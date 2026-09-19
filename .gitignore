@@ -126,6 +126,8 @@ InitTestScene*.unity*
 # ============================================
 /[Aa]ssets/Synaptic AI Pro/
 /[Aa]ssets/Synaptic AI Pro.meta
+/[Aa]ssets/LMArt-StylizedEnvironmentKit/
+/[Aa]ssets/LMArt-StylizedEnvironmentKit.meta
 
 # ============================================
 # 再生成できる自作アセット (任意)

@@ -2,11 +2,15 @@
 
 ## プロジェクト概要
 
-VRChat ワールド **「KominkaHillside」**
-
-<!-- ここにワールドの一言説明・企画背景・現在の優先度を書く -->
+VRChat ワールド **「古民家の裏山」 (KominkaHillside)** — VAnimal シリーズ。
+古民家ドッグラン (`C:/work/unity/vcc/KominkaDogRun`) の続編。**同じ 6 匹と秋の裏山を散歩し、遠くの古民家を眺める。**
 
 > **AI ドキュメントナビゲーション:** `docs/AI_INDEX.md` を参照
+> 企画の原本はユーザー作成の `docs/reference/VAnimal_KominkaHillside_Concept.md` (AI は編集しない)。
+> 判断基準・ビジュアル方針は `docs/core-concept.md`、仕様・スコープは `docs/game-design.md`。
+
+**優先する体験 (並列。優劣なし)**: 山から古民家が見える / 犬と無理なく遊べる / 小さな空間でも散歩した感じがする。豪華さは草木の密度ではなく眺め・道・犬・つながりで作る。
+**スマホ対応を目指す** (確約ではない。実機で判断)。犬ギミックは古民家から一式コピーして個別管理 (共通化しない)。
 
 ---
 
@@ -28,7 +32,9 @@ Packages/
 └── com.local.vrc-world-tools               # 共有診断ツール (file: 参照)
 ```
 
-**作業対象シーンは `Assets/Scenes/<メインシーン>.unity`。**
+**作業対象シーンは `Assets/Scenes/VRCDefaultWorldScene.unity`** (VCC テンプレートのまま。改名するときはここも直す)。
+
+購入アセット (Git 管理外): `Assets/LMArt-StylizedEnvironmentKit/` (古民家と同じ広葉樹・遠景)。秋色などの派生物は `Assets/KominkaHillside/` 側へコピーして管理する。
 
 ---
 

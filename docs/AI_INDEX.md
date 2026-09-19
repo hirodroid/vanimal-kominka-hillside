@@ -25,7 +25,8 @@
 
 | File | Domain | Role |
 |------|--------|------|
-| `core-concept.md` | 企画・ビジュアル | 体験の核とビジュアル方針 (色・形・素材・光・UI・例外) の正本 |
+| `reference/VAnimal_KominkaHillside_Concept.md` | 企画 (原本) | ユーザー作成の企画・引き継ぎ資料 (2026-09-19 合意)。**AI は編集しない。** 導出文書と食い違ったらこちらを優先し、下 2 枚を直す。**例外: 原本より後のユーザー決定** — `game-design.md` に日付付きで追補されたものが原本より優先 (原本は書き換えないため) |
+| `core-concept.md` | 判断基準・ビジュアル | 原本から導いた体験の核・判断基準とビジュアル方針 (色・形・素材・光・UI・例外) の正本 |
 | `game-design.md` | 仕様 | コアコンセプトから導く仕様・スコープの正本 |
 | `world-ui-spec.md` | UI仕様 | ビジュアル方針から具体化するUIトークン・画面・状態/入力契約・検証記録。既存の同等資料があればそちらを正本にする |
 | `development/overview.md` | 開発全体 | マイルストーンの進捗・完成条件 |
@@ -43,6 +44,8 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 | `development/design/design_index.md` | 詳細設計の入口 |
 | `development/issues/issue_summary.md` | 課題の入口 (状態ごとに 4 分割) |
 | `development/git-workflow.md` | Git 運用ルール |
+| `development/imports/kominka-dog-system.md` | 古民家ドッグランからの犬ギミック移植記録 (移植時に作成。書式は古民家側 `C:/work/unity/vcc/KominkaDogRun/docs/development/dog-system-porting.md`) |
+| `reference/world/*.png` | 空間構成のイメージ図 (雰囲気の参考。地形図・確定レイアウトではない。犬の頭数・犬種の根拠にもしない) |
 | `plans/` | 実装計画書・実機チェックリスト |
 | `../.claude/skills/vrc-*/` | 共有 Skills (VRChat World 開発一般の知識・手順) |
 
@@ -50,15 +53,30 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 
 ## 不変条件 (Invariants)
 
-<!-- このワールドで絶対に破ってはいけない設計上の約束をここに列挙する。
-     例: 「画面は同期しない — 同期は共通条件と結果のみ」
-         「スコープは game-design.md の『入れないもの』リストが正本」 -->
-
-1.
-2.
+1. **古民家ドッグランの続編である。** 主役は同じ 6 匹 (コーギー / ポメラニアン / ラブラドール / ダックスフンド / 柴犬 / サモエド)。犬種・頭数を増減しない
+2. **山から古民家が見える。** 展望・休憩場所から古民家の外観が識別できることを崩す変更をしない。古民家は遠景専用で内部は作らない
+3. **犬ギミックは古民家から一式コピーして個別管理する。** 共通ライブラリ化・VPM 化・自動同期をしない。移植元のタグ・SHA・範囲・差分を `development/imports/kominka-dog-system.md` に残す
+4. **新しい大規模ギミック・専用散歩 AI は初期範囲に入れない。** スコープは `game-design.md` §7 が正本
+5. **スマホ対応を目指す。** 「Terrain だから軽い」と判断しない。密度で豪華にせず、眺め・道・犬・古民家とのつながりで作る
+6. **散歩道から Terrain の切断面・空白を見せない。** 歩ける範囲の外に景観用の余白を置く
+7. **画面は同期しない。** 同期は古民家の設計 (犬の位置 = Owner 権威、ボール、状態) を引き継ぎ、新しい同期を設計しない
+8. **企画の原本 (`reference/VAnimal_KominkaHillside_Concept.md`) と購入アセットのフォルダは編集しない。** 秋色などの派生物は `Assets/KominkaHillside/` 側にコピーして管理する
 
 ---
 
 ## 最初に着手すべきこと
 
 <!-- 現在地と着手順をここに書く。セッションのたびに更新する。 -->
+
+**現在地 (2026-09-19)**: 立ち上げ完了。Unity 2022.3.22f1 / SDK 3.10.4 / Synaptic AI Pro 導入済み / LMArt BroadleafTreeField 導入済み。企画・仕様・不変条件を記入。シーンは VCC テンプレートのまま (`Assets/Scenes/VRCDefaultWorldScene.unity`)。
+
+着手順 (Issue は `development/issues/issue_summary.md`):
+
+1. **DES-ENV-001 (着手)** 地形の方式 (Terrain / Blender) の比較条件と「Blender へ切り替える基準」を決める。決定はまだしない
+2. **IMP-DOG-001 の手順 1〜3 (先行)** 古民家側にタグ `export/kominka-hillside-v1` を打ち、移植範囲と Git 外依存を棚卸しする。試作用の犬 1 匹はこの記録範囲から持ち込む
+3. **VER-ENV-001** 試作: 簡単な Terrain + 秋の広葉樹 + 軽量化した古民家の外観 (仮) + 犬 1 匹 + ボールで、眺め・歩行・遊び・端の見え方・実機負荷を確認する。`core-concept.md` §3 の代表シーン検証を兼ねる
+4. **DES-ENV-001 (確定)** 試作の実測で方式を決め、`game-design.md` §4 を更新する
+5. **IMP-DOG-001 (本移植)** 6 匹 + 撫で・ボール・添い寝を移植し、移植記録を完成させる
+6. 試作結果を踏まえて `game-design.md` §4 の未決定事項 (広さ・配置・行動範囲・性能目標) を埋める
+
+作業前の確認: `bash scripts/unity-api.sh health` が通り、eval の `Application.dataPath` がこのプロジェクトを指すこと (`vrc-synaptic-unity`)。

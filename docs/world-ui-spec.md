@@ -8,14 +8,14 @@
 
 | 項目 | 値 |
 |---|---|
-| world / UI scope | KominkaHillside / unknown |
-| この設定の版・最終更新日 | unknown |
+| world / UI scope | KominkaHillside (古民家の裏山) / 古民家ドッグランの既存 UI を移植して使う。新規 UI は増やさない方針 (provisional) |
+| この設定の版・最終更新日 | 0.1 / 2026-09-19 (立ち上げ時の識別情報のみ。UI 制作開始時に埋める) |
 | 共通リファレンスの版・パス | 1.0.0 / `.claude/skills/vrc-udonsharp/reference/ui/00_START_HERE.md` (プロジェクトルート基準) |
-| 対象シーン・Prefab・ゲーム処理 | unknown |
-| Unity / Worlds SDK / TMP / ClientSim | unknown。プロジェクトから取得 |
-| ビルドターゲット | Windows / Android / iOS の採用範囲を記載 |
+| 対象シーン・Prefab・ゲーム処理 | `Assets/Scenes/VRCDefaultWorldScene.unity` / 移植する犬ギミックの UI (IMP-DOG-001 で棚卸し) |
+| Unity / Worlds SDK / TMP / ClientSim | 2022.3.22f1 / 3.10.4 / 3.0.6 / SDK 同梱 |
+| ビルドターゲット | Windows 確定。Android / iOS はスマホ対応を目指す (実機で判断。`game-design.md` §1) |
 | 対象機器・入力 | PCVR / Desktop / Android Touch / iOS Touch / その他 |
-| 対応言語 | unknown |
+| 対応言語 | 日本語 (古民家と同じ。provisional) |
 | 主目的・主要操作・戻る活動 | unknown |
 | UIの影響範囲 | 個人 / 共有 / 混在、項目別に定義 |
 | 検証の到達点 | documentedのみ等。根拠に応じて記入 |
@@ -24,9 +24,9 @@
 
 | 必要情報 | 参照ファイル・節・版 | UIへの解釈 | 状態 |
 |---|---|---|---|
-| コアコンセプト | unknown | unknown | missing |
+| コアコンセプト | `core-concept.md` §1〜2 (2026-09-19) | 犬が主役。UI は古民家のトークンを継承し、案内は最小 | provisional |
 | 主役と背景、避ける遮蔽 | unknown | unknown | missing |
-| パレットと明暗 | unknown | unknown | missing |
+| パレットと明暗 | `core-concept.md` §3 役割別パレット (2026-09-19) | 暗い面 + 白文字を継承。状態は色以外でも区別 | provisional |
 | 形状・角・輪郭 | unknown | unknown | missing |
 | 素材・模様・デフォルメ | unknown | unknown | missing |
 | 昼夜・照明・演出時の背景 | unknown | unknown | missing |
