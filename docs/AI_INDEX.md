@@ -72,7 +72,7 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 
 着手順 (Issue は `development/issues/issue_summary.md`):
 
-1. **DES-ENV-001 (着手)** 地形の方式 (Terrain / Blender) の比較条件と「Blender へ切り替える基準」を決める。決定はまだしない
+1. **DES-ENV-001 (着手済み)** まず Terrain。切り替え基準は Issue に記録済み (2026-09-19)
 2. **VER-ENV-001** 試作: 簡単な Terrain + 秋の広葉樹 + 軽量化した古民家の外観 (仮) + **犬サイズのダミー** (犬の実装は持ち込まない) で、眺め・歩行・端の見え方・実機負荷を確認する。`core-concept.md` §3 の代表シーン検証を兼ねる
 3. **DES-ENV-001 (確定)** 試作の実測で方式を決め、`game-design.md` §4 を更新する
 4. **IMP-DOG-001** 地形方式が決まってから、古民家側にタグ `export/kominka-hillside-v1` を打ち、6 匹 + 撫で・ボール・添い寝を移植する (移植記録を作成)。**タグはこの時点で打つ** (試作用の先行コピーはしない: 2026-09-19 ユーザー決定)
