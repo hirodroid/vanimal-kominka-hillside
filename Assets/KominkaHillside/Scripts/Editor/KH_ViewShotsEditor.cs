@@ -36,33 +36,41 @@ public static class KH_ViewShotsEditor
         // 01 展望 → 古民家 (項目 1)
         Shot("01-viewpoint-to-kominka", EyeAt(terrain, vp), komCenter, Fov);
         Shot("01b-viewpoint-to-kominka-fov40", EyeAt(terrain, vp), komCenter, 40f);
-        // 02 入口: 前 (進行方向) / 谷側 (後ろ = 古民家側) / 山側
+        // 02 スポーン (門の前): 前 / 振り返って門
+        var ent = root.transform.Find("KH_Places/KH_Entrance");
+        if (ent != null)
+        {
+            var eye = ent.position + Vector3.up * (Eye - C.SpawnGroundOffset);
+            Shot("02-spawn-forward", eye, eye + ent.forward * 10f + Vector3.down * 0.5f, Fov);
+            Shot("02b-spawn-back-to-gate", eye, eye - ent.forward * 6f + Vector3.down * 0.3f, Fov);
+        }
+        // 10.. 道の制御点ごとに進行方向 (歩く目線)。展望・広場では谷側 / 山側も
         int n = C.Path.GetLength(0);
-        string[] names = { "entrance", "curve1", "viewpoint", "curve2", "plaza", "curve3" };
         for (int i = 0; i < n; i++)
         {
             var here = new Vector2(C.Path[i, 0], C.Path[i, 1]);
             var next = new Vector2(C.Path[(i + 1) % n, 0], C.Path[(i + 1) % n, 1]);
             var eye = EyeAt(terrain, here);
             var fwd = (next - here).normalized;
-            Shot(string.Format("{0:00}-{1}-forward", 10 + i, names[i]), eye, eye + new Vector3(fwd.x, -0.15f, fwd.y) * 10f, Fov);
-            Shot(string.Format("{0:00}-{1}-valley", 10 + i, names[i]), eye, eye + new Vector3(0f, -0.2f, -1f) * 10f, Fov);
-            Shot(string.Format("{0:00}-{1}-hill", 10 + i, names[i]), eye, eye + new Vector3(0f, 0.05f, 1f) * 10f, Fov);
+            Shot(string.Format("{0:00}-p{1:00}-forward", 10 + i, i), eye, eye + new Vector3(fwd.x, -0.15f, fwd.y) * 10f, Fov);
         }
-        // 20 ダミーとボール: 広場中心を 3 m / 10 m から (南から北向き)
+        Shot("30-viewpoint-hill", EyeAt(terrain, vp), EyeAt(terrain, vp) + new Vector3(0f, 0.05f, 1f) * 10f, Fov);
+        Shot("31-plaza-valley", EyeAt(terrain, plaza), EyeAt(terrain, plaza) + new Vector3(0f, -0.2f, -1f) * 10f, Fov);
+        Shot("32-plaza-hill", EyeAt(terrain, plaza), EyeAt(terrain, plaza) + new Vector3(0f, 0.05f, 1f) * 10f, Fov);
+        // 40 ダミーとボール: 広場中心を 3 m / 10 m から (南から北向き)、木陰のダミー
         var dummyFocus = KH_TerrainPrototypeEditor.GroundXZ(terrain, plaza, 0.3f);
-        Shot("20-dummies-3m", EyeAt(terrain, plaza + new Vector2(0f, -3f)), dummyFocus, Fov);
-        Shot("21-dummies-10m", EyeAt(terrain, plaza + new Vector2(0f, -10f)), dummyFocus, Fov);
-        // 22 木陰のダミー (最後のダミー)
+        Shot("40-dummies-3m", EyeAt(terrain, plaza + new Vector2(0f, -3f)), dummyFocus, Fov);
+        Shot("41-dummies-10m", EyeAt(terrain, plaza + new Vector2(0f, -10f)), dummyFocus, Fov);
         int last = C.DummyOffsets.GetLength(0) - 1;
         var shade = plaza + new Vector2(C.DummyOffsets[last, 0], C.DummyOffsets[last, 1]);
-        Shot("22-dummy-shade-3m", EyeAt(terrain, shade + new Vector2(3f, -1f)), KH_TerrainPrototypeEditor.GroundXZ(terrain, shade, 0.3f), Fov);
-        // 30 端の確認: 谷側の柵越し (東端 / 西端) と北の土手
-        Shot("30-edge-southeast", EyeAt(terrain, new Vector2(100f, 80f)), new Vector3(118f, 5f, 60f), Fov);
-        Shot("31-edge-southwest", EyeAt(terrain, new Vector2(20f, 80f)), new Vector3(2f, 5f, 60f), Fov);
-        Shot("32-edge-north", EyeAt(terrain, new Vector2(60f, 160f)), new Vector3(60f, 30f, 185f), Fov);
-        Shot("33-edge-west", EyeAt(terrain, new Vector2(20f, 120f)), new Vector3(-5f, 25f, 120f), Fov);
-        Shot("34-edge-east", EyeAt(terrain, new Vector2(100f, 120f)), new Vector3(125f, 25f, 120f), Fov);
+        Shot("42-dummy-shade-3m", EyeAt(terrain, shade + new Vector2(3f, -1f)), KH_TerrainPrototypeEditor.GroundXZ(terrain, shade, 0.3f), Fov);
+        // 50 端の確認: 谷の南西 / 南東の隅、北の土手、西・東
+        Shot("50-edge-southwest", EyeAt(terrain, new Vector2(25f, 30f)), new Vector3(5f, 8f, 8f), Fov);
+        Shot("51-edge-southeast", EyeAt(terrain, new Vector2(95f, 30f)), new Vector3(115f, 8f, 8f), Fov);
+        Shot("52-edge-north", EyeAt(terrain, new Vector2(60f, 160f)), new Vector3(60f, 30f, 185f), Fov);
+        Shot("53-edge-west", EyeAt(terrain, new Vector2(20f, 120f)), new Vector3(-5f, 25f, 120f), Fov);
+        Shot("54-edge-east", EyeAt(terrain, new Vector2(100f, 120f)), new Vector3(125f, 25f, 120f), Fov);
+        Shot("55-valley-from-slope", EyeAt(terrain, new Vector2(24f, 70f)), new Vector3(60f, 3f, 30f), Fov);
         Debug.Log("KH_ViewShotsEditor done -> " + OutDir);
     }
 

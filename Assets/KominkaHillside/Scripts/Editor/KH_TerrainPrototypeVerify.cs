@@ -68,7 +68,7 @@ public static class KH_TerrainPrototypeVerify
         Info("path samples=" + path.Count + " length=" + KH_TerrainShape.PathLength(path).ToString("0.0") + " m");
         Require("path slope <= " + C.PathMaxSlopeDeg + " deg (worst " + (Mathf.Atan(worstSlope) * Mathf.Rad2Deg).ToString("0.0") + " deg, ng=" + slopeNg + ")", slopeNg == 0);
         Require("path cross slope <= " + C.PathMaxCrossSlopeDeg + " deg (worst " + (Mathf.Atan(worstCross) * Mathf.Rad2Deg).ToString("0.0") + " deg, ng=" + crossNg + ")", crossNg == 0);
-        Require("path edge min z >= fence z + " + C.PathFenceClearance + " (min edge z " + minEdgeZ.ToString("0.0") + ")", minEdgeZ >= C.BoundSouthZ + C.PathFenceClearance);
+        Require("path edge min z >= south bound + 2 (min edge z " + minEdgeZ.ToString("0.0") + ")", minEdgeZ >= C.BoundSouthZ + 2f);
 
         // --- 古民家
         var kom = root.transform.Find("KH_Places/KH_FarKominka");
@@ -86,7 +86,7 @@ public static class KH_TerrainPrototypeVerify
             Require("kominka interior children found " + found + "/" + C.KominkaInteriorChildren.Length + ", active " + activeInterior, found == C.KominkaInteriorChildren.Length && activeInterior == 0);
             if (building != null) Require("kominka is still a prefab instance (not unpacked)", PrefabUtility.IsPartOfPrefabInstance(building.gameObject));
             int udonN = kom.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true).Length, animN = kom.GetComponentsInChildren<Animator>(true).Length, colN = kom.GetComponentsInChildren<Collider>(true).Length;
-            Require("kominka has no udon/animator/collider (" + udonN + "/" + animN + "/" + colN + ")", udonN == 0 && animN == 0 && colN == 0);
+            Require("kominka has no udon/animator, exactly 1 collider (wall) (" + udonN + "/" + animN + "/" + colN + ")", udonN == 0 && animN == 0 && colN == 1);
 
             // 展望 → 古民家 5 点の遮蔽 (診断値)
             var vp = new Vector2(C.Flats[C.ViewpointFlat, 0], C.Flats[C.ViewpointFlat, 1]);
@@ -144,17 +144,14 @@ public static class KH_TerrainPrototypeVerify
                 Require("wall bottom <= ground - " + C.BoundBelowGround + " (sampled, ng=" + bottomNg + ")", bottomNg == 0);
             }
         }
-        var fence = root.transform.Find("KH_Fence");
-        if (fence != null)
+        // --- 門と塀 (古民家側へ戻れない)
+        var gateBlock = root.transform.Find("KH_Places/KH_GateBlock");
+        Require("KH_GateBlock exists with BoxCollider on layer " + C.BoundLayerName, gateBlock != null && gateBlock.GetComponent<BoxCollider>() != null && gateBlock.gameObject.layer == LayerMask.NameToLayer(C.BoundLayerName));
+        if (kom != null)
         {
-            float fx0 = float.MaxValue, fx1 = float.MinValue, fz = 0f; int posts = 0;
-            foreach (Transform t in fence) if (t.name == "KH_FencePost") { posts++; fx0 = Mathf.Min(fx0, t.position.x); fx1 = Mathf.Max(fx1, t.position.x); fz = t.position.z; }
-            Require("fence posts span x " + C.BoundWestX + ".." + C.BoundEastX + " at z ~" + C.BoundSouthZ + " (posts=" + posts + ", x " + fx0.ToString("0.0") + ".." + fx1.ToString("0.0") + ", z " + fz.ToString("0.0") + ")",
-                posts > 0 && Mathf.Abs(fx0 - C.BoundWestX) < 0.1f && Mathf.Abs(fx1 - C.BoundEastX) < 0.1f && Mathf.Abs(fz - C.BoundSouthZ) < 0.5f);
-            Info("fence visual gap at viewpoint x=" + C.Flats[C.ViewpointFlat, 0] + " +-" + C.FenceGapAtViewpointHalf + " (bound wall is continuous; checked above)");
+            var wallMesh = kom.Find("KH_KominkaWall/" + C.KominkaWallMeshChild);
+            Require("kominka wall has MeshCollider", wallMesh != null && wallMesh.GetComponent<MeshCollider>() != null && wallMesh.GetComponent<MeshCollider>().enabled);
         }
-        else Require("KH_Fence exists", false);
-
         // --- Floor / スポーン
         bool floor = false;
         foreach (var go in scene.GetRootGameObjects()) if (go.name == "Floor") floor = true;
@@ -166,7 +163,14 @@ public static class KH_TerrainPrototypeVerify
         {
             Require("spawns[0] == KH_Entrance", desc.spawns != null && desc.spawns.Length >= 1 && desc.spawns[0] == entrance);
             Require("RespawnHeightY == -10", Mathf.Abs(desc.RespawnHeightY + 10f) < 0.01f);
-            Require("spawn faces north (+z)", Vector3.Dot(entrance.forward, Vector3.forward) > 0.99f);
+            if (gateBlock != null)
+            {
+                var toGate = gateBlock.position - entrance.position; toGate.y = 0f;
+                Require("spawn faces away from the gate", Vector3.Dot(entrance.forward, toGate.normalized) < -0.9f);
+                RaycastHit gh = new RaycastHit();
+                bool gateHit = Physics.Raycast(entrance.position + Vector3.up * 1f, toGate.normalized, out gh, C.SpawnDistanceFromGate + 1.5f, ~0, QueryTriggerInteraction.Ignore) && gh.collider.name == "KH_GateBlock";
+                Require("walking back from spawn into the gate hits KH_GateBlock", gateHit);
+            }
             RaycastHit hit = new RaycastHit();
             bool grounded1 = tc != null && tc.Raycast(new Ray(entrance.position + Vector3.up * 5f, Vector3.down), out hit, 50f);
             float off = grounded1 ? entrance.position.y - hit.point.y : -999f;
@@ -174,17 +178,8 @@ public static class KH_TerrainPrototypeVerify
             var hits = Physics.OverlapBox(entrance.position + Vector3.up * 1f, new Vector3(0.25f, 1f, 0.25f), Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
             int nonTerrain = 0; foreach (var h in hits) if (!(h is TerrainCollider)) { nonTerrain++; Info("spawn overlap: " + h.name); }
             Require("spawn body box overlaps no collider (except terrain)", nonTerrain == 0);
-            float minPost = float.MaxValue; int postRoad = 0;
-            foreach (Transform t in entrance)
-            {
-                if (!t.name.StartsWith("KH_GatePost")) continue;
-                var pxz = new Vector2(t.position.x, t.position.z);
-                minPost = Mathf.Min(minPost, Vector2.Distance(pxz, new Vector2(entrance.position.x, entrance.position.z)));
-                float rh; float d = KH_TerrainShape.DistanceToPath(path, pxz.x, pxz.y, out rh);
-                if (d < C.PathHalfWidth + 0.125f) postRoad++;
-            }
-            Require("gate posts >= 2 m from spawn (min " + minPost.ToString("0.00") + ")", minPost >= 2f);
-            Require("gate posts do not cross the road", postRoad == 0);
+            float rhs; float dSpawn = KH_TerrainShape.DistanceToPath(path, entrance.position.x, entrance.position.z, out rhs);
+            Require("spawn is on or beside the trail (distance " + dSpawn.ToString("0.0") + " m <= 4)", dSpawn <= 4f);
         }
 
         // --- Stage 状態
@@ -217,6 +212,8 @@ public static class KH_TerrainPrototypeVerify
             Require("Stage B: board trees == " + C.BoardTrees.GetLength(0) + " (" + (boards != null ? boards.childCount : 0) + ")", boards != null && boards.childCount == C.BoardTrees.GetLength(0));
             int sceneTris = 0; foreach (var mf in root.GetComponentsInChildren<MeshFilter>(false)) if (mf.sharedMesh != null) sceneTris += mf.sharedMesh.triangles.Length / 3;
             Info("DIAG KH_World active mesh triangles (excluding terrain) = " + sceneTris);
+            var shrubs = root.transform.Find("KH_Shrubs");
+            Require("Stage B: shrubs == " + C.ShrubCount + " (" + (shrubs != null ? shrubs.childCount : 0) + ")", shrubs != null && shrubs.childCount == C.ShrubCount);
             Require("Stage B: KH_Scenery has 1 viewset", scenery != null && scenery.childCount == 1);
             if (scenery != null && scenery.childCount == 1)
             {

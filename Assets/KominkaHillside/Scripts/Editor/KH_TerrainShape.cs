@@ -24,11 +24,11 @@ public static class KH_TerrainShape
         float h;
         if (z < C.RidgeZ1) h = Mathf.Lerp(C.RidgeTop, C.ValleyH, SmoothStep(C.RidgeZ0, C.RidgeZ1, z));
         else if (z < C.SlopeZ0) h = C.ValleyH + (Mathf.PerlinNoise(x * 0.07f + 3f, z * 0.07f + 9f) - 0.5f) * 2f * C.ValleyNoise;
-        else if (z < C.SlopeZ1) h = Mathf.Lerp(C.ValleyH + 0.5f, C.HillBase, SmoothStep(C.SlopeZ0, C.SlopeZ1, z));
+        else if (z < C.SlopeZ1) h = Mathf.Lerp(C.ValleyH + 0.5f, C.HillBase, Mathf.Clamp01((z - C.SlopeZ0) / (C.SlopeZ1 - C.SlopeZ0))); // 線形 (一様な勾配)
         else if (z < C.BankZ0) h = C.HillBase + C.HillRise * SmoothStep(C.SlopeZ1, C.BankZ0, z);
         else h = C.HillBase + C.HillRise + C.BankHeight * SmoothStep(C.BankZ0, C.BankZ1, z);
 
-        if (z >= C.SlopeZ0)
+        if (z >= C.BankFromZ)
         {
             if (x < C.BankX0) h += C.BankHeight * SmoothStep(C.BankX0, 0f, x);
             else if (x > C.BankX1) h += C.BankHeight * SmoothStep(C.BankX1, C.TerrainSize.x, x);
@@ -237,7 +237,8 @@ public static class KH_TerrainShape
                 float steep = td.GetSteepness(x / W, z / L);
                 float roadH;
                 float d = DistanceToPath(path, x, z, out roadH);
-                float road = 1f - SmoothStep(C.PathHalfWidth, C.PathHalfWidth + 1.5f, d);
+                float edgeNoise = (Mathf.PerlinNoise(x * 0.35f + 7f, z * 0.35f + 3f) - 0.5f) * 2f * C.PathEdgeNoise;
+                float road = 1f - SmoothStep(C.PathHalfWidth, C.PathHalfWidth + 1.5f, d + edgeNoise);
                 bool bank = x < C.BankX0 || x > C.BankX1 || z > C.BankZ0;
                 float rocky = Mathf.Clamp01((steep - rockySlope + 5f) / 10f);
                 if (bank) rocky = Mathf.Max(rocky, 0.6f);

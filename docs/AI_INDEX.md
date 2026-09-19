@@ -69,7 +69,7 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 
 <!-- 現在地と着手順をここに書く。セッションのたびに更新する。 -->
 
-**現在地 (2026-09-19 夜)**: Terrain 試作 (VER-ENV-001) の Stage A + B を生成し、Editor 検証 48/48・View Shots で一次判定済み。**次はユーザーの Play** ([計画 §6](plans/2026-09-19-terrain-prototype.md))。舞台は `Assets/Scenes/VRCDefaultWorldScene.unity` の `KH_World` 配下 (Build で作り直す。手で置くものはその外)。数値の正本は `Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeConfig.cs`。Unity 2022.3.22f1 / SDK 3.10.5 / Synaptic AI Pro / LMArt / モサンゴ屋 導入済み。
+**現在地 (2026-09-19 夜)**: Terrain 試作 (VER-ENV-001) **v2** (門から出発する配置。ユーザーの手作業を把握して再パラメータ化) を生成し、Editor 検証 50/50・View Shots で一次判定済み。**次はユーザーの Play** ([計画 §10](plans/2026-09-19-terrain-prototype.md))。**Build は手作業を消す**: 手で直したい値は設定へ写してから Build する (手作業の参照コミット `13a7e31`)。舞台は `Assets/Scenes/VRCDefaultWorldScene.unity` の `KH_World` 配下 (Build で作り直す。手で置くものはその外)。数値の正本は `Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeConfig.cs`。Unity 2022.3.22f1 / SDK 3.10.5 / Synaptic AI Pro / LMArt / モサンゴ屋 導入済み。
 
 着手順 (Issue は `development/issues/issue_summary.md`):
 

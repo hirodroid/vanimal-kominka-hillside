@@ -59,12 +59,16 @@ public static class KH_TerrainPrototypeEditor
         terrain.drawInstanced = false;
         log.AppendLine("terrain created size=" + td.size + " hm=" + td.heightmapResolution + " layers=" + td.terrainLayers.Length);
 
-        // 場所
+        // 古民家 (門の位置がスポーンの基準になるので先に置く)
+        Vector3 gateCenter, gateOut;
+        var kom = BuildKominka(terrain, places, log, out gateCenter, out gateOut);
+
+        // 入口 = 門の外側。門の開口は透明 Collider で塞ぐ (古民家側へは戻れない)
         var entrance = NewChild(places, "KH_Entrance");
-        var spawnPos = GroundXZ(terrain, C.EntranceXZ, C.SpawnGroundOffset);
-        entrance.transform.position = spawnPos;
-        entrance.transform.rotation = Quaternion.identity; // +z = 北
-        BuildGate(terrain, entrance, log);
+        var spawnXZ = new Vector2(gateCenter.x + gateOut.x * C.SpawnDistanceFromGate, gateCenter.z + gateOut.z * C.SpawnDistanceFromGate);
+        entrance.transform.position = GroundXZ(terrain, spawnXZ, C.SpawnGroundOffset);
+        entrance.transform.rotation = Quaternion.LookRotation(new Vector3(gateOut.x, 0f, gateOut.z), Vector3.up); // 門から外を向く
+        BuildGateBlock(entrance, gateCenter, gateOut, log);
 
         var viewpoint = NewChild(places, "KH_Viewpoint");
         viewpoint.transform.position = GroundXZ(terrain, new Vector2(C.Flats[C.ViewpointFlat, 0], C.Flats[C.ViewpointFlat, 1]), 0f);
@@ -73,9 +77,7 @@ public static class KH_TerrainPrototypeEditor
         var plaza = NewChild(places, "KH_Plaza");
         plaza.transform.position = GroundXZ(terrain, new Vector2(C.Flats[C.PlazaFlat, 0], C.Flats[C.PlazaFlat, 1]), 0f);
 
-        BuildKominka(terrain, places, log);
         BuildBounds(terrain, root, log);
-        BuildFence(terrain, root, log);
         BuildDummies(terrain, root, log);
         WireDescriptor(entrance.transform, log);
 
@@ -93,7 +95,7 @@ public static class KH_TerrainPrototypeEditor
         if (terrain == null) { Fail(log, "Stage A output not found. Run Build Stage A first.", "build-B.log"); return; }
         var td = terrain.terrainData;
 
-        foreach (var name in new[] { "KH_Trees", "KH_BoardTrees", "KH_Scenery" })
+        foreach (var name in new[] { "KH_Trees", "KH_BoardTrees", "KH_Shrubs", "KH_Scenery" })
         {
             var t = root.transform.Find(name);
             if (t != null) { Object.DestroyImmediate(t.gameObject); log.AppendLine("removed old " + name); }
@@ -218,19 +220,17 @@ public static class KH_TerrainPrototypeEditor
         return go;
     }
 
-    static void BuildGate(Terrain terrain, GameObject entrance, StringBuilder log)
+    // 門の開口を塞ぐ透明 BoxCollider (門枠の中心、外向きに直交)
+    static void BuildGateBlock(GameObject entrance, Vector3 gateCenter, Vector3 gateOut, StringBuilder log)
     {
-        var wood = ProtoMaterial("Wood", new Color(0.45f, 0.30f, 0.18f));
-        var sp = entrance.transform.position;
-        for (int s = -1; s <= 1; s += 2)
-        {
-            var xz = new Vector2(sp.x + s * C.GateOffsetFromSpawn.x, sp.z + C.GateOffsetFromSpawn.y);
-            var g = GroundXZ(terrain, xz, 1.1f);
-            Cube(entrance, "KH_GatePost" + (s < 0 ? "L" : "R"), g, new Vector3(0.25f, 2.2f, 0.25f), wood, true);
-        }
-        var top = GroundXZ(terrain, new Vector2(sp.x, sp.z + C.GateOffsetFromSpawn.y), 2.3f);
-        Cube(entrance, "KH_GateTop", top, new Vector3(C.GateOffsetFromSpawn.x * 2f + 0.4f, 0.15f, 0.2f), wood, false);
-        log.AppendLine("gate at spawn " + sp.ToString("0.00"));
+        var go = new GameObject("KH_GateBlock");
+        go.transform.SetParent(entrance.transform.parent, false);
+        go.layer = LayerMask.NameToLayer(C.BoundLayerName);
+        go.transform.position = new Vector3(gateCenter.x, gateCenter.y + C.GateBlockSize.y * 0.5f - 1.5f, gateCenter.z);
+        go.transform.rotation = Quaternion.LookRotation(new Vector3(gateOut.x, 0f, gateOut.z), Vector3.up);
+        var bc = go.AddComponent<BoxCollider>();
+        bc.size = C.GateBlockSize;
+        log.AppendLine("gate block at " + go.transform.position.ToString("0.00") + " out=" + gateOut.ToString("0.00") + " spawn=" + entrance.transform.position.ToString("0.00"));
     }
 
     static void BuildBench(Terrain terrain, GameObject viewpoint)
@@ -241,13 +241,15 @@ public static class KH_TerrainPrototypeEditor
         Cube(viewpoint, "KH_Bench", pos, new Vector3(1.6f, 0.45f, 0.5f), wood, true);
     }
 
-    static void BuildKominka(Terrain terrain, GameObject places, StringBuilder log)
+    static GameObject BuildKominka(Terrain terrain, GameObject places, StringBuilder log, out Vector3 gateCenter, out Vector3 gateOut)
     {
+        gateCenter = C.KominkaPosition; gateOut = Vector3.forward;
         var holder = NewChild(places, "KH_FarKominka");
         holder.transform.position = C.KominkaPosition;
+        holder.transform.rotation = Quaternion.Euler(0f, C.KominkaYaw, 0f);
         var building = InstantiatePrefab(C.KominkaBuildingPrefabGuid, holder, "KH_KominkaBuilding", log);
         var wall = InstantiatePrefab(C.KominkaWallPrefabGuid, holder, "KH_KominkaWall", log);
-        if (building == null) return;
+        if (building == null || wall == null) return holder;
 
         // 室内の子を override で非アクティブ化
         int off = 0;
@@ -263,21 +265,8 @@ public static class KH_TerrainPrototypeEditor
         }
         log.AppendLine("kominka interior deactivated: " + off + "/" + C.KominkaInteriorChildren.Length);
 
-        // 縁側が北 (+z) を向くように回す
-        var eng = building.transform.Find(C.KominkaEngawaFloorChild);
-        var bb = ActiveBounds(building);
-        if (eng != null)
-        {
-            var er = eng.GetComponentInChildren<Renderer>();
-            var dir = er.bounds.center - bb.center; dir.y = 0f;
-            var yaw = Vector3.SignedAngle(dir.normalized, Vector3.forward, Vector3.up);
-            holder.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-            log.AppendLine("kominka engawa dir=" + dir.normalized.ToString("0.00") + " -> yaw " + yaw.ToString("0.0"));
-        }
-        else log.AppendLine("WARN engawa child not found; orientation unchanged");
-
         // 建物の底を谷底の地面に合わせる
-        bb = ActiveBounds(building);
+        var bb = ActiveBounds(building);
         float ground = terrain.SampleHeight(bb.center) + terrain.transform.position.y;
         holder.transform.position += new Vector3(0f, ground - bb.min.y, 0f);
         bb = ActiveBounds(building);
@@ -292,7 +281,23 @@ public static class KH_TerrainPrototypeEditor
         foreach (var col in holder.GetComponentsInChildren<Collider>(true)) { Object.DestroyImmediate(col); removed++; }
         remain = holder.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true).Length + holder.GetComponentsInChildren<Animator>(true).Length + holder.GetComponentsInChildren<Collider>(true).Length;
         log.AppendLine("kominka removed components (udon/animator/collider)=" + removed + " remaining=" + remain);
+        // 塀は歩ける側にあるので MeshCollider で塞ぐ (敷地に入れない)
+        var wallMesh = wall.transform.Find(C.KominkaWallMeshChild);
+        if (wallMesh != null) { var mc = wallMesh.gameObject.AddComponent<MeshCollider>(); mc.sharedMesh = wallMesh.GetComponent<MeshFilter>().sharedMesh; log.AppendLine("wall MeshCollider added"); }
+        else log.AppendLine("ERROR wall mesh child not found: " + C.KominkaWallMeshChild);
+        // 門の位置と外向き (門枠の中心、玄関 → 門枠 の方向)
+        var gate = wall.transform.Find(C.KominkaGateFrameChild);
+        var genkan = building.transform.Find(C.KominkaGenkanChild);
+        if (gate != null && genkan != null)
+        {
+            gateCenter = gate.GetComponentInChildren<Renderer>().bounds.center;
+            var gk = genkan.GetComponentInChildren<Renderer>().bounds.center;
+            gateOut = gateCenter - gk; gateOut.y = 0f; gateOut.Normalize();
+            log.AppendLine("gate center=" + gateCenter.ToString("0.00") + " out=" + gateOut.ToString("0.00"));
+        }
+        else log.AppendLine("ERROR gate/genkan child not found");
         log.AppendLine("kominka active tris=" + ActiveTris(holder));
+        return holder;
     }
 
     static bool DisableComponent(Component c)
@@ -369,35 +374,6 @@ public static class KH_TerrainPrototypeEditor
         bool alongX = Mathf.Abs(b.x - a.x) > Mathf.Abs(b.y - a.y);
         bc.size = alongX ? new Vector3(len, top - bottom, C.BoundThickness) : new Vector3(C.BoundThickness, top - bottom, len);
         log.AppendLine(name + " ground " + minG.ToString("0.0") + ".." + maxG.ToString("0.0") + " box y " + bottom.ToString("0.0") + ".." + top.ToString("0.0"));
-    }
-
-    static void BuildFence(Terrain terrain, GameObject root, StringBuilder log)
-    {
-        var fence = NewChild(root, "KH_Fence");
-        var wood = ProtoMaterial("Wood", new Color(0.45f, 0.30f, 0.18f));
-        float z = C.BoundSouthZ + 0.15f;
-        var posts = new List<Vector3>();
-        float vpX = C.Flats[C.ViewpointFlat, 0];
-        for (float x = C.BoundWestX; x <= C.BoundEastX + 0.01f; x += C.FencePostSpacing)
-        {
-            var g = GroundXZ(terrain, new Vector2(x, z), C.FencePostHeight * 0.5f);
-            bool gap = Mathf.Abs(x - vpX) < C.FenceGapAtViewpointHalf;
-            if (!gap) Cube(fence, "KH_FencePost", g, new Vector3(0.15f, C.FencePostHeight, 0.15f), wood, false);
-            posts.Add(g);
-        }
-        for (int i = 0; i + 1 < posts.Count; i++)
-        {
-            float mx = (posts[i].x + posts[i + 1].x) * 0.5f;
-            if (Mathf.Abs(mx - vpX) < C.FenceGapAtViewpointHalf + C.FencePostSpacing * 0.5f) continue; // 展望の正面は空ける
-            for (int r = 0; r < 2; r++)
-            {
-                float h = C.FencePostHeight * (r == 0 ? -0.1f : 0.35f);
-                var a = posts[i] + Vector3.up * h; var b = posts[i + 1] + Vector3.up * h;
-                var rail = Cube(fence, "KH_FenceRail", (a + b) * 0.5f, new Vector3(0.06f, 0.08f, Vector3.Distance(a, b)), wood, false);
-                rail.transform.rotation = Quaternion.LookRotation(b - a, Vector3.up);
-            }
-        }
-        log.AppendLine("fence posts=" + posts.Count);
     }
 
     static void BuildDummies(Terrain terrain, GameObject root, StringBuilder log)
@@ -484,6 +460,35 @@ public static class KH_TerrainPrototypeEditor
             }
         }
         log.AppendLine("boardTrees=" + C.BoardTrees.GetLength(0) + " overrides=" + boardOverrides);
+
+        // 低木: 歩ける範囲に seed で散らす (道・平坦部・古民家から離す)
+        var shrubs = NewChild(root, "KH_Shrubs");
+        var srng = new System.Random(C.ShrubSeed);
+        var path = KH_TerrainShape.SamplePath();
+        var komT = root.transform.Find("KH_Places/KH_FarKominka");
+        var komB = komT != null ? ActiveBounds(komT.gameObject) : new Bounds(Vector3.zero, Vector3.zero);
+        int placed = 0, tries = 0;
+        while (placed < C.ShrubCount && tries < 2000)
+        {
+            tries++;
+            float x = Mathf.Lerp(C.WalkX0, C.WalkX1, (float)srng.NextDouble()), z = Mathf.Lerp(C.WalkZ0, C.WalkZ1, (float)srng.NextDouble());
+            float rh; if (KH_TerrainShape.DistanceToPath(path, x, z, out rh) < C.ShrubClearPath) continue;
+            bool nearFlat = false; for (int f = 0; f < C.Flats.GetLength(0); f++) if (Vector2.Distance(new Vector2(x, z), new Vector2(C.Flats[f, 0], C.Flats[f, 1])) < C.Flats[f, 3] + C.ShrubClearFlat) nearFlat = true;
+            if (nearFlat) continue;
+            var kb = komB; kb.Expand(C.ShrubClearKominka * 2f); if (kb.Contains(new Vector3(x, kb.center.y, z))) continue;
+            var sp = AssetDatabase.LoadAssetAtPath<GameObject>(C.ShrubPrefabPaths[placed % C.ShrubPrefabPaths.Length]);
+            if (sp == null) { log.AppendLine("ERROR shrub prefab not found"); break; }
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(sp, root.scene);
+            go.name = "KH_Shrub_" + placed.ToString("00");
+            go.transform.SetParent(shrubs.transform, false);
+            go.transform.position = GroundXZ(terrain, new Vector2(x, z), -0.1f);
+            go.transform.rotation = Quaternion.Euler(0f, (float)(srng.NextDouble() * 360.0), 0f);
+            go.transform.localScale = Vector3.one * Mathf.Lerp(C.ShrubScaleMin, C.ShrubScaleMax, (float)srng.NextDouble());
+            foreach (var r in go.GetComponentsInChildren<Renderer>(true))
+                GameObjectUtility.SetStaticEditorFlags(r.gameObject, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccludeeStatic);
+            placed++;
+        }
+        log.AppendLine("shrubs=" + placed + " (tries " + tries + ")");
     }
 
     static void BuildScenery(GameObject root, Dictionary<string, Material> autumn, StringBuilder log)
