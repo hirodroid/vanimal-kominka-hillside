@@ -54,3 +54,6 @@
 
 # TerrainData remains binary even with Force Text. Preserve its bytes in Git.
 Assets/KominkaHillside/Data/Environment/Autumn/garden_Autumn.asset binary
+
+# Terrain 試作の TerrainData (Build Stage A が生成。GUID 維持)
+Assets/KominkaHillside/Data/Terrain/*.asset binary

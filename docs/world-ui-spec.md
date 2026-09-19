@@ -12,7 +12,7 @@
 | この設定の版・最終更新日 | 0.1 / 2026-09-19 (立ち上げ時の識別情報のみ。UI 制作開始時に埋める) |
 | 共通リファレンスの版・パス | 1.0.0 / `.claude/skills/vrc-udonsharp/reference/ui/00_START_HERE.md` (プロジェクトルート基準) |
 | 対象シーン・Prefab・ゲーム処理 | `Assets/Scenes/VRCDefaultWorldScene.unity` / 移植する犬ギミックの UI (IMP-DOG-001 で棚卸し) |
-| Unity / Worlds SDK / TMP / ClientSim | 2022.3.22f1 / 3.10.4 / 3.0.6 / SDK 同梱 |
+| Unity / Worlds SDK / TMP / ClientSim | 2022.3.22f1 / 3.10.5 / 3.0.6 / SDK 同梱 |
 | ビルドターゲット | Windows 確定。Android / iOS はスマホ対応を目指す (実機で判断。`game-design.md` §1) |
 | 対象機器・入力 | PCVR / Desktop / Android Touch / iOS Touch / その他 |
 | 対応言語 | 日本語 (古民家と同じ。provisional) |

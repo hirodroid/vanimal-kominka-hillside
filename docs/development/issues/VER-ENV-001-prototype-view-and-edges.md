@@ -2,7 +2,7 @@
 id: VER-ENV-001
 type: VER
 system: ENV
-status: todo
+status: wip
 priority: High
 ---
 
@@ -32,9 +32,9 @@ priority: High
 
 | # | 項目 | 方法 | 判定 |
 |---|---|---|---|
-| 1 | 展望場所から古民家の屋根・建物が識別できる | Editor でカメラをレンダリングして画像を残す (OurUsualPark の `OP_ViewShotsEditor` が前例) | 未 |
-| 2 | 一周して Terrain の切断面・空白・空の床が見えない | 端 4 方向のスクリーンショット | 未 |
-| 3 | 犬とボールが背景から浮く (3 m / 10 m / 木陰) | 画像 | 未 |
+| 1 | 展望場所から古民家の屋根・建物が識別できる | Editor でカメラをレンダリングして画像を残す (OurUsualPark の `OP_ViewShotsEditor` が前例) | **Editor OK** (2026-09-19。[計画 §9](../../plans/2026-09-19-terrain-prototype.md)) |
+| 2 | 一周して Terrain の切断面・空白・空の床が見えない | 端 4 方向のスクリーンショット | **Editor 概ね OK** (南東・南西の隅は Play で確認) |
+| 3 | 犬とボールが背景から浮く (3 m / 10 m / 木陰) | 画像 | **Editor OK** (木陰は白のみ確認。濃茶は目立たない) |
 | 4 | 柵・斜面の外へ落ちない | Play で柵に沿って歩く (ユーザー) | 未 |
 | 5 | 犬が斜面・道で破綻なく動く | Play (ユーザー)。**IMP-DOG-001 の後** | 未 |
 | 6 | Android 実機での負荷の目安 | 実機ビルド (ユーザー)。`vrc-performance` の手順で Editor 側の描画コールも取る | 未 |

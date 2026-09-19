@@ -43,7 +43,7 @@ Packages/
 | 項目 | 値 |
 |------|-----|
 | Unity | 2022.3.22f1 LTS |
-| VRChat SDK | Worlds SDK 3.10.4 |
+| VRChat SDK | Worlds SDK 3.10.5 |
 | スクリプティング | UdonSharp (C#) |
 | UI | World Space Canvas + TextMeshPro |
 | カラースペース | Linear |

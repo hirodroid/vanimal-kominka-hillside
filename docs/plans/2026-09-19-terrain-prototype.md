@@ -1,7 +1,7 @@
 # Terrain 試作 (VER-ENV-001) 実装計画
 
 > 対象 Issue: [VER-ENV-001](../development/issues/VER-ENV-001-prototype-view-and-edges.md) / [DES-ENV-001](../development/issues/DES-ENV-001-terrain-vs-blender.md)
-> 状態: **着手可** (2026-09-19。Codex レビュー 3 往復: 高 5 / 中 12 / 低 1 → 高 2 / 中 9 / 低 2 → 高 0 / 中 4 / 低 2。全件反映。§8)。
+> 状態: **Stage A + B 実施済み、Editor 検証 48/48 OK、Play 待ち** (2026-09-19。§9)。計画は Codex レビュー 3 往復 (§8) を経て着手。
 > 方針の正本: `core-concept.md` §3 (仮決め)。この計画は「順序と分担」を持ち、何を確かめるかは Issue が持つ。
 
 ## 0. ゴールと、この一回で決めないこと
@@ -231,3 +231,48 @@ TerrainData の契約 (Codex 指摘):
 | 中: スポーン検査の範囲不足 (OverlapBox は半寸法 / 2 m 離隔 / 道との交差 / 浮き) | 埋没・離隔・交差・接地オフセットを分けて検査 |
 | 低: 保存手順の重複 | 1 本に統合。`.unity` grep と override 永続化は再読込後に判定 |
 | 低: 設定クラスの対象列挙 / 路肩の左右 | §3 に列挙。路肩は左右各 2 m |
+
+## 9. 実施記録 (2026-09-19)
+
+実装: [KH_TerrainPrototypeConfig.cs](../../Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeConfig.cs) (数値の正本) / [KH_TerrainShape.cs](../../Assets/KominkaHillside/Scripts/Editor/KH_TerrainShape.cs) (高さ・道・splat) / [KH_TerrainPrototypeEditor.cs](../../Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeEditor.cs) (Build A / B) / [KH_TerrainPrototypeVerify.cs](../../Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeVerify.cs) / [KH_ViewShotsEditor.cs](../../Assets/KominkaHillside/Scripts/Editor/KH_ViewShotsEditor.cs)。
+1 周の実行は `bash scripts/kh-terrain-loop.sh [B]` (保存 → Build A [→ B] → Verify → View Shots)。
+
+証拠: [evidence/2026-09-19-terrain-prototype/](evidence/2026-09-19-terrain-prototype/) (View Shots 29 枚を 960×540 JPEG に縮小、shots.log、verify.txt、build ログ)。
+
+### 計画からの変更 (作って分かったこと)
+
+| 計画 | 実際 | 理由 |
+|---|---|---|
+| 展望 (95,125)、丘の内側 | **(98,80) 柵際、平坦部 r=3 / 移行帯 6** | 丘の内側では丘の南縁が谷を隠す。柵際でも平坦部が 4 m 以上あると目線 1.6 m の俯角 (約 22°) を足元で切る。小さな平坦部にして解決 (1 回目 4/5 点遮蔽 → 最終 1/5。画像では屋根・建物・塀まで識別可) |
+| 古民家 (60, 35) | **(60, 28)** | 俯角を 18° まで浅くして、平坦部の縁より下に見せる |
+| 道: 入口 → (60,86) → (85,94) → 展望 → 広場 → (30,115) | 入口 → (60,86) → **展望 (98,80)** → (85,125) → 広場 → (30,115) | 展望の移動に合わせて順路を組み直し。実測 **225 m** (勾配 ≤ 9.9°、横傾斜 ≤ 0.9°) |
+| ViewSet01 を北と南に 2 個 | **Terrain 中心に 1 個** | ViewSet01 は直径 561 m の「取り囲むリング」(丘・森・山・板の木) で、中心に置く設計だった |
+| 木 12 本 | **実物 5 本 + 板の木 (Board_Tree 十字 2 枚) 12 本** | BroadleafTreeB01 は 1 本 約 2.4 万三角形・LOD 無し。12 本で 29 万 (公式目安 25 万超)。5 本 + 板で **13.8 万** (予算 20 万内) |
+| 土手 +5 m | **+10 m** (Terrain 高さレンジ 40 → 50) | +5 では北の縁の先に遠景の床が見えた。尾根として空を切らせる |
+| 岩 Layer の閾値 25° | **30°** | 谷側の斜面 (22°) と南の尾根が「暗い壁」に見えた |
+| 南の尾根 z 0〜20、10 m | z 0〜15、8 m | 古民家を z=28 に下げた分、尾根を詰めた |
+| 柵は連続 | **展望の正面 ±3 m は見た目を空ける** (透明壁は連続) | 横木 (0.5 / 1.0 m) が目線 1.6 m の古民家を横切る |
+| 道と柵の離隔 ≥ 2 m | **≥ 0.5 m** | 展望は意図して柵際 |
+| 遠景の古民家: 室内の子を非アクティブ | + **UdonBehaviour ×17 / Animator / Collider を削除** (removed-component override) | 障子・引き戸に `GlobalSyncedAnimationBool` が付いていて、ネットワークに露出する (Audit Net Events で high 27 件の元) |
+| 草の密度「薄く」 | CoverageMode の被覆率 90 / 90 / 40 / 30 / 40 (庭は平均 120〜150) | 密度 3 では 1% で草が見えなかった |
+
+### Verify (再読込後) と診断
+
+- Verify: **48/48 OK** (道の勾配 9.9° / 横傾斜 0.9° / 境界 4 辺の露出・底・重なり / スポーン接地・埋没・門柱離隔 / 古民家 6,891 tris・室内 0・Udon 0 / Stage B 木 5・板 12・遠景 1・秋材質 100% / Detail 道 0・広場 0 / NetworkIDs 残骸 0)。展望→古民家の Terrain 遮蔽は 5 点中 1 点 (壁の下隅) で、合否は画像
+- コンソールエラー 0。`Tools/VRC World Tools/`: Platform Audit **triangles 137,506** (予算 200,000 内)、Animator 0、Realtime light 1 (テンプレートの Directional)。warning: 2048 テクスチャの Android override 無し 8 件 (モサンゴ屋 / LMArt。Android 計測の回で扱う)。Audit Net Events の high 27 件は `Assets/モサンゴ屋/.../SimpleSwitchPrefab` のスクリプト定義 (シーンには置いていない。遠景の古民家からは削除済み)
+- 設定の正本 `config/platform-support.json` を作成 (PC 確定 / Android は目指す段階 / SDK 3.10.5)
+
+### Editor での一次判定 (VER-ENV-001 の項目)
+
+| 項目 | 判定 | 証拠 |
+|---|---|---|
+| 1 古民家が識別できる | **OK** (屋根の形・縁側・塀。遠景の秋の森と山の手前) | 01-viewpoint-to-kominka.jpg / 01b (FOV 40) |
+| 2 端が見えない | **概ね OK** (北・西・東は土手の尾根が空を切る。南は谷 + 尾根 + 遠景)。**要 Play**: 南東・南西の隅で Terrain の縁と遠景の床の継ぎ目が見える角度がある (30 / 31) | 30〜34-edge-*.jpg |
+| 3 ダミー・ボールの発見性 | **OK** 3 m / 10 m で 6 色とも識別。木陰: サモエド (白) は識別可。ダックス (濃茶) は木陰で目立たない | 20 / 21 / 22 |
+| 7 UI 可読性 | 未 (メニュー未配置) | — |
+
+### 次
+
+1. **ユーザー Play** (§6 のチェックリスト)。特に: 一周の歩行時間 / 柵の両端 / 谷底に落ちないか / 南東・南西の隅の継ぎ目
+2. Play の結果を VER-ENV-001 と `core-concept.md` §3 に記録 → DES-ENV-001 確定
+3. 犬なしの Android 計測 (犬移植前の参考値)

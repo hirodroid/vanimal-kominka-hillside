@@ -69,12 +69,12 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 
 <!-- 現在地と着手順をここに書く。セッションのたびに更新する。 -->
 
-**現在地 (2026-09-19)**: 立ち上げ完了。Unity 2022.3.22f1 / SDK 3.10.4 / Synaptic AI Pro 導入済み / LMArt BroadleafTreeField 導入済み。企画・仕様・不変条件を記入。シーンは VCC テンプレートのまま (`Assets/Scenes/VRCDefaultWorldScene.unity`)。
+**現在地 (2026-09-19 夜)**: Terrain 試作 (VER-ENV-001) の Stage A + B を生成し、Editor 検証 48/48・View Shots で一次判定済み。**次はユーザーの Play** ([計画 §6](plans/2026-09-19-terrain-prototype.md))。舞台は `Assets/Scenes/VRCDefaultWorldScene.unity` の `KH_World` 配下 (Build で作り直す。手で置くものはその外)。数値の正本は `Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeConfig.cs`。Unity 2022.3.22f1 / SDK 3.10.5 / Synaptic AI Pro / LMArt / モサンゴ屋 導入済み。
 
 着手順 (Issue は `development/issues/issue_summary.md`):
 
 1. **DES-ENV-001 (着手済み)** まず Terrain。切り替え基準は Issue に記録済み (2026-09-19)
-2. **VER-ENV-001** 試作: 簡単な Terrain + 秋の広葉樹 + 軽量化した古民家の外観 (仮) + **犬サイズのダミー** (犬の実装は持ち込まない) で、眺め・歩行・端の見え方・実機負荷を確認する。`core-concept.md` §3 の代表シーン検証を兼ねる
+2. **VER-ENV-001** 試作 (**生成済み。Play 待ち**): Terrain + 秋の広葉樹 + 古民家の外観 + 犬サイズのダミーで、眺め・歩行・端の見え方・実機負荷を確認する。`core-concept.md` §3 の代表シーン検証を兼ねる。作り直しは `bash scripts/kh-terrain-loop.sh B`
 3. **DES-ENV-001 (確定)** 試作の実測で方式を決め、`game-design.md` §4 を更新する
 4. **IMP-DOG-001** 地形方式が決まってから、古民家側にタグ `export/kominka-hillside-v1` を打ち、6 匹 + 撫で・ボール・添い寝を移植する (移植記録を作成)。**タグはこの時点で打つ** (試作用の先行コピーはしない: 2026-09-19 ユーザー決定)
 5. **VER-ENV-001 の犬項目** (遊び・追従・行動範囲) を移植後に確認する

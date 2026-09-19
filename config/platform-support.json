@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "project": "KominkaHillside",
+  "notes": [
+    "サポート境界の正本。人向けの説明は docs/game-design.md §1 (対応環境) と §6 完成条件 6。",
+    "status: candidate=未検証 / verified=必須検証完了 / stale=SDK・Unity 更新後で再検証待ち / unsupported=保証しない",
+    "2026-09-19: PC は確定。Android (スマホ / Quest) は『目指す』段階で確約ではない (企画原本 §6)。実機で成立性を判断し、公開対象を決める。iOS は未決定。",
+    "mobilePolicy は provisional=true の間は判断材料の測定にだけ使う (Release Audit の合否にしない)。値は古民家ドッグランと同じ。"
+  ],
+  "supportBoundary": {
+    "unityVersion": "2022.3.22f1",
+    "worldsSdkVersion": "3.10.5",
+    "verifiedAt": "2026-09-19",
+    "status": "candidate"
+  },
+  "requiredBuildTargets": ["Windows", "Android"],
+  "requiredRuntimeProfiles": ["PCVR", "Desktop", "AndroidTouch"],
+  "mobilePolicy": {
+    "provisional": true,
+    "androidBundleHardLimitMb": 100,
+    "androidBundleProjectBudgetMb": 90,
+    "officialTriangleRecommendation": 250000,
+    "projectTriangleBudget": 200000,
+    "defaultTextureMaxSize": 1024,
+    "requireMobileOverrideWhenSourceExceeds": 1024,
+    "postProcessingAllowed": false,
+    "realtimeLightBudget": 0,
+    "renderTextureRecommendedMaxSize": 1024,
+    "unknownCustomShaderPolicy": "warn",
+    "transparentMaterialPolicy": "warn"
+  },
+  "requiredInputActions": [],
+  "exceptions": []
+}
