@@ -1,0 +1,135 @@
+# Unity + VRChat (VCC / UdonSharp) 用 .gitignore
+#
+# 出典: https://github.com/github/gitignore/blob/main/Unity.gitignore に
+# VRChat / VCC 固有と運用上の除外を足したもの。
+#
+# **購入アセットは末尾の枠へ追記する。** 導入したその日に足すこと
+# (後からだと履歴に入ってしまい、消すのが面倒になる)。
+
+.utmp/
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+*.log
+
+# Blender の *.blend1 はバージョン管理に入れない
+*.blend1
+*.blend1.meta
+
+# サイズが大きく、機微な情報を含みうるもの
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# JetBrains Rider
+/[Aa]ssets/Plugins/Editor/JetBrains*
+*.DotSettings.user
+
+# Visual Studio
+.vs/
+ExportedObj/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# クラッシュレポート
+sysinfo.txt
+mono_crash.*
+
+# ビルド成果物
+*.apk
+*.aab
+*.unitypackage
+*.unitypackage.meta
+*.app
+
+# テスト実行時の自動生成シーン
+InitTestScene*.unity*
+/[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# ============================================
+# VRChat / VCC / UdonSharp
+# ============================================
+
+# コンパイルで再生成されるもの
+/[Aa]ssets/SerializedUdonPrograms/
+/[Aa]ssets/SerializedUdonPrograms.meta
+/[Aa]ssets/UdonSharp/
+/[Aa]ssets/UdonSharp.meta
+
+# Packages/ 配下は VPM / VCC が復元する。
+# 追跡するのは manifest 類だけ (manifest.json / vpm-manifest.json / packages-lock.json)
+/Packages/*/
+
+# 自動生成
+/[Aa]ssets/XR/
+/[Aa]ssets/XR.meta
+
+# SDK がインポートするもの
+/[Aa]ssets/VRCSDK/
+/[Aa]ssets/VRChat Examples/
+/[Aa]ssets/Udon/
+/[Aa]ssets/UdonSharpEditor/
+
+# Pipeline Manager のバックアップ
+/[Aa]ssets/PipelineManager*.asset
+/[Aa]ssets/PipelineManager*.asset.meta
+
+# ClientSim のローカル保存
+/ClientSimStorage/
+
+# TMP Essential Resources (メニュー実行時に自動インポートされる)
+/[Aa]ssets/TextMesh Pro/
+/[Aa]ssets/TextMesh Pro.meta
+
+# ============================================
+# AI 開発環境 (vrc-world-agent)
+# ============================================
+
+# 共有 Skills (原本リポジトリへのジャンクション)
+.claude/skills/vrc-*/
+.agents/skills/vrc-*/
+
+# 個人ごとの権限設定 (共有しない)
+/.claude/settings.local.json
+
+# 診断ツールのレポート出力 / setup が残す manifest のバックアップ
+/Logs
+/Packages/manifest.json.bak
+
+# 監査・調査セッションの生成物 (残すなら この行を消す)
+/docs/_sessions
+
+# ============================================
+# 購入 / サードパーティアセット (コミットしない)
+# **導入したらここへ 2 行ずつ追記する** (ディレクトリと .meta の両方)
+#   /[Aa]ssets/<アセット名>/
+#   /[Aa]ssets/<アセット名>.meta
+# ============================================
+/[Aa]ssets/Synaptic AI Pro/
+/[Aa]ssets/Synaptic AI Pro.meta
+
+# ============================================
+# 再生成できる自作アセット (任意)
+# フォントアトラスのように「メニュー 1 発で作り直せるが容量が大きい」ものは
+# 除外してよい。ただし **GUID が変わると参照が切れる**ものは、
+# 再生成後に再リンクが要る点を、この場所へ理由つきで書き残すこと
+# ============================================

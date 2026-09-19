@@ -1,0 +1,53 @@
+# Unity プロジェクト用 .gitattributes
+#
+# 目的は 2 つ:
+#   1. シーン / プレハブ / アセットを **テキストとして扱わせる** (diff と grep が効く)
+#   2. 改行コードを固定して、環境差で全行が差分になるのを防ぐ
+
+# 既定はテキストとして自動判定し、チェックアウト時は環境の改行へ
+* text=auto
+
+# --- Unity のシリアライズ資産 (Force Text 前提) -------------------------------
+# **merge=unityyamlmerge を使うには UnityYAMLMerge の設定が別途要る**。
+# 設定していない場合でも、テキスト扱いにしておくだけで grep 検証はできる
+# (claude-skills/vrc-scene-edit-safety の「保存後にファイルを grep で再確認」)。
+*.unity     text eol=lf merge=unityyamlmerge
+*.prefab    text eol=lf merge=unityyamlmerge
+*.asset     text eol=lf merge=unityyamlmerge
+*.mat       text eol=lf merge=unityyamlmerge
+*.anim      text eol=lf merge=unityyamlmerge
+*.controller text eol=lf merge=unityyamlmerge
+*.overrideController text eol=lf merge=unityyamlmerge
+*.physicMaterial text eol=lf merge=unityyamlmerge
+*.physicsMaterial2D text eol=lf merge=unityyamlmerge
+*.meta      text eol=lf
+*.asmdef    text eol=lf
+*.asmref    text eol=lf
+
+# --- ソースとドキュメント -----------------------------------------------------
+*.cs        text diff=csharp
+*.md        text
+*.json      text
+*.js        text eol=lf
+*.sh        text eol=lf
+*.ps1       text eol=crlf
+
+# --- バイナリ (diff させない) -------------------------------------------------
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.psd       binary
+*.tga       binary
+*.exr       binary
+*.hdr       binary
+*.fbx       binary
+*.blend     binary
+*.obj       binary
+*.wav       binary
+*.mp3       binary
+*.ogg       binary
+*.ttf       binary
+*.otf       binary
+*.dll       binary
+*.unitypackage binary
