@@ -128,6 +128,12 @@ InitTestScene*.unity*
 /[Aa]ssets/Synaptic AI Pro.meta
 /[Aa]ssets/LMArt-StylizedEnvironmentKit/
 /[Aa]ssets/LMArt-StylizedEnvironmentKit.meta
+# モサンゴ屋「庭付き古民家」(古民家ドッグランと同じ。遠景の古民家外観 + 庭 Terrain の Layer / 草の元)
+/[Aa]ssets/モサンゴ屋/
+/[Aa]ssets/モサンゴ屋.meta
+# 上のインポート時に Unity が旧形式 Terrain を自動変換して生成する (Standard Assets の地面テクスチャもここ)
+/[Aa]ssets/_TerrainAutoUpgrade/
+/[Aa]ssets/_TerrainAutoUpgrade.meta
 
 # ============================================
 # 再生成できる自作アセット (任意)

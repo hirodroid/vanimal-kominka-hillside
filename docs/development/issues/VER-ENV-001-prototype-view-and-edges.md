@@ -20,10 +20,10 @@ priority: High
 
 | 要素 | 内容 |
 |---|---|
-| 地形 | Terrain (DES-ENV-001 の 1 手目)。入口 → 散歩道 → 展望 → 広場 → 入口 の短い周回路。歩ける範囲の外に景観用の余白 |
+| 地形 | Terrain (DES-ENV-001 の 1 手目)。入口 → 散歩道 → 展望 → 広場 → 入口 の短い周回路。歩ける範囲の外に景観用の余白。**Layer と草は古民家の庭と同じものを使う** (世界観を合わせる。2026-09-19 ユーザー決定): Layer は モサンゴ屋同梱の Standard Assets 地面テクスチャ (`_TerrainAutoUpgrade/TerrainAssets/SurfaceTextures/` の GrassRocky / Cliff / MudRocky / Sand / GrassHill)、草は古民家側 Git 管理の秋色 4 枚 (`Assets/KominkaDogRun/Textures/Environment/Autumn/`) と `garden_Autumn.asset` の Healthy/Dry Color を `.meta` ごとコピー。モバイルは Layer 4 枚以下に絞る |
 | 木 | LMArt `BroadleafTreeB01` を数本。秋色は古民家の `Assets/KominkaDogRun/{Materials,Textures}/Environment/Autumn/` を `.meta` ごとコピーして流用 (GUID 維持) |
 | 遠景 | LMArt `ViewSet01` (秋色) を試す。展望から見て邪魔なら外す |
-| 古民家 (仮) | 遠景に置ける軽い外観。モサンゴ屋の建物から外観だけ取るか、屋根の形が分かる仮ボックスでも可。「あの場所だ」と分かる形が目的 |
+| 古民家 (仮) | **モサンゴ屋「庭付き古民家」をこのプロジェクトへインポート** (ユーザー。古民家と同じ版。`.gitignore` 追記済み) し、建物の外観 (屋根・壁・縁側) だけを残して室内・家具・ギミックを無効化した軽量版を遠景に置く。「あの場所だ」と分かる形が目的。近づけない距離に置くので LOD / 三角形数は試作で測る |
 | 犬 | **この段階では持ち込まない** (2026-09-19 ユーザー決定: タグ付けと移植は地形方式が決まってから IMP-DOG-001 で)。犬のサイズ感・発見性の確認には犬サイズのダミー (カプセル等、犬の毛色に近い色) を置く。ボールも同様にダミー可 |
 | 小物 | ボール 1 個 / 既存メニュー 1 枚 (UI 可読性の確認用) |
 | 端 | 谷側に柵 (Collider 付き)、山側に土手・岩 |
