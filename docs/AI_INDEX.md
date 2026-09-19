@@ -44,6 +44,7 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 | `development/design/design_index.md` | 詳細設計の入口 |
 | `development/issues/issue_summary.md` | 課題の入口 (状態ごとに 4 分割) |
 | `development/git-workflow.md` | Git 運用ルール |
+| `development/imports/kominka-autumn-assets.md` | 古民家ドッグランからの秋色資産 (草・葉・遠景の材質と TerrainData) の移植記録。Layer の使い分けもここ |
 | `development/imports/kominka-dog-system.md` | 古民家ドッグランからの犬ギミック移植記録 (移植時に作成。書式は古民家側 `C:/work/unity/vcc/KominkaDogRun/docs/development/dog-system-porting.md`) |
 | `reference/world/*.png` | 空間構成のイメージ図 (雰囲気の参考。地形図・確定レイアウトではない。犬の頭数・犬種の根拠にもしない) |
 | `plans/` | 実装計画書・実機チェックリスト |

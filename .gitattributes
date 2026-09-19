@@ -51,3 +51,6 @@
 *.otf       binary
 *.dll       binary
 *.unitypackage binary
+
+# TerrainData remains binary even with Force Text. Preserve its bytes in Git.
+Assets/KominkaHillside/Data/Environment/Autumn/garden_Autumn.asset binary
