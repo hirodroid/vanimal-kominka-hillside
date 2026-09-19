@@ -73,10 +73,10 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 着手順 (Issue は `development/issues/issue_summary.md`):
 
 1. **DES-ENV-001 (着手)** 地形の方式 (Terrain / Blender) の比較条件と「Blender へ切り替える基準」を決める。決定はまだしない
-2. **IMP-DOG-001 の手順 1〜3 (先行)** 古民家側にタグ `export/kominka-hillside-v1` を打ち、移植範囲と Git 外依存を棚卸しする。試作用の犬 1 匹はこの記録範囲から持ち込む
-3. **VER-ENV-001** 試作: 簡単な Terrain + 秋の広葉樹 + 軽量化した古民家の外観 (仮) + 犬 1 匹 + ボールで、眺め・歩行・遊び・端の見え方・実機負荷を確認する。`core-concept.md` §3 の代表シーン検証を兼ねる
-4. **DES-ENV-001 (確定)** 試作の実測で方式を決め、`game-design.md` §4 を更新する
-5. **IMP-DOG-001 (本移植)** 6 匹 + 撫で・ボール・添い寝を移植し、移植記録を完成させる
+2. **VER-ENV-001** 試作: 簡単な Terrain + 秋の広葉樹 + 軽量化した古民家の外観 (仮) + **犬サイズのダミー** (犬の実装は持ち込まない) で、眺め・歩行・端の見え方・実機負荷を確認する。`core-concept.md` §3 の代表シーン検証を兼ねる
+3. **DES-ENV-001 (確定)** 試作の実測で方式を決め、`game-design.md` §4 を更新する
+4. **IMP-DOG-001** 地形方式が決まってから、古民家側にタグ `export/kominka-hillside-v1` を打ち、6 匹 + 撫で・ボール・添い寝を移植する (移植記録を作成)。**タグはこの時点で打つ** (試作用の先行コピーはしない: 2026-09-19 ユーザー決定)
+5. **VER-ENV-001 の犬項目** (遊び・追従・行動範囲) を移植後に確認する
 6. 試作結果を踏まえて `game-design.md` §4 の未決定事項 (広さ・配置・行動範囲・性能目標) を埋める
 
 作業前の確認: `bash scripts/unity-api.sh health` が通り、eval の `Application.dataPath` がこのプロジェクトを指すこと (`vrc-synaptic-unity`)。
