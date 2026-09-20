@@ -22,7 +22,7 @@ namespace KominkaHillside.Editor
     public static class KH_HandMenuEditor
     {
         const string WorldScene = "Assets/Scenes/VRCDefaultWorldScene.unity";
-        const string FontPath = "Assets/KominkaHillside/Font/KD_NotoSerif SDF.asset";
+        public const string FontPath = "Assets/KominkaHillside/Font/KD_NotoSerif SDF.asset";
         const string RoundPath = "Assets/KominkaHillside/Textures/UI/KD_UiRound.png";
         const string RuntimeSource = "Assets/KominkaHillside/Scripts/KH_HandMenu.cs";
         const string MarkerMaterialPath = "Assets/KominkaHillside/Data/Walking/KH_GatherMarker.mat";
@@ -56,6 +56,7 @@ namespace KominkaHillside.Editor
             sb.Append(Title).Append(WordClose).Append(WordLauncher).Append(WordLeft).Append(WordRight).Append(WordOff).Append(WordPlaza).Append(WordGate)
               .Append(WordGather).Append(WordEnd).Append(WordBuy).Append(WordRecall).Append(WordBallSuffix).Append(WordOpener).Append(WordBall).Append(WordDisc).Append(WordToySuffix);
             foreach (string s in Tabs) sb.Append(s); foreach (string s in DogNames) sb.Append(s); foreach (string s in Formations) sb.Append(s);
+            sb.Append(KH_FrisbeePrototypeEditor.AimHint); // world-space hint on the disc's aim marker uses the same static font
             for (char c = ' '; c <= '~'; c++) sb.Append(c);
             return sb.ToString();
         }

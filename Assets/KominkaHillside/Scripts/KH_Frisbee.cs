@@ -52,6 +52,18 @@ namespace KominkaHillside
         public Material discMaterial, discHeldMaterial;
         public LineRenderer aimLine;
         public Transform aimMarker;
+        [Header("Play area feedback (Codex U/V/P review 2026-09-21; values are provisional until Play)")]
+        [Tooltip("Preview materials: inside the play area / landing outside it (grey)")]
+        public Material aimMaterial, aimOutsideMaterial;
+        public Renderer aimMarkerRenderer;
+        [Tooltip("Child of the marker shown only when the landing point is outside (a shape, not just a colour)")]
+        public GameObject aimMarkerCross;
+        [Tooltip("Ring on the ground around the play area, shown to the holder only")]
+        public LineRenderer areaRing;
+        public int areaRingPoints = 64;
+        public float areaRingLift = 0.03f;
+        [Tooltip("Short hint near the marker while holding outside the play area or aiming out of it")]
+        public Transform aimHint; // the hint text object (TextMeshPro itself is not exposed to Udon; text is set by Build)
         public int aimPoints = 40;
         public float aimStep = 0.08f;
         [Header("Desktop throw (aimLaunch off)")]
@@ -75,6 +87,8 @@ namespace KominkaHillside
 
         // Flight (meaningful on the Owner while _flying; other clients only see the synced transform).
         private float _aimPower = 0.5f;
+        private bool _aimOutside;      // last preview ended outside the play area (material state)
+        private bool _ringBuilt;
         private float _lookAxis;
         private bool _heldLocal;
         private bool _flying;
@@ -255,6 +269,47 @@ namespace KominkaHillside
         }
 
         // Preview for the holder only (local). Same _PositionAt as the flight, stopped at the first obstacle.
+        // The play area is the catcher's (the dog's flat); no catcher or radius 0 = no area feedback at all.
+        bool HasArea() { return catcher != null && catcher.playAreaRadius > 0f; }
+        bool InArea(Vector3 p)
+        {
+            if (!HasArea()) return true;
+            Vector3 d = p - catcher.playAreaCenter; d.y = 0f;
+            return d.magnitude <= catcher.playAreaRadius;
+        }
+
+        // Ring = the range the dog may run in (same circle the catcher checks; no margin, so the ring never
+        // promises more than the dog does). Built once per pickup from ground hits, shown to the holder only.
+        void BuildRing()
+        {
+            if (areaRing == null || !HasArea()) return;
+            int n = areaRingPoints < 8 ? 8 : areaRingPoints;
+            areaRing.positionCount = n; areaRing.loop = true;
+            RaycastHit hit;
+            for (int i = 0; i < n; i++)
+            {
+                float a = i * Mathf.PI * 2f / n;
+                Vector3 p = catcher.playAreaCenter + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * catcher.playAreaRadius;
+                float y = catcher.playAreaCenter.y;
+                if (Physics.Raycast(p + Vector3.up * 3f, Vector3.down, out hit, 8f, catcher.groundLayerMask, QueryTriggerInteraction.Ignore)) y = hit.point.y;
+                areaRing.SetPosition(i, new Vector3(p.x, y + areaRingLift, p.z));
+            }
+            _ringBuilt = true;
+        }
+
+        void SetAimOutside(bool outside)
+        {
+            if (outside == _aimOutside) return;
+            _aimOutside = outside;
+            Material m = outside && aimOutsideMaterial != null ? aimOutsideMaterial : aimMaterial;
+            if (m != null)
+            {
+                if (aimLine != null) aimLine.sharedMaterial = m;
+                if (aimMarkerRenderer != null) aimMarkerRenderer.sharedMaterial = m;
+            }
+            if (aimMarkerCross != null) aimMarkerCross.SetActive(outside);
+        }
+
         void UpdateAim()
         {
             bool show = aimLaunch && _pickup != null && _pickup.IsHeld && Networking.IsOwner(gameObject) && aimLine != null;
@@ -262,7 +317,14 @@ namespace KominkaHillside
             {
                 if (aimLine != null && aimLine.enabled) aimLine.enabled = false;
                 if (aimMarker != null && aimMarker.gameObject.activeSelf) aimMarker.gameObject.SetActive(false);
+                if (areaRing != null && areaRing.enabled) { areaRing.enabled = false; _ringBuilt = false; }
+                if (aimHint != null && aimHint.gameObject.activeSelf) aimHint.gameObject.SetActive(false);
                 return;
+            }
+            if (areaRing != null && HasArea())
+            {
+                if (!_ringBuilt) BuildRing();
+                if (!areaRing.enabled) areaRing.enabled = true;
             }
             UpdateAimPower();
             Vector3 p0 = transform.position;
@@ -285,6 +347,23 @@ namespace KominkaHillside
                 if (!aimMarker.gameObject.activeSelf) aimMarker.gameObject.SetActive(true);
                 aimMarker.position = end + Vector3.up * 0.02f;
                 aimMarker.rotation = Quaternion.identity;
+            }
+            // Outside: the path is still drawn to where the disc really lands (never cut short), but grey with a
+            // cross on the marker, and a one-line hint says why the dog will not come.
+            bool outside = HasArea() && (!InArea(end) || !InArea(p0));
+            SetAimOutside(outside);
+            if (aimHint != null)
+            {
+                if (aimHint.gameObject.activeSelf != outside) aimHint.gameObject.SetActive(outside);
+                if (outside)
+                {
+                    VRCPlayerApi lp = Networking.LocalPlayer;
+                    Vector3 headPos = Utilities.IsValid(lp) ? lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position : p0 + Vector3.up;
+                    Vector3 at = end + Vector3.up * 0.5f;
+                    aimHint.position = at;
+                    Vector3 face = at - headPos; face.y = 0f;
+                    if (face.sqrMagnitude > 1e-4f) aimHint.rotation = Quaternion.LookRotation(face.normalized, Vector3.up);
+                }
             }
         }
 

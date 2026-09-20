@@ -21,6 +21,8 @@ namespace KominkaHillside.Editor
     public static class KH_FrisbeePrototypeEditor
     {
         public const string ScenePath = "Assets/Scenes/KH_FrisbeePrototype.unity";
+        // Shown near the aim marker when the holder stands or aims outside the dog's flat (font glyphs via Menu/2).
+        public const string AimHint = "広場の中で遊ぼう";
         const string Data = "Assets/KominkaHillside/Data/Frisbee";
         static readonly string[] Programs = { "KH_Frisbee", "KH_FrisbeeCatch", "KH_FrisbeeLauncher" };
         const int DogLayer = 14, PickupLayer = 13;
@@ -200,6 +202,32 @@ namespace KominkaHillside.Editor
             var mc = marker.GetComponent<Collider>(); if (mc != null) UnityEngine.Object.DestroyImmediate(mc);
             marker.transform.localScale = new Vector3(.34f, .004f, .34f); marker.GetComponent<Renderer>().sharedMaterial = aimMat; marker.SetActive(false);
             disc.aimLine = line; disc.aimMarker = marker.transform; disc.aimLaunch = true; disc.aimSpeed = 7.5f; disc.aimSpeedMin = 4f; disc.aimSpeedMax = 11f;
+            // Play-area feedback (Codex U/V/P 2026-09-21): grey preview + cross when landing outside, a faint ring
+            // of the area while held, a one-line hint. Colours / width / alpha are provisional until Play.
+            disc.aimMaterial = aimMat; disc.aimOutsideMaterial = Mat("KH_FrisbeeAimOut", new Color(.45f, .45f, .45f)); disc.aimMarkerRenderer = marker.GetComponent<Renderer>();
+            var cross = Obj("Cross", marker.transform); cross.transform.localPosition = Vector3.zero; cross.transform.localScale = Vector3.one;
+            foreach (var arm in new[] { "A", "B" })
+            {
+                var bar = Prim(arm, PrimitiveType.Cube, cross.transform);
+                var bc = bar.GetComponent<Collider>(); if (bc != null) UnityEngine.Object.DestroyImmediate(bc);
+                // Marker is a 0.34 x 0.004 x 0.34 cylinder; arms are expressed in its local (scaled) space.
+                bar.transform.localPosition = new Vector3(0f, 1.5f, 0f); bar.transform.localScale = new Vector3(.8f, 1f, .07f);
+                bar.transform.localRotation = Quaternion.Euler(0f, arm == "A" ? 45f : -45f, 0f);
+                bar.GetComponent<Renderer>().sharedMaterial = disc.aimOutsideMaterial;
+            }
+            cross.SetActive(false); disc.aimMarkerCross = cross;
+            var ringGo = Obj("AreaRing", aimRoot.transform);
+            var ring = ringGo.GetComponent<LineRenderer>(); if (ring == null) ring = ringGo.AddComponent<LineRenderer>();
+            string ringPath = Data + "/KH_FrisbeeArea.mat"; var ringMat = AssetDatabase.LoadAssetAtPath<Material>(ringPath);
+            if (ringMat == null) { ringMat = new Material(Shader.Find("Legacy Shaders/Transparent/Diffuse")); ringMat.color = new Color(1f, .95f, .85f, .3f); AssetDatabase.CreateAsset(ringMat, ringPath); }
+            ring.sharedMaterial = ringMat; ring.useWorldSpace = true; ring.loop = true; ring.startWidth = .03f; ring.endWidth = .03f; ring.positionCount = 0; ring.enabled = false;
+            ring.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; ring.receiveShadows = false;
+            disc.areaRing = ring; disc.areaRingLift = .03f;
+            var hintGo = Obj("Hint", aimRoot.transform);
+            var hint = hintGo.GetComponent<TMPro.TextMeshPro>(); if (hint == null) hint = hintGo.AddComponent<TMPro.TextMeshPro>();
+            hint.font = AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>(KH_HandMenuEditor.FontPath); hint.fontSize = 3f; hint.alignment = TMPro.TextAlignmentOptions.Center; hint.color = Color.white;
+            hint.enableWordWrapping = false; hint.text = AimHint; hint.rectTransform.sizeDelta = new Vector2(4f, 1f); hintGo.SetActive(false);
+            disc.aimHint = hintGo.transform;
             // Held look: the holder sees the disc at 25% so the preview line is not hidden behind it.
             string heldPath = Data + "/" + materialName + "Held.mat"; var held = AssetDatabase.LoadAssetAtPath<Material>(heldPath);
             if (held == null) { held = new Material(Shader.Find("Legacy Shaders/Transparent/Diffuse")); held.color = new Color(color.r, color.g, color.b, .25f); AssetDatabase.CreateAsset(held, heldPath); }
@@ -221,6 +249,7 @@ namespace KominkaHillside.Editor
             catcher.clipCrouchDuration = facts.crouch; catcher.clipRiseDuration = facts.rise; catcher.clipRecoverDuration = facts.recover;
             catcher.groundLayerMask = (1 << 0) | (1 << 11);
             catcher.takeoffSpeed = 2.5f; catcher.chaseRunSpeed = 4.5f; catcher.standoffDistance = 8f; // code-owned, same rule as the flight model
+            catcher.playAreaMargin = 0f; // the ring the holder sees is exactly the acceptance circle (Codex P)
             // Inspector tuning survives a rebuild, except the one value the clip dictates: the smallest rise
             // must keep clip playback at or below 1.8x (review D2), so an older scene value is raised here.
             float riseFloor = 0.5f * disc.gravity * Mathf.Pow(facts.rise / 1.8f, 2f);
