@@ -65,8 +65,11 @@ priority: High    # High / Medium / Low
 | [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) | High | 古民家と同構成のメニュー、接続補助、自分の接続犬への目的地選択、集合 | todo |
 | [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビーなど挙動の違うおもちゃを設計する | todo |
 | [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 裏山専用ライブと古民家の有料ライブ購入者の利用を設計する | todo |
+| [IMP-DOG-004](review/IMP-DOG-004-leash-models-release.md) | High | 首輪・リードをBlenderで本制作、Unity保存・Editor検査済み。実機の操作・適合・対象端末確認待ち | review |
 
 着手順: BUG-DOG-001→IMP-DOG-003→DES-UI-001→DES-DOG-002。同期・端末・境界確認は並行継続。DES-LIV-001は権利と依存の調査を並行し、基本体験後に制作する。DES-WLD-001の往復導線は継続、IMP-ENV-001の景観増量は後回し。具体的な目的と設計提案は [開発全体像](../overview.md) §3。
+
+最新の制作指示ではIMP-DOG-004のBlender本制作とおもちゃ提案を優先して着手。上記の機能改善順は残し、モデルの仕上げと区別する。
 
 2026-09-20追加相談でIMP-DOG-003を目的地と通過点による自由な散歩へ具体化。目的地指定に必要なDES-DOG-001/ DES-UI-001の契約は散歩試作に先行させ、メニュー全体の完成を前提にしない。仕様整理のみで実装の状態は変更しない。
 

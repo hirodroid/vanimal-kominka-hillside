@@ -30,12 +30,18 @@ if [ -z "$endpoint" ]; then
 fi
 payload="${2:-}"
 
+# Health is public; check connectivity even before credentials are configured.
+if [ "$endpoint" = "health" ] && [ -z "$payload" ]; then
+  curl -s -m 30 "$BASE/health"
+  exit $?
+fi
+
 token="${SYNAPTIC_BLENDER_TOKEN:-}"
 if [ -z "$token" ] && [ -f "$TOKEN_FILE" ]; then
   token="$(head -n 1 "$TOKEN_FILE" | tr -d '\r\n')"
 fi
 if [ -z "$token" ]; then
-  echo "blender-api.sh: token not found" >&2
+  echo "blender-api.sh: token unavailable (missing or unreadable)" >&2
   echo "  Blender の Preferences > Add-ons > Synaptic AI > HTTP Server にある HTTP API Token を" >&2
   echo "  $TOKEN_FILE に 1 行で保存するか、環境変数 SYNAPTIC_BLENDER_TOKEN に入れてください" >&2
   exit 3

@@ -1,0 +1,10 @@
+Unfiltered Unity console analysis
+{
+  "totalLogs": 49,
+  "uniqueMessages": 49,
+  "errors": 0,
+  "warnings": 36,
+  "messages": 13
+}
+Warnings: purchased house sliding-door/shoji prefab Udon setup (36). Not claimed resolved by this model change.
+Editor.log recent compilation: no error CS.

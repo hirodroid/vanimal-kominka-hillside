@@ -1,0 +1,57 @@
+PASS six dogs
+PASS Corgi neck root attachment
+PASS Corgi Blender collar
+PASS Corgi twelve rope bones
+PASS Corgi rope weights
+PASS Corgi every rope bone has vertices
+PASS Corgi rope backing references
+PASS Corgi mesh backing reference
+PASS Corgi separate readiness indicator
+PASS Corgi physical contact preserved
+PASS Pome neck root attachment
+PASS Pome Blender collar
+PASS Pome twelve rope bones
+PASS Pome rope weights
+PASS Pome every rope bone has vertices
+PASS Pome rope backing references
+PASS Pome mesh backing reference
+PASS Pome separate readiness indicator
+PASS Pome physical contact preserved
+PASS Lab neck root attachment
+PASS Lab Blender collar
+PASS Lab twelve rope bones
+PASS Lab rope weights
+PASS Lab every rope bone has vertices
+PASS Lab rope backing references
+PASS Lab mesh backing reference
+PASS Lab separate readiness indicator
+PASS Lab physical contact preserved
+PASS Dachs neck root attachment
+PASS Dachs Blender collar
+PASS Dachs twelve rope bones
+PASS Dachs rope weights
+PASS Dachs every rope bone has vertices
+PASS Dachs rope backing references
+PASS Dachs mesh backing reference
+PASS Dachs separate readiness indicator
+PASS Dachs physical contact preserved
+PASS Shiba neck root attachment
+PASS Shiba Blender collar
+PASS Shiba twelve rope bones
+PASS Shiba rope weights
+PASS Shiba every rope bone has vertices
+PASS Shiba rope backing references
+PASS Shiba mesh backing reference
+PASS Shiba separate readiness indicator
+PASS Shiba physical contact preserved
+PASS Samoyed neck root attachment
+PASS Samoyed Blender collar
+PASS Samoyed twelve rope bones
+PASS Samoyed rope weights
+PASS Samoyed every rope bone has vertices
+PASS Samoyed rope backing references
+PASS Samoyed mesh backing reference
+PASS Samoyed separate readiness indicator
+PASS Samoyed physical contact preserved
+PASS supported shared material
+failed=0

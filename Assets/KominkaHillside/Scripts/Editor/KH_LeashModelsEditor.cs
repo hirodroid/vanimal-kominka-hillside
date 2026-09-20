@@ -48,6 +48,9 @@ namespace KominkaHillside.Editor
         }
         public static void FitCollar(Transform collar,Transform anchor,Transform dog,int breed,string data,Material band,Material metal)
         {
+            var current=collar.Find("Band");
+            if(current!=null&&current.GetComponent<MeshFilter>().sharedMesh.name.EndsWith("_Blender"))
+            {KH_LeashProductionEditor.Fit(collar,anchor,dog,breed);return;}
             collar.position=dog.TransformPoint(Centres[breed]);collar.rotation=dog.rotation*Quaternion.Euler(Tilt[breed],0,0);
             var scale=collar.parent.lossyScale;collar.localScale=new Vector3(1/scale.x,1/scale.y,1/scale.z);
             var radii=Radii[breed];

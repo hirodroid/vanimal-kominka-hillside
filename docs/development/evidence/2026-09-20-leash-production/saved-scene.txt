@@ -1,0 +1,10 @@
+KH_Collar_Corgi_Blender.asset sceneReferences=1
+KH_Collar_Pome_Blender.asset sceneReferences=1
+KH_Collar_Lab_Blender.asset sceneReferences=1
+KH_Collar_Dachs_Blender.asset sceneReferences=1
+KH_Collar_Shiba_Blender.asset sceneReferences=1
+KH_Collar_Samoyed_Blender.asset sceneReferences=1
+KH_LeashHandle_Blender.asset sceneReferences=6
+KH_LeashSnap_Blender.asset sceneReferences=12
+KH_LeashRope_Skinned.asset sceneReferences=6
+KH_Leash_WovenMetal.mat sceneReferences=30

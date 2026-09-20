@@ -167,7 +167,8 @@ namespace KominkaHillside.Editor
                 roots[i]=dog;fetch[i]=f;
                 if(initial)b.transform.position=dog.position+new Vector3(.6f,.25f,.3f);
                 Transform neck=p.headAnchor != null?p.headAnchor.parent:dog;
-                var collar=Child(neck,"KH_Collar_"+key);
+                var existingCollar=dog.GetComponentsInChildren<KH_LeashCollar>(true).FirstOrDefault(x=>x.dogIndex==i);
+                var collar=existingCollar!=null?existingCollar.transform:Child(neck,"KH_Collar_"+key);
                 var anchor=Child(collar,"ClipAnchor");
                 var visual=collar.Find("Band");
                 if(visual==null || visual.GetComponent<MeshFilter>().sharedMesh.name=="Cylinder")
@@ -195,7 +196,9 @@ namespace KominkaHillside.Editor
                 var pickup=t.GetComponent<VRC_Pickup>();if(pickup==null)pickup=t.gameObject.AddComponent<VRCPickup>();
                 pickup.AutoHold=VRC_Pickup.AutoHoldMode.Yes;pickup.proximity=.35f;pickup.InteractionText=i<3?"Leash tip - left":"Leash tip - right";
                 var clip=Add<KH_LeashClip>(t.gameObject);clip.manager=manager;clip.pickup=pickup;clip.tip=KH_LeashModelsEditor.MakeTip(t,Data,neutral);clip.desktopHand=i<3?0:1;
-                clip.indicator=t.GetComponent<Renderer>();clip.readyMaterial=ready;clip.blockedMaterial=neutral;clip.indicator.sharedMaterial=neutral;
+                var indicator=t.Find("ReadyIndicator");
+                clip.indicator=indicator!=null?indicator.GetComponent<Renderer>():t.GetComponent<Renderer>();
+                clip.readyMaterial=ready;clip.blockedMaterial=neutral;clip.indicator.sharedMaterial=neutral;
                 manager.localClips[i]=clip;
             }
             foreach(var u in root.GetComponentsInChildren<UdonSharpBehaviour>(true)){UdonSharpEditorUtility.CopyProxyToUdon(u);EditorUtility.SetDirty(u);}

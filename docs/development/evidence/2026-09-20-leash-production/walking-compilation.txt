@@ -1,0 +1,61 @@
+Udon diagnostics=0 errors=0
+KD_FetchSystem_Pome program=True symbols=36
+KD_StopAnchor_Samoyed program=True symbols=14
+KD_StopAnchor_Lab program=True symbols=14
+KD_Ball_Shiba program=True symbols=19
+KD_Ball_Corgi program=True symbols=19
+KD_FetchSystem_Dachs program=True symbols=36
+KD_StopAnchor_Dachs program=True symbols=14
+KD_PetSystem_Lab program=True symbols=68
+KH_Collar_Samoyed program=True symbols=9
+KD_PetSystem_Dachs program=True symbols=68
+KH_Collar_Dachs program=True symbols=9
+KD_WanderSystem_Corgi program=True symbols=133
+KD_FetchSystem_Corgi program=True symbols=36
+KD_FetchSystem_Samoyed program=True symbols=35
+KH_Collar_Lab program=True symbols=9
+KD_StopAnchor_Pome program=True symbols=14
+KD_PetSystem_Shiba program=True symbols=68
+KH_Collar_Pome program=True symbols=9
+KD_WanderSystem_Lab program=True symbols=133
+KD_DogPack program=True symbols=13
+KD_Ball_Lab program=True symbols=19
+KD_WanderSystem_Dachs program=True symbols=133
+KH_Collar_Corgi program=True symbols=9
+KD_PetSystem_Samoyed program=True symbols=68
+KD_StopAnchor_Shiba program=True symbols=14
+KD_PetSystem_Pome program=True symbols=68
+KD_WanderSystem_Pome program=True symbols=133
+KD_FetchSystem_Lab program=True symbols=36
+KD_Ball_Pome program=True symbols=19
+KD_PetSystem_Corgi program=True symbols=89
+KD_WanderSystem_Shiba program=True symbols=132
+KD_WanderSystem_Samoyed program=True symbols=132
+KH_Collar_Shiba program=True symbols=9
+KD_Ball_Samoyed program=True symbols=19
+KD_FetchSystem_Shiba program=True symbols=35
+KD_Ball_Dachs program=True symbols=19
+KD_StopAnchor_Corgi program=True symbols=14
+KH_Leashes program=True symbols=10
+Clip0 program=True symbols=10
+Clip1 program=True symbols=10
+Clip2 program=True symbols=10
+Clip3 program=True symbols=10
+Clip4 program=True symbols=10
+Clip5 program=True symbols=10
+MANAGER ___UdonSharpBehaviourVersion___=System.Int32
+MANAGER leashLength=System.Single
+MANAGER attachReach=System.Single
+MANAGER followSpeed=System.Single
+MANAGER catchUpDistance=System.Single
+MANAGER dogRoots=UnityEngine.Transform[]
+MANAGER collarAnchors=UnityEngine.Transform[]
+MANAGER fetchers=UnityEngine.Component[]
+MANAGER roamCenters=UnityEngine.Transform[]
+MANAGER localClips=UnityEngine.Component[]
+PASS backing dogRoots entries=6
+PASS backing collarAnchors entries=6
+PASS backing roamCenters entries=6
+PASS backing fetchers entries=6
+PASS backing localClips entries=6
+Network IDs=71 missing=0

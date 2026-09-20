@@ -73,6 +73,7 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 後から受領した散歩資料を正とする。Terrain v4は「門→登り道→見晴らし→上部の遊び場」の試作。最終コース長・形状・休憩場所数・端処理は未確定。実物6匹を導入しダミー非表示。地形Editor検査53/53、散歩Editor検査74/74の範囲と実機の結果を区別する。
 
 - 現在の品質・改善順: [開発全体像](development/overview.md) §3。
+- 最新の着手: **IMP-DOG-004** 首輪・リードのBlender本制作とUnity反映・Editor検査済み。新モデルの実機確認待ち、おもちゃは候補提案まで。[制作票・接続状態](plans/2026-09-20-leash-asset-production.md)。
 - 次の実装: **BUG-DOG-001** ボールを広場へ、**IMP-DOG-003** 目的地と通過点による自由な散歩・誘い・犬同士の遊びと首輪ずれ。目的地指定に必要な **DES-DOG-001 / DES-UI-001** の契約は試作に先行。並行して **IMP-DOG-001/002・VER-ENV-001** の同期・端末・地形検証。
 - その後: **DES-UI-001** 古民家型メニュー・接続補助・集合、**DES-DOG-002** 挙動の違うおもちゃ、**DES-LIV-001** 専用ライブ・既存購入者の利用。**IMP-ENV-001**の景観増量は優先度を下げる。往復導線は **DES-WLD-001**。詳細は [PCVR具体報告](plans/2026-09-20-pcvr-feedback.md)。
 - 状態と実行キュー: [Issueサマリ](development/issues/issue_summary.md)。移植の出所は [移植記録](development/imports/kominka-dog-system.md)、ユーザー報告と項目別手順は [散歩検証記録](plans/2026-09-20-leash-walking.md)。

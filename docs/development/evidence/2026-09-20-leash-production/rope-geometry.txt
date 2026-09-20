@@ -1,0 +1,5 @@
+PASS sample=0 startMm=0.355 endMm=0.352 radiusErrorMm=0.001
+PASS sample=1 startMm=0.359 endMm=0.359 radiusErrorMm=0.001
+PASS sample=2 startMm=0.351 endMm=0.351 radiusErrorMm=0.001
+PASS sample=3 startMm=0.351 endMm=0.359 radiusErrorMm=0.001
+Editor proxy geometry and skinned vertices only; Udon runtime/VR not exercised. failed=0

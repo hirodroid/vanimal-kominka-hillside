@@ -1,0 +1,241 @@
+Editor animation sampling, not a Play/VR result.
+KD_Dog_Corgi neck=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Corgi(Clone)
+KD_Dog_Corgi rest clip=rest t=0.000 samples=71 changed=0 neckMeanMm=0.00 headMeanMm=0.00
+KD_Dog_Corgi rest bakeScale karada maxMm=0.000
+KD_Dog_Corgi rest bakeScale 球.001 maxMm=0.000
+KD_Dog_Corgi rest bakeScale ha.006 maxMm=0.000
+KD_Dog_Corgi neck=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Corgi(Clone)
+KD_Dog_Corgi aruku clip=aruku t=1.750 samples=71 changed=38 neckMeanMm=1.12 headMeanMm=2.55
+KD_Dog_Corgi aruku bakeScale karada maxMm=0.001
+KD_Dog_Corgi aruku bakeScale 球.001 maxMm=0.000
+KD_Dog_Corgi aruku bakeScale ha.006 maxMm=0.000
+KD_Dog_Corgi neck=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Corgi(Clone)
+KD_Dog_Corgi hasiru clip=hasiru1 t=0.175 samples=71 changed=39 neckMeanMm=1.67 headMeanMm=2.90
+KD_Dog_Corgi hasiru bakeScale karada maxMm=0.001
+KD_Dog_Corgi hasiru bakeScale 球.001 maxMm=0.000
+KD_Dog_Corgi hasiru bakeScale ha.006 maxMm=0.000
+KD_Dog_Corgi neck=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Corgi(Clone)
+KD_Dog_Corgi Sit clip=KD_Sit_Corgi t=4.750 samples=71 changed=46 neckMeanMm=3.45 headMeanMm=3.45
+KD_Dog_Corgi Sit bakeScale karada maxMm=0.000
+KD_Dog_Corgi Sit bakeScale 球.001 maxMm=0.000
+KD_Dog_Corgi Sit bakeScale ha.006 maxMm=0.000
+KD_Dog_Corgi neck=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Corgi(Clone)
+KD_Dog_Corgi huse clip=huse t=11.416 samples=71 changed=46 neckMeanMm=9.86 headMeanMm=16.92
+KD_Dog_Corgi huse bakeScale karada maxMm=0.000
+KD_Dog_Corgi huse bakeScale 球.001 maxMm=0.000
+KD_Dog_Corgi huse bakeScale ha.006 maxMm=0.000
+KD_Dog_Corgi neck=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Corgi(Clone)
+KD_Dog_Corgi taimen clip=taimen 2 t=3.127 samples=71 changed=24 neckMeanMm=7.32 headMeanMm=7.92
+KD_Dog_Corgi taimen bakeScale karada maxMm=0.000
+KD_Dog_Corgi taimen bakeScale 球.001 maxMm=0.000
+KD_Dog_Corgi taimen bakeScale ha.006 maxMm=0.000
+KD_Dog_Corgi neck=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Corgi(Clone)
+KD_Dog_Corgi PickupPose clip=KD_PickupPose_Corgi t=0.950 samples=71 changed=6 neckMeanMm=8.33 headMeanMm=41.24
+KD_Dog_Corgi PickupPose bakeScale karada maxMm=0.000
+KD_Dog_Corgi PickupPose bakeScale 球.001 maxMm=0.000
+KD_Dog_Corgi PickupPose bakeScale ha.006 maxMm=0.000
+KD_Dog_Corgi neck=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ko-gi-/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Corgi(Clone)
+KD_Dog_Corgi taiki clip=taiki 6 t=4.200 samples=71 changed=36 neckMeanMm=2.18 headMeanMm=13.47
+KD_Dog_Corgi taiki bakeScale karada maxMm=0.001
+KD_Dog_Corgi taiki bakeScale 球.001 maxMm=0.000
+KD_Dog_Corgi taiki bakeScale ha.006 maxMm=0.000
+KD_Dog_Pome neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Pome(Clone)
+KD_Dog_Pome rest clip=rest t=0.000 samples=112 changed=0 neckMeanMm=0.00 headMeanMm=0.00
+KD_Dog_Pome rest bakeScale ha maxMm=0.000
+KD_Dog_Pome rest bakeScale karada maxMm=0.000
+KD_Dog_Pome rest bakeScale me maxMm=0.000
+KD_Dog_Pome neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Pome(Clone)
+KD_Dog_Pome aruku clip=aruku t=1.050 samples=112 changed=20 neckMeanMm=4.94 headMeanMm=4.08
+KD_Dog_Pome aruku bakeScale ha maxMm=0.000
+KD_Dog_Pome aruku bakeScale karada maxMm=0.000
+KD_Dog_Pome aruku bakeScale me maxMm=0.000
+KD_Dog_Pome neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Pome(Clone)
+KD_Dog_Pome hasiru clip=hasiru1 t=0.490 samples=112 changed=20 neckMeanMm=7.79 headMeanMm=6.69
+KD_Dog_Pome hasiru bakeScale ha maxMm=0.000
+KD_Dog_Pome hasiru bakeScale karada maxMm=0.000
+KD_Dog_Pome hasiru bakeScale me maxMm=0.000
+KD_Dog_Pome neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Pome(Clone)
+KD_Dog_Pome Sit clip=KD_Sit_Pome t=4.750 samples=112 changed=25 neckMeanMm=6.19 headMeanMm=4.51
+KD_Dog_Pome Sit bakeScale ha maxMm=0.000
+KD_Dog_Pome Sit bakeScale karada maxMm=0.000
+KD_Dog_Pome Sit bakeScale me maxMm=0.000
+KD_Dog_Pome neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Pome(Clone)
+KD_Dog_Pome huse clip=huse t=11.400 samples=112 changed=23 neckMeanMm=13.97 headMeanMm=9.99
+KD_Dog_Pome huse bakeScale ha maxMm=0.000
+KD_Dog_Pome huse bakeScale karada maxMm=0.000
+KD_Dog_Pome huse bakeScale me maxMm=0.000
+KD_Dog_Pome neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Pome(Clone)
+KD_Dog_Pome taimen clip=taimen t=1.750 samples=112 changed=9 neckMeanMm=6.10 headMeanMm=8.98
+KD_Dog_Pome taimen bakeScale ha maxMm=0.000
+KD_Dog_Pome taimen bakeScale karada maxMm=0.000
+KD_Dog_Pome taimen bakeScale me maxMm=0.000
+KD_Dog_Pome neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Pome(Clone)
+KD_Dog_Pome PickupPose clip=KD_PickupPose_Pome t=0.950 samples=112 changed=3 neckMeanMm=18.11 headMeanMm=38.79
+KD_Dog_Pome PickupPose bakeScale ha maxMm=0.000
+KD_Dog_Pome PickupPose bakeScale karada maxMm=0.000
+KD_Dog_Pome PickupPose bakeScale me maxMm=0.000
+KD_Dog_Pome neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Pome(Clone)
+KD_Dog_Pome taiki clip=taiki t=4.813 samples=112 changed=10 neckMeanMm=7.96 headMeanMm=15.19
+KD_Dog_Pome taiki bakeScale ha maxMm=0.000
+KD_Dog_Pome taiki bakeScale karada maxMm=0.000
+KD_Dog_Pome taiki bakeScale me maxMm=0.000
+KD_Dog_Lab neck=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Lab(Clone)
+KD_Dog_Lab rest clip=rest t=0.000 samples=66 changed=0 neckMeanMm=0.00 headMeanMm=0.00
+KD_Dog_Lab rest bakeScale me maxMm=0.001
+KD_Dog_Lab rest bakeScale karada maxMm=0.001
+KD_Dog_Lab rest bakeScale ha.001 maxMm=0.001
+KD_Dog_Lab neck=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Lab(Clone)
+KD_Dog_Lab aruku clip=aruku t=1.750 samples=66 changed=38 neckMeanMm=1.03 headMeanMm=2.82
+KD_Dog_Lab aruku bakeScale me maxMm=0.001
+KD_Dog_Lab aruku bakeScale karada maxMm=0.001
+KD_Dog_Lab aruku bakeScale ha.001 maxMm=0.001
+KD_Dog_Lab neck=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Lab(Clone)
+KD_Dog_Lab hasiru clip=hasiru1 t=0.233 samples=66 changed=39 neckMeanMm=3.03 headMeanMm=6.15
+KD_Dog_Lab hasiru bakeScale me maxMm=0.000
+KD_Dog_Lab hasiru bakeScale karada maxMm=0.001
+KD_Dog_Lab hasiru bakeScale ha.001 maxMm=0.001
+KD_Dog_Lab neck=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Lab(Clone)
+KD_Dog_Lab Sit clip=KD_Sit_Lab t=4.750 samples=66 changed=46 neckMeanMm=6.61 headMeanMm=6.61
+KD_Dog_Lab Sit bakeScale me maxMm=0.000
+KD_Dog_Lab Sit bakeScale karada maxMm=0.000
+KD_Dog_Lab Sit bakeScale ha.001 maxMm=0.000
+KD_Dog_Lab neck=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Lab(Clone)
+KD_Dog_Lab huse clip=huse t=11.400 samples=66 changed=49 neckMeanMm=12.88 headMeanMm=17.32
+KD_Dog_Lab huse bakeScale me maxMm=0.001
+KD_Dog_Lab huse bakeScale karada maxMm=0.001
+KD_Dog_Lab huse bakeScale ha.001 maxMm=0.000
+KD_Dog_Lab neck=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Lab(Clone)
+KD_Dog_Lab taimen clip=taimen 2 t=3.127 samples=66 changed=24 neckMeanMm=5.89 headMeanMm=22.21
+KD_Dog_Lab taimen bakeScale me maxMm=0.001
+KD_Dog_Lab taimen bakeScale karada maxMm=0.001
+KD_Dog_Lab taimen bakeScale ha.001 maxMm=0.001
+KD_Dog_Lab neck=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Lab(Clone)
+KD_Dog_Lab PickupPose clip=KD_PickupPose_Lab t=0.950 samples=66 changed=6 neckMeanMm=9.91 headMeanMm=48.77
+KD_Dog_Lab PickupPose bakeScale me maxMm=0.001
+KD_Dog_Lab PickupPose bakeScale karada maxMm=0.001
+KD_Dog_Lab PickupPose bakeScale ha.001 maxMm=0.000
+KD_Dog_Lab neck=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/ラブラドール/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Lab(Clone)
+KD_Dog_Lab taiki clip=taiki 6 t=4.200 samples=66 changed=36 neckMeanMm=2.01 headMeanMm=19.59
+KD_Dog_Lab taiki bakeScale me maxMm=0.001
+KD_Dog_Lab taiki bakeScale karada maxMm=0.001
+KD_Dog_Lab taiki bakeScale ha.001 maxMm=0.001
+KD_Dog_Dachs neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Dachs(Clone)
+KD_Dog_Dachs rest clip=rest t=0.000 samples=71 changed=0 neckMeanMm=0.00 headMeanMm=0.00
+KD_Dog_Dachs rest bakeScale ha.002 maxMm=0.000
+KD_Dog_Dachs rest bakeScale karada maxMm=0.000
+KD_Dog_Dachs rest bakeScale me maxMm=0.000
+KD_Dog_Dachs neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Dachs(Clone)
+KD_Dog_Dachs aruku clip=aruku 1 t=0.263 samples=71 changed=17 neckMeanMm=1.98 headMeanMm=1.93
+KD_Dog_Dachs aruku bakeScale ha.002 maxMm=0.000
+KD_Dog_Dachs aruku bakeScale karada maxMm=0.000
+KD_Dog_Dachs aruku bakeScale me maxMm=0.000
+KD_Dog_Dachs neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Dachs(Clone)
+KD_Dog_Dachs hasiru clip=hasiru1 t=0.140 samples=71 changed=21 neckMeanMm=10.89 headMeanMm=13.51
+KD_Dog_Dachs hasiru bakeScale ha.002 maxMm=0.000
+KD_Dog_Dachs hasiru bakeScale karada maxMm=0.000
+KD_Dog_Dachs hasiru bakeScale me maxMm=0.000
+KD_Dog_Dachs neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Dachs(Clone)
+KD_Dog_Dachs Sit clip=KD_Sit_Dachs t=4.750 samples=71 changed=27 neckMeanMm=7.55 headMeanMm=14.31
+KD_Dog_Dachs Sit bakeScale ha.002 maxMm=0.000
+KD_Dog_Dachs Sit bakeScale karada maxMm=0.000
+KD_Dog_Dachs Sit bakeScale me maxMm=0.000
+KD_Dog_Dachs neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Dachs(Clone)
+KD_Dog_Dachs huse clip=huse t=11.400 samples=71 changed=25 neckMeanMm=8.42 headMeanMm=10.94
+KD_Dog_Dachs huse bakeScale ha.002 maxMm=0.000
+KD_Dog_Dachs huse bakeScale karada maxMm=0.000
+KD_Dog_Dachs huse bakeScale me maxMm=0.000
+KD_Dog_Dachs neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Dachs(Clone)
+KD_Dog_Dachs taimen clip=taimen t=1.750 samples=71 changed=15 neckMeanMm=9.77 headMeanMm=22.49
+KD_Dog_Dachs taimen bakeScale ha.002 maxMm=0.000
+KD_Dog_Dachs taimen bakeScale karada maxMm=0.000
+KD_Dog_Dachs taimen bakeScale me maxMm=0.000
+KD_Dog_Dachs neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Dachs(Clone)
+KD_Dog_Dachs PickupPose clip=KD_PickupPose_Dachs t=0.950 samples=71 changed=11 neckMeanMm=11.11 headMeanMm=19.67
+KD_Dog_Dachs PickupPose bakeScale ha.002 maxMm=0.000
+KD_Dog_Dachs PickupPose bakeScale karada maxMm=0.000
+KD_Dog_Dachs PickupPose bakeScale me maxMm=0.000
+KD_Dog_Dachs neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Dachs(Clone)
+KD_Dog_Dachs taiki clip=taiki t=2.450 samples=71 changed=13 neckMeanMm=3.86 headMeanMm=7.27
+KD_Dog_Dachs taiki bakeScale ha.002 maxMm=0.000
+KD_Dog_Dachs taiki bakeScale karada maxMm=0.000
+KD_Dog_Dachs taiki bakeScale me maxMm=0.000
+KD_Dog_Shiba neck=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Shiba(Clone)
+KD_Dog_Shiba rest clip=rest t=0.000 samples=86 changed=0 neckMeanMm=0.00 headMeanMm=0.00
+KD_Dog_Shiba rest bakeScale 球.001 maxMm=0.000
+KD_Dog_Shiba rest bakeScale ha.005 maxMm=0.000
+KD_Dog_Shiba rest bakeScale karada maxMm=0.001
+KD_Dog_Shiba neck=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Shiba(Clone)
+KD_Dog_Shiba aruku clip=aruku t=1.750 samples=86 changed=38 neckMeanMm=1.00 headMeanMm=2.59
+KD_Dog_Shiba aruku bakeScale 球.001 maxMm=0.000
+KD_Dog_Shiba aruku bakeScale ha.005 maxMm=0.000
+KD_Dog_Shiba aruku bakeScale karada maxMm=0.000
+KD_Dog_Shiba neck=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Shiba(Clone)
+KD_Dog_Shiba hasiru clip=hasiru1 t=0.175 samples=86 changed=39 neckMeanMm=1.58 headMeanMm=3.86
+KD_Dog_Shiba hasiru bakeScale 球.001 maxMm=0.000
+KD_Dog_Shiba hasiru bakeScale ha.005 maxMm=0.000
+KD_Dog_Shiba hasiru bakeScale karada maxMm=0.000
+KD_Dog_Shiba neck=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Shiba(Clone)
+KD_Dog_Shiba Sit clip=KD_Sit_Shiba t=4.750 samples=86 changed=46 neckMeanMm=6.04 headMeanMm=6.04
+KD_Dog_Shiba Sit bakeScale 球.001 maxMm=0.000
+KD_Dog_Shiba Sit bakeScale ha.005 maxMm=0.000
+KD_Dog_Shiba Sit bakeScale karada maxMm=0.000
+KD_Dog_Shiba neck=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Shiba(Clone)
+KD_Dog_Shiba huse clip=KD_LieDown_Shiba t=11.416 samples=86 changed=46 neckMeanMm=8.30 headMeanMm=20.33
+KD_Dog_Shiba huse bakeScale 球.001 maxMm=0.000
+KD_Dog_Shiba huse bakeScale ha.005 maxMm=0.000
+KD_Dog_Shiba huse bakeScale karada maxMm=0.000
+KD_Dog_Shiba neck=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Shiba(Clone)
+KD_Dog_Shiba taimen clip=taimen 2 t=3.127 samples=86 changed=24 neckMeanMm=6.96 headMeanMm=6.96
+KD_Dog_Shiba taimen bakeScale 球.001 maxMm=0.001
+KD_Dog_Shiba taimen bakeScale ha.005 maxMm=0.000
+KD_Dog_Shiba taimen bakeScale karada maxMm=0.001
+KD_Dog_Shiba neck=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Shiba(Clone)
+KD_Dog_Shiba PickupPose clip=KD_PickupPose_Shiba t=0.950 samples=86 changed=6 neckMeanMm=7.45 headMeanMm=45.20
+KD_Dog_Shiba PickupPose bakeScale 球.001 maxMm=0.000
+KD_Dog_Shiba PickupPose bakeScale ha.005 maxMm=0.000
+KD_Dog_Shiba PickupPose bakeScale karada maxMm=0.001
+KD_Dog_Shiba neck=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/shiba/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Shiba(Clone)
+KD_Dog_Shiba taiki clip=taiki 6 t=4.200 samples=86 changed=36 neckMeanMm=2.26 headMeanMm=15.49
+KD_Dog_Shiba taiki bakeScale 球.001 maxMm=0.000
+KD_Dog_Shiba taiki bakeScale ha.005 maxMm=0.000
+KD_Dog_Shiba taiki bakeScale karada maxMm=0.001
+KD_Dog_Samoyed neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Samoyed(Clone)
+KD_Dog_Samoyed rest clip=rest t=0.000 samples=29 changed=0 neckMeanMm=0.00 headMeanMm=0.00
+KD_Dog_Samoyed rest bakeScale ha.002 maxMm=0.000
+KD_Dog_Samoyed rest bakeScale karada maxMm=0.000
+KD_Dog_Samoyed rest bakeScale me maxMm=0.000
+KD_Dog_Samoyed neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Samoyed(Clone)
+KD_Dog_Samoyed aruku clip=aruku t=0.875 samples=29 changed=21 neckMeanMm=6.82 headMeanMm=17.97
+KD_Dog_Samoyed aruku bakeScale ha.002 maxMm=0.000
+KD_Dog_Samoyed aruku bakeScale karada maxMm=0.000
+KD_Dog_Samoyed aruku bakeScale me maxMm=0.000
+KD_Dog_Samoyed neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Samoyed(Clone)
+KD_Dog_Samoyed hasiru clip=hasiru1 t=0.613 samples=29 changed=21 neckMeanMm=9.29 headMeanMm=13.20
+KD_Dog_Samoyed hasiru bakeScale ha.002 maxMm=0.000
+KD_Dog_Samoyed hasiru bakeScale karada maxMm=0.000
+KD_Dog_Samoyed hasiru bakeScale me maxMm=0.000
+KD_Dog_Samoyed neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Samoyed(Clone)
+KD_Dog_Samoyed Sit clip=KD_Sit_Samoyed t=4.750 samples=29 changed=29 neckMeanMm=21.57 headMeanMm=16.13
+KD_Dog_Samoyed Sit bakeScale ha.002 maxMm=0.000
+KD_Dog_Samoyed Sit bakeScale karada maxMm=0.000
+KD_Dog_Samoyed Sit bakeScale me maxMm=0.000
+KD_Dog_Samoyed neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Samoyed(Clone)
+KD_Dog_Samoyed huse clip=huse t=11.400 samples=29 changed=23 neckMeanMm=21.46 headMeanMm=23.06
+KD_Dog_Samoyed huse bakeScale ha.002 maxMm=0.000
+KD_Dog_Samoyed huse bakeScale karada maxMm=0.000
+KD_Dog_Samoyed huse bakeScale me maxMm=0.000
+KD_Dog_Samoyed neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Samoyed(Clone)
+KD_Dog_Samoyed taimen clip=taimen t=3.372 samples=29 changed=4 neckMeanMm=23.87 headMeanMm=23.87
+KD_Dog_Samoyed taimen bakeScale ha.002 maxMm=0.000
+KD_Dog_Samoyed taimen bakeScale karada maxMm=0.000
+KD_Dog_Samoyed taimen bakeScale me maxMm=0.000
+KD_Dog_Samoyed neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Samoyed(Clone)
+KD_Dog_Samoyed PickupPose clip=KD_PickupPose_Samoyed t=0.950 samples=29 changed=4 neckMeanMm=21.47 headMeanMm=65.38
+KD_Dog_Samoyed PickupPose bakeScale ha.002 maxMm=0.000
+KD_Dog_Samoyed PickupPose bakeScale karada maxMm=0.000
+KD_Dog_Samoyed PickupPose bakeScale me maxMm=0.000
+KD_Dog_Samoyed neck=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 skin3=hojo_born/Bone/Bone_end/PB3/inu/アーマチュア/Bone/Bone.001/Bone.002/Bone.003 animator=KD_Dog_Samoyed(Clone)
+KD_Dog_Samoyed taiki clip=taiki t=2.450 samples=29 changed=12 neckMeanMm=9.82 headMeanMm=15.20
+KD_Dog_Samoyed taiki bakeScale ha.002 maxMm=0.000
+KD_Dog_Samoyed taiki bakeScale karada maxMm=0.000
+KD_Dog_Samoyed taiki bakeScale me maxMm=0.000
