@@ -64,10 +64,11 @@ priority: High    # High / Medium / Low
 | [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) | High | 古民家と同構成のメニュー、接続補助、自分の接続犬への目的地選択、集合 | todo |
 | [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビーなど挙動の違うおもちゃを設計する | todo |
 | [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 裏山専用ライブと古民家の有料ライブ購入者の利用を設計する | todo |
+| [DES-WLD-002](DES-WLD-002-sound.md) | Medium | 裏山の音 (BGM・環境音) の方針・音源・ライブとの切替を設計する | todo |
 | [IMP-DOG-004](review/IMP-DOG-004-leash-models-release.md) | High | 首輪・リードの本制作。PCVR 1 人は合格。2 人・Quest/iOS・座位/木陰の確認待ち | review |
 | [BUG-DOG-002](BUG-DOG-002-leash-handle-orientation.md) | Medium | リードの持ち手が左右どちらの手でも左向きに付く。最後の微調整 | todo |
 
-着手順: BUG-DOG-001→IMP-DOG-003→DES-UI-001→DES-DOG-002。同期・端末・境界確認は並行継続。DES-LIV-001は権利と依存の調査を並行し、基本体験後に制作する。DES-WLD-001の往復導線は継続、IMP-ENV-001の景観増量は後回し。具体的な目的と設計提案は [開発全体像](../overview.md) §3。
+着手順 (2026-09-20 PCVR 好評後に整理): **DES-UI-001** (古民家型メニュー本体: 目的地選択・接続/解除補助・集合・ボール集め。仮看板を置き換える) を主軸に、小さな UX 調整 (BUG-DOG-002 持ち手の向き、看板文字、IMP-DOG-003 の犬同士の遊び・項目別確認) を並行。次に DES-DOG-002 (おもちゃ) と DES-DOG-001 (おしゃれ)。音は DES-WLD-002、ライブは DES-LIV-001 で設計を並行し、制作は基本体験の後。複数人・Quest/iOS・境界の検証 (IMP-DOG-002 / VER-ENV-001) と往復導線 (DES-WLD-001) は継続、IMP-ENV-001 の景観増量は後回し。具体的な目的と設計提案は [開発全体像](../overview.md) §3。
 
 最新の制作指示ではIMP-DOG-004のBlender本制作とおもちゃ提案を優先して着手。上記の機能改善順は残し、モデルの仕上げと区別する。
 
