@@ -27,6 +27,8 @@ namespace KominkaHillside
         public float liftCap = 0.95f;
         public float maxSpeed = 11f;
         public float maxFlightSeconds = 8f;
+        [Tooltip("Below this height the flight ends and VRCObjectSync's respawn returns the disc (set from the scene descriptor by Build)")]
+        public float respawnBelowY = -20f;
         public float radius = 0.12f;
         public float spinDegPerSec = 720f;
         public float noseUpDeg = 6f;
@@ -365,6 +367,7 @@ namespace KominkaHillside
                 EndFlight(hit.point + Vector3.up * 0.02f, vel * 0.25f, EndLanded);
                 return;
             }
+            if (next.y < respawnBelowY) { EndFlight(next, Vector3.zero, EndTimeout); return; } // out of the world: let Respawn bring it home
             transform.position = next;
             Vector3 heading = vel; heading.y = 0f;
             _spin += spinDegPerSec * Time.deltaTime;

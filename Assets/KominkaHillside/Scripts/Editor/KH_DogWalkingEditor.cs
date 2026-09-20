@@ -29,11 +29,20 @@ namespace KominkaHillside.Editor
         // off the trail end and away from the shade tree. VRCObjectSync respawns to this start position.
         public static readonly Vector2 BallHomeCenter = new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0]+3.5f, KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]+3.5f);
         public const float BallSpacing=0.9f, BallRestHeight=0.07f;
+        // IMP-DOG-005: discs rest in a second row behind the balls (same flat), one per dog; stage 2 wires only these breeds.
+        public static readonly string[] FrisbeeKeys = {"Lab"};
+        public static readonly Color[] DiscColors = {new Color(.90f,.30f,.25f),new Color(.95f,.60f,.75f),new Color(.95f,.80f,.15f),new Color(.35f,.55f,.95f),new Color(.85f,.45f,.20f),new Color(.90f,.90f,.95f)};
+        public static Vector3 DiscHome(int i)
+        {
+            Vector3 b=BallHome(i);float z=b.z+2.2f;
+            return new Vector3(b.x,Ground(b.x,z)+0.03f,z);
+        }
         public static Vector3 BallHome(int i)
         {
             float x=BallHomeCenter.x+((i%3)-1)*BallSpacing, z=BallHomeCenter.y+((i/3)-0.5f)*BallSpacing;
             return new Vector3(x,Ground(x,z)+BallRestHeight,z);
         }
+        static VRC_SceneDescriptor desc0() { return UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>(); }
         static void Report(string name, string text) { Directory.CreateDirectory("Temp/KH_DogPort"); File.WriteAllText("Temp/KH_DogPort/"+name+".txt",text); Debug.Log("[KH Walking] " + text); }
         static void Guard()
         {
@@ -210,6 +219,26 @@ namespace KominkaHillside.Editor
                 c.line=line;manager.collarAnchors[i]=anchor;
                 UdonSharpEditorUtility.GetBackingUdonBehaviour(c).InteractionText="Release leash";
             }
+            // IMP-DOG-005: one disc + catcher per breed in FrisbeeKeys, on the same dog that walks and fetches.
+            manager.frisbeeCatchers=new KH_FrisbeeCatch[6];act.frisbeeCatchers=new KH_FrisbeeCatch[6];recall.discs=new KH_Frisbee[6];recall.discCatchers=new KH_FrisbeeCatch[6];
+            var facts=KH_FrisbeePrototypeEditor.ReadFacts();
+            for(int i=0;i<6;i++)
+            {
+                string key=Keys[i];var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+key);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+key);var p=Find<KD_DogPetController>(root,"KD_PetSystem_"+key);
+                if(Array.IndexOf(FrisbeeKeys,key)<0){w.frisbeeCatch=null;f.frisbeeCatch=null;continue;}
+                // The jump clip, its pose facts and the Animator Jump state exist for one breed so far; adding a key
+                // here without authoring them (Frisbee/2 for that breed) must fail loudly, not copy Lab's mouth.
+                if(key!=KH_FrisbeeJumpClipEditor.Breed)throw new InvalidOperationException("No jump clip / pose facts authored for "+key+" (KH_FrisbeeJumpClipEditor.Breed is "+KH_FrisbeeJumpClipEditor.Breed+").");
+                bool created;var disc=KH_FrisbeePrototypeEditor.BuildDisc(root.transform,"KH_Frisbee_"+key,"KH_FrisbeeDisc_"+key,DiscColors[i],out created);
+                foreach(var t in disc.GetComponentsInChildren<Transform>(true))t.gameObject.layer=13;
+                if(created){disc.transform.position=DiscHome(i);disc.transform.rotation=Quaternion.identity;} // human-owned once placed (review M4)
+                var c=Add<KH_FrisbeeCatch>(Child(root.transform,"KH_FrisbeeCatch_"+key).gameObject,true);
+                KH_FrisbeePrototypeEditor.ConfigureCatcher(c,disc,roots[i],f.dogAnimator,f.mouthAnchor,facts);
+                c.hillsideLeashes=manager;c.fetch=f;c.wander=w;c.activities=act;c.pet=p;c.dogIndex=i;
+                c.playAreaCenter=new Vector3(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,2],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]);
+                c.playAreaRadius=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3];
+                w.frisbeeCatch=c;f.frisbeeCatch=c;manager.frisbeeCatchers[i]=c;act.frisbeeCatchers[i]=c;recall.discs[i]=disc;recall.discCatchers[i]=c;
+            }
             pack.dogRoots=roots;pack.dogFetch=fetch;
             // Leash stations (game-design section 4): one rack per destination, a left and a right slot each.
             // Station placement is human-owned (written once); slots and tools are code-owned.
@@ -359,7 +388,49 @@ namespace KominkaHillside.Editor
                 bool actRefs=true;for(int i=0;i<6;i++){var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+Keys[i]);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+Keys[i]);if(w.activities!=act||f.activities!=act)actRefs=false;}
                 Check(actRefs,"all six Wander/Fetch reference the gather authority");
             }
+            // IMP-DOG-005: disc + catcher on the walking dog (stage 2: FrisbeeKeys only), others deliberately unwired.
+            var facts=KH_FrisbeePrototypeEditor.ReadFacts();var clipAsset=AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPath);
+            for(int i=0;i<6;i++)
+            {
+                string key=Keys[i];bool wanted=Array.IndexOf(FrisbeeKeys,key)>=0;var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+key);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+key);var p=Find<KD_DogPetController>(root,"KD_PetSystem_"+key);
+                var ct=root.transform.Find("KH_FrisbeeCatch_"+key);var dt=root.transform.Find("KH_Frisbee_"+key);
+                if(!wanted){Check(ct==null&&dt==null&&w.frisbeeCatch==null&&f.frisbeeCatch==null&&(m.frisbeeCatchers==null||m.frisbeeCatchers[i]==null)&&(act.frisbeeCatchers==null||act.frisbeeCatchers[i]==null),"no disc for "+key+" yet (deliberate)");continue;}
+                var c=ct==null?null:ct.GetComponent<KH_FrisbeeCatch>();var d=dt==null?null:dt.GetComponent<KH_Frisbee>();
+                Check(c!=null&&d!=null,"disc and catcher exist for "+key);if(c==null||d==null)continue;
+                Check(c.dogRoot==m.dogRoots[i]&&c.dogAnimator==f.dogAnimator&&c.mouthAnchor==f.mouthAnchor&&c.frisbee==d&&d.catcher==c,"catcher shares the walking dog's root/Animator/mouth "+key);
+                Check(c.hillsideLeashes==m&&c.fetch==f&&c.wander==w&&c.activities==act&&c.pet==p&&c.dogIndex==i,"catcher neighbours "+key);
+                Check(w.frisbeeCatch==c&&f.frisbeeCatch==c&&m.frisbeeCatchers[i]==c&&act.frisbeeCatchers[i]==c,"Wander/Fetch/Manager/Gather see the catcher "+key);
+                Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(c).SyncMethod==Networking.SyncType.Manual&&UdonSharpEditorUtility.GetBackingUdonBehaviour(d).SyncMethod==Networking.SyncType.None,"catcher Manual / disc None "+key);
+                Check(Vector3.Distance(c.mouthOffsetCatch,facts.mouthOffsetCatch)<1e-4f&&Mathf.Abs(c.clipRiseDuration-facts.rise)<1e-4f&&c.minRootRise>=0.5f*d.gravity*Mathf.Pow(facts.rise/1.8f,2f)-1e-3f,"pose facts match the clip JSON, rise floor "+key);
+                var ac=f.dogAnimator==null?null:f.dogAnimator.runtimeAnimatorController as UnityEditor.Animations.AnimatorController;
+                Check(ac!=null&&ac.parameters.Any(x=>x.name=="Jump")&&ac.layers[0].stateMachine.states.Any(st=>st.state.name=="Jump"&&st.state.motion==clipAsset),"Animator has Jump with the clip "+key);
+                float plaza=Vector2.Distance(new Vector2(d.transform.position.x,d.transform.position.z),new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]));
+                Check(plaza<KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3]&&Mathf.Abs(Ground(d.transform.position.x,d.transform.position.z)-KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,2])<.05f,"disc rests on the flat clearing "+key);
+                Check(Mathf.Abs(c.playAreaRadius-KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3])<1e-3f&&Vector2.Distance(new Vector2(c.playAreaCenter.x,c.playAreaCenter.z),new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]))<1e-3f,"play area = plaza flat "+key);
+                Check(d.GetComponent<VRCObjectSync>()!=null&&d.GetComponent<VRCPickup>()!=null&&d.aimLine!=null&&d.aimMarker!=null&&d.discHeldMaterial!=null&&d.discRenderer!=null&&Mathf.Abs(d.respawnBelowY-desc0().RespawnHeightY)<1e-3f,"disc components, aim preview, held material, respawn height "+key);
+                var cb=UdonSharpEditorUtility.GetBackingUdonBehaviour(c);object bv;
+                Check(cb.publicVariables.TryGetVariableValue("dogRoot",out bv)&&(bv as Transform)==c.dogRoot,"catcher backing dogRoot "+key);
+                bool factsOk=cb.publicVariables.TryGetVariableValue("mouthOffsetCatch",out bv)&&(Vector3)bv==c.mouthOffsetCatch
+                    &&cb.publicVariables.TryGetVariableValue("mouthOffsetStand",out bv)&&(Vector3)bv==c.mouthOffsetStand
+                    &&cb.publicVariables.TryGetVariableValue("clipCrouchDuration",out bv)&&(float)bv==c.clipCrouchDuration
+                    &&cb.publicVariables.TryGetVariableValue("clipRiseDuration",out bv)&&(float)bv==c.clipRiseDuration
+                    &&cb.publicVariables.TryGetVariableValue("clipRecoverDuration",out bv)&&(float)bv==c.clipRecoverDuration
+                    &&cb.publicVariables.TryGetVariableValue("playAreaRadius",out bv)&&(float)bv==c.playAreaRadius
+                    &&cb.publicVariables.TryGetVariableValue("playAreaCenter",out bv)&&(Vector3)bv==c.playAreaCenter;
+                Check(factsOk,"catcher backing: all pose facts + play area "+key);
+                bool refsOk=true;foreach(var pair in new[]{new object[]{"hillsideLeashes",m},new object[]{"fetch",f},new object[]{"wander",w},new object[]{"activities",act},new object[]{"pet",p},new object[]{"frisbee",d}})
+                {
+                    var expect=UdonSharpEditorUtility.GetBackingUdonBehaviour((UdonSharpBehaviour)pair[1]);
+                    if(!(cb.publicVariables.TryGetVariableValue((string)pair[0],out bv)&&(bv as UnityEngine.Object)==expect))refsOk=false;
+                }
+                Check(refsOk&&cb.publicVariables.TryGetVariableValue("dogIndex",out bv)&&(int)bv==i,"catcher backing: neighbour references and dogIndex "+key);
+                var wb=UdonSharpEditorUtility.GetBackingUdonBehaviour(w);var fb=UdonSharpEditorUtility.GetBackingUdonBehaviour(f);var cbb=UdonSharpEditorUtility.GetBackingUdonBehaviour(c);
+                Check(wb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb&&fb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb,"Wander/Fetch backing frisbeeCatch "+key);
+                Check(f.sleepBoard==null&&f.liveSystem==null,"sleep board / live unwired for "+key+" (re-verify exclusion if reintroduced)");
+            }
             var recallB=root.GetComponentInChildren<KH_ToyRecall>(true);
+            Check(recallB!=null&&recallB.discs!=null&&recallB.discs.Length==6&&recallB.discCatchers.Length==6&&Enumerable.Range(0,6).All(i=>{bool want=Array.IndexOf(FrisbeeKeys,Keys[i])>=0;var dt=root.transform.Find("KH_Frisbee_"+Keys[i]);var ct=root.transform.Find("KH_FrisbeeCatch_"+Keys[i]);
+                return want?(dt!=null&&ct!=null&&recallB.discs[i]==dt.GetComponent<KH_Frisbee>()&&recallB.discCatchers[i]==ct.GetComponent<KH_FrisbeeCatch>()&&m.frisbeeCatchers[i]==recallB.discCatchers[i]&&act.frisbeeCatchers[i]==recallB.discCatchers[i]):(recallB.discs[i]==null&&recallB.discCatchers[i]==null);}),"toy recall / manager / gather disc arrays point at each dog's own disc and catcher");
             Check(recallB!=null&&recallB.balls!=null&&recallB.balls.Length==6&&recallB.balls.All(x=>x!=null)&&recallB.fetchers.Length==6&&recallB.fetchers.All(x=>x!=null)&&recallB.activities==act,"toy recall wired to 6 balls/fetchers");
             bool slotsOk=m.stationSlots!=null&&m.stationSlots.Length==6&&m.stationSlots.All(x=>x!=null)&&m.stationSlots.Distinct().Count()==6&&m.slotHand.All(h=>h==0||h==1)
                 &&Enumerable.Range(0,6).Select(k=>m.stationOf[k]*2+m.slotHand[k]).Distinct().Count()==6&&m.stationOf.All(s=>s>=0&&s<3)
@@ -369,6 +440,9 @@ namespace KominkaHillside.Editor
             Check(toolsHome&&m.localClips.Select(c=>c.transform.position).Distinct().Count()==6,"six tools rest one per slot with matching side, no two at one spot");
             Check(act!=null&&act.gameObject==m.gameObject,"gather authority shares the manager GameObject (single Owner)");
             var desc=UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>();Check(desc.NetworkIDCollection.Count(x=>x.gameObject==null)==0,"no dangling NetworkIDs");
+            Check(desc.NetworkIDCollection.Select(x=>x.ID).Distinct().Count()==desc.NetworkIDCollection.Count&&desc.NetworkIDCollection.Where(x=>x.gameObject!=null).Select(x=>x.gameObject).Distinct().Count()==desc.NetworkIDCollection.Count(x=>x.gameObject!=null),"NetworkIDs unique per ID and per GameObject");
+            var networked=root.GetComponentsInChildren<VRCObjectSync>(true).Select(x=>x.gameObject).Concat(root.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true).Where(u=>u.SyncMethod!=Networking.SyncType.None).Select(u=>u.gameObject)).Distinct().ToArray();
+            Check(networked.All(g=>desc.NetworkIDCollection.Any(x=>x.gameObject==g)),"every synced object under KH_Dogs has a NetworkID ("+networked.Length+")");
             foreach(var st in new[]{"KH_LeashRack","KH_Station_Viewpoint","KH_Station_Plaza"}){var t=root.transform.Find(st);Check(t!=null&&t.Find("Crossbar")!=null&&Mathf.Abs(t.position.y-.8f-Ground(t.position.x,t.position.z))<.3f,"station "+st+" placed at rack height");}
             var signs=root.GetComponentsInChildren<KH_WalkSign>(true);Check(signs.Length==6&&signs.All(x=>x.manager==m&&x.GetComponent<BoxCollider>()!=null&&UdonSharpEditorUtility.GetBackingUdonBehaviour(x).InteractionText.Length>0),"six destination sign boards wired");
             Check(signs.Count(x=>x.destination==KH_WalkRouteEditor.DestinationPlaza)==3&&signs.Count(x=>x.destination==KH_WalkRouteEditor.DestinationEntrance)==3,"sign destinations 3 plaza + 3 gate");

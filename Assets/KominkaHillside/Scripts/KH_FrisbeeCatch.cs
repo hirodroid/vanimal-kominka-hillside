@@ -31,6 +31,18 @@ namespace KominkaHillside
         public Transform mouthAnchor;
         public KH_Frisbee frisbee;
 
+        [Header("World-scene neighbours (null in the prototype scene: no exclusion, no play area)")]
+        public KH_LeashManager hillsideLeashes;
+        public KominkaDogRun.KD_DogFetchController fetch;
+        public KominkaDogRun.KD_DogWanderController wander;
+        public KominkaDogRun.KD_GroupActivities activities;
+        public KominkaDogRun.KD_DogPetController pet;
+        public int dogIndex = -1;
+        [Tooltip("Flat play area (the plaza). 0 radius = unlimited. Ready and throws are refused outside it")]
+        public Vector3 playAreaCenter;
+        public float playAreaRadius;
+        public float playAreaMargin = 2f;
+
         [Header("Pose facts (written by Tools/KominkaHillside/Frisbee/4 Build Scene from the clip JSON)")]
         [Tooltip("Mouth anchor relative to dogRoot (dogRoot frame, world units) at the clip's catch frame")]
         public Vector3 mouthOffsetCatch;
@@ -141,12 +153,18 @@ namespace KominkaHillside
         private bool _released;
         private VRC_Pickup _discPickup;
         private float _deviationSince = -1f;
-        private Vector3 _standoffSpot; private bool _standoffValid;
+        private Vector3 _standoffSpot; private bool _standoffValid; private float _nextStandoff;
+        private bool _yieldAfterLanding;   // a leash / gather arrived while airborne: land, then hand the dog over
+        private bool _ownerSplitWarned;
+        private bool _outputValid;         // our Run/Walk/speed writes are current (false after another controller wrote)
 
         public int State { get { return state; } }
         public bool IsIdle { get { return state == StateIdle; } }
         public bool IsCarrying { get { return state == StateJumpCarry || state == StateLandCarry || state == StateReturn || state == StateDrop; } }
         public bool IsAirborne { get { return state == StateJump || state == StateJumpCarry || state == StateLand || state == StateLandCarry; } }
+        // Busy for the other systems: Ready (standing off while someone holds the disc) is NOT engaged, so a
+        // held disc never takes the dog away from Fetch, the leash or a gathering (review M1).
+        public bool IsEngaged { get { return state != StateIdle && state != StateReady; } }
         public int DebugPlan { get { return _plan; } }
 
         void Start()
@@ -173,6 +191,7 @@ namespace KominkaHillside
         {
             if (!IsDogOwner()) return;
             if (IsCarrying || IsAirborne) return; // finish the mouth / the landing first; the launcher refuses these too
+            if (!CanPlay(p0)) return;             // same gate as Ready: leash / Fetch / gathering / treat / rest / play area
             // Plausibility (network callable; anyone may send): a real launch is capped by the disc and starts nearby.
             if (v0.magnitude > frisbee.maxSpeed * 1.05f || Vector3.Distance(p0, dogRoot.position) > 200f) return;
             if (Networking.GetServerTimeInSeconds() - launchServerTime > 5.0) return;
@@ -198,7 +217,7 @@ namespace KominkaHillside
             state = next;
             _stateEntered = Networking.GetServerTimeInSeconds();
             _released = false;
-            if (next == StateIdle) { throwerId = -1; animSpeed = 1f; _plan = PlanNone; _haveLaunch = false; _localPlanValid = false; }
+            if (next == StateIdle) { throwerId = -1; animSpeed = 1f; _plan = PlanNone; _haveLaunch = false; _localPlanValid = false; _yieldAfterLanding = false; _speed = 0f; }
             if (next == StateJumpCarry || next == StateReturn) ClaimDisc();
             RequestSerialization();
             ApplyState();
@@ -229,6 +248,9 @@ namespace KominkaHillside
             frisbee._Release(velocity);
         }
 
+        // Landed / stopped by a wall / lost track: worth walking to. Grabbed or out of the world: not (review D5).
+        bool Retrievable() { return _flightEndReason != KH_Frisbee.EndGrabbed && _flightEndReason != KH_Frisbee.EndTimeout; }
+
         void GiveUp()
         {
             bool held = _discPickup != null && _discPickup.IsHeld;
@@ -242,7 +264,23 @@ namespace KominkaHillside
         void ApplyState()
         {
             bool jumping = IsAirborne;
-            ApplyAnimatorSpeed();
+            // Shared Animator hand-over (review M2): entering a non-Idle state, rewrite everything we own;
+            // returning to Idle, stop writing and tell Wander its cached outputs are stale.
+            if (_lastApplied != state)
+            {
+                if (state == StateIdle)
+                {
+                    // Hand the Animator back clean: no locomotion flags, playback speed 1 (review D2).
+                    if (_wroteRun) { dogAnimator.SetBool("Run", false); _wroteRun = false; }
+                    if (_wroteWalk) { dogAnimator.SetBool("Walk", false); _wroteWalk = false; }
+                    dogAnimator.speed = 1f; _wroteSpeed = 1f; _speed = 0f;
+                    if (wander != null) wander._InvalidateLeashAnimation();
+                }
+                // Petting: allowed while Idle / Ready, suppressed while engaged (review M2; same hooks Fetch uses).
+                if (pet != null) { if (IsEngaged) pet._SuppressPetting(); else if (fetch == null || fetch.IsIdle) pet._ResumePetting(); }
+                _outputValid = false;
+            }
+            if (state != StateIdle) ApplyAnimatorSpeed();
             if (jumping != _wroteJump || _lastApplied < 0) { dogAnimator.SetBool("Jump", jumping); _wroteJump = jumping; }
             bool pickup = state == StatePickup;
             if (pickup != _wrotePickup || _lastApplied < 0) { dogAnimator.SetBool("Pickup", pickup); _wrotePickup = pickup; }
@@ -254,8 +292,14 @@ namespace KominkaHillside
         {
             _dogOwner = IsDogOwner();
             if (!_dogOwner) ObserveSpeed();
-            if (state == StateIdle) { if (_dogOwner && standoffWhenHeld && frisbee.HolderPlayer != null) { _standoffValid = false; TransitionTo(StateReady); } else Coast(); return; }
-            if (state == StateReady) { UpdateReady(); UpdateLocomotionAnim(); return; }
+            WarnIfOwnerSplit();
+            if (state == StateIdle)
+            {
+                // Idle: Wander owns the Animator and the root; we only watch for a held disc.
+                if (_dogOwner && standoffWhenHeld && frisbee.HolderPlayer != null && CanPlay(frisbee.HolderPlayer.GetPosition())) { _standoffValid = false; _nextStandoff = 0f; TransitionTo(StateReady); }
+                return;
+            }
+            if (state == StateReady) { UpdateReady(); if (state == StateReady) UpdateLocomotionAnim(); return; }
             // Became Owner mid-sequence (previous Owner left): no local plan, so stop safely.
             if (_dogOwner && !_localPlanValid) { GiveUp(); return; }
             double now = Networking.GetServerTimeInSeconds();
@@ -263,6 +307,11 @@ namespace KominkaHillside
 
             // A hand wins over the mouth and over the chase (IsHeld is synced) - but an airborne dog lands first.
             if (_dogOwner && !IsAirborne && _discPickup != null && _discPickup.IsHeld) { GiveUp(); return; }
+            // A leash or a gathering accepted meanwhile wins (review D2): on the ground stop now, in the air land first.
+            if (_dogOwner && Claimed())
+            {
+                if (IsAirborne) _yieldAfterLanding = true; else { GiveUp(); return; }
+            }
 
             if (state == StateChase) UpdateChase(now, elapsed);
             else if (state == StateJump || state == StateJumpCarry) UpdateJump(now);
@@ -270,7 +319,46 @@ namespace KominkaHillside
             else if (state == StateRetrieve) UpdateRetrieve(elapsed);
             else if (state == StatePickup) UpdatePickup(elapsed);
             else if (state == StateReturn || state == StateDrop) UpdateReturn(elapsed);
-            UpdateLocomotionAnim();
+            if (state != StateIdle) UpdateLocomotionAnim(); // a transition above may have handed the Animator back (review D2)
+        }
+
+        // Everything that must be true for the dog to stand off for a held disc or to accept a throw.
+        // Null neighbours (prototype scene) mean "no such system" (review M1/M3: one gate for both entrances).
+        bool CanPlay(Vector3 at)
+        {
+            if (Claimed()) return false;
+            if (fetch != null && !fetch.IsIdle) return false;
+            if (wander != null && (wander.IsTreatBusy || wander.IsResting || wander.IsAsleep)) return false;
+            if (activities != null && activities.Mode == 2) return false;
+            if (!InPlayArea(at, playAreaMargin)) return false;
+            return true;
+        }
+
+        // Leash attached or gathering participant: authorities that beat the frisbee once they are accepted.
+        bool Claimed()
+        {
+            if (hillsideLeashes != null && dogIndex >= 0 && hillsideLeashes._IsLeashed(dogIndex)) return true;
+            if (activities != null && activities.Mode == 1 && activities._IsParticipant(dogIndex)) return true;
+            return false;
+        }
+
+        bool InPlayArea(Vector3 p, float margin)
+        {
+            if (playAreaRadius <= 0f) return true;
+            Vector3 d = p - playAreaCenter; d.y = 0f;
+            return d.magnitude <= playAreaRadius + margin;
+        }
+
+        // Anywhere the dog itself would run, crouch, land or pick up must be inside the flat (review D1); the
+        // launch point alone gets playAreaMargin because a thrower may stand at the edge.
+        bool DogMayGo(Vector3 p) { return InPlayArea(p, 0f); }
+
+        // Same contract as KD_DogFetchController (IMP-NET-005 invariant 8): dogRoot and this object share an Owner.
+        void WarnIfOwnerSplit()
+        {
+            if (_ownerSplitWarned || _dogOwner == Networking.IsOwner(gameObject)) return;
+            _ownerSplitWarned = true;
+            Debug.LogError("[KH_FrisbeeCatch] Ownership split: dogRoot and " + gameObject.name + " have different Owners - throws are dropped until they converge.");
         }
 
         // ---- Ready: the disc is in someone's hand. Take a stand-off spot in front of them and watch. ----
@@ -282,12 +370,24 @@ namespace KominkaHillside
             VRCPlayerApi holder = frisbee.HolderPlayer;
             if (holder == null) { TransitionTo(StateIdle); return; } // dropped without a throw, or thrown: ReqCatch overrides
             Vector3 holderPos = holder.GetPosition();
-            VRCPlayerApi.TrackingData head = holder.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
-            Vector3 fwd = head.rotation * Vector3.forward; fwd.y = 0f;
-            if (fwd.sqrMagnitude < 0.0001f) { fwd = holder.GetRotation() * Vector3.forward; fwd.y = 0f; }
-            if (fwd.sqrMagnitude < 0.0001f) fwd = Vector3.forward;
-            Vector3 spot = holderPos + fwd.normalized * standoffDistance;
-            if (!_standoffValid || Vector3.Distance(spot, _standoffSpot) > standoffSlack) { _standoffSpot = spot; _standoffValid = true; }
+            if (!CanPlay(holderPos)) { TransitionTo(StateIdle); return; } // Ready never takes the dog from anyone (review M1)
+            if (!_standoffValid || Time.time >= _nextStandoff)
+            {
+                // Target refreshed at 10 Hz (review D5); the walk toward it is still per frame.
+                _nextStandoff = Time.time + 0.1f;
+                VRCPlayerApi.TrackingData head = holder.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+                Vector3 fwd = head.rotation * Vector3.forward; fwd.y = 0f;
+                if (fwd.sqrMagnitude < 0.0001f) { fwd = holder.GetRotation() * Vector3.forward; fwd.y = 0f; }
+                if (fwd.sqrMagnitude < 0.0001f) fwd = Vector3.forward;
+                Vector3 spot = holderPos + fwd.normalized * standoffDistance;
+                if (playAreaRadius > 0f)
+                {
+                    // Keep the stand-off spot inside the flat (review P2): pull it toward the centre if needed.
+                    Vector3 c = spot - playAreaCenter; c.y = 0f;
+                    if (c.magnitude > playAreaRadius) spot = playAreaCenter + c.normalized * playAreaRadius + Vector3.up * (spot.y - playAreaCenter.y);
+                }
+                if (!_standoffValid || Vector3.Distance(spot, _standoffSpot) > standoffSlack) { _standoffSpot = spot; _standoffValid = true; }
+            }
             Vector3 to = _standoffSpot - dogRoot.position; to.y = 0f;
             float dist = to.magnitude;
             if (dist > arriveRadius)
@@ -310,7 +410,7 @@ namespace KominkaHillside
             {
                 // Landed or stopped by a wall: fetch from the ground if it is within reach; never re-arm the jump.
                 // Grabbed / recalled: nothing to fetch.
-                if (_flightEndReason != KH_Frisbee.EndGrabbed && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance) TransitionTo(StateRetrieve);
+                if (Retrievable() && DogMayGo(frisbee.transform.position) && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance) TransitionTo(StateRetrieve);
                 else GiveUp();
                 return;
             }
@@ -358,8 +458,10 @@ namespace KominkaHillside
             }
             else
             {
-                // Nothing reachable yet: follow the disc from behind until the prediction offers a point.
+                // Nothing reachable yet: follow the disc from behind until the prediction offers a point,
+                // but never out of the flat (review D1): a throw leaving the plaza is simply not chased.
                 Vector3 disc = frisbee._PositionAt(_p0, _v0, tNow);
+                if (!DogMayGo(disc) || (_landingValid && !DogMayGo(_landing))) { GiveUp(); return; }
                 MoveToward(disc, chaseRunSpeed, 1.0f, chaseAcceleration);
             }
             ObserveFlight(tNow);
@@ -412,6 +514,7 @@ namespace KominkaHillside
             float lane = v * (tUp * 2f + crouch) + 0.6f;
             if (Physics.Raycast(crouchStart + Vector3.up * 0.3f, fwd, out hit, lane, frisbee.obstacleMask, QueryTriggerInteraction.Ignore)) return 0;
             Vector3 landing = liftoff + fwd * (v * tUp * 2f);
+            if (!DogMayGo(crouchStart) || !DogMayGo(catchRoot) || !DogMayGo(landing)) return 0;
             if (!Physics.Raycast(landing + Vector3.up * groundRayOffset, Vector3.down, out hit, groundRayDistance, groundLayerMask, QueryTriggerInteraction.Ignore)) return 0;
             if (Mathf.Abs(hit.point.y - _groundY) > 0.25f) return 0;
             if (commit)
@@ -461,6 +564,7 @@ namespace KominkaHillside
                     if (fwd.sqrMagnitude < 1e-4f) fwd = Vector3.forward; fwd.Normalize();
                     Vector3 right = Vector3.Cross(Vector3.up, fwd);
                     Vector3 root = new Vector3(d.x, _groundY, d.z) - fwd * mouthOffsetStand.z - right * mouthOffsetStand.x;
+                    if (!DogMayGo(root)) continue;
                     Vector3 to = root - dogPos; to.y = 0f;
                     float turn = to.magnitude > 0.05f ? Vector3.Angle(dogRoot.forward, to) : 0f;
                     if (Eta(to.magnitude, turn) > t - tNow) continue;
@@ -475,7 +579,7 @@ namespace KominkaHillside
                 Debug.Log("[KH_FrisbeeCatch] jump candidate t=" + t.ToString("F2") + (kind == 2 ? " standing" : " running") + " dist=" + Vector3.Distance(dogPos, _crouchStart).ToString("F2"));
                 break;
             }
-            if (chosen == PlanNone && _landingValid) chosen = PlanGround;
+            if (chosen == PlanNone && _landingValid && DogMayGo(_landing)) chosen = PlanGround;
             if (chosen != _plan) Debug.Log("[KH_FrisbeeCatch] plan=" + chosen + " catchT=" + _catchT.ToString("F2") + " rise=" + _rootRise.ToString("F2") + " tUp=" + _tUp.ToString("F2") + " scale=" + _animScale.ToString("F2") + " tNow=" + tNow.ToString("F2"));
             _plan = chosen;
         }
@@ -530,7 +634,7 @@ namespace KominkaHillside
                 float gap = EdgeGap(tNow);
                 if (ta < _tUp - catchWindow + 0.001f) _bestGap = 99f;
                 if (gap < _bestGap) _bestGap = gap;
-                bool ok = gap <= catchTolerance && !_flightEnded && !(_discPickup != null && _discPickup.IsHeld);
+                bool ok = gap <= catchTolerance && !_flightEnded && !_yieldAfterLanding && !(_discPickup != null && _discPickup.IsHeld); // yielding: no new catch (review D4)
                 if (ok)
                 {
                     _catchDecided = true;
@@ -558,11 +662,12 @@ namespace KominkaHillside
             float desired = Mathf.Lerp(_jumpSpeed, 0f, Mathf.Clamp01(elapsed / recover));
             MoveToward(dogRoot.position + _forward * 2f, desired, 0f);
             if (elapsed < recover) return;
+            if (_yieldAfterLanding) { GiveUp(); return; } // leash / gathering took the dog while airborne
             if (state == StateLandCarry) { TransitionTo(StateReturn); return; }
             if (_discPickup != null && _discPickup.IsHeld) { GiveUp(); return; }
             if (_flightEnded)
             {
-                if (_flightEndReason != KH_Frisbee.EndGrabbed && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance) TransitionTo(StateRetrieve);
+                if (Retrievable() && DogMayGo(frisbee.transform.position) && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance) TransitionTo(StateRetrieve);
                 else GiveUp();
             }
             else { _plan = PlanNone; _nextPlan = 0f; TransitionTo(StateChase); } // missed while still flying: plan again
@@ -573,8 +678,9 @@ namespace KominkaHillside
         {
             if (!_dogOwner) { UpdateLocomotionAnim(); return; }
             if (elapsed > chaseTimeout) { GiveUp(); return; }
-            if (_flightEnded && _flightEndReason == KH_Frisbee.EndGrabbed) { GiveUp(); return; }
+            if (_flightEnded && !Retrievable()) { GiveUp(); return; }
             Vector3 target = frisbee.transform.position;
+            if (!DogMayGo(target)) { GiveUp(); return; } // rolled or was carried out of the flat
             if (!_flightEnded) target = _landingValid ? _landing : frisbee._PositionAt(_p0, _v0, frisbee._ElapsedSince(_t0));
             Vector3 to = target - dogRoot.position; to.y = 0f;
             float dist = to.magnitude;
@@ -675,9 +781,10 @@ namespace KominkaHillside
             bool moving = _speed > stopSpeedThreshold;
             bool running = moving && _speed >= runAnimSpeed;
             bool walking = moving && !running;
-            if (running != _wroteRun) { dogAnimator.SetBool("Run", running); _wroteRun = running; }
-            if (walking != _wroteWalk) { dogAnimator.SetBool("Walk", walking); _wroteWalk = walking; }
+            if (running != _wroteRun || !_outputValid) { dogAnimator.SetBool("Run", running); _wroteRun = running; }
+            if (walking != _wroteWalk || !_outputValid) { dogAnimator.SetBool("Walk", walking); _wroteWalk = walking; }
             ApplyAnimatorSpeed();
+            _outputValid = true;
         }
 
         // Jump states play the clip at the arc pace; a sprint above runSpeed plays the run clip faster
@@ -687,7 +794,7 @@ namespace KominkaHillside
             float spd = 1f;
             if (IsAirborne) spd = animSpeed;
             else if (_speed > runSpeed) spd = Mathf.Min(maxRunAnimScale, _speed / runSpeed);
-            if (Mathf.Abs(spd - _wroteSpeed) > 0.01f || _lastApplied < 0) { dogAnimator.speed = spd; _wroteSpeed = spd; }
+            if (Mathf.Abs(spd - _wroteSpeed) > 0.01f || _lastApplied < 0 || !_outputValid) { dogAnimator.speed = spd; _wroteSpeed = spd; }
         }
 
         // No ground under the point: keep the height (the flat prototype ground has an edge; see review U4).

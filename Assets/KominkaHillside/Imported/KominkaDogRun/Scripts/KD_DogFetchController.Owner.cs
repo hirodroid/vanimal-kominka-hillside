@@ -249,6 +249,7 @@ namespace KominkaDogRun
             {
                 if (dogState != StateIdle) petController._SuppressPetting();
                 else if (CandyBusy()) MyWander()._SuppressPettingForCandy();
+                else if (frisbeeCatch != null && frisbeeCatch.IsEngaged) petController._SuppressPetting(); // IMP-DOG-005: the disc chase owns the head
                 else petController._ResumePetting();
             }
 

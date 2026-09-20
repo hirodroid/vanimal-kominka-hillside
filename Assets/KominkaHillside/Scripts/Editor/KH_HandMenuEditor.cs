@@ -38,7 +38,7 @@ namespace KominkaHillside.Editor
         public static readonly string[] DogNames = { "コーギー", "ポメラニアン", "ラブラドール", "ダックスフンド", "柴犬", "サモエド" };
         public static readonly string[] Formations = { "横一列", "輪になる", "ぎゅっと集合", "V字", "思い思いに", "前後二列" };
         public const string WordLeft = "左につなぐ", WordRight = "右につなぐ", WordOff = "外す", WordPlaza = "広場へ行こう", WordGate = "古民家側へ帰ろう";
-        public const string WordGather = "ここに集合", WordEnd = "終わる", WordBuy = "購入画面をひらく", WordRecall = "目の前へ", WordBallSuffix = " のボール", WordOpener = "メニューをひらく";
+        public const string WordGather = "ここに集合", WordEnd = "終わる", WordBuy = "購入画面をひらく", WordRecall = "目の前へ", WordBallSuffix = " のボール", WordOpener = "メニューをひらく", WordBall = "ボール", WordDisc = "フリスビー", WordToySuffix = " のおもちゃ";
 
         static void Report(string name, string text) { Directory.CreateDirectory("Temp/KH_DogPort"); File.WriteAllText("Temp/KH_DogPort/" + name + ".txt", text); Debug.Log("[KH Menu] " + text); }
         static void Guard() { if (Application.isPlaying || EditorSceneManager.GetActiveScene().path != WorldScene) throw new InvalidOperationException("Open the hillside scene in Edit mode."); }
@@ -54,7 +54,7 @@ namespace KominkaHillside.Editor
             string src = File.ReadAllText(RuntimeSource);
             foreach (Match m in Regex.Matches(src, "\"((?:[^\"\\\\]|\\\\.)*)\"")) sb.Append(m.Groups[1].Value.Replace("\\n", "").Replace("\\\"", "\""));
             sb.Append(Title).Append(WordClose).Append(WordLauncher).Append(WordLeft).Append(WordRight).Append(WordOff).Append(WordPlaza).Append(WordGate)
-              .Append(WordGather).Append(WordEnd).Append(WordBuy).Append(WordRecall).Append(WordBallSuffix).Append(WordOpener);
+              .Append(WordGather).Append(WordEnd).Append(WordBuy).Append(WordRecall).Append(WordBallSuffix).Append(WordOpener).Append(WordBall).Append(WordDisc).Append(WordToySuffix);
             foreach (string s in Tabs) sb.Append(s); foreach (string s in DogNames) sb.Append(s); foreach (string s in Formations) sb.Append(s);
             for (char c = ' '; c <= '~'; c++) sb.Append(c);
             return sb.ToString();
@@ -269,13 +269,17 @@ namespace KominkaHillside.Editor
             menu.gatherNote = Text(gather, "Note", new Vector2(0f, -60f), new Vector2(1080f, 90f), "", 18f, TextAlignmentOptions.Center, font);
             // おもちゃ
             var toys = menu.pages[2].transform;
-            menu.toyState = new TextMeshProUGUI[6]; menu.toyImages = new Image[6];
+            menu.toyState = new TextMeshProUGUI[6]; menu.toyImages = new Image[6]; menu.discImages = new Image[6];
             for (int i = 0; i < 6; i++)
             {
+                // One row per dog, one button per toy kind (IMP-DOG-005: the disc is a second toy with its own behaviour).
                 var cell = Child(toys, "Ball" + i, new Vector2(i % 2 == 0 ? -285f : 285f, 210f - (i / 2) * 120f), new Vector2(540f, 110f));
-                Text(cell.transform, "Name", new Vector2(-80f, 20f), new Vector2(380f, 34f), DogNames[i] + WordBallSuffix, 22f, TextAlignmentOptions.Left, font).enableWordWrapping = false;
-                menu.toyState[i] = Text(cell.transform, "State", new Vector2(-150f, -22f), new Vector2(240f, 30f), "", 18f, TextAlignmentOptions.Left, font);
-                menu.toyImages[i] = Button(cell.transform, "Recall", new Vector2(180f, 0f), new Vector2(136f, 44f), ActionPrimary, WordRecall, 20f, font, round, backing, "_Toy" + i);
+                var nameText = cell.transform.Find("Name"); if (nameText != null) UnityEngine.Object.DestroyImmediate(nameText.gameObject);
+                var oldRecall = cell.transform.Find("Recall"); if (oldRecall != null) UnityEngine.Object.DestroyImmediate(oldRecall.gameObject);
+                Text(cell.transform, "Name", new Vector2(-130f, 22f), new Vector2(280f, 34f), DogNames[i] + WordToySuffix, 22f, TextAlignmentOptions.Left, font).enableWordWrapping = false;
+                menu.toyState[i] = Text(cell.transform, "State", new Vector2(-130f, -20f), new Vector2(280f, 30f), "", 16f, TextAlignmentOptions.Left, font);
+                menu.toyImages[i] = Button(cell.transform, "Ball", new Vector2(70f, 0f), new Vector2(110f, 44f), ActionPrimary, WordBall, 20f, font, round, backing, "_Toy" + i);
+                menu.discImages[i] = Button(cell.transform, "Disc", new Vector2(195f, 0f), new Vector2(130f, 44f), ActionPrimary, WordDisc, 20f, font, round, backing, "_Disc" + i);
             }
             menu.toyNote = Text(toys, "Note", new Vector2(0f, -220f), new Vector2(1100f, 36f), "", 18f, TextAlignmentOptions.Center, font);
             // Touch launcher (Screen Space Overlay; inactive by default, runtime shows it for Touch input only)
@@ -336,7 +340,8 @@ namespace KominkaHillside.Editor
             if (n == "Start") return "_GatherStart"; if (n == "End") return "_GatherEnd"; if (n == "Buy") return "_Buy";
             if (n == "DestPlaza") return "_DestPlaza"; if (n == "DestGate") return "_DestGate";
             if (p.StartsWith("Dog")) { string i = p.Substring(3); return n == "Left" ? "_Left" + i : n == "Right" ? "_Right" + i : n == "Off" ? "_Off" + i : "?"; }
-            if (p.StartsWith("Ball") && n == "Recall") return "_Toy" + p.Substring(4);
+            if (p.StartsWith("Ball") && n == "Ball") return "_Toy" + p.Substring(4);
+            if (p.StartsWith("Ball") && n == "Disc") return "_Disc" + p.Substring(4);
             return "?";
         }
 
@@ -361,6 +366,7 @@ namespace KominkaHillside.Editor
             Check(menu.walkState.Length == 6 && menu.walkLeft.Length == 6 && menu.walkRight.Length == 6 && menu.walkOff.Length == 6 && menu.walkState.All(x => x != null) && menu.walkLeft.All(x => x != null), "walk rows 6");
             Check(menu.formImages.Length == 6 && menu.formImages.All(x => x != null) && menu.startImage != null && menu.endImage != null && menu.buyImage != null && menu.markers.Length == 6 && menu.markers.All(x => x != null && !x.activeSelf), "gather buttons and 6 inactive markers");
             Check(menu.toyImages.Length == 6 && menu.toyState.Length == 6 && menu.toyImages.All(x => x != null), "toy rows 6");
+            Check(menu.discImages != null && menu.discImages.Length == 6 && menu.discImages.All(x => x != null), "disc buttons 6");
             var buttons = menu.panelRoot.GetComponentsInChildren<UnityEngine.UI.Button>(true).Concat(menu.launcher.GetComponentsInChildren<UnityEngine.UI.Button>(true)).ToArray();
             var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(menu);
             int wired = 0, sliced = 0;
@@ -369,7 +375,7 @@ namespace KominkaHillside.Editor
                 if (b.onClick.GetPersistentEventCount() == 1 && b.onClick.GetPersistentTarget(0) == backing && b.onClick.GetPersistentMethodName(0) == "SendCustomEvent") wired++;
                 var img = b.GetComponent<Image>(); if (img != null && (img.sprite == null || img.type == Image.Type.Sliced)) sliced++;
             }
-            Check(buttons.Length == 40 && wired == buttons.Length, "40 buttons (39 panel + launcher) all wired to the menu Udon (" + wired + ")");
+            Check(buttons.Length == 46 && wired == buttons.Length, "46 buttons (45 panel incl. 6 disc + launcher) all wired to the menu Udon (" + wired + ")");
             Check(sliced == buttons.Length, "rounded buttons use Sliced sprites");
             // Every onClick string must be the handler expected for that button (name -> event), and the handler must exist.
             var runtimeMethods = new HashSet<string>(typeof(KH_HandMenu).GetMethods().Select(m => m.Name));
@@ -388,7 +394,7 @@ namespace KominkaHillside.Editor
             bool refs = backingVars.TryGetVariableValue("manager", out mv) && mv != null && backingVars.TryGetVariableValue("activities", out mv) && mv != null
                 && backingVars.TryGetVariableValue("pass", out mv) && mv != null && backingVars.TryGetVariableValue("recall", out mv) && mv != null && backingVars.TryGetVariableValue("panelRoot", out mv) && mv != null;
             Check(refs, "backing Udon holds manager/activities/pass/recall/panelRoot references");
-            bool arrays = new UnityEngine.Object[][] { menu.pages, menu.tabImages, menu.tabUnderlines, menu.walkState, menu.walkLeft, menu.walkRight, menu.walkOff, menu.formImages, menu.markers, menu.toyState, menu.toyImages }
+            bool arrays = new UnityEngine.Object[][] { menu.pages, menu.tabImages, menu.tabUnderlines, menu.walkState, menu.walkLeft, menu.walkRight, menu.walkOff, menu.formImages, menu.markers, menu.toyState, menu.toyImages, menu.discImages }
                 .All(a => a != null && a.Length > 0 && a.All(x => x != null));
             Check(arrays, "all reference arrays are allocated with no null element");
             var openers = dogs.GetComponentsInChildren<KH_MenuOpener>(true);

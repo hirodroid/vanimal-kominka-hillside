@@ -152,51 +152,12 @@ namespace KominkaHillside.Editor
             recall.transform.position = new Vector3(-.8f, .35f, -4f); recall.transform.localScale = new Vector3(.3f, .7f, .3f);
             recall.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeRecall", new Color(.25f, .35f, .5f));
 
-            // Disc.
-            var discGo = Prim("KH_Frisbee", PrimitiveType.Cylinder, props.transform);
-            discGo.layer = PickupLayer; discGo.transform.localScale = new Vector3(.24f, .012f, .24f);
-            var cap = discGo.GetComponent<CapsuleCollider>(); if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
-            var box = discGo.GetComponent<BoxCollider>(); if (box == null) box = discGo.AddComponent<BoxCollider>(); box.size = new Vector3(1f, 2f, 1f);
-            discGo.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeDisc", new Color(1f, .5f, .15f));
-            var rb = discGo.GetComponent<Rigidbody>(); if (rb == null) rb = discGo.AddComponent<Rigidbody>();
-            rb.mass = .15f; rb.drag = .4f; rb.angularDrag = 1f; rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-            var pickup = discGo.GetComponent<VRCPickup>(); if (pickup == null) pickup = discGo.AddComponent<VRCPickup>();
-            pickup.proximity = 1f; pickup.InteractionText = "Disc"; pickup.orientation = VRC_Pickup.PickupOrientation.Any; pickup.ThrowVelocityBoostScale = 1.5f;
-            if (discGo.GetComponent<VRCObjectSync>() == null) discGo.AddComponent<VRCObjectSync>();
-            discGo.transform.position = muzzle.position; discGo.transform.rotation = Quaternion.identity;
-            var disc = Add<KH_Frisbee>(discGo);
-            // Aim preview: a line along the predicted path and a landing marker, shown to the holder only.
-            var aimRoot = Obj("KH_FrisbeeAim", props.transform);
-            var lineGo = Obj("AimLine", aimRoot.transform);
-            var line = lineGo.GetComponent<LineRenderer>(); if (line == null) line = lineGo.AddComponent<LineRenderer>();
-            var aimMat = Mat("KH_FrisbeeAim", new Color(.3f, .9f, 1f, .8f));
-            line.sharedMaterial = aimMat; line.useWorldSpace = true; line.startWidth = .03f; line.endWidth = .015f; line.positionCount = 0; line.enabled = false;
-            line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; line.receiveShadows = false;
-            var marker = Prim("AimMarker", PrimitiveType.Cylinder, aimRoot.transform);
-            var mc = marker.GetComponent<Collider>(); if (mc != null) UnityEngine.Object.DestroyImmediate(mc);
-            marker.transform.localScale = new Vector3(.34f, .004f, .34f); marker.GetComponent<Renderer>().sharedMaterial = aimMat; marker.SetActive(false);
-            disc.aimLine = line; disc.aimMarker = marker.transform; disc.aimLaunch = true; disc.aimSpeed = 7.5f; disc.aimSpeedMin = 4f; disc.aimSpeedMax = 11f;
-            // Held look: the holder sees the disc at 25% so the preview line is not hidden behind it.
-            string heldPath = Data + "/KH_FrisbeeDiscHeld.mat"; var held = AssetDatabase.LoadAssetAtPath<Material>(heldPath);
-            if (held == null) { held = new Material(Shader.Find("Legacy Shaders/Transparent/Diffuse")); held.color = new Color(1f, .5f, .15f, .25f); AssetDatabase.CreateAsset(held, heldPath); }
-            disc.discRenderer = discGo.GetComponent<Renderer>(); disc.discMaterial = Mat("KH_FrisbeeDisc", new Color(1f, .5f, .15f)); disc.discHeldMaterial = held;
-            // Flight model: code-owned (the Verify integration check and the fixed throw assume these). Tune in the
-            // Inspector during Play, then copy the numbers here; a rebuild restores them.
-            disc.gravity = 9.81f; disc.drag = 0.15f; disc.lift = 0.30f; disc.liftCap = 0.95f; disc.maxSpeed = 11f;
-            disc.desktopMinThrowSpeed = 6f; disc.desktopMaxThrowSpeed = 11f; disc.desktopThrowRise = 0.25f; // a short press must still fly ~2 s
-
-            // Catcher (Manual sync on its own object; the dog root carries VRCObjectSync).
+            // Disc + catcher: the same helpers place the Lab disc in the world scene (KH_DogWalkingEditor).
+            bool discCreated;
+            var disc = BuildDisc(props.transform, "KH_Frisbee", "KH_FrisbeeDisc", new Color(1f, .5f, .15f), out discCreated);
+            disc.transform.position = muzzle.position; disc.transform.rotation = Quaternion.identity; // prototype: always on the stand
             var catcher = Add<KH_FrisbeeCatch>(Obj("KH_FrisbeeCatch_Lab", dogs.transform), true);
-            catcher.dogRoot = dogT; catcher.dogAnimator = animator; catcher.mouthAnchor = mouth; catcher.frisbee = disc;
-            catcher.mouthOffsetCatch = facts.mouthOffsetCatch; catcher.mouthOffsetStand = facts.mouthOffsetStand;
-            catcher.clipCrouchDuration = facts.crouch; catcher.clipRiseDuration = facts.rise; catcher.clipRecoverDuration = facts.recover;
-            catcher.groundLayerMask = (1 << 0) | (1 << 11);
-            catcher.takeoffSpeed = 2.5f; catcher.chaseRunSpeed = 4.5f; catcher.standoffDistance = 8f; // code-owned, same rule as the flight model
-            // Inspector tuning survives a rebuild, except the one value the clip dictates: the smallest rise
-            // must keep clip playback at or below 1.8x (review D2), so an older scene value is raised here.
-            float riseFloor = 0.5f * disc.gravity * Mathf.Pow(facts.rise / 1.8f, 2f);
-            if (catcher.minRootRise < riseFloor) catcher.minRootRise = Mathf.Ceil(riseFloor * 100f) / 100f;
-            disc.catcher = catcher;
+            ConfigureCatcher(catcher, disc, dogT, animator, mouth, facts);
             var launcher = Add<KH_FrisbeeLauncher>(stand); launcher.frisbee = disc; launcher.catcher = catcher; launcher.muzzle = muzzle; launcher.recallOnly = false;
             UdonSharpEditorUtility.GetBackingUdonBehaviour(launcher).InteractionText = "Throw (fixed)";
             var recaller = Add<KH_FrisbeeLauncher>(recall); recaller.frisbee = disc; recaller.catcher = catcher; recaller.muzzle = muzzle; recaller.recallOnly = true;
@@ -208,9 +169,68 @@ namespace KominkaHillside.Editor
             Report("build-scene", "scene=" + ScenePath + " dog=KD_Dog_Lab mouthOffsetCatch=" + facts.mouthOffsetCatch.ToString("F3") + " droppedNetworkIds=" + dropped + "; run 5 Verify.");
         }
 
-        struct Facts { public Vector3 mouthOffsetCatch, mouthOffsetStand; public float crouch, rise, recover, clipLength; }
+        // ---------------------------------------------------------------- shared with the world-scene builder
+        // Disc GameObject (Rigidbody / VRCPickup / VRCObjectSync / KH_Frisbee) plus its aim preview objects
+        // ("<name>_Aim" beside it) and the held (see-through) material. Idempotent by name; 'created' tells the
+        // caller whether to place it (placement is human-owned once it exists; review M4).
+        public static KH_Frisbee BuildDisc(Transform parent, string name, string materialName, Color color, out bool created)
+        {
+            var existing = parent.Find(name);
+            created = existing == null;
+            var discGo = Prim(name, PrimitiveType.Cylinder, parent);
+            discGo.layer = PickupLayer; discGo.transform.localScale = new Vector3(.24f, .012f, .24f);
+            var cap = discGo.GetComponent<CapsuleCollider>(); if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
+            var box = discGo.GetComponent<BoxCollider>(); if (box == null) box = discGo.AddComponent<BoxCollider>(); box.size = new Vector3(1f, 2f, 1f);
+            var discMat = Mat(materialName, color);
+            discGo.GetComponent<Renderer>().sharedMaterial = discMat;
+            var rb = discGo.GetComponent<Rigidbody>(); if (rb == null) rb = discGo.AddComponent<Rigidbody>();
+            rb.mass = .15f; rb.drag = .4f; rb.angularDrag = 1f; rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+            var pickup = discGo.GetComponent<VRCPickup>(); if (pickup == null) pickup = discGo.AddComponent<VRCPickup>();
+            pickup.proximity = 1f; pickup.InteractionText = "Disc"; pickup.orientation = VRC_Pickup.PickupOrientation.Any; pickup.ThrowVelocityBoostScale = 1.5f;
+            if (discGo.GetComponent<VRCObjectSync>() == null) discGo.AddComponent<VRCObjectSync>();
+            var disc = Add<KH_Frisbee>(discGo);
+            // Aim preview: a line along the predicted path and a landing marker, shown to the holder only.
+            var aimRoot = Obj(name + "_Aim", parent);
+            var lineGo = Obj("AimLine", aimRoot.transform);
+            var line = lineGo.GetComponent<LineRenderer>(); if (line == null) line = lineGo.AddComponent<LineRenderer>();
+            var aimMat = Mat("KH_FrisbeeAim", new Color(.3f, .9f, 1f, .8f));
+            line.sharedMaterial = aimMat; line.useWorldSpace = true; line.startWidth = .03f; line.endWidth = .015f; line.positionCount = 0; line.enabled = false;
+            line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; line.receiveShadows = false;
+            var marker = Prim("AimMarker", PrimitiveType.Cylinder, aimRoot.transform);
+            var mc = marker.GetComponent<Collider>(); if (mc != null) UnityEngine.Object.DestroyImmediate(mc);
+            marker.transform.localScale = new Vector3(.34f, .004f, .34f); marker.GetComponent<Renderer>().sharedMaterial = aimMat; marker.SetActive(false);
+            disc.aimLine = line; disc.aimMarker = marker.transform; disc.aimLaunch = true; disc.aimSpeed = 7.5f; disc.aimSpeedMin = 4f; disc.aimSpeedMax = 11f;
+            // Held look: the holder sees the disc at 25% so the preview line is not hidden behind it.
+            string heldPath = Data + "/" + materialName + "Held.mat"; var held = AssetDatabase.LoadAssetAtPath<Material>(heldPath);
+            if (held == null) { held = new Material(Shader.Find("Legacy Shaders/Transparent/Diffuse")); held.color = new Color(color.r, color.g, color.b, .25f); AssetDatabase.CreateAsset(held, heldPath); }
+            disc.discRenderer = discGo.GetComponent<Renderer>(); disc.discMaterial = discMat; disc.discHeldMaterial = held;
+            // Flight model: code-owned (the Verify integration check and the fixed throw assume these). Tune in the
+            // Inspector during Play, then copy the numbers here; a rebuild restores them.
+            disc.gravity = 9.81f; disc.drag = 0.15f; disc.lift = 0.30f; disc.liftCap = 0.95f; disc.maxSpeed = 11f;
+            disc.desktopMinThrowSpeed = 6f; disc.desktopMaxThrowSpeed = 11f; disc.desktopThrowRise = 0.25f; // a short press must still fly ~2 s
+            var descriptor = UnityEngine.Object.FindObjectOfType<VRCSceneDescriptor>();
+            if (descriptor != null) disc.respawnBelowY = descriptor.RespawnHeightY;
+            return disc;
+        }
 
-        static Facts ReadFacts()
+        // Pose facts (from the clip JSON) and the code-owned tuning; neighbours / play area are the caller's.
+        public static void ConfigureCatcher(KH_FrisbeeCatch catcher, KH_Frisbee disc, Transform dogRoot, Animator animator, Transform mouth, Facts facts)
+        {
+            catcher.dogRoot = dogRoot; catcher.dogAnimator = animator; catcher.mouthAnchor = mouth; catcher.frisbee = disc;
+            catcher.mouthOffsetCatch = facts.mouthOffsetCatch; catcher.mouthOffsetStand = facts.mouthOffsetStand;
+            catcher.clipCrouchDuration = facts.crouch; catcher.clipRiseDuration = facts.rise; catcher.clipRecoverDuration = facts.recover;
+            catcher.groundLayerMask = (1 << 0) | (1 << 11);
+            catcher.takeoffSpeed = 2.5f; catcher.chaseRunSpeed = 4.5f; catcher.standoffDistance = 8f; // code-owned, same rule as the flight model
+            // Inspector tuning survives a rebuild, except the one value the clip dictates: the smallest rise
+            // must keep clip playback at or below 1.8x (review D2), so an older scene value is raised here.
+            float riseFloor = 0.5f * disc.gravity * Mathf.Pow(facts.rise / 1.8f, 2f);
+            if (catcher.minRootRise < riseFloor) catcher.minRootRise = Mathf.Ceil(riseFloor * 100f) / 100f;
+            disc.catcher = catcher;
+        }
+
+        public struct Facts { public Vector3 mouthOffsetCatch, mouthOffsetStand; public float crouch, rise, recover, clipLength; }
+
+        public static Facts ReadFacts()
         {
             string path = KH_FrisbeeJumpClipEditor.FactsPath;
             if (!File.Exists(path)) throw new InvalidOperationException("Run 2 Build Jump Clip first (" + path + ")");

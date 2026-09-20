@@ -16,6 +16,9 @@ namespace KominkaDogRun
     public partial class KD_DogWanderController
     {
         public KominkaHillside.KH_LeashManager hillsideLeashes;
+        // IMP-DOG-005: the disc catcher moves the root (Ready and engaged); Wander yields exactly as it does for Fetch.
+        public KominkaHillside.KH_FrisbeeCatch frisbeeCatch;
+        private bool FrisbeeActive { get { return frisbeeCatch != null && !frisbeeCatch.IsIdle; } }
         // Read by sibling dogs of the same holder to stagger invitations. Meaningful on the dog Owner only.
         [HideInInspector] public int leashMode;
         [HideInInspector] public float leashInviteEndedAt = -1000f; // pack-wide quiet gap between invitations
@@ -72,6 +75,7 @@ namespace KominkaDogRun
             _wasLeashed = true;
             // Fetch cancels on its own owner tick. Never write the root concurrently with it.
             if (fetchController != null && !fetchController.IsIdle) return true;
+            if (FrisbeeActive) return true; // an airborne dog lands before the leash moves it (KH_FrisbeeCatch yields)
             _wantSleep = false; _paused = false;
             _lastBusyTime = Time.time;
             VRCPlayerApi holder = VRCPlayerApi.GetPlayerById(hillsideLeashes.walkers[dogIndex]);

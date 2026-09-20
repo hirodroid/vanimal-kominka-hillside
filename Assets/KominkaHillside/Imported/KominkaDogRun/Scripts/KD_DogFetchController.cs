@@ -51,6 +51,8 @@ namespace KominkaDogRun
         [Header("配線 (Tools/KominkaDogRun/Fetch System が設定する)")]
         public Transform dogRoot;
         public KominkaHillside.KH_LeashManager hillsideLeashes;
+        // IMP-DOG-005: a thrown ball does not interrupt a disc chase / jump / carry (Ready does not block).
+        public KominkaHillside.KH_FrisbeeCatch frisbeeCatch;
         public Animator dogAnimator;
         [Tooltip("ko-gi- 側 Bone.006 (顎) の子。くわえたボールの表示位置")]
         public Transform mouthAnchor;
@@ -810,6 +812,7 @@ namespace KominkaDogRun
         bool StartFetch(int playerId)
         {
             if (hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex)) return false;
+            if (frisbeeCatch != null && frisbeeCatch.IsEngaged) return false;
             // **Fetch が始まる唯一の口。** `_OnBallThrown` (ローカル) と
             // `ReqStartFetch` (ネットワーク経由) の両方がここを通るので、
             // 判定を 1 箇所に置けば経路ごとの書き分けが要らない

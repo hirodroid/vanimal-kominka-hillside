@@ -1311,7 +1311,8 @@ namespace KominkaDogRun
             if (fetchController == null) { _behaviorSelectionValid = false; Coast(); NotifyPlay(); return; }
 
             // ---- 割り込み 1: Fetch 中は何もしない (dogState は同期済み — 全員一致) ----
-            if (!fetchController.IsIdle)
+            // IMP-DOG-005: フリスビー中 (Ready を含む。root と Animator を KH_FrisbeeCatch が書く) も同じ扱い
+            if (!fetchController.IsIdle || FrisbeeActive)
             {
                 _behaviorSelectionValid = false;
                 _lastBusyTime = Time.time;

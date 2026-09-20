@@ -39,6 +39,7 @@ namespace KominkaHillside
         [Header("おもちゃ")]
         public TextMeshProUGUI[] toyState;     // 6
         public Image[] toyImages;
+        public Image[] discImages;             // 6 (IMP-DOG-005)
         public TextMeshProUGUI toyNote;
         [Header("Look (KominkaDogRun tokens)")]
         public Color actionPrimary = new Color(.35f, .50f, .30f);
@@ -71,6 +72,7 @@ namespace KominkaHillside
         private float _noteUntil;
         private string _note = "";
         private int _toyRow = -1;
+        private int _toyKind = 0;
         // Requests are confirmed against the shared state (attach/detach/destination) or the authority's reply (gather).
         private int _pendingKind;              // 0 none, 1 attach, 2 detach, 3 destination, 4 gather start, 5 gather end
         private int _pendingDog, _pendingHand, _pendingDest;
@@ -260,13 +262,16 @@ namespace KominkaHillside
         // ---- おもちゃ ----
         public void _Toy0() { Toy(0); } public void _Toy1() { Toy(1); } public void _Toy2() { Toy(2); }
         public void _Toy3() { Toy(3); } public void _Toy4() { Toy(4); } public void _Toy5() { Toy(5); }
-        private void Toy(int row)
+        private void Toy(int row) { Toy(row, KH_ToyRecall.KindBall); }
+        public void _Disc0() { Toy(0, KH_ToyRecall.KindDisc); } public void _Disc1() { Toy(1, KH_ToyRecall.KindDisc); } public void _Disc2() { Toy(2, KH_ToyRecall.KindDisc); }
+        public void _Disc3() { Toy(3, KH_ToyRecall.KindDisc); } public void _Disc4() { Toy(4, KH_ToyRecall.KindDisc); } public void _Disc5() { Toy(5, KH_ToyRecall.KindDisc); }
+        private void Toy(int row, int kind)
         {
             if (recall == null) return;
-            int gate = recall._Gate(row);
-            if (gate != KH_ToyRecall.Ok) { Note(ToyText(gate)); Draw(); return; }
-            _toyRow = row;
-            recall._Recall(row);
+            int gate = recall._GateToy(row, kind);
+            if (gate != KH_ToyRecall.Ok) { Note(gate == KH_ToyRecall.Unwired && kind == KH_ToyRecall.KindDisc ? "この子のフリスビーはまだです" : ToyText(gate)); Draw(); return; }
+            _toyRow = row; _toyKind = kind;
+            recall._RecallToy(row, kind);
             Note("目の前へ呼びます…");
             Draw();
         }
@@ -389,18 +394,29 @@ namespace KominkaHillside
             for (int i = 0; i < 6; i++)
             {
                 int gate = recall._Gate(i);
-                string state = gate == KH_ToyRecall.Ok ? "呼べる" : gate == KH_ToyRecall.Held ? "だれかが持っている" : gate == KH_ToyRecall.DogBusy ? "犬が遊んでいる" : gate == KH_ToyRecall.Pending ? "呼んでいる途中" : gate == KH_ToyRecall.Cooldown ? "少し待つ" : "使えない";
+                int discGate = recall._GateToy(i, KH_ToyRecall.KindDisc);
+                string state = "ボール: " + ShortState(gate) + " ／ フリスビー: " + (discGate == KH_ToyRecall.Unwired ? "まだ" : ShortState(discGate));
                 if (toyState != null && i < toyState.Length && toyState[i] != null) toyState[i].text = state;
                 Tint(toyImages, i, gate == KH_ToyRecall.Ok ? actionPrimary : disabled);
+                Tint(discImages, i, discGate == KH_ToyRecall.Ok ? actionPrimary : disabled);
             }
             int result = recall._LastResult();
-            string fallback = "ボールは 1 個ずつ、目の前の地面に置きます";
-            if (_toyRow >= 0 && recall._LastRow() == _toyRow && result >= 0)
+            string fallback = "おもちゃは 1 つずつ、目の前の地面に置きます。フリスビーは持つと軌道が見え、Use で飛びます";
+            if (_toyRow >= 0 && recall._LastRow() == _toyRow && recall._LastKind() == _toyKind && result >= 0)
             {
                 fallback = result == 0 ? "目の前に置きました" : result == 1 ? "いまは呼べませんでした" : "うまくいきませんでした。もう一度どうぞ";
                 if (Time.time >= _noteUntil) { _note = fallback; _noteUntil = Time.time + 3f; _toyRow = -1; }
             }
             if (toyNote != null) toyNote.text = NoteOrDefault(fallback);
+        }
+        private string ShortState(int gate)
+        {
+            if (gate == KH_ToyRecall.Ok) return "呼べる";
+            if (gate == KH_ToyRecall.Held) return "持たれ中";
+            if (gate == KH_ToyRecall.DogBusy) return "遊び中";
+            if (gate == KH_ToyRecall.Pending) return "呼び中";
+            if (gate == KH_ToyRecall.Cooldown) return "少し待つ";
+            return "使えない";
         }
         private void Tint(Image[] images, int i, Color color)
         {

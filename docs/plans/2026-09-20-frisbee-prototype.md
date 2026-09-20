@@ -55,6 +55,100 @@
 | U2 中: 成否が予測のみで、表示ディスクとの差を制限しない | **見送り**: 1 人試作では差 0。2 人検証で observed-predicted を記録してから設計 |
 | M5 低: 6 匹に複製すると `frisbee.catcher` が Start 順で上書き | 試作は 1 対 1 (Verify)。展開時に担当裁定を設計 |
 
+## 段階 2: 本シーン導入の計画 (2026-09-21 起案 → Codex P/M/D レビュー反映)
+
+前提 (ユーザー決定): **散歩のラブにそのまま付ける** (別個体は用意しない。不変条件 1)。VR 確認は本シーンで行う。試作シーンは調整用に残す。**フリスビーは「おもちゃの一覧に増えた、動きの違う 1 種類」** (ユーザー 2026-09-21): 犬ごとに 1 枚、色はその犬の識別色。ボール系の見た目違い (まり・たい焼き) やディスクの柄違いは各おもちゃの中の話として後回し (DES-DOG-002)。段階 2 で配線するのはラブの 1 枚だけで、6 匹展開は「ディスクと Catch を 5 つ足す」だけになる構成にする。
+
+### 置くもの
+
+| もの | 場所・配線 | 所有者 |
+|---|---|---|
+| `KH_FrisbeeCatch_Lab` (Manual 同期、別 GameObject) | `KH_Dogs` 直下、`KD_FetchSystem_Lab` と同じ並び。`dogRoot` = `KD_Dog_Lab`、`dogAnimator` / `mouthAnchor` = Fetch と同じ参照、`frisbee` = 下のディスク、`hillsideLeashes` / `fetch` / `wander` / `activities` / `dogIndex`、pose facts = 試作と同じ JSON | 配線・pose facts・飛行値・追走速度は Build が毎回書く。`playArea` (広場中心・半径) はコード正本 (`KH_TerrainPrototypeConfig.Flats[PlazaFlat]`) |
+| `KH_Frisbee_Lab` (Rigidbody / VRCPickup / VRCObjectSync / KH_Frisbee、layer Pickup、照準線・マーカー・半透明材質。色 = ラブの識別色 = ボールと同じ黄) | 広場のボール置き場の隣に `DiscHome(i)` (ボールと同じ規則、段階 2 は i = Lab のみ)。VRCObjectSync の Respawn 位置 = ここ | **位置・回転はディスクを新規作成したときだけ書く** (M4: 既存 Build の `initial` は `KH_Dogs` の有無なので流用しない。ボールは意図的に毎回だが、ディスクは人の配置を守る) |
+| 「おもちゃ」ページ | **6 犬の行はそのまま**、各行に「ボール」「フリスビー」の 2 ボタン (タブは増やさない)。`KH_ToyRecall` は「犬番号 + おもちゃ種類」で門番と回収 (`discs[6]` / `discCatchers[6]`、ラブ以外は null = 「まだ」表示)。犬番号とおもちゃの対応は崩さない (M5) | Build が毎回 |
+| 試作専用の台・回収ボタン | 置かない (手で持って照準モード) | — |
+
+### 状態と「使用中」の定義 (M1)
+
+- `IsIdle` = state == Idle。`IsEngaged` = state が Chase / Jump / JumpCarry / Land / LandCarry / Retrieve / Pickup / Return / Drop (**Ready は含まない**)。
+- **Ready (持たれている間の位置取り)** は「他の遊びを奪わない」。開始条件 = `CanPlay()` (下表) が全て真。継続条件 = 毎フレーム同じ `CanPlay()`。偽になったら即 Idle (Ready は地上で止まっているだけなので、割り込む側が root を動かしてよい)。
+- **投球 (ReqCatch)** も同じ `CanPlay()` を通る。Idle→Ready と ReqCatch の受付を 1 つの関数にする。
+- Ready 中のボール投球: **Fetch が勝つ** (Fetch は Ready を見ないので始まる → 犬側が `!fetch.IsIdle` を見て Ready→Idle)。Ready 中のリード接続・集合も同様に成立する。
+
+| `CanPlay()` の条件 | 正本 (M3) |
+|---|---|
+| リードされていない | `hillsideLeashes._IsLeashed(dogIndex)` |
+| Fetch していない | `fetch.IsIdle` |
+| 集合・かけっこの対象でない | `activities.Mode == 1 && activities._IsParticipant(dogIndex)`、`activities.Mode == 2` |
+| おやつ対応中でない | `wander.IsTreatBusy` (**Fetch の通常投球は拒否しない項目。フリスビーは意図して拒否**: 食べている最中に位置取りへ走り出さない) |
+| 休憩・寝ていない | `wander.IsResting`、`wander.IsAsleep` |
+| 寝床・ライブ | この世界には配置していない (Build が null にする)。Verify で「未配線」を検査し、再導入時は競合検証を必須にする |
+| 遊べる場所 | ディスクの発射点と Ready の目標が `playArea` (広場の円) の内側 (P2: 斜面・広場の縁・地面のない前方へは Ready も追走も出さない。計画の候補が地面検査で落ちるのは保険であって保証ではない) |
+
+### 取り合いの規則
+
+| 状況 | 規則 | 実装箇所 |
+|---|---|---|
+| フリスビー Engaged | Wander は動かない (Fetch 中と同じ扱い。休憩・寝床の凍結解除も同じ) | `KD_DogWanderController.Update` の Fetch ゲートの隣に `!frisbeeCatch.IsIdle` (Ready 中も Wander は root を書かない)。`HillsideLeash` の Fetch ゲートも同じ |
+| Engaged 中に投げられたボール | Fetch は始まらない | `KD_DogFetchController.StartFetch` に `frisbeeCatch.IsEngaged` (**受付の唯一の口**) |
+| Engaged 中のリード接続要求 | 拒否 | `KH_LeashManager.ReqAttach` の `fetchers[dog].IsIdle` の隣 |
+| Engaged 中の集合対象 | 選ばれない | `KD_GroupActivities.Available` |
+| **同期遅延で両立してしまったとき** (D2) | **受理済みのリード・集合参加が勝つ**。犬側は Owner tick で観測し、地上なら即 GiveUp (ディスクを放す)、空中なら「キャッチ・持ち帰りを中止予約」して着地後に Idle。着地までリード・集合側は root を動かさない (Wander が `!IsIdle` で待つ) | `KH_FrisbeeCatch.Update` (Fetch の `_IsLeashed → GiveUp` と同じ形) |
+| 撫で (M2) | **Ready の静止中は許可、Engaged 中は抑制** (ジャンプ中に頭の骨へ追加回転を書かせない) | `KD_DogPetController` の Fetch 用ゲート (`dogState != Idle`) の隣に `frisbeeCatch.IsEngaged` |
+| 共有 Animator の担当 (M2) | Idle 中はフリスビーが Animator を**書かない** (試作の `Coast()` を Idle から外す)。非 Idle へ入るとき自分の出力キャッシュを無効化して書き直す。Idle へ戻るとき Wander の出力を失効させる (Fetch と同じ `wander._InvalidateLeashAnimation()`) | `KH_FrisbeeCatch.ApplyState` |
+
+### Owner の契約 (D1)
+
+- dogRoot・`KD_FetchSystem_Lab`・`KH_FrisbeeCatch_Lab` は**同じ Owner** が前提 (既存の Fetch と同じ。犬側で SetOwner を呼ばない。分かれるのはマスター交代の一瞬で、収束する)。
+- ディスクは `KH_FrisbeeCatch_Lab` の Owner へ ReqCatch を送り、受信側は dogRoot の Owner でなければ捨てる。不一致は Fetch の `WarnIfOwnerSplit` と同じ警告を出し、受付を止める (継続の実装はしない)。退出試験では 3 者の Owner を記録する。
+
+### ディスクの回収と場外 (D3)
+
+- メニュー回収: Owner 取得を待つ → 使用状態を再確認 (`IsHeldNow` / `catcher.IsEngaged`) → `KH_Frisbee._Recall()` (飛行終了 + 犬へ EndGrabbed) → 頭の向き 1.2 m 先の地面へ (ボールと同じ置き方)。飛行中でも回収できる (犬が投球を拒否した飛行中のディスクを戻す手段)。
+- 場外: 飛行中に `RespawnHeightY` を下回ったら `EndFlight` (EndTimeout) → VRCObjectSync の Respawn が台へ戻す。犬は終了通知で Idle。
+
+### 途中参加 (D4)
+
+同期は state / throwerId / animSpeed のみ。合格条件: Ready・飛行・くわえ帰還・中断後は root と口元のディスク・Pickup 可否が復元される。**ジャンプ中に入った人のクリップ位相のずれは許容**し、着地後に通常表示へ戻ることを合格条件にする。
+
+### 負荷 (D5) と端末 (D6)
+
+- Ready の目標 (頭の向き 8 m 先) の更新を 10 Hz に間引く (移動の補間は毎フレーム)。本シーンで「未保持 / 保持+Ready / 投球」の増分を `vrc-performance` の手順で測る。
+- 照準線 (LineRenderer 40 点 + 区間レイ) は保持者のクライアントだけ。半透明材質 (`Legacy Shaders/Transparent/Diffuse`) は Android/iOS ビルドで shader 参照を確認し、実機で両眼表示・地面との重なり・可読性を見る。PCVR 合格を Quest/iOS 合格に読み替えない。
+
+### やらないこと (段階 2 の範囲外)
+
+他 5 匹への展開・ディスク複数・犬の割当 (DES-DOG-002)、斜面でのジャンプの制作 (Issue 対象外。**安全な中止条件は上の playArea で今回入れる**)、ダッシュ (並走) とフリップ (別 Issue)、音・エフェクト、Owner 交代時の継続。
+
+### Verify に足す項目 (M5)
+
+6 匹維持・Catch はラブだけ・ディスク 1 対 1 (他 5 匹は未配線で正常) / Catch の backing が Manual、dogRoot・Animator・口参照が Fetch と一致 / pose facts JSON = proxy = backing、Jump とクリップ、minRootRise の下限 / Wander・Fetch・Manager・集合・回収・撫での追加参照 (保存・再読込後の backing) / メニュー 7 行の表示・イベント・対象、材質参照 / playArea が広場の平坦と一致 / NetworkID の欠損・重複 0 / 寝床・ライブが未配線。
+
+### ゲート
+
+Editor 検査 (`Walking/5 Verify` に上の項目) + Codex D/M → **NetworkID の失敗を解消** → Build & Test → PCVR 1 人 (本シーン用チェックリスト) → 2 人。Quest/iOS は残件として別途。
+
+### 段階 2 の実装記録 (2026-09-21)
+
+- 変更: `KH_FrisbeeCatch` (CanPlay / Claimed / IsEngaged、Ready の 10 Hz 目標更新と playArea への丸め、空中で譲る予約 → 着地後に GiveUp、Idle で Animator を書かない + 出入りでキャッシュ失効 + Wander の失効、撫での Suppress/Resume、Owner 不一致警告)、`KH_Frisbee` (Respawn 高さで飛行終了)、`KD_DogWanderController` / `.HillsideLeash` (フリスビー中ゲート = Fetch と同じ枝)、`KD_DogFetchController.StartFetch`、`KD_GroupActivities.Available`、`KH_LeashManager.ReqAttach`、`KH_ToyRecall` (おもちゃ種類: ボール / ディスク、ディスク回収は `_Recall` → 配置)、`KH_HandMenu` (各犬の行に「ボール」「フリスビー」の 2 ボタン、状態は短語で 2 種併記、ラブ以外は「まだ」)、`KH_HandMenuEditor` (2 ボタン、語彙を字形へ追加 = 2 字、ボタン数検査 46)、`KH_DogWalkingEditor` (`FrisbeeKeys = {Lab}`、`DiscHome(i)` = ボールの 2.2 m 後ろ、ディスクは新規作成時だけ配置、Catch と近隣の配線、playArea = 広場の円、Verify 12 項目追加)、`KH_FrisbeePrototypeEditor` (ディスク生成・Catch 設定を共有ヘルパへ抽出)。
+- Editor 検証: C# / U# エラー 0、Console 0。**Walking Verify 134/134** (レビュー是正後) (フリスビー: Lab のみ配線・他 5 匹は意図して未配線、root/Animator/口の共有、近隣参照、Manual/None、pose facts = JSON、Animator の Jump、広場上、playArea、部品、backing、寝床/ライブ未配線)。**Menu Verify 22/22**。試作シーン Verify 35/35 (回帰)。
+- NetworkID: 18:47 の Build 失敗を SDK の割当ロジックで再現したところ **エラー 0** (86 件、新規 2 = ディスクと Catch を保存済み、重複 0)。未保存だった別作業のオブジェクトが原因だった可能性が高い。次の Build & Test で確認。
+- 未実施: 本シーンでの Play・PCVR・2 人。
+
+#### 独立レビューと是正 (段階 2、Codex D/M、2026-09-21)
+
+| 指摘 | 対応 |
+|---|---|
+| D1 高: playArea が受付位置にしか効かず、外向きの投球で犬が広場を出る | 犬が行く場所すべて (ため開始点・キャッチ根元・着地点・走り抜けの根元・地上回収先・追走の目標) を playArea (余白なし) で検査し、外なら候補を捨てる / 中止。受付だけ余白 2 m |
+| D2 高: Idle 復帰で `_speed` と Animator の speed が残り、Ready→Idle 後も Run/Walk を立て直す | Idle 遷移で `_speed=0`、speed=1 を書き戻し、Idle では Animator を一切書かない (状態別更新の後に Idle を再確認) |
+| D3 高: Fetch の受信 (`ApplyState`) が Idle のたびに `_ResumePetting` を呼び、Engaged 中の抑制を解く | Fetch の再開条件に `frisbeeCatch.IsEngaged` を追加 (Fetch 側 1 行) |
+| D4 中: 譲る予約中も新規キャッチする | 予約中はキャッチ判定を通さない (くわえていた場合だけ着地後に放す) |
+| D5 中: 場外 (EndTimeout) の後に Respawn 済みのディスクを拾いに行く | Grabbed と Timeout は回収対象外に統一 (`Retrievable()`) |
+| M1 中: 「FrisbeeKeys に足すだけ」だが facts/クリップ/Jump は Lab 固定 | Build は `KH_FrisbeeJumpClipEditor.Breed` 以外のキーを明示的に拒否 (例外)。6 匹展開時は犬キーから facts/クリップ/Controller を解決する入口を作る (段階 3) |
+| M2 中: Verify が backing の一部しか見ない、回収配列は非 null のみ、NetworkID は dangling のみ | backing で全 pose facts + playArea + 近隣参照 + dogIndex、Wander/Fetch の backing `frisbeeCatch`、回収/Manager/集合の配列が各犬の実物と一致、NetworkID の ID・GameObject 重複と同期物の未登録を検査 (134 項目) |
+
+是正後: Walking Verify **134/134**、Menu Verify 22/22、C#/U# エラー 0、Console 0。
+
 ## Play チェックリスト (段階 1〜2。上から順に、必要人数順)
 
 事前: Console にエラー無し / `KH_FrisbeePrototype.unity` を開く (ワールドシーンの未保存編集は先に保存するか捨てる) / Play 前に Verify が失敗 0 であること。
@@ -83,6 +177,23 @@
 - [ ] 飛行中に人が掴む: 犬が中止して Idle に戻る
 - [ ] くわえて戻る途中に「Recall disc」を押す: 拒否される (ログ)。Idle 中に押すと台へ戻る
 - [ ] ディスクを崖外相当 (y < −20) へ落とす手段が無いので、代わりに Recall で復帰できることを確認
+
+### 本シーン (段階 2、1 人 → 2 人)
+
+事前: `VRCDefaultWorldScene` を開く / Console エラー無し / Walking Verify 134・Menu Verify 22 が失敗 0 / Build & Test をし直した。
+
+- [ ] 広場のボール置き場の 2.2 m 後ろにラブの黄色いディスクが 1 枚ある。手元メニュー「おもちゃ」に各犬の行「ボール」「フリスビー」があり、ラブ以外のフリスビーは「まだ」
+- [ ] ディスクを持つとラブが 8 m 前へ走って自分を向く (Ready)。ほかの 5 匹は散歩・自由行動のまま
+- [ ] 線を犬の少し先に置いて Use → ラブが跳んで取り、持ち帰って 0.9 m 手前で止まる。3 秒以内に口から取れる
+- [ ] 取ったあと Idle に戻ったラブが普通に自由行動へ戻る (立ちっぱなし・走りっぱなしにならない = Animator の引き継ぎ)
+- [ ] ラブが Ready で待っている間に撫でられる。追走・ジャンプ・持ち帰り中は撫でが効かない
+- [ ] Ready 中にラブへリードをつなぐ → つながり、Ready が解ける。Ready 中にラブのボールを投げる → Fetch が始まり Ready が解ける
+- [ ] 追走〜持ち帰り中にリードをつなごうとする → つながらない。集合を始める → ラブは選ばれない
+- [ ] ラブをリードで連れている間にディスクを持つ → ラブは位置取りしない。投げても追わない (地面に落ちる)
+- [ ] 広場の外 (坂・見晴らし) でディスクを持つ → 位置取りしない。広場の外へ投げる → 追わない
+- [ ] メニュー「フリスビー」で回収: Idle なら目の前へ。飛行中に呼ぶ → 飛行が止まって目の前へ来て、犬は追わない
+- [ ] ディスクを崖下へ落とす (Respawn 高さ) → 台へ戻り、犬は Idle
+- [ ] 他 5 匹の散歩・集合・ボール Fetch がこれまでどおり (回帰)
 
 ### 2 人 (実機)
 

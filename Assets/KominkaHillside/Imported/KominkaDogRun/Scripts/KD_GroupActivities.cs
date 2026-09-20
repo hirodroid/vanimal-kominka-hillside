@@ -144,11 +144,14 @@ namespace KominkaDogRun
             if (wasGather && hillsideLeashes != null) hillsideLeashes._OnGatherEnded(participants);
         }
 
+        public KominkaHillside.KH_FrisbeeCatch[] frisbeeCatchers; // hillside: per dog, null where no disc yet
+
         public bool Available(int i) // net: callable-ok: read-only eligibility
         {
             if (pack == null || pack.dogFetch == null || i < 0 || i >= pack.dogFetch.Length) return false;
             KD_DogFetchController f = pack.dogFetch[i]; KD_DogWanderController w = pack.dogWander[i];
             if (hillsideLeashes != null && hillsideLeashes._IsLeashed(i)) return false;
+            if (frisbeeCatchers != null && i < frisbeeCatchers.Length && frisbeeCatchers[i] != null && frisbeeCatchers[i].IsEngaged) return false; // IMP-DOG-005
             if (Mode == 1 && !_IsParticipant(i)) return false;
             return f != null && w != null && f.gameObject.activeInHierarchy && f.IsIdle && !f.PetActive
                 && !w.CandyReserved

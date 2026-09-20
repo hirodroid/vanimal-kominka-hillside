@@ -18,6 +18,7 @@ namespace KominkaHillside
         public KominkaDogRun.KD_DogFetchController[] fetchers;
         public Transform[] roamCenters;
         public KH_LeashClip[] localClips;
+        public KH_FrisbeeCatch[] frisbeeCatchers; // per dog, null where the dog has no disc yet (IMP-DOG-005)
         public KH_WalkRoute route;
         public KominkaDogRun.KD_GroupActivities activities;
         // Leash stations: one slot per tool side. stationSlots[i] belongs to station stationOf[i], side slotHand[i].
@@ -163,6 +164,7 @@ namespace KominkaHillside
             if (Vector3.Distance(caller.GetPosition(), dogRoots[dog].position) > attachReach) return;
             // A carrying/chasing dog must finish its current Fetch before attachment; a gathering dog stays in formation.
             if (fetchers[dog] == null || !fetchers[dog].IsIdle || _IsGathering(dog)) return;
+            if (frisbeeCatchers != null && dog < frisbeeCatchers.Length && frisbeeCatchers[dog] != null && frisbeeCatchers[dog].IsEngaged) return;
             int count = 0;
             for (int i = 0; i < walkers.Length; i++) if (walkers[i] == caller.playerId && hands[i] == hand) count++;
             if (count >= 3) return;
