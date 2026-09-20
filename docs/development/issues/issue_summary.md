@@ -56,13 +56,14 @@ priority: High    # High / Medium / Low
 | [DES-ENV-001](DES-ENV-001-terrain-vs-blender.md) | High | 地形を Unity Terrain で作るか Blender で作るか (着手: 比較条件と切替基準 → VER-ENV-001 の実測で確定) | todo |
 | [VER-ENV-001](VER-ENV-001-prototype-view-and-edges.md) | High | 試作: 眺め・移動・端の見え方・実機負荷を確認する (代表シーン検証を兼ねる)。v4生成・PCVR総合評価は良好、境界・負荷は項目別検証中 | wip |
 | [IMP-DOG-001](IMP-DOG-001-port-dog-system.md) | High | 古民家ドッグランの犬ギミックを移植する (タグ `export/kominka-hillside-v1` + 移植記録) | wip |
-| [DES-DOG-001](DES-DOG-001-leash-walking.md) | High | リード散歩の操作・行動・同期を設計する。片手 3 匹・合計 6 匹を基準に未決定事項を詰める | wip |
+| [DES-DOG-001](DES-DOG-001-leash-walking.md) | High | 集合・目的地継承・拠点回収の契約を実装済み (Editor)。Play 後に停滞検知・端末別入力・購入権の双方向を詰める | wip |
 | [IMP-DOG-002](IMP-DOG-002-leash-walking.md) | High | 基本実装・PCVR体験好評。上限・競合・退出・途中参加などの項目別確認と修正 | wip |
 | [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、看板の分かりやすさ、Desktop/Touch、複数人 | wip |
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |
 | [DES-WLD-001](DES-WLD-001-round-trip.md) | Medium | 古民家からの出発・帰還と状態の扱いを設計する | todo |
-| [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) | High | 古民家型メニュー・接続補助・目的地選択を設計中。トレーナーの集合と最寄り拠点へのリード回収は方針合意、画面/競合/入力を具体化 | wip |
+| [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) | High | 手元メニュー (さんぽ/あそぶ/おもちゃ)・接続補助・目的地・集合・ボール回収を実装、Editor 検査済み。Play 確認待ち | wip |
 | [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビーなど挙動の違うおもちゃを設計する | todo |
+| [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | 平地・1匹でフリスビー飛行と基本ジャンプキャッチを試作する。口の位置と未来軌道を合わせ、4段階の姿勢・失敗時の動作・複数人の見え方を確認 | todo |
 | [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 裏山専用ライブと古民家の有料ライブ購入者の利用を設計する | todo |
 | [DES-WLD-002](DES-WLD-002-sound.md) | Medium | 裏山の音 (BGM・環境音) の方針・音源・ライブとの切替を設計する | todo |
 | [IMP-DOG-004](review/IMP-DOG-004-leash-models-release.md) | High | 首輪・リードの本制作。PCVR 1 人は合格。2 人・Quest/iOS・座位/木陰の確認待ち | review |
@@ -74,7 +75,7 @@ priority: High    # High / Medium / Low
 
 2026-09-20追加相談でIMP-DOG-003を目的地と通過点による自由な散歩へ具体化。目的地指定に必要なDES-DOG-001/ DES-UI-001の契約は散歩試作に先行させ、メニュー全体の完成を前提にしない。
 
-同日、ユーザー指示でBUG-DOG-001とIMP-DOG-003の手順1〜2を実装 ([記録](../../plans/2026-09-20-free-walk.md))。IMP-DOG-004の首輪・リードと合わせて次のPlay/PCVRで一括確認する。
+同日、ユーザー指示でBUG-DOG-001とIMP-DOG-003の手順1〜2を実装 ([記録](../../plans/2026-09-20-free-walk.md))。PCVR で好評。続けて DES-UI-001 / DES-DOG-001 の合意を実装 ([記録](../../plans/2026-09-20-menu-gather-stations.md))。次の Play/PCVR で一括確認する。
 
 ---
 

@@ -1,0 +1,22 @@
+PASS hand menu exists under KH_Dogs
+PASS font has every menu character (283 distinct, missing 0)
+PASS font is Static
+PASS authorities wired
+PASS panel and launcher start inactive
+PASS panel: WorldSpace canvas, VRCUiShape, raycaster, Walkthrough layer
+PASS panel 1140x700 at 1mm/px
+PASS three tabs and pages
+PASS walk rows 6
+PASS gather buttons and 6 inactive markers
+PASS toy rows 6
+PASS 40 buttons (39 panel + launcher) all wired to the menu Udon (40)
+PASS rounded buttons use Sliced sprites
+PASS every onClick names an existing _ handler
+PASS every button calls the handler its name implies
+PASS backing Udon holds manager/activities/pass/recall/panelRoot references
+PASS all reference arrays are allocated with no null element
+PASS three station plates open the menu by Interact
+PASS all 68 texts use the shared font
+PASS single-line texts tall enough for one line (cramped=0)
+PASS fixed labels fit their width (measured 51, overflow 0)
+TOTAL 21 FAILED 0

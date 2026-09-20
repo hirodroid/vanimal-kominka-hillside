@@ -38,6 +38,7 @@ KD_Ball_Dachs program=True symbols=19
 KD_StopAnchor_Corgi program=True symbols=14
 KH_Leashes program=True symbols=23
 KH_Leashes program=True symbols=13
+MenuPlate program=True symbols=2
 KH_WalkRoute program=True symbols=9
 Board_GATE program=True symbols=6
 Board_PLAZA program=True symbols=6
@@ -47,12 +48,15 @@ Board_GATE program=True symbols=6
 Board_PLAZA program=True symbols=6
 KH_TrainerPass program=True symbols=3
 KH_ToyRecall program=True symbols=7
+MenuPlate program=True symbols=2
+MenuPlate program=True symbols=2
 Clip0 program=True symbols=10
 Clip1 program=True symbols=10
 Clip2 program=True symbols=10
 Clip3 program=True symbols=10
 Clip4 program=True symbols=10
 Clip5 program=True symbols=10
+KH_HandMenu program=True symbols=45
 MANAGER ___UdonSharpBehaviourVersion___=System.Int32
 MANAGER leashLength=System.Single
 MANAGER attachReach=System.Single

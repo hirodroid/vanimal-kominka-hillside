@@ -74,7 +74,8 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 
 - 現在の品質・改善順: [開発全体像](development/overview.md) §3。
 - 最新の到達点 (`f25de23`): 目的地と通過点による自由な散歩 (IMP-DOG-003 手順1〜2)、ボールの広場配置 (BUG-DOG-001 完了)、首輪・リードの本制作 (IMP-DOG-004) を PCVR 1 人で確認し好評。[散歩の記録](plans/2026-09-20-free-walk.md)、[制作票](plans/2026-09-20-leash-asset-production.md)。
-- 次の主軸: **DES-UI-001** 古民家型メニュー本体 (目的地選択で仮看板を置き換え、接続補助、集合、ボール集め)。並行して **BUG-DOG-002** 持ち手の向きなどの UX 調整、**DES-WLD-002** 音の設計。順序は [開発全体像 §3](development/overview.md)。
+- 最新の着手: **DES-UI-001 / DES-DOG-001** の合意を実装 (手元メニュー 3 タブ、リード拠点、集合、ボール個別回収、共通購入権)。Editor 検査済み、Play/PCVR 待ち。[記録とチェックリスト](plans/2026-09-20-menu-gather-stations.md)。
+- 並行: **BUG-DOG-002** 持ち手の向き、**DES-WLD-002** 音の設計。順序は [開発全体像 §3](development/overview.md)。
 - 状態と実行キュー: [Issueサマリ](development/issues/issue_summary.md)。移植の出所は [移植記録](development/imports/kominka-dog-system.md)、ユーザー報告と項目別手順は [散歩検証記録](plans/2026-09-20-leash-walking.md)。
 
 Build は KH_World を作り直す。手修正は設定へ写してから再生成する。数値は Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeConfig.cs が正本。手置きは KH_World 外へ。

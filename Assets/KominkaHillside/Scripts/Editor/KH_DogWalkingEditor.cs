@@ -44,7 +44,7 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Walking/1 Create Programs")]
         public static void Programs()
         {
-            foreach (string name in new[]{"KH_LeashManager","KH_LeashClip","KH_LeashCollar","KH_WalkRoute","KH_WalkSign","KH_TrainerPass","KH_ToyRecall"})
+            foreach (string name in new[]{"KH_LeashManager","KH_LeashClip","KH_LeashCollar","KH_WalkRoute","KH_WalkSign","KH_TrainerPass","KH_ToyRecall","KH_HandMenu","KH_MenuOpener"})
             {
                 string path="Assets/KominkaHillside/Scripts/"+name;
                 if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(path+".asset") != null) continue;

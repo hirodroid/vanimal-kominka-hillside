@@ -24,6 +24,7 @@ namespace KominkaHillside
         public GameObject launcher;            // Touch only: screen-space [メニュー]
         public GameObject[] pages;             // 0 walk, 1 gather, 2 toys
         public Image[] tabImages;
+        public GameObject[] tabUnderlines;
         public TextMeshProUGUI titleText;
         [Header("さんぽ")]
         public TextMeshProUGUI[] walkState;    // 6
@@ -70,6 +71,11 @@ namespace KominkaHillside
         private float _noteUntil;
         private string _note = "";
         private int _toyRow = -1;
+        // Requests are confirmed against the shared state (attach/detach/destination) or the authority's reply (gather).
+        private int _pendingKind;              // 0 none, 1 attach, 2 detach, 3 destination, 4 gather start, 5 gather end
+        private int _pendingDog, _pendingHand, _pendingDest;
+        private float _pendingAt;
+        private float _nextMarkers;
 
         // ---- opening ----
         public void _Toggle() { OpenOrRecall(); }
@@ -107,7 +113,8 @@ namespace KominkaHillside
         {
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp)) return;
-            if (_eyeCooldown <= 0) { float eye = lp.GetAvatarEyeHeightAsMeters(); if (eye > .1f) _scale = eye / referenceEyeHeight; _eyeCooldown = 60; }
+            // Distance follows eye height like KominkaDogRun, clamped so tiny/huge avatars keep the board usable.
+            if (_eyeCooldown <= 0) { float eye = lp.GetAvatarEyeHeightAsMeters(); if (eye > .1f) _scale = Mathf.Clamp(eye / referenceEyeHeight, .75f, 1.5f); _eyeCooldown = 60; }
             _eyeCooldown--;
             if (_inputPoll <= 0) { _inputMethod = (int)InputManager.GetLastUsedInputMethod(); ApplyInputMode(); _inputPoll = 90; }
             _inputPoll--;
@@ -158,6 +165,7 @@ namespace KominkaHillside
             int gate = AttachGate(dog, hand);
             if (gate != 0) { Note(GateText(gate, hand)); Draw(); return; }
             manager._RequestAttach(dog, hand);
+            Pending(1, dog, hand, -1);
             Note(hand == 0 ? "左につなぎます…" : "右につなぎます…");
             Draw();
         }
@@ -165,6 +173,7 @@ namespace KominkaHillside
         {
             if (manager == null || !manager._IsMine(dog)) { Note("自分がつないでいる犬だけ外せます"); Draw(); return; }
             manager._RequestDetach(dog);
+            Pending(2, dog, -1, -1);
             Note("外します…");
             Draw();
         }
@@ -174,7 +183,8 @@ namespace KominkaHillside
             manager._ChooseDestination(destination);
             int mine = 0;
             for (int i = 0; i < manager.walkers.Length; i++) if (manager._IsMine(i)) mine++;
-            Note(mine == 0 ? "行き先をおぼえました。つないだ犬に伝えます" : "つないでいる " + mine + " 匹に伝えました");
+            if (mine == 0) Note("行き先をおぼえました。つないだ犬に伝えます");
+            else { Pending(3, -1, -1, destination); Note("つないでいる " + mine + " 匹に伝えます…"); }
             Draw();
         }
         private string GateText(int gate, int hand)
@@ -194,19 +204,49 @@ namespace KominkaHillside
         public void _GatherStart()
         {
             if (activities == null) return;
-            if (!Trainer()) { Note(pass != null && pass._Configured() && !pass._Loaded() ? "購入情報を読み込み中です" : "トレーナー特典です"); Draw(); return; }
+            if (!Trainer()) { Note(pass != null && pass._Configured() && !pass._Loaded() ? "購入情報を読み込み中です" : "集合はトレーナー特典です。購入画面からどうぞ"); Draw(); return; }
             if (activities.Mode != 0) { Note("開催中です"); Draw(); return; }
             if (GatherCount() == 0) { Note("集合できる犬がいません (つないでいる犬・遊んでいる犬は対象外)"); Draw(); return; }
             activities._Request(1, _shape, 0);
+            Pending(4, -1, -1, -1);
             Note("集合を頼みました…");
             Draw();
         }
         public void _GatherEnd()
         {
             if (activities == null || activities.Mode == 0) return;
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp) || activities.HostId != lp.playerId) { Note("終われるのは集合を始めた人です"); Draw(); return; }
             activities._Request(0, 0, 0);
+            Pending(5, -1, -1, -1);
             Note("終わります…");
             Draw();
+        }
+        private void Pending(int kind, int dog, int hand, int dest) { _pendingKind = kind; _pendingDog = dog; _pendingHand = hand; _pendingDest = dest; _pendingAt = Time.time; }
+        // Resolves the outstanding request from shared state; a request nobody answered within 4 s is reported as unknown.
+        private void PollPending()
+        {
+            if (_pendingKind == 0) return;
+            bool done = false, ok = false; string text = "";
+            if (_pendingKind == 1) { ok = manager._IsMine(_pendingDog) && manager.hands[_pendingDog] == _pendingHand; done = ok; text = _pendingHand == 0 ? "左手につなぎました" : "右手につなぎました"; }
+            else if (_pendingKind == 2) { ok = !manager._IsLeashed(_pendingDog); done = ok; text = "外しました"; }
+            else if (_pendingKind == 3)
+            {
+                bool all = true, any = false;
+                for (int i = 0; i < manager.walkers.Length; i++) if (manager._IsMine(i)) { any = true; if (manager.destinations[i] != _pendingDest) all = false; }
+                ok = any && all; done = ok; text = _pendingDest == 1 ? "広場へ向かいます" : "古民家側へ帰ります";
+            }
+            else if (_pendingKind == 4 || _pendingKind == 5)
+            {
+                int state = activities.LocalRequestState; // 1 waiting, 2 accepted, 3 rejected, 4 timed out
+                if (state == 2) { done = true; ok = true; text = _pendingKind == 4 ? "集合を始めました" : "集合を終えました"; }
+                else if (state == 3) { done = true; text = _pendingKind == 4 ? "ここには並べません (斜面が急すぎる・物がある・犬がいない・開催中)" : "終えられませんでした"; }
+                else if (state == 4) { done = true; text = "応答がありませんでした"; }
+            }
+            if (!done && Time.time - _pendingAt > 4f) { done = true; text = "結果を確認できませんでした。表示を見てもう一度どうぞ"; }
+            if (!done) return;
+            _pendingKind = 0;
+            Note(text);
         }
         public void _Buy() { if (pass != null) pass._OpenStore(); }
         private bool Trainer() { return pass != null && pass._Configured() && pass._OwnedBy(Networking.LocalPlayer); }
@@ -227,7 +267,7 @@ namespace KominkaHillside
             if (gate != KH_ToyRecall.Ok) { Note(ToyText(gate)); Draw(); return; }
             _toyRow = row;
             recall._Recall(row);
-            Note("手元へ呼びます…");
+            Note("目の前へ呼びます…");
             Draw();
         }
         private string ToyText(int gate)
@@ -244,20 +284,29 @@ namespace KominkaHillside
         private void Update()
         {
             bool visible = panelRoot != null && panelRoot.activeInHierarchy;
+            if (visible) PollPending();
             bool preview = visible && _tab == 1 && Trainer() && activities != null && activities.Mode == 0;
-            if (markers != null) for (int i = 0; i < markers.Length; i++)
+            // Markers: 10 Hz, only for dogs that would join, only where ground exists (a missing disc = no slot there).
+            if (markers != null && (!preview || Time.time >= _nextMarkers))
             {
-                if (markers[i] == null) continue;
-                markers[i].SetActive(preview);
-                if (!preview) continue;
+                _nextMarkers = Time.time + .1f;
                 VRCPlayerApi lp = Networking.LocalPlayer;
-                if (!Utilities.IsValid(lp)) continue;
-                Vector3 p = lp.GetPosition() + lp.GetRotation() * activities.Offset(_shape, i);
-                RaycastHit hit;
-                if (Physics.Raycast(p + Vector3.up * 1.5f, Vector3.down, out hit, 4f, groundMask, QueryTriggerInteraction.Ignore)) p.y = hit.point.y;
-                markers[i].transform.position = p + Vector3.up * .02f;
-                float d = activities.MarkerDiameter(i);
-                markers[i].transform.localScale = new Vector3(d, .005f, d);
+                for (int i = 0; i < markers.Length; i++)
+                {
+                    if (markers[i] == null) continue;
+                    bool show = preview && Utilities.IsValid(lp) && activities.Available(i);
+                    Vector3 p = Vector3.zero; RaycastHit hit;
+                    if (show)
+                    {
+                        p = lp.GetPosition() + lp.GetRotation() * activities.Offset(_shape, i);
+                        if (Physics.Raycast(p + Vector3.up * 1.5f, Vector3.down, out hit, 4f, groundMask, QueryTriggerInteraction.Ignore)) p.y = hit.point.y; else show = false;
+                    }
+                    markers[i].SetActive(show);
+                    if (!show) continue;
+                    markers[i].transform.position = p + Vector3.up * .02f;
+                    float d = activities.MarkerDiameter(i);
+                    markers[i].transform.localScale = new Vector3(d, .005f, d);
+                }
             }
             if (!visible || Time.time < _nextDraw) return;
             _nextDraw = Time.time + .25f;
@@ -268,6 +317,7 @@ namespace KominkaHillside
             if (panelRoot == null || !panelRoot.activeInHierarchy) return;
             for (int i = 0; i < pages.Length; i++) if (pages[i] != null) pages[i].SetActive(i == _tab);
             for (int i = 0; i < tabImages.Length; i++) if (tabImages[i] != null) tabImages[i].color = i == _tab ? tabOn : tabOff;
+            if (tabUnderlines != null) for (int i = 0; i < tabUnderlines.Length; i++) if (tabUnderlines[i] != null) tabUnderlines[i].SetActive(i == _tab);
             if (_tab == 0) DrawWalk(); else if (_tab == 1) DrawGather(); else DrawToys();
         }
         private string NoteOrDefault(string fallback) { return Time.time < _noteUntil ? _note : fallback; }
@@ -282,11 +332,7 @@ namespace KominkaHillside
                 bool isMine = manager._IsMine(i);
                 string state;
                 if (isMine) { state = manager.hands[i] == 0 ? "左手につないでいる" : "右手につないでいる"; mine++; if (manager.destinations[i] == 1) plaza++; else gate++; }
-                else if (leashed)
-                {
-                    VRCPlayerApi holder = VRCPlayerApi.GetPlayerById(manager.walkers[i]);
-                    state = (Utilities.IsValid(holder) ? holder.displayName : "だれか") + " が散歩中";
-                }
+                else if (leashed) state = "ほかの人が散歩中"; // no display names: the static font cannot render arbitrary glyphs
                 else if (manager._IsGathering(i)) state = "集合中";
                 else if (manager.fetchers[i] != null && !manager.fetchers[i].IsIdle) state = "ボールで遊び中";
                 else
@@ -313,28 +359,29 @@ namespace KominkaHillside
         {
             if (activities == null) return;
             bool trainer = Trainer();
-            bool loading = pass != null && pass._Configured() && !pass._Loaded();
+            bool configured = pass != null && pass._Configured();
+            bool loading = configured && !pass._Loaded();
             int mode = activities.Mode;
             string status;
-            if (!pass._Configured()) status = "集合は準備中です";
-            else if (loading) status = "購入情報を読み込み中…";
-            else if (!trainer) status = "集合はトレーナー特典です";
-            else if (mode == 1)
+            VRCPlayerApi me = Networking.LocalPlayer;
+            bool hosting = mode != 0 && Utilities.IsValid(me) && activities.HostId == me.playerId;
+            if (mode == 1)
             {
                 int left = Mathf.Max(0, 60 - Mathf.FloorToInt(activities.Elapsed));
-                VRCPlayerApi host = VRCPlayerApi.GetPlayerById(activities.HostId);
-                status = (Utilities.IsValid(host) ? host.displayName : "だれか") + " の集合中 (" + activities.ParticipantCount + " 匹・あと " + left + " 秒)";
+                status = (hosting ? "あなた" : "ほかの人") + "の集合中 (" + activities.ParticipantCount + " 匹・あと " + left + " 秒)";
             }
             else if (mode != 0) status = "ほかの遊びを開催中です";
+            else if (!configured) status = "集合は準備中です";
+            else if (loading) status = "購入情報を読み込み中…";
+            else if (!trainer) status = "集合はトレーナー特典です";
             else status = "集合できる犬: " + GatherCount() + " 匹 (つないでいる犬・遊んでいる犬は対象外)";
             if (gatherStatus != null) gatherStatus.text = status;
-            if (gatherNote != null) gatherNote.text = NoteOrDefault(trainer ? "隊形を選び、足元の印を見て「ここに集合」。坂でも並びます。1 分で解散し、その場で自由行動に戻ります" : "古民家で買った特典はここでも使えます");
-            for (int i = 0; i < 6; i++) Tint(formImages, i, i == _shape ? toggleOn : trainer ? actionNeutral : disabled);
+            if (gatherNote != null) gatherNote.text = NoteOrDefault(trainer ? "隊形を選び、足元の印を見て「ここに集合」。印が出ない枠はそこに並べません。坂でも並びます。1 分で解散し、その場で自由行動に戻ります" : "古民家で買った特典はここでも使えます");
+            int lit = mode == 1 ? activities.Formation : _shape;
+            for (int i = 0; i < 6; i++) Tint(formImages, i, i == lit ? toggleOn : trainer && mode == 0 ? actionNeutral : disabled);
             if (startImage != null) startImage.color = trainer && mode == 0 && GatherCount() > 0 ? actionPrimary : disabled;
-            VRCPlayerApi lp = Networking.LocalPlayer;
-            bool canEnd = mode != 0 && Utilities.IsValid(lp) && activities.HostId == lp.playerId;
-            if (endImage != null) endImage.color = canEnd ? actionNeutral : disabled;
-            if (buyImage != null) { buyImage.gameObject.SetActive(!trainer && !loading && pass._Configured()); buyImage.color = actionPrimary; }
+            if (endImage != null) endImage.color = hosting ? actionNeutral : disabled;
+            if (buyImage != null) { buyImage.gameObject.SetActive(!trainer && !loading && configured); buyImage.color = actionPrimary; }
         }
         private void DrawToys()
         {
