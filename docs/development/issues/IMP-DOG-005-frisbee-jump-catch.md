@@ -2,7 +2,7 @@
 id: IMP-DOG-005
 type: IMP
 system: DOG
-status: todo
+status: wip
 priority: Medium
 ---
 
@@ -91,6 +91,11 @@ AIはコンパイルと構造・設定を確認し、PlayとVRChat実機での�
 - 犬とディスクの所有権、キャッチ成否の裁定、所有者退出・途中参加時の復帰。
 - リード中・呼び出し・ほかのおもちゃとの優先順位、リセット方法。全体の契約はDES-DOG-002と整合させる。
 - Quest単体・iOSへの展開条件と負荷確認。1匹の試作合格と全機種・6匹の公開品質を分ける。
+
+## 試作の記録
+
+- **2026-09-20 段階 1 を Editor で構築** (Play 未実施): 専用試作シーン `KH_FrisbeePrototype.unity` (平地・ラブ 1 匹・固定投球) に `KH_Frisbee` (閉形式の飛行 = 予測) / `KH_FrisbeeCatch` (予測 → 踏み切り → 固定放物線 → 口の判定 → 持ち帰り) / `KH_FrisbeeLauncher` を配置。4 段階の姿勢は `KH_Jump_Lab.anim` を Editor で生成し、10 キーの側面図で「ため → 口が届く瞬間 → 着地の沈み込み」を確認 (ユーザー評価は未)。Verify 35 項目 失敗 0 (Codex D/M/U レビュー是正後)。設計判断・調整値・Play チェックリストは [記録](../../plans/2026-09-20-frisbee-prototype.md)。
+- 既存 Fetch との接続点は未決 (本番シーンには置いていない)。低い投球は「小さく跳ぶ」で代用しており、通常キャッチを別動作にするかは Play 後に判断。
 
 ## 完了条件
 
