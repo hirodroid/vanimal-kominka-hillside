@@ -2,74 +2,379 @@ using UnityEngine;
 using UnityEngine.AI;
 using VRC.SDKBase;
 using VRC.SDK3.Components;
+using VRC.SDK3.UdonNetworkCalling;
+using VRC.Udon.Common.Interfaces;
 
 namespace KominkaDogRun
 {
     // Hillside-only adaptation. Existing Owner-only locomotion and animation remain the single writer.
+    //
+    // IMP-DOG-003 "free walk with a destination": the dog knows the trail and wants to go, the holder
+    // sets the pace through the leash. Decisions run on the dog Owner; position reaches everyone through
+    // VRCObjectSync. Poses that others must see (LookAt, LieDown) are derived on every client from
+    // synced facts (dog pose, holder position/stillness) so Owner and non-Owner screens agree.
     public partial class KD_DogWanderController
     {
         public KominkaHillside.KH_LeashManager hillsideLeashes;
+        // Read by sibling dogs of the same holder to stagger invitations. Meaningful on the dog Owner only.
+        [HideInInspector] public int leashMode;
+        [HideInInspector] public float leashInviteEndedAt = -1000f; // pack-wide quiet gap between invitations
+        const int LeashWalk = 0, LeashWait = 1, LeashReturn = 2, LeashDetour = 3, LeashInvite = 4,
+            LeashRest = 5, LeashFree = 6, LeashArrived = 7;
+
         private NavMeshPath _leashPath;
         private Vector3[] _leashCorners;
         private int _leashCorner;
         private float _nextLeashPath;
+        private Vector3 _leashGoal;
         private bool _wasLeashed;
+        private int _routeNext = -1;   // next trail node; -1 = not on the trail
+        private int _routeDest = -1;
+        private float _nextRouteEntry;
+        private float _nextHolderSample;
+        private Vector3 _holderSample;      // where the holder was when they last counted as moving
+        private float _holderMovedAt;
+        private bool _arrived;              // held until the destination changes or the holder leaves its zone
+        private float _nextTeleportTry;
+        private bool _holderOffTrail;
+        private float _modeUntil;
+        private float _sniffUntil;
+        private Vector3 _detourPoint;
+        private float _nextDetourRoll;
+        private int _inviteCount;
+        private float _nextInviteAt;
+        private bool _inviteBarked;
 
         public void _InvalidateLeashAnimation() { _leashAnimationDirty = true; }
         private bool _leashAnimationDirty;
+
+        // Sound only, but only the dog Owner (the one deciding invitations) may ring it.
+        [NetworkCallable(maxEventsPerSecond: 3)]
+        public void LeashInviteBark()
+        {
+            if (dogRoot == null || NetworkCalling.CallingPlayer != Networking.GetOwner(dogRoot.gameObject)) return;
+            Bark();
+        }
 
         private bool UpdateHillsideLeash()
         {
             if (hillsideLeashes == null || dogRoot == null) return false;
             if (!hillsideLeashes._IsLeashed(dogIndex))
             {
-                if (_wasLeashed) { _wasLeashed = false; _speed = 0f; _nextLeashPath = 0f; }
+                if (_wasLeashed) { _wasLeashed = false; _speed = 0f; _nextLeashPath = 0f; _routeNext = -1; leashMode = LeashFree; }
                 return false;
             }
-            if (!_wasLeashed) _leashAnimationDirty = true;
+            if (!_wasLeashed)
+            {
+                _leashAnimationDirty = true; _routeNext = -1; _routeDest = -1; _inviteCount = 0; _nextInviteAt = 0f;
+                _holderMovedAt = Time.time; _nextHolderSample = 0f; _holderOffTrail = false; _arrived = false; leashMode = LeashWalk;
+            }
             _wasLeashed = true;
             // Fetch cancels on its own owner tick. Never write the root concurrently with it.
             if (fetchController != null && !fetchController.IsIdle) return true;
-            _wantLieDown = false; _wantSleep = false; _paused = false;
+            _wantSleep = false; _paused = false;
             _lastBusyTime = Time.time;
-            if (!_dogOwner) { ApplyMoveAnim(); return true; }
             VRCPlayerApi holder = VRCPlayerApi.GetPlayerById(hillsideLeashes.walkers[dogIndex]);
-            if (!Utilities.IsValid(holder)) { _speed = 0f; ApplyMoveAnim(); return true; }
-            if (Time.time >= _nextLeashPath)
+            if (!Utilities.IsValid(holder)) { if (_dogOwner) _speed = 0f; ApplyMoveAnim(); return true; }
+
+            Vector3 handPos = hillsideLeashes._HandPosition(holder, hillsideLeashes.hands[dogIndex]);
+            Vector3 holderPos = holder.GetPosition();
+            Vector3 toHand = handPos - dogRoot.position; toHand.y = 0f;
+            float handDist = toHand.magnitude;
+            float leash = hillsideLeashes.leashLength;
+            int destNode = hillsideLeashes._DestinationNode(dogIndex);
+            KominkaHillside.KH_WalkRoute route = hillsideLeashes.route;
+            if (destNode != _routeDest)
             {
-                _nextLeashPath = Time.time + 0.35f;
-                if (_leashPath == null) _leashPath = new NavMeshPath();
-                NavMeshHit from, to;
-                bool fromValid = NavMesh.SamplePosition(dogRoot.position, out from, 2f, NavMesh.AllAreas);
-                bool toValid = NavMesh.SamplePosition(hillsideLeashes._WalkingTarget(dogIndex), out to, 2f, NavMesh.AllAreas);
-                _leashCorners = null;
-                if (fromValid && toValid && NavMesh.CalculatePath(from.position, to.position, NavMesh.AllAreas, _leashPath))
+                // A new destination is a fresh start: leave rest/invite state and the stillness clock behind.
+                _routeDest = destNode; _routeNext = -1; _arrived = false;
+                _holderMovedAt = Time.time; _holderSample = holderPos; _inviteCount = 0; _nextInviteAt = 0f;
+                if (leashMode == LeashRest || leashMode == LeashInvite) leashMode = LeashWalk;
+            }
+            if (destNode >= 0)
+            {
+                float destDist = Horizontal(dogRoot.position, route._Position(destNode));
+                if (destDist < route._Radius(destNode)) _arrived = true;
+                else if (Horizontal(holderPos, route._Position(destNode)) > route._Radius(destNode) + 6f) _arrived = false;
+            }
+            else _arrived = false;
+
+            SampleHolder(holderPos, destNode, route);
+            float stillFor = Time.time - _holderMovedAt;
+            float restAfter = (_arrived ? 20f : hillsideLeashes.inviteAfter + hillsideLeashes.inviteInterval * hillsideLeashes.inviteLimit) + dogIndex * 2f;
+            bool settling = stillFor > restAfter && handDist < 2.2f;
+            LeashPose(holder, toHand, handDist, settling);
+            if (!_dogOwner) { ApplyMoveAnim(); return true; }
+
+            // 1. Stretched too far: come back to the hand (run), teleport only after a real separation.
+            if (leashMode == LeashReturn) { if (handDist < leash * 0.6f) { leashMode = LeashWalk; _routeNext = -1; } }
+            else if (handDist > leash * 1.25f) leashMode = LeashReturn;
+            if (leashMode == LeashReturn)
+            {
+                Vector3 back = handPos - toHand / Mathf.Max(handDist, 0.001f) * 0.9f;
+                if (handDist > hillsideLeashes.catchUpDistance && Time.time >= _nextTeleportTry)
                 {
-                    _leashCorners = _leashPath.corners; _leashCorner = 1;
-                    // Recover only to a baked, reachable surface after a large separation/teleport.
-                    if (Vector3.Distance(dogRoot.position, holder.GetPosition()) > hillsideLeashes.catchUpDistance
-                        && _leashPath.status == NavMeshPathStatus.PathComplete)
+                    _nextTeleportTry = Time.time + 1f;
+                    if (TeleportTo(back)) return true;
+                }
+                LeashGo(back, handDist > leash * 1.6f ? hillsideLeashes.followSpeed : runSpeed, 0.2f);
+                return true;
+            }
+
+            // 2. Holder has stood still for long (or all invitations are spent): settle down beside them until they move.
+            if (stillFor > restAfter || (_inviteCount >= hillsideLeashes.inviteLimit && stillFor > 1f))
+            {
+                leashMode = LeashRest;
+                if (handDist > 1.8f) LeashGo(handPos - toHand / handDist * 1.0f, walkSpeed, 0.2f); else Coast();
+                return true;
+            }
+
+            // 3. No destination, holder off the trail, or no reachable entry: keep them company around the hand.
+            if (destNode < 0 || _holderOffTrail) { _routeNext = -1; FollowHand(handDist, leash, LeashFree); return true; }
+            if (_arrived) { _routeNext = -1; FollowHand(handDist, leash, LeashArrived); return true; }
+            if (_routeNext < 0 && Time.time >= _nextRouteEntry)
+            {
+                _routeNext = ChooseEntry(destNode, route);
+                if (_routeNext < 0) _nextRouteEntry = Time.time + 3f; // nothing reachable: retry later, stay with the holder
+            }
+            if (_routeNext < 0) { FollowHand(handDist, leash, LeashFree); return true; }
+
+            // 4. Advance along the routing table; arrival at the destination node ends the trip.
+            Vector3 nodePos = route._Position(_routeNext);
+            if (Horizontal(dogRoot.position, nodePos) < route._Radius(_routeNext) && _routeNext != destNode)
+            {
+                _routeNext = route._Next(_routeNext, destNode);
+                if (_routeNext < 0) { FollowHand(handDist, leash, LeashFree); return true; }
+                nodePos = route._Position(_routeNext);
+            }
+            if (Horizontal(dogRoot.position, nodePos) > 40f) { _routeNext = -1; FollowHand(handDist, leash, LeashFree); return true; }
+
+            // 5. Invitation: holder stopped while the dog waits ahead -> come back, bark once, look, then lead again.
+            if (leashMode == LeashInvite)
+            {
+                if (stillFor < 1f) leashMode = LeashWalk;
+                else if (handDist > 1.2f && !_inviteBarked) LeashGo(handPos - toHand / handDist * 0.9f, runSpeed * 0.8f, 0.2f);
+                else
+                {
+                    Coast(); FaceTowards(holderPos);
+                    if (!_inviteBarked)
                     {
-                        VRCObjectSync sync = dogRoot.GetComponent<VRCObjectSync>();
-                        if (sync != null) sync.FlagDiscontinuity();
-                        dogRoot.position = to.position; // net: owner-only: _dogOwner checked above
-                        _speed = 0f; _leashCorners = null;
+                        _inviteBarked = true; _modeUntil = Time.time + 2.5f;
+                        SendCustomNetworkEvent(NetworkEventTarget.All, nameof(LeashInviteBark));
+                    }
+                    if (Time.time >= _modeUntil)
+                    {
+                        _inviteCount++; leashInviteEndedAt = Time.time;
+                        _nextInviteAt = Time.time + hillsideLeashes.inviteInterval * (1f + 0.3f * _inviteCount);
+                        leashMode = LeashWalk;
                     }
                 }
+                if (leashMode == LeashInvite) return true;
             }
-            if (_leashCorners == null || _leashCorners.Length < 2) { _speed = 0f; ApplyMoveAnim(); return true; }
+            else if (stillFor > hillsideLeashes.inviteAfter + dogIndex * 1.3f && handDist > leash * 0.55f && DogAhead(nodePos, toHand)
+                && _inviteCount < hillsideLeashes.inviteLimit && Time.time >= _nextInviteAt && !SiblingInviting())
+            {
+                leashMode = LeashInvite; _inviteBarked = false;
+                return true;
+            }
+
+            // 6. Detour: with slack on the leash, sniff a spot beside the trail, then carry on.
+            if (leashMode == LeashDetour)
+            {
+                if (handDist > leash * 0.9f || Time.time > _modeUntil) leashMode = LeashWalk;
+                else if (Horizontal(dogRoot.position, _detourPoint) > 0.35f && _sniffUntil <= 0f) { LeashGo(_detourPoint, walkSpeed, 0.1f); return true; }
+                else
+                {
+                    if (_sniffUntil <= 0f) _sniffUntil = Time.time + 1.5f + Rand01((int)Time.time, 4211) * 1.5f;
+                    Coast();
+                    if (Time.time >= _sniffUntil) leashMode = LeashWalk; else return true;
+                }
+            }
+            else if (leashMode == LeashWalk && handDist < leash * 0.5f && Time.time >= _nextDetourRoll)
+            {
+                _nextDetourRoll = Time.time + 4f;
+                if (Rand01((int)Time.time, 4201) < hillsideLeashes.detourChance && PickDetour(nodePos, handPos, leash))
+                { leashMode = LeashDetour; _modeUntil = Time.time + 8f; _sniffUntil = 0f; return true; }
+            }
+
+            // 7. Lead toward the next node; stop at the end of the leash when ahead of the holder.
+            Vector3 nodeDir = nodePos - dogRoot.position; nodeDir.y = 0f;
+            bool ahead = DogAhead(nodePos, toHand);
+            float waitAt = leash * (0.78f + 0.04f * (dogIndex % 4));
+            if (ahead && handDist >= waitAt)
+            {
+                leashMode = LeashWait;
+                Coast();
+                if (_speed <= stopSpeedThreshold) FaceTowards(holderPos);
+                return true;
+            }
+            leashMode = LeashWalk;
+            float side = Mathf.Sin(Time.time * 0.2f + dogIndex * 1.3f) * 1.1f;
+            Vector3 goal = nodePos + Vector3.Cross(Vector3.up, nodeDir.normalized) * side;
+            float speed = !ahead && handDist > 1.2f ? runSpeed : (handDist < leash * 0.45f ? runSpeed * 0.85f : walkSpeed);
+            LeashGo(goal, speed, 0.3f);
+            return true;
+        }
+
+        // Every client: LookAt when stopped facing the holder, LieDown when settling. Both derive from
+        // synced facts only, so nobody sees a pose the Owner did not choose.
+        private void LeashPose(VRCPlayerApi holder, Vector3 toHand, float handDist, bool settling)
+        {
+            bool stopped = _speed <= stopSpeedThreshold;
+            if (settling && stopped) { _wantLieDown = true; return; }
+            Vector3 forward = dogRoot.forward; forward.y = 0f;
+            if (!stopped || handDist < 0.8f || Vector3.Angle(forward, toHand) > 40f) return;
+            _look = true;
+            if (petController == null) return;
+            petController._SetGaze(holder.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position, 0f);
+            petController._SetUrge(0.5f);
+        }
+
+        // 1 Hz: did the holder move, and are they still near the trail (with hysteresis)?
+        private void SampleHolder(Vector3 holderPos, int destNode, KominkaHillside.KH_WalkRoute route)
+        {
+            if (Time.time < _nextHolderSample) return;
+            bool first = _nextHolderSample <= 0f;
+            _nextHolderSample = Time.time + 1f;
+            // Displacement from where stillness began, so a slow stroll still counts as moving.
+            if (first || Vector3.Distance(holderPos, _holderSample) > 0.6f)
+            {
+                _holderMovedAt = Time.time; _inviteCount = 0; _nextInviteAt = 0f; _holderSample = holderPos;
+            }
+            if (route == null) { _holderOffTrail = true; return; }
+            float trailDist = route._DistanceToTrail(holderPos);
+            bool nearDest = destNode >= 0 && Horizontal(holderPos, route._Position(destNode)) < route._Radius(destNode) + 2f;
+            if (_holderOffTrail) { if (trailDist < hillsideLeashes.trailOnDistance || nearDest) _holderOffTrail = false; }
+            else if (trailDist > hillsideLeashes.trailOffDistance && !nearDest) _holderOffTrail = true;
+        }
+
+        private void FollowHand(float handDist, float leash, int mode)
+        {
+            leashMode = mode;
+            LeashGo(hillsideLeashes._WalkingTarget(dogIndex), handDist > leash * 0.7f ? hillsideLeashes.followSpeed : walkSpeed, 0.2f);
+        }
+
+        // Nearest reachable node that still leads to the destination. Path length, not straight distance,
+        // so a dog below a switchback enters the lower leg instead of climbing across the slope.
+        private int ChooseEntry(int destNode, KominkaHillside.KH_WalkRoute route)
+        {
+            if (route == null || route.count <= 0) return -1;
+            if (_leashPath == null) _leashPath = new NavMeshPath();
+            NavMeshHit from;
+            if (!NavMesh.SamplePosition(dogRoot.position, out from, 2f, NavMesh.AllAreas)) return -1;
+            int best = -1, nearest = -1; float bestScore = 1e9f, nearestLen = 1e9f;
+            for (int i = 0; i < route.count; i++)
+            {
+                if (route._Cost(i, destNode) >= 1e5f) continue;
+                Vector3 p = route._Position(i);
+                if (Horizontal(dogRoot.position, p) > 30f) continue;
+                NavMeshHit to;
+                if (!NavMesh.SamplePosition(p, out to, 2f, NavMesh.AllAreas)) continue;
+                if (!NavMesh.CalculatePath(from.position, to.position, NavMesh.AllAreas, _leashPath) || _leashPath.status != NavMeshPathStatus.PathComplete) continue;
+                float len = PathLength(_leashPath);
+                if (len < nearestLen) { nearestLen = len; nearest = i; }
+                if (len > hillsideLeashes.entryMaxPath) continue;
+                float score = len + route._Cost(i, destNode);
+                if (score < bestScore) { bestScore = score; best = i; }
+            }
+            _leashCorners = null; _nextLeashPath = 0f;
+            return best >= 0 ? best : nearest;
+        }
+
+        private bool PickDetour(Vector3 nodePos, Vector3 handPos, float leash)
+        {
+            Vector3 dir = nodePos - dogRoot.position; dir.y = 0f;
+            if (dir.sqrMagnitude < 0.01f) return false;
+            dir.Normalize();
+            float side = Rand01((int)Time.time, 4231) < 0.5f ? -1f : 1f;
+            Vector3 cand = dogRoot.position + dir * (0.5f + Rand01((int)Time.time, 4241) * 1.5f)
+                + Vector3.Cross(Vector3.up, dir) * side * (1.5f + Rand01((int)Time.time, 4251) * 1.2f);
+            if (Horizontal(cand, handPos) > leash * 0.8f) return false;
+            NavMeshHit hit;
+            if (!NavMesh.SamplePosition(cand, out hit, 1f, NavMesh.AllAreas)) return false;
+            if (_leashPath == null) _leashPath = new NavMeshPath();
+            NavMeshHit from;
+            if (!NavMesh.SamplePosition(dogRoot.position, out from, 2f, NavMesh.AllAreas)) return false;
+            if (!NavMesh.CalculatePath(from.position, hit.position, NavMesh.AllAreas, _leashPath) || _leashPath.status != NavMeshPathStatus.PathComplete) return false;
+            if (PathLength(_leashPath) > 5f) return false;
+            _detourPoint = hit.position; _leashCorners = null; _nextLeashPath = 0f;
+            return true;
+        }
+
+        private bool SiblingInviting()
+        {
+            if (pack == null || pack.dogWander == null) return false;
+            for (int i = 0; i < pack.dogWander.Length; i++)
+            {
+                if (i == dogIndex || pack.dogWander[i] == null) continue;
+                if (hillsideLeashes.walkers[i] != hillsideLeashes.walkers[dogIndex]) continue;
+                if (pack.dogWander[i].leashMode == LeashInvite) return true;
+                if (Time.time - pack.dogWander[i].leashInviteEndedAt < hillsideLeashes.inviteInterval * 0.5f) return true; // quiet gap for the holder
+            }
+            return false;
+        }
+
+        // Recover only to a baked, reachable surface after a large separation/teleport.
+        private bool TeleportTo(Vector3 goal)
+        {
+            if (_leashPath == null) _leashPath = new NavMeshPath();
+            NavMeshHit from, to;
+            if (!NavMesh.SamplePosition(dogRoot.position, out from, 2f, NavMesh.AllAreas)) return false;
+            if (!NavMesh.SamplePosition(goal, out to, 2f, NavMesh.AllAreas)) return false;
+            if (!NavMesh.CalculatePath(from.position, to.position, NavMesh.AllAreas, _leashPath) || _leashPath.status != NavMeshPathStatus.PathComplete) return false;
+            VRCObjectSync sync = dogRoot.GetComponent<VRCObjectSync>();
+            if (sync != null) sync.FlagDiscontinuity();
+            dogRoot.position = to.position; // net: owner-only: _dogOwner checked by the caller
+            _speed = 0f; _leashCorners = null; _nextLeashPath = 0f; _routeNext = -1;
+            ApplyMoveAnim();
+            return true;
+        }
+
+        // Walks toward goal along the baked NavMesh. The path is refreshed every 0.35 s or when the goal moves.
+        private void LeashGo(Vector3 goal, float speed, float stop)
+        {
+            if (Time.time >= _nextLeashPath || Vector3.Distance(goal, _leashGoal) > 0.6f)
+            {
+                _nextLeashPath = Time.time + 0.35f; _leashGoal = goal;
+                if (_leashPath == null) _leashPath = new NavMeshPath();
+                NavMeshHit from, to;
+                _leashCorners = null;
+                if (NavMesh.SamplePosition(dogRoot.position, out from, 2f, NavMesh.AllAreas)
+                    && NavMesh.SamplePosition(goal, out to, 2f, NavMesh.AllAreas)
+                    && NavMesh.CalculatePath(from.position, to.position, NavMesh.AllAreas, _leashPath)
+                    && _leashPath.status != NavMeshPathStatus.PathInvalid)
+                { _leashCorners = _leashPath.corners; _leashCorner = 1; }
+            }
+            if (_leashCorners == null || _leashCorners.Length < 2) { Coast(); return; }
             while (_leashCorner < _leashCorners.Length - 1 && Vector3.Distance(dogRoot.position, _leashCorners[_leashCorner]) < 0.35f) _leashCorner++;
             Vector3 target = _leashCorners[_leashCorner];
             Vector3 delta = target - dogRoot.position; delta.y = 0f;
             float distance = delta.magnitude;
-            if (distance < 0.15f) { _speed = 0f; ApplyMoveAnim(); return true; }
+            if (distance < 0.15f) { Coast(); return; }
             float clearance = WallClearance(dogRoot.position, delta / distance, distance);
-            if (clearance < 0.05f) { _speed = 0f; ApplyMoveAnim(); return true; }
-            target = dogRoot.position + delta / distance * clearance;
-            float speed = Vector3.Distance(dogRoot.position, holder.GetPosition()) > hillsideLeashes.leashLength * 0.7f
-                ? hillsideLeashes.followSpeed : walkSpeed;
-            StepToward(target, _leashCorner == _leashCorners.Length - 1 ? 0.2f : 0.05f, speed);
-            return true;
+            if (clearance < 0.05f) { Coast(); return; }
+            StepToward(dogRoot.position + delta / distance * clearance, _leashCorner == _leashCorners.Length - 1 ? stop : 0.05f, speed);
+        }
+
+        private float PathLength(NavMeshPath path)
+        {
+            Vector3[] c = path.corners;
+            float len = 0f;
+            for (int i = 1; i < c.Length; i++) len += Vector3.Distance(c[i - 1], c[i]);
+            return len;
+        }
+
+        // The dog is between the holder and the next node (node and hand lie in opposite directions).
+        private bool DogAhead(Vector3 nodePos, Vector3 toHand)
+        {
+            Vector3 nodeDir = nodePos - dogRoot.position; nodeDir.y = 0f;
+            return Vector3.Dot(nodeDir, toHand) < 0f;
+        }
+
+        private float Horizontal(Vector3 a, Vector3 b)
+        {
+            a.y = 0f; b.y = 0f;
+            return Vector3.Distance(a, b);
         }
     }
 }

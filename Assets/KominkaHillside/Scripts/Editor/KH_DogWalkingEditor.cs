@@ -22,6 +22,15 @@ namespace KominkaHillside.Editor
         const string SourceScene = "Assets/KominkaHillside/Imported/KH_DogPortSource.unity";
         const string Data = "Assets/KominkaHillside/Data/Walking";
         static readonly string[] Keys = {"Corgi","Pome","Lab","Dachs","Shiba","Samoyed"};
+        // BUG-DOG-001: balls rest on the flat upper clearing (KH_TerrainPrototypeConfig.Flats[PlazaFlat], y=19 within r=12),
+        // off the trail end and away from the shade tree. VRCObjectSync respawns to this start position.
+        public static readonly Vector2 BallHomeCenter = new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0]+3.5f, KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]+3.5f);
+        public const float BallSpacing=0.9f, BallRestHeight=0.07f;
+        public static Vector3 BallHome(int i)
+        {
+            float x=BallHomeCenter.x+((i%3)-1)*BallSpacing, z=BallHomeCenter.y+((i/3)-0.5f)*BallSpacing;
+            return new Vector3(x,Ground(x,z)+BallRestHeight,z);
+        }
         static void Report(string name, string text) { Directory.CreateDirectory("Temp/KH_DogPort"); File.WriteAllText("Temp/KH_DogPort/"+name+".txt",text); Debug.Log("[KH Walking] " + text); }
         static void Guard()
         {
@@ -32,7 +41,7 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Walking/1 Create Programs")]
         public static void Programs()
         {
-            foreach (string name in new[]{"KH_LeashManager","KH_LeashClip","KH_LeashCollar"})
+            foreach (string name in new[]{"KH_LeashManager","KH_LeashClip","KH_LeashCollar","KH_WalkRoute","KH_WalkSign"})
             {
                 string path="Assets/KominkaHillside/Scripts/"+name;
                 if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(path+".asset") != null) continue;
@@ -137,7 +146,9 @@ namespace KominkaHillside.Editor
             manager.dogRoots=new Transform[6];manager.collarAnchors=new Transform[6];manager.fetchers=new KD_DogFetchController[6];
             manager.roamCenters=new Transform[6];manager.localClips=new KH_LeashClip[6];
             UdonSharpEditorUtility.GetBackingUdonBehaviour(manager).publicVariables.RemoveVariable("roamRadius");
-            manager.leashLength=3f;manager.followSpeed=4.8f;manager.catchUpDistance=10f;
+            manager.leashLength=3f;manager.followSpeed=4.8f;manager.catchUpDistance=10f;manager.defaultDestination=KH_WalkRouteEditor.DestinationPlaza;
+            manager.trailOffDistance=6f;manager.trailOnDistance=4f;manager.entryMaxPath=12f;manager.inviteAfter=8f;manager.inviteInterval=14f;manager.inviteLimit=3;manager.detourChance=.25f;
+            var existingRoute=root.GetComponentInChildren<KH_WalkRoute>(true);manager.route=existingRoute;
             var pack=Find<KD_DogPack>(root,"KD_DogPack");
             var rope=Mat("KH_Rope",new Color(.29f,.16f,.08f));
             var ready=Mat("KH_ClipReady",new Color(.2f,.8f,.45f));
@@ -165,7 +176,8 @@ namespace KominkaHillside.Editor
                 p.companionSlot=null;
                 manager.dogRoots[i]=dog;manager.fetchers[i]=f;manager.roamCenters[i]=home;
                 roots[i]=dog;fetch[i]=f;
-                if(initial)b.transform.position=dog.position+new Vector3(.6f,.25f,.3f);
+                // Design-owned start position (BUG-DOG-001); rewritten on every Build.
+                b.transform.position=BallHome(i);b.transform.rotation=Quaternion.identity;
                 Transform neck=p.headAnchor != null?p.headAnchor.parent:dog;
                 var existingCollar=dog.GetComponentsInChildren<KH_LeashCollar>(true).FirstOrDefault(x=>x.dogIndex==i);
                 var collar=existingCollar!=null?existingCollar.transform:Child(neck,"KH_Collar_"+key);
@@ -268,6 +280,35 @@ namespace KominkaHillside.Editor
                     && NavMesh.CalculatePath(dog.position,destination.position,NavMesh.AllAreas,path) && path.status==NavMeshPathStatus.PathComplete;
                 Check(route,"complete route to upper clearing "+key);
             }
+            for(int i=0;i<6;i++)
+            {
+                var ball=Find<Transform>(root,"KD_Ball_"+Keys[i]);Vector3 home=BallHome(i);
+                float plaza=Vector2.Distance(new Vector2(ball.position.x,ball.position.z),new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]));
+                float ground=Ground(ball.position.x,ball.position.z);
+                Check(Vector3.Distance(ball.position,home)<.01f&&plaza<KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3]&&Mathf.Abs(ground-KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,2])<.02f,"ball on flat clearing "+Keys[i]+" pos="+ball.position.ToString("F2")+" ground="+ground.ToString("F2"));
+                NavMeshHit ballHit;Check(NavMesh.SamplePosition(ball.position,out ballHit,1f,NavMesh.AllAreas),"ball reachable on navigation "+Keys[i]);
+            }
+            var walkRoute=root.GetComponentInChildren<KH_WalkRoute>(true);Check(walkRoute!=null&&m.route==walkRoute,"walk route wired to manager");
+            if(walkRoute!=null)
+            {
+                int n=walkRoute.count;Check(n>=8&&walkRoute.nodes!=null&&walkRoute.nodes.Length==n&&walkRoute.nextHop.Length==n*n&&walkRoute.routeCost.Length==n*n&&walkRoute.arriveRadius.Length==n,"route arrays sized n="+n);
+                Check(walkRoute.destinationNodes!=null&&walkRoute.destinationNodes.Length==2&&walkRoute.destinationNodes[0]==0&&walkRoute.destinationNodes[1]==n-1,"route destinations gate=0 plaza=last");
+                bool chain=true;int at=0,steps=0;while(at!=n-1&&steps<n+1){int nx=walkRoute._Next(at,n-1);if(nx!=at+1){chain=false;break;}at=nx;steps++;}
+                Check(chain&&at==n-1,"nextHop walks gate->plaza in "+steps+" hops");
+                chain=true;at=n-1;steps=0;while(at!=0&&steps<n+1){int nx=walkRoute._Next(at,0);if(nx!=at-1){chain=false;break;}at=nx;steps++;}
+                Check(chain&&at==0,"nextHop walks plaza->gate in "+steps+" hops");
+                bool onNav=true,spaced=true;for(int i=0;i<n;i++){NavMeshHit h;if(!NavMesh.SamplePosition(walkRoute.nodes[i].position,out h,.5f,NavMesh.AllAreas))onNav=false;if(i>0&&Vector3.Distance(walkRoute.nodes[i-1].position,walkRoute.nodes[i].position)>KH_WalkRouteEditor.NodeSpacing*1.6f)spaced=false;}
+                Check(onNav,"all route nodes on navigation");
+                bool linksComplete=walkRoute.linkA.Length==n-1;var linkPath=new NavMeshPath();
+                for(int i=0;i<walkRoute.linkA.Length;i++){NavMeshHit a,b;if(!NavMesh.SamplePosition(walkRoute.nodes[walkRoute.linkA[i]].position,out a,.5f,NavMesh.AllAreas)||!NavMesh.SamplePosition(walkRoute.nodes[walkRoute.linkB[i]].position,out b,.5f,NavMesh.AllAreas)||!NavMesh.CalculatePath(a.position,b.position,NavMesh.AllAreas,linkPath)||linkPath.status!=NavMeshPathStatus.PathComplete)linksComplete=false;}
+                Check(linksComplete,"every route link has a complete NavMesh path (links="+walkRoute.linkA.Length+")");Check(spaced,"route node spacing <= "+(KH_WalkRouteEditor.NodeSpacing*1.6f)+"m");
+                Check(Vector3.Distance(walkRoute.nodes[n-1].position,new Vector3(72,19,127))<1f&&Vector3.Distance(walkRoute.nodes[0].position,new Vector3(47.6f,walkRoute.nodes[0].position.y,40.1f))<1.5f,"route ends at gate and plaza centre");
+                var rb=UdonSharpEditorUtility.GetBackingUdonBehaviour(walkRoute);object rv;var rn=rb.publicVariables.TryGetVariableValue("nodes",out rv)?rv as Array:null;
+                Check(rn!=null&&rn.Length==n&&(rn.GetValue(0) as Transform)==walkRoute.nodes[0],"route backing nodes entries="+(rn==null?0:rn.Length));
+                var mb=UdonSharpEditorUtility.GetBackingUdonBehaviour(m);object mr;Check(mb.publicVariables.TryGetVariableValue("route",out mr)&&(mr as UnityEngine.Object)==UdonSharpEditorUtility.GetBackingUdonBehaviour(walkRoute),"manager backing route reference");
+            }
+            var signs=root.GetComponentsInChildren<KH_WalkSign>(true);Check(signs.Length==6&&signs.All(x=>x.manager==m&&x.GetComponent<BoxCollider>()!=null&&UdonSharpEditorUtility.GetBackingUdonBehaviour(x).InteractionText.Length>0),"six destination sign boards wired");
+            Check(signs.Count(x=>x.destination==KH_WalkRouteEditor.DestinationPlaza)==3&&signs.Count(x=>x.destination==KH_WalkRouteEditor.DestinationEntrance)==3,"sign destinations 3 plaza + 3 gate");
             int missing=root.GetComponentsInChildren<Transform>(true).Sum(t=>GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(t.gameObject));
             Check(missing==0,"no missing scene scripts");
             Check(NavMesh.CalculateTriangulation().vertices.Length>0,"baked navigation exists");
@@ -322,6 +363,9 @@ namespace KominkaHillside.Editor
                 log.AppendLine((ok?"PASS":"FAIL")+" backing "+symbol+" entries="+(array==null?0:array.Length));
             }
             CheckArray("dogRoots",m.dogRoots);CheckArray("collarAnchors",m.collarAnchors);CheckArray("roamCenters",m.roamCenters);
+            // Synced arrays with program defaults (walkers, hands) live in the program heap, not as overrides; destinations must match that state.
+            object dv,wv;bool hasD=backing.publicVariables.TryGetVariableValue("destinations",out dv),hasW=backing.publicVariables.TryGetVariableValue("walkers",out wv);
+            log.AppendLine((hasD==hasW&&(!hasD||(dv is int[]&&((int[])dv).Length==6))?"PASS":"FAIL")+" backing destinations state matches walkers (override="+hasD+")");
             CheckArray("fetchers",m.fetchers.Select(f=>(UnityEngine.Object)UdonSharpEditorUtility.GetBackingUdonBehaviour(f)).ToArray());
             CheckArray("localClips",m.localClips.Select(c=>(UnityEngine.Object)UdonSharpEditorUtility.GetBackingUdonBehaviour(c)).ToArray());
             var descriptor=UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>();

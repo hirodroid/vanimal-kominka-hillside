@@ -8,7 +8,7 @@
 
 | ID | 概要 | 何を確かめれば完了か |
 |----|------|---------------------|
-| [IMP-DOG-004](IMP-DOG-004-leash-models-release.md) | 首輪・リードの本制作 | 新モデルのPCVR付け外し・姿勢追従・6匹表示、Quest/iOS、明所/木陰・座位を制作票で確認 |
+| [IMP-DOG-004](IMP-DOG-004-leash-models-release.md) | 首輪・リードの本制作 | PCVR 1 人は合格 (2026-09-20)。残り: 2 人・Quest/iOS・座位/木陰。持ち手の向きは BUG-DOG-002 |
 
 ---
 

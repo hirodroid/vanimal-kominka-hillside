@@ -1,0 +1,100 @@
+PASS dog root exists outside terrain builder
+PASS manager exists
+PASS six local pickup tips
+PASS six collar interactions
+PASS manager backing sync Manual
+PASS leash wiring Corgi
+PASS original pet rig Corgi
+PASS Fetch wiring Corgi
+PASS ObjectSync Corgi
+PASS model renderers Corgi
+PASS supported materials Corgi
+PASS pack roster Corgi
+PASS local clip wiring Corgi
+PASS collar follows skeleton Corgi
+PASS dog on navigation Corgi
+PASS complete route to upper clearing Corgi
+PASS leash wiring Pome
+PASS original pet rig Pome
+PASS Fetch wiring Pome
+PASS ObjectSync Pome
+PASS model renderers Pome
+PASS supported materials Pome
+PASS pack roster Pome
+PASS local clip wiring Pome
+PASS collar follows skeleton Pome
+PASS dog on navigation Pome
+PASS complete route to upper clearing Pome
+PASS leash wiring Lab
+PASS original pet rig Lab
+PASS Fetch wiring Lab
+PASS ObjectSync Lab
+PASS model renderers Lab
+PASS supported materials Lab
+PASS pack roster Lab
+PASS local clip wiring Lab
+PASS collar follows skeleton Lab
+PASS dog on navigation Lab
+PASS complete route to upper clearing Lab
+PASS leash wiring Dachs
+PASS original pet rig Dachs
+PASS Fetch wiring Dachs
+PASS ObjectSync Dachs
+PASS model renderers Dachs
+PASS supported materials Dachs
+PASS pack roster Dachs
+PASS local clip wiring Dachs
+PASS collar follows skeleton Dachs
+PASS dog on navigation Dachs
+PASS complete route to upper clearing Dachs
+PASS leash wiring Shiba
+PASS original pet rig Shiba
+PASS Fetch wiring Shiba
+PASS ObjectSync Shiba
+PASS model renderers Shiba
+PASS supported materials Shiba
+PASS pack roster Shiba
+PASS local clip wiring Shiba
+PASS collar follows skeleton Shiba
+PASS dog on navigation Shiba
+PASS complete route to upper clearing Shiba
+PASS leash wiring Samoyed
+PASS original pet rig Samoyed
+PASS Fetch wiring Samoyed
+PASS ObjectSync Samoyed
+PASS model renderers Samoyed
+PASS supported materials Samoyed
+PASS pack roster Samoyed
+PASS local clip wiring Samoyed
+PASS collar follows skeleton Samoyed
+PASS dog on navigation Samoyed
+PASS complete route to upper clearing Samoyed
+PASS ball on flat clearing Corgi pos=(74.60, 19.07, 130.05) ground=19.00
+PASS ball reachable on navigation Corgi
+PASS ball on flat clearing Pome pos=(75.50, 19.07, 130.05) ground=19.00
+PASS ball reachable on navigation Pome
+PASS ball on flat clearing Lab pos=(76.40, 19.07, 130.05) ground=19.00
+PASS ball reachable on navigation Lab
+PASS ball on flat clearing Dachs pos=(74.60, 19.07, 130.95) ground=19.00
+PASS ball reachable on navigation Dachs
+PASS ball on flat clearing Shiba pos=(75.50, 19.07, 130.95) ground=19.00
+PASS ball reachable on navigation Shiba
+PASS ball on flat clearing Samoyed pos=(76.40, 19.07, 130.95) ground=19.00
+PASS ball reachable on navigation Samoyed
+PASS walk route wired to manager
+PASS route arrays sized n=17
+PASS route destinations gate=0 plaza=last
+PASS nextHop walks gate->plaza in 16 hops
+PASS nextHop walks plaza->gate in 16 hops
+PASS all route nodes on navigation
+PASS every route link has a complete NavMesh path (links=16)
+PASS route node spacing <= 11.2m
+PASS route ends at gate and plaza centre
+PASS route backing nodes entries=17
+PASS manager backing route reference
+PASS six destination sign boards wired
+PASS sign destinations 3 plaza + 3 gate
+PASS no missing scene scripts
+PASS baked navigation exists
+PASS terrain placeholders hidden
+TOTAL 99 FAILED 0

@@ -17,15 +17,29 @@ namespace KominkaHillside
         public KominkaDogRun.KD_DogFetchController[] fetchers;
         public Transform[] roamCenters;
         public KH_LeashClip[] localClips;
+        public KH_WalkRoute route;
         [UdonSynced] public int[] walkers = new int[] {-1,-1,-1,-1,-1,-1};
         [UdonSynced] public int[] hands = new int[] {0,0,0,0,0,0}; // 0 left, 1 right; not SDK enum values.
         [UdonSynced] public Vector3[] releasedHomes = new Vector3[6];
         [UdonSynced] private bool homesInitialized;
+        // Per-dog destination (index into route.destinationNodes). Kept across detach; reset when a
+        // different player attaches so nobody inherits a stranger's "go home".
+        [UdonSynced] public int[] destinations = new int[] {1,1,1,1,1,1};
+        [UdonSynced] public int[] lastWalkers = new int[] {-1,-1,-1,-1,-1,-1};
         [Header("Tuning: provisional until Play")]
         public float leashLength = 3f;
         public float attachReach = 4f;
         public float followSpeed = 4.8f;
         public float catchUpDistance = 10f;
+        public int defaultDestination = 1;
+        [Header("Free walk (IMP-DOG-003, provisional)")]
+        public float trailOffDistance = 6f;    // holder farther than this from the trail: dog keeps them company instead
+        public float trailOnDistance = 4f;     // ... and rejoins the trail once the holder is closer than this
+        public float entryMaxPath = 12f;       // longest NavMesh path accepted when entering the trail
+        public float inviteAfter = 8f;         // holder still this long at leash end before the dog comes back to invite
+        public float inviteInterval = 14f;     // base spacing between invitations (grows each time)
+        public int inviteLimit = 3;            // after this many, the dog settles down until the holder moves
+        public float detourChance = 0.25f;     // per 4 s roll while walking with slack
         private float _nextMaintenance;
 
         public void _OfferTip(Vector3 position, int hand)
@@ -50,6 +64,31 @@ namespace KominkaHillside
             return player.GetPosition() + player.GetRotation() * new Vector3(hand == 0 ? -0.23f : 0.23f, height * 0.6f, 0.32f);
         }
 
+        public int _DestinationNode(int dog)
+        {
+            if (route == null || dog < 0 || dog >= destinations.Length) return -1;
+            return route._DestinationNode(destinations[dog]);
+        }
+
+        public void _RequestDestination(int destination)
+        {
+            if (!Utilities.IsValid(Networking.LocalPlayer)) return;
+            SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqDestination), destination);
+        }
+
+        // Applies to every dog the caller is leashing. Other people's dogs and free dogs are untouched.
+        [NetworkCallable(maxEventsPerSecond: 6)]
+        public void ReqDestination(int destination)
+        {
+            if (!Networking.IsOwner(gameObject) || route == null || route._DestinationNode(destination) < 0) return;
+            VRCPlayerApi caller = NetworkCalling.CallingPlayer;
+            if (!Utilities.IsValid(caller)) return;
+            bool changed = false;
+            for (int i = 0; i < walkers.Length; i++)
+                if (walkers[i] == caller.playerId && destinations[i] != destination) { destinations[i] = destination; changed = true; }
+            if (changed) RequestSerialization();
+        }
+
         public Vector3 _WalkingTarget(int dog)
         {
             VRCPlayerApi player = VRCPlayerApi.GetPlayerById(walkers[dog]);
@@ -59,8 +98,9 @@ namespace KominkaHillside
             float side = hands[dog] == 0 ? -1f : 1f;
             // Slow variation within distinct slots, not a formation locked to one point.
             float time = (float)(Networking.GetServerTimeInSeconds() % 10000.0);
+            // Beside and slightly ahead of the hand, never queued behind the walker.
             Vector3 offset = new Vector3(side * (0.75f + slot * 0.45f), 0f,
-                0.6f - slot * 0.7f + Mathf.Sin(time * 0.35f + dog * 1.7f) * 0.25f);
+                0.5f + slot * 0.35f + Mathf.Sin(time * 0.35f + dog * 1.7f) * 0.25f);
             offset = Vector3.ClampMagnitude(offset, Mathf.Max(0.5f, leashLength - 0.6f));
             Vector3 target = _HandPosition(player, hands[dog]) + player.GetRotation() * offset;
             target.y = player.GetPosition().y;
@@ -87,6 +127,8 @@ namespace KominkaHillside
             if (count >= 3) return;
             walkers[dog] = caller.playerId;
             hands[dog] = hand;
+            if (lastWalkers[dog] != caller.playerId) destinations[dog] = defaultDestination;
+            lastWalkers[dog] = caller.playerId;
             RequestSerialization();
         }
 
