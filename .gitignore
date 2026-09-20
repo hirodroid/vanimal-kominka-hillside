@@ -134,6 +134,9 @@ InitTestScene*.unity*
 # 上のインポート時に Unity が旧形式 Terrain を自動変換して生成する (Standard Assets の地面テクスチャもここ)
 /[Aa]ssets/_TerrainAutoUpgrade/
 /[Aa]ssets/_TerrainAutoUpgrade.meta
+# 犬ギミック移植元の購入モデル・モーション (固定 GUID の必要依存のみ)
+/[Aa]ssets/TORINOSUKE/
+/[Aa]ssets/TORINOSUKE.meta
 
 # ============================================
 # 再生成できる自作アセット (任意)

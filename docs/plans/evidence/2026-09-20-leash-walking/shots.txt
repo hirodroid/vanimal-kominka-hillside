@@ -1,0 +1,8 @@
+﻿  01-rack pos=(45.00, 3.31, 41.40) lookAt=(45.00, 2.71, 43.00) yaw=0.0 pitch=20.6 fov=55
+  02-six-dogs pos=(46.00, 3.36, 42.00) lookAt=(46.00, 2.49, 47.00) yaw=0.0 pitch=9.9 fov=60
+  03-collar-Corgi pos=(44.60, 2.78, 46.89) lookAt=(44.00, 2.53, 46.09) yaw=216.9 pitch=14.0 fov=45
+  03-collar-Pome pos=(46.60, 2.61, 46.81) lookAt=(46.00, 2.36, 46.01) yaw=216.9 pitch=14.0 fov=45
+  03-collar-Lab pos=(48.60, 2.82, 46.96) lookAt=(48.00, 2.57, 46.16) yaw=216.9 pitch=14.0 fov=45
+  03-collar-Dachs pos=(44.60, 2.92, 48.89) lookAt=(44.00, 2.67, 48.09) yaw=216.9 pitch=14.0 fov=45
+  03-collar-Shiba pos=(46.60, 2.97, 48.89) lookAt=(46.00, 2.72, 48.09) yaw=216.9 pitch=14.0 fov=45
+  03-collar-Samoyed pos=(48.60, 3.16, 48.96) lookAt=(48.00, 2.91, 48.16) yaw=216.9 pitch=14.0 fov=45

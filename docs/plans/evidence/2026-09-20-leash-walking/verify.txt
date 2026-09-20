@@ -1,0 +1,75 @@
+PASS dog root exists outside terrain builder
+PASS manager exists
+PASS six local pickup tips
+PASS six collar interactions
+PASS manager backing sync Manual
+PASS leash wiring Corgi
+PASS original pet rig Corgi
+PASS Fetch wiring Corgi
+PASS ObjectSync Corgi
+PASS model renderers Corgi
+PASS supported materials Corgi
+PASS pack roster Corgi
+PASS local clip wiring Corgi
+PASS collar follows skeleton Corgi
+PASS dog on navigation Corgi
+PASS complete route to upper clearing Corgi
+PASS leash wiring Pome
+PASS original pet rig Pome
+PASS Fetch wiring Pome
+PASS ObjectSync Pome
+PASS model renderers Pome
+PASS supported materials Pome
+PASS pack roster Pome
+PASS local clip wiring Pome
+PASS collar follows skeleton Pome
+PASS dog on navigation Pome
+PASS complete route to upper clearing Pome
+PASS leash wiring Lab
+PASS original pet rig Lab
+PASS Fetch wiring Lab
+PASS ObjectSync Lab
+PASS model renderers Lab
+PASS supported materials Lab
+PASS pack roster Lab
+PASS local clip wiring Lab
+PASS collar follows skeleton Lab
+PASS dog on navigation Lab
+PASS complete route to upper clearing Lab
+PASS leash wiring Dachs
+PASS original pet rig Dachs
+PASS Fetch wiring Dachs
+PASS ObjectSync Dachs
+PASS model renderers Dachs
+PASS supported materials Dachs
+PASS pack roster Dachs
+PASS local clip wiring Dachs
+PASS collar follows skeleton Dachs
+PASS dog on navigation Dachs
+PASS complete route to upper clearing Dachs
+PASS leash wiring Shiba
+PASS original pet rig Shiba
+PASS Fetch wiring Shiba
+PASS ObjectSync Shiba
+PASS model renderers Shiba
+PASS supported materials Shiba
+PASS pack roster Shiba
+PASS local clip wiring Shiba
+PASS collar follows skeleton Shiba
+PASS dog on navigation Shiba
+PASS complete route to upper clearing Shiba
+PASS leash wiring Samoyed
+PASS original pet rig Samoyed
+PASS Fetch wiring Samoyed
+PASS ObjectSync Samoyed
+PASS model renderers Samoyed
+PASS supported materials Samoyed
+PASS pack roster Samoyed
+PASS local clip wiring Samoyed
+PASS collar follows skeleton Samoyed
+PASS dog on navigation Samoyed
+PASS complete route to upper clearing Samoyed
+PASS no missing scene scripts
+PASS baked navigation exists
+PASS terrain placeholders hidden
+TOTAL 74 FAILED 0

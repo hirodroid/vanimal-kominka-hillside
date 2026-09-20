@@ -273,6 +273,14 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "jp.sigmal00.uzumore-shader": {
+      "version": "file:jp.sigmal00.uzumore-shader",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "jp.lilxyzw.liltoon": "1.9.0"
+      }
+    },
     "com.unity.modules.ai": {
       "version": "1.0.0",
       "depth": 0,

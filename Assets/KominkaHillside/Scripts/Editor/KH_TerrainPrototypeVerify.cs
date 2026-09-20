@@ -52,7 +52,7 @@ public static class KH_TerrainPrototypeVerify
         for (int i = 0; i < path.Count; i++) center[i] = Ground(terrain, path[i].xz);
         for (int i = 0; i < path.Count; i++)
         {
-            int j = (i + 1) % path.Count;
+            int j = Mathf.Min(i + 1, path.Count - 1);
             float dist = Vector2.Distance(path[i].xz, path[j].xz);
             float slope = Mathf.Abs(center[j] - center[i]) / Mathf.Max(dist, 0.01f);
             worstSlope = Mathf.Max(worstSlope, slope);
@@ -66,6 +66,19 @@ public static class KH_TerrainPrototypeVerify
             minEdgeZ = Mathf.Min(minEdgeZ, Mathf.Min(l.y, r.y));
         }
         Info("path samples=" + path.Count + " length=" + KH_TerrainShape.PathLength(path).ToString("0.0") + " m");
+        Require("open trail starts at gate and ends at plaza", Vector2.Distance(path[0].xz, new Vector2(C.Path[0, 0], C.Path[0, 1])) < 0.01f && Vector2.Distance(path[path.Count - 1].xz, new Vector2(C.Flats[C.PlazaFlat, 0], C.Flats[C.PlazaFlat, 1])) < 0.01f);
+        // 閉曲線への退行を検知: 始点と終点を結ぶ架空の帰路へ距離を取らない。
+        Vector2 closingMid = (path[0].xz + path[path.Count - 1].xz) * 0.5f;
+        float unusedHeight;
+        float closingDistance = KH_TerrainShape.DistanceToPath(path, closingMid.x, closingMid.y, out unusedHeight);
+        Require("no synthetic closing segment (midpoint distance " + closingDistance.ToString("0.0") + " m)", closingDistance > C.PathHalfWidth + C.PathPaintFeather);
+        int plazaSlopeNg = 0;
+        for (int zi = -8; zi <= 8; zi += 2) for (int xi = -8; xi <= 8; xi += 2)
+        {
+            if (xi * xi + zi * zi > 64) continue;
+            if (td.GetSteepness((C.Flats[C.PlazaFlat, 0] + xi) / td.size.x, (C.Flats[C.PlazaFlat, 1] + zi) / td.size.z) > 3f) plazaSlopeNg++;
+        }
+        Require("dog play area radius 8m slope <= 3 deg (ng=" + plazaSlopeNg + ")", plazaSlopeNg == 0);
         Require("path slope <= " + C.PathMaxSlopeDeg + " deg (worst " + (Mathf.Atan(worstSlope) * Mathf.Rad2Deg).ToString("0.0") + " deg, ng=" + slopeNg + ")", slopeNg == 0);
         Require("path cross slope <= " + C.PathMaxCrossSlopeDeg + " deg (worst " + (Mathf.Atan(worstCross) * Mathf.Rad2Deg).ToString("0.0") + " deg, ng=" + crossNg + ")", crossNg == 0);
         Require("path edge min z >= south bound + 2 (min edge z " + minEdgeZ.ToString("0.0") + ")", minEdgeZ >= C.BoundSouthZ + 2f);

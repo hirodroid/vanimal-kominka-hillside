@@ -5,6 +5,9 @@
     },
     "jp.lilxyzw.liltoon": {
       "version": "2.3.4"
+    },
+    "jp.sigmal00.uzumore-shader": {
+      "version": "1.0.20"
     }
   },
   "locked": {
@@ -21,6 +24,12 @@
     "jp.lilxyzw.liltoon": {
       "version": "2.3.4",
       "dependencies": {}
+    },
+    "jp.sigmal00.uzumore-shader": {
+      "version": "1.0.20",
+      "dependencies": {
+        "jp.lilxyzw.liltoon": ">=1.9.0"
+      }
     }
   }
 }

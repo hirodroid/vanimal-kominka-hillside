@@ -54,8 +54,15 @@ priority: High    # High / Medium / Low
 | ID | 重要度 | 概要 | 状態 |
 |----|--------|------|------|
 | [DES-ENV-001](DES-ENV-001-terrain-vs-blender.md) | High | 地形を Unity Terrain で作るか Blender で作るか (着手: 比較条件と切替基準 → VER-ENV-001 の実測で確定) | todo |
-| [VER-ENV-001](VER-ENV-001-prototype-view-and-edges.md) | High | 試作: 眺め・移動・端の見え方・実機負荷を確認する (代表シーン検証を兼ねる)。Stage A+B 生成済み・Editor 一次判定済み・**Play 待ち** | wip |
-| [IMP-DOG-001](IMP-DOG-001-port-dog-system.md) | High | 古民家ドッグランの犬ギミックを移植する (タグ `export/kominka-hillside-v1` + 移植記録) | todo |
+| [VER-ENV-001](VER-ENV-001-prototype-view-and-edges.md) | High | 試作: 眺め・移動・端の見え方・実機負荷を確認する (代表シーン検証を兼ねる)。v4生成・PCVR総合評価は良好、境界・負荷は項目別検証中 | wip |
+| [IMP-DOG-001](IMP-DOG-001-port-dog-system.md) | High | 古民家ドッグランの犬ギミックを移植する (タグ `export/kominka-hillside-v1` + 移植記録) | wip |
+| [DES-DOG-001](DES-DOG-001-leash-walking.md) | High | リード散歩の操作・行動・同期を設計する。片手 3 匹・合計 6 匹を基準に未決定事項を詰める | wip |
+| [IMP-DOG-002](IMP-DOG-002-leash-walking.md) | High | 基本実装・PCVR体験好評。上限・競合・退出・途中参加などの項目別確認と修正 | wip |
+| [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 次の実装: 接続の分かりやすさ、犬の距離・動き、首輪・先端を磨く | todo |
+| [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |
+| [DES-WLD-001](DES-WLD-001-round-trip.md) | Medium | 古民家からの出発・帰還と状態の扱いを設計する | todo |
+
+着手順: IMP-DOG-003を次の比較実装とし、IMP-DOG-001/002・VER-ENV-001の実機確認を並行する。負荷と地形の判断をDES-ENV-001へ返し、その後にIMP-ENV-001、DES-WLD-001を進める。DES-DOG-001は各段階の採用値・おしゃれ・機能範囲をまとめる。改善意図と段階ごとの判断は [開発全体像](../overview.md) §3。
 
 ---
 

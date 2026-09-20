@@ -1,7 +1,7 @@
 // Terrain 試作 (VER-ENV-001) の設定。数値の正本はここ。計画: docs/plans/2026-09-19-terrain-prototype.md
-// 2026-09-19 夜のユーザー判断 (手作業の試作を把握して再パラメータ化):
-//   古民家は谷底の南にあり塀で囲まれている。プレイヤーは古民家の門から出て (スポーン)、獣道を西の斜面へ登り、
-//   丘を周回 (広場で遊び、展望で古民家を見返す)、東の斜面を下って門の前へ戻る。門は塞いで古民家側へは戻れない。
+// 2026-09-19 最新のユーザー判断:
+//   門から裏山へ一本の道が伸び、上に犬と遊べる平地がある。周回路は不要。
+//   上部の見晴らしから古民家を見返し、帰りは来た道を下る。門は塞いで古民家側へは戻れない。
 //   道は綺麗でなくてよい (獣道)。木は多め。広さは現状 (120×180) でよい。
 // 値を変えたら Build Stage A から再実行する。
 using UnityEngine;
@@ -30,7 +30,7 @@ public static class KH_TerrainPrototypeConfig
 
     // --- Terrain 寸法 ---
     public static readonly Vector3 TerrainSize = new Vector3(120f, 50f, 180f);
-    public const int HeightmapResolution = 129;
+    public const int HeightmapResolution = 257;
     public const int AlphamapResolution = 256;
     public const int DetailResolution = 256;
     public const int DetailResolutionPerPatch = 16;
@@ -45,46 +45,45 @@ public static class KH_TerrainPrototypeConfig
     public const float ValleyNoise = 0.3f;
     public const float SlopeZ0 = 44f, SlopeZ1 = 84f;       // 斜面 (線形): ValleyH+0.5 → HillBase。40 m で 10 m = 約 14°
     public const float HillBase = 12f;                     // 丘の南端の高さ
-    public const float HillRise = 9f;                      // 丘の北端 (BankZ0) までの上昇
+    public const float HillRise = 7f;                      // 広場背後を掘り込みの壁にせず山腹へなじませる
     public const float BankZ0 = 160f, BankZ1 = 180f;       // 北の土手
     public const float BankHeight = 10f;                   // 土手の盛り上がり (北・東・西)。尾根として縁の先を隠す
     public const float BankX0 = 15f, BankX1 = 105f;        // 東西の土手はこの外側
     public const float BankFromZ = 10f;                    // 東西の土手はこの z から北 (谷底も囲む)
+    // 外周を直線の壁にせず、幅と稜線が緩く変化する尾根としてつなぐ。
+    public const float BankShoulderWidth = 27f;
+    public const float LandformNoise = 0.65f;
 
     // ガウス山: x, z, 振幅, σ (道の外)
     public static readonly float[,] Bumps = {
-        { 35f, 150f, 3f, 15f },  // 北西の起伏
-        { 95f, 150f, 3f, 15f },  // 北東の起伏
-        { 65f, 105f, 2.5f, 14f }, // 丘の中央 (道の内側)
+        { 24f, 125f, 7f, 28f },  // 西側の山腹。道はこの裾を登る
+        { 43f, 159f, 4f, 24f },  // 山は広場のさらに奥へ続く
+        { 78f, 131f, 0.8f, 23f }, // 犬の広場を支える山の肩
     };
 
     // 平坦部: x, z, 高さ, 半径, 移行帯
     public static readonly float[,] Flats = {
-        { 98f, 88f, 12.5f, 3f, 6f },  // 展望 (丘の南縁。小さな平坦部: 目線 1.6 m の俯角を足元で切らない)
-        { 55f, 140f, 19.5f, 10f, 8f }, // 広場
+        { 80f, 108f, 19f, 3f, 7f },   // 広場の手前の見晴らし。古民家を見下ろす
+        { 72f, 127f, 19f, 12f, 18f }, // 登り切った先の犬の遊び場 (直径24m)
     };
     public const int ViewpointFlat = 0, PlazaFlat = 1;
 
-    // 散歩道の制御点: x, z, 高さ (閉曲線。門の前から西の斜面を登り、丘を周回し、東の斜面を下って門の前へ)
+    // 散歩道の制御点: x, z, 高さ。開いた一本の道。終点と始点は接続しない。
     public static readonly float[,] Path = {
-        { 47f, 41f, 1.5f },    // 門の前 (スポーンの脇)
-        { 38f, 47f, 2.5f },
-        { 26f, 58f, 5.5f },    // 西の斜面を斜めに登る
-        { 22f, 76f, 10f },
-        { 26f, 96f, 13f },     // 丘の西側
-        { 40f, 118f, 16f },
-        { 55f, 140f, 19.5f },  // 広場 (Flats[1] と同じ高さ)
-        { 80f, 130f, 18f },
-        { 98f, 88f, 12.5f },   // 展望 (Flats[0] と同じ高さ)。ここから古民家を見返す
-        { 100f, 72f, 9f },     // 東の斜面を下る
-        { 98f, 56f, 5f },
-        { 90f, 46f, 2.5f },
-        { 75f, 42f, 1.5f },    // 谷底を西へ戻る
+        { 47.6f, 40.1f, 1.5f }, // 門の前
+        { 40f, 52f, 3f },
+        { 38f, 70f, 6.5f },     // 山腹の木を回って登る
+        { 49f, 85f, 10.5f },
+        { 63f, 95f, 14.5f },
+        { 80f, 108f, 19f },     // 見晴らし。ここで登り切る
+        { 80f, 118f, 19f },
+        { 72f, 127f, 19f },     // 広場の中で道がほどけて終わる
     };
     public const float PathHalfWidth = 1.0f;   // 獣道: 幅 2 m
-    public const float PathEdgeNoise = 0.8f;   // 縁を揺らす (m)
+    public const float PathEdgeNoise = 0.45f;  // 細かなギザギザを抑え、幅の緩い変化で獣道を作る
+    public const float PathPaintFeather = 0.7f;
     public const float PathShoulder = 2f;      // 路肩 (左右各)
-    public const float PathBlend = 6f;         // 路肩の外の移行帯
+    public const float PathBlend = 10f;        // 路肩の外の移行帯。切土の急な壁を作らない
     public const float PathSampleStep = 1f;
     public const float PathMaxSlopeDeg = 15f;  // 獣道なので 10° → 15° に緩和 (2026-09-19 ユーザーは 23° の直登も許容)
     public const float PathMaxCrossSlopeDeg = 5f;
@@ -130,11 +129,11 @@ public static class KH_TerrainPrototypeConfig
     // --- Stage B: 木・低木・遠景・草 ---
     // 実物の広葉樹 (x, z)。BroadleafTreeB01 は 1 本 約 2.4 万三角形・LOD 無しなので少数。最後の 1 本は木陰ダミーの隣
     public static readonly float[,] Trees = {
-        { 32f, 62f },    // 西の斜面、道の東脇 (登りの目印)
-        { 16f, 100f },   // 丘の西縁
-        { 106f, 100f },  // 展望の背後 (額縁)
-        { 68f, 112f },   // 丘の中央
-        { 46f, 148f },   // 広場の木陰
+        { 30f, 67f },    // 門から見える登りの木
+        { 40f, 97f },    // 山側の木陰
+        { 95f, 108f },   // 見晴らしの右側
+        { 88f, 141f },   // 広場の奥の木
+        { 63f, 136f },   // 犬の広場の木陰
     };
     public const int TreeSeed = 20260919;
     public const float TreeScaleMin = 0.9f, TreeScaleMax = 1.2f;
@@ -165,7 +164,7 @@ public static class KH_TerrainPrototypeConfig
     public const int DetailSeed = 7;
     public const float DetailNoiseScale = 0.08f;
     public const float DetailClearAroundPath = 0.5f;
-    public const float DetailClearPlazaRadius = 6f;
+    public const float DetailClearPlazaRadius = 11f;
 
     // Layer 規則
     public const float RockySlopeDeg = 30f;

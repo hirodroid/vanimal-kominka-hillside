@@ -6,11 +6,11 @@ VRChat ワールド **「古民家の裏山」 (KominkaHillside)** — VAnimal �
 古民家ドッグラン (`C:/work/unity/vcc/KominkaDogRun`) の続編。**同じ 6 匹と秋の裏山を散歩し、遠くの古民家を眺める。**
 
 > **AI ドキュメントナビゲーション:** `docs/AI_INDEX.md` を参照
-> 企画の原本はユーザー作成の `docs/reference/VAnimal_KominkaHillside_Concept.md` (AI は編集しない)。
+> 企画は後から受領した `docs/reference/VAnimal_KominkaHillside_Walking_Addendum.md` を優先する (ユーザー指定)。旧 `VAnimal_KominkaHillside_Concept.md` は履歴として保存し、編集しない。
 > 判断基準・ビジュアル方針は `docs/core-concept.md`、仕様・スコープは `docs/game-design.md`。
 
 **優先する体験 (並列。優劣なし)**: 山から古民家が見える / 犬と無理なく遊べる / 小さな空間でも散歩した感じがする。豪華さは草木の密度ではなく眺め・道・犬・つながりで作る。
-**スマホ対応を目指す** (確約ではない。実機で判断)。犬ギミックは古民家から一式コピーして個別管理 (共通化しない)。
+**PC に加え Quest 単体・iOS 対応を目指す** (実機で判断)。犬ギミックは古民家の確認済み実装をコピーして個別管理。同じ修正が繰り返される部分が見えたら共通化を検討する。散歩は片手最大 3 匹・合計最大 6 匹のリード接続を含む。
 
 ---
 

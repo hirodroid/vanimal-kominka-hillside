@@ -1,0 +1,56 @@
+RESULT: ok=50 ng=0
+    scene=Assets/Scenes/VRCDefaultWorldScene.unity dirty=False
+OK  KH_World exists
+OK  terrain exists
+OK  terrainData asset path == config
+OK  heightmap resolution == 257
+OK  size == (120.00, 50.00, 180.00)
+OK  terrainCollider enabled and same data
+OK  4 layers by diffuse name
+    path samples=293 length=293.0 m
+OK  path slope <= 15 deg (worst 15.1 deg, ng=0)
+OK  path cross slope <= 5 deg (worst 2.5 deg, ng=0)
+OK  path edge min z >= south bound + 2 (min edge z 39.2)
+OK  KH_FarKominka exists
+OK  kominka building instance exists
+OK  kominka active tris <= 8000 (6891)
+OK  kominka interior children found 8/8, active 0
+OK  kominka is still a prefab instance (not unpacked)
+OK  kominka has no udon/animator, exactly 1 collider (wall) (0/0/1)
+    DIAG viewpoint->kominka terrain-blocked points = 0/5 (pass/fail is by view shots)  eye=(98.0, 14.1, 88.0) kominka=(57.5, 4.0, 31.6) dist=70.2
+OK  grounded objects + path control points inside walk area (outside=0)
+OK  KH_Bounds exists
+OK  4 walls
+OK  walls enabled, non-trigger, layer Environment
+OK  south face z == 12
+OK  north face z == 168
+OK  west face x == 12
+OK  east face x == 108
+OK  corners overlap (3D)
+OK  wall exposure >= required along faces (sampled, ng=0)
+OK  wall bottom <= ground - 1 (sampled, ng=0)
+OK  KH_GateBlock exists with BoxCollider on layer Environment
+OK  kominka wall has MeshCollider
+OK  template Floor removed
+OK  descriptor exists
+OK  spawns[0] == KH_Entrance
+OK  RespawnHeightY == -10
+OK  spawn faces away from the gate
+OK  walking back from spawn into the gate hits KH_GateBlock
+OK  spawn ground offset == 0.1 +-0.05 (0.10)
+OK  spawn body box overlaps no collider (except terrain)
+OK  spawn is on or beside the trail (distance 0.7 m <= 4)
+    stage detected: B (dressing present) detailTotal=5986010
+OK  Stage B: trees == 5 (5)
+OK  Stage B: tree leaf materials are autumn (5/5)
+OK  Stage B: board trees == 20 (20)
+    DIAG KH_World active mesh triangles (excluding terrain) = 178034
+OK  Stage B: shrubs == 16 (16)
+OK  Stage B: KH_Scenery has 1 viewset
+OK  Stage B: viewset materials are autumn (5/5)
+OK  Stage B: 5 detail prototypes valid
+OK  Stage B: details present on hill (total 5986010)
+OK  Stage B: details zero on road center and plaza center (road 0, plaza 0)
+OK  dummies 6 + ball 1 (7)
+OK  saved .unity: NetworkIDs dangling (gameObject fileID 0) == 0 (0)
+OK  saved .unity: KH_Terrain present in file

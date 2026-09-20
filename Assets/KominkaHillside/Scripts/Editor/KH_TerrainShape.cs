@@ -26,13 +26,21 @@ public static class KH_TerrainShape
         else if (z < C.SlopeZ0) h = C.ValleyH + (Mathf.PerlinNoise(x * 0.07f + 3f, z * 0.07f + 9f) - 0.5f) * 2f * C.ValleyNoise;
         else if (z < C.SlopeZ1) h = Mathf.Lerp(C.ValleyH + 0.5f, C.HillBase, Mathf.Clamp01((z - C.SlopeZ0) / (C.SlopeZ1 - C.SlopeZ0))); // 線形 (一様な勾配)
         else if (z < C.BankZ0) h = C.HillBase + C.HillRise * SmoothStep(C.SlopeZ1, C.BankZ0, z);
-        else h = C.HillBase + C.HillRise + C.BankHeight * SmoothStep(C.BankZ0, C.BankZ1, z);
+        else h = C.HillBase + C.HillRise;
+
+        // 地形端の高さは保ち、尾根の裾と高さを場所ごとに変える。
+        float northStart = C.BankZ0 - 8f + 5f * Mathf.Sin(x * 0.057f + 0.8f);
+        h += C.BankHeight * (0.85f + 0.15f * Mathf.Sin(x * 0.083f)) * SmoothStep(northStart, C.BankZ1, z);
 
         if (z >= C.BankFromZ)
         {
-            if (x < C.BankX0) h += C.BankHeight * SmoothStep(C.BankX0, 0f, x);
-            else if (x > C.BankX1) h += C.BankHeight * SmoothStep(C.BankX1, C.TerrainSize.x, x);
+            float westWidth = C.BankShoulderWidth + 5f * Mathf.Sin(z * 0.055f + 0.7f);
+            float eastWidth = C.BankShoulderWidth + 5f * Mathf.Sin(z * 0.047f + 2.3f);
+            float fade = SmoothStep(C.BankFromZ, C.BankFromZ + 16f, z);
+            h += fade * C.BankHeight * (0.9f + 0.17f * Mathf.Sin(z * 0.064f)) * SmoothStep(westWidth, 0f, x);
+            h += fade * C.BankHeight * (0.9f + 0.17f * Mathf.Sin(z * 0.052f + 1.7f)) * SmoothStep(C.TerrainSize.x - eastWidth, C.TerrainSize.x, x);
         }
+        h += (Mathf.PerlinNoise(x * 0.042f + 31f, z * 0.042f + 17f) - 0.5f) * 2f * C.LandformNoise * SmoothStep(C.SlopeZ0, C.SlopeZ1, z);
         for (int i = 0; i < C.Bumps.GetLength(0); i++)
         {
             float dx = x - C.Bumps[i, 0], dz = z - C.Bumps[i, 1], sg = C.Bumps[i, 3];
@@ -55,16 +63,23 @@ public static class KH_TerrainShape
     }
 
     // ---------------------------------------------------------------- 道
-    static Vector2 CtrlXZ(int i) { int n = C.Path.GetLength(0); i = ((i % n) + n) % n; return new Vector2(C.Path[i, 0], C.Path[i, 1]); }
+    static Vector2 CtrlXZ(int i)
+    {
+        int n = C.Path.GetLength(0);
+        // 端は接線方向へ外挿する。重複点だと centripetal の分母が 0 になる。
+        if (i < 0) return 2f * CtrlXZ(0) - CtrlXZ(1);
+        if (i >= n) return 2f * CtrlXZ(n - 1) - CtrlXZ(n - 2);
+        return new Vector2(C.Path[i, 0], C.Path[i, 1]);
+    }
 
-    // centripetal Catmull-Rom (閉曲線) を弧長 PathSampleStep で再サンプルし、高さを制御点間で線形補間 → 勾配上限で緩和
+    // 門 → 広場の開いた centripetal Catmull-Rom を弧長で再サンプル。始点へは戻さない。
     public static List<PathSample> SamplePath()
     {
         int n = C.Path.GetLength(0);
         var dense = new List<Vector2>();
         var denseSeg = new List<int>();
         var denseT = new List<float>();
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < n - 1; i++)
         {
             Vector2 p0 = CtrlXZ(i - 1), p1 = CtrlXZ(i), p2 = CtrlXZ(i + 1), p3 = CtrlXZ(i + 2);
             float t0 = 0f, t1 = t0 + Mathf.Pow(Vector2.Distance(p0, p1), C.CatmullRomAlpha), t2 = t1 + Mathf.Pow(Vector2.Distance(p1, p2), C.CatmullRomAlpha), t3 = t2 + Mathf.Pow(Vector2.Distance(p2, p3), C.CatmullRomAlpha);
@@ -79,12 +94,13 @@ public static class KH_TerrainShape
                 denseSeg.Add(i); denseT.Add(u);
             }
         }
+        dense.Add(CtrlXZ(n - 1)); denseSeg.Add(n - 2); denseT.Add(1f);
         // 弧長で再サンプル
         var result = new List<PathSample>();
         float acc = 0f, next = 0f;
-        for (int i = 0; i < dense.Count; i++)
+        for (int i = 0; i < dense.Count - 1; i++)
         {
-            int j = (i + 1) % dense.Count;
+            int j = i + 1;
             float segLen = Vector2.Distance(dense[i], dense[j]);
             while (next <= acc + segLen)
             {
@@ -94,13 +110,16 @@ public static class KH_TerrainShape
                 ps.s = next;
                 int seg = denseSeg[i];
                 float segT = Mathf.Lerp(denseT[i], i + 1 < dense.Count && denseSeg[j] == seg ? denseT[j] : 1f, u);
-                ps.h = Mathf.Lerp(C.Path[seg, 2], C.Path[(seg + 1) % n, 2], segT);
+                ps.h = Mathf.Lerp(C.Path[seg, 2], C.Path[seg + 1, 2], segT);
                 ps.anchored = segT < 1e-3f;
                 result.Add(ps);
                 next += C.PathSampleStep;
             }
             acc += segLen;
         }
+        // 最後の 1m 未満の区間も保持し、広場の指定位置で正確に終える。
+        if (Vector2.Distance(result[result.Count - 1].xz, CtrlXZ(n - 1)) > 0.001f)
+            result.Add(new PathSample { xz = CtrlXZ(n - 1), h = C.Path[n - 1, 2], s = acc, anchored = true });
         // 平坦部の中は水平 (固定)
         for (int i = 0; i < result.Count; i++)
         {
@@ -110,13 +129,13 @@ public static class KH_TerrainShape
             result[i] = ps;
         }
         // 勾配上限で緩和 (固定点は動かさない)
-        float maxD = Mathf.Tan(C.PathMaxSlopeDeg * Mathf.Deg2Rad) * C.PathSampleStep * 0.98f;
         for (int pass = 0; pass < 200; pass++)
         {
             bool changed = false;
-            for (int i = 0; i < result.Count; i++)
+            for (int i = 0; i < result.Count - 1; i++)
             {
-                var a = result[i]; var b = result[(i + 1) % result.Count];
+                var a = result[i]; var b = result[i + 1];
+                float maxD = Mathf.Tan(C.PathMaxSlopeDeg * Mathf.Deg2Rad) * Vector2.Distance(a.xz, b.xz) * 0.96f;
                 float d = b.h - a.h;
                 if (Mathf.Abs(d) <= maxD) continue;
                 float excess = Mathf.Abs(d) - maxD;
@@ -124,7 +143,7 @@ public static class KH_TerrainShape
                 else if (!a.anchored) a.h += Mathf.Sign(d) * excess;
                 else if (!b.anchored) b.h -= Mathf.Sign(d) * excess;
                 else continue;
-                result[i] = a; result[(i + 1) % result.Count] = b; changed = true;
+                result[i] = a; result[i + 1] = b; changed = true;
             }
             if (!changed) break;
         }
@@ -133,7 +152,7 @@ public static class KH_TerrainShape
 
     static Vector2 Lerp2(Vector2 a, Vector2 b, float t) { return a + (b - a) * t; }
 
-    public static float PathLength(List<PathSample> s) { return s.Count * C.PathSampleStep; }
+    public static float PathLength(List<PathSample> s) { return s.Count > 0 ? s[s.Count - 1].s : 0f; }
 
     // 点から道の中心線までの距離と、そこでの道の高さ (隣接サンプルへ射影して補間)
     public static float DistanceToPath(List<PathSample> s, float x, float z, out float roadH)
@@ -148,7 +167,8 @@ public static class KH_TerrainShape
         float dist = Mathf.Sqrt(bestD); roadH = s[best].h;
         for (int k = -1; k <= 0; k++)
         {
-            int i0 = (best + k + s.Count) % s.Count, i1 = (i0 + 1) % s.Count;
+            int i0 = best + k, i1 = i0 + 1;
+            if (i0 < 0 || i1 >= s.Count) continue;
             Vector2 a = s[i0].xz, b = s[i1].xz, ab = b - a;
             float len2 = ab.sqrMagnitude; if (len2 < 1e-6f) continue;
             float t = Mathf.Clamp01(Vector2.Dot(p - a, ab) / len2);
@@ -161,7 +181,7 @@ public static class KH_TerrainShape
     // 道の進行方向 (正規化) と左向きの法線
     public static void PathFrame(List<PathSample> s, int i, out Vector2 forward, out Vector2 left)
     {
-        var a = s[(i - 1 + s.Count) % s.Count].xz; var b = s[(i + 1) % s.Count].xz;
+        var a = s[Mathf.Max(0, i - 1)].xz; var b = s[Mathf.Min(s.Count - 1, i + 1)].xz;
         forward = (b - a).normalized;
         left = new Vector2(-forward.y, forward.x);
     }
@@ -215,7 +235,7 @@ public static class KH_TerrainShape
             log.AppendLine("heights min=" + minH.ToString("0.0") + " max=" + maxH.ToString("0.0") + " (range " + H + ")");
             log.AppendLine("path samples=" + path.Count + " length=" + PathLength(path).ToString("0.0") + " m");
             float worst = 0f;
-            for (int i = 0; i < path.Count; i++) worst = Mathf.Max(worst, Mathf.Abs(path[(i + 1) % path.Count].h - path[i].h));
+            for (int i = 0; i < path.Count - 1; i++) worst = Mathf.Max(worst, Mathf.Abs(path[i + 1].h - path[i].h));
             log.AppendLine("path profile worst step=" + worst.ToString("0.000") + " m/" + C.PathSampleStep + " m (" + (Mathf.Atan(worst / C.PathSampleStep) * Mathf.Rad2Deg).ToString("0.0") + " deg)");
         }
         return norm;
@@ -237,11 +257,15 @@ public static class KH_TerrainShape
                 float steep = td.GetSteepness(x / W, z / L);
                 float roadH;
                 float d = DistanceToPath(path, x, z, out roadH);
-                float edgeNoise = (Mathf.PerlinNoise(x * 0.35f + 7f, z * 0.35f + 3f) - 0.5f) * 2f * C.PathEdgeNoise;
-                float road = 1f - SmoothStep(C.PathHalfWidth, C.PathHalfWidth + 1.5f, d + edgeNoise);
-                bool bank = x < C.BankX0 || x > C.BankX1 || z > C.BankZ0;
+                float edgeNoise = (Mathf.PerlinNoise(x * 0.16f + 7f, z * 0.16f + 3f) - 0.5f) * 2f * C.PathEdgeNoise;
+                float road = 1f - SmoothStep(C.PathHalfWidth, C.PathHalfWidth + C.PathPaintFeather, d + edgeNoise);
+                // 到着地点は丸い道の終端ではなく、縁の崩れた土の広場へ開く。
+                float px = x - C.Flats[C.PlazaFlat, 0], pz = z - C.Flats[C.PlazaFlat, 1];
+                float clearingDist = Mathf.Sqrt(px * px + pz * pz * 0.85f);
+                float clearingNoise = (Mathf.PerlinNoise(x * 0.18f, z * 0.18f) - 0.5f) * 2f;
+                float clearing = 1f - SmoothStep(8f, 12f, clearingDist + clearingNoise);
+                road = Mathf.Max(road, clearing * 0.82f);
                 float rocky = Mathf.Clamp01((steep - rockySlope + 5f) / 10f);
-                if (bank) rocky = Mathf.Max(rocky, 0.6f);
                 float noise = Mathf.PerlinNoise(x * C.LayerNoiseScale + 11f, z * C.LayerNoiseScale + 5f);
                 float grassRocky = noise > C.RockyNoiseThreshold ? Mathf.Clamp01((noise - C.RockyNoiseThreshold) * 6f) : 0f;
                 float ground = 1f - road;

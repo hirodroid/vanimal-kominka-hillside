@@ -25,7 +25,8 @@
 
 | File | Domain | Role |
 |------|--------|------|
-| `reference/VAnimal_KominkaHillside_Concept.md` | 企画 (原本) | ユーザー作成の企画・引き継ぎ資料 (2026-09-19 合意)。**AI は編集しない。** 導出文書と食い違ったらこちらを優先し、下 2 枚を直す。**例外: 原本より後のユーザー決定** — `game-design.md` に日付付きで追補されたものが原本より優先 (原本は書き換えないため) |
+| `reference/VAnimal_KominkaHillside_Walking_Addendum.md` | 企画 (優先資料) | 後から受領した 11 項目。ユーザー指定により旧資料・以前の会話・試作より優先。未確定事項は固定しない |
+| `reference/VAnimal_KominkaHillside_Concept.md` | 企画 (旧原本) | 旧企画の履歴。AI は編集しない。食い違う場合は後から受領した散歩企画資料を優先 |
 | `core-concept.md` | 判断基準・ビジュアル | 原本から導いた体験の核・判断基準とビジュアル方針 (色・形・素材・光・UI・例外) の正本 |
 | `game-design.md` | 仕様 | コアコンセプトから導く仕様・スコープの正本 |
 | `world-ui-spec.md` | UI仕様 | ビジュアル方針から具体化するUIトークン・画面・状態/入力契約・検証記録。既存の同等資料があればそちらを正本にする |
@@ -56,28 +57,25 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 
 1. **古民家ドッグランの続編である。** 主役は同じ 6 匹 (コーギー / ポメラニアン / ラブラドール / ダックスフンド / 柴犬 / サモエド)。犬種・頭数を増減しない
 2. **山から古民家が見える。** 展望・休憩場所から古民家の外観が識別できることを崩す変更をしない。古民家は遠景専用で内部は作らない
-3. **犬ギミックは古民家から一式コピーして個別管理する。** 共通ライブラリ化・VPM 化・自動同期をしない。移植元のタグ・SHA・範囲・差分を `development/imports/kominka-dog-system.md` に残す
-4. **新しい大規模ギミック・専用散歩 AI は初期範囲に入れない。** スコープは `game-design.md` §7 が正本
-5. **スマホ対応を目指す。** 「Terrain だから軽い」と判断しない。密度で豪華にせず、眺め・道・犬・古民家とのつながりで作る
+3. **犬ギミックは古民家から一式コピーして個別管理する。** 最初から共通ライブラリ化・VPM 化を進めず、同じ修正が繰り返される部分が見えたら共通化を検討する。移植元のタグ・SHA・範囲・差分を `development/imports/kominka-dog-system.md` に残す
+4. **片手 3 匹・合計 6 匹のリード接続・範囲内行動は初期範囲に含む。** 犬の先導など追加行動は必須にしない。 スコープは `game-design.md` §7 が正本
+5. **PC に加え Quest 単体・iOS 対応を目指す。** 「Terrain だから軽い」と判断しない。密度で豪華にせず、眺め・道・犬・古民家とのつながりで作る
 6. **散歩道から Terrain の切断面・空白を見せない。** 歩ける範囲の外に景観用の余白を置く
-7. **画面は同期しない。** 同期は古民家の設計 (犬の位置 = Owner 権威、ボール、状態) を引き継ぎ、新しい同期を設計しない
+7. **画面は同期しない。** 既存の同期を移植の土台にする。リードの接続先・左右は専用ManagerのOwnerが裁定する初回実装を導入した。複数人・退出・途中参加は未検証。設計と残課題は DES-DOG-001、検証状態は IMP-DOG-002 を参照
 8. **企画の原本 (`reference/VAnimal_KominkaHillside_Concept.md`) と購入アセットのフォルダは編集しない。** 秋色などの派生物は `Assets/KominkaHillside/` 側にコピーして管理する
 
 ---
 
-## 最初に着手すべきこと
+## 現在地と次の作業
 
-<!-- 現在地と着手順をここに書く。セッションのたびに更新する。 -->
+**2026-09-20 PCVR試作確認**: ユーザーがPlayはひとまず良好、アップロード後PCVRで非常に面白かったと報告。同じ6匹とリード散歩の体験を確認できたプロトタイプとして保存する。各操作・6匹・複数人・Quest単体・iOSの検証が全て済んだ意味ではない。
 
-**現在地 (2026-09-19 夜)**: Terrain 試作 (VER-ENV-001) **v2** (門から出発する配置。ユーザーの手作業を把握して再パラメータ化) を生成し、Editor 検証 50/50・View Shots で一次判定済み。**次はユーザーの Play** ([計画 §10](plans/2026-09-19-terrain-prototype.md))。**Build は手作業を消す**: 手で直したい値は設定へ写してから Build する (手作業の参照コミット `13a7e31`)。舞台は `Assets/Scenes/VRCDefaultWorldScene.unity` の `KH_World` 配下 (Build で作り直す。手で置くものはその外)。数値の正本は `Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeConfig.cs`。Unity 2022.3.22f1 / SDK 3.10.5 / Synaptic AI Pro / LMArt / モサンゴ屋 導入済み。
+後から受領した散歩資料を正とする。Terrain v4は「門→登り道→見晴らし→上部の遊び場」の試作。最終コース長・形状・休憩場所数・端処理は未確定。実物6匹を導入しダミー非表示。地形Editor検査53/53、散歩Editor検査74/74の範囲と実機の結果を区別する。
 
-着手順 (Issue は `development/issues/issue_summary.md`):
+- 現在の品質・改善順: [開発全体像](development/overview.md) §3。
+- 次の実装: **IMP-DOG-003** 接続・追従の手触り。並行して **IMP-DOG-001/002・VER-ENV-001** の同期・端末・地形検証。
+- その後: **IMP-ENV-001** 景観・休憩場所、**DES-WLD-001** 古民家との往復導線。おしゃれ・採用機能・性能予算は **DES-DOG-001**。
+- 状態と実行キュー: [Issueサマリ](development/issues/issue_summary.md)。移植の出所は [移植記録](development/imports/kominka-dog-system.md)、ユーザー報告と項目別手順は [散歩検証記録](plans/2026-09-20-leash-walking.md)。
 
-1. **DES-ENV-001 (着手済み)** まず Terrain。切り替え基準は Issue に記録済み (2026-09-19)
-2. **VER-ENV-001** 試作 (**生成済み。Play 待ち**): Terrain + 秋の広葉樹 + 古民家の外観 + 犬サイズのダミーで、眺め・歩行・端の見え方・実機負荷を確認する。`core-concept.md` §3 の代表シーン検証を兼ねる。作り直しは `bash scripts/kh-terrain-loop.sh B`
-3. **DES-ENV-001 (確定)** 試作の実測で方式を決め、`game-design.md` §4 を更新する
-4. **IMP-DOG-001** 地形方式が決まってから、古民家側にタグ `export/kominka-hillside-v1` を打ち、6 匹 + 撫で・ボール・添い寝を移植する (移植記録を作成)。**タグはこの時点で打つ** (試作用の先行コピーはしない: 2026-09-19 ユーザー決定)
-5. **VER-ENV-001 の犬項目** (遊び・追従・行動範囲) を移植後に確認する
-6. 試作結果を踏まえて `game-design.md` §4 の未決定事項 (広さ・配置・行動範囲・性能目標) を埋める
-
-作業前の確認: `bash scripts/unity-api.sh health` が通り、eval の `Application.dataPath` がこのプロジェクトを指すこと (`vrc-synaptic-unity`)。
+Build は KH_World を作り直す。手修正は設定へ写してから再生成する。数値は Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeConfig.cs が正本。手置きは KH_World 外へ。
+Unity 操作前は scripts/unity-api.sh 経由で接続と Application.dataPath を確認する。
