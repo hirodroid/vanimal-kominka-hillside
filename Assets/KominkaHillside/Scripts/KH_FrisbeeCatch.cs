@@ -46,7 +46,10 @@ namespace KominkaHillside
         public float minRootRise = 0.19f;
         [Tooltip("Disc lower than the standing mouth by more than this: pick it up after it lands")]
         public float tooLowBelowMouth = 0.30f;
+        [Tooltip("Mouth to the disc EDGE (centre distance minus the disc radius) at the catch instant")]
         public float catchTolerance = 0.30f;
+        [Tooltip("Seconds around the planned catch instant during which the mouth may meet the disc (first frame within tolerance wins)")]
+        public float catchWindow = 0.08f;
         [Tooltip("Horizontal speed carried into the crouch and the air")]
         public float takeoffSpeed = 2.5f;
         [Tooltip("Sprint used while chasing a flying disc (the walk-world run of 2.4 m/s never catches up; first Play). " +
@@ -125,6 +128,7 @@ namespace KominkaHillside
         private Vector3 _jumpFrom;
         private float _groundY;
         private bool _catchDecided;
+        private float _bestGap;
         private bool _airborne;
         private Vector3 _airStart, _airVel;
         private double _stateEntered;
@@ -320,7 +324,7 @@ namespace KominkaHillside
                 float crouchAt = _catchT - _tUp - _crouchReal;
                 float avail = crouchAt - tNow;
                 if (avail < -0.08f) { _plan = PlanNone; _nextPlan = 0f; }     // missed the slot: pick a later candidate next frame
-                else if (dist <= arriveRadius && avail <= 0.08f) { BeginJump(now); return; }
+                else if (dist <= arriveRadius && avail <= 0.02f) { BeginJump(now); return; } // never early: 0.08 s early puts the disc 0.5 m short
                 float desired = avail > 0.05f ? Mathf.Clamp(dist / avail, walkSpeed * 0.5f, chaseRunSpeed) : chaseRunSpeed;
                 if (dist <= arriveRadius) { Coast(); dogRoot.rotation = Quaternion.RotateTowards(dogRoot.rotation, Quaternion.LookRotation(_forward, Vector3.up), turnSpeedDegPerSec * Time.deltaTime); } // net: owner-only; at the start point, face the jump line while waiting
                 else MoveToward(_crouchStart, desired, 0f, chaseAcceleration);
@@ -331,13 +335,21 @@ namespace KominkaHillside
                 Vector3 to = _catchRoot - dogRoot.position; to.y = 0f;
                 float desired = avail > 0.05f ? Mathf.Clamp(to.magnitude / avail, walkSpeed * 0.5f, chaseRunSpeed) : chaseRunSpeed;
                 MoveToward(_catchRoot + _forward * 0.5f, desired, 0f, chaseAcceleration); // run through, not to, the point
-                if (avail <= 0.0f)
+                if (avail <= catchWindow)
                 {
-                    Vector3 predicted = frisbee._PositionAt(_p0, _v0, tNow);
-                    float gap = Vector3.Distance(mouthAnchor.position, predicted);
-                    Debug.Log("[KH_FrisbeeCatch] run catch " + (gap <= catchTolerance ? "OK" : "MISS") + " mouth-predicted=" + gap.ToString("F3"));
-                    if (gap <= catchTolerance && !(_discPickup != null && _discPickup.IsHeld)) { TransitionTo(StateReturn); return; }
-                    _plan = PlanNone; _nextPlan = 0f;
+                    if (!_catchDecided) { _catchDecided = true; _bestGap = 99f; }
+                    float gap = EdgeGap(tNow);
+                    if (gap < _bestGap) _bestGap = gap;
+                    if (gap <= catchTolerance && !(_discPickup != null && _discPickup.IsHeld))
+                    {
+                        Debug.Log("[KH_FrisbeeCatch] run catch OK mouth-edge=" + gap.ToString("F3") + " at " + avail.ToString("F2") + "s");
+                        TransitionTo(StateReturn); return;
+                    }
+                    if (avail < -catchWindow)
+                    {
+                        Debug.Log("[KH_FrisbeeCatch] run catch MISS best mouth-edge=" + _bestGap.ToString("F3"));
+                        _plan = PlanNone; _nextPlan = 0f; _catchDecided = false;
+                    }
                 }
             }
             else if (_plan == PlanGround)
@@ -453,7 +465,7 @@ namespace KominkaHillside
                     float turn = to.magnitude > 0.05f ? Vector3.Angle(dogRoot.forward, to) : 0f;
                     if (Eta(to.magnitude, turn) > t - tNow) continue;
                     if (to.magnitude > 0.05f && Physics.Raycast(dogPos + Vector3.up * 0.3f, to.normalized, out hit, to.magnitude, frisbee.obstacleMask, QueryTriggerInteraction.Ignore)) continue;
-                    _catchT = t; _catchRoot = root; _forward = fwd; _rootRise = 0f; _tUp = 0f; _animScale = 1f; _crouchReal = 0f; _jumpSpeed = 0f;
+                    _catchT = t; _catchRoot = root; _forward = fwd; _rootRise = 0f; _tUp = 0f; _animScale = 1f; _crouchReal = 0f; _jumpSpeed = 0f; _catchDecided = false;
                     chosen = PlanRun;
                     break;
                 }
@@ -470,9 +482,11 @@ namespace KominkaHillside
 
         void BeginJump(double now)
         {
-            // The dog is at the crouch start within the time window (<= 0.08 s early/late); the clip starts now.
-            _jumpStart = now;
-            _jumpFrom = dogRoot.position; _jumpFrom.y = _groundY; _catchDecided = false; _airborne = false;
+            // The arc is anchored to the planned instant so the mouth meets the prediction on time; the clip
+            // starts now, at most a frame or two behind the arc (starts more than 0.1 s late are replanned above).
+            _jumpStart = _t0 + (_catchT - _tUp - _crouchReal);
+            if (_jumpStart > now) _jumpStart = now;
+            _jumpFrom = dogRoot.position; _jumpFrom.y = _groundY; _catchDecided = false; _airborne = false; _bestGap = 99f;
             animSpeed = _animScale;
             TransitionTo(StateJump);
         }
@@ -510,17 +524,29 @@ namespace KominkaHillside
             pos.y = _groundY + vy * ta - 0.5f * g * ta * ta;
             if (ta >= 2f * _tUp) pos.y = _groundY;
             dogRoot.position = pos; // net: owner-only
-            if (!_catchDecided && ta >= _tUp)
+            if (!_catchDecided && ta >= _tUp - catchWindow)
             {
-                _catchDecided = true;
                 float tNow = frisbee._ElapsedSince(_t0);
-                Vector3 predicted = frisbee._PositionAt(_p0, _v0, tNow);
-                Vector3 mouth = mouthAnchor.position;
-                float gap = Vector3.Distance(mouth, predicted);
-                float syncGap = Vector3.Distance(frisbee.transform.position, predicted);
+                float gap = EdgeGap(tNow);
+                if (ta < _tUp - catchWindow + 0.001f) _bestGap = 99f;
+                if (gap < _bestGap) _bestGap = gap;
                 bool ok = gap <= catchTolerance && !_flightEnded && !(_discPickup != null && _discPickup.IsHeld);
-                Debug.Log("[KH_FrisbeeCatch] catch " + (ok ? "OK" : "MISS") + " mouth-predicted=" + gap.ToString("F3") + " observed-predicted=" + syncGap.ToString("F3") + " rise=" + _rootRise.ToString("F2") + " scale=" + _animScale.ToString("F2"));
-                if (ok) { TransitionTo(StateJumpCarry); return; }
+                if (ok)
+                {
+                    _catchDecided = true;
+                    float syncGap = Vector3.Distance(frisbee.transform.position, frisbee._PositionAt(_p0, _v0, tNow));
+                    Debug.Log("[KH_FrisbeeCatch] catch OK mouth-edge=" + gap.ToString("F3") + " at " + (ta - _tUp).ToString("F2") + "s observed-predicted=" + syncGap.ToString("F3") + " rise=" + _rootRise.ToString("F2") + " scale=" + _animScale.ToString("F2"));
+                    TransitionTo(StateJumpCarry); return;
+                }
+                if (ta >= _tUp + catchWindow)
+                {
+                    _catchDecided = true;
+                    Vector3 predicted = frisbee._PositionAt(_p0, _v0, tNow);
+                    Vector3 err = predicted - mouthAnchor.position; float dy = err.y; err.y = 0f;
+                    bool inJump = dogAnimator.GetCurrentAnimatorStateInfo(0).IsName("Jump");
+                    Debug.Log("[KH_FrisbeeCatch] catch MISS best mouth-edge=" + _bestGap.ToString("F3") + " now: dxz=" + err.magnitude.ToString("F2") + " dy=" + dy.ToString("F2")
+                        + " yawErr=" + Vector3.Angle(dogRoot.forward, _forward).ToString("F0") + " inJumpState=" + inJump + " rise=" + _rootRise.ToString("F2") + " scale=" + _animScale.ToString("F2") + " flightEnded=" + _flightEnded);
+                }
             }
             if (ta >= 2f * _tUp) TransitionTo(state == StateJumpCarry ? StateLandCarry : StateLand);
         }
@@ -590,6 +616,13 @@ namespace KominkaHillside
                 ReleaseDisc(dogRoot.forward * 0.3f);
                 TransitionTo(StateIdle);
             }
+        }
+
+        // Mouth anchor to the disc edge, using the prediction (== flight on the thrower's client).
+        float EdgeGap(float tNow)
+        {
+            float gap = Vector3.Distance(mouthAnchor.position, frisbee._PositionAt(_p0, _v0, tNow)) - frisbee.radius;
+            return gap < 0f ? 0f : gap;
         }
 
         // ---- Locomotion (compact port of KD_DogFetchController's walk/run/turn/snap) ----

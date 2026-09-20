@@ -165,9 +165,25 @@ namespace KominkaHillside.Editor
             if (discGo.GetComponent<VRCObjectSync>() == null) discGo.AddComponent<VRCObjectSync>();
             discGo.transform.position = muzzle.position; discGo.transform.rotation = Quaternion.identity;
             var disc = Add<KH_Frisbee>(discGo);
+            // Aim preview: a line along the predicted path and a landing marker, shown to the holder only.
+            var aimRoot = Obj("KH_FrisbeeAim", props.transform);
+            var lineGo = Obj("AimLine", aimRoot.transform);
+            var line = lineGo.GetComponent<LineRenderer>(); if (line == null) line = lineGo.AddComponent<LineRenderer>();
+            var aimMat = Mat("KH_FrisbeeAim", new Color(.3f, .9f, 1f, .8f));
+            line.sharedMaterial = aimMat; line.useWorldSpace = true; line.startWidth = .03f; line.endWidth = .015f; line.positionCount = 0; line.enabled = false;
+            line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; line.receiveShadows = false;
+            var marker = Prim("AimMarker", PrimitiveType.Cylinder, aimRoot.transform);
+            var mc = marker.GetComponent<Collider>(); if (mc != null) UnityEngine.Object.DestroyImmediate(mc);
+            marker.transform.localScale = new Vector3(.34f, .004f, .34f); marker.GetComponent<Renderer>().sharedMaterial = aimMat; marker.SetActive(false);
+            disc.aimLine = line; disc.aimMarker = marker.transform; disc.aimLaunch = true; disc.aimSpeed = 7.5f; disc.aimSpeedMin = 4f; disc.aimSpeedMax = 11f;
+            // Held look: the holder sees the disc at 25% so the preview line is not hidden behind it.
+            string heldPath = Data + "/KH_FrisbeeDiscHeld.mat"; var held = AssetDatabase.LoadAssetAtPath<Material>(heldPath);
+            if (held == null) { held = new Material(Shader.Find("Legacy Shaders/Transparent/Diffuse")); held.color = new Color(1f, .5f, .15f, .25f); AssetDatabase.CreateAsset(held, heldPath); }
+            disc.discRenderer = discGo.GetComponent<Renderer>(); disc.discMaterial = Mat("KH_FrisbeeDisc", new Color(1f, .5f, .15f)); disc.discHeldMaterial = held;
             // Flight model: code-owned (the Verify integration check and the fixed throw assume these). Tune in the
             // Inspector during Play, then copy the numbers here; a rebuild restores them.
             disc.gravity = 9.81f; disc.drag = 0.15f; disc.lift = 0.30f; disc.liftCap = 0.95f; disc.maxSpeed = 11f;
+            disc.desktopMinThrowSpeed = 6f; disc.desktopMaxThrowSpeed = 11f; disc.desktopThrowRise = 0.25f; // a short press must still fly ~2 s
 
             // Catcher (Manual sync on its own object; the dog root carries VRCObjectSync).
             var catcher = Add<KH_FrisbeeCatch>(Obj("KH_FrisbeeCatch_Lab", dogs.transform), true);

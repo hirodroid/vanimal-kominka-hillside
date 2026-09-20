@@ -2,6 +2,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.SDK3.Components;
+using VRC.Udon.Common;
 using VRC.Udon.Common.Interfaces;
 
 namespace KominkaHillside
@@ -33,11 +34,29 @@ namespace KominkaHillside
         [Header("Throw detection (same shape as KD_BallController)")]
         public float throwSpeedThreshold = 1.5f;
         public int throwCheckFrames = 6;
-        [Header("Desktop throw")]
+        [Header("Aim launch (user decision 2026-09-21: trigger + trajectory preview, not a physical throw)")]
+        [Tooltip("While held, the holder sees the predicted path and Use launches the disc along it. Off = physical throw / desktop charge")]
+        public bool aimLaunch = true;
+        [Tooltip("Launch speed at power 0.5. Power (0..1) maps aimSpeedMin..aimSpeedMax: VR right stick up/down, desktop mouse wheel")]
+        public float aimSpeed = 7.5f;
+        public float aimSpeedMin = 4f, aimSpeedMax = 11f;
+        [Tooltip("Power change per second at full stick deflection")]
+        public float aimPowerRate = 0.8f;
+        [Tooltip("Power change per mouse wheel notch (desktop)")]
+        public float aimPowerWheel = 0.08f;
+        public float aimMinPitchDeg = -5f, aimMaxPitchDeg = 40f;
+        [Tooltip("Swapped in while held by the local player so the preview line shows through the disc")]
+        public Renderer discRenderer;
+        public Material discMaterial, discHeldMaterial;
+        public LineRenderer aimLine;
+        public Transform aimMarker;
+        public int aimPoints = 40;
+        public float aimStep = 0.08f;
+        [Header("Desktop throw (aimLaunch off)")]
         public float desktopMaxChargeSeconds = 1.0f;
-        public float desktopMinThrowSpeed = 4f;
-        public float desktopMaxThrowSpeed = 10f;
-        public float desktopThrowRise = 0.15f;
+        public float desktopMinThrowSpeed = 6f;
+        public float desktopMaxThrowSpeed = 11f;
+        public float desktopThrowRise = 0.25f;
 
         public const int EndUnknown = 0, EndWall = 1, EndLanded = 2, EndTimeout = 3, EndGrabbed = 4, EndCaught = 5;
 
@@ -53,6 +72,9 @@ namespace KominkaHillside
         private float _maxObservedSpeed;
 
         // Flight (meaningful on the Owner while _flying; other clients only see the synced transform).
+        private float _aimPower = 0.5f;
+        private float _lookAxis;
+        private bool _heldLocal;
         private bool _flying;
         private Vector3 _p0, _v0;
         private double _t0;
@@ -178,7 +200,8 @@ namespace KominkaHillside
 
         public override void OnPickup()
         {
-            _charging = false; _hasPendingThrow = false;
+            _charging = false; _hasPendingThrow = false; _heldLocal = true; _lookAxis = 0f;
+            if (discRenderer != null && discHeldMaterial != null) discRenderer.sharedMaterial = discHeldMaterial; // local: the holder sees through it
             bool wasFlying = _flying;
             _flying = false;
             if (_sync != null)
@@ -190,15 +213,96 @@ namespace KominkaHillside
             if (wasFlying) NotifyEnd(EndGrabbed);
         }
 
+        float AimSpeedNow() { return Mathf.Lerp(aimSpeedMin, aimSpeedMax, _aimPower); }
+
+        // Power input: VR right stick vertical (unused by VRChat in VR), desktop mouse wheel. Both local.
+        public override void InputLookVertical(float value, UdonInputEventArgs args) { _lookAxis = value; }
+
+        void UpdateAimPower()
+        {
+            if (!_heldLocal) return;
+            if (_isDesktop)
+            {
+                float wheel = Input.GetAxis("Mouse ScrollWheel");
+                if (Mathf.Abs(wheel) > 0.0001f) _aimPower = Mathf.Clamp01(_aimPower + Mathf.Sign(wheel) * aimPowerWheel);
+            }
+            else if (Mathf.Abs(_lookAxis) > 0.2f)
+            {
+                _aimPower = Mathf.Clamp01(_aimPower + _lookAxis * aimPowerRate * Time.deltaTime);
+            }
+        }
+
+        // Where a launch from the hand would go right now: the holding hand's pointing direction in VR, the
+        // head direction on desktop, pitch clamped so a casual aim still flies.
+        Vector3 AimDirection()
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) return Vector3.forward;
+            Vector3 dir;
+            if (_isDesktop || _pickup == null) dir = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).rotation * Vector3.forward;
+            else
+            {
+                VRCPlayerApi.TrackingDataType hand = _pickup.currentHand == VRC_Pickup.PickupHand.Left ? VRCPlayerApi.TrackingDataType.LeftHand : VRCPlayerApi.TrackingDataType.RightHand;
+                dir = lp.GetTrackingData(hand).rotation * Vector3.forward;
+            }
+            Vector3 flat = dir; flat.y = 0f;
+            if (flat.sqrMagnitude < 1e-4f) flat = lp.GetRotation() * Vector3.forward;
+            flat.Normalize();
+            float pitch = Mathf.Clamp(Mathf.Atan2(dir.y, Mathf.Sqrt(dir.x * dir.x + dir.z * dir.z)) * Mathf.Rad2Deg, aimMinPitchDeg, aimMaxPitchDeg);
+            return Quaternion.AngleAxis(-pitch, Vector3.Cross(Vector3.up, flat)) * flat;
+        }
+
+        // Preview for the holder only (local). Same _PositionAt as the flight, stopped at the first obstacle.
+        void UpdateAim()
+        {
+            bool show = aimLaunch && _pickup != null && _pickup.IsHeld && Networking.IsOwner(gameObject) && aimLine != null;
+            if (!show)
+            {
+                if (aimLine != null && aimLine.enabled) aimLine.enabled = false;
+                if (aimMarker != null && aimMarker.gameObject.activeSelf) aimMarker.gameObject.SetActive(false);
+                return;
+            }
+            UpdateAimPower();
+            Vector3 p0 = transform.position;
+            Vector3 v0 = AimDirection() * AimSpeedNow();
+            int n = aimPoints < 2 ? 2 : aimPoints;
+            aimLine.positionCount = n;
+            Vector3 prev = p0; Vector3 end = p0; int count = 0;
+            RaycastHit hit;
+            for (int i = 0; i < n; i++)
+            {
+                Vector3 p = _PositionAt(p0, v0, i * aimStep);
+                Vector3 d = p - prev; float len = d.magnitude;
+                if (i > 0 && len > 1e-4f && Physics.Raycast(prev, d / len, out hit, len, obstacleMask, QueryTriggerInteraction.Ignore)) { p = hit.point; aimLine.SetPosition(i, p); count = i + 1; end = p; break; }
+                aimLine.SetPosition(i, p); count = i + 1; end = p; prev = p;
+            }
+            aimLine.positionCount = count;
+            if (!aimLine.enabled) aimLine.enabled = true;
+            if (aimMarker != null)
+            {
+                if (!aimMarker.gameObject.activeSelf) aimMarker.gameObject.SetActive(true);
+                aimMarker.position = end + Vector3.up * 0.02f;
+                aimMarker.rotation = Quaternion.identity;
+            }
+        }
+
         public override void OnPickupUseDown()
         {
+            if (aimLaunch)
+            {
+                if (_pickup == null || !_pickup.IsHeld) return;
+                _pendingThrowVelocity = AimDirection() * AimSpeedNow();
+                _hasPendingThrow = true;
+                _pickup.Drop(); // Drop -> _CheckThrow applies the aimed velocity a frame later (after the SDK's own drop velocity)
+                return;
+            }
             if (!_isDesktop) return;
             _charging = true; _chargeStartTime = Time.time;
         }
 
         public override void OnPickupUseUp()
         {
-            if (!_isDesktop || !_charging) return;
+            if (aimLaunch || !_isDesktop || !_charging) return;
             _charging = false;
             if (_pickup == null || !_pickup.IsHeld) return;
             VRCPlayerApi lp = Networking.LocalPlayer;
@@ -214,6 +318,8 @@ namespace KominkaHillside
 
         public override void OnDrop()
         {
+            _heldLocal = false;
+            if (discRenderer != null && discMaterial != null) discRenderer.sharedMaterial = discMaterial;
             _checksRemaining = throwCheckFrames; _maxObservedSpeed = 0f;
             SendCustomEventDelayedFrames(nameof(_CheckThrow), 1);
         }
@@ -238,7 +344,7 @@ namespace KominkaHillside
 
         void Update()
         {
-            if (!_flying) return;
+            if (!_flying) { UpdateAim(); return; }
             if (!Networking.IsOwner(gameObject)) { _flying = false; return; }
             float t = _ElapsedSince(_t0);
             Vector3 prev = transform.position;
