@@ -58,11 +58,17 @@ priority: High    # High / Medium / Low
 | [IMP-DOG-001](IMP-DOG-001-port-dog-system.md) | High | 古民家ドッグランの犬ギミックを移植する (タグ `export/kominka-hillside-v1` + 移植記録) | wip |
 | [DES-DOG-001](DES-DOG-001-leash-walking.md) | High | リード散歩の操作・行動・同期を設計する。片手 3 匹・合計 6 匹を基準に未決定事項を詰める | wip |
 | [IMP-DOG-002](IMP-DOG-002-leash-walking.md) | High | 基本実装・PCVR体験好評。上限・競合・退出・途中参加などの項目別確認と修正 | wip |
-| [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 次の実装: 接続の分かりやすさ、犬の距離・動き、首輪・先端を磨く | todo |
+| [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | ボール修正後: 目的地と通過点による自由な散歩・誘い・犬同士の遊び、首輪ずれと操作を磨く | todo |
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |
 | [DES-WLD-001](DES-WLD-001-round-trip.md) | Medium | 古民家からの出発・帰還と状態の扱いを設計する | todo |
+| [BUG-DOG-001](BUG-DOG-001-ball-spawn-slope.md) | High | 直近: 開始時に坂から落ちるボールを上の広場へ移す | todo |
+| [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) | High | 古民家と同構成のメニュー、接続補助、自分の接続犬への目的地選択、集合 | todo |
+| [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビーなど挙動の違うおもちゃを設計する | todo |
+| [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 裏山専用ライブと古民家の有料ライブ購入者の利用を設計する | todo |
 
-着手順: IMP-DOG-003を次の比較実装とし、IMP-DOG-001/002・VER-ENV-001の実機確認を並行する。負荷と地形の判断をDES-ENV-001へ返し、その後にIMP-ENV-001、DES-WLD-001を進める。DES-DOG-001は各段階の採用値・おしゃれ・機能範囲をまとめる。改善意図と段階ごとの判断は [開発全体像](../overview.md) §3。
+着手順: BUG-DOG-001→IMP-DOG-003→DES-UI-001→DES-DOG-002。同期・端末・境界確認は並行継続。DES-LIV-001は権利と依存の調査を並行し、基本体験後に制作する。DES-WLD-001の往復導線は継続、IMP-ENV-001の景観増量は後回し。具体的な目的と設計提案は [開発全体像](../overview.md) §3。
+
+2026-09-20追加相談でIMP-DOG-003を目的地と通過点による自由な散歩へ具体化。目的地指定に必要なDES-DOG-001/ DES-UI-001の契約は散歩試作に先行させ、メニュー全体の完成を前提にしない。仕様整理のみで実装の状態は変更しない。
 
 ---
 

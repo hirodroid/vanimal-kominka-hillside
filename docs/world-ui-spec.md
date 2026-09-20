@@ -8,17 +8,19 @@
 
 | 項目 | 値 |
 |---|---|
-| world / UI scope | KominkaHillside (古民家の裏山) / 古民家ドッグランの既存 UI を移植して使う。新規 UI は増やさない方針 (provisional) |
-| この設定の版・最終更新日 | 0.1 / 2026-09-19 (立ち上げ時の識別情報のみ。UI 制作開始時に埋める) |
+| world / UI scope | KominkaHillside (古民家の裏山) / 古民家ドッグランと基本構成を揃え、中身を裏山向けにする。しゃがめない人向けの接続/解除補助を追加する (2026-09-20ユーザー方針) |
+| この設定の版・最終更新日 | 0.3 / 2026-09-20 (目的地選択の要件追補。画面の具体化・実装は未着手) |
 | 共通リファレンスの版・パス | 1.0.0 / `.claude/skills/vrc-udonsharp/reference/ui/00_START_HERE.md` (プロジェクトルート基準) |
 | 対象シーン・Prefab・ゲーム処理 | `Assets/Scenes/VRCDefaultWorldScene.unity` / 移植する犬ギミックの UI (IMP-DOG-001 で棚卸し) |
 | Unity / Worlds SDK / TMP / ClientSim | 2022.3.22f1 / 3.10.5 / 3.0.6 / SDK 同梱 |
-| ビルドターゲット | Windows 確定。Android / iOS はスマホ対応を目指す (実機で判断。`game-design.md` §1) |
-| 対象機器・入力 | PCVR / Desktop / Android Touch / iOS Touch / その他 |
+| ビルドターゲット | Windows / Android / iOSを対象とする目標。Quest単体・iOSを含む実機確認は未了 (`game-design.md` §1、config/platform-support.json) |
+| 対象機器・入力 | PCVR / Desktop / Quest単体VR / iOS Touch。Android Touchは追加の確認候補 |
 | 対応言語 | 日本語 (古民家と同じ。provisional) |
-| 主目的・主要操作・戻る活動 | unknown |
+| 主目的・主要操作・戻る活動 | 犬との遊びと散歩を補助する。犬と左右を選んで接続/解除し、自分の接続犬に目的地を伝えて散歩へ戻る。既存メニューの構成を調査後、集合・ライブ等の対象機能を具体化する |
 | UIの影響範囲 | 個人 / 共有 / 混在、項目別に定義 |
-| 検証の到達点 | documentedのみ等。根拠に応じて記入 |
+| 検証の到達点 | 要件記録のみ。画面・入力・権限は [DES-UI-001](development/issues/DES-UI-001-menu-and-leash-assist.md)、有料ライブは [DES-LIV-001](development/issues/DES-LIV-001-hillside-live.md) で設計。未確定表は未実装を示す |
+
+補助UIの提案: 個人メニューに犬一覧と「左につなぐ／右につなぐ／外す」を置き、散歩先・座位でも使える入口を用意する。固定ボードは案内の候補。配置の最終決定・寸法・入力は未定。物理接続と同じ上限・他人の接続・Fetchの裁定を使い、処理待ちや拒否も表示する。適用資料はXR-01 / XR-04で、未検証の寸法を規定値にしない。
 
 ## 2. ビジュアル方針との接続
 
@@ -68,6 +70,8 @@
 この画面に入れない情報と理由：unknown
 
 ## 5. 操作と状態契約
+
+目的地選択の要件 (2026-09-20): メニューから広場/古民家側の散歩入口を指定し、自分の接続犬の目的地を変更する。画面操作は個人、犬の目的地と動きは共有。ワールド全犬への一括変更にはしない。初期値・追加接続・再接続・要求中の接続変更はDES-DOG-001、対象なし・現在値の混在・要求結果の表示はDES-UI-001で具体化する。仕様の正本は [game-design §4](game-design.md)。以下のunknownは詳細未設計であり、要件が未合意という意味ではない。適用観点はSOC-01〜04、未実装・NOT_TESTED。
 
 | action ID | 対象ID | 表示範囲 | 変更する状態 | 実行者・書込者 | 実行可能条件 | 消費・結果 | 確認／取消 |
 |---|---|---|---|---|---|---|---|
