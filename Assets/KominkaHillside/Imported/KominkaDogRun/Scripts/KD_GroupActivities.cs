@@ -6,7 +6,13 @@ using VRC.Udon.Common.Interfaces;
 
 namespace KominkaDogRun
 {
-    // Shares the Live object's ownership: every shared start is adjudicated here.
+    // KominkaDogRun: shares the Live object's ownership, every shared start is adjudicated here.
+    //
+    // KominkaHillside (2026-09-20, game-design §4「集合と拠点のリード」): this behaviour sits on the SAME GameObject as
+    // KH_LeashManager so one Owner serialises "attach" and "gather" decisions (no cross-owner race). live may be
+    // null, the trainer entitlement comes from KH_TrainerPass, leashed dogs never gather, the roster is frozen at
+    // start (participants), placement accepts slopes, and the end of a gathering is handed to the manager directly.
+    // Race/play (op 2/3) remain in code but are not offered by the hillside menu.
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class KD_GroupActivities : UdonSharpBehaviour
     {
@@ -15,7 +21,14 @@ namespace KominkaDogRun
         public KD_ShopItem formationItem, playItem;
         public KD_BallController[] balls;
         public KD_PhotoDirector photos;
+        public KominkaHillside.KH_LeashManager hillsideLeashes;
+        public KominkaHillside.KH_TrainerPass hillsidePass;
+        [Tooltip("Hillside: accept slots on slopes. Ground normal must be at least this (1 = flat only)")]
+        public float minGroundNormal = .9f;
+        [Tooltip("Hillside: maximum height difference between a slot's ground and the host (0 = unlimited)")]
+        public float maxSlotHeightDelta = .25f;
         public LayerMask groundMask = (1 << 0) | (1 << 11);
+        [UdonSynced] private int participants; // bit i = dog i joined this gathering (frozen at start)
         [UdonSynced] private int mode;
         [UdonSynced] private int startedMs;
         [UdonSynced] private int host = -1;
@@ -55,6 +68,14 @@ namespace KominkaDogRun
         public int RaceRound { get { return raceRound; } } // net: callable-ok: read-only
         public int LocalRequestState { get { return _requestState; } } // net: callable-ok: read-only
         public bool Busy { get { return Mode != 0 || raceBall >= 0 || (live != null && (live.CandyPreparing || live.DogRecovering)); } } // net: callable-ok: read-only
+        public bool _IsParticipant(int i) { return i >= 0 && i < 32 && (participants & (1 << i)) != 0; } // net: callable-ok: read-only
+        public int ParticipantCount { get { int n = 0; for (int i = 0; i < 6; i++) if (_IsParticipant(i)) n++; return n; } } // net: callable-ok: read-only
+        private bool OwnsFormation(VRCPlayerApi caller)
+        {
+            if (hillsidePass != null) return hillsidePass._OwnedBy(caller);
+            return formationItem != null && formationItem.OwnedBy(caller);
+        }
+        public bool _LocalOwnsFormation() { VRCPlayerApi lp = Networking.LocalPlayer; return Utilities.IsValid(lp) && OwnsFormation(lp); }
 
         public void _Request(int op, int a, int b)
         {
@@ -79,21 +100,23 @@ namespace KominkaDogRun
                 // 「開催をおわる」: 開催者本人、または部屋の管理者 (オーナー優先、不在時だけ Master。IMP-NET-007)。
                 // 管理者は受理直前に在席を測り直す — 代行 Master の要求がオーナー復帰の直後に届いても通さない
                 if (op == 0 && Mode != 0 && (caller.playerId == host || (live != null && live.CanManageNow(caller))))
-                { mode = 0; result = 2; }
+                { EndGathering(); result = 2; }
                 else if (op == 6 && live != null && live._StopFor(caller)) { result = 2; }
                 else if (op == 4 && live != null && !Busy && live._BeginFor(caller, a))
-                { formation = formationItem != null && formationItem.OwnedBy(caller) && b >= 0 && b < 6 ? b : Random.Range(0, 6); result = 2; }
+                { formation = OwnsFormation(caller) && b >= 0 && b < 6 ? b : Random.Range(0, 6); result = 2; }
                 else if (op == 5 && live != null && live.HostId == caller.playerId && live.IsNightWanted
-                    && formationItem != null && formationItem.OwnedBy(caller) && a >= 0 && a < 6)
+                    && OwnsFormation(caller) && a >= 0 && a < 6)
                 { formation = a; result = 2; }
-                else if (op >= 1 && op <= 3 && !Busy && live != null && !live.IsNightWanted)
+                else if (op >= 1 && op <= 3 && !Busy && (live == null || !live.IsNightWanted))
                 {
-                    KD_ShopItem item = op == 1 ? formationItem : playItem;
-                    bool owns = item != null && item.OwnedBy(caller);
+                    bool owns = op == 1 ? OwnsFormation(caller) : playItem != null && playItem.OwnedBy(caller);
                     bool valid = op == 1 ? a >= 0 && a < 6 && ValidPlacement(p, angle, a, caller)
                         : op == 2 ? AnyAvailable() : a != b && Available(a) && Available(b);
                     if (owns && valid)
                     {
+                        // Freeze the roster before Mode flips: dogs busy now (leashed, fetching, petted) do not join later.
+                        participants = 0;
+                        if (op == 1) for (int i = 0; i < 6; i++) if (Available(i)) participants |= 1 << i;
                         mode = op; host = caller.playerId; startedMs = Networking.GetServerTimeInMilliseconds();
                         formation = op == 1 ? a : formation; anchor = p; yaw = angle;
                         if (op == 3) { anchor = pack.dogWander[a].areaCenter.position; yaw = 0; }
@@ -113,10 +136,20 @@ namespace KominkaDogRun
             if (Networking.LocalPlayer != null && player == Networking.LocalPlayer.playerId && seq == _seq && _requestState == 1)
                 _requestState = result;
         }
+        // Owner only. The manager (same Owner) turns each participant's current spot into its new roaming home.
+        private void EndGathering()
+        {
+            bool wasGather = mode == 1;
+            mode = 0;
+            if (wasGather && hillsideLeashes != null) hillsideLeashes._OnGatherEnded(participants);
+        }
+
         public bool Available(int i) // net: callable-ok: read-only eligibility
         {
             if (pack == null || pack.dogFetch == null || i < 0 || i >= pack.dogFetch.Length) return false;
             KD_DogFetchController f = pack.dogFetch[i]; KD_DogWanderController w = pack.dogWander[i];
+            if (hillsideLeashes != null && hillsideLeashes._IsLeashed(i)) return false;
+            if (Mode == 1 && !_IsParticipant(i)) return false;
             return f != null && w != null && f.gameObject.activeInHierarchy && f.IsIdle && !f.PetActive
                 && !w.CandyReserved
                 && (w.petController == null || !w.petController.IsPetting)
@@ -192,9 +225,10 @@ namespace KominkaDogRun
                 Vector3 q = p + Quaternion.Euler(0, angle, 0) * Offset(shape, i);
                 RaycastHit hit;
                 // 障害物は枠ごとの体格 (幅) で見る — 壁沿いや布団の横でも自分の体が収まれば組める (部屋の中で組めるようにした。2026-09-13)
-                if (!Physics.Raycast(q + Vector3.up * .6f, Vector3.down, out hit, 1.2f, groundMask, QueryTriggerInteraction.Ignore)
-                    || hit.normal.y < .9f || Mathf.Abs(hit.point.y - p.y) > .25f
-                    || Physics.CheckSphere(hit.point + Vector3.up * .25f, Mathf.Max(.12f, Width(i)), groundMask, QueryTriggerInteraction.Ignore)) return false;
+                // Hillside: cast from higher so slots below the host on a slope still find ground; clearance sphere follows the normal.
+                if (!Physics.Raycast(q + Vector3.up * 1.5f, Vector3.down, out hit, 4f, groundMask, QueryTriggerInteraction.Ignore)
+                    || hit.normal.y < minGroundNormal || (maxSlotHeightDelta > 0f && Mathf.Abs(hit.point.y - p.y) > maxSlotHeightDelta)
+                    || Physics.CheckSphere(hit.point + hit.normal * .3f, Mathf.Max(.12f, Width(i)), groundMask, QueryTriggerInteraction.Ignore)) return false;
             }
             return AnyAvailable();
         }
@@ -242,7 +276,7 @@ namespace KominkaDogRun
                 _previous[i] = p;
             }
             if (Time.time < _nextTick) return; _nextTick = Time.time + .1f;
-            if (mode != 0 && (Mode == 0 || !Utilities.IsValid(VRCPlayerApi.GetPlayerById(host)))) { mode = 0; revision++; RequestSerialization(); }
+            if (mode != 0 && (Mode == 0 || !Utilities.IsValid(VRCPlayerApi.GetPlayerById(host)))) { EndGathering(); revision++; RequestSerialization(); }
             if (_pendingBall >= 0)
             {
                 int i = _pendingBall;

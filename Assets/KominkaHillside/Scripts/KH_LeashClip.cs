@@ -5,6 +5,8 @@ using VRC.SDKBase;
 namespace KominkaHillside
 {
     // Local pickup: every player can physically attach a tip; the shared manager arbitrates ownership.
+    // Tools live at leash stations. After an attach, a drop or a timeout the tool goes to the nearest
+    // station with a free slot of its side, never to the ground where it was released.
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_LeashClip : UdonSharpBehaviour
     {
@@ -26,19 +28,12 @@ namespace KominkaHillside
         private float _requestAt;
         private float _retryAfter;
 
-        public bool _CanOffer() { return pickup != null && !pickup.IsHeld && _pending < 0; }
-        public void _OfferAt(Vector3 position)
-        {
-            if (!_CanOffer()) return;
-            _home = position;
-            ReturnHome();
-        }
-
         private void Start() { _home = transform.position; _rotation = transform.rotation; }
         public override void OnPickup() { _candidate = -1; _pending = -1; }
         public override void OnDrop() { _candidate = -1; if (_pending < 0) ReturnHome(); }
         private void ReturnHome()
         {
+            if (manager != null) _home = manager._ReturnSlot(transform.position, desktopHand, this);
             transform.SetPositionAndRotation(_home, _rotation);
             Rigidbody body = GetComponent<Rigidbody>();
             if (body != null) { body.velocity = Vector3.zero; body.angularVelocity = Vector3.zero; }

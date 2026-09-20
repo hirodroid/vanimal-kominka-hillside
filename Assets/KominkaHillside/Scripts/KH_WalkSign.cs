@@ -23,7 +23,7 @@ namespace KominkaHillside
             int mine = 0;
             for (int i = 0; i < manager.walkers.Length; i++) if (manager.walkers[i] == local.playerId) mine++;
             if (mine == 0) return; // nothing to tell; no flash, so the miss is visible
-            manager._RequestDestination(destination);
+            manager._ChooseDestination(destination);
             if (board != null && flashMaterial != null) { board.sharedMaterial = flashMaterial; SendCustomEventDelayedSeconds(nameof(_EndFlash), 0.5f); }
         }
 

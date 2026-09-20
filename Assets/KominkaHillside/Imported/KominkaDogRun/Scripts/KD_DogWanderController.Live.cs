@@ -103,7 +103,12 @@ namespace KominkaDogRun
                 Vector3 goal = activities.Slot(dogIndex);
                 Vector3 flat = goal - dogRoot.position; flat.y = 0;
                 if (flat.magnitude > arriveRadius || _speed > stopSpeedThreshold)
-                { StepToward(goal, 0f, flat.magnitude > runDistance ? runSpeed : walkSpeed); return true; }
+                {
+                    float speed = flat.magnitude > runDistance ? runSpeed : walkSpeed;
+                    // Hillside: walk the baked NavMesh when a complete path exists; otherwise go straight (through obstacles).
+                    if (hillsideLeashes == null || !GatherStep(goal, speed)) StepToward(goal, 0f, speed);
+                    return true;
+                }
                 Coast();
                 Vector3 face = activities.Formation == 1 ? activities.Anchor - dogRoot.position : Quaternion.Euler(0, activities.Yaw, 0) * Vector3.forward;
                 face.y = 0;

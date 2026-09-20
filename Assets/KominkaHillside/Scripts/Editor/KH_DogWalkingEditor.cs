@@ -22,6 +22,9 @@ namespace KominkaHillside.Editor
         const string SourceScene = "Assets/KominkaHillside/Imported/KH_DogPortSource.unity";
         const string Data = "Assets/KominkaHillside/Data/Walking";
         static readonly string[] Keys = {"Corgi","Pome","Lab","Dachs","Shiba","Samoyed"};
+        // Same Product (ownership) and Listing (purchase page) as KominkaDogRun (world-ui-spec section 6). Asset copied with its GUID.
+        public const string TrainerProductPath="Assets/KominkaHillside/Data/CE/KD_Product_Trainer.asset";
+        public const string TrainerProductId="prod_8c044b21-35f2-4ebb-80f9-e4f685f7bf9f", TrainerListingId="prod_81a5ac65-bd3d-40ad-8edb-2fc7d13b1cee";
         // BUG-DOG-001: balls rest on the flat upper clearing (KH_TerrainPrototypeConfig.Flats[PlazaFlat], y=19 within r=12),
         // off the trail end and away from the shade tree. VRCObjectSync respawns to this start position.
         public static readonly Vector2 BallHomeCenter = new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0]+3.5f, KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]+3.5f);
@@ -41,7 +44,7 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Walking/1 Create Programs")]
         public static void Programs()
         {
-            foreach (string name in new[]{"KH_LeashManager","KH_LeashClip","KH_LeashCollar","KH_WalkRoute","KH_WalkSign"})
+            foreach (string name in new[]{"KH_LeashManager","KH_LeashClip","KH_LeashCollar","KH_WalkRoute","KH_WalkSign","KH_TrainerPass","KH_ToyRecall"})
             {
                 string path="Assets/KominkaHillside/Scripts/"+name;
                 if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(path+".asset") != null) continue;
@@ -150,6 +153,17 @@ namespace KominkaHillside.Editor
             manager.trailOffDistance=6f;manager.trailOnDistance=4f;manager.entryMaxPath=12f;manager.inviteAfter=8f;manager.inviteInterval=14f;manager.inviteLimit=3;manager.detourChance=.25f;
             var existingRoute=root.GetComponentInChildren<KH_WalkRoute>(true);manager.route=existingRoute;
             var pack=Find<KD_DogPack>(root,"KD_DogPack");
+            // Gathering (game-design §4): hillside copy of KD_GroupActivities, trainer entitlement via the shared Product/Listing.
+            var pass=Add<KH_TrainerPass>(Child(root.transform,"KH_TrainerPass").gameObject);
+            pass.product=AssetDatabase.LoadAssetAtPath<VRC.Economy.UdonProduct>(TrainerProductPath);pass.listingId=TrainerListingId;
+            // Same GameObject as the manager: one Owner adjudicates attach and gather (review D1). Remove the earlier separate object.
+            var oldAct=root.transform.Find("KH_Activities");if(oldAct!=null)UnityEngine.Object.DestroyImmediate(oldAct.gameObject);
+            var act=Add<KD_GroupActivities>(manager.gameObject,true);
+            act.live=null;act.photos=null;act.formationItem=null;act.playItem=null;act.pack=pack;act.hillsideLeashes=manager;act.hillsidePass=pass;
+            act.minGroundNormal=.5f;act.maxSlotHeightDelta=0f;act.groundMask=(1<<0)|(1<<11);act.balls=new KD_BallController[6];
+            manager.activities=act;
+            var recall=Add<KH_ToyRecall>(Child(root.transform,"KH_ToyRecall").gameObject);
+            recall.balls=new KD_BallController[6];recall.fetchers=new KD_DogFetchController[6];recall.activities=act;recall.groundMask=(1<<0)|(1<<11);
             var rope=Mat("KH_Rope",new Color(.29f,.16f,.08f));
             var ready=Mat("KH_ClipReady",new Color(.2f,.8f,.45f));
             var neutral=Mat("KH_ClipNeutral",new Color(.8f,.63f,.27f));
@@ -172,7 +186,8 @@ namespace KominkaHillside.Editor
                 w.fetchController=f;w.petController=p;p.fetchController=f;p.wanderController=w;
                 f.pack=pack;w.pack=pack;
                 // Omitted room/stage/services stay null in this world.
-                f.sleepBoard=null;f.liveSystem=null;f.activities=null;f.photoDirector=null;
+                f.sleepBoard=null;f.liveSystem=null;f.activities=act;f.photoDirector=null;w.activities=act;
+                act.balls[i]=b;recall.balls[i]=b;recall.fetchers[i]=f;
                 p.companionSlot=null;
                 manager.dogRoots[i]=dog;manager.fetchers[i]=f;manager.roamCenters[i]=home;
                 roots[i]=dog;fetch[i]=f;
@@ -196,24 +211,52 @@ namespace KominkaHillside.Editor
                 UdonSharpEditorUtility.GetBackingUdonBehaviour(c).InteractionText="Release leash";
             }
             pack.dogRoots=roots;pack.dogFetch=fetch;
+            // Leash stations (game-design section 4): one rack per destination, a left and a right slot each.
+            // Station placement is human-owned (written once); slots and tools are code-owned.
+            var wood=Mat("KH_RackWood",new Color(.32f,.19f,.10f));
             var rack=Child(root.transform,"KH_LeashRack");
             if(initial)rack.position=new Vector3(45,Ground(45,43)+.8f,43);
-            KH_LeashModelsEditor.MakeRack(rack,Mat("KH_RackWood",new Color(.32f,.19f,.10f)));
+            var stations=new Transform[]{rack,Child(root.transform,"KH_Station_Viewpoint"),Child(root.transform,"KH_Station_Plaza")};
+            // Initial placement comes from the terrain places (same offsets as the signs), so build order does not matter.
+            var placesRoot=GameObject.Find("KH_World");
+            if(placesRoot==null)throw new InvalidOperationException("KH_World (terrain places) is required to place stations.");
+            Vector3[] placeOffset={Vector3.zero,new Vector3(2.4f,0f,1.2f),new Vector3(-3f,0f,-2.5f)};float[] placeYaw={0f,45f,315f};string[] placeName={"","KH_Places/KH_Viewpoint","KH_Places/KH_Plaza"};
+            for(int s=1;s<3;s++)
+            {
+                if(stations[s].Find("Crossbar")!=null)continue; // human-owned placement already exists
+                var place=placesRoot.transform.Find(placeName[s]);if(place==null)throw new InvalidOperationException("Missing "+placeName[s]);
+                var rot=Quaternion.Euler(0f,placeYaw[s],0f);Vector3 signPos=place.position+placeOffset[s];
+                Vector3 p=signPos+rot*new Vector3(1.3f,0f,0f);stations[s].rotation=rot;stations[s].position=new Vector3(p.x,Ground(p.x,p.z)+.8f,p.z);
+            }
+            manager.stationSlots=new Transform[6];manager.slotHand=new int[6];manager.stationOf=new int[6];
+            for(int s=0;s<3;s++)
+            {
+                KH_LeashModelsEditor.MakeRack(stations[s],wood);
+                for(int h=0;h<2;h++){var slot=Child(stations[s],h==0?"SlotL":"SlotR");slot.localPosition=new Vector3(h==0?-.2f:.2f,0f,0f);slot.localRotation=Quaternion.identity;
+                    int k=h*3+s;manager.stationSlots[k]=slot;manager.slotHand[k]=h;manager.stationOf[k]=s;}
+            }
+            var tools=Child(root.transform,"KH_LeashTools");
             for(int i=0;i<6;i++)
             {
-                var t=rack.Find("Clip"+i);bool newClip=t==null;
-                if(newClip){var go=GameObject.CreatePrimitive(PrimitiveType.Capsule);go.name="Clip"+i;t=go.transform;t.SetParent(rack,false);t.localPosition=new Vector3((i-2.5f)*.18f,0,0);t.localScale=new Vector3(.07f,.12f,.07f);}
+                var t=tools.Find("Clip"+i);if(t==null)t=rack.Find("Clip"+i);bool newClip=t==null;
+                if(newClip){var go=GameObject.CreatePrimitive(PrimitiveType.Capsule);go.name="Clip"+i;t=go.transform;t.localScale=new Vector3(.07f,.12f,.07f);}
+                t.SetParent(tools,true);
+                // Tool i rests at slot i: hand = i/3 (0 left, 1 right), station = i%3.
+                var home=manager.stationSlots[(i/3)*3+(i%3)];t.SetPositionAndRotation(home.position,home.rotation);
                 t.gameObject.layer=14;
                 var rb=t.GetComponent<Rigidbody>();if(rb==null)rb=t.gameObject.AddComponent<Rigidbody>();rb.isKinematic=true;rb.useGravity=false;
                 var pickup=t.GetComponent<VRC_Pickup>();if(pickup==null)pickup=t.gameObject.AddComponent<VRCPickup>();
                 pickup.AutoHold=VRC_Pickup.AutoHoldMode.Yes;pickup.proximity=.35f;pickup.InteractionText=i<3?"Leash tip - left":"Leash tip - right";
-                var clip=Add<KH_LeashClip>(t.gameObject);clip.manager=manager;clip.pickup=pickup;clip.tip=KH_LeashModelsEditor.MakeTip(t,Data,neutral);clip.desktopHand=i<3?0:1;
+                var clip=Add<KH_LeashClip>(t.gameObject);clip.manager=manager;clip.pickup=pickup;clip.tip=KH_LeashModelsEditor.MakeTip(t,Data,neutral);clip.desktopHand=i/3;
                 var indicator=t.Find("ReadyIndicator");
                 clip.indicator=indicator!=null?indicator.GetComponent<Renderer>():t.GetComponent<Renderer>();
                 clip.readyMaterial=ready;clip.blockedMaterial=neutral;clip.indicator.sharedMaterial=neutral;
                 manager.localClips[i]=clip;
             }
             foreach(var u in root.GetComponentsInChildren<UdonSharpBehaviour>(true)){UdonSharpEditorUtility.CopyProxyToUdon(u);EditorUtility.SetDirty(u);}
+            // Removed temporary Udon objects leave {fileID: 0} entries in the descriptor (vrc-scene-edit-safety). Drop only typeless ones.
+            var descriptor=UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>();
+            if(descriptor!=null){int dropped=descriptor.NetworkIDCollection.RemoveAll(x=>x.gameObject==null&&(x.SerializedTypeNames==null||x.SerializedTypeNames.Count==0));if(dropped>0)EditorUtility.SetDirty(descriptor);}
             // The dog system is outside KH_World, so terrain regeneration does not erase it.
             var terrainRoot=GameObject.Find("KH_World");
             if(terrainRoot!=null){var dummies=terrainRoot.transform.Find("KH_Dummies");if(dummies!=null)dummies.gameObject.SetActive(false);}
@@ -307,6 +350,26 @@ namespace KominkaHillside.Editor
                 Check(rn!=null&&rn.Length==n&&(rn.GetValue(0) as Transform)==walkRoute.nodes[0],"route backing nodes entries="+(rn==null?0:rn.Length));
                 var mb=UdonSharpEditorUtility.GetBackingUdonBehaviour(m);object mr;Check(mb.publicVariables.TryGetVariableValue("route",out mr)&&(mr as UnityEngine.Object)==UdonSharpEditorUtility.GetBackingUdonBehaviour(walkRoute),"manager backing route reference");
             }
+            var act=root.GetComponentInChildren<KD_GroupActivities>(true);Check(act!=null&&m.activities==act&&UdonSharpEditorUtility.GetBackingUdonBehaviour(act).SyncMethod==Networking.SyncType.Manual,"gather authority exists, Manual, wired to manager");
+            if(act!=null)
+            {
+                Check(act.pack==pack&&act.hillsideLeashes==m&&act.balls!=null&&act.balls.Length==6&&act.balls.All(x=>x!=null)&&act.live==null&&act.minGroundNormal<=.5f&&act.maxSlotHeightDelta==0f,"gather wiring: pack, leashes, 6 balls, no live, slope tolerant");
+                var passB=root.GetComponentInChildren<KH_TrainerPass>(true);
+                Check(passB!=null&&act.hillsidePass==passB&&passB.product!=null&&passB.product.ID==TrainerProductId&&passB.listingId==TrainerListingId,"trainer pass: shared Product/Listing IDs");
+                bool actRefs=true;for(int i=0;i<6;i++){var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+Keys[i]);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+Keys[i]);if(w.activities!=act||f.activities!=act)actRefs=false;}
+                Check(actRefs,"all six Wander/Fetch reference the gather authority");
+            }
+            var recallB=root.GetComponentInChildren<KH_ToyRecall>(true);
+            Check(recallB!=null&&recallB.balls!=null&&recallB.balls.Length==6&&recallB.balls.All(x=>x!=null)&&recallB.fetchers.Length==6&&recallB.fetchers.All(x=>x!=null)&&recallB.activities==act,"toy recall wired to 6 balls/fetchers");
+            bool slotsOk=m.stationSlots!=null&&m.stationSlots.Length==6&&m.stationSlots.All(x=>x!=null)&&m.stationSlots.Distinct().Count()==6&&m.slotHand.All(h=>h==0||h==1)
+                &&Enumerable.Range(0,6).Select(k=>m.stationOf[k]*2+m.slotHand[k]).Distinct().Count()==6&&m.stationOf.All(s=>s>=0&&s<3)
+                &&Enumerable.Range(0,6).All(k=>m.stationSlots[k].parent==new[]{root.transform.Find("KH_LeashRack"),root.transform.Find("KH_Station_Viewpoint"),root.transform.Find("KH_Station_Plaza")}[m.stationOf[k]]);
+            Check(slotsOk,"three stations, each exactly one left and one right slot, slots parented to their station");
+            bool toolsHome=true;for(int i=0;i<6;i++){var c=m.localClips[i];if(c==null||c.desktopHand!=i/3||Vector3.Distance(c.transform.position,m.stationSlots[(i/3)*3+(i%3)].position)>.01f)toolsHome=false;}
+            Check(toolsHome&&m.localClips.Select(c=>c.transform.position).Distinct().Count()==6,"six tools rest one per slot with matching side, no two at one spot");
+            Check(act!=null&&act.gameObject==m.gameObject,"gather authority shares the manager GameObject (single Owner)");
+            var desc=UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>();Check(desc.NetworkIDCollection.Count(x=>x.gameObject==null)==0,"no dangling NetworkIDs");
+            foreach(var st in new[]{"KH_LeashRack","KH_Station_Viewpoint","KH_Station_Plaza"}){var t=root.transform.Find(st);Check(t!=null&&t.Find("Crossbar")!=null&&Mathf.Abs(t.position.y-.8f-Ground(t.position.x,t.position.z))<.3f,"station "+st+" placed at rack height");}
             var signs=root.GetComponentsInChildren<KH_WalkSign>(true);Check(signs.Length==6&&signs.All(x=>x.manager==m&&x.GetComponent<BoxCollider>()!=null&&UdonSharpEditorUtility.GetBackingUdonBehaviour(x).InteractionText.Length>0),"six destination sign boards wired");
             Check(signs.Count(x=>x.destination==KH_WalkRouteEditor.DestinationPlaza)==3&&signs.Count(x=>x.destination==KH_WalkRouteEditor.DestinationEntrance)==3,"sign destinations 3 plaza + 3 gate");
             int missing=root.GetComponentsInChildren<Transform>(true).Sum(t=>GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(t.gameObject));
@@ -363,6 +426,11 @@ namespace KominkaHillside.Editor
                 log.AppendLine((ok?"PASS":"FAIL")+" backing "+symbol+" entries="+(array==null?0:array.Length));
             }
             CheckArray("dogRoots",m.dogRoots);CheckArray("collarAnchors",m.collarAnchors);CheckArray("roamCenters",m.roamCenters);
+            CheckArray("stationSlots",m.stationSlots);
+            object av;log.AppendLine((backing.publicVariables.TryGetVariableValue("activities",out av)&&(av as UnityEngine.Object)==UdonSharpEditorUtility.GetBackingUdonBehaviour(m.activities)?"PASS":"FAIL")+" backing activities reference");
+            var actB=UdonSharpEditorUtility.GetBackingUdonBehaviour(root.GetComponentInChildren<KD_GroupActivities>(true));object bv;var ba=actB.publicVariables.TryGetVariableValue("balls",out bv)?bv as Array:null;
+            log.AppendLine((ba!=null&&ba.Length==6?"PASS":"FAIL")+" backing activities.balls entries="+(ba==null?0:ba.Length));
+            object pv;log.AppendLine((actB.publicVariables.TryGetVariableValue("hillsidePass",out pv)&&pv!=null?"PASS":"FAIL")+" backing activities.hillsidePass");
             // Synced arrays with program defaults (walkers, hands) live in the program heap, not as overrides; destinations must match that state.
             object dv,wv;bool hasD=backing.publicVariables.TryGetVariableValue("destinations",out dv),hasW=backing.publicVariables.TryGetVariableValue("walkers",out wv);
             log.AppendLine((hasD==hasW&&(!hasD||(dv is int[]&&((int[])dv).Length==6))?"PASS":"FAIL")+" backing destinations state matches walkers (override="+hasD+")");

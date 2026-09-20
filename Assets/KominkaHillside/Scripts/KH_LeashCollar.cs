@@ -15,16 +15,11 @@ namespace KominkaHillside
         public Transform[] ropeBones;
         public Renderer snapVisual;
         public Renderer handleVisual;
-        private int _previousWalker = -1;
         public override void Interact() { if (manager != null) manager._RequestDetach(dogIndex); }
         public override void PostLateUpdate()
         {
             if (line == null || manager == null) return;
             bool connected = manager._IsLeashed(dogIndex);
-            VRCPlayerApi local = Networking.LocalPlayer;
-            if (!connected && Utilities.IsValid(local) && _previousWalker == local.playerId)
-                manager._OfferTip(anchor.position + Vector3.up * 0.1f, manager.hands[dogIndex]);
-            _previousWalker = manager.walkers[dogIndex];
             VRCPlayerApi holder = connected ? VRCPlayerApi.GetPlayerById(manager.walkers[dogIndex]) : null;
             bool visible = connected && Utilities.IsValid(holder);
             bool modeled = ropeMesh != null && ropeBones != null && ropeBones.Length == 12;

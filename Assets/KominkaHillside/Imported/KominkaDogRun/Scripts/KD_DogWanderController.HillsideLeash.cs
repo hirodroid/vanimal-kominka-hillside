@@ -356,6 +356,32 @@ namespace KominkaDogRun
             StepToward(dogRoot.position + delta / distance * clearance, _leashCorner == _leashCorners.Length - 1 ? stop : 0.05f, speed);
         }
 
+        // Gathering (KD_GroupActivities mode 1) on the hillside: follow a complete NavMesh path to the slot.
+        // Returns false when no complete path exists so the caller walks straight (the agreed "pass through" fallback).
+        private float _nextGatherPath;
+        private bool _gatherPathOk;
+        private bool GatherStep(Vector3 goal, float speed)
+        {
+            if (!_dogOwner) { ApplyMoveAnim(); return true; }
+            if (Time.time >= _nextGatherPath || Vector3.Distance(goal, _leashGoal) > 0.6f)
+            {
+                _nextGatherPath = Time.time + 0.5f; _leashGoal = goal;
+                if (_leashPath == null) _leashPath = new NavMeshPath();
+                NavMeshHit from, to;
+                _leashCorners = null; _gatherPathOk = false;
+                if (NavMesh.SamplePosition(dogRoot.position, out from, 2f, NavMesh.AllAreas)
+                    && NavMesh.SamplePosition(goal, out to, 2f, NavMesh.AllAreas)
+                    && NavMesh.CalculatePath(from.position, to.position, NavMesh.AllAreas, _leashPath)
+                    && _leashPath.status == NavMeshPathStatus.PathComplete)
+                { _leashCorners = _leashPath.corners; _leashCorner = 1; _gatherPathOk = true; }
+            }
+            if (!_gatherPathOk || _leashCorners == null || _leashCorners.Length < 2) return false;
+            while (_leashCorner < _leashCorners.Length - 1 && Vector3.Distance(dogRoot.position, _leashCorners[_leashCorner]) < 0.35f) _leashCorner++;
+            bool last = _leashCorner == _leashCorners.Length - 1;
+            StepToward(last ? goal : _leashCorners[_leashCorner], 0f, speed);
+            return true;
+        }
+
         private float PathLength(NavMeshPath path)
         {
             Vector3[] c = path.corners;
