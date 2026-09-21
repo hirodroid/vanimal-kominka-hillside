@@ -256,6 +256,8 @@ namespace KominkaDogRun
                 _routeDest = destNode; _routeNext = -1; _arrived = false;
                 _holderMovedAt = Time.time; _holderSample = holderPos; _inviteCount = 0; _nextInviteAt = 0f;
                 if (leashMode == LeashRest || leashMode == LeashInvite) leashMode = LeashWalk;
+                // 引き返すと「これから通る場所」も入れ替わる。前の向きで当てた立ち寄りは捨てる
+                _stopoverPending = -1; _stopoverRolledFor = -1;
             }
             if (destNode >= 0)
             {
@@ -473,7 +475,7 @@ namespace KominkaDogRun
                     if (leashMode == LeashStopover) return true;
                 }
             }
-            else if (leashMode == LeashWalk && HolderMoving() && TryStopover(handPos, leash, route)) return true;
+            else if (leashMode == LeashWalk && TryStopover(handPos, leash, route)) return true;
 
             // 7. Lead toward the next node; stop at the end of the leash when ahead of the holder.
             Vector3 nodeDir = nodePos - dogRoot.position; nodeDir.y = 0f;
@@ -766,22 +768,36 @@ namespace KominkaDogRun
         {
             KominkaHillside.KH_WalkStopovers spots = hillsideLeashes.stopovers;
             if (spots == null || route == null) { _stopoverRolledFor = -1; _stopoverPending = -1; return; }
-            Vector3 dir = route._TrailDirection(handPos);
-            Vector3 aheadRef = _routeNext >= 0 ? route._Position(_routeNext) : dogRoot.position;
-            Vector3 toNode = aheadRef - handPos; toNode.y = 0f;
-            if (Vector3.Dot(dir, toNode) < 0f) dir = -dir;   // 「前」は目的地の側
+            if (_stopoverPending >= 0 && Time.time > _stopoverPendingUntil) _stopoverPending = -1;
+            // 追うものが無ければ道の向きも要らない。**_TrailDirection はリンク全走査**なので、
+            // 何も持っていない大半のフレームでは引かない
+            if (_stopoverRolledFor < 0 && _stopoverPending < 0) return;
+            Vector3 dir = PassDirection(route, handPos);
             if (_stopoverRolledFor >= 0 && PassedBy(spots, _stopoverRolledFor, handPos, dir)) _stopoverRolledFor = -1;
-            if (_stopoverPending >= 0
-                && (Time.time > _stopoverPendingUntil || PassedBy(spots, _stopoverPending, handPos, dir)))
-                _stopoverPending = -1;
+            if (_stopoverPending >= 0 && PassedBy(spots, _stopoverPending, handPos, dir)) _stopoverPending = -1;
         }
 
-        // その場所を手がもう通り過ぎたか (道沿いに 1 m 以上後ろ、または 8 m より遠い)
+        /// <summary>The direction the walk is going, at the hand, signed toward the destination through
+        /// the next trail node. **`Vector3.zero` when there is no next node** - off the trail there is no
+        /// "ahead" to speak of, and guessing one from the dog's own position would point backwards as
+        /// often as forwards. Callers fall back to distance only.</summary>
+        private Vector3 PassDirection(KominkaHillside.KH_WalkRoute route, Vector3 handPos)
+        {
+            if (_routeNext < 0) return Vector3.zero;
+            Vector3 dir = route._TrailDirection(handPos);
+            Vector3 toNode = route._Position(_routeNext) - handPos; toNode.y = 0f;
+            if (Vector3.Dot(dir, toNode) < 0f) dir = -dir;
+            return dir;
+        }
+
+        // その場所を手がもう通り過ぎたか (手から 8 m より遠い、または道沿いに 1 m 以上後ろ)。
+        // 向きが決まらないとき (dir = zero) は距離だけで見る
         private bool PassedBy(KominkaHillside.KH_WalkStopovers spots, int k, Vector3 handPos, Vector3 dir)
         {
             if (k >= spots.count) return true;
             Vector3 to = spots._Position(k) - handPos; to.y = 0f;
-            return to.magnitude > StopoverForget || Vector3.Dot(to, dir) <= -StopoverBehind;
+            if (to.magnitude > StopoverForget) return true;
+            return dir.sqrMagnitude > 0.0001f && Vector3.Dot(to, dir) <= -StopoverBehind;
         }
 
         /// <summary>Roll for the stopover the holder is walking up to, and go as soon as it is in reach.
@@ -792,19 +808,25 @@ namespace KominkaDogRun
         {
             KominkaHillside.KH_WalkStopovers spots = hillsideLeashes.stopovers;
             if (spots == null || spots.count <= 0 || route == null) return false;
-            // 当たりを持っているなら、あとは手が近づくのを待つだけ
+            Vector3 dir = PassDirection(route, handPos);
+            // 当たりを持っているなら、あとは手が近づくのを待つだけ。**ここは人が歩いているかを問わない**
+            // (Codex D) — 立ち止まって手を伸ばしてくれた人にこそ、犬は寄って行ってよい
             if (_stopoverPending >= 0)
             {
-                if (Horizontal(spots._Position(_stopoverPending), handPos) > leash * StopoverHandMax) return false;
+                Vector3 pendingSpot = spots._Position(_stopoverPending);
+                if (Horizontal(pendingSpot, handPos) > leash * StopoverHandMax) return false;
+                // 待っている間に引き返していることがある。持ち越しを使う直前にもう一度前後を見る
+                Vector3 toPending = pendingSpot - handPos; toPending.y = 0f;
+                if (dir.sqrMagnitude > 0.0001f && Vector3.Dot(toPending, dir) <= -StopoverBehind)
+                { _stopoverPending = -1; return false; }
                 if (SiblingAtStopover(_stopoverPending) || SiblingPausedRecently()) return false;
                 return EnterStopover(spots, _stopoverPending);
             }
+            // ここから下は新しい抽選。**歩いている人の前を通るときだけ引く**
+            if (!HolderMoving()) return false;
             // 犬ごとのクールダウンと、同じ人の犬全体の静穏間隔 (寄り道と共通)
             if (Time.time - _lastStopoverAt < StopoverCooldown || SiblingPausedRecently()) return false;
-            Vector3 dir = route._TrailDirection(handPos);
-            Vector3 aheadRef = _routeNext >= 0 ? route._Position(_routeNext) : dogRoot.position;
-            Vector3 toNode = aheadRef - handPos; toNode.y = 0f;
-            if (Vector3.Dot(dir, toNode) < 0f) dir = -dir;
+            if (dir.sqrMagnitude < 0.0001f) return false;   // 前後が決まらないなら「これから通る」も決まらない
             int best = -1; float bestDist = 1e6f;
             for (int k = 0; k < spots.count; k++)
             {
