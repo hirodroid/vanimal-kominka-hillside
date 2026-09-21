@@ -111,8 +111,12 @@ function status() {
     perVariant: r.perVariant,
     results: (r.throwResults || []).map(t => ({
       v: t.variant, shot: t.shot, outcome: t.outcome, ok: t.ok,
+      // 動きの質 (round 4): 取れても「機械っぽい」なら ok にしない
+      mode: t.mode, yawRateMax: t.yawRateMax, speedMin: t.speedMin, vTake: t.vTake, path: t.approachPath,
+      motionOk: t.motionOk, motion: t.motionNote,
       seconds: t.seconds, reachedIdle: t.reachedIdle, endState: t.endState, line: t.outcomeLine,
     })),
+    motionFailed: (r.throwResults || []).filter(t => t.motionOk === false).length,
     errors: r.errors,
     sceneFileUnchanged: r.sceneFileUnchanged,
     notCovered: r.notCovered,
@@ -131,7 +135,9 @@ function list() {
     shots: SHOTS,
     throwsPlanned: VARIANTS.length * SHOTS.length,
     outcomes: ['caught', 'miss', 'ground', 'none', 'timeout', 'blocked'],
-    pass: 'すべての投げが caught か、その投げに書いた想定内の結果 (low の ground など) であること',
+    pass: 'すべての投げが caught か、その投げに書いた想定内の結果 (low の ground など) であり、かつ動きの質 (motion) も合格であること',
+    motion: 'round 4: 踏み切り / キャッチの行の mode (hook / run / stand / wait / overtake)・yawRateMax・speedMin で判定。'
+      + '急旋回 (> 300 deg/s) は全 mode で不合格。wait 以外で踏み切り直前 1 秒の最小速度が 1.5 m/s 未満 (減速して跳んだ) も不合格',
     notCovered: NOT_COVERED,
   }, null, 2));
 }

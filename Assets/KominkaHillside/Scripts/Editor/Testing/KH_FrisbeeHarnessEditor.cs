@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -51,6 +52,11 @@ namespace KominkaHillside.Editor
         const double BudgetPerThrow = 20.0;
         const double ThrowBudget = 12.0;      // 1 投げ (投げてから片付けるまで) の上限 (秒)
         const double ThrowSettle = 10.0;      // 投げてから Idle へ戻るのを待つ上限 (秒)
+        // 動きの質のしきい値は捕り手側の定数をそのまま使う (2 か所に数字を置かない)。
+        const float MotionMaxYawRate = KH_FrisbeeCatch.MotionMaxYawRate;
+        const float MotionMinSpeed = KH_FrisbeeCatch.MotionMinSpeed;
+        const float MotionWindow = KH_FrisbeeCatch.MotionWindow;
+        const float MotionMinPath = KH_FrisbeeCatch.MotionMinPath;
 
         // ---------------------------------------------------------------- 投げ表
         struct Shot { public string name; public float speed, elevation; public string[] allowed; public string note; }
@@ -91,6 +97,12 @@ namespace KominkaHillside.Editor
             public string outcome = "none";      // caught / miss / ground / none / timeout / blocked
             public string[] allowed;
             public bool ok;
+            // 動きの質 (IMP-DOG-008 round 4)。取れたかどうかとは別の合否。
+            // mode = hook / run / stand / overtake / "" (跳ばず取らずに終わった投げ)。
+            public string mode = "";
+            public float yawRateMax = -1f, speedMin = -1f, vTake = -1f, approachPath = -1f;
+            public bool motionOk = true;
+            public string motionNote = "no takeoff / catch line: motion not judged";
             public double seconds;
             public int endState = -1;
             public bool reachedIdle;
@@ -578,7 +590,9 @@ namespace KominkaHillside.Editor
             rec.reachedIdle = rec.endState == StateIdle;
             for (int i = mark; i < Lines.Count; i++) rec.lines.Add(Lines[i]);
             Classify(rec, engaged);
-            rec.ok = shot.allowed.Contains(rec.outcome);
+            JudgeMotion(rec);
+            // round 4: 取れたかどうか **と** 動きが機械でないこと の両方で 1 投げの合否を決める。
+            rec.ok = shot.allowed.Contains(rec.outcome) && rec.motionOk;
             if (rec.ok) report.throwsOk++;
 
             // 5. 次の投げのために円盤を台へ戻す (犬の現在の追いかけも終わる)。
@@ -609,6 +623,58 @@ namespace KominkaHillside.Editor
                 : engaged ? "the dog engaged but logged no catch / miss / ground line"
                 : "the disc flew but the dog never left Idle";
         }
+
+        /// <summary>動きの質 (round 4)。「取れた」だけでは PCVR 3 の「機械っぽい」を落とせないので、
+        /// 踏み切り / キャッチの行に残る mode と直前 1 秒の最大旋回速度・最小速度で別に合否を出す。
+        /// 減速せずに跳ぶのが既定なので、速度 0 を許すのは wait (ロブなどで回り込みでも時間が余る) だけ。
+        /// 旋回の急さはどの mode でも許さない。</summary>
+        static void JudgeMotion(ThrowResult rec)
+        {
+            // 判定に使えるのは踏み切り / キャッチの行だけ。plan= の行にも mode= は載るが数値が無いので、
+            // 地上回収 (ground) のように跳ばずに終わった投げは「判定していない」(motionOk 既定 true) のまま。
+            string line = rec.outcomeLine != null && rec.outcomeLine.Contains(" yawRateMax=") ? rec.outcomeLine
+                : rec.takeoffLine != null && rec.takeoffLine.Contains(" yawRateMax=") ? rec.takeoffLine : null;
+            if (line == null) return;
+            rec.mode = Field(line, " mode=");
+            rec.yawRateMax = Num(line, " yawRateMax=");
+            rec.speedMin = Num(line, " speedMin=");
+            rec.vTake = Num(line, " vTake=");
+            rec.approachPath = Num(line, " path=");
+            if (rec.yawRateMax < 0f || rec.speedMin < 0f)
+            { rec.motionOk = false; rec.motionNote = "motion numbers missing from: " + line; return; }
+            if (rec.yawRateMax > MotionMaxYawRate)
+            { rec.motionOk = false; rec.motionNote = "yawRateMax " + rec.yawRateMax.ToString("F0") + " > " + MotionMaxYawRate + " deg/s (snap turn)"; return; }
+            // 助走が 1 秒ぶんの距離 (1.5 m/s x 1 s) に満たない投げは速度で判定しない。円盤が犬のすぐ横に
+            // 落ちてくる投げでは、どれだけ生き物らしく動いても直前 1 秒を走り続けることは幾何的にできない。
+            if (rec.approachPath >= 0f && rec.approachPath < MotionMinPath)
+            {
+                rec.motionOk = true;
+                rec.motionNote = "mode=" + rec.mode + " yawRateMax=" + rec.yawRateMax.ToString("F0")
+                    + " (speed not judged: approach was only " + rec.approachPath.ToString("F1") + " m)";
+                return;
+            }
+            if (rec.mode != "wait" && rec.speedMin < MotionMinSpeed)
+            { rec.motionOk = false; rec.motionNote = "mode=" + rec.mode + " but speedMin " + rec.speedMin.ToString("F2") + " < " + MotionMinSpeed + " m/s (slowed to a stop before taking off)"; return; }
+            rec.motionOk = true;
+            rec.motionNote = "mode=" + rec.mode + " yawRateMax=" + rec.yawRateMax.ToString("F0") + " speedMin=" + rec.speedMin.ToString("F2");
+        }
+
+        static string Field(string line, string key)
+        {
+            int at = line.IndexOf(key, StringComparison.Ordinal);
+            if (at < 0) return "";
+            at += key.Length;
+            int end = line.IndexOf(' ', at);
+            return end < 0 ? line.Substring(at) : line.Substring(at, end - at);
+        }
+
+        static float Num(string line, string key)
+        {
+            string s = Field(line, key);
+            float v;
+            return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : -1f;
+        }
+
 
         static void Summarise()
         {

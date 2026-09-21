@@ -264,9 +264,13 @@ namespace KominkaHillside.Editor
             catcher.groundLayerMask = (1 << 0) | (1 << 11);
             // Code-owned, same rule as the flight model. IMP-DOG-008 round 2: the intercept planner promises to be
             // standing under the catch point in time, and only a sprint keeps that promise (a dog IS fast).
-            catcher.chaseRunSpeed = 10f; catcher.chaseAcceleration = 25f; catcher.maxRunAnimScale = 2.5f;
+            // Round 4 (PCVR 3 "it is a machine"): the sprint and the snap turn are gone. The hook approach delivers
+            // the facing, so the run can be 8 m/s with a visible 12 m/s2 start and a 10 m/s2 roll-out, and the turn
+            // rates can be a dog's (240 running / 180 walking / 120 standing in a catch state).
+            catcher.chaseRunSpeed = 8f; catcher.chaseAcceleration = 12f; catcher.chaseDeceleration = 10f;
+            catcher.maxRunAnimScale = 2.5f;
             catcher.noticeDelay = 0.1f; catcher.settleTime = 0.2f; catcher.returnRunSpeed = 4.5f;
-            catcher.turnSpeedDegPerSec = 720f;   // Eta charges the turn serially; a 180 deg spin must not eat the window
+            catcher.turnSpeedDegPerSec = 240f; catcher.walkTurnDegPerSec = 180f; catcher.standTurnDegPerSec = 120f;
             catcher.maxRootRise = 0.9f;  // how high the standing jump reaches; also bounds the clip playback below
             catcher.standoffDistance = 8f;
             catcher.variant = KH_FrisbeeCatch.VariantNormal; catcher.pendingVariant = -1; // code-owned: every instance starts on the baseline
@@ -459,9 +463,16 @@ namespace KominkaHillside.Editor
                     // IMP-DOG-008 round 2 (intercept-first): the plan promises the dog will be STANDING under the
                     // catch point, settled, before the crouch. Only a sprint can keep that promise.
                     Check(catcher.chaseRunSpeed >= 8f, "chase sprint " + catcher.chaseRunSpeed.ToString("F1") + " m/s >= 8 (the ETA the planner promises)");
-                    Check(catcher.chaseAcceleration >= 15f, "chase acceleration " + catcher.chaseAcceleration.ToString("F1") + " m/s2 >= 15 (the sprint must be reached, not just named)");
+                    // Round 4: both of these are now bands, not floors. Too low and the plan cannot keep its ETA;
+                    // too high and the dog reads as a machine (PCVR 3), which no catch rate can make up for.
+                    Check(catcher.chaseAcceleration >= 8f && catcher.chaseAcceleration <= 15f, "chase acceleration " + catcher.chaseAcceleration.ToString("F1") + " m/s2 in [8, 15] (reached, but visibly)");
                     Check(catcher.settleTime >= 0.1f && catcher.settleTime <= 0.6f, "settle time " + catcher.settleTime.ToString("F2") + " s in [0.10, 0.60]");
-                    Check(catcher.turnSpeedDegPerSec >= 540f, "turn rate " + catcher.turnSpeedDegPerSec.ToString("F0") + " deg/s >= 540 (Eta charges the turn serially)");
+                    Check(catcher.turnSpeedDegPerSec >= 180f && catcher.turnSpeedDegPerSec <= 360f, "turn rate " + catcher.turnSpeedDegPerSec.ToString("F0") + " deg/s in [180, 360] (a dog's turn, not a turret's)");
+                    Check(KH_FrisbeeCatch.HookLength >= 1f && KH_FrisbeeCatch.HookLength <= 3f, "hook length " + KH_FrisbeeCatch.HookLength.ToString("F2") + " m in [1, 3] (the straightening run before the spot)");
+                    Check(KH_FrisbeeCatch.HookAngleDeg >= 20f && KH_FrisbeeCatch.HookAngleDeg <= 70f, "hook angle " + KH_FrisbeeCatch.HookAngleDeg.ToString("F0") + " deg in [20, 70] (a curve in, not a reverse park)");
+                    Check(catcher.chaseDeceleration > 0f && catcher.chaseDeceleration < catcher.deceleration, "chase braking " + catcher.chaseDeceleration.ToString("F1") + " m/s2 < the generic " + catcher.deceleration.ToString("F1") + " (the chase rolls out, it does not stop dead)");
+                    Check(catcher.standTurnDegPerSec <= catcher.walkTurnDegPerSec && catcher.walkTurnDegPerSec <= catcher.turnSpeedDegPerSec && catcher.standTurnDegPerSec > catcher.idleTurnSpeedDegPerSec,
+                        "turn rates stand " + catcher.standTurnDegPerSec.ToString("F0") + " <= walk " + catcher.walkTurnDegPerSec.ToString("F0") + " <= run " + catcher.turnSpeedDegPerSec.ToString("F0") + ", all above idle " + catcher.idleTurnSpeedDegPerSec.ToString("F0"));
                     Check(catcher.maxRunAnimScale >= 1.5f && catcher.maxRunAnimScale <= 3f, "run clip speed cap " + catcher.maxRunAnimScale.ToString("F1") + "x in [1.5, 3.0] (higher reads as jitter)");
                     Check(KH_FrisbeeCatch.HoldEnterRadius >= 0.2f && KH_FrisbeeCatch.HoldEnterRadius <= 0.6f, "hold band " + KH_FrisbeeCatch.HoldEnterRadius.ToString("F2") + " m in [0.20, 0.60] (must sit outside the 0.1 m arrive radius)");
                     Check(catcher.returnRunSpeed <= catcher.chaseRunSpeed, "return pace " + catcher.returnRunSpeed.ToString("F1") + " <= chase sprint " + catcher.chaseRunSpeed.ToString("F1") + " (only the chase has a deadline)");
