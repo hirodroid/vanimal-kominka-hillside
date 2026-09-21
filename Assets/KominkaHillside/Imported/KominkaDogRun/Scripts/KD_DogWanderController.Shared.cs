@@ -327,6 +327,25 @@ namespace KominkaDogRun
                 rate * Time.deltaTime);
         }
 
+        /// <summary>向きを指定の速さで変える (IMP-DOG-010)。
+        ///
+        /// <see cref="FaceTowards"/> は静止中を <see cref="idleTurnSpeedDegPerSec"/> (30deg/s) で回す —
+        /// **その場で相手を見るための速さ**で、足の擦れを避けるためにわざと遅い。
+        /// 寄り道・立ち寄りで嗅ぐ先や眺める先へ向き直るのは「これから何かをする準備」なので、
+        /// 30deg/s では向き終わる前に人が歩き去る。オーバーロードにしないのは、
+        /// 既存の呼び出しが黙って速くならないようにするため (名前で違いを見せる)。</summary>
+        void FaceTowardsRate(Vector3 worldPoint, float degPerSec)
+        {
+            // IMP-NET-005: 向きも `VRCObjectSync` が配る
+            if (!_dogOwner) return;
+            Vector3 d = worldPoint - dogRoot.position;
+            d.y = 0f;
+            if (d.sqrMagnitude < 0.0001f) return;
+            Quaternion look = Quaternion.LookRotation(d.normalized, Vector3.up);
+            dogRoot.rotation = Quaternion.RotateTowards(dogRoot.rotation, look, // net: owner-only: 冒頭の早期 return が非 Owner を弾く
+                degPerSec * Time.deltaTime);
+        }
+
         // ================================================================
 
         /// <summary>移動アニメを実速度から決める (KD_DogFetchController.UpdateLocomotionAnim と同じ方針)。
@@ -358,7 +377,9 @@ namespace KominkaDogRun
             bool eatPose = _eatPose && !moving;
             if (eatPose) look = false;
             // IMP-DOG-010: 座っているフレームは座りが勝つ (Bool は一度に 1 つ)。
-            // Sit そのものを書くのは LateUpdate の 1 箇所
+            // Sit そのものを書くのは LateUpdate の 1 箇所だが、**足が動いていたらここで畳む** —
+            // 向こうは `_wantSit` をそのまま書くので、畳まないと歩きながら座った犬になる
+            if (moving) _wantSit = false;
             if (_wantSit) { look = false; eatPose = false; }
 
             // IMP-DOG-009: 走りクリップの再生速度を実速度へ追従させる (KH_FrisbeeCatch.ApplyAnimatorSpeed と同じ方針)。
