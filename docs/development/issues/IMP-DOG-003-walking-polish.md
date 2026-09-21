@@ -36,6 +36,7 @@ priority: High
 - 実装済み (Editor 検査のみ): `KH_WalkRoute` (17 点・経路表)、`KH_LeashManager.destinations` と `ReqDestination`、看板 `KH_WalkSign` 3 基、`KD_DogWanderController.HillsideLeash.cs` の散歩ロジック (先行・リード端で待つ・誘い 3 回で伏せ・寄り道・道外は手まわり・到着後の落ち着き・戻る条件)。数値は game-design §4「自由な散歩の初回実装値」。
 - 未実装: 手順 3 の犬同士の遊び、手順 5 の接続の見つけやすさ、手順 7 の Desktop/Touch 確認。看板は DES-UI-001 のメニューまでの仮 UI。
 - 首輪ずれ (手順 6) は IMP-DOG-004 の実機確認と合わせて見る。
+- 2026-09-21 PCVR: 犬の速さが 2 段階しかなく人が引っ張る形になる → 速さの 4 段階化は [IMP-DOG-009](IMP-DOG-009-walk-speed-tiers.md) へ分けた。
 - 2026-09-20 ユーザー PCVR (1 人): 「めちゃくちゃ動きは良かった。かなり良かった」。項目別の記録 (往復・道外・誘いの回数・看板) は未取得。看板の文字 (`GATE <`) が分かりにくい点は UX 調整対象。
 
 ## 完了条件
