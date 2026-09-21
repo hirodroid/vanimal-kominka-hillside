@@ -19,6 +19,7 @@ namespace KominkaHillside
         public KominkaDogRun.KD_GroupActivities activities;
         public KH_TrainerPass pass;
         public KH_ToyRecall recall;
+        public KH_NightMode night;             // IMP-ENV-002: local night mode (null = feature absent, button disabled)
         public Transform[] dogRoots;
         public GameObject panelRoot;
         public GameObject launcher;            // Touch only: screen-space [メニュー]
@@ -26,6 +27,8 @@ namespace KominkaHillside
         public Image[] tabImages;
         public GameObject[] tabUnderlines;
         public TextMeshProUGUI titleText;
+        public Image nightImage;               // header toggle (IMP-ENV-002)
+        public TextMeshProUGUI nightLabel;
         [Header("さんぽ")]
         public TextMeshProUGUI[] walkState;    // 6
         public Image[] walkLeft, walkRight, walkOff;
@@ -138,6 +141,9 @@ namespace KominkaHillside
         public void _Tab0() { _tab = 0; Draw(); }
         public void _Tab1() { _tab = 1; Draw(); }
         public void _Tab2() { _tab = 2; Draw(); }
+
+        // ---- ナイトモード (IMP-ENV-002; local only, fades over KH_NightMode.fadeSeconds) ----
+        public void _Night() { if (night == null) return; night._Toggle(); Draw(); }
 
         // ---- さんぽ ----
         public void _Left0() { Attach(0, 0); } public void _Left1() { Attach(1, 0); } public void _Left2() { Attach(2, 0); }
@@ -323,7 +329,15 @@ namespace KominkaHillside
             for (int i = 0; i < pages.Length; i++) if (pages[i] != null) pages[i].SetActive(i == _tab);
             for (int i = 0; i < tabImages.Length; i++) if (tabImages[i] != null) tabImages[i].color = i == _tab ? tabOn : tabOff;
             if (tabUnderlines != null) for (int i = 0; i < tabUnderlines.Length; i++) if (tabUnderlines[i] != null) tabUnderlines[i].SetActive(i == _tab);
+            DrawNight();
             if (_tab == 0) DrawWalk(); else if (_tab == 1) DrawGather(); else DrawToys();
+        }
+        private void DrawNight()
+        {
+            bool on = night != null && night.IsOn;
+            if (nightImage != null) nightImage.color = night == null ? disabled : on ? toggleOn : actionNeutral;
+            // Label shows the current (target) state, not the action; the gold tint marks ON (Codex U-2: "OFF" could read as "turn off").
+            if (nightLabel != null) nightLabel.text = night == null ? "ナイトモード" : on ? "ナイトモード: ON" : "ナイトモード: OFF";
         }
         private string NoteOrDefault(string fallback) { return Time.time < _noteUntil ? _note : fallback; }
         private void DrawWalk()

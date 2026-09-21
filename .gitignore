@@ -137,6 +137,9 @@ InitTestScene*.unity*
 # 犬ギミック移植元の購入モデル・モーション (固定 GUID の必要依存のみ)
 /[Aa]ssets/TORINOSUKE/
 /[Aa]ssets/TORINOSUKE.meta
+# Allsky (古民家ドッグランと同じ空。KH_Skybox.mat が Day Sun High Clear のキューブマップを固定 GUID で参照。IMP-ENV-002)
+/[Aa]ssets/Allsky/
+/[Aa]ssets/Allsky.meta
 
 # ============================================
 # 再生成できる自作アセット (任意)

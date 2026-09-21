@@ -34,6 +34,7 @@ namespace KominkaHillside.Editor
         static readonly Color TabOff = new Color(.20f, .18f, .16f), AccentGold = new Color(.84f, .68f, .32f);
         // Words written by this builder (runtime words live in KH_HandMenu.cs)
         public const string Title = "古民家の裏山", WordClose = "閉じる", WordLauncher = "メニュー";
+        const string WordNight = "ナイトモード: OFF";   // initial label only (DrawNight overwrites it every draw; runtime literals in KH_HandMenu.cs own the words and Charset reads them). Longest variant so the width check measures the worst case
         public static readonly string[] Tabs = { "さんぽ", "あそぶ", "おもちゃ" };
         public static readonly string[] DogNames = { "コーギー", "ポメラニアン", "ラブラドール", "ダックスフンド", "柴犬", "サモエド" };
         public static readonly string[] Formations = { "横一列", "輪になる", "ぎゅっと集合", "V字", "思い思いに", "前後二列" };
@@ -233,6 +234,10 @@ namespace KominkaHillside.Editor
             // Header
             menu.titleText = Text(panel.transform, "Title", new Vector2(-380f, 312f), new Vector2(340f, 40f), Title, 26f, TextAlignmentOptions.Left, font);
             Button(panel.transform, "Close", new Vector2(485f, 312f), new Vector2(110f, 44f), ActionClose, WordClose, 22f, font, round, backing, "_Close");
+            // Night mode toggle (IMP-ENV-002): one header button visible on every tab. Wired to KH_NightMode when Night/1 Setup has run.
+            menu.nightImage = Button(panel.transform, "Night", new Vector2(290f, 312f), new Vector2(250f, 44f), ActionNeutral, WordNight, 22f, font, round, backing, "_Night");
+            menu.nightLabel = menu.nightImage.GetComponentInChildren<TextMeshProUGUI>(true);
+            menu.night = UnityEngine.Object.FindObjectOfType<KH_NightMode>(true);
             // Tabs (flat + gold underline for the active one)
             menu.tabImages = new Image[3]; menu.tabUnderlines = new GameObject[3]; menu.pages = new GameObject[3];
             for (int i = 0; i < 3; i++)
@@ -328,14 +333,14 @@ namespace KominkaHillside.Editor
             panel.SetActive(false);
             UdonSharpEditorUtility.CopyProxyToUdon(menu); EditorUtility.SetDirty(menu);
             EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveOpenScenes(); AssetDatabase.SaveAssets();
-            Report("menu-build", "menu built: tabs=3 walkRows=6 forms=6 toys=6 launcher=inactive panel=inactive");
+            Report("menu-build", "menu built: tabs=3 walkRows=6 forms=6 toys=6 night=" + (menu.night != null ? "wired" : "MISSING (run Night/1 Setup)") + " launcher=inactive panel=inactive");
         }
 
         // Button name (and its cell/parent) -> the handler Build wires. Kept next to Build so a renamed button fails Verify.
         static string ExpectedEvent(UnityEngine.UI.Button b)
         {
             string n = b.name, p = b.transform.parent.name;
-            if (n == "Close") return "_Close"; if (n == "Open") return "_Toggle";
+            if (n == "Close") return "_Close"; if (n == "Open") return "_Toggle"; if (n == "Night") return "_Night";
             if (n.StartsWith("Tab")) return "_Tab" + n.Substring(3);
             if (n.StartsWith("Form")) return "_Form" + n.Substring(4);
             if (n == "Start") return "_GatherStart"; if (n == "End") return "_GatherEnd"; if (n == "Buy") return "_Buy";
@@ -376,7 +381,9 @@ namespace KominkaHillside.Editor
                 if (b.onClick.GetPersistentEventCount() == 1 && b.onClick.GetPersistentTarget(0) == backing && b.onClick.GetPersistentMethodName(0) == "SendCustomEvent") wired++;
                 var img = b.GetComponent<Image>(); if (img != null && (img.sprite == null || img.type == Image.Type.Sliced)) sliced++;
             }
-            Check(buttons.Length == 46 && wired == buttons.Length, "46 buttons (45 panel incl. 6 disc + launcher) all wired to the menu Udon (" + wired + ")");
+            Check(buttons.Length == 47 && wired == buttons.Length, "47 buttons (46 panel incl. 6 disc + night + launcher) all wired to the menu Udon (" + wired + ")");
+            Check(menu.nightImage != null && menu.nightLabel != null && menu.nightLabel.transform.IsChildOf(menu.nightImage.transform), "night button image and label");
+            Check(menu.night != null, "night wired to KH_NightMode (run Night/1 Setup then Build Menu)");
             Check(sliced == buttons.Length, "rounded buttons use Sliced sprites");
             // Every onClick string must be the handler expected for that button (name -> event), and the handler must exist.
             var runtimeMethods = new HashSet<string>(typeof(KH_HandMenu).GetMethods().Select(m => m.Name));
@@ -395,6 +402,10 @@ namespace KominkaHillside.Editor
             bool refs = backingVars.TryGetVariableValue("manager", out mv) && mv != null && backingVars.TryGetVariableValue("activities", out mv) && mv != null
                 && backingVars.TryGetVariableValue("pass", out mv) && mv != null && backingVars.TryGetVariableValue("recall", out mv) && mv != null && backingVars.TryGetVariableValue("panelRoot", out mv) && mv != null;
             Check(refs, "backing Udon holds manager/activities/pass/recall/panelRoot references");
+            // A U# reference is stored in the backing heap as the target's backing UdonBehaviour, not its proxy.
+            bool nightRefs = menu.night != null && backingVars.TryGetVariableValue("night", out mv) && mv == (object)UdonSharpEditorUtility.GetBackingUdonBehaviour(menu.night)
+                && backingVars.TryGetVariableValue("nightImage", out mv) && mv == (object)menu.nightImage && backingVars.TryGetVariableValue("nightLabel", out mv) && mv == (object)menu.nightLabel;
+            Check(nightRefs, "backing Udon holds night/nightImage/nightLabel (same objects as the proxy)");
             bool arrays = new UnityEngine.Object[][] { menu.pages, menu.tabImages, menu.tabUnderlines, menu.walkState, menu.walkLeft, menu.walkRight, menu.walkOff, menu.formImages, menu.markers, menu.toyState, menu.toyImages, menu.discImages }
                 .All(a => a != null && a.Length > 0 && a.All(x => x != null));
             Check(arrays, "all reference arrays are allocated with no null element");

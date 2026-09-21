@@ -24,7 +24,7 @@
 - 元の作業ツリーにあった未コミットのシーン・Program Asset・音量設定は取り込まない。trackedファイルは `git show <SHA>:<path>` から採取した。
 - `KH_DogPortSource.unity` は移植用の中間シーン。本番は `Assets/Scenes/VRCDefaultWorldScene.unity`。犬を`KH_Dogs`に置き、Terrain再生成の`KH_World`の外で保持する。
 - 室内、睡眠部屋、ショップ、進行・保存、ライブ、写真、トレーナーの各サービスはシーンへ配置しない。散歩に必要な機能を先に検証するため。型依存のコードや元モデル内の非表示の飾りは残るが、選択UI・保存・解放を実装済みとは扱わない。
-- `KD_MenuSettings` のSleepKit参照を`KH_WITH_SLEEPKIT`で分離。既定では参照しない。夜・部屋用サービスは未配置。
+- `KD_MenuSettings` のSleepKit参照を`KH_WITH_SLEEPKIT`で分離。既定では参照しない。夜・部屋用サービスは未配置。ナイトモードは 2026-09-21 に新規 `KH_NightMode` が担う (IMP-ENV-002。`KD_LiveNight` / `KD_MenuSettings` は使わず、覆いシェーダーは `KD_NightOverlay.shader` を `Assets/KominkaHillside/Shaders/KH_NightOverlay.shader` へコピーしてミラー抑制を足した派生物)。`KH_WITH_SLEEPKIT` 分岐の整理はライブ移植時。
 - WanderにHillsideLeash partialを追加。犬のOwnerだけがNavMesh経路と既存の加減速・地面追従を使って動かす。位置同期は元のVRCObjectSyncを継続。
 - Fetchは接続中の開始を拒否。接続状態が遅れて届いた競合は既存GiveUpを通してボールを解放する。Idleに戻る際に全クライアントでWanderのアニメ出力を失効し、次の更新で再適用。
 - 門前の犬・ボール配置、自由行動の中心、地面レイヤー、首輪・先端・経路を裏山用へ設定。犬の子階層はPickupNoEnvironmentとし、地面レイが自分のColliderを拾わないようにする。
