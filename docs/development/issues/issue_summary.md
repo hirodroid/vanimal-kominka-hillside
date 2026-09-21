@@ -64,7 +64,7 @@ priority: High    # High / Medium / Low
 | [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) | High | 手元メニュー (さんぽ/あそぶ/おもちゃ)・接続補助・目的地・集合・ボール回収を実装、Editor 検査済み。Play 確認待ち | wip |
 | [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビー通常版の体験はひとまずOK。1匹で取り方・飛び方の採用内容を固めてから6匹へ展開する | todo |
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開はその後の別Issue | wip |
-| [IMP-DOG-008](IMP-DOG-008-frisbee-variations.md) | Medium | ラブ1匹で外からの走り込み・取り方・飛び方の変化を試す。通常版と採用バリエーションを評価後に6匹展開 | todo |
+| [IMP-DOG-008](IMP-DOG-008-frisbee-variations.md) | Medium | ラブ1匹で走り込み 3 候補・ひねり・横曲がりを開発用の切替で比べる (設計済み、実装中)。通常版と採用バリエーションを評価後に6匹展開 | wip |
 | [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 裏山専用ライブと古民家の有料ライブ購入者の利用を設計する | todo |
 | [DES-WLD-002](DES-WLD-002-sound.md) | Medium | 裏山の音 (BGM・環境音) の方針・音源・ライブとの切替を設計する | todo |
 | [IMP-DOG-004](review/IMP-DOG-004-leash-models-release.md) | High | 首輪・リードの本制作。PCVR 1 人は合格。2 人・Quest/iOS・座位/木陰の確認待ち | review |
