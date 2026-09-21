@@ -17,6 +17,7 @@ const MENU = 'Tools/KominkaHillside/Frisbee/';
 
 const SHOTS = [
   { name: 'flat', speed: 7.5, elevationDeg: 10, allowed: ['caught'], note: '基準の投げ' },
+  { name: 'mid', speed: 5.8, elevationDeg: 8, allowed: ['caught'], note: 'ClientSim の Desktop 投げの再現 (低く短い)' },
   { name: 'lob', speed: 6, elevationDeg: 35, allowed: ['caught'], note: '山なり。滞空が長い' },
   { name: 'low', speed: 5, elevationDeg: 0, allowed: ['caught', 'ground'], note: '水平・低速。立ったまま取る / 落ちたものを拾う のどちらも想定内' },
   { name: 'far', speed: 9, elevationDeg: 15, allowed: ['caught'], note: '遠投' },

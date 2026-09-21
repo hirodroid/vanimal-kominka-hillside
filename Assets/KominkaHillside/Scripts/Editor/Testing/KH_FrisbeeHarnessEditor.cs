@@ -65,6 +65,10 @@ namespace KominkaHillside.Editor
         {
             new Shot { name = "flat", speed = 7.5f, elevation = 10f, allowed = new[] { "caught" },
                 note = "基準の投げ。跳んで取るか、走り込んで取る" },
+            // ClientSim の Desktop 投げ (5.6-6.2 m/s・低い仰角、犬は 6.5-7.5 m 前) を再現する投げ。
+            // ひねり (v4) が跳ばずに立って取る / 地上回収へ落ちる回帰は、この幾何でだけ出た。
+            new Shot { name = "mid",  speed = 5.8f, elevation = 8f,  allowed = new[] { "caught" },
+                note = "ClientSim の Desktop 投げの再現。低く短い。走り込んで跳べるか" },
             new Shot { name = "lob",  speed = 6f,   elevation = 35f, allowed = new[] { "caught" },
                 note = "山なり。滞空が長いので先回りできるはず" },
             new Shot { name = "low",  speed = 5f,   elevation = 0f,  allowed = new[] { "caught", "ground" },

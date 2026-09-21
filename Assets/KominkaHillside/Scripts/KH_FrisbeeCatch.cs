@@ -216,6 +216,16 @@ namespace KominkaHillside
         // The take-off speed IS the speed the dog has at the crouch, clamped to a band a dog can push off from, and
         // it is re-read at every 10 Hz replan. Round 2 fixed it at 2.5, the approach disagreed, and the dog stopped.
         public const float RunJumpMinTakeoff = 2f, RunJumpMaxTakeoff = 6f;
+        // A dog already standing inside the run-up distance does not reverse out to get a longer approach - it
+        // pounces from where it is. Without this the crouch start is pushed BEHIND the dog (worst on the twist,
+        // whose mouth sits 0.63 m off the running line, so the run-up has to come out of a 0.6 m gap) and the next
+        // replan drops the plan: measured as v4 committing plan=1 and falling to plan=3 on every ClientSim throw.
+        public const float RunJumpShortTakeoff = 1f;
+        // The take-off ceiling is about the JUMP, not about getting there. Far from the crouch start the dog may
+        // run at the full chase speed and trim down inside this distance (8 -> 3 m/s needs 2.75 m at
+        // chaseDeceleration). Holding the whole approach at the take-off ceiling made a plan the dog fell a stride
+        // behind unrecoverable, and the twist - which also has to sidestep 0.63 m - dropped to the ground plan.
+        public const float RunJumpTrimDistance = 3f;
         // Round 4b: ANY direction, including straight at the disc (-1). A dog facing an incoming disc runs at it and
         // jumps, and refusing that left every flat / lob throw on the "get under it and wait" plan - the very shape
         // the user called mechanical. What a head-on meeting does not tolerate is speed: the closing rate is the sum
@@ -285,7 +295,7 @@ namespace KominkaHillside
         // _hookPoint is A, the point short of the spot the first leg aims at, and _hookDone latches once the dog is
         // inside HookCornerRadius of it (the corner is never re-entered, so the dog cannot loop round the spot).
         private int _mode = ModeHook;
-        private float _takeoffCap = RunJumpMaxTakeoff;  // ceiling on the take-off speed of THIS plan (head-on runs are slower)
+        private float _takeoffMin = RunJumpMinTakeoff, _takeoffCap = RunJumpMaxTakeoff;  // take-off speed band of THIS plan (head-on and short run-ups are slower)
         private Vector3 _hookPoint;
         private bool _hookActive, _hookDone;
         private float _hookLen = HookLength;
@@ -295,7 +305,7 @@ namespace KominkaHillside
         private float[] _mYaw, _mSpeed, _mTime;
         private int _mIdx, _mCount;
         private Vector3 _mPrevFwd; private bool _mPrimed, _motionLatched;
-        private float _mAccAngle, _mAccTime, _mSlowest = -1f;
+        private float _mAccAngle, _mAccTime, _mSlowest = -1f, _mPrevDt = 0.016f;
         private float _yawRateMax, _speedMin, _vTake;
         // Scratch filled by CatchGeometry; copied into the plan fields only once a candidate is accepted.
         private Vector3 _geoForward, _geoCatchRoot, _geoStandRoot;
@@ -466,8 +476,9 @@ namespace KominkaHillside
             _haveLaunch = true; _gen = gen; _p0 = p0; _v0 = v0; _t0 = launchServerTime; _curve = curve; _flightEnded = false;
             _plan = PlanNone; _nextPlan = 0f; _deviationSince = -1f; _landingValid = false; _localPlanValid = true;
             _settledSince = -1f; _holding = false; _runningCatch = false; _faceErrAtTakeoff = -1f;
-            _mode = ModeHook; _hookActive = false; _hookDone = false; _motionLatched = false; _takeoffCap = RunJumpMaxTakeoff;
-            _mCount = 0; _mIdx = 0; _mPrimed = false; _mAccAngle = 0f; _mAccTime = 0f; _mSlowest = -1f;   // the last second of motion belongs to THIS throw only
+            _mode = ModeHook; _hookActive = false; _hookDone = false; _motionLatched = false;
+            _takeoffMin = RunJumpMinTakeoff; _takeoffCap = RunJumpMaxTakeoff;
+            _mCount = 0; _mIdx = 0; _mPrimed = false; _mAccAngle = 0f; _mAccTime = 0f; _mSlowest = -1f; _mPrevDt = 0.016f;   // the last second of motion belongs to THIS throw only
             _yawRateMax = 0f; _speedMin = 0f; _vTake = 0f;
             throwerId = thrower;
             LogThrow(p0, v0, curve);
@@ -872,9 +883,10 @@ namespace KominkaHillside
             // happen here, and the air solve absorbs the last few centimetres anyway.
             Vector3 toC = _standRoot - dogPos; toC.y = 0f;
             float dT = toC.magnitude;
-            // The run-up itself is held at the take-off ceiling, so the speed the dog crosses the crouch start
-            // with IS the speed it jumps at - no braking stride between the two.
-            if (pace > _takeoffCap) pace = _takeoffCap;
+            // The last few metres are held at the take-off ceiling, so the speed the dog crosses the crouch start
+            // with IS the speed it jumps at - no braking stride between the two. Further out it may run flat out.
+            float ceiling = dT > RunJumpTrimDistance ? chaseRunSpeed : _takeoffCap;
+            if (pace > ceiling) pace = ceiling;
             MoveToward(dT < 0.6f ? _standRoot + _forward * 2f : _standRoot, pace, 0f, chaseAcceleration, false, chaseDeceleration);
             if (dT > 0.05f)
             {
@@ -947,8 +959,11 @@ namespace KominkaHillside
                 // on a hitch (measured) even though every writer is capped at 240, because the rotation and the
                 // clock do not come from the same interval. Over MotionBucket the two agree, and a REAL snap turn
                 // lasts far longer than one bucket, so nothing that matters is smoothed away.
+                // Pair the angle with the dt of the frame that TURNED it, not of the frame reading it. The
+                // rotation between the previous sample and now was applied with the PREVIOUS frame's deltaTime;
+                // summing this frame's instead let a varying frame time report 312 deg/s from a 240 deg/s cap.
                 _mAccAngle += Vector3.Angle(_mPrevFwd, fwd);
-                _mAccTime += dt;
+                _mAccTime += _mPrevDt;
                 if (_mSlowest < 0f || _speed < _mSlowest) _mSlowest = _speed;
                 if (_mAccTime >= MotionBucket)
                 {
@@ -960,7 +975,7 @@ namespace KominkaHillside
                     _mAccAngle = 0f; _mAccTime = 0f; _mSlowest = -1f;
                 }
             }
-            _mPrevFwd = fwd; _mPrimed = true;
+            _mPrevFwd = fwd; _mPrevDt = dt; _mPrimed = true;
         }
 
         // Worst turn rate and slowest moment of the last MotionWindow seconds. Latched at the takeoff so the catch
@@ -1127,8 +1142,14 @@ namespace KominkaHillside
                 // Every momentum jump is re-derived, not merely re-checked: the crouch start follows the speed the
                 // dog has RIGHT NOW, so a dog that is running early pushes the crouch start further out instead of
                 // arriving and stopping on it (round 2's failure, and the reason PCVR 3 saw no running jumps).
-                float vTake = Mathf.Clamp(_speed, RunJumpMinTakeoff, _takeoffCap);
+                float vTake = Mathf.Clamp(_speed, _takeoffMin, _takeoffCap);
                 Vector3 ground = new Vector3(_catchRoot.x, _catchRoot.y - _rootRise, _catchRoot.z);
+                // _forward is FIXED at the commit (the run-up is a line, not something re-aimed every tick); only
+                // the crouch start slides along it, and never past the dog - a run-up the dog would have to reverse
+                // out of is what dropped every twist plan.
+                Vector3 toGround = ground - dogPos; toGround.y = 0f;
+                float fit = toGround.magnitude / (_tUp + _crouchReal);
+                if (vTake > fit) vTake = fit < RunJumpShortTakeoff ? RunJumpShortTakeoff : fit;
                 Vector3 crouchStart = ground - _forward * (vTake * (_tUp + _crouchReal));
                 if (!DogMayGo(crouchStart)) return false;
                 // Deadband. The crouch start is derived from the speed, and the speed is paced at the crouch start:
@@ -1147,7 +1168,7 @@ namespace KominkaHillside
                 if (availR <= 0.02f) return pathR < 1.2f;
                 // A little over the run speed is not a dropped plan: the dog cuts the corner at A, so the measured
                 // path always overstates what is left. Dropping on the nose made the lob fall to the ground plan.
-                if (pathR / availR > (_mode == ModeRun ? _takeoffCap : chaseRunSpeed) * 1.15f) return false;
+                if (pathR / availR > chaseRunSpeed * 1.15f) return false;   // only the sprint is the hard limit
                 _jumpSpeed = vTake;
                 return true;
             }
@@ -1403,7 +1424,7 @@ namespace KominkaHillside
             _rootRise = rise; _tUp = tUp; _animScale = scale; _crouchReal = crouch; _jumpSpeed = jumpSpeed;
             _planSlack = slack; _planPath = _apPath; _catchDecided = false; _runningCatch = false;
             _mode = _apMode; _hookActive = _apHook; _hookPoint = _apPoint; _hookLen = _apLen; _hookDone = false;
-            _takeoffCap = RunJumpMaxTakeoff;
+            _takeoffMin = RunJumpMinTakeoff; _takeoffCap = RunJumpMaxTakeoff;
             // entry = the direction the dog will actually arrive from (the hook's second leg), not the beeline.
             Vector3 entry = _apHook ? standRoot - _apPoint : standRoot - dogPos; entry.y = 0f;
             _entryDir = entry.sqrMagnitude > 1e-4f ? entry.normalized : _geoForward;
@@ -1435,32 +1456,42 @@ namespace KominkaHillside
                 // Running INTO the disc adds both speeds to the closing rate, so the take-off is capped there; the
                 // catch window is unchanged and the occasional miss is the price of the dog looking alive.
                 float cap = closing < 0f ? RunJumpHeadOnMaxTakeoff : RunJumpMaxTakeoff;
-                float vTake = Mathf.Clamp(_speed, RunJumpMinTakeoff, cap);
                 Vector3 right = Vector3.Cross(Vector3.up, fwd);
                 Vector3 catchRoot = new Vector3(d.x, groundY + rise, d.z) - fwd * _mouthCatch.z - right * _mouthCatch.x;
                 Vector3 standRoot = new Vector3(catchRoot.x, groundY, catchRoot.z);
                 float tUp = Mathf.Sqrt(2f * rise / g);
                 float scale = _riseDur / tUp;
                 float crouch = _crouchDur / scale;
+                // Run-up length = take-off speed x (crouch + rise). If the dog is already inside it, SHORTEN the
+                // run-up by taking off slower rather than putting the crouch start behind the dog.
+                Vector3 toStand = standRoot - dogPos; toStand.y = 0f;
+                float vTake = Mathf.Clamp(_speed, RunJumpMinTakeoff, cap);
+                float lo = RunJumpMinTakeoff;
+                if (toStand.magnitude < vTake * (tUp + crouch))
+                { vTake = Mathf.Clamp(toStand.magnitude / (tUp + crouch), RunJumpShortTakeoff, cap); lo = vTake; }
                 Vector3 crouchStart = standRoot - fwd * (vTake * (tUp + crouch));
                 if (!DogMayGo(standRoot) || !DogMayGo(crouchStart)) continue;
                 Vector3 to = crouchStart - dogPos; to.y = 0f;
                 float dist = to.magnitude;
                 float avail = (t - crouch - tUp) - tNow;
                 if (avail <= 0.05f) continue;
-                // Paced within the take-off ceiling, not merely within the sprint: a head-on run that has to be
-                // covered at 8 m/s would arrive doing 8 and then have to brake into the crouch.
-                if (dist / avail > cap) continue;
+                // Reachable at the chase speed; the take-off ceiling is applied over the last RunJumpTrimDistance
+                // metres instead, so a candidate is not refused just because the run-up is long.
+                if (dist / avail > chaseRunSpeed) continue;
                 float eta = Eta(dist, dist > 0.05f ? Vector3.Angle(dogRoot.forward, to) : 0f);
                 // Same margin as the hook: a running jump committed with 0.04 s to spare is dropped by the next
-                // replan and ends on the ground plan (measured on the twist preset).
-                if (eta > avail - HookEtaMargin) continue;
+                // replan and ends on the ground plan (measured on the twist preset). A dog that is ALREADY running
+                // needs half of it - the ETA it is being judged against no longer includes a standing start, and
+                // this is the scan that has to re-form a plan after one was dropped mid-flight.
+                if (eta > avail - (_speed > runSpeed ? HookEtaMargin * 0.5f : HookEtaMargin)) continue;
                 if (!LaneClear(dogPos, crouchStart) || !GroundOk(standRoot, groundY)) continue;
                 _catchT = t; _catchRoot = catchRoot; _standRoot = crouchStart; _forward = fwd; _entryDir = fwd;
                 _rootRise = rise; _tUp = tUp; _animScale = scale; _crouchReal = crouch; _jumpSpeed = vTake;
                 _planSlack = avail - eta; _planPath = dist; _catchDecided = false; _runningCatch = false;
                 _mode = ModeRun; _hookActive = false; _hookDone = true; _hookPoint = crouchStart; _hookLen = 0f;
-                _takeoffCap = cap;   // the 10 Hz re-derive must keep the same ceiling, or a head-on run speeds up
+                // The band the 10 Hz re-derive must stay inside: without it a head-on run speeds up past its cap,
+                // and a shortened run-up grows back out behind the dog.
+                _takeoffMin = lo; _takeoffCap = lo > cap ? lo : cap;
                 return PlanJump;
             }
             return PlanNone;
@@ -1498,7 +1529,7 @@ namespace KominkaHillside
                 _rootRise = 0f; _tUp = 0f; _animScale = 1f; _crouchReal = 0f; _jumpSpeed = 0f;
                 _planSlack = slack; _planPath = dist; _catchDecided = false; _runningCatch = true;
                 _mode = ModeOvertake; _hookActive = false; _hookDone = true; _hookPoint = root; _hookLen = 0f;
-                _takeoffCap = RunJumpMaxTakeoff;
+                _takeoffMin = RunJumpMinTakeoff; _takeoffCap = RunJumpMaxTakeoff;
                 return PlanRun;
             }
             return PlanNone;
