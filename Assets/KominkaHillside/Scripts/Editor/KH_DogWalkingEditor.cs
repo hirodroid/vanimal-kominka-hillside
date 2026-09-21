@@ -234,6 +234,10 @@ namespace KominkaHillside.Editor
                 if(created){disc.transform.position=DiscHome(i);disc.transform.rotation=Quaternion.identity;} // human-owned once placed (review M4)
                 var c=Add<KH_FrisbeeCatch>(Child(root.transform,"KH_FrisbeeCatch_"+key).gameObject,true);
                 KH_FrisbeePrototypeEditor.ConfigureCatcher(c,disc,roots[i],f.dogAnimator,f.mouthAnchor,facts,twistFacts);
+                // IMP-DOG-008 wave 2: the purchased body hangs off the 追従GIMMICK ParentConstraint and trails the
+                // root by up to 30 deg / 0.5 m while the dog turns and jumps, so the catch plan (root + rotation *
+                // mouthOffsetCatch) misses. Only the frisbee dogs are made rigid; the other five keep the gimmick.
+                KH_FrisbeeJumpClipEditor.MakeBodyRigid(roots[i].gameObject);
                 c.hillsideLeashes=manager;c.fetch=f;c.wander=w;c.activities=act;c.pet=p;c.dogIndex=i;
                 c.playAreaCenter=new Vector3(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,2],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]);
                 c.playAreaRadius=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3];
@@ -399,7 +403,11 @@ namespace KominkaHillside.Editor
             {
                 string key=Keys[i];bool wanted=Array.IndexOf(FrisbeeKeys,key)>=0;var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+key);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+key);var p=Find<KD_DogPetController>(root,"KD_PetSystem_"+key);
                 var ct=root.transform.Find("KH_FrisbeeCatch_"+key);var dt=root.transform.Find("KH_Frisbee_"+key);
-                if(!wanted){Check(ct==null&&dt==null&&w.frisbeeCatch==null&&f.frisbeeCatch==null&&(m.frisbeeCatchers==null||m.frisbeeCatchers[i]==null)&&(act.frisbeeCatchers==null||act.frisbeeCatchers[i]==null),"no disc for "+key+" yet (deliberate)");continue;}
+                // IMP-DOG-008 wave 2: only the frisbee dogs lose the 追従GIMMICK body-follow ParentConstraint, so the
+                // change stays scoped - the other five must still have it (their body trails the root as bought).
+                if(!wanted){Check(ct==null&&dt==null&&w.frisbeeCatch==null&&f.frisbeeCatch==null&&(m.frisbeeCatchers==null||m.frisbeeCatchers[i]==null)&&(act.frisbeeCatchers==null||act.frisbeeCatchers[i]==null),"no disc for "+key+" yet (deliberate)");
+                    Check(m.dogRoots[i]!=null&&!KH_FrisbeeJumpClipEditor.IsBodyRigid(m.dogRoots[i].gameObject),"non-frisbee dog "+key+" keeps the purchased body-follow constraint");continue;}
+                Check(m.dogRoots[i]!=null&&KH_FrisbeeJumpClipEditor.IsBodyRigid(m.dogRoots[i].gameObject),"frisbee dog body is rigid to its root (追従 ParentConstraint inactive) "+key);
                 var c=ct==null?null:ct.GetComponent<KH_FrisbeeCatch>();var d=dt==null?null:dt.GetComponent<KH_Frisbee>();
                 Check(c!=null&&d!=null,"disc and catcher exist for "+key);if(c==null||d==null)continue;
                 Check(c.dogRoot==m.dogRoots[i]&&c.dogAnimator==f.dogAnimator&&c.mouthAnchor==f.mouthAnchor&&c.frisbee==d&&d.catcher==c,"catcher shares the walking dog's root/Animator/mouth "+key);

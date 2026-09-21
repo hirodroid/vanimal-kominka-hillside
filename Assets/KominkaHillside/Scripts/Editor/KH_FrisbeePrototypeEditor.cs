@@ -161,6 +161,10 @@ namespace KominkaHillside.Editor
             disc.transform.position = muzzle.position; disc.transform.rotation = Quaternion.identity; // prototype: always on the stand
             var catcher = Add<KH_FrisbeeCatch>(Obj("KH_FrisbeeCatch_Lab", dogs.transform), true);
             ConfigureCatcher(catcher, disc, dogT, animator, mouth, facts, twistFacts);
+            // IMP-DOG-008 wave 2: the purchased body hangs off the 追従GIMMICK ParentConstraint and trails the root
+            // by up to 30 deg / 0.5 m while the dog turns and jumps, which put the real mouth 1.3 m from where the
+            // plan (root + rotation * mouthOffsetCatch) put it. Idempotent, so a rebuild on an existing dog is fine.
+            KH_FrisbeeJumpClipEditor.MakeBodyRigid(dogT.gameObject);
             var launcher = Add<KH_FrisbeeLauncher>(stand); launcher.frisbee = disc; launcher.catcher = catcher; launcher.muzzle = muzzle; launcher.recallOnly = false;
             UdonSharpEditorUtility.GetBackingUdonBehaviour(launcher).InteractionText = "Throw (fixed)";
             var recaller = Add<KH_FrisbeeLauncher>(recall); recaller.frisbee = disc; recaller.catcher = catcher; recaller.muzzle = muzzle; recaller.recallOnly = true;
@@ -431,6 +435,9 @@ namespace KominkaHillside.Editor
                     Check(catcher.dogRoot != null && catcher.dogRoot.GetComponent<VRCObjectSync>() != null, "dog root has VRCObjectSync");
                     Check(catcher.dogAnimator != null && catcher.dogAnimator.runtimeAnimatorController == ac, "dog Animator uses AC_KD_Dog_Lab");
                     Check(catcher.dogRoot != null && catcher.dogRoot.GetComponentsInChildren<UdonBehaviour>(true).Length == 0, "dog subtree carries no world-scene behaviours");
+                    // IMP-DOG-008 wave 2: without this the visible body trails the root (追従GIMMICK ParentConstraint)
+                    // and the authored mouth facts do not hold in flight - the twist catch missed by 1.3 m.
+                    Check(catcher.dogRoot != null && KH_FrisbeeJumpClipEditor.IsBodyRigid(catcher.dogRoot.gameObject), "frisbee dog body is rigid to its root (追従 ParentConstraint inactive)");
                     Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(catcher).SyncMethod == Networking.SyncType.Manual, "catcher sync=Manual");
                     Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(disc).SyncMethod == Networking.SyncType.None, "disc sync=None (VRCObjectSync carries the transform)");
                     Check(disc.GetComponent<VRCObjectSync>() != null && disc.GetComponent<VRCPickup>() != null && disc.GetComponent<Rigidbody>() != null, "disc has ObjectSync/Pickup/Rigidbody");

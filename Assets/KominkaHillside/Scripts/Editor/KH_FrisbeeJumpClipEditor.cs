@@ -152,9 +152,73 @@ namespace KominkaHillside.Editor
                 SceneManager.MoveGameObjectToScene(clone, into);
                 clone.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
                 clone.SetActive(true);
+                MakeBodyRigid(clone);
                 return clone;
             }
             finally { if (openedHere) EditorSceneManager.CloseScene(source, true); }
+        }
+
+        // The purchased dog hangs its whole visible body (inu: both skeletons and every mesh) off a
+        // ParentConstraint fed by the asset's follow gimmick (追従GIMMICK -> VRC constraint chain), not off the
+        // dog root's hierarchy. At rest the two agree exactly, but the chain trails the root with a time constant
+        // of seconds: measured in Play (2026-09-21), after the dog turned 32 degrees the body still sat 30 degrees
+        // behind it half a second later, and during a jump it trailed 0.3-0.5 m below/behind the root. Every pose
+        // fact this generator writes - and the whole catch plan, which places the root so that
+        // root + rotation * mouthOffsetCatch lands on the disc - assumes the body is rigidly attached to the root.
+        // So the body is made rigid: the constraint is switched off (not destroyed, so the gimmick can be restored),
+        // and the transform keeps its hierarchy values, which is where the constraint was holding it anyway.
+        // Verified: with this off, the runtime mouth follows the authored clip to ~2 cm through the whole jump;
+        // with it on, the twist catch missed by 1.3 m (IMP-DOG-008 wave 2 follow-up).
+        // Idempotent: a second call finds nothing left to switch off and returns 0.
+        public static int MakeBodyRigid(GameObject dog)
+        {
+            int n = 0;
+            foreach (var pc in dog.GetComponentsInChildren<UnityEngine.Animations.ParentConstraint>(true))
+            {
+                if (!pc.constraintActive && !pc.enabled) continue;
+                string src = pc.sourceCount > 0 && pc.GetSource(0).sourceTransform != null
+                    ? AnimationUtility.CalculateTransformPath(pc.GetSource(0).sourceTransform, dog.transform) : "-";
+                Debug.Log("[KH Frisbee] body-follow off: " + dog.name + "/" + AnimationUtility.CalculateTransformPath(pc.transform, dog.transform)
+                    + " ParentConstraint (source " + src + ")");
+                pc.constraintActive = false; pc.enabled = false; n++;
+                EditorUtility.SetDirty(pc);
+            }
+            return n;
+        }
+
+        // Verify helper for both scene builders: true when nothing under the dog still drives the body from the
+        // follow gimmick. IsBodyRigid(dog) == false is the state that made the twist catch miss by 1.3 m.
+        public static bool IsBodyRigid(GameObject dog)
+        {
+            foreach (var pc in dog.GetComponentsInChildren<UnityEngine.Animations.ParentConstraint>(true))
+                if (pc.constraintActive || pc.enabled) return false;
+            return true;
+        }
+
+        // Existing scenes: 4 Build Scene keeps the dog it already made, so the switch above never reaches it.
+        // This applies the same change to every dog in the open scenes. Run it once after 4 Build Scene
+        // (KH_FrisbeePrototypeEditor could fold the MakeBodyRigid call into its own dog wiring instead).
+        [MenuItem("Tools/KominkaHillside/Frisbee/6 Make Dog Bodies Rigid")]
+        public static void MakeDogBodiesRigid()
+        {
+            if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode only");
+            int dogs = 0, off = 0;
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                if (!scene.isLoaded) continue;
+                bool touched = false;
+                foreach (var root in scene.GetRootGameObjects())
+                    foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (!t.name.StartsWith("KD_Dog_", StringComparison.Ordinal)) continue;
+                        dogs++;
+                        int n = MakeBodyRigid(t.gameObject);
+                        off += n; touched |= n > 0;
+                    }
+                if (touched) EditorSceneManager.MarkSceneDirty(scene);
+            }
+            Debug.Log("[KH Frisbee] body-follow constraints switched off: " + off + " on " + dogs + " dog(s). Save the scene to keep it.");
         }
 
         public static AnimationClip IdleClip()
