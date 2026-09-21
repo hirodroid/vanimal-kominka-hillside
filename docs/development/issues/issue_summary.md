@@ -73,6 +73,7 @@ priority: High    # High / Medium / Low
 | [IMP-DOG-007](IMP-DOG-007-leash-pull-haptics.md) | Medium | リードを引っ張られたら、接続している側の手に振動を伝える (Haptics)。判定・振動パターン・端末対応を具体化する | todo |
 | [IMP-ENV-002](IMP-ENV-002-skybox-and-night-mode.md) | Medium | 空を古民家と同じキューブマップにし、手元メニューのヘッダーに OFF / ON のナイトモード (RBS 不使用。乗算オーバーレイ + 空の露出) を実装。Editor 検査済み、Play・Quest/iOS 確認待ち | wip |
 | [IMP-DOG-009](IMP-DOG-009-walk-speed-tiers.md) | High | 散歩の犬の速さを 4 段階に (最速は現状の速歩の 3 倍)。人が犬を引っ張る状態をなくす。Run クリップの再生速度・減速も合わせる | todo |
+| [IMP-DOG-010](IMP-DOG-010-walk-stopovers.md) | Medium | 寄り道が分かりにくい (嗅ぐ姿勢が無い・ずれが小さい・短い) ので作り直し、道沿いの立ち寄り場所と夜の散歩の違いを足す | todo |
 
 着手順 (2026-09-20 PCVR 好評後に整理): **DES-UI-001** (古民家型メニュー本体: 目的地選択・接続/解除補助・集合・ボール集め。仮看板を置き換える) を主軸に、小さな UX 調整 (BUG-DOG-002 持ち手の向き、看板文字、IMP-DOG-003 の犬同士の遊び・項目別確認) を並行。次に DES-DOG-002 (おもちゃ) と DES-DOG-001 (おしゃれ)。音は DES-WLD-002、ライブは DES-LIV-001 で設計を並行し、制作は基本体験の後。複数人・Quest/iOS・境界の検証 (IMP-DOG-002 / VER-ENV-001) と往復導線 (DES-WLD-001) は継続、IMP-ENV-001 の景観増量は後回し。具体的な目的と設計提案は [開発全体像](../overview.md) §3。
 
