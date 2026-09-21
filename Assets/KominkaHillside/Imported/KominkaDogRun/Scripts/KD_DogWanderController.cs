@@ -134,6 +134,10 @@ namespace KominkaDogRun
         public float stopSpeedThreshold = DefaultStopSpeedThreshold;
         [Tooltip("走りアニメに切り替える速度 (walkSpeed と runSpeed の間)")]
         public float runAnimSpeed = DefaultRunAnimSpeed;
+        [Tooltip("走りクリップの再生速度の上限倍率 (実速度 / runSpeed)。IMP-DOG-009 で散歩の速さを 4 段階に " +
+            "したので、runSpeed の数倍で走る場面ができた。倍率を掛けないと足が滑って見え、上限を外すと " +
+            "こま送りに見える。Play で決める仮値")]
+        public float runAnimScaleMax = DefaultRunAnimScaleMax;
         [Tooltip("実速度が 0 になってから静止ポーズへ落とすまでの保持時間 (秒)。" +
             "足が止まるより先にポーズへ入ると「静止ポーズなのにまだ進む」= 滑って見えるため、" +
             "アニメの側を後ろへずらす。0 で無効 (従来どおり即座に落とす)。Fetch 側と揃える")]
@@ -443,6 +447,7 @@ namespace KominkaDogRun
         bool _wasRunning;        // 走り始めの検出 (追跡ドローンへ 1 回通知)
         float _stopHoldUntil;    // 実速度 0 のあともこの時刻まで脚を動かし続ける
         bool _heldRunning;       // 保持中に続ける脚 (Run か Walk か)
+        float _wroteAnimSpeed = 1f; // Animator へ書いた再生速度 (IMP-DOG-009。変化したときだけ書き直す)
         float _speed;            // 実移動速度 (m/s)。Run/Walk アニメはこれから導出する
         Vector3 _moveDir = Vector3.forward; // 惰性で止まるときに進む向き (最後の進行方向)
         float _nextProximityCheck; // 接近判定の間引き (Udon VM で毎フレーム全員分は重い)
@@ -553,6 +558,11 @@ namespace KominkaDogRun
         /// (破壊的監査 RC-1 でどちらの 0 検査にも入っていないと分かったので正本化した)。</summary>
         public const float DefaultRunSpeed = 2.4f;
         public const float DefaultWalkSpeed = 1.1f;
+        /// <summary>走りクリップの再生速度の上限倍率 (IMP-DOG-009)。
+        /// **KH_FrisbeeCatch とは共有しない** — あちらは追走用に自前の `maxRunAnimScale` を持ち、
+        /// Idle へ戻るとき `Animator.speed` を 1 に戻す。`KD_DogFetchController` は再生速度を一度も書かない。
+        /// Verify (Dog Unit/4) の共有定数の一致検査もこの値を見ない。散歩側だけの仮値。</summary>
+        public const float DefaultRunAnimScaleMax = 2.5f;
 
         // ---- はぁはぁの息 (IMP-DOG-015)。**どれも Play で耳と目で決める値** ----
         /// <summary>歩き 1.1 と走り 2.4 の間。**歩いただけで息が上がると嘘になる。**</summary>
@@ -959,6 +969,7 @@ namespace KominkaDogRun
             // 無言で通さない (理由は KD_DogFetchController.Start の同じ検査)
             if (acceleration <= 0.01f || deceleration <= 0.01f
                 || stopSpeedThreshold <= 0f || runAnimSpeed <= 0f
+                || runAnimScaleMax <= 0.01f
                 || idleTurnSpeedDegPerSec <= 0.01f)
             {
                 Debug.LogWarning("[KD_DogWanderController] locomotion tuning value is 0 - falling back to defaults.");
@@ -966,6 +977,8 @@ namespace KominkaDogRun
                 if (deceleration <= 0.01f) deceleration = DefaultDeceleration;
                 if (stopSpeedThreshold <= 0f) stopSpeedThreshold = DefaultStopSpeedThreshold;
                 if (runAnimSpeed <= 0f) runAnimSpeed = DefaultRunAnimSpeed;
+                // 0 のままだと Mathf.Clamp の上限が下限を下回り、走りクリップが 1 倍に張り付く
+                if (runAnimScaleMax <= 0.01f) runAnimScaleMax = DefaultRunAnimScaleMax;
                 // 0 のままだと「相手の方を向く」が永久に完了せず、対面が成立しない
                 if (idleTurnSpeedDegPerSec <= 0.01f) idleTurnSpeedDegPerSec = DefaultIdleTurnSpeedDegPerSec;
             }
@@ -1344,6 +1357,11 @@ namespace KominkaDogRun
                 _wasMoving = false;
                 _wasRunning = false;
                 _speed = 0f;
+                // 再生速度もここで返す (IMP-DOG-009 / Codex D1)。**リードの引き渡しだけでは足りない** —
+                // 速い散歩の途中でリードを外し、次の更新より前に Fetch が始まると、
+                // Fetch は `Animator.speed` を一度も書かないので倍率が上がったまま残る。
+                // 毎フレーム通るが、実物が自分の書いた値でなければ何も書かない
+                ReleaseAnimatorSpeed();
                 // 仕事中は「立ち止まっている」ではない。じゃれ合いの相手が IsPausedForPlayer を
                 // 読むので、古い true を残さない
                 _paused = false;

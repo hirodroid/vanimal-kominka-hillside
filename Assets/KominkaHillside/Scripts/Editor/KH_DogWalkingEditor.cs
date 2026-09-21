@@ -158,7 +158,10 @@ namespace KominkaHillside.Editor
             manager.dogRoots=new Transform[6];manager.collarAnchors=new Transform[6];manager.fetchers=new KD_DogFetchController[6];
             manager.roamCenters=new Transform[6];manager.localClips=new KH_LeashClip[6];
             UdonSharpEditorUtility.GetBackingUdonBehaviour(manager).publicVariables.RemoveVariable("roamRadius");
-            manager.leashLength=3f;manager.followSpeed=4.8f;manager.catchUpDistance=10f;manager.defaultDestination=KH_WalkRouteEditor.DestinationPlaza;
+            UdonSharpEditorUtility.GetBackingUdonBehaviour(manager).publicVariables.RemoveVariable("followSpeed");
+            manager.leashLength=3f;manager.catchUpDistance=10f;manager.defaultDestination=KH_WalkRouteEditor.DestinationPlaza;
+            // IMP-DOG-009: the upper two of the four walking tiers. Prototype values, not yet judged in Play - Build owns them.
+            manager.dashSpeed=4.5f;manager.sprintSpeed=7.2f;manager.stopoverChance=.5f;
             manager.trailOffDistance=6f;manager.trailOnDistance=4f;manager.entryMaxPath=12f;manager.inviteAfter=8f;manager.inviteInterval=14f;manager.inviteLimit=3;manager.detourChance=.25f;
             var existingRoute=root.GetComponentInChildren<KH_WalkRoute>(true);manager.route=existingRoute;
             var pack=Find<KD_DogPack>(root,"KD_DogPack");
@@ -190,6 +193,8 @@ namespace KominkaHillside.Editor
                 var home=Child(root.transform,"KH_Roam_"+key);
                 if(initial)home.position=dog.position;
                 w.areaCenter=home;w.areaRadius=3f;w.groundRayOffset=1.5f;w.groundRayDistance=6f;
+                // IMP-DOG-009: the run clip's playback cap has an owner here, not just a field initializer.
+                w.runAnimScaleMax=KD_DogWanderController.DefaultRunAnimScaleMax;
                 w.groundLayerMask=(1<<0)|(1<<11);w.hillsideLeashes=manager;w.dogIndex=i;
                 f.hillsideLeashes=manager;f.dogIndex=i;f.ballController=b;b.fetchController=f;
                 w.fetchController=f;w.petController=p;p.fetchController=f;p.wanderController=w;
@@ -337,11 +342,19 @@ namespace KominkaHillside.Editor
             Check(root.GetComponentsInChildren<KH_LeashClip>(true).Length==6,"six local pickup tips");
             Check(root.GetComponentsInChildren<KH_LeashCollar>(true).Length==6,"six collar interactions");
             Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(m).SyncMethod==Networking.SyncType.Manual,"manager backing sync Manual");
+            // IMP-DOG-009: the walking tiers Build writes. These only pin the prototype numbers against drift -
+            // a PASS here says the scene matches the code, never that Play has judged the pace.
+            Check(m.dashSpeed==4.5f,"dash speed "+m.dashSpeed.ToString("F1")+" == 4.5 m/s");
+            Check(m.sprintSpeed==7.2f,"sprint speed "+m.sprintSpeed.ToString("F1")+" == 7.2 m/s");
+            Check(m.stopoverChance==.5f,"stopover chance "+m.stopoverChance.ToString("F2")+" == 0.50");
             var pack=root.GetComponentInChildren<KD_DogPack>();
             for(int i=0;i<6;i++)
             {
                 string key=Keys[i];var dog=Find<Transform>(root,"KD_Dog_"+key);var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+key);var p=Find<KD_DogPetController>(root,"KD_PetSystem_"+key);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+key);
                 Check(m.dogRoots[i]==dog && w.hillsideLeashes==m && f.hillsideLeashes==m,"leash wiring "+key);
+                // Four distinct tiers, in order. Two live on the dog's legs, two on the walk (IMP-DOG-009).
+                Check(w.walkSpeed<w.runSpeed&&w.runSpeed<m.dashSpeed&&m.dashSpeed<m.sprintSpeed,"speed tiers ordered "+key+" "+w.walkSpeed.ToString("F1")+" < "+w.runSpeed.ToString("F1")+" < "+m.dashSpeed.ToString("F1")+" < "+m.sprintSpeed.ToString("F1"));
+                Check(w.runAnimScaleMax==2.5f,"run clip speed cap "+w.runAnimScaleMax.ToString("F1")+"x == 2.5 "+key);
                 Check(p.headAnchor!=null&&p.sourceBone!=null&&p.dogAnimator!=null,"original pet rig "+key);
                 Check(f.ballController!=null&&f.mouthAnchor!=null&&f.dogRoot==dog,"Fetch wiring "+key);
                 Check(dog.GetComponent<VRCObjectSync>()!=null,"ObjectSync "+key);

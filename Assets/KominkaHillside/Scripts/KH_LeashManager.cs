@@ -21,6 +21,8 @@ namespace KominkaHillside
         public KH_FrisbeeCatch[] frisbeeCatchers; // per dog, null where the dog has no disc yet (IMP-DOG-005)
         public KH_WalkRoute route;
         public KominkaDogRun.KD_GroupActivities activities;
+        // Stopover spots along the trail. Wired by Build; the dogs only consult it while walking.
+        public KH_WalkStopovers stopovers;
         // Leash stations: one slot per tool side. stationSlots[i] belongs to station stationOf[i], side slotHand[i].
         public Transform[] stationSlots;
         public int[] slotHand;
@@ -35,7 +37,12 @@ namespace KominkaHillside
         [Header("Tuning: provisional until Play")]
         public float leashLength = 3f;
         public float attachReach = 4f;
-        public float followSpeed = 4.8f;
+        // Walking pace, upper two of the four tiers (IMP-DOG-009). The lower two (walkSpeed 1.1 / runSpeed 2.4)
+        // live on each KD_DogWanderController because they are the dog's own legs; these two are the walk's
+        // own tiers, so the whole pack shares one number. Prototype values until Play: Build writes them,
+        // Verify pins them, and walkSpeed < runSpeed < dashSpeed < sprintSpeed must hold.
+        public float dashSpeed = 4.5f;    // 走り: overtaking a walking holder, coming back inside 1.6x leash
+        public float sprintSpeed = 7.2f;  // 全力: recovery from beyond 1.6x leash, keeping up with a running holder
         public float catchUpDistance = 10f;
         public int defaultDestination = 1;
         [Header("Free walk (IMP-DOG-003, provisional)")]
@@ -46,6 +53,7 @@ namespace KominkaHillside
         public float inviteInterval = 14f;     // base spacing between invitations (grows each time)
         public int inviteLimit = 3;            // after this many, the dog settles down until the holder moves
         public float detourChance = 0.25f;     // per 4 s roll while walking with slack
+        public float stopoverChance = 0.5f;    // chance the dog takes a stopover spot it passes (provisional)
         private float _nextMaintenance;
         private int _myChoice = -1;            // this player's destination choice for the stay; -1 = not chosen yet
         private NavMeshPath _stationPath;

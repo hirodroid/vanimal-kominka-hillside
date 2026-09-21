@@ -357,6 +357,25 @@ namespace KominkaDogRun
             // (設計書 §5) — ポーズが立つフレームは LookAt を諦める
             bool eatPose = _eatPose && !moving;
             if (eatPose) look = false;
+
+            // IMP-DOG-009: 走りクリップの再生速度を実速度へ追従させる (KH_FrisbeeCatch.ApplyAnimatorSpeed と同じ方針)。
+            // 散歩の速い段 (走り 4.5 / 全力 7.2) は runSpeed の数倍なので、掛けないと足が地面を滑る。
+            // **Bool が同じなら return する下の行より前に置く** — 速度は Bool が変わらないまま動き続ける。
+            // 非 Owner も通す (_speed は ObserveSpeed が観測で埋めている) ので同期は要らない。
+            // Fetch / フリスビーが Animator を持っている間は書かない — `Animator.speed` の書き手は常に 1 つ。
+            // フリスビー (KH_FrisbeeCatch) は追走で自分の倍率を書き、Idle へ戻るとき 1 に戻して
+            // _InvalidateLeashAnimation でこちらへ書き直させる。Fetch (KD_DogFetchController) は
+            // 再生速度を一度も書かないので、**こちらが引き渡しの時点で 1 に返しておく** (ReleaseAnimatorSpeed)
+            if (!AnimatorYielded())
+            {
+                float animSpeed = running && runSpeed > 0.01f ? Mathf.Clamp(_speed / runSpeed, 1f, runAnimScaleMax) : 1f;
+                if (_leashAnimationDirty || Mathf.Abs(animSpeed - _wroteAnimSpeed) > 0.01f)
+                {
+                    dogAnimator.speed = animSpeed;
+                    _wroteAnimSpeed = animSpeed;
+                }
+            }
+
             if (!_leashAnimationDirty && moving == _wasMoving && running == _wasRunning && look == _wasLooking
                 && eatPose == _wasEatPose) return;
 
@@ -371,6 +390,22 @@ namespace KominkaDogRun
                 photoDirector._OnDogChase(dogIndex); // 追跡ドローンの流用 (クールダウンは向こうが持つ)
             _wasRunning = running;
             _wasLooking = look;
+        }
+
+        /// <summary>走りクリップの再生速度を 1 倍へ返し、こちらの控えも畳む (IMP-DOG-009)。
+        ///
+        /// Fetch / フリスビーへ Animator を渡すとき、こちらが上げたままの再生速度を残さないための処理。
+        /// **`_wroteAnimSpeed` は「最後に書いたのが自分」までしか証明しない** — 受け取った側が
+        /// もう自分の速度を書いているかもしれないので、実物を読み直して**まだ自分の値のままのときだけ**
+        /// 1 へ戻す (Codex D2)。控えはどの経路でも 1 に畳む (次に書くときの比較元を汚さない)。</summary>
+        void ReleaseAnimatorSpeed()
+        {
+            if (dogAnimator != null)
+            {
+                float now = dogAnimator.speed;
+                if (now != 1f && now == _wroteAnimSpeed) dogAnimator.speed = 1f;
+            }
+            _wroteAnimSpeed = 1f;
         }
 
         /// <summary>じゃれ合いの開始エッジを撮影へ渡す (IMP-CAM-002)。

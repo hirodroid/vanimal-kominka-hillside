@@ -2,7 +2,7 @@
 id: IMP-DOG-009
 type: IMP
 system: DOG
-status: todo
+status: wip
 priority: High
 ---
 
@@ -20,7 +20,7 @@ priority: High
 
 - 既定値は `KD_DogWanderController.cs` の `DefaultRunSpeed` 2.4 / `DefaultWalkSpeed` 1.1。古民家から移植したままの値で、ドッグランの広さに合わせたもの。
 - VRChat の人の移動は既定で歩き 2 m/s・走り 4 m/s。**犬の「速い」2.4 m/s は人の歩きと同程度**なので、人が普通に歩くだけで犬は追い越せず、走れば置き去りになる。
-- 移動アニメは `ApplyMoveAnim` で Walk / Run の Bool を切り替えるだけで、再生速度は実速度に追従しない ([Shared.cs:334](../../../Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogWanderController.Shared.cs#L334))。フリスビーの追走 (10 m/s) だけは `KH_FrisbeeCatch.ApplyAnimatorSpeed` で `_speed / runSpeed` を `maxRunAnimScale` まで掛けている ([KH_FrisbeeCatch.cs:1175](../../../Assets/KominkaHillside/Scripts/KH_FrisbeeCatch.cs#L1175))。
+- 移動アニメは `ApplyMoveAnim` で Walk / Run の Bool を切り替えるだけで、再生速度は実速度に追従しない ([Shared.cs:334](../../../Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogWanderController.Shared.cs#L334))。フリスビーの追走 (10 m/s) だけは `KH_FrisbeeCatch.ApplyAnimatorSpeed` で `_speed / runSpeed` を `maxRunAnimScale` まで掛けている ([KH_FrisbeeCatch.cs:1175](../../../Assets/KominkaHillside/Scripts/KH_FrisbeeCatch.cs#L1782))。
 
 ## 目的と範囲
 
@@ -43,6 +43,10 @@ priority: High
 3. Run クリップの再生速度スケールと減速・旋回の調整を入れ、Editor で Verify を通す (Walking 146/146 を維持)。
 4. PCVR で 1 匹 → 3 匹 → 6 匹。人が歩く / 走る / 止まる / 引き返すの各場面で、犬が人を引っ張る側に回っているか、速すぎて怖くないか、紐の見え方を評価する。
 5. 採用値を game-design §4 の実装値表と保存済みシーンへ整合させる。
+
+## 試作の記録
+
+- **2026-09-21 設計と Codex 設計レビュー (X/D/P) を反映、実装開始**: 値は `KH_LeashManager` に `dashSpeed` 4.5 / `sprintSpeed` 7.2 (`followSpeed` を統合、Build が所有)。人の速度は「1 s の変位」ではなく毎フレームの EMA (1 Hz の変位は静止判定用で速度にならないため)。人が走っても 1.25× の帰還と往復しないよう「先行保持」を追加、Run クリップは `Animator.speed` で追従、コーナーは身体の向きとの角度差で減速。設計値・指摘/対応・分担は [記録](../../plans/2026-09-21-walk-speed-and-stopovers.md)。Play は未。
 
 ## 完了条件
 

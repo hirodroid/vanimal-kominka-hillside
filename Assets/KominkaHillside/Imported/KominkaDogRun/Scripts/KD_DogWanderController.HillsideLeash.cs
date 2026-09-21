@@ -19,6 +19,9 @@ namespace KominkaDogRun
         // IMP-DOG-005: the disc catcher moves the root (Ready and engaged); Wander yields exactly as it does for Fetch.
         public KominkaHillside.KH_FrisbeeCatch frisbeeCatch;
         private bool FrisbeeActive { get { return frisbeeCatch != null && !frisbeeCatch.IsIdle; } }
+        // Fetch and the disc catcher own the Animator (bools and playback speed) while they run. Wander's
+        // own writes must stand back for exactly as long, or the two fight over Animator.speed (IMP-DOG-009).
+        private bool AnimatorYielded() { return (fetchController != null && !fetchController.IsIdle) || FrisbeeActive; }
         // Read by sibling dogs of the same holder to stagger invitations. Meaningful on the dog Owner only.
         [HideInInspector] public int leashMode;
         [HideInInspector] public float leashInviteEndedAt = -1000f; // pack-wide quiet gap between invitations
@@ -47,6 +50,26 @@ namespace KominkaDogRun
         private int _inviteCount;
         private float _nextInviteAt;
         private bool _inviteBarked;
+        // IMP-DOG-009: how fast the holder is actually moving right now. Owner only, never synced; the 1 Hz
+        // SampleHolder below is a different question (has the holder stood still long enough to rest/invite?)
+        // and stays as it was. This one picks which of the four speed tiers the dog walks at.
+        private float _holderSpeed;         // EMA of the holder's horizontal body speed (m/s)
+        private Vector3 _holderPrevPos;
+        private bool _holderPrevValid;
+        private int _holderTier;            // 0 still / 1 walking / 2 running (hysteresis)
+        private int _holderTracked = -1;    // playerId the history belongs to; a new holder starts from zero
+        private bool _leashYielded;         // last frame handed the root/Animator to Fetch or the disc
+        private bool _wasDogOwner;          // Owner edge: a client that just took over has no history
+
+        // ---- IMP-DOG-009 の仮値 (どれも Play で決める。速さの段そのものは KH_LeashManager 側) ----
+        const float HolderSpeedTau = 0.4f;       // 速さの平滑化の時定数 (s)
+        const float HolderJumpMeters = 1f;       // 1 フレームでこれ以上飛んだら不連続 (テレポート・リスポーン)
+        const float HolderRunEnter = 3f, HolderRunExit = 2.4f;    // 人の走り 4 m/s と歩き 2 m/s の間で切る
+        const float HolderMoveEnter = 0.7f, HolderMoveExit = 0.4f; // 「歩き出した」/「止まった」
+        const float LeadHoldGain = 2f;           // lead-hold: リード端までの余裕 1 m あたりの上乗せ (m/s / m)
+        const float LeadHoldMax = 1.1f;          // lead-hold を続けるリード長の倍率の上限 (復帰の 1.25 倍の内側)
+        const float TurnSlowDeg = 60f;           // 体がこれだけ向き違うなら歩きまで落とす (横滑り対策)
+        const float TurnEaseDeg = 30f;           // 中間は走りで頭打ち
 
         public void _InvalidateLeashAnimation() { _leashAnimationDirty = true; }
         private bool _leashAnimationDirty;
@@ -64,18 +87,27 @@ namespace KominkaDogRun
             if (hillsideLeashes == null || dogRoot == null) return false;
             if (!hillsideLeashes._IsLeashed(dogIndex))
             {
-                if (_wasLeashed) { _wasLeashed = false; _speed = 0f; _nextLeashPath = 0f; _routeNext = -1; leashMode = LeashFree; }
+                // Unleashing also gives the run clip back its normal playback speed: off the leash the dog
+                // never exceeds runSpeed, and Fetch may take over before the next wander frame (Codex D1).
+                if (_wasLeashed) { _wasLeashed = false; _speed = 0f; _nextLeashPath = 0f; _routeNext = -1; leashMode = LeashFree; ResetHolderSpeed(); ReleaseAnimatorSpeed(); }
                 return false;
             }
             if (!_wasLeashed)
             {
                 _leashAnimationDirty = true; _routeNext = -1; _routeDest = -1; _inviteCount = 0; _nextInviteAt = 0f;
                 _holderMovedAt = Time.time; _nextHolderSample = 0f; _holderOffTrail = false; _arrived = false; leashMode = LeashWalk;
+                ResetHolderSpeed(); _holderTracked = hillsideLeashes.walkers[dogIndex]; _leashYielded = false;
             }
             _wasLeashed = true;
             // Fetch cancels on its own owner tick. Never write the root concurrently with it.
-            if (fetchController != null && !fetchController.IsIdle) return true;
-            if (FrisbeeActive) return true; // an airborne dog lands before the leash moves it (KH_FrisbeeCatch yields)
+            // The disc does the same (an airborne dog lands before the leash moves it; KH_FrisbeeCatch yields).
+            // Both own the Animator too, so the hand-over gets cleaned up once, on the edge (Codex D2).
+            if (AnimatorYielded())
+            {
+                if (!_leashYielded) { _leashYielded = true; YieldAnimator(); }
+                return true;
+            }
+            if (_leashYielded) { _leashYielded = false; ResetHolderSpeed(); } // came back: the pace estimate is stale
             _wantSleep = false; _paused = false;
             _lastBusyTime = Time.time;
             VRCPlayerApi holder = VRCPlayerApi.GetPlayerById(hillsideLeashes.walkers[dogIndex]);
@@ -83,6 +115,14 @@ namespace KominkaDogRun
 
             Vector3 handPos = hillsideLeashes._HandPosition(holder, hillsideLeashes.hands[dogIndex]);
             Vector3 holderPos = holder.GetPosition();
+            // The pace comes from the body, not the hand: a hand waved beside a standing player is not walking.
+            if (_dogOwner)
+            {
+                int holderId = hillsideLeashes.walkers[dogIndex];
+                if (!_wasDogOwner || holderId != _holderTracked) { _holderTracked = holderId; ResetHolderSpeed(); }
+                TrackHolderSpeed(holderPos);
+            }
+            _wasDogOwner = _dogOwner;
             Vector3 toHand = handPos - dogRoot.position; toHand.y = 0f;
             float handDist = toHand.magnitude;
             float leash = hillsideLeashes.leashLength;
@@ -112,7 +152,14 @@ namespace KominkaDogRun
 
             // 1. Stretched too far: come back to the hand (run), teleport only after a real separation.
             if (leashMode == LeashReturn) { if (handDist < leash * 0.6f) { leashMode = LeashWalk; _routeNext = -1; } }
-            else if (handDist > leash * 1.25f) leashMode = LeashReturn;
+            else if (handDist > leash * 1.25f)
+            {
+                leashMode = LeashReturn;
+                // PCVR のチェック用 (IMP-DOG-009)。走っている人の後ろで戻りが周期的に出るなら、
+                // 先行を止めている側 (lead-hold の帯) が狭すぎる
+                Debug.Log("[KH_Leash] dog" + dogIndex + " Return handDist=" + handDist.ToString("F1")
+                    + " holderSpeed=" + _holderSpeed.ToString("F1"));
+            }
             if (leashMode == LeashReturn)
             {
                 Vector3 back = handPos - toHand / Mathf.Max(handDist, 0.001f) * 0.9f;
@@ -121,7 +168,7 @@ namespace KominkaDogRun
                     _nextTeleportTry = Time.time + 1f;
                     if (TeleportTo(back)) return true;
                 }
-                LeashGo(back, handDist > leash * 1.6f ? hillsideLeashes.followSpeed : runSpeed, 0.2f);
+                LeashGo(back, handDist > leash * 1.6f ? hillsideLeashes.sprintSpeed : hillsideLeashes.dashSpeed, 0.2f);
                 return true;
             }
 
@@ -205,7 +252,11 @@ namespace KominkaDogRun
             Vector3 nodeDir = nodePos - dogRoot.position; nodeDir.y = 0f;
             bool ahead = DogAhead(nodePos, toHand);
             float waitAt = leash * (0.78f + 0.04f * (dogIndex % 4));
-            if (ahead && handDist >= waitAt)
+            // Only a standing holder makes the dog stop and wait. While they walk or run the dog keeps
+            // leading and trims its pace by the slack it has left (lead-hold) — stopping in front of a
+            // running holder is what used to hand them the 1.25x leash end and start a return loop.
+            bool leadHold = ahead && HolderMoving() && handDist >= leash * 0.45f && handDist <= leash * LeadHoldMax;
+            if (ahead && handDist >= waitAt && !leadHold)
             {
                 leashMode = LeashWait;
                 Coast();
@@ -215,7 +266,17 @@ namespace KominkaDogRun
             leashMode = LeashWalk;
             float side = Mathf.Sin(Time.time * 0.2f + dogIndex * 1.3f) * 1.1f;
             Vector3 goal = nodePos + Vector3.Cross(Vector3.up, nodeDir.normalized) * side;
-            float speed = !ahead && handDist > 1.2f ? runSpeed : (handDist < leash * 0.45f ? runSpeed * 0.85f : walkSpeed);
+            float speed;
+            if (!ahead && handDist > 1.2f)
+                // Behind the holder: overtaking has to beat the pace they are actually keeping.
+                speed = HolderRunning() ? hillsideLeashes.sprintSpeed
+                    : (HolderMoving() ? hillsideLeashes.dashSpeed : runSpeed);
+            else if (leadHold)
+                // Match the holder and add just enough to keep the slack; never past the end of the leash.
+                speed = Mathf.Clamp(_holderSpeed + LeadHoldGain * (waitAt - handDist), walkSpeed, hillsideLeashes.sprintSpeed);
+            else if (handDist < leash * 0.45f && HolderMoving())
+                speed = hillsideLeashes.dashSpeed; // plenty of slack and the holder is going: get out in front
+            else speed = walkSpeed;
             LeashGo(goal, speed, 0.3f);
             return true;
         }
@@ -255,7 +316,66 @@ namespace KominkaDogRun
         private void FollowHand(float handDist, float leash, int mode)
         {
             leashMode = mode;
-            LeashGo(hillsideLeashes._WalkingTarget(dogIndex), handDist > leash * 0.7f ? hillsideLeashes.followSpeed : walkSpeed, 0.2f);
+            // Three tiers around the hand: sprint from outside the leash, run while it is taut, walk on slack.
+            float speed = handDist > leash * 1.2f ? hillsideLeashes.sprintSpeed
+                : (handDist > leash * 0.7f ? hillsideLeashes.dashSpeed : walkSpeed);
+            LeashGo(hillsideLeashes._WalkingTarget(dogIndex), speed, 0.2f);
+        }
+
+        // ---- IMP-DOG-009: the holder's own pace ----
+
+        private bool HolderRunning() { return _holderTier >= 2; }
+        private bool HolderMoving() { return _holderTier >= 1; }
+
+        private void ResetHolderSpeed()
+        {
+            _holderPrevValid = false; _holderSpeed = 0f; _holderTier = 0;
+        }
+
+        /// <summary>Owner only, every frame. Teleports, respawns and station warps arrive as one huge step,
+        /// so those only move the reference point — letting them into the average would read as "running"
+        /// for the next second and send every dog off at full speed.</summary>
+        private void TrackHolderSpeed(Vector3 holderPos)
+        {
+            float dt = Time.deltaTime;
+            if (dt <= 0.0001f) return;
+            holderPos.y = 0f;
+            if (!_holderPrevValid) { _holderPrevPos = holderPos; _holderPrevValid = true; return; }
+            float delta = Vector3.Distance(holderPos, _holderPrevPos);
+            _holderPrevPos = holderPos;
+            if (delta > HolderJumpMeters) return;
+            _holderSpeed = Mathf.Lerp(_holderSpeed, delta / dt, Mathf.Min(1f, dt / HolderSpeedTau));
+
+            // Hysteresis both ways: a pace hovering on a threshold must not flip the dog's speed every frame.
+            int tier = _holderTier;
+            if (_holderSpeed >= HolderRunEnter) tier = 2;
+            else if (tier == 2 && _holderSpeed < HolderRunExit) tier = _holderSpeed >= HolderMoveExit ? 1 : 0;
+            if (tier < 2)
+            {
+                if (_holderSpeed >= HolderMoveEnter) { if (tier < 1) tier = 1; }
+                else if (tier == 1 && _holderSpeed < HolderMoveExit) tier = 0;
+            }
+            if (tier != _holderTier)
+            {
+                Debug.Log("[KH_Leash] dog" + dogIndex + " holder tier " + _holderTier + "->" + tier
+                    + " v=" + _holderSpeed.ToString("F1"));
+                _holderTier = tier;
+            }
+        }
+
+        /// <summary>Rising edge of the hand-over to Fetch / the disc (Codex D2). They own the root and the
+        /// Animator from here, so leave nothing of ours for them to fight: our own pose bool, the playback
+        /// speed we scaled, and the walk state (detour point, timers, pace history) that will be stale by
+        /// the time the dog comes back.</summary>
+        private void YieldAnimator()
+        {
+            // Pickup は Fetch がくわえポーズで自分で使う Bool。**こちらが立てた分だけ**下ろす
+            if (_wasEatPose && dogAnimator != null) dogAnimator.SetBool("Pickup", false);
+            _eatPose = false; _wasEatPose = false;
+            ReleaseAnimatorSpeed();
+            leashMode = LeashWalk;
+            _sniffUntil = 0f; _modeUntil = 0f; _detourPoint = dogRoot.position;
+            ResetHolderSpeed();
         }
 
         // Nearest reachable node that still leads to the destination. Path length, not straight distance,
@@ -357,6 +477,16 @@ namespace KominkaDogRun
             if (distance < 0.15f) { Coast(); return; }
             float clearance = WallClearance(dogRoot.position, delta / distance, distance);
             if (clearance < 0.05f) { Coast(); return; }
+            // IMP-DOG-009: StepToward points the movement at the target instantly but turns the body only at
+            // turnSpeedDegPerSec, so at 7 m/s the dog side-slips through a corner. Hold the pace back until
+            // the body has come round. The 0.35 m corner advance and the shared decel/turn constants stay.
+            Vector3 forward = dogRoot.forward; forward.y = 0f;
+            if (forward.sqrMagnitude > 0.0001f)
+            {
+                float turn = Vector3.Angle(forward, delta / distance);
+                if (turn > TurnSlowDeg) { if (speed > walkSpeed) speed = walkSpeed; }
+                else if (turn > TurnEaseDeg && speed > hillsideLeashes.dashSpeed) speed = hillsideLeashes.dashSpeed;
+            }
             StepToward(dogRoot.position + delta / distance * clearance, _leashCorner == _leashCorners.Length - 1 ? stop : 0.05f, speed);
         }
 
