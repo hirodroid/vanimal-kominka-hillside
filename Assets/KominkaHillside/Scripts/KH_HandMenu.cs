@@ -20,6 +20,7 @@ namespace KominkaHillside
         public KH_TrainerPass pass;
         public KH_ToyRecall recall;
         public KH_NightMode night;             // IMP-ENV-002: local night mode (null = feature absent, button disabled)
+        public KH_FrisbeeCatch devCatcher;     // IMP-DOG-008 prototype switch (null = button disabled)
         public Transform[] dogRoots;
         public GameObject panelRoot;
         public GameObject launcher;            // Touch only: screen-space [メニュー]
@@ -29,6 +30,8 @@ namespace KominkaHillside
         public TextMeshProUGUI titleText;
         public Image nightImage;               // header toggle (IMP-ENV-002)
         public TextMeshProUGUI nightLabel;
+        public Image devImage;                 // header prototype-variant cycle (IMP-DOG-008, development only)
+        public TextMeshProUGUI devLabel;
         [Header("さんぽ")]
         public TextMeshProUGUI[] walkState;    // 6
         public Image[] walkLeft, walkRight, walkOff;
@@ -144,6 +147,18 @@ namespace KominkaHillside
 
         // ---- ナイトモード (IMP-ENV-002; local only, fades over KH_NightMode.fadeSeconds) ----
         public void _Night() { if (night == null) return; night._Toggle(); Draw(); }
+
+        // ---- 試作の切替 (IMP-DOG-008; development only. The preset is synced by KH_FrisbeeCatch, so anyone may press it) ----
+        public void _DevVariant()
+        {
+            if (devCatcher == null) return;
+            // Advance from the deferred target when there is one, so repeated presses keep moving while the dog is busy.
+            int cur = devCatcher.PendingVariant >= 0 ? devCatcher.PendingVariant : devCatcher.Variant;
+            devCatcher._RequestVariant((cur + 1) % KH_FrisbeeCatch.VariantCount);
+            // PendingVariant is the Owner's answer and may not have arrived yet on a non-owner, so the toast reads the local dog state.
+            Note(devCatcher.IsEngaged ? "帰ってから切替" : "切替を頼みました");
+            Draw();
+        }
 
         // ---- さんぽ ----
         public void _Left0() { Attach(0, 0); } public void _Left1() { Attach(1, 0); } public void _Left2() { Attach(2, 0); }
@@ -330,6 +345,7 @@ namespace KominkaHillside
             for (int i = 0; i < tabImages.Length; i++) if (tabImages[i] != null) tabImages[i].color = i == _tab ? tabOn : tabOff;
             if (tabUnderlines != null) for (int i = 0; i < tabUnderlines.Length; i++) if (tabUnderlines[i] != null) tabUnderlines[i].SetActive(i == _tab);
             DrawNight();
+            DrawDev();
             if (_tab == 0) DrawWalk(); else if (_tab == 1) DrawGather(); else DrawToys();
         }
         private void DrawNight()
@@ -338,6 +354,29 @@ namespace KominkaHillside
             if (nightImage != null) nightImage.color = night == null ? disabled : on ? toggleOn : actionNeutral;
             // Label shows the current (target) state, not the action; the gold tint marks ON (Codex U-2: "OFF" could read as "turn off").
             if (nightLabel != null) nightLabel.text = night == null ? "ナイトモード" : on ? "ナイトモード: ON" : "ナイトモード: OFF";
+        }
+        // Development-only preset cycle (IMP-DOG-008). Reads the synced value every draw, so a switch by anyone shows on every menu.
+        private void DrawDev()
+        {
+            int v = devCatcher == null ? 0 : devCatcher.Variant;
+            int pending = devCatcher == null ? -1 : devCatcher.PendingVariant;
+            bool deferred = pending >= 0 && pending != v;   // requested while the dog was busy; applies when it returns to Idle
+            if (devImage != null) devImage.color = devCatcher == null ? disabled : v == 0 && !deferred ? actionNeutral : toggleOn;
+            if (devLabel == null) return;
+            if (devCatcher == null) devLabel.text = "試作: なし";
+            else if (deferred) devLabel.text = "試作: " + VariantName(v) + " → " + VariantName(pending);
+            else devLabel.text = "試作: " + VariantName(v);
+        }
+        // The static font bakes only the literals of this file (vrc-tmp-font), so the preset names live here.
+        private string VariantName(int v)
+        {
+            if (v == 0) return "通常";
+            if (v == 1) return "走り込み: 横";
+            if (v == 2) return "走り込み: 遠く";
+            if (v == 3) return "走り込み: 並走";
+            if (v == 4) return "ひねり";
+            if (v == 5) return "横曲がり";
+            return "?";
         }
         private string NoteOrDefault(string fallback) { return Time.time < _noteUntil ? _note : fallback; }
         private void DrawWalk()

@@ -164,6 +164,12 @@ namespace KominkaHillside.Editor
             UdonSharpEditorUtility.GetBackingUdonBehaviour(launcher).InteractionText = "Throw (fixed)";
             var recaller = Add<KH_FrisbeeLauncher>(recall); recaller.frisbee = disc; recaller.catcher = catcher; recaller.muzzle = muzzle; recaller.recallOnly = true;
             UdonSharpEditorUtility.GetBackingUdonBehaviour(recaller).InteractionText = "Recall disc";
+            // IMP-DOG-008: the prototype scene has no hand menu, so a third cube cycles the variant.
+            var cycle = Prim("KH_FrisbeeVariant", PrimitiveType.Cube, props.transform);
+            cycle.transform.position = new Vector3(-1.6f, .35f, -4f); cycle.transform.localScale = new Vector3(.3f, .7f, .3f);
+            cycle.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeVariant", new Color(.45f, .35f, .22f));
+            var cycler = Add<KH_FrisbeeLauncher>(cycle); cycler.frisbee = disc; cycler.catcher = catcher; cycler.muzzle = muzzle; cycler.recallOnly = false; cycler.cycleVariant = true;
+            UdonSharpEditorUtility.GetBackingUdonBehaviour(cycler).InteractionText = "Next variant";
 
             foreach (var u in scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<UdonSharpBehaviour>(true))) { UdonSharpEditorUtility.CopyProxyToUdon(u); EditorUtility.SetDirty(u); }
             int dropped = desc.NetworkIDCollection.RemoveAll(x => x.gameObject == null && (x.SerializedTypeNames == null || x.SerializedTypeNames.Count == 0));
@@ -249,6 +255,7 @@ namespace KominkaHillside.Editor
             catcher.clipCrouchDuration = facts.crouch; catcher.clipRiseDuration = facts.rise; catcher.clipRecoverDuration = facts.recover;
             catcher.groundLayerMask = (1 << 0) | (1 << 11);
             catcher.takeoffSpeed = 2.5f; catcher.chaseRunSpeed = 4.5f; catcher.standoffDistance = 8f; // code-owned, same rule as the flight model
+            catcher.variant = KH_FrisbeeCatch.VariantNormal; catcher.pendingVariant = -1; // code-owned: every instance starts on the baseline
             catcher.playAreaMargin = 0f; // the ring the holder sees is exactly the acceptance circle (Codex P)
             // Inspector tuning survives a rebuild, except the one value the clip dictates: the smallest rise
             // must keep clip playback at or below 1.8x (review D2), so an older scene value is raised here.
@@ -354,7 +361,7 @@ namespace KominkaHillside.Editor
                 var catcher = open.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<KH_FrisbeeCatch>(true)).FirstOrDefault();
                 var disc = open.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<KH_Frisbee>(true)).FirstOrDefault();
                 var launchers = open.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<KH_FrisbeeLauncher>(true)).ToArray();
-                Check(catcher != null && disc != null && launchers.Length == 2, "scene has catcher, disc and two launchers");
+                Check(catcher != null && disc != null && launchers.Length == 3, "scene has catcher, disc and three launchers");
                 if (catcher != null && disc != null)
                 {
                     Check(catcher.dogRoot != null && catcher.dogAnimator != null && catcher.mouthAnchor != null && catcher.frisbee == disc, "catcher wiring");
@@ -371,11 +378,24 @@ namespace KominkaHillside.Editor
                     Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(disc).SyncMethod == Networking.SyncType.None, "disc sync=None (VRCObjectSync carries the transform)");
                     Check(disc.GetComponent<VRCObjectSync>() != null && disc.GetComponent<VRCPickup>() != null && disc.GetComponent<Rigidbody>() != null, "disc has ObjectSync/Pickup/Rigidbody");
                     Check(disc.catcher == catcher, "disc -> catcher");
-                    Check(launchers.All(l => l.frisbee == disc && l.muzzle != null && l.catcher == catcher) && launchers.Count(l => l.recallOnly) == 1, "launchers wired (one recall, one throw)");
+                    Check(launchers.All(l => l.frisbee == disc && l.muzzle != null && l.catcher == catcher) && launchers.Count(l => l.recallOnly) == 1 && launchers.Count(l => l.cycleVariant) == 1,
+                        "launchers wired (one recall, one throw, one variant cycle)");
                     var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(catcher);
                     Check(backing.publicVariables.TryGetVariableValue("dogRoot", out Transform bd) && bd == catcher.dogRoot, "backing heap holds dogRoot");
                     Check(backing.publicVariables.TryGetVariableValue("mouthOffsetCatch", out Vector3 bm) && bm == catcher.mouthOffsetCatch, "backing heap holds mouthOffsetCatch");
                     Check(backing.publicVariables.TryGetVariableValue("clipRiseDuration", out float br) && Mathf.Abs(br - catcher.clipRiseDuration) < 1e-5f, "backing heap holds clipRiseDuration");
+                    // IMP-DOG-008: the switch starts on the baseline and the run-in preset fits this dog and this disc.
+                    Check(catcher.variant == KH_FrisbeeCatch.VariantNormal && catcher.pendingVariant == -1, "catcher starts on variant Normal with nothing queued");
+                    Check(backing.publicVariables.TryGetVariableValue("variant", out int bvar) && bvar == KH_FrisbeeCatch.VariantNormal, "backing heap holds variant 0");
+                    Check(KH_FrisbeeCatch.RunInTakeoff <= catcher.chaseRunSpeed, "run-in takeoff " + KH_FrisbeeCatch.RunInTakeoff.ToString("F2") + " <= chaseRunSpeed " + catcher.chaseRunSpeed.ToString("F2"));
+                    Check(catcher.minRootRise <= KH_FrisbeeCatch.RunInPreferMaxRise && KH_FrisbeeCatch.RunInPreferMaxRise <= catcher.maxRootRise,
+                        "run-in preferred rise " + KH_FrisbeeCatch.RunInPreferMaxRise.ToString("F2") + " inside [" + catcher.minRootRise.ToString("F2") + ", " + catcher.maxRootRise.ToString("F2") + "]");
+                    // The run-in's own geometry (design record: 2.3 m in the air, ~3.1 m including the crouch travel).
+                    // The pass-1 fallback may still pick a high jump, so its travel is reported alongside.
+                    float runOut = KH_FrisbeeCatch.RunInTakeoff * 2f * Mathf.Sqrt(2f * KH_FrisbeeCatch.RunInPreferMaxRise / disc.gravity);
+                    float runOutMax = KH_FrisbeeCatch.RunInTakeoff * 2f * Mathf.Sqrt(2f * catcher.maxRootRise / disc.gravity);
+                    Check(runOut <= 3f, "run-in air travel " + runOut.ToString("F2") + " m <= 3 m at the preferred rise (fallback at maxRootRise " + catcher.maxRootRise.ToString("F2") + ": " + runOutMax.ToString("F2") + " m)");
+                    Check(KH_FrisbeeCatch.RunInReadyTurnDeg >= 20f && KH_FrisbeeCatch.RunInReadyTurnDeg <= 90f, "run-in Ready turn threshold " + KH_FrisbeeCatch.RunInReadyTurnDeg.ToString("F0") + " deg in [20, 90]");
                     var desc = open.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<VRCSceneDescriptor>(true)).FirstOrDefault();
                     Check(desc != null && desc.spawns != null && desc.spawns.Length > 0 && desc.spawns[0] != null, "scene descriptor with spawn");
                     Check(desc != null && desc.NetworkIDCollection.All(x => x.gameObject != null), "no dangling NetworkIDs");

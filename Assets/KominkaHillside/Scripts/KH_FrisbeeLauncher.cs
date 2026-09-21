@@ -14,6 +14,9 @@ namespace KominkaHillside
         public KH_FrisbeeCatch catcher;
         public Transform muzzle;
         public bool recallOnly;
+        [Tooltip("IMP-DOG-008: this cube cycles the catcher's prototype variant instead of throwing " +
+            "(the prototype scene has no hand menu). Nothing else on this behaviour runs")]
+        public bool cycleVariant;
         [Header("Fixed throw (provisional)")]
         public float speed = 8f;
         public float elevationDeg = 10f;
@@ -23,6 +26,12 @@ namespace KominkaHillside
 
         public override void Interact()
         {
+            if (cycleVariant)
+            {
+                // Stand-in for the hand menu's dev switch: step to the next preset (the catcher's Owner decides).
+                if (catcher != null) catcher._RequestVariant((catcher.Variant + 1) % KH_FrisbeeCatch.VariantCount);
+                return;
+            }
             if (frisbee == null || muzzle == null) return;
             if (frisbee.IsHeldNow) { Debug.Log("[KH_FrisbeeLauncher] refused: disc is held"); return; }
             if (catcher != null && (catcher.IsCarrying || catcher.IsAirborne)) { Debug.Log("[KH_FrisbeeLauncher] refused: dog is carrying or in the air"); return; }

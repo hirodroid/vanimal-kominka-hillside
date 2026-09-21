@@ -1,9 +1,10 @@
 {
+  "name": "Jump",
   "breed": "Lab",
   "mouthOffsetCatch": [0.0000, 0.7739, 0.3869],
   "mouthOffsetStand": [0.0000, 0.5559, 0.4642],
-  "crouch": 0.250,
-  "rise": 0.350,
-  "recover": 0.400,
-  "clipLength": 1.350
+  "crouch": 0.2500,
+  "rise": 0.3500,
+  "recover": 0.4000,
+  "clipLength": 1.3500
 }

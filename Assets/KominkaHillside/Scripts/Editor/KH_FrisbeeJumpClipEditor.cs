@@ -17,6 +17,9 @@ namespace KominkaHillside.Editor
     // (legs, trunk pitch, neck, jaw, and the pelvis sink on ground frames); KH_FrisbeeCatch moves the
     // root along the arc at runtime, so no root motion is baked. Angles are authoring values for this
     // model, not measured canine joint angles (vrc-animator-reactions section 9).
+    // IMP-DOG-008 wave 2: one generator, several clips. A ClipVariant is a name + key table + durations +
+    // the Animator Bool that plays it; Build writes every variant (KH_Jump_Lab, KH_Twist_Lab, ...) and
+    // Render sheets every variant. The Jump variant is byte-for-byte the table that shipped in stage 2.
     public static class KH_FrisbeeJumpClipEditor
     {
         public const string SourceScene = "Assets/KominkaHillside/Imported/KH_DogPortSource.unity";
@@ -25,19 +28,25 @@ namespace KominkaHillside.Editor
         public const string Output = "Temp/KH_Frisbee";
         public const string MouthAnchorName = "KD_FetchAnchor_Mouth";
         public const string Breed = "Lab";
-        public static string ClipPath { get { return ClipDir + "/KH_Jump_" + Breed + ".anim"; } }
-        public static string FactsPath { get { return DataDir + "/KH_Jump_" + Breed + ".json"; } }
+        // Asset names are KH_{variant}_{Breed}; ClipPath / FactsPath stay the Jump variant for every caller.
+        public static string ClipPathFor(string name) { return ClipDir + "/KH_" + name + "_" + Breed + ".anim"; }
+        public static string FactsPathFor(string name) { return DataDir + "/KH_" + name + "_" + Breed + ".json"; }
+        public static string ClipPath { get { return ClipPathFor("Jump"); } }
+        public static string FactsPath { get { return FactsPathFor("Jump"); } }
         public static string ControllerPath { get { return "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/AC_KD_Dog_" + Breed + ".controller"; } }
 
-        // Clip timing (seconds). Rise == land so the symmetric arc touches down on the touchdown key.
+        // Jump clip timing (seconds). Rise == land so the symmetric arc touches down on the touchdown key.
+        // Every variant carries its own copy in ClipVariant.crouch/rise/recover; CatchAt/TouchdownAt/EndAt
+        // below stay the Jump numbers (KH_FrisbeePrototypeEditor.Verify reads them).
         public const float Crouch = 0.25f, Rise = 0.35f, Recover = 0.40f;
         public const float CatchAt = Crouch + Rise, TouchdownAt = Crouch + Rise + Rise, EndAt = Crouch + Rise + Rise + Recover;
 
         // One key of the clip: time and additive angles (deg) about the dog's pitch axis (+ = nose/limb down-back).
-        struct Key
+        public struct Key
         {
             public string name; public float time;
             public float hip, knee, hock, shoulder, elbow, wrist, root, lumbar, chest, neck, head, jaw;
+            public float twist;  // whole-body yaw (deg) about world up, + = the dog turns to its own right (clockwise from above)
             public bool ground; // feet on the floor: sink/raise the pelvis so the lowest point touches y=0
             public bool plant;  // all four paws down: pitch the body about the fore paws until the hind paws touch
         }
@@ -50,6 +59,9 @@ namespace KominkaHillside.Editor
         }
 
         static Key Plant(Key k) { k.plant = true; return k; }
+
+        // Yaw for one key. Kept out of K() so the jump table below stays exactly the table of stage 2.
+        static Key Twist(Key k, float deg) { k.twist = deg; return k; }
 
         static Key Scale(Key k, float s)
         {
@@ -73,6 +85,48 @@ namespace KominkaHillside.Editor
                 K("touchdown", TouchdownAt, -24, 32, -18, -24, 6, -4, 6, 7, 3, 2, -8, 0, true),
                 Plant(K("absorb", TouchdownAt + 0.15f, -12, 20, -16, 6, 26, -16, 0, 5, 2, -4, -4, 0, true)),
                 K("recover", EndAt, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true),
+            };
+        }
+
+        // IMP-DOG-008 v4 "twist": the same ten poses as the jump, only yawed. The dog leaves along its run,
+        // turns 90 deg in the air to bite the disc coming across it, and unwinds so it lands facing the run
+        // again. Ground keys stay at 0 so the feet land square; the catch mouth offset gains a lateral (x)
+        // component, which is what KH_FrisbeeCatch already places with right * mouthOffsetCatch.x.
+        static readonly string[] TwistOrder = { "start", "crouch", "takeoff", "rise", "catch", "bite", "descend", "touchdown", "absorb", "recover" };
+        static readonly float[] TwistDeg = { 0f, 0f, 0f, 40f, 90f, 90f, 45f, 0f, 0f, 0f };
+
+        static Key[] TwistKeys()
+        {
+            var keys = Keys(); // same durations as the jump, so the jump times carry over unchanged
+            for (int i = 0; i < keys.Length; i++)
+            {
+                int at = Array.IndexOf(TwistOrder, keys[i].name);
+                if (at < 0) throw new InvalidOperationException("No twist authored for key " + keys[i].name);
+                keys[i] = Twist(keys[i], TwistDeg[at]);
+            }
+            return keys;
+        }
+
+        // One clip of the family: which keys, how long each phase lasts, and the Animator Bool / State that plays it.
+        public struct ClipVariant
+        {
+            public string name;      // asset name part: KH_{name}_{Breed}.anim / .json
+            public Key[] keys;
+            public float crouch, rise, recover;
+            public string boolParam; // Animator Bool and State name
+            public float CatchAt { get { return crouch + rise; } }
+            public float TouchdownAt { get { return crouch + rise + rise; } }
+            public float EndAt { get { return crouch + rise + rise + recover; } }
+            public string ClipPath { get { return ClipPathFor(name); } }
+            public string FactsPath { get { return FactsPathFor(name); } }
+        }
+
+        public static ClipVariant[] Variants()
+        {
+            return new[]
+            {
+                new ClipVariant { name = "Jump", keys = Keys(), crouch = Crouch, rise = Rise, recover = Recover, boolParam = "Jump" },
+                new ClipVariant { name = "Twist", keys = TwistKeys(), crouch = Crouch, rise = Rise, recover = Recover, boolParam = "Twist" },
             };
         }
 
@@ -151,11 +205,43 @@ namespace KominkaHillside.Editor
             return Vector3.Cross(Vector3.up, Forward(rig)).normalized; // + rotation = nose / hanging limb goes down-back
         }
 
+        // Whole-body rotation about the pelvis, written to the root driver (the armature root that carries
+        // every other driver, so the rotation reaches all mesh bones through the constraints). The sibling
+        // tail root is not under it, so it follows the same pivot by hand.
+        static void RootRotate(KH_DogRig rig, Quaternion q)
+        {
+            var root = rig.AnimationRoot; var tail = rig.SiblingTail;
+            if (tail != null) { tail.position = root.position + q * (tail.position - root.position); tail.rotation = q * tail.rotation; }
+            root.rotation = q * root.rotation;
+        }
+
+        // Yaw the whole dog about world up. Written to the same root driver as the k.root pitch, but the
+        // amount that arrives is measured on the displayed body (Forward reads the mesh-side trunk bones)
+        // and the residual is solved up to three times, like Rot does for a joint -- a world rotation written
+        // to a driver reached the mesh at only 40-75% in the 2026-09-20 run, and a pitch-only solver would
+        // leave the same shortfall in yaw. Applied before the pitch axis is taken so every joint angle below
+        // is measured in the dog's own (turned) frame: the twist is a rigid yaw of the jump pose.
+        static void TwistBody(GameObject dog, KH_DogRig rig, float deg)
+        {
+            KH_DogRig.ApplyConstraints(dog);
+            var target = Quaternion.AngleAxis(deg, Vector3.up) * Forward(rig);
+            RootRotate(rig, Quaternion.AngleAxis(deg, Vector3.up));
+            KH_DogRig.ApplyConstraints(dog);
+            for (int i = 0; i < 3; i++)
+            {
+                float residual = Vector3.SignedAngle(Forward(rig), target, Vector3.up);
+                if (Mathf.Abs(residual) < 0.2f) break;
+                RootRotate(rig, Quaternion.AngleAxis(residual, Vector3.up));
+                KH_DogRig.ApplyConstraints(dog);
+            }
+        }
+
         static void Pose(GameObject dog, KH_DogRig rig, Key k)
         {
+            if (rig.AnimationRoot == null) throw new InvalidOperationException("No animation root 'Bone'");
+            if (Mathf.Abs(k.twist) > 0.001f) TwistBody(dog, rig, k.twist);
             var axis = PitchAxis(rig);
             var root = rig.AnimationRoot;
-            if (root == null) throw new InvalidOperationException("No animation root 'Bone'");
             var tail = rig.SiblingTail;
             // Whole body pitch about the pelvis; the sibling tail root follows the same pivot.
             if (Mathf.Abs(k.root) > 0.001f)
@@ -295,12 +381,25 @@ namespace KominkaHillside.Editor
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode only");
             Directory.CreateDirectory(ClipDir); Directory.CreateDirectory(DataDir); Directory.CreateDirectory(Output);
             var scene = EditorSceneManager.NewPreviewScene(); var log = new StringBuilder();
+            try
+            {
+                var variants = Variants();
+                for (int i = 0; i < variants.Length; i++) BuildOne(scene, variants[i], i, log);
+                File.WriteAllText(Output + "/build.txt", log.ToString());
+                Debug.Log("[KH Frisbee] clips built: " + string.Join(", ", variants.Select(v => v.ClipPath)) + "\n" + log);
+            }
+            finally { EditorSceneManager.ClosePreviewScene(scene); }
+        }
+
+        static void BuildOne(Scene scene, ClipVariant variant, int index, StringBuilder log)
+        {
             AnimationClip result = new AnimationClip();
             try
             {
                 var baseClip = IdleClip();
-                result.name = "KH_Jump_" + Breed; result.frameRate = 30;
-                foreach (var key in Keys())
+                log.AppendLine("== " + variant.name + " ==");
+                result.name = "KH_" + variant.name + "_" + Breed; result.frameRate = 30;
+                foreach (var key in variant.keys)
                 {
                     var dog = CloneSourceDog(scene);
                     try
@@ -332,28 +431,23 @@ namespace KominkaHillside.Editor
                 }
                 var settings = AnimationUtility.GetAnimationClipSettings(result);
                 settings.loopTime = false; AnimationUtility.SetAnimationClipSettings(result, settings);
-                var existing = AssetDatabase.LoadAssetAtPath<AnimationClip>(ClipPath);
-                if (existing == null) { AssetDatabase.CreateAsset(result, ClipPath); result = null; }
+                string clipPath = variant.ClipPath;
+                var existing = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
+                if (existing == null) { AssetDatabase.CreateAsset(result, clipPath); result = null; }
                 else { EditorUtility.CopySerialized(result, existing); EditorUtility.SetDirty(existing); }
                 AssetDatabase.SaveAssets();
 
                 // Pose facts for the controller: mouth anchor in the dog frame at the catch key and at idle.
-                var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(ClipPath);
-                Vector3 mouthCatch = MouthAt(scene, clip, CatchAt), mouthStand = MouthAt(scene, baseClip, 0f);
-                File.WriteAllText(FactsPath, "{\n  \"breed\": \"" + Breed + "\",\n  \"mouthOffsetCatch\": " + V(mouthCatch) + ",\n  \"mouthOffsetStand\": " + V(mouthStand)
-                    + ",\n  \"crouch\": " + F(Crouch) + ",\n  \"rise\": " + F(Rise) + ",\n  \"recover\": " + F(Recover) + ",\n  \"clipLength\": " + F(clip.length) + "\n}\n");
-                AssetDatabase.ImportAsset(FactsPath);
-                AddJumpState(clip);
+                var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
+                Vector3 mouthCatch = MouthAt(scene, clip, variant.CatchAt), mouthStand = MouthAt(scene, baseClip, 0f);
+                File.WriteAllText(variant.FactsPath, "{\n  \"name\": \"" + variant.name + "\",\n  \"breed\": \"" + Breed + "\",\n  \"mouthOffsetCatch\": " + V(mouthCatch) + ",\n  \"mouthOffsetStand\": " + V(mouthStand)
+                    + ",\n  \"crouch\": " + F(variant.crouch) + ",\n  \"rise\": " + F(variant.rise) + ",\n  \"recover\": " + F(variant.recover) + ",\n  \"clipLength\": " + F(clip.length) + "\n}\n");
+                AssetDatabase.ImportAsset(variant.FactsPath);
+                AddClipState(clip, variant, index);
                 log.AppendLine("clip length=" + clip.length + " curves=" + AnimationUtility.GetCurveBindings(clip).Length);
                 log.AppendLine("mouthOffsetCatch=" + mouthCatch.ToString("F3") + " mouthOffsetStand=" + mouthStand.ToString("F3"));
-                File.WriteAllText(Output + "/build.txt", log.ToString());
-                Debug.Log("[KH Frisbee] jump clip built: " + ClipPath + "\n" + log);
             }
-            finally
-            {
-                if (result != null) Object.DestroyImmediate(result);
-                EditorSceneManager.ClosePreviewScene(scene);
-            }
+            finally { if (result != null) Object.DestroyImmediate(result); }
         }
 
         // Segment directions (world, dog at identity) for reading the pose numerically: fore 011->012->014, hind 005->010->015->016.
@@ -380,25 +474,30 @@ namespace KominkaHillside.Editor
             finally { Object.DestroyImmediate(dog); }
         }
 
-        // Adds Bool "Jump" + state "Jump" to the breed's controller (idempotent). Any State -> Jump while
-        // the Bool is up (no self transition); Jump -> Run / Walk / Idle once it drops, like the Call states.
-        public static void AddJumpState(AnimationClip clip)
+        // Adds Bool "Jump" + state "Jump" to the breed's controller (idempotent), i.e. the first variant.
+        public static void AddJumpState(AnimationClip clip) { AddClipState(clip, Variants()[0], 0); }
+
+        // Adds the variant's Bool + state to the breed's controller (idempotent). Any State -> state while
+        // the Bool is up (no self transition); state -> Run / Walk / Idle once it drops, like the Call states.
+        // New states are stacked below the Jump node so the graph stays readable; an existing node keeps its place.
+        public static void AddClipState(AnimationClip clip, ClipVariant variant, int index)
         {
+            string param = variant.boolParam;
             var ac = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
             if (ac == null) throw new InvalidOperationException("Missing " + ControllerPath);
-            if (!ac.parameters.Any(p => p.name == "Jump")) ac.AddParameter("Jump", AnimatorControllerParameterType.Bool);
+            if (!ac.parameters.Any(p => p.name == param)) ac.AddParameter(param, AnimatorControllerParameterType.Bool);
             var sm = ac.layers[0].stateMachine;
-            var jump = sm.states.Select(s => s.state).FirstOrDefault(s => s.name == "Jump");
-            if (jump == null) jump = sm.AddState("Jump", new Vector3(950, 640, 0));
-            jump.motion = clip; jump.writeDefaultValues = true;
+            var state = sm.states.Select(s => s.state).FirstOrDefault(s => s.name == param);
+            if (state == null) state = sm.AddState(param, new Vector3(950, 640 + 80 * index, 0));
+            state.motion = clip; state.writeDefaultValues = true;
             AnimatorState Find(string n) { var s = sm.states.Select(x => x.state).FirstOrDefault(x => x.name == n); if (s == null) throw new InvalidOperationException("State " + n + " missing"); return s; }
-            foreach (var t in sm.anyStateTransitions.Where(t => t.destinationState == jump).ToArray()) sm.RemoveAnyStateTransition(t);
-            var any = sm.AddAnyStateTransition(jump);
-            any.hasExitTime = false; any.duration = 0.1f; any.canTransitionToSelf = false; any.AddCondition(AnimatorConditionMode.If, 0, "Jump");
-            foreach (var t in jump.transitions.ToArray()) jump.RemoveTransition(t);
-            var toRun = jump.AddTransition(Find("Run")); toRun.hasExitTime = false; toRun.duration = 0.1f; toRun.AddCondition(AnimatorConditionMode.IfNot, 0, "Jump"); toRun.AddCondition(AnimatorConditionMode.If, 0, "Run");
-            var toWalk = jump.AddTransition(Find("Walk")); toWalk.hasExitTime = false; toWalk.duration = 0.1f; toWalk.AddCondition(AnimatorConditionMode.IfNot, 0, "Jump"); toWalk.AddCondition(AnimatorConditionMode.If, 0, "Walk");
-            var toIdle = jump.AddTransition(Find("Idle")); toIdle.hasExitTime = false; toIdle.duration = 0.2f; toIdle.AddCondition(AnimatorConditionMode.IfNot, 0, "Jump");
+            foreach (var t in sm.anyStateTransitions.Where(t => t.destinationState == state).ToArray()) sm.RemoveAnyStateTransition(t);
+            var any = sm.AddAnyStateTransition(state);
+            any.hasExitTime = false; any.duration = 0.1f; any.canTransitionToSelf = false; any.AddCondition(AnimatorConditionMode.If, 0, param);
+            foreach (var t in state.transitions.ToArray()) state.RemoveTransition(t);
+            var toRun = state.AddTransition(Find("Run")); toRun.hasExitTime = false; toRun.duration = 0.1f; toRun.AddCondition(AnimatorConditionMode.IfNot, 0, param); toRun.AddCondition(AnimatorConditionMode.If, 0, "Run");
+            var toWalk = state.AddTransition(Find("Walk")); toWalk.hasExitTime = false; toWalk.duration = 0.1f; toWalk.AddCondition(AnimatorConditionMode.IfNot, 0, param); toWalk.AddCondition(AnimatorConditionMode.If, 0, "Walk");
+            var toIdle = state.AddTransition(Find("Idle")); toIdle.hasExitTime = false; toIdle.duration = 0.2f; toIdle.AddCondition(AnimatorConditionMode.IfNot, 0, param);
             EditorUtility.SetDirty(ac); AssetDatabase.SaveAssets();
         }
 
@@ -446,15 +545,13 @@ namespace KominkaHillside.Editor
         {
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode only");
             Directory.CreateDirectory(Output);
-            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(ClipPath);
-            if (clip == null) throw new InvalidOperationException("Build the clip first: " + ClipPath);
+            var variants = Variants();
+            foreach (var v in variants)
+                if (AssetDatabase.LoadAssetAtPath<AnimationClip>(v.ClipPath) == null) throw new InvalidOperationException("Build the clips first: " + v.ClipPath);
             var scene = EditorSceneManager.NewPreviewScene();
+            var log = new StringBuilder();
             try
             {
-                var keys = Keys();
-                const int W = 420, H = 360;
-                var side = new Texture2D(W * keys.Length, H, TextureFormat.RGB24, false);
-                var quarter = new Texture2D(W * keys.Length, H, TextureFormat.RGB24, false);
                 Bounds frame;
                 {
                     var idle = CloneSourceDog(scene);
@@ -463,23 +560,47 @@ namespace KominkaHillside.Editor
                 }
                 var center = frame.center; center.y = frame.size.y * 0.55f;
                 float ortho = Mathf.Max(frame.size.x, frame.size.y, frame.size.z) * 0.72f;
-                for (int i = 0; i < keys.Length; i++)
-                {
-                    var (s, q) = RenderOne(scene, clip, keys[i].time, keys[i].name, center, ortho, W, H);
-                    side.SetPixels(i * W, 0, W, H, s.GetPixels()); quarter.SetPixels(i * W, 0, W, H, q.GetPixels());
-                    File.WriteAllBytes(Output + "/" + i + "-" + keys[i].name + "-side.png", s.EncodeToPNG());
-                    Object.DestroyImmediate(s); Object.DestroyImmediate(q);
-                }
-                side.Apply(); quarter.Apply();
-                File.WriteAllBytes(Output + "/sheet-side.png", side.EncodeToPNG());
-                File.WriteAllBytes(Output + "/sheet-quarter.png", quarter.EncodeToPNG());
-                Object.DestroyImmediate(side); Object.DestroyImmediate(quarter);
-                Debug.Log("[KH Frisbee] rendered " + keys.Length + " stages to " + Output);
+                foreach (var v in variants) RenderVariant(scene, v, center, ortho, log);
+                Debug.Log("[KH Frisbee] rendered " + variants.Length + " variants to " + Output + "\n" + log);
             }
             finally { EditorSceneManager.ClosePreviewScene(scene); }
         }
 
-        static (Texture2D side, Texture2D quarter) RenderOne(Scene scene, AnimationClip clip, float time, string label, Vector3 center, float ortho, int w, int h)
+        // The jump keeps the file names the stage-2 record links (sheet-side.png / sheet-quarter.png);
+        // every other variant gets its name appended.
+        static string Suffix(ClipVariant v) { return v.name == "Jump" ? "" : "-" + v.name; }
+
+        static void RenderVariant(Scene scene, ClipVariant variant, Vector3 center, float ortho, StringBuilder log)
+        {
+            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(variant.ClipPath);
+            var keys = variant.keys;
+            string sfx = Suffix(variant);
+            const int W = 420, H = 360;
+            var side = new Texture2D(W * keys.Length, H, TextureFormat.RGB24, false);
+            var quarter = new Texture2D(W * keys.Length, H, TextureFormat.RGB24, false);
+            try
+            {
+                for (int i = 0; i < keys.Length; i++)
+                {
+                    var (s, q) = RenderOne(scene, clip, keys[i].time, keys[i].name, center, ortho, W, H, keys[i].twist);
+                    side.SetPixels(i * W, 0, W, H, s.GetPixels()); quarter.SetPixels(i * W, 0, W, H, q.GetPixels());
+                    File.WriteAllBytes(Output + "/" + i + "-" + keys[i].name + "-side" + sfx + ".png", s.EncodeToPNG());
+                    Object.DestroyImmediate(s); Object.DestroyImmediate(q);
+                }
+                side.Apply(); quarter.Apply();
+                File.WriteAllBytes(Output + "/sheet-side" + sfx + ".png", side.EncodeToPNG());
+                File.WriteAllBytes(Output + "/sheet-quarter" + sfx + ".png", quarter.EncodeToPNG());
+            }
+            finally { Object.DestroyImmediate(side); Object.DestroyImmediate(quarter); }
+            var mouthCatch = MouthAt(scene, clip, variant.CatchAt);
+            log.AppendLine(variant.name + ": " + keys.Length + " stages, sheet-side" + sfx + ".png / sheet-quarter" + sfx + ".png"
+                + " mouthOffsetCatch=" + mouthCatch.ToString("F3") + " twist=" + string.Join("/", keys.Select(k => k.twist.ToString("F0"))));
+        }
+
+        // untwist = the key's yaw: the cameras stay in the run frame instead of turning with the dog, so a
+        // twist key shows the body turned toward the lens. Zero for every jump key, so the jump sheets are
+        // the same views as stage 2.
+        static (Texture2D side, Texture2D quarter) RenderOne(Scene scene, AnimationClip clip, float time, string label, Vector3 center, float ortho, int w, int h, float untwist = 0f)
         {
             var owned = new List<Object>();
             T Own<T>(T v) where T : Object { owned.Add(v); return v; }
@@ -489,6 +610,7 @@ namespace KominkaHillside.Editor
                 clip.SampleAnimation(dog, time); KH_DogRig.ApplyConstraints(dog);
                 var rig = KH_DogRig.Resolve(dog, MouthAnchorName);
                 var fwd = Forward(rig);
+                if (Mathf.Abs(untwist) > 0.001f) fwd = Quaternion.AngleAxis(-untwist, Vector3.up) * fwd;
                 var right = Vector3.Cross(Vector3.up, fwd);
                 var display = Own(new GameObject("Render")); SceneManager.MoveGameObjectToScene(display, scene);
                 var mat = Own(new Material(Shader.Find("Standard"))); mat.color = new Color(.70f, .55f, .30f); mat.SetFloat("_Glossiness", .1f);

@@ -424,6 +424,21 @@ namespace KominkaHillside.Editor
                     if(!(cb.publicVariables.TryGetVariableValue((string)pair[0],out bv)&&(bv as UnityEngine.Object)==expect))refsOk=false;
                 }
                 Check(refsOk&&cb.publicVariables.TryGetVariableValue("dogIndex",out bv)&&(int)bv==i,"catcher backing: neighbour references and dogIndex "+key);
+                // IMP-DOG-008: the prototype switch starts on the baseline and the run-in presets fit this dog, this disc and the plaza.
+                Check(c.variant==KH_FrisbeeCatch.VariantNormal&&c.pendingVariant==-1&&cb.publicVariables.TryGetVariableValue("variant",out bv)&&(int)bv==KH_FrisbeeCatch.VariantNormal,"variant starts at Normal, proxy and backing, nothing queued "+key);
+                Check(KH_FrisbeeCatch.RunInTakeoff<=c.chaseRunSpeed,"run-in takeoff "+KH_FrisbeeCatch.RunInTakeoff.ToString("F2")+" <= chaseRunSpeed "+c.chaseRunSpeed.ToString("F2")+" "+key);
+                Check(c.minRootRise<=KH_FrisbeeCatch.RunInPreferMaxRise&&KH_FrisbeeCatch.RunInPreferMaxRise<=c.maxRootRise,"run-in preferred rise "+KH_FrisbeeCatch.RunInPreferMaxRise.ToString("F2")+" inside ["+c.minRootRise.ToString("F2")+", "+c.maxRootRise.ToString("F2")+"] "+key);
+                // Design record: 2.3 m in the air at the preferred rise (~3.1 m including the crouch travel). The
+                // pass-1 fallback may still pick a high jump, so its travel is reported alongside.
+                float runOut=KH_FrisbeeCatch.RunInTakeoff*2f*Mathf.Sqrt(2f*KH_FrisbeeCatch.RunInPreferMaxRise/d.gravity);
+                float runOutMax=KH_FrisbeeCatch.RunInTakeoff*2f*Mathf.Sqrt(2f*c.maxRootRise/d.gravity);
+                Check(runOut<=3f,"run-in air travel "+runOut.ToString("F2")+" m <= 3 m at the preferred rise (fallback at maxRootRise "+c.maxRootRise.ToString("F2")+": "+runOutMax.ToString("F2")+" m) "+key);
+                Check(KH_FrisbeeCatch.RunInReadyTurnDeg>=20f&&KH_FrisbeeCatch.RunInReadyTurnDeg<=90f,"run-in Ready turn threshold "+KH_FrisbeeCatch.RunInReadyTurnDeg.ToString("F0")+" deg in [20, 90] "+key);
+                // A Ready spot is measured from the holder, so it only ever lands inside the plaza if its own radius does.
+                float[] readyAhead={KH_FrisbeeCatch.ReadyAhead1,KH_FrisbeeCatch.ReadyAhead2,KH_FrisbeeCatch.ReadyAhead3};
+                float[] readyLateral={KH_FrisbeeCatch.ReadyLateral1,KH_FrisbeeCatch.ReadyLateral2,KH_FrisbeeCatch.ReadyLateral3};
+                float readyMax=0f;for(int v=0;v<3;v++){float r=Mathf.Sqrt(readyAhead[v]*readyAhead[v]+readyLateral[v]*readyLateral[v]);if(r>readyMax)readyMax=r;}
+                Check(readyMax<=c.playAreaRadius,"run-in Ready spots reach "+readyMax.ToString("F1")+" m <= play area radius "+c.playAreaRadius.ToString("F1")+" "+key);
                 var wb=UdonSharpEditorUtility.GetBackingUdonBehaviour(w);var fb=UdonSharpEditorUtility.GetBackingUdonBehaviour(f);var cbb=UdonSharpEditorUtility.GetBackingUdonBehaviour(c);
                 Check(wb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb&&fb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb,"Wander/Fetch backing frisbeeCatch "+key);
                 Check(f.sleepBoard==null&&f.liveSystem==null,"sleep board / live unwired for "+key+" (re-verify exclusion if reintroduced)");

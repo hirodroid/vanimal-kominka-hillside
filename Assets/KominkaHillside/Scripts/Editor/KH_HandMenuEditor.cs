@@ -35,6 +35,7 @@ namespace KominkaHillside.Editor
         // Words written by this builder (runtime words live in KH_HandMenu.cs)
         public const string Title = "古民家の裏山", WordClose = "閉じる", WordLauncher = "メニュー";
         const string WordNight = "ナイトモード: OFF";   // initial label only (DrawNight overwrites it every draw; runtime literals in KH_HandMenu.cs own the words and Charset reads them). Longest variant so the width check measures the worst case
+        const string WordDev = "試作: 走り込み: 遠く → 走り込み: 並走";   // IMP-DOG-008: initial label only (DrawDev overwrites it; the words are runtime literals). The worst case DrawDev can show (longest name → longest pending name) so the width check measures it
         public static readonly string[] Tabs = { "さんぽ", "あそぶ", "おもちゃ" };
         public static readonly string[] DogNames = { "コーギー", "ポメラニアン", "ラブラドール", "ダックスフンド", "柴犬", "サモエド" };
         public static readonly string[] Formations = { "横一列", "輪になる", "ぎゅっと集合", "V字", "思い思いに", "前後二列" };
@@ -238,6 +239,12 @@ namespace KominkaHillside.Editor
             menu.nightImage = Button(panel.transform, "Night", new Vector2(290f, 312f), new Vector2(250f, 44f), ActionNeutral, WordNight, 22f, font, round, backing, "_Night");
             menu.nightLabel = menu.nightImage.GetComponentInChildren<TextMeshProUGUI>(true);
             menu.night = UnityEngine.Object.FindObjectOfType<KH_NightMode>(true);
+            // IMP-DOG-008 (development only): cycles the prototype preset on the Lab catcher.
+            // Free header span is x -210..165 (375 wide); 350 at -22 spans -197..153. 18 pt keeps the worst pending label (311 px) inside the 326 px box.
+            menu.devImage = Button(panel.transform, "Dev", new Vector2(-22f, 312f), new Vector2(350f, 44f), ActionNeutral, WordDev, 18f, font, round, backing, "_DevVariant");
+            menu.devLabel = menu.devImage.GetComponentInChildren<TextMeshProUGUI>(true);
+            var labCatchT = dogs.transform.Find("KH_FrisbeeCatch_Lab");
+            menu.devCatcher = labCatchT == null ? null : labCatchT.GetComponent<KH_FrisbeeCatch>();
             // Tabs (flat + gold underline for the active one)
             menu.tabImages = new Image[3]; menu.tabUnderlines = new GameObject[3]; menu.pages = new GameObject[3];
             for (int i = 0; i < 3; i++)
@@ -333,7 +340,7 @@ namespace KominkaHillside.Editor
             panel.SetActive(false);
             UdonSharpEditorUtility.CopyProxyToUdon(menu); EditorUtility.SetDirty(menu);
             EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveOpenScenes(); AssetDatabase.SaveAssets();
-            Report("menu-build", "menu built: tabs=3 walkRows=6 forms=6 toys=6 night=" + (menu.night != null ? "wired" : "MISSING (run Night/1 Setup)") + " launcher=inactive panel=inactive");
+            Report("menu-build", "menu built: tabs=3 walkRows=6 forms=6 toys=6 night=" + (menu.night != null ? "wired" : "MISSING (run Night/1 Setup)") + " dev=" + (menu.devCatcher != null ? "wired" : "MISSING (run Walking/3 Build)") + " launcher=inactive panel=inactive");
         }
 
         // Button name (and its cell/parent) -> the handler Build wires. Kept next to Build so a renamed button fails Verify.
@@ -341,6 +348,7 @@ namespace KominkaHillside.Editor
         {
             string n = b.name, p = b.transform.parent.name;
             if (n == "Close") return "_Close"; if (n == "Open") return "_Toggle"; if (n == "Night") return "_Night";
+            if (n == "Dev") return "_DevVariant";
             if (n.StartsWith("Tab")) return "_Tab" + n.Substring(3);
             if (n.StartsWith("Form")) return "_Form" + n.Substring(4);
             if (n == "Start") return "_GatherStart"; if (n == "End") return "_GatherEnd"; if (n == "Buy") return "_Buy";
@@ -381,9 +389,10 @@ namespace KominkaHillside.Editor
                 if (b.onClick.GetPersistentEventCount() == 1 && b.onClick.GetPersistentTarget(0) == backing && b.onClick.GetPersistentMethodName(0) == "SendCustomEvent") wired++;
                 var img = b.GetComponent<Image>(); if (img != null && (img.sprite == null || img.type == Image.Type.Sliced)) sliced++;
             }
-            Check(buttons.Length == 47 && wired == buttons.Length, "47 buttons (46 panel incl. 6 disc + night + launcher) all wired to the menu Udon (" + wired + ")");
+            Check(buttons.Length == 48 && wired == buttons.Length, "48 buttons (47 panel incl. 6 disc + night + dev + launcher) all wired to the menu Udon (" + wired + ")");
             Check(menu.nightImage != null && menu.nightLabel != null && menu.nightLabel.transform.IsChildOf(menu.nightImage.transform), "night button image and label");
             Check(menu.night != null, "night wired to KH_NightMode (run Night/1 Setup then Build Menu)");
+            Check(menu.devImage != null && menu.devLabel != null && menu.devLabel.transform.IsChildOf(menu.devImage.transform), "dev variant button image and label");
             Check(sliced == buttons.Length, "rounded buttons use Sliced sprites");
             // Every onClick string must be the handler expected for that button (name -> event), and the handler must exist.
             var runtimeMethods = new HashSet<string>(typeof(KH_HandMenu).GetMethods().Select(m => m.Name));
@@ -406,6 +415,8 @@ namespace KominkaHillside.Editor
             bool nightRefs = menu.night != null && backingVars.TryGetVariableValue("night", out mv) && mv == (object)UdonSharpEditorUtility.GetBackingUdonBehaviour(menu.night)
                 && backingVars.TryGetVariableValue("nightImage", out mv) && mv == (object)menu.nightImage && backingVars.TryGetVariableValue("nightLabel", out mv) && mv == (object)menu.nightLabel;
             Check(nightRefs, "backing Udon holds night/nightImage/nightLabel (same objects as the proxy)");
+            bool devRefs = menu.devCatcher != null && backingVars.TryGetVariableValue("devCatcher", out mv) && mv == (object)UdonSharpEditorUtility.GetBackingUdonBehaviour(menu.devCatcher);
+            Check(devRefs, "backing Udon holds devCatcher (KH_FrisbeeCatch_Lab; run Walking/3 Build then Build Menu)");
             bool arrays = new UnityEngine.Object[][] { menu.pages, menu.tabImages, menu.tabUnderlines, menu.walkState, menu.walkLeft, menu.walkRight, menu.walkOff, menu.formImages, menu.markers, menu.toyState, menu.toyImages, menu.discImages }
                 .All(a => a != null && a.Length > 0 && a.All(x => x != null));
             Check(arrays, "all reference arrays are allocated with no null element");
