@@ -448,6 +448,8 @@ namespace KominkaHillside.Editor
                 Check(c.chaseAcceleration>=15f,"chase acceleration "+c.chaseAcceleration.ToString("F1")+" m/s2 >= 15 (the sprint must be reached, not just named) "+key);
                 Check(c.settleTime>=0.1f&&c.settleTime<=0.6f,"settle time "+c.settleTime.ToString("F2")+" s in [0.10, 0.60] "+key);
                 Check(c.turnSpeedDegPerSec>=540f,"turn rate "+c.turnSpeedDegPerSec.ToString("F0")+" deg/s >= 540 (Eta charges the turn serially) "+key);
+                Check(c.maxRunAnimScale>=1.5f&&c.maxRunAnimScale<=3f,"run clip speed cap "+c.maxRunAnimScale.ToString("F1")+"x in [1.5, 3.0] (higher reads as jitter) "+key);
+                Check(KH_FrisbeeCatch.HoldEnterRadius>=0.2f&&KH_FrisbeeCatch.HoldEnterRadius<=0.6f,"hold band "+KH_FrisbeeCatch.HoldEnterRadius.ToString("F2")+" m in [0.20, 0.60] (must sit outside the 0.1 m arrive radius) "+key);
                 Check(c.returnRunSpeed<=c.chaseRunSpeed,"return pace "+c.returnRunSpeed.ToString("F1")+" <= chase sprint "+c.chaseRunSpeed.ToString("F1")+" (only the chase has a deadline) "+key);
                 // The highest jump the planner may pick still has to play the clip at a believable speed.
                 float topScale=Mathf.Max(c.clipRiseDuration,c.clipRiseDurationTwist)/Mathf.Sqrt(2f*c.maxRootRise/d.gravity);

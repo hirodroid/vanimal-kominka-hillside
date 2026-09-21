@@ -260,7 +260,7 @@ namespace KominkaHillside.Editor
             catcher.groundLayerMask = (1 << 0) | (1 << 11);
             // Code-owned, same rule as the flight model. IMP-DOG-008 round 2: the intercept planner promises to be
             // standing under the catch point in time, and only a sprint keeps that promise (a dog IS fast).
-            catcher.chaseRunSpeed = 10f; catcher.chaseAcceleration = 25f; catcher.maxRunAnimScale = 3.5f;
+            catcher.chaseRunSpeed = 10f; catcher.chaseAcceleration = 25f; catcher.maxRunAnimScale = 2.5f;
             catcher.noticeDelay = 0.1f; catcher.settleTime = 0.2f; catcher.returnRunSpeed = 4.5f;
             catcher.turnSpeedDegPerSec = 720f;   // Eta charges the turn serially; a 180 deg spin must not eat the window
             catcher.maxRootRise = 0.9f;  // how high the standing jump reaches; also bounds the clip playback below
@@ -455,6 +455,8 @@ namespace KominkaHillside.Editor
                     Check(catcher.chaseAcceleration >= 15f, "chase acceleration " + catcher.chaseAcceleration.ToString("F1") + " m/s2 >= 15 (the sprint must be reached, not just named)");
                     Check(catcher.settleTime >= 0.1f && catcher.settleTime <= 0.6f, "settle time " + catcher.settleTime.ToString("F2") + " s in [0.10, 0.60]");
                     Check(catcher.turnSpeedDegPerSec >= 540f, "turn rate " + catcher.turnSpeedDegPerSec.ToString("F0") + " deg/s >= 540 (Eta charges the turn serially)");
+                    Check(catcher.maxRunAnimScale >= 1.5f && catcher.maxRunAnimScale <= 3f, "run clip speed cap " + catcher.maxRunAnimScale.ToString("F1") + "x in [1.5, 3.0] (higher reads as jitter)");
+                    Check(KH_FrisbeeCatch.HoldEnterRadius >= 0.2f && KH_FrisbeeCatch.HoldEnterRadius <= 0.6f, "hold band " + KH_FrisbeeCatch.HoldEnterRadius.ToString("F2") + " m in [0.20, 0.60] (must sit outside the 0.1 m arrive radius)");
                     Check(catcher.returnRunSpeed <= catcher.chaseRunSpeed, "return pace " + catcher.returnRunSpeed.ToString("F1") + " <= chase sprint " + catcher.chaseRunSpeed.ToString("F1") + " (only the chase has a deadline)");
                     // The highest jump the planner may pick still has to play the clip at a believable speed.
                     float longestRiseDur = Mathf.Max(catcher.clipRiseDuration, catcher.clipRiseDurationTwist);

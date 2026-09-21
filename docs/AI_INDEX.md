@@ -53,6 +53,10 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 
 ---
 
+## 素材の確認記録
+
+新規・変更素材は [共通制作手順](../.claude/skills/vrc-asset-production/references/source-rights.md) の型を既存記録に統合する。購入・移植素材は `development/imports/` の該当記録、自作は `plans/` の該当制作票を使う（例: [リード制作票](plans/2026-09-20-leash-asset-production.md)）。そこから参照元・条件の根拠・確認日・生成履歴・採用前結果へたどれるようにする。別台帳は増やさず、記録がない新素材は制作票に節を作る。既存記録の技術検証・自作表記を権利確認済みとは読み替えない。
+
 ## 不変条件 (Invariants)
 
 1. **古民家ドッグランの続編である。** 主役は同じ 6 匹 (コーギー / ポメラニアン / ラブラドール / ダックスフンド / 柴犬 / サモエド)。犬種・頭数を増減しない
@@ -77,7 +81,7 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 - 最新の着手: **DES-UI-001 / DES-DOG-001** の合意を実装 (手元メニュー 3 タブ、リード拠点、集合、ボール個別回収、共通購入権)。Editor 検査済み、Play/PCVR 待ち。[記録とチェックリスト](plans/2026-09-20-menu-gather-stations.md)。
 - 並行: **BUG-DOG-002** 持ち手の向き、**DES-WLD-002** 音の設計。順序は [開発全体像 §3](development/overview.md)。
 - **IMP-DOG-005 フリスビー**: 本シーンの散歩のラブが取れる (広場限定、照準モード、位置取り、メニュー「おもちゃ」の「フリスビー」)。PCVR 1 人で好評。項目別・2 人・他犬・Quest/iOS は未。調整用の試作シーン `Assets/Scenes/KH_FrisbeePrototype.unity` と `Tools/KominkaHillside/Frisbee/` は残す。[記録とチェックリスト](plans/2026-09-20-frisbee-prototype.md)。
-- **フリスビーの次の制作 (2026-09-21 合意 → 着手)**: 通常版の体験はひとまずOK。[IMP-DOG-008](development/issues/IMP-DOG-008-frisbee-variations.md) でラブ1匹の走り込み 3 候補・ひねり・横曲がりを、手元メニューのヘッダの開発用切替 (6 プリセット) で比べる。**PCVR 1 回目は「全然取らない」→ 先回り型キャッチ (投げた瞬間に点を決め 10 m/s で先回り → 真下で微調整 → 真上に跳ぶ) へ作り替え、Editor 検査済み (試作 54 / Walking 149 / Menu 27)。Build & Test と PCVR 2 回目待ち**。設計・分担・チェックリストは [記録](plans/2026-09-21-frisbee-variations.md)。通常版と採用バリエーションが1匹でOKになってから6匹展開。005の未確認項目は継続する。
+- **フリスビーの次の制作 (2026-09-21 合意 → 着手)**: 通常版の体験はひとまずOK。[IMP-DOG-008](development/issues/IMP-DOG-008-frisbee-variations.md) でラブ1匹の走り込み 3 候補・ひねり・横曲がりを、手元メニューのヘッダの開発用切替 (6 プリセット) で比べる。**PCVR 1 回目は「全然取らない」→ 先回り型キャッチ (投げた瞬間に点を決め 10 m/s で先回り → 真下で微調整 → 真上に跳ぶ) へ作り替え、PCVR 2 回目「かなり良かった」(跳んで取った 29 回 / MISS 3 回)。3 回目に向けて 待機中の向き直り (真の原因 = 停止中の旋回 30°/s)・ブレ・並走の追い抜きを修正、Editor 検査済み (試作 56 / Walking 151 / Menu 27)。Build & Test と PCVR 3 回目待ち**。設計・分担・チェックリストは [記録](plans/2026-09-21-frisbee-variations.md)。通常版と採用バリエーションが1匹でOKになってから6匹展開。005の未確認項目は継続する。
 - **IMP-ENV-002 空とナイトモード**: 空を古民家と同じ Allsky キューブマップに、手元メニューのヘッダーに OFF/ON のナイトモード (自前の乗算オーバーレイ、RBS 不使用)。Editor 検査済み、Play 待ち。[記録とチェックリスト](plans/2026-09-21-sky-and-night-mode.md)。
 - 状態と実行キュー: [Issueサマリ](development/issues/issue_summary.md)。移植の出所は [移植記録](development/imports/kominka-dog-system.md)、ユーザー報告と項目別手順は [散歩検証記録](plans/2026-09-20-leash-walking.md)。
 
