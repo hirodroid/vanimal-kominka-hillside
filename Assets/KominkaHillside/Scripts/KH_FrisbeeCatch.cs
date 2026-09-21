@@ -770,9 +770,23 @@ namespace KominkaHillside
 
         // Tail shared by the catch / stand-catch lines (IMP-DOG-008 log format). Round 2 drops vTake (the takeoff
         // is always from a standstill) and pass (there is one scan).
+        // mouthLocal is the ONE number that separates the v4 twist hypotheses: the planner places the root so that
+        // root + rotation * _mouthCatch lands on the disc, while the decision measures the real mouthAnchor. If the
+        // clip's yaw reaches the runtime rig, mouthLocal == the facts; if it does not, it reads like the untwisted
+        // jump mouth; if the frame or a sign is wrong, it is the facts with a component negated. Measured the same
+        // way the clip editor measures the facts (rotation only, no scale), so the two are directly comparable.
         string VariantTail()
         {
-            return " v=" + variant + " entry=" + EntryAngle().ToString("F0");
+            Vector3 ml = Quaternion.Inverse(dogRoot.rotation) * (mouthAnchor.position - dogRoot.position);
+            // clipT = where the Animator actually is inside the jump clip. The plan puts the catch at
+            // clipCrouchDuration + clipRiseDuration (0.60 s for both clips) by construction, so a clipT that is
+            // not 0.60 means the pose is out of phase; a clipT of 0.60 with a mouth that is not the facts means
+            // the rig is not reproducing the authored pose. Those are different bugs in different files.
+            AnimatorStateInfo si = dogAnimator.GetCurrentAnimatorStateInfo(0);
+            return " v=" + variant + " entry=" + EntryAngle().ToString("F0")
+                + " mouthLocal=(" + ml.x.ToString("F3") + "," + ml.y.ToString("F3") + "," + ml.z.ToString("F3") + ")"
+                + " rootFwd=" + Vector3.Angle(dogRoot.forward, _forward).ToString("F0")
+                + " clipT=" + (si.normalizedTime * si.length).ToString("F3") + " animSpd=" + dogAnimator.speed.ToString("F2");
         }
 
         // Ground height under a point on the trajectory. The scan needs it per candidate (the disc may come down
@@ -824,10 +838,22 @@ namespace KominkaHillside
                 // swapping to a candidate it has not started for. The about-face IS required - it is the thing the
                 // dog was skipping - except on an overtake, which is caught facing the way it runs.
                 Vector3 toHeld = _standRoot - dogPos; toHeld.y = 0f;
-                float turnHeld = toHeld.magnitude > 0.05f ? Vector3.Angle(dogRoot.forward, toHeld) : 0f;
-                Vector3 approachHeld = toHeld.magnitude > 0.05f ? toHeld.normalized : dogRoot.forward;
+                float distHeld = toHeld.magnitude;
+                // Close in, the dog is not running anywhere: it shuffles centimetres and turns on the spot, so the
+                // cost of the plan is its heading residual, not a run plus a turn onto some target direction.
+                // Charging Angle(dog->spot, _forward) here read 180 deg for a dog standing just PAST the spot and
+                // cost 0.25 s + Eta, which dropped every stand catch onto the ground plan a moment before its
+                // window (ClientSim regression, Desktop 5-6 m/s throws: plan=3 slack=0.32 -> plan=2, 0 catches).
+                bool close = _holding || distHeld < HoldExitRadius;
+                float turnHeld = close ? 0f : Vector3.Angle(dogRoot.forward, toHeld);
+                Vector3 approachHeld = close ? dogRoot.forward : toHeld.normalized;
                 float faceHeld = _runningCatch ? 0f : Vector3.Angle(approachHeld, _forward);
-                if (Eta(toHeld.magnitude, turnHeld) + faceHeld / turnSpeedDegPerSec + _crouchReal + _tUp <= held + 0.05f)
+                // A plan the dog is already standing on is never given up. Success is decided by the catch window
+                // (stand catch) or by the 0.5 m gate at the crouch (jump) - not by a feasibility sum that can go
+                // negative while the dog is in exactly the right place.
+                bool committed = _holding && !_runningCatch && distHeld <= HoldEnterRadius
+                    && (_plan == PlanRun || _catchT - _tUp - _crouchReal - tNow <= 0.5f);
+                if (committed || Eta(distHeld, turnHeld) + faceHeld / turnSpeedDegPerSec + _crouchReal + _tUp <= held + 0.05f)
                 {
                     // Fine-tune while waiting: the catch time is fixed, the spot is re-derived from the prediction
                     // (the ground under the disc may read differently from where the dog now stands). Only a real
@@ -936,7 +962,9 @@ namespace KominkaHillside
                 _settledSince = -1f; _holding = false;   // a new plan means a new spot: the hold starts over
                 Debug.Log("[KH_FrisbeeCatch] plan=" + chosen + " run=" + (_runningCatch ? 1 : 0) + " catchT=" + _catchT.ToString("F2") + " rise=" + _rootRise.ToString("F2")
                     + " tUp=" + _tUp.ToString("F2") + " dist=" + Vector3.Distance(dogPos, chosen == PlanGround ? _landing : _standRoot).ToString("F1")
-                    + " slack=" + _planSlack.ToString("F2") + " entry=" + EntryAngle().ToString("F0") + " v=" + variant);
+                    + " slack=" + _planSlack.ToString("F2") + " entry=" + EntryAngle().ToString("F0") + " v=" + variant
+                    // Which pose facts this plan was aimed with: the twist set is the one under suspicion (v4).
+                    + (_twist ? " facts=(" + _mouthCatch.x.ToString("F3") + "," + _mouthCatch.y.ToString("F3") + "," + _mouthCatch.z.ToString("F3") + ")" : ""));
                 _loggedRunning = _runningCatch;
             }
             _plan = chosen;
