@@ -9,6 +9,8 @@ VRChat ワールド **「古民家の裏山」 (KominkaHillside)** — VAnimal �
 > 企画は後から受領した `docs/reference/VAnimal_KominkaHillside_Walking_Addendum.md` を優先する (ユーザー指定)。旧 `VAnimal_KominkaHillside_Concept.md` は履歴として保存し、編集しない。
 > 判断基準・ビジュアル方針は `docs/core-concept.md`、仕様・スコープは `docs/game-design.md`。
 
+制作の参照元と権利確認は [共通制作手順](.claude/skills/vrc-asset-production/references/source-rights.md) に従う。外部資料の入力・利用前、不明点の相談、採用・公開前の確認と記録が対象。主要部分は購入アセット、一般的な小物・演出素材はAI制作も使う。記録先は [AI_INDEX](docs/AI_INDEX.md#素材の確認記録)。
+
 **優先する体験 (並列。優劣なし)**: 山から古民家が見える / 犬と無理なく遊べる / 小さな空間でも散歩した感じがする。豪華さは草木の密度ではなく眺め・道・犬・つながりで作る。
 **PC に加え Quest 単体・iOS 対応を目指す** (実機で判断)。犬ギミックは古民家の確認済み実装をコピーして個別管理。同じ修正が繰り返される部分が見えたら共通化を検討する。散歩は片手最大 3 匹・合計最大 6 匹のリード接続を含む。
 

@@ -45,6 +45,8 @@ git tag m1-<内容>
 
 ## アップロード前
 
+- [ ] [共通制作手順](../../.claude/skills/vrc-asset-production/references/source-rights.md) に従い、新規・変更素材の対象版・用途・記録・クレジット・未解決事項を照合する
+
 - [ ] コンソールにエラーが無い
 - [ ] シーンが保存されている
 - [ ] `node scripts/check-doc-links.js` と `node scripts/check-issues.js` が通る
