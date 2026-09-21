@@ -478,6 +478,10 @@ namespace KominkaDogRun
         int _restCount;           // 何度目の休憩か (乱数のストリーム。犬ごとに seedSalt が混ざる)
         bool _wantLieDown;        // 今フレーム伏せていたいか。**下ろしてから立てる**
         bool _wasLieDown;         // Animator へ書いた値 (変化したときだけ書く)
+        // IMP-DOG-010: 立ち寄り先で「座って眺める」。伏せと同じ作法 (下ろしてから立てる / 書くのは LateUpdate)。
+        // 伏せは「歩き続けると起こされる」ので立ち寄りでは使わない — 座るはその代わり
+        bool _wantSit;            // 今フレーム座っていたいか
+        bool _wasSit;             // Animator へ書いた値 (変化したときだけ書く)
         int _restPhase;           // RestPhase* (水場へ → 飲む → 伏せる)
         float _idleLieSince = -1f; // IMP-DOG-016: 窓の外で足が止まった時刻 (-1 = 動いている)
         float _drinkUntil;        // 飲み終わる時刻
@@ -1296,6 +1300,8 @@ namespace KominkaDogRun
             // IMP-DOG-014: 伏せも同じ作法。**どの早期 return を通っても伏せが残らない**
             // (Animator への書き込みは LateUpdate が 1 箇所で面倒を見る)
             _wantLieDown = false;
+            // IMP-DOG-010: 座るも同じ作法 (立ち寄りの枝だけが立てる。伏せとは同時に立たない)
+            _wantSit = false;
             // IMP-DOG-019: そばで寝るも同じ作法。**寝る枝だけが立てる**
             // (伏せ (LieDown) と同時に立てない — Bool は一度に 1 つの規約)
             _wantSleep = false;
@@ -1735,6 +1741,15 @@ namespace KominkaDogRun
             {
                 _wasLieDown = _wantLieDown;
                 dogAnimator.SetBool("LieDown", _wantLieDown);
+            }
+
+            // ---- IMP-DOG-010: 座る (立ち寄り先で眺める) を Animator へ書く ----
+            // **伏せと同じ 1 箇所主義。** 座る枝は _wantLieDown / _wantSleep を立てないので、
+            // 2 つの Bool が同時に立つことはない。LookAt / Pickup は ApplyMoveAnim 側が抑える
+            if (dogAnimator != null && _wantSit != _wasSit)
+            {
+                _wasSit = _wantSit;
+                dogAnimator.SetBool("Sit", _wantSit);
             }
 
             // ---- IMP-DOG-019 Phase 2: そばで寝るを Animator へ書く ----

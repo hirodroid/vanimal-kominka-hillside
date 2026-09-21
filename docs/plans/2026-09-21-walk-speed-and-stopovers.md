@@ -69,7 +69,21 @@ Fable = 司令塔 (設計・ゲート・Unity メニュー・コミット)、Opu
 
 ## 実装記録
 
-(Wave ごとに追記)
+### Wave 1 (2026-09-21、コミット 3a94a9f)
+
+- 1-A: `KH_LeashManager.dashSpeed 4.5 / sprintSpeed 7.2` (`followSpeed` は Build の `RemoveVariable` で除去)、`KD_DogWanderController.runAnimScaleMax 2.5` (Build が所有)、人の速度 EMA とヒステリシス、先行保持、`ApplyMoveAnim` の `Animator.speed`、`ReleaseAnimatorSpeed()` (Fetch/Frisbee へ譲るとき・解除時・Update の早期 return で speed を戻す。読み戻して自分の値のときだけ 1 へ)、`LeashGo` の角度減速。Console: `[KH_Leash] dog{i} Return handDist=… holderSpeed=…` / `holder tier a->b`。
+- 1-B: `KH_WalkStopovers` + `Walking/4d Build Stopovers` / `4e Verify Stopovers`。子 `KH_Dogs/KH_Stopovers/StopNN_{Sniff|Sit}` (+ 任意の `Look` 子) を人が動かし、配列は名前順で再生成。初回 3 か所: `Stop00_Sit` (ベンチ脇、古民家を見る) / `Stop01_Sniff` (Node07 の道端。木の根元の候補が無くフォールバック) / `Stop02_Sniff` (Node02 の道端)。
+- 検査: Walking Verify 176/176、Stopovers Verify 45/45、Console エラー 0。Play 未。
+- Codex コードレビュー (D/M) 指摘 / 対応:
+
+| # | 指摘 | 対応 |
+|---|---|---|
+| D 中 | 解除と Fetch 開始が重なると Run の再生倍率が残る (Fetch は speed を書かない) | `ReleaseAnimatorSpeed()` を Update の Fetch/Frisbee 早期 return と解除経路からも呼ぶ |
+| D 中 | yield 時の speed=1 が Frisbee の書いた値を上書きし得る | 読み戻して自分の書いた値のときだけ 1 へ戻す |
+| D 中 | 4e が配列不整合で例外終了 | 全配列の形を先に検査し、揃ったときだけループ。backing も全要素照合 |
+| D 低 | `SaveOpenScenes` が他のシーンも保存 | `SaveScene(scene)` に限定 |
+| M 中 | `runAnimScaleMax` の所有者が無い (Verify は ==2.5) | Build が各犬に既定値を書く |
+| M 低 | Fetch と Frisbee の責務のコメント誤り、「Play 確定値」の文言 | コメント修正、「試作値を Build/Verify で固定」に |
 
 ## Play チェックリスト (ユーザー担当)
 

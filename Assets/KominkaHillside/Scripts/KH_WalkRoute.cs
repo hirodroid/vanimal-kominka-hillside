@@ -64,5 +64,50 @@ namespace KominkaHillside
             }
             return best;
         }
+
+        // IMP-DOG-010: the same nearest segment as _DistanceToTrail, as a foot point and as a direction,
+        // so a dog can pick a spot measured from the trail centre instead of from wherever it happens to
+        // stand. Two plain returns rather than one call with out parameters (cheaper to trust in Udon);
+        // both rescan, which costs nothing at the rate these are called (once per 4 s roll).
+
+        // The nearest point on the trail centreline, at the trail's own height.
+        public Vector3 _ProjectToTrail(Vector3 p)
+        {
+            int i = NearestLink(p);
+            if (i < 0) return p;
+            Vector3 a = nodes[linkA[i]].position, b = nodes[linkB[i]].position;
+            Vector3 ab = b - a; ab.y = 0f;
+            Vector3 qa = p - a; qa.y = 0f;
+            float len = ab.sqrMagnitude;
+            float t = len < 0.0001f ? 0f : Mathf.Clamp01(Vector3.Dot(qa, ab) / len);
+            return a + (b - a) * t;
+        }
+
+        // Horizontal unit direction of that segment, linkA -> linkB. The caller decides the sign it wants.
+        public Vector3 _TrailDirection(Vector3 p)
+        {
+            int i = NearestLink(p);
+            if (i < 0) return Vector3.forward;
+            Vector3 d = nodes[linkB[i]].position - nodes[linkA[i]].position; d.y = 0f;
+            return d.sqrMagnitude < 0.0001f ? Vector3.forward : d.normalized;
+        }
+
+        private int NearestLink(Vector3 p)
+        {
+            if (linkA == null) return -1;
+            int best = -1; float bestDist = 1e6f;
+            Vector3 q = p; q.y = 0f;
+            for (int i = 0; i < linkA.Length; i++)
+            {
+                Vector3 a = nodes[linkA[i]].position, b = nodes[linkB[i]].position;
+                a.y = 0f; b.y = 0f;
+                Vector3 ab = b - a;
+                float len = ab.sqrMagnitude;
+                float t = len < 0.0001f ? 0f : Mathf.Clamp01(Vector3.Dot(q - a, ab) / len);
+                float d = Vector3.Distance(q, a + ab * t);
+                if (d < bestDist) { bestDist = d; best = i; }
+            }
+            return best;
+        }
     }
 }

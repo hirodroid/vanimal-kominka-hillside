@@ -71,6 +71,37 @@ namespace KominkaDogRun
         const float TurnSlowDeg = 60f;           // 体がこれだけ向き違うなら歩きまで落とす (横滑り対策)
         const float TurnEaseDeg = 30f;           // 中間は走りで頭打ち
 
+        // IMP-DOG-010: 寄り道が「分かる」ための状態。姿勢は全クライアントが位置から導出するので同期は増やさない。
+        private float _detourEnteredAt;     // 寄り道へ入った時刻 (到着の締切の起点)
+        private bool _sniffExtended;        // 延長を使ったか (1 回だけ)
+        private float _handDistPrev;        // 前フレームの手との距離 (人が離れていく向きかの判定)
+        private float _stoppedSince = -1f;  // 足が止まった時刻 (-1 = 動いている)。非 Owner も観測 _speed から持てる
+        private int _detourOk, _detourFail; // 行き先の候補が成立した / しなかった回数 (Console で成立率を見る)
+        /// <summary>この犬が最後に足を止め終わった時刻 (寄り道・立ち寄り)。**同じ人の犬どうしが読む** —
+        /// 次々と止まると散歩にならないので、群れ全体で静穏間隔を置く (Codex X4)。</summary>
+        [HideInInspector] public float lastPauseEnd = -1000f;
+
+        // ---- IMP-DOG-010 の仮値 (寄り道。どれも Play で決める。リード長 3 m で成立する幾何) ----
+        const float DetourAheadMin = 0.5f, DetourAheadMax = 2f;   // 手を道へ落とした点から道沿いに前へ
+        const float DetourSideMin = 1.8f, DetourSideMax = 2.3f;   // そこから道と直角に外す
+        const float DetourTrailMin = 1.6f;      // 道の中心線からこれだけ離れないと、進路の揺れ (±1.1 m) と区別できない
+        const float DetourHandMax = 0.8f;       // 手からリード長のこの倍率まで (寄り道の途中で紐が張らない)
+        const float DetourPathMax = 5f;         // 行き先までの経路長の上限
+        const float DetourArrive = 0.35f;       // ここまで近づいたら着いたとみなす
+        const float DetourTrigger = 0.75f;      // 発生を許すリード長の倍率 (先行していても起きる)
+        const float DetourRollInterval = 4f;    // 抽選の間隔 (s)
+        const float DetourQuiet = 12f;          // 同じ人の犬すべてに掛かる静穏間隔 (s)
+        const float DetourModeCap = 12f;        // 寄り道 1 回の上限 (s)
+        const float DetourReachCap = 6f;        // ここまでに着けなければ諦める (s)
+        const float DetourBreakLeash = 0.8f;    // 人が離れていくとき切り上げるリード長の倍率
+        const float SniffMin = 3f, SniffMax = 5f;      // 嗅ぐ時間 (s)。人が気づいて足を止められる長さ
+        const float SniffExtend = 5f;                  // 付き合ってくれたときの延長 (1 回だけ)
+        const float SniffExtendLeash = 0.95f;          // 延長を許すリード長の倍率
+        const float SniffFaceToleranceDeg = 15f;       // 向き切ってから頭を下げる (Rest の飲む枝より厳しめ)
+        const float SniffFaceMinDist = 0.25f;          // これより近い行き先は「もう向いている」とみなす
+        const float PoseStoppedFor = 0.5f;      // 姿勢の導出: これだけ連続で止まっていること
+        const float PoseHandMin = 1.2f;         // 姿勢の導出: 手からこれだけ離れていること
+
         public void _InvalidateLeashAnimation() { _leashAnimationDirty = true; }
         private bool _leashAnimationDirty;
 
@@ -97,6 +128,7 @@ namespace KominkaDogRun
                 _leashAnimationDirty = true; _routeNext = -1; _routeDest = -1; _inviteCount = 0; _nextInviteAt = 0f;
                 _holderMovedAt = Time.time; _nextHolderSample = 0f; _holderOffTrail = false; _arrived = false; leashMode = LeashWalk;
                 ResetHolderSpeed(); _holderTracked = hillsideLeashes.walkers[dogIndex]; _leashYielded = false;
+                ResetLeashDecisions();
             }
             _wasLeashed = true;
             // Fetch cancels on its own owner tick. Never write the root concurrently with it.
@@ -119,12 +151,18 @@ namespace KominkaDogRun
             if (_dogOwner)
             {
                 int holderId = hillsideLeashes.walkers[dogIndex];
-                if (!_wasDogOwner || holderId != _holderTracked) { _holderTracked = holderId; ResetHolderSpeed(); }
+                // A client that has just taken the dog over did not make the decision that is in progress
+                // and has no history behind it, so it starts the walk from scratch (Codex D1).
+                if (!_wasDogOwner || holderId != _holderTracked)
+                { _holderTracked = holderId; ResetHolderSpeed(); ResetLeashDecisions(); }
                 TrackHolderSpeed(holderPos);
             }
             _wasDogOwner = _dogOwner;
             Vector3 toHand = handPos - dogRoot.position; toHand.y = 0f;
             float handDist = toHand.magnitude;
+            // Is the hand pulling away from the dog this frame? (the detour reads it to know when to look up)
+            bool handOpening = handDist > _handDistPrev;
+            _handDistPrev = handDist;
             float leash = hillsideLeashes.leashLength;
             int destNode = hillsideLeashes._DestinationNode(dogIndex);
             KominkaHillside.KH_WalkRoute route = hillsideLeashes.route;
@@ -147,7 +185,7 @@ namespace KominkaDogRun
             float stillFor = Time.time - _holderMovedAt;
             float restAfter = (_arrived ? 20f : hillsideLeashes.inviteAfter + hillsideLeashes.inviteInterval * hillsideLeashes.inviteLimit) + dogIndex * 2f;
             bool settling = stillFor > restAfter && handDist < 2.2f;
-            LeashPose(holder, toHand, handDist, settling);
+            LeashPose(holder, toHand, handDist, handPos, route, settling);
             if (!_dogOwner) { ApplyMoveAnim(); return true; }
 
             // 1. Stretched too far: come back to the hand (run), teleport only after a real separation.
@@ -229,23 +267,54 @@ namespace KominkaDogRun
                 return true;
             }
 
-            // 6. Detour: with slack on the leash, sniff a spot beside the trail, then carry on.
+            // 6. Detour: leave the trail for the verge, sniff there, and pick the walk up again.
+            //    The dog must visibly step off the path, stay long enough for the holder to notice, and
+            //    look up by itself when the holder walks on (never be dragged off the spot).
             if (leashMode == LeashDetour)
             {
-                if (handDist > leash * 0.9f || Time.time > _modeUntil) leashMode = LeashWalk;
-                else if (Horizontal(dogRoot.position, _detourPoint) > 0.35f && _sniffUntil <= 0f) { LeashGo(_detourPoint, walkSpeed, 0.1f); return true; }
+                // 切り上げ: 紐が伸びていて、人が歩いていて、さらに離れていく向きのときだけ。
+                // 固定の待ち時間は置かない — ポーズは足が動いた時点で ApplyMoveAnim が下ろす (Codex X2/D1)
+                bool leaving = handDist >= leash * DetourBreakLeash && HolderMoving() && handOpening;
+                bool tooSlow = _sniffUntil <= 0f && Time.time > _detourEnteredAt + DetourReachCap;
+                if (leaving || tooSlow || Time.time > _modeUntil) EndDetour();
+                else if (Horizontal(dogRoot.position, _detourPoint) > DetourArrive && _sniffUntil <= 0f)
+                { LeashGo(_detourPoint, walkSpeed, 0.1f); return true; }
                 else
                 {
-                    if (_sniffUntil <= 0f) _sniffUntil = Time.time + 1.5f + Rand01((int)Time.time, 4211) * 1.5f;
                     Coast();
-                    if (Time.time >= _sniffUntil) leashMode = LeashWalk; else return true;
+                    // **向き切ってから頭を下げる** (Rest の飲む枝と同じ作法)。着いた瞬間に立てると
+                    // 嗅ぐ先を横目に見たまま止まる。ただし鼻先の数 cm のために回らない —
+                    // 行き過ぎた犬がその場で 180° 回ると 30 deg/s では到着の締切を食い潰す
+                    Vector3 want = _detourPoint - dogRoot.position; want.y = 0f;
+                    bool facing = want.sqrMagnitude <= SniffFaceMinDist * SniffFaceMinDist
+                        || Vector3.Angle(dogRoot.forward, want) <= SniffFaceToleranceDeg;
+                    if (!facing) { FaceTowards(_detourPoint); return true; }
+                    if (_speed > stopSpeedThreshold) return true;   // 止まり切ってから数え始める
+                    if (_sniffUntil <= 0f)
+                        _sniffUntil = Time.time + SniffMin + Rand01((int)Time.time, 4211) * (SniffMax - SniffMin);
+                    else if (Time.time >= _sniffUntil)
+                    {
+                        // 人が足を止めて付き合ってくれたなら 1 回だけ延長する
+                        if (!_sniffExtended && !HolderMoving() && handDist <= leash * SniffExtendLeash)
+                        { _sniffExtended = true; _sniffUntil = Time.time + SniffExtend; }
+                        else EndDetour();
+                    }
+                    if (leashMode == LeashDetour) return true;
                 }
             }
-            else if (leashMode == LeashWalk && handDist < leash * 0.5f && Time.time >= _nextDetourRoll)
+            else if (leashMode == LeashWalk && handDist < leash * DetourTrigger && HolderMoving()
+                && Time.time >= _nextDetourRoll)
             {
-                _nextDetourRoll = Time.time + 4f;
-                if (Rand01((int)Time.time, 4201) < hillsideLeashes.detourChance && PickDetour(nodePos, handPos, leash))
-                { leashMode = LeashDetour; _modeUntil = Time.time + 8f; _sniffUntil = 0f; return true; }
+                _nextDetourRoll = Time.time + DetourRollInterval;
+                // 犬ごとの差は値だけで作る (行動の種類は増やさない)
+                float chance = hillsideLeashes.detourChance * (0.7f + 0.2f * (dogIndex % 4));
+                if (Rand01((int)Time.time, 4201) < chance && !SiblingPausedRecently()
+                    && PickDetour(nodePos, handPos, leash, route))
+                {
+                    leashMode = LeashDetour; _detourEnteredAt = Time.time;
+                    _modeUntil = Time.time + DetourModeCap; _sniffUntil = 0f; _sniffExtended = false;
+                    return true;
+                }
             }
 
             // 7. Lead toward the next node; stop at the end of the leash when ahead of the holder.
@@ -281,14 +350,35 @@ namespace KominkaDogRun
             return true;
         }
 
-        // Every client: LookAt when stopped facing the holder, LieDown when settling. Both derive from
-        // synced facts only, so nobody sees a pose the Owner did not choose.
-        private void LeashPose(VRCPlayerApi holder, Vector3 toHand, float handDist, bool settling)
+        // Every client: LookAt when stopped facing the holder, LieDown when settling, and the sniff pose
+        // (Pickup, IMP-DOG-010) when the dog stands still out on the verge. All three derive from facts
+        // every client already has — the dog's position/rotation through VRCObjectSync, the holder's own
+        // position, the static trail — so nobody sees a pose the Owner did not choose and no synced
+        // variable is added. **The Owner uses the same derivation**, not leashMode, so the screens cannot
+        // disagree about which pose is up; the cost is that the pose follows the position updates rather
+        // than the decision (an approximate display was chosen over another synced variable, Codex D1).
+        // Bool は一度に 1 つ (設計書 §5): 伏せ > 嗅ぐ > 対面 の順で 1 つだけ立てて抜ける。
+        private void LeashPose(VRCPlayerApi holder, Vector3 toHand, float handDist, Vector3 handPos,
+            KominkaHillside.KH_WalkRoute route, bool settling)
         {
             bool stopped = _speed <= stopSpeedThreshold;
+            // 「止まっている」ではなく「止まって何秒経ったか」で決める — 通過中のわずかな停止では立たない
+            if (!stopped) _stoppedSince = -1f;
+            else if (_stoppedSince < 0f) _stoppedSince = Time.time;
             if (settling && stopped) { _wantLieDown = true; return; }
+            if (!stopped) return;
+            // 嗅ぐ: 0.5 s 止まっていて、道の中心線から外れた所に居て、手からも離れていて、
+            // その手はまだ道の上 (= 人は散歩を続けている)。Fetch / フリスビー中はここへ来ない (上で return 済み)
+            if (route != null && _stoppedSince >= 0f && Time.time - _stoppedSince >= PoseStoppedFor
+                && handDist >= PoseHandMin
+                && route._DistanceToTrail(dogRoot.position) >= DetourTrailMin
+                && route._DistanceToTrail(handPos) < hillsideLeashes.trailOffDistance)
+            {
+                _eatPose = true; // ApplyMoveAnim が Animator の Pickup へ落とす (IMP-TRT-001 の流用)
+                return;
+            }
             Vector3 forward = dogRoot.forward; forward.y = 0f;
-            if (!stopped || handDist < 0.8f || Vector3.Angle(forward, toHand) > 40f) return;
+            if (handDist < 0.8f || Vector3.Angle(forward, toHand) > 40f) return;
             _look = true;
             if (petController == null) return;
             petController._SetGaze(holder.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position, 0f);
@@ -372,9 +462,11 @@ namespace KominkaDogRun
             // Pickup は Fetch がくわえポーズで自分で使う Bool。**こちらが立てた分だけ**下ろす
             if (_wasEatPose && dogAnimator != null) dogAnimator.SetBool("Pickup", false);
             _eatPose = false; _wasEatPose = false;
+            // Sit は散歩の側しか書かない Bool。立てたままだと座った犬がボールを追う
+            if (_wasSit && dogAnimator != null) dogAnimator.SetBool("Sit", false);
+            _wantSit = false; _wasSit = false;
             ReleaseAnimatorSpeed();
-            leashMode = LeashWalk;
-            _sniffUntil = 0f; _modeUntil = 0f; _detourPoint = dogRoot.position;
+            ResetLeashDecisions();
             ResetHolderSpeed();
         }
 
@@ -405,24 +497,92 @@ namespace KominkaDogRun
             return best >= 0 ? best : nearest;
         }
 
-        private bool PickDetour(Vector3 nodePos, Vector3 handPos, float leash)
+        /// <summary>Where to go and sniff. **Measured from the trail centreline, not from the dog**
+        /// (IMP-DOG-010 / Codex X1): the old point was a diagonal step from wherever the dog stood, which
+        /// stayed inside the path's own width and read as the walk wobbling. Here the hand is dropped onto
+        /// the centreline, a point 0.5-2.0 m further along the walk is taken, and the verge is reached by
+        /// stepping perpendicular 1.8-2.3 m — far enough to read as "off the path", close enough that a
+        /// 3 m leash still reaches. The side the dog is already on is tried first so it does not cross in
+        /// front of the holder; the other side is the fallback.</summary>
+        private bool PickDetour(Vector3 nodePos, Vector3 handPos, float leash, KominkaHillside.KH_WalkRoute route)
         {
-            Vector3 dir = nodePos - dogRoot.position; dir.y = 0f;
-            if (dir.sqrMagnitude < 0.01f) return false;
-            dir.Normalize();
-            float side = Rand01((int)Time.time, 4231) < 0.5f ? -1f : 1f;
-            Vector3 cand = dogRoot.position + dir * (0.5f + Rand01((int)Time.time, 4241) * 1.5f)
-                + Vector3.Cross(Vector3.up, dir) * side * (1.5f + Rand01((int)Time.time, 4251) * 1.2f);
-            if (Horizontal(cand, handPos) > leash * 0.8f) return false;
-            NavMeshHit hit;
-            if (!NavMesh.SamplePosition(cand, out hit, 1f, NavMesh.AllAreas)) return false;
-            if (_leashPath == null) _leashPath = new NavMeshPath();
-            NavMeshHit from;
-            if (!NavMesh.SamplePosition(dogRoot.position, out from, 2f, NavMesh.AllAreas)) return false;
-            if (!NavMesh.CalculatePath(from.position, hit.position, NavMesh.AllAreas, _leashPath) || _leashPath.status != NavMeshPathStatus.PathComplete) return false;
-            if (PathLength(_leashPath) > 5f) return false;
-            _detourPoint = hit.position; _leashCorners = null; _nextLeashPath = 0f;
-            return true;
+            if (route == null) return false;
+            Vector3 onTrail = route._ProjectToTrail(handPos);
+            Vector3 dir = route._TrailDirection(handPos);
+            Vector3 toNode = nodePos - onTrail; toNode.y = 0f;
+            if (Vector3.Dot(dir, toNode) < 0f) dir = -dir; // 「前」は次の通過点の側
+            Vector3 basePoint = onTrail + dir * (DetourAheadMin
+                + Rand01((int)Time.time, 4241) * (DetourAheadMax - DetourAheadMin));
+            Vector3 perp = Vector3.Cross(Vector3.up, dir);
+            Vector3 toDog = dogRoot.position - basePoint; toDog.y = 0f;
+            float near = Vector3.Dot(perp, toDog) < 0f ? -1f : 1f;
+            float side = DetourSideMin + Rand01((int)Time.time, 4251) * (DetourSideMax - DetourSideMin);
+            if (TryDetour(basePoint + perp * (near * side), handPos, leash, route)) return true;
+            return TryDetour(basePoint - perp * (near * side), handPos, leash, route);
+        }
+
+        // One candidate: off the trail, within reach of the hand, on the NavMesh and actually walkable to.
+        // The NavMesh may shove the sample back onto the path, so the distance is re-checked after it.
+        private bool TryDetour(Vector3 cand, Vector3 handPos, float leash, KominkaHillside.KH_WalkRoute route)
+        {
+            bool ok = false;
+            NavMeshHit hit, from;
+            if (route._DistanceToTrail(cand) >= DetourTrailMin
+                && Horizontal(cand, handPos) <= leash * DetourHandMax
+                && NavMesh.SamplePosition(cand, out hit, 1f, NavMesh.AllAreas)
+                && route._DistanceToTrail(hit.position) >= DetourTrailMin
+                && Horizontal(hit.position, handPos) <= leash * DetourHandMax
+                && NavMesh.SamplePosition(dogRoot.position, out from, 2f, NavMesh.AllAreas))
+            {
+                if (_leashPath == null) _leashPath = new NavMeshPath();
+                if (NavMesh.CalculatePath(from.position, hit.position, NavMesh.AllAreas, _leashPath)
+                    && _leashPath.status == NavMeshPathStatus.PathComplete
+                    && PathLength(_leashPath) <= DetourPathMax)
+                {
+                    _detourPoint = hit.position; _leashCorners = null; _nextLeashPath = 0f;
+                    ok = true;
+                }
+            }
+            // Codex: the geometry has to be shown to work on the real hillside, not argued about.
+            // Owner only (this is only reached from the Owner's roll); one line per 10 candidates.
+            if (ok) _detourOk++; else _detourFail++;
+            if ((_detourOk + _detourFail) % 10 == 0)
+                Debug.Log("[KH_Leash] dog" + dogIndex + " detour candidates ok=" + _detourOk + " fail=" + _detourFail);
+            return ok;
+        }
+
+        // Every exit from the detour comes through here, so the quiet interval always starts when the dog
+        // lifts its head - whatever ended it (Wave 3's stopovers will stamp the same field).
+        private void EndDetour()
+        {
+            leashMode = LeashWalk;
+            _sniffUntil = 0f; _sniffExtended = false;
+            lastPauseEnd = Time.time;
+            _nextDetourRoll = Time.time + DetourRollInterval;
+        }
+
+        // Codex X4: one holder's dogs stopping one after another is not a walk any more. The quiet interval
+        // covers this dog too, so it is also the per-dog cooldown.
+        private bool SiblingPausedRecently()
+        {
+            if (pack == null || pack.dogWander == null) return false;
+            for (int i = 0; i < pack.dogWander.Length; i++)
+            {
+                if (pack.dogWander[i] == null) continue;
+                if (hillsideLeashes.walkers[i] != hillsideLeashes.walkers[dogIndex]) continue;
+                if (Time.time - pack.dogWander[i].lastPauseEnd < DetourQuiet) return true;
+            }
+            return false;
+        }
+
+        // Anything the Owner alone was deciding: dropped on attach and when this client takes the dog over.
+        private void ResetLeashDecisions()
+        {
+            if (leashMode == LeashDetour) leashMode = LeashWalk;
+            _sniffUntil = 0f; _sniffExtended = false; _modeUntil = 0f;
+            _detourPoint = dogRoot.position; _detourEnteredAt = Time.time;
+            _stoppedSince = -1f; _handDistPrev = 0f;
+            _nextDetourRoll = Time.time + DetourRollInterval;
         }
 
         private bool SiblingInviting()

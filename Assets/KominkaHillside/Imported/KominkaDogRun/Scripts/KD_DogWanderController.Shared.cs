@@ -357,6 +357,9 @@ namespace KominkaDogRun
             // (設計書 §5) — ポーズが立つフレームは LookAt を諦める
             bool eatPose = _eatPose && !moving;
             if (eatPose) look = false;
+            // IMP-DOG-010: 座っているフレームは座りが勝つ (Bool は一度に 1 つ)。
+            // Sit そのものを書くのは LateUpdate の 1 箇所
+            if (_wantSit) { look = false; eatPose = false; }
 
             // IMP-DOG-009: 走りクリップの再生速度を実速度へ追従させる (KH_FrisbeeCatch.ApplyAnimatorSpeed と同じ方針)。
             // 散歩の速い段 (走り 4.5 / 全力 7.2) は runSpeed の数倍なので、掛けないと足が地面を滑る。
