@@ -114,6 +114,7 @@ namespace KominkaHillside.Editor
         static void BuildInto(Scene scene)
         {
             var facts = ReadFacts();
+            var twistFacts = ReadFacts("Twist");
 
             // World: descriptor, spawn, flat ground, one wall for the "hits a wall" case.
             var world = Obj("KH_FrisbeeWorld");
@@ -159,7 +160,7 @@ namespace KominkaHillside.Editor
             var disc = BuildDisc(props.transform, "KH_Frisbee", "KH_FrisbeeDisc", new Color(1f, .5f, .15f), out discCreated);
             disc.transform.position = muzzle.position; disc.transform.rotation = Quaternion.identity; // prototype: always on the stand
             var catcher = Add<KH_FrisbeeCatch>(Obj("KH_FrisbeeCatch_Lab", dogs.transform), true);
-            ConfigureCatcher(catcher, disc, dogT, animator, mouth, facts);
+            ConfigureCatcher(catcher, disc, dogT, animator, mouth, facts, twistFacts);
             var launcher = Add<KH_FrisbeeLauncher>(stand); launcher.frisbee = disc; launcher.catcher = catcher; launcher.muzzle = muzzle; launcher.recallOnly = false;
             UdonSharpEditorUtility.GetBackingUdonBehaviour(launcher).InteractionText = "Throw (fixed)";
             var recaller = Add<KH_FrisbeeLauncher>(recall); recaller.frisbee = disc; recaller.catcher = catcher; recaller.muzzle = muzzle; recaller.recallOnly = true;
@@ -247,28 +248,36 @@ namespace KominkaHillside.Editor
             return disc;
         }
 
-        // Pose facts (from the clip JSON) and the code-owned tuning; neighbours / play area are the caller's.
-        public static void ConfigureCatcher(KH_FrisbeeCatch catcher, KH_Frisbee disc, Transform dogRoot, Animator animator, Transform mouth, Facts facts)
+        // Pose facts (from both clip JSONs) and the code-owned tuning; neighbours / play area are the caller's.
+        public static void ConfigureCatcher(KH_FrisbeeCatch catcher, KH_Frisbee disc, Transform dogRoot, Animator animator, Transform mouth, Facts facts, Facts twist)
         {
             catcher.dogRoot = dogRoot; catcher.dogAnimator = animator; catcher.mouthAnchor = mouth; catcher.frisbee = disc;
             catcher.mouthOffsetCatch = facts.mouthOffsetCatch; catcher.mouthOffsetStand = facts.mouthOffsetStand;
             catcher.clipCrouchDuration = facts.crouch; catcher.clipRiseDuration = facts.rise; catcher.clipRecoverDuration = facts.recover;
+            // IMP-DOG-008 v4: the twist clip's own facts. The standing mouth is shared (both clips start from idle).
+            catcher.mouthOffsetCatchTwist = twist.mouthOffsetCatch;
+            catcher.clipCrouchDurationTwist = twist.crouch; catcher.clipRiseDurationTwist = twist.rise; catcher.clipRecoverDurationTwist = twist.recover;
             catcher.groundLayerMask = (1 << 0) | (1 << 11);
             catcher.takeoffSpeed = 2.5f; catcher.chaseRunSpeed = 4.5f; catcher.standoffDistance = 8f; // code-owned, same rule as the flight model
             catcher.variant = KH_FrisbeeCatch.VariantNormal; catcher.pendingVariant = -1; // code-owned: every instance starts on the baseline
             catcher.playAreaMargin = 0f; // the ring the holder sees is exactly the acceptance circle (Codex P)
             // Inspector tuning survives a rebuild, except the one value the clip dictates: the smallest rise
             // must keep clip playback at or below 1.8x (review D2), so an older scene value is raised here.
-            float riseFloor = 0.5f * disc.gravity * Mathf.Pow(facts.rise / 1.8f, 2f);
+            // Both clips play from the same minRootRise, so the floor follows the longer rise (Codex P: the
+            // floor is a height, computed from the clip's rise TIME).
+            float riseFloor = 0.5f * disc.gravity * Mathf.Pow(Mathf.Max(facts.rise, twist.rise) / 1.8f, 2f);
             if (catcher.minRootRise < riseFloor) catcher.minRootRise = Mathf.Ceil(riseFloor * 100f) / 100f;
             disc.catcher = catcher;
         }
 
         public struct Facts { public Vector3 mouthOffsetCatch, mouthOffsetStand; public float crouch, rise, recover, clipLength; }
 
-        public static Facts ReadFacts()
+        public static Facts ReadFacts() { return ReadFacts("Jump"); }
+
+        // One clip variant's facts (KH_FrisbeeJumpClipEditor.Variants(): "Jump", "Twist").
+        public static Facts ReadFacts(string name)
         {
-            string path = KH_FrisbeeJumpClipEditor.FactsPath;
+            string path = KH_FrisbeeJumpClipEditor.FactsPathFor(name);
             if (!File.Exists(path)) throw new InvalidOperationException("Run 2 Build Jump Clip first (" + path + ")");
             string s = File.ReadAllText(path);
             Vector3 Vec(string key)
@@ -303,7 +312,24 @@ namespace KominkaHillside.Editor
             var jump = ac == null ? null : ac.layers[0].stateMachine.states.Select(s => s.state).FirstOrDefault(s => s.name == "Jump");
             Check(jump != null && jump.motion == clip, "controller Jump state uses the clip");
             Check(ac != null && ac.layers[0].stateMachine.anyStateTransitions.Any(t => t.destinationState == jump && !t.canTransitionToSelf), "AnyState -> Jump (no self transition)");
-            Check(jump != null && jump.transitions.Length == 3, "Jump exits to Run/Walk/Idle");
+            // Counting three exits is not enough: they must lead back to the three locomotion states by name, or a
+            // clip could exit into itself and never hand the dog back (Codex M).
+            Func<AnimatorState, bool> exitsToLocomotion = s => s != null && s.transitions.Length == 3
+                && new[] { "Run", "Walk", "Idle" }.All(n => s.transitions.Any(t => t.destinationState != null && t.destinationState.name == n));
+            Check(exitsToLocomotion(jump), "Jump exits to Run/Walk/Idle (by name)");
+            // IMP-DOG-008 v4: the twist clip is the second member of the clip family and gets the same treatment.
+            var twistVariant = KH_FrisbeeJumpClipEditor.Variants().FirstOrDefault(v => v.name == "Twist");
+            var twistClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPathFor("Twist"));
+            Check(twistClip != null, "twist clip exists " + KH_FrisbeeJumpClipEditor.ClipPathFor("Twist"));
+            Check(twistClip != null && Mathf.Abs(twistClip.length - twistVariant.EndAt) < 0.02f, "twist clip length " + (twistClip == null ? "-" : twistClip.length.ToString("F3")) + " == " + twistVariant.EndAt.ToString("F3"));
+            Check(ac != null && ac.parameters.Any(p => p.name == "Twist" && p.type == AnimatorControllerParameterType.Bool), "controller has Bool Twist");
+            var twistState = ac == null ? null : ac.layers[0].stateMachine.states.Select(s => s.state).FirstOrDefault(s => s.name == "Twist");
+            Check(twistState != null && twistState.motion == twistClip, "controller Twist state uses the twist clip");
+            Check(ac != null && ac.layers[0].stateMachine.anyStateTransitions.Any(t => t.destinationState == twistState && !t.canTransitionToSelf), "AnyState -> Twist (no self transition)");
+            Check(exitsToLocomotion(twistState), "Twist exits to Run/Walk/Idle (by name)");
+            // The curving preset is a right bend of a sane size: 0 would make v5 the same as v0, and beyond 0.5 1/m
+            // a 7.5 m/s throw leaves the plaza sideways.
+            Check(KH_FrisbeeCatch.CurveDefault > 0f && KH_FrisbeeCatch.CurveDefault <= 0.5f, "flight curve default " + KH_FrisbeeCatch.CurveDefault.ToString("F2") + " in (0, 0.5] 1/m");
             if (clip != null)
             {
                 Check(Mathf.Abs(clip.length - KH_FrisbeeJumpClipEditor.EndAt) < 0.02f, "clip length " + clip.length.ToString("F3") + " == " + KH_FrisbeeJumpClipEditor.EndAt.ToString("F3"));
@@ -345,6 +371,25 @@ namespace KominkaHillside.Editor
                             minAir = KH_FrisbeeJumpClipEditor.BodyBounds(dog).min.y;
                             log.AppendLine("INFO catch-frame lowest body point y=" + minAir.ToString("F3") + " (airborne; the root arc adds the rise)");
                         }
+                        // Every other member of the clip family gets the same mouth-vs-JSON comparison, on the same
+                        // dog (Codex M): a twist clip rebuilt without rewriting its facts must fail here.
+                        foreach (var cv in KH_FrisbeeJumpClipEditor.Variants())
+                        {
+                            if (cv.name == "Jump") continue;   // covered above, with the full pose checks
+                            var vClip = AssetDatabase.LoadAssetAtPath<AnimationClip>(cv.ClipPath);
+                            Vector3 vMouth = Vector3.zero; bool vOk = false;
+                            if (vClip != null)
+                            {
+                                vClip.SampleAnimation(dog, cv.CatchAt); KH_DogRig.ApplyConstraints(dog);
+                                var vRig = KH_DogRig.Resolve(dog, KH_FrisbeeJumpClipEditor.MouthAnchorName);
+                                if (vRig.Ok)
+                                {
+                                    vMouth = vRig.mouthAnchor.position - dog.transform.position;
+                                    vOk = Vector3.Distance(vMouth, ReadFacts(cv.name).mouthOffsetCatch) < 0.005f;
+                                }
+                            }
+                            Check(vOk, "facts mouthOffsetCatch matches the " + cv.name + " clip (" + vMouth.ToString("F3") + ")");
+                        }
                     }
                     finally { UnityEngine.Object.DestroyImmediate(dog); }
                 }
@@ -370,7 +415,13 @@ namespace KominkaHillside.Editor
                     Check(Vector3.Distance(catcher.mouthOffsetCatch, sceneFacts.mouthOffsetCatch) < 1e-4f && Vector3.Distance(catcher.mouthOffsetStand, sceneFacts.mouthOffsetStand) < 1e-4f
                         && Mathf.Abs(catcher.clipCrouchDuration - sceneFacts.crouch) < 1e-4f && Mathf.Abs(catcher.clipRiseDuration - sceneFacts.rise) < 1e-4f && Mathf.Abs(catcher.clipRecoverDuration - sceneFacts.recover) < 1e-4f,
                         "catcher pose facts equal the clip JSON (rebuild the scene after the clip)");
-                    Check(catcher.minRootRise >= 0.5f * disc.gravity * Mathf.Pow(catcher.clipRiseDuration / 1.8f, 2f) - 1e-3f, "minRootRise keeps clip playback <= 1.8x (rise>=" + (0.5f * disc.gravity * Mathf.Pow(catcher.clipRiseDuration / 1.8f, 2f)).ToString("F3") + ")");
+                    var sceneTwist = ReadFacts("Twist");
+                    Check(Vector3.Distance(catcher.mouthOffsetCatchTwist, sceneTwist.mouthOffsetCatch) < 1e-4f
+                        && Mathf.Abs(catcher.clipCrouchDurationTwist - sceneTwist.crouch) < 1e-4f && Mathf.Abs(catcher.clipRiseDurationTwist - sceneTwist.rise) < 1e-4f && Mathf.Abs(catcher.clipRecoverDurationTwist - sceneTwist.recover) < 1e-4f,
+                        "catcher twist pose facts equal the twist clip JSON (mouth " + catcher.mouthOffsetCatchTwist.ToString("F3") + ")");
+                    // Both clips play at the same minRootRise, so the floor follows the longer rise time.
+                    float longestRise = Mathf.Max(catcher.clipRiseDuration, catcher.clipRiseDurationTwist);
+                    Check(catcher.minRootRise >= 0.5f * disc.gravity * Mathf.Pow(longestRise / 1.8f, 2f) - 1e-3f, "minRootRise keeps both clips' playback <= 1.8x (longest rise " + longestRise.ToString("F2") + " s -> rise>=" + (0.5f * disc.gravity * Mathf.Pow(longestRise / 1.8f, 2f)).ToString("F3") + ")");
                     Check(catcher.dogRoot != null && catcher.dogRoot.GetComponent<VRCObjectSync>() != null, "dog root has VRCObjectSync");
                     Check(catcher.dogAnimator != null && catcher.dogAnimator.runtimeAnimatorController == ac, "dog Animator uses AC_KD_Dog_Lab");
                     Check(catcher.dogRoot != null && catcher.dogRoot.GetComponentsInChildren<UdonBehaviour>(true).Length == 0, "dog subtree carries no world-scene behaviours");
@@ -384,9 +435,14 @@ namespace KominkaHillside.Editor
                     Check(backing.publicVariables.TryGetVariableValue("dogRoot", out Transform bd) && bd == catcher.dogRoot, "backing heap holds dogRoot");
                     Check(backing.publicVariables.TryGetVariableValue("mouthOffsetCatch", out Vector3 bm) && bm == catcher.mouthOffsetCatch, "backing heap holds mouthOffsetCatch");
                     Check(backing.publicVariables.TryGetVariableValue("clipRiseDuration", out float br) && Mathf.Abs(br - catcher.clipRiseDuration) < 1e-5f, "backing heap holds clipRiseDuration");
+                    Check(backing.publicVariables.TryGetVariableValue("mouthOffsetCatchTwist", out Vector3 bmt) && bmt == catcher.mouthOffsetCatchTwist
+                        && backing.publicVariables.TryGetVariableValue("clipCrouchDurationTwist", out float bct) && Mathf.Abs(bct - catcher.clipCrouchDurationTwist) < 1e-5f
+                        && backing.publicVariables.TryGetVariableValue("clipRiseDurationTwist", out float brt) && Mathf.Abs(brt - catcher.clipRiseDurationTwist) < 1e-5f
+                        && backing.publicVariables.TryGetVariableValue("clipRecoverDurationTwist", out float bvt) && Mathf.Abs(bvt - catcher.clipRecoverDurationTwist) < 1e-5f, "backing heap holds the twist pose facts");
                     // IMP-DOG-008: the switch starts on the baseline and the run-in preset fits this dog and this disc.
                     Check(catcher.variant == KH_FrisbeeCatch.VariantNormal && catcher.pendingVariant == -1, "catcher starts on variant Normal with nothing queued");
-                    Check(backing.publicVariables.TryGetVariableValue("variant", out int bvar) && bvar == KH_FrisbeeCatch.VariantNormal, "backing heap holds variant 0");
+                    Check(backing.publicVariables.TryGetVariableValue("variant", out int bvar) && bvar == KH_FrisbeeCatch.VariantNormal
+                        && backing.publicVariables.TryGetVariableValue("pendingVariant", out int bpend) && bpend == -1, "backing heap holds variant 0 with nothing queued");
                     Check(KH_FrisbeeCatch.RunInTakeoff <= catcher.chaseRunSpeed, "run-in takeoff " + KH_FrisbeeCatch.RunInTakeoff.ToString("F2") + " <= chaseRunSpeed " + catcher.chaseRunSpeed.ToString("F2"));
                     Check(catcher.minRootRise <= KH_FrisbeeCatch.RunInPreferMaxRise && KH_FrisbeeCatch.RunInPreferMaxRise <= catcher.maxRootRise,
                         "run-in preferred rise " + KH_FrisbeeCatch.RunInPreferMaxRise.ToString("F2") + " inside [" + catcher.minRootRise.ToString("F2") + ", " + catcher.maxRootRise.ToString("F2") + "]");
@@ -401,21 +457,30 @@ namespace KominkaHillside.Editor
                     Check(desc != null && desc.NetworkIDCollection.All(x => x.gameObject != null), "no dangling NetworkIDs");
                     // Closed-form flight against a small-step integration of the same model (the honest check that
                     // prediction == flight is by construction: KH_Frisbee.Update steps _PositionAt with the same facts).
-                    float maxErr = 0f;
+                    // The curving preset (v5) is part of the same model, so the integrator carries the sideways
+                    // acceleration too and the check runs straight, right-curving and left-curving throws.
+                    float maxErr = 0f; float maxDrift = 0f;
                     var p0 = new Vector3(0f, 1.3f, 0f);
+                    foreach (float curve in new[] { 0f, KH_FrisbeeCatch.CurveDefault, -KH_FrisbeeCatch.CurveDefault })
                     foreach (var v0 in new[] { new Vector3(0f, 1.2f, 8f), new Vector3(3f, 0.4f, 10.5f), new Vector3(0f, 2.5f, 4f) })
                     {
                         Vector3 p = p0, v = v0; float dt = 0.0002f;
                         float vh2 = Mathf.Min(v0.x * v0.x + v0.z * v0.z, disc.liftCap * disc.gravity / disc.lift);
+                        Vector3 flat = new Vector3(v0.x, 0f, v0.z);
+                        Vector3 side = flat.magnitude < 1e-4f ? Vector3.zero : Vector3.Cross(Vector3.up, flat.normalized);
                         for (int i = 1; i <= 15000; i++)
                         {
                             float t = i * dt;
-                            var a = new Vector3(-disc.drag * v.x, -disc.gravity + disc.lift * vh2 * Mathf.Exp(-2f * disc.drag * t), -disc.drag * v.z);
+                            float decay = Mathf.Exp(-2f * disc.drag * t);
+                            var a = new Vector3(-disc.drag * v.x, -disc.gravity + disc.lift * vh2 * decay, -disc.drag * v.z) + side * (curve * vh2 * decay);
                             v += a * dt; p += v * dt;
-                            if (i % 1000 == 0) { float err = Vector3.Distance(p, disc._PositionAt(p0, v0, t)); if (err > maxErr) maxErr = err; }
+                            if (i % 1000 == 0) { float err = Vector3.Distance(p, disc._PositionAt(p0, v0, curve, t)); if (err > maxErr) maxErr = err; }
                         }
+                        float drift = Mathf.Abs(Vector3.Dot(disc._PositionAt(p0, v0, curve, 3f) - disc._PositionAt(p0, v0, 0f, 3f), side));
+                        if (drift > maxDrift) maxDrift = drift;
                     }
-                    Check(maxErr < 0.01f, "closed-form flight matches integrated model (max err=" + maxErr.ToString("F4") + " m over 3 s)");
+                    Check(maxErr < 0.01f, "closed-form flight matches integrated model for curve 0 / +-" + KH_FrisbeeCatch.CurveDefault.ToString("F2") + " (max err=" + maxErr.ToString("F4") + " m over 3 s)");
+                    log.AppendLine("INFO sideways drift at 3 s with curve " + KH_FrisbeeCatch.CurveDefault.ToString("F2") + ": up to " + maxDrift.ToString("F2") + " m");
                 }
             }
             else log.AppendLine("INFO prototype scene missing; scene wiring not checked");

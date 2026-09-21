@@ -79,6 +79,8 @@ namespace KominkaHillside
         private string _note = "";
         private int _toyRow = -1;
         private int _toyKind = 0;
+        private int _devRequested = -1;        // preset asked for locally, not yet confirmed by the dog Owner (IMP-DOG-008)
+        private float _devRequestedUntil;
         // Requests are confirmed against the shared state (attach/detach/destination) or the authority's reply (gather).
         private int _pendingKind;              // 0 none, 1 attach, 2 detach, 3 destination, 4 gather start, 5 gather end
         private int _pendingDog, _pendingHand, _pendingDest;
@@ -153,11 +155,24 @@ namespace KominkaHillside
         {
             if (devCatcher == null) return;
             // Advance from the deferred target when there is one, so repeated presses keep moving while the dog is busy.
-            int cur = devCatcher.PendingVariant >= 0 ? devCatcher.PendingVariant : devCatcher.Variant;
-            devCatcher._RequestVariant((cur + 1) % KH_FrisbeeCatch.VariantCount);
+            int cur = DevCurrent();
+            int next = (cur + 1) % KH_FrisbeeCatch.VariantCount;
+            _devRequested = next; _devRequestedUntil = Time.time + 1.5f;   // optimistic: the Owner's answer takes a round trip
+            devCatcher._RequestVariant(next);
             // PendingVariant is the Owner's answer and may not have arrived yet on a non-owner, so the toast reads the local dog state.
             Note(devCatcher.IsEngaged ? "帰ってから切替" : "切替を頼みました");
             Draw();
+        }
+
+        // What the next press counts from. Until the Owner's answer arrives (the synced number or the queue shows
+        // what was asked for) or 1.5 s pass, that is the number we asked for: two quick presses must step two
+        // presets, not ask twice for the same one (Codex U). The label keeps showing the synced truth.
+        private int DevCurrent()
+        {
+            int v = devCatcher.PendingVariant >= 0 ? devCatcher.PendingVariant : devCatcher.Variant;
+            if (_devRequested < 0) return v;
+            if (Time.time >= _devRequestedUntil || devCatcher.Variant == _devRequested || devCatcher.PendingVariant == _devRequested) { _devRequested = -1; return v; }
+            return _devRequested;
         }
 
         // ---- さんぽ ----

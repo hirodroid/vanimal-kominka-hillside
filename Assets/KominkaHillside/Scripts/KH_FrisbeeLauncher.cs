@@ -29,7 +29,13 @@ namespace KominkaHillside
             if (cycleVariant)
             {
                 // Stand-in for the hand menu's dev switch: step to the next preset (the catcher's Owner decides).
-                if (catcher != null) catcher._RequestVariant((catcher.Variant + 1) % KH_FrisbeeCatch.VariantCount);
+                // Counting from the queued number when there is one, exactly like the menu, so presses while the
+                // dog is busy keep moving forward instead of re-asking for the same preset (Codex U).
+                if (catcher != null)
+                {
+                    int cur = catcher.PendingVariant >= 0 ? catcher.PendingVariant : catcher.Variant;
+                    catcher._RequestVariant((cur + 1) % KH_FrisbeeCatch.VariantCount);
+                }
                 return;
             }
             if (frisbee == null || muzzle == null) return;

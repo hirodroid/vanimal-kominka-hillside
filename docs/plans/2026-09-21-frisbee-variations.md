@@ -2,7 +2,7 @@
 
 > 対象: IMP-DOG-008
 
-状態: **設計 → 実装中** (2026-09-21)。作業票は [IMP-DOG-008](../development/issues/IMP-DOG-008-frisbee-variations.md)、通常版の記録は [段階 1〜2 の記録](2026-09-20-frisbee-prototype.md)、採用範囲の設計は [DES-DOG-002](../development/issues/DES-DOG-002-toy-behaviour.md)。ここは「順序と分担」「設計判断の数値」「検証記録」。何を作るかは Issue が持つ。
+状態: **6 プリセットを Editor で構築・検査済み、Build & Test と PCVR 評価待ち** (2026-09-21)。作業票は [IMP-DOG-008](../development/issues/IMP-DOG-008-frisbee-variations.md)、通常版の記録は [段階 1〜2 の記録](2026-09-20-frisbee-prototype.md)、採用範囲の設計は [DES-DOG-002](../development/issues/DES-DOG-002-toy-behaviour.md)。ここは「順序と分担」「設計判断の数値」「検証記録」。何を作るかは Issue が持つ。
 
 ## 進め方と分担 (2026-09-21 ユーザー決定)
 
@@ -71,14 +71,14 @@ Ready の幾何: 持ち主 `H`、頭の向き (水平) `f`、`r = Cross(up, f)`�
 
 ### 飛び方: 横曲がり (v5)
 
-- `_PositionAt(p0, v0, curve, t)`: `side = Cross(up, v0flat).normalized`、横変位 = `curve · vh2 · (t/(2k) − (1−e^(−2kt))/(4k²))` (揚力項と同じ積分。バンクした円盤が横へ流れる形)。`_VelocityAt` に `curve · vh2 · (1−e^(−2kt))/(2k) · side`。`CurveDefault = 0.15` (右曲がり。符号で左右)。
-- 照準線・飛行・犬の予測の呼び出し (9 箇所) を同時に変える。Verify の閉形式 vs 積分に横加速度を足し、curve = 0 / ±0.15 の 3 通りで最大誤差 < 1 cm。
+- `_PositionAt(p0, v0, curve, t)`: `side = Cross(up, v0flat).normalized`、横加速度 = `curve · vh2 · e^(−2kt)` (揚力と同じ「水平速度² に比例」)。**横速度にも他の水平速度と同じ抵抗 k がかかる** (`v_s' = curve·vh2·e^(−2kt) − k·v_s`) ので、横速度 = `curve · vh2 · (e^(−kt) − e^(−2kt)) / k`、横変位 = `curve · vh2 / k · ((1−e^(−kt))/k − (1−e^(−2kt))/(2k))`。初案の「揚力項と同じ積分」は横速度を減衰させておらず、Verify の積分照合で 0.6 m ずれて判明 → 抵抗ありに修正 (誤差 2.5 mm)。`CurveDefault = 0.04` (右曲がり。符号で左右。7.5 m/s・10° で着地 12 m のとき横へ約 1.9 m。設計初案の 0.15 は揚力項と同じ積分なので横 7 m も流れ、実装時に閉形式の再計算で判明して 0.04 へ変更)。
+- 照準線・飛行・犬の予測の呼び出し (9 箇所) を同時に変える。Verify の閉形式 vs 積分に横加速度を足し、curve = 0 / ±CurveDefault (0.04) の 3 通り × 投球 3 種で最大誤差 < 1 cm。
 - 「持ち主が選ぶ / 自動で変わる」はここでは決めない。
 
 ### 切替ボタン (手元メニューのヘッダ)
 
 - ナイトモード型。`KH_HandMenu.devCatcher / devImage / devLabel`、`_DevVariant()` = 次の番号を `_RequestVariant`。ラベル `試作: {名前}`、色は 0 = 中立 / ≠0 = ON。表示は同期値を読むので他人が切り替えても全員のメニューが追従する。名前の文字列は `KH_HandMenu.cs` のリテラルに置く (字形が焼かれるのはこのファイルのリテラルだけ)。
-- ヘッダの空き x −210〜165 に (−20, 312) 幅 280 で置く。Verify のボタン数 47 → 48 + 2 項目。試作シーンにはメニューが無いので Interact キューブ (`KH_FrisbeeLauncher.cycleVariant`) を任意で足す。
+- ヘッダの空き x −210〜165 に (−22, 312) 幅 350・18 pt で置く (予約中の最長ラベル `試作: 走り込み: 遠く → 走り込み: 並走` が 311 px で収まる。初案の幅 280・20 pt では 345 px で溢れた)。Verify のボタン数 47 → 48 + 2 項目。試作シーンにはメニューが無いので Interact キューブ (`KH_FrisbeeLauncher.cycleVariant`) を任意で足す。
 - 撤去 / 本設定化は評価後に決める。撤去コミットでは Build Menu の古い子 (`Dev`) の掃除を 1 度入れる。
 
 ### ログ (Owner。既存行の拡張。ユーザーの報告と突き合わせる)
@@ -132,10 +132,85 @@ Ready の幾何: 持ち主 `H`、頭の向き (水平) `f`、`r = Cross(up, f)`�
 
 Ready のフラつき (slack 2.5 + side ラッチ。次点 = 2 Hz 更新) / 広場の縁で候補が落ちて地上回収が増える (中央に立つ) / v2 の判定窓 ±0.8 m (ミスが多ければ見送り候補) / v3 は強い投げで取れない (事前に伝える) / 既存クリップの着地の足滑り (NG なら走り取り) / 走り抜けの口位置差 (`mouth-edge` で判断) / ClientSim では投げ手 ≠ Owner の経路が通らない (実機 2 人) / `ReqCatch` の引数 6 個 (NetworkCallable の上限 8 以内)。
 
-## 実装記録
+## 実装記録 (Wave 1〜3、2026-09-21)
 
-(Wave 1〜4 で追記)
+- **Wave 1 (Opus-A / Opus-B)**: `KH_FrisbeeCatch` に同期 `variant` / `pendingVariant`、`_RequestVariant` → `ReqVariant` (NetworkCallable) → `SetVariant` → `ApplyVariant` (Owner は SetVariant 内で、非 Owner は OnDeserialization で)。Ready の幾何 (`ReadySpot`、side ラッチ、v1〜3 の向きラッチ 45° / 2.5 m)、`Plan` の 2 パス、`TryJump` の `_takeoff`、`UpdateLand` の出口速度、facts の作業値、ログ (`throw v= … curve=`、`plan= … pass= slack= startDist= entry=`、`takeoff … wait=`、`catch … v= entry= vTake=`)。`KH_HandMenu` のヘッダに「試作: ○○」(ナイトモードの隣、幅 350・18 pt、予約中は `現在 → 予約`、忙しければ「帰ってから切替」)。字形は 1 字 (常) を追加。試作シーンに「Next variant」キューブ。
+- **Wave 2 (Opus-D1 / Opus-C)**: `KH_FrisbeeJumpClipEditor` をクリップ変種レコード化 (`Variants()` = Jump / Twist、`Key.twist`、ヨー残差を 3 回まで解く、`AddClipState` 冪等)。`KH_Twist_Lab.anim` / `.json` を生成 (catch の口 (0.629, 0.774, −0.242) = 骨盤を軸に 90°)。側面・斜め図: [side](evidence/2026-09-21-frisbee-variations/sheet-side-Twist.png) / [quarter](evidence/2026-09-21-frisbee-variations/sheet-quarter-Twist.png)。Jump のシートは従来と同じ。横曲がりは `_PositionAt(p0, v0, curve, t)` / `_VelocityAt(v0, curve, t)` (上の式)、ディスクの投球ごとの `_curve`、`ReqCatch` 第 6 引数 (|curve| > 1 は拒否)、照準線は `FlightCurve` を毎フレーム読む。`CurveDefault` は 0.15 → **0.04** (0.15 は横 7 m)。
+- **Wave 3 (Opus-C)**: 第 2 の facts (`*Twist`) を Build が書き、`ApplyVariant` が作業値へ、`ApplyState` が `Jump` / `Twist` の Bool を分けて書く (キャッシュ失効時は両方書き直し)。`minRootRise` の下限は両クリップの上昇時間の大きい方。
+- **Editor 検証** (メインが実行): C#/U# エラー 0、Console 0。**試作 Verify 51/51** (35 → 41 → 50 → 51: variant / pendingVariant の proxy/backing、走り込みの定数、Twist クリップ・Controller (出口の行き先も)・facts と実クリップの口位置、閉形式 vs 積分 curve 0/±0.04 最大誤差 2.5 mm)、**Walking Verify 146/146** (134 → 140 → 146)、**Menu Verify 27/27** (48 ボタン、dev=wired、字形欠け 0)。保存済みシーンの grep: 本シーンに `variant` / `devCatcher` / Dev ボタン各 1、試作シーンに `KH_FrisbeeVariant` 1、Controller に Twist クリップ参照 1。
+- ゲートの罠: Walking Build はシーンが dirty だと Guard で止まる (Frisbee 4 Build Scene の後に一度止まった。Menu Build が保存した後に再実行して通過)。
+- Codex コードレビュー (D/M/U) の是正後に再ゲート: 試作 51/51、Walking 146/146、Menu 27/27、Console 0。
+- 未実施: Play・PCVR・2 人。
 
-## Play チェックリスト (段階 3)
+### コードレビュー (Codex D/M/U、2026-09-21) と対応
 
-(Wave 4 で確定。骨子: §0 = 切替ボタンの字形と反応 / 4.0 m/s 踏み切りのクリップ破綻 / ひねりの見え方 / 横曲がりの線と実飛行の一致 → 1 人 = 通常 3 回の基準、v1〜5 の各挙動、低い投球・高い投球・割り込み・通常復帰・追走中の切替 → 2 人 = 切替の反映、非 Owner の見え方、途中参加。症状 → 見るところの表付き)
+| 指摘 | 対応 |
+|---|---|
+| D 高: 着地後の回復中に約 1 m 前進する分が広場検査から漏れ、縁の内側に着地してから場外へ出うる (通常版にもある穴が走り込みで広がる) | 走り込みは候補検査に回復終了位置まで含める。全プリセットで `UpdateLand` の前進が広場を出るなら止める (保険)。v0 の候補選択は変えない (比較基準)。縁でのキャッチをチェックリストに追加 |
+| D 中: `ReqVariant` と予約適用が dogRoot の Owner だけを見ており、Owner 分裂中に Catch の非 Owner が同期値を書ける | dogRoot と Catch (同期変数を持つ側) の両方の Owner を必須に |
+| D 中: `curve` の範囲検査が NaN を拒否しない | 有限値を確認してから範囲検査 |
+| M 中: `plan=` は計画種類が変わった時しか出ず、厳格 → 通常パスへの置き換えが `pass=` に出ない。キャッチログにも pass が無い | 採用パスを計画の事実として持ち、パスが変わった時も出す。キャッチログに `pass=` (通常版は `normal`) |
+| M 中: Twist の実クリップをサンプリングして口位置と JSON を比べる検査が無い (Jump だけ)。遷移も出口数だけ | 変種ごとに実測検査、遷移の行き先 (Run/Walk/Idle) も検査 |
+| M 中: Menu Verify が `devImage` / `devLabel` の backing を見ない。`pendingVariant=-1` の backing も未検査 | Night と同じ照合を追加、両 Catch Verify に `pendingVariant` の backing |
+| M 低: 記録の積分照合 (±0.15) とボタン寸法 (幅 280・−20) が実装と違う | 記録を確定値 (±0.04、幅 350・−22・18 pt) に統一 |
+| U 高: 走り込みでも、ため開始点に早く着くと `Coast` で止まってから跳ぶ経路が残る (厳格パスは余裕 ≤ 0.30 s を保証するだけ) | 計画の構造上の限界として今回は直さない。`takeoff wait=` で待ち時間を記録し、PCVR で「止まってから跳ぶ」印象が出るかを評価項目にする。出るなら `RunInJitSlack` を詰めるか、踏み切りへ速度を連続させる進入制御を次のラウンドで設計 |
+| U 中: 非 Owner の連打が同期の往復前は同じ番号を要求する。試作キューブは予約値を読まない | メニューは押した値を 1.5 s ローカルに覚えて次を計算、キューブはメニューと同じ規則 |
+| U 中: 縁で外向きに着地すると回復中にそのまま前進して見える | D 高と同じ対応。縁での投球を評価条件に |
+
+## Play チェックリスト (段階 3、6 プリセット。Build & Test し直してから)
+
+事前: Console エラー 0 / 試作・Walking・Menu Verify 失敗 0 / **アップロードし直した** (古い症状が出たらまずここ) / **投げ手は広場の中央付近に立つ** (縁だと待機位置が円へ丸められ「遠く」にならない) / 通常版の再現条件 (強さ既定 0.5・仰角 10° 前後) を基準にする。
+
+**切替の使い方**: 手元メニューのヘッダ「試作: 通常」を押すと 通常 → 走り込み: 横 → 遠く → 並走 → ひねり → 横曲がり → 通常 と回る。犬が追走〜持ち帰り中に押すと「帰ってから切替」と出て、ラベルが `現在 → 予約` になり、犬が戻ったら切り替わる (続けて押せば予約が進む。現在の番号まで回すと取消)。誰が押しても全員のメニューに反映される。
+
+### §0 エディタで判定できない項目
+
+- [ ] ヘッダのボタンが VR で押せて、6 つの名前が欠けずに表示される (字形)。予約中の `○○ → ○○` も欠けない
+- [ ] 切替後にディスクを持つと、犬が新しい待機位置へ行く。Console に `variant 0 -> 1 applied`
+- [ ] 踏み切り 4.0 m/s (走り込み) で既存クリップが破綻しない (ため中に 0.6〜0.8 m 進む、着地後に足が滑る)。**NG なら「走り取り」クリップを次の候補にする**
+- [ ] ひねり (v4) の空中の見え方: 90° ひねって取り、着地で進行方向へ戻る。骨盤を軸に回るので、口が横へ振れる
+- [ ] 横曲がり (v5) の線が右へ曲がり、実飛行が線どおりで、犬が曲がった先で取る
+- [ ] `takeoff … wait=` が 0.3 s を超え続けない (超えるなら候補の選びが早い)
+
+### 1 人 (PCVR)。**同じ投げ方で通常と候補を交互に** (慣れ・新奇性を分けるため)
+
+遊びの感想 (これが主。技術欄は開発側が Console と突き合わせる):
+- [ ] 勢いを止めずに取った感じがしたか (通常との違いが分かるか)
+- [ ] 犬が待つ場所の意味 (横で構えている / 遠くで待っている / 隣で走り出す) が説明なしで分かったか
+- [ ] 犬を見ようと首を振っても待機場所が逃げないか (v1〜3)
+- [ ] 取れなかった / 落としたときも、また投げたくなったか。次の一投まで待たされた感じがあったか (戻り・受け取り・切替・再配置)
+- [ ] ディスクを持ったままメニューの切替を操作できるか
+- [ ] 6 つのうち、どれを「通常版と並べて残したい」か、どれを見送るか
+
+技術欄 (Console):
+- [ ] 通常 (v0) を 3 回: `throw v=0` の ahead / lateral、`plan=`、`catch OK` を基準として記録
+- [ ] 横 (v1): 待機は前 7 m・横 4 m (今居る側)。`plan= … pass=0` (厳格候補) で取れた回数と `pass=1` (通常の計画へ戻った) の回数、`entry=` の分布、`takeoff speedNow ≥ 3.5`
+- [ ] 遠く (v2): 待機は前 11 m・横 1.5 m。`entry=` の分布 (正面寄りか)。MISS が続けば閉じる速さの問題
+- [ ] 並走 (v3): 待機は斜め前 4 m で前向き。**既定の強さの平投げは追いつけず地上回収 (仕様)**。5〜6 m/s (スティック下) と 仰角 20° 以上の両方で試し、後ろから追いついて走り抜けで取れるか。それでも「遊びたい」か
+- [ ] ひねり (v4): `catch OK` の mouth-edge が通常と同程度か (口の位置が横に振れる分の誤差)
+- [ ] 横曲がり (v5): `throw … curve=0.04`、着地点が線の先と一致、犬が取る。左曲がりは未実装 (符号で追加可)
+- [ ] 各プリセットで 低い投球 (走り抜け) / 高い投球 (地上回収) / リード接続・ボール投げの割り込み が通常と同じ
+- [ ] **縁でのキャッチ** (輪の 2〜3 m 内側へ投げる): 走り込みで取った後に広場の外へ走り出さない (回復中に止まる)。地上回収へ落ちる回数
+- [ ] 走り込みで「ため開始点で止まってから跳ぶ」印象が出るか (`takeoff wait=` が 0.1 s を超える投球の割合と、体感)
+- [ ] 通常へ戻して 3 回投げ、基準と同じ挙動 (`v=0`、8 m 前で待つ、着地で止まる)
+- [ ] 追走〜持ち帰り中に切替 → 「帰ってから切替」→ Idle 後に `applied`
+
+### 2 人 (実機)
+
+- [ ] 投げ手 ≠ 犬 Owner で、非 Owner がボタンを押しても全員のラベルが変わり、犬の待機位置が変わる
+- [ ] 非 Owner の画面で 4.5 m/s の走り・ひねりが滑らか。`observed-predicted` を記録
+- [ ] 途中参加者のメニューに現在のプリセットが出る (0 に戻らない)
+- [ ] 横曲がりを非 Owner が投げても犬 Owner が同じ曲がりで予測して取る
+
+### 症状 → 見るところ
+
+| 症状 | 見るところ |
+|---|---|
+| 横 / 遠くへ行かない | `variant` が 0 のまま (Menu Verify の `devCatcher` 配線) / `CanPlay` 偽 (リード・集合・場外) / 縁に立って目標が円へ丸められた |
+| 走り込むが取れない (MISS 続き) | `entry` が 150° 超なら閉じる速さ。`mouth-edge` 0.3〜0.5 なら走り抜けの口位置 (Run と Idle の差) → `catchTolerance` |
+| 止まってから跳ぶ | `takeoff wait` > 0.3 → `RunInJitSlack` を 0.2 に。`pass=1` ばかりなら厳格候補が通らない → `RunInPreferMaxRise` を 0.5 に |
+| 地上回収ばかり (`plan=2`) | v3 の強い平投げ (仕様) / キャッチ点が縁から 3 m 以内 (着地点が `DogMayGo` で落ちる) → 中央へ |
+| 待機場所が行ったり来たり | v1〜3 はラッチ (45° / 2.5 m)。それでも動くなら更新を 2 Hz へ |
+| 切替が効かない | `deferred` ログ → Idle 待ち / `Ownership split` 警告 |
+| 曲がらない | 投球時のプリセットが 5 でない (`throw … curve=0.00`) / 線は曲がるが飛行が違う → `_curve` の捕捉 |
+| ひねりで姿勢が崩れる | `Temp/KH_Frisbee/sheet-side-Twist.png` と比較。鍵は `KH_FrisbeeJumpClipEditor.TwistKeys()`。直したら Frisbee 2 → 3 → 4 → 5 |

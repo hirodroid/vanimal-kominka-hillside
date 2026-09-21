@@ -77,7 +77,7 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 - 最新の着手: **DES-UI-001 / DES-DOG-001** の合意を実装 (手元メニュー 3 タブ、リード拠点、集合、ボール個別回収、共通購入権)。Editor 検査済み、Play/PCVR 待ち。[記録とチェックリスト](plans/2026-09-20-menu-gather-stations.md)。
 - 並行: **BUG-DOG-002** 持ち手の向き、**DES-WLD-002** 音の設計。順序は [開発全体像 §3](development/overview.md)。
 - **IMP-DOG-005 フリスビー**: 本シーンの散歩のラブが取れる (広場限定、照準モード、位置取り、メニュー「おもちゃ」の「フリスビー」)。PCVR 1 人で好評。項目別・2 人・他犬・Quest/iOS は未。調整用の試作シーン `Assets/Scenes/KH_FrisbeePrototype.unity` と `Tools/KominkaHillside/Frisbee/` は残す。[記録とチェックリスト](plans/2026-09-20-frisbee-prototype.md)。
-- **フリスビーの次の制作 (2026-09-21 合意 → 着手)**: 通常版の体験はひとまずOK。[IMP-DOG-008](development/issues/IMP-DOG-008-frisbee-variations.md) でラブ1匹の走り込み 3 候補・ひねり・横曲がりを、手元メニューのヘッダの開発用切替 (6 プリセット) で比べる。設計・分担・チェックリストは [記録](plans/2026-09-21-frisbee-variations.md)。通常版と採用バリエーションが1匹でOKになってから6匹展開。005の未確認項目は継続する。
+- **フリスビーの次の制作 (2026-09-21 合意 → 着手)**: 通常版の体験はひとまずOK。[IMP-DOG-008](development/issues/IMP-DOG-008-frisbee-variations.md) でラブ1匹の走り込み 3 候補・ひねり・横曲がりを、手元メニューのヘッダの開発用切替 (6 プリセット) で比べる。**Editor で構築・検査済み (試作 51 / Walking 146 / Menu 27、Codex 設計・コードレビュー反映)、Build & Test と PCVR 評価待ち**。設計・分担・チェックリストは [記録](plans/2026-09-21-frisbee-variations.md)。通常版と採用バリエーションが1匹でOKになってから6匹展開。005の未確認項目は継続する。
 - **IMP-ENV-002 空とナイトモード**: 空を古民家と同じ Allsky キューブマップに、手元メニューのヘッダーに OFF/ON のナイトモード (自前の乗算オーバーレイ、RBS 不使用)。Editor 検査済み、Play 待ち。[記録とチェックリスト](plans/2026-09-21-sky-and-night-mode.md)。
 - 状態と実行キュー: [Issueサマリ](development/issues/issue_summary.md)。移植の出所は [移植記録](development/imports/kominka-dog-system.md)、ユーザー報告と項目別手順は [散歩検証記録](plans/2026-09-20-leash-walking.md)。
 

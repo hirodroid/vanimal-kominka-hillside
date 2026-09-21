@@ -415,8 +415,11 @@ namespace KominkaHillside.Editor
             bool nightRefs = menu.night != null && backingVars.TryGetVariableValue("night", out mv) && mv == (object)UdonSharpEditorUtility.GetBackingUdonBehaviour(menu.night)
                 && backingVars.TryGetVariableValue("nightImage", out mv) && mv == (object)menu.nightImage && backingVars.TryGetVariableValue("nightLabel", out mv) && mv == (object)menu.nightLabel;
             Check(nightRefs, "backing Udon holds night/nightImage/nightLabel (same objects as the proxy)");
-            bool devRefs = menu.devCatcher != null && backingVars.TryGetVariableValue("devCatcher", out mv) && mv == (object)UdonSharpEditorUtility.GetBackingUdonBehaviour(menu.devCatcher);
-            Check(devRefs, "backing Udon holds devCatcher (KH_FrisbeeCatch_Lab; run Walking/3 Build then Build Menu)");
+            // Same shape as the night check: the button's own Image/Label must be in the heap too, or the header
+            // draws nothing at runtime while the Inspector looks wired (Codex M).
+            bool devRefs = menu.devCatcher != null && backingVars.TryGetVariableValue("devCatcher", out mv) && mv == (object)UdonSharpEditorUtility.GetBackingUdonBehaviour(menu.devCatcher)
+                && backingVars.TryGetVariableValue("devImage", out mv) && mv == (object)menu.devImage && backingVars.TryGetVariableValue("devLabel", out mv) && mv == (object)menu.devLabel;
+            Check(devRefs, "backing Udon holds devCatcher/devImage/devLabel (KH_FrisbeeCatch_Lab; run Walking/3 Build then Build Menu)");
             bool arrays = new UnityEngine.Object[][] { menu.pages, menu.tabImages, menu.tabUnderlines, menu.walkState, menu.walkLeft, menu.walkRight, menu.walkOff, menu.formImages, menu.markers, menu.toyState, menu.toyImages, menu.discImages }
                 .All(a => a != null && a.Length > 0 && a.All(x => x != null));
             Check(arrays, "all reference arrays are allocated with no null element");

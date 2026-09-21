@@ -94,6 +94,7 @@ namespace KominkaHillside
         private bool _flying;
         private Vector3 _p0, _v0;
         private double _t0;
+        private float _curve;  // per-throw fact (IMP-DOG-008 v5), captured at launch beside p0 / v0 / the generation
         private float _spin;
         private int _gen;      // throw generation (this Owner's count; the catcher matches start and end notices)
 
@@ -122,26 +123,49 @@ namespace KominkaHillside
 
         // ---- Closed-form flight. Pure: callers pass the launch facts they hold. ----
         // Horizontal: v = v0 e^(-k t). Vertical: a = -g + L v_h^2 (capped), integrated in closed form.
-        public Vector3 _PositionAt(Vector3 p0, Vector3 v0, float t)
+        // Sideways (IMP-DOG-008 v5): a = curve * v_h^2 * e^(-2 k t) along `side` (left/right of the throw), so a
+        // banked disc drifts sideways as it slows. Unlike the lift, the sideways velocity it builds is horizontal
+        // and is dragged like the rest of the horizontal velocity (v_s' = curve v_h^2 e^(-2kt) - k v_s), which is
+        // why its integral is not the lift's. curve is 1/m and is a per-throw fact (0 for every preset but the
+        // curving one), never read from the Inspector.
+        public Vector3 _PositionAt(Vector3 p0, Vector3 v0, float curve, float t)
         {
             if (t < 0f) t = 0f;
             float k = drag;
             float vh2 = LiftSpeedSquared(v0);
             float s = k > 1e-4f ? (1f - Mathf.Exp(-k * t)) / k : t;
             float liftTerm;
-            if (k > 1e-4f) liftTerm = lift * vh2 * (t / (2f * k) - (1f - Mathf.Exp(-2f * k * t)) / (4f * k * k));
-            else liftTerm = 0.5f * lift * vh2 * t * t;
-            return new Vector3(p0.x + v0.x * s, p0.y + v0.y * t - 0.5f * gravity * t * t + liftTerm, p0.z + v0.z * s);
+            float sideTerm;
+            if (k > 1e-4f)
+            {
+                liftTerm = lift * vh2 * (t / (2f * k) - (1f - Mathf.Exp(-2f * k * t)) / (4f * k * k));
+                sideTerm = curve * vh2 / k * ((1f - Mathf.Exp(-k * t)) / k - (1f - Mathf.Exp(-2f * k * t)) / (2f * k));
+            }
+            else { liftTerm = 0.5f * lift * vh2 * t * t; sideTerm = 0.5f * curve * vh2 * t * t; }
+            Vector3 side = SideDirection(v0);
+            return new Vector3(p0.x + v0.x * s + side.x * sideTerm, p0.y + v0.y * t - 0.5f * gravity * t * t + liftTerm, p0.z + v0.z * s + side.z * sideTerm);
         }
 
-        public Vector3 _VelocityAt(Vector3 v0, float t)
+        public Vector3 _VelocityAt(Vector3 v0, float curve, float t)
         {
             if (t < 0f) t = 0f;
             float k = drag;
             float vh2 = LiftSpeedSquared(v0);
             float e = Mathf.Exp(-k * t);
-            float vy = v0.y - gravity * t + (k > 1e-4f ? lift * vh2 * (1f - Mathf.Exp(-2f * k * t)) / (2f * k) : lift * vh2 * t);
-            return new Vector3(v0.x * e, vy, v0.z * e);
+            float vy = v0.y - gravity * t + lift * vh2 * (k > 1e-4f ? (1f - Mathf.Exp(-2f * k * t)) / (2f * k) : t);
+            Vector3 side = SideDirection(v0);
+            // Built up by the sideways lift, then dragged like every other horizontal component.
+            float sideV = curve * vh2 * (k > 1e-4f ? (e - Mathf.Exp(-2f * k * t)) / k : t);
+            return new Vector3(v0.x * e + side.x * sideV, vy, v0.z * e + side.z * sideV);
+        }
+
+        // Horizontal right of the launch direction (positive curve = the disc bends right). A throw with no
+        // horizontal speed has no side to bend toward, so the term vanishes.
+        private Vector3 SideDirection(Vector3 v0)
+        {
+            Vector3 flat = new Vector3(v0.x, 0f, v0.z);
+            if (flat.magnitude < 1e-4f) return Vector3.zero;
+            return Vector3.Cross(Vector3.up, flat.normalized);
         }
 
         private float LiftSpeedSquared(Vector3 v0)
@@ -164,16 +188,20 @@ namespace KominkaHillside
             float speed = v0.magnitude;
             if (speed < 0.01f) return false;
             if (speed > maxSpeed) v0 = v0 * (maxSpeed / speed);
+            // The curve is read once, here: a flight already in the air keeps the bend it was launched with even
+            // if the preset is switched mid-flight (the dog is told the same number with ReqCatch).
+            _curve = catcher != null ? catcher.FlightCurve : 0f;
             _p0 = p0; _v0 = v0; _t0 = Networking.GetServerTimeInSeconds(); _spin = 0f; _flying = true; _gen++;
             _sync.SetKinematic(true);
             transform.position = p0;
             VRCPlayerApi lp = Networking.LocalPlayer;
             int thrower = Utilities.IsValid(lp) ? lp.playerId : -1;
-            Debug.Log("[KH_Frisbee] launch v=" + speed.ToString("F2") + " thrower=" + thrower);
+            Debug.Log("[KH_Frisbee] launch v=" + speed.ToString("F2") + " thrower=" + thrower + " curve=" + _curve.ToString("F2"));
             if (catcher != null)
             {
-                if (Networking.IsOwner(catcher.gameObject)) catcher.ReqCatch(_gen, p0, v0, _t0, thrower);
-                else catcher.SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(KH_FrisbeeCatch.ReqCatch), _gen, p0, v0, _t0, thrower);
+                // net: 6 parameters, within the NetworkCallable limit of 8, all basic types.
+                if (Networking.IsOwner(catcher.gameObject)) catcher.ReqCatch(_gen, p0, v0, _t0, thrower, _curve);
+                else catcher.SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(KH_FrisbeeCatch.ReqCatch), _gen, p0, v0, _t0, thrower, _curve);
             }
             return true;
         }
@@ -329,13 +357,16 @@ namespace KominkaHillside
             UpdateAimPower();
             Vector3 p0 = transform.position;
             Vector3 v0 = AimDirection() * AimSpeedNow();
+            // Live, not latched: the line bends the moment the curving preset is selected (the flight latches
+            // its own value in _Launch).
+            float curve = catcher != null ? catcher.FlightCurve : 0f;
             int n = aimPoints < 2 ? 2 : aimPoints;
             aimLine.positionCount = n;
             Vector3 prev = p0; Vector3 end = p0; int count = 0;
             RaycastHit hit;
             for (int i = 0; i < n; i++)
             {
-                Vector3 p = _PositionAt(p0, v0, i * aimStep);
+                Vector3 p = _PositionAt(p0, v0, curve, i * aimStep);
                 Vector3 d = p - prev; float len = d.magnitude;
                 if (i > 0 && len > 1e-4f && Physics.Raycast(prev, d / len, out hit, len, obstacleMask, QueryTriggerInteraction.Ignore)) { p = hit.point; aimLine.SetPosition(i, p); count = i + 1; end = p; break; }
                 aimLine.SetPosition(i, p); count = i + 1; end = p; prev = p;
@@ -429,8 +460,8 @@ namespace KominkaHillside
             if (!Networking.IsOwner(gameObject)) { _flying = false; return; }
             float t = _ElapsedSince(_t0);
             Vector3 prev = transform.position;
-            Vector3 next = _PositionAt(_p0, _v0, t);
-            Vector3 vel = _VelocityAt(_v0, t);
+            Vector3 next = _PositionAt(_p0, _v0, _curve, t);
+            Vector3 vel = _VelocityAt(_v0, _curve, t);
             Vector3 d = next - prev;
             float len = d.magnitude;
             RaycastHit hit;

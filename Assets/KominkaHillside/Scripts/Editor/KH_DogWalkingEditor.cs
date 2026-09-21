@@ -221,7 +221,7 @@ namespace KominkaHillside.Editor
             }
             // IMP-DOG-005: one disc + catcher per breed in FrisbeeKeys, on the same dog that walks and fetches.
             manager.frisbeeCatchers=new KH_FrisbeeCatch[6];act.frisbeeCatchers=new KH_FrisbeeCatch[6];recall.discs=new KH_Frisbee[6];recall.discCatchers=new KH_FrisbeeCatch[6];
-            var facts=KH_FrisbeePrototypeEditor.ReadFacts();
+            var facts=KH_FrisbeePrototypeEditor.ReadFacts();var twistFacts=KH_FrisbeePrototypeEditor.ReadFacts("Twist"); // IMP-DOG-008 v4: both clip variants
             for(int i=0;i<6;i++)
             {
                 string key=Keys[i];var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+key);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+key);var p=Find<KD_DogPetController>(root,"KD_PetSystem_"+key);
@@ -233,7 +233,7 @@ namespace KominkaHillside.Editor
                 foreach(var t in disc.GetComponentsInChildren<Transform>(true))t.gameObject.layer=13;
                 if(created){disc.transform.position=DiscHome(i);disc.transform.rotation=Quaternion.identity;} // human-owned once placed (review M4)
                 var c=Add<KH_FrisbeeCatch>(Child(root.transform,"KH_FrisbeeCatch_"+key).gameObject,true);
-                KH_FrisbeePrototypeEditor.ConfigureCatcher(c,disc,roots[i],f.dogAnimator,f.mouthAnchor,facts);
+                KH_FrisbeePrototypeEditor.ConfigureCatcher(c,disc,roots[i],f.dogAnimator,f.mouthAnchor,facts,twistFacts);
                 c.hillsideLeashes=manager;c.fetch=f;c.wander=w;c.activities=act;c.pet=p;c.dogIndex=i;
                 c.playAreaCenter=new Vector3(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,2],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]);
                 c.playAreaRadius=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3];
@@ -390,6 +390,11 @@ namespace KominkaHillside.Editor
             }
             // IMP-DOG-005: disc + catcher on the walking dog (stage 2: FrisbeeKeys only), others deliberately unwired.
             var facts=KH_FrisbeePrototypeEditor.ReadFacts();var clipAsset=AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPath);
+            // IMP-DOG-008 v4: the twist clip is the second member of the family and is checked like the jump.
+            var twistFacts=KH_FrisbeePrototypeEditor.ReadFacts("Twist");var twistClip=AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPathFor("Twist"));
+            var twistVariant=KH_FrisbeeJumpClipEditor.Variants().FirstOrDefault(v=>v.name=="Twist");
+            Check(twistClip!=null&&Mathf.Abs(twistClip.length-twistVariant.EndAt)<0.02f,"twist clip exists, length "+(twistClip==null?"-":twistClip.length.ToString("F3"))+" == "+twistVariant.EndAt.ToString("F3"));
+            Check(KH_FrisbeeCatch.CurveDefault>0f&&KH_FrisbeeCatch.CurveDefault<=0.5f,"flight curve default "+KH_FrisbeeCatch.CurveDefault.ToString("F2")+" in (0, 0.5] 1/m");
             for(int i=0;i<6;i++)
             {
                 string key=Keys[i];bool wanted=Array.IndexOf(FrisbeeKeys,key)>=0;var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+key);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+key);var p=Find<KD_DogPetController>(root,"KD_PetSystem_"+key);
@@ -401,9 +406,15 @@ namespace KominkaHillside.Editor
                 Check(c.hillsideLeashes==m&&c.fetch==f&&c.wander==w&&c.activities==act&&c.pet==p&&c.dogIndex==i,"catcher neighbours "+key);
                 Check(w.frisbeeCatch==c&&f.frisbeeCatch==c&&m.frisbeeCatchers[i]==c&&act.frisbeeCatchers[i]==c,"Wander/Fetch/Manager/Gather see the catcher "+key);
                 Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(c).SyncMethod==Networking.SyncType.Manual&&UdonSharpEditorUtility.GetBackingUdonBehaviour(d).SyncMethod==Networking.SyncType.None,"catcher Manual / disc None "+key);
-                Check(Vector3.Distance(c.mouthOffsetCatch,facts.mouthOffsetCatch)<1e-4f&&Mathf.Abs(c.clipRiseDuration-facts.rise)<1e-4f&&c.minRootRise>=0.5f*d.gravity*Mathf.Pow(facts.rise/1.8f,2f)-1e-3f,"pose facts match the clip JSON, rise floor "+key);
+                // Both clips play from the same minRootRise, so the floor follows the longer rise time (Codex P).
+                float longestRise=Mathf.Max(facts.rise,twistFacts.rise);
+                Check(Vector3.Distance(c.mouthOffsetCatch,facts.mouthOffsetCatch)<1e-4f&&Mathf.Abs(c.clipRiseDuration-facts.rise)<1e-4f&&c.minRootRise>=0.5f*d.gravity*Mathf.Pow(longestRise/1.8f,2f)-1e-3f,"pose facts match the clip JSON, rise floor from the longest rise "+longestRise.ToString("F2")+" s "+key);
+                Check(Vector3.Distance(c.mouthOffsetCatchTwist,twistFacts.mouthOffsetCatch)<1e-4f&&Mathf.Abs(c.clipCrouchDurationTwist-twistFacts.crouch)<1e-4f&&Mathf.Abs(c.clipRiseDurationTwist-twistFacts.rise)<1e-4f&&Mathf.Abs(c.clipRecoverDurationTwist-twistFacts.recover)<1e-4f,"twist pose facts match the twist clip JSON "+key);
                 var ac=f.dogAnimator==null?null:f.dogAnimator.runtimeAnimatorController as UnityEditor.Animations.AnimatorController;
                 Check(ac!=null&&ac.parameters.Any(x=>x.name=="Jump")&&ac.layers[0].stateMachine.states.Any(st=>st.state.name=="Jump"&&st.state.motion==clipAsset),"Animator has Jump with the clip "+key);
+                var twistState=ac==null?null:ac.layers[0].stateMachine.states.Select(st=>st.state).FirstOrDefault(st=>st.name=="Twist");
+                Check(ac!=null&&ac.parameters.Any(x=>x.name=="Twist"&&x.type==AnimatorControllerParameterType.Bool)&&twistState!=null&&twistState.motion==twistClip,"Animator has Bool Twist with the twist clip "+key);
+                Check(ac!=null&&twistState!=null&&twistState.transitions.Length==3&&ac.layers[0].stateMachine.anyStateTransitions.Any(t=>t.destinationState==twistState&&!t.canTransitionToSelf),"Twist state: AnyState entry and 3 exits "+key);
                 float plaza=Vector2.Distance(new Vector2(d.transform.position.x,d.transform.position.z),new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]));
                 Check(plaza<KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3]&&Mathf.Abs(Ground(d.transform.position.x,d.transform.position.z)-KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,2])<.05f,"disc rests on the flat clearing "+key);
                 Check(Mathf.Abs(c.playAreaRadius-KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3])<1e-3f&&Vector2.Distance(new Vector2(c.playAreaCenter.x,c.playAreaCenter.z),new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]))<1e-3f,"play area = plaza flat "+key);
@@ -418,6 +429,11 @@ namespace KominkaHillside.Editor
                     &&cb.publicVariables.TryGetVariableValue("playAreaRadius",out bv)&&(float)bv==c.playAreaRadius
                     &&cb.publicVariables.TryGetVariableValue("playAreaCenter",out bv)&&(Vector3)bv==c.playAreaCenter;
                 Check(factsOk,"catcher backing: all pose facts + play area "+key);
+                bool twistOk=cb.publicVariables.TryGetVariableValue("mouthOffsetCatchTwist",out bv)&&(Vector3)bv==c.mouthOffsetCatchTwist
+                    &&cb.publicVariables.TryGetVariableValue("clipCrouchDurationTwist",out bv)&&(float)bv==c.clipCrouchDurationTwist
+                    &&cb.publicVariables.TryGetVariableValue("clipRiseDurationTwist",out bv)&&(float)bv==c.clipRiseDurationTwist
+                    &&cb.publicVariables.TryGetVariableValue("clipRecoverDurationTwist",out bv)&&(float)bv==c.clipRecoverDurationTwist;
+                Check(twistOk,"catcher backing: twist pose facts "+key);
                 bool refsOk=true;foreach(var pair in new[]{new object[]{"hillsideLeashes",m},new object[]{"fetch",f},new object[]{"wander",w},new object[]{"activities",act},new object[]{"pet",p},new object[]{"frisbee",d}})
                 {
                     var expect=UdonSharpEditorUtility.GetBackingUdonBehaviour((UdonSharpBehaviour)pair[1]);
@@ -425,7 +441,7 @@ namespace KominkaHillside.Editor
                 }
                 Check(refsOk&&cb.publicVariables.TryGetVariableValue("dogIndex",out bv)&&(int)bv==i,"catcher backing: neighbour references and dogIndex "+key);
                 // IMP-DOG-008: the prototype switch starts on the baseline and the run-in presets fit this dog, this disc and the plaza.
-                Check(c.variant==KH_FrisbeeCatch.VariantNormal&&c.pendingVariant==-1&&cb.publicVariables.TryGetVariableValue("variant",out bv)&&(int)bv==KH_FrisbeeCatch.VariantNormal,"variant starts at Normal, proxy and backing, nothing queued "+key);
+                Check(c.variant==KH_FrisbeeCatch.VariantNormal&&c.pendingVariant==-1&&cb.publicVariables.TryGetVariableValue("variant",out bv)&&(int)bv==KH_FrisbeeCatch.VariantNormal&&cb.publicVariables.TryGetVariableValue("pendingVariant",out bv)&&(int)bv==-1,"variant starts at Normal, proxy and backing, nothing queued (backing too) "+key);
                 Check(KH_FrisbeeCatch.RunInTakeoff<=c.chaseRunSpeed,"run-in takeoff "+KH_FrisbeeCatch.RunInTakeoff.ToString("F2")+" <= chaseRunSpeed "+c.chaseRunSpeed.ToString("F2")+" "+key);
                 Check(c.minRootRise<=KH_FrisbeeCatch.RunInPreferMaxRise&&KH_FrisbeeCatch.RunInPreferMaxRise<=c.maxRootRise,"run-in preferred rise "+KH_FrisbeeCatch.RunInPreferMaxRise.ToString("F2")+" inside ["+c.minRootRise.ToString("F2")+", "+c.maxRootRise.ToString("F2")+"] "+key);
                 // Design record: 2.3 m in the air at the preferred rise (~3.1 m including the crouch travel). The
