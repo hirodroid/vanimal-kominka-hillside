@@ -258,10 +258,16 @@ namespace KominkaHillside.Editor
             catcher.mouthOffsetCatchTwist = twist.mouthOffsetCatch;
             catcher.clipCrouchDurationTwist = twist.crouch; catcher.clipRiseDurationTwist = twist.rise; catcher.clipRecoverDurationTwist = twist.recover;
             catcher.groundLayerMask = (1 << 0) | (1 << 11);
-            catcher.takeoffSpeed = 2.5f; catcher.chaseRunSpeed = 4.5f; catcher.standoffDistance = 8f; // code-owned, same rule as the flight model
+            // Code-owned, same rule as the flight model. IMP-DOG-008 round 2: the intercept planner promises to be
+            // standing under the catch point in time, and only a sprint keeps that promise (a dog IS fast).
+            catcher.chaseRunSpeed = 10f; catcher.chaseAcceleration = 25f; catcher.maxRunAnimScale = 3.5f;
+            catcher.noticeDelay = 0.1f; catcher.settleTime = 0.2f; catcher.returnRunSpeed = 4.5f;
+            catcher.turnSpeedDegPerSec = 720f;   // Eta charges the turn serially; a 180 deg spin must not eat the window
+            catcher.maxRootRise = 0.9f;  // how high the standing jump reaches; also bounds the clip playback below
+            catcher.standoffDistance = 8f;
             catcher.variant = KH_FrisbeeCatch.VariantNormal; catcher.pendingVariant = -1; // code-owned: every instance starts on the baseline
             catcher.playAreaMargin = 0f; // the ring the holder sees is exactly the acceptance circle (Codex P)
-            // Inspector tuning survives a rebuild, except the one value the clip dictates: the smallest rise
+            // Inspector tuning survives a rebuild for everything not written above, except the one value the clip dictates: the smallest rise
             // must keep clip playback at or below 1.8x (review D2), so an older scene value is raised here.
             // Both clips play from the same minRootRise, so the floor follows the longer rise (Codex P: the
             // floor is a height, computed from the clip's rise TIME).
@@ -443,15 +449,18 @@ namespace KominkaHillside.Editor
                     Check(catcher.variant == KH_FrisbeeCatch.VariantNormal && catcher.pendingVariant == -1, "catcher starts on variant Normal with nothing queued");
                     Check(backing.publicVariables.TryGetVariableValue("variant", out int bvar) && bvar == KH_FrisbeeCatch.VariantNormal
                         && backing.publicVariables.TryGetVariableValue("pendingVariant", out int bpend) && bpend == -1, "backing heap holds variant 0 with nothing queued");
-                    Check(KH_FrisbeeCatch.RunInTakeoff <= catcher.chaseRunSpeed, "run-in takeoff " + KH_FrisbeeCatch.RunInTakeoff.ToString("F2") + " <= chaseRunSpeed " + catcher.chaseRunSpeed.ToString("F2"));
-                    Check(catcher.minRootRise <= KH_FrisbeeCatch.RunInPreferMaxRise && KH_FrisbeeCatch.RunInPreferMaxRise <= catcher.maxRootRise,
-                        "run-in preferred rise " + KH_FrisbeeCatch.RunInPreferMaxRise.ToString("F2") + " inside [" + catcher.minRootRise.ToString("F2") + ", " + catcher.maxRootRise.ToString("F2") + "]");
-                    // The run-in's own geometry (design record: 2.3 m in the air, ~3.1 m including the crouch travel).
-                    // The pass-1 fallback may still pick a high jump, so its travel is reported alongside.
-                    float runOut = KH_FrisbeeCatch.RunInTakeoff * 2f * Mathf.Sqrt(2f * KH_FrisbeeCatch.RunInPreferMaxRise / disc.gravity);
-                    float runOutMax = KH_FrisbeeCatch.RunInTakeoff * 2f * Mathf.Sqrt(2f * catcher.maxRootRise / disc.gravity);
-                    Check(runOut <= 3f, "run-in air travel " + runOut.ToString("F2") + " m <= 3 m at the preferred rise (fallback at maxRootRise " + catcher.maxRootRise.ToString("F2") + ": " + runOutMax.ToString("F2") + " m)");
-                    Check(KH_FrisbeeCatch.RunInReadyTurnDeg >= 20f && KH_FrisbeeCatch.RunInReadyTurnDeg <= 90f, "run-in Ready turn threshold " + KH_FrisbeeCatch.RunInReadyTurnDeg.ToString("F0") + " deg in [20, 90]");
+                    // IMP-DOG-008 round 2 (intercept-first): the plan promises the dog will be STANDING under the
+                    // catch point, settled, before the crouch. Only a sprint can keep that promise.
+                    Check(catcher.chaseRunSpeed >= 8f, "chase sprint " + catcher.chaseRunSpeed.ToString("F1") + " m/s >= 8 (the ETA the planner promises)");
+                    Check(catcher.chaseAcceleration >= 15f, "chase acceleration " + catcher.chaseAcceleration.ToString("F1") + " m/s2 >= 15 (the sprint must be reached, not just named)");
+                    Check(catcher.settleTime >= 0.1f && catcher.settleTime <= 0.6f, "settle time " + catcher.settleTime.ToString("F2") + " s in [0.10, 0.60]");
+                    Check(catcher.turnSpeedDegPerSec >= 540f, "turn rate " + catcher.turnSpeedDegPerSec.ToString("F0") + " deg/s >= 540 (Eta charges the turn serially)");
+                    Check(catcher.returnRunSpeed <= catcher.chaseRunSpeed, "return pace " + catcher.returnRunSpeed.ToString("F1") + " <= chase sprint " + catcher.chaseRunSpeed.ToString("F1") + " (only the chase has a deadline)");
+                    // The highest jump the planner may pick still has to play the clip at a believable speed.
+                    float longestRiseDur = Mathf.Max(catcher.clipRiseDuration, catcher.clipRiseDurationTwist);
+                    float topScale = longestRiseDur / Mathf.Sqrt(2f * catcher.maxRootRise / disc.gravity);
+                    Check(topScale >= 0.6f, "maxRootRise " + catcher.maxRootRise.ToString("F2") + " m plays the clip at " + topScale.ToString("F2") + "x >= 0.60 (longest rise " + longestRiseDur.ToString("F2") + " s)");
+                    Check(KH_FrisbeeCatch.RunInReadyTurnDeg >= 20f && KH_FrisbeeCatch.RunInReadyTurnDeg <= 90f, "Ready turn threshold " + KH_FrisbeeCatch.RunInReadyTurnDeg.ToString("F0") + " deg in [20, 90]");
                     var desc = open.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<VRCSceneDescriptor>(true)).FirstOrDefault();
                     Check(desc != null && desc.spawns != null && desc.spawns.Length > 0 && desc.spawns[0] != null, "scene descriptor with spawn");
                     Check(desc != null && desc.NetworkIDCollection.All(x => x.gameObject != null), "no dangling NetworkIDs");

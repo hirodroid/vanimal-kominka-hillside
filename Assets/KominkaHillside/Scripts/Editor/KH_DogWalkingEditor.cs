@@ -442,14 +442,17 @@ namespace KominkaHillside.Editor
                 Check(refsOk&&cb.publicVariables.TryGetVariableValue("dogIndex",out bv)&&(int)bv==i,"catcher backing: neighbour references and dogIndex "+key);
                 // IMP-DOG-008: the prototype switch starts on the baseline and the run-in presets fit this dog, this disc and the plaza.
                 Check(c.variant==KH_FrisbeeCatch.VariantNormal&&c.pendingVariant==-1&&cb.publicVariables.TryGetVariableValue("variant",out bv)&&(int)bv==KH_FrisbeeCatch.VariantNormal&&cb.publicVariables.TryGetVariableValue("pendingVariant",out bv)&&(int)bv==-1,"variant starts at Normal, proxy and backing, nothing queued (backing too) "+key);
-                Check(KH_FrisbeeCatch.RunInTakeoff<=c.chaseRunSpeed,"run-in takeoff "+KH_FrisbeeCatch.RunInTakeoff.ToString("F2")+" <= chaseRunSpeed "+c.chaseRunSpeed.ToString("F2")+" "+key);
-                Check(c.minRootRise<=KH_FrisbeeCatch.RunInPreferMaxRise&&KH_FrisbeeCatch.RunInPreferMaxRise<=c.maxRootRise,"run-in preferred rise "+KH_FrisbeeCatch.RunInPreferMaxRise.ToString("F2")+" inside ["+c.minRootRise.ToString("F2")+", "+c.maxRootRise.ToString("F2")+"] "+key);
-                // Design record: 2.3 m in the air at the preferred rise (~3.1 m including the crouch travel). The
-                // pass-1 fallback may still pick a high jump, so its travel is reported alongside.
-                float runOut=KH_FrisbeeCatch.RunInTakeoff*2f*Mathf.Sqrt(2f*KH_FrisbeeCatch.RunInPreferMaxRise/d.gravity);
-                float runOutMax=KH_FrisbeeCatch.RunInTakeoff*2f*Mathf.Sqrt(2f*c.maxRootRise/d.gravity);
-                Check(runOut<=3f,"run-in air travel "+runOut.ToString("F2")+" m <= 3 m at the preferred rise (fallback at maxRootRise "+c.maxRootRise.ToString("F2")+": "+runOutMax.ToString("F2")+" m) "+key);
-                Check(KH_FrisbeeCatch.RunInReadyTurnDeg>=20f&&KH_FrisbeeCatch.RunInReadyTurnDeg<=90f,"run-in Ready turn threshold "+KH_FrisbeeCatch.RunInReadyTurnDeg.ToString("F0")+" deg in [20, 90] "+key);
+                // Round 2 (intercept-first): the plan promises the dog will be STANDING under the catch point,
+                // settled, before the crouch. Only a sprint keeps that promise.
+                Check(c.chaseRunSpeed>=8f,"chase sprint "+c.chaseRunSpeed.ToString("F1")+" m/s >= 8 (the ETA the planner promises) "+key);
+                Check(c.chaseAcceleration>=15f,"chase acceleration "+c.chaseAcceleration.ToString("F1")+" m/s2 >= 15 (the sprint must be reached, not just named) "+key);
+                Check(c.settleTime>=0.1f&&c.settleTime<=0.6f,"settle time "+c.settleTime.ToString("F2")+" s in [0.10, 0.60] "+key);
+                Check(c.turnSpeedDegPerSec>=540f,"turn rate "+c.turnSpeedDegPerSec.ToString("F0")+" deg/s >= 540 (Eta charges the turn serially) "+key);
+                Check(c.returnRunSpeed<=c.chaseRunSpeed,"return pace "+c.returnRunSpeed.ToString("F1")+" <= chase sprint "+c.chaseRunSpeed.ToString("F1")+" (only the chase has a deadline) "+key);
+                // The highest jump the planner may pick still has to play the clip at a believable speed.
+                float topScale=Mathf.Max(c.clipRiseDuration,c.clipRiseDurationTwist)/Mathf.Sqrt(2f*c.maxRootRise/d.gravity);
+                Check(topScale>=0.6f,"maxRootRise "+c.maxRootRise.ToString("F2")+" m plays the clip at "+topScale.ToString("F2")+"x >= 0.60 "+key);
+                Check(KH_FrisbeeCatch.RunInReadyTurnDeg>=20f&&KH_FrisbeeCatch.RunInReadyTurnDeg<=90f,"Ready turn threshold "+KH_FrisbeeCatch.RunInReadyTurnDeg.ToString("F0")+" deg in [20, 90] "+key);
                 // A Ready spot is measured from the holder, so it only ever lands inside the plaza if its own radius does.
                 float[] readyAhead={KH_FrisbeeCatch.ReadyAhead1,KH_FrisbeeCatch.ReadyAhead2,KH_FrisbeeCatch.ReadyAhead3};
                 float[] readyLateral={KH_FrisbeeCatch.ReadyLateral1,KH_FrisbeeCatch.ReadyLateral2,KH_FrisbeeCatch.ReadyLateral3};

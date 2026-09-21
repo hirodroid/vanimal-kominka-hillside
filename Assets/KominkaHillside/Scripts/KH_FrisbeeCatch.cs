@@ -24,11 +24,17 @@ namespace KominkaHillside
     // Owner hand-over mid-sequence is not continued: a new Owner without the local plan aborts to Idle
     // (review D1). Continuing a jump on another client would need the arc synced; not in this prototype.
     //
-    // IMP-DOG-008 invariant: the prototype `variant` only affects the Ready target, candidate selection,
-    // takeoff speed, landing exit speed, clip selection and the flight curve. GiveUp, the ground retrieve,
-    // CanPlay, Claimed, the yield-after-landing reservation, playArea (DogMayGo) and ObserveFlight never read it.
-    // playArea still never reads the variant, but since the Codex D review UpdateLand clamps the recover slide
-    // at the edge of the flat for every variant (a run-in leaves the landing at a run and would slide off).
+    // IMP-DOG-008 round 2 (PCVR feedback 2026-09-21): intercept-first. Every jump from a run missed by 0.5-0.9 m,
+    // because the pacing brought the dog to the crouch start early, it coasted to a stop and then jumped from a
+    // standstill along a plan that assumed it was still moving. The dog now reads the whole trajectory at the throw,
+    // takes the HIGHEST point it can still be standing under in time, sprints there at full speed, fine-tunes its
+    // position while it waits and jumps straight up. There is no running jump any more: the takeoff is always from
+    // a standstill (_jumpSpeed == 0), so the only thing the plan must get right is where to stand and when to crouch.
+    //
+    // IMP-DOG-008 invariant: the prototype `variant` only affects the Ready target, the clip selection and the
+    // flight curve. The planner, the chase, the jump and the landing are identical across presets. GiveUp, the
+    // ground retrieve, CanPlay, Claimed, the yield-after-landing reservation, playArea (DogMayGo) and ObserveFlight
+    // never read it. UpdateLand still clamps the recover slide at the edge of the flat for every preset (Codex D).
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class KH_FrisbeeCatch : UdonSharpBehaviour
     {
@@ -63,9 +69,10 @@ namespace KominkaHillside
         public float clipRiseDurationTwist = 0.35f;
         public float clipRecoverDurationTwist = 0.40f;
 
-        [Header("Jump (provisional; Inspector values are kept by Build Scene)")]
-        [Tooltip("Root rise range. The clip plays at clipRise/tUp, so the range also bounds the playback speed")]
-        public float maxRootRise = 0.75f;
+        [Header("Jump (Build Scene writes maxRootRise and the speeds below; the rest of the Inspector values are kept)")]
+        [Tooltip("Root rise range. The clip plays at clipRise/tUp, so the range also bounds the playback speed. " +
+            "Code-owned since round 2: the standing jump is the only jump, so this is how high the dog can reach")]
+        public float maxRootRise = 0.9f;
         public float minRootRise = 0.19f;
         [Tooltip("Disc lower than the standing mouth by more than this: pick it up after it lands")]
         public float tooLowBelowMouth = 0.30f;
@@ -73,14 +80,18 @@ namespace KominkaHillside
         public float catchTolerance = 0.30f;
         [Tooltip("Seconds around the planned catch instant during which the mouth may meet the disc (first frame within tolerance wins)")]
         public float catchWindow = 0.08f;
-        [Tooltip("Horizontal speed carried into the crouch and the air")]
-        public float takeoffSpeed = 2.5f;
-        [Tooltip("Sprint used while chasing a flying disc (the walk-world run of 2.4 m/s never catches up; first Play). " +
-            "The run clip is sped up in proportion above runSpeed")]
-        public float chaseRunSpeed = 4.5f;
+        [Tooltip("Sprint used to get under the catch point. Round 2: 4.5 m/s could not keep any ETA promise, and a dog " +
+            "IS fast, so it sprints at 10 and arrives early on purpose. The run clip is sped up in proportion above runSpeed")]
+        public float chaseRunSpeed = 10f;
         [Tooltip("Acceleration while chasing (a sprint start; the walk value 6 is kept for return/retrieve)")]
-        public float chaseAcceleration = 12f;
-        public float maxRunAnimScale = 2.2f;
+        public float chaseAcceleration = 25f;
+        public float maxRunAnimScale = 3.5f;
+        [Tooltip("Seconds the dog wants to be standing on the spot, settled, before the crouch begins. " +
+            "Part of the feasibility test, so a candidate it can only just reach is refused")]
+        public float settleTime = 0.2f;
+        [Tooltip("Speed used to bring the disc back (retrieve from the ground, return to the thrower). " +
+            "Not the sprint: the chase is the only part that has a deadline")]
+        public float returnRunSpeed = 4.5f;
 
         [Header("Stand-off while the disc is held (user idea 2026-09-21)")]
         [Tooltip("While someone holds the disc the dog runs this far in front of them and waits facing them. " +
@@ -90,14 +101,17 @@ namespace KominkaHillside
         [Tooltip("The spot moves with the holder; the dog only re-positions once it is off by more than this")]
         public float standoffSlack = 1.5f;
         public float replanInterval = 0.1f;
-        public float noticeDelay = 0.25f;
+        [Tooltip("Round 2: the catch point is decided at the throw, so the dog must not spend a quarter second admiring it")]
+        public float noticeDelay = 0.1f;
 
         [Header("Locomotion (KD defaults)")]
         public float runSpeed = 2.4f;
         public float walkSpeed = 1.1f;
         public float acceleration = 6f;
         public float deceleration = 36f;
-        public float turnSpeedDegPerSec = 360f;
+        [Tooltip("Code-owned since round 2: Eta charges the turn serially, so a dog that has to spin 180 deg to " +
+            "chase pays for it out of the catch window. 720 deg/s halves that bill and keeps Eta honest")]
+        public float turnSpeedDegPerSec = 720f;
         public float idleTurnSpeedDegPerSec = 30f;
         public float runAnimSpeed = 1.7f;
         public float stopSpeedThreshold = 0.05f;
@@ -133,9 +147,9 @@ namespace KominkaHillside
         public const int VariantNormal = 0, VariantRunInSide = 1, VariantRunInFar = 2, VariantRunInBeside = 3,
             VariantTwist = 4, VariantCurve = 5;
         public const int VariantCount = 6;
-        // Run-in (v1..3): a short fast hop instead of a high jump, and only candidates the dog just barely reaches
-        // at a full sprint, so the catch reads as "ran in from outside and snatched it".
-        public const float RunInTakeoff = 4f, RunInPreferMaxRise = 0.40f, RunInJitSlack = 0.30f, RunInReadySlack = 2.5f;
+        // Run-in (v1..3). Round 2: the planner no longer differs per preset (every catch is an intercept), so all
+        // that is left of the run-in is WHERE the dog waits for the throw - the run in from there is the effect.
+        public const float RunInReadySlack = 2.5f;
         // Ready geometry per run-in preset: ahead along the holder's head direction, lateral toward the side the dog is on.
         public const float ReadyAhead1 = 7f, ReadyLateral1 = 4f, ReadyAhead2 = 11f, ReadyLateral2 = 1.5f,
             ReadyAhead3 = 4f, ReadyLateral3 = 2.5f;
@@ -160,13 +174,15 @@ namespace KominkaHillside
         private int _flightEndReason;
         // Plan (Owner).
         private int _plan;
-        private int _planPass = -1;    // which scan adopted the current plan: -1 = no run-in, 0 = strict, 1 = fallback
         private float _catchT;         // flight time of the catch
-        private Vector3 _catchRoot;    // where dogRoot must be at the catch (world; y = ground + rise, or ground for a run catch)
-        private Vector3 _liftoff;      // where the arc starts (ground level)
-        private Vector3 _crouchStart;  // where the crouch begins; chase target for a jump plan
-        private Vector3 _forward;      // horizontal direction of the jump
+        private Vector3 _catchRoot;    // where dogRoot must be at the catch (world; y = ground + rise, or ground for a stand catch)
+        private Vector3 _standRoot;    // the spot on the ground under the catch: chase target, crouch start and takeoff
+        private Vector3 _forward;      // where the dog looks at the catch (into the oncoming disc)
+        private Vector3 _entryDir = Vector3.forward;  // the way it ran in to get there (log only: `entry=`)
         private float _rootRise, _tUp, _animScale, _crouchReal, _jumpSpeed;
+        private float _planSlack;      // spare seconds of the committed candidate (log only)
+        // Scratch filled by CatchGeometry; copied into the plan fields only once a candidate is accepted.
+        private Vector3 _geoForward, _geoCatchRoot, _geoStandRoot;
         private Vector3 _landing;      // predicted disc landing point (PlanGround)
         private bool _landingValid;
         private float _nextPlan;
@@ -200,12 +216,10 @@ namespace KominkaHillside
         private float _readySide = 1f;     // which side of the holder's line the Ready spot sits on (latched at Ready entry)
         private Vector3 _standoffFwd = Vector3.forward;  // holder's head direction the current Ready spot was built from
         private Vector3 _standoffHolderPos;              // where the holder stood when that spot was built
-        private float _takeoff, _preferMaxRise, _jitSlack, _landExit;
-        private bool _runIn, _twist;       // _twist: the Animator Bool and the pose facts below follow it
+        private bool _runIn, _twist;       // _runIn: Ready geometry only (round 2). _twist: Animator Bool + pose facts
         private Vector3 _mouthCatch;       // pose working values, copied from the Jump or the Twist facts set
         private float _crouchDur, _riseDur, _recoverDur;
-        private float _evalSlack;          // avail - Eta of the last evaluated candidate (strict pass + logs)
-        private float _waitSince = -1f;    // Time.time the dog first stood on the crouch start, -1 = never waited
+        private float _settledSince = -1f; // Time.time the dog first stood on the catch spot, -1 = not there yet
 
         public int State { get { return state; } }
         public int Variant { get { return variant; } }
@@ -288,7 +302,7 @@ namespace KominkaHillside
             Debug.Log("[KH_FrisbeeCatch] variant " + was + " -> " + v + " applied");
         }
 
-        // Expand the preset into the working values the Ready target, the planner and (Wave 3) the clip read.
+        // Expand the preset into the working values the Ready target and the clip read (round 2: not the planner).
         // Runs on every client, from the synced number, so display and decision agree without extra sync.
         void ApplyVariant()
         {
@@ -302,11 +316,8 @@ namespace KominkaHillside
             else if (variant == VariantRunInBeside) { _readyAhead = ReadyAhead3; _readyLateral = ReadyLateral3; _readyFaceForward = true; }
             // A 4 m sideways target swings 4 m when the head turns 30 degrees: a wider slack, not a faster refresh.
             _readySlack = _runIn ? Mathf.Max(standoffSlack, RunInReadySlack) : standoffSlack;
-            // Planner.
-            _takeoff = _runIn ? RunInTakeoff : takeoffSpeed;
-            _preferMaxRise = RunInPreferMaxRise;
-            _jitSlack = RunInJitSlack;
-            _landExit = _runIn ? runSpeed : 0f;   // run through and turn around, instead of stopping dead
+            // Round 2: the planner reads nothing else from the preset. v1..3 differ from v0 only in where the dog
+            // waits, so "ran in from the side" is produced by the geometry of the throw, not by a second scan.
             // Pose facts. The planner, the jump and the landing read the working values only, so swapping the clip
             // swaps the mouth the plan aims with (the twist mouth is off to the side and slightly behind the root).
             if (_twist)
@@ -332,8 +343,8 @@ namespace KominkaHillside
             if (float.IsNaN(curve) || float.IsInfinity(curve)) return;   // a forged value would poison every prediction (Codex D)
             if (curve < -1f || curve > 1f) return; // a real throw carries FlightCurve (0 or CurveDefault); clamping would split flight and prediction
             _haveLaunch = true; _gen = gen; _p0 = p0; _v0 = v0; _t0 = launchServerTime; _curve = curve; _flightEnded = false;
-            _plan = PlanNone; _nextPlan = 0f; _deviationSince = -1f; _planPass = -1; _landingValid = false; _localPlanValid = true;
-            _waitSince = -1f;
+            _plan = PlanNone; _nextPlan = 0f; _deviationSince = -1f; _landingValid = false; _localPlanValid = true;
+            _settledSince = -1f;
             throwerId = thrower;
             LogThrow(p0, v0, curve);
             TransitionTo(StateChase);
@@ -371,7 +382,7 @@ namespace KominkaHillside
             state = next;
             _stateEntered = Networking.GetServerTimeInSeconds();
             _released = false;
-            if (next == StateIdle) { throwerId = -1; animSpeed = 1f; _plan = PlanNone; _planPass = -1; _haveLaunch = false; _localPlanValid = false; _yieldAfterLanding = false; _speed = 0f; _waitSince = -1f; }
+            if (next == StateIdle) { throwerId = -1; animSpeed = 1f; _plan = PlanNone; _haveLaunch = false; _localPlanValid = false; _yieldAfterLanding = false; _speed = 0f; _settledSince = -1f; }
             if (next == StateJumpCarry || next == StateReturn) ClaimDisc();
             // A switch asked for mid-sequence lands here, at the first quiet moment (IMP-DOG-008). Only the client
             // that owns both the dog and this object may apply it (Codex D: the synced numbers live here).
@@ -598,7 +609,7 @@ namespace KominkaHillside
             return spot;
         }
 
-        // ---- Chase: run to the crouch start (jump) or through the catch point (run catch), replanning ----
+        // ---- Chase: sprint to the spot under the catch point, settle there, replanning ----
         void UpdateChase(double now, float elapsed)
         {
             if (!_dogOwner) { UpdateLocomotionAnim(); return; }
@@ -617,29 +628,47 @@ namespace KominkaHillside
             if (Time.time >= _nextPlan) { _nextPlan = Time.time + replanInterval; Plan(tNow); }
             if (_plan == PlanJump)
             {
-                Vector3 to = _crouchStart - dogRoot.position; to.y = 0f;
+                // Sprint to the spot, then hold it. Arriving early is the goal, not a defect: the seconds spent
+                // standing under the trajectory are what turns a 0.5 m miss into a catch (`takeoff settled=`).
+                Vector3 to = _standRoot - dogRoot.position; to.y = 0f;
                 float dist = to.magnitude;
-                // How long the dog stood on the crouch start before it could go: 0 for a run-in that arrives just
-                // in time, large for "ran there and waited" (IMP-DOG-008 log).
-                if (dist <= arriveRadius) { if (_waitSince < 0f) _waitSince = Time.time; }
-                else _waitSince = -1f;
+                if (dist <= 0.1f) { if (_settledSince < 0f) _settledSince = Time.time; }
+                else _settledSince = -1f;
                 float crouchAt = _catchT - _tUp - _crouchReal;
                 float avail = crouchAt - tNow;
-                if (avail < -0.08f) { _plan = PlanNone; _nextPlan = 0f; }     // missed the slot: pick a later candidate next frame
-                else if (dist <= arriveRadius && avail <= 0.02f) { BeginJump(now); return; } // never early: 0.08 s early puts the disc 0.5 m short
-                float desired = avail > 0.05f ? Mathf.Clamp(dist / avail, walkSpeed * 0.5f, chaseRunSpeed) : chaseRunSpeed;
-                // Known limit (Codex U): even a run-in may arrive up to RunInJitSlack early and stand here, which
-                // costs the "never stopped" look. The wait is printed as `takeoff wait=`; judge it in Play before
-                // changing the strict pass. net: owner-only; at the start point, face the jump line while waiting.
-                if (dist <= arriveRadius) { Coast(); dogRoot.rotation = Quaternion.RotateTowards(dogRoot.rotation, Quaternion.LookRotation(_forward, Vector3.up), turnSpeedDegPerSec * Time.deltaTime); }
-                else MoveToward(_crouchStart, desired, 0f, chaseAcceleration);
+                if (avail < -0.08f) { _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; }   // missed the slot: a later candidate next frame
+                else if (avail <= 0.02f)
+                {
+                    // Never early: 0.08 s early puts the disc 0.5 m away. Too far from the spot to jump from here,
+                    // so drop the plan and let the scan offer a later (lower) candidate, or the ground.
+                    if (dist <= 0.5f) { BeginJump(now); return; }
+                    _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f;
+                }
+                else if (dist > 0.1f) MoveToward(_standRoot, chaseRunSpeed, 0.1f, chaseAcceleration);
+                else
+                {
+                    // On the spot: walk off the last few centimetres of the residual and look into the disc.
+                    if (dist > 0.05f) MoveToward(_standRoot, walkSpeed, 0f);
+                    else Coast();
+                    FaceToward(_forward); // net: owner-only
+                }
             }
             else if (_plan == PlanRun)
             {
+                // Stand catch: the disc comes through at standing mouth height, so the dog waits on the spot
+                // instead of running through it (same decision window as before).
+                Vector3 to = _standRoot - dogRoot.position; to.y = 0f;
+                float dist = to.magnitude;
+                if (dist <= 0.1f) { if (_settledSince < 0f) _settledSince = Time.time; }
+                else _settledSince = -1f;
                 float avail = _catchT - tNow;
-                Vector3 to = _catchRoot - dogRoot.position; to.y = 0f;
-                float desired = avail > 0.05f ? Mathf.Clamp(to.magnitude / avail, walkSpeed * 0.5f, chaseRunSpeed) : chaseRunSpeed;
-                MoveToward(_catchRoot + _forward * 0.5f, desired, 0f, chaseAcceleration); // run through, not to, the point
+                if (dist > 0.1f) MoveToward(_standRoot, chaseRunSpeed, 0.1f, chaseAcceleration);
+                else
+                {
+                    if (dist > 0.05f) MoveToward(_standRoot, walkSpeed, 0f);
+                    else Coast();
+                    FaceToward(_forward); // net: owner-only
+                }
                 if (avail <= catchWindow)
                 {
                     if (!_catchDecided) { _catchDecided = true; _bestGap = 99f; }
@@ -647,13 +676,13 @@ namespace KominkaHillside
                     if (gap < _bestGap) _bestGap = gap;
                     if (gap <= catchTolerance && !(_discPickup != null && _discPickup.IsHeld))
                     {
-                        Debug.Log("[KH_FrisbeeCatch] run catch OK mouth-edge=" + gap.ToString("F3") + " at " + avail.ToString("F2") + "s" + VariantTail());
+                        Debug.Log("[KH_FrisbeeCatch] stand catch OK mouth-edge=" + gap.ToString("F3") + " at " + avail.ToString("F2") + "s" + VariantTail());
                         TransitionTo(StateReturn); return;
                     }
                     if (avail < -catchWindow)
                     {
-                        Debug.Log("[KH_FrisbeeCatch] run catch MISS best mouth-edge=" + _bestGap.ToString("F3") + VariantTail());
-                        _plan = PlanNone; _nextPlan = 0f; _catchDecided = false;
+                        Debug.Log("[KH_FrisbeeCatch] stand catch MISS best mouth-edge=" + _bestGap.ToString("F3") + VariantTail());
+                        _plan = PlanNone; _nextPlan = 0f; _catchDecided = false; _settledSince = -1f;
                     }
                 }
             }
@@ -683,165 +712,138 @@ namespace KominkaHillside
             return run + turnDeg / turnSpeedDegPerSec;
         }
 
-        // Horizontal angle between the way the dog goes and the way the disc flies at the catch: 0 = catching it
-        // from behind, 90 = crossing the line, 180 = head-on. The number the run-in presets are judged by.
+        // Horizontal angle between the way the dog RAN IN and the way the disc flies at the catch: 0 = came from
+        // behind the disc, 90 = crossed the line, 180 = ran at it head-on. The number the presets are judged by.
+        // Round 2 measures the run-in, not the facing: the dog always ends up facing into the disc (_forward),
+        // so the facing would read 180 for every throw.
         float EntryAngle()
         {
             Vector3 dv = frisbee._VelocityAt(_v0, _curve, _catchT); dv.y = 0f;
-            if (dv.sqrMagnitude < 1e-4f || _forward.sqrMagnitude < 1e-4f) return 0f;
-            return Vector3.Angle(_forward, dv);
+            if (dv.sqrMagnitude < 1e-4f || _entryDir.sqrMagnitude < 1e-4f) return 0f;
+            return Vector3.Angle(_entryDir, dv);
         }
 
-        // Tail shared by the catch / run-catch lines (IMP-DOG-008 log format).
+        // Tail shared by the catch / stand-catch lines (IMP-DOG-008 log format). Round 2 drops vTake (the takeoff
+        // is always from a standstill) and pass (there is one scan).
         string VariantTail()
         {
-            return " v=" + variant + " entry=" + EntryAngle().ToString("F0") + " vTake=" + _speed.ToString("F2") + " pass=" + PassName(_planPass);
+            return " v=" + variant + " entry=" + EntryAngle().ToString("F0");
         }
 
-        // A jump candidate at flight time t. The jump direction is the line from the dog to the disc, so the dog
-        // runs straight at the point and jumps along its run (head-on when the disc comes toward it, chasing when
-        // it comes from behind). If the disc comes down right over the dog it crouches on the spot and jumps up.
-        // Returns 0 = not feasible, 1 = running jump, 2 = standing jump; fills the plan fields when feasible.
-        int TryJump(float t, float tNow, Vector3 d, float rise, Vector3 dogPos, bool commit)
+        // Ground height under a point on the trajectory. The scan needs it per candidate (the disc may come down
+        // over a different part of the flat than the dog stands on); no hit keeps the dog's own ground.
+        float GroundYAt(Vector3 p)
         {
-            float g = frisbee.gravity;
-            float tUp = Mathf.Sqrt(2f * rise / g);
-            float scale = _riseDur / tUp;
-            float crouch = _crouchDur / scale;
-            float avail = t - tUp - crouch - tNow;
-            if (avail < 0f) return 0;
-            Vector3 flat = d - dogPos; flat.y = 0f;
-            float far = flat.magnitude;
-            Vector3 fwd = far > 0.3f ? flat / far : dogRoot.forward; fwd.y = 0f;
-            if (fwd.sqrMagnitude < 1e-4f) fwd = Vector3.forward; fwd.Normalize();
-            Vector3 right = Vector3.Cross(Vector3.up, fwd);
-            Vector3 catchRoot = new Vector3(d.x, _groundY + rise, d.z) - fwd * _mouthCatch.z - right * _mouthCatch.x;
             RaycastHit hit;
-            // Run-up shorter than the distance to the disc, so the crouch start never lies behind the dog; when the
-            // disc comes down (almost) on the dog the run-up degenerates into a standing jump.
-            float v = Mathf.Min(_takeoff, Mathf.Max(0f, far - _mouthCatch.z - 0.1f) / (tUp + crouch));
-            int kind = 1;
-            if (v < 0.6f) { v = 0f; kind = 2; }
-            Vector3 liftoff = catchRoot - fwd * (v * tUp); liftoff.y = _groundY;
-            Vector3 crouchStart = liftoff - fwd * (v * crouch);   // the dog keeps moving during the crouch (review U3)
-            Vector3 toStart = crouchStart - dogPos; toStart.y = 0f;
-            float dist = toStart.magnitude;
-            float turn = dist > 0.05f ? Vector3.Angle(dogRoot.forward, toStart) : 0f;
-            if (kind == 1 && dist > 0.3f && Vector3.Dot(toStart / dist, fwd) < 0.3f) return 0; // must arrive heading along fwd
-            if (kind == 2) turn = Mathf.Max(turn, Vector3.Angle(dogRoot.forward, fwd));      // and face the disc before the crouch
-            // Spare seconds at a full sprint. The run-in strict pass wants this small (arrive just in time);
-            // the plan log prints it. Only meaningful after a feasible result.
-            _evalSlack = avail - Eta(dist, turn);
-            if (_evalSlack < 0f) return 0;
-            // Lane and landing must be clear and on the ground (walls, edge of the flat).
-            float lane = v * (tUp * 2f + crouch) + 0.6f;
-            if (Physics.Raycast(crouchStart + Vector3.up * 0.3f, fwd, out hit, lane, frisbee.obstacleMask, QueryTriggerInteraction.Ignore)) return 0;
-            Vector3 landing = liftoff + fwd * (v * tUp * 2f);
-            if (!DogMayGo(crouchStart) || !DogMayGo(catchRoot) || !DogMayGo(landing)) return 0;
-            // A run-in does not stop on landing: it slides on through the recover window (from v down to _landExit
-            // at the clip's playback scale). That slide must stay on the flat too (Codex D). v0 keeps the check
-            // above alone, so the baseline picks exactly the candidates it did in stage 2.
-            if (_runIn && !DogMayGo(landing + fwd * (0.5f * (v + _landExit) * (_recoverDur / scale)))) return 0;
-            if (!Physics.Raycast(landing + Vector3.up * groundRayOffset, Vector3.down, out hit, groundRayDistance, groundLayerMask, QueryTriggerInteraction.Ignore)) return 0;
-            if (Mathf.Abs(hit.point.y - _groundY) > 0.25f) return 0;
-            if (commit)
-            {
-                _catchT = t; _catchRoot = catchRoot; _liftoff = liftoff; _crouchStart = crouchStart; _forward = fwd;
-                _rootRise = rise; _tUp = tUp; _animScale = scale; _crouchReal = crouch; _jumpSpeed = v;
-            }
-            return kind;
+            float top = p.y + groundRayOffset;
+            float len = top - _groundY + groundRayDistance;
+            if (len < groundRayDistance) len = groundRayDistance;
+            if (Physics.Raycast(new Vector3(p.x, top, p.z), Vector3.down, out hit, len, groundLayerMask, QueryTriggerInteraction.Ignore))
+                return hit.point.y;
+            return _groundY;
         }
 
-        // Earliest flight time at which the mouth can be brought to the disc. See the class comment.
-        // A plan already chosen is kept while it stays feasible (with slack), so replanning cannot flap.
+        // Where the root must be to meet the disc at flight time t, and the spot on the ground under it.
+        // The dog faces INTO the oncoming disc (round 2: it waits for the disc, it no longer runs along with it),
+        // so the mouth offset is taken off that facing. Fills the _geo* scratch; commits nothing.
+        void CatchGeometry(float t, float rise, float groundY, bool stand, Vector3 dogPos)
+        {
+            Vector3 d = frisbee._PositionAt(_p0, _v0, _curve, t);
+            Vector3 dv = frisbee._VelocityAt(_v0, _curve, t); dv.y = 0f;
+            Vector3 fwd;
+            if (dv.sqrMagnitude > 1e-4f) fwd = -dv.normalized;
+            else { fwd = d - dogPos; fwd.y = 0f; if (fwd.sqrMagnitude < 1e-4f) fwd = dogRoot.forward; }
+            fwd.y = 0f;
+            if (fwd.sqrMagnitude < 1e-4f) fwd = Vector3.forward;
+            fwd = fwd.normalized;
+            Vector3 right = Vector3.Cross(Vector3.up, fwd);
+            Vector3 mouth = stand ? mouthOffsetStand : _mouthCatch;
+            _geoForward = fwd;
+            _geoCatchRoot = new Vector3(d.x, groundY + rise, d.z) - fwd * mouth.z - right * mouth.x;
+            _geoStandRoot = new Vector3(_geoCatchRoot.x, groundY, _geoCatchRoot.z);
+        }
+
+        // Intercept-first (IMP-DOG-008 round 2). The trajectory is known at the throw, so the dog picks the point
+        // it wants and goes to stand under it: the scan walks the flight forward and takes the FIRST candidate it
+        // can reach in time, which - since the disc is coming down by then - is the HIGHEST one it can catch.
+        // A candidate is feasible only if the dog can be standing there, settled, before the crouch has to begin.
+        // A plan already chosen is kept while it stays reachable, so replanning cannot flap.
         void Plan(float tNow)
         {
             _groundY = SnapToGround(dogRoot.position).y;
             Vector3 dogPos = dogRoot.position;
-            if (_plan == PlanJump && _catchT - _tUp - _crouchReal - tNow > -0.08f)
+            float held = _catchT - tNow;
+            if ((_plan == PlanJump || _plan == PlanRun) && held > -(catchWindow + 0.02f))
             {
-                Vector3 to = _crouchStart - dogPos; to.y = 0f;
-                float turn = to.magnitude > 0.05f ? Vector3.Angle(dogRoot.forward, to) : 0f;
-                if (Eta(to.magnitude, turn) <= _catchT - _tUp - _crouchReal - tNow + 0.15f) return; // keep it
-            }
-            if (_plan == PlanRun && _catchT - tNow > -0.02f)
-            {
-                Vector3 to = _catchRoot - dogPos; to.y = 0f;
-                float turn = to.magnitude > 0.05f ? Vector3.Angle(dogRoot.forward, to) : 0f;
-                if (Eta(to.magnitude, turn) <= _catchT - tNow + 0.15f) return;
+                // Settling is not required to KEEP a plan: once the dog is on its way, arriving at all beats
+                // swapping to a candidate it has not started for.
+                Vector3 toHeld = _standRoot - dogPos; toHeld.y = 0f;
+                float turnHeld = toHeld.magnitude > 0.05f ? Vector3.Angle(dogRoot.forward, toHeld) : 0f;
+                if (Eta(toHeld.magnitude, turnHeld) + _crouchReal + _tUp <= held + 0.05f)
+                {
+                    // Fine-tune while waiting: the catch time is fixed, the spot is re-derived from the prediction
+                    // (the ground under the disc may read differently from where the dog now stands).
+                    if (toHeld.magnitude <= 0.1f)
+                    {
+                        CatchGeometry(_catchT, _rootRise, GroundYAt(frisbee._PositionAt(_p0, _v0, _curve, _catchT)), _plan == PlanRun, dogPos);
+                        if (DogMayGo(_geoStandRoot)) { _catchRoot = _geoCatchRoot; _standRoot = _geoStandRoot; _forward = _geoForward; }
+                    }
+                    return;
+                }
             }
             int chosen = PlanNone;
             const int Samples = 32;
             const float Step = 0.1f;
+            float g = frisbee.gravity;
             RaycastHit hit;
-            // Run-in (v1..3) scans twice: pass 0 takes only candidates that read as a run-in (a low fast hop, and
-            // one the dog only just reaches at a sprint); pass 1 is the stage-2 scan, so the dog always goes for
-            // the disc. Every other variant runs pass 1 alone and behaves exactly as before.
-            int passes = _runIn ? 2 : 1;
-            int usedPass = 0;
-            for (int pass = 0; pass < passes; pass++)
+            for (int i = 0; i < Samples; i++)
             {
-                bool strict = _runIn && pass == 0;
-                for (int i = 0; i < Samples; i++)
+                float t = tNow + 0.2f + i * Step;
+                Vector3 d = frisbee._PositionAt(_p0, _v0, _curve, t);
+                float groundY = GroundYAt(d);
+                float h = d.y - groundY;
+                if (h <= frisbee.radius) { _landing = new Vector3(d.x, groundY, d.z); _landingValid = true; break; }
+                float rise = h - _mouthCatch.y;
+                if (rise > maxRootRise) continue;                       // still out of reach; it comes down later
+                bool stand = false;
+                if (rise < minRootRise)
                 {
-                    float t = tNow + 0.2f + i * Step;
-                    Vector3 d = frisbee._PositionAt(_p0, _v0, _curve, t);
-                    float h = d.y - _groundY;
-                    if (h <= frisbee.radius) { _landing = new Vector3(d.x, _groundY, d.z); _landingValid = true; break; }
-                    if (h < mouthOffsetStand.y - tooLowBelowMouth) continue; // too low for a running catch: wait for the ground
-                    float rise = h - _mouthCatch.y;
-                    if (rise > maxRootRise) continue;                  // out of reach now; it may come down later
-                    if (rise < minRootRise)
-                    {
-                        // Low disc: run through it with the standing mouth (no jump, no pose clip).
-                        Vector3 flat = d - dogPos; flat.y = 0f;
-                        Vector3 fwd = flat.magnitude > 0.3f ? flat.normalized : dogRoot.forward; fwd.y = 0f;
-                        if (fwd.sqrMagnitude < 1e-4f) fwd = Vector3.forward; fwd.Normalize();
-                        Vector3 right = Vector3.Cross(Vector3.up, fwd);
-                        Vector3 root = new Vector3(d.x, _groundY, d.z) - fwd * mouthOffsetStand.z - right * mouthOffsetStand.x;
-                        if (!DogMayGo(root)) continue;
-                        Vector3 to = root - dogPos; to.y = 0f;
-                        float turn = to.magnitude > 0.05f ? Vector3.Angle(dogRoot.forward, to) : 0f;
-                        float slack = (t - tNow) - Eta(to.magnitude, turn);
-                        if (slack < 0f) continue;
-                        if (strict && slack > _jitSlack) continue;     // reachable at a jog: not a run-in
-                        if (to.magnitude > 0.05f && Physics.Raycast(dogPos + Vector3.up * 0.3f, to.normalized, out hit, to.magnitude, frisbee.obstacleMask, QueryTriggerInteraction.Ignore)) continue;
-                        _catchT = t; _catchRoot = root; _forward = fwd; _rootRise = 0f; _tUp = 0f; _animScale = 1f; _crouchReal = 0f; _jumpSpeed = 0f; _catchDecided = false;
-                        _evalSlack = slack;
-                        chosen = PlanRun;
-                        break;
-                    }
-                    if (strict && rise > _preferMaxRise) continue;      // a high jump reads as "stopped and jumped"
-                    // In the strict pass the fields are only written once the candidate is accepted, so a rejected
-                    // one cannot leave a half-plan behind.
-                    int kind = TryJump(t, tNow, d, rise, dogPos, !strict);
-                    if (kind == 0) continue;
-                    if (strict)
-                    {
-                        if (_evalSlack > _jitSlack) continue;
-                        TryJump(t, tNow, d, rise, dogPos, true);
-                    }
-                    chosen = PlanJump;
-                    Debug.Log("[KH_FrisbeeCatch] jump candidate t=" + t.ToString("F2") + (kind == 2 ? " standing" : " running") + " dist=" + Vector3.Distance(dogPos, _crouchStart).ToString("F2"));
-                    break;
+                    // Not worth a jump. At standing mouth height the dog simply waits for it; lower than that,
+                    // wait for the ground instead (the same rule as before, now decided standing still).
+                    if (h < mouthOffsetStand.y - tooLowBelowMouth) continue;
+                    stand = true; rise = 0f;
                 }
-                if (chosen != PlanNone) { usedPass = pass; break; }
-                usedPass = pass;
+                CatchGeometry(t, rise, groundY, stand, dogPos);
+                if (!DogMayGo(_geoStandRoot)) continue;
+                float tUp = stand ? 0f : Mathf.Sqrt(2f * rise / g);
+                float scale = stand ? 1f : _riseDur / tUp;
+                float crouch = stand ? 0f : _crouchDur / scale;
+                Vector3 to = _geoStandRoot - dogPos; to.y = 0f;
+                float dist = to.magnitude;
+                // Turning to the spot, or (already there) turning to face the disc, both cost time.
+                float turn = dist > 0.05f ? Vector3.Angle(dogRoot.forward, to) : Vector3.Angle(dogRoot.forward, _geoForward);
+                float slack = (t - tNow) - (Eta(dist, turn) + settleTime + crouch + tUp);
+                if (slack < 0f) continue;                               // cannot be standing there in time
+                if (dist > 0.05f && Physics.Raycast(dogPos + Vector3.up * 0.3f, to / dist, out hit, dist, frisbee.obstacleMask, QueryTriggerInteraction.Ignore)) continue;
+                if (!Physics.Raycast(_geoStandRoot + Vector3.up * groundRayOffset, Vector3.down, out hit, groundRayDistance, groundLayerMask, QueryTriggerInteraction.Ignore)) continue;
+                if (Mathf.Abs(hit.point.y - groundY) > 0.25f) continue;  // a step or a hole where the dog would stand
+                _catchT = t; _catchRoot = _geoCatchRoot; _standRoot = _geoStandRoot; _forward = _geoForward;
+                _entryDir = dist > 0.05f ? to / dist : _geoForward;
+                _rootRise = rise; _tUp = tUp; _animScale = scale; _crouchReal = crouch; _jumpSpeed = 0f;
+                _planSlack = slack; _catchDecided = false;
+                chosen = stand ? PlanRun : PlanJump;
+                break;
             }
-            if (chosen == PlanNone && _landingValid && DogMayGo(_landing)) chosen = PlanGround;
-            // Which scan this plan came from is a fact of the plan, not of the log line: the same plan kind adopted
-            // by the fallback means something else than one the strict pass found (Codex M), so a pass change is
-            // logged even when the kind stays put.
-            int chosenPass = _runIn ? usedPass : -1;
-            if (chosen != _plan || chosenPass != _planPass) Debug.Log("[KH_FrisbeeCatch] plan=" + chosen + " catchT=" + _catchT.ToString("F2") + " rise=" + _rootRise.ToString("F2") + " tUp=" + _tUp.ToString("F2") + " scale=" + _animScale.ToString("F2") + " tNow=" + tNow.ToString("F2")
-                + " v=" + variant + " pass=" + PassName(chosenPass) + " slack=" + _evalSlack.ToString("F2")
-                + " startDist=" + Vector3.Distance(dogPos, chosen == PlanJump ? _crouchStart : _catchRoot).ToString("F1")
-                + " entry=" + EntryAngle().ToString("F0"));
-            _plan = chosen; _planPass = chosenPass;
+            if (chosen == PlanNone) { _planSlack = 0f; if (_landingValid && DogMayGo(_landing)) chosen = PlanGround; }
+            if (chosen != _plan)
+            {
+                _settledSince = -1f;     // a new kind of plan means a new spot: the settle clock starts over
+                Debug.Log("[KH_FrisbeeCatch] plan=" + chosen + " catchT=" + _catchT.ToString("F2") + " rise=" + _rootRise.ToString("F2")
+                    + " tUp=" + _tUp.ToString("F2") + " dist=" + Vector3.Distance(dogPos, chosen == PlanGround ? _landing : _standRoot).ToString("F1")
+                    + " slack=" + _planSlack.ToString("F2") + " entry=" + EntryAngle().ToString("F0") + " v=" + variant);
+            }
+            _plan = chosen;
         }
-
-        // "normal" for every preset without the two-pass scan, else the scan that adopted the plan.
-        string PassName(int pass) { return pass < 0 ? "normal" : pass.ToString(); }
 
         void BeginJump(double now)
         {
@@ -851,9 +853,12 @@ namespace KominkaHillside
             if (_jumpStart > now) _jumpStart = now;
             _jumpFrom = dogRoot.position; _jumpFrom.y = _groundY; _catchDecided = false; _airborne = false; _bestGap = 99f;
             animSpeed = _animScale;
-            // wait = seconds spent standing on the crouch start; a run-in that works should read ~0.00.
-            Debug.Log("[KH_FrisbeeCatch] takeoff v=" + variant + " speedNow=" + _speed.ToString("F2") + " planned=" + _jumpSpeed.ToString("F2")
-                + " wait=" + (_waitSince < 0f ? -1f : Time.time - _waitSince).ToString("F2"));
+            // settled = seconds spent standing on the spot before the crouch (round 2 wants this >= settleTime),
+            // off = how far from it the dog actually was when the crouch began (the air solve absorbs the rest).
+            Vector3 offTo = _standRoot - dogRoot.position; offTo.y = 0f;
+            Debug.Log("[KH_FrisbeeCatch] takeoff v=" + variant
+                + " settled=" + (_settledSince < 0f ? -1f : Time.time - _settledSince).ToString("F2")
+                + " off=" + offTo.magnitude.ToString("F2"));
             TransitionTo(StateJump);
         }
 
@@ -877,8 +882,9 @@ namespace KominkaHillside
             float vy = g * _tUp;
             if (!_airborne)
             {
-                // Horizontal air velocity is whatever brings the root from here to the planned catch root at tUp
-                // (the crouch travel is planned, so this is close to the variant's takeoff speed).
+                // Horizontal air velocity is whatever brings the root from here to the planned catch root at tUp.
+                // Round 2: the takeoff is from a standstill, so this only ever corrects the few centimetres the
+                // fine-tune left over (the cap stays, for the case where the dog had to jump from up to 0.5 m off).
                 _airborne = true; _airStart = dogRoot.position; _airStart.y = _groundY;
                 Vector3 need = _catchRoot - _airStart; need.y = 0f;
                 _airVel = need / Mathf.Max(0.05f, _tUp);
@@ -921,11 +927,11 @@ namespace KominkaHillside
         {
             if (!_dogOwner) { UpdateLocomotionAnim(); return; }
             float recover = _recoverDur / Mathf.Max(0.1f, _animScale);
-            // Run-in leaves the landing at a run (turn around and carry it back); everything else stops as before.
-            float desired = Mathf.Lerp(_jumpSpeed, _landExit, Mathf.Clamp01(elapsed / recover));
-            // All variants: the slide never carries the root off the flat. At the edge the dog holds its ground and
-            // the clip plays on, so the landing still reads as a landing (Codex D; TryJump already refuses run-in
-            // candidates whose slide would end outside, this is the guard for everything it cannot foresee).
+            // Round 2: the jump is always a standing one, so the dog lands on the spot and simply stops (v0's rule
+            // for every preset). The lerp is kept so an interrupted jump with residual speed still eases out.
+            float desired = Mathf.Lerp(_jumpSpeed, 0f, Mathf.Clamp01(elapsed / recover));
+            // Every preset: the slide never carries the root off the flat. At the edge the dog holds its ground and
+            // the clip plays on, so the landing still reads as a landing (Codex D).
             float reach = _speed > desired ? _speed : desired;
             if (DogMayGo(dogRoot.position + _forward * (reach * Time.deltaTime))) MoveToward(dogRoot.position + _forward * 2f, desired, 0f);
             else _speed = 0f;
@@ -952,7 +958,9 @@ namespace KominkaHillside
             if (!_flightEnded) target = _landingValid ? _landing : frisbee._PositionAt(_p0, _v0, _curve, frisbee._ElapsedSince(_t0));
             Vector3 to = target - dogRoot.position; to.y = 0f;
             float dist = to.magnitude;
-            MoveToward(target, !_flightEnded ? chaseRunSpeed : (dist > returnRunDistance ? runSpeed : walkSpeed), arriveRadius * 0.7f);
+            // Still flying: sprint to where it will land. On the ground: bring it back at the carry pace, not at
+            // the sprint (round 2: only the chase has a deadline).
+            MoveToward(target, !_flightEnded ? chaseRunSpeed : (dist > returnRunDistance ? returnRunSpeed : walkSpeed), arriveRadius * 0.7f);
             if (_flightEnded && dist <= arriveRadius) TransitionTo(StatePickup);
         }
 
@@ -978,7 +986,7 @@ namespace KominkaHillside
             if (state == StateReturn)
             {
                 if (elapsed > returnTimeout) { GiveUp(); return; }
-                MoveToward(playerPos, dist > returnRunDistance ? runSpeed : walkSpeed, returnStopDistance);
+                MoveToward(playerPos, dist > returnRunDistance ? returnRunSpeed : walkSpeed, returnStopDistance);
                 if (dist <= returnStopDistance + 0.05f && _speed <= stopSpeedThreshold) TransitionTo(StateDrop);
                 return;
             }
@@ -1040,7 +1048,9 @@ namespace KominkaHillside
         {
             Vector3 p = dogRoot.position;
             float dt = Time.deltaTime;
-            if (_obsValid && dt > 0.0001f) { Vector3 d = p - _obsPrev; d.y = 0f; _speed = d.magnitude / dt; if (_speed > 8f) _speed = 0f; }
+            // Anything faster than the sprint is a network jump, not a run (the ceiling follows chaseRunSpeed:
+            // round 2 sprints at 10 m/s, and a fixed 8 would have blanked the run clip on every observer).
+            if (_obsValid && dt > 0.0001f) { Vector3 d = p - _obsPrev; d.y = 0f; _speed = d.magnitude / dt; if (_speed > chaseRunSpeed * 1.5f) _speed = 0f; }
             _obsPrev = p; _obsValid = true;
         }
 
