@@ -48,6 +48,8 @@ priority: High
 
 - **2026-09-21 設計と Codex 設計レビュー (X/D/P) を反映、実装開始**: 値は `KH_LeashManager` に `dashSpeed` 4.5 / `sprintSpeed` 7.2 (`followSpeed` を統合、Build が所有)。人の速度は「1 s の変位」ではなく毎フレームの EMA (1 Hz の変位は静止判定用で速度にならないため)。人が走っても 1.25× の帰還と往復しないよう「先行保持」を追加、Run クリップは `Animator.speed` で追従、コーナーは身体の向きとの角度差で減速。設計値・指摘/対応・分担は [記録](../../plans/2026-09-21-walk-speed-and-stopovers.md)。Play は未。
 
+- **2026-09-21 Wave 1 実装 (Editor 検査済み、Play 未)**: コミット 3a94a9f。Codex コードレビュー (D/M) の是正込み。Walking Verify 176/176 (以後 178/178)。Play チェックリストは記録の「Play チェックリスト」。
+
 ## 完了条件
 
 - [ ] 散歩の速さが 4 段階になり、最速は現状の速歩の 3 倍程度で、場面ごとの割り当てを記録した
