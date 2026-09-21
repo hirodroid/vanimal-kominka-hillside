@@ -479,7 +479,8 @@ namespace KominkaDogRun
         bool _wantLieDown;        // 今フレーム伏せていたいか。**下ろしてから立てる**
         bool _wasLieDown;         // Animator へ書いた値 (変化したときだけ書く)
         // IMP-DOG-010: 立ち寄り先で「座って眺める」。伏せと同じ作法 (下ろしてから立てる / 書くのは LateUpdate)。
-        // 伏せは「歩き続けると起こされる」ので立ち寄りでは使わない — 座るはその代わり
+        // 伏せは「歩き続けると起こされる」ので立ち寄りでは使わない — 座るはその代わり。
+        // **最初に立てるのは Wave 3 の立ち寄り (LeashPose の場所ルール) で、それ以前の書き手は無い**
         bool _wantSit;            // 今フレーム座っていたいか
         bool _wasSit;             // Animator へ書いた値 (変化したときだけ書く)
         int _restPhase;           // RestPhase* (水場へ → 飲む → 伏せる)
@@ -1928,7 +1929,11 @@ namespace KominkaDogRun
                 Vector3 moved = pos - _obsPrevPos;
                 moved.y = 0f;
                 float m = moved.magnitude;
-                _speed = (m <= ObservedTeleportThreshold) ? m / dt : 0f;
+                bool warped = m > ObservedTeleportThreshold;
+                _speed = warped ? 0f : m / dt;
+                // IMP-DOG-010: ワープの直後を「ずっと止まっていた」と読ませない。姿勢はこちらの
+                // 連続停止時間から導出されるので、飛んだ先で即座に嗅ぐポーズが出てしまう
+                if (warped) _stoppedSince = -1f;
             }
             else
             {

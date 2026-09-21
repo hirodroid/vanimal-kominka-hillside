@@ -347,6 +347,10 @@ namespace KominkaHillside.Editor
             Check(m.dashSpeed==4.5f,"dash speed "+m.dashSpeed.ToString("F1")+" == 4.5 m/s");
             Check(m.sprintSpeed==7.2f,"sprint speed "+m.sprintSpeed.ToString("F1")+" == 7.2 m/s");
             Check(m.stopoverChance==.5f,"stopover chance "+m.stopoverChance.ToString("F2")+" == 0.50");
+            // IMP-DOG-010 B: the dogs read the spots through the manager, so an unwired list is a silent
+            // "no stopovers ever". Walking/4e checks the spots themselves (placement, paths, spacing).
+            Check(m.stopovers!=null,"stopover data wired to manager");
+            Check(m.stopovers!=null&&m.stopovers.count>=1,"stopover spots "+(m.stopovers==null?0:m.stopovers.count)+" >= 1");
             var pack=root.GetComponentInChildren<KD_DogPack>();
             for(int i=0;i<6;i++)
             {
