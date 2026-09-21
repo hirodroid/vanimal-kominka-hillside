@@ -8,7 +8,10 @@
 |---|---|---|
 | 1 | **専用試作シーン** `Assets/Scenes/KH_FrisbeePrototype.unity` (平地・ラブ 1 匹・固定投球ボタン・回収ボタン・壁 1 枚) で 投球 → 追走 → ジャンプ → キャッチ → 着地 → 持ち帰り を通す。4 段階ポーズのクリップ生成と側面レンダ | Editor 検査 (Verify 35 項目) + Codex D/M/U → **ユーザーの Play 評価** |
 | 2 | **本シーン導入** (散歩のラブ 1 匹 + ディスク 1 枚、照準モード、Wander / Fetch / リード / 集合 / 撫でとの排他、おもちゃメニューの「フリスビー」、広場の輪と場外の案内)。VR 確認は本シーンで | Editor 検査 + Codex → Build & Test → PCVR 1 人 → 2 人 (本シーン用チェックリスト) |
-| 3 | 6 匹展開・ディスク複数・犬の割当・Quest/iOS・斜面、ダッシュ (並走) とフリップ | 別途設計 (DES-DOG-002 / 別 Issue) |
+| 3 | **同じラブ1匹でバリエーション**。外からの走り込みを最初に、取り方・飛び方の候補を一通り試して採否を決める | [IMP-DOG-008](../development/issues/IMP-DOG-008-frisbee-variations.md)。通常版と採用候補の組み合わせをユーザーがVRで評価 |
+| 4 | **1匹で通常版と採用バリエーションがOKになってから6匹展開**。犬種別の姿勢・口の位置を調整 | DES-DOG-002から別Issueを切る。複数ディスク・割当も具体化 |
+
+2026-09-21 追加合意: 通常版の体験の仕上げはひとまずOK。次の制作は段階3とする。段階1〜2の項目別・2人確認はIMP-DOG-005に残し、Quest/iOSなどの公開向け検証も継続する。斜面への拡張は別途判断し、段階3〜4の前提にしない。
 
 ## 段階 1 の設計判断 (実装時に決めた値。Play で見直す)
 
@@ -144,7 +147,7 @@ Editor 検査 (`Walking/5 Verify` に上の項目) + Codex D/M → **NetworkID �
 | D3 高: Fetch の受信 (`ApplyState`) が Idle のたびに `_ResumePetting` を呼び、Engaged 中の抑制を解く | Fetch の再開条件に `frisbeeCatch.IsEngaged` を追加 (Fetch 側 1 行) |
 | D4 中: 譲る予約中も新規キャッチする | 予約中はキャッチ判定を通さない (くわえていた場合だけ着地後に放す) |
 | D5 中: 場外 (EndTimeout) の後に Respawn 済みのディスクを拾いに行く | Grabbed と Timeout は回収対象外に統一 (`Retrievable()`) |
-| M1 中: 「FrisbeeKeys に足すだけ」だが facts/クリップ/Jump は Lab 固定 | Build は `KH_FrisbeeJumpClipEditor.Breed` 以外のキーを明示的に拒否 (例外)。6 匹展開時は犬キーから facts/クリップ/Controller を解決する入口を作る (段階 3) |
+| M1 中: 「FrisbeeKeys に足すだけ」だが facts/クリップ/Jump は Lab 固定 | Build は `KH_FrisbeeJumpClipEditor.Breed` 以外のキーを明示的に拒否 (例外)。6 匹展開時は犬キーから facts/クリップ/Controller を解決する入口を作る (追加合意後の段階 4) |
 | M2 中: Verify が backing の一部しか見ない、回収配列は非 null のみ、NetworkID は dangling のみ | backing で全 pose facts + playArea + 近隣参照 + dogIndex、Wander/Fetch の backing `frisbeeCatch`、回収/Manager/集合の配列が各犬の実物と一致、NetworkID の ID・GameObject 重複と同期物の未登録を検査 (134 項目) |
 
 是正後: Walking Verify **134/134**、Menu Verify 22/22、C#/U# エラー 0、Console 0。

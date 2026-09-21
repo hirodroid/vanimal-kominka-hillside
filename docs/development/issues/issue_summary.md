@@ -62,8 +62,9 @@ priority: High    # High / Medium / Low
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |
 | [DES-WLD-001](DES-WLD-001-round-trip.md) | Medium | 古民家からの出発・帰還と状態の扱いを設計する | todo |
 | [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) | High | 手元メニュー (さんぽ/あそぶ/おもちゃ)・接続補助・目的地・集合・ボール回収を実装、Editor 検査済み。Play 確認待ち | wip |
-| [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | 挙動の違うおもちゃを設計する。フリスビーは IMP-DOG-005 で導入済み、他犬への展開・見た目違い・ダッシュ/フリップが残り | todo |
-| [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー: 本シーンの散歩のラブが取れる (広場限定・照準モード・位置取り・メニュー)。PCVR 1 人で好評。項目別・2 人・他犬・Quest/iOS が残り | wip |
+| [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビー通常版の体験はひとまずOK。1匹で取り方・飛び方の採用内容を固めてから6匹へ展開する | todo |
+| [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開はその後の別Issue | wip |
+| [IMP-DOG-008](IMP-DOG-008-frisbee-variations.md) | Medium | ラブ1匹で外からの走り込み・取り方・飛び方の変化を試す。通常版と採用バリエーションを評価後に6匹展開 | todo |
 | [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 裏山専用ライブと古民家の有料ライブ購入者の利用を設計する | todo |
 | [DES-WLD-002](DES-WLD-002-sound.md) | Medium | 裏山の音 (BGM・環境音) の方針・音源・ライブとの切替を設計する | todo |
 | [IMP-DOG-004](review/IMP-DOG-004-leash-models-release.md) | High | 首輪・リードの本制作。PCVR 1 人は合格。2 人・Quest/iOS・座位/木陰の確認待ち | review |
@@ -75,6 +76,8 @@ priority: High    # High / Medium / Low
 着手順 (2026-09-20 PCVR 好評後に整理): **DES-UI-001** (古民家型メニュー本体: 目的地選択・接続/解除補助・集合・ボール集め。仮看板を置き換える) を主軸に、小さな UX 調整 (BUG-DOG-002 持ち手の向き、看板文字、IMP-DOG-003 の犬同士の遊び・項目別確認) を並行。次に DES-DOG-002 (おもちゃ) と DES-DOG-001 (おしゃれ)。音は DES-WLD-002、ライブは DES-LIV-001 で設計を並行し、制作は基本体験の後。複数人・Quest/iOS・境界の検証 (IMP-DOG-002 / VER-ENV-001) と往復導線 (DES-WLD-001) は継続、IMP-ENV-001 の景観増量は後回し。具体的な目的と設計提案は [開発全体像](../overview.md) §3。
 
 最新の制作指示ではIMP-DOG-004のBlender本制作とおもちゃ提案を優先して着手。上記の機能改善順は残し、モデルの仕上げと区別する。
+
+2026-09-21 フリスビーの追加合意: 通常版の体験はVRでひとまずOK。**フリスビーの次の制作はIMP-DOG-008** (1匹で外からの走り込み → 取り方・飛び方の候補比較 → 採用組み合わせの評価)。1匹でOKになってから6匹展開を別Issueにする。IMP-DOG-005の未確認項目は継続する。
 
 2026-09-20追加相談でIMP-DOG-003を目的地と通過点による自由な散歩へ具体化。目的地指定に必要なDES-DOG-001/ DES-UI-001の契約は散歩試作に先行させ、メニュー全体の完成を前提にしない。
 
