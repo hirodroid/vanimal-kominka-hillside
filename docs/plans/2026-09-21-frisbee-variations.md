@@ -295,3 +295,11 @@ Editor 検証: コンパイル 0、Console 0、試作 Verify **54/54**、Walking
 | 切替が効かない | `deferred` ログ → Idle 待ち / `Ownership split` 警告 |
 | 曲がらない | 投球時のプリセットが 5 でない (`throw … curve=0.00`) / 線は曲がるが飛行が違う → `_curve` の捕捉 |
 | ひねりで姿勢が崩れる | `Temp/KH_Frisbee/sheet-side-Twist.png` と比較。鍵は `KH_FrisbeeJumpClipEditor.TwistKeys()`。直したら Frisbee 2 → 3 → 4 → 5 |
+
+## 既知の間欠 (ハーネス)
+
+ひねり (v4) の遠投 (9 m/s・15°) は踏み切りの余裕がほぼ 0 で、まれに `plan=2` (地上回収) に落ちる (9/21 `211813`、9/22 IMP-DOG-013 の再走で各 1 回)。原因は候補の余裕不足で、機能の回帰ではない。連続 2 回落ちたら要調査、単発は既知として扱う。
+
+## 持ち帰り後のよしよし (IMP-DOG-013)
+
+2026-09-22 ユーザー要望「持って帰ってきた時によしよししたい。今は反応しないし、受け取ったらすぐ走っていってしまう」への対応 (くわえて待つ間の撫で再開と、Ready の頭の猶予) は [IMP-DOG-013](../development/issues/IMP-DOG-013-frisbee-pet-after-return.md)。走り込みプリセットの Ready 幾何は猶予の後は従来どおりで、ここの数値は変えていない。

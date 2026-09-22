@@ -118,6 +118,13 @@ namespace KominkaHillside
         [Tooltip("Round 2: the catch point is decided at the throw, so the dog must not spend a quarter second admiring it")]
         public float noticeDelay = 0.1f;
 
+        [Header("Petting after the return (IMP-DOG-013, user 2026-09-22)")]
+        [Tooltip("Grace at the start of Ready: for this long the dog stays where it is instead of running off to the " +
+            "stand-off spot, so the player who just took the disc out of its mouth can say よしよし first")]
+        public float readyGraceSeconds = 4f;
+        [Tooltip("The grace only holds while the holder is still this close. Walk away and the dog takes its spot at once")]
+        public float readyGraceDistance = 2.5f;
+
         [Header("Locomotion (KD defaults)")]
         public float runSpeed = 2.4f;
         public float walkSpeed = 1.1f;
@@ -350,6 +357,13 @@ namespace KominkaHillside
         private Vector3 _mouthCatch;       // pose working values, copied from the Jump or the Twist facts set
         private float _crouchDur, _riseDur, _recoverDur;
         private float _settledSince = -1f; // Time.time the dog first stood on the catch spot, -1 = not there yet
+        // IMP-DOG-013. _heldSince: Time.time this Ready began (the moment the disc went into a hand). _graceEnded
+        // latches once the dog has left for its spot, so the grace is a one-shot per Ready and the dog never
+        // wanders back into it. _dropPetHold: seconds of the Drop wait spent being petted, subtracted from the
+        // drop timer so the disc is not set down in the middle of a stroke.
+        private float _heldSince = -1f;
+        private bool _graceLogged, _graceEnded;
+        private float _dropPetHold; private bool _dropPetLogged;
 
         public int State { get { return state; } }
         public int Variant { get { return variant; } }
@@ -363,6 +377,15 @@ namespace KominkaHillside
         // Busy for the other systems: Ready (standing off while someone holds the disc) is NOT engaged, so a
         // held disc never takes the dog away from Fetch, the leash or a gathering (review M1).
         public bool IsEngaged { get { return state != StateIdle && state != StateReady; } }
+        // Where the head may be borrowed by the petting controller (IMP-DOG-013). NOT the inverse of IsEngaged:
+        // Drop is engaged (the disc is in the mouth, the other systems must stay off) and yet it is exactly the
+        // moment the user asked for - the dog has brought the disc back, is standing still in front of the thrower
+        // and wants a よしよし. Everything that moves the dog stays suppressed, so no clip fights the head writes.
+        // KD_DogFetchController.ApplyState reads this, so the two controllers resume on the same rule.
+        public bool PetAllowed { get { return PetAllowedIn(state); } }
+        // The same rule as a pure function of the state number, so Verify can prove it over every state without a
+        // running dog (the LandingOf / InCircleXZ pattern).
+        public static bool PetAllowedIn(int s) { return s == StateIdle || s == StateReady || s == StateDrop; }
         public int DebugPlan { get { return _plan; } }
 
         void Start()
@@ -541,6 +564,10 @@ namespace KominkaHillside
             _released = false;
             if (next == StateIdle) { throwerId = -1; animSpeed = 1f; _plan = PlanNone; _haveLaunch = false; _localPlanValid = false; _yieldAfterLanding = false; _speed = 0f; _settledSince = -1f; _holding = false; _runningCatch = false; }
             if (next == StateJumpCarry || next == StateReturn) ClaimDisc();
+            // IMP-DOG-013. Ready: start the よしよし window (one per entry, logged once). Drop: the petting
+            // credit against the drop timer belongs to THIS wait only.
+            if (next == StateReady) { _heldSince = Time.time; _graceLogged = false; _graceEnded = false; }
+            if (next == StateDrop) { _dropPetHold = 0f; _dropPetLogged = false; }
             // A switch asked for mid-sequence lands here, at the first quiet moment (IMP-DOG-008). Only the client
             // that owns both the dog and this object may apply it (Codex D: the synced numbers live here).
             if (next == StateIdle && pendingVariant >= 0 && IsDogOwner() && Networking.IsOwner(gameObject)) { int v = pendingVariant; pendingVariant = -1; SetVariant(v); }
@@ -605,8 +632,9 @@ namespace KominkaHillside
                     dogAnimator.speed = 1f; _wroteSpeed = 1f; _speed = 0f;
                     if (wander != null) wander._InvalidateLeashAnimation();
                 }
-                // Petting: allowed while Idle / Ready, suppressed while engaged (review M2; same hooks Fetch uses).
-                if (pet != null) { if (IsEngaged) pet._SuppressPetting(); else if (fetch == null || fetch.IsIdle) pet._ResumePetting(); }
+                // Petting: allowed while Idle / Ready / Drop, suppressed while the dog is moving (review M2 +
+                // IMP-DOG-013; same hooks Fetch uses). The jump must never have a second writer on the head bone.
+                if (pet != null) { if (!PetAllowed) pet._SuppressPetting(); else if (fetch == null || fetch.IsIdle) pet._ResumePetting(); }
                 _outputValid = false;
             }
             if (state != StateIdle) ApplyAnimatorSpeed();
@@ -675,6 +703,20 @@ namespace KominkaHillside
             return false;
         }
 
+        // Are hands on the dog right now (IMP-DOG-013)? Two sources, because the decision runs on the dog's Owner
+        // and the petter is usually somebody else:
+        //   pet.IsPetting  - the LOCAL player's own hands, with no round trip (and the only source in the
+        //                    prototype scene, where fetch is null).
+        //   fetch.PetActive - the synced pet state (IMP-NET-001): KD_DogFetchController's Owner authenticates the
+        //                    petter by observing their hand and publishes it, so every client agrees.
+        // Nothing here writes: a false negative only means the dog leaves on time, never that it jumps mid-stroke.
+        bool BeingPetted()
+        {
+            if (pet != null && pet.IsPetting) return true;
+            if (fetch != null && fetch.PetActive) return true;
+            return false;
+        }
+
         bool InPlayArea(Vector3 p, float margin) { return InCircleXZ(p, playAreaCenter, playAreaRadius, margin); }
 
         // The play-area test as a pure function. The planner reaches it through InPlayArea / DogMayGo; Verify calls
@@ -716,6 +758,7 @@ namespace KominkaHillside
             if (holder == null) { TransitionTo(StateIdle); return; } // dropped without a throw, or thrown: ReqCatch overrides
             Vector3 holderPos = holder.GetPosition();
             if (!CanPlay(holderPos)) { TransitionTo(StateIdle); return; } // Ready never takes the dog from anyone (review M1)
+            if (!_graceEnded && ReadyGrace(holderPos)) return;
             if (!_standoffValid || Time.time >= _nextStandoff)
             {
                 // Target refreshed at 10 Hz (review D5); the walk toward it is still per frame.
@@ -761,6 +804,42 @@ namespace KominkaHillside
             // watch the holder as before.
             if (_readyFaceForward) FaceToward(_standoffFwd);
             else FaceToward(holderPos - dogRoot.position);
+        }
+
+        // IMP-DOG-013: the よしよし window at the head of Ready. Until now the disc leaving the mouth put the dog
+        // straight into Ready, and Ready's first act is an 8 m sprint - the dog you had just caught bolted the
+        // instant you took the disc, which is the whole of the user's complaint. So for the first few seconds,
+        // while the holder is still within arm's reach, the dog simply stays and looks at them; and it will not
+        // leave AT ALL while hands are on it, however long the grace has run. True = the grace is holding the dog
+        // this frame (the caller returns and never reaches the stand-off run).
+        //
+        // Everything else about Ready is untouched: the presets, the geometry, the slack and IsEngaged are the
+        // same once the grace is over, and a throw during the window still works, because ReqCatch overrides
+        // Ready from Update and never consults this.
+        bool ReadyGrace(Vector3 holderPos)
+        {
+            Vector3 toHolder = holderPos - dogRoot.position; toHolder.y = 0f;
+            float holderDist = toHolder.magnitude;
+            bool petting = BeingPetted();
+            if (!_graceLogged)
+            {
+                _graceLogged = true;
+                Debug.Log("[KH_FrisbeeCatch] ready grace: holder=" + holderDist.ToString("F1") + " m petting=" + (petting ? "true" : "false"));
+            }
+            bool near = holderDist < readyGraceDistance;
+            bool within = _heldSince >= 0f && Time.time - _heldSince < readyGraceSeconds;
+            if ((near && within) || petting)
+            {
+                // Stay put and watch them. _standoffValid is dropped so the spot (and the side it sits on) is
+                // built fresh from where everyone actually is once the dog does set off.
+                _standoffValid = false;
+                Coast();
+                FaceToward(toHolder);
+                return true;
+            }
+            _graceEnded = true;
+            Debug.Log("[KH_FrisbeeCatch] ready go (reason=" + (near ? "time" : "distance") + ")");
+            return false;
         }
 
         // spot = holder + head direction * ahead + right * (lateral * side), pulled back inside the flat.
@@ -1774,7 +1853,18 @@ namespace KominkaHillside
             }
             Coast();
             FaceToward(to);
-            if (!_released && elapsed >= dropWaitDuration)
+            // IMP-DOG-013: the dog has arrived, is standing still and has the disc in its mouth - ApplyState
+            // resumed petting on the way into Drop (PetAllowed). While hands are on it the drop timer STOPS, so
+            // the disc is never set down in the middle of a stroke; it resumes where it left off when they leave.
+            // The head is written by the petting controller in LateUpdate and the disc is placed from the mouth
+            // anchor in PostLateUpdate, which runs after it, so the disc follows the petted head rather than
+            // fighting it.
+            if (BeingPetted())
+            {
+                _dropPetHold += Time.deltaTime;
+                if (!_dropPetLogged) { _dropPetLogged = true; Debug.Log("[KH_FrisbeeCatch] drop wait paused: being petted"); }
+            }
+            if (!_released && elapsed - _dropPetHold >= dropWaitDuration)
             {
                 _released = true;
                 ReleaseDisc(dogRoot.forward * 0.3f);

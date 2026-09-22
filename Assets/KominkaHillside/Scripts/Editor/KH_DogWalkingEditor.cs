@@ -503,6 +503,14 @@ namespace KominkaHillside.Editor
                 float topScale=Mathf.Min(c.clipRiseDuration,c.clipRiseDurationTwist)/topTUp;
                 Check(topScale>=0.6f,"maxRootRise "+c.maxRootRise.ToString("F2")+" m plays the SLOWEST clip at "+topScale.ToString("F2")+"x >= 0.60 (jump "+(c.clipRiseDuration/topTUp).ToString("F2")+"x, twist "+(c.clipRiseDurationTwist/topTUp).ToString("F2")+"x) "+key);
                 Check(KH_FrisbeeCatch.RunInReadyTurnDeg>=20f&&KH_FrisbeeCatch.RunInReadyTurnDeg<=90f,"Ready turn threshold "+KH_FrisbeeCatch.RunInReadyTurnDeg.ToString("F0")+" deg in [20, 90] "+key);
+                // IMP-DOG-013: the よしよし window before the stand-off run, proxy and backing, plus the rule that
+                // says where 撫で may resume at all (both controllers read PetAllowed).
+                Check(c.readyGraceSeconds>=1f&&c.readyGraceSeconds<=10f,"ready grace "+c.readyGraceSeconds.ToString("F1")+" s in [1, 10] "+key);
+                Check(c.readyGraceDistance>=1f&&c.readyGraceDistance<=5f,"ready grace distance "+c.readyGraceDistance.ToString("F1")+" m in [1, 5] (arm's reach) "+key);
+                Check(cb.publicVariables.TryGetVariableValue("readyGraceSeconds",out bv)&&Mathf.Abs((float)bv-c.readyGraceSeconds)<1e-5f
+                    &&cb.publicVariables.TryGetVariableValue("readyGraceDistance",out bv)&&Mathf.Abs((float)bv-c.readyGraceDistance)<1e-5f,"catcher backing: ready grace pair "+key);
+                Check(c.readyGraceDistance<c.standoffDistance,"the grace ends well before the stand-off spot ("+c.readyGraceDistance.ToString("F1")+" m < "+c.standoffDistance.ToString("F1")+" m) "+key);
+                Check(KH_FrisbeePrototypeEditor.PetStatesOk(),"petting resumes in Idle / Ready / Drop and stays suppressed in every moving state (PetAllowed) "+key);
                 // A Ready spot is measured from the holder, so it only ever lands inside the plaza if its own radius does.
                 float[] readyAhead={KH_FrisbeeCatch.ReadyAhead1,KH_FrisbeeCatch.ReadyAhead2,KH_FrisbeeCatch.ReadyAhead3};
                 float[] readyLateral={KH_FrisbeeCatch.ReadyLateral1,KH_FrisbeeCatch.ReadyLateral2,KH_FrisbeeCatch.ReadyLateral3};

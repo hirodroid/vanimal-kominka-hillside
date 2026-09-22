@@ -273,6 +273,10 @@ namespace KominkaHillside.Editor
             catcher.turnSpeedDegPerSec = 240f; catcher.walkTurnDegPerSec = 180f; catcher.standTurnDegPerSec = 120f;
             catcher.maxRootRise = 0.9f;  // how high the standing jump reaches; also bounds the clip playback below
             catcher.standoffDistance = 8f;
+            // IMP-DOG-013 (user 2026-09-22 "受け取ったらすぐ走っていってしまう"): the よしよし window before the
+            // stand-off run. Code-owned like the rest of the Ready geometry - the pair only reads as "it waited
+            // for me" when both halves agree, so they are not left to drift apart in an Inspector.
+            catcher.readyGraceSeconds = 4f; catcher.readyGraceDistance = 2.5f;
             catcher.variant = KH_FrisbeeCatch.VariantNormal; catcher.pendingVariant = -1; // code-owned: every instance starts on the baseline
             catcher.playAreaMargin = 0f; // the ring the holder sees is exactly the acceptance circle (Codex P)
             // Inspector tuning survives a rebuild for everything not written above, except the one value the clip dictates: the smallest rise
@@ -282,6 +286,21 @@ namespace KominkaHillside.Editor
             float riseFloor = 0.5f * disc.gravity * Mathf.Pow(Mathf.Max(facts.rise, twist.rise) / 1.8f, 2f);
             if (catcher.minRootRise < riseFloor) catcher.minRootRise = Mathf.Ceil(riseFloor * 100f) / 100f;
             disc.catcher = catcher;
+        }
+
+        // IMP-DOG-013: the pet-resume rule over every state number, shared by both Verify menus. KH_FrisbeeCatch
+        // (and KD_DogFetchController through PetAllowed) resumes 撫で exactly where the dog is standing still with
+        // nothing queued: Idle, Ready (the stand-off and the grace) and the Drop wait with the disc in its mouth.
+        // Everywhere it runs, jumps, carries or picks up, the head belongs to the clip alone.
+        public static bool PetStatesOk()
+        {
+            foreach (int s in new[] { KH_FrisbeeCatch.StateIdle, KH_FrisbeeCatch.StateReady, KH_FrisbeeCatch.StateDrop })
+                if (!KH_FrisbeeCatch.PetAllowedIn(s)) return false;
+            foreach (int s in new[] { KH_FrisbeeCatch.StateChase, KH_FrisbeeCatch.StateJump, KH_FrisbeeCatch.StateJumpCarry,
+                KH_FrisbeeCatch.StateLand, KH_FrisbeeCatch.StateLandCarry, KH_FrisbeeCatch.StateRetrieve,
+                KH_FrisbeeCatch.StatePickup, KH_FrisbeeCatch.StateReturn })
+                if (KH_FrisbeeCatch.PetAllowedIn(s)) return false;
+            return true;
         }
 
         public struct Facts { public Vector3 mouthOffsetCatch, mouthOffsetStand; public float crouch, rise, recover, clipLength; }
@@ -523,6 +542,19 @@ namespace KominkaHillside.Editor
                         + "x >= 0.60 (shortest rise " + shortestRiseDur.ToString("F2") + " s; jump " + (catcher.clipRiseDuration / topTUp).ToString("F2")
                         + "x, twist " + (catcher.clipRiseDurationTwist / topTUp).ToString("F2") + "x)");
                     Check(KH_FrisbeeCatch.RunInReadyTurnDeg >= 20f && KH_FrisbeeCatch.RunInReadyTurnDeg <= 90f, "Ready turn threshold " + KH_FrisbeeCatch.RunInReadyTurnDeg.ToString("F0") + " deg in [20, 90]");
+                    // IMP-DOG-013: the よしよし window. Too short and the dog still bolts; too long and it stops
+                    // reading as a dog waiting for the next throw. The distance must be arm's reach, not a room.
+                    Check(catcher.readyGraceSeconds >= 1f && catcher.readyGraceSeconds <= 10f,
+                        "ready grace " + catcher.readyGraceSeconds.ToString("F1") + " s in [1, 10] (long enough for a よしよし, short enough to still want the throw)");
+                    Check(catcher.readyGraceDistance >= 1f && catcher.readyGraceDistance <= 5f,
+                        "ready grace distance " + catcher.readyGraceDistance.ToString("F1") + " m in [1, 5] (arm's reach, not the whole plaza)");
+                    Check(backing.publicVariables.TryGetVariableValue("readyGraceSeconds", out float bgs) && Mathf.Abs(bgs - catcher.readyGraceSeconds) < 1e-5f
+                        && backing.publicVariables.TryGetVariableValue("readyGraceDistance", out float bgd) && Mathf.Abs(bgd - catcher.readyGraceDistance) < 1e-5f,
+                        "backing heap holds the ready grace pair");
+                    // The pet-resume rule as the runtime reads it: petting is allowed exactly where the dog stands
+                    // still without moving next - Idle, Ready and the Drop wait with the disc in its mouth - and
+                    // nowhere it runs or jumps. Static, so the rule cannot rot unnoticed between Play sessions.
+                    Check(PetStatesOk(), "petting resumes in Idle / Ready / Drop and stays suppressed in every moving state (PetAllowed)");
                     var desc = open.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<VRCSceneDescriptor>(true)).FirstOrDefault();
                     Check(desc != null && desc.spawns != null && desc.spawns.Length > 0 && desc.spawns[0] != null, "scene descriptor with spawn");
                     Check(desc != null && desc.NetworkIDCollection.All(x => x.gameObject != null), "no dangling NetworkIDs");

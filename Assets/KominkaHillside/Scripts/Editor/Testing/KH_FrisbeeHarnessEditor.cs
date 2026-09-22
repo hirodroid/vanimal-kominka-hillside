@@ -96,6 +96,8 @@ namespace KominkaHillside.Editor
             // 着地点が広場の外へ出る候補を落とす規則は、ここでは 1 度も働かない。
             "広場の縁 (playArea)。試作シーンの捕り手は playAreaRadius = 0 なので、着地点・踏み切り・待機の広場判定 (DogMayGo) は常に真になる。縁での着地・回復のはみ出しは本シーンの Verify (幾何) と実機 Play でしか見ていない",
             "Ready (持ち手が構えている間の待機位置)。プロトタイプに持ち手がいないので Ready へ入らず、走り込み系プリセット v1..v3 は待機位置の違いが出ない = ここでは v0 と同じ投げになる",
+            // IMP-DOG-013: 猶予は Ready の頭にあり、撫では pet / fetch の配線が要る。試作シーンはどちらも無い。
+            "持ち帰り後のよしよし (IMP-DOG-013)。readyGraceSeconds / readyGraceDistance は Ready に入って初めて働くので 1 度も通らず、撫での判定 (pet.IsPetting / fetch.PetActive) も試作シーンには撫で・Fetch の配線が無いので常に偽 = Drop の待ちも止まらない。猶予・撫で・Drop のタイマー停止は本シーンの Verify (値と状態の規則) と実機 Play でしか見ていない",
             "VR の手投げ・狙い (aim line / marker / 広場外の警告) は一切通らない。固定投げ台の +Z 方向の投げだけ",
             "Interact は UdonBehaviour.Interact() を直接呼ぶので、実際のレイキャスト・距離 (proximity)・InteractionText の当たり判定は通っていない",
             "他プレイヤー、Owner 移譲、同期 (単一 ClientSim クライアント)",

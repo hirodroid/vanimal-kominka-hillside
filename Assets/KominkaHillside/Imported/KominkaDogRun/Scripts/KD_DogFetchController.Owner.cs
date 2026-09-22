@@ -249,7 +249,10 @@ namespace KominkaDogRun
             {
                 if (dogState != StateIdle) petController._SuppressPetting();
                 else if (CandyBusy()) MyWander()._SuppressPettingForCandy();
-                else if (frisbeeCatch != null && frisbeeCatch.IsEngaged) petController._SuppressPetting(); // IMP-DOG-005: the disc chase owns the head
+                // IMP-DOG-005: the disc chase owns the head. IMP-DOG-013: read the frisbee's own rule instead of
+                // IsEngaged - Drop (brought the disc back, standing in front of the thrower) is engaged for every
+                // other system and yet is exactly where 撫で belongs, so both controllers resume on one predicate.
+                else if (frisbeeCatch != null && !frisbeeCatch.PetAllowed) petController._SuppressPetting();
                 else petController._ResumePetting();
             }
 
