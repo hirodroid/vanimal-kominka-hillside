@@ -53,7 +53,7 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Walking/1 Create Programs")]
         public static void Programs()
         {
-            foreach (string name in new[]{"KH_LeashManager","KH_LeashClip","KH_LeashCollar","KH_WalkRoute","KH_WalkSign","KH_TrainerPass","KH_ToyRecall","KH_HandMenu","KH_MenuOpener"})
+            foreach (string name in new[]{"KH_LeashManager","KH_LeashClip","KH_LeashCollar","KH_LeashHaptics","KH_WalkRoute","KH_WalkSign","KH_TrainerPass","KH_ToyRecall","KH_HandMenu","KH_MenuOpener"})
             {
                 string path="Assets/KominkaHillside/Scripts/"+name;
                 if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(path+".asset") != null) continue;
@@ -174,6 +174,13 @@ namespace KominkaHillside.Editor
             act.live=null;act.photos=null;act.formationItem=null;act.playItem=null;act.pack=pack;act.hillsideLeashes=manager;act.hillsidePass=pass;
             act.minGroundNormal=.5f;act.maxSlotHeightDelta=0f;act.groundMask=(1<<0)|(1<<11);act.balls=new KD_BallController[6];
             manager.activities=act;
+            // IMP-DOG-007: local-only haptics beside the manager. Build owns the thresholds the same way it owns
+            // the walking tiers, so a scene built earlier cannot keep values the code no longer describes.
+            var haptics=Add<KH_LeashHaptics>(Child(manager.transform,"KH_LeashHaptics").gameObject);
+            haptics.manager=manager;haptics.hapticsOn=true;
+            haptics.pullRatio=1f;haptics.pullFullRatio=1.25f;haptics.stillSpeed=.4f;haptics.stillPullRatio=.85f;haptics.awaySpeed=.3f;
+            haptics.pulseInterval=.12f;haptics.pulseDuration=.08f;haptics.tugInterval=.5f;haptics.tugDuration=.15f;
+            haptics.minAmplitude=.3f;haptics.frequency=.5f;haptics.teleportJump=1f;haptics.logPulls=true;
             var recall=Add<KH_ToyRecall>(Child(root.transform,"KH_ToyRecall").gameObject);
             recall.balls=new KD_BallController[6];recall.fetchers=new KD_DogFetchController[6];recall.activities=act;recall.groundMask=(1<<0)|(1<<11);
             var rope=Mat("KH_Rope",new Color(.29f,.16f,.08f));
@@ -521,6 +528,29 @@ namespace KominkaHillside.Editor
             Check(recallB!=null&&recallB.discs!=null&&recallB.discs.Length==6&&recallB.discCatchers.Length==6&&Enumerable.Range(0,6).All(i=>{bool want=Array.IndexOf(FrisbeeKeys,Keys[i])>=0;var dt=root.transform.Find("KH_Frisbee_"+Keys[i]);var ct=root.transform.Find("KH_FrisbeeCatch_"+Keys[i]);
                 return want?(dt!=null&&ct!=null&&recallB.discs[i]==dt.GetComponent<KH_Frisbee>()&&recallB.discCatchers[i]==ct.GetComponent<KH_FrisbeeCatch>()&&m.frisbeeCatchers[i]==recallB.discCatchers[i]&&act.frisbeeCatchers[i]==recallB.discCatchers[i]):(recallB.discs[i]==null&&recallB.discCatchers[i]==null);}),"toy recall / manager / gather disc arrays point at each dog's own disc and catcher");
             Check(recallB!=null&&recallB.balls!=null&&recallB.balls.Length==6&&recallB.balls.All(x=>x!=null)&&recallB.fetchers.Length==6&&recallB.fetchers.All(x=>x!=null)&&recallB.activities==act,"toy recall wired to 6 balls/fetchers");
+            // IMP-DOG-007 leash haptics: local only, one instance, and the only place in the world that shakes a controller.
+            var hap=root.GetComponentsInChildren<KH_LeashHaptics>(true);
+            Check(hap.Length==1,"exactly one KH_LeashHaptics ("+hap.Length+")");
+            if(hap.Length==1)
+            {
+                var h=hap[0];var hb=UdonSharpEditorUtility.GetBackingUdonBehaviour(h);object hv;
+                Check(h.manager==m,"haptics wired to the manager");
+                Check(hb.publicVariables.TryGetVariableValue("manager",out hv)&&(hv as UnityEngine.Object)==UdonSharpEditorUtility.GetBackingUdonBehaviour(m),"haptics backing manager reference");
+                Check(hb.SyncMethod==Networking.SyncType.None,"haptics backing sync None (local only)");
+                Check(h.transform.parent==m.transform,"haptics sits beside the manager");
+                Check(h.hapticsOn&&hb.publicVariables.TryGetVariableValue("hapticsOn",out hv)&&(bool)hv,"haptics enabled (proxy and backing)");
+                Check(h.pullRatio<h.pullFullRatio,"taut "+h.pullRatio.ToString("F2")+" < full "+h.pullFullRatio.ToString("F2"));
+                Check(h.stillPullRatio<=h.pullRatio,"standing band "+h.stillPullRatio.ToString("F2")+" <= taut "+h.pullRatio.ToString("F2"));
+                Check(h.pulseInterval>h.pulseDuration&&h.tugInterval>h.tugDuration,"each haptic ends before the next (pulse "+h.pulseDuration.ToString("F2")+"<"+h.pulseInterval.ToString("F2")+", tug "+h.tugDuration.ToString("F2")+"<"+h.tugInterval.ToString("F2")+")");
+                Check(h.tugInterval>h.pulseInterval&&h.tugDuration>h.pulseDuration,"the tug is slower and longer than the pulse");
+                Check(h.minAmplitude>0f&&h.minAmplitude<1f&&h.frequency>0f&&h.frequency<=1f,"amplitude floor "+h.minAmplitude.ToString("F2")+" in (0,1), frequency "+h.frequency.ToString("F2")+" in (0,1]");
+                Check(h.stillSpeed>0f&&h.awaySpeed>0f&&h.teleportJump>=1f,"standing "+h.stillSpeed.ToString("F2")+" m/s, leaving "+h.awaySpeed.ToString("F2")+" m/s, teleport guard "+h.teleportJump.ToString("F2")+" m >= 1");
+                // The walk must never buzz from two places at once: only this script may call the haptic API.
+                var callers=Directory.GetFiles("Assets/KominkaHillside","*.cs",SearchOption.AllDirectories)
+                    .Where(p=>!p.Replace('\\','/').Contains("/Editor/")&&File.ReadAllText(p).Contains("PlayHaptic"+"EventInHand"))
+                    .Select(Path.GetFileName).OrderBy(x=>x).ToArray();
+                Check(callers.Length==1&&callers[0]=="KH_LeashHaptics.cs","PlayHapticEventInHand called from KH_LeashHaptics.cs only ("+string.Join(", ",callers)+")");
+            }
             bool slotsOk=m.stationSlots!=null&&m.stationSlots.Length==6&&m.stationSlots.All(x=>x!=null)&&m.stationSlots.Distinct().Count()==6&&m.slotHand.All(h=>h==0||h==1)
                 &&Enumerable.Range(0,6).Select(k=>m.stationOf[k]*2+m.slotHand[k]).Distinct().Count()==6&&m.stationOf.All(s=>s>=0&&s<3)
                 &&Enumerable.Range(0,6).All(k=>m.stationSlots[k].parent==new[]{root.transform.Find("KH_LeashRack"),root.transform.Find("KH_Station_Viewpoint"),root.transform.Find("KH_Station_Plaza")}[m.stationOf[k]]);
