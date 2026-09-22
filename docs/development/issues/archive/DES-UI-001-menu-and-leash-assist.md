@@ -44,7 +44,7 @@ priority: High
 - [x] 古民家の構成との対応と採用範囲をworld-ui-specへ記録 ([world-ui-spec §4〜7](../../../world-ui-spec.md))
 - [x] 座位・立位・片手・小さいアバター、Desktop・Touchで入口と出口を定義 — **立位・片手・VR の入口は 2026-09-22 の PCVR で確認済み。座位と Desktop / Touch の入口は未実施 → [IMP-DOG-003](../IMP-DOG-003-walking-polish.md) (手順 7 の Desktop/Touch 確認)**
 - [x] 犬/左右選択・接続/解除の結果・拒否・失敗時の復帰を定義 (実装済み・PCVR で確認済み)
-- [x] 目的地選択の対象・現在値・対象なし/混在・処理待ち/拒否と権限再判定を定義し、別の人の接続犬に影響しないことを確認する手順を用意 — **受付時の権限再判定の手順は [DES-DOG-001](../DES-DOG-001-leash-walking.md)、別の人の接続犬に影響しないことの確認は未実施 → [IMP-DOG-002](../IMP-DOG-002-leash-walking.md) (複数人・競合)**
+- [x] 目的地選択の対象・現在値・対象なし/混在・処理待ち/拒否と権限再判定を定義し、別の人の接続犬に影響しないことを確認する手順を用意 — **受付時の権限再判定の手順は [DES-DOG-001](../DES-DOG-001-leash-walking.md)、別の人の接続犬に影響しないことの確認は 2026-09-22 の 6 人 PCVR ([IMP-DOG-002](IMP-DOG-002-leash-walking.md) 完了) で不具合報告なし。項目別の手順は実施していない。Quest 単体・iOS での確認は [VER-WLD-001](../VER-WLD-001-quest-ios-devices.md)**
 - [x] 集合の権限・対象と散歩/Fetch/ライブとの優先順位を定義 ([game-design §4「集合と拠点のリード」](../../../game-design.md)。ライブ側の実装は [DES-LIV-001](../DES-LIV-001-hillside-live.md))
 - [x] モックと実装Issue・実機確認手順を用意 — **モックは作らず実装 → Editor 検査 → PCVR の順で確認した (未実施 → 実装と PCVR 確認で代替)。端末別の実機確認手順は [IMP-DOG-003](../IMP-DOG-003-walking-polish.md)**
 
@@ -57,7 +57,7 @@ priority: High
 - **確認済みの範囲外 / 残り** (いずれも既存 Issue へ引き継ぎ。新規 Issue は作らない):
   - 座位・Desktop / Touch の入口と出口 → [IMP-DOG-003](../IMP-DOG-003-walking-polish.md)
   - 権限 (トレーナー権) の受付時の再判定手順、端末別入力 → [DES-DOG-001](../DES-DOG-001-leash-walking.md) (既に列挙済み)
-  - 複数人での目的地・接続の競合、別の人の接続犬に影響しないことの確認 → [IMP-DOG-002](../IMP-DOG-002-leash-walking.md)
+  - 複数人での目的地・接続の競合、別の人の接続犬に影響しないことの確認 → 2026-09-22 の 6 人 PCVR で成立 ([IMP-DOG-002](IMP-DOG-002-leash-walking.md) 完了。総合評価で、項目別の合否は未記録)。端末を変えた確認は [VER-WLD-001](../VER-WLD-001-quest-ios-devices.md)
   - 古民家 7 タブの残り (おやつ・呼ぶ / 休憩・かざり・パーティクル) の持ち込み範囲、仮看板の撤去 → 採用時に別途判断 (タブ継承だけで増やさない)
 
 2026-09-20: 散歩試作のため、入口・見晴らし・広場に Interact 式の看板 (`KH_WalkSign`、`PLAZA >` / `GATE <`) を仮置きした。メニューに目的地選択を持たせたらこの看板は撤去または案内板へ格下げする。ボールは古民家の `KD_TreatPouch.Toy.cs` の個別呼び出しを移植する方針で、まだ未実装。

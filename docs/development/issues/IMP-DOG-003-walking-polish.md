@@ -8,7 +8,7 @@ priority: High
 
 # IMP-DOG-003 目的地を持つ自由な散歩とリードの手触りを作る
 
-2026-09-20のPCVR試作を基準に体験を磨く。追加相談で、主眼を「前方へ配置する追従」から「犬自身が目的地へ行きたがり、自由に過ごす散歩」へ具体化した。仕様の正本は [game-design §4「目的地を持つ自由な散歩」](../../game-design.md)、経緯は [PCVRフィードバック](../../plans/2026-09-20-pcvr-feedback.md)。基本実装と機能検証は [IMP-DOG-002](IMP-DOG-002-leash-walking.md)、未決定の契約は [DES-DOG-001](DES-DOG-001-leash-walking.md)、目的地メニューは [DES-UI-001](archive/DES-UI-001-menu-and-leash-assist.md) と連携する。2026-09-20 に手順 1〜2 (通過点・目的地・自発的な散歩・待機・誘い・寄り道・道外) と目的地の看板を実装し Editor 検査済み。Play は未確認。[実装記録と Play チェックリスト](../../plans/2026-09-20-free-walk.md)。
+2026-09-20のPCVR試作を基準に体験を磨く。追加相談で、主眼を「前方へ配置する追従」から「犬自身が目的地へ行きたがり、自由に過ごす散歩」へ具体化した。仕様の正本は [game-design §4「目的地を持つ自由な散歩」](../../game-design.md)、経緯は [PCVRフィードバック](../../plans/2026-09-20-pcvr-feedback.md)。基本実装と機能検証は [IMP-DOG-002](archive/IMP-DOG-002-leash-walking.md)、未決定の契約は [DES-DOG-001](DES-DOG-001-leash-walking.md)、目的地メニューは [DES-UI-001](archive/DES-UI-001-menu-and-leash-assist.md) と連携する。2026-09-20 に手順 1〜2 (通過点・目的地・自発的な散歩・待機・誘い・寄り道・道外) と目的地の看板を実装し Editor 検査済み。Play は未確認。[実装記録と Play チェックリスト](../../plans/2026-09-20-free-walk.md)。
 
 ## 今回の合意
 
