@@ -53,6 +53,8 @@ priority: High    # High / Medium / Low
 
 | ID | 重要度 | 概要 | 状態 |
 |----|--------|------|------|
+| [IMP-DOG-011](IMP-DOG-011-muchio-greeting.md) | Medium | 裏山で空いている犬が、自由行動の一つとしてたまにムチォの匂いを嗅ぎに行く。無改変での検知試作・実機確認から開始 | todo |
+| [VER-DOG-001](VER-DOG-001-avatar-pet-contact-research.md) | Medium | 来訪者の無改変が条件。ムチォは既存Senderで対応候補、犬っこは通常時の対象外。次はムチォの検知試作・実機確認 | wip |
 | [DES-ENV-001](DES-ENV-001-terrain-vs-blender.md) | High | 地形を Unity Terrain で作るか Blender で作るか (着手: 比較条件と切替基準 → VER-ENV-001 の実測で確定) | todo |
 | [VER-ENV-001](VER-ENV-001-prototype-view-and-edges.md) | High | 試作: 眺め・移動・端の見え方・実機負荷を確認する (代表シーン検証を兼ねる)。v4生成・PCVR総合評価は良好、境界・負荷は項目別検証中 | wip |
 | [IMP-DOG-001](IMP-DOG-001-port-dog-system.md) | High | 古民家ドッグランの犬ギミックを移植する (タグ `export/kominka-hillside-v1` + 移植記録) | wip |
