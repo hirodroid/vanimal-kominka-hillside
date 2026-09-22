@@ -8,6 +8,7 @@
 | ID | 概要 | 完了日 | 備考 |
 |----|------|--------|------|
 | [BUG-DOG-001](BUG-DOG-001-ball-spawn-slope.md) | ボール 6 個を坂から上の広場の平坦部へ | 2026-09-20 | Builder が設計値として毎回配置、Verify で平坦部・NavMesh 上を検査。PCVR で落下報告なし |
+| [IMP-DOG-008](IMP-DOG-008-frisbee-variations.md) | ラブ 1 匹でフリスビーの走り込み・取り方・飛び方を試し、先回り型 + 動きの層に作り替え、6 プリセット全部採用 | 2026-09-22 | Editor Verify + ClientSim ハーネス (30 投げ) + PCVR 5 回。ひねりの MISS の真因は購入犬の胴体追従 Constraint。6 匹展開は IMP-DOG-012、設定は DES-UI-002 |
 
 ---
 
