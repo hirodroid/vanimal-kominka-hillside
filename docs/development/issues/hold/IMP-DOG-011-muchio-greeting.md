@@ -2,7 +2,7 @@
 id: IMP-DOG-011
 type: IMP
 system: DOG
-status: todo
+status: hold
 priority: Medium
 ---
 
@@ -14,7 +14,7 @@ priority: Medium
 
 2026-09-21ユーザー依頼・同日の範囲修正。**まず古民家の裏山で試作する。** 古民家ドッグランへの展開は本Issueの実装範囲に含めない。実装・実機検証は未着手。
 
-先行調査: [VER-DOG-001](VER-DOG-001-avatar-pet-contact-research.md) / [Prefab調査結果・実機チェックリスト](../../plans/2026-09-21-avatar-pet-contact-research.md)。静的調査の根拠・対象版はそちらを正本とし、本Issueは試作と犬への接続を管理する。
+先行調査: [VER-DOG-001](VER-DOG-001-avatar-pet-contact-research.md) / [Prefab調査結果・実機チェックリスト](../../../plans/2026-09-21-avatar-pet-contact-research.md)。静的調査の根拠・対象版はそちらを正本とし、本Issueは試作と犬への接続を管理する。
 
 ## 現時点の判断
 
@@ -88,3 +88,5 @@ Contact proxyの `position` / `rotation` はContactのRoot Transform、`player` 
 ## 状態
 
 Issue作成のみ。コード・シーン・アバターの変更なし。作者への連絡なし。実装・実機確認の結果が出るまで対応済みとはしない。
+
+**2026-09-22 保留。** 来訪者がアバターに何も入れなくても成り立つ体験を作っているのに、他者のアバターギミックが無いと成立しない体験は方針と噛み合わない。体験価値より宣伝・集客の動機が強いと判断した。「散歩・犬との体験そのものが良くなる」と感じたら再検討する ([hold_summary](hold_summary.md))。

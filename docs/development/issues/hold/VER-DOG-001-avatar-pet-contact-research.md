@@ -2,7 +2,7 @@
 id: VER-DOG-001
 type: VER
 system: DOG
-status: wip
+status: hold
 priority: Medium
 ---
 
@@ -38,7 +38,7 @@ priority: Medium
 
 後続の実装は [IMP-DOG-011 自由行動中にムチォの匂いを嗅ぐ](IMP-DOG-011-muchio-greeting.md) で管理する。本Issueは静的調査の根拠と実機での検知成立の確認を担当する。
 
-**静的調査済み。実装・実機検証は未着手のためwipを維持する。** 詳細は [調査結果・実機チェックリスト](../../plans/2026-09-21-avatar-pet-contact-research.md)。
+**静的調査済み。実装・実機検証は未着手。2026-09-22 に IMP-DOG-011 と共に保留 ([hold_summary](hold_summary.md))。** 詳細は [調査結果・実機チェックリスト](../../../plans/2026-09-21-avatar-pet-contact-research.md)。
 
 | 対象 | 判定 | 主な根拠 |
 |---|---|---|

@@ -1,6 +1,6 @@
 # アバターペット連携の静的調査 — 犬っこギミック / ムチォ
 
-調査日: 2026-09-21。依頼・残課題: [VER-DOG-001](../development/issues/VER-DOG-001-avatar-pet-contact-research.md)。
+調査日: 2026-09-21。依頼・残課題: [VER-DOG-001](../development/issues/hold/VER-DOG-001-avatar-pet-contact-research.md)。
 
 ## 1. 結論
 
