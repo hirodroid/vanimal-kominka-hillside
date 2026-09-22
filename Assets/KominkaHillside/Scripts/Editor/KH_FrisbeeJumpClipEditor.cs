@@ -170,55 +170,111 @@ namespace KominkaHillside.Editor
         // Verified: with this off, the runtime mouth follows the authored clip to ~2 cm through the whole jump;
         // with it on, the twist catch missed by 1.3 m (IMP-DOG-008 wave 2 follow-up).
         // Idempotent: a second call finds nothing left to switch off and returns 0.
+        //
+        // Codex D2: scoped to ONE known constraint. "Every ParentConstraint under the dog" would also switch off
+        // anything a future prop, accessory or rig fix adds, silently and with no way to tell from the scene which
+        // of them this tool turned off. The one constraint the follow gimmick drives is identified by all three of
+        // its facts - the object name, its path under the dog, and a source that lives under 追従GIMMICK - and
+        // anything else is logged and left alone.
+        public const string BodyFollowPath = "hojo_born/Bone/Bone_end/PB3/inu";
+        public const string BodyFollowObject = "inu";
+        public const string BodyFollowSourceRoot = "追従GIMMICK";
+
+        // The one ParentConstraint the purchased follow gimmick drives, or null. Shared by MakeBodyRigid and by
+        // both Verifies, so "which constraint" is decided in exactly one place.
+        public static UnityEngine.Animations.ParentConstraint FindBodyFollow(GameObject dog)
+        {
+            foreach (var pc in dog.GetComponentsInChildren<UnityEngine.Animations.ParentConstraint>(true))
+                if (IsBodyFollow(dog, pc)) return pc;
+            return null;
+        }
+
+        static bool IsBodyFollow(GameObject dog, UnityEngine.Animations.ParentConstraint pc)
+        {
+            if (pc.transform.name != BodyFollowObject) return false;
+            if (AnimationUtility.CalculateTransformPath(pc.transform, dog.transform) != BodyFollowPath) return false;
+            for (int i = 0; i < pc.sourceCount; i++)
+            {
+                var src = pc.GetSource(i).sourceTransform;
+                for (var a = src; a != null; a = a.parent)
+                    if (a.name == BodyFollowSourceRoot) return true;
+            }
+            return false;
+        }
+
         public static int MakeBodyRigid(GameObject dog)
         {
             int n = 0;
             foreach (var pc in dog.GetComponentsInChildren<UnityEngine.Animations.ParentConstraint>(true))
             {
-                if (!pc.constraintActive && !pc.enabled) continue;
+                string path = AnimationUtility.CalculateTransformPath(pc.transform, dog.transform);
                 string src = pc.sourceCount > 0 && pc.GetSource(0).sourceTransform != null
                     ? AnimationUtility.CalculateTransformPath(pc.GetSource(0).sourceTransform, dog.transform) : "-";
-                Debug.Log("[KH Frisbee] body-follow off: " + dog.name + "/" + AnimationUtility.CalculateTransformPath(pc.transform, dog.transform)
-                    + " ParentConstraint (source " + src + ")");
+                if (!IsBodyFollow(dog, pc))
+                {
+                    // Not ours: say so out loud rather than switching off something nobody asked about.
+                    Debug.Log("[KH Frisbee] body-follow skipped (not the known follow constraint): " + dog.name + "/" + path
+                        + " ParentConstraint (source " + src + ")");
+                    continue;
+                }
+                if (!pc.constraintActive && !pc.enabled) continue;
+                Debug.Log("[KH Frisbee] body-follow off: " + dog.name + "/" + path + " ParentConstraint (source " + src + ")");
                 pc.constraintActive = false; pc.enabled = false; n++;
                 EditorUtility.SetDirty(pc);
             }
             return n;
         }
 
-        // Verify helper for both scene builders: true when nothing under the dog still drives the body from the
-        // follow gimmick. IsBodyRigid(dog) == false is the state that made the twist catch miss by 1.3 m.
+        // Verify helper for both scene builders: true when the follow gimmick's own constraint is switched off.
+        // IsBodyRigid(dog) == false is the state that made the twist catch miss by 1.3 m. A dog with no such
+        // constraint at all is NOT rigid: it means the path above no longer matches the purchased rig.
         public static bool IsBodyRigid(GameObject dog)
         {
+            var pc = FindBodyFollow(dog);
+            return pc != null && !pc.constraintActive && !pc.enabled;
+        }
+
+        // Codex D2: the other half of the scope. Every ParentConstraint under the dog that is NOT the follow
+        // gimmick's must still be running, so Verify can prove the change stayed where it was aimed.
+        public static bool OtherConstraintsUntouched(GameObject dog)
+        {
             foreach (var pc in dog.GetComponentsInChildren<UnityEngine.Animations.ParentConstraint>(true))
-                if (pc.constraintActive || pc.enabled) return false;
+                if (!IsBodyFollow(dog, pc) && !(pc.constraintActive && pc.enabled)) return false;
             return true;
         }
 
-        // Existing scenes: 4 Build Scene keeps the dog it already made, so the switch above never reaches it.
-        // This applies the same change to every dog in the open scenes. Run it once after 4 Build Scene
-        // (KH_FrisbeePrototypeEditor could fold the MakeBodyRigid call into its own dog wiring instead).
+        // Existing scenes: 4 Build Scene makes the dogs it wires rigid itself (both the prototype builder and the
+        // walking builder call MakeBodyRigid), so this menu is only for a scene whose frisbee dog predates that -
+        // or for putting it back after someone re-imported the purchased dog. Nothing has to be run after a Build.
+        // Codex D2: only dogs that actually have a KH_FrisbeeCatch wired to them. Sweeping every KD_Dog_* would
+        // stiffen the other five, whose bodies are meant to keep the purchased follow gimmick.
         [MenuItem("Tools/KominkaHillside/Frisbee/6 Make Dog Bodies Rigid")]
         public static void MakeDogBodiesRigid()
         {
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode only");
-            int dogs = 0, off = 0;
+            int dogs = 0, off = 0, skipped = 0;
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 var scene = SceneManager.GetSceneAt(i);
                 if (!scene.isLoaded) continue;
                 bool touched = false;
+                var seen = new List<GameObject>();
                 foreach (var root in scene.GetRootGameObjects())
-                    foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                    foreach (var c in root.GetComponentsInChildren<KH_FrisbeeCatch>(true))
                     {
-                        if (!t.name.StartsWith("KD_Dog_", StringComparison.Ordinal)) continue;
+                        if (c.dogRoot == null) { skipped++; continue; }
+                        var go = c.dogRoot.gameObject;
+                        if (seen.Contains(go)) continue;   // two catchers on one dog: switch it off once
+                        seen.Add(go);
                         dogs++;
-                        int n = MakeBodyRigid(t.gameObject);
+                        int n = MakeBodyRigid(go);
                         off += n; touched |= n > 0;
                     }
                 if (touched) EditorSceneManager.MarkSceneDirty(scene);
             }
-            Debug.Log("[KH Frisbee] body-follow constraints switched off: " + off + " on " + dogs + " dog(s). Save the scene to keep it.");
+            Debug.Log("[KH Frisbee] body-follow constraints switched off: " + off + " on " + dogs + " frisbee dog(s)"
+                + (skipped > 0 ? ", " + skipped + " catcher(s) with no dogRoot wired" : "")
+                + ". Dogs without a KH_FrisbeeCatch are untouched. Save the scene to keep it.");
         }
 
         public static AnimationClip IdleClip()

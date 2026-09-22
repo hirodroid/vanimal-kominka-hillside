@@ -15,18 +15,21 @@ process.chdir(root);
 const base = 'Logs/kh-frisbee-harness';
 const MENU = 'Tools/KominkaHillside/Frisbee/';
 
+// expectKind は「どう終わったか」の期待 (jump / stand / over / ground / any)。
+// Unity 側の KH_FrisbeeHarnessEditor.Shots と同じ表を持つ (片方だけ直さないこと)。
 const SHOTS = [
-  { name: 'flat', speed: 7.5, elevationDeg: 10, allowed: ['caught'], note: '基準の投げ' },
-  { name: 'mid', speed: 5.8, elevationDeg: 8, allowed: ['caught'], note: 'ClientSim の Desktop 投げの再現 (低く短い)' },
-  { name: 'lob', speed: 6, elevationDeg: 35, allowed: ['caught'], note: '山なり。滞空が長い' },
-  { name: 'low', speed: 5, elevationDeg: 0, allowed: ['caught', 'ground'], note: '水平・低速。立ったまま取る / 落ちたものを拾う のどちらも想定内' },
-  { name: 'far', speed: 9, elevationDeg: 15, allowed: ['caught'], note: '遠投' },
+  { name: 'flat', speed: 7.5, elevationDeg: 10, allowed: ['caught'], expectKind: 'jump', note: '基準の投げ。跳んで取る' },
+  { name: 'mid', speed: 5.8, elevationDeg: 8, allowed: ['caught'], expectKind: 'any', note: 'ClientSim の Desktop 投げの再現 (低く短い)。終わり方は問わない' },
+  { name: 'lob', speed: 6, elevationDeg: 35, allowed: ['caught'], expectKind: 'jump', note: '山なり。滞空が長いので先回りして跳ぶ' },
+  { name: 'low', speed: 5, elevationDeg: 0, allowed: ['caught', 'ground'], expectKind: 'ground', note: '水平・低速。犬の手前に落ちるので拾いに行く' },
+  { name: 'far', speed: 9, elevationDeg: 15, allowed: ['caught'], expectKind: 'jump', note: '遠投。走って追いついて跳ぶ' },
 ];
 const VARIANTS = [
   { v: 0, name: 'Normal' }, { v: 1, name: 'RunInSide' }, { v: 2, name: 'RunInFar' },
   { v: 3, name: 'RunInBeside' }, { v: 4, name: 'Twist' }, { v: 5, name: 'Curve' },
 ];
 const NOT_COVERED = [
+  '広場の縁 (playArea)。試作シーンの捕り手は playAreaRadius = 0 なので DogMayGo は常に真で、着地点が広場の外へ出る候補を落とす規則はここでは 1 度も働かない (本シーンの Verify の幾何と実機 Play で見る)',
   'Ready (持ち手が構えている間の待機位置)。プロトタイプに持ち手がいないので走り込み系 v1..v3 は v0 と同じ投げになる',
   'VR の手投げ・狙い表示',
   '他プレイヤー・Owner 移譲・同期',
@@ -111,13 +114,21 @@ function status() {
     throws: `${r.throwsOk}/${r.throwResults ? r.throwResults.length : 0} ok (planned ${r.throwsPlanned})`,
     perVariant: r.perVariant,
     results: (r.throwResults || []).map(t => ({
-      v: t.variant, shot: t.shot, outcome: t.outcome, ok: t.ok,
+      v: t.variant, shot: t.shot, outcome: t.outcome,
+      // 「取れた」と「一周終わった」は別の列 (Codex M1)。ok は両方 + 動き + 終わり方。
+      caught: t.caught, completed: t.completed, ok: t.ok,
+      // 終わり方 (Codex M2): 跳んで取ったのか、立って取ったのか、拾いに行ったのか
+      kind: t.kind, expectKind: t.expectKind, expectOk: t.expectOk, expect: t.expectNote,
       // 動きの質 (round 4): 取れても「機械っぽい」なら ok にしない
       mode: t.mode, yawRateMax: t.yawRateMax, speedMin: t.speedMin, vTake: t.vTake, path: t.approachPath,
       motionOk: t.motionOk, motion: t.motionNote,
-      seconds: t.seconds, reachedIdle: t.reachedIdle, endState: t.endState, line: t.outcomeLine,
+      seconds: t.seconds, endState: t.endState, line: t.outcomeLine,
     })),
+    caught: (r.throwResults || []).filter(t => t.caught).length,
+    completed: (r.throwResults || []).filter(t => t.completed).length,
     motionFailed: (r.throwResults || []).filter(t => t.motionOk === false).length,
+    expectFailed: (r.throwResults || []).filter(t => t.expectOk === false).length,
+    notCompleted: (r.throwResults || []).filter(t => t.completed === false).map(t => `v${t.variant}/${t.shot} endState=${t.endState}`),
     errors: r.errors,
     sceneFileUnchanged: r.sceneFileUnchanged,
     notCovered: r.notCovered,
@@ -136,9 +147,13 @@ function list() {
     shots: SHOTS,
     throwsPlanned: VARIANTS.length * SHOTS.length,
     outcomes: ['caught', 'miss', 'ground', 'none', 'timeout', 'blocked'],
-    pass: 'すべての投げが caught か、その投げに書いた想定内の結果 (low の ground など) であり、かつ動きの質 (motion) も合格であること',
-    motion: 'round 4: 踏み切り / キャッチの行の mode (hook / run / stand / wait / overtake)・yawRateMax・speedMin で判定。'
-      + '急旋回 (> 300 deg/s) は全 mode で不合格。wait 以外で踏み切り直前 1 秒の最小速度が 1.5 m/s 未満 (減速して跳んだ) も不合格',
+    kinds: ['jump', 'stand', 'over', 'ground', 'any (期待側だけ)'],
+    throwWindowSeconds: 16,
+    pass: '1 投げの合否は 4 つすべて: (1) 想定内の結果 (allowed)、(2) 16 秒の窓の内に Idle へ戻って一周が終わった (completed)、'
+      + '(3) 動きの質 (motion)、(4) 期待した終わり方 (expectKind)。全体の PASS は計画した投げが全部走り、全部 ok で、Console エラー 0',
+    motion: 'round 4: 踏み切り / キャッチの行の mode (hook / run / stand / wait / overtake)・yawRateMax・speedMin・vTake で判定。'
+      + '急旋回 (> 300 deg/s) は全 mode で不合格。wait 以外で踏み切り直前 1 秒の最小速度が 1.5 m/s 未満 (減速して跳んだ) も不合格。'
+      + '跳んだのに数字が行に無い場合も不合格 (判定できない = 合格ではない)',
     notCovered: NOT_COVERED,
   }, null, 2));
 }

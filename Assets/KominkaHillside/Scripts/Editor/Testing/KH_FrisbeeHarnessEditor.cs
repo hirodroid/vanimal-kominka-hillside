@@ -19,8 +19,10 @@ namespace KominkaHillside.Editor
     /// フリスビーの ClientSim 自動テスト台 (IMP-DOG-008 の繰り返し確認用)。
     ///
     /// 何をするか: プロトタイプシーン (KH_FrisbeePrototype) を単独で開き、Play へ入り、
-    /// 固定投げ台 (KH_FrisbeeStand) の Interact を 6 プリセット x 4 投げ分だけ叩き、
+    /// 固定投げ台 (KH_FrisbeeStand) の Interact を 6 プリセット x 5 投げ分だけ叩き、
     /// 毎回 [KH_Frisbee*] のコンソール行から成否を分類して JSON に残す。
+    /// 1 投げの合否は 4 つ: 想定内の結果 (outcomeOk) / 一周を終えた (completed) /
+    /// 動きが機械でない (motionOk) / 期待した終わり方 (expectOk)。
     ///
     /// 原則 (古民家ドッグランの KD_ClientSimHarnessEditor と同じ):
     ///  - 入口は固定 (メニュー 1 つ)。終了も固定 (完了・失敗・停止・時間切れのどれでも Edit モードへ戻る)。
@@ -46,12 +48,15 @@ namespace KominkaHillside.Editor
 
         const int StateIdle = 0, StateReady = 10;
         const int VariantCount = 6;
-        // 全体の番犬。下限 240 秒 (設計値)。24 投げの全面実行は 1 投げ 10 秒 + 片付けで 240 秒に収まらないので、
+        // 全体の番犬。下限 240 秒 (設計値)。30 投げの全面実行は 1 投げ 16 秒 + 片付けで 240 秒に収まらないので、
         // 計画した投げ数に応じて伸ばす。options.json の globalTimeoutSeconds で上書きできる。
         const double MinBudget = 240.0;
-        const double BudgetPerThrow = 20.0;
-        const double ThrowBudget = 12.0;      // 1 投げ (投げてから片付けるまで) の上限 (秒)
-        const double ThrowSettle = 10.0;      // 投げてから Idle へ戻るのを待つ上限 (秒)
+        const double BudgetPerThrow = 28.0;
+        // Codex M1: 1 投げの窓は「Idle へ戻るまで」を含む。遠投 (far) は取ってから人の足元まで
+        // 咥えて戻り、置いて Idle へ戻るまでに 12-14 秒かかるので、10 秒では「取れたのに未完」に
+        // なっていた (それを ok にしていたのが M1 の指摘)。窓を 16 秒に広げ、完走も合否に入れる。
+        const double ThrowBudget = 18.0;      // 1 投げ (投げてから片付けるまで) の上限 (秒)
+        const double ThrowSettle = 16.0;      // 投げてから Idle へ戻るのを待つ上限 (秒)
         // 動きの質のしきい値は捕り手側の定数をそのまま使う (2 か所に数字を置かない)。
         const float MotionMaxYawRate = KH_FrisbeeCatch.MotionMaxYawRate;
         const float MotionMinSpeed = KH_FrisbeeCatch.MotionMinSpeed;
@@ -59,26 +64,37 @@ namespace KominkaHillside.Editor
         const float MotionMinPath = KH_FrisbeeCatch.MotionMinPath;
 
         // ---------------------------------------------------------------- 投げ表
-        struct Shot { public string name; public float speed, elevation; public string[] allowed; public string note; }
+        // expectKind (Codex M2): その投げが「どう終わったか」の期待。outcome (取れたか) だけでは
+        // 「跳ばずに立って取った」回帰 (4 回目の v4) を落とせないので、終わり方も行ごとに書く。
+        //   jump   = 跳んで取った (catch OK / MISS。踏み切りのある行)
+        //   stand  = 立ったまま取った / 取り損ねた (stand catch ...)
+        //   over   = 走り抜けざまに取った (overtake catch ...、v3 だけ)
+        //   ground = 落ちたものを拾いに行った (plan=2)
+        //   any    = 問わない
+        struct Shot { public string name; public float speed, elevation; public string[] allowed; public string expectKind; public string note; }
 
         static readonly Shot[] Shots =
         {
-            new Shot { name = "flat", speed = 7.5f, elevation = 10f, allowed = new[] { "caught" },
-                note = "基準の投げ。跳んで取るか、走り込んで取る" },
+            new Shot { name = "flat", speed = 7.5f, elevation = 10f, allowed = new[] { "caught" }, expectKind = "jump",
+                note = "基準の投げ。跳んで取る (立って取ったら不合格)" },
             // ClientSim の Desktop 投げ (5.6-6.2 m/s・低い仰角、犬は 6.5-7.5 m 前) を再現する投げ。
             // ひねり (v4) が跳ばずに立って取る / 地上回収へ落ちる回帰は、この幾何でだけ出た。
-            new Shot { name = "mid",  speed = 5.8f, elevation = 8f,  allowed = new[] { "caught" },
-                note = "ClientSim の Desktop 投げの再現。低く短い。走り込んで跳べるか" },
-            new Shot { name = "lob",  speed = 6f,   elevation = 35f, allowed = new[] { "caught" },
-                note = "山なり。滞空が長いので先回りできるはず" },
-            new Shot { name = "low",  speed = 5f,   elevation = 0f,  allowed = new[] { "caught", "ground" },
-                note = "水平・低速。犬の手前に落ちるので、立ったまま取る / 落ちたものを拾いに行く のどちらも想定内" },
-            new Shot { name = "far",  speed = 9f,   elevation = 15f, allowed = new[] { "caught" },
-                note = "遠投。走って追いつけるかどうか" },
+            // 固定台では犬が 10.5 m 先なので全プリセットで「立って取る」幾何になる = 終わり方は問わない。
+            new Shot { name = "mid",  speed = 5.8f, elevation = 8f,  allowed = new[] { "caught" }, expectKind = "any",
+                note = "ClientSim の Desktop 投げの再現。低く短い。取れれば跳んでも立ってもよい" },
+            new Shot { name = "lob",  speed = 6f,   elevation = 35f, allowed = new[] { "caught" }, expectKind = "jump",
+                note = "山なり。滞空が長いので先回りして跳ぶ" },
+            new Shot { name = "low",  speed = 5f,   elevation = 0f,  allowed = new[] { "caught", "ground" }, expectKind = "ground",
+                note = "水平・低速。犬の手前に落ちるので拾いに行く" },
+            new Shot { name = "far",  speed = 9f,   elevation = 15f, allowed = new[] { "caught" }, expectKind = "jump",
+                note = "遠投。走って追いついて跳ぶ" },
         };
 
         static readonly string[] NotCovered =
         {
+            // Codex D1: 試作シーンの捕り手は playAreaRadius = 0 (広場無し) なので、DogMayGo は常に真。
+            // 着地点が広場の外へ出る候補を落とす規則は、ここでは 1 度も働かない。
+            "広場の縁 (playArea)。試作シーンの捕り手は playAreaRadius = 0 なので、着地点・踏み切り・待機の広場判定 (DogMayGo) は常に真になる。縁での着地・回復のはみ出しは本シーンの Verify (幾何) と実機 Play でしか見ていない",
             "Ready (持ち手が構えている間の待機位置)。プロトタイプに持ち手がいないので Ready へ入らず、走り込み系プリセット v1..v3 は待機位置の違いが出ない = ここでは v0 と同じ投げになる",
             "VR の手投げ・狙い (aim line / marker / 広場外の警告) は一切通らない。固定投げ台の +Z 方向の投げだけ",
             "Interact は UdonBehaviour.Interact() を直接呼ぶので、実際のレイキャスト・距離 (proximity)・InteractionText の当たり判定は通っていない",
@@ -100,6 +116,16 @@ namespace KominkaHillside.Editor
             public float speed, elevationDeg;
             public string outcome = "none";      // caught / miss / ground / none / timeout / blocked
             public string[] allowed;
+            // Codex M1: 「取れた」と「一周終わった」は別の列。取ってから持ち帰って置いて Idle へ戻るまでが
+            // 1 投げで、そこまで行かなかった投げは ok にしない。
+            public bool caught;                  // outcome == "caught"
+            public bool completed;               // 窓の内に Idle へ戻った (= reachedIdle)
+            public bool outcomeOk;               // outcome が allowed に入っている
+            // Codex M2: 終わり方 (jump / stand / over / ground / "") と、その投げに期待した終わり方。
+            public string kind = "";
+            public string expectKind = "any";
+            public bool expectOk = true;
+            public string expectNote = "";
             public bool ok;
             // 動きの質 (IMP-DOG-008 round 4)。取れたかどうかとは別の合否。
             // mode = hook / run / stand / overtake / "" (跳ばず取らずに終わった投げ)。
@@ -119,6 +145,7 @@ namespace KominkaHillside.Editor
         {
             public int variant;
             public int caught, miss, ground, none, other;
+            public int completed;   // Codex M1: そのプリセットで一周まで終わった投げの数
         }
 
         [Serializable]
@@ -537,7 +564,7 @@ namespace KominkaHillside.Editor
             {
                 index = index, variant = variant, shot = shot.name,
                 speed = shot.speed, elevationDeg = shot.elevation,
-                allowed = shot.allowed, note = shot.note,
+                allowed = shot.allowed, expectKind = shot.expectKind, note = shot.note,
             };
             report.throwResults.Add(rec);
             report.throwsRun++;
@@ -595,8 +622,16 @@ namespace KominkaHillside.Editor
             for (int i = mark; i < Lines.Count; i++) rec.lines.Add(Lines[i]);
             Classify(rec, engaged);
             JudgeMotion(rec);
-            // round 4: 取れたかどうか **と** 動きが機械でないこと の両方で 1 投げの合否を決める。
-            rec.ok = shot.allowed.Contains(rec.outcome) && rec.motionOk;
+            JudgeKind(rec);
+            // 1 投げの合否は 4 つ全部:
+            //   outcomeOk  想定内の結果だったか (round 1)
+            //   completed  その一周が終わったか = 窓の内に Idle へ戻ったか (Codex M1)
+            //   motionOk   動きが機械でないか (round 4)
+            //   expectOk   期待した終わり方だったか (Codex M2)
+            rec.caught = rec.outcome == "caught";
+            rec.completed = rec.reachedIdle;
+            rec.outcomeOk = shot.allowed.Contains(rec.outcome);
+            rec.ok = rec.outcomeOk && rec.completed && rec.motionOk && rec.expectOk;
             if (rec.ok) report.throwsOk++;
 
             // 5. 次の投げのために円盤を台へ戻す (犬の現在の追いかけも終わる)。
@@ -618,14 +653,37 @@ namespace KominkaHillside.Editor
                 if (l.Contains("] takeoff ")) rec.takeoffLine = l;
                 if (l.Contains("[KH_Frisbee] launch ")) rec.launchLine = l;
             }
-            if (ok != null) { rec.outcome = "caught"; rec.outcomeLine = ok; return; }
-            if (miss != null) { rec.outcome = "miss"; rec.outcomeLine = miss; return; }
-            if (rec.planLine != null && rec.planLine.Contains("plan=2 ")) { rec.outcome = "ground"; rec.outcomeLine = rec.planLine; return; }
+            if (ok != null) { rec.outcome = "caught"; rec.outcomeLine = ok; rec.kind = KindOf(ok); return; }
+            if (miss != null) { rec.outcome = "miss"; rec.outcomeLine = miss; rec.kind = KindOf(miss); return; }
+            if (rec.planLine != null && rec.planLine.Contains("plan=2 ")) { rec.outcome = "ground"; rec.outcomeLine = rec.planLine; rec.kind = "ground"; return; }
             if (!rec.reachedIdle) { rec.outcome = "timeout"; rec.outcomeLine = "state=" + rec.endState + " when the " + ThrowSettle + " s window ran out"; return; }
             rec.outcome = "none";
             rec.outcomeLine = rec.launchLine == null ? "no launch line: the throw never left the stand"
                 : engaged ? "the dog engaged but logged no catch / miss / ground line"
                 : "the disc flew but the dog never left Idle";
+        }
+
+        /// <summary>キャッチの行から「どう終わったか」を読む (Codex M2)。
+        /// `stand catch ...` は立ったまま、`overtake catch ...` は走り抜けざま、素の `catch OK/MISS` は
+        /// 跳んで (UpdateJump の中でしか出ない行)。</summary>
+        static string KindOf(string line)
+        {
+            if (line.Contains("stand catch")) return "stand";
+            if (line.Contains("overtake catch")) return "over";
+            return "jump";
+        }
+
+        /// <summary>期待した終わり方か (Codex M2)。v4 が flat / lob / far で跳ばずに立って取る回帰は
+        /// outcome では caught なので落ちない。行ごとに書いた expectKind で落とす。
+        /// 結果が想定外のときは outcomeOk が既に落としているので、ここでは何も足さない。</summary>
+        static void JudgeKind(ThrowResult rec)
+        {
+            if (string.IsNullOrEmpty(rec.expectKind) || rec.expectKind == "any")
+            { rec.expectOk = true; rec.expectNote = "expectKind=any"; return; }
+            if (rec.kind == rec.expectKind)
+            { rec.expectOk = true; rec.expectNote = "kind=" + rec.kind + " == expectKind=" + rec.expectKind; return; }
+            rec.expectOk = false;
+            rec.expectNote = "kind=" + (string.IsNullOrEmpty(rec.kind) ? "(none)" : rec.kind) + " but this shot expects " + rec.expectKind;
         }
 
         /// <summary>動きの質 (round 4)。「取れた」だけでは PCVR 3 の「機械っぽい」を落とせないので、
@@ -638,14 +696,26 @@ namespace KominkaHillside.Editor
             // 地上回収 (ground) のように跳ばずに終わった投げは「判定していない」(motionOk 既定 true) のまま。
             string line = rec.outcomeLine != null && rec.outcomeLine.Contains(" yawRateMax=") ? rec.outcomeLine
                 : rec.takeoffLine != null && rec.takeoffLine.Contains(" yawRateMax=") ? rec.takeoffLine : null;
-            if (line == null) return;
+            if (line == null)
+            {
+                // Codex M3: 跳んだのに数字が無い = 判定できない、であって合格ではない。
+                // 踏み切りの行があった (= 跳んだ) / キャッチの行が跳躍だった のどちらかなら不合格にする。
+                if (rec.kind == "jump" || rec.kind == "stand" || rec.kind == "over" || rec.takeoffLine != null)
+                {
+                    rec.motionOk = false;
+                    rec.motionNote = "kind=" + rec.kind + " but no takeoff / catch line carried yawRateMax= : "
+                        + (rec.takeoffLine ?? rec.outcomeLine ?? "(no line)");
+                }
+                return;   // 跳びも取りもしなかった投げ (ground / none) は既定どおり「判定していない」
+            }
             rec.mode = Field(line, " mode=");
             rec.yawRateMax = Num(line, " yawRateMax=");
             rec.speedMin = Num(line, " speedMin=");
             rec.vTake = Num(line, " vTake=");
             rec.approachPath = Num(line, " path=");
-            if (rec.yawRateMax < 0f || rec.speedMin < 0f)
-            { rec.motionOk = false; rec.motionNote = "motion numbers missing from: " + line; return; }
+            // Codex M3: 3 つのうち 1 つでも読めなければ不合格。既定の true のまま通していたのが指摘。
+            if (rec.yawRateMax < 0f || rec.speedMin < 0f || rec.vTake < 0f)
+            { rec.motionOk = false; rec.motionNote = "motion numbers missing (yawRateMax / speedMin / vTake) from: " + line; return; }
             if (rec.yawRateMax > MotionMaxYawRate)
             { rec.motionOk = false; rec.motionNote = "yawRateMax " + rec.yawRateMax.ToString("F0") + " > " + MotionMaxYawRate + " deg/s (snap turn)"; return; }
             // 助走が 1 秒ぶんの距離 (1.5 m/s x 1 s) に満たない投げは速度で判定しない。円盤が犬のすぐ横に
@@ -693,6 +763,7 @@ namespace KominkaHillside.Editor
                     else if (t.outcome == "ground") c.ground++;
                     else if (t.outcome == "none") c.none++;
                     else c.other++;
+                    if (t.completed) c.completed++;
                 }
                 report.perVariant.Add(c);
             }

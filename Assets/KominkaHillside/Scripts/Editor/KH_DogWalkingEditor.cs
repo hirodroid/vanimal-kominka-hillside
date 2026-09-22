@@ -425,6 +425,8 @@ namespace KominkaHillside.Editor
                 if(!wanted){Check(ct==null&&dt==null&&w.frisbeeCatch==null&&f.frisbeeCatch==null&&(m.frisbeeCatchers==null||m.frisbeeCatchers[i]==null)&&(act.frisbeeCatchers==null||act.frisbeeCatchers[i]==null),"no disc for "+key+" yet (deliberate)");
                     Check(m.dogRoots[i]!=null&&!KH_FrisbeeJumpClipEditor.IsBodyRigid(m.dogRoots[i].gameObject),"non-frisbee dog "+key+" keeps the purchased body-follow constraint");continue;}
                 Check(m.dogRoots[i]!=null&&KH_FrisbeeJumpClipEditor.IsBodyRigid(m.dogRoots[i].gameObject),"frisbee dog body is rigid to its root (追従 ParentConstraint inactive) "+key);
+                // Codex D2: the change is scoped to that one constraint - anything else under the dog still runs.
+                Check(m.dogRoots[i]!=null&&KH_FrisbeeJumpClipEditor.OtherConstraintsUntouched(m.dogRoots[i].gameObject),"every other ParentConstraint under "+key+" is still active (scoped to "+KH_FrisbeeJumpClipEditor.BodyFollowPath+")");
                 var c=ct==null?null:ct.GetComponent<KH_FrisbeeCatch>();var d=dt==null?null:dt.GetComponent<KH_Frisbee>();
                 Check(c!=null&&d!=null,"disc and catcher exist for "+key);if(c==null||d==null)continue;
                 Check(c.dogRoot==m.dogRoots[i]&&c.dogAnimator==f.dogAnimator&&c.mouthAnchor==f.mouthAnchor&&c.frisbee==d&&d.catcher==c,"catcher shares the walking dog's root/Animator/mouth "+key);
@@ -476,20 +478,41 @@ namespace KominkaHillside.Editor
                 Check(c.turnSpeedDegPerSec>=180f&&c.turnSpeedDegPerSec<=360f,"turn rate "+c.turnSpeedDegPerSec.ToString("F0")+" deg/s in [180, 360] (a dog's turn, not a turret's) "+key);
                 Check(KH_FrisbeeCatch.HookLength>=1f&&KH_FrisbeeCatch.HookLength<=3f,"hook length "+KH_FrisbeeCatch.HookLength.ToString("F2")+" m in [1, 3] "+key);
                 Check(KH_FrisbeeCatch.HookAngleDeg>=20f&&KH_FrisbeeCatch.HookAngleDeg<=70f,"hook angle "+KH_FrisbeeCatch.HookAngleDeg.ToString("F0")+" deg in [20, 70] "+key);
+                // Codex M5: the momentum grid (HookLenAt / HookAngAt), not just the wait hook.
+                Check(KH_FrisbeeCatch.HookLengthMin>=0.5f&&KH_FrisbeeCatch.HookLengthMin<=KH_FrisbeeCatch.HookLength&&KH_FrisbeeCatch.HookLengthMax>=KH_FrisbeeCatch.HookLength&&KH_FrisbeeCatch.HookLengthMax<=6f,
+                    "hook loop lengths "+KH_FrisbeeCatch.HookLengthMin.ToString("F2")+" - "+KH_FrisbeeCatch.HookLengthMax.ToString("F2")+" m bracket "+KH_FrisbeeCatch.HookLength.ToString("F2")+", within [0.5, 6] "+key);
+                Check(KH_FrisbeeCatch.HookAngleMin>=10f&&KH_FrisbeeCatch.HookAngleMin<=KH_FrisbeeCatch.HookAngleDeg&&KH_FrisbeeCatch.HookAngleMax>=KH_FrisbeeCatch.HookAngleDeg&&KH_FrisbeeCatch.HookAngleMax<=120f,
+                    "hook loop angles "+KH_FrisbeeCatch.HookAngleMin.ToString("F0")+" - "+KH_FrisbeeCatch.HookAngleMax.ToString("F0")+" deg bracket "+KH_FrisbeeCatch.HookAngleDeg.ToString("F0")+", within [10, 120] "+key);
+                Check(KH_FrisbeeCatch.HookCombos>=2&&KH_FrisbeeCatch.HookCombos<=16,"hook loop count "+KH_FrisbeeCatch.HookCombos+" in [2, 16] "+key);
                 Check(c.chaseDeceleration>0f&&c.chaseDeceleration<c.deceleration,"chase braking "+c.chaseDeceleration.ToString("F1")+" m/s2 < the generic "+c.deceleration.ToString("F1")+" "+key);
                 Check(c.standTurnDegPerSec<=c.walkTurnDegPerSec&&c.walkTurnDegPerSec<=c.turnSpeedDegPerSec&&c.standTurnDegPerSec>c.idleTurnSpeedDegPerSec,"turn rates stand "+c.standTurnDegPerSec.ToString("F0")+" <= walk "+c.walkTurnDegPerSec.ToString("F0")+" <= run "+c.turnSpeedDegPerSec.ToString("F0")+", all above idle "+key);
                 Check(c.maxRunAnimScale>=1.5f&&c.maxRunAnimScale<=3f,"run clip speed cap "+c.maxRunAnimScale.ToString("F1")+"x in [1.5, 3.0] (higher reads as jitter) "+key);
                 Check(KH_FrisbeeCatch.HoldEnterRadius>=0.2f&&KH_FrisbeeCatch.HoldEnterRadius<=0.6f,"hold band "+KH_FrisbeeCatch.HoldEnterRadius.ToString("F2")+" m in [0.20, 0.60] (must sit outside the 0.1 m arrive radius) "+key);
                 Check(c.returnRunSpeed<=c.chaseRunSpeed,"return pace "+c.returnRunSpeed.ToString("F1")+" <= chase sprint "+c.chaseRunSpeed.ToString("F1")+" (only the chase has a deadline) "+key);
                 // The highest jump the planner may pick still has to play the clip at a believable speed.
-                float topScale=Mathf.Max(c.clipRiseDuration,c.clipRiseDurationTwist)/Mathf.Sqrt(2f*c.maxRootRise/d.gravity);
-                Check(topScale>=0.6f,"maxRootRise "+c.maxRootRise.ToString("F2")+" m plays the clip at "+topScale.ToString("F2")+"x >= 0.60 "+key);
+                // Codex M5: the slowest playback is the SHORTEST clip over the longest air time, so Max checked
+                // the easier clip and let the other drop below 0.60x unnoticed.
+                float topTUp=Mathf.Sqrt(2f*c.maxRootRise/d.gravity);
+                float topScale=Mathf.Min(c.clipRiseDuration,c.clipRiseDurationTwist)/topTUp;
+                Check(topScale>=0.6f,"maxRootRise "+c.maxRootRise.ToString("F2")+" m plays the SLOWEST clip at "+topScale.ToString("F2")+"x >= 0.60 (jump "+(c.clipRiseDuration/topTUp).ToString("F2")+"x, twist "+(c.clipRiseDurationTwist/topTUp).ToString("F2")+"x) "+key);
                 Check(KH_FrisbeeCatch.RunInReadyTurnDeg>=20f&&KH_FrisbeeCatch.RunInReadyTurnDeg<=90f,"Ready turn threshold "+KH_FrisbeeCatch.RunInReadyTurnDeg.ToString("F0")+" deg in [20, 90] "+key);
                 // A Ready spot is measured from the holder, so it only ever lands inside the plaza if its own radius does.
                 float[] readyAhead={KH_FrisbeeCatch.ReadyAhead1,KH_FrisbeeCatch.ReadyAhead2,KH_FrisbeeCatch.ReadyAhead3};
                 float[] readyLateral={KH_FrisbeeCatch.ReadyLateral1,KH_FrisbeeCatch.ReadyLateral2,KH_FrisbeeCatch.ReadyLateral3};
                 float readyMax=0f;for(int v=0;v<3;v++){float r=Mathf.Sqrt(readyAhead[v]*readyAhead[v]+readyLateral[v]*readyLateral[v]);if(r>readyMax)readyMax=r;}
                 Check(readyMax<=c.playAreaRadius,"run-in Ready spots reach "+readyMax.ToString("F1")+" m <= play area radius "+c.playAreaRadius.ToString("F1")+" "+key);
+                // Codex D1 高: the landing rule as pure geometry, against THIS dog's real plaza circle - the same
+                // LandingOf / InCircleXZ the planner and the liftoff gate call. A jump that leaves the ground
+                // 0.70 m inside the ring and travels 1.00 m must be refused; the same jump 1 m further in must not.
+                {
+                    Vector3 pc=c.playAreaCenter;float prad=c.playAreaRadius;
+                    Vector3 pf=new Vector3(0.6f,0f,0.8f);float pv=2f,pt=0.25f;
+                    Vector3 lo=pc+pf*(prad-0.7f),la=KH_FrisbeeCatch.LandingOf(lo,pf,pv,pt);
+                    Vector3 lo2=pc+pf*(prad-1.7f),la2=KH_FrisbeeCatch.LandingOf(lo2,pf,pv,pt);
+                    Check(Mathf.Abs(((la-pc).magnitude-prad)-0.3f)<1e-3f,"LandingOf puts a "+(pv*2f*pt).ToString("F2")+" m arc 0.30 m past the plaza edge (measured "+((la-pc).magnitude-prad).ToString("F3")+") "+key);
+                    Check(KH_FrisbeeCatch.InCircleXZ(lo,pc,prad,0f)&&!KH_FrisbeeCatch.InCircleXZ(la,pc,prad,0f)&&KH_FrisbeeCatch.InCircleXZ(la2,pc,prad,0f),
+                        "the play-area predicate refuses a landing 0.30 m outside the plaza although the take-off is inside, and accepts the one 0.70 m in "+key);
+                }
                 var wb=UdonSharpEditorUtility.GetBackingUdonBehaviour(w);var fb=UdonSharpEditorUtility.GetBackingUdonBehaviour(f);var cbb=UdonSharpEditorUtility.GetBackingUdonBehaviour(c);
                 Check(wb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb&&fb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb,"Wander/Fetch backing frisbeeCatch "+key);
                 Check(f.sleepBoard==null&&f.liveSystem==null,"sleep board / live unwired for "+key+" (re-verify exclusion if reintroduced)");

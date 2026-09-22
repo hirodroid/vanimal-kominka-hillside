@@ -246,6 +246,9 @@ namespace KominkaHillside
         // The two numbers the harness judges: a turn faster than this is a snap, and outside the hook a dog that
         // dropped below this before taking off had stopped and popped.
         public const float MotionMaxYawRate = 300f, MotionMinSpeed = 1.5f;
+        // Codex D1: how far past the landing the lane has to be clear. The recover slide carries the dog roughly
+        // this far before UpdateLand's edge clamp can stop it, so the stride after the landing is checked too.
+        public const float LandingLaneMargin = 0.6f;
         // Below this approach length the speed rule is not satisfiable by ANY dog: the window alone needs
         // MotionMinSpeed * MotionWindow = 1.5 m covered at speed, and the dog still has to accelerate into it from
         // a standstill and a turn. Shorter approaches are judged on the yaw rate only (the disc came down next to
@@ -465,12 +468,23 @@ namespace KominkaHillside
         [NetworkCallable(maxEventsPerSecond: 5)]
         public void ReqCatch(int gen, Vector3 p0, Vector3 v0, double launchServerTime, int thrower, float curve)
         {
-            if (!IsDogOwner()) return;
+            // Both Owners, like ReqVariant: the plan is the dog's, but the state this call writes is synced from
+            // THIS object, so an ownership split would run the sequence on a client nobody reads it from (Codex D3).
+            if (!IsDogOwner() || !Networking.IsOwner(gameObject)) return;
             if (IsCarrying || IsAirborne) return; // finish the mouth / the landing first; the launcher refuses these too
+            // Plausibility (network callable; anyone may send). Non-finite first: NaN survives every comparison
+            // below (NaN > x and NaN < x are both false), so a forged launch would sail through the caps and then
+            // poison the prediction, the plan and the dog's transform for the whole flight (Codex D3).
+            if (!Finite(p0) || !Finite(v0)) return;
+            if (double.IsNaN(launchServerTime) || double.IsInfinity(launchServerTime)) return;
             if (!CanPlay(p0)) return;             // same gate as Ready: leash / Fetch / gathering / treat / rest / play area
-            // Plausibility (network callable; anyone may send): a real launch is capped by the disc and starts nearby.
+            // A real launch is capped by the disc and starts nearby.
             if (v0.magnitude > frisbee.maxSpeed * 1.05f || Vector3.Distance(p0, dogRoot.position) > 200f) return;
-            if (Networking.GetServerTimeInSeconds() - launchServerTime > 5.0) return;
+            // Age of the launch. Too old: the flight is over. In the future: a forged timestamp would make
+            // _ElapsedSince negative and run the whole scan on a trajectory that has not started (1 s covers
+            // clock skew between clients, which is all a real launch can be out by).
+            double age = Networking.GetServerTimeInSeconds() - launchServerTime;
+            if (age > 5.0 || age < -1.0) return;
             if (float.IsNaN(curve) || float.IsInfinity(curve)) return;   // a forged value would poison every prediction (Codex D)
             if (curve < -1f || curve > 1f) return; // a real throw carries FlightCurve (0 or CurveDefault); clamping would split flight and prediction
             _haveLaunch = true; _gen = gen; _p0 = p0; _v0 = v0; _t0 = launchServerTime; _curve = curve; _flightEnded = false;
@@ -483,6 +497,14 @@ namespace KominkaHillside
             throwerId = thrower;
             LogThrow(p0, v0, curve);
             TransitionTo(StateChase);
+        }
+
+        // Every component finite. Vector3.magnitude on a NaN component is NaN, which compares false against every
+        // bound, so the caps in ReqCatch only mean something once this has passed (Codex D3).
+        bool Finite(Vector3 v)
+        {
+            if (float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z)) return false;
+            return !(float.IsInfinity(v.x) || float.IsInfinity(v.y) || float.IsInfinity(v.z));
         }
 
         // Where the dog stands in the throw's own frame, so a run-in preset can be judged from the log alone
@@ -653,11 +675,23 @@ namespace KominkaHillside
             return false;
         }
 
-        bool InPlayArea(Vector3 p, float margin)
+        bool InPlayArea(Vector3 p, float margin) { return InCircleXZ(p, playAreaCenter, playAreaRadius, margin); }
+
+        // The play-area test as a pure function. The planner reaches it through InPlayArea / DogMayGo; Verify calls
+        // it directly, so the landing rule can be proven on a mock circle without a scene (Codex D1).
+        public static bool InCircleXZ(Vector3 p, Vector3 center, float radius, float margin)
         {
-            if (playAreaRadius <= 0f) return true;
-            Vector3 d = p - playAreaCenter; d.y = 0f;
-            return d.magnitude <= playAreaRadius + margin;
+            if (radius <= 0f) return true;
+            Vector3 d = p - center; d.y = 0f;
+            return d.magnitude <= radius + margin;
+        }
+
+        // Where a jump that leaves `liftoff` along `fwd` at `vTake` comes down. The arc is symmetric (UpdateJump
+        // flies for 2 * tUp), so this is pure geometry - static, so Verify can assert on the same expression the
+        // planner and the liftoff gate use (Codex D1).
+        public static Vector3 LandingOf(Vector3 liftoff, Vector3 fwd, float vTake, float tUp)
+        {
+            return liftoff + fwd * (vTake * 2f * tUp);
         }
 
         // Anywhere the dog itself would run, crouch, land or pick up must be inside the flat (review D1); the
@@ -989,6 +1023,16 @@ namespace KominkaHillside
                 if (_mYaw[i] > yaw) yaw = _mYaw[i];
                 if (slow < 0f || _mSpeed[i] < slow) slow = _mSpeed[i];
             }
+            // The bucket still being filled (Codex M3). Up to MotionBucket seconds - the very moments before the
+            // crouch, where a stop or a snap would show - used to be invisible to the verdict because only closed
+            // buckets were read. The angle is divided by at least half a bucket so a one-frame remainder cannot
+            // report a rate no writer can produce (the whole reason the samples are bucketed at all).
+            if (_mAccTime > 0f)
+            {
+                float partial = _mAccAngle / (_mAccTime > MotionBucket * 0.5f ? _mAccTime : MotionBucket * 0.5f);
+                if (partial > yaw) yaw = partial;
+                if (_mSlowest >= 0f && (slow < 0f || _mSlowest < slow)) slow = _mSlowest;
+            }
             _yawRateMax = yaw; _speedMin = slow < 0f ? 0f : slow;
         }
 
@@ -1152,6 +1196,9 @@ namespace KominkaHillside
                 if (vTake > fit) vTake = fit < RunJumpShortTakeoff ? RunJumpShortTakeoff : fit;
                 Vector3 crouchStart = ground - _forward * (vTake * (_tUp + _crouchReal));
                 if (!DogMayGo(crouchStart)) return false;
+                // The crouch start slides with the speed the dog HAS, so the landing slides with it (Codex D1).
+                // Only the cheap half of the test at 10 Hz; the raycasts are done at the commit and at the liftoff.
+                if (!DogMayGo(LandingOf(crouchStart + _forward * (vTake * _crouchReal), _forward, vTake, _tUp))) return false;
                 // Deadband. The crouch start is derived from the speed, and the speed is paced at the crouch start:
                 // rewriting it at 10 Hz makes the two chase each other (the dog speeds up, the point comes toward
                 // it, it slows down, the point runs away). Only a real move is worth re-aiming for.
@@ -1311,6 +1358,20 @@ namespace KominkaHillside
             return !Physics.Raycast(from + Vector3.up * 0.3f, d / dist, out hit, dist, frisbee.obstacleMask, QueryTriggerInteraction.Ignore);
         }
 
+        // Codex D1 高: round 2 dropped the landing test the old TryJump did (DogMayGo + ground within 0.25 m + the
+        // lane). A candidate whose catch point and crouch start are both inside the flat can still come DOWN
+        // outside it, or on a step, or through the fence - and the recover slide then carries the dog on out. So
+        // every jump candidate is judged on where it lands as well as on where it leaves the ground.
+        // crouchStart is where the crouch begins; the feet leave the ground vTake * crouch further along fwd.
+        bool LandingOk(Vector3 crouchStart, Vector3 fwd, float vTake, float tUp, float crouch, float groundY)
+        {
+            Vector3 liftoff = crouchStart + fwd * (vTake * crouch);
+            Vector3 landing = LandingOf(liftoff, fwd, vTake, tUp);
+            if (!DogMayGo(landing)) return false;
+            if (!GroundOk(landing, groundY)) return false;
+            return LaneClear(crouchStart, landing + fwd * LandingLaneMargin);
+        }
+
         // A step or a hole where the dog would stand or take off.
         bool GroundOk(Vector3 spot, float groundY)
         {
@@ -1352,6 +1413,7 @@ namespace KominkaHillside
                 if (_apPath / avail < HookWaitPace) continue;  // even the longest loop leaves it loitering: pass 3
                 if (!LaneClear(dogPos, _apPoint) || !LaneClear(_apPoint, crouchStart)) continue;
                 if (!GroundOk(_geoStandRoot, groundY) || !GroundOk(crouchStart, groundY)) continue;
+                if (!LandingOk(crouchStart, _geoForward, vTake, tUp, crouch, groundY)) continue;   // Codex D1
                 CommitApproach(t, rise, tUp, scale, crouch, avail - _apEta, dogPos, crouchStart, vTake);
                 return PlanJump;
             }
@@ -1384,6 +1446,9 @@ namespace KominkaHillside
                 if (slack < 0f) continue;                 // cannot be standing there, already turned, in time
                 if (!LaneClear(dogPos, _apPoint) || !LaneClear(_apPoint, _geoStandRoot)) continue;
                 if (!GroundOk(_geoStandRoot, groundY)) continue;
+                // Codex D1: the wait jump goes straight up (vTake 0), so the landing is the spot itself - but the
+                // stride the recover slides out still has to be inside the flat and clear.
+                if (!LandingOk(_geoStandRoot, _geoForward, 0f, tUp, crouch, groundY)) continue;
                 CommitApproach(t, rise, tUp, scale, crouch, slack, dogPos, _geoStandRoot, 0f);
                 return PlanJump;
             }
@@ -1485,6 +1550,7 @@ namespace KominkaHillside
                 // this is the scan that has to re-form a plan after one was dropped mid-flight.
                 if (eta > avail - (_speed > runSpeed ? HookEtaMargin * 0.5f : HookEtaMargin)) continue;
                 if (!LaneClear(dogPos, crouchStart) || !GroundOk(standRoot, groundY)) continue;
+                if (!LandingOk(crouchStart, fwd, vTake, tUp, crouch, groundY)) continue;   // Codex D1
                 _catchT = t; _catchRoot = catchRoot; _standRoot = crouchStart; _forward = fwd; _entryDir = fwd;
                 _rootRise = rise; _tUp = tUp; _animScale = scale; _crouchReal = crouch; _jumpSpeed = vTake;
                 _planSlack = avail - eta; _planPath = dist; _catchDecided = false; _runningCatch = false;
@@ -1584,12 +1650,28 @@ namespace KominkaHillside
                 // Horizontal air velocity is whatever brings the root from here to the planned catch root at tUp.
                 // Round 2: the takeoff is from a standstill, so this only ever corrects the few centimetres the
                 // fine-tune left over (the cap stays, for the case where the dog had to jump from up to 0.5 m off).
-                _airborne = true; _airStart = dogRoot.position; _airStart.y = _groundY;
-                Vector3 need = _catchRoot - _airStart; need.y = 0f;
-                _airVel = need / Mathf.Max(0.05f, _tUp);
+                Vector3 start = dogRoot.position; start.y = _groundY;
+                Vector3 need = _catchRoot - start; need.y = 0f;
+                Vector3 vel = need / Mathf.Max(0.05f, _tUp);
                 float cap = chaseRunSpeed * 1.2f;
-                if (_airVel.magnitude > cap) _airVel = _airVel.normalized * cap;
-                if (Vector3.Dot(_airVel, _forward) < 0f) _airVel = Vector3.zero; // never fly backwards
+                if (vel.magnitude > cap) vel = vel.normalized * cap;
+                if (Vector3.Dot(vel, _forward) < 0f) vel = Vector3.zero; // never fly backwards
+                // Codex D1: last gate before the feet leave the ground. The crouch start has been sliding with the
+                // dog's own speed for the last 10 Hz replans and the air solve has just corrected the residual, so
+                // the arc that is about to be flown is only final HERE. A jump that would come down outside the
+                // flat (or off the ground) is not taken at all: drop the plan and let the scan offer a later
+                // candidate, or the ground retrieve.
+                Vector3 landing = start + vel * (2f * _tUp);
+                if (!DogMayGo(landing) || !GroundOk(landing, _groundY))
+                {
+                    Debug.Log("[KH_FrisbeeCatch] liftoff refused: landing outside");
+                    _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false;
+                    _catchDecided = false; _runningCatch = false; _airborne = false; animSpeed = 1f;
+                    dogRoot.position = SnapToGround(start); // net: owner-only
+                    TransitionTo(StateChase);
+                    return;
+                }
+                _airborne = true; _airStart = start; _airVel = vel;
             }
             Vector3 pos = _airStart + _airVel * ta;
             pos.y = _groundY + vy * ta - 0.5f * g * ta * ta;
