@@ -267,7 +267,7 @@ namespace KominkaHillside.Editor
             // Round 4 (PCVR 3 "it is a machine"): the sprint and the snap turn are gone. The hook approach delivers
             // the facing, so the run can be 8 m/s with a visible 12 m/s2 start and a 10 m/s2 roll-out, and the turn
             // rates can be a dog's (240 running / 180 walking / 120 standing in a catch state).
-            catcher.chaseRunSpeed = 8f; catcher.chaseAcceleration = 12f; catcher.chaseDeceleration = 10f;
+            catcher.chaseRunSpeed = 9.5f; catcher.chaseAcceleration = 14f; catcher.chaseDeceleration = 10f;
             catcher.maxRunAnimScale = 2.5f;
             catcher.noticeDelay = 0.1f; catcher.settleTime = 0.2f; catcher.returnRunSpeed = 4.5f;
             catcher.turnSpeedDegPerSec = 240f; catcher.walkTurnDegPerSec = 180f; catcher.standTurnDegPerSec = 120f;
@@ -276,7 +276,7 @@ namespace KominkaHillside.Editor
             // IMP-DOG-013 (user 2026-09-22 "受け取ったらすぐ走っていってしまう"): the よしよし window before the
             // stand-off run. Code-owned like the rest of the Ready geometry - the pair only reads as "it waited
             // for me" when both halves agree, so they are not left to drift apart in an Inspector.
-            catcher.readyGraceSeconds = 4f; catcher.readyGraceDistance = 2.5f;
+            catcher.readyGraceSeconds = 2f; catcher.readyGraceDistance = 2.5f;
             catcher.variant = KH_FrisbeeCatch.VariantNormal; catcher.pendingVariant = -1; // code-owned: every instance starts on the baseline
             catcher.playAreaMargin = 0f; // the ring the holder sees is exactly the acceptance circle (Codex P)
             // Inspector tuning survives a rebuild for everything not written above, except the one value the clip dictates: the smallest rise
@@ -484,10 +484,10 @@ namespace KominkaHillside.Editor
                         && backing.publicVariables.TryGetVariableValue("pendingVariant", out int bpend) && bpend == -1, "backing heap holds variant 0 with nothing queued");
                     // IMP-DOG-008 round 2 (intercept-first): the plan promises the dog will be STANDING under the
                     // catch point, settled, before the crouch. Only a sprint can keep that promise.
-                    Check(catcher.chaseRunSpeed >= 8f, "chase sprint " + catcher.chaseRunSpeed.ToString("F1") + " m/s >= 8 (the ETA the planner promises)");
+                    Check(catcher.chaseRunSpeed >= 9.5f, "chase sprint " + catcher.chaseRunSpeed.ToString("F1") + " m/s >= 9.5 (round 5: the ETA the planner promises, and the reach of a jump candidate)");
                     // Round 4: both of these are now bands, not floors. Too low and the plan cannot keep its ETA;
                     // too high and the dog reads as a machine (PCVR 3), which no catch rate can make up for.
-                    Check(catcher.chaseAcceleration >= 8f && catcher.chaseAcceleration <= 15f, "chase acceleration " + catcher.chaseAcceleration.ToString("F1") + " m/s2 in [8, 15] (reached, but visibly)");
+                    Check(catcher.chaseAcceleration >= 10f && catcher.chaseAcceleration <= 18f, "chase acceleration " + catcher.chaseAcceleration.ToString("F1") + " m/s2 in [10, 18] (reached, but visibly: " + (catcher.chaseRunSpeed / catcher.chaseAcceleration).ToString("F2") + " s to the run)");
                     Check(catcher.settleTime >= 0.1f && catcher.settleTime <= 0.6f, "settle time " + catcher.settleTime.ToString("F2") + " s in [0.10, 0.60]");
                     Check(catcher.turnSpeedDegPerSec >= 180f && catcher.turnSpeedDegPerSec <= 360f, "turn rate " + catcher.turnSpeedDegPerSec.ToString("F0") + " deg/s in [180, 360] (a dog's turn, not a turret's)");
                     Check(KH_FrisbeeCatch.HookLength >= 1f && KH_FrisbeeCatch.HookLength <= 3f, "hook length " + KH_FrisbeeCatch.HookLength.ToString("F2") + " m in [1, 3] (the straightening run before the spot)");
@@ -544,8 +544,8 @@ namespace KominkaHillside.Editor
                     Check(KH_FrisbeeCatch.RunInReadyTurnDeg >= 20f && KH_FrisbeeCatch.RunInReadyTurnDeg <= 90f, "Ready turn threshold " + KH_FrisbeeCatch.RunInReadyTurnDeg.ToString("F0") + " deg in [20, 90]");
                     // IMP-DOG-013: the よしよし window. Too short and the dog still bolts; too long and it stops
                     // reading as a dog waiting for the next throw. The distance must be arm's reach, not a room.
-                    Check(catcher.readyGraceSeconds >= 1f && catcher.readyGraceSeconds <= 10f,
-                        "ready grace " + catcher.readyGraceSeconds.ToString("F1") + " s in [1, 10] (long enough for a よしよし, short enough to still want the throw)");
+                    Check(catcher.readyGraceSeconds >= 1f && catcher.readyGraceSeconds <= 6f,
+                        "ready grace " + catcher.readyGraceSeconds.ToString("F1") + " s in [1, 6] (round 5: 2 s - long enough for a よしよし, short enough to still want the throw)");
                     Check(catcher.readyGraceDistance >= 1f && catcher.readyGraceDistance <= 5f,
                         "ready grace distance " + catcher.readyGraceDistance.ToString("F1") + " m in [1, 5] (arm's reach, not the whole plaza)");
                     Check(backing.publicVariables.TryGetVariableValue("readyGraceSeconds", out float bgs) && Mathf.Abs(bgs - catcher.readyGraceSeconds) < 1e-5f
@@ -555,6 +555,23 @@ namespace KominkaHillside.Editor
                     // still without moving next - Idle, Ready and the Drop wait with the disc in its mouth - and
                     // nowhere it runs or jumps. Static, so the rule cannot rot unnoticed between Play sessions.
                     Check(PetStatesOk(), "petting resumes in Idle / Ready / Drop and stays suppressed in every moving state (PetAllowed)");
+                    // Round 5 (PCVR 2026-09-22 "もっと遠くから跳んでいい"): the take-off band sets how far out the
+                    // dog leaves the ground. Head-on stays well under the general ceiling because the closing rate
+                    // there is the sum of both speeds.
+                    Check(KH_FrisbeeCatch.RunJumpMaxTakeoff >= 5f && KH_FrisbeeCatch.RunJumpMaxTakeoff <= 9f
+                        && KH_FrisbeeCatch.RunJumpMinTakeoff < KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff
+                        && KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff < KH_FrisbeeCatch.RunJumpMaxTakeoff,
+                        "take-off band " + KH_FrisbeeCatch.RunJumpMinTakeoff.ToString("F1") + " / head-on " + KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff.ToString("F1")
+                        + " / " + KH_FrisbeeCatch.RunJumpMaxTakeoff.ToString("F1") + " m/s is ordered, ceiling in [5, 9]");
+                    Check(KH_FrisbeeCatch.RunJumpMaxLoiter > 0f && KH_FrisbeeCatch.RunJumpMaxLoiter <= 0.6f,
+                        "a running jump may arrive at most " + KH_FrisbeeCatch.RunJumpMaxLoiter.ToString("F2") + " s early (in (0, 0.60]); beyond that it would stand on the take-off point");
+                    Check(KH_FrisbeeCatch.StandStraightSlack >= 0.1f && KH_FrisbeeCatch.StandStraightSlack <= 1f,
+                        "thin stand catches run straight below " + KH_FrisbeeCatch.StandStraightSlack.ToString("F2") + " s of slack (in [0.10, 1.00])");
+                    // The overtake is every preset's now, so its pace floor has to be a real chase-down for all of
+                    // them: below the walking-world run it would start taking throws a jog could reach.
+                    Check(KH_FrisbeeCatch.OvertakeMinPace > catcher.runSpeed && KH_FrisbeeCatch.OvertakeMinPace <= catcher.chaseRunSpeed,
+                        "overtake pace floor " + KH_FrisbeeCatch.OvertakeMinPace.ToString("F1") + " m/s is above the walking run "
+                        + catcher.runSpeed.ToString("F1") + " and within the sprint " + catcher.chaseRunSpeed.ToString("F1"));
                     var desc = open.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<VRCSceneDescriptor>(true)).FirstOrDefault();
                     Check(desc != null && desc.spawns != null && desc.spawns.Length > 0 && desc.spawns[0] != null, "scene descriptor with spawn");
                     Check(desc != null && desc.NetworkIDCollection.All(x => x.gameObject != null), "no dangling NetworkIDs");

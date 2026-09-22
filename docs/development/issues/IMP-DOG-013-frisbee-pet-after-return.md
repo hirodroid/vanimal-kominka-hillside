@@ -30,10 +30,11 @@ priority: Medium
 
 ### 2. Ready の頭に「よしよしの猶予」を置く
 
-- 新しいコード所有の値 `readyGraceSeconds = 4` / `readyGraceDistance = 2.5`。Build (`ConfigureCatcher`) が書く。
-- Ready に入った時刻を記録し、**持ち手が 2.5 m 以内にいて、かつ 4 秒以内**の間は、待機位置へ走らずその場に留まって持ち手のほうを向く。
+- 新しいコード所有の値 `readyGraceSeconds = 2` / `readyGraceDistance = 2.5`。Build (`ConfigureCatcher`) が書く。
+  (初版は 4 秒。**PCVR 2026-09-22 で「待ちは 2 秒でいい」** → 2 秒へ。撫でている間は秒数に関係なく待ち続けるので、体験は短くならない)
+- Ready に入った時刻を記録し、**持ち手が 2.5 m 以内にいて、かつ 2 秒以内**の間は、待機位置へ走らずその場に留まって持ち手のほうを向く。
 - **撫でられている間は、猶予が過ぎていても走り出さない。** 判定は撫でコントローラの `IsPetting` (自分の手) と、Fetch 側の同期された撫で状態 `PetActive` (他の人の手) の両方を見る。犬の Owner と撫でている人が別でも成立する。
-- 持ち手が 2.5 m より離れる / 4 秒経って誰も撫でていない → **従来どおり** 8 m 先 (プリセットごとの幾何) へ走って構える。猶予は Ready 1 回につき 1 度だけで、走り出した後に戻ってくることはない。
+- 持ち手が 2.5 m より離れる / 2 秒経って誰も撫でていない → **従来どおり** 8 m 先 (プリセットごとの幾何) へ走って構える。猶予は Ready 1 回につき 1 度だけで、走り出した後に戻ってくることはない。
 - **猶予の間に投げても今までどおり。** 投げは `ReqCatch` が Ready を上書きするので、猶予は一切見ない。
 - `IsEngaged` の意味は変えない (Ready は今までどおり engaged ではない)。走り込みプリセット v0〜3 の幾何も猶予の後は完全に従来どおり。
 
@@ -50,8 +51,15 @@ priority: Medium
 - `Assets/KominkaHillside/Scripts/KH_FrisbeeCatch.cs`: `readyGraceSeconds` / `readyGraceDistance`、`PetAllowed` / `PetAllowedIn(int)`、`BeingPetted()`、`ReadyGrace()`、Drop のタイマー控除。
 - `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogFetchController.Owner.cs`: 撫で再開を `!frisbeeCatch.PetAllowed` に。
 - `Assets/KominkaHillside/Scripts/Editor/KH_FrisbeePrototypeEditor.cs` / `KH_DogWalkingEditor.cs`: Build が猶予の 2 値を書き、Verify が範囲・proxy/backing の一致・撫で再開の規則 (状態ごと) を機械検査する。
-- 試作 Verify 71 項目 / 散歩 Verify 202 項目 / メニュー Verify 27 項目、いずれも失敗 0。コンパイルエラー 0、コンソール Error 0。
-- ClientSim ハーネス 30 投は回帰確認 (持ち帰り・Drop が従来どおり完了するか)。**試作シーンには持ち手がいないので Ready・猶予・撫では 1 度も通らない** (ハーネスの `notCovered` に明記)。
+- 試作 Verify 75 項目 / 散歩 Verify 206 項目 / メニュー Verify 27 項目、いずれも失敗 0。コンパイルエラー 0、コンソール Error 0。
+- ClientSim ハーネス 36 投は回帰確認 (持ち帰り・Drop が従来どおり完了するか)。**試作シーンには持ち手がいないので Ready・猶予・撫では 1 度も通らない** (ハーネスの `notCovered` に明記)。
+
+## PCVR 1 回目 (2026-09-22、ユーザー) と round 5 の修正
+
+**「撫でてから離れて投げるのはめちゃくちゃ気持ちいい」** — 流れ自体は確定。直したのは 2 点。
+
+- **待ちは 2 秒でいい** → `readyGraceSeconds` 4 → 2。撫でている間は秒数に関係なく待ち続けるので、体験は短くならない。
+- **よしよしの流れが跳躍を潰していた。** 撫でた直後は犬が投げ手の 0.8-1.1 m 横にいるので、そこから跳躍帯へ入るのは幾何的に間に合わず、15 投のうち 5 投が地上回収に落ちていた (`plan=2 mode=hook dist=10-11 slack=0.00`)。後ろから走って追いついて立ち取り帯でさらう「追い抜き」は v3 専用だったので、**全プリセットへ開いた** (順番は両方の跳びの後、立ち止まる計画の前)。速さ・跳ぶ距離・見積もりの較正と合わせて [フリスビーのバリエーション §6 回目](../../plans/2026-09-21-frisbee-variations.md) に記録。
 
 ## Play チェックリスト (ユーザー担当・PCVR)
 
@@ -59,8 +67,8 @@ priority: Medium
 
 - [ ] 持ち帰って目の前で待っている犬を**撫でられる** (♡・表情・尻尾が出る)
 - [ ] 撫でている間はディスクを落とさない (手を離すと、止まっていた残り時間で落とす)
-- [ ] 口からディスクを受け取っても、**4 秒 or 2.5 m 離れるまではその場で待つ** (すぐ走り出さない)
-- [ ] 受け取った後に撫で続けている間は走り出さない (4 秒を過ぎても待つ)
+- [ ] 口からディスクを受け取っても、**2 秒 or 2.5 m 離れるまではその場で待つ** (すぐ走り出さない)
+- [ ] 受け取った後に撫で続けている間は走り出さない (2 秒を過ぎても待つ)
 - [ ] 持ち手が離れたら、いつもどおり 8 m 先へ走って構える (`ready go (reason=distance)`)
 - [ ] 猶予の最中に投げれば、今までどおり即座に追う
 - [ ] ボール Fetch との排他は従来どおり (ボールを投げれば Fetch が勝ち、その間は撫でられない)
@@ -71,7 +79,7 @@ priority: Medium
 |---|---|
 | 持ち帰りの後も撫でに反応しない | 状態 (`Drop` に入っているか)。Fetch 側が Idle か (ボールを持っていると Fetch が撫でを取る)。撫でコントローラの配線 (`pet`) |
 | 撫でている最中にディスクを落とす | `drop wait paused` が出ているか。出ないなら `IsPetting` / `PetActive` が立っていない (他人の撫では同期経路) |
-| 受け取ってもまだすぐ走る | `ready grace:` の `holder=` (2.5 m より遠い位置で取っていないか)。`ready go (reason=)` が `distance` なら距離、`time` なら 4 秒切れ |
+| 受け取ってもまだすぐ走る | `ready grace:` の `holder=` (2.5 m より遠い位置で取っていないか)。`ready go (reason=)` が `distance` なら距離、`time` なら 2 秒切れ |
 | いつまでも走り出さない | 誰かが撫で続けている (`ready go` が出ない)。撫でをやめれば出る |
 | 撫でている最中に跳んで頭が暴れる | 抑制が漏れている → Verify の `PetAllowed` 項目。Chase/Jump で撫でが生きていれば配線か規則の破れ |
 

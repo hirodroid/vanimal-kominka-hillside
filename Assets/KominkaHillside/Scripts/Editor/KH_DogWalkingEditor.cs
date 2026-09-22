@@ -478,9 +478,9 @@ namespace KominkaHillside.Editor
                 Check(c.variant==KH_FrisbeeCatch.VariantNormal&&c.pendingVariant==-1&&cb.publicVariables.TryGetVariableValue("variant",out bv)&&(int)bv==KH_FrisbeeCatch.VariantNormal&&cb.publicVariables.TryGetVariableValue("pendingVariant",out bv)&&(int)bv==-1,"variant starts at Normal, proxy and backing, nothing queued (backing too) "+key);
                 // Round 2 (intercept-first): the plan promises the dog will be STANDING under the catch point,
                 // settled, before the crouch. Only a sprint keeps that promise.
-                Check(c.chaseRunSpeed>=8f,"chase sprint "+c.chaseRunSpeed.ToString("F1")+" m/s >= 8 (the ETA the planner promises) "+key);
+                Check(c.chaseRunSpeed>=9.5f,"chase sprint "+c.chaseRunSpeed.ToString("F1")+" m/s >= 9.5 (round 5: the ETA the planner promises) "+key);
                 // Round 4: bands, not floors - too low and the ETA fails, too high and the dog reads as a machine.
-                Check(c.chaseAcceleration>=8f&&c.chaseAcceleration<=15f,"chase acceleration "+c.chaseAcceleration.ToString("F1")+" m/s2 in [8, 15] (reached, but visibly) "+key);
+                Check(c.chaseAcceleration>=10f&&c.chaseAcceleration<=18f,"chase acceleration "+c.chaseAcceleration.ToString("F1")+" m/s2 in [10, 18] ("+(c.chaseRunSpeed/c.chaseAcceleration).ToString("F2")+" s to the run) "+key);
                 Check(c.settleTime>=0.1f&&c.settleTime<=0.6f,"settle time "+c.settleTime.ToString("F2")+" s in [0.10, 0.60] "+key);
                 Check(c.turnSpeedDegPerSec>=180f&&c.turnSpeedDegPerSec<=360f,"turn rate "+c.turnSpeedDegPerSec.ToString("F0")+" deg/s in [180, 360] (a dog's turn, not a turret's) "+key);
                 Check(KH_FrisbeeCatch.HookLength>=1f&&KH_FrisbeeCatch.HookLength<=3f,"hook length "+KH_FrisbeeCatch.HookLength.ToString("F2")+" m in [1, 3] "+key);
@@ -505,12 +505,20 @@ namespace KominkaHillside.Editor
                 Check(KH_FrisbeeCatch.RunInReadyTurnDeg>=20f&&KH_FrisbeeCatch.RunInReadyTurnDeg<=90f,"Ready turn threshold "+KH_FrisbeeCatch.RunInReadyTurnDeg.ToString("F0")+" deg in [20, 90] "+key);
                 // IMP-DOG-013: the よしよし window before the stand-off run, proxy and backing, plus the rule that
                 // says where 撫で may resume at all (both controllers read PetAllowed).
-                Check(c.readyGraceSeconds>=1f&&c.readyGraceSeconds<=10f,"ready grace "+c.readyGraceSeconds.ToString("F1")+" s in [1, 10] "+key);
+                Check(c.readyGraceSeconds>=1f&&c.readyGraceSeconds<=6f,"ready grace "+c.readyGraceSeconds.ToString("F1")+" s in [1, 6] (round 5: 2 s) "+key);
                 Check(c.readyGraceDistance>=1f&&c.readyGraceDistance<=5f,"ready grace distance "+c.readyGraceDistance.ToString("F1")+" m in [1, 5] (arm's reach) "+key);
                 Check(cb.publicVariables.TryGetVariableValue("readyGraceSeconds",out bv)&&Mathf.Abs((float)bv-c.readyGraceSeconds)<1e-5f
                     &&cb.publicVariables.TryGetVariableValue("readyGraceDistance",out bv)&&Mathf.Abs((float)bv-c.readyGraceDistance)<1e-5f,"catcher backing: ready grace pair "+key);
                 Check(c.readyGraceDistance<c.standoffDistance,"the grace ends well before the stand-off spot ("+c.readyGraceDistance.ToString("F1")+" m < "+c.standoffDistance.ToString("F1")+" m) "+key);
                 Check(KH_FrisbeePrototypeEditor.PetStatesOk(),"petting resumes in Idle / Ready / Drop and stays suppressed in every moving state (PetAllowed) "+key);
+                // round 5 (PCVR 2026-09-22): 跳ぶ距離の帯・薄い立ち取りの直進・全プリセットの追い抜き
+                Check(KH_FrisbeeCatch.RunJumpMaxTakeoff>=5f&&KH_FrisbeeCatch.RunJumpMaxTakeoff<=9f
+                    &&KH_FrisbeeCatch.RunJumpMinTakeoff<KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff
+                    &&KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff<KH_FrisbeeCatch.RunJumpMaxTakeoff,
+                    "take-off band "+KH_FrisbeeCatch.RunJumpMinTakeoff.ToString("F1")+" / head-on "+KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff.ToString("F1")+" / "+KH_FrisbeeCatch.RunJumpMaxTakeoff.ToString("F1")+" m/s ordered, ceiling in [5, 9] "+key);
+                Check(KH_FrisbeeCatch.RunJumpMaxLoiter>0f&&KH_FrisbeeCatch.RunJumpMaxLoiter<=0.6f,"a running jump may arrive at most "+KH_FrisbeeCatch.RunJumpMaxLoiter.ToString("F2")+" s early "+key);
+                Check(KH_FrisbeeCatch.StandStraightSlack>=0.1f&&KH_FrisbeeCatch.StandStraightSlack<=1f,"thin stand catches run straight below "+KH_FrisbeeCatch.StandStraightSlack.ToString("F2")+" s of slack "+key);
+                Check(KH_FrisbeeCatch.OvertakeMinPace>c.runSpeed&&KH_FrisbeeCatch.OvertakeMinPace<=c.chaseRunSpeed,"overtake pace floor "+KH_FrisbeeCatch.OvertakeMinPace.ToString("F1")+" m/s above the walking run and within the sprint "+key);
                 // A Ready spot is measured from the holder, so it only ever lands inside the plaza if its own radius does.
                 float[] readyAhead={KH_FrisbeeCatch.ReadyAhead1,KH_FrisbeeCatch.ReadyAhead2,KH_FrisbeeCatch.ReadyAhead3};
                 float[] readyLateral={KH_FrisbeeCatch.ReadyLateral1,KH_FrisbeeCatch.ReadyLateral2,KH_FrisbeeCatch.ReadyLateral3};

@@ -91,11 +91,14 @@ namespace KominkaHillside
         [Tooltip("Seconds around the planned catch instant during which the mouth may meet the disc (first frame within tolerance wins)")]
         public float catchWindow = 0.08f;
         [Tooltip("Run used to get under the catch point. Round 2 sprinted at 10 m/s with a 25 m/s2 start, which read " +
-            "as a teleport (PCVR 3). Round 4: 8 m/s is still faster than the walking world and the hook approach buys " +
-            "back the time the gentler acceleration costs. The run clip is sped up in proportion above runSpeed")]
-        public float chaseRunSpeed = 8f;
-        [Tooltip("Acceleration while chasing. Round 4: 12 m/s2 takes 0.67 s to reach the run - visible, not instant")]
-        public float chaseAcceleration = 12f;
+            "as a teleport (PCVR 3); round 4 came back down to 8. Round 5 (PCVR 2026-09-22, 'もっと遠くから跳んでいい - " +
+            "跳ばずに迷っている感じが多い'): 9.5 m/s. The shape the user objected to was the SNAP TURN and the standing " +
+            "start, not the speed, and every metre per second here buys jump candidates the dog can actually reach. " +
+            "The run clip is sped up in proportion above runSpeed (capped by maxRunAnimScale)")]
+        public float chaseRunSpeed = 9.5f;
+        [Tooltip("Acceleration while chasing. Round 5: 14 m/s2 still takes 0.68 s to reach the 9.5 m/s run - the same " +
+            "visible ramp as round 4's 12 -> 8, so the start does not read as a teleport")]
+        public float chaseAcceleration = 14f;
         [Tooltip("Braking while chasing (round 4). The generic deceleration 36 stops the dog dead; the chase eases " +
             "into the catch spot and into the crouch with this one instead")]
         public float chaseDeceleration = 10f;
@@ -120,8 +123,10 @@ namespace KominkaHillside
 
         [Header("Petting after the return (IMP-DOG-013, user 2026-09-22)")]
         [Tooltip("Grace at the start of Ready: for this long the dog stays where it is instead of running off to the " +
-            "stand-off spot, so the player who just took the disc out of its mouth can say よしよし first")]
-        public float readyGraceSeconds = 4f;
+            "stand-off spot, so the player who just took the disc out of its mouth can say よしよし first. " +
+            "Round 5 (PCVR 2026-09-22): 4 -> 2 s. The pet-then-step-back-then-throw flow was 'めちゃくちゃ気持ちいい' " +
+            "but the wait afterwards was too long; petting itself still holds the dog for as long as it lasts")]
+        public float readyGraceSeconds = 2f;
         [Tooltip("The grace only holds while the holder is still this close. Walk away and the dog takes its spot at once")]
         public float readyGraceDistance = 2.5f;
 
@@ -191,6 +196,19 @@ namespace KominkaHillside
         // (3.5 m/s = half again the walking-world run). This also keeps a lob, which only ever paces out to a
         // 2.5 m/s trot, with the intercept jump where it belongs.
         public const float OvertakeMinPace = 3.5f, OvertakeMinDot = 0.5f;
+        // Round 5 (PCVR 2026-09-22): the overtake is no longer v3's alone. Five of fifteen throws were made from
+        // BESIDE the thrower (the new pet-then-throw flow puts the dog 0.8-1.1 m away), and from there the dog can
+        // never reach the jump band in time - every one of them fell to the ground plan with slack=0.00. Running a
+        // disc down from behind and taking it in the stand band is exactly what a dog does with a throw it started
+        // late, so every preset gets it. WHERE it sits in the order is what still differs: v3 (並走) is defined by
+        // the overtake and tries it first; everyone else tries it only after both jumps, so "chase it down and
+        // jump" still wins whenever a jump is reachable at all.
+        // Stand catches inside this much slack use the STRAIGHT approach, never a hook loop. The loop's ETA is the
+        // cheaper of the two by construction (ApproachHold only takes it when it is), but the estimate does not
+        // carry the corner, the wider turn or the extra metres, and on a thin plan being wrong costs the catch:
+        // three v1 stand catches committed at slack 0.01-0.24 and were dropped 1.1-3.1 m short (PCVR 2026-09-22).
+        // Fewer metres beats a cheaper estimate when there is nothing to absorb the error with.
+        public const float StandStraightSlack = 0.3f;
         // ---- Round 4: the hook approach (PCVR 3: "it slides underneath and snaps round - a machine") ----
         // The dog must reach the take-off point already facing F (into the oncoming disc) AND still running,
         // because a facing it still owes has to be paid as a turn in place, and a jump from a standstill is the
@@ -222,7 +240,10 @@ namespace KominkaHillside
         public const float PreferJumpMinRise = 0.25f;
         // The take-off speed IS the speed the dog has at the crouch, clamped to a band a dog can push off from, and
         // it is re-read at every 10 Hz replan. Round 2 fixed it at 2.5, the approach disagreed, and the dog stopped.
-        public const float RunJumpMinTakeoff = 2f, RunJumpMaxTakeoff = 6f;
+        // Round 5 (PCVR 2026-09-22 "もっと遠くから跳んでいい"): the ceiling goes 6 -> 7, which lengthens the run-up
+        // (vTake * (crouch + rise)) by the same ratio, so the dog leaves the ground earlier and further out. The
+        // landing is re-checked from the longer arc by the same LandingOk, so nothing about the flat rule changes.
+        public const float RunJumpMinTakeoff = 2f, RunJumpMaxTakeoff = 7f;
         // A dog already standing inside the run-up distance does not reverse out to get a longer approach - it
         // pounces from where it is. Without this the crouch start is pushed BEHIND the dog (worst on the twist,
         // whose mouth sits 0.63 m off the running line, so the run-up has to come out of a 0.6 m gap) and the next
@@ -237,8 +258,19 @@ namespace KominkaHillside
         // jumps, and refusing that left every flat / lob throw on the "get under it and wait" plan - the very shape
         // the user called mechanical. What a head-on meeting does not tolerate is speed: the closing rate is the sum
         // of both, so a fast run turns the catch window into centimetres. Head-on take-off is capped instead.
+        // Round 5: 3 -> 3.5, the same "jump from further out" as RunJumpMaxTakeoff, kept well under it because the
+        // closing rate here is still the sum of both speeds.
         public const float RunJumpMinDot = -1f;
-        public const float RunJumpHeadOnMaxTakeoff = 3f;
+        public const float RunJumpHeadOnMaxTakeoff = 3.5f;
+        // Round 5. A running jump has no loop to spend spare time in (that is the hook's job), and RunApproach
+        // drops its pace floor over the last stride so the dog does not overshoot the crouch start - so a run-jump
+        // candidate the dog reaches EARLY is a dog standing on the take-off point waiting for the clock. At 8 m/s
+        // that was rare; at 9.5 it showed up as three throws logging `mode=run but speedMin 0.00 (slowed to a stop
+        // before taking off)` - the very "stop and pop" round 4 removed, coming back in through the speed bump.
+        // Worst on head-on candidates, whose take-off cap (3.5) makes the run-up short. So a running jump is
+        // refused when the run cannot fill the time, and ScanWaitJump picks it up instead: still a jump, but the
+        // honest kind that goes up from a settled stance, and the one the motion rule exempts by design.
+        public const float RunJumpMaxLoiter = 0.25f;
         // A straight run-up (no loop) only delivers the facing if the dog is already coming from roughly the right
         // side; beyond this it would have to arrive backwards, so the plan waits instead.
         public const float StraightMaxOffAngle = 60f;
@@ -296,6 +328,12 @@ namespace KominkaHillside
         private float _rootRise, _tUp, _animScale, _crouchReal, _jumpSpeed;
         private float _planSlack;      // spare seconds of the committed candidate (log only)
         private float _planPath;       // length of the committed approach (log only: `path=`)
+        // ETA calibration (round 5). _planEta is the seconds the accepted candidate's approach was ESTIMATED to
+        // take and _planEtaT is the flight time it was committed at; when the dog actually gets there (hold entry
+        // or the crouch) the difference is logged as etaErr. -1 = this plan has no estimate (the ground plan).
+        // Nothing reads these: they exist so the harness can say whether Eta is optimistic before anyone tunes it.
+        private float _planEta = -1f, _planEtaT;
+        private bool _etaLogged;
         private bool _runningCatch;    // v3: this PlanRun is taken on the run (never stop), not standing still
         private bool _holding;         // inside the hold band: turning to face the disc and fine-tuning the spot
         private bool _loggedRunning;   // the _runningCatch the last plan line was printed with
@@ -884,6 +922,12 @@ namespace KominkaHillside
                 Vector3 toC = _standRoot - dogRoot.position; toC.y = 0f;
                 float distC = toC.magnitude;
                 RunApproach(availC);
+                // Round 5: a momentum jump ARRIVES when the dog reaches the crouch start, not when the crouch
+                // timer fires - the timer is fixed by _catchT, so measuring there made etaErr identical to the
+                // plan's slack and said nothing about the estimate (first 36-throw run: etaErr == slack on every
+                // hook/run plan). BeginJump still logs it as a fallback, tagged at=crouch with the distance, so a
+                // plan the dog never actually reached is visible rather than silently scored as on time.
+                if (distC <= HoldEnterRadius) LogEtaErr("reach");
                 if (availC < -0.10f) { _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false; }
                 else if (availC <= 0.02f)
                 {
@@ -924,6 +968,7 @@ namespace KominkaHillside
                     // arriving early is the whole point there and exactly wrong here - a sprint would carry the
                     // dog through the spot before the disc reaches it.
                     float pace = avail > 0.05f ? Mathf.Clamp(dist / avail, runSpeed, chaseRunSpeed) : chaseRunSpeed;
+                    if (dist < 0.5f) LogEtaErr("overtake");   // an overtake never holds: reaching the point IS arriving
                     MoveToward(dist < 0.5f ? _standRoot + _forward * 1.5f : _standRoot, pace, 0f, chaseAcceleration, true, chaseDeceleration);
                 }
                 else { UpdateHold(dist); HookOrSprint(dist); }
@@ -964,8 +1009,26 @@ namespace KominkaHillside
         // sprint, otherwise it flickers on the band edge (the "jitter" in the PCVR notes).
         void UpdateHold(float dist)
         {
-            if (!_holding) { if (dist < HoldEnterRadius) { _holding = true; _settledSince = Time.time; } }
+            if (!_holding) { if (dist < HoldEnterRadius) { _holding = true; _settledSince = Time.time; LogEtaErr("hold"); } }
             else if (dist > HoldExitRadius) { _holding = false; _settledSince = -1f; }
+        }
+
+        // Round 5: what the approach ACTUALLY cost against what Eta promised, once per committed plan, at the first
+        // moment the dog can be said to have arrived (the hold band for a wait / stand, the crouch for a momentum
+        // jump). Positive = the estimate was optimistic. This is a measurement, not a correction: nothing reads it,
+        // and the harness collects the distribution so a calibration factor can be argued for from numbers rather
+        // than by widening HookEtaMargin until the symptom goes away.
+        void LogEtaErr(string at)
+        {
+            if (_etaLogged || _planEta < 0f) return;
+            _etaLogged = true;
+            float actual = frisbee._ElapsedSince(_t0) - _planEtaT;
+            float err = actual - _planEta;
+            Vector3 off = _standRoot - dogRoot.position; off.y = 0f;
+            Debug.Log("[KH_FrisbeeCatch] etaErr=" + (err >= 0f ? "+" : "") + err.ToString("F2")
+                + " est=" + _planEta.ToString("F2") + " actual=" + actual.ToString("F2")
+                + " at=" + at + " mode=" + ModeName() + " path=" + _planPath.ToString("F1")
+                + " slack=" + _planSlack.ToString("F2") + " dist=" + off.magnitude.ToString("F2") + " v=" + variant);
         }
 
         // One step of a MOMENTUM approach (round 4 amendment): run the hook - leg 1 to A, then, from the corner on,
@@ -1233,14 +1296,20 @@ namespace KominkaHillside
             Vector3 dogPos = dogRoot.position;
             float held = _catchT - tNow;
             if ((_plan == PlanJump || _plan == PlanRun) && held > -(catchWindow + 0.02f) && KeepPlan(tNow, dogPos, held)) return;
-            int chosen = ScanJump(tNow, dogPos);
+            // Round 5 order. v3 (並走) IS the overtake, so it asks for one before anything else. Every other preset
+            // asks for it after both jumps and before anything that stands still: a jump is still preferred
+            // wherever one is reachable, but a throw the dog started too late for (beside the thrower, after a
+            // よしよし) is now run down from behind instead of being abandoned to the ground plan.
+            int chosen = _overtake ? ScanOvertake(tNow, dogPos) : PlanNone;
+            if (chosen == PlanNone) chosen = ScanJump(tNow, dogPos);
             if (chosen == PlanNone) chosen = ScanRunJump(tNow, dogPos);
+            if (chosen == PlanNone && !_overtake) chosen = ScanOvertake(tNow, dogPos);
             if (chosen == PlanNone) chosen = ScanWaitJump(tNow, dogPos);
             if (chosen == PlanNone) chosen = ScanStand(tNow, dogPos);
-            // v3 (並走) keeps its snatch-on-the-run, but it now sits behind the two jumps: "chase it down and jump"
-            // is the shape the user asked for, and the overtake is what is left when no jump fits.
-            if (chosen == PlanNone && _overtake) chosen = ScanOvertake(tNow, dogPos);
-            if (chosen == PlanNone) { _planSlack = 0f; _runningCatch = false; if (_landingValid && DogMayGo(_landing)) chosen = PlanGround; }
+            if (chosen == PlanNone) { _planSlack = 0f; _runningCatch = false; _planEta = -1f; if (_landingValid && DogMayGo(_landing)) chosen = PlanGround; }
+            // Getting here at all means the keep rule declined and the scans ran, so whatever came back is a FRESH
+            // commit: this is the moment the estimate was made, and the clock etaErr is measured against.
+            _planEtaT = tNow; _etaLogged = false;
             // An overtake and a stand catch are both PlanRun but nothing alike, and a hook and a running jump are
             // both PlanJump, so the mode is part of the identity of the plan, not just of the line.
             if (chosen != _plan || _runningCatch != _loggedRunning || _mode != _loggedMode)
@@ -1249,7 +1318,8 @@ namespace KominkaHillside
                 Debug.Log("[KH_FrisbeeCatch] plan=" + chosen + " run=" + (_runningCatch ? 1 : 0) + " mode=" + ModeName()
                     + " catchT=" + _catchT.ToString("F2") + " rise=" + _rootRise.ToString("F2")
                     + " tUp=" + _tUp.ToString("F2") + " dist=" + Vector3.Distance(dogPos, chosen == PlanGround ? _landing : _standRoot).ToString("F1")
-                    + " slack=" + _planSlack.ToString("F2") + " entry=" + EntryAngle().ToString("F0") + " v=" + variant
+                    + " slack=" + _planSlack.ToString("F2") + " eta=" + _planEta.ToString("F2")
+                    + " entry=" + EntryAngle().ToString("F0") + " v=" + variant
                     // Which pose facts this plan was aimed with: the twist set is the one under suspicion (v4).
                     + (_twist ? " facts=(" + _mouthCatch.x.ToString("F3") + "," + _mouthCatch.y.ToString("F3") + "," + _mouthCatch.z.ToString("F3") + ")" : ""));
                 _loggedRunning = _runningCatch; _loggedMode = _mode;
@@ -1320,6 +1390,14 @@ namespace KominkaHillside
             // negative while the dog is in exactly the right place.
             bool committed = _holding && !_runningCatch && distHeld <= HoldEnterRadius
                 && (_plan == PlanRun || _catchT - _tUp - _crouchReal - tNow <= 0.5f);
+            // Round 5 (PCVR 2026-09-22): a STAND catch is not dropped while the dog can still physically get to the
+            // spot before the catch window shuts. `cost` above charges a settle and a facing residual the catch
+            // does not actually require - a stand catch succeeds if the mouth is within catchTolerance at the
+            // instant, full stop - and three v1 stand catches were dropped onto the ground plan with the dog still
+            // 1.1-3.1 m out and seconds of flight left. The run itself is the only hard constraint; let the window
+            // be the judge of the rest.
+            if (!committed && _plan == PlanRun && !_runningCatch
+                && Eta(distHeld, Vector3.Angle(dogRoot.forward, toHeld)) <= held + catchWindow) committed = true;
             if (!committed && cost + _crouchReal + _tUp > held + 0.05f) return false;
             // Fine-tune while waiting: the catch time is fixed, the spot is re-derived from the prediction (the
             // ground under the disc may read differently from where the dog now stands). Only a real difference
@@ -1400,7 +1478,10 @@ namespace KominkaHillside
         // version that keeps the near cases (the ClientSim stand catches) and the far ones at the same time.
         // Either way the heading is rolled onto _forward across the last metres of the run-in (HookOrSprint), so
         // the residual turn is charged at the running rate, not at the standing one.
-        void ApproachHold(Vector3 T, Vector3 F, Vector3 dogPos)
+        void ApproachHold(Vector3 T, Vector3 F, Vector3 dogPos) { ApproachHold(T, F, dogPos, true); }
+
+        // allowHook = false: the straight line, whatever the estimate says. Round 5 (see StandStraightSlack).
+        void ApproachHold(Vector3 T, Vector3 F, Vector3 dogPos, bool allowHook)
         {
             Vector3 to = T - dogPos; to.y = 0f;
             float d = to.magnitude;
@@ -1414,7 +1495,7 @@ namespace KominkaHillside
             Vector3 rel = dogPos - T; rel.y = 0f;
             Vector3 right = Vector3.Cross(Vector3.up, F);
             float side = Vector3.Dot(rel, right) < 0f ? -1f : 1f;
-            for (int k = 0; k < 2; k++)
+            for (int k = 0; allowHook && k < 2; k++)
             {
                 float s = k == 1 ? -side : side;
                 Vector3 A = T + (Quaternion.AngleAxis(-s * HookAngleDeg, Vector3.up) * (-F)) * HookLength;
@@ -1551,6 +1632,15 @@ namespace KominkaHillside
                 if (!DogMayGo(_geoStandRoot)) continue;
                 ApproachHold(_geoStandRoot, _geoForward, dogPos);
                 float slack = (t - tNow) - (_apEta + settleTime);
+                // Round 5: a thin stand catch runs the straight line. The loop only ever wins on the ESTIMATE, and
+                // a plan with less than StandStraightSlack to give has nothing to pay the estimate's error with.
+                // Re-costing it straight usually costs slack; a candidate that then no longer fits is refused here
+                // and the scan offers a later (lower) one, which is the honest answer.
+                if (_apHook && slack < StandStraightSlack)
+                {
+                    ApproachHold(_geoStandRoot, _geoForward, dogPos, false);
+                    slack = (t - tNow) - (_apEta + settleTime);
+                }
                 if (slack < 0f) continue;
                 if (!LaneClear(dogPos, _apPoint) || !LaneClear(_apPoint, _geoStandRoot)) continue;
                 if (!GroundOk(_geoStandRoot, groundY)) continue;
@@ -1566,7 +1656,7 @@ namespace KominkaHillside
         {
             _catchT = t; _catchRoot = _geoCatchRoot; _standRoot = standRoot; _forward = _geoForward;
             _rootRise = rise; _tUp = tUp; _animScale = scale; _crouchReal = crouch; _jumpSpeed = jumpSpeed;
-            _planSlack = slack; _planPath = _apPath; _catchDecided = false; _runningCatch = false;
+            _planSlack = slack; _planPath = _apPath; _planEta = _apEta; _catchDecided = false; _runningCatch = false;
             _mode = _apMode; _hookActive = _apHook; _hookPoint = _apPoint; _hookLen = _apLen; _hookDone = false;
             _takeoffMin = RunJumpMinTakeoff; _takeoffCap = RunJumpMaxTakeoff;
             // entry = the direction the dog will actually arrive from (the hook's second leg), not the beeline.
@@ -1628,11 +1718,12 @@ namespace KominkaHillside
                 // needs half of it - the ETA it is being judged against no longer includes a standing start, and
                 // this is the scan that has to re-form a plan after one was dropped mid-flight.
                 if (eta > avail - (_speed > runSpeed ? HookEtaMargin * 0.5f : HookEtaMargin)) continue;
+                if (avail - eta > RunJumpMaxLoiter) continue;   // round 5: it would arrive and stand there - pass 3's job
                 if (!LaneClear(dogPos, crouchStart) || !GroundOk(standRoot, groundY)) continue;
                 if (!LandingOk(crouchStart, fwd, vTake, tUp, crouch, groundY)) continue;   // Codex D1
                 _catchT = t; _catchRoot = catchRoot; _standRoot = crouchStart; _forward = fwd; _entryDir = fwd;
                 _rootRise = rise; _tUp = tUp; _animScale = scale; _crouchReal = crouch; _jumpSpeed = vTake;
-                _planSlack = avail - eta; _planPath = dist; _catchDecided = false; _runningCatch = false;
+                _planSlack = avail - eta; _planPath = dist; _planEta = eta; _catchDecided = false; _runningCatch = false;
                 _mode = ModeRun; _hookActive = false; _hookDone = true; _hookPoint = crouchStart; _hookLen = 0f;
                 // The band the 10 Hz re-derive must stay inside: without it a head-on run speeds up past its cap,
                 // and a shortened run-up grows back out behind the dog.
@@ -1666,13 +1757,14 @@ namespace KominkaHillside
                 Vector3 approach = to / dist;
                 if (Vector3.Dot(approach, fwd) < OvertakeMinDot) continue; // crossing or meeting it, not chasing it down
                 float turn = Vector3.Angle(dogRoot.forward, to);
-                float slack = (t - tNow) - Eta(dist, turn);              // no settle, no crouch: just be there, moving
+                float eta = Eta(dist, turn);
+                float slack = (t - tNow) - eta;                          // no settle, no crouch: just be there, moving
                 if (slack < 0f) continue;
                 if (dist / (t - tNow) < OvertakeMinPace) continue;       // a trot-in is not an overtake
                 if (!LaneClear(dogPos, root) || !GroundOk(root, groundY)) continue;
                 _catchT = t; _catchRoot = root; _standRoot = root; _forward = fwd; _entryDir = approach;
                 _rootRise = 0f; _tUp = 0f; _animScale = 1f; _crouchReal = 0f; _jumpSpeed = 0f;
-                _planSlack = slack; _planPath = dist; _catchDecided = false; _runningCatch = true;
+                _planSlack = slack; _planPath = dist; _planEta = eta; _catchDecided = false; _runningCatch = true;
                 _mode = ModeOvertake; _hookActive = false; _hookDone = true; _hookPoint = root; _hookLen = 0f;
                 _takeoffMin = RunJumpMinTakeoff; _takeoffCap = RunJumpMaxTakeoff;
                 return PlanRun;
@@ -1682,6 +1774,7 @@ namespace KominkaHillside
 
         void BeginJump(double now)
         {
+            LogEtaErr("crouch");   // round 5: a momentum jump "arrives" when the crouch begins
             // The arc is anchored to the planned instant so the mouth meets the prediction on time; the clip
             // starts now, at most a frame or two behind the arc (starts more than 0.1 s late are replanned above).
             _jumpStart = _t0 + (_catchT - _tUp - _crouchReal);

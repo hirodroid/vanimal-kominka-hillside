@@ -19,7 +19,7 @@ namespace KominkaHillside.Editor
     /// フリスビーの ClientSim 自動テスト台 (IMP-DOG-008 の繰り返し確認用)。
     ///
     /// 何をするか: プロトタイプシーン (KH_FrisbeePrototype) を単独で開き、Play へ入り、
-    /// 固定投げ台 (KH_FrisbeeStand) の Interact を 6 プリセット x 5 投げ分だけ叩き、
+    /// 固定投げ台 (KH_FrisbeeStand) の Interact を 6 プリセット x 6 投げ分だけ叩き、
     /// 毎回 [KH_Frisbee*] のコンソール行から成否を分類して JSON に残す。
     /// 1 投げの合否は 4 つ: 想定内の結果 (outcomeOk) / 一周を終えた (completed) /
     /// 動きが機械でない (motionOk) / 期待した終わり方 (expectOk)。
@@ -48,7 +48,7 @@ namespace KominkaHillside.Editor
 
         const int StateIdle = 0, StateReady = 10;
         const int VariantCount = 6;
-        // 全体の番犬。下限 240 秒 (設計値)。30 投げの全面実行は 1 投げ 16 秒 + 片付けで 240 秒に収まらないので、
+        // 全体の番犬。下限 240 秒 (設計値)。36 投げの全面実行は 1 投げ 16 秒 + 片付けで 240 秒に収まらないので、
         // 計画した投げ数に応じて伸ばす。options.json の globalTimeoutSeconds で上書きできる。
         const double MinBudget = 240.0;
         const double BudgetPerThrow = 28.0;
@@ -68,10 +68,10 @@ namespace KominkaHillside.Editor
         // 「跳ばずに立って取った」回帰 (4 回目の v4) を落とせないので、終わり方も行ごとに書く。
         //   jump   = 跳んで取った (catch OK / MISS。踏み切りのある行)
         //   stand  = 立ったまま取った / 取り損ねた (stand catch ...)
-        //   over   = 走り抜けざまに取った (overtake catch ...、v3 だけ)
+        //   over   = 走り抜けざまに取った (overtake catch ...。round 5 から全プリセットで出うる)
         //   ground = 落ちたものを拾いに行った (plan=2)
         //   any    = 問わない
-        struct Shot { public string name; public float speed, elevation; public string[] allowed; public string expectKind; public string note; }
+        struct Shot { public string name; public float speed, elevation, side; public string[] allowed; public string expectKind; public string note; }
 
         static readonly Shot[] Shots =
         {
@@ -81,13 +81,19 @@ namespace KominkaHillside.Editor
             // ひねり (v4) が跳ばずに立って取る / 地上回収へ落ちる回帰は、この幾何でだけ出た。
             // 固定台では犬が 10.5 m 先なので全プリセットで「立って取る」幾何になる = 終わり方は問わない。
             new Shot { name = "mid",  speed = 5.8f, elevation = 8f,  allowed = new[] { "caught" }, expectKind = "any",
-                note = "ClientSim の Desktop 投げの再現。低く短い。取れれば跳んでも立ってもよい" },
+                note = "ClientSim の Desktop 投げの再現。低く短い。取れれば跳んでも立ってもよい (round 5: 追い抜き over も全プリセットで出うる。outcome は caught なので落ちない)" },
             new Shot { name = "lob",  speed = 6f,   elevation = 35f, allowed = new[] { "caught" }, expectKind = "jump",
                 note = "山なり。滞空が長いので先回りして跳ぶ" },
             new Shot { name = "low",  speed = 5f,   elevation = 0f,  allowed = new[] { "caught", "ground" }, expectKind = "ground",
                 note = "水平・低速。犬の手前に落ちるので拾いに行く" },
             new Shot { name = "far",  speed = 9f,   elevation = 15f, allowed = new[] { "caught" }, expectKind = "jump",
                 note = "遠投。走って追いついて跳ぶ" },
+            // round 5 (2026-09-22): 横へ 25 度ずらした投げ。固定台の +Z 一本槍では、真正面の幾何しか
+            // 通っていなかった (回り込み・旋回・横からの踏み切りが 1 度も測られない)。取れるかどうかは
+            // 基準にしない (allowed に ground を入れてある) — **etaErr を横の幾何でも採るための投げ**で、
+            // 合否ではなく分布を見るために足した。
+            new Shot { name = "side", speed = 7f,   elevation = 10f, side = 25f, allowed = new[] { "caught", "ground" }, expectKind = "any",
+                note = "横 25 度。回り込みと横からの踏み切りを通す (取れ方は問わない)" },
         };
 
         static readonly string[] NotCovered =
@@ -138,6 +144,10 @@ namespace KominkaHillside.Editor
             public double seconds;
             public int endState = -1;
             public bool reachedIdle;
+            // round 5: Eta の誤差 (実際 - 見積もり、秒)。正 = 見積もりが楽観的。合否には使わない
+            // (足したのは「余裕を広げる」前に分布を見るため)。-99 = この投げでは採れなかった。
+            public float etaErr = -99f;
+            public string etaAt = "", etaMode = "", etaLine;
             public string dogStart, launchLine, planLine, takeoffLine, outcomeLine, note;
             public List<string> lines = new List<string>();
         }
@@ -148,6 +158,21 @@ namespace KominkaHillside.Editor
             public int variant;
             public int caught, miss, ground, none, other;
             public int completed;   // Codex M1: そのプリセットで一周まで終わった投げの数
+            public int jump, stand, over;   // round 5: 終わり方の内訳 (追い抜きが全プリセットへ広がったので)
+        }
+
+        /// <summary>round 5: Eta の誤差の分布。合否ではなく**較正のための観測**。
+        /// 正 = 見積もりが楽観的 (実際のほうが遅い)。median が一貫して正なら
+        /// HookEtaMargin を広げるのではなく Eta 自体に係数を入れる、という判断材料。</summary>
+        [Serializable]
+        public class EtaStats
+        {
+            public int samples;
+            public float min, median, mean, max;
+            public int optimistic;   // etaErr > 0 の本数
+            public int over100ms;    // etaErr > 0.10 s の本数
+            public string byMode = "";
+            public string verdict = "NOT_MEASURED";
         }
 
         [Serializable]
@@ -165,6 +190,7 @@ namespace KominkaHillside.Editor
             public string[] notCovered = NotCovered;
             public List<ThrowResult> throwResults = new List<ThrowResult>();
             public List<VariantSummary> perVariant = new List<VariantSummary>();
+            public EtaStats eta = new EtaStats();
             public List<string> errors = new List<string>();
             public List<string> trace = new List<string>();
         }
@@ -604,7 +630,7 @@ namespace KominkaHillside.Editor
             throwDeadline = start + ThrowBudget;
             thrower.SetProgramVariable("speed", shot.speed);
             thrower.SetProgramVariable("elevationDeg", shot.elevation);
-            thrower.SetProgramVariable("sideDeg", 0f);
+            thrower.SetProgramVariable("sideDeg", shot.side);
             int mark = Lines.Count;
             thrower.Interact();
 
@@ -654,6 +680,10 @@ namespace KominkaHillside.Editor
                 if (l.Contains("] plan=")) rec.planLine = l;
                 if (l.Contains("] takeoff ")) rec.takeoffLine = l;
                 if (l.Contains("[KH_Frisbee] launch ")) rec.launchLine = l;
+                // round 5: 1 投げにつき最後に成立したプラン 1 本ぶんを採る (計画が差し替わったら上書き)。
+                float ee;
+                if (l.Contains(" etaErr=") && TryNum(l, " etaErr=", out ee))
+                { rec.etaLine = l; rec.etaErr = ee; rec.etaAt = Field(l, " at="); rec.etaMode = Field(l, " mode="); }
             }
             if (ok != null) { rec.outcome = "caught"; rec.outcomeLine = ok; rec.kind = KindOf(ok); return; }
             if (miss != null) { rec.outcome = "miss"; rec.outcomeLine = miss; rec.kind = KindOf(miss); return; }
@@ -751,6 +781,12 @@ namespace KominkaHillside.Editor
             return float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out v) ? v : -1f;
         }
 
+        /// <summary>Num と違い「読めなかった」と「負の値」を混同しない (etaErr は負になりうる)。</summary>
+        static bool TryNum(string line, string key, out float v)
+        {
+            return float.TryParse(Field(line, key), NumberStyles.Float, CultureInfo.InvariantCulture, out v);
+        }
+
 
         static void Summarise()
         {
@@ -766,10 +802,40 @@ namespace KominkaHillside.Editor
                     else if (t.outcome == "none") c.none++;
                     else c.other++;
                     if (t.completed) c.completed++;
+                    if (t.kind == "jump") c.jump++;
+                    else if (t.kind == "stand") c.stand++;
+                    else if (t.kind == "over") c.over++;
                 }
                 report.perVariant.Add(c);
             }
             report.throwsOk = report.throwResults.Count(t => t.ok);
+            SummariseEta();
+        }
+
+        /// <summary>round 5: etaErr の分布をまとめる。**合否には一切関わらない** —
+        /// 「余裕 (HookEtaMargin) を広げる」のか「Eta に係数を入れる」のかを、症状ではなく数字で決めるため。</summary>
+        static void SummariseEta()
+        {
+            var s = report.throwResults.Where(t => t.etaErr > -90f).Select(t => t.etaErr).OrderBy(v => v).ToList();
+            var e = report.eta;
+            e.samples = s.Count;
+            if (s.Count == 0) { e.verdict = "NOT_MEASURED: どの投げでも etaErr 行が出なかった"; return; }
+            e.min = s[0]; e.max = s[s.Count - 1];
+            e.median = s.Count % 2 == 1 ? s[s.Count / 2] : (s[s.Count / 2 - 1] + s[s.Count / 2]) * 0.5f;
+            e.mean = s.Sum() / s.Count;
+            e.optimistic = s.Count(v => v > 0f);
+            e.over100ms = s.Count(v => v > 0.10f);
+            e.byMode = string.Join(" ", report.throwResults.Where(t => t.etaErr > -90f)
+                .GroupBy(t => string.IsNullOrEmpty(t.etaMode) ? "?" : t.etaMode)
+                .OrderBy(g => g.Key)
+                .Select(g => g.Key + "=" + g.Count() + "/" + (g.Sum(t => t.etaErr) / g.Count()).ToString("F2", CultureInfo.InvariantCulture))
+                .ToArray());
+            // しきい値は「1 フレーム 2 つぶん」ではなく「HookEtaMargin (0.15 s) を食い潰すか」で置く。
+            // median がそこを超えて楽観的なら、余裕を広げても次の幾何でまた足りなくなる = Eta 側の問題。
+            e.verdict = e.median > 0.15f ? "OPTIMISTIC: median " + e.median.ToString("F2", CultureInfo.InvariantCulture) + " s > HookEtaMargin 0.15 — Eta に係数 (EtaSafety) を入れることを検討する"
+                : e.median > 0.05f ? "SLIGHTLY_OPTIMISTIC: median " + e.median.ToString("F2", CultureInfo.InvariantCulture) + " s — 余裕の内。様子見"
+                : e.median < -0.15f ? "PESSIMISTIC: median " + e.median.ToString("F2", CultureInfo.InvariantCulture) + " s — 候補を必要以上に捨てている可能性"
+                : "OK: median " + e.median.ToString("F2", CultureInfo.InvariantCulture) + " s — 見積もりと実際がほぼ一致";
         }
 
         // ---------------------------------------------------------------- 小道具

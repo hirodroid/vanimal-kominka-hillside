@@ -19,10 +19,11 @@ const MENU = 'Tools/KominkaHillside/Frisbee/';
 // Unity 側の KH_FrisbeeHarnessEditor.Shots と同じ表を持つ (片方だけ直さないこと)。
 const SHOTS = [
   { name: 'flat', speed: 7.5, elevationDeg: 10, allowed: ['caught'], expectKind: 'jump', note: '基準の投げ。跳んで取る' },
-  { name: 'mid', speed: 5.8, elevationDeg: 8, allowed: ['caught'], expectKind: 'any', note: 'ClientSim の Desktop 投げの再現 (低く短い)。終わり方は問わない' },
+  { name: 'mid', speed: 5.8, elevationDeg: 8, allowed: ['caught'], expectKind: 'any', note: 'ClientSim の Desktop 投げの再現 (低く短い)。終わり方は問わない (round 5: 追い抜き over も全プリセットで出うる)' },
   { name: 'lob', speed: 6, elevationDeg: 35, allowed: ['caught'], expectKind: 'jump', note: '山なり。滞空が長いので先回りして跳ぶ' },
   { name: 'low', speed: 5, elevationDeg: 0, allowed: ['caught', 'ground'], expectKind: 'ground', note: '水平・低速。犬の手前に落ちるので拾いに行く' },
   { name: 'far', speed: 9, elevationDeg: 15, allowed: ['caught'], expectKind: 'jump', note: '遠投。走って追いついて跳ぶ' },
+  { name: 'side', speed: 7, elevationDeg: 10, sideDeg: 25, allowed: ['caught', 'ground'], expectKind: 'any', note: '横 25 度 (round 5)。回り込みと横からの踏み切りを通す。合否ではなく etaErr を横の幾何でも採るための投げ' },
 ];
 const VARIANTS = [
   { v: 0, name: 'Normal' }, { v: 1, name: 'RunInSide' }, { v: 2, name: 'RunInFar' },
@@ -121,6 +122,8 @@ function status() {
       kind: t.kind, expectKind: t.expectKind, expectOk: t.expectOk, expect: t.expectNote,
       // 動きの質 (round 4): 取れても「機械っぽい」なら ok にしない
       mode: t.mode, yawRateMax: t.yawRateMax, speedMin: t.speedMin, vTake: t.vTake, path: t.approachPath,
+      // round 5: Eta の誤差 (実際 - 見積もり)。合否ではなく較正の観測値
+      etaErr: t.etaErr, etaAt: t.etaAt, etaMode: t.etaMode,
       motionOk: t.motionOk, motion: t.motionNote,
       seconds: t.seconds, endState: t.endState, line: t.outcomeLine,
     })),
@@ -128,6 +131,9 @@ function status() {
     completed: (r.throwResults || []).filter(t => t.completed).length,
     motionFailed: (r.throwResults || []).filter(t => t.motionOk === false).length,
     expectFailed: (r.throwResults || []).filter(t => t.expectOk === false).length,
+    kinds: ['jump', 'stand', 'over', 'ground'].reduce((a, k) => (a[k] = (r.throwResults || []).filter(t => t.kind === k).length, a), {}),
+    // round 5: 見積もり (Eta) が楽観的かどうか。合否には使わない
+    eta: r.eta,
     notCompleted: (r.throwResults || []).filter(t => t.completed === false).map(t => `v${t.variant}/${t.shot} endState=${t.endState}`),
     errors: r.errors,
     sceneFileUnchanged: r.sceneFileUnchanged,
