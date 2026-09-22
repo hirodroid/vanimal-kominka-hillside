@@ -44,4 +44,4 @@ priority: Medium
 - [仕様の正本 §4](../../game-design.md): リードの範囲内行動と既存の遊び
 - [DES-DOG-001 リード散歩](DES-DOG-001-leash-walking.md): 接続・他の行動との優先順位
 - [IMP-DOG-003 散歩の磨き込み](IMP-DOG-003-walking-polish.md): 自由な散歩からの切替と復帰
-- [DES-UI-001 手元メニュー](DES-UI-001-menu-and-leash-assist.md): おやつ機能は現時点で未採用。入口と操作を連携して決める
+- [DES-UI-001 手元メニュー](archive/DES-UI-001-menu-and-leash-assist.md): おやつ機能は現時点で未採用。入口と操作を連携して決める

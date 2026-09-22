@@ -55,15 +55,12 @@ priority: High    # High / Medium / Low
 |----|--------|------|------|
 | [IMP-DOG-011](hold/IMP-DOG-011-muchio-greeting.md) | Medium | 裏山で空いている犬が、自由行動の一つとしてたまにムチォの匂いを嗅ぎに行く。2026-09-22 保留 (他者のアバターギミック依存・集客寄りの動機)。理由と再検討条件は hold_summary | hold |
 | [VER-DOG-001](hold/VER-DOG-001-avatar-pet-contact-research.md) | Medium | 来訪者の無改変が条件。ムチォは既存Senderで対応候補、犬っこは通常時の対象外。静的調査まで完了、IMP-DOG-011 と共に保留 | hold |
-| [DES-ENV-001](DES-ENV-001-terrain-vs-blender.md) | High | 地形を Unity Terrain で作るか Blender で作るか (着手: 比較条件と切替基準 → VER-ENV-001 の実測で確定) | todo |
-| [VER-ENV-001](VER-ENV-001-prototype-view-and-edges.md) | High | 試作: 眺め・移動・端の見え方・実機負荷を確認する (代表シーン検証を兼ねる)。v4生成・PCVR総合評価は良好、境界・負荷は項目別検証中 | wip |
 | [IMP-DOG-001](IMP-DOG-001-port-dog-system.md) | High | 古民家ドッグランの犬ギミックを移植する (タグ `export/kominka-hillside-v1` + 移植記録) | wip |
 | [DES-DOG-001](DES-DOG-001-leash-walking.md) | High | 集合・目的地継承・拠点回収の契約を実装済み (Editor)。Play 後に停滞検知・端末別入力・購入権の双方向を詰める | wip |
 | [IMP-DOG-002](IMP-DOG-002-leash-walking.md) | High | 基本実装・PCVR体験好評。上限・競合・退出・途中参加などの項目別確認と修正 | wip |
 | [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、看板の分かりやすさ、Desktop/Touch、複数人 | wip |
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |
 | [DES-WLD-001](DES-WLD-001-round-trip.md) | Medium | 古民家からの出発・帰還と状態の扱いを設計する | todo |
-| [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) | High | 手元メニュー (さんぽ/あそぶ/おもちゃ)・接続補助・目的地・集合・ボール回収を実装、Editor 検査済み。Play 確認待ち | wip |
 | [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビーは 1 匹で採用内容を確定 (IMP-DOG-008 完了)。残り: 他のおもちゃの挙動、複数ディスク・犬の割当、公開範囲 | todo |
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開はその後の別Issue | wip |
 | [IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md) | Medium | フリスビー (先回り型 + 6 プリセット) を 6 匹へ展開: 犬種別クリップ・facts、配線、胴体固定、負荷実測、Catch の分割、犬種別ハーネス | todo |
@@ -74,11 +71,12 @@ priority: High    # High / Medium / Low
 | [BUG-DOG-002](BUG-DOG-002-leash-handle-orientation.md) | Medium | リードの持ち手が左右どちらの手でも左向きに付く。最後の微調整 | todo |
 | [IMP-DOG-006](IMP-DOG-006-leashed-treat-approach.md) | Medium | リード接続中もおやつに反応して寄ってくる。反応対象・操作・散歩への復帰を具体化する | todo |
 | [IMP-DOG-007](IMP-DOG-007-leash-pull-haptics.md) | Medium | リードを引っ張られたら、接続している側の手に振動を伝える (Haptics)。判定・振動パターン・端末対応を具体化する | todo |
-| [IMP-ENV-002](IMP-ENV-002-skybox-and-night-mode.md) | Medium | 空を古民家と同じキューブマップにし、手元メニューのヘッダーに OFF / ON のナイトモード (RBS 不使用。乗算オーバーレイ + 空の露出) を実装。Editor 検査済み、Play・Quest/iOS 確認待ち | wip |
 | [IMP-DOG-009](IMP-DOG-009-walk-speed-tiers.md) | High | 散歩の犬の速さを 4 段階に (最速は現状の速歩の 3 倍)。人が犬を引っ張る状態をなくす。Run クリップの再生速度・減速も合わせる。9/22 PCVR 1 人 1 匹で OK・採用、3〜6 匹・2 人以上・Desktop は未確認 | wip |
 | [IMP-DOG-010](IMP-DOG-010-walk-stopovers.md) | Medium | 寄り道が分かりにくい (嗅ぐ姿勢が無い・ずれが小さい・短い) ので作り直し、道沿いの立ち寄り場所と夜の散歩の違いを足す。9/22 PCVR 1 人 1 匹で OK・採用 (Sniff クリップは保留)、3〜6 匹・2 人以上・Desktop は未確認 | wip |
 
-着手順 (2026-09-20 PCVR 好評後に整理): **DES-UI-001** (古民家型メニュー本体: 目的地選択・接続/解除補助・集合・ボール集め。仮看板を置き換える) を主軸に、小さな UX 調整 (BUG-DOG-002 持ち手の向き、看板文字、IMP-DOG-003 の犬同士の遊び・項目別確認) を並行。次に DES-DOG-002 (おもちゃ) と DES-DOG-001 (おしゃれ)。音は DES-WLD-002、ライブは DES-LIV-001 で設計を並行し、制作は基本体験の後。複数人・Quest/iOS・境界の検証 (IMP-DOG-002 / VER-ENV-001) と往復導線 (DES-WLD-001) は継続、IMP-ENV-001 の景観増量は後回し。具体的な目的と設計提案は [開発全体像](../overview.md) §3。
+着手順 (2026-09-22 更新): メニュー本体 (DES-UI-001) は PCVR 確認で完了。小さな UX 調整 (BUG-DOG-002 持ち手の向き、看板文字、IMP-DOG-003 の犬同士の遊び・Desktop/Touch・項目別確認) を進め、次に DES-DOG-002 (おもちゃ) と DES-DOG-001 (おしゃれ・権限・端末別入力)。音は DES-WLD-002、ライブは DES-LIV-001 で設計を並行し、制作は基本体験の後。複数人の検証 (IMP-DOG-002) と往復導線 (DES-WLD-001) は継続。境界・負荷の項目別確認と Quest/iOS は IMP-ENV-001 が引き受ける (景観の増量自体は後回し)。具体的な目的と設計提案は [開発全体像](../overview.md) §3。
+
+2026-09-22: **DES-ENV-001 / VER-ENV-001 / DES-UI-001 / IMP-ENV-002 を完了**。地形は Unity Terrain 採用 (「もうテレインで OK」)、眺め・端は PCVR で良好、手元メニューと空・ナイトモードはユーザーが PCVR で確認済み。記録は [完了した Issue](archive/archive_summary.md)。引き継ぎ: 境界・負荷の項目別確認 (VER-ENV-001 の項目 2 の隅・4・6) → IMP-ENV-001、座位と Desktop/Touch の入口 → IMP-DOG-003、複数人の競合・他人の接続犬への影響 → IMP-DOG-002、権限の再判定と端末別入力 → DES-DOG-001。Quest 単体・iOS は引き続き未確認。
 
 最新の制作指示ではIMP-DOG-004のBlender本制作とおもちゃ提案を優先して着手。上記の機能改善順は残し、モデルの仕上げと区別する。
 

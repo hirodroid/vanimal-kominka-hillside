@@ -2,14 +2,14 @@
 id: DES-ENV-001
 type: DES
 system: ENV
-status: todo
+status: done
 priority: High
 ---
 
 # DES-ENV-001 地形を Unity Terrain で作るか Blender で作るか
 
-後から受領した散歩資料を正とし、**Unity Terrain で制作する方向**。最終採用の性能検証は未了。以下の比較軸・切替条件は検証のために残す。
-舞台の骨格を決める最初の判断なので、試作 (VER-ENV-001) で確かめてから決める。
+**2026-09-22 決定: Unity Terrain を採用** (ユーザー判断「もうテレインで OK」)。以下の比較軸・切替条件は判断の経緯として残す。
+舞台の骨格を決める最初の判断なので、試作 (VER-ENV-001) で確かめてから決めた。
 
 ## 判断軸 (検証前の仮説。試作の実測で確かめる)
 
@@ -56,11 +56,19 @@ Terrain で作るときの制約: Layer は 4 枚以下 / heightmap は必要最
 
 ## 完了条件
 
-- [ ] 方式が決まり、`game-design.md` §3 と `core-concept.md` §3 の「主要アセット候補と制約」を更新した
-- [ ] 判断の根拠 (試作の画像・負荷の数値・当たった問題) をこの Issue に記録した
+- [x] 方式が決まり、`game-design.md` §3 と `core-concept.md` §3 の「主要アセット候補と制約」を更新した (2026-09-22)
+- [x] 判断の根拠 (試作の画像・負荷の数値・当たった問題) をこの Issue に記録した
+
+**完了 (2026-09-22)**
+
+ユーザー判断「もうテレインで OK」。**Unity Terrain を採用**し、Blender への切り替えは行わない。VER-ENV-001 とまとめての判断で、眺め・端の見え方は PCVR で良好と評価された。
+
+- どう確かめたか: v1〜v4 の Terrain 試作を Editor で作って画像と Verify を取り (v4 は再読込 Verify **53/53**、Console Error **0**、Terrain 以外 **178,034 tris**。[計画 §12](../../../plans/2026-09-19-terrain-prototype.md))、ユーザーが 2026-09-20 以降の PCVR で門 → 登り道 → 見晴らし → 広場を歩いて評価した (「非常に面白かった」「かなり良かった」)。上の**切り替え基準 (端が見える / 道・段差がブラシで作れない / Android で地面が支配的) に当たったものは無い**。
+- 想定と実際のずれ: 着手時は「VER-ENV-001 の条件付き実測 (端末・設定・数値) で採否を決める」見立てだったが、実際は**試作の作りやすさと PCVR の眺めの評価で先に決まり**、Android の実測を待たずに確定した。古民家 IMP-INF-022 の「地面の作り方より犬・葉の透過・遠景が効く」が覆らなかったため、負荷で地形方式を選ぶ場面が来なかった。
+- 残り: Android / iOS 実機の負荷測定は未実施。地形方式の再検討材料ではなく、景観・足場の磨き込み ([IMP-ENV-001](../IMP-ENV-001-hillside-polish.md) の「負荷の初回測定」) の前提として引き継ぐ。Terrain を採用した後も Layer 4 枚以下 / heightmap は必要最小 / 草の距離は短め の制約は維持する。
 
 ## 参照
 
-- 企画原本 §4〜6: `../../reference/VAnimal_KominkaHillside_Concept.md`
+- 企画原本 §4〜6: `../../../reference/VAnimal_KominkaHillside_Concept.md`
 - 試作: [VER-ENV-001](VER-ENV-001-prototype-view-and-edges.md)
 - Blender を使うなら `vrc-synaptic-blender` / `vrc-asset-production`

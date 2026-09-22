@@ -1,6 +1,6 @@
 # 空を古民家と合わせ、手元メニューにナイトモード (OFF / ON) を置く (設計・記録・Play チェックリスト)
 
-状態: 実装済み・Editor 検査済み (§3)。Codex レビュー: 設計 P/M/D (§5)、実装 D/M/U (§6)。**Play・実機は未確認** (§4)。作業票は [IMP-ENV-002](../development/issues/IMP-ENV-002-skybox-and-night-mode.md)。ここは「順序と分担」と、実装時に決めた値の記録。何を作るかは Issue が持つ。
+状態: 実装済み・Editor 検査済み (§3)。Codex レビュー: 設計 P/M/D (§5)、実装 D/M/U (§6)。**2026-09-22 に PCVR で確認済み (ユーザー)、Quest / iOS は未確認** (§4)。作業票は [IMP-ENV-002](../development/issues/archive/IMP-ENV-002-skybox-and-night-mode.md)。ここは「順序と分担」と、実装時に決めた値の記録。何を作るかは Issue が持つ。
 
 ## 1. 決めたこと (Issue の「実装前に決めること」への答え)
 
