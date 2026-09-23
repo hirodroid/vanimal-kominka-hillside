@@ -44,3 +44,34 @@ priority: Medium
 - [ ] 選択・出し入れ・同時数・リセット・遊ぶ犬の割当とリード中の扱いを決めた
 - [ ] 物理と犬の所有権・同期、紛失復帰、Quest/iOSでの負荷を検証する計画がある
 - [ ] 採用案を仕様と実装Issueに反映した (フリスビーは IMP-DOG-012 / DES-UI-002 へ反映済み。他のおもちゃは未)
+
+## 2026-09-23 ユーザー決定: ボールの柄違いは古民家と同じ商品を採用 (DES-UI-003 より)
+
+[DES-UI-003](DES-UI-003-menu-scope-and-polish.md) の 2026-09-23 ユーザー回答で、**おもちゃの柄違いは古民家と同じ商品をそのまま採用**と決まった。商品・価格はそのまま持ってくるが、裏山での持たせ方・置き場所は本Issueで決める。
+
+**商品 (古民家と同じ)**
+
+| 商品 | productKey | 価格 |
+|---|---|---|
+| 基本ボール | toy.basic_ball | 0pt (無料・初期品) |
+| テニスボール | toy.tennis_ball | 10pt |
+| ドーナツ | toy.donut | 20pt |
+| 骨 | toy.bone | 30pt |
+| 布ボール | toy.cloth_ball | 40pt |
+| 手毬 | toy.temari_claude | 50pt |
+
+別枠でぬいぐるみ3点 (肉球クッション / たい焼き / えび天) が **CE 200C の1セット** (`KominkaDogRun: Assets/KominkaDogRun/Editor/KD_ProductDefinitions.cs:50-60`)。ポイント価格は古民家と同じにする ([game-design §4](../../game-design.md))。
+
+**古民家の作り (読取調査、HEAD 44505384)**
+
+- 同じ fetch ボールの**メッシュ差し替え**。ボール本体 (SphereCollider + VRCPickup + VRCObjectSync) は1犬1個のままで、子ノード KD_ToyMesh_{key} を1つだけ SetActive する。当たり判定・物理は共通で、挙動差のある玩具は却下済み (`KominkaDogRun: Assets/KominkaDogRun/Scripts/KD_ToyBox.cs:39-42`、`KominkaDogRun: docs/development/issues/review/IMP-FET-009-toy-box.md:367`)。
+- 選択は**全員共通の1つ**で、同期は `[UdonSynced] string` **1本**。見た目は同期変数からのみ作り、Late Joiner の Persistence が既存プレイヤーのボールを書き換えない設計 (`KominkaDogRun: Assets/KominkaDogRun/Scripts/KD_ToyBox.cs:47-51, 83-95, 16-32`)。
+- **選択と購入は物理の棚 (KD_ShopShelf / KD_ShopItem) の実物タッチ**。メニューのおもちゃタブは犬6行 × [手元へ] だけで、「選択もタブへ」は共有物の切り替えだからと却下済み (`KominkaDogRun: docs/development/design/hand-menu.md:37, 192-244, 739, 744`)。
+- **ディスク (フリスビー) の柄違いは古民家に前例なし** (`KominkaDogRun: docs/business-strategy.md:541` に将来候補として載るだけ)。
+
+**本Issueで決めること (裏山)**
+
+- **犬ごとの選択にするか、全員共通1選択にするか**。裏山は犬ごとにボールとディスクを持つため、同期変数が1本 → 6本になる帯域と Late Joiner の復元をどう設計するかが判断材料。
+- **棚を門付近 (おじいさんの隣) に置くか**。古民家と同じ実物タッチを使うなら置き場所が要る。
+- **ディスクの柄違いは前例がないため後回し**。ボール側の採用結果を見てから採否を決める。
+- ポイント価格は古民家と同じ (変更する場合はここで理由を書く)。
