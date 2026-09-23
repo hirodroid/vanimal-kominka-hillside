@@ -40,9 +40,18 @@ namespace KominkaDogRun
         public KD_ActivitiesMenu activitiesMenu;
 
         private int _confirmKind;
+        /// <summary>開いているカードがギフトの確認か (IMP-PRG-012)。**表示の種別の記録で、検査 (ハーネス) が読む。**
+        /// 開閉と実行の正本は各売り場の状態 (`_liveGiftRow` / `_accGiftRow`) — 購入の確認は所有になった瞬間に閉じるが、
+        /// ギフトの確認は所有が前提なので閉じない、という判定も売り場側が持つ。</summary>
+        private bool _confirmGift;
+        /// <summary>ハーネスが heap を読むためのフィールド名。</summary>
+        public const string VarConfirmGift = nameof(_confirmGift);
 
         // net: callable-ok: 読み取りのみ
         public int ConfirmKind() { return _confirmKind; }
+
+        // net: callable-ok: 読み取りのみ
+        public bool ConfirmIsGift() { return _confirmGift; }
 
         /// <summary>確認を開く / 開いたまま文言を更新する。売り場ごとの Redraw から毎回呼んでよい
         /// (0.5 秒ごとに状態へ追いつく — 棚の RefreshOpenConfirm と同じ)。ローカル専用なので `_` 始まり。</summary>
@@ -74,6 +83,7 @@ namespace KominkaDogRun
         private void HideConfirmAll()
         {
             _confirmKind = ConfirmNone;
+            _confirmGift = false;
             if (confirmRoot != null && confirmRoot.activeSelf) confirmRoot.SetActive(false);
         }
 
@@ -120,7 +130,21 @@ namespace KominkaDogRun
             else if (state == KD_ShopItem.ConfirmBuy && ledger != null) note = L("confirm.remaining").Replace("{0}", (ledger.Points() - item.price).ToString());
             else note = "";
             bool can = state == KD_ShopItem.ConfirmBuy || state == KD_ShopItem.ConfirmSpecial;
+            _confirmGift = false;
             _ShowConfirm(kind, title, body, note, can, L(ce ? "confirm.storeButton" : "KD_ShopShelf.WordBuy"));
+        }
+
+        /// <summary>所有済みの CE 商品を贈る確認 (IMP-PRG-012)。「〇〇を贈りますか？」+ 中身 + 「購入済み · VRChat の購入画面でギフトを選び…」。
+        /// [購入画面へ] は同じ Listing を開くだけ (ギフトの操作は VRChat の画面が持つ。Udon に贈り先を指定する口は無い)。
+        /// pt も台帳も動かない。買い切りの CE だけ (Subscription はギフト対応が未確認なので売り場側で出さない)。
+        /// 所有していない・購入情報の読み込み前・販売終了なら [購入画面へ] を隠す。ローカル専用なので `_` 始まり。</summary>
+        public void _ShowGiftConfirm(int kind, KD_ShopItem item, string body)
+        {
+            if (item == null || !item.IsCE()) { _HideConfirm(kind); return; }
+            string title = L("confirm.giftTitle").Replace("{0}", L(item.displayNameKey));
+            bool can = item.Owned() && item.CePurchasesLoaded() && !LiveSaleClosed(item);
+            _confirmGift = true;
+            _ShowConfirm(kind, title, body, L("confirm.giftNote"), can, L("confirm.storeButton"));
         }
     }
 }

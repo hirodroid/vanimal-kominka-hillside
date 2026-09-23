@@ -87,6 +87,14 @@ namespace KominkaDogRun
         public GameObject yesButton;
         [Tooltip("肯定ボタンの文言。「購入」「使う」を出し分ける")]
         public TextMeshProUGUI yesLabel;
+        [Tooltip("[ギフトする] (IMP-PRG-012)。所有済みの買い切り CE のときだけ、ボタン列の下に 1 本出す。押すと同じ Listing を開く (pt も台帳も動かない)")]
+        public GameObject giftButton;
+        public TextMeshProUGUI giftLabel;
+        [Tooltip("パネルの地 (Bg)。上端に吸着していて、[ギフトする] が出るときだけ高さを 244 → 304 に伸ばす。Canvas 自体は常に 304 (VRCUiShape の当たりを実行時に変えない)")]
+        public RectTransform confirmBg;
+        /// <summary>Bg の高さ。ギフト行なし / あり (px)。Setup (KD_ShopSetupEditor.EnsureConfirmPanel) と対で持つ。</summary>
+        public const float ConfirmBgHeight = 244f;
+        public const float ConfirmBgHeightGift = 304f;
         [Tooltip("パネルを出す高さ (商品の真上。手でボタンを隠さないため)。" +
                  "**実物棚の品だけに効く** — メニュー行は下の横ずらしを使う")]
         public float confirmHeight = 0.42f;
@@ -151,6 +159,8 @@ namespace KominkaDogRun
         public const string WordUse = "使う";
         public const string WordBuy = "購入";
         public const string WordCancel = "やめる";
+        /// <summary>[ギフトする] の Editor 既定文 (IMP-PRG-012)。実行時は文言表 KD_ShopShelf.WordGift。</summary>
+        public const string WordGift = "ギフトする (VRChat の購入画面)";
         public const string WordSpecial = "スペシャル";
         public const string WordLocked = "準備中";
         public const string WordRemain = "ポイント";
@@ -248,7 +258,12 @@ namespace KominkaDogRun
                 }
             }
             else if (state == KD_ShopItem.ConfirmInUse) detail = L("KD_ShopShelf.WordInUse");
-            else if (state == KD_ShopItem.ConfirmOwned) { detail = L("KD_ShopShelf.WordOwned"); yes = L("KD_ShopShelf.WordUse"); action = ActUse; }
+            else if (state == KD_ShopItem.ConfirmOwned)
+            {
+                detail = L("KD_ShopShelf.WordOwned"); yes = L("KD_ShopShelf.WordUse"); action = ActUse;
+                // 所有済みの CE は値段 (Credits) も出す — 贈るときの目安 (IMP-PRG-012)
+                if (item.IsCE() && item.ceCredits > 0) price = item.ceCredits.ToString() + " C";
+            }
             else if (state == KD_ShopItem.ConfirmSpecial)
             {
                 // CE: 値段は Credits、[購入] は Storefront を開く。pt のバーは出さない
@@ -268,6 +283,34 @@ namespace KominkaDogRun
             if (confirmPrice != null) confirmPrice.text = price;
 
             UpdateConfirmBar(item, ptPath);
+            UpdateGiftRow(item, state);
+        }
+
+        /// <summary>[ギフトする] の行 (IMP-PRG-012)。**所有済みの買い切り CE のときだけ**出し、地 (Bg) を下へ伸ばす。
+        /// 未所有は [購入] が同じ Listing を開くので行は要らない。使用中でも出す (贈るのに使用の有無は関係ない)。
+        /// Subscription はこの棚に無い。所有判定は KD_ShopItem のまま (ここで組み直さない)。</summary>
+        private void UpdateGiftRow(KD_ShopItem item, int state)
+        {
+            bool gift = item.IsCE() && state != KD_ShopItem.ConfirmLoading && item.CePurchasesLoaded() && item.Owned();
+            if (giftButton != null && giftButton.activeSelf != gift) giftButton.SetActive(gift);
+            if (gift && giftLabel != null) giftLabel.text = L("KD_ShopShelf.WordGift");
+            if (confirmBg != null)
+            {
+                float h = gift ? ConfirmBgHeightGift : ConfirmBgHeight;
+                if (!Mathf.Approximately(confirmBg.sizeDelta.y, h)) confirmBg.sizeDelta = new Vector2(confirmBg.sizeDelta.x, h);
+            }
+        }
+
+        /// <summary>確認パネルの [ギフトする] (IMP-PRG-012)。同じ Listing を開くだけ — ギフトの操作は VRChat の画面が持つ。
+        /// pt も台帳も動かない。ローカル専用なので `_` 始まり。</summary>
+        public void _ConfirmGift()
+        {
+            if (string.IsNullOrEmpty(_openId)) { CloseConfirm(); Redraw(); return; }
+            int i = IndexOf(_openId);
+            CloseConfirm();
+            if (i >= 0 && items[i] != null && items[i].IsCE() && items[i].Owned()) { items[i]._OpenStore(); Play(selectClip); }
+            else Reject("KD_ShopShelf.WordNotHere");
+            Redraw();
         }
 
         /// <summary>「あと N pt」の資源バー (AvatarIdleArena IMP-UI-007 の移植)。

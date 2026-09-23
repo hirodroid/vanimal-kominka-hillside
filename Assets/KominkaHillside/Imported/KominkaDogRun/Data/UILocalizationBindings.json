@@ -1,0 +1,1550 @@
+{
+  "labels": [
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Label0/Text",
+      "key": "gallery.label.0"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Label1/Text",
+      "key": "gallery.label.1"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Label2/Text",
+      "key": "gallery.label.2"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Label3/Text",
+      "key": "gallery.label.3"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Caption/Text",
+      "key": "gallery.caption"
+    },
+    {
+      "root": "KD_CreditBoard",
+      "path": "Canvas/CopyHint",
+      "key": "ui.extra.037"
+    },
+    {
+      "root": "KD_CreditBoard",
+      "path": "Canvas/ScrollView/Viewport/CreditRows/Name4",
+      "key": "credit.player"
+    },
+    {
+      "root": "KD_CreditBoard",
+      "path": "Canvas/ScrollView/Viewport/CreditRows/Name2",
+      "key": "credit.font"
+    },
+    {
+      "root": "KD_CreditBoard",
+      "path": "Canvas/ScrollView/Viewport/CreditRows/Name1",
+      "key": "credit.environment"
+    },
+    {
+      "root": "KD_CreditBoard",
+      "path": "Canvas/ScrollView/Viewport/CreditRows/Name0",
+      "key": "credit.dogs"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/LiveAccess/Label",
+      "key": "ui.extra.045"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/LiveAccessNote",
+      "key": "ui.extra.048"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/ShareCanvas/Content/DeviceHint",
+      "key": "ui.extra.038"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/ShareCanvas/Content/CopyHint",
+      "key": "ui.extra.036"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/ShareCanvas/Content/Post/TextArea/Text",
+      "key": "share.post"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/RadioSettings/BackSettings/Label",
+      "key": "KD_TreatPouch.WordBackSettings"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/RadioSettings/Scope",
+      "key": "ui.extra.032"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/RadioSettings/Channel/Label",
+      "key": "ui.extra.030"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/RadioSettings/Power/Label",
+      "key": "ui.extra.031"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/ShareCanvas/Content/Title",
+      "key": "ui.extra.034"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/RadioSettingsButton/Label",
+      "key": "radio.settings.button"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "ScreenControls/Panel/Direction",
+      "key": "KD_SleepPlacement.Direction"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "PhotosButton/Label",
+      "key": "KD_ShopKeeper.WordPhotos"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Toy/Scroll/Viewport/Content/ToyRow3/Button/Label",
+      "key": "KD_TreatPouch.WordRecall"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/Preset1/Label",
+      "key": "KD_DistanceFadeSettings.Deep"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Treat/Scroll/Viewport/Content/Row0/Button/Label",
+      "key": "KD_TreatPouch.WordDispense"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_PetFx/Scroll/Viewport/Content/FxRow4/Button/Label",
+      "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Treat/Scroll/Viewport/Content/Row2/Button/Label",
+      "key": "KD_TreatPouch.WordDispense"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Tab2/Label",
+      "key": "KD_TreatPouch.WordTabPetFx"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/VolumeSettingsButton/Label",
+      "key": "KD_TreatPouch.WordVolumeSettings"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Tab4/Label",
+      "key": "KD_TreatPouch.WordLiveVolume"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "ScreenControls/Panel/Hint",
+      "key": "KD_SleepPlacement.TouchHint"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow3/Button/Label",
+      "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow1/Sub",
+      "key": "ui.extra.001"
+    },
+    {
+      "root": "KD_ShopShelf",
+      "path": "KD_ShopConfirm/YesButton/Label",
+      "key": "KD_ShopShelf.WordBuy"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow2/Sub",
+      "key": "ui.extra.002"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow2/Label",
+      "key": "ui.extra.006"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "ShopButton/Label",
+      "key": "KD_ShopKeeper.WordShop"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Toy/Scroll/Viewport/Content/ToyRow1/Button/Label",
+      "key": "KD_TreatPouch.WordRecall"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/Preset2/Label",
+      "key": "KD_DistanceFadeSettings.Soft"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "TreatsButton/Label",
+      "key": "KD_ShopKeeper.WordTreats"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VolumeSettings/BackSettingsButton/Label",
+      "key": "KD_TreatPouch.WordBackSettings"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/Error",
+      "key": "KD_DistanceFadeSettings.Loading"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "ScreenControls/Panel/Confirm/Label",
+      "key": "KD_SleepPlacement.Confirm"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "ScreenControls/Panel/Cancel/Label",
+      "key": "KD_SleepPlacement.Cancel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/CallAccess/Label",
+      "key": "KD_TreatPouch.WordOpenOff"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Live/Scroll/Viewport/Content/LiveRow3/Button/Label",
+      "key": "KD_TreatPouch.WordLiveHost"
+    },
+    {
+      "root": "KD_ShopShelf_Treat",
+      "path": "KD_ShopConfirm/YesButton/Label",
+      "key": "KD_ShopShelf.WordBuy"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "SettingsButton/Label",
+      "key": "KD_TreatPouch.WordSettings"
+    },
+    {
+      "root": "KD_ShopShelf_Treat",
+      "path": "KD_ShopConfirm/NoButton/Label",
+      "key": "KD_SleepPlacement.Cancel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/Scroll/Viewport/Content/SleepRow0/Button/Label",
+      "key": "KD_TreatPouch.WordSleepCall"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "DogsButton/Label",
+      "key": "KD_ShopKeeper.WordDogs"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "ScreenControls/Panel/Distance",
+      "key": "KD_SleepPlacement.Distance"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/ConfirmCustomButton/Label",
+      "key": "KD_DistanceFadeSettings.Confirm"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/StartTitle",
+      "key": "KD_DistanceFadeSettings.StartLabel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VolumeSettings/VoiceTitle",
+      "key": "KD_TreatPouch.WordDogVoice"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/Scope",
+      "key": "KD_DistanceFadeSettings.ScopeNote"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "VrHint/Hint",
+      "key": "KD_SleepPlacement.VrHint"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "VrHint/Buttons/Cancel/Label",
+      "key": "KD_SleepPlacement.Cancel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Treat/Scroll/Viewport/Content/Row1/Button/Label",
+      "key": "KD_TreatPouch.WordDispense"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "PettingButton/Label",
+      "key": "KD_ShopKeeper.WordPetting"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow2/Button/Label",
+      "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Tab1/Label",
+      "key": "KD_TreatPouch.WordTabToy"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/EndTitle",
+      "key": "KD_DistanceFadeSettings.EndLabel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Balance",
+      "key": "ui.extra.026"
+    },
+    {
+      "root": "KD_ShopShelf",
+      "path": "KD_ShopConfirm/NoButton/Label",
+      "key": "KD_SleepPlacement.Cancel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_PetFx/Scroll/Viewport/Content/FxRow3/Button/Label",
+      "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_ShopShelf_Treat",
+      "path": "KD_ShopShelf_Label",
+      "key": "KD_TreatPouch.WordTabTreat"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "ByeButton/Label",
+      "key": "KD_ShopKeeper.WordBye"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_PetFx/Scroll/Viewport/Content/FxRow1/Button/Label",
+      "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Toy/Scroll/Viewport/Content/ToyRow4/Button/Label",
+      "key": "KD_TreatPouch.WordRecall"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/ColorTitle",
+      "key": "KD_DistanceFadeSettings.ColorLabel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow0/Label",
+      "key": "ui.extra.004"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/Preset3/Label",
+      "key": "KD_DistanceFadeSettings.Custom"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Live/Scroll/Viewport/Content/LiveRow1/Button/Label",
+      "key": "KD_TreatPouch.WordLiveHost"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VolumeSettings/OutsideHeading",
+      "key": "KD_TreatPouch.WordOutside"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Live/Scroll/Viewport/Content/LiveRow2/Button/Label",
+      "key": "KD_TreatPouch.WordLiveHost"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/InputNote",
+      "key": "KD_DistanceFadeSettings.InputNote"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/BackButton/Label",
+      "key": "KD_TreatPouch.WordAccBack"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Header",
+      "key": "KD_TreatPouch.WordTabAcc"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/DistanceFadeSettingsButton/Label",
+      "key": "KD_DistanceFadeSettings.EntryButton"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/Scroll/Viewport/Content/SleepRow2/Button/Label",
+      "key": "KD_TreatPouch.WordSleepCall"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Live/Scroll/Viewport/Content/LiveRow0/Button/Label",
+      "key": "KD_TreatPouch.WordLiveHost"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/Preset0/Label",
+      "key": "KD_DistanceFadeSettings.Standard"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow3/Label",
+      "key": "ui.extra.007"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/BackSettingsButton/Label",
+      "key": "KD_TreatPouch.WordBackSettings"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow4/Label",
+      "key": "ui.extra.008"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Treat/PutAwayButton/Label",
+      "key": "KD_TreatPouch.WordPutAway"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_PetFx/Scroll/Viewport/Content/FxRow0/Button/Label",
+      "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Tab3/Label",
+      "key": "KD_TreatPouch.WordTabSleep"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Treat/Status",
+      "key": "ui.extra.026"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow3/Sub",
+      "key": "ui.extra.003"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VolumeSettings/BedroomVoiceVolumeTitle",
+      "key": "KD_TreatPouch.WordDogVoice"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "CloseButton/Label",
+      "key": "KD_PhotoViewer.InteractWord"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "Balance",
+      "key": "ui.extra.027"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow5/Label",
+      "key": "ui.extra.009"
+    },
+    {
+      "root": "KD_CreditBoard",
+      "path": "Canvas/Lead",
+      "key": "ui.extra.021"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "SectionTitle",
+      "key": "KD_TreatPouch.WordAccTitle"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VolumeSettings/LiveVolumeTitle",
+      "key": "KD_TreatPouch.WordLiveVolume"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/Scroll/Viewport/Content/SleepRow4/Button/Label",
+      "key": "KD_TreatPouch.WordSleepCall"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/Scroll/Viewport/Content/SleepRow3/Button/Label",
+      "key": "KD_TreatPouch.WordSleepCall"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VolumeSettings/BedroomLiveVolumeTitle",
+      "key": "KD_TreatPouch.WordLiveVolume"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/Scroll/Viewport/Content/SleepRow1/Button/Label",
+      "key": "KD_TreatPouch.WordSleepCall"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow1/Label",
+      "key": "ui.extra.005"
+    },
+    {
+      "root": "KD_CreditBoard",
+      "path": "Canvas/Title",
+      "key": "ui.extra.022"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "HowToButton/Label",
+      "key": "KD_ShopKeeper.WordHowTo"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Live/Scroll/Viewport/Content/LiveRow5/Button/Label",
+      "key": "KD_TreatPouch.WordLiveHost"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Treat/Scroll/Viewport/Content/Row3/Button/Label",
+      "key": "KD_TreatPouch.WordDispense"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/StrengthTitle",
+      "key": "KD_DistanceFadeSettings.StrengthLabel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Toy/Scroll/Viewport/Content/ToyRow5/Button/Label",
+      "key": "KD_TreatPouch.WordRecall"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow0/Sub",
+      "key": "ui.extra.001"
+    },
+    {
+      "root": "KD_TouchLauncher",
+      "path": "LauncherButton/Label",
+      "key": "KD_ShopKeeper.WordHowTo"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Tab5/Label",
+      "key": "KD_TreatPouch.WordTabAcc"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Tab6/Label",
+      "key": "KD_TreatPouch.WordTabPlay"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow1/Button/Label",
+      "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Toy/Scroll/Viewport/Content/ToyRow0/Button/Label",
+      "key": "KD_TreatPouch.WordRecall"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow5/Button/Label",
+      "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_PetFx/Scroll/Viewport/Content/FxRow5/Button/Label",
+      "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Toy/Scroll/Viewport/Content/ToyRow2/Button/Label",
+      "key": "KD_TreatPouch.WordRecall"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VolumeSettings/BedroomNote",
+      "key": "KD_TreatPouch.WordBedroomNote"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow0/Button/Label",
+      "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Live/Scroll/Viewport/Content/LiveRow4/Button/Label",
+      "key": "KD_TreatPouch.WordLiveHost"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VolumeSettings/BedroomHeading",
+      "key": "KD_TreatPouch.WordBedroom"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_PetFx/Scroll/Viewport/Content/FxRow2/Button/Label",
+      "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "ContentScroll/Viewport/InfoBody",
+      "key": "KD_ShopKeeper.WordGreeting"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Tab0/Label",
+      "key": "KD_TreatPouch.WordTabTreat"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/Scroll/Viewport/Content/SleepRow5/Button/Label",
+      "key": "KD_TreatPouch.WordSleepCall"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Acc/Scroll/Viewport/Content/AccRow4/Button/Label",
+      "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VolumeSettings/VolumeScope",
+      "key": "KD_TreatPouch.WordVolumeScope"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/RadioSettings/AboutTitle",
+      "key": "radio.about.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/RadioSettings/About",
+      "key": "radio.about.body"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/RadioSettings/Updates",
+      "key": "radio.updates"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/RadioSettings/CopyHint",
+      "key": "ui.extra.036"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "WaysButton/Label",
+      "key": "KD_ShopKeeper.WordWays"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "CallButton/Label",
+      "key": "KD_ShopKeeper.WordCall"
+    },
+    {
+      "root": "KD_BedroomPhoto",
+      "path": "Title",
+      "key": "gallery.bedroom.title"
+    },
+    {
+      "root": "KD_SleepGuide",
+      "path": "Caption",
+      "key": "guide.sleep"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Pose0/Label",
+      "key": "call.pose0"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Pose1/Label",
+      "key": "call.pose1"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Pose2/Label",
+      "key": "call.pose2"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Back/Label",
+      "key": "call.back"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Place/Label",
+      "key": "call.place"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Apply/Label",
+      "key": "call.apply"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Release/Label",
+      "key": "call.release"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Paw/Label",
+      "key": "call.paw"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Pose3/Label",
+      "key": "call.pose3"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Pose4/Label",
+      "key": "call.pose4"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Stretch/Label",
+      "key": "call.stretch"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/InformationButton/Label",
+      "key": "information.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/Information/AiInformationButton/Label",
+      "key": "information.ai.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/Information/BackSettings/Label",
+      "key": "KD_TreatPouch.WordBackSettings"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/AiInformation/BackInformation/Label",
+      "key": "information.back"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/AiInformation/ScrollView/Viewport/Content",
+      "key": "information.ai.body"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/NightModeLabel",
+      "key": "settings.night.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/NightModeNote",
+      "key": "settings.night.note"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Live/Scroll/Viewport/Content/LiveRow6/Button/Label",
+      "key": "KD_TreatPouch.WordLiveHost"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Live/Scroll/Viewport/Content/LiveRow7/Button/Label",
+      "key": "KD_TreatPouch.WordLiveHost"
+    },
+    {
+      "root": "FrameCanvas",
+      "path": "Title",
+      "key": "photo.frame.title"
+    },
+    {
+      "root": "FrameCanvas",
+      "path": "Previous/Label",
+      "key": "photo.frame.previous"
+    },
+    {
+      "root": "FrameCanvas",
+      "path": "Next/Label",
+      "key": "photo.frame.next"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/Information/VanimalInformationButton/Label",
+      "key": "information.vanimal.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VanimalInformation/ScrollView/Viewport/Content",
+      "key": "information.vanimal.body"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VanimalInformation/BackInformation/Label",
+      "key": "information.back"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/Information/TrainerInformationButton/Label",
+      "key": "information.trainer.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/TrainerInformation/ScrollView/Viewport/Content",
+      "key": "information.trainer.body"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/TrainerInformation/BackInformation/Label",
+      "key": "information.back"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Welcome/ScrollView/Viewport/Body",
+      "key": "welcome.body"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Welcome/LaterButton/Label",
+      "key": "welcome.later"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Welcome/MenuButton/Label",
+      "key": "welcome.menu"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/Information/WelcomeInformationButton/Label",
+      "key": "welcome.reread.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/WelcomeInformation/ScrollView/Viewport/Content",
+      "key": "welcome.reread.body"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/WelcomeInformation/BackInformation/Label",
+      "key": "information.back"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/PhotoSettingsButton/Label",
+      "key": "photo.settings.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/PhotoSettings/BackSettings/Label",
+      "key": "KD_TreatPouch.WordBackSettings"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/PhotoSettings/High/Label",
+      "key": "photo.settings.high"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/PhotoSettings/Standard/Label",
+      "key": "photo.settings.standard"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/PhotoSettings/Off/Label",
+      "key": "photo.settings.off"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/PhotoSettings/Note",
+      "key": "photo.settings.note"
+    },
+    {
+      "root": "KD_PhotoHelpMain",
+      "path": "MarkerVisual/Label",
+      "key": "photo.help.mark"
+    },
+    {
+      "root": "KD_PhotoHelpMain",
+      "path": "Panel/Visual/Title",
+      "key": "photo.help.title"
+    },
+    {
+      "root": "KD_PhotoHelpMain",
+      "path": "Panel/Visual/Body",
+      "key": "photo.help.body"
+    },
+    {
+      "root": "KD_PhotoHelpMain",
+      "path": "Panel/Visual/Close/Label",
+      "key": "photo.help.close"
+    },
+    {
+      "root": "KD_PhotoHelpBedroom",
+      "path": "MarkerVisual/Label",
+      "key": "photo.help.mark"
+    },
+    {
+      "root": "KD_PhotoHelpBedroom",
+      "path": "Panel/Visual/Title",
+      "key": "photo.help.title"
+    },
+    {
+      "root": "KD_PhotoHelpBedroom",
+      "path": "Panel/Visual/Body",
+      "key": "photo.help.body"
+    },
+    {
+      "root": "KD_PhotoHelpBedroom",
+      "path": "Panel/Visual/Close/Label",
+      "key": "photo.help.close"
+    },
+    {
+      "root": "KD_PhotoHelpMain",
+      "path": "SettingsMarkerVisual/Open/Label",
+      "key": "photo.settings.title"
+    },
+    {
+      "root": "KD_PhotoHelpMain",
+      "path": "SettingsPanel/Visual/Title",
+      "key": "photo.settings.title"
+    },
+    {
+      "root": "KD_PhotoHelpMain",
+      "path": "SettingsPanel/Visual/High/Label",
+      "key": "photo.settings.high"
+    },
+    {
+      "root": "KD_PhotoHelpMain",
+      "path": "SettingsPanel/Visual/Standard/Label",
+      "key": "photo.settings.standard"
+    },
+    {
+      "root": "KD_PhotoHelpMain",
+      "path": "SettingsPanel/Visual/Off/Label",
+      "key": "photo.settings.off"
+    },
+    {
+      "root": "KD_PhotoHelpMain",
+      "path": "SettingsPanel/Visual/Note",
+      "key": "photo.settings.note"
+    },
+    {
+      "root": "KD_PhotoHelpMain",
+      "path": "SettingsPanel/Visual/Close/Label",
+      "key": "photo.help.close"
+    },
+    {
+      "root": "KD_PhotoHelpBedroom",
+      "path": "SettingsMarkerVisual/Open/Label",
+      "key": "photo.settings.title"
+    },
+    {
+      "root": "KD_PhotoHelpBedroom",
+      "path": "SettingsPanel/Visual/Title",
+      "key": "photo.settings.title"
+    },
+    {
+      "root": "KD_PhotoHelpBedroom",
+      "path": "SettingsPanel/Visual/High/Label",
+      "key": "photo.settings.high"
+    },
+    {
+      "root": "KD_PhotoHelpBedroom",
+      "path": "SettingsPanel/Visual/Standard/Label",
+      "key": "photo.settings.standard"
+    },
+    {
+      "root": "KD_PhotoHelpBedroom",
+      "path": "SettingsPanel/Visual/Off/Label",
+      "key": "photo.settings.off"
+    },
+    {
+      "root": "KD_PhotoHelpBedroom",
+      "path": "SettingsPanel/Visual/Note",
+      "key": "photo.settings.note"
+    },
+    {
+      "root": "KD_PhotoHelpBedroom",
+      "path": "SettingsPanel/Visual/Close/Label",
+      "key": "photo.help.close"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Live/LiveDetail/FxRow/Button/Label",
+      "key": "KD_TreatPouch.WordLiveSeeFx"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Live/LiveDetail/AccRow/Button/Label",
+      "key": "KD_TreatPouch.WordLiveSeeAcc"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Live/LiveBack/Label",
+      "key": "KD_TreatPouch.WordAccBack"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Welcome/LanguageHeading",
+      "key": "welcome.language"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/WelcomeInformation/LanguageHeading",
+      "key": "welcome.language"
+    }
+  ],
+  "interactions": [
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board9",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board12",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board16",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board19",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board22",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoViewer",
+      "path": "",
+      "key": "KD_PhotoViewer.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board5",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board20",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board8",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board13",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board17",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board18",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board6",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board23",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board10",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board14",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board3",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board21",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board4",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board7",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board2",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board15",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board0",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board11",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_PhotoSystem",
+      "path": "Gallery/Board1",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_ShopKeeper",
+      "path": "",
+      "key": "KD_ShopKeeper.InteractWord"
+    },
+    {
+      "root": "KD_BedroomPhoto",
+      "path": "Board0",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_BedroomPhoto",
+      "path": "Board1",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_BedroomPhoto",
+      "path": "Board2",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "KD_BedroomPhoto",
+      "path": "Board3",
+      "key": "KD_PhotoBoard.InteractWord"
+    },
+    {
+      "root": "Radio_Local",
+      "path": "Colliders/Button_Power_Collider",
+      "key": "radio.interact.power"
+    },
+    {
+      "root": "Radio_Local",
+      "path": "Colliders/Switch_Channel_Collider",
+      "key": "radio.interact.channel"
+    },
+    {
+      "root": "Radio_Local",
+      "path": "Colliders/Slider_Collider",
+      "key": "radio.interact.volume"
+    }
+  ],
+  "names": [
+    {
+      "root": "KD_TreatPouch",
+      "field": "toyNameKeys",
+      "keys": [
+        "ui.extra.010",
+        "dog.pomeranian",
+        "dog.labrador",
+        "ui.extra.012",
+        "ui.extra.008",
+        "ui.extra.009"
+      ]
+    },
+    {
+      "root": "KD_TreatPouch",
+      "field": "accNameKeys",
+      "keys": [
+        "accessory.Bandana",
+        "accessory.TailRibbon",
+        "accessory.BowTie",
+        "accessory.Cap",
+        "accessory.SpiralGlasses",
+        "accessory.StrawHat",
+        "accessory.TopHat",
+        "accessory.StarGlasses",
+        "accessory.Backpack",
+        "accessory.Floral",
+        "accessory.FlowerCrown",
+        "accessory.FlowerCorsage",
+        "accessory.FlowerTail",
+        "accessory.Royal",
+        "accessory.Crown",
+        "accessory.RoyalNecklace",
+        "accessory.RoyalTail",
+        "accessory.Summer",
+        "accessory.MarineCap",
+        "accessory.Sunglasses",
+        "accessory.SunflowerNecklace",
+        "accessory.CandyStep",
+        "accessory.CandyDonutBeret",
+        "accessory.CandyPawMedallion",
+        "accessory.CandyClip",
+        "accessory.PumpkinParade",
+        "accessory.PumpkinWitchHat",
+        "accessory.PumpkinBrooch",
+        "accessory.PumpkinBatTail"
+      ]
+    },
+    {
+      "root": "KD_TreatPouch",
+      "field": "accSlotNameKeys",
+      "keys": [
+        "accessory.slot.2",
+        "accessory.slot.4",
+        "accessory.slot.2",
+        "accessory.slot.0",
+        "accessory.slot.1",
+        "accessory.slot.0",
+        "accessory.slot.0",
+        "accessory.slot.1",
+        "accessory.slot.3",
+        "accessory.set",
+        "accessory.slot.0",
+        "accessory.slot.2",
+        "accessory.slot.4",
+        "accessory.set",
+        "accessory.slot.0",
+        "accessory.slot.2",
+        "accessory.slot.4",
+        "accessory.set",
+        "accessory.slot.0",
+        "accessory.slot.1",
+        "accessory.slot.2",
+        "accessory.set",
+        "accessory.slot.0",
+        "accessory.slot.2",
+        "accessory.slot.4",
+        "accessory.set",
+        "accessory.slot.0",
+        "accessory.slot.2",
+        "accessory.slot.4"
+      ]
+    },
+    {
+      "root": "KD_TreatPouch",
+      "field": "liveTitleKeys",
+      "keys": [
+        "KD_TreatPouch.liveTitleKeys.0",
+        "KD_TreatPouch.liveTitleKeys.1",
+        "KD_TreatPouch.liveTitleKeys.2",
+        "KD_TreatPouch.liveTitleKeys.3",
+        "KD_TreatPouch.liveTitleKeys.4",
+        "KD_TreatPouch.liveTitleKeys.5",
+        "KD_TreatPouch.liveTitleKeys.6",
+        "KD_TreatPouch.liveTitleKeys.7",
+        "KD_TreatPouch.liveTitleKeys.8"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Treat_23",
+      "field": "displayNameKey",
+      "keys": [
+        "ui.extra.020"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Fx_13",
+      "field": "displayNameKey",
+      "keys": [
+        "fx.petal"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Fx_10",
+      "field": "displayNameKey",
+      "keys": [
+        "fx.heart"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Toy_2",
+      "field": "displayNameKey",
+      "keys": [
+        "item.donut"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Live_25",
+      "field": "displayNameKey",
+      "keys": [
+        "KD_TreatPouch.liveTitleKeys.0"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Live_26",
+      "field": "displayNameKey",
+      "keys": [
+        "KD_ShopItem_Live_26.displayNameKey.0"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Toy_1",
+      "field": "displayNameKey",
+      "keys": [
+        "item.tennis"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Fx_14",
+      "field": "displayNameKey",
+      "keys": [
+        "fx.sakura"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Toy_0",
+      "field": "displayNameKey",
+      "keys": [
+        "item.basic"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Toy_4",
+      "field": "displayNameKey",
+      "keys": [
+        "item.cloth"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Treat_22",
+      "field": "displayNameKey",
+      "keys": [
+        "ui.extra.019"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Fx_15",
+      "field": "displayNameKey",
+      "keys": [
+        "fx.goldPaw"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Treat_21",
+      "field": "displayNameKey",
+      "keys": [
+        "ui.extra.018"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Toy_6",
+      "field": "displayNameKey",
+      "keys": [
+        "item.temariClaude"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Fx_11",
+      "field": "displayNameKey",
+      "keys": [
+        "item.paw"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Fx_12",
+      "field": "displayNameKey",
+      "keys": [
+        "fx.sparkle"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Toy_5",
+      "field": "displayNameKey",
+      "keys": [
+        "item.bone"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Treat_20",
+      "field": "displayNameKey",
+      "keys": [
+        "ui.extra.017"
+      ]
+    },
+    {
+      "root": "KD_ShopShelf",
+      "field": "titleKey",
+      "keys": [
+        "ui.extra.023"
+      ]
+    },
+    {
+      "root": "KD_ShopShelf_Treat",
+      "field": "titleKey",
+      "keys": [
+        "ui.extra.024"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Toy_PawCushion",
+      "field": "displayNameKey",
+      "keys": [
+        "item.pawCushion"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Toy_TaiyakiPlush",
+      "field": "displayNameKey",
+      "keys": [
+        "item.taiyakiPlush"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Toy_EbiTenPlush",
+      "field": "displayNameKey",
+      "keys": [
+        "item.ebitenPlush"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Live_CandyStepSet",
+      "field": "displayNameKey",
+      "keys": [
+        "KD_ShopItem_Live_CandyStepSet.displayNameKey.0"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Live_PumpkinParadeSet",
+      "field": "displayNameKey",
+      "keys": [
+        "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Fx_Candy",
+      "field": "displayNameKey",
+      "keys": [
+        "fx.candy"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Fx_Pumpkin",
+      "field": "displayNameKey",
+      "keys": [
+        "fx.pumpkin"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Fx_Lantern",
+      "field": "displayNameKey",
+      "keys": [
+        "fx.lantern"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Fx_Meteor",
+      "field": "displayNameKey",
+      "keys": [
+        "fx.meteor"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Fx_Confetti",
+      "field": "displayNameKey",
+      "keys": [
+        "fx.confetti"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Action_BellyUp",
+      "field": "displayNameKey",
+      "keys": [
+        "action.belly_up"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Action_ChinRest",
+      "field": "displayNameKey",
+      "keys": [
+        "action.chin_rest"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Action_GivePaw",
+      "field": "displayNameKey",
+      "keys": [
+        "action.give_paw"
+      ]
+    },
+    {
+      "root": "KD_ShopItem_Action_StretchYawn",
+      "field": "displayNameKey",
+      "keys": [
+        "action.stretch_yawn"
+      ]
+    }
+  ],
+  "pickups": [
+    {
+      "root": "KD_Treat_0",
+      "path": "",
+      "key": "interact.treat"
+    },
+    {
+      "root": "KD_Treat_1",
+      "path": "",
+      "key": "interact.treat"
+    },
+    {
+      "root": "KD_Treat_2",
+      "path": "",
+      "key": "interact.treat"
+    }
+  ]
+}

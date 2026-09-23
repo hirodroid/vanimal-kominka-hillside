@@ -43,3 +43,355 @@ Unityメニュー `Tools/KominkaHillside/Walking/` の順序は、1 Create Progr
 | 日付 | 原因・修正元のコミット／Issue | このワールドへの適用内容・見送り理由 | 確認結果 |
 |---|---|---|---|
 | 2026-09-20 | IMP-DOG-002 | リードとFetchの競合・アニメ出力キャッシュは裏山固有の追加処理。古民家へ自動逆移植しない | 静的レビュー済み。ユーザーPlay/PCVR総合評価は良好、競合の項目別結果は未取得 |
+| 2026-09-23 | 46bc182f (IMP-PRG-012 ギフト入口) / abffd6c6 (呼ぶ・ライブ全員許可の既定 ON)。866385e9・68676eaa は Editor/PNG のみ | 段階 0-a の版合わせ。未改変のランタイム 9 本を `44505384` 版へ更新 (下記「差分の適用」)。裏山で改変済みのファイルとの重なりは 0 | C# のランタイムと Editor はどちらもエラー 0。U# は 83 本のコンパイルが完了し、エラー 0 |
+
+## 2026-09-23 Editor ビルダーの移植 (段階 0-a)
+
+[メニュー再構築計画](../../plans/2026-09-23-menu-rebuild.md) D-3・D-8 の段階 0-a。古民家の手元メニューを作る Editor ビルダーを裏山へ持ち込み、パスと MenuItem を付け替えた。シーン・Program Asset は変えていない。Tools メニューも実行していない。
+
+- 移植元: `C:/work/unity/vcc/KominkaDogRun` の作業ツリー。HEAD は `1cb8d619ae6811fd50ea26ea269dca77b15fdf2a`。`Assets/KominkaDogRun/Editor` と `Scripts` は HEAD および `4450538433a4b358577cd2dc9bcd2cd02479fd3f` と同じ内容 (`git diff --quiet` で確認)。ツリーは dirty だが、変更は 7 件 (4 つの Program Asset、シーン、`ProjectSettings` 2 件) で、Editor/Scripts の `.cs` には入っていない。
+- 範囲: `Assets/KominkaDogRun/Editor/*.cs` の 129 本。`Testing/` は除く。`.meta` はコピーせず、Unity に新しい GUID を振らせた。コピー先は `Assets/KominkaHillside/Imported/KominkaDogRun/Editor/` で、ファイル名と namespace (`KominkaDogRun.Editor` / `KominkaDogRun.EditorTools`) は変えていない。
+- 同一性: `git show 44505384:<path>` に同じ置換規則を当てた結果と照合した。124 本の時点で全一致した。最終の 101 本のうち 99 本も一致し、差は置換だけである。残りの 2 本は、下の「裏山改変 (ガード)」を入れた `KD_MenuFinishEditor.cs` と `KD_NightModeSettingsEditor.cs`。
+- 置換は node スクリプトで機械的に行った。パスは 156 種 (延べ 227 か所)、MenuItem は 319 本 (直書き) と 16 本 (const 接頭辞 4 系統) を置き換えた。`Menu.SetChecked` が使う const 1 本と、案内文の中にある完全一致の旧メニュー名 12 か所も直した。
+
+### 差分の適用 (版ずれの解消)
+
+裏山のランタイムはタグ `503dde8f` から取り込んだものなので、コピーした Editor (`44505384` 相当) より古い。`503dde8f`→`44505384` の間に上流で変わったランタイムは 18 件ある。そのうち裏山で改変済みのファイルとの重なりは 0 件だった。そこで司令塔の判断に従い、未改変の 9 本を `44505384` 版に更新した。更新前に、9 本すべてが `503dde8f` 版と同一 (裏山で未改変) であることを diff で確かめた。`.asset` と `.meta` は触っていない。
+
+| ファイル (`Imported/KominkaDogRun/Scripts/`) | 元コミット | 行数 (+/-) |
+|---|---|---|
+| `KD_TreatPouch.cs` | 46bc182f (ギフト入口 IMP-PRG-012) | 15/5 |
+| `KD_TreatPouch.Acc.cs` | 46bc182f | 70/5 |
+| `KD_TreatPouch.Confirm.cs` | 46bc182f | 24/0 |
+| `KD_TreatPouch.Live.cs` | 46bc182f | 70/11 |
+| `KD_ActivitiesMenu.cs` | 46bc182f | 2/1 |
+| `Progress/KD_ShopShelf.cs` | 46bc182f | 44/1 |
+| `KD_LiveAccess.cs` | abffd6c6 (呼ぶ/ライブ全員許可の既定 ON) | 2/1 |
+| `KD_ShopKeeper.cs` | abffd6c6 | 1/1 |
+| `KD_SleepBoard.cs` | abffd6c6 | 2/1 |
+
+同じ区間の上流コミットのうち、`866385e9` (Touch ランチャーの iOS 修正) は Editor 2 本 (`KD_TreatSetupEditor.Pouch.cs` / `.Verify.cs`) とシーンだけを変えている。`68676eaa` (案内文言) が変えたのは `Data/Panfret/explain-onboarding.png` だけである。Editor 側の変更は今回のコピーに含まれる。PNG は取り込んでいない (Welcome Guide は段階 1・3 で扱う)。`KD_CatController.cs` も取り込んでいない (猫は裏山では使わない)。
+
+### パス置換
+
+規則は先に書いたものから順に適用し、最初に一致した 1 本だけを使う。
+
+| 旧 | 新 |
+|---|---|
+| `Assets/KominkaDogRun/Textures/KD_UiRound.png` / `KD_UiCircle.png` | `Assets/KominkaHillside/Textures/UI/…` |
+| `Assets/KominkaDogRun/Scripts/…` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/…` |
+| `Assets/KominkaDogRun/Editor/…` | `Assets/KominkaHillside/Imported/KominkaDogRun/Editor/…` |
+| `Assets/KominkaDogRun/Font/…` | `Assets/KominkaHillside/Font/…` |
+| `Assets/KominkaDogRun/Data/CE…` | `Assets/KominkaHillside/Data/CE…` |
+| `Assets/KominkaDogRun…` (上記以外。`CreateFolder("Assets/KominkaDogRun", …)` の親フォルダも含む) | `Assets/KominkaHillside/Imported/KominkaDogRun…` |
+
+156 種の内訳は、移植先に実在 87 / 未コピー 42 / 接頭辞・フォルダ 27。フォルダは実行時に作られるか、まだ無い。未コピーの 42 種は、使う段階で取り込む。
+
+- 段階 1: `Scripts/KD_ProgressManager.asset`
+- 段階 2: `Animations/KD_PickupPose.anim`、`Materials/M_KD_Ball.mat`、`Models/Accessories/BlenderOptimized/Crown/KD_Crown_Optimized.fbx`、`Prefabs/KD_Ball.prefab`、`Scripts/KD_BallResetButton.asset`、`Textures/KD_HeartParticle.png`
+- 段階外 (未採用の機能。35 種): 猫、写真、ギャラリー、クレジット板、寝室のブランケット、ポスター、夜空、プレビューシーン、Android プローブ、`KD_TreatSystem` (古民家でも廃止済み) など
+
+<details><summary>156 種の全置換表</summary>
+
+| 旧パス | 新パス | 箇所 | 移植先 |
+|---|---|---|---|
+| `Assets/KominkaDogRun` | `Assets/KominkaHillside/Imported/KominkaDogRun` | 15 | あり |
+| `Assets/KominkaDogRun/` | `Assets/KominkaHillside/Imported/KominkaDogRun/` | 2 | あり |
+| `Assets/KominkaDogRun/Animations` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations` | 4 | あり |
+| `Assets/KominkaDogRun/Animations/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/` | 1 | あり |
+| `Assets/KominkaDogRun/Animations/AC_Cat.controller` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/AC_Cat.controller` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Animations/AC_KD_Dog_` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/AC_KD_Dog_` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Animations/AC_KD_Dog_Pome.controller` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/AC_KD_Dog_Pome.controller` | 1 | あり |
+| `Assets/KominkaDogRun/Animations/AC_KD_Dog.controller` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/AC_KD_Dog.controller` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Animations/AC_KD_Npc.controller` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/AC_KD_Npc.controller` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Animations/AN_CatSuwari2.anim` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/AN_CatSuwari2.anim` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Animations/Companion` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion` | 1 | あり |
+| `Assets/KominkaDogRun/Animations/Companion/KD_` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_` | 3 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Animations/KD_LieDown_` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_LieDown_` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Animations/KD_LieDown_Shiba.anim` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_LieDown_Shiba.anim` | 1 | あり |
+| `Assets/KominkaDogRun/Animations/KD_PawHold_` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PawHold_` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Animations/KD_PickupPose_` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PickupPose_` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Animations/KD_PickupPose.anim` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PickupPose.anim` | 1 | 未コピー (段階 2) |
+| `Assets/KominkaDogRun/Animations/PumpkinPreview` | `Assets/KominkaHillside/Imported/KominkaDogRun/Animations/PumpkinPreview` | 1 | あり |
+| `Assets/KominkaDogRun/Data` | `Assets/KominkaHillside/Imported/KominkaDogRun/Data` | 2 | あり |
+| `Assets/KominkaDogRun/Data/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Data/` | 2 | あり |
+| `Assets/KominkaDogRun/Data/BGM` | `Assets/KominkaHillside/Imported/KominkaDogRun/Data/BGM` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Data/BGM/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Data/BGM/` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Data/CE` | `Assets/KominkaHillside/Data/CE` | 1 | あり |
+| `Assets/KominkaDogRun/Data/Panfret/explain-onboarding.png` | `Assets/KominkaHillside/Imported/KominkaDogRun/Data/Panfret/explain-onboarding.png` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Data/Panfret/explain.png` | `Assets/KominkaHillside/Imported/KominkaDogRun/Data/Panfret/explain.png` | 2 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Data/SE/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Data/SE/` | 3 | あり |
+| `Assets/KominkaDogRun/Data/UILocalizationBindings.json` | `Assets/KominkaHillside/Imported/KominkaDogRun/Data/UILocalizationBindings.json` | 1 | あり |
+| `Assets/KominkaDogRun/Data/UITranslations.json` | `Assets/KominkaHillside/Imported/KominkaDogRun/Data/UITranslations.json` | 1 | あり |
+| `Assets/KominkaDogRun/Editor/KD_PumpkinPreviewEditor.MountInspection.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Editor/KD_PumpkinPreviewEditor.MountInspection.cs` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Font/` | `Assets/KominkaHillside/Font/` | 1 | あり |
+| `Assets/KominkaDogRun/Font/KD_NotoSerif` | `Assets/KominkaHillside/Font/KD_NotoSerif` | 4 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Font/Noto_Serif_JP/static/NotoSerifJP-Regular.ttf` | `Assets/KominkaHillside/Font/Noto_Serif_JP/static/NotoSerifJP-Regular.ttf` | 6 | あり |
+| `Assets/KominkaDogRun/KD_AndroidToonBuildProbe.unity` | `Assets/KominkaHillside/Imported/KominkaDogRun/KD_AndroidToonBuildProbe.unity` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/KD_MobileStripProbe-` | `Assets/KominkaHillside/Imported/KominkaDogRun/KD_MobileStripProbe-` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Materials` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials` | 2 | あり |
+| `Assets/KominkaDogRun/Materials/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/` | 6 | あり |
+| `Assets/KominkaDogRun/Materials/KD_FullscreenQuad.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/KD_FullscreenQuad.asset` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/KD_GrassOverrideKeeper.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/KD_GrassOverrideKeeper.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/KD_NightOverlay.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/KD_NightOverlay.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/KD_NightSkybox.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/KD_NightSkybox.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/KD_Skybox.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/KD_Skybox.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/KD_SleepPreview.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/KD_SleepPreview.mat` | 3 | あり |
+| `Assets/KominkaDogRun/Materials/KD_ToyPhysics.physicMaterial` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/KD_ToyPhysics.physicMaterial` | 1 | あり |
+| `Assets/KominkaDogRun/Materials/M_KD_` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Materials/M_KD_Ball_` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_Ball_` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Materials/M_KD_Ball.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_Ball.mat` | 1 | 未コピー (段階 2) |
+| `Assets/KominkaDogRun/Materials/M_KD_BlanketBlock_Android.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_BlanketBlock_Android.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/M_KD_BlanketHoundstooth_Android.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_BlanketHoundstooth_Android.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/M_KD_BlanketPlaid_Android.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_BlanketPlaid_Android.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/M_KD_CatEye_Android.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_CatEye_Android.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/M_KD_CreditPlaque.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_CreditPlaque.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/M_KD_GallerySlot{i}.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_GallerySlot{i}.mat` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Materials/M_KD_GalleryTextBackground.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_GalleryTextBackground.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/M_KD_Heart.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_Heart.mat` | 2 | あり |
+| `Assets/KominkaDogRun/Materials/M_KD_PhotoPrint.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_PhotoPrint.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/M_KD_PhotoViewerBack.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_PhotoViewerBack.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/M_KD_PhotoViewerPhoto.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_PhotoViewerPhoto.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/M_KD_PosterBoard_Android.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_PosterBoard_Android.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/M_KD_PosterYSS_Android.mat` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/M_KD_PosterYSS_Android.mat` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Materials/NightQueue` | `Assets/KominkaHillside/Imported/KominkaDogRun/Materials/NightQueue` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Models/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/` | 2 | あり |
+| `Assets/KominkaDogRun/Models/Accessories/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/Accessories/` | 3 | あり |
+| `Assets/KominkaDogRun/Models/Accessories/BlenderOptimized` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/Accessories/BlenderOptimized` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Models/Accessories/BlenderOptimized/Crown/KD_Crown_Optimized.fbx` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/Accessories/BlenderOptimized/Crown/KD_Crown_Optimized.fbx` | 1 | 未コピー (段階 2) |
+| `Assets/KominkaDogRun/Models/Accessories/CandyStep/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/Accessories/CandyStep/` | 1 | あり |
+| `Assets/KominkaDogRun/Models/Accessories/Everyday` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/Accessories/Everyday` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Models/Accessories/PumpkinParade/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/Accessories/PumpkinParade/` | 1 | あり |
+| `Assets/KominkaDogRun/Models/Accessories/ThemeSets/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/Accessories/ThemeSets/` | 2 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Models/DogPreviews` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/DogPreviews` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Models/DogPreviews/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/DogPreviews/` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Models/KD_PhotoFrameOverlay.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/KD_PhotoFrameOverlay.asset` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Models/SleepPlacement` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/SleepPlacement` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Models/Toys` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/Toys` | 1 | あり |
+| `Assets/KominkaDogRun/Models/Toys/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/Toys/` | 5 | あり |
+| `Assets/KominkaDogRun/Models/Treat/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Models/Treat/` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Prefabs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Prefabs` | 2 | あり |
+| `Assets/KominkaDogRun/Prefabs/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Prefabs/` | 1 | あり |
+| `Assets/KominkaDogRun/Prefabs/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Prefabs/` | 1 | あり |
+| `Assets/KominkaDogRun/Prefabs/KD_Ball_` | `Assets/KominkaHillside/Imported/KominkaDogRun/Prefabs/KD_Ball_` | 3 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Prefabs/KD_Ball.prefab` | `Assets/KominkaHillside/Imported/KominkaDogRun/Prefabs/KD_Ball.prefab` | 1 | 未コピー (段階 2) |
+| `Assets/KominkaDogRun/Prefabs/PetFx` | `Assets/KominkaHillside/Imported/KominkaDogRun/Prefabs/PetFx` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Scenes` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scenes` | 2 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Scenes/CandyStepPreview.unity` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scenes/CandyStepPreview.unity` | 2 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Scenes/CandyStepPreview002.unity` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scenes/CandyStepPreview002.unity` | 2 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Scenes/LiveThumbnailCaptureTemp.unity` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scenes/LiveThumbnailCaptureTemp.unity` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Scenes/PumpkinParadePreview001.unity` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scenes/PumpkinParadePreview001.unity` | 2 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Scripts/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/` | 10 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_AccessoryBox.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_AccessoryBox.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_AccessoryBox.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_AccessoryBox.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_BallController.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_BallController.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_BallController.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_BallController.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_BallResetButton.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_BallResetButton.asset` | 1 | 未コピー (段階 2) |
+| `Assets/KominkaDogRun/Scripts/KD_BgmPlayer.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_BgmPlayer.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_BgmPlayer.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_BgmPlayer.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_CallPose.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_CallPose.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_CallPose.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_CallPose.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_CandyDogPerformance.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_CandyDogPerformance.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_CandyDogPerformance.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_CandyDogPerformance.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_CatController.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_CatController.asset` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Scripts/KD_CatController.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_CatController.cs` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Scripts/KD_DistanceFadeSettings.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DistanceFadeSettings.asset` | 2 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_DistanceFadeSettings.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DistanceFadeSettings.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_DogFetchController.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogFetchController.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_DogFetchController.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogFetchController.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_DogPack.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogPack.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_DogPack.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogPack.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_DogPetController.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogPetController.asset` | 2 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_DogPetController.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogPetController.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_DogStopAnchor.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogStopAnchor.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_DogStopAnchor.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogStopAnchor.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_DogWanderController.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogWanderController.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_DogWanderController.CandyMount.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogWanderController.CandyMount.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_DogWanderController.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogWanderController.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_LiveNight.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_LiveNight.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_LiveNight.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_LiveNight.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_LiveSystem.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_LiveSystem.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_LiveSystem.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_LiveSystem.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_ProgressManager.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_ProgressManager.asset` | 1 | 未コピー (段階 1) |
+| `Assets/KominkaDogRun/Scripts/KD_ShopKeeper.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_ShopKeeper.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_ShopKeeper.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_ShopKeeper.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_SleepAudio.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_SleepAudio.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_SleepAudio.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_SleepAudio.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_SleepBoard.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_SleepBoard.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_SleepBoard.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_SleepBoard.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_SleepPlacement.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_SleepPlacement.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_SleepPlacement.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_SleepPlacement.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_SleepSlot.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_SleepSlot.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_SleepSlot.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_SleepSlot.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_TreatBox.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatBox.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_TreatBox.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatBox.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_TreatController.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatController.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_TreatController.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatController.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_TreatFx.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatFx.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_TreatFx.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatFx.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_TreatPouch.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatPouch.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_TreatPouch.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatPouch.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_TreatSlot.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatSlot.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_TreatSlot.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatSlot.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/KD_TreatSystem.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatSystem.asset` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Scripts/KD_TreatSystem.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatSystem.cs` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Scripts/Progress/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/Progress/` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/Progress/KD_GiftCodePanel.asset` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/Progress/KD_GiftCodePanel.asset` | 1 | あり |
+| `Assets/KominkaDogRun/Scripts/Progress/KD_GiftCodePanel.cs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/Progress/KD_GiftCodePanel.cs` | 1 | あり |
+| `Assets/KominkaDogRun/Shaders/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Shaders/` | 1 | あり |
+| `Assets/KominkaDogRun/Shaders/KD_NightOverlay.shader` | `Assets/KominkaHillside/Imported/KominkaDogRun/Shaders/KD_NightOverlay.shader` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Textures` | `Assets/KominkaHillside/Imported/KominkaDogRun/Textures` | 1 | あり |
+| `Assets/KominkaDogRun/Textures/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Textures/` | 3 | あり |
+| `Assets/KominkaDogRun/Textures/DogBook` | `Assets/KominkaHillside/Imported/KominkaDogRun/Textures/DogBook` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Textures/KD_CreditPlaque.png` | `Assets/KominkaHillside/Imported/KominkaDogRun/Textures/KD_CreditPlaque.png` | 1 | 未コピー (段階外 (未採用機能)) |
+| `Assets/KominkaDogRun/Textures/KD_HeartParticle.png` | `Assets/KominkaHillside/Imported/KominkaDogRun/Textures/KD_HeartParticle.png` | 1 | 未コピー (段階 2) |
+| `Assets/KominkaDogRun/Textures/KD_UiCircle.png` | `Assets/KominkaHillside/Textures/UI/KD_UiCircle.png` | 1 | あり |
+| `Assets/KominkaDogRun/Textures/KD_UiRound.png` | `Assets/KominkaHillside/Textures/UI/KD_UiRound.png` | 1 | あり |
+| `Assets/KominkaDogRun/Textures/LiveThumbs` | `Assets/KominkaHillside/Imported/KominkaDogRun/Textures/LiveThumbs` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Textures/LiveThumbs/<productKey>.png` | `Assets/KominkaHillside/Imported/KominkaDogRun/Textures/LiveThumbs/<productKey>.png` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+| `Assets/KominkaDogRun/Textures/Particle/` | `Assets/KominkaHillside/Imported/KominkaDogRun/Textures/Particle/` | 2 | あり |
+| `Assets/KominkaDogRun/Textures/PhotoFrames` | `Assets/KominkaHillside/Imported/KominkaDogRun/Textures/PhotoFrames` | 1 | 接頭辞・フォルダ (実行時に生成または未作成) |
+
+</details>
+
+### MenuItem
+
+- 構築手順に使うもの (計画の対応表) は `Tools/KominkaHillside/Menu/<番号> <名前>` に並べた。同じ系統に属するほかの項目には、近い番号に英字を付けた。対象は 55 本。
+- それ以外は `Tools/KominkaHillside/Menu/Imported-Unused/<古民家での Tools/KominkaDogRun/ 以下のパス>` に隔離した。コンパイル対象に残ったのは 241 本 (系統別の本数は下)。
+- 日本語を含むパス 4 本は ASCII に直した: `Debug/KD_DogAnimDebugHud - Attach/Detach` と `Photo System/4,5 - Debug Snap Probe ON/OFF`。前者は除外したファイルにある。
+- 既存の `KH_HandMenuEditor` の 5 本 (`0 Import TMP Essentials` 〜 `4 Verify Menu`) は `Tools/KominkaHillside/Menu/Legacy/…` へ改名し、番号の衝突を避けた。KH_HandMenu は段階 0-b で退役させる。
+- 残っているもの: 案内文 9 か所が、系統名だけで古い `Tools/KominkaDogRun/…` を指している (例 `KD_TreatSetupEditor.Pouch.cs:76`「先に Tools/KominkaDogRun/Progress System」)。機能には影響しない。シーンを判定する条件 `"Assets/Scenes/KominkaDogRun.unity"` (`KD_ActionProductsEditor` / `KD_AccessoryEverydayEditor` ほか) は指定範囲外なので置き換えていない。段階 0-b で該当メニューを使う前に確認する。
+
+| 古民家 (`Tools/KominkaDogRun/…`) | 裏山 (`Tools/KominkaHillside/Menu/…`) | ファイル |
+|---|---|---|
+| Hand Menu/1 - Bake UI Sprite | **1 Bake UI Sprite** | KD_UiSpriteEditor.cs |
+| Credit/1 - Build Font Asset | **2 Build Font Asset** | KD_CreditSetupEditor.cs |
+| Credit/0 - Import TMP Essentials | **2a Import TMP Essentials** | KD_CreditSetupEditor.cs |
+| Shop/1 - Create Program Assets | **3 Create Shop Programs** | KD_ShopSetupEditor.cs |
+| Shop/2 - Setup Shop | **4 Setup Shop** | KD_ShopSetupEditor.Setup.cs |
+| Shop/3 - Verify Shop | **4a Verify Shop** | KD_ShopSetupEditor.Verify.cs |
+| Shop/4 - CE Unlock (dev) | **4b CE Unlock (dev)** | KD_ShopSetupEditor.cs |
+| Shop/5 - CE Relock | **4c CE Relock** | KD_ShopSetupEditor.cs |
+| Treat System/1 - Create Program Assets | **5 Create Pouch Programs** | KD_TreatSetupEditor.cs |
+| Sleep System/2 - Setup Sleep System | **6 Setup Sleep** | KD_SleepSetupEditor.cs |
+| Sleep System/1 - Create Program Assets | **6a Create Sleep Programs** | KD_SleepSetupEditor.cs |
+| Sleep System/3 - Verify Sleep System | **6b Verify Sleep System** | KD_SleepSetupEditor.cs |
+| Treat System/2 - Setup Treat System | **7 Build Menu** | KD_TreatSetupEditor.cs |
+| Activities/1 - Create Programs | **8 Create Activities Programs** | KD_ActivitiesEditor.cs |
+| Activities/2 - Build | **9 Setup Activities** | KD_ActivitiesEditor.cs |
+| Menu Finish/1 - Create Programs | **10 Collect Words** | KD_MenuFinishEditor.cs |
+| Menu Finish/0 - Survey | **10a Survey Menu Finish** | KD_MenuFinishEditor.cs |
+| Menu Finish/2 - Setup | **11 Setup Localization** | KD_MenuFinishEditor.cs |
+| Menu Finish/7 - Allow Partial Translations (Next Build Only) | **11a Allow Partial Translations (Next Build Only)** | KD_MenuFinishEditor.cs |
+| Hand Menu/2 - Rebuild Panel | **12 Rebuild Panel** | KD_HandMenuScrollEditor.cs |
+| Hand Menu/3 - Apply Scroll Layout | **13 Apply Scroll Layout** | KD_HandMenuScrollEditor.cs |
+| Distance Fade/2 - Setup | **14 Setup Distance Fade** | KD_DistanceFadeSettingsEditor.cs |
+| Distance Fade/1 - Create Program Asset | **14a Create Distance Fade Programs** | KD_DistanceFadeSettingsEditor.cs |
+| Distance Fade/0 - Survey | **14b Survey Distance Fade** | KD_DistanceFadeSettingsEditor.cs |
+| Distance Fade/3 - Verify | **14c Verify Distance Fade** | KD_DistanceFadeSettingsEditor.cs |
+| Distance Fade/4 - Preview UI | **14d Preview Distance Fade UI** | KD_DistanceFadeSettingsEditor.cs |
+| Distance Fade/5 - Verify VM Parsers | **14e Verify VM Parsers** | KD_DistanceFadeSettingsEditor.cs |
+| Night Mode/1 - Setup | **15 Setup Night Mode** | KD_NightModeSettingsEditor.cs |
+| Night Mode/2 - Verify | **15a Verify Night Mode** | KD_NightModeSettingsEditor.cs |
+| Night Mode/3 - Render | **15b Render Night Mode** | KD_NightModeSettingsEditor.cs |
+| UI/5 - Setup Volume Settings | **16 Setup Volume** | KD_DogVoiceSettingsEditor.cs |
+| UI/4 - Verify Dog Voice Settings | **16a Verify Dog Voice Settings** | KD_DogVoiceSettingsEditor.cs |
+| UI/6 - Verify Volume Layout | **16b Verify Volume Layout** | KD_UiReviewEditor.cs |
+| UI/1 - Refresh Menus | **17 Refresh Menus** | KD_UiRefreshEditor.cs |
+| UI/2 - Verify Layout | **17a Verify Layout** | KD_UiReviewEditor.cs |
+| UI/3 - Verify Touch Orientation | **17b Verify Touch Orientation** | KD_TouchLauncherVerifyEditor.cs |
+| Dog Previews/1 - Build | **18 Build Dog Previews** | KD_DogPreviewEditor.cs |
+| Dog Previews/5 - Fit Miniatures | **18a Fit Miniatures** | KD_DogPreviewEditor.cs |
+| Hand Menu Collision/1 - Apply | **19 Apply Collision Layers** | KD_HandMenuCollisionEditor.cs |
+| Treat System/3 - Verify Treat System | **20 Verify Pouch** | KD_TreatSetupEditor.Verify.cs |
+| Hand Menu/4 - Verify Scroll Layout | **21 Verify Scroll Layout** | KD_HandMenuScrollEditor.cs |
+| Hand Menu/5 - Preview Scroll Pages | **21a Preview Scroll Pages** | KD_HandMenuScrollEditor.cs |
+| Hand Menu/6 - Preview Live Catalog Only | **21b Preview Live Catalog Only** | KD_HandMenuScrollEditor.cs |
+| Hand Menu/7 - Preview Particle Catalog Only | **21c Preview Particle Catalog Only** | KD_HandMenuScrollEditor.cs |
+| Menu Finish/3 - Verify | **22 Verify Localization** | KD_MenuFinishEditor.cs |
+| Menu Finish/5 - Verify Language Extension | **22b Verify Language Extension** | KD_MenuFinishEditor.cs |
+| Menu Finish/4 - Preview | **22c Preview Menu Finish** | KD_MenuFinishEditor.cs |
+| Menu Finish/6 - Preview Photo Share Context | **22d Preview Photo Share Context** | KD_MenuFinishEditor.cs |
+| Activities/3 - Verify | **23 Verify Activities** | KD_ActivitiesEditor.cs |
+| Activities/4 - Preview UI | **23a Preview Activities UI** | KD_ActivitiesEditor.cs |
+| Hand Menu Collision/2 - Verify | **24 Verify Collision** | KD_HandMenuCollisionEditor.cs |
+| Dog Previews/2 - Verify | **25 Verify Dog Previews** | KD_DogPreviewEditor.cs |
+| Dog Previews/3 - Render | **25a Render Dog Previews** | KD_DogPreviewEditor.cs |
+| Dog Previews/4 - Measure Skin | **25b Measure Skin** | KD_DogPreviewEditor.cs |
+| Dog Previews/6 - Check Menu States | **25c Check Menu States** | KD_DogPreviewEditor.cs |
+
+Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 / Archive 45 / BGM 3 / Bedroom and Onboarding 7 / Build Size 8 / Call Poses 7 / Cat 3 / Companion Motions 3 / Credit 2 / Debug 5 / Display Guidance 3 / Dog Book 5 / Dog Breath 2 / Dog Load 2 / Dog Pack 3 / Dog Performance 1 / Dog Sync 5 / Dog Unit 5 / Fetch System 6 / Fur Material 2 / Gift Code 4 / Live System 4 / Npc Controller 2 / Pet Sampling 1 / Pet System 13 / Photo Frames 4 / Photo System 8 / Photo and Information 4 / Plush Review 7 / Plush Shelf 5 / Products 3 / Progress System 3 / Release Check 1 / Scene Layout 3 / Shop Display LOD 3 / Shop Keeper 4 / Sleep Audio 4 / Sleep Placement 8 / Stop Anchor 5 / Texture Budget 2 / Toy Box 7 / Toy Catalog 3 / Toy Physics 6 / VR Interaction 4 / Wander System 3 / Welcome Guide 3
+
+### 除外した Editor (`Imported/KominkaDogRun/Editor~/`、Unity は読み込まない)
+
+28 本。どれも、構築手順に使う Editor から参照されていない。依存を閉包計算して確かめた。
+
+| ファイル | 欠けている型 | 必要になる段階 |
+|---|---|---|
+| `KD_DogAnimDebugHudEditor.cs` / `KD_DogPlayDebugHudEditor.cs` / `KD_ProgressDebugHudEditor.cs` | `KominkaDogRun.DebugTools` (古民家の `Scripts/Debug/`。取り込んでいない) | 不要 (デバッグ HUD) |
+| `KD_CatSetupEditor.cs` | `KD_CatController` | 不要 (猫は裏山では使わない) |
+| `KD_MobileStripEditor.cs` | `HoboRadio_Controller` (購入ラジオ) | 不要 (ラジオは使わない) |
+| `KD_PumpkinProductionEditor.Revision.cs` / `KD_PumpkinPreviewEditor.Inspection.cs` | `VirtualCampers.LiveGenerator` (別リポジトリ) | DES-LIV-001 の採用後 |
+| `KD_PumpkinPreviewEditor.Stage.cs` | `KD_CandyRehearsalEditor` (`Editor/Testing/`。コピー対象外) | DES-LIV-001 の採用後 |
+| Stage.cs を外すと連鎖して使えなくなるもの: `KD_PumpkinPreviewEditor.{cs,Bodies,Costumes,MountAnimation,MountAnimatorInspection,MountInspection,Props,Revision}` / `KD_PumpkinProductionEditor.{cs,Scene}` / `KD_CandyDogSetupEditor.{cs,Choreography,Mount}` / `KD_CandyPreviewEditor` / `KD_ApprovedLivesEditor` / `KD_DogAnimatorBuilderEditor.{cs,Clips,Diagnose,RootAudit,Verify}` | 同じクラスの別ファイル (partial) にある `One` / `GuardStage` / `ShowVersion` などと、`KD_PumpkinPreviewEditor.MountHopPath` ほか | ライブ採用後。犬の Animator を作り直すときも戻す |
+
+### 小アセットのコピー
+
+`.meta` ごとコピーし、GUID を古民家と同じにした。
+
+| ファイル (`Imported/KominkaDogRun/`) | 用途 |
+|---|---|
+| `Data/UITranslations.json` (1,034,236 B) / `Data/UILocalizationBindings.json` (40,208 B) | 文言の正本。`KD_MenuFinishEditor.CatalogPath` / `KD_LocalizationEditor` が参照する |
+| `Materials/KD_SleepPreview.mat` (GUID `e26c2cf3…`) | ミニチュアのプレビュー |
+| `Shaders/KD_DogPreview.shader` (GUID `530184e0…`、`KominkaDogRun/Dog Preview`) | 同上 |
+
+置き場所は指示どおり `Imported/KominkaDogRun/Data/` にした。計画 D-4 の「`Assets/KominkaHillside/Data/` へコピー」とは違うので、0-b で文言に裏山向けの変更を入れるときにどちらへ置くかを決める。
+
+### 裏山改変 (ガード)
+
+司令塔の判断 (2026-09-23) で、購入アセットへの参照をプリプロセッサで分けた。partial では既存メソッドの本体にある参照を消せないため。ランタイムの `KD_MenuSettings` が使っている `#if KH_WITH_SLEEPKIT` と同じやり方にそろえた。どちらの定義も裏山では立てていないので、`#else` 側 (または何もしない側) がコンパイルされる。各ガードの直前に「裏山改変: 購入アセット (HoboRadio / SleepKit) は裏山に無い」の 1 行コメントがある。行番号は改変後のファイルのもの。
+
+| ファイル | 行 | 定義名 | 囲んだもの | 裏山での動作 (`#else`) | 理由 |
+|---|---|---|---|---|---|
+| `KD_MenuFinishEditor.cs` | L66-80 (Setup) | `KH_WITH_HOBORADIO` | `HoboRadio_Controller` / `VolumeSlider` の探索と必須チェック | 「ラジオ未導入」の Log を 1 行出す | 購入ラジオが無い |
+| 同上 | L99-104 (Setup) | `KH_WITH_HOBORADIO` | `settings.radio` / `radioAudio` / `radioKnob` / `knobMin` / `knobMax` への代入 | `radio` / `radioAudio` / `radioKnob` を null にする (以後の null チェックで無効) | 同上 |
+| 同上 | L213-219 (BuildNightMode) | `KH_WITH_SLEEPKIT` | `RBS.SleepKit2.Udon.SleepKitSettingsManager` の探索と必須チェック | なし (スライダーだけ作る) | 購入 SleepKit が無い |
+| 同上 | L225-227 (BuildNightMode) | `KH_WITH_SLEEPKIT` | `settings.sleepKit = sleepKit` | なし | `KD_MenuSettings.sleepKit` は同じ定義で外してある |
+| 同上 | L235-239 (BuildNightMode) | `KH_WITH_SLEEPKIT` | ログ行の `sleepKit.name` | 「SleepKit 無し。KH_NightMode への配線は段階 0-b」のログを出す | 同上 |
+| 同上 | L442-453 (Survey) | `KH_WITH_HOBORADIO` | ラジオの列挙 | `RADIO none` をログに出す | 購入ラジオが無い |
+| 同上 | L618-622 (Verify) | `KH_WITH_SLEEPKIT` | `settings.sleepKit!=null` を含む Check | `sleepKit` の条件だけを除いた同じ Check (スライダーが設定ホームにあること) | 同上 |
+| `KD_NightModeSettingsEditor.cs` | L54-59 (Verify) | `KH_WITH_SLEEPKIT` | `SleepKitSettingsManager` の探索と Check | 「裏山では KH_NightMode に置き換える (段階 0-b)」の Log を出して return | 同上 |
+| 同上 | L81-87 (Verify) | `KH_WITH_SLEEPKIT` | backing `sleepKit` の Check | なし (return 後なので実行されない。CS0162 警告のみ) | 同上 |
+
+注意: `KD_MenuFinishEditor.Setup` は元はラジオが無いと例外で止まった。裏山ではラジオ無しのまま進み、ラジオ設定頁 (`RadioSettings`) の器は作られる。0-b では、裏山版の `KD_MenuSettings` (寝室・ラジオ・解像度なし、D-5) に合わせて、この頁を作らない方へ直す必要がある。
+
+### コンパイル結果 — **コンパイル 0 (達成)**
+
+- C#: ガード追加後に force refresh した。Editor.log の新しい区間に `error CS` は 0 件。
+  - `Library/ScriptAssemblies/Assembly-CSharp-Editor.dll` は 2026-09-23 21:00:18 に生成された (1,669,120 B)。最後に編集したファイル (`KD_MenuFinishEditor.cs`、21:00:15) より新しい。
+  - `Assembly-CSharp.dll` は、9 本のランタイム更新後の 20:49:30 に生成されたもの。
+- U#: `UdonSharp.UdonSharpProgramAsset.CompileAllCsPrograms(true)` を実行し、次の行が出た。
+
+  ```
+  [UdonSharp] Compile of 83 scripts finished in 00:03.809
+  ```
+
+  - 新しい Error / Exception は 0 件。
+  - 同じ区間に、シーン内の `障子.*` / `引き戸*` (プレハブのインスタンス) について「has not been fully setup」「Cannot setup behaviour on prefab instance」の警告が出た。これは今回の変更前から同じセッションのログに出ている既存の警告で、シーンは保存していない。
+- eval の `AssetDatabase.LoadAssetAtPath<MonoScript>(…).GetClass()` が次の型を返し、新しいアセンブリで型が解決できることを確かめた。
+  - `KH_HandMenuEditor` → `KominkaHillside.Editor.KH_HandMenuEditor` (Legacy メニューを持つ既存の Editor)
+  - `KD_MenuFinishEditor` → `KominkaDogRun.Editor.KD_MenuFinishEditor`
+  - `KD_TreatSetupEditor` → `KominkaDogRun.Editor.KD_TreatSetupEditor`
+- 以前のブロッカー (`KD_MenuFinishEditor.cs` / `KD_NightModeSettingsEditor.cs` の `RBS.*`、`HoboRadio_Controller`、`VolumeSlider`、`KD_MenuSettings.sleepKit` の参照) は、上のガードで**解消済み**。
+
+### 0-b で扱う残件
+
+- **案内文に残る旧メニュー名 (9 か所):** 系統名だけで `Tools/KominkaDogRun/…` を指している。表示だけの問題で、動作には影響しない。
+  - `KD_MenuFinishEditor.cs`: Sleep System
+  - `KD_SleepSetupEditor.cs`: Dog Pack
+  - `KD_TreatSetupEditor.cs`: Dog Pack
+  - `KD_TreatSetupEditor.Pouch.cs`: Progress System / Fetch System / Sleep System/2 / Live System/2 の 4 か所
+  - `KD_WanderSetupEditor.cs`: Dog Pack/2
+  - 除外した `KD_ProgressDebugHudEditor.cs` に 1 か所
+- **シーン判定の条件:** `"Assets/Scenes/KominkaDogRun.unity"` を条件にしているため、裏山のシーン `Assets/Scenes/VRCDefaultWorldScene.unity` では該当メニューが止まる。構築手順で使うものの例は `KD_MenuFinishEditor.Setup` (Menu/11)。ほかに `KD_ActionProductsEditor` と `KD_AccessoryEverydayEditor` などにもある。0-b でメニューを実行する前に、裏山のシーンへ向ける。
+- **ラジオ設定頁:** 上の注意のとおり、ラジオ無しでも器が作られるので、作らない方へ直す。

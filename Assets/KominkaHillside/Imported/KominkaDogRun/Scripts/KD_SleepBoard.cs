@@ -63,8 +63,9 @@ namespace KominkaDogRun
         public KD_DogPack pack;
 
         /// <summary>**開放フラグ。** オフならオーナー以外は呼べない (Issue §1 決定 2)。
+        /// **既定は ON** (2026-09-22 ユーザー決定) — 部屋は開いた状態で始め、絞りたいときだけ管理者が設定ホームで切る。
         /// 同期はこの 1 本だけ — 誰が占有しているかは枠が持つ。</summary>
-        [UdonSynced] private bool openToAll;
+        [UdonSynced] private bool openToAll = true;
 
         /// <summary>Owner になってから書いてよくなるまでの打ち切り (秒)。
         /// <see cref="KD_SleepSlot"/> と同じ理屈 (`SetOwner` 直後の書き込みは捨てられうる)。</summary>

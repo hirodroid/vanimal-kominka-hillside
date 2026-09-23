@@ -18,7 +18,8 @@ namespace KominkaDogRun
     {
         [Tooltip("共通の管理者判定 (Tools/KominkaDogRun/Menu Finish が配線する)。未配線なら設定を変更できない")]
         public KD_SleepBoard sleepBoard;
-        [UdonSynced] private bool openToAll;
+        // 既定は ON (2026-09-22 ユーザー決定)。開けた部屋は最初から各所持者が開催でき、絞りたい部屋だけ管理者が設定ホームで切る
+        [UdonSynced] private bool openToAll = true;
         private bool _pending;
         private bool _target;
         private float _deadline;

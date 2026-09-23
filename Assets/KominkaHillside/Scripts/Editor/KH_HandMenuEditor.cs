@@ -76,7 +76,7 @@ namespace KominkaHillside.Editor
         }
 
         // TMP Essential Resources (TMP_Settings, shaders) are git-ignored; a fresh clone needs this once (vrc-tmp-font §0).
-        [MenuItem("Tools/KominkaHillside/Menu/0 Import TMP Essentials")]
+        [MenuItem("Tools/KominkaHillside/Menu/Legacy/0 Import TMP Essentials")]
         public static void ImportTmpEssentials()
         {
             string pkg = Path.GetFullPath("Library/PackageCache/com.unity.textmeshpro@3.0.6/Package Resources/TMP Essential Resources.unitypackage");
@@ -85,7 +85,7 @@ namespace KominkaHillside.Editor
             Report("tmp-import", "imported " + pkg);
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/1 Measure Font")]
+        [MenuItem("Tools/KominkaHillside/Menu/Legacy/1 Measure Font")]
         public static void MeasureFont()
         {
             var font = Font(); if (font == null) throw new InvalidOperationException("Font asset missing: " + FontPath);
@@ -102,7 +102,7 @@ namespace KominkaHillside.Editor
         }
 
         // Bakes missing glyphs into the static font (Dynamic for the call, Static after). Rebakes at 48 pt when the atlas is full.
-        [MenuItem("Tools/KominkaHillside/Menu/2 Ensure Glyphs")]
+        [MenuItem("Tools/KominkaHillside/Menu/Legacy/2 Ensure Glyphs")]
         public static void EnsureGlyphs()
         {
             var font = Font(); if (font == null) throw new InvalidOperationException("Font asset missing: " + FontPath);
@@ -191,7 +191,7 @@ namespace KominkaHillside.Editor
             return img;
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/3 Build Menu")]
+        [MenuItem("Tools/KominkaHillside/Menu/Legacy/3 Build Menu")]
         public static void Build()
         {
             Guard(); var scene = EditorSceneManager.GetActiveScene();
@@ -359,7 +359,7 @@ namespace KominkaHillside.Editor
             return "?";
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/4 Verify Menu")]
+        [MenuItem("Tools/KominkaHillside/Menu/Legacy/4 Verify Menu")]
         public static void Verify()
         {
             Guard(); var log = new StringBuilder(); int total = 0, failed = 0;

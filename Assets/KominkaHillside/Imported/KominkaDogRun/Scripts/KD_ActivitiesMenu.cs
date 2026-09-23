@@ -154,7 +154,8 @@ namespace KominkaDogRun
                 // トレーナー (CE Subscription): 商品名ではなく「加入しますか？」。1 か月 500C から
                 int st = items[_confirm].ConfirmationState(false);
                 pouch._ShowConfirm(KD_TreatPouch.ConfirmActivities, L("activities.trainerConfirmTitle"), L("activities.trainerConfirmBody"),
-                    st == KD_ShopItem.ConfirmLoading ? L("activities.loading") : L("confirm.storeNote"),
+                    // トレーナー (Subscription) はギフト対応が未確認なので、共通の confirm.storeNote (「ギフトもここから」) ではなく既存文だけ (IMP-PRG-012)
+                    st == KD_ShopItem.ConfirmLoading ? L("activities.loading") : L("activities.storeNoteCard"),
                     st == KD_ShopItem.ConfirmSpecial, L("confirm.storeButton"));
             }
             else pouch._HideConfirm(KD_TreatPouch.ConfirmActivities);

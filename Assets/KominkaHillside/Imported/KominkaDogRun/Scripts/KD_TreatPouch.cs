@@ -267,6 +267,8 @@ namespace KominkaDogRun
         public const string WordAccChoose = "えらぶ";
         /// <summary>2 ページ目から戻る。</summary>
         public const string WordAccBack = "もどる";
+        /// <summary>行の [ギフト] の Editor 既定文 (IMP-PRG-012)。実行時は文言表 product.gift。</summary>
+        public const string WordGift = "ギフト";
         /// <summary>2 ページ目、着けられる犬の行のボタン。</summary>
         public const string WordAccPut = "つける";
         /// <summary>2 ページ目、既にその飾りが着いている行のボタン。</summary>
@@ -521,6 +523,9 @@ namespace KominkaDogRun
         public UnityEngine.UI.Button[] liveButtonComponents;
         public UnityEngine.UI.Image[] liveButtonImages;
         public TextMeshProUGUI[] liveButtonLabels;
+        [Tooltip("行の [ギフト] (IMP-PRG-012)。所有済みの買い切り CE (Pack / キャンディ / パンプキン) の一覧の行だけ出す。押すと贈る確認カード → 同じ Listing を開く")]
+        public GameObject[] liveGiftButtons;
+        public TextMeshProUGUI[] liveGiftLabels;
 
         [Tooltip("状態の 1 行 (〇〇さんが開催中 残り N 秒 / 次の開催まで あと N 秒)")]
         public TextMeshProUGUI liveStatusLabel;
@@ -551,6 +556,8 @@ namespace KominkaDogRun
         public GameObject liveConfirmNo;
 
         private int _liveConfirmRow = -1;
+        /// <summary>贈る確認を開いている商品 (liveProducts の添字)。購入の確認 (_liveConfirmRow) とは別に持つ — 所有で閉じない (IMP-PRG-012)。</summary>
+        private int _liveGiftRow = -1;
 
         // ============================================================
         // かざりタブ (DES-DOG-004)
@@ -589,6 +596,9 @@ namespace KominkaDogRun
         public GameObject[] accButtons;
         public UnityEngine.UI.Button[] accButtonComponents;
         public TextMeshProUGUI[] accButtonLabels;
+        [Tooltip("1 ページ目の行の [ギフト] (IMP-PRG-012)。所有済みの買い切り CE セット (王様 / 夏 / キャンディ / パンプキン) だけ出す。2 ページ目 (犬) では全部隠す")]
+        public GameObject[] accGiftButtons;
+        public TextMeshProUGUI[] accGiftLabels;
 
         [Tooltip("2 ページ目の見出し (選んだ飾りの名前) と [もどる]")]
         public GameObject accBackButton;
@@ -1207,7 +1217,7 @@ namespace KominkaDogRun
             panelRoot.SetActive(open);
             // hints._OnMenuOpened() はここでは呼ばない — 「開いた」と「自分の操作で開けた」は別 (MarkSelfOpened。IMP-INF-020)
             if (!open) { _panelClosedFrame = Time.frameCount; _gardenPlaced = false; }
-            if (!open) { _fxConfirmRow = -1; _liveConfirmRow = -1; _livePage = LivePageList; _liveProduct = -1; _accConfirm = false; HideConfirmAll(); return; }
+            if (!open) { _fxConfirmRow = -1; _liveConfirmRow = -1; _liveGiftRow = -1; _livePage = LivePageList; _liveProduct = -1; _accConfirm = false; _accGiftRow = -1; HideConfirmAll(); return; }
 
             // 初回はかざり。同じ滞在中は直前のタブを保ち、繰り返し操作を短くする。
             ApplyTab();
@@ -1242,8 +1252,8 @@ namespace KominkaDogRun
             _volumeSettingsOpen = false;
             _distanceFadeSettingsOpen = false;
             _fxConfirmRow = -1;
-            _liveConfirmRow = -1;
-            _accConfirm = false;
+            _liveConfirmRow = -1; _liveGiftRow = -1;
+            _accConfirm = false; _accGiftRow = -1;
             HideConfirmAll();
             ApplyTab();
             Redraw();
@@ -1258,9 +1268,9 @@ namespace KominkaDogRun
             _settingsOpen = false;
             _tab = tab;
             _fxConfirmRow = -1;
-            _liveConfirmRow = -1;
+            _liveConfirmRow = -1; _liveGiftRow = -1;
             _livePage = LivePageList; _liveProduct = -1;   // P7: ライブは一覧から
-            _accConfirm = false;
+            _accConfirm = false; _accGiftRow = -1;
             HideConfirmAll();
             ApplyTab();
             // P2: あそぶの面は KD_ActivitiesMenu が描く。タブを開くたびにホームへ戻す (Codex 指摘 2026-09-17: _OpenSettings に置いていた)

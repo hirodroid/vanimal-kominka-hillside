@@ -192,7 +192,26 @@
 
 ## 実装記録
 
-### 段階 0-a: 未着手
+### 段階 0-a (2026-09-23)
+
+**状態: 完了 (コンパイル 0)。C# のランタイムと Editor はエラー 0、U# は 83 本のコンパイルが完了した。** 記録の詳細は [kominka-dog-system「2026-09-23 Editor ビルダーの移植 (段階 0-a)」](../development/imports/kominka-dog-system.md#2026-09-23-editor-ビルダーの移植-段階-0-a)。
+
+- 古民家 `Assets/KominkaDogRun/Editor/*.cs` の 129 本 (Testing 除く) を `Assets/KominkaHillside/Imported/KominkaDogRun/Editor/` にコピーした。有効なのは 101 本。28 本は欠けている型のため `Editor~/` へ除外した (デバッグ HUD、猫、ラジオ、パンプキン/キャンディのライブ制作系と、その連鎖先)。構築手順の Editor は 1 本も除外していない。
+- パス置換 156 種 (延べ 227 か所) を node で機械的に適用した。`Assets/KominkaDogRun` の残りは 0。置換後の 101 本のうち 99 本は、`44505384` と置換の差以外は同一。残りの 2 本は下のガードだけが違う。
+- MenuItem は、構築手順の 55 本を `Tools/KominkaHillside/Menu/1 Bake UI Sprite` 〜 `25c` に、それ以外の 241 本を `Menu/Imported-Unused/…` に置いた。すべて ASCII。KH_HandMenuEditor の 5 本は `Menu/Legacy/` へ移した。
+- 版ずれを解消するため、未改変のランタイム 9 本 (KD_TreatPouch 本体 + Acc/Confirm/Live、KD_ActivitiesMenu、KD_LiveAccess、KD_ShopKeeper、KD_ShopShelf、KD_SleepBoard) を `503dde8f` 版から `44505384` 版へ更新した (46bc182f / abffd6c6)。ランタイム C# はエラー 0。
+- 小アセット: `UITranslations.json` / `UILocalizationBindings.json` / `KD_SleepPreview.mat` / `KD_DogPreview.shader` を `Imported/KominkaDogRun/` にコピーした (GUID は古民家と同じ)。
+- **裏山改変 (ガード)**: `KD_MenuFinishEditor.cs` (7 か所) と `KD_NightModeSettingsEditor.cs` (2 か所) にある購入アセットへの参照 (`HoboRadio_Controller` / `VolumeSlider` / `RBS.*` / `KD_MenuSettings.sleepKit`) を `#if KH_WITH_HOBORADIO` / `#if KH_WITH_SLEEPKIT` で囲んだ。以前のブロッカーは解消済み。行の一覧は移植記録の「裏山改変 (ガード)」表を見る。
+- コンパイルの証拠:
+  - `Assembly-CSharp-Editor.dll` は 21:00:18 に生成。
+  - `Assembly-CSharp.dll` は 20:49:30 に生成。
+  - U# は `Compile of 83 scripts finished in 00:03.809` が出て、新しいエラーは 0 件。
+  - 既存の `KH_HandMenuEditor` の型は eval で解決できた。
+- 0-b で扱う残件:
+  - 案内文 9 か所に旧メニュー名が残っている。
+  - シーン判定の条件 `Assets/Scenes/KominkaDogRun.unity` を裏山のシーンへ向ける (Menu/11 ほか)。
+  - ラジオ無しでもラジオ設定頁の器が作られるので、作らないようにする。
+- 未実施: シーン変更、Tools メニューの実行、Codex レビュー、コミット。
 
 ## 実機チェックリスト骨子 (段階 0 の PCVR 同等性確認)
 

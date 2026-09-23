@@ -37,6 +37,33 @@ namespace KominkaDogRun
         public void _Live7() { Live(7); }
         public void _Live8() { Live(8); }
 
+        public void _LiveGift0() { LiveGift(0); }
+        public void _LiveGift1() { LiveGift(1); }
+        public void _LiveGift2() { LiveGift(2); }
+        public void _LiveGift3() { LiveGift(3); }
+        public void _LiveGift4() { LiveGift(4); }
+        public void _LiveGift5() { LiveGift(5); }
+        public void _LiveGift6() { LiveGift(6); }
+        public void _LiveGift7() { LiveGift(7); }
+        public void _LiveGift8() { LiveGift(8); }
+
+        /// <summary>一覧の行の [ギフト] (IMP-PRG-012)。所有済みの買い切り CE だけ。贈る確認カードを開くだけで、Listing はカードの [購入画面へ] が開く。</summary>
+        private void LiveGift(int row)
+        {
+            if (_livePage != LivePageList) return;
+            KD_ShopItem it = LiveProductAt(row);
+            if (!CanGift(it)) return;
+            _liveConfirmRow = -1; _liveGiftRow = row;
+            Redraw();
+        }
+
+        /// <summary>[ギフト] を出す条件: 買い切りの CE を所有していて、購入情報が届いていて、販売中 (IMP-PRG-012)。
+        /// Subscription (トレーナー) はこの板の売り場に無い。所有判定は KD_ShopItem のまま (ここで組み直さない)。</summary>
+        private bool CanGift(KD_ShopItem it)
+        {
+            return it != null && it.IsCE() && it.CePurchasesLoaded() && it.Owned() && !LiveSaleClosed(it);
+        }
+
         /// <summary>行を押した。一覧: 所持なら開催 (Pack は曲を選ぶ面)、未所持なら詳細の面。曲を選ぶ面: その曲を開催。</summary>
         private void Live(int row)
         {
@@ -50,7 +77,7 @@ namespace KominkaDogRun
             KD_ShopItem it = LiveProductAt(row);
             if (it == null || catalog == null) return;
             if (it.Owned()) { LiveHost(row); return; }
-            _liveProduct = row; _livePage = LivePageDetail; _liveConfirmRow = -1;
+            _liveProduct = row; _livePage = LivePageDetail; _liveConfirmRow = -1; _liveGiftRow = -1;
             Redraw();
         }
 
@@ -60,14 +87,14 @@ namespace KominkaDogRun
             KD_ShopItem it = LiveProductAt(product);
             if (it == null) return;
             int n = LiveShowCount(it);
-            if (n > 1) { _liveProduct = product; _livePage = LivePageSongs; _liveConfirmRow = -1; Redraw(); return; }
+            if (n > 1) { _liveProduct = product; _livePage = LivePageSongs; _liveConfirmRow = -1; _liveGiftRow = -1; Redraw(); return; }
             int liveId = LiveShowOf(it, 0);
             if (liveId >= 0) LiveStartShow(liveId);
         }
 
         private void LiveStartShow(int liveId)
         {
-            _liveConfirmRow = -1;
+            _liveConfirmRow = -1; _liveGiftRow = -1;
             if (live == null || !live.CanStart || !live.IsLocalAllowedToHost) { Feedback("ui.extra.043", false); Redraw(); return; }
             if (live.LocalRequestState == KD_LiveSystem.RequestPending) return;
             _awaitingLive = true;
@@ -91,6 +118,13 @@ namespace KominkaDogRun
                 halloween = hp != null && it.ceListingId == hp.ceListingId;
             }
             if (!halloween) return false;
+            return HalloweenSaleClosedNow();
+        }
+
+        /// <summary>パンプキン・パレードの販売終了 (2026-10-31 23:59 JST = 14:59 UTC) を過ぎたか。ハーネスの期待値も同じ判定を使う。</summary>
+        // net: callable-ok: 読み取りのみ (時刻の比較)
+        public bool HalloweenSaleClosedNow()
+        {
             return System.DateTime.Compare(System.DateTime.UtcNow, new System.DateTime(2026, 10, 31, 14, 59, 0)) >= 0;
         }
 
@@ -108,7 +142,7 @@ namespace KominkaDogRun
             int product = LiveProductIndexOf(HalloweenProductKey);
             if (product < 0) return;
             SetTab(TabLive);
-            _liveProduct = product; _livePage = LivePageDetail; _liveConfirmRow = -1;
+            _liveProduct = product; _livePage = LivePageDetail; _liveConfirmRow = -1; _liveGiftRow = -1;
             Redraw();
         }
 
@@ -126,7 +160,7 @@ namespace KominkaDogRun
         /// <summary>詳細・曲を選ぶ面の [もどる]。</summary>
         public void _LiveBack()
         {
-            _livePage = LivePageList; _liveProduct = -1; _liveConfirmRow = -1;
+            _livePage = LivePageList; _liveProduct = -1; _liveConfirmRow = -1; _liveGiftRow = -1;
             Redraw();
         }
 
@@ -153,13 +187,22 @@ namespace KominkaDogRun
             KD_ShopItem it = LiveProductAt(_liveProduct);
             int row = AccRowOfLiveSet(it);
             SetTab(TabAcc);
-            if (row >= 0) { _accSet = -1; _accSetMenu = 0; _accConfirm = false; _accProduct = row; ResetAccessoryScroll(); Redraw(); }
+            if (row >= 0) { _accSet = -1; _accSetMenu = 0; _accConfirm = false; _accGiftRow = -1; _accProduct = row; ResetAccessoryScroll(); Redraw(); }
         }
 
-        /// <summary>確認カードの [購入]。**pt が減る唯一の口** (なでタブと同じ 2 段階)。
-        /// CE 品は pt を動かさず Storefront を開くだけ (IMP-FET-010)。</summary>
+        /// <summary>確認カードの [購入] / [購入画面へ]。**pt が減る唯一の口** (なでタブと同じ 2 段階)。
+        /// CE 品は pt を動かさず Storefront を開くだけ (IMP-FET-010)。
+        /// 贈る確認 (_liveGiftRow) からも来る — 所有済みでも同じ Listing を開く (IMP-PRG-012)。</summary>
         public void _LiveBuy()
         {
+            if (_liveGiftRow >= 0)
+            {
+                KD_ShopItem g = LiveProductAt(_liveGiftRow);
+                _liveGiftRow = -1;
+                if (CanGift(g)) g._OpenStore();
+                Redraw();
+                return;
+            }
             KD_ShopItem it = LiveProductAt(_liveConfirmRow);
             _liveConfirmRow = -1;
             if (it == null || catalog == null || LiveSaleClosed(it)) { Feedback("KD_ShopShelf.WordCantBuy", false); Redraw(); return; }
@@ -172,7 +215,7 @@ namespace KominkaDogRun
 
         public void _LiveCancel()
         {
-            _liveConfirmRow = -1;
+            _liveConfirmRow = -1; _liveGiftRow = -1;
             Redraw();
         }
 
@@ -339,6 +382,7 @@ namespace KominkaDogRun
                 bool rowOn = false;
                 bool show = false;
                 bool on = false;
+                bool gift = false;
                 string title = "-";
                 string sub = "";
                 string buttonWord = L("KD_TreatPouch.WordLiveHost");
@@ -350,7 +394,7 @@ namespace KominkaDogRun
                         rowOn = true;
                         title = L(it.displayNameKey);
                         sub = LiveJoin(LiveTagOf(it), LivePriceText(it));
-                        if (it.Owned()) { show = true; on = hostOn; }
+                        if (it.Owned()) { show = true; on = hostOn; gift = CanGift(it); }   // 所有済みの買い切り CE は [ギフト] も (IMP-PRG-012)
                         else if (LiveSaleClosed(it)) { show = false; sub = LiveJoin(LiveTagOf(it), L("live.saleClosed")); }
                         else { show = true; on = true; buttonWord = L("KD_TreatPouch.WordLiveMore"); }
                     }
@@ -369,7 +413,14 @@ namespace KominkaDogRun
                 if (rowGo != null && rowGo.activeSelf != rowOn) rowGo.SetActive(rowOn);
                 if (!rowOn) continue;
                 TextMeshProUGUI lbl = liveLabels[i];
-                if (lbl != null) lbl.text = title;
+                if (lbl != null)
+                {
+                    lbl.text = title;
+                    // [ギフト] (右上 136×40、x 110..246) が出る行は名前の幅を詰める (左寄せなので文字は動かない。IMP-PRG-012)
+                    RectTransform lr = (RectTransform)lbl.transform;
+                    lr.anchoredPosition = new Vector2(gift ? -70f : 0f, 32f);
+                    lr.sizeDelta = new Vector2(gift ? 340f : 480f, 36f);
+                }
                 if (liveSubLabels != null && i < liveSubLabels.Length && liveSubLabels[i] != null)
                     liveSubLabels[i].text = sub;
                 if (liveButtonLabels != null && i < liveButtonLabels.Length && liveButtonLabels[i] != null)
@@ -381,6 +432,10 @@ namespace KominkaDogRun
                     liveButtonComponents[i].interactable = on;
                 if (liveButtonImages != null && i < liveButtonImages.Length && liveButtonImages[i] != null)
                     liveButtonImages[i].color = on ? recallOnColor : recallOffColor;
+                GameObject giftBtn = (liveGiftButtons != null && i < liveGiftButtons.Length) ? liveGiftButtons[i] : null;
+                if (giftBtn != null && giftBtn.activeSelf != gift) giftBtn.SetActive(gift);
+                if (gift && liveGiftLabels != null && i < liveGiftLabels.Length && liveGiftLabels[i] != null)
+                    liveGiftLabels[i].text = L("product.gift");
             }
 
             RedrawLiveDetail(current, hostOn);
@@ -416,7 +471,11 @@ namespace KominkaDogRun
             // ---- 確認 (P13: 板の手前のカード。なで・かざりと同じ 1 枚) ----
             KD_ShopItem c = LiveProductAt(_liveConfirmRow);
             if (c != null && (c.Owned() || LiveSaleClosed(c))) { _liveConfirmRow = -1; c = null; }   // 買えた / 別経路で入手した / 開いている間に販売が終わった
+            // 贈る確認 (IMP-PRG-012): 所有が前提なので所有で閉じない。贈れなくなった (販売終了・所有が消えた) ら閉じる
+            KD_ShopItem g = LiveProductAt(_liveGiftRow);
+            if (g != null && !CanGift(g)) { _liveGiftRow = -1; g = null; }
             if (c != null) _ShowItemConfirm(ConfirmLive, c, LiveBundleLabel(c));
+            else if (g != null) _ShowGiftConfirm(ConfirmLive, g, LiveBundleLabel(g));
             else _HideConfirm(ConfirmLive);
         }
 

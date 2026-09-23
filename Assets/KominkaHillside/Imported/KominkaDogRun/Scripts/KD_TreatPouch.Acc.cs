@@ -54,10 +54,52 @@ namespace KominkaDogRun
         public void _Acc14() { AccRow(14); }
         public void _Acc15() { AccRow(15); }
 
+        public void _AccGift0() { AccGift(0); }
+        public void _AccGift1() { AccGift(1); }
+        public void _AccGift2() { AccGift(2); }
+        public void _AccGift3() { AccGift(3); }
+        public void _AccGift4() { AccGift(4); }
+        public void _AccGift5() { AccGift(5); }
+        public void _AccGift6() { AccGift(6); }
+        public void _AccGift7() { AccGift(7); }
+        public void _AccGift8() { AccGift(8); }
+        public void _AccGift9() { AccGift(9); }
+        public void _AccGift10() { AccGift(10); }
+        public void _AccGift11() { AccGift(11); }
+        public void _AccGift12() { AccGift(12); }
+        public void _AccGift13() { AccGift(13); }
+        public void _AccGift14() { AccGift(14); }
+        public void _AccGift15() { AccGift(15); }
+
+        /// <summary>贈る確認を開いている商品 (accItems の添字)。購入の確認 (_accConfirm) とは別に持つ — 所有で閉じない (IMP-PRG-012)。</summary>
+        private int _accGiftRow = -1;
+
+        /// <summary>1 ページ目 (商品一覧) の行の [ギフト] (IMP-PRG-012)。行 = 一覧の何行目か (AccRow と同じ添字)。
+        /// 所有済みの買い切り CE セットだけ。贈る確認カードを開くだけで、Listing はカードの [購入画面へ] が開く。</summary>
+        private void AccGift(int row)
+        {
+            if (_accProduct >= 0 || _accSetMenu != 0) return;   // 商品一覧の面だけ
+            EnsureAccessoryCatalog();
+            if (_accCatalogRows == null || row < 0 || row >= _accCatalogCount) return;
+            int product = _accCatalogRows[row];
+            if (!AccCanGift(product)) return;
+            _accConfirm = false; _accGiftRow = product;
+            Redraw();
+        }
+
+        /// <summary>[ギフト] を出す条件: 買い切りの CE セットを所有していて、購入情報が届いていて、販売中 (IMP-PRG-012)。
+        /// セットの中身 (単品) は商品ではないので出さない。所有判定は KD_ShopItem のまま。</summary>
+        private bool AccCanGift(int product)
+        {
+            if (accItems == null || product < 0 || product >= accItems.Length) return false;
+            if (accProductIds == null || product >= accProductIds.Length || AccIsSetMember(accProductIds[product])) return false;
+            return CanGift(accItems[product]);   // 条件はライブと同じ 1 か所 (KD_TreatPouch.Live.CanGift)
+        }
+
         /// <summary>犬 → セットの中身/装着方法 → 商品一覧へ一段ずつ戻る。</summary>
         public void _AccBack()
         {
-            _accConfirm = false;
+            _accConfirm = false; _accGiftRow = -1;
             if (_accSet >= 0)
             {
                 if (_accProduct >= 0) _accSetMenu = _accProduct == _accSet ? 1 : 2;
@@ -75,10 +117,20 @@ namespace KominkaDogRun
                 tabScrolls[TabAcc].verticalNormalizedPosition = 1f;
         }
 
-        public void _AccConfirmNo() { _accConfirm = false; Redraw(); }
+        public void _AccConfirmNo() { _accConfirm = false; _accGiftRow = -1; Redraw(); }
 
+        /// <summary>カードの [購入] / [購入画面へ]。贈る確認 (_accGiftRow) からも来る — 所有済みでも同じ Listing を開く (IMP-PRG-012)。</summary>
         public void _AccConfirmBuy()
         {
+            if (_accGiftRow >= 0)
+            {
+                int product = _accGiftRow;
+                _accGiftRow = -1;
+                if (_tab == TabAcc && !_settingsOpen && panelRoot != null && panelRoot.activeInHierarchy && AccCanGift(product))
+                    accItems[product]._OpenStore();
+                Redraw();
+                return;
+            }
             if (!_accConfirm || _tab != TabAcc || _settingsOpen || panelRoot == null || !panelRoot.activeInHierarchy) return;
             if (accItems == null || _accProduct < 0 || _accProduct >= accItems.Length) return;
             if (accProductIds == null || _accProduct >= accProductIds.Length) return;
@@ -253,6 +305,8 @@ namespace KominkaDogRun
             { _accSet = -1; _accSetMenu = 0; _accProduct = -1; _accConfirm = false; }
 
             bool page2 = _accProduct >= 0 && accProductIds != null && _accProduct < accProductIds.Length;
+            // 贈る確認 (IMP-PRG-012) は商品一覧の面だけ。面を離れた / 贈れなくなったら閉じる (所有では閉じない)
+            if (_accGiftRow >= 0 && (page2 || _accSetMenu != 0 || !AccCanGift(_accGiftRow))) _accGiftRow = -1;
             KD_ShopItem previewItem = page2 && accItems != null && _accProduct < accItems.Length ? accItems[_accProduct] : null;
             if (previewItem == null || previewItem.Owned() || LiveSaleClosed(previewItem)) _accConfirm = false;
             int previewSelection = page2 ? accProductIds[_accProduct] : -1;
@@ -261,6 +315,11 @@ namespace KominkaDogRun
             if (page2 && _accConfirm && previewItem != null)
                 _ShowItemConfirm(ConfirmAcc, previewItem, previewItem.categoryKey == "live" ? LiveBundleLabel(previewItem)
                     : accessories != null && accProductIds != null && accessories.IndexOfSet(accProductIds[_accProduct]) >= 0 ? L("accessory.set") : "");
+            else if (_accGiftRow >= 0)
+            {
+                KD_ShopItem giftItem = accItems[_accGiftRow];
+                _ShowGiftConfirm(ConfirmAcc, giftItem, giftItem.categoryKey == "live" ? LiveBundleLabel(giftItem) : L("accessory.set"));
+            }
             else _HideConfirm(ConfirmAcc);
 
             bool canBack = page2 || _accSetMenu > 0;
@@ -283,6 +342,7 @@ namespace KominkaDogRun
 
                 string label, sub, button;
                 bool enabled;
+                bool gift = false;
 
                 if (page2) AccDogRow(i, out label, out sub, out button, out enabled);
                 else if (_accSetMenu == 1)
@@ -296,15 +356,16 @@ namespace KominkaDogRun
                     int choice = _accSetMenu == 2 ? AccMemberRow(i) : _accCatalogRows[i];
                     AccProductRow(choice, out label, out sub, out button, out enabled);
                     if (_accSetMenu == 2) sub = choice >= 0 && accSlotNameKeys != null && choice < accSlotNameKeys.Length ? L(accSlotNameKeys[choice]) : "";
-                    else if (choice >= 0 && AccOwned(choice)) button = L("KD_TreatPouch.WordAccPut");
+                    else if (choice >= 0 && AccOwned(choice)) { button = L("KD_TreatPouch.WordAccPut"); gift = AccCanGift(choice); }   // 所有済みの買い切り CE セットは [ギフト] も (IMP-PRG-012)
                 }
 
                 if (accRowLabels != null && i < accRowLabels.Length && accRowLabels[i] != null)
                 {
                     accRowLabels[i].text = label;
                     RectTransform labelRect = (RectTransform)accRowLabels[i].transform;
-                    labelRect.anchoredPosition = new Vector2(page2 ? 80f : 0f, 32f);
-                    labelRect.sizeDelta = new Vector2(page2 ? 320f : 480f, 36f);
+                    // [ギフト] (右上 160×40、x 86..246) が出る行は名前の幅を詰める (左寄せなので文字は動かない)
+                    labelRect.anchoredPosition = new Vector2(page2 ? 80f : gift ? -90f : 0f, 32f);
+                    labelRect.sizeDelta = new Vector2(page2 ? 320f : gift ? 300f : 480f, 36f);
                 }
                 if (accRowSubLabels != null && i < accRowSubLabels.Length && accRowSubLabels[i] != null)
                 {
@@ -318,6 +379,10 @@ namespace KominkaDogRun
                 if (accButtonComponents != null && i < accButtonComponents.Length
                     && accButtonComponents[i] != null)
                     accButtonComponents[i].interactable = enabled;
+                GameObject giftBtn = (accGiftButtons != null && i < accGiftButtons.Length) ? accGiftButtons[i] : null;
+                if (giftBtn != null && giftBtn.activeSelf != gift) giftBtn.SetActive(gift);
+                if (gift && accGiftLabels != null && i < accGiftLabels.Length && accGiftLabels[i] != null)
+                    accGiftLabels[i].text = L("product.gift");
             }
         }
 
