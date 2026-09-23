@@ -1,11 +1,11 @@
 # KominkaHillside -- AI Document Index
 
 > AI エージェント用ナビゲーション入口。
-> 編集・実装の前に必ずこのファイルから読み始めること。
+> 共通指示はCLAUDE.md。対象が分かる作業は必要な資料・節だけ読む。
 
 ## Reading Rules
 
-1. **TIER 0 は常に最初に読む** -- CLAUDE.md (root) + このファイル
+1. **CLAUDE.mdを共通入口にする**。この索引は仕様判断・作業選択・資料探索時に読む。対象Issueが既知なら個票と参照先の該当節へ直行し、仕様・機能変更時は下の不変条件を確認する
 2. **タスクに関連する TIER 1 だけ読む** -- 全部読まない
 3. **TIER 2 はドメインが関わるときだけ参照**
 4. **体験の意図・見た目の判断は core-concept.md、仕様判断は game-design.md に立ち返る**
@@ -14,7 +14,7 @@
 
 ## Document Tree
 
-### TIER 0: AI Gate (必読)
+### TIER 0: AI Gate (作業入口)
 
 | File | Role |
 |------|------|
@@ -72,18 +72,17 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 
 ## 現在地と次の作業
 
-**2026-09-20 PCVR試作確認**: ユーザーがPlayはひとまず良好、アップロード後PCVRで非常に面白かったと報告。同じ6匹とリード散歩の体験を確認できたプロトタイプとして保存する。各操作・6匹・複数人・Quest単体・iOSの検証が全て済んだ意味ではない。**その後 2026-09-22 に 6 人 PCVR でリード散歩が成立し、リード散歩の Issue は完了** (項目別の合否は未記録)。
+現在の判断と改善順は [開発全体像](development/overview.md) §3、実行キューと状態は [Issueサマリ](development/issues/issue_summary.md)。個票・検証記録の最新記載を確認し、過去のPASSを現在版の合格へ読み替えない。試行経緯・検査件数はこの入口へ追記せず、次の記録を更新する。
 
-後から受領した散歩資料を正とする。**地形は 2026-09-22 に Unity Terrain 採用で確定** (ユーザー判断「もうテレインで OK」。眺め・端は PCVR で良好)。Terrain v4は「門→登り道→見晴らし→上部の遊び場」の試作で、最終コース長・形状・休憩場所数・端処理は未確定。実物6匹を導入しダミー非表示。地形Editor検査53/53、散歩Editor検査74/74の範囲と実機の結果を区別する。境界 (南東・南西の隅)・落下・負荷は項目別に未確認で、景観の磨き込み (IMP-ENV-001) が引き受ける。**Quest 単体・iOS はまだ一度も実機に載せておらず、全機能の実機確認を [VER-WLD-001](development/issues/VER-WLD-001-quest-ios-devices.md) に集約した** (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界)。
-
-- 現在の品質・改善順: [開発全体像](development/overview.md) §3。
-- 最新の到達点 (`f25de23`): 目的地と通過点による自由な散歩 (IMP-DOG-003 手順1〜2)、ボールの広場配置 (BUG-DOG-001 完了)、首輪・リードの本制作 (IMP-DOG-004) を PCVR 1 人で確認し好評。[散歩の記録](plans/2026-09-20-free-walk.md)、[制作票](plans/2026-09-20-leash-asset-production.md)。
-- **手元メニュー (2026-09-22 確認済み)**: さんぽ / あそぶ / おもちゃ の 3 タブ、リード拠点、集合、ボール個別回収、共通購入権を実装し、ユーザーが PCVR で確認した。設計票 DES-UI-001 は完了 (archive)。**複数人での競合は 2026-09-22 の 6 人 PCVR で成立** (リード散歩の確認と同じ場)。残るのは座位・Desktop/Touch の入口 (IMP-DOG-003)、権限の再判定・端末別入力 (DES-DOG-001)、Quest/iOS ([VER-WLD-001](development/issues/VER-WLD-001-quest-ios-devices.md))。仮看板は残置中。[記録とチェックリスト](plans/2026-09-20-menu-gather-stations.md)。
-- 並行: **BUG-DOG-002** 持ち手の向き、**DES-WLD-002** 音の設計。順序は [開発全体像 §3](development/overview.md)。
-- **IMP-DOG-005 フリスビー**: 本シーンの散歩のラブが取れる (広場限定、照準モード、位置取り、メニュー「おもちゃ」の「フリスビー」)。PCVR 1 人で好評。項目別・2 人・他犬は未、Quest/iOS は [VER-WLD-001](development/issues/VER-WLD-001-quest-ios-devices.md)。調整用の試作シーン `Assets/Scenes/KH_FrisbeePrototype.unity` と `Tools/KominkaHillside/Frisbee/` は残す。[記録とチェックリスト](plans/2026-09-20-frisbee-prototype.md)。
-- **フリスビー (2026-09-21〜22)**: [IMP-DOG-008](development/issues/archive/IMP-DOG-008-frisbee-variations.md) 完了。ラブ 1 匹で先回り型 + 動きの層 (回り込み・追いながら跳ぶ) に作り替え、6 プリセット (待つ場所 3 種・ひねり・横曲がり) を全部採用。開発用切替は当面残す。次は [IMP-DOG-012](development/issues/IMP-DOG-012-frisbee-six-dogs.md) (6 匹展開) と [DES-UI-002](development/issues/DES-UI-002-frisbee-settings.md) (設定の中身・操作権)。ClientSim ハーネス `scripts/kh-frisbee-harness.cjs` で捕獲・完了・動きの質を機械判定。**PCVR 1 回目は「全然取らない」→ 先回り型キャッチ (投げた瞬間に点を決め 10 m/s で先回り → 真下で微調整 → 真上に跳ぶ) へ作り替え、PCVR 2 回目「かなり良かった」(跳んで取った 29 回 / MISS 3 回)。3 回目に向けて 待機中の向き直り (真の原因 = 停止中の旋回 30°/s)・ブレ・並走の追い抜きを修正、ClientSim ハーネス (`scripts/kh-frisbee-harness.cjs`) を導入し、回帰と「ひねりが取れない」真の原因 (購入犬の胴体がルートに遅れて追従する ParentConstraint) を修正、PCVR 3 回目「機械的」(瞬間移動・急旋回・ポンと跳ぶ) を受けて、回り込み経路・追いながら跳ぶ (正面も可)・なだらかな加減速・機械っぽさの数値判定へ作り替え。ClientSim 4 回目「ひねり以外はだいぶいい」→ ひねりが跳ばない原因 (横の口オフセットで助走の内側に居て、ため開始点が後ろへ滑る) を修正、**ハーネス 30/30 PASS**、Verify 試作 61 / Walking 161 / Menu 27。Build & Test と PCVR 5 回目待ち**。設計・分担・チェックリストは [記録](plans/2026-09-21-frisbee-variations.md)。通常版と採用バリエーションが1匹でOKになってから6匹展開。005の未確認項目は継続する。
-- **空とナイトモード (2026-09-22 確認済み)**: 空は古民家と同じ Allsky キューブマップ、手元メニューのヘッダーに OFF/ON のナイトモード (自前の乗算オーバーレイ、RBS 不使用)。PCVR で確認済み、**Quest / iOS は未確認** ([VER-WLD-001](development/issues/VER-WLD-001-quest-ios-devices.md))。複数人での非伝播も未確認。作業票 IMP-ENV-002 は完了 (archive)。[記録とチェックリスト](plans/2026-09-21-sky-and-night-mode.md)。
-- 状態と実行キュー: [Issueサマリ](development/issues/issue_summary.md)。移植の出所は [移植記録](development/imports/kominka-dog-system.md)、ユーザー報告と項目別手順は [散歩検証記録](plans/2026-09-20-leash-walking.md)。
+| 対象 | 記録・未確認条件の参照先 |
+|---|---|
+| 散歩・首輪・リード | [自由な散歩](plans/2026-09-20-free-walk.md)、[散歩検証](plans/2026-09-20-leash-walking.md)、[制作票](plans/2026-09-20-leash-asset-production.md) |
+| 手元メニュー・集合・拠点 | [実装とチェックリスト](plans/2026-09-20-menu-gather-stations.md) |
+| フリスビー | [本シーン導入](plans/2026-09-20-frisbee-prototype.md)、[動きの改修経緯](plans/2026-09-21-frisbee-variations.md)、[ハーネスの手順・最新記録](testing/kh-frisbee-harness.md)。1匹での成立確認と6匹展開は別 |
+| 空・ナイトモード | [実装とチェックリスト](plans/2026-09-21-sky-and-night-mode.md) |
+| Quest単体・iOS | [端末検証](development/issues/VER-WLD-001-quest-ios-devices.md)。PCVR総合評価を端末別・項目別の合格にしない |
+| 地形・境界・負荷 | [開発全体像](development/overview.md) §2〜3。Terrain採用は確定、境界・落下・負荷の項目別確認は継続 |
+| 犬ギミックの出所 | [移植記録](development/imports/kominka-dog-system.md) |
 
 Build は KH_World を作り直す。手修正は設定へ写してから再生成する。数値は Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeConfig.cs が正本。手置きは KH_World 外へ。
 Unity 操作前は scripts/unity-api.sh 経由で接続と Application.dataPath を確認する。

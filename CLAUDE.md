@@ -96,7 +96,7 @@ VRChat ワールド開発**一般**の知識・作業手順は `.claude/skills/v
 | `vrc-physbone-colliders` | 揺れる部位に当たり判定を載せるとき |
 | `vrc-animator-reactions` | Animator でリアクションを出す / 手の接触・撫でを判定するとき |
 | `vrc-performance` | 「重い」「fps が出ない」を判断するとき |
-| `vrc-codex-review` | 節目 (Issue 完了・設計書の大幅更新・コミット前) に第三者レビューを頼むとき |
+| `vrc-codex-review` | 機能・Issueの確定、設計書大幅更新、まとまった差分の確定前。小変更は適用条件に従って省略 (同期・保存・権限等は少行数でも対象) |
 | `vrc-destructive-audit` | 公開前の総点検・「バグが無いか一通り見て」と頼まれたとき |
 
 **一般化できる知見を得たら、プロジェクト側ではなく共有リポジトリの Skill を直す**
@@ -106,15 +106,11 @@ VRChat ワールド開発**一般**の知識・作業手順は `.claude/skills/v
 
 ## 検証ワークフロー
 
-**AI の検証はコンパイルエラー 0 件 + シーン構築の確認まで。Play はユーザーが行う。**
+確認範囲・実行分担・完了の境界は `vrc-verification` §1で選ぶ。文書だけなら文書検査、Unityコード変更ならコンパイル完了とエラーを確認し、構造・値・参照変更は保存結果も確認する。挙動変更は再現ケースと影響範囲を検証する。フックや一括入口で実行済みの検査は重複不要。
 
-1. ファイル編集
-2. `bash scripts/unity-api.sh execute '{"tool":"unity_force_refresh_assets","params":{"importMode":"force"}}'`
-3. `unity_analyze_console_logs` を**フィルタ無し**で呼んでエラーを確認
-4. シーン構築の結果は検証メニュー / grep / GUID 参照数で確かめる
-5. Play で確認すべき項目をチェックリストにしてユーザーへ引き継ぐ
+Unity操作は `vrc-synaptic-unity` と `scripts/unity-api.sh` 経由。refreshの成功だけでコンパイル完了としない。Playは通常ユーザー担当で、未確認条件を引き継ぐ。
 
-詳細は `vrc-verification` スキル。API 呼び出しは**必ず `bash scripts/unity-api.sh` 経由**。
+フリスビーのClientSimハーネスはAI実行可。[実行・停止・復旧と部分／全体の選択](docs/testing/kh-frisbee-harness.md)に従う。疑似入力の結果を実通信・PCVRの合格にしない。
 
 ---
 
