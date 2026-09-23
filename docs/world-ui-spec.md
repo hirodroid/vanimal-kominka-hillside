@@ -19,10 +19,10 @@
 | Unity / Worlds SDK / TMP / ClientSim | 2022.3.22f1 / 3.10.5 / 3.0.6 / SDK 同梱 |
 | ビルドターゲット | Windows / Android / iOSを対象とする目標。Quest単体・iOSを含む実機確認は未了 (`game-design.md` §1、config/platform-support.json) |
 | 対象機器・入力 | PCVR / Desktop / Quest単体VR / iOS Touch。Android Touchは追加の確認候補 |
-| 対応言語 | 日本語 (古民家と同じ。provisional) |
+| 対応言語 | 日本語を焼く。en は古民家の訳を継承 (UITranslations)。provisional |
 | 主目的・主要操作・戻る活動 | 犬との遊びと散歩を補助する。犬と左右を選んで接続/解除し、自分の接続犬に目的地を伝えて散歩へ戻る。既存メニューの構成を調査後、集合・ライブ等の対象機能を具体化する |
 | UIの影響範囲 | 個人 / 共有 / 混在、項目別に定義 |
-| 検証の到達点 | 合意要件と画面候補・操作契約の一部を記録。モック・実装・実機確認は未実施。画面・入力・権限は [DES-UI-001](development/issues/archive/DES-UI-001-menu-and-leash-assist.md)、有料ライブは [DES-LIV-001](development/issues/DES-LIV-001-hillside-live.md) で具体化 |
+| 検証の到達点 | 合意要件と画面候補・操作契約の一部を記録。モックは 2026-09-23 版 3 で確認済み。実装・実機は未。画面・入力・権限は [DES-UI-001](development/issues/archive/DES-UI-001-menu-and-leash-assist.md)、有料ライブは [DES-LIV-001](development/issues/DES-LIV-001-hillside-live.md) で具体化 |
 
 補助UIの合意: 個人メニューに犬一覧と「左につなぐ／右につなぐ／外す」を置き、散歩先・座位でも使える入口を用意する。接続は近距離 (4mを試作基準)、自己解除は距離不問。固定ボードは案内の候補。寸法・端末別入力は試作する。物理接続と同じ上限・他人の接続・集合/Fetchの裁定を使い、処理待ちや拒否も表示する。適用資料はXR-01 / XR-04。
 
@@ -74,7 +74,7 @@
 | GATHER | 犬を並べて写真・ライブを楽しむ | 必要時→詳細 | 「あそぶ」内のトレーナー集合→隊形選択 | 隊形・場所・開始・古民家同様の途中終了。開催から1分 | 開始成功時は犬を見るため閉じる案。失敗は同画面。パネルを閉じても開催は継続 | 開催対象・開催者・隊形・残り時間。1〜5匹は空席保持。斜面配置対応 |
 | TOYS | ボールを使える場所へ戻す | 必要時 | 古民家のおもちゃタブを候補 | 1個ずつ手元へ。一括リセットは置かない | メニュー共通の戻る/閉じる | 使用中・回収可能なボール |
 | NIGHT | 自分の画面だけ夜にする (IMP-ENV-002、2026-09-21 実装) | 常時 (現行はヘッダー) | 現行はヘッダーのボタン 1 つ「ナイトモード: OFF / ON」(今の状態を表示、ON は金色)。中間値なし | 押すたびに反転、3 秒フェード | どのタブでも見える。閉じてもフェードは続く | ON/OFF (ローカル。保存しない)。**2026-09-23 決定でヘッダーから設定面 (SETTINGS) へ移し、古民家と同じスライダー (夜の明るさ 0〜100%、注記「自分だけに反映・次回も復元」) にする。現行の OFF/ON は暫定** ([計画書](plans/2026-09-21-sky-and-night-mode.md) §1 の「設定が 2 つ目以上になったら移す」を確定させたもの)。移設は未実装 |
-| TREAT | おやつを出して犬に与える | 必要時 | 「おやつ」タブ。4 品の行 + 固定フッター (枠 ●●○ / 状態 1 行 / [しまう]) | 行ごとに [出す] / [買う]、手に持って与える、[しまう] | 共通のタブから入る。**配布成功時だけ板を自動で閉じる** | 在庫数・自分が出しているか・世界の枠 3 つの使用状況 |
+| TREAT | おやつを出して犬に与える | 必要時 | 「おやつ」タブ。4 品の行 + 固定フッター (状態 1 行 / [しまう])。枠 ●●○ は出さない (古民家で IMP-TRT-007 により削除済み) | 行ごとに [出す] / [買う]、手に持って与える、[しまう] | 共通のタブから入る。**配布成功時だけ板を自動で閉じる** | 在庫数・自分が出しているか・世界の枠 3 つの使用状況 |
 | DECO | 犬に飾りと撫でエフェクトを着ける | 必要時→詳細 | 「かざり」タブ。14 品 (セット 5 + 単独 9) → [セットでつける]／[個別でつける] → 犬選択 (試着プレビュー)。「撫でエフェクト」を同じタブ内の小見出しに置く | 品目選択、犬ごとに着ける／外す、購入は全売り場共通の確認カード | 戻るは一段ずつ。閉じるは共通 | 選択中の品目・所持・装着中の犬と枠・試着中のプレビュー (ローカル) |
 | CALL | リードを外した犬を呼んでポーズを取らせる | 必要時→詳細 | 「呼ぶ」タブ。犬 6 → ポーズ 5 (ミニチュア) → 場所 | 犬の予約、ポーズ選択、マーカーの位置・向き、確定、[自由にする] | 戻るは一段ずつ。配置中は場所画面を保持 | 予約中の犬・ポーズ・マーカー位置と向き。リード接続中の犬は暗色 + 「リード中。さんぽで外してから」。姿勢が成立しない斜面は「この姿勢には平らな場所が必要です」 |
 | SETTINGS | 個人の見え方・音・許可を変える | 必要時 | タブではなく上段の別面 (古民家と同じ) | ナイトモード (ヘッダーから移設、スライダー)、音量、言語、距離フェード (PCのみ)、呼ぶを全員に許可 (初期 ON)、ライブ開催許可 (初期 ON)、クレジット、案内 | 上段の [設定] から入り、同じ入口でタブへ戻る | 各設定の現在値。未復元の間は「設定をよみこみ中」 |
@@ -196,21 +196,35 @@ Focus Viewの設定：unknown。通常入口：unknown。再配置・見失い�
 
 ## 8. Unity部品と更新
 
+下表は **provisional / 全行 未実装**。2026-09-23 の [計画書](plans/2026-09-23-menu-rebuild.md) 段階 0 で古民家の器 (`KD_TreatPouch` + Editor ビルダー) を移植して作る予定の構成で、古民家 (作業ツリー 1cb8d61) の読取調査に基づく。**プレハブは無く、すべて Editor ビルダーが生成する**ため「Prefab」欄は生成名を指す。実測値は構築後に差し替える。
+
 | 部品・Prefab | 責務 | 寸法管理者 | Raycast | 更新契機 | 常駐／非表示 | ワールドoverride |
 |---|---|---|---|---|---|---|
-| unknown | unknown | unknown | unknown | unknown | unknown | unknown |
+| `KD_TreatPouch` (root) | メニュー本体。SyncMode None・同期変数 0 本。layer 0・Collider 無し | ビルダー (`KD_TreatSetupEditor.Pouch`) | なし | 開閉入力・`_Refresh` | 常駐 | さんぽ/おもちゃ/あそぶの裏山改変 (partial) |
+| `KD_TreatPouchPanel` | WorldSpace Canvas 1140×700 @scale 0.001、layer 17、`VRCUiShape` + `GraphicRaycaster` | ビルダー | Canvas 全体 | 開いた瞬間 `PlaceInFront` (前方 0.95 m) | 既定 非表示 | なし |
+| `Tab0..Tab6` + `Underline` | 7 タブの切替。点灯色 + 金の下線、interactable は使わない | `KD_HandMenuScrollEditor` (Y224・高さ46・幅の和1100) | 各タブ Button | クリック | 常駐 | PetFx2→Walk2、`Order={2,0,5,3,1,6,4}` |
+| `Page_*` + `Scroll/Viewport/Content` | タブ 1 枚だけ active。`GridLayoutGroup` cell 508×112 ×2 列、`ScrollRect` 縦のみ Clamped・sensitivity 35・inertia off、`Scrollbar` 幅 40 常設、`RectMask2D` | `KD_HandMenuScrollEditor` | Viewport の透明 Image | タブ切替・再描画 | 1 枚 active / 他は非表示 | Page_Walk を新設、Page_PetFx は Acc へ合流 |
+| 行プール `Row`/`ToyRow`/`SleepRow`/`LiveRow`/`AccRow`+`FxRow` | 行の固定プール (Row 4 / ToyRow 6 / SleepRow 6 / LiveRow / AccRow 16 + FxRow 11) | ビルダー | 行内 Button | 再描画 | 常駐 (余りは非表示) | ToyRow は [ボール][ディスク] 2 本、LiveRow は準備中 1 行 |
+| `ConfirmPanel` (Card 720×300、z −15) | 全売り場で共有の購入確認カード 1 枚。暗幕 1140×700 自体が `_ConfirmNo` | ビルダー | 暗幕 + カード | `_ShowConfirm` / 再描画 | 既定 非表示 | なし |
+| `Page_Settings` | 設定面 (音量・距離フェード・ナイトモード・許可2種・言語・クレジット・案内) | `KD_MenuSettings` 側ビルダー | 面内 Button/Slider | 入口ボタン・再描画 | 既定 非表示 | 寝室・ラジオ・解像度を外す。ナイトモードは `KH_NightMode` |
+| `Page_Welcome` | 初回のみの案内 (`KD_Onboarding_v1`) | `KD_WelcomeGuideEditor` | 面内 Button | 初回入室 | 既定 非表示 | 裏山向け文言 |
+| `KD_TouchLauncher > LauncherButton` | Touch の起動ボタン。ScreenSpaceOverlay、sortingOrder 100 | ビルダー | Button | 入力方式が Touch のときだけ表示 | 既定 非表示 | なし |
+| `KD_MenuOpener` プレート ×3 (`KH_MenuOpener`) | 拠点の「メニューをひらく」板。Interact → `pouch._Toggle` | `KH_DogWalkingEditor` | Interact (layer 14) | Interact | 常駐 | **裏山だけの追加** (片手・座位の入口) |
+| `KD_UiRound.png` / `KD_UiCircle.png` | 角丸 (Sliced・半径12・border30) と色玉 (Simple)。色は Image.color の乗算 1 本 | `KD_UiSpriteEditor` (96×96・PPU100) | — | ビルド時に毎回焼き直す | 資産 | なし |
+| `KD_NotoSerif SDF` (Static) | 共通フォント。実効 26/24/22/20/18 pt | `AddGlyphs` (唯一の口) | — | 文言追加時 | 資産 | **48 pt へ再ベイク** (779/784 で満杯) |
 
 | UnityEvent | 対象Behaviour | メソッド／イベント名 | action ID | 実行確認 |
 |---|---|---|---|---|
-| unknown | unknown | unknown | unknown | NOT_TESTED |
+| `Button.onClick` (代表。全ボタン同形式) | backing UdonBehaviour (`GetBackingUdonBehaviour(pouch)`) | `SendCustomEvent("_Tab0")` ほか (`_Close` / `_Row{i}` / `_Toy{i}` / `_Sleep{i}` / `_Acc{i}` / `_ConfirmYes` / `_ConfirmNo` / `_Toggle` / `_OpenSettings`) | 1 ボタン = 1 本の String Persistent Listener (ビルダーが毎回張り直す) | NOT_TESTED |
 
 | API・機能 | Unity出典 | VRChat許可 | Udon露出確認の版 | コンパイル | 実クライアント |
 |---|---|---|---|---|---|
 | unknown | unknown | unknown | unknown | NOT_TESTED | NOT_TESTED |
 
-更新方針：値が変わった時／必要な周期／常時の理由：unknown  
+更新方針 (provisional / 未実装)：**`_Refresh()` は板が非表示でも要求監視 (`PollLiveRequest`) と再予約を続ける (0.5 秒、`SendCustomEventDelayedSeconds` で自己再予約)。描画を打ち切るのは `Redraw()` (panelRoot 非表示なら即 return)。あそぶタブだけ 0.25 秒** (`KD_ActivitiesMenu.Update`)。dirty 判定は持たない。  
+同期対象：**板は 0 本 (SyncMode None)。Verify で固定する。**  
 CPU・GPU・メモリの予算と比較条件：unknown（初期値を根拠なく設定しない）  
-同期対象のスキーマ・Network IDの保全：unknown
+Network IDの保全：unknown
 
 ## 9. レビューと仮設定の記録
 

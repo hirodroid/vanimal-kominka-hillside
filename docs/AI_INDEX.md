@@ -77,7 +77,7 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 | 対象 | 記録・未確認条件の参照先 |
 |---|---|
 | 散歩・首輪・リード | [自由な散歩](plans/2026-09-20-free-walk.md)、[散歩検証](plans/2026-09-20-leash-walking.md)、[制作票](plans/2026-09-20-leash-asset-production.md) |
-| 手元メニュー・集合・拠点 | [実装とチェックリスト](plans/2026-09-20-menu-gather-stations.md) |
+| 手元メニュー・集合・拠点 | [実装とチェックリスト](plans/2026-09-20-menu-gather-stations.md)、[古民家の器への作り替え計画](plans/2026-09-23-menu-rebuild.md) (2026-09-23、未着手) |
 | フリスビー | [本シーン導入](plans/2026-09-20-frisbee-prototype.md)、[動きの改修経緯](plans/2026-09-21-frisbee-variations.md)、[ハーネスの手順・最新記録](testing/kh-frisbee-harness.md)。1匹での成立確認と6匹展開は別 |
 | 空・ナイトモード | [実装とチェックリスト](plans/2026-09-21-sky-and-night-mode.md) |
 | Quest単体・iOS | [端末検証](development/issues/VER-WLD-001-quest-ios-devices.md)。PCVR総合評価を端末別・項目別の合格にしない |

@@ -14,7 +14,7 @@ priority: High
 
 ## 範囲
 
-- `KD_ProgressLedger` / `KD_ShopItem` / `KD_ShopCatalog` / `KD_PlayerFxTag` をシーンへ配線し、Editor を `KH_` 名で作る (古民家の `KominkaDogRun: Assets/KominkaDogRun/Editor/KD_ProductDefinitions.cs` / `KD_ProgressSetupEditor.cs` 相当)。価格表・品目表の正本をここに置く。
+- `KD_ProgressLedger` / `KD_ShopItem` / `KD_ShopCatalog` / `KD_PlayerFxTag` をシーンへ配線する。古民家の Editor (`KominkaDogRun: Assets/KominkaDogRun/Editor/KD_ProductDefinitions.cs` / `KD_ProgressSetupEditor.cs` / `KD_ShopSetupEditor.cs`) は **`KD_` 名のまま `Assets/KominkaHillside/Imported/KominkaDogRun/Editor/` へコピー**し、裏山の差分は partial (例 `KD_TreatSetupEditor.Hillside.cs`) に隔離する。**裏山で新規に書く Editor だけ `KH_{Name}Editor`** (2026-09-23 決定。[計画書](../../plans/2026-09-23-menu-rebuild.md) D-3)。価格表・品目表の正本は裏山値の `KD_ProductDefinitions` に置く。
 - 価格は古民家と同じ。飾り 9 品 + 花セット = **260pt**、撫でFX 6 種 0〜40 = **120pt**、追加動作 4 種 各 30 = **120pt**、おもちゃ 5 品 10〜50 = **150pt**、おやつ 4 種 1〜5pt / 5 個。CE 商品 (王様・夏・キャンディ・パンプキン・ぬいぐるみ 3 点・ライブパック) は Credits。
 - 付与は **Bonus.keeper の 200pt 一回のみ**。古民家の初期配布 100 (Bonus.initial) は**置かない**。骨型ビスケット初期 5 個 (`_GrantInitialStockOnce`) は継承し、話しかけなくてもおやつは使える。滞在は 1 分 = 1pt (AFK 除外なし・上限なし)。達成ボーナス・デイリーは入れない。
 - 重複防止を継承する: 付与済み判定 (Bonus.keeper の既存値) → 台帳の復元完了待ち → `_giftPending` の 1 秒再試行 → 「フラグ true → Earned 加算」の書込順 (`KominkaDogRun: Assets/KominkaDogRun/Scripts/Progress/KD_ProgressLedger.cs:179`)。購入は「Own=true → Spent」の順。
@@ -23,6 +23,7 @@ priority: High
 - おじいさん (`KD_ShopKeeper`) を門付近に配置する。Interact のみ・近接自動オープンなし・4m で閉じるを継承。会話 UI の板を継承し、ナビを裏山向けへ差し替える (過ごし方 / さんぽ / おやつ / 呼ぶ / またね)。付与後の挨拶で「メニューの かざり で支度できる」と端末別のメニューの開き方を案内する。NPC 板から かざり を開く導線は作らない。
 - 残高はメニューのヘッダー右に常時表示する。表示枠は [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md)、値の供給が本Issue。
 - 消費が世界で 1 箇所であることの機械検査 (古民家の `scripts/check-consume-once.js` 相当) を裏山へ移植する。
+- UI 頁は古民家の `KD_TreatPouch` のヘッダ残高と共有の購入確認カード (`confirmRoot`) をそのまま使い、ビルダーは [計画書](../../plans/2026-09-23-menu-rebuild.md) 段階 0 で移植済みのものに配線を足す (新しい頁を自作しない)。
 
 ## やらないこと
 

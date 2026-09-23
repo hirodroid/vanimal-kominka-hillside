@@ -65,8 +65,8 @@ priority: High    # High / Medium / Low
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開はその後の別Issue | wip |
 | [IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md) | Medium | フリスビー (先回り型 + 6 プリセット) を 6 匹へ展開: 犬種別クリップ・facts、配線、胴体固定、負荷実測、Catch の分割、犬種別ハーネス | todo |
 | [DES-UI-002](DES-UI-002-frisbee-settings.md) | Medium | フリスビーの設定 (待つ場所・曲げ・取り方) の選ぶ / 自動の切り分けと操作権、開発用切替の撤去時期を設計する | todo |
-| [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。次はモックと実装Issue起票 | wip |
-| [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) | High | メニューを表駆動にし、案 A の 7 タブ + 設定面 + ヘッダー ([残高][設定][閉じる]) を作る。距離フェード移植 (PC のみ)、ナイトモード移設、状態表示の規律 | todo |
+| [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。次は IMP-UI-001 段階 0-a | wip |
+| [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) | High | 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換える。段階 0-a 移植の土台 (Editor 丸ごとコピー・パス置換・MenuItem 隔離) → 0-b 器の構築 (7 タブ・さんぽ/おもちゃ/あそぶ移設・KH_HandMenu 退役・設定面の器とナイトモードスライダー) → 段階 3 設定面の残り (距離フェード・許可初期ON・言語・案内)。計画書 2026-09-23 | todo |
 | [IMP-PRG-001](IMP-PRG-001-ledger-shopkeeper-points.md) | High | 台帳・おじいさん (門)・支度用ポイント (初回 200pt 一回・滞在 1分1pt)・購入と CE 判定を裏山へ配線する | todo |
 | [IMP-DOG-014](IMP-DOG-014-treats-port.md) | Medium | おやつ 4 種を古民家から移植 (Box/Slot3/Controller/Fx・Editor・メッシュ)。接続犬の反応は IMP-DOG-006 | todo |
 | [IMP-DOG-015](IMP-DOG-015-accessories-and-petfx-port.md) | Medium | 飾り 14 商品と撫でFX 11 種を移植。首元 7 品と首輪・リードの干渉を実測して調整する | todo |
