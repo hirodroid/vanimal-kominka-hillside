@@ -24,11 +24,14 @@
 ## 実行
 
 ```bash
-node scripts/kh-frisbee-harness.cjs list      # 投げの表と、保証しないもの
+node scripts/kh-frisbee-harness.cjs list      # 投げの表・netorder のケース表と、保証しないもの
 node scripts/kh-frisbee-harness.cjs start     # Unity のメニューを叩くだけ
 node scripts/kh-frisbee-harness.cjs status    # latest.json の要約 (PASS なら終了コード 0)
 node scripts/kh-frisbee-harness.cjs stop      # 停止フラグ + メニューの停止
 ```
+
+モードは 2 つ。既定は下の 36 投げ、`--mode=netorder` は
+[ネット順序モード](#ネット順序モード---modenetorder-bug-dog-003) の 5 ケース x 2 周 = 10 投げ。
 
 `start` が返す `START_REQUEST_ACCEPTED` は **受け付けただけで PASS ではない**。
 結果は必ず `status` (または report.json) で読む。
@@ -39,7 +42,7 @@ node scripts/kh-frisbee-harness.cjs stop      # 停止フラグ + メニュー�
 node scripts/kh-frisbee-harness.cjs start --variants=0,4 --shots=flat,low --budget=300
 ```
 
-`--variants` / `--shots` / `--budget` は `Logs/kh-frisbee-harness/options.json` に書かれ、
+`--variants` / `--shots` / `--budget` / `--mode` / `--repeats` は `Logs/kh-frisbee-harness/options.json` に書かれ、
 Unity 側が起動時に 1 度だけ読む。Unity のメニュー
 `Tools/KominkaHillside/Frisbee/7 Harness (ClientSim)` から直接呼ぶこともできる
 (その場合は前回の options.json がそのまま効く)。停止は `8 Harness Stop`。
@@ -90,6 +93,10 @@ Unity 側が起動時に 1 度だけ読む。Unity のメニュー
    プロトタイプシーンのファイルハッシュを実行前後で比べ、`sceneFileUnchanged` に残す。
 
 ## 結果の読み方
+
+以下は既定モード (36 投げ) の話。`--mode=netorder` の読み方は
+[ネット順序モード](#ネット順序モード---modenetorder-bug-dog-003) を見る
+(`status` は `PASS` / `FAIL` / `BLOCKED` の意味だけ共通)。
 
 `report.json` の `status`:
 
@@ -168,6 +175,127 @@ Unity 側が起動時に 1 度だけ読む。Unity のメニュー
   `--budget` で上書きできる。上限に当たった実行は `BLOCKED` で、そこまでの投げは残る。
 - Editor が一時停止 (Pause) された場合も自動再開はせず打ち切る。
 
+## ネット順序モード (`--mode=netorder`, BUG-DOG-003)
+
+```bash
+node scripts/kh-frisbee-harness.cjs start --mode=netorder            # 5 ケース x 2 周 = 10 投げ
+node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=3
+node scripts/kh-frisbee-harness.cjs status                           # netCase / netOk / req の行
+```
+
+### 目的
+
+投げの通知 (ネットワークイベント) と円盤の `IsHeld` (VRCPickup の同期) は**別の経路で届く**ので、
+犬の Owner では「通知は着いたのに円盤はまだ手の中に見える」という順序が起こる。
+これが BUG-DOG-003 (Master 以外が投げると犬が動かない) の原因で、
+`KH_FrisbeeCatch` は通知をいったん**保留 (pending)** し、円盤が手から出たと見えた最初のフレームで受理する。
+
+このモードは**その順序だけ**を 1 クライアントで作って、保留の論理 5 つを通す:
+保留する / 手を離した最初のフレームで受理する / 期限を越えたら捨てる / 掴み直しで取り消す /
+追走中に奪われて投げ直されたら古い投球を捨てて新しい方だけを通す。
+
+順序は捕り手の `debugHeldOverride` (`0` = 実値 / `1` = 保持扱い / `-1` = 解放扱い) を
+ハーネスが投げの前後で書いて作る。切り替えの時刻は**すべて `KH_FrisbeeCatch.PendingHoldSeconds`
+から導く** (Editor 側は定数を直接参照するので、定数を変えればケースも追従する。秒の写経はしない)。
+以下 `Hold` = `PendingHoldSeconds`。
+
+**この変数が捕り手に無ければ `BLOCKED`。** FAIL ではない (順序が壊れていると分かったのではなく、測れていない)。
+
+### ケース表
+
+5 ケースすべて必須。プリセットは v0 固定、投げは `flat` 1 本だけ (順序を見るモードなので幾何は変えない)。
+表は Unity 側 (`KH_FrisbeeHarnessEditor.NetCases`) と CLI 側 (`NET_CASES`) の両方にあるので、
+直すときは投げの表と同じく 2 か所そろえる。
+
+| case | 投げる前 | 切り替え | 期待する順序 | `netOk` |
+|------|----------|----------|--------------|---------|
+| `held-first` | `1` (まだ手の中)。犬が Ready になるまで最大 3 s 待つ | Interact の `Hold x 0.25` 後に `0` | `req hold` → `req resolved` → `throw` → `plan=` | 左の順序 + `outcome` が `caught` か `ground` + `completed` + **持ち帰りの証拠** (下記) |
+| `release-first` | `0` (従来どおり) | なし | `req accept path=local` (`req hold` は出ない) | 左 + **既定モードの 4 条件** (outcomeOk / completed / motionOk / expectOk) + **持ち帰りの証拠** |
+| `expired` | `1`、Ready 待ち | `Hold x 1.3` まで `1` のまま → `0` に戻し、**さらに 2.0 s 観測** | `req hold` → `req expired`、その後は静か | 左 + 失効の後に `throw` / `plan=` / `req resolved` が 1 行も出ない + state が Idle/Ready のまま + 2.0 s を最後まで観測できた |
+| `regrab` | `0` | 最初の `plan=` を見たら `1` → `Hold x 0.5` 後に `0` | `req accept` → `plan=` → `req cancel reason=held-regrab` | 左 + 取消から **1.0 s 以内**に state が Idle/Ready へ戻る |
+| `steal-rethrow` | `0` | `req accept` と最初の `plan=` を見たら `1` にして**その場で投げ台をもう一度 Interact** → `Hold x 0.25` 後に `0` | `req accept`(gen N) → `plan=` → **`req cancel reason=held-regrab` か `superseded`(gen N) と `req hold`(gen N+1) の 2 本 (順不同)** → `req resolved`(gen N+1) → `throw` → `plan=` | 下の**半順序**を満たすこと + 2 投げ目の**持ち帰りの証拠** |
+
+- **持ち帰りの証拠 (Codex M1)。** 「Idle へ戻った」(`completed`) だけでは一周と数えない —
+  `plan=2` のまま取り消されて Idle に落ちた投げも `completed` は真になるから。
+  毎フレーム読んでいる `state` に、**咥えた state (JumpCarry `3` / Pickup `7`) か `catch OK` の行**が
+  あり、**かつ 返す state (Return `8` / Drop `9`)** があることを求める。
+  `report` の `netRoundTrip` / `netStates` に、通った state がそのまま残る。
+- **`steal-rethrow` が見ているのは全順序ではなく半順序。** 実装が求めるのは次の 4 つだけで、
+  取消 (gen N) と保留 (gen N+1) のどちらが先に出るかは**問わない**:
+
+  1. `req accept`(gen N) < 最初の `plan=`
+  2. `req cancel`(gen N, `held-regrab` か `superseded`) が `plan=` より後、かつ **`req resolved`(gen N+1) より前**
+  3. `req hold`(gen N+1) が `plan=` より後、かつ **`req resolved`(gen N+1) より前**
+  4. `req resolved`(gen N+1) < `throw` < `plan=`
+
+  この 2 本の順序を固定しないのは、投げ台が投げを 1 フレーム以上遅らせる (`_pending` + Owner 要求) ためで、
+  捕り手が先に「手が見えた」と気づけば取消が先、投げ直しの通知が先に届けば保留が先になる。
+  **本質は「古い投球の取消が新しい投球の受理より先」**で、そこだけを固定している。
+- `steal-rethrow` は 2 投げぶんを 1 ケースで走らせるので、**2 投げ目が受理された瞬間に state を数え直す**
+  (1 投げ目の追走を 2 投げ目の証拠にしない)。判定の窓と番犬もこのケースだけ 6 s 伸ばす。
+- `held-first` で `ground` を許すのは、保留の分だけ受理が遅れて幾何がずれるため。
+  **取れ方 (`kind`) は問わない** — このモードが見ているのは順序であって跳び方ではない。
+- `2.0 s` (失効の後の観測) と `1.0 s` (取消の後の猶予) は保留の長さとは無関係の**観測窓**なので、
+  `Hold` からは導かない。Editor 側でも別の定数として置いてある。
+- `release-first` だけ既定モードの 4 条件を合否に入れる。**保留を足しても普通の投げが今までどおり通る**
+  ことを見る対照だから。
+- `steal-rethrow` の投げ直しが通るのは、投げ台 (`KH_FrisbeeLauncher`) が `debugHeldOverride` を見ない
+  **実値の `IsHeldNow`** で判断しているから (飛行中の円盤は「持たれていない」)。
+  捕り手だけが「まだ手の中」に見えるので、投げは出るのに保留へ入る、という順序が作れる。
+  取消の理由は、奪取が生きた投球に追いついたか (`superseded`) 先に手が見えたか (`held-regrab`) で変わるので、
+  **どちらでも合格**にする。
+
+### 読み方
+
+`report.json` の `mode` が `"netorder"`、投げごとに `netCase` / `netOk` / `netNote` / `reqLines[]` が付く。
+
+- **合否は `netOk` だけ** (`ok` は `netOk` と同じ値)。ただし `netOk` の中身はケースによって違い、
+  既定モードの列を使うものと使わないものがある (`status` の `info` 列には常に全部出る):
+
+  | case | 行の順序 | `outcome` | `completed` | `motionOk` | `expectOk` | 持ち帰りの証拠 |
+  |------|----------|-----------|-------------|-----------|-----------|----------------|
+  | `held-first` | 全順序 (`hold` < `resolved` < `throw` < `plan=`) | **使う** (`caught` か `ground`) | **使う** | 参考 | 参考 | **使う** |
+  | `release-first` | `accept`(`path=local`) があり `hold` が無い | **使う** (`allowed`) | **使う** | **使う** | **使う** | **使う** |
+  | `expired` | 全順序 (`hold` < `expired`) + 以降が静か | 参考 | 参考 | 参考 | 参考 | 使わない (そもそも走らせない) |
+  | `regrab` | 全順序 (`accept` < `plan=` < `cancel`) | 参考 | 参考 | 参考 | 参考 | 使わない (追走を止めるのが正しい) |
+  | `steal-rethrow` | **半順序** (上の 4 条件。`cancel` と `hold` は順不同) | 参考 | 参考 | 参考 | 参考 | **使う** (2 投げ目ぶん) |
+
+- `netNote` に、どの行が何番目に出たか (`hold@3 resolved@7 throw@8 plan@9 ...`) がそのまま入る。
+  落ちたケースはここを読めば「順序のどこで崩れたか」が分かる。
+- `status` は投げごとに `firstReq` (`[KH_FrisbeeCatch] req ...` の 1 本目) を出し、
+  最後に `reqLines` で全ケースの req 行を並べる。
+- `netRoundTrip` / `netStates`: 判定した区間で実際に通った `state` と、持ち帰りの証拠が揃ったか。
+- `overrideRestored`: `debugHeldOverride` を `0` へ戻し、**読み直して 0 を確かめた**かの記録。
+  **どの終わり方 (完了・BLOCKED・停止フラグ・番犬・例外) でも戻してから Play を抜ける。**
+  この値は Play 中の Udon ヒープにしかなく、ハーネスはシーンを保存しないので保存物には残らないが、
+  「抜けたから大丈夫」を理由にせず、抜ける前に戻して読み直した結果をここへ書く。
+  **確かめられなかった実行は PASS にしない** (Codex M2): 読み直しが 0 でない・例外・Play が先に終わった
+  のいずれでも `errors` に 1 件足して `FAIL` にし、後続の終了経路でもう一度戻しにいく。
+  `PASS` になれるのは `overrideRestored` が `OK:` で始まるときだけ
+  (既定モードは `NOT_APPLICABLE...` のまま = 一度も書いていない)。
+- `expired` は **Ready で終わるのが正しい**。既定モードと違い「Idle へ戻らなかった」だけでは
+  `timeout` にしない。
+
+### 時間の上限
+
+1 ケースの窓・番犬は既定モードと同じ (判定 16 s / 番犬 18 s)。
+**`steal-rethrow` だけ 1 ケースで 2 投げぶん走る**ので、この 2 つを 6 s ずつ伸ばす
+(判定 22 s / 番犬 24 s。既定モードの 16 s / 18 s は変えていない)。
+全体も同じ式 (`計画した投げ数 x 28 s + 30 s`、下限 240 s) なので、既定の 10 投げでは 310 s。
+実際は `expired` が `Hold x 1.3 + 2.0 s`、`regrab` が数秒で終わるので、
+かかるのは `held-first` / `release-first` の一周 (6-14 s) と `steal-rethrow` (10-20 s) が支配的。
+
+### 通していないもの
+
+**netorder が通すのは 1 クライアント上の順序の論理であって、通信そのものではない。**
+`debugHeldOverride` で作った「通知が先、held が後」は本物の到着順の*模擬*で、
+実際の到着順・Owner 移譲・`IsHeld` の同期の遅れは 2 人以上の実機でしか出ない。
+下の `notCovered` の「他プレイヤー・Owner 移譲・同期」はこのモードを足しても **NOT_TESTED のまま**。
+
+とくに、**保留中に相手が取得 → 弱く放す (別人の保持者・Owner)** は単一クライアントでは再現できない。
+netorder の保持者は `debugHeldOverride > 0` のとき常に**円盤の Owner (= ローカルプレイヤー)** なので、
+別人が持つ・別人へ Owner が移る・その人が弱く放す、という経路は 1 度も通らない。**2 人実機で確認する。**
+
 ## 保証する範囲
 
 実際に通るもの:
@@ -189,11 +317,43 @@ Unity 側が起動時に 1 度だけ読む。Unity のメニュー
   v1..v3 の PASS は「同じ投げを繰り返しても壊れない」以上の意味を持たない。
 - VR の手投げ・狙い表示 (aim line / marker / 広場外の警告)。固定台の +Z の投げだけ。
 - `Interact()` を直接呼ぶので、実際のレイキャスト・距離 (proximity)・InteractionText の当たり判定。
-- 他プレイヤー、Owner 移譲、同期 (単一 ClientSim クライアント)。
+- **他プレイヤー、Owner 移譲、同期 (単一 ClientSim クライアント)。**
+  `--mode=netorder` は `debugHeldOverride` で「通知が先、held が後」という**順序**を作って
+  保留の論理を通すが、通すのは 1 クライアント上の論理であって通信ではない。
+  実際の到着順・Owner 移譲・`IsHeld` の同期は 2 人以上の実機でしか見ていない。
+- **保留中に相手が取得 → 弱く放す (別人の保持者・Owner) は単一クライアントでは再現できない。**
+  netorder の保持者は常に円盤の Owner (= ローカルプレイヤー) なので、別人が持つ・Owner が移る・
+  その人が弱く放す、という経路は 1 度も通らない。2 人実機で確認する。
 - 体験としての見え方 (間・迫力・不自然さ)。**人の Play でしか判定できない。**
 - 実機ビルド (PCVR / Quest / iOS) と実クライアント。
 
-## 直近の実測 (2026-09-22, Codex 是正後)
+## 直近の実測 (2026-09-23, BUG-DOG-003 の保留を入れた後)
+
+### `--mode=netorder`
+
+5 ケース x 2 周 = 10 投げ、**`PASS` 10/10** (run `20260923-122627-de9b6a`、2026-09-23、
+Console エラー 0、`sceneFileUnchanged=true`、`overrideRestored` OK)。
+
+- `held-first` の `heldFor` は 0.25-0.27 s。これは**注入値**
+  (`PendingHoldSeconds x 0.25` でハーネスが手を離す時刻) であって、**実通信の観測値ではない**。
+  実際に通知と `IsHeld` がどれだけずれるかは 2 人実機の `heldFor` ログでしか分からない。
+- `expired` は 1.00-1.02 s で期限切れ (`PendingHoldSeconds = 1.0` どおり)。
+- `steal-rethrow` は gen N の `held-regrab` 取消が gen N+1 の `resolved` より前に出た
+  (今回は取消が先。半順序なので逆順でも合格になる)。
+- どの投げにも recall 由来の `req end … target=…` が 1 行入る。**参考情報**で、
+  どの `netOk` の規則にも使っていない。
+
+### 既定モード (同じビルド)
+
+6 プリセット x 6 投げ = 36 投げ、**27/36** (run `20260923-122807-c9c769`)。
+落ちたのは `lob` の miss、`far` の stand / 急旋回、`side` の急旋回。
+
+**これは BUG-DOG-003 の変更で出た回帰ではない。** 同じ投げを変更前の HEAD `2cde145` で流した
+差分実行 (run `20260923-114552-6e8727`、18 投げ中 11) でも同じ 3 つが再現する。
+`2cde145` の時点で既に、下の投げ表の期待 (`far` → `jump` など) と実際の動きが食い違っている。
+**別件として追う** — この食い違いを隠すために表の期待を緩めない (期待表は変更していない)。
+
+## 2026-09-22 の実測 (BUG-DOG-003 前、参考値)
 
 6 プリセット x 5 投げ = 30 投げ、**`PASS` 30/30** (run `20260922-145701`、Console エラー 0、
 `sceneFileUnchanged=true`、所要 5 分 04 秒)。判定の 4 条件 (outcomeOk / completed / motionOk / expectOk)

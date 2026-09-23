@@ -510,6 +510,13 @@ namespace KominkaHillside.Editor
                 Check(cb.publicVariables.TryGetVariableValue("readyGraceSeconds",out bv)&&Mathf.Abs((float)bv-c.readyGraceSeconds)<1e-5f
                     &&cb.publicVariables.TryGetVariableValue("readyGraceDistance",out bv)&&Mathf.Abs((float)bv-c.readyGraceDistance)<1e-5f,"catcher backing: ready grace pair "+key);
                 Check(c.readyGraceDistance<c.standoffDistance,"the grace ends well before the stand-off spot ("+c.readyGraceDistance.ToString("F1")+" m < "+c.standoffDistance.ToString("F1")+" m) "+key);
+                // BUG-DOG-003: the window a launch notice may wait for the pickup sync to catch up. Long enough to
+                // cover the arrival-order race, short enough that the remaining flight is still worth chasing.
+                Check(KH_FrisbeeCatch.PendingHoldSeconds>=0.5f&&KH_FrisbeeCatch.PendingHoldSeconds<=2f,"pending launch hold "+KH_FrisbeeCatch.PendingHoldSeconds.ToString("F2")+" s in [0.5, 2] "+key);
+                // The harness-only held override must ship at 0 in every scene, in the proxy AND on the backing
+                // heap (that is the value Udon actually runs). A missing symbol or a different type is a FAILURE,
+                // not a zero: it would mean the field was renamed or retyped and this check stopped proving anything.
+                Check(c.debugHeldOverride==0&&cb.publicVariables.TryGetVariableValue("debugHeldOverride",out bv)&&bv is int&&(int)bv==0,"held override off (harness only), proxy and backing "+key);
                 Check(KH_FrisbeePrototypeEditor.PetStatesOk(),"petting resumes in Idle / Ready / Drop and stays suppressed in every moving state (PetAllowed) "+key);
                 // round 5 (PCVR 2026-09-22): 跳ぶ距離の帯・薄い立ち取りの直進・全プリセットの追い抜き
                 Check(KH_FrisbeeCatch.RunJumpMaxTakeoff>=5f&&KH_FrisbeeCatch.RunJumpMaxTakeoff<=9f

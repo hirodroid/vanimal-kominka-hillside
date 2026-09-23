@@ -551,6 +551,14 @@ namespace KominkaHillside.Editor
                     Check(backing.publicVariables.TryGetVariableValue("readyGraceSeconds", out float bgs) && Mathf.Abs(bgs - catcher.readyGraceSeconds) < 1e-5f
                         && backing.publicVariables.TryGetVariableValue("readyGraceDistance", out float bgd) && Mathf.Abs(bgd - catcher.readyGraceDistance) < 1e-5f,
                         "backing heap holds the ready grace pair");
+                    // BUG-DOG-003: the window a launch notice may wait for the pickup sync to catch up, and the
+                    // harness-only override that drives that race. The constant is a const, so it never reaches the
+                    // backing heap and is checked statically; the override is checked in the proxy AND on the heap,
+                    // where a missing symbol or a different type FAILS rather than reading as zero.
+                    Check(KH_FrisbeeCatch.PendingHoldSeconds >= 0.5f && KH_FrisbeeCatch.PendingHoldSeconds <= 2f,
+                        "pending launch hold " + KH_FrisbeeCatch.PendingHoldSeconds.ToString("F2") + " s in [0.5, 2] (long enough for the arrival-order race, short enough to still catch)");
+                    Check(catcher.debugHeldOverride == 0 && backing.publicVariables.TryGetVariableValue("debugHeldOverride", out int bheld) && bheld == 0,
+                        "held override off (harness only), proxy and backing heap");
                     // The pet-resume rule as the runtime reads it: petting is allowed exactly where the dog stands
                     // still without moving next - Idle, Ready and the Drop wait with the disc in its mouth - and
                     // nowhere it runs or jumps. Static, so the rule cannot rot unnoticed between Play sessions.

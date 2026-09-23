@@ -318,6 +318,29 @@ namespace KominkaHillside
         private float _curve;          // the throw's own sideways lift, received with the launch facts (IMP-DOG-008 v5)
         private bool _flightEnded;
         private int _flightEndReason;
+        // BUG-DOG-003. A launch notice (network event) and the pickup's held state (VRCPickup sync) travel on
+        // separate channels, so on the dog Owner the notice can arrive while the disc still reads as held.
+        // The notice is parked here (Owner-local, never synced) and accepted on the first frame the disc is
+        // seen out of the hand. PendingHoldSeconds is an initial value; tune it from real-device heldFor logs.
+        public const float PendingHoldSeconds = 1.0f;
+        private bool _pendingLaunch;
+        private int _pendingGen, _pendingThrower;
+        private Vector3 _pendingP0, _pendingV0;
+        private double _pendingT0;
+        private float _pendingCurve;
+        private float _pendingSince;            // Time.time at receipt
+        private double _pendingAgeAtReceipt;    // server age at receipt (log)
+        private bool _pendingLocal;             // direct call vs network path (log)
+        private bool _pendingEnded; private int _pendingEndReason;  // ReqFlightEnded seen for THIS pending throw
+        private bool _pendingSeenThrower;       // the thrower was observed on the disc while THIS notice waited
+        private bool _launchLocal;              // the accepted launch's path, kept for its cancel line
+        // Owned by the ACCEPTED launch alone: true from AcceptLaunch, false again at TransitionTo(StateIdle), and
+        // nothing else writes it. A notice parked while a chase is live must NOT clear it, or the live chase would
+        // lose its re-grab detection for as long as the notice sits there (BUG-DOG-003).
+        private bool _seenReleased;
+        [Header("Diagnostics (harness only)")]
+        [Tooltip("0 = read the pickup. 1 = pretend held (holder = disc Owner), -1 = pretend released. Verify asserts 0 in every scene.")]
+        public int debugHeldOverride = 0;
         // Plan (Owner).
         private int _plan;
         private float _catchT;         // flight time of the catch
@@ -529,35 +552,52 @@ namespace KominkaHillside
         [NetworkCallable(maxEventsPerSecond: 5)]
         public void ReqCatch(int gen, Vector3 p0, Vector3 v0, double launchServerTime, int thrower, float curve)
         {
+            // BUG-DOG-003: local = KH_Frisbee._Launch called straight into us on the thrower's own client; net = it
+            // came over the wire, and only on that path is CallingPlayer defined (ClientSim sets it the same way).
+            // InNetworkCall is INHERITED by a direct call made from inside a network event handler, so this would
+            // read as net there; our direct callers (_Launch from OnDrop / a later frame, _Recall from Interact)
+            // are not network handlers, so local is right for them.
+            bool local = !NetworkCalling.InNetworkCall;
+            // Age of the launch, read once: every reject line reports it, and the age gate below uses it. A forged
+            // NaN timestamp simply prints as NaN here and is refused by the implausible / age gates.
+            double age = Networking.GetServerTimeInSeconds() - launchServerTime;
             // Both Owners, like ReqVariant: the plan is the dog's, but the state this call writes is synced from
             // THIS object, so an ownership split would run the sequence on a client nobody reads it from (Codex D3).
-            if (!IsDogOwner() || !Networking.IsOwner(gameObject)) return;
-            if (IsCarrying || IsAirborne) return; // finish the mouth / the landing first; the launcher refuses these too
+            if (!IsDogOwner() || !Networking.IsOwner(gameObject)) { LogReject("not-owner", local, thrower, gen, age); return; }
+            if (IsCarrying || IsAirborne) { LogReject("busy", local, thrower, gen, age); return; } // finish the mouth / the landing first; the launcher refuses these too
+            // BUG-DOG-003 (Codex D3): the arguments are forgeable, so a network sender may only announce its own
+            // throw. A direct call has no CallingPlayer, which is exactly the local path. An unauthenticated network
+            // call (no valid CallingPlayer) is refused outright, not just a mismatched one.
+            if (!local)
+            {
+                VRCPlayerApi caller = NetworkCalling.CallingPlayer;
+                if (!Utilities.IsValid(caller) || caller.playerId != thrower) { LogReject("sender-mismatch", local, thrower, gen, age); return; }
+            }
             // Plausibility (network callable; anyone may send). Non-finite first: NaN survives every comparison
             // below (NaN > x and NaN < x are both false), so a forged launch would sail through the caps and then
             // poison the prediction, the plan and the dog's transform for the whole flight (Codex D3).
-            if (!Finite(p0) || !Finite(v0)) return;
-            if (double.IsNaN(launchServerTime) || double.IsInfinity(launchServerTime)) return;
-            if (!CanPlay(p0)) return;             // same gate as Ready: leash / Fetch / gathering / treat / rest / play area
+            if (!Finite(p0) || !Finite(v0)) { LogReject("implausible", local, thrower, gen, age); return; }
+            if (double.IsNaN(launchServerTime) || double.IsInfinity(launchServerTime)) { LogReject("implausible", local, thrower, gen, age); return; }
+            if (!CanPlay(p0)) { LogReject(Claimed() ? "claimed" : "cannot-play", local, thrower, gen, age); return; }  // same gate as Ready: leash / Fetch / gathering / treat / rest / play area
             // A real launch is capped by the disc and starts nearby.
-            if (v0.magnitude > frisbee.maxSpeed * 1.05f || Vector3.Distance(p0, dogRoot.position) > 200f) return;
-            // Age of the launch. Too old: the flight is over. In the future: a forged timestamp would make
-            // _ElapsedSince negative and run the whole scan on a trajectory that has not started (1 s covers
-            // clock skew between clients, which is all a real launch can be out by).
-            double age = Networking.GetServerTimeInSeconds() - launchServerTime;
-            if (age > 5.0 || age < -1.0) return;
-            if (float.IsNaN(curve) || float.IsInfinity(curve)) return;   // a forged value would poison every prediction (Codex D)
-            if (curve < -1f || curve > 1f) return; // a real throw carries FlightCurve (0 or CurveDefault); clamping would split flight and prediction
-            _haveLaunch = true; _gen = gen; _p0 = p0; _v0 = v0; _t0 = launchServerTime; _curve = curve; _flightEnded = false;
-            _plan = PlanNone; _nextPlan = 0f; _deviationSince = -1f; _landingValid = false; _localPlanValid = true;
-            _settledSince = -1f; _holding = false; _runningCatch = false; _faceErrAtTakeoff = -1f;
-            _mode = ModeHook; _hookActive = false; _hookDone = false; _motionLatched = false;
-            _takeoffMin = RunJumpMinTakeoff; _takeoffCap = RunJumpMaxTakeoff;
-            _mCount = 0; _mIdx = 0; _mPrimed = false; _mAccAngle = 0f; _mAccTime = 0f; _mSlowest = -1f; _mPrevDt = 0.016f;   // the last second of motion belongs to THIS throw only
-            _yawRateMax = 0f; _speedMin = 0f; _vTake = 0f;
-            throwerId = thrower;
-            LogThrow(p0, v0, curve);
-            TransitionTo(StateChase);
+            if (v0.magnitude > frisbee.maxSpeed * 1.05f || Vector3.Distance(p0, dogRoot.position) > 200f) { LogReject("implausible", local, thrower, gen, age); return; }
+            // Too old: the flight is over. In the future: a forged timestamp would make _ElapsedSince negative and
+            // run the whole scan on a trajectory that has not started (1 s covers clock skew between clients,
+            // which is all a real launch can be out by).
+            if (age > 5.0 || age < -1.0) { LogReject("age", local, thrower, gen, age); return; }
+            if (float.IsNaN(curve) || float.IsInfinity(curve)) { LogReject("implausible", local, thrower, gen, age); return; }   // a forged value would poison every prediction (Codex D)
+            if (curve < -1f || curve > 1f) { LogReject("implausible", local, thrower, gen, age); return; } // a real throw carries FlightCurve (0 or CurveDefault); clamping would split flight and prediction
+            // BUG-DOG-003: the notice beat the pickup sync. Park it instead of starting a chase the very next
+            // frame would cancel (L708). No state is touched here: Ready stays Ready, an engaged sequence runs on.
+            if (HeldNow())
+            {
+                if (_pendingLaunch) LogPending("cancel   ", "replaced");
+                StorePending(gen, p0, v0, launchServerTime, thrower, curve, local, age);
+                LogReq("hold     ", "", local, thrower, gen, age, 0.0, -1f, true, false, 0);
+                return;
+            }
+            if (_pendingLaunch) { LogPending("cancel   ", "replaced"); ClearPending(); }   // Codex D1: a fresh accept always drops the old notice
+            AcceptLaunch(gen, p0, v0, launchServerTime, thrower, curve, local, 0f, false, 0);
         }
 
         // Every component finite. Vector3.magnitude on a NaN component is NaN, which compares false against every
@@ -584,14 +624,227 @@ namespace KominkaHillside
                 + " curve=" + curve.ToString("F2"));   // the throw's own bend; every prediction below uses this value
         }
 
-        [NetworkCallable(maxEventsPerSecond: 5)]
-        public void ReqFlightEnded(int gen, int reason, Vector3 pos)
+        // BUG-DOG-003. Every read of "the disc is in a hand" goes through these two, so the harness can drive the
+        // arrival-order race deterministically without touching KH_Frisbee: KH_FrisbeeLauncher keeps reading the
+        // real IsHeldNow and still refuses a held disc.
+        bool HeldNow()
         {
-            if (!IsDogOwner() || !_haveLaunch) return;
-            // The generation counter lives on the thrower's client; a recall by someone else cannot know it.
-            // Grabbed/recalled is accepted from anyone (a hand can take the disc anyway); the rest must match.
-            if (reason != KH_Frisbee.EndGrabbed && gen != _gen) return;
-            _flightEnded = true; _flightEndReason = reason;
+            if (debugHeldOverride > 0) return true;
+            if (debugHeldOverride < 0) return false;
+            return _discPickup != null && _discPickup.IsHeld;
+        }
+
+        // KH_Frisbee.HolderPlayer returns null whenever the pickup is not really held, so a simulated hold needs a
+        // stand-in holder: the disc Owner is the player VRChat would report for a real hand anyway.
+        VRCPlayerApi HolderNow()
+        {
+            if (debugHeldOverride > 0)
+            {
+                VRCPlayerApi sim = Networking.GetOwner(frisbee.gameObject);
+                if (!Utilities.IsValid(sim)) return null;
+                return sim;
+            }
+            if (debugHeldOverride < 0) return null;
+            return frisbee.HolderPlayer;
+        }
+
+        // BUG-DOG-003. One line per event, never per frame. kind carries its own padding so the columns line up.
+        // heldFor < 0 drops the pending-only columns (this line is not about a parked notice).
+        void LogReq(string kind, string reason, bool local, int thrower, int gen, double age, double ageAtReceipt, float heldFor, bool held, bool ended, int endReason)
+        {
+            string s = "[KH_FrisbeeCatch] req " + kind;
+            if (reason.Length > 0) s = s + "reason=" + reason + " ";
+            s = s + "path=" + (local ? "local" : "net") + " thrower=" + thrower + " gen=" + gen + " age=" + ((float)age).ToString("F2");
+            if (heldFor >= 0f) s = s + " ageAtReceipt=" + ((float)ageAtReceipt).ToString("F2") + " heldFor=" + heldFor.ToString("F2");
+            s = s + " held=" + (held ? "true" : "false") + " ended=" + (ended ? endReason : 0) + " state=" + state
+                + " owner=" + OwnerIdOf(dogRoot.gameObject) + "/" + OwnerIdOf(gameObject) + "/" + OwnerIdOf(frisbee.gameObject);
+            Debug.Log(s);
+        }
+
+        int OwnerIdOf(GameObject go)
+        {
+            if (go == null) return -1;
+            VRCPlayerApi o = Networking.GetOwner(go);
+            return Utilities.IsValid(o) ? o.playerId : -1;
+        }
+
+        // The parked notice's own numbers (its thrower, its generation, how long it has waited).
+        void LogPending(string kind, string reason)
+        {
+            LogReq(kind, reason, _pendingLocal, _pendingThrower, _pendingGen, Networking.GetServerTimeInSeconds() - _pendingT0,
+                _pendingAgeAtReceipt, Time.time - _pendingSince, HeldNow(), _pendingEnded, _pendingEndReason);
+        }
+
+        // A launch that was already accepted (no pending columns).
+        void LogLaunchCancel(string reason)
+        {
+            LogReq("cancel   ", reason, _launchLocal, throwerId, _gen, Networking.GetServerTimeInSeconds() - _t0,
+                0.0, -1f, HeldNow(), _flightEnded, _flightEndReason);
+        }
+
+        // BUG-DOG-003 (Codex M4). One line per end notice actually received, so a flight that ended for a reason
+        // nobody expected can be traced to its sender. NotifyEnd fires once per flight, so this is never per frame.
+        void LogEnd(int reason, int sender, int gen, double opTime, string target)
+        {
+            Debug.Log("[KH_FrisbeeCatch] req end      reason=" + reason + " sender=" + sender + " gen=" + gen
+                + " opAge=" + ((float)(Networking.GetServerTimeInSeconds() - opTime)).ToString("F2") + " target=" + target);
+        }
+
+        // BUG-DOG-003 (Codex M3). The one way a live launch ends: the reason is said exactly once (GiveUp alone is
+        // silent, and TransitionTo(StateIdle) clears _haveLaunch, so the line cannot repeat on the next frame).
+        void CancelLaunch(string reason)
+        {
+            if (_haveLaunch) LogLaunchCancel(reason);
+            GiveUp();
+        }
+
+        void LogReject(string reason, bool local, int thrower, int gen, double age)
+        {
+            LogReq("reject   ", reason, local, thrower, gen, age, 0.0, -1f, HeldNow(), false, 0);
+        }
+
+        // BUG-DOG-003. Park the launch facts; nothing about the dog's state changes (Ready stays Ready, an engaged
+        // sequence keeps running) and _seenReleased is left alone - that flag belongs to the launch already running,
+        // which must keep cancelling on a real re-grab while this notice waits.
+        void StorePending(int gen, Vector3 p0, Vector3 v0, double launchServerTime, int thrower, float curve, bool local, double age)
+        {
+            _pendingLaunch = true; _pendingGen = gen; _pendingP0 = p0; _pendingV0 = v0; _pendingT0 = launchServerTime;
+            _pendingThrower = thrower; _pendingCurve = curve; _pendingLocal = local;
+            _pendingSince = Time.time; _pendingAgeAtReceipt = age;
+            _pendingEnded = false; _pendingEndReason = 0; _pendingSeenThrower = false;
+        }
+
+        void ClearPending()
+        {
+            _pendingLaunch = false; _pendingGen = 0; _pendingThrower = -1; _pendingP0 = Vector3.zero; _pendingV0 = Vector3.zero;
+            _pendingT0 = 0.0; _pendingCurve = 0f; _pendingSince = 0f; _pendingAgeAtReceipt = 0.0; _pendingLocal = false;
+            _pendingEnded = false; _pendingEndReason = 0; _pendingSeenThrower = false;   // _seenReleased is the live launch's, never this notice's (BUG-DOG-003)
+        }
+
+        // Everything that invalidates a parked notice, checked every frame in every state. Expiry FIRST, the same
+        // order KD_DogFetchController uses (L880-887): otherwise a stale notice is revived by a late release.
+        void ExpirePending()
+        {
+            if (Time.time - _pendingSince > PendingHoldSeconds) { LogPending("expired  ", ""); ClearPending(); return; }
+            // Both Owners, the same gate ReqCatch passed (Codex D3).
+            if (!IsDogOwner() || !Networking.IsOwner(gameObject)) { LogPending("cancel   ", "owner-change"); ClearPending(); return; }
+            if (!Utilities.IsValid(VRCPlayerApi.GetPlayerById(_pendingThrower))) { LogPending("cancel   ", "thrower-left"); ClearPending(); return; }
+            // _pendingP0 is the launch point, so this is literally the test ReqCatch ran on arrival.
+            if (!CanPlay(_pendingP0)) { LogPending("cancel   ", Claimed() ? "claimed" : "cannot-play"); ClearPending(); return; }
+            // BUG-DOG-003 (Codex D1, 2nd review). Two different situations read the same way here:
+            //   (a) somebody else really has the disc now. That notice must die, because a foreign grab sends no end
+            //       notice of its own (KH_Frisbee.OnPickup only notifies while ITS client had the disc flying), so
+            //       the grabber's weak drop would otherwise look like the release this notice is waiting for.
+            //   (b) the ownership transfer for THIS throw simply has not reached us yet, so the disc still reads as
+            //       the PREVIOUS holder's. Killing the notice here would be the original bug in a new shape.
+            // They are told apart by whether the thrower was ever seen on the disc while this notice waited. Note
+            // that HolderPlayer returns the disc Owner itself, so holder and Owner are not independent evidence -
+            // they are the same sync arriving, which is why a single sighting is enough to switch (b) off.
+            // Until that sighting a mismatch means "still syncing" and we just wait; PendingHoldSeconds bounds it.
+            VRCPlayerApi holderNow = HolderNow();
+            VRCPlayerApi discOwnerNow = Networking.GetOwner(frisbee.gameObject);
+            bool holderIsThrower = Utilities.IsValid(holderNow) && holderNow.playerId == _pendingThrower;
+            bool ownerIsThrower = Utilities.IsValid(discOwnerNow) && discOwnerNow.playerId == _pendingThrower;
+            if (holderIsThrower || ownerIsThrower) _pendingSeenThrower = true;
+            bool takenByOther = (Utilities.IsValid(holderNow) && !holderIsThrower) || (Utilities.IsValid(discOwnerNow) && !ownerIsThrower);
+            if (_pendingSeenThrower && takenByOther) { LogPending("cancel   ", "taken-by-other"); ClearPending(); return; }
+            if (_pendingEnded && !RetrievableReason(_pendingEndReason)) { LogPending("cancel   ", "flight-ended:" + _pendingEndReason); ClearPending(); return; }
+        }
+
+        // Called straight after ExpirePending and only while the dog is free. True = the notice became a throw.
+        bool TryResolvePending()
+        {
+            if (HeldNow()) return false;   // still in the hand as far as this client can see
+            float heldFor = Time.time - _pendingSince;
+            if (heldFor <= 0f) heldFor = 0.001f;   // resolving on the receipt frame is still a resolve, not a plain accept
+            int gen = _pendingGen, thrower = _pendingThrower, endReason = _pendingEndReason;
+            Vector3 p0 = _pendingP0, v0 = _pendingV0;
+            double t0 = _pendingT0;                // the ORIGINAL launch time; never re-stamped to the receipt
+            float curve = _pendingCurve;
+            bool local = _pendingLocal, ended = _pendingEnded;
+            LogPending("resolved ", "");
+            ClearPending();
+            AcceptLaunch(gen, p0, v0, t0, thrower, curve, local, heldFor, ended, endReason);
+            return true;
+        }
+
+        // The launch facts become this client's current sequence. heldFor > 0 means it waited as a parked notice.
+        void AcceptLaunch(int gen, Vector3 p0, Vector3 v0, double launchServerTime, int thrower, float curve, bool local, float heldFor, bool ended, int endReason)
+        {
+            _haveLaunch = true; _gen = gen; _p0 = p0; _v0 = v0; _t0 = launchServerTime; _curve = curve;
+            // BUG-DOG-003 (Codex D2): an end notice that arrived while the notice was parked is not forgotten here.
+            _flightEnded = ended; _flightEndReason = endReason;
+            _plan = PlanNone; _nextPlan = 0f; _deviationSince = -1f; _landingValid = false; _localPlanValid = true;
+            _settledSince = -1f; _holding = false; _runningCatch = false; _faceErrAtTakeoff = -1f;
+            _mode = ModeHook; _hookActive = false; _hookDone = false; _motionLatched = false;
+            _takeoffMin = RunJumpMinTakeoff; _takeoffCap = RunJumpMaxTakeoff;
+            _mCount = 0; _mIdx = 0; _mPrimed = false; _mAccAngle = 0f; _mAccTime = 0f; _mSlowest = -1f; _mPrevDt = 0.016f;   // the last second of motion belongs to THIS throw only
+            _yawRateMax = 0f; _speedMin = 0f; _vTake = 0f;
+            throwerId = thrower;
+            _launchLocal = local;
+            _seenReleased = true;   // BUG-DOG-003: the disc was out of the hand at this instant; a hand AFTER this is a new grab
+            if (heldFor <= 0f) LogReq("accept   ", "", local, thrower, gen, Networking.GetServerTimeInSeconds() - launchServerTime, 0.0, -1f, false, ended, endReason);
+            LogThrow(p0, v0, curve);
+            TransitionTo(StateChase);
+            // BUG-DOG-003: a notice that already waited must not also sit out the 0.1 s notice pause - L913 measures
+            // elapsed from _stateEntered, which TransitionTo just stamped with now.
+            if (heldFor > 0f) _stateEntered = _stateEntered - noticeDelay;
+        }
+
+        [NetworkCallable(maxEventsPerSecond: 5)]
+        public void ReqFlightEnded(int gen, int reason, Vector3 pos, int sender, double opTime)
+        {
+            if (!IsDogOwner()) return;
+            // BUG-DOG-003 (Codex D3): authenticate the sender on the network path, exactly as ReqCatch does. A direct
+            // call has no CallingPlayer; InNetworkCall is inherited by a direct call made from inside a network event
+            // handler, but KH_Frisbee's direct callers (NotifyEnd from EndFlight / OnPickup / _Recall) are not.
+            // Dropped here on purpose without a line: a forger could otherwise spam the log through this path.
+            if (NetworkCalling.InNetworkCall)
+            {
+                VRCPlayerApi caller = NetworkCalling.CallingPlayer;
+                if (!Utilities.IsValid(caller) || caller.playerId != sender) return;
+            }
+            // Matching rules, identical for the parked notice and the live launch (Codex D4/D5):
+            //   that launch's own thrower - the generation MUST match, whatever the reason (the counter lives on
+            //     the thrower's client, so it only means anything coming from them);
+            //   anyone else - EndGrabbed only, on the authenticated sender alone. Owning the disc is deliberately
+            //     NOT required: a grab or a recall reaches the dog Owner before the ownership change does, and
+            //     demanding the ownership would reject it forever. Instead the notice carries the server time it
+            //     was raised at, and a foreign notice older than the launch it would end is ignored (Codex D4,
+            //     2nd review). 1.0 s is the clock-skew tolerance ReqCatch already uses.
+            // Wave 0 #7: the parked notice is matched FIRST, because it has no _haveLaunch for the live branch. The
+            // call then falls through to the live launch: a same-thrower notice can only match one of the two
+            // (sender, gen) pairs, but a FOREIGN EndGrabbed is a hand on the disc and legitimately ends both.
+            bool opFinite = !(double.IsNaN(opTime) || double.IsInfinity(opTime));
+            bool hitPending = false, hitLive = false;
+            string drop = "dropped-none";
+            if (_pendingLaunch)
+            {
+                if (sender == _pendingThrower)
+                {
+                    if (gen == _pendingGen) { _pendingEnded = true; _pendingEndReason = reason; hitPending = true; }   // resolved or cancelled by ExpirePending / TryResolvePending
+                    else drop = "dropped-gen";
+                }
+                else if (reason != KH_Frisbee.EndGrabbed) drop = "dropped-reason";
+                else if (!opFinite || opTime < _pendingT0 - 1.0) drop = "dropped-stale";
+                else { LogPending("cancel   ", "flight-ended:" + reason); ClearPending(); hitPending = true; }   // a hand or a recall by somebody else
+            }
+            if (_haveLaunch)
+            {
+                if (sender == throwerId)
+                {
+                    if (gen == _gen) { _flightEnded = true; _flightEndReason = reason; hitLive = true; }
+                    else if (!hitPending) drop = "dropped-gen";
+                }
+                else if (reason != KH_Frisbee.EndGrabbed) { if (!hitPending) drop = "dropped-reason"; }
+                else if (!opFinite || opTime < _t0 - 1.0) { if (!hitPending) drop = "dropped-stale"; }
+                else { _flightEnded = true; _flightEndReason = reason; hitLive = true; }
+            }
+            string target = drop;
+            if (hitPending && hitLive) target = "both";
+            else if (hitPending) target = "pending";
+            else if (hitLive) target = "live";
+            LogEnd(reason, sender, gen, opTime, target);
         }
 
         // ---- Owner-side transitions ----
@@ -600,7 +853,7 @@ namespace KominkaHillside
             state = next;
             _stateEntered = Networking.GetServerTimeInSeconds();
             _released = false;
-            if (next == StateIdle) { throwerId = -1; animSpeed = 1f; _plan = PlanNone; _haveLaunch = false; _localPlanValid = false; _yieldAfterLanding = false; _speed = 0f; _settledSince = -1f; _holding = false; _runningCatch = false; }
+            if (next == StateIdle) { throwerId = -1; animSpeed = 1f; _plan = PlanNone; _haveLaunch = false; _localPlanValid = false; _yieldAfterLanding = false; _speed = 0f; _settledSince = -1f; _holding = false; _runningCatch = false; _seenReleased = false; }   // BUG-DOG-003: a parked notice is NOT dropped here (the next frame resolves it); only the release flag is
             if (next == StateJumpCarry || next == StateReturn) ClaimDisc();
             // IMP-DOG-013. Ready: start the よしよし window (one per entry, logged once). Drop: the petting
             // credit against the drop timer belongs to THIS wait only.
@@ -639,11 +892,13 @@ namespace KominkaHillside
         }
 
         // Landed / stopped by a wall / lost track: worth walking to. Grabbed or out of the world: not (review D5).
-        bool Retrievable() { return _flightEndReason != KH_Frisbee.EndGrabbed && _flightEndReason != KH_Frisbee.EndTimeout; }
+        bool Retrievable() { return RetrievableReason(_flightEndReason); }
+        // The same rule for an end notice that arrived while a launch notice was still parked (BUG-DOG-003).
+        bool RetrievableReason(int reason) { return reason != KH_Frisbee.EndGrabbed && reason != KH_Frisbee.EndTimeout; }
 
         void GiveUp()
         {
-            bool held = _discPickup != null && _discPickup.IsHeld;
+            bool held = HeldNow();
             if (IsCarrying && !held) ReleaseDisc(Vector3.zero);
             TransitionTo(StateIdle);
         }
@@ -692,24 +947,57 @@ namespace KominkaHillside
             _dogOwner = IsDogOwner();
             if (!_dogOwner) ObserveSpeed();
             WarnIfOwnerSplit();
+            // BUG-DOG-003. A parked launch notice is judged every frame in every state, and accepted only while the
+            // dog is free. Expiry and acceptance are separate so a stale notice cannot be revived (Codex D1).
+            if (_pendingLaunch) ExpirePending();
+            // BUG-DOG-003 (Codex D2): a NEW throw that is already out of the hand beats a chase that is still on the
+            // ground - otherwise the live chase holds the dog engaged until the notice expires and the second throw
+            // is simply lost. Airborne or with the disc in the mouth we finish first, like every other interruption
+            // here. Idle is reached this frame, so the next frame resolves the notice normally.
+            if (_pendingLaunch && IsEngaged && !IsAirborne && !IsCarrying && _dogOwner && !HeldNow()
+                && (_pendingThrower != throwerId || _pendingGen != _gen))
+            { CancelLaunch("superseded"); return; }
+            if (_pendingLaunch && !IsEngaged && TryResolvePending()) return;
             if (state == StateIdle)
             {
                 // Idle: Wander owns the Animator and the root; we only watch for a held disc.
-                if (_dogOwner && standoffWhenHeld && frisbee.HolderPlayer != null && CanPlay(frisbee.HolderPlayer.GetPosition())) { _standoffValid = false; _nextStandoff = 0f; TransitionTo(StateReady); }
+                VRCPlayerApi holder = HolderNow();
+                if (_dogOwner && standoffWhenHeld && holder != null && CanPlay(holder.GetPosition())) { _standoffValid = false; _nextStandoff = 0f; TransitionTo(StateReady); }
                 return;
             }
-            if (state == StateReady) { UpdateReady(); if (state == StateReady) UpdateLocomotionAnim(); return; }
+            if (state == StateReady)
+            {
+                // BUG-DOG-003: while a notice waits, stand and WATCH THE DISC. UpdateReady would read the holder,
+                // find the hand already empty and drop to Idle (old L796) - the very loop this fixes. Codex U1: the
+                // parked launch facts already predict where the disc is, so the dog follows it instead of staring at
+                // the player who threw it; this is the same prediction the chase will use a moment later.
+                if (_pendingLaunch)
+                {
+                    if (_dogOwner)
+                    {
+                        Coast();
+                        float tPend = frisbee._ElapsedSince(_pendingT0);
+                        if (tPend < 0f) tPend = 0f;
+                        FaceToward(frisbee._PositionAt(_pendingP0, _pendingV0, _pendingCurve, tPend) - dogRoot.position);
+                    }
+                    UpdateLocomotionAnim(); return;
+                }
+                UpdateReady(); if (state == StateReady) UpdateLocomotionAnim(); return;
+            }
             // Became Owner mid-sequence (previous Owner left): no local plan, so stop safely.
-            if (_dogOwner && !_localPlanValid) { GiveUp(); return; }
+            if (_dogOwner && !_localPlanValid) { CancelLaunch("owner-change"); return; }   // Codex M3: every live cancel says why, once
             double now = Networking.GetServerTimeInSeconds();
             float elapsed = (float)(now - _stateEntered);
 
             // A hand wins over the mouth and over the chase (IsHeld is synced) - but an airborne dog lands first.
-            if (_dogOwner && !IsAirborne && _discPickup != null && _discPickup.IsHeld) { GiveUp(); return; }
+            // BUG-DOG-003: only a hand seen AFTER the launch RUNNING HERE was observed released counts as a re-grab.
+            // A stale "held" from before that throw is what used to cancel every non-Owner throw one frame in. The
+            // flag tracks the accepted launch only, so a notice parked meanwhile cannot switch this test off.
+            if (_dogOwner && !IsAirborne && _seenReleased && HeldNow()) { CancelLaunch("held-regrab"); return; }
             // A leash or a gathering accepted meanwhile wins (review D2): on the ground stop now, in the air land first.
             if (_dogOwner && Claimed())
             {
-                if (IsAirborne) _yieldAfterLanding = true; else { GiveUp(); return; }
+                if (IsAirborne) _yieldAfterLanding = true; else { CancelLaunch("claimed"); return; }   // Codex M3
             }
 
             if (state == StateChase) UpdateChase(now, elapsed);
@@ -792,7 +1080,7 @@ namespace KominkaHillside
         void UpdateReady()
         {
             if (!_dogOwner) return;
-            VRCPlayerApi holder = frisbee.HolderPlayer;
+            VRCPlayerApi holder = HolderNow();
             if (holder == null) { TransitionTo(StateIdle); return; } // dropped without a throw, or thrown: ReqCatch overrides
             Vector3 holderPos = holder.GetPosition();
             if (!CanPlay(holderPos)) { TransitionTo(StateIdle); return; } // Ready never takes the dog from anyone (review M1)
@@ -900,14 +1188,14 @@ namespace KominkaHillside
         {
             if (!_dogOwner) { UpdateLocomotionAnim(); return; }
             SampleMotion();   // round 4: the last second of yaw rate / speed is the evidence for "machine or dog"
-            if (!_haveLaunch) { GiveUp(); return; }
-            if (elapsed > chaseTimeout) { GiveUp(); return; }
+            if (!_haveLaunch) { GiveUp(); return; }   // nothing to cancel: this sequence has no launch facts (no line)
+            if (elapsed > chaseTimeout) { CancelLaunch("chase-timeout"); return; }
             if (_flightEnded)
             {
                 // Landed or stopped by a wall: fetch from the ground if it is within reach; never re-arm the jump.
                 // Grabbed / recalled: nothing to fetch.
                 if (Retrievable() && DogMayGo(frisbee.transform.position) && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance) TransitionTo(StateRetrieve);
-                else GiveUp();
+                else CancelLaunch("flight-ended:" + _flightEndReason);   // Codex M3: grabbed / lost / out of reach, said once
                 return;
             }
             if (elapsed < noticeDelay) { Coast(); FaceToward(frisbee.transform.position - dogRoot.position); return; }
@@ -977,7 +1265,7 @@ namespace KominkaHillside
                     if (!_catchDecided) { _catchDecided = true; _bestGap = 99f; }
                     float gap = EdgeGap(tNow);
                     if (gap < _bestGap) _bestGap = gap;
-                    if (gap <= catchTolerance && !(_discPickup != null && _discPickup.IsHeld))
+                    if (gap <= catchTolerance && !HeldNow())
                     {
                         Debug.Log("[KH_FrisbeeCatch] " + (_runningCatch ? "overtake" : "stand") + " catch OK mouth-edge=" + gap.ToString("F3") + " at " + avail.ToString("F2") + "s" + VariantTail());
                         TransitionTo(StateReturn); return;
@@ -998,7 +1286,7 @@ namespace KominkaHillside
                 // Nothing reachable yet: follow the disc from behind until the prediction offers a point,
                 // but never out of the flat (review D1): a throw leaving the plaza is simply not chased.
                 Vector3 disc = frisbee._PositionAt(_p0, _v0, _curve, tNow);
-                if (!DogMayGo(disc) || (_landingValid && !DogMayGo(_landing))) { GiveUp(); return; }
+                if (!DogMayGo(disc) || (_landingValid && !DogMayGo(_landing))) { CancelLaunch("out-of-area"); return; }
                 MoveToward(disc, chaseRunSpeed, 1.0f, chaseAcceleration, true, chaseDeceleration);
             }
             ObserveFlight(tNow);
@@ -1855,7 +2143,7 @@ namespace KominkaHillside
                 float gap = EdgeGap(tNow);
                 if (ta < _tUp - catchWindow + 0.001f) _bestGap = 99f;
                 if (gap < _bestGap) _bestGap = gap;
-                bool ok = gap <= catchTolerance && !_flightEnded && !_yieldAfterLanding && !(_discPickup != null && _discPickup.IsHeld); // yielding: no new catch (review D4)
+                bool ok = gap <= catchTolerance && !_flightEnded && !_yieldAfterLanding && !HeldNow(); // yielding: no new catch (review D4)
                 if (ok)
                 {
                     _catchDecided = true;
@@ -1890,13 +2178,13 @@ namespace KominkaHillside
             if (DogMayGo(dogRoot.position + _forward * (reach * Time.deltaTime))) MoveToward(dogRoot.position + _forward * 2f, desired, 0f);
             else _speed = 0f;
             if (elapsed < recover) return;
-            if (_yieldAfterLanding) { GiveUp(); return; } // leash / gathering took the dog while airborne
+            if (_yieldAfterLanding) { CancelLaunch("claimed"); return; } // leash / gathering took the dog while airborne
             if (state == StateLandCarry) { TransitionTo(StateReturn); return; }
-            if (_discPickup != null && _discPickup.IsHeld) { GiveUp(); return; }
+            if (HeldNow()) { CancelLaunch("held-regrab"); return; }
             if (_flightEnded)
             {
                 if (Retrievable() && DogMayGo(frisbee.transform.position) && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance) TransitionTo(StateRetrieve);
-                else GiveUp();
+                else CancelLaunch("flight-ended:" + _flightEndReason);
             }
             else { _plan = PlanNone; _nextPlan = 0f; TransitionTo(StateChase); } // missed while still flying: plan again
         }
@@ -1905,10 +2193,10 @@ namespace KominkaHillside
         void UpdateRetrieve(float elapsed)
         {
             if (!_dogOwner) { UpdateLocomotionAnim(); return; }
-            if (elapsed > chaseTimeout) { GiveUp(); return; }
-            if (_flightEnded && !Retrievable()) { GiveUp(); return; }
+            if (elapsed > chaseTimeout) { CancelLaunch("retrieve-timeout"); return; }
+            if (_flightEnded && !Retrievable()) { CancelLaunch("flight-ended:" + _flightEndReason); return; }
             Vector3 target = frisbee.transform.position;
-            if (!DogMayGo(target)) { GiveUp(); return; } // rolled or was carried out of the flat
+            if (!DogMayGo(target)) { CancelLaunch("out-of-area"); return; } // rolled or was carried out of the flat
             if (!_flightEnded) target = _landingValid ? _landing : frisbee._PositionAt(_p0, _v0, _curve, frisbee._ElapsedSince(_t0));
             Vector3 to = target - dogRoot.position; to.y = 0f;
             float dist = to.magnitude;
@@ -1933,13 +2221,13 @@ namespace KominkaHillside
         {
             if (!_dogOwner) { UpdateLocomotionAnim(); return; }
             VRCPlayerApi p = VRCPlayerApi.GetPlayerById(throwerId);
-            if (!Utilities.IsValid(p)) { GiveUp(); return; }
+            if (!Utilities.IsValid(p)) { CancelLaunch("thrower-left"); return; }
             Vector3 playerPos = p.GetPosition();
             Vector3 to = playerPos - dogRoot.position; to.y = 0f;
             float dist = to.magnitude;
             if (state == StateReturn)
             {
-                if (elapsed > returnTimeout) { GiveUp(); return; }
+                if (elapsed > returnTimeout) { CancelLaunch("return-timeout"); return; }
                 MoveToward(playerPos, dist > returnRunDistance ? returnRunSpeed : walkSpeed, returnStopDistance);
                 if (dist <= returnStopDistance + 0.05f && _speed <= stopSpeedThreshold) TransitionTo(StateDrop);
                 return;
@@ -2076,7 +2364,7 @@ namespace KominkaHillside
         public override void PostLateUpdate()
         {
             if (!IsCarrying) return;
-            if (_discPickup != null && _discPickup.IsHeld) return;
+            if (HeldNow()) return;
             Vector3 fwd = dogRoot.forward, up = dogRoot.up;
             frisbee.transform.position = mouthAnchor.position + fwd * carryForward + up * carryUp;
             frisbee.transform.rotation = Quaternion.LookRotation(fwd, up) * Quaternion.Euler(carryTiltDeg, 0f, 0f);

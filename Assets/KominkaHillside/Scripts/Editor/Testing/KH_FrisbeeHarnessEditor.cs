@@ -63,6 +63,56 @@ namespace KominkaHillside.Editor
         const float MotionWindow = KH_FrisbeeCatch.MotionWindow;
         const float MotionMinPath = KH_FrisbeeCatch.MotionMinPath;
 
+        // ---------------------------------------------------------------- netorder (BUG-DOG-003)
+        // 投げの通知 (ネットワークイベント) と円盤の held (VRCPickup の同期) は別の経路で届くので、
+        // 犬の Owner では「通知が先、まだ手の中」という順序が起こる。その順序だけを 1 クライアントで
+        // 再現する mode。捕り手の debugHeldOverride (0 = 実値 / 1 = 保持扱い / -1 = 解放扱い) を
+        // ハーネスが切り替えて作る。**実際の通信の到着順は再現しない** (それは 2 人実機でしか出ない)。
+        //
+        // 期限の秒は捕り手の定数をそのまま使う (2 か所に数字を置かない)。PendingHoldSeconds を
+        // 変えたら、下の切り替え時刻も自動で追従する。
+        const float NetHold = KH_FrisbeeCatch.PendingHoldSeconds;
+        const int NetVariant = 0;             // netorder はプリセットの違いを見ない (順序だけ)
+        const string NetShot = "flat";        // 跳んで取る基準の投げ 1 本だけを使う
+        const double NetReleaseEarly = NetHold * 0.25;   // held-first: 期限のはるか手前で手を離す
+        const double NetReleaseLate = NetHold * 1.3;     // expired:   期限を過ぎてから手を離す
+        const double NetRegrabHold = NetHold * 0.5;      // regrab:    掴み直しを保つ長さ
+        // 下の 3 つは保留の長さとは無関係の**観測窓**なので PendingHoldSeconds からは導かない。
+        const double NetExpiredWatch = 2.0;   // 失効のあと「何も起きない」ことを見る窓
+        const double NetRegrabSettle = 1.0;   // 取消のあと Idle/Ready へ落ち着くまでの猶予
+        const double NetReadyWait = 3.0;      // 投げる前に Ready (state 10) になるのを待つ上限
+        const double NetPlanWait = 4.0;       // regrab / steal-rethrow: plan= がここまでに出なければ打ち切る
+        // steal-rethrow は「1 投げ目の追走 → 奪取 → 2 投げ目の一周」を 1 ケースで通すので、
+        // 判定の窓と番犬をこの分だけ伸ばす (既定モードの ThrowSettle / ThrowBudget は触らない)。
+        const double NetStealExtra = 6.0;
+
+        // 持ち帰りの証拠に使う state (Codex M1)。捕り手の定数をそのまま参照する。
+        const int StateJumpCarry = KH_FrisbeeCatch.StateJumpCarry, StatePickup = KH_FrisbeeCatch.StatePickup,
+            StateReturn = KH_FrisbeeCatch.StateReturn, StateDrop = KH_FrisbeeCatch.StateDrop;
+        const int NetStateCount = KH_FrisbeeCatch.StateReady + 1;
+
+        struct NetCase { public string name; public bool holdBeforeThrow; public string expect; public string note; }
+
+        static readonly NetCase[] NetCases =
+        {
+            new NetCase { name = "held-first", holdBeforeThrow = true,
+                expect = "req hold -> req resolved -> throw -> plan=",
+                note = "通知が先に着き、円盤はまだ手の中に見える。保留に入り、手を離した最初のフレームで受理される (これが直したい順序そのもの)" },
+            new NetCase { name = "release-first", holdBeforeThrow = false,
+                expect = "req accept path=local (hold 無し)",
+                note = "対照。従来どおり手を離した後に通知が着く。既定モードの 4 条件 (outcome/completed/motion/expectKind) もここだけ合否に入れる" },
+            new NetCase { name = "expired", holdBeforeThrow = true,
+                expect = "req hold -> req expired、その後は静か",
+                note = "手の中のまま期限を越える。保留は捨てられ、あとから手を離しても投球が蘇らないことを見る" },
+            new NetCase { name = "regrab", holdBeforeThrow = false,
+                expect = "req accept -> plan= -> req cancel reason=held-regrab",
+                note = "受理して追いかけている最中に掴み直される。解放を 1 度見た後の手は新しい掴みとして勝ち、犬は追走をやめる" },
+            // Codex U3: 追走中に相手が円盤を取得し、そのまま投げ直す。1 ケースで 2 投げぶん走る。
+            new NetCase { name = "steal-rethrow", holdBeforeThrow = false,
+                expect = "req accept(gen N) -> plan= -> req cancel reason=held-regrab|superseded (gen N) -> req hold(gen N+1) -> req resolved(gen N+1) -> throw -> plan= -> 持ち帰り",
+                note = "追走中に相手が取って即投げ直す。古い投球は取り消され、新しい投球だけが保留から解決して一周まで行く (取消が新しい gen の受理より先に出ること)" },
+        };
+
         // ---------------------------------------------------------------- 投げ表
         // expectKind (Codex M2): その投げが「どう終わったか」の期待。outcome (取れたか) だけでは
         // 「跳ばずに立って取った」回帰 (4 回目の v4) を落とせないので、終わり方も行ごとに書く。
@@ -106,13 +156,21 @@ namespace KominkaHillside.Editor
             "持ち帰り後のよしよし (IMP-DOG-013)。readyGraceSeconds / readyGraceDistance は Ready に入って初めて働くので 1 度も通らず、撫での判定 (pet.IsPetting / fetch.PetActive) も試作シーンには撫で・Fetch の配線が無いので常に偽 = Drop の待ちも止まらない。猶予・撫で・Drop のタイマー停止は本シーンの Verify (値と状態の規則) と実機 Play でしか見ていない",
             "VR の手投げ・狙い (aim line / marker / 広場外の警告) は一切通らない。固定投げ台の +Z 方向の投げだけ",
             "Interact は UdonBehaviour.Interact() を直接呼ぶので、実際のレイキャスト・距離 (proximity)・InteractionText の当たり判定は通っていない",
-            "他プレイヤー、Owner 移譲、同期 (単一 ClientSim クライアント)",
+            // BUG-DOG-003: --mode=netorder は「通知が先、held が後」という**順序**を 1 クライアントで作るだけ。
+            // 実際の到着順・Owner 移譲・同期そのものは、ここでは 1 度も通らない。
+            "他プレイヤー、Owner 移譲、同期 (単一 ClientSim クライアント)。--mode=netorder は debugHeldOverride で順序を作って保留の論理を通すが、通すのは 1 クライアント上の論理であって通信ではない。実際の到着順・Owner 移譲・IsHeld の同期は 2 人以上の実機でしか見ていない",
+            // Codex U3/M4: netorder の holder は「円盤の Owner = 自分」を騙っているだけ。
+            "保留中に相手が取得 → 弱く放す (別人の保持者・Owner) は単一クライアントでは再現できない。netorder の HolderNow() は円盤の Owner (= ローカルプレイヤー) を返すだけで、別人が持つ・別人へ Owner が移る・その人が弱く放すという経路は 1 度も通らない。2 人実機で確認する",
             "体験としての見え方 (間・迫力・不自然さ) は人の Play でしか判定できない",
             "実機ビルド (PCVR / Quest / iOS) と実クライアント",
         };
 
         // ---------------------------------------------------------------- レポート
-        [Serializable] public class Options { public double globalTimeoutSeconds; public string variants = ""; public string shots = ""; }
+        // mode: "" / "default" = 従来の 36 投げ。"netorder" = BUG-DOG-003 の順序 4 ケース x repeats。
+        [Serializable] public class Options { public double globalTimeoutSeconds; public string variants = ""; public string shots = ""; public string mode = ""; public int repeats; }
+
+        static bool IsNetOrder(Options o) { return o != null && o.mode == "netorder"; }
+        static int Repeats(Options o) { return o != null && o.repeats > 0 ? o.repeats : 2; }
 
         [Serializable]
         public class ThrowResult
@@ -148,6 +206,16 @@ namespace KominkaHillside.Editor
             // (足したのは「余裕を広げる」前に分布を見るため)。-99 = この投げでは採れなかった。
             public float etaErr = -99f;
             public string etaAt = "", etaMode = "", etaLine;
+            // netorder (BUG-DOG-003)。既定モードでは netCase が "" のまま = この 4 列は意味を持たない。
+            // netorder では **合否は netOk だけ**で、上の outcomeOk / completed / motionOk / expectOk は
+            // 参考列として残る (release-first だけは従来の 4 条件も netOk に入れる)。
+            public string netCase = "";
+            public bool netOk;
+            public string netNote = "";
+            // Codex M1: 判定した区間で実際に通った state。Idle へ戻っただけを「一周した」と数えないための証拠。
+            public string netStates = "";
+            public bool netRoundTrip;
+            public List<string> reqLines = new List<string>();
             public string dogStart, launchLine, planLine, takeoffLine, outcomeLine, note;
             public List<string> lines = new List<string>();
         }
@@ -179,6 +247,11 @@ namespace KominkaHillside.Editor
         public class Report
         {
             public string runId, status = "RUNNING", failure;
+            // "default" = 36 投げの通し。"netorder" = BUG-DOG-003 の順序ケース (repeats 回)。
+            public string mode = "default";
+            public int repeats;
+            // netorder が debugHeldOverride をどう戻したか。既定モードでは一度も書かない。
+            public string overrideRestored = "NOT_APPLICABLE: default mode never writes debugHeldOverride";
             public string unity, sdk, scene, previousScene, sceneHashBefore, sceneHashAfter;
             public string started, ended, revision, dirty, sourceManifest;
             public bool sceneDirtyBefore, sceneDirtyAfterPlay, sceneFileUnchanged;
@@ -205,6 +278,10 @@ namespace KominkaHillside.Editor
         static double nextStopPoll;
         static readonly List<string> Lines = new List<string>();
         static UdonBehaviour catcher, thrower, recaller, cycler;
+        // netorder: 捕り手の debugHeldOverride を書いたか / 今いくつか (全終了経路で 0 へ戻すため)。
+        static bool overrideTouched;
+        static bool overrideFailLogged;   // 後始末の失敗は 1 件だけ errors へ (再試行のたびに増やさない)
+        static int overrideNow;
         static Transform dogRoot;
         static Vector3 dogHome;
         static Quaternion dogHomeRot;
@@ -314,11 +391,15 @@ namespace KominkaHillside.Editor
             Directory.CreateDirectory(Base);
             if (File.Exists(StopFlag)) File.Delete(StopFlag);
             var options = ReadOptions();
-            int planned = Variants(options).Length * Plan(options).Length;
+            int planned = IsNetOrder(options)
+                ? NetCases.Length * Repeats(options)
+                : Variants(options).Length * Plan(options).Length;
 
             report = new Report
             {
                 runId = DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N").Substring(0, 6),
+                mode = IsNetOrder(options) ? "netorder" : "default",
+                repeats = IsNetOrder(options) ? Repeats(options) : 0,
                 unity = Application.unityVersion,
                 sdk = SdkVersion(),
                 scene = proto,
@@ -335,9 +416,14 @@ namespace KominkaHillside.Editor
                     : Math.Max(MinBudget, planned * BudgetPerThrow + 30.0),
             };
             report.deadline = EditorApplication.timeSinceStartup + report.budgetSeconds;
-            report.trace.Add("variants=" + string.Join(",", Variants(options).Select(v => v.ToString()).ToArray()) +
-                " shots=" + string.Join(",", Plan(options).Select(s => s.name).ToArray()) +
-                " budget=" + report.budgetSeconds + "s");
+            report.trace.Add(IsNetOrder(options)
+                ? "mode=netorder cases=" + string.Join(",", NetCases.Select(n => n.name).ToArray()) +
+                  " repeats=" + Repeats(options) + " variant=" + NetVariant + " shot=" + NetShot +
+                  " PendingHoldSeconds=" + NetHold.ToString("F2", CultureInfo.InvariantCulture) +
+                  " budget=" + report.budgetSeconds + "s"
+                : "variants=" + string.Join(",", Variants(options).Select(v => v.ToString()).ToArray()) +
+                  " shots=" + string.Join(",", Plan(options).Select(s => s.name).ToArray()) +
+                  " budget=" + report.budgetSeconds + "s");
             SessionState.SetString(Key, report.runId);
             SessionState.SetString(Key + ".options", JsonUtility.ToJson(options));
             Directory.CreateDirectory(RunDir);
@@ -369,6 +455,9 @@ namespace KominkaHillside.Editor
             if (state == PlayModeStateChange.EnteredPlayMode) { routine = Suite(); lastFrame = -1; }
             if (state == PlayModeStateChange.ExitingPlayMode)
             {
+                // 外から Play を止められた経路は StopInternal を通らないので、ここでも override を戻す
+                // (まだ isPlaying なので書き戻せる最後の機会)。
+                RestoreOverride();
                 if (report.status == "RUNNING")
                 {
                     report.status = "BLOCKED";
@@ -429,10 +518,14 @@ namespace KominkaHillside.Editor
                 if (!routine.MoveNext())
                 {
                     Summarise();
-                    report.status = report.errors.Count == 0
-                        && report.throwResults.Count == report.throwsPlanned
-                        && report.throwsOk == report.throwResults.Count
-                        && report.throwResults.Count > 0 ? "PASS" : "FAIL";
+                    // netorder は前提 (debugHeldOverride の有無) を満たさないとき、自分で BLOCKED を置いて
+                    // 抜ける。その判定は上書きしない。既定モードはここへ来る時点で必ず RUNNING なので、
+                    // この条件は既定の合否を変えない。
+                    if (report.status == "RUNNING")
+                        report.status = report.errors.Count == 0
+                            && report.throwResults.Count == report.throwsPlanned
+                            && report.throwsOk == report.throwResults.Count
+                            && report.throwResults.Count > 0 ? "PASS" : "FAIL";
                     StopInternal();
                 }
             }
@@ -448,6 +541,9 @@ namespace KominkaHillside.Editor
         static void StopInternal()
         {
             routine = null;
+            // netorder の後始末はここが最後の関所。停止フラグ・番犬・例外・正常終了のどれもここを通る。
+            // **Udon を止める前に**戻す (下で UdonBehaviour を無効化すると書き込めなくなる)。
+            RestoreOverride();
             if (!ending && EditorApplication.isPlaying)
             {
                 // Udon を先に止めてから Play を抜ける (終了順で SDK 側が先に消えるのを避ける)。
@@ -464,11 +560,22 @@ namespace KominkaHillside.Editor
         {
             try
             {
+                // 最後の関所。ここまで来て PENDING のままなら「戻せなかった」と記録に残す
+                // (すでに戻してあれば何もしない)。
+                RestoreOverride();
                 ClientSimRuntimeLoader.EndUnityTesting();
                 Application.logMessageReceived -= Log;
                 Summarise();
                 if (report.status == "RUNNING") { report.status = "BLOCKED"; Why("Run ended without a verdict"); }
                 if (report.errors.Count > 0 && report.status == "PASS") report.status = "FAIL";
+                // Codex M2: 後始末を確かめられていない実行は PASS にしない。
+                // 既定モードは "NOT_APPLICABLE..." のままなのでここを通らない。
+                if (report.status == "PASS" && report.overrideRestored != null
+                    && !report.overrideRestored.StartsWith("OK:") && !report.overrideRestored.StartsWith("NOT_APPLICABLE"))
+                {
+                    report.status = "FAIL";
+                    Why("debugHeldOverride was not confirmed back at 0: " + report.overrideRestored);
+                }
                 report.ended = DateTime.Now.ToString("o");
                 Save();
             }
@@ -517,6 +624,7 @@ namespace KominkaHillside.Editor
                 SessionState.EraseString(Key + ".options");
                 SessionState.SetBool(Key + ".restore", false);
                 report = null; ending = false; closed = false; routine = null; throwDeadline = 0;
+                overrideTouched = false; overrideFailLogged = false; overrideNow = 0;
                 catcher = thrower = recaller = cycler = null;
                 Lines.Clear();
             }
@@ -575,6 +683,12 @@ namespace KominkaHillside.Editor
             report.trace.Add("dog home = " + dogHome.ToString("F2") + " " + dogHomeRot.eulerAngles.ToString("F0"));
 
             var options = JsonUtility.FromJson<Options>(SessionState.GetString(Key + ".options", "{}")) ?? new Options();
+            if (IsNetOrder(options))
+            {
+                var net = NetOrderSuite(options);
+                while (net.MoveNext()) yield return null;
+                yield break;
+            }
             var shots = Plan(options);
             int index = 0;
             foreach (int v in Variants(options))
@@ -584,6 +698,51 @@ namespace KominkaHillside.Editor
                     while (one.MoveNext()) yield return null;
                     Save();
                 }
+        }
+
+        // ---------------------------------------------------------------- netorder (BUG-DOG-003)
+        /// <summary>通知が先で held が後、という順序だけを 1 クライアントで作る mode。
+        /// 捕り手の debugHeldOverride を投げの前後で切り替え、[KH_FrisbeeCatch] req ... の行の
+        /// **順序**で合否を出す。既定モードの 4 条件は参考列として残すだけ (release-first を除く)。</summary>
+        static IEnumerator NetOrderSuite(Options options)
+        {
+            // 前提: 切り替えは捕り手の debugHeldOverride だけで作る。無ければ何も測れないので BLOCKED
+            // (FAIL ではない - 測れていないのであって、順序が壊れていると分かったわけではない)。
+            if (!Has(catcher, "debugHeldOverride"))
+            {
+                report.status = "BLOCKED";
+                report.failure = "KH_FrisbeeCatch does not expose 'debugHeldOverride'. --mode=netorder drives that symbol "
+                    + "to fake the held / released order (BUG-DOG-003); land the runtime side first, then re-run.";
+                report.overrideRestored = "NOT_APPLICABLE: the symbol is missing, so nothing was ever written";
+                report.trace.Add("netorder BLOCKED: the live KH_FrisbeeCatch has no debugHeldOverride");
+                yield break;
+            }
+            if (!Shots.Any(s => s.name == NetShot))
+            {
+                report.status = "BLOCKED";
+                report.failure = "The shot table has no '" + NetShot + "' shot; every netorder case throws it.";
+                yield break;
+            }
+            overrideNow = ReadInt(catcher, "debugHeldOverride");
+            // 0 以外で始まっていたら (シーン側の置き忘れ) それも「戻すべきもの」として扱う。
+            if (overrideNow != 0) overrideTouched = true;
+            report.overrideRestored = "PENDING: netorder is running";
+            report.trace.Add("netorder: debugHeldOverride starts at " + overrideNow
+                + ", PendingHoldSeconds=" + NetHold.ToString("F2", CultureInfo.InvariantCulture)
+                + " -> release-early=" + NetReleaseEarly.ToString("F2", CultureInfo.InvariantCulture)
+                + "s release-late=" + NetReleaseLate.ToString("F2", CultureInfo.InvariantCulture)
+                + "s regrab-hold=" + NetRegrabHold.ToString("F2", CultureInfo.InvariantCulture)
+                + "s (all derived from the constant, never typed twice)");
+
+            int index = 0;
+            for (int r = 0; r < Repeats(options); r++)
+                foreach (var c in NetCases)
+                {
+                    var one = RunNetThrow(index++, c, r);
+                    while (one.MoveNext()) yield return null;
+                    Save();
+                }
+            RestoreOverride();
         }
 
         static IEnumerator RunThrow(int index, int variant, Shot shot)
@@ -598,15 +757,7 @@ namespace KominkaHillside.Editor
             report.throwsRun++;
 
             // 1. 落ち着くまで待ち、プリセットを合わせる (犬が動いている間は要求が保留されるため)
-            var idle = WaitIdle(4); while (idle.MoveNext()) yield return null;
-            int guard = 0;
-            while (ReadInt(catcher, "variant") != variant && guard++ < VariantCount + 2)
-            {
-                cycler.Interact();
-                var w = Wait(0.35); while (w.MoveNext()) yield return null;
-                idle = WaitIdle(2); while (idle.MoveNext()) yield return null;
-            }
-            rec.variantApplied = ReadInt(catcher, "variant");
+            var pre = EnsureVariant(variant, rec); while (pre.MoveNext()) yield return null;
             if (rec.variantApplied != variant)
             {
                 rec.outcome = "blocked"; rec.ok = false;
@@ -616,12 +767,7 @@ namespace KominkaHillside.Editor
 
             // 2. 犬を元の立ち位置へ戻す (注入)。これをしないと 2 投げ目以降は犬が人の足元に
             //    いる状態からの投げになり、同じ投げの比較にならない。
-            if (dogRoot != null)
-            {
-                dogRoot.SetPositionAndRotation(dogHome, dogHomeRot);
-                yield return null;
-                rec.dogStart = dogRoot.position.ToString("F2");
-            }
+            var home = PlaceDogHome(rec); while (home.MoveNext()) yield return null;
             var settle = Wait(0.3); while (settle.MoveNext()) yield return null;
 
             // 3. 投げの値を固定投げ台へ書き、Interact で投げる。ここから 1 投げ分の時計を回す
@@ -665,12 +811,453 @@ namespace KominkaHillside.Editor
             // 5. 次の投げのために円盤を台へ戻す (犬の現在の追いかけも終わる)。
             //    片付けは投げの判定が済んだあとなので、1 投げの時計は先に止める。
             throwDeadline = 0;
-            recaller.Interact();
-            var back = Wait(0.4); while (back.MoveNext()) yield return null;
-            idle = WaitIdle(4); while (idle.MoveNext()) yield return null;
+            var tidy = Recall(); while (tidy.MoveNext()) yield return null;
         }
 
-        static void Classify(ThrowResult rec, bool engaged)
+        /// <summary>手順 1 (既定モードと netorder で共有)。落ち着くまで待ってからプリセットを合わせる。
+        /// 犬が動いている間は切り替え要求が保留されるので、毎回 Idle を待ってから回す。</summary>
+        static IEnumerator EnsureVariant(int variant, ThrowResult rec)
+        {
+            var idle = WaitIdle(4); while (idle.MoveNext()) yield return null;
+            int guard = 0;
+            while (ReadInt(catcher, "variant") != variant && guard++ < VariantCount + 2)
+            {
+                cycler.Interact();
+                var w = Wait(0.35); while (w.MoveNext()) yield return null;
+                idle = WaitIdle(2); while (idle.MoveNext()) yield return null;
+            }
+            rec.variantApplied = ReadInt(catcher, "variant");
+        }
+
+        /// <summary>手順 2 (共有)。唯一の注入 = 犬をシーンの立ち位置へ戻す。</summary>
+        static IEnumerator PlaceDogHome(ThrowResult rec)
+        {
+            if (dogRoot == null) yield break;
+            dogRoot.SetPositionAndRotation(dogHome, dogHomeRot);
+            yield return null;
+            rec.dogStart = dogRoot.position.ToString("F2");
+        }
+
+        /// <summary>手順 5 (共有)。次の投げのために円盤を台へ戻す (犬の現在の追いかけも終わる)。</summary>
+        static IEnumerator Recall()
+        {
+            recaller.Interact();
+            var back = Wait(0.4); while (back.MoveNext()) yield return null;
+            var idle = WaitIdle(4); while (idle.MoveNext()) yield return null;
+        }
+
+        /// <summary>netorder の 1 ケース。既定モードの RunThrow と同じ手順 (Idle 待ち → プリセット →
+        /// 犬を定位置へ → 固定台の Interact → 観測 → recall) を通し、投げの前後で
+        /// debugHeldOverride を切り替えて「通知が先、held が後」を作る。</summary>
+        static IEnumerator RunNetThrow(int index, NetCase c, int repeat)
+        {
+            Shot shot = Shots.First(s => s.name == NetShot);
+            var rec = new ThrowResult
+            {
+                index = index, variant = NetVariant, shot = shot.name,
+                speed = shot.speed, elevationDeg = shot.elevation,
+                allowed = shot.allowed, expectKind = shot.expectKind,
+                netCase = c.name,
+                note = "netorder " + c.name + " (repeat " + (repeat + 1) + "). expect: " + c.expect + " — " + c.note,
+            };
+            report.throwResults.Add(rec);
+            report.throwsRun++;
+            var notes = new List<string>();
+
+            // 1. プリセット合わせの前に override を 0 へ。1 のままだと犬は Ready から Idle へ戻らず、
+            //    WaitIdle が毎回空振りする。
+            SetOverride(0);
+            var pre = EnsureVariant(NetVariant, rec); while (pre.MoveNext()) yield return null;
+            if (rec.variantApplied != NetVariant)
+            {
+                rec.outcome = "blocked"; rec.ok = false; rec.netOk = false;
+                rec.netNote = "preset " + NetVariant + " could not be selected (stuck on " + rec.variantApplied + ")";
+                yield break;
+            }
+
+            // 2. 犬を立ち位置へ (既定モードと同じ唯一の注入)
+            var home = PlaceDogHome(rec); while (home.MoveNext()) yield return null;
+            var settle = Wait(0.3); while (settle.MoveNext()) yield return null;
+
+            // 3. 投げの前に「まだ手の中」を作る。Interact の瞬間に 1 なら ReqCatch は保留へ入る。
+            //    Ready まで待つのは本番に近い文脈にするためで、**順序の判定には要らない** (試作シーンに
+            //    持ち手がいないので、standoffWhenHeld や CanPlay の都合で入らないことがありうる)。
+            if (c.holdBeforeThrow)
+            {
+                SetOverride(1);
+                double readyUntil = EditorApplication.timeSinceStartup + NetReadyWait;
+                while (EditorApplication.timeSinceStartup < readyUntil && ReadInt(catcher, "state") != StateReady)
+                    yield return null;
+                if (ReadInt(catcher, "state") != StateReady)
+                    notes.Add("dog did not reach Ready within " + NetReadyWait + " s (state=" + ReadInt(catcher, "state")
+                        + "); the case still runs — only the pending order is judged");
+            }
+
+            // 4. 投げる。steal-rethrow だけは 2 投げぶん走るので窓を伸ばす。
+            double extra = c.name == "steal-rethrow" ? NetStealExtra : 0.0;
+            double start = EditorApplication.timeSinceStartup;
+            throwDeadline = start + ThrowBudget + extra;
+            thrower.SetProgramVariable("speed", shot.speed);
+            thrower.SetProgramVariable("elevationDeg", shot.elevation);
+            thrower.SetProgramVariable("sideDeg", shot.side);
+            int mark = Lines.Count;
+            thrower.Interact();
+
+            // 5. 観測。行と state を毎フレーム拾いながら、ケースごとに override を切り替える。
+            //    seen[] は「判定する区間で実際に通った state」。steal-rethrow は 2 投げ目の受理で
+            //    数え直す (1 投げ目の追走を 2 投げ目の一周の証拠にしない)。
+            bool engaged = false;
+            var seen = new bool[NetStateCount];
+            int scan = mark, firstPlan = -1, expiredAt = -1, cancelAt = -1, stealResolvedAt = -1;
+            bool stolen = false, phase2Engaged = false;
+            double release = c.name == "held-first" ? start + NetReleaseEarly
+                : c.name == "expired" ? start + NetReleaseLate : -1;
+            double regrabUntil = -1, watchUntil = -1, cancelTime = -1, settledAt = -1, stealRelease = -1;
+            double planWait = start + NetPlanWait;
+            double limit = Math.Min(start + ThrowSettle + extra, throwDeadline);
+
+            while (EditorApplication.timeSinceStartup < limit)
+            {
+                double now = EditorApplication.timeSinceStartup;
+                int st = ReadInt(catcher, "state");
+                if (st != StateIdle && st != StateReady) engaged = true;
+                if (st >= 0 && st < seen.Length) seen[st] = true;
+                for (; scan < Lines.Count; scan++)
+                {
+                    string l = Lines[scan];
+                    if (firstPlan < 0 && l.Contains("] plan=")) firstPlan = scan;
+                    if (expiredAt < 0 && l.Contains("] req expired")) expiredAt = scan;
+                    if (cancelAt < 0 && l.Contains("] req cancel") && l.Contains("reason=held-regrab"))
+                    { cancelAt = scan; cancelTime = now; }
+                    if (stolen && stealResolvedAt < 0 && l.Contains("] req resolved"))
+                    {
+                        // 2 投げ目が受理された瞬間から、持ち帰りの証拠を数え直す。
+                        stealResolvedAt = scan;
+                        for (int k = 0; k < seen.Length; k++) seen[k] = false;
+                    }
+                }
+
+                if (c.name == "held-first")
+                {
+                    // 期限のはるか手前で手を離す → 次のフレームで保留が解決するはず。
+                    if (overrideNow == 1 && now >= release) SetOverride(0);
+                    if (engaged && st == StateIdle) break;
+                }
+                else if (c.name == "release-first")
+                {
+                    if (engaged && st == StateIdle) break;
+                }
+                else if (c.name == "expired")
+                {
+                    // 期限を過ぎてから手を離し、**そのあと 2 秒**「何も起きない」ことを見る。
+                    if (overrideNow == 1 && now >= release)
+                    {
+                        if (expiredAt < 0) notes.Add("no 'req expired' line yet when the hand was released at "
+                            + NetReleaseLate.ToString("F2", CultureInfo.InvariantCulture) + " s");
+                        SetOverride(0);
+                        watchUntil = now + NetExpiredWatch;
+                    }
+                    if (watchUntil > 0 && now >= watchUntil) break;
+                }
+                else if (c.name == "steal-rethrow")
+                {
+                    // 追走が始まったら (accept + plan=) 相手が取って即投げ直す。
+                    // override を先に立ててから Interact する: 投げ台は実値の IsHeldNow を見るので
+                    // 投げは通り、捕り手は「まだ手の中」に見えて保留に入る。
+                    if (!stolen)
+                    {
+                        if (firstPlan >= 0 && FindLine(Lines, "] req accept", null, mark) >= 0)
+                        {
+                            SetOverride(1);
+                            thrower.Interact();
+                            stolen = true;
+                            stealRelease = now + NetReleaseEarly;
+                        }
+                        else if (now > planWait)
+                        { notes.Add("no 'req accept' + 'plan=' within " + NetPlanWait + " s: the first throw never started a chase"); break; }
+                    }
+                    else
+                    {
+                        if (overrideNow == 1 && now >= stealRelease) SetOverride(0);   // 相手が投げて手を離した
+                        if (stealResolvedAt >= 0)
+                        {
+                            if (st != StateIdle && st != StateReady) phase2Engaged = true;
+                            if (phase2Engaged && st == StateIdle) break;   // 2 投げ目の一周が終わった
+                        }
+                        else if (now > stealRelease + NetPlanWait)
+                        { notes.Add("the second launch was never resolved within " + NetPlanWait + " s of the release"); break; }
+                    }
+                }
+                else   // regrab
+                {
+                    if (firstPlan < 0)
+                    {
+                        if (now > planWait)
+                        { notes.Add("no 'plan=' within " + NetPlanWait + " s of the throw: the dog never started a chase"); break; }
+                    }
+                    else
+                    {
+                        if (overrideNow == 0 && regrabUntil < 0) { SetOverride(1); regrabUntil = now + NetRegrabHold; }
+                        if (overrideNow == 1 && now >= regrabUntil) SetOverride(0);
+                        if (cancelAt >= 0)
+                        {
+                            if (settledAt < 0 && (st == StateIdle || st == StateReady)) settledAt = now;
+                            if (overrideNow == 0 && (settledAt >= 0 || now > cancelTime + NetRegrabSettle)) break;
+                        }
+                        else if (now > regrabUntil + NetRegrabSettle)
+                        { notes.Add("no 'req cancel reason=held-regrab' line after the re-grab"); break; }
+                    }
+                }
+                yield return null;
+            }
+
+            rec.seconds = Math.Round(EditorApplication.timeSinceStartup - start, 2);
+            rec.endState = ReadInt(catcher, "state");
+            rec.reachedIdle = rec.endState == StateIdle;
+            for (int i = mark; i < Lines.Count; i++) rec.lines.Add(Lines[i]);
+            foreach (string l in rec.lines) if (l.Contains("[KH_FrisbeeCatch] req ")) rec.reqLines.Add(l);
+
+            // netorder は Ready で終わるのが正しいケース (expired) を含むので、「Idle へ戻らなかった」
+            // だけで timeout にはしない。
+            Classify(rec, engaged, true);
+            JudgeMotion(rec);
+            JudgeKind(rec);
+            rec.caught = rec.outcome == "caught";
+            rec.completed = rec.reachedIdle;
+            rec.outcomeOk = shot.allowed.Contains(rec.outcome);
+            bool watchedFull = watchUntil > 0 && EditorApplication.timeSinceStartup >= watchUntil - 0.1;
+            JudgeNetOrder(rec, c, engaged, watchedFull, cancelTime, settledAt, seen, notes);
+            // Codex M2: netorder の合否は netOk だけ。outcomeOk / completed / motionOk / expectOk は
+            // 参考列のまま残す (release-first だけ、その 4 条件も netOk の一部として使う)。
+            rec.ok = rec.netOk;
+            if (rec.ok) report.throwsOk++;
+
+            // 6. 片付け。円盤を戻す前に override を必ず 0 へ。
+            throwDeadline = 0;
+            SetOverride(0);
+            var tidy = Recall(); while (tidy.MoveNext()) yield return null;
+        }
+
+        /// <summary>netorder の合否。req の行の**順序**だけで決める。
+        /// 行は `[KH_FrisbeeCatch] req <動詞>` と `reason=<理由>` を別々の部分文字列として見るので、
+        /// 列を揃える空白 (req cancel   reason=...) を跨いでも当たる。</summary>
+        static void JudgeNetOrder(ThrowResult rec, NetCase c, bool engaged, bool watchedFull,
+            double cancelTime, double settledAt, bool[] seen, List<string> notes)
+        {
+            var L = rec.lines;
+            int hold = FindLine(L, "] req hold", null, 0);
+            int accept = FindLine(L, "] req accept", null, 0);
+            int plan = FindLine(L, "] plan=", null, 0);
+            string trip;
+            rec.netRoundTrip = RoundTrip(seen, L, out trip);
+            rec.netStates = StatesOf(seen);
+            switch (c.name)
+            {
+                case "held-first":
+                {
+                    int resolved = FindLine(L, "] req resolved", null, hold < 0 ? 0 : hold + 1);
+                    int thrown = FindLine(L, "[KH_FrisbeeCatch] throw ", null, resolved < 0 ? 0 : resolved + 1);
+                    int planned = FindLine(L, "] plan=", null, thrown < 0 ? 0 : thrown + 1);
+                    // 投げ遅れの分だけ幾何がずれるので、flat でも地上回収に落ちるのは許す (取れ方は問わない)。
+                    // Codex M1: ただし「Idle へ戻った」だけでは一周の証拠にしない (下の RoundTrip)。
+                    bool landed = rec.outcome == "caught" || rec.outcome == "ground";
+                    rec.netOk = hold >= 0 && resolved > hold && thrown > resolved && planned > thrown
+                        && landed && rec.completed && rec.netRoundTrip;
+                    notes.Add("hold@" + hold + " resolved@" + resolved + " throw@" + thrown + " plan@" + planned
+                        + " outcome=" + rec.outcome + " completed=" + rec.completed + " roundTrip=" + trip);
+                    break;
+                }
+                case "release-first":
+                {
+                    int local = FindLine(L, "] req accept", "path=local", 0);
+                    // 対照なので、ここだけは既定モードの 4 条件もそのまま合否に入れる。
+                    rec.netOk = accept >= 0 && local == accept && hold < 0
+                        && rec.outcomeOk && rec.completed && rec.motionOk && rec.expectOk && rec.netRoundTrip;
+                    notes.Add("accept@" + accept + " path=local:" + (local >= 0) + " hold@" + hold
+                        + " (must be -1) legacy outcomeOk=" + rec.outcomeOk + " completed=" + rec.completed
+                        + " motionOk=" + rec.motionOk + " expectOk=" + rec.expectOk + " roundTrip=" + trip);
+                    break;
+                }
+                case "steal-rethrow":
+                {
+                    // 1 投げ目 (gen N) を受理して追走 → 相手が取って投げ直す (gen N+1) → 古い方が取り消され、
+                    // 新しい方だけが保留から解決して一周まで行く。gen で 2 本を区別する。
+                    int genA = accept < 0 ? -1 : GenOf(L[accept]);
+                    int plan1 = FindLine(L, "] plan=", null, accept < 0 ? 0 : accept + 1);
+                    int holdB = FindLineGenNot(L, "] req hold", genA, plan1 < 0 ? 0 : plan1 + 1);
+                    int genB = holdB < 0 ? -1 : GenOf(L[holdB]);
+                    // 取消の理由は、奪取が生きた投球に追いついたか (superseded) 先に手が見えたか (held-regrab) で変わる。
+                    int cancelA = FindLineGen(L, "] req cancel", "reason=held-regrab", genA, plan1 < 0 ? 0 : plan1 + 1);
+                    if (cancelA < 0) cancelA = FindLineGen(L, "] req cancel", "reason=superseded", genA, plan1 < 0 ? 0 : plan1 + 1);
+                    int resolvedB = holdB < 0 ? -1 : FindLineGen(L, "] req resolved", null, genB, holdB + 1);
+                    int thrownB = FindLine(L, "[KH_FrisbeeCatch] throw ", null, resolvedB < 0 ? 0 : resolvedB + 1);
+                    int plan2 = FindLine(L, "] plan=", null, thrownB < 0 ? 0 : thrownB + 1);
+                    rec.netOk = accept >= 0 && genA >= 0 && plan1 > accept
+                        && holdB > plan1 && genB >= 0 && genB != genA
+                        && cancelA > plan1 && resolvedB > holdB && cancelA < resolvedB   // 古い投球の取消が新しい投球の受理より先
+                        && thrownB > resolvedB && plan2 > thrownB
+                        && rec.netRoundTrip;
+                    notes.Add("gen " + genA + " accept@" + accept + " plan@" + plan1 + " cancel@" + cancelA
+                        + " -> gen " + genB + " hold@" + holdB + " resolved@" + resolvedB + " throw@" + thrownB
+                        + " plan@" + plan2 + " (cancel before resolved="
+                        + (cancelA >= 0 && resolvedB >= 0 && cancelA < resolvedB) + ") roundTrip=" + trip);
+                    break;
+                }
+                case "expired":
+                {
+                    int expired = FindLine(L, "] req expired", null, hold < 0 ? 0 : hold + 1);
+                    // 失効のあとに投球が蘇らないこと。resolved / throw / plan= のどれが出ても不合格。
+                    bool quiet = expired >= 0
+                        && FindLine(L, "] req resolved", null, expired + 1) < 0
+                        && FindLine(L, "[KH_FrisbeeCatch] throw ", null, expired + 1) < 0
+                        && FindLine(L, "] plan=", null, expired + 1) < 0;
+                    rec.netOk = hold >= 0 && expired > hold && quiet && !engaged && watchedFull;
+                    notes.Add("hold@" + hold + " expired@" + expired + " quiet-after-expiry=" + quiet
+                        + " leftIdleOrReady=" + engaged + " watched " + NetExpiredWatch + " s after the release="
+                        + watchedFull + " endState=" + rec.endState);
+                    break;
+                }
+                case "regrab":
+                {
+                    int cancel = FindLine(L, "] req cancel", "reason=held-regrab", plan < 0 ? 0 : plan + 1);
+                    double delay = settledAt >= 0 && cancelTime > 0 ? settledAt - cancelTime : -1;
+                    bool settled = delay >= 0 && delay <= NetRegrabSettle;
+                    rec.netOk = accept >= 0 && plan > accept && cancel > plan && settled;
+                    notes.Add("accept@" + accept + " plan@" + plan + " cancel(held-regrab)@" + cancel
+                        + " back to Idle/Ready " + (delay < 0 ? "never" : delay.ToString("F2", CultureInfo.InvariantCulture) + " s")
+                        + " after the cancel (limit " + NetRegrabSettle + " s) endState=" + rec.endState);
+                    break;
+                }
+                default:
+                    // 表にケースを足したのに判定を書き忘れた場合。黙って合格にしない。
+                    rec.netOk = false;
+                    notes.Add("netCase '" + c.name + "' has no rule in JudgeNetOrder");
+                    break;
+            }
+            rec.netNote = string.Join(" | ", notes.ToArray());
+        }
+
+        static int FindLine(List<string> lines, string a, string b, int from)
+        {
+            for (int i = Math.Max(0, from); i < lines.Count; i++)
+                if (lines[i].Contains(a) && (b == null || lines[i].Contains(b))) return i;
+            return -1;
+        }
+
+        /// <summary>gen= が一致する行だけを探す (steal-rethrow は 2 本の投球を gen で分ける)。</summary>
+        static int FindLineGen(List<string> lines, string a, string b, int gen, int from)
+        {
+            for (int i = Math.Max(0, from); i < lines.Count; i++)
+                if (lines[i].Contains(a) && (b == null || lines[i].Contains(b)) && GenOf(lines[i]) == gen) return i;
+            return -1;
+        }
+
+        /// <summary>gen= が「その値ではない」行を探す (新しい世代の最初の 1 本を取る)。</summary>
+        static int FindLineGenNot(List<string> lines, string a, int gen, int from)
+        {
+            for (int i = Math.Max(0, from); i < lines.Count; i++)
+            {
+                if (!lines[i].Contains(a)) continue;
+                int g = GenOf(lines[i]);
+                if (g >= 0 && g != gen) return i;
+            }
+            return -1;
+        }
+
+        /// <summary>req の行の gen= を読む。読めなければ -1。</summary>
+        static int GenOf(string line)
+        {
+            int v;
+            return int.TryParse(Field(line, " gen="), NumberStyles.Integer, CultureInfo.InvariantCulture, out v) ? v : -1;
+        }
+
+        /// <summary>持ち帰りの証拠 (Codex M1)。「Idle へ戻った」(completed) だけでは、
+        /// plan=2 のまま取り消されて Idle に落ちた投げも通ってしまう。
+        /// 咥えた state (JumpCarry / Pickup) か `catch OK` の行、**かつ** 返す state (Return / Drop) を
+        /// 実際に見たことを求める。state は毎フレーム読んでいるので、通ったなら必ずどれかに当たる。</summary>
+        static bool RoundTrip(bool[] seen, List<string> lines, out string why)
+        {
+            bool carried = seen[StateJumpCarry] || seen[StatePickup];
+            bool caughtLine = FindLine(lines, "catch OK", null, 0) >= 0;
+            bool returned = seen[StateReturn] || seen[StateDrop];
+            bool ok = returned && (carried || caughtLine);
+            why = (ok ? "OK" : "MISSING") + " states=" + StatesOf(seen)
+                + " carried(" + StateJumpCarry + "/" + StatePickup + ")=" + carried
+                + " catchOK=" + caughtLine
+                + " returned(" + StateReturn + "/" + StateDrop + ")=" + returned;
+            return ok;
+        }
+
+        static string StatesOf(bool[] seen)
+        {
+            var got = new List<string>();
+            for (int i = 0; i < seen.Length; i++) if (seen[i]) got.Add(i.ToString());
+            return got.Count == 0 ? "(none)" : string.Join(",", got.ToArray());
+        }
+
+        /// <summary>捕り手の debugHeldOverride を書く (0 = 実値 / 1 = 保持扱い / -1 = 解放扱い)。
+        /// 書いた事実を覚えておき、どの終わり方でも RestoreOverride が 0 に戻せるようにする。</summary>
+        static void SetOverride(int value)
+        {
+            if (catcher == null || !EditorApplication.isPlaying || overrideNow == value) return;
+            catcher.SetProgramVariable("debugHeldOverride", value);
+            overrideNow = value;
+            if (value != 0) overrideTouched = true;
+        }
+
+        /// <summary>netorder の後始末。debugHeldOverride を 0 へ戻し、**読み直して 0 を確かめてから**
+        /// 記録する。正常終了・BLOCKED・停止フラグ・番犬・例外のすべてが StopInternal を通るので、そこから呼ぶ。
+        /// 値は Play 中の Udon ヒープにしか無く (ハーネスはシーンを保存しない) Play を抜ければ消えるが、
+        /// 「抜けたから大丈夫」を理由にしない — 抜ける前に戻し、確かめた結果を記録する。
+        ///
+        /// Codex M2: 確かめられなかった実行を PASS にしない。読み直しが 0 でない・例外・Play が終わっていた
+        /// のいずれでも errors に 1 件足し (= FAIL)、overrideTouched を**下ろさない**ので
+        /// 後続の終了経路 (ExitingPlayMode / Finish) がもう一度試す。</summary>
+        static void RestoreOverride()
+        {
+            if (report == null) return;
+            if (!overrideTouched)
+            {
+                // 一度も 1 / -1 を書いていない = 戻すものが無い (既定モードは常にこちら)。
+                if (report.mode == "netorder" && report.overrideRestored != null && report.overrideRestored.StartsWith("PENDING"))
+                    report.overrideRestored = "OK: netorder never wrote debugHeldOverride (nothing to restore)";
+                return;
+            }
+            string outcome;
+            try
+            {
+                if (catcher == null || !EditorApplication.isPlaying)
+                {
+                    outcome = "NOT_RESTORED_IN_SESSION: play mode had already ended, so the harness could not write "
+                        + "debugHeldOverride back to 0 and read it back. (The value lives only in the play-mode Udon heap "
+                        + "and the harness never saves the scene, but this run did not confirm it.)";
+                }
+                else
+                {
+                    catcher.SetProgramVariable("debugHeldOverride", 0);
+                    overrideNow = 0;
+                    object v;
+                    int now = catcher.TryGetProgramVariable("debugHeldOverride", out v) && v is int ? (int)v : -99;
+                    outcome = now == 0
+                        ? "OK: debugHeldOverride=0, read back from the live UdonBehaviour"
+                        : "FAILED: debugHeldOverride read back as " + now + " after the restore";
+                }
+            }
+            catch (Exception e) { outcome = "FAILED: " + e.Message; }
+            report.overrideRestored = outcome;
+            if (outcome.StartsWith("OK:")) { overrideTouched = false; return; }
+            // 失敗: touched を下ろさない (次の終了経路で再試行する) + PASS を落とす。
+            if (!overrideFailLogged)
+            {
+                overrideFailLogged = true;
+                report.errors.Add("[KH Frisbee Harness] debugHeldOverride was not confirmed back at 0: " + outcome);
+            }
+        }
+
+        /// <summary>拾った行から 1 投げの outcome / kind を決める。</summary>
+        /// <param name="readyEndsOk">netorder 用。Ready で終わるのが正しいケース (expired) があるので、
+        /// 「Idle へ戻らなかった」だけで timeout にはしない。既定モードは false のまま。</param>
+        static void Classify(ThrowResult rec, bool engaged, bool readyEndsOk = false)
         {
             string ok = null, miss = null;
             foreach (string l in rec.lines)
@@ -688,7 +1275,8 @@ namespace KominkaHillside.Editor
             if (ok != null) { rec.outcome = "caught"; rec.outcomeLine = ok; rec.kind = KindOf(ok); return; }
             if (miss != null) { rec.outcome = "miss"; rec.outcomeLine = miss; rec.kind = KindOf(miss); return; }
             if (rec.planLine != null && rec.planLine.Contains("plan=2 ")) { rec.outcome = "ground"; rec.outcomeLine = rec.planLine; rec.kind = "ground"; return; }
-            if (!rec.reachedIdle) { rec.outcome = "timeout"; rec.outcomeLine = "state=" + rec.endState + " when the " + ThrowSettle + " s window ran out"; return; }
+            if (!rec.reachedIdle && !(readyEndsOk && rec.endState == StateReady))
+            { rec.outcome = "timeout"; rec.outcomeLine = "state=" + rec.endState + " when the " + ThrowSettle + " s window ran out"; return; }
             rec.outcome = "none";
             rec.outcomeLine = rec.launchLine == null ? "no launch line: the throw never left the stand"
                 : engaged ? "the dog engaged but logged no catch / miss / ground line"

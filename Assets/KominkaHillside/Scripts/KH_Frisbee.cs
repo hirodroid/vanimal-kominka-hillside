@@ -499,8 +499,15 @@ namespace KominkaHillside
         {
             if (catcher == null) return;
             Vector3 pos = transform.position;
-            if (Networking.IsOwner(catcher.gameObject)) catcher.ReqFlightEnded(_gen, reason, pos);
-            else catcher.SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(KH_FrisbeeCatch.ReqFlightEnded), _gen, reason, pos);
+            // BUG-DOG-003: the catcher matches an end notice against the thrower it is holding (the generation
+            // counter is per client), so it has to be told who sent this one, and WHEN it happened - a grab from
+            // before the throw it would end must not cancel it (Codex D4, 2nd review). net: 5 parameters, still
+            // within the NetworkCallable limit of 8, all basic types.
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            int sender = Utilities.IsValid(lp) ? lp.playerId : -1;
+            double opTime = Networking.GetServerTimeInSeconds();
+            if (Networking.IsOwner(catcher.gameObject)) catcher.ReqFlightEnded(_gen, reason, pos, sender, opTime);
+            else catcher.SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(KH_FrisbeeCatch.ReqFlightEnded), _gen, reason, pos, sender, opTime);
         }
     }
 }
