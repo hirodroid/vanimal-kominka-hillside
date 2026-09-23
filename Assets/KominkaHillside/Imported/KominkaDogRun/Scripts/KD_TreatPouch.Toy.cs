@@ -39,13 +39,21 @@ namespace KominkaDogRun
         /// <summary>置くときの浮かせ量 (m)。地面と重なった状態で置かない。</summary>
         const float RecallLift = 0.05f;
 
-        public void _Toy0() { Recall(0); }
-        public void _Toy1() { Recall(1); }
-        public void _Toy2() { Recall(2); }
-        public void _Toy3() { Recall(3); }
+        // 裏山改変: [ボール] は KH_ToyRecall (坂の地面へ置く・ディスクと 1 本の要求) へ。古民家の Recall (KD_BallController 直叩き) は呼ばない (復帰条件なし)
+        public void _Toy0() { HillsideToy(0, KominkaHillside.KH_ToyRecall.KindBall); }
+        public void _Toy1() { HillsideToy(1, KominkaHillside.KH_ToyRecall.KindBall); }
+        public void _Toy2() { HillsideToy(2, KominkaHillside.KH_ToyRecall.KindBall); }
+        public void _Toy3() { HillsideToy(3, KominkaHillside.KH_ToyRecall.KindBall); }
         // IMP-DOG-020: 6 匹化 (柴 / サモエド)。行 = 犬 1 匹なので口も 1 匹 1 つ
-        public void _Toy4() { Recall(4); }
-        public void _Toy5() { Recall(5); }
+        public void _Toy4() { HillsideToy(4, KominkaHillside.KH_ToyRecall.KindBall); }
+        public void _Toy5() { HillsideToy(5, KominkaHillside.KH_ToyRecall.KindBall); }
+        // 裏山改変: 行の 2 つ目のボタン [ディスク] (IMP-DOG-005。KH_ToyRecall.KindDisc)
+        public void _Disc0() { HillsideToy(0, KominkaHillside.KH_ToyRecall.KindDisc); }
+        public void _Disc1() { HillsideToy(1, KominkaHillside.KH_ToyRecall.KindDisc); }
+        public void _Disc2() { HillsideToy(2, KominkaHillside.KH_ToyRecall.KindDisc); }
+        public void _Disc3() { HillsideToy(3, KominkaHillside.KH_ToyRecall.KindDisc); }
+        public void _Disc4() { HillsideToy(4, KominkaHillside.KH_ToyRecall.KindDisc); }
+        public void _Disc5() { HillsideToy(5, KominkaHillside.KH_ToyRecall.KindDisc); }
 
         /// <summary>**「待機中」は導出する。新しい状態は 1 つも作らない。**
         ///
@@ -155,6 +163,9 @@ namespace KominkaDogRun
         /// (逆向きは実機ビルドで null に化ける — `vrc-udonsharp` §3)。</summary>
         private void PollSharedRequests()
         {
+            // 裏山改変: さんぽの要求とおもちゃの結果もここで毎フレーム解決する (Redraw は板が閉じていると何もしないので、その外で回す)
+            PollWalkPending();
+            PollHillsideToy();
             if (_pendingRecallRow >= 0)
             {
                 int row = _pendingRecallRow;
@@ -190,6 +201,102 @@ namespace KominkaDogRun
                     _feedbackTab = TabSleep;
                 }
             }
+        }
+
+        // ============================================================
+        // 裏山改変: おもちゃタブ = KH_ToyRecall のボール / ディスク (KH_HandMenu の Toy / DrawToys を移した)
+        //
+        // 可否 (_GateToy) も結果 (_LastResult) も KH_ToyRecall が正本。板は読むだけで、行には [ボール][ディスク] の 2 つ。
+        // 押せない行は隠さず暗くし、理由は行の 2 行目に出す (古民家のおもちゃタブと同じ作法)。
+        // ============================================================
+
+        /// <summary>結果を待っている行と種類 (-1 = 待っていない)。KH_ToyRecall の最後の結果がこの行・種類のときだけ表示する。</summary>
+        private int _hsToyRow = -1;
+        private int _hsToyKind;
+
+        private void HillsideToy(int row, int kind)
+        {
+            if (recall == null) return;
+            int gate = recall._GateToy(row, kind);
+            if (gate != KominkaHillside.KH_ToyRecall.Ok)
+            {
+                string key = gate == KominkaHillside.KH_ToyRecall.Unwired && kind == KominkaHillside.KH_ToyRecall.KindDisc
+                    ? "KD_TreatPouch.WordToyGateNoDisc" : HillsideToyGateKey(gate);
+                HillsideNote(TabToy, key, "");
+                Redraw();
+                return;
+            }
+            _hsToyRow = row; _hsToyKind = kind;
+            recall._RecallToy(row, kind);
+            HillsideNote(TabToy, "KD_TreatPouch.WordToyCalling", "");
+            Redraw();
+        }
+
+        /// <summary>KH_ToyRecall の結果を 1 回だけ下端へ出す (0 置いた / 1 呼べなかった / 2 時間切れ)。
+        /// 別の行・別の種類の結果は拾わない (連打・行の取り違えの床)。</summary>
+        private void PollHillsideToy()
+        {
+            if (_hsToyRow < 0 || recall == null) return;
+            int result = recall._LastResult();
+            if (result < 0 || recall._LastRow() != _hsToyRow || recall._LastKind() != _hsToyKind) return;
+            _hsToyRow = -1;
+            HillsideNote(TabToy, result == 0 ? "KD_TreatPouch.WordToyPlaced" : result == 1 ? "KD_TreatPouch.WordToyFailed" : "KD_TreatPouch.WordToyTimeout", "");
+            Redraw();
+        }
+
+        private string HillsideToyGateKey(int gate)
+        {
+            if (gate == KominkaHillside.KH_ToyRecall.Held) return "KD_TreatPouch.WordToyGateHeld";
+            if (gate == KominkaHillside.KH_ToyRecall.DogBusy) return "KD_TreatPouch.WordToyGateBusy";
+            if (gate == KominkaHillside.KH_ToyRecall.Cooldown) return "KD_TreatPouch.WordToyGateCooldown";
+            if (gate == KominkaHillside.KH_ToyRecall.Pending) return "KD_TreatPouch.WordToyGatePending";
+            return "KD_TreatPouch.WordToyGateUnavailable";
+        }
+
+        private string HillsideToyShort(int gate)
+        {
+            if (gate == KominkaHillside.KH_ToyRecall.Ok) return L("KD_TreatPouch.WordToyStateOk");
+            if (gate == KominkaHillside.KH_ToyRecall.Held) return L("KD_TreatPouch.WordToyStateHeld");
+            if (gate == KominkaHillside.KH_ToyRecall.DogBusy) return L("KD_TreatPouch.WordToyStateBusy");
+            if (gate == KominkaHillside.KH_ToyRecall.Pending) return L("KD_TreatPouch.WordToyStatePending");
+            if (gate == KominkaHillside.KH_ToyRecall.Cooldown) return L("KD_TreatPouch.WordToyStateCooldown");
+            return L("KD_TreatPouch.WordToyStateNone");
+        }
+
+        /// <summary>おもちゃタブ (Redraw の TabToy 分岐から。上の「裏山改変:」の一部)。行 = 犬、[ボール] は toyButton*、[ディスク] は disc*。</summary>
+        private void RedrawHillsideToy()
+        {
+            int n = toyLabels == null ? 0 : toyLabels.Length;
+            for (int i = 0; i < n; i++)
+            {
+                int ballGate = recall == null ? KominkaHillside.KH_ToyRecall.Unwired : recall._GateToy(i, KominkaHillside.KH_ToyRecall.KindBall);
+                int discGate = recall == null ? KominkaHillside.KH_ToyRecall.Unwired : recall._GateToy(i, KominkaHillside.KH_ToyRecall.KindDisc);
+                bool ballOn = ballGate == KominkaHillside.KH_ToyRecall.Ok;
+                bool discOn = discGate == KominkaHillside.KH_ToyRecall.Ok;
+
+                if (toyLabels[i] != null) toyLabels[i].text = HillsideDogName(i);
+                if (toyReasonLabels != null && i < toyReasonLabels.Length && toyReasonLabels[i] != null)
+                    toyReasonLabels[i].text = L("KD_TreatPouch.WordToyBall") + ": " + HillsideToyShort(ballGate) + " / " + L("KD_TreatPouch.WordToyDisc") + ": "
+                        + (discGate == KominkaHillside.KH_ToyRecall.Unwired ? L("KD_TreatPouch.WordToyStateNotYet") : HillsideToyShort(discGate));
+
+                // **ボタンは隠さない。** 押せないことは interactable と色で表す (古民家のおもちゃタブと同じ)
+                GameObject ball = (toyButtons != null && i < toyButtons.Length) ? toyButtons[i] : null;
+                if (ball != null && !ball.activeSelf) ball.SetActive(true);
+                if (toyButtonComponents != null && i < toyButtonComponents.Length && toyButtonComponents[i] != null)
+                    toyButtonComponents[i].interactable = ballOn;
+                if (toyButtonImages != null && i < toyButtonImages.Length && toyButtonImages[i] != null)
+                    toyButtonImages[i].color = ballOn ? recallOnColor : recallOffColor;
+
+                GameObject disc = (discButtons != null && i < discButtons.Length) ? discButtons[i] : null;
+                if (disc != null && !disc.activeSelf) disc.SetActive(true);
+                if (discButtonComponents != null && i < discButtonComponents.Length && discButtonComponents[i] != null)
+                    discButtonComponents[i].interactable = discOn;
+                if (discButtonImages != null && i < discButtonImages.Length && discButtonImages[i] != null)
+                    discButtonImages[i].color = discOn ? recallOnColor : recallOffColor;
+                if (discButtonLabels != null && i < discButtonLabels.Length && discButtonLabels[i] != null)
+                    discButtonLabels[i].text = L("KD_TreatPouch.WordToyDisc");
+            }
+            HillsideFooter(HillsideNoteOr(TabToy, L("KD_TreatPouch.WordToyHelp")));
         }
 
         private void CacheBalls()

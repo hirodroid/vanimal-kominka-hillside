@@ -16,7 +16,7 @@ namespace KominkaDogRun
 
             // ---- タブの外。**どのタブに居ても読める** ----
             if (sectionTitleLabel != null)
-                sectionTitleLabel.text = _welcome ? L("welcome.title") : _settingsOpen ? (_extraSettingsPage != null ? L(_extraSettingsTitle) : _distanceFadeSettingsOpen ? L("KD_DistanceFadeSettings.Title") : _volumeSettingsOpen ? L("KD_TreatPouch.WordVolumeSettings") : L("KD_TreatPouch.WordSettings")) : _tab == TabToy ? L("KD_TreatPouch.WordToyTitle") : _tab == TabPetFx ? L("KD_TreatPouch.WordFxTitle")
+                sectionTitleLabel.text = _welcome ? L("welcome.title") : _settingsOpen ? (_extraSettingsPage != null ? L(_extraSettingsTitle) : _distanceFadeSettingsOpen ? L("KD_DistanceFadeSettings.Title") : _volumeSettingsOpen ? L("KD_TreatPouch.WordVolumeSettings") : L("KD_TreatPouch.WordSettings")) : _tab == TabToy ? L("KD_TreatPouch.WordToyTitle") : _tab == TabWalk ? L("KD_TreatPouch.WordWalkTitle")
                     : _tab == TabSleep ? L("KD_TreatPouch.WordSleepTitle") : _tab == TabLive ? LiveSectionTitle()
                     : _tab == TabAcc ? L("KD_TreatPouch.WordAccTitle") : _tab == TabPlay ? L("activities.title") : L("KD_TreatPouch.WordTitle");
             RedrawEventBand();   // P10: ヘッダとタブの間 (どのタブでも)
@@ -54,8 +54,11 @@ namespace KominkaDogRun
             if (_settingsOpen) { RedrawVoiceSettings(); RedrawBgmSettings(); RedrawMusicSettings(); RedrawCallAccess(); return; }
 
             // ---- 開いているタブだけ ----
-            if (_tab == TabToy) { RedrawToy(); return; }
-            if (_tab == TabPetFx) { RedrawFx(); return; }
+            // 裏山改変: 未導入のバックエンドのタブは「準備中」1 行 (計画書 D-1 の段階表)。移動先 KD_TreatPouch.Hillside.cs。各バックエンドの配線で解除
+            if (HillsidePreparing()) return;
+            // 裏山改変: おもちゃは KH_ToyRecall のボール / ディスク (KD_TreatPouch.Toy.cs の RedrawHillsideToy)。タブ 2 は さんぽ (KD_TreatPouch.Walk.cs)。RedrawFx は IMP-DOG-015 で RedrawAcc から呼ぶ
+            if (_tab == TabToy) { RedrawHillsideToy(); return; }
+            if (_tab == TabWalk) { RedrawWalk(); return; }
             if (_tab == TabSleep) { RedrawSleep(); return; }
             if (_tab == TabLive) { RedrawLive(); return; }
             if (_tab == TabAcc) { RedrawAcc(); return; }

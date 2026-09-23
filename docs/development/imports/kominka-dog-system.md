@@ -395,3 +395,68 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
   - 除外した `KD_ProgressDebugHudEditor.cs` に 1 か所
 - **シーン判定の条件:** `"Assets/Scenes/KominkaDogRun.unity"` を条件にしているため、裏山のシーン `Assets/Scenes/VRCDefaultWorldScene.unity` では該当メニューが止まる。構築手順で使うものの例は `KD_MenuFinishEditor.Setup` (Menu/11)。ほかに `KD_ActionProductsEditor` と `KD_AccessoryEverydayEditor` などにもある。0-b でメニューを実行する前に、裏山のシーンへ向ける。
 - **ラジオ設定頁:** 上の注意のとおり、ラジオ無しでも器が作られるので、作らない方へ直す。
+
+→ 3 件とも段階 0-b で解消した (下の節)。
+
+## 2026-09-23 器の構築 (段階 0-b)
+
+[メニュー再構築計画](../../plans/2026-09-23-menu-rebuild.md) D-1〜D-6・D-8 の段階 0-b。移植した `KD_TreatPouch` と Editor ビルダーで手元メニューの器をシーンに作り、`KH_HandMenu` を退役させた。実行順・Verify の数値・未確認の点は計画書の「実装記録 / 段階 0-b」が正本。ここには**古民家の移植元から何を変えたか**だけを残す。移植元の SHA は段階 0-a と同じ (`44505384` 相当)。
+
+状態: Verify 全 PASS、シーン保存済み。Codex レビュー・コミット・Play (ClientSim・実機) は未実施。
+
+### 新規と削除
+
+| 区分 | ファイル | 内容 |
+|---|---|---|
+| 新規 partial | `Imported/KominkaDogRun/Scripts/KD_TreatPouch.Hillside.cs` | 段階フラグ `hillsideStage`、`manager` (KH_LeashManager) / `recall` (KH_ToyRecall)、ディスクのボタン配列、`HillsideStartGuard()` (段階 0 で未導入の参照は Log 1 行、必須の参照だけ LogError)、`HillsidePreparing()` (準備中の描画)、ledger null の間はヘッダの Balance を隠す、タブ別 4 秒の通知 |
+| 新規 partial | `Imported/KominkaDogRun/Scripts/KD_TreatPouch.Walk.cs` | さんぽ (Walk2)。`KH_HandMenu` の AttachGate / Attach / Detach / ChooseDestination / GateText / Pending / PollPending を移した |
+| 新規 partial | `Imported/KominkaDogRun/Editor/KD_TreatSetupEditor.Hillside.cs` | 定数 `KD_Hillside` (シーン判定の正本 `ScenePath`、`KH_Dogs`、拠点板 3 枚、`Stage`)、`Menu/7 Build Menu` = `SetupHillside`、`HillsideBuildPages`、`HillsideWords`、`Menu/2b Rebake Font 48pt`、`Menu/19b Assign Network IDs`、確認カードの共有配線 |
+| 削除 | `Scripts/KH_HandMenu.cs` / `KH_HandMenu.asset` / `Scripts/Editor/KH_HandMenuEditor.cs` (各 `.meta` 共) | 退役。シーンの `KH_Dogs/KH_HandMenu` (Panel / Launcher / Markers) も削除し、NetworkIDs の残骸 (ID 73) を除いた |
+
+### 裏山改変の一覧
+
+担当は R = ランタイム担当、E = Editor 担当、司 = 司令塔。
+
+| ファイル | 何を | 理由 | 担当 |
+|---|---|---|---|
+| `KD_TreatPouch.cs` | `TabWalk = 2` を追加 (`TabPetFx` はコンパイル互換で残す)、既定タブ Walk、Start の LogError を `HillsideStartGuard()` 1 行へ、`_Tab2` → `SetTab(TabWalk)` | D-2 (パーティクルの枠をさんぽに)、D-1 (段階 0 で null を許す) | R |
+| `KD_TreatPouch.Toy.cs` | `_Toy{i}` ボール / `_Disc0..5` ディスク → `KH_ToyRecall._RecallToy`、`RedrawHillsideToy`、`PollSharedRequests` から `PollWalkPending` / `PollHillsideToy` | 裏山のおもちゃは KD_ToyBox / KD_BallController でなく KH_ToyRecall | R |
+| `KD_TreatPouch.Live.cs` | `_LiveSeeFx` → `TabAcc` | 撫でFX は かざりへ合流 (D-2) | R |
+| `KD_TreatPouch.Redraw.cs` | TabWalk の分岐、`HillsidePreparing()` 1 行、見出し `WordWalkTitle` | 呼び出し口だけ (D-3) | R |
+| `KD_ActivitiesMenu.cs` | 集合のみに書き直し。`hillsidePass` (KH_TrainerPass)、一覧 / 隊形 6 + [ここに集合]、`LocalRequestState` 4 秒、マーカー 10 Hz・地面レイ。`items` は宣言だけ残す | 犬目線カメラ・2 匹の遊びは対象外 (DES-UI-003)。`items` は `KD_ProductsEditor` が参照 | R |
+| `KD_ActivitiesEditor.cs` | 裏山シーンのガード、Programs は GroupActivities / ActivitiesMenu、`KH_Dogs/KD_Activities`、`KH_Dogs/KH_GatherMarkers/Marker0..5` (layer 14)、Verify は集合のみ (カメラ・商品・ライブは SKIP 明示) | 同上 | R |
+| `KD_MenuSettings.cs` | `hillsideNight` を追加、`_NightMode` → `KH_NightMode._SetDarkness`、ラジオ入口を `#if !KH_WITH_HOBORADIO` で閉じる | ナイトモードは古民家と同じスライダー (DES-UI-003)。ラジオは裏山に無い | R |
+| `Scripts/KH_NightMode.cs` (裏山の自作) | `_SetDarkness(float)` / `_Darkness()`、PlayerData キー `KH_NightMode.dark` で保存・復元 | 同上 | R |
+| `Scripts/KH_MenuOpener.cs` (裏山の自作) | 呼び先を `pouch._Toggle` へ | 拠点板 3 枚は裏山の追加として残す (D-6) | R |
+| `Scripts/Editor/KH_NightModeEditor.cs` (裏山の自作) | Verify を `KD_MenuSettings.hillsideNight` の配線確認に | 同上 | R |
+| `Data/UITranslations.json` | 90 キー × 13 言語を追加 (ja/en 必須、他は en を複製)。`WordToyTitle` を ja「ボール・ディスクを手元へ」/ en "Bring a ball or disc to you" に差替 | さんぽ・ディスク・準備中・ライブ準備中などの裏山文言 | R |
+| `KD_TreatSetupEditor.Pouch.cs` | Page_Walk、items null なら器 4 行、fxItems は常に空、既定タブ Walk、案内文 4 か所 | 段階 0 はおやつ・撫でFX の実体が無い | E |
+| `KD_TreatSetupEditor.cs` / `.Verify.cs` | 古民家の Setup / Verify を Imported-Unused へ、`Menu/20` = VerifyHillside (段階表 D-1 で PASS+理由 / FAIL を分ける) | 古民家の Setup はおやつの器一式を要求する | E |
+| `KD_HandMenuScrollEditor.cs` | Order {2,0,5,3,1,6,4}、Widths {145,150,145,185,145,145,149}、`Prefixes[2] = "WalkRow"`、`RowsFor`、さんぽの犬行のボタン 156×3・18 pt、Verify を裏山値に、21b / 21c は対象外 | D-2 | E |
+| 同上 (`RowsFor` のおやつ) | `KD_ShopSetupEditor.TreatProductCount` (4) | Verify 21 が 6 を期待して FAIL していた | 司 |
+| `KD_MenuFinishEditor.cs` | 3 System を `KH_Dogs` 直下、RadioSettings の頁・ボタンを作らない、設定ホームの 音量 / 距離フェード / インフォメーション / 写真 の入口を非表示 (段階 3 で戻す)、BuildNightMode で `hillsideNight` を配線、Verify 22 を裏山向けに | ラジオが無い / 段階 3 の項目は 0-b で出さない | E |
+| `KD_NightModeSettingsEditor.cs` | KH_NightMode 向け (SleepKit は SKIP) | SleepKit が無い | E |
+| `KD_LocalizationEditor.cs` / `KD_UiRefreshEditor.cs` | root を `KH_Dogs`、文字集合を `PouchWords` + `HillsideWords` | 裏山のシーン構成 | E |
+| `Data/UILocalizationBindings.json` | 裏山に実在するものだけに絞った: labels 205 → 108 / interactions 33 → 0 / pickups 3 → 0 / names 38 → 4。追加 34、差替 3 | 無い対象への束縛で Verify が落ちないように | E |
+| `Scripts/Editor/KH_DogWalkingEditor.cs` L56 (裏山の自作) | Walking/1 Create Programs の一覧から KH_HandMenu を外した (Walking/5 の項目は不変) | 退役 | E |
+| `Scripts/Editor/KH_FrisbeePrototypeEditor.cs:239` (裏山の自作) | `KH_HandMenuEditor.FontPath` → `KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath` (同じ値) | 退役 | 司 |
+
+- 文言ファイルの置き場所は `Imported/KominkaDogRun/Data/` のまま編集した (段階 0-a で保留した `Assets/KominkaHillside/Data/` への移動はしていない)。
+
+### MenuItem の変更
+
+| メニュー | 変更 |
+|---|---|
+| `Tools/KominkaHillside/Menu/7 Build Menu` | 古民家の `Setup()` から裏山の `SetupHillside()` へ付け替え |
+| `Menu/Imported-Unused/Treat System/2 - Setup Treat System (Kominka)` / `3 - Verify Treat System (Kominka)` | 古民家の Setup / Verify の移動先 (新設) |
+| `Menu/20 Verify Pouch` | 裏山の `VerifyHillside` |
+| `Menu/2b Rebake Font 48pt` | 新設 (48 pt・Static で再ベイク) |
+| `Menu/19b Assign Network IDs` | 新設 (`NetworkIDAssignment.ConfigureNetworkIDs` を呼ぶ) |
+| `Menu/Legacy/…` (KH_HandMenuEditor の 5 本) | `KH_HandMenuEditor.cs` の削除で消えた |
+
+### 0-a の残件の解消
+
+- **シーン判定**: `"Assets/Scenes/KominkaDogRun.unity"` の条件を、定数 `KD_Hillside.ScenePath` (`Assets/Scenes/VRCDefaultWorldScene.unity`) の参照に置き換えた。E の報告では 19 ファイル。現物で `KD_Hillside.ScenePath` を参照する `.cs` は定義元の `KD_TreatSetupEditor.Hillside.cs` を含めて 21 本。`Editor~` 以外に旧パスの文字列は残っていない。
+- **案内文の旧メニュー名 9 か所**: `Tools/KominkaHillside/Menu/…` の実名へ直した。
+- **ラジオ設定頁**: `KD_MenuFinishEditor` が作らなくなった。ランタイムの入口も `#if !KH_WITH_HOBORADIO` で閉じた。
+- 副作用: パス置換の都合で Editor 12 本の改行が LF にそろった (内容は同じ)。

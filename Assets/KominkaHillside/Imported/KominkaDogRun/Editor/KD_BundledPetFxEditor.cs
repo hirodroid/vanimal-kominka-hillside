@@ -20,7 +20,7 @@ namespace KominkaDogRun.Editor
         public static void Setup()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode
-                || EditorSceneManager.GetActiveScene().path != "Assets/Scenes/KominkaDogRun.unity")
+                || EditorSceneManager.GetActiveScene().path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */)
                 throw new InvalidOperationException("Target Edit scene required");
             var p = KD_SceneObjects.Find(KD_DogDefs.TreatPouchName).GetComponent<KD_TreatPouch>();
             var scroll = p.tabScrolls[KD_TreatPouch.TabPetFx];

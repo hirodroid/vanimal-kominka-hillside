@@ -746,7 +746,7 @@ namespace KominkaDogRun.Editor
 
         static void SetupEffects(bool layeredOnly, bool bundledOnly = false, bool simplifiedOnly = false)
         {
-            if (EditorApplication.isPlaying || EditorSceneManager.GetActiveScene().path != "Assets/Scenes/KominkaDogRun.unity")
+            if (EditorApplication.isPlaying || EditorSceneManager.GetActiveScene().path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */)
                 throw new System.InvalidOperationException("Target Edit scene required");
             var log = new StringBuilder();
             log.AppendLine("[KD_PetFx] Setup — 撫でエフェクト " + PetFx.Length + " 種");

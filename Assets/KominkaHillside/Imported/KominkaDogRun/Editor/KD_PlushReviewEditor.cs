@@ -54,7 +54,7 @@ namespace KominkaDogRun.Editor
 
         static void Guard()
         {
-            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().path != "Assets/Scenes/KominkaDogRun.unity")
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */)
                 throw new InvalidOperationException("Open KominkaDogRun scene first.");
         }
 

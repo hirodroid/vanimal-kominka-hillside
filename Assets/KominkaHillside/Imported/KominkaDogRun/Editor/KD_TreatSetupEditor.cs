@@ -106,7 +106,7 @@ namespace KominkaDogRun.Editor
             CreateProgramAsset(KD_TreatFxSetupEditor.FxScriptPath,
                 KD_TreatFxSetupEditor.FxProgramPath, log);
             CreateProgramAsset(PouchScriptPath, PouchProgramPath, log);
-            log.AppendLine("次: force refresh してから 2 - Setup Treat System");
+            log.AppendLine("次: force refresh してから Tools/KominkaHillside/Menu/7 Build Menu");
             KD_VerifyLog.Write(TreatLogFile, log);
         }
 
@@ -130,7 +130,8 @@ namespace KominkaDogRun.Editor
             log.AppendLine("created: " + programPath);
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/7 Build Menu")]
+        // 裏山改変: 古民家のおやつ一式の Setup (棚・台帳・枠を要求する)。裏山の入口は Menu/7 Build Menu = SetupHillside (KD_TreatSetupEditor.Hillside.cs)
+        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Treat System/2 - Setup Treat System (Kominka)")]
         public static void Setup()
         {
             var log = new StringBuilder();
@@ -143,7 +144,7 @@ namespace KominkaDogRun.Editor
             var pack = (found == 1 && packGo != null) ? packGo.GetUdonSharpComponent<KD_DogPack>() : null;
             if (pack == null)
             {
-                log.AppendLine("FAIL " + PackName + " が無い。先に Tools/KominkaDogRun/Dog Pack を実行");
+                log.AppendLine("FAIL " + PackName + " が無い。先に Tools/KominkaHillside/Menu/Imported-Unused/Dog Pack/2 - Setup Dog Pack を実行");
                 KD_VerifyLog.Write(TreatLogFile, log);
                 return;
             }

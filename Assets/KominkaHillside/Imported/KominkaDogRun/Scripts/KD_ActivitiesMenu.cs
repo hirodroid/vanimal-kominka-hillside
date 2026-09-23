@@ -8,204 +8,284 @@ namespace KominkaDogRun
 {
     /// <summary>手元メニュー 7 枚目のタブ「あそぶ」(IMP-INF-006 P2、2026-09-13〜16 ユーザー決定)。
     ///
-    /// 中身は 2 群 — **犬目線カメラ (Point、自分だけに見える)** が上、**ばにまるトレーナー (月額、CE Subscription)** が下
-    /// (安い → 高い、Credits は最後。P9 と同じ向き)。トレーナー未加入のときは特典の説明 + 特典 2 群の予告 + [購入画面をひらく]、
-    /// 加入中は 2 特典を [使う]。購入は VRChat の購入画面で行い、ワールド内では決済しない。
-    /// 2026-09-16 までは上段の [あそぶ] ボタンから開く設定の面だった (Treat Setup がそのボタンを掃除して入口が消えていた)。</summary>
+    /// 裏山改変: **集合のみ** (KominkaHillside 段階 0-b、計画書 D-5)。 古民家の犬目線カメラ (KD_DogPovCamera)・
+    /// みんなで遊ぶセット (かけっこ / 2 匹の遊び)・KD_ShopItem の所持判定は外した。トレーナー判定は KH_TrainerPass
+    /// (`_Configured() && _OwnedBy(LocalPlayer)`)、未加入は案内 + [購入画面をひらく] → `hillsidePass._OpenStore()`。
+    ///
+    /// 面: 0 = 一覧 (群「ばにまるトレーナー」: 集合モード [使う] / 開催をおわる [おわる])、1 = 隊形 6 行 + [ここに集合]。
+    /// 要求の結果は KD_GroupActivities.LocalRequestState (1 待ち / 2 受理 / 3 拒否 / 4 時間切れ) を読み、
+    /// KH_HandMenu (退役) の GatherStart / GatherEnd / PollPending と同じ文言で状態行に出す。
+    /// 隊形の印 (placementMarkers) は坂を考えて足元の地面へ落とし、地面が無い枠は出さない (KH_HandMenu と同じ)。
+    /// 同期変数 0 本 (SyncMode None)。</summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KD_ActivitiesMenu : UdonSharpBehaviour
     {
         public KD_TreatPouch pouch;
         public KD_GroupActivities activities;
-        public KD_DogPovCamera pov;
+        // 裏山改変: トレーナーの権利は KH_TrainerPass (KD_ShopItem の所持判定の置き換え。復帰条件なし)
+        [Tooltip("トレーナーの権利 (KH_Dogs/KH_TrainerPass)")]
+        public KominkaHillside.KH_TrainerPass hillsidePass;
         public KD_Language language;
-        [Tooltip("0 集合モード (トレーナー) / 1 みんなで遊ぶセット (トレーナー。0 と同じ Listing) / 2 犬目線カメラ (Point)")]
+        // 裏山改変: 古民家の商品の口。裏山では使わない (null) が KD_ProductsEditor.HasMenuEntry が読むので宣言だけ残す
+        [Tooltip("裏山では使わない (null のまま)。古民家の商品 (集合 / みんなで遊ぶ / 犬目線) の口。KD_ProductsEditor.HasMenuEntry が読むので宣言だけ残す")]
         public KD_ShopItem[] items;
         [Tooltip("タブの面 (KD_TreatPouch.tabPages[TabPlay])")]
         public GameObject page;
         public TMP_Text heading, status, actionLabel, backLabel;
-        [Tooltip("P2: 群の見出し 2 本と、トレーナーの案内 (未加入) / 加入中の説明")]
-        public TMP_Text groupPovLabel, groupTrainerLabel, introLabel;
+        [Tooltip("群「ばにまるトレーナー」の見出しと、トレーナーの案内 (未加入) / 加入中の説明")]
+        public TMP_Text groupTrainerLabel, introLabel;
+        [Tooltip("一覧: 0 = 集合モード [使う] / 1 = 開催をおわる [おわる] (2..5 は隠す)。隊形: 0..5 = 隊形")]
         public Button[] rows;
         public TMP_Text[] rowLabels;
         public Button action;
         public GameObject back;
-        public string[] dogKeys;
         public GameObject[] placementMarkers;
-        // _page: 0 ホーム / 1 隊形 / 2 犬 2 匹 / 3 犬目線 / 5 みんなで遊ぶ (かけっこ・2 匹)
-        private int _page, _confirm = -1, _shape, _a = -1, _b = -1;
-        private float _next;
-        private bool _wasVisible;
-        private string _feedback = "";
-        // P2: ホームの行 — 0 犬目線カメラ / 1 モニターを呼び戻す / 2 モニターをしまう / 3 集合モード / 4 みんなで遊ぶセット / 5 開催をおわる
-        private string[] _homeKeys = { "activities.home.2", "activities.home.4", "activities.home.5", "activities.home.0", "activities.home.1", "activities.home.3" };
-        private string[] _homeSubKeys = { "activities.povDesc", "activities.recallDesc", "activities.closeDesc", "activities.perk.formation", "activities.perk.hosting", "activities.endDesc" };
+        [Tooltip("隊形の印を落とす地面 (Default + Environment)。KD_GroupActivities.groundMask と同じ")]
+        public LayerMask groundMask = (1 << 0) | (1 << 11);
+
+        // _page: 0 一覧 / 1 隊形
+        private int _page, _shape;
+        private float _next, _nextMarkers;
+        private bool _wasVisible, _markersShown;
+        // 要求 (KH_HandMenu の Pending の型): 4 集合を始める / 5 集合を終える
+        private int _pendingKind;
+        private float _pendingAt;
+        private string _noteKey = "";
+        private float _noteUntil;
         private string[] _shapeKeys = { "activities.shape.0", "activities.shape.1", "activities.shape.2", "activities.shape.3", "activities.shape.4", "activities.shape.5" };
-        private string[] _activeKeys = { "activities.ready", "activities.active.1", "activities.active.2", "activities.active.3" };
         private const float RowPitchX = 355f;
 
-        /// <summary>タブが開いたとき (KD_TreatPouch.SetTab から)。ホームへ戻す。</summary>
-        public void _Open() { _page = 0; _confirm = -1; _feedback = ""; Draw(); }
+        /// <summary>タブが開いたとき (KD_TreatPouch.SetTab から)。一覧へ戻す。</summary>
+        public void _Open() { _page = 0; Draw(); }
         public void _Back()
         {
-            _CancelConfirm(); _feedback = "";
             if (_page == 0) return;
             _page = 0; Draw();
         }
-        /// <summary>確認カードの [やめる] (KD_TreatPouch._ConfirmNo から)。ローカル専用なので `_` 始まり。</summary>
-        public void _CancelConfirm() { _confirm = -1; pouch._HideConfirm(KD_TreatPouch.ConfirmActivities); Draw(); }
+        /// <summary>確認カードの [やめる] (KD_TreatPouch._ConfirmNo から)。裏山は確認カードを使わないので閉じるだけ。ローカル専用なので `_` 始まり。</summary>
+        public void _CancelConfirm() { if (pouch != null) pouch._HideConfirm(KD_TreatPouch.ConfirmActivities); }
         public void _Row0() { Press(0); }
         public void _Row1() { Press(1); }
         public void _Row2() { Press(2); }
         public void _Row3() { Press(3); }
         public void _Row4() { Press(4); }
         public void _Row5() { Press(5); }
-        private string L(string key) { return language._Text(key); }
-        private bool Trainer() { return items != null && items.Length > 0 && items[0].Owned(); }
+        private string L(string key) { return language != null ? language._Text(key) : key; }
+        private bool Configured() { return hillsidePass != null && hillsidePass._Configured(); }
+        private bool Loading() { return Configured() && !hillsidePass._Loaded(); }
+        private bool Trainer() { return Configured() && hillsidePass._OwnedBy(Networking.LocalPlayer); }
+        private bool Hosting()
+        {
+            VRCPlayerApi me = Networking.LocalPlayer;
+            return activities != null && activities.Mode != 0 && Utilities.IsValid(me) && activities.HostId == me.playerId;
+        }
+        private int GatherCount()
+        {
+            if (activities == null) return 0;
+            int n = 0;
+            for (int i = 0; i < 6; i++) if (activities.Available(i)) n++;
+            return n;
+        }
+        private void Note(string key) { _noteKey = key; _noteUntil = Time.time + 4f; }
+
         private void Press(int i)
         {
-            if (!page.activeInHierarchy) return;
-            _feedback = "";
+            if (page == null || !page.activeInHierarchy || activities == null) return;
             if (_page == 0)
             {
-                bool trainer = Trainer();
-                // 犬目線 (Point): 未所持なら確認カード、所持なら犬を選ぶ面
-                if (i == 0) { if (!items[2].Owned()) _confirm = 2; else _page = 3; }
-                else if (i == 1) pov._Recall();
-                else if (i == 2) pov._Close();
-                // トレーナー特典: 未加入は行を押せない (購入は [購入画面をひらく] から)
-                else if (i == 3) { if (trainer) _page = 1; }
-                else if (i == 4) { if (trainer) _page = 5; }
-                else activities._Request(0, 0, 0);
+                if (i == 0) { if (Trainer()) _page = 1; else Note(Loading() ? "activities.hillside.loadingPass" : "activities.hillside.needTrainer"); }
+                else if (i == 1) GatherEnd();
             }
-            else if (_page == 1) { _shape = i; activities.localFormation = i; }
-            else if (_page == 2) { if (_a < 0 || _b >= 0 || _a == i) { _a = i; _b = -1; } else _b = i; }
-            else if (_page == 3)
-            {
-                if (i < dogKeys.Length) pov._Show(i);
-            }
-            else if (_page == 5)
-            {
-                if (i == 0) activities._Request(2, 0, 0);
-                else if (i == 1) { _page = 2; _a = -1; _b = -1; }
-            }
+            else if (_page == 1 && i >= 0 && i < 6) { _shape = i; activities.localFormation = i; }
             Draw();
         }
+
+        /// <summary>下段の 1 ボタン: 一覧 = [購入画面をひらく] (未加入のときだけ出る) / 隊形 = [ここに集合]。</summary>
         public void _Action()
         {
-            if (!page.activeInHierarchy) return;
-            if (_confirm >= 0)
-            {
-                int product = _confirm;
-                int buyState = items[product].ConfirmationState(false);
-                // CE (トレーナー): Storefront を開くだけ。所有は購入イベントで戻る (IMP-FET-010)
-                if (buyState == KD_ShopItem.ConfirmSpecial) { _confirm = -1; pouch._HideConfirm(KD_TreatPouch.ConfirmActivities); items[product]._OpenStore(); }
-                else if (buyState == KD_ShopItem.ConfirmBuy && items[product]._Buy())
-                { _confirm = -1; pouch._HideConfirm(KD_TreatPouch.ConfirmActivities); _feedback = "activities.bought"; }
-            }
-            // P2: ホームの [購入画面をひらく] (未加入のときだけ出る) → トレーナーの確認カード
-            else if (_page == 0) { if (!Trainer()) _confirm = 0; }
-            else if (_page == 1)
-            {
-                if (activities.live.IsNightWanted) activities._Request(5, _shape, 0);
-                else activities._Request(1, _shape, 0);
-            }
-            else if (_page == 2 && _a >= 0 && _b >= 0) activities._Request(3, _a, _b);
-            else if (_page == 3) pov._ToggleView();
+            if (page == null || !page.activeInHierarchy) return;
+            if (_page == 0) { if (!Trainer() && Configured()) hillsidePass._OpenStore(); }
+            else if (_page == 1) GatherStart();
             Draw();
         }
+
+        private void GatherStart()
+        {
+            if (activities == null) return;
+            if (!Trainer()) { Note(Loading() ? "activities.hillside.loadingPass" : "activities.hillside.needTrainer"); return; }
+            if (activities.Mode != 0) { Note("activities.hillside.hosting"); return; }
+            if (GatherCount() == 0) { Note("activities.hillside.noDogs"); return; }
+            if (RequestBusy()) return;   // 自分の要求の返事待ち: 送らない (受け付けた要求の結果だけを表示する)
+            activities._Request(1, _shape, 0);
+            Pending(4);
+            Note("activities.hillside.requesting");
+        }
+
+        private void GatherEnd()
+        {
+            if (activities == null || activities.Mode == 0) return;
+            if (!Hosting()) { Note("activities.hillside.notHost"); return; }
+            if (RequestBusy()) return;   // 開始の返事待ちに終了を重ねない (KD_GroupActivities._Request は待機中は送らない)
+            activities._Request(0, 0, 0);
+            Pending(5);
+            Note("activities.hillside.ending");
+        }
+
+        private void Pending(int kind) { _pendingKind = kind; _pendingAt = Time.time; }
+
+        /// <summary>自分の要求が返事待ちか (この板の未決、または権限者側の LocalRequestState == 1)。待機中は新しい要求を送らない。</summary>
+        private bool RequestBusy() { return _pendingKind != 0 || (activities != null && activities.LocalRequestState == 1); }
+
+        /// <summary>未決の要求を権限者の返事から解決する。4 秒で返事が無ければ「確認できませんでした」。板を閉じていても進む。</summary>
+        private void PollPending()
+        {
+            if (_pendingKind == 0 || activities == null) return;
+            bool done = false;
+            string key = "";
+            int state = activities.LocalRequestState;   // 1 waiting, 2 accepted, 3 rejected, 4 timed out
+            if (state == 2) { done = true; key = _pendingKind == 4 ? "activities.hillside.started" : "activities.hillside.ended"; }
+            else if (state == 3) { done = true; key = _pendingKind == 4 ? "activities.hillside.rejectStart" : "activities.hillside.rejectEnd"; }
+            else if (state == 4) { done = true; key = "activities.hillside.noReply"; }
+            if (!done && Time.time - _pendingAt > 4f) { done = true; key = "activities.hillside.unknown"; }
+            if (!done) return;
+            _pendingKind = 0;
+            Note(key);
+            Draw();
+        }
+
         private void Update()
         {
             bool visible = page != null && page.activeInHierarchy;
-            if (_wasVisible && !visible) { _confirm = -1; pouch._HideConfirm(KD_TreatPouch.ConfirmActivities); }
+            if (_wasVisible && !visible && pouch != null) pouch._HideConfirm(KD_TreatPouch.ConfirmActivities);
             _wasVisible = visible;
-            bool preview = visible && _page == 1 && items[0].Owned() && !activities.live.IsNightWanted;
-            for (int i = 0; i < placementMarkers.Length; i++)
-            {
-                GameObject marker = placementMarkers[i]; marker.SetActive(preview);
-                if (preview && Networking.LocalPlayer != null)
-                {
-                    VRCPlayerApi lp = Networking.LocalPlayer;
-                    marker.transform.position = lp.GetPosition() + lp.GetRotation() * activities.Offset(_shape, i) + Vector3.up * .02f;
-                    float d = activities.MarkerDiameter(i); // 印は体幅 (隊形を詰めたので固定 0.65 m では重なって 1 つの塊に見える。2026-09-13)
-                    marker.transform.localScale = new Vector3(d, .005f, d);
-                }
-            }
+            PollPending();
+            UpdateMarkers(visible);
             if (Time.time < _next) return; _next = Time.time + .25f;
             if (visible) Draw();
         }
+
+        /// <summary>隊形の印: 10 Hz、加わる犬の枠だけ、地面がある所だけ (印が出ない枠 = そこには並べない)。KH_HandMenu と同じ。</summary>
+        private void UpdateMarkers(bool visible)
+        {
+            if (placementMarkers == null) return;
+            bool preview = visible && _page == 1 && activities != null && activities.Mode == 0 && Trainer();
+            if (!preview)
+            {
+                if (!_markersShown) return;
+                _markersShown = false;
+                for (int i = 0; i < placementMarkers.Length; i++)
+                    if (placementMarkers[i] != null && placementMarkers[i].activeSelf) placementMarkers[i].SetActive(false);
+                return;
+            }
+            if (Time.time < _nextMarkers) return;
+            _nextMarkers = Time.time + .1f;
+            _markersShown = true;
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            for (int i = 0; i < placementMarkers.Length; i++)
+            {
+                GameObject marker = placementMarkers[i];
+                if (marker == null) continue;
+                bool show = Utilities.IsValid(lp) && activities.Available(i);
+                Vector3 p = Vector3.zero;
+                RaycastHit hit;
+                if (show)
+                {
+                    p = lp.GetPosition() + lp.GetRotation() * activities.Offset(_shape, i);
+                    if (Physics.Raycast(p + Vector3.up * 1.5f, Vector3.down, out hit, 4f, groundMask, QueryTriggerInteraction.Ignore)) p.y = hit.point.y; else show = false;
+                }
+                if (marker.activeSelf != show) marker.SetActive(show);
+                if (!show) continue;
+                marker.transform.position = p + Vector3.up * .02f;
+                float d = activities.MarkerDiameter(i);
+                marker.transform.localScale = new Vector3(d, .005f, d);
+            }
+        }
+
         private void Draw()
         {
-            if (page == null || !page.activeInHierarchy) return;
+            if (page == null || !page.activeInHierarchy || activities == null) return;
             bool trainer = Trainer();
+            bool configured = Configured();
+            bool loading = Loading();
             bool home = _page == 0;
-            heading.text = L(_page == 1 ? "activities.formationHelp" : _page == 2 ? "activities.pairHelp" : _page == 3 ? "activities.povHelp" : trainer ? "activities.helpTrainer" : "activities.help");
+            int mode = activities.Mode;
+            bool hosting = Hosting();
+
+            heading.text = L(home ? (trainer ? "activities.helpTrainer" : "activities.hillside.help") : "activities.hillside.formationHelp");
             backLabel.text = L("activities.back");
             if (back != null && back.activeSelf != !home) back.SetActive(!home);
-            // P2: 群の見出しと案内はホームだけ
-            if (groupPovLabel != null) { groupPovLabel.gameObject.SetActive(home); groupPovLabel.text = L("activities.group.pov"); }
-            if (groupTrainerLabel != null) { groupTrainerLabel.gameObject.SetActive(home); groupTrainerLabel.text = L(trainer ? "activities.group.trainer.on" : "activities.group.trainer.off"); }
-            if (introLabel != null) { introLabel.gameObject.SetActive(home); introLabel.text = L(trainer ? "activities.trainerActive" : "activities.trainerIntro"); }
-            // P13: 確認カード (一覧はそのまま見せ、暗幕が押下を受ける)。買えた / 別経路で入手したら閉じる
-            if (_confirm >= 0 && items[_confirm].Owned()) _confirm = -1;
-            if (_confirm == 2) pouch._ShowItemConfirm(KD_TreatPouch.ConfirmActivities, items[2], L("activities.buyHelp"));
-            else if (_confirm >= 0)
+            if (groupTrainerLabel != null)
             {
-                // トレーナー (CE Subscription): 商品名ではなく「加入しますか？」。1 か月 500C から
-                int st = items[_confirm].ConfirmationState(false);
-                pouch._ShowConfirm(KD_TreatPouch.ConfirmActivities, L("activities.trainerConfirmTitle"), L("activities.trainerConfirmBody"),
-                    // トレーナー (Subscription) はギフト対応が未確認なので、共通の confirm.storeNote (「ギフトもここから」) ではなく既存文だけ (IMP-PRG-012)
-                    st == KD_ShopItem.ConfirmLoading ? L("activities.loading") : L("activities.storeNoteCard"),
-                    st == KD_ShopItem.ConfirmSpecial, L("confirm.storeButton"));
+                if (groupTrainerLabel.gameObject.activeSelf != home) groupTrainerLabel.gameObject.SetActive(home);
+                groupTrainerLabel.text = L(trainer ? "activities.group.trainer.on" : "activities.group.trainer.off");
             }
-            else pouch._HideConfirm(KD_TreatPouch.ConfirmActivities);
+            if (introLabel != null)
+            {
+                if (introLabel.gameObject.activeSelf != home) introLabel.gameObject.SetActive(home);
+                introLabel.text = L(trainer ? "activities.hillside.trainerActive" : "activities.hillside.trainerIntro");
+            }
+
             for (int i = 0; i < rows.Length; i++)
             {
-                bool show = _page != 5 || i < 2;
-                rows[i].gameObject.SetActive(show); rows[i].interactable = true;
-                // P2: ホームは 2 群 (上 3 行 = 犬目線、下 3 行 = トレーナー) の間に見出しと案内を挟む。ほかの面は詰める
-                RectTransform rt = (RectTransform)rows[i].transform;
-                rt.anchoredPosition = new Vector2((i % 3 - 1) * RowPitchX, home ? (i < 3 ? 60f : -150f) : (i < 3 ? 68f : -32f));
+                bool show = home ? (i == 0 || (i == 1 && trainer)) : i < 6;
+                if (rows[i].gameObject.activeSelf != show) rows[i].gameObject.SetActive(show);
                 if (!show) continue;
+                // 一覧: 群の見出し (Y 120) の下に 1 段 (古民家の上の群の座標)。隊形: 3 列 × 2 段 (古民家の座標)
+                RectTransform rt = (RectTransform)rows[i].transform;
+                rt.anchoredPosition = new Vector2((i % 3 - 1) * RowPitchX, home ? 60f : (i < 3 ? 68f : -32f));
                 string text;
                 if (home)
                 {
-                    text = L(_homeKeys[i]);
-                    string sub = L(_homeSubKeys[i]);
-                    if (i == 0) sub = items[2].Owned() ? L("activities.povOwnedDesc") : items[2].price + " pt · " + sub;
-                    if (i == 1 || i == 2) rows[i].interactable = pov.IsOpen;
-                    if (i == 3 || i == 4) { rows[i].interactable = trainer; if (!trainer) sub = L("activities.needTrainer"); }
-                    // 開催者本人または管理者 (受信側 KD_GroupActivities.Handle op 0 と同じ判定元: live → access → KD_SleepBoard)
-                    if (i == 5) rows[i].interactable = activities.Mode != 0 && Networking.LocalPlayer != null && (activities.HostId == Networking.LocalPlayer.playerId || activities.live.CanManage(Networking.LocalPlayer));
+                    bool interactable;
+                    string sub;
+                    if (i == 0)
+                    {
+                        text = L("activities.home.0");
+                        interactable = trainer;
+                        sub = trainer ? L("activities.hillside.perk") : L("activities.needTrainer");
+                    }
+                    else
+                    {
+                        text = L("activities.home.3");
+                        interactable = hosting && !RequestBusy();
+                        sub = L("activities.endDesc");
+                    }
+                    rows[i].interactable = interactable;
                     text += "\n<size=17>" + sub + "</size>";
                 }
-                else if (_page == 1) text = (_shape == i ? "● " : "") + L(_shapeKeys[i]);
-                else if (_page == 5) text = L(i == 0 ? "activities.race" : "activities.pair");
                 else
                 {
-                    text = L(dogKeys[i]);
-                    if (_page == 2) { if (i == _a || i == _b) text = "● " + text; rows[i].interactable = activities.Available(i); }
-                    if (_page == 3 && pov.IsOpen && pov.selectedDog == i) text = "● " + text;
+                    rows[i].interactable = mode == 0 && !RequestBusy();
+                    text = (_shape == i ? "● " : "") + L(_shapeKeys[i]);
                 }
                 rowLabels[i].text = text;
             }
-            bool sharedBusy = activities.Busy || activities.live.IsNightWanted;
-            string state = activities.LocalRequestState == 1 ? "activities.pending" : activities.LocalRequestState == 3 ? "activities.rejected" : activities.LocalRequestState == 4 ? "activities.unknown" : "";
-            status.text = _feedback.Length > 0 ? L(_feedback) : state.Length > 0 ? L(state) : activities.Mode != 0 ? L(_activeKeys[activities.Mode]) + " " + Mathf.CeilToInt(60f - activities.Elapsed) + "s"
-                : home && !trainer ? L("activities.storeNote") : L("activities.ready");
-            action.gameObject.SetActive((_page >= 1 && _page <= 3) || (home && !trainer));
-            action.interactable = activities.LocalRequestState != 1;
-            if (home) { actionLabel.text = L("activities.openStore"); action.interactable = true; }
-            else if (_page == 1)
+
+            // 状態の 1 行 (KH_HandMenu の DrawGather と同じ優先順)。通知が生きていればそちら
+            string line;
+            if (mode == 1)
             {
-                actionLabel.text = L(activities.live.IsNightWanted ? "activities.applyLive" : "activities.gather");
-                action.interactable &= items[0].Owned() && (!sharedBusy || activities.live.IsNightWanted && Networking.LocalPlayer != null && activities.live.HostId == Networking.LocalPlayer.playerId);
-                if (!activities.live.IsNightWanted && Networking.LocalPlayer != null)
-                    action.interactable &= activities.ValidPlacement(Networking.LocalPlayer.GetPosition(), Networking.LocalPlayer.GetRotation().eulerAngles.y, _shape, Networking.LocalPlayer);
+                int left = Mathf.Max(0, 60 - Mathf.FloorToInt(activities.Elapsed));
+                line = L(hosting ? "activities.hillside.activeMine" : "activities.hillside.activeOther")
+                    .Replace("{0}", activities.ParticipantCount.ToString()).Replace("{1}", left.ToString());
             }
-            else if (_page == 2) { actionLabel.text = L("activities.startPair"); action.interactable &= !sharedBusy && _a >= 0 && _b >= 0 && activities.Available(_a) && activities.Available(_b); }
-            else if (_page == 3) { actionLabel.text = L(pov.followView ? "activities.firstPerson" : "activities.follow"); action.interactable = true; }
-            if (_page == 5) rows[0].interactable = !sharedBusy && activities.LocalRequestState != 1;
+            else if (mode != 0) line = L("activities.hillside.otherActivity");
+            else if (!configured) line = L("activities.hillside.notConfigured");
+            else if (loading) line = L("activities.hillside.loading");
+            else if (!trainer) line = L(home ? "activities.storeNote" : "activities.hillside.notTrainer");
+            else line = L("activities.hillside.available").Replace("{0}", GatherCount().ToString());
+            if (_noteKey.Length > 0 && Time.time < _noteUntil) line = L(_noteKey);
+            status.text = line;
+
+            // 下段の 1 ボタン: 一覧は未加入 (購入情報が届いている) のときだけ [購入画面をひらく]、隊形は [ここに集合]
+            bool showAction = home ? (!trainer && configured && !loading) : true;
+            if (action.gameObject.activeSelf != showAction) action.gameObject.SetActive(showAction);
+            if (home) { actionLabel.text = L("activities.openStore"); action.interactable = true; }
+            else
+            {
+                actionLabel.text = L("activities.gather");
+                action.interactable = trainer && mode == 0 && !RequestBusy() && GatherCount() > 0;
+            }
         }
     }
 }

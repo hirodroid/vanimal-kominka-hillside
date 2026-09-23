@@ -17,6 +17,7 @@ priority: Medium
 - 6 項目を種類 (待つ場所 / 取り方 / 投げ方) で分けて見せる。開発用のプリセット番号をそのまま公開設定のデータ構造にしない。
 - 縁で追わない・候補が落ちる時の短い理由の返し方 (「中央へ投げてね」「リード中」など。Codex U3)。照準を「必ず取れる表示」と読ませない。
 - 「試作」ボタンの撤去時期 (6 匹展開の間は残す) と、Build Menu の古い子の掃除。
+  - **2026-09-23: [試作] の入口は `KH_HandMenu` の退役 ([IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) 段階 0-b) で消えた** (`KH_FrisbeeCatch._DevVariant` 自体は残る)。代わりの入口 (設定ホームの [Dev] 行を段階 3 から前倒しする / `KH_FrisbeePrototypeEditor` の Editor 切替にする) はユーザーが判断する。
 
 ## 完了条件
 

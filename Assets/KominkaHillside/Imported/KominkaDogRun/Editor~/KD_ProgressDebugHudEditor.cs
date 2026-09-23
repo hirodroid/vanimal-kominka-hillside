@@ -27,7 +27,7 @@ namespace KominkaDogRun.EditorTools
             if (sysGo == null)
             {
                 Debug.LogError("[ProgressHUD] " + SystemName + " がシーンに無い。"
-                    + "先に Tools/KominkaDogRun/Progress System/2 - Setup を流すこと");
+                    + "先に Tools/KominkaHillside/Menu/Imported-Unused/Progress System/2 - Setup Progress System を流すこと");
                 return;
             }
             var ledger = sysGo.GetComponent<KD_ProgressLedger>();

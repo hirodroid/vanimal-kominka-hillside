@@ -18,7 +18,7 @@ namespace KominkaDogRun.Editor
         const string Menu = "Tools/KominkaHillside/Menu/Imported-Unused/Photo and Information/";
         static void Guard()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorSceneManager.GetActiveScene().path != "Assets/Scenes/KominkaDogRun.unity")
+            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorSceneManager.GetActiveScene().path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */)
                 throw new InvalidOperationException("Stopped KominkaDogRun scene required");
         }
         static string T(string key) => KD_LocalizationEditor.Text(KD_LocalizationEditor.Load(), "ja", key);

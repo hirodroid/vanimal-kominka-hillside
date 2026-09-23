@@ -37,6 +37,8 @@ priority: High
 - **ヘッダーの段構成は新しい判断を要しない**: 古民家はヘッダ (Y314) とタブ帯 (Y224) を**もともと別の段**に置いており、モックで懸念した「7 タブ + ヘッダ操作が 1 段に入らない」は実配置では起きない。金の下線もタブ幅のままで入る。
 - 全売り場で共通の購入確認カード 1 枚 (暗幕 1140×700 + カード 720×300) を器として用意する。残高枠も枠だけ用意し、値は IMP-PRG-001 が供給する。
 - 状態表示の規律 (未復元 / 実行可能 / 資源不足 / 権限・占有 / 処理待ち / 失敗) を古民家の「隠す vs 暗くする」の使い分けごと継承する ([world-ui-spec](../../world-ui-spec.md))。
+- **実装時の判断 (2026-09-23)**: 設定ホームの 音量 / 距離フェード / インフォメーション / 写真 の入口は 0-b では**非表示**にした (押しても何も起きないボタンを出さないため。段階 3 で戻す)。インフォメーション・クレジット・ギャラリー・写真の器も 0-b では作らない。ラジオ設定頁は作らない。残高 (ヘッダの Balance) は ledger が入る段階 1 まで隠す。
+- **退役で失ったもの (2026-09-23)**: `KH_HandMenu` のヘッダにあった [試作: …] (`KH_FrisbeeCatch._DevVariant`) の入口が無くなった。[DES-UI-002](DES-UI-002-frisbee-settings.md) は「6 匹展開の間は残す」としているので、代わりの入口 (設定ホームの [Dev] 行を段階 3 から前倒しする / `KH_FrisbeePrototypeEditor` の Editor 切替にする) を**ユーザーが判断する**。
 
 ### 段階 3 — 設定面の残りとようこそ
 
@@ -53,13 +55,19 @@ priority: High
 
 各タブのバックエンド (台帳・おじいさん = IMP-PRG-001、おやつ = IMP-DOG-014、かざり・撫でFX = IMP-DOG-015、呼ぶ・ポーズ = IMP-DOG-016)、ライブの中身と演目 (DES-LIV-001)、音源そのもの、おもちゃの柄違いの設計 ([DES-DOG-002](DES-DOG-002-toy-behaviour.md))、Quest / iOS の合格判定。
 
+## 進捗
+
+- 2026-09-23: **段階 0-a 完了** (`d87407f`)。
+- 2026-09-23: **段階 0-b 実装済み、Verify 全 PASS。PCVR 確認待ち**。`KH_HandMenu` は退役した。Codex レビュー・コミット・Play (ClientSim・実機) は未実施。記録と PCVR チェックリストは [計画書の実装記録](../../plans/2026-09-23-menu-rebuild.md)、ファイル単位の差分は [kominka-dog-system](../imports/kominka-dog-system.md)。
+- 残り: 段階 0-b の PCVR 確認、段階 3 (設定面の残りとようこそ)、[試作] 入口の代替 (ユーザー判断)。
+
 ## 完了条件
 
-- [ ] **段階 0-a**: コンパイル 0 件・Console エラー 0 (フィルタ無し)、パス置換一覧が [kominka-dog-system](../imports/kominka-dog-system.md) に表で残り、未採用機能の MenuItem が隔離されている
-- [ ] **段階 0-b の Verify** ([計画書の Verify 表](../../plans/2026-09-23-menu-rebuild.md)の「導入段階 0-b」分が全 PASS): `Sum(Widths) == 1064` かつ間隔込みで 1100 / 既定タブ `_tab == TabWalk` / Page_Walk の `Dog{i}` 3 ボタンが `_WalkLeft{i}` `_WalkRight{i}` `_WalkOff{i}`、行き先 2 行が `_WalkPlaza` `_WalkGate` / `ToyRow{i}` の 2 ボタンが `_Toy{i}` `_Disc{i}` で `recall` (KH_ToyRecall) が非 null / Page_Acc Content の子順が `AccRow0..15`, `FxRow0..10` / 拠点板 3 枚の Interact 先が `_Toggle` / `KH_HandMenu` コンポーネント 0 個 / 同期変数 0 / ナイトモードの Slider が `KH_NightMode` / 欠字 0 / あそぶが集合のみ
-- [ ] 段階表 (計画書 D-1) により「意図的な未導入 (null が正)」と「参照の欠落 (FAIL)」が区別され、Live 行の検査は skip が明示されている (棚・寝台も同様)
-- [ ] 既存 3 機能に退行がない (`Walking/5 Verify` が従来どおり全 PASS)。**連打・タブ変更・閉じて再表示・拒否・4 秒超過**で結果表示が取り違わらない
-- [ ] **PCVR でユーザーが「現行 3 機能の見え方が古民家と同じ」ことを確認した** (段階 0-b のゲート。48 pt の可読性と、開閉が 0.6 秒 → 0.5 秒に変わった体感を含む)
+- [x] **段階 0-a**: コンパイル 0 件・Console エラー 0 (フィルタ無し)、パス置換一覧が [kominka-dog-system](../imports/kominka-dog-system.md) に表で残り、未採用機能の MenuItem が隔離されている (2026-09-23、`d87407f`)
+- [x] **段階 0-b の Verify** ([計画書の Verify 表](../../plans/2026-09-23-menu-rebuild.md)の「導入段階 0-b」分が全 PASS): `Sum(Widths) == 1064` かつ間隔込みで 1100 / 既定タブ `_tab == TabWalk` / Page_Walk の `WalkRow0..5` (起票時の仮名 `Dog{i}`) の 3 ボタンが `_WalkLeft{i}` `_WalkRight{i}` `_WalkOff{i}`、行き先 2 行 (`WalkRow6` / `WalkRow7`) が `_WalkPlaza` `_WalkGate` / `ToyRow{i}` の 2 ボタンが `_Toy{i}` `_Disc{i}` で `recall` (KH_ToyRecall) が非 null / Page_Acc Content の子順が `AccRow0..15`, `FxRow0..10` / 拠点板 3 枚の Interact 先が `_Toggle` / `KH_HandMenu` コンポーネント 0 個 / 同期変数 0 / ナイトモードの Slider が `KH_NightMode` / 欠字 0 / あそぶが集合のみ — **2026-09-23 PASS**: Menu/20 `VERIFY RESULT PASS`、21 pass 394 / fail 0、22 failures 0、23 failures 0、24 PASS、15a failures 0。コンパイル error CS 0、U# 82 本 0 エラー
+- [x] 段階表 (計画書 D-1) により「意図的な未導入 (null が正)」と「参照の欠落 (FAIL)」が区別され、Live 行の検査は skip が明示されている (棚・寝台も同様) — 2026-09-23、Menu/20 が段階表で PASS + 理由を出力し、ライブ行の onClick・棚・寝台・ポーズ面・ミニチュア・おやつの枠を SKIP と明示
+- [ ] 既存 3 機能に退行がない (`Walking/5 Verify` が従来どおり全 PASS)。**連打・タブ変更・閉じて再表示・拒否・4 秒超過**で結果表示が取り違わらない — 2026-09-23: `Walking/5 Verify` は TOTAL 208 / FAILED 0。取り違えの確認は ClientSim・実機とも**未** (計画書の PCVR チェックリスト §0)
+- [ ] **PCVR でユーザーが「現行 3 機能の見え方が古民家と同じ」ことを確認した** (段階 0-b のゲート。48 pt の可読性と、開閉が 0.6 秒 → 0.5 秒に変わった体感を含む) — **待ち** (2026-09-23 時点。チェックリストは計画書)
 - [ ] 距離フェードが PC で反映され、保存して再入室で復元する。Android / iOS は入口が押せず文言だけ見える (T-011)
 - [ ] ナイトモードが設定面のスライダーで連続的に効き、保存値が再入室で復元される (ヘッダーからの移設で退行しない)
 - [ ] 許可トグル 2 種が初期 ON で、権限者以外は操作できない

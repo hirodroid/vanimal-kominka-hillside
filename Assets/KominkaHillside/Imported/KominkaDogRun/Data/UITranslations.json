@@ -270,7 +270,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyTitle",
-          "text": "ボールを手元へ"
+          "text": "ボール・ディスクを手元へ"
         },
         {
           "key": "KD_TreatPouch.WordFxTitle",
@@ -2231,6 +2231,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "さんぽ"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "犬とさんぽ"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "左につなぐ"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "右につなぐ"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "はずす"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "ここへ"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "広場"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "古民家側の入口"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "左手につないでいる"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "右手につないでいる"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "ほかの人が散歩中"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "集合中"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "ボールで遊び中"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "自由行動 ({0} m 先)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "近くにいる"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "つないでいる犬の行き先"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "いまの行き先"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "つないでいる犬はいません。行き先は次につなぐ犬に伝わります"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "行き先がまざっています (広場 {0} / 古民家側 {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} 匹: 広場へ"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} 匹: 古民家側へ"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "左につなぎます…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "右につなぎます…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "自分がつないでいる犬だけ外せます"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "外します…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "行き先をおぼえました。つないだ犬に伝えます"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "つないでいる {0} 匹に伝えます…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "もうつないでいます"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "ほかの人がつないでいます"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "集合中は待ってください"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "ボールで遊んでいます"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "左手は 3 匹までです"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "右手は 3 匹までです"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "もう少し近づいてください (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "いまは使えません"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "左手につなぎました"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "右手につなぎました"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "外しました"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "広場へ向かいます"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "古民家側へ帰ります"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "結果を確認できませんでした。表示を見てもう一度どうぞ"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "ボール"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "ディスク"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "呼べる"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "持たれ中"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "遊び中"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "呼び中"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "少し待つ"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "使えない"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "まだ"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "だれかが持っています"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "犬が遊んでいます"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "少し待ってください"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "呼んでいる途中です"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "いまは使えません"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "この子のディスクはまだです"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "目の前へ呼びます…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "目の前に置きました"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "いまは呼べませんでした"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "うまくいきませんでした。もう一度どうぞ"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "おもちゃは 1 つずつ、目の前の地面に置きます。ディスクは持つと軌道が見え、Use で飛びます"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "準備中"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "裏山のライブは準備中"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "演目と開催の仕組みは、これから決めます。"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "決まったら、この面に演目が並びます。"
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "ばにまるトレーナーの特典。集合は、その場のみんなで楽しめます。"
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "隊形を選び、足元の印を見て「ここに集合」。印が出ない枠はそこに並べません。坂でも並びます。1 分で解散し、その場で自由行動に戻ります"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "6 つの隊形で集合"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "トレーナーになると、犬たちを集合させて集合写真を撮れます。古民家で買った特典はここでも使えます。\n1 か月 500 / 3 か月 1,350 / 6 か月 2,550 / 12 か月 4,800 Credits。自動更新はなく、延長は残りの日数に足されます。"
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "入室時に有効だったトレーナーの権利は、滞在中はそのまま使えます。集合は、その場のみんなで楽しめます。"
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "集合を始めました"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "集合を終えました"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "ここには並べません (斜面が急すぎる・物がある・犬がいない・開催中)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "終えられませんでした"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "応答がありませんでした"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "結果を確認できませんでした。表示を見てもう一度どうぞ"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "集合を頼みました…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "終わります…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "開催中です"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "集合できる犬がいません (つないでいる犬・遊んでいる犬は対象外)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "終われるのは集合を始めた人です"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "購入情報を読み込み中です"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "集合はトレーナー特典です。購入画面からどうぞ"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "あなたの集合中 ({0} 匹・あと {1} 秒)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "ほかの人の集合中 ({0} 匹・あと {1} 秒)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "ほかの遊びを開催中です"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "集合は準備中です"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "購入情報を読み込み中…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "集合はトレーナー特典です"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "集合できる犬: {0} 匹 (つないでいる犬・遊んでいる犬は対象外)"
         }
       ]
     },
@@ -2501,7 +2861,7 @@
         },
         {
           "key": "KD_TreatPouch.WordToyTitle",
-          "text": "Bring a ball here"
+          "text": "Bring a ball or disc to you"
         },
         {
           "key": "KD_TreatPouch.WordFxTitle",
@@ -4462,6 +4822,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "Walk"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "Walk with the dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "Leash left"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "Leash right"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "Unleash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "Go here"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "Plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "Farmhouse-side gate"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "On your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "On your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "Walking with someone else"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "Roaming ({0} m away)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "Nearby"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "Destination for your leashed dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "Current destination"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "No dogs on your leash. The destination applies to the next dog you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "Mixed destinations (plaza {0} / farmhouse side {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} dog(s): to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} dog(s): to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "Leashing on your left…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "Leashing on your right…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "You can only unleash dogs on your own leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "Unleashing…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "Destination saved. It will apply to the dogs you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "Telling your {0} leashed dog(s)…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "Already on your leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "Someone else has this dog"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "Please wait until the gathering ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "Up to 3 dogs on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "Up to 3 dogs on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "Please come a little closer (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "Leashed on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "Leashed on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "Unleashed"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "Heading to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "Heading back to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "Ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "Disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "ready"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "held"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "playing"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "calling"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "wait"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "unavailable"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "not yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "Someone is holding it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "A dog is playing with it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "Already calling a toy"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "This dog has no disc yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "Calling it to you…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "Placed in front of you"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "Could not call it right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "That did not work. Please try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "Coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "Hillside lives are coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "The shows and how to host them are still being decided."
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "Once decided, the shows will be listed here."
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "A VAnimal Trainer perk. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "Gather in 6 formations"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "Gathering started"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "Gathering ended"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "Cannot line up here (too steep, something in the way, no dogs, or already running)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "Could not end it"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "No reply"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "Gathering requested…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "Ending…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "Already running"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "No dogs can gather (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "Only the person who started it can end it"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "Loading purchase information"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "Gathering is a Trainer perk. Open the store to join"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "Your gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "Someone else's gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "Another activity is running"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "Gathering is coming soon"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "Loading purchase information…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "Gathering is a Trainer perk"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
         }
       ]
     },
@@ -6693,6 +7413,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "Walk"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "Walk with the dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "Leash left"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "Leash right"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "Unleash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "Go here"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "Plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "Farmhouse-side gate"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "On your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "On your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "Walking with someone else"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "Roaming ({0} m away)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "Nearby"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "Destination for your leashed dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "Current destination"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "No dogs on your leash. The destination applies to the next dog you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "Mixed destinations (plaza {0} / farmhouse side {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} dog(s): to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} dog(s): to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "Leashing on your left…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "Leashing on your right…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "You can only unleash dogs on your own leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "Unleashing…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "Destination saved. It will apply to the dogs you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "Telling your {0} leashed dog(s)…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "Already on your leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "Someone else has this dog"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "Please wait until the gathering ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "Up to 3 dogs on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "Up to 3 dogs on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "Please come a little closer (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "Leashed on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "Leashed on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "Unleashed"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "Heading to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "Heading back to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "Ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "Disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "ready"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "held"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "playing"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "calling"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "wait"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "unavailable"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "not yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "Someone is holding it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "A dog is playing with it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "Already calling a toy"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "This dog has no disc yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "Calling it to you…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "Placed in front of you"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "Could not call it right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "That did not work. Please try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "Coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "Hillside lives are coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "The shows and how to host them are still being decided."
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "Once decided, the shows will be listed here."
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "A VAnimal Trainer perk. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "Gather in 6 formations"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "Gathering started"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "Gathering ended"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "Cannot line up here (too steep, something in the way, no dogs, or already running)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "Could not end it"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "No reply"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "Gathering requested…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "Ending…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "Already running"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "No dogs can gather (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "Only the person who started it can end it"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "Loading purchase information"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "Gathering is a Trainer perk. Open the store to join"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "Your gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "Someone else's gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "Another activity is running"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "Gathering is coming soon"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "Loading purchase information…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "Gathering is a Trainer perk"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
         }
       ]
     },
@@ -8924,6 +10004,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "Walk"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "Walk with the dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "Leash left"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "Leash right"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "Unleash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "Go here"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "Plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "Farmhouse-side gate"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "On your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "On your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "Walking with someone else"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "Roaming ({0} m away)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "Nearby"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "Destination for your leashed dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "Current destination"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "No dogs on your leash. The destination applies to the next dog you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "Mixed destinations (plaza {0} / farmhouse side {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} dog(s): to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} dog(s): to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "Leashing on your left…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "Leashing on your right…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "You can only unleash dogs on your own leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "Unleashing…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "Destination saved. It will apply to the dogs you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "Telling your {0} leashed dog(s)…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "Already on your leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "Someone else has this dog"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "Please wait until the gathering ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "Up to 3 dogs on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "Up to 3 dogs on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "Please come a little closer (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "Leashed on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "Leashed on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "Unleashed"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "Heading to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "Heading back to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "Ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "Disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "ready"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "held"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "playing"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "calling"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "wait"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "unavailable"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "not yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "Someone is holding it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "A dog is playing with it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "Already calling a toy"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "This dog has no disc yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "Calling it to you…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "Placed in front of you"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "Could not call it right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "That did not work. Please try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "Coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "Hillside lives are coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "The shows and how to host them are still being decided."
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "Once decided, the shows will be listed here."
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "A VAnimal Trainer perk. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "Gather in 6 formations"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "Gathering started"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "Gathering ended"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "Cannot line up here (too steep, something in the way, no dogs, or already running)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "Could not end it"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "No reply"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "Gathering requested…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "Ending…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "Already running"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "No dogs can gather (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "Only the person who started it can end it"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "Loading purchase information"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "Gathering is a Trainer perk. Open the store to join"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "Your gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "Someone else's gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "Another activity is running"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "Gathering is coming soon"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "Loading purchase information…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "Gathering is a Trainer perk"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
         }
       ]
     },
@@ -11155,6 +12595,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "Walk"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "Walk with the dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "Leash left"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "Leash right"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "Unleash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "Go here"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "Plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "Farmhouse-side gate"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "On your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "On your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "Walking with someone else"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "Roaming ({0} m away)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "Nearby"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "Destination for your leashed dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "Current destination"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "No dogs on your leash. The destination applies to the next dog you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "Mixed destinations (plaza {0} / farmhouse side {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} dog(s): to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} dog(s): to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "Leashing on your left…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "Leashing on your right…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "You can only unleash dogs on your own leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "Unleashing…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "Destination saved. It will apply to the dogs you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "Telling your {0} leashed dog(s)…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "Already on your leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "Someone else has this dog"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "Please wait until the gathering ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "Up to 3 dogs on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "Up to 3 dogs on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "Please come a little closer (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "Leashed on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "Leashed on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "Unleashed"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "Heading to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "Heading back to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "Ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "Disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "ready"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "held"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "playing"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "calling"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "wait"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "unavailable"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "not yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "Someone is holding it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "A dog is playing with it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "Already calling a toy"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "This dog has no disc yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "Calling it to you…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "Placed in front of you"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "Could not call it right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "That did not work. Please try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "Coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "Hillside lives are coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "The shows and how to host them are still being decided."
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "Once decided, the shows will be listed here."
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "A VAnimal Trainer perk. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "Gather in 6 formations"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "Gathering started"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "Gathering ended"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "Cannot line up here (too steep, something in the way, no dogs, or already running)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "Could not end it"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "No reply"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "Gathering requested…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "Ending…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "Already running"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "No dogs can gather (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "Only the person who started it can end it"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "Loading purchase information"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "Gathering is a Trainer perk. Open the store to join"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "Your gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "Someone else's gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "Another activity is running"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "Gathering is coming soon"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "Loading purchase information…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "Gathering is a Trainer perk"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
         }
       ]
     },
@@ -13386,6 +15186,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "Walk"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "Walk with the dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "Leash left"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "Leash right"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "Unleash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "Go here"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "Plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "Farmhouse-side gate"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "On your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "On your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "Walking with someone else"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "Roaming ({0} m away)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "Nearby"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "Destination for your leashed dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "Current destination"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "No dogs on your leash. The destination applies to the next dog you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "Mixed destinations (plaza {0} / farmhouse side {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} dog(s): to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} dog(s): to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "Leashing on your left…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "Leashing on your right…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "You can only unleash dogs on your own leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "Unleashing…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "Destination saved. It will apply to the dogs you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "Telling your {0} leashed dog(s)…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "Already on your leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "Someone else has this dog"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "Please wait until the gathering ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "Up to 3 dogs on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "Up to 3 dogs on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "Please come a little closer (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "Leashed on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "Leashed on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "Unleashed"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "Heading to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "Heading back to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "Ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "Disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "ready"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "held"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "playing"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "calling"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "wait"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "unavailable"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "not yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "Someone is holding it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "A dog is playing with it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "Already calling a toy"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "This dog has no disc yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "Calling it to you…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "Placed in front of you"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "Could not call it right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "That did not work. Please try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "Coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "Hillside lives are coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "The shows and how to host them are still being decided."
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "Once decided, the shows will be listed here."
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "A VAnimal Trainer perk. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "Gather in 6 formations"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "Gathering started"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "Gathering ended"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "Cannot line up here (too steep, something in the way, no dogs, or already running)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "Could not end it"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "No reply"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "Gathering requested…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "Ending…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "Already running"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "No dogs can gather (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "Only the person who started it can end it"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "Loading purchase information"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "Gathering is a Trainer perk. Open the store to join"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "Your gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "Someone else's gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "Another activity is running"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "Gathering is coming soon"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "Loading purchase information…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "Gathering is a Trainer perk"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
         }
       ]
     },
@@ -15617,6 +17777,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "Walk"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "Walk with the dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "Leash left"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "Leash right"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "Unleash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "Go here"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "Plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "Farmhouse-side gate"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "On your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "On your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "Walking with someone else"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "Roaming ({0} m away)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "Nearby"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "Destination for your leashed dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "Current destination"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "No dogs on your leash. The destination applies to the next dog you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "Mixed destinations (plaza {0} / farmhouse side {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} dog(s): to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} dog(s): to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "Leashing on your left…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "Leashing on your right…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "You can only unleash dogs on your own leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "Unleashing…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "Destination saved. It will apply to the dogs you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "Telling your {0} leashed dog(s)…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "Already on your leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "Someone else has this dog"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "Please wait until the gathering ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "Up to 3 dogs on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "Up to 3 dogs on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "Please come a little closer (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "Leashed on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "Leashed on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "Unleashed"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "Heading to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "Heading back to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "Ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "Disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "ready"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "held"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "playing"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "calling"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "wait"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "unavailable"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "not yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "Someone is holding it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "A dog is playing with it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "Already calling a toy"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "This dog has no disc yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "Calling it to you…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "Placed in front of you"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "Could not call it right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "That did not work. Please try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "Coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "Hillside lives are coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "The shows and how to host them are still being decided."
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "Once decided, the shows will be listed here."
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "A VAnimal Trainer perk. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "Gather in 6 formations"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "Gathering started"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "Gathering ended"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "Cannot line up here (too steep, something in the way, no dogs, or already running)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "Could not end it"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "No reply"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "Gathering requested…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "Ending…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "Already running"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "No dogs can gather (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "Only the person who started it can end it"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "Loading purchase information"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "Gathering is a Trainer perk. Open the store to join"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "Your gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "Someone else's gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "Another activity is running"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "Gathering is coming soon"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "Loading purchase information…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "Gathering is a Trainer perk"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
         }
       ]
     },
@@ -17848,6 +20368,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "Walk"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "Walk with the dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "Leash left"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "Leash right"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "Unleash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "Go here"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "Plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "Farmhouse-side gate"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "On your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "On your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "Walking with someone else"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "Roaming ({0} m away)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "Nearby"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "Destination for your leashed dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "Current destination"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "No dogs on your leash. The destination applies to the next dog you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "Mixed destinations (plaza {0} / farmhouse side {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} dog(s): to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} dog(s): to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "Leashing on your left…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "Leashing on your right…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "You can only unleash dogs on your own leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "Unleashing…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "Destination saved. It will apply to the dogs you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "Telling your {0} leashed dog(s)…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "Already on your leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "Someone else has this dog"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "Please wait until the gathering ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "Up to 3 dogs on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "Up to 3 dogs on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "Please come a little closer (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "Leashed on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "Leashed on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "Unleashed"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "Heading to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "Heading back to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "Ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "Disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "ready"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "held"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "playing"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "calling"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "wait"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "unavailable"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "not yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "Someone is holding it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "A dog is playing with it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "Already calling a toy"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "This dog has no disc yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "Calling it to you…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "Placed in front of you"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "Could not call it right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "That did not work. Please try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "Coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "Hillside lives are coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "The shows and how to host them are still being decided."
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "Once decided, the shows will be listed here."
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "A VAnimal Trainer perk. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "Gather in 6 formations"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "Gathering started"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "Gathering ended"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "Cannot line up here (too steep, something in the way, no dogs, or already running)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "Could not end it"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "No reply"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "Gathering requested…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "Ending…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "Already running"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "No dogs can gather (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "Only the person who started it can end it"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "Loading purchase information"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "Gathering is a Trainer perk. Open the store to join"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "Your gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "Someone else's gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "Another activity is running"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "Gathering is coming soon"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "Loading purchase information…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "Gathering is a Trainer perk"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
         }
       ]
     },
@@ -20079,6 +22959,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "Walk"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "Walk with the dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "Leash left"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "Leash right"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "Unleash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "Go here"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "Plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "Farmhouse-side gate"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "On your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "On your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "Walking with someone else"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "Roaming ({0} m away)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "Nearby"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "Destination for your leashed dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "Current destination"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "No dogs on your leash. The destination applies to the next dog you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "Mixed destinations (plaza {0} / farmhouse side {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} dog(s): to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} dog(s): to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "Leashing on your left…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "Leashing on your right…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "You can only unleash dogs on your own leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "Unleashing…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "Destination saved. It will apply to the dogs you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "Telling your {0} leashed dog(s)…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "Already on your leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "Someone else has this dog"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "Please wait until the gathering ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "Up to 3 dogs on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "Up to 3 dogs on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "Please come a little closer (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "Leashed on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "Leashed on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "Unleashed"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "Heading to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "Heading back to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "Ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "Disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "ready"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "held"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "playing"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "calling"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "wait"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "unavailable"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "not yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "Someone is holding it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "A dog is playing with it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "Already calling a toy"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "This dog has no disc yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "Calling it to you…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "Placed in front of you"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "Could not call it right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "That did not work. Please try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "Coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "Hillside lives are coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "The shows and how to host them are still being decided."
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "Once decided, the shows will be listed here."
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "A VAnimal Trainer perk. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "Gather in 6 formations"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "Gathering started"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "Gathering ended"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "Cannot line up here (too steep, something in the way, no dogs, or already running)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "Could not end it"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "No reply"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "Gathering requested…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "Ending…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "Already running"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "No dogs can gather (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "Only the person who started it can end it"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "Loading purchase information"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "Gathering is a Trainer perk. Open the store to join"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "Your gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "Someone else's gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "Another activity is running"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "Gathering is coming soon"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "Loading purchase information…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "Gathering is a Trainer perk"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
         }
       ]
     },
@@ -22310,6 +25550,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "Walk"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "Walk with the dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "Leash left"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "Leash right"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "Unleash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "Go here"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "Plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "Farmhouse-side gate"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "On your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "On your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "Walking with someone else"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "Roaming ({0} m away)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "Nearby"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "Destination for your leashed dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "Current destination"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "No dogs on your leash. The destination applies to the next dog you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "Mixed destinations (plaza {0} / farmhouse side {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} dog(s): to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} dog(s): to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "Leashing on your left…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "Leashing on your right…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "You can only unleash dogs on your own leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "Unleashing…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "Destination saved. It will apply to the dogs you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "Telling your {0} leashed dog(s)…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "Already on your leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "Someone else has this dog"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "Please wait until the gathering ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "Up to 3 dogs on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "Up to 3 dogs on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "Please come a little closer (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "Leashed on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "Leashed on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "Unleashed"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "Heading to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "Heading back to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "Ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "Disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "ready"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "held"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "playing"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "calling"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "wait"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "unavailable"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "not yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "Someone is holding it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "A dog is playing with it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "Already calling a toy"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "This dog has no disc yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "Calling it to you…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "Placed in front of you"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "Could not call it right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "That did not work. Please try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "Coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "Hillside lives are coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "The shows and how to host them are still being decided."
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "Once decided, the shows will be listed here."
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "A VAnimal Trainer perk. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "Gather in 6 formations"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "Gathering started"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "Gathering ended"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "Cannot line up here (too steep, something in the way, no dogs, or already running)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "Could not end it"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "No reply"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "Gathering requested…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "Ending…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "Already running"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "No dogs can gather (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "Only the person who started it can end it"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "Loading purchase information"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "Gathering is a Trainer perk. Open the store to join"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "Your gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "Someone else's gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "Another activity is running"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "Gathering is coming soon"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "Loading purchase information…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "Gathering is a Trainer perk"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
         }
       ]
     },
@@ -24541,6 +28141,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "Walk"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "Walk with the dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "Leash left"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "Leash right"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "Unleash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "Go here"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "Plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "Farmhouse-side gate"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "On your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "On your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "Walking with someone else"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "Roaming ({0} m away)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "Nearby"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "Destination for your leashed dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "Current destination"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "No dogs on your leash. The destination applies to the next dog you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "Mixed destinations (plaza {0} / farmhouse side {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} dog(s): to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} dog(s): to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "Leashing on your left…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "Leashing on your right…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "You can only unleash dogs on your own leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "Unleashing…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "Destination saved. It will apply to the dogs you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "Telling your {0} leashed dog(s)…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "Already on your leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "Someone else has this dog"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "Please wait until the gathering ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "Up to 3 dogs on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "Up to 3 dogs on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "Please come a little closer (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "Leashed on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "Leashed on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "Unleashed"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "Heading to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "Heading back to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "Ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "Disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "ready"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "held"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "playing"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "calling"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "wait"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "unavailable"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "not yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "Someone is holding it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "A dog is playing with it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "Already calling a toy"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "This dog has no disc yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "Calling it to you…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "Placed in front of you"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "Could not call it right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "That did not work. Please try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "Coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "Hillside lives are coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "The shows and how to host them are still being decided."
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "Once decided, the shows will be listed here."
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "A VAnimal Trainer perk. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "Gather in 6 formations"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "Gathering started"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "Gathering ended"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "Cannot line up here (too steep, something in the way, no dogs, or already running)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "Could not end it"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "No reply"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "Gathering requested…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "Ending…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "Already running"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "No dogs can gather (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "Only the person who started it can end it"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "Loading purchase information"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "Gathering is a Trainer perk. Open the store to join"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "Your gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "Someone else's gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "Another activity is running"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "Gathering is coming soon"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "Loading purchase information…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "Gathering is a Trainer perk"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
         }
       ]
     },
@@ -26772,6 +30732,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "Walk"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "Walk with the dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "Leash left"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "Leash right"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "Unleash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "Go here"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "Plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "Farmhouse-side gate"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "On your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "On your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "Walking with someone else"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "Roaming ({0} m away)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "Nearby"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "Destination for your leashed dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "Current destination"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "No dogs on your leash. The destination applies to the next dog you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "Mixed destinations (plaza {0} / farmhouse side {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} dog(s): to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} dog(s): to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "Leashing on your left…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "Leashing on your right…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "You can only unleash dogs on your own leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "Unleashing…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "Destination saved. It will apply to the dogs you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "Telling your {0} leashed dog(s)…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "Already on your leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "Someone else has this dog"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "Please wait until the gathering ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "Up to 3 dogs on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "Up to 3 dogs on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "Please come a little closer (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "Leashed on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "Leashed on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "Unleashed"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "Heading to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "Heading back to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "Ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "Disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "ready"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "held"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "playing"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "calling"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "wait"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "unavailable"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "not yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "Someone is holding it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "A dog is playing with it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "Already calling a toy"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "This dog has no disc yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "Calling it to you…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "Placed in front of you"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "Could not call it right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "That did not work. Please try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "Coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "Hillside lives are coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "The shows and how to host them are still being decided."
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "Once decided, the shows will be listed here."
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "A VAnimal Trainer perk. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "Gather in 6 formations"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "Gathering started"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "Gathering ended"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "Cannot line up here (too steep, something in the way, no dogs, or already running)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "Could not end it"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "No reply"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "Gathering requested…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "Ending…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "Already running"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "No dogs can gather (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "Only the person who started it can end it"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "Loading purchase information"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "Gathering is a Trainer perk. Open the store to join"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "Your gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "Someone else's gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "Another activity is running"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "Gathering is coming soon"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "Loading purchase information…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "Gathering is a Trainer perk"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
         }
       ]
     },
@@ -29007,6 +33327,366 @@
         {
           "key": "welcome.language",
           "text": "Language / 言語"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTab",
+          "text": "Walk"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkTitle",
+          "text": "Walk with the dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkLeft",
+          "text": "Leash left"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkRight",
+          "text": "Leash right"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkOff",
+          "text": "Unleash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkHere",
+          "text": "Go here"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkPlaza",
+          "text": "Plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGate",
+          "text": "Farmhouse-side gate"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateLeft",
+          "text": "On your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateRight",
+          "text": "On your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateOther",
+          "text": "Walking with someone else"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateGathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateFar",
+          "text": "Roaming ({0} m away)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateNear",
+          "text": "Nearby"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDest",
+          "text": "Destination for your leashed dogs"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateDestChosen",
+          "text": "Current destination"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryNone",
+          "text": "No dogs on your leash. The destination applies to the next dog you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryMixed",
+          "text": "Mixed destinations (plaza {0} / farmhouse side {1})"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryPlaza",
+          "text": "{0} dog(s): to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkSummaryGate",
+          "text": "{0} dog(s): to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingLeft",
+          "text": "Leashing on your left…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachingRight",
+          "text": "Leashing on your right…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetachMineOnly",
+          "text": "You can only unleash dogs on your own leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetaching",
+          "text": "Unleashing…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestRemembered",
+          "text": "Destination saved. It will apply to the dogs you leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDestTelling",
+          "text": "Telling your {0} leashed dog(s)…"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateAlready",
+          "text": "Already on your leash"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateOther",
+          "text": "Someone else has this dog"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateGathering",
+          "text": "Please wait until the gathering ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateBall",
+          "text": "Playing with a ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullLeft",
+          "text": "Up to 3 dogs on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFullRight",
+          "text": "Up to 3 dogs on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateFar",
+          "text": "Please come a little closer (4 m)"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedLeft",
+          "text": "Leashed on your left hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkAttachedRight",
+          "text": "Leashed on your right hand"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkDetached",
+          "text": "Unleashed"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToPlaza",
+          "text": "Heading to the plaza"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkToGate",
+          "text": "Heading back to the farmhouse side"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkUnknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyBall",
+          "text": "Ball"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyDisc",
+          "text": "Disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateOk",
+          "text": "ready"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateHeld",
+          "text": "held"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateBusy",
+          "text": "playing"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStatePending",
+          "text": "calling"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateCooldown",
+          "text": "wait"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNone",
+          "text": "unavailable"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyStateNotYet",
+          "text": "not yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateHeld",
+          "text": "Someone is holding it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateBusy",
+          "text": "A dog is playing with it"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateCooldown",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGatePending",
+          "text": "Already calling a toy"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateUnavailable",
+          "text": "Not available right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyGateNoDisc",
+          "text": "This dog has no disc yet"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyCalling",
+          "text": "Calling it to you…"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyPlaced",
+          "text": "Placed in front of you"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyFailed",
+          "text": "Could not call it right now"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyTimeout",
+          "text": "That did not work. Please try again"
+        },
+        {
+          "key": "KD_TreatPouch.WordToyHelp",
+          "text": "Toys are placed on the ground in front of you, one at a time. Hold a disc to see its path; Use throws it"
+        },
+        {
+          "key": "KD_TreatPouch.WordPreparing",
+          "text": "Coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparing",
+          "text": "Hillside lives are coming soon"
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingSub",
+          "text": "The shows and how to host them are still being decided."
+        },
+        {
+          "key": "KD_TreatPouch.WordLivePreparingStatus",
+          "text": "Once decided, the shows will be listed here."
+        },
+        {
+          "key": "activities.hillside.help",
+          "text": "A VAnimal Trainer perk. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.formationHelp",
+          "text": "Choose a shape, check the ground markers, then gather. Slots without a marker cannot be used there. Slopes are fine. After a minute the dogs roam free from where they are"
+        },
+        {
+          "key": "activities.hillside.perk",
+          "text": "Gather in 6 formations"
+        },
+        {
+          "key": "activities.hillside.trainerIntro",
+          "text": "As a Trainer you can gather the dogs for a group photo. Perks bought at the farmhouse work here too.\n500 Credits for 1 month / 1,350 for 3 / 2,550 for 6 / 4,800 for 12. No auto-renewal; an extension adds to the remaining days."
+        },
+        {
+          "key": "activities.hillside.trainerActive",
+          "text": "Trainer rights active on entry last for the whole stay. Everyone present can enjoy the gathering."
+        },
+        {
+          "key": "activities.hillside.started",
+          "text": "Gathering started"
+        },
+        {
+          "key": "activities.hillside.ended",
+          "text": "Gathering ended"
+        },
+        {
+          "key": "activities.hillside.rejectStart",
+          "text": "Cannot line up here (too steep, something in the way, no dogs, or already running)"
+        },
+        {
+          "key": "activities.hillside.rejectEnd",
+          "text": "Could not end it"
+        },
+        {
+          "key": "activities.hillside.noReply",
+          "text": "No reply"
+        },
+        {
+          "key": "activities.hillside.unknown",
+          "text": "Could not confirm the result. Check the board and try again"
+        },
+        {
+          "key": "activities.hillside.requesting",
+          "text": "Gathering requested…"
+        },
+        {
+          "key": "activities.hillside.ending",
+          "text": "Ending…"
+        },
+        {
+          "key": "activities.hillside.hosting",
+          "text": "Already running"
+        },
+        {
+          "key": "activities.hillside.noDogs",
+          "text": "No dogs can gather (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.notHost",
+          "text": "Only the person who started it can end it"
+        },
+        {
+          "key": "activities.hillside.loadingPass",
+          "text": "Loading purchase information"
+        },
+        {
+          "key": "activities.hillside.needTrainer",
+          "text": "Gathering is a Trainer perk. Open the store to join"
+        },
+        {
+          "key": "activities.hillside.activeMine",
+          "text": "Your gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.activeOther",
+          "text": "Someone else's gathering ({0} dogs, {1} s left)"
+        },
+        {
+          "key": "activities.hillside.otherActivity",
+          "text": "Another activity is running"
+        },
+        {
+          "key": "activities.hillside.notConfigured",
+          "text": "Gathering is coming soon"
+        },
+        {
+          "key": "activities.hillside.loading",
+          "text": "Loading purchase information…"
+        },
+        {
+          "key": "activities.hillside.notTrainer",
+          "text": "Gathering is a Trainer perk"
+        },
+        {
+          "key": "activities.hillside.available",
+          "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
         }
       ]
     }

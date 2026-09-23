@@ -16,7 +16,7 @@ namespace KominkaDogRun.Editor
         public const float TintStrength = .35f;
         public static void Guard()
         {
-            if (EditorApplication.isPlaying || EditorSceneManager.GetActiveScene().path != "Assets/Scenes/KominkaDogRun.unity")
+            if (EditorApplication.isPlaying || EditorSceneManager.GetActiveScene().path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */)
                 throw new InvalidOperationException("KominkaDogRun Edit scene required");
         }
 

@@ -46,7 +46,8 @@ namespace KominkaDogRun.Editor
         {
             var go = KD_SceneObjects.Find(name, out int count);
             if (count > 1) throw new InvalidOperationException("Duplicate " + name);
-            if (go == null) { go = new GameObject(name); KD_SceneObjects.PlaceIfNew(go, KD_DogDefs.SystemsPath); }
+            // 裏山改変: 器は KH_Dogs 直下 ("====KominkaDogRun====/KD_Systems" は作らない)
+            if (go == null) { go = new GameObject(name); Undo.RegisterCreatedObjectUndo(go, "Create " + name); KD_SceneObjects.PlaceIfNew(go, KD_Hillside.DogsRootName); }
             var component = go.GetComponent<T>();
             if (component == null) component = go.AddUdonSharpComponent<T>();
             var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(component);
@@ -58,7 +59,7 @@ namespace KominkaDogRun.Editor
         [MenuItem("Tools/KominkaHillside/Menu/11 Setup Localization")]
         public static void Setup()
         {
-            if (EditorApplication.isPlaying || EditorSceneManager.GetActiveScene().path != "Assets/Scenes/KominkaDogRun.unity")
+            if (EditorApplication.isPlaying || EditorSceneManager.GetActiveScene().path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */)
                 throw new InvalidOperationException("Open the target scene in Edit mode");
             var pouch = KD_SceneObjects.Find(KD_DogDefs.TreatPouchName).GetComponent<KD_TreatPouch>();
             if (pouch.settingsHome == null) throw new InvalidOperationException("Settings home missing");
@@ -80,19 +81,22 @@ namespace KominkaDogRun.Editor
 #endif
             var catalog = KD_LocalizationEditor.Load();
             var log = new StringBuilder();
+            if (pouch.sectionTitleLabel == null) throw new InvalidOperationException("Pouch panel missing: run Tools/KominkaHillside/Menu/7 Build Menu first");
             var language = System<KD_Language>(Systems[0], VRC.SDKBase.Networking.SyncType.None);
             var settings = System<KD_MenuSettings>(Systems[1], VRC.SDKBase.Networking.SyncType.None);
             var access = System<KD_LiveAccess>(Systems[2], VRC.SDKBase.Networking.SyncType.Manual);
             KD_LocalizationEditor.Configure(language,catalog,log);
             // Credit restores the source font before adding; self-language catalog glyphs are explicitly declared (client languages are drawn by the VRChat fallback).
-            BuildCreditRows(log);
+            // 裏山改変: クレジット板は裏山に無い (段階 3)。元 TTF の差し直しだけ行う
+            KD_TreatSetupEditor.RestoreFontSource(log);
             KD_ShopSetupEditor.AddGlyphs(KD_LocalizationEditor.BundledCharacters(catalog), log);
             var font = pouch.sectionTitleLabel.font;
             language.pouch = pouch; settings.pouch = pouch; settings.language = language; settings.liveAccess = access;
             // IMP-NET-007: 開催許可の変更権限は KD_SleepBoard.CanControl (オーナー優先、不在時だけ Master) を共通の正本にする。
             // 台帳が無ければ配線せず失敗させる (Master 判定で埋めない。Verify も同じ参照を数える)
             var board = KD_SceneObjects.Find(KD_DogDefs.SleepBoardName)?.GetComponent<KD_SleepBoard>();
-            if (board == null) throw new InvalidOperationException(KD_DogDefs.SleepBoardName + " missing: run Tools/KominkaDogRun/Sleep System first");
+            // 裏山改変: 段階 0 は KD_SleepBoard が意図的な未導入 (IMP-DOG-016 で必須に戻す)。無ければ配線せず、許可トグルは暗いまま
+            if (board == null) log.AppendLine("NOTE 段階 0: " + KD_DogDefs.SleepBoardName + " は未導入 (Tools/KominkaHillside/Menu/6 Setup Sleep で入る)。access.sleepBoard は null");
             access.sleepBoard = board;
             pouch.language = language;
             // 裏山改変: 購入アセット (HoboRadio / SleepKit) は裏山に無い
@@ -117,8 +121,7 @@ namespace KominkaDogRun.Editor
             pouch.refreshSeconds = KD_ShopItem.ConfirmRefreshSeconds;
             foreach (var shelf in shelves) { shelf.refreshSeconds = KD_ShopItem.ConfirmRefreshSeconds; Copy(shelf); }
             BuildSettings(pouch, settings, language, font, log);
-            BuildCreditRows(log);
-            BuildGallery(language,catalog,log);
+            // 裏山改変: クレジット板と写真ギャラリーは裏山に無い (BuildCreditRows / BuildGallery は呼ばない)
             KD_LocalizationEditor.Bind(language, catalog, log);
             Copy(pouch); Copy(settings); Copy(language); Copy(access);
             EditorSceneManager.MarkSceneDirty(pouch.gameObject.scene);
@@ -134,9 +137,8 @@ namespace KominkaDogRun.Editor
             var settings = go.GetComponent<KD_MenuSettings>();
             BuildSettings(pouch, settings, settings.language, pouch.sectionTitleLabel.font, log);
             var catalog = KD_LocalizationEditor.Load();
-            BuildCreditRows(log);
+            // 裏山改変: クレジット板と写真ギャラリーは裏山に無い
             KD_LocalizationEditor.Configure(settings.language,catalog,log);
-            BuildGallery(settings.language,catalog,log);
             KD_LocalizationEditor.Bind(settings.language,catalog,log);
             Copy(settings); Copy(settings.language);
         }
@@ -151,7 +153,9 @@ namespace KominkaDogRun.Editor
             // (Dog Voice Settings / Distance Fade Settings)。ここで上書きすると 2 本目の正本になり、
             // 片方だけ再実行したときに中央へ戻る (2026-09-22 実測: 距離フェードが X=0 へずれていた)
             // IMP-ENV-019: 文言は全端末で「ラジオ設定 (PCのみ)」(radio.settings.button)。押せるかは KD_MenuSettings.Start() が端末で決める
-            settings.radioButton = Button(parent, "RadioSettingsButton", new Vector2(180,82), new Vector2(320,64), "ラジオ設定 (PCのみ)", font, udon, "_OpenRadio", log).GetComponent<Button>();
+            // 裏山改変: ラジオは裏山に無い (D-5)。入口も頁も作らない (以前の構築で残っていれば片付ける)
+            Retire(parent, "RadioSettingsButton", log);
+            settings.radioButton = null;
             var retiredEntry=parent.Find("ShareSettingsButton");
             if(retiredEntry!=null)UnityEngine.Object.DestroyImmediate(retiredEntry.gameObject);
             language.choiceLabel = Label(parent, "Language", new Vector2(-115,-98), new Vector2(370,48), "", font, 24);
@@ -159,32 +163,22 @@ namespace KominkaDogRun.Editor
             var next=parent.Find("English");if(next!=null)next.name="NextLanguage";
             Button(parent, "PreviousLanguage", new Vector2(145,-98), new Vector2(100,58), "<", font, langUdon, "_PreviousLanguage", log);
             Button(parent, "NextLanguage", new Vector2(275,-98), new Vector2(100,58), ">", font, langUdon, "_NextLanguage", log);
-            var radio = KD_ShopSetupEditor.EnsureUiChild(pouch.settingsPage.transform, "RadioSettings", Vector2.zero, new Vector2(KD_TreatSetupEditor.PanelWidth,KD_TreatSetupEditor.PanelHeight));
-            settings.radioPage = radio;
-            settings.radioState = Label(radio.transform, "State", new Vector2(-280,110), new Vector2(480,70), "電源: ON   CH 1", font, 26);
-            Button(radio.transform,"Power",new Vector2(-400,20),new Vector2(220,64),"電源",font,udon,"_RadioPower",log);
-            Button(radio.transform,"Channel",new Vector2(-160,20),new Vector2(220,64),"次のチャンネル",font,udon,"_RadioChannel",log);
-            settings.radioVolume = KD_DogVoiceSettingsEditor.BuildSlider(radio.transform,"Volume",-80,KD_UiSpriteEditor.LoadRound(),udon,"_RadioVolume",log);
-            ((RectTransform)settings.radioVolume.transform).anchoredPosition=new Vector2(-330,-80);
-            settings.radioVolumeValue = Label(radio.transform,"VolumeValue",new Vector2(-110,-80),new Vector2(120,46),"100%",font,24);
-            Label(radio.transform,"Scope",new Vector2(-280,-135),new Vector2(480,64),KD_LocalizationEditor.Text(KD_LocalizationEditor.Load(),"ja","ui.extra.032"),font,20);
-            Back(radio.transform,pouch,font,log);
-            ((RectTransform)radio.transform.Find("BackSettings")).anchoredPosition=new Vector2(-380,-250);
+            // 裏山改変: ラジオ設定頁 (RadioSettings) は作らない。写真の共有 (BuildPhotoShare) も裏山に無い
+            Retire(pouch.settingsPage.transform, "RadioSettings", log);
+            settings.radioPage = null; settings.radioState = null; settings.radioVolume = null; settings.radioVolumeValue = null;
             var catalog=KD_LocalizationEditor.Load();
-            Label(radio.transform,"AboutTitle",new Vector2(270,155),new Vector2(500,44),KD_LocalizationEditor.Text(catalog,catalog.fallbackLanguage,"radio.about.title"),font,24).alignment=TextAlignmentOptions.Left;
-            Label(radio.transform,"About",new Vector2(270,48),new Vector2(500,152),KD_LocalizationEditor.Text(catalog,catalog.fallbackLanguage,"radio.about.body"),font,20).alignment=TextAlignmentOptions.TopLeft;
-            Label(radio.transform,"Updates",new Vector2(270,-65),new Vector2(500,64),KD_LocalizationEditor.Text(catalog,catalog.fallbackLanguage,"radio.updates"),font,20).alignment=TextAlignmentOptions.Left;
-            CopyField(radio.transform,"XUrl",new Vector2(270,-145),new Vector2(500,50),RadioXUrl,font,false).pointSize=22;
-            Label(radio.transform,"CopyHint",new Vector2(270,-205),new Vector2(500,44),KD_LocalizationEditor.Text(catalog,catalog.fallbackLanguage,"ui.extra.036"),font,18).alignment=TextAlignmentOptions.Left;
-            BuildPhotoShare(pouch,language,font,log);
             // Keep pages other builders registered (GiftCodePage / PhotoSettings …). Resetting the array here
             // silently emptied the あそぶ・みる page (2026-09-13、当時は設定の面): KD_TreatPouch only activates pages listed here.
             var kept = new List<GameObject>();
             foreach (var p in pouch.extraSettingsPages ?? Array.Empty<GameObject>()) if (p != null && !kept.Contains(p)) kept.Add(p);
-            if (!kept.Contains(radio)) kept.Add(radio);
             pouch.extraSettingsPages = kept.ToArray();
-            BuildInformation(pouch, settings, font, log);
-            radio.SetActive(false);
+            // 裏山改変: インフォメーション (はじめに / 生成AI / VAnimal / トレーナー / 写真設定) は段階 3。0-b では作らない (BuildInformation を呼ばない)。
+            // 音量と距離フェードの入口は段階 3 で戻す。0-b は**非表示** (押しても何も起きないボタンを見せない)
+            foreach (string entry in new[] { "VolumeSettingsButton", "DistanceFadeSettingsButton", "InformationButton", "PhotoSettingsButton" })
+            {
+                var e = parent.Find(entry);
+                if (e != null && e.gameObject.activeSelf) { e.gameObject.SetActive(false); log.AppendLine("Settings: " + entry + " hidden (段階 3)"); }
+            }
             var livePage = pouch.settingsHome.transform;
             // P5 (2026-09-16 ユーザー決定): 呼ぶの開放も「この部屋のみんな」の設定。ライブ開催許可と横に並べ、権限者は同じ規則 (オーナー優先、不在時 Master)
             var pouchUdon = UdonSharpEditorUtility.GetBackingUdonBehaviour(pouch);
@@ -201,7 +195,7 @@ namespace KominkaDogRun.Editor
             // IMP-NET-007: 補足は 1 行だけ (通常文言は「オーナー」。不在時の代行はここでしか説明しない)。文言は ui.extra.048 (Bind が差し替える)
             Label(livePage,"LiveAccessNote",new Vector2(0,-221),new Vector2(700,30),KD_LocalizationEditor.Text(catalog,catalog.fallbackLanguage,"ui.extra.048"),font,16);
             BuildNightMode(pouch, settings, font, log);
-            log.AppendLine("Settings: languages, radio with description/X URL, live access; share moved to photo gallery");
+            log.AppendLine("Settings (裏山 0-b): languages, call/live access, night mode slider -> KH_NightMode (radio / share / information / volume / distance fade entries are not shown)");
         }
 
         /// <summary>IMP-ENV-015: SleepKit のナイトモードを設定ホームの最下段に Slider で置く。
@@ -231,12 +225,24 @@ namespace KominkaDogRun.Editor
             settings.nightModeValue = Label(home, "NightModeValue", new Vector2(215, -262), new Vector2(110, 46), "OFF", font, 24);
             settings.nightModeValue.alignment = TextAlignmentOptions.Left;
             Label(home, "NightModeNote", new Vector2(0, -306), new Vector2(700, 36), T("settings.night.note"), font, 18);
+            // 裏山改変: スライダーの先は KH_NightMode (シーンに 1 個)。強度 0〜1 を KD_MenuSettings._NightMode が _SetDarkness で渡す
+            settings.hillsideNight = HillsideNight(pouch.gameObject.scene);
             // 裏山改変: 購入アセット (HoboRadio / SleepKit) は裏山に無い
 #if KH_WITH_SLEEPKIT
             log.AppendLine("Night mode: slider on settings home -> SleepKitSettingsManager (" + sleepKit.name + ")");
 #else
-            log.AppendLine("Night mode: slider on settings home (裏山: SleepKit 無し。KH_NightMode への配線は段階 0-b)");
+            log.AppendLine("Night mode: slider on settings home -> KH_NightMode (" + settings.hillsideNight.name + ")");
 #endif
+        }
+
+        /// <summary>裏山改変: シーンにちょうど 1 個の KH_NightMode (Night/1 Setup が作る)。無い・複数なら止める (段階 0-b から必須)。</summary>
+        internal static global::KominkaHillside.KH_NightMode HillsideNight(Scene scene)
+        {
+            global::KominkaHillside.KH_NightMode found = null; int count = 0;
+            foreach (var n in Resources.FindObjectsOfTypeAll<global::KominkaHillside.KH_NightMode>())
+                if (n.gameObject.scene == scene) { found = n; count++; }
+            if (count != 1) throw new InvalidOperationException("Exactly one KH_NightMode is required in the scene (found " + count + "). Run Tools/KominkaHillside/Night/1 Setup Sky And Night");
+            return found;
         }
 
         internal static void BuildInformation(KD_TreatPouch pouch, KD_MenuSettings settings, TMP_FontAsset font, StringBuilder log)
@@ -299,6 +305,15 @@ namespace KominkaDogRun.Editor
             foreach(var t in canvasGo.GetComponentsInChildren<Transform>(true))t.gameObject.layer=0;
             canvasGo.SetActive(true);share.SetActive(true);
             log.AppendLine("Photo share: right of Caption local="+rect.localPosition+" world size="+Vector3.Scale(new Vector3(1280,360,0),rect.lossyScale));
+        }
+
+        /// <summary>裏山改変: 作らないと決めた部品が以前の構築で残っていれば消す (作った側の後始末。冪等)。</summary>
+        static void Retire(Transform parent, string name, StringBuilder log)
+        {
+            var t = parent == null ? null : parent.Find(name);
+            if (t == null) return;
+            Object.DestroyImmediate(t.gameObject);
+            log.AppendLine("removed " + name + " (裏山では作らない)");
         }
 
         static void Back(Transform parent, KD_TreatPouch pouch, TMP_FontAsset font, StringBuilder log)
@@ -400,9 +415,8 @@ namespace KominkaDogRun.Editor
             var language=KD_SceneObjects.Find("KD_Language")?.GetComponent<KD_Language>();
             if(language==null)return;
             var catalog=KD_LocalizationEditor.Load();
-            BuildCreditRows(log);
+            // 裏山改変: クレジット板と写真ギャラリーは裏山に無い
             KD_LocalizationEditor.Configure(language,catalog,log);
-            BuildGallery(language,catalog,log);
             KD_LocalizationEditor.Bind(language,catalog,log);Copy(language);
         }
         static void Copy(UdonSharpBehaviour behaviour)
@@ -498,7 +512,7 @@ namespace KominkaDogRun.Editor
             var scene=EditorSceneManager.NewPreviewScene();var previous=RenderTexture.active;
             try
             {
-                foreach(var definition in catalog.languages)foreach(string pageName in new[]{"home","radio","share","credit"})
+                foreach(var definition in catalog.languages)foreach(string pageName in new[]{"home"})   // 裏山改変: ラジオ・写真の共有・クレジット板は裏山に無い
                 {
                     string lang=definition.code;
                     bool credit=pageName=="credit",sharing=pageName=="share";int width=credit?840:sharing?1280:(int)KD_TreatSetupEditor.PanelWidth,height=credit?1080:sharing?360:(int)KD_TreatSetupEditor.PanelHeight;
@@ -575,8 +589,8 @@ namespace KominkaDogRun.Editor
             Check(pouch!=null && pouch.language==language,"menu language reference");
             Check(pouch.refreshSeconds==KD_ShopItem.ConfirmRefreshSeconds,"menu confirmation refresh 0.5s");
             foreach(var shelf in language.shelves)Check(shelf.refreshSeconds==KD_ShopItem.ConfirmRefreshSeconds,"shelf confirmation refresh 0.5s: "+shelf.name);
-            KD_PhotoSetupEditor.ValidateGalleryText(language);
-            Check(true,"gallery TMP labels are connected to stable language keys");
+            // 裏山改変: 写真ギャラリーは裏山に無い
+            log.AppendLine("SKIP gallery TMP labels (裏山では対象外: 写真は未採用)");
             Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(language).SyncMethod==VRC.SDKBase.Networking.SyncType.None,"language sync None");
             Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(settings).SyncMethod==VRC.SDKBase.Networking.SyncType.None,"settings sync None");
             Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(access).SyncMethod==VRC.SDKBase.Networking.SyncType.Manual,"hosting permission sync Manual");
@@ -587,32 +601,34 @@ namespace KominkaDogRun.Editor
             Check(access.IsOpenToAll,"new instance hosting access defaults ON");
             // IMP-NET-007: 開催許可の管理者判定は寝る台帳の CanControl (オーナー優先、不在時だけ Master) が唯一の正本。実参照と backing Udon の両方を見る
             var board=KD_SceneObjects.Find(KD_DogDefs.SleepBoardName)?.GetComponent<KD_SleepBoard>();
-            Check(board!=null && access.sleepBoard==board,"hosting permission asks KD_SleepBoard.CanControl (owner first, Master only while absent)");
-            object wiredBoard;
-            Check(board!=null && UdonSharpEditorUtility.GetBackingUdonBehaviour(access).publicVariables.TryGetVariableValue("sleepBoard",out wiredBoard)
-                && wiredBoard as Object==UdonSharpEditorUtility.GetBackingUdonBehaviour(board),"hosting permission backing Udon holds the sleep board");
+            // 裏山改変: 段階表 (D-1)。KD_SleepBoard は段階 2 (IMP-DOG-016) まで意図的な未導入 = null が正
+            if(board==null) Check(access.sleepBoard==null,"段階 0: KD_SleepBoard は意図的な未導入 (access.sleepBoard null。許可トグルは暗い。IMP-DOG-016 で必須)");
+            else
+            {
+                Check(access.sleepBoard==board,"hosting permission asks KD_SleepBoard.CanControl (owner first, Master only while absent)");
+                object wiredBoard;
+                Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(access).publicVariables.TryGetVariableValue("sleepBoard",out wiredBoard)
+                    && wiredBoard as Object==UdonSharpEditorUtility.GetBackingUdonBehaviour(board),"hosting permission backing Udon holds the sleep board");
+            }
             var note=pouch.settingsHome.transform.Find("LiveAccessNote");
             Check(note!=null && Array.IndexOf(language.fixedLabels,note.GetComponent<TextMeshProUGUI>())>=0,"live access note label bound (single line about the Master standing in)");
-            Check(pouch.live.access==access && pouch.live.hostingItems.Length==pouch.liveItems.Length,"live checks access and own work");
-            for(int i=0;i<pouch.liveItems.Length;i++)Check(pouch.live.hostingItems[i]==pouch.liveItems[i],"hosting work "+i);
-            Check(KD_LiveSystem.CooldownSeconds==60,"60 second cooldown retained");
-            var radioProxy=settings.radio==null?null:UdonSharpEditorUtility.GetProxyBehaviour(settings.radio);
-            Check(radioProxy!=null && !new SerializedObject(radioProxy).FindProperty("isGlobal").boolValue,"radio remains Local");
-            Check(settings.radioAudio!=null && settings.radioKnob!=null && settings.knobMax>settings.knobMin,"radio audio and physical knob");
-            // IMP-ENV-019: ボタンは設定ホームの RadioSettingsButton、文言は radio.settings.button (PCのみ) に束縛。Android / iOS では Start() が interactable=false にする
-            Check(settings.radioButton!=null && settings.radioButton.name=="RadioSettingsButton" && settings.radioButton.transform.parent==pouch.settingsHome.transform,"radio settings button wired on settings home (IMP-ENV-019)");
-            var radioButtonLabel=settings.radioButton==null?null:settings.radioButton.transform.Find("Label")?.GetComponent<TextMeshProUGUI>();
-            int radioButtonBinding=radioButtonLabel==null?-1:Array.IndexOf(language.fixedLabels,radioButtonLabel);
-            Check(radioButtonBinding>=0 && language.fixedKeys[radioButtonBinding]=="radio.settings.button","radio settings button label bound to radio.settings.button");
-            foreach(string code in language.languageCodes)Check(language._TextForLanguage("radio.settings.button",code).Contains("PC"),"radio settings button says PC only ("+code+")");
-            // IMP-INF-017 added the information pages; every extra page must be one the settings script knows.
-            Check(pouch.extraSettingsPages.Contains(settings.radioPage) && pouch.extraSettingsPages.Contains(settings.informationPage) && pouch.extraSettingsPages.Contains(settings.aiInformationPage),"extra settings pages include radio + information + AI information");
-            // Sub pages opened through _OpenExtraSettings must be in the array, or they open empty (2026-09-13 あそぶ・みる).
-            // Volume / DistanceFade are toggled by their own flags and are not listed here.
-            foreach(string name in new[]{"RadioSettings","Information","AiInformation"})
+            // 裏山改変: ライブは DES-LIV-001 まで準備中 (KD_LiveSystem を置かない)
+            if(pouch.live==null) log.AppendLine("SKIP live hosting work / cooldown (裏山では対象外: DES-LIV-001 まで KD_LiveSystem を置かない)");
+            else
             {
-                var child=pouch.settingsPage.transform.Find(name);
-                Check(child!=null && pouch.extraSettingsPages.Contains(child.gameObject),"extra settings page managed: "+name);
+                Check(pouch.live.access==access && pouch.live.hostingItems.Length==pouch.liveItems.Length,"live checks access and own work");
+                for(int i=0;i<pouch.liveItems.Length;i++)Check(pouch.live.hostingItems[i]==pouch.liveItems[i],"hosting work "+i);
+            }
+            // 裏山改変: ラジオは裏山に無い (D-5)。入口・頁とも作らないことを数える
+            Check(settings.radio==null && settings.radioButton==null && settings.radioPage==null
+                && pouch.settingsHome.transform.Find("RadioSettingsButton")==null && pouch.settingsPage.transform.Find("RadioSettings")==null,
+                "radio settings entry and page are not built (裏山: ラジオ無し)");
+            // 裏山改変: インフォメーション・写真設定は段階 3。0-b は入口を作らない / 隠す
+            log.AppendLine("SKIP information / AI information / photo settings pages (裏山では対象外: 段階 3)");
+            foreach(string entry in new[]{"VolumeSettingsButton","DistanceFadeSettingsButton","InformationButton","PhotoSettingsButton"})
+            {
+                var e=pouch.settingsHome.transform.Find(entry);
+                Check(e==null || !e.gameObject.activeSelf,"settings entry not shown in stage 0-b: "+entry+(e==null?" (absent)":" (hidden)"));
             }
             // 裏山改変: 購入アセット (HoboRadio / SleepKit) は裏山に無い
 #if KH_WITH_SLEEPKIT
@@ -620,16 +636,17 @@ namespace KominkaDogRun.Editor
 #else
             Check(settings.nightMode!=null && settings.nightMode.transform.parent==pouch.settingsHome.transform,"night mode slider on settings home (IMP-ENV-015; 裏山: SleepKit 無し)");
 #endif
+            // 裏山改変: スライダーの先は KH_NightMode (段階 0-b から必須)
+            {
+                global::KominkaHillside.KH_NightMode night=null; try{night=HillsideNight(pouch.gameObject.scene);}catch(InvalidOperationException e){log.AppendLine("  "+e.Message);}
+                Check(night!=null && settings.hillsideNight==night,"night mode slider drives the scene's KH_NightMode (settings.hillsideNight)");
+                object wiredNight;
+                Check(night!=null && UdonSharpEditorUtility.GetBackingUdonBehaviour(settings).publicVariables.TryGetVariableValue("hillsideNight",out wiredNight)
+                    && wiredNight as Object==UdonSharpEditorUtility.GetBackingUdonBehaviour(night),"settings backing Udon holds KH_NightMode (hillsideNight)");
+            }
             Check(pouch.settingsHome.transform.Find("ShareSettingsButton")==null && pouch.settingsPage.transform.Find("ShareSettings")==null,"share removed from hand menu");
-            var gallery=KD_SceneObjects.Find(KD_DogDefs.PhotoSystemName).transform.Find("Gallery");
-            var share=gallery.Find("ShareCanvas");var caption=gallery.Find("Caption");
-            Check(share!=null && share.gameObject.activeInHierarchy && language.shareField.transform.IsChildOf(share),"share lives on active photo board");
-            Check(share.localPosition.x-((RectTransform)share).rect.width*share.localScale.x*.5f>caption.localPosition.x+caption.localScale.x*.5f && Mathf.Approximately(share.localPosition.y,caption.localPosition.y),"share is right of caption without overlap");
-            Check(share.GetComponent<GraphicRaycaster>()!=null && share.GetComponent<VRCUiShape>()!=null && share.GetComponent<BoxCollider>().isTrigger && share.gameObject.layer==0,"photo share UI input components");
-            var url=settings.radioPage.transform.Find("XUrl").GetComponent<TMP_InputField>();
-            Check(url.text==KD_MenuFinishEditor.RadioXUrl && url.readOnly && url.onFocusSelectAll && !url.richText && url.textViewport.GetComponent<RectMask2D>()!=null,"exact copyable radio X URL");
-            Check(language.shareField!=null && language.shareField.readOnly && !language.shareField.richText && language.shareField.onFocusSelectAll,"share copy field");
-            Check(language.shareField.text.EndsWith("#KominkaDogRun #VRChat") && !language.shareField.text.Contains("#VRChat_world紹介") && !language.shareField.text.Contains("\\"),"two hashtags, no escape characters");
+            // 裏山改変: 写真の共有・ラジオの X URL は裏山に無い
+            log.AppendLine("SKIP photo share board / radio X URL / share hashtags (裏山では対象外: 写真・ラジオ未採用)");
             var catalog=KD_LocalizationEditor.Load();
             // IMP-ENV-020: おじいさんの const (字形宣言・行幅検査の対象) は文言表 ja の写しでなければならない
             var keeperMismatch=KD_ShopKeeperSetupEditor.ConstMismatches(catalog);
@@ -641,16 +658,8 @@ namespace KominkaDogRun.Editor
             Check(unique.Count==language.keys.Length,"keys unique");
             for(int l=0;l<language.languageCodes.Length;l++)for(int k=0;k<language.keys.Length;k++)
                 Check(language._TextForLanguage(language.keys[k],language.languageCodes[l])==KD_LocalizationEditor.Text(catalog,language.languageCodes[l],language.keys[k]),"text "+language.languageCodes[l]+":"+language.keys[k]);
-            var credit=KD_SceneObjects.Find(KD_DogDefs.CreditBoardName);
-            var scroll=credit.GetComponentInChildren<ScrollRect>(true);
-            var fields=credit.GetComponentsInChildren<TMP_InputField>(true);
-            Check(fields.Length==5,"five credit URLs");
-            Check(scroll.verticalScrollbarVisibility==ScrollRect.ScrollbarVisibility.Permanent && scroll.verticalScrollbar.GetComponent<RectTransform>().rect.width>=40,"credit scrollbar permanent and 40px");
-            Check(scroll.content.rect.height>scroll.viewport.rect.height,"credit content scrolls beyond viewport");
-            foreach(var field in fields)Check(field.readOnly && field.onFocusSelectAll && !field.richText && field.textViewport.GetComponent<RectMask2D>()!=null && field.text.StartsWith("https://"),"copy "+field.name);
-            bool attribution=false;
-            foreach(var text in credit.GetComponentsInChildren<TMP_Text>(true))if(text.text.Contains("TORINOSUKEの家"))attribution=true;
-            Check(attribution,"specified attribution retained verbatim");
+            // 裏山改変: クレジット板は裏山に無い (設定面のクレジットは段階 3)
+            log.AppendLine("SKIP credit board URLs / attribution (裏山では対象外: 段階 3)");
             var measure=new GameObject("KD_TextMeasure",typeof(RectTransform),typeof(CanvasRenderer),typeof(TextMeshProUGUI));
             measure.hideFlags=HideFlags.HideAndDontSave;
             try

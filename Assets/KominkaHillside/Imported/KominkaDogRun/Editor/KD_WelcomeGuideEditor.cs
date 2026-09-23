@@ -60,7 +60,7 @@ namespace KominkaDogRun.Editor
 
         static void Guard()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorSceneManager.GetActiveScene().path != "Assets/Scenes/KominkaDogRun.unity")
+            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorSceneManager.GetActiveScene().path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */)
                 throw new InvalidOperationException("Stopped KominkaDogRun scene required");
         }
         static void Write(string name, StringBuilder log) { Directory.CreateDirectory(Output); File.WriteAllText(Output + name + ".txt", log.ToString()); Debug.Log(log.ToString()); }

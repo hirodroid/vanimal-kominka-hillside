@@ -216,8 +216,11 @@ namespace KominkaHillside.Editor
             Check(values, "backing Udon holds onDarkness / fadeSeconds / liveDarkness == defaults");
             var others = UnityEngine.Object.FindObjectsOfType<KH_NightMode>(true);
             Check(others.Length == 1, "exactly one KH_NightMode in the scene (" + others.Length + ")");
-            var menu = UnityEngine.Object.FindObjectOfType<KH_HandMenu>(true);
-            Check(menu != null && menu.night == night && menu.nightImage != null && menu.nightLabel != null, "KH_HandMenu.night wired with button image and label (run Menu/3 Build Menu after Setup)");
+            // Menu rebuild stage 0-b (D-5): the entry is the settings slider of KD_TreatPouch's settings page (KD_MenuSettings), not KH_HandMenu.
+            var settings = UnityEngine.Object.FindObjectsOfType<KominkaDogRun.KD_MenuSettings>(true);
+            Check(settings.Length == 1 && settings[0].hillsideNight == night && settings[0].nightMode != null && settings[0].nightModeValue != null,
+                "KD_MenuSettings.hillsideNight wired with slider and value label (run Tools/KominkaHillside/Menu/7 Build Menu after Setup; found " + settings.Length + ")");
+            Check(settings.Length == 1 && settings[0].pouch != null, "KD_MenuSettings.pouch wired (settings page of the hand menu)");
             var descriptor = UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>();
             Check(descriptor != null && descriptor.NetworkIDCollection.Count(x => x.gameObject == null) == 0, "no dangling NetworkIDs");
             Report("night-verify", log + "TOTAL " + total + " FAILED " + failed);

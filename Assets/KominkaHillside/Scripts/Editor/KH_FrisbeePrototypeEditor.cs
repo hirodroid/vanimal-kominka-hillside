@@ -236,7 +236,7 @@ namespace KominkaHillside.Editor
             disc.areaRing = ring; disc.areaRingLift = .03f;
             var hintGo = Obj("Hint", aimRoot.transform);
             var hint = hintGo.GetComponent<TMPro.TextMeshPro>(); if (hint == null) hint = hintGo.AddComponent<TMPro.TextMeshPro>();
-            hint.font = AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>(KH_HandMenuEditor.FontPath); hint.fontSize = 3f; hint.alignment = TMPro.TextAlignmentOptions.Center; hint.color = Color.white;
+            hint.font = AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>(KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath /* KH_HandMenuEditor は 2026-09-23 に退役 (IMP-UI-001 段階 0-b)。同じ Assets/KominkaHillside/Font/KD_NotoSerif SDF.asset */); hint.fontSize = 3f; hint.alignment = TMPro.TextAlignmentOptions.Center; hint.color = Color.white;
             hint.enableWordWrapping = false; hint.text = AimHint; hint.rectTransform.sizeDelta = new Vector2(4f, 1f); hintGo.SetActive(false);
             disc.aimHint = hintGo.transform;
             // Held look: the holder sees the disc at 25% so the preview line is not hidden behind it.

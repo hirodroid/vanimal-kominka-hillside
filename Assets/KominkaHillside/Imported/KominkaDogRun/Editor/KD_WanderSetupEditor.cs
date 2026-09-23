@@ -238,7 +238,7 @@ namespace KominkaDogRun.Editor
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             log.AppendLine("dogs=" + done + "/" + defsAll.Length);
             log.AppendLine("NOTE じゃれ合い (IMP-DOG-009) の名簿・調整値はここでは触らない。"
-                + "Wander System を作り直したときは Tools/KominkaDogRun/Dog Pack/2 - Setup を再実行する");
+                + "Wander System を作り直したときは Tools/KominkaHillside/Menu/Imported-Unused/Dog Pack/2 - Setup Dog Pack を再実行する");
             log.AppendLine(copyOk
                 ? "SETUP RESULT: PASS (scene not saved yet)"
                 : "SETUP RESULT: FAIL (force refresh 後に再実行)");

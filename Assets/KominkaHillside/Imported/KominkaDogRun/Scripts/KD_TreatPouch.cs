@@ -445,6 +445,9 @@ namespace KominkaDogRun
         public const int TabTreat = 0;
         public const int TabToy = 1;
         public const int TabPetFx = 2;
+        // 裏山改変: タブ 2 は さんぽ (計画書 D-2)。撫でFX は かざり (TabAcc) に合流し、描画は KD_TreatPouch.Walk.cs。
+        // TabPetFx は移植コードのコンパイル互換のため残すが、裏山のタブ切替では使わない (復帰条件なし)。
+        public const int TabWalk = 2;
         /// <summary>4 タブ目 (IMP-DOG-019 Phase 5)。**hand-menu §9 の却下
         /// 「タブを 4 つ目 (設定 / 写真) へ広げる」には当たらない** —
         /// あれが却下したのは「使う」以外を持ち込むことで、
@@ -882,7 +885,8 @@ namespace KominkaDogRun
 
         /// <summary>いま開いているタブ (<c>Tab*</c>)。**同期も保存もしない。**
         /// 既定は左端の <see cref="TabAcc"/>。</summary>
-        private int _tab = TabAcc;
+        // 裏山改変: 既定は さんぽ (TabWalk。計画書 D-2。復帰条件なし)
+        private int _tab = TabWalk;
         public UnityEngine.UI.ScrollRect[] tabScrolls;
 
         // ---- おもちゃタブのキャッシュ (Start で 1 回だけ引く) ----
@@ -949,7 +953,8 @@ namespace KominkaDogRun
             CacheBalls();
 
             // 初回は左端の「かざり」(IMP-INF-008)。以後は選択を保持する。
-            _tab = TabAcc;
+            // 裏山改変: 初回は左端の「さんぽ」(計画書 D-2。復帰条件なし)
+            _tab = TabWalk;
             ApplyTab();
 
             // **既定は閉じている。** 開いたまま保存すると入室した瞬間から板が浮くし、
@@ -957,20 +962,8 @@ namespace KominkaDogRun
             // (復元が Start より先に来て庭へ置いた直後なら閉じない — IMP-INF-020。Start 同士の順は保証されない)
             if (panelRoot != null && panelRoot.activeSelf && !_welcome) panelRoot.SetActive(false);
 
-            if (box == null)
-                Debug.LogError("[KD_TreatPouch] box 未配線 - おやつを 1 個も出せない。"
-                    + "Run Tools/KominkaDogRun/Treat System setup.");
-            if (ledger == null)
-                Debug.LogError("[KD_TreatPouch] ledger 未配線 - 在庫を読めないので出せない。");
-            if (statusLabel == null)
-                Debug.LogError("[KD_TreatPouch] statusLabel 未配線 - "
-                    + "理由コードの出し先が無い = **無言で失敗する**。");
-            // **欠けても板は動く** (ねるタブが 4 行とも暗くなるだけ) が、
-            // おもちゃタブの `∧ !sleeping` も一緒に効かなくなる = 呼んでも来ないボタンが出る
-            if (sleepBoard == null)
-                Debug.LogError("[KD_TreatPouch] sleepBoard 未配線 - ねるタブが使えないうえ、"
-                    + "**寝ている犬のボールに [" + L("KD_TreatPouch.WordRecall") + "] が出る**。"
-                    + "Run Tools/KominkaDogRun/Treat System setup.");
+            // 裏山改変: 未配線の検査は段階表 (計画書 D-1) で「意図的な未導入」と「欠落」を分ける。移動先 KD_TreatPouch.Hillside.cs。hillsideStage 1 (台帳) / 2 (おやつ・かざり・呼ぶ) で段階表どおり必須へ戻る
+            HillsideStartGuard();
 
             _state = KD_TreatBox.DispIdle;
             _stateSince = Time.time;
@@ -1238,7 +1231,7 @@ namespace KominkaDogRun
 
         public void _Tab0() { SetTab(TabTreat); }
         public void _Tab1() { SetTab(TabToy); }
-        public void _Tab2() { SetTab(TabPetFx); }
+        public void _Tab2() { SetTab(TabWalk); }   // 裏山改変: タブ 2 は さんぽ (計画書 D-2)
         public void _Tab3() { SetTab(TabSleep); }
         public void _Tab4() { SetTab(TabLive); }
         public void _Tab5() { SetTab(TabAcc); }

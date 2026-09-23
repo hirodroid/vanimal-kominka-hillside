@@ -1,12 +1,18 @@
 using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
+using VRC.SDK3.Persistence;
 
 namespace KominkaHillside
 {
     // IMP-ENV-002: local night mode (OFF / ON) driven from the hand menu. Same recipe as KominkaDogRun's live night
     // (KD_LiveNight): a full-screen multiplicative quad (KH_NightOverlay, queue 4999, no GrabPass so it also draws on
-    // Quest / iOS) plus the sky material's _Exposure / _Tint. No RBS SleepKit. Nothing is synced or saved: each player
-    // chooses for their own eyes, and a rejoin starts in daylight.
+    // Quest / iOS) plus the sky material's _Exposure / _Tint. No RBS SleepKit. Nothing is synced: each player
+    // chooses for their own eyes.
+    //
+    // Menu rebuild stage 0-b (docs/plans/2026-09-23-menu-rebuild.md D-5): the hand menu's settings slider (KD_MenuSettings)
+    // sets the darkness 0..1 through _SetDarkness; the value is saved to this player's PlayerData (SaveKey) and restored on
+    // rejoin (applies to you only). onDarkness is the target while ON; switching ON/OFF still fades over fadeSeconds.
     //
     // Materials are never written on the shared assets: the overlay uses Renderer.material (an instance) and the sky
     // is instanced from a hidden SkyHolder renderer, then assigned to RenderSettings.skybox in Start. Leaving Play
@@ -45,6 +51,10 @@ namespace KominkaHillside
         private float _applied = -1f;        // last darkness written to the materials (-1 = never)
         private Material _overlayMat, _skyMat;
         private bool _ready;
+        // PlayerData (local player only): restored in OnPlayerRestored; a choice made before the restore wins and is saved then.
+        public const string SaveKey = "KH_NightMode.dark";
+        private bool _restored;
+        private bool _chosen;
 
         // net: callable-ok: pure query for the menu
         public bool IsOn { get { return _on; } }
@@ -52,6 +62,41 @@ namespace KominkaHillside
         public float Darkness { get { return Mathf.Max(Mathf.Clamp01(_phase) * Mathf.Clamp01(onDarkness), Mathf.Clamp01(liveDarkness)); } }
 
         public void _Toggle() { _on = !_on; }
+
+        /// <summary>Settings slider (0 = OFF .. 1 = darkest). A change while ON is immediate; OFF <-> ON fades over fadeSeconds.
+        /// Saved to PlayerData once restored. Local only (underscore prefix).</summary>
+        public void _SetDarkness(float dark)
+        {
+            dark = Mathf.Clamp01(dark);
+            _chosen = true;
+            SetTarget(dark);
+            if (_restored) Save();
+        }
+
+        // net: callable-ok: pure query for the settings slider (target darkness 0..1; OFF = 0)
+        public float _Darkness() { return _on ? Mathf.Clamp01(onDarkness) : 0f; }
+
+        private void SetTarget(float dark)
+        {
+            // Keep the last non-zero level as onDarkness so switching OFF fades out from where it was.
+            if (dark > 0.005f) { onDarkness = dark; _on = true; }
+            else _on = false;
+        }
+
+        private void Save()
+        {
+            if (!Utilities.IsValid(Networking.LocalPlayer)) return;
+            PlayerData.SetFloat(SaveKey, _Darkness());
+        }
+
+        public override void OnPlayerRestored(VRCPlayerApi player)
+        {
+            if (!Utilities.IsValid(player) || !player.isLocal) return;
+            _restored = true;
+            if (_chosen) { Save(); return; }   // chosen before the restore: the player's choice wins
+            float saved = 0f;
+            if (PlayerData.TryGetFloat(player, SaveKey, out saved)) SetTarget(Mathf.Clamp01(saved));
+        }
 
         void Start()
         {

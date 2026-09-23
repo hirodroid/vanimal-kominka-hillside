@@ -238,7 +238,8 @@ namespace KominkaDogRun.Editor
             if(target.fixedLabels.Length!=manifest.labels.Length || target.fixedKeys.Length!=manifest.labels.Length || target.interactTargets.Length!=manifest.interactions.Length || target.interactKeys.Length!=manifest.interactions.Length)
                 throw new InvalidOperationException("Localization bindings differ from manifest");
             for(int i=0;i<manifest.labels.Length;i++)if(target.fixedKeys[i]!=manifest.labels[i].key || target.fixedLabels[i]!=Resolve(manifest.labels[i]).GetComponent<TMP_Text>())throw new InvalidOperationException("Stale text binding "+i);
-            KD_PhotoSetupEditor.ValidateGalleryText(target);
+            // 裏山改変: 写真 (ギャラリー) は裏山で未採用。写真の器があるときだけ検査する
+            if(KD_SceneObjects.Find(KD_DogDefs.PhotoSystemName)!=null)KD_PhotoSetupEditor.ValidateGalleryText(target);
             for(int i=0;i<manifest.interactions.Length;i++)if(target.interactKeys[i]!=manifest.interactions[i].key || target.interactTargets[i]!=Resolve(manifest.interactions[i]).GetComponent<UdonBehaviour>())throw new InvalidOperationException("Stale prompt binding "+i);
             var pickups = manifest.pickups ?? Array.Empty<Binding>();
             if (target.pickupTargets == null || target.pickupKeys == null || target.pickupTargets.Length != pickups.Length || target.pickupKeys.Length != pickups.Length)

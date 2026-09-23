@@ -94,7 +94,7 @@ namespace KominkaDogRun.Editor
             if (pack == null)
             {
                 log.AppendLine("FAIL " + KD_DogDefs.DogPackName + " が取れない (" + found + " 個)。"
-                    + "先に Tools/KominkaDogRun/Dog Pack を実行");
+                    + "先に Tools/KominkaHillside/Menu/Imported-Unused/Dog Pack/2 - Setup Dog Pack を実行");
                 Finish(log);
                 return;
             }

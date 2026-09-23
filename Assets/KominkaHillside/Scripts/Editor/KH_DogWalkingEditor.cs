@@ -53,7 +53,9 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Walking/1 Create Programs")]
         public static void Programs()
         {
-            foreach (string name in new[]{"KH_LeashManager","KH_LeashClip","KH_LeashCollar","KH_LeashHaptics","KH_WalkRoute","KH_WalkSign","KH_TrainerPass","KH_ToyRecall","KH_HandMenu","KH_MenuOpener"})
+            // KH_HandMenu は退役 (段階 0-b。手元メニューは KD_TreatPouch = Tools/KominkaHillside/Menu/5 が Program Asset を作る)。
+            // スクリプト削除後にここへ残すと、元の無い Program Asset を作ってしまう
+            foreach (string name in new[]{"KH_LeashManager","KH_LeashClip","KH_LeashCollar","KH_LeashHaptics","KH_WalkRoute","KH_WalkSign","KH_TrainerPass","KH_ToyRecall","KH_MenuOpener"})
             {
                 string path="Assets/KominkaHillside/Scripts/"+name;
                 if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(path+".asset") != null) continue;

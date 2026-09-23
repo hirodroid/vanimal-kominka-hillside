@@ -19,7 +19,7 @@ namespace KominkaDogRun.Editor
         [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Call Poses/6 - Connect Point Products")]
         public static void Setup()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorSceneManager.GetActiveScene().path != "Assets/Scenes/KominkaDogRun.unity")
+            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorSceneManager.GetActiveScene().path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */)
                 throw new InvalidOperationException("Stopped KominkaDogRun scene required");
             var c = KD_ProductsEditor.SceneComponents<KD_CallPose>().Single();
             var p = c.pouch;

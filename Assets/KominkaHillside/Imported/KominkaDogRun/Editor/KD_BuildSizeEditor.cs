@@ -21,7 +21,7 @@ using UnityEngine.SceneManagement;
 
 public static class KD_BuildSizeEditor
 {
-    const string ScenePath = "Assets/Scenes/KominkaDogRun.unity";
+    const string ScenePath = KominkaDogRun.Editor.KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */;
     const string OutDir = "Temp/kd-buildsize";
 
     // VRChat mobile download limit, read from the SDK on 2026-09-10 (ValidationHelpers

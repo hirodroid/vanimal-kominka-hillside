@@ -179,7 +179,8 @@ namespace KominkaDogRun
         }
 
         /// <summary>詳細の面 [パーティクルで見る]: 同梱の撫でFX はパーティクルタブに並ぶ。</summary>
-        public void _LiveSeeFx() { SetTab(TabPetFx); }
+        // 裏山改変: タブ 2 は さんぽ。撫でFX は かざり (TabAcc) に合流したので、かざりタブへ (D-2)。
+        public void _LiveSeeFx() { SetTab(TabAcc); }
 
         /// <summary>詳細の面 [かざりで見る]: 同梱の飾りはかざりタブのセット (犬を選ぶ面) へ。</summary>
         public void _LiveSeeAcc()

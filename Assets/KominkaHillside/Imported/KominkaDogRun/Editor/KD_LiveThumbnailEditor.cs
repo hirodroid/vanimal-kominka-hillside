@@ -36,7 +36,7 @@ namespace KominkaDogRun.Editor
             Directory.CreateDirectory(Output);
             var req = JsonUtility.FromJson<Request>(File.ReadAllText(Output + "/request.json"));
             const string captureScene = "Assets/KominkaHillside/Imported/KominkaDogRun/Scenes/LiveThumbnailCaptureTemp.unity";
-            if (!AssetDatabase.CopyAsset("Assets/Scenes/KominkaDogRun.unity", captureScene)) throw new Exception("Capture copy failed");
+            if (!AssetDatabase.CopyAsset(KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */, captureScene)) throw new Exception("Capture copy failed");
             Scene s = default(Scene);
             var mats = new List<Material>();
             var previous = RenderTexture.active;

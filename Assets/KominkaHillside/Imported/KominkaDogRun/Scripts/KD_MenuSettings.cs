@@ -54,6 +54,9 @@ namespace KominkaDogRun
 #endif
         public Slider nightMode;
         public TextMeshProUGUI nightModeValue;
+        // 裏山改変: ナイトモードの正本は KH_NightMode (SleepKit は無い。KominkaHillside 段階 0-b、計画書 D-5)。
+        // Slider の「暗さ」0〜1 をそのまま渡し、PlayerData の保存・復元も KH_NightMode が持つ (自分だけに反映)。
+        public KominkaHillside.KH_NightMode hillsideNight;
         private float _nextRefresh;
         private bool _restored;
 
@@ -65,13 +68,16 @@ namespace KominkaDogRun
 #if UNITY_ANDROID || UNITY_IOS
             available = false;
 #endif
+#if !KH_WITH_HOBORADIO
+            available = false;   // 裏山改変: HoboRadio を入れていない裏山ではラジオの入口を閉じる (radioPage は作らない)
+#endif
             return available;
         }
         private void Start()
         {
             if (radioButton != null) radioButton.interactable = RadioAvailable();
         }
-        public void _OpenRadio() { if (!RadioAvailable()) return; pouch._OpenExtraSettings(radioPage, "ui.extra.028"); RefreshRadio(); }
+        public void _OpenRadio() { if (!RadioAvailable() || radioPage == null) return; pouch._OpenExtraSettings(radioPage, "ui.extra.028"); RefreshRadio(); }
         public void _OpenInformation() { pouch._OpenExtraSettings(informationPage, "information.title"); }
         public void _OpenVanimalInformation() { OpenReading(vanimalInformationPage, vanimalInformationScroll, "information.vanimal.title"); }
         public void _OpenTrainerInformation() { OpenReading(trainerInformationPage, trainerInformationScroll, "information.trainer.title"); }
@@ -126,7 +132,8 @@ namespace KominkaDogRun
         }
         public void _NightMode()
         {
-
+            // 裏山改変: KH_NightMode へ暗さ 0〜1 を渡す (保存も KH_NightMode)
+            if (hillsideNight != null && nightMode != null) hillsideNight._SetDarkness(Mathf.Clamp01(nightMode.value));
 #if KH_WITH_SLEEPKIT
             if (sleepKit == null || nightMode == null) return;
             sleepKit.SetNightModeValue(DarkToBrightness(nightMode.value));
@@ -167,7 +174,8 @@ namespace KominkaDogRun
             float dark = BrightnessToDark(sleepKit.GetNightModeValue());
 #else
             if (nightMode == null) return;
-            float dark = 0f;
+            // 裏山改変: 表示は KH_NightMode の目標の暗さ (復元値を含む)。未配線なら OFF
+            float dark = hillsideNight != null ? hillsideNight._Darkness() : 0f;
 #endif
             if (!Mathf.Approximately(nightMode.value, dark)) nightMode.SetValueWithoutNotify(dark);
             if (nightModeValue != null) nightModeValue.text = dark < .005f ? "OFF" : Mathf.RoundToInt(dark * 100f).ToString() + "%";

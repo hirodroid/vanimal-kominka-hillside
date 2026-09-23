@@ -16,13 +16,29 @@ namespace KominkaDogRun.Editor
     public static class KD_HandMenuScrollEditor
     {
         // 7 枚 (P2、2026-09-16: あそぶを右端に)。幅の和 1064 + 間隔 6×6 = 1100 = 板の内寸。文字は 24 → 22pt
-        internal static readonly int[] Order = { 5, 0, 3, 1, 4, 2, 6 };
-        static readonly float[] Widths = { 145, 150, 185, 145, 145, 145, 149 };
+        // 裏山改変 (D-2): タブ 2 は さんぽ。表示順 = さんぽ / おやつ / かざり / 呼ぶ / おもちゃ / あそぶ / ライブ
+        //   (古民家 Order = { 5, 0, 3, 1, 4, 2, 6 } / Widths = { 145, 150, 185, 145, 145, 145, 149 })。幅の和は古民家と同じ 1064
+        internal static readonly int[] Order = { 2, 0, 5, 3, 1, 6, 4 };
+        internal static readonly float[] Widths = { 145, 150, 145, 185, 145, 145, 149 };
+        internal const float TabGap = 6, TabRowWidth = 1100;
+        internal static float WidthSum() { float s = 0; foreach (float w in Widths) s += w; return s; }
         const float TabPoints = 22;
         // 2026-09-17: 上段の余白 (ユーザー指摘「ヘッダ・帯・タブが詰まっている」)。上余白 14 / ヘッダ 44 / 隙間 7 / 帯 30 / 隙間 8 / タブ 46 / 一覧まで 15
         const float HeaderY = 314, HeaderHeight = 44, TabY = 224, TabHeight = 46;
         internal const float ContentTop = 186, ContentTopWithRow = 140, TopRowY = 164;
-        static readonly string[] Prefixes = { "Row", "ToyRow", "FxRow", "SleepRow", "LiveRow", "AccRow" };
+        // 裏山改変: Prefixes[2] = "WalkRow" (古民家 "FxRow")。かざり (5) だけ AccRow + FxRow の 2 種 (撫でFX の合流 D-2)
+        static readonly string[] Prefixes = { "Row", "ToyRow", "WalkRow", "SleepRow", "LiveRow", "AccRow" };
+        internal const string AccFxPrefix = "FxRow";
+        /// <summary>タブ id の Content に並べる行の (prefix, 行数)。**並び順もこの順** (かざりは AccRow の後ろに FxRow)。</summary>
+        internal static (string prefix, int count)[] RowsFor(int id)
+        {
+            if (id == KD_TreatPouch.TabLive) return new[] { (Prefixes[id], KD_DogDefs.LiveShows.Length) };
+            if (id == KD_TreatPouch.TabWalk) return new[] { (Prefixes[id], KD_TreatSetupEditor.WalkRowCount) };
+            if (id == KD_TreatPouch.TabAcc) return new[] { (Prefixes[id], KD_AccessorySetsEditor.MenuCount), (AccFxPrefix, KD_TreatSetupEditor.HillsideFxRowCount) };
+            // 裏山改変 (司令塔 2026-09-23): おやつは Row 4 (KD_ShopSetupEditor.TreatProductCount。Pouch ビルダーが作る数と同じ。古民家の行プールも 4)
+            if (id == KD_TreatPouch.TabTreat) return new[] { (Prefixes[id], KD_ShopSetupEditor.TreatProductCount) };
+            return new[] { (Prefixes[id], 6) };
+        }
         const float RowHeight = 112;
         const float RowWidth = 508;
 
@@ -139,7 +155,7 @@ namespace KominkaDogRun.Editor
             var p = KD_SceneObjects.Find(KD_DogDefs.TreatPouchName).GetComponent<KD_TreatPouch>();
             if (p.tabPages == null || p.tabPages.Length != KD_TreatPouch.TabCount) throw new InvalidOperationException(KD_TreatPouch.TabCount + " hand menu pages required");
             var log = new StringBuilder();
-            KD_ShopSetupEditor.AddGlyphs(KD_TreatPouch.WordTabPetFx, log);
+            KD_ShopSetupEditor.AddGlyphs(TabLabelWord(KD_TreatPouch.TabWalk, log), log);   // 裏山改変: 古民家は WordTabPetFx
             Build(p, log);
             EditorUtility.SetDirty(p); UdonSharpEditorUtility.CopyProxyToUdon(p);
             EditorSceneManager.MarkSceneDirty(p.gameObject.scene); AssetDatabase.SaveAssets();
@@ -225,11 +241,13 @@ namespace KominkaDogRun.Editor
                 var tab = p.tabImages[id].transform;
                 float width = Widths[id]; Place(tab,new Vector2(left+width/2,TabY),new Vector2(width,TabHeight));
                 Text(tab,"Label",Vector2.zero,new Vector2(width-8,TabHeight-6),TabPoints);
-                if(id == KD_TreatPouch.TabPetFx) tab.Find("Label").GetComponent<TextMeshProUGUI>().text = KD_TreatPouch.WordTabPetFx;
+                // 裏山改変: タブ 2 のラベルは さんぽ (WordWalkTab)。古民家は WordTabPetFx
+                if(id == KD_TreatPouch.TabWalk) tab.Find("Label").GetComponent<TextMeshProUGUI>().text = TabLabelWord(id, log);
                 var line = (RectTransform)p.tabUnderlines[id].transform;
                 Place(line,new Vector2(0,-(TabHeight/2-3)),new Vector2(width,5));
-                p.tabImages[id].color = id == KD_TreatPouch.TabAcc ? p.tabOnColor : p.tabOffColor;
-                p.tabUnderlines[id].SetActive(id == KD_TreatPouch.TabAcc);
+                // 裏山改変: 初期タブは さんぽ (古民家は かざり)
+                p.tabImages[id].color = id == KD_TreatPouch.TabWalk ? p.tabOnColor : p.tabOffColor;
+                p.tabUnderlines[id].SetActive(id == KD_TreatPouch.TabWalk);
                 left += width + 6;
             }
             // Scroll を持つのは先頭 6 枚。あそぶ (TabPlay) は KD_ActivitiesMenu の固定配置
@@ -257,12 +275,11 @@ namespace KominkaDogRun.Editor
                 int count=0;
                 // かざりは 16 行 (KD_AccessorySetsEditor.MenuCount。一覧は 14 品 + セット面の予備)。
                 // 2026-09-16 まで 6 で止めていたので AccRow6〜15 が Page_Acc 直下 (Y=-272 以下) に残り、7 品目以降が板の外だった (P9 の並び替えで発覚)
-                int rowCount = id == KD_TreatPouch.TabLive ? KD_DogDefs.LiveShows.Length
-                    : id == KD_TreatPouch.TabPetFx ? KD_ShopSetupEditor.PetFxProductCount
-                    : id == KD_TreatPouch.TabAcc ? KD_AccessorySetsEditor.MenuCount : 6;
+                // 裏山改変: 行の表は RowsFor (さんぽ 8 行 / かざりは AccRow 16 の後ろに FxRow 11)
+                foreach (var (prefix, rowCount) in RowsFor(id))
                 for(int rowIndex=0; rowIndex<rowCount; rowIndex++)
                 {
-                    string name = Prefixes[id]+rowIndex;
+                    string name = prefix+rowIndex;
                     var row = page.Find(name); if(row == null) row = content.Find(name); if(row == null) continue;
                     row.SetParent(content,false); row.SetAsLastSibling(); count++;
                     var element = row.GetComponent<LayoutElement>(); if(element == null) element = row.gameObject.AddComponent<LayoutElement>();
@@ -280,7 +297,7 @@ namespace KominkaDogRun.Editor
                         // [ギフト] (IMP-PRG-012) は名前の行の右端 (x 110..246、高さ 40)。名前の幅は実行時 (RedrawLive) が出る行だけ 340 に詰める
                         Action(row,"Gift",178,32,136,40);
                     }
-                    if(id == 5)
+                    if(id == 5 && prefix == Prefixes[5])   // 裏山改変: FxRow は古民家のパーティクル頁と同じ汎用の置き方
                     {
                         Text(row,"Sub",new Vector2(-96,-18),new Vector2(288,60),18);
                         row.Find("Sub").GetComponent<TextMeshProUGUI>().enableWordWrapping=true;
@@ -292,6 +309,28 @@ namespace KominkaDogRun.Editor
                     {
                         Place(row.Find("Swatch"),new Vector2(-230,32),new Vector2(22,22));
                         Text(row,"Label",new Vector2(15,32),new Vector2(435,36),22);
+                        // 裏山改変: 行に [ボール] (Button) と [ディスク] (Disc)。理由は左に詰める
+                        Text(row,"Reason",new Vector2(-126,-18),new Vector2(250,60),18);
+                        { var toyReason=row.Find("Reason"); if(toyReason!=null) toyReason.GetComponent<TextMeshProUGUI>().enableWordWrapping=true; }
+                        Action(row,"Button",64,-18,120);
+                        Action(row,"Disc",190,-18,120);
+                    }
+                    if(id == KD_TreatPouch.TabWalk)
+                    {
+                        // 裏山改変: さんぽ。犬の行 = 名前 / 状態 / [左につなぐ][右につなぐ][はずす] (3 つで 480px、文字 18pt)。行き先の行 = 汎用の置き方 + [ここへ]
+                        if(row.Find("Left") != null)
+                        {
+                            Place(row.Find("Swatch"),new Vector2(-230,35),new Vector2(22,22));
+                            Text(row,"Label",new Vector2(15,35),new Vector2(435,30),22);
+                            Text(row,"Reason",new Vector2(0,4),new Vector2(480,28),18);
+                            var reason=row.Find("Reason");if(reason!=null)reason.GetComponent<TextMeshProUGUI>().enableWordWrapping=false;
+                            foreach(var (button,x) in new[]{("Left",-162f),("Right",0f),("Off",162f)})
+                            {
+                                Action(row,button,x,-34,156,40);
+                                var label=row.Find(button+"/Label");if(label!=null)label.GetComponent<TextMeshProUGUI>().fontSize=18;
+                            }
+                        }
+                        else Action(row,"Here",178,-18,136);
                     }
                     if(id == 3)
                     {
@@ -335,11 +374,35 @@ namespace KominkaDogRun.Editor
                 scroll.movementType=ScrollRect.MovementType.Clamped;scroll.inertia=false;scroll.scrollSensitivity=35;
                 scroll.verticalScrollbar=scrollbar;scroll.verticalScrollbarVisibility=ScrollRect.ScrollbarVisibility.Permanent;
                 scroll.verticalNormalizedPosition=1; p.tabScrolls[id]=scroll;
-                p.tabPages[id].SetActive(id==KD_TreatPouch.TabAcc);
+                p.tabPages[id].SetActive(id==KD_TreatPouch.TabWalk);   // 裏山改変: 初期は さんぽ
                 log.AppendLine("tab="+id+" rows="+count+" viewport="+view.sizeDelta+" grid=2 columns scroll=vertical/permanent");
             }
-            p.sectionTitleLabel.text=KD_TreatPouch.WordAccTitle;
+            p.sectionTitleLabel.text=KD_Hillside.Text("KD_TreatPouch.WordWalkTitle","犬とさんぽ",log);   // 裏山改変: 古民家は WordAccTitle
             EditorUtility.SetDirty(p);
+        }
+
+        /// <summary>裏山改変: タブの見出し。タブ 2 (さんぽ) だけ文言表 (KD_TreatPouch.WordWalkTab) から引く。</summary>
+        static string TabLabelWord(int id, StringBuilder log)
+        {
+            return id == KD_TreatPouch.TabWalk ? KD_Hillside.Text("KD_TreatPouch.WordWalkTab", "さんぽ", log) : "";
+        }
+
+        /// <summary>裏山改変: 行ボタンの押し先 (Verify 用)。行 prefix とボタン名から期待するイベント名を返す。</summary>
+        internal static string ExpectedRowEvent(string prefix, int index, string button)
+        {
+            switch (prefix)
+            {
+                case "Row": return "_Row" + index;
+                case "ToyRow": return button == "Disc" ? "_Disc" + index : "_Toy" + index;
+                case "WalkRow":
+                    if (button == "Here") return index == KD_TreatSetupEditor.WalkDogRows ? "_WalkPlaza" : "_WalkGate";
+                    return "_Walk" + button + index;   // Left / Right / Off
+                case "FxRow": return "_Fx" + index;
+                case "SleepRow": return "_Sleep" + index;
+                case "LiveRow": return (button == "Gift" ? "_LiveGift" : "_Live") + index;
+                case "AccRow": return (button == "Gift" ? "_AccGift" : "_Acc") + index;
+            }
+            return "?";
         }
 
         [MenuItem("Tools/KominkaHillside/Menu/21 Verify Scroll Layout")]
@@ -349,6 +412,9 @@ namespace KominkaDogRun.Editor
             var log=new StringBuilder();int fail=0,pass=0;
             void Check(bool ok,string what){if(ok)pass++;else fail++;log.AppendLine((ok?"PASS ":"FAIL ")+what);}
             Check(((RectTransform)p.panelRoot.transform).sizeDelta==new Vector2(1140,700),"board 1140x700");
+            // 裏山改変: タブ幅の和 (Verify 表 0-b)。1064 + 間隔 6×6 = 1100 (古民家と同じ枠)
+            Check(Mathf.Approximately(WidthSum(),1064) && Mathf.Approximately(WidthSum()+TabGap*(KD_TreatPouch.TabCount-1),TabRowWidth),"tab widths sum 1064 (+36 = 1100): "+WidthSum());
+            Check(Order.Length==KD_TreatPouch.TabCount && Order[0]==KD_TreatPouch.TabWalk,"tab order starts with さんぽ (Order "+string.Join(",",Order)+")");
             float previous=-570;
             foreach(int id in Order)
             {
@@ -365,7 +431,7 @@ namespace KominkaDogRun.Editor
                 Check(s.viewport.GetComponent<RectMask2D>()!=null && s.viewport.GetComponent<Image>().raycastTarget,"mask and drag surface "+id);
                 Check(s.verticalScrollbar!=null && s.verticalScrollbarVisibility==ScrollRect.ScrollbarVisibility.Permanent,"permanent scrollbar "+id);
                 Check(s.verticalScrollbar.handleRect.sizeDelta==Vector2.zero,"scrollbar handle stays within track "+id);
-                Check(p.tabPages[id].activeSelf==(id==KD_TreatPouch.TabAcc),"initial active page "+id);
+                Check(p.tabPages[id].activeSelf==(id==KD_TreatPouch.TabWalk),"initial active page "+id+" (裏山: さんぽ)");
                 var grid=s.content.GetComponent<GridLayoutGroup>();
                 Check(grid!=null && grid.constraint==GridLayoutGroup.Constraint.FixedColumnCount && grid.constraintCount==2,"two columns "+id);
                 Check(s.content.GetComponent<VerticalLayoutGroup>()==null,"single layout driver "+id);
@@ -373,17 +439,37 @@ namespace KominkaDogRun.Editor
                 Check(grid.cellSize.y*3+grid.spacing.y*2+grid.padding.vertical<=s.viewport.rect.height,"six choices fit height "+id);
                 if (id == KD_TreatPouch.TabLive)
                     Check(s.content.childCount == KD_DogDefs.LiveShows.Length, "all live rows in scroll content");
+                // 裏山改変: 子の並びが行の表 (RowsFor) と一致する。かざりは AccRow0..15 の後ろに FxRow0..10 (Verify 表 0-b「かざりの混在行」)
+                {
+                    var want=new System.Collections.Generic.List<string>();
+                    foreach(var (prefix,rowCount) in RowsFor(id)) for(int r=0;r<rowCount;r++) want.Add(prefix+r);
+                    var got=new System.Collections.Generic.List<string>(); foreach(Transform row in s.content) got.Add(row.name);
+                    Check(System.Linq.Enumerable.SequenceEqual(want,got),"rows in scroll content in order "+id+" ("+got.Count+"/"+want.Count+(got.Count>0?": "+got[0]+".."+got[got.Count-1]:"")+")");
+                }
                 if (id == KD_TreatPouch.TabAcc)
-                    Check(s.content.childCount == KD_AccessorySetsEditor.MenuCount && System.Linq.Enumerable.All(p.accRows, r => r.transform.parent == s.content),
+                    Check(System.Linq.Enumerable.All(p.accRows, r => r.transform.parent == s.content),
                         "all " + KD_AccessorySetsEditor.MenuCount + " accessory rows in scroll content (7th item and later were off the panel until 2026-09-16)");
+                if (id == KD_TreatPouch.TabToy)
+                    foreach(Transform row in s.content) Check(row.Find("Button")?.GetComponent<Button>()!=null && row.Find("Disc")?.GetComponent<Button>()!=null,"toy row has [ball] and [disc]: "+row.name);
+                if (id == KD_TreatPouch.TabWalk)
+                    foreach(Transform row in s.content)
+                    {
+                        int wi=int.Parse(row.name.Substring(Prefixes[id].Length));
+                        bool dog=wi<KD_TreatSetupEditor.WalkDogRows;
+                        Check(dog ? row.Find("Left")!=null && row.Find("Right")!=null && row.Find("Off")!=null && row.Find("Here")==null
+                                  : row.Find("Here")!=null && row.Find("Left")==null,"walk row buttons: "+row.name+(dog?" (dog: Left/Right/Off)":" (destination: Here)"));
+                        if(dog){ float w=0; foreach(var n in new[]{"Left","Right","Off"}) w+=((RectTransform)row.Find(n)).sizeDelta.x; Check(w+12<=RowWidth,"walk buttons fit the row ("+w+"+12 <= "+RowWidth+")"); }
+                    }
                 foreach(Transform row in s.content)
                 {
                     Check(row.GetComponent<LayoutElement>()!=null,"layout element "+row.name);
+                    string rowPrefix=id==KD_TreatPouch.TabAcc && row.name.StartsWith(AccFxPrefix)?AccFxPrefix:Prefixes[id];
                     foreach(var b in row.GetComponentsInChildren<Button>(true))
                     {
                         Check(b.onClick.GetPersistentEventCount()==1 && b.onClick.GetPersistentTarget(0)==UdonSharpEditorUtility.GetBackingUdonBehaviour(p),"preserved action "+row.name+"/"+b.name);
-                        string index=row.name.Substring(Prefixes[id].Length);
-                        string evt="_"+new[]{"Row","Toy","Fx","Sleep","Live","Acc"}[id]+(b.name=="Gift"?"Gift":"")+index;   // [ギフト] は _LiveGift{i} / _AccGift{i} (IMP-PRG-012)
+                        int index=int.Parse(row.name.Substring(rowPrefix.Length));
+                        // 裏山改変: 押し先は ExpectedRowEvent (さんぽ _WalkLeft{i} / _WalkRight{i} / _WalkOff{i} / _WalkPlaza / _WalkGate、おもちゃ _Toy{i} / _Disc{i})
+                        string evt=ExpectedRowEvent(rowPrefix,index,b.name);   // [ギフト] は _LiveGift{i} / _AccGift{i} (IMP-PRG-012)
                         var calls=new SerializedObject(b).FindProperty("m_OnClick.m_PersistentCalls.m_Calls");
                         Check(calls.arraySize==1 && calls.GetArrayElementAtIndex(0).FindPropertyRelative("m_MethodName").stringValue=="SendCustomEvent"
                             && calls.GetArrayElementAtIndex(0).FindPropertyRelative("m_Arguments.m_StringArgument").stringValue==evt,"action event "+evt);
@@ -394,6 +480,7 @@ namespace KominkaDogRun.Editor
             Check(p.confirmRoot!=null && p.confirmRoot.transform.parent==p.panelRoot.transform && p.confirmRoot.transform.GetSiblingIndex()==p.panelRoot.transform.childCount-1 && !p.confirmRoot.activeSelf,"purchase confirmation is one shared card, last sibling, closed by default (P13)");
             Check(p.fxConfirmRoot==p.confirmRoot && p.liveConfirmRoot==p.confirmRoot && p.accConfirmRoot==p.confirmRoot,"fx/live/acc confirmations all point at the shared card");
             Check(p.tabPages[2].transform.Find("FxConfirm")==null && p.tabPages[4].transform.Find("LiveConfirm")==null && p.tabPages[5].transform.Find("AccConfirm")==null,"legacy confirm bands removed");
+            Check(p.tabPages[KD_TreatPouch.TabWalk].name=="Page_Walk","tab 2 page is Page_Walk (裏山: 撫でFX は Page_Acc へ合流)");
             Check(((RectTransform)p.tabPages[5].transform.Find("BackButton")).anchoredPosition==new Vector2(470,TopRowY),"accessory back above grid");
             // 2026-09-17: 上段の隙間 — ヘッダ / 帯 / タブが重ならず、各 6px 以上あく。一覧の上端はタブの下端より下
             {
@@ -406,7 +493,7 @@ namespace KominkaDogRun.Editor
             }
             Check(p.statusLabel.transform.parent==p.tabPages[0].transform,"treat status outside grid");
             Check(p.tabPages[0].transform.Find("Slots")==null && p.tabScrolls[0].content.Find("Slots")==null,"retired shared treat counter absent");
-            Check(KD_ShopSetupEditor.MissingGlyphs(KD_TreatPouch.WordTabPetFx).Length==0,"particle glyphs");
+            Check(KD_ShopSetupEditor.MissingGlyphs(TabLabelWord(KD_TreatPouch.TabWalk,log)).Length==0,"walk tab glyphs (裏山: 古民家は particle glyphs)");
             log.AppendLine("RESULT pass="+pass+" fail="+fail);File.WriteAllText("Temp/hand-menu-scroll-verify.txt",log.ToString());
             if(fail>0)Debug.LogError(log.ToString());
         }
@@ -416,12 +503,13 @@ namespace KominkaDogRun.Editor
         public static void Preview()
         { PreviewPages(false); }
 
+        // 裏山改変: ライブは準備中 (DES-LIV-001 まで)、パーティクルのタブは無い (撫でFX は かざりへ合流)。どちらも裏山では対象外
         [MenuItem("Tools/KominkaHillside/Menu/21b Preview Live Catalog Only")]
         public static void PreviewLiveCatalogOnly()
-        { PreviewPages(true); }
+        { throw new InvalidOperationException("裏山では対象外: ライブは DES-LIV-001 まで準備中"); }
 
         [MenuItem("Tools/KominkaHillside/Menu/21c Preview Particle Catalog Only")]
-        public static void PreviewParticleCatalogOnly() { PreviewPages(false, KD_TreatPouch.TabPetFx); }
+        public static void PreviewParticleCatalogOnly() { throw new InvalidOperationException("裏山では対象外: パーティクルのタブは無い (撫でFX は かざりへ合流。描画は IMP-DOG-015)"); }
 
         static void PreviewPages(bool liveOnly, int onlyTab = -1)
         {
@@ -449,6 +537,8 @@ namespace KominkaDogRun.Editor
                 {
                     int id=capture%7;bool dogs=id==6;if(dogs)id=5;
                     if(liveOnly && id!=KD_TreatPouch.TabLive)continue;
+                    // 裏山改変: さんぽ (2) は行の中身が実行時だけ、おやつ (0) は段階 0 で商品が無い、ライブ (4) は準備中。撮影の対象外
+                    if(id==KD_TreatPouch.TabWalk || (id==KD_TreatPouch.TabTreat && p.items==null) || (id==KD_TreatPouch.TabLive && p.live==null))continue;
                     if(onlyTab >= 0 && id != onlyTab)continue;
                     string lang=p.language.languageCodes[capture/7];
                     string L(string key){return p.language._TextForLanguage(key,lang);}

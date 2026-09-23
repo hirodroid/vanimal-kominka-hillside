@@ -23,7 +23,7 @@ namespace KominkaDogRun.Editor
         public static string ModelPath(string key) { return Root + "/" + key + "/KD_" + key + "_Everyday.fbx"; }
         static void Guard()
         {
-            if (EditorApplication.isPlaying || SceneManager.GetActiveScene().path != "Assets/Scenes/KominkaDogRun.unity")
+            if (EditorApplication.isPlaying || SceneManager.GetActiveScene().path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */)
                 throw new InvalidOperationException("Target world in Edit mode required");
             Directory.CreateDirectory(Output);
         }

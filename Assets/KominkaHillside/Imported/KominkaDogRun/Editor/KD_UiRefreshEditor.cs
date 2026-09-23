@@ -19,8 +19,8 @@ namespace KominkaDogRun.Editor
         public static void Apply()
         {
             var scene = SceneManager.GetActiveScene();
-            if (EditorApplication.isPlaying || scene.path != "Assets/Scenes/KominkaDogRun.unity")
-                throw new InvalidOperationException("Open KominkaDogRun in Edit mode.");
+            if (EditorApplication.isPlaying || scene.path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */)
+                throw new InvalidOperationException("Open " + KD_Hillside.ScenePath + " in Edit mode.");
             string backup = "Temp/ui-before-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".unity";
             if (!EditorSceneManager.SaveScene(scene, backup, true))
                 throw new InvalidOperationException("Could not preserve the current unsaved scene.");
@@ -29,11 +29,9 @@ namespace KominkaDogRun.Editor
             if (font == null || KD_UiSpriteEditor.LoadRound() == null)
                 throw new InvalidOperationException("Shared UI font/sprite missing.");
             // Bake all declared UI words; use the source constants, never a second copy of the text.
-            var words = new StringBuilder();
-            foreach (var type in new[] { typeof(KD_ShopShelf), typeof(KD_TreatPouch), typeof(KD_ShopKeeper) })
-                foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Static))
-                    if (field.IsLiteral && field.FieldType == typeof(string)) words.Append((string)field.GetRawConstantValue());
-            KD_ShopSetupEditor.AddGlyphs(words.ToString(), log);
+            // 裏山改変: 字の宣言は PouchWords + HillsideWords に一本化 (D-4。古民家は 3 型の const を全部焼いていた)
+            KD_TreatSetupEditor.RestoreFontSource(log);
+            KD_ShopSetupEditor.AddGlyphs(KD_TreatSetupEditor.PouchWords() + KD_TreatSetupEditor.HillsideWords(), log);
             foreach (var shelf in Resources.FindObjectsOfTypeAll<KD_ShopShelf>())
             {
                 if (shelf.gameObject.scene != scene || shelf.confirmRoot == null) continue;
@@ -75,7 +73,8 @@ namespace KominkaDogRun.Editor
 
         static void CheckCustom(UdonSharpBehaviour behaviour)
         {
-            if (behaviour.transform.root.name != "====KominkaDogRun====" || PrefabUtility.IsPartOfPrefabInstance(behaviour))
+            // 裏山改変: 自作の器は KH_Dogs の下 (古民家は "====KominkaDogRun====")
+            if (behaviour.transform.root.name != KD_Hillside.DogsRootName || PrefabUtility.IsPartOfPrefabInstance(behaviour))
                 throw new InvalidOperationException("Outside custom scene objects: " + behaviour.name);
         }
         static void Copy(UdonSharpBehaviour behaviour)

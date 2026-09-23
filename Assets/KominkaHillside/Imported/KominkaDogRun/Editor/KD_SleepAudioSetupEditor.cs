@@ -35,7 +35,7 @@ namespace KominkaDogRun.Editor
         {
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode only");
             var scene = SceneManager.GetActiveScene();
-            if (scene.path != "Assets/Scenes/KominkaDogRun.unity") throw new InvalidOperationException("Wrong scene");
+            if (scene.path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */) throw new InvalidOperationException("Wrong scene");
             int found;
             var liveGo = KD_SceneObjects.Find(KD_DogDefs.LiveSystemName, out found);
             if (liveGo == null || found != 1) throw new InvalidOperationException("Live system missing/duplicate");

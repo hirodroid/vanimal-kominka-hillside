@@ -81,7 +81,7 @@ namespace KominkaDogRun.Editor
         [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Products/1 - Apply Metadata")]
         public static void Apply()
         {
-            if (EditorApplication.isPlaying || EditorSceneManager.GetActiveScene().path != "Assets/Scenes/KominkaDogRun.unity")
+            if (EditorApplication.isPlaying || EditorSceneManager.GetActiveScene().path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */)
                 throw new InvalidOperationException("Target Edit scene required");
             var catalog = SceneComponents<KD_ShopCatalog>().Single(c => !c.name.StartsWith("Test"));
             var ledger = KD_SceneObjects.Find(KD_DogDefs.ProgressSystemName).GetComponent<KD_ProgressLedger>();

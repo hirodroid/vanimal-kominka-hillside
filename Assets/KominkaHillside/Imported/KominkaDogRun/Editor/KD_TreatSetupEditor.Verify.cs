@@ -12,7 +12,8 @@ namespace KominkaDogRun.Editor
     /// <summary>IMP-TRT-001 おやつ: 3 - Verify (シーン配線 / 手元メニューの検査)。本体は KD_TreatSetupEditor.cs。</summary>
     public static partial class KD_TreatSetupEditor
     {
-        [MenuItem("Tools/KominkaHillside/Menu/20 Verify Pouch")]
+        // 裏山改変: 古民家のおやつ一式の Verify (枠・棚・台帳を数える)。裏山の Menu/20 は VerifyHillside (このファイルの末尾)
+        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Treat System/3 - Verify Treat System (Kominka)")]
         public static void Verify()
         {
             var v = new KD_VerifyLog("[KD_TreatSetup] Verify");
@@ -1165,6 +1166,333 @@ namespace KominkaDogRun.Editor
                 width = (width - margin) / 0.1f + margin;
             }
             return width;
+        }
+
+        // ================================================================ 裏山 (段階 0-b) の検査
+        //
+        // 計画書「Verify の追加項目」の 0-b 行を全部持つ。古民家の検査のうち、裏山の値へ書き換えたもの
+        // (既定タブ = さんぽ / Page_Acc の Content = AccRow 16 + FxRow 11 / 行数) と、対象外として skip を
+        // 明示するもの (ライブ行のリフレクション検査・棚・寝台・ミニチュア) を分ける。黙って落とさない。
+        // 参照の null は段階表 (D-1) で「意図的な未導入 (PASS + 理由)」と「欠落 (FAIL)」に分ける。
+
+        const string HillsideVerifyLog = KD_Hillside.LogDir + "verify-pouch.txt";
+
+        [MenuItem("Tools/KominkaHillside/Menu/20 Verify Pouch")]
+        public static void VerifyHillside()
+        {
+            var v = new KD_VerifyLog("[KD_TreatSetup] Verify (裏山 段階 0-b)");
+            var log = v.Text;
+            if (!v.Check(!EditorApplication.isPlaying && KD_Hillside.InScene(), KD_Hillside.ScenePath + " を Edit モードで開いている"))
+            { v.Finish(HillsideVerifyLog); return; }
+
+            // ---- Program Asset と同期 (全段階: 同期変数 0 本・SyncMode None) ----
+            var pa = AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(PouchProgramPath);
+            v.Check(pa != null && pa.sourceCsScript != null, "program asset ok: KD_TreatPouch");
+            v.Check(pa != null && pa.behaviourSyncMode == BehaviourSyncMode.None, "KD_TreatPouch の behaviourSyncMode == None (画面は同期しない)");
+            int synced = 0;
+            foreach (var f in typeof(KD_TreatPouch).GetFields(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic))
+                foreach (var a in f.GetCustomAttributes(true))
+                    if (a.GetType().Name == "UdonSyncedAttribute") synced++;
+            v.Check(synced == 0, "同期変数 0 本: KD_TreatPouch の [UdonSynced] (actual " + synced + ")");
+
+            // ---- 旧実装の不在 (KH_HandMenu コンポーネント 0 個・旧 Panel なし)。型は退役で消えるので名前で数える ----
+            {
+                int legacy = 0;
+                var scene = EditorSceneManager.GetActiveScene();
+                foreach (var mb in Resources.FindObjectsOfTypeAll<MonoBehaviour>())
+                {
+                    if (mb == null || mb.gameObject.scene != scene) continue;
+                    if (mb.GetType().Name == KD_Hillside.LegacyHandMenuName) legacy++;
+                    var udon = mb as VRC.Udon.UdonBehaviour;
+                    if (udon != null && udon.programSource != null && udon.programSource.name == KD_Hillside.LegacyHandMenuName) legacy++;
+                }
+                v.Check(legacy == 0, "KH_HandMenu コンポーネント 0 個 (proxy + backing。actual " + legacy + ")");
+                KD_SceneObjects.Find(KD_Hillside.LegacyHandMenuName, out int legacyObjects);
+                v.Check(legacyObjects == 0, "旧 KH_Dogs/KH_HandMenu (Panel / Launcher / Markers) が無い (actual " + legacyObjects + ")");
+            }
+
+            var go = KD_SceneObjects.Find(PouchName, out int pouchCount);
+            if (!v.Check(pouchCount == 1 && go != null, PouchName + " がシーン内に 1 個 (actual " + pouchCount + ")")) { v.Finish(HillsideVerifyLog); return; }
+            var pouch = go.GetUdonSharpComponent<KD_TreatPouch>();
+            if (!v.Check(pouch != null, PouchName + " に KD_TreatPouch が付いている")) { v.Finish(HillsideVerifyLog); return; }
+            var pouchUdon = UdonSharpEditorUtility.GetBackingUdonBehaviour(pouch);
+            v.Check(go.transform.parent != null && go.transform.parent.name == KD_Hillside.DogsRootName && go.transform.parent.parent == null,
+                PouchName + " が " + KD_Hillside.DogsRootName + " 直下 (\"====KominkaDogRun====\" を作らない)");
+            KD_SceneObjects.Find(KD_DogDefs.WorldRootName, out int kominkaRoots);
+            v.Check(kominkaRoots == 0, "\"" + KD_DogDefs.WorldRootName + "\" がシーンに無い (actual " + kominkaRoots + ")");
+            v.Check(pouchUdon != null && pouchUdon.SyncMethod == VRC.SDKBase.Networking.SyncType.None, PouchName + " の backing SyncMethod == None");
+            v.Check(go.layer == 0, PouchName + " の layer が Default (actual " + go.layer + ")");
+            v.Check(go.GetComponent<Collider>() == null && go.GetComponent<MeshRenderer>() == null && go.transform.Find(PouchBodyName) == null,
+                PouchName + " に Collider / 見た目 / " + PouchBodyName + " が無い (体に追従する当たりはプレイヤーを押しのける)");
+            v.Check(go.GetComponent<VRCObjectSync>() == null, PouchName + " に VRCObjectSync が無い");
+            // 開閉は古民家値 (D-6。KH_HandMenu の 0.6 は持ち込まない)
+            v.Check(pouch.openStickSign == -1 && Mathf.Approximately(pouch.openStickThreshold, 0.8f) && Mathf.Approximately(pouch.openHoldSeconds, 0.5f),
+                "開閉 = 右スティック下 (sign -1)・しきい値 0.8・0.5 秒 (actual " + pouch.openStickSign + " / " + pouch.openStickThreshold.ToString("F2") + " / " + pouch.openHoldSeconds.ToString("F2") + ")");
+            v.Check(Mathf.Approximately(pouch.panelDistance, 0.95f), PouchName + ".panelDistance == 0.95 (actual " + pouch.panelDistance.ToString("F2") + ")");
+            v.Check(!pouch.debugForceTouch, PouchName + ".debugForceTouch が false");
+
+            // ---- 段階表 (D-1)。段階 0 で null が正の参照は PASS + 理由、必須は FAIL ----
+            v.Check(pouch.hillsideStage == KD_Hillside.Stage, PouchName + ".hillsideStage == " + KD_Hillside.Stage + " (段階 0-b。actual " + pouch.hillsideStage + ")");
+            int stage = pouch.hillsideStage;
+            void StageRef(bool present, string name, int requiredFrom, string when)
+            {
+                if (stage >= requiredFrom) v.Check(present, name + " 配線 (段階 " + requiredFrom + " から必須: " + when + ")");
+                else v.Check(true, name + (present ? " 配線済み (先行)" : " は意図的な未導入 (段階 " + stage + " では null が正。" + when + " で必須)"));
+            }
+            StageRef(pouch.manager != null, PouchName + ".manager (KH_LeashManager)", 0, "段階 0-b");
+            StageRef(pouch.recall != null, PouchName + ".recall (KH_ToyRecall)", 0, "段階 0-b");
+            StageRef(pouch.activitiesMenu != null, PouchName + ".activitiesMenu (KD_ActivitiesMenu)", 0, "段階 0-b。Menu/9 → Menu/7");
+            StageRef(pouch.ledger != null, PouchName + ".ledger (KD_ProgressLedger)", 1, "IMP-PRG-001");
+            StageRef(pouch.catalog != null, PouchName + ".catalog (KD_ShopCatalog)", 1, "IMP-PRG-001");
+            StageRef(pouch.box != null, PouchName + ".box (KD_TreatBox)", 2, "IMP-DOG-014");
+            StageRef(pouch.items != null && pouch.items.Length > 0, PouchName + ".items (おやつの商品)", 2, "IMP-DOG-014");
+            StageRef(pouch.accessories != null, PouchName + ".accessories (KD_AccessoryBox)", 2, "IMP-DOG-015");
+            StageRef(pouch.petFxBox != null, PouchName + ".petFxBox (KD_PetFxBox)", 2, "IMP-DOG-015");
+            StageRef(pouch.sleepBoard != null, PouchName + ".sleepBoard (KD_SleepBoard)", 2, "IMP-DOG-016");
+            StageRef(pouch.sleepPlacement != null, PouchName + ".sleepPlacement (KD_SleepPlacement)", 2, "IMP-DOG-016");
+            StageRef(pouch.callPose != null, PouchName + ".callPose (KD_CallPose)", 2, "IMP-DOG-016");
+            // ライブは DES-LIV-001 の採用まで置かない (段階の番号を持たない)。null であることだけ見る
+            v.Check(pouch.live == null, PouchName + ".live は null (ライブは DES-LIV-001 の採用まで準備中。KD_LiveSystem を置かない)");
+            {
+                // U# 参照は backing に相手の backing UdonBehaviour として入る (vrc-udonsharp §4)
+                object wired;
+                v.Check(pouch.manager != null && pouchUdon.publicVariables.TryGetVariableValue("manager", out wired)
+                    && wired as Object == UdonSharpEditorUtility.GetBackingUdonBehaviour(pouch.manager), "backing Udon が manager を持つ");
+                v.Check(pouch.recall != null && pouchUdon.publicVariables.TryGetVariableValue("recall", out wired)
+                    && wired as Object == UdonSharpEditorUtility.GetBackingUdonBehaviour(pouch.recall), "backing Udon が recall を持つ");
+                var dogs = go.transform.parent;
+                v.Check(pouch.manager != null && pouch.manager.transform.parent == dogs && pouch.manager.name == KD_Hillside.LeashesName, "manager は " + KD_Hillside.DogsRootName + "/" + KD_Hillside.LeashesName);
+                v.Check(pouch.recall != null && pouch.recall.transform.parent == dogs && pouch.recall.name == KD_Hillside.ToyRecallName, "recall は " + KD_Hillside.DogsRootName + "/" + KD_Hillside.ToyRecallName);
+            }
+
+            // ---- 板 ----
+            var panel = pouch.panelRoot;
+            if (!v.Check(panel != null, PouchName + ".panelRoot 配線")) { v.Finish(HillsideVerifyLog); return; }
+            v.Check(!panel.activeSelf, PouchPanelName + " が既定で非アクティブ");
+            var prect = (RectTransform)panel.transform;
+            v.Check(prect.sizeDelta == new Vector2(PanelWidth, PanelHeight), PouchPanelName + " 1140x700");
+            var canvas = panel.GetComponent<Canvas>();
+            v.Check(canvas != null && canvas.renderMode == RenderMode.WorldSpace && panel.GetComponent<VRCUiShape>() != null
+                && panel.GetComponent<UnityEngine.UI.GraphicRaycaster>() != null, PouchPanelName + " が WorldSpace Canvas + VRCUiShape + GraphicRaycaster");
+            v.Check(KD_HandMenuCollisionEditor.Validate(panel, log), PouchPanelName + " の当たりがプレイヤーを塞がない (layer 17)");
+            var launcher = pouch.touchLauncher;
+            v.Check(launcher != null && !launcher.activeSelf && launcher.transform.parent == go.transform, "Touch ランチャーが pouch の子で既定非アクティブ");
+            if (launcher != null)
+            {
+                var lb = launcher.transform.Find(LauncherButtonName)?.GetComponent<UnityEngine.UI.Button>();
+                Object lt; v.Check(OnClickEventName(lb, out lt) == "_Toggle" && lt == pouchUdon, LauncherButtonName + " -> _Toggle");
+                var lc = launcher.GetComponent<Canvas>();
+                v.Check(lc != null && lc.renderMode == RenderMode.ScreenSpaceOverlay && lc.sortingOrder == 100, "Touch ランチャーは Overlay / sortingOrder 100");
+            }
+            v.Check(pouch.statusLabel != null && pouch.closeButton != null && pouch.sectionTitleLabel != null, "statusLabel / closeButton / sectionTitleLabel 配線");
+
+            // ---- タブ (幅の和・並び・既定タブ) ----
+            int tabs = KD_TreatPouch.TabCount;
+            v.Check(pouch.tabPages != null && pouch.tabPages.Length == tabs && pouch.tabImages != null && pouch.tabImages.Length == tabs
+                && pouch.tabUnderlines != null && pouch.tabUnderlines.Length == tabs, "タブ " + tabs + " 枚 (pages / images / underlines)");
+            v.Check(KD_TreatPouch.TabWalk == 2, "TabWalk == 2 (古民家の PetFx の枠をさんぽへ。D-2)");
+            float sum = KD_HandMenuScrollEditor.WidthSum();
+            v.Check(Mathf.Approximately(sum, 1064f) && Mathf.Approximately(sum + KD_HandMenuScrollEditor.TabGap * (tabs - 1), KD_HandMenuScrollEditor.TabRowWidth),
+                "タブ幅の和 1064、間隔 6×6 を加えて 1100 (actual " + sum + ")");
+            v.Check(string.Join(",", KD_HandMenuScrollEditor.Order) == "2,0,5,3,1,6,4", "表示順 {2,0,5,3,1,6,4} = さんぽ / おやつ / かざり / 呼ぶ / おもちゃ / あそぶ / ライブ");
+            if (pouch.tabPages != null && pouch.tabPages.Length == tabs)
+            {
+                v.Check(pouch.tabPages[KD_TreatPouch.TabWalk] != null && pouch.tabPages[KD_TreatPouch.TabWalk].name == "Page_Walk", "tabPages[2] == Page_Walk");
+                for (int i = 0; i < tabs; i++)
+                {
+                    bool want = i == KD_TreatPouch.TabWalk;
+                    v.Check(pouch.tabPages[i] != null && pouch.tabPages[i].activeSelf == want
+                        && pouch.tabUnderlines[i] != null && pouch.tabUnderlines[i].activeSelf == want,
+                        "既定タブ = さんぽ: " + (pouch.tabPages[i] == null ? "tab" + i : pouch.tabPages[i].name) + (want ? " だけアクティブ" : " は非アクティブ"));
+                }
+            }
+            // 実行時の既定タブ (_tab) は private。ソースのフィールド初期値と Start を読む (契約: _tab = TabWalk)
+            {
+                string src = File.Exists(PouchScriptPath) ? File.ReadAllText(PouchScriptPath) : "";
+                v.Check(src.Contains("_tab = TabWalk"), "既定タブ: KD_TreatPouch.cs が _tab = TabWalk を持つ (フィールド初期値 / Start)");
+            }
+
+            // ---- さんぽの行 / 行き先 ----
+            var walkScroll = pouch.tabScrolls != null && pouch.tabScrolls.Length > KD_TreatPouch.TabWalk ? pouch.tabScrolls[KD_TreatPouch.TabWalk] : null;
+            var walkContent = walkScroll == null ? null : walkScroll.content;
+            v.Check(walkContent != null && walkContent.childCount == WalkRowCount, "さんぽの行が " + WalkRowCount + " 行 (犬 6 + 行き先 2) で Scroll の Content に居る");
+            for (int i = 0; i < WalkRowCount && walkContent != null; i++)
+            {
+                var row = walkContent.Find(WalkRowPrefix + i);
+                if (!v.Check(row != null, WalkRowPrefix + i + " がある")) continue;
+                if (i < WalkDogRows)
+                {
+                    foreach (string b in new[] { "Left", "Right", "Off" })
+                    {
+                        var btn = row.Find(b)?.GetComponent<UnityEngine.UI.Button>();
+                        string want = "_Walk" + b + i; Object t;
+                        v.Check(btn != null && btn.onClick.GetPersistentEventCount() == 1 && OnClickEventName(btn, out t) == want && t == pouchUdon
+                            && typeof(KD_TreatPouch).GetMethod(want) != null, "さんぽ " + KD_DogDefs.All[i].displayName + " [" + b + "] -> " + want + " (1 本・pouch 宛・口が実在)");
+                    }
+                }
+                else
+                {
+                    string want = i == WalkDogRows ? "_WalkPlaza" : "_WalkGate";
+                    var btn = row.Find("Here")?.GetComponent<UnityEngine.UI.Button>(); Object t;
+                    v.Check(btn != null && btn.onClick.GetPersistentEventCount() == 1 && OnClickEventName(btn, out t) == want && t == pouchUdon
+                        && typeof(KD_TreatPouch).GetMethod(want) != null, "さんぽの行き先 " + WalkRowPrefix + i + " [ここへ] -> " + want);
+                }
+            }
+            v.Check(pouch.walkLabels != null && pouch.walkLabels.Length == WalkRowCount && pouch.walkStateLabels != null && pouch.walkStateLabels.Length == WalkRowCount
+                && System.Array.TrueForAll(pouch.walkLabels, x => x != null) && System.Array.TrueForAll(pouch.walkStateLabels, x => x != null), "walkLabels / walkStateLabels が 8 本とも配線");
+            v.Check(AllSet(pouch.walkLeftButtons, WalkDogRows) && AllSet(pouch.walkRightButtons, WalkDogRows) && AllSet(pouch.walkOffButtons, WalkDogRows)
+                && AllSet(pouch.walkLeftImages, WalkDogRows) && AllSet(pouch.walkRightImages, WalkDogRows) && AllSet(pouch.walkOffImages, WalkDogRows),
+                "walkLeft/Right/Off の Button と Image が 6 本ずつ配線");
+            v.Check(AllSet(pouch.walkHereButtons, 2) && AllSet(pouch.walkHereImages, 2), "walkHereButtons / walkHereImages が 2 本ずつ配線");
+
+            // ---- おもちゃの行 ([ボール] [ディスク] → KH_ToyRecall) ----
+            int dogsN = KD_DogDefs.All.Length;
+            var toyScroll = pouch.tabScrolls != null && pouch.tabScrolls.Length > KD_TreatPouch.TabToy ? pouch.tabScrolls[KD_TreatPouch.TabToy] : null;
+            for (int i = 0; i < dogsN && toyScroll != null; i++)
+            {
+                var row = toyScroll.content.Find("ToyRow" + i);
+                if (!v.Check(row != null, "ToyRow" + i + " が Scroll の Content に居る")) continue;
+                foreach (var (b, want) in new[] { ("Button", "_Toy" + i), (DiscButtonName, "_Disc" + i) })
+                {
+                    var btn = row.Find(b)?.GetComponent<UnityEngine.UI.Button>(); Object t;
+                    v.Check(btn != null && btn.onClick.GetPersistentEventCount() == 1 && OnClickEventName(btn, out t) == want && t == pouchUdon
+                        && typeof(KD_TreatPouch).GetMethod(want) != null, "おもちゃ " + KD_DogDefs.All[i].displayName + " [" + b + "] -> " + want);
+                }
+            }
+            v.Check(AllSet(pouch.toyButtons, dogsN) && AllSet(pouch.toyButtonComponents, dogsN) && AllSet(pouch.toyButtonImages, dogsN)
+                && AllSet(pouch.toyLabels, dogsN) && AllSet(pouch.toyReasonLabels, dogsN), "toyButtons / Components / Images / Labels / ReasonLabels が 6 本ずつ ([ボール])");
+            v.Check(AllSet(pouch.discButtons, dogsN) && AllSet(pouch.discButtonComponents, dogsN) && AllSet(pouch.discButtonImages, dogsN) && AllSet(pouch.discButtonLabels, dogsN),
+                "discButtons / Components / Images / Labels が 6 本ずつ ([ディスク])");
+            v.Check(pouch.recall != null, "おもちゃの叩く先 recall (KH_ToyRecall) が非 null");
+            log.AppendLine("  NOTE KD_BallController / KD_DogFetchController (balls / toyFetchers) は裏山では使わない (KH_ToyRecall が正本。検査しない)");
+
+            // ---- かざりの混在行 (AccRow0..15, FxRow0..10 の順) ----
+            var accScroll = pouch.tabScrolls != null && pouch.tabScrolls.Length > KD_TreatPouch.TabAcc ? pouch.tabScrolls[KD_TreatPouch.TabAcc] : null;
+            if (accScroll != null)
+            {
+                var want = new System.Collections.Generic.List<string>();
+                for (int i = 0; i < KD_AccessorySetsEditor.MenuCount; i++) want.Add("AccRow" + i);
+                for (int i = 0; i < HillsideFxRowCount; i++) want.Add("FxRow" + i);
+                var got = new System.Collections.Generic.List<string>();
+                foreach (Transform row in accScroll.content) got.Add(row.name);
+                v.Check(System.Linq.Enumerable.SequenceEqual(want, got), "かざりの Content の子順が AccRow0..15, FxRow0..10 (actual " + got.Count + " 行)");
+            }
+            else v.Check(false, "かざりの Scroll がある");
+            v.Check(AllSet(pouch.fxButtons, HillsideFxRowCount) && AllSet(pouch.fxLabels, HillsideFxRowCount), "fxButtons / fxLabels が 11 本 (かざりの Content の FxRow)");
+            log.AppendLine("  NOTE FxRow の onClick (_Fx{i}) の検査は段階 2 (IMP-DOG-015) まで行わない (計画書 Verify 表。配線だけは Menu/21 が数える)");
+
+            // ---- 準備中の器 (おやつ 4 / かざり 16 / 呼ぶ 6 / ライブ 9。行 0 に準備中を描く先がある) ----
+            v.Check(AllSet(pouch.rowLabels, KD_ShopSetupEditor.TreatProductCount) && AllSet(pouch.rowButtons, KD_ShopSetupEditor.TreatProductCount), "おやつの器 Row0..3 (行 0 = 準備中の出し先)");
+            v.Check(AllSet(pouch.accRows, KD_AccessorySetsEditor.MenuCount) && AllSet(pouch.accRowLabels, KD_AccessorySetsEditor.MenuCount), "かざりの器 AccRow0..15");
+            v.Check(AllSet(pouch.sleepLabels, dogsN) && AllSet(pouch.sleepButtons, dogsN), "呼ぶの器 SleepRow0..5");
+            v.Check(pouch.liveLabels != null && pouch.liveLabels.Length == KD_DogDefs.LiveShows.Length && pouch.liveLabels[0] != null
+                && pouch.liveSubLabels != null && pouch.liveSubLabels.Length > 0 && pouch.liveSubLabels[0] != null, "ライブの器 LiveRow0..8 (行 0 = 準備中 1 行の出し先)");
+            log.AppendLine("  SKIP ライブ行の onClick リフレクション検査 (_Live{i} / _LiveGift{i})・liveItems / liveProducts / 参考画像・確認カードの題の寸法 (裏山では対象外: DES-LIV-001 まで準備中 1 行だけ)");
+            log.AppendLine("  SKIP 棚 (KD_ShopShelf / KD_ShopItem) の配線・効果音 (裏山では対象外: 段階 1 IMP-PRG-001 まで)");
+            log.AppendLine("  SKIP 寝台・ポーズ面 (KD_SleepBoard / KD_SleepPlacement / KD_CallPose) (裏山では対象外: 段階 2 IMP-DOG-016 まで)");
+            log.AppendLine("  SKIP ミニチュア (DogPreview / accPreviewDogs) (裏山では対象外: 段階 2 IMP-DOG-015 まで)");
+            log.AppendLine("  SKIP おやつの枠 (KD_TreatSlot / KD_TreatController / 自己テスト) (裏山では対象外: 段階 2 IMP-DOG-014 まで)");
+
+            // ---- 拠点板 3 枚 → pouch._Toggle ----
+            {
+                var openers = Object.FindObjectsOfType<global::KominkaHillside.KH_MenuOpener>(true);
+                v.Check(openers.Length == KD_Hillside.OpenerStations.Length, "拠点板 (KH_MenuOpener) が " + KD_Hillside.OpenerStations.Length + " 枚 (actual " + openers.Length + ")");
+                foreach (string st in KD_Hillside.OpenerStations)
+                {
+                    var plate = go.transform.parent.Find(st + "/" + KD_Hillside.OpenerPlateName);
+                    var opener = plate == null ? null : plate.GetComponent<global::KominkaHillside.KH_MenuOpener>();
+                    object wired;
+                    v.Check(opener != null && opener.pouch == pouch
+                        && UdonSharpEditorUtility.GetBackingUdonBehaviour(opener).publicVariables.TryGetVariableValue("pouch", out wired)
+                        && wired as Object == pouchUdon, "拠点板 " + st + "/" + KD_Hillside.OpenerPlateName + " が pouch を指す (proxy + backing)");
+                }
+            }
+
+            // ---- ナイトモード (設定面の Slider → KH_NightMode) ----
+            {
+                var settingsGo = KD_SceneObjects.Find("KD_MenuSettings", out int settingsCount);
+                var settings = settingsCount == 1 && settingsGo != null ? settingsGo.GetComponent<KD_MenuSettings>() : null;
+                if (v.Check(settings != null, "KD_MenuSettings が 1 個 (Menu/11 Setup Localization が作る)"))
+                {
+                    var nights = Object.FindObjectsOfType<global::KominkaHillside.KH_NightMode>(true);
+                    v.Check(nights.Length == 1 && settings.hillsideNight == nights[0], "ナイトモード: settings.hillsideNight がシーンの KH_NightMode (" + nights.Length + " 個)");
+                    Object t = null; string ev = null;
+                    if (settings.nightMode != null && settings.nightMode.onValueChanged.GetPersistentEventCount() == 1)
+                    {
+                        var calls = new SerializedObject(settings.nightMode).FindProperty("m_OnValueChanged.m_PersistentCalls.m_Calls");
+                        t = calls.GetArrayElementAtIndex(0).FindPropertyRelative("m_Target").objectReferenceValue;
+                        ev = calls.GetArrayElementAtIndex(0).FindPropertyRelative("m_Arguments.m_StringArgument").stringValue;
+                    }
+                    v.Check(settings.nightMode != null && pouch.settingsHome != null && settings.nightMode.transform.parent == pouch.settingsHome.transform
+                        && settings.nightMode.minValue == 0f && settings.nightMode.maxValue == 1f && ev == "_NightMode"
+                        && t == UdonSharpEditorUtility.GetBackingUdonBehaviour(settings), "ナイトモード: 設定ホームの Slider (0〜1 = 0〜100%) -> KD_MenuSettings._NightMode");
+                    v.Check(pouch.settingsHome != null && pouch.settingsHome.transform.Find("RadioSettingsButton") == null
+                        && pouch.settingsPage != null && pouch.settingsPage.transform.Find("RadioSettings") == null, "ラジオ設定の入口と頁が無い (裏山: ラジオ無し)");
+                }
+            }
+
+            // ---- あそぶ (集合のみ) ----
+            {
+                int pov = 0, photo = 0;
+                var scene = EditorSceneManager.GetActiveScene();
+                foreach (var mb in Resources.FindObjectsOfTypeAll<MonoBehaviour>())
+                {
+                    if (mb == null || mb.gameObject.scene != scene) continue;
+                    string n = mb.GetType().Name;
+                    if (n == "KD_DogPovCamera") pov++;
+                    if (n == "KD_PhotoDirector") photo++;
+                }
+                v.Check(pov == 0 && photo == 0, "あそぶは集合のみ: 犬目線カメラ (KD_DogPovCamera " + pov + ")・写真 (KD_PhotoDirector " + photo + ") がシーンに無い");
+                v.Check(pouch.activitiesMenu != null, "あそぶ: pouch.activitiesMenu 配線 (面の中身・集合のみの詳細は Menu/23 Verify Activities が数える)");
+            }
+
+            // ---- 確認カード (共有 1 枚) / 押せるものの意匠 / onClick 1 本 ----
+            v.Check(pouch.confirmRoot != null && pouch.confirmRoot.transform.parent == panel.transform
+                && pouch.confirmRoot.transform.GetSiblingIndex() == panel.transform.childCount - 1 && !pouch.confirmRoot.activeSelf,
+                "確認カードは共有 1 枚・板直下の最後の子・既定で閉じている");
+            {
+                int notSliced = 0, badClick = 0;
+                foreach (var b in panel.GetComponentsInChildren<UnityEngine.UI.Button>(true))
+                {
+                    bool cardStop = b.name == "Card" && b.transform.parent != null && b.transform.parent.name == ConfirmPanelName;
+                    if (!cardStop && b.onClick.GetPersistentEventCount() != 1) { badClick++; log.AppendLine("  FAIL " + b.name + " の onClick が " + b.onClick.GetPersistentEventCount() + " 本"); }
+                    if (b.name.StartsWith("Tab") || b.name == ConfirmPanelName || cardStop) continue;
+                    var img = b.GetComponent<UnityEngine.UI.Image>();
+                    if (img != null && img.type != UnityEngine.UI.Image.Type.Sliced) { notSliced++; log.AppendLine("  FAIL " + b.name + " が Sliced でない"); }
+                }
+                v.Check(badClick == 0, "板の全ボタンの onClick が 1 本 (二重登録なし。違反 " + badClick + ")");
+                v.Check(notSliced == 0, "押せるものは全部 Sliced (違反 " + notSliced + ")");
+                var circle = KD_UiSpriteEditor.LoadCircle();
+                int badSwatch = 0;
+                foreach (var img in panel.GetComponentsInChildren<UnityEngine.UI.Image>(true))
+                    if (img.name == "Swatch" && (img.sprite != circle || img.type != UnityEngine.UI.Image.Type.Simple)) badSwatch++;
+                v.Check(circle != null && badSwatch == 0, "色の丸は円スプライト + Simple (違反 " + badSwatch + ")");
+            }
+
+            // ---- 欠字 0 (Static) ----
+            var font = AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>(KD_ShopSetupEditor.SharedFontPath);
+            v.Check(font != null && font.atlasPopulationMode == TMPro.AtlasPopulationMode.Static, "共有フォントが Static (Dynamic だと欠字 0 が嘘になる)");
+            v.Check(font != null && Mathf.RoundToInt(font.faceInfo.pointSize) == HillsidePointSize, "共有フォントが " + HillsidePointSize + " pt (actual " + (font == null ? 0 : font.faceInfo.pointSize) + ")");
+            string missing = KD_ShopSetupEditor.MissingGlyphs(PouchWords() + HillsideWords());
+            v.Check(missing.Length == 0, "欠字 0: PouchWords + HillsideWords (欠け " + missing.Length + " 字" + (missing.Length == 0 ? "" : ": " + missing) + ")");
+
+            // ---- NetworkIDs ----
+            var desc = Object.FindObjectOfType<VRC.SDK3.Components.VRCSceneDescriptor>();
+            if (desc != null && desc.NetworkIDCollection != null)
+            {
+                int broken = 0;
+                foreach (var pair in desc.NetworkIDCollection) if (pair == null || pair.gameObject == null) broken++;
+                v.Check(broken == 0, "NetworkIDs broken refs == 0 (actual " + broken + ", total " + desc.NetworkIDCollection.Count + ")");
+            }
+            v.Finish(HillsideVerifyLog);
+        }
+
+        /// <summary>配列が <paramref name="n"/> 本で、要素が全部非 null。</summary>
+        static bool AllSet<T>(T[] a, int n) where T : Object
+        {
+            if (a == null || a.Length != n) return false;
+            foreach (var x in a) if (x == null) return false;
+            return true;
         }
     }
 }

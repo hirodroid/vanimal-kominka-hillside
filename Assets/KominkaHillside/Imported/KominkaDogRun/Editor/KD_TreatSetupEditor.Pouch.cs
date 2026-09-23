@@ -73,7 +73,7 @@ namespace KominkaDogRun.Editor
                 ? ledgerGo.GetUdonSharpComponent<KD_ProgressLedger>() : null;
             if (ledger == null)
                 log.AppendLine("   FAIL 台帳が取れない (" + KD_DogDefs.ProgressSystemName
-                    + " が " + ledgerCount + " 個) — 先に Tools/KominkaDogRun/Progress System");
+                    + " が " + ledgerCount + " 個) — 先に Tools/KominkaHillside/Menu/Imported-Unused/Progress System/2 - Setup Progress System");
 
             int n = KD_ShopSetupEditor.TreatProductCount;
             var items = new KD_ShopItem[n];
@@ -103,7 +103,7 @@ namespace KominkaDogRun.Editor
                     ? ballGo.GetUdonSharpComponent<KD_BallController>() : null;
                 if (balls[i] == null)
                     log.AppendLine("   FAIL ボールが取れない: " + defs[i].BallName
-                        + " (" + ballCount + " 個) — 先に Tools/KominkaDogRun/Fetch System");
+                        + " (" + ballCount + " 個) — 先に Tools/KominkaHillside/Menu/Imported-Unused/Fetch System/2 - Setup Fetch System");
 
                 var fetchGo = KD_SceneObjects.Find(defs[i].FetchSystemName, out int fetchCount);
                 fetchers[i] = (fetchCount == 1 && fetchGo != null)
@@ -160,7 +160,7 @@ namespace KominkaDogRun.Editor
                 log.AppendLine("   FAIL " + KD_DogDefs.SleepBoardName + " が取れない ("
                     + sleepCount + " 個) — ねるタブが使えず、"
                     + "**寝ている犬のボールに [呼ぶ] が出る**。"
-                    + "先に Tools/KominkaDogRun/Sleep System/2 - Setup");
+                    + "先に Tools/KominkaHillside/Menu/6 Setup Sleep");
 
             // ---- 板 ----
             var font = AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>(
@@ -360,8 +360,9 @@ namespace KominkaDogRun.Editor
             KD_TreatPouch.WordTabTreat, KD_TreatPouch.WordTabToy, KD_TreatPouch.WordTabPetFx,
             KD_TreatPouch.WordTabSleep, KD_TreatPouch.WordTabLive, KD_TreatPouch.WordTabAcc, KD_TreatPouch.WordTabPlay };
         // Page_Play (あそぶ。P2) の中身は Activities/2 - Build が作る。ここでは空の面だけ用意する
+        // 裏山改変: タブ 2 は さんぽ (Page_Walk)。撫でFX は かざり (Page_Acc) に合流 (D-2)
         static readonly string[] TabPageNames = {
-            "Page_Treat", "Page_Toy", "Page_PetFx", "Page_Sleep", "Page_Live", "Page_Acc", "Page_Play" };
+            "Page_Treat", "Page_Toy", "Page_Walk", "Page_Sleep", "Page_Live", "Page_Acc", "Page_Play" };
 
         // ---- タブバーの寸法 (IMP-DOG-019 Phase 5 で 3 → 4 枚、IMP-PRG-004 Phase 4 で 5 枚) ----
         //
@@ -396,6 +397,10 @@ namespace KominkaDogRun.Editor
         internal static void BuildPouchPanel(GameObject root, KD_TreatPouch pouch,
             KD_ShopItem[] items, KD_ShopItem[] fxItems, TMPro.TMP_FontAsset font, StringBuilder log)
         {
+            // 裏山改変: 段階 0 は items / fxItems が無い (null)。おやつの行は器の本数 (4) だけ作り、
+            // 撫でFX の行は HillsideBuildPages が かざりの Content に作る (旧 PetFx 頁には作らない)
+            if (items == null || items.Length == 0) items = new KD_ShopItem[KD_ShopSetupEditor.TreatProductCount];
+            fxItems = new KD_ShopItem[0];
             var t = root.transform.Find(PouchPanelName);
             GameObject go = t != null ? t.gameObject : null;
             if (go == null)
@@ -455,7 +460,7 @@ namespace KominkaDogRun.Editor
 
             var sectionTitle = EnsureText(go.transform, "SectionTitle", new Vector2(-222.5f, 220f),
                 new Vector2(255f, 48f), 26f, TMPro.TextAlignmentOptions.Left, font);
-            sectionTitle.text = KD_TreatPouch.WordTitle;
+            sectionTitle.text = KD_Hillside.Text("KD_TreatPouch.WordWalkTitle", "犬とさんぽ", log);   // 裏山改変: 既定タブは さんぽ
             var balance = EnsureText(go.transform, "Balance", new Vector2(15f, 220f),
                 new Vector2(200f, 48f), 22f, TMPro.TextAlignmentOptions.Right, font);
             var feedback = EnsureText(go.transform, "Feedback", new Vector2(0f, -200f),
@@ -495,7 +500,8 @@ namespace KominkaDogRun.Editor
             {
                 EnsureTab(go.transform, "Tab" + i.ToString(),
                     new Vector2(tabLeft + i * TabStep, TabBarY), new Vector2(TabWidth, TabHeight),
-                    font, TabWords[i], pouchUdon, "_Tab" + i.ToString(), log,
+                    font, i == KD_TreatPouch.TabWalk ? KD_Hillside.Text("KD_TreatPouch.WordWalkTab", "さんぽ", log) : TabWords[i],   // 裏山改変
+                    pouchUdon, "_Tab" + i.ToString(), log,
                     out tabImages[i], out tabUnderlines[i]);
                 var tabLabel = tabImages[i].transform.Find("Label").GetComponent<TMPro.TextMeshProUGUI>();
                 tabLabel.fontSize = 26f;
@@ -712,7 +718,7 @@ namespace KominkaDogRun.Editor
             var liveSys = (liveCount == 1 && liveGo != null) ? liveGo.GetUdonSharpComponent<KD_LiveSystem>() : null;
             if (liveSys == null)
                 log.AppendLine("   WARN " + KD_DogDefs.LiveSystemName
-                    + " が取れない — ライブタブは暗いまま。先に Tools/KominkaDogRun/Live System/2 - Setup");
+                    + " が取れない — ライブタブは暗いまま。先に Tools/KominkaHillside/Menu/Imported-Unused/Live System/2 - Setup Live System");
             var liveCatalog = new System.Collections.Generic.List<KD_ShopItem>();
             {
                 var catGo = KD_SceneObjects.Find(KD_DogDefs.ShopCatalogName, out int catN);
@@ -921,7 +927,7 @@ namespace KominkaDogRun.Editor
                 pouch.uiSuccessClip = soundShelf.buyClip;
                 pouch.uiRejectClip = soundShelf.rejectClip;
             }
-            else log.AppendLine("FAIL UI feedback: treat shelf audio source not found");
+            else log.AppendLine("   NOTE 段階 0: おやつの棚が無いので効果音 (uiSuccessClip / uiRejectClip) は未配線 (IMP-PRG-001 / IMP-DOG-014)");   // 裏山改変
             pouch.balanceLabel = balance;
             pouch.sectionTitleLabel = sectionTitle;
             pouch.feedbackLabel = feedback;
@@ -962,18 +968,21 @@ namespace KominkaDogRun.Editor
             pouch.sleepNoteLabel = sleepNote;
             KD_SleepPlacementEditor.RebuildIfPresent(pouch, log);
 
-            // **既定は「かざり」だけ開いておく。** 実行時の ApplyTab と同じ状態にしておかないと、
+            // **既定は「さんぽ」だけ開いておく** (裏山改変: 古民家は かざり)。実行時の ApplyTab と同じ状態にしておかないと、
             // Play を押す前のシーン上で 3 面が重なって見える
             for (int i = 0; i < tabs; i++)
-                if (pages[i] != null) pages[i].SetActive(i == KD_TreatPouch.TabAcc);
+                if (pages[i] != null) pages[i].SetActive(i == KD_TreatPouch.TabWalk);
             for (int i = 0; i < tabs; i++)
             {
                 if (tabImages[i] != null)
-                    tabImages[i].color = (i == KD_TreatPouch.TabAcc)
+                    tabImages[i].color = (i == KD_TreatPouch.TabWalk)
                         ? pouch.tabOnColor : pouch.tabOffColor;
                 if (tabUnderlines[i] != null)
-                    tabUnderlines[i].SetActive(i == KD_TreatPouch.TabAcc);
+                    tabUnderlines[i].SetActive(i == KD_TreatPouch.TabWalk);
             }
+
+            // 裏山改変: さんぽ / [ディスク] / かざりの FxRow / ライブ準備中。**Scroll.Build が Content へ移すので、その直前**
+            HillsideBuildPages(go, pouch, pages, font, pouchUdon, round, circle, log);
 
             // **既定は閉じておく** (入室した瞬間から板が浮かないように)
             go.SetActive(false);
@@ -989,11 +998,11 @@ namespace KominkaDogRun.Editor
             {
                 var activitiesGo = KD_SceneObjects.Find("KD_Activities", out int activitiesCount);
                 pouch.activitiesMenu = (activitiesCount == 1 && activitiesGo != null) ? activitiesGo.GetUdonSharpComponent<KD_ActivitiesMenu>() : null;
-                if (pouch.activitiesMenu == null) log.AppendLine("   WARN KD_Activities が無い — あそぶの確認カードは開かない (先に Activities/2 - Build)");
+                if (pouch.activitiesMenu == null) log.AppendLine("   WARN KD_Activities が無い — あそぶは空の面 (先に Tools/KominkaHillside/Menu/9 Setup Activities → Menu/7 を再実行)");
             }
             log.AppendLine("   pouch panel: " + PanelWidth + "x" + PanelHeight
                 + " / おやつ " + n + " / おもちゃ " + toyCount + " / なで " + fxCount
-                + " / ねる " + toyCount + " / 既定は非アクティブ・かざりタブ・2列スクロール");
+                + " / ねる " + toyCount + " / 既定は非アクティブ・さんぽタブ・2列スクロール");
         }
 
         /// <summary>退役した部品 (旧確認帯など) が残っていれば消す。**作った側の後始末** (再実行は冪等)。</summary>
@@ -1341,6 +1350,7 @@ namespace KominkaDogRun.Editor
         static void PrunePanelChildren(GameObject panel, int tabCount, int treatRows,
             StringBuilder log)
         {
+            // 裏山改変: Page_Walk は TabPageNames 経由で残る。WalkRow / Disc / FxRow は各 Page の中 (板直下ではない) なので、ここの掃除の対象外
             var keep = new System.Collections.Generic.HashSet<string>
             {
                 "Bg", "Balance", "SectionTitle", "Feedback", "CloseButton", "CloseHint", "SettingsButton", "Page_Settings",
