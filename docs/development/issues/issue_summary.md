@@ -65,7 +65,7 @@ priority: High    # High / Medium / Low
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開はその後の別Issue | wip |
 | [IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md) | Medium | フリスビー (先回り型 + 6 プリセット) を 6 匹へ展開: 犬種別クリップ・facts、配線、胴体固定、負荷実測、Catch の分割、犬種別ハーネス | todo |
 | [DES-UI-002](DES-UI-002-frisbee-settings.md) | Medium | フリスビーの設定 (待つ場所・曲げ・取り方) の選ぶ / 自動の切り分けと操作権、開発用切替の撤去時期を設計する | todo |
-| [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | メニューをそのまま／変える／今回は外すで整理。飾り・おやつの内容継承、解除後に呼ぶ／ポーズを使う方針を了承。支度用ポイント200/500仮候補・追加解放・所持引継ぎなし・ラジオ対象外。残る項目は提案段階 | wip |
+| [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 古民家の飾り・おやつ・呼ぶ・メニューを読取調査し、初回付与200pt推奨・達成ボーナス案・タブ構成案・実装方針を提案。Codexレビュー14件を反映済み、ユーザー回答待ち | wip |
 | [DES-UI-004](DES-UI-004-walk-destinations-and-boards.md) | Medium | 散歩の目的地・位置と仮看板の本制作、案内／説明ボードの内容・配置・役割を検討する | todo |
 | [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 古民家の有料ライブ購入者の利用と、裏山ライブの開催・再生・競合・復帰を設計する。演目企画は DES-LIV-002 | todo |
 | [DES-LIV-002](DES-LIV-002-live-lineup-and-parade.md) | Medium | ハロウィン・Candy Step・ライブパックの裏山向け演目を企画する。散歩道を犬たちがパレードする専用ライブ 1 本を含め、枠・本数・構成を整理 | todo |
