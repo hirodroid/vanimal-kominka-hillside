@@ -58,25 +58,28 @@ priority: High    # High / Medium / Low
 | [VER-DOG-001](hold/VER-DOG-001-avatar-pet-contact-research.md) | Medium | 来訪者の無改変が条件。ムチォは既存Senderで対応候補、犬っこは通常時の対象外。静的調査まで完了、IMP-DOG-011 と共に保留 | hold |
 | [IMP-DOG-001](IMP-DOG-001-port-dog-system.md) | High | 古民家ドッグランの犬ギミックを移植する (タグ `export/kominka-hillside-v1` + 移植記録) | wip |
 | [DES-DOG-001](DES-DOG-001-leash-walking.md) | High | 集合・目的地継承・拠点回収の契約を実装済み (Editor)。Play 後に停滞検知・端末別入力・購入権の双方向を詰める | wip |
-| [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、看板の分かりやすさ、Desktop/Touch、複数人 | wip |
+| [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、Desktop/Touch、複数人。看板の本制作・分かりやすさは DES-UI-004 へ分離 | wip |
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |
 | [DES-WLD-001](DES-WLD-001-round-trip.md) | Medium | 古民家からの出発・帰還と状態の扱いを設計する | todo |
 | [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビーは 1 匹で採用内容を確定 (IMP-DOG-008 完了)。残り: 他のおもちゃの挙動、複数ディスク・犬の割当、公開範囲 | todo |
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開はその後の別Issue | wip |
 | [IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md) | Medium | フリスビー (先回り型 + 6 プリセット) を 6 匹へ展開: 犬種別クリップ・facts、配線、胴体固定、負荷実測、Catch の分割、犬種別ハーネス | todo |
 | [DES-UI-002](DES-UI-002-frisbee-settings.md) | Medium | フリスビーの設定 (待つ場所・曲げ・取り方) の選ぶ / 自動の切り分けと操作権、開発用切替の撤去時期を設計する | todo |
-| [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 裏山専用ライブと古民家の有料ライブ購入者の利用を設計する | todo |
+| [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | メニューの移植採否・変更内容を相談中。9/23 おじいさん初回会話で支度用ポイント (200/500仮候補)、基本の散歩・遊びは稼ぎ不要、追加の飾り等は遊んで解放。古民家とのポイント/所持品引継ぎなし。おやつ採用・ラジオ対象外 | wip |
+| [DES-UI-004](DES-UI-004-walk-destinations-and-boards.md) | Medium | 散歩の目的地・位置と仮看板の本制作、案内／説明ボードの内容・配置・役割を検討する | todo |
+| [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 古民家の有料ライブ購入者の利用と、裏山ライブの開催・再生・競合・復帰を設計する。演目企画は DES-LIV-002 | todo |
+| [DES-LIV-002](DES-LIV-002-live-lineup-and-parade.md) | Medium | ハロウィン・Candy Step・ライブパックの裏山向け演目を企画する。散歩道を犬たちがパレードする専用ライブ 1 本を含め、枠・本数・構成を整理 | todo |
 | [DES-WLD-002](DES-WLD-002-sound.md) | Medium | 裏山の音 (BGM・環境音) の方針・音源・ライブとの切替を設計する | todo |
 | [IMP-DOG-004](review/IMP-DOG-004-leash-models-release.md) | High | 首輪・リードの本制作。PCVR 1 人は合格。2 人・Quest/iOS・座位/木陰の確認待ち | review |
-| [BUG-DOG-002](BUG-DOG-002-leash-handle-orientation.md) | Medium | リードの持ち手が左右どちらの手でも左向きに付く。最後の微調整 | todo |
-| [IMP-DOG-006](IMP-DOG-006-leashed-treat-approach.md) | Medium | リード接続中もおやつに反応して寄ってくる。反応対象・操作・散歩への復帰を具体化する | todo |
+| [BUG-DOG-002](BUG-DOG-002-leash-handle-orientation.md) | Medium | リードの輪と紐の接続部が横向き。肘→手の延長上・手の前側へ向くよう左右とも調整する (9/23 要望具体化) | todo |
+| [IMP-DOG-006](IMP-DOG-006-leashed-treat-approach.md) | Medium | おやつで自分の接続犬の最寄り1匹を呼び、少し待つ間に撫でる/首輪を外す→次の1匹。9/23 操作方針了承、詳細設計・実装は未 | todo |
 | [IMP-DOG-007](IMP-DOG-007-leash-pull-haptics.md) | Medium | リードを引っ張られたら、接続している側の手に振動を伝える (Haptics)。9/22 に VR 限定で実装 (伸び比率 + 止まっている時の引き、手ごとに最大)、PCVR の体感確認が残る | wip |
 | [IMP-DOG-009](IMP-DOG-009-walk-speed-tiers.md) | High | 散歩の犬の速さを 4 段階に (最速は現状の速歩の 3 倍)。人が犬を引っ張る状態をなくす。Run クリップの再生速度・減速も合わせる。9/22 PCVR 1 人 1 匹で OK・採用、3〜6 匹・2 人以上・Desktop は未確認 | wip |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo |
 | [IMP-DOG-013](IMP-DOG-013-frisbee-pet-after-return.md) | Medium | フリスビーを持ち帰った犬をよしよしできる。くわえて待っている間は撫でを再開し (撫でている間はディスクを落とさない)、受け取っても 4 秒 / 2.5 m の猶予はその場で待つ。9/22 実装・Editor 検査済み、PCVR 確認が残る | wip |
 | [IMP-DOG-010](IMP-DOG-010-walk-stopovers.md) | Medium | 寄り道が分かりにくい (嗅ぐ姿勢が無い・ずれが小さい・短い) ので作り直し、道沿いの立ち寄り場所と夜の散歩の違いを足す。9/22 PCVR 1 人 1 匹で OK・採用 (Sniff クリップは保留)、3〜6 匹・2 人以上・Desktop は未確認 | wip |
 
-着手順 (2026-09-22 更新): メニュー本体 (DES-UI-001) は PCVR 確認で完了。小さな UX 調整 (BUG-DOG-002 持ち手の向き、看板文字、IMP-DOG-003 の犬同士の遊び・Desktop/Touch・項目別確認) を進め、次に DES-DOG-002 (おもちゃ) と DES-DOG-001 (おしゃれ・権限・端末別入力)。音は DES-WLD-002、ライブは DES-LIV-001 で設計を並行し、制作は基本体験の後。**複数人は 6 人 PCVR の散歩で確認でき IMP-DOG-002 は完了**、残る複数人の未確認はフリスビー (IMP-DOG-005) と空・ナイトモード (非伝播) で、往復導線 (DES-WLD-001) は継続。境界・負荷の項目別確認は IMP-ENV-001、**Quest 単体・iOS の実機確認は VER-WLD-001 に集約**する (景観の増量自体は後回し)。具体的な目的と設計提案は [開発全体像](../overview.md) §3。
+着手順 (2026-09-23 担当先を更新): メニュー本体 (DES-UI-001) は PCVR 確認で完了。小さな UX 調整 (BUG-DOG-002 持ち手の向き、IMP-DOG-003 の犬同士の遊び・Desktop/Touch・項目別確認) を進め、次に DES-DOG-002 (おもちゃ) と DES-DOG-001 (採用後のおしゃれ・権限・端末別入力)。メニュー機能の採否と支度用ポイントは DES-UI-003、目的地・看板・説明ボードは DES-UI-004、おやつで1匹ずつ呼び寄せる操作は IMP-DOG-006 で具体化する。音は DES-WLD-002、ライブの演目企画は DES-LIV-002、購入者の利用・開催と復帰は DES-LIV-001 で設計を並行し、制作は基本体験の後。**複数人は 6 人 PCVR の散歩で確認でき IMP-DOG-002 は完了**、残る複数人の未確認はフリスビー (IMP-DOG-005) と空・ナイトモード (非伝播) で、往復導線 (DES-WLD-001) は継続。境界・負荷の項目別確認は IMP-ENV-001、**Quest 単体・iOS の実機確認は VER-WLD-001 に集約**する (景観の増量自体は後回し)。具体的な目的と設計提案は [開発全体像](../overview.md) §3。
 
 2026-09-22: **DES-ENV-001 / VER-ENV-001 / DES-UI-001 / IMP-ENV-002 を完了**。地形は Unity Terrain 採用 (「もうテレインで OK」)、眺め・端は PCVR で良好、手元メニューと空・ナイトモードはユーザーが PCVR で確認済み。記録は [完了した Issue](archive/archive_summary.md)。引き継ぎ: 境界・負荷の項目別確認 (VER-ENV-001 の項目 2 の隅・4・6) → IMP-ENV-001、座位と Desktop/Touch の入口 → IMP-DOG-003、複数人の競合・他人の接続犬への影響 → IMP-DOG-002、権限の再判定と端末別入力 → DES-DOG-001。Quest 単体・iOS は引き続き未確認。
 
