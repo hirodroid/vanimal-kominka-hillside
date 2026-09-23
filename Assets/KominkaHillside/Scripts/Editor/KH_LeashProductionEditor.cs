@@ -162,10 +162,19 @@ namespace KominkaHillside.Editor
                 check(stored!=null&&stored.SequenceEqual(c.ropeBones),Keys[i]+" rope backing references");
                 backing.publicVariables.TryGetVariableValue("ropeMesh",out SkinnedMeshRenderer storedRenderer);
                 check(storedRenderer==c.ropeMesh,Keys[i]+" mesh backing reference");
+                // BUG-DOG-002: the grip offset is applied with rotation only, so the handle must stay at scale 1
+                // or the offset lands at the wrong distance from the hand.
+                check(c.handleVisual!=null&&Vector3.Distance(c.handleVisual.transform.lossyScale,Vector3.one)<1e-4f,Keys[i]+" handle scale one");
                 var clip=m.localClips[i];check(clip.indicator.transform.name=="ReadyIndicator"&&clip.GetComponent<Renderer>().sharedMaterial==Material,Keys[i]+" separate readiness indicator");
                 check(Vector3.Distance(clip.tip.localPosition,new Vector3(0,.045f,0))<.0001f,Keys[i]+" physical contact preserved");
             }
-            check(Material.shader.isSupported,"supported shared material");log.AppendLine("failed="+failed);Report("verify",log.ToString());
+            check(Material.shader.isSupported,"supported shared material");
+            // BUG-DOG-002: the handle placement values the six collars share. Reported every run so the PCVR
+            // judgement has the numbers it was made against; only the usable range is enforced here.
+            log.AppendLine("handleGripOffset="+m.handleGripOffset.ToString("F4")+"m handleRollDegrees="+m.handleRollDegrees.ToString("F1")+"deg (right hand; left hand uses the negated roll)");
+            check(m.handleGripOffset>=0f&&m.handleGripOffset<=.1f,"handle grip offset within 0..0.1 m");
+            check(m.handleRollDegrees>=-180f&&m.handleRollDegrees<=180f,"handle ring roll within -180..180 deg");
+            log.AppendLine("failed="+failed);Report("verify",log.ToString());
             if(failed>0)throw new InvalidOperationException("Production verification failed");
         }
         [MenuItem("Tools/KominkaHillside/Walking/Production 4 Capture")]

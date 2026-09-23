@@ -37,6 +37,11 @@ namespace KominkaHillside
         [Header("Tuning: provisional until Play")]
         public float leashLength = 3f;
         public float attachReach = 4f;
+        // BUG-DOG-002: handle placement, shared by all six collars so there is one place to tune.
+        [Tooltip("持ち手の輪の中心から握り位置までの距離 (m)。輪のローカル +Y 方向。0.062 で輪の後ろ側の帯が拳に入り、輪と金具は手の前へ出る")]
+        public float handleGripOffset = 0.062f;
+        [Tooltip("紐の軸まわりの輪の面の傾き (度)。右手の値で、左手は符号を反転して左右の感覚をそろえる。輪が縦/横に見えるときは ±90 単位で回す")]
+        public float handleRollDegrees = 0f;
         // Walking pace, upper two of the four tiers (IMP-DOG-009). The lower two (walkSpeed 1.1 / runSpeed 2.4)
         // live on each KD_DogWanderController because they are the dog's own legs; these two are the walk's
         // own tiers, so the whole pack shares one number. Prototype values until Play: Build writes them,

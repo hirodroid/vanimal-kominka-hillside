@@ -160,6 +160,9 @@ namespace KominkaHillside.Editor
             UdonSharpEditorUtility.GetBackingUdonBehaviour(manager).publicVariables.RemoveVariable("roamRadius");
             UdonSharpEditorUtility.GetBackingUdonBehaviour(manager).publicVariables.RemoveVariable("followSpeed");
             manager.leashLength=3f;manager.catchUpDistance=10f;manager.defaultDestination=KH_WalkRouteEditor.DestinationPlaza;
+            // BUG-DOG-002: handle grip and ring roll. Build owns them so a rebuild cannot drop them back to
+            // scene leftovers; the values still wait on PCVR judgement (Production 3 Verify pins the range).
+            manager.handleGripOffset=.062f;manager.handleRollDegrees=0f;
             // IMP-DOG-009: the upper two of the four walking tiers. Prototype values, not yet judged in Play - Build owns them.
             manager.dashSpeed=4.5f;manager.sprintSpeed=7.2f;manager.stopoverChance=.5f;
             manager.trailOffDistance=6f;manager.trailOnDistance=4f;manager.entryMaxPath=12f;manager.inviteAfter=8f;manager.inviteInterval=14f;manager.inviteLimit=3;manager.detourChance=.25f;
