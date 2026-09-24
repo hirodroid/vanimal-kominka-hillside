@@ -80,7 +80,7 @@
 
 **アルベド以外の判定** (`IsNonAlbedo`): Importer が NormalMap、またはファイル名に normal / _ao / occlusion / metallic / smoothness / roughness / _spec / _height / _mask 等を含むか `_nm` / `_n` で終わる。行の上限の半分 (下限 256)。犬の `ke.png` (毛のマスク) も対象になった。
 
-音楽の上限は空 (裏山にライブ・BGM が無い。SE は触らない)。曲を足したら `AudioCaps()` に 1 行 (古民家: 曲 q=0.5、wav マスターは PC q=0.7)。
+**音源は削っていない** (`AudioCaps()` は空、SE 14 本は毎回「music over its cap: 0」)。**音源は最後の手段で基本やらない** (2026-09-24 ユーザー決定)。曲を足しても、よほどの無駄が無い限り `AudioCaps()` に行を足さない (古民家の q=0.5 はこの決定より前の個別判断)。
 
 ## 4. 残っている削り代 (見積り。実測は削ってから測る)
 
