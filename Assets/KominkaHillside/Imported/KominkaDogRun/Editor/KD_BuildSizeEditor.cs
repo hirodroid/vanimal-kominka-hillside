@@ -30,13 +30,13 @@ public static class KD_BuildSizeEditor
 
     // ---------------------------------------------------------------- bundle size
 
-    [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Build Size/1 - Bundle Size PC")]
+    [MenuItem("Tools/KominkaHillside/Build Size/1 - Bundle Size PC")]
     public static void BundlePC() { Bundle(BuildTarget.StandaloneWindows64, "pc"); }
 
-    [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Build Size/2 - Bundle Size Android")]
+    [MenuItem("Tools/KominkaHillside/Build Size/2 - Bundle Size Android")]
     public static void BundleAndroid() { Bundle(BuildTarget.Android, "android"); }
 
-    [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Build Size/3 - Bundle Size iOS")]
+    [MenuItem("Tools/KominkaHillside/Build Size/3 - Bundle Size iOS")]
     public static void BundleIOS() { Bundle(BuildTarget.iOS, "ios"); }
 
     static void Bundle(BuildTarget target, string tag)
@@ -93,59 +93,67 @@ public static class KD_BuildSizeEditor
     {
         public string name;
         public string prefix;
-        public string kinds; // t=texture a=audio f=font m=meshAsset p=playable c=animClip s=shader x=modelFile
+        public string kinds; // t=texture a=audio f=font m=meshAsset p=playable c=animClip s=shader x=modelFile d=terrainData
         // Unity refuses to place one asset in two bundles, so a broad row must skip the sub-folders
         // that have a row of their own.
         public string[] except;
         public List<string> paths = new List<string>();
     }
 
-    [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Build Size/4 - Group Cost PC")]
+    [MenuItem("Tools/KominkaHillside/Build Size/4 - Group Cost PC")]
     public static void GroupCostPC() { GroupCost(BuildTarget.StandaloneWindows64, "pc"); }
 
-    [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Build Size/5 - Group Cost Android")]
+    [MenuItem("Tools/KominkaHillside/Build Size/5 - Group Cost Android")]
     public static void GroupCostAndroid() { GroupCost(BuildTarget.Android, "android"); }
 
+    // 裏山改変 (2026-09-24): 裏山に実在するフォルダだけ。古民家にしか無い行 (IKA / RBS / Blanket / _Originals / Atelier /
+    // VirtualCampers / hoboradio / qvpen / vvmw) は落とし、Terrain (kinds d) と polyperfect / LMArt / モサンゴ屋のメッシュを足した。
     static List<Group> Groups()
     {
         var g = new List<Group>();
+        const string Imp = "Assets/KominkaHillside/Imported/KominkaDogRun/";
         g.Add(new Group { name = "dog-textures", prefix = "Assets/TORINOSUKE/", kinds = "t" });
         g.Add(new Group { name = "dog-animclips", prefix = "Assets/TORINOSUKE/", kinds = "c" });
-        g.Add(new Group { name = "dogpreview-meshes", prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Models/DogPreviews/", kinds = "m" });
-        g.Add(new Group { name = "kd-model-textures", prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Models/", kinds = "t",
-            except = new string[] { "Assets/KominkaHillside/Imported/KominkaDogRun/Models/Accessories/", "Assets/KominkaHillside/Imported/KominkaDogRun/Models/Toys/" } });
-        // Accessories are the thing being scaled up, so they get their own rows: what does one more
-        // item / one more set cost? (2026-09-10)
-        g.Add(new Group { name = "accessory-meshes", prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Models/Accessories/", kinds = "x" });
-        g.Add(new Group { name = "accessory-textures", prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Models/Accessories/", kinds = "t" });
-        g.Add(new Group { name = "toy-meshes", prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Models/Toys/", kinds = "x" });
-        g.Add(new Group { name = "toy-textures", prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Models/Toys/", kinds = "t" });
-        g.Add(new Group { name = "kd-textures", prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Textures/", kinds = "t" });
-        g.Add(new Group { name = "kd-animclips", prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/", kinds = "c" });
-        g.Add(new Group { name = "kd-audio", prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Data/", kinds = "a" });
-        g.Add(new Group { name = "kd-fonts", prefix = "Assets/KominkaHillside/Font/", kinds = "tf" });
-        g.Add(new Group { name = "kd-shaders", prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Shaders/", kinds = "s" });
-        g.Add(new Group { name = "lightmaps", prefix = "Assets/Scenes/", kinds = "t" });
+        g.Add(new Group { name = "dog-meshes", prefix = "Assets/TORINOSUKE/", kinds = "x" });
+        g.Add(new Group { name = "dogpreview-meshes", prefix = Imp + "Models/DogPreviews/", kinds = "m" });
+        g.Add(new Group { name = "kd-model-textures", prefix = Imp + "Models/", kinds = "t",
+            except = new string[] { Imp + "Models/Accessories/", Imp + "Models/Toys/" } });
+        g.Add(new Group { name = "kd-model-meshes", prefix = Imp + "Models/", kinds = "x",
+            except = new string[] { Imp + "Models/Accessories/", Imp + "Models/Toys/" } });
+        g.Add(new Group { name = "accessory-meshes", prefix = Imp + "Models/Accessories/", kinds = "x" });
+        g.Add(new Group { name = "accessory-textures", prefix = Imp + "Models/Accessories/", kinds = "t" });
+        g.Add(new Group { name = "toy-meshes", prefix = Imp + "Models/Toys/", kinds = "x" });
+        g.Add(new Group { name = "toy-textures", prefix = Imp + "Models/Toys/", kinds = "t" });
+        g.Add(new Group { name = "kd-textures", prefix = Imp + "Textures/", kinds = "t" });
+        g.Add(new Group { name = "kd-animclips", prefix = Imp + "Animations/", kinds = "c" });
+        g.Add(new Group { name = "kd-audio", prefix = Imp + "Data/", kinds = "a" });
+        g.Add(new Group { name = "kd-shaders", prefix = Imp + "Shaders/", kinds = "s" });
+        // 裏山の自作物
+        g.Add(new Group { name = "kh-textures", prefix = "Assets/KominkaHillside/Textures/", kinds = "t" });
+        g.Add(new Group { name = "kh-meshes", prefix = "Assets/KominkaHillside/Models/", kinds = "xm" });
+        g.Add(new Group { name = "kh-model-textures", prefix = "Assets/KominkaHillside/Models/", kinds = "t" });
+        g.Add(new Group { name = "kh-animclips", prefix = "Assets/KominkaHillside/Animations/", kinds = "c" });
+        g.Add(new Group { name = "kh-audio", prefix = "Assets/KominkaHillside/Data/", kinds = "a" });
+        g.Add(new Group { name = "kh-terrain-data", prefix = "Assets/KominkaHillside/Data/Terrain/", kinds = "d" });
+        g.Add(new Group { name = "kh-fonts", prefix = "Assets/KominkaHillside/Font/", kinds = "tf" });
+        g.Add(new Group { name = "kh-shaders", prefix = "Assets/KominkaHillside/Shaders/", kinds = "s" });
+        g.Add(new Group { name = "terrain-layer-textures", prefix = "Assets/_TerrainAutoUpgrade/", kinds = "t" });
+        g.Add(new Group { name = "scene-folder-textures", prefix = "Assets/Scenes/", kinds = "t" });
+        // 購入アセット
         g.Add(new Group { name = "kominka-textures", prefix = "Assets/モサンゴ屋/", kinds = "t" });
-        g.Add(new Group { name = "garden-textures", prefix = "Assets/IKA 3DCG art studio/", kinds = "t" });
+        g.Add(new Group { name = "kominka-meshes", prefix = "Assets/モサンゴ屋/", kinds = "x" });
         g.Add(new Group { name = "sky-cubemap", prefix = "Assets/Allsky/", kinds = "t" });
-        g.Add(new Group { name = "sleepkit", prefix = "Assets/RBS/SleepKit2/", kinds = "taf" });
         g.Add(new Group { name = "trees-textures", prefix = "Assets/LMArt-StylizedEnvironmentKit/", kinds = "t" });
-        g.Add(new Group { name = "blanket-textures", prefix = "Assets/Blanket/", kinds = "t" });
+        g.Add(new Group { name = "trees-meshes", prefix = "Assets/LMArt-StylizedEnvironmentKit/", kinds = "x" });
         g.Add(new Group { name = "people-textures", prefix = "Assets/polyperfect/", kinds = "t" });
-        // 2026-09-10: friends shop / favourite-creator posters.
-        g.Add(new Group { name = "poster-art", prefix = "Assets/_Originals/", kinds = "t" });
-        g.Add(new Group { name = "poster-board", prefix = "Assets/Atelier_Fuyutsuki/", kinds = "t" });
-        g.Add(new Group { name = "show-timelines", prefix = "Assets/VirtualCampers.LiveGenerator/Shows/", kinds = "p" });
-        g.Add(new Group { name = "show-audio", prefix = "Assets/VirtualCampers.LiveGenerator/Shows/", kinds = "a" });
-        g.Add(new Group { name = "show-textures", prefix = "Packages/com.virtualcampers.live-generator/", kinds = "t" });
-        g.Add(new Group { name = "radio-textures", prefix = "Packages/com.shijukai.hoboradio/", kinds = "t" });
-        g.Add(new Group { name = "qvpen-textures", prefix = "Packages/net.ureishi.qvpen/", kinds = "t" });
-        g.Add(new Group { name = "vvmw-textures", prefix = "Packages/idv.jlchntoz.vvmw/", kinds = "t" });
+        g.Add(new Group { name = "people-meshes", prefix = "Assets/polyperfect/", kinds = "x" });
+        g.Add(new Group { name = "people-animclips", prefix = "Assets/polyperfect/", kinds = "c" });
+        g.Add(new Group { name = "synaptic", prefix = "Assets/Synaptic AI Pro/", kinds = "tafmpcsx" });
         g.Add(new Group { name = "tmp-default-fonts", prefix = "Assets/TextMesh Pro/", kinds = "tf" });
         g.Add(new Group { name = "shaders-postprocessing", prefix = "Packages/com.unity.postprocessing/", kinds = "s" });
         g.Add(new Group { name = "shaders-liltoon", prefix = "Packages/jp.lilxyzw.liltoon/", kinds = "s" });
         g.Add(new Group { name = "shaders-uzumore", prefix = "Packages/jp.sigmal00.uzumore-shader/", kinds = "s" });
+        g.Add(new Group { name = "vrworldtoolkit", prefix = "Packages/dev.onevr.vrworldtoolkit/", kinds = "tafmpcsx" });
         return g;
     }
 
@@ -228,6 +236,7 @@ public static class KD_BuildSizeEditor
         {
             var t = AssetDatabase.GetMainAssetTypeAtPath(p);
             if (t == typeof(Mesh)) return 'm';
+            if (t == typeof(TerrainData)) return 'd'; // 裏山改変: Terrain の高さ・スプラットも数える
             if (t != null && t.Name == "TMP_FontAsset") return 'f';
         }
         return '?';
@@ -246,7 +255,7 @@ public static class KD_BuildSizeEditor
         public string note;
     }
 
-    [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Build Size/6 - Ref Graph")]
+    [MenuItem("Tools/KominkaHillside/Build Size/6 - Ref Graph")]
     public static void RefGraph()
     {
         var visited = new HashSet<int>();
@@ -556,31 +565,25 @@ public static class KD_BuildSizeEditor
         public string why;
     }
 
+    // 裏山改変 (2026-09-24): 上限値は古民家の決定 (TORINOSUKE / モサンゴ屋 / LMArt 1024、Toys 512、自作 Textures は 2048 + 圧縮強制) を
+    // そのまま使い、古民家に無い polyperfect (おじいさん) / Allsky (IMP-ENV-002 が 1024 を書く。ここでも同じ値) / Terrain 層を足した。
     static List<Cap> Caps()
     {
         var c = new List<Cap>();
+        const string Imp = "Assets/KominkaHillside/Imported/KominkaDogRun/";
         c.Add(new Cap { prefix = "Assets/TORINOSUKE/", maxSize = 1024, why = "6 dogs, the star of the world -- 2048 stays on PC" });
-        c.Add(new Cap { prefix = "Assets/モサンゴ屋/", maxSize = 1024, why = "kominka building and its props" });
-        c.Add(new Cap { prefix = "Assets/IKA 3DCG art studio/", maxSize = 1024, why = "miniature garden" });
-        c.Add(new Cap { prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Models/", maxSize = 1024, why = "our toys and accessories" });
-        // 2026-09-15 user decision: plush toys carry Diffuse + Normal + AO at 1024 and cost 2.2MB each on
-        // mobile (60x an accessory). 512 is enough for a toy in the mouth of a dog on a phone.
-        c.Add(new Cap { prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Models/Toys/", maxSize = 512, why = "toys: full PBR sets, 512 on a phone" });
-        // 2026-09-18: our own Textures/ folder had no row, so six 2560x1440 RGBA32 photo frames went in
-        // uncompressed -- 118MB of texture memory on a phone for six overlays. 2048 is a ceiling here;
-        // the row mostly exists so the compression half of the rule covers the folder.
-        c.Add(new Cap { prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Textures/", maxSize = 2048, pcCompress = true, why = "our effect / UI textures; forces compression on every platform" });
-        c.Add(new Cap { prefix = "Assets/LMArt-StylizedEnvironmentKit/", maxSize = 1024, why = "trees" });
-        c.Add(new Cap { prefix = "Assets/RBS/", maxSize = 1024, why = "sleep kit" });
-        c.Add(new Cap { prefix = "Assets/Blanket/", maxSize = 1024, why = "blanket" });
-        // 2026-09-10 user decision: 256 is enough for the radio. It is one small prop that shipped
-        // 14 textures at 2048 (7.48MB of the Android download).
-        c.Add(new Cap { prefix = "Packages/com.shijukai.hoboradio/", maxSize = 256, why = "one small prop" });
-        // 2026-09-10: posters keep their authored size -- people read the shop names on them -- so 2048
-        // is a ceiling, not a downscale. The row is a guard for the next poster somebody drops in at
-        // 4096. Measured cost of the current four: 2.84MB of the Android download.
-        c.Add(new Cap { prefix = "Assets/_Originals/", maxSize = 2048, why = "posters stay readable; 2048 is a ceiling for the next one" });
-        c.Add(new Cap { prefix = "Assets/Atelier_Fuyutsuki/", maxSize = 2048, why = "poster board" });
+        c.Add(new Cap { prefix = "Assets/モサンゴ屋/", maxSize = 1024, why = "kominka seen from the hill (far view only)" });
+        c.Add(new Cap { prefix = "Assets/LMArt-StylizedEnvironmentKit/", maxSize = 1024, why = "trees and environment kit" });
+        c.Add(new Cap { prefix = "Assets/polyperfect/", maxSize = 1024, why = "the old man (NPC)" });
+        c.Add(new Cap { prefix = "Assets/Allsky/", maxSize = 1024, why = "sky cubemap; same value KH_NightModeEditor writes (IMP-ENV-002)" });
+        c.Add(new Cap { prefix = "Assets/_TerrainAutoUpgrade/", maxSize = 1024, why = "terrain layer textures" });
+        c.Add(new Cap { prefix = Imp + "Models/", maxSize = 1024, why = "our toys and accessories (ported from Kominka)" });
+        c.Add(new Cap { prefix = Imp + "Models/Toys/", maxSize = 512, why = "toys: full PBR sets, 512 on a phone (Kominka 2026-09-15 decision)" });
+        c.Add(new Cap { prefix = Imp + "Textures/", maxSize = 2048, pcCompress = true, why = "ported effect / UI textures; forces compression on every platform" });
+        c.Add(new Cap { prefix = "Assets/KominkaHillside/Textures/", maxSize = 2048, pcCompress = true, why = "our own textures; forces compression on every platform" });
+        // 96x96 の UI 円 (KD_UiCircle / KD_UiRound) は非圧縮でも 36 KB。BC7 で縁が荒れる方が損なので圧縮強制の対象から外す (2026-09-24)。
+        c.Add(new Cap { prefix = "Assets/KominkaHillside/Textures/UI/", maxSize = 2048, pcCompress = false, why = "tiny UI sprites; mobile override only, no forced compression" });
+        c.Add(new Cap { prefix = "Assets/KominkaHillside/Models/", maxSize = 1024, why = "our own models (leash, collar, walking props)" });
         return c;
     }
 
@@ -604,20 +607,20 @@ public static class KD_BuildSizeEditor
         public string why;
     }
 
+    // 裏山改変 (2026-09-24): 裏山にライブも BGM も無い。SE は古民家と同じく触らない (短い音は立ち上がりで劣化が目立つ)。
+    // 曲を足したらここへ 1 行 (古民家: 曲 q=0.5、wav マスターは PC q=0.7)。
     static List<AudioCap> AudioCaps()
     {
         var c = new List<AudioCap>();
-        c.Add(new AudioCap { prefix = "Assets/VirtualCampers.LiveGenerator/Shows/", quality = 0.5f, pcQuality = 0.7f, pcExtension = ".wav", why = "live songs, the biggest single block of the download" });
-        c.Add(new AudioCap { prefix = "Assets/KominkaHillside/Imported/KominkaDogRun/Data/BGM/", quality = 0.5f, why = "background music" });
         return c;
     }
 
     static readonly string[] MobilePlatforms = new string[] { "Android", "iPhone" };
 
-    [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Build Size/7 - Apply Mobile Caps")]
+    [MenuItem("Tools/KominkaHillside/Build Size/7 - Apply Mobile Caps")]
     public static void ApplyMobileCaps() { MobileCaps(true); }
 
-    [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Build Size/8 - Verify Mobile Caps")]
+    [MenuItem("Tools/KominkaHillside/Build Size/8 - Verify Mobile Caps")]
     public static void VerifyMobileCaps() { MobileCaps(false); }
 
     static void MobileCaps(bool apply)
@@ -657,6 +660,9 @@ public static class KD_BuildSizeEditor
 
             var imp = AssetImporter.GetAtPath(path) as TextureImporter;
             if (imp == null) continue;
+            // 裏山改変 (2026-09-24 ユーザー指示): アルベド以外 (ノーマル / AO / メタリック / ラフネス等) はモバイルで行の上限の半分 (下限 256)。
+            bool nonAlbedo = IsNonAlbedo(path, imp);
+            if (nonAlbedo) cap = Math.Max(256, cap / 2);
             int w = 0;
             int h = 0;
             GetSourceSize(imp, ref w, ref h);
@@ -690,7 +696,7 @@ public static class KD_BuildSizeEditor
             if (!apply)
             {
                 missing++;
-                rows.Add("MISSING cap=" + cap + " src=" + w + "x" + h + (uncompressed ? " UNCOMPRESSED" : "") + (mipBlocks ? " NPOT+mip" : "") + (pcNeeds ? " (PC too)" : "") + " " + path);
+                rows.Add("MISSING cap=" + cap + (nonAlbedo ? " non-albedo" : "") + " src=" + w + "x" + h + (uncompressed ? " UNCOMPRESSED" : "") + (mipBlocks ? " NPOT+mip" : "") + (pcNeeds ? " (PC too)" : "") + " " + path);
                 continue;
             }
 
@@ -717,7 +723,7 @@ public static class KD_BuildSizeEditor
             }
             imp.SaveAndReimport();
             changed++;
-            rows.Add("SET cap=" + cap + " src=" + w + "x" + h + (uncompressed ? " UNCOMPRESSED->compressed" : "") + (mipBlocks ? " NPOT: mipmaps off" : "") + (pcNeeds ? " (PC BC7 too)" : "") + " " + path + "  (" + why + ")");
+            rows.Add("SET cap=" + cap + (nonAlbedo ? " non-albedo" : "") + " src=" + w + "x" + h + (uncompressed ? " UNCOMPRESSED->compressed" : "") + (mipBlocks ? " NPOT: mipmaps off" : "") + (pcNeeds ? " (PC BC7 too)" : "") + " " + path + "  (" + why + ")");
             EditorUtility.DisplayProgressBar("mobile texture caps", path, (float)i / deps.Length);
         }
         EditorUtility.ClearProgressBar();
@@ -812,6 +818,18 @@ public static class KD_BuildSizeEditor
             + " | music=" + audioInScope + (apply ? (" changed=" + audioChanged) : (" missing=" + audioMissing)) + " ok=" + audioOk;
         if (!apply && (missing > 0 || audioMissing > 0)) Debug.LogError(head + " -- run `7 - Apply Mobile Caps`");
         else Debug.LogError(head);
+    }
+
+    // Normal maps by importer type; AO / metallic / roughness / height / mask by file name. Albedo keeps the row's cap.
+    static readonly string[] NonAlbedoWords = new string[] { "normal", "_ao", "occlusion", "ambientocc", "metallic", "_metal", "smoothness", "roughness", "_rough", "_spec", "specular", "_height", "_disp", "_mask", "_orm", "_mra" };
+    static readonly string[] NonAlbedoSuffixes = new string[] { "_nm", "_n", "_nrm", "_nor", "_norm" };
+    static bool IsNonAlbedo(string path, TextureImporter imp)
+    {
+        if (imp.textureType == TextureImporterType.NormalMap) return true;
+        string n = Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
+        for (int i = 0; i < NonAlbedoWords.Length; i++) if (n.Contains(NonAlbedoWords[i])) return true;
+        for (int i = 0; i < NonAlbedoSuffixes.Length; i++) if (n.EndsWith(NonAlbedoSuffixes[i])) return true;
+        return false;
     }
 
     static void GetSourceSize(TextureImporter imp, ref int w, ref int h)

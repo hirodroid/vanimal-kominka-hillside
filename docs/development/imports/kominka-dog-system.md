@@ -322,6 +322,8 @@ Unityメニュー `Tools/KominkaHillside/Walking/` の順序は、1 Create Progr
 
 Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 / Archive 45 / BGM 3 / Bedroom and Onboarding 7 / Build Size 8 / Call Poses 7 / Cat 3 / Companion Motions 3 / Credit 2 / Debug 5 / Display Guidance 3 / Dog Book 5 / Dog Breath 2 / Dog Load 2 / Dog Pack 3 / Dog Performance 1 / Dog Sync 5 / Dog Unit 5 / Fetch System 6 / Fur Material 2 / Gift Code 4 / Live System 4 / Npc Controller 2 / Pet Sampling 1 / Pet System 13 / Photo Frames 4 / Photo System 8 / Photo and Information 4 / Plush Review 7 / Plush Shelf 5 / Products 3 / Progress System 3 / Release Check 1 / Scene Layout 3 / Shop Display LOD 3 / Shop Keeper 4 / Sleep Audio 4 / Sleep Placement 8 / Stop Anchor 5 / Texture Budget 2 / Toy Box 7 / Toy Catalog 3 / Toy Physics 6 / VR Interaction 4 / Wander System 3 / Welcome Guide 3
 
+- 2026-09-24: `Build Size` 8 本は Imported-Unused から `Tools/KominkaHillside/Build Size/1〜8` へ昇格した (裏山の容量計測に使う)。`Groups()` / `Caps()` / `AudioCaps()` は裏山の実在フォルダに書き換え、TerrainData を数える kind `d` を足した。上限値は古民家の決定をそのまま使う。実測は [ビルドサイズ実測](../../plans/2026-09-24-build-size-audit.md)。`Texture Budget` 2 本は Allsky 1 枚だけの旧表で、Build Size 7 / 8 の Allsky 行が代替するため Imported-Unused のまま
+
 ### 除外した Editor (`Imported/KominkaDogRun/Editor~/`、Unity は読み込まない)
 
 28 本。どれも、構築手順に使う Editor から参照されていない。依存を閉包計算して確かめた。

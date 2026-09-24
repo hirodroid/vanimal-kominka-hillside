@@ -80,6 +80,7 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 | 手元メニュー・集合・拠点 | [実装とチェックリスト](plans/2026-09-20-menu-gather-stations.md)、[古民家の器への作り替え計画](plans/2026-09-23-menu-rebuild.md) (段階 0-b 完了 2026-09-24。段階 1 IMP-PRG-001・段階 2 IMP-DOG-014 / 015 / 016・段階 3 IMP-UI-001 後半は 2026-09-24 実装済み・Verify 全 PASS、実機確認待ち。首輪干渉 8 件・ミニチュアの首輪・クレジット URL 3 件はユーザー判断待ち) |
 | フリスビー | [本シーン導入](plans/2026-09-20-frisbee-prototype.md)、[動きの改修経緯](plans/2026-09-21-frisbee-variations.md)、[ハーネスの手順・最新記録](testing/kh-frisbee-harness.md)。1匹での成立確認と6匹展開は別 |
 | 空・ナイトモード | [実装とチェックリスト](plans/2026-09-21-sky-and-night-mode.md) |
+| 容量 (ビルドサイズ) | [ビルドサイズ実測](plans/2026-09-24-build-size-audit.md)。計測は `Tools/KominkaHillside/Build Size/`、手順と罠は `vrc-performance` のビルドサイズチェック。素材を足したら `7 - Apply` → `2 - Bundle Size Android` |
 | Quest単体・iOS | [端末検証](development/issues/VER-WLD-001-quest-ios-devices.md)。PCVR総合評価を端末別・項目別の合格にしない |
 | 地形・境界・負荷 | [開発全体像](development/overview.md) §2〜3。Terrain採用は確定、境界・落下・負荷の項目別確認は継続 |
 | 犬ギミックの出所 | [移植記録](development/imports/kominka-dog-system.md) |

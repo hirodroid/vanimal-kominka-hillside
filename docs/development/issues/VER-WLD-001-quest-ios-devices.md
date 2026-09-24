@@ -25,6 +25,7 @@ priority: Medium
 | 5 | 首輪・リードのモデル | 明所／木陰での見え方、動作中のずれ、持ち手の向き、材質が端末で破綻しないか | [IMP-DOG-004](review/IMP-DOG-004-leash-models-release.md) の Quest/iOS |
 | 6 | 負荷 | Quest 単体・iOS の fps と描画コールの目安 (`vrc-performance` の手順)。6 匹散歩・複数人での数字 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) の「負荷の初回測定」③ |
 | 7 | 境界 | Terrain の縁・遠景の継ぎ目 (南東・南西の隅)、柵・斜面の外への落下が端末でも同じか | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) |
+| 8 | 容量 | Android / iOS のダウンロードサイズがモバイル上限 100 MB を下回っているか。実機に載せる前に `Tools/KominkaHillside/Build Size/8 - Verify Mobile Caps` を 0 件にして `2 - Bundle Size Android` を測る。最新の実測と余力は [ビルドサイズ実測](../../plans/2026-09-24-build-size-audit.md) だけが持つ (ここに数字を書かない)。実機での見た目 (1024 に落とした樹皮・古民家・空) はこの Issue で見る | [ビルドサイズ実測](../../plans/2026-09-24-build-size-audit.md) |
 
 ## 完了条件
 
