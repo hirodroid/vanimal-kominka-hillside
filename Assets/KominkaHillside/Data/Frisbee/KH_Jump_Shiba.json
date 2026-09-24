@@ -1,0 +1,11 @@
+{
+  "name": "Jump",
+  "breed": "Shiba",
+  "mouthOffsetCatch": [0.0000, 0.5541, 0.3607],
+  "mouthOffsetStand": [0.0000, 0.3587, 0.3882],
+  "crouch": 0.2200,
+  "rise": 0.3500,
+  "recover": 0.3600,
+  "maxRootRise": 0.5807,
+  "clipLength": 1.2800
+}

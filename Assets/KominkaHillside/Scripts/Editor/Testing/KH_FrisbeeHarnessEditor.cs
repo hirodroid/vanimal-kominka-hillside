@@ -40,11 +40,21 @@ namespace KominkaHillside.Editor
         const string OptionsPath = Base + "/options.json";
         const string Key = "KH.Frisbee.Harness.Run";
 
-        // シーン内のオブジェクト名 (KH_FrisbeePrototypeEditor.BuildInto が作る名前)
-        const string CatcherName = "KH_FrisbeeCatch_Lab";
-        const string ThrowerName = "KH_FrisbeeStand";
-        const string RecallName = "KH_FrisbeeRecall";
-        const string CyclerName = "KH_FrisbeeVariant";
+        // シーン内のオブジェクト名 (KH_FrisbeePrototypeEditor.BuildInto が作る名前)。
+        // IMP-DOG-012: 試作シーンは犬種ごとのレーン 6 本。--breed=<Key> (既定 Lab) でレーンを選び、名前は
+        // KH_FrisbeePrototypeEditor.LaneName から組む (Lab レーンは従来の名前のまま = 既存の記録と比べられる)。
+        // 投げの開始位置・向きはレーンの投げ台と犬の立ち位置 (Lab と同じ相対配置を x へずらしたもの) で決まるので、
+        // 投げ表と期待する終わり方は Lab の表をそのまま使う。
+        const string DefaultBreed = "Lab";
+        static string laneBreed = DefaultBreed;
+        static string CatcherName { get { return "KH_FrisbeeCatch_" + laneBreed; } }
+        static string ThrowerName { get { return KH_FrisbeePrototypeEditor.LaneName("KH_FrisbeeStand", laneBreed); } }
+        static string RecallName { get { return KH_FrisbeePrototypeEditor.LaneName("KH_FrisbeeRecall", laneBreed); } }
+        static string CyclerName { get { return KH_FrisbeePrototypeEditor.LaneName("KH_FrisbeeVariant", laneBreed); } }
+        // プロトタイプの ClientSim の出現位置 (KH_FrisbeePrototypeEditor.BuildInto の Spawn)。レーンを選んだら
+        // プレイヤーをそのレーンの同じ位置へ移す (犬は投げた人の足元へ持ち帰るので、Lab 以外のレーンで
+        // 出現位置のままだと帰り道が 12-36 m 伸び、16 秒の窓に収まらない)。
+        static readonly Vector3 SpawnPos = new Vector3(0f, 0f, -6f);
 
         const int StateIdle = 0, StateReady = 10;
         const int VariantCount = 6;
@@ -167,10 +177,27 @@ namespace KominkaHillside.Editor
 
         // ---------------------------------------------------------------- レポート
         // mode: "" / "default" = 従来の 36 投げ。"netorder" = BUG-DOG-003 の順序 4 ケース x repeats。
-        [Serializable] public class Options { public double globalTimeoutSeconds; public string variants = ""; public string shots = ""; public string mode = ""; public int repeats; }
+        // IMP-DOG-012: breed = 投げる犬のレーン (既定 Lab)。mode "sixdogs" = 6 匹の負荷測定 (下の SixDogsSuite)。
+        [Serializable] public class Options { public double globalTimeoutSeconds; public string variants = ""; public string shots = ""; public string mode = ""; public int repeats; public string breed = ""; }
 
         static bool IsNetOrder(Options o) { return o != null && o.mode == "netorder"; }
+        static bool IsSixDogs(Options o) { return o != null && o.mode == "sixdogs"; }
         static int Repeats(Options o) { return o != null && o.repeats > 0 ? o.repeats : 2; }
+        static string BreedOf(Options o) { return o != null && !string.IsNullOrEmpty(o.breed) ? o.breed : DefaultBreed; }
+
+        // ---------------------------------------------------------------- sixdogs (IMP-DOG-012)
+        // 6 匹が同時に追う区間の負荷を測る mode。各周で (1) Lab 1 匹だけ (参考値) → (2) 6 匹同時、の順に
+        // flat を投げ、同じ長さの区間の frameTime・描画コール数と、計画器の候補探索の回数を並べる。
+        // frameTime は上限を外して測る (Application.targetFrameRate = -1 / QualitySettings.vSyncCount = 0)。
+        // 外した値は SessionState にも置き、どの終わり方でも戻して読み直した結果を frameCapRestored に残す
+        // (QualitySettings は Play を抜けても戻らないことがある: vrc-performance)。
+        const string SixShot = "flat";
+        const int SixVariant = 0;
+        const double SixFlightWindow = 4.0;   // 投げてからこの秒数を「追う区間」として frameTime を比べる (flat は 2 s 前後で取る)
+        const double SixSettle = 30.0;        // 全員が Idle へ戻るまでの上限。6 匹が 1 人の足元へ最大 30 m 持ち帰るので既定の 16 s では足りない
+        const double SixBudgetExtra = 4.0;    // 番犬は SixSettle + これ
+        // 犬ごとの行は Console から犬を特定できない ([KH_FrisbeeCatch] の行に犬の名前が無い) ので、
+        // 取れたか・一周したかは各捕り手の state を毎フレーム読んで決める。
 
         [Serializable]
         public class ThrowResult
@@ -243,10 +270,67 @@ namespace KominkaHillside.Editor
             public string verdict = "NOT_MEASURED";
         }
 
+        /// <summary>IMP-DOG-012 sixdogs: 1 区間の frameTime (ms、上限を外した値) と描画コール数 (UnityEditor.UnityStats)。</summary>
+        [Serializable]
+        public class FrameStats
+        {
+            public int frames;            // 採れたフレーム数
+            public float seconds;
+            public float meanMs, p95Ms, maxMs;
+            public float meanBatches, maxBatches, meanDrawCalls, maxDrawCalls, meanSetPass;
+        }
+
+        [Serializable]
+        public class SixDogResult
+        {
+            public string breed;
+            public string kind = "";      // jump (JumpCarry を見た) / stand-or-over (咥えずに Return) / ground (Pickup) / ""
+            public bool caught, completed, ok;
+            public string states = "";
+            public double seconds;
+            public int planScans, planEvaluations, planHookTries;   // この区間での増分
+        }
+
+        [Serializable]
+        public class SixDogsRound
+        {
+            public int round;
+            public string label;          // "lab-only" (参考値) / "six"
+            public int dogs;
+            public FrameStats flight = new FrameStats();   // 投げてから SixFlightWindow 秒 (追う区間)。比率はこちらで出す
+            public FrameStats cycle = new FrameStats();    // 投げてから全員が Idle へ戻るまで
+            public int planScans, planEvaluations, planHookTries;   // 投げた犬の合計 (増分)
+            public bool ok;
+            public List<SixDogResult> perDog = new List<SixDogResult>();
+        }
+
+        [Serializable]
+        public class SixDogsReport
+        {
+            public string frameCap = "NOT_TOUCHED";          // 外す前の値と外した値
+            public string frameCapRestored = "NOT_APPLICABLE";
+            public string shot = SixShot;
+            public int variant = SixVariant;
+            public string playerAt = "";
+            public List<SixDogsRound> rounds = new List<SixDogsRound>();
+            public string ratio = "NOT_MEASURED";            // six / lab-only (flight の平均 frameTime、候補探索の回数)
+            public string[] cannotSay =
+            {
+                "試作シーン (平面・犬 6 匹・投げ台) の値。本シーン (地形・草木・遠景・他の犬の徘徊・リード・メニュー) との差は含まない",
+                "Editor の Desktop Play で上限を外した frameTime。VR (解像度・2 眼・90 fps 予算) の予測には使えない。使ってよいのは比率と描画コール数だけ",
+                "単一 ClientSim クライアント。犬の Owner が 1 人に集まった場合の負荷であって、Owner が分かれた実機の分担は測っていない",
+                "描画コール数は UnityEditor.UnityStats の値。Game 画面の Statistics とは一致しない (vrc-performance: 計測系の食い違い)。同じ計測どうしの比だけを読む",
+                "犬ごとの取り方 (jump / stand / over) の内訳と動きの質は、Console の行が犬を名乗らないので判定していない (state だけで取れた・一周したを見る)",
+            };
+        }
+
         [Serializable]
         public class Report
         {
             public string runId, status = "RUNNING", failure;
+            // IMP-DOG-012: 投げたレーン (--breed)。sixdogs は全レーン。
+            public string breed = DefaultBreed;
+            public SixDogsReport sixdogs;
             // "default" = 36 投げの通し。"netorder" = BUG-DOG-003 の順序ケース (repeats 回)。
             public string mode = "default";
             public int repeats;
@@ -391,15 +475,22 @@ namespace KominkaHillside.Editor
             Directory.CreateDirectory(Base);
             if (File.Exists(StopFlag)) File.Delete(StopFlag);
             var options = ReadOptions();
+            // IMP-DOG-012: the lane must be one the prototype builder makes (the scene itself is checked in Play).
+            if (Array.IndexOf(KH_FrisbeePrototypeEditor.LaneBreeds, BreedOf(options)) < 0)
+                throw new InvalidOperationException("Unknown --breed '" + BreedOf(options) + "' (lanes: " + string.Join(",", KH_FrisbeePrototypeEditor.LaneBreeds) + ").");
+            int lanes = KH_FrisbeePrototypeEditor.LaneBreeds.Length;
             int planned = IsNetOrder(options)
                 ? NetCases.Length * Repeats(options)
+                : IsSixDogs(options) ? Repeats(options) * (1 + lanes)   // 各周: Lab 1 匹 + 6 匹同時
                 : Variants(options).Length * Plan(options).Length;
 
             report = new Report
             {
                 runId = DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N").Substring(0, 6),
-                mode = IsNetOrder(options) ? "netorder" : "default",
-                repeats = IsNetOrder(options) ? Repeats(options) : 0,
+                mode = IsNetOrder(options) ? "netorder" : IsSixDogs(options) ? "sixdogs" : "default",
+                repeats = IsNetOrder(options) || IsSixDogs(options) ? Repeats(options) : 0,
+                breed = IsSixDogs(options) ? string.Join(",", KH_FrisbeePrototypeEditor.LaneBreeds) : BreedOf(options),
+                sixdogs = IsSixDogs(options) ? new SixDogsReport() : null,
                 unity = Application.unityVersion,
                 sdk = SdkVersion(),
                 scene = proto,
@@ -420,8 +511,11 @@ namespace KominkaHillside.Editor
                 ? "mode=netorder cases=" + string.Join(",", NetCases.Select(n => n.name).ToArray()) +
                   " repeats=" + Repeats(options) + " variant=" + NetVariant + " shot=" + NetShot +
                   " PendingHoldSeconds=" + NetHold.ToString("F2", CultureInfo.InvariantCulture) +
-                  " budget=" + report.budgetSeconds + "s"
-                : "variants=" + string.Join(",", Variants(options).Select(v => v.ToString()).ToArray()) +
+                  " budget=" + report.budgetSeconds + "s" + " breed=" + BreedOf(options)
+                : IsSixDogs(options)
+                ? "mode=sixdogs lanes=" + string.Join(",", KH_FrisbeePrototypeEditor.LaneBreeds) + " repeats=" + Repeats(options) +
+                  " shot=" + SixShot + " variant=" + SixVariant + " flightWindow=" + SixFlightWindow + "s settle=" + SixSettle + "s budget=" + report.budgetSeconds + "s"
+                : "breed=" + BreedOf(options) + " variants=" + string.Join(",", Variants(options).Select(v => v.ToString()).ToArray()) +
                   " shots=" + string.Join(",", Plan(options).Select(s => s.name).ToArray()) +
                   " budget=" + report.budgetSeconds + "s");
             SessionState.SetString(Key, report.runId);
@@ -458,6 +552,7 @@ namespace KominkaHillside.Editor
                 // 外から Play を止められた経路は StopInternal を通らないので、ここでも override を戻す
                 // (まだ isPlaying なので書き戻せる最後の機会)。
                 RestoreOverride();
+                RestoreFrameCap();   // IMP-DOG-012 sixdogs: still playing, so both values can be written back
                 if (report.status == "RUNNING")
                 {
                     report.status = "BLOCKED";
@@ -544,6 +639,7 @@ namespace KominkaHillside.Editor
             // netorder の後始末はここが最後の関所。停止フラグ・番犬・例外・正常終了のどれもここを通る。
             // **Udon を止める前に**戻す (下で UdonBehaviour を無効化すると書き込めなくなる)。
             RestoreOverride();
+            RestoreFrameCap();
             if (!ending && EditorApplication.isPlaying)
             {
                 // Udon を先に止めてから Play を抜ける (終了順で SDK 側が先に消えるのを避ける)。
@@ -563,6 +659,7 @@ namespace KominkaHillside.Editor
                 // 最後の関所。ここまで来て PENDING のままなら「戻せなかった」と記録に残す
                 // (すでに戻してあれば何もしない)。
                 RestoreOverride();
+                RestoreFrameCap();   // after a domain reload only the SessionState copy is left
                 ClientSimRuntimeLoader.EndUnityTesting();
                 Application.logMessageReceived -= Log;
                 Summarise();
@@ -626,6 +723,7 @@ namespace KominkaHillside.Editor
                 report = null; ending = false; closed = false; routine = null; throwDeadline = 0;
                 overrideTouched = false; overrideFailLogged = false; overrideNow = 0;
                 catcher = thrower = recaller = cycler = null;
+                laneBreed = DefaultBreed;
                 Lines.Clear();
             }
             catch (Exception e)
@@ -667,6 +765,33 @@ namespace KominkaHillside.Editor
             report.trace.Add("local player ready: " + Networking.LocalPlayer.displayName);
             var settle = Wait(1.5); while (settle.MoveNext()) yield return null;
 
+            // IMP-DOG-012: the lane (--breed) and the sixdogs mode. The options are read here (not after the
+            // lookups below, as before) because they decide which objects to look up.
+            var options = JsonUtility.FromJson<Options>(SessionState.GetString(Key + ".options", "{}")) ?? new Options();
+            if (IsSixDogs(options))
+            {
+                var six = SixDogsSuite(options);
+                while (six.MoveNext()) yield return null;
+                yield break;
+            }
+            laneBreed = BreedOf(options);
+            string missingLane = MissingLaneObjects(laneBreed);
+            if (missingLane != null)
+            {
+                report.status = "BLOCKED";
+                report.failure = "Prototype lane '" + laneBreed + "' is not built (" + missingLane + "). Run Tools/KominkaHillside/Frisbee/4 Build Scene after Frisbee/2 has made this breed's clips (IMP-DOG-012).";
+                yield break;
+            }
+            if (laneBreed != DefaultBreed)
+            {
+                // The dog carries the disc back to whoever threw it, so the thrower stands where the Lab lane's
+                // spawn is, shifted with the lane. The Lab lane is left exactly as before (no teleport at all).
+                var at = SpawnPos + new Vector3(KH_FrisbeePrototypeEditor.LaneOffsetX(laneBreed), 0f, 0f);
+                Networking.LocalPlayer.TeleportTo(at, Quaternion.identity);
+                var moved = Wait(0.5); while (moved.MoveNext()) yield return null;
+                report.trace.Add("lane " + laneBreed + ": player teleported to " + at.ToString("F1") + " (now " + Networking.LocalPlayer.GetPosition().ToString("F1") + ")");
+            }
+
             catcher = Find(CatcherName);
             thrower = Find(ThrowerName);
             recaller = Find(RecallName);
@@ -680,9 +805,8 @@ namespace KominkaHillside.Editor
             if (catcher.TryGetProgramVariable("dogRoot", out value)) dogRoot = value as Transform;
             if (dogRoot == null) throw new InvalidOperationException("KH_FrisbeeCatch.dogRoot is not wired; the harness cannot put the dog back.");
             dogHome = dogRoot.position; dogHomeRot = dogRoot.rotation;
-            report.trace.Add("dog home = " + dogHome.ToString("F2") + " " + dogHomeRot.eulerAngles.ToString("F0"));
+            report.trace.Add("lane " + laneBreed + " catcher=" + CatcherName + " stand=" + ThrowerName + " dog home = " + dogHome.ToString("F2") + " " + dogHomeRot.eulerAngles.ToString("F0"));
 
-            var options = JsonUtility.FromJson<Options>(SessionState.GetString(Key + ".options", "{}")) ?? new Options();
             if (IsNetOrder(options))
             {
                 var net = NetOrderSuite(options);
@@ -698,6 +822,297 @@ namespace KominkaHillside.Editor
                     while (one.MoveNext()) yield return null;
                     Save();
                 }
+        }
+
+        // ---------------------------------------------------------------- lanes / sixdogs (IMP-DOG-012)
+        /// <summary>このレーンの 4 つ (捕り手・投げ台・recall・切替台) のうち、Play 中のシーンに無いものの名前。全部あれば null。</summary>
+        static string MissingLaneObjects(string breed)
+        {
+            string keep = laneBreed; laneBreed = breed;
+            try
+            {
+                var missing = new List<string>();
+                foreach (string n in new[] { CatcherName, ThrowerName, RecallName, CyclerName })
+                    if (TryFind(n) == null) missing.Add(n);
+                return missing.Count == 0 ? null : string.Join(", ", missing.ToArray());
+            }
+            finally { laneBreed = keep; }
+        }
+
+        static UdonBehaviour TryFind(string goName)
+        {
+            foreach (var u in Resources.FindObjectsOfTypeAll<UdonBehaviour>())
+                if (u != null && u.gameObject.scene.IsValid() && u.gameObject.name == goName) return u;
+            return null;
+        }
+
+        /// <summary>上限を外す。外す前の値は SessionState にも置く (Play 退出のドメイン再読み込みで static は消える)。</summary>
+        static void UncapFrameRate()
+        {
+            int tfr = Application.targetFrameRate, vs = QualitySettings.vSyncCount;
+            SessionState.SetInt(Key + ".tfr", tfr);
+            SessionState.SetInt(Key + ".vsync", vs);
+            SessionState.SetBool(Key + ".cap", true);
+            Application.targetFrameRate = -1;
+            QualitySettings.vSyncCount = 0;
+            if (report != null && report.sixdogs != null)
+                report.sixdogs.frameCap = "before targetFrameRate=" + tfr + " vSyncCount=" + vs + " (quality level " + QualitySettings.GetQualityLevel()
+                    + ") -> measured with targetFrameRate=" + Application.targetFrameRate + " vSyncCount=" + QualitySettings.vSyncCount;
+        }
+
+        /// <summary>sixdogs の後始末。どの終了経路 (完了・BLOCKED・停止・番犬・例外・外からの Stop) も通る。
+        /// Play 中なら targetFrameRate と vSyncCount の両方、Edit モードでは QualitySettings の vSyncCount だけ戻す
+        /// (targetFrameRate は Play を抜ければ ClientSim の設定ごと消える値、vSyncCount はプロジェクト設定に残りうる値)。
+        /// 戻したら読み直し、確かめられなければ errors に足して PASS にしない。</summary>
+        static void RestoreFrameCap()
+        {
+            if (!SessionState.GetBool(Key + ".cap", false)) return;
+            int tfr = SessionState.GetInt(Key + ".tfr", -1), vs = SessionState.GetInt(Key + ".vsync", 0);
+            string outcome;
+            try
+            {
+                QualitySettings.vSyncCount = vs;
+                bool playing = EditorApplication.isPlaying;
+                if (playing) Application.targetFrameRate = tfr;
+                bool ok = QualitySettings.vSyncCount == vs && (!playing || Application.targetFrameRate == tfr);
+                outcome = (ok ? "OK: " : "FAILED: ") + "vSyncCount=" + QualitySettings.vSyncCount + " (want " + vs + ")"
+                    + (playing ? " targetFrameRate=" + Application.targetFrameRate + " (want " + tfr + ")" : " (edit mode: targetFrameRate left to Unity)");
+                if (ok) SessionState.SetBool(Key + ".cap", false);
+            }
+            catch (Exception e) { outcome = "FAILED: " + e.Message; }
+            if (report == null) return;
+            if (report.sixdogs != null) report.sixdogs.frameCapRestored = outcome;
+            if (!outcome.StartsWith("OK:") && report.errors.Count < 50)
+                report.errors.Add("[KH Frisbee Harness] frame cap was not confirmed restored: " + outcome);
+        }
+
+        struct SixLane
+        {
+            public string breed;
+            public UdonBehaviour catcher, thrower, recaller, cycler;
+            public Transform dogRoot;
+            public Vector3 home; public Quaternion homeRot;
+        }
+
+        /// <summary>IMP-DOG-012 --mode=sixdogs。各周で Lab 1 匹 (参考値) → 6 匹同時 の順に flat を投げ、
+        /// 同じ区間の frameTime (上限を外した値) と描画コール数、計画器のカウンタ (_planScans /
+        /// _planEvaluations / _planHookTries の増分) を並べる。1 匹ごとの合否は state だけで決める
+        /// (取れた = JumpCarry を見た、または Pickup を経ずに Return を見た / 一周 = 動いた後に Idle)。</summary>
+        static IEnumerator SixDogsSuite(Options options)
+        {
+            var breeds = KH_FrisbeePrototypeEditor.LaneBreeds;
+            var lanes = new SixLane[breeds.Length];
+            var missing = new List<string>();
+            for (int i = 0; i < breeds.Length; i++)
+            {
+                string m = MissingLaneObjects(breeds[i]);
+                if (m != null) { missing.Add(breeds[i] + ": " + m); continue; }
+                laneBreed = breeds[i];
+                lanes[i].breed = breeds[i];
+                lanes[i].catcher = Find(CatcherName); lanes[i].thrower = Find(ThrowerName);
+                lanes[i].recaller = Find(RecallName); lanes[i].cycler = Find(CyclerName);
+            }
+            laneBreed = DefaultBreed;
+            if (missing.Count > 0)
+            {
+                report.status = "BLOCKED";
+                report.failure = "Prototype lanes are not built (" + string.Join(" | ", missing.ToArray()) + "). Run Tools/KominkaHillside/Frisbee/4 Build Scene (IMP-DOG-012).";
+                yield break;
+            }
+            foreach (var l in lanes)
+                if (!Has(l.catcher, "_planEvaluations") || !Has(l.catcher, "_planScans") || !Has(l.catcher, "_planHookTries") || !Has(l.catcher, "state"))
+                {
+                    report.status = "BLOCKED";
+                    report.failure = l.breed + ": KH_FrisbeeCatch does not expose _planScans / _planEvaluations / _planHookTries (the IMP-DOG-012 planner counters). Land the runtime side first.";
+                    yield break;
+                }
+            if (!Shots.Any(s => s.name == SixShot)) { report.status = "BLOCKED"; report.failure = "The shot table has no '" + SixShot + "' shot."; yield break; }
+            Shot shot = Shots.First(s => s.name == SixShot);
+            for (int i = 0; i < lanes.Length; i++)
+            {
+                object value;
+                if (lanes[i].catcher.TryGetProgramVariable("dogRoot", out value)) lanes[i].dogRoot = value as Transform;
+                if (lanes[i].dogRoot == null) throw new InvalidOperationException(lanes[i].breed + ": KH_FrisbeeCatch.dogRoot is not wired.");
+                lanes[i].home = lanes[i].dogRoot.position; lanes[i].homeRot = lanes[i].dogRoot.rotation;
+            }
+            int lab = Array.IndexOf(breeds, DefaultBreed);
+            // The dogs carry the disc back to the thrower (the local player). Stand at the middle of the lanes so no
+            // lane's walk back is more than half the row; the Lab-only reference uses the same spot.
+            float mid = 0f; foreach (var b in breeds) mid += KH_FrisbeePrototypeEditor.LaneOffsetX(b); mid /= breeds.Length;
+            var playerAt = SpawnPos + new Vector3(mid, 0f, 0f);
+            Networking.LocalPlayer.TeleportTo(playerAt, Quaternion.identity);
+            report.sixdogs.playerAt = playerAt.ToString("F1");
+            // Used by the shared helpers (Recall / WaitIdle / override restore) - the Lab lane, as in the default mode.
+            catcher = lanes[lab].catcher; thrower = lanes[lab].thrower; recaller = lanes[lab].recaller; cycler = lanes[lab].cycler;
+            dogRoot = lanes[lab].dogRoot; dogHome = lanes[lab].home; dogHomeRot = lanes[lab].homeRot;
+
+            UncapFrameRate();
+            report.trace.Add("sixdogs: " + report.sixdogs.frameCap + " player at " + playerAt.ToString("F1"));
+            var warm = Wait(1.0); while (warm.MoveNext()) yield return null;
+
+            int index = 0;
+            for (int r = 0; r < Repeats(options); r++)
+            {
+                foreach (bool six in new[] { false, true })
+                {
+                    int[] set = six ? Enumerable.Range(0, lanes.Length).ToArray() : new[] { lab };
+                    var round = new SixDogsRound { round = r + 1, label = six ? "six" : "lab-only", dogs = set.Length };
+                    report.sixdogs.rounds.Add(round);
+                    var recs = new ThrowResult[set.Length];
+
+                    // 1. Everyone quiet, preset v0, every dog (thrown or not) back on its spot.
+                    for (int k = 0; k < set.Length; k++)
+                    {
+                        var l = lanes[set[k]];
+                        recs[k] = new ThrowResult
+                        {
+                            index = index++, variant = SixVariant, shot = shot.name, speed = shot.speed, elevationDeg = shot.elevation,
+                            allowed = new[] { "caught" }, expectKind = "any",
+                            note = "sixdogs round " + (r + 1) + " " + round.label + " lane " + l.breed,
+                            motionNote = "not judged in sixdogs: the [KH_FrisbeeCatch] lines do not name the dog",
+                        };
+                        report.throwResults.Add(recs[k]);
+                        report.throwsRun++;
+                        var pre = EnsureVariantOn(l.catcher, l.cycler, SixVariant, recs[k]); while (pre.MoveNext()) yield return null;
+                    }
+                    for (int i = 0; i < lanes.Length; i++) lanes[i].dogRoot.SetPositionAndRotation(lanes[i].home, lanes[i].homeRot);
+                    var calm = Wait(0.5); while (calm.MoveNext()) yield return null;
+
+                    // 2. Counters before, then every stand in the set fires in the same frame.
+                    var before = new int[set.Length, 3];
+                    for (int k = 0; k < set.Length; k++)
+                    {
+                        var c = lanes[set[k]].catcher;
+                        before[k, 0] = ReadInt(c, "_planScans"); before[k, 1] = ReadInt(c, "_planEvaluations"); before[k, 2] = ReadInt(c, "_planHookTries");
+                        lanes[set[k]].thrower.SetProgramVariable("speed", shot.speed);
+                        lanes[set[k]].thrower.SetProgramVariable("elevationDeg", shot.elevation);
+                        lanes[set[k]].thrower.SetProgramVariable("sideDeg", shot.side);
+                    }
+                    int mark = Lines.Count;
+                    double start = EditorApplication.timeSinceStartup;
+                    throwDeadline = start + SixSettle + SixBudgetExtra;
+                    for (int k = 0; k < set.Length; k++) lanes[set[k]].thrower.Interact();
+
+                    // 3. Observe: per-frame frame time and draw counts, per-dog states, until every thrown dog is back
+                    //    in Idle after having moved (or the settle window runs out).
+                    var flightMs = new List<float>(); var cycleMs = new List<float>();
+                    var flightB = new List<float>(); var cycleB = new List<float>();
+                    var flightD = new List<float>(); var cycleD = new List<float>(); var flightS = new List<float>(); var cycleS = new List<float>();
+                    var seen = new bool[set.Length, NetStateCount];
+                    var engaged = new bool[set.Length]; var done = new bool[set.Length]; var doneAt = new double[set.Length];
+                    int sampledFrame = -1;
+                    while (EditorApplication.timeSinceStartup < start + SixSettle)
+                    {
+                        double now = EditorApplication.timeSinceStartup;
+                        if (Time.frameCount != sampledFrame)
+                        {
+                            sampledFrame = Time.frameCount;
+                            float ms = Time.unscaledDeltaTime * 1000f;
+                            float b = UnityStats.batches, d = UnityStats.drawCalls, sp = UnityStats.setPassCalls;
+                            cycleMs.Add(ms); cycleB.Add(b); cycleD.Add(d); cycleS.Add(sp);
+                            if (now - start <= SixFlightWindow) { flightMs.Add(ms); flightB.Add(b); flightD.Add(d); flightS.Add(sp); }
+                        }
+                        bool all = true;
+                        for (int k = 0; k < set.Length; k++)
+                        {
+                            if (done[k]) continue;
+                            int st = ReadInt(lanes[set[k]].catcher, "state");
+                            if (st >= 0 && st < NetStateCount) seen[k, st] = true;
+                            if (st != StateIdle && st != StateReady) engaged[k] = true;
+                            if (engaged[k] && st == StateIdle) { done[k] = true; doneAt[k] = now - start; }
+                            else all = false;
+                        }
+                        // Keep sampling for the whole flight window even when everyone is done early, so the
+                        // lab-only and the six window always cover the same seconds.
+                        if (all && now - start > SixFlightWindow) break;
+                        yield return null;
+                    }
+                    double took = EditorApplication.timeSinceStartup - start;
+                    round.flight = Stats(flightMs, flightB, flightD, flightS, Math.Min(took, SixFlightWindow));
+                    round.cycle = Stats(cycleMs, cycleB, cycleD, cycleS, took);
+
+                    // 4. Per dog: caught / completed from the states, and the planner's work in this window.
+                    round.ok = true;
+                    for (int k = 0; k < set.Length; k++)
+                    {
+                        var l = lanes[set[k]];
+                        var dog = new SixDogResult { breed = l.breed };
+                        dog.planScans = ReadInt(l.catcher, "_planScans") - before[k, 0];
+                        dog.planEvaluations = ReadInt(l.catcher, "_planEvaluations") - before[k, 1];
+                        dog.planHookTries = ReadInt(l.catcher, "_planHookTries") - before[k, 2];
+                        bool jumpCarry = seen[k, StateJumpCarry], pickup = seen[k, StatePickup], ret = seen[k, StateReturn] || seen[k, StateDrop];
+                        dog.kind = jumpCarry ? "jump" : pickup ? "ground" : ret ? "stand-or-over" : "";
+                        dog.caught = jumpCarry || (ret && !pickup);
+                        dog.completed = done[k] && ret;
+                        dog.ok = dog.caught && dog.completed;
+                        dog.seconds = Math.Round(done[k] ? doneAt[k] : took, 2);
+                        var got = new List<string>(); for (int s = 0; s < NetStateCount; s++) if (seen[k, s]) got.Add(s.ToString());
+                        dog.states = got.Count == 0 ? "(none)" : string.Join(",", got.ToArray());
+                        round.perDog.Add(dog);
+                        round.planScans += dog.planScans; round.planEvaluations += dog.planEvaluations; round.planHookTries += dog.planHookTries;
+                        round.ok &= dog.ok;
+
+                        var rec = recs[k];
+                        rec.seconds = dog.seconds;
+                        rec.endState = ReadInt(l.catcher, "state");
+                        rec.reachedIdle = rec.endState == StateIdle;
+                        rec.outcome = dog.caught ? "caught" : pickup ? "ground" : engaged[k] ? (done[k] ? "none" : "timeout") : "none";
+                        rec.kind = dog.kind == "stand-or-over" ? "" : dog.kind;
+                        rec.caught = dog.caught; rec.completed = dog.completed;
+                        rec.outcomeOk = dog.caught; rec.expectOk = true; rec.expectNote = "expectKind=any (sixdogs measures load; how each dog caught is not attributed)";
+                        rec.outcomeLine = "states=" + dog.states + " kind=" + (dog.kind.Length == 0 ? "(none)" : dog.kind) + " planEvaluations=" + dog.planEvaluations;
+                        rec.dogStart = l.home.ToString("F2");
+                        rec.ok = dog.ok;
+                    }
+                    // The lines of a six-dog window cannot be split per dog; they are kept once, on the round's first record.
+                    for (int i = mark; i < Lines.Count; i++) recs[0].lines.Add(Lines[i]);
+                    report.throwsOk = report.throwResults.Count(t => t.ok);
+                    report.trace.Add("sixdogs r" + (r + 1) + " " + round.label + ": flight mean " + round.flight.meanMs.ToString("F2", CultureInfo.InvariantCulture)
+                        + " ms max " + round.flight.maxMs.ToString("F2", CultureInfo.InvariantCulture) + " ms batches " + round.flight.meanBatches.ToString("F0", CultureInfo.InvariantCulture)
+                        + " | planEvaluations " + round.planEvaluations + " scans " + round.planScans + " hookTries " + round.planHookTries + " | ok=" + round.ok);
+
+                    // 5. Tidy: every thrown disc back on its stand.
+                    throwDeadline = 0;
+                    for (int k = 0; k < set.Length; k++) lanes[set[k]].recaller.Interact();
+                    var back = Wait(0.5); while (back.MoveNext()) yield return null;
+                    for (int k = 0; k < set.Length; k++) { var idle = WaitIdleOn(lanes[set[k]].catcher, 4); while (idle.MoveNext()) yield return null; }
+                    Save();
+                }
+            }
+            SummariseSixDogs();
+            RestoreFrameCap();
+        }
+
+        static FrameStats Stats(List<float> ms, List<float> batches, List<float> draws, List<float> setPass, double seconds)
+        {
+            var f = new FrameStats { frames = ms.Count, seconds = (float)Math.Round(seconds, 2) };
+            if (ms.Count == 0) return f;
+            var sorted = ms.OrderBy(v => v).ToList();
+            f.meanMs = ms.Average(); f.maxMs = sorted[sorted.Count - 1];
+            f.p95Ms = sorted[Math.Min(sorted.Count - 1, (int)Math.Ceiling(sorted.Count * 0.95) - 1)];
+            f.meanBatches = batches.Average(); f.maxBatches = batches.Max();
+            f.meanDrawCalls = draws.Average(); f.maxDrawCalls = draws.Max();
+            f.meanSetPass = setPass.Average();
+            return f;
+        }
+
+        /// <summary>6 匹 / 1 匹 の比。flight 区間の平均 frameTime と、候補探索の回数 (6 匹は合計、1 匹は Lab)。</summary>
+        static void SummariseSixDogs()
+        {
+            if (report == null || report.sixdogs == null || report.mode != "sixdogs") return;
+            var solo = report.sixdogs.rounds.Where(x => x.label == "lab-only").ToList();
+            var six = report.sixdogs.rounds.Where(x => x.label == "six").ToList();
+            if (solo.Count == 0 || six.Count == 0) { report.sixdogs.ratio = "NOT_MEASURED: need both a lab-only and a six round"; return; }
+            float soloMs = solo.Average(x => x.flight.meanMs), sixMs = six.Average(x => x.flight.meanMs);
+            float soloMax = solo.Max(x => x.flight.maxMs), sixMax = six.Max(x => x.flight.maxMs);
+            double soloEval = solo.Average(x => (double)x.planEvaluations), sixEval = six.Average(x => (double)x.planEvaluations);
+            float soloB = solo.Average(x => x.flight.meanBatches), sixB = six.Average(x => x.flight.meanBatches);
+            var ic = CultureInfo.InvariantCulture;
+            report.sixdogs.ratio = "flight mean frameTime six/lab = " + sixMs.ToString("F2", ic) + "/" + soloMs.ToString("F2", ic) + " ms (x"
+                + (soloMs > 0f ? (sixMs / soloMs).ToString("F2", ic) : "-") + "), max " + sixMax.ToString("F2", ic) + "/" + soloMax.ToString("F2", ic)
+                + " ms; planEvaluations six(total)/lab = " + sixEval.ToString("F0", ic) + "/" + soloEval.ToString("F0", ic) + " (x"
+                + (soloEval > 0 ? (sixEval / soloEval).ToString("F2", ic) : "-") + "); flight batches six/lab = "
+                + sixB.ToString("F0", ic) + "/" + soloB.ToString("F0", ic) + " (UnityStats)";
         }
 
         // ---------------------------------------------------------------- netorder (BUG-DOG-003)
@@ -818,15 +1233,21 @@ namespace KominkaHillside.Editor
         /// 犬が動いている間は切り替え要求が保留されるので、毎回 Idle を待ってから回す。</summary>
         static IEnumerator EnsureVariant(int variant, ThrowResult rec)
         {
-            var idle = WaitIdle(4); while (idle.MoveNext()) yield return null;
+            var on = EnsureVariantOn(catcher, cycler, variant, rec); while (on.MoveNext()) yield return null;
+        }
+
+        /// <summary>EnsureVariant の本体。sixdogs (IMP-DOG-012) はレーンごとの捕り手と切替台で呼ぶ。</summary>
+        static IEnumerator EnsureVariantOn(UdonBehaviour c, UdonBehaviour cyc, int variant, ThrowResult rec)
+        {
+            var idle = WaitIdleOn(c, 4); while (idle.MoveNext()) yield return null;
             int guard = 0;
-            while (ReadInt(catcher, "variant") != variant && guard++ < VariantCount + 2)
+            while (ReadInt(c, "variant") != variant && guard++ < VariantCount + 2)
             {
-                cycler.Interact();
+                cyc.Interact();
                 var w = Wait(0.35); while (w.MoveNext()) yield return null;
-                idle = WaitIdle(2); while (idle.MoveNext()) yield return null;
+                idle = WaitIdleOn(c, 2); while (idle.MoveNext()) yield return null;
             }
-            rec.variantApplied = ReadInt(catcher, "variant");
+            rec.variantApplied = ReadInt(c, "variant");
         }
 
         /// <summary>手順 2 (共有)。唯一の注入 = 犬をシーンの立ち位置へ戻す。</summary>
@@ -1398,6 +1819,7 @@ namespace KominkaHillside.Editor
             }
             report.throwsOk = report.throwResults.Count(t => t.ok);
             SummariseEta();
+            SummariseSixDogs();   // IMP-DOG-012 (no-op outside sixdogs)
         }
 
         /// <summary>round 5: etaErr の分布をまとめる。**合否には一切関わらない** —
@@ -1440,10 +1862,12 @@ namespace KominkaHillside.Editor
             while (EditorApplication.timeSinceStartup < until) yield return null;
         }
 
-        static IEnumerator WaitIdle(double seconds)
+        static IEnumerator WaitIdle(double seconds) { return WaitIdleOn(catcher, seconds); }
+
+        static IEnumerator WaitIdleOn(UdonBehaviour c, double seconds)
         {
             double until = EditorApplication.timeSinceStartup + seconds;
-            while (EditorApplication.timeSinceStartup < until && ReadInt(catcher, "state") != StateIdle) yield return null;
+            while (EditorApplication.timeSinceStartup < until && ReadInt(c, "state") != StateIdle) yield return null;
         }
 
         static UdonBehaviour Find(string goName)

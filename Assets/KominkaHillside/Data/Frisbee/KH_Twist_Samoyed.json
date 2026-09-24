@@ -1,0 +1,11 @@
+{
+  "name": "Twist",
+  "breed": "Samoyed",
+  "mouthOffsetCatch": [0.6542, 0.7240, -0.2364],
+  "mouthOffsetStand": [0.0000, 0.5034, 0.4672],
+  "crouch": 0.2500,
+  "rise": 0.3500,
+  "recover": 0.4000,
+  "maxRootRise": 0.8150,
+  "clipLength": 1.3500
+}

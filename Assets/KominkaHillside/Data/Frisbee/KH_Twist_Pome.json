@@ -1,0 +1,11 @@
+{
+  "name": "Twist",
+  "breed": "Pome",
+  "mouthOffsetCatch": [0.3436, 0.2875, -0.1527],
+  "mouthOffsetStand": [0.0000, 0.1566, 0.2020],
+  "crouch": 0.2000,
+  "rise": 0.3500,
+  "recover": 0.3200,
+  "maxRootRise": 0.4500,
+  "clipLength": 1.2200
+}

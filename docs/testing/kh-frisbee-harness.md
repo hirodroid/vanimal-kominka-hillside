@@ -30,8 +30,10 @@ node scripts/kh-frisbee-harness.cjs status    # latest.json の要約 (PASS な�
 node scripts/kh-frisbee-harness.cjs stop      # 停止フラグ + メニューの停止
 ```
 
-モードは 2 つ。既定は下の 36 投げ、`--mode=netorder` は
-[ネット順序モード](#ネット順序モード---modenetorder-bug-dog-003) の 5 ケース x 2 周 = 10 投げ。
+モードは 3 つ。既定は下の 36 投げ、`--mode=netorder` は
+[ネット順序モード](#ネット順序モード---modenetorder-bug-dog-003) の 5 ケース x 2 周 = 10 投げ、
+`--mode=sixdogs` は [6 匹同時の負荷](#6-匹同時の負荷---modesixdogs-imp-dog-012) (IMP-DOG-012)。
+既定モードと netorder は `--breed=<Key>` で[犬種のレーン](#犬種のレーン---breed-imp-dog-012)を選ぶ (既定 Lab)。
 
 `start` が返す `START_REQUEST_ACCEPTED` は **受け付けただけで PASS ではない**。
 結果は必ず `status` (または report.json) で読む。
@@ -42,7 +44,7 @@ node scripts/kh-frisbee-harness.cjs stop      # 停止フラグ + メニュー�
 node scripts/kh-frisbee-harness.cjs start --variants=0,4 --shots=flat,low --budget=300
 ```
 
-`--variants` / `--shots` / `--budget` / `--mode` / `--repeats` は `Logs/kh-frisbee-harness/options.json` に書かれ、
+`--variants` / `--shots` / `--budget` / `--mode` / `--repeats` / `--breed` は `Logs/kh-frisbee-harness/options.json` に書かれ、
 Unity 側が起動時に 1 度だけ読む。Unity のメニュー
 `Tools/KominkaHillside/Frisbee/7 Harness (ClientSim)` から直接呼ぶこともできる
 (その場合は前回の options.json がそのまま効く)。停止は `8 Harness Stop`。
@@ -317,6 +319,56 @@ node scripts/kh-frisbee-harness.cjs status                           # netCase /
 netorder の保持者は `debugHeldOverride > 0` のとき常に**円盤の Owner (= ローカルプレイヤー)** なので、
 別人が持つ・別人へ Owner が移る・その人が弱く放す、という経路は 1 度も通らない。**2 人実機で確認する。**
 
+## 犬種のレーン (`--breed`, IMP-DOG-012)
+
+試作シーン `KH_FrisbeePrototype` は犬種ごとのレーンを x 方向に 12 m 間隔で並べる
+(Corgi −24 / Pome −12 / **Lab 0** / Dachs 12 / Shiba 24 / Samoyed 36。地面は 120 m 四方)。
+**Lab レーンは従来の名前・座標のまま**なので、Lab の結果は過去の記録と比べられる。
+他のレーンは同じ配置 (犬の立ち位置・投げ台・recall・プリセットの cube・壁) を平行移動し、名前に `_<Breed>` が付く。
+
+```bash
+node scripts/kh-frisbee-harness.cjs start --breed=Corgi --variants=0,4 --shots=flat,low
+```
+
+- キーは `Corgi` / `Pome` / `Lab` / `Dachs` / `Shiba` / `Samoyed`。1 回の実行で 1 犬種。省略すると Lab。
+- Lab 以外は投げの前に**プレイヤーをそのレーンの出現位置へテレポート**する (犬は投げた人へ持ち帰るため)。
+  「何をするか」の立ち位置 (1.5, 0, 6.5) などは、レーンの x を足した位置になる。
+- 投げの表・判定の 4 条件は既定モードと同じ。レーンがそろっていなければ `BLOCKED` (`Frisbee/4 Build Scene` で作り直す)。
+
+## 6 匹同時の負荷 (`--mode=sixdogs`, IMP-DOG-012)
+
+```bash
+node scripts/kh-frisbee-harness.cjs start --mode=sixdogs --repeats=2
+```
+
+- **投げは v0 / flat に固定** (`--variants` / `--shots` は効かない。`--breed` を付けるとエラー。全レーンを投げる)。
+- 1 周 = **Lab 1 匹だけ (参考値) → 6 匹同時**。`--repeats` 周 (既定 2) で `周数 x (1 + 6)` 犬ぶん (既定 14)。
+- 区間 **flight** (投げてから 4 s) と **cycle** (全員が Idle へ戻るまで) の frameTime (平均 / p95 / 最大)、
+  `UnityEditor.UnityStats` の batches / drawCalls / setPass、捕り手の計画器カウンタ
+  (`_planScans` / `_planEvaluations` / `_planHookTries` の増分) を記録する。
+  report の `sixdogs.rounds[]` に周ごと、その `perDog` に犬ごと、`sixdogs.ratio` に 6 匹 / Lab の比。
+- **PASS = 全犬が「取った (`caught`)」かつ「一周した (`completed`)」**。`expectKind` は `any`、`motionOk` は判定しない
+  (`[KH_FrisbeeCatch]` の行が犬を名乗らないので、6 匹同時だとどの行がどの犬か分からない)。
+  犬ごとの取り方と動きの質は `--breed` の既定モードで見る。
+
+**frame cap の扱い**: Play 中だけ `Application.targetFrameRate = -1` / `QualitySettings.vSyncCount = 0` で上限を外して測り、
+どの終わり方でも元の値へ戻して読み直す。report の `sixdogs.frameCap` (測定前 → 測定中) と
+`sixdogs.frameCapRestored` (`OK: …` なら復元済み) で確かめる。`OK` でなければ Unity の設定を手で戻す。
+
+**保証しないもの (report の `sixdogs.cannotSay`)。PASS でも数字をこの範囲の外へ持ち出さない:**
+
+- 試作シーン (平面・犬 6 匹・投げ台) の値。本シーン (地形・草木・遠景・他の犬の徘徊・リード・メニュー) の負荷は含まない。
+- Editor の Desktop Play で上限を外した frameTime。VR (解像度・2 眼・90 fps 予算) の予測には使えない。使ってよいのは**比率と描画コール数だけ**。
+- 単一 ClientSim クライアント。犬の Owner が 1 人に集まった場合の負荷で、Owner が分かれた実機の分担は測っていない。
+- 描画コール数は `UnityStats` の値で、Game 画面の Statistics とは一致しない。同じ計測どうしの比だけを読む。
+- 犬ごとの取り方 (jump / stand / over) の内訳と動きの質は判定していない。
+
+**副作用 (2026-09-24 の実行ごとに発生)**: 実行後に `ProjectSettings/QualitySettings.asset` の
+`m_CurrentQuality` が 2 → 3 に変わっていた (どの段で変わったかは未特定。`frameCapRestored` は OK だった)。
+ハーネスの後は `git status ProjectSettings/` を見て、QualitySettings.asset が変わっていれば
+Unity を Edit モードにしたまま `git checkout -- ProjectSettings/QualitySettings.asset` で戻す
+(意図した設定変更と混ぜてコミットしない)。
+
 ## 保証する範囲
 
 実際に通るもの:
@@ -347,8 +399,41 @@ netorder の保持者は `debugHeldOverride > 0` のとき常に**円盤の Owne
   その人が弱く放す、という経路は 1 度も通らない。2 人実機で確認する。
 - 体験としての見え方 (間・迫力・不自然さ)。**人の Play でしか判定できない。**
 - 実機ビルド (PCVR / Quest / iOS) と実クライアント。
+- **複数ディスクを別の人が同時に投げる・Owner が犬ごとに分かれる** (IMP-DOG-012)。`sixdogs` は 1 クライアントが 6 台の投げ台を同時に叩くだけ。
 
-## 直近の実測 (2026-09-23, BUG-DOG-003 の保留を入れた後)
+## 直近の実測 (2026-09-24, IMP-DOG-012 の 6 匹展開)
+
+**縮小表** (`--variants=0,4 --shots=flat,low --breed=<Key>` = 4 投げ) を 6 犬種、すべて **`PASS` 4/4**
+(Console エラー 0、`sceneFileUnchanged=true`)。**全 36 投げ x 6 犬種は未実施** — 縮小表の PASS を全表の PASS にしない。
+
+| 犬種 | run | 取り方 | eta (標本 2、合否に使わない) |
+|---|---|---|---|
+| Dachs | `20260924-192420-cef7a3` | jump 2 / ground 2 | PESSIMISTIC median −0.18 s |
+| Corgi | `20260924-192537-d60bbf` | jump 2 / ground 2 | PESSIMISTIC −0.17 s |
+| Pome | `20260924-192642-c7b922` | jump 2 / ground 2 | PESSIMISTIC −0.20 s |
+| Shiba | `20260924-192747-85b601` | jump 2 / ground 2 | OK −0.08 s |
+| Samoyed | `20260924-192905-c3b50d` | jump 2 / ground 2 | PESSIMISTIC −0.17 s |
+| Lab | `20260924-193010-c0186c` | jump 2 / ground 2 | OK −0.15 s |
+
+`low` は全犬種で `ground` (想定内)、`motionOk` の失敗 0。
+
+**`--mode=sixdogs`** (`--repeats=2`、run `20260924-193126-f2b014`): **`PASS` 14/14** (全犬が取って一周した)。
+flight の frameTime 平均 6 匹 / Lab = 2.62 / 2.48 ms (x1.05)、最大 9.34 / 26.66 ms、
+計画器の評価回数 316 / 28 (x11.29。犬ごとに 65 か 28)、flight の batches 19 / 18、一周 13.7 / 9.0 s。
+(ここまでの sixdogs の数値は上限適用前。) 上限は 60 / vSync 0 → 測定中 −1 / 0 → 復元 OK。数字の読み方と言えないことは
+[6 匹展開の記録](../plans/2026-09-24-frisbee-six-dogs.md)。
+
+**犬種別の跳躍上限を入れた後の再実行** (同日): Pome `20260924-194936-3541b9` / Corgi `20260924-195038-fd626b` /
+Dachs `20260924-195141-3231f1` が 4/4 (jump 2 / ground 2、motion / expect 失敗 0、eta PESSIMISTIC −0.24〜−0.25 s)。
+下限 0.30 のときの Pome (`20260924-194228-0397de`) は 2/4 (flat を立って取る stand 2) で、これが下限を 0.45 に上げた根拠。
+**Shiba / Samoyed は上限適用後に再実行していない** (上の表は共通 0.9 m のときの値)。Lab は 0.9 m で不変。
+上限適用後の sixdogs (run `20260924-195243-316191`) も 14/14、総 frameTime 6 匹 / Lab = 2.62 / 2.86 ms (x0.92)、
+評価回数 355 / 28 (x12.68)、batches 19 / 18。batches は 1 → 6 匹の描画コストではなく (どちらの回も 6 匹がシーンにいる)、
+frameTime 比は Udon の処理時間比ではない。
+
+run `20260924-193745-d8da73` (Corgi) は文書作業中の誤起動で、2 投げ後に `stop` で止めた `BLOCKED`。結果として読まない。
+
+## 2026-09-23 の実測 (BUG-DOG-003 の保留を入れた後)
 
 ### `--mode=netorder`
 

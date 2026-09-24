@@ -29,8 +29,16 @@ namespace KominkaHillside.Editor
         // off the trail end and away from the shade tree. VRCObjectSync respawns to this start position.
         public static readonly Vector2 BallHomeCenter = new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0]+3.5f, KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]+3.5f);
         public const float BallSpacing=0.9f, BallRestHeight=0.07f;
-        // IMP-DOG-005: discs rest in a second row behind the balls (same flat), one per dog; stage 2 wires only these breeds.
-        public static readonly string[] FrisbeeKeys = {"Lab"};
+        // IMP-DOG-005: discs rest in a second row behind the balls (same flat), one per dog.
+        // IMP-DOG-012: all six dogs. Each breed needs its own clips + facts from Frisbee/2 (Build refuses a breed without them).
+        public static readonly string[] FrisbeeKeys = {"Corgi","Pome","Lab","Dachs","Shiba","Samoyed"};
+        // IMP-DOG-012 (Codex M1): every breed in FrisbeeKeys x both clip variants is read through the one typed reader
+        // (KH_FrisbeePrototypeEditor.ReadAllFacts: path, name, breed, vectors, times, maxRootRise, clip length) BEFORE
+        // Build touches the scene, and Build uses exactly these values. A bad or missing breed stops the build whole.
+        static void RequireFrisbeeAssets(out KH_FrisbeePrototypeEditor.Facts[] jump,out KH_FrisbeePrototypeEditor.Facts[] twist)
+        {
+            KH_FrisbeePrototypeEditor.ReadAllFacts(FrisbeeKeys,out jump,out twist);
+        }
         public static readonly Color[] DiscColors = {new Color(.90f,.30f,.25f),new Color(.95f,.60f,.75f),new Color(.95f,.80f,.15f),new Color(.35f,.55f,.95f),new Color(.85f,.45f,.20f),new Color(.90f,.90f,.95f)};
         public static Vector3 DiscHome(int i)
         {
@@ -141,6 +149,7 @@ namespace KominkaHillside.Editor
         {
             Guard();var scene=EditorSceneManager.GetActiveScene();
             if(scene.isDirty)throw new InvalidOperationException("Save scene before the initial walking build.");
+            KH_FrisbeePrototypeEditor.Facts[] frisbeeJump,frisbeeTwist;RequireFrisbeeAssets(out frisbeeJump,out frisbeeTwist); // IMP-DOG-012: before anything in the scene changes
             Directory.CreateDirectory("Temp/KH_DogPort/BeforeWalking");
             if(!File.Exists("Temp/KH_DogPort/BeforeWalking/VRCDefaultWorldScene.unity"))File.Copy(WorldScene,"Temp/KH_DogPort/BeforeWalking/VRCDefaultWorldScene.unity");
             Directory.CreateDirectory(Data);AssetDatabase.Refresh();
@@ -242,14 +251,13 @@ namespace KominkaHillside.Editor
             }
             // IMP-DOG-005: one disc + catcher per breed in FrisbeeKeys, on the same dog that walks and fetches.
             manager.frisbeeCatchers=new KH_FrisbeeCatch[6];act.frisbeeCatchers=new KH_FrisbeeCatch[6];recall.discs=new KH_Frisbee[6];recall.discCatchers=new KH_FrisbeeCatch[6];
-            var facts=KH_FrisbeePrototypeEditor.ReadFacts();var twistFacts=KH_FrisbeePrototypeEditor.ReadFacts("Twist"); // IMP-DOG-008 v4: both clip variants
             for(int i=0;i<6;i++)
             {
                 string key=Keys[i];var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+key);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+key);var p=Find<KD_DogPetController>(root,"KD_PetSystem_"+key);
                 if(Array.IndexOf(FrisbeeKeys,key)<0){w.frisbeeCatch=null;f.frisbeeCatch=null;continue;}
-                // The jump clip, its pose facts and the Animator Jump state exist for one breed so far; adding a key
-                // here without authoring them (Frisbee/2 for that breed) must fail loudly, not copy Lab's mouth.
-                if(key!=KH_FrisbeeJumpClipEditor.Breed)throw new InvalidOperationException("No jump clip / pose facts authored for "+key+" (KH_FrisbeeJumpClipEditor.Breed is "+KH_FrisbeeJumpClipEditor.Breed+").");
+                // IMP-DOG-012: each breed's own pose facts (both clip variants, IMP-DOG-008 v4). RequireFrisbeeAssets
+                // already refused a breed without them, so nothing here can fall back to Lab's mouth.
+                int fk=Array.IndexOf(FrisbeeKeys,key);var facts=frisbeeJump[fk];var twistFacts=frisbeeTwist[fk]; // validated up front (Codex M1)
                 bool created;var disc=KH_FrisbeePrototypeEditor.BuildDisc(root.transform,"KH_Frisbee_"+key,"KH_FrisbeeDisc_"+key,DiscColors[i],out created);
                 foreach(var t in disc.GetComponentsInChildren<Transform>(true))t.gameObject.layer=13;
                 if(created){disc.transform.position=DiscHome(i);disc.transform.rotation=Quaternion.identity;} // human-owned once placed (review M4)
@@ -257,7 +265,7 @@ namespace KominkaHillside.Editor
                 KH_FrisbeePrototypeEditor.ConfigureCatcher(c,disc,roots[i],f.dogAnimator,f.mouthAnchor,facts,twistFacts);
                 // IMP-DOG-008 wave 2: the purchased body hangs off the 追従GIMMICK ParentConstraint and trails the
                 // root by up to 30 deg / 0.5 m while the dog turns and jumps, so the catch plan (root + rotation *
-                // mouthOffsetCatch) misses. Only the frisbee dogs are made rigid; the other five keep the gimmick.
+                // mouthOffsetCatch) misses. Only the frisbee dogs are made rigid (IMP-DOG-012: all six, FrisbeeKeys).
                 KH_FrisbeeJumpClipEditor.MakeBodyRigid(roots[i].gameObject);
                 c.hillsideLeashes=manager;c.fetch=f;c.wander=w;c.activities=act;c.pet=p;c.dogIndex=i;
                 c.playAreaCenter=new Vector3(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,2],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]);
@@ -426,12 +434,8 @@ namespace KominkaHillside.Editor
                 bool actRefs=true;for(int i=0;i<6;i++){var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+Keys[i]);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+Keys[i]);if(w.activities!=act||f.activities!=act)actRefs=false;}
                 Check(actRefs,"all six Wander/Fetch reference the gather authority");
             }
-            // IMP-DOG-005: disc + catcher on the walking dog (stage 2: FrisbeeKeys only), others deliberately unwired.
-            var facts=KH_FrisbeePrototypeEditor.ReadFacts();var clipAsset=AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPath);
-            // IMP-DOG-008 v4: the twist clip is the second member of the family and is checked like the jump.
-            var twistFacts=KH_FrisbeePrototypeEditor.ReadFacts("Twist");var twistClip=AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPathFor("Twist"));
-            var twistVariant=KH_FrisbeeJumpClipEditor.Variants().FirstOrDefault(v=>v.name=="Twist");
-            Check(twistClip!=null&&Mathf.Abs(twistClip.length-twistVariant.EndAt)<0.02f,"twist clip exists, length "+(twistClip==null?"-":twistClip.length.ToString("F3"))+" == "+twistVariant.EndAt.ToString("F3"));
+            // IMP-DOG-005: disc + catcher on the walking dog (FrisbeeKeys; IMP-DOG-012: all six), others deliberately unwired.
+            var descV=desc0();
             Check(KH_FrisbeeCatch.CurveDefault>0f&&KH_FrisbeeCatch.CurveDefault<=0.5f,"flight curve default "+KH_FrisbeeCatch.CurveDefault.ToString("F2")+" in (0, 0.5] 1/m");
             for(int i=0;i<6;i++)
             {
@@ -446,6 +450,18 @@ namespace KominkaHillside.Editor
                 Check(m.dogRoots[i]!=null&&KH_FrisbeeJumpClipEditor.OtherConstraintsUntouched(m.dogRoots[i].gameObject),"every other ParentConstraint under "+key+" is still active (scoped to "+KH_FrisbeeJumpClipEditor.BodyFollowPath+")");
                 var c=ct==null?null:ct.GetComponent<KH_FrisbeeCatch>();var d=dt==null?null:dt.GetComponent<KH_Frisbee>();
                 Check(c!=null&&d!=null,"disc and catcher exist for "+key);if(c==null||d==null)continue;
+                // IMP-DOG-012: this breed's own clips and facts (never Lab's), and the catcher / disc are networked objects.
+                KH_FrisbeePrototypeEditor.Facts[] vj=null,vt=null;string factsErr=null;
+                try{KH_FrisbeePrototypeEditor.ReadAllFacts(new[]{key},out vj,out vt);}catch(Exception e){factsErr=e.Message;}
+                Check(factsErr==null,"frisbee facts JSON (Jump + Twist) valid for "+key+" (name, breed, vectors, times, maxRootRise, clip length)"+(factsErr==null?"":": "+factsErr));if(factsErr!=null)continue;
+                var facts=vj[0];var clipAsset=AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPathFor("Jump",key));
+                // IMP-DOG-008 v4: the twist clip is the second member of the family and is checked like the jump.
+                var twistFacts=vt[0];var twistClip=AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPathFor("Twist",key));
+                var jumpVariant=KH_FrisbeeJumpClipEditor.Variants(key).FirstOrDefault(v=>v.name=="Jump");var twistVariant=KH_FrisbeeJumpClipEditor.Variants(key).FirstOrDefault(v=>v.name=="Twist");
+                Check(clipAsset!=null&&Mathf.Abs(clipAsset.length-jumpVariant.EndAt)<0.02f,"jump clip exists, length "+(clipAsset==null?"-":clipAsset.length.ToString("F3"))+" == "+jumpVariant.EndAt.ToString("F3")+" "+key);
+                Check(twistClip!=null&&Mathf.Abs(twistClip.length-twistVariant.EndAt)<0.02f,"twist clip exists, length "+(twistClip==null?"-":twistClip.length.ToString("F3"))+" == "+twistVariant.EndAt.ToString("F3")+" "+key);
+                Check(descV!=null&&descV.NetworkIDCollection.Any(x=>x.gameObject==ct.gameObject)&&descV.NetworkIDCollection.Any(x=>x.gameObject==dt.gameObject),"catcher and disc have NetworkIDs "+key);
+                Check(d.GetComponent<VRCPickup>()!=null&&d.GetComponent<Renderer>()!=null&&d.GetComponent<Renderer>().sharedMaterial!=null&&d.GetComponent<Renderer>().sharedMaterial.name=="KH_FrisbeeDisc_"+key,"disc wears its own colour KH_FrisbeeDisc_"+key);
                 Check(c.dogRoot==m.dogRoots[i]&&c.dogAnimator==f.dogAnimator&&c.mouthAnchor==f.mouthAnchor&&c.frisbee==d&&d.catcher==c,"catcher shares the walking dog's root/Animator/mouth "+key);
                 Check(c.hillsideLeashes==m&&c.fetch==f&&c.wander==w&&c.activities==act&&c.pet==p&&c.dogIndex==i,"catcher neighbours "+key);
                 Check(w.frisbeeCatch==c&&f.frisbeeCatch==c&&m.frisbeeCatchers[i]==c&&act.frisbeeCatchers[i]==c,"Wander/Fetch/Manager/Gather see the catcher "+key);
@@ -453,6 +469,7 @@ namespace KominkaHillside.Editor
                 // Both clips play from the same minRootRise, so the floor follows the longer rise time (Codex P).
                 float longestRise=Mathf.Max(facts.rise,twistFacts.rise);
                 Check(Vector3.Distance(c.mouthOffsetCatch,facts.mouthOffsetCatch)<1e-4f&&Mathf.Abs(c.clipRiseDuration-facts.rise)<1e-4f&&c.minRootRise>=0.5f*d.gravity*Mathf.Pow(longestRise/1.8f,2f)-1e-3f,"pose facts match the clip JSON, rise floor from the longest rise "+longestRise.ToString("F2")+" s "+key);
+                Check(Mathf.Abs(c.maxRootRise-facts.maxRootRise)<1e-4f,"jump ceiling maxRootRise "+c.maxRootRise.ToString("F2")+" == "+key+"'s facts "+facts.maxRootRise.ToString("F2")+" (Codex D1: per breed, Lab 0.90) "+key);
                 Check(Vector3.Distance(c.mouthOffsetCatchTwist,twistFacts.mouthOffsetCatch)<1e-4f&&Mathf.Abs(c.clipCrouchDurationTwist-twistFacts.crouch)<1e-4f&&Mathf.Abs(c.clipRiseDurationTwist-twistFacts.rise)<1e-4f&&Mathf.Abs(c.clipRecoverDurationTwist-twistFacts.recover)<1e-4f,"twist pose facts match the twist clip JSON "+key);
                 var ac=f.dogAnimator==null?null:f.dogAnimator.runtimeAnimatorController as UnityEditor.Animations.AnimatorController;
                 Check(ac!=null&&ac.parameters.Any(x=>x.name=="Jump")&&ac.layers[0].stateMachine.states.Any(st=>st.state.name=="Jump"&&st.state.motion==clipAsset),"Animator has Jump with the clip "+key);
@@ -470,6 +487,7 @@ namespace KominkaHillside.Editor
                     &&cb.publicVariables.TryGetVariableValue("clipCrouchDuration",out bv)&&(float)bv==c.clipCrouchDuration
                     &&cb.publicVariables.TryGetVariableValue("clipRiseDuration",out bv)&&(float)bv==c.clipRiseDuration
                     &&cb.publicVariables.TryGetVariableValue("clipRecoverDuration",out bv)&&(float)bv==c.clipRecoverDuration
+                    &&cb.publicVariables.TryGetVariableValue("maxRootRise",out bv)&&(float)bv==c.maxRootRise
                     &&cb.publicVariables.TryGetVariableValue("playAreaRadius",out bv)&&(float)bv==c.playAreaRadius
                     &&cb.publicVariables.TryGetVariableValue("playAreaCenter",out bv)&&(Vector3)bv==c.playAreaCenter;
                 Check(factsOk,"catcher backing: all pose facts + play area "+key);
@@ -557,6 +575,14 @@ namespace KominkaHillside.Editor
                 Check(wb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb&&fb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb,"Wander/Fetch backing frisbeeCatch "+key);
                 var sleepBoardV=root.transform.Find("KD_SleepBoard")?.GetComponent<KD_SleepBoard>();
                 Check(f.sleepBoard==sleepBoardV&&f.liveSystem==null,"sleep board = KH_Dogs/KD_SleepBoard when built (IMP-DOG-016, else null) / live unwired for "+key);
+            }
+            // IMP-DOG-012: six discs in the row behind the balls. Placement is human-owned once a disc exists (Build only
+            // places a NEW one at DiscHome(i); the Lab disc keeps wherever it already rests), so this checks that no two
+            // discs sit on top of each other rather than pinning them to DiscHome.
+            {
+                var discPos=FrisbeeKeys.Select(k=>root.transform.Find("KH_Frisbee_"+k)).Where(t=>t!=null).Select(t=>t.position).ToArray();
+                float minGap=float.MaxValue;for(int a=0;a<discPos.Length;a++)for(int b=a+1;b<discPos.Length;b++)minGap=Mathf.Min(minGap,Vector3.Distance(discPos[a],discPos[b]));
+                Check(discPos.Length==FrisbeeKeys.Length&&(discPos.Length<2||minGap>=0.3f),"all "+FrisbeeKeys.Length+" discs present and apart (closest pair "+(discPos.Length<2?"-":minGap.ToString("F2"))+" m >= 0.30)");
             }
             var recallB=root.GetComponentInChildren<KH_ToyRecall>(true);
             Check(recallB!=null&&recallB.discs!=null&&recallB.discs.Length==6&&recallB.discCatchers.Length==6&&Enumerable.Range(0,6).All(i=>{bool want=Array.IndexOf(FrisbeeKeys,Keys[i])>=0;var dt=root.transform.Find("KH_Frisbee_"+Keys[i]);var ct=root.transform.Find("KH_FrisbeeCatch_"+Keys[i]);

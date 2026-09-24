@@ -146,7 +146,7 @@
 | distanceFade | 個人 | 本人の画面のみ | 距離フェード設定 Udon (ローカル) | なし (同期変数 0 本) | PlayerData の 1 文字列 (版\|選択\|色\|開始\|終了\|強度) | 復元後に犬の毛マテリアルへ適用。PC のみ | provisional。**キーは `KH_DistanceFade_v1`** (2026-09-24 改名。古民家は `KD_DistanceFade_v1` で、値は引き継がない)。**実装済み・未検証** (T-011) |
 | deco.slots (犬 × 枠 → 品目) | 共有 | 全員 | 飾り Udon の Owner | Manual 同期の配列 1 本 | インスタンス内のみ。着せた人が退室しても残る。新しいインスタンスは装着なしで始まる | 同期変数から見た目を作る | provisional。同じ犬の枠は最後の変更者以外 60 秒待つ。**実装済み・未検証** (2026-09-24、`KH_Dogs/KD_AccessorySystem` Manual。2 人の確認は未) |
 | petfx.selection | 個人 | 演出は他人にも見える | 撫でFX Udon (ローカル) | 同期変数なし。選択は PlayerFxTag で他人へ配る | 個人の所持・選択として PlayerData | 復元後に選択を戻す | provisional。**実装済み・未検証** (2026-09-24、`KH_Dogs/KD_PetFxBox`。他人への配布・再入室の復元は未確認) |
-| toy.selection | 共有 1 本 または 犬別 (未決定) | 全員 | おもちゃ Udon の Owner | 古民家は同期変数 1 本で全員共通 | インスタンス内のみ | 同期変数から見た目を作る (Late Joiner が他人のボールを書き換えない) | provisional。裏山は犬ごとにボール/ディスクを持つため、共有 1 本か犬別かは [DES-DOG-002](development/issues/DES-DOG-002-toy-behaviour.md) で決める |
+| toy.selection | 共有 1 本 または 犬別 (未決定) | 全員 | おもちゃ Udon の Owner | 古民家は同期変数 1 本で全員共通 | インスタンス内のみ | 同期変数から見た目を作る (Late Joiner が他人のボールを書き換えない) | provisional。裏山は犬ごとにボールとディスクを持つ (ディスクは 2026-09-24 に犬別 6 枚・識別色で 6 匹へ配線、[IMP-DOG-012](development/issues/IMP-DOG-012-frisbee-six-dogs.md))。柄違いの選択を共有 1 本にするか犬別にするかは [DES-DOG-002](development/issues/DES-DOG-002-toy-behaviour.md) で決める |
 | night (ナイトモード ON/OFF) | 個人 | 本人の画面 (全画面乗算 + 空の露出) | `KH_NightMode` (ローカル) | なし (同期変数 0 本) | 保存しない。退室で消える | 常に OFF で開始 | 2026-09-21 初版 (暫定)。ライブの夜とは max 合成 |
 | night.level (ナイトモードの明るさ 0〜100%、provisional) | 個人 | 本人の画面 | `KH_NightMode` (ローカル) | なし | PlayerData に保存 (古民家と同じ「自分だけに反映・次回も復元」) | 保存値、無ければ 0% | 2026-09-23 決定。OFF/ON をスライダーへ作り替える (IMP-UI-001)。未実装 |
 

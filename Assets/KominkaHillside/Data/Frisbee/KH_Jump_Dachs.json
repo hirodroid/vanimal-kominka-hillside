@@ -1,0 +1,11 @@
+{
+  "name": "Jump",
+  "breed": "Dachs",
+  "mouthOffsetCatch": [0.0000, 0.3694, 0.3180],
+  "mouthOffsetStand": [0.0000, 0.2296, 0.3511],
+  "crouch": 0.2000,
+  "rise": 0.3500,
+  "recover": 0.3200,
+  "maxRootRise": 0.4500,
+  "clipLength": 1.2200
+}

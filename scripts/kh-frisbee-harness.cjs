@@ -1,6 +1,6 @@
 // フリスビー ClientSim ハーネスの入口。Unity への呼び出しは必ず scripts/unity-api.sh を通す。
 // 使い方:  node scripts/kh-frisbee-harness.cjs start|status|stop|list
-//            [--variants=0,4] [--shots=flat,low] [--budget=600] [--mode=netorder] [--repeats=2]
+//            [--variants=0,4] [--shots=flat,low] [--budget=600] [--mode=netorder|sixdogs] [--repeats=2] [--breed=Lab]
 //
 //   start   Unity のメニュー Tools/KominkaHillside/Frisbee/7 Harness (ClientSim) を叩くだけ。
 //           返る START_REQUEST_ACCEPTED は「受け付けた」であって PASS ではない。status で結果を見る。
@@ -10,6 +10,11 @@
 //
 //   --mode=netorder は BUG-DOG-003 用。36 投げの代わりに、通知が先で held が後、という
 //   **順序**の 4 ケースを repeats 回 (既定 2) 流す。合否は req の行の順序 (netOk) だけ。
+//
+//   --breed=<Key> (IMP-DOG-012) は試作シーンの犬種レーンを選ぶ (Corgi / Pome / Lab / Dachs / Shiba / Samoyed、既定 Lab)。
+//   Lab 以外のレーンは Lab と同じ配置を x へずらしたもので、投げ表と期待する終わり方は同じ表を使う。
+//   --mode=sixdogs (IMP-DOG-012) は負荷測定。各周で Lab 1 匹 → 6 匹同時 に flat を投げ、同じ区間の frameTime
+//   (上限を外した値)・描画コール数・計画器の候補探索回数を並べる。repeats 周 (既定 2)。
 const fs = require('fs');
 const path = require('path');
 const cp = require('child_process');
@@ -29,6 +34,8 @@ const SHOTS = [
   { name: 'far', speed: 9, elevationDeg: 15, allowed: ['caught'], expectKind: 'jump', note: '遠投。走って追いついて跳ぶ' },
   { name: 'side', speed: 7, elevationDeg: 10, sideDeg: 25, allowed: ['caught', 'ground'], expectKind: 'any', note: '横 25 度 (round 5)。回り込みと横からの踏み切りを通す。合否ではなく etaErr を横の幾何でも採るための投げ' },
 ];
+// IMP-DOG-012: 試作シーンのレーン (KH_FrisbeePrototypeEditor.LaneBreeds = KH_FrisbeeJumpClipEditor.Breeds と同じ順)。
+const BREEDS = ['Corgi', 'Pome', 'Lab', 'Dachs', 'Shiba', 'Samoyed'];
 const VARIANTS = [
   { v: 0, name: 'Normal' }, { v: 1, name: 'RunInSide' }, { v: 2, name: 'RunInFar' },
   { v: 3, name: 'RunInBeside' }, { v: 4, name: 'Twist' }, { v: 5, name: 'Curve' },
@@ -132,14 +139,22 @@ function start() {
   fs.mkdirSync(base, { recursive: true });
   try { fs.unlinkSync(`${base}/stop.flag`); } catch (_) { /* ignore */ }
   const mode = arg('mode') || 'default';
-  if (mode !== 'default' && mode !== 'netorder') throw new Error('--mode must be default | netorder');
+  if (mode !== 'default' && mode !== 'netorder' && mode !== 'sixdogs') throw new Error('--mode must be default | netorder | sixdogs');
+  const breed = arg('breed') || 'Lab';
+  if (!BREEDS.includes(breed)) throw new Error('--breed must be one of ' + BREEDS.join(' | '));
+  if (mode === 'sixdogs' && arg('breed')) throw new Error('--mode=sixdogs throws every lane; --breed does not apply');
   const options = {
     globalTimeoutSeconds: Number(arg('budget')) || 0,
     variants: arg('variants'),
     shots: arg('shots'),
-    // Unity 側は mode が "netorder" のときだけ順序ケースへ分岐する。空 / "default" は従来どおり。
-    mode: mode === 'netorder' ? 'netorder' : '',
-    repeats: mode === 'netorder' ? (Number(arg('repeats')) || 2) : 0,
+    // Unity 側の分岐: "netorder" = 順序ケース (v0 / flat、合否は netOk)、"sixdogs" = 負荷測定 (IMP-DOG-012。
+    // v0 / flat 固定で --variants / --shots は効かない。合否は犬ごとの捕獲 + 完了 (state で判定) だけで、
+    // 取り方・動きの質は見ない)、空 / "default" = 従来の投げ表 (4 条件)。
+    mode: mode === 'netorder' || mode === 'sixdogs' ? mode : '',
+    // netorder はケース表の周回数、sixdogs は (Lab 1 匹 + 6 匹同時) の周回数。既定モードでは使わない。
+    repeats: mode === 'netorder' || mode === 'sixdogs' ? (Number(arg('repeats')) || 2) : 0,
+    // IMP-DOG-012: 投げるレーン (既定 Lab)。default と netorder で効く。sixdogs は全レーンを投げるので空。
+    breed: mode === 'sixdogs' ? '' : breed,
   };
   fs.writeFileSync(`${base}/options.json`, JSON.stringify(options, null, 2));
   const menu = unityMenu(MENU + '7 Harness (ClientSim)');
@@ -149,11 +164,15 @@ function start() {
     options,
     plan: mode === 'netorder'
       ? `${NET_CASES.length} cases x ${options.repeats} repeats = ${NET_CASES.length * options.repeats} throws (${NET_CASES.map(c => c.name).join(', ')})`
-      : undefined,
+      : mode === 'sixdogs'
+        ? `${options.repeats} rounds x (Lab only + ${BREEDS.length} dogs at once) = ${options.repeats * (1 + BREEDS.length)} dog-throws, shot flat, v0`
+        : `lane ${breed}`,
     note: 'Unity が Play へ入り、終わると Edit モードへ戻る。結果は status で読む。受付は PASS ではない。'
       + (mode === 'netorder'
         ? ' netorder は捕り手の debugHeldOverride を 0/1 に切り替えて req の行の順序を測る。捕り手にその変数が無ければ BLOCKED (FAIL ではない)。'
-        : ''),
+        : mode === 'sixdogs'
+          ? ' sixdogs は Play 中だけ Application.targetFrameRate = -1 / QualitySettings.vSyncCount = 0 にし、どの終わり方でも戻して読み直す (frameCapRestored)。試作シーンのレーンが揃っていなければ BLOCKED (Frisbee/4 Build Scene)。'
+          : ' 試作シーンにそのレーンが無ければ BLOCKED (Frisbee/4 Build Scene)。'),
     status_command: 'node scripts/kh-frisbee-harness.cjs status',
   }, null, 2));
 }
@@ -207,9 +226,34 @@ function status() {
     process.exitCode = r.status === 'PASS' ? 0 : 1;
     return;
   }
+  if (r.mode === 'sixdogs') {
+    const six = r.sixdogs || {};
+    console.log(JSON.stringify({
+      runId: r.runId, mode: r.mode, repeats: r.repeats, status: r.status, started: r.started, ended: r.ended, failure: r.failure,
+      running: fs.existsSync(`${base}/journal.json`),
+      throws: `${r.throwsOk}/${throws.length} dog-throws ok (planned ${r.throwsPlanned}); ok = caught (state) + completed`,
+      // 6 匹 / Lab 1 匹 の比。IMP-DOG-012 の負荷の答え (Desktop・上限なし・試作シーン)
+      ratio: six.ratio,
+      frameCap: six.frameCap, frameCapRestored: six.frameCapRestored, playerAt: six.playerAt,
+      rounds: (six.rounds || []).map(x => ({
+        round: x.round, label: x.label, dogs: x.dogs, ok: x.ok,
+        flight: `${x.flight.frames}f ${x.flight.seconds}s mean ${x.flight.meanMs.toFixed(2)} p95 ${x.flight.p95Ms.toFixed(2)} max ${x.flight.maxMs.toFixed(2)} ms, batches ${x.flight.meanBatches.toFixed(0)} (max ${x.flight.maxBatches.toFixed(0)}), drawCalls ${x.flight.meanDrawCalls.toFixed(0)}, setPass ${x.flight.meanSetPass.toFixed(0)}`,
+        cycle: `${x.cycle.frames}f ${x.cycle.seconds}s mean ${x.cycle.meanMs.toFixed(2)} p95 ${x.cycle.p95Ms.toFixed(2)} max ${x.cycle.maxMs.toFixed(2)} ms`,
+        planner: `scans ${x.planScans} evaluations ${x.planEvaluations} hookTries ${x.planHookTries}`,
+        perDog: (x.perDog || []).map(d => `${d.breed}: ${d.ok ? 'ok' : 'NG'} kind=${d.kind || '-'} caught=${d.caught} completed=${d.completed} ${d.seconds}s states=${d.states} eval=${d.planEvaluations}`),
+      })),
+      cannotSay: six.cannotSay,
+      errors: r.errors,
+      sceneFileUnchanged: r.sceneFileUnchanged,
+      report: `${base}/${r.runId}/report.json`,
+    }, null, 2));
+    process.exitCode = r.status === 'PASS' ? 0 : 1;
+    return;
+  }
   const summary = {
     runId: r.runId,
     mode: r.mode || 'default',
+    breed: r.breed || 'Lab',
     status: r.status,
     started: r.started,
     ended: r.ended,
@@ -253,6 +297,14 @@ function list() {
   console.log(JSON.stringify({
     scene: 'Assets/Scenes/KH_FrisbeePrototype.unity',
     menu: MENU + '7 Harness (ClientSim)',
+    breeds: { flag: '--breed=<Key> (既定 Lab)', lanes: BREEDS, note: 'IMP-DOG-012: 試作シーンは犬種ごとのレーン (x に 12 m ずつ)。Lab レーンは従来の名前と座標のまま。Lab 以外は投げの前にプレイヤーをレーンの出現位置へ移す (犬は投げた人へ持ち帰るため)' },
+    sixdogs: {
+      flag: 'node scripts/kh-frisbee-harness.cjs start --mode=sixdogs [--repeats=2]',
+      what: '各周: Lab 1 匹だけ (参考値) → 6 匹同時 に flat (v0) を投げる。投げてから 4 s (flight) と全員が Idle へ戻るまで (cycle) の frameTime・UnityStats の描画コール数、捕り手の _planScans / _planEvaluations / _planHookTries の増分を記録',
+      pass: '犬ごとに state で「取れた (JumpCarry か、Pickup を経ずに Return)」と「一周 (動いた後に Idle)」。全員 ok・Console エラー 0・frameCapRestored が OK: で PASS。取り方の内訳と動きの質は判定しない (行が犬を名乗らない)',
+      frameCap: 'Application.targetFrameRate = -1 / QualitySettings.vSyncCount = 0 で測り、終了時に戻して読み直す',
+      cannotSay: '試作シーンの値 (本シーンの地形・草木・他の犬の徘徊は含まない)。Desktop の frameTime は VR の予測にならない (比率と描画コール数だけ使う)',
+    },
     variants: VARIANTS,
     shots: SHOTS,
     throwsPlanned: VARIANTS.length * SHOTS.length,
@@ -301,7 +353,7 @@ try {
   else if (command === 'stop') stop();
   else if (command === 'status') status();
   else if (command === 'list') list();
-  else throw new Error('Use start | status | stop | list  [--variants=0,4] [--shots=flat,low] [--budget=600] [--mode=netorder] [--repeats=2]');
+  else throw new Error('Use start | status | stop | list  [--variants=0,4] [--shots=flat,low] [--budget=600] [--mode=netorder|sixdogs] [--repeats=2] [--breed=Lab]');
 } catch (e) {
   console.error(e.message);
   process.exitCode = 1;

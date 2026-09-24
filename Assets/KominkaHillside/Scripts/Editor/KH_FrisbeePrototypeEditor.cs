@@ -16,7 +16,8 @@ using VRC.Udon;
 namespace KominkaHillside.Editor
 {
     // IMP-DOG-005 prototype scene: flat ground, one dog (Lab, copied from the port source without its
-    // walk/fetch/pet systems), one disc, a fixed-throw stand and a recall button. Everything here is
+    // walk/fetch/pet systems), one disc, a fixed-throw stand and a recall button. IMP-DOG-012: one such lane per
+    // breed (LaneBreeds), the Lab lane unchanged and the others shifted along x (LaneOffsetX). Everything here is
     // code-owned and rebuilt on every Build; nothing in the hillside world scene is touched.
     public static class KH_FrisbeePrototypeEditor
     {
@@ -26,6 +27,21 @@ namespace KominkaHillside.Editor
         const string Data = "Assets/KominkaHillside/Data/Frisbee";
         static readonly string[] Programs = { "KH_Frisbee", "KH_FrisbeeCatch", "KH_FrisbeeLauncher" };
         const int DogLayer = 14, PickupLayer = 13;
+
+        // IMP-DOG-012: one lane per breed, side by side along x. The Lab lane is the original prototype, unmoved and
+        // with its original object names (KH_Frisbee / KH_FrisbeeStand / KH_FrisbeeRecall / KH_FrisbeeVariant / Wall),
+        // so earlier harness records stay comparable; every other lane is the same layout shifted by LaneSpacing and
+        // its objects carry the breed as a suffix. The ClientSim harness (--breed / --mode=sixdogs) finds them by
+        // these names. 12 m keeps a side throw (about 6 m of drift) and the dog chasing it out of the next lane.
+        public static readonly string[] LaneBreeds = KH_FrisbeeJumpClipEditor.Breeds;
+        public const float LaneSpacing = 12f;
+        public static float LaneOffsetX(string breed)
+        {
+            int i = Array.IndexOf(LaneBreeds, breed), lab = Array.IndexOf(LaneBreeds, KH_FrisbeeJumpClipEditor.Breed);
+            if (i < 0) throw new InvalidOperationException("No prototype lane for breed " + breed);
+            return (i - lab) * LaneSpacing;
+        }
+        public static string LaneName(string baseName, string breed) { return breed == KH_FrisbeeJumpClipEditor.Breed ? baseName : baseName + "_" + breed; }
 
         static void Report(string name, string text) { Directory.CreateDirectory(KH_FrisbeeJumpClipEditor.Output); File.WriteAllText(KH_FrisbeeJumpClipEditor.Output + "/" + name + ".txt", text); Debug.Log("[KH Frisbee] " + text); }
 
@@ -113,73 +129,88 @@ namespace KominkaHillside.Editor
 
         static void BuildInto(Scene scene)
         {
-            var facts = ReadFacts();
-            var twistFacts = ReadFacts("Twist");
+            // IMP-DOG-012: one lane per breed (LaneBreeds). Every breed's facts are read BEFORE anything is built, so
+            // a breed without its Frisbee/2 output stops the build instead of leaving the scene half-made.
+            Facts[] laneFacts, laneTwist;
+            ReadAllFacts(LaneBreeds, out laneFacts, out laneTwist);   // Codex M1: typed + validated, all breeds, before any change
+            var facts = laneFacts[Array.IndexOf(LaneBreeds, KH_FrisbeeJumpClipEditor.Breed)];
 
-            // World: descriptor, spawn, flat ground, one wall for the "hits a wall" case.
+            // World: descriptor, spawn, flat ground, one wall per lane for the "hits a wall" case.
             var world = Obj("KH_FrisbeeWorld");
             var desc = world.GetComponent<VRCSceneDescriptor>(); if (desc == null) desc = world.AddComponent<VRCSceneDescriptor>();
             var spawn = Obj("Spawn", world.transform).transform; spawn.position = new Vector3(0f, 0f, -6f); spawn.rotation = Quaternion.identity;
             desc.spawns = new[] { spawn }; desc.RespawnHeightY = -20f; desc.spawnOrder = VRC_SceneDescriptor.SpawnOrder.First;
-            var ground = Prim("Ground", PrimitiveType.Plane, world.transform); ground.transform.localScale = Vector3.one * 8f; ground.isStatic = true;
+            // IMP-DOG-012: the plane grows from 80 m to 120 m square so the outer lanes (x -24 .. +36, side throws drift
+            // about 6 m further) still have ground under them. Same height (y = 0) and centre, so the Lab lane is unchanged.
+            var ground = Prim("Ground", PrimitiveType.Plane, world.transform); ground.transform.localScale = Vector3.one * 12f; ground.isStatic = true;
             ground.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeGround", new Color(.45f, .58f, .32f));
-            var wall = Prim("Wall", PrimitiveType.Cube, world.transform); wall.transform.position = new Vector3(0f, 1.25f, 22f); wall.transform.localScale = new Vector3(16f, 2.5f, .3f); wall.isStatic = true;
-            wall.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeWall", new Color(.6f, .55f, .5f));
 
-            // Dog: copy of the port-source Lab, without walk/fetch/pet behaviours (they belong to the world scene).
             var dogs = Obj("KH_FrisbeeDogs");
-            var dogT = dogs.transform.Find("KD_Dog_Lab");
-            if (dogT == null)
-            {
-                var dog = KH_FrisbeeJumpClipEditor.CloneSourceDog(scene);
-                dog.transform.SetParent(dogs.transform, true); dogT = dog.transform;
-                foreach (var u in dog.GetComponentsInChildren<UdonSharpBehaviour>(true)) UnityEngine.Object.DestroyImmediate(u);
-                foreach (var u in dog.GetComponentsInChildren<UdonBehaviour>(true)) UnityEngine.Object.DestroyImmediate(u);
-                foreach (var t in dog.GetComponentsInChildren<Transform>(true)) GameObjectUtility.RemoveMonoBehavioursWithMissingScript(t.gameObject);
-            }
-            dogT.SetPositionAndRotation(new Vector3(1.5f, 0f, 6.5f), Quaternion.Euler(0f, 180f, 0f)); // beside where the fixed throw comes down (z 6-8), watching the stand (user, 2026-09-21)
-            foreach (var t in dogT.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = DogLayer;
-            if (dogT.GetComponent<VRCObjectSync>() == null) dogT.gameObject.AddComponent<VRCObjectSync>();
-            var animator = dogT.GetComponentInChildren<Animator>(true);
-            if (animator == null) throw new InvalidOperationException("Dog has no Animator");
-            var mouth = dogT.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == KH_FrisbeeJumpClipEditor.MouthAnchorName);
-            if (mouth == null) throw new InvalidOperationException("Dog has no " + KH_FrisbeeJumpClipEditor.MouthAnchorName);
-
-            // Stand (fixed throw) and recall button.
             var props = Obj("KH_FrisbeeProps");
-            var stand = Prim("KH_FrisbeeStand", PrimitiveType.Cube, props.transform);
-            stand.transform.position = new Vector3(0f, .5f, -4f); stand.transform.localScale = new Vector3(.4f, 1f, .4f);
-            stand.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeStand", new Color(.35f, .25f, .18f));
-            var muzzle = Obj("Muzzle", stand.transform).transform; muzzle.localPosition = new Vector3(0f, .75f, 0f); muzzle.localRotation = Quaternion.identity; muzzle.localScale = new Vector3(2.5f, 1f, 2.5f);
-            var recall = Prim("KH_FrisbeeRecall", PrimitiveType.Cube, props.transform);
-            recall.transform.position = new Vector3(-.8f, .35f, -4f); recall.transform.localScale = new Vector3(.3f, .7f, .3f);
-            recall.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeRecall", new Color(.25f, .35f, .5f));
+            for (int li = 0; li < LaneBreeds.Length; li++)
+            {
+                string breed = LaneBreeds[li];
+                bool lab = breed == KH_FrisbeeJumpClipEditor.Breed;
+                Vector3 lane = new Vector3(LaneOffsetX(breed), 0f, 0f);
+                var wall = Prim(LaneName("Wall", breed), PrimitiveType.Cube, world.transform); wall.transform.position = lane + new Vector3(0f, 1.25f, 22f); wall.transform.localScale = new Vector3(16f, 2.5f, .3f); wall.isStatic = true;
+                wall.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeWall", new Color(.6f, .55f, .5f));
 
-            // Disc + catcher: the same helpers place the Lab disc in the world scene (KH_DogWalkingEditor).
-            bool discCreated;
-            var disc = BuildDisc(props.transform, "KH_Frisbee", "KH_FrisbeeDisc", new Color(1f, .5f, .15f), out discCreated);
-            disc.transform.position = muzzle.position; disc.transform.rotation = Quaternion.identity; // prototype: always on the stand
-            var catcher = Add<KH_FrisbeeCatch>(Obj("KH_FrisbeeCatch_Lab", dogs.transform), true);
-            ConfigureCatcher(catcher, disc, dogT, animator, mouth, facts, twistFacts);
-            // IMP-DOG-008 wave 2: the purchased body hangs off the 追従GIMMICK ParentConstraint and trails the root
-            // by up to 30 deg / 0.5 m while the dog turns and jumps, which put the real mouth 1.3 m from where the
-            // plan (root + rotation * mouthOffsetCatch) put it. Idempotent, so a rebuild on an existing dog is fine.
-            KH_FrisbeeJumpClipEditor.MakeBodyRigid(dogT.gameObject);
-            var launcher = Add<KH_FrisbeeLauncher>(stand); launcher.frisbee = disc; launcher.catcher = catcher; launcher.muzzle = muzzle; launcher.recallOnly = false;
-            UdonSharpEditorUtility.GetBackingUdonBehaviour(launcher).InteractionText = "Throw (fixed)";
-            var recaller = Add<KH_FrisbeeLauncher>(recall); recaller.frisbee = disc; recaller.catcher = catcher; recaller.muzzle = muzzle; recaller.recallOnly = true;
-            UdonSharpEditorUtility.GetBackingUdonBehaviour(recaller).InteractionText = "Recall disc";
-            // IMP-DOG-008: the prototype scene has no hand menu, so a third cube cycles the variant.
-            var cycle = Prim("KH_FrisbeeVariant", PrimitiveType.Cube, props.transform);
-            cycle.transform.position = new Vector3(-1.6f, .35f, -4f); cycle.transform.localScale = new Vector3(.3f, .7f, .3f);
-            cycle.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeVariant", new Color(.45f, .35f, .22f));
-            var cycler = Add<KH_FrisbeeLauncher>(cycle); cycler.frisbee = disc; cycler.catcher = catcher; cycler.muzzle = muzzle; cycler.recallOnly = false; cycler.cycleVariant = true;
-            UdonSharpEditorUtility.GetBackingUdonBehaviour(cycler).InteractionText = "Next variant";
+                // Dog: copy of the port-source dog of this breed, without walk/fetch/pet behaviours (they belong to the world scene).
+                var dogT = dogs.transform.Find("KD_Dog_" + breed);
+                if (dogT == null)
+                {
+                    var dog = KH_FrisbeeJumpClipEditor.CloneSourceDog(scene, breed);
+                    dog.transform.SetParent(dogs.transform, true); dogT = dog.transform;
+                    foreach (var u in dog.GetComponentsInChildren<UdonSharpBehaviour>(true)) UnityEngine.Object.DestroyImmediate(u);
+                    foreach (var u in dog.GetComponentsInChildren<UdonBehaviour>(true)) UnityEngine.Object.DestroyImmediate(u);
+                    foreach (var t in dog.GetComponentsInChildren<Transform>(true)) GameObjectUtility.RemoveMonoBehavioursWithMissingScript(t.gameObject);
+                }
+                dogT.SetPositionAndRotation(lane + new Vector3(1.5f, 0f, 6.5f), Quaternion.Euler(0f, 180f, 0f)); // beside where the fixed throw comes down (z 6-8), watching the stand (user, 2026-09-21)
+                foreach (var t in dogT.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = DogLayer;
+                if (dogT.GetComponent<VRCObjectSync>() == null) dogT.gameObject.AddComponent<VRCObjectSync>();
+                var animator = dogT.GetComponentInChildren<Animator>(true);
+                if (animator == null) throw new InvalidOperationException("Dog " + breed + " has no Animator");
+                var mouth = dogT.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == KH_FrisbeeJumpClipEditor.MouthAnchorName);
+                if (mouth == null) throw new InvalidOperationException("Dog " + breed + " has no " + KH_FrisbeeJumpClipEditor.MouthAnchorName);
+
+                // Stand (fixed throw) and recall button.
+                var stand = Prim(LaneName("KH_FrisbeeStand", breed), PrimitiveType.Cube, props.transform);
+                stand.transform.position = lane + new Vector3(0f, .5f, -4f); stand.transform.localScale = new Vector3(.4f, 1f, .4f);
+                stand.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeStand", new Color(.35f, .25f, .18f));
+                var muzzle = Obj("Muzzle", stand.transform).transform; muzzle.localPosition = new Vector3(0f, .75f, 0f); muzzle.localRotation = Quaternion.identity; muzzle.localScale = new Vector3(2.5f, 1f, 2.5f);
+                var recall = Prim(LaneName("KH_FrisbeeRecall", breed), PrimitiveType.Cube, props.transform);
+                recall.transform.position = lane + new Vector3(-.8f, .35f, -4f); recall.transform.localScale = new Vector3(.3f, .7f, .3f);
+                recall.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeRecall", new Color(.25f, .35f, .5f));
+
+                // Disc + catcher: the same helpers place the discs in the world scene (KH_DogWalkingEditor). The Lab lane
+                // keeps its orange KH_FrisbeeDisc; the other lanes wear the world scene's colour for that dog.
+                bool discCreated;
+                int colour = Array.IndexOf(KH_DogWalkingEditor.FrisbeeKeys, breed);
+                var disc = lab ? BuildDisc(props.transform, "KH_Frisbee", "KH_FrisbeeDisc", new Color(1f, .5f, .15f), out discCreated)
+                    : BuildDisc(props.transform, LaneName("KH_Frisbee", breed), "KH_FrisbeeDisc_" + breed, KH_DogWalkingEditor.DiscColors[colour < 0 ? 0 : colour], out discCreated);
+                disc.transform.position = muzzle.position; disc.transform.rotation = Quaternion.identity; // prototype: always on the stand
+                var catcher = Add<KH_FrisbeeCatch>(Obj("KH_FrisbeeCatch_" + breed, dogs.transform), true);
+                ConfigureCatcher(catcher, disc, dogT, animator, mouth, laneFacts[li], laneTwist[li]);
+                // IMP-DOG-008 wave 2: the purchased body hangs off the 追従GIMMICK ParentConstraint and trails the root
+                // by up to 30 deg / 0.5 m while the dog turns and jumps, which put the real mouth 1.3 m from where the
+                // plan (root + rotation * mouthOffsetCatch) put it. Idempotent, so a rebuild on an existing dog is fine.
+                KH_FrisbeeJumpClipEditor.MakeBodyRigid(dogT.gameObject);
+                var launcher = Add<KH_FrisbeeLauncher>(stand); launcher.frisbee = disc; launcher.catcher = catcher; launcher.muzzle = muzzle; launcher.recallOnly = false;
+                UdonSharpEditorUtility.GetBackingUdonBehaviour(launcher).InteractionText = "Throw (fixed)";
+                var recaller = Add<KH_FrisbeeLauncher>(recall); recaller.frisbee = disc; recaller.catcher = catcher; recaller.muzzle = muzzle; recaller.recallOnly = true;
+                UdonSharpEditorUtility.GetBackingUdonBehaviour(recaller).InteractionText = "Recall disc";
+                // IMP-DOG-008: the prototype scene has no hand menu, so a third cube cycles the variant.
+                var cycle = Prim(LaneName("KH_FrisbeeVariant", breed), PrimitiveType.Cube, props.transform);
+                cycle.transform.position = lane + new Vector3(-1.6f, .35f, -4f); cycle.transform.localScale = new Vector3(.3f, .7f, .3f);
+                cycle.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeVariant", new Color(.45f, .35f, .22f));
+                var cycler = Add<KH_FrisbeeLauncher>(cycle); cycler.frisbee = disc; cycler.catcher = catcher; cycler.muzzle = muzzle; cycler.recallOnly = false; cycler.cycleVariant = true;
+                UdonSharpEditorUtility.GetBackingUdonBehaviour(cycler).InteractionText = "Next variant";
+            }
 
             foreach (var u in scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<UdonSharpBehaviour>(true))) { UdonSharpEditorUtility.CopyProxyToUdon(u); EditorUtility.SetDirty(u); }
             int dropped = desc.NetworkIDCollection.RemoveAll(x => x.gameObject == null && (x.SerializedTypeNames == null || x.SerializedTypeNames.Count == 0));
             EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); AssetDatabase.SaveAssets();
-            Report("build-scene", "scene=" + ScenePath + " dog=KD_Dog_Lab mouthOffsetCatch=" + facts.mouthOffsetCatch.ToString("F3") + " droppedNetworkIds=" + dropped + "; run 5 Verify.");
+            Report("build-scene", "scene=" + ScenePath + " lanes=" + string.Join(",", LaneBreeds) + " (Lab mouthOffsetCatch=" + facts.mouthOffsetCatch.ToString("F3") + ") droppedNetworkIds=" + dropped + "; run 5 Verify.");
         }
 
         // ---------------------------------------------------------------- shared with the world-scene builder
@@ -271,7 +302,9 @@ namespace KominkaHillside.Editor
             catcher.maxRunAnimScale = 2.5f;
             catcher.noticeDelay = 0.1f; catcher.settleTime = 0.2f; catcher.returnRunSpeed = 4.5f;
             catcher.turnSpeedDegPerSec = 240f; catcher.walkTurnDegPerSec = 180f; catcher.standTurnDegPerSec = 120f;
-            catcher.maxRootRise = 0.9f;  // how high the standing jump reaches; also bounds the clip playback below
+            // IMP-DOG-012 (Codex D1): how high the standing jump reaches is the BREED's ceiling from its facts (Lab 0.90,
+            // the others scaled by the standing mouth height, floor 0.30; F1 Frisbee/2). Also bounds the clip playback below.
+            catcher.maxRootRise = facts.maxRootRise;
             catcher.standoffDistance = 8f;
             // IMP-DOG-013 (user 2026-09-22 "受け取ったらすぐ走っていってしまう"): the よしよし window before the
             // stand-off run. Code-owned like the rest of the Ready geometry - the pair only reads as "it waited
@@ -285,6 +318,8 @@ namespace KominkaHillside.Editor
             // floor is a height, computed from the clip's rise TIME).
             float riseFloor = 0.5f * disc.gravity * Mathf.Pow(Mathf.Max(facts.rise, twist.rise) / 1.8f, 2f);
             if (catcher.minRootRise < riseFloor) catcher.minRootRise = Mathf.Ceil(riseFloor * 100f) / 100f;
+            // IMP-DOG-012: a small breed's ceiling must still leave a band of jumps above the playback floor.
+            if (catcher.maxRootRise <= catcher.minRootRise) throw new InvalidOperationException(catcher.name + ": maxRootRise " + catcher.maxRootRise + " <= minRootRise " + catcher.minRootRise + " (no jump band left)");
             disc.catcher = catcher;
         }
 
@@ -303,28 +338,103 @@ namespace KominkaHillside.Editor
             return true;
         }
 
-        public struct Facts { public Vector3 mouthOffsetCatch, mouthOffsetStand; public float crouch, rise, recover, clipLength; }
+        // name / breed are what the JSON itself says (checked against the path it was read from). maxRootRise is the
+        // breed's own jump ceiling (IMP-DOG-012, written by F1's Frisbee/2): ConfigureCatcher copies it to the catcher.
+        public struct Facts { public string name, breed; public Vector3 mouthOffsetCatch, mouthOffsetStand; public float crouch, rise, recover, clipLength, maxRootRise; }
 
         public static Facts ReadFacts() { return ReadFacts("Jump"); }
 
         // One clip variant's facts (KH_FrisbeeJumpClipEditor.Variants(): "Jump", "Twist").
-        public static Facts ReadFacts(string name)
+        public static Facts ReadFacts(string name) { return ReadFacts(name, KH_FrisbeeJumpClipEditor.Breed); }
+
+        // IMP-DOG-012 (Codex M1): the one typed reader for Data/Frisbee/KH_{name}_{breed}.json. It throws unless
+        // the file exists, names THIS variant and THIS breed (a Lab file copied onto the Pome path is refused), has
+        // every key with 3-component vectors, and carries plausible times and a maxRootRise (no fall-back value).
+        public static Facts ReadFacts(string name, string breed)
         {
-            string path = KH_FrisbeeJumpClipEditor.FactsPathFor(name);
-            if (!File.Exists(path)) throw new InvalidOperationException("Run 2 Build Jump Clip first (" + path + ")");
+            string path = KH_FrisbeeJumpClipEditor.FactsPathFor(name, breed);
+            if (!File.Exists(path)) throw new InvalidOperationException("Run 2 Build Jump Clip first for " + breed + " (" + path + ")");
             string s = File.ReadAllText(path);
+            var ic = System.Globalization.CultureInfo.InvariantCulture;
+            int KeyAt(string key)
+            {
+                int i = s.IndexOf("\"" + key + "\"", StringComparison.Ordinal);
+                if (i < 0) throw new InvalidOperationException(path + ": key \"" + key + "\" missing (re-run Frisbee/2 for " + breed + ")");
+                return i + key.Length + 2;
+            }
+            string Str(string key)
+            {
+                int i = KeyAt(key); int a = s.IndexOf('"', s.IndexOf(':', i) + 1), b = a < 0 ? -1 : s.IndexOf('"', a + 1);
+                if (a < 0 || b < 0) throw new InvalidOperationException(path + ": \"" + key + "\" is not a string");
+                return s.Substring(a + 1, b - a - 1);
+            }
             Vector3 Vec(string key)
             {
-                int i = s.IndexOf("\"" + key + "\"", StringComparison.Ordinal); int a = s.IndexOf('[', i), b = s.IndexOf(']', a);
-                var parts = s.Substring(a + 1, b - a - 1).Split(',').Select(x => float.Parse(x.Trim(), System.Globalization.CultureInfo.InvariantCulture)).ToArray();
-                return new Vector3(parts[0], parts[1], parts[2]);
+                int i = KeyAt(key); int a = s.IndexOf('[', i), b = a < 0 ? -1 : s.IndexOf(']', a);
+                if (a < 0 || b < 0) throw new InvalidOperationException(path + ": \"" + key + "\" is not an array");
+                var parts = s.Substring(a + 1, b - a - 1).Split(',');
+                if (parts.Length != 3) throw new InvalidOperationException(path + ": \"" + key + "\" has " + parts.Length + " components, expected 3");
+                var v = new float[3];
+                for (int k = 0; k < 3; k++)
+                    if (!float.TryParse(parts[k].Trim(), System.Globalization.NumberStyles.Float, ic, out v[k]) || float.IsNaN(v[k]) || float.IsInfinity(v[k]))
+                        throw new InvalidOperationException(path + ": \"" + key + "\"[" + k + "] is not a finite number");
+                return new Vector3(v[0], v[1], v[2]);
             }
             float Num(string key)
             {
-                int i = s.IndexOf("\"" + key + "\"", StringComparison.Ordinal); int a = s.IndexOf(':', i) + 1; int b = s.IndexOfAny(new[] { ',', '\n', '}' }, a);
-                return float.Parse(s.Substring(a, b - a).Trim(), System.Globalization.CultureInfo.InvariantCulture);
+                int i = KeyAt(key); int a = s.IndexOf(':', i) + 1; int b = s.IndexOfAny(new[] { ',', '\n', '}' }, a);
+                float v;
+                if (a <= 0 || b < 0 || !float.TryParse(s.Substring(a, b - a).Trim(), System.Globalization.NumberStyles.Float, ic, out v) || float.IsNaN(v) || float.IsInfinity(v))
+                    throw new InvalidOperationException(path + ": \"" + key + "\" is not a finite number");
+                return v;
             }
-            return new Facts { mouthOffsetCatch = Vec("mouthOffsetCatch"), mouthOffsetStand = Vec("mouthOffsetStand"), crouch = Num("crouch"), rise = Num("rise"), recover = Num("recover"), clipLength = Num("clipLength") };
+            var f = new Facts
+            {
+                name = Str("name"), breed = Str("breed"),
+                mouthOffsetCatch = Vec("mouthOffsetCatch"), mouthOffsetStand = Vec("mouthOffsetStand"),
+                crouch = Num("crouch"), rise = Num("rise"), recover = Num("recover"), clipLength = Num("clipLength"), maxRootRise = Num("maxRootRise"),
+            };
+            var bad = new System.Collections.Generic.List<string>();
+            if (f.name != name) bad.Add("name \"" + f.name + "\" != \"" + name + "\"");
+            if (f.breed != breed) bad.Add("breed \"" + f.breed + "\" != \"" + breed + "\"");
+            if (f.crouch <= 0.05f || f.crouch > 1f) bad.Add("crouch " + f.crouch + " not in (0.05, 1]");
+            if (f.rise <= 0.05f || f.rise > 1f) bad.Add("rise " + f.rise + " not in (0.05, 1]");
+            if (f.recover <= 0.05f || f.recover > 1.5f) bad.Add("recover " + f.recover + " not in (0.05, 1.5]");
+            float expectLen = f.crouch + 2f * f.rise + f.recover;
+            if (Mathf.Abs(f.clipLength - expectLen) > 0.02f) bad.Add("clipLength " + f.clipLength + " != crouch + 2 rise + recover " + expectLen.ToString("F3"));
+            // The ceiling decision (2026-09-24): Lab keeps 0.90, the others scale by the standing mouth height, floor 0.30.
+            if (f.maxRootRise < MinMaxRootRise - 1e-3f || f.maxRootRise > MaxMaxRootRise) bad.Add("maxRootRise " + f.maxRootRise + " not in [" + MinMaxRootRise + ", " + MaxMaxRootRise + "]");
+            if (f.mouthOffsetStand.y <= 0f || f.mouthOffsetCatch.y <= 0f) bad.Add("mouth heights must be above the root (stand y " + f.mouthOffsetStand.y + ", catch y " + f.mouthOffsetCatch.y + ")");
+            if (bad.Count > 0) throw new InvalidOperationException(path + ": " + string.Join("; ", bad));
+            return f;
+        }
+
+        // Bounds on a breed's jump ceiling as read from its facts (0.30 = the floor of the ceiling rule, 1.5 m = no dog).
+        public const float MinMaxRootRise = 0.30f, MaxMaxRootRise = 1.5f;
+
+        // IMP-DOG-012 (Codex M1): every breed x both variants, read and validated BEFORE a builder touches its scene.
+        // All problems are collected and thrown once. The Jump and Twist files of a breed must agree on maxRootRise
+        // (the catcher has one ceiling) and on the standing mouth (both clips start from the same idle pose).
+        public static void ReadAllFacts(string[] breeds, out Facts[] jump, out Facts[] twist)
+        {
+            jump = new Facts[breeds.Length]; twist = new Facts[breeds.Length];
+            var bad = new System.Collections.Generic.List<string>();
+            for (int i = 0; i < breeds.Length; i++)
+            {
+                try { jump[i] = ReadFacts("Jump", breeds[i]); } catch (Exception e) { bad.Add(e.Message); continue; }
+                try { twist[i] = ReadFacts("Twist", breeds[i]); } catch (Exception e) { bad.Add(e.Message); continue; }
+                if (Mathf.Abs(jump[i].maxRootRise - twist[i].maxRootRise) > 1e-3f)
+                    bad.Add(breeds[i] + ": Jump maxRootRise " + jump[i].maxRootRise + " != Twist " + twist[i].maxRootRise);
+                if (Vector3.Distance(jump[i].mouthOffsetStand, twist[i].mouthOffsetStand) > 1e-3f)
+                    bad.Add(breeds[i] + ": Jump and Twist disagree on mouthOffsetStand");
+                var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPathFor("Jump", breeds[i]));
+                var tclip = AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPathFor("Twist", breeds[i]));
+                if (clip == null) bad.Add("clip missing: " + KH_FrisbeeJumpClipEditor.ClipPathFor("Jump", breeds[i]));
+                else if (Mathf.Abs(clip.length - jump[i].clipLength) > 0.02f) bad.Add(breeds[i] + ": Jump clip length " + clip.length.ToString("F3") + " != facts " + jump[i].clipLength.ToString("F3"));
+                if (tclip == null) bad.Add("clip missing: " + KH_FrisbeeJumpClipEditor.ClipPathFor("Twist", breeds[i]));
+                else if (Mathf.Abs(tclip.length - twist[i].clipLength) > 0.02f) bad.Add(breeds[i] + ": Twist clip length " + tclip.length.ToString("F3") + " != facts " + twist[i].clipLength.ToString("F3"));
+            }
+            if (bad.Count > 0) throw new InvalidOperationException("Frisbee facts / clips not usable (run Frisbee/2 Build Jump Clip first): " + string.Join(" | ", bad));
         }
 
         [MenuItem("Tools/KominkaHillside/Frisbee/5 Verify")]
@@ -436,10 +546,52 @@ namespace KominkaHillside.Editor
             {
             if (opened)
             {
-                var catcher = open.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<KH_FrisbeeCatch>(true)).FirstOrDefault();
-                var disc = open.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<KH_Frisbee>(true)).FirstOrDefault();
-                var launchers = open.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<KH_FrisbeeLauncher>(true)).ToArray();
-                Check(catcher != null && disc != null && launchers.Length == 3, "scene has catcher, disc and three launchers");
+                // IMP-DOG-012: six lanes. The Lab lane gets every check below (it is the lane all earlier records were
+                // taken on); the other lanes get the per-breed wiring checks in the block after it.
+                var allCatchers = open.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<KH_FrisbeeCatch>(true)).ToArray();
+                var allLaunchers = open.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<KH_FrisbeeLauncher>(true)).ToArray();
+                var catcher = allCatchers.FirstOrDefault(x => x.name == "KH_FrisbeeCatch_" + KH_FrisbeeJumpClipEditor.Breed);
+                var disc = catcher == null ? null : catcher.frisbee;
+                var launchers = allLaunchers.Where(l => catcher != null && l.catcher == catcher).ToArray();
+                Check(catcher != null && disc != null && launchers.Length == 3, "Lab lane has catcher, disc and three launchers");
+                Check(allCatchers.Length == LaneBreeds.Length && allLaunchers.Length == 3 * LaneBreeds.Length,
+                    "one lane per breed: " + allCatchers.Length + " catchers / " + allLaunchers.Length + " launchers (expect " + LaneBreeds.Length + " / " + (3 * LaneBreeds.Length) + ")");
+                foreach (string breed in LaneBreeds)
+                {
+                    var lc = allCatchers.FirstOrDefault(x => x.name == "KH_FrisbeeCatch_" + breed);
+                    var ld = lc == null ? null : lc.frisbee;
+                    bool wired = lc != null && ld != null && ld.name == LaneName("KH_Frisbee", breed) && ld.catcher == lc && lc.dogRoot != null && lc.dogRoot.name == "KD_Dog_" + breed
+                        && lc.dogAnimator != null && lc.mouthAnchor != null;
+                    Check(wired, "lane " + breed + ": catcher, own disc " + LaneName("KH_Frisbee", breed) + ", dog KD_Dog_" + breed);
+                    if (!wired) continue;
+                    var lf = ReadFacts("Jump", breed); var lt = ReadFacts("Twist", breed);
+                    Check(Vector3.Distance(lc.mouthOffsetCatch, lf.mouthOffsetCatch) < 1e-4f && Vector3.Distance(lc.mouthOffsetStand, lf.mouthOffsetStand) < 1e-4f
+                        && Mathf.Abs(lc.clipCrouchDuration - lf.crouch) < 1e-4f && Mathf.Abs(lc.clipRiseDuration - lf.rise) < 1e-4f && Mathf.Abs(lc.clipRecoverDuration - lf.recover) < 1e-4f
+                        && Vector3.Distance(lc.mouthOffsetCatchTwist, lt.mouthOffsetCatch) < 1e-4f && Mathf.Abs(lc.clipRiseDurationTwist - lt.rise) < 1e-4f,
+                        "lane " + breed + ": pose facts (Jump + Twist) equal that breed's JSON");
+                    // Codex D1: the jump ceiling is the breed's own, proxy and backing heap.
+                    var lcb = UdonSharpEditorUtility.GetBackingUdonBehaviour(lc);
+                    Check(Mathf.Abs(lc.maxRootRise - lf.maxRootRise) < 1e-4f && lcb.publicVariables.TryGetVariableValue("maxRootRise", out float lmr) && Mathf.Abs(lmr - lf.maxRootRise) < 1e-4f,
+                        "lane " + breed + ": catcher maxRootRise " + lc.maxRootRise.ToString("F2") + " == facts " + lf.maxRootRise.ToString("F2") + " (proxy and backing)");
+                    var lac = lc.dogAnimator.runtimeAnimatorController as AnimatorController;
+                    var ljump = AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPathFor("Jump", breed));
+                    var ltwist = AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPathFor("Twist", breed));
+                    Check(lac != null && AssetDatabase.GetAssetPath(lac) == KH_FrisbeeJumpClipEditor.ControllerPathFor(breed)
+                        && lac.layers[0].stateMachine.states.Any(st => st.state.name == "Jump" && st.state.motion == ljump && ljump != null)
+                        && lac.layers[0].stateMachine.states.Any(st => st.state.name == "Twist" && st.state.motion == ltwist && ltwist != null),
+                        "lane " + breed + ": Animator " + KH_FrisbeeJumpClipEditor.ControllerPathFor(breed) + " plays that breed's Jump / Twist clips");
+                    Check(KH_FrisbeeJumpClipEditor.IsBodyRigid(lc.dogRoot.gameObject) && lc.dogRoot.GetComponent<VRCObjectSync>() != null
+                        && lc.dogRoot.GetComponentsInChildren<UdonBehaviour>(true).Length == 0, "lane " + breed + ": body rigid, VRCObjectSync, no world-scene behaviours");
+                    var ll = allLaunchers.Where(l => l.catcher == lc).ToArray();
+                    Check(ll.Length == 3 && ll.All(l => l.frisbee == ld && l.muzzle != null) && ll.Count(l => l.recallOnly) == 1 && ll.Count(l => l.cycleVariant) == 1
+                        && ll.Any(l => !l.recallOnly && !l.cycleVariant && l.name == LaneName("KH_FrisbeeStand", breed)),
+                        "lane " + breed + ": three launchers (" + LaneName("KH_FrisbeeStand", breed) + " throw, recall, variant) on its own disc");
+                    float dx = LaneOffsetX(breed);
+                    Check(Mathf.Abs(lc.dogRoot.position.x - (dx + 1.5f)) < 0.01f && Mathf.Abs(lc.dogRoot.position.z - 6.5f) < 0.01f && Mathf.Abs(lc.dogRoot.position.y) < 0.01f,
+                        "lane " + breed + ": dog stands at the lane's copy of the Lab spot (x " + (dx + 1.5f).ToString("F1") + ", z 6.5, y 0)");
+                    Check(lc.variant == KH_FrisbeeCatch.VariantNormal && lc.pendingVariant == -1 && lc.debugHeldOverride == 0 && lc.playAreaRadius == 0f,
+                        "lane " + breed + ": variant Normal, nothing queued, held override 0, no play area (same as the Lab lane)");
+                }
                 if (catcher != null && disc != null)
                 {
                     Check(catcher.dogRoot != null && catcher.dogAnimator != null && catcher.mouthAnchor != null && catcher.frisbee == disc, "catcher wiring");

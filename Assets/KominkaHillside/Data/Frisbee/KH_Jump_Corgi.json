@@ -1,0 +1,11 @@
+{
+  "name": "Jump",
+  "breed": "Corgi",
+  "mouthOffsetCatch": [0.0000, 0.3635, 0.3117],
+  "mouthOffsetStand": [0.0000, 0.2284, 0.3269],
+  "crouch": 0.2000,
+  "rise": 0.3500,
+  "recover": 0.3200,
+  "maxRootRise": 0.4500,
+  "clipLength": 1.2200
+}
