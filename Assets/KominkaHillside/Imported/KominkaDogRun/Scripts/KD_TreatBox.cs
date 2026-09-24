@@ -372,6 +372,9 @@ namespace KominkaDogRun
             // 配っても一歩も来ず、枠は放置 60 秒で回収され在庫だけ減っていた。**`f.IsIdle` では弾けない** (dogState は Idle のまま)。
             // 拘束されていない犬 (撫でられて観客から外れた犬、かけっこの勝者決定後の犬) は従来どおり候補に残す
             if (_packWander[d] != null && _packWander[d].ShowEngaged) return false;
+            // 裏山改変 (IMP-DOG-014): リード接続中・集合中・フリスビー中の犬には配らない (HillsideDogBusy)。
+            // どれも徘徊層がおやつより優先するので、配っても来ずに枠が放置 60 秒で回収され在庫だけ減る (上の ShowEngaged と同じ理由)
+            if (HillsideDogBusy(_packWander[d])) return false;
             // 食べ終わって返事をしている最中 (**マスターのローカル時計**。
             // 読むのはマスターだけで、結果は dogSlot として配るので割れない)
             if (_thanksHoldUntil != null && Time.time < _thanksHoldUntil[d]) return false;
@@ -559,9 +562,69 @@ namespace KominkaDogRun
                 if (root == null || !root.gameObject.activeInHierarchy) continue;
                 active++;
                 KD_DogWanderController w = d < _packWander.Length ? _packWander[d] : null;
-                if (w == null || !w.ShowEngaged) return false;
+                if (w == null || !(w.ShowEngaged || HillsideDogBusy(w))) return false;   // 裏山改変: 割当 (EligibleDog) と同じ除外を予測にも
             }
             return active > 0;
+        }
+
+        /// <summary>裏山改変 (IMP-DOG-014): 裏山の状態で おやつを受けられない犬。**割当 (<see cref="EligibleDog"/>) と
+        /// 予測 (<see cref="AllDogsEngaged"/>) の両方がここを読む** — 条件を 2 か所に書き写さない。
+        ///
+        /// | 状態 | 読む先 | 理由 |
+        /// |---|---|---|
+        /// | リード接続中 | KH_LeashManager._IsLeashed (walkers は同期) | 散歩の足は徘徊層がおやつより優先して持つ |
+        /// | 集合中 | KH_LeashManager._IsGathering (KD_GroupActivities の同期値) | 同上 (ShowEngaged と重なるが裏山の口でも見る) |
+        /// | フリスビー中 (Ready を含む) | KH_FrisbeeCatch.IsIdle でない | root と Animator をフリスビーが持つ (徘徊層の FrisbeeActive と同じ判定) |
+        ///
+        /// **足場:** 接続犬を 1 匹ずつ呼ぶ変更は IMP-DOG-006 で、ここのリード接続の行を置き換える。
+        /// 参照は犬ごとの徘徊層が既に持つもの (hillsideLeashes / frisbeeCatch / dogIndex) を読むだけで、同期変数は増やさない。</summary>
+        private bool HillsideDogBusy(KD_DogWanderController w) { return HillsideCauseOf(w) != HillsideBusyNone; }
+
+        /// <summary>裏山改変 (IMP-DOG-014): 全頭が来られないときの主因 (手元メニューの理由文を分けるため)。</summary>
+        public const int HillsideBusyNone = 0;
+        public const int HillsideBusyLeash = 1;
+        public const int HillsideBusyGather = 2;
+        public const int HillsideBusyFrisbee = 3;
+        /// <summary>催し (ライブ・集合の同期値・かけっこ等の ShowEngaged) だけ、または裏山の理由が特定できない = 活動の終わりを待つ。</summary>
+        public const int HillsideBusyOther = 4;
+
+        /// <summary>犬 1 匹の裏山の忙しさ (<see cref="HillsideDogBusy"/> の中身)。順は フリスビー > リード > 集合。</summary>
+        private int HillsideCauseOf(KD_DogWanderController w)
+        {
+            if (w == null) return HillsideBusyNone;
+            if (w.frisbeeCatch != null && !w.frisbeeCatch.IsIdle) return HillsideBusyFrisbee;
+            KominkaHillside.KH_LeashManager leashes = w.hillsideLeashes;
+            if (leashes == null) return HillsideBusyNone;
+            int i = w.dogIndex;
+            if (i < 0) return HillsideBusyNone;
+            if (leashes._IsLeashed(i)) return HillsideBusyLeash;   // IMP-DOG-006: ここを「呼ばれた 1 匹だけ受ける」へ置き換える
+            if (leashes._IsGathering(i)) return HillsideBusyGather;
+            return HillsideBusyNone;
+        }
+
+        /// <summary>裏山改変 (IMP-DOG-014): 全頭が来られない (<see cref="AllDogsEngaged"/> が true) ときの主因 <c>HillsideBusy*</c>。
+        /// 来られる犬が居れば <see cref="HillsideBusyNone"/>。主因 = 裏山の理由で忙しい犬がいちばん多い理由 (同数は リード > 集合 > フリスビー。
+        /// リードは本人が外せるので先に案内する)。裏山の理由の犬が 1 匹も居なければ <see cref="HillsideBusyOther"/>。
+        /// 押す人のローカルの予測 (AllDogsEngaged と同じ性質)。</summary>
+        // net: callable-ok: 読み取りのみ
+        public int HillsideAllBusyCause()
+        {
+            if (!AllDogsEngaged()) return HillsideBusyNone;
+            int leash = 0, gather = 0, frisbee = 0;
+            for (int d = 0; d < _packRoots.Length; d++)
+            {
+                Transform root = _packRoots[d];
+                if (root == null || !root.gameObject.activeInHierarchy) continue;
+                KD_DogWanderController w = d < _packWander.Length ? _packWander[d] : null;
+                int c = HillsideCauseOf(w);
+                if (c == HillsideBusyLeash) leash++;
+                else if (c == HillsideBusyGather) gather++;
+                else if (c == HillsideBusyFrisbee) frisbee++;
+            }
+            if (leash == 0 && gather == 0 && frisbee == 0) return HillsideBusyOther;
+            if (leash >= gather && leash >= frisbee) return HillsideBusyLeash;
+            if (gather >= frisbee) return HillsideBusyGather;
+            return HillsideBusyFrisbee;
         }
 
         /// <summary>最初の空き枠の番号。無ければ -1。</summary>

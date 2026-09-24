@@ -298,5 +298,172 @@ namespace KominkaDogRun
             return items[i];
         }
 
+        // ============================================================
+        // 裏山改変 (IMP-DOG-014): おやつの [買う]
+        //
+        // 古民家の板にはおやつの購入が無い (棚で買う)。裏山は棚のエリアが無いので、行ごとの [買う] から
+        // 共有の確認カード (kind ConfirmTreat) を開き、[購入] で catalog._RequestBuy(key) を呼ぶ。
+        // その先は古民家の経路のまま: KD_ShopItem._Buy → ledger._TryBuyStocked(key, price, packCount 5, stockCap 20)。
+        // **pt と在庫が動くのは _TreatConfirmBuy の 1 か所だけ** (押した瞬間には払わない。_FxBuy と同じ 2 段階)。
+        // [買う] は復元後は常に出す — 残高不足・在庫上限 20 の理由は確認カードの注記で読ませる ([購入] は隠す)。
+        // 同期変数は増やさない (台帳は PlayerData。ここはローカルの表示状態だけ)。
+        // ============================================================
+
+        /// <summary>確認カードの種別 (KD_TreatPouch.Confirm.cs の Confirm* の続き)。</summary>
+        public const int ConfirmTreat = 6;
+
+        [Header("裏山 段階 2: おやつの [買う] (IMP-DOG-014)")]
+        [Tooltip("Row{i}/Buy。添字 = おやつの行 (items と同じ)。ビルダー (KD_TreatSetupEditor.Treats の HillsideBuildTreatBuy) が作る")]
+        public GameObject[] treatBuyButtons;
+        public UnityEngine.UI.Image[] treatBuyImages;
+        public TextMeshProUGUI[] treatBuyLabels;
+
+        /// <summary>確認カードを開いているおやつの行 (-1 = 閉じている)。</summary>
+        private int _treatConfirmRow = -1;
+
+        public void _TreatBuy0() { TreatBuyPress(0); }
+        public void _TreatBuy1() { TreatBuyPress(1); }
+        public void _TreatBuy2() { TreatBuyPress(2); }
+        public void _TreatBuy3() { TreatBuyPress(3); }
+
+        /// <summary>行の [買う]。確認カードを開くだけ (払わない)。</summary>
+        private void TreatBuyPress(int row)
+        {
+            KD_ShopItem it = ItemAt(row);
+            if (it == null || catalog == null || ledger == null) return;
+            _treatConfirmRow = row;
+            Redraw();
+        }
+
+        /// <summary>確認カードの [購入] (Confirm.cs の _ConfirmYes が kind ConfirmTreat のとき呼ぶ)。
+        /// **押した時点の状態で再確認する** — 開いてから pt・在庫が動いていても、上限と残高は台帳が最後に弾く
+        /// (ここで先に分けるのは理由の文言のため)。ローカル専用なので `_` 始まり。</summary>
+        public void _TreatConfirmBuy()
+        {
+            KD_ShopItem it = ItemAt(_treatConfirmRow);
+            _treatConfirmRow = -1;
+            _HideConfirm(ConfirmTreat);
+            if (it == null || catalog == null) { TreatFeedback(KeyCantBuy, false); Redraw(); return; }
+            int state = it.ConfirmationState(false);
+            if (state == KD_ShopItem.ConfirmFull) { TreatFeedback(KeyStockFull, false); Redraw(); return; }
+            if (state != KD_ShopItem.ConfirmBuy) { TreatFeedback(KeyCantBuy, false); Redraw(); return; }
+            bool bought = catalog._RequestBuy(it.productKey);
+            TreatFeedback(bought ? KeyBought : KeyCantBuy, bought);
+            Redraw();
+        }
+
+        /// <summary>確認カードの [やめる] と暗幕 (Confirm.cs の _ConfirmNo が kind ConfirmTreat のとき呼ぶ)。ローカル専用なので `_` 始まり。</summary>
+        public void _TreatConfirmNo()
+        {
+            _treatConfirmRow = -1;
+            _HideConfirm(ConfirmTreat);
+            TreatFeedback(KeyBuyCancelled, false);
+            Redraw();
+        }
+
+        const string KeyCantBuy = "KD_ShopShelf.WordCantBuy";
+        const string KeyBought = "KD_ShopShelf.WordBought";
+        const string KeyStockFull = "KD_ShopShelf.WordEnough";
+        const string KeyBuyCancelled = "KD_TreatPouch.WordTreatBuyCancelled";
+
+        /// <summary>おやつタブの下端 (statusLabel) に 4 秒出す。**キャンセルは音を鳴らさない** (失敗ではない)。</summary>
+        private void TreatFeedback(string key, bool success)
+        {
+            if (key == KeyBuyCancelled)
+            {
+                _feedbackText = key;
+                _feedbackUntil = Time.time + 4f;
+            }
+            else Feedback(key, success);
+            _feedbackTab = TabTreat;
+        }
+
+        /// <summary>RedrawTreat の末尾で呼ぶ (Redraw.cs)。行の [買う] と補足、確認カード、状態行の上書き。
+        /// 古民家の補足「棚で買える」は裏山では誤りなので、ここで価格と上限の文言に書き替える。</summary>
+        private void HillsideRedrawTreat()
+        {
+            bool loaded = ledger != null && ledger.Loaded();
+            int n = rowLabels == null ? 0 : rowLabels.Length;
+            for (int i = 0; i < n; i++)
+            {
+                // 段階 1 の準備中で隠した行を戻す (box が配線された後は通常描画)
+                if (rowLabels[i] != null)
+                {
+                    GameObject row = HillsideRowOf(rowLabels[i]);
+                    if (row != null && !row.activeSelf) row.SetActive(true);
+                }
+                KD_ShopItem it = ItemAt(i);
+                int state = it == null ? KD_ShopItem.ConfirmLoading : it.ConfirmationState(false);
+                if (rowHintLabels != null && i < rowHintLabels.Length && rowHintLabels[i] != null)
+                    rowHintLabels[i].text = TreatRowHint(it, state);
+
+                bool show = loaded && it != null && catalog != null;
+                GameObject btn = (treatBuyButtons != null && i < treatBuyButtons.Length) ? treatBuyButtons[i] : null;
+                if (btn != null && btn.activeSelf != show) btn.SetActive(show);
+                if (treatBuyLabels != null && i < treatBuyLabels.Length && treatBuyLabels[i] != null)
+                    treatBuyLabels[i].text = L("KD_TreatPouch.WordBuyHere");
+                // 買えない間は灰 (押せば理由のカードが開く。隠さない)
+                if (treatBuyImages != null && i < treatBuyImages.Length && treatBuyImages[i] != null)
+                    treatBuyImages[i].color = state == KD_ShopItem.ConfirmBuy ? recallOnColor : hillsideNeutralColor;
+            }
+
+            // ---- 確認カード (開いている間は 0.5 秒ごとに状態へ追いつく。RedrawFx と同じ) ----
+            KD_ShopItem c = ItemAt(_treatConfirmRow);
+            if (c != null) TreatShowConfirm(c);
+            else { _treatConfirmRow = -1; _HideConfirm(ConfirmTreat); }
+
+            // ---- 状態行: 購入の結果 (4 秒) > 出す手順・理由 > 未受取の案内 ----
+            if (statusLabel != null)
+            {
+                if (_feedbackTab == TabTreat && Time.time < _feedbackUntil) statusLabel.text = L(_feedbackText);
+                else if (statusLabel.text.Length == 0 && HillsideGrantLineVisible()) statusLabel.text = L("KD_TreatPouch.WordGrantLine");
+            }
+        }
+
+        /// <summary>行の補足 (名前の下)。上限 > 読み込み中 > 「5個入り 1 pt」(+ 足りなければ「あと N pt」)。</summary>
+        private string TreatRowHint(KD_ShopItem it, int state)
+        {
+            if (it == null) return "";
+            if (state == KD_ShopItem.ConfirmLoading) return "";
+            if (state == KD_ShopItem.ConfirmFull) return L(KeyStockFull);
+            string s = it.packCount.ToString() + L("KD_ShopShelf.WordPack") + " " + it.price.ToString() + " pt";
+            if (state == KD_ShopItem.ConfirmShort)
+                s += " / " + L("KD_TreatPouch.WordAccWaitPrefix") + " " + it.Shortfall().ToString() + " pt";
+            return s;
+        }
+
+        /// <summary>おやつの確認を捨てる (メニューを閉じる・タブを替える・設定を開くとき。FX / かざりの確認と同じ遷移で呼ぶ)。
+        /// カードの非表示は呼び手の HideConfirmAll が行う。</summary>
+        private void HillsideResetTreatConfirm() { _treatConfirmRow = -1; }
+
+        /// <summary>全頭が来られない (GateDogsBusy) ときの理由文。KD_TreatBox.HillsideAllBusyCause の主因で分ける。
+        /// リードは「呼ぶ」のリード中 (WordSleepLeashed) と言葉をそろえる。特定できなければ活動の終わり待ち。</summary>
+        private string HillsideDogsBusyText()
+        {
+            int cause = box == null ? KD_TreatBox.HillsideBusyOther : box.HillsideAllBusyCause();
+            if (cause == KD_TreatBox.HillsideBusyLeash) return L("KD_TreatPouch.WordTreatBusyLeash");
+            if (cause == KD_TreatBox.HillsideBusyGather) return L("KD_TreatPouch.WordTreatBusyGather");
+            if (cause == KD_TreatBox.HillsideBusyFrisbee) return L("KD_TreatPouch.WordTreatBusyFrisbee");
+            return L("KD_TreatPouch.WordTreatBusyWait");
+        }
+
+        /// <summary>おやつの確認カード。題 = 「〇〇を N pt で購入しますか？」/ 中身 = 「5個入り / 残り N個」/
+        /// 注記 = 上限・不足・購入後の残り。[購入] は買えるときだけ出す (棚の ApplyConfirmState と同じ判定)。</summary>
+        private void TreatShowConfirm(KD_ShopItem it)
+        {
+            int state = it.ConfirmationState(false);
+            string title = L("confirm.buyTitle").Replace("{0}", L(it.displayNameKey)).Replace("{1}", it.price.ToString() + " pt");
+            string body = it.packCount.ToString() + L("KD_ShopShelf.WordPack") + " / "
+                + L("KD_TreatPouch.WordLiveRemain") + " " + it.Stock().ToString() + L("KD_ShopShelf.WordCount");
+            string note;
+            if (state == KD_ShopItem.ConfirmLoading) note = L("KD_ShopShelf.WordLoading") + "...";
+            else if (state == KD_ShopItem.ConfirmFull) note = L(KeyStockFull);
+            else if (state == KD_ShopItem.ConfirmShort) note = L("confirm.short").Replace("{0}", it.Shortfall().ToString());
+            else if (state == KD_ShopItem.ConfirmBuy && ledger != null) note = L("confirm.remaining").Replace("{0}", (ledger.Points() - it.price).ToString());
+            else note = "";
+            _confirmGift = false;
+            _ShowConfirm(ConfirmTreat, title, body, note, state == KD_ShopItem.ConfirmBuy, L("KD_ShopShelf.WordBuy"));
+        }
+
     }
 }

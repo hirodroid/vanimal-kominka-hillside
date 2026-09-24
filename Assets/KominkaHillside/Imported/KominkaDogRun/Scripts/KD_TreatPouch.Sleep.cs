@@ -34,6 +34,12 @@ namespace KominkaDogRun
         /// <summary>台帳が配線されていない。**無言にしない。**</summary>
         public const int SleepUnwired = 4;
         public const int SleepReserved = 5;
+        /// <summary>裏山改変: IMP-DOG-016 変更 1。リード接続中 → 暗いまま「リード中。さんぽで外してから」。</summary>
+        public const int SleepLeashed = 6;
+        /// <summary>裏山改変: 集合 (あそぶ) に参加中 → 暗いまま「集合中」。</summary>
+        public const int SleepGathering = 7;
+        /// <summary>裏山改変: フリスビー中 (KH_FrisbeeCatch が Idle 以外) → 暗いまま「フリスビーで遊び中」。</summary>
+        public const int SleepFrisbee = 8;
 
         /// <summary>おもちゃタブの理由ラベル (180px @18pt) に収まる表示名の字数。
         /// **`さんと寝ている` (7 字 = 126px) を引いた残り**から決めてある。</summary>
@@ -62,6 +68,10 @@ namespace KominkaDogRun
             // (開放を切るのは「これから呼べる人」の制限であって、
             // 既に成立している占有を畳む操作ではない — KD_SleepBoard._SetOpenToAll)
             if (slot.IsSleeperLocal) return SleepMine;
+            // 裏山改変: IMP-DOG-016 変更 1。自分・他人を問わずリード接続中 / 集合中 / フリスビー中の犬は呼べない。判定は台帳 (KD_SleepBoard) が持つ
+            if (sleepBoard._IsLeashedDog(row)) return SleepLeashed;
+            if (sleepBoard._IsGatheringDog(row)) return SleepGathering;
+            if (sleepBoard._IsFrisbeeDog(row)) return SleepFrisbee;
             if (slot.LiveReservationId >= 0) return SleepReserved;
             if (sleepBoard.IsSleeping(row)) return SleepOther;
             if (!sleepBoard.IsLocalAllowedToCall) return SleepNoPermission;
@@ -73,6 +83,10 @@ namespace KominkaDogRun
         {
             int gate = SleepGate(row);
             if (gate == SleepUnwired) { Feedback("ui.extra.043", false); Redraw(); return; }
+            // 裏山改変: 押せない理由を下端にも出す (ボタンは暗いので通常は押されない)
+            if (gate == SleepLeashed) { Feedback("KD_TreatPouch.WordSleepLeashed", false); Redraw(); return; }
+            if (gate == SleepGathering) { Feedback("KD_TreatPouch.WordWalkStateGathering", false); Redraw(); return; }
+            if (gate == SleepFrisbee) { Feedback("KD_TreatPouch.WordSleepFrisbee", false); Redraw(); return; }
 
             KD_SleepSlot slot = sleepBoard.SlotOf(row);
             if (slot == null) { Feedback("ui.extra.043", false); Redraw(); return; }
@@ -185,6 +199,10 @@ namespace KominkaDogRun
             if (gate == SleepMine) return L("KD_TreatPouch.WordSleepingSelf");
             if (gate == SleepOther) return SleeperText(row, SleepNameBudget);
             if (gate == SleepReserved) return L("call.selectionBusy");
+            // 裏山改変: さんぽ側の事情 (リード / 集合 / フリスビー) の理由
+            if (gate == SleepLeashed) return L("KD_TreatPouch.WordSleepLeashed");
+            if (gate == SleepGathering) return L("KD_TreatPouch.WordWalkStateGathering");
+            if (gate == SleepFrisbee) return L("KD_TreatPouch.WordSleepFrisbee");
             return "";   // 空いている行は状態を出さない (押せることはボタンが語る)
         }
 

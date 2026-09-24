@@ -187,10 +187,13 @@ namespace KominkaDogRun.Editor
 
         // ================================================================ Setup
 
-        /// <summary>`Treat System/2 - Setup` から呼ばれる。**作るだけ。**</summary>
+        /// <summary>`Treat System/2 - Setup` から呼ばれる。**作るだけ。**
+        /// 裏山改変 (IMP-DOG-014): <paramref name="containerPath"/> を渡すと器をそこへ置き (裏山は KH_Dogs 直下)、
+        /// **焼き済みのテクスチャ (古民家からコピーした同 GUID) は焼き直さない** (無いときだけ焼く)。null なら古民家どおり。</summary>
         public static bool Setup(KD_TreatBox box, KD_TreatSlot[] slots, KD_DogPack pack,
-            StringBuilder log)
+            StringBuilder log, string containerPath = null)
         {
+            bool hillside = containerPath != null;
             bool ok = true;
             var defs = Defs;
 
@@ -209,7 +212,9 @@ namespace KominkaDogRun.Editor
             // ---- テクスチャとマテリアル ----
             foreach (var d in defs)
             {
-                KD_ParticleBaker.Bake(d.TexPath, d.spec);
+                // 裏山改変: 古民家から持ってきた焼き済みはそのまま使う (差分を出さない)
+                if (!hillside || AssetDatabase.LoadAssetAtPath<Texture2D>(d.TexPath) == null)
+                    KD_ParticleBaker.Bake(d.TexPath, d.spec);
                 var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(d.TexPath);
                 if (tex == null) { log.AppendLine("   FAIL baked but not imported: " + d.TexPath); ok = false; continue; }
 
@@ -219,7 +224,7 @@ namespace KominkaDogRun.Editor
                     // 撫でと同じ **Legacy Shaders/Particles/Alpha Blended** (設計 5)
                     var shader = Shader.Find("Legacy Shaders/Particles/Alpha Blended");
                     if (shader == null) { log.AppendLine("   FAIL shader not found"); ok = false; continue; }
-                    mat = new Material(shader);
+                    mat = new Material(shader);   // (裏山ではコピー済みの M_KD_TreatFx_* があるので通らない想定)
                     AssetDatabase.CreateAsset(mat, d.MatPath);
                     log.AppendLine("   created " + d.MatPath);
                 }
@@ -238,7 +243,7 @@ namespace KominkaDogRun.Editor
             if (fxGo == null)
             {
                 fxGo = new GameObject(KD_DogDefs.TreatFxName);
-                KD_SceneObjects.PlaceIfNew(fxGo, KD_DogDefs.SystemsPath);
+                KD_SceneObjects.PlaceIfNew(fxGo, hillside ? containerPath : KD_DogDefs.SystemsPath);   // 裏山改変: KH_Dogs 直下
                 log.AppendLine("   created " + KD_DogDefs.TreatFxName);
             }
 

@@ -12,7 +12,8 @@ namespace KominkaDogRun
     ///
     /// **状態機械は各売り場のまま。** ここは置き場 (表示) だけを 1 つにする —
     /// パーティクル (`_fxConfirmRow`) / ライブ (`_liveConfirmRow`) / かざり (`_accConfirm`) /
-    /// あそぶ (`KD_ActivitiesMenu._confirm`) / 呼ぶの追加動作 (`KD_CallPose._purchase`) が
+    /// あそぶ (`KD_ActivitiesMenu._confirm`) / 呼ぶの追加動作 (`KD_CallPose._purchase`) /
+    /// 裏山のおやつ (`_treatConfirmRow`、KD_TreatPouch.Treat.cs) が
     /// 自分の Redraw で <see cref="_ShowConfirm"/> / <see cref="_HideConfirm"/> を呼び、
     /// [購入] [やめる] は <see cref="_ConfirmYes"/> / <see cref="_ConfirmNo"/> が開いている種別へ振り分ける。
     /// **pt が減る口は各売り場の既存メソッドのまま** (ここでは払わない)。</summary>
@@ -96,6 +97,8 @@ namespace KominkaDogRun
             if (kind == ConfirmAcc) { _AccConfirmBuy(); return; }
             if (kind == ConfirmActivities) { if (activitiesMenu != null) activitiesMenu._Action(); return; }
             if (kind == ConfirmCall) { if (callPose != null) callPose._BuyAction(); return; }
+            // 裏山改変 (IMP-DOG-014): おやつの [買う] (KD_TreatPouch.Treat.cs)
+            if (kind == ConfirmTreat) { _TreatConfirmBuy(); return; }
             HideConfirmAll();
         }
 
@@ -108,6 +111,8 @@ namespace KominkaDogRun
             if (kind == ConfirmAcc) { _AccConfirmNo(); return; }
             if (kind == ConfirmActivities) { if (activitiesMenu != null) activitiesMenu._CancelConfirm(); return; }
             if (kind == ConfirmCall) { if (callPose != null) callPose._CancelPurchase(); return; }
+            // 裏山改変 (IMP-DOG-014): おやつの [買う] の [やめる] / 暗幕 (KD_TreatPouch.Treat.cs)
+            if (kind == ConfirmTreat) { _TreatConfirmNo(); return; }
             HideConfirmAll();
         }
 

@@ -153,6 +153,63 @@ namespace KominkaDogRun
             return LiveSleeperOf(dogIndex) >= 0;
         }
 
+        // ============================================================
+        // 裏山改変: IMP-DOG-016 変更 1 — リード・集合・フリスビーとの排他
+        //
+        // 呼ぶ (寝る枠) とさんぽ (KH_LeashManager) は同じ犬を同時に持たない。
+        // **リード接続中 / 集合中 / フリスビー中の犬は呼べない** (枠の予約と確定と監視、板の行、ポーズ面が
+        // <see cref="_IsWalkBusy"/> を見る)。徘徊層はこの 3 つを呼び出しより優先するので、受理すると犬が来ない。
+        // 逆方向の **呼ばれて待機中の犬はリードをつなげない** は
+        // KH_LeashManager.ReqAttach と さんぽタブの WalkAttachGate が <see cref="_IsCalled"/> を見る。
+        // 伝播の谷間で両方が立ったら **リード (とフリスビー) が勝つ** (枠 Owner の Watch が呼び出しを畳む)。
+        // リード・集合は同期値、フリスビーは KH_FrisbeeCatch の状態 (おやつの HillsideDogBusy と同じ基準 = !IsIdle、Ready を含む)。
+        // ============================================================
+
+        [Tooltip("裏山改変: さんぽの正本 (KH_Dogs/KH_Leashes)。リード接続中・集合中・フリスビー中の犬を呼ぶ対象から外す。null なら排他なし (古民家と同じ)")]
+        public KominkaHillside.KH_LeashManager hillsideLeashes;
+
+        /// <summary>裏山改変: 犬 <paramref name="dogIndex"/> が呼ばれて待機中 (寝る指名を受けている) か。
+        /// KH_LeashManager / さんぽタブが「接続不可」の判定に使う。読むだけ。</summary>
+        // net: callable-ok: 副作用の無い問い合わせ
+        public bool _IsCalled(int dogIndex)
+        {
+            return IsSleeping(dogIndex);
+        }
+
+        /// <summary>裏山改変: 犬 <paramref name="dogIndex"/> がリードにつながれているか。</summary>
+        // net: callable-ok: 副作用の無い問い合わせ
+        public bool _IsLeashedDog(int dogIndex)
+        {
+            return hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex);
+        }
+
+        /// <summary>裏山改変: 犬 <paramref name="dogIndex"/> が集合 (あそぶ) に参加中か。</summary>
+        // net: callable-ok: 副作用の無い問い合わせ
+        public bool _IsGatheringDog(int dogIndex)
+        {
+            return hillsideLeashes != null && hillsideLeashes._IsGathering(dogIndex);
+        }
+
+        /// <summary>裏山改変: 犬 <paramref name="dogIndex"/> がフリスビー中か (KH_FrisbeeCatch が Idle 以外。Ready を含む)。
+        /// 徘徊層の FrisbeeActive・おやつの HillsideDogBusy と同じ基準。ディスクの無い犬は false。</summary>
+        // net: callable-ok: 副作用の無い問い合わせ
+        public bool _IsFrisbeeDog(int dogIndex)
+        {
+            if (hillsideLeashes == null) return false;
+            KominkaHillside.KH_FrisbeeCatch[] catchers = hillsideLeashes.frisbeeCatchers;
+            if (catchers == null || dogIndex < 0 || dogIndex >= catchers.Length) return false;
+            KominkaHillside.KH_FrisbeeCatch c = catchers[dogIndex];
+            return c != null && !c.IsIdle;
+        }
+
+        /// <summary>裏山改変: さんぽ側の事情で呼べないか (リード接続中 / 集合中 / フリスビー中)。
+        /// 予約・確定・監視 (KD_SleepSlot)、行の状態 (KD_TreatPouch.Sleep)、ポーズ面 (KD_CallPose) の共通の判定。</summary>
+        // net: callable-ok: 副作用の無い問い合わせ
+        public bool _IsWalkBusy(int dogIndex)
+        {
+            return _IsLeashedDog(dogIndex) || _IsGatheringDog(dogIndex) || _IsFrisbeeDog(dogIndex);
+        }
+
         /// <summary>**この機能の権限を握っている人か** (Issue §1 決定 2 / §6 危険 1)。
         ///
         /// <code>

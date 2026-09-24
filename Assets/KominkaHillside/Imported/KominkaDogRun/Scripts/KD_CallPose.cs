@@ -56,6 +56,8 @@ namespace KominkaDogRun
             KD_SleepSlot slot = board.SlotOf(dog);
             if (slot == null || (slot.LiveSleeperId >= 0 && !slot.IsSleeperLocal)) return;
             if (!slot.IsSleeperLocal && !board.IsLocalAllowedToCall) return;
+            // 裏山改変: IMP-DOG-016 変更 1。リード接続中・集合中・フリスビー中はポーズ面を開かない (理由は呼ぶタブの行が出す)
+            if (board._IsWalkBusy(dog)) return;
             if (_dog != dog) _Dismiss();
             if (!slot._BeginSelection()) return;
             _dog = dog;
@@ -259,9 +261,13 @@ namespace KominkaDogRun
                 if (purchaseControls[i] != null) purchaseControls[i].SetActive(true);
             KD_SleepSlot slot = board.SlotOf(_dog);
             bool mine = slot != null && slot.IsSleeperLocal;
-            bool available = slot != null && slot.SelectionReady && (mine || board.IsLocalAllowedToCall);
+            // 裏山改変: IMP-DOG-016 変更 1。面を開いている間にリード・集合・フリスビーが始まったら、押せなくして理由を出す
+            bool walkBusy = board._IsWalkBusy(_dog);
+            bool available = slot != null && slot.SelectionReady && (mine || board.IsLocalAllowedToCall) && !walkBusy;
             if (title != null) title.text = pouch.sleepLabels[_dog].text + " / " + L("call.choose");
-            if (status != null) status.text = slot != null && slot.SelectionPending ? L("call.selectionWaiting")
+            if (status != null) status.text = walkBusy ? L(board._IsLeashedDog(_dog) ? "KD_TreatPouch.WordSleepLeashed"
+                    : board._IsGatheringDog(_dog) ? "KD_TreatPouch.WordWalkStateGathering" : "KD_TreatPouch.WordSleepFrisbee")
+                : slot != null && slot.SelectionPending ? L("call.selectionWaiting")
                 : !available ? L("call.unavailable") : L((_pose == 2 && !Owned(2)) || (_pose == 1 && !Owned(1)) || (_pose == 4 && !Owned(0))
                     ? "call.lockedHint" : _pose == 2 ? "call.pawHint" : _pose == 1 ? "call.chinHint" : "call.hint");
             if (title != null && mine) title.text += " / " + L("call.current") + L(PoseKey(slot.PoseId));

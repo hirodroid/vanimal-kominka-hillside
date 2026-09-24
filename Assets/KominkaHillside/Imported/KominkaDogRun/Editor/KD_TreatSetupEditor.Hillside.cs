@@ -25,9 +25,10 @@ namespace KominkaDogRun.Editor
         /// <summary>拠点の「メニューをひらく」板の親 (KH_Dogs 直下)。子の名前は MenuPlate。</summary>
         public static readonly string[] OpenerStations = { "KH_LeashRack", "KH_Station_Viewpoint", "KH_Station_Plaza" };
         public const string OpenerPlateName = "MenuPlate";
-        /// <summary>段階 1 (IMP-PRG-001: 台帳・カタログ・残高・ポイントの面・ようこそ最小版)。
-        /// <c>KD_TreatPouch.hillsideStage</c> へ Setup が毎回書く値 (計画書 D-1)。0 = 段階 0-b。</summary>
-        public const int Stage = 1;
+        /// <summary>段階 2 (IMP-DOG-014 おやつ / 015 かざり・撫でFX・ミニチュア / 016 呼ぶ・ポーズ・場所決め)。
+        /// 1 = IMP-PRG-001 (台帳・カタログ・残高・ポイントの面・ようこそ最小版)、0 = 段階 0-b。
+        /// <c>KD_TreatPouch.hillsideStage</c> へ Setup が毎回書く値 (計画書 D-1)。</summary>
+        public const int Stage = 2;
         /// <summary>段階 1 の台帳と商品の器 (KH_Dogs 直下。P1 の Menu/3a・4 が作る)。</summary>
         public const string ProgressSystemName = "KD_ProgressSystem";
         public const string ShopCatalogName = "KD_ShopCatalog";
@@ -71,7 +72,9 @@ namespace KominkaDogRun.Editor
     /// 拠点板 3 枚 → CopyProxyToUdon → MarkSceneDirty。**保存しない。**
     ///
     /// 段階 0 の参照 (box / ledger / items / balls / toyFetchers / catalog / petFxBox / fxItems / sleepBoard / live)
-    /// は**探さず、触らない** (新規なら null のまま。段階 1・2 のビルダーが配線する)。</summary>
+    /// は**探さず、触らない** (新規なら null のまま。段階 1・2 のビルダーが配線する)。
+    /// 段階 1 は ledger / catalog / items / fxItems、段階 2 は box (+ 枠) / accessories (+ 一覧) / petFxBox / sleepBoard / sleepPlacement / callPose を
+    /// 探して配線する (<see cref="HillsideFindStage1"/> / <see cref="HillsideFindStage2"/>。**1 つでも無ければ何も書かずに FAIL**)。live は探さない。</summary>
     public static partial class KD_TreatSetupEditor
     {
         const string HillsideBuildLog = KD_Hillside.LogDir + "build-menu.txt";
@@ -82,6 +85,8 @@ namespace KominkaDogRun.Editor
         public const int HillsideFxRowCount = 11;
         const string WalkRowPrefix = "WalkRow";
         const string DiscButtonName = "Disc";
+        /// <summary>撫でFX の群見出しのセル (FxHead0 = 見出し / FxHead1 = 右の空き)。かざりの Content で AccRow の後ろ・FxRow の前 (D-2)。</summary>
+        internal const string FxHeadPrefix = "FxHead";
 
         [MenuItem("Tools/KominkaHillside/Menu/7 Build Menu")]
         public static void SetupHillside()
@@ -137,6 +142,18 @@ namespace KominkaDogRun.Editor
                 return;
             }
 
+            // ---- 段階 2 (IMP-DOG-014 / 015 / 016): おやつの箱・かざり・撫でFX・呼ぶ。**1 つでも無ければ何も書かずに FAIL**
+            // (Menu/6c Setup Treats・6e Setup Accessories・6g Setup Pet Fx・6 Setup Sleep → 6i → 6j が先) ----
+            KD_TreatBox stageBox = null; KD_AccessoryBox stageAccessories = null; KD_PetFxBox stagePetFxBox = null;
+            KD_SleepBoard stageSleepBoard = null; KD_SleepPlacement stageSleepPlacement = null; KD_CallPose stageCallPose = null;
+            if (KD_Hillside.Stage >= 2 && !HillsideFindStage2(dogs.transform, log, out stageBox, out stageAccessories, out stagePetFxBox,
+                out stageSleepBoard, out stageSleepPlacement, out stageCallPose))
+            {
+                log.AppendLine("SETUP RESULT: FAIL (段階 2 の前提が無い。上の FAIL の Setup を先に。pouch は触っていない)");
+                KD_VerifyLog.Write(HillsideBuildLog, log);
+                return;
+            }
+
             // ---- 文言の束縛先 (Codex D-1 2026-09-24): 板の再構築の中の Bind (Menu Finish の RebuildIfPresent) が
             // Bindings の束縛先 (例 KD_ShopKeeperMenu) を要求する。途中で例外になると板だけ作り直した途中状態が残るので、**何も変える前に**確かめる ----
             if (!HillsideBindTargetsReady(log))
@@ -180,6 +197,8 @@ namespace KominkaDogRun.Editor
             // ---- 板 (items / fxItems は段階 0 では無い。BuildPouchPanel が器の行数へ読み替える) ----
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KD_ShopSetupEditor.SharedFontPath);
             if (font == null) { log.AppendLine("   FAIL font asset が無い (" + KD_ShopSetupEditor.SharedFontPath + ")"); ok = false; }
+            // 段階 2 (IMP-DOG-016): BuildPouchPanel の途中で KD_SleepPlacementEditor / KD_CallPoseEditor の RebuildIfPresent が pouch.sleepBoard を読むので、先に渡す
+            if (KD_Hillside.Stage >= 2) pouch.sleepBoard = stageSleepBoard;
             BuildPouchPanel(go, pouch, KD_Hillside.Stage >= 1 ? stageItems : pouch.items, KD_Hillside.Stage >= 1 ? stageFxItems : pouch.fxItems, font, log);
             if (KD_Hillside.Stage >= 1)
             {
@@ -193,6 +212,28 @@ namespace KominkaDogRun.Editor
                 pouch.uiRejectClip = KD_ShopSetupEditor.HillsideRejectClip();
                 if (pouch.uiSuccessClip == null || pouch.uiRejectClip == null)
                     log.AppendLine("   WARN 購入の効果音が取れない (success=" + (pouch.uiSuccessClip != null) + " reject=" + (pouch.uiRejectClip != null) + ")。P1 の Data/SE を確認");
+            }
+            if (KD_Hillside.Stage >= 2)
+            {
+                // 段階 2 (IMP-DOG-014): おやつの箱と枠。枠 → pouch は「移譲が済んだ」の知らせ先 (6c も書くが、7 を後に流しても揃うようにここでも書く)
+                pouch.box = stageBox;
+                foreach (var s in stageBox.slots)
+                {
+                    s.pouch = pouch;
+                    ok &= TryCopy(s, log);
+                }
+                // 段階 2 (IMP-DOG-015): かざりの台帳 + 一覧 (accessories / accProductIds / accItems / accNameKeys ほか) と撫でFX。6e・6g も同じ値を書く (べき等)。
+                // 試着のミニチュア (accPreviewDogs / accPreviewItems) は Menu/18 Build Dog Previews が書く。確認カードの付け替えは BuildPouchPanel の中の KD_DogPreviewEditor.RewireMenu
+                if (!KD_AccessorySetsEditor.HillsideWire(stageAccessories, pouch, log)) ok = false;
+                ok &= TryCopy(stageAccessories, log);
+                pouch.petFxBox = stagePetFxBox;
+                // 段階 2 (IMP-DOG-016): 呼ぶタブ (犬 → ポーズ → 場所)。Rebuild でも同じ値が入るが、正本はここ
+                pouch.sleepBoard = stageSleepBoard;
+                pouch.sleepPlacement = stageSleepPlacement;
+                pouch.callPose = stageCallPose;
+                log.AppendLine("   段階 2: box = " + KD_Hillside.DogsRootName + "/" + BoxName + " (枠 " + stageBox.slots.Length + " 本の pouch を配線) / accessories="
+                    + (pouch.accessories != null) + " petFxBox=" + (pouch.petFxBox != null) + " / sleepBoard / sleepPlacement / callPose を配線"
+                    + " / 試着ミニチュア=" + (pouch.accPreviewDogs != null ? pouch.accPreviewDogs.Length : 0) + " 匹 (無ければ Menu/18)");
             }
 
             // ---- 設計値 (**コードの既定値はシーンに効かない**ので毎回書く。古民家値 D-6) ----
@@ -208,10 +249,13 @@ namespace KominkaDogRun.Editor
             log.AppendLine("   hillsideStage=" + KD_Hillside.Stage + " manager=" + (manager != null) + " recall=" + (recall != null)
                 + " activitiesMenu=" + (pouch.activitiesMenu != null));
             log.AppendLine("   段階 " + KD_Hillside.Stage + ": " + (KD_Hillside.Stage >= 1 ? "ledger / catalog / items / fxItems を配線。" : "ledger / catalog / items / fxItems は探さない。")
-                + "box / balls / toyFetchers / petFxBox / sleepBoard / live は探さない"
+                + (KD_Hillside.Stage >= 2 ? "box / accessories / petFxBox / sleepBoard / sleepPlacement / callPose を配線。balls / toyFetchers / live は探さない"
+                    : "box / balls / toyFetchers / petFxBox / sleepBoard / live は探さない")
                 + " (現在 box=" + (pouch.box != null) + " ledger=" + (pouch.ledger != null) + " catalog=" + (pouch.catalog != null)
                 + " items=" + CountSet(pouch.items) + " fxItems=" + CountSet(pouch.fxItems)
-                + " sleepBoard=" + (pouch.sleepBoard != null) + " live=" + (pouch.live != null) + ")");
+                + " accessories=" + (pouch.accessories != null) + " petFxBox=" + (pouch.petFxBox != null)
+                + " sleepBoard=" + (pouch.sleepBoard != null) + " sleepPlacement=" + (pouch.sleepPlacement != null) + " callPose=" + (pouch.callPose != null)
+                + " live=" + (pouch.live != null) + ")");
             ok &= TryCopy(pouch, log);
 
             // ---- 拠点板 3 枚 → pouch._Toggle (配線だけ。位置・Interact 文言・近さは触らない) ----
@@ -290,6 +334,55 @@ namespace KominkaDogRun.Editor
                 else fxFound++;
             }
             log.AppendLine("   段階 1: ledger=" + (ledger != null) + " catalog=" + (catalog != null) + " items=" + CountSet(items) + "/" + n + " fxItems=" + fxFound + "/" + fxN);
+            return ok;
+        }
+
+        /// <summary>段階 2 の参照を探す (計画書 D-1 の段階表。探索と FAIL 判定はここ 1 か所)。
+        /// box = KH_Dogs/KD_TreatBox (枠 3 本。Menu/6c)、accessories = KH_Dogs/KD_AccessorySystem (Menu/6e)、petFxBox = KH_Dogs/KD_PetFxBox (Menu/6g)、
+        /// sleepBoard = KH_Dogs/KD_SleepBoard (Menu/6)、sleepPlacement = KH_Dogs/KD_SleepPlacement (Menu/6i)、callPose = KH_Dogs/KD_CallPose (Menu/6j)。
+        /// どれか 1 つでも無ければ false (呼び手は何も書かずに止める)。</summary>
+        static bool HillsideFindStage2(Transform dogs, StringBuilder log, out KD_TreatBox box, out KD_AccessoryBox accessories, out KD_PetFxBox petFxBox,
+            out KD_SleepBoard sleepBoard, out KD_SleepPlacement sleepPlacement, out KD_CallPose callPose)
+        {
+            bool ok = true;
+            // ---- IMP-DOG-014 おやつ ----
+            var boxT = dogs.Find(BoxName);
+            box = boxT == null ? null : boxT.GetComponent<KD_TreatBox>();
+            KD_SceneObjects.Find(BoxName, out int boxCount);
+            var slots = box == null ? null : box.slots;
+            if (box == null || boxCount != 1 || slots == null || slots.Length != SlotCount || !System.Array.TrueForAll(slots, s => s != null))
+            {
+                log.AppendLine("FAIL " + KD_Hillside.DogsRootName + "/" + BoxName + " が無いか枠が " + SlotCount + " 本そろっていない (シーン内 " + boxCount + ")。先に Menu/6c Setup Treats");
+                ok = false; box = null;
+            }
+            // ---- IMP-DOG-015 かざり・撫でFX ----
+            var accT = dogs.Find(KD_DogDefs.AccessoryBoxName);
+            accessories = accT == null ? null : accT.GetComponent<KD_AccessoryBox>();
+            KD_SceneObjects.Find(KD_DogDefs.AccessoryBoxName, out int accCount);
+            if (accessories == null || accCount != 1)
+            {
+                log.AppendLine("FAIL " + KD_Hillside.DogsRootName + "/" + KD_DogDefs.AccessoryBoxName + " に KD_AccessoryBox が 1 個ない (シーン内 " + accCount + ")。先に Menu/6e Setup Accessories");
+                ok = false; accessories = null;
+            }
+            petFxBox = KD_BundledPetFxEditor.HillsideFindBox(dogs, log);   // 無ければ FAIL を書いて null (Menu/6g)
+            if (petFxBox == null) ok = false;
+            // ---- IMP-DOG-016 呼ぶ・ポーズ・場所決め ----
+            var boardT = dogs.Find(KD_DogDefs.SleepBoardName);
+            sleepBoard = boardT == null ? null : boardT.GetComponent<KD_SleepBoard>();
+            KD_SceneObjects.Find(KD_DogDefs.SleepBoardName, out int boardCount);
+            if (sleepBoard == null || boardCount != 1)
+            {
+                log.AppendLine("FAIL " + KD_Hillside.DogsRootName + "/" + KD_DogDefs.SleepBoardName + " が 1 個ない (シーン内 " + boardCount + ")。先に Menu/6a → refresh → 6 Setup Sleep");
+                ok = false; sleepBoard = null;
+            }
+            var placementT = dogs.Find(KD_SleepPlacementEditor.SystemName);
+            sleepPlacement = placementT == null ? null : placementT.GetComponent<KD_SleepPlacement>();
+            if (sleepPlacement == null) { log.AppendLine("FAIL " + KD_Hillside.DogsRootName + "/" + KD_SleepPlacementEditor.SystemName + " が無い。先に Menu/6i Setup Sleep Placement"); ok = false; }
+            var callT = dogs.Find("KD_CallPose");
+            callPose = callT == null ? null : callT.GetComponent<KD_CallPose>();
+            if (callPose == null) { log.AppendLine("FAIL " + KD_Hillside.DogsRootName + "/KD_CallPose が無い。先に Menu/6j Setup Call Poses"); ok = false; }
+            log.AppendLine("   段階 2: box=" + (box != null) + " accessories=" + (accessories != null) + " petFxBox=" + (petFxBox != null)
+                + " sleepBoard=" + (sleepBoard != null) + " sleepPlacement=" + (sleepPlacement != null) + " callPose=" + (callPose != null));
             return ok;
         }
 
@@ -452,6 +545,18 @@ namespace KominkaDogRun.Editor
                 fxButtonLabels[i] = ButtonLabelOf(fxButtons[i], 0f);
                 row.SetActive(false);
             }
+            // 裏山改変 (IMP-DOG-015): 撫でFX の群見出し (計画書 D-2)。2 列の Grid なので見出し 1 セル + 空きセル 1 つ。
+            // Scroll.Build が RowsFor の順 (AccRow → FxHead → FxRow) で Content へ移す。カタログの見える行は 14 = 偶数なので、見出しは必ず新しい段の左端
+            var fxHeads = new GameObject[2];
+            for (int h = 0; h < 2; h++)
+            {
+                fxHeads[h] = KD_ShopSetupEditor.EnsureUiChild(acc, FxHeadPrefix + h, SleepGridPos(h), new Vector2(340f, 92f));
+                fxHeads[h].SetActive(false);   // 実行時 RedrawFxRows がカタログ階層で出す
+            }
+            var fxHeadLabel = EnsureText(fxHeads[0].transform, "Label", new Vector2(0f, 20f), new Vector2(330f, 40f), 22f, TextAlignmentOptions.Left, font);
+            fxHeadLabel.text = KD_Hillside.Text("KD_TreatPouch.WordFxGroup", "撫でエフェクト", log);
+            pouch.hillsideFxHeadRows = fxHeads;
+            pouch.hillsideFxHeadLabel = fxHeadLabel;
             pouch.fxLabels = fxLabels; pouch.fxSubLabels = fxSubs; pouch.fxButtons = fxButtons;
             pouch.fxButtonImages = fxImages; pouch.fxButtonLabels = fxButtonLabels;
             // 撫でFX 専用のタブは無い。確認カードは共有 1 枚 (kind Fx はそのまま)
@@ -468,7 +573,7 @@ namespace KominkaDogRun.Editor
                 pouch.liveSubLabels[0].text = KD_Hillside.Text("KD_TreatPouch.WordLivePreparingSub", "演目と開催の仕組みは、これから決めます。", log);
 
             log.AppendLine("   裏山: Page_Walk " + WalkRowCount + " 行 (犬 " + WalkDogRows + " + 行き先 2) / おもちゃ [ディスク] " + toyRows
-                + " / かざりの FxRow " + HillsideFxRowCount + " (既定非表示) / ライブは準備中");
+                + " / かざりの群見出し + FxRow " + HillsideFxRowCount + " (既定非表示) / ライブは準備中");
 
             // ---- 段階 1: ヘッダの残高の入口 + ポイントの面 (入手経路 2 行 + [もどる]) / ようこその面 ----
             if (KD_Hillside.Stage >= 1)
@@ -478,6 +583,10 @@ namespace KominkaDogRun.Editor
                 // 11b Build Welcome より前の Menu/7・11 でも面が居る必要がある。庭の置き場・手元ヒントは 11b
                 KD_WelcomeGuideEditor.BuildPage(pouch, panel.transform, font, udon, log);
             }
+
+            // ---- 段階 2 (IMP-DOG-014): おやつの行に [買う] (Row{i}/Buy -> _TreatBuy{i})。実体は KD_TreatSetupEditor.Treats.cs ----
+            if (KD_Hillside.Stage >= 2)
+                HillsideBuildTreatBuy(pages, pouch, font, udon, round, log);
         }
 
         /// <summary>段階 1 のポイントの面 (計画書 D-5「残高・ポイント面」)。古民家の KD_GiftCodeSetupEditor.Setup の入口と面から

@@ -98,6 +98,30 @@ namespace KominkaDogRun.Editor
             EditorUtility.SetDirty(ctrl);
         }
 
+        /// <summary>裏山改変: 犬の Animator Controller (古民家からコピー済み) に呼ぶポーズの 7 状態が既に揃っているか。
+        /// 揃っていれば作り直さない (作り直すと状態と遷移の fileID が変わり、同じ中身でも .controller の差分が出る)。</summary>
+        internal static bool AnimatorConfigured(AnimatorController ctrl)
+        {
+            if (ctrl == null) return false;
+            foreach (var p in new[] { "CallReady", "CallPose", "CallTime" })
+                if (!ctrl.parameters.Any(x => x.name == p)) return false;
+            var sm = ctrl.layers[0].stateMachine;
+            foreach (var name in States)
+                if (sm.states.Count(x => x.state.name == name && x.state.motion != null) != 1) return false;
+            return sm.anyStateTransitions.Count(t => t.destinationState != null && States.Contains(t.destinationState.name)) == States.Length;
+        }
+
+        /// <summary>裏山改変: ポーズのミニチュア・配置ゴーストから外すさんぽの道具。首輪 (KH_Collar_*) は含めない。</summary>
+        internal static bool IsWalkingGear(string name)
+        {
+            return name.StartsWith("KH_Lead") || name.StartsWith("KH_ConnectedHandle") || name.StartsWith("KH_Roam")
+                || name.StartsWith("KH_LeashClip") || name.StartsWith("KH_Handle");
+        }
+
+        /// <summary>裏山改変: 追加動作 4 種の商品キー。添字は KD_SleepSlot.BellyUp / ChinRest / GivePaw / StretchYawn。
+        /// 商品 (KH_Dogs/KD_ShopCatalog/KD_ShopItem_Action_*) は段階 1 の Menu/4 Setup Shop が作る。ここでは配線だけ。</summary>
+        internal static readonly string[] ActionKeys = { "action.belly_up", "action.chin_rest", "action.give_paw", "action.stretch_yawn" };
+
         [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Call Poses/1 - Create Program")]
         public static void CreateProgram()
         {
@@ -118,13 +142,25 @@ namespace KominkaDogRun.Editor
             if (KD_SceneObjects.Find(Name) != null) Setup();
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Call Poses/2 - Setup")]
+        /// <summary>裏山改変: IMP-DOG-016。Menu/6j。KH_Dogs/KD_CallPose (ポーズ面 + ミニチュア 30 + 場所決めのゴースト 30) を作る / 作り直す。
+        /// Menu/7 (BuildPouchPanel) と Menu/18 (DogPreview) からも RebuildIfPresent で呼ばれる。
+        /// 前提: Menu/6 Setup Sleep、Menu/6i Setup Sleep Placement、段階 1 の KD_ShopItem_Action_* 4 行。
+        /// 古民家から変えた点: シーンの控え (Temp/call-poses/before.unity) を保存しない / 台帳と場所決めは名前で引く /
+        /// Animator が既に構成済みなら作り直さない / 首輪は焼き、さんぽの道具 (IsWalkingGear) だけ外す /
+        /// 追加動作の商品は作らず段階 1 の行を配線するだけ (KD_ActionProductsEditor.Setup は呼ばない)。**シーンは保存しない。**</summary>
+        [MenuItem("Tools/KominkaHillside/Menu/6j Setup Call Poses")]
         public static void Setup()
         {
-            if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode only");
+            if (EditorApplication.isPlaying || !KD_Hillside.InScene()) throw new InvalidOperationException("Open " + KD_Hillside.ScenePath + " in Edit mode");
             Directory.CreateDirectory("Temp/call-poses");
             var pouch = KD_SceneObjects.Find(KD_DogDefs.TreatPouchName).GetComponent<KD_TreatPouch>();
-            if (!File.Exists("Temp/call-poses/before.unity")) EditorSceneManager.SaveScene(pouch.gameObject.scene, "Temp/call-poses/before.unity", true);
+            // 裏山改変: 台帳と場所決めは名前で引く (Menu/7 の途中から呼ばれても配線順に依存しない)
+            var boardGo = KD_SceneObjects.Find(KD_DogDefs.SleepBoardName);
+            if (boardGo != null && boardGo.GetComponent<KD_SleepBoard>() != null) pouch.sleepBoard = boardGo.GetComponent<KD_SleepBoard>();
+            var placementGo = KD_SceneObjects.Find(KD_SleepPlacementEditor.SystemName);
+            if (placementGo != null && placementGo.GetComponent<KD_SleepPlacement>() != null) pouch.sleepPlacement = placementGo.GetComponent<KD_SleepPlacement>();
+            if (pouch.sleepBoard == null || pouch.sleepPlacement == null || pouch.sleepPlacement.markerDogs == null || pouch.sleepPlacement.markerDogs.Length != 6)
+                throw new InvalidOperationException("Run Menu/6 Setup Sleep and Menu/6i Setup Sleep Placement first");
             var go = KD_SceneObjects.Find(Name);
             if (go == null) go = Child(pouch.sleepBoard.transform.parent, Name);
             var c = go.GetComponent<KD_CallPose>(); if (c == null) c = go.AddUdonSharpComponent<KD_CallPose>();
@@ -171,7 +207,10 @@ namespace KominkaDogRun.Editor
                 var def = KD_DogDefs.All[d]; var source = KD_SceneObjects.Find(def.DogName);
                 c.dogs[d] = source.GetComponentsInChildren<KD_DogWanderController>(true).FirstOrDefault();
                 if (c.dogs[d] == null) c.dogs[d] = KD_SceneObjects.Find(def.WanderSystemName).GetComponent<KD_DogWanderController>();
-                ConfigureAnimator(def, AssetDatabase.LoadAssetAtPath<AnimatorController>(def.ControllerPath));
+                var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(def.ControllerPath);
+                // 裏山改変: 古民家からコピーした Controller は構成済み。揃っていれば作り直さない
+                if (AnimatorConfigured(controller)) log.AppendLine(def.key + " animator: 構成済み (作り直さない)");
+                else { ConfigureAnimator(def, controller); log.AppendLine(def.key + " animator: 呼ぶポーズの 7 状態を構成した"); }
                 var scene = EditorSceneManager.NewPreviewScene();
                 try
                 {
@@ -179,6 +218,10 @@ namespace KominkaDogRun.Editor
                     {
                         var clone = Object.Instantiate(source); SceneManager.MoveGameObjectToScene(clone, scene);
                         clone.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity); clone.SetActive(true);
+                        // 裏山改変: 首輪 (KH_Collar_*) は焼く (司令塔の決定: かざり試着の Menu/18 と同じ見た目)。
+                        // 犬に付いて見えるさんぽの道具 (リード・クリップ・持ち手・徘徊の目印) だけ外す
+                        foreach (var part in clone.GetComponentsInChildren<Transform>(true))
+                            if (part != clone.transform && IsWalkingGear(part.name)) part.gameObject.SetActive(false);
                         var clip = pose < PoseCount ? PoseClip(def, pose) : pose == PoseCount ? PawClip(def) : CompanionClip(def, "ChinRest");
                         KD_DogPreviewEditor.SamplePose(clone, new KD_ClipRef(clip.name, AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(clip)), clip.length));
                         if (pose < PoseCount)
@@ -252,18 +295,74 @@ namespace KominkaDogRun.Editor
                 foreach (var b in new UdonSharpBehaviour[] { c.dogs[d], c.board.SlotOf(d) })
                 { EditorUtility.SetDirty(b); UdonSharpEditorUtility.CopyProxyToUdon(b); }
             }
+            // 裏山改変: 追加動作 4 種の商品 (段階 1 で作成済み) を面と 6 枠へ配線する。商品の中身 (価格・区分・台帳) は触らない
+            HillsideActionProducts(c, pouch, log);
             AssetDatabase.SaveAssets(); EditorSceneManager.MarkSceneDirty(go.scene);
-            File.WriteAllText("Temp/call-poses/setup.txt", log.ToString());
-            KD_ActionProductsEditor.Setup();
+            log.AppendLine("**シーンは保存していない。** 次: Menu/6b Verify Sleep System");
+            KD_VerifyLog.Write(KD_Hillside.LogDir + "setup-call-poses.txt", log);
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Call Poses/3 - Verify")]
-        public static void Verify()
+        /// <summary>裏山改変: KD_ActionProductsEditor.Setup の配線部分だけ。商品は KD_ProductDefinitions の sceneName で引き、
+        /// 無ければ止める (段階 1 の Menu/4 Setup Shop が先)。価格・区分・台帳・カタログの束ね直しはしない (段階 1 の持ち物)。</summary>
+        static void HillsideActionProducts(KD_CallPose c, KD_TreatPouch p, StringBuilder log)
         {
-            var log = new StringBuilder(); int failures = 0;
-            void Check(bool ok, string label) { log.AppendLine((ok ? "PASS " : "FAIL ") + label); if (!ok) failures++; }
-            var c = KD_SceneObjects.Find(Name).GetComponent<KD_CallPose>();
+            var items = new KD_ShopItem[ActionKeys.Length];
+            for (int i = 0; i < ActionKeys.Length; i++)
+            {
+                string sceneName = KD_ProductDefinitions.SceneName(ActionKeys[i]);
+                var itemGo = KD_SceneObjects.Find(sceneName, out int count);
+                items[i] = (count == 1 && itemGo != null) ? itemGo.GetComponent<KD_ShopItem>() : null;
+                if (items[i] == null) throw new InvalidOperationException("Action product " + sceneName + " missing (" + count + "). Run Menu/4 Setup Shop (stage 1) first");
+            }
+            c.actionProducts = items;
+            for (int d = 0; d < 6; d++)
+            {
+                var slot = c.board.SlotOf(d);
+                if (slot == null) throw new InvalidOperationException("Six existing slots required");
+                slot.actionProducts = items; EditorUtility.SetDirty(slot); UdonSharpEditorUtility.CopyProxyToUdon(slot);
+            }
+            // P13 (2026-09-16): 追加動作の確認も板の手前の共有カード (KD_TreatPouch.confirmRoot)。旧 Purchase パネルは消す
+            var legacyPurchase = c.panel.transform.Find("Purchase");
+            if (legacyPurchase != null) { Object.DestroyImmediate(legacyPurchase.gameObject); log.AppendLine("removed CallPosePanel/Purchase (P13)"); }
+            if (p.confirmRoot == null) throw new InvalidOperationException("Shared confirm card missing — run Menu/7 Build Menu first");
+            c.purchaseControls = new[] { c.placeButton.gameObject, c.applyButton.gameObject, c.releaseButton.gameObject,
+                c.pawButton.gameObject, c.stretchButton.gameObject, c.panel.transform.Find("Back").gameObject, c.status.gameObject };
+            EditorUtility.SetDirty(c); UdonSharpEditorUtility.CopyProxyToUdon(c);
+            log.AppendLine("action products: " + string.Join(", ", items.Select(x => x.name + " " + x.price + "pt")) + " → KD_CallPose + 6 枠");
+        }
+
+        /// <summary>裏山改変: 古民家の 3 - Verify (例外で止める) を Menu/6b の一部 (件数を数える) にした。裏山の追加: 置き場所・language・追加動作の商品。</summary>
+        internal static void VerifyInto(KD_VerifyLog v)
+        {
+            void Check(bool ok, string label) { v.Check(ok, label); }
+            var cgo = KD_SceneObjects.Find(Name);
+            if (!v.Check(cgo != null && cgo.GetComponent<KD_CallPose>() != null, "KD_CallPose がある (Menu/6j)")) return;
+            var c = cgo.GetComponent<KD_CallPose>();
             Check(c.pouch.callPose == c && c.board != null && c.placement != null, "wiring");
+            // ---- 裏山改変: IMP-DOG-016 ----
+            Check(cgo.transform.parent != null && cgo.transform.parent.name == KD_Hillside.DogsRootName && cgo.transform.parent.parent == null, "KD_CallPose が KH_Dogs 直下");
+            Check(c.language != null && c.language == c.pouch.language, "language 配線");
+            Check(c.panel != null && c.panel.transform.parent == c.pouch.tabPages[KD_TreatPouch.TabSleep].transform, "CallPosePanel が Page_Sleep の子");
+            Check(c.dogListParts != null && c.dogListParts.Length > 0 && !c.dogListParts.Contains(c.panel) && c.dogListParts.All(x => x != null && x.name != "OpenToAllButton"),
+                "犬の一覧 (dogListParts) = Page_Sleep の子から面と許可ボタンを除いたもの (" + (c.dogListParts == null ? 0 : c.dogListParts.Length) + ")");
+            Check(c.actionProducts != null && c.actionProducts.Length == ActionKeys.Length, "追加動作の商品 4 行");
+            for (int i = 0; c.actionProducts != null && i < ActionKeys.Length && i < c.actionProducts.Length; i++)
+            {
+                var item = c.actionProducts[i];
+                var scene = KD_SceneObjects.Find(KD_ProductDefinitions.SceneName(ActionKeys[i]));
+                Check(item != null && scene != null && item.gameObject == scene && item.productKey == ActionKeys[i] && item.price == 30 && !item.IsCE() && !item.IsStocked() && item.menuOnly,
+                    ActionKeys[i] + " = " + KD_ProductDefinitions.SceneName(ActionKeys[i]) + " (段階 1 の行) / 30pt / 永続 / menuOnly");
+                for (int d = 0; d < 6; d++)
+                {
+                    var slot = c.board.SlotOf(d);
+                    object raw = null;
+                    bool wired = slot != null && UdonSharpEditorUtility.GetBackingUdonBehaviour(slot).publicVariables.TryGetVariableValue("actionProducts", out raw);
+                    var values = raw as Object[];
+                    Check(slot != null && slot.actionProducts != null && slot.actionProducts.Length == 4 && slot.actionProducts[i] == item && wired && values != null && values.Length == 4
+                        && item != null && values[i] == UdonSharpEditorUtility.GetBackingUdonBehaviour(item), ActionKeys[i] + " 枠 " + d + " proxy/backing (ActionOwnedBy の課金ゲート)");
+                }
+            }
+            Check(c.pouch.confirmRoot != null && c.panel.transform.Find("Purchase") == null && c.purchaseControls != null && c.purchaseControls.Length == 7, "確認は共有カード (P13)。旧 Purchase パネルが無い");
             Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(c).SyncMethod == VRC.SDKBase.Networking.SyncType.None, "local UI sync mode");
             Check(c.dogs.Length == 6 && c.miniatures.Length == 30 && c.placement.poseGhosts.Length == 30 && c.poseButtons.Length == 5, "six dogs / thirty previews / five poses");
             Check(!c.panel.activeSelf, "menu closed initially");
@@ -306,8 +405,6 @@ namespace KominkaDogRun.Editor
             }
             foreach (var b in c.panel.GetComponentsInChildren<Button>(true))
                 Check(b.onClick.GetPersistentEventCount() == 1 && b.onClick.GetPersistentTarget(0) == UdonSharpEditorUtility.GetBackingUdonBehaviour(c), "button " + b.name);
-            log.AppendLine("failures=" + failures); Directory.CreateDirectory("Temp/call-poses"); File.WriteAllText("Temp/call-poses/verify.txt", log.ToString());
-            if (failures > 0) throw new InvalidOperationException(log.ToString());
         }
 
         [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Call Poses/4 - Preview")]
@@ -384,12 +481,11 @@ namespace KominkaDogRun.Editor
             if (overflow > 0) throw new InvalidOperationException("Call pose text overflow: " + overflow);
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Call Poses/5 - Verify Animator Playback")]
-        public static void VerifyPlayback()
+        /// <summary>裏山改変: 古民家の 5 - Verify Animator Playback を Menu/6b の一部にした (Preview Scene だけで回す。シーンは触らない)。</summary>
+        internal static void VerifyPlaybackInto(KD_VerifyLog v)
         {
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode only");
-            var log = new StringBuilder(); int failures = 0;
-            void Check(bool ok, string label) { log.AppendLine((ok ? "PASS " : "FAIL ") + label); if (!ok) failures++; }
+            void Check(bool ok, string label) { v.Check(ok, label); }
             var scene = EditorSceneManager.NewPreviewScene();
             try
             {
@@ -445,9 +541,6 @@ namespace KominkaDogRun.Editor
                 }
             }
             finally { EditorSceneManager.ClosePreviewScene(scene); }
-            Directory.CreateDirectory("Temp/call-poses"); log.AppendLine("failures=" + failures);
-            File.WriteAllText("Temp/call-poses/playback.txt", log.ToString());
-            if (failures > 0) throw new InvalidOperationException(log.ToString());
         }
     }
 }

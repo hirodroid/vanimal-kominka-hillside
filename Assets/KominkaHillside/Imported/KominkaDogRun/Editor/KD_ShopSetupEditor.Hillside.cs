@@ -206,12 +206,15 @@ namespace KominkaDogRun.Editor
                 KD_VerifyLog.Write(HillsideShopSetupLog, log);
                 return;
             }
-            // 裏山には ToyBox / PetFxBox が無い (段階 1)。通知先は空。手元メニューはカタログを直接読む
-            catalog.consumers = new UdonSharpBehaviour[0];
-            catalog.consumerEvents = new string[0];
+            // 裏山には ToyBox が無い。手元メニューはカタログを直接読む
+            // 裏山改変 (IMP-DOG-015 提案): 段階 2 の撫でFX の消費側 (KH_Dogs/KD_PetFxBox) があれば通知先に残す (Menu/6g が足す。流し直しで消さない)
+            var petFxT = dogs.Find(KD_DogDefs.PetFxBoxName);
+            var petFx = petFxT == null ? null : petFxT.GetComponent<KD_PetFxBox>();
+            catalog.consumers = petFx != null ? new UdonSharpBehaviour[] { petFx } : new UdonSharpBehaviour[0];
+            catalog.consumerEvents = petFx != null ? new[] { "_OnShopSelectionChanged" } : new string[0];
             ok &= TryCopy(catalog, log);
             log.AppendLine("wired catalog.items = ledger.products = " + catalog.items.Length + " 件 / categories "
-                + string.Join(",", catalog.categoryKeys) + " / consumers 0");
+                + string.Join(",", catalog.categoryKeys) + " / consumers " + catalog.consumers.Length);
 
             // ---- 撫でFXの札 (古民家と同じく Shop Setup が作る。KH_Dogs 直下) ----
             EnsurePlayerFxTag(log, dogs);
@@ -347,8 +350,8 @@ namespace KominkaDogRun.Editor
                 v.Check(catalog.categoryKeys != null && catalog.categoryKeys.SequenceEqual(KD_ProductDefinitions.Categories), "catalog.categoryKeys == 表の区分");
                 v.Check(catalog.defaultProducts != null && catalog.defaultProducts.SequenceEqual(KD_ProductDefinitions.Defaults), "catalog.defaultProducts == 表の既定");
                 v.Check(catalog.consumers != null && catalog.consumerEvents != null && catalog.consumers.Length == catalog.consumerEvents.Length,
-                    "catalog.consumers と consumerEvents が同数 (裏山段階 1 は 0 本でよい)");
-                log.AppendLine("  SKIP catalog.consumers に ToyBox / PetFxBox — 裏山段階 1 には無い");
+                    "catalog.consumers と consumerEvents が同数 (裏山段階 1 は 0 本、段階 2 は KD_PetFxBox の 1 本)");
+                log.AppendLine("  NOTE catalog.consumers の KD_PetFxBox._OnShopSelectionChanged は Menu/6h Verify Pet Fx が数える (ToyBox は裏山に無い)");
             }
 
             // ---- 商品 (シーン中の KD_ShopItem すべて) ----

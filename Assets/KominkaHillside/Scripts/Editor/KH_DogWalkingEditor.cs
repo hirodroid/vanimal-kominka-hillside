@@ -170,6 +170,9 @@ namespace KominkaHillside.Editor
             manager.trailOffDistance=6f;manager.trailOnDistance=4f;manager.entryMaxPath=12f;manager.inviteAfter=8f;manager.inviteInterval=14f;manager.inviteLimit=3;manager.detourChance=.25f;
             var existingRoute=root.GetComponentInChildren<KH_WalkRoute>(true);manager.route=existingRoute;
             var pack=Find<KD_DogPack>(root,"KD_DogPack");
+            // IMP-DOG-016: keep the Call tab's sleep board if Menu/6 has built it (null before stage 2 = the old behaviour).
+            var sleepBoardT=root.transform.Find("KD_SleepBoard");var sleepBoard=sleepBoardT!=null?sleepBoardT.GetComponent<KD_SleepBoard>():null;
+            manager.sleepBoard=sleepBoard;
             // Gathering (game-design §4): hillside copy of KD_GroupActivities, trainer entitlement via the shared Product/Listing.
             var pass=Add<KH_TrainerPass>(Child(root.transform,"KH_TrainerPass").gameObject);
             pass.product=AssetDatabase.LoadAssetAtPath<VRC.Economy.UdonProduct>(TrainerProductPath);pass.listingId=TrainerListingId;
@@ -212,9 +215,10 @@ namespace KominkaHillside.Editor
                 w.fetchController=f;w.petController=p;p.fetchController=f;p.wanderController=w;
                 f.pack=pack;w.pack=pack;
                 // Omitted room/stage/services stay null in this world.
-                f.sleepBoard=null;f.liveSystem=null;f.activities=act;f.photoDirector=null;w.activities=act;
+                f.sleepBoard=sleepBoard;f.liveSystem=null;f.activities=act;f.photoDirector=null;w.activities=act;
+                if(sleepBoard!=null)w.sleepBoard=sleepBoard;
                 act.balls[i]=b;recall.balls[i]=b;recall.fetchers[i]=f;
-                p.companionSlot=null;
+                p.companionSlot=sleepBoard!=null?sleepBoard.SlotOf(i):null;   // IMP-DOG-016: chin rest reads the dog's own slot (Menu/6j wires it too)
                 manager.dogRoots[i]=dog;manager.fetchers[i]=f;manager.roamCenters[i]=home;
                 roots[i]=dog;fetch[i]=f;
                 // Design-owned start position (BUG-DOG-001); rewritten on every Build.
@@ -363,6 +367,7 @@ namespace KominkaHillside.Editor
             // "no stopovers ever". Walking/4e checks the spots themselves (placement, paths, spacing).
             Check(m.stopovers!=null,"stopover data wired to manager");
             Check(m.stopovers!=null&&m.stopovers.count>=1,"stopover spots "+(m.stopovers==null?0:m.stopovers.count)+" >= 1");
+            {var sb=root.transform.Find("KD_SleepBoard")?.GetComponent<KD_SleepBoard>();Check(m.sleepBoard==sb,"leash manager asks the Call tab's sleep board before attaching (IMP-DOG-016; null before stage 2)");}
             var pack=root.GetComponentInChildren<KD_DogPack>();
             for(int i=0;i<6;i++)
             {
@@ -550,7 +555,8 @@ namespace KominkaHillside.Editor
                 }
                 var wb=UdonSharpEditorUtility.GetBackingUdonBehaviour(w);var fb=UdonSharpEditorUtility.GetBackingUdonBehaviour(f);var cbb=UdonSharpEditorUtility.GetBackingUdonBehaviour(c);
                 Check(wb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb&&fb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb,"Wander/Fetch backing frisbeeCatch "+key);
-                Check(f.sleepBoard==null&&f.liveSystem==null,"sleep board / live unwired for "+key+" (re-verify exclusion if reintroduced)");
+                var sleepBoardV=root.transform.Find("KD_SleepBoard")?.GetComponent<KD_SleepBoard>();
+                Check(f.sleepBoard==sleepBoardV&&f.liveSystem==null,"sleep board = KH_Dogs/KD_SleepBoard when built (IMP-DOG-016, else null) / live unwired for "+key);
             }
             var recallB=root.GetComponentInChildren<KH_ToyRecall>(true);
             Check(recallB!=null&&recallB.discs!=null&&recallB.discs.Length==6&&recallB.discCatchers.Length==6&&Enumerable.Range(0,6).All(i=>{bool want=Array.IndexOf(FrisbeeKeys,Keys[i])>=0;var dt=root.transform.Find("KH_Frisbee_"+Keys[i]);var ct=root.transform.Find("KH_FrisbeeCatch_"+Keys[i]);

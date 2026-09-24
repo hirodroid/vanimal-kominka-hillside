@@ -34,7 +34,8 @@ namespace KominkaDogRun.Editor
         {
             if (id == KD_TreatPouch.TabLive) return new[] { (Prefixes[id], KD_DogDefs.LiveShows.Length) };
             if (id == KD_TreatPouch.TabWalk) return new[] { (Prefixes[id], KD_TreatSetupEditor.WalkRowCount) };
-            if (id == KD_TreatPouch.TabAcc) return new[] { (Prefixes[id], KD_AccessorySetsEditor.MenuCount), (AccFxPrefix, KD_TreatSetupEditor.HillsideFxRowCount) };
+            // 裏山改変 (IMP-DOG-015): AccRow16 → 撫でFX の群見出し 2 セル (FxHead0 見出し / FxHead1 空き) → FxRow11
+            if (id == KD_TreatPouch.TabAcc) return new[] { (Prefixes[id], KD_AccessorySetsEditor.MenuCount), (KD_TreatSetupEditor.FxHeadPrefix, 2), (AccFxPrefix, KD_TreatSetupEditor.HillsideFxRowCount) };
             // 裏山改変 (司令塔 2026-09-23): おやつは Row 4 (KD_ShopSetupEditor.TreatProductCount。Pouch ビルダーが作る数と同じ。古民家の行プールも 4)
             if (id == KD_TreatPouch.TabTreat) return new[] { (Prefixes[id], KD_ShopSetupEditor.TreatProductCount) };
             return new[] { (Prefixes[id], 6) };
@@ -315,6 +316,14 @@ namespace KominkaDogRun.Editor
                         Action(row,"Button",64,-18,120);
                         Action(row,"Disc",190,-18,120);
                     }
+                    if(id == KD_TreatPouch.TabTreat && row.Find(KD_TreatSetupEditor.TreatBuyButtonName) != null)
+                    {
+                        // 裏山改変 (IMP-DOG-014): おやつの行に [出す] (Button) と [買う] (Buy)。補足 (価格・上限) は左に詰める (おもちゃ行と同じ型)
+                        Text(row,"Hint",new Vector2(-126,-18),new Vector2(250,60),18);
+                        { var hint=row.Find("Hint"); if(hint!=null) hint.GetComponent<TextMeshProUGUI>().enableWordWrapping=true; }
+                        Action(row,"Button",64,-18,120);
+                        Action(row,KD_TreatSetupEditor.TreatBuyButtonName,190,-18,120);
+                    }
                     if(id == KD_TreatPouch.TabWalk)
                     {
                         // 裏山改変: さんぽ。犬の行 = 名前 / 状態 / [左につなぐ][右につなぐ][はずす] (3 つで 480px、文字 18pt)。行き先の行 = 汎用の置き方 + [ここへ]
@@ -392,7 +401,7 @@ namespace KominkaDogRun.Editor
         {
             switch (prefix)
             {
-                case "Row": return "_Row" + index;
+                case "Row": return button == KD_TreatSetupEditor.TreatBuyButtonName ? KD_TreatSetupEditor.TreatBuyEventOf(index) : "_Row" + index;   // 裏山改変 (IMP-DOG-014): [買う]
                 case "ToyRow": return button == "Disc" ? "_Disc" + index : "_Toy" + index;
                 case "WalkRow":
                     if (button == "Here") return index == KD_TreatSetupEditor.WalkDogRows ? "_WalkPlaza" : "_WalkGate";

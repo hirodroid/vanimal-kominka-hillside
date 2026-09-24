@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 
 namespace KominkaDogRun.Editor
 {
-    public static class KD_AccessorySetsEditor
+    public static partial class KD_AccessorySetsEditor   // 裏山改変: partial (KD_AccessorySetsEditor.Hillside.cs)
     {
         public const int MenuCount = 16;
         const string Output = "Temp/accessory-sets-integration";

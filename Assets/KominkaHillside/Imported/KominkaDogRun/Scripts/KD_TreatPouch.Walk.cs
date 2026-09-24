@@ -62,12 +62,13 @@ namespace KominkaDogRun
         public void _WalkGate() { WalkChooseDestination(WalkDestGate); }
 
         /// <summary>理由は正本 (KH_LeashManager) の規則を写したもの。拒否が不意打ちにならないため (Owner がもう一度判定する)。
-        /// 0 ok / 1 自分がつないでいる / 2 他人 / 3 集合中 / 4 ボール / 5 片手 3 匹 / 6 遠い / 9 使えない。</summary>
+        /// 0 ok / 1 自分がつないでいる / 2 他人 / 3 集合中 / 4 ボール / 5 片手 3 匹 / 6 遠い / 7 呼ばれて待機中 / 9 使えない。</summary>
         private int WalkAttachGate(int dog, int hand)
         {
             if (manager == null || manager.walkers == null || dog < 0 || dog >= manager.walkers.Length) return 9;
             if (manager._IsLeashed(dog)) return manager._IsMine(dog) ? 1 : 2;
             if (manager._IsGathering(dog)) return 3;
+            if (sleepBoard != null && sleepBoard._IsCalled(dog)) return 7;   // 裏山改変 (IMP-DOG-016): 呼ばれて待機中は接続不可
             if (manager.fetchers == null || dog >= manager.fetchers.Length || manager.fetchers[dog] == null || !manager.fetchers[dog].IsIdle) return 4;
             if (manager._MyCount(hand) >= 3) return 5;
             VRCPlayerApi lp = Networking.LocalPlayer;
@@ -114,6 +115,7 @@ namespace KominkaDogRun
             if (gate == 4) return "KD_TreatPouch.WordWalkGateBall";
             if (gate == 5) return hand == 0 ? "KD_TreatPouch.WordWalkGateFullLeft" : "KD_TreatPouch.WordWalkGateFullRight";
             if (gate == 6) return "KD_TreatPouch.WordWalkGateFar";
+            if (gate == 7) return "KD_TreatPouch.WordWalkGateCalled";   // 裏山改変 (IMP-DOG-016)
             return "KD_TreatPouch.WordWalkGateUnavailable";
         }
 
@@ -175,6 +177,7 @@ namespace KominkaDogRun
                 }
                 else if (leashed) state = L("KD_TreatPouch.WordWalkStateOther");   // 表示名は出さない (フォントに無い字は豆腐になる)
                 else if (manager._IsGathering(i)) state = L("KD_TreatPouch.WordWalkStateGathering");
+                else if (sleepBoard != null && sleepBoard._IsCalled(i)) state = L("KD_TreatPouch.WordWalkStateCalled");   // 裏山改変 (IMP-DOG-016)
                 else if (manager.fetchers != null && i < manager.fetchers.Length && manager.fetchers[i] != null && !manager.fetchers[i].IsIdle) state = L("KD_TreatPouch.WordWalkStateBall");
                 else
                 {

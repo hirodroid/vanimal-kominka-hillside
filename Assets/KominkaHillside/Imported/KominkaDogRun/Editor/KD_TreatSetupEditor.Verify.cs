@@ -1232,7 +1232,7 @@ namespace KominkaDogRun.Editor
             v.Check(!pouch.debugForceTouch, PouchName + ".debugForceTouch が false");
 
             // ---- 段階表 (D-1)。段階 0 で null が正の参照は PASS + 理由、必須は FAIL ----
-            v.Check(pouch.hillsideStage == KD_Hillside.Stage, PouchName + ".hillsideStage == " + KD_Hillside.Stage + " (0 = 段階 0-b / 1 = IMP-PRG-001。actual " + pouch.hillsideStage + ")");
+            v.Check(pouch.hillsideStage == KD_Hillside.Stage, PouchName + ".hillsideStage == " + KD_Hillside.Stage + " (0 = 段階 0-b / 1 = IMP-PRG-001 / 2 = IMP-DOG-014〜016。actual " + pouch.hillsideStage + ")");
             int stage = pouch.hillsideStage;
             void StageRef(bool present, string name, int requiredFrom, string when)
             {
@@ -1292,6 +1292,33 @@ namespace KominkaDogRun.Editor
                         "おじいさん " + KD_Hillside.DogsRootName + "/KD_ShopKeeper が 1 個 (シーンの KD_ShopKeeper " + keepers + " 個。Menu/4d Setup Shop Keeper)");
                     v.Check(pouch.uiSuccessClip != null && pouch.uiRejectClip != null && pouch.uiAudio != null,
                         "購入の効果音 (uiSuccessClip / uiRejectClip / uiAudio) 配線 (裏山は棚ではなく KD_ShopSetupEditor.HillsideBuyClip / HillsideRejectClip)");
+                }
+                if (stage >= 2)
+                {
+                    // 段階 2 (IMP-DOG-014): おやつの箱。枠・実体・自己テストの詳細は Menu/6d Verify Treats
+                    v.Check(pouch.box != null && pouch.box.transform.parent == dogs && pouch.box.name == BoxName,
+                        "box は " + KD_Hillside.DogsRootName + "/" + BoxName);
+                    v.Check(pouch.box != null && pouchUdon.publicVariables.TryGetVariableValue("box", out wired)
+                        && wired as Object == UdonSharpEditorUtility.GetBackingUdonBehaviour(pouch.box), "backing Udon が box を持つ");
+                    v.Check(pouch.box != null && pouch.box.slots != null && pouch.box.slots.Length == KD_DogDefs.TreatSlotCount
+                        && System.Array.TrueForAll(pouch.box.slots, s => s != null && s.pouch == pouch),
+                        "box.slots が " + KD_DogDefs.TreatSlotCount + " 本・各枠の pouch == " + PouchName + " (移譲の知らせ先)");
+                    // 段階 2 (IMP-DOG-015): かざりの台帳と撫でFX の置き場 (台帳・一覧の中身は Menu/6f、撫でFX は Menu/6h)
+                    v.Check(pouch.accessories != null && pouch.accessories.transform.parent == dogs && pouch.accessories.name == KD_DogDefs.AccessoryBoxName,
+                        "accessories は " + KD_Hillside.DogsRootName + "/" + KD_DogDefs.AccessoryBoxName);
+                    v.Check(pouch.petFxBox != null && pouch.petFxBox.transform.parent == dogs && pouch.petFxBox.name == KD_DogDefs.PetFxBoxName,
+                        "petFxBox は " + KD_Hillside.DogsRootName + "/" + KD_DogDefs.PetFxBoxName);
+                    // 段階 2 (IMP-DOG-016): 呼ぶの参照がシーンの実物を指す (中身の検査は Menu/6b Verify Sleep System が持つ。正本を 2 つにしない)
+                    var wantSleepBoard = dogs.Find(KD_DogDefs.SleepBoardName)?.GetComponent<KD_SleepBoard>();
+                    var wantPlacement = dogs.Find(KD_SleepPlacementEditor.SystemName)?.GetComponent<KD_SleepPlacement>();
+                    var wantCallPose = dogs.Find("KD_CallPose")?.GetComponent<KD_CallPose>();
+                    v.Check(wantSleepBoard != null && pouch.sleepBoard == wantSleepBoard, PouchName + ".sleepBoard == " + KD_Hillside.DogsRootName + "/" + KD_DogDefs.SleepBoardName);
+                    v.Check(wantPlacement != null && pouch.sleepPlacement == wantPlacement && wantPlacement.board == wantSleepBoard,
+                        PouchName + ".sleepPlacement == " + KD_Hillside.DogsRootName + "/" + KD_SleepPlacementEditor.SystemName + " (board も同じ台帳)");
+                    v.Check(wantCallPose != null && pouch.callPose == wantCallPose && wantCallPose.board == wantSleepBoard && wantCallPose.placement == wantPlacement,
+                        PouchName + ".callPose == " + KD_Hillside.DogsRootName + "/KD_CallPose (board / placement も同じ)");
+                    v.Check(wantSleepBoard != null && wantSleepBoard.hillsideLeashes == pouch.manager, "KD_SleepBoard.hillsideLeashes == pouch.manager (リード接続中・集合中は呼べない)");
+                    v.Check(pouch.manager != null && pouch.manager.sleepBoard == wantSleepBoard, "KH_LeashManager.sleepBoard == KD_SleepBoard (呼ばれて待機中の犬はリードをつなげない。Menu/6 / Walking/3)");
                 }
             }
 
@@ -1357,7 +1384,10 @@ namespace KominkaDogRun.Editor
                 KD_SceneObjects.Find(KD_GiftCodeSetupEditor.SystemName, out int giftObjects);
                 v.Check(giftPanels == 0 && giftObjects == 0, "ギフトコードの器が無い: KD_GiftCodePanel コンポーネント " + giftPanels + " 個 / オブジェクト " + giftObjects + " 個");
                 v.Check(pouch.settingsPage == null || pouch.settingsPage.transform.Find(KD_GiftCodeSetupEditor.PageName) == null, "ギフトコードの面 (" + KD_GiftCodeSetupEditor.PageName + ") が無い");
-                v.Check(panel.GetComponentsInChildren<TMPro.TMP_InputField>(true).Length == 0, "板に入力欄 (TMP_InputField) が無い (コード入力の器を置かない)");
+                // 裏山改変 (司令塔 2026-09-24、段階 3): 距離フェードの入力欄とクレジットの URL 欄 (Page_Settings 配下) は正規の入力欄。ギフトコード用の入力欄が Page_Settings の外に無いことだけを見る
+                int strayInputs = 0;
+                foreach (var f in panel.GetComponentsInChildren<TMPro.TMP_InputField>(true)) { bool inSettings = false; for (var t = f.transform; t != null && t != panel.transform; t = t.parent) if (t.name == "Page_Settings") { inSettings = true; break; } if (!inSettings) strayInputs++; }
+                v.Check(strayInputs == 0, "Page_Settings の外に入力欄 (TMP_InputField) が無い (コード入力の器を置かない。actual " + strayInputs + ")");
                 // ようこその面 (最小版)。細部は Menu/11c Verify Welcome
                 v.Check(pouch.welcomePage != null && pouch.welcomePage.name == KD_WelcomeGuideEditor.PageName && pouch.welcomePage.transform.parent == panel.transform && !pouch.welcomePage.activeSelf,
                     "ようこその面 " + KD_WelcomeGuideEditor.PageName + " が板直下・既定非表示 (詳細は Menu/11c Verify Welcome)");
@@ -1448,32 +1478,85 @@ namespace KominkaDogRun.Editor
             v.Check(pouch.recall != null, "おもちゃの叩く先 recall (KH_ToyRecall) が非 null");
             log.AppendLine("  NOTE KD_BallController / KD_DogFetchController (balls / toyFetchers) は裏山では使わない (KH_ToyRecall が正本。検査しない)");
 
-            // ---- かざりの混在行 (AccRow0..15, FxRow0..10 の順) ----
+            // ---- かざりの混在行 (AccRow0..15, FxHead0..1, FxRow0..10 の順) ----
             var accScroll = pouch.tabScrolls != null && pouch.tabScrolls.Length > KD_TreatPouch.TabAcc ? pouch.tabScrolls[KD_TreatPouch.TabAcc] : null;
             if (accScroll != null)
             {
                 var want = new System.Collections.Generic.List<string>();
-                for (int i = 0; i < KD_AccessorySetsEditor.MenuCount; i++) want.Add("AccRow" + i);
-                for (int i = 0; i < HillsideFxRowCount; i++) want.Add("FxRow" + i);
+                // 裏山改変 (IMP-DOG-015): 期待値は Scroll の行の表 (AccRow16 → FxHead2 → FxRow11) から作る
+                foreach (var (prefix, rowCount) in KD_HandMenuScrollEditor.RowsFor(KD_TreatPouch.TabAcc)) for (int i = 0; i < rowCount; i++) want.Add(prefix + i);
                 var got = new System.Collections.Generic.List<string>();
                 foreach (Transform row in accScroll.content) got.Add(row.name);
-                v.Check(System.Linq.Enumerable.SequenceEqual(want, got), "かざりの Content の子順が AccRow0..15, FxRow0..10 (actual " + got.Count + " 行)");
+                v.Check(System.Linq.Enumerable.SequenceEqual(want, got), "かざりの Content の子順が AccRow0..15, FxHead0..1, FxRow0..10 (actual " + got.Count + " 行)");
             }
             else v.Check(false, "かざりの Scroll がある");
             v.Check(AllSet(pouch.fxButtons, HillsideFxRowCount) && AllSet(pouch.fxLabels, HillsideFxRowCount), "fxButtons / fxLabels が 11 本 (かざりの Content の FxRow)");
-            log.AppendLine("  NOTE FxRow の onClick (_Fx{i}) の検査は段階 2 (IMP-DOG-015) まで行わない (計画書 Verify 表。配線だけは Menu/21 が数える)");
+            if (stage >= 2)
+            {
+                // 裏山改変 (IMP-DOG-015 / D-2 (e)): 撫でFX の行の [つける/買う] は pouch の _Fx{i} を 1 本だけ呼ぶ
+                for (int i = 0; i < HillsideFxRowCount; i++)
+                {
+                    var btn = pouch.fxButtons != null && i < pouch.fxButtons.Length && pouch.fxButtons[i] != null ? pouch.fxButtons[i].GetComponent<UnityEngine.UI.Button>() : null;
+                    Object t = null;
+                    v.Check(btn != null && btn.onClick.GetPersistentEventCount() == 1 && OnClickEventName(btn, out t) == "_Fx" + i && t == pouchUdon
+                        && typeof(KD_TreatPouch).GetMethod("_Fx" + i) != null, "撫でFX FxRow" + i + " [つける/買う] -> _Fx" + i);
+                }
+                v.Check(pouch.hillsideFxHeadRows != null && pouch.hillsideFxHeadRows.Length == 2 && pouch.hillsideFxHeadRows[0] != null && pouch.hillsideFxHeadRows[1] != null
+                    && pouch.hillsideFxHeadLabel != null && pouch.hillsideFxHeadLabel.transform.parent == pouch.hillsideFxHeadRows[0].transform,
+                    "撫でFX の群見出し (FxHead0 見出し / FxHead1 空き) が配線済み");
+            }
+            else log.AppendLine("  NOTE FxRow の onClick (_Fx{i}) の検査は段階 2 (IMP-DOG-015) から (段階 " + stage + ")");
 
             // ---- 準備中の器 (おやつ 4 / かざり 16 / 呼ぶ 6 / ライブ 9。行 0 に準備中を描く先がある) ----
             v.Check(AllSet(pouch.rowLabels, KD_ShopSetupEditor.TreatProductCount) && AllSet(pouch.rowButtons, KD_ShopSetupEditor.TreatProductCount), "おやつの器 Row0..3 (行 0 = 準備中の出し先)");
+            if (stage >= 2)
+            {
+                // 段階 2 (IMP-DOG-014): 行の [買う] (Row{i}/Buy -> _TreatBuy{i}) と確認カード kind Treat
+                int tn = KD_ShopSetupEditor.TreatProductCount;
+                v.Check(AllSet(pouch.treatBuyButtons, tn) && AllSet(pouch.treatBuyImages, tn) && AllSet(pouch.treatBuyLabels, tn),
+                    "[買う] の配線 treatBuyButtons / treatBuyImages / treatBuyLabels が " + tn + " 本");
+                for (int i = 0; i < tn && pouch.treatBuyButtons != null && i < pouch.treatBuyButtons.Length; i++)
+                {
+                    var buyGo = pouch.treatBuyButtons[i];
+                    var btn = buyGo == null ? null : buyGo.GetComponent<UnityEngine.UI.Button>();
+                    string want = TreatBuyEventOf(i);
+                    Object t = null;
+                    v.Check(btn != null && buyGo.name == TreatBuyButtonName && pouch.rowButtons != null && i < pouch.rowButtons.Length && pouch.rowButtons[i] != null
+                        && buyGo.transform.parent == pouch.rowButtons[i].transform.parent
+                        && btn.onClick.GetPersistentEventCount() == 1 && OnClickEventName(btn, out t) == want && t == pouchUdon
+                        && typeof(KD_TreatPouch).GetMethod(want) != null,
+                        "おやつ Row" + i + " [買う] -> " + want + " (出すと同じ行・1 本・pouch 宛・口が実在)");
+                }
+                string confirmSrc = File.ReadAllText("Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatPouch.Confirm.cs");
+                v.Check(typeof(KD_TreatPouch).GetMethod("_TreatConfirmBuy") != null && typeof(KD_TreatPouch).GetMethod("_TreatConfirmNo") != null
+                    && confirmSrc.Contains("kind == ConfirmTreat) { _TreatConfirmBuy();") && confirmSrc.Contains("kind == ConfirmTreat) { _TreatConfirmNo();"),
+                    "確認カード kind Treat: _ConfirmYes / _ConfirmNo が _TreatConfirmBuy / _TreatConfirmNo へ振り分ける");
+            }
             v.Check(AllSet(pouch.accRows, KD_AccessorySetsEditor.MenuCount) && AllSet(pouch.accRowLabels, KD_AccessorySetsEditor.MenuCount), "かざりの器 AccRow0..15");
             v.Check(AllSet(pouch.sleepLabels, dogsN) && AllSet(pouch.sleepButtons, dogsN), "呼ぶの器 SleepRow0..5");
             v.Check(pouch.liveLabels != null && pouch.liveLabels.Length == KD_DogDefs.LiveShows.Length && pouch.liveLabels[0] != null
                 && pouch.liveSubLabels != null && pouch.liveSubLabels.Length > 0 && pouch.liveSubLabels[0] != null, "ライブの器 LiveRow0..8 (行 0 = 準備中 1 行の出し先)");
             log.AppendLine("  SKIP ライブ行の onClick リフレクション検査 (_Live{i} / _LiveGift{i})・liveItems / liveProducts / 参考画像・確認カードの題の寸法 (裏山では対象外: DES-LIV-001 まで準備中 1 行だけ)");
             log.AppendLine("  SKIP 棚 (KD_ShopShelf) の配線・棚の効果音・棚の商品の Collider (裏山では対象外: 棚は置かない。商品は menuOnly で KH_Dogs/KD_ShopCatalog の子。購入はメニュー)");
-            log.AppendLine("  SKIP 寝台・ポーズ面 (KD_SleepBoard / KD_SleepPlacement / KD_CallPose) (裏山では対象外: 段階 2 IMP-DOG-016 まで)");
-            log.AppendLine("  SKIP ミニチュア (DogPreview / accPreviewDogs) (裏山では対象外: 段階 2 IMP-DOG-015 まで)");
-            log.AppendLine("  SKIP おやつの枠 (KD_TreatSlot / KD_TreatController / 自己テスト) (裏山では対象外: 段階 2 IMP-DOG-014 まで)");
+            if (stage >= 2)
+            {
+                // 段階 2 (IMP-DOG-016): 参照は上の段階表の検査。ここは斜面判定の定数を出すだけ
+                log.AppendLine("  NOTE 斜面判定 (場所決め): KD_SleepSlot.HillsideMinGroundNormal=" + KD_SleepSlot.HillsideMinGroundNormal.ToString("F2")
+                    + " (約 " + (Mathf.Acos(KD_SleepSlot.HillsideMinGroundNormal) * Mathf.Rad2Deg).ToString("F1") + "°) mask=" + KD_SleepSlot.HillsideGroundMask
+                    + "。詳細 (実測・赤い印・ポーズ面・追加動作) は Menu/6b Verify Sleep System");
+                // 段階 2 (IMP-DOG-015 / D-7): 試着のミニチュア (Menu/18 Build Dog Previews)。詳しい検査は Menu/25 Verify Dog Previews
+                int prodN = pouch.accessories != null && pouch.accessories.productIds != null ? pouch.accessories.productIds.Length : 0;
+                v.Check(AllSet(pouch.accPreviewDogs, dogsN) && pouch.accPreviewItems != null && pouch.accPreviewItems.Length == prodN * dogsN && prodN > 0
+                    && System.Array.TrueForAll(pouch.accPreviewItems, x => x != null),
+                    "試着ミニチュア accPreviewDogs " + dogsN + " / accPreviewItems " + (prodN * dogsN) + " (Menu/18 Build Dog Previews。詳細は Menu/25)");
+                log.AppendLine("  NOTE おやつの枠 (KD_TreatSlot / KD_TreatController / 実体 / 自己テスト / 食後エフェクト) は Menu/6d Verify Treats が数える");
+            }
+            else
+            {
+                log.AppendLine("  SKIP 寝台・ポーズ面 (KD_SleepBoard / KD_SleepPlacement / KD_CallPose) (裏山では対象外: 段階 2 IMP-DOG-016 まで)");
+                log.AppendLine("  SKIP ミニチュア (DogPreview / accPreviewDogs) (段階 2 IMP-DOG-015 から。段階 " + stage + ")");
+                log.AppendLine("  SKIP おやつの枠 (KD_TreatSlot / KD_TreatController / 自己テスト) (裏山では対象外: 段階 2 IMP-DOG-014 まで)");
+            }
 
             // ---- 拠点板 3 枚 → pouch._Toggle ----
             {

@@ -134,7 +134,7 @@ namespace KominkaDogRun
                     // 添い寝へ向かう間は Fetch と同じく壁を抜けて目標へ進む (BUG-DOG-004)。
                     // WallClearance で手前へ寄せると、寝室の壁や縁側で止まってしまう。
                     // 接地・加減速・Owner だけの位置更新は既存の StepToward に任せる。
-                    StepToward(spot, 0f, dist > runDistance ? runSpeed : walkSpeed);
+                    SleepStep(spot, dist > runDistance ? runSpeed : walkSpeed);   // 裏山改変: 散歩と同じ地形追従 (SleepStep)
 
                     // **呼ばれて来ていることが読めるように、呼んだ人を見ながら寄る**
                     // (おやつが「おやつそのものを見つめる」でやっているのと同じ。設計原則 4)。
@@ -187,7 +187,7 @@ namespace KominkaDogRun
             float distance = delta.magnitude;
             if (!_sleepFrozen && distance > Mathf.Max(0.02f, placedSleepLiftRadius))
             {
-                StepToward(target, 0f, distance > runDistance ? runSpeed : walkSpeed);
+                SleepStep(target, distance > runDistance ? runSpeed : walkSpeed);   // 裏山改変: 散歩と同じ地形追従 (SleepStep)
                 return true;
             }
             _sleepFrozen = true;
@@ -200,9 +200,23 @@ namespace KominkaDogRun
             if (_dogOwner)
             {
                 dogRoot.rotation = Quaternion.Euler(0f, slot.SpotYaw, 0f); // net: owner-only: _dogOwner、指定向きへ最後の許容角を合わせる
-                dogRoot.position = Vector3.MoveTowards(dogRoot.position, target, Mathf.Max(.05f, placedSleepLiftSpeed) * Time.deltaTime); // net: owner-only: _dogOwner、上昇中は接地スナップしない
+                Vector3 lifted = Vector3.MoveTowards(dogRoot.position, target, Mathf.Max(.05f, placedSleepLiftSpeed) * Time.deltaTime);
+                // 裏山改変: IMP-DOG-016 変更 3。裏山の指定寝床は必ず地面 (KD_SleepSlot._PlacementGroundOk) なので、
+                // 収まる途中も接地させる (古民家は縁側・寝台へ上げるため接地しなかった)。斜面で体が地面へめり込まない / 浮かない
+                if (hillsideLeashes != null) lifted = SnapToGround(lifted);
+                dogRoot.position = lifted; // net: owner-only: _dogOwner、古民家は上昇中は接地スナップしない
             }
             return true;
+        }
+
+        /// <summary>裏山改変: IMP-DOG-016 変更 3。呼ばれた犬の足。**散歩の集合と同じ地形追従**
+        /// (KD_DogWanderController.HillsideLeash の GatherStep = NavMesh の完全な経路を角ごとに StepToward + 接地スナップ)。
+        /// 完全な経路が無いときは古民家と同じ直進 (StepToward、壁を抜けて目標へ = BUG-DOG-004 / DES-DOG-001 の「到達不能時は直進」)。
+        /// 裏山でない (hillsideLeashes 未配線) ときは古民家どおり StepToward だけ。非 Owner は GatherStep / StepToward の中で脚だけ選ぶ。</summary>
+        void SleepStep(Vector3 target, float speed)
+        {
+            if (hillsideLeashes != null && GatherStep(target, speed)) return;
+            StepToward(target, 0f, speed);
         }
 
         /// <summary>従来の扇呼びのみ、遅れて入った人の停止判定を時刻で補う。</summary>

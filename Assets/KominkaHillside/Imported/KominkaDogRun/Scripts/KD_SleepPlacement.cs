@@ -34,6 +34,13 @@ namespace KominkaDogRun
         public Transform marker;
         public GameObject[] markerDogs;
         public GameObject[] poseGhosts;
+        [Tooltip("裏山改変: IMP-DOG-016 変更 2。犬ごとの赤い印 (markerDogs[i]/Invalid)。平らでない・地面が無い場所で出す")]
+        public GameObject[] invalidMarks;
+        /// <summary>裏山改変: 無効な場所の文言キー (色だけにしない)。</summary>
+        public const string NeedFlatKey = "KD_TreatPouch.WordSleepNeedFlat";
+        /// <summary>裏山改変: 手 / 頭から狙いの点までの間で先に地面に当たったら、そこを狙いにする (地面の中へマーカーを埋めない)。
+        /// 狙いの点から真下へ探す深さ (m)。</summary>
+        public const float GroundSearchDepth = 6f;
         [System.NonSerialized] public int requestedPose;
         private int _pose;
         public GameObject screenCanvas;
@@ -62,6 +69,10 @@ namespace KominkaDogRun
         private Vector3 _submitted;
         private float _submittedYaw;
         private int _previousCalledMs;
+        // 裏山改変: 今のマーカー位置が置ける場所か (接地 + 傾き)。-1 = 未表示 (文言を出し直す印)
+        private bool _groundOk;
+        private int _shownGround = -1;
+        private string _hintKey = "";
         public bool Active { get { return _state != 0; } }
 
         public void _Begin()
@@ -89,7 +100,10 @@ namespace KominkaDogRun
             if (vrLabel != null) vrLabel.gameObject.SetActive(true);
             if (screenCanvas != null) screenCanvas.SetActive(!lp.IsUserInVR());
             if (pouch != null) { pouch._HideForPlacement(); pouch._SuppressLauncher(); }
-            ShowStatus(lp.IsUserInVR() ? "KD_SleepPlacement.VrHint" : InputManager.GetLastUsedInputMethod() == VRCInputMethod.Touch ? "KD_SleepPlacement.TouchHint" : "KD_SleepPlacement.Hint");
+            _hintKey = lp.IsUserInVR() ? "KD_SleepPlacement.VrHint" : InputManager.GetLastUsedInputMethod() == VRCInputMethod.Touch ? "KD_SleepPlacement.TouchHint" : "KD_SleepPlacement.Hint";
+            // 裏山改変: 最初の UpdatePreview で文言と印を決める
+            _groundOk = false; _shownGround = -1;
+            ShowStatus(_hintKey);
             UpdatePreview(lp);
         }
 
@@ -115,6 +129,8 @@ namespace KominkaDogRun
         public void _Confirm()
         {
             if (_state != 1 || !_armed || _slot == null || marker == null) return;
+            // 裏山改変: 平らでない / 地面が無い場所では確定しない (赤い印と文言はそのまま。板は閉じない)
+            if (!_groundOk) { ShowStatus(NeedFlatKey); return; }
             _submitted = marker.position;
             _submittedYaw = marker.eulerAngles.y;
             _previousCalledMs = _slot.CalledMs;
@@ -154,6 +170,9 @@ namespace KominkaDogRun
             _slot = null;
             SetProgress(0f);
             if (marker != null) marker.gameObject.SetActive(false);
+            for (int i = 0; invalidMarks != null && i < invalidMarks.Length; i++)
+                if (invalidMarks[i] != null) invalidMarks[i].SetActive(false);   // 裏山改変: 赤い印も閉じる
+            _shownGround = -1;
             if (screenCanvas != null) screenCanvas.SetActive(false);
             // 板ごと消す (VRCUiShape の Collider を最後の頭の位置に残さない)。
             if (vrLabel != null) vrLabel.transform.parent.gameObject.SetActive(false);
@@ -207,7 +226,8 @@ namespace KominkaDogRun
             if (_slot == null || marker == null || board == null) { Fail(); return; }
             _slot._KeepSelectionAlive();
             if (!_armed && !_rightHeld && !_leftHeld && Time.time - _started > .2f) _armed = true;
-            if (confirmButton != null) confirmButton.interactable = _state == 1 && _armed;
+            // 裏山改変: 置けない場所では押せない
+            if (confirmButton != null) confirmButton.interactable = _state == 1 && _armed && _groundOk;
             if (_state == 2)
             {
                 // IMP-DOG-032: 確定成功は板を閉じたまま (犬が来るのを板に遮られずに見る)。取消・失敗は同じタブへ戻す。
@@ -232,6 +252,8 @@ namespace KominkaDogRun
                 if (Input.GetKeyDown(KeyCode.Return)) { _Confirm(); return; }
             }
             UpdatePreview(lp);
+            // 裏山改変: 長押しは置ける場所でだけ進む
+            if (lp.IsUserInVR() && _holdingConfirm && _rightHeld && !_groundOk) { _holdingConfirm = false; SetProgress(0f); }
             if (lp.IsUserInVR() && _holdingConfirm && _rightHeld)
             {
                 float progress = Mathf.Clamp01((Time.time - _holdSince) / ConfirmHoldSeconds);
@@ -246,8 +268,19 @@ namespace KominkaDogRun
             bool vr = lp.IsUserInVR();
             var pose = lp.GetTrackingData(vr ? VRCPlayerApi.TrackingDataType.RightHand : VRCPlayerApi.TrackingDataType.Head);
             Vector3 forward = pose.rotation * Vector3.forward;
-            marker.position = pose.position + forward * (vr ? .15f : _distance);
+            // 裏山改変: IMP-DOG-016 変更 2。狙いの点を真下の地面へ接地させ、置けるかを枠と同じ式で判定する。
+            // 古民家は狙いの点 (手の前 / 頭の前) にそのまま置いていた (平地の庭では床の高さと大差が無かった)。
+            float reach = vr ? .15f : _distance;
+            Vector3 aim = pose.position + forward * reach;
+            RaycastHit hit;
+            if (Physics.Raycast(pose.position, forward, out hit, reach, KD_SleepSlot.HillsideGroundMask, QueryTriggerInteraction.Ignore))
+                aim = hit.point;   // 見下ろした坂の中へ埋めない
+            bool grounded = Physics.Raycast(aim + Vector3.up * KD_SleepSlot.HillsideGroundProbe, Vector3.down, out hit,
+                KD_SleepSlot.HillsideGroundProbe + GroundSearchDepth, KD_SleepSlot.HillsideGroundMask, QueryTriggerInteraction.Ignore);
+            marker.position = grounded ? hit.point : aim;
             marker.rotation = Quaternion.Euler(0f, _yaw, 0f);
+            _groundOk = grounded && _slot != null && _slot._PlacementGroundOk(marker.position);
+            ShowGround();
             bool touch = !vr && InputManager.GetLastUsedInputMethod() == VRCInputMethod.Touch;
             if (screenCanvas != null && screenCanvas.activeSelf != touch) screenCanvas.SetActive(touch);
             if (vrLabel != null)
@@ -263,6 +296,17 @@ namespace KominkaDogRun
                     hud.rotation = head.rotation;
                 }
             }
+        }
+
+        /// <summary>裏山改変: 置ける / 置けないが変わったときだけ、赤い印と文言を切り替える。</summary>
+        private void ShowGround()
+        {
+            int now = _groundOk ? 1 : 0;
+            if (now == _shownGround) return;
+            _shownGround = now;
+            for (int i = 0; invalidMarks != null && i < invalidMarks.Length; i++)
+                if (invalidMarks[i] != null) invalidMarks[i].SetActive(!_groundOk && i == requestedDog);
+            if (_state == 1) ShowStatus(_groundOk ? _hintKey : NeedFlatKey);
         }
 
         private void ShowStatus(string value)

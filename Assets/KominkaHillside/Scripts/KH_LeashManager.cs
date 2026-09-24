@@ -21,6 +21,9 @@ namespace KominkaHillside
         public KH_FrisbeeCatch[] frisbeeCatchers; // per dog, null where the dog has no disc yet (IMP-DOG-005)
         public KH_WalkRoute route;
         public KominkaDogRun.KD_GroupActivities activities;
+        // IMP-DOG-016: dogs called over from the Call tab (KD_SleepBoard) cannot be leashed until released there.
+        // Wired by Menu/6 Setup Sleep (and Walking/3 Build keeps it). null = no exclusion (before stage 2).
+        public KominkaDogRun.KD_SleepBoard sleepBoard;
         // Stopover spots along the trail. Wired by Build; the dogs only consult it while walking.
         public KH_WalkStopovers stopovers;
         // Leash stations: one slot per tool side. stationSlots[i] belongs to station stationOf[i], side slotHand[i].
@@ -178,6 +181,8 @@ namespace KominkaHillside
             // A carrying/chasing dog must finish its current Fetch before attachment; a gathering dog stays in formation.
             if (fetchers[dog] == null || !fetchers[dog].IsIdle || _IsGathering(dog)) return;
             if (frisbeeCatchers != null && dog < frisbeeCatchers.Length && frisbeeCatchers[dog] != null && frisbeeCatchers[dog].IsEngaged) return;
+            // IMP-DOG-016: a dog waiting where it was called stays out of the walk until its caller (or the owner) lets it roam.
+            if (sleepBoard != null && sleepBoard._IsCalled(dog)) return;
             int count = 0;
             for (int i = 0; i < walkers.Length; i++) if (walkers[i] == caller.playerId && hands[i] == hand) count++;
             if (count >= 3) return;

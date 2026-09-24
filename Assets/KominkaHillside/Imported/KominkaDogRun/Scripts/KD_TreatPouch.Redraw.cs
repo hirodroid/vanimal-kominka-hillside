@@ -22,7 +22,8 @@ namespace KominkaDogRun
             RedrawEventBand();   // P10: ヘッダとタブの間 (どのタブでも)
             if (feedbackLabel != null)
             {
-                bool visible = !_settingsOpen && !_welcome && _tab == TabPetFx && _fxConfirmRow < 0 && _feedbackTab == _tab && Time.time < _feedbackUntil;
+                // 裏山改変 (IMP-DOG-015): 撫でFX の結果は かざりのカタログ階層で出す (古民家は _tab == TabPetFx。裏山のタブ 2 は さんぽ)。判定は KD_TreatPouch.PetFx.cs
+                bool visible = HillsideFxFeedbackVisible();
                 feedbackLabel.gameObject.SetActive(visible);
                 if (visible) feedbackLabel.text = L(_feedbackText);
             }
@@ -57,7 +58,8 @@ namespace KominkaDogRun
             // ---- 開いているタブだけ ----
             // 裏山改変: 未導入のバックエンドのタブは「準備中」1 行 (計画書 D-1 の段階表)。移動先 KD_TreatPouch.Hillside.cs。各バックエンドの配線で解除
             if (HillsidePreparing()) return;
-            // 裏山改変: おもちゃは KH_ToyRecall のボール / ディスク (KD_TreatPouch.Toy.cs の RedrawHillsideToy)。タブ 2 は さんぽ (KD_TreatPouch.Walk.cs)。RedrawFx は IMP-DOG-015 で RedrawAcc から呼ぶ
+            // 裏山改変: おもちゃは KH_ToyRecall のボール / ディスク (KD_TreatPouch.Toy.cs の RedrawHillsideToy)。タブ 2 は さんぽ (KD_TreatPouch.Walk.cs)。
+            // 撫でFX は かざりへ合流 (RedrawAcc の中の RedrawFxRows。KD_TreatPouch.PetFx.cs / 計画書 D-2)
             if (_tab == TabToy) { RedrawHillsideToy(); return; }
             if (_tab == TabWalk) { RedrawWalk(); return; }
             if (_tab == TabSleep) { RedrawSleep(); return; }
@@ -119,6 +121,8 @@ namespace KominkaDogRun
             }
 
             if (statusLabel != null) statusLabel.text = StatusText();
+            // 裏山改変 (IMP-DOG-014): [買う]・行の補足・確認カード・購入結果の 1 行 (KD_TreatPouch.Treat.cs)
+            HillsideRedrawTreat();
         }
 
         /// <summary>おもちゃタブ。**押せない行は隠さず暗くする。**
@@ -156,71 +160,7 @@ namespace KominkaDogRun
             }
         }
 
-        /// <summary>パーティクル一覧。Point不足は理由、CEはセット名とCreditsを表示。</summary>
-        private void RedrawFx()
-        {
-            string applied = petFxBox == null ? KD_PetFxBox.Unset : petFxBox.AppliedProduct();
-            int n = fxLabels == null ? 0 : fxLabels.Length;
-            for (int i = 0; i < n; i++)
-            {
-                KD_ShopItem it = FxAt(i);
-                bool show = false;
-                bool owned = false;
-                string s = "-";
-
-                if (it != null)
-                {
-                    s = L(it.displayNameKey);
-                    owned = it.Owned();
-                    if (applied != KD_PetFxBox.Unset && applied == it.productKey)
-                    {
-                        s += "  " + L("KD_ShopShelf.WordInUse");   // 着けている = 押す先が無い
-                    }
-                    else if (owned)
-                    {
-                        show = true;                           // 持っている = 着け替えられる
-                    }
-                    else if (LiveSaleClosed(it)) { s += "  " + L("live.saleClosed"); }   // 期間限定の同梱 FX: 販売終了後は買えない (買った人はそのまま)
-                    else if (it.IsCE())
-                    {
-                        s += "  " + (it.CePurchasesLoaded() ? it.ceCredits.ToString() + " C" : L("KD_ShopShelf.WordLoading"));
-                        show = it.CePurchasesLoaded();
-                    }
-                    else
-                    {
-                        // **「あと N pt」が goal-gradient の主表示** (棚と同じ)
-                        int gap = it.Shortfall();
-                        if (gap > 0) s += "  " + L("KD_TreatPouch.WordAccWaitPrefix") + " " + gap.ToString() + "pt";
-                        else { s += "  " + it.price.ToString() + "pt"; show = it.CanBuy(); }
-                    }
-                }
-
-                TextMeshProUGUI lbl = fxLabels[i];
-                if (lbl != null) lbl.text = s;
-                if (fxSubLabels != null && i < fxSubLabels.Length && fxSubLabels[i] != null)
-                    fxSubLabels[i].text = FxBundleLabel(it);
-
-                // **ボタンの文言が状態を語る** — つける / 買う を取り違えない
-                if (fxButtonLabels != null && i < fxButtonLabels.Length
-                    && fxButtonLabels[i] != null)
-                    fxButtonLabels[i].text = owned ? L("KD_TreatPouch.WordAccPut") : L("KD_TreatPouch.WordBuyHere");
-                if (fxButtonImages != null && i < fxButtonImages.Length && fxButtonImages[i] != null)
-                    fxButtonImages[i].color = owned ? equipOnColor : recallOnColor;
-
-                GameObject btn = (fxButtons != null && i < fxButtons.Length) ? fxButtons[i] : null;
-                if (btn != null && btn.activeSelf != show) btn.SetActive(show);
-            }
-
-            // ---- 確認帯 ----
-            //
-            // **開いたままでも 1 秒ごとに状態へ追いつく** (棚の RefreshOpenConfirm と同じ) —
-            // 開きっぱなしのまま pt が閾値を跨いだとき、「あと 1pt」で固まらないように
-            KD_ShopItem c = FxAt(_fxConfirmRow);
-            if (c != null && (c.Owned() || LiveSaleClosed(c))) { _fxConfirmRow = -1; c = null; }   // 買えた / 別経路で入手した / 販売が終わった
-            // P13: 板の手前のカード 1 枚に出す (帯は廃止)。**買えない間は [購入] を隠す** — 押しても断られるボタンを出さない
-            if (c != null) _ShowItemConfirm(ConfirmFx, c, FxBundleLabel(c));
-            else _HideConfirm(ConfirmFx);
-        }
+        // 裏山改変 (IMP-DOG-015): 古民家の RedrawFx (パーティクル一覧) は KD_TreatPouch.PetFx.cs の RedrawFxRows へ移した (かざりのカタログ階層で描く。計画書 D-2)
 
         private string StatusText()
         {
@@ -239,7 +179,8 @@ namespace KominkaDogRun
             if (gate == KD_TreatBox.GateAlreadyOut) return L("KD_TreatPouch.WordAlreadyOut");
             if (gate == KD_TreatBox.GateNoStock) return L("KD_TreatPouch.WordNoStock");
             if (gate == KD_TreatBox.GateSlotsFull) return L("KD_TreatPouch.WordSlotsFull");
-            if (gate == KD_TreatBox.GateDogsBusy) return L("KD_TreatPouch.WordSlotsFull");   // 「いま出せません」を共用 (犬が全員 催しに拘束中)
+            // 裏山改変 (IMP-DOG-014): 全頭が来られない理由を分ける (リード中 / 集合中 / フリスビー中 / 活動の終わり待ち)。KD_TreatPouch.Treat.cs
+            if (gate == KD_TreatBox.GateDogsBusy) return HillsideDogsBusyText();
             if (gate == KD_TreatBox.GateOwnerFailed) return L("KD_TreatPouch.WordSlotLost");
             if (gate == KD_TreatBox.GateCommitFailed) return L("KD_TreatPouch.WordCommitFailed");
             return "";

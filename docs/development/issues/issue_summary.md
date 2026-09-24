@@ -65,12 +65,12 @@ priority: High    # High / Medium / Low
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開はその後の別Issue | wip |
 | [IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md) | Medium | フリスビー (先回り型 + 6 プリセット) を 6 匹へ展開: 犬種別クリップ・facts、配線、胴体固定、負荷実測、Catch の分割、犬種別ハーネス | todo |
 | [DES-UI-002](DES-UI-002-frisbee-settings.md) | Medium | フリスビーの設定 (待つ場所・曲げ・取り方) の選ぶ / 自動の切り分けと操作権、開発用切替の撤去時期を設計する。[試作] 入口は 9/23 の KH_HandMenu 退役で消え、代替はユーザー判断 | todo |
-| [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK) | wip |
-| [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) | High | 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換える。段階 0-a 移植の土台 (Editor 丸ごとコピー・パス置換・MenuItem 隔離) → 0-b 器の構築 (7 タブ・さんぽ/おもちゃ/あそぶ移設・KH_HandMenu 退役・設定面の器とナイトモードスライダー) → 段階 3 設定面の残り (距離フェード・許可初期ON・言語・案内)。計画書 2026-09-23。**9/23 0-a 完了・0-b 実装済み (Verify 全 PASS、KH_HandMenu 退役)、9/24 PCVR OK で 0-b 完了**。[試作] は 9/24 あそぶタブのトレーナー群へ移設 (DES-UI-002) | todo |
+| [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK)、段階 2・3 は 9/24 実装済み・PCVR 待ち | wip |
+| [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) | High | 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換える。段階 0-a 移植の土台 (Editor 丸ごとコピー・パス置換・MenuItem 隔離) → 0-b 器の構築 (7 タブ・さんぽ/おもちゃ/あそぶ移設・KH_HandMenu 退役・設定面の器とナイトモードスライダー) → 段階 3 設定面の残り (距離フェード・許可初期ON・言語・案内)。計画書 2026-09-23。**9/23 0-a 完了・0-b 実装済み (Verify 全 PASS、KH_HandMenu 退役)、9/24 PCVR OK で 0-b 完了**。[試作] は 9/24 あそぶタブのトレーナー群へ移設 (DES-UI-002)。**9/24 段階 3 実装済み・Verify 全 PASS (距離フェード・犬の声・クレジット・インフォメーション・ようこそ全文)、PCVR 待ち。クレジット URL 3 件は未記入** | todo |
 | [IMP-PRG-001](IMP-PRG-001-ledger-shopkeeper-points.md) | High | 台帳・おじいさん (門)・支度用ポイント (初回 200pt 一回・滞在 1分1pt)・購入と CE 判定を裏山へ配線する。**9/24 実装済み・Verify 全 PASS** (名前空間 KH_Commerce_v1、残高・ポイント面・ようこそ最小版)。T-007 / T-008・復元は実機・ClientSim 待ち | todo |
-| [IMP-DOG-014](IMP-DOG-014-treats-port.md) | Medium | おやつ 4 種を古民家から移植 (Box/Slot3/Controller/Fx・Editor・メッシュ)。接続犬の反応は IMP-DOG-006 | todo |
-| [IMP-DOG-015](IMP-DOG-015-accessories-and-petfx-port.md) | Medium | 飾り 14 商品と撫でFX 11 種を移植。首元 7 品と首輪・リードの干渉を実測して調整する | todo |
-| [IMP-DOG-016](IMP-DOG-016-call-pose-port-and-slope.md) | Medium | 呼ぶ・ポーズを移植し、リード接続中の除外と斜面 (接地・法線) の判定を足す | todo |
+| [IMP-DOG-014](IMP-DOG-014-treats-port.md) | Medium | おやつ 4 種を古民家から移植 (Box/Slot3/Controller/Fx・Editor・メッシュ)。接続犬の反応は IMP-DOG-006。**9/24 実装済み・Verify 全 PASS (メニューの [買う] 含む)、Play・T-009 待ち** | todo |
+| [IMP-DOG-015](IMP-DOG-015-accessories-and-petfx-port.md) | Medium | 飾り 14 商品と撫でFX 11 種を移植。首元 7 品と首輪・リードの干渉を実測して調整する。**9/24 実装済み・Verify 全 PASS。干渉は実測済みで 8 件未解消 (取り下げはユーザー判断)、PCVR 待ち** | todo |
+| [IMP-DOG-016](IMP-DOG-016-call-pose-port-and-slope.md) | Medium | 呼ぶ・ポーズを移植し、リード接続中の除外と斜面 (接地・法線) の判定を足す。**9/24 実装済み・Verify 全 PASS。法線 0.9 を仮採用、Play・T-010 待ち** | todo |
 | [DES-UI-004](DES-UI-004-walk-destinations-and-boards.md) | Medium | 散歩の目的地・位置と仮看板の本制作、案内／説明ボードの内容・配置・役割を検討する | todo |
 | [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 古民家の有料ライブ購入者の利用と、裏山ライブの開催・再生・競合・復帰を設計する。演目企画は DES-LIV-002 | todo |
 | [DES-LIV-002](DES-LIV-002-live-lineup-and-parade.md) | Medium | ハロウィン・Candy Step・ライブパックの裏山向け演目を企画する。散歩道を犬たちがパレードする専用ライブ 1 本を含め、枠・本数・構成を整理 | todo |

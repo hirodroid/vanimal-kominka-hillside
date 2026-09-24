@@ -33,7 +33,8 @@ namespace KominkaDogRun
         public const string NumberError = "数値は半角・小数点は . で入力";
         public const string RangeError = "開始距離 > 終了距離 >= 0、強度 >= 0";
         public const string RestoreError = "保存値を読めないため標準を表示";
-        public const string SaveKey = "KD_DistanceFade_v1";
+        // 裏山改変: 保存キーは裏山専用 (古民家の KD_DistanceFade_v1 とワールド間で混ざらないよう名前を分ける。IMP-UI-001 段階 3)
+        public const string SaveKey = "KH_DistanceFade_v1";
 
         public Renderer[] targetRenderers;
         public int[] targetSlots;

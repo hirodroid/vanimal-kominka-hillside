@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 namespace KominkaDogRun.Editor
 {
     /// <summary>同梱FXの商品と既存パーティクル一覧だけを拡張する。配置・他タブは保持。</summary>
-    public static class KD_BundledPetFxEditor
+    public static partial class KD_BundledPetFxEditor   // 裏山改変: partial (KD_BundledPetFxEditor.Hillside.cs)
     {
         [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Pet System/10 - Connect Bundled Catalog")]
         public static void Setup()

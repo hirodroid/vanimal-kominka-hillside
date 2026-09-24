@@ -40,7 +40,7 @@ namespace KominkaDogRun.Editor
     ///   4 - Setup Accessory Nodes     (犬へ装着ノードを作る。**作るだけ**)
     ///   5 - Replace Accessory Placement (既存ノードを表の比率で置き直す。**手の調整が消える**)
     /// </summary>
-    public static class KD_AccessorySetupEditor
+    public static partial class KD_AccessorySetupEditor   // 裏山改変: partial (KD_AccessorySetupEditor.Hillside.cs)
     {
         const string AccessoriesRoot = "Assets/KominkaHillside/Imported/KominkaDogRun/Models/Accessories/BlenderOptimized";
 

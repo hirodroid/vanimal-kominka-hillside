@@ -192,11 +192,6 @@
     },
     {
       "root": "KD_TreatPouchPanel",
-      "path": "Page_Settings/VolumeSettings/BedroomVoiceVolumeTitle",
-      "key": "KD_TreatPouch.WordDogVoice"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
       "path": "CloseButton/Label",
       "key": "KD_PhotoViewer.InteractWord"
     },
@@ -212,11 +207,6 @@
     },
     {
       "root": "KD_TreatPouchPanel",
-      "path": "Page_Settings/VolumeSettings/LiveVolumeTitle",
-      "key": "KD_TreatPouch.WordLiveVolume"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
       "path": "Page_Sleep/Scroll/Viewport/Content/SleepRow4/Button/Label",
       "key": "KD_TreatPouch.WordSleepCall"
     },
@@ -224,11 +214,6 @@
       "root": "KD_TreatPouchPanel",
       "path": "Page_Sleep/Scroll/Viewport/Content/SleepRow3/Button/Label",
       "key": "KD_TreatPouch.WordSleepCall"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
-      "path": "Page_Settings/VolumeSettings/BedroomLiveVolumeTitle",
-      "key": "KD_TreatPouch.WordLiveVolume"
     },
     {
       "root": "KD_TreatPouchPanel",
@@ -297,11 +282,6 @@
     },
     {
       "root": "KD_TreatPouchPanel",
-      "path": "Page_Settings/VolumeSettings/BedroomNote",
-      "key": "KD_TreatPouch.WordBedroomNote"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
       "path": "Page_Acc/Scroll/Viewport/Content/AccRow0/Button/Label",
       "key": "KD_TreatPouch.WordAccPut"
     },
@@ -309,11 +289,6 @@
       "root": "KD_TreatPouchPanel",
       "path": "Page_Live/Scroll/Viewport/Content/LiveRow4/Button/Label",
       "key": "KD_TreatPouch.WordLiveHost"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
-      "path": "Page_Settings/VolumeSettings/BedroomHeading",
-      "key": "KD_TreatPouch.WordBedroom"
     },
     {
       "root": "KD_TreatPouchPanel",
@@ -333,7 +308,7 @@
     {
       "root": "KD_TreatPouchPanel",
       "path": "Page_Settings/VolumeSettings/VolumeScope",
-      "key": "KD_TreatPouch.WordVolumeScope"
+      "key": "settings.volume.scope"
     },
     {
       "root": "KD_TreatPouchPanel",
@@ -561,6 +536,81 @@
       "key": "welcome.language"
     },
     {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/InformationButton/Label",
+      "key": "information.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/Information/AiInformationButton/Label",
+      "key": "information.ai.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/Information/BackSettings/Label",
+      "key": "KD_TreatPouch.WordBackSettings"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/AiInformation/BackInformation/Label",
+      "key": "information.back"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/AiInformation/ScrollView/Viewport/Content",
+      "key": "information.ai.body"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/Information/VanimalInformationButton/Label",
+      "key": "information.vanimal.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VanimalInformation/ScrollView/Viewport/Content",
+      "key": "information.vanimal.body"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VanimalInformation/BackInformation/Label",
+      "key": "information.back"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/Information/TrainerInformationButton/Label",
+      "key": "information.trainer.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/TrainerInformation/ScrollView/Viewport/Content",
+      "key": "information.trainer.body"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/TrainerInformation/BackInformation/Label",
+      "key": "information.back"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/Information/WelcomeInformationButton/Label",
+      "key": "welcome.reread.title"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/WelcomeInformation/ScrollView/Viewport/Content",
+      "key": "welcome.reread.body"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/WelcomeInformation/BackInformation/Label",
+      "key": "information.back"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/WelcomeInformation/LanguageHeading",
+      "key": "welcome.language"
+    },
+    {
       "root": "KD_ShopKeeperMenu",
       "path": "WaysButton/Label",
       "key": "KD_ShopKeeper.WordWays"
@@ -589,6 +639,231 @@
       "root": "KD_ShopKeeperMenu",
       "path": "ContentScroll/Viewport/InfoBody",
       "key": "KD_ShopKeeper.WordGreeting"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/GroupSelf",
+      "key": "settings.group.self"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/GroupRoom",
+      "key": "settings.group.room"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/GroupRead",
+      "key": "settings.group.read"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/CreditButton/Label",
+      "key": "ui.extra.022"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/DistanceFadeSettingsButton/Label",
+      "key": "KD_DistanceFadeSettings.EntryButton"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/Preset0/Label",
+      "key": "KD_DistanceFadeSettings.Standard"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/Preset1/Label",
+      "key": "KD_DistanceFadeSettings.Deep"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/Preset2/Label",
+      "key": "KD_DistanceFadeSettings.Soft"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/Preset3/Label",
+      "key": "KD_DistanceFadeSettings.Custom"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/Error",
+      "key": "KD_DistanceFadeSettings.Loading"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/ConfirmCustomButton/Label",
+      "key": "KD_DistanceFadeSettings.Confirm"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/ColorTitle",
+      "key": "KD_DistanceFadeSettings.ColorLabel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/StartTitle",
+      "key": "KD_DistanceFadeSettings.StartLabel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/EndTitle",
+      "key": "KD_DistanceFadeSettings.EndLabel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/StrengthTitle",
+      "key": "KD_DistanceFadeSettings.StrengthLabel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/Scope",
+      "key": "KD_DistanceFadeSettings.ScopeNote"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/InputNote",
+      "key": "KD_DistanceFadeSettings.InputNote"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/DistanceFadeSettings/BackSettingsButton/Label",
+      "key": "KD_TreatPouch.WordBackSettings"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/CreditPage/ScrollView/Viewport/CreditRows/Lead",
+      "key": "ui.extra.021"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/CreditPage/ScrollView/Viewport/CreditRows/Name0",
+      "key": "credit.dogs"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/CreditPage/ScrollView/Viewport/CreditRows/Name1",
+      "key": "credit.environment.kit"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/CreditPage/ScrollView/Viewport/CreditRows/Name2",
+      "key": "credit.environment"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/CreditPage/ScrollView/Viewport/CreditRows/Name3",
+      "key": "credit.sky"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/CreditPage/ScrollView/Viewport/CreditRows/Name4",
+      "key": "credit.keeper"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/CreditPage/ScrollView/Viewport/CreditRows/Name5",
+      "key": "credit.font"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/CreditPage/BackSettings/Label",
+      "key": "KD_TreatPouch.WordBackSettings"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/CreditPage/CopyHint",
+      "key": "ui.extra.036"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "ScreenControls/Panel/Direction",
+      "key": "KD_SleepPlacement.Direction"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "ScreenControls/Panel/Hint",
+      "key": "KD_SleepPlacement.TouchHint"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "ScreenControls/Panel/Confirm/Label",
+      "key": "KD_SleepPlacement.Confirm"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "ScreenControls/Panel/Cancel/Label",
+      "key": "KD_SleepPlacement.Cancel"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "ScreenControls/Panel/Distance",
+      "key": "KD_SleepPlacement.Distance"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "VrHint/Hint",
+      "key": "KD_SleepPlacement.VrHint"
+    },
+    {
+      "root": "KD_SleepPlacement",
+      "path": "VrHint/Buttons/Cancel/Label",
+      "key": "KD_SleepPlacement.Cancel"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Pose0/Label",
+      "key": "call.pose0"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Pose1/Label",
+      "key": "call.pose1"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Pose2/Label",
+      "key": "call.pose2"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Back/Label",
+      "key": "call.back"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Place/Label",
+      "key": "call.place"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Apply/Label",
+      "key": "call.apply"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Release/Label",
+      "key": "call.release"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Paw/Label",
+      "key": "call.paw"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Pose3/Label",
+      "key": "call.pose3"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Pose4/Label",
+      "key": "call.pose4"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Sleep/CallPosePanel/Stretch/Label",
+      "key": "call.stretch"
     }
   ],
   "interactions": [

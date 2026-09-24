@@ -74,6 +74,10 @@ namespace KominkaDogRun
         /// <summary>贈る確認を開いている商品 (accItems の添字)。購入の確認 (_accConfirm) とは別に持つ — 所有で閉じない (IMP-PRG-012)。</summary>
         private int _accGiftRow = -1;
 
+        /// <summary>裏山改変 (IMP-DOG-015): CE セットの [ギフト] を出すか。**裏山ではギフトが未決定** (Issue の「やらないこと」) なので false。
+        /// 決まったらここを true にする (古民家の IMP-PRG-012 の経路はそのまま残してある)。</summary>
+        private const bool HillsideAccGiftEnabled = false;
+
         /// <summary>1 ページ目 (商品一覧) の行の [ギフト] (IMP-PRG-012)。行 = 一覧の何行目か (AccRow と同じ添字)。
         /// 所有済みの買い切り CE セットだけ。贈る確認カードを開くだけで、Listing はカードの [購入画面へ] が開く。</summary>
         private void AccGift(int row)
@@ -91,6 +95,8 @@ namespace KominkaDogRun
         /// セットの中身 (単品) は商品ではないので出さない。所有判定は KD_ShopItem のまま。</summary>
         private bool AccCanGift(int product)
         {
+            // 裏山改変 (IMP-DOG-015 「やらないこと」): CE セットの [ギフト] は裏山では未決定。決まるまで出さない (行の [ギフト] は隠れたまま)
+            if (!HillsideAccGiftEnabled) return false;
             if (accItems == null || product < 0 || product >= accItems.Length) return false;
             if (accProductIds == null || product >= accProductIds.Length || AccIsSetMember(accProductIds[product])) return false;
             return CanGift(accItems[product]);   // 条件はライブと同じ 1 か所 (KD_TreatPouch.Live.CanGift)
@@ -384,6 +390,13 @@ namespace KominkaDogRun
                 if (gift && accGiftLabels != null && i < accGiftLabels.Length && accGiftLabels[i] != null)
                     accGiftLabels[i].text = L("product.gift");
             }
+
+            // 裏山改変 (IMP-DOG-015 / 計画書 D-2 (a)): 撫でFX の行 (Content の AccRow の後ろの FxRow0..10) は
+            // **カタログ階層 (_accSetMenu == 0 かつ _accProduct 未選択) のときだけ**描く。セット中身・装着方法・犬選択では隠す。
+            // 下端の 1 行は 撫でFX の結果 → 無ければ支度ポイントの未受取の案内 (KD_TreatPouch.PetFx.cs)
+            bool fxLevel = !page2 && _accSetMenu == 0;
+            RedrawFxRows(fxLevel);
+            HillsideAccFooter(fxLevel);
         }
 
         /// <summary>1 ページ目の 1 行 — 飾りそのもの。</summary>

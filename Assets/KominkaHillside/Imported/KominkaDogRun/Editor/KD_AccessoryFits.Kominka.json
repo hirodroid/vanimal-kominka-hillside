@@ -1,0 +1,7241 @@
+{
+ "source": "KominkaDogRun Assets/Scenes/KominkaDogRun.unity (fitted accessory nodes, extracted 2026-09-24 by IMP-DOG-015)",
+ "nodes": [
+  {
+   "name": "KD_Acc_Backpack_Corgi",
+   "lp": [
+    1.7826148e-8,
+    0.021718582,
+    -0.033946503
+   ],
+   "lr": [
+    0.7355576,
+    -0.0000015991393,
+    -0.0000013698138,
+    -0.67746216
+   ],
+   "ls": [
+    0.67466563,
+    0.674666,
+    0.67466015
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "5711873526821973872",
+   "art": {
+    "kind": "prefab",
+    "guid": "890a883d80be8a4448c439baa8da8540",
+    "name": "KD_Backpack_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Backpack_Dachs",
+   "lp": [
+    -2.663408e-8,
+    0.049579263,
+    -0.024471965
+   ],
+   "lr": [
+    -0.740909,
+    0.0000018910285,
+    0.0000011003017,
+    0.6716055
+   ],
+   "ls": [
+    0.9640403,
+    0.9640403,
+    0.9640542
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "8841577710606636310",
+   "art": {
+    "kind": "prefab",
+    "guid": "890a883d80be8a4448c439baa8da8540",
+    "name": "KD_Backpack_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Backpack_Lab",
+   "lp": [
+    -4.0771025e-7,
+    0.06415088,
+    -0.059760235
+   ],
+   "lr": [
+    0.70207876,
+    -0.0000015604379,
+    -0.0000015829908,
+    -0.7120994
+   ],
+   "ls": [
+    1.0722606,
+    1.0722613,
+    1.0722736
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "8511888021416317772",
+   "art": {
+    "kind": "prefab",
+    "guid": "890a883d80be8a4448c439baa8da8540",
+    "name": "KD_Backpack_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Backpack_Pome",
+   "lp": [
+    -1.575831e-7,
+    0.02664231,
+    -0.02807011
+   ],
+   "lr": [
+    -0.7141554,
+    0.000002335529,
+    0.0000018538785,
+    0.69998723
+   ],
+   "ls": [
+    0.56507456,
+    0.56507444,
+    0.565074
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "6573354694576654366",
+   "art": {
+    "kind": "prefab",
+    "guid": "890a883d80be8a4448c439baa8da8540",
+    "name": "KD_Backpack_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Backpack_Samoyed",
+   "lp": [
+    -2.6226223e-7,
+    0.06623322,
+    -0.036719996
+   ],
+   "lr": [
+    -0.70208234,
+    3.9151328e-7,
+    0.00000263102,
+    0.7120958
+   ],
+   "ls": [
+    0.8712882,
+    0.8712876,
+    0.8712788
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "5548066529992777544",
+   "art": {
+    "kind": "prefab",
+    "guid": "890a883d80be8a4448c439baa8da8540",
+    "name": "KD_Backpack_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Backpack_Shiba",
+   "lp": [
+    -2.2429077e-7,
+    0.014518557,
+    -0.033191852
+   ],
+   "lr": [
+    0.74252975,
+    -0.0000018031241,
+    -0.0000021249284,
+    -0.66981316
+   ],
+   "ls": [
+    0.7418877,
+    0.74188745,
+    0.7418871
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "1021694844000764429",
+   "art": {
+    "kind": "prefab",
+    "guid": "890a883d80be8a4448c439baa8da8540",
+    "name": "KD_Backpack_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Bandana_Corgi",
+   "lp": [
+    5.0031623e-10,
+    0.082175404,
+    0.09629949
+   ],
+   "lr": [
+    0.31343517,
+    -0.0000019400331,
+    -7.6355104e-7,
+    -0.94960964
+   ],
+   "ls": [
+    0.5381962,
+    0.5381951,
+    0.34982538
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "885053799189291298",
+   "art": {
+    "kind": "prefab",
+    "guid": "345f7357a465803408d134c23c1ca7f1",
+    "name": "KD_Bandana_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Bandana_Dachs",
+   "lp": [
+    -1.3242064e-7,
+    0.053229857,
+    0.10689274
+   ],
+   "lr": [
+    -0.21862553,
+    0.0000023466034,
+    1.2555233e-7,
+    0.97580886
+   ],
+   "ls": [
+    0.6472394,
+    0.89894855,
+    0.8989522
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4161160155152489284",
+   "art": {
+    "kind": "prefab",
+    "guid": "345f7357a465803408d134c23c1ca7f1",
+    "name": "KD_Bandana_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Bandana_Lab",
+   "lp": [
+    -3.4137372e-8,
+    0.13136828,
+    0.13090606
+   ],
+   "lr": [
+    0.4504887,
+    -0.000001552267,
+    -0.0000014272443,
+    -0.8927822
+   ],
+   "ls": [
+    0.85537475,
+    0.8553803,
+    0.555997
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "3831644120154889502",
+   "art": {
+    "kind": "prefab",
+    "guid": "345f7357a465803408d134c23c1ca7f1",
+    "name": "KD_Bandana_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Bandana_Pome",
+   "lp": [
+    2.5874364e-8,
+    0.091917865,
+    0.10640369
+   ],
+   "lr": [
+    -0.49659067,
+    0.0000019156619,
+    9.0350596e-7,
+    0.8679849
+   ],
+   "ls": [
+    0.64310205,
+    0.6431021,
+    0.5144814
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "1744527258686883404",
+   "art": {
+    "kind": "prefab",
+    "guid": "345f7357a465803408d134c23c1ca7f1",
+    "name": "KD_Bandana_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Bandana_Samoyed",
+   "lp": [
+    -5.8721586e-8,
+    0.09983058,
+    0.1391867
+   ],
+   "lr": [
+    -0.46157956,
+    0.0000010298771,
+    0.0000014508869,
+    0.88709885
+   ],
+   "ls": [
+    0.69504845,
+    0.69504505,
+    0.45177895
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "1149051314770268442",
+   "art": {
+    "kind": "prefab",
+    "guid": "345f7357a465803408d134c23c1ca7f1",
+    "name": "KD_Bandana_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Bandana_Shiba",
+   "lp": [
+    -1.992052e-8,
+    0.07026312,
+    0.11081257
+   ],
+   "lr": [
+    0.3063481,
+    -0.0000014737615,
+    -0.0000012653826,
+    -0.9519196
+   ],
+   "ls": [
+    0.6316302,
+    0.63163006,
+    0.50530386
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "5557788304161918047",
+   "art": {
+    "kind": "prefab",
+    "guid": "345f7357a465803408d134c23c1ca7f1",
+    "name": "KD_Bandana_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_BowTie_Corgi",
+   "lp": [
+    1.0357688e-8,
+    0.07622325,
+    0.09109602
+   ],
+   "lr": [
+    0.31343508,
+    -0.0000019400331,
+    -7.635508e-7,
+    -0.9496097
+   ],
+   "ls": [
+    0.40385237,
+    0.40385237,
+    0.40385237
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "885053799189291298",
+   "art": {
+    "kind": "prefab",
+    "guid": "222bf0317c2eb994bb006dabb32d519a",
+    "name": "KD_BowTie_Optimized",
+    "lp": [
+     0,
+     0,
+     0.005
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_BowTie_Dachs",
+   "lp": [
+    0,
+    0.0484,
+    0.102
+   ],
+   "lr": [
+    -0.15002407,
+    0.0000023496461,
+    -3.8442902e-8,
+    0.9886824
+   ],
+   "ls": [
+    0.67454976,
+    0.67454976,
+    0.67454976
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4161160155152489284",
+   "art": {
+    "kind": "prefab",
+    "guid": "222bf0317c2eb994bb006dabb32d519a",
+    "name": "KD_BowTie_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_BowTie_Lab",
+   "lp": [
+    9.707851e-9,
+    0.12498884,
+    0.12686574
+   ],
+   "lr": [
+    0.40314654,
+    -0.0000016265141,
+    -0.0000013473748,
+    -0.91513544
+   ],
+   "ls": [
+    0.64185584,
+    0.64185584,
+    0.64185584
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "3831644120154889502",
+   "art": {
+    "kind": "prefab",
+    "guid": "222bf0317c2eb994bb006dabb32d519a",
+    "name": "KD_BowTie_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_BowTie_Pome",
+   "lp": [
+    0,
+    0.0897,
+    0.1051
+   ],
+   "lr": [
+    -0.49659058,
+    0.0000019177912,
+    9.065583e-7,
+    0.8679849
+   ],
+   "ls": [
+    0.48257074,
+    0.48257074,
+    0.48257074
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "1744527258686883404",
+   "art": {
+    "kind": "prefab",
+    "guid": "222bf0317c2eb994bb006dabb32d519a",
+    "name": "KD_BowTie_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_BowTie_Samoyed",
+   "lp": [
+    3.1292153e-9,
+    0.09812536,
+    0.13799173
+   ],
+   "lr": [
+    -0.46157953,
+    0.0000010352803,
+    0.0000014480754,
+    0.88709885
+   ],
+   "ls": [
+    0.5215484,
+    0.5215484,
+    0.5215484
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "1149051314770268442",
+   "art": {
+    "kind": "prefab",
+    "guid": "222bf0317c2eb994bb006dabb32d519a",
+    "name": "KD_BowTie_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_BowTie_Shiba",
+   "lp": [
+    0,
+    0.0677,
+    0.1089
+   ],
+   "lr": [
+    0.2645345,
+    -0.0000014776145,
+    -0.0000012332749,
+    -0.9643763
+   ],
+   "ls": [
+    0.47396246,
+    0.47396246,
+    0.47396246
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "5557788304161918047",
+   "art": {
+    "kind": "prefab",
+    "guid": "222bf0317c2eb994bb006dabb32d519a",
+    "name": "KD_BowTie_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Cap_Corgi",
+   "lp": [
+    -2.3788641e-7,
+    0.0037693083,
+    -0.050267406
+   ],
+   "lr": [
+    0.8228839,
+    -0.0000011636639,
+    -0.0000016894265,
+    -0.5682097
+   ],
+   "ls": [
+    0.6125835,
+    0.6125834,
+    0.61257887
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "8148263570539721516",
+   "art": {
+    "kind": "prefab",
+    "guid": "b4d390fe5adcba443b93fddb5c50cead",
+    "name": "KD_Cap_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Cap_Dachs",
+   "lp": [
+    -3.4426563e-8,
+    0.015211411,
+    -0.061200395
+   ],
+   "lr": [
+    -0.79123753,
+    0.0000016684013,
+    0.0000014731729,
+    0.611509
+   ],
+   "ls": [
+    0.9208705,
+    0.9208704,
+    0.9208838
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4963894962745805130",
+   "art": {
+    "kind": "prefab",
+    "guid": "b4d390fe5adcba443b93fddb5c50cead",
+    "name": "KD_Cap_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Cap_Lab",
+   "lp": [
+    -7.373136e-8,
+    0.009200279,
+    -0.0870004
+   ],
+   "lr": [
+    0.78215903,
+    -0.0000012739349,
+    -0.0000016863183,
+    -0.62307876
+   ],
+   "ls": [
+    0.9735974,
+    0.97359794,
+    0.9736088
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "5219840403016306448",
+   "art": {
+    "kind": "prefab",
+    "guid": "b4d390fe5adcba443b93fddb5c50cead",
+    "name": "KD_Cap_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Cap_Pome",
+   "lp": [
+    -1.9814387e-8,
+    0.00068833854,
+    -0.066995986
+   ],
+   "lr": [
+    -0.7089849,
+    0.0000018663288,
+    0.0000016888322,
+    0.7052237
+   ],
+   "ls": [
+    0.7319862,
+    0.7319863,
+    0.7319859
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7307630783673111618",
+   "art": {
+    "kind": "prefab",
+    "guid": "b4d390fe5adcba443b93fddb5c50cead",
+    "name": "KD_Cap_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Cap_Samoyed",
+   "lp": [
+    -1.2724014e-7,
+    -0.012450313,
+    -0.10098767
+   ],
+   "lr": [
+    -0.71322757,
+    8.1258736e-7,
+    0.0000022355223,
+    0.7009326
+   ],
+   "ls": [
+    0.7911136,
+    0.79111314,
+    0.7911051
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "8263653568412435220",
+   "art": {
+    "kind": "prefab",
+    "guid": "b4d390fe5adcba443b93fddb5c50cead",
+    "name": "KD_Cap_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Cap_Shiba",
+   "lp": [
+    -5.673003e-8,
+    -0.004299937,
+    -0.02950025
+   ],
+   "lr": [
+    0.83458954,
+    -9.698231e-7,
+    -0.0000020598939,
+    -0.55087227
+   ],
+   "ls": [
+    0.7189291,
+    0.7189288,
+    0.7189286
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "3493982087481613905",
+   "art": {
+    "kind": "prefab",
+    "guid": "b4d390fe5adcba443b93fddb5c50cead",
+    "name": "KD_Cap_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Crown_Corgi",
+   "lp": [
+    -2.3788621e-7,
+    0.0037691211,
+    -0.050267354
+   ],
+   "lr": [
+    0.82288384,
+    -0.0000011636638,
+    -0.0000016894264,
+    -0.56820965
+   ],
+   "ls": [
+    0.46615243,
+    0.46615243,
+    0.46615243
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "8148263570539721516",
+   "art": {
+    "kind": "prefab",
+    "guid": "e3f981330239da340a118bac909be956",
+    "name": "KD_Crown_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Crown_Dachs",
+   "lp": [
+    0,
+    0.0256,
+    -0.0495
+   ],
+   "lr": [
+    -0.68583494,
+    0.0000019024653,
+    0.0000011712816,
+    0.7277571
+   ],
+   "ls": [
+    0.77860844,
+    0.77860844,
+    0.77860844
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4963894962745805130",
+   "art": {
+    "kind": "prefab",
+    "guid": "e3f981330239da340a118bac909be956",
+    "name": "KD_Crown_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Crown_Lab",
+   "lp": [
+    0,
+    0.0092,
+    -0.087
+   ],
+   "lr": [
+    0.7127449,
+    -0.000001465855,
+    -0.0000015209221,
+    -0.70142335
+   ],
+   "ls": [
+    0.7408709,
+    0.7408709,
+    0.7408709
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "5219840403016306448",
+   "art": {
+    "kind": "prefab",
+    "guid": "e3f981330239da340a118bac909be956",
+    "name": "KD_Crown_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Crown_Pome",
+   "lp": [
+    0,
+    0.0007,
+    -0.0648
+   ],
+   "lr": [
+    -0.7089849,
+    0.0000018767921,
+    0.0000016783131,
+    0.7052238
+   ],
+   "ls": [
+    0.5570141,
+    0.5570141,
+    0.5570141
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7307630783673111618",
+   "art": {
+    "kind": "prefab",
+    "guid": "e3f981330239da340a118bac909be956",
+    "name": "KD_Crown_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Crown_Samoyed",
+   "lp": [
+    -4.9368854e-8,
+    -0.012460095,
+    -0.101539
+   ],
+   "lr": [
+    -0.7132275,
+    8.061425e-7,
+    0.000002242079,
+    0.7009327
+   ],
+   "ls": [
+    0.6020045,
+    0.6020045,
+    0.6020045
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "8263653568412435220",
+   "art": {
+    "kind": "prefab",
+    "guid": "e3f981330239da340a118bac909be956",
+    "name": "KD_Crown_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Crown_Shiba",
+   "lp": [
+    0,
+    -0.0043,
+    -0.0295
+   ],
+   "lr": [
+    0.83458954,
+    -9.645101e-7,
+    -0.0000020546709,
+    -0.5508722
+   ],
+   "ls": [
+    0.5470778,
+    0.5470778,
+    0.5470778
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "3493982087481613905",
+   "art": {
+    "kind": "prefab",
+    "guid": "e3f981330239da340a118bac909be956",
+    "name": "KD_Crown_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerCorsage_Corgi",
+   "lp": [
+    7.210982e-9,
+    0.08123334,
+    0.09785845
+   ],
+   "lr": [
+    0.31343517,
+    -0.0000019400331,
+    -7.6355104e-7,
+    -0.94960964
+   ],
+   "ls": [
+    0.6470492,
+    0.6470479,
+    0.6470453
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "885053799189291298",
+   "art": {
+    "kind": "prefab",
+    "guid": "9718bf1e200717448a774fd04ce05fec",
+    "name": "KD_FlowerCorsage_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerCorsage_Dachs",
+   "lp": [
+    -7.978241e-8,
+    0.048400097,
+    0.10200005
+   ],
+   "lr": [
+    -0.15002398,
+    0.0000023496452,
+    -3.8444266e-8,
+    0.9886823
+   ],
+   "ls": [
+    1.0807552,
+    1.0807613,
+    1.0807656
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4161160155152489284",
+   "art": {
+    "kind": "prefab",
+    "guid": "9718bf1e200717448a774fd04ce05fec",
+    "name": "KD_FlowerCorsage_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerCorsage_Lab",
+   "lp": [
+    -1.2784199e-8,
+    0.121200554,
+    0.12340009
+   ],
+   "lr": [
+    0.4031467,
+    -0.0000016248359,
+    -0.000001344049,
+    -0.91513544
+   ],
+   "ls": [
+    1.0283761,
+    1.0283828,
+    1.0283825
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "3831644120154889502",
+   "art": {
+    "kind": "prefab",
+    "guid": "9718bf1e200717448a774fd04ce05fec",
+    "name": "KD_FlowerCorsage_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerCorsage_Pome",
+   "lp": [
+    3.089271e-8,
+    0.093699396,
+    0.10745109
+   ],
+   "lr": [
+    -0.49659067,
+    0.0000019156619,
+    9.0350596e-7,
+    0.8679849
+   ],
+   "ls": [
+    0.7731701,
+    0.77317023,
+    0.77316976
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "1744527258686883404",
+   "art": {
+    "kind": "prefab",
+    "guid": "9718bf1e200717448a774fd04ce05fec",
+    "name": "KD_FlowerCorsage_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerCorsage_Samoyed",
+   "lp": [
+    2.2339572e-8,
+    0.101211905,
+    0.1401547
+   ],
+   "lr": [
+    -0.46157956,
+    0.0000010298771,
+    0.0000014508869,
+    0.88709885
+   ],
+   "ls": [
+    0.8356213,
+    0.83561724,
+    0.83561665
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "1149051314770268442",
+   "art": {
+    "kind": "prefab",
+    "guid": "9718bf1e200717448a774fd04ce05fec",
+    "name": "KD_FlowerCorsage_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerCorsage_Shiba",
+   "lp": [
+    -1.0442051e-8,
+    0.06770036,
+    0.10890022
+   ],
+   "lr": [
+    0.26453435,
+    -0.000001527554,
+    -0.0000011998936,
+    -0.96437633
+   ],
+   "ls": [
+    0.75937706,
+    0.75937694,
+    0.7593767
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "5557788304161918047",
+   "art": {
+    "kind": "prefab",
+    "guid": "9718bf1e200717448a774fd04ce05fec",
+    "name": "KD_FlowerCorsage_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerCrown_Corgi",
+   "lp": [
+    -2.1418937e-7,
+    0.005958422,
+    -0.044489052
+   ],
+   "lr": [
+    0.7589819,
+    -0.0000013338823,
+    -0.0000015585355,
+    -0.6511117
+   ],
+   "ls": [
+    0.5149269,
+    0.51492685,
+    0.51492304
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "8148263570539721516",
+   "art": {
+    "kind": "prefab",
+    "guid": "4ea962aedfeeb2b41bb56b345bbef3ff",
+    "name": "KD_FlowerCrown_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerCrown_Dachs",
+   "lp": [
+    4.243114e-8,
+    0.025599929,
+    -0.049500115
+   ],
+   "lr": [
+    -0.685835,
+    0.0000018783155,
+    0.0000011940402,
+    0.72775716
+   ],
+   "ls": [
+    0.86007625,
+    0.8600761,
+    0.86008865
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4963894962745805130",
+   "art": {
+    "kind": "prefab",
+    "guid": "4ea962aedfeeb2b41bb56b345bbef3ff",
+    "name": "KD_FlowerCrown_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerCrown_Lab",
+   "lp": [
+    -7.373136e-8,
+    0.009200279,
+    -0.0870004
+   ],
+   "lr": [
+    0.7127449,
+    -0.0000014432245,
+    -0.0000015439182,
+    -0.7014234
+   ],
+   "ls": [
+    0.818389,
+    0.8183894,
+    0.81839854
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "5219840403016306448",
+   "art": {
+    "kind": "prefab",
+    "guid": "4ea962aedfeeb2b41bb56b345bbef3ff",
+    "name": "KD_FlowerCrown_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerCrown_Pome",
+   "lp": [
+    -8.772666e-9,
+    0.00070001936,
+    -0.06480006
+   ],
+   "lr": [
+    -0.7089849,
+    0.0000018663288,
+    0.0000016888322,
+    0.7052237
+   ],
+   "ls": [
+    0.61529535,
+    0.61529547,
+    0.6152952
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7307630783673111618",
+   "art": {
+    "kind": "prefab",
+    "guid": "4ea962aedfeeb2b41bb56b345bbef3ff",
+    "name": "KD_FlowerCrown_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerCrown_Samoyed",
+   "lp": [
+    -8.30887e-8,
+    -0.012271496,
+    -0.090704754
+   ],
+   "lr": [
+    -0.71322757,
+    8.1258736e-7,
+    0.0000022355223,
+    0.7009326
+   ],
+   "ls": [
+    0.664998,
+    0.66499764,
+    0.66499084
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "8263653568412435220",
+   "art": {
+    "kind": "prefab",
+    "guid": "4ea962aedfeeb2b41bb56b345bbef3ff",
+    "name": "KD_FlowerCrown_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerCrown_Shiba",
+   "lp": [
+    -5.673003e-8,
+    -0.004299937,
+    -0.02950025
+   ],
+   "lr": [
+    0.83458954,
+    -9.698231e-7,
+    -0.0000020598939,
+    -0.55087227
+   ],
+   "ls": [
+    0.6043195,
+    0.6043192,
+    0.60431904
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "3493982087481613905",
+   "art": {
+    "kind": "prefab",
+    "guid": "4ea962aedfeeb2b41bb56b345bbef3ff",
+    "name": "KD_FlowerCrown_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerTail_Corgi",
+   "lp": [
+    2.1176447e-8,
+    0.05060013,
+    0.035600152
+   ],
+   "lr": [
+    -1.2967401e-13,
+    3.725351e-8,
+    1,
+    3.5527123e-14
+   ],
+   "ls": [
+    0.6284535,
+    0.628454,
+    0.6284479
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "5564191647360653824",
+   "art": {
+    "kind": "prefab",
+    "guid": "998b8f7105ef8dd41af8d849314ea7dc",
+    "name": "KD_FlowerTail_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerTail_Dachs",
+   "lp": [
+    -0.00060003216,
+    0.030400235,
+    0.016500117
+   ],
+   "lr": [
+    -0.045406744,
+    -0.16582163,
+    -0.9851091,
+    -0.0012316942
+   ],
+   "ls": [
+    0.56973904,
+    0.5697388,
+    0.56973886
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "5281791415296532646",
+   "art": {
+    "kind": "prefab",
+    "guid": "998b8f7105ef8dd41af8d849314ea7dc",
+    "name": "KD_FlowerTail_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerTail_Lab",
+   "lp": [
+    -1.00210144e-7,
+    0.075,
+    0.034100264
+   ],
+   "lr": [
+    3.944172e-8,
+    1.1920922e-7,
+    1,
+    -3.3887417e-8
+   ],
+   "ls": [
+    0.99882483,
+    0.99882466,
+    0.9988252
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "8382062477078357564",
+   "art": {
+    "kind": "prefab",
+    "guid": "998b8f7105ef8dd41af8d849314ea7dc",
+    "name": "KD_FlowerTail_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerTail_Pome",
+   "lp": [
+    1.0303211e-8,
+    0.059400108,
+    0.06580001
+   ],
+   "lr": [
+    3.398909e-8,
+    -0.52770275,
+    -0.84942913,
+    -1.3984182e-7
+   ],
+   "ls": [
+    0.4269435,
+    0.42694357,
+    0.42694348
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7549746148138696110",
+   "art": {
+    "kind": "prefab",
+    "guid": "998b8f7105ef8dd41af8d849314ea7dc",
+    "name": "KD_FlowerTail_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerTail_Samoyed",
+   "lp": [
+    0.09231011,
+    0.039222836,
+    0.070271015
+   ],
+   "lr": [
+    0.46142977,
+    0.4614243,
+    0.5358002,
+    0.5358063
+   ],
+   "ls": [
+    0.81161404,
+    0.811614,
+    0.81161386
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "9151763347140078328",
+   "art": {
+    "kind": "prefab",
+    "guid": "998b8f7105ef8dd41af8d849314ea7dc",
+    "name": "KD_FlowerTail_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_FlowerTail_Shiba",
+   "lp": [
+    0.040240664,
+    0.0421252,
+    0.029446065
+   ],
+   "lr": [
+    0.3006732,
+    0.5883161,
+    0.39228743,
+    0.63999254
+   ],
+   "ls": [
+    0.42694497,
+    0.42694485,
+    0.42694467
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "891315163486844797",
+   "art": {
+    "kind": "prefab",
+    "guid": "998b8f7105ef8dd41af8d849314ea7dc",
+    "name": "KD_FlowerTail_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_MarineCap_Corgi",
+   "lp": [
+    -2.3788641e-7,
+    0.0037693083,
+    -0.050267406
+   ],
+   "lr": [
+    0.8228839,
+    -0.0000011636639,
+    -0.0000016894265,
+    -0.5682097
+   ],
+   "ls": [
+    0.5066115,
+    0.5066114,
+    0.50660765
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "8148263570539721516",
+   "art": {
+    "kind": "prefab",
+    "guid": "942ae9c5d75a42041854a11b76d20365",
+    "name": "KD_MarineCap_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_MarineCap_Dachs",
+   "lp": [
+    2.3991653e-10,
+    0.014175121,
+    -0.056959763
+   ],
+   "lr": [
+    -0.685835,
+    0.0000018783155,
+    0.0000011940402,
+    0.72775716
+   ],
+   "ls": [
+    0.84618706,
+    0.84618694,
+    0.8461993
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4963894962745805130",
+   "art": {
+    "kind": "prefab",
+    "guid": "942ae9c5d75a42041854a11b76d20365",
+    "name": "KD_MarineCap_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_MarineCap_Lab",
+   "lp": [
+    -7.373136e-8,
+    0.009200279,
+    -0.0870004
+   ],
+   "lr": [
+    0.7127449,
+    -0.0000014432245,
+    -0.0000015439182,
+    -0.7014234
+   ],
+   "ls": [
+    0.80517334,
+    0.80517375,
+    0.80518275
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "5219840403016306448",
+   "art": {
+    "kind": "prefab",
+    "guid": "942ae9c5d75a42041854a11b76d20365",
+    "name": "KD_MarineCap_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_MarineCap_Pome",
+   "lp": [
+    -3.312459e-8,
+    0.000674259,
+    -0.069642864
+   ],
+   "lr": [
+    -0.7089849,
+    0.0000018663288,
+    0.0000016888322,
+    0.7052237
+   ],
+   "ls": [
+    0.60535866,
+    0.6053588,
+    0.6053585
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7307630783673111618",
+   "art": {
+    "kind": "prefab",
+    "guid": "942ae9c5d75a42041854a11b76d20365",
+    "name": "KD_MarineCap_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_MarineCap_Samoyed",
+   "lp": [
+    -1.05558605e-7,
+    -0.012362501,
+    -0.09593802
+   ],
+   "lr": [
+    -0.71322757,
+    8.1258736e-7,
+    0.0000022355223,
+    0.7009326
+   ],
+   "ls": [
+    0.6542571,
+    0.65425676,
+    0.6542501
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "8263653568412435220",
+   "art": {
+    "kind": "prefab",
+    "guid": "942ae9c5d75a42041854a11b76d20365",
+    "name": "KD_MarineCap_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_MarineCap_Shiba",
+   "lp": [
+    -5.673003e-8,
+    -0.004299937,
+    -0.02950025
+   ],
+   "lr": [
+    0.83458954,
+    -9.698231e-7,
+    -0.0000020598939,
+    -0.55087227
+   ],
+   "ls": [
+    0.59456086,
+    0.5945606,
+    0.5945604
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "3493982087481613905",
+   "art": {
+    "kind": "prefab",
+    "guid": "942ae9c5d75a42041854a11b76d20365",
+    "name": "KD_MarineCap_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_RoyalNecklace_Corgi",
+   "lp": [
+    -1.5826146e-8,
+    0.07695573,
+    0.0920845
+   ],
+   "lr": [
+    0.31343517,
+    -0.0000019400331,
+    -7.6355104e-7,
+    -0.94960964
+   ],
+   "ls": [
+    0.55762374,
+    0.55762255,
+    0.5576204
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "885053799189291298",
+   "art": {
+    "kind": "prefab",
+    "guid": "6910c4b78ce8bff4a9fea2642002c3f3",
+    "name": "KD_RoyalNecklace_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_RoyalNecklace_Dachs",
+   "lp": [
+    -7.978241e-8,
+    0.048400097,
+    0.10200005
+   ],
+   "lr": [
+    -0.15002398,
+    0.0000023496452,
+    -3.8444266e-8,
+    0.9886823
+   ],
+   "ls": [
+    0.6706029,
+    0.93139815,
+    0.9314019
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4161160155152489284",
+   "art": {
+    "kind": "prefab",
+    "guid": "6910c4b78ce8bff4a9fea2642002c3f3",
+    "name": "KD_RoyalNecklace_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_RoyalNecklace_Lab",
+   "lp": [
+    -1.2784199e-8,
+    0.121200554,
+    0.12340009
+   ],
+   "lr": [
+    0.4031467,
+    -0.0000016248359,
+    -0.000001344049,
+    -0.91513544
+   ],
+   "ls": [
+    0.8862519,
+    0.8862577,
+    0.88625747
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "3831644120154889502",
+   "art": {
+    "kind": "prefab",
+    "guid": "6910c4b78ce8bff4a9fea2642002c3f3",
+    "name": "KD_RoyalNecklace_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_RoyalNecklace_Pome",
+   "lp": [
+    1.962831e-8,
+    0.08970025,
+    0.10510006
+   ],
+   "lr": [
+    -0.49659067,
+    0.0000019156619,
+    9.0350596e-7,
+    0.8679849
+   ],
+   "ls": [
+    0.6663167,
+    0.66631675,
+    0.6663164
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "1744527258686883404",
+   "art": {
+    "kind": "prefab",
+    "guid": "6910c4b78ce8bff4a9fea2642002c3f3",
+    "name": "KD_RoyalNecklace_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_RoyalNecklace_Samoyed",
+   "lp": [
+    1.9555866e-8,
+    0.0965386,
+    0.13687977
+   ],
+   "lr": [
+    -0.46157956,
+    0.0000010298771,
+    0.0000014508869,
+    0.88709885
+   ],
+   "ls": [
+    0.7201405,
+    0.720137,
+    0.57610923
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "1149051314770268442",
+   "art": {
+    "kind": "prefab",
+    "guid": "6910c4b78ce8bff4a9fea2642002c3f3",
+    "name": "KD_RoyalNecklace_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_RoyalNecklace_Shiba",
+   "lp": [
+    -1.0442051e-8,
+    0.06770036,
+    0.10890022
+   ],
+   "lr": [
+    0.26453435,
+    -0.000001527554,
+    -0.0000011998936,
+    -0.96437633
+   ],
+   "ls": [
+    0.65443057,
+    0.65443045,
+    0.6544302
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "5557788304161918047",
+   "art": {
+    "kind": "prefab",
+    "guid": "6910c4b78ce8bff4a9fea2642002c3f3",
+    "name": "KD_RoyalNecklace_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_RoyalTail_Corgi",
+   "lp": [
+    2.1176447e-8,
+    0.03260013,
+    0.035600152
+   ],
+   "lr": [
+    -1.2967401e-13,
+    3.725351e-8,
+    1,
+    3.5527123e-14
+   ],
+   "ls": [
+    0.5970307,
+    0.59703124,
+    0.5970254
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "5564191647360653824",
+   "art": {
+    "kind": "prefab",
+    "guid": "8719b33985ce91e409ad954faf575829",
+    "name": "KD_RoyalTail_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_RoyalTail_Dachs",
+   "lp": [
+    -0.00060003216,
+    0.030400235,
+    0.016500117
+   ],
+   "lr": [
+    -0.045406744,
+    -0.16582163,
+    -0.9851091,
+    -0.0012316942
+   ],
+   "ls": [
+    0.541254,
+    0.5412538,
+    0.54125386
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "5281791415296532646",
+   "art": {
+    "kind": "prefab",
+    "guid": "8719b33985ce91e409ad954faf575829",
+    "name": "KD_RoyalTail_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_RoyalTail_Lab",
+   "lp": [
+    -1.00210144e-7,
+    0.075,
+    0.040100265
+   ],
+   "lr": [
+    3.944172e-8,
+    1.1920922e-7,
+    1,
+    -3.3887417e-8
+   ],
+   "ls": [
+    0.94888365,
+    0.9488835,
+    0.94888395
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "8382062477078357564",
+   "art": {
+    "kind": "prefab",
+    "guid": "8719b33985ce91e409ad954faf575829",
+    "name": "KD_RoyalTail_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_RoyalTail_Pome",
+   "lp": [
+    1.0303211e-8,
+    0.059400108,
+    0.06580001
+   ],
+   "lr": [
+    3.398909e-8,
+    -0.52770275,
+    -0.84942913,
+    -1.3984182e-7
+   ],
+   "ls": [
+    0.40559694,
+    0.405597,
+    0.4055969
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7549746148138696110",
+   "art": {
+    "kind": "prefab",
+    "guid": "8719b33985ce91e409ad954faf575829",
+    "name": "KD_RoyalTail_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_RoyalTail_Samoyed",
+   "lp": [
+    0.09231011,
+    0.039222836,
+    0.070271015
+   ],
+   "lr": [
+    0.46142977,
+    0.4614243,
+    0.5358002,
+    0.5358063
+   ],
+   "ls": [
+    0.77103883,
+    0.7710388,
+    0.7710387
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "9151763347140078328",
+   "art": {
+    "kind": "prefab",
+    "guid": "8719b33985ce91e409ad954faf575829",
+    "name": "KD_RoyalTail_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_RoyalTail_Shiba",
+   "lp": [
+    0.040240664,
+    0.0421252,
+    0.029446065
+   ],
+   "lr": [
+    0.3006732,
+    0.5883161,
+    0.39228743,
+    0.63999254
+   ],
+   "ls": [
+    0.40559673,
+    0.4055966,
+    0.40559646
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "891315163486844797",
+   "art": {
+    "kind": "prefab",
+    "guid": "8719b33985ce91e409ad954faf575829",
+    "name": "KD_RoyalTail_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_SpiralGlasses_Corgi",
+   "lp": [
+    -7.024031e-8,
+    0.08787837,
+    -0.009308284
+   ],
+   "lr": [
+    0.6174324,
+    -0.0000016122104,
+    -0.0000012684827,
+    -0.78662395
+   ],
+   "ls": [
+    0.5598134,
+    0.55981326,
+    0.55980915
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "8148263570539721516",
+   "art": {
+    "kind": "prefab",
+    "guid": "9d4dfd64259a1bd45bbb009ea24af013",
+    "name": "KD_SpiralGlasses_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_SpiralGlasses_Dachs",
+   "lp": [
+    -2.4690223e-8,
+    0.10825901,
+    -0.034421902
+   ],
+   "lr": [
+    -0.685835,
+    0.0000018644834,
+    0.0000011793625,
+    0.72775716
+   ],
+   "ls": [
+    0.93504065,
+    0.9350406,
+    0.9350542
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4963894962745805130",
+   "art": {
+    "kind": "prefab",
+    "guid": "9d4dfd64259a1bd45bbb009ea24af013",
+    "name": "KD_SpiralGlasses_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_SpiralGlasses_Lab",
+   "lp": [
+    -3.5998727e-7,
+    0.10003033,
+    -0.05464614
+   ],
+   "lr": [
+    0.7127449,
+    -0.0000014682103,
+    -0.0000015685065,
+    -0.7014234
+   ],
+   "ls": [
+    0.88972056,
+    0.88972104,
+    0.889731
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "5219840403016306448",
+   "art": {
+    "kind": "prefab",
+    "guid": "9d4dfd64259a1bd45bbb009ea24af013",
+    "name": "KD_SpiralGlasses_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_SpiralGlasses_Pome",
+   "lp": [
+    -1.1175803e-7,
+    0.07575397,
+    -0.018871969
+   ],
+   "lr": [
+    -0.70898485,
+    0.0000018541832,
+    0.00000167676,
+    0.7052236
+   ],
+   "ls": [
+    0.6689277,
+    0.6689278,
+    0.6689275
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7307630783673111618",
+   "art": {
+    "kind": "prefab",
+    "guid": "9d4dfd64259a1bd45bbb009ea24af013",
+    "name": "KD_SpiralGlasses_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_SpiralGlasses_Samoyed",
+   "lp": [
+    -2.6410106e-7,
+    0.08137096,
+    -0.035839677
+   ],
+   "lr": [
+    -0.7132276,
+    4.2664476e-7,
+    0.0000026292564,
+    0.7009326
+   ],
+   "ls": [
+    0.7229623,
+    0.7229619,
+    0.7229546
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "8263653568412435220",
+   "art": {
+    "kind": "prefab",
+    "guid": "9d4dfd64259a1bd45bbb009ea24af013",
+    "name": "KD_SpiralGlasses_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_SpiralGlasses_Shiba",
+   "lp": [
+    -2.1213783e-7,
+    0.08699384,
+    -0.02743036
+   ],
+   "lr": [
+    0.71322757,
+    -0.000001223534,
+    -0.0000018400101,
+    -0.70093256
+   ],
+   "ls": [
+    0.6569953,
+    0.656995,
+    0.65699476
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "3493982087481613905",
+   "art": {
+    "kind": "prefab",
+    "guid": "9d4dfd64259a1bd45bbb009ea24af013",
+    "name": "KD_SpiralGlasses_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_StarGlasses_Corgi",
+   "lp": [
+    -5.629494e-8,
+    0.07816434,
+    -0.005920683
+   ],
+   "lr": [
+    0.6174324,
+    -0.0000016122104,
+    -0.0000012684827,
+    -0.78662395
+   ],
+   "ls": [
+    0.5598134,
+    0.55981326,
+    0.55980915
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "8148263570539721516",
+   "art": {
+    "kind": "prefab",
+    "guid": "86ce0cb94580b10479c3aa4bafc12775",
+    "name": "KD_StarGlasses_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_StarGlasses_Dachs",
+   "lp": [
+    -5.723632e-8,
+    0.12304713,
+    -0.018556915
+   ],
+   "lr": [
+    -0.685835,
+    0.0000018644834,
+    0.0000011793625,
+    0.72775716
+   ],
+   "ls": [
+    0.5610244,
+    0.56102437,
+    0.56103253
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4963894962745805130",
+   "art": {
+    "kind": "prefab",
+    "guid": "86ce0cb94580b10479c3aa4bafc12775",
+    "name": "KD_StarGlasses_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_StarGlasses_Lab",
+   "lp": [
+    -3.6942953e-7,
+    0.11910905,
+    -0.03501884
+   ],
+   "lr": [
+    0.7127449,
+    -0.0000014682103,
+    -0.0000015685065,
+    -0.7014234
+   ],
+   "ls": [
+    0.71177644,
+    0.71177685,
+    0.7117848
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "5219840403016306448",
+   "art": {
+    "kind": "prefab",
+    "guid": "86ce0cb94580b10479c3aa4bafc12775",
+    "name": "KD_StarGlasses_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_StarGlasses_Pome",
+   "lp": [
+    -1.1175666e-7,
+    0.07575397,
+    -0.018871969
+   ],
+   "lr": [
+    -0.70898485,
+    0.0000018541832,
+    0.00000167676,
+    0.7052236
+   ],
+   "ls": [
+    0.6689277,
+    0.6689278,
+    0.6689275
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7307630783673111618",
+   "art": {
+    "kind": "prefab",
+    "guid": "86ce0cb94580b10479c3aa4bafc12775",
+    "name": "KD_StarGlasses_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_StarGlasses_Samoyed",
+   "lp": [
+    -7.8784936e-8,
+    0.081471264,
+    -0.030056942
+   ],
+   "lr": [
+    -0.7132276,
+    4.2664476e-7,
+    0.0000026292564,
+    0.7009326
+   ],
+   "ls": [
+    0.7229623,
+    0.7229619,
+    0.7229546
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "8263653568412435220",
+   "art": {
+    "kind": "prefab",
+    "guid": "86ce0cb94580b10479c3aa4bafc12775",
+    "name": "KD_StarGlasses_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_StarGlasses_Shiba",
+   "lp": [
+    -2.1213783e-7,
+    0.08699384,
+    -0.02743036
+   ],
+   "lr": [
+    0.71322757,
+    -0.000001223534,
+    -0.0000018400101,
+    -0.70093256
+   ],
+   "ls": [
+    0.6569953,
+    0.656995,
+    0.65699476
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "3493982087481613905",
+   "art": {
+    "kind": "prefab",
+    "guid": "86ce0cb94580b10479c3aa4bafc12775",
+    "name": "KD_StarGlasses_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_StrawHat_Corgi",
+   "lp": [
+    -3.4151e-8,
+    0.00842344,
+    -0.06602716
+   ],
+   "lr": [
+    0.81440496,
+    -0.0000011884797,
+    -0.0000016720606,
+    -0.580297
+   ],
+   "ls": [
+    0.48944438,
+    0.48944438,
+    0.48944438
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "8148263570539721516",
+   "art": {
+    "kind": "prefab",
+    "guid": "99b63045e0465354886d8b8c5dab1ce3",
+    "name": "KD_StrawHat_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_StrawHat_Dachs",
+   "lp": [
+    -5.1065868e-8,
+    0.024188025,
+    -0.06541641
+   ],
+   "lr": [
+    -0.7581492,
+    0.0000017696112,
+    0.000001363727,
+    0.65208113
+   ],
+   "ls": [
+    0.8175127,
+    0.8175127,
+    0.8175127
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4963894962745805130",
+   "art": {
+    "kind": "prefab",
+    "guid": "99b63045e0465354886d8b8c5dab1ce3",
+    "name": "KD_StrawHat_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_StrawHat_Lab",
+   "lp": [
+    0,
+    -0.0048,
+    -0.0855
+   ],
+   "lr": [
+    0.7566929,
+    -0.0000013710782,
+    -0.0000016605909,
+    -0.65377045
+   ],
+   "ls": [
+    0.7778895,
+    0.7778895,
+    0.7778895
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "5219840403016306448",
+   "art": {
+    "kind": "prefab",
+    "guid": "99b63045e0465354886d8b8c5dab1ce3",
+    "name": "KD_StrawHat_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_StrawHat_Pome",
+   "lp": [
+    0,
+    -0.0031,
+    -0.075
+   ],
+   "lr": [
+    -0.73313254,
+    0.0000018220055,
+    0.0000017853005,
+    0.6800858
+   ],
+   "ls": [
+    0.4,
+    0.4,
+    0.4
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7307630783673111618",
+   "art": {
+    "kind": "prefab",
+    "guid": "99b63045e0465354886d8b8c5dab1ce3",
+    "name": "KD_StrawHat_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_StrawHat_Samoyed",
+   "lp": [
+    0.00030435075,
+    -0.024648217,
+    -0.109272726
+   ],
+   "lr": [
+    -0.67768925,
+    -0.010606448,
+    0.0009057264,
+    0.73527133
+   ],
+   "ls": [
+    0.5,
+    0.5,
+    0.5
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "8263653568412435220",
+   "art": {
+    "kind": "prefab",
+    "guid": "99b63045e0465354886d8b8c5dab1ce3",
+    "name": "KD_StrawHat_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_StrawHat_Shiba",
+   "lp": [
+    0,
+    0.06,
+    -0.0446
+   ],
+   "lr": [
+    0.58186114,
+    -0.0000014335208,
+    -0.0000015510202,
+    -0.8132882
+   ],
+   "ls": [
+    0.28,
+    0.28,
+    0.28
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "3493982087481613905",
+   "art": {
+    "kind": "prefab",
+    "guid": "99b63045e0465354886d8b8c5dab1ce3",
+    "name": "KD_StrawHat_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_SunflowerNecklace_Corgi",
+   "lp": [
+    -1.715712e-10,
+    0.07986253,
+    0.09600811
+   ],
+   "lr": [
+    0.31343517,
+    -0.0000019400331,
+    -7.6355104e-7,
+    -0.94960964
+   ],
+   "ls": [
+    0.622938,
+    0.6229367,
+    0.6229343
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "885053799189291298",
+   "art": {
+    "kind": "prefab",
+    "guid": "bb7a2997698181f42b3a63cfdef0bdcf",
+    "name": "KD_SunflowerNecklace_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_SunflowerNecklace_Dachs",
+   "lp": [
+    -7.978241e-8,
+    0.048400097,
+    0.10200005
+   ],
+   "lr": [
+    -0.15002398,
+    0.0000023496452,
+    -3.8444266e-8,
+    0.9886823
+   ],
+   "ls": [
+    0.884414,
+    1.0404929,
+    1.0404971
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4161160155152489284",
+   "art": {
+    "kind": "prefab",
+    "guid": "bb7a2997698181f42b3a63cfdef0bdcf",
+    "name": "KD_SunflowerNecklace_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_SunflowerNecklace_Lab",
+   "lp": [
+    9.672707e-9,
+    0.12996697,
+    0.13141896
+   ],
+   "lr": [
+    0.4031467,
+    -0.0000016248359,
+    -0.000001344049,
+    -0.91513544
+   ],
+   "ls": [
+    0.9900566,
+    0.9900631,
+    0.9900628
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "3831644120154889502",
+   "art": {
+    "kind": "prefab",
+    "guid": "bb7a2997698181f42b3a63cfdef0bdcf",
+    "name": "KD_SunflowerNecklace_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_SunflowerNecklace_Pome",
+   "lp": [
+    3.0472997e-8,
+    0.093550384,
+    0.10736349
+   ],
+   "lr": [
+    -0.49659067,
+    0.0000019156619,
+    9.0350596e-7,
+    0.8679849
+   ],
+   "ls": [
+    0.7443618,
+    0.7443619,
+    0.74436146
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "1744527258686883404",
+   "art": {
+    "kind": "prefab",
+    "guid": "bb7a2997698181f42b3a63cfdef0bdcf",
+    "name": "KD_SunflowerNecklace_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_SunflowerNecklace_Samoyed",
+   "lp": [
+    2.058761e-8,
+    0.0982707,
+    0.13809358
+   ],
+   "lr": [
+    -0.46157956,
+    0.0000010298771,
+    0.0000014508869,
+    0.88709885
+   ],
+   "ls": [
+    0.80449057,
+    0.80448663,
+    0.80448604
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "1149051314770268442",
+   "art": {
+    "kind": "prefab",
+    "guid": "bb7a2997698181f42b3a63cfdef0bdcf",
+    "name": "KD_SunflowerNecklace_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_SunflowerNecklace_Shiba",
+   "lp": [
+    -1.0442051e-8,
+    0.06770036,
+    0.10890022
+   ],
+   "lr": [
+    0.26453435,
+    -0.000001527554,
+    -0.0000011998936,
+    -0.96437633
+   ],
+   "ls": [
+    0.7310839,
+    0.7310838,
+    0.7310835
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "5557788304161918047",
+   "art": {
+    "kind": "prefab",
+    "guid": "bb7a2997698181f42b3a63cfdef0bdcf",
+    "name": "KD_SunflowerNecklace_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Sunglasses_Corgi",
+   "lp": [
+    -1.7530699e-8,
+    0.09182358,
+    0.0035434058
+   ],
+   "lr": [
+    0.6174325,
+    -0.0000016122108,
+    -0.0000012684827,
+    -0.78662395
+   ],
+   "ls": [
+    0.61812866,
+    0.61812854,
+    0.618124
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "8148263570539721516",
+   "art": {
+    "kind": "prefab",
+    "guid": "eb32f3986d73b0845b0e1d35ff6066dc",
+    "name": "KD_Sunglasses_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Sunglasses_Dachs",
+   "lp": [
+    3.9485997e-9,
+    0.107861936,
+    -0.027732335
+   ],
+   "lr": [
+    -0.68583494,
+    0.0000018644814,
+    0.000001179366,
+    0.72775716
+   ],
+   "ls": [
+    1.0324419,
+    1.0324417,
+    1.0324568
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4963894962745805130",
+   "art": {
+    "kind": "prefab",
+    "guid": "eb32f3986d73b0845b0e1d35ff6066dc",
+    "name": "KD_Sunglasses_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Sunglasses_Lab",
+   "lp": [
+    -3.2336632e-7,
+    0.10738082,
+    -0.0459385
+   ],
+   "lr": [
+    0.71274483,
+    -0.0000014682105,
+    -0.0000015685067,
+    -0.70142335
+   ],
+   "ls": [
+    0.98240274,
+    0.9824032,
+    0.98241425
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "5219840403016306448",
+   "art": {
+    "kind": "prefab",
+    "guid": "eb32f3986d73b0845b0e1d35ff6066dc",
+    "name": "KD_Sunglasses_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Sunglasses_Pome",
+   "lp": [
+    -5.9526798e-8,
+    0.07828107,
+    -0.008544604
+   ],
+   "lr": [
+    -0.70898485,
+    0.0000018541791,
+    0.0000016767635,
+    0.70522374
+   ],
+   "ls": [
+    0.7386093,
+    0.7386094,
+    0.738609
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7307630783673111618",
+   "art": {
+    "kind": "prefab",
+    "guid": "eb32f3986d73b0845b0e1d35ff6066dc",
+    "name": "KD_Sunglasses_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Sunglasses_Samoyed",
+   "lp": [
+    2.1445605e-7,
+    0.08317667,
+    -0.03258699
+   ],
+   "lr": [
+    -0.71322757,
+    4.266452e-7,
+    0.0000026292564,
+    0.7009326
+   ],
+   "ls": [
+    0.7982735,
+    0.798273,
+    0.7982649
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "8263653568412435220",
+   "art": {
+    "kind": "prefab",
+    "guid": "eb32f3986d73b0845b0e1d35ff6066dc",
+    "name": "KD_Sunglasses_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_Sunglasses_Shiba",
+   "lp": [
+    -1.064529e-7,
+    0.09071175,
+    -0.01878808
+   ],
+   "lr": [
+    0.71322757,
+    -0.0000012026436,
+    -0.0000018612665,
+    -0.7009326
+   ],
+   "ls": [
+    0.72543365,
+    0.7254333,
+    0.72543305
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "3493982087481613905",
+   "art": {
+    "kind": "prefab",
+    "guid": "eb32f3986d73b0845b0e1d35ff6066dc",
+    "name": "KD_Sunglasses_Set",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_TailRibbon_Corgi",
+   "lp": [
+    0,
+    0.0326,
+    0.0356
+   ],
+   "lr": [
+    0,
+    0,
+    1,
+    0
+   ],
+   "ls": [
+    0.44159818,
+    0.44159818,
+    0.44159818
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "5564191647360653824",
+   "art": {
+    "kind": "prefab",
+    "guid": "0d918c4e6287d284180d3c1777444162",
+    "name": "KD_TailRibbon_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_TailRibbon_Dachs",
+   "lp": [
+    -0.0006,
+    0.0304,
+    0.0165
+   ],
+   "lr": [
+    -0.04540672,
+    -0.16582157,
+    -0.98510915,
+    -0.001231677
+   ],
+   "ls": [
+    0.39999998,
+    0.39999998,
+    0.39999998
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "5281791415296532646",
+   "art": {
+    "kind": "prefab",
+    "guid": "0d918c4e6287d284180d3c1777444162",
+    "name": "KD_TailRibbon_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_TailRibbon_Lab",
+   "lp": [
+    0,
+    0.05,
+    0.0401
+   ],
+   "lr": [
+    0,
+    0,
+    1,
+    0
+   ],
+   "ls": [
+    0.70184344,
+    0.7018435,
+    0.70184344
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "8382062477078357564",
+   "art": {
+    "kind": "prefab",
+    "guid": "0d918c4e6287d284180d3c1777444162",
+    "name": "KD_TailRibbon_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_TailRibbon_Pome",
+   "lp": [
+    1.3617916e-9,
+    0.066123694,
+    0.06912295
+   ],
+   "lr": [
+    1.660408e-8,
+    -0.5277028,
+    -0.8494291,
+    -1.9876735e-7
+   ],
+   "ls": [
+    0.3,
+    0.3,
+    0.3
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7549746148138696110",
+   "art": {
+    "kind": "prefab",
+    "guid": "0d918c4e6287d284180d3c1777444162",
+    "name": "KD_TailRibbon_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_TailRibbon_Samoyed",
+   "lp": [
+    0.09231011,
+    0.039222836,
+    0.070271015
+   ],
+   "lr": [
+    0.46142977,
+    0.4614243,
+    0.5358002,
+    0.5358063
+   ],
+   "ls": [
+    0.5702964,
+    0.5702964,
+    0.5702964
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "9151763347140078328",
+   "art": {
+    "kind": "prefab",
+    "guid": "0d918c4e6287d284180d3c1777444162",
+    "name": "KD_TailRibbon_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_TailRibbon_Shiba",
+   "lp": [
+    0.040240664,
+    0.0421252,
+    0.029446065
+   ],
+   "lr": [
+    0.3006732,
+    0.5883161,
+    0.39228743,
+    0.63999254
+   ],
+   "ls": [
+    0.3,
+    0.3,
+    0.3
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "891315163486844797",
+   "art": {
+    "kind": "prefab",
+    "guid": "0d918c4e6287d284180d3c1777444162",
+    "name": "KD_TailRibbon_Optimized",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_TopHat_Corgi",
+   "lp": [
+    -2.2943152e-7,
+    0.0010504406,
+    -0.05744406
+   ],
+   "lr": [
+    0.8228839,
+    -0.0000011636639,
+    -0.0000016894265,
+    -0.5682097
+   ],
+   "ls": [
+    0.30697662,
+    0.30697656,
+    0.30697432
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "8148263570539721516",
+   "art": {
+    "kind": "prefab",
+    "guid": "62c999251c95f5843b1a5a394b0fa5a6",
+    "name": "KD_TopHat_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_TopHat_Dachs",
+   "lp": [
+    -9.512224e-8,
+    0.026906466,
+    -0.071509115
+   ],
+   "lr": [
+    -0.685835,
+    0.0000018783155,
+    0.0000011940402,
+    0.72775716
+   ],
+   "ls": [
+    0.5127387,
+    0.51273865,
+    0.5127461
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4963894962745805130",
+   "art": {
+    "kind": "prefab",
+    "guid": "62c999251c95f5843b1a5a394b0fa5a6",
+    "name": "KD_TopHat_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_TopHat_Lab",
+   "lp": [
+    -1.3926952e-7,
+    0.009051425,
+    -0.09629777
+   ],
+   "lr": [
+    0.7127449,
+    -0.0000014432245,
+    -0.0000015439182,
+    -0.7014234
+   ],
+   "ls": [
+    0.5165865,
+    0.5165867,
+    0.5165925
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "5219840403016306448",
+   "art": {
+    "kind": "prefab",
+    "guid": "62c999251c95f5843b1a5a394b0fa5a6",
+    "name": "KD_TopHat_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_TopHat_Pome",
+   "lp": [
+    -5.5334326e-8,
+    0.00064146525,
+    -0.075804286
+   ],
+   "lr": [
+    -0.7089849,
+    0.0000018663288,
+    0.0000016888322,
+    0.7052237
+   ],
+   "ls": [
+    0.36681148,
+    0.3668115,
+    0.3668114
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7307630783673111618",
+   "art": {
+    "kind": "prefab",
+    "guid": "62c999251c95f5843b1a5a394b0fa5a6",
+    "name": "KD_TopHat_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_TopHat_Samoyed",
+   "lp": [
+    -1.8109193e-7,
+    -0.01259993,
+    -0.1095912
+   ],
+   "lr": [
+    -0.71322757,
+    8.1258736e-7,
+    0.0000022355223,
+    0.7009326
+   ],
+   "ls": [
+    0.41976133,
+    0.41976112,
+    0.41975683
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "8263653568412435220",
+   "art": {
+    "kind": "prefab",
+    "guid": "62c999251c95f5843b1a5a394b0fa5a6",
+    "name": "KD_TopHat_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_Acc_TopHat_Shiba",
+   "lp": [
+    -1.3172458e-7,
+    -0.007507041,
+    -0.037002552
+   ],
+   "lr": [
+    0.83458954,
+    -9.698231e-7,
+    -0.0000020598939,
+    -0.55087227
+   ],
+   "ls": [
+    0.3708645,
+    0.37086433,
+    0.3708642
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "3493982087481613905",
+   "art": {
+    "kind": "prefab",
+    "guid": "62c999251c95f5843b1a5a394b0fa5a6",
+    "name": "KD_TopHat_Everyday",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "",
+    "meshFileID": "0",
+    "mats": [],
+    "cast": -1,
+    "receive": -1,
+    "lightProbe": -1,
+    "reflProbe": -1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_CandyClip_Corgi",
+   "lp": [
+    2.1176447e-8,
+    0.03260013,
+    0.035600152
+   ],
+   "lr": [
+    -1.2967401e-13,
+    3.725351e-8,
+    1,
+    3.5527123e-14
+   ],
+   "ls": [
+    0.61959094,
+    0.61959094,
+    0.61959094
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "5564191647360653824",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_CandyClip",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "3063399499046b24a837b7fd3c4680f6",
+    "meshFileID": "-3417527239468317583",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_CandyClip_Dachs",
+   "lp": [
+    -0.00060003216,
+    0.030400235,
+    0.016500117
+   ],
+   "lr": [
+    -0.045406744,
+    -0.16582163,
+    -0.9851091,
+    -0.0012316942
+   ],
+   "ls": [
+    1.0348873,
+    1.0348873,
+    1.0348873
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "5281791415296532646",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_CandyClip",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "3063399499046b24a837b7fd3c4680f6",
+    "meshFileID": "-3417527239468317583",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_CandyClip_Lab",
+   "lp": [
+    2.758901e-8,
+    0.05000047,
+    0.040100165
+   ],
+   "lr": [
+    3.944172e-8,
+    1.1920922e-7,
+    1,
+    -3.3887417e-8
+   ],
+   "ls": [
+    0.9847294,
+    0.9847294,
+    0.9847294
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "8382062477078357564",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_CandyClip",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "3063399499046b24a837b7fd3c4680f6",
+    "meshFileID": "-3417527239468317583",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_CandyClip_Pome",
+   "lp": [
+    1.1936663e-8,
+    0.06612385,
+    0.06912292
+   ],
+   "lr": [
+    3.398909e-8,
+    -0.52770275,
+    -0.84942913,
+    -1.3984182e-7
+   ],
+   "ls": [
+    0.74035907,
+    0.74035907,
+    0.74035907
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7549746148138696110",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_CandyClip",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "3063399499046b24a837b7fd3c4680f6",
+    "meshFileID": "-3417527239468317583",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_CandyClip_Samoyed",
+   "lp": [
+    0.09231012,
+    0.039222926,
+    0.070271105
+   ],
+   "lr": [
+    0.46142977,
+    0.46142423,
+    0.5358003,
+    0.5358063
+   ],
+   "ls": [
+    0.8001625,
+    0.8001625,
+    0.8001625
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "9151763347140078328",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_CandyClip",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "3063399499046b24a837b7fd3c4680f6",
+    "meshFileID": "-3417527239468317583",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_CandyClip_Shiba",
+   "lp": [
+    0.040240675,
+    0.042125262,
+    0.02944632
+   ],
+   "lr": [
+    0.30067322,
+    0.58831614,
+    0.39228734,
+    0.6399925
+   ],
+   "ls": [
+    0.7271509,
+    0.7271509,
+    0.7271509
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "891315163486844797",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_CandyClip",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "3063399499046b24a837b7fd3c4680f6",
+    "meshFileID": "-3417527239468317583",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_DonutBeret_Corgi",
+   "lp": [
+    -2.5775043e-7,
+    0.007225589,
+    -0.055104896
+   ],
+   "lr": [
+    0.0000015699891,
+    -0.62422687,
+    0.7812432,
+    0.0000013059636
+   ],
+   "ls": [
+    0.4820866,
+    0.4820866,
+    0.4820866
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "8148263570539721516",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_DonutBeret",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "dd61c31971333ee45945b17da28c4e87",
+    "meshFileID": "-1961281740423828476",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_DonutBeret_Dachs",
+   "lp": [
+    4.243114e-8,
+    0.025599929,
+    -0.049500115
+   ],
+   "lr": [
+    -0.685835,
+    0.0000018783155,
+    0.0000011940402,
+    0.72775716
+   ],
+   "ls": [
+    0.8052173,
+    0.8052173,
+    0.8052173
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4963894962745805130",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_DonutBeret",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "dd61c31971333ee45945b17da28c4e87",
+    "meshFileID": "-1961281740423828476",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_DonutBeret_Lab",
+   "lp": [
+    -7.373136e-8,
+    0.009200279,
+    -0.0870004
+   ],
+   "lr": [
+    0.7127449,
+    -0.0000014432245,
+    -0.0000015439182,
+    -0.7014234
+   ],
+   "ls": [
+    0.76619065,
+    0.76619065,
+    0.76619065
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "5219840403016306448",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_DonutBeret",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "dd61c31971333ee45945b17da28c4e87",
+    "meshFileID": "-1961281740423828476",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_DonutBeret_Pome",
+   "lp": [
+    -8.772211e-9,
+    0.00070001936,
+    -0.06480006
+   ],
+   "lr": [
+    -0.7089849,
+    0.0000018663288,
+    0.0000016888322,
+    0.7052237
+   ],
+   "ls": [
+    0.57605284,
+    0.57605284,
+    0.57605284
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7307630783673111618",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_DonutBeret",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "dd61c31971333ee45945b17da28c4e87",
+    "meshFileID": "-1961281740423828476",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_DonutBeret_Samoyed",
+   "lp": [
+    -1.2962374e-7,
+    -0.012459895,
+    -0.10153901
+   ],
+   "lr": [
+    -0.71322757,
+    8.1258736e-7,
+    0.0000022355223,
+    0.7009326
+   ],
+   "ls": [
+    0.6225844,
+    0.6225844,
+    0.6225844
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "8263653568412435220",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_DonutBeret",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "dd61c31971333ee45945b17da28c4e87",
+    "meshFileID": "-1961281740423828476",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_DonutBeret_Shiba",
+   "lp": [
+    -3.4708656e-8,
+    -0.0017951746,
+    -0.03449776
+   ],
+   "lr": [
+    0.000001283182,
+    -0.6077482,
+    0.79412985,
+    7.2996164e-7
+   ],
+   "ls": [
+    0.56577694,
+    0.56577694,
+    0.56577694
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "3493982087481613905",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_DonutBeret",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "dd61c31971333ee45945b17da28c4e87",
+    "meshFileID": "-1961281740423828476",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_PawMedallion_Corgi",
+   "lp": [
+    -1.3209984e-8,
+    0.07965913,
+    0.09286485
+   ],
+   "lr": [
+    0.31343517,
+    -0.0000019400331,
+    -7.6355104e-7,
+    -0.94960964
+   ],
+   "ls": [
+    0.7708096,
+    0.7708096,
+    0.7708096
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "885053799189291298",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_PawMedallion",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "a6a6103662d3b51428edefac4e3acdf4",
+    "meshFileID": "-6108576021179739815",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_PawMedallion_Dachs",
+   "lp": [
+    -7.978241e-8,
+    0.048400097,
+    0.10200005
+   ],
+   "lr": [
+    -0.150024,
+    0.0000023496455,
+    -3.844427e-8,
+    0.9886824
+   ],
+   "ls": [
+    1.2874641,
+    1.2874641,
+    1.2874641
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4161160155152489284",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_PawMedallion",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "a6a6103662d3b51428edefac4e3acdf4",
+    "meshFileID": "-6108576021179739815",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_PawMedallion_Lab",
+   "lp": [
+    -2.8051915e-8,
+    0.1249895,
+    0.1268659
+   ],
+   "lr": [
+    0.4031467,
+    -0.0000016248359,
+    -0.000001344049,
+    -0.91513544
+   ],
+   "ls": [
+    1.2250646,
+    1.2250646,
+    1.2250646
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "3831644120154889502",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_PawMedallion",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "a6a6103662d3b51428edefac4e3acdf4",
+    "meshFileID": "-6108576021179739815",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_PawMedallion_Pome",
+   "lp": [
+    3.6033993e-7,
+    0.09713252,
+    0.10782206
+   ],
+   "lr": [
+    -0.49659067,
+    0.0000019156619,
+    9.0350596e-7,
+    0.8679849
+   ],
+   "ls": [
+    0.92105246,
+    0.92105246,
+    0.92105246
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "1744527258686883404",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_PawMedallion",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "a6a6103662d3b51428edefac4e3acdf4",
+    "meshFileID": "-6108576021179739815",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_PawMedallion_Samoyed",
+   "lp": [
+    3.0524575e-7,
+    0.09812569,
+    0.13799198
+   ],
+   "lr": [
+    -0.46157956,
+    0.0000010298771,
+    0.0000014508869,
+    0.88709885
+   ],
+   "ls": [
+    0.9954519,
+    0.9954519,
+    0.9954519
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "1149051314770268442",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_PawMedallion",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "a6a6103662d3b51428edefac4e3acdf4",
+    "meshFileID": "-6108576021179739815",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_CandyCostume_PawMedallion_Shiba",
+   "lp": [
+    -1.0442051e-8,
+    0.06770036,
+    0.10890022
+   ],
+   "lr": [
+    0.26453435,
+    -0.000001527554,
+    -0.0000011998936,
+    -0.96437633
+   ],
+   "ls": [
+    0.9046224,
+    0.9046224,
+    0.9046224
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "5557788304161918047",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_CandyStep_PawMedallion",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "a6a6103662d3b51428edefac4e3acdf4",
+    "meshFileID": "-6108576021179739815",
+    "mats": [
+     {
+      "guid": "6da27befc134a184abc7f2c79d6a2677",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 1,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 1
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_BatTail_Corgi",
+   "lp": [
+    2.0038541e-8,
+    0.040995505,
+    0.035654843
+   ],
+   "lr": [
+    3.9605457e-8,
+    -0.73621815,
+    -0.67674434,
+    5.7201525e-8
+   ],
+   "ls": [
+    0.4273991,
+    0.4273991,
+    0.4273991
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "5564191647360653824",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_BatTail",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "45155af080f5241489ac975898c14432",
+    "meshFileID": "975536624754631368",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_BatTail_Dachs",
+   "lp": [
+    -0.000600049,
+    0.041117378,
+    0.017099507
+   ],
+   "lr": [
+    3.207004e-7,
+    -0.64022124,
+    -0.76819056,
+    2.726637e-7
+   ],
+   "ls": [
+    0.7210059,
+    0.7210059,
+    0.7210059
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "5281791415296532646",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_BatTail",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "45155af080f5241489ac975898c14432",
+    "meshFileID": "975536624754631368",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_BatTail_Lab",
+   "lp": [
+    7.720361e-8,
+    0.05862327,
+    0.03659641
+   ],
+   "lr": [
+    -1.8059258e-7,
+    -0.7742362,
+    -0.63289684,
+    -2.0171183e-7
+   ],
+   "ls": [
+    0.67927206,
+    0.67927206,
+    0.67927206
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "8382062477078357564",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_BatTail",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "45155af080f5241489ac975898c14432",
+    "meshFileID": "975536624754631368",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_BatTail_Pome",
+   "lp": [
+    2.9712282e-8,
+    0.076543115,
+    0.06513776
+   ],
+   "lr": [
+    6.082341e-8,
+    -0.86185133,
+    -0.50716096,
+    1.17515704e-7
+   ],
+   "ls": [
+    0.51070833,
+    0.51070833,
+    0.51070833
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7549746148138696110",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_BatTail",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "45155af080f5241489ac975898c14432",
+    "meshFileID": "975536624754631368",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_BatTail_Samoyed",
+   "lp": [
+    0.09231004,
+    0.04845369,
+    0.07304168
+   ],
+   "lr": [
+    0.0000010867777,
+    0.7071067,
+    0.7071068,
+    0.0000010895667
+   ],
+   "ls": [
+    0.27041015,
+    0.27041015,
+    0.27041015
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "9151763347140078328",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_BatTail",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "45155af080f5241489ac975898c14432",
+    "meshFileID": "975536624754631368",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_BatTail_Shiba",
+   "lp": [
+    0.039852902,
+    0.049406856,
+    0.027241666
+   ],
+   "lr": [
+    -1.429969e-7,
+    -0.87095636,
+    -0.4913603,
+    -4.3537034e-7
+   ],
+   "ls": [
+    0.24574009,
+    0.24574009,
+    0.24574009
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "891315163486844797",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_BatTail",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "45155af080f5241489ac975898c14432",
+    "meshFileID": "975536624754631368",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_PumpkinBrooch_Corgi",
+   "lp": [
+    3.8932177e-7,
+    0.0721058,
+    0.101688415
+   ],
+   "lr": [
+    0.5207058,
+    -0.0000017162124,
+    -0.0000011837877,
+    -0.8537361
+   ],
+   "ls": [
+    0.47422162,
+    0.47422162,
+    0.47422162
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "885053799189291298",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_PumpkinBrooch",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "c2a80cda6e4db9346ac40d6455f04ae6",
+    "meshFileID": "5615675725441878387",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_PumpkinBrooch_Dachs",
+   "lp": [
+    -3.0342673e-7,
+    0.04700891,
+    0.12543346
+   ],
+   "lr": [
+    -0.37969252,
+    0.0000023729292,
+    6.5109737e-7,
+    0.9251128
+   ],
+   "ls": [
+    0.7920804,
+    0.7920804,
+    0.7920804
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4161160155152489284",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_PumpkinBrooch",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "c2a80cda6e4db9346ac40d6455f04ae6",
+    "meshFileID": "5615675725441878387",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_PumpkinBrooch_Lab",
+   "lp": [
+    -1.1635004e-7,
+    0.11143877,
+    0.16750383
+   ],
+   "lr": [
+    0.4506476,
+    -0.0000015640214,
+    -0.0000014631452,
+    -0.892702
+   ],
+   "ls": [
+    0.7536893,
+    0.7536893,
+    0.7536893
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "3831644120154889502",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_PumpkinBrooch",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "c2a80cda6e4db9346ac40d6455f04ae6",
+    "meshFileID": "5615675725441878387",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_PumpkinBrooch_Pome",
+   "lp": [
+    5.5633916e-7,
+    0.09228786,
+    0.13497473
+   ],
+   "lr": [
+    -0.57275385,
+    0.0000018631216,
+    0.0000011474057,
+    0.8197275
+   ],
+   "ls": [
+    0.56665367,
+    0.56665367,
+    0.56665367
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "1744527258686883404",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_PumpkinBrooch",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "c2a80cda6e4db9346ac40d6455f04ae6",
+    "meshFileID": "5615675725441878387",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_PumpkinBrooch_Samoyed",
+   "lp": [
+    -0.0009129676,
+    0.0783705,
+    0.17065337
+   ],
+   "lr": [
+    -0.46157962,
+    5.3929614e-7,
+    0.0000017025204,
+    0.8870988
+   ],
+   "ls": [
+    0.61242956,
+    0.61242956,
+    0.61242956
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "1149051314770268442",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_PumpkinBrooch",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "c2a80cda6e4db9346ac40d6455f04ae6",
+    "meshFileID": "5615675725441878387",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_PumpkinBrooch_Shiba",
+   "lp": [
+    0.000076236785,
+    0.06501644,
+    0.12738807
+   ],
+   "lr": [
+    0.4482922,
+    -0.0000012129647,
+    -0.0000016610863,
+    -0.8938871
+   ],
+   "ls": [
+    0.5565453,
+    0.5565453,
+    0.5565453
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "5557788304161918047",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_PumpkinBrooch",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "c2a80cda6e4db9346ac40d6455f04ae6",
+    "meshFileID": "5615675725441878387",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_WitchHat_Corgi",
+   "lp": [
+    0,
+    0.0012,
+    -0.0517
+   ],
+   "lr": [
+    0.77255267,
+    -0.0000013006966,
+    -0.0000015863357,
+    -0.63495064
+   ],
+   "ls": [
+    0.3,
+    0.3,
+    0.3
+   ],
+   "fatherGuid": "de3f682e15a9ad74093cb1c4970f6520",
+   "fatherFileID": "8148263570539721516",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_WitchHat",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "a025db68f74492749aab033d08f4c865",
+    "meshFileID": "-1467475376941657032",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_WitchHat_Dachs",
+   "lp": [
+    -0.0291,
+    0.0435,
+    -0.0589
+   ],
+   "lr": [
+    -0.56495225,
+    0.16773143,
+    0.13457754,
+    0.79660785
+   ],
+   "ls": [
+    0.3,
+    0.3,
+    0.3
+   ],
+   "fatherGuid": "dd94fbd924e81d944a726405a15238d7",
+   "fatherFileID": "4963894962745805130",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_WitchHat",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "a025db68f74492749aab033d08f4c865",
+    "meshFileID": "-1467475376941657032",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_WitchHat_Lab",
+   "lp": [
+    0.0048,
+    0.0091,
+    -0.0873
+   ],
+   "lr": [
+    0.7127449,
+    -0.0000014682106,
+    -0.0000015685068,
+    -0.7014234
+   ],
+   "ls": [
+    0.90000004,
+    0.90000004,
+    0.90000004
+   ],
+   "fatherGuid": "5736813bd5bbfe04ab60ae0f5cbeb6fd",
+   "fatherFileID": "5219840403016306448",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_WitchHat",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "a025db68f74492749aab033d08f4c865",
+    "meshFileID": "-1467475376941657032",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_WitchHat_Pome",
+   "lp": [
+    0,
+    0.025,
+    -0.0713
+   ],
+   "lr": [
+    -0.5850642,
+    0.0000020653315,
+    0.0000012833597,
+    0.81098706
+   ],
+   "ls": [
+    0.3,
+    0.3,
+    0.3
+   ],
+   "fatherGuid": "e9a4544f2eda9254f965d555060479e8",
+   "fatherFileID": "7307630783673111618",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_WitchHat",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "a025db68f74492749aab033d08f4c865",
+    "meshFileID": "-1467475376941657032",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_WitchHat_Samoyed",
+   "lp": [
+    -0.0001,
+    -0.0266,
+    -0.1038
+   ],
+   "lr": [
+    -0.7371676,
+    3.6209647e-7,
+    0.00000262384,
+    0.6757099
+   ],
+   "ls": [
+    0.5,
+    0.5,
+    0.5
+   ],
+   "fatherGuid": "743ffbf56e83bb44a9c3d18337f9262c",
+   "fatherFileID": "8263653568412435220",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_WitchHat",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "a025db68f74492749aab033d08f4c865",
+    "meshFileID": "-1467475376941657032",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  },
+  {
+   "name": "KD_PumpkinCostume_WitchHat_Shiba",
+   "lp": [
+    0,
+    -0.0033,
+    -0.0389
+   ],
+   "lr": [
+    0.84994036,
+    -8.956557e-7,
+    -0.0000021566375,
+    -0.526879
+   ],
+   "ls": [
+    0.4,
+    0.4,
+    0.4
+   ],
+   "fatherGuid": "03f419105d1319b42bd3a1eb8b1b301f",
+   "fatherFileID": "3493982087481613905",
+   "art": {
+    "kind": "mesh",
+    "guid": "",
+    "name": "KD_Pumpkin_WitchHat",
+    "lp": [
+     0,
+     0,
+     0
+    ],
+    "lr": [
+     -0.7071068,
+     0,
+     0,
+     0.7071067
+    ],
+    "ls": [
+     1,
+     1,
+     1
+    ],
+    "meshGuid": "a025db68f74492749aab033d08f4c865",
+    "meshFileID": "-1467475376941657032",
+    "mats": [
+     {
+      "guid": "8955e8a8ada4baf4a95532e65d369e27",
+      "fileID": "2100000"
+     }
+    ],
+    "cast": 0,
+    "receive": 1,
+    "lightProbe": 1,
+    "reflProbe": 0
+   }
+  }
+ ]
+}

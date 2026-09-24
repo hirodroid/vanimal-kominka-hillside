@@ -1210,7 +1210,7 @@ namespace KominkaDogRun
             panelRoot.SetActive(open);
             // hints._OnMenuOpened() はここでは呼ばない — 「開いた」と「自分の操作で開けた」は別 (MarkSelfOpened。IMP-INF-020)
             if (!open) { _panelClosedFrame = Time.frameCount; _gardenPlaced = false; }
-            if (!open) { _fxConfirmRow = -1; _liveConfirmRow = -1; _liveGiftRow = -1; _livePage = LivePageList; _liveProduct = -1; _accConfirm = false; _accGiftRow = -1; HideConfirmAll(); return; }
+            if (!open) { _fxConfirmRow = -1; _liveConfirmRow = -1; _liveGiftRow = -1; _livePage = LivePageList; _liveProduct = -1; _accConfirm = false; _accGiftRow = -1; HillsideResetTreatConfirm(); HideConfirmAll(); return; }   // 裏山改変: おやつの確認 (IMP-DOG-014) も閉じるときに捨てる
 
             // 初回はかざり。同じ滞在中は直前のタブを保ち、繰り返し操作を短くする。
             ApplyTab();
@@ -1247,6 +1247,7 @@ namespace KominkaDogRun
             _fxConfirmRow = -1;
             _liveConfirmRow = -1; _liveGiftRow = -1;
             _accConfirm = false; _accGiftRow = -1;
+            HillsideResetTreatConfirm();   // 裏山改変: おやつの確認 (IMP-DOG-014) も遷移で捨てる
             HideConfirmAll();
             ApplyTab();
             Redraw();
@@ -1264,6 +1265,7 @@ namespace KominkaDogRun
             _liveConfirmRow = -1; _liveGiftRow = -1;
             _livePage = LivePageList; _liveProduct = -1;   // P7: ライブは一覧から
             _accConfirm = false; _accGiftRow = -1;
+            HillsideResetTreatConfirm();   // 裏山改変: おやつの確認 (IMP-DOG-014) も遷移で捨てる
             HideConfirmAll();
             ApplyTab();
             // P2: あそぶの面は KD_ActivitiesMenu が描く。タブを開くたびにホームへ戻す (Codex 指摘 2026-09-17: _OpenSettings に置いていた)

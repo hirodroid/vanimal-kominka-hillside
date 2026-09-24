@@ -43,6 +43,20 @@ namespace KominkaDogRun
         public const int MaxPoseId = 4;
         private const int Reserve = 1, Renew = 2, Cancel = 3, Commit = 4, Release = 5, Pose = 6, Paw = 7, Chin = 8, Stretch = 9;
         private const int LeaseMs = 15000, RequestMaxAgeMs = 8000;
+
+        // ---- 裏山改変: IMP-DOG-016 変更 2 — 置き場所の接地・傾きの判定 ----
+        // 古民家の ValidPlacement は NaN / Inf だけを見ていた (平地の庭では足りた)。裏山は斜面なので、
+        // 指定寝床 (場所を決めて呼ぶ) は **真下に地面があり、その法線が HillsideMinGroundNormal 以上**のときだけ受け付ける。
+        // 板 (KD_SleepPlacement) の赤マーカーと、枠 Owner の受理は同じ _PlacementGroundOk を通す (判定の式を 2 か所に書かない)。
+        /// <summary>地面法線の y の下限 (仮値 0.9 = 約 25.8°)。**ここ 1 か所**。集合 (KD_GroupActivities.minGroundNormal は裏山で 0.5) より厳しいのは、
+        /// ふせ・ごろん・へそ天が体を地面へ密着させるため (IMP-DOG-016)。PCVR の実測で確定する。</summary>
+        public const float HillsideMinGroundNormal = 0.9f;
+        /// <summary>地面の層 (0 Default / 11 Environment)。犬の徘徊 (groundLayerMask) と KD_GroupActivities.groundMask と同じ。</summary>
+        public const int HillsideGroundMask = (1 << 0) | (1 << 11);
+        /// <summary>判定のレイを置き場所の何 m 上から下ろすか。</summary>
+        public const float HillsideGroundProbe = 0.5f;
+        /// <summary>置き場所と地面の高さの差の許容 (m)。板は地面へ接地させて送るので、ずれるのは伝播中に地面が無い場所だけ。</summary>
+        public const float HillsideGroundTolerance = 0.1f;
         [System.NonSerialized] public int requestedPose;
         [System.NonSerialized] public Vector3 requestedSpot;
         [System.NonSerialized] public float requestedYaw;
@@ -118,6 +132,7 @@ namespace KominkaDogRun
             var lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp) || (board != null && !board.CanCall(lp) && !IsSleeperLocal)) return false;
             if (LiveSleeperId >= 0 && !IsSleeperLocal) return false;
+            if (board != null && board._IsWalkBusy(dogIndex)) return false;   // 裏山改変: リード接続中・集合中・フリスビー中は呼べない
             if (LiveReservationId >= 0 && LiveReservationId != lp.playerId) return false;
             if (_selectionToken != 0) return true;
             _selectionOwner = OwnerId();
@@ -149,7 +164,7 @@ namespace KominkaDogRun
         }
         public bool _TryCallPlaced()
         {
-            if (CallPending || !SelectionReady || !PoseOwnedBy(requestedPose, Networking.LocalPlayer) || !ValidPlacement(requestedSpot, requestedYaw)) return false;
+            if (CallPending || !SelectionReady || !PoseOwnedBy(requestedPose, Networking.LocalPlayer) || !ValidPlacement(requestedSpot, requestedYaw, true)) return false;
             _pendingHasSpot = true; _pendingSpot = requestedSpot; _pendingYaw = requestedYaw;
             _pendingPose = Mathf.Clamp(requestedPose, 0, MaxPoseId);
             SubmitCall();
@@ -232,6 +247,7 @@ namespace KominkaDogRun
                 }
                 if (LiveSleeperId >= 0 && LiveSleeperId != id) return;
                 if (board != null && !board.CanCall(player) && LiveSleeperId != id) return;
+                if (board != null && board._IsWalkBusy(dogIndex)) return;   // 裏山改変: リード接続中・集合中・フリスビー中は予約させない
                 if (ReservationLive()) return;
                 reservedId = id; reservedToken = token; reservedMs = now;
                 RequestSerialization();
@@ -245,7 +261,8 @@ namespace KominkaDogRun
             {
                 if (!ReservationLive() || reservedId != id || reservedToken != token) return;
                 if ((LiveSleeperId >= 0 && LiveSleeperId != id) || (board != null && !board.CanCall(player) && LiveSleeperId != id)) return;
-                if (!PoseOwnedBy(pose, player) || !ValidPlacement(position, yaw)) return;
+                if (board != null && board._IsWalkBusy(dogIndex)) return;   // 裏山改変: 予約後にリード・集合・フリスビーが始まったら確定させない
+                if (!PoseOwnedBy(pose, player) || !ValidPlacement(position, yaw, flag)) return;
                 sleeperId = id; hasSpot = flag; spot = flag ? position : Vector3.zero;
                 spotYaw = flag ? Mathf.Repeat(yaw, 360f) : 0f; poseId = pose; pawHeld = false; arrived = false;
                 chinHand = 0; hasStretch = false;
@@ -274,12 +291,29 @@ namespace KominkaDogRun
                 { _requestPlayers[i] = player; _requestTokens[i] = 0; return i; }
             return -1;
         }
-        private bool ValidPlacement(Vector3 position, float yaw)
+        /// <summary>裏山改変: <paramref name="placed"/> (場所を決めて呼ぶ) のときは接地と傾きも見る。
+        /// 場所を決めない呼び出し (人のそばの扇) は position が未使用なので NaN / Inf だけ (古民家どおり)。</summary>
+        private bool ValidPlacement(Vector3 position, float yaw, bool placed)
         {
-            return !float.IsNaN(position.x) && !float.IsInfinity(position.x)
+            bool finite = !float.IsNaN(position.x) && !float.IsInfinity(position.x)
                 && !float.IsNaN(position.y) && !float.IsInfinity(position.y)
                 && !float.IsNaN(position.z) && !float.IsInfinity(position.z)
                 && !float.IsNaN(yaw) && !float.IsInfinity(yaw);
+            if (!finite) return false;
+            return !placed || _PlacementGroundOk(position);
+        }
+
+        /// <summary>裏山改変: IMP-DOG-016 変更 2。<paramref name="position"/> の真下に地面 (層 0 / 11) があり、
+        /// 高さの差が <see cref="HillsideGroundTolerance"/> 以内で、法線の y が <see cref="HillsideMinGroundNormal"/> 以上か。
+        /// 板の赤マーカー (KD_SleepPlacement) と枠 Owner の受理がどちらもここを通る。地形は静的なので全クライアントで同じ結論になる。</summary>
+        // net: callable-ok: 副作用の無い問い合わせ (レイキャストのみ)
+        public bool _PlacementGroundOk(Vector3 position)
+        {
+            RaycastHit hit;
+            if (!Physics.Raycast(position + Vector3.up * HillsideGroundProbe, Vector3.down, out hit,
+                    HillsideGroundProbe + HillsideGroundTolerance, HillsideGroundMask, QueryTriggerInteraction.Ignore)) return false;
+            if (Mathf.Abs(hit.point.y - position.y) > HillsideGroundTolerance) return false;
+            return hit.normal.y >= HillsideMinGroundNormal;
         }
         public override bool OnOwnershipRequest(VRCPlayerApi requester, VRCPlayerApi newOwner) { return false; }
         public override void OnOwnershipTransferred(VRCPlayerApi player)
@@ -332,6 +366,13 @@ namespace KominkaDogRun
             if (!Networking.IsOwner(gameObject)) return;
             if (reservedId >= 0 && !ReservationLive()) ClearReservation();
             if (sleeperId >= 0 && LiveSleeperId < 0) { PublishRelease(); return; }
+            // 裏山改変: 「呼ばれている」と「リード / 集合 / フリスビー」が両方立ったら、さんぽ側が勝つ (呼び出しと予約を畳む)。
+            // 徘徊層がさんぽ側を優先するので、残すと犬が来ないまま枠が居座る (場所指定は到着待ちにタイムアウトが無い)
+            if (board != null && board._IsWalkBusy(dogIndex))
+            {
+                if (LiveSleeperId >= 0) { PublishRelease(); return; }
+                if (reservedId >= 0) ClearReservation();
+            }
             if (LiveSleeperId < 0) return;
             var player = VRCPlayerApi.GetPlayerById(sleeperId);
             Transform dog = DogRoot();

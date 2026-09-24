@@ -14,7 +14,8 @@ using UnityEngine.UI;
 
 namespace KominkaDogRun.Editor
 {
-    public static class KD_DogVoiceSettingsEditor
+    // 裏山改変: 音量は当面 犬の声のみ (IMP-UI-001 段階 3)。裏山の構築・Menu/16・16a は KD_DogVoiceSettingsEditor.Hillside.cs (partial)
+    public static partial class KD_DogVoiceSettingsEditor
     {
         internal static void Build(KD_TreatPouch pouch, Transform parent, TMP_FontAsset font,
             VRC.Udon.UdonBehaviour udon, StringBuilder log)
@@ -53,81 +54,12 @@ namespace KominkaDogRun.Editor
                 var old = audio.transform.Find(name);
                 if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
             }
-            KD_ShopSetupEditor.EnsureButton(home.transform, "VolumeSettingsButton", new Vector2(-180f, 82f),
-                new Vector2(340f, 64f), KD_UiSpriteEditor.ActionNeutral, font, KD_TreatPouch.WordVolumeSettings,
-                udon, "_OpenVolumeSettings", log);
-            KD_ShopSetupEditor.EnsureButton(audio.transform, "BackSettingsButton", new Vector2(-250f, -196f),
-                new Vector2(180f, 44f), KD_UiSpriteEditor.ActionNeutral, font, KD_TreatPouch.WordBackSettings,
-                udon, "_OpenSettings", log);
-
-            // Six independent sliders: outside on the left, bedroom on the right.
-            pouch.dogVoiceToggleImage = null; pouch.dogVoiceToggleLabel = null;
-            pouch.bgmToggleImage = null; pouch.bgmToggleLabel = null;
-            Label(audio.transform, "OutsideHeading", new Vector2(-175f, 112f), new Vector2(290f, 36f), 24f, KD_TreatPouch.WordOutside, font);
-            Label(audio.transform, "BedroomHeading", new Vector2(175f, 112f), new Vector2(290f, 36f), 24f, KD_TreatPouch.WordBedroom, font);
-            pouch.bgmSlider = BuildVolumeRow(audio.transform, "BgmTitle", "BgmValue", "BgmSlider",
-                KD_TreatPouch.WordBgm, -175f, 72f, .5f, "_BgmChanged", font, round, udon, log, out var bgmValue);
-            pouch.bgmValueLabel = bgmValue;
-            pouch.dogVoiceSlider = BuildVolumeRow(audio.transform, "VoiceTitle", "VolumeValue", "VoiceSlider",
-                KD_TreatPouch.WordDogVoice, -175f, -16f, .5f, "_DogVoiceChanged", font, round, udon, log, out var voiceValue);
-            pouch.dogVoiceValueLabel = voiceValue;
-            pouch.liveVolumeSlider = BuildVolumeRow(audio.transform, "LiveVolumeTitle", "LiveVolumeValue", "LiveVolumeSlider",
-                KD_TreatPouch.WordLiveVolume, -175f, -104f, .5f, "_LiveVolumeChanged", font, round, udon, log, out var liveValue);
-            pouch.liveVolumeValueLabel = liveValue;
-            pouch.bedroomBgmVolumeSlider = BuildVolumeRow(audio.transform, "BedroomBgmVolumeTitle", "BedroomBgmVolumeValue", "BedroomBgmVolumeSlider",
-                KD_TreatPouch.WordBgm, 175f, 72f, .1f, "_BedroomBgmVolumeChanged", font, round, udon, log, out var bedroomBgmValue);
-            pouch.bedroomBgmVolumeValueLabel = bedroomBgmValue;
-            pouch.bedroomVoiceVolumeSlider = BuildVolumeRow(audio.transform, "BedroomVoiceVolumeTitle", "BedroomVoiceVolumeValue", "BedroomVoiceVolumeSlider",
-                KD_TreatPouch.WordDogVoice, 175f, -16f, .1f, "_BedroomVoiceVolumeChanged", font, round, udon, log, out var bedroomVoiceValue);
-            pouch.bedroomVoiceVolumeValueLabel = bedroomVoiceValue;
-            pouch.bedroomLiveVolumeSlider = BuildVolumeRow(audio.transform, "BedroomLiveVolumeTitle", "BedroomLiveVolumeValue", "BedroomLiveVolumeSlider",
-                KD_TreatPouch.WordLiveVolume, 175f, -104f, .1f, "_BedroomLiveVolumeChanged", font, round, udon, log, out var bedroomLiveValue);
-            pouch.bedroomLiveVolumeValueLabel = bedroomLiveValue;
-            Label(audio.transform, "BedroomNote", new Vector2(110f, -182f), new Vector2(420f, 26f),
-                18f, KD_TreatPouch.WordBedroomNote, font);
-            Label(audio.transform, "VolumeScope", new Vector2(110f, -205f), new Vector2(420f, 26f),
-                18f, KD_TreatPouch.WordVolumeScope, font);
-            int roomCount;
-            var roomGo = KD_SceneObjects.Find(KD_DogDefs.SleepAudioName, out roomCount);
-            pouch.sleepAudio = roomGo != null && roomCount == 1 ? roomGo.GetComponent<KD_SleepAudio>() : null;
+            // 裏山改変 (段階 3): 音量の頁は「外」の 1 群 = 犬の声だけ。BGM・ライブ (DES-WLD-002 / DES-LIV-001 後) と寝室 (裏山に無い) の行は作らず、
+            // 以前の構築で残っていれば消す。入口・戻る・行・音源の配線は EnsureHillsideVolume (KD_DogVoiceSettingsEditor.Hillside.cs) が持つ
+            EnsureHillsideVolume(pouch, font, log);
             home.SetActive(true);
             audio.SetActive(false);
             page.SetActive(false);
-
-            var dogs = new List<KD_DogWanderController>();
-            var sources = new List<AudioSource>();
-            foreach (var dog in Resources.FindObjectsOfTypeAll<KD_DogWanderController>())
-            {
-                if (dog.gameObject.scene != pouch.gameObject.scene || dog.transform.root.name != "====KominkaDogRun====") continue;
-                dogs.Add(dog);
-                if (dog.breathSource != null)
-                {
-                    dog.breathSource.mute = true;
-                    EditorUtility.SetDirty(dog.breathSource);
-                }
-                if (dog.barkSource != null && !sources.Contains(dog.barkSource)) sources.Add(dog.barkSource);
-            }
-            foreach (var pet in Resources.FindObjectsOfTypeAll<KD_DogPetController>())
-            {
-                if (pet.gameObject.scene != pouch.gameObject.scene || pet.transform.root.name != "====KominkaDogRun====") continue;
-                if (pet.joyAudioSource != null && !sources.Contains(pet.joyAudioSource)) sources.Add(pet.joyAudioSource);
-            }
-            // BGM は別 Setup が作る。**どちらの順で流しても配線が揃う**ように、
-            // 在れば引き直す (BGM 側も手元メニューを引き直す)
-            foreach (var bgm in Resources.FindObjectsOfTypeAll<KD_BgmPlayer>())
-                if (bgm.gameObject.scene == pouch.gameObject.scene) pouch.bgmPlayer = bgm;
-            log.AppendLine("Bgm player wired: " + (pouch.bgmPlayer != null));
-
-            pouch.voiceDogs = dogs.ToArray();
-            pouch.dogVoiceSources = sources.ToArray();
-            pouch.dogVoiceBaseVolumes = new float[sources.Count];
-            for (int i = 0; i < sources.Count; i++)
-            {
-                pouch.dogVoiceBaseVolumes[i] = sources[i].volume;
-                sources[i].mute = true;
-                EditorUtility.SetDirty(sources[i]);
-            }
-            log.AppendLine("Voice settings: dogs=" + dogs.Count + " oneShotSources=" + sources.Count);
             KD_DistanceFadeSettingsEditor.RebuildIfPresent(pouch, log);
         }
 
@@ -157,7 +89,8 @@ namespace KominkaDogRun.Editor
             return slider;
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/16 Setup Volume")]
+        // 裏山改変: 裏山の Menu/16 は SetupVolumeHillside (.Hillside.cs)。こちらは古民家の写し (Build は裏山版を通る)
+        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Volume/16 - Setup Volume (Kominka)")]
         public static void SetupVolumeSettings()
         {
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode only");
@@ -246,25 +179,36 @@ namespace KominkaDogRun.Editor
             return text;
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/16a Verify Dog Voice Settings")]
+        // 裏山改変: 裏山の Menu/16a は VerifyHillside (.Hillside.cs)。古民家の犬の root 名 "====KominkaDogRun====" を前提にした写し
+        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Volume/16a - Verify Dog Voice Settings (Kominka)")]
         public static void Verify()
         {
-            var scene = SceneManager.GetActiveScene();
             var log = new StringBuilder("PROJECT " + Application.dataPath + "\n");
             int failed = 0;
             Action<bool, string> check = (ok, label) => { log.AppendLine((ok ? "PASS " : "FAIL ") + label); if (!ok) failed++; };
+            VerifyCore("====KominkaDogRun====", log, check);
+            log.AppendLine("RESULT fail=" + failed);
+            File.WriteAllText("Temp/ui-dog-voice-settings.txt", log.ToString());
+            Debug.Log(log.ToString());
+            if (failed > 0) throw new InvalidOperationException("Voice settings verification failed: " + failed);
+        }
+
+        /// <summary>裏山改変: 古民家の検査本体 (犬の root 名を引数に)。裏山の Menu/16a (VerifyHillside) は KH_Dogs で呼ぶ。</summary>
+        static void VerifyCore(string rootName, StringBuilder log, Action<bool, string> check)
+        {
+            var scene = SceneManager.GetActiveScene();
             KD_TreatPouch original = null;
             var expectedDogs = new List<KD_DogWanderController>();
             var expectedSources = new HashSet<AudioSource>();
             foreach (var dog in Resources.FindObjectsOfTypeAll<KD_DogWanderController>())
             {
-                if (dog.gameObject.scene != scene || dog.transform.root.name != "====KominkaDogRun====") continue;
+                if (dog.gameObject.scene != scene || dog.transform.root.name != rootName) continue;
                 expectedDogs.Add(dog);
                 if (dog.barkSource != null) expectedSources.Add(dog.barkSource);
                 log.AppendLine("DOG " + dog.name + " bark=" + (dog.barkSource != null) + " breath=" + (dog.breathSource != null));
             }
             foreach (var pet in Resources.FindObjectsOfTypeAll<KD_DogPetController>())
-                if (pet.gameObject.scene == scene && pet.transform.root.name == "====KominkaDogRun====" && pet.joyAudioSource != null)
+                if (pet.gameObject.scene == scene && pet.transform.root.name == rootName && pet.joyAudioSource != null)
                     expectedSources.Add(pet.joyAudioSource);
             foreach (var p in Resources.FindObjectsOfTypeAll<KD_TreatPouch>()) if (p.gameObject.scene == scene) original = p;
             check(original != null, "pouch exists");
@@ -347,10 +291,6 @@ namespace KominkaDogRun.Editor
                 check(!bark.mute && !breath.mute && Mathf.Approximately(bark.volume, 0.2f) && Mathf.Approximately(breath.volume, 0.1f), "ON restores selected volume");
             }
             finally { EditorSceneManager.ClosePreviewScene(preview); }
-            log.AppendLine("RESULT fail=" + failed);
-            File.WriteAllText("Temp/ui-dog-voice-settings.txt", log.ToString());
-            Debug.Log(log.ToString());
-            if (failed > 0) throw new InvalidOperationException("Voice settings verification failed: " + failed);
         }
     }
 }

@@ -25,6 +25,10 @@ namespace KominkaDogRun
         public GameObject welcomeInformationPage;
         public ScrollRect welcomeInformationScroll;
         public ScrollRect vanimalInformationScroll, trainerInformationScroll;
+        // 裏山改変: クレジットは設定面の頁 (古民家の KD_CreditBoard は置かない。IMP-UI-001 段階 3)。
+        // 入口は設定ホームの群「読む」の [クレジット]。頁は pouch.extraSettingsPages に登録し、開閉は _OpenExtraSettings に任せる
+        public GameObject creditPage;
+        public ScrollRect creditScroll;
         // IMP-ENV-019: HoboRadio は PC のみ (配布元の公式回答、2026-09-18)。Android / iOS ビルドでは本体が
         // ビルド時に外され (KD_MobileStripEditor)、この Button は Start() で押せなくなる。
         // ラジオへ触る入口は全部 RadioAvailable() で先に閉じる — 外された参照は Udon が null ではなく
@@ -83,6 +87,8 @@ namespace KominkaDogRun
         public void _OpenTrainerInformation() { OpenReading(trainerInformationPage, trainerInformationScroll, "information.trainer.title"); }
         public void _OpenPhotoSettings() { pouch._OpenExtraSettings(photoSettingsPage, "photo.settings.title"); }
         public void _OpenWelcomeInformation() { OpenReading(welcomeInformationPage, welcomeInformationScroll, "welcome.reread.title"); }
+        // 裏山改変: 設定ホームの [クレジット] (見出しは ui.extra.022「クレジット」)。頁が無い段階では何もしない
+        public void _OpenCredits() { if (creditPage == null) return; OpenReading(creditPage, creditScroll, "ui.extra.022"); }
         private void OpenReading(GameObject page, ScrollRect scroll, string title)
         {
             pouch._OpenExtraSettings(page, title);

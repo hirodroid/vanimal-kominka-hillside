@@ -16,24 +16,37 @@ using Object = UnityEngine.Object;
 
 namespace KominkaDogRun.Editor
 {
-    /// <summary>裏山 (KominkaHillside) の ようこそ 最小版 (段階 1 IMP-PRG-001)。古民家の本体 (KD_WelcomeGuideEditor.cs) の共通ヘルパーを使い、
+    /// <summary>裏山 (KominkaHillside) の ようこそ (段階 1 IMP-PRG-001 の最小版 → 段階 3 IMP-UI-001 で全文)。古民家の本体 (KD_WelcomeGuideEditor.cs) の共通ヘルパーを使い、
     /// 裏山の構築 (Menu/7 から呼ぶ BuildPage、Menu/11b) と検証 (Menu/11c) をここに隔離する (Codex M-3 2026-09-24)。</summary>
     public static partial class KD_WelcomeGuideEditor
     {
-        // ================================================================ 裏山 (段階 1 IMP-PRG-001): ようこそ 最小版
+        // ================================================================ 裏山: ようこそ (段階 1 IMP-PRG-001 最小版 → 段階 3 IMP-UI-001 全文)
         //
         // 古民家の IMP-INF-020 (案 1 庭に開いて置く + 案 2 ようこその面 + 案 4 手元ヒント) をそのまま使い、
-        // 裏山で外すもの: 「はじめに」の再読面とインフォメーション (段階 3)・寝台の通知 (呼ぶは段階 2)・写真ビューア・ライブ。
+        // 裏山で外すもの: 写真ビューア・ライブ (hints.viewer / live は null)。
         // 置き場は KH_Dogs 直下 ("====KominkaDogRun====" / KD_Places は作らない)。保存キー KD_Onboarding_v1 は古民家どおり (KD_HintDirector)。
-        // 本文は文言表の welcome.* を裏山の値へ差し替えて使う (題「ようこそ、古民家の裏山へ」+ 本文 2 行)。
+        // 裏山改変 (段階 3): 本文は古民家の welcome.body の文型 (群 2 つ + 「・」の行) で、モック welcomeBody の構成 —
+        //   群「なにも持っていなくても」: 撫でる / ボールやディスクを投げる / 一緒に歩く / そばで寝てもらう (写真の行は裏山に無いので出さない)
+        //   群「この板でできること」: さんぽ・おやつ・かざり / ポイントとおじいさん
+        // 足元の 1 行は端末別 (段階 1 の器) + 2 行目に再読の案内 (設定 → インフォメーション → はじめに、古民家の文型)。
+        // 再読の面 (Page_Settings/WelcomeInformation) は Menu/11 Setup Localization → BuildInformation → KD_PhotoInformationEditor.BuildPages → BuildReread が作る
+        // (U1 の設定面)。本文は welcome.reread.body (同じ内容 + メニューを手元に呼ぶには)。11b は面の有無を見るだけ、11c が検証する。
+        // 寝台の通知 (N2 hint.sleep) は段階 2 (呼ぶ IMP-DOG-016) の後なので sleepNoticeEnabled = true (KD_SleepSlot 6 枠を配線)。
 
         const string HillsideMenu = "Tools/KominkaHillside/Menu/";
         /// <summary>庭の置き場の初期値: 入口のスポーン地点から前へ 1.8 m、板の中心は地面 + 1.3 m。**新規作成時だけ** (位置は人が Inspector で詰める)。</summary>
         const float SpotAhead = 1.8f, SpotHeight = 1.3f;
         /// <summary>11c が要求する文言キー (self 言語 ja / en で空でない)。</summary>
         static readonly string[] HillsideKeys = { "welcome.title", "welcome.body", "welcome.footer.vr", "welcome.footer.desktop", "welcome.footer.touch",
-            "welcome.later", "welcome.menu", "welcome.language", "hint.hand.vr", "hint.hand.desktop", "hint.hand.touch",
-            "hint.menu.vr", "hint.menu.desktop", "hint.menu.touch", "hint.pet", "hint.throw.vr", "hint.throw.desktop", "hint.throw.touch" };
+            "welcome.later", "welcome.menu", "welcome.language", "welcome.reread.title", "welcome.reread.body", "welcome.ways", "hint.hand.vr", "hint.hand.desktop", "hint.hand.touch",
+            "hint.menu.vr", "hint.menu.desktop", "hint.menu.touch", "hint.pet", "hint.throw.vr", "hint.throw.desktop", "hint.throw.touch", "hint.sleep" };
+        /// <summary>裏山改変 (段階 3): 11c が本文に要求する群・行 (ja)。モック welcomeBody の構成。写真の行は出さない。</summary>
+        static readonly string[] HillsideBodyJa = { "なにも持っていなくても", "撫でる", "ボールやディスクを投げる", "一緒に歩く", "そばで寝てもらう",
+            "この板でできること", "さんぽ・おやつ・かざり", "ポイントとおじいさん" };
+        /// <summary>再読 (welcome.reread.body) に要求する行 (ja)。群の題は読む面の見出しに合わせて言い換えるので、行の題だけ見る。</summary>
+        static readonly string[] HillsideRereadJa = { "撫でる", "ボールやディスクを投げる", "一緒に歩く", "そばで寝てもらう", "ポイントとおじいさん", "メニューを手元に呼ぶには", "門のそばのおじいさん" };
+        /// <summary>裏山に無いもの (ja)。ようこそ・はじめに の本文に出さない。</summary>
+        static readonly string[] HillsideAbsentJa = { "写真", "ライブ", "ギフトコード", "縁側", "庭のおじいさん" };
         /// <summary>裏山の題 (文言表の welcome.title の ja)。差し替えの取り込み漏れを 11c が見る。</summary>
         public const string HillsideTitleJa = "ようこそ、古民家の裏山へ";
 
@@ -62,7 +75,7 @@ namespace KominkaDogRun.Editor
             if (pouch.confirmRoot != null) pouch.confirmRoot.transform.SetAsLastSibling();   // P13: 確認カードは常に最後の子
             page.SetActive(false);
             pouch.welcomePage = page;
-            log.AppendLine("   welcome page: " + PageName + " (本文 / 言語 / 足元の 1 行 / [あとで] [メニューを見る])");
+            log.AppendLine("   welcome page: " + PageName + " (本文 全文 / 言語 / 足元の 1 行 / [あとで] [メニューを見る])");
         }
 
         /// <summary>KH_Dogs 直下の子を 1 個だけ取る (無ければ作る)。シーン内に同名が 2 個以上なら例外。</summary>
@@ -106,7 +119,7 @@ namespace KominkaDogRun.Editor
         [MenuItem(HillsideMenu + "11b Build Welcome")]
         public static void BuildHillside()
         {
-            Guard(); var log = new StringBuilder("[KD_WelcomeGuide] Build (裏山 段階 1: ようこそ 最小版)\n");
+            Guard(); var log = new StringBuilder("[KD_WelcomeGuide] Build (裏山 段階 3: ようこそ 全文)\n");
             var pouch = Find<KD_TreatPouch>(KD_DogDefs.TreatPouchName);
             if (pouch == null || pouch.panelRoot == null || pouch.sectionTitleLabel == null) throw new InvalidOperationException("KD_TreatPouch の板が無い (先に Tools/KominkaHillside/Menu/7 Build Menu)");
             var language = pouch.language;
@@ -124,7 +137,11 @@ namespace KominkaDogRun.Editor
 
             // ---- 案 2: ようこその面 (Menu/7 と同じ器。言語の行もここで配線) ----
             BuildPage(pouch, pouch.panelRoot.transform, font, pouchUdon, log);
-            log.AppendLine("SKIP 「はじめに」の再読面・インフォメーションの行 (段階 3。足元の 1 行も再読の案内を持たない)");
+            // 裏山改変 (段階 3): 「はじめに」の再読面は Menu/11 (設定面の BuildInformation) が作る。ここは有無を見るだけ (面を作ると設定面の並びと二重になる)
+            var menuSettings = KD_ProductsEditor.SceneComponents<KD_MenuSettings>().SingleOrDefault();
+            if (menuSettings == null || menuSettings.welcomeInformationPage == null || menuSettings.welcomeInformationScroll == null)
+                log.AppendLine("WARN 「はじめに」の再読面が無い (Menu/11 Setup Localization でインフォメーションを作ってから 11b を再実行)。足元の 2 行目が案内する先が無い");
+            else log.AppendLine("reread: Page_Settings/" + menuSettings.welcomeInformationPage.name + " (welcome.reread.body。Menu/11 が作成済み)");
 
             // ---- 案 1: 庭の置き場 (KH_Dogs/KD_WelcomeSpot。**位置は新規作成時だけ**) ----
             var spot = DogsChild(dogs, SpotName, log, out bool newSpot);
@@ -149,7 +166,7 @@ namespace KominkaDogRun.Editor
                 .Where(c => !c.transform.IsChildOf(pouch.transform)).Select(c => c.name).Distinct().ToArray();
             log.AppendLine("spot overlaps: " + (hits.Length == 0 ? "none" : string.Join(", ", hits)));
 
-            // ---- 手元ヒントと通知 (KD_HintDirector。古民家どおり。寝台の通知は呼ぶ (段階 2) まで出さない) ----
+            // ---- 手元ヒントと通知 (KD_HintDirector。古民家どおり。裏山改変 (段階 3): 寝台の通知は呼ぶ (段階 2) の枠が揃っていれば出す) ----
             var hintGo = DogsChild(dogs, HintDirectorName, log);
             var hints = hintGo.GetComponent<KD_HintDirector>();
             if (hints == null) hints = hintGo.AddUdonSharpComponent<KD_HintDirector>();
@@ -160,8 +177,13 @@ namespace KominkaDogRun.Editor
             hints.keeper = keeperT == null ? null : keeperT.GetComponent<KD_ShopKeeper>();
             if (hints.keeper == null) log.AppendLine("NOTE KH_Dogs/KD_ShopKeeper が無い — おじいさんの会話中の「集中」判定なし (Menu/4d の後に 11b を再実行)");
             hints.viewer = null; hints.live = null;
-            hints.sleepSlots = new KD_SleepSlot[0];
-            hints.sleepNoticeEnabled = false;
+            var slots = KD_DogDefs.All.Select(d => KD_SceneObjects.Find(KD_DogDefs.SleepSlotNameOf(d.key))?.GetComponent<KD_SleepSlot>()).ToArray();
+            if (slots.All(x => x != null)) { hints.sleepSlots = slots; hints.sleepNoticeEnabled = true; }
+            else
+            {
+                hints.sleepSlots = new KD_SleepSlot[0]; hints.sleepNoticeEnabled = false;
+                log.AppendLine("WARN KD_SleepSlot が " + slots.Count(x => x != null) + "/" + slots.Length + " 枠 — 寝台の通知 (hint.sleep) は出さない (Menu/6 Setup Sleep の後に 11b を再実行)");
+            }
             var pack = KD_SceneObjects.Find(KD_DogDefs.DogPackName)?.GetComponent<KD_DogPack>();
             hints.dogs = pack != null && pack.dogRoots != null ? pack.dogRoots : new Transform[0];
             var pets = new List<KD_DogPetController>();
@@ -188,7 +210,7 @@ namespace KominkaDogRun.Editor
             hints.welcomeEnabled = true;
             pouch.hints = hints;
             log.AppendLine("hints: " + KD_Hillside.DogsRootName + "/" + HintDirectorName + " dogs=" + hints.dogs.Length + " pet=" + hints.pet.Length + " balls=" + hints.balls.Length
-                + " keeper=" + (hints.keeper != null) + " sleepNotice=off (呼ぶは段階 2) / 手元ヒント VR・Desktop・Touch");
+                + " keeper=" + (hints.keeper != null) + " sleepNotice=" + (hints.sleepNoticeEnabled ? "on (" + hints.sleepSlots.Length + " 枠)" : "off") + " / 手元ヒント VR・Desktop・Touch");
 
             // ---- 文言の束縛 ----
             KD_LocalizationEditor.Configure(language, catalog, log);
@@ -202,7 +224,7 @@ namespace KominkaDogRun.Editor
         [MenuItem(HillsideMenu + "11c Verify Welcome")]
         public static void VerifyHillside()
         {
-            var v = new KD_VerifyLog("[KD_WelcomeGuide] Verify (裏山 段階 1: ようこそ 最小版)");
+            var v = new KD_VerifyLog("[KD_WelcomeGuide] Verify (裏山 段階 3: ようこそ 全文)");
             Action<bool, string> check = (ok, label) => v.Check(ok, label);
             var log = v.Text;
             if (!v.Check(!EditorApplication.isPlaying && KD_Hillside.InScene(), KD_Hillside.ScenePath + " を Edit モードで開いている")) { v.Finish(Output + "verify-hillside.txt"); return; }
@@ -220,7 +242,22 @@ namespace KominkaDogRun.Editor
             check(page != null && pouch.language.welcomeScroll != null && pouch.language.welcomeScroll.content == page.Find(BodyPath), "welcome scrolling body wired");
             check(pouch.confirmRoot == null || pouch.confirmRoot.transform.GetSiblingIndex() == panel.childCount - 1, "confirm card still the last child (P13)");
             VerifyLanguageRow(page, pouch.language.welcomeChoiceLabel, pouch.language.welcomeScroll, pouch.language, check);
-            log.AppendLine("  SKIP 「はじめに」の再読面・インフォメーションの行 (裏山では段階 3)");
+            // 裏山改変 (段階 3): 「はじめに」の再読面 (設定 → インフォメーション → はじめに。面は Menu/11 の BuildInformation が作る)
+            var menuSettings = KD_ProductsEditor.SceneComponents<KD_MenuSettings>().SingleOrDefault();
+            var reread = pouch.settingsPage == null ? null : pouch.settingsPage.transform.Find(RereadName);
+            if (v.Check(menuSettings != null && menuSettings.informationPage != null && reread != null && menuSettings.welcomeInformationPage == reread.gameObject,
+                "「はじめに」の面 Page_Settings/" + RereadName + " が KD_MenuSettings.welcomeInformationPage (Menu/11 のインフォメーション)"))
+            {
+                check(Wired(menuSettings.informationPage.transform.Find(RereadButtonName), menuSettings, "_OpenWelcomeInformation"), "インフォメーション → [はじめに] → _OpenWelcomeInformation");
+                check(Wired(reread.Find("BackInformation"), menuSettings, "_OpenInformation"), "はじめに → [インフォメーションへ戻る] → _OpenInformation");
+                check((pouch.extraSettingsPages ?? Array.Empty<GameObject>()).Contains(reread.gameObject) && !reread.gameObject.activeSelf, "はじめに: 設定の追加頁として管理・既定は非アクティブ");
+                var rereadBody = menuSettings.welcomeInformationScroll == null ? null : menuSettings.welcomeInformationScroll.content.GetComponent<TMP_Text>();
+                check(pouch.language.introductionScroll == menuSettings.welcomeInformationScroll && rereadBody != null && rereadBody.richText,
+                    "はじめに: 読む面の本文 (太字の見出しを使うので richText) と言語切替の先頭戻し");
+                VerifyLanguageRow(reread, pouch.language.introductionChoiceLabel, pouch.language.introductionScroll, pouch.language, check);
+            }
+            check(pouch.language.fixedKeys != null && pouch.language.fixedKeys.Contains("welcome.reread.body") && pouch.language.fixedKeys.Contains("welcome.reread.title"),
+                "はじめに の本文と行の文言が束縛にある (UILocalizationBindings の Page_Settings/WelcomeInformation/...)");
 
             // 案 1: 庭の置き場
             var spot = dogs == null ? null : dogs.Find(SpotName);
@@ -245,7 +282,9 @@ namespace KominkaDogRun.Editor
             check(hintsUdon != null && hintsUdon.SyncMethod == VRC.SDKBase.Networking.SyncType.None, "KD_HintDirector の SyncMethod == None (ローカルだけ)");
             check(hints.welcomeEnabled && hints.pouch == pouch && pouch.hints == hints && hints.language == pouch.language, "hints ↔ pouch / language wired, welcomeEnabled");
             check(KD_HintDirector.SaveKey == "KD_Onboarding_v1", "保存キーは古民家どおり KD_Onboarding_v1");
-            check(!hints.sleepNoticeEnabled && (hints.sleepSlots == null || hints.sleepSlots.Length == 0), "寝台の通知は出さない (呼ぶは段階 2 IMP-DOG-016)");
+            check(hints.sleepNoticeEnabled && hints.sleepSlots != null && hints.sleepSlots.Length == KD_DogDefs.All.Length
+                && KD_DogDefs.All.Select((d, i) => hints.sleepSlots[i] != null && hints.sleepSlots[i].name == KD_DogDefs.SleepSlotNameOf(d.key)).All(x => x),
+                "寝台の通知 (hint.sleep) を出す: KD_SleepSlot " + KD_DogDefs.All.Length + " 枠を犬の順に配線 (段階 2 の呼ぶの後。Menu/6 の後に 11b)");
             check(hints.viewer == null && hints.live == null, "写真ビューア・ライブは参照しない (裏山に無い)");
             check(hints.dogs != null && hints.dogs.Length == KD_DogDefs.All.Length && hints.dogs.All(x => x != null), "dogs " + KD_DogDefs.All.Length + " 匹 (KD_DogPack.dogRoots)");
             check(hints.balls != null && hints.balls.Length == KD_DogDefs.All.Length && hints.balls.All(x => x != null)
@@ -270,8 +309,21 @@ namespace KominkaDogRun.Editor
             check(catalog.languages.Where(KD_LocalizationEditor.Bundled).All(l => HillsideKeys.All(k => l.texts.Any(t => t.key == k && !string.IsNullOrEmpty(t.text)))), "catalog has all welcome/hint keys in every bundled language");
             string title = KD_LocalizationEditor.Text(catalog, "ja", "welcome.title");
             check(title == HillsideTitleJa, "welcome.title (ja) が裏山の題「" + HillsideTitleJa + "」(actual 「" + title + "」)");
-            string footer = KD_LocalizationEditor.Text(catalog, "ja", "welcome.footer.vr");
-            check(!footer.Contains("インフォメーション"), "足元の 1 行が再読 (設定 → インフォメーション) を案内しない (段階 3 まで面が無い)");
+            foreach (string device in new[] { "vr", "desktop", "touch" })
+            {
+                string footer = KD_LocalizationEditor.Text(catalog, "ja", "welcome.footer." + device);
+                check(footer.Contains("設定 → インフォメーション → はじめに"), "足元の 1 行 (" + device + ") が再読の道順を案内する (段階 3 で面ができた)");
+            }
+            // 裏山改変 (段階 3): 本文の構成 (モック welcomeBody)。群 2 つ・行 6 つ、写真・ライブ・ギフトコードなど裏山に無いものを出さない
+            string bodyJa = KD_LocalizationEditor.Text(catalog, "ja", "welcome.body"), rereadJa = KD_LocalizationEditor.Text(catalog, "ja", "welcome.reread.body");
+            string[] bodyMissing = HillsideBodyJa.Where(x => !bodyJa.Contains(x)).ToArray(), rereadMissing = HillsideRereadJa.Where(x => !rereadJa.Contains(x)).ToArray();
+            check(bodyMissing.Length == 0, "welcome.body (ja) が全文の群と行を持つ" + (bodyMissing.Length == 0 ? "" : " (欠け: " + string.Join(" / ", bodyMissing) + ")"));
+            check(rereadMissing.Length == 0, "welcome.reread.body (ja) が同じ内容 + メニューを手元に呼ぶには" + (rereadMissing.Length == 0 ? "" : " (欠け: " + string.Join(" / ", rereadMissing) + ")"));
+            string[] absent = HillsideAbsentJa.Where(x => bodyJa.Contains(x) || rereadJa.Contains(x)).ToArray();
+            check(absent.Length == 0, "ようこそ・はじめに に裏山に無いもの (写真・ライブ・ギフトコード・縁側・庭のおじいさん) を書かない" + (absent.Length == 0 ? "" : " (有り: " + string.Join(" / ", absent) + ")"));
+            string trainerJa = KD_LocalizationEditor.Text(catalog, "ja", "information.trainer.body");
+            check(trainerJa.Contains("フリスビーの取り方") && trainerJa.Contains("この裏山にはありません"), "information.trainer.body (ja): 裏山の特典は 集合 と フリスビーの取り方。かけっこ・2 匹の遊びは対象外と注記");
+            check(KD_LocalizationEditor.Text(catalog, "ja", "information.vanimal.body").Contains("古民家の裏山"), "information.vanimal.body (ja): 裏山の紹介に差し替え済み");
             string menuNotice = KD_LocalizationEditor.Text(catalog, "ja", "hint.menu.vr");
             check(!menuNotice.Contains("パーティクル") && menuNotice.Contains("さんぽ"), "メニュー紹介 (hint.menu.*) のタブ名が裏山の並び (さんぽ有り・パーティクル無し)");
             check(pouch.language.keys != null && HillsideKeys.All(k => pouch.language.keys.Contains(k)), "KD_Language tables carry the keys (Configure ran)");
@@ -284,8 +336,35 @@ namespace KominkaDogRun.Editor
             string miss = KD_ShopSetupEditor.MissingGlyphs(need);
             check(miss.Length == 0, "欠字 0: ようこそ・手元ヒントの文言 (ja / en。欠け " + miss.Length + (miss.Length == 0 ? "" : ": " + miss) + ")");
             VerifyLanguageSwitch(catalog, font, check);
+            // 裏山改変 (段階 3): 文字の収まり (ja / en)。足元の 1 行は固定枠 (FooterSize) に 2 行で収まること、本文は ScrollView なので長さの上限だけ
+            if (page != null) VerifyHillsideFit(page, catalog, check);
             v.Finish(Output + "verify-hillside.txt");
             if (v.Fail > 0) Debug.LogError("Welcome (裏山) verify: " + v.Fail + " failure(s). See " + Output + "verify-hillside.txt");
+        }
+
+        /// <summary>裏山改変 (段階 3): ようこその足元の 1 行 (3 端末) が枠に収まるか・本文が長すぎないかを、焼き込む言語 (ja / en) で測る。
+        /// ラベルの文字は変えない (GetPreferredValues に文字列を渡すだけ)。最終の見え方は Imported-Unused/Welcome Guide/3 Preview の PNG と PCVR。</summary>
+        static void VerifyHillsideFit(Transform page, KD_LocalizationEditor.Catalog catalog, Action<bool, string> check)
+        {
+            var footerT = page.Find("Footer"); var bodyT = page.Find(BodyPath);
+            var footer = footerT == null ? null : footerT.GetComponent<TextMeshProUGUI>();
+            var body = bodyT == null ? null : bodyT.GetComponent<TextMeshProUGUI>();
+            if (footer == null || body == null) { check(false, "文字の収まり: Footer / Body が無い"); return; }
+            foreach (var definition in catalog.languages.Where(KD_LocalizationEditor.Bundled))
+            {
+                foreach (string device in new[] { "vr", "desktop", "touch" })
+                {
+                    string text = KD_LocalizationEditor.Text(catalog, definition.code, "welcome.footer." + device);
+                    float needed = footer.GetPreferredValues(text, footer.rectTransform.rect.width, 0).y, box = footer.rectTransform.rect.height;
+                    check(needed <= box + .5f, "足元の 1 行が枠に収まる: " + definition.code + " " + device + " (needed " + needed.ToString("F0") + " / box " + box.ToString("F0") + ")");
+                }
+                string bodyText = KD_LocalizationEditor.Text(catalog, definition.code, "welcome.body");
+                float width = body.rectTransform.rect.width - body.margin.x - body.margin.z;
+                float bodyNeeded = body.GetPreferredValues(bodyText, width, 0).y + body.margin.y + body.margin.w;
+                float view = ((RectTransform)body.transform.parent).rect.height;
+                // 全文は ScrollView で読む。viewport の 2 倍を越えたら長すぎ (初回の面はスクロールさせすぎない)
+                check(bodyNeeded <= view * 2f, "ようこその本文の長さ: " + definition.code + " needed " + bodyNeeded.ToString("F0") + " / viewport " + view.ToString("F0") + " (2 画面以内。越える分はスクロール)");
+            }
         }
     }
 }

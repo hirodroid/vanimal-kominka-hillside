@@ -5,7 +5,7 @@ using VRC.SDKBase;
 
 namespace KominkaDogRun
 {
-    /// <summary>KD_TreatPouch の裏山差分 (KominkaHillside 段階 0-b / 1。計画書 docs/plans/2026-09-23-menu-rebuild.md D-1 / D-2)。
+    /// <summary>KD_TreatPouch の裏山差分 (KominkaHillside 段階 0-b / 1 / 2。計画書 docs/plans/2026-09-23-menu-rebuild.md D-1 / D-2)。
     ///
     /// **古民家の本体には手を入れず、段階表と「準備中」の描画をここに隔離する。**
     /// 段階 (hillsideStage) ごとに「その段階では null が正 (意図的な未導入)」と「本来必要な参照の欠落」を分け、
@@ -15,7 +15,7 @@ namespace KominkaDogRun
     /// |---|---|---|
     /// | manager (KH_LeashManager) / recall (KH_ToyRecall) / statusLabel | 必須 | 0-b |
     /// | ledger / catalog | null 可 | 1 (IMP-PRG-001) |
-    /// | box / accessories / petFxBox / sleepBoard | null 可 | 2 (IMP-DOG-014 / 015 / 016) |
+    /// | box / accessories / petFxBox / sleepBoard / sleepPlacement / callPose | null 可 | 2 (IMP-DOG-014 / 015 / 016) |
     /// | live | null 可 | DES-LIV-001 の採用後 |
     /// </summary>
     public partial class KD_TreatPouch
@@ -73,6 +73,9 @@ namespace KominkaDogRun
             if (accessories == null) { if (hillsideStage < 2) planned += " accessories"; else Debug.LogError("[KD_TreatPouch] accessories 未配線 (段階 " + hillsideStage.ToString() + ")"); }
             if (petFxBox == null) { if (hillsideStage < 2) planned += " petFxBox"; else Debug.LogError("[KD_TreatPouch] petFxBox 未配線 (段階 " + hillsideStage.ToString() + ")"); }
             if (sleepBoard == null) { if (hillsideStage < 2) planned += " sleepBoard"; else Debug.LogError("[KD_TreatPouch] sleepBoard 未配線 (段階 " + hillsideStage.ToString() + ")"); }
+            // 段階 2 (IMP-DOG-016): 呼ぶタブは台帳・場所決め・ポーズ面の 3 つで 1 組。欠けると [ポーズを選ぶ] が無言で何もしない
+            if (hillsideStage >= 2 && sleepBoard != null && (sleepPlacement == null || callPose == null))
+                Debug.LogError("[KD_TreatPouch] sleepPlacement / callPose 未配線 (段階 " + hillsideStage.ToString() + ") - Run Tools/KominkaHillside/Menu/6i・6j → Menu/7");
             if (live == null) planned += " live";   // DES-LIV-001 の採用まで常に未導入
             if (planned.Length > 0)
                 Debug.Log("[KD_TreatPouch] 段階 " + hillsideStage.ToString() + ":" + planned + " は意図的な未導入");
@@ -148,7 +151,8 @@ namespace KominkaDogRun
         }
 
         /// <summary>おじいさんの支度ポイント (Bonus.keeper) が未受取の案内を出すか。**復元前は出さない** (受取済みの人に一瞬出さない)。
-        /// 段階 1 は おやつ・かざりの準備中の行のサブ文、段階 2 は購入面の行 0 の上の 1 行が使う (両方ここを読む)。</summary>
+        /// 段階 1 は おやつ・かざりの準備中の行のサブ文、段階 2 は おやつ = 状態行 (statusLabel が空のとき。KD_TreatPouch.Treat.cs の HillsideRedrawTreat) /
+        /// かざり = 板の下端の 1 行 (KD_TreatPouch.PetFx.cs の HillsideAccFooter。撫でFX の結果が出ている間はそちらを優先)。</summary>
         private bool HillsideGrantLineVisible()
         {
             return ledger != null && ledger.Loaded() && !ledger.BonusReceived(KD_ProgressLedger.BonusKeeper);
@@ -167,8 +171,9 @@ namespace KominkaDogRun
             {
                 HillsidePreparingRows(rowLabels, L("KD_TreatPouch.WordPreparing"));
                 HillsideHideAll(rowButtons);
+                HillsideHideAll(treatBuyButtons);   // 裏山改変 (IMP-DOG-014): [買う] も box が来るまで出さない
                 HillsideClearAll(rowHintLabels);
-                // 段階 1: 未受取の案内を準備中の行のサブ文に (段階 2 で行 0 の上の 1 行へ移す)
+                // 段階 1: 未受取の案内を準備中の行のサブ文に (段階 2 は おやつタブの状態行へ。KD_TreatPouch.Treat.cs)
                 if (HillsideGrantLineVisible() && rowHintLabels != null && rowHintLabels.Length > 0 && rowHintLabels[0] != null)
                     rowHintLabels[0].text = L("KD_TreatPouch.WordGrantLine");
                 if (putAwayButton != null && putAwayButton.activeSelf) putAwayButton.SetActive(false);
@@ -179,6 +184,7 @@ namespace KominkaDogRun
             {
                 HillsidePreparingRows(accRowLabels, L("KD_TreatPouch.WordPreparing"));
                 HillsideHideRows(fxLabels);   // Page_Acc の Content に並ぶ撫でFX の行 (FxRow0..) も隠す
+                HillsideHideAll(hillsideFxHeadRows);   // 裏山改変 (IMP-DOG-015): 撫でFX の群見出しも (KD_TreatPouch.PetFx.cs)
                 HillsideHideAll(accButtons);
                 HillsideHideAll(accGiftButtons);
                 HillsideClearAll(accRowSubLabels);

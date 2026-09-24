@@ -20,7 +20,8 @@ using VRC.Udon;
 namespace KominkaDogRun.Editor
 {
     // IMP-INF-009 / menu finishing: read-only inventory is deliberately separate from setup.
-    public static class KD_MenuFinishEditor
+    // 裏山改変: 設定面の段階 3 (群の見出し・並び・クレジット頁・インフォメーション・Verify 22 の裏山検査) は KD_MenuFinishEditor.Hillside.cs (partial)
+    public static partial class KD_MenuFinishEditor
     {
         public const string CatalogPath = "Assets/KominkaHillside/Imported/KominkaDogRun/Data/UITranslations.json";
         public const string RadioXUrl = "https://x.com/hobo_radioVRC";
@@ -158,11 +159,12 @@ namespace KominkaDogRun.Editor
             settings.radioButton = null;
             var retiredEntry=parent.Find("ShareSettingsButton");
             if(retiredEntry!=null)UnityEngine.Object.DestroyImmediate(retiredEntry.gameObject);
-            language.choiceLabel = Label(parent, "Language", new Vector2(-115,-98), new Vector2(370,48), "", font, 24);
+            // 裏山改変: 行の y は設定ホームの 3 群の配置 (KD_MenuFinishEditor.Hillside の Hillside*Y) が正本
+            language.choiceLabel = Label(parent, "Language", new Vector2(-115,HillsideLanguageY), new Vector2(370,48), "", font, 24);
             var previous=parent.Find("Japanese");if(previous!=null)previous.name="PreviousLanguage";
             var next=parent.Find("English");if(next!=null)next.name="NextLanguage";
-            Button(parent, "PreviousLanguage", new Vector2(145,-98), new Vector2(100,58), "<", font, langUdon, "_PreviousLanguage", log);
-            Button(parent, "NextLanguage", new Vector2(275,-98), new Vector2(100,58), ">", font, langUdon, "_NextLanguage", log);
+            Button(parent, "PreviousLanguage", new Vector2(145,HillsideLanguageY), new Vector2(100,58), "<", font, langUdon, "_PreviousLanguage", log);
+            Button(parent, "NextLanguage", new Vector2(275,HillsideLanguageY), new Vector2(100,58), ">", font, langUdon, "_NextLanguage", log);
             // 裏山改変: ラジオ設定頁 (RadioSettings) は作らない。写真の共有 (BuildPhotoShare) も裏山に無い
             Retire(pouch.settingsPage.transform, "RadioSettings", log);
             settings.radioPage = null; settings.radioState = null; settings.radioVolume = null; settings.radioVolumeValue = null;
@@ -172,30 +174,30 @@ namespace KominkaDogRun.Editor
             var kept = new List<GameObject>();
             foreach (var p in pouch.extraSettingsPages ?? Array.Empty<GameObject>()) if (p != null && !kept.Contains(p)) kept.Add(p);
             pouch.extraSettingsPages = kept.ToArray();
-            // 裏山改変: インフォメーション (はじめに / 生成AI / VAnimal / トレーナー / 写真設定) は段階 3。0-b では作らない (BuildInformation を呼ばない)。
-            // 音量と距離フェードの入口は段階 3 で戻す。0-b は**非表示** (押しても何も起きないボタンを見せない)
-            foreach (string entry in new[] { "VolumeSettingsButton", "DistanceFadeSettingsButton", "InformationButton", "PhotoSettingsButton" })
-            {
-                var e = parent.Find(entry);
-                if (e != null && e.gameObject.activeSelf) { e.gameObject.SetActive(false); log.AppendLine("Settings: " + entry + " hidden (段階 3)"); }
-            }
+            // 裏山改変 (段階 3): 0-b で非表示にした 音量 / 距離フェード / インフォメーションの入口を戻す。写真設定は裏山に無い (作らない・残っていれば消す)
+            Retire(parent, "PhotoSettingsButton", log);
+            Retire(pouch.settingsPage.transform, "PhotoSettings", log);
+            settings.photoSettingsPage = null;
             var livePage = pouch.settingsHome.transform;
             // P5 (2026-09-16 ユーザー決定): 呼ぶの開放も「この部屋のみんな」の設定。ライブ開催許可と横に並べ、権限者は同じ規則 (オーナー優先、不在時 Master)
             var pouchUdon = UdonSharpEditorUtility.GetBackingUdonBehaviour(pouch);
-            var callOpen = Button(livePage,"CallAccess",new Vector2(-285,-182),new Vector2(540,44),KD_TreatPouch.WordOpenOn,font,pouchUdon,"_OpenToAll",log);
+            var callOpen = Button(livePage,"CallAccess",new Vector2(-285,HillsideAccessY),new Vector2(540,44),KD_TreatPouch.WordOpenOn,font,pouchUdon,"_OpenToAll",log);
             pouch.openToAllButton = callOpen;
             pouch.openToAllButtonComponent = callOpen.GetComponent<Button>();
             pouch.openToAllImage = callOpen.GetComponent<Image>();
             pouch.openToAllLabel = callOpen.transform.Find("Label").GetComponent<TextMeshProUGUI>();
             pouch.openToAllLabel.fontSize = 22;
-            var open = Button(livePage,"LiveAccess",new Vector2(285,-182),new Vector2(540,44),KD_LocalizationEditor.Text(catalog,catalog.fallbackLanguage,"ui.extra.046"),font,udon,"_ToggleLiveAccess",log);
+            var open = Button(livePage,"LiveAccess",new Vector2(285,HillsideAccessY),new Vector2(540,44),KD_LocalizationEditor.Text(catalog,catalog.fallbackLanguage,"ui.extra.046"),font,udon,"_ToggleLiveAccess",log);
             settings.liveAccessButton = open.GetComponent<Button>();
             settings.liveAccessLabel = open.transform.Find("Label").GetComponent<TextMeshProUGUI>();
             settings.liveAccessLabel.fontSize = 22;
             // IMP-NET-007: 補足は 1 行だけ (通常文言は「オーナー」。不在時の代行はここでしか説明しない)。文言は ui.extra.048 (Bind が差し替える)
-            Label(livePage,"LiveAccessNote",new Vector2(0,-221),new Vector2(700,30),KD_LocalizationEditor.Text(catalog,catalog.fallbackLanguage,"ui.extra.048"),font,16);
+            // 裏山改変: 補足は群「この部屋のみんな」の見出しの行の右 (モックの群見出しの副題)。文言・束縛は古民家のまま
+            Label(livePage,"LiveAccessNote",HillsideAccessNotePos,HillsideAccessNoteSize,KD_LocalizationEditor.Text(catalog,catalog.fallbackLanguage,"ui.extra.048"),font,16).alignment = TextAlignmentOptions.Right;
             BuildNightMode(pouch, settings, font, log);
-            log.AppendLine("Settings (裏山 0-b): languages, call/live access, night mode slider -> KH_NightMode (radio / share / information / volume / distance fade entries are not shown)");
+            // 裏山改変 (段階 3): 音量 (犬の声のみ)・距離フェード・クレジット・インフォメーションの入口と頁、3 群の見出しと並び
+            BuildHillsideSettings(pouch, settings, font, log);
+            log.AppendLine("Settings (裏山 段階 3): 3 groups (self / room / read): volume (dog voice only), distance fade (PC only), night mode -> KH_NightMode, language | call/live access | credits, information (radio / share / photo are not built)");
         }
 
         /// <summary>IMP-ENV-015: SleepKit のナイトモードを設定ホームの最下段に Slider で置く。
@@ -219,12 +221,13 @@ namespace KominkaDogRun.Editor
 #if KH_WITH_SLEEPKIT
             settings.sleepKit = sleepKit;
 #endif
-            Label(home, "NightModeLabel", new Vector2(-300, -262), new Vector2(260, 46), T("settings.night.title"), font, 24).alignment = TextAlignmentOptions.Right;
-            settings.nightMode = KD_DogVoiceSettingsEditor.BuildSlider(home, "NightMode", -262, KD_UiSpriteEditor.LoadRound(), udon, "_NightMode", log);
+            // 裏山改変: 群「自分の見え方・聞こえ方」の 2 行目 (古民家は最下段 -262 / -306)。y の正本は KD_MenuFinishEditor.Hillside
+            Label(home, "NightModeLabel", new Vector2(-300, HillsideNightY), new Vector2(260, 46), T("settings.night.title"), font, 24).alignment = TextAlignmentOptions.Right;
+            settings.nightMode = KD_DogVoiceSettingsEditor.BuildSlider(home, "NightMode", HillsideNightY, KD_UiSpriteEditor.LoadRound(), udon, "_NightMode", log);
             KD_DogVoiceSettingsEditor.SetInitialSliderValue(settings.nightMode, 0f);
-            settings.nightModeValue = Label(home, "NightModeValue", new Vector2(215, -262), new Vector2(110, 46), "OFF", font, 24);
+            settings.nightModeValue = Label(home, "NightModeValue", new Vector2(215, HillsideNightY), new Vector2(110, 46), "OFF", font, 24);
             settings.nightModeValue.alignment = TextAlignmentOptions.Left;
-            Label(home, "NightModeNote", new Vector2(0, -306), new Vector2(700, 36), T("settings.night.note"), font, 18);
+            Label(home, "NightModeNote", new Vector2(0, HillsideNightNoteY), new Vector2(700, 26), T("settings.night.note"), font, 18);
             // 裏山改変: スライダーの先は KH_NightMode (シーンに 1 個)。強度 0〜1 を KD_MenuSettings._NightMode が _SetDarkness で渡す
             settings.hillsideNight = HillsideNight(pouch.gameObject.scene);
             // 裏山改変: 購入アセット (HoboRadio / SleepKit) は裏山に無い
@@ -250,7 +253,8 @@ namespace KominkaDogRun.Editor
             var catalog = KD_LocalizationEditor.Load();
             string T(string key) { return KD_LocalizationEditor.Text(catalog, catalog.fallbackLanguage, key); }
             var udon = UdonSharpEditorUtility.GetBackingUdonBehaviour(settings);
-            Button(pouch.settingsHome.transform, "InformationButton", new Vector2(180,0), new Vector2(320,64), T("information.title"), font, udon, "_OpenInformation", log);
+            // 裏山改変: 群「読む」の右 (古民家は (180,0) 320x64)。位置の正本は KD_MenuFinishEditor.Hillside
+            Button(pouch.settingsHome.transform, "InformationButton", HillsideInformationEntryPos, HillsideEntrySize, T("information.title"), font, udon, "_OpenInformation", log);
             var info = KD_ShopSetupEditor.EnsureUiChild(pouch.settingsPage.transform, "Information", Vector2.zero, new Vector2(KD_TreatSetupEditor.PanelWidth,KD_TreatSetupEditor.PanelHeight));
             var ai = KD_ShopSetupEditor.EnsureUiChild(pouch.settingsPage.transform, "AiInformation", Vector2.zero, new Vector2(KD_TreatSetupEditor.PanelWidth,KD_TreatSetupEditor.PanelHeight));
             settings.informationPage = info; settings.aiInformationPage = ai;
@@ -275,7 +279,8 @@ namespace KominkaDogRun.Editor
             pouch.extraSettingsPages = pages.ToArray();
             info.SetActive(false); ai.SetActive(false);
             log.AppendLine("Information: optional AI disclosure page, 24pt scroll text");
-            KD_PhotoInformationEditor.BuildPages(pouch, settings, font, log);
+            // 裏山改変: 写真設定の無い版 (はじめに / 生成AI / VAnimal / トレーナー)。古民家の KD_PhotoInformationEditor.BuildPages は写真設定の頁と入口を作るので呼ばない
+            BuildInformationPagesHillside(pouch, settings, font, log);
         }
 
         internal static void BuildPhotoShare(KD_TreatPouch pouch,KD_Language language,TMP_FontAsset font,StringBuilder log)
@@ -623,13 +628,8 @@ namespace KominkaDogRun.Editor
             Check(settings.radio==null && settings.radioButton==null && settings.radioPage==null
                 && pouch.settingsHome.transform.Find("RadioSettingsButton")==null && pouch.settingsPage.transform.Find("RadioSettings")==null,
                 "radio settings entry and page are not built (裏山: ラジオ無し)");
-            // 裏山改変: インフォメーション・写真設定は段階 3。0-b は入口を作らない / 隠す
-            log.AppendLine("SKIP information / AI information / photo settings pages (裏山では対象外: 段階 3)");
-            foreach(string entry in new[]{"VolumeSettingsButton","DistanceFadeSettingsButton","InformationButton","PhotoSettingsButton"})
-            {
-                var e=pouch.settingsHome.transform.Find(entry);
-                Check(e==null || !e.gameObject.activeSelf,"settings entry not shown in stage 0-b: "+entry+(e==null?" (absent)":" (hidden)"));
-            }
+            // 裏山改変 (段階 3): 0-b の SKIP を解除。3 群の見出し・並び・入口 4 つ・クレジット頁・インフォメーション (写真設定なし)・音量 (犬の声のみ)・距離フェード
+            VerifyHillsideSettings(pouch, settings, language, Check, log);
             // 裏山改変: 購入アセット (HoboRadio / SleepKit) は裏山に無い
 #if KH_WITH_SLEEPKIT
             Check(settings.nightMode!=null && settings.sleepKit!=null && settings.nightMode.transform.parent==pouch.settingsHome.transform,"night mode slider on settings home (IMP-ENV-015)");
@@ -658,8 +658,8 @@ namespace KominkaDogRun.Editor
             Check(unique.Count==language.keys.Length,"keys unique");
             for(int l=0;l<language.languageCodes.Length;l++)for(int k=0;k<language.keys.Length;k++)
                 Check(language._TextForLanguage(language.keys[k],language.languageCodes[l])==KD_LocalizationEditor.Text(catalog,language.languageCodes[l],language.keys[k]),"text "+language.languageCodes[l]+":"+language.keys[k]);
-            // 裏山改変: クレジット板は裏山に無い (設定面のクレジットは段階 3)
-            log.AppendLine("SKIP credit board URLs / attribution (裏山では対象外: 段階 3)");
+            // 裏山改変: クレジット板 (KD_CreditBoard) は裏山に無い。設定面のクレジット頁は VerifyHillsideSettings が見る
+            Check(KD_SceneObjects.Find(KD_DogDefs.CreditBoardName)==null,"no credit board in the world (裏山: クレジットは設定面の頁)");
             var measure=new GameObject("KD_TextMeasure",typeof(RectTransform),typeof(CanvasRenderer),typeof(TextMeshProUGUI));
             measure.hideFlags=HideFlags.HideAndDontSave;
             try

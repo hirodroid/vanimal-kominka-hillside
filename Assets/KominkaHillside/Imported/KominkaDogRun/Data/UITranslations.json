@@ -974,19 +974,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "門のそばのおじいさんに話しかけると、支度用のポイントがもらえます。\nさんぽは、この板の「さんぽ」から。犬をつないで、裏山を歩けます。"
+          "text": "なにも持っていなくても — いつもの遊びは、そのまま\n・撫でる: 頭・ほっぺ・あごをなでると、犬が返事をします\n・ボールやディスクを投げる: 拾って投げると、持ってきます\n・一緒に歩く: この板の「さんぽ」から。犬をつないで、裏山を歩けます\n・そばで寝てもらう: この板の「呼ぶ」から。犬が来て、そばで寝ます\n\nこの板でできること — 過ごした時間がポイントになり、好きなものと交換できます\n・さんぽ・おやつ・かざり: 犬をつなぐ、手元に出す、犬につける。上のタブから\n・ポイントとおじいさん: 右上の「ポイント」に入手経路。門のそばのおじいさんに話しかけると、支度用のポイントがもらえます"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "閉じたあとも、右スティックを下に長押しで、また呼べます。"
+          "text": "閉じたあとも、右スティックを下に長押しで、また呼べます。\nもう一度読むときは 設定 → インフォメーション → はじめに"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "閉じたあとも、T キーで、また呼べます。"
+          "text": "閉じたあとも、T キーで、また呼べます。\nもう一度読むときは 設定 → インフォメーション → はじめに"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "閉じたあとも、画面の [メニュー] で、また呼べます。"
+          "text": "閉じたあとも、画面の [メニュー] で、また呼べます。\nもう一度読むときは 設定 → インフォメーション → はじめに"
         },
         {
           "key": "welcome.later",
@@ -1754,7 +1754,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "VAnimalについて\n\nVAnimal（ブイアニマル）は、動物とのふれあいや遊びをテーマに、VRChatでワールドを作っています。愛称は「ばにまる」です。\n\n撫でると、うれしそうにする。\n投げたボールを、持って帰ってくる。\n足元で、寝る。\n\nそんな、犬と遊んだり、一緒に過ごしたりする体験を、VRChatでもみんなと楽しみたくて、古民家ドッグランを作りました。\n\nこれからは、屋外でのびのび犬とふれあえるワールドや、動物を洗って遊べるワールド、動物病院のような、お世話を楽しめるワールドも作っていきたいと考えています。\n\nワールド制作だけでなく、動物系のワールドを巡るツアーイベントなども開催したいです。\n\n動物たちのいろいろな反応を楽しみながら、一緒に過ごせる場所や遊びを、少しずつ増やしていけたら嬉しいです。\n\n最新情報はDiscordで発信しています。\nVAnimalのVRChatグループにあるリンクから参加できます。"
+          "text": "VAnimalについて\n\nVAnimal（ブイアニマル）は、動物とのふれあいや遊びをテーマに、VRChatでワールドを作っています。愛称は「ばにまる」です。\n\n撫でると、うれしそうにする。\n投げたボールを、持って帰ってくる。\n足元で、寝る。\n\nそんな、犬と遊んだり、一緒に過ごしたりする体験を、VRChatでもみんなと楽しみたくて、古民家ドッグランを作りました。\n\nこの「古民家の裏山」は、その続きの場所です。古民家ドッグランと同じ6匹と、秋の裏山を散歩しながら、遠くに見える古民家を眺められます。\n\nこれからも、動物を洗って遊べるワールドや、動物病院のような、お世話を楽しめるワールドを作っていきたいと考えています。\n\nワールド制作だけでなく、動物系のワールドを巡るツアーイベントなども開催したいです。\n\n動物たちのいろいろな反応を楽しみながら、一緒に過ごせる場所や遊びを、少しずつ増やしていけたら嬉しいです。\n\n最新情報はDiscordで発信しています。\nVAnimalのVRChatグループにあるリンクから参加できます。"
         },
         {
           "key": "information.trainer.title",
@@ -1762,7 +1762,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "ばにまるトレーナーについて\n\nばにまるトレーナーは、もっと犬たちと遊びたい人のための、期間制の追加体験です。\n\nトレーナーになると、犬たちを集合させたり、かけっこさせたり、好きな2匹を一緒に遊ばせたりできます。\n\nみんなで集合写真を撮ったり、かけっこを見守ったり。\nトレーナーが始めた遊びは、その場にいるみんなで楽しめます。\n\n撫でる、ボールを投げる、そばで寝てもらう。\nいつもの遊びは、これまでどおり誰でも楽しめます。\n\nかざりやおもちゃ、ライブ作品は別売りで、トレーナーには含まれません。\n\nこれから作っていくワールドでも、それぞれの場所に合った犬との遊びを、トレーナー向けに用意していきたいと考えています。対応する内容や時期は、まだ決まっていません。\n\nご利用期間は、次の4つから選べます。\n1か月：500 Credits\n3か月：1,350 Credits（月あたり450 Credits）\n6か月：2,550 Credits（月あたり425 Credits）\n12か月：4,800 Credits（月あたり400 Credits）\n\n自動更新はありません。"
+          "text": "ばにまるトレーナーについて\n\nばにまるトレーナーは、もっと犬たちと遊びたい人のための、期間制の追加体験です。\n\nこの裏山では、トレーナーになると、犬たちを集合させたり、「フリスビーの取り方」を切り替えたりできます。\n\nみんなで集合写真を撮ったり、いろいろな取り方を見守ったり。\nトレーナーが始めた遊びは、その場にいるみんなで楽しめます。\n\n撫でる、ボールやディスクを投げる、一緒に歩く、そばで寝てもらう。\nいつもの遊びは、これまでどおり誰でも楽しめます。\n\n古民家ドッグランのかけっこや、好きな2匹を一緒に遊ばせる遊びは、この裏山にはありません。\n\nかざりやおもちゃ、ライブ作品は別売りで、トレーナーには含まれません。\n\nこれから作っていくワールドでも、それぞれの場所に合った犬との遊びを、トレーナー向けに用意していきたいと考えています。対応する内容や時期は、まだ決まっていません。\n\nご利用期間は、次の4つから選べます。\n1か月：500 Credits\n3か月：1,350 Credits（月あたり450 Credits）\n6か月：2,550 Credits（月あたり425 Credits）\n12か月：4,800 Credits（月あたり400 Credits）\n\n自動更新はありません。"
         },
         {
           "key": "photo.help.mark",
@@ -2222,7 +2222,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>いつもの遊びを、気軽に</b>\nなにも持っていなくても、そのまま遊べます。\n\n<b>なでる</b>\n頭・ほっぺ・あごをなでると、犬が返事をします。\n\n<b>ボールを投げる</b>\nボールを拾って投げると、犬が持ってきます。\n\n<b>そばで寝てもらう</b>\nメニューの「呼ぶ」から。犬が来て、そばで寝ます。\n\n<b>写真を楽しむ</b>\nいい瞬間は自動で撮られ、縁側の写真板に並びます。\n\n<b>メニューでできること</b>\nここで過ごした時間がポイントになり、好きなものと交換できます。\n上のタブから、おやつを手元に出したり、犬にかざりをつけたり、庭でライブをひらいたりできます。ライブは、その場のみんなで見られます。\n\n<b>ポイントとおじいさん</b>\n右上の「ポイント」で、ポイントの入手方法やギフトコードを確認できます。\n庭のおじいさんは遊び方を教え、はじめてのポイントをくれます。\n\n<b>メニューを手元に呼ぶには</b>\nVR：右スティックを下に長押し\nDesktop：T キー\nスマホ：画面の［メニュー］"
+          "text": "<b>いつもの遊びを、気軽に</b>\nなにも持っていなくても、そのまま遊べます。\n\n<b>撫でる</b>\n頭・ほっぺ・あごをなでると、犬が返事をします。\n\n<b>ボールやディスクを投げる</b>\n拾って投げると、犬が持ってきます。\n\n<b>一緒に歩く</b>\nメニューの「さんぽ」から。犬をつないで、裏山を歩けます。\n\n<b>そばで寝てもらう</b>\nメニューの「呼ぶ」から。犬が来て、そばで寝ます。\n\n<b>メニューでできること</b>\nここで過ごした時間がポイントになり、好きなものと交換できます。\n上のタブから、犬をつないでさんぽしたり、おやつを手元に出したり、犬にかざりをつけたりできます。\n\n<b>ポイントとおじいさん</b>\n右上の「ポイント」で、ポイントの入手方法を確認できます。\n門のそばのおじいさんに話しかけると、支度用のポイントがもらえます。\n\n<b>メニューを手元に呼ぶには</b>\nVR：右スティックを下に長押し\nDesktop：T キー\nスマホ：画面の［メニュー］"
         },
         {
           "key": "photo.frame.halloween",
@@ -2663,6 +2663,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "入口のおじいさんから支度ポイントを受け取れます"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "購入をやめました"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "撫でエフェクト"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "リード中。さんぽで外してから"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "この姿勢には平らな場所が必要です"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "呼ばれて待機中"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "呼ばれて待機中です。呼ぶタブで自由にしてから"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "自分の見え方・聞こえ方"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "この部屋のみんな"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "読む"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "自分だけに反映・0% で消音"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "舞台モデル\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "空\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "おじいさん\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "リード中の犬は来られません。さんぽで外してから"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "集合中です。終わってから"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "フリスビー中です。終わってから"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "犬たちは手がはなせません。遊びが終わってから"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "フリスビーで遊び中"
         }
       ]
     },
@@ -3637,19 +3709,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "Talk to Grandpa by the gate to get points for getting ready.\nFor a walk, open Walk on this board. Put a dog on the lead and walk the hillside."
+          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "After closing, hold the right stick down to call this back anytime."
+          "text": "After closing, hold the right stick down to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "After closing, press T to call this back anytime."
+          "text": "After closing, press T to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "After closing, tap Menu on screen to call this back anytime."
+          "text": "After closing, tap Menu on screen to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.later",
@@ -4417,7 +4489,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nIn the future, we would like to make worlds where you can spend time with dogs in open outdoor spaces, wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
+          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nKominka Hillside continues from there. Take a walk on an autumn hillside with the same six dogs from Kominka Dog Run, and look back at the old house in the distance.\n\nIn the future, we would also like to make worlds where you can wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
         },
         {
           "key": "information.trainer.title",
@@ -4425,7 +4497,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nAs a Trainer, you can gather the dogs, have them race, or choose two dogs to play together.\n\nTake a group photo with everyone, or watch a race.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
+          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nHere on the hillside, as a Trainer, you can gather the dogs or switch the Frisbee catch style.\n\nTake a group photo with everyone, or watch the different ways the dogs catch.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball or disc, walk together, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nThe races and two-dog play from Kominka Dog Run are not available on the hillside.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
         },
         {
           "key": "photo.help.mark",
@@ -4885,7 +4957,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Play fetch</b>\nPick up a ball and throw it. A dog will bring it back.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>Enjoy the photos</b>\nSpecial moments are captured automatically and displayed on the photo board by the veranda.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to take out treats, dress up a dog, or start a live show in the garden. Everyone nearby can enjoy the show together.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right for ways to earn points and gift codes.\nGrandpa in the garden explains how to play and gives you your first points.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
+          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -5326,6 +5398,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "Get your welcome points from Grandpa at the entrance"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "Purchase cancelled"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "Petting effects"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "On a leash. Unclip it in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "This pose needs flat ground"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "Called over, waiting"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "Waiting where it was called. Let it roam in Call first"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "What you see and hear"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "Everyone in this instance"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "Read"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "Personal setting; 0% mutes"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "Environment\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "Sky\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "Old man\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "Leashed dogs can't come. Unleash them in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "The dogs are gathering. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "The dogs are playing frisbee. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "The dogs are busy. Try after the activity ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "Playing with the disc"
         }
       ]
     },
@@ -6300,19 +6444,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "Talk to Grandpa by the gate to get points for getting ready.\nFor a walk, open Walk on this board. Put a dog on the lead and walk the hillside."
+          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "After closing, hold the right stick down to call this back anytime."
+          "text": "After closing, hold the right stick down to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "After closing, press T to call this back anytime."
+          "text": "After closing, press T to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "After closing, tap Menu on screen to call this back anytime."
+          "text": "After closing, tap Menu on screen to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.later",
@@ -7080,7 +7224,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "О VAnimal\n\nVAnimal создаёт миры VRChat о времени, проведённом с животными, и играх с ними. По-японски нас также называют «Ванимару» (ばにまる).\n\nСобака радуется, когда её гладят.\nПриносит брошенный мяч.\nЗасыпает у ваших ног.\n\nМы сделали Kominka Dog Run, потому что хотели вместе переживать эти моменты игры и общения с собаками в VRChat.\n\nВ будущем мы хотим создавать миры, где можно гулять с собаками на открытых просторах, мыть животных и играть с ними или ухаживать за ними в месте вроде ветеринарной клиники.\n\nПомимо миров, мы хотели бы проводить события — например, туры по мирам о животных.\n\nНадеемся постепенно добавлять новые места и способы проводить время вместе, радуясь тому, как по-разному животные откликаются на нас.\n\nНовости мы публикуем в Discord.\nПрисоединиться можно по ссылке на странице группы VAnimal в VRChat."
+          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nKominka Hillside continues from there. Take a walk on an autumn hillside with the same six dogs from Kominka Dog Run, and look back at the old house in the distance.\n\nIn the future, we would also like to make worlds where you can wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
         },
         {
           "key": "information.trainer.title",
@@ -7088,7 +7232,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "О VAnimal Trainer\n\nVAnimal Trainer — это членство на срок для тех, кто хочет играть с собаками больше.\n\nТренер может собрать собак, устроить забег или выбрать двух собак, чтобы они поиграли вместе.\n\nСделайте общее фото со всеми или посмотрите забег.\nЗанятиями, которые начинает Тренер, могут наслаждаться все, кто здесь.\n\nПогладить собаку, бросить мяч, позвать собаку поспать рядом —\nэти обычные игры по-прежнему доступны всем.\n\nНаряды, игрушки и шоу продаются отдельно и в членство Тренера не входят.\n\nВ будущих мирах мы тоже хотим предлагать Тренерам игры с собаками, подходящие каждому месту. Что именно и когда — ещё не решено.\n\nЧетыре варианта срока:\n1 месяц: 500 Credits\n3 месяца: 1 350 Credits (450 Credits в месяц)\n6 месяцев: 2 550 Credits (425 Credits в месяц)\n12 месяцев: 4 800 Credits (400 Credits в месяц)\n\nЧленство не продлевается автоматически."
+          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nHere on the hillside, as a Trainer, you can gather the dogs or switch the Frisbee catch style.\n\nTake a group photo with everyone, or watch the different ways the dogs catch.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball or disc, walk together, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nThe races and two-dog play from Kominka Dog Run are not available on the hillside.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
         },
         {
           "key": "photo.help.mark",
@@ -7548,7 +7692,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Чувствуйте себя как дома</b>\nОбычные занятия доступны без покупок.\n\n<b>Погладить собаку</b>\nПроведите по голове, щекам или подбородку — она ответит.\n\n<b>Поиграть в апорт</b>\nПоднимите мяч и бросьте. Собака принесёт его обратно.\n\n<b>Отдохнуть вместе</b>\nВыберите «Позвать» в меню. Собака придёт и ляжет рядом.\n\n<b>Посмотреть фото</b>\nОсобые моменты снимаются сами и показываются на фотодоске у веранды.\n\n<b>Что можно делать в меню</b>\nВремя здесь приносит очки, которые можно обменять на то, что нравится.\nВо вкладках сверху — достать лакомство, нарядить собаку или устроить шоу в саду. Все рядом смогут посмотреть его вместе.\n\n<b>Очки и дедушка</b>\nОткройте «Очки» справа вверху — там способы заработать очки и подарочные коды.\nДедушка в саду расскажет, как играть, и даст первые очки.\n\n<b>Вызвать меню к себе</b>\nVR: удерживайте правый стик вниз\nПК: нажмите T\nТелефон: коснитесь [Меню] на экране"
+          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -7989,6 +8133,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "Get your welcome points from Grandpa at the entrance"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "Purchase cancelled"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "Petting effects"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "On a leash. Unclip it in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "This pose needs flat ground"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "Called over, waiting"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "Waiting where it was called. Let it roam in Call first"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "What you see and hear"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "Everyone in this instance"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "Read"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "Personal setting; 0% mutes"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "Environment\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "Sky\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "Old man\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "Leashed dogs can't come. Unleash them in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "The dogs are gathering. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "The dogs are playing frisbee. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "The dogs are busy. Try after the activity ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "Playing with the disc"
         }
       ]
     },
@@ -8963,19 +9179,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "Talk to Grandpa by the gate to get points for getting ready.\nFor a walk, open Walk on this board. Put a dog on the lead and walk the hillside."
+          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "After closing, hold the right stick down to call this back anytime."
+          "text": "After closing, hold the right stick down to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "After closing, press T to call this back anytime."
+          "text": "After closing, press T to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "After closing, tap Menu on screen to call this back anytime."
+          "text": "After closing, tap Menu on screen to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.later",
@@ -9743,7 +9959,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "Про VAnimal\n\nVAnimal створює світи VRChat про час, проведений із тваринами, та ігри з ними. Японською нас також називають «Ванімару» (ばにまる).\n\nСобака радіє, коли її гладять.\nПриносить кинутий м'яч.\nЗасинає біля ваших ніг.\n\nМи зробили Kominka Dog Run, бо хотіли разом переживати ці миті гри та спілкування з собаками у VRChat.\n\nУ майбутньому ми хочемо створювати світи, де можна гуляти з собаками на відкритих просторах, мити тварин і гратися з ними або доглядати за ними в місці на кшталт ветеринарної клініки.\n\nОкрім світів, ми хотіли б проводити події — наприклад, тури світами про тварин.\n\nСподіваємося поступово додавати нові місця та способи проводити час разом, тішачись тим, як по-різному тварини відгукуються на нас.\n\nНовини ми публікуємо в Discord.\nПриєднатися можна за посиланням на сторінці групи VAnimal у VRChat."
+          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nKominka Hillside continues from there. Take a walk on an autumn hillside with the same six dogs from Kominka Dog Run, and look back at the old house in the distance.\n\nIn the future, we would also like to make worlds where you can wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
         },
         {
           "key": "information.trainer.title",
@@ -9751,7 +9967,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "Про VAnimal Trainer\n\nVAnimal Trainer — це членство на строк для тих, хто хоче гратися з собаками більше.\n\nТренер може зібрати собак, влаштувати перегони або вибрати двох собак, щоб вони погралися разом.\n\nЗробіть спільне фото з усіма або подивіться перегони.\nЗаняттями, які починає Тренер, можуть тішитися всі, хто тут.\n\nПогладити собаку, кинути м'яч, покликати собаку поспати поруч —\nці звичні ігри й далі доступні всім.\n\nВбрання, іграшки та шоу продаються окремо й до членства Тренера не входять.\n\nУ майбутніх світах ми теж хочемо пропонувати Тренерам ігри з собаками, що пасують кожному місцю. Що саме й коли — ще не вирішено.\n\nЧотири варіанти строку:\n1 місяць: 500 Credits\n3 місяці: 1 350 Credits (450 Credits на місяць)\n6 місяців: 2 550 Credits (425 Credits на місяць)\n12 місяців: 4 800 Credits (400 Credits на місяць)\n\nЧленство не продовжується автоматично."
+          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nHere on the hillside, as a Trainer, you can gather the dogs or switch the Frisbee catch style.\n\nTake a group photo with everyone, or watch the different ways the dogs catch.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball or disc, walk together, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nThe races and two-dog play from Kominka Dog Run are not available on the hillside.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
         },
         {
           "key": "photo.help.mark",
@@ -10211,7 +10427,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Почувайтеся як удома</b>\nЗвичні заняття доступні без покупок.\n\n<b>Погладити собаку</b>\nПроведіть по голові, щоках або підборіддю — вона відповість.\n\n<b>Погратися в апорт</b>\nПідніміть м'яч і киньте. Собака принесе його назад.\n\n<b>Відпочити разом</b>\nВиберіть «Покликати» в меню. Собака прийде й ляже поруч.\n\n<b>Подивитися фото</b>\nОсобливі миті знімаються самі й показуються на фотодошці біля веранди.\n\n<b>Що можна робити в меню</b>\nЧас тут приносить бали, які можна обміняти на те, що подобається.\nУ вкладках угорі — дістати ласощі, вбрати собаку або влаштувати шоу в саду. Усі поруч зможуть подивитися його разом.\n\n<b>Бали та дідусь</b>\nВідкрийте «Бали» праворуч угорі — там способи заробити бали та подарункові коди.\nДідусь у саду розкаже, як грати, і дасть перші бали.\n\n<b>Викликати меню до себе</b>\nVR: утримуйте правий стік донизу\nПК: натисніть T\nТелефон: торкніться [Меню] на екрані"
+          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -10652,6 +10868,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "Get your welcome points from Grandpa at the entrance"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "Purchase cancelled"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "Petting effects"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "On a leash. Unclip it in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "This pose needs flat ground"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "Called over, waiting"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "Waiting where it was called. Let it roam in Call first"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "What you see and hear"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "Everyone in this instance"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "Read"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "Personal setting; 0% mutes"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "Environment\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "Sky\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "Old man\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "Leashed dogs can't come. Unleash them in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "The dogs are gathering. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "The dogs are playing frisbee. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "The dogs are busy. Try after the activity ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "Playing with the disc"
         }
       ]
     },
@@ -11626,19 +11914,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "Talk to Grandpa by the gate to get points for getting ready.\nFor a walk, open Walk on this board. Put a dog on the lead and walk the hillside."
+          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "After closing, hold the right stick down to call this back anytime."
+          "text": "After closing, hold the right stick down to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "After closing, press T to call this back anytime."
+          "text": "After closing, press T to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "After closing, tap Menu on screen to call this back anytime."
+          "text": "After closing, tap Menu on screen to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.later",
@@ -12406,7 +12694,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "VAnimal에 대하여\n\nVAnimal은 동물과의 교감과 놀이를 주제로 VRChat에서 월드를 만들고 있습니다. 일본에서는 “바니마루”(ばにまる)라는 애칭으로도 불립니다.\n\n쓰다듬으면 기뻐합니다.\n던진 공을 물어 옵니다.\n발밑에서 잠듭니다.\n\n이렇게 강아지와 놀거나 함께 시간을 보내는 경험을 VRChat에서도 다 같이 즐기고 싶어서 Kominka Dog Run을 만들었습니다.\n\n앞으로는 야외에서 마음껏 강아지와 어울릴 수 있는 월드, 동물을 씻기며 놀 수 있는 월드, 동물병원처럼 돌봄을 즐길 수 있는 월드도 만들어 가고 싶습니다.\n\n월드 제작뿐 아니라 동물 관련 월드를 도는 투어 이벤트 같은 것도 열고 싶습니다.\n\n동물들의 여러 반응을 즐기면서 함께 지낼 수 있는 장소와 놀이를 조금씩 늘려 갈 수 있으면 좋겠습니다.\n\n최신 소식은 Discord에서 전하고 있습니다.\nVAnimal의 VRChat 그룹 페이지에 있는 링크로 참여할 수 있습니다."
+          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nKominka Hillside continues from there. Take a walk on an autumn hillside with the same six dogs from Kominka Dog Run, and look back at the old house in the distance.\n\nIn the future, we would also like to make worlds where you can wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
         },
         {
           "key": "information.trainer.title",
@@ -12414,7 +12702,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "VAnimal Trainer에 대하여\n\nVAnimal Trainer는 강아지들과 더 놀고 싶은 분을 위한 기간제 멤버십입니다.\n\n트레이너가 되면 강아지들을 모으거나, 달리기를 시키거나, 마음에 드는 두 마리를 함께 놀게 할 수 있습니다.\n\n다 같이 단체 사진을 찍거나, 달리기를 지켜보거나.\n트레이너가 시작한 놀이는 그 자리에 있는 모두가 즐길 수 있습니다.\n\n쓰다듬기, 공 던지기, 곁에서 재우기.\n늘 하던 놀이는 지금까지처럼 누구나 즐길 수 있습니다.\n\n장식과 장난감, 라이브 작품은 별도 판매이며 트레이너에는 포함되지 않습니다.\n\n앞으로 만들어 갈 월드에서도 각 장소에 어울리는 강아지와의 놀이를 트레이너용으로 준비하고 싶습니다. 해당 내용과 시기는 아직 정해지지 않았습니다.\n\n이용 기간은 다음 네 가지 중에서 고를 수 있습니다.\n1개월: 500 Credits\n3개월: 1,350 Credits (월 450 Credits)\n6개월: 2,550 Credits (월 425 Credits)\n12개월: 4,800 Credits (월 400 Credits)\n\n자동 갱신은 없습니다."
+          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nHere on the hillside, as a Trainer, you can gather the dogs or switch the Frisbee catch style.\n\nTake a group photo with everyone, or watch the different ways the dogs catch.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball or disc, walk together, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nThe races and two-dog play from Kominka Dog Run are not available on the hillside.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
         },
         {
           "key": "photo.help.mark",
@@ -12874,7 +13162,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>편하게 지내세요</b>\n아무것도 가지고 있지 않아도 늘 하던 놀이를 그대로 즐길 수 있습니다.\n\n<b>강아지를 쓰다듬기</b>\n머리·볼·턱을 쓰다듬으면 강아지가 대답합니다.\n\n<b>공 던지고 받기</b>\n공을 주워 던지면 강아지가 물어 옵니다.\n\n<b>함께 쉬기</b>\n메뉴에서 [부르기]를 고르세요. 강아지가 와서 곁에 눕습니다.\n\n<b>사진 즐기기</b>\n좋은 순간은 자동으로 찍혀 툇마루의 사진판에 놓입니다.\n\n<b>메뉴에서 할 수 있는 것</b>\n여기서 보낸 시간이 포인트가 되어 좋아하는 것과 바꿀 수 있습니다.\n위쪽 탭에서 간식을 꺼내거나, 강아지를 꾸미거나, 정원에서 라이브를 열 수 있습니다. 라이브는 그 자리의 모두가 함께 볼 수 있습니다.\n\n<b>포인트와 할아버지</b>\n오른쪽 위의 [포인트]에서 포인트 얻는 방법과 기프트 코드를 확인할 수 있습니다.\n정원의 할아버지는 노는 법을 알려 주고 첫 포인트를 줍니다.\n\n<b>메뉴를 손안으로 부르기</b>\nVR: 오른쪽 스틱을 아래로 길게\nDesktop: T 키\n스마트폰: 화면의 [메뉴]"
+          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -13315,6 +13603,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "Get your welcome points from Grandpa at the entrance"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "Purchase cancelled"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "Petting effects"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "On a leash. Unclip it in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "This pose needs flat ground"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "Called over, waiting"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "Waiting where it was called. Let it roam in Call first"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "What you see and hear"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "Everyone in this instance"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "Read"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "Personal setting; 0% mutes"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "Environment\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "Sky\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "Old man\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "Leashed dogs can't come. Unleash them in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "The dogs are gathering. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "The dogs are playing frisbee. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "The dogs are busy. Try after the activity ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "Playing with the disc"
         }
       ]
     },
@@ -14289,19 +14649,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "Talk to Grandpa by the gate to get points for getting ready.\nFor a walk, open Walk on this board. Put a dog on the lead and walk the hillside."
+          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "After closing, hold the right stick down to call this back anytime."
+          "text": "After closing, hold the right stick down to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "After closing, press T to call this back anytime."
+          "text": "After closing, press T to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "After closing, tap Menu on screen to call this back anytime."
+          "text": "After closing, tap Menu on screen to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.later",
@@ -15069,7 +15429,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "Über VAnimal\n\nVAnimal baut VRChat-Welten, in denen man Zeit mit Tieren verbringt und mit ihnen spielt. Auf Japanisch heißen wir auch „Vanimaru“ (ばにまる).\n\nEin Hund freut sich, wenn du ihn streichelst.\nEr bringt den Ball zurück, den du wirfst.\nEr schläft zu deinen Füßen ein.\n\nKominka Dog Run ist entstanden, weil wir genau diese Augenblicke mit Hunden gemeinsam in VRChat erleben wollten.\n\nIn Zukunft möchten wir Welten machen, in denen man draußen im Freien Zeit mit Hunden verbringt, Tiere wäscht und mit ihnen spielt oder sie an einem Ort wie einer Tierklinik versorgt.\n\nNeben dem Weltenbau möchten wir auch Veranstaltungen anbieten, etwa Touren durch Welten rund um Tiere.\n\nNach und nach möchten wir mehr Orte und mehr Arten des Zusammenseins hinzufügen und dabei all die verschiedenen Reaktionen der Tiere genießen.\n\nNeuigkeiten teilen wir auf Discord.\nBeitreten kannst du über den Link auf der VRChat-Gruppenseite von VAnimal."
+          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nKominka Hillside continues from there. Take a walk on an autumn hillside with the same six dogs from Kominka Dog Run, and look back at the old house in the distance.\n\nIn the future, we would also like to make worlds where you can wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
         },
         {
           "key": "information.trainer.title",
@@ -15077,7 +15437,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "Über VAnimal Trainer\n\nVAnimal Trainer ist eine Mitgliedschaft auf Zeit für alle, die mehr mit den Hunden spielen wollen.\n\nAls Trainer kannst du die Hunde versammeln, sie ein Wettrennen laufen lassen oder zwei Hunde aussuchen, die miteinander spielen.\n\nMach ein Gruppenfoto mit allen oder sieh beim Wettrennen zu.\nWas ein Trainer startet, können alle hier gemeinsam genießen.\n\nEinen Hund streicheln, einen Ball werfen, einen Hund neben sich schlafen lassen:\nDiese gewohnten Spiele bleiben für alle offen.\n\nOutfits, Spielzeug und Shows werden getrennt verkauft und sind in der Trainer-Mitgliedschaft nicht enthalten.\n\nAuch in den Welten, die wir noch bauen, möchten wir Trainern Spiele mit Hunden anbieten, die zum jeweiligen Ort passen. Was genau kommt und wann, steht noch nicht fest.\n\nDu hast vier Laufzeiten zur Wahl:\n1 Monat: 500 Credits\n3 Monate: 1.350 Credits (450 Credits pro Monat)\n6 Monate: 2.550 Credits (425 Credits pro Monat)\n12 Monate: 4.800 Credits (400 Credits pro Monat)\n\nDie Mitgliedschaft verlängert sich nicht automatisch."
+          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nHere on the hillside, as a Trainer, you can gather the dogs or switch the Frisbee catch style.\n\nTake a group photo with everyone, or watch the different ways the dogs catch.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball or disc, walk together, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nThe races and two-dog play from Kominka Dog Run are not available on the hillside.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
         },
         {
           "key": "photo.help.mark",
@@ -15537,7 +15897,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Mach es dir gemütlich</b>\nDie gewohnten Spiele gibt es auch, wenn dir nichts gehört.\n\n<b>Einen Hund streicheln</b>\nStreich über Kopf, Wangen oder Kinn, und er antwortet dir.\n\n<b>Ball werfen und holen lassen</b>\nHeb einen Ball auf und wirf ihn. Ein Hund bringt ihn zurück.\n\n<b>Zusammen ausruhen</b>\nWähl im Menü Rufen. Ein Hund kommt und legt sich neben dich.\n\n<b>Die Fotos genießen</b>\nBesondere Augenblicke werden automatisch aufgenommen und auf der Fototafel an der Veranda gezeigt.\n\n<b>Was du im Menü tun kannst</b>\nDie Zeit hier wird zu Punkten, die du gegen das tauschst, was dir gefällt.\nÜber die Reiter oben holst du Leckerlis heraus, ziehst einem Hund etwas an oder gibst eine Show im Garten. Alle in der Nähe sehen die Show gemeinsam.\n\n<b>Punkte und der Opa</b>\nUnter Punkte oben rechts stehen die Wege zu Punkten und die Geschenkcodes.\nDer Opa im Garten erklärt die Spiele und gibt dir deine ersten Punkte.\n\n<b>So holst du das Menü zu dir</b>\nVR: rechten Stick nach unten halten\nDesktop: Taste T\nHandy: [Menü] auf dem Bildschirm antippen"
+          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -15978,6 +16338,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "Get your welcome points from Grandpa at the entrance"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "Purchase cancelled"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "Petting effects"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "On a leash. Unclip it in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "This pose needs flat ground"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "Called over, waiting"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "Waiting where it was called. Let it roam in Call first"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "What you see and hear"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "Everyone in this instance"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "Read"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "Personal setting; 0% mutes"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "Environment\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "Sky\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "Old man\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "Leashed dogs can't come. Unleash them in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "The dogs are gathering. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "The dogs are playing frisbee. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "The dogs are busy. Try after the activity ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "Playing with the disc"
         }
       ]
     },
@@ -16952,19 +17384,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "Talk to Grandpa by the gate to get points for getting ready.\nFor a walk, open Walk on this board. Put a dog on the lead and walk the hillside."
+          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "After closing, hold the right stick down to call this back anytime."
+          "text": "After closing, hold the right stick down to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "After closing, press T to call this back anytime."
+          "text": "After closing, press T to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "After closing, tap Menu on screen to call this back anytime."
+          "text": "After closing, tap Menu on screen to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.later",
@@ -17732,7 +18164,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "关于 VAnimal\n\nVAnimal 以与动物接触和玩耍为主题，在 VRChat 制作世界。日文昵称是“Vanimaru”(ばにまる)。\n\n抚摸时，它会露出高兴的样子。\n把扔出去的球叼回来。\n在你脚边睡着。\n\n我们想把这些和狗狗玩耍、一起度过时光的体验，也在 VRChat 里和大家一起享受，于是做了 Kominka Dog Run。\n\n今后我们还想做能在户外自在地和狗狗接触的世界、能给动物洗澡玩耍的世界，以及像动物医院那样，能享受照顾动物的世界。\n\n除了制作世界，我们也想举办巡游动物主题世界的导览活动。\n\n希望能一边享受动物们各种各样的反应，一边慢慢增加可以一起度过的场所和玩法。\n\n最新消息会在 Discord 发布。\n可以通过 VAnimal 的 VRChat 群组页面里的链接加入。"
+          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nKominka Hillside continues from there. Take a walk on an autumn hillside with the same six dogs from Kominka Dog Run, and look back at the old house in the distance.\n\nIn the future, we would also like to make worlds where you can wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
         },
         {
           "key": "information.trainer.title",
@@ -17740,7 +18172,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "关于 VAnimal Trainer\n\nVAnimal Trainer 是为想和狗狗们玩得更尽兴的人准备的、有期限的追加体验。\n\n成为训练员后，可以让狗狗们集合、赛跑，或者指定喜欢的 2 只一起玩。\n\n大家一起拍合影，或者看着狗狗赛跑。\n训练员开始的玩法，在场的所有人都能一起享受。\n\n抚摸、扔球、让狗狗睡在身边。\n这些平常的玩法，和以前一样谁都可以享受。\n\n装饰、玩具和灯光秀作品另行出售，不包含在训练员权益里。\n\n今后制作的世界里，我们也想为训练员准备适合各个场所的、与狗狗一起玩的方式。具体内容和时间还没有确定。\n\n使用期限可以从以下 4 种中选择。\n1 个月: 500 Credits\n3 个月: 1,350 Credits (每月 450 Credits)\n6 个月: 2,550 Credits (每月 425 Credits)\n12 个月: 4,800 Credits (每月 400 Credits)\n\n没有自动续费。"
+          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nHere on the hillside, as a Trainer, you can gather the dogs or switch the Frisbee catch style.\n\nTake a group photo with everyone, or watch the different ways the dogs catch.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball or disc, walk together, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nThe races and two-dog play from Kominka Dog Run are not available on the hillside.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
         },
         {
           "key": "photo.help.mark",
@@ -18200,7 +18632,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>平常的玩法，随意就好</b>\n就算什么都没有，也能照样玩。\n\n<b>抚摸狗狗</b>\n摸摸头、脸颊、下巴，狗狗会回应你。\n\n<b>扔球给它捡</b>\n把球捡起来扔出去，狗狗会叼回来。\n\n<b>一起休息</b>\n从菜单的“呼唤”开始。狗狗会过来，睡在你旁边。\n\n<b>欣赏照片</b>\n好的瞬间会自动拍下，排在檐廊的照片板上。\n\n<b>菜单里能做的事</b>\n在这里度过的时间会变成积分，可以换你喜欢的东西。\n从上面的标签页，可以把零食取到手边、给狗狗戴上装饰，或者在院子里举办灯光秀。灯光秀在场的人都能一起看。\n\n<b>积分和爷爷</b>\n在右上的“积分”里，可以查看积分的获取方法和礼品码。\n院子里的爷爷会教你怎么玩，还会给你最初的积分。\n\n<b>怎么把菜单叫到手边</b>\nVR: 长按右摇杆向下\nDesktop: 按 T 键\n手机: 点击画面上的［菜单］"
+          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -18641,6 +19073,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "Get your welcome points from Grandpa at the entrance"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "Purchase cancelled"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "Petting effects"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "On a leash. Unclip it in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "This pose needs flat ground"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "Called over, waiting"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "Waiting where it was called. Let it roam in Call first"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "What you see and hear"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "Everyone in this instance"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "Read"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "Personal setting; 0% mutes"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "Environment\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "Sky\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "Old man\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "Leashed dogs can't come. Unleash them in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "The dogs are gathering. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "The dogs are playing frisbee. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "The dogs are busy. Try after the activity ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "Playing with the disc"
         }
       ]
     },
@@ -19615,19 +20119,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "Talk to Grandpa by the gate to get points for getting ready.\nFor a walk, open Walk on this board. Put a dog on the lead and walk the hillside."
+          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "After closing, hold the right stick down to call this back anytime."
+          "text": "After closing, hold the right stick down to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "After closing, press T to call this back anytime."
+          "text": "After closing, press T to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "After closing, tap Menu on screen to call this back anytime."
+          "text": "After closing, tap Menu on screen to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.later",
@@ -20395,7 +20899,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "Sobre VAnimal\n\nVAnimal crea mundos de VRChat sobre pasar el rato y jugar con animales. En japonés también nos llaman “Vanimaru” (ばにまる).\n\nUn perro se pone contento cuando lo acaricias.\nTe trae de vuelta la pelota que lanzas.\nSe queda dormido a tus pies.\n\nHicimos Kominka Dog Run porque queríamos disfrutar en VRChat, con todo el mundo, de esos momentos de jugar y pasar el rato con perros.\n\nMás adelante nos gustaría hacer mundos donde puedas estar con perros en espacios abiertos, lavar animales y jugar con ellos, o disfrutar cuidándolos en un sitio parecido a una clínica veterinaria.\n\nAdemás de crear mundos, también nos gustaría organizar eventos, como visitas guiadas por mundos de animales.\n\nEsperamos ir añadiendo poco a poco más lugares y más formas de pasar el rato juntos, disfrutando de todas las maneras en que los animales nos responden.\n\nCompartimos las novedades en Discord.\nPuedes entrar desde el enlace de la página del grupo de VAnimal en VRChat."
+          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nKominka Hillside continues from there. Take a walk on an autumn hillside with the same six dogs from Kominka Dog Run, and look back at the old house in the distance.\n\nIn the future, we would also like to make worlds where you can wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
         },
         {
           "key": "information.trainer.title",
@@ -20403,7 +20907,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "Sobre VAnimal Trainer\n\nVAnimal Trainer es una suscripción por tiempo limitado para quien quiera jugar más con los perros.\n\nComo Trainer puedes reunir a los perros, hacer que echen una carrera o elegir dos para que jueguen juntos.\n\nSácate una foto de grupo con todos o mira una carrera.\nTodas las personas que estén allí pueden disfrutar de las actividades que abre un Trainer.\n\nAcariciar a un perro, lanzar una pelota o que un perro duerma a tu lado: los juegos de siempre siguen siendo para todo el mundo.\n\nLos adornos, los juguetes y los shows se venden aparte y no están incluidos en Trainer.\n\nTambién nos gustaría ofrecer a los Trainer formas de jugar con los perros pensadas para cada mundo que hagamos en el futuro. Todavía no hemos decidido ni el contenido ni las fechas.\n\nPuedes elegir entre cuatro periodos:\n1 mes: 500 Credits\n3 meses: 1350 Credits (450 Credits al mes)\n6 meses: 2550 Credits (425 Credits al mes)\n12 meses: 4800 Credits (400 Credits al mes)\n\nNo hay renovación automática."
+          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nHere on the hillside, as a Trainer, you can gather the dogs or switch the Frisbee catch style.\n\nTake a group photo with everyone, or watch the different ways the dogs catch.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball or disc, walk together, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nThe races and two-dog play from Kominka Dog Run are not available on the hillside.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
         },
         {
           "key": "photo.help.mark",
@@ -20863,7 +21367,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Ponte a gusto</b>\nPuedes disfrutar de los juegos de siempre sin tener nada comprado.\n\n<b>Acariciar a un perro</b>\nPásale la mano por la cabeza, las mejillas o la barbilla y te responderá.\n\n<b>Jugar a la pelota</b>\nRecoge una pelota y lánzala. El perro te la traerá.\n\n<b>Descansar juntos</b>\nElige “Llamar” en el menú. Un perro vendrá y se echará a tu lado.\n\n<b>Disfrutar de las fotos</b>\nLos momentos especiales se capturan solos y se ven en el tablero de fotos del porche.\n\n<b>Qué puedes hacer en el menú</b>\nEl tiempo que pasas aquí te da puntos para cambiarlos por lo que quieras.\nEn las pestañas de arriba puedes sacar premios, poner adornos a un perro o abrir un show en el jardín. Todos los que estén cerca podrán verlo juntos.\n\n<b>Puntos y el abuelo</b>\nAbre “Puntos”, arriba a la derecha, para ver las formas de ganar puntos y los códigos de regalo.\nEl abuelo del jardín te explica cómo jugar y te da tus primeros puntos.\n\n<b>Traer el menú a tu lado</b>\nVR: mantén el stick derecho hacia abajo\nDesktop: pulsa T\nMóvil: toca [Menú] en la pantalla"
+          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -21304,6 +21808,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "Get your welcome points from Grandpa at the entrance"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "Purchase cancelled"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "Petting effects"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "On a leash. Unclip it in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "This pose needs flat ground"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "Called over, waiting"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "Waiting where it was called. Let it roam in Call first"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "What you see and hear"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "Everyone in this instance"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "Read"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "Personal setting; 0% mutes"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "Environment\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "Sky\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "Old man\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "Leashed dogs can't come. Unleash them in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "The dogs are gathering. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "The dogs are playing frisbee. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "The dogs are busy. Try after the activity ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "Playing with the disc"
         }
       ]
     },
@@ -22278,19 +22854,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "Talk to Grandpa by the gate to get points for getting ready.\nFor a walk, open Walk on this board. Put a dog on the lead and walk the hillside."
+          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "After closing, hold the right stick down to call this back anytime."
+          "text": "After closing, hold the right stick down to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "After closing, press T to call this back anytime."
+          "text": "After closing, press T to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "After closing, tap Menu on screen to call this back anytime."
+          "text": "After closing, tap Menu on screen to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.later",
@@ -23058,7 +23634,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "À propos de VAnimal\n\nVAnimal crée des mondes VRChat autour du temps passé et des jeux avec les animaux. En japonais, on nous appelle aussi “Vanimaru” (ばにまる).\n\nLe chien a l'air heureux quand tu le caresses.\nIl rapporte la balle que tu lances.\nIl s'endort à tes pieds.\n\nNous avons fait Kominka Dog Run parce que nous voulions partager ces moments de jeu et de vie avec les chiens, dans VRChat.\n\nPlus tard, nous aimerions faire des mondes où l'on passe du temps avec des chiens en plein air, où l'on lave et où l'on joue avec les animaux, ou encore où l'on prend soin d'eux, comme dans une clinique vétérinaire.\n\nAu-delà de la création de mondes, nous aimerions aussi organiser des événements, par exemple des visites guidées de mondes animaliers.\n\nNous espérons ajouter peu à peu d'autres lieux et d'autres façons de passer du temps ensemble, en profitant de toutes les réactions des animaux.\n\nNous publions nos actualités sur Discord.\nTu peux nous rejoindre par le lien sur la page du groupe VRChat de VAnimal."
+          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nKominka Hillside continues from there. Take a walk on an autumn hillside with the same six dogs from Kominka Dog Run, and look back at the old house in the distance.\n\nIn the future, we would also like to make worlds where you can wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
         },
         {
           "key": "information.trainer.title",
@@ -23066,7 +23642,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "À propos de VAnimal Trainer\n\nVAnimal Trainer est un abonnement à durée limitée, pour celles et ceux qui veulent jouer davantage avec les chiens.\n\nEn tant que Trainer, tu peux rassembler les chiens, organiser une course, ou choisir deux chiens pour les faire jouer ensemble.\n\nPrendre une photo de groupe avec tout le monde, ou regarder une course.\nTout le monde sur place profite des activités lancées par un Trainer.\n\nCaresser un chien, lancer une balle, faire dormir un chien à côté de soi.\nCes jeux de tous les jours restent accessibles à tous.\n\nLes accessoires, les jouets et les spectacles sont vendus séparément et ne sont pas compris dans l'abonnement Trainer.\n\nNous aimerions aussi proposer aux Trainers des façons de jouer avec les chiens adaptées à chacun des mondes que nous créerons. Le contenu et les dates ne sont pas encore décidés.\n\nQuatre durées au choix :\n1 mois : 500 Credits\n3 mois : 1 350 Credits (450 Credits par mois)\n6 mois : 2 550 Credits (425 Credits par mois)\n12 mois : 4 800 Credits (400 Credits par mois)\n\nL'abonnement ne se renouvelle pas automatiquement."
+          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nHere on the hillside, as a Trainer, you can gather the dogs or switch the Frisbee catch style.\n\nTake a group photo with everyone, or watch the different ways the dogs catch.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball or disc, walk together, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nThe races and two-dog play from Kominka Dog Run are not available on the hillside.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
         },
         {
           "key": "photo.help.mark",
@@ -23526,7 +24102,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Fais comme chez toi</b>\nTu peux profiter des jeux habituels sans rien posséder.\n\n<b>Caresser un chien</b>\nCaresse sa tête, ses joues ou son menton, et il te répond.\n\n<b>Lancer la balle</b>\nRamasse une balle et lance-la. Un chien te la rapporte.\n\n<b>Se reposer ensemble</b>\nChoisis “Appeler” dans le menu. Un chien vient se reposer près de toi.\n\n<b>Profiter des photos</b>\nLes beaux moments sont pris automatiquement et s'affichent sur le tableau photo de la véranda.\n\n<b>Ce que permet le menu</b>\nLe temps passé ici rapporte des points, à échanger contre ce qui te plaît.\nLes onglets ci-dessus servent à sortir des friandises, à habiller un chien ou à lancer un spectacle dans le jardin. Tout le monde à côté en profite ensemble.\n\n<b>Points et papi</b>\nOuvre “Points” en haut à droite pour voir comment gagner des points et les codes cadeaux.\nLe papi du jardin t'explique comment jouer et te donne tes premiers points.\n\n<b>Rappeler le menu</b>\nVR : maintiens le stick droit vers le bas\nDesktop : appuie sur T\nMobile : touche [Menu] à l'écran"
+          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -23967,6 +24543,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "Get your welcome points from Grandpa at the entrance"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "Purchase cancelled"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "Petting effects"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "On a leash. Unclip it in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "This pose needs flat ground"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "Called over, waiting"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "Waiting where it was called. Let it roam in Call first"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "What you see and hear"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "Everyone in this instance"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "Read"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "Personal setting; 0% mutes"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "Environment\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "Sky\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "Old man\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "Leashed dogs can't come. Unleash them in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "The dogs are gathering. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "The dogs are playing frisbee. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "The dogs are busy. Try after the activity ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "Playing with the disc"
         }
       ]
     },
@@ -24941,19 +25589,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "Talk to Grandpa by the gate to get points for getting ready.\nFor a walk, open Walk on this board. Put a dog on the lead and walk the hillside."
+          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "After closing, hold the right stick down to call this back anytime."
+          "text": "After closing, hold the right stick down to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "After closing, press T to call this back anytime."
+          "text": "After closing, press T to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "After closing, tap Menu on screen to call this back anytime."
+          "text": "After closing, tap Menu on screen to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.later",
@@ -25721,7 +26369,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "Sobre a VAnimal\n\nA VAnimal cria mundos de VRChat sobre passar o tempo e brincar com animais. Em japonês também nos chamam de “Vanimaru” (ばにまる).\n\nO cachorro fica feliz quando você faz carinho.\nTraz de volta a bola que você lança.\nDorme aos seus pés.\n\nFizemos o Kominka Dog Run porque queríamos viver no VRChat, junto com todo mundo, esses momentos de brincar e passar o tempo com cachorros.\n\nMais para a frente, queremos fazer mundos onde dê para ficar com cachorros em espaços abertos, lavar animais e brincar com eles, ou cuidar deles num lugar parecido com uma clínica veterinária.\n\nAlém de criar mundos, também queremos organizar eventos, como tours por mundos de animais.\n\nEsperamos ir somando aos poucos mais lugares e mais formas de passar o tempo junto, aproveitando todas as maneiras como os animais respondem à gente.\n\nAs novidades saem no nosso Discord.\nVocê pode entrar pelo link na página do grupo da VAnimal no VRChat."
+          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nKominka Hillside continues from there. Take a walk on an autumn hillside with the same six dogs from Kominka Dog Run, and look back at the old house in the distance.\n\nIn the future, we would also like to make worlds where you can wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
         },
         {
           "key": "information.trainer.title",
@@ -25729,7 +26377,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "Sobre o VAnimal Trainer\n\nO VAnimal Trainer é uma assinatura por tempo limitado para quem quer brincar mais com os cachorros.\n\nComo Trainer você pode reunir os cachorros, fazer uma corrida ou escolher dois para brincarem juntos.\n\nTire uma foto em grupo com todo mundo ou assista a uma corrida.\nTodas as pessoas que estiverem ali aproveitam as atividades que um Trainer abre.\n\nFazer carinho, lançar a bola ou deixar um cachorro dormir do seu lado: as brincadeiras de sempre continuam sendo para todo mundo.\n\nEnfeites, brinquedos e shows são vendidos à parte e não estão inclusos no Trainer.\n\nTambém queremos oferecer aos Trainers formas de brincar com os cachorros pensadas para cada mundo que fizermos no futuro. Ainda não decidimos o conteúdo nem as datas.\n\nVocê pode escolher entre quatro períodos:\n1 mês: 500 Credits\n3 meses: 1.350 Credits (450 Credits por mês)\n6 meses: 2.550 Credits (425 Credits por mês)\n12 meses: 4.800 Credits (400 Credits por mês)\n\nNão há renovação automática."
+          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nHere on the hillside, as a Trainer, you can gather the dogs or switch the Frisbee catch style.\n\nTake a group photo with everyone, or watch the different ways the dogs catch.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball or disc, walk together, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nThe races and two-dog play from Kominka Dog Run are not available on the hillside.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
         },
         {
           "key": "photo.help.mark",
@@ -26189,7 +26837,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Fique à vontade</b>\nVocê pode aproveitar as brincadeiras de sempre sem ter nada comprado.\n\n<b>Fazer carinho</b>\nPasse a mão na cabeça, nas bochechas ou no queixo, e o cachorro responde.\n\n<b>Brincar de buscar</b>\nPegue uma bola e lance. O cachorro traz de volta.\n\n<b>Descansar junto</b>\nEscolha “Chamar” no menu. Um cachorro vem e se deita do seu lado.\n\n<b>Aproveitar as fotos</b>\nOs momentos especiais são capturados automaticamente e aparecem no painel de fotos da varanda.\n\n<b>O que dá para fazer no menu</b>\nO tempo que você passa aqui vira pontos para trocar pelo que quiser.\nNas abas de cima você tira petiscos, coloca enfeites no cachorro ou abre um show no jardim. Todo mundo por perto assiste junto.\n\n<b>Pontos e o vovô</b>\nAbra “Pontos”, no canto superior direito, para ver as formas de ganhar pontos e os códigos de presente.\nO vovô do jardim explica como brincar e dá os seus primeiros pontos.\n\n<b>Trazer o menu para você</b>\nVR: segure o analógico direito para baixo\nDesktop: tecle T\nCelular: toque em [Menu] na tela"
+          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -26630,6 +27278,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "Get your welcome points from Grandpa at the entrance"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "Purchase cancelled"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "Petting effects"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "On a leash. Unclip it in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "This pose needs flat ground"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "Called over, waiting"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "Waiting where it was called. Let it roam in Call first"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "What you see and hear"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "Everyone in this instance"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "Read"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "Personal setting; 0% mutes"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "Environment\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "Sky\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "Old man\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "Leashed dogs can't come. Unleash them in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "The dogs are gathering. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "The dogs are playing frisbee. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "The dogs are busy. Try after the activity ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "Playing with the disc"
         }
       ]
     },
@@ -27604,19 +28324,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "Talk to Grandpa by the gate to get points for getting ready.\nFor a walk, open Walk on this board. Put a dog on the lead and walk the hillside."
+          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "After closing, hold the right stick down to call this back anytime."
+          "text": "After closing, hold the right stick down to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "After closing, press T to call this back anytime."
+          "text": "After closing, press T to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "After closing, tap Menu on screen to call this back anytime."
+          "text": "After closing, tap Menu on screen to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.later",
@@ -28384,7 +29104,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "Su VAnimal\n\nVAnimal crea mondi VRChat dedicati a passare il tempo e giocare con gli animali. In giapponese ci chiamano anche “Vanimaru” (ばにまる).\n\nUn cane sembra felice quando lo accarezzi.\nTi riporta la palla che lanci.\nSi addormenta ai tuoi piedi.\n\nAbbiamo creato Kominka Dog Run perché volevamo goderci in VRChat, tutti insieme, questi momenti di gioco e di compagnia con i cani.\n\nIn futuro ci piacerebbe creare mondi dove stare con i cani in spazi aperti, lavare gli animali e giocare con loro, o prendersene cura in un posto simile a una clinica veterinaria.\n\nOltre a creare mondi, vorremmo anche organizzare eventi, come tour tra i mondi dedicati agli animali.\n\nSperiamo di aggiungere poco a poco altri luoghi e altri modi di stare insieme, godendoci tutti i modi in cui gli animali ci rispondono.\n\nCondividiamo le novità su Discord.\nPuoi entrare dal link nella pagina del gruppo VRChat di VAnimal."
+          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nKominka Hillside continues from there. Take a walk on an autumn hillside with the same six dogs from Kominka Dog Run, and look back at the old house in the distance.\n\nIn the future, we would also like to make worlds where you can wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
         },
         {
           "key": "information.trainer.title",
@@ -28392,7 +29112,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "Su VAnimal Trainer\n\nVAnimal Trainer è un abbonamento a tempo per chi vuole giocare di più con i cani.\n\nCome Trainer puoi radunare i cani, farli correre in gara o scegliere due cani che giochino insieme.\n\nFai una foto di gruppo con tutti o guarda una corsa.\nChi si trova qui può godersi le attività che apre un Trainer.\n\nAccarezzare un cane, lanciare una palla, avere un cane che dorme accanto a te: i giochi di sempre restano per tutti.\n\nAccessori, giochi e show si vendono a parte e non sono inclusi in Trainer.\n\nAnche nei mondi che creeremo in futuro vorremmo offrire ai Trainer modi di giocare con i cani adatti a ogni luogo. Contenuti e date non sono ancora decisi.\n\nPuoi scegliere tra quattro periodi:\n1 mese: 500 Credits\n3 mesi: 1.350 Credits (450 Credits al mese)\n6 mesi: 2.550 Credits (425 Credits al mese)\n12 mesi: 4.800 Credits (400 Credits al mese)\n\nNon c'è rinnovo automatico."
+          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nHere on the hillside, as a Trainer, you can gather the dogs or switch the Frisbee catch style.\n\nTake a group photo with everyone, or watch the different ways the dogs catch.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball or disc, walk together, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nThe races and two-dog play from Kominka Dog Run are not available on the hillside.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
         },
         {
           "key": "photo.help.mark",
@@ -28852,7 +29572,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Mettiti a tuo agio</b>\nPuoi goderti i giochi di sempre senza avere nulla.\n\n<b>Accarezza un cane</b>\nPassagli la mano su testa, guance o mento e ti risponderà.\n\n<b>Gioca a riportare la palla</b>\nRaccogli una palla e lanciala. Un cane te la riporterà.\n\n<b>Riposa insieme a un cane</b>\nScegli “Chiama” nel menu. Un cane arriva e si sdraia accanto a te.\n\n<b>Goditi le foto</b>\nLe foto dei momenti speciali si scattano da sole e compaiono sulla bacheca delle foto vicino alla veranda.\n\n<b>Cosa puoi fare nel menu</b>\nIl tempo che passi qui diventa punti da scambiare con quello che ti piace.\nDalle schede qui sopra puoi tirare fuori gli snack, vestire un cane o aprire uno show in giardino. Chi si trova vicino può guardarlo insieme a te.\n\n<b>Punti e il nonno</b>\nApri “Punti” in alto a destra per vedere come guadagnare punti e i codici regalo.\nIl nonno del giardino ti spiega come giocare e ti dà i primi punti.\n\n<b>Come richiamare il menu</b>\nVR: tieni la levetta destra verso il basso\nDesktop: premi T\nTelefono: tocca [Menu] sullo schermo"
+          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -29293,6 +30013,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "Get your welcome points from Grandpa at the entrance"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "Purchase cancelled"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "Petting effects"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "On a leash. Unclip it in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "This pose needs flat ground"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "Called over, waiting"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "Waiting where it was called. Let it roam in Call first"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "What you see and hear"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "Everyone in this instance"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "Read"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "Personal setting; 0% mutes"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "Environment\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "Sky\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "Old man\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "Leashed dogs can't come. Unleash them in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "The dogs are gathering. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "The dogs are playing frisbee. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "The dogs are busy. Try after the activity ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "Playing with the disc"
         }
       ]
     },
@@ -30267,19 +31059,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "Talk to Grandpa by the gate to get points for getting ready.\nFor a walk, open Walk on this board. Put a dog on the lead and walk the hillside."
+          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "After closing, hold the right stick down to call this back anytime."
+          "text": "After closing, hold the right stick down to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "After closing, press T to call this back anytime."
+          "text": "After closing, press T to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "After closing, tap Menu on screen to call this back anytime."
+          "text": "After closing, tap Menu on screen to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.later",
@@ -31047,7 +31839,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "O VAnimal\n\nVAnimal tworzy światy VRChat o spędzaniu czasu i zabawie ze zwierzętami. Po japońsku mówi się na nas też „Vanimaru” (ばにまる).\n\nPies cieszy się, gdy go pogłaszczesz.\nPrzynosi rzuconą piłkę.\nZasypia u twoich stóp.\n\nKominka Dog Run powstał dlatego, że chcieliśmy przeżywać takie chwile zabawy i bycia z psami razem w VRChat.\n\nW przyszłości chcemy tworzyć światy, w których będzie można być z psami na otwartej przestrzeni, myć zwierzęta i bawić się z nimi albo opiekować się nimi w miejscu takim jak lecznica dla zwierząt.\n\nOprócz tworzenia światów chcemy też organizować wydarzenia, na przykład wycieczki po światach ze zwierzętami.\n\nMamy nadzieję po trochu dokładać kolejne miejsca i sposoby na wspólny czas, ciesząc się tym, jak różnie zwierzęta na nas reagują.\n\nNajnowsze wieści podajemy na Discordzie.\nMożna dołączyć przez link na stronie grupy VAnimal w VRChat."
+          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nKominka Hillside continues from there. Take a walk on an autumn hillside with the same six dogs from Kominka Dog Run, and look back at the old house in the distance.\n\nIn the future, we would also like to make worlds where you can wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
         },
         {
           "key": "information.trainer.title",
@@ -31055,7 +31847,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "O VAnimal Trainer\n\nVAnimal Trainer to czasowe członkostwo dla tych, którzy chcą bawić się z psami jeszcze więcej.\n\nJako trener możesz zebrać psy razem, urządzić im wyścig albo wybrać dwa psy, żeby pobawiły się ze sobą.\n\nZrób ze wszystkimi zdjęcie grupowe albo popatrz na wyścig.\nZabawy zaczęte przez trenera cieszą wszystkich obecnych.\n\nGłaskanie, rzucanie piłki, drzemka psa obok ciebie.\nTe codzienne zabawy pozostają dostępne dla każdego.\n\nOzdoby, zabawki i pokazy sprzedawane są osobno i nie wchodzą w skład członkostwa.\n\nW kolejnych światach też chcemy przygotować dla trenerów zabawy z psami dopasowane do danego miejsca. Ich zakres i terminy nie są jeszcze ustalone.\n\nDo wyboru są cztery okresy członkostwa:\n1 miesiąc: 500 Credits\n3 miesiące: 1 350 Credits (450 Credits miesięcznie)\n6 miesięcy: 2 550 Credits (425 Credits miesięcznie)\n12 miesięcy: 4 800 Credits (400 Credits miesięcznie)\n\nCzłonkostwo nie odnawia się automatycznie."
+          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nHere on the hillside, as a Trainer, you can gather the dogs or switch the Frisbee catch style.\n\nTake a group photo with everyone, or watch the different ways the dogs catch.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball or disc, walk together, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nThe races and two-dog play from Kominka Dog Run are not available on the hillside.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
         },
         {
           "key": "photo.help.mark",
@@ -31515,7 +32307,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>Czuj się jak u siebie</b>\nZwykłe zabawy są dostępne, nawet jeśli nic nie masz.\n\n<b>Pogłaszcz psa</b>\nPogłaszcz go po głowie, policzkach albo pod brodą, a odpowie ci.\n\n<b>Pobaw się w aport</b>\nPodnieś piłkę i rzuć. Pies ci ją przyniesie.\n\n<b>Odpocznijcie razem</b>\nW menu wybierz „Zawołaj”. Pies przyjdzie i położy się obok ciebie.\n\n<b>Ciesz się zdjęciami</b>\nWyjątkowe chwile zapisują się same i trafiają na tablicę ze zdjęciami przy werandzie.\n\n<b>Co możesz zrobić w menu</b>\nCzas spędzony tutaj zamienia się w punkty do wymiany na to, co lubisz.\nZ zakładek u góry wyjmiesz smakołyk, ubierzesz psa albo urządzisz pokaz w ogrodzie. Pokaz ogląda razem cały ogród.\n\n<b>Punkty i dziadek</b>\nOtwórz „Punkty” w prawym górnym rogu, żeby zobaczyć sposoby zdobywania punktów i kody podarunkowe.\nDziadek w ogrodzie uczy zabaw i daje pierwsze punkty.\n\n<b>Jak przywołać menu</b>\nVR: przytrzymaj prawą gałkę w dół\nDesktop: naciśnij T\nTelefon: dotknij [Menu] na ekranie"
+          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -31956,6 +32748,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "Get your welcome points from Grandpa at the entrance"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "Purchase cancelled"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "Petting effects"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "On a leash. Unclip it in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "This pose needs flat ground"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "Called over, waiting"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "Waiting where it was called. Let it roam in Call first"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "What you see and hear"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "Everyone in this instance"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "Read"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "Personal setting; 0% mutes"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "Environment\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "Sky\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "Old man\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "Leashed dogs can't come. Unleash them in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "The dogs are gathering. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "The dogs are playing frisbee. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "The dogs are busy. Try after the activity ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "Playing with the disc"
         }
       ]
     },
@@ -32934,19 +33798,19 @@
         },
         {
           "key": "welcome.body",
-          "text": "Talk to Grandpa by the gate to get points for getting ready.\nFor a walk, open Walk on this board. Put a dog on the lead and walk the hillside."
+          "text": "Nothing in hand? The usual play is all here\n- Pet: stroke the head, cheeks or chin and the dog answers\n- Throw a ball or disc: pick one up and throw it, and the dog brings it back\n- Walk together: from Walk on this board, put dogs on the lead and walk the hillside\n- Nap together: from Call on this board a dog comes and sleeps beside you\n\nWhat this board does: time spent here becomes points to trade for things you like\n- Walk, Treats, Dress: lead a dog, bring out treats, put things on a dog. From the tabs above\n- Points and Grandpa: Points at the top right shows how to earn. Talk to Grandpa by the gate to get points for getting ready"
         },
         {
           "key": "welcome.footer.vr",
-          "text": "After closing, hold the right stick down to call this back anytime."
+          "text": "After closing, hold the right stick down to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.desktop",
-          "text": "After closing, press T to call this back anytime."
+          "text": "After closing, press T to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.footer.touch",
-          "text": "After closing, tap Menu on screen to call this back anytime."
+          "text": "After closing, tap Menu on screen to call this back anytime.\nTo read again: Settings → Information → Getting started"
         },
         {
           "key": "welcome.later",
@@ -33714,7 +34578,7 @@
         },
         {
           "key": "information.vanimal.body",
-          "text": "關於 VAnimal\n\nVAnimal 以與動物接觸和玩耍為主題，在 VRChat 製作世界。日文暱稱是「Vanimaru」(ばにまる)。\n\n撫摸時，牠會露出高興的樣子。\n把丟出去的球叼回來。\n在你腳邊睡著。\n\n我們想把這些和狗狗玩耍、一起度過時光的體驗，也在 VRChat 裡和大家一起享受，於是做了 Kominka Dog Run。\n\n今後我們還想做能在戶外自在地和狗狗接觸的世界、能給動物洗澡玩耍的世界，以及像動物醫院那樣，能享受照顧動物的世界。\n\n除了製作世界，我們也想舉辦巡遊動物主題世界的導覽活動。\n\n希望能一邊享受動物們各種各樣的反應，一邊慢慢增加可以一起度過的場所和玩法。\n\n最新消息會在 Discord 發布。\n可以透過 VAnimal 的 VRChat 群組頁面裡的連結加入。"
+          "text": "About VAnimal\n\nVAnimal creates VRChat worlds about spending time and playing with animals. In Japanese, we also go by “Vanimaru” (ばにまる).\n\nA dog looks happy when you pet it.\nBrings back the ball you throw.\nFalls asleep at your feet.\n\nWe made Kominka Dog Run because we wanted to enjoy those moments of playing and spending time with dogs together in VRChat.\n\nKominka Hillside continues from there. Take a walk on an autumn hillside with the same six dogs from Kominka Dog Run, and look back at the old house in the distance.\n\nIn the future, we would also like to make worlds where you can wash and play with animals, or enjoy caring for them in a place like an animal hospital.\n\nBeyond creating worlds, we would also like to hold events such as tours of animal-themed worlds.\n\nWe hope to gradually add more places and ways to spend time together, enjoying all the different ways animals respond to us.\n\nWe share our latest news on Discord.\nYou can join through the link on VAnimal’s VRChat group page."
         },
         {
           "key": "information.trainer.title",
@@ -33722,7 +34586,7 @@
         },
         {
           "key": "information.trainer.body",
-          "text": "關於 VAnimal Trainer\n\nVAnimal Trainer 是為想和狗狗們玩得更盡興的人準備的追加體驗，有使用期限。\n\n成為訓練員後，可以讓狗狗們集合、賽跑，或者指定喜歡的 2 隻一起玩。\n\n大家一起拍合照，或者看著狗狗賽跑。\n訓練員開始的玩法，在場的所有人都能一起享受。\n\n撫摸、丟球、讓狗狗睡在身邊。\n這些平常的玩法，和以前一樣誰都可以享受。\n\n裝飾、玩具和燈光秀作品另行出售，不包含在訓練員權益裡。\n\n今後製作的世界裡，我們也想為訓練員準備適合各個場所、與狗狗一起玩的方式。具體內容和時間還沒有確定。\n\n使用期限可以從以下 4 種中選擇。\n1 個月: 500 Credits\n3 個月: 1,350 Credits (每月 450 Credits)\n6 個月: 2,550 Credits (每月 425 Credits)\n12 個月: 4,800 Credits (每月 400 Credits)\n\n沒有自動續訂。"
+          "text": "About VAnimal Trainer\n\nVAnimal Trainer is a time-limited membership for people who want to play more with the dogs.\n\nHere on the hillside, as a Trainer, you can gather the dogs or switch the Frisbee catch style.\n\nTake a group photo with everyone, or watch the different ways the dogs catch.\nEveryone there can enjoy the activities a Trainer starts.\n\nPet a dog, throw a ball or disc, walk together, or have a dog sleep beside you.\nThese everyday ways to play remain available to everyone.\n\nThe races and two-dog play from Kominka Dog Run are not available on the hillside.\n\nAccessories, toys, and live performances are sold separately and are not included in Trainer membership.\n\nWe would also like to offer Trainers ways to play with dogs suited to each of the worlds we create in the future. The activities and their release dates have not yet been decided.\n\nChoose from four membership periods:\n1 month: 500 Credits\n3 months: 1,350 Credits (450 Credits per month)\n6 months: 2,550 Credits (425 Credits per month)\n12 months: 4,800 Credits (400 Credits per month)\n\nMembership does not renew automatically."
         },
         {
           "key": "photo.help.mark",
@@ -34182,7 +35046,7 @@
         },
         {
           "key": "welcome.reread.body",
-          "text": "<b>平常的玩法，隨意就好</b>\n就算什麼都沒有，也能照樣玩。\n\n<b>撫摸狗狗</b>\n摸摸頭、臉頰、下巴，狗狗會回應你。\n\n<b>丟球給牠撿</b>\n把球撿起來丟出去，狗狗會叼回來。\n\n<b>一起休息</b>\n從選單的「呼喚」開始。狗狗會過來，睡在你旁邊。\n\n<b>欣賞相片</b>\n好的瞬間會自動拍下，排在簷廊的相片板上。\n\n<b>選單裡能做的事</b>\n在這裡度過的時間會變成積分，可以換你喜歡的東西。\n從上面的標籤，可以把零食取到手邊、給狗狗戴上裝飾，或者在院子裡舉辦燈光秀。燈光秀在場的人都能一起看。\n\n<b>積分和爺爺</b>\n在右上的「積分」裡，可以查看積分的獲取方法和兌換碼。\n院子裡的爺爺會教你怎麼玩，還會給你最初的積分。\n\n<b>怎麼把選單叫到手邊</b>\nVR: 長按右搖桿向下\nDesktop: 按 T 鍵\n手機: 點一下畫面上的［選單］"
+          "text": "<b>Make yourself at home</b>\nYou can enjoy the usual activities without owning anything.\n\n<b>Pet a dog</b>\nStroke their head, cheeks, or chin, and they will respond.\n\n<b>Throw a ball or disc</b>\nPick one up and throw it. A dog will bring it back.\n\n<b>Walk together</b>\nChoose “Walk” in the menu. Put dogs on the lead and walk the hillside.\n\n<b>Rest together</b>\nChoose “Call” in the menu. A dog will come over and rest beside you.\n\n<b>What you can do in the menu</b>\nTime spent here earns points to exchange for things you like.\nUse the tabs above to walk with dogs on the lead, take out treats, or dress up a dog.\n\n<b>Points and Grandpa</b>\nOpen “Points” at the top right to see how to earn points.\nTalk to Grandpa by the gate to get points for getting ready.\n\n<b>Bring the menu to you</b>\nVR: Hold the right stick down\nDesktop: Press T\nMobile: Tap [Menu] on the screen"
         },
         {
           "key": "photo.frame.halloween",
@@ -34623,6 +35487,78 @@
         {
           "key": "KD_TreatPouch.WordGrantLine",
           "text": "Get your welcome points from Grandpa at the entrance"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBuyCancelled",
+          "text": "Purchase cancelled"
+        },
+        {
+          "key": "KD_TreatPouch.WordFxGroup",
+          "text": "Petting effects"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepLeashed",
+          "text": "On a leash. Unclip it in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepNeedFlat",
+          "text": "This pose needs flat ground"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkStateCalled",
+          "text": "Called over, waiting"
+        },
+        {
+          "key": "KD_TreatPouch.WordWalkGateCalled",
+          "text": "Waiting where it was called. Let it roam in Call first"
+        },
+        {
+          "key": "settings.group.self",
+          "text": "What you see and hear"
+        },
+        {
+          "key": "settings.group.room",
+          "text": "Everyone in this instance"
+        },
+        {
+          "key": "settings.group.read",
+          "text": "Read"
+        },
+        {
+          "key": "settings.volume.scope",
+          "text": "Personal setting; 0% mutes"
+        },
+        {
+          "key": "credit.environment.kit",
+          "text": "Environment\nLMArt Stylized Environment Kit"
+        },
+        {
+          "key": "credit.sky",
+          "text": "Sky\nAllsky"
+        },
+        {
+          "key": "credit.keeper",
+          "text": "Old man\npolyperfect Low Poly Animated People"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyLeash",
+          "text": "Leashed dogs can't come. Unleash them in Walk first"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyGather",
+          "text": "The dogs are gathering. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyFrisbee",
+          "text": "The dogs are playing frisbee. Try after it ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyWait",
+          "text": "The dogs are busy. Try after the activity ends"
+        },
+        {
+          "key": "KD_TreatPouch.WordSleepFrisbee",
+          "text": "Playing with the disc"
         }
       ]
     }

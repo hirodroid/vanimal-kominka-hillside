@@ -16,7 +16,8 @@ using UnityEngine.UI;
 
 namespace KominkaDogRun.Editor
 {
-    public static class KD_DistanceFadeSettingsEditor
+    // 裏山改変: 裏山の入口 (Menu/14 / 14c) と構築は KD_DistanceFadeSettingsEditor.Hillside.cs (partial)。古民家の Setup / Verify は Imported-Unused へ
+    public static partial class KD_DistanceFadeSettingsEditor
     {
         public const string SystemName = "KD_DistanceFadeSettings";
         const string ScriptPath = "Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DistanceFadeSettings.cs";
@@ -70,7 +71,8 @@ namespace KominkaDogRun.Editor
                 }
                 if (targets == 0) throw new InvalidOperationException("No fade targets: " + def.key);
             }
-            CollectCat(reference, log, rs, ss);
+            // 裏山改変: 猫は裏山に居ない (IMP-CAT-001 の分岐は通さない)。CollectCat は古民家の写しとして残す
+            log.AppendLine("cat: none in Hillside (skipped)");
             renderers = rs.ToArray(); slots = ss.ToArray();
             log.AppendLine("TARGETS " + rs.Count);
         }
@@ -115,7 +117,8 @@ namespace KominkaDogRun.Editor
             AssetDatabase.SaveAssets();
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/14 Setup Distance Fade")]
+        // 裏山改変: 古民家の Setup (KD_Systems へ置く) は隔離。裏山は SetupHillside (Menu/14)
+        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Distance Fade/14 - Setup Distance Fade (Kominka)")]
         public static void Setup()
         {
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode only");
@@ -184,7 +187,7 @@ namespace KominkaDogRun.Editor
             var su = UdonSharpEditorUtility.GetBackingUdonBehaviour(settings);
             var home = pouch.settingsHome.transform;
             // IMP-DOG-036: 文言は全端末で「距離フェード (PCのみ)」。押せるかは KD_DistanceFadeSettings.Start() が端末で決める
-            settings.entryButton = KD_ShopSetupEditor.EnsureButton(home, "DistanceFadeSettingsButton", new Vector2(-180, 0), new Vector2(340, 64),
+            settings.entryButton = KD_ShopSetupEditor.EnsureButton(home, "DistanceFadeSettingsButton", KD_MenuFinishEditor.HillsideFadeEntryPos /* 裏山改変: 設定ホームの配置の正本は KD_MenuFinishEditor.Hillside */, KD_MenuFinishEditor.HillsideEntrySize,
                 KD_UiSpriteEditor.ActionNeutral, font, KD_DistanceFadeSettings.EntryButton, pu, "_OpenDistanceFadeSettings", log).GetComponent<Button>();
             var page = KD_ShopSetupEditor.EnsureUiChild(pouch.settingsPage.transform, "DistanceFadeSettings", Vector2.zero, new Vector2(760, 520));
             pouch.distanceFadeSettingsPage = page;
@@ -285,11 +288,21 @@ namespace KominkaDogRun.Editor
             finally { UnityEngine.Object.DestroyImmediate(probe); }
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/14c Verify Distance Fade")]
+        // 裏山改変: 古民家の Verify (音量の入口を兄弟に要求する) は隔離。裏山は VerifyHillside (Menu/14c)
+        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Distance Fade/14c - Verify Distance Fade (Kominka)")]
         public static void Verify()
         {
             var log = new StringBuilder(); int fail = 0;
             Action<bool,string> check = (ok,msg) => { log.AppendLine((ok ? "PASS " : "FAIL ") + msg); if (!ok) fail++; };
+            VerifyShared(log, check);
+            log.AppendLine("RESULT " + (fail == 0 ? "PASS" : "FAIL") + " failures=" + fail);
+            File.WriteAllText("Temp/distance-fade-verify.txt", log.ToString());
+            if (fail > 0) Debug.LogError("Distance fade verification failed: " + fail);
+        }
+
+        /// <summary>裏山改変: 古民家の検査本体 (配線・入口・頁・入力欄・字形・論理) を裏山の Menu/14c (VerifyHillside) からも使う。</summary>
+        static void VerifyShared(StringBuilder log, Action<bool,string> check)
+        {
             var settings = KD_SceneObjects.Find(SystemName).GetComponent<KD_DistanceFadeSettings>();
             var pouch = KD_SceneObjects.Find(KD_DogDefs.TreatPouchName).GetComponent<KD_TreatPouch>();
             var reference = Reference();
@@ -361,9 +374,6 @@ namespace KominkaDogRun.Editor
                 UnityEngine.Object.DestroyImmediate(probe);
             }
             VerifyLogic(reference, check);
-            log.AppendLine("RESULT " + (fail == 0 ? "PASS" : "FAIL") + " failures=" + fail);
-            File.WriteAllText("Temp/distance-fade-verify.txt", log.ToString());
-            if (fail > 0) Debug.LogError("Distance fade verification failed: " + fail);
         }
 
         static void VerifyLogic(Material reference, Action<bool,string> check)

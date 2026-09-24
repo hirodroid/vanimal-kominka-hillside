@@ -217,6 +217,14 @@ namespace KominkaDogRun
         private void HillsideToy(int row, int kind)
         {
             if (recall == null) return;
+            // 裏山改変 (IMP-DOG-016): 呼ばれて待機中の犬は おもちゃ (ボール / ディスク) の候補から外す (古民家の !sleeping)。
+            // KH_ToyRecall の可否は Fetch の IsIdle を見るが、寝ている犬の dogState は Idle のままなので弾けない (Issue §6 危険 4)
+            if (sleepBoard != null && sleepBoard.IsSleeping(row))
+            {
+                HillsideNote(TabToy, "KD_TreatPouch.WordSleepingSomeone", "");
+                Redraw();
+                return;
+            }
             int gate = recall._GateToy(row, kind);
             if (gate != KominkaHillside.KH_ToyRecall.Ok)
             {
@@ -273,10 +281,14 @@ namespace KominkaDogRun
                 int discGate = recall == null ? KominkaHillside.KH_ToyRecall.Unwired : recall._GateToy(i, KominkaHillside.KH_ToyRecall.KindDisc);
                 bool ballOn = ballGate == KominkaHillside.KH_ToyRecall.Ok;
                 bool discOn = discGate == KominkaHillside.KH_ToyRecall.Ok;
+                // 裏山改変 (IMP-DOG-016): 呼ばれて待機中の犬は押せない (ボタンは暗く、理由は「〇〇さんのそばにいる」)
+                bool sleeping = sleepBoard != null && sleepBoard.IsSleeping(i);
+                if (sleeping) { ballOn = false; discOn = false; }
 
                 if (toyLabels[i] != null) toyLabels[i].text = HillsideDogName(i);
                 if (toyReasonLabels != null && i < toyReasonLabels.Length && toyReasonLabels[i] != null)
-                    toyReasonLabels[i].text = L("KD_TreatPouch.WordToyBall") + ": " + HillsideToyShort(ballGate) + " / " + L("KD_TreatPouch.WordToyDisc") + ": "
+                    toyReasonLabels[i].text = sleeping ? SleeperText(i, ToyNameBudget)
+                        : L("KD_TreatPouch.WordToyBall") + ": " + HillsideToyShort(ballGate) + " / " + L("KD_TreatPouch.WordToyDisc") + ": "
                         + (discGate == KominkaHillside.KH_ToyRecall.Unwired ? L("KD_TreatPouch.WordToyStateNotYet") : HillsideToyShort(discGate));
 
                 // **ボタンは隠さない。** 押せないことは interactable と色で表す (古民家のおもちゃタブと同じ)

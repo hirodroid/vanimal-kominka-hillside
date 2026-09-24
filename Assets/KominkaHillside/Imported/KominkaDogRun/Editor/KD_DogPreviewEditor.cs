@@ -19,7 +19,7 @@ namespace KominkaDogRun.Editor
 {
     // Bakes only display geometry into dog-root coordinates. No cloned behaviours enter the world.
     // Rebuild after changing dog scale, accessory fit or the selected pose clip.
-    public static class KD_DogPreviewEditor
+    public static partial class KD_DogPreviewEditor   // 裏山改変: partial (KD_DogPreviewEditor.Hillside.cs)
     {
         const string Dir = "Assets/KominkaHillside/Imported/KominkaDogRun/Models/DogPreviews";
         const string GhostMat = "Assets/KominkaHillside/Imported/KominkaDogRun/Materials/KD_SleepPreview.mat";
@@ -413,6 +413,25 @@ namespace KominkaDogRun.Editor
             var p=Pouch();var log=new StringBuilder();int fail=0,pass=0;
             void Check(bool ok,string name){if(ok)pass++;else fail++;log.AppendLine((ok?"PASS ":"FAIL ")+name);}
             int dogs=KD_DogDefs.All.Length;
+            // 裏山改変 (IMP-DOG-015): 焼き直しの要否 (古民家の焼き済みとの比較) を先に出す。前提 (かざり・呼ぶの配線と 18 の器) が無ければ、落ちずに FAIL を書いて止める
+            int parity=HillsideBakeParity(log);
+            log.AppendLine("bakeParityMismatch="+parity);
+            // Codex M-1 (段階 2+3): 焼き済みが今の犬 (首輪込み) より古ければ FAIL。内訳は上の DIFF 行 (HillsideBakeParity)
+            Check(parity==0,"焼き済みミニチュアが今の犬 (首輪込み) と一致 (不一致 "+parity+" 姿勢。DIFF 行を参照。Menu/18 Build Dog Previews で焼き直す)");
+            if(p.accessories==null || p.sleepPlacement==null || p.sleepPlacement.markerDogs==null || p.accPreviewDogs==null || p.accPreviewItems==null || p.accRows==null || p.accConfirmRoot==null)
+            {
+                Check(false,"前提: pouch.accessories (6e) / sleepPlacement (6i) / accPreviewDogs・accPreviewItems (18 Build Dog Previews) / accConfirmRoot が配線済み");
+                log.AppendLine("RESULT pass="+pass+" fail="+fail);
+                Directory.CreateDirectory("Temp/dog-previews");File.WriteAllText("Temp/dog-previews/verify.txt",log.ToString());Debug.Log(log.ToString());
+                return;
+            }
+            // 裏山改変: 飾りの試着は「1 メッシュ共有」 (焼かずに本物のノードと同じメッシュを Transform で置く。2026-09-10 古民家の決定)
+            for(int i=0;i<p.accPreviewItems.Length && i<p.accessories.nodes.Length;i++)
+            {
+                var item=p.accPreviewItems[i];var node=p.accessories.nodes[i];
+                var a=item==null?null:item.GetComponentInChildren<MeshFilter>(true);var b=node==null?null:node.GetComponentInChildren<MeshFilter>(true);
+                Check(a!=null && b!=null && a.sharedMesh==b.sharedMesh && !AssetDatabase.GetAssetPath(a.sharedMesh).StartsWith(Dir),"shared accessory mesh "+i+(node!=null?" "+node.name:""));
+            }
             Check(p.accPreviewDogs!=null && p.accPreviewDogs.Length==dogs,"six miniatures");
             Check(p.accPreviewItems!=null && p.accPreviewItems.Length==dogs*p.accessories.productIds.Length,"product x dog preview nodes");
             for(int d=0;d<dogs;d++)
@@ -440,11 +459,15 @@ namespace KominkaDogRun.Editor
             }
             for(int i=0;i<p.accPreviewItems.Length;i++)Check(p.accPreviewItems[i]!=null && !p.accPreviewItems[i].activeSelf && p.accPreviewItems[i].transform.IsChildOf(p.accPreviewDogs[i%dogs].transform) && p.accPreviewItems[i]!=p.accessories.nodes[i],"isolated accessory "+i);
             Check(p.accConfirmRoot!=null && !p.accConfirmRoot.activeSelf,"confirmation hidden");
+            // 裏山改変 (司令塔 2026-09-24): 確認は共有カード 1 枚 (P13)。ConfirmPanel = 暗幕 (_ConfirmNo、本文ラベルは実行時に書く)、Card = クリック遮断 (listener 0)、No / Yes だけが文言を持つ。古民家の検査は P13 以前の形なので、この形に合わせる
             foreach(var button in p.accConfirmRoot.GetComponentsInChildren<Button>(true))
             {
+                if(button.name=="Card") { Check(button.onClick.GetPersistentEventCount()==0,"confirmation card blocks clicks (no listener) "+button.name); continue; }
                 Check(button.onClick.GetPersistentEventCount()==1 && button.onClick.GetPersistentTarget(0)==UdonSharpEditorUtility.GetBackingUdonBehaviour(p),"confirmation button target "+button.name);
+                if(button.name=="ConfirmPanel") continue; // 暗幕の本文は実行時の文言
                 var label=button.GetComponentInChildren<TextMeshProUGUI>();
-                Check(label!=null && Array.IndexOf(p.language.fixedLabels,label)>=0,"localized confirmation "+button.name);
+                // No / Yes の文言は KD_TreatPouch.Confirm.cs が表示のたびに L(call.cancelPurchase / KD_ShopShelf.WordBuy / confirm.storeButton) で書く (固定束縛ではない)
+                Check(label!=null,"confirmation label present (runtime localized) "+button.name);
             }
             var backing=UdonSharpEditorUtility.GetBackingUdonBehaviour(p);
             GameObject[] wired;

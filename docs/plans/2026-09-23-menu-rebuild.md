@@ -1,6 +1,6 @@
 # 手元メニューを古民家と同一の器へ作り替える実装計画
 
-状態: **段階 0-a・0-b 完了** (2026-09-23 実装・Verify 全 PASS・Codex D+M・コミット a19112a、2026-09-24 に PCVR でユーザー OK)。**段階 1 (IMP-PRG-001) は 2026-09-24 に実装済み・Verify 全 PASS。Codex D+M 済み (5 件修正・1 件記録)、Play (ClientSim・PCVR) は未実施**。記録は下の「実装記録」、確認手順は「実機チェックリスト」。設計は 2026-09-23 のユーザー指示「モック OK。古民家の実際のメニューの配置・コンポーネントを確認して設計」に基づく。採否と全体構成の正本は [game-design §4](../game-design.md) と [DES-UI-003](../development/issues/DES-UI-003-menu-scope-and-polish.md)、画面・入力・状態・Unity 部品の正本は [world-ui-spec §4〜6・§8](../world-ui-spec.md)。見え方の合意はモック 版 3 (<https://claude.ai/artifact/K1moWuWCeWMUm7wUprZx3f>、ユーザー「OK」)。
+状態: **段階 0-a・0-b 完了** (2026-09-23 実装・Verify 全 PASS・Codex D+M・コミット a19112a、2026-09-24 に PCVR でユーザー OK)。**段階 1 (IMP-PRG-001) は 2026-09-24 に実装済み・Verify 全 PASS。Codex D+M 済み (5 件修正・1 件記録)、Play (ClientSim・PCVR) は未実施**。**段階 2 (IMP-DOG-014 / 015 / 016) と段階 3 (IMP-UI-001 後半) は 2026-09-24 に実装済み・Verify 全 PASS・シーン保存済み。Codex D+M+U 済み (6 件修正・2 件記録)、コミット未、Play (ClientSim・PCVR) 待ち。首輪と首元の飾りの干渉 8 件・ミニチュアの首輪・クレジット URL 3 件はユーザーの判断待ち** (下の「ユーザーへの報告」)。記録は下の「実装記録」、確認手順は「実機チェックリスト」。設計は 2026-09-23 のユーザー指示「モック OK。古民家の実際のメニューの配置・コンポーネントを確認して設計」に基づく。採否と全体構成の正本は [game-design §4](../game-design.md) と [DES-UI-003](../development/issues/DES-UI-003-menu-scope-and-polish.md)、画面・入力・状態・Unity 部品の正本は [world-ui-spec §4〜6・§8](../world-ui-spec.md)。見え方の合意はモック 版 3 (<https://claude.ai/artifact/K1moWuWCeWMUm7wUprZx3f>、ユーザー「OK」)。
 
 この計画書は**順序と分担**だけを持つ。何を作るかは各 Issue が持つ。
 
@@ -127,9 +127,9 @@
 |---|---|---|---|
 | **0-a** | **移植の土台**: `Assets/KominkaDogRun/Editor/` を丸ごとコピー、**パス定数の置換一覧を作る** (`grep "Assets/KominkaDogRun"` の結果を [kominka-dog-system](../development/imports/kominka-dog-system.md) に表で記録。Script / Program Asset は `Assets/KominkaHillside/Imported/KominkaDogRun/…`、Font / Textures / Data / Models / Materials は `Assets/KominkaHillside/…`)、MenuItem の付け替えと未採用機能の隔離 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (0-a) | **コンパイル 0** / Console エラー 0 / 置換一覧が imports に記録されている / Codex M |
 | **0-b** | **器の構築**: スプライト焼き、フォント 48 pt 再ベイク、文言・言語生成、KD_TreatPouch を配置して 7 タブの器を作る。さんぽ・おもちゃ・あそぶを KH_HandMenu から移し、KH_HandMenu を退役。**設定面の器とナイトモードのスライダー**。ライブは準備中、おやつ・かざり・呼ぶは行に「準備中」。拠点板の付け替え | IMP-UI-001 (0-b) | コンパイル 0 / Verify (Pouch + Scroll Layout、下の Verify 表の段階 0 分) 全 PASS / 既存 3 機能の退行なし (`Walking/5 Verify` 全 PASS。起票時の「111」は古い件数で、2026-09-23 時点の項目数は 208) / Codex D+M / **PCVR で現行 3 機能の見え方が古民家と同じ (ユーザー)**。**到達状況 (2026-09-23): コンパイル 0・Verify 全 PASS・Walking/5 208/0 は済み。Codex 未・PCVR 未** |
-| 1 | 台帳・おじいさん・ポイント・残高・確認カードの実体 (購入が動く)。**初回未受取の案内帯 (購入面の 1 行) と ようこそ の最小版 (題 + [メニューを見る]) を前倒しする** | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) | Verify + ClientSim (T-007/T-008) + Codex D+M。**到達状況 (2026-09-24): コンパイル 0・Verify 全 PASS (3b / 4a / 4e / 20 / 21 / 22 / 23 / 11c / 24 / 15a)・Walking/5 208/0・check-consume-once OK は済み。Codex は実行中。T-007 / T-008 は実機または ClientSim 待ち (台帳用のハーネスは無い)** |
-| 2 | おやつ / かざり + 撫でFX + ミニチュア / 呼ぶ + ポーズ面 + 場所決め (3 本並列) | [IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md) / [015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) / [016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | 各 Verify + ハーネス + Codex D+M、PCVR (ユーザー)。加えて **入室 → おじいさん → 200pt → かざりで装着 → さんぽ の一周が 1 人で成立する** |
-| 3 | 設定面 (距離フェード・ナイトモードスライダー・許可 2 種・言語・クレジット・案内・音量)、ようこそ | IMP-UI-001 (後半) | Verify + Codex D+M+U、PCVR |
+| 1 | 台帳・おじいさん・ポイント・残高・確認カードの実体 (購入が動く)。**初回未受取の案内帯 (購入面の 1 行) と ようこそ の最小版 (題 + [メニューを見る]) を前倒しする** | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) | Verify + ClientSim (T-007/T-008) + Codex D+M。**到達状況 (2026-09-24): コンパイル 0・Verify 全 PASS (3b / 4a / 4e / 20 / 21 / 22 / 23 / 11c / 24 / 15a)・Walking/5 208/0・check-consume-once OK は済み。Codex D+M+U 済み (6 件修正・2 件記録)。T-007 / T-008 は実機または ClientSim 待ち (台帳用のハーネスは無い)** |
+| 2 | おやつ / かざり + 撫でFX + ミニチュア / 呼ぶ + ポーズ面 + 場所決め (3 本並列) | [IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md) / [015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) / [016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | 各 Verify + ハーネス + Codex D+M、PCVR (ユーザー)。加えて **入室 → おじいさん → 200pt → かざりで装着 → さんぽ の一周が 1 人で成立する**。**到達状況 (2026-09-24): コンパイル 0 (C# 0 / U# 82)・Verify 全 PASS (6d / 6f / 6h / 6b / 25 / 20 / 21 / 22 / 23 / 24 / 4e / Walking/5 209/0、check-consume-once OK)・シーン保存は済み。Codex D+M+U 済み (6 件修正・2 件記録) (段階 3 と合わせて)。ハーネス・一周・PCVR は未。首輪干渉 8 件はユーザー判断待ち** |
+| 3 | 設定面 (距離フェード・ナイトモードスライダー・許可 2 種・言語・クレジット・案内・音量)、ようこそ | IMP-UI-001 (後半) | Verify + Codex D+M+U、PCVR。**到達状況 (2026-09-24): Verify 全 PASS (14c / 16a / 22 / 11c / 15a / 20 / 21)・シーン保存は済み。Codex D+M+U 済み (6 件修正・2 件記録) (段階 2 と合わせて)。PCVR (T-011 を含む) は未。クレジット URL 3 件は未記入 (Verify 22 は `CREDIT_URL_PENDING 3`)** |
 | 4 | 複数人・Desktop/Touch・Quest/iOS | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | 実機チェックリスト |
 
 - 段階 0-a → 0-b が全体の前提。段階 1 → 2 の順 (購入が無いとかざり・おやつの行が試せない)。段階 2 の 3 本は触るファイルが**ほぼ**重ならない (Treat 系 / Acc+PetFx+Preview 系 / Sleep+CallPose 系) が、**共通ファイル (`.Pouch.cs` / `.Redraw.cs` / `.Confirm.cs` / `UITranslations.json`) は 3 本の担当が直接編集せず、差分を司令塔が順に統合する**。
@@ -149,17 +149,22 @@
 | Shop/2 Setup Shop, 3 Verify Shop | **Menu/4 Setup Shop (裏山)** / **4a Verify Shop (裏山)** (`KD_ShopSetupEditor.Hillside.cs`。`KH_Dogs/KD_ShopCatalog` + `KD_ShopItem_*` 50 行 = `KD_ProductDefinitions.All`、全行 menuOnly、`KH_Dogs/KD_PlayerFxTag`。棚・ToyBox・おやつ陳列は作らず、4a で SKIP を明示)。古民家版は `Menu/Imported-Unused/Shop/2・3 (Kominka)` へ | 1 |
 | Shop Keeper/2 Setup, 3 Verify | **Menu/4d Setup Shop Keeper** / **4e Verify Shop Keeper** (`KD_ShopKeeperSetupEditor.Hillside.cs`。`KH_Dogs/KD_ShopKeeper` + 子 man_farm、ナビ 5 項目)。古民家版の入口 `Menu/Imported-Unused/Shop Keeper/2・3` も同じ 5 項目で組む | 1 |
 | 5 Treat System/1 Create Program Assets | Menu/5 Create Pouch Programs | 0-b |
-| 6 Sleep System/2 Setup | **段階 0 では飛ばす** → Menu/6 Setup Sleep | 2 (IMP-DOG-016) |
+| 6 Sleep System/1 Create Programs, 2 Setup, 3 Verify | **Menu/6a Create Sleep Programs** / **6 Setup Sleep** / **6b Verify Sleep System** (`KD_SleepSetupEditor.cs` 裏山改変。6 は `KH_Dogs/KD_SleepBoard` + `KD_SleepSlot` ×6、6 匹の wander / fetch、`KD_LiveAccess`、`pouch.sleepBoard`、`KH_LeashManager.sleepBoard` を配線) | 2 (IMP-DOG-016) |
+| (Sleep Placement/1 Setup) | **Menu/6i Setup Sleep Placement** (`KD_SleepPlacementEditor.cs`。`KH_Dogs/KD_SleepPlacement`、赤マーク `Models/SleepPlacement/Invalid.mat`) | 2 (IMP-DOG-016) |
+| (Call Pose/1 Setup) | **Menu/6j Setup Call Poses** (`KD_CallPoseEditor.cs`。`KH_Dogs/KD_CallPose`、6 匹 × 7 ポーズを `Models/DogPreviews` へ焼く。重い) | 2 (IMP-DOG-016) |
+| Treat System/2 Setup (おやつの器) | **Menu/6c Setup Treats** / **6d Verify Treats** (新規 `KD_TreatSetupEditor.Treats.cs`。`KD_TreatHome_0..2` / `KD_Treat_0..2` / `KD_TreatSlot_0..2` / `KD_TreatBox` / `KD_TreatFx` を `KH_Dogs` 直下に)。古民家の Setup は `Imported-Unused/Treat System/2 (Kominka)` のまま | 2 (IMP-DOG-014) |
+| Accessories/2 Setup, 3 Verify | **Menu/6e Setup Accessories** / **6f Verify Accessories** (新規 `KD_AccessorySetupEditor.Hillside.cs`。24 品 × 6 匹の見た目ノード、`KH_Dogs/KD_AccessorySystem` (Manual)、首輪干渉表) | 2 (IMP-DOG-015) |
+| Pet System/Bundled Pet Fx | **Menu/6g Setup Pet Fx** / **6h Verify Pet Fx** (新規 `KD_BundledPetFxEditor.Hillside.cs`。`KH_Dogs/KD_PetFxBox` (None)、同梱 5 種 × 2 層) | 2 (IMP-DOG-015) |
 | 7 Treat System/2 Setup Treat System | **Menu/7 Build Menu = 裏山の入口 `SetupHillside()`** (`KD_TreatSetupEditor.Hillside.cs`。KD_DogPack 必須 → `KH_Dogs/KD_TreatPouch` → BuildPouchPanel → 開閉値 → `hillsideStage`・manager・recall → 拠点板 3 枚 → CopyProxyToUdon → 文言。段階 0 の参照は探さない)。古民家の Setup / Verify は `Menu/Imported-Unused/Treat System/2 - Setup Treat System (Kominka)` / `3 - Verify Treat System (Kominka)` へ移した | 0-b |
 | 8-9 Activities/1,2 | Menu/8 Create Activities Programs, 9 Setup Activities (集合のみ) | 0-b |
 | 10-11 Menu Finish/1,2 | Menu/10 Collect Words, 11 Setup Localization (文言・言語配列・グリフ・Bind) | 0-b |
 | Welcome Guide/1 Build, 2 Verify | **Menu/11b Build Welcome** / **11c Verify Welcome** (`KD_WelcomeGuideEditor.cs` 裏山改変。最小版の ようこそ + `KD_HintDirector`)。古民家版は `Menu/Imported-Unused/Welcome Guide/1・2 (Kominka)` へ | 1 |
 | 12-13 Hand Menu/2 Rebuild Panel, 3 Apply Scroll Layout | Menu/12 Rebuild Panel, 13 Apply Scroll Layout | 0-b |
-| 14 Distance Fade/2 | Menu/14 Setup Distance Fade | 3 |
+| 14 Distance Fade/2, 3 | **Menu/14 Setup Distance Fade** / **14c Verify Distance Fade** (`KD_DistanceFadeSettingsEditor.Hillside.cs`。系は `KH_Dogs` 直下、猫なし)。古民家版は `Menu/Imported-Unused/Distance Fade/…` へ | 3 (2026-09-24 実行) |
 | 15 Night Mode/1 | Menu/15 Setup Night Mode (裏山は `KH_NightMode` を指す) | **0-b** (スライダーの配線を段階 0-b へ前倒し。15a Verify も 0-b で実行) |
-| 16 UI/5 Volume | Menu/16 Setup Volume | 3 |
+| 16 UI/5 Volume | **Menu/16 Setup Volume** / **16a Verify Dog Voice** (`KD_DogVoiceSettingsEditor.Hillside.cs`。音量頁は「外」1 群 = 犬の声だけ)。古民家版は `Menu/Imported-Unused/Volume/…` へ | 3 (2026-09-24 実行) |
 | 17 UI/1 Refresh Menus | Menu/17 Refresh Menus | 0-b 以降毎回 |
-| (Dog Previews/1 Build) | Menu/18 Build Dog Previews | 2 |
+| (Dog Previews/1 Build) | Menu/18 Build Dog Previews (`KD_DogPreviewEditor.Hillside.cs` で焼き済みと比較。裏山は首輪込みで焼き直す) | 2 (2026-09-24 実行) |
 | Hand Menu Collision/1 | Menu/19 Apply Collision Layers | 0-b |
 | (裏山のみ) | **Menu/19b Assign Network IDs** (SDK がビルド時に呼ぶ `NetworkIDAssignment.ConfigureNetworkIDs` を Editor から呼ぶ。新しい UdonBehaviour を置いた後と、器を消した後に実行) | 0-b 以降、器を足し引きするたび |
 | 検証: Treat System/3, Hand Menu/4, Menu Finish/3・5, Activities/3, Hand Menu Collision/2, Dog Previews/2 | Menu/20 Verify Pouch, 21 Verify Scroll Layout, 22 Verify Localization, 23 Verify Activities, 24 Verify Collision, 25 Verify Dog Previews | 各段階 |
@@ -170,6 +175,10 @@
 
 2026-09-24 の段階 1 で司令塔が実行した順: 3 → 3a → 4 → 3b / 4a → 19b → 保存 → (文言の統合・refresh) → 4d → 7 → 9 → 11 → 11b → 検証 (3b / 4a / 4e / 20 / 21 / 22 / 23 / 11c / 24 / 15a / Walking/5) → 19b → 保存。
 
+2026-09-24 の段階 2・3 で司令塔が実行した順: 6 → 6i → 6j (初回は例外) → 11 → 6j (再) → 6c → 6e → 6g → 18 → 7 → 9 → 11 → 14 → 16 → 11b → 19b → 検証 → 保存。結果は下の「実装記録 / 段階 2」。
+
+**Bind の循環依存 (2026-09-24 判明)**: Bind (文言の束縛) は、束縛先の部品が 1 つでも無いと例外で止まる。段階 3 の束縛 (インフォメーション) は Menu/11 が作る器を、段階 2 の束縛 (ポーズ面・場所決めの固定ラベル 18 行) は 6i / 6j が作る器を要求する。6j も 11 も Bind を呼ぶので、空のシーンからは **6 → 6i → 6j (器はできるが Bind で例外) → 11 → 6j (再)** の順で流す (器がそろった後の流し直しの順序は確かめていない)。
+
 ## Verify の追加項目 (古民家の検査に裏山分を足す)
 
 | 検査 | 導入段階 | 対象オブジェクト | イベント名・接続先 | 期待値 | 未導入時の扱い |
@@ -179,7 +188,9 @@
 | さんぽの行 | 0-b | Page_Walk の `WalkRow0..5` (6。計画時の仮名 `Dog{i}`) | `_WalkLeft{i}` / `_WalkRight{i}` / `_WalkOff{i}` → pouch backing | 3 ボタン × 6 行が名前どおり 1 本ずつ | 2026-09-23 PASS |
 | さんぽの行き先 | 0-b | Page_Walk の `WalkRow6` (広場) / `WalkRow7` (古民家側の入口) | `_WalkPlaza` / `_WalkGate` | 各 1 本 | 2026-09-23 PASS |
 | おもちゃの行 | 0-b | `ToyRow{i}` (6) | `_Toy{i}` / `_Disc{i}`、`pouch.recall` (KH_ToyRecall) | 2 ボタン / 行、recall 参照が非 null | 2026-09-23 PASS |
-| かざりの混在行 | 0-b (順序) / 2 (FX の配線) | Page_Acc の Content | `_Acc{i}` / `_Fx{i}` | 子順が `AccRow0..15`, `FxRow0..10` | FX の onClick は段階 2 まで未検査 (FxRow は既定で非表示)。子順は 2026-09-23 PASS |
+| かざりの混在行 | 0-b (順序) / 2 (FX の配線) | Page_Acc の Content | `_Acc{i}` / `_Fx{i}` | 子順が `AccRow0..15`, 群見出し `FxHead0/1`, `FxRow0..10`。FX 行の onClick が `_Fx{i}` | 子順は 2026-09-23 PASS。**FX の配線 (onClick・petFxBox) は 2026-09-24 PASS** (Menu/20・21・6h) |
+| おやつの行と [買う] | 2 | Page_Treat の `Row0..3` | `_Row{i}` / `_TreatBuy{i}` → 確認カード kind `ConfirmTreat` (6) | 4 行 × 2 ボタン、`pouch.box` が非 null | 2026-09-24 PASS (Menu/20・21・6d) |
+| 段階 2 の参照 | 2 | pouch | box / accessories / petFxBox / sleepBoard / sleepPlacement / callPose | 6 参照すべて非 null (Menu/7 は 1 か所 `HillsideFindStage2` で探し、欠ければ pouch に触れる前に止める)。試着ミニチュア 6 匹 | 2026-09-24 PASS (Menu/7・20・25) |
 | 拠点板 | 0-b | `KH_MenuOpener` ×3 | Interact → pouch の `_Toggle` | 3 枚とも pouch を指す | 2026-09-23 PASS |
 | 旧実装の不在 | 0-b | シーン全体 | — | `KH_HandMenu` コンポーネント **0 個**、旧 Panel なし | 2026-09-23 PASS (退役・保存後。シーン grep でも 0) |
 | 同期変数 | 全段階 | pouch backing | — | **0 本** (SyncMode None) | 2026-09-23 PASS |
@@ -187,7 +198,7 @@
 | 欠字 | 全段階 | `KD_NotoSerif SDF` | — | `MissingGlyphs(PouchWords()) == 0`、Static | 2026-09-23 PASS (48 pt、`HillsideWords()` 込み) |
 | あそぶ | 0-b | Page_Play | `KD_ActivitiesMenu` | 集合のみ (犬目線カメラ・2 匹の遊びが無い) | 2026-09-23 PASS (Menu/20・23) |
 | ライブ | — | Page_Live | `_Live{i}` / `_LiveGift{i}` | **skip を明示** (DES-LIV-001 まで) | 準備中 1 行だけを確認。2026-09-23 は SKIP を出力して PASS |
-| 参照の null 許容 | 段階表 (D-1) | pouch の各参照 | — | その段階で「null が正」か「FAIL」かを段階表で判定 | 意図的な未導入は PASS 扱いで理由を出力。2026-09-23 PASS |
+| 参照の null 許容 | 段階表 (D-1) | pouch の各参照 | — | その段階で「null が正」か「FAIL」かを段階表で判定 | 意図的な未導入は PASS 扱いで理由を出力。2026-09-23 PASS。**2026-09-24 に段階表を 2 へ上げて PASS** (`KD_Hillside.Stage = 2`。null が正なのは live だけ) |
 
 最右列の「2026-09-23 PASS」は段階 0-b の実行結果 (Menu/20 `VERIFY RESULT PASS`、21 pass 394 / fail 0。詳細は「実装記録」)。
 
@@ -415,7 +426,174 @@ Menu/20 で新たに見るもの: ledger / catalog が `KH_Dogs` 直下、`KD_Sh
 
 修正後: refresh → C# 0 → U# 82 finished → Menu/7 (束縛先の事前検査 119 / 不足 0) → 11 → Verify 4e / 20 / 11c / 3b / 4a / 22 PASS、Walking/5 208/0、check-consume-once OK → 保存 (dirty=False)。
 
-## 実機チェックリスト (段階 0-b の PCVR 同等性確認、段階 1)
+### 段階 2 (2026-09-24)
+
+**状態: 実装済み・Verify 全 PASS。** シーン保存済み (dirty = False)。Codex D+M+U (段階 3 と合わせて 1 回) は実行中。コミット・Play (ClientSim・実機とも) は未実施。ファイルごとの差分と資産コピーの記録は [kominka-dog-system「段階 2」](../development/imports/kominka-dog-system.md#2026-09-24-おやつかざり撫でfx呼ぶ-段階-2)。完了条件の進み具合は各 Issue の「進捗」([IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md#進捗) / [015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md#進捗) / [016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md#進捗))。
+
+実装は おやつ担当 (014)、かざり・撫でFX・ミニチュア担当 (015)、呼ぶ・ポーズ・場所決め担当 (016) の 3 エージェントが並列で行った。共通ファイルへの差分は各担当が patch に書き、統合担当が 1 つにまとめた。司令塔は資産を古民家からコピーし (315 ファイル、GUID は古民家と同じ)、文言を統合し、Tools メニューを実行した。
+
+**変更の要点**
+
+- おやつ (014):
+  - `KD_TreatBox` 裏山改変。`HillsideDogBusy` が、リード中 (`KH_LeashManager._IsLeashed`)・集合中 (`_IsGathering`)・フリスビー中 (Ready を含む) の犬を `EligibleDog` と `AllDogsEngaged` から外す。接続犬を 1 匹ずつ呼ぶ変更 (IMP-DOG-006) の差し込み口はコメントで示した。
+  - `KD_TreatPouch.Treat.cs` 裏山改変。[買う] `_TreatBuy0..3` → 共有の確認カード (kind `ConfirmTreat` = 6) → `_TreatConfirmBuy` → `catalog._RequestBuy` → `KD_ShopItem._Buy` → `ledger._TryBuyStocked` (5 個 / 上限 20)。`_TreatConfirmNo` は「購入をやめました」。行のヒントは「5個入り N pt」に「あと N pt」か「所持数の上限です」を添える。カードは 上限 / 不足 / 購入可 の 3 態。結果は状態行に 4 秒。枠 ●●○ は出さない。未受取の案内は状態行に出す (行 0 の上ではない。下の逸脱 1)。
+  - 新規 `KD_TreatSetupEditor.Treats.cs`: `Menu/6c Setup Treats` / `6d Verify Treats`。6c は `KH_Dogs` に `KD_TreatHome_0..2` (初回だけ `KH_LeashRack` の −Z 1.5 m に 0.6 m 間隔、地面へレイキャスト)、`KD_Treat_0..2` (Pickup + Rigidbody + VRCObjectSync + 4 メッシュ)、`KD_TreatSlot_0..2`、`KD_TreatBox` (Manual)、`KD_TreatFx` を作り、6 匹の `KD_WanderSystem_*.treatBox` を配線する。6d は構造・3 枠・メッシュ・定位置の高さ・SetOwner の不在・タイムアウト 20 / 60 / 5 / 8 秒・商品 4 行 (価格 / 5 個 / 上限 20 / 初期 5)・段階 2 の `pouch.box` と [買う] 4 本・NetworkID 7 本・古民家の自己テスト (Gate / Give / Dispense / Claims)・FX を見る。棚は SKIP。
+  - `KD_TreatFxSetupEditor` に `containerPath` 引数を足した。
+- かざり・撫でFX・ミニチュア (015):
+  - `KD_TreatPouch.PetFx.cs` 裏山改変。`RedrawFxRows(visible)`、`HillsideAccCatalogLevel` / `HillsideFxFeedbackVisible` / `HillsideAccFooter` (板の下端に撫でFX の結果か未受取の案内)、群見出し `hillsideFxHeadRows` / `hillsideFxHeadLabel`。Equip はカタログ階層でだけ出す。
+  - `KD_TreatPouch.Acc.cs`: `RedrawAcc` の末尾で、カタログ階層のときだけ `RedrawFxRows` を呼ぶ。確認カードは kind Fx、戻るは `_AccBack` (D-2 (a)(b)(c))。CE セットの [ギフト] は `HillsideAccGiftEnabled = false` で出さない (裏山では未決定)。
+  - 新規 Editor 4 本:
+    - `KD_AccessorySetupEditor.Hillside.cs`: `Menu/6e Setup Accessories` / `6f Verify Accessories`。24 品 × 6 匹の見た目ノードを、古民家の実測値 (`KD_AccessoryFits.Kominka.json`。古民家シーンの 144 ノードから抽出、コミット対象) どおり骨の下へ置く。`KH_Dogs/KD_AccessorySystem` (Manual)、pouch の配線。6f は首輪干渉表を出す。
+    - `KD_AccessorySetsEditor.Hillside.cs`: 参照だけを配線する (商品は書き換えない)。
+    - `KD_BundledPetFxEditor.Hillside.cs`: `Menu/6g Setup Pet Fx` / `6h Verify Pet Fx`。同梱 5 種 × 2 層を各犬の `KD_PetHearts` と同じ位置へ置く。`KH_Dogs/KD_PetFxBox` (SyncMode None)、petControllers の往復、`catalog.consumers`、`pouch.petFxBox`。
+    - `KD_DogPreviewEditor.Hillside.cs`: 焼き済みのミニチュアとの比較。
+  - 既存の Editor 4 本を partial にした。Verify 25 に「飾りのメッシュは 1 つを共有」の検査を足した。
+  - ミニチュア: 犬の体は古民家の焼き済みと 12 姿勢すべて一致した (最大ずれ 0.022 mm)。違いは首輪 (Band) の分だけなので、Menu/18 で首輪込みに焼き直した (司令塔の決定。ユーザー確認待ち)。
+- 呼ぶ・ポーズ・場所決め (016):
+  - `KD_SleepBoard`: `hillsideLeashes` と読むだけの API (`_IsCalled` / `_IsLeashedDog` / `_IsGatheringDog` / `_IsWalkBusy`)。
+  - `KD_SleepSlot`: 斜面の定数を 1 か所に置いた (`HillsideMinGroundNormal = 0.9`、layer 0 / 11、probe 0.5 m、高さの許容 0.1 m)。`_PlacementGroundOk` は真下へのレイキャストで高さと法線を見る。`ValidPlacement` は「場所を選んで呼ぶ」の確定にだけ効く。予約・確定・`_BeginSelection` はリード中・集合中の犬を拒否する。Watch: 呼ぶとリードが同時に同じ犬に乗ったら、リードが勝って呼ぶを解放する。
+  - `KD_SleepPlacement`: マーカーを地面へ落とす。無効な場所は赤マーク + 「この姿勢には平らな場所が必要です」。ボタン / Desktop のクリック / VR の長押しの 3 経路とも確定できない (`invalidMarks`)。
+  - `KD_CallPose`: リード中・集合中は開かない。開いている間にリードが付いたら操作を止め、理由を出す。
+  - `KD_TreatPouch.Sleep.cs`: 行の状態に `SleepLeashed` (`WordSleepLeashed`) / `SleepGathering` (`WordWalkStateGathering`) を足した。
+  - `KD_DogWanderController.Sleep.cs`: `SleepStep` は集合と同じ `GatherStep` (NavMesh + 接地) で向かう。失敗したら旧 `StepToward`。最後の据わりも接地させる。
+  - Editor: `KD_SleepSetupEditor` (6a / 6 / 6b を裏山向けに)、`KD_SleepPlacementEditor` (6i)、`KD_CallPoseEditor` (6j。シーンのバックアップ保存をやめた。7 状態がそろった animator は作り直さない。焼くときは `KH_*` (首輪) を隠す。`KD_ShopItem_Action_*` の 4 行だけ配線する)。
+- 統合 (共通ファイル): `KD_TreatPouch.Confirm` / `.Redraw` / `.Hillside` / `.Toy` / `.Walk`、`KD_TreatSetupEditor.Hillside` / `.Verify`、`KD_HandMenuScrollEditor`、`KH_LeashManager` (`sleepBoard`。呼ばれた犬への `ReqAttach` を拒否)、`KH_DogWalkingEditor` (Walking/3 が sleepBoard / companionSlot を null に戻し、Walking/5 が FAIL する問題を直した)、Bindings 18 行の復元。
+  - 矛盾の裁き: Menu/7 の段階 2 は 6 参照 (box / accessories / petFxBox / sleepBoard / sleepPlacement / callPose) を `HillsideFindStage2` の 1 か所で探し、欠けていれば pouch に触れる前に止める。配線は box → かざり・撫でFX → 呼ぶ の 1 ブロック (016 の「board は BuildPouchPanel の前」を守る)。Verify 20 の SKIP 3 行は 1 つの if/else にした。群見出し `FxHead0/1` を入れた。`KD_Hillside.Stage = 2`。`RedrawFx()` (66 行) は削除して `RedrawFxRows` に一本化した。
+- 司令塔の修正:
+  - Verify 20 の「板に TMP_InputField が無い」を「Page_Settings の外に無い」に変えた。段階 3 の距離フェードの入力欄とクレジットの URL 欄は正規の部品。
+  - Verify 25 の確認カードの検査を、P13 以降の共有カードの形 (ConfirmPanel = 暗幕、Card = クリック遮断で listener 0、No / Yes の文言は実行時に `L()` で書く) に合わせた。古民家の Verify 25 は P13 以前の形のままで、古民家でも同じ FAIL になる。
+- 文言: 新規 6 (014: `WordTreatBuyCancelled` / 015: `WordFxGroup`「撫でエフェクト」/ 016: `WordSleepLeashed` / `WordSleepNeedFlat` / `WordWalkStateCalled` / `WordWalkGateCalled`)。資産の欠けは 014・015 とも無し。
+
+**首輪と首元の飾りの干渉 (015 の実測、Menu/6f)**
+
+むね (Chest) の 7 品 × 6 匹 = 42 組。頂点が首輪の帯 +3 mm の範囲か留め具に入るかで判定した。対策 (a) は「前へずらす」(上限 30 mm)、(b) は「前 + 下へずらす」。
+
+| 結果 | 件数 | 品と犬 (ずらす量) |
+|---|---|---|
+| 干渉なし | 25 | — |
+| (a) 前へずらして解消。6e が自動で適用する | 9 | Corgi 肉球メダリオン 1 mm / Pome 宝石付き首飾り 9 mm・ひまわり首飾り 1 mm・肉球メダリオン 16 mm / Lab 蝶ネクタイ 19 mm・胸かぼちゃ 16 mm / Dachs 宝石付き首飾り 23 mm / Shiba 肉球メダリオン 3 mm / Samoyed 肉球メダリオン 6 mm |
+| **(a) では解消できない** | **8** | Lab: バンダナ ((b) でも不可)・宝石付き首飾り (前 8 + 下 16 なら解消)・ひまわり首飾り (前 2 + 下 26)・花コサージュ (前 22 + 下 12)・肉球メダリオン (前 6 + 下 30) / Dachs: バンダナ (不可)・ひまわり首飾り (不可)・肉球メダリオン (前 0 + 下 28) |
+
+Lab と Dachs は首輪が低く大きいことが原因。**8 件は取り下げず、そのまま残している。取り下げるかはユーザーが判断する** (Issue の決まり)。(b) の値は計算しただけで、適用していない。
+
+**斜面の法線 (016 の実測)**
+
+`HillsideMinGroundNormal = 0.9` (約 25.8°。仮値)。集合 (0.5) より厳しくするのは、伏せる姿勢は体を地面に付けるため。
+
+| 測った範囲 | 合格 / 点数 | 最小の法線 |
+|---|---|---|
+| ラック・広場・見晴らしの各 3 m 以内 | 113 / 113 | 0.926 |
+| 散歩道の 17 ノード | 833 / 833 | 0.963 |
+| 地形全体 | ≥ 0.9 が 83%、≥ 0.85 が 96% | — |
+
+**契約からの逸脱** (司令塔が受け入れた)
+
+- 014:
+  1. 未受取の案内は、行 0 の上ではなく状態行 (statusLabel が空のとき) に出す。Page_Treat には上段の行が無く、上へ出すには Scroll の上端の計算を変える必要がある。
+- 015:
+  1. かざりへの合流の呼び出し口は `.Redraw.cs` ではなく `.Acc.cs` の `RedrawAcc` の末尾に置いた。
+  2. 群見出し「撫でエフェクト」(任意のパッチ) を採用した。
+  3. CE セットの [ギフト] は出さない (裏山では未決定)。
+  4. ミニチュアは首輪込みで焼き直した (司令塔の決定)。
+- 016:
+  1. 集合中の犬も呼ぶの対象から外した (DES-DOG-001 Q2「集合中の割込を禁止」と揃えた)。
+  2. 呼ぶとリードが同時に同じ犬に乗ったら、リードが勝つ。
+  3. `KD_CallPoseEditor` のシーンのバックアップ保存をやめた。
+
+**Tools メニューの実行と結果** (司令塔、段階 3 と一続き、この順)
+
+| 順 | メニュー | 結果 |
+|---|---|---|
+| 1 | 6 Setup Sleep | PASS |
+| 2 | 6i Setup Sleep Placement | 器を作成 |
+| 3 | 6j Setup Call Poses | 初回は Bind が `InformationButton` 不在で例外 (器は作られていた)。11 の後に再実行して PASS (上の「Bind の循環依存」) |
+| 4 | 6c Setup Treats / 6e Setup Accessories / 6g Setup Pet Fx | それぞれ PASS |
+| 5 | 18 Build Dog Previews | 首輪込みで焼き直し |
+| 6 | 7 Build Menu | 段階 2: box / accessories / petFxBox / sleepBoard / sleepPlacement / callPose すべて True、試着ミニチュア 6 匹。PASS |
+| 7 | 9 → 11 → 14 → 16 → 11b | 11b done (段階 3 の分は「段階 3」) |
+| 8 | 19b Assign Network IDs | 148 → 168 (新規 20)、errors 0 |
+| 9 | 保存 | dirty = False |
+
+**Verify 結果** (段階 3 の分を含む)
+
+| メニュー | 結果 | 備考 |
+|---|---|---|
+| 6d Verify Treats | PASS | 棚は SKIP |
+| 6f Verify Accessories | PASS | 首輪干渉表を出力 (上表) |
+| 6h Verify Pet Fx | PASS | — |
+| 6b Verify Sleep System | PASS | 斜面の定数と法線値を出力 |
+| 25 Verify Dog Previews | pass 1661 / fail 0 | 司令塔の修正後 |
+| 20 Verify Pouch | PASS | 司令塔の修正後。段階表 2 |
+| 21 Verify Scroll Layout | pass 404 / fail 0 | — |
+| 22 Verify Localization | PASS | `CREDIT_URL_PENDING 3` (段階 3) |
+| 23 Verify Activities | PASS | — |
+| 24 Verify Collision | PASS | — |
+| 11c Verify Welcome | PASS | 段階 3 |
+| 14c Verify Distance Fade | PASS | 段階 3 |
+| 16a Verify Dog Voice | PASS | 段階 3 |
+| 15a Verify Night Mode | PASS | — |
+| 4e Verify Shop Keeper | PASS | — |
+| Walking/5 Verify | TOTAL 209 / FAILED 0 | — |
+| `node scripts/check-consume-once.js` | OK | — |
+
+**コンパイル**: C# error CS 0、U# 82 本 (新規の U# は無い)。**シーン**: 保存後のファイルの grep で KD_TreatBox / KD_AccessorySystem / KD_PetFxBox / KD_SleepBoard / KD_SleepPlacement / KD_CallPose / CreditPage / DistanceFadeSettings が各 1。
+
+**未実施**: Codex D+M+U の結果の反映 (実行中。表は後で足す)、コミット、Play (ClientSim・実機とも)、ハーネスでのおやつの固定手順、一周 (入室 → おじいさん → 200pt → かざりで装着 → さんぽ)。人が確認する点は下の「実機チェックリスト / 3. 段階 2」。
+
+### 段階 3 (2026-09-24)
+
+**状態: 実装済み・Verify 全 PASS。** シーン保存済み (dirty = False)。Codex D+M+U (段階 2 と合わせて 1 回) は実行中。コミット・PCVR は未実施。ファイルごとの差分は [kominka-dog-system「段階 3」](../development/imports/kominka-dog-system.md#2026-09-24-設定面の残りとようこそ-段階-3)。完了条件の進み具合は [IMP-UI-001「進捗」](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md#進捗)。
+
+実装は 設定面担当 (U1) と ようこそ・インフォメーション担当 (U2) の 2 エージェントが並列で行った。司令塔は文言を統合し、Tools メニューを段階 2 と一続きで実行した (上の「段階 2」の表)。
+
+**変更の要点**
+
+- 設定面 (U1):
+  - `KD_DistanceFadeSettings`: PlayerData のキーを `KH_DistanceFade_v1` に改名した (古民家の保存値は引き継がない)。Android / iOS では Start で入口を `interactable = false` にする。
+  - `KD_MenuSettings`: `creditPage` / `creditScroll` / `_OpenCredits`、見出し `ui.extra.022`。
+  - `KD_MenuFinishEditor` を partial にした。BuildSettings: 0-b の非表示をやめ、写真設定は作らない。ナイトモード・言語・許可を 3 群の配置へ動かし、最後に `BuildHillsideSettings` を呼ぶ。BuildInformation: 写真設定なし。Verify 22 の SKIP を解除し、`VerifyHillsideSettings` を足した。
+  - 新規 `KD_MenuFinishEditor.Hillside.cs` (設定ホームの配置の正本):
+    - 群見出し 3 つ (`settings.group.self` / `room` / `read`)。
+    - クレジット頁 `Page_Settings/CreditPage` の 7 行: 犬モデル TORINOSUKEの家 / 舞台 LMArt Stylized Environment Kit / 舞台 モサンゴ屋「庭付き古民家」/ 空 Allsky / おじいさん polyperfect / フォント Noto Serif JP / OFL の表示行。**URL 3 件 (LMArt / Allsky / polyperfect) は推測で埋めず、入力欄を作っていない。Verify 22 は `CREDIT_URL_PENDING 3` と出す。ユーザーが `KD_MenuFinishEditor.HillsideCredits` に書く。**
+    - インフォメーションの 4 行: はじめに / 生成AI / VAnimal / トレーナー の順 (モックの順。古民家は生成AI が末尾)。
+  - `KD_DistanceFadeSettingsEditor` を partial にし、`.Hillside.cs` に Menu/14 / 14c (系は `KH_Dogs` 直下、猫なし)。
+  - `KD_DogVoiceSettingsEditor` を partial にし、`.Hillside.cs` に Menu/16 / 16a。音量頁は「外」の 1 群 = 犬の声のスライダー + 値 + 注記 (`settings.volume.scope`) + [戻る]。BGM・ライブ・寝室の行は無く、pouch のそれらの参照は null。音源は `KH_Dogs` の bark / breath / joy。
+  - **犬の声が鳴るようになる**: 6 匹の bark / breath はシーンで mute のまま焼かれていて、無音だった。配線後は古民家と同じく `KD_TreatPouch.Start` が 50% で解除する。`KD_PetSystem_*` の joyAudioSource は 6 匹とも null (古民家も同じ) なので、実際に鳴るのは bark と breath。
+  - 古民家版の 14 / 14c / 16 / 16a は `Menu/Imported-Unused/` へ移した。
+- ようこそ・インフォメーション (U2):
+  - `KD_WelcomeGuideEditor.Hillside.cs`: 11b は「はじめに」の面を作らない (U1 の経路が作る)。`KD_SleepSlot` が 6 枠そろえば `sleepNoticeEnabled = true`。11c は、はじめにの面・通知・フッタ 2 行・本文の群と行 (写真・ライブ・ギフトコード・縁側・庭のおじいさんが無い)・VAnimal とトレーナーが裏山向け、を見る。`VerifyHillsideFit` はフッタ 1060×60、本文は表示枠 276 の 2 倍以内。
+  - 文言の差替 7: `welcome.body` (群「なにも持っていなくても」: 撫でる / ボールやディスクを投げる / 一緒に歩く / そばで寝てもらう、群「この板でできること」: さんぽ・おやつ・かざり / ポイントとおじいさん)、`welcome.footer` ×3 (2 行目「もう一度読むときは 設定 → インフォメーション → はじめに」)、`welcome.reread.body`、`information.vanimal.body` (裏山を「その続きの場所」と書く)、`information.trainer.body` (集合と「フリスビーの取り方」。かけっこ・2 匹の遊びは裏山に無い)。
+  - Bindings にインフォメーション系 15 行を戻した。
+- 文言の統合: 段階 2 の新規 6 + U2 の差替 7 + U1 の新規 7 → 13 言語 677 キー。U1 の Bindings は追加 27 / 削除 5 / 差替 1。
+
+**契約からの逸脱** (司令塔が受け入れた)
+
+- U1:
+  1. クレジットの URL 3 件は空のまま (入力欄を作らない)。Verify 22 は FAIL にせず `CREDIT_URL_PENDING 3` と出す。
+  2. Menu/11 が、入口 4 つ・音量頁・距離フェードの系と頁・クレジット頁・インフォメーション・群見出しをまとめて作る (束縛が要求する部品を 11 だけでそろえるため)。
+- U2:
+  1. ようこそのフッタに 2 行目 (再読の案内) を戻した。契約は「段階 1 のまま」だったが、段階 1 で外したのは再読の面が無かったため。古民家・モックと同じ文型で、司令塔が採用した。
+
+**Verify 結果**: 上の「段階 2」の表 (14c / 16a / 22 / 11c / 15a / 20 / 21 がこの段階の分)。
+
+**未実施**: Codex D+M+U の結果の反映 (実行中)、コミット、PCVR (T-011 を含む)。人が確認する点は下の「実機チェックリスト / 4. 段階 3」。
+
+**Codex レビュー (D + M + U、2026-09-24、gpt-6-astra、段階 2・3 をまとめて)** — 指摘 7 件 (高 1 / 中 5 / 低 1)。D の 同期の権威・Late Joiner / リード・集合との排他 / 斜面・地形追従 / 購入処理 / 距離フェード / 撫でFX 合流 / U#・同期変数 / 人の配置保護、M の Setup・Verify・段階表 / 定数の二重管理 / Verify 20・25 の変更理由 / 段階 3 の構成、U の 入口・準備中解除 / 設定 3 群 は「問題なし」。
+
+| # | 重要度 | 指摘 | 対応 |
+|---|---|---|---|
+| D-1 | 高 | KD_SleepBoard `_IsWalkBusy` にフリスビー中が無く、フリスビー中でも呼ぶを受理して犬が来ない (場所指定では到着待ちが長引く) | **修正** (016)。`_IsFrisbeeDog` (frisbeeCatch != null && !IsIdle、Ready 含む。KD_TreatBox と同じ基準) を共通判定に合流し、予約・確定・監視・ポーズ面・行状態 (SleepFrisbee、文言 WordSleepFrisbee「フリスビーで遊び中」) で共有。リード優先は維持 |
+| D-2 | 中 | おやつの確認カードだけ `_treatConfirmRow` が SetOpen(false) / SetTab / _OpenSettings で初期化されず、閉じて再度開くと前のカードが復活 | **修正** (014)。`HillsideResetTreatConfirm()` を FX・かざりの確認を破棄する 3 遷移から呼ぶ |
+| M-1 | 中 | Verify 25 は焼き済みミニチュアの不一致数 (parity) をログに出すだけで FAIL にしない | **修正** (015)。`Check(parity == 0)` を追加。焼き直し後の実値 parity 0 (12 姿勢一致、最大ずれ 0.000mm) |
+| M-2 | 中 | KD_CallPoseEditor がポーズのミニチュア/ゴーストを焼くとき `KH_*` を全部隠し首輪も外す (「ミニチュアは首輪込み」の決定と不一致) | **修正** (016)。除外をリード・クリップ・ハンドル (KH_Lead* / KH_ConnectedHandle* / KH_Roam* / KH_LeashClip* / KH_Handle*) に限定し首輪は残す。Menu/6j → 7 で焼き直し済み |
+| M-3 | 低 | 注記が `裏山改変:` / `裏山改変 (...)` / 文末 `裏山改変。` に分散 | **修正** (016)。所有 9 ファイルを `裏山改変:` 始まりに統一 |
+| U-1 | 中 | 新しい除外で全頭が来られないときも「いま出せません」で、さんぽで外せばよいことが伝わらない (呼ぶ側は理由を分けている) | **修正** (014)。KD_TreatBox `HillsideAllBusyCause()` (多数派の理由。同数ならリード > 集合 > フリスビー) で 4 種の文言 (リード中の犬は来られません。さんぽで外してから / 集合中です / フリスビー中です / 犬たちは手がはなせません) |
+| U-2 | 中 | 未解消 8 件の首元品 (Lab / Dachs) の食い込みは PCVR で目につきやすい | **記録** (ユーザー判断)。取り下げは自動で行わず、首輪込みのミニチュア (M-2 で一致) と実物で比較できる状態で渡す |
+| U-3 | 低 | 犬の声が入室時に既定 50% で急に鳴り出す可能性 | **記録** (PCVR で確認。唐突なら短いフェードを足す候補) |
+
+修正後: refresh → C# 0 → U# 82 → Menu/6j (首輪込みで焼き直し) → 7 → 9 → 11 → Verify 6b / 6d / 25 (1662/0) / 20 / 21 (404/0) / 22 / 6f / 11c / 23 PASS、19b (168、新規 0)、Walking/5 209/0 → 保存 (dirty=False)。未使用のコピー (Data/SE/Cat の wav 2 本、Shaders 7 本) は参照 0 を確認したが削除はせず残置 (削除は別途)。
+
+## 実機チェックリスト (段階 0-b の PCVR 同等性確認、段階 1〜3)
 
 準備: シーン保存済み (2026-09-23 の段階 0-b 以降)・Console エラーなし。**Build & Test し直す。** 端末・人数を記録する。段階 0 は「現行 3 機能が古民家と同じ見え方になったか」だけを見る。おやつ・かざり・呼ぶ・ライブの中身、残高、設定面の残り (音量・距離フェード・インフォメーション・写真) は、この段階では**意図的に無い**。
 
@@ -469,6 +647,63 @@ Menu/20 で新たに見るもの: ledger / catalog が `KH_Dogs` 直下、`KD_Sh
 | ポイント面が出ない | PointsButton → `_HillsidePoints` の onClick、`Page_Settings/PointsPage` (Menu/20) |
 | ようこそが毎回出る・出ない | `KD_HintDirector` の保存キー `KD_Onboarding_v1`、`KD_WelcomeSpot` (Menu/11c) |
 
+### 3. 段階 2 (おやつ・かざり・撫でFX・呼ぶ。2026-09-24 追加)
+
+準備: 段階 2・3 のシーン保存 (2026-09-24) 以降で **Build & Test し直す**。「2 人」「4 人」の項目は別アカウントで入る。初回の挙動を見る項目は、裏山の PlayerData (`KH_Commerce_v1`) が無い状態から始める。
+
+- [ ] **一周 (1 人・最初に見る)**: 入室 → おじいさんに話しかけて 200pt → かざりで 1 品を買って犬に着ける → さんぽでつないで歩く。途中で詰まらず、案内 (ようこそ・おじいさん・未受取の案内) と画面が食い違わない。
+- おやつ:
+  - [ ] 出す → あげる → しまう が 1 人で成立する (吸着 → 犬が来る → 食べる → お礼)。6 匹それぞれで食べる動きとお礼の FX の位置がおかしくない。
+  - [ ] 定位置 (`KD_TreatHome_0..2`、ラックの −Z 側) のおやつが地面に沈まず、浮きすぎない。
+  - [ ] [買う]: 行のヒント (18 pt。「5個入り N pt」+「あと N pt」/「所持数の上限です」) が枠に収まる。確認カードが 上限 / 不足 / 購入可 の 3 態で正しく出る。[やめる] で「購入をやめました」。買うと在庫が 5 増え、退室して入り直すと在庫が戻る。
+  - [ ] **T-009 (4 人)**: 4 人が同時に出すと 4 人目に枠の理由が出て、在庫が減らない。枠が空けば出し直せる。在庫 0・全犬が拘束中 (リード中・集合中・フリスビー中) でも理由が出て在庫を失わない。
+- かざり・撫でFX:
+  - [ ] **首輪と首元の飾り**: 解消できなかった 8 件 (Lab のバンダナ・宝石付き首飾り・ひまわり首飾り・花コサージュ・肉球メダリオン、Dachs のバンダナ・ひまわり首飾り・肉球メダリオン) の見え方。**取り下げるかの判断材料にする。**
+  - [ ] 前へずらした 9 件 (Corgi・Pome・Lab・Dachs・Shiba・Samoyed。量は実装記録の表) が毛から浮いて見えない。
+  - [ ] リードの線と首元の飾りが交差しても不自然でない (Dachs は留め具まで約 68 mm)。
+  - [ ] ミニチュア (試着の犬) に首輪が入っているのでよいか。
+  - [ ] 群見出し「撫でエフェクト」の下の FX 行が かざりの一覧 (カタログ階層) でだけ出て、セットの中身・着け方・犬選択の画面では出ない。買う → つける が効く。
+  - [ ] **撫でFX (2 人)**: 選んだ FX が相手の画面でも撫でたときに出る。退室して入り直すと自分の選択が戻る。
+  - [ ] **60 秒ルールと残留 (2 人)**: 相手が着けた犬の同じ枠は 60 秒待たされ、理由が出る。着けた人が退室しても飾りは残る。
+- 呼ぶ・ポーズ・場所決め:
+  - [ ] **T-010**: リード中の犬の行は暗く「リード中。さんぽで外してから」が出る。外すと呼べる。呼ばれて待機中の犬はさんぽでつなげない (理由が出る)。集合中の犬も呼べない。
+  - [ ] 斜面ではマーカーが赤くなり「この姿勢には平らな場所が必要です」が出て、ボタン・Desktop のクリック・VR の長押しのどれでも確定できない。文言が見える位置 (VR は手元、Desktop は頭の前) で読める。平らな場所では成立する。
+  - [ ] 判定の限界付近 (法線 0.9 前後) に置いた犬が地面に沈まず、浮かない。
+  - [ ] **2 人**: 同じ犬を同時に選ぶと先着だけが予約できる。呼んでいる犬に別の人がリードを付けると、リードが勝って呼ぶが解ける。
+  - [ ] NavMesh が途切れる場所へ呼んでも、犬が直進でたどり着き、固まらない。
+  - [ ] 場所決めのマーカーのレイがラック・看板などの小物に当たって、変な高さに出ない。
+  - [ ] 4 動作 (へそ天 / あご乗せ / お手 / 伸び+あくび) は買うまで価格が出て、買うと使える。
+
+| 症状 | 最初に見るところ |
+|---|---|
+| おやつのタブが準備中のまま / [買う] が出ない | `pouch.box` (Menu/7 の段階 2 の参照、Menu/20)、Menu/6c |
+| おやつに犬が来ない | `KD_TreatBox.HillsideDogBusy` (リード中・集合中・フリスビー中は来ない)、6 匹の `KD_WanderSystem_*.treatBox` (Menu/6d) |
+| 飾りが着かない・他人に見えない | `KH_Dogs/KD_AccessorySystem` (Manual) と NetworkID (Menu/19b)、Menu/6f |
+| 飾りが首輪に埋まる・浮く | `KD_AccessoryFits.Kominka.json` と 6e のずらし量 (Menu/6f の干渉表) |
+| 撫でFX が犬に出ない・他人に出ない | `catalog.consumers` の `KD_PetFxBox` (Menu/4 を流し直すと消えないか)、`KD_PlayerFxTag`、Menu/6h |
+| 呼ぶの行がずっと暗い | `KD_SleepBoard.hillsideLeashes` と `_IsWalkBusy`、`KH_LeashManager.sleepBoard` (Menu/6b、Walking/5) |
+| 平らな場所でも赤くなる / 斜面でも確定できる | `KD_SleepSlot.HillsideMinGroundNormal` (0.9) と layer 0 / 11、probe 0.5 m |
+| ポーズ面の文字が言語切替で変わらない | Bindings の 18 行 (ポーズ面・場所決め) と Bind の順序 (上の「Bind の循環依存」) |
+
+### 4. 段階 3 (設定面の残り・ようこそ。2026-09-24 追加)
+
+- [ ] **T-011 (PC)**: 距離フェードを変えて [確定して保存] すると犬の毛の見え方が変わる。退室して入り直すと戻る (保存キー `KH_DistanceFade_v1`)。範囲外の値は保存されず理由が出る。
+- [ ] **T-011 (Android / iOS)**: 設定面の「距離フェード (PCのみ)」が見えて、押せない。
+- [ ] **犬の声**: 今まで無音だった吠え声・息が鳴るようになった。50% の音量と頻度がうるさくない。音量頁の犬の声スライダーで変わる。
+- [ ] 設定ホームの 3 群 (自分の見え方・聞こえ方 / この部屋のみんな / 読む) で迷わない。ナイトモードのスライダーが以前どおり効き、入り直すと戻る。
+- [ ] 許可 2 種 (呼ぶ / ライブ開催を全員に許可) が初期 ON で、権限者 (インスタンスオーナー、不在時は Master) 以外は切り替えられない。
+- [ ] クレジット頁の 7 行が読める。URL 3 件はユーザーが記入した後に確認する。
+- [ ] インフォメーションの 4 頁 (はじめに / 生成AI / VAnimal / トレーナー) が開けて、本文が読める。
+- [ ] ようこそ: フッタの 2 行 (20 pt) が枠に収まる。本文の「門のそば」の言い方と、実際の位置 (ラックの横) が食い違わない。設定 → インフォメーション → はじめに で読み直せる。
+
+| 症状 | 最初に見るところ |
+|---|---|
+| 距離フェードが保存されない・戻らない | `KD_DistanceFadeSettings` の PlayerData キー `KH_DistanceFade_v1`、Menu/14c |
+| スマホで距離フェードが押せる | `KD_DistanceFadeSettings.Start` の端末判定 |
+| 犬の声が鳴らない / 急に大きい | pouch の dogVoiceSources と `KD_TreatPouch.Start` の 50% 解除、Menu/16a |
+| 設定面の文字が言語で変わらない・例外が出る | Bindings (追加 27 / 削除 5 / 差替 1 + インフォメーション 15) と Menu/11 の後の Bind、Menu/22 |
+| はじめにの面が無い | Menu/11 が作る (11b は作らない)。Menu/11c |
+
 ## ユーザーへの報告 (開発側の決定)
 
 以下は開発側で決めて進める。**異論があれば設計へ戻す。**
@@ -479,4 +714,16 @@ Menu/20 で新たに見るもの: ledger / catalog が `KH_Dogs` 直下、`KD_Sh
 
 **ユーザーの判断が要るもの (2026-09-23 追加)**
 
-4. **フリスビーの [試作] の入口**。KH_HandMenu の退役で無くなった。代わりに、設定ホームの [Dev] 行を段階 3 から前倒しするか、`KH_FrisbeePrototypeEditor` の Editor 切替にするか ([DES-UI-002](../development/issues/DES-UI-002-frisbee-settings.md))。
+4. **フリスビーの [試作] の入口**。KH_HandMenu の退役で無くなった。代わりに、設定ホームの [Dev] 行を段階 3 から前倒しするか、`KH_FrisbeePrototypeEditor` の Editor 切替にするか ([DES-UI-002](../development/issues/DES-UI-002-frisbee-settings.md))。→ **2026-09-24 決定済み**: あそぶタブのトレーナー群の行「フリスビーの取り方」へ移設した。
+
+**開発側の決定 (2026-09-24 追加、段階 2・3)**
+
+5. **呼ぶの斜面判定は法線 0.9 (約 25.8°) を仮に採る**。散歩道・ラック・広場・見晴らしの実測点はすべて合格した (実装記録の表)。PCVR で限界付近の見え方を見てから確定する。
+6. **集合中の犬も呼ぶの対象から外す**。呼ぶとリードが同じ犬に同時に乗ったときは**リードが勝つ**。
+7. **犬の声が鳴るようになる**。これまでシーンでは無音だった。音量設定 (犬の声だけ) を配線したので、古民家と同じく 50% で鳴る。
+
+**ユーザーの判断が要るもの (2026-09-24 追加)**
+
+8. **首輪と首元の飾りの干渉 8 件を取り下げるか**。Lab: バンダナ・宝石付き首飾り・ひまわり首飾り・花コサージュ・肉球メダリオン、Dachs: バンダナ・ひまわり首飾り・肉球メダリオン。Lab と Dachs は首輪が低く大きいのが原因。前へずらすだけでは解消せず、5 件は前 + 下へずらせば解消するが、3 件 (Lab バンダナ、Dachs バンダナ・ひまわり首飾り) はそれでも解消しない。**開発側は取り下げずに残している。** PCVR で見て決めてほしい (実装記録「首輪と首元の飾りの干渉」)。
+9. **試着のミニチュアに首輪を含めるか**。開発側は、実際の犬と同じ見た目にするため首輪込みで焼き直した。
+10. **クレジットの URL 3 件** (LMArt Stylized Environment Kit / Allsky / polyperfect Low Poly Animated People)。購入元の URL を推測では埋めていない。ユーザーが `KD_MenuFinishEditor.HillsideCredits` (`Imported/KominkaDogRun/Editor/KD_MenuFinishEditor.Hillside.cs`) に書き、Menu/11 を流し直す (空の間は URL 欄を作らず、Verify 22 が `CREDIT_URL_PENDING` と出す)。

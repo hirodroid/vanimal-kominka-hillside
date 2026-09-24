@@ -40,13 +40,21 @@ namespace KominkaDogRun.Editor
             AssetDatabase.SaveAssets();
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Sleep Placement/2 - Setup")]
+        /// <summary>裏山改変: IMP-DOG-016。Menu/6i。KH_Dogs/KD_SleepPlacement (場所決め) を作る / 作り直す。
+        /// 前提: Menu/6 Setup Sleep (KH_Dogs/KD_SleepBoard) と Menu/7 (手元メニューの呼ぶタブ SleepRow0..5)。
+        /// 古民家から変えた点: 器は KH_Dogs 直下 / マーカーに赤い印 (invalidMarks) / language の配線 /
+        /// BuildUI から Scroll.Build を呼ばない (Menu/7 が最後に呼ぶ)。**シーンは保存しない。**</summary>
+        [MenuItem("Tools/KominkaHillside/Menu/6i Setup Sleep Placement")]
         public static void Setup()
         {
-            if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode only");
+            if (EditorApplication.isPlaying || !KD_Hillside.InScene()) throw new InvalidOperationException("Open " + KD_Hillside.ScenePath + " in Edit mode");
             var pouch = KD_SceneObjects.Find(KD_DogDefs.TreatPouchName).GetComponent<KD_TreatPouch>();
+            // 裏山改変: 台帳は名前で引く (Menu/7 の BuildPouchPanel の途中からも呼ばれるので、pouch.sleepBoard の配線順に依存しない)
+            var boardGo = KD_SceneObjects.Find(KD_DogDefs.SleepBoardName);
+            var board = boardGo == null ? null : boardGo.GetComponent<KD_SleepBoard>();
+            if (board != null && pouch.sleepBoard != board) pouch.sleepBoard = board;
             if (pouch.sleepButtons == null || pouch.sleepButtons.Length != KD_DogDefs.All.Length || pouch.sleepBoard == null)
-                throw new InvalidOperationException("Build sleep system and hand menu first");
+                throw new InvalidOperationException("Build sleep system (Menu/6) and hand menu (Menu/7) first");
             if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(ProgramPath) == null)
                 throw new InvalidOperationException("Create program and compile first");
             foreach (var def in KD_DogDefs.All)
@@ -59,7 +67,7 @@ namespace KominkaDogRun.Editor
             {
                 go = new GameObject(SystemName);
                 Undo.RegisterCreatedObjectUndo(go, "Create sleep placement");
-                KD_SceneObjects.PlaceIfNew(go, KD_DogDefs.SystemsPath);
+                KD_SceneObjects.PlaceIfNew(go, KD_Hillside.DogsRootName);   // 裏山改変: KH_Dogs 直下
             }
             var placement = go.GetComponent<KD_SleepPlacement>();
             if (placement == null) placement = go.AddUdonSharpComponent<KD_SleepPlacement>();
@@ -82,7 +90,9 @@ namespace KominkaDogRun.Editor
             UdonSharpEditorUtility.CopyProxyToUdon(placement); UdonSharpEditorUtility.CopyProxyToUdon(pouch);
             EditorSceneManager.MarkSceneDirty(go.scene);
             AssetDatabase.SaveAssets();
-            File.WriteAllText("Temp/sleep-placement-setup.txt", log.ToString());
+            log.AppendLine("裏山: 斜面判定 HillsideMinGroundNormal=" + KD_SleepSlot.HillsideMinGroundNormal + " (KD_SleepSlot の定数 1 か所) / 赤い印 " + (placement.invalidMarks == null ? 0 : placement.invalidMarks.Length) + " 個");
+            log.AppendLine("**シーンは保存していない。** 次: Menu/6j Setup Call Poses → Menu/6b Verify Sleep System");
+            KD_VerifyLog.Write(KD_Hillside.LogDir + "setup-sleep-placement.txt", log);
         }
 
         internal static void RebuildIfPresent(KD_TreatPouch pouch, StringBuilder log)
@@ -144,6 +154,7 @@ namespace KominkaDogRun.Editor
         static void BuildUI(KD_TreatPouch pouch, KD_SleepPlacement placement, StringBuilder log)
         {
             placement.pouch = pouch; placement.board = pouch.sleepBoard; pouch.sleepPlacement = placement;
+            placement.language = pouch.language;   // 裏山改変: 実行時の文言 (ヒント・平らな場所が必要) を言語表から引く
             var font = pouch.sectionTitleLabel.font;
             var su = UdonSharpEditorUtility.GetBackingUdonBehaviour(placement);
             // Calling now always goes through pose selection and placement; retire the duplicate entry.
@@ -176,8 +187,8 @@ namespace KominkaDogRun.Editor
             placement.vrLabel = Label(vr.transform, "Hint", VrHintPos, VrHintSize, KD_SleepPlacement.VrHint, font, 24);
             ConfigureVrInputUI(placement, log);
             log.AppendLine("UI: 6 place buttons, local screen sliders/confirm/cancel, VR board (hint + turn/cancel)");
-            if (pouch.tabScrolls != null && pouch.tabScrolls.Length == 6)
-                KD_HandMenuScrollEditor.Build(pouch, log);
+            // 裏山改変: 古民家はここで KD_HandMenuScrollEditor.Build を呼んでいた (行の PlaceButton を消したあとの詰め直し)。
+            // 裏山の行に PlaceButton は無く、Menu/7 の BuildPouchPanel の途中 (Scroll.Build の前) からも呼ばれるので、ここでは呼ばない
         }
 
         // 頭に追従する VR の板 (IMP-DOG-031): ヒント 2 行 + [◀] [▶] (進捗円) [やめる]。scale .0009 で約 0.68m × 0.15m。
@@ -252,6 +263,7 @@ namespace KominkaDogRun.Editor
             Directory.CreateDirectory(MeshDir); AssetDatabase.Refresh();
             var root = Child(placement.transform, "Marker"); placement.marker = root.transform;
             placement.markerDogs = new GameObject[KD_DogDefs.All.Length];
+            var invalid = new GameObject[KD_DogDefs.All.Length];   // 裏山改変: 赤い印
             for (int i = 0; i < KD_DogDefs.All.Length; i++)
             {
                 var def = KD_DogDefs.All[i];
@@ -325,16 +337,35 @@ namespace KominkaDogRun.Editor
                 var renderer = go.GetComponent<MeshRenderer>(); if (renderer == null) renderer = go.AddComponent<MeshRenderer>();
                 renderer.sharedMaterial = mat; renderer.shadowCastingMode = ShadowCastingMode.Off; renderer.receiveShadows = false;
                 placement.markerDogs[i] = go; go.SetActive(i == 0);
+                // 裏山改変: IMP-DOG-016 変更 2。平らでない / 地面が無い場所の赤い印。同じ輪郭を少し大きく・少し上に重ねる
+                var bad = Child(go.transform, "Invalid"); bad.layer = 2;
+                bad.transform.localPosition = new Vector3(0f, .004f, 0f); bad.transform.localRotation = Quaternion.identity; bad.transform.localScale = Vector3.one * 1.08f;
+                var badFilter = bad.GetComponent<MeshFilter>(); if (badFilter == null) badFilter = bad.AddComponent<MeshFilter>(); badFilter.sharedMesh = mesh;
+                var badRenderer = bad.GetComponent<MeshRenderer>(); if (badRenderer == null) badRenderer = bad.AddComponent<MeshRenderer>();
+                badRenderer.sharedMaterial = InvalidMaterial(); badRenderer.shadowCastingMode = ShadowCastingMode.Off; badRenderer.receiveShadows = false;
+                bad.SetActive(false);
+                invalid[i] = bad;
                 log.AppendLine(def.key + " head=" + head.ToString("F3") + " ratio=" + ratio + " triangles=" + triangles.Count/3);
             }
+            placement.invalidMarks = invalid;   // 裏山改変: 赤い印
             root.SetActive(false);
         }
 
-        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Sleep Placement/3 - Verify")]
-        public static void Verify()
+        /// <summary>裏山改変: 赤い印の材質 (Unlit/Color。犬ごとの色の印と同じシェーダ)。</summary>
+        public static readonly Color InvalidColor = new Color(0.86f, 0.16f, 0.12f);
+        static Material InvalidMaterial()
         {
-            var log = new StringBuilder(); int pass = 0, fail = 0;
-            void Check(bool ok, string what) { if (ok) pass++; else fail++; log.AppendLine((ok ? "PASS " : "FAIL ") + what); }
+            var path = MeshDir + "/Invalid.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null) { mat = new Material(Shader.Find("Unlit/Color")); AssetDatabase.CreateAsset(mat, path); }
+            mat.color = InvalidColor; EditorUtility.SetDirty(mat);
+            return mat;
+        }
+
+        /// <summary>裏山改変: 単独の検査は Menu/6b (KD_SleepSetupEditor.Verify) にまとめた。ここは古民家の 3 - Verify の中身 + 裏山の追加。</summary>
+        internal static void VerifyInto(KD_VerifyLog v)
+        {
+            void Check(bool ok, string what) { v.Check(ok, what); }
             void Event(UnityEngine.Object component, string field, VRC.Udon.UdonBehaviour target, string evt)
             {
                 Calls(new SerializedObject(component).FindProperty(field + ".m_PersistentCalls.m_Calls"), target, evt);
@@ -350,6 +381,26 @@ namespace KominkaDogRun.Editor
             Check(p != null, "placement system");
             if (p != null)
             {
+                // ---- 裏山改変: IMP-DOG-016 ----
+                Check(go.transform.parent != null && go.transform.parent.name == KD_Hillside.DogsRootName && go.transform.parent.parent == null, "KD_SleepPlacement が KH_Dogs 直下");
+                Check(p.language != null && p.language == p.pouch.language, "language 配線 (ヒント・平らな場所が必要の文言)");
+                Check(p.invalidMarks != null && p.invalidMarks.Length == 6, "赤い印 6 個 (invalidMarks)");
+                for (int i = 0; p.invalidMarks != null && i < p.invalidMarks.Length && i < 6; i++)
+                {
+                    var bad = p.invalidMarks[i];
+                    var r = bad == null ? null : bad.GetComponent<MeshRenderer>();
+                    Check(bad != null && p.markerDogs != null && i < p.markerDogs.Length && bad.transform.parent == p.markerDogs[i].transform && !bad.activeSelf
+                        && r != null && r.sharedMaterial != null && r.sharedMaterial.color.r > .6f && r.sharedMaterial.color.g < .4f, "赤い印 " + i + " (犬の印の子・初期非表示・赤)");
+                }
+                object wiredMarks;
+                Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(p).publicVariables.TryGetVariableValue("invalidMarks", out wiredMarks)
+                    && wiredMarks is GameObject[] && ((GameObject[])wiredMarks).Length == 6, "backing invalidMarks");
+                string flat = null;
+                try { flat = KD_LocalizationEditor.Text(KD_LocalizationEditor.Load(), "ja", KD_SleepPlacement.NeedFlatKey); } catch (InvalidOperationException) { }
+                Check(!string.IsNullOrEmpty(flat), "文言 " + KD_SleepPlacement.NeedFlatKey + " (ja=" + (flat ?? "無し") + ")");
+                if (!string.IsNullOrEmpty(flat)) Check(KD_ShopSetupEditor.MissingGlyphs(flat).Length == 0, "平らな場所が必要の字が焼けている");
+                v.Info("   斜面判定 HillsideMinGroundNormal=" + KD_SleepSlot.HillsideMinGroundNormal.ToString("F2") + " mask=" + KD_SleepSlot.HillsideGroundMask
+                    + " probe=" + KD_SleepSlot.HillsideGroundProbe + " tolerance=" + KD_SleepSlot.HillsideGroundTolerance + " searchDepth=" + KD_SleepPlacement.GroundSearchDepth);
                 Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(p).SyncMethod == VRC.SDKBase.Networking.SyncType.None, "local only");
                 Check(p.marker != null && !p.marker.gameObject.activeSelf, "marker hidden initially");
                 Check(p.screenCanvas != null && !p.screenCanvas.activeSelf, "screen hidden initially");
@@ -405,6 +456,7 @@ namespace KominkaDogRun.Editor
                 Check(backing.publicVariables.TryGetVariableValue("marker", out wiredMarker) && wiredMarker == p.marker, "backing marker");
                 Check(backing.publicVariables.TryGetVariableValue("screenCanvas", out wiredScreen) && wiredScreen == p.screenCanvas, "backing screen");
                 Check(KD_ShopSetupEditor.MissingGlyphs(Words()).Length == 0, "Japanese glyphs");
+                // 裏山改変: ヒントの文字列は実行時に言語表で差し替わるので、幅の検査は古民家どおり既定 (ja の const) で見る
                 foreach (var t in go.GetComponentsInChildren<TextMeshProUGUI>(true))
                     Check(t.GetPreferredValues(t.text).x <= t.rectTransform.rect.width + 1, "text width " + t.name);
                 foreach (var b in p.pouch.sleepButtons)
@@ -412,8 +464,6 @@ namespace KominkaDogRun.Editor
                     var t = b.GetComponentInChildren<TextMeshProUGUI>(); Check(t.GetPreferredValues(t.text).x <= t.rectTransform.rect.width + 1, "button text fit");
                 }
             }
-            log.AppendLine("RESULT pass=" + pass + " fail=" + fail);
-            File.WriteAllText("Temp/sleep-placement-verify.txt", log.ToString()); Debug.Log(log.ToString());
         }
     }
 }
