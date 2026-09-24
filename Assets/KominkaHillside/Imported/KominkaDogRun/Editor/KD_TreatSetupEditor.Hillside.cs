@@ -25,8 +25,17 @@ namespace KominkaDogRun.Editor
         /// <summary>拠点の「メニューをひらく」板の親 (KH_Dogs 直下)。子の名前は MenuPlate。</summary>
         public static readonly string[] OpenerStations = { "KH_LeashRack", "KH_Station_Viewpoint", "KH_Station_Plaza" };
         public const string OpenerPlateName = "MenuPlate";
-        /// <summary>段階 0-b。<c>KD_TreatPouch.hillsideStage</c> へ Setup が毎回書く値 (計画書 D-1)。</summary>
-        public const int Stage = 0;
+        /// <summary>段階 1 (IMP-PRG-001: 台帳・カタログ・残高・ポイントの面・ようこそ最小版)。
+        /// <c>KD_TreatPouch.hillsideStage</c> へ Setup が毎回書く値 (計画書 D-1)。0 = 段階 0-b。</summary>
+        public const int Stage = 1;
+        /// <summary>段階 1 の台帳と商品の器 (KH_Dogs 直下。P1 の Menu/3a・4 が作る)。</summary>
+        public const string ProgressSystemName = "KD_ProgressSystem";
+        public const string ShopCatalogName = "KD_ShopCatalog";
+        /// <summary>段階 1 の ポイントの面 (Page_Settings の下。ギフトコードの器 GiftCodePage の代わり)。</summary>
+        public const string PointsPageName = "PointsPage";
+        /// <summary>おじいさんの支度ポイントの額 (Codex M-2: 200 を二重に持たない)。正本は P1 の KD_ProgressLedger.HillsideKeeperPoints。</summary>
+        // TODO(P1 の定数が入ったら): = KD_ProgressLedger.HillsideKeeperPoints; に差し替える (それまでの仮の値)
+        public const int KeeperPoints = KD_ProgressLedger.HillsideKeeperPoints; // 正本は台帳 (Codex M-2、司令塔 2026-09-24 差替)
         public const string LogDir = "Temp/menu-rebuild/";
 
         public static bool InScene()
@@ -78,7 +87,7 @@ namespace KominkaDogRun.Editor
         public static void SetupHillside()
         {
             var log = new StringBuilder();
-            log.AppendLine("[KD_TreatSetup] Setup (裏山 段階 0-b)");
+            log.AppendLine("[KD_TreatSetup] Setup (裏山 段階 " + KD_Hillside.Stage + ")");
             bool ok = true;
             if (EditorApplication.isPlaying || !KD_Hillside.InScene())
             {
@@ -118,6 +127,25 @@ namespace KominkaDogRun.Editor
             if (manager == null) { log.AppendLine("FAIL KH_Dogs/KH_Leashes に KH_LeashManager が無い (さんぽの叩く先)"); ok = false; }
             if (recall == null) { log.AppendLine("FAIL KH_Dogs/KH_ToyRecall に KH_ToyRecall が無い (おもちゃの叩く先)"); ok = false; }
 
+            // ---- 段階 1 (IMP-PRG-001): 台帳・カタログ・商品。**無ければ何も書かずに FAIL** (P1 の Menu/3a Setup Progress・4 Setup Shop が先) ----
+            KD_ProgressLedger stageLedger = null; KD_ShopCatalog stageCatalog = null;
+            KD_ShopItem[] stageItems = null, stageFxItems = null;
+            if (KD_Hillside.Stage >= 1 && !HillsideFindStage1(dogs.transform, log, out stageLedger, out stageCatalog, out stageItems, out stageFxItems))
+            {
+                log.AppendLine("SETUP RESULT: FAIL (段階 1 の前提が無い。先に Tools/KominkaHillside/Menu/3a Setup Progress → 4 Setup Shop。pouch は触っていない)");
+                KD_VerifyLog.Write(HillsideBuildLog, log);
+                return;
+            }
+
+            // ---- 文言の束縛先 (Codex D-1 2026-09-24): 板の再構築の中の Bind (Menu Finish の RebuildIfPresent) が
+            // Bindings の束縛先 (例 KD_ShopKeeperMenu) を要求する。途中で例外になると板だけ作り直した途中状態が残るので、**何も変える前に**確かめる ----
+            if (!HillsideBindTargetsReady(log))
+            {
+                log.AppendLine("SETUP RESULT: FAIL (文言の束縛先が足りない。上の手順を先に。pouch は触っていない)");
+                KD_VerifyLog.Write(HillsideBuildLog, log);
+                return;
+            }
+
             // ---- pouch (KH_Dogs 直下。**位置に意味は無い**。既存なら親も位置も触らない) ----
             var go = KD_SceneObjects.Find(PouchName, out int found);
             if (found > 1)
@@ -152,7 +180,20 @@ namespace KominkaDogRun.Editor
             // ---- 板 (items / fxItems は段階 0 では無い。BuildPouchPanel が器の行数へ読み替える) ----
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KD_ShopSetupEditor.SharedFontPath);
             if (font == null) { log.AppendLine("   FAIL font asset が無い (" + KD_ShopSetupEditor.SharedFontPath + ")"); ok = false; }
-            BuildPouchPanel(go, pouch, pouch.items, pouch.fxItems, font, log);
+            BuildPouchPanel(go, pouch, KD_Hillside.Stage >= 1 ? stageItems : pouch.items, KD_Hillside.Stage >= 1 ? stageFxItems : pouch.fxItems, font, log);
+            if (KD_Hillside.Stage >= 1)
+            {
+                // 段階 1: 台帳とカタログを配線 (live は探さない。box / accessories / petFxBox / sleepBoard は段階 2)
+                pouch.ledger = stageLedger;
+                pouch.catalog = stageCatalog;
+                pouch.items = stageItems;
+                pouch.fxItems = stageFxItems;
+                // 裏山には棚が無い (items[0].shelf は常に null) ので、購入の効果音は P1 の音源 (古民家と同じ Data/SE) を直接配線する
+                pouch.uiSuccessClip = KD_ShopSetupEditor.HillsideBuyClip();
+                pouch.uiRejectClip = KD_ShopSetupEditor.HillsideRejectClip();
+                if (pouch.uiSuccessClip == null || pouch.uiRejectClip == null)
+                    log.AppendLine("   WARN 購入の効果音が取れない (success=" + (pouch.uiSuccessClip != null) + " reject=" + (pouch.uiRejectClip != null) + ")。P1 の Data/SE を確認");
+            }
 
             // ---- 設計値 (**コードの既定値はシーンに効かない**ので毎回書く。古民家値 D-6) ----
             pouch.panelDistance = 0.95f;
@@ -166,8 +207,10 @@ namespace KominkaDogRun.Editor
             pouch.recall = recall;
             log.AppendLine("   hillsideStage=" + KD_Hillside.Stage + " manager=" + (manager != null) + " recall=" + (recall != null)
                 + " activitiesMenu=" + (pouch.activitiesMenu != null));
-            log.AppendLine("   段階 0: box / ledger / items / balls / toyFetchers / catalog / petFxBox / fxItems / sleepBoard / live は探さない"
+            log.AppendLine("   段階 " + KD_Hillside.Stage + ": " + (KD_Hillside.Stage >= 1 ? "ledger / catalog / items / fxItems を配線。" : "ledger / catalog / items / fxItems は探さない。")
+                + "box / balls / toyFetchers / petFxBox / sleepBoard / live は探さない"
                 + " (現在 box=" + (pouch.box != null) + " ledger=" + (pouch.ledger != null) + " catalog=" + (pouch.catalog != null)
+                + " items=" + CountSet(pouch.items) + " fxItems=" + CountSet(pouch.fxItems)
                 + " sleepBoard=" + (pouch.sleepBoard != null) + " live=" + (pouch.live != null) + ")");
             ok &= TryCopy(pouch, log);
 
@@ -186,7 +229,7 @@ namespace KominkaDogRun.Editor
 
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             log.AppendLine("SETUP RESULT: " + (ok ? "PASS" : "FAIL"));
-            log.AppendLine("**シーンは保存していない。** 次: Menu/8・9 (あそぶ) → Menu/11 → Menu/20・21・24 の Verify");
+            log.AppendLine("**シーンは保存していない。** 次: Menu/8・9 (あそぶ) → Menu/11 → Menu/11b Build Welcome → Menu/20・21・22・11c の Verify");
             KD_VerifyLog.Write(HillsideBuildLog, log);
         }
 
@@ -206,6 +249,95 @@ namespace KominkaDogRun.Editor
             }
             log.AppendLine("   拠点板: " + wired + " / " + KD_Hillside.OpenerStations.Length + " 枚を pouch._Toggle へ");
             return wired == KD_Hillside.OpenerStations.Length;
+        }
+
+        /// <summary>段階 1 の参照を探す。ledger = KH_Dogs/KD_ProgressSystem、catalog = KH_Dogs/KD_ShopCatalog、
+        /// items = おやつ 4 (<see cref="KD_ShopSetupEditor.TreatItemNameAt"/>)、fxItems = 撫でFX 11 (<see cref="KD_ShopSetupEditor.PetFxItemNameAt"/>。
+        /// 無い分は WARN で null)。ledger / catalog / おやつが 1 つでも無ければ false (呼び手は何も書かずに止める)。</summary>
+        static bool HillsideFindStage1(Transform dogs, StringBuilder log, out KD_ProgressLedger ledger, out KD_ShopCatalog catalog,
+            out KD_ShopItem[] items, out KD_ShopItem[] fxItems)
+        {
+            bool ok = true;
+            var ledgerT = dogs.Find(KD_Hillside.ProgressSystemName);
+            ledger = ledgerT == null ? null : ledgerT.GetComponent<KD_ProgressLedger>();
+            KD_SceneObjects.Find(KD_Hillside.ProgressSystemName, out int ledgerCount);
+            if (ledger == null || ledgerCount != 1)
+            { log.AppendLine("FAIL " + KD_Hillside.DogsRootName + "/" + KD_Hillside.ProgressSystemName + " に KD_ProgressLedger が 1 個ない (シーン内 " + ledgerCount + ")。先に Menu/3a Setup Progress"); ok = false; ledger = null; }
+            var catalogT = dogs.Find(KD_Hillside.ShopCatalogName);
+            catalog = catalogT == null ? null : catalogT.GetComponent<KD_ShopCatalog>();
+            KD_SceneObjects.Find(KD_Hillside.ShopCatalogName, out int catalogCount);
+            if (catalog == null || catalogCount != 1)
+            { log.AppendLine("FAIL " + KD_Hillside.DogsRootName + "/" + KD_Hillside.ShopCatalogName + " に KD_ShopCatalog が 1 個ない (シーン内 " + catalogCount + ")。先に Menu/4 Setup Shop"); ok = false; catalog = null; }
+
+            int n = KD_ShopSetupEditor.TreatProductCount;
+            items = new KD_ShopItem[n];
+            for (int i = 0; i < n; i++)
+            {
+                string name = KD_ShopSetupEditor.TreatItemNameAt(i);
+                var itemGo = KD_SceneObjects.Find(name, out int count);
+                items[i] = (count == 1 && itemGo != null) ? itemGo.GetComponent<KD_ShopItem>() : null;
+                if (items[i] == null) { log.AppendLine("FAIL おやつの商品 " + name + " が取れない (" + count + " 個)。先に Menu/4 Setup Shop"); ok = false; }
+            }
+            int fxN = KD_ShopSetupEditor.PetFxProductCount;
+            fxItems = new KD_ShopItem[fxN];
+            int fxFound = 0;
+            for (int i = 0; i < fxN; i++)
+            {
+                string name = KD_ShopSetupEditor.PetFxItemNameAt(i);
+                var fxGo = KD_SceneObjects.Find(name, out int count);
+                fxItems[i] = (count == 1 && fxGo != null) ? fxGo.GetComponent<KD_ShopItem>() : null;
+                if (fxItems[i] == null) log.AppendLine("   WARN 撫でFX の商品 " + name + " が取れない (" + count + " 個)。null のまま (描画・購入は段階 2 IMP-DOG-015)");
+                else fxFound++;
+            }
+            log.AppendLine("   段階 1: ledger=" + (ledger != null) + " catalog=" + (catalog != null) + " items=" + CountSet(items) + "/" + n + " fxItems=" + fxFound + "/" + fxN);
+            return ok;
+        }
+
+        /// <summary>Menu/7 が中で走らせる Bind (KD_MenuSettings が居るときだけ) の前提を、変更の前に確かめる。
+        /// UILocalizationBindings の束縛先のうち **7 自身が作るもの (板 KD_TreatPouchPanel / KD_TouchLauncher / KD_TreatPouch) 以外**が
+        /// シーンに解決でき、束縛の文言キーが文言表にあること。足りなければ手順を log に書いて false。</summary>
+        static bool HillsideBindTargetsReady(StringBuilder log)
+        {
+            if (KD_SceneObjects.Find("KD_MenuSettings") == null) { log.AppendLine("   束縛先の事前検査: KD_MenuSettings が無い = 7 の中で Bind は走らない (skip)"); return true; }
+            var m = JsonUtility.FromJson<KD_LocalizationEditor.Manifest>(File.ReadAllText(KD_LocalizationEditor.BindingsPath));
+            var catalog = KD_LocalizationEditor.Load();
+            var own = new System.Collections.Generic.HashSet<string> { PouchPanelName, PouchLauncherName, PouchName };
+            var all = new System.Collections.Generic.List<KD_LocalizationEditor.Binding>();
+            if (m.labels != null) all.AddRange(m.labels);
+            if (m.interactions != null) all.AddRange(m.interactions);
+            if (m.pickups != null) all.AddRange(m.pickups);
+            int missing = 0, missingKeys = 0;
+            var reported = new System.Collections.Generic.HashSet<string>();
+            foreach (var b in all)
+            {
+                try { KD_LocalizationEditor.Text(catalog, catalog.fallbackLanguage, b.key); }
+                catch (System.InvalidOperationException) { missingKeys++; log.AppendLine("   FAIL 束縛の文言キーが文言表に無い: " + b.key + " (文言の統合を先に)"); }
+                if (own.Contains(b.root)) continue;
+                try { KD_LocalizationEditor.Resolve(b); }
+                catch (System.InvalidOperationException e)
+                {
+                    missing++;
+                    if (reported.Add(b.root)) log.AppendLine("   FAIL " + e.Message + " — " + HillsideBindHint(b.root));
+                }
+            }
+            if (m.names != null)
+                foreach (var n in m.names)
+                    if (!own.Contains(n.root) && KD_SceneObjects.Find(n.root) == null) { missing++; log.AppendLine("   FAIL 名前の束縛先 " + n.root + " が無い — " + HillsideBindHint(n.root)); }
+            log.AppendLine("   束縛先の事前検査: 束縛 " + all.Count + " 件 / 束縛先の不足 " + missing + " / 文言キーの不足 " + missingKeys);
+            return missing == 0 && missingKeys == 0;
+        }
+
+        static string HillsideBindHint(string root)
+        {
+            if (root.StartsWith("KD_ShopKeeper")) return "先に Tools/KominkaHillside/Menu/4d Setup Shop Keeper";
+            return "UILocalizationBindings.json の束縛先を作る Setup を先に実行";
+        }
+
+        static int CountSet<T>(T[] a) where T : Object
+        {
+            int c = 0;
+            if (a != null) foreach (var x in a) if (x != null) c++;
+            return c;
         }
 
         // ================================================================ 板の裏山差分 (BuildPouchPanel から呼ぶ)
@@ -337,6 +469,69 @@ namespace KominkaDogRun.Editor
 
             log.AppendLine("   裏山: Page_Walk " + WalkRowCount + " 行 (犬 " + WalkDogRows + " + 行き先 2) / おもちゃ [ディスク] " + toyRows
                 + " / かざりの FxRow " + HillsideFxRowCount + " (既定非表示) / ライブは準備中");
+
+            // ---- 段階 1: ヘッダの残高の入口 + ポイントの面 (入手経路 2 行 + [もどる]) / ようこその面 ----
+            if (KD_Hillside.Stage >= 1)
+            {
+                HillsideBuildPoints(panel, pouch, font, udon, round, log);
+                // ようこその面の器は板の再構築 (ここ) で作る — Bind (Menu Finish) が Page_Welcome の束縛を要求するので、
+                // 11b Build Welcome より前の Menu/7・11 でも面が居る必要がある。庭の置き場・手元ヒントは 11b
+                KD_WelcomeGuideEditor.BuildPage(pouch, panel.transform, font, udon, log);
+            }
+        }
+
+        /// <summary>段階 1 のポイントの面 (計画書 D-5「残高・ポイント面」)。古民家の KD_GiftCodeSetupEditor.Setup の入口と面から
+        /// **ギフトコードの器 (KD_GiftCodePanel・入力欄・受け取ったコード) を外した**もの。入口は残高ラベルの裏の PointsButton
+        /// (位置と大きさは KD_HandMenuScrollEditor.LayoutFrame が決める)、面は Page_Settings/PointsPage (extraSettingsPages に登録)。
+        /// 文字は実行時に KD_TreatPouch.HillsideRedrawPoints が書く (ここの字は Editor 上の仮)。</summary>
+        static void HillsideBuildPoints(GameObject panel, KD_TreatPouch pouch, TMP_FontAsset font, VRC.Udon.UdonBehaviour udon, Sprite round, StringBuilder log)
+        {
+            var balance = pouch.balanceLabel;
+            if (balance == null || pouch.settingsPage == null) { log.AppendLine("   FAIL ポイントの面: balanceLabel / settingsPage が無い"); return; }
+            var br = balance.rectTransform;
+            var entry = KD_ShopSetupEditor.EnsureButton(panel.transform, KD_GiftCodeSetupEditor.PointsButtonName, br.anchoredPosition,
+                br.sizeDelta + new Vector2(16f, 6f), new Color(.34f, .30f, .28f, .55f), font, "", udon, "_HillsidePoints", log);
+            // 入口 → 残高ラベルの順で末尾へ (ラベルが上に描かれる)。確認カードは BuildPouchPanel が後で最後の子へ戻す
+            entry.transform.SetAsLastSibling(); balance.transform.SetAsLastSibling();
+            balance.raycastTarget = false;
+            if (!balance.gameObject.activeSelf) balance.gameObject.SetActive(true);
+            if (!entry.activeSelf) entry.SetActive(true);
+            pouch.hillsidePointsButton = entry;
+
+            // 古民家のギフトコードの面 (GiftCodePage) が残っていれば片付ける (裏山ではギフトコードの器を作らない)
+            var gift = pouch.settingsPage.transform.Find(KD_GiftCodeSetupEditor.PageName);
+            if (gift != null) { log.AppendLine("   removed " + KD_GiftCodeSetupEditor.PageName + " (裏山ではギフトコードの器を作らない)"); Object.DestroyImmediate(gift.gameObject); }
+
+            var page = KD_ShopSetupEditor.EnsureUiChild(pouch.settingsPage.transform, KD_Hillside.PointsPageName, Vector2.zero, new Vector2(PanelWidth, PanelHeight));
+            string T(string key, string fallback) { return KD_Hillside.Text(key, fallback, log); }
+            var heading = EnsureText(page.transform, "Heading", new Vector2(0f, 170f), new Vector2(1040f, 44f), 28f, TextAlignmentOptions.Left, font);
+            heading.text = T("gift.heading", "ポイントの入手経路");
+            var rows = new TextMeshProUGUI[2];
+            var subs = new TextMeshProUGUI[2];
+            float[] ys = { 100f, 4f };
+            for (int i = 0; i < 2; i++)
+            {
+                rows[i] = EnsureText(page.transform, "Row" + i, new Vector2(0f, ys[i]), new Vector2(1040f, 40f), 26f, TextAlignmentOptions.Left, font);
+                subs[i] = EnsureText(page.transform, "Sub" + i, new Vector2(0f, ys[i] - 40f), new Vector2(1040f, 32f), 20f, TextAlignmentOptions.Left, font);
+                subs[i].color = new Color(.85f, .82f, .76f);
+            }
+            rows[0].text = T("KD_TreatPouch.WordPointsKeeper", "おじいさんの支度ポイント") + "  +" + KD_Hillside.KeeperPoints + " pt";
+            subs[0].text = T("KD_TreatPouch.WordPointsKeeperSub", "一度だけ。入口のおじいさんが渡してくれます");
+            rows[1].text = T("gift.source.stay", "滞在 1 分ごとに +1 pt");
+            subs[1].text = T("KD_TreatPouch.WordPointsStaySub", "ここで過ごすだけでたまります");
+            var back = RoundButton(page.transform, "Back", new Vector2(-430f, -285f), new Vector2(200f, 48f), KD_UiSpriteEditor.ActionNeutral, font,
+                T("gift.back", "戻る"), udon, "_HillsidePointsBack", round, log);
+            pouch.hillsidePointsPage = page;
+            pouch.hillsidePointsHeading = heading;
+            pouch.hillsidePointsRows = rows;
+            pouch.hillsidePointsSubs = subs;
+            pouch.hillsidePointsBackLabel = ButtonLabelOf(back, 24f);
+            var pages = new System.Collections.Generic.List<GameObject>();
+            foreach (var p in pouch.extraSettingsPages ?? new GameObject[0]) if (p != null && p != page && !pages.Contains(p)) pages.Add(p);
+            pages.Add(page);
+            pouch.extraSettingsPages = pages.ToArray();
+            page.SetActive(false);
+            log.AppendLine("   段階 1: ポイントの面 " + KD_Hillside.PointsPageName + " (入手経路 2 行 + [もどる]。ギフトコードの器なし) / 入口 " + KD_GiftCodeSetupEditor.PointsButtonName + " -> _HillsidePoints");
         }
 
         // ================================================================ 文言 (字形の宣言)

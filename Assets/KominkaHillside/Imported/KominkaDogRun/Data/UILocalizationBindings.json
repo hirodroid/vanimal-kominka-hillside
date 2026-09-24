@@ -539,9 +539,65 @@
       "root": "KD_TreatPouchPanel",
       "path": "Page_Acc/Scroll/Viewport/Content/FxRow5/Button/Label",
       "key": "KD_TreatPouch.WordAccPut"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Welcome/ScrollView/Viewport/Body",
+      "key": "welcome.body"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Welcome/LaterButton/Label",
+      "key": "welcome.later"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Welcome/MenuButton/Label",
+      "key": "welcome.menu"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Welcome/LanguageHeading",
+      "key": "welcome.language"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "WaysButton/Label",
+      "key": "KD_ShopKeeper.WordWays"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "WalkButton/Label",
+      "key": "KD_ShopKeeper.WordWalk"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "TreatsButton/Label",
+      "key": "KD_ShopKeeper.WordTreats"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "CallButton/Label",
+      "key": "KD_ShopKeeper.WordCall"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "ByeButton/Label",
+      "key": "KD_ShopKeeper.WordBye"
+    },
+    {
+      "root": "KD_ShopKeeperMenu",
+      "path": "ContentScroll/Viewport/InfoBody",
+      "key": "KD_ShopKeeper.WordGreeting"
     }
   ],
-  "interactions": [],
+  "interactions": [
+    {
+      "root": "KD_ShopKeeper",
+      "path": "",
+      "key": "KD_ShopKeeper.InteractWord"
+    }
+  ],
   "names": [
     {
       "root": "KD_TreatPouch",

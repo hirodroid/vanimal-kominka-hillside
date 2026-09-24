@@ -5,7 +5,7 @@ using VRC.SDKBase;
 
 namespace KominkaDogRun
 {
-    /// <summary>KD_TreatPouch の裏山差分 (KominkaHillside 段階 0-b。計画書 docs/plans/2026-09-23-menu-rebuild.md D-1 / D-2)。
+    /// <summary>KD_TreatPouch の裏山差分 (KominkaHillside 段階 0-b / 1。計画書 docs/plans/2026-09-23-menu-rebuild.md D-1 / D-2)。
     ///
     /// **古民家の本体には手を入れず、段階表と「準備中」の描画をここに隔離する。**
     /// 段階 (hillsideStage) ごとに「その段階では null が正 (意図的な未導入)」と「本来必要な参照の欠落」を分け、
@@ -80,11 +80,78 @@ namespace KominkaDogRun
             HillsideHideBalance();
         }
 
-        /// <summary>残高 (ledger) が無い段階では「読み込み中...」を出し続けないよう、ヘッダの残高を隠す (IMP-PRG-001 で戻す)。</summary>
+        /// <summary>残高 (ledger) が無い段階 (0) では「読み込み中...」を出し続けないよう、ヘッダの残高とポイントの入口を隠す。
+        /// 段階 1 (IMP-PRG-001) で ledger が配線されたら出す (未復元の間は Redraw が「読み込み中...」を書く。古民家どおり)。</summary>
         private void HillsideHideBalance()
         {
-            if (balanceLabel == null || ledger != null) return;
-            if (balanceLabel.gameObject.activeSelf) balanceLabel.gameObject.SetActive(false);
+            bool show = ledger != null;
+            if (balanceLabel != null && balanceLabel.gameObject.activeSelf != show) balanceLabel.gameObject.SetActive(show);
+            if (hillsidePointsButton != null && hillsidePointsButton.activeSelf != show) hillsidePointsButton.SetActive(show);
+        }
+
+        // ============================================================
+        // 段階 1 (IMP-PRG-001): ポイントの面と未受取の案内
+        // ============================================================
+
+        [Header("裏山 段階 1: ポイントの面 (ヘッダの残高を押す)")]
+        [Tooltip("残高ラベルの裏の入口 (PointsButton → _HillsidePoints)。ledger が無い段階では隠す")]
+        public GameObject hillsidePointsButton;
+        [Tooltip("Page_Settings/PointsPage。extraSettingsPages に登録する。**ギフトコードの器 (KD_GiftCodePanel・入力欄) は置かない** (計画書 D-5)")]
+        public GameObject hillsidePointsPage;
+        public TextMeshProUGUI hillsidePointsHeading;
+        /// <summary>入手経路 2 行 (0 = おじいさんの支度ポイント / 1 = 滞在)。名前と補足。</summary>
+        public TextMeshProUGUI[] hillsidePointsRows;
+        public TextMeshProUGUI[] hillsidePointsSubs;
+        public TextMeshProUGUI hillsidePointsBackLabel;
+
+        /// <summary>ポイントの面を開く前のタブ ([もどる] で戻す)。</summary>
+        private int _hsPointsReturnTab = -1;
+
+        /// <summary>ヘッダの残高を押した。古民家の KD_GiftCodePanel._Open の代わり (ギフトコードの器は無い)。ローカル専用。</summary>
+        public void _HillsidePoints()
+        {
+            if (hillsidePointsPage == null || ledger == null) return;
+            if (!(_settingsOpen && _extraSettingsPage == hillsidePointsPage)) _hsPointsReturnTab = _tab;
+            _OpenExtraSettings(hillsidePointsPage, "gift.title");
+        }
+
+        /// <summary>ポイントの面の [もどる]。開く前のタブへ (古民家の KD_GiftCodePanel._Back と同じ)。</summary>
+        public void _HillsidePointsBack()
+        {
+            int tab = _hsPointsReturnTab;
+            _hsPointsReturnTab = -1;
+            if (tab < 0 || tab >= TabCount) tab = TabWalk;
+            SetTab(tab);
+        }
+
+        /// <summary>設定の枠の中でポイントの面を開いているときだけ描く (Redraw の設定分岐から毎回呼ぶ)。</summary>
+        private void HillsideRedrawPoints()
+        {
+            if (hillsidePointsPage == null || !_settingsOpen || _extraSettingsPage != hillsidePointsPage) return;
+            bool loaded = ledger != null && ledger.Loaded();
+            string loading = L("KD_ShopShelf.WordLoading") + "...";
+            if (hillsidePointsHeading != null)
+                hillsidePointsHeading.text = L("gift.heading") + "    " + (loaded ? L("KD_TreatPouch.WordPointsNow").Replace("{0}", ledger.Points().ToString()) : loading);
+            if (hillsidePointsRows != null && hillsidePointsRows.Length >= 2)
+            {
+                string keeper = ledger != null ? ledger.keeperPoints.ToString() : "?";
+                string state = !loaded ? loading : L(ledger.BonusReceived(KD_ProgressLedger.BonusKeeper) ? "gift.received" : "gift.pending");
+                if (hillsidePointsRows[0] != null) hillsidePointsRows[0].text = L("KD_TreatPouch.WordPointsKeeper") + "  +" + keeper + " pt  [" + state + "]";
+                if (hillsidePointsRows[1] != null) hillsidePointsRows[1].text = L("gift.source.stay");
+            }
+            if (hillsidePointsSubs != null && hillsidePointsSubs.Length >= 2)
+            {
+                if (hillsidePointsSubs[0] != null) hillsidePointsSubs[0].text = L("KD_TreatPouch.WordPointsKeeperSub");
+                if (hillsidePointsSubs[1] != null) hillsidePointsSubs[1].text = L("KD_TreatPouch.WordPointsStaySub");
+            }
+            if (hillsidePointsBackLabel != null) hillsidePointsBackLabel.text = L("gift.back");
+        }
+
+        /// <summary>おじいさんの支度ポイント (Bonus.keeper) が未受取の案内を出すか。**復元前は出さない** (受取済みの人に一瞬出さない)。
+        /// 段階 1 は おやつ・かざりの準備中の行のサブ文、段階 2 は購入面の行 0 の上の 1 行が使う (両方ここを読む)。</summary>
+        private bool HillsideGrantLineVisible()
+        {
+            return ledger != null && ledger.Loaded() && !ledger.BonusReceived(KD_ProgressLedger.BonusKeeper);
         }
 
         // ============================================================
@@ -101,6 +168,9 @@ namespace KominkaDogRun
                 HillsidePreparingRows(rowLabels, L("KD_TreatPouch.WordPreparing"));
                 HillsideHideAll(rowButtons);
                 HillsideClearAll(rowHintLabels);
+                // 段階 1: 未受取の案内を準備中の行のサブ文に (段階 2 で行 0 の上の 1 行へ移す)
+                if (HillsideGrantLineVisible() && rowHintLabels != null && rowHintLabels.Length > 0 && rowHintLabels[0] != null)
+                    rowHintLabels[0].text = L("KD_TreatPouch.WordGrantLine");
                 if (putAwayButton != null && putAwayButton.activeSelf) putAwayButton.SetActive(false);
                 if (statusLabel != null) statusLabel.text = "";
                 return true;
@@ -112,6 +182,8 @@ namespace KominkaDogRun
                 HillsideHideAll(accButtons);
                 HillsideHideAll(accGiftButtons);
                 HillsideClearAll(accRowSubLabels);
+                if (HillsideGrantLineVisible() && accRowSubLabels != null && accRowSubLabels.Length > 0 && accRowSubLabels[0] != null)
+                    accRowSubLabels[0].text = L("KD_TreatPouch.WordGrantLine");
                 if (accBackButton != null && accBackButton.activeSelf) accBackButton.SetActive(false);
                 if (accHeaderLabel != null) accHeaderLabel.text = "";
                 return true;

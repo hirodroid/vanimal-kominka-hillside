@@ -460,3 +460,58 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 - **案内文の旧メニュー名 9 か所**: `Tools/KominkaHillside/Menu/…` の実名へ直した。
 - **ラジオ設定頁**: `KD_MenuFinishEditor` が作らなくなった。ランタイムの入口も `#if !KH_WITH_HOBORADIO` で閉じた。
 - 副作用: パス置換の都合で Editor 12 本の改行が LF にそろった (内容は同じ)。
+
+## 2026-09-24 台帳・おじいさん・ポイント (段階 1)
+
+[メニュー再構築計画](../../plans/2026-09-23-menu-rebuild.md) D-5・D-8 の段階 1 ([IMP-PRG-001](../issues/IMP-PRG-001-ledger-shopkeeper-points.md))。古民家の台帳・カタログ・おじいさん・ようこそを裏山のシーンに置き、手元メニューに残高とポイント面を足した。実行順・Verify の数値・未確認の点は計画書の「実装記録 / 段階 1」が正本。ここには**古民家の移植元から何を変えたか**だけを残す。移植元の SHA は段階 0-a と同じ (`44505384` 相当)。
+
+状態: Verify 全 PASS、シーン保存済み。Codex レビュー (実行中)・コミット・Play (ClientSim・実機) は未了。
+
+### 準備のコピー (前コミット 7165e45)
+
+段階 1 の準備として、次を古民家からコピーした。記録はコミット 7165e45 のメッセージにある。
+
+| 対象 | 置き場 | 備考 |
+|---|---|---|
+| polyperfect (Low Poly Animated People + Common) | `Assets/polyperfect/` | 購入アセット、git 管理外 (`.gitignore`)。おじいさんの man_farm に使う |
+| `AC_KD_Npc.controller` | `Imported/KominkaDogRun/Animations/` | おじいさんの Animator |
+| CE の UdonProduct 6 本 (`KD_Product_CandyStep` / `KominkaLivePack` / `PlushSet` / `PumpkinParade` / `RoyalSet` / `SummerSet`) | `Assets/KominkaHillside/Data/CE/` | 同じ Product / Listing ID を参照する |
+
+### 新規
+
+| 区分 | ファイル | 内容 |
+|---|---|---|
+| 新規 partial | `Imported/KominkaDogRun/Editor/KD_ShopSetupEditor.Hillside.cs` | `Menu/4 Setup Shop` / `4a Verify Shop` の裏山版。`KH_Dogs/KD_ShopCatalog` + `KD_ShopItem_*` 50 行 (= `KD_ProductDefinitions.All`、全行 menuOnly で Collider・描画・棚・listener なし)、`BindCatalog` (ledger.products / categoryKeys / defaults / CE の UdonProduct)、`KH_Dogs/KD_PlayerFxTag`、文言表 (`displayNameKey` / `displayName`。古民家ではシーンにしか無かった)、購入音の口 `HillsideBuyClip()` / `HillsideRejectClip()` |
+| 新規 partial | `Imported/KominkaDogRun/Editor/KD_ShopKeeperSetupEditor.Hillside.cs` | `Menu/4d Setup Shop Keeper` / `4e Verify Shop Keeper`。おじいさんの配置 (初回だけ)、man_farm と `AC_KD_Npc`、ナビ 5 項目の表 |
+| 新規 script | `scripts/check-consume-once.js` | 古民家から移植。`Imported/KominkaDogRun/Scripts` と `Assets/KominkaHillside/Scripts` を見て、`_TryConsume` の呼び出しが 1 か所かを確かめる |
+
+### 裏山改変の一覧
+
+担当は P1 = 台帳・カタログ、P2 = おじいさん、P3 = 板・ようこそ、司 = 司令塔。
+
+| ファイル | 何を | 理由 | 担当 |
+|---|---|---|---|
+| `Scripts/Progress/KD_ProgressLedger.cs` | 名前空間 `KH_Commerce_v1` / テスト `KH_TestCommerce_v1`。`initialPoints` 既定 0 (0 以下なら `Bonus.initial` もフラグも書かない)、`keeperPoints` 既定 200。Grant の口と「フラグ true → Earned 加算」の順は不変 | 付与はおじいさんの 200pt 一本 (game-design §4)。古民家の保存データと区別する | P1 |
+| `Editor/KD_ProgressSetupEditor.cs` | Setup / Verify を `Menu/3a` / `3b` へ付け替え。`KH_Dogs/KD_ProgressSystem`、SyncMode None、名前空間・initialPoints 0・keeperPoints 200 を書く | 裏山のシーン構成 | P1 |
+| `Editor/KD_ShopSetupEditor.Setup.cs` / `.Verify.cs` | 古民家版を `Menu/Imported-Unused/Shop/2・3 (Kominka)` へ | 裏山に棚は無く、購入はメニュー | P1 |
+| `Editor/KD_ShopSetupEditor.Ui.cs` | `EnsurePlayerFxTag` に親の引数 (`KH_Dogs`) を足す。既存なら親も位置も触らない | 裏山は `KD_Systems` を作らない | P1 |
+| `Scripts/KD_ShopKeeper.cs` | ナビ 5 項目 (過ごし方 / さんぽ (新 `_OpenWalk`) / おやつ / 呼ぶ / またね)。古民家だけの `_OpenHowTo` / `_OpenPetting` / `_OpenDogs` / `_OpenPhotos` / `_OpenShop` は残して navIndex −1。挨拶 2 種に「支度は手元メニューの「かざり」で」+ 端末別の開き方。初回は「{0}pt だ。一度きりだよ」。`_TryGift` (復元待ち 1 秒再試行) は不変 | DES-UI-003 のナビと導線 | P2 |
+| `Editor/KD_ShopKeeperSetupEditor.cs` | partial 化し、`BuildMenu` と Verify の核を裏山のナビ表に置き換えた (古民家版の入口 `Imported-Unused/Shop Keeper/2・3` も 5 項目で組む) | 裏山専用の入口を別に作ると二重管理になる | P2 |
+| `Scripts/KD_TreatPouch.Hillside.cs` | ledger 配線時にヘッダの Balance を出す。`hillsidePoints*`、`_HillsidePoints` / `_HillsidePointsBack`、`HillsideRedrawPoints` (「いま N pt」+ 入手経路 2 行、未復元は「読み込み中...」)、`HillsideGrantLineVisible()` と準備中の行のサブ文への `WordGrantLine` | 残高・ポイント面・未受取の案内 (D-5) | P3 |
+| `Scripts/KD_TreatPouch.Redraw.cs` | 設定の枠の中で `HillsideRedrawPoints()` を呼ぶ 1 行 | 呼び出し口だけ (D-3) | P3 |
+| `Editor/KD_TreatSetupEditor.Hillside.cs` | `KD_Hillside.Stage = 1`、`HillsideFindStage1` (ledger / catalog / treat 4 / petfx 11。無ければ FAIL で書かない)、購入音の配線、`HillsideBuildPoints` (PointsButton、`Page_Settings/PointsPage`、ギフトコードの器を作らず残骸 `GiftCodePage` を削除)、段階 1 で `KD_WelcomeGuideEditor.BuildPage` を呼ぶ | 段階表 D-1 を 1 へ | P3 |
+| `Editor/KD_TreatSetupEditor.Pouch.cs` | 効果音の NOTE の文言 (棚が無いので SetupHillside が配線する旨) | 段階 1 の配線元の変更 | P3 |
+| `Editor/KD_TreatSetupEditor.Verify.cs` | Verify 20 の段階表を 1 に (treat 4 必須、petfx 11 枠で null は WARN)、ledger / catalog が `KH_Dogs` 直下、`KD_ShopKeeper` 1 個、購入音、Balance と PointsButton、ポイント面 2 行 + [戻る]、ギフトコード無し (`KD_GiftCodePanel` / `GiftCodePage` / `TMP_InputField` が 0)、welcome page・hints・welcomeSpot。棚は SKIP 明示 | 同上 | P3 |
+| `Editor/KD_WelcomeGuideEditor.cs` | 古民家の Build / Verify を `Imported-Unused/Welcome Guide/1・2 (Kominka)` へ。新 `BuildPage`、`Menu/11b` / `11c`。`KH_Dogs/KD_WelcomeSpot` (新規時だけ `KH_Entrance` の前 1.8 m・高さ 1.3 m)、`KH_Dogs/KD_HintDirector` (sync None、`sleepNoticeEnabled = false`、保存キー `KD_Onboarding_v1`) | ようこそ の最小版を段階 1 へ前倒し (D-5) | P3 |
+| `Data/UILocalizationBindings.json` | `Page_Welcome` の 4 束縛、`KD_ShopKeeperMenu` の 6 束縛、interactions 1 を追加 (labels 118 / interactions 1) | 新しい板の文言 | P3 |
+| `Data/UITranslations.json` | 差替 15 (P2 7 + P3 8)、新規 7 (P2 2 + P3 5)。13 言語、計 664 キー。`welcome.*` の既存キーは差替 (再読の行は段階 3 まで無いので除去) | おじいさんのナビ・挨拶、ポイント面、未受取の案内、ようこそ | 司 (P2 / P3 の断片を統合) |
+
+### MenuItem の変更
+
+| メニュー | 変更 |
+|---|---|
+| `Tools/KominkaHillside/Menu/3a Setup Progress` / `3b Verify Progress` | `Menu/Imported-Unused/Progress System/2・3` から付け替え (裏山改変) |
+| `Menu/4 Setup Shop` / `4a Verify Shop` | 裏山版 (`KD_ShopSetupEditor.Hillside.cs`) に。古民家版は `Menu/Imported-Unused/Shop/2 - Setup Shop (Kominka)` / `3 - Verify Shop (Kominka)` へ |
+| `Menu/4d Setup Shop Keeper` / `4e Verify Shop Keeper` | 新設 (`KD_ShopKeeperSetupEditor.Hillside.cs`) |
+| `Menu/11b Build Welcome` / `11c Verify Welcome` | 新設 (`KD_WelcomeGuideEditor.cs`)。古民家版は `Menu/Imported-Unused/Welcome Guide/1 - Build (Kominka)` / `2 - Verify (Kominka)` へ |
+| `Menu/7 Build Menu` / `20 Verify Pouch` | 段階 1 の分岐と検査を追加 (入口の名前は不変) |

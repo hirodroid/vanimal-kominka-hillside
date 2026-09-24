@@ -29,6 +29,16 @@ namespace KominkaDogRun
     ///
     /// ヒステリシスが要らないのは開く条件が距離ではないから
     /// (棚の撫でFXメニューは show/hide の 2 距離が要る — あちらは近接で開くため)。
+    ///
+    /// ## 裏山改変 (IMP-PRG-001 段階 1)
+    ///
+    /// 門のそばに立つ。付与は **Bonus.keeper 200pt 一回だけ** (額は台帳の keeperPoints。
+    /// 付与経路 <see cref="_TryGift"/> と一回きりの判定は古民家のまま。付与の要求は板を閉じても残し、
+    /// 復元待ちの 1 秒再試行は板が閉じていても回す = Codex D-2)。
+    /// 左ナビは 5 項目 **過ごし方 / さんぽ / おやつ / 呼ぶ / またね** (navIndex 0..3 + またね)。
+    /// 古民家の メニュー・なでかた・犬のこと・写真のこと・おかいもの はボタンを作らない
+    /// (メソッドと文言キーは残す。呼ばれてもハイライトなし = navIndex -1)。
+    /// 構築は Tools/KominkaHillside/Menu/4d Setup Shop Keeper。
     /// </summary>
     /// <remarks>
     /// SyncMode None。**メニューは完全にローカル** — 開いたクライアントだけに見え、
@@ -69,7 +79,7 @@ namespace KominkaDogRun
                  "(2026-09-01 レジストリ + 対照群)")]
         public UnityEngine.UI.ScrollRect contentScroll;
 
-        [Tooltip("左ナビ 8 ボタンの背景 Image (生成順 = _Open* の navIndex。IMP-INF-011 で過ごし方、IMP-ENV-020 で呼ぶことが加わり 8)。選択中だけ色を変える。" +
+        [Tooltip("左ナビの話題ボタンの背景 Image (生成順 = _Open* の navIndex)。裏山改変: 4 本 = 過ごし方 / さんぽ / おやつ / 呼ぶ (古民家は 8 本)。選択中だけ色を変える。" +
                  "Image.color の setter は Udon 公開を確認済み (2026-09-01)")]
         public UnityEngine.UI.Image[] navImages;
         [Tooltip("ナビの通常色 (Setup が書く)")]
@@ -105,16 +115,25 @@ namespace KominkaDogRun
         /// <summary>Interact の表示文言。Setup が UdonBehaviour.interactText へ書く。</summary>
         public const string InteractWord = "おじいさんに話しかける";
 
+        // 裏山改変: 挨拶は「支度はメニューの かざり」+ 端末別のメニューの開き方 (IMP-PRG-001)。
+        // 受け取り済みの人が話しかけたときも、付与の直後もこの案内が出る
         public const string WordGreeting =
-            "よく来たね。\nここはわしの庭だよ。\n犬たちと好きに遊んでいきな。\n" +
-            "知りたいことがあれば、\n何でも聞いておくれ。";
+            "よく来たね。\nここは古民家の裏山だよ。\n犬たちと、のんびり\n歩いていきな。\n\n" +
+            "支度は、手元メニューの\n「かざり」でできる。\n" +
+            "VRは右スティックを下に\n倒したままにすると出る。\nDesktopはTキー、\n" +
+            "スマホは画面にある\n「メニュー」を押しな。\n\n" +
+            "知りたいことがあれば、\n左から選んでおくれ。";
 
         // IMP-PRG-009: はじめて話しかけたときだけの挨拶。{0} は台帳の keeperPoints
-        // (文言に数を焼かない — 額を変えたら板も追随する)
+        // (文言に数を焼かない — 額を変えたら板も追随する)。
+        // 裏山改変: 200pt 一回だけ (Bonus.keeper) + かざりで支度 + 端末別の開き方
         public const string WordGreetingGift =
-            "よく来たね。\nここはわしの庭だよ。\n\nはじめてだね。\nこれを持っていきな。\n" +
-            "{0}ptだ。\n好きなものと交換しな。\n\n犬たちと好きに遊んでいきな。\n" +
-            "知りたいことがあれば、\n何でも聞いておくれ。";
+            "よく来たね。\nはじめてだね。\n散歩の支度に、これを\n持っていきな。\n" +
+            "{0}ptだ。一度きりだよ。\n\n" +
+            "手元メニューの「かざり」で\n犬の支度ができる。\n" +
+            "VRは右スティックを下に\n倒したままにすると出る。\nDesktopはTキー、\n" +
+            "スマホは画面にある\n「メニュー」を押しな。\n\n" +
+            "知りたいことがあれば、\n左から選んでおくれ。";
 
         // IMP-ENV-005: 説明は「聞けば全部わかる」詳細版 — 仕様は隠さず全部言う
         // (入り口の説明ボードが簡素版。文面のレビュー記録は
@@ -124,49 +143,62 @@ namespace KominkaDogRun
         //  縦は制限なし — 本文はスクロールで収まる。規約が破れた行は wrap が折り返す
         //  = 欠けはしないが読みにくい (BUG-ENV-001 の安全網。免罪符にしない)
         public const string WordWays = "過ごし方";
+        // 裏山改変: 裏山の過ごし方 (さんぽ・眺め・ボールとディスク)。写真・ライブ・犬の板の話はしない
         public const string InfoWays =
             "ここでの過ごし方だよ。\n" +
             "好きな順でいい。\n" +
             "\n" +
+            "犬をつないで、さんぽに行く。\n" +
             "犬をなでる。\n" +
-            "ボールを投げる。\n" +
+            "ボールやディスクを投げる。\n" +
             "おやつをあげる。\n" +
-            "それだけでも、じゅうぶんだ。\n" +
             "\n" +
-            "手元メニューの「呼ぶ」で、\n" +
-            "好きな場所に犬を呼んで\n" +
-            "そばで寝てもらえる。\n" +
-            "くわしくは「呼ぶこと」だ。\n" +
-            "\n" +
-            "いい瞬間は写真になって、\n" +
-            "縁側の板に並ぶ。\n" +
-            "「写真のこと」で話すよ。\n" +
+            "山の上からは、ふもとの\n" +
+            "古民家が見えるよ。\n" +
+            "ときどき振り返ってみな。\n" +
             "\n" +
             "「かざり」で犬におめかし、\n" +
-            "「パーティクル」でなでた\n" +
-            "ときの光を変えられる。\n" +
-            "「ライブ」は誰かが開けば、\n" +
-            "その場のみんなで見られる。\n" +
-            "「あそぶ」には犬目線カメラと\n" +
-            "トレーナーの遊びがある。\n" +
-            "ライブやトレーナーの条件と\n" +
-            "買い物は「おかいもの」で話すよ。\n" +
-            "\n" +
-            "となりの板では、犬に呼び名を\n" +
-            "つけて、お気に入りを選べる。\n" +
+            "なでたときの光も選べる。\n" +
+            "「呼ぶ」で犬をそばに呼んで\n" +
+            "休ませることもできる。\n" +
             "\n" +
             "ぜんぶやらなくていい。\n" +
             "ながめているだけでも\n" +
             "いいもんだよ。";
+
+        /// <summary>裏山改変: さんぽの話題 (IMP-PRG-001)。</summary>
+        public const string WordWalk = "さんぽ";
+        public const string InfoWalk =
+            "手元メニューの「さんぽ」で\n" +
+            "犬をリードにつなげるよ。\n" +
+            "犬の行で「左につなぐ」か\n" +
+            "「右につなぐ」を押しな。\n" +
+            "近くにいる犬だけだ。\n" +
+            "片手に3匹、両手で6匹まで\n" +
+            "つなげる。\n" +
+            "\n" +
+            "行き先は「広場」か\n" +
+            "「古民家側の入口」だ。\n" +
+            "つないだ犬は、寄り道を\n" +
+            "しながら行き先へ歩く。\n" +
+            "\n" +
+            "外すときは「はずす」だ。\n" +
+            "つないだ本人だけが外せる。\n" +
+            "\n" +
+            "ポイントがなくても、さんぽと\n" +
+            "ボール遊びはいつでもできる。";
+
         public const string WordHowTo = "メニュー";
         public const string WordPetting = "なでかた";
         public const string WordDogs = "犬のこと";
         public const string WordPhotos = "写真のこと";
         public const string WordShop = "おかいもの";
-        public const string WordTreats = "おやつのこと";
+        /// <summary>裏山改変: ナビのラベルを「おやつのこと」→「おやつ」。</summary>
+        public const string WordTreats = "おやつ";
         public const string WordBye = "またね";
-        /// <summary>IMP-ENV-020: 8 話題目 (呼ぶ・姿勢と動作・呼べる人)。</summary>
-        public const string WordCall = "呼ぶこと";
+        /// <summary>IMP-ENV-020: 8 話題目 (呼ぶ・姿勢と動作・呼べる人)。
+        /// 裏山改変: ナビのラベルを「呼ぶこと」→「呼ぶ」。</summary>
+        public const string WordCall = "呼ぶ";
 
         public const string InfoHowTo =
             "まずは手元のメニューを\n" +
@@ -367,6 +399,7 @@ namespace KominkaDogRun
             "見るのは誰でも無料だよ。\n" +
             "犬が出るライブもある。";
 
+        // 裏山改変: 棚は無い。買い足しも手元メニューの「おやつ」から
         public const string InfoTreats =
             "手元のメニューで「おやつ」を\n" +
             "選び、「出す」を押しな。\n" +
@@ -378,62 +411,32 @@ namespace KominkaDogRun
             "食べてくれるよ。\n" +
             "一度に出せるのはひとつだけ。\n" +
             "はじめに5個持たせてあるから、\n" +
-            "なくなったら棚で\n" +
+            "なくなったら「おやつ」で\n" +
             "ポイントと交換しな。";
 
+        // 裏山改変: 短い版 (呼び方・リード中は対象外・無料の姿勢・呼べる人)
         public const string InfoCall =
-            "［呼び方］\n" +
             "手元メニューの「呼ぶ」で\n" +
             "犬を選び、ポーズを選んで、\n" +
             "場所と向きを決める。\n" +
-            "場所を決める間は、\n" +
-            "メニューが閉じるよ。\n" +
-            "決めたあとも閉じたままで、\n" +
-            "犬が歩いてくる。\n" +
-            "自分が呼んだ犬を\n" +
-            "自由にするなら、\n" +
-            "「呼ぶ」でその犬を選び、\n" +
+            "犬が歩いてきて、そこで\n" +
+            "休んでくれるよ。\n" +
+            "自由にするなら、「呼ぶ」で\n" +
+            "その犬を選び、\n" +
             "「自由にする」を押しな。\n" +
             "\n" +
-            "［姿勢と動作］\n" +
+            "リードでつないでいる犬は\n" +
+            "呼べない。先に外しな。\n" +
+            "\n" +
             "ごろん、ふせ、おすわり、\n" +
             "うずくまるの4つは無料だ。\n" +
-            "へそ天は、ポイントで買うと\n" +
-            "ポーズで選べる。\n" +
-            "お手とあご乗せも、\n" +
-            "ポイントで買う動作だよ。\n" +
-            "おすわりでお手、\n" +
-            "ふせであご乗せだ。\n" +
-            "VRでは、呼んだ本人が\n" +
-            "犬の前に手を差し出して、\n" +
-            "少しそのまま待ちな。\n" +
-            "手を犬から遠ざけると\n" +
-            "終わるよ。\n" +
-            "Desktopとスマホでは、\n" +
-            "犬の近くでメニューを開き、\n" +
-            "「呼ぶ」の動作ボタンを\n" +
-            "押しな。しばらくその姿で\n" +
-            "応えてくれるよ。\n" +
-            "伸びとあくびはセットで、\n" +
-            "これもポイントで買う動作だ。\n" +
-            "犬が着いてから、\n" +
-            "どの端末でも「呼ぶ」の\n" +
-            "ボタンで一回ずつ頼めるよ。\n" +
-            "追加の姿勢や動作は、\n" +
-            "一度買えば6犬種で使える。\n" +
-            "トレーナーには含まれない。\n" +
+            "ほかの姿勢や動作は、\n" +
+            "ポイントで増やせるよ。\n" +
             "\n" +
-            "［呼べる人］\n" +
-            "犬を呼べるのは、部屋の\n" +
-            "オーナー (いなければMaster) か、\n" +
+            "呼べるのは部屋のオーナー\n" +
+            "(いなければMaster) と、\n" +
             "「呼ぶを全員に許可」が\n" +
-            "ONのときの参加者だよ。\n" +
-            "姿勢や動作を買っても、\n" +
-            "呼ぶ許可は別に必要だ。\n" +
-            "呼んだ犬のポーズを\n" +
-            "変えられるのは、呼んだ本人だけ。\n" +
-            "ほかの犬が空いていれば、\n" +
-            "そっちを呼びな。";
+            "ONのときの参加者だよ。";
 
         public KD_Language language;
         private string L(string source) { return language != null ? language._Text(source) : source; }
@@ -444,7 +447,7 @@ namespace KominkaDogRun
             // (KD_BallResetButton と同じ保険)
             if (menuRoot == null || infoBody == null || contentScroll == null)
                 Debug.LogError("[KD_ShopKeeper] wiring incomplete. " +
-                    "Run Tools/KominkaDogRun/Shop Keeper setup.");
+                    "Run Tools/KominkaHillside/Menu/4d Setup Shop Keeper.");
             CloseMenu();
             SendCustomEventDelayedSeconds(nameof(_Refresh), Mathf.Max(refreshSeconds, 0.25f));
         }
@@ -466,43 +469,55 @@ namespace KominkaDogRun
             Play(openClip);
         }
 
-        /// <summary>IMP-PRG-009: はじめて話しかけたときの 100pt。台帳が復元前なら
-        /// 板を開いている間 <see cref="_Refresh"/> が 1 秒ごとに再試行する
-        /// (入室直後に話しかけた人が取りこぼさないように)。付与できたら挨拶を
-        /// 贈り物版へ差し替える (残高の行も同時に増える = 因果が読める)。
+        /// <summary>IMP-PRG-009: はじめて話しかけたときの一度きりの付与 (裏山改変: 額は台帳の keeperPoints = 200)。
+        /// 台帳が復元前なら <see cref="_Refresh"/> が 1 秒ごとに再試行する (入室直後に話しかけた人が取りこぼさないように)。
+        /// 裏山改変 (Codex D-2): **付与の要求 (<see cref="_giftPending"/>) と板の表示を分けた。** 古民家は板を閉じると
+        /// 要求を捨て、再試行も板が開いている間だけだったので、復元前に「またね」や 4 m で閉じると
+        /// 復元後も話しかけ直すまで付かなかった。裏山では閉じても要求を残し、板が閉じていても再試行する。
+        /// 贈り物の挨拶への切替だけは板の表示中に限る (閉じていれば次に開いたとき通常の挨拶 = 受取済み)。
+        /// 一回きりの判定は台帳 (<see cref="KD_ProgressLedger._GrantKeeperBonus"/>) のまま。
         /// ローカル専用なので `_` 始まり。</summary>
         public void _TryGift()
         {
             if (!_giftPending || ledger == null || !ledger.Loaded()) return;
             _giftPending = false;
             if (!ledger._GrantKeeperBonus()) return;
+            if (menuRoot == null || !menuRoot.activeSelf) return;   // 裏山改変: 表示の切替は板が開いているときだけ
             ShowTopic(-1, "", "KD_ShopKeeper.WordGreetingGift");
             RedrawBalance();
         }
+        /// <summary>付与の要求。Interact で立ち、付与を試したら下ろす。裏山改変: 板を閉じても下ろさない
+        /// (4e が「CloseMenu が要求を消さない」ことを検査する)。</summary>
         private bool _giftPending;
 
-        /// <summary>[あそびかた]。ローカル専用なので `_` 始まり。</summary>
-        public void _OpenWays() { ShowTopic(6, "KD_ShopKeeper.WordWays", "KD_ShopKeeper.InfoWays"); }
+        // 裏山改変: navIndex は裏山のナビ順 (0 過ごし方 / 1 さんぽ / 2 おやつ / 3 呼ぶ)。
+        // 古民家だけの話題 (メニュー・なでかた・犬のこと・写真のこと・おかいもの) はボタンが無いので -1
 
-        public void _OpenHowTo() { ShowTopic(0, "KD_ShopKeeper.WordHowTo", "KD_ShopKeeper.InfoHowTo"); }
+        /// <summary>[過ごし方]。ローカル専用なので `_` 始まり。</summary>
+        public void _OpenWays() { ShowTopic(0, "KD_ShopKeeper.WordWays", "KD_ShopKeeper.InfoWays"); }
+
+        public void _OpenHowTo() { ShowTopic(-1, "KD_ShopKeeper.WordHowTo", "KD_ShopKeeper.InfoHowTo"); }
 
         /// <summary>[なでかた]。ローカル専用なので `_` 始まり。</summary>
-        public void _OpenPetting() { ShowTopic(1, "KD_ShopKeeper.WordPetting", "KD_ShopKeeper.InfoPetting"); }
+        public void _OpenPetting() { ShowTopic(-1, "KD_ShopKeeper.WordPetting", "KD_ShopKeeper.InfoPetting"); }
 
         /// <summary>[犬のこと]。ローカル専用なので `_` 始まり。</summary>
-        public void _OpenDogs() { ShowTopic(2, "KD_ShopKeeper.WordDogs", "KD_ShopKeeper.InfoDogs"); }
+        public void _OpenDogs() { ShowTopic(-1, "KD_ShopKeeper.WordDogs", "KD_ShopKeeper.InfoDogs"); }
 
         /// <summary>[写真のこと]。ローカル専用なので `_` 始まり。</summary>
-        public void _OpenPhotos() { ShowTopic(3, "KD_ShopKeeper.WordPhotos", "KD_ShopKeeper.InfoPhotos"); }
+        public void _OpenPhotos() { ShowTopic(-1, "KD_ShopKeeper.WordPhotos", "KD_ShopKeeper.InfoPhotos"); }
 
         /// <summary>[おかいもの]。ローカル専用なので `_` 始まり。</summary>
-        public void _OpenShop() { ShowTopic(4, "KD_ShopKeeper.WordShop", "KD_ShopKeeper.InfoShop"); }
+        public void _OpenShop() { ShowTopic(-1, "KD_ShopKeeper.WordShop", "KD_ShopKeeper.InfoShop"); }
 
-        /// <summary>[おやつのこと]。ローカル専用なので `_` 始まり。</summary>
-        public void _OpenTreatInfo() { ShowTopic(5, "KD_ShopKeeper.WordTreats", "KD_ShopKeeper.InfoTreats"); }
+        /// <summary>[おやつ]。ローカル専用なので `_` 始まり。</summary>
+        public void _OpenTreatInfo() { ShowTopic(2, "KD_ShopKeeper.WordTreats", "KD_ShopKeeper.InfoTreats"); }
 
-        /// <summary>[呼ぶこと] (IMP-ENV-020 で 8 話題目)。ローカル専用なので `_` 始まり。</summary>
-        public void _OpenCall() { ShowTopic(7, "KD_ShopKeeper.WordCall", "KD_ShopKeeper.InfoCall"); }
+        /// <summary>裏山改変: [さんぽ]。ローカル専用なので `_` 始まり。</summary>
+        public void _OpenWalk() { ShowTopic(1, "KD_ShopKeeper.WordWalk", "KD_ShopKeeper.InfoWalk"); }
+
+        /// <summary>[呼ぶ] (IMP-ENV-020 で 8 話題目)。ローカル専用なので `_` 始まり。</summary>
+        public void _OpenCall() { ShowTopic(3, "KD_ShopKeeper.WordCall", "KD_ShopKeeper.InfoCall"); }
 
         /// <summary>[またね]。ローカル専用なので `_` 始まり。</summary>
         public void _Close()
@@ -517,6 +532,7 @@ namespace KominkaDogRun
 
         /// <summary>周期処理。**`Update` ではない** — 1 秒に 1 回だけ走る。
         /// 開いている間だけ、距離クローズと残高の追従を行う。
+        /// 裏山改変: 付与の再試行は板の開閉に関係なく回す (要求が立っている間だけ中身が動く)。
         /// ローカル専用なので `_` 始まり。</summary>
         public void _Refresh()
         {
@@ -531,10 +547,10 @@ namespace KominkaDogRun
                 }
                 else
                 {
-                    _TryGift();
                     RedrawBalance();
                 }
             }
+            _TryGift();   // 裏山改変: 閉じていても再試行 (台帳の復元を待って一度だけ)
             SendCustomEventDelayedSeconds(nameof(_Refresh), Mathf.Max(refreshSeconds, 0.25f));
         }
 
@@ -571,7 +587,7 @@ namespace KominkaDogRun
         private void CloseMenu()
         {
             if (menuRoot != null) menuRoot.SetActive(false);
-            _giftPending = false;   // 閉じたら再試行しない (次に話しかけたとき改めて)
+            // 裏山改変 (Codex D-2): 付与の要求は消さない (復元前に閉じても、復元後に _Refresh が付与する)
         }
 
         /// <summary>本文の翻訳。贈り物の挨拶だけ {0} に台帳の額を入れる。</summary>

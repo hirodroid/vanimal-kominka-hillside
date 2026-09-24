@@ -30,8 +30,14 @@ namespace KominkaDogRun.Editor
     /// Setup がやるのは**検出と是正だけ**: Controller を `AC_KD_Npc` へ差し替え、
     /// RootMotion を切り、デモ用コンポーネント (`People_WanderScript` / NavMeshAgent /
     /// CharacterController) をインスタンスから外す (アセット本体は不可触)。
+    ///
+    /// ## 裏山改変 (IMP-PRG-001 段階 1)
+    ///
+    /// 裏山の入口は **Menu/4d Setup Shop Keeper / 4e Verify Shop Keeper** (KD_ShopKeeperSetupEditor.Hillside.cs)。
+    /// 4d は man_farm を子が空のときだけ自動で置く (上の「人が置く」は古民家の入口 = Imported-Unused/2 の話)。
+    /// 板のナビは裏山の 5 項目 (BuildMenu は両方の入口で共通)。Verify の核は VerifyCore に切り出した。
     /// </summary>
-    public static class KD_ShopKeeperSetupEditor
+    public static partial class KD_ShopKeeperSetupEditor
     {
         const string KeeperScript = "Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_ShopKeeper.cs";
         const string KeeperProgram = "Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_ShopKeeper.asset";
@@ -136,6 +142,9 @@ namespace KominkaDogRun.Editor
 
         // ================================================================ 2: Setup
 
+        /// <summary>古民家の入口。**裏山では使わない** (入口は Tools/KominkaHillside/Menu/4d Setup Shop Keeper —
+        /// 置き場所 (KH_Dogs 直下・門のそば)、man_farm の自動配置、language の配線は 4d だけが持つ)。
+        /// 板 (BuildMenu) は裏山のナビ 5 項目で組む。</summary>
         [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Shop Keeper/2 - Setup Shop Keeper")]
         public static void Setup()
         {
@@ -463,26 +472,24 @@ namespace KominkaDogRun.Editor
                     + "Tools/KominkaHillside/Menu/1 Bake UI Sprite を流すこと "
                     + "(無くても動くが、意匠は直角矩形のまま)");
             var navColor = new Color(0.30f, 0.27f, 0.22f);
-            string[] btnNames = { "HowToButton", "PettingButton", "DogsButton",
-                "PhotosButton", "ShopButton", "TreatsButton", "WaysButton", "CallButton" };
-            string[] btnWords = { KD_ShopKeeper.WordHowTo, KD_ShopKeeper.WordPetting,
-                KD_ShopKeeper.WordDogs, KD_ShopKeeper.WordPhotos,
-                KD_ShopKeeper.WordShop, KD_ShopKeeper.WordTreats, KD_ShopKeeper.WordWays,
-                KD_ShopKeeper.WordCall };
-            string[] btnEvents = { "_OpenHowTo", "_OpenPetting", "_OpenDogs",
-                "_OpenPhotos", "_OpenShop", "_OpenTreatInfo", "_OpenWays", "_OpenCall" };
+            // 裏山改変: 話題 4 (過ごし方 / さんぽ / おやつ / 呼ぶ) + またね。表は .Hillside.cs の NavButtons / NavEvents。
+            // 生成順 = navIndex = 表示段 (古民家の NavRow の並べ替えは要らない)。古民家だけのボタンは消す
+            foreach (var stale in KominkaOnlyButtons) Nuke(menuGo.transform, stale);
+            string[] btnNames = NavButtons;
+            string[] btnWords = NavWords();
+            string[] btnEvents = NavEvents;
             var navImages = new UnityEngine.UI.Image[btnNames.Length];
             for (int i = 0; i < btnNames.Length; i++)
             {
                 var b = KD_ShopSetupEditor.EnsureButton(menuGo.transform, btnNames[i],
-                    new Vector2(NavX, NavTopY - NavPitch * NavRow(i)), NavSize,
+                    new Vector2(NavX, NavTopY - NavPitch * i), NavSize,
                     navColor, font, btnWords[i], keeperUdon, btnEvents[i], log);
                 navImages[i] = b.GetComponent<UnityEngine.UI.Image>();
                 KD_UiSpriteEditor.ApplyRoundSkin(navImages[i], round);
             }
-            var bye = KD_ShopSetupEditor.EnsureButton(menuGo.transform, "ByeButton",
+            var bye = KD_ShopSetupEditor.EnsureButton(menuGo.transform, ByeButtonName,
                 new Vector2(NavX, NavByeY), NavSize, new Color(0.34f, 0.30f, 0.28f),
-                font, KD_ShopKeeper.WordBye, keeperUdon, "_Close", log);
+                font, KD_ShopKeeper.WordBye, keeperUdon, ByeEvent, log);
             KD_UiSpriteEditor.ApplyRoundSkin(
                 bye.GetComponent<UnityEngine.UI.Image>(), round);
 
@@ -520,34 +527,44 @@ namespace KominkaDogRun.Editor
 
         // ================================================================ 3: Verify
 
+        /// <summary>検査の集計 (Check / Skip / Warn を 1 か所で数える)。
+        /// 裏山改変: 古民家の Verify 本体を <see cref="VerifyCore"/> へ切り出し、
+        /// 裏山の 4e (<c>VerifyHillside</c>) と古民家の Imported-Unused/3 が同じ核を使う。</summary>
+        internal sealed class VerifyTally
+        {
+            public readonly StringBuilder Log = new StringBuilder();
+            public int Fail;
+            public void Check(bool cond, string what)
+            {
+                Log.AppendLine((cond ? "  ok   " : "  FAIL ") + what);
+                if (!cond) Fail++;
+            }
+            public void Skip(string what) { Log.AppendLine("  SKIP " + what); }
+            public void Warn(string what) { Log.AppendLine("  WARN " + what); }
+        }
+
+        /// <summary>古民家の入口。**裏山では使わない** (入口は Tools/KominkaHillside/Menu/4e Verify Shop Keeper)。
+        /// 中身は 4e と同じ核 (<see cref="VerifyCore"/>) だけで、裏山固有の検査 (置き場所・台帳の額・language・
+        /// man_farm の出自) は持たない。</summary>
         [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Shop Keeper/3 - Verify Shop Keeper")]
         public static void Verify()
         {
-            var log = new StringBuilder();
-            log.AppendLine("[KD_ShopKeeperSetup] Verify");
-            int fail = 0;
-            void Check(bool cond, string what)
-            {
-                log.AppendLine((cond ? "  ok   " : "  FAIL ") + what);
-                if (!cond) fail++;
-            }
-
+            var t = new VerifyTally();
+            t.Log.AppendLine("[KD_ShopKeeperSetup] Verify (Kominka 入口。裏山では Menu/4e を使う)");
             int found;
             var keeperGo = KD_SceneObjects.Find(KeeperName, out found);
-            Check(keeperGo != null && found == 1, KeeperName + " がシーンにちょうど 1 個");
-            if (keeperGo == null)
-            {
-                FinishVerify(log, fail);
-                return;
-            }
+            t.Check(keeperGo != null && found == 1, KeeperName + " がシーンにちょうど 1 個");
+            var keeper = keeperGo == null ? null : keeperGo.GetComponent<KD_ShopKeeper>();
+            t.Check(keeper != null, "KD_ShopKeeper が付いている");
+            if (keeper != null) VerifyCore(t, keeperGo, keeper);
+            FinishVerify(t.Log, t.Fail, "Logs/imp-env-004-keeper-verify.txt");
+        }
 
-            var keeper = keeperGo.GetComponent<KD_ShopKeeper>();
-            Check(keeper != null, "KD_ShopKeeper が付いている");
-            if (keeper == null)
-            {
-                FinishVerify(log, fail);
-                return;
-            }
+        /// <summary>おじいさんの検査の核: Interact・配線・板・ナビ (裏山の 5 項目)・文言の幅・字形・NPC。</summary>
+        static void VerifyCore(VerifyTally t, GameObject keeperGo, KD_ShopKeeper keeper)
+        {
+            var log = t.Log;
+            System.Action<bool, string> Check = t.Check;
 
             // ---- Interact ----
             var ub = UdonSharpEditorUtility.GetBackingUdonBehaviour(keeper);
@@ -557,22 +574,24 @@ namespace KominkaDogRun.Editor
                 "interactText が設計値 (既定の \"Use\" のまま放置しない)");
             Check(ub != null && Mathf.Abs(ub.proximity - Proximity) < 0.01f,
                 "proximity = " + Proximity);
-            Check(keeperGo.GetComponent<Collider>() != null, "Interact 用の Collider がある");
+            Check(keeperGo.GetComponent<Collider>() != null, "Interact 用の Collider がホスト側にある");
             Check(keeper.hideDistance > Proximity,
                 "hideDistance > proximity (話しかけた瞬間に閉じない)");
 
             // ---- 配線 ----
-            Check(keeper.ledger != null, "ledger 配線 (残高の読み取り先)");
+            Check(keeper.ledger != null, "ledger 配線 (残高の読み取り先 + 一度きりの付与を頼む先)");
             Check(keeper.pivot != null, "pivot 配線");
             Check(keeper.menuRoot != null, "menuRoot 配線");
             Check(keeper.balanceLabel != null && keeper.infoTitle != null
                 && keeper.infoBody != null, "TMP 3 枚の配線");
             Check(keeper.sfx != null, "AudioSource 配線");
             if (keeper.openClip == null || keeper.closeClip == null)
-                log.AppendLine("  WARN 開閉音が未配線 (無音で動く — 音源を確認)");
+                t.Warn("開閉音が未配線 (無音で動く — 音源を確認)");
 
             // ---- メニュー Canvas ----
             var menuGo = keeper.menuRoot;
+            var wantFont = AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>(
+                KD_ShopSetupEditor.SharedFontPath);
             if (menuGo != null)
             {
                 Check(!menuGo.activeSelf,
@@ -583,16 +602,17 @@ namespace KominkaDogRun.Editor
                 Check(menuGo.GetComponent<UnityEngine.UI.GraphicRaycaster>() != null,
                     "GraphicRaycaster がある");
 
-                // ボタン配線: 9 個 (左ナビ = 話題 8 + またね。もどる は v2.4 で消えた —
-                // ナビが常時見えているので戻る操作が要らない)。
+                // ボタン配線 (裏山改変): 5 個 = 話題 4 (過ごし方 / さんぽ / おやつ / 呼ぶ) + またね。
                 // **本数だけでなく飛び先 (SendCustomEvent の文字列引数) まで照合する** —
-                // 本数だけだと「あそびかた が _OpenDogs へ誤配線」でも通る (2026-09-01 Codex 指摘)
+                // 本数だけだと「過ごし方 が _OpenWalk へ誤配線」でも通る (2026-09-01 Codex 指摘)
                 var buttons = menuGo.GetComponentsInChildren<UnityEngine.UI.Button>(true);
-                Check(buttons.Length == 9, "ボタンが 9 個 (実際 " + buttons.Length + ")");
-                string[] wantBtn = { "HowToButton", "PettingButton", "DogsButton",
-                    "PhotosButton", "ShopButton", "TreatsButton", "WaysButton", "CallButton", "ByeButton" };
-                string[] wantEvent = { "_OpenHowTo", "_OpenPetting", "_OpenDogs",
-                    "_OpenPhotos", "_OpenShop", "_OpenTreatInfo", "_OpenWays", "_OpenCall", "_Close" };
+                int wantCount = NavButtons.Length + 1;
+                Check(buttons.Length == wantCount, "ボタンが " + wantCount + " 個 (実際 " + buttons.Length + ")");
+                var wantBtn = new string[wantCount];
+                var wantEvent = new string[wantCount];
+                for (int i = 0; i < NavButtons.Length; i++) { wantBtn[i] = NavButtons[i]; wantEvent[i] = NavEvents[i]; }
+                wantBtn[wantCount - 1] = ByeButtonName;
+                wantEvent[wantCount - 1] = ByeEvent;
                 for (int i = 0; i < wantBtn.Length; i++)
                 {
                     UnityEngine.UI.Button b = null;
@@ -610,11 +630,18 @@ namespace KominkaDogRun.Editor
                         && arg == wantEvent[i],
                         wantBtn[i] + " → SendCustomEvent(\"" + wantEvent[i]
                         + "\") がちょうど 1 本 (実際 " + n + " 本 / \"" + arg + "\")");
+                    // 飛び先のメソッドが実在する (改名で黙って no-op にならない)
+                    Check(typeof(KD_ShopKeeper).GetMethod(wantEvent[i]) != null,
+                        "KD_ShopKeeper." + wantEvent[i] + " が public で存在する");
+                }
+                foreach (var name in KominkaOnlyButtons)
+                {
+                    bool present = false;
+                    foreach (var c in buttons) if (c.name == name) present = true;
+                    Check(!present, name + " が無い (古民家だけの話題。裏山では作らない)");
                 }
 
-                // ボタンの意匠: 押せるものは全部 角丸 + 枠 = Sliced (IMP-ENV-006 —
-                // 手元メニューと同じ検査。`Filled` / `Simple` へ戻ると見た目だけ壊れて
-                // 例外もログも出ない)
+                // ボタンの意匠: 押せるものは全部 角丸 + 枠 = Sliced (IMP-ENV-006)
                 var wantRound = KD_UiSpriteEditor.LoadRound();
                 Check(wantRound != null,
                     "角丸スプライトが焼かれている (" + KD_UiSpriteEditor.RoundSpritePath + ")");
@@ -628,11 +655,9 @@ namespace KominkaDogRun.Editor
                 }
 
                 // フォント: 共有フォントが刺さっているか (実機で豆腐にならないか)
-                var wantFont = AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>(
-                    KD_ShopSetupEditor.SharedFontPath);
                 bool fontsOk = wantFont != null;
-                foreach (var t in menuGo.GetComponentsInChildren<TMPro.TextMeshProUGUI>(true))
-                    if (t.font != wantFont) fontsOk = false;
+                foreach (var tx in menuGo.GetComponentsInChildren<TMPro.TextMeshProUGUI>(true))
+                    if (tx.font != wantFont) fontsOk = false;
                 Check(fontsOk, "全 TMP に共有フォントが刺さっている");
 
                 // ---- スクロールとナビの配線 (IMP-ENV-005 v2.4) ----
@@ -644,16 +669,9 @@ namespace KominkaDogRun.Editor
                         && keeper.contentScroll.verticalScrollbar != null
                         && keeper.contentScroll.vertical && !keeper.contentScroll.horizontal,
                         "ContentScroll が完全配線 (vertical only)");
-                    // 本文 TMP そのものが content であること (別物を差すと
-                    // ContentSizeFitter が効かず、長い話題の下端が切れる)
                     Check(keeper.infoBody != null && keeper.contentScroll.content ==
                         (RectTransform)keeper.infoBody.transform,
                         "InfoBody が ContentScroll の content");
-                    // 溢れ検査は設計値 (InfoBodyFontSize / ContentWidth) で測るので、
-                    // **実物が設計値どおりであることを先に固定する** (2026-09-01 Codex 指摘 —
-                    // 実物の fontSize や幅がずれていたら、定数で測った検査は嘘になる)。
-                    // wrap は**有効**であること (BUG-ENV-001 — 手動改行の規約が破れた行を
-                    // 黙って欠けさせず折り返す安全網。改行の正本は手動のまま = 下の実測検査)
                     Check(keeper.infoBody != null
                         && Mathf.Abs(keeper.infoBody.fontSize - InfoBodyFontSize) < 0.01f
                         && Mathf.Abs(keeper.infoBody.characterSpacing) < 0.01f
@@ -664,23 +682,19 @@ namespace KominkaDogRun.Editor
                         keeper.contentScroll.viewport.sizeDelta.x - ContentWidth) < 0.5f,
                         "viewport 幅が設計値 " + ContentWidth);
                 }
-                // navImages[i] は _Open* の navIndex と同じ順 (= Setup の btnNames の生成順)。
-                // 長さと Button の有無だけでなく **どのボタンの背景か** まで照合する (Codex 指摘: 順序違い・重複だと
-                // 押した話題と別のボタンが点灯するのに、本数検査は通ってしまう)
-                string[] navOwners = { "HowToButton", "PettingButton", "DogsButton", "PhotosButton",
-                    "ShopButton", "TreatsButton", "WaysButton", "CallButton" };
-                bool navOk = keeper.navImages != null && keeper.navImages.Length == navOwners.Length;
+                // navImages[i] は _Open* の navIndex と同じ順 (= NavButtons の生成順)。
+                // どのボタンの背景かまで照合する (順序違い・重複だと別のボタンが点灯する)
+                bool navOk = keeper.navImages != null && keeper.navImages.Length == NavButtons.Length;
                 if (navOk)
-                    for (int i = 0; i < navOwners.Length; i++)
+                    for (int i = 0; i < NavButtons.Length; i++)
                     {
                         var img = keeper.navImages[i];
                         if (img == null || img.GetComponent<UnityEngine.UI.Button>() == null
-                            || img.gameObject.name != navOwners[i]) navOk = false;
+                            || img.gameObject.name != NavButtons[i]) navOk = false;
                     }
-                Check(navOk, "navImages 8 本が生成順どおり (" + string.Join("/", navOwners) + " の背景 Image。選択ハイライト用)");
-                // ナビ 8 段 + またね が板に収まり、互いに重ならない (IMP-ENV-020 で詰めた寸法の回帰ゲート)。
-                // **実物の RectTransform** を板 (menuRoot) の座標系で読む — 定数だけの計算だと、シーンで
-                // ずらされたボタンが重なっていても通ってしまう (Codex 指摘)
+                Check(navOk, "navImages " + NavButtons.Length + " 本が生成順どおり ("
+                    + string.Join("/", NavButtons) + " の背景 Image。選択ハイライト用)");
+                // ナビ + またね が板に収まり、互いに重ならない。**実物の RectTransform** を板の座標系で読む
                 {
                     var menuRect = (RectTransform)menuGo.transform;
                     float lowest = float.MaxValue, byeTop = float.MinValue, byeBottom = float.MinValue;
@@ -690,7 +704,7 @@ namespace KominkaDogRun.Editor
                         var rt = (RectTransform)b.transform;
                         Vector2 local = menuRect.InverseTransformPoint(rt.position);
                         float top = local.y + rt.rect.height * 0.5f, bottom = local.y - rt.rect.height * 0.5f;
-                        if (b.name == "ByeButton") { byeTop = top; byeBottom = bottom; }
+                        if (b.name == ByeButtonName) { byeTop = top; byeBottom = bottom; }
                         else { if (bottom < lowest) lowest = bottom; placed.Add(new[] { top, bottom }); }
                     }
                     bool disjoint = true;
@@ -698,22 +712,15 @@ namespace KominkaDogRun.Editor
                         for (int c = a + 1; c < placed.Count; c++)
                             if (placed[a][1] < placed[c][0] && placed[c][1] < placed[a][0]) disjoint = false;
                     Check(disjoint && lowest > byeTop + 4f && byeBottom > -MenuH * 0.5f,
-                        "実物のナビ 8 段が互いに重ならず、下端 " + lowest.ToString("F0") + " > またね上端 "
-                        + byeTop.ToString("F0") + " で、またね下端 " + byeBottom.ToString("F0") + " が板内");
+                        "実物のナビ " + NavButtons.Length + " 段が互いに重ならず、下端 " + lowest.ToString("F0")
+                        + " > またね上端 " + byeTop.ToString("F0") + " で、またね下端 " + byeBottom.ToString("F0") + " が板内");
                 }
 
                 // ---- 溢れ (IMP-ENV-005): **横幅だけ**実測する ----
-                // 縦の溢れはスクロールが受けるが、横に溢れた字はスクロールでは
-                // 救えない。本文は wrap が折り返してくれる (BUG-ENV-001 の安全網) が、
-                // **折り返しは読みやすさの敗北**なので、手動改行が枠に収まることを
-                // 従来どおり実測で守る (1 行 ≤ 16 全角の規約は据え置き)。
-                //
-                // 測り方は MaxLineWidth (グリフ送り幅の計算) — TMP の GetPreferredValues は
-                // rect の状態に引きずられて 1/10 の値を返した (2026-09-01 実測。
-                // 42 ≤ 430 で何でも通る「壊れた検出器」になっていた)。
-                // **測定器そのものも対照群で検査する** — 既知の 10 全角が fontSize×10
-                // 前後で測れることを先に確かめ、崩れたら測定ごと FAIL にする
-                bool gaugeOk = false;
+                // 縦の溢れはスクロールが受ける。本文は wrap が折り返す (BUG-ENV-001 の安全網) が、
+                // 手動改行 (1 行 ≤ 16 全角) が枠に収まることを実測で守る。
+                // 測定器そのものも対照群で検査する (GetPreferredValues が 1/10 を返した実測 2026-09-01)
+                bool gaugeOk;
                 {
                     float ctrl = MaxLineWidth(wantFont, InfoBodyFontSize, "あいうえおかきくけこ");
                     gaugeOk = ctrl > InfoBodyFontSize * 8f && ctrl < InfoBodyFontSize * 14f;
@@ -721,32 +728,29 @@ namespace KominkaDogRun.Editor
                         + " / 期待 " + (InfoBodyFontSize * 8f).ToString("F0") + "〜"
                         + (InfoBodyFontSize * 14f).ToString("F0") + ")");
 
-                    // 挨拶も表示エリアの本文として出る (v2.4 の初期表示) ので同じ枠で見る
-                    string[] topics = { "挨拶", "挨拶 (はじめて)",
-                        KD_ShopKeeper.WordHowTo, KD_ShopKeeper.WordPetting,
-                        KD_ShopKeeper.WordDogs, KD_ShopKeeper.WordPhotos,
-                        KD_ShopKeeper.WordShop, KD_ShopKeeper.WordTreats, KD_ShopKeeper.WordWays,
-                        KD_ShopKeeper.WordCall };
-                    // IMP-ENV-020: 測るのは**文言表** (表示の正本) の本文。const は ja の写しで、
-                    // 一致は ConstMismatches が検査する (ズレると焼いた字・測った行が出る字と違う)。
-                    // 文字の有効幅 = viewport 幅 − 本文 margin 左右 (Setup が BodyMarginX ずつ入れる)
+                    // 測るのは**文言表** (表示の正本) の本文。const は ja の写しで、一致は ConstMismatches が検査する。
+                    // 裏山改変: 文言キーは司令塔が UITranslations.json へ統合する — 未登録なら FAIL (統合待ち) として名指しする
                     var catalog = KD_LocalizationEditor.Load();
                     var mismatches = ConstMismatches(catalog);
                     Check(mismatches.Length == 0, "const が文言表 ja と一致 (" + CatalogKeys.Length
                         + " キー)" + (mismatches.Length == 0 ? "" : ": " + string.Join(", ", mismatches)));
                     float effective = ContentWidth - BodyMarginX * 2f;
+                    string[] topics = BodyTopics();
                     for (int i = 0; i < BodyKeys.Length; i++)
                     {
-                        float w = MaxLineWidth(wantFont, InfoBodyFontSize,
-                            BodyText(catalog, "ja", BodyKeys[i], keeper));
+                        string ja;
+                        if (!TryBodyText(catalog, "ja", BodyKeys[i], keeper, out ja))
+                        {
+                            Check(false, "文言キー " + BodyKeys[i] + " が文言表にある (未登録 = 統合待ち)");
+                            continue;
+                        }
+                        float w = MaxLineWidth(wantFont, InfoBodyFontSize, ja);
                         Check(gaugeOk && w <= effective + 0.5f,
                             "本文 ja「" + topics[i] + "」の手動改行が有効幅に収まる (実測 "
                             + w.ToString("F0") + " / 幅 " + effective + ")");
                     }
-                    // 実描画 (self 言語 = ja/en): 実物の InfoBody に流し込む。ja は自動折返しが
-                    // 起きないこと (手動改行が正本)、en は段落だけ改行して自動折返しに任せるので
-                    // 欠けが無いこと。client 言語は Editor で測れない (未収録字を LiberationSans の
-                    // 幅で測ってしまう) ので CLIENT_UNMEASURED として記録だけ
+                    // 実描画 (self 言語 = ja/en): ja は自動折返しが起きないこと、en は欠けが無いこと。
+                    // client 言語は Editor で測れないので CLIENT_UNMEASURED として記録だけ
                     if (keeper.infoBody != null && keeper.menuRoot != null)
                         foreach (var lang in catalog.languages)
                         {
@@ -758,7 +762,8 @@ namespace KominkaDogRun.Editor
                             }
                             for (int i = 0; i < BodyKeys.Length; i++)
                             {
-                                string text = BodyText(catalog, lang.code, BodyKeys[i], keeper);
+                                string text;
+                                if (!TryBodyText(catalog, lang.code, BodyKeys[i], keeper, out text)) continue;   // 上で FAIL 済み
                                 bool truncated; float height;
                                 int lines = MeasureBody(keeper, text, out truncated, out height);
                                 int manual = text.Split('\n').Length;
@@ -769,18 +774,12 @@ namespace KominkaDogRun.Editor
                             }
                         }
 
-                    // ---- スクロールの外に居るテキスト (BUG-ENV-001: 無検査だった) ----
-                    //
-                    // Balance / InfoTitle / ナビラベルは wrap 無効 + Overflow のまま置く
-                    // (1 行 40〜60px の枠なので、折り返すと 2 行目が枠外の下へ描かれる)。
-                    // **wrap で守れないぶん、ここで幅を実測する。**
-                    // fontSize と枠は実物から読む — 定数で測ると実物とずれたとき嘘になる
+                    // ---- スクロールの外に居るテキスト (BUG-ENV-001) ----
+                    // Balance / InfoTitle / ナビラベルは wrap 無効。幅を実測する (fontSize と枠は実物から読む)
                     if (keeper.balanceLabel != null)
                     {
                         float fs = keeper.balanceLabel.fontSize;
-                        float frame = ((RectTransform)keeper.balanceLabel.transform)
-                            .sizeDelta.x;
-                        // 表示しうる 3 通りの最悪 (残高は 5 桁まで見ておく)
+                        float frame = ((RectTransform)keeper.balanceLabel.transform).sizeDelta.x;
                         string[] worst = { KD_ShopShelf.WordRemain + " " + KD_ProgressLedger.MaxPoints + " pt",
                             KD_ShopShelf.WordLoading + "...", KD_ShopShelf.WordNoLedger };
                         float wMax = 0f;
@@ -797,10 +796,9 @@ namespace KominkaDogRun.Editor
                     if (keeper.infoTitle != null)
                     {
                         float fs = keeper.infoTitle.fontSize;
-                        float frame = ((RectTransform)keeper.infoTitle.transform)
-                            .sizeDelta.x;
+                        float frame = ((RectTransform)keeper.infoTitle.transform).sizeDelta.x;
                         float wMax = 0f;
-                        for (int i = 1; i < topics.Length; i++)   // [0] = 挨拶 (題なし)
+                        for (int i = 2; i < topics.Length; i++)   // [0][1] = 挨拶 (題なし)
                         {
                             float w = MaxLineWidth(wantFont, fs, topics[i]);
                             if (w > wMax) wMax = w;
@@ -812,8 +810,7 @@ namespace KominkaDogRun.Editor
                     foreach (var b in buttons)
                     {
                         var lblT = b.transform.Find("Label");
-                        var lbl = lblT == null ? null
-                            : lblT.GetComponent<TMPro.TextMeshProUGUI>();
+                        var lbl = lblT == null ? null : lblT.GetComponent<TMPro.TextMeshProUGUI>();
                         if (lbl == null)
                         {
                             Check(false, b.name + " に Label が居る");
@@ -838,7 +835,7 @@ namespace KominkaDogRun.Editor
             var animators = keeperGo.GetComponentsInChildren<Animator>(true);
             Check(animators.Length == 1,
                 "keeper の子に Animator がちょうど 1 個 (実際 " + animators.Length
-                + ")。0 = man_farm を子へ置き Setup を再実行 / 2+ = 是正対象を決められない");
+                + ")。0 = man_farm が無い (Setup を再実行) / 2+ = 是正対象を決められない");
             var animator = animators.Length == 1 ? animators[0] : null;
             if (animator != null)
             {
@@ -858,14 +855,12 @@ namespace KominkaDogRun.Editor
                 }
                 Check(demo == 0, "デモ用コンポーネントが残っていない (実際 " + demo + ")");
             }
-
-            FinishVerify(log, fail);
         }
 
-        static void FinishVerify(StringBuilder log, int fail)
+        static void FinishVerify(StringBuilder log, int fail, string file)
         {
             log.AppendLine(fail == 0 ? "VERIFY RESULT: PASS" : $"VERIFY RESULT: FAIL ({fail})");
-            Finish("Logs/imp-env-004-keeper-verify.txt", log);
+            Finish(file, log);
         }
 
         // ============================================================
@@ -877,7 +872,9 @@ namespace KominkaDogRun.Editor
         // KD_LocalizationBuildGuard が同じ関数で止める (Setup の迂回経路で漏れないように)。
         // ============================================================
 
-        /// <summary>文言表の KD_ShopKeeper.* 20 キー (Interact 1・挨拶 2・題 9・本文 8)。</summary>
+        /// <summary>文言表の KD_ShopKeeper.* 22 キー (Interact 1・挨拶 2・題 10・本文 9)。
+        /// 裏山改変: さんぽ (WordWalk / InfoWalk) を足した。古民家だけの話題 (HowTo / Petting / Dogs / Photos / Shop) の
+        /// キーは板に出ないが、文言表に残っているので一致検査は続ける。</summary>
         public static readonly string[] CatalogKeys = {
             "KD_ShopKeeper.InteractWord", "KD_ShopKeeper.WordGreeting", "KD_ShopKeeper.WordGreetingGift",
             "KD_ShopKeeper.WordWays", "KD_ShopKeeper.WordHowTo", "KD_ShopKeeper.WordPetting",
@@ -885,14 +882,24 @@ namespace KominkaDogRun.Editor
             "KD_ShopKeeper.WordTreats", "KD_ShopKeeper.WordBye",
             "KD_ShopKeeper.InfoWays", "KD_ShopKeeper.InfoHowTo", "KD_ShopKeeper.InfoPetting",
             "KD_ShopKeeper.InfoDogs", "KD_ShopKeeper.InfoCall", "KD_ShopKeeper.InfoPhotos", "KD_ShopKeeper.InfoShop",
-            "KD_ShopKeeper.InfoTreats" };
+            "KD_ShopKeeper.InfoTreats", "KD_ShopKeeper.WordWalk", "KD_ShopKeeper.InfoWalk" };
 
-        /// <summary>本文として表示エリアに出るキー (挨拶 2 + 話題 8)。Verify の topics と同順。</summary>
+        /// <summary>本文として表示エリアに出るキー。裏山改変: 挨拶 2 + 裏山の話題 4 (過ごし方 / さんぽ / おやつ / 呼ぶ)。
+        /// <see cref="BodyTopics"/> / <see cref="TitleKeys"/> と同順。</summary>
         static readonly string[] BodyKeys = {
             "KD_ShopKeeper.WordGreeting", "KD_ShopKeeper.WordGreetingGift",
-            "KD_ShopKeeper.InfoHowTo", "KD_ShopKeeper.InfoPetting", "KD_ShopKeeper.InfoDogs",
-            "KD_ShopKeeper.InfoPhotos", "KD_ShopKeeper.InfoShop", "KD_ShopKeeper.InfoTreats",
-            "KD_ShopKeeper.InfoWays", "KD_ShopKeeper.InfoCall" };
+            "KD_ShopKeeper.InfoWays", "KD_ShopKeeper.InfoWalk", "KD_ShopKeeper.InfoTreats", "KD_ShopKeeper.InfoCall" };
+
+        /// <summary><see cref="BodyKeys"/> の題のキー (挨拶は題なし = 空)。</summary>
+        static readonly string[] TitleKeys = {
+            "", "", "KD_ShopKeeper.WordWays", "KD_ShopKeeper.WordWalk", "KD_ShopKeeper.WordTreats", "KD_ShopKeeper.WordCall" };
+
+        /// <summary>Verify のログに出す話題名 (<see cref="BodyKeys"/> と同順)。</summary>
+        static string[] BodyTopics()
+        {
+            return new[] { "挨拶", "挨拶 (はじめて)", KD_ShopKeeper.WordWays, KD_ShopKeeper.WordWalk,
+                KD_ShopKeeper.WordTreats, KD_ShopKeeper.WordCall };
+        }
 
         /// <summary>キーに対応する C# const の値。</summary>
         public static string ConstText(string key)
@@ -919,17 +926,25 @@ namespace KominkaDogRun.Editor
                 case "KD_ShopKeeper.InfoTreats": return KD_ShopKeeper.InfoTreats;
                 case "KD_ShopKeeper.WordCall": return KD_ShopKeeper.WordCall;
                 case "KD_ShopKeeper.InfoCall": return KD_ShopKeeper.InfoCall;
+                case "KD_ShopKeeper.WordWalk": return KD_ShopKeeper.WordWalk;
+                case "KD_ShopKeeper.InfoWalk": return KD_ShopKeeper.InfoWalk;
             }
             throw new System.ArgumentException("not a KD_ShopKeeper const key: " + key);
         }
 
-        /// <summary>const と文言表 ja が食い違うキーの一覧 (空 = 一致)。副作用なし。</summary>
+        /// <summary>const と文言表 ja が食い違うキーの一覧 (空 = 一致)。副作用なし。
+        /// 裏山改変: 文言表に未登録のキーは例外で止めず「(未登録)」付きで返す
+        /// (新しいキーは司令塔が統合する。統合前に Verify / Menu 22 が落ちて他の検査まで読めなくなるのを防ぐ)。</summary>
         public static string[] ConstMismatches(KD_LocalizationEditor.Catalog catalog)
         {
             var list = new System.Collections.Generic.List<string>();
             foreach (var key in CatalogKeys)
-                if (KD_LocalizationEditor.Text(catalog, "ja", key).Replace("\r\n", "\n") != ConstText(key))
-                    list.Add(key);
+            {
+                string ja;
+                try { ja = KD_LocalizationEditor.Text(catalog, "ja", key).Replace("\r\n", "\n"); }
+                catch (System.InvalidOperationException) { list.Add(key + " (未登録)"); continue; }
+                if (ja != ConstText(key)) list.Add(key);
+            }
             return list.ToArray();
         }
 
@@ -948,8 +963,15 @@ namespace KominkaDogRun.Editor
             string text = KD_LocalizationEditor.Text(catalog, code, key).Replace("\r\n", "\n");
             if (text.Contains("{0}"))
                 text = text.Replace("{0}", keeper != null && keeper.ledger != null
-                    ? keeper.ledger.keeperPoints.ToString() : "100");
+                    ? keeper.ledger.keeperPoints.ToString() : HillsideKeeperPoints.ToString());   // 裏山改変: 台帳が無いときの見積りは裏山の額
             return text;
+        }
+
+        /// <summary><see cref="BodyText"/> のキー未登録を false で返す版 (Verify 用)。</summary>
+        static bool TryBodyText(KD_LocalizationEditor.Catalog catalog, string code, string key, KD_ShopKeeper keeper, out string text)
+        {
+            try { text = BodyText(catalog, code, key, keeper); return true; }
+            catch (System.InvalidOperationException) { text = null; return false; }
         }
 
         /// <summary>実物の InfoBody に本文を流し込んで測る (非アクティブな板を一時的に起こす)。
@@ -1005,10 +1027,9 @@ namespace KominkaDogRun.Editor
                 return;
             }
             var catalog = KD_LocalizationEditor.Load();
-            string[] titleKeys = { "", "", "KD_ShopKeeper.WordHowTo", "KD_ShopKeeper.WordPetting",
-                "KD_ShopKeeper.WordDogs", "KD_ShopKeeper.WordPhotos", "KD_ShopKeeper.WordShop",
-                "KD_ShopKeeper.WordTreats", "KD_ShopKeeper.WordWays", "KD_ShopKeeper.WordCall" };
-            string[] navNames = { "HowTo", "Petting", "Dogs", "Photos", "Shop", "Treats", "Ways", "Call", "Bye" };
+            // 裏山改変: 表は BodyKeys / TitleKeys (挨拶 2 + 話題 4)。ナビは 過ごし方 / さんぽ / おやつ / 呼ぶ / またね
+            string[] titleKeys = TitleKeys;
+            string[] navNames = { "Ways", "Walk", "Treats", "Call", "Bye" };
             var menu = keeper.menuRoot;
             var labels = menu.GetComponentsInChildren<TMPro.TMP_Text>(true);
             var keepTexts = new string[labels.Length];
@@ -1030,8 +1051,10 @@ namespace KominkaDogRun.Editor
                                 t.text = KD_LocalizationEditor.Text(catalog, lang.code, "KD_ShopKeeper.Word" + n);
                     for (int i = 0; i < BodyKeys.Length; i++)
                     {
+                        string bodyText;
+                        if (!TryBodyText(catalog, lang.code, BodyKeys[i], keeper, out bodyText)) { log.AppendLine("skip " + BodyKeys[i] + " (文言表に未登録)"); continue; }
                         keeper.infoTitle.text = titleKeys[i] == "" ? "" : KD_LocalizationEditor.Text(catalog, lang.code, titleKeys[i]);
-                        keeper.infoBody.text = BodyText(catalog, lang.code, BodyKeys[i], keeper);
+                        keeper.infoBody.text = bodyText;
                         UnityEngine.Canvas.ForceUpdateCanvases();
                         keeper.infoBody.ForceMeshUpdate(true, true);
                         string name = "npc-" + lang.code + "-" + BodyKeys[i].Substring("KD_ShopKeeper.".Length);
@@ -1086,25 +1109,6 @@ namespace KominkaDogRun.Editor
             }
         }
 
-        /// <summary>navImages の番号 (= ボタン生成順 = _Open* の navIndex) → 左ナビの表示段。
-        /// 並びは「メニュー / 過ごし方 / なでかた / 犬のこと / 呼ぶこと / 写真のこと / おかいもの / おやつのこと」
-        /// (開き方の次に「何ができるか」、その後に体験の詳細。IMP-INF-011 / IMP-ENV-020)。</summary>
-        static int NavRow(int i)
-        {
-            switch (i)
-            {
-                case 0: return 0;   // HowTo
-                case 6: return 1;   // Ways
-                case 1: return 2;   // Petting
-                case 2: return 3;   // Dogs
-                case 7: return 4;   // Call
-                case 3: return 5;   // Photos
-                case 4: return 6;   // Shop
-                case 5: return 7;   // Treats
-            }
-            return i;
-        }
-
         // ---- helpers (他の SetupEditor と同型) ----
 
         /// <summary>Button の persistent onClick 1 本目の文字列引数と対象を読む
@@ -1153,17 +1157,15 @@ namespace KominkaDogRun.Editor
         static string KeeperGlyphs()
         {
             var chars = new StringBuilder();
+            // 裏山改変: 板に出る字だけ (挨拶 2 + 話題 4 + またね)。古民家だけの話題 (メニュー・なでかた・犬のこと・
+            // 写真のこと・おかいもの) はボタンが無く表示されないので焼かない (48 pt アトラスの容量を使わない)
             chars.Append(KD_ShopKeeper.InteractWord)
                  .Append(KD_ShopKeeper.WordGreeting).Append(KD_ShopKeeper.WordGreetingGift)
-                 .Append(KD_ShopKeeper.WordHowTo).Append(KD_ShopKeeper.WordPetting)
-                 .Append(KD_ShopKeeper.WordDogs).Append(KD_ShopKeeper.WordPhotos)
-                 .Append(KD_ShopKeeper.WordShop).Append(KD_ShopKeeper.WordTreats)
                  .Append(KD_ShopKeeper.WordWays).Append(KD_ShopKeeper.InfoWays)
-                 .Append(KD_ShopKeeper.WordBye)
-                 .Append(KD_ShopKeeper.InfoHowTo).Append(KD_ShopKeeper.InfoPetting)
-                 .Append(KD_ShopKeeper.InfoDogs).Append(KD_ShopKeeper.InfoPhotos)
-                 .Append(KD_ShopKeeper.InfoShop).Append(KD_ShopKeeper.InfoTreats)
+                 .Append(KD_ShopKeeper.WordWalk).Append(KD_ShopKeeper.InfoWalk)
+                 .Append(KD_ShopKeeper.WordTreats).Append(KD_ShopKeeper.InfoTreats)
                  .Append(KD_ShopKeeper.WordCall).Append(KD_ShopKeeper.InfoCall)
+                 .Append(KD_ShopKeeper.WordBye)
                  // 残高行の借用語 (KD_ShopShelf の const を RedrawBalance が使う)
                  .Append(KD_ShopShelf.WordRemain).Append(KD_ShopShelf.WordLoading)
                  .Append(KD_ShopShelf.WordNoLedger);

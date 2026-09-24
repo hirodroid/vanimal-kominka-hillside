@@ -13,16 +13,23 @@ namespace KominkaDogRun
     public class KD_ProgressLedger : UdonSharpBehaviour
     {
         public const int MaxPoints = 1000000;
-        public const string ProductionNamespace = "KD_Commerce_v1";
-        public const string TestNamespace = "KD_TestCommerce_v1";
+        // 裏山改変: PlayerData 名前空間を KH_ へ (IMP-PRG-001 段階 1)。別ワールドなので衝突はしないが、
+        // 検査と文書で古民家の KD_Commerce_v1 と区別するため。キー体系 (.Earned / .Spent / .Own.* ...) は継承
+        public const string ProductionNamespace = "KH_Commerce_v1";
+        public const string TestNamespace = "KH_TestCommerce_v1";
         public string storageNamespace = ProductionNamespace;
         public KD_ShopItem[] products;
         public float minuteSeconds = 60f;
         public float tickSeconds = 15f;
-        /// <summary>初期配布。復元直後に一度だけ Earned へ足す (0 で無効)。Progress Setup が 100 に正す。</summary>
-        public int initialPoints = 100;
-        /// <summary>おじいさんに話しかけたとき一度だけ (0 で無効)。呼ぶのは KD_ShopKeeper、書くのはここ。</summary>
-        public int keeperPoints = 100;
+        /// <summary>初期配布。復元直後に一度だけ Earned へ足す (0 で無効)。
+        /// 裏山改変: 既定 0 (初期配布は置かない。付与はおじいさんの 200pt だけ — DES-UI-003)。Progress Setup も 0 に正す。</summary>
+        public int initialPoints = 0;
+        /// <summary>おじいさんに話しかけたとき一度だけ (0 で無効)。呼ぶのは KD_ShopKeeper、書くのはここ。
+        /// 裏山改変: 既定 200 (古民家は 100)。額の正本は HillsideKeeperPoints。</summary>
+        public int keeperPoints = HillsideKeeperPoints;
+        /// <summary>裏山改変: おじいさんの支度ポイントの額 (一度だけ)。**正本はこの 1 か所** —
+        /// 台帳の既定値・Progress Setup / Verify・Keeper の Verify と本文・ポイント面の表示はここを参照する (Codex M-2)。</summary>
+        public const int HillsideKeeperPoints = 200;
         public const string BonusInitial = "initial";
         public const string BonusKeeper = "keeper";
         private bool _started, _restored, _catalogReady, _loaded;
@@ -121,7 +128,9 @@ namespace KominkaDogRun
             {
                 int pending = _pendingMinutes; _pendingMinutes = 0; Grant(pending);
             }
-            _GrantBonusOnce(BonusInitial, initialPoints);
+            // 裏山改変: initialPoints <= 0 なら Bonus.initial を付与しない (フラグも書かない)。
+            // _GrantBonusOnce も amount <= 0 で何も書かないが、裏山では「呼ばない」ことを明示しておく
+            if (initialPoints > 0) _GrantBonusOnce(BonusInitial, initialPoints);
         }
         /// <summary>BUG-PRG-001 の切り分け用。復元直後 (付与前) の台帳値と、独立して読んだ rawOwned を 1 行で出す。
         /// 実機の output_log を <c>node scripts/prg-diagnose-log.js</c> で読む。原因が確定して Issue を閉じるときに外す (release-checklist §1)。</summary>

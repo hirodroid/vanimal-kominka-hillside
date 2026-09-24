@@ -1,4 +1,4 @@
-# KominkaHillside -- ワールド固有UI設定
+| 実装済み・未検証 (2026-09-24 IMP-PRG-001。実機・ClientSim 待ち) | NOT_TESTED || 実装済み・未検証 (2026-09-24 IMP-PRG-001。実機・ClientSim 待ち) | NOT_TESTED || 実装済み・未検証 (2026-09-24 IMP-PRG-001。実機・ClientSim 待ち) | NOT_TESTED |# KominkaHillside -- ワールド固有UI設定
 
 配置先：`docs/world-ui-spec.md`。共通資料1.0.0の09章を基にしたワールド固有の設定。Unityへ自動インポートするスキーマではない。
 全体のビジュアル方針は `core-concept.md` が正本。この資料は参照先・更新日とUIへの具体化を持ち、全体パレットを二重管理しない。既存のUI仕様が別名ならそちらを正本とし、この資料は案内にする。
@@ -139,7 +139,7 @@
 
 | 状態キー | 個人／共有 | 表示対象 | 管理者 | 同期手段 | 保存手段・寿命 | 初期復元 | 版・移行 |
 |---|---|---|---|---|---|---|---|
-| points.earned / points.spent | 個人 | 本人 (ヘッダーの残高) | 台帳 Udon (ローカル) | なし | PlayerData。ワールド別で古民家とは共有しない。名前空間は実装時に決定 (古民家は `KD_Commerce_v1`) | 復元完了後に残高を表示。未復元は「よみこみ中」 | provisional |
+| points.earned / points.spent | 個人 | 本人 (ヘッダーの残高) | 台帳 Udon (ローカル) | なし | PlayerData。ワールド別で古民家とは共有しない。名前空間は **`KH_Commerce_v1`** (2026-09-24 決定・IMP-PRG-001。古民家は `KD_Commerce_v1`) | 復元完了後に残高を表示。未復元は「よみこみ中」 | provisional |
 | own.{productKey} | 個人 | 本人の購入面 | 台帳 Udon (**ポイント商品のみ**。CE 商品は台帳に書かず Store が正本) | なし | PlayerData。true のときだけ書く | 復元後に所持済み表示へ。CE は購入情報の読込後に Store で判定する | provisional |
 | stock.{treat} | 個人 | 本人のおやつタブ | 台帳 Udon | なし | PlayerData。在庫 = 初期付与 (骨型ビスケット 5 個) を含む入手累計 StockB − 取り出しが成立した時点の消費累計 StockE。しまっても戻らない (1 回の購入で 5 個、上限 20) | 復元後に在庫行へ反映。骨型ビスケットの初期 5 個は一度だけ付与 | provisional |
 | bonus.keeper | 個人 | 本人 (おじいさんの挨拶) | 台帳 Udon | なし | PlayerData。一回きりのフラグ | 未復元なら付与を保留し、復元後に再試行 | provisional |

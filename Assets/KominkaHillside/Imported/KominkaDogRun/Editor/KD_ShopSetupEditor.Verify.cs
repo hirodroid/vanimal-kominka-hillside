@@ -14,7 +14,8 @@ namespace KominkaDogRun.Editor
     {
         // ================================================================ 3: Verify
 
-        [MenuItem("Tools/KominkaHillside/Menu/4a Verify Shop")]
+        // 裏山改変 (IMP-PRG-001 段階 1): 古民家版は Imported-Unused へ。裏山の Menu/4a は KD_ShopSetupEditor.Hillside.cs の VerifyHillside
+        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Shop/3 - Verify Shop (Kominka)")]
         public static void Verify()
         {
             var v = new KD_VerifyLog("[KD_ShopSetup] Verify");
@@ -654,10 +655,11 @@ namespace KominkaDogRun.Editor
             var seen = new Dictionary<string, string>();
             bool ok = true;
             // **`const string ... = "KD_..."` の宣言だけを見る。**
+            // 裏山改変: 名前空間を KH_Commerce_v1 にしたので KH_ 始まりも見る (KD_ だけだと台帳の定数を素通りする)
             // 単に `"KD_..."` を拾うと `<see cref="KD_ShopItem"/>` のような
             // **doc コメントの型名が「キー」に見えて誤検出する** (実際に踏んだ)
             var re = new System.Text.RegularExpressions.Regex(
-                @"const\s+string\s+\w+\s*=\s*""(KD_[A-Za-z0-9_]+)""");
+                @"const\s+string\s+\w+\s*=\s*""(K[DH]_[A-Za-z0-9_]+)""");
             foreach (var f in files)
             {
                 if (!File.Exists(f)) { log.AppendLine("       (見つからない: " + f + ")"); ok = false; continue; }

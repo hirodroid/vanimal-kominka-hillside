@@ -70,7 +70,7 @@
 - **残高 0 でも散歩・接続解除・基本の遊び (ボール・フリスビー・撫で・集合) は使える。** 基本の体験にポイント稼ぎを要求しない。
 - **重複防止と復元は古民家の方式を継承する。** 初回付与は一回きりのフラグで判定し、台帳が未復元の間は付与を保留して復元後に再試行する (KominkaDogRun: Assets/KominkaDogRun/Scripts/KD_ShopKeeper.cs:469-480)。
 
-残る未決定: PlayerData の名前空間の改名、首輪と首元 7 品の干渉の実測、呼ぶの斜面判定の数値、おやつ 3 枠の複数人表示。これらと会話→付与→装い選択の導線は [DES-UI-003](development/issues/DES-UI-003-menu-scope-and-polish.md) で具体化する。**文書のみ更新、NPC・ポイント処理は未実装。**
+残る未決定: 首輪と首元 7 品の干渉の実測、呼ぶの斜面判定の数値、おやつ 3 枠の複数人表示。これらと会話→付与→装い選択の導線は [DES-UI-003](development/issues/DES-UI-003-menu-scope-and-polish.md) で具体化する。PlayerData の名前空間は `KH_Commerce_v1` に決定した (2026-09-24)。**2026-09-24 に台帳・おじいさん・支度用ポイント・残高表示を実装済み ([IMP-PRG-001](development/issues/IMP-PRG-001-ledger-shopkeeper-points.md))、実機確認待ち。** おやつ・かざりの購入行は段階 2。
 
 ### おやつで散歩中の犬を呼び寄せる (2026-09-23 追加相談)
 

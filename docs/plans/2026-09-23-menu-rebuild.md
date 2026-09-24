@@ -1,6 +1,6 @@
 # 手元メニューを古民家と同一の器へ作り替える実装計画
 
-状態: **段階 0-a・0-b 完了** (2026-09-23 実装・Verify 全 PASS・Codex D+M・コミット a19112a、2026-09-24 に PCVR でユーザー OK)。次は段階 1 (IMP-PRG-001)。記録は下の「実装記録」、確認手順は「実機チェックリスト」。設計は 2026-09-23 のユーザー指示「モック OK。古民家の実際のメニューの配置・コンポーネントを確認して設計」に基づく。採否と全体構成の正本は [game-design §4](../game-design.md) と [DES-UI-003](../development/issues/DES-UI-003-menu-scope-and-polish.md)、画面・入力・状態・Unity 部品の正本は [world-ui-spec §4〜6・§8](../world-ui-spec.md)。見え方の合意はモック 版 3 (<https://claude.ai/artifact/K1moWuWCeWMUm7wUprZx3f>、ユーザー「OK」)。
+状態: **段階 0-a・0-b 完了** (2026-09-23 実装・Verify 全 PASS・Codex D+M・コミット a19112a、2026-09-24 に PCVR でユーザー OK)。**段階 1 (IMP-PRG-001) は 2026-09-24 に実装済み・Verify 全 PASS。Codex D+M 済み (5 件修正・1 件記録)、Play (ClientSim・PCVR) は未実施**。記録は下の「実装記録」、確認手順は「実機チェックリスト」。設計は 2026-09-23 のユーザー指示「モック OK。古民家の実際のメニューの配置・コンポーネントを確認して設計」に基づく。採否と全体構成の正本は [game-design §4](../game-design.md) と [DES-UI-003](../development/issues/DES-UI-003-menu-scope-and-polish.md)、画面・入力・状態・Unity 部品の正本は [world-ui-spec §4〜6・§8](../world-ui-spec.md)。見え方の合意はモック 版 3 (<https://claude.ai/artifact/K1moWuWCeWMUm7wUprZx3f>、ユーザー「OK」)。
 
 この計画書は**順序と分担**だけを持つ。何を作るかは各 Issue が持つ。
 
@@ -127,7 +127,7 @@
 |---|---|---|---|
 | **0-a** | **移植の土台**: `Assets/KominkaDogRun/Editor/` を丸ごとコピー、**パス定数の置換一覧を作る** (`grep "Assets/KominkaDogRun"` の結果を [kominka-dog-system](../development/imports/kominka-dog-system.md) に表で記録。Script / Program Asset は `Assets/KominkaHillside/Imported/KominkaDogRun/…`、Font / Textures / Data / Models / Materials は `Assets/KominkaHillside/…`)、MenuItem の付け替えと未採用機能の隔離 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (0-a) | **コンパイル 0** / Console エラー 0 / 置換一覧が imports に記録されている / Codex M |
 | **0-b** | **器の構築**: スプライト焼き、フォント 48 pt 再ベイク、文言・言語生成、KD_TreatPouch を配置して 7 タブの器を作る。さんぽ・おもちゃ・あそぶを KH_HandMenu から移し、KH_HandMenu を退役。**設定面の器とナイトモードのスライダー**。ライブは準備中、おやつ・かざり・呼ぶは行に「準備中」。拠点板の付け替え | IMP-UI-001 (0-b) | コンパイル 0 / Verify (Pouch + Scroll Layout、下の Verify 表の段階 0 分) 全 PASS / 既存 3 機能の退行なし (`Walking/5 Verify` 全 PASS。起票時の「111」は古い件数で、2026-09-23 時点の項目数は 208) / Codex D+M / **PCVR で現行 3 機能の見え方が古民家と同じ (ユーザー)**。**到達状況 (2026-09-23): コンパイル 0・Verify 全 PASS・Walking/5 208/0 は済み。Codex 未・PCVR 未** |
-| 1 | 台帳・おじいさん・ポイント・残高・確認カードの実体 (購入が動く)。**初回未受取の案内帯 (購入面の 1 行) と ようこそ の最小版 (題 + [メニューを見る]) を前倒しする** | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) | Verify + ClientSim (T-007/T-008) + Codex D+M |
+| 1 | 台帳・おじいさん・ポイント・残高・確認カードの実体 (購入が動く)。**初回未受取の案内帯 (購入面の 1 行) と ようこそ の最小版 (題 + [メニューを見る]) を前倒しする** | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) | Verify + ClientSim (T-007/T-008) + Codex D+M。**到達状況 (2026-09-24): コンパイル 0・Verify 全 PASS (3b / 4a / 4e / 20 / 21 / 22 / 23 / 11c / 24 / 15a)・Walking/5 208/0・check-consume-once OK は済み。Codex は実行中。T-007 / T-008 は実機または ClientSim 待ち (台帳用のハーネスは無い)** |
 | 2 | おやつ / かざり + 撫でFX + ミニチュア / 呼ぶ + ポーズ面 + 場所決め (3 本並列) | [IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md) / [015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) / [016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | 各 Verify + ハーネス + Codex D+M、PCVR (ユーザー)。加えて **入室 → おじいさん → 200pt → かざりで装着 → さんぽ の一周が 1 人で成立する** |
 | 3 | 設定面 (距離フェード・ナイトモードスライダー・許可 2 種・言語・クレジット・案内・音量)、ようこそ | IMP-UI-001 (後半) | Verify + Codex D+M+U、PCVR |
 | 4 | 複数人・Desktop/Touch・Quest/iOS | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | 実機チェックリスト |
@@ -145,11 +145,15 @@
 | 2 Credit/1 Build Font Asset | Menu/2 Build Font Asset | 0-b では使わない (下の 2b で再ベイク) |
 | (裏山のみ) | **Menu/2b Rebake Font 48pt** (`KD_TreatSetupEditor.Hillside.cs`。`PouchWords()` + `HillsideWords()` を 48 pt・Static で焼き直す) | 0-b |
 | 3-4 Shop/1 Create Program Assets, Shop/2 Setup Shop | **段階 0 では飛ばす** → Menu/3 Create Shop Programs, 4 Setup Shop | 1 (IMP-PRG-001) |
+| Progress System/2 Setup, 3 Verify | **Menu/3a Setup Progress** / **3b Verify Progress** (`KD_ProgressSetupEditor.cs` 裏山改変。`KH_Dogs/KD_ProgressSystem`、SyncMode None、名前空間 `KH_Commerce_v1`、initialPoints 0、keeperPoints 200) | 1 |
+| Shop/2 Setup Shop, 3 Verify Shop | **Menu/4 Setup Shop (裏山)** / **4a Verify Shop (裏山)** (`KD_ShopSetupEditor.Hillside.cs`。`KH_Dogs/KD_ShopCatalog` + `KD_ShopItem_*` 50 行 = `KD_ProductDefinitions.All`、全行 menuOnly、`KH_Dogs/KD_PlayerFxTag`。棚・ToyBox・おやつ陳列は作らず、4a で SKIP を明示)。古民家版は `Menu/Imported-Unused/Shop/2・3 (Kominka)` へ | 1 |
+| Shop Keeper/2 Setup, 3 Verify | **Menu/4d Setup Shop Keeper** / **4e Verify Shop Keeper** (`KD_ShopKeeperSetupEditor.Hillside.cs`。`KH_Dogs/KD_ShopKeeper` + 子 man_farm、ナビ 5 項目)。古民家版の入口 `Menu/Imported-Unused/Shop Keeper/2・3` も同じ 5 項目で組む | 1 |
 | 5 Treat System/1 Create Program Assets | Menu/5 Create Pouch Programs | 0-b |
 | 6 Sleep System/2 Setup | **段階 0 では飛ばす** → Menu/6 Setup Sleep | 2 (IMP-DOG-016) |
 | 7 Treat System/2 Setup Treat System | **Menu/7 Build Menu = 裏山の入口 `SetupHillside()`** (`KD_TreatSetupEditor.Hillside.cs`。KD_DogPack 必須 → `KH_Dogs/KD_TreatPouch` → BuildPouchPanel → 開閉値 → `hillsideStage`・manager・recall → 拠点板 3 枚 → CopyProxyToUdon → 文言。段階 0 の参照は探さない)。古民家の Setup / Verify は `Menu/Imported-Unused/Treat System/2 - Setup Treat System (Kominka)` / `3 - Verify Treat System (Kominka)` へ移した | 0-b |
 | 8-9 Activities/1,2 | Menu/8 Create Activities Programs, 9 Setup Activities (集合のみ) | 0-b |
 | 10-11 Menu Finish/1,2 | Menu/10 Collect Words, 11 Setup Localization (文言・言語配列・グリフ・Bind) | 0-b |
+| Welcome Guide/1 Build, 2 Verify | **Menu/11b Build Welcome** / **11c Verify Welcome** (`KD_WelcomeGuideEditor.cs` 裏山改変。最小版の ようこそ + `KD_HintDirector`)。古民家版は `Menu/Imported-Unused/Welcome Guide/1・2 (Kominka)` へ | 1 |
 | 12-13 Hand Menu/2 Rebuild Panel, 3 Apply Scroll Layout | Menu/12 Rebuild Panel, 13 Apply Scroll Layout | 0-b |
 | 14 Distance Fade/2 | Menu/14 Setup Distance Fade | 3 |
 | 15 Night Mode/1 | Menu/15 Setup Night Mode (裏山は `KH_NightMode` を指す) | **0-b** (スライダーの配線を段階 0-b へ前倒し。15a Verify も 0-b で実行) |
@@ -163,6 +167,8 @@
 段階 0 で飛ばす 3 と 6 は、板側では「準備中」の行として成立させる。ライブ (Live4) は DES-LIV-001 の採用まで準備中のまま。
 
 2026-09-23 の段階 0-b で司令塔が実行した順: 1 → 2b → 5 / 10 / 8 → 7 → 11 → 9 → 7 (再) → 11 (再) → 15 → 17 → 19 → 19b → 20〜24 / 15a / Walking/5。9 (あそぶ) の後に 7 と 11 をやり直すのは、7 が `activitiesMenu` を拾うため。結果は下の「実装記録」。
+
+2026-09-24 の段階 1 で司令塔が実行した順: 3 → 3a → 4 → 3b / 4a → 19b → 保存 → (文言の統合・refresh) → 4d → 7 → 9 → 11 → 11b → 検証 (3b / 4a / 4e / 20 / 21 / 22 / 23 / 11c / 24 / 15a / Walking/5) → 19b → 保存。
 
 ## Verify の追加項目 (古民家の検査に裏山分を足す)
 
@@ -321,8 +327,95 @@
 
 修正後に force refresh → C# 0 (dll 22:19) → U# `Compile of 82 scripts finished`、Error 0 → Menu/20 PASS / 21 pass 394 fail 0 / 23 PASS / Walking/5 208 FAILED 0 を再確認した。フィールドの追加・改名は無く、シーンの proxy 値は変わっていない (Menu/7 の再実行は不要、シーンは dirty=False のまま)。
 
+### 段階 1 (2026-09-24)
 
-## 実機チェックリスト (段階 0-b の PCVR 同等性確認)
+**状態: 実装済み・Verify 全 PASS。** シーン保存済み (dirty = False)。Codex D+M は実行中。コミット・Play (ClientSim・実機とも) は未実施。ファイルごとの差分は [kominka-dog-system「2026-09-24 台帳・おじいさん・ポイント (段階 1)」](../development/imports/kominka-dog-system.md#2026-09-24-台帳おじいさんポイント-段階-1)。完了条件の進み具合は [IMP-PRG-001「進捗」](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md#進捗)。
+
+実装は台帳・カタログ担当 (P1)、おじいさん担当 (P2)、板・ようこそ担当 (P3) の 3 エージェントが並列で行った。司令塔は文言の断片を `UITranslations.json` へ統合し (13 言語、664 キー)、Tools メニューを実行した。準備として、購入アセット polyperfect (Low Poly Animated People + Common、git 管理外) と `AC_KD_Npc.controller`、CE の UdonProduct 6 本 (`Data/CE`) を古民家からコピーした (前コミット 7165e45)。
+
+**変更の要点**
+
+- 台帳・カタログ (P1):
+  - `KD_ProgressLedger.cs` 裏山改変。PlayerData 名前空間は **`KH_Commerce_v1`** (Test は `KH_TestCommerce_v1`)。`initialPoints` の既定は 0 で、0 なら `Bonus.initial` もそのフラグも書かない。`keeperPoints` の既定は 200。Grant の口と「フラグ true → Earned 加算」の順は変えていない。
+  - `Menu/3a Setup Progress` / `3b Verify Progress`: `KH_Dogs/KD_ProgressSystem` (SyncMode None)。
+  - `Menu/4 Setup Shop` の裏山版 (新規 `KD_ShopSetupEditor.Hillside.cs`): `KH_Dogs/KD_ShopCatalog` と `KD_ShopItem_*` 50 行 (= `KD_ProductDefinitions.All`)。全行 menuOnly で、Collider・描画・棚・listener は作らない。`BindCatalog` が `ledger.products` / `categoryKeys` / defaults と CE の UdonProduct を配線する。`KH_Dogs/KD_PlayerFxTag` (VRCPlayerObject、Manual) もここで作る。`4a Verify Shop` の裏山版は棚・ToyBox・おやつ陳列を SKIP と明示する。古民家版の Setup / Verify は `Menu/Imported-Unused/Shop/2・3 (Kominka)` へ移した。
+  - `scripts/check-consume-once.js` を移植した。`_TryConsume` の呼び出しは `KD_TreatPouch.Treat.cs:201` の 1 か所で OK。
+- おじいさん (P2):
+  - `KD_ShopKeeper.cs` 裏山改変。ナビは 5 項目 (過ごし方 / さんぽ (新 `_OpenWalk`) / おやつ / 呼ぶ / またね)。古民家だけの `_OpenHowTo` / `_OpenPetting` / `_OpenDogs` / `_OpenPhotos` / `_OpenShop` はメソッドを残し、navIndex −1 にした。挨拶は 2 種とも「支度は手元メニューの「かざり」で」と端末別の開き方を添える。初回は「{0}pt だ。一度きりだよ」。付与経路 `_TryGift` (復元待ち・1 秒再試行) は変えていない。
+  - `KD_ShopKeeperSetupEditor.cs` を partial 化し、`BuildMenu` を裏山のナビ表で組む。新規 `KD_ShopKeeperSetupEditor.Hillside.cs` に `Menu/4d Setup Shop Keeper` / `4e Verify Shop Keeper`。
+  - 4d: `KH_Dogs/KD_ShopKeeper` を**初回だけ** (48.00, 地面レイキャスト → 1.73 (`KH_World/KH_Terrain`), 43.00) に置き、`KH_LeashRack` (45, 2.71, 43) の方 (−X) を向ける。以後は人が調整した値を保つ。子に man_farm (`Assets/polyperfect`、購入アセット) を InstantiatePrefab し、`AC_KD_Npc` を当て、RootMotion を切り、デモ用コンポーネントを除く。Collider はホスト側、SyncMode None、proximity 2.5 / hideDistance 4、効果音は「決定ボタンを押す2.mp3」。`KD_Language.keeper` も配線する。
+  - 4e: 5 ボタンの onClick と実在メソッド、ja/en 本文の幅の実測、const と文言表の一致を見る。古民家の話題 5 種・棚・写真・Wave は SKIP を明示し、man_farm の見た目は MANUAL (人が確認)。
+- 板・ようこそ (P3):
+  - `KD_TreatPouch.Hillside.cs`: ledger が配線されたらヘッダの Balance を出す。フィールド `hillsidePoints*`、`_HillsidePoints` / `_HillsidePointsBack`。`HillsideRedrawPoints` は見出し「いま N pt」、行 1「おじいさんの支度ポイント +keeperPoints (受取済み / 未)」、行 2「滞在 1 分 1pt」。未復元は「読み込み中...」。`HillsideGrantLineVisible()` (`ledger != null && Loaded && !BonusReceived(keeper)`) が真なら、おやつ (`rowHintLabels[0]`) と かざり (`accRowSubLabels[0]`) の準備中の行のサブ文に `WordGrantLine` を出す。`.Redraw.cs` の変更は 1 行。
+  - `KD_TreatSetupEditor.Hillside.cs`: `KD_Hillside.Stage = 1`。段階 1 の分岐 `HillsideFindStage1` が ledger / catalog / treat 4 / petfx 11 を探し、無ければ FAIL で何も書かない。購入音は棚が無いため `KD_ShopSetupEditor.HillsideBuyClip()` / `HillsideRejectClip()` から取る。`HillsideBuildPoints` が PointsButton (→ `_HillsidePoints`) と `Page_Settings/PointsPage` (見出し + 2 行 + [戻る]) を作る。ギフトコードの器・入力欄は作らず、残骸の `GiftCodePage` は削除する。段階 1 では `KD_WelcomeGuideEditor.BuildPage` も呼ぶ (Bind の順序に依存するため)。
+  - `KD_WelcomeGuideEditor.cs` 裏山改変: 古民家の Build / Verify は `Menu/Imported-Unused/Welcome Guide/1・2 (Kominka)` へ移した。新しい `BuildPage` と `Menu/11b Build Welcome` / `11c Verify Welcome`。`KH_Dogs/KD_WelcomeSpot` は新規のときだけ `KH_Entrance` (47.64, 1.61, 40.08) の前 1.8 m・高さ 1.3 m に置く。`KH_Dogs/KD_HintDirector` は sync None で、language / pouch / keeper / dogs / pet controllers / balls / pickups / Notice・Context 板 / VR・Desktop・Touch の手元ヒントを配線する。`sleepNoticeEnabled = false` (段階 2 まで)、保存キーは `KD_Onboarding_v1`。
+  - `UILocalizationBindings.json`: `Page_Welcome` の 4 束縛と `KD_ShopKeeperMenu` の 6 束縛、interactions 1 を足した (labels 118 / interactions 1)。
+- 文言 (司令塔が統合): P2 の差替 7 + 新規 2、P3 の新規 5 + 差替 8。13 言語で 664 キー。
+
+**契約からの逸脱** (司令塔が受け入れた)
+
+- P1:
+  1. `check-consume-once.js` は `Imported` に加えて `Assets/KominkaHillside/Scripts` も見る。
+  2. `Menu/4` は `KD_ProductDefinitions.All` の全行 (50) を作る (画面に出ないおもちゃ・ライブの行も台帳のために残す)。
+  3. 文言表 (`displayNameKey` / `displayName`) は Hillside partial にハードコードした。古民家ではシーンにしか無かった。
+- P2:
+  1. 裏山専用の入口を別に作らず、`BuildMenu` と Verify の核を裏山版に置き換えた (古民家版の入口も 5 項目で組む)。
+  2. 4d が `KD_Language.keeper` も配線する。
+- P3:
+  1. 空の welcome page を `Menu/7` でも作る (Bind の順序に依存するため)。
+  2. `welcome.*` の既存キーを差し替えた (再読の行は段階 3 まで無いので除いた)。
+  3. `KD_WelcomeSpot` と `KD_HintDirector` は `KH_Dogs` 直下に置いた。
+
+**Tools メニューの実行と結果** (司令塔、この順)
+
+| 順 | メニュー | 結果 |
+|---|---|---|
+| 1 | 3 Create Shop Programs → 3a Setup Progress → 4 Setup Shop | `KD_ProgressSystem` / `KD_ShopCatalog` + `KD_ShopItem_*` 50 行 / `KD_PlayerFxTag` を作成 |
+| 2 | 3b Verify Progress / 4a Verify Shop | PASS |
+| 3 | 19b Assign Network IDs | PlayerFxTag / ProgressSystem / ShopCatalog / ShopItem_* に ID を振った |
+| 4 | 保存 → 文言の統合 → refresh | C# 0、U# 82 |
+| 5 | 4d → 7 → 9 → 11 → 11b | おじいさん・板の段階 1 配線・あそぶ・文言・ようこそ |
+| 6 | 19b Assign Network IDs | 146 → 148 |
+| 7 | 保存 | dirty = False |
+
+**Verify 結果**
+
+| メニュー | 結果 | SKIP を明示したもの |
+|---|---|---|
+| 3b Verify Progress | PASS | — |
+| 4a Verify Shop | PASS | 棚・ToyBox・おやつ陳列 |
+| 4e Verify Shop Keeper | PASS | 古民家の話題 5 種・棚・写真・Wave。man_farm の見た目は MANUAL |
+| 20 Verify Pouch | PASS (段階表 1: treat 4 必須、petfx 11 枠で null は WARN) | 棚 |
+| 21 Verify Scroll Layout | pass 394 / fail 0 | — |
+| 22 Verify Localization | PASS | — |
+| 23 Verify Activities | PASS | — |
+| 11c Verify Welcome | PASS | — |
+| 24 Verify Collision | PASS | — |
+| 15a Verify Night Mode | PASS | — |
+| Walking/5 Verify | TOTAL 208 / FAILED 0 | — |
+| `node scripts/check-consume-once.js` | OK (`_TryConsume` の呼び出し 1 か所) | — |
+
+Menu/20 で新たに見るもの: ledger / catalog が `KH_Dogs` 直下、`KD_ShopKeeper` 1 個、購入音、Balance 表示と PointsButton、ポイント面の 2 行 + [戻る]、ギフトコードの器が無い (`KD_GiftCodePanel` / `GiftCodePage` / `TMP_InputField` が 0)、welcome page・hints・welcomeSpot。
+
+**未実施**: Play (ClientSim・実機とも)、コミット。IMP-PRG-001 の完了条件のうち T-007 (200pt が一回だけ)、滞在と復元、購入と復元、T-008 (残高 0 で基本の遊び) は実機または ClientSim 待ち。ClientSim のハーネスはフリスビー用しか無い。
+
+**人が確認する点**: man_farm の見た目・立ち位置・向き、`KD_WelcomeSpot` の位置 (ラックとおじいさんへの視界を遮らないか)、ポイント面と ようこそ のレイアウト。下の「実機チェックリスト / 段階 1」に入れた。
+
+
+**Codex レビュー (D + M、2026-09-24、gpt-6-astra)** — 対象は段階 1 の未コミット差分 + 新規 3 本。指摘 5 件 (中 3 / 低 2) + 別件 1。D (1) 書込順・重複防止 (2) 名前空間 (3) 購入の順序 (4) CE 読込中 (5) U#・同期 (6) 配置・保存、M (2) 二重管理 (3) 段階フラグ (4) 段階 2・3 への復帰箇所 (5) 仕様との対応 は「問題なし」。
+
+| # | 重要度 | 指摘 | 対応 |
+|---|---|---|---|
+| D-1 | 中 | Menu/7 (SetupHillside) は KD_ShopKeeperMenu が無い状態で Bind に入ると例外で途中停止する。Setup Shop のログ案内も順序が違う | **修正** (P3 / P1)。7 は変更前に Bindings の束縛先 119 件と文言キーを検査し、不足なら手順付きで何も変えずに終了。案内を 4 → 4d → 7 → 11 → 11b に統一 |
+| D-2 | 中 | KD_ShopKeeper: 台帳の未復元中に話しかけて板を閉じると付与要求 `_giftPending` が消え、再試行も板が開いている間だけ (古民家からの継承) | **修正** (P2)。閉じても要求を保持し、`_Refresh` の `_TryGift` を板の開閉と無関係に回す。贈り物の挨拶への切替だけ表示中に限定。4e に検査 2 件 |
+| M-1 | 中 | scripts/check-consume-once.js の `DECL_RE` がメソッド本体まで一致し、1 行メソッド内の 2 つ目の `_TryConsume` を見逃す | **修正** (P1)。宣言の見出しだけを除外し呼び出しを全件数える。負のセルフテスト 9 件 (1 行メソッド / 式形式 / 同一行 2 回 など) を内蔵 |
+| M-2 | 低 | 付与額 200 が台帳既定値・Progress Setup・Keeper Verify・見積り・ポイント面の仮表示に独立して存在 | **修正**。`KD_ProgressLedger.HillsideKeeperPoints` を正本にし、台帳既定値・KD_ProgressSetupEditor・KD_ShopKeeperSetupEditor.Hillside・KD_Hillside.KeeperPoints がそれを参照。Verify 20 が `ledger.keeperPoints == KD_Hillside.KeeperPoints` を検査 |
+| M-3 | 低 | KD_WelcomeGuideEditor に裏山専用の 268 行が本体へ直接追加 | **修正** (P3)。partial 化し `KD_WelcomeGuideEditor.Hillside.cs` へ |
+| 別件 | 中 | KD_ShopCatalog.cs:73 (未変更の既存処理): CE 選択の復元が購入情報の到着を待たず、未読込を未所持として既定品へ落とし `_resolved = true` にする | **記録のみ**。段階 2 (IMP-DOG-015 の CE 品利用) の前に、未読込と未所持を分けて未読込の区分だけ再解決する候補 |
+
+修正後: refresh → C# 0 → U# 82 finished → Menu/7 (束縛先の事前検査 119 / 不足 0) → 11 → Verify 4e / 20 / 11c / 3b / 4a / 22 PASS、Walking/5 208/0、check-consume-once OK → 保存 (dirty=False)。
+
+## 実機チェックリスト (段階 0-b の PCVR 同等性確認、段階 1)
 
 準備: シーン保存済み (2026-09-23 の段階 0-b 以降)・Console エラーなし。**Build & Test し直す。** 端末・人数を記録する。段階 0 は「現行 3 機能が古民家と同じ見え方になったか」だけを見る。おやつ・かざり・呼ぶ・ライブの中身、残高、設定面の残り (音量・距離フェード・インフォメーション・写真) は、この段階では**意図的に無い**。
 
@@ -355,6 +448,26 @@
 | 結果がいつも「確認できませんでした」/ 前の結果が出る | さんぽは `KD_TreatPouch.Walk.cs` の Pending と `KH_LeashManager` の共有状態、あそぶは `activities.LocalRequestState`。ポーリングは `Update` の `PollSharedRequests` |
 | 準備中のタブで行やボタンが崩れて出る | `hillsideStage = 0` と `HillsidePreparing()` (Menu/20 の段階表) |
 | ナイトモードが効かない・戻らない | `KD_MenuSettings.hillsideNight` の配線 (Menu/15a)、PlayerData のキー `KH_NightMode.dark` |
+
+### 2. 段階 1 (台帳・おじいさん・ポイント。2026-09-24 追加)
+
+準備: 段階 1 のシーン保存 (2026-09-24) 以降で **Build & Test し直す**。PlayerData の名前空間は `KH_Commerce_v1`。初回の挙動を見るときは、そのアカウントで裏山の PlayerData がまだ無い状態から始める (ClientSim なら保存データを消す)。おやつ・かざり・呼ぶのタブはまだ準備中で、購入の行は段階 2 で出る。
+
+- [ ] **おじいさんの見た目と位置**: 門 (`KH_Entrance`) 付近・ラックの +X 3 m に立ち、ラックの方を向いている。man_farm が地面から浮かず埋まらず、待機のアニメが動く。話しかけるまで板は出ない (近づくだけでは開かない)。4 m 離れると閉じる。ナビ 5 項目 (過ごし方 / さんぽ / おやつ / 呼ぶ / またね) が押せ、本文が枠に収まる。
+- [ ] **200pt が一回だけ (T-007)**: 初回会話で「200pt だ。一度きりだよ」が出て、ヘッダの残高が 200 増える。連打しても、入室直後 (台帳の復元前) に話しかけても、退室して入り直しても 2 回目は入らず、挨拶だけになる。挨拶に「支度は手元メニューの「かざり」で」と、その端末の開き方が出る。
+- [ ] **残高表示と復元**: 入室直後は「読み込み中...」、復元後に数値。滞在 1 分ごとに 1 増える。退室して入り直すと残高が戻る。
+- [ ] **ポイント面**: ヘッダの残高を押すと「いま N pt」と入手経路 2 行 (おじいさんの支度ポイント +200 (受取済み / 未)、滞在 1 分 1pt) と [戻る] が出る。ギフトコードの入力欄は無い。
+- [ ] **未受取の案内**: 受け取る前は、おやつ・かざりの準備中の行に「入口のおじいさんから支度ポイントを受け取れます」の案内が出る。受け取った後は消える。
+- [ ] **ようこそは初回だけ**: 初めて入ったとき、入口の前に ようこそ の板が出る。[あとで] / [メニューを見る] が効く。入り直すと出ない (`KD_Onboarding_v1`)。板がラックやおじいさんへの視界を遮らない。
+- [ ] **残高 0 で基本の遊び (T-008)**: 残高 0 のまま (おじいさんに話しかける前)、散歩・リード解除・ボール・フリスビー・撫で・集合 (トレーナー特典を所持した状態) が使え、ポイントを求める表示が出ない。
+
+| 症状 | 最初に見るところ |
+|---|---|
+| おじいさんがいない・浮く・向きが違う | Menu/4d は初回だけ位置と向きを決め、以後は人の値を保つ。man_farm (購入アセット `Assets/polyperfect`) の有無。Menu/4e |
+| 200pt が入らない・2 回入る | `KD_ShopKeeper._TryGift` (復元待ち・1 秒再試行) と台帳の `Bonus.keeper`。名前空間 `KH_Commerce_v1` (Menu/3b) |
+| 残高が出ない・「読み込み中...」のまま | pouch の ledger 配線 (Menu/20 の段階表 1)、台帳の復元 |
+| ポイント面が出ない | PointsButton → `_HillsidePoints` の onClick、`Page_Settings/PointsPage` (Menu/20) |
+| ようこそが毎回出る・出ない | `KD_HintDirector` の保存キー `KD_Onboarding_v1`、`KD_WelcomeSpot` (Menu/11c) |
 
 ## ユーザーへの報告 (開発側の決定)
 

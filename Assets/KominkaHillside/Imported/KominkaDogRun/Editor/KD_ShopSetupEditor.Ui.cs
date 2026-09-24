@@ -347,7 +347,9 @@ namespace KominkaDogRun.Editor
         ///
         /// **雛形はシーンに残す** (実行時に複製元として使われる)。
         /// 中身は同期変数 1 本だけなので、人数ぶん増えても軽い。</summary>
-        static void EnsurePlayerFxTag(StringBuilder log)
+        /// <param name="parentIfNew">裏山改変: 新規に作るときの親 (KH_Dogs)。null なら古民家どおり KD_Systems。
+        /// 既存なら親も位置も触らない (Setup = 作るだけ)。</param>
+        static void EnsurePlayerFxTag(StringBuilder log, Transform parentIfNew = null)
         {
             int found;
             var go = KD_SceneObjects.Find(PlayerFxTagName, out found);
@@ -359,7 +361,12 @@ namespace KominkaDogRun.Editor
             if (go == null)
             {
                 go = new GameObject(PlayerFxTagName);
-                KD_SceneObjects.PlaceIfNew(go, KD_DogDefs.SystemsPath);
+                if (parentIfNew != null)
+                {
+                    Undo.RegisterCreatedObjectUndo(go, "Create " + PlayerFxTagName);
+                    go.transform.SetParent(parentIfNew, false);
+                }
+                else KD_SceneObjects.PlaceIfNew(go, KD_DogDefs.SystemsPath);
                 log.AppendLine("created " + PlayerFxTagName);
             }
 

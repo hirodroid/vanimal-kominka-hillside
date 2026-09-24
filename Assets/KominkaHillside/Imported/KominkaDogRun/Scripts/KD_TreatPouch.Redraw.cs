@@ -51,7 +51,8 @@ namespace KominkaDogRun
             }
 
             if (_welcome) { RedrawWelcome(); return; }
-            if (_settingsOpen) { RedrawVoiceSettings(); RedrawBgmSettings(); RedrawMusicSettings(); RedrawCallAccess(); return; }
+            // 裏山改変: ポイントの面 (段階 1。ギフトコードの器の代わり) は設定の枠の中の面。描画は KD_TreatPouch.Hillside.cs
+            if (_settingsOpen) { RedrawVoiceSettings(); RedrawBgmSettings(); RedrawMusicSettings(); RedrawCallAccess(); HillsideRedrawPoints(); return; }
 
             // ---- 開いているタブだけ ----
             // 裏山改変: 未導入のバックエンドのタブは「準備中」1 行 (計画書 D-1 の段階表)。移動先 KD_TreatPouch.Hillside.cs。各バックエンドの配線で解除

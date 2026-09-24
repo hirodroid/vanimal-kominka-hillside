@@ -29,7 +29,7 @@ namespace KominkaDogRun.Editor
     /// </code>
     /// 文言は UITranslations.json (welcome.* / hint.hand.*)、固定ラベルの束縛は UILocalizationBindings.json。
     /// 板の枠 (ヘッダ / 帯 / タブ / 一覧の上下端) は KD_HandMenuScrollEditor が正本なので、ここは面の中身だけ置く。</summary>
-    public static class KD_WelcomeGuideEditor
+    public static partial class KD_WelcomeGuideEditor
     {
         const string Menu = "Tools/KominkaHillside/Menu/Imported-Unused/Welcome Guide/";
         const string Output = "Temp/welcome-guide/";
@@ -215,7 +215,9 @@ namespace KominkaDogRun.Editor
             plate.SetActive(false); return label;
         }
 
-        [MenuItem(Menu + "1 - Build")]
+        // 裏山改変: 古民家の Build / Verify (再読の面・インフォメーション・KD_Places・寝台の通知を前提) は Imported-Unused に残す。
+        // 裏山の入口は Menu/11b Build Welcome / 11c Verify Welcome (このファイルの末尾 BuildHillside / VerifyHillside)
+        [MenuItem(Menu + "1 - Build (Kominka)")]
         public static void Build()
         {
             Guard(); var log = new StringBuilder();
@@ -296,7 +298,7 @@ namespace KominkaDogRun.Editor
             Write("build", log);
         }
 
-        [MenuItem(Menu + "2 - Verify")]
+        [MenuItem(Menu + "2 - Verify (Kominka)")]
         public static void Verify()
         {
             var log = new StringBuilder(); int checks = 0, failures = 0;

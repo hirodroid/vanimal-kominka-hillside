@@ -17,6 +17,12 @@ namespace KominkaDogRun.Editor
     ///   2 - Setup Progress System
     ///   3 - Verify Progress System
     ///
+    /// 裏山改変 (IMP-PRG-001 段階 1): 2 / 3 を Tools/KominkaHillside/Menu/3a Setup Progress / 3b Verify Progress へ付け替え。
+    /// 置き場所は KH_Dogs 直下 (古民家の "====KominkaDogRun====/KD_Systems" は作らない)、額は initial 0 / keeper 200、
+    /// storageNamespace は KH_Commerce_v1。**products は 3a では配線しない** — 古民家と同じく
+    /// Menu/4 Setup Shop が商品を作ったあと <see cref="KD_ProductsEditor.BindCatalog"/> で ledger.products = catalog.items にする。
+    /// 裏山の実行順: 3 Create Shop Programs → force refresh → 3a → 4 → 4d → 7 → 11 → 11b (検査は 3b / 4a)。
+    ///
     /// **台帳は何にも配線されない。** 犬・ボール・カメラのどこも参照しないし、
     /// 誰からも参照されない (消費側の おもちゃ箱 [IMP-FET-009] / おやつ棚 [IMP-TRT-001]
     /// がまだ無い)。**それが正しい姿** — 台帳は残高と所持ビットしか知らない。
@@ -35,9 +41,15 @@ namespace KominkaDogRun.Editor
         const string ShopScript = ScriptDir + "KD_ShopItem.cs";
         const string ShopProgram = ScriptDir + "KD_ShopItem.asset";
         const string SystemName = KD_DogDefs.ProgressSystemName;   // IMP-INF-003: 正本は KD_DogDefs
-        /// <summary>IMP-PRG-009: 初期配布 / おじいさんの額 (2026-09-14 ユーザー決定)。</summary>
-        const int InitialPoints = 100;
-        const int KeeperPoints = 100;
+        /// <summary>IMP-PRG-009: 初期配布 / おじいさんの額 (2026-09-14 ユーザー決定)。
+        /// 裏山改変: 初期配布は置かない (0)、おじいさんは 200 を一度だけ (DES-UI-003 / IMP-PRG-001)。</summary>
+        public const int InitialPoints = 0;
+        public const int KeeperPoints = KD_ProgressLedger.HillsideKeeperPoints;   // 裏山改変: 正本は台帳の定数
+        /// <summary>裏山改変: ログの置き場所 (KD_Hillside.LogDir)。</summary>
+        const string HillsideSetupLog = KD_Hillside.LogDir + "setup-progress.txt";
+        const string HillsideVerifyLog = KD_Hillside.LogDir + "verify-progress.txt";
+        /// <summary>裏山改変: 台帳の置き場所 (KH_Dogs 直下)。</summary>
+        public const string HillsidePath = KD_Hillside.DogsRootName + "/" + SystemName;
 
         // 旧実装 (2026-08-17 午前の「恒久解放のみ」版)。作り替えたので撤去する
         const string LegacyProgram = "Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_ProgressManager.asset";
@@ -91,26 +103,37 @@ namespace KominkaDogRun.Editor
 
         // ================================================================ 2: Setup
 
-        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Progress System/2 - Setup Progress System")]
+        [MenuItem("Tools/KominkaHillside/Menu/3a Setup Progress")]   // 裏山改変: Imported-Unused/Progress System/2 から付け替え
         public static void Setup()
         {
             var log = new StringBuilder();
-            log.AppendLine("[KD_ProgressSetup] Setup");
+            log.AppendLine("[KD_ProgressSetup] Setup (裏山 段階 1)");
+            if (EditorApplication.isPlaying || !KD_Hillside.InScene())
+            {
+                log.AppendLine("FAIL " + KD_Hillside.ScenePath + " を Edit モードで開くこと");
+                Finish(HillsideSetupLog, log);
+                return;
+            }
 
             int found;
             var sysGo = KD_SceneObjects.Find(SystemName, out found);
             if (found > 1)
             {
                 log.AppendLine($"FAIL '{SystemName}' がシーン内に {found} 個ある。1 個に整理してから再実行");
-                Finish("Logs/imp-prg-001-setup.txt", log);
+                Finish(HillsideSetupLog, log);
                 return;
             }
             if (sysGo == null)
             {
+                // 裏山改変: KH_Dogs 直下に作る。KD_SceneObjects.PlaceIfNew は通さない
+                // (EnsureContainer がルートの KH_Dogs の Transform を単位元へ揃えてしまうため)
+                var dogs = FindHillsideRoot(log);
+                if (dogs == null) { Finish(HillsideSetupLog, log); return; }
                 // 位置は意味を持たない (音も絵も出さない台帳なので原点でよい)
                 sysGo = new GameObject(SystemName);
-                KD_SceneObjects.PlaceIfNew(sysGo, KD_DogDefs.SystemsPath);   // IMP-INF-003
-                log.AppendLine("created " + SystemName);
+                Undo.RegisterCreatedObjectUndo(sysGo, "Create " + SystemName);
+                sysGo.transform.SetParent(dogs, false);
+                log.AppendLine("created " + HillsidePath);
             }
             else
             {
@@ -158,8 +181,8 @@ namespace KominkaDogRun.Editor
                 log.AppendLine($"tickSeconds {ledger.tickSeconds} -> 15");
                 ledger.tickSeconds = 15f;
             }
-            // IMP-PRG-009: 入手経路の額も製品値へ正す (初期配布 100 / おじいさん 100。
-            // 正本は business-strategy §5.5 と IMP-PRG-009)
+            // IMP-PRG-009: 入手経路の額も製品値へ正す。
+            // 裏山改変: 初期配布 0 / おじいさん 200 (正本は IMP-PRG-001 と game-design §4)
             if (ledger.initialPoints != InitialPoints)
             {
                 log.AppendLine($"initialPoints {ledger.initialPoints} -> {InitialPoints}");
@@ -189,11 +212,18 @@ namespace KominkaDogRun.Editor
                 EditorUtility.SetDirty(ub);
             }
 
+            // 裏山改変: 名前空間を毎回正す (KH_Commerce_v1)。BindCatalog も同じ値を書く
+            if (ledger.storageNamespace != KD_ProgressLedger.ProductionNamespace)
+            {
+                log.AppendLine($"storageNamespace {ledger.storageNamespace} -> {KD_ProgressLedger.ProductionNamespace}");
+                ledger.storageNamespace = KD_ProgressLedger.ProductionNamespace;
+            }
+
             bool copyOk = TryCopy(ledger, log);
 
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-            log.AppendLine("NOTE 配線は 1 本も無い。消費側 (IMP-FET-009 / IMP-TRT-001) が "
-                + "KD_ShopItem を棚に並べて listener を受ける形で後から繋がる");
+            log.AppendLine("NOTE products は Menu/4 Setup Shop が配線する (古民家と同じ順序。現在 "
+                + (ledger.products == null ? 0 : ledger.products.Length) + " 件)");
             log.AppendLine("NOTE 値段は KD_ShopItem 側が正本。台帳は値段を知らないので、"
                 + "値段を変えても既存プレイヤーの残高は動かない");
             log.AppendLine("NOTE 実機で残高が残るには VRChat 側でワールドの Persistence が "
@@ -201,16 +231,30 @@ namespace KominkaDogRun.Editor
             log.AppendLine(copyOk
                 ? "SETUP RESULT: PASS (scene not saved yet)"
                 : "SETUP RESULT: FAIL (force refresh 後に再実行)");
-            Finish("Logs/imp-prg-001-setup.txt", log);
+            log.AppendLine("次: Menu/4 Setup Shop → Menu/3b Verify Progress / 4a Verify Shop");
+            Finish(HillsideSetupLog, log);
+        }
+
+        /// <summary>裏山改変: ルートの KH_Dogs (1 個) を返す。無ければ FAIL を書いて null。</summary>
+        internal static Transform FindHillsideRoot(StringBuilder log)
+        {
+            int n;
+            var dogs = KD_SceneObjects.Find(KD_Hillside.DogsRootName, out n);
+            if (dogs == null || n != 1 || dogs.transform.parent != null)
+            {
+                log.AppendLine("FAIL " + KD_Hillside.DogsRootName + " がルートに 1 個ない (" + n + ")");
+                return null;
+            }
+            return dogs.transform;
         }
 
         // ================================================================ 3: Verify
 
-        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Progress System/3 - Verify Progress System")]
+        [MenuItem("Tools/KominkaHillside/Menu/3b Verify Progress")]   // 裏山改変: Imported-Unused/Progress System/3 から付け替え
         public static void Verify()
         {
             var log = new StringBuilder();
-            log.AppendLine("[KD_ProgressSetup] Verify");
+            log.AppendLine("[KD_ProgressSetup] Verify (裏山 段階 1)");
             int fail = 0;
             void Check(bool cond, string what)
             {
@@ -241,6 +285,11 @@ namespace KominkaDogRun.Editor
             int found;
             var sysGo = KD_SceneObjects.Find(SystemName, out found);
             Check(found == 1, SystemName + " exists exactly once (actual " + found + ")");
+            // 裏山改変: 置き場所は KH_Dogs 直下 (古民家の SystemsPath 前提は裏山では対象外)
+            Check(sysGo != null && KD_SceneObjects.PathOf(sysGo) == HillsidePath,
+                "置き場所が " + HillsidePath + " (actual " + (sysGo == null ? "-" : KD_SceneObjects.PathOf(sysGo)) + ")");
+            log.AppendLine("  SKIP 古民家の置き場所 (" + KD_DogDefs.SystemsPath + ") の前提 — 裏山では KH_Dogs 直下");
+            log.AppendLine("  SKIP ギフトコード (KD_GiftCodePanel / Bonus.gift.*) の前提 — 裏山では置かない (IMP-PRG-001 やらないこと)");
             var ledger = sysGo == null ? null : sysGo.GetUdonSharpComponent<KD_ProgressLedger>();
             Check(ledger != null, "KD_ProgressLedger on " + SystemName);
 
@@ -269,9 +318,39 @@ namespace KominkaDogRun.Editor
                 Check(ledger.tickSeconds > 0f && ledger.tickSeconds <= 60f,
                     $"0 < tickSeconds <= 60 (actual {ledger.tickSeconds})");
                 Check(ledger.initialPoints == InitialPoints,
-                    $"initialPoints == {InitialPoints} (actual {ledger.initialPoints}) — 初期配布 (IMP-PRG-009)");
+                    $"initialPoints == {InitialPoints} (actual {ledger.initialPoints}) — 裏山は初期配布なし (Bonus.initial を書かない)");
                 Check(ledger.keeperPoints == KeeperPoints,
-                    $"keeperPoints == {KeeperPoints} (actual {ledger.keeperPoints}) — おじいさん (IMP-PRG-009)");
+                    $"keeperPoints == {KeeperPoints} (actual {ledger.keeperPoints}) — おじいさんの一度だけ");
+                // 裏山改変: 名前空間 (定数と、シーン値と、backing heap の 3 つ)
+                Check(KD_ProgressLedger.ProductionNamespace == "KH_Commerce_v1" && KD_ProgressLedger.TestNamespace == "KH_TestCommerce_v1",
+                    "名前空間の定数が KH_Commerce_v1 / KH_TestCommerce_v1");
+                Check(ledger.storageNamespace == KD_ProgressLedger.ProductionNamespace,
+                    $"storageNamespace == {KD_ProgressLedger.ProductionNamespace} (actual {ledger.storageNamespace})");
+                var heapUb = UdonSharpEditorUtility.GetBackingUdonBehaviour(ledger);
+                string nsBacking; int ib, kb;
+                Check(heapUb != null && heapUb.publicVariables.TryGetVariableValue("storageNamespace", out nsBacking)
+                    && nsBacking == KD_ProgressLedger.ProductionNamespace, "backing heap の storageNamespace も KH_Commerce_v1");
+                Check(heapUb != null && heapUb.publicVariables.TryGetVariableValue("initialPoints", out ib) && ib == InitialPoints
+                    && heapUb.publicVariables.TryGetVariableValue("keeperPoints", out kb) && kb == KeeperPoints,
+                    $"backing heap の initialPoints / keeperPoints も {InitialPoints} / {KeeperPoints}");
+
+                // 裏山改変: products は Menu/4 Setup Shop が配線する。カタログがあれば一致を見る
+                var catGo = KD_SceneObjects.Find(KD_DogDefs.ShopCatalogName);
+                var cat = catGo == null ? null : catGo.GetComponent<KD_ShopCatalog>();
+                if (cat == null)
+                    log.AppendLine("  SKIP products の検査 (KD_ShopCatalog が無い。先に Menu/4 Setup Shop)");
+                else
+                {
+                    int want = KD_ProductDefinitions.All.Length;
+                    Check(ledger.products != null && ledger.products.Length == want,
+                        $"ledger.products が商品表と同数 {want} (actual {(ledger.products == null ? 0 : ledger.products.Length)})");
+                    Check(ledger.products != null && cat.items != null && System.Linq.Enumerable.SequenceEqual(ledger.products, cat.items),
+                        "ledger.products == catalog.items (同じ並び・同じ参照)");
+                    object raw;
+                    Check(heapUb != null && heapUb.publicVariables.TryGetVariableValue("products", out raw)
+                        && raw is System.Array arr && arr.Length == want,
+                        "backing heap の products も同数 (CopyProxyToUdon 済み)");
+                }
             }
 
             // ---- シーン中の KD_ShopItem すべて ----
@@ -319,7 +398,7 @@ namespace KominkaDogRun.Editor
             // ---- 純関数の自己テスト ----
             if (ledger == null)
             {
-                log.AppendLine("  SKIP 純関数の自己テスト (ledger が無い。先に 2 - Setup)");
+                log.AppendLine("  SKIP 純関数の自己テスト (ledger が無い。先に Menu/3a Setup Progress)");
                 fail++;
             }
             else
@@ -328,7 +407,7 @@ namespace KominkaDogRun.Editor
             }
 
             log.AppendLine(fail == 0 ? "VERIFY RESULT: PASS" : $"VERIFY RESULT: FAIL ({fail} checks)");
-            Finish("Logs/imp-prg-001-verify.txt", log);
+            Finish(HillsideVerifyLog, log);
         }
 
         /// <summary>台帳の純関数の自己テスト。**Play を 1 秒も使わずに算術を確かめる。**

@@ -14,7 +14,9 @@ namespace KominkaDogRun.Editor
     {
         // ================================================================ 2: Setup
 
-        [MenuItem("Tools/KominkaHillside/Menu/4 Setup Shop")]
+        // 裏山改変 (IMP-PRG-001 段階 1): 古民家版 (棚・ToyBox・確認パネル・効果音を作る) は Imported-Unused へ。
+        // 裏山の Menu/4 Setup Shop は KD_ShopSetupEditor.Hillside.cs の SetupHillside (カタログと商品だけ)
+        [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Shop/2 - Setup Shop (Kominka)")]
         public static void Setup()
         {
             var log = new StringBuilder();

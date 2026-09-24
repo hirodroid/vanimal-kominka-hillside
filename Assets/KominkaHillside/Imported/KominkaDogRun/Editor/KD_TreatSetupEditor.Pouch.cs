@@ -927,7 +927,7 @@ namespace KominkaDogRun.Editor
                 pouch.uiSuccessClip = soundShelf.buyClip;
                 pouch.uiRejectClip = soundShelf.rejectClip;
             }
-            else log.AppendLine("   NOTE 段階 0: おやつの棚が無いので効果音 (uiSuccessClip / uiRejectClip) は未配線 (IMP-PRG-001 / IMP-DOG-014)");   // 裏山改変
+            else log.AppendLine("   NOTE 裏山には棚が無いので効果音 (uiSuccessClip / uiRejectClip) はここでは拾わない (段階 1 以降は SetupHillside が KD_ShopSetupEditor.HillsideBuyClip / HillsideRejectClip を配線)");   // 裏山改変
             pouch.balanceLabel = balance;
             pouch.sectionTitleLabel = sectionTitle;
             pouch.feedbackLabel = feedback;
