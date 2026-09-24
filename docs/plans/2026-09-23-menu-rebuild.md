@@ -1,6 +1,6 @@
 # 手元メニューを古民家と同一の器へ作り替える実装計画
 
-状態: **段階 0-a 完了、段階 0-b 実装済み (Verify 全 PASS)、PCVR 確認待ち** (2026-09-23。Codex レビューとコミットは未。記録は下の「実装記録」、確認手順は「実機チェックリスト」)。設計は 2026-09-23 のユーザー指示「モック OK。古民家の実際のメニューの配置・コンポーネントを確認して設計」に基づく。採否と全体構成の正本は [game-design §4](../game-design.md) と [DES-UI-003](../development/issues/DES-UI-003-menu-scope-and-polish.md)、画面・入力・状態・Unity 部品の正本は [world-ui-spec §4〜6・§8](../world-ui-spec.md)。見え方の合意はモック 版 3 (<https://claude.ai/artifact/K1moWuWCeWMUm7wUprZx3f>、ユーザー「OK」)。
+状態: **段階 0-a・0-b 完了** (2026-09-23 実装・Verify 全 PASS・Codex D+M・コミット a19112a、2026-09-24 に PCVR でユーザー OK)。次は段階 1 (IMP-PRG-001)。記録は下の「実装記録」、確認手順は「実機チェックリスト」。設計は 2026-09-23 のユーザー指示「モック OK。古民家の実際のメニューの配置・コンポーネントを確認して設計」に基づく。採否と全体構成の正本は [game-design §4](../game-design.md) と [DES-UI-003](../development/issues/DES-UI-003-menu-scope-and-polish.md)、画面・入力・状態・Unity 部品の正本は [world-ui-spec §4〜6・§8](../world-ui-spec.md)。見え方の合意はモック 版 3 (<https://claude.ai/artifact/K1moWuWCeWMUm7wUprZx3f>、ユーザー「OK」)。
 
 この計画書は**順序と分担**だけを持つ。何を作るかは各 Issue が持つ。
 
@@ -222,7 +222,7 @@
 
 ### 段階 0-b (2026-09-23)
 
-**状態: 実装済み・Verify 全 PASS・Codex D+M 済み。PCVR 確認待ち。** コミットはこの記録の直後 (段階 0-b を 1 コミット)。Play (ClientSim・実機とも) も未実施。ファイルごとの差分は [kominka-dog-system「2026-09-23 器の構築 (段階 0-b)」](../development/imports/kominka-dog-system.md#2026-09-23-器の構築-段階-0-b)。
+**状態: 完了。** Verify 全 PASS・Codex D+M 済み・コミット a19112a。**2026-09-24 PCVR でユーザー OK** (現行 3 機能の見え方が古民家と同じ。総合評価)。Play (ClientSim・実機とも) も未実施。ファイルごとの差分は [kominka-dog-system「2026-09-23 器の構築 (段階 0-b)」](../development/imports/kominka-dog-system.md#2026-09-23-器の構築-段階-0-b)。
 
 実装はランタイム担当 (R) と Editor 担当 (E) の 2 エージェントが並列で行い、司令塔が不足を直して Tools メニューを実行した。
 

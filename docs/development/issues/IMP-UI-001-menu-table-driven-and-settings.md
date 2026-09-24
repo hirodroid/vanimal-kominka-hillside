@@ -58,8 +58,8 @@ priority: High
 ## 進捗
 
 - 2026-09-23: **段階 0-a 完了** (`d87407f`)。
-- 2026-09-23: **段階 0-b 実装済み、Verify 全 PASS。PCVR 確認待ち**。`KH_HandMenu` は退役した。Codex レビュー・コミット・Play (ClientSim・実機) は未実施。記録と PCVR チェックリストは [計画書の実装記録](../../plans/2026-09-23-menu-rebuild.md)、ファイル単位の差分は [kominka-dog-system](../imports/kominka-dog-system.md)。
-- 残り: 段階 0-b の PCVR 確認、段階 3 (設定面の残りとようこそ)、[試作] 入口の代替 (ユーザー判断)。
+- 2026-09-23: **段階 0-b 実装済み、Verify 全 PASS、Codex D+M 済み、コミット a19112a**。`KH_HandMenu` は退役した。**2026-09-24: PCVR でユーザーが「現行 3 機能の見え方が古民家と同じ」を OK** (段階 0-b のゲート通過)。ClientSim は未実施。記録と PCVR チェックリストは [計画書の実装記録](../../plans/2026-09-23-menu-rebuild.md)、ファイル単位の差分は [kominka-dog-system](../imports/kominka-dog-system.md)。
+- 残り: 段階 3 (設定面の残りとようこそ)、[試作] 入口の代替 (ユーザー判断。DES-UI-002)。
 
 ## 完了条件
 
@@ -67,7 +67,7 @@ priority: High
 - [x] **段階 0-b の Verify** ([計画書の Verify 表](../../plans/2026-09-23-menu-rebuild.md)の「導入段階 0-b」分が全 PASS): `Sum(Widths) == 1064` かつ間隔込みで 1100 / 既定タブ `_tab == TabWalk` / Page_Walk の `WalkRow0..5` (起票時の仮名 `Dog{i}`) の 3 ボタンが `_WalkLeft{i}` `_WalkRight{i}` `_WalkOff{i}`、行き先 2 行 (`WalkRow6` / `WalkRow7`) が `_WalkPlaza` `_WalkGate` / `ToyRow{i}` の 2 ボタンが `_Toy{i}` `_Disc{i}` で `recall` (KH_ToyRecall) が非 null / Page_Acc Content の子順が `AccRow0..15`, `FxRow0..10` / 拠点板 3 枚の Interact 先が `_Toggle` / `KH_HandMenu` コンポーネント 0 個 / 同期変数 0 / ナイトモードの Slider が `KH_NightMode` / 欠字 0 / あそぶが集合のみ — **2026-09-23 PASS**: Menu/20 `VERIFY RESULT PASS`、21 pass 394 / fail 0、22 failures 0、23 failures 0、24 PASS、15a failures 0。コンパイル error CS 0、U# 82 本 0 エラー
 - [x] 段階表 (計画書 D-1) により「意図的な未導入 (null が正)」と「参照の欠落 (FAIL)」が区別され、Live 行の検査は skip が明示されている (棚・寝台も同様) — 2026-09-23、Menu/20 が段階表で PASS + 理由を出力し、ライブ行の onClick・棚・寝台・ポーズ面・ミニチュア・おやつの枠を SKIP と明示
 - [ ] 既存 3 機能に退行がない (`Walking/5 Verify` が従来どおり全 PASS)。**連打・タブ変更・閉じて再表示・拒否・4 秒超過**で結果表示が取り違わらない — 2026-09-23: `Walking/5 Verify` は TOTAL 208 / FAILED 0。取り違えの確認は ClientSim・実機とも**未** (計画書の PCVR チェックリスト §0)
-- [ ] **PCVR でユーザーが「現行 3 機能の見え方が古民家と同じ」ことを確認した** (段階 0-b のゲート。48 pt の可読性と、開閉が 0.6 秒 → 0.5 秒に変わった体感を含む) — **待ち** (2026-09-23 時点。チェックリストは計画書)
+- [x] **PCVR でユーザーが「現行 3 機能の見え方が古民家と同じ」ことを確認した** (段階 0-b のゲート。48 pt の可読性と、開閉が 0.6 秒 → 0.5 秒に変わった体感を含む) — **2026-09-24 ユーザー OK** (総合評価。項目別の記録は無し)
 - [ ] 距離フェードが PC で反映され、保存して再入室で復元する。Android / iOS は入口が押せず文言だけ見える (T-011)
 - [ ] ナイトモードが設定面のスライダーで連続的に効き、保存値が再入室で復元される (ヘッダーからの移設で退行しない)
 - [ ] 許可トグル 2 種が初期 ON で、権限者以外は操作できない
