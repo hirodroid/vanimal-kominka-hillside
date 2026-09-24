@@ -108,6 +108,10 @@ namespace KominkaDogRun.Editor
 
             menu.page = page; menu.pouch = pouch; menu.activities = act; menu.hillsidePass = pass; menu.language = language;
             menu.items = null; menu.groundMask = act.groundMask;
+            // 裏山改変: フリスビーの取り方の行 (DES-UI-002)。犬ごとの KH_FrisbeeCatch は Walking/3 Build が KD_GroupActivities へ配線したものを写す (null を含む 6 要素。act 側は触らない)
+            menu.frisbeeCatchers = new KominkaHillside.KH_FrisbeeCatch[6];
+            for (int i = 0; i < 6; i++) menu.frisbeeCatchers[i] = act.frisbeeCatchers != null && i < act.frisbeeCatchers.Length ? act.frisbeeCatchers[i] : null;
+            log.AppendLine("frisbee catchers: " + menu.frisbeeCatchers.Count(c => c != null) + " of 6");
             pouch.activitiesMenu = menu;
 
             // 文言は UITranslations.json が正本 (activities.hillside.* を含む)。KD_Language の配列を作り直し、字形を焼く
@@ -217,6 +221,13 @@ namespace KominkaDogRun.Editor
             Check(m.page.transform.Find("GroupPov") == null, "no dog-camera group on the page");
             Check(m.groupTrainerLabel != null && m.introLabel != null && m.back != null && m.heading != null && m.status != null && m.action != null && m.actionLabel != null && m.backLabel != null, "labels, back and action wired");
             Check(m.rows != null && m.rows.Length == 6 && m.rows.All(r => r != null) && m.rowLabels != null && m.rowLabels.Length == 6 && m.rowLabels.All(l => l != null), "six rows connected");
+            // 裏山改変: フリスビーの取り方 (DES-UI-002)。トレーナー群の一覧の行 (row2 = _Row2)、犬ごとの配列は Gather の写し
+            Check(m.frisbeeCatchers != null && m.frisbeeCatchers.Length == 6, "frisbeeCatchers has 6 entries (" + (m.frisbeeCatchers == null ? "null" : m.frisbeeCatchers.Length.ToString()) + ")");
+            Check(m.frisbeeCatchers != null && a.frisbeeCatchers != null && m.frisbeeCatchers.Length == 6
+                && Enumerable.Range(0, 6).All(i => m.frisbeeCatchers[i] == (i < a.frisbeeCatchers.Length ? a.frisbeeCatchers[i] : null)), "frisbeeCatchers match KD_GroupActivities.frisbeeCatchers (" + (m.frisbeeCatchers == null ? 0 : m.frisbeeCatchers.Count(c => c != null)) + " dogs with a disc)");
+            Check(KD_ActivitiesMenu.RowFrisbee == 2 && m.rows != null && m.rows.Length > KD_ActivitiesMenu.RowFrisbee && m.rows[KD_ActivitiesMenu.RowFrisbee] != null
+                && m.rows[KD_ActivitiesMenu.RowFrisbee].name == "ActivityRow" + KD_ActivitiesMenu.RowFrisbee && m.rows[KD_ActivitiesMenu.RowFrisbee].transform.parent == m.page.transform,
+                "frisbee row is ActivityRow" + KD_ActivitiesMenu.RowFrisbee + " in the trainer group (home row, beside gather / end)");
             var udon = UdonSharpEditorUtility.GetBackingUdonBehaviour(m);
             foreach (var button in m.page.GetComponentsInChildren<Button>(true))
             {
@@ -247,7 +258,9 @@ namespace KominkaDogRun.Editor
             catch (Exception e) { Check(false, "localization bindings current: " + e.Message); }
             var catalog = KD_LocalizationEditor.Load();
             var ja = catalog.languages.First(l => l.code == "ja");
-            foreach (string key in new[] { "activities.hillside.help", "activities.hillside.formationHelp", "activities.hillside.started", "activities.hillside.unknown", "activities.hillside.available" })
+            foreach (string key in new[] { "activities.hillside.help", "activities.hillside.formationHelp", "activities.hillside.started", "activities.hillside.unknown", "activities.hillside.available",
+                "activities.hillside.frisbee", "activities.hillside.frisbeeNow", "activities.hillside.frisbeePending", "activities.hillside.frisbeeRequested", "activities.hillside.frisbeeAfterReturn",
+                "activities.hillside.frisbeeVariant.0", "activities.hillside.frisbeeVariant.1", "activities.hillside.frisbeeVariant.2", "activities.hillside.frisbeeVariant.3", "activities.hillside.frisbeeVariant.4", "activities.hillside.frisbeeVariant.5" })
                 Check(ja.texts.Any(e => e.key == key && !string.IsNullOrEmpty(e.text)), "text " + key);
             Finish(sb, fail);
         }
@@ -302,11 +315,15 @@ namespace KominkaDogRun.Editor
                     for (int i = 0; i < 6; i++)
                     {
                         var row = (RectTransform)root.Find("ActivityRow" + i);
-                        bool show = home ? (i == 0 || (i == 1 && trainer)) : true;
+                        // 裏山改変: フリスビー行 (row2、DES-UI-002) は一覧で出す (ディスクを持つ犬がいる前提)。未加入は中央の枠へ詰める。加入中は長めの副文 (予約中) で幅を確かめる
+                        bool frisbee = home && i == KD_ActivitiesMenu.RowFrisbee;
+                        bool show = home ? (i == 0 || (i == 1 && trainer) || frisbee) : true;
                         row.gameObject.SetActive(show);
-                        row.anchoredPosition = new Vector2((i % 3 - 1) * 355, home ? 60 : (i < 3 ? 68 : -32));
+                        int column = frisbee && !trainer ? 1 : i % 3;
+                        row.anchoredPosition = new Vector2((column - 1) * 355, home ? 60 : (i < 3 ? 68 : -32));
                         string text = home
                             ? (i == 0 ? L("activities.home.0") + "\n<size=17>" + (trainer ? L("activities.hillside.perk") : L("activities.needTrainer")) + "</size>"
+                              : frisbee ? L("activities.hillside.frisbee") + "\n<size=17>" + (trainer ? L("activities.hillside.frisbeePending").Replace("{0}", L("activities.hillside.frisbeeVariant.3")) : L("activities.needTrainer")) + "</size>"
                                       : L("activities.home.3") + "\n<size=17>" + L("activities.endDesc") + "</size>")
                             : (i == 0 ? "● " : "") + L("activities.shape." + i);
                         row.Find("Label").GetComponent<TMP_Text>().text = text;

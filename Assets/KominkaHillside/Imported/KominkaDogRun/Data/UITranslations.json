@@ -2591,6 +2591,50 @@
         {
           "key": "activities.hillside.available",
           "text": "集合できる犬: {0} 匹 (つないでいる犬・遊んでいる犬は対象外)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "フリスビーの取り方"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "いま: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "帰ってから: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "切替を頼みました"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "犬が帰ってから切り替わります"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "通常"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "走り込み: 横"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "走り込み: 遠く"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "走り込み: 並走"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "ひねり"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "横曲がり"
         }
       ]
     },
@@ -5182,6 +5226,50 @@
         {
           "key": "activities.hillside.available",
           "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "Frisbee catch style"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "Now: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "After the dog is back: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "Switch requested"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "Switches once the dog is back"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "Normal"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "Run-in: side"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "Run-in: far"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "Run-in: alongside"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "Twist"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "Curve"
         }
       ]
     },
@@ -7773,6 +7861,50 @@
         {
           "key": "activities.hillside.available",
           "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "Frisbee catch style"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "Now: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "After the dog is back: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "Switch requested"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "Switches once the dog is back"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "Normal"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "Run-in: side"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "Run-in: far"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "Run-in: alongside"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "Twist"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "Curve"
         }
       ]
     },
@@ -10364,6 +10496,50 @@
         {
           "key": "activities.hillside.available",
           "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "Frisbee catch style"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "Now: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "After the dog is back: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "Switch requested"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "Switches once the dog is back"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "Normal"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "Run-in: side"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "Run-in: far"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "Run-in: alongside"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "Twist"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "Curve"
         }
       ]
     },
@@ -12955,6 +13131,50 @@
         {
           "key": "activities.hillside.available",
           "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "Frisbee catch style"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "Now: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "After the dog is back: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "Switch requested"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "Switches once the dog is back"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "Normal"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "Run-in: side"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "Run-in: far"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "Run-in: alongside"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "Twist"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "Curve"
         }
       ]
     },
@@ -15546,6 +15766,50 @@
         {
           "key": "activities.hillside.available",
           "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "Frisbee catch style"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "Now: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "After the dog is back: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "Switch requested"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "Switches once the dog is back"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "Normal"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "Run-in: side"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "Run-in: far"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "Run-in: alongside"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "Twist"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "Curve"
         }
       ]
     },
@@ -18137,6 +18401,50 @@
         {
           "key": "activities.hillside.available",
           "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "Frisbee catch style"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "Now: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "After the dog is back: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "Switch requested"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "Switches once the dog is back"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "Normal"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "Run-in: side"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "Run-in: far"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "Run-in: alongside"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "Twist"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "Curve"
         }
       ]
     },
@@ -20728,6 +21036,50 @@
         {
           "key": "activities.hillside.available",
           "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "Frisbee catch style"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "Now: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "After the dog is back: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "Switch requested"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "Switches once the dog is back"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "Normal"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "Run-in: side"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "Run-in: far"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "Run-in: alongside"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "Twist"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "Curve"
         }
       ]
     },
@@ -23319,6 +23671,50 @@
         {
           "key": "activities.hillside.available",
           "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "Frisbee catch style"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "Now: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "After the dog is back: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "Switch requested"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "Switches once the dog is back"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "Normal"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "Run-in: side"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "Run-in: far"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "Run-in: alongside"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "Twist"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "Curve"
         }
       ]
     },
@@ -25910,6 +26306,50 @@
         {
           "key": "activities.hillside.available",
           "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "Frisbee catch style"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "Now: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "After the dog is back: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "Switch requested"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "Switches once the dog is back"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "Normal"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "Run-in: side"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "Run-in: far"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "Run-in: alongside"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "Twist"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "Curve"
         }
       ]
     },
@@ -28501,6 +28941,50 @@
         {
           "key": "activities.hillside.available",
           "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "Frisbee catch style"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "Now: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "After the dog is back: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "Switch requested"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "Switches once the dog is back"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "Normal"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "Run-in: side"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "Run-in: far"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "Run-in: alongside"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "Twist"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "Curve"
         }
       ]
     },
@@ -31092,6 +31576,50 @@
         {
           "key": "activities.hillside.available",
           "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "Frisbee catch style"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "Now: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "After the dog is back: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "Switch requested"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "Switches once the dog is back"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "Normal"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "Run-in: side"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "Run-in: far"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "Run-in: alongside"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "Twist"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "Curve"
         }
       ]
     },
@@ -33687,6 +34215,50 @@
         {
           "key": "activities.hillside.available",
           "text": "Dogs that can gather: {0} (leashed or playing dogs are excluded)"
+        },
+        {
+          "key": "activities.hillside.frisbee",
+          "text": "Frisbee catch style"
+        },
+        {
+          "key": "activities.hillside.frisbeeNow",
+          "text": "Now: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeePending",
+          "text": "After the dog is back: {0}"
+        },
+        {
+          "key": "activities.hillside.frisbeeRequested",
+          "text": "Switch requested"
+        },
+        {
+          "key": "activities.hillside.frisbeeAfterReturn",
+          "text": "Switches once the dog is back"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.0",
+          "text": "Normal"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.1",
+          "text": "Run-in: side"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.2",
+          "text": "Run-in: far"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.3",
+          "text": "Run-in: alongside"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.4",
+          "text": "Twist"
+        },
+        {
+          "key": "activities.hillside.frisbeeVariant.5",
+          "text": "Curve"
         }
       ]
     }

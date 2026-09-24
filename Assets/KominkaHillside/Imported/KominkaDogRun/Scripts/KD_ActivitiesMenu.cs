@@ -12,7 +12,9 @@ namespace KominkaDogRun
     /// みんなで遊ぶセット (かけっこ / 2 匹の遊び)・KD_ShopItem の所持判定は外した。トレーナー判定は KH_TrainerPass
     /// (`_Configured() && _OwnedBy(LocalPlayer)`)、未加入は案内 + [購入画面をひらく] → `hillsidePass._OpenStore()`。
     ///
-    /// 面: 0 = 一覧 (群「ばにまるトレーナー」: 集合モード [使う] / 開催をおわる [おわる])、1 = 隊形 6 行 + [ここに集合]。
+    /// 面: 0 = 一覧 (群「ばにまるトレーナー」: 集合モード [使う] / 開催をおわる [おわる] / フリスビーの取り方 [切替])、1 = 隊形 6 行 + [ここに集合]。
+    /// 裏山改変: フリスビーの取り方 (row2、DES-UI-002、2026-09-24 ユーザー決定) は frisbeeCatchers の全犬へ次のプリセットを
+    /// _RequestVariant で頼む (旧 KH_HandMenu ヘッダの [試作] の移設。誰でも → トレーナーだけ)。
     /// 要求の結果は KD_GroupActivities.LocalRequestState (1 待ち / 2 受理 / 3 拒否 / 4 時間切れ) を読み、
     /// KH_HandMenu (退役) の GatherStart / GatherEnd / PollPending と同じ文言で状態行に出す。
     /// 隊形の印 (placementMarkers) は坂を考えて足元の地面へ落とし、地面が無い枠は出さない (KH_HandMenu と同じ)。
@@ -34,7 +36,11 @@ namespace KominkaDogRun
         public TMP_Text heading, status, actionLabel, backLabel;
         [Tooltip("群「ばにまるトレーナー」の見出しと、トレーナーの案内 (未加入) / 加入中の説明")]
         public TMP_Text groupTrainerLabel, introLabel;
-        [Tooltip("一覧: 0 = 集合モード [使う] / 1 = 開催をおわる [おわる] (2..5 は隠す)。隊形: 0..5 = 隊形")]
+        // 裏山改変: フリスビーの取り方の切替 (DES-UI-002、2026-09-24 ユーザー決定「トレーナー用の遊びの所へ」)。
+        // 旧 KH_HandMenu ヘッダの [試作] (誰でも押せた) の後継。犬ごと、ディスクが無い犬は null (KD_GroupActivities.frisbeeCatchers の写し)
+        [Tooltip("犬ごとのフリスビー (KD_GroupActivities.frisbeeCatchers の写し、6 要素、ディスクが無い犬は null)。全部 null なら行を隠す")]
+        public KominkaHillside.KH_FrisbeeCatch[] frisbeeCatchers;
+        [Tooltip("一覧: 0 = 集合モード [使う] / 1 = 開催をおわる [おわる] / 2 = フリスビーの取り方 [切替] (3..5 は隠す)。隊形: 0..5 = 隊形")]
         public Button[] rows;
         public TMP_Text[] rowLabels;
         public Button action;
@@ -54,6 +60,11 @@ namespace KominkaDogRun
         private float _noteUntil;
         private string[] _shapeKeys = { "activities.shape.0", "activities.shape.1", "activities.shape.2", "activities.shape.3", "activities.shape.4", "activities.shape.5" };
         private const float RowPitchX = 355f;
+        // 裏山改変: フリスビー行 (DES-UI-002)。一覧の行の添字と、連打で 2 つ進む楽観表示 (旧 KH_HandMenu.DevCurrent と同じ 1.5 秒)
+        public const int RowFrisbee = 2;
+        private int _frisbeeAsked = -1;
+        private float _frisbeeAskedUntil;
+        private string[] _frisbeeVariantKeys = { "activities.hillside.frisbeeVariant.0", "activities.hillside.frisbeeVariant.1", "activities.hillside.frisbeeVariant.2", "activities.hillside.frisbeeVariant.3", "activities.hillside.frisbeeVariant.4", "activities.hillside.frisbeeVariant.5" };
 
         /// <summary>タブが開いたとき (KD_TreatPouch.SetTab から)。一覧へ戻す。</summary>
         public void _Open() { _page = 0; Draw(); }
@@ -95,6 +106,8 @@ namespace KominkaDogRun
             {
                 if (i == 0) { if (Trainer()) _page = 1; else Note(Loading() ? "activities.hillside.loadingPass" : "activities.hillside.needTrainer"); }
                 else if (i == 1) GatherEnd();
+                // 裏山改変: フリスビーの取り方 (DES-UI-002)。権限は集合と同じ (トレーナーだけ)
+                else if (i == RowFrisbee) { if (Trainer()) FrisbeeSwitch(); else Note(Loading() ? "activities.hillside.loadingPass" : "activities.needTrainer"); }
             }
             else if (_page == 1 && i >= 0 && i < 6) { _shape = i; activities.localFormation = i; }
             Draw();
@@ -129,6 +142,53 @@ namespace KominkaDogRun
             activities._Request(0, 0, 0);
             Pending(5);
             Note("activities.hillside.ending");
+        }
+
+        // ---- 裏山改変: フリスビーの取り方の切替 (DES-UI-002。旧 KH_HandMenu._DevVariant / DevCurrent の移設) ----
+        // プリセットは KH_FrisbeeCatch が同期して持つ (Owner が書く)。この板は _RequestVariant で頼むだけで、同期変数は足さない。
+
+        /// <summary>最初のディスクを持つ犬 (表示と「次」の起点)。0 匹なら null で行を隠す。</summary>
+        private KominkaHillside.KH_FrisbeeCatch FirstCatcher()
+        {
+            if (frisbeeCatchers == null) return null;
+            for (int i = 0; i < frisbeeCatchers.Length; i++) if (frisbeeCatchers[i] != null) return frisbeeCatchers[i];
+            return null;
+        }
+
+        /// <summary>次の押下の起点。Owner の返事 (同期値か予約) が届くか 1.5 秒経つまでは頼んだ番号 (連打で 2 つ進む。Codex U)。表示は同期値のまま。</summary>
+        private int FrisbeeCurrent(KominkaHillside.KH_FrisbeeCatch c)
+        {
+            int v = c.PendingVariant >= 0 ? c.PendingVariant : c.Variant;
+            if (_frisbeeAsked < 0) return v;
+            if (Time.time >= _frisbeeAskedUntil || c.Variant == _frisbeeAsked || c.PendingVariant == _frisbeeAsked) { _frisbeeAsked = -1; return v; }
+            return _frisbeeAsked;
+        }
+
+        private void FrisbeeSwitch()
+        {
+            KominkaHillside.KH_FrisbeeCatch first = FirstCatcher();
+            if (first == null) return;
+            int next = (FrisbeeCurrent(first) + 1) % KominkaHillside.KH_FrisbeeCatch.VariantCount;
+            _frisbeeAsked = next; _frisbeeAskedUntil = Time.time + 1.5f;
+            bool engaged = false;
+            for (int i = 0; i < frisbeeCatchers.Length; i++)
+            {
+                KominkaHillside.KH_FrisbeeCatch c = frisbeeCatchers[i];
+                if (c == null) continue;
+                c._RequestVariant(next);
+                // PendingVariant は Owner の返事で非 Owner にはまだ届いていないことがあるので、通知はローカルの犬の状態で決める
+                if (c.IsEngaged) engaged = true;
+            }
+            Note(engaged ? "activities.hillside.frisbeeAfterReturn" : "activities.hillside.frisbeeRequested");
+        }
+
+        private string FrisbeeVariantName(int v) { return v >= 0 && v < _frisbeeVariantKeys.Length ? L(_frisbeeVariantKeys[v]) : v.ToString(); }
+
+        /// <summary>副文: 「いま: 走り込み: 横」、予約中は「帰ってから: ひねり」(同期値)。</summary>
+        private string FrisbeeState(KominkaHillside.KH_FrisbeeCatch c)
+        {
+            if (c.PendingVariant >= 0) return L("activities.hillside.frisbeePending").Replace("{0}", FrisbeeVariantName(c.PendingVariant));
+            return L("activities.hillside.frisbeeNow").Replace("{0}", FrisbeeVariantName(c.Variant));
         }
 
         private void Pending(int kind) { _pendingKind = kind; _pendingAt = Time.time; }
@@ -225,14 +285,18 @@ namespace KominkaDogRun
                 introLabel.text = L(trainer ? "activities.hillside.trainerActive" : "activities.hillside.trainerIntro");
             }
 
+            // 裏山改変: フリスビー行 (DES-UI-002)。ディスクを持つ犬が 0 匹なら隠す
+            KominkaHillside.KH_FrisbeeCatch catcher = FirstCatcher();
             for (int i = 0; i < rows.Length; i++)
             {
-                bool show = home ? (i == 0 || (i == 1 && trainer)) : i < 6;
+                bool show = home ? (i == 0 || (i == 1 && trainer) || (i == RowFrisbee && catcher != null)) : i < 6;
                 if (rows[i].gameObject.activeSelf != show) rows[i].gameObject.SetActive(show);
                 if (!show) continue;
                 // 一覧: 群の見出し (Y 120) の下に 1 段 (古民家の上の群の座標)。隊形: 3 列 × 2 段 (古民家の座標)
+                // 裏山改変: 未加入は [おわる] (row1) が隠れるので、フリスビー行を中央の枠へ詰める (添字は 2 のまま)
                 RectTransform rt = (RectTransform)rows[i].transform;
-                rt.anchoredPosition = new Vector2((i % 3 - 1) * RowPitchX, home ? 60f : (i < 3 ? 68f : -32f));
+                int column = home && i == RowFrisbee && !trainer ? 1 : i % 3;
+                rt.anchoredPosition = new Vector2((column - 1) * RowPitchX, home ? 60f : (i < 3 ? 68f : -32f));
                 string text;
                 if (home)
                 {
@@ -243,6 +307,13 @@ namespace KominkaDogRun
                         text = L("activities.home.0");
                         interactable = trainer;
                         sub = trainer ? L("activities.hillside.perk") : L("activities.needTrainer");
+                    }
+                    else if (i == RowFrisbee)
+                    {
+                        // 裏山改変: フリスビーの取り方 (DES-UI-002)。行全体が [切替]。権限と読み込み中の扱いは集合モード (row0) と同じ
+                        text = L("activities.hillside.frisbee");
+                        interactable = trainer;
+                        sub = trainer ? FrisbeeState(catcher) : L("activities.needTrainer");
                     }
                     else
                     {

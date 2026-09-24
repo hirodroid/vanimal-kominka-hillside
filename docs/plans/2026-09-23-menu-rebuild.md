@@ -95,7 +95,7 @@
 | かざり Acc5 (+撫でFX) | `.Acc` + `.PetFx` | KD_AccessoryBox / KD_PetFxBox / KD_PlayerFxTag、ミニチュア | IMP-DOG-015 |
 | 呼ぶ Sleep3 | `.Sleep` + KD_CallPose + KD_SleepPlacement | KD_SleepBoard / KD_SleepSlot、リード除外は KH_LeashManager、斜面は ValidPlacement 裏山改変 | IMP-DOG-016 |
 | おもちゃ Toy1 | `.Toy` (裏山改変: 行に [ボール][ディスク]) | `KH_ToyRecall` (KD_ToyBox / KD_BallController は使わない) | 段階 0 |
-| あそぶ Play6 | `KD_ActivitiesMenu` (裏山改変: 集合のみ、隊形 6・マーカー) | `KD_GroupActivities` 裏山改変 / `KH_TrainerPass` | 段階 0 |
+| あそぶ Play6 | `KD_ActivitiesMenu` (裏山改変: 集合のみ、隊形 6・マーカー。**2026-09-24 追加: トレーナー群の行「フリスビーの取り方」で 6 プリセットを順送り** = 旧 [試作] の移設、DES-UI-002) | `KD_GroupActivities` 裏山改変 / `KH_TrainerPass` / `KH_FrisbeeCatch._RequestVariant` | 段階 0 (フリスビー行は 0-b 後) |
 | ライブ Live4 | `.Live` (裏山改変: live が null なら「準備中」1 行) | KD_LiveSystem は置かない (DES-LIV-001 後) | 段階 0 (準備中) |
 | 残高・ポイント面 | ヘッダ Balance + ポイント面 (**入手経路 2 行のみ**。`KD_GiftCodePanel` は使わず、ギフトコードは未決定なので器を作らない) | KD_ProgressLedger / KD_ShopCatalog / KD_ShopKeeper | IMP-PRG-001 |
 | 設定面 (器 + ナイトモード) | `KD_MenuSettings` (裏山改変: 寝室・ラジオ・解像度なし) | `KH_NightMode` のスライダー | **段階 0-b** (KH_HandMenu 退役でナイトモードの入口が無くなるため) |
