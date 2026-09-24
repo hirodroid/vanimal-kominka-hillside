@@ -58,6 +58,8 @@ namespace KominkaDogRun.Editor
         {
             public string name; public float[] lp; public float[] lr; public float[] ls;
             public string fatherGuid; public string fatherFileID; public FitArt art;
+            /// <summary>裏山の首輪対策 (b) = 古民家の位置から「前 + 下」(mm、犬の座標軸)。2026-09-24 ユーザー決定 (案 C) の 5 件だけ true。</summary>
+            public bool hillsideB; public float hillsideBFwdMm; public float hillsideBDownMm;
         }
         [Serializable] class FitData { public string source; public FitNode[] nodes; }
 
@@ -409,7 +411,8 @@ namespace KominkaDogRun.Editor
             holder.localPosition = baseline;
             var r = MeasureCollar(dog, rig, holder, collar);
             DogFrame(dog, rig, out _, out _, out Vector3 fwd);
-            Vector3 desired = baseline + holder.parent.InverseTransformVector(fwd * (r.measured && r.resolvable ? r.shift : 0f));
+            Vector3 desired = fit.hillsideB ? HillsideBPosition(dog, rig, holder, fit)
+                : baseline + holder.parent.InverseTransformVector(fwd * (r.measured && r.resolvable ? r.shift : 0f));
             bool atBaseline = (current - baseline).sqrMagnitude < 1e-10f;
             bool atDesired = (current - desired).sqrMagnitude < 1e-10f;
             if (!write) { holder.localPosition = current; action = atDesired ? "採用値のまま" : atBaseline ? "古民家の位置のまま" : "手の調整あり"; return r; }
@@ -418,7 +421,13 @@ namespace KominkaDogRun.Editor
             {
                 holder.localPosition = desired;
                 if (!atDesired) EditorUtility.SetDirty(holder);
-                action = !r.resolvable ? "解消できない ((a) 上限 " + Mm(CollarMaxShift) + " でも当たりが残る。動かさない)"
+                if (fit.hillsideB)
+                {
+                    var after = MeasureCollar(dog, rig, holder, collar);
+                    action = "解消 (b) 前 " + fit.hillsideBFwdMm.ToString("F0") + "mm + 下 " + fit.hillsideBDownMm.ToString("F0") + "mm"
+                        + (after.measured && after.hits == 0 ? "" : " — WARN 置いた位置でも首輪に入る頂点 " + after.hits + " (首輪を作り直したなら値を測り直す)");
+                }
+                else action = !r.resolvable ? (HillsideNodeExcluded(holder.name) ? "除外 (この犬には付けない。行は暗く、台帳も拒否)" : "解消できない ((a) 上限 " + Mm(CollarMaxShift) + " でも当たりが残る。動かさない)")
                     : r.shift > 0f ? "前へ " + Mm(r.shift) : "干渉なし (古民家の位置)";
             }
             else { holder.localPosition = current; action = "手の調整を保持 (基準からずれている。測り直しは基準の位置で行った)"; }
@@ -426,6 +435,52 @@ namespace KominkaDogRun.Editor
         }
 
         static string Mm(float m) { return (m * 1000f).ToString("F1") + "mm"; }
+
+        // ================================================================ 案 C (2026-09-24 ユーザー決定): 当たる組み合わせだけ対処する
+        //
+        // 首元の品はなくさず、首輪飾りへの作り替えもしない。
+        //   (a) 前へ (上限 CollarMaxShift) で解消する組 → 6e が自動で前へ (実測の最小量)
+        //   (b) 前 + 下 で解消する 5 組 → 値は KD_AccessoryFits.Kominka.json の hillsideB* (古民家の実測値と同じ 1 か所)
+        //   物理的に無理な 3 組 → 下の除外表。その犬の行を暗くし、台帳 (KD_AccessoryBox) の Owner も装着要求を拒否する
+
+        /// <summary>**除外表の正本 (犬 × 品目キー)。** 品目キー = KD_AccessorySetsEditor.Keys (KD_Acc_{Key}_{Dog} の Key)。
+        /// 6e が KD_AccessoryBox.blockedDogs / blockedProducts (添字をそろえた 2 本の配列) へ書く。</summary>
+        internal static readonly string[,] HillsideCollarExcluded =
+        {
+            { "Lab", "Bandana" },
+            { "Dachs", "Bandana" },
+            { "Dachs", "SunflowerNecklace" },
+        };
+
+        /// <summary>除外表を (犬の添字, 品目 ID) の 2 本の配列へ。表の名前が解決できなければ FAIL を書いて false。</summary>
+        internal static bool HillsideExcludedArrays(out int[] dogs, out int[] products, StringBuilder log)
+        {
+            int n = HillsideCollarExcluded.GetLength(0);
+            dogs = new int[n]; products = new int[n];
+            bool ok = true;
+            for (int i = 0; i < n; i++)
+            {
+                dogs[i] = Array.FindIndex(KD_DogDefs.All, d => d.key == HillsideCollarExcluded[i, 0]);
+                products[i] = Array.IndexOf(KD_AccessorySetsEditor.Keys, HillsideCollarExcluded[i, 1]);
+                if (dogs[i] < 0 || products[i] < 0) { log.AppendLine("   FAIL 除外表の " + HillsideCollarExcluded[i, 0] + " × " + HillsideCollarExcluded[i, 1] + " が犬・品目表に無い"); ok = false; }
+            }
+            return ok;
+        }
+
+        /// <summary>ノード名 (KD_Acc_{Key}_{Dog}) が除外表の組か。</summary>
+        internal static bool HillsideNodeExcluded(string nodeName)
+        {
+            for (int i = 0; i < HillsideCollarExcluded.GetLength(0); i++)
+                if (nodeName == "KD_Acc_" + HillsideCollarExcluded[i, 1] + "_" + HillsideCollarExcluded[i, 0]) return true;
+            return false;
+        }
+
+        /// <summary>(b) の置き場所 (骨のローカル)。古民家の位置 + 前 - 下 (犬の座標軸)。</summary>
+        static Vector3 HillsideBPosition(GameObject dog, KD_DogRig rig, Transform holder, FitNode fit)
+        {
+            DogFrame(dog, rig, out _, out Vector3 up, out Vector3 fwd);
+            return V3(fit.lp) + holder.parent.InverseTransformVector(fwd * (fit.hillsideBFwdMm * .001f) - up * (fit.hillsideBDownMm * .001f));
+        }
 
         // ================================================================ Menu/6e Setup Accessories
 
@@ -508,11 +563,11 @@ namespace KominkaDogRun.Editor
                     var collar = CollarOf(holder.transform.parent, defs[d].key);
                     var fit = fits[holder.name];
                     var r = ApplyCollarShift(dogGos[d], rigs[d], holder.transform, collar, fit, true, log, out string action);
-                    if (r.measured && !r.resolvable) unresolved++;
+                    if (r.measured && !r.resolvable && !fit.hillsideB && !HillsideNodeExcluded(holder.name)) unresolved++;
                     log.AppendLine("   " + holder.name + ": " + CollarText(r) + " → " + action);
                 }
             }
-            log.AppendLine("   首輪: 解消できない " + unresolved + " 件" + (unresolved > 0 ? " (動かしていない。PCVR で見て、取り下げはユーザーが判断)" : ""));
+            log.AppendLine("   首輪: 案 C (2026-09-24) の外で解消できない " + unresolved + " 件" + (unresolved > 0 ? " (動かしていない。首輪を作り直したなら (b) の値と除外表を見直す)" : "") + " / (b) " + fits.Values.Count(f => f.hillsideB) + " 件 / 除外 " + HillsideCollarExcluded.GetLength(0) + " 件");
 
             // ---- 台帳 (Manual。犬の Ownership には触らない) ----
             var boxT = dogs.Find(KD_DogDefs.AccessoryBoxName);
@@ -539,6 +594,10 @@ namespace KominkaDogRun.Editor
             box.productSlots = slots;
             box.nodes = nodes;
             box.dogCount = dogN;
+            // 裏山改変 (案 C): 首輪と物理的に重なる組 (除外表) を台帳へ。Owner が装着要求を拒否し、手元メニューはその犬の行を暗くする
+            if (HillsideExcludedArrays(out int[] blockedDogs, out int[] blockedProducts, log)) { box.blockedDogs = blockedDogs; box.blockedProducts = blockedProducts; }
+            else ok = false;
+            log.AppendLine("   除外 (この犬には付けない): " + HillsideCollarExcluded.GetLength(0) + " 組 → blockedDogs / blockedProducts");
 
             var pouchT = dogs.Find(KD_DogDefs.TreatPouchName);
             var pouch = pouchT == null ? null : pouchT.GetComponent<KD_TreatPouch>();
@@ -628,9 +687,9 @@ namespace KominkaDogRun.Editor
                 v.Check(pouch.accConfirmRoot != null && pouch.accConfirmRoot == pouch.confirmRoot, "かざりの確認は共有カード 1 枚 (accConfirmRoot = confirmRoot)");
             }
 
-            // ---- 首輪との干渉 (むね 7 品 × 6 匹。今の位置で測る) ----
-            v.Info("== 首輪との干渉 (むね。犬の座標軸 = 右 / 上 / 前。食い込み = 首輪の前面 − 飾りの後ろ面、正なら重なる) ==");
-            int unresolved = 0, overlapping = 0, collars = 0;
+            // ---- 首輪との干渉 (むね 7 品 × 6 匹。今の位置で測る。案 C = 2026-09-24 ユーザー決定) ----
+            v.Info("== 首輪との干渉 (むね。犬の座標軸 = 右 / 上 / 前。案 C: (a) 前へ / (b) 前 + 下 / 除外 = この犬には付けない) ==");
+            int outside = 0, fixedB = 0, wantB = fits.Values.Count(f => f.hillsideB), excludedSeen = 0, collars = 0;
             for (int d = 0; d < dogN; d++)
             {
                 if (rigs[d] == null) continue;
@@ -643,24 +702,51 @@ namespace KominkaDogRun.Editor
                     var node = box.nodes[p * dogN + d];
                     if (node == null) continue;
                     var r = MeasureCollar(dogGos[d], rigs[d], node.transform, collar);
-                    string shiftNote = "";
-                    if (fits.TryGetValue(node.name, out FitNode fit))
+                    string shiftNote = "", status;
+                    fits.TryGetValue(node.name, out FitNode fit);
+                    if (fit != null)
                     {
-                        DogFrame(dogGos[d], rigs[d], out _, out _, out Vector3 fwd);
+                        DogFrame(dogGos[d], rigs[d], out _, out Vector3 upW, out Vector3 fwd);
                         var delta = node.transform.parent.TransformVector(node.transform.localPosition - V3(fit.lp));
-                        shiftNote = " / 古民家の位置から前へ " + Mm(Vector3.Dot(delta, fwd));
+                        shiftNote = " / 古民家の位置から 前 " + Mm(Vector3.Dot(delta, fwd)) + " 下 " + Mm(-Vector3.Dot(delta, upW));
                     }
-                    bool bad = r.measured && r.hits > 0;
-                    if (bad) overlapping++;
-                    if (bad && !r.resolvable) unresolved++;
-                    v.Info("   " + (bad ? "WARN " : "ok   ") + node.name + ": " + CollarText(r) + shiftNote
+                    bool hit = r.measured && r.hits > 0;
+                    if (HillsideNodeExcluded(node.name))
+                    {
+                        excludedSeen++;
+                        status = box.Blocked(d, p) ? "除外 " : "FAIL ";
+                        if (!box.Blocked(d, p)) outside++;
+                    }
+                    else if (fit != null && fit.hillsideB)
+                    {
+                        bool placed = (node.transform.localPosition - HillsideBPosition(dogGos[d], rigs[d], node.transform, fit)).sqrMagnitude < 1e-10f;
+                        if (placed && !hit) { fixedB++; status = "解消 (b) "; } else { outside++; status = "WARN (b) " + (placed ? "置いたが当たる " : "未適用 (6e) "); }
+                    }
+                    else if (hit) { outside++; status = "WARN "; }
+                    else status = "ok   ";
+                    v.Info("   " + status + node.name + ": " + CollarText(r) + shiftNote
                         + (r.clipDistance >= 0f ? " / リードの留め具まで " + Mm(r.clipDistance) : ""));
                 }
             }
             v.Check(collars == dogN, "首輪 KH_Collar_* が 6 匹の首の骨 (Bone.003) の子にある (" + collars + ")");
-            v.Note("首輪に食い込むむねの品 " + overlapping + " 件 / 対策 (a) の上限 " + Mm(CollarMaxShift) + " で解消できない品 " + unresolved + " 件"
-                + (overlapping > 0 ? " — 6e を流していなければ流す。流しても残る品は PCVR で見て、取り下げはユーザーが判断" : ""));
-            v.Note("PCVR でしか分からないこと: 毛 (fur シェーダー) との重なり、リードが張ったときの線と飾りの交差、姿勢 (お座り・伏せ・へそ天) での見え方");
+            v.Check(fixedB == wantB && wantB == 5, "対策 (b) = 前 + 下 の " + wantB + " 組が実測値どおりに置かれ、首輪に当たらない (解消 " + fixedB + ")");
+            v.Check(outside == 0, "案 C の外で首輪に当たる むねの品 0 件 (" + outside + ")" + (outside > 0 ? " — 6e を流す。首輪を作り直したなら (b) の値と除外表を見直す" : ""));
+
+            // ---- 除外 (この犬には付けない): 台帳の配列と手元メニューの暗くする条件 ----
+            var sbEx = new StringBuilder();
+            bool exOk = HillsideExcludedArrays(out int[] exDogs, out int[] exProducts, sbEx);
+            v.Check(exOk && excludedSeen == exDogs.Length && box.blockedDogs != null && box.blockedProducts != null
+                && box.blockedDogs.SequenceEqual(exDogs) && box.blockedProducts.SequenceEqual(exProducts),
+                "除外 " + exDogs.Length + " 組 (Lab のバンダナ / Dachs のバンダナ / Dachs のひまわり首飾り) が KD_AccessoryBox.blockedDogs / blockedProducts に配線" + (exOk ? "" : "\n" + sbEx));
+            object rawDogs = null;
+            v.Check(backing != null && backing.publicVariables.TryGetVariableValue("blockedDogs", out rawDogs) && rawDogs is int[] bd && bd.SequenceEqual(exDogs),
+                "backing の blockedDogs が proxy と一致 (CopyProxyToUdon 済み)");
+            v.Check(typeof(KD_AccessoryBox).GetMethod("Blocked") != null
+                && typeof(KD_TreatPouch).GetMethod("AccDogBlocked", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic) != null,
+                "台帳 KD_AccessoryBox.Blocked (Owner が拒否・セットは該当品だけ飛ばす) と手元メニューの AccDogBlocked (犬の行を暗く + 理由) がある");
+            try { KD_LocalizationEditor.Text(KD_LocalizationEditor.Load(), "ja", "KD_TreatPouch.WordAccNotForDog"); v.Check(true, "理由の文言 KD_TreatPouch.WordAccNotForDog が文言表にある"); }
+            catch (InvalidOperationException) { v.Check(false, "理由の文言 KD_TreatPouch.WordAccNotForDog が文言表にある (keys-015.json を統合)"); }
+            v.Note("PCVR でしか分からないこと: 毛 (fur シェーダー) との重なり、(b) で下げた品が胸の毛に沈まないか、リードが張ったときの線と飾りの交差、姿勢 (お座り・伏せ・へそ天) での見え方");
             v.Finish(HillsideVerifyLog);
         }
 
@@ -699,7 +785,7 @@ namespace KominkaDogRun.Editor
                         if (!EnsureArt(holder, fit, false, log, out _)) continue;
                         var r = ApplyCollarShift(clone, rig, holder.transform, collar, fit, true, log, out string action);
                         if (r.measured && r.hits > 0) overlapping++;
-                        if (r.measured && !r.resolvable) unresolved++;
+                        if (r.measured && !r.resolvable && !fit.hillsideB && !HillsideNodeExcluded(name)) unresolved++;
                         log.AppendLine("   " + HillsideLabelOf(p) + ": " + CollarText(r) + " → " + action
                             + (r.clipDistance >= 0f ? " / リードの留め具まで " + Mm(r.clipDistance) : ""));
                     }

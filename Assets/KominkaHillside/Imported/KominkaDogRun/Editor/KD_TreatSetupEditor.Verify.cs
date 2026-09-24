@@ -1549,6 +1549,18 @@ namespace KominkaDogRun.Editor
                 v.Check(AllSet(pouch.accPreviewDogs, dogsN) && pouch.accPreviewItems != null && pouch.accPreviewItems.Length == prodN * dogsN && prodN > 0
                     && System.Array.TrueForAll(pouch.accPreviewItems, x => x != null),
                     "試着ミニチュア accPreviewDogs " + dogsN + " / accPreviewItems " + (prodN * dogsN) + " (Menu/18 Build Dog Previews。詳細は Menu/25)");
+                // 裏山改変 (IMP-DOG-015 案 C、2026-09-24 ユーザー決定): 首輪と物理的に重なる組の除外が台帳に配線され、手元メニューに犬の行を暗くする条件がある
+                {
+                    var exLog = new StringBuilder();
+                    bool exOk = KD_AccessorySetupEditor.HillsideExcludedArrays(out int[] exDogs, out int[] exProducts, exLog);
+                    var accBox = pouch.accessories;
+                    v.Check(exOk && accBox != null && accBox.blockedDogs != null && accBox.blockedProducts != null
+                        && System.Linq.Enumerable.SequenceEqual(accBox.blockedDogs, exDogs) && System.Linq.Enumerable.SequenceEqual(accBox.blockedProducts, exProducts),
+                        "かざりの除外 " + exDogs.Length + " 組 (首輪と重なる 犬 × 品。KD_AccessorySetupEditor.HillsideCollarExcluded) が台帳 blockedDogs / blockedProducts に配線 (Menu/6e)");
+                    v.Check(typeof(KD_TreatPouch).GetMethod("AccDogBlocked", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic) != null
+                        && typeof(KD_AccessoryBox).GetMethod("Blocked") != null,
+                        "除外の組は犬選択の行が暗くなり理由を出す (KD_TreatPouch.AccDogBlocked)・台帳の Owner が拒否する (KD_AccessoryBox.Blocked)");
+                }
                 log.AppendLine("  NOTE おやつの枠 (KD_TreatSlot / KD_TreatController / 実体 / 自己テスト / 食後エフェクト) は Menu/6d Verify Treats が数える");
             }
             else

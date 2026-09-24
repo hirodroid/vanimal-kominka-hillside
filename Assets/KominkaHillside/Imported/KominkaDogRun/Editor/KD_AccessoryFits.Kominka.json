@@ -1,5 +1,6 @@
 {
  "source": "KominkaDogRun Assets/Scenes/KominkaDogRun.unity (fitted accessory nodes, extracted 2026-09-24 by IMP-DOG-015)",
+ "hillsideNote": "hillsideB* = 裏山の首輪対策 (b) 前 + 下 (mm、犬の座標軸)。2026-09-24 ユーザー決定 (案 C) で 6e が古民家の位置 (lp) に足して置く。値は 6e の実測 (Preview Scene) の最小の組",
  "nodes": [
   {
    "name": "KD_Acc_Backpack_Corgi",
@@ -1616,7 +1617,10 @@
     "receive": -1,
     "lightProbe": -1,
     "reflProbe": -1
-   }
+   },
+   "hillsideB": true,
+   "hillsideBFwdMm": 22,
+   "hillsideBDownMm": 12
   },
   {
    "name": "KD_Acc_FlowerCorsage_Pome",
@@ -2792,7 +2796,10 @@
     "receive": -1,
     "lightProbe": -1,
     "reflProbe": -1
-   }
+   },
+   "hillsideB": true,
+   "hillsideBFwdMm": 8,
+   "hillsideBDownMm": 16
   },
   {
    "name": "KD_Acc_RoyalNecklace_Pome",
@@ -4262,7 +4269,10 @@
     "receive": -1,
     "lightProbe": -1,
     "reflProbe": -1
-   }
+   },
+   "hillsideB": true,
+   "hillsideBFwdMm": 2,
+   "hillsideBDownMm": 26
   },
   {
    "name": "KD_Acc_SunflowerNecklace_Pome",
@@ -6047,7 +6057,10 @@
     "receive": 1,
     "lightProbe": 1,
     "reflProbe": 1
-   }
+   },
+   "hillsideB": true,
+   "hillsideBFwdMm": 0,
+   "hillsideBDownMm": 28
   },
   {
    "name": "KD_CandyCostume_PawMedallion_Lab",
@@ -6101,7 +6114,10 @@
     "receive": 1,
     "lightProbe": 1,
     "reflProbe": 1
-   }
+   },
+   "hillsideB": true,
+   "hillsideBFwdMm": 6,
+   "hillsideBDownMm": 30
   },
   {
    "name": "KD_CandyCostume_PawMedallion_Pome",

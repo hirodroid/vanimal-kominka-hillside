@@ -191,6 +191,7 @@ namespace KominkaDogRun
             if (dog < 0 || dog >= accessories.dogCount) return;
             if (accProductIds == null || _accProduct >= accProductIds.Length) return;
             if (_accConfirm) return;
+            if (AccDogBlocked(dog)) return;   // 裏山改変 (IMP-DOG-015 案 C): 首輪と重なる組は着けない・買う入口にもしない (行は暗い)
             if (!AccOwned(_accProduct))
             {
                 if (AccIsSetMember(accProductIds[_accProduct])) return;
@@ -285,7 +286,8 @@ namespace KominkaDogRun
                 GameObject preview = accPreviewItems[i];
                 if (preview == null) continue;
                 bool visible = page2 && dogCount > 0 && i / dogCount < accessories.productIds.Length
-                    && accessories.SelectionContains(selection, accessories.productIds[i / dogCount]);
+                    && accessories.SelectionContains(selection, accessories.productIds[i / dogCount])
+                    && !accessories.Blocked(i % dogCount, accessories.productIds[i / dogCount]);   // 裏山改変: 首輪と重なる組は試着にも出さない
                 if (preview.activeSelf != visible) preview.SetActive(visible);
             }
         }
@@ -368,6 +370,9 @@ namespace KominkaDogRun
                 if (accRowLabels != null && i < accRowLabels.Length && accRowLabels[i] != null)
                 {
                     accRowLabels[i].text = label;
+                    // 裏山改変 (IMP-DOG-015 案 C): 首輪と重なる犬の行は暗く (理由はサブ文)。ほかの行は白へ戻す
+                    Color labelColor = page2 && AccDogBlocked(i) ? HillsideAccBlockedColor : Color.white;
+                    accRowLabels[i].color = labelColor;
                     RectTransform labelRect = (RectTransform)accRowLabels[i].transform;
                     // [ギフト] (右上 160×40、x 86..246) が出る行は名前の幅を詰める (左寄せなので文字は動かない)
                     labelRect.anchoredPosition = new Vector2(page2 ? 80f : gift ? -90f : 0f, 32f);
@@ -434,6 +439,14 @@ namespace KominkaDogRun
             int slot = accessories.SlotOfProduct(product);
             if (slot < 0 && !isSet) return;
 
+            // 裏山改変 (IMP-DOG-015 案 C): 首輪と物理的に重なる組 (Lab のバンダナ等) は暗く、理由を出す。所持の有無より先に判定する
+            if (AccDogBlocked(dog))
+            {
+                sub = L("KD_TreatPouch.WordAccNotForDog");
+                enabled = false;
+                return;
+            }
+
             if (!AccOwned(_accProduct))
             {
                 button = L("KD_TreatPouch.WordBuyHere");
@@ -475,6 +488,20 @@ namespace KominkaDogRun
             else button = L("KD_TreatPouch.WordAccPut");
             if (accessories.requestDog == dog && accessories.requestSelection == product && accessories.requestState == 3) sub = L("accessory.rejected");
             if (accessories.requestDog == dog && accessories.requestSelection == product && accessories.requestState == 4) sub = L("accessory.unknown");
+        }
+
+        /// <summary>裏山改変 (IMP-DOG-015 案 C): 暗くした犬の行の名前の色。</summary>
+        private Color HillsideAccBlockedColor = new Color(0.55f, 0.55f, 0.55f, 1f);
+
+        /// <summary>裏山改変 (IMP-DOG-015 案 C、2026-09-24 ユーザー決定): 犬選択の面で、選んでいる単品がこの犬の首輪と物理的に重なるか。
+        /// 除外表の正本は Editor の定数 (KD_AccessorySetupEditor.HillsideCollarExcluded) → KD_AccessoryBox.blockedDogs / blockedProducts。
+        /// セットは中身の該当品だけ飛ばして着けられるので false (台帳側の PrepareSelection が飛ばす)。</summary>
+        private bool AccDogBlocked(int dog)
+        {
+            if (accessories == null || accProductIds == null || _accProduct < 0 || _accProduct >= accProductIds.Length) return false;
+            int product = accProductIds[_accProduct];
+            if (accessories.IndexOfSet(product) >= 0) return false;
+            return accessories.Blocked(dog, product);
         }
 
         /// <summary>恒久 ID から行番号を引く (表示名を出すため)。</summary>

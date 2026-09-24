@@ -124,6 +124,22 @@ namespace KominkaDogRun
         public int[] setIds = new int[0];
         public int[] setMembers = new int[0]; // exactly three product IDs per set
         public KD_ShopItem[] setItems;
+        // 裏山改変 (IMP-DOG-015 案 C、2026-09-24 ユーザー決定): 首輪と物理的に重なる「犬 × 品目」の組。添字をそろえた 2 本の配列
+        // (U# は多次元配列・構造体を持てない)。正本は Editor の定数 1 か所 (KD_AccessorySetupEditor.HillsideCollarExcluded) で、Menu/6e が書く。
+        // 単品はその犬に着けられない (Owner が拒否)。セットはその品だけ飛ばして残りの枠を着ける。
+        public int[] blockedDogs = new int[0];
+        public int[] blockedProducts = new int[0];
+
+        /// <summary>裏山改変: 犬 dog にこの品目 (単品の恒久 ID) を着けられないか。セットの ID は常に false (中身ごとに見る)。</summary>
+        // net: callable-ok: 読み取りのみ
+        public bool Blocked(int dog, int product)
+        {
+            if (blockedDogs == null || blockedProducts == null) return false;
+            int n = blockedDogs.Length < blockedProducts.Length ? blockedDogs.Length : blockedProducts.Length;
+            for (int i = 0; i < n; i++) if (blockedDogs[i] == dog && blockedProducts[i] == product) return true;
+            return false;
+        }
+
         public int requestState; // 0 idle, 1 pending, 2 accepted, 3 rejected, 4 result unknown
         public int requestDog = Unset;
         private int _requestToken;
@@ -182,6 +198,7 @@ namespace KominkaDogRun
             EnsureArrays();
             if (requestState == 1 || dog < 0 || dog >= dogCount || !CanChange(dog)) return;
             if (clearSlot < 0 && !SelectionOwned(selection)) return;
+            if (clearSlot < 0 && Blocked(dog, selection)) return;   // 裏山改変: 首輪と重なる組は送らない (Owner も拒否する)
             var player = Networking.LocalPlayer;
             var owner = Networking.GetOwner(gameObject);
             if (!Utilities.IsValid(player) || !Utilities.IsValid(owner)) return;
@@ -221,7 +238,7 @@ namespace KominkaDogRun
                 ok = RemainingFor(dog, player.playerId) <= 0;
                 if (ok)
                 {
-                    ok = PrepareSelection(next, selection, clearSlot, player);
+                    ok = PrepareSelection(next, selection, clearSlot, player, dog);
                     // PlayerData and the request travel separately. Retry only an explicitly
                     // uncommitted entitlement failure, with the original deadline and Owner.
                     entitlementPending = !ok && !player.isLocal && clearSlot < 0 && age < 3500;
@@ -244,7 +261,7 @@ namespace KominkaDogRun
         }
 
         // Validate the whole selection before writing even one slot.
-        private bool PrepareSelection(int[] next, int selection, int clearSlot, VRCPlayerApi player)
+        private bool PrepareSelection(int[] next, int selection, int clearSlot, VRCPlayerApi player, int dog)
         {
             if (clearSlot >= 0)
             {
@@ -255,18 +272,21 @@ namespace KominkaDogRun
             if (set >= 0)
             {
                 if (setMembers == null || setMembers.Length != setIds.Length * 3 || setItems == null || set >= setItems.Length || setItems[set] == null || !setItems[set].OwnedBy(player)) return false;
-                int used = 0;
+                int used = 0, applied = 0;
                 for (int i = 0; i < 3; i++)
                 {
                     int product = setMembers[set * 3 + i];
                     int slot = SlotOfProduct(product);
                     if (slot < 0 || slot >= SlotCount || (used & (1 << slot)) != 0 || !ProductOwnedBy(product, player)) return false;
-                    used |= 1 << slot; next[slot] = product;
+                    used |= 1 << slot;
+                    if (Blocked(dog, product)) continue;   // 裏山改変: 首輪と重なる品だけ飛ばす (その枠は今のまま)
+                    next[slot] = product; applied++;
                 }
-                return true;
+                return applied > 0;
             }
             int singleSlot = SlotOfProduct(selection);
             if (singleSlot < 0 || singleSlot >= SlotCount || !ProductOwnedBy(selection, player)) return false;
+            if (Blocked(dog, selection)) return false;   // 裏山改変: 首輪と重なる組は Owner が拒否 (未所持品の拒否と同じ経路)
             next[singleSlot] = selection; return true;
         }
 
@@ -341,6 +361,7 @@ namespace KominkaDogRun
             for (int i = 0; i < 3; i++)
             {
                 int product = setMembers[set * 3 + i];
+                if (Blocked(dog, product)) continue;   // 裏山改変: その犬に着けない品は「着けた」の判定から外す
                 if (EquippedOf(dog, SlotOfProduct(product)) != product) return false;
             }
             return true;

@@ -2735,6 +2735,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "フリスビーで遊び中"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "この犬には付けられません (首輪と重なる)"
         }
       ]
     },
@@ -5470,6 +5474,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "Playing with the disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "Can't be worn by this dog (overlaps the collar)"
         }
       ]
     },
@@ -8205,6 +8213,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "Playing with the disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "Can't be worn by this dog (overlaps the collar)"
         }
       ]
     },
@@ -10940,6 +10952,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "Playing with the disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "Can't be worn by this dog (overlaps the collar)"
         }
       ]
     },
@@ -13675,6 +13691,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "Playing with the disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "Can't be worn by this dog (overlaps the collar)"
         }
       ]
     },
@@ -16410,6 +16430,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "Playing with the disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "Can't be worn by this dog (overlaps the collar)"
         }
       ]
     },
@@ -19145,6 +19169,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "Playing with the disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "Can't be worn by this dog (overlaps the collar)"
         }
       ]
     },
@@ -21880,6 +21908,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "Playing with the disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "Can't be worn by this dog (overlaps the collar)"
         }
       ]
     },
@@ -24615,6 +24647,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "Playing with the disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "Can't be worn by this dog (overlaps the collar)"
         }
       ]
     },
@@ -27350,6 +27386,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "Playing with the disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "Can't be worn by this dog (overlaps the collar)"
         }
       ]
     },
@@ -30085,6 +30125,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "Playing with the disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "Can't be worn by this dog (overlaps the collar)"
         }
       ]
     },
@@ -32820,6 +32864,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "Playing with the disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "Can't be worn by this dog (overlaps the collar)"
         }
       ]
     },
@@ -35559,6 +35607,10 @@
         {
           "key": "KD_TreatPouch.WordSleepFrisbee",
           "text": "Playing with the disc"
+        },
+        {
+          "key": "KD_TreatPouch.WordAccNotForDog",
+          "text": "Can't be worn by this dog (overlaps the collar)"
         }
       ]
     }
