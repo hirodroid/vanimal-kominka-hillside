@@ -4,6 +4,7 @@ type: DES
 system: UI
 status: todo
 priority: Medium
+summary: 散歩の目的地・位置と仮看板の本制作、案内／説明ボードの内容・配置・役割を検討する
 ---
 
 # DES-UI-004 散歩の目的地・配置と案内／説明ボードを本制作へ向けて整理する
@@ -13,7 +14,7 @@ priority: Medium
 ## 現状と引き継ぎ
 
 - [IMP-DOG-003](IMP-DOG-003-walking-polish.md) で入口・見晴らし・広場に仮看板 `KH_WalkSign` を設置した。`PLAZA >` / `GATE <` で目的地を指示できるが、`GATE <` が分かりにくいとの PCVR フィードバックがある。[実装記録](../../plans/2026-09-20-free-walk.md)。
-- 手元メニューの目的地選択は [DES-UI-001](archive/DES-UI-001-menu-and-leash-assist.md) で実装・確認済み。仮看板は残置中で、撤去・案内専用化・操作の併設は未判断。
+- 手元メニューの目的地選択は [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) で実装・確認済み。仮看板は残置中で、撤去・案内専用化・操作の併設は未判断。
 - 仮看板の本制作と分かりやすさの検討を本 Issue に分離する。犬の散歩挙動は IMP-DOG-003、道・休憩場所の景観調整は [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) が担当する。
 
 ## 検討すること

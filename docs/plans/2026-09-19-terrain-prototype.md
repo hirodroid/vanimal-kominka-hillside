@@ -1,6 +1,6 @@
 # Terrain 試作 (VER-ENV-001) 実装計画
 
-> 対象 Issue: [VER-ENV-001](../development/issues/archive/VER-ENV-001-prototype-view-and-edges.md) / [DES-ENV-001](../development/issues/archive/DES-ENV-001-terrain-vs-blender.md) (どちらも 2026-09-22 完了)
+> 対象 Issue: [VER-ENV-001](../development/issues/VER-ENV-001-prototype-view-and-edges.md) / [DES-ENV-001](../development/issues/DES-ENV-001-terrain-vs-blender.md) (どちらも 2026-09-22 完了)
 > 状態: **v2 (門から出発する配置) を Stage A + B で生成、Editor 検証 50/50 OK、Play 待ち** (2026-09-19 夜。§10)。v1 の記録は §9。
 > 方針の正本: `core-concept.md` §3 (仮決め)。この計画は「順序と分担」を持ち、何を確かめるかは Issue が持つ。
 

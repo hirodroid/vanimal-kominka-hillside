@@ -4,6 +4,7 @@ type: DES
 system: LIV
 status: todo
 priority: Medium
+summary: ハロウィン・Candy Step・ライブパックの裏山向け演目を企画する。散歩道を犬たちがパレードする専用ライブ 1 本を含め、枠・本数・構成を整理
 ---
 
 # DES-LIV-002 裏山で作るパーティクルライブの演目と犬のパレードを企画する

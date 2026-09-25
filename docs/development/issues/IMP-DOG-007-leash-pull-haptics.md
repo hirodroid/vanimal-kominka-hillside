@@ -4,6 +4,7 @@ type: IMP
 system: DOG
 status: wip
 priority: Medium
+summary: リードを引っ張られたら、接続している側の手に振動を伝える (Haptics)。9/22 に VR 限定で実装 (伸び比率 + 止まっている時の引き、手ごとに最大)、PCVR の体感確認が残る
 ---
 
 # IMP-DOG-007 リードを引っ張られたら振動する (Haptics)
@@ -69,5 +70,5 @@ priority: Medium
 
 - [仕様の正本 §4](../../game-design.md): リード・範囲内行動・物理の扱い
 - [DES-DOG-001 リード散歩](DES-DOG-001-leash-walking.md): 接続先・左右・散歩の契約
-- [IMP-DOG-002 リード散歩の実装](archive/IMP-DOG-002-leash-walking.md): 基本実装と複数人での確認
+- [IMP-DOG-002 リード散歩の実装](IMP-DOG-002-leash-walking.md): 基本実装と複数人での確認
 - [IMP-DOG-003 散歩の磨き込み](IMP-DOG-003-walking-polish.md): 自由な散歩と接続時フィードバック

@@ -1,6 +1,6 @@
 # メニュー・集合・リード拠点の実装計画と記録
 
-状態: 実装済み。2026-09-22 にユーザーが PCVR で確認し DES-UI-001 は完了 (座位・Desktop/Touch・複数人は未確認)。合意の正本は [game-design §4「集合と拠点のリード」「メニュー補助の追加合意」](../game-design.md)、残る実装詳細は [DES-DOG-001](../development/issues/DES-DOG-001-leash-walking.md)、画面は [world-ui-spec §4〜7](../world-ui-spec.md)、UI 課題は [DES-UI-001](../development/issues/archive/DES-UI-001-menu-and-leash-assist.md)。ユーザー指示「設計を整備したので実装、適宜レビュー」(コミット `e46b555`) に基づく。
+状態: 実装済み。2026-09-22 にユーザーが PCVR で確認し DES-UI-001 は完了 (座位・Desktop/Touch・複数人は未確認)。合意の正本は [game-design §4「集合と拠点のリード」「メニュー補助の追加合意」](../game-design.md)、残る実装詳細は [DES-DOG-001](../development/issues/DES-DOG-001-leash-walking.md)、画面は [world-ui-spec §4〜7](../world-ui-spec.md)、UI 課題は [DES-UI-001](../development/issues/DES-UI-001-menu-and-leash-assist.md)。ユーザー指示「設計を整備したので実装、適宜レビュー」(コミット `e46b555`) に基づく。
 
 ## 段階
 

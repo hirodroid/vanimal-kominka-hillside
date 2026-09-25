@@ -1,23 +1,17 @@
 {
   "shared": [
-    "vrc-animator-reactions",
     "vrc-asset-production",
-    "vrc-codex-review",
-    "vrc-destructive-audit",
-    "vrc-maintenance-audit",
+    "vrc-character-rig",
     "vrc-networking",
     "vrc-new-world-setup",
     "vrc-performance",
-    "vrc-physbone-colliders",
-    "vrc-project-registry",
-    "vrc-reaper-automation",
+    "vrc-review",
     "vrc-scene-edit-safety",
     "vrc-synaptic-blender",
     "vrc-synaptic-unity",
-    "vrc-tmp-font",
     "vrc-udonsharp",
     "vrc-verification",
-    "vrc-visual-direction"
+    "vrc-world-ui"
   ],
   "local": []
 }

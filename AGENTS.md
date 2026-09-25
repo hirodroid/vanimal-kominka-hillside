@@ -4,7 +4,7 @@
 共通ルール・検査コマンドをここに複製しない。Claudeの権限設定やhookがCodexにも適用されるとは仮定しない。
 
 - `.agents/skills/` と `.claude/skills/` は `C:/work/unity/vrc-world-agent/claude-skills/` の同じ原本へのジャンクション。本文を複製しない。
-- 公開対象は [config/agent-skills.json](config/agent-skills.json)。既存のClaude側18スキルをCodexにも公開する。
+- 公開対象は [config/agent-skills.json](config/agent-skills.json)。件数と一覧はこのファイルが正本 (Claude側のSkillを改名・統合したらここを更新する)。
 - 再設定はプロジェクトルートで `powershell -NoProfile -ExecutionPolicy Bypass -File C:/work/unity/vrc-world-agent/scripts/setup-codex.ps1 -Project .`。確認のみは `-DryRun`。
 - 初回のリンク作成は通常ユーザーのPowerShellまたは承認済み権限拡張で行う。詳細は [共有の接続手順](../../vrc-world-agent/docs/codex-setup.md)。一覧の認識は新しいセッションで確認する。
 - Claude固有のツール名は利用可能な同等ツールに読み替える。Unity APIは共通指示どおり `scripts/unity-api.sh` 経由とし、操作前に接続先プロジェクトを確認する。

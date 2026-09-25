@@ -4,6 +4,7 @@ type: DES
 system: WLD
 status: todo
 priority: Medium
+summary: 裏山の音 (BGM・環境音) の方針・音源・ライブとの切替を設計する
 ---
 
 # DES-WLD-002 裏山の音 (BGM・環境音) を設計する

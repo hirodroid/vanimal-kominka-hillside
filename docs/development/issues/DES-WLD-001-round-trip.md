@@ -4,6 +4,7 @@ type: DES
 system: WLD
 status: todo
 priority: Medium
+summary: 古民家からの出発・帰還と状態の扱いを設計する
 ---
 
 # DES-WLD-001 古民家と裏山の往復導線を決める

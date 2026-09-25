@@ -86,8 +86,9 @@ Packages/
 
 読む場面は各 Skill の description に書いてある。このワールドでの補足だけ下に置く。
 
-- `vrc-udonsharp`: UI の設計・制作・改修・レビューは §5 の UI 資料から入る
-- `vrc-codex-review`: 小変更は適用条件に従って省略してよいが、同期・保存・権限等は少行数でも対象
+- `vrc-world-ui`: UI の設計・制作・改修・レビューは UI 資料 (`reference/ui/`) から入る
+- `vrc-review`: 独立レビューは小変更なら適用条件に従って省略してよいが、同期・保存・権限等は少行数でも対象
+- 「前に別のワールドでやった」を辿るときは `C:/work/unity/vrc-world-agent/docs/project-registry.md` (Skill ではない索引)
 
 **一般化できる知見を得たら、プロジェクト側ではなく共有リポジトリの Skill を直す**
 (ジャンクションなのでその場で編集できる)。
@@ -108,8 +109,9 @@ Unity操作は `vrc-synaptic-unity` と `scripts/unity-api.sh` 経由 (`check` �
 
 ```bash
 node scripts/check-doc-links.js     # リンク切れ (ファイルを移動したら必ず通す)
-node scripts/check-issues.js        # Issue の frontmatter / 置き場所 / サマリの整合
-node scripts/check-issues.js --next # 次に使える Issue ID (採番は必ずこれで)
+node scripts/check-issues.js         # Issue の検査 (frontmatter・issue_summary.md が生成結果と一致するか)
+node scripts/check-issues.js --write # issue_summary.md を生成 (status 等を変えたら必ず。手で編集しない)
+node scripts/check-issues.js --next IMP DOG # 次に使える Issue ID (採番は必ずこれで。引数なしで全 prefix)
 ```
 
 ---

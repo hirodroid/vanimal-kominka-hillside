@@ -1,6 +1,6 @@
 # 手元メニューを古民家と同一の器へ作り替える実装計画
 
-**最新状態は個票** ([IMP-UI-001](../development/issues/review/IMP-UI-001-menu-table-driven-and-settings.md) / [IMP-PRG-001](../development/issues/review/IMP-PRG-001-ledger-shopkeeper-points.md) / [IMP-DOG-014](../development/issues/review/IMP-DOG-014-treats-port.md) / [015](../development/issues/review/IMP-DOG-015-accessories-and-petfx-port.md) / [016](../development/issues/review/IMP-DOG-016-call-pose-port-and-slope.md))、全体の現在地は [overview §3](../development/overview.md#3-現在地) を見る。
+**最新状態は個票** ([IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) / [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) / [IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md) / [015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) / [016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md))、全体の現在地は [overview §3](../development/overview.md#3-現在地) を見る。
 
 実施の経過 (2026-09-25 時点): 段階 0-a・0-b は 2026-09-23 実装・Codex D+M・コミット a19112a、2026-09-24 に PCVR でユーザー OK。段階 1 (IMP-PRG-001) は 2026-09-24 実装・Verify 全 PASS・Codex D+M 済み・コミット e4f5906。段階 2 (IMP-DOG-014 / 015 / 016) と段階 3 (IMP-UI-001 後半) は 2026-09-24 実装・Verify 全 PASS・Codex D+M+U 済み (6 件修正・2 件記録)・コミット c27a7e3。首輪と首元の飾りの干渉は 2026-09-24 に案 C で決定・適用 (049b173 / 136b516)、ミニチュアの首輪込みも同日ユーザー OK。段階 1〜3 の Play (ClientSim・PCVR) とクレジット URL 3 件の記入は、この時点で未了。記録は下の「実装記録」、確認手順は「実機チェックリスト」。設計は 2026-09-23 のユーザー指示「モック OK。古民家の実際のメニューの配置・コンポーネントを確認して設計」に基づく。採否と全体構成の正本は [game-design §4](../game-design.md) と [DES-UI-003](../development/issues/DES-UI-003-menu-scope-and-polish.md)、画面・入力・状態・Unity 部品の正本は [world-ui-spec §4〜6・§8](../world-ui-spec.md)。見え方の合意はモック 版 3 (<https://claude.ai/artifact/K1moWuWCeWMUm7wUprZx3f>、ユーザー「OK」)。
 
@@ -117,7 +117,7 @@
 
 ### D-6 開閉・配置・端末
 
-古民家と同じにする: PlaceInFront (前方 0.95 m・高さ −0.05、眼高でスケール)、VR 右スティック下 **0.5 秒・しきい値 0.8**、Desktop `T`、Touch ランチャー (Overlay・sortingOrder 100)。**KH_HandMenu の 0.6 秒 / 0.6 しきい値は古民家値へ戻す (2026-09-23 決定。ユーザー指示「配置・文言・動線は全部古民家と同じ」に従う)。これは [DES-UI-001](../development/issues/archive/DES-UI-001-menu-and-leash-assist.md) で PCVR 確認済みの 0.6 秒から体感を変える変更なので、段階 0 の PCVR 確認項目に含める。** 拠点板 3 枚は裏山の追加として維持し (片手・座位対策)、Interact → `pouch._Toggle`。レイヤー 17 が Player(9)/PlayerLocal(10) と当たらない設定は `KD_HandMenuCollisionEditor` で適用・検査する。
+古民家と同じにする: PlaceInFront (前方 0.95 m・高さ −0.05、眼高でスケール)、VR 右スティック下 **0.5 秒・しきい値 0.8**、Desktop `T`、Touch ランチャー (Overlay・sortingOrder 100)。**KH_HandMenu の 0.6 秒 / 0.6 しきい値は古民家値へ戻す (2026-09-23 決定。ユーザー指示「配置・文言・動線は全部古民家と同じ」に従う)。これは [DES-UI-001](../development/issues/DES-UI-001-menu-and-leash-assist.md) で PCVR 確認済みの 0.6 秒から体感を変える変更なので、段階 0 の PCVR 確認項目に含める。** 拠点板 3 枚は裏山の追加として維持し (片手・座位対策)、Interact → `pouch._Toggle`。レイヤー 17 が Player(9)/PlayerLocal(10) と当たらない設定は `KD_HandMenuCollisionEditor` で適用・検査する。
 
 ### D-7 ミニチュア (試着プレビュー・ポーズ面)
 
@@ -127,10 +127,10 @@
 
 | 段階 | 内容 | 担当 Issue | ゲート |
 |---|---|---|---|
-| **0-a** | **移植の土台**: `Assets/KominkaDogRun/Editor/` を丸ごとコピー、**パス定数の置換一覧を作る** (`grep "Assets/KominkaDogRun"` の結果を [kominka-dog-system](../development/imports/kominka-dog-system.md) に表で記録。Script / Program Asset は `Assets/KominkaHillside/Imported/KominkaDogRun/…`、Font / Textures / Data / Models / Materials は `Assets/KominkaHillside/…`)、MenuItem の付け替えと未採用機能の隔離 | [IMP-UI-001](../development/issues/review/IMP-UI-001-menu-table-driven-and-settings.md) (0-a) | **コンパイル 0** / Console エラー 0 / 置換一覧が imports に記録されている / Codex M |
+| **0-a** | **移植の土台**: `Assets/KominkaDogRun/Editor/` を丸ごとコピー、**パス定数の置換一覧を作る** (`grep "Assets/KominkaDogRun"` の結果を [kominka-dog-system](../development/imports/kominka-dog-system.md) に表で記録。Script / Program Asset は `Assets/KominkaHillside/Imported/KominkaDogRun/…`、Font / Textures / Data / Models / Materials は `Assets/KominkaHillside/…`)、MenuItem の付け替えと未採用機能の隔離 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (0-a) | **コンパイル 0** / Console エラー 0 / 置換一覧が imports に記録されている / Codex M |
 | **0-b** | **器の構築**: スプライト焼き、フォント 48 pt 再ベイク、文言・言語生成、KD_TreatPouch を配置して 7 タブの器を作る。さんぽ・おもちゃ・あそぶを KH_HandMenu から移し、KH_HandMenu を退役。**設定面の器とナイトモードのスライダー**。ライブは準備中、おやつ・かざり・呼ぶは行に「準備中」。拠点板の付け替え | IMP-UI-001 (0-b) | コンパイル 0 / Verify (Pouch + Scroll Layout、下の Verify 表の段階 0 分) 全 PASS / 既存 3 機能の退行なし (`Walking/5 Verify` 全 PASS。起票時の「111」は古い件数で、2026-09-23 時点の項目数は 208) / Codex D+M / **PCVR で現行 3 機能の見え方が古民家と同じ (ユーザー)**。**到達状況 (2026-09-23): コンパイル 0・Verify 全 PASS・Walking/5 208/0 は済み。Codex 未・PCVR 未** |
-| 1 | 台帳・おじいさん・ポイント・残高・確認カードの実体 (購入が動く)。**初回未受取の案内帯 (購入面の 1 行) と ようこそ の最小版 (題 + [メニューを見る]) を前倒しする** | [IMP-PRG-001](../development/issues/review/IMP-PRG-001-ledger-shopkeeper-points.md) | Verify + ClientSim (T-007/T-008) + Codex D+M。**到達状況 (2026-09-24): コンパイル 0・Verify 全 PASS (3b / 4a / 4e / 20 / 21 / 22 / 23 / 11c / 24 / 15a)・Walking/5 208/0・check-consume-once OK は済み。Codex D+M+U 済み (6 件修正・2 件記録)。T-007 / T-008 は実機または ClientSim 待ち (台帳用のハーネスは無い)** |
-| 2 | おやつ / かざり + 撫でFX + ミニチュア / 呼ぶ + ポーズ面 + 場所決め (3 本並列) | [IMP-DOG-014](../development/issues/review/IMP-DOG-014-treats-port.md) / [015](../development/issues/review/IMP-DOG-015-accessories-and-petfx-port.md) / [016](../development/issues/review/IMP-DOG-016-call-pose-port-and-slope.md) | 各 Verify + ハーネス + Codex D+M、PCVR (ユーザー)。加えて **入室 → おじいさん → 200pt → かざりで装着 → さんぽ の一周が 1 人で成立する**。**到達状況 (2026-09-24): コンパイル 0 (C# 0 / U# 82)・Verify 全 PASS (6d / 6f / 6h / 6b / 25 / 20 / 21 / 22 / 23 / 24 / 4e / Walking/5 209/0、check-consume-once OK)・シーン保存は済み。Codex D+M+U 済み (6 件修正・2 件記録) (段階 3 と合わせて)。ハーネス・一周・PCVR は未。首輪干渉 8 件はユーザー判断待ち** (2026-09-25 撤回: 首輪干渉は案 C で決定・適用済み 049b173、コミット済み c27a7e3) |
+| 1 | 台帳・おじいさん・ポイント・残高・確認カードの実体 (購入が動く)。**初回未受取の案内帯 (購入面の 1 行) と ようこそ の最小版 (題 + [メニューを見る]) を前倒しする** | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) | Verify + ClientSim (T-007/T-008) + Codex D+M。**到達状況 (2026-09-24): コンパイル 0・Verify 全 PASS (3b / 4a / 4e / 20 / 21 / 22 / 23 / 11c / 24 / 15a)・Walking/5 208/0・check-consume-once OK は済み。Codex D+M+U 済み (6 件修正・2 件記録)。T-007 / T-008 は実機または ClientSim 待ち (台帳用のハーネスは無い)** |
+| 2 | おやつ / かざり + 撫でFX + ミニチュア / 呼ぶ + ポーズ面 + 場所決め (3 本並列) | [IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md) / [015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) / [016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | 各 Verify + ハーネス + Codex D+M、PCVR (ユーザー)。加えて **入室 → おじいさん → 200pt → かざりで装着 → さんぽ の一周が 1 人で成立する**。**到達状況 (2026-09-24): コンパイル 0 (C# 0 / U# 82)・Verify 全 PASS (6d / 6f / 6h / 6b / 25 / 20 / 21 / 22 / 23 / 24 / 4e / Walking/5 209/0、check-consume-once OK)・シーン保存は済み。Codex D+M+U 済み (6 件修正・2 件記録) (段階 3 と合わせて)。ハーネス・一周・PCVR は未。首輪干渉 8 件はユーザー判断待ち** (2026-09-25 撤回: 首輪干渉は案 C で決定・適用済み 049b173、コミット済み c27a7e3) |
 | 3 | 設定面 (距離フェード・ナイトモードスライダー・許可 2 種・言語・クレジット・案内・音量)、ようこそ | IMP-UI-001 (後半) | Verify + Codex D+M+U、PCVR。**到達状況 (2026-09-24): Verify 全 PASS (14c / 16a / 22 / 11c / 15a / 20 / 21)・シーン保存は済み。Codex D+M+U 済み (6 件修正・2 件記録) (段階 2 と合わせて)。PCVR (T-011 を含む) は未。クレジット URL 3 件は未記入 (Verify 22 は `CREDIT_URL_PENDING 3`)** |
 | 4 | 複数人・Desktop/Touch・Quest/iOS | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | 実機チェックリスト |
 
@@ -346,7 +346,7 @@
 
 2026-09-25 撤回: コミット済み e4f5906 (Codex D+M は下の「Codex レビュー」のとおり済み)。
 
-ファイルごとの差分は [kominka-dog-system「2026-09-24 台帳・おじいさん・ポイント (段階 1)」](../development/imports/kominka-dog-system.md#2026-09-24-台帳おじいさんポイント-段階-1)。完了条件の進み具合は [IMP-PRG-001「進捗」](../development/issues/review/IMP-PRG-001-ledger-shopkeeper-points.md#進捗)。
+ファイルごとの差分は [kominka-dog-system「2026-09-24 台帳・おじいさん・ポイント (段階 1)」](../development/imports/kominka-dog-system.md#2026-09-24-台帳おじいさんポイント-段階-1)。完了条件の進み具合は [IMP-PRG-001「進捗」](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md#進捗)。
 
 実装は台帳・カタログ担当 (P1)、おじいさん担当 (P2)、板・ようこそ担当 (P3) の 3 エージェントが並列で行った。司令塔は文言の断片を `UITranslations.json` へ統合し (13 言語、664 キー)、Tools メニューを実行した。準備として、購入アセット polyperfect (Low Poly Animated People + Common、git 管理外) と `AC_KD_Npc.controller`、CE の UdonProduct 6 本 (`Data/CE`) を古民家からコピーした (前コミット 7165e45)。
 
@@ -438,7 +438,7 @@ Menu/20 で新たに見るもの: ledger / catalog が `KH_Dogs` 直下、`KD_Sh
 
 2026-09-25 撤回: コミット済み c27a7e3 (Codex D+M+U は段階 3 末尾の「Codex レビュー」のとおり済み)。
 
-ファイルごとの差分と資産コピーの記録は [kominka-dog-system「段階 2」](../development/imports/kominka-dog-system.md#2026-09-24-おやつかざり撫でfx呼ぶ-段階-2)。完了条件の進み具合は各 Issue の「進捗」([IMP-DOG-014](../development/issues/review/IMP-DOG-014-treats-port.md#進捗) / [015](../development/issues/review/IMP-DOG-015-accessories-and-petfx-port.md#進捗) / [016](../development/issues/review/IMP-DOG-016-call-pose-port-and-slope.md#進捗))。
+ファイルごとの差分と資産コピーの記録は [kominka-dog-system「段階 2」](../development/imports/kominka-dog-system.md#2026-09-24-おやつかざり撫でfx呼ぶ-段階-2)。完了条件の進み具合は各 Issue の「進捗」([IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md#進捗) / [015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md#進捗) / [016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md#進捗))。
 
 実装は おやつ担当 (014)、かざり・撫でFX・ミニチュア担当 (015)、呼ぶ・ポーズ・場所決め担当 (016) の 3 エージェントが並列で行った。共通ファイルへの差分は各担当が patch に書き、統合担当が 1 つにまとめた。司令塔は資産を古民家からコピーし (315 ファイル、GUID は古民家と同じ)、文言を統合し、Tools メニューを実行した。
 
@@ -558,7 +558,7 @@ Lab と Dachs は首輪が低く大きいことが原因。案 C 決定前の実
 
 2026-09-25 撤回: コミット済み c27a7e3 (Codex D+M+U は下の「Codex レビュー」のとおり済み)。
 
-ファイルごとの差分は [kominka-dog-system「段階 3」](../development/imports/kominka-dog-system.md#2026-09-24-設定面の残りとようこそ-段階-3)。完了条件の進み具合は [IMP-UI-001「進捗」](../development/issues/review/IMP-UI-001-menu-table-driven-and-settings.md#進捗)。
+ファイルごとの差分は [kominka-dog-system「段階 3」](../development/imports/kominka-dog-system.md#2026-09-24-設定面の残りとようこそ-段階-3)。完了条件の進み具合は [IMP-UI-001「進捗」](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md#進捗)。
 
 実装は 設定面担当 (U1) と ようこそ・インフォメーション担当 (U2) の 2 エージェントが並列で行った。司令塔は文言を統合し、Tools メニューを段階 2 と一続きで実行した (上の「段階 2」の表)。
 

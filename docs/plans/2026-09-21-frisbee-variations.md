@@ -2,7 +2,7 @@
 
 > 対象: IMP-DOG-008
 
-状態: **PCVR 5 回目 (2026-09-22) で「いい感じ」。先回り型 + 動きの層 (回り込み・追いながら跳ぶ) + ひねり修正まで 1 匹で成立。採否の決定と設定の中身、6 匹展開の起票へ** (`9b9133f`)。作業票は [IMP-DOG-008](../development/issues/archive/IMP-DOG-008-frisbee-variations.md)、通常版の記録は [段階 1〜2 の記録](2026-09-20-frisbee-prototype.md)、採用範囲の設計は [DES-DOG-002](../development/issues/DES-DOG-002-toy-behaviour.md)。ここは「順序と分担」「設計判断の数値」「検証記録」。何を作るかは Issue が持つ。
+状態: **PCVR 5 回目 (2026-09-22) で「いい感じ」。先回り型 + 動きの層 (回り込み・追いながら跳ぶ) + ひねり修正まで 1 匹で成立。採否の決定と設定の中身、6 匹展開の起票へ** (`9b9133f`)。作業票は [IMP-DOG-008](../development/issues/IMP-DOG-008-frisbee-variations.md)、通常版の記録は [段階 1〜2 の記録](2026-09-20-frisbee-prototype.md)、採用範囲の設計は [DES-DOG-002](../development/issues/DES-DOG-002-toy-behaviour.md)。ここは「順序と分担」「設計判断の数値」「検証記録」。何を作るかは Issue が持つ。
 
 ## 進め方と分担 (2026-09-21 ユーザー決定)
 

@@ -17,8 +17,9 @@
  *   5. 別リポジトリへの参照 (絶対パス、または `../` でリポジトリ外へ出る相対パス) は
  *      参照先が実在すれば OK (警告しない)、実在しなければ BROKEN。4 の WARN の対象にしない
  *
- * Issue を review/ や archive/ へ移すと `../` の数がずれる。
- * 移動したら必ずこれを通すこと (docs/development/issues/issue_summary.md 「移動の手順」)。
+ * Issue は issues/ 直下の 1 ディレクトリに置き、状態が変わっても移動しない (2026-09-25)。
+ * 状態は frontmatter の status、一覧は `node scripts/check-issues.js --write` で生成する。
+ * 文書を移動・改名したときは必ずこれを通すこと。
  */
 
 const fs = require('fs');

@@ -34,15 +34,15 @@
 
 ### TIER 2: Reference
 
-見た目の制作・アセット選定・統合確認では `vrc-visual-direction` と `core-concept.md` の「ビジュアル方針」を先に読む。
+見た目の制作・アセット選定・統合確認では `vrc-asset-production` の references/visual-direction.md と `core-concept.md` の「ビジュアル方針」を先に読む。
 意図と仕様が食い違ったらコアコンセプトに照らして矛盾を解消し、仕様やパレットを別資料で二重管理しない。
 
-UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-udonsharp/reference/ui/00_START_HERE.md` (プロジェクトルート基準) から必要な章を選び、`world-ui-spec.md` の対象範囲を確認する。
+UI制作・改修・レビューは `vrc-world-ui` と `.claude/skills/vrc-world-ui/reference/ui/00_START_HERE.md` (プロジェクトルート基準) から必要な章を選び、`world-ui-spec.md` の対象範囲を確認する。
 
 | File | Domain |
 |------|--------|
 | `development/glossary.md` | 用語集 (ユビキタス言語) |
-| `development/issues/issue_summary.md` | 課題の入口 (状態ごとに 4 分割) |
+| `development/issues/issue_summary.md` | 課題の一覧 (frontmatter から `check-issues.js --write` で生成。運用は同じ場所の README.md) |
 | `development/git-workflow.md` | Git 運用ルール |
 | `development/imports/kominka-autumn-assets.md` | 古民家ドッグランからの秋色資産 (草・葉・遠景の材質と TerrainData) の移植記録。Layer の使い分けもここ |
 | `development/imports/kominka-dog-system.md` | 古民家ドッグランからの犬ギミック移植記録 (移植時に作成。書式は古民家側 `C:/work/unity/vcc/KominkaDogRun/docs/development/dog-system-porting.md`) |
@@ -76,12 +76,12 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 | 対象 | 記録・未確認条件の参照先 |
 |---|---|
 | 散歩・首輪・リード | [自由な散歩](plans/2026-09-20-free-walk.md)、[散歩検証](plans/2026-09-20-leash-walking.md)、[制作票](plans/2026-09-20-leash-asset-production.md) |
-| 手元メニュー・集合・拠点 | [旧メニューの実装とチェックリスト](plans/2026-09-20-menu-gather-stations.md)、[古民家の器への作り替え計画](plans/2026-09-23-menu-rebuild.md)、[IMP-UI-001](development/issues/review/IMP-UI-001-menu-table-driven-and-settings.md) / [IMP-PRG-001](development/issues/review/IMP-PRG-001-ledger-shopkeeper-points.md) / [IMP-DOG-014](development/issues/review/IMP-DOG-014-treats-port.md) / [015](development/issues/review/IMP-DOG-015-accessories-and-petfx-port.md) / [016](development/issues/review/IMP-DOG-016-call-pose-port-and-slope.md) |
+| 手元メニュー・集合・拠点 | [旧メニューの実装とチェックリスト](plans/2026-09-20-menu-gather-stations.md)、[古民家の器への作り替え計画](plans/2026-09-23-menu-rebuild.md)、[IMP-UI-001](development/issues/IMP-UI-001-menu-table-driven-and-settings.md) / [IMP-PRG-001](development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) / [IMP-DOG-014](development/issues/IMP-DOG-014-treats-port.md) / [015](development/issues/IMP-DOG-015-accessories-and-petfx-port.md) / [016](development/issues/IMP-DOG-016-call-pose-port-and-slope.md) |
 | フリスビー | [本シーン導入](plans/2026-09-20-frisbee-prototype.md)、[動きの改修経緯](plans/2026-09-21-frisbee-variations.md)、[6 匹展開](plans/2026-09-24-frisbee-six-dogs.md)、[ハーネスの手順・最新記録](testing/kh-frisbee-harness.md)、[BUG-DOG-003 非マスターの投球](development/issues/BUG-DOG-003-frisbee-non-master-throw.md) |
 | 空・ナイトモード | [実装とチェックリスト](plans/2026-09-21-sky-and-night-mode.md) |
 | 容量 (ビルドサイズ) | [ビルドサイズ実測](plans/2026-09-24-build-size-audit.md)、計測メニュー `Tools/KominkaHillside/Build Size/`、手順と罠は `vrc-performance` のビルドサイズチェック。素材を足したら `7 - Apply` → `2 - Bundle Size Android` |
 | Quest単体・iOS | [端末検証](development/issues/VER-WLD-001-quest-ios-devices.md) |
-| 地形・境界・負荷 | [IMP-ENV-001](development/issues/IMP-ENV-001-hillside-polish.md)、[完了した地形判断](development/issues/archive/archive_summary.md) |
+| 地形・境界・負荷 | [IMP-ENV-001](development/issues/IMP-ENV-001-hillside-polish.md)、[完了した地形判断](development/issues/issue_summary.md) |
 | 犬ギミックの出所 | [移植記録](development/imports/kominka-dog-system.md) |
 
 Build は KH_World を作り直す。手修正は設定へ写してから再生成する。数値は Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeConfig.cs が正本。手置きは KH_World 外へ。

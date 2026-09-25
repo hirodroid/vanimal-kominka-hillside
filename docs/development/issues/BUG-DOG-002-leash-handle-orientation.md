@@ -4,6 +4,7 @@ type: BUG
 system: DOG
 status: wip
 priority: Medium
+summary: リードの輪と紐の接続部が横向き。肘→手の延長上・手の前側へ向くよう左右とも調整する (9/23 要望具体化)
 ---
 
 # BUG-DOG-002 リードの輪と紐の接続部を腕から手の前方へ向ける

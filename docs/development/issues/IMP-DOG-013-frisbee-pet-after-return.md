@@ -4,6 +4,7 @@ type: IMP
 system: DOG
 status: wip
 priority: Medium
+summary: フリスビーを持ち帰った犬をよしよしできる。くわえて待っている間は撫でを再開し (撫でている間はディスクを落とさない)、受け取っても 4 秒 / 2.5 m の猶予はその場で待つ。9/22 実装・Editor 検査済み、PCVR 確認が残る
 ---
 
 # IMP-DOG-013 フリスビーを持ち帰った犬をよしよしする

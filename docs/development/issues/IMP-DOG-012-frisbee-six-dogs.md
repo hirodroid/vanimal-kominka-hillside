@@ -4,11 +4,12 @@ type: IMP
 system: DOG
 status: wip
 priority: Medium
+summary: "フリスビー (先回り型 + 6 プリセット) を 6 匹へ展開する。2026-09-24 実装済み (ff76602): 犬種別クリップ・facts、犬別ディスク 6 枚、犬種別の跳躍上限 (小型犬 0.45 m)、Verify・縮小ハーネス・6 匹同時の負荷 PASS。残り: Shiba / Samoyed の縮小表の取り直し・全 36 投げ (AI)、PCVR (ユーザー)"
 ---
 
 # IMP-DOG-012 フリスビーを 6 匹へ展開する
 
-2026-09-22 起票。[IMP-DOG-008](archive/IMP-DOG-008-frisbee-variations.md) でラブ 1 匹の通常版 (先回り型 + 動きの層) と 6 プリセット (待つ場所 3 種・ひねり・横曲がり) をユーザーが PCVR で「いい感じ」と評価し、全部採用した。次はこれを 6 匹へ展開する。採用範囲の設計は [DES-DOG-002](DES-DOG-002-toy-behaviour.md)、設計値と検証記録は [段階 3 の記録](../../plans/2026-09-21-frisbee-variations.md)、設定 UI は [DES-UI-002](DES-UI-002-frisbee-settings.md)。
+2026-09-22 起票。[IMP-DOG-008](IMP-DOG-008-frisbee-variations.md) でラブ 1 匹の通常版 (先回り型 + 動きの層) と 6 プリセット (待つ場所 3 種・ひねり・横曲がり) をユーザーが PCVR で「いい感じ」と評価し、全部採用した。次はこれを 6 匹へ展開する。採用範囲の設計は [DES-DOG-002](DES-DOG-002-toy-behaviour.md)、設計値と検証記録は [段階 3 の記録](../../plans/2026-09-21-frisbee-variations.md)、設定 UI は [DES-UI-002](DES-UI-002-frisbee-settings.md)。
 
 ## 範囲
 

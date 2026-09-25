@@ -4,6 +4,8 @@ type: DES
 system: ENV
 status: done
 priority: High
+summary: 地形を Unity Terrain で作るか Blender で作るか → **Terrain 採用**
+updated: 2026-09-22
 ---
 
 # DES-ENV-001 地形を Unity Terrain で作るか Blender で作るか
@@ -63,12 +65,19 @@ Terrain で作るときの制約: Layer は 4 枚以下 / heightmap は必要最
 
 ユーザー判断「もうテレインで OK」。**Unity Terrain を採用**し、Blender への切り替えは行わない。VER-ENV-001 とまとめての判断で、眺め・端の見え方は PCVR で良好と評価された。
 
-- どう確かめたか: v1〜v4 の Terrain 試作を Editor で作って画像と Verify を取り (v4 は再読込 Verify **53/53**、Console Error **0**、Terrain 以外 **178,034 tris**。[計画 §12](../../../plans/2026-09-19-terrain-prototype.md))、ユーザーが 2026-09-20 以降の PCVR で門 → 登り道 → 見晴らし → 広場を歩いて評価した (「非常に面白かった」「かなり良かった」)。上の**切り替え基準 (端が見える / 道・段差がブラシで作れない / Android で地面が支配的) に当たったものは無い**。
+- どう確かめたか: v1〜v4 の Terrain 試作を Editor で作って画像と Verify を取り (v4 は再読込 Verify **53/53**、Console Error **0**、Terrain 以外 **178,034 tris**。[計画 §12](../../plans/2026-09-19-terrain-prototype.md))、ユーザーが 2026-09-20 以降の PCVR で門 → 登り道 → 見晴らし → 広場を歩いて評価した (「非常に面白かった」「かなり良かった」)。上の**切り替え基準 (端が見える / 道・段差がブラシで作れない / Android で地面が支配的) に当たったものは無い**。
 - 想定と実際のずれ: 着手時は「VER-ENV-001 の条件付き実測 (端末・設定・数値) で採否を決める」見立てだったが、実際は**試作の作りやすさと PCVR の眺めの評価で先に決まり**、Android の実測を待たずに確定した。古民家 IMP-INF-022 の「地面の作り方より犬・葉の透過・遠景が効く」が覆らなかったため、負荷で地形方式を選ぶ場面が来なかった。
-- 残り: Android / iOS 実機の負荷測定は未実施。地形方式の再検討材料ではなく、景観・足場の磨き込み ([IMP-ENV-001](../IMP-ENV-001-hillside-polish.md) の「負荷の初回測定」) の前提として引き継ぐ。Terrain を採用した後も Layer 4 枚以下 / heightmap は必要最小 / 草の距離は短め の制約は維持する。
+- 残り: Android / iOS 実機の負荷測定は未実施。地形方式の再検討材料ではなく、景観・足場の磨き込み ([IMP-ENV-001](IMP-ENV-001-hillside-polish.md) の「負荷の初回測定」) の前提として引き継ぐ。Terrain を採用した後も Layer 4 枚以下 / heightmap は必要最小 / 草の距離は短め の制約は維持する。
 
 ## 参照
 
-- 企画原本 §4〜6: `../../../reference/VAnimal_KominkaHillside_Concept.md`
+- 企画原本 §4〜6: `../../reference/VAnimal_KominkaHillside_Concept.md`
 - 試作: [VER-ENV-001](VER-ENV-001-prototype-view-and-edges.md)
 - Blender を使うなら `vrc-synaptic-blender` / `vrc-asset-production`
+
+## 完了記録
+
+> 2026-09-25 の Issue 運用一本化で `archive/archive_summary.md` の行から移記。
+
+- 完了日: 2026-09-22
+- 備考: ユーザー判断「もうテレインで OK」。v1〜v4 の試作 (v4 Verify 53/53、Console Error 0) と PCVR の評価で切り替え基準に当たらず確定。Android / iOS の負荷測定は未実施で IMP-ENV-001 へ

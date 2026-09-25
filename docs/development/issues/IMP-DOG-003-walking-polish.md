@@ -4,11 +4,12 @@ type: IMP
 system: DOG
 status: wip
 priority: High
+summary: "自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、Desktop/Touch、複数人。看板の本制作・分かりやすさは DES-UI-004 へ分離"
 ---
 
 # IMP-DOG-003 目的地を持つ自由な散歩とリードの手触りを作る
 
-2026-09-20のPCVR試作を基準に体験を磨く。追加相談で、主眼を「前方へ配置する追従」から「犬自身が目的地へ行きたがり、自由に過ごす散歩」へ具体化した。仕様の正本は [game-design §4「目的地を持つ自由な散歩」](../../game-design.md)、経緯は [PCVRフィードバック](../../plans/2026-09-20-pcvr-feedback.md)。基本実装と機能検証は [IMP-DOG-002](archive/IMP-DOG-002-leash-walking.md)、未決定の契約は [DES-DOG-001](DES-DOG-001-leash-walking.md)、目的地メニューは [DES-UI-001](archive/DES-UI-001-menu-and-leash-assist.md) と連携する。2026-09-20 に手順 1〜2 (通過点・目的地・自発的な散歩・待機・誘い・寄り道・道外) と目的地の看板を実装し Editor 検査済み。Play は未確認。[実装記録と Play チェックリスト](../../plans/2026-09-20-free-walk.md)。
+2026-09-20のPCVR試作を基準に体験を磨く。追加相談で、主眼を「前方へ配置する追従」から「犬自身が目的地へ行きたがり、自由に過ごす散歩」へ具体化した。仕様の正本は [game-design §4「目的地を持つ自由な散歩」](../../game-design.md)、経緯は [PCVRフィードバック](../../plans/2026-09-20-pcvr-feedback.md)。基本実装と機能検証は [IMP-DOG-002](IMP-DOG-002-leash-walking.md)、未決定の契約は [DES-DOG-001](DES-DOG-001-leash-walking.md)、目的地メニューは [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) と連携する。2026-09-20 に手順 1〜2 (通過点・目的地・自発的な散歩・待機・誘い・寄り道・道外) と目的地の看板を実装し Editor 検査済み。Play は未確認。[実装記録と Play チェックリスト](../../plans/2026-09-20-free-walk.md)。
 
 ## 今回の合意
 
@@ -37,7 +38,7 @@ priority: High
 
 - 実装済み (Editor 検査のみ): `KH_WalkRoute` (17 点・経路表)、`KH_LeashManager.destinations` と `ReqDestination`、看板 `KH_WalkSign` 3 基、`KD_DogWanderController.HillsideLeash.cs` の散歩ロジック (先行・リード端で待つ・誘い 3 回で伏せ・寄り道・道外は手まわり・到着後の落ち着き・戻る条件)。数値は game-design §4「自由な散歩の初回実装値」。
 - 未実装: 手順 3 の犬同士の遊び、手順 5 の接続の見つけやすさ、手順 7 の Desktop/Touch 確認。看板は DES-UI-001 のメニュー (2026-09-22 完了) までの仮 UI で、撤去/案内板化は未判断。
-- 2026-09-22 [DES-UI-001](archive/DES-UI-001-menu-and-leash-assist.md) から引き継ぎ: **座位と Desktop / Touch での手元メニューの入口・出口**も手順 7 の確認に含める (立位・片手・VR は PCVR 確認済み)。
+- 2026-09-22 [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) から引き継ぎ: **座位と Desktop / Touch での手元メニューの入口・出口**も手順 7 の確認に含める (立位・片手・VR は PCVR 確認済み)。
 - 首輪ずれ (手順 6) は IMP-DOG-004 の実機確認と合わせて見る。
 - 2026-09-21 PCVR: 犬の速さが 2 段階しかなく人が引っ張る形になる → 速さの 4 段階化は [IMP-DOG-009](IMP-DOG-009-walk-speed-tiers.md) へ分けた。同日「寄り道が分かりにくすぎる」→ 寄り道の見せ方・立ち寄り場所・夜の散歩は [IMP-DOG-010](IMP-DOG-010-walk-stopovers.md) へ分けた。
 - 2026-09-20 ユーザー PCVR (1 人): 「めちゃくちゃ動きは良かった。かなり良かった」。項目別の記録 (往復・道外・誘いの回数・看板) は未取得。看板の文字 (`GATE <`) が分かりにくい点は UX 調整対象。

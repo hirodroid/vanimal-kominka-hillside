@@ -4,6 +4,7 @@ type: IMP
 system: DOG
 status: todo
 priority: Medium
+summary: おやつで自分の接続犬の最寄り1匹を呼び、少し待つ間に撫でる/首輪を外す→次の1匹。9/23 操作方針了承、詳細設計・実装は未
 ---
 
 # IMP-DOG-006 リード接続中もおやつに反応して寄ってくる

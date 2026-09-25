@@ -1,7 +1,7 @@
 # KominkaHillside (古民家の裏山) -- コアコンセプト
 
 > 体験の意図とビジュアル方針の正本。仕様・スコープ・実装の完成条件は `game-design.md`。
-> 企画の進め方は `vrc-visual-direction`。具体的な判断と色・素材感はこの資料で管理する。
+> 企画の進め方は `vrc-asset-production` (references/visual-direction.md)。具体的な判断と色・素材感はこの資料で管理する。
 >
 > **企画の原本**はユーザー作成の [reference/VAnimal_KominkaHillside_Concept.md](reference/VAnimal_KominkaHillside_Concept.md) (2026-09-19 合意済み)。
 > **現在は後から受領した [散歩企画追補](reference/VAnimal_KominkaHillside_Walking_Addendum.md) を正とする** (ユーザー指定)。旧原本・以前の会話・試作と矛盾する場合も後の資料に合わせる。
@@ -82,9 +82,9 @@ PC に加え Quest 単体・iOS でも楽しめることを目指す。古民家
 
 UI固有のトークン・画面・操作状態は `world-ui-spec.md` に具体化する。ワールド全体の方針は本資料を参照し、パレットを二重管理しない。
 
-- 試作の記録: `VER-ENV-001` (2026-09-22 完了。`development/issues/archive/`)
+- 試作の記録: `VER-ENV-001` (2026-09-22 完了。`development/issues/`)
 - 犬ギミックの移植記録: `development/imports/kominka-dog-system.md` (移植時に作成。書式は古民家側 `docs/development/dog-system-porting.md`)
-- アセット採用の判断: 各 Issue に `vrc-visual-direction` §4 の表で残す
+- アセット採用の判断: 各 Issue に `vrc-asset-production` の references/visual-direction.md §4 の表で残す
 
 ## 4. 方針の変更記録
 

@@ -4,6 +4,7 @@ type: IMP
 system: DOG
 status: wip
 priority: High
+summary: 古民家ドッグランの犬ギミックを移植する (タグ `export/kominka-hillside-v1` + 移植記録)
 ---
 
 # IMP-DOG-001 古民家ドッグランの犬ギミックを移植する

@@ -4,6 +4,7 @@ type: IMP
 system: DOG
 status: wip
 priority: High
+summary: 散歩の犬の速さを 4 段階に (最速は現状の速歩の 3 倍)。人が犬を引っ張る状態をなくす。Run クリップの再生速度・減速も合わせる。9/22 PCVR 1 人 1 匹で OK・採用、3〜6 匹・2 人以上・Desktop は未確認
 ---
 
 # IMP-DOG-009 散歩の犬の速さを 4 段階にし、人が引っ張る状態をなくす

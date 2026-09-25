@@ -4,6 +4,7 @@ type: DES
 system: LIV
 status: todo
 priority: Medium
+summary: 古民家の有料ライブ購入者の利用と、裏山ライブの開催・再生・競合・復帰を設計する。演目企画は DES-LIV-002
 ---
 
 # DES-LIV-001 裏山のライブと既存購入者の利用を設計する
