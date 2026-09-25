@@ -117,7 +117,7 @@
 ### 負荷 (D5) と端末 (D6)
 
 - Ready の目標 (頭の向き 8 m 先) の更新を 10 Hz に間引く (移動の補間は毎フレーム)。本シーンで「未保持 / 保持+Ready / 投球」の増分を `vrc-performance` の手順で測る。
-- 照準線 (LineRenderer 40 点 + 区間レイ) は保持者のクライアントだけ。半透明材質 (`Legacy Shaders/Transparent/Diffuse`) は Android/iOS ビルドで shader 参照を確認し、実機で両眼表示・地面との重なり・可読性を見る。PCVR 合格を Quest/iOS 合格に読み替えない。
+- 照準線 (LineRenderer 40 点 + 区間レイ) は保持者のクライアントだけ。半透明材質 (`Legacy Shaders/Transparent/Diffuse`) は Android/iOS ビルドで shader 参照を確認し、実機で両眼表示・地面との重なり・可読性を見る (不変条件 7)。
 
 ### やらないこと (段階 2 の範囲外)
 

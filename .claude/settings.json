@@ -2,13 +2,13 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit|Write|Bash|PowerShell",
         "hooks": [
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hook-check-cs.js\"",
             "timeout": 60,
-            "statusMessage": "scripts/check-* (.cs 編集時)"
+            "statusMessage": "scripts/check-* (.cs / .md 編集時)"
           }
         ]
       }

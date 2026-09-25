@@ -63,14 +63,14 @@ priority: High    # High / Medium / Low
 | [DES-WLD-001](DES-WLD-001-round-trip.md) | Medium | 古民家からの出発・帰還と状態の扱いを設計する | todo |
 | [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビーは 1 匹で採用内容を確定 (IMP-DOG-008 完了)。複数ディスク・犬の割当は犬別 6 枚で開発側決定 (2026-09-24、ユーザー確認待ち)。残り: 他のおもちゃの挙動、ボールの柄違いの持たせ方、公開範囲 | todo |
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開は012 | wip |
-| [IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md) | Medium | フリスビー (先回り型 + 6 プリセット) を 6 匹へ展開。2026-09-24 実装: 犬種別クリップ・facts、犬別ディスク 6 枚の配線、犬種別の跳躍上限 (小型犬 0.45 m)、Verify・縮小ハーネス・6 匹同時の負荷 PASS。残り: Shiba / Samoyed の縮小表の取り直し、全 36 投げ、PCVR | todo |
+| [IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md) | Medium | フリスビー (先回り型 + 6 プリセット) を 6 匹へ展開する。2026-09-24 実装済み (ff76602): 犬種別クリップ・facts、犬別ディスク 6 枚、犬種別の跳躍上限 (小型犬 0.45 m)、Verify・縮小ハーネス・6 匹同時の負荷 PASS。残り: Shiba / Samoyed の縮小表の取り直し・全 36 投げ (AI)、PCVR (ユーザー) | wip |
 | [DES-UI-002](DES-UI-002-frisbee-settings.md) | Medium | フリスビーの設定 (待つ場所・曲げ・取り方) の選ぶ / 自動の切り分けと操作権、開発用切替の撤去時期を設計する。[試作] 入口は 9/23 の KH_HandMenu 退役で消え、代替はユーザー判断 | todo |
 | [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK)、段階 2・3 は 9/24 実装済み・PCVR 待ち | wip |
-| [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) | High | 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換える。段階 0-a 移植の土台 (Editor 丸ごとコピー・パス置換・MenuItem 隔離) → 0-b 器の構築 (7 タブ・さんぽ/おもちゃ/あそぶ移設・KH_HandMenu 退役・設定面の器とナイトモードスライダー) → 段階 3 設定面の残り (距離フェード・許可初期ON・言語・案内)。計画書 2026-09-23。**9/23 0-a 完了・0-b 実装済み (Verify 全 PASS、KH_HandMenu 退役)、9/24 PCVR OK で 0-b 完了**。[試作] は 9/24 あそぶタブのトレーナー群へ移設 (DES-UI-002)。**9/24 段階 3 実装済み・Verify 全 PASS (距離フェード・犬の声・クレジット・インフォメーション・ようこそ全文)、PCVR 待ち。クレジット URL 3 件は未記入** | todo |
-| [IMP-PRG-001](IMP-PRG-001-ledger-shopkeeper-points.md) | High | 台帳・おじいさん (門)・支度用ポイント (初回 200pt 一回・滞在 1分1pt)・購入と CE 判定を裏山へ配線する。**9/24 実装済み・Verify 全 PASS** (名前空間 KH_Commerce_v1、残高・ポイント面・ようこそ最小版)。T-007 / T-008・復元は実機・ClientSim 待ち | todo |
-| [IMP-DOG-014](IMP-DOG-014-treats-port.md) | Medium | おやつ 4 種を古民家から移植 (Box/Slot3/Controller/Fx・Editor・メッシュ)。接続犬の反応は IMP-DOG-006。**9/24 実装済み・Verify 全 PASS (メニューの [買う] 含む)、Play・T-009 待ち** | todo |
-| [IMP-DOG-015](IMP-DOG-015-accessories-and-petfx-port.md) | Medium | 飾り 14 商品と撫でFX 11 種を移植。首元 7 品と首輪・リードの干渉を実測して調整する。**9/24 実装済み・Verify 全 PASS。干渉は 9/24 案 C で決定 (5 件は (b) で下げ、3 件は犬ごとに除外。Verify 6f PASS)。ミニチュアは首輪込み。PCVR 待ち | todo |
-| [IMP-DOG-016](IMP-DOG-016-call-pose-port-and-slope.md) | Medium | 呼ぶ・ポーズを移植し、リード接続中の除外と斜面 (接地・法線) の判定を足す。**9/24 実装済み・Verify 全 PASS。法線 0.9 を仮採用、Play・T-010 待ち** | todo |
+| [IMP-UI-001](review/IMP-UI-001-menu-table-driven-and-settings.md) | High | 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換え、設定面を作る。段階 0-a / 0-b / 3 は実装済み・Verify 全 PASS、0-b は 2026-09-24 PCVR OK。段階 3 (距離フェード・許可初期 ON・ようこそ等) の実機確認待ち。クレジット URL 3 件はユーザー記入待ち | review |
+| [IMP-PRG-001](review/IMP-PRG-001-ledger-shopkeeper-points.md) | High | 台帳・おじいさん (門)・支度用ポイント (初回 200pt 一回・滞在 1分1pt)・購入と CE 判定。2026-09-24 実装済み・Verify 全 PASS (e4f5906、名前空間 KH_Commerce_v1)。T-007 / T-008・復元の実機確認待ち | review |
+| [IMP-DOG-014](review/IMP-DOG-014-treats-port.md) | Medium | おやつ 4 種を古民家から移植 (メニューの [買う] 含む)。2026-09-24 実装済み・Verify 全 PASS (c27a7e3)。出す/あげる/しまう・補充・T-009 (枠 3) の Play・実機確認待ち。接続犬の反応は IMP-DOG-006 | review |
+| [IMP-DOG-015](review/IMP-DOG-015-accessories-and-petfx-port.md) | Medium | 飾り 14 商品と撫でFX 11 種を移植。2026-09-24 実装済み・Verify 全 PASS (c27a7e3)。首輪干渉は 2026-09-24 案 C で決定・適用 (5 件は (b) で下げ、3 件は犬ごとに除外、Verify 6f PASS。049b173)。装着・同期・見た目の PCVR 確認待ち | review |
+| [IMP-DOG-016](review/IMP-DOG-016-call-pose-port-and-slope.md) | Medium | 呼ぶ・ポーズを移植し、リード接続中の除外と斜面 (接地・法線) の判定を足す。2026-09-24 実装済み・Verify 全 PASS (c27a7e3)。法線 0.9 は仮採用。Play・T-010・斜面の PCVR 確認待ち | review |
 | [DES-UI-004](DES-UI-004-walk-destinations-and-boards.md) | Medium | 散歩の目的地・位置と仮看板の本制作、案内／説明ボードの内容・配置・役割を検討する | todo |
 | [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 古民家の有料ライブ購入者の利用と、裏山ライブの開催・再生・競合・復帰を設計する。演目企画は DES-LIV-002 | todo |
 | [DES-LIV-002](DES-LIV-002-live-lineup-and-parade.md) | Medium | ハロウィン・Candy Step・ライブパックの裏山向け演目を企画する。散歩道を犬たちがパレードする専用ライブ 1 本を含め、枠・本数・構成を整理 | todo |
@@ -84,19 +84,7 @@ priority: High    # High / Medium / Low
 | [IMP-DOG-013](IMP-DOG-013-frisbee-pet-after-return.md) | Medium | フリスビーを持ち帰った犬をよしよしできる。くわえて待っている間は撫でを再開し (撫でている間はディスクを落とさない)、受け取っても 4 秒 / 2.5 m の猶予はその場で待つ。9/22 実装・Editor 検査済み、PCVR 確認が残る | wip |
 | [IMP-DOG-010](IMP-DOG-010-walk-stopovers.md) | Medium | 寄り道が分かりにくい (嗅ぐ姿勢が無い・ずれが小さい・短い) ので作り直し、道沿いの立ち寄り場所と夜の散歩の違いを足す。9/22 PCVR 1 人 1 匹で OK・採用 (Sniff クリップは保留)、3〜6 匹・2 人以上・Desktop は未確認 | wip |
 
-着手順 (2026-09-23 担当先を更新): メニュー本体 (DES-UI-001) は PCVR 確認で完了。小さな UX 調整 (BUG-DOG-002 持ち手の向き、IMP-DOG-003 の犬同士の遊び・Desktop/Touch・項目別確認) を進め、次に DES-DOG-002 (おもちゃ) と DES-DOG-001 (採用後のおしゃれ・権限・端末別入力)。メニュー機能の採否と支度用ポイントは DES-UI-003、目的地・看板・説明ボードは DES-UI-004、おやつで1匹ずつ呼び寄せる操作は IMP-DOG-006 で具体化する。音は DES-WLD-002、ライブの演目企画は DES-LIV-002、購入者の利用・開催と復帰は DES-LIV-001 で設計を並行し、制作は基本体験の後。**複数人は 6 人 PCVR の散歩で確認でき IMP-DOG-002 は完了**、残る複数人の未確認はフリスビー (IMP-DOG-005) と空・ナイトモード (非伝播) で、往復導線 (DES-WLD-001) は継続。境界・負荷の項目別確認は IMP-ENV-001、**Quest 単体・iOS の実機確認は VER-WLD-001 に集約**する (景観の増量自体は後回し)。具体的な目的と設計提案は [開発全体像](../overview.md) §3。
-
-2026-09-22: **DES-ENV-001 / VER-ENV-001 / DES-UI-001 / IMP-ENV-002 を完了**。地形は Unity Terrain 採用 (「もうテレインで OK」)、眺め・端は PCVR で良好、手元メニューと空・ナイトモードはユーザーが PCVR で確認済み。記録は [完了した Issue](archive/archive_summary.md)。引き継ぎ: 境界・負荷の項目別確認 (VER-ENV-001 の項目 2 の隅・4・6) → IMP-ENV-001、座位と Desktop/Touch の入口 → IMP-DOG-003、複数人の競合・他人の接続犬への影響 → IMP-DOG-002、権限の再判定と端末別入力 → DES-DOG-001。Quest 単体・iOS は引き続き未確認。
-
-2026-09-22 (続き): **IMP-DOG-002 を完了**。ユーザーが 6 人 PCVR で散歩し、競合・退出・途中参加を含めて問題なしと報告 (項目別の合否は未記録)。残った **Quest 単体・iOS の実機確認は [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) を新設して集約**した (リード散歩・メニュー・空/ナイトモード・フリスビー・首輪/リード・負荷・境界)。各 Issue の Quest/iOS 条件はそのまま残し、実機で見る場所だけをまとめている。
-
-最新の制作指示ではIMP-DOG-004のBlender本制作とおもちゃ提案を優先して着手。上記の機能改善順は残し、モデルの仕上げと区別する。
-
-2026-09-21 フリスビーの追加合意: 通常版の体験はVRでひとまずOK。**フリスビーの次の制作はIMP-DOG-008** (1匹で外からの走り込み → 取り方・飛び方の候補比較 → 採用組み合わせの評価)。1匹でOKになってから6匹展開を別Issueにする。IMP-DOG-005の未確認項目は継続する。
-
-2026-09-20追加相談でIMP-DOG-003を目的地と通過点による自由な散歩へ具体化。目的地指定に必要なDES-DOG-001/ DES-UI-001の契約は散歩試作に先行させ、メニュー全体の完成を前提にしない。
-
-同日、ユーザー指示でBUG-DOG-001とIMP-DOG-003の手順1〜2を実装 ([記録](../../plans/2026-09-20-free-walk.md))。PCVR で好評。続けて DES-UI-001 / DES-DOG-001 の合意を実装 ([記録](../../plans/2026-09-20-menu-gather-stations.md))。次の Play/PCVR で一括確認する。
+着手順と現在地の説明は [開発全体像](../overview.md) §3 が正本 (このファイルは実行キューと状態だけを持つ)。2026-09-20〜23 の着手順メモは git 履歴 (`ff76602` 時点のこのファイル) を参照。
 
 ---
 

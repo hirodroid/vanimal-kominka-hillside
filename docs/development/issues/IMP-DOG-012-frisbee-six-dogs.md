@@ -2,7 +2,7 @@
 id: IMP-DOG-012
 type: IMP
 system: DOG
-status: todo
+status: wip
 priority: Medium
 ---
 
@@ -52,4 +52,4 @@ priority: Medium
 
 - PCVR: 6 匹の動き・犬種ごとの姿勢・跳躍の高さ (小型犬の下限 0.45 m = Pome の体高の約 2.9 倍)・複数ディスクの同時・Owner 分裂・リード中 / 集合中の除外との組み合わせ ([チェックリスト](../../plans/2026-09-24-frisbee-six-dogs.md#pcvr-チェックリスト-build--test-し直してから))。
 - 全 36 投げ × 6 犬種のハーネス、本シーン (地形・草木込み) での負荷、Shiba / Samoyed の縮小表を上限適用後に取り直すこと。
-- status は PCVR の評価まで todo のまま。
+- status は wip (2026-09-25 に todo から是正。実装済みで AI 側の残り (Shiba / Samoyed の取り直し・全 36 投げ) がある)。残りを済ませたら PCVR の評価待ちとして review へ移す。

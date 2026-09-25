@@ -20,23 +20,26 @@ VRChat ワールド **「古民家の裏山」 (KominkaHillside)** — VAnimal �
 
 ```
 Assets/
-├── Scenes/                 # シーンファイル
+├── Scenes/                  # 本シーン VRCDefaultWorldScene と試作シーン KH_FrisbeePrototype
 ├── KominkaHillside/         # 自作コンテンツ (すべてここに置く)
-│       ├── Scripts/        # UdonSharp スクリプト
-│       ├── Prefabs/        # プレハブ
-│       ├── Materials/      # マテリアル
-│       └── Data/           # データ
-├── UdonSharp/              # UdonSharp ユーティリティ (自動生成)
-└── SerializedUdonPrograms/ # Udon コンパイル済み (自動生成)
+│   ├── Scripts/             # UdonSharp スクリプト (KH_*)。Editor/ に Editor スクリプト
+│   ├── Imported/            # 古民家ドッグランから移植したもの (KominkaDogRun/ 以下は KD_ 名のまま) と移植元シーン
+│   ├── Animations/ Models/ Materials/ Shaders/ Textures/ Font/
+│   ├── Data/                # Terrain・Walking・Frisbee・CE・Environment などのデータ
+│   └── Prefabs/             # 現状は空 (メニュー等は Editor ビルダーがシーンへ直接生成)
+├── (購入アセット)           # 下記。Git 管理外
+├── UdonSharp/               # UdonSharp ユーティリティ (自動生成)
+└── SerializedUdonPrograms/  # Udon コンパイル済み (自動生成)
 
 Packages/
 ├── com.vrchat.worlds                        # VRChat Worlds SDK
-└── com.local.vrc-world-tools               # 共有診断ツール (file: 参照)
+├── jp.lilxyzw.liltoon / jp.sigmal00.uzumore-shader  # VPM
+└── com.local.vrc-world-tools               # 共有診断ツール (manifest.json の file: 参照)
 ```
 
 **作業対象シーンは `Assets/Scenes/VRCDefaultWorldScene.unity`** (VCC テンプレートのまま。改名するときはここも直す)。
 
-購入アセット (Git 管理外): `Assets/LMArt-StylizedEnvironmentKit/` (古民家と同じ広葉樹・遠景)。秋色などの派生物は `Assets/KominkaHillside/` 側へコピーして管理する。
+購入アセット (Git 管理外、`.gitignore` 末尾の枠に列挙): `Assets/LMArt-StylizedEnvironmentKit/` (古民家と同じ広葉樹・遠景)、`Assets/モサンゴ屋/` (遠景の古民家外観と庭 Terrain の素材)、`Assets/TORINOSUKE/` (犬のモデル・モーション)、`Assets/Allsky/` (空)、`Assets/polyperfect/` (おじいさんの NPC)。ほかに `Assets/Synaptic AI Pro/` (AI 操作ツール) と、モサンゴ屋の取り込みで生成される `Assets/_TerrainAutoUpgrade/` も除外。秋色などの派生物は `Assets/KominkaHillside/` 側へコピーして管理する。
 
 ---
 
@@ -56,10 +59,11 @@ Packages/
 
 | 対象 | 規則 | 例 |
 |------|------|-----|
-| システムスクリプト | `KH_{ComponentName}` | `KH_GameManager` |
-| Editor スクリプト | `KH_{Name}Editor` | `KH_SetupEditor` |
-| プレハブ | `KH_{Name}` | `KH_GameBoard` |
-| feature ブランチ | `feature/kh-{shortName}` | `feature/kh-time-attack` |
+| システムスクリプト | `KH_{ComponentName}` | `KH_LeashManager` |
+| Editor スクリプト | `KH_{Name}Editor` | `KH_DogWalkingEditor` |
+| プレハブ | `KH_{Name}` | (現状プレハブ無し) |
+
+古民家から移植したスクリプト・Editor は `KD_` 名のまま `Imported/KominkaDogRun/` に置く。ブランチは現状 `main` への直コミットのみ (feature ブランチは使っていない)。
 
 **UI ハンドラなどローカル専用の public メソッドは `_` 始まりにする**
 (理由は `vrc-networking` スキル。付けないとネットワーク経由で誰でも呼べる)。
@@ -76,28 +80,14 @@ Packages/
 
 ## 共有ナレッジ (vrc-world-agent)
 
-VRChat ワールド開発**一般**の知識・作業手順は `.claude/skills/vrc-*/` にある
+共有 Skill (VRChat ワールド開発**一般**の知識・作業手順) は `.claude/skills/vrc-*/`
 (共有リポジトリへの skill ごとのジャンクション)。
 **このファイルにはこのワールド固有のことだけを書く。**
 
-| Skill | 読むべき場面 |
-|-------|-------------|
-| `vrc-project-registry` | 「これは前に別のワールドでやった」を辿るとき |
-| `vrc-new-world-setup` | 環境の導入・再セットアップ (稀。忘れたとき用) |
-| `vrc-visual-direction` | コアコンセプト直後のビジュアル方針の仮決め・代表シーン検証、モデル・小物・UI制作前、アセット選定・統合レビュー |
-| `vrc-asset-production` | 3D モデル・小物の制作仕様、書き出し・取り込み・検収 |
-| `vrc-synaptic-unity` | Unity エディタを操作するとき (最初に読む)。eval か Editor スクリプトかの判断もここ |
-| `vrc-synaptic-blender` | Blender を操作するとき (モデル・シェイプキー・リグの修正、FBX 書き出し) |
-| `vrc-verification` | 検証・コンパイル確認・Play の引き継ぎ |
-| `vrc-scene-edit-safety` | シーン/プレハブを一括変更する前 |
-| `vrc-udonsharp` | UdonSharp実装、UIの設計・制作・改修・レビュー (§5のUI資料)、アセットを実行時に切り替える設計 |
-| `vrc-networking` | 同期・ネットワークイベントを扱うとき |
-| `vrc-tmp-font` | 日本語 UI の文言追加・フォント作業 |
-| `vrc-physbone-colliders` | 揺れる部位に当たり判定を載せるとき |
-| `vrc-animator-reactions` | Animator でリアクションを出す / 手の接触・撫でを判定するとき |
-| `vrc-performance` | 「重い」「fps が出ない」を判断するとき |
-| `vrc-codex-review` | 機能・Issueの確定、設計書大幅更新、まとまった差分の確定前。小変更は適用条件に従って省略 (同期・保存・権限等は少行数でも対象) |
-| `vrc-destructive-audit` | 公開前の総点検・「バグが無いか一通り見て」と頼まれたとき |
+読む場面は各 Skill の description に書いてある。このワールドでの補足だけ下に置く。
+
+- `vrc-udonsharp`: UI の設計・制作・改修・レビューは §5 の UI 資料から入る
+- `vrc-codex-review`: 小変更は適用条件に従って省略してよいが、同期・保存・権限等は少行数でも対象
 
 **一般化できる知見を得たら、プロジェクト側ではなく共有リポジトリの Skill を直す**
 (ジャンクションなのでその場で編集できる)。

@@ -42,7 +42,6 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 | File | Domain |
 |------|--------|
 | `development/glossary.md` | 用語集 (ユビキタス言語) |
-| `development/design/design_index.md` | 詳細設計の入口 |
 | `development/issues/issue_summary.md` | 課題の入口 (状態ごとに 4 分割) |
 | `development/git-workflow.md` | Git 運用ルール |
 | `development/imports/kominka-autumn-assets.md` | 古民家ドッグランからの秋色資産 (草・葉・遠景の材質と TerrainData) の移植記録。Layer の使い分けもここ |
@@ -65,24 +64,24 @@ UI制作・改修・レビューは `vrc-udonsharp` §5 と `.claude/skills/vrc-
 4. **片手 3 匹・合計 6 匹のリード接続・範囲内行動は初期範囲に含む。** 追加相談で、自分の接続犬へ目的地を指定し、通過点をたどる自由な散歩を採用方針とした。先行・寄り道・待機・誘い・犬同士の遊びを試作し、前方への固定配置を目標にしない。仕様とスコープは `game-design.md` §4・7 が正本
 5. **PC に加え Quest 単体・iOS 対応を目指す。** 「Terrain だから軽い」と判断しない。密度で豪華にせず、眺め・道・犬・古民家とのつながりで作る
 6. **散歩道から Terrain の切断面・空白を見せない。** 歩ける範囲の外に景観用の余白を置く
-7. **画面は同期しない。** 既存の同期を移植の土台にする。リードの接続先・左右は専用ManagerのOwnerが裁定する初回実装を導入した。**複数人・退出・途中参加は 2026-09-22 の 6 人 PCVR で成立** (総合評価。項目別の合否は未記録)。残る端末の確認は [VER-WLD-001](development/issues/VER-WLD-001-quest-ios-devices.md)、設計と残課題は DES-DOG-001 を参照
+7. **画面は同期しない。PCVR の総合評価を、項目別・端末別の合格や性能数値に読み替えない。** 既存の同期を移植の土台にし、リードの接続先・左右は専用 Manager の Owner が裁定する。ユーザーの PCVR 評価は多くが総合評価 (例: 2026-09-22 の 6 人散歩は項目別の合否が未記録) なので、完了条件の各項目・Quest 単体・iOS ([VER-WLD-001](development/issues/VER-WLD-001-quest-ios-devices.md))・ClientSim や Editor の結果とは分けて記録する。この但し書きの正本はここで、他の文書は「(不変条件 7)」で参照する。同期の設計と残課題は DES-DOG-001
 8. **企画の原本 (`reference/VAnimal_KominkaHillside_Concept.md`) と購入アセットのフォルダは編集しない。** 秋色などの派生物は `Assets/KominkaHillside/` 側にコピーして管理する
 
 ---
 
-## 現在地と次の作業
+## 対象ごとの参照先
 
-現在の判断と改善順は [開発全体像](development/overview.md) §3、実行キューと状態は [Issueサマリ](development/issues/issue_summary.md)。個票・検証記録の最新記載を確認し、過去のPASSを現在版の合格へ読み替えない。試行経緯・検査件数はこの入口へ追記せず、次の記録を更新する。
+**現在地と次の作業の本文は [開発全体像](development/overview.md) §3 だけが持つ。** 実行キューと状態は [Issueサマリ](development/issues/issue_summary.md)。下表は対象ごとの参照先の案内で、進捗・状態・検査件数はここへ書かない (個票・記録を更新する)。過去の PASS を現在版の合格へ読み替えない。
 
 | 対象 | 記録・未確認条件の参照先 |
 |---|---|
 | 散歩・首輪・リード | [自由な散歩](plans/2026-09-20-free-walk.md)、[散歩検証](plans/2026-09-20-leash-walking.md)、[制作票](plans/2026-09-20-leash-asset-production.md) |
-| 手元メニュー・集合・拠点 | [実装とチェックリスト](plans/2026-09-20-menu-gather-stations.md)、[古民家の器への作り替え計画](plans/2026-09-23-menu-rebuild.md) (段階 0-b 完了 2026-09-24。段階 1 IMP-PRG-001・段階 2 IMP-DOG-014 / 015 / 016・段階 3 IMP-UI-001 後半は 2026-09-24 実装済み・Verify 全 PASS、実機確認待ち。首輪干渉 8 件・ミニチュアの首輪・クレジット URL 3 件はユーザー判断待ち) |
-| フリスビー | [本シーン導入](plans/2026-09-20-frisbee-prototype.md)、[動きの改修経緯](plans/2026-09-21-frisbee-variations.md)、[6 匹展開](plans/2026-09-24-frisbee-six-dogs.md) (2026-09-24 実装、PCVR 待ち)、[ハーネスの手順・最新記録](testing/kh-frisbee-harness.md)。1匹での成立確認と6匹展開は別 |
+| 手元メニュー・集合・拠点 | [旧メニューの実装とチェックリスト](plans/2026-09-20-menu-gather-stations.md)、[古民家の器への作り替え計画](plans/2026-09-23-menu-rebuild.md)、[IMP-UI-001](development/issues/review/IMP-UI-001-menu-table-driven-and-settings.md) / [IMP-PRG-001](development/issues/review/IMP-PRG-001-ledger-shopkeeper-points.md) / [IMP-DOG-014](development/issues/review/IMP-DOG-014-treats-port.md) / [015](development/issues/review/IMP-DOG-015-accessories-and-petfx-port.md) / [016](development/issues/review/IMP-DOG-016-call-pose-port-and-slope.md) |
+| フリスビー | [本シーン導入](plans/2026-09-20-frisbee-prototype.md)、[動きの改修経緯](plans/2026-09-21-frisbee-variations.md)、[6 匹展開](plans/2026-09-24-frisbee-six-dogs.md)、[ハーネスの手順・最新記録](testing/kh-frisbee-harness.md)、[BUG-DOG-003 非マスターの投球](development/issues/BUG-DOG-003-frisbee-non-master-throw.md) |
 | 空・ナイトモード | [実装とチェックリスト](plans/2026-09-21-sky-and-night-mode.md) |
-| 容量 (ビルドサイズ) | [ビルドサイズ実測](plans/2026-09-24-build-size-audit.md)。計測は `Tools/KominkaHillside/Build Size/`、手順と罠は `vrc-performance` のビルドサイズチェック。素材を足したら `7 - Apply` → `2 - Bundle Size Android` |
-| Quest単体・iOS | [端末検証](development/issues/VER-WLD-001-quest-ios-devices.md)。PCVR総合評価を端末別・項目別の合格にしない |
-| 地形・境界・負荷 | [開発全体像](development/overview.md) §2〜3。Terrain採用は確定、境界・落下・負荷の項目別確認は継続 |
+| 容量 (ビルドサイズ) | [ビルドサイズ実測](plans/2026-09-24-build-size-audit.md)、計測メニュー `Tools/KominkaHillside/Build Size/`、手順と罠は `vrc-performance` のビルドサイズチェック。素材を足したら `7 - Apply` → `2 - Bundle Size Android` |
+| Quest単体・iOS | [端末検証](development/issues/VER-WLD-001-quest-ios-devices.md) |
+| 地形・境界・負荷 | [IMP-ENV-001](development/issues/IMP-ENV-001-hillside-polish.md)、[完了した地形判断](development/issues/archive/archive_summary.md) |
 | 犬ギミックの出所 | [移植記録](development/imports/kominka-dog-system.md) |
 
 Build は KH_World を作り直す。手修正は設定へ写してから再生成する。数値は Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeConfig.cs が正本。手置きは KH_World 外へ。

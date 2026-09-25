@@ -465,7 +465,7 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 
 ## 2026-09-24 台帳・おじいさん・ポイント (段階 1)
 
-[メニュー再構築計画](../../plans/2026-09-23-menu-rebuild.md) D-5・D-8 の段階 1 ([IMP-PRG-001](../issues/IMP-PRG-001-ledger-shopkeeper-points.md))。古民家の台帳・カタログ・おじいさん・ようこそを裏山のシーンに置き、手元メニューに残高とポイント面を足した。実行順・Verify の数値・未確認の点は計画書の「実装記録 / 段階 1」が正本。ここには**古民家の移植元から何を変えたか**だけを残す。移植元の SHA は段階 0-a と同じ (`44505384` 相当)。
+[メニュー再構築計画](../../plans/2026-09-23-menu-rebuild.md) D-5・D-8 の段階 1 ([IMP-PRG-001](../issues/review/IMP-PRG-001-ledger-shopkeeper-points.md))。古民家の台帳・カタログ・おじいさん・ようこそを裏山のシーンに置き、手元メニューに残高とポイント面を足した。実行順・Verify の数値・未確認の点は計画書の「実装記録 / 段階 1」が正本。ここには**古民家の移植元から何を変えたか**だけを残す。移植元の SHA は段階 0-a と同じ (`44505384` 相当)。
 
 状態: Verify 全 PASS、シーン保存済み。Codex レビュー (実行中)・コミット・Play (ClientSim・実機) は未了。
 
@@ -520,7 +520,7 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 
 ## 2026-09-24 おやつ・かざり・撫でFX・呼ぶ (段階 2)
 
-[メニュー再構築計画](../../plans/2026-09-23-menu-rebuild.md) D-2・D-5・D-7・D-8 の段階 2 ([IMP-DOG-014](../issues/IMP-DOG-014-treats-port.md) / [IMP-DOG-015](../issues/IMP-DOG-015-accessories-and-petfx-port.md) / [IMP-DOG-016](../issues/IMP-DOG-016-call-pose-port-and-slope.md))。古民家のおやつ・飾り・撫でFX・呼ぶ・ポーズ・場所決めを裏山のシーンに置き、手元メニューの準備中を外した。実行順・Verify の数値・首輪干渉と斜面の実測・未確認の点は計画書の「実装記録 / 段階 2」が正本。ここには**古民家の移植元から何を変えたか**と、資産のコピーだけを残す。移植元の SHA は段階 0-a と同じ (`44505384` 相当)。
+[メニュー再構築計画](../../plans/2026-09-23-menu-rebuild.md) D-2・D-5・D-7・D-8 の段階 2 ([IMP-DOG-014](../issues/review/IMP-DOG-014-treats-port.md) / [IMP-DOG-015](../issues/review/IMP-DOG-015-accessories-and-petfx-port.md) / [IMP-DOG-016](../issues/review/IMP-DOG-016-call-pose-port-and-slope.md))。古民家のおやつ・飾り・撫でFX・呼ぶ・ポーズ・場所決めを裏山のシーンに置き、手元メニューの準備中を外した。実行順・Verify の数値・首輪干渉と斜面の実測・未確認の点は計画書の「実装記録 / 段階 2」が正本。ここには**古民家の移植元から何を変えたか**と、資産のコピーだけを残す。移植元の SHA は段階 0-a と同じ (`44505384` 相当)。
 
 状態: Verify 全 PASS、シーン保存済み。Codex レビュー (段階 3 と合わせて実行中)・コミット・Play (ClientSim・実機) は未了。
 
@@ -609,7 +609,7 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 
 ## 2026-09-24 設定面の残りとようこそ (段階 3)
 
-[メニュー再構築計画](../../plans/2026-09-23-menu-rebuild.md) D-5 の「設定面 (残り)」と「ようこそ」([IMP-UI-001](../issues/IMP-UI-001-menu-table-driven-and-settings.md) 段階 3)。実行順・Verify の数値は計画書の「実装記録 / 段階 3」が正本。移植元の SHA は段階 0-a と同じ (`44505384` 相当)。新しい資産のコピーは無い。
+[メニュー再構築計画](../../plans/2026-09-23-menu-rebuild.md) D-5 の「設定面 (残り)」と「ようこそ」([IMP-UI-001](../issues/review/IMP-UI-001-menu-table-driven-and-settings.md) 段階 3)。実行順・Verify の数値は計画書の「実装記録 / 段階 3」が正本。移植元の SHA は段階 0-a と同じ (`44505384` 相当)。新しい資産のコピーは無い。
 
 状態: Verify 全 PASS、シーン保存済み。Codex レビュー (段階 2 と合わせて実行中)・コミット・PCVR は未了。
 

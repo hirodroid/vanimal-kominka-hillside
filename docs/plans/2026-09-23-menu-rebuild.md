@@ -1,8 +1,10 @@
 # 手元メニューを古民家と同一の器へ作り替える実装計画
 
-状態: **段階 0-a・0-b 完了** (2026-09-23 実装・Verify 全 PASS・Codex D+M・コミット a19112a、2026-09-24 に PCVR でユーザー OK)。**段階 1 (IMP-PRG-001) は 2026-09-24 に実装済み・Verify 全 PASS。Codex D+M 済み (5 件修正・1 件記録)、Play (ClientSim・PCVR) は未実施**。**段階 2 (IMP-DOG-014 / 015 / 016) と段階 3 (IMP-UI-001 後半) は 2026-09-24 に実装済み・Verify 全 PASS・シーン保存済み。Codex D+M+U 済み (6 件修正・2 件記録)、コミット未、Play (ClientSim・PCVR) 待ち。首輪と首元の飾りの干渉 8 件・ミニチュアの首輪・クレジット URL 3 件はユーザーの判断待ち** (下の「ユーザーへの報告」)。記録は下の「実装記録」、確認手順は「実機チェックリスト」。設計は 2026-09-23 のユーザー指示「モック OK。古民家の実際のメニューの配置・コンポーネントを確認して設計」に基づく。採否と全体構成の正本は [game-design §4](../game-design.md) と [DES-UI-003](../development/issues/DES-UI-003-menu-scope-and-polish.md)、画面・入力・状態・Unity 部品の正本は [world-ui-spec §4〜6・§8](../world-ui-spec.md)。見え方の合意はモック 版 3 (<https://claude.ai/artifact/K1moWuWCeWMUm7wUprZx3f>、ユーザー「OK」)。
+**最新状態は個票** ([IMP-UI-001](../development/issues/review/IMP-UI-001-menu-table-driven-and-settings.md) / [IMP-PRG-001](../development/issues/review/IMP-PRG-001-ledger-shopkeeper-points.md) / [IMP-DOG-014](../development/issues/review/IMP-DOG-014-treats-port.md) / [015](../development/issues/review/IMP-DOG-015-accessories-and-petfx-port.md) / [016](../development/issues/review/IMP-DOG-016-call-pose-port-and-slope.md))、全体の現在地は [overview §3](../development/overview.md#3-現在地) を見る。
 
-この計画書は**順序と分担**だけを持つ。何を作るかは各 Issue が持つ。
+実施の経過 (2026-09-25 時点): 段階 0-a・0-b は 2026-09-23 実装・Codex D+M・コミット a19112a、2026-09-24 に PCVR でユーザー OK。段階 1 (IMP-PRG-001) は 2026-09-24 実装・Verify 全 PASS・Codex D+M 済み・コミット e4f5906。段階 2 (IMP-DOG-014 / 015 / 016) と段階 3 (IMP-UI-001 後半) は 2026-09-24 実装・Verify 全 PASS・Codex D+M+U 済み (6 件修正・2 件記録)・コミット c27a7e3。首輪と首元の飾りの干渉は 2026-09-24 に案 C で決定・適用 (049b173 / 136b516)、ミニチュアの首輪込みも同日ユーザー OK。段階 1〜3 の Play (ClientSim・PCVR) とクレジット URL 3 件の記入は、この時点で未了。記録は下の「実装記録」、確認手順は「実機チェックリスト」。設計は 2026-09-23 のユーザー指示「モック OK。古民家の実際のメニューの配置・コンポーネントを確認して設計」に基づく。採否と全体構成の正本は [game-design §4](../game-design.md) と [DES-UI-003](../development/issues/DES-UI-003-menu-scope-and-polish.md)、画面・入力・状態・Unity 部品の正本は [world-ui-spec §4〜6・§8](../world-ui-spec.md)。見え方の合意はモック 版 3 (<https://claude.ai/artifact/K1moWuWCeWMUm7wUprZx3f>、ユーザー「OK」)。
+
+この計画書は**順序と分担**と、その日時付きの実施記録だけを持つ。何を作るか・今どこまで済んだかは各 Issue が持つ。
 
 ## 古民家の器の事実 (2026-09-23 読取調査)
 
@@ -125,10 +127,10 @@
 
 | 段階 | 内容 | 担当 Issue | ゲート |
 |---|---|---|---|
-| **0-a** | **移植の土台**: `Assets/KominkaDogRun/Editor/` を丸ごとコピー、**パス定数の置換一覧を作る** (`grep "Assets/KominkaDogRun"` の結果を [kominka-dog-system](../development/imports/kominka-dog-system.md) に表で記録。Script / Program Asset は `Assets/KominkaHillside/Imported/KominkaDogRun/…`、Font / Textures / Data / Models / Materials は `Assets/KominkaHillside/…`)、MenuItem の付け替えと未採用機能の隔離 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (0-a) | **コンパイル 0** / Console エラー 0 / 置換一覧が imports に記録されている / Codex M |
+| **0-a** | **移植の土台**: `Assets/KominkaDogRun/Editor/` を丸ごとコピー、**パス定数の置換一覧を作る** (`grep "Assets/KominkaDogRun"` の結果を [kominka-dog-system](../development/imports/kominka-dog-system.md) に表で記録。Script / Program Asset は `Assets/KominkaHillside/Imported/KominkaDogRun/…`、Font / Textures / Data / Models / Materials は `Assets/KominkaHillside/…`)、MenuItem の付け替えと未採用機能の隔離 | [IMP-UI-001](../development/issues/review/IMP-UI-001-menu-table-driven-and-settings.md) (0-a) | **コンパイル 0** / Console エラー 0 / 置換一覧が imports に記録されている / Codex M |
 | **0-b** | **器の構築**: スプライト焼き、フォント 48 pt 再ベイク、文言・言語生成、KD_TreatPouch を配置して 7 タブの器を作る。さんぽ・おもちゃ・あそぶを KH_HandMenu から移し、KH_HandMenu を退役。**設定面の器とナイトモードのスライダー**。ライブは準備中、おやつ・かざり・呼ぶは行に「準備中」。拠点板の付け替え | IMP-UI-001 (0-b) | コンパイル 0 / Verify (Pouch + Scroll Layout、下の Verify 表の段階 0 分) 全 PASS / 既存 3 機能の退行なし (`Walking/5 Verify` 全 PASS。起票時の「111」は古い件数で、2026-09-23 時点の項目数は 208) / Codex D+M / **PCVR で現行 3 機能の見え方が古民家と同じ (ユーザー)**。**到達状況 (2026-09-23): コンパイル 0・Verify 全 PASS・Walking/5 208/0 は済み。Codex 未・PCVR 未** |
-| 1 | 台帳・おじいさん・ポイント・残高・確認カードの実体 (購入が動く)。**初回未受取の案内帯 (購入面の 1 行) と ようこそ の最小版 (題 + [メニューを見る]) を前倒しする** | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) | Verify + ClientSim (T-007/T-008) + Codex D+M。**到達状況 (2026-09-24): コンパイル 0・Verify 全 PASS (3b / 4a / 4e / 20 / 21 / 22 / 23 / 11c / 24 / 15a)・Walking/5 208/0・check-consume-once OK は済み。Codex D+M+U 済み (6 件修正・2 件記録)。T-007 / T-008 は実機または ClientSim 待ち (台帳用のハーネスは無い)** |
-| 2 | おやつ / かざり + 撫でFX + ミニチュア / 呼ぶ + ポーズ面 + 場所決め (3 本並列) | [IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md) / [015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) / [016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | 各 Verify + ハーネス + Codex D+M、PCVR (ユーザー)。加えて **入室 → おじいさん → 200pt → かざりで装着 → さんぽ の一周が 1 人で成立する**。**到達状況 (2026-09-24): コンパイル 0 (C# 0 / U# 82)・Verify 全 PASS (6d / 6f / 6h / 6b / 25 / 20 / 21 / 22 / 23 / 24 / 4e / Walking/5 209/0、check-consume-once OK)・シーン保存は済み。Codex D+M+U 済み (6 件修正・2 件記録) (段階 3 と合わせて)。ハーネス・一周・PCVR は未。首輪干渉 8 件はユーザー判断待ち** |
+| 1 | 台帳・おじいさん・ポイント・残高・確認カードの実体 (購入が動く)。**初回未受取の案内帯 (購入面の 1 行) と ようこそ の最小版 (題 + [メニューを見る]) を前倒しする** | [IMP-PRG-001](../development/issues/review/IMP-PRG-001-ledger-shopkeeper-points.md) | Verify + ClientSim (T-007/T-008) + Codex D+M。**到達状況 (2026-09-24): コンパイル 0・Verify 全 PASS (3b / 4a / 4e / 20 / 21 / 22 / 23 / 11c / 24 / 15a)・Walking/5 208/0・check-consume-once OK は済み。Codex D+M+U 済み (6 件修正・2 件記録)。T-007 / T-008 は実機または ClientSim 待ち (台帳用のハーネスは無い)** |
+| 2 | おやつ / かざり + 撫でFX + ミニチュア / 呼ぶ + ポーズ面 + 場所決め (3 本並列) | [IMP-DOG-014](../development/issues/review/IMP-DOG-014-treats-port.md) / [015](../development/issues/review/IMP-DOG-015-accessories-and-petfx-port.md) / [016](../development/issues/review/IMP-DOG-016-call-pose-port-and-slope.md) | 各 Verify + ハーネス + Codex D+M、PCVR (ユーザー)。加えて **入室 → おじいさん → 200pt → かざりで装着 → さんぽ の一周が 1 人で成立する**。**到達状況 (2026-09-24): コンパイル 0 (C# 0 / U# 82)・Verify 全 PASS (6d / 6f / 6h / 6b / 25 / 20 / 21 / 22 / 23 / 24 / 4e / Walking/5 209/0、check-consume-once OK)・シーン保存は済み。Codex D+M+U 済み (6 件修正・2 件記録) (段階 3 と合わせて)。ハーネス・一周・PCVR は未。首輪干渉 8 件はユーザー判断待ち** (2026-09-25 撤回: 首輪干渉は案 C で決定・適用済み 049b173、コミット済み c27a7e3) |
 | 3 | 設定面 (距離フェード・ナイトモードスライダー・許可 2 種・言語・クレジット・案内・音量)、ようこそ | IMP-UI-001 (後半) | Verify + Codex D+M+U、PCVR。**到達状況 (2026-09-24): Verify 全 PASS (14c / 16a / 22 / 11c / 15a / 20 / 21)・シーン保存は済み。Codex D+M+U 済み (6 件修正・2 件記録) (段階 2 と合わせて)。PCVR (T-011 を含む) は未。クレジット URL 3 件は未記入 (Verify 22 は `CREDIT_URL_PENDING 3`)** |
 | 4 | 複数人・Desktop/Touch・Quest/iOS | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | 実機チェックリスト |
 
@@ -340,7 +342,11 @@
 
 ### 段階 1 (2026-09-24)
 
-**状態: 実装済み・Verify 全 PASS。** シーン保存済み (dirty = False)。Codex D+M は実行中。コミット・Play (ClientSim・実機とも) は未実施。ファイルごとの差分は [kominka-dog-system「2026-09-24 台帳・おじいさん・ポイント (段階 1)」](../development/imports/kominka-dog-system.md#2026-09-24-台帳おじいさんポイント-段階-1)。完了条件の進み具合は [IMP-PRG-001「進捗」](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md#進捗)。
+**状態: 実装済み・Verify 全 PASS。** シーン保存済み (dirty = False)。Codex D+M は実行中。コミット・Play (ClientSim・実機とも) は未実施。
+
+2026-09-25 撤回: コミット済み e4f5906 (Codex D+M は下の「Codex レビュー」のとおり済み)。
+
+ファイルごとの差分は [kominka-dog-system「2026-09-24 台帳・おじいさん・ポイント (段階 1)」](../development/imports/kominka-dog-system.md#2026-09-24-台帳おじいさんポイント-段階-1)。完了条件の進み具合は [IMP-PRG-001「進捗」](../development/issues/review/IMP-PRG-001-ledger-shopkeeper-points.md#進捗)。
 
 実装は台帳・カタログ担当 (P1)、おじいさん担当 (P2)、板・ようこそ担当 (P3) の 3 エージェントが並列で行った。司令塔は文言の断片を `UITranslations.json` へ統合し (13 言語、664 キー)、Tools メニューを実行した。準備として、購入アセット polyperfect (Low Poly Animated People + Common、git 管理外) と `AC_KD_Npc.controller`、CE の UdonProduct 6 本 (`Data/CE`) を古民家からコピーした (前コミット 7165e45)。
 
@@ -428,7 +434,11 @@ Menu/20 で新たに見るもの: ledger / catalog が `KH_Dogs` 直下、`KD_Sh
 
 ### 段階 2 (2026-09-24)
 
-**状態: 実装済み・Verify 全 PASS。** シーン保存済み (dirty = False)。Codex D+M+U (段階 3 と合わせて 1 回) は実行中。コミット・Play (ClientSim・実機とも) は未実施。ファイルごとの差分と資産コピーの記録は [kominka-dog-system「段階 2」](../development/imports/kominka-dog-system.md#2026-09-24-おやつかざり撫でfx呼ぶ-段階-2)。完了条件の進み具合は各 Issue の「進捗」([IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md#進捗) / [015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md#進捗) / [016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md#進捗))。
+**状態: 実装済み・Verify 全 PASS。** シーン保存済み (dirty = False)。Codex D+M+U (段階 3 と合わせて 1 回) は実行中。コミット・Play (ClientSim・実機とも) は未実施。
+
+2026-09-25 撤回: コミット済み c27a7e3 (Codex D+M+U は段階 3 末尾の「Codex レビュー」のとおり済み)。
+
+ファイルごとの差分と資産コピーの記録は [kominka-dog-system「段階 2」](../development/imports/kominka-dog-system.md#2026-09-24-おやつかざり撫でfx呼ぶ-段階-2)。完了条件の進み具合は各 Issue の「進捗」([IMP-DOG-014](../development/issues/review/IMP-DOG-014-treats-port.md#進捗) / [015](../development/issues/review/IMP-DOG-015-accessories-and-petfx-port.md#進捗) / [016](../development/issues/review/IMP-DOG-016-call-pose-port-and-slope.md#進捗))。
 
 実装は おやつ担当 (014)、かざり・撫でFX・ミニチュア担当 (015)、呼ぶ・ポーズ・場所決め担当 (016) の 3 エージェントが並列で行った。共通ファイルへの差分は各担当が patch に書き、統合担当が 1 つにまとめた。司令塔は資産を古民家からコピーし (315 ファイル、GUID は古民家と同じ)、文言を統合し、Tools メニューを実行した。
 
@@ -448,7 +458,7 @@ Menu/20 で新たに見るもの: ledger / catalog が `KH_Dogs` 直下、`KD_Sh
     - `KD_BundledPetFxEditor.Hillside.cs`: `Menu/6g Setup Pet Fx` / `6h Verify Pet Fx`。同梱 5 種 × 2 層を各犬の `KD_PetHearts` と同じ位置へ置く。`KH_Dogs/KD_PetFxBox` (SyncMode None)、petControllers の往復、`catalog.consumers`、`pouch.petFxBox`。
     - `KD_DogPreviewEditor.Hillside.cs`: 焼き済みのミニチュアとの比較。
   - 既存の Editor 4 本を partial にした。Verify 25 に「飾りのメッシュは 1 つを共有」の検査を足した。
-  - ミニチュア: 犬の体は古民家の焼き済みと 12 姿勢すべて一致した (最大ずれ 0.022 mm)。違いは首輪 (Band) の分だけなので、Menu/18 で首輪込みに焼き直した (司令塔の決定。ユーザー確認待ち)。
+  - ミニチュア: 犬の体は古民家の焼き済みと 12 姿勢すべて一致した (最大ずれ 0.022 mm)。違いは首輪 (Band) の分だけなので、Menu/18 で首輪込みに焼き直した (司令塔の決定。2026-09-24 にユーザー OK で確定、049b173)。
 - 呼ぶ・ポーズ・場所決め (016):
   - `KD_SleepBoard`: `hillsideLeashes` と読むだけの API (`_IsCalled` / `_IsLeashedDog` / `_IsGatheringDog` / `_IsWalkBusy`)。
   - `KD_SleepSlot`: 斜面の定数を 1 か所に置いた (`HillsideMinGroundNormal = 0.9`、layer 0 / 11、probe 0.5 m、高さの許容 0.1 m)。`_PlacementGroundOk` は真下へのレイキャストで高さと法線を見る。`ValidPlacement` は「場所を選んで呼ぶ」の確定にだけ効く。予約・確定・`_BeginSelection` はリード中・集合中の犬を拒否する。Watch: 呼ぶとリードが同時に同じ犬に乗ったら、リードが勝って呼ぶを解放する。
@@ -472,9 +482,9 @@ Menu/20 で新たに見るもの: ledger / catalog が `KH_Dogs` 直下、`KD_Sh
 |---|---|---|
 | 干渉なし | 25 | — |
 | (a) 前へずらして解消。6e が自動で適用する | 9 | Corgi 肉球メダリオン 1 mm / Pome 宝石付き首飾り 9 mm・ひまわり首飾り 1 mm・肉球メダリオン 16 mm / Lab 蝶ネクタイ 19 mm・胸かぼちゃ 16 mm / Dachs 宝石付き首飾り 23 mm / Shiba 肉球メダリオン 3 mm / Samoyed 肉球メダリオン 6 mm |
-| **(a) では解消できない** | **8** | Lab: バンダナ ((b) でも不可)・宝石付き首飾り (前 8 + 下 16 なら解消)・ひまわり首飾り (前 2 + 下 26)・花コサージュ (前 22 + 下 12)・肉球メダリオン (前 6 + 下 30) / Dachs: バンダナ (不可)・ひまわり首飾り (不可)・肉球メダリオン (前 0 + 下 28) |
+| **(a) では解消できない** (案 C 決定前の実測、2026-09-24) | **8** | Lab: バンダナ ((b) でも不可)・宝石付き首飾り (前 8 + 下 16 なら解消)・ひまわり首飾り (前 2 + 下 26)・花コサージュ (前 22 + 下 12)・肉球メダリオン (前 6 + 下 30) / Dachs: バンダナ (不可)・ひまわり首飾り (不可)・肉球メダリオン (前 0 + 下 28) |
 
-Lab と Dachs は首輪が低く大きいことが原因。**8 件は取り下げず、そのまま残している。取り下げるかはユーザーが判断する** (Issue の決まり)。→ **2026-09-24 ユーザー決定 (案 C)**: 首元品はなくさず、首輪飾りへの作り替えもしない。当たる組み合わせだけ対処する。(b) 前 + 下 で解消する 5 件 (Lab: 宝石付き首飾り 前 8 + 下 16mm / ひまわり首飾り 前 2 + 下 26 / 花コサージュ 前 22 + 下 12 / 肉球メダリオン 前 6 + 下 30、Dachs: 肉球メダリオン 前 0 + 下 28) は Menu/6e が自動適用 (値は KD_AccessoryFits.Kominka.json の hillsideB*)。物理的に無理な 3 件 (Lab のバンダナ、Dachs のバンダナ、Dachs のひまわり首飾り) は除外表 KD_AccessorySetupEditor.HillsideCollarExcluded → KD_AccessoryBox.blockedDogs/blockedProducts に配線し、犬選択の行を暗くして「この犬には付けられません (首輪と重なる)」(WordAccNotForDog)、Owner も拒否。夏セットの Dachs はセットごと拒否せず ひまわり首飾りだけ飛ばす。既定品バンダナは「既定 = 何も付けない」で問題なし。Verify 6f: 5 件「解消 (b)」・3 件「除外」・解消しない品 0、25 / 20 / 22 / 21 / Walking/5 PASS、保存済み。試着・ポーズのミニチュアは首輪込みで確定 (ユーザー OK)。(b) の値は計算しただけで、適用していない。
+Lab と Dachs は首輪が低く大きいことが原因。案 C 決定前の実測 (2026-09-24) の時点では、8 件を取り下げずに残し、取り下げはユーザー判断としていた。→ **2026-09-24 ユーザー決定 (案 C)**: 首元品はなくさず、首輪飾りへの作り替えもしない。当たる組み合わせだけ対処する。(b) 前 + 下 で解消する 5 件 (Lab: 宝石付き首飾り 前 8 + 下 16mm / ひまわり首飾り 前 2 + 下 26 / 花コサージュ 前 22 + 下 12 / 肉球メダリオン 前 6 + 下 30、Dachs: 肉球メダリオン 前 0 + 下 28) は Menu/6e が自動適用 (値は KD_AccessoryFits.Kominka.json の hillsideB*)。物理的に無理な 3 件 (Lab のバンダナ、Dachs のバンダナ、Dachs のひまわり首飾り) は除外表 KD_AccessorySetupEditor.HillsideCollarExcluded → KD_AccessoryBox.blockedDogs/blockedProducts に配線し、犬選択の行を暗くして「この犬には付けられません (首輪と重なる)」(WordAccNotForDog)、Owner も拒否。夏セットの Dachs はセットごと拒否せず ひまわり首飾りだけ飛ばす。既定品バンダナは「既定 = 何も付けない」で問題なし。Verify 6f: 5 件「解消 (b)」・3 件「除外」・解消しない品 0、25 / 20 / 22 / 21 / Walking/5 PASS、保存済み。試着・ポーズのミニチュアは首輪込みで確定 (ユーザー OK)。(案 C 決定前の実測時点では (b) の値は計算だけで未適用だった。)
 
 **斜面の法線 (016 の実測)**
 
@@ -494,7 +504,7 @@ Lab と Dachs は首輪が低く大きいことが原因。**8 件は取り下�
   1. かざりへの合流の呼び出し口は `.Redraw.cs` ではなく `.Acc.cs` の `RedrawAcc` の末尾に置いた。
   2. 群見出し「撫でエフェクト」(任意のパッチ) を採用した。
   3. CE セットの [ギフト] は出さない (裏山では未決定)。
-  4. ミニチュアは首輪込みで焼き直した (司令塔の決定)。
+  4. ミニチュアは首輪込みで焼き直した (司令塔の決定。2026-09-24 にユーザー OK で確定)。
 - 016:
   1. 集合中の犬も呼ぶの対象から外した (DES-DOG-001 Q2「集合中の割込を禁止」と揃えた)。
   2. 呼ぶとリードが同時に同じ犬に乗ったら、リードが勝つ。
@@ -540,9 +550,15 @@ Lab と Dachs は首輪が低く大きいことが原因。**8 件は取り下�
 
 **未実施**: Codex D+M+U の結果の反映 (実行中。表は後で足す)、コミット、Play (ClientSim・実機とも)、ハーネスでのおやつの固定手順、一周 (入室 → おじいさん → 200pt → かざりで装着 → さんぽ)。人が確認する点は下の「実機チェックリスト / 3. 段階 2」。
 
+2026-09-25 撤回: コミット済み c27a7e3 (Codex D+M+U の反映は段階 3 末尾の表)。Play・おやつのハーネス・一周の最新状態は個票を見る。
+
 ### 段階 3 (2026-09-24)
 
-**状態: 実装済み・Verify 全 PASS。** シーン保存済み (dirty = False)。Codex D+M+U (段階 2 と合わせて 1 回) は実行中。コミット・PCVR は未実施。ファイルごとの差分は [kominka-dog-system「段階 3」](../development/imports/kominka-dog-system.md#2026-09-24-設定面の残りとようこそ-段階-3)。完了条件の進み具合は [IMP-UI-001「進捗」](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md#進捗)。
+**状態: 実装済み・Verify 全 PASS。** シーン保存済み (dirty = False)。Codex D+M+U (段階 2 と合わせて 1 回) は実行中。コミット・PCVR は未実施。
+
+2026-09-25 撤回: コミット済み c27a7e3 (Codex D+M+U は下の「Codex レビュー」のとおり済み)。
+
+ファイルごとの差分は [kominka-dog-system「段階 3」](../development/imports/kominka-dog-system.md#2026-09-24-設定面の残りとようこそ-段階-3)。完了条件の進み具合は [IMP-UI-001「進捗」](../development/issues/review/IMP-UI-001-menu-table-driven-and-settings.md#進捗)。
 
 実装は 設定面担当 (U1) と ようこそ・インフォメーション担当 (U2) の 2 エージェントが並列で行った。司令塔は文言を統合し、Tools メニューを段階 2 と一続きで実行した (上の「段階 2」の表)。
 
@@ -578,6 +594,8 @@ Lab と Dachs は首輪が低く大きいことが原因。**8 件は取り下�
 
 **未実施**: Codex D+M+U の結果の反映 (実行中)、コミット、PCVR (T-011 を含む)。人が確認する点は下の「実機チェックリスト / 4. 段階 3」。
 
+2026-09-25 撤回: コミット済み c27a7e3 (Codex D+M+U の反映は下の表)。PCVR の最新状態は個票を見る。
+
 **Codex レビュー (D + M + U、2026-09-24、gpt-6-astra、段階 2・3 をまとめて)** — 指摘 7 件 (高 1 / 中 5 / 低 1)。D の 同期の権威・Late Joiner / リード・集合との排他 / 斜面・地形追従 / 購入処理 / 距離フェード / 撫でFX 合流 / U#・同期変数 / 人の配置保護、M の Setup・Verify・段階表 / 定数の二重管理 / Verify 20・25 の変更理由 / 段階 3 の構成、U の 入口・準備中解除 / 設定 3 群 は「問題なし」。
 
 | # | 重要度 | 指摘 | 対応 |
@@ -608,7 +626,7 @@ Lab と Dachs は首輪が低く大きいことが原因。**8 件は取り下�
 - [ ] 準備中のタブ (おやつ・かざり・呼ぶ・ライブ) は、行 0 に「準備中」だけが出る (ライブは「裏山のライブは準備中」と説明 1 行)。押しても何も壊れない。ヘッダに残高は出ない (段階 1 まで)。
 - [ ] ナイトモード: 設定 → スライダーで夜の明るさが連続的に変わり、フェードが不自然でない。**退室して入り直すと値が戻る** (自分だけに反映)。設定ホームにラジオ・音量・距離フェード・インフォメーション・写真の入口が無いのは意図どおり (段階 3)。
 - [ ] **開閉の長押しが 0.6 秒 → 0.5 秒・しきい値 0.6 → 0.8 に変わった体感が許容できる** (DES-UI-001 で PCVR 確認済みの値からの変更。誤爆・開けないが起きないか)。
-- 参考 (チェック項目ではない): フリスビーの [試作] ボタンは無くなっている。代わりの入口は判断待ち (上の「失ったもの」)。
+- 参考 (チェック項目ではない): フリスビーの [試作] ボタンは無くなっている。代わりの入口は 2026-09-24 に決定済み: あそぶタブのトレーナー群の行「フリスビーの取り方」(下の「ユーザーへの報告」4)。
 
 ### 1. 1 人・端末別 (開閉 3 端末)
 
@@ -658,10 +676,10 @@ Lab と Dachs は首輪が低く大きいことが原因。**8 件は取り下�
   - [ ] [買う]: 行のヒント (18 pt。「5個入り N pt」+「あと N pt」/「所持数の上限です」) が枠に収まる。確認カードが 上限 / 不足 / 購入可 の 3 態で正しく出る。[やめる] で「購入をやめました」。買うと在庫が 5 増え、退室して入り直すと在庫が戻る。
   - [ ] **T-009 (4 人)**: 4 人が同時に出すと 4 人目に枠の理由が出て、在庫が減らない。枠が空けば出し直せる。在庫 0・全犬が拘束中 (リード中・集合中・フリスビー中) でも理由が出て在庫を失わない。
 - かざり・撫でFX:
-  - [ ] **首輪と首元の飾り** (案 C 適用後): (b) で下げた 5 件が胸の毛に沈んで見えないか、除外 3 件の行が暗く理由が出るか。以前の記述: 解消できなかった 8 件 (Lab のバンダナ・宝石付き首飾り・ひまわり首飾り・花コサージュ・肉球メダリオン、Dachs のバンダナ・ひまわり首飾り・肉球メダリオン) の見え方。**取り下げるかの判断材料にする。**
+  - [ ] **首輪と首元の飾り** (案 C 適用後): (b) で下げた 5 件が胸の毛に沈んで見えないか、除外 3 件の行が暗く理由が出るか。案 C 決定前 (2026-09-24) の記述: 解消できなかった 8 件 (Lab のバンダナ・宝石付き首飾り・ひまわり首飾り・花コサージュ・肉球メダリオン、Dachs のバンダナ・ひまわり首飾り・肉球メダリオン) の見え方を取り下げの判断材料にする予定だった。
   - [ ] 前へずらした 9 件 (Corgi・Pome・Lab・Dachs・Shiba・Samoyed。量は実装記録の表) が毛から浮いて見えない。
   - [ ] リードの線と首元の飾りが交差しても不自然でない (Dachs は留め具まで約 68 mm)。
-  - [ ] ミニチュア (試着の犬) に首輪が入っているのでよいか。
+  - [ ] ミニチュア (試着の犬) の首輪が実際の犬と同じに見える (首輪込みは 2026-09-24 にユーザー OK で確定)。
   - [ ] 群見出し「撫でエフェクト」の下の FX 行が かざりの一覧 (カタログ階層) でだけ出て、セットの中身・着け方・犬選択の画面では出ない。買う → つける が効く。
   - [ ] **撫でFX (2 人)**: 選んだ FX が相手の画面でも撫でたときに出る。退室して入り直すと自分の選択が戻る。
   - [ ] **60 秒ルールと残留 (2 人)**: 相手が着けた犬の同じ枠は 60 秒待たされ、理由が出る。着けた人が退室しても飾りは残る。
@@ -724,6 +742,6 @@ Lab と Dachs は首輪が低く大きいことが原因。**8 件は取り下�
 
 **ユーザーの判断が要るもの (2026-09-24 追加)**
 
-8. **首輪と首元の飾りの干渉 8 件を取り下げるか**。Lab: バンダナ・宝石付き首飾り・ひまわり首飾り・花コサージュ・肉球メダリオン、Dachs: バンダナ・ひまわり首飾り・肉球メダリオン。Lab と Dachs は首輪が低く大きいのが原因。前へずらすだけでは解消せず、5 件は前 + 下へずらせば解消するが、3 件 (Lab バンダナ、Dachs バンダナ・ひまわり首飾り) はそれでも解消しない。**開発側は取り下げずに残している。** PCVR で見て決めてほしい (実装記録「首輪と首元の飾りの干渉」)。
-9. **試着のミニチュアに首輪を含めるか**。開発側は、実際の犬と同じ見た目にするため首輪込みで焼き直した。
+8. **首輪と首元の飾りの干渉 8 件を取り下げるか**。Lab: バンダナ・宝石付き首飾り・ひまわり首飾り・花コサージュ・肉球メダリオン、Dachs: バンダナ・ひまわり首飾り・肉球メダリオン。Lab と Dachs は首輪が低く大きいのが原因。前へずらすだけでは解消せず、5 件は前 + 下へずらせば解消するが、3 件 (Lab バンダナ、Dachs バンダナ・ひまわり首飾り) はそれでも解消しない。**開発側は取り下げずに残している。** PCVR で見て決めてほしい (実装記録「首輪と首元の飾りの干渉」)。→ **2026-09-24 決定済み (案 C、049b173 / 136b516)**: 取り下げず、5 件は前 + 下へずらし、3 件はその犬だけ除外した。
+9. **試着のミニチュアに首輪を含めるか**。開発側は、実際の犬と同じ見た目にするため首輪込みで焼き直した。→ **2026-09-24 決定済み**: 首輪込みで確定 (ユーザー OK、049b173)。
 10. **クレジットの URL 3 件** (LMArt Stylized Environment Kit / Allsky / polyperfect Low Poly Animated People)。購入元の URL を推測では埋めていない。ユーザーが `KD_MenuFinishEditor.HillsideCredits` (`Imported/KominkaDogRun/Editor/KD_MenuFinishEditor.Hillside.cs`) に書き、Menu/11 を流し直す (空の間は URL 欄を作らず、Verify 22 が `CREDIT_URL_PENDING` と出す)。

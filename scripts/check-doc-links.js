@@ -12,8 +12,10 @@
  *   3. (--orphans) git 管理下の docs/ でどこからもリンクされていない .md。
  *      config/doc-orphans.baseline.txt があれば **baseline に無い新規の orphan だけ** fail にする
  *      (archive の文書は summary からしか被リンクされないのが正常なので、全 orphan を fail にすると運用が壊れる)
- *   4. git 管理下の文書から gitignore された文書 (docs/_sessions 等) へのリンクを WARN
+ *   4. git 管理下の文書から、このリポジトリ内で gitignore された文書 (docs/_sessions 等) へのリンクを WARN
  *      (クローン先では dangling。orphan 判定にも untracked からの被リンクは使わない) — IMP-INF-019 K4
+ *   5. 別リポジトリへの参照 (絶対パス、または `../` でリポジトリ外へ出る相対パス) は
+ *      参照先が実在すれば OK (警告しない)、実在しなければ BROKEN。4 の WARN の対象にしない
  *
  * Issue を review/ や archive/ へ移すと `../` の数がずれる。
  * 移動したら必ずこれを通すこと (docs/development/issues/issue_summary.md 「移動の手順」)。
@@ -31,6 +33,28 @@ const ORPHAN_BASELINE = path.join(ROOT, 'config/doc-orphans.baseline.txt');
 
 const norm = p => p.split(path.sep).join('/');
 const abs = rel => path.join(ROOT, rel);
+/** ROOT 相対の正規化済みパスがリポジトリの外を指すか。 */
+const isOutside = rel => rel === '..' || rel.startsWith('../') || path.isAbsolute(rel);
+
+/** 絶対パス表記 (C:/x, C:\x, /c/x (Git Bash), file:///C:/x) を OS の絶対パスへ。該当しなければ null。 */
+function toAbsolute(target) {
+  let t = target;
+  if (/^file:\/\//i.test(t)) t = t.replace(/^file:\/\/\/?/i, '');
+  if (/^[A-Za-z]:[\\/]/.test(t)) return path.normalize(t);
+  const m = t.match(/^\/([A-Za-z])\/(.*)$/);
+  if (m && process.platform === 'win32') return path.normalize(`${m[1]}:/${m[2]}`);
+  if (t.startsWith('/')) return path.normalize(t);
+  return null;
+}
+
+/** リポジトリ外の参照先を確かめる。問題があれば理由、無ければ null。 */
+function checkOutside(absPath, frag, label) {
+  if (!fs.existsSync(absPath)) return `ファイルが無い (${label})`;
+  if (frag && absPath.endsWith('.md') && !headingAnchors(fs.readFileSync(absPath, 'utf8')).has(frag)) {
+    return `見出し「#${frag}」が無い (${label})`;
+  }
+  return null;
+}
 
 /** git 管理下のファイル集合。git が無い / リポジトリでない場合は null (= 全部 tracked 扱い)。 */
 function trackedSet() {
@@ -114,7 +138,18 @@ for (const file of files) {
       continue;
     }
 
-    const resolved = norm(path.posix.normalize(path.posix.join(dir, decodeURIComponent(target))));
+    const decoded = decodeURIComponent(target);
+    const absTarget = toAbsolute(decoded);
+    const resolved = absTarget
+      ? norm(path.relative(ROOT, absTarget))
+      : norm(path.posix.normalize(path.posix.join(dir, decoded)));
+    if (isOutside(resolved)) {
+      // 別リポジトリへの参照: 実在すれば OK、無ければ BROKEN。git 管理外 WARN は出さない
+      const why = checkOutside(absTarget || path.resolve(ROOT, resolved), frag,
+        absTarget ? '別リポジトリへの絶対パス' : 'リポジトリ外への相対パス');
+      if (why) broken.push([where, raw, why]);
+      continue;
+    }
     if (!fs.existsSync(abs(resolved))) {
       broken.push([where, raw, 'ファイルが無い']);
       continue;
@@ -135,7 +170,9 @@ for (const [where, link] of untrackedLinks) console.log(`WARN-UNTRACKED ${where}
 
 let newOrphans = 0;
 if (SHOW_ORPHANS) {
-  const orphans = files.filter(f => isTracked(f) && !linkedTo.has(f) && f !== 'docs/AI_INDEX.md' && f !== 'CLAUDE.md');
+  // 入口 (索引・EXTRA_FILES・各 Skill の SKILL.md) は被リンクが無くても正常
+  const isEntry = f => f === 'docs/AI_INDEX.md' || EXTRA_FILES.includes(f) || /^claude-skills\/[^/]+\/SKILL\.md$/.test(f);
+  const orphans = files.filter(f => isTracked(f) && !linkedTo.has(f) && !isEntry(f));
   if (WRITE_ORPHANS) {
     fs.mkdirSync(path.dirname(ORPHAN_BASELINE), { recursive: true });
     fs.writeFileSync(ORPHAN_BASELINE, orphans.join('\n') + '\n');
