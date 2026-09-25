@@ -119,6 +119,7 @@ node scripts/check-issues.js --next IMP DOG # 次に使える Issue ID (採番�
 ## Git 運用
 
 - **購入アセットはコミットしない** (`.gitignore` で除外)
+- **stage は自分が触ったパスだけ** (`git add -A` を使わない)。別セッションが同じ作業ツリーで文書やシーンを編集していることがある。同一ファイルの hunk 分離とシーンの扱いは `vrc-scene-edit-safety`「別セッションと作業ツリーを共有しているとき」
 - `.meta` ファイルは必ずコミットする (Unity のアセット参照に必要)
 - `Library/`, `Logs/`, `UserSettings/` は除外
 - `.claude/skills/vrc-*/` は共有リポジトリへのジャンクションなので除外
