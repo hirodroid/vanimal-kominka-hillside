@@ -98,7 +98,7 @@ Packages/
 
 確認範囲・実行分担・完了の境界は `vrc-verification` §1で選ぶ。文書だけなら文書検査、Unityコード変更ならコンパイル完了とエラーを確認し、構造・値・参照変更は保存結果も確認する。挙動変更は再現ケースと影響範囲を検証する。フックや一括入口で実行済みの検査は重複不要。
 
-Unity操作は `vrc-synaptic-unity` と `scripts/unity-api.sh` 経由。refreshの成功だけでコンパイル完了としない。Playは通常ユーザー担当で、未確認条件を引き継ぐ。
+Unity操作は `vrc-synaptic-unity` と `scripts/unity-api.sh` 経由 (`check` で接続先を照合)。コンパイル確認は `bash scripts/unity-compile.sh [--udon]` (refreshの成功だけでコンパイル完了としない)。Playは通常ユーザー担当で、未確認条件を引き継ぐ。
 
 フリスビーのClientSimハーネスはAI実行可。[実行・停止・復旧と部分／全体の選択](docs/testing/kh-frisbee-harness.md)に従う。疑似入力の結果を実通信・PCVRの合格にしない。
 
