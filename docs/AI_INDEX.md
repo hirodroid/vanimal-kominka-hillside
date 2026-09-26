@@ -81,6 +81,7 @@ UI制作・改修・レビューは `vrc-world-ui` と `.claude/skills/vrc-world
 | 空・ナイトモード | [実装とチェックリスト](plans/2026-09-21-sky-and-night-mode.md) |
 | 容量 (ビルドサイズ) | [ビルドサイズ実測](plans/2026-09-24-build-size-audit.md)、計測メニュー `Tools/KominkaHillside/Build Size/`、手順と罠は `vrc-performance` のビルドサイズチェック。素材を足したら `7 - Apply` → `2 - Bundle Size Android` |
 | Quest単体・iOS | [端末検証](development/issues/VER-WLD-001-quest-ios-devices.md) |
+| 体験会 (複数人・スマホ参加) | [2026-09-26 の記録と振り分け](plans/2026-09-26-group-playtest.md)。端末別の合格には読み替えない (不変条件 7) |
 | 地形・境界・負荷 | [IMP-ENV-001](development/issues/IMP-ENV-001-hillside-polish.md)、[完了した地形判断](development/issues/issue_summary.md) |
 | 犬ギミックの出所 | [移植記録](development/imports/kominka-dog-system.md) |
 
