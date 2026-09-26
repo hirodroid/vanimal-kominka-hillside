@@ -31,9 +31,9 @@ namespace KominkaHillside
         [Tooltip("true = KominkaDogRun's shape (3 s fade-in, then the cap) for comparison. 26a writes DefaultUseKominkaFade")]
         public bool useKominkaFade;
 
-        /// <summary>KH_HillsideDusk 001 (124.0 s, 60 BPM): the night arrives at 88 s, where the harmony opens and the leaves turn
+        /// <summary>KH_HillsideDusk 002 (124.0 s, 60 BPM): the night arrives at 80 s, where the harmony opens and the leaves turn
         /// into stars (the peak section is 72-104 s). Coordinator decision 2026-09-26.</summary>
-        public const float DefaultRampSeconds = 88f;
+        public const float DefaultRampSeconds = 80f;   // 001 was 88 s
         public const bool DefaultUseKominkaFade = false;
 
         private float _written = -1f;   // last value written to nightMode.liveDarkness (-1 = never)

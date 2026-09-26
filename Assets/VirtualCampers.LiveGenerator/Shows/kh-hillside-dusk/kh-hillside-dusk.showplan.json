@@ -12,36 +12,48 @@
     },
     "concept": {
       "title": "紅葉が星になる",
-      "story": "夕方の裏山の広場で、6 匹と並んで座る。一本の木から紅葉の光が一枚離れ、旋律に合わせて左右の木から一枚ずつ舞う。葉は流れになってゆるい渦を昇り、上ほど色が冷え、和声が開く瞬間に白い星の点へ変わって夜空に広がる。星が残って瞬く中、最後の一枚が同じ木から犬のそばに降りて消える。",
+      "story": "夕方の裏山の広場で、6 匹と並んで座る。紅葉の光が一枚離れ、旋律に合わせて左右から一枚ずつ舞う。小さな山で風が吹き、草の葉がいっせいに舞い上がって観客の後ろから谷へ渡る。後ろの木から葉の流れが頭上を越えてゆるい渦を昇り、谷の上に月が昇るにつれて上ほど色が冷え、渦の上端に光が混じり始める。和声が開く瞬間に葉は白い星の点へ変わって夜空に広がり、終わりの瞬きの音に合わせて星が少しずつ瞬く。最後の一枚が犬のそばに降りて消える。",
       "palette": "primary #FF6A2B (momiji red) / secondary #FFB347 (gold) / cool #B8B4FF (the cooled top of the vortex) / accent #F4F8FF (star white). Colour-changing layers are tint:false.",
       "motifs": [
         "M1 one leaf",
-        "M2 leaf per melody note / answer from the other tree",
-        "M3 rising vortex that cools with height",
+        "M2 leaf per melody note / answer from the other side",
+        "M2' one wind wave across the plaza (v2)",
+        "M3 streams from the real trees into a rising vortex that cools with height; moonrise + glints at its top (v2)",
         "M4 leaves become star points (one big scatter)",
-        "M5 stars remain, last leaf by the dogs"
+        "M5 stars remain and twinkle with the figure (v2), last leaf by the dogs"
       ],
-      "arc": "one leaf → leaves answer each other → vortex → leaves become stars → night stars + the last leaf",
+      "arc": "one leaf → leaves answer each other → a gust (small crest) → streams → vortex under the rising moon → leaves become stars → night stars twinkle + the last leaf",
+      "version": "v2 (演出 002 of the show; v1 = shows/kh-hillside-dusk/versions/001)",
       "avoid": "constellation lines / dipper (kd-quiet-wishes), light flowers / light tree (garden-lights), sakura petals (petal-waltz), paw prints (happy-tails), screen-filling particles, explosions, constant maximum"
     },
     "stage": {
-      "provisional": true,
+      "provisional": false,
       "hostTransform": {
         "position": [
-          0,
-          0,
-          0
+          72,
+          19,
+          127
         ],
-        "eulerY": 0
+        "eulerY": 190
       },
-      "hostTransformNote": "Where the host world puts LiveStage_kh-hillside-dusk (KD_DogDefs.LiveStagePosition / LiveStageEulerY equivalent in KominkaHillside). Not used inside the showplan; copied into meta.stage so the host can set its constants. Default = origin until the plaza (diameter ~24 m, elevation ~19 m, sloped) is measured. Keep +Z where the sky is open; effects stay above y 5 except the last leaf, so the low view down to the kominka in the valley is not covered.",
+      "hostTransformNote": "Surveyed 2026-09-26 (hillside-live-wiring.md §2.7; host constant KD_LiveSetupEditor.Hillside.cs HillsideStagePosition / HillsideStageEulerY). World (72, 19.0, 127) = plaza centre (flat radius 12 m at y 19), rotation Y 190 deg: +Z looks down the valley to the kominka (98.6 m away, ~11 deg below the horizontal from the plaza, local (-0.5, -17.5, 98.6)). Not used inside the showplan; copied to meta.stage. Keep everything in the +Z half above eye level except the wind wave (grass height, a few seconds) and the last leaf (by the dogs).",
       "anchors": {
         "treeLeft": [
+          -13.3,
+          6.5,
+          -16.6
+        ],
+        "treeRight": [
+          10.4,
+          6.5,
+          -7.3
+        ],
+        "releaseLeft": [
           -9,
           6.5,
           7
         ],
-        "treeRight": [
+        "releaseRight": [
           9,
           6.5,
           7
@@ -65,47 +77,121 @@
           0,
           0.35,
           2.5
+        ],
+        "windFrom": [
+          0,
+          0.65,
+          -1.5
+        ],
+        "kominka": [
+          -0.5,
+          -17.5,
+          98.6
         ]
       },
       "config": "shows/kh-hillside-dusk/config.json"
     },
     "effects": "effects.kh.json",
+    "v2Cues": {
+      "windWave": {
+        "time": 40,
+        "source": {
+          "windWave": {
+            "seconds": 40,
+            "revision": "002",
+            "window": [
+              28,
+              47
+            ],
+            "source": "vrc-music-agent songs/KH_HillsideDusk/versions/002 composition.md (小さな山の到達 11:1 = 40.0 s: piano F6 + F5, woodwind A5, bass F1, strings 3 voices; the loudest second of the growth section)."
+          },
+          "onset": {
+            "trackId": "track-01",
+            "role": "Lead",
+            "eventId": "track-01-event-20",
+            "pitch": 89,
+            "velocity": 96
+          }
+        }
+      },
+      "moon": {
+        "birth": 48,
+        "riseStart": 48,
+        "top": 80,
+        "fadeOutFrom": 117.75,
+        "gone": 123,
+        "whiteAt": 79.5,
+        "elevationDeg": [
+          8,
+          12,
+          13.5
+        ],
+        "start": "7.814,7.524,44.316",
+        "topPos": "7.814,10.765,44.316",
+        "waypoints": 75,
+        "sightLine": {
+          "haloLowestDeg": 4.573,
+          "kominkaDeg": -10.739
+        }
+      },
+      "twinkles": {
+        "count": 6,
+        "times": [
+          102,
+          104,
+          106,
+          108,
+          110,
+          112
+        ],
+        "tally": {
+          "candidates": 12,
+          "simultaneous": 0,
+          "tooClose": 6,
+          "overCap": 0,
+          "kept": 6,
+          "rule": "end section 96-122.4 s, tracks harmony (Harmony), pitch >= 93, >= 0.45 s apart, <= 32"
+        }
+      }
+    },
     "musicHandoff": {
       "schema": "music-handoff/1.0",
       "songId": "KH_HillsideDusk",
-      "revision": "001",
-      "revisionId": "KH_HillsideDusk_001",
+      "revision": "002",
+      "revisionId": "KH_HillsideDusk_002",
       "title": "山の夕暮れ",
-      "handoffFile": "../vrc-music-agent/songs/KH_HillsideDusk/versions/001/events/handoff.json",
-      "handoffSha256": "3c9f5c10ad0df7e4dd628eb031af7c39eb092cec759d68521d3c0fc45b9f3a15",
-      "audioFile": "../vrc-music-agent/songs/KH_HillsideDusk/versions/001/output/master.wav",
-      "audioSha256": "3b0491002d1bd8db6af06cfef0b79f7d019d16d9baab47046f7111da4801813c",
+      "handoffFile": "../vrc-music-agent/songs/KH_HillsideDusk/versions/002/events/handoff.json",
+      "handoffSha256": "a5851ee6030043beee90e06e581d161e57c861a0e035014f0de51bbb927175af",
+      "audioFile": "../vrc-music-agent/songs/KH_HillsideDusk/versions/002/output/master.wav",
+      "audioSha256": "59dc0031d56589264854c3bcd5f39839696ccf4bcde6e9767b0a8f43fc6c10fe",
       "noteUse": {
         "melody": {
-          "total": 63,
+          "total": 70,
           "leaf": 9,
           "melody: intro keeps one leaf only (the first note)": 6,
-          "melody: < 2.5 s after the previous leaf": 4,
-          "melody: after grow (the vortex / stars carry it, not single leaves)": 44
+          "melody: < 2.5 s after the previous leaf": 8,
+          "melody: after grow (the vortex / stars carry it, not single leaves)": 47
         },
         "answer": {
-          "total": 31,
+          "total": 32,
           "leaf": 4,
-          "answer: < 2.5 s after the previous leaf": 8,
+          "answer: < 2.5 s after the previous leaf": 7,
+          "answer: within 1 s of a melody leaf": 1,
+          "answer: on the wind wave (the gust carries it)": 1,
           "answer: after grow (the vortex / stars carry it, not single leaves)": 19
         },
         "sustainHolds": [
           [
             24,
-            103.5
+            95.5
           ],
           [
-            104,
+            96,
             112
           ]
         ],
         "otherTracks": [
-          "Harmony (85 events): no direct mapping; only the last-note cue looks at all tracks"
+          "Harmony (118 events): no direct mapping; only the last-note cue looks at all tracks"
         ]
       },
       "timelineProvenance": "author-song-json",
@@ -125,7 +211,7 @@
         {
           "phraseId": "first-leaf",
           "timeSeconds": 0,
-          "notes": "M1: one leaf leaves the left tree and drifts, swinging, toward the middle; fades before the grow section",
+          "notes": "M1: one leaf leaves the left release point and drifts, swinging, toward the middle; fades before the grow section",
           "source": {
             "trackId": "track-01",
             "role": "Lead",
@@ -203,31 +289,31 @@
             "role": "Lead",
             "eventId": "track-01-event-16",
             "pitch": 79,
-            "velocity": 72
+            "velocity": 74
           }
         },
         {
           "phraseId": "leaf-melody-7",
-          "timeSeconds": 40,
+          "timeSeconds": 39,
           "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)",
           "source": {
             "trackId": "track-01",
             "role": "Lead",
             "eventId": "track-01-event-17",
-            "pitch": 70,
-            "velocity": 76
+            "pitch": 82,
+            "velocity": 78
           }
         },
         {
           "phraseId": "leaf-melody-8",
-          "timeSeconds": 42.5,
+          "timeSeconds": 41.5,
           "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)",
           "source": {
             "trackId": "track-01",
             "role": "Lead",
-            "eventId": "track-01-event-19",
-            "pitch": 77,
-            "velocity": 72
+            "eventId": "track-01-event-21",
+            "pitch": 86,
+            "velocity": 84
           }
         },
         {
@@ -273,15 +359,38 @@
           "source": {
             "trackId": "track-03",
             "role": "Reply",
-            "eventId": "track-03-event-10",
+            "eventId": "track-03-event-11",
             "pitch": 81,
             "velocity": 70
           }
         },
         {
+          "phraseId": "wind-wave",
+          "timeSeconds": 40,
+          "notes": "M2': on the arrival beat of the small crest a gust lifts ~220 leaves from the grass behind the audience and carries them as one band toward the valley (+Z, 3 m/s, rising ~2 m); gone by 45.2 s",
+          "source": {
+            "windWave": {
+              "seconds": 40,
+              "revision": "002",
+              "window": [
+                28,
+                47
+              ],
+              "source": "vrc-music-agent songs/KH_HillsideDusk/versions/002 composition.md (小さな山の到達 11:1 = 40.0 s: piano F6 + F5, woodwind A5, bass F1, strings 3 voices; the loudest second of the growth section)."
+            },
+            "onset": {
+              "trackId": "track-01",
+              "role": "Lead",
+              "eventId": "track-01-event-20",
+              "pitch": 89,
+              "velocity": 96
+            }
+          }
+        },
+        {
           "phraseId": "gather-left",
           "timeSeconds": 48,
-          "notes": "M3: leaves stream from the left tree into the vortex base",
+          "notes": "M3: leaves stream from the real left tree behind the audience, over their heads, into the vortex base",
           "source": {
             "section": "deepening"
           }
@@ -289,7 +398,7 @@
         {
           "phraseId": "gather-right",
           "timeSeconds": 48,
-          "notes": "M3: leaves stream from the right tree into the vortex base",
+          "notes": "M3: leaves stream from the real right tree behind the audience, over their heads, into the vortex base",
           "source": {
             "section": "deepening"
           }
@@ -303,26 +412,45 @@
             "stringHolds": [
               [
                 50,
-                84
+                76
               ]
             ]
           }
         },
         {
+          "phraseId": "moonrise",
+          "timeSeconds": 48,
+          "notes": "v2 moon: a soft moon fades in over the valley (45 m, 10 deg right) at 8 deg and rises to 12 deg by the harmonic opening 80 s (warm -> white at 79.5 s), then drifts to 13.5 deg and fades 117.75-123 s",
+          "source": {
+            "section": "deepening",
+            "riseTo": "harmonicOpening",
+            "harmonicOpening": 80
+          }
+        },
+        {
+          "phraseId": "vortex-crown",
+          "timeSeconds": 52,
+          "notes": "v2: while the moon rises, faint white glints appear at the top of the vortex and grow (emission 5% -> 100%) until the vortex stops at 76 s: the build-up brightens instead of only waiting, and hints at the stars",
+          "source": {
+            "riseWith": "moonrise"
+          }
+        },
+        {
           "phraseId": "leaf-to-star",
-          "timeSeconds": 82,
+          "timeSeconds": 74,
           "notes": "M4: the vortex continues; each leaf turns into a white star point at 37.5-56.25% of its 16 s life (first change at the peak cue), rises and spreads; tapers after the peak",
           "source": {
             "harmonicOpening": {
-              "seconds": 88,
-              "bar": 23,
+              "seconds": 80,
+              "bar": 21,
               "chord": "Dbmaj7 (bVI)",
-              "source": "vrc-music-agent songs/KH_HillsideDusk/versions/001 song.json composition.chords[23] / composition.md (和声が D♭ へ開く 88 秒)"
+              "revision": "002",
+              "source": "vrc-music-agent songs/KH_HillsideDusk/versions/002 composition.md (和声が開く D♭maj7 21:1 = 80.0 s; piano rising A♭5–C6–F6–A♭6–C7 at 80.0–82.5 s). v1 used 88 s (001 bar 23)."
             },
             "onset": {
               "trackId": "track-01",
               "role": "Lead",
-              "eventId": "track-01-event-41",
+              "eventId": "track-01-event-48",
               "pitch": 80,
               "velocity": 82
             }
@@ -330,19 +458,20 @@
         },
         {
           "phraseId": "star-scatter",
-          "timeSeconds": 84.25,
+          "timeSeconds": 76.25,
           "notes": "M4 (the one big motion): a ring of 48 leaves leaves the top of the vortex outward and turns into stars at the harmonic opening",
           "source": {
             "harmonicOpening": {
-              "seconds": 88,
-              "bar": 23,
+              "seconds": 80,
+              "bar": 21,
               "chord": "Dbmaj7 (bVI)",
-              "source": "vrc-music-agent songs/KH_HillsideDusk/versions/001 song.json composition.chords[23] / composition.md (和声が D♭ へ開く 88 秒)"
+              "revision": "002",
+              "source": "vrc-music-agent songs/KH_HillsideDusk/versions/002 composition.md (和声が開く D♭maj7 21:1 = 80.0 s; piano rising A♭5–C6–F6–A♭6–C7 at 80.0–82.5 s). v1 used 88 s (001 bar 23)."
             },
             "onset": {
               "trackId": "track-01",
               "role": "Lead",
-              "eventId": "track-01-event-41",
+              "eventId": "track-01-event-48",
               "pitch": 80,
               "velocity": 82
             }
@@ -350,22 +479,95 @@
         },
         {
           "phraseId": "night-stars",
-          "timeSeconds": 88,
+          "timeSeconds": 80,
           "notes": "M4-M5: star points fill the sky where the leaf-stars spread, then remain and twinkle; emission stops 12.3 s before the end",
           "source": {
             "harmonicOpening": {
-              "seconds": 88,
-              "bar": 23,
+              "seconds": 80,
+              "bar": 21,
               "chord": "Dbmaj7 (bVI)",
-              "source": "vrc-music-agent songs/KH_HillsideDusk/versions/001 song.json composition.chords[23] / composition.md (和声が D♭ へ開く 88 秒)"
+              "revision": "002",
+              "source": "vrc-music-agent songs/KH_HillsideDusk/versions/002 composition.md (和声が開く D♭maj7 21:1 = 80.0 s; piano rising A♭5–C6–F6–A♭6–C7 at 80.0–82.5 s). v1 used 88 s (001 bar 23)."
             },
             "onset": {
               "trackId": "track-01",
               "role": "Lead",
-              "eventId": "track-01-event-41",
+              "eventId": "track-01-event-48",
               "pitch": 80,
               "velocity": 82
             }
+          }
+        },
+        {
+          "phraseId": "star-twinkle-1",
+          "timeSeconds": 102,
+          "notes": "v2 M5: a few star points flare briefly on a note of the high twinkle figure (the region moves note by note, never the whole sky)",
+          "source": {
+            "trackId": "track-02",
+            "role": "Harmony",
+            "eventId": "track-02-event-107",
+            "pitch": 96,
+            "velocity": 104
+          }
+        },
+        {
+          "phraseId": "star-twinkle-2",
+          "timeSeconds": 104,
+          "notes": "v2 M5: a few star points flare briefly on a note of the high twinkle figure (the region moves note by note, never the whole sky)",
+          "source": {
+            "trackId": "track-02",
+            "role": "Harmony",
+            "eventId": "track-02-event-109",
+            "pitch": 96,
+            "velocity": 102
+          }
+        },
+        {
+          "phraseId": "star-twinkle-3",
+          "timeSeconds": 106,
+          "notes": "v2 M5: a few star points flare briefly on a note of the high twinkle figure (the region moves note by note, never the whole sky)",
+          "source": {
+            "trackId": "track-02",
+            "role": "Harmony",
+            "eventId": "track-02-event-111",
+            "pitch": 96,
+            "velocity": 100
+          }
+        },
+        {
+          "phraseId": "star-twinkle-4",
+          "timeSeconds": 108,
+          "notes": "v2 M5: a few star points flare briefly on a note of the high twinkle figure (the region moves note by note, never the whole sky)",
+          "source": {
+            "trackId": "track-02",
+            "role": "Harmony",
+            "eventId": "track-02-event-113",
+            "pitch": 96,
+            "velocity": 96
+          }
+        },
+        {
+          "phraseId": "star-twinkle-5",
+          "timeSeconds": 110,
+          "notes": "v2 M5: a few star points flare briefly on a note of the high twinkle figure (the region moves note by note, never the whole sky)",
+          "source": {
+            "trackId": "track-02",
+            "role": "Harmony",
+            "eventId": "track-02-event-115",
+            "pitch": 96,
+            "velocity": 92
+          }
+        },
+        {
+          "phraseId": "star-twinkle-6",
+          "timeSeconds": 112,
+          "notes": "v2 M5: a few star points flare briefly on a note of the high twinkle figure (the region moves note by note, never the whole sky)",
+          "source": {
+            "trackId": "track-02",
+            "role": "Harmony",
+            "eventId": "track-02-event-117",
+            "pitch": 96,
+            "velocity": 86
           }
         },
         {
@@ -375,7 +577,7 @@
           "source": {
             "trackId": "track-01",
             "role": "Lead",
-            "eventId": "track-01-event-63",
+            "eventId": "track-01-event-70",
             "pitch": 65,
             "velocity": 54
           }
@@ -383,9 +585,9 @@
       ]
     },
     "budgetEstimate": {
-      "maxParticlesTotal": 926,
-      "materialsIfShared": 7,
-      "materialsIfNotShared": 22,
+      "maxParticlesTotal": 1236,
+      "materialsIfShared": 12,
+      "materialsIfNotShared": 32,
       "realtimeLights": 0,
       "note": "Static sum of maxParticles per (phrase, step) instance. Materials: every step sets params.shareMaterials, so identical layers share one .mat; verify in Unity (vclive.sh verify --budget-*)."
     }
@@ -428,13 +630,13 @@
       "id": "mountain",
       "label": "peak (山)",
       "startTime": 72,
-      "endTime": 104,
+      "endTime": 96,
       "effects": []
     },
     {
       "id": "ending",
       "label": "end (終止)",
-      "startTime": 104,
+      "startTime": 96,
       "endTime": 124,
       "effects": []
     }
@@ -501,7 +703,7 @@
           "ease": "linear"
         }
       ],
-      "notes": "M1: one leaf leaves the left tree and drifts, swinging, toward the middle; fades before the grow section"
+      "notes": "M1: one leaf leaves the left release point and drifts, swinging, toward the middle; fades before the grow section"
     },
     {
       "id": "leaf-melody-1",
@@ -626,7 +828,7 @@
     {
       "id": "leaf-melody-7",
       "at": {
-        "sec": 40
+        "sec": 39
       },
       "steps": [
         {
@@ -646,7 +848,7 @@
     {
       "id": "leaf-melody-8",
       "at": {
-        "sec": 42.5
+        "sec": 41.5
       },
       "steps": [
         {
@@ -764,6 +966,25 @@
       "notes": "M2: the answer lets one leaf go from the right tree"
     },
     {
+      "id": "wind-wave",
+      "at": {
+        "sec": 40
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_wind_wave",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "0,0.65,-1.5",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          }
+        }
+      ],
+      "notes": "M2': on the arrival beat of the small crest a gust lifts ~220 leaves from the grass behind the audience and carries them as one band toward the valley (+Z, 3 m/s, rising ~2 m); gone by 45.2 s"
+    },
+    {
       "id": "gather-left",
       "at": {
         "sec": 48
@@ -772,39 +993,39 @@
         {
           "fx": "trail/kh_leaf_gather",
           "at": "0s",
-          "dur": "5s",
-          "origin": "-9,6.5,7",
+          "dur": "8s",
+          "origin": "-13.3,6.5,-16.6",
           "intensity": 1,
           "params": {
             "shareMaterials": true
           },
           "color": "primary",
           "path": [
-            "-8.62,6.629,7.15",
-            "-8.24,6.746,7.3",
-            "-7.86,6.851,7.45",
-            "-7.48,6.944,7.6",
-            "-7.1,7.025,7.75",
-            "-6.72,7.094,7.9",
-            "-6.34,7.151,8.05",
-            "-5.96,7.196,8.2",
-            "-5.58,7.229,8.35",
-            "-5.2,7.25,8.5",
-            "-4.82,7.259,8.65",
-            "-4.44,7.256,8.8",
-            "-4.06,7.241,8.95",
-            "-3.68,7.214,9.1",
-            "-3.3,7.175,9.25",
-            "-2.92,7.124,9.4",
-            "-2.54,7.061,9.55",
-            "-2.16,6.986,9.7",
-            "-1.78,6.899,9.85",
+            "-12.705,6.629,-15.27",
+            "-12.11,6.746,-13.94",
+            "-11.515,6.851,-12.61",
+            "-10.92,6.944,-11.28",
+            "-10.325,7.025,-9.95",
+            "-9.73,7.094,-8.62",
+            "-9.135,7.151,-7.29",
+            "-8.54,7.196,-5.96",
+            "-7.945,7.229,-4.63",
+            "-7.35,7.25,-3.3",
+            "-6.755,7.259,-1.97",
+            "-6.16,7.256,-0.64",
+            "-5.565,7.241,0.69",
+            "-4.97,7.214,2.02",
+            "-4.375,7.175,3.35",
+            "-3.78,7.124,4.68",
+            "-3.185,7.061,6.01",
+            "-2.59,6.986,7.34",
+            "-1.995,6.899,8.67",
             "-1.4,6.8,10"
           ],
           "ease": "linear"
         }
       ],
-      "notes": "M3: leaves stream from the left tree into the vortex base"
+      "notes": "M3: leaves stream from the real left tree behind the audience, over their heads, into the vortex base"
     },
     {
       "id": "gather-right",
@@ -815,39 +1036,39 @@
         {
           "fx": "trail/kh_leaf_gather",
           "at": "0s",
-          "dur": "5s",
-          "origin": "9,6.5,7",
+          "dur": "8s",
+          "origin": "10.4,6.5,-7.3",
           "intensity": 1,
           "params": {
             "shareMaterials": true
           },
           "color": "secondary",
           "path": [
-            "8.62,6.629,7.15",
-            "8.24,6.746,7.3",
-            "7.86,6.851,7.45",
-            "7.48,6.944,7.6",
-            "7.1,7.025,7.75",
-            "6.72,7.094,7.9",
-            "6.34,7.151,8.05",
-            "5.96,7.196,8.2",
-            "5.58,7.229,8.35",
-            "5.2,7.25,8.5",
-            "4.82,7.259,8.65",
-            "4.44,7.256,8.8",
-            "4.06,7.241,8.95",
-            "3.68,7.214,9.1",
-            "3.3,7.175,9.25",
-            "2.92,7.124,9.4",
-            "2.54,7.061,9.55",
-            "2.16,6.986,9.7",
-            "1.78,6.899,9.85",
+            "9.95,6.629,-6.435",
+            "9.5,6.746,-5.57",
+            "9.05,6.851,-4.705",
+            "8.6,6.944,-3.84",
+            "8.15,7.025,-2.975",
+            "7.7,7.094,-2.11",
+            "7.25,7.151,-1.245",
+            "6.8,7.196,-0.38",
+            "6.35,7.229,0.485",
+            "5.9,7.25,1.35",
+            "5.45,7.259,2.215",
+            "5,7.256,3.08",
+            "4.55,7.241,3.945",
+            "4.1,7.214,4.81",
+            "3.65,7.175,5.675",
+            "3.2,7.124,6.54",
+            "2.75,7.061,7.405",
+            "2.3,6.986,8.27",
+            "1.85,6.899,9.135",
             "1.4,6.8,10"
           ],
           "ease": "linear"
         }
       ],
-      "notes": "M3: leaves stream from the right tree into the vortex base"
+      "notes": "M3: leaves stream from the real right tree behind the audience, over their heads, into the vortex base"
     },
     {
       "id": "vortex",
@@ -858,7 +1079,7 @@
         {
           "fx": "spiral/kh_leaf_vortex",
           "at": "0s",
-          "dur": "34s",
+          "dur": "26s",
           "origin": "0,6.5,10",
           "intensity": 1,
           "params": {
@@ -874,9 +1095,130 @@
       "notes": "M3: the slow rising vortex grows (emission ramps up) while the strings hold; leaves cool from red to lavender toward the top; it keeps rising through the build-up and stops 4 s before the harmonic opening so its last leaves overlap the leaf->star vortex"
     },
     {
+      "id": "moonrise",
+      "at": {
+        "sec": 48
+      },
+      "steps": [
+        {
+          "fx": "trail/kh_moon",
+          "at": "0s",
+          "dur": "74.9s",
+          "origin": "7.814,7.524,44.316",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "path": [
+            "7.814,7.534,44.316",
+            "7.814,7.56,44.316",
+            "7.814,7.603,44.316",
+            "7.814,7.662,44.316",
+            "7.814,7.734,44.316",
+            "7.814,7.82,44.316",
+            "7.814,7.917,44.316",
+            "7.814,8.024,44.316",
+            "7.814,8.142,44.316",
+            "7.814,8.267,44.316",
+            "7.814,8.4,44.316",
+            "7.814,8.539,44.316",
+            "7.814,8.683,44.316",
+            "7.814,8.83,44.316",
+            "7.814,8.98,44.316",
+            "7.814,9.131,44.316",
+            "7.814,9.283,44.316",
+            "7.814,9.434,44.316",
+            "7.814,9.582,44.316",
+            "7.814,9.727,44.316",
+            "7.814,9.867,44.316",
+            "7.814,10.002,44.316",
+            "7.814,10.13,44.316",
+            "7.814,10.249,44.316",
+            "7.814,10.36,44.316",
+            "7.814,10.459,44.316",
+            "7.814,10.547,44.316",
+            "7.814,10.622,44.316",
+            "7.814,10.682,44.316",
+            "7.814,10.727,44.316",
+            "7.814,10.755,44.316",
+            "7.814,10.765,44.316",
+            "7.814,10.792,44.316",
+            "7.814,10.821,44.316",
+            "7.814,10.85,44.316",
+            "7.814,10.879,44.316",
+            "7.814,10.907,44.316",
+            "7.814,10.936,44.316",
+            "7.814,10.965,44.316",
+            "7.814,10.993,44.316",
+            "7.814,11.022,44.316",
+            "7.814,11.051,44.316",
+            "7.814,11.08,44.316",
+            "7.814,11.108,44.316",
+            "7.814,11.137,44.316",
+            "7.814,11.166,44.316",
+            "7.814,11.195,44.316",
+            "7.814,11.223,44.316",
+            "7.814,11.252,44.316",
+            "7.814,11.281,44.316",
+            "7.814,11.31,44.316",
+            "7.814,11.339,44.316",
+            "7.814,11.367,44.316",
+            "7.814,11.396,44.316",
+            "7.814,11.425,44.316",
+            "7.814,11.454,44.316",
+            "7.814,11.483,44.316",
+            "7.814,11.512,44.316",
+            "7.814,11.541,44.316",
+            "7.814,11.569,44.316",
+            "7.814,11.598,44.316",
+            "7.814,11.627,44.316",
+            "7.814,11.656,44.316",
+            "7.814,11.685,44.316",
+            "7.814,11.714,44.316",
+            "7.814,11.743,44.316",
+            "7.814,11.772,44.316",
+            "7.814,11.801,44.316",
+            "7.814,11.83,44.316",
+            "7.814,11.859,44.316",
+            "7.814,11.888,44.316",
+            "7.814,11.917,44.316",
+            "7.814,11.946,44.316",
+            "7.814,11.975,44.316",
+            "7.814,12.004,44.316"
+          ],
+          "ease": "linear"
+        }
+      ],
+      "notes": "v2 moon: a soft moon fades in over the valley (45 m, 10 deg right) at 8 deg and rises to 12 deg by the harmonic opening 80 s (warm -> white at 79.5 s), then drifts to 13.5 deg and fades 117.75-123 s"
+    },
+    {
+      "id": "vortex-crown",
+      "at": {
+        "sec": 52
+      },
+      "steps": [
+        {
+          "fx": "spiral/kh_vortex_crown",
+          "at": "0s",
+          "dur": "24s",
+          "origin": "0,6.5,10",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "pulse": {
+            "pattern": "ramp",
+            "from": 0.05,
+            "to": 1
+          }
+        }
+      ],
+      "notes": "v2: while the moon rises, faint white glints appear at the top of the vortex and grow (emission 5% -> 100%) until the vortex stops at 76 s: the build-up brightens instead of only waiting, and hints at the stars"
+    },
+    {
       "id": "leaf-to-star",
       "at": {
-        "sec": 82
+        "sec": 74
       },
       "steps": [
         {
@@ -915,7 +1257,7 @@
     {
       "id": "star-scatter",
       "at": {
-        "sec": 84.25
+        "sec": 76.25
       },
       "steps": [
         {
@@ -934,7 +1276,7 @@
     {
       "id": "night-stars",
       "at": {
-        "sec": 88
+        "sec": 80
       },
       "steps": [
         {
@@ -956,7 +1298,7 @@
         {
           "fx": "aurora/kh_night_stars",
           "at": "16s",
-          "dur": "7.7s",
+          "dur": "15.7s",
           "origin": "0,17,12",
           "intensity": 1,
           "params": {
@@ -966,6 +1308,126 @@
         }
       ],
       "notes": "M4-M5: star points fill the sky where the leaf-stars spread, then remain and twinkle; emission stops 12.3 s before the end"
+    },
+    {
+      "id": "star-twinkle-1",
+      "at": {
+        "sec": 102
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_star_twinkle",
+          "at": "0s",
+          "dur": "0.3s",
+          "origin": "-8,17,9",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "accent"
+        }
+      ],
+      "notes": "v2 M5: a few star points flare briefly on a note of the high twinkle figure (the region moves note by note, never the whole sky)"
+    },
+    {
+      "id": "star-twinkle-2",
+      "at": {
+        "sec": 104
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_star_twinkle",
+          "at": "0s",
+          "dur": "0.3s",
+          "origin": "6,18,15",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "accent"
+        }
+      ],
+      "notes": "v2 M5: a few star points flare briefly on a note of the high twinkle figure (the region moves note by note, never the whole sky)"
+    },
+    {
+      "id": "star-twinkle-3",
+      "at": {
+        "sec": 106
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_star_twinkle",
+          "at": "0s",
+          "dur": "0.3s",
+          "origin": "-2,16.5,18",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "accent"
+        }
+      ],
+      "notes": "v2 M5: a few star points flare briefly on a note of the high twinkle figure (the region moves note by note, never the whole sky)"
+    },
+    {
+      "id": "star-twinkle-4",
+      "at": {
+        "sec": 108
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_star_twinkle",
+          "at": "0s",
+          "dur": "0.3s",
+          "origin": "9,16,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "accent"
+        }
+      ],
+      "notes": "v2 M5: a few star points flare briefly on a note of the high twinkle figure (the region moves note by note, never the whole sky)"
+    },
+    {
+      "id": "star-twinkle-5",
+      "at": {
+        "sec": 110
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_star_twinkle",
+          "at": "0s",
+          "dur": "0.3s",
+          "origin": "-10,18,16",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "accent"
+        }
+      ],
+      "notes": "v2 M5: a few star points flare briefly on a note of the high twinkle figure (the region moves note by note, never the whole sky)"
+    },
+    {
+      "id": "star-twinkle-6",
+      "at": {
+        "sec": 112
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_star_twinkle",
+          "at": "0s",
+          "dur": "0.3s",
+          "origin": "2,17.5,10",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "accent"
+        }
+      ],
+      "notes": "v2 M5: a few star points flare briefly on a note of the high twinkle figure (the region moves note by note, never the whole sky)"
     },
     {
       "id": "last-leaf",

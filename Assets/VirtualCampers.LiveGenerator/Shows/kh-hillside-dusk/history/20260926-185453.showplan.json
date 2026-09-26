@@ -1,0 +1,1039 @@
+{
+  "version": "2.0",
+  "meta": {
+    "title": "紅葉が星になる",
+    "titleEn": "When Autumn Leaves Become Stars (working title)",
+    "slug": "kh-hillside-dusk",
+    "world": "KominkaHillside",
+    "provisional": false,
+    "clock": {
+      "kind": "music-handoff",
+      "note": "Sections from the author timeline, cues from MIDI note onsets (velocity is not loudness)."
+    },
+    "concept": {
+      "title": "紅葉が星になる",
+      "story": "夕方の裏山の広場で、6 匹と並んで座る。一本の木から紅葉の光が一枚離れ、旋律に合わせて左右の木から一枚ずつ舞う。葉は流れになってゆるい渦を昇り、上ほど色が冷え、和声が開く瞬間に白い星の点へ変わって夜空に広がる。星が残って瞬く中、最後の一枚が同じ木から犬のそばに降りて消える。",
+      "palette": "primary #FF6A2B (momiji red) / secondary #FFB347 (gold) / cool #B8B4FF (the cooled top of the vortex) / accent #F4F8FF (star white). Colour-changing layers are tint:false.",
+      "motifs": [
+        "M1 one leaf",
+        "M2 leaf per melody note / answer from the other tree",
+        "M3 rising vortex that cools with height",
+        "M4 leaves become star points (one big scatter)",
+        "M5 stars remain, last leaf by the dogs"
+      ],
+      "arc": "one leaf → leaves answer each other → vortex → leaves become stars → night stars + the last leaf",
+      "avoid": "constellation lines / dipper (kd-quiet-wishes), light flowers / light tree (garden-lights), sakura petals (petal-waltz), paw prints (happy-tails), screen-filling particles, explosions, constant maximum"
+    },
+    "stage": {
+      "provisional": true,
+      "hostTransform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "eulerY": 0
+      },
+      "hostTransformNote": "Where the host world puts LiveStage_kh-hillside-dusk (KD_DogDefs.LiveStagePosition / LiveStageEulerY equivalent in KominkaHillside). Not used inside the showplan; copied into meta.stage so the host can set its constants. Default = origin until the plaza (diameter ~24 m, elevation ~19 m, sloped) is measured. Keep +Z where the sky is open; effects stay above y 5 except the last leaf, so the low view down to the kominka in the valley is not covered.",
+      "anchors": {
+        "treeLeft": [
+          -9,
+          6.5,
+          7
+        ],
+        "treeRight": [
+          9,
+          6.5,
+          7
+        ],
+        "vortexBase": [
+          0,
+          6.5,
+          10
+        ],
+        "vortexTop": [
+          0,
+          11.5,
+          10
+        ],
+        "sky": [
+          0,
+          17,
+          12
+        ],
+        "dogs": [
+          0,
+          0.35,
+          2.5
+        ]
+      },
+      "config": "shows/kh-hillside-dusk/config.json"
+    },
+    "effects": "effects.kh.json",
+    "musicHandoff": {
+      "schema": "music-handoff/1.0",
+      "songId": "KH_HillsideDusk",
+      "revision": "001",
+      "revisionId": "KH_HillsideDusk_001",
+      "title": "山の夕暮れ",
+      "handoffFile": "../vrc-music-agent/songs/KH_HillsideDusk/versions/001/events/handoff.json",
+      "handoffSha256": "3c9f5c10ad0df7e4dd628eb031af7c39eb092cec759d68521d3c0fc45b9f3a15",
+      "audioFile": "../vrc-music-agent/songs/KH_HillsideDusk/versions/001/output/master.wav",
+      "audioSha256": "3b0491002d1bd8db6af06cfef0b79f7d019d16d9baab47046f7111da4801813c",
+      "noteUse": {
+        "melody": {
+          "total": 63,
+          "leaf": 9,
+          "melody: intro keeps one leaf only (the first note)": 6,
+          "melody: < 2.5 s after the previous leaf": 4,
+          "melody: after grow (the vortex / stars carry it, not single leaves)": 44
+        },
+        "answer": {
+          "total": 31,
+          "leaf": 4,
+          "answer: < 2.5 s after the previous leaf": 8,
+          "answer: after grow (the vortex / stars carry it, not single leaves)": 19
+        },
+        "sustainHolds": [
+          [
+            24,
+            103.5
+          ],
+          [
+            104,
+            112
+          ]
+        ],
+        "otherTracks": [
+          "Harmony (85 events): no direct mapping; only the last-note cue looks at all tracks"
+        ]
+      },
+      "timelineProvenance": "author-song-json",
+      "timelineNote": "Bar = 4 s (60 BPM 4/4). Sections end on bar lines; 31 = ring-out after the last note.",
+      "sectionMap": {
+        "intro": "intro",
+        "grow": "growth",
+        "deepen": "deepening",
+        "peak": "mountain",
+        "end": "ending"
+      },
+      "audioReactive": "not-attached"
+    },
+    "authoring": {
+      "generator": "tools/authoring/gen_kh-hillside-dusk.js",
+      "trace": [
+        {
+          "phraseId": "first-leaf",
+          "timeSeconds": 0,
+          "notes": "M1: one leaf leaves the left tree and drifts, swinging, toward the middle; fades before the grow section",
+          "source": {
+            "trackId": "track-01",
+            "role": "Lead",
+            "eventId": "track-01-event-1",
+            "pitch": 60,
+            "velocity": 72
+          }
+        },
+        {
+          "phraseId": "leaf-melody-1",
+          "timeSeconds": 16,
+          "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)",
+          "source": {
+            "trackId": "track-01",
+            "role": "Lead",
+            "eventId": "track-01-event-8",
+            "pitch": 72,
+            "velocity": 74
+          }
+        },
+        {
+          "phraseId": "leaf-melody-2",
+          "timeSeconds": 18.5,
+          "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)",
+          "source": {
+            "trackId": "track-01",
+            "role": "Lead",
+            "eventId": "track-01-event-10",
+            "pitch": 79,
+            "velocity": 70
+          }
+        },
+        {
+          "phraseId": "leaf-melody-3",
+          "timeSeconds": 24,
+          "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)",
+          "source": {
+            "trackId": "track-01",
+            "role": "Lead",
+            "eventId": "track-01-event-11",
+            "pitch": 77,
+            "velocity": 74
+          }
+        },
+        {
+          "phraseId": "leaf-melody-4",
+          "timeSeconds": 26.5,
+          "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)",
+          "source": {
+            "trackId": "track-01",
+            "role": "Lead",
+            "eventId": "track-01-event-13",
+            "pitch": 84,
+            "velocity": 72
+          }
+        },
+        {
+          "phraseId": "leaf-melody-5",
+          "timeSeconds": 32,
+          "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)",
+          "source": {
+            "trackId": "track-01",
+            "role": "Lead",
+            "eventId": "track-01-event-14",
+            "pitch": 72,
+            "velocity": 76
+          }
+        },
+        {
+          "phraseId": "leaf-melody-6",
+          "timeSeconds": 34.5,
+          "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)",
+          "source": {
+            "trackId": "track-01",
+            "role": "Lead",
+            "eventId": "track-01-event-16",
+            "pitch": 79,
+            "velocity": 72
+          }
+        },
+        {
+          "phraseId": "leaf-melody-7",
+          "timeSeconds": 40,
+          "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)",
+          "source": {
+            "trackId": "track-01",
+            "role": "Lead",
+            "eventId": "track-01-event-17",
+            "pitch": 70,
+            "velocity": 76
+          }
+        },
+        {
+          "phraseId": "leaf-melody-8",
+          "timeSeconds": 42.5,
+          "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)",
+          "source": {
+            "trackId": "track-01",
+            "role": "Lead",
+            "eventId": "track-01-event-19",
+            "pitch": 77,
+            "velocity": 72
+          }
+        },
+        {
+          "phraseId": "leaf-answer-1",
+          "timeSeconds": 21,
+          "notes": "M2: the answer lets one leaf go from the right tree",
+          "source": {
+            "trackId": "track-03",
+            "role": "Reply",
+            "eventId": "track-03-event-1",
+            "pitch": 77,
+            "velocity": 70
+          }
+        },
+        {
+          "phraseId": "leaf-answer-2",
+          "timeSeconds": 29,
+          "notes": "M2: the answer lets one leaf go from the right tree",
+          "source": {
+            "trackId": "track-03",
+            "role": "Reply",
+            "eventId": "track-03-event-4",
+            "pitch": 79,
+            "velocity": 70
+          }
+        },
+        {
+          "phraseId": "leaf-answer-3",
+          "timeSeconds": 37,
+          "notes": "M2: the answer lets one leaf go from the right tree",
+          "source": {
+            "trackId": "track-03",
+            "role": "Reply",
+            "eventId": "track-03-event-7",
+            "pitch": 74,
+            "velocity": 70
+          }
+        },
+        {
+          "phraseId": "leaf-answer-4",
+          "timeSeconds": 45,
+          "notes": "M2: the answer lets one leaf go from the right tree",
+          "source": {
+            "trackId": "track-03",
+            "role": "Reply",
+            "eventId": "track-03-event-10",
+            "pitch": 81,
+            "velocity": 70
+          }
+        },
+        {
+          "phraseId": "gather-left",
+          "timeSeconds": 48,
+          "notes": "M3: leaves stream from the left tree into the vortex base",
+          "source": {
+            "section": "deepening"
+          }
+        },
+        {
+          "phraseId": "gather-right",
+          "timeSeconds": 48,
+          "notes": "M3: leaves stream from the right tree into the vortex base",
+          "source": {
+            "section": "deepening"
+          }
+        },
+        {
+          "phraseId": "vortex",
+          "timeSeconds": 50,
+          "notes": "M3: the slow rising vortex grows (emission ramps up) while the strings hold; leaves cool from red to lavender toward the top; it keeps rising through the build-up and stops 4 s before the harmonic opening so its last leaves overlap the leaf->star vortex",
+          "source": {
+            "section": "deepening",
+            "stringHolds": [
+              [
+                50,
+                84
+              ]
+            ]
+          }
+        },
+        {
+          "phraseId": "leaf-to-star",
+          "timeSeconds": 82,
+          "notes": "M4: the vortex continues; each leaf turns into a white star point at 37.5-56.25% of its 16 s life (first change at the peak cue), rises and spreads; tapers after the peak",
+          "source": {
+            "harmonicOpening": {
+              "seconds": 88,
+              "bar": 23,
+              "chord": "Dbmaj7 (bVI)",
+              "source": "vrc-music-agent songs/KH_HillsideDusk/versions/001 song.json composition.chords[23] / composition.md (和声が D♭ へ開く 88 秒)"
+            },
+            "onset": {
+              "trackId": "track-01",
+              "role": "Lead",
+              "eventId": "track-01-event-41",
+              "pitch": 80,
+              "velocity": 82
+            }
+          }
+        },
+        {
+          "phraseId": "star-scatter",
+          "timeSeconds": 84.25,
+          "notes": "M4 (the one big motion): a ring of 48 leaves leaves the top of the vortex outward and turns into stars at the harmonic opening",
+          "source": {
+            "harmonicOpening": {
+              "seconds": 88,
+              "bar": 23,
+              "chord": "Dbmaj7 (bVI)",
+              "source": "vrc-music-agent songs/KH_HillsideDusk/versions/001 song.json composition.chords[23] / composition.md (和声が D♭ へ開く 88 秒)"
+            },
+            "onset": {
+              "trackId": "track-01",
+              "role": "Lead",
+              "eventId": "track-01-event-41",
+              "pitch": 80,
+              "velocity": 82
+            }
+          }
+        },
+        {
+          "phraseId": "night-stars",
+          "timeSeconds": 88,
+          "notes": "M4-M5: star points fill the sky where the leaf-stars spread, then remain and twinkle; emission stops 12.3 s before the end",
+          "source": {
+            "harmonicOpening": {
+              "seconds": 88,
+              "bar": 23,
+              "chord": "Dbmaj7 (bVI)",
+              "source": "vrc-music-agent songs/KH_HillsideDusk/versions/001 song.json composition.chords[23] / composition.md (和声が D♭ へ開く 88 秒)"
+            },
+            "onset": {
+              "trackId": "track-01",
+              "role": "Lead",
+              "eventId": "track-01-event-41",
+              "pitch": 80,
+              "velocity": 82
+            }
+          }
+        },
+        {
+          "phraseId": "last-leaf",
+          "timeSeconds": 103.12,
+          "notes": "M5: the last leaf swings down from the left tree, lands by the dogs at 115.476 s and fades out 116-117.12 s (last note 116 s)",
+          "source": {
+            "trackId": "track-01",
+            "role": "Lead",
+            "eventId": "track-01-event-63",
+            "pitch": 65,
+            "velocity": 54
+          }
+        }
+      ]
+    },
+    "budgetEstimate": {
+      "maxParticlesTotal": 926,
+      "materialsIfShared": 7,
+      "materialsIfNotShared": 22,
+      "realtimeLights": 0,
+      "note": "Static sum of maxParticles per (phrase, step) instance. Materials: every step sets params.shareMaterials, so identical layers share one .mat; verify in Unity (vclive.sh verify --budget-*)."
+    }
+  },
+  "bpm": 60,
+  "timeSignature": "4/4",
+  "beatsPerBar": 4,
+  "beatOffset": 0,
+  "totalDuration": 124,
+  "playbackDuration": 124,
+  "palette": {
+    "primary": "#FF6A2B",
+    "secondary": "#FFB347",
+    "cool": "#B8B4FF",
+    "accent": "#F4F8FF"
+  },
+  "sections": [
+    {
+      "id": "intro",
+      "label": "intro (導入)",
+      "startTime": 0,
+      "endTime": 16,
+      "effects": []
+    },
+    {
+      "id": "growth",
+      "label": "grow (育ち)",
+      "startTime": 16,
+      "endTime": 48,
+      "effects": []
+    },
+    {
+      "id": "deepening",
+      "label": "deepen (深まり)",
+      "startTime": 48,
+      "endTime": 72,
+      "effects": []
+    },
+    {
+      "id": "mountain",
+      "label": "peak (山)",
+      "startTime": 72,
+      "endTime": 104,
+      "effects": []
+    },
+    {
+      "id": "ending",
+      "label": "end (終止)",
+      "startTime": 104,
+      "endTime": 124,
+      "effects": []
+    }
+  ],
+  "phrases": [
+    {
+      "id": "first-leaf",
+      "at": {
+        "sec": 0
+      },
+      "steps": [
+        {
+          "fx": "trail/kh_leaf_glide",
+          "at": "0s",
+          "dur": "13.8s",
+          "origin": "-9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "primary",
+          "path": [
+            "-9.098,6.592,7.325",
+            "-9.159,6.662,7.598",
+            "-9.172,6.7,7.78",
+            "-9.129,6.699,7.849",
+            "-9.031,6.658,7.801",
+            "-8.882,6.582,7.65",
+            "-8.696,6.48,7.426",
+            "-8.485,6.365,7.172",
+            "-8.267,6.415,6.93",
+            "-8.056,6.447,6.745",
+            "-7.863,6.452,6.647",
+            "-7.697,6.424,6.656",
+            "-7.56,6.363,6.775",
+            "-7.446,6.273,6.988",
+            "-7.349,6.163,7.269",
+            "-7.258,6.042,7.581",
+            "-7.159,6.066,7.884",
+            "-7.042,6.076,8.142",
+            "-6.898,6.064,8.327",
+            "-6.724,6.025,8.423",
+            "-6.52,5.96,8.427",
+            "-6.29,5.871,8.353",
+            "-6.044,5.768,8.223",
+            "-5.792,5.658,8.069",
+            "-5.548,5.671,7.924",
+            "-5.322,5.674,7.817",
+            "-5.122,5.66,7.771",
+            "-4.954,5.626,7.798",
+            "-4.819,5.571,7.899",
+            "-4.713,5.5,8.06",
+            "-4.631,5.419,8.262",
+            "-4.565,5.335,8.478",
+            "-4.507,5.354,8.681",
+            "-4.449,5.366,8.846",
+            "-4.388,5.366,8.954",
+            "-4.32,5.351,8.997",
+            "-4.246,5.324,8.975",
+            "-4.172,5.285,8.898",
+            "-4.104,5.242,8.783",
+            "-4.05,5.2,8.65"
+          ],
+          "ease": "linear"
+        }
+      ],
+      "notes": "M1: one leaf leaves the left tree and drifts, swinging, toward the middle; fades before the grow section"
+    },
+    {
+      "id": "leaf-melody-1",
+      "at": {
+        "sec": 16
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_release",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "-9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "primary"
+        }
+      ],
+      "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)"
+    },
+    {
+      "id": "leaf-melody-2",
+      "at": {
+        "sec": 18.5
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_release",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "-9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "primary"
+        }
+      ],
+      "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)"
+    },
+    {
+      "id": "leaf-melody-3",
+      "at": {
+        "sec": 24
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_release",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "-9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "primary"
+        }
+      ],
+      "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)"
+    },
+    {
+      "id": "leaf-melody-4",
+      "at": {
+        "sec": 26.5
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_release",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "-9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "primary"
+        }
+      ],
+      "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)"
+    },
+    {
+      "id": "leaf-melody-5",
+      "at": {
+        "sec": 32
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_release",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "-9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "primary"
+        }
+      ],
+      "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)"
+    },
+    {
+      "id": "leaf-melody-6",
+      "at": {
+        "sec": 34.5
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_release",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "-9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "primary"
+        }
+      ],
+      "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)"
+    },
+    {
+      "id": "leaf-melody-7",
+      "at": {
+        "sec": 40
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_release",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "-9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "primary"
+        }
+      ],
+      "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)"
+    },
+    {
+      "id": "leaf-melody-8",
+      "at": {
+        "sec": 42.5
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_release",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "-9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "primary"
+        }
+      ],
+      "notes": "M2: a melody note lets one leaf go from the left tree (drifts inward at tree height)"
+    },
+    {
+      "id": "leaf-answer-1",
+      "at": {
+        "sec": 21
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_release",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "secondary",
+          "rotate": [
+            0,
+            180,
+            0
+          ]
+        }
+      ],
+      "notes": "M2: the answer lets one leaf go from the right tree"
+    },
+    {
+      "id": "leaf-answer-2",
+      "at": {
+        "sec": 29
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_release",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "secondary",
+          "rotate": [
+            0,
+            180,
+            0
+          ]
+        }
+      ],
+      "notes": "M2: the answer lets one leaf go from the right tree"
+    },
+    {
+      "id": "leaf-answer-3",
+      "at": {
+        "sec": 37
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_release",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "secondary",
+          "rotate": [
+            0,
+            180,
+            0
+          ]
+        }
+      ],
+      "notes": "M2: the answer lets one leaf go from the right tree"
+    },
+    {
+      "id": "leaf-answer-4",
+      "at": {
+        "sec": 45
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_release",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "secondary",
+          "rotate": [
+            0,
+            180,
+            0
+          ]
+        }
+      ],
+      "notes": "M2: the answer lets one leaf go from the right tree"
+    },
+    {
+      "id": "gather-left",
+      "at": {
+        "sec": 48
+      },
+      "steps": [
+        {
+          "fx": "trail/kh_leaf_gather",
+          "at": "0s",
+          "dur": "5s",
+          "origin": "-9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "primary",
+          "path": [
+            "-8.62,6.629,7.15",
+            "-8.24,6.746,7.3",
+            "-7.86,6.851,7.45",
+            "-7.48,6.944,7.6",
+            "-7.1,7.025,7.75",
+            "-6.72,7.094,7.9",
+            "-6.34,7.151,8.05",
+            "-5.96,7.196,8.2",
+            "-5.58,7.229,8.35",
+            "-5.2,7.25,8.5",
+            "-4.82,7.259,8.65",
+            "-4.44,7.256,8.8",
+            "-4.06,7.241,8.95",
+            "-3.68,7.214,9.1",
+            "-3.3,7.175,9.25",
+            "-2.92,7.124,9.4",
+            "-2.54,7.061,9.55",
+            "-2.16,6.986,9.7",
+            "-1.78,6.899,9.85",
+            "-1.4,6.8,10"
+          ],
+          "ease": "linear"
+        }
+      ],
+      "notes": "M3: leaves stream from the left tree into the vortex base"
+    },
+    {
+      "id": "gather-right",
+      "at": {
+        "sec": 48
+      },
+      "steps": [
+        {
+          "fx": "trail/kh_leaf_gather",
+          "at": "0s",
+          "dur": "5s",
+          "origin": "9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "secondary",
+          "path": [
+            "8.62,6.629,7.15",
+            "8.24,6.746,7.3",
+            "7.86,6.851,7.45",
+            "7.48,6.944,7.6",
+            "7.1,7.025,7.75",
+            "6.72,7.094,7.9",
+            "6.34,7.151,8.05",
+            "5.96,7.196,8.2",
+            "5.58,7.229,8.35",
+            "5.2,7.25,8.5",
+            "4.82,7.259,8.65",
+            "4.44,7.256,8.8",
+            "4.06,7.241,8.95",
+            "3.68,7.214,9.1",
+            "3.3,7.175,9.25",
+            "2.92,7.124,9.4",
+            "2.54,7.061,9.55",
+            "2.16,6.986,9.7",
+            "1.78,6.899,9.85",
+            "1.4,6.8,10"
+          ],
+          "ease": "linear"
+        }
+      ],
+      "notes": "M3: leaves stream from the right tree into the vortex base"
+    },
+    {
+      "id": "vortex",
+      "at": {
+        "sec": 50
+      },
+      "steps": [
+        {
+          "fx": "spiral/kh_leaf_vortex",
+          "at": "0s",
+          "dur": "34s",
+          "origin": "0,6.5,10",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "pulse": {
+            "pattern": "ramp",
+            "from": 0.2,
+            "to": 1
+          }
+        }
+      ],
+      "notes": "M3: the slow rising vortex grows (emission ramps up) while the strings hold; leaves cool from red to lavender toward the top; it keeps rising through the build-up and stops 4 s before the harmonic opening so its last leaves overlap the leaf->star vortex"
+    },
+    {
+      "id": "leaf-to-star",
+      "at": {
+        "sec": 82
+      },
+      "steps": [
+        {
+          "fx": "spiral/kh_leaf_to_star",
+          "at": "0s",
+          "dur": "18s",
+          "origin": "0,6.5,10",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "pulse": {
+            "pattern": "ramp",
+            "from": 0.4,
+            "to": 1
+          }
+        },
+        {
+          "fx": "spiral/kh_leaf_to_star",
+          "at": "18s",
+          "dur": "6s",
+          "origin": "0,6.5,10",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "pulse": {
+            "pattern": "ramp",
+            "from": 1,
+            "to": 0.25
+          }
+        }
+      ],
+      "notes": "M4: the vortex continues; each leaf turns into a white star point at 37.5-56.25% of its 16 s life (first change at the peak cue), rises and spreads; tapers after the peak"
+    },
+    {
+      "id": "star-scatter",
+      "at": {
+        "sec": 84.25
+      },
+      "steps": [
+        {
+          "fx": "burst/kh_leaf_to_star_scatter",
+          "at": "0s",
+          "dur": "0.5s",
+          "origin": "0,11.5,10",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          }
+        }
+      ],
+      "notes": "M4 (the one big motion): a ring of 48 leaves leaves the top of the vortex outward and turns into stars at the harmonic opening"
+    },
+    {
+      "id": "night-stars",
+      "at": {
+        "sec": 88
+      },
+      "steps": [
+        {
+          "fx": "aurora/kh_night_stars",
+          "at": "0s",
+          "dur": "16s",
+          "origin": "0,17,12",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "accent",
+          "pulse": {
+            "pattern": "ramp",
+            "from": 0.1,
+            "to": 1
+          }
+        },
+        {
+          "fx": "aurora/kh_night_stars",
+          "at": "16s",
+          "dur": "7.7s",
+          "origin": "0,17,12",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "accent"
+        }
+      ],
+      "notes": "M4-M5: star points fill the sky where the leaf-stars spread, then remain and twinkle; emission stops 12.3 s before the end"
+    },
+    {
+      "id": "last-leaf",
+      "at": {
+        "sec": 103.12
+      },
+      "steps": [
+        {
+          "fx": "trail/kh_leaf_glide",
+          "at": "0s",
+          "dur": "13.9s",
+          "origin": "-9,6.5,7",
+          "intensity": 1,
+          "params": {
+            "shareMaterials": true
+          },
+          "color": "primary",
+          "path": [
+            "-8.738,6.618,7.502",
+            "-8.521,6.673,7.825",
+            "-8.397,6.643,7.872",
+            "-8.376,6.525,7.629",
+            "-8.428,6.335,7.158",
+            "-8.497,6.177,6.585",
+            "-8.513,6.166,6.058",
+            "-8.42,6.096,5.702",
+            "-8.186,5.949,5.585",
+            "-7.817,5.728,5.701",
+            "-7.351,5.456,5.973",
+            "-6.849,5.289,6.279",
+            "-6.376,5.189,6.49",
+            "-5.981,5.033,6.506",
+            "-5.686,4.812,6.287",
+            "-5.479,4.535,5.859",
+            "-5.322,4.223,5.31",
+            "-5.16,4.074,4.758",
+            "-4.942,3.923,4.314",
+            "-4.632,3.725,4.055",
+            "-4.225,3.475,4.002",
+            "-3.742,3.185,4.112",
+            "-3.226,2.904,4.299",
+            "-2.73,2.771,4.457",
+            "-2.3,2.611,4.497",
+            "-1.962,2.413,4.366",
+            "-1.718,2.178,4.066",
+            "-1.545,1.919,3.65",
+            "-1.404,1.726,3.203",
+            "-1.253,1.619,2.817",
+            "-1.061,1.492,2.565",
+            "-0.812,1.337,2.477",
+            "-0.519,1.161,2.54",
+            "-0.207,0.978,2.697",
+            "0.082,0.899,2.874",
+            "0.314,0.858,2.995",
+            "0.46,0.805,3.012",
+            "0.514,0.739,2.913",
+            "0.486,0.665,2.723",
+            "0.4,0.6,2.5",
+            "0.4,0.6,2.5",
+            "0.4,0.6,2.5",
+            "0.4,0.6,2.5",
+            "0.4,0.6,2.5",
+            "0.4,0.6,2.5"
+          ],
+          "ease": "linear"
+        }
+      ],
+      "notes": "M5: the last leaf swings down from the left tree, lands by the dogs at 115.476 s and fades out 116-117.12 s (last note 116 s)"
+    }
+  ]
+}
