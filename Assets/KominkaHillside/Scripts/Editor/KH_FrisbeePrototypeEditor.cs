@@ -298,7 +298,8 @@ namespace KominkaHillside.Editor
             // Round 4 (PCVR 3 "it is a machine"): the sprint and the snap turn are gone. The hook approach delivers
             // the facing, so the run can be 8 m/s with a visible 12 m/s2 start and a 10 m/s2 roll-out, and the turn
             // rates can be a dog's (240 running / 180 walking / 120 standing in a catch state).
-            catcher.chaseRunSpeed = 9.5f; catcher.chaseAcceleration = 14f; catcher.chaseDeceleration = 10f;
+            // chaseRunSpeed is per breed since PCVR 2026-09-26 (ChaseRunSpeedFor, written below with the other breed values).
+            catcher.chaseAcceleration = 14f; catcher.chaseDeceleration = 10f;
             catcher.maxRunAnimScale = 2.5f;
             catcher.noticeDelay = 0.1f; catcher.settleTime = 0.2f; catcher.returnRunSpeed = 4.5f;
             catcher.turnSpeedDegPerSec = 240f; catcher.walkTurnDegPerSec = 180f; catcher.standTurnDegPerSec = 120f;
@@ -322,6 +323,7 @@ namespace KominkaHillside.Editor
             if (catcher.maxRootRise <= catcher.minRootRise) throw new InvalidOperationException(catcher.name + ": maxRootRise " + catcher.maxRootRise + " <= minRootRise " + catcher.minRootRise + " (no jump band left)");
             // IMP-DOG-017 (user 2026-09-26 "リアルの犬を検討しつつ不自然でない推奨値"): the breed's own chase-down sprint,
             // the turn from a standstill and the rise that makes a jump a jump. Code-owned per breed, like maxRootRise.
+            catcher.chaseRunSpeed = ChaseRunSpeedFor(facts.breed);   // PCVR 2026-09-26 "全体的に足早すぎ、特に小型犬"
             catcher.chaseSprintSpeed = ChaseSprintSpeedFor(facts.breed);
             catcher.launchTurnDegPerSec = LaunchTurnDegPerSec;
             catcher.jumpFloorRise = JumpFloorRiseFor(facts);
@@ -334,17 +336,39 @@ namespace KominkaHillside.Editor
         }
 
         // IMP-DOG-017 breed table. Real sprints: Lab / Shiba / Samoyed 30-40 km/h (8-11 m/s), Corgi / Dachs 25-30,
-        // Pome 20-25. Every breed chases at 9.5 m/s (PCVR-approved), so only the chase-down (B) gets "one burst":
-        // +10% for the mid / large dogs, 10.5 for the small ones. 480 deg/s = turning from a standstill (a real dog
-        // swings half round in 0.3 s = 600 deg/s); running turns stay at turnSpeedDegPerSec.
+        // Pome 20-25. PCVR 2026-09-26 "全体的に足早すぎ、特に小型犬": the shared 9.5 m/s chase is gone, so both the
+        // chase run (A / C and every other chase) and the chase-down burst (B only) are per breed, the small dogs
+        // well below the large ones:
+        //   breed    chaseRunSpeed  chaseSprintSpeed
+        //   Lab           8.5           10.0
+        //   Samoyed       8.5           10.0
+        //   Shiba         8.0            9.5
+        //   Corgi         7.0            8.5
+        //   Dachs         7.0            8.5
+        //   Pome          6.5            8.0
+        // chaseAcceleration stays 14 for all. 480 deg/s = turning from a standstill (a real dog swings half round in
+        // 0.3 s = 600 deg/s); running turns stay at turnSpeedDegPerSec.
         public const float LaunchTurnDegPerSec = 480f;
         public const float JumpFloorRiseCap = 0.25f, JumpFloorMouthRatio = 0.6f;
+        public static float ChaseRunSpeedFor(string breed)
+        {
+            switch (breed)
+            {
+                case "Lab": case "Samoyed": return 8.5f;
+                case "Shiba": return 8.0f;
+                case "Corgi": case "Dachs": return 7.0f;
+                case "Pome": return 6.5f;
+                default: throw new InvalidOperationException("No chaseRunSpeed for breed " + breed + " (IMP-DOG-017 table)");
+            }
+        }
         public static float ChaseSprintSpeedFor(string breed)
         {
             switch (breed)
             {
-                case "Lab": case "Samoyed": case "Shiba": return 11.0f;
-                case "Corgi": case "Dachs": case "Pome": return 10.5f;
+                case "Lab": case "Samoyed": return 10.0f;
+                case "Shiba": return 9.5f;
+                case "Corgi": case "Dachs": return 8.5f;
+                case "Pome": return 8.0f;
                 default: throw new InvalidOperationException("No chaseSprintSpeed for breed " + breed + " (IMP-DOG-017 table)");
             }
         }
@@ -603,11 +627,12 @@ namespace KominkaHillside.Editor
                         "lane " + breed + ": catcher maxRootRise " + lc.maxRootRise.ToString("F2") + " == facts " + lf.maxRootRise.ToString("F2") + " (proxy and backing)");
                     // IMP-DOG-017: the breed table, proxy and backing heap.
                     float lfloor = JumpFloorRiseFor(lf);
-                    Check(Mathf.Abs(lc.chaseSprintSpeed - ChaseSprintSpeedFor(breed)) < 1e-4f && Mathf.Abs(lc.launchTurnDegPerSec - LaunchTurnDegPerSec) < 1e-4f && Mathf.Abs(lc.jumpFloorRise - lfloor) < 1e-3f
+                    Check(Mathf.Abs(lc.chaseRunSpeed - ChaseRunSpeedFor(breed)) < 1e-4f && Mathf.Abs(lc.chaseSprintSpeed - ChaseSprintSpeedFor(breed)) < 1e-4f && Mathf.Abs(lc.launchTurnDegPerSec - LaunchTurnDegPerSec) < 1e-4f && Mathf.Abs(lc.jumpFloorRise - lfloor) < 1e-3f
+                        && lcb.publicVariables.TryGetVariableValue("chaseRunSpeed", out float lrs) && Mathf.Abs(lrs - lc.chaseRunSpeed) < 1e-4f
                         && lcb.publicVariables.TryGetVariableValue("chaseSprintSpeed", out float lss) && Mathf.Abs(lss - lc.chaseSprintSpeed) < 1e-4f
                         && lcb.publicVariables.TryGetVariableValue("launchTurnDegPerSec", out float llt) && Mathf.Abs(llt - lc.launchTurnDegPerSec) < 1e-4f
                         && lcb.publicVariables.TryGetVariableValue("jumpFloorRise", out float ljf) && Mathf.Abs(ljf - lc.jumpFloorRise) < 1e-4f,
-                        "lane " + breed + ": chase-down sprint " + lc.chaseSprintSpeed.ToString("F1") + " / launch turn " + lc.launchTurnDegPerSec.ToString("F0") + " / jump floor " + lc.jumpFloorRise.ToString("F3")
+                        "lane " + breed + ": chase run " + lc.chaseRunSpeed.ToString("F1") + " / chase-down sprint " + lc.chaseSprintSpeed.ToString("F1") + " / launch turn " + lc.launchTurnDegPerSec.ToString("F0") + " / jump floor " + lc.jumpFloorRise.ToString("F3")
                         + " == breed table (floor = min(0.25, 0.6 x stand mouth " + lf.mouthOffsetStand.y.ToString("F3") + ") = " + lfloor.ToString("F3") + "), proxy and backing");
                     Check(lc.chaseSprintSpeed >= lc.chaseRunSpeed && lc.chaseSprintSpeed <= 11f && lc.launchTurnDegPerSec >= 240f && lc.launchTurnDegPerSec <= 720f && lc.jumpFloorRise < lc.maxRootRise,
                         "lane " + breed + ": sprint in [chaseRunSpeed " + lc.chaseRunSpeed.ToString("F1") + ", 11], launch turn in [240, 720], jump floor < maxRootRise " + lc.maxRootRise.ToString("F2"));
@@ -674,9 +699,10 @@ namespace KominkaHillside.Editor
                     Check(catcher.variant == KH_FrisbeeCatch.VariantNormal && catcher.pendingVariant == -1, "catcher starts on variant Normal with nothing queued");
                     Check(backing.publicVariables.TryGetVariableValue("variant", out int bvar) && bvar == KH_FrisbeeCatch.VariantNormal
                         && backing.publicVariables.TryGetVariableValue("pendingVariant", out int bpend) && bpend == -1, "backing heap holds variant 0 with nothing queued");
-                    // IMP-DOG-008 round 2 (intercept-first): the plan promises the dog will be STANDING under the
-                    // catch point, settled, before the crouch. Only a sprint can keep that promise.
-                    Check(catcher.chaseRunSpeed >= 9.5f, "chase sprint " + catcher.chaseRunSpeed.ToString("F1") + " m/s >= 9.5 (round 5: the ETA the planner promises, and the reach of a jump candidate)");
+                    // IMP-DOG-008 round 2 (intercept-first) promised the catch with a shared 9.5 m/s sprint. PCVR 2026-09-26
+                    // ("全体的に足早すぎ、特に小型犬"): the chase run is the breed's own now (IMP-DOG-017 table).
+                    Check(Mathf.Abs(catcher.chaseRunSpeed - ChaseRunSpeedFor(KH_FrisbeeJumpClipEditor.Breed)) < 1e-4f,
+                        "chase run " + catcher.chaseRunSpeed.ToString("F1") + " m/s == breed table " + ChaseRunSpeedFor(KH_FrisbeeJumpClipEditor.Breed).ToString("F1") + " (" + KH_FrisbeeJumpClipEditor.Breed + ", PCVR 2026-09-26)");
                     // Round 4: both of these are now bands, not floors. Too low and the plan cannot keep its ETA;
                     // too high and the dog reads as a machine (PCVR 3), which no catch rate can make up for.
                     Check(catcher.chaseAcceleration >= 10f && catcher.chaseAcceleration <= 18f, "chase acceleration " + catcher.chaseAcceleration.ToString("F1") + " m/s2 in [10, 18] (reached, but visibly: " + (catcher.chaseRunSpeed / catcher.chaseAcceleration).ToString("F2") + " s to the run)");

@@ -207,7 +207,10 @@ namespace KominkaHillside
             string band = _bandIn < 0f ? "none" : _bandIn.ToString("F2") + "-" + _bandOut.ToString("F2");
             if (_bandIn2 >= 0f) band = band + "+" + _bandIn2.ToString("F2") + "-" + _bandOut2.ToString("F2");
             return " solve=" + _solveCount + " pick=" + pick + " vReq=" + _pickVReq.ToString("F2")
-                + " vCap=" + _pickVCap.ToString("F1") + " band=" + band;
+                + " vCap=" + _pickVCap.ToString("F1") + " band=" + band
+                // Round 7: a band existed but no jump came of it - why each shape failed at the last instant tried
+                // (time / area / speed / eta / close / side / banned / lane / ground / landing; ok = passed, lost on score).
+                + (chosen != PlanJump && _bandIn >= 0f ? " why=A:" + _whyA + ",B:" + _whyB + ",C:" + _whyC : "");
         }
 
         string MotionTail()

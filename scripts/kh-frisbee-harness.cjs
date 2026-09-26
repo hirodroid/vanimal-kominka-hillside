@@ -36,9 +36,9 @@ const SHOTS = [
   { name: 'far', variant: -1, speed: 9, elevationDeg: 15, allowed: ['caught'], expectKind: 'jump', note: '遠投。走って追いついて跳ぶ' },
   { name: 'side', variant: -1, speed: 7, elevationDeg: 10, sideDeg: 25, allowed: ['caught', 'ground'], expectKind: 'any', note: '横 25 度 (round 5)。回り込みと横からの踏み切りを通す。合否ではなく etaErr を横の幾何でも採るための投げ' },
   // IMP-DOG-017: 位置取りの投げ。各 1 回 (自分のプリセットで)。犬は投げ台からの相対位置へ置く。
-  { name: 'beside', variant: 0, place: 'beside (投げ台の横 0.6 m、投げ台向き)', speed: 6, elevationDeg: 10, allowed: ['caught'], expectKind: 'jump', expectMode: 'chase',
+  { name: 'beside', variant: 0, place: 'beside (投げ台の横 0.6 m、投げ台向き)', speed: 6, elevationDeg: 10, allowed: ['caught', 'ground'], expectKind: 'jump|over|ground', expectMode: 'chase',
     labAllowed: ['caught', 'ground'], labExpectKind: 'jump|over|ground',
-    note: 'よしよしの後に投げる流れ。Lab 以外は追いついて跳ぶ (mode=chase)。Lab は over / ground も許す (跳ぶなら mode=chase)' },
+    note: 'よしよしの後に投げる流れ。跳ぶなら mode=chase。犬種別に速度を下げた 2026-09-26 以降、小型犬は 6 m/s でも横からは届かないので全犬種 over / ground も許す' },
   { name: 'chase', variant: 3, place: 'chase (v3 の待機位置: 投げ台の前 4 m・横 2.5 m、投げる方向向き)', speed: 7, elevationDeg: 10, allowed: ['caught'], expectKind: 'jump', expectMode: 'chase',
     note: '後ろから追いついて跳ぶ。全犬種で mode=chase' },
 ];

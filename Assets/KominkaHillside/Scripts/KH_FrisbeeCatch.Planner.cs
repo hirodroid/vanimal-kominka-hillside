@@ -134,6 +134,15 @@ namespace KominkaHillside
                 // dog has RIGHT NOW, so a dog that is running early pushes the crouch start further out instead of
                 // arriving and stopping on it (round 2's failure, and the reason PCVR 3 saw no running jumps).
                 float vTake = Mathf.Clamp(_speed, _takeoffMin, _takeoffCap);
+                // PCVR 2026-09-26 (drop=gate 4.4-4.8 m short): the crouch start is derived from the speed, and the
+                // speed is paced at the crouch start. When the pace eased the dog down (ahead of schedule), vTake fell,
+                // the crouch start slid AWAY along -_forward, and the dog chased a receding target; the first keep
+                // tick alone also reset the solve's vTake (B: 6.3) to the standing 2 m/s, moving it ~2 m further out.
+                // So vTake only ratchets UP from the committed value (the target never recedes), and inside
+                // RunJumpTrimDistance it is frozen. The shortening below (a dog already inside the run-up) still applies.
+                if (vTake < _jumpSpeed) vTake = _jumpSpeed;
+                Vector3 toCur = _standRoot - dogPos; toCur.y = 0f;
+                if (toCur.magnitude <= RunJumpTrimDistance) vTake = _jumpSpeed;
                 Vector3 ground = new Vector3(_catchRoot.x, _catchRoot.y - _rootRise, _catchRoot.z);
                 // _forward is FIXED at the commit (the run-up is a line, not something re-aimed every tick); only
                 // the crouch start slides along it, and never past the dog.
@@ -188,7 +197,13 @@ namespace KominkaHillside
                     // KeepLateSeconds of it is left, the pace is judged against the crouch deadline instead.
                     float budget = availA > KeepLateSeconds ? availA : availC;
                     if (budget <= 0.02f) return DropMode("pace");
-                    if (ViaPath(dogPos) / budget > chaseRunSpeed * KeepPaceSlack) return DropMode("pace");
+                    // PCVR 2026-09-26 ("回り込んだ後に全然跳ばない"): late in the approach the path THROUGH the via
+                    // point is metres longer than the straight line, and it dropped plans the dog could walk in to
+                    // (Samoyed: 1.7 m straight with 0.5 s = 3.4 m/s, dropped for pace). If the straight line fits,
+                    // finish the via here and run straight in; drop only when even the straight line cannot make it.
+                    float capA = chaseRunSpeed * KeepPaceSlack;
+                    if (_viaActive && !_viaDone && (distHeld <= ViaFinishDistance || ViaPath(dogPos) / budget > capA) && distHeld / budget <= capA) _viaDone = true;
+                    if (ViaPath(dogPos) / budget > capA) return DropMode("pace");
                 }
                 FineTune(dogPos);
                 return true;
@@ -350,7 +365,7 @@ namespace KominkaHillside
         int Solve(float tNow, Vector3 dogPos)
         {
             float lo = JumpFloor(), hi = maxRootRise;
-            _solveCount = 0; _cScore = -1f;
+            _solveCount = 0; _cScore = -1f; _whyA = "-"; _whyB = "-"; _whyC = "-";
             FindBand(tNow, lo, hi);
             if (hi <= lo) return PlanNone;
             if (_bandIn >= 0f) SolveBand(tNow, dogPos, _bandIn, _bandOut, lo, hi);
@@ -367,8 +382,13 @@ namespace KominkaHillside
             // Harness round 2: never pick ON the band edge. The edge is where the bisection tolerance and the clamp
             // meet, and a candidate there sits at exactly maxRootRise (or the floor). Inset both ends; a band
             // narrower than twice the inset is sampled once at its middle.
-            if (tOut - tIn > 2f * BandInset) { tIn += BandInset; tOut -= BandInset; }
-            else { tIn = 0.5f * (tIn + tOut); tOut = tIn; }
+            // PCVR 2026-09-26: a small dog's band (<= 2 x BandInset wide) was sampled once at its MIDDLE, so every
+            // Pome / Corgi / Dachs jump came out at the same mid-band rise (0.32). Now a narrow band is sampled at
+            // three instants just inside the bisection tolerance and the rise clamp keeps each off the edge; the
+            // score (rise x RiseScoreWeight) then takes the highest one.
+            bool narrow = tOut - tIn <= 2f * BandInset;
+            if (!narrow) { tIn += BandInset; tOut -= BandInset; }
+            else if (tOut - tIn > 2f * BandTolerance) { tIn += BandTolerance; tOut -= BandTolerance; }
             float span = tOut - tIn;
             float riseLo = lo + BandRiseInset, riseHi = hi - BandRiseInset;
             if (riseHi < riseLo) { riseLo = 0.5f * (lo + hi); riseHi = riseLo; }
@@ -376,6 +396,7 @@ namespace KominkaHillside
             if (span / step > SolveMaxSamples - 1) step = span / (SolveMaxSamples - 1);
             int n = (int)(span / step) + 1;
             if (n > SolveMaxSamples) n = SolveMaxSamples;
+            if (narrow && span > 0.001f) { n = 3; step = span / 2f; }
             float vTakeB = Mathf.Clamp(chaseSprintSpeed * ChaseTakeoffFraction, RunJumpMinTakeoff, RunJumpMaxTakeoff);
             for (int i = 0; i < n; i++)
             {
@@ -391,13 +412,13 @@ namespace KominkaHillside
                 float scale = _riseDur / tUp;
                 float crouch = _crouchDur / scale;
                 float avail = t - tNow - crouch - tUp;
-                if (avail <= 0.05f) continue;
+                if (avail <= 0.05f) { _whyA = "time"; _whyB = "time"; _whyC = "time"; continue; }
                 Vector3 dv = frisbee._VelocityAt(_v0, _curve, t); dv.y = 0f;
                 if (dv.sqrMagnitude < 1e-4f) continue;
                 Vector3 flight = dv.normalized;
                 // Higher in the band is better: the jump reads bigger (user 2026-09-26 "大げさでも跳んでほしい").
-                float riseTerm = (rise - lo) / (hi - lo) * 3f;
-                if ((_bannedModes & (1 << ModeAround)) == 0) EvalAround(t, rise, tUp, scale, crouch, avail, groundY, dogPos, riseTerm);
+                float riseTerm = (rise - lo) / (hi - lo) * RiseScoreWeight;   // PCVR 2026-09-26: 3 -> 6
+                if ((_bannedModes & (1 << ModeAround)) == 0) EvalAround(t, rise, tUp, scale, crouch, avail, groundY, dogPos, riseTerm); else _whyA = "banned";
                 EvalRun(t, d, flight, rise, tUp, scale, crouch, avail, groundY, dogPos, riseTerm, vTakeB);
             }
         }
@@ -417,10 +438,10 @@ namespace KominkaHillside
         void EvalAround(float t, float rise, float tUp, float scale, float crouch, float avail, float groundY, Vector3 dogPos, float riseTerm)
         {
             float availA = avail - settleTime;
-            if (availA <= 0.05f) return;
+            if (availA <= 0.05f) { _whyA = "time"; return; }
             CatchGeometry(t, rise, groundY, false, dogPos);
             Vector3 S = _geoStandRoot, F = _geoForward;
-            if (!DogMayGo(S)) return;
+            if (!DogMayGo(S)) { _whyA = "area"; return; }
             Vector3 flight = -F;
             Vector3 to = S - dogPos; to.y = 0f;
             float dS = to.magnitude;
@@ -450,18 +471,31 @@ namespace KominkaHillside
             }
             else { path = dS; firstLeg = to; }
             float vReq = path / availA;
-            if (vReq > chaseRunSpeed) return;
             float eta = EtaCorrected(path, firstLeg.magnitude > 0.05f ? Vector3.Angle(dogRoot.forward, firstLeg) : 0f, chaseRunSpeed);
-            if (eta + settleTime > avail) return;
+            // Round 7 (Pome v5 flat: 1.4 m from the spot, 1.6 s to spare, solve=0): the via detour for a dog standing
+            // just behind the spot is ~5 m, and with the launch it no longer fits the budget - and there was no
+            // straight alternative, so a dog next to the spot could not take A at all. When the via version fails,
+            // try the straight run-in, charged like the old wait approach: the run and the about-face overlap (the
+            // heading blends onto F across the run-in), so the cost is whichever of the two takes longer.
+            if (via && (vReq > chaseRunSpeed || eta + settleTime > avail))
+            {
+                float etaS = Mathf.Max(EtaCorrected(dS, dS > 0.05f ? Vector3.Angle(dogRoot.forward, to) : 0f, chaseRunSpeed),
+                    Vector3.Angle(to, F) / Mathf.Max(1f, turnSpeedDegPerSec));
+                if (dS / availA <= chaseRunSpeed && etaS + settleTime <= avail)
+                { via = false; V = S; path = dS; firstLeg = to; vReq = dS / availA; eta = etaS; }
+            }
+            if (vReq > chaseRunSpeed) { _whyA = "speed"; return; }
+            if (eta + settleTime > avail) { _whyA = "eta"; return; }
+            _whyA = "ok";
             _solveCount++;
-            float score = Pref(ModeAround) * 10f + riseTerm + Mathf.Clamp01(1f - vReq / chaseRunSpeed) * 2f;
+            float score = Pref(ModeAround) * 10f + riseTerm + Mathf.Clamp01(1f - vReq / chaseRunSpeed) * SpeedScoreWeight;
             if (score <= _cScore) return;     // the raycasts below are only paid for a candidate that would win
-            if (!GroundOk(S, groundY)) return;
-            if (!LaneClear(dogPos, V)) return;
-            if (via && !LaneClear(V, S)) return;
+            if (!GroundOk(S, groundY)) { _whyA = "ground"; return; }
+            if (!LaneClear(dogPos, V)) { _whyA = "lane"; return; }
+            if (via && !LaneClear(V, S)) { _whyA = "lane"; return; }
             // Codex D1: straight up (vTake 0), so the landing is the spot itself - but the recover stride still
             // has to be inside the flat and clear.
-            if (!LandingOk(S, F, 0f, tUp, crouch, groundY)) return;
+            if (!LandingOk(S, F, 0f, tUp, crouch, groundY)) { _whyA = "landing"; return; }
             _cScore = score; _cMode = ModeAround; _cT = t; _cRise = rise; _cTUp = tUp; _cScale = scale; _cCrouch = crouch;
             _cCatchRoot = _geoCatchRoot; _cDrive = S; _cFwd = F; _cJumpSpeed = 0f;
             _cVia = V; _cViaActive = via; _cVReq = vReq; _cVCap = chaseRunSpeed; _cEta = eta; _cPath = path;
@@ -481,7 +515,8 @@ namespace KominkaHillside
             float dd = run.magnitude;
             bool behind = dd > 0.01f && Vector3.Dot(run, flight) >= 0.5f * dd;
             int mode = behind ? ModeChase : ModeFront;
-            if ((_bannedModes & (1 << mode)) != 0) return;
+            if (behind) _whyC = "side"; else _whyB = "side";   // round 7 why=: this instant belongs to the other shape
+            if ((_bannedModes & (1 << mode)) != 0) { WhyRun(behind, "banned"); return; }
             Vector3 fwd;
             float cap, vTake, vCap, lo = RunJumpMinTakeoff;
             if (behind)
@@ -490,14 +525,14 @@ namespace KominkaHillside
             }
             else
             {
-                if (dd < 1f) return;                                   // on top of it already: there is no run-up
+                if (dd < 1f) { WhyRun(behind, "close"); return; }                                  // on top of it already: there is no run-up
                 fwd = run / dd;                                        // it takes it facing the way it runs
                 // Running INTO the disc adds both speeds to the closing rate, so the take-off is capped there.
                 cap = Vector3.Dot(fwd, flight) < 0f ? RunJumpHeadOnMaxTakeoff : RunJumpMaxTakeoff;
                 vTake = Mathf.Clamp(_speed, RunJumpMinTakeoff, cap);
                 vCap = chaseRunSpeed;
             }
-            if (vCap < 0.1f) return;
+            if (vCap < 0.1f) { WhyRun(behind, "speed"); return; }
             Vector3 right = Vector3.Cross(Vector3.up, fwd);
             Vector3 catchRoot = new Vector3(d.x, groundY + rise, d.z) - fwd * _mouthCatch.z - right * _mouthCatch.x;
             Vector3 standRoot = new Vector3(catchRoot.x, groundY, catchRoot.z);
@@ -512,18 +547,20 @@ namespace KominkaHillside
             Vector3 crouchStart = standRoot - fwd * (vTake * (tUp + crouch));
             Vector3 to = crouchStart - dogPos; to.y = 0f;
             // B: the crouch start must be ahead of the dog - it catches up, it does not turn round for it.
-            if (behind && Vector3.Dot(to, fwd) < 0f) return;
-            if (!DogMayGo(standRoot) || !DogMayGo(crouchStart)) return;
+            if (behind && Vector3.Dot(to, fwd) < 0f) { WhyRun(behind, "close"); return; }
+            if (!DogMayGo(standRoot) || !DogMayGo(crouchStart)) { WhyRun(behind, "area"); return; }
             float dist = to.magnitude;
             float vReq = dist / avail;
-            if (vReq > vCap) return;
+            if (vReq > vCap) { WhyRun(behind, "speed"); return; }
             float eta = EtaCorrected(dist, dist > 0.05f ? Vector3.Angle(dogRoot.forward, to) : 0f, vCap);
-            if (avail - eta < SolveMinSlack) return;   // round 5: no zero-margin running jumps
+            if (avail - eta < SolveMinSlack) { WhyRun(behind, "eta"); return; }   // round 5: no zero-margin running jumps
+            WhyRun(behind, "ok");
             _solveCount++;
-            float score = Pref(mode) * 10f + riseTerm + Mathf.Clamp01(1f - vReq / vCap) * 2f;
+            float score = Pref(mode) * 10f + riseTerm + Mathf.Clamp01(1f - vReq / vCap) * SpeedScoreWeight;
             if (score <= _cScore) return;
-            if (!LaneClear(dogPos, crouchStart) || !GroundOk(standRoot, groundY)) return;
-            if (!LandingOk(crouchStart, fwd, vTake, tUp, crouch, groundY)) return;   // Codex D1
+            if (!LaneClear(dogPos, crouchStart)) { WhyRun(behind, "lane"); return; }
+            if (!GroundOk(standRoot, groundY)) { WhyRun(behind, "ground"); return; }
+            if (!LandingOk(crouchStart, fwd, vTake, tUp, crouch, groundY)) { WhyRun(behind, "landing"); return; }   // Codex D1
             _cScore = score; _cMode = mode; _cT = t; _cRise = rise; _cTUp = tUp; _cScale = scale; _cCrouch = crouch;
             _cCatchRoot = catchRoot; _cDrive = crouchStart; _cFwd = fwd; _cJumpSpeed = vTake;
             _cVia = crouchStart; _cViaActive = false; _cVReq = vReq; _cVCap = vCap; _cEta = eta; _cPath = dist;
@@ -533,6 +570,9 @@ namespace KominkaHillside
             _cTakeMin = lo; _cTakeCap = lo > cap ? lo : cap;
             _cEntry = fwd;
         }
+        // Round 7 diagnostics: the last reason B / C failed at (plan= why=). Log only.
+        void WhyRun(bool behind, string r) { if (behind) _whyB = r; else _whyC = r; }
+
 
         // Take the best candidate (_c* scratch) as the plan.
         void CommitCandidate()

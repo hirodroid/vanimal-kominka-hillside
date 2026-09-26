@@ -330,6 +330,9 @@ namespace KominkaHillside
                 // spot, so it rounds the via point instead of touching it. Latched, so it can never be re-entered.
                 Vector3 toV0 = _viaPoint - dogPos; toV0.y = 0f;
                 if (toV0.magnitude <= ViaCornerRadius) _viaDone = true;
+                // PCVR 2026-09-26: within ViaFinishDistance of the spot the via point is finished regardless.
+                Vector3 toS0 = _standRoot - dogPos; toS0.y = 0f;
+                if (toS0.magnitude <= ViaFinishDistance) _viaDone = true;
             }
             float pace = chaseRunSpeed;
             if (avail > 0f)

@@ -108,7 +108,7 @@ node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=2
 
    | 投げ | プリセット | 犬の置き方 | speed / elev | 想定内の結果 | 期待 |
    |------|-----------|------------|--------------|--------------|------|
-   | beside | v0 | 投げ台の横 0.6 m、投げ台の方を向く (よしよしの後に投げる流れ) | 6 / 10 (PCVR 09-25 の実測 5.5〜7.1 の中央値) | caught (Lab は ground も) | Lab 以外: `jump` かつ `mode=chase`。Lab: `jump` / `over` / `ground` のどれか (跳んだなら `mode=chase`) |
+   | beside | v0 | 投げ台の横 0.6 m、投げ台の方を向く (よしよしの後に投げる流れ) | 6 / 10 (PCVR 09-25 の実測 5.5〜7.1 の中央値) | caught / ground | 全犬種 `jump` / `over` / `ground` のどれか (跳んだなら `mode=chase`)。犬種別に速度を下げた 2026-09-26 以降、小型犬 (sprint 8.0〜8.5) は 6 m/s でも横からは物理的に届かない (solve=0 → ground) |
    | chase | v3 | v3 の待機位置 = 投げ台の前 `ReadyAhead3` (4 m)・横 `ReadyLateral3` (2.5 m)、投げる方向 (+Z) を向く | 7 / 10 | caught | 全犬種 `jump` かつ `mode=chase` |
 
    - 跳んだ投げの `mode` は `expectOk` で見る (`expectMode`)。`mode` は踏み切り / キャッチの行の `mode=` (無ければ takeoff 行)。

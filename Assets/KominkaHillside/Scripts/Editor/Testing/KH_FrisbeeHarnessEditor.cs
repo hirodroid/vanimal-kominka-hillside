@@ -172,7 +172,9 @@ namespace KominkaHillside.Editor
             // beside: よしよしの後に投げる流れ (犬は投げ手の 0.6 m 横、投げ手を向く)。小型・中型は追いついて跳ぶ。
             // Lab は追い抜き (over) か地上回収 (ground) も許す (跳んだなら mode=chase を求める)。Lab 以外は跳ぶこと。
             new Shot { variant = KH_FrisbeeCatch.VariantNormal, place = "beside", name = "beside", speed = 6f, elevation = 10f,   // 6 m/s = PCVR 2026-09-25 のよしよし直後の投げの実測 (5.5-7.1、中央値 6.0)。7 だと小型犬の B は余裕 0 の際どい候補になる
-                allowed = new[] { "caught" }, expectKind = "jump", expectMode = "chase",
+                // 2026-09-26 速度を犬種別に下げた後 (Pome 8.0 / Corgi・Dachs 8.5): 6 m/s の投げでも小型犬は横からは物理的に届かない (solve=0)。
+                // 全犬種 jump|over|ground を許し、跳んだなら mode=chase を求める。跳べる速さに戻すかは PCVR の判断 (IMP-DOG-017)。
+                allowed = new[] { "caught", "ground" }, expectKind = "jump|over|ground", expectMode = "chase",
                 labAllowed = new[] { "caught", "ground" }, labExpectKind = "jump|over|ground",
                 note = "投げ手の横 0.6 m (投げ手向き) から 7 m/s。Lab 以外は追いついて跳ぶ (mode=chase)、Lab は over / ground も許す (跳ぶなら mode=chase)" },
             // chase: v3 (並走) の待機位置 (投げ台から前 ReadyAhead3・横 ReadyLateral3、投げる方向を向く) から。

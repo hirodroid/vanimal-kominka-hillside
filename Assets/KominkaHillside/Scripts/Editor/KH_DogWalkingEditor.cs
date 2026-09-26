@@ -504,9 +504,10 @@ namespace KominkaHillside.Editor
                 Check(refsOk&&cb.publicVariables.TryGetVariableValue("dogIndex",out bv)&&(int)bv==i,"catcher backing: neighbour references and dogIndex "+key);
                 // IMP-DOG-008: the prototype switch starts on the baseline and the run-in presets fit this dog, this disc and the plaza.
                 Check(c.variant==KH_FrisbeeCatch.VariantNormal&&c.pendingVariant==-1&&cb.publicVariables.TryGetVariableValue("variant",out bv)&&(int)bv==KH_FrisbeeCatch.VariantNormal&&cb.publicVariables.TryGetVariableValue("pendingVariant",out bv)&&(int)bv==-1,"variant starts at Normal, proxy and backing, nothing queued (backing too) "+key);
-                // Round 2 (intercept-first): the plan promises the dog will be STANDING under the catch point,
-                // settled, before the crouch. Only a sprint keeps that promise.
-                Check(c.chaseRunSpeed>=9.5f,"chase sprint "+c.chaseRunSpeed.ToString("F1")+" m/s >= 9.5 (round 5: the ETA the planner promises) "+key);
+                // Round 2 (intercept-first) promised the catch with a shared 9.5 m/s sprint. PCVR 2026-09-26 ("全体的に足早すぎ、
+                // 特に小型犬"): the chase run is the breed's own now (IMP-DOG-017 table), proxy and backing.
+                Check(Mathf.Abs(c.chaseRunSpeed-KH_FrisbeePrototypeEditor.ChaseRunSpeedFor(key))<1e-4f&&cb.publicVariables.TryGetVariableValue("chaseRunSpeed",out bv)&&bv is float&&Mathf.Abs((float)bv-c.chaseRunSpeed)<1e-5f,
+                    "chase run "+c.chaseRunSpeed.ToString("F1")+" m/s == breed table "+KH_FrisbeePrototypeEditor.ChaseRunSpeedFor(key).ToString("F1")+" (PCVR 2026-09-26), proxy and backing "+key);
                 // Round 4: bands, not floors - too low and the ETA fails, too high and the dog reads as a machine.
                 Check(c.chaseAcceleration>=10f&&c.chaseAcceleration<=18f,"chase acceleration "+c.chaseAcceleration.ToString("F1")+" m/s2 in [10, 18] ("+(c.chaseRunSpeed/c.chaseAcceleration).ToString("F2")+" s to the run) "+key);
                 Check(c.settleTime>=0.1f&&c.settleTime<=0.6f,"settle time "+c.settleTime.ToString("F2")+" s in [0.10, 0.60] "+key);

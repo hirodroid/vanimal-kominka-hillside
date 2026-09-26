@@ -287,6 +287,11 @@ namespace KominkaHillside
         // Within ViaCornerRadius of it the dog starts steering at the spot (the corner is a blend, not a waypoint).
         // No via point when the straight run-in already arrives within ViaStraightAngle of the catch facing.
         public const float ViaAhead = 1.5f, ViaSide = 1.2f, ViaCornerRadius = 1.0f, ViaStraightAngle = 45f;
+        // PCVR 2026-09-26: within this of the stand spot the via point is finished and the dog runs straight in.
+        public const float ViaFinishDistance = 2f;
+        // Solve score = pref x 10 + rise fraction x RiseScoreWeight + speed margin x SpeedScoreWeight. PCVR 2026-09-26
+        // ("small dogs' jumps look small"): 3 / 2 -> 6 / 1, so the pick sits high in the band for every breed.
+        public const float RiseScoreWeight = 6f, SpeedScoreWeight = 1f;
         // B's planned take-off speed as a fraction of chaseSprintSpeed, and the pace it runs on after landing.
         public const float ChaseTakeoffFraction = 0.6f;
         // B after a catch: keep running (chaseSprintSpeed * ChaseTakeoffFraction) through the recover and this much
@@ -391,6 +396,7 @@ namespace KominkaHillside
         private int _solveCount;
         private float _bandIn = -1f, _bandOut = -1f, _bandIn2 = -1f, _bandOut2 = -1f;
         private float _pickVReq, _pickVCap;
+        private string _whyA = "-", _whyB = "-", _whyC = "-";   // round 7: why each shape failed at the last instant Solve tried (log only)
         // Best candidate so far inside Solve; copied into the plan fields by CommitCandidate only.
         private float _cScore; private int _cMode;
         private float _cT, _cRise, _cTUp, _cScale, _cCrouch, _cJumpSpeed, _cVReq, _cVCap, _cEta, _cPath, _cSlack, _cTakeMin, _cTakeCap;
