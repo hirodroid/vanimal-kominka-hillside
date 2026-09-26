@@ -47,13 +47,59 @@ namespace KominkaHillside.Editor
         public static readonly Color[] DiscColors = {new Color(.90f,.30f,.25f),new Color(.95f,.60f,.75f),new Color(.95f,.80f,.15f),new Color(.35f,.55f,.95f),new Color(.85f,.45f,.20f),new Color(.90f,.90f,.95f)};
         public static Vector3 DiscHome(int i)
         {
-            Vector3 b=BallHome(i);float z=b.z+2.2f;
+            Vector3 b=PlazaToySpot(i);float z=b.z+2.2f;
             return new Vector3(b.x,Ground(b.x,z)+0.03f,z);
         }
-        public static Vector3 BallHome(int i)
+        // The plaza grid where the balls rested until 2026-09-26 night (BUG-DOG-001). Only the disc row still hangs off it.
+        static Vector3 PlazaToySpot(int i)
         {
             float x=BallHomeCenter.x+((i%3)-1)*BallSpacing, z=BallHomeCenter.y+((i/3)-0.5f)*BallSpacing;
             return new Vector3(x,Ground(x,z)+BallRestHeight,z);
+        }
+        // IMP-DOG-019 (2026-09-26 night): one toy out per dog. The ball starts in the toy park (and VRCObjectSync
+        // respawns it there); [Ball] in the hand menu brings it out and sends the disc down, and back (KH_ToyRecall).
+        // Park = KH_Dogs/KH_ToyPark: an invisible box (floor + low walls, no Renderer) ParkDepth below the plaza centre.
+        // Layer 17 Walkthrough: collides with the toys (13) but not with players, and is outside the NavMesh
+        // (layers 0|11) and the ground rays (0|11). Its floor must stay above VRC_SceneDescriptor.RespawnHeightY,
+        // or VRCObjectSync would respawn a parked toy forever. Code-owned: Build rewrites it every time.
+        public const string ToyParkName="KH_ToyPark";
+        public const float ParkDepth=4f, ParkSpacing=.5f, ParkWallHeight=.5f;
+        public const int ParkLayer=17;
+        public static readonly Vector3 ParkFloorSize=new Vector3(4f,.2f,2f);
+        public static Vector3 ParkOrigin()   // top of the floor, under the plaza centre
+        {
+            float x=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],z=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1];
+            return new Vector3(x,Ground(x,z)-ParkDepth,z);
+        }
+        static Vector3 ParkBallLocal(int i){return new Vector3((i-2.5f)*ParkSpacing,.15f,-.4f);}
+        static Vector3 ParkDiscLocal(int i){return new Vector3((i-2.5f)*ParkSpacing,.1f,.4f);}
+        public static Vector3 BallHome(int i){return ParkOrigin()+ParkBallLocal(i);}
+        // Floor + four walls of the park: names, local centres, collider sizes (Build writes them, Verify compares them).
+        static readonly string[] ParkBoxNames={"Floor","WallN","WallS","WallE","WallW"};
+        static void ParkBoxes(out Vector3[] centres,out Vector3[] sizes)
+        {
+            float hx=ParkFloorSize.x*.5f,hz=ParkFloorSize.z*.5f,t=.1f;
+            centres=new[]{new Vector3(0f,-ParkFloorSize.y*.5f,0f),new Vector3(0f,ParkWallHeight*.5f,hz+t*.5f),new Vector3(0f,ParkWallHeight*.5f,-hz-t*.5f),new Vector3(hx+t*.5f,ParkWallHeight*.5f,0f),new Vector3(-hx-t*.5f,ParkWallHeight*.5f,0f)};
+            sizes=new[]{ParkFloorSize,new Vector3(ParkFloorSize.x+2*t,ParkWallHeight,t),new Vector3(ParkFloorSize.x+2*t,ParkWallHeight,t),new Vector3(t,ParkWallHeight,ParkFloorSize.z),new Vector3(t,ParkWallHeight,ParkFloorSize.z)};
+        }
+        static Transform BuildToyPark(Transform root,out Transform[] parkBall,out Transform[] parkDisc)
+        {
+            var park=Child(root,ToyParkName);park.position=ParkOrigin();park.rotation=Quaternion.identity;park.localScale=Vector3.one;
+            var names=ParkBoxNames;Vector3[] centres,sizes;ParkBoxes(out centres,out sizes);
+            for(int k=0;k<names.Length;k++)
+            {
+                var b=Child(park,names[k]);b.localPosition=centres[k];b.localRotation=Quaternion.identity;b.localScale=Vector3.one;
+                var col=b.GetComponent<BoxCollider>();if(col==null)col=b.gameObject.AddComponent<BoxCollider>();
+                col.center=Vector3.zero;col.size=sizes[k];col.isTrigger=false;col.enabled=true;
+            }
+            parkBall=new Transform[6];parkDisc=new Transform[6];
+            for(int i=0;i<6;i++)
+            {
+                parkBall[i]=Child(park,"Ball"+i);parkBall[i].localPosition=ParkBallLocal(i);parkBall[i].localRotation=Quaternion.identity;
+                parkDisc[i]=Child(park,"Disc"+i);parkDisc[i].localPosition=ParkDiscLocal(i);parkDisc[i].localRotation=Quaternion.identity;
+            }
+            foreach(var tr in park.GetComponentsInChildren<Transform>(true))tr.gameObject.layer=ParkLayer;
+            return park;
         }
         static VRC_SceneDescriptor desc0() { return UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>(); }
         static void Report(string name, string text) { Directory.CreateDirectory("Temp/KH_DogPort"); File.WriteAllText("Temp/KH_DogPort/"+name+".txt",text); Debug.Log("[KH Walking] " + text); }
@@ -165,6 +211,11 @@ namespace KominkaHillside.Editor
             Guard();var scene=EditorSceneManager.GetActiveScene();
             if(scene.isDirty)throw new InvalidOperationException("Save scene before the initial walking build.");
             KH_FrisbeePrototypeEditor.Facts[] frisbeeJump,frisbeeTwist;RequireFrisbeeAssets(out frisbeeJump,out frisbeeTwist); // IMP-DOG-012: before anything in the scene changes
+            {   // IMP-DOG-019: a park below RespawnHeightY would make VRCObjectSync respawn the parked toys forever
+                var d=desc0();if(d==null)throw new InvalidOperationException("VRC_SceneDescriptor is required (toy park vs RespawnHeightY)");
+                float floorBottom=ParkOrigin().y-ParkFloorSize.y;
+                if(floorBottom-1f<=d.RespawnHeightY)throw new InvalidOperationException("Toy park floor "+floorBottom.ToString("F2")+" is not at least 1 m above RespawnHeightY "+d.RespawnHeightY.ToString("F2"));
+            }
             Directory.CreateDirectory("Temp/KH_DogPort/BeforeWalking");
             if(!File.Exists("Temp/KH_DogPort/BeforeWalking/VRCDefaultWorldScene.unity"))File.Copy(WorldScene,"Temp/KH_DogPort/BeforeWalking/VRCDefaultWorldScene.unity");
             Directory.CreateDirectory(Data);AssetDatabase.Refresh();
@@ -216,6 +267,8 @@ namespace KominkaHillside.Editor
             haptics.minAmplitude=.3f;haptics.frequency=.5f;haptics.teleportJump=1f;haptics.logPulls=true;
             var recall=Add<KH_ToyRecall>(Child(root.transform,"KH_ToyRecall").gameObject);
             recall.balls=new KD_BallController[6];recall.fetchers=new KD_DogFetchController[6];recall.activities=act;recall.groundMask=(1<<0)|(1<<11);
+            Transform[] parkBall,parkDisc;BuildToyPark(root.transform,out parkBall,out parkDisc);   // IMP-DOG-019: the toy that is not out waits here
+            recall.parkBall=parkBall;recall.parkDisc=parkDisc;
             var rope=Mat("KH_Rope",new Color(.29f,.16f,.08f));
             var ready=Mat("KH_ClipReady",new Color(.2f,.8f,.45f));
             var neutral=Mat("KH_ClipNeutral",new Color(.8f,.63f,.27f));
@@ -246,8 +299,8 @@ namespace KominkaHillside.Editor
                 p.companionSlot=sleepBoard!=null?sleepBoard.SlotOf(i):null;   // IMP-DOG-016: chin rest reads the dog's own slot (Menu/6j wires it too)
                 manager.dogRoots[i]=dog;manager.fetchers[i]=f;manager.roamCenters[i]=home;
                 roots[i]=dog;fetch[i]=f;
-                // Design-owned start position (BUG-DOG-001); rewritten on every Build.
-                b.transform.position=BallHome(i);b.transform.rotation=Quaternion.identity;
+                // Design-owned start position, rewritten on every Build: the toy park since IMP-DOG-019 (was the plaza, BUG-DOG-001).
+                b.transform.position=parkBall[i].position;b.transform.rotation=Quaternion.identity;
                 Transform neck=p.headAnchor != null?p.headAnchor.parent:dog;
                 var existingCollar=dog.GetComponentsInChildren<KH_LeashCollar>(true).FirstOrDefault(x=>x.dogIndex==i);
                 var collar=existingCollar!=null?existingCollar.transform:Child(neck,"KH_Collar_"+key);
@@ -432,13 +485,37 @@ namespace KominkaHillside.Editor
                     && NavMesh.CalculatePath(dog.position,destination.position,NavMesh.AllAreas,path) && path.status==NavMeshPathStatus.PathComplete;
                 Check(route,"complete route to upper clearing "+key);
             }
-            for(int i=0;i<6;i++)
+            // IMP-DOG-019 (2026-09-26 night): only the discs are out at start; the balls wait in the toy park under the
+            // plaza (replaces BUG-DOG-001's "ball on the flat clearing" and "ball reachable on navigation").
+            var park=root.transform.Find(ToyParkName);var recallP=root.GetComponentInChildren<KH_ToyRecall>(true);
+            Check(park!=null,"toy park "+ToyParkName+" exists under KH_Dogs");
+            if(park!=null)
             {
-                var ball=Find<Transform>(root,"KD_Ball_"+Keys[i]);Vector3 home=BallHome(i);
-                float plaza=Vector2.Distance(new Vector2(ball.position.x,ball.position.z),new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]));
-                float ground=Ground(ball.position.x,ball.position.z);
-                Check(Vector3.Distance(ball.position,home)<.01f&&plaza<KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3]&&Mathf.Abs(ground-KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,2])<.02f,"ball on flat clearing "+Keys[i]+" pos="+ball.position.ToString("F2")+" ground="+ground.ToString("F2"));
-                NavMeshHit ballHit;Check(NavMesh.SamplePosition(ball.position,out ballHit,1f,NavMesh.AllAreas),"ball reachable on navigation "+Keys[i]);
+                float px=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],pz=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1];
+                float below=Ground(px,pz)-park.position.y;var dsc=desc0();
+                Check(below>=2f,"toy park "+below.ToString("F2")+" m below the plaza ground (>= 2)");
+                Check(dsc!=null&&park.position.y-ParkFloorSize.y-1f>dsc.RespawnHeightY,"toy park floor "+(park.position.y-ParkFloorSize.y).ToString("F2")+" at least 1 m above RespawnHeightY "+(dsc==null?float.NaN:dsc.RespawnHeightY).ToString("F2"));
+                Check(Vector2.Distance(new Vector2(park.position.x,park.position.z),new Vector2(px,pz))<.01f,"toy park under the plaza centre");
+                Check(park.rotation==Quaternion.identity&&park.lossyScale==Vector3.one,"toy park unrotated, unscaled");
+                Vector3[] boxCentres,boxSizes;ParkBoxes(out boxCentres,out boxSizes);
+                for(int k=0;k<ParkBoxNames.Length;k++)
+                {   // Codex review 2026-09-26 night: check the real shape, not just that colliders exist
+                    var t=park.Find(ParkBoxNames[k]);var c=t==null?null:t.GetComponent<BoxCollider>();
+                    Check(c!=null&&!c.isTrigger&&c.enabled&&Vector3.Distance(t.localPosition,boxCentres[k])<1e-3f&&t.localRotation==Quaternion.identity&&t.localScale==Vector3.one
+                        &&c.center==Vector3.zero&&Vector3.Distance(c.size,boxSizes[k])<1e-3f,"toy park "+ParkBoxNames[k]+" BoxCollider at "+boxCentres[k].ToString("F2")+" size "+boxSizes[k].ToString("F2")+" (actual "+(c==null?"-":t.localPosition.ToString("F2")+" "+c.size.ToString("F2"))+")");
+                }
+                var nav=root.GetComponentInChildren<NavMeshSurface>(true);
+                Check(park.GetComponentsInChildren<Transform>(true).All(t=>t.gameObject.layer==ParkLayer)&&(nav==null||(nav.layerMask.value&(1<<ParkLayer))==0)&&!Physics.GetIgnoreLayerCollision(ParkLayer,13),"toy park on layer "+ParkLayer+": collides with toys (13), outside the NavMesh layers");
+                Check(park.GetComponentsInChildren<Renderer>(true).Length==0,"toy park has no Renderer");
+                Check(Enumerable.Range(0,6).All(i=>{var b=park.Find("Ball"+i);var d=park.Find("Disc"+i);return b!=null&&d!=null&&Vector3.Distance(b.localPosition,ParkBallLocal(i))<1e-3f&&Vector3.Distance(d.localPosition,ParkDiscLocal(i))<1e-3f;}),"toy park spots Ball0..5 / Disc0..5 on the floor inside the walls");
+                Check(recallP!=null&&recallP.parkBall!=null&&recallP.parkBall.Length==6&&recallP.parkDisc!=null&&recallP.parkDisc.Length==6
+                    &&Enumerable.Range(0,6).All(i=>recallP.parkBall[i]==park.Find("Ball"+i)&&recallP.parkDisc[i]==park.Find("Disc"+i)),"toy recall parkBall / parkDisc wired to the six park spots each");
+                for(int i=0;i<6;i++)
+                {
+                    var ball=Find<Transform>(root,"KD_Ball_"+Keys[i]);var spot=park.Find("Ball"+i);
+                    float gap=spot==null?float.MaxValue:Vector3.Distance(ball.position,spot.position);
+                    Check(gap<=.05f,"ball starts in the toy park "+Keys[i]+" (off its spot "+(spot==null?"-":gap.ToString("F3"))+" m <= 0.05)");
+                }
             }
             var walkRoute=root.GetComponentInChildren<KH_WalkRoute>(true);Check(walkRoute!=null&&m.route==walkRoute,"walk route wired to manager");
             if(walkRoute!=null)
@@ -513,6 +590,7 @@ namespace KominkaHillside.Editor
                 Check(ac!=null&&twistState!=null&&twistState.transitions.Length==3&&ac.layers[0].stateMachine.anyStateTransitions.Any(t=>t.destinationState==twistState&&!t.canTransitionToSelf),"Twist state: AnyState entry and 3 exits "+key);
                 float plaza=Vector2.Distance(new Vector2(d.transform.position.x,d.transform.position.z),new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]));
                 Check(plaza<KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3]&&Mathf.Abs(Ground(d.transform.position.x,d.transform.position.z)-KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,2])<.05f,"disc rests on the flat clearing "+key);
+                Check(d.transform.position.y-ParkOrigin().y>=2f,"disc starts out on the plaza, not in the toy park (IMP-DOG-019) "+key);
                 Check(Mathf.Abs(c.playAreaRadius-KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3])<1e-3f&&Vector2.Distance(new Vector2(c.playAreaCenter.x,c.playAreaCenter.z),new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]))<1e-3f,"play area = plaza flat "+key);
                 Check(d.GetComponent<VRCObjectSync>()!=null&&d.GetComponent<VRCPickup>()!=null&&d.aimLine!=null&&d.aimMarker!=null&&d.discHeldMaterial!=null&&d.discRenderer!=null&&Mathf.Abs(d.respawnBelowY-desc0().RespawnHeightY)<1e-3f,"disc components, aim preview, held material, respawn height "+key);
                 var cb=UdonSharpEditorUtility.GetBackingUdonBehaviour(c);object bv;

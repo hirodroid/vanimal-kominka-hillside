@@ -17,6 +17,14 @@ namespace KominkaHillside
         // Second toy kind (IMP-DOG-005): one disc per dog, wired only where the dog can catch it (null = "not yet").
         public KH_Frisbee[] discs;
         public KH_FrisbeeCatch[] discCatchers;
+        // IMP-DOG-019 (2026-09-26 night): one toy OUT per dog. The other one waits in the park under the plaza
+        // (KH_Dogs/KH_ToyPark, Walking/3 Build). "Parked" is only a position, carried by VRCObjectSync to everyone
+        // and to late joiners; no synced flag, no SetActive. Balls start in the park, discs on the plaza.
+        public Transform[] parkBall;
+        public Transform[] parkDisc;
+        const float ParkedRadius = 1f;      // within this of its park spot = already parked (stage 2 skipped)
+        const float StageTimeout = 4f;      // per stage (ownership wait)
+        const float MovedTolerance = 0.1f;  // the other toy moved more than this since the ask = someone else is using it
         public const int KindBall = 0, KindDisc = 1;
         public LayerMask groundMask = (1 << 0) | (1 << 11);
         public float recallDistance = 1.2f;
@@ -31,6 +39,12 @@ namespace KominkaHillside
         private float _writtenAt = -1f;
         private int _lastResult = -1;   // 0 placed, 1 failed (busy), 2 timeout; -1 none
         private int _lastRow = -1;
+        // 0 idle, 1 = bring the asked toy to the player (the original machine), 2 = park the same dog's other toy.
+        // _pendingRow stays set through both stages, so the gate answers Pending until the pair is settled.
+        private int _stage;
+        private float _parkAskedAt;
+        private Vector3 _otherAtAsk;        // where the same dog's other toy was when the menu was pressed
+        private bool _otherAtAskValid;
         // IMP-DOG-019 (2026-09-26): one toy per dog at a time. Local pickupable veto, derived from synced state.
         const float ExclusiveInterval = 0.25f;
         private float _nextExclusiveAt;
@@ -153,7 +167,10 @@ namespace KominkaHillside
             if (!Utilities.IsValid(lp)) return;
             if (_recallAt == null) _recallAt = new float[balls.Length];
             if (_discRecallAt == null) _discRecallAt = new float[discs == null ? 6 : discs.Length];
-            _pendingRow = row; _pendingKind = kind; _requestAt = Time.time; _writtenAt = -1f; _lastRow = row; _lastKind = kind; _lastResult = -1;
+            _pendingRow = row; _pendingKind = kind; _stage = 1; _requestAt = Time.time; _writtenAt = -1f; _lastRow = row; _lastKind = kind; _lastResult = -1;
+            int otherKind = kind == KindDisc ? KindBall : KindDisc;
+            _otherAtAskValid = ToyWired(row, otherKind);
+            if (_otherAtAskValid) _otherAtAsk = ToyObject(row, otherKind).transform.position;
             GameObject go = ToyObject(row, kind);
             if (!Networking.IsOwner(go)) Networking.SetOwner(lp, go); // net: setowner-ok: toy only; position waits for ownership
         }
@@ -163,16 +180,105 @@ namespace KominkaHillside
             if (Time.time >= _nextExclusiveAt) { _nextExclusiveAt = Time.time + ExclusiveInterval; ApplyExclusive(); }
             if (_pendingRow < 0) return;
             int row = _pendingRow; int kind = _pendingKind;
+            if (_stage == 2) { StepPark(row, kind); return; }
             GameObject go = ToyObject(row, kind);
             bool owner = Networking.IsOwner(go);
             if (_writtenAt < 0f && owner)
             {
                 _pendingRow = -1; // let the gate see no pending request
                 if (_GateToy(row, kind) == Ok) { _pendingRow = row; Place(row, kind); }
-                else { _lastRow = row; _lastResult = 1; }
+                else { _lastRow = row; _lastResult = 1; _stage = 0; }
             }
-            else if (_writtenAt >= 0f && (!owner || Time.time - _writtenAt >= 1f)) { _pendingRow = -1; _lastRow = row; _lastResult = owner ? 0 : 2; }
-            else if (Time.time - _requestAt >= 4f) { _pendingRow = -1; _lastRow = row; _lastResult = 2; }
+            else if (_writtenAt >= 0f && (!owner || Time.time - _writtenAt >= 1f))
+            {
+                _lastRow = row; _lastResult = owner ? 0 : 2;
+                if (owner) BeginPark(row, kind); else { _pendingRow = -1; _stage = 0; }
+            }
+            else if (Time.time - _requestAt >= StageTimeout) { _pendingRow = -1; _stage = 0; _lastRow = row; _lastResult = 2; }
+        }
+
+        // ---- IMP-DOG-019 stage 2: the other toy of the same dog goes to the park ----
+        // Runs only after stage 1 placed the asked toy (_lastResult = 0 is already out, so nothing here can turn
+        // "brought" into a failure). Gives up without taking anything when the other toy is in use (held, flying,
+        // chased, race ball) at the start or again once ownership arrives, when its row/park spot is unwired, or
+        // after StageTimeout without ownership. A give-up only means both toys stay visible; the exclusive veto still
+        // keeps the pair to one in use.
+        // "Moved since the ask" is the guard for what the in-use flags cannot see on this client (Codex review
+        // 2026-09-26 night): a disc another player threw and the dog refused is IsFlying on the thrower only, and a
+        // second player who brought the other toy out at the same moment is not Pending here. Both show up as the
+        // other toy's synced position moving after our menu press, so stage 2 leaves it alone (both stay visible,
+        // never zero out). A disc that already lay still when the menu was pressed is not in use and is parked.
+        void BeginPark(int row, int kind)
+        {
+            int other = kind == KindDisc ? KindBall : KindDisc;
+            Transform spot = ParkSpot(row, other);
+            if (spot == null || !ToyWired(row, other) || OtherInUse(row, other) || OtherMoved(row, other)
+                || InPark(row, other) || InPark(row, kind)) { EndPark(); return; }
+            _stage = 2; _parkAskedAt = Time.time;
+            GameObject go = ToyObject(row, other);
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) { EndPark(); return; }
+            if (!Networking.IsOwner(go)) Networking.SetOwner(lp, go); // net: setowner-ok: the same dog's other toy only, never while in use; position waits for ownership
+        }
+
+        void StepPark(int row, int kind)
+        {
+            int other = kind == KindDisc ? KindBall : KindDisc;
+            GameObject go = ToyObject(row, other);
+            if (Networking.IsOwner(go))
+            {
+                if (!OtherInUse(row, other) && !OtherMoved(row, other) && !InPark(row, kind)) Park(row, other);   // picked up / moved / ours parked by someone meanwhile: leave it
+                EndPark();
+            }
+            else if (Time.time - _parkAskedAt >= StageTimeout) EndPark();
+        }
+
+        void EndPark() { _pendingRow = -1; _stage = 0; }
+
+        bool ToyWired(int row, int kind)
+        {
+            if (kind == KindDisc) return discs != null && row >= 0 && row < discs.Length && discs[row] != null;
+            return balls != null && row >= 0 && row < balls.Length && balls[row] != null;
+        }
+
+        // Near its own park spot. For the other toy: already parked, skip. For the asked toy: someone else parked it
+        // (their stage 2 of the same dog, the opposite way) - then parking ours too would leave the dog with none.
+        bool InPark(int row, int kind)
+        {
+            Transform spot = ParkSpot(row, kind);
+            return spot != null && ToyWired(row, kind) && Vector3.Distance(ToyObject(row, kind).transform.position, spot.position) <= ParkedRadius;
+        }
+
+        bool OtherInUse(int row, int kind) { return kind == KindDisc ? DiscInUse(row) : BallInUse(row); }
+
+        bool OtherMoved(int row, int kind)
+        {
+            if (!_otherAtAskValid) return true;
+            return Vector3.Distance(ToyObject(row, kind).transform.position, _otherAtAsk) > MovedTolerance;
+        }
+
+        Transform ParkSpot(int row, int kind)
+        {
+            Transform[] a = kind == KindDisc ? parkDisc : parkBall;
+            if (a == null || row < 0 || row >= a.Length) return null;
+            return a[row];
+        }
+
+        // Owner only (StepPark checked). A teleport: FlagDiscontinuity so other clients do not see it slide
+        // through the ground (KD_TreatController._RespawnHome, measured 2026-08-24).
+        void Park(int row, int kind)
+        {
+            GameObject go = ToyObject(row, kind);
+            Transform spot = ParkSpot(row, kind);
+            if (spot == null) return;
+            if (kind == KindDisc) discs[row]._Recall();   // ends a flight / tells the dog, and unfreezes
+            VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
+            if (sync != null) sync.SetKinematic(false);
+            go.transform.position = spot.position;
+            go.transform.rotation = Quaternion.identity;
+            if (sync != null) sync.FlagDiscontinuity();
+            Rigidbody rb = go.GetComponent<Rigidbody>();
+            if (rb != null && !rb.isKinematic) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
         }
 
         private void Place(int row, int kind)
