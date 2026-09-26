@@ -30,7 +30,7 @@ node scripts/kh-frisbee-harness.cjs status    # latest.json の要約 (PASS な�
 node scripts/kh-frisbee-harness.cjs stop      # 停止フラグ + メニューの停止
 ```
 
-モードは 3 つ。既定は下の 36 投げ、`--mode=netorder` は
+モードは 3 つ。既定は下の 36 投げ + 位置取りの 2 投げ (IMP-DOG-017、`--shots` を省略すると 38)、`--mode=netorder` は
 [ネット順序モード](#ネット順序モード---modenetorder-bug-dog-003) の 5 ケース x 2 周 = 10 投げ、
 `--mode=sixdogs` は [6 匹同時の負荷](#6-匹同時の負荷---modesixdogs-imp-dog-012) (IMP-DOG-012)。
 既定モードと netorder は `--breed=<Key>` で[犬種のレーン](#犬種のレーン---breed-imp-dog-012)を選ぶ (既定 Lab)。
@@ -65,8 +65,12 @@ Unity 側が起動時に 1 度だけ読む。Unity のメニュー
 
 ```bash
 node scripts/kh-frisbee-harness.cjs start --mode=default --variants=0,1,2,3,4,5 --shots=flat,mid,lob,low,far,side
+node scripts/kh-frisbee-harness.cjs start --mode=default --shots=beside,chase
 node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=2
 ```
+
+1 行目が従来の 36 投げ (比較できる基準)。2 行目は IMP-DOG-017 の位置取りの 2 投げで、`--variants` に関係なく各 1 回。
+`--shots` を省略すると 1 回の実行で両方 (38 投げ) を流す。
 
 この2コマンドは各runの終了・復旧を確認してから順に実行する。同じコード・条件の合格を修正のたびに取り直さない。失敗時は再現条件を絞って原因を調べ、変更前からの失敗は証拠付きで別件へ残す。今回の回帰や必須条件の失敗を既知扱いで除外せず、期待値を緩めて通さない。
 
@@ -97,6 +101,21 @@ node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=2
    表は Unity 側 (`KH_FrisbeeHarnessEditor.Shots`) と CLI 側 (`SHOTS`) の両方にあるので、
    直すときは 2 か所そろえる。
 
+   **位置取りの投げ (IMP-DOG-017、2026-09-26)。** 上の 6 投げは犬を落下点の横 (1.5, 0, 6.5) から走らせるので、
+   「落下点の後ろから追いついて跳ぶ」(取り方 `chase`) が 1 度も測られていなかった。次の 2 投げは
+   **自分のプリセットで 1 回だけ**流し (`--variants` に関係しない。`--shots` で選ばれたときだけ)、
+   犬をシーンの立ち位置ではなく**投げ台からの相対位置**へ置く (横は立ち位置のある側 = +x):
+
+   | 投げ | プリセット | 犬の置き方 | speed / elev | 想定内の結果 | 期待 |
+   |------|-----------|------------|--------------|--------------|------|
+   | beside | v0 | 投げ台の横 0.6 m、投げ台の方を向く (よしよしの後に投げる流れ) | 6 / 10 (PCVR 09-25 の実測 5.5〜7.1 の中央値) | caught (Lab は ground も) | Lab 以外: `jump` かつ `mode=chase`。Lab: `jump` / `over` / `ground` のどれか (跳んだなら `mode=chase`) |
+   | chase | v3 | v3 の待機位置 = 投げ台の前 `ReadyAhead3` (4 m)・横 `ReadyLateral3` (2.5 m)、投げる方向 (+Z) を向く | 7 / 10 | caught | 全犬種 `jump` かつ `mode=chase` |
+
+   - 跳んだ投げの `mode` は `expectOk` で見る (`expectMode`)。`mode` は踏み切り / キャッチの行の `mode=` (無ければ takeoff 行)。
+   - 試作シーンには持ち手がいないので犬は Ready に入らない。chase は**置く位置で v3 の待機の幾何を作る**
+     (実際の Ready は持ち手の頭の向きから測る。ここでは投げ台を持ち手とみなす)。
+   - 置いた位置と向きは投げごとの `dogStart` (`x,y,z yaw=… (beside)`) に残る。
+
    - プリセットは `KH_FrisbeeVariant` の cube (`cycleVariant`) を `Interact()` で叩き、
      捕り手の `variant` が目的の番号になるまで回す。犬が動いている間の要求は保留されるので、
      毎回 Idle を待ってから回す。
@@ -104,6 +123,7 @@ node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=2
      円盤の recall は円盤しか戻さず、犬は咥えて人の足元まで運んで置くので、これをしないと
      2 投げ目以降が「13-18 m 離れた所からの投げ」になり、同じ投げの比較にならない
      (実測: 戻さないと 24 投げ中 12 しか想定内にならず、戻すと 22)。
+     位置取りの投げ (beside / chase、IMP-DOG-017) だけは立ち位置の代わりに投げ台からの相対位置へ置く (上の表)。
    - 投げは `KH_FrisbeeStand` の UdonBehaviour に `speed` / `elevationDeg` / `sideDeg` を書き、
      `Interact()` を 1 回。固定台は常に +Z へ投げる。
    - 投げてから捕り手の `state` が Idle (0) へ戻るまで、**最大 16 秒**待つ。
@@ -155,7 +175,7 @@ node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=2
 |---------|------|
 | `OK` | median がほぼ 0。見積もりと実際が一致している |
 | `SLIGHTLY_OPTIMISTIC` | median 0.05〜0.15 s。既存の余裕の内 |
-| `OPTIMISTIC` | median > 0.15 s (= `HookEtaMargin` を食い潰す)。**余裕を広げるのではなく `Eta` に係数を入れる**ことを検討する |
+| `OPTIMISTIC` | median > 0.15 s (= 旧 `HookEtaMargin` を食い潰す量。定数は IMP-DOG-017 で廃止、閾値の数字は据え置き)。**余裕を広げるのではなく `Eta` に係数を入れる**ことを検討する |
 | `PESSIMISTIC` | median < −0.15 s。候補を必要以上に捨てている可能性 |
 
 **「着いた」をどこで採るかで答えが変わる。** 最初の実装は、勢いのまま跳ぶ計画の到着を*屈み始め*で採っていた。屈み始めの時刻は `_catchT` から逆算された固定値なので、`etaErr` が計画の `slack` と恒等になり、median +0.24 s の「一貫して楽観的」という**偽の結論**が出た。到着を**踏み切り点へ実際に届いた時**へ直すと median +0.115 s (30 標本、2026-09-22) で余裕の内。
@@ -182,7 +202,9 @@ node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=2
 | `ground` | `plan=2` で落ちたものを拾いに行った |
 
 `motionOk` (round 4 + Codex M3): 踏み切り / キャッチの行の `mode`・`yawRateMax`・`speedMin`・`vTake` で判定。
-急旋回 (> 300 deg/s) は全 mode で不合格。`wait` 以外で踏み切り直前 1 秒の最小速度が 1.5 m/s 未満も不合格
+`mode` は IMP-DOG-017 から `around` (回り込み) / `chase` (追いつき) / `front` (正面・横) / `stand` (立ち取り) / `overtake` (並走取り)
+(旧 `hook` / `run` / `wait` は廃止。旧 `stand` は勢いのある直進の名前だったが、今の `stand` は旧 `wait` の立ち取り)。
+急旋回 (> 300 deg/s) は全 mode で不合格 (IMP-DOG-017 から yawRateMax は walkSpeed 以上で走っている区間だけを数え、静止からの向き直りは `launchYaw=` に別記。speedMin も 1.5 m/s に初めて達した後だけ)。`around` と `stand` 以外で踏み切り直前 1 秒の最小速度が 1.5 m/s 未満も不合格
 (助走が 2.5 m 未満の投げは速度では判定しない)。**跳んだ / 取ったのに行に数字が無い場合も不合格** —
 判定できないことを合格として数えない。
 
@@ -346,6 +368,7 @@ node scripts/kh-frisbee-harness.cjs start --mode=sixdogs --repeats=2
 - 区間 **flight** (投げてから 4 s) と **cycle** (全員が Idle へ戻るまで) の frameTime (平均 / p95 / 最大)、
   `UnityEditor.UnityStats` の batches / drawCalls / setPass、捕り手の計画器カウンタ
   (`_planScans` / `_planEvaluations` / `_planHookTries` の増分) を記録する。
+  `_planHookTries` は IMP-DOG-017 の計画器の書き直しで無くなりうるので、無ければ 0 として読む (前 2 つは必須)。
   report の `sixdogs.rounds[]` に周ごと、その `perDog` に犬ごと、`sixdogs.ratio` に 6 匹 / Lab の比。
 - **PASS = 全犬が「取った (`caught`)」かつ「一周した (`completed`)」**。`expectKind` は `any`、`motionOk` は判定しない
   (`[KH_FrisbeeCatch]` の行が犬を名乗らないので、6 匹同時だとどの行がどの犬か分からない)。

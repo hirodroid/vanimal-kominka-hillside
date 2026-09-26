@@ -138,11 +138,11 @@ namespace KominkaHillside
             if (elapsed < noticeDelay) { Coast(); FaceToward(frisbee.transform.position - dogRoot.position); return; }
             float tNow = frisbee._ElapsedSince(_t0);
             if (Time.time >= _nextPlan) { _nextPlan = Time.time + replanInterval; Plan(tNow); }
-            if (_plan == PlanJump && _mode != ModeWait)
+            if (_plan == PlanJump && _mode != ModeAround)
             {
-                // Momentum jump (hook / straight run-up / chase-down). The crouch start moves with the dog's own
-                // speed (Plan recomputes it at 10 Hz) and the pace is whatever covers the remaining PATH in the
-                // remaining time, floored at a jog: the dog is never standing still when the crouch begins.
+                // Momentum jump (B chase / C front). The crouch start moves with the dog's own speed (Plan
+                // recomputes it at 10 Hz) and the pace is whatever covers the remaining path in the remaining time,
+                // floored at a jog: the dog is never standing still when the crouch begins.
                 float availC = _catchT - _tUp - _crouchReal - tNow;
                 Vector3 toC = _standRoot - dogRoot.position; toC.y = 0f;
                 float distC = toC.magnitude;
@@ -153,31 +153,33 @@ namespace KominkaHillside
                 // hook/run plan). BeginJump still logs it as a fallback, tagged at=crouch with the distance, so a
                 // plan the dog never actually reached is visible rather than silently scored as on time.
                 if (distC <= HoldEnterRadius) LogEtaErr("reach");
-                if (availC < -0.10f) { _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false; }
+                // IMP-DOG-017: a missed slot lets the solve run again (_solved = false) on what is left of the band.
+                if (availC < -0.10f) { _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false; _solved = false; _dropReason = "slot"; }
                 else if (availC <= 0.02f)
                 {
                     if (distC <= 1.2f) { BeginJump(now); return; }
-                    _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false;
+                    _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false; _solved = false; _dropReason = "gate";
                 }
             }
             else if (_plan == PlanJump)
             {
-                // The wait: get under the point early and go up from a standstill (round 3's shape). Only reached
-                // when even the longest loop cannot spend the spare time - a high lob.
+                // A around: out through the via point, back onto the spot facing the thrower, settle, straight up.
+                // IMP-DOG-017: paced to arrive settleTime before the crouch, so spare time is spent running slower
+                // instead of standing on the spot.
                 Vector3 to = _standRoot - dogRoot.position; to.y = 0f;
                 float dist = to.magnitude;
                 UpdateHold(dist);
                 float crouchAt = _catchT - _tUp - _crouchReal;
                 float avail = crouchAt - tNow;
-                if (avail < -0.08f) { _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false; }   // missed the slot: a later candidate next frame
+                if (avail < -0.08f) { _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false; _solved = false; _dropReason = "slot"; }   // missed the slot: solve again
                 else if (avail <= 0.02f)
                 {
                     // Never early: 0.08 s early puts the disc 0.5 m away. Too far from the spot to jump from here,
-                    // so drop the plan and let the scan offer a later (lower) candidate, or the ground.
+                    // so drop the plan and let the solve offer a later candidate, or the fallbacks.
                     if (dist <= 0.5f) { BeginJump(now); return; }
-                    _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false;
+                    _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false; _solved = false; _dropReason = "gate";
                 }
-                else HookOrSprint(dist);
+                else HoldOrApproach(dist, avail - settleTime > 0.05f ? avail - settleTime : 0.05f);
             }
             else if (_plan == PlanStandOrOvertake)
             {
@@ -196,7 +198,7 @@ namespace KominkaHillside
                     if (dist < 0.5f) LogEtaErr("overtake");   // an overtake never holds: reaching the point IS arriving
                     MoveToward(dist < 0.5f ? _standRoot + _forward * 1.5f : _standRoot, pace, 0f, chaseAcceleration, true, chaseDeceleration);
                 }
-                else { UpdateHold(dist); HookOrSprint(dist); }
+                else { UpdateHold(dist); HoldOrApproach(dist, -1f); }   // D stand: sprint in and wait (unpaced)
                 if (avail <= catchWindow)
                 {
                     if (!_catchDecided) { _catchDecided = true; _bestGap = 99f; }
@@ -210,7 +212,7 @@ namespace KominkaHillside
                     if (avail < -catchWindow)
                     {
                         Debug.Log("[KH_FrisbeeCatch] " + (_runningCatch ? "overtake" : "stand") + " catch MISS best mouth-edge=" + _bestGap.ToString("F3") + VariantTail());
-                        _plan = PlanNone; _nextPlan = 0f; _catchDecided = false; _settledSince = -1f; _holding = false;
+                        _plan = PlanNone; _nextPlan = 0f; _catchDecided = false; _settledSince = -1f; _holding = false; _dropReason = "miss";
                     }
                 }
             }
@@ -238,88 +240,128 @@ namespace KominkaHillside
             else if (dist > HoldExitRadius) { _holding = false; _settledSince = -1f; }
         }
 
-        // One step of a MOMENTUM approach (round 4 amendment): run the hook - leg 1 to A, then, from the corner on,
-        // leg 2 along the run-up line with the heading blending into _forward - paced so the dog crosses the crouch
-        // start exactly on time and still running. Nothing here ever brakes to a stop.
+        // Turn rate for the chase approach (IMP-DOG-017). From a standstill / below a walk the dog swings round at
+        // launchTurnDegPerSec (the start of a chase); once running it keeps the dog's running rate.
+        float ChaseTurnRate() { return _speed < walkSpeed ? launchTurnDegPerSec : turnSpeedDegPerSec; }
+
+        // IMP-DOG-017 harness round 3 (Pome v0 beside): the cruise speed that covers d in exactly T under the SAME
+        // model the solve's ETA uses - ramp at chaseAcceleration, then cruise. Pacing at the plain average d / T
+        // made a dog starting from rest ask for 7 m/s while ramping, fall behind its own plan (5.7 m/s average over
+        // the first 1.2 s) and lose the chase. From rest: T = v / (2a) + d / v, so v = a (T - sqrt(T^2 - 2d/a)).
+        // Already moving at s: that is the from-rest case started s/a earlier, i.e. T' = T + s/a, d' = d + s^2/(2a).
+        // No real root = unreachable -> vCap. A root below s means the dog is ahead of schedule -> ease to d / T.
+        float PaceToArrive(float d, float T, float vCap)
+        {
+            if (T <= 0.05f) return vCap;
+            float a = chaseAcceleration;
+            float sp = _speed > 0f ? _speed : 0f;
+            float tp = T + sp / a, dp = d + sp * sp / (2f * a);
+            float disc = tp * tp - 2f * dp / a;
+            if (disc < 0f) return vCap;
+            float v = a * (tp - Mathf.Sqrt(disc));
+            if (v < sp) v = d / T;
+            return v > vCap ? vCap : v;
+        }
+
+        // One step of a MOMENTUM approach (B chase / C front): straight at the crouch start, paced so the dog crosses
+        // it exactly on time and still running. Nothing here ever brakes to a stop.
         void RunApproach(float avail)
         {
             Vector3 dogPos = dogRoot.position;
-            if (_hookActive && !_hookDone)
-            {
-                Vector3 toA = _hookPoint - dogPos; toA.y = 0f;
-                if (toA.magnitude <= HookCornerRadius) _hookDone = true;
-            }
-            float pathLeft = _hookActive && !_hookDone ? HookPath(dogPos, _hookPoint, _standRoot)
-                : Vector3.Distance(new Vector3(dogPos.x, 0f, dogPos.z), new Vector3(_standRoot.x, 0f, _standRoot.z));
-            // Paced to arrive AS the crouch begins, not sooner. A lower floor here (the old HookMinPace) made the
-            // dog cover a short approach early, stop on the spot and then lunge - the stop the user objected to.
-            // The floor only applies while there is more than a jog-second of ground left to cover.
-            float pace = avail > 0.05f ? pathLeft / avail : chaseRunSpeed;
-            if (pathLeft > MotionMinSpeed * MotionWindow && pace < HookMinPace) pace = HookMinPace;
-            if (pace > chaseRunSpeed) pace = chaseRunSpeed;
-            if (_hookActive && !_hookDone)
-            {
-                MoveToward(_hookPoint, pace, 0f, chaseAcceleration, true, chaseDeceleration);
-                return;
-            }
-            // Aim past the crouch start once it is under the nose: braking onto a point is exactly what must not
-            // happen here, and the air solve absorbs the last few centimetres anyway.
             Vector3 toC = _standRoot - dogPos; toC.y = 0f;
             float dT = toC.magnitude;
+            // IMP-DOG-017: B's cap is the breed's sprint, everything else runs at most chaseRunSpeed.
+            float vCap = _mode == ModeChase ? chaseSprintSpeed : chaseRunSpeed;
+            // Paced to arrive PaceLeadRun before the crouch (harness round 1: exactly on time left every stride of
+            // error as a late arrival). The jog floor holds until the last RunPaceFloorPath metres, so the dog is
+            // never standing on the crouch start (round 1: v0 mid took off with speedMin 0, off 0.39).
+            float pace = avail > 0.05f ? PaceToArrive(dT, Mathf.Max(0.05f, avail - PaceLeadRun), vCap) : vCap;
+            if (dT > RunPaceFloorPath && pace < HookMinPace) pace = HookMinPace;
+            if (pace > vCap) pace = vCap;
             // The last few metres are held at the take-off ceiling, so the speed the dog crosses the crouch start
             // with IS the speed it jumps at - no braking stride between the two. Further out it may run flat out.
-            float ceiling = dT > RunJumpTrimDistance ? chaseRunSpeed : _takeoffCap;
-            if (pace > ceiling) pace = ceiling;
-            MoveToward(dT < 0.6f ? _standRoot + _forward * 2f : _standRoot, pace, 0f, chaseAcceleration, false, chaseDeceleration);
-            if (dT > 0.05f)
+            // B's trim ceiling is never below its planned take-off (0.6 x chaseSprintSpeed, <= RunJumpMaxTakeoff).
+            float trimCap = _takeoffCap;
+            if (_mode == ModeChase)
             {
-                // The heading rolls onto the catch facing across the run-up, so the last stride is already on it.
-                float w = _hookActive ? Mathf.Clamp01(1f - dT / Mathf.Max(0.5f, _hookLen)) : 1f;
-                Vector3 steer = Vector3.Lerp(toC / dT, _forward, w);
-                TurnAt(steer, _speed > walkSpeed ? turnSpeedDegPerSec : walkTurnDegPerSec); // net: owner-only
+                float vTakeB = Mathf.Clamp(chaseSprintSpeed * ChaseTakeoffFraction, RunJumpMinTakeoff, RunJumpMaxTakeoff);
+                if (trimCap < vTakeB) trimCap = vTakeB;
             }
-            else TurnAt(_forward, turnSpeedDegPerSec);
+            float ceiling = dT > RunJumpTrimDistance ? vCap : trimCap;
+            if (pace > ceiling) pace = ceiling;
+            // Aim past the crouch start once it is under the nose: braking onto a point is exactly what must not
+            // happen here, and the air solve absorbs the last few centimetres anyway.
+            // Arriving early means the dog can run past the crouch start before the 10 Hz replan slides it on;
+            // once past it, keep aiming ahead along the run-up rather than turning back for it.
+            bool past = Vector3.Dot(toC, _forward) < 0f;
+            MoveToward(dT < 0.6f || past ? _standRoot + _forward * 2f : _standRoot, pace, 0f, chaseAcceleration, false, chaseDeceleration);
+            if (dT > 0.05f && !past)
+            {
+                // The heading rolls onto the take-off facing over the last HoldBlendLength metres (B may come in up
+                // to 60 deg off the flight line), so the last stride is already on it.
+                float w = Mathf.Clamp01(1f - dT / HoldBlendLength);
+                Vector3 steer = Vector3.Lerp(toC / dT, _forward, w);
+                TurnAt(steer, ChaseTurnRate()); // net: owner-only
+            }
+            else TurnAt(_forward, ChaseTurnRate());
         }
 
-        // One step of a WAIT approach toward _standRoot. Outside the hold band the dog runs the small hook: leg 1
-        // to A, then leg 2 to the spot with the heading blending into the facing the catch needs, so the last
-        // stride is already along _forward. Inside the band it holds, turns off the residual at a dog's standing
-        // rate and shuffles the last centimetres.
-        void HookOrSprint(float dist)
+        // One step of an A (around) or D (stand) approach toward _standRoot. Outside the hold band: A runs to its
+        // via point, then onto the spot with the heading blending into the catch facing, so the last stride is
+        // already along _forward; D runs straight in. avail > 0 paces the run to use that many seconds (A: arrive
+        // settleTime before the crouch - spare time is spent running slower, IMP-DOG-017); avail <= 0 sprints (D).
+        // Inside the band it holds, turns off the residual at a dog's standing rate and shuffles the last centimetres.
+        void HoldOrApproach(float dist, float avail)
         {
             if (_holding)
             {
-                // Round 3 turned here at 720 deg/s because FaceToward would have used the idle rate (30 deg/s = six
-                // seconds for an about-face). Round 4: the hook delivers the facing, so what is left is small and
-                // 120 deg/s is enough - and it is a turn, not a snap.
+                // Round 4: the approach delivers the facing, so what is left is small and 120 deg/s is enough - and
+                // it is a turn, not a snap. (Not the launch rate: this is a dog settling, not setting off.)
                 TurnAt(_forward, standTurnDegPerSec); // net: owner-only
                 // Deadband on the residual, and no facing from the walk, so the two do not fight each other.
                 if (dist > 0.08f) MoveToward(_standRoot, walkSpeed, 0f, acceleration, false);
                 else Coast();
                 return;
             }
-            if (_hookActive && !_hookDone)
+            Vector3 dogPos = dogRoot.position;
+            if (_viaActive && !_viaDone)
             {
-                Vector3 toA = _hookPoint - dogRoot.position; toA.y = 0f;
-                float dA = toA.magnitude;
-                // The corner is a blend, not a waypoint: inside HookCornerRadius the dog is already steering at the
-                // spot, so it rounds A instead of touching it. Latched, so it can never be re-entered.
-                if (dA <= HookCornerRadius) _hookDone = true;
-                else { MoveToward(_hookPoint, chaseRunSpeed, 0f, chaseAcceleration, true, chaseDeceleration); return; }
+                // The corner is a blend, not a waypoint: inside ViaCornerRadius the dog is already steering at the
+                // spot, so it rounds the via point instead of touching it. Latched, so it can never be re-entered.
+                Vector3 toV0 = _viaPoint - dogPos; toV0.y = 0f;
+                if (toV0.magnitude <= ViaCornerRadius) _viaDone = true;
+            }
+            float pace = chaseRunSpeed;
+            if (avail > 0f)
+            {
+                float pathLeft = ViaPath(dogPos);
+                // Harness round 1: aim to be there PaceLeadAround before the settle is due, not exactly on it.
+                pace = PaceToArrive(pathLeft, Mathf.Max(0.05f, avail - PaceLeadAround), chaseRunSpeed);   // round 3: same model as the ETA
+                if (pathLeft > MotionMinSpeed * MotionWindow && pace < HookMinPace) pace = HookMinPace;
+                if (pace > chaseRunSpeed) pace = chaseRunSpeed;
+            }
+            if (_viaActive && !_viaDone)
+            {
+                Vector3 toV = _viaPoint - dogPos; toV.y = 0f;
+                MoveToward(_viaPoint, pace, 0f, chaseAcceleration, false, chaseDeceleration);
+                TurnAt(toV, ChaseTurnRate()); // net: owner-only
+                return;
             }
             // Second leg. MoveToward's own brake (chaseDeceleration) eases the run down into the spot - at the hold
-            // band it is still rolling at a jog - and the heading is steered separately so it can
-            // arrive on _forward rather than on the line it travelled.
-            Vector3 toT = _standRoot - dogRoot.position; toT.y = 0f;
+            // band it is still rolling at a jog - and the heading is steered separately so it can arrive on _forward
+            // rather than on the line it travelled.
+            Vector3 toT = _standRoot - dogPos; toT.y = 0f;
             float dT = toT.magnitude;
-            MoveToward(_standRoot, chaseRunSpeed, 0f, chaseAcceleration, false, chaseDeceleration);
+            MoveToward(_standRoot, pace, 0f, chaseAcceleration, false, chaseDeceleration);
             if (dT > 0.05f)
             {
-                // The heading rolls onto the catch facing across the last metres of the run-in, hook or not: that
-                // is what lets Eta charge the facing at the running rate instead of billing a spin on arrival.
-                float w = Mathf.Clamp01(1f - dT / Mathf.Max(0.5f, _hookActive ? _hookLen : HoldBlendLength));
+                // The heading rolls onto the catch facing across the last leg (the via leg, or HoldBlendLength): that
+                // is what lets the ETA charge the facing at the running rate instead of billing a spin on arrival.
+                float blend = HoldBlendLength;
+                if (_viaActive) { Vector3 leg = _standRoot - _viaPoint; leg.y = 0f; blend = leg.magnitude; }
+                float w = Mathf.Clamp01(1f - dT / Mathf.Max(0.5f, blend));
                 Vector3 steer = Vector3.Lerp(toT / dT, _forward, w);
-                TurnAt(steer, _speed > walkSpeed ? turnSpeedDegPerSec : walkTurnDegPerSec); // net: owner-only
+                TurnAt(steer, ChaseTurnRate()); // net: owner-only
             }
         }
 
@@ -346,9 +388,9 @@ namespace KominkaHillside
             // a mouth offset of 0.63 m applied in the wrong frame, so this is the number that explains them).
             Vector3 offTo = _standRoot - dogRoot.position; offTo.y = 0f;
             _faceErrAtTakeoff = Vector3.Angle(dogRoot.forward, _forward);
-            // Round 4 amendment: every mode but the wait takes off with the speed it actually has - the crouch is
-            // a stride, not a stop ("実際跳ぶときは減速しない、トップスピードでは?"). The air solve absorbs the rest.
-            _jumpSpeed = _mode == ModeWait ? Mathf.Min(_speed, HookMinPace) : Mathf.Min(_speed, _takeoffCap);
+            // Round 4 amendment: B / C take off with the speed they actually have - the crouch is a stride, not a
+            // stop ("実際跳ぶときは減速しない、トップスピードでは?"). A goes up from its settled stance. The air solve absorbs the rest.
+            _jumpSpeed = _mode == ModeAround ? Mathf.Min(_speed, HookMinPace) : Mathf.Min(_speed, _takeoffCap);
             _vTake = _jumpSpeed;
             ComputeMotion(); _motionLatched = true;   // the approach is what these two numbers describe
             Debug.Log("[KH_FrisbeeCatch] takeoff v=" + variant
@@ -396,7 +438,7 @@ namespace KominkaHillside
                 if (!DogMayGo(landing) || !GroundOk(landing, _groundY))
                 {
                     Debug.Log("[KH_FrisbeeCatch] liftoff refused: landing outside");
-                    _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false;
+                    _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false; _solved = false; _dropReason = "liftoff";   // IMP-DOG-017: solve again
                     _catchDecided = false; _runningCatch = false; _airborne = false; animSpeed = 1f;
                     dogRoot.position = SnapToGround(start); // net: owner-only
                     TransitionTo(StateChase);
@@ -433,16 +475,33 @@ namespace KominkaHillside
                         + " inJumpState=" + inJump + " rise=" + _rootRise.ToString("F2") + " scale=" + _animScale.ToString("F2") + " flightEnded=" + _flightEnded + VariantTail());
                 }
             }
-            if (ta >= 2f * _tUp) TransitionTo(state == StateJumpCarry ? StateLandCarry : StateLand);
+            if (ta >= 2f * _tUp)
+            {
+                // IMP-DOG-017 (Codex review): B's run-through is only taken when the whole run (recover + RunThroughSeconds
+                // at chaseSprintSpeed * ChaseTakeoffFraction) is clear of obstacles; otherwise it lands and stops as usual.
+                if (state == StateJumpCarry && _mode == ModeChase)
+                {
+                    float runLen = chaseSprintSpeed * ChaseTakeoffFraction * (_recoverDur / Mathf.Max(0.1f, _animScale) + RunThroughSeconds);
+                    _runThroughClear = LaneClear(dogRoot.position, dogRoot.position + dogRoot.forward * runLen);
+                }
+                else _runThroughClear = false;
+                TransitionTo(state == StateJumpCarry ? StateLandCarry : StateLand);
+            }
         }
 
         void UpdateLand(double now, float elapsed)
         {
             if (!_dogOwner) { UpdateLocomotionAnim(); return; }
             float recover = _recoverDur / Mathf.Max(0.1f, _animScale);
-            // Round 2: the jump is always a standing one, so the dog lands on the spot and simply stops (v0's rule
-            // for every preset). The lerp is kept so an interrupted jump with residual speed still eases out.
+            // Round 2: a standing jump lands on the spot and simply stops. The lerp is kept so a jump with residual
+            // speed still eases out.
             float desired = Mathf.Lerp(_jumpSpeed, 0f, Mathf.Clamp01(elapsed / recover));
+            // IMP-DOG-017: B with the disc does NOT stop - it runs on through the landing (and on for
+            // RunThroughSeconds of the Return, see UpdateReturn) and then arcs back to the thrower.
+            bool runThrough = _mode == ModeChase && state == StateLandCarry && !_yieldAfterLanding && _runThroughClear;
+            // One stride ahead is re-checked every frame; a blocked stride ends the run-through for good (Codex review).
+            if (runThrough && !LaneClear(dogRoot.position, dogRoot.position + _forward * LandingLaneMargin)) { _runThroughClear = false; runThrough = false; }
+            if (runThrough) desired = chaseSprintSpeed * ChaseTakeoffFraction;
             // Every preset: the slide never carries the root off the flat. At the edge the dog holds its ground and
             // the clip plays on, so the landing still reads as a landing (Codex D).
             float reach = _speed > desired ? _speed : desired;
@@ -450,14 +509,14 @@ namespace KominkaHillside
             else _speed = 0f;
             if (elapsed < recover) return;
             if (_yieldAfterLanding) { CancelLaunch("claimed"); return; } // leash / gathering took the dog while airborne
-            if (state == StateLandCarry) { TransitionTo(StateReturn); return; }
+            if (state == StateLandCarry) { _runThrough = runThrough && _speed > 0f; TransitionTo(StateReturn); return; }
             if (HeldNow()) { CancelLaunch("held-regrab"); return; }
             if (_flightEnded)
             {
                 if (Retrievable() && DogMayGo(frisbee.transform.position) && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance) TransitionTo(StateRetrieve);
                 else CancelLaunch("flight-ended:" + _flightEndReason);
             }
-            else { _plan = PlanNone; _nextPlan = 0f; TransitionTo(StateChase); } // missed while still flying: plan again
+            else { _plan = PlanNone; _nextPlan = 0f; _solved = false; _dropReason = "miss"; TransitionTo(StateChase); } // missed while still flying: solve again
         }
 
         // ---- Ground pickup: walk to the resting disc, lower the head, take it ----
@@ -499,6 +558,25 @@ namespace KominkaHillside
             if (state == StateReturn)
             {
                 if (elapsed > returnTimeout) { CancelLaunch("return-timeout"); return; }
+                if (_runThrough)
+                {
+                    // IMP-DOG-017 B: the run-through IS the arc home. The dog keeps the landing's pace along its OWN
+                    // heading while turning toward the thrower at the running rate, so the path bends round instead
+                    // of the old straight run followed by MoveToward's sideways slide (Codex review). Same flat clamp
+                    // as the landing, plus one stride of lane: at the edge or an obstacle the run-through ends.
+                    float keep = chaseSprintSpeed * ChaseTakeoffFraction;
+                    float reach = _speed > keep ? _speed : keep;
+                    Vector3 head = dogRoot.forward; head.y = 0f;
+                    if (elapsed < RunThroughSeconds && head.sqrMagnitude > 1e-4f
+                        && DogMayGo(dogRoot.position + head * (reach * Time.deltaTime))
+                        && LaneClear(dogRoot.position, dogRoot.position + head.normalized * LandingLaneMargin))
+                    {
+                        MoveToward(dogRoot.position + head.normalized * 2f, keep, 0f, chaseAcceleration, false, chaseDeceleration);
+                        TurnAt(to, turnSpeedDegPerSec); // net: owner-only
+                        return;
+                    }
+                    _runThrough = false;
+                }
                 MoveToward(playerPos, dist > returnRunDistance ? returnRunSpeed : walkSpeed, returnStopDistance);
                 if (dist <= returnStopDistance + 0.05f && _speed <= stopSpeedThreshold) TransitionTo(StateDrop);
                 return;

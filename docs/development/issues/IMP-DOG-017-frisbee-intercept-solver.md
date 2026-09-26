@@ -2,11 +2,11 @@
 id: IMP-DOG-017
 type: IMP
 system: DOG
-status: wip
+status: review
 priority: High
 decided: 2026-09-26
 summary: 小型犬 (Pome / Dachs / Corgi) と Shiba がフリスビーの下に回り込み、振り向いて跳ばずに取るのがほとんど。プランナーは軌道を知っているが、0.1 秒刻みの候補を決まった近づき方で合否判定し、落ちたら次の案へ回すため、跳べる時間帯が短い犬ほど立ち取りに落ちる。投げた瞬間に「どこで何秒後に跳ぶか・どの速さで走るか」を解く方式へ見直す
-next: B (追いつき) の最高速をユーザーと決め、設計を Codex で独立レビュー → 実装。実装は 2026-09-26 のテスト会のログを見てから
+next: PCVR で見え方 (A の回り込み・B の走り抜け・480°/s の向き直り・小型犬の跳躍) と犬種上限 10.5 / 11.0 の自然さを確認。テスト会のログを pick= / drop= で追う
 ---
 
 # IMP-DOG-017 フリスビーの迎撃を「解く」方式へ見直す
@@ -114,6 +114,38 @@ next: B (追いつき) の最高速をユーザーと決め、設計を Codex �
 ### 決めること (残り)
 
 - **B の最高速 (並走の速い足取り)。** P5 を小型犬で成り立たせるには 10〜11 m/s・旋回 480°/s が要る。「犬なので速いのはよいが、不自然に速いのは困る」との兼ね合いで決める。Lab は P5 の B が物理的に無理なので、D' (走りながら取る) を成功させる方を直す (ログでは D' を選んでも全投 E に落ちている)
+
+## 実装記録 (2026-09-26)
+
+Opus サブエージェント 2 本 (runtime / Editor+ハーネス) で並列実装、統括がコンパイル・Verify・ハーネスを回した。ハーネス 3 往復で確定。
+
+### 実装した形
+
+- **Solve** (投げの受理直後に 1 回): 跳べる帯 `[max(jumpFloorRise, minRootRise), maxRootRise]` の出入りを 0.05 秒の粗走査 + 二分法 (5 ms) で求め (区間は最大 2 つ。手元で帯に入る瞬間は届かないので 2 つ目も見る)、帯を 0.02 秒刻み (最大 60 点、両端 0.03 秒と rise 0.01 m を内側に寄せる) で A around / B chase / C front を評価。成立条件は物理だけ (必要速度 ≤ 上限、EtaCorrected ≤ 使える時間、DogMayGo / GroundOk / LaneClear / LandingOk)。点数 `pref×10 + 帯内の高さ×3 + 速度余裕×2` (通常 A>B>C、v3 B>A>C)。跳べなければ D stand → D' overtake → E ground
+- **Keep** (10 Hz): 取り方は変えない。必要ペース > 上限 × 1.05 のときだけ捨てて、その取り方を除外して再 Solve。ただし**近い (B/C/D' は 1.2 m 以内、A/D は hold 内か 0.6 m 以内) か残り 0.15 秒以下ならペース判定をしない** (踏み切りの距離ゲートに任せる)。A は settle の残りが 0.15 秒を切ったら crouch の締切で判定する
+- **ペース**: `PaceToArrive(d, T, vCap)` = Solve の ETA と同じ「加速してから巡航」モデルの逆算 (`v = a(T' − sqrt(T'² − 2d'/a))`、走行中は開始を s/a 秒前にずらす)。到着は A で 0.15 秒、B/C で 0.10 秒早めに狙う。B/C は残り 0.3 m まで 1.5 m/s を下回らない。旧「平均速度 = 距離 ÷ 時間」だと加速の遅れで自分の計画に追いつけなかった (Pome beside で実測)
+- **B の着地後**: 減速せず `chaseSprintSpeed×0.6` で recover + 1.0 秒走り抜け (Return の最初の 1 秒)、flat の縁で止まるクランプは従来どおり。v3 の B は跳躍の再生を 1.15 倍
+- **旋回**: `_speed < walkSpeed` のとき launchTurnDegPerSec (480)、走行中は 240
+- **ログ**: `plan=` 行の末尾に `solve= pick= vReq= vCap= band= drop=` (drop は pace/area/landing/eta/late/expired/slot/gate/liftoff/miss)。takeoff / catch 行に `launchYaw=`。motion 判定は yawRateMax を walkSpeed 以上の区間だけ、speedMin を 1.5 m/s に初めて達した後だけで測る (静止からの向き直りと走り出しは「機械っぽさ」の対象外)
+- **犬種値** (Build Scene が書く。Walking/3 Build と Frisbee/4 Build Scene の両方): chaseSprintSpeed Lab/Samoyed/Shiba 11.0、Corgi/Dachs/Pome 10.5 / launchTurnDegPerSec 480 / jumpFloorRise = min(0.25, 0.6 × 立位の口の高さ)。**小型犬 3 種は minRootRise (クリップ再生 1.8 倍の下限) 0.19 の方が高く、jumpFloorRise は効いていない** (Verify が INFO で出す)。それでも Pome の flat/mid/lob/far/side は全部 around で跳んだので、再生倍率の上限を上げる (0.19 → 0.10 なら 2.4 倍) は PCVR を見てから決める
+- 削除した定数: HookCornerRadius / HookWaitPace / HookEtaMargin / StraightMaxOffAngle / PlanSamples / PlanStep / PreferJumpMinRise / ModeHook・Run・Straight・Wait。Hook* / RunJumpMaxLoiter / StandStraightSlack は Verify の参照を外した後も残置 (`kept for Verify` 注記)。次の整理で消してよい
+
+### ハーネス (ClientSim、2026-09-26)
+
+| 走行 | 結果 |
+|---|---|
+| Lab 既定 38 投 (36 + beside + chase) | 38/38 PASS (flat front/around、mid stand (SolveMinSlack 導入前は front で跳んでいた。mid は取れ方を問わない投げ)、lob around、far chase、beside は ground = Lab は許容) |
+| Pome 既定 38 投 | 38/38 PASS。flat/mid/lob/side は around、far は around/chase、beside と chase は chase で跳ぶ (立ち取り 0) |
+| sixdogs | 14/14 PASS |
+| netorder | 10/10 PASS |
+
+往復の中身 (Codex 独立レビュー 中 3 / 低 4 を反映済み: late/expired でも再 Solve、B の走り抜けを弧 (自分の向きに走りながら投げ手へ旋回) にして通路を LaneClear で検査、speedMin の走り出し判定を投げごとにラッチ、v3 の 1.15 倍は姿勢と弧がずれるので撤回、残置定数の削除、コメント修正)。ハーネスの beside は 7 → 6 m/s (PCVR 09-25 のよしよし直後の実測 5.5〜7.1 の中央値。7 だと小型犬の B は余裕 0 で際どい)。B/C の候補は余裕 0.05 秒以上を要求 (SolveMinSlack)。①残り時間が小さくなると必要ペースが発散して捨てていた (lob / chase / mid) → 近い・遅いときは判定しない ②静止からの 480°/s と走り出しが motion 判定に掛かった → 測り方を変更 ③A の settle 締切で lob を捨てていた → crouch 締切へ ④平均速度のペースでは加速の遅れで追いつけない (Pome beside) → ETA と同じモデルで逆算
+
+### 未確認 (PCVR)
+
+- 見え方: A の回り込みの弧、B の走り抜けと戻り、480°/s の向き直り、v3 の 1.15 倍。小型犬の跳躍の見た目
+- 犬種ごとの上限 (10.5 / 11.0) が不自然でないか。よしよし直後 (beside) の B が実機の投げでも出るか (ハーネスは 7 m/s・10°)
+- 世界シーンは Walking/3 Build + Walking/5 Verify (483/483) 済み。実機ログは `plan=` 行の `pick= drop=` と `dog=` で 1 投ずつ追える
 
 ## 完了条件 (案)
 

@@ -41,15 +41,20 @@ namespace KominkaHillside
     // before the crouch. Jumps are preferred over stand catches wherever one is feasible.
     //
     // IMP-DOG-008 invariant: the prototype `variant` only affects the Ready target, the clip selection, the flight
-    // curve and - for v3 alone - whether the overtake scan runs at all. The intercept planner,
+    // curve and - for v3 alone - which catch shape the solve prefers (IMP-DOG-017: B chase first). The intercept planner,
     // the jump and the landing are identical across presets. GiveUp, the
     // ground retrieve, CanPlay, Claimed, the yield-after-landing reservation, playArea (DogMayGo) and ObserveFlight
     // never read it. UpdateLand still clamps the recover slide at the edge of the flat for every preset (Codex D).
     //
+    // IMP-DOG-017 (user 2026-09-26): the planner is SOLVED, not tried shape by shape. At the throw the dog finds when
+    // the disc is inside its own jump band (jumpFloorRise..maxRootRise, per breed), and for each instant the average
+    // speed each catch shape needs (A around / B chase / C front); the best feasible one is kept for the whole
+    // flight and only its pace is adjusted. Stand (D), overtake (D') and ground (E) are the fallbacks. See Planner.cs.
+    //
     // IMP-DOG-012 (Codex M4): one Behaviour, one Program Asset, four files (partial). The split moved whole
     // members only; nothing about the behaviour changed.
     //   KH_FrisbeeCatch.cs             fields, constants, synced state, variant, requests, transitions, display, Update
-    //   KH_FrisbeeCatch.Planner.cs     the intercept planner (Plan / KeepPlan, approach costs, Pass 1-4 + overtake)
+    //   KH_FrisbeeCatch.Planner.cs     the intercept planner (Plan / KeepPlan, Solve over the jump band, D / D' fallbacks)
     //   KH_FrisbeeCatch.Motion.cs      Ready / Chase execution, jump, landing, pickup, return, locomotion
     //   KH_FrisbeeCatch.Diagnostics.cs log lines, motion quality, and the harness read-outs
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
@@ -116,6 +121,18 @@ namespace KominkaHillside
         [Tooltip("Speed used to bring the disc back (retrieve from the ground, return to the thrower). " +
             "Not the sprint: the chase is the only part that has a deadline")]
         public float returnRunSpeed = 4.5f;
+
+        [Header("Breed (IMP-DOG-017; Build Scene writes these)")]
+        [Tooltip("Speed cap of the B chase (catching up from behind) only; A / C keep chaseRunSpeed. Real dogs sprint " +
+            "8-11 m/s (Lab / Shiba / Samoyed) and less for the short-legged ones, so +10% over the PCVR-approved 9.5: " +
+            "11 for the medium / large breeds, 10.5 for Corgi / Dachs / Pome (user 2026-09-26)")]
+        public float chaseSprintSpeed = 11f;
+        [Tooltip("Turn rate from a standstill / below walkSpeed at the start of a chase (a real dog turns half round in " +
+            "0.3 s). Running turns keep turnSpeedDegPerSec")]
+        public float launchTurnDegPerSec = 480f;
+        [Tooltip("Lowest root rise that counts as a jump = min(0.25, 0.6 * mouthOffsetStand.y), so a small dog's jump " +
+            "band scales with its size. The floor actually used is max(jumpFloorRise, minRootRise)")]
+        public float jumpFloorRise = 0.25f;
 
         [Header("Stand-off while the disc is held (user idea 2026-09-21)")]
         [Tooltip("While someone holds the disc the dog runs this far in front of them and waits facing them. " +
@@ -209,101 +226,80 @@ namespace KominkaHillside
         // (3.5 m/s = half again the walking-world run). This also keeps a lob, which only ever paces out to a
         // 2.5 m/s trot, with the intercept jump where it belongs.
         public const float OvertakeMinPace = 3.5f, OvertakeMinDot = 0.5f;
-        // Round 5 (PCVR 2026-09-22): the overtake is no longer v3's alone. Five of fifteen throws were made from
-        // BESIDE the thrower (the new pet-then-throw flow puts the dog 0.8-1.1 m away), and from there the dog can
-        // never reach the jump band in time - every one of them fell to the ground plan with slack=0.00. Running a
-        // disc down from behind and taking it in the stand band is exactly what a dog does with a throw it started
-        // late, so every preset gets it. WHERE it sits in the order is what still differs: v3 (並走) is defined by
-        // the overtake and tries it first; everyone else tries it only after both jumps, so "chase it down and
-        // jump" still wins whenever a jump is reachable at all.
-        // Stand catches inside this much slack use the STRAIGHT approach, never a hook loop. The loop's ETA is the
-        // cheaper of the two by construction (ApproachHold only takes it when it is), but the estimate does not
-        // carry the corner, the wider turn or the extra metres, and on a thin plan being wrong costs the catch:
-        // three v1 stand catches committed at slack 0.01-0.24 and were dropped 1.1-3.1 m short (PCVR 2026-09-22).
-        // Fewer metres beats a cheaper estimate when there is nothing to absorb the error with.
-        public const float StandStraightSlack = 0.3f;
-        // ---- Round 4: the hook approach (PCVR 3: "it slides underneath and snaps round - a machine") ----
-        // The dog must reach the take-off point already facing F (into the oncoming disc) AND still running,
-        // because a facing it still owes has to be paid as a turn in place, and a jump from a standstill is the
-        // pop-up the user called a machine. So the run is aimed at A = C - F * len, swung about C toward the side
-        // the dog is already on (C = the crouch start, F * v * (crouch + rise) short of the catch spot): the dog
-        // comes round on its own side, curves onto the line, and the last strides ARE the run-up to the jump.
-        //
-        // Spare time is spent by making the LOOP BIGGER, not by standing still (user, round 4 amendment: "when it
-        // actually jumps it should not be slowing down - top speed, surely?"). HookLenAt / HookAngAt walk six
-        // loops from (2.2 m, 45 deg) to (4.5 m, 90 deg) and the planner takes the biggest one it can still run.
-        // HookLength / HookAngleDeg are the loop ApproachHold uses (and the numbers Verify bounds); the momentum
-        // grid runs from HookLengthMin / HookAngleMin up to the maxima, because a catch point 2 m away with a
-        // second to spare needs a SMALL curve - the 2.2 m loop takes longer than the whole flight has left.
-        public const float HookLength = 2.2f, HookLengthMin = 1f, HookLengthMax = 4.5f;
-        public const float HookAngleDeg = 45f, HookAngleMin = 25f, HookAngleMax = 90f;
-        public const int HookCombos = 8;
-        // Within this of A the dog stops steering at A and starts steering at C: the corner is a blend, not a waypoint.
-        public const float HookCornerRadius = 1.0f;
-        // Runtime floor on the approach pace - a jog, never a stop. Below the second one there is so much spare time
-        // that even the longest loop cannot use it up, and the plan becomes an honest wait (a high lob).
-        public const float HookMinPace = 1.5f, HookWaitPace = 2.0f;
-        // Taking the biggest loop that *exactly* fits leaves a plan with 0.1 s of slack, and the first replan that
-        // disagrees by a stride drops it (measured: the lob committed at slack 0.09 and fell to the ground plan).
-        // The loop is chosen to land this much inside the budget instead.
-        public const float HookEtaMargin = 0.15f;
-        // Over the last metres of a WAIT approach the heading rolls onto the catch facing even without a loop.
+        // Round 5 (PCVR 2026-09-22): the overtake is every preset's, not v3's alone - a throw the dog started late
+        // (beside the thrower, after a よしよし) is run down from behind instead of being abandoned to the ground plan.
+        // IMP-DOG-017: it is now D', tried only when no jump (A / B / C) and no stand catch (D) is feasible.
+        // Runtime floor on the approach pace - a jog, never a stop (RunApproach and the A approach). Also the most
+        // an A (standing) take-off may carry of the speed the dog still has at the crouch.
+        public const float HookMinPace = 1.5f;
+        // Over the last metres of an A / stand approach the heading rolls onto the catch facing, so the last stride
+        // is already along _forward and the residual turn is paid at the running rate.
         public const float HoldBlendLength = 2.5f;
-        // A jump is preferred to a stand catch wherever one is feasible; this is the rise that makes a jump a jump.
-        public const float PreferJumpMinRise = 0.25f;
         // The take-off speed IS the speed the dog has at the crouch, clamped to a band a dog can push off from, and
-        // it is re-read at every 10 Hz replan. Round 2 fixed it at 2.5, the approach disagreed, and the dog stopped.
-        // Round 5 (PCVR 2026-09-22 "もっと遠くから跳んでいい"): the ceiling goes 6 -> 7, which lengthens the run-up
-        // (vTake * (crouch + rise)) by the same ratio, so the dog leaves the ground earlier and further out. The
-        // landing is re-checked from the longer arc by the same LandingOk, so nothing about the flat rule changes.
+        // it is re-read at every 10 Hz replan. Round 5 (PCVR 2026-09-22 "もっと遠くから跳んでいい"): ceiling 6 -> 7.
         public const float RunJumpMinTakeoff = 2f, RunJumpMaxTakeoff = 7f;
         // A dog already standing inside the run-up distance does not reverse out to get a longer approach - it
-        // pounces from where it is. Without this the crouch start is pushed BEHIND the dog (worst on the twist,
-        // whose mouth sits 0.63 m off the running line, so the run-up has to come out of a 0.6 m gap) and the next
-        // replan drops the plan: measured as v4 committing plan=1 and falling to plan=3 on every ClientSim throw.
+        // pounces from where it is (C front; the crouch start never goes behind the dog).
         public const float RunJumpShortTakeoff = 1f;
         // The take-off ceiling is about the JUMP, not about getting there. Far from the crouch start the dog may
-        // run at the full chase speed and trim down inside this distance (8 -> 3 m/s needs 2.75 m at
-        // chaseDeceleration). Holding the whole approach at the take-off ceiling made a plan the dog fell a stride
-        // behind unrecoverable, and the twist - which also has to sidestep 0.63 m - dropped to the ground plan.
+        // run at the full chase speed and trim down inside this distance.
         public const float RunJumpTrimDistance = 3f;
-        // Round 4b: ANY direction, including straight at the disc (-1). A dog facing an incoming disc runs at it and
-        // jumps, and refusing that left every flat / lob throw on the "get under it and wait" plan - the very shape
-        // the user called mechanical. What a head-on meeting does not tolerate is speed: the closing rate is the sum
-        // of both, so a fast run turns the catch window into centimetres. Head-on take-off is capped instead.
-        // Round 5: 3 -> 3.5, the same "jump from further out" as RunJumpMaxTakeoff, kept well under it because the
-        // closing rate here is still the sum of both speeds.
+        // Round 4b: a dog facing an incoming disc runs at it and jumps (C front). The closing rate is the sum of
+        // both speeds, so the head-on take-off is capped.
         public const float RunJumpMinDot = -1f;
         public const float RunJumpHeadOnMaxTakeoff = 3.5f;
-        // Round 5. A running jump has no loop to spend spare time in (that is the hook's job), and RunApproach
-        // drops its pace floor over the last stride so the dog does not overshoot the crouch start - so a run-jump
-        // candidate the dog reaches EARLY is a dog standing on the take-off point waiting for the clock. At 8 m/s
-        // that was rare; at 9.5 it showed up as three throws logging `mode=run but speedMin 0.00 (slowed to a stop
-        // before taking off)` - the very "stop and pop" round 4 removed, coming back in through the speed bump.
-        // Worst on head-on candidates, whose take-off cap (3.5) makes the run-up short. So a running jump is
-        // refused when the run cannot fill the time, and ScanWaitJump picks it up instead: still a jump, but the
-        // honest kind that goes up from a settled stance, and the one the motion rule exempts by design.
-        public const float RunJumpMaxLoiter = 0.25f;
-        // A straight run-up (no loop) only delivers the facing if the dog is already coming from roughly the right
-        // side; beyond this it would have to arrive backwards, so the plan waits instead.
-        public const float StraightMaxOffAngle = 60f;
-        // How the approach was made. Logged at the takeoff and at the catch. Everything but `wait` takes off with
-        // momentum, so the harness fails those if the dog dropped below a jog in the last second.
-        // Approach method (_mode) and its log name (ModeName; the log names are the harness contract and did not change):
-        //   ModeHook     `hook`     loop out to A, curve onto the run-up, take off at speed (Pass 1)
-        //   ModeRun      `run`      run at the point along the dog's own heading and take off at speed (Pass 2)
-        //   ModeStraight `stand`    no loop fits, but a straight run-up still takes off at speed (Pass 1 fallback;
-        //                           was ModeStand until IMP-DOG-012 - it is NOT a stand catch, the log name is legacy)
-        //   ModeWait     `wait`     be there early and settle: the wait jump (Pass 3) and every stand catch (Pass 4)
-        //   ModeOvertake `overtake` run it down from behind and snatch it without stopping
-        public const int ModeHook = 0, ModeRun = 1, ModeStraight = 2, ModeWait = 3, ModeOvertake = 4;
+        // ---- IMP-DOG-017 solve ----
+        // Catch shape (_mode) and its log name (ModeName; the names are the harness contract):
+        //   ModeAround   `around`   A: run out past the catch point through one via point, come back onto it facing
+        //                           the thrower, settle, jump straight up (jumpSpeed 0)
+        //   ModeChase    `chase`    B: from behind, run WITH the disc (up to chaseSprintSpeed) and take off at speed;
+        //                           after a catch it runs on through the landing and arcs back (UpdateLand / Return)
+        //   ModeFront    `front`    C: run AT the point (in front of / beside the disc) and take off at speed
+        //   ModeStand    `stand`    D: no jump reachable - stand under it facing the disc (PlanStandOrOvertake)
+        //   ModeOvertake `overtake` D': run it down from behind and snatch it without stopping (PlanStandOrOvertake)
+        // The old hook / run / wait shapes are gone (IMP-DOG-017 decision 1). The numbers double as _bannedModes bits.
+        public const int ModeAround = 0, ModeChase = 1, ModeFront = 2, ModeStand = 3, ModeOvertake = 4;
+        // Band search: coarse step from now to the landing, then bisection of each edge to this tolerance. A small
+        // dog's band is 50-110 ms wide (issue table), so the old 0.1 s scan saw 0 or 1 samples of it.
+        public const float BandScanStep = 0.05f, BandTolerance = 0.005f;
+        // Harness round 2: the solve samples [tIn + BandInset, tOut - BandInset] and clamps the rise to
+        // [floor + BandRiseInset, maxRootRise - BandRiseInset], so the pick never sits on the band edge.
+        public const float BandInset = 0.03f, BandRiseInset = 0.01f;
+        public const int BandScanMaxSteps = 120;   // 6 s of flight; also the D / D' scans' horizon
+        // Band sampling: 20 ms, at most 60 instants per interval (a long band gets a wider step instead).
+        public const float SolveStep = 0.02f;
+        public const int SolveMaxSamples = 60;
+        // A kept shape is dropped only when the pace it needs exceeds its cap by this factor (decision 4).
+        public const float KeepPaceSlack = 1.05f;
+        // Round 5: B / C are running jumps with nothing in hand, so Solve refuses a candidate with less spare time than
+        // this (a zero-slack pick is lost to one frame hitch). A keeps >= 0: its settleTime is the margin.
+        public const float SolveMinSlack = 0.05f;
+        // Harness round 1 (2026-09-26): path / time-left explodes as time-left -> 0, so the pace rule dropped plans a
+        // stride from success. It is not asked once the dog is within KeepCloseRun of a B / C / D' target (= the
+        // BeginJump gate), inside the hold band for A / D, or with KeepLateSeconds or less to go.
+        public const float KeepCloseRun = 1.2f, KeepLateSeconds = 0.15f;
+        // Harness round 1: pace the approach to arrive this much BEFORE the deadline (A: before the settle starts;
+        // B / C: before the crouch), so a stride's error is spare time instead of a late arrival.
+        public const float PaceLeadAround = 0.15f, PaceLeadRun = 0.10f;
+        // B / C never pace below HookMinPace while more than this is left to the crouch start (a jog, never a stop).
+        public const float RunPaceFloorPath = 0.3f;
+        // A's via point: this far past the stand spot along the flight, and this far out on the dog's own side.
+        // Within ViaCornerRadius of it the dog starts steering at the spot (the corner is a blend, not a waypoint).
+        // No via point when the straight run-in already arrives within ViaStraightAngle of the catch facing.
+        public const float ViaAhead = 1.5f, ViaSide = 1.2f, ViaCornerRadius = 1.0f, ViaStraightAngle = 45f;
+        // B's planned take-off speed as a fraction of chaseSprintSpeed, and the pace it runs on after landing.
+        public const float ChaseTakeoffFraction = 0.6f;
+        // B after a catch: keep running (chaseSprintSpeed * ChaseTakeoffFraction) through the recover and this much
+        // longer while turning toward the thrower - the arc home (UpdateReturn) - then the normal Return.
+        public const float RunThroughSeconds = 1.0f;
+        // (V3RiseAnimBoost removed after Codex review: boosting the synced animSpeed alone put the pose out of phase with the arc.)
         // Motion quality ring: the last second of (yaw rate, speed), sampled per frame while chasing.
         public const int MotionSamples = 128;
         public const float MotionWindow = 1f;
         // One sample per this many seconds (see SampleMotion): long enough that the angle and the clock agree.
         public const float MotionBucket = 0.08f;
-        // The two numbers the harness judges: a turn faster than this is a snap, and outside the hook a dog that
-        // dropped below this before taking off had stopped and popped.
+        // The two numbers the harness judges: a turn faster than this is a snap, and outside around / stand a dog
+        // that dropped below this before taking off had stopped and popped.
         public const float MotionMaxYawRate = 300f, MotionMinSpeed = 1.5f;
         // Codex D1: how far past the landing the lane has to be clear. The recover slide carries the dog roughly
         // this far before UpdateLand's edge clamp can stop it, so the stride after the landing is checked too.
@@ -313,9 +309,6 @@ namespace KominkaHillside
         // a standstill and a turn. Shorter approaches are judged on the yaw rate only (the disc came down next to
         // the dog - there was nothing to run). Measured: 1.5-2.2 m approaches bottom out at 1.0 m/s on the ramp.
         public const float MotionMinPath = 2.5f;
-        // Trajectory scan: 32 samples of 0.1 s from +0.2 s, walked forward so the FIRST hit is the highest point.
-        public const int PlanSamples = 32;
-        public const float PlanStep = 0.1f;
         // Ready geometry per run-in preset: ahead along the holder's head direction, lateral toward the side the dog is on.
         public const float ReadyAhead1 = 7f, ReadyLateral1 = 4f, ReadyAhead2 = 11f, ReadyLateral2 = 1.5f,
             ReadyAhead3 = 4f, ReadyLateral3 = 2.5f;
@@ -382,22 +375,38 @@ namespace KominkaHillside
         private bool _loggedRunning;   // the _runningCatch the last plan line was printed with
         private int _loggedMode = -1;  // and the mode (a hook and a running jump are both PlanJump)
         private float _faceErrAtTakeoff = -1f;  // facing error when the crouch began (log: `face=`)
-        // Round 4 approach. _mode is how this plan gets there (ModeHook / ModeRun / ModeStraight / ModeOvertake);
-        // _hookPoint is A, the point short of the spot the first leg aims at, and _hookDone latches once the dog is
-        // inside HookCornerRadius of it (the corner is never re-entered, so the dog cannot loop round the spot).
-        private int _mode = ModeHook;
+        // _mode is the catch shape of this plan (ModeAround / ModeChase / ModeFront / ModeStand / ModeOvertake).
+        // _viaPoint is A's via point, and _viaDone latches once the dog is inside ViaCornerRadius of it (the corner is
+        // never re-entered, so the dog cannot loop round the spot).
+        private int _mode = ModeAround;
         private float _takeoffMin = RunJumpMinTakeoff, _takeoffCap = RunJumpMaxTakeoff;  // take-off speed band of THIS plan (head-on and short run-ups are slower)
-        private Vector3 _hookPoint;
-        private bool _hookActive, _hookDone;
-        private float _hookLen = HookLength;
-        // Scratch filled by Approach(): the point to run at, the mode it represents and what it costs.
-        private Vector3 _apPoint; private int _apMode; private float _apEta, _apLen, _apPath; private bool _apHook;
+        private Vector3 _viaPoint;
+        private bool _viaActive, _viaDone;
+        // IMP-DOG-017 solve state (Owner-local). _solved: the jump solve has run for this throw (reset by a dropped
+        // shape or a missed slot). _bannedModes: bit (1 << mode) per shape dropped by KeepPlan, never offered again
+        // for this throw. The rest is what the plan line reports (solve= / vReq= / vCap= / band=).
+        private bool _solved;
+        private string _dropReason = "";   // why KeepPlan / the chase last gave a plan up (plan= line: drop=)
+        private int _bannedModes;
+        private int _solveCount;
+        private float _bandIn = -1f, _bandOut = -1f, _bandIn2 = -1f, _bandOut2 = -1f;
+        private float _pickVReq, _pickVCap;
+        // Best candidate so far inside Solve; copied into the plan fields by CommitCandidate only.
+        private float _cScore; private int _cMode;
+        private float _cT, _cRise, _cTUp, _cScale, _cCrouch, _cJumpSpeed, _cVReq, _cVCap, _cEta, _cPath, _cSlack, _cTakeMin, _cTakeCap;
+        private Vector3 _cCatchRoot, _cDrive, _cFwd, _cVia, _cEntry; private bool _cViaActive;
+        // B after a catch: the first RunThroughSeconds of Return keep running along _forward (set in UpdateLand).
+        private bool _runThrough;
+        private bool _runThroughClear;     // decided at touchdown: the whole run-through lane is clear (Codex review)
         // Motion quality ring (Owner, Chase only) and the values latched at the takeoff.
         private float[] _mYaw, _mSpeed, _mTime;
         private int _mIdx, _mCount;
         private Vector3 _mPrevFwd; private bool _mPrimed, _motionLatched;
         private float _mAccAngle, _mAccTime, _mSlowest = -1f, _mPrevDt = 0.016f;
         private float _yawRateMax, _speedMin, _vTake;
+        private float _mRanBucketEnd = -1f;  // Time.time the bucket containing _mRanSince closed, -1 = not yet
+        private float _mRanSince = -1f;  // IMP-DOG-017 (Codex review): Time.time this throw first sampled >= MotionMinSpeed, -1 = never
+        private float _launchYaw;      // IMP-DOG-017: worst turn rate below walkSpeed in the window (log only; excluded from _yawRateMax)
         // Scratch filled by CatchGeometry; copied into the plan fields only once a candidate is accepted.
         private Vector3 _geoForward, _geoCatchRoot, _geoStandRoot;
         private Vector3 _landing;      // predicted disc landing point (PlanRetrieve)
@@ -408,7 +417,7 @@ namespace KominkaHillside
         // The harness reads them off the Udon heap before and after a measured window (--mode=sixdogs), so the
         // difference is the work the planner did. _planScans = Plan() calls that ran the candidate scans (KeepPlan
         // declined); _planEvaluations = trajectory samples examined by the scans (pass x time; each sample may also
-        // cost ground / lane raycasts); _planHookTries = hook loops sized by Approach.
+        // cost ground / lane raycasts); _planHookTries = A via points sized by Solve (IMP-DOG-017; was hook loops).
         private int _planScans, _planEvaluations, _planHookTries;
         // Jump execution (Owner).
         private double _jumpStart;
@@ -440,7 +449,7 @@ namespace KominkaHillside
         private Vector3 _standoffFwd = Vector3.forward;  // holder's head direction the current Ready spot was built from
         private Vector3 _standoffHolderPos;              // where the holder stood when that spot was built
         private bool _runIn, _twist;       // _runIn: Ready geometry only (round 2). _twist: Animator Bool + pose facts
-        private bool _overtake;            // v3 only: try an on-the-run catch from behind before the intercept scan
+        private bool _overtake;            // v3 only: the solve scores B chase highest (IMP-DOG-017). D' overtake is a fallback for every preset
         private Vector3 _mouthCatch;       // pose working values, copied from the Jump or the Twist facts set
         private float _crouchDur, _riseDur, _recoverDur;
         private float _settledSince = -1f; // Time.time the dog first stood on the catch spot, -1 = not there yet
@@ -550,8 +559,8 @@ namespace KominkaHillside
             _appliedVariant = variant;
             _runIn = variant == VariantRunInSide || variant == VariantRunInFar || variant == VariantRunInBeside;
             _twist = variant == VariantTwist;   // ApplyState picks the Twist Bool and the twist facts from this
-            // v3 waits ahead of the holder looking downfield, so the disc passes it from behind: the only preset
-            // that gets a chance at an overtake, and the only one whose planner differs (round 2b).
+            // v3 waits ahead of the holder looking downfield, so the disc passes it from behind. IMP-DOG-017: the only
+            // preset whose planner differs - B chase scores highest there (A around elsewhere); D' is everyone's fallback.
             _overtake = variant == VariantRunInBeside;
             // Ready target. v4 / v5 keep the Normal stand-off: only the pose / the flight differ there.
             _readyAhead = standoffDistance; _readyLateral = 0f; _readyFaceForward = false;
@@ -739,7 +748,8 @@ namespace KominkaHillside
             _flightEnded = ended; _flightEndReason = endReason;
             _plan = PlanNone; _nextPlan = 0f; _deviationSince = -1f; _landingValid = false; _localPlanValid = true;
             _settledSince = -1f; _holding = false; _runningCatch = false; _faceErrAtTakeoff = -1f;
-            _mode = ModeHook; _hookActive = false; _hookDone = false; _motionLatched = false;
+            _mode = ModeAround; _viaActive = false; _viaDone = false; _motionLatched = false;
+            _solved = false; _bannedModes = 0; _runThrough = false; _runThroughClear = false; _dropReason = ""; _mRanSince = -1f; _mRanBucketEnd = -1f;   // IMP-DOG-017: a new throw is solved from scratch
             _takeoffMin = RunJumpMinTakeoff; _takeoffCap = RunJumpMaxTakeoff;
             _mCount = 0; _mIdx = 0; _mPrimed = false; _mAccAngle = 0f; _mAccTime = 0f; _mSlowest = -1f; _mPrevDt = 0.016f;   // the last second of motion belongs to THIS throw only
             _yawRateMax = 0f; _speedMin = 0f; _vTake = 0f;

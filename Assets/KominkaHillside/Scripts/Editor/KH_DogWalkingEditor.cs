@@ -511,14 +511,19 @@ namespace KominkaHillside.Editor
                 Check(c.chaseAcceleration>=10f&&c.chaseAcceleration<=18f,"chase acceleration "+c.chaseAcceleration.ToString("F1")+" m/s2 in [10, 18] ("+(c.chaseRunSpeed/c.chaseAcceleration).ToString("F2")+" s to the run) "+key);
                 Check(c.settleTime>=0.1f&&c.settleTime<=0.6f,"settle time "+c.settleTime.ToString("F2")+" s in [0.10, 0.60] "+key);
                 Check(c.turnSpeedDegPerSec>=180f&&c.turnSpeedDegPerSec<=360f,"turn rate "+c.turnSpeedDegPerSec.ToString("F0")+" deg/s in [180, 360] (a dog's turn, not a turret's) "+key);
-                Check(KH_FrisbeeCatch.HookLength>=1f&&KH_FrisbeeCatch.HookLength<=3f,"hook length "+KH_FrisbeeCatch.HookLength.ToString("F2")+" m in [1, 3] "+key);
-                Check(KH_FrisbeeCatch.HookAngleDeg>=20f&&KH_FrisbeeCatch.HookAngleDeg<=70f,"hook angle "+KH_FrisbeeCatch.HookAngleDeg.ToString("F0")+" deg in [20, 70] "+key);
-                // Codex M5: the momentum grid (HookLenAt / HookAngAt), not just the wait hook.
-                Check(KH_FrisbeeCatch.HookLengthMin>=0.5f&&KH_FrisbeeCatch.HookLengthMin<=KH_FrisbeeCatch.HookLength&&KH_FrisbeeCatch.HookLengthMax>=KH_FrisbeeCatch.HookLength&&KH_FrisbeeCatch.HookLengthMax<=6f,
-                    "hook loop lengths "+KH_FrisbeeCatch.HookLengthMin.ToString("F2")+" - "+KH_FrisbeeCatch.HookLengthMax.ToString("F2")+" m bracket "+KH_FrisbeeCatch.HookLength.ToString("F2")+", within [0.5, 6] "+key);
-                Check(KH_FrisbeeCatch.HookAngleMin>=10f&&KH_FrisbeeCatch.HookAngleMin<=KH_FrisbeeCatch.HookAngleDeg&&KH_FrisbeeCatch.HookAngleMax>=KH_FrisbeeCatch.HookAngleDeg&&KH_FrisbeeCatch.HookAngleMax<=120f,
-                    "hook loop angles "+KH_FrisbeeCatch.HookAngleMin.ToString("F0")+" - "+KH_FrisbeeCatch.HookAngleMax.ToString("F0")+" deg bracket "+KH_FrisbeeCatch.HookAngleDeg.ToString("F0")+", within [10, 120] "+key);
-                Check(KH_FrisbeeCatch.HookCombos>=2&&KH_FrisbeeCatch.HookCombos<=16,"hook loop count "+KH_FrisbeeCatch.HookCombos+" in [2, 16] "+key);
+                // IMP-DOG-017: the hook loop grid (Hook*) is gone; the per-breed trio from the Build Scene table replaces it.
+                // Sprint: B (追いつき) only, between the chase run and a real dog's burst. Launch turn: from a standstill,
+                // between the running turn and a spin. Jump floor: min(0.25, 0.6 x standing mouth), below the ceiling.
+                Check(c.chaseSprintSpeed>=c.chaseRunSpeed&&c.chaseSprintSpeed<=11f&&Mathf.Abs(c.chaseSprintSpeed-KH_FrisbeePrototypeEditor.ChaseSprintSpeedFor(key))<1e-4f,
+                    "chase-down sprint "+c.chaseSprintSpeed.ToString("F1")+" m/s in [chaseRunSpeed "+c.chaseRunSpeed.ToString("F1")+", 11.0], == breed table "+key);
+                Check(c.launchTurnDegPerSec>=240f&&c.launchTurnDegPerSec<=720f&&Mathf.Abs(c.launchTurnDegPerSec-KH_FrisbeePrototypeEditor.LaunchTurnDegPerSec)<1e-4f,"launch turn "+c.launchTurnDegPerSec.ToString("F0")+" deg/s in [240, 720], == code-owned "+KH_FrisbeePrototypeEditor.LaunchTurnDegPerSec.ToString("F0")+" (Codex 4) "+key);
+                float floorRise=KH_FrisbeePrototypeEditor.JumpFloorRiseFor(facts);
+                Check(Mathf.Abs(c.jumpFloorRise-floorRise)<1e-3f&&c.jumpFloorRise<c.maxRootRise,"jump floor "+c.jumpFloorRise.ToString("F3")+" == min(0.25, 0.6 x stand mouth "+facts.mouthOffsetStand.y.ToString("F3")+") = "+floorRise.ToString("F3")+", < maxRootRise "+c.maxRootRise.ToString("F2")+" "+key);
+                Check(cb.publicVariables.TryGetVariableValue("chaseSprintSpeed",out bv)&&bv is float&&Mathf.Abs((float)bv-c.chaseSprintSpeed)<1e-5f
+                    &&cb.publicVariables.TryGetVariableValue("launchTurnDegPerSec",out bv)&&bv is float&&Mathf.Abs((float)bv-c.launchTurnDegPerSec)<1e-5f
+                    &&cb.publicVariables.TryGetVariableValue("jumpFloorRise",out bv)&&bv is float&&Mathf.Abs((float)bv-c.jumpFloorRise)<1e-5f,"catcher backing: sprint / launch turn / jump floor "+key);
+                if(c.minRootRise>c.jumpFloorRise+1e-4f)log.AppendLine("INFO minRootRise "+c.minRootRise.ToString("F3")+" > jumpFloorRise "+c.jumpFloorRise.ToString("F3")+" (the playback floor decides the lowest jump) "+key);
+                Check(KH_FrisbeeCatch.HookMinPace>0f&&KH_FrisbeeCatch.HookMinPace<c.chaseRunSpeed,"approach pace floor "+KH_FrisbeeCatch.HookMinPace.ToString("F1")+" m/s in (0, chaseRunSpeed) "+key);
                 Check(c.chaseDeceleration>0f&&c.chaseDeceleration<c.deceleration,"chase braking "+c.chaseDeceleration.ToString("F1")+" m/s2 < the generic "+c.deceleration.ToString("F1")+" "+key);
                 Check(c.standTurnDegPerSec<=c.walkTurnDegPerSec&&c.walkTurnDegPerSec<=c.turnSpeedDegPerSec&&c.standTurnDegPerSec>c.idleTurnSpeedDegPerSec,"turn rates stand "+c.standTurnDegPerSec.ToString("F0")+" <= walk "+c.walkTurnDegPerSec.ToString("F0")+" <= run "+c.turnSpeedDegPerSec.ToString("F0")+", all above idle "+key);
                 Check(c.maxRunAnimScale>=1.5f&&c.maxRunAnimScale<=3f,"run clip speed cap "+c.maxRunAnimScale.ToString("F1")+"x in [1.5, 3.0] (higher reads as jitter) "+key);
@@ -546,13 +551,11 @@ namespace KominkaHillside.Editor
                 // not a zero: it would mean the field was renamed or retyped and this check stopped proving anything.
                 Check(c.debugHeldOverride==0&&cb.publicVariables.TryGetVariableValue("debugHeldOverride",out bv)&&bv is int&&(int)bv==0,"held override off (harness only), proxy and backing "+key);
                 Check(KH_FrisbeePrototypeEditor.PetStatesOk(),"petting resumes in Idle / Ready / Drop and stays suppressed in every moving state (PetAllowed) "+key);
-                // round 5 (PCVR 2026-09-22): 跳ぶ距離の帯・薄い立ち取りの直進・全プリセットの追い抜き
+                // round 5 (PCVR 2026-09-22): 跳ぶ距離の帯・全プリセットの追い抜き (IMP-DOG-017 で早着の上限と薄い立ち取りの直進は廃止)
                 Check(KH_FrisbeeCatch.RunJumpMaxTakeoff>=5f&&KH_FrisbeeCatch.RunJumpMaxTakeoff<=9f
                     &&KH_FrisbeeCatch.RunJumpMinTakeoff<KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff
                     &&KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff<KH_FrisbeeCatch.RunJumpMaxTakeoff,
                     "take-off band "+KH_FrisbeeCatch.RunJumpMinTakeoff.ToString("F1")+" / head-on "+KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff.ToString("F1")+" / "+KH_FrisbeeCatch.RunJumpMaxTakeoff.ToString("F1")+" m/s ordered, ceiling in [5, 9] "+key);
-                Check(KH_FrisbeeCatch.RunJumpMaxLoiter>0f&&KH_FrisbeeCatch.RunJumpMaxLoiter<=0.6f,"a running jump may arrive at most "+KH_FrisbeeCatch.RunJumpMaxLoiter.ToString("F2")+" s early "+key);
-                Check(KH_FrisbeeCatch.StandStraightSlack>=0.1f&&KH_FrisbeeCatch.StandStraightSlack<=1f,"thin stand catches run straight below "+KH_FrisbeeCatch.StandStraightSlack.ToString("F2")+" s of slack "+key);
                 Check(KH_FrisbeeCatch.OvertakeMinPace>c.runSpeed&&KH_FrisbeeCatch.OvertakeMinPace<=c.chaseRunSpeed,"overtake pace floor "+KH_FrisbeeCatch.OvertakeMinPace.ToString("F1")+" m/s above the walking run and within the sprint "+key);
                 // A Ready spot is measured from the holder, so it only ever lands inside the plaza if its own radius does.
                 float[] readyAhead={KH_FrisbeeCatch.ReadyAhead1,KH_FrisbeeCatch.ReadyAhead2,KH_FrisbeeCatch.ReadyAhead3};

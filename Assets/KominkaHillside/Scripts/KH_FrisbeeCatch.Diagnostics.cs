@@ -101,7 +101,7 @@ namespace KominkaHillside
         // moment the dog can be said to have arrived (the hold band for a wait / stand, the crouch for a momentum
         // jump). Positive = the estimate was optimistic. This is a measurement, not a correction: nothing reads it,
         // and the harness collects the distribution so a calibration factor can be argued for from numbers rather
-        // than by widening HookEtaMargin until the symptom goes away.
+        // than by widening a margin until the symptom goes away (IMP-DOG-017: the paced run now absorbs it).
         void LogEtaErr(string at)
         {
             if (_etaLogged || _planEta < 0f) return;
@@ -132,6 +132,7 @@ namespace KominkaHillside
                 _mAccAngle += Vector3.Angle(_mPrevFwd, fwd);
                 _mAccTime += _mPrevDt;
                 if (_mSlowest < 0f || _speed < _mSlowest) _mSlowest = _speed;
+                if (_mRanSince < 0f && _speed >= MotionMinSpeed) _mRanSince = Time.time;   // latched per throw (AcceptLaunch resets)
                 if (_mAccTime >= MotionBucket)
                 {
                     _mYaw[_mIdx] = _mAccAngle / _mAccTime;
@@ -139,6 +140,9 @@ namespace KominkaHillside
                     _mTime[_mIdx] = Time.time;
                     _mIdx++; if (_mIdx >= MotionSamples) _mIdx = 0;
                     if (_mCount < MotionSamples) _mCount++;
+                    // Round 5: the bucket that CONTAINS the latch also holds the ramp below it; remember when it closed
+                    // so only the buckets after it count toward speedMin.
+                    if (_mRanSince >= 0f && _mRanBucketEnd < 0f) _mRanBucketEnd = Time.time;
                     _mAccAngle = 0f; _mAccTime = 0f; _mSlowest = -1f;
                 }
             }
@@ -147,14 +151,26 @@ namespace KominkaHillside
 
         // Worst turn rate and slowest moment of the last MotionWindow seconds. Latched at the takeoff so the catch
         // line reports the approach, not the (already finished) flight.
+        //
+        // IMP-DOG-017 harness round 1: the chase now starts with a launch spin (launchTurnDegPerSec 480) and on a short
+        // flight that spin and the standing start fall inside the window. Neither is the machine the rules were
+        // written for (a snap turn AT SPEED, a stop BEFORE THE TAKE-OFF), so:
+        //   yawRateMax counts only buckets whose slowest speed is >= walkSpeed; the rest is reported as launchYaw;
+        //   speedMin counts only window samples at or after _mRanSince, the first moment THIS THROW the dog reached
+        //   MotionMinSpeed (latched per throw, Codex review: a per-window "first reached" exempted a run -> stop ->
+        //   run whose first run fell outside the window). Round 5: the bucket containing the latch is excluded too
+        //   (its slowest sample is the ramp), so counting starts with the bucket after it. Never ran -> speedMin 0.
         void ComputeMotion()
         {
-            float yaw = 0f, slow = -1f, cut = Time.time - MotionWindow;
-            for (int i = 0; i < _mCount; i++)
+            float yaw = 0f, launch = 0f, slow = -1f, cut = Time.time - MotionWindow;
+            int start = _mIdx - _mCount; if (start < 0) start += MotionSamples;
+            for (int k = 0; k < _mCount; k++)
             {
+                int i = start + k; if (i >= MotionSamples) i -= MotionSamples;   // oldest first
                 if (_mTime[i] < cut) continue;
-                if (_mYaw[i] > yaw) yaw = _mYaw[i];
-                if (slow < 0f || _mSpeed[i] < slow) slow = _mSpeed[i];
+                if (_mSpeed[i] >= walkSpeed) { if (_mYaw[i] > yaw) yaw = _mYaw[i]; }
+                else if (_mYaw[i] > launch) launch = _mYaw[i];
+                if (_mRanBucketEnd >= 0f && _mTime[i] > _mRanBucketEnd && (slow < 0f || _mSpeed[i] < slow)) slow = _mSpeed[i];
             }
             // The bucket still being filled (Codex M3). Up to MotionBucket seconds - the very moments before the
             // crouch, where a stop or a snap would show - used to be invisible to the verdict because only closed
@@ -163,19 +179,35 @@ namespace KominkaHillside
             if (_mAccTime > 0f)
             {
                 float partial = _mAccAngle / (_mAccTime > MotionBucket * 0.5f ? _mAccTime : MotionBucket * 0.5f);
-                if (partial > yaw) yaw = partial;
-                if (_mSlowest >= 0f && (slow < 0f || _mSlowest < slow)) slow = _mSlowest;
+                if (_mSlowest >= walkSpeed) { if (partial > yaw) yaw = partial; }
+                else if (partial > launch) launch = partial;
+                if (_mRanBucketEnd >= 0f && _mSlowest >= 0f && (slow < 0f || _mSlowest < slow)) slow = _mSlowest;
             }
-            _yawRateMax = yaw; _speedMin = slow < 0f ? 0f : slow;
+            _yawRateMax = yaw; _launchYaw = launch; _speedMin = slow < 0f ? 0f : slow;
         }
 
+        // IMP-DOG-017 log names (the harness contract): around / chase / front / stand / overtake. The old hook / run /
+        // wait names are gone with the shapes they described.
         string ModeName()
         {
-            if (_mode == ModeRun) return "run";
+            if (_mode == ModeChase) return "chase";
+            if (_mode == ModeFront) return "front";
+            if (_mode == ModeStand) return "stand";
             if (_mode == ModeOvertake) return "overtake";
-            if (_mode == ModeStraight) return "stand";
-            if (_mode == ModeWait) return "wait";
-            return "hook";
+            return "around";
+        }
+
+        // IMP-DOG-017: the tail of the plan= line. solve = feasible (instant, shape) pairs the last Solve found (speed
+        // and time tests passed; placement raycasts are only paid by candidates that would win). pick = what this line
+        // commits (ground / none when no catch shape). vReq / vCap = the committed pace and its cap. band = the
+        // flight-time interval(s) of the jump band from the last Solve, none when the disc never passes through it.
+        string SolveTail(int chosen)
+        {
+            string pick = chosen == PlanRetrieve ? "ground" : (chosen == PlanNone ? "none" : ModeName());
+            string band = _bandIn < 0f ? "none" : _bandIn.ToString("F2") + "-" + _bandOut.ToString("F2");
+            if (_bandIn2 >= 0f) band = band + "+" + _bandIn2.ToString("F2") + "-" + _bandOut2.ToString("F2");
+            return " solve=" + _solveCount + " pick=" + pick + " vReq=" + _pickVReq.ToString("F2")
+                + " vCap=" + _pickVCap.ToString("F1") + " band=" + band;
         }
 
         string MotionTail()
@@ -185,7 +217,9 @@ namespace KominkaHillside
                 + " speedMin=" + _speedMin.ToString("F2") + " vTake=" + _vTake.ToString("F2")
                 // How far the approach was. Under MotionMinSpeed * MotionWindow the dog COULD NOT have been running
                 // for the whole window, however lively it is: the disc simply came down next to it.
-                + " path=" + _planPath.ToString("F1");
+                + " path=" + _planPath.ToString("F1")
+                // IMP-DOG-017: the turn rate left out of yawRateMax because the dog was below walkSpeed (launch spin).
+                + " launchYaw=" + _launchYaw.ToString("F0");
         }
 
         // Horizontal angle between the way the dog RAN IN and the way the disc flies at the catch: 0 = came from

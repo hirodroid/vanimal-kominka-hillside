@@ -57,6 +57,8 @@ namespace KominkaHillside.Editor
         static readonly Vector3 SpawnPos = new Vector3(0f, 0f, -6f);
 
         const int StateIdle = 0, StateReady = 10;
+        // IMP-DOG-017: beside の投げで犬を置く、投げ台からの横の距離 (よしよしの後の、手の届く距離)。
+        const float BesideGap = 0.6f;
         const int VariantCount = 6;
         // 全体の番犬。下限 240 秒 (設計値)。36 投げの全面実行は 1 投げ 16 秒 + 片付けで 240 秒に収まらないので、
         // 計画した投げ数に応じて伸ばす。options.json の globalTimeoutSeconds で上書きできる。
@@ -131,29 +133,53 @@ namespace KominkaHillside.Editor
         //   over   = 走り抜けざまに取った (overtake catch ...。round 5 から全プリセットで出うる)
         //   ground = 落ちたものを拾いに行った (plan=2)
         //   any    = 問わない
-        struct Shot { public string name; public float speed, elevation, side; public string[] allowed; public string expectKind; public string note; }
+        //   a|b    = どれか (IMP-DOG-017: Lab の beside の jump|over|ground)
+        // IMP-DOG-017 で足した列:
+        //   place       "" = 犬をシーンの立ち位置へ戻す (従来)。"beside" / "chase" = 投げ台からの相対位置へ置く (PlaceDogFor)
+        //   variant     -1 = --variants の各プリセットで流す (従来)。0 以上 = そのプリセットで 1 回だけ流す
+        //   expectMode  "" = 問わない。跳んだ投げ (kind=jump) の takeoff / catch 行の mode= がこれであること
+        //   labAllowed / labExpectKind / labExpectMode  Lab レーンだけの期待 (null = 上と同じ)
+        struct Shot
+        {
+            public string name; public float speed, elevation, side; public string[] allowed; public string expectKind; public string note;
+            public string place; public int variant; public string expectMode;
+            public string[] labAllowed; public string labExpectKind, labExpectMode;
+        }
 
         static readonly Shot[] Shots =
         {
-            new Shot { name = "flat", speed = 7.5f, elevation = 10f, allowed = new[] { "caught" }, expectKind = "jump",
+            new Shot { variant = -1, name = "flat", speed = 7.5f, elevation = 10f, allowed = new[] { "caught" }, expectKind = "jump",
                 note = "基準の投げ。跳んで取る (立って取ったら不合格)" },
             // ClientSim の Desktop 投げ (5.6-6.2 m/s・低い仰角、犬は 6.5-7.5 m 前) を再現する投げ。
             // ひねり (v4) が跳ばずに立って取る / 地上回収へ落ちる回帰は、この幾何でだけ出た。
             // 固定台では犬が 10.5 m 先なので全プリセットで「立って取る」幾何になる = 終わり方は問わない。
-            new Shot { name = "mid",  speed = 5.8f, elevation = 8f,  allowed = new[] { "caught" }, expectKind = "any",
+            new Shot { variant = -1, name = "mid",  speed = 5.8f, elevation = 8f,  allowed = new[] { "caught" }, expectKind = "any",
                 note = "ClientSim の Desktop 投げの再現。低く短い。取れれば跳んでも立ってもよい (round 5: 追い抜き over も全プリセットで出うる。outcome は caught なので落ちない)" },
-            new Shot { name = "lob",  speed = 6f,   elevation = 35f, allowed = new[] { "caught" }, expectKind = "jump",
+            new Shot { variant = -1, name = "lob",  speed = 6f,   elevation = 35f, allowed = new[] { "caught" }, expectKind = "jump",
                 note = "山なり。滞空が長いので先回りして跳ぶ" },
-            new Shot { name = "low",  speed = 5f,   elevation = 0f,  allowed = new[] { "caught", "ground" }, expectKind = "ground",
+            new Shot { variant = -1, name = "low",  speed = 5f,   elevation = 0f,  allowed = new[] { "caught", "ground" }, expectKind = "ground",
                 note = "水平・低速。犬の手前に落ちるので拾いに行く" },
-            new Shot { name = "far",  speed = 9f,   elevation = 15f, allowed = new[] { "caught" }, expectKind = "jump",
+            new Shot { variant = -1, name = "far",  speed = 9f,   elevation = 15f, allowed = new[] { "caught" }, expectKind = "jump",
                 note = "遠投。走って追いついて跳ぶ" },
             // round 5 (2026-09-22): 横へ 25 度ずらした投げ。固定台の +Z 一本槍では、真正面の幾何しか
             // 通っていなかった (回り込み・旋回・横からの踏み切りが 1 度も測られない)。取れるかどうかは
             // 基準にしない (allowed に ground を入れてある) — **etaErr を横の幾何でも採るための投げ**で、
             // 合否ではなく分布を見るために足した。
-            new Shot { name = "side", speed = 7f,   elevation = 10f, side = 25f, allowed = new[] { "caught", "ground" }, expectKind = "any",
+            new Shot { variant = -1, name = "side", speed = 7f,   elevation = 10f, side = 25f, allowed = new[] { "caught", "ground" }, expectKind = "any",
                 note = "横 25 度。回り込みと横からの踏み切りを通す (取れ方は問わない)" },
+            // IMP-DOG-017 (2026-09-26): 位置取りの投げ。固定台の立ち位置 (1.5, 0, 6.5) は落下点の横なので、
+            // 「犬が落下点の後ろから追いつく」(B chase) が 1 度も測られていなかった。どちらもプリセット 1 つで 1 回。
+            // beside: よしよしの後に投げる流れ (犬は投げ手の 0.6 m 横、投げ手を向く)。小型・中型は追いついて跳ぶ。
+            // Lab は追い抜き (over) か地上回収 (ground) も許す (跳んだなら mode=chase を求める)。Lab 以外は跳ぶこと。
+            new Shot { variant = KH_FrisbeeCatch.VariantNormal, place = "beside", name = "beside", speed = 6f, elevation = 10f,   // 6 m/s = PCVR 2026-09-25 のよしよし直後の投げの実測 (5.5-7.1、中央値 6.0)。7 だと小型犬の B は余裕 0 の際どい候補になる
+                allowed = new[] { "caught" }, expectKind = "jump", expectMode = "chase",
+                labAllowed = new[] { "caught", "ground" }, labExpectKind = "jump|over|ground",
+                note = "投げ手の横 0.6 m (投げ手向き) から 7 m/s。Lab 以外は追いついて跳ぶ (mode=chase)、Lab は over / ground も許す (跳ぶなら mode=chase)" },
+            // chase: v3 (並走) の待機位置 (投げ台から前 ReadyAhead3・横 ReadyLateral3、投げる方向を向く) から。
+            // 試作シーンには持ち手がいないので Ready に入らない — 置く位置でその幾何を作る。
+            new Shot { variant = KH_FrisbeeCatch.VariantRunInBeside, place = "chase", name = "chase", speed = 7f, elevation = 10f,
+                allowed = new[] { "caught" }, expectKind = "jump", expectMode = "chase",
+                note = "v3 の待機位置 (前 4 m・横 2.5 m、投げる方向向き) から 7 m/s。全犬種で追いついて跳ぶ (mode=chase)" },
         };
 
         static readonly string[] NotCovered =
@@ -221,7 +247,8 @@ namespace KominkaHillside.Editor
             public string expectNote = "";
             public bool ok;
             // 動きの質 (IMP-DOG-008 round 4)。取れたかどうかとは別の合否。
-            // mode = hook / run / stand / overtake / "" (跳ばず取らずに終わった投げ)。
+            // mode = around / chase / front / stand / overtake / "" (跳ばず取らずに終わった投げ)。IMP-DOG-017 で
+            // 旧 hook / run / wait から改名 (stand は旧 wait の立ち取り。旧 ModeStraight の "stand" とは別物)。
             public string mode = "";
             public float yawRateMax = -1f, speedMin = -1f, vTake = -1f, approachPath = -1f;
             public bool motionOk = true;
@@ -244,6 +271,8 @@ namespace KominkaHillside.Editor
             public bool netRoundTrip;
             public List<string> reqLines = new List<string>();
             public string dogStart, launchLine, planLine, takeoffLine, outcomeLine, note;
+            public string place = "";            // IMP-DOG-017: "" = シーンの立ち位置 / beside / chase
+            public string expectMode = "";       // IMP-DOG-017: 跳んだ投げに期待する mode ("" = 問わない)
             public List<string> lines = new List<string>();
         }
 
@@ -341,7 +370,7 @@ namespace KominkaHillside.Editor
             public bool sceneDirtyBefore, sceneDirtyAfterPlay, sceneFileUnchanged;
             public double deadline, budgetSeconds;
             public int throwsPlanned, throwsRun, throwsOk;
-            public string injection = "毎回、犬をシーンの立ち位置へ戻してから投げる (円盤の recall だけでは犬が戻らないため)。それ以外の注入はない";
+            public string injection = "毎回、犬をシーンの立ち位置へ戻してから投げる (円盤の recall だけでは犬が戻らないため)。IMP-DOG-017 の位置取りの投げ (beside / chase) だけは、立ち位置の代わりに投げ台からの相対位置 (dogStart に出る) へ置く。それ以外の注入はない";
             public string scope = "実行した投げだけの結果。notCovered は PASS でも NOT_TESTED のまま";
             public string buildTest = "NOT_TESTED", humanExperience = "NOT_TESTED";
             public string[] notCovered = NotCovered;
@@ -482,7 +511,7 @@ namespace KominkaHillside.Editor
             int planned = IsNetOrder(options)
                 ? NetCases.Length * Repeats(options)
                 : IsSixDogs(options) ? Repeats(options) * (1 + lanes)   // 各周: Lab 1 匹 + 6 匹同時
-                : Variants(options).Length * Plan(options).Length;
+                : Variants(options).Length * Plan(options).Count(s => s.variant < 0) + Plan(options).Count(s => s.variant >= 0);
 
             report = new Report
             {
@@ -818,10 +847,19 @@ namespace KominkaHillside.Editor
             foreach (int v in Variants(options))
                 foreach (var shot in shots)
                 {
+                    if (shot.variant >= 0) continue;   // IMP-DOG-017: 位置取りの投げは下で 1 回だけ
                     var one = RunThrow(index++, v, shot);
                     while (one.MoveNext()) yield return null;
                     Save();
                 }
+            // IMP-DOG-017: 自分のプリセットを持つ投げ (beside / chase)。--variants に関係なく、--shots で選ばれていれば 1 回。
+            foreach (var shot in shots)
+            {
+                if (shot.variant < 0) continue;
+                var one = RunThrow(index++, shot.variant, shot);
+                while (one.MoveNext()) yield return null;
+                Save();
+            }
         }
 
         // ---------------------------------------------------------------- lanes / sixdogs (IMP-DOG-012)
@@ -920,10 +958,10 @@ namespace KominkaHillside.Editor
                 yield break;
             }
             foreach (var l in lanes)
-                if (!Has(l.catcher, "_planEvaluations") || !Has(l.catcher, "_planScans") || !Has(l.catcher, "_planHookTries") || !Has(l.catcher, "state"))
+                if (!Has(l.catcher, "_planEvaluations") || !Has(l.catcher, "_planScans") || !Has(l.catcher, "state"))
                 {
                     report.status = "BLOCKED";
-                    report.failure = l.breed + ": KH_FrisbeeCatch does not expose _planScans / _planEvaluations / _planHookTries (the IMP-DOG-012 planner counters). Land the runtime side first.";
+                    report.failure = l.breed + ": KH_FrisbeeCatch does not expose _planScans / _planEvaluations (the IMP-DOG-012 planner counters). Land the runtime side first.";
                     yield break;
                 }
             if (!Shots.Any(s => s.name == SixShot)) { report.status = "BLOCKED"; report.failure = "The shot table has no '" + SixShot + "' shot."; yield break; }
@@ -983,7 +1021,7 @@ namespace KominkaHillside.Editor
                     for (int k = 0; k < set.Length; k++)
                     {
                         var c = lanes[set[k]].catcher;
-                        before[k, 0] = ReadInt(c, "_planScans"); before[k, 1] = ReadInt(c, "_planEvaluations"); before[k, 2] = ReadInt(c, "_planHookTries");
+                        before[k, 0] = ReadInt(c, "_planScans"); before[k, 1] = ReadInt(c, "_planEvaluations"); before[k, 2] = ReadIntOr(c, "_planHookTries", 0);
                         lanes[set[k]].thrower.SetProgramVariable("speed", shot.speed);
                         lanes[set[k]].thrower.SetProgramVariable("elevationDeg", shot.elevation);
                         lanes[set[k]].thrower.SetProgramVariable("sideDeg", shot.side);
@@ -1039,7 +1077,7 @@ namespace KominkaHillside.Editor
                         var dog = new SixDogResult { breed = l.breed };
                         dog.planScans = ReadInt(l.catcher, "_planScans") - before[k, 0];
                         dog.planEvaluations = ReadInt(l.catcher, "_planEvaluations") - before[k, 1];
-                        dog.planHookTries = ReadInt(l.catcher, "_planHookTries") - before[k, 2];
+                        dog.planHookTries = ReadIntOr(l.catcher, "_planHookTries", 0) - before[k, 2];
                         bool jumpCarry = seen[k, StateJumpCarry], pickup = seen[k, StatePickup], ret = seen[k, StateReturn] || seen[k, StateDrop];
                         dog.kind = jumpCarry ? "jump" : pickup ? "ground" : ret ? "stand-or-over" : "";
                         dog.caught = jumpCarry || (ret && !pickup);
@@ -1167,7 +1205,13 @@ namespace KominkaHillside.Editor
                 index = index, variant = variant, shot = shot.name,
                 speed = shot.speed, elevationDeg = shot.elevation,
                 allowed = shot.allowed, expectKind = shot.expectKind, note = shot.note,
+                place = shot.place ?? "", expectMode = shot.expectMode ?? "",
             };
+            // IMP-DOG-017: Lab だけ期待が違う投げ (beside)。
+            bool labLane = laneBreed == DefaultBreed;
+            if (labLane && shot.labAllowed != null) rec.allowed = shot.labAllowed;
+            if (labLane && shot.labExpectKind != null) rec.expectKind = shot.labExpectKind;
+            if (labLane && shot.labExpectMode != null) rec.expectMode = shot.labExpectMode;
             report.throwResults.Add(rec);
             report.throwsRun++;
 
@@ -1182,7 +1226,9 @@ namespace KominkaHillside.Editor
 
             // 2. 犬を元の立ち位置へ戻す (注入)。これをしないと 2 投げ目以降は犬が人の足元に
             //    いる状態からの投げになり、同じ投げの比較にならない。
-            var home = PlaceDogHome(rec); while (home.MoveNext()) yield return null;
+            //    IMP-DOG-017: 位置取りの投げ (beside / chase) は、立ち位置の代わりに投げ台からの相対位置へ置く。
+            var home = string.IsNullOrEmpty(shot.place) ? PlaceDogHome(rec) : PlaceDogFor(shot.place, rec);
+            while (home.MoveNext()) yield return null;
             var settle = Wait(0.3); while (settle.MoveNext()) yield return null;
 
             // 3. 投げの値を固定投げ台へ書き、Interact で投げる。ここから 1 投げ分の時計を回す
@@ -1219,7 +1265,7 @@ namespace KominkaHillside.Editor
             //   expectOk   期待した終わり方だったか (Codex M2)
             rec.caught = rec.outcome == "caught";
             rec.completed = rec.reachedIdle;
-            rec.outcomeOk = shot.allowed.Contains(rec.outcome);
+            rec.outcomeOk = rec.allowed.Contains(rec.outcome);
             rec.ok = rec.outcomeOk && rec.completed && rec.motionOk && rec.expectOk;
             if (rec.ok) report.throwsOk++;
 
@@ -1257,6 +1303,35 @@ namespace KominkaHillside.Editor
             dogRoot.SetPositionAndRotation(dogHome, dogHomeRot);
             yield return null;
             rec.dogStart = dogRoot.position.ToString("F2");
+        }
+
+        /// <summary>IMP-DOG-017 の位置取りの投げ。投げ台 (固定台は常に +Z へ投げる) を投げ手とみなし、
+        /// 犬をその相対位置へ置く。横はシーンの立ち位置がある側 (+x) — 実際のワールドでも Ready は
+        /// 「犬のいる側」へ取るので、同じ側に置く。高さは立ち位置と同じ (平面)。
+        ///   beside: 投げ台の横 BesideGap (0.6 m)、投げ台の方を向く (よしよしの後に投げる流れ)
+        ///   chase:  v3 の Ready = 前 ReadyAhead3 (4 m)・横 ReadyLateral3 (2.5 m)、投げる方向 (+Z) を向く</summary>
+        static IEnumerator PlaceDogFor(string place, ThrowResult rec)
+        {
+            if (dogRoot == null || thrower == null) yield break;
+            Vector3 stand = thrower.transform.position; stand.y = dogHome.y;
+            Vector3 fwd = Vector3.forward;
+            float sideSign = dogHome.x - stand.x >= 0f ? 1f : -1f;
+            Vector3 side = Vector3.right * sideSign;
+            Vector3 at; Quaternion rot;
+            if (place == "beside")
+            {
+                at = stand + side * BesideGap;
+                rot = Quaternion.LookRotation(-side, Vector3.up);
+            }
+            else if (place == "chase")
+            {
+                at = stand + fwd * KH_FrisbeeCatch.ReadyAhead3 + side * KH_FrisbeeCatch.ReadyLateral3;
+                rot = Quaternion.LookRotation(fwd, Vector3.up);
+            }
+            else throw new InvalidOperationException("Unknown dog placement '" + place + "' (beside / chase)");
+            dogRoot.SetPositionAndRotation(at, rot);
+            yield return null;
+            rec.dogStart = dogRoot.position.ToString("F2") + " yaw=" + dogRoot.eulerAngles.y.ToString("F0") + " (" + place + ")";
         }
 
         /// <summary>手順 5 (共有)。次の投げのために円盤を台へ戻す (犬の現在の追いかけも終わる)。</summary>
@@ -1721,15 +1796,33 @@ namespace KominkaHillside.Editor
         {
             if (string.IsNullOrEmpty(rec.expectKind) || rec.expectKind == "any")
             { rec.expectOk = true; rec.expectNote = "expectKind=any"; return; }
-            if (rec.kind == rec.expectKind)
-            { rec.expectOk = true; rec.expectNote = "kind=" + rec.kind + " == expectKind=" + rec.expectKind; return; }
-            rec.expectOk = false;
-            rec.expectNote = "kind=" + (string.IsNullOrEmpty(rec.kind) ? "(none)" : rec.kind) + " but this shot expects " + rec.expectKind;
+            // IMP-DOG-017: "over|ground" のような候補の並び。
+            if (!rec.expectKind.Split('|').Contains(rec.kind))
+            {
+                rec.expectOk = false;
+                rec.expectNote = "kind=" + (string.IsNullOrEmpty(rec.kind) ? "(none)" : rec.kind) + " but this shot expects " + rec.expectKind;
+                return;
+            }
+            // IMP-DOG-017: 跳んだ投げは取り方 (mode) も見る。beside / chase は「追いついて跳ぶ」(chase) の投げ。
+            if (!string.IsNullOrEmpty(rec.expectMode) && rec.kind == "jump")
+            {
+                string mode = !string.IsNullOrEmpty(rec.mode) ? rec.mode
+                    : Field(rec.takeoffLine ?? rec.outcomeLine ?? "", " mode=");
+                if (mode != rec.expectMode)
+                {
+                    rec.expectOk = false;
+                    rec.expectNote = "kind=jump but mode=" + (string.IsNullOrEmpty(mode) ? "(none)" : mode) + ", this shot expects mode=" + rec.expectMode;
+                    return;
+                }
+                rec.expectOk = true; rec.expectNote = "kind=jump mode=" + mode + " == expected"; return;
+            }
+            rec.expectOk = true; rec.expectNote = "kind=" + rec.kind + " in expectKind=" + rec.expectKind;
         }
 
         /// <summary>動きの質 (round 4)。「取れた」だけでは PCVR 3 の「機械っぽい」を落とせないので、
         /// 踏み切り / キャッチの行に残る mode と直前 1 秒の最大旋回速度・最小速度で別に合否を出す。
-        /// 減速せずに跳ぶのが既定なので、速度 0 を許すのは wait (ロブなどで回り込みでも時間が余る) だけ。
+        /// 減速せずに跳ぶのが既定なので、速度 0 を許すのは around (回り込んで立ち止まってから跳ぶ) と
+        /// stand (立ち取り) だけ (IMP-DOG-017: 旧 wait から改名。早く着くことを不合格にしなくなった)。
         /// 旋回の急さはどの mode でも許さない。</summary>
         static void JudgeMotion(ThrowResult rec)
         {
@@ -1768,7 +1861,7 @@ namespace KominkaHillside.Editor
                     + " (speed not judged: approach was only " + rec.approachPath.ToString("F1") + " m)";
                 return;
             }
-            if (rec.mode != "wait" && rec.speedMin < MotionMinSpeed)
+            if (rec.mode != "around" && rec.mode != "stand" && rec.speedMin < MotionMinSpeed)
             { rec.motionOk = false; rec.motionNote = "mode=" + rec.mode + " but speedMin " + rec.speedMin.ToString("F2") + " < " + MotionMinSpeed + " m/s (slowed to a stop before taking off)"; return; }
             rec.motionOk = true;
             rec.motionNote = "mode=" + rec.mode + " yawRateMax=" + rec.yawRateMax.ToString("F0") + " speedMin=" + rec.speedMin.ToString("F2");
@@ -1878,6 +1971,14 @@ namespace KominkaHillside.Editor
         }
 
         static bool Has(UdonBehaviour u, string symbol) { object _; return u.TryGetProgramVariable(symbol, out _); }
+
+        /// <summary>IMP-DOG-017: 回り込みのループ探索 (_planHookTries) は計画器の書き直しで無くなりうるので、
+        /// 無ければ既定値 (増分 0) として読む。_planScans / _planEvaluations は従来どおり必須。</summary>
+        static int ReadIntOr(UdonBehaviour u, string symbol, int fallback)
+        {
+            object value;
+            return u.TryGetProgramVariable(symbol, out value) && value is int ? (int)value : fallback;
+        }
 
         static int ReadInt(UdonBehaviour u, string symbol)
         {

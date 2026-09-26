@@ -320,8 +320,36 @@ namespace KominkaHillside.Editor
             if (catcher.minRootRise < riseFloor) catcher.minRootRise = Mathf.Ceil(riseFloor * 100f) / 100f;
             // IMP-DOG-012: a small breed's ceiling must still leave a band of jumps above the playback floor.
             if (catcher.maxRootRise <= catcher.minRootRise) throw new InvalidOperationException(catcher.name + ": maxRootRise " + catcher.maxRootRise + " <= minRootRise " + catcher.minRootRise + " (no jump band left)");
+            // IMP-DOG-017 (user 2026-09-26 "リアルの犬を検討しつつ不自然でない推奨値"): the breed's own chase-down sprint,
+            // the turn from a standstill and the rise that makes a jump a jump. Code-owned per breed, like maxRootRise.
+            catcher.chaseSprintSpeed = ChaseSprintSpeedFor(facts.breed);
+            catcher.launchTurnDegPerSec = LaunchTurnDegPerSec;
+            catcher.jumpFloorRise = JumpFloorRiseFor(facts);
+            // The planner's real floor is max(jumpFloorRise, minRootRise): a playback floor above the breed's jump floor
+            // silently takes the low jumps away again (the small-breed "does not jump" of IMP-DOG-017).
+            if (catcher.minRootRise > catcher.jumpFloorRise + 1e-4f)
+                Debug.LogWarning("[KH Frisbee] " + catcher.name + ": minRootRise " + catcher.minRootRise.ToString("F3") + " > jumpFloorRise " + catcher.jumpFloorRise.ToString("F3")
+                    + " (" + facts.breed + "): the jump floor does not take effect, the clip playback floor decides");
             disc.catcher = catcher;
         }
+
+        // IMP-DOG-017 breed table. Real sprints: Lab / Shiba / Samoyed 30-40 km/h (8-11 m/s), Corgi / Dachs 25-30,
+        // Pome 20-25. Every breed chases at 9.5 m/s (PCVR-approved), so only the chase-down (B) gets "one burst":
+        // +10% for the mid / large dogs, 10.5 for the small ones. 480 deg/s = turning from a standstill (a real dog
+        // swings half round in 0.3 s = 600 deg/s); running turns stay at turnSpeedDegPerSec.
+        public const float LaunchTurnDegPerSec = 480f;
+        public const float JumpFloorRiseCap = 0.25f, JumpFloorMouthRatio = 0.6f;
+        public static float ChaseSprintSpeedFor(string breed)
+        {
+            switch (breed)
+            {
+                case "Lab": case "Samoyed": case "Shiba": return 11.0f;
+                case "Corgi": case "Dachs": case "Pome": return 10.5f;
+                default: throw new InvalidOperationException("No chaseSprintSpeed for breed " + breed + " (IMP-DOG-017 table)");
+            }
+        }
+        // min(0.25, 0.6 x standing mouth height): Pome 0.094 / Corgi 0.137 / Dachs 0.138 / Shiba 0.215 / Samoyed, Lab 0.25.
+        public static float JumpFloorRiseFor(Facts facts) { return Mathf.Min(JumpFloorRiseCap, JumpFloorMouthRatio * facts.mouthOffsetStand.y); }
 
         // IMP-DOG-013: the pet-resume rule over every state number, shared by both Verify menus. KH_FrisbeeCatch
         // (and KD_DogFetchController through PetAllowed) resumes 撫で exactly where the dog is standing still with
@@ -573,6 +601,18 @@ namespace KominkaHillside.Editor
                     var lcb = UdonSharpEditorUtility.GetBackingUdonBehaviour(lc);
                     Check(Mathf.Abs(lc.maxRootRise - lf.maxRootRise) < 1e-4f && lcb.publicVariables.TryGetVariableValue("maxRootRise", out float lmr) && Mathf.Abs(lmr - lf.maxRootRise) < 1e-4f,
                         "lane " + breed + ": catcher maxRootRise " + lc.maxRootRise.ToString("F2") + " == facts " + lf.maxRootRise.ToString("F2") + " (proxy and backing)");
+                    // IMP-DOG-017: the breed table, proxy and backing heap.
+                    float lfloor = JumpFloorRiseFor(lf);
+                    Check(Mathf.Abs(lc.chaseSprintSpeed - ChaseSprintSpeedFor(breed)) < 1e-4f && Mathf.Abs(lc.launchTurnDegPerSec - LaunchTurnDegPerSec) < 1e-4f && Mathf.Abs(lc.jumpFloorRise - lfloor) < 1e-3f
+                        && lcb.publicVariables.TryGetVariableValue("chaseSprintSpeed", out float lss) && Mathf.Abs(lss - lc.chaseSprintSpeed) < 1e-4f
+                        && lcb.publicVariables.TryGetVariableValue("launchTurnDegPerSec", out float llt) && Mathf.Abs(llt - lc.launchTurnDegPerSec) < 1e-4f
+                        && lcb.publicVariables.TryGetVariableValue("jumpFloorRise", out float ljf) && Mathf.Abs(ljf - lc.jumpFloorRise) < 1e-4f,
+                        "lane " + breed + ": chase-down sprint " + lc.chaseSprintSpeed.ToString("F1") + " / launch turn " + lc.launchTurnDegPerSec.ToString("F0") + " / jump floor " + lc.jumpFloorRise.ToString("F3")
+                        + " == breed table (floor = min(0.25, 0.6 x stand mouth " + lf.mouthOffsetStand.y.ToString("F3") + ") = " + lfloor.ToString("F3") + "), proxy and backing");
+                    Check(lc.chaseSprintSpeed >= lc.chaseRunSpeed && lc.chaseSprintSpeed <= 11f && lc.launchTurnDegPerSec >= 240f && lc.launchTurnDegPerSec <= 720f && lc.jumpFloorRise < lc.maxRootRise,
+                        "lane " + breed + ": sprint in [chaseRunSpeed " + lc.chaseRunSpeed.ToString("F1") + ", 11], launch turn in [240, 720], jump floor < maxRootRise " + lc.maxRootRise.ToString("F2"));
+                    if (lc.minRootRise > lc.jumpFloorRise + 1e-4f)
+                        log.AppendLine("INFO lane " + breed + ": minRootRise " + lc.minRootRise.ToString("F3") + " > jumpFloorRise " + lc.jumpFloorRise.ToString("F3") + " (the playback floor decides the lowest jump)");
                     var lac = lc.dogAnimator.runtimeAnimatorController as AnimatorController;
                     var ljump = AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPathFor("Jump", breed));
                     var ltwist = AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPathFor("Twist", breed));
@@ -642,21 +682,17 @@ namespace KominkaHillside.Editor
                     Check(catcher.chaseAcceleration >= 10f && catcher.chaseAcceleration <= 18f, "chase acceleration " + catcher.chaseAcceleration.ToString("F1") + " m/s2 in [10, 18] (reached, but visibly: " + (catcher.chaseRunSpeed / catcher.chaseAcceleration).ToString("F2") + " s to the run)");
                     Check(catcher.settleTime >= 0.1f && catcher.settleTime <= 0.6f, "settle time " + catcher.settleTime.ToString("F2") + " s in [0.10, 0.60]");
                     Check(catcher.turnSpeedDegPerSec >= 180f && catcher.turnSpeedDegPerSec <= 360f, "turn rate " + catcher.turnSpeedDegPerSec.ToString("F0") + " deg/s in [180, 360] (a dog's turn, not a turret's)");
-                    Check(KH_FrisbeeCatch.HookLength >= 1f && KH_FrisbeeCatch.HookLength <= 3f, "hook length " + KH_FrisbeeCatch.HookLength.ToString("F2") + " m in [1, 3] (the straightening run before the spot)");
-                    Check(KH_FrisbeeCatch.HookAngleDeg >= 20f && KH_FrisbeeCatch.HookAngleDeg <= 70f, "hook angle " + KH_FrisbeeCatch.HookAngleDeg.ToString("F0") + " deg in [20, 70] (a curve in, not a reverse park)");
-                    // Codex M5: the momentum grid, not just the wait hook. These are the loops the planner really
-                    // runs (HookLenAt / HookAngAt walk the two ranges), so they are the numbers that decide whether
-                    // spare time is spent running or standing.
-                    Check(KH_FrisbeeCatch.HookLengthMin >= 0.5f && KH_FrisbeeCatch.HookLengthMin <= KH_FrisbeeCatch.HookLength
-                        && KH_FrisbeeCatch.HookLengthMax >= KH_FrisbeeCatch.HookLength && KH_FrisbeeCatch.HookLengthMax <= 6f,
-                        "hook loop lengths " + KH_FrisbeeCatch.HookLengthMin.ToString("F2") + " - " + KH_FrisbeeCatch.HookLengthMax.ToString("F2")
-                        + " m bracket the wait hook " + KH_FrisbeeCatch.HookLength.ToString("F2") + " and stay within [0.5, 6]");
-                    Check(KH_FrisbeeCatch.HookAngleMin >= 10f && KH_FrisbeeCatch.HookAngleMin <= KH_FrisbeeCatch.HookAngleDeg
-                        && KH_FrisbeeCatch.HookAngleMax >= KH_FrisbeeCatch.HookAngleDeg && KH_FrisbeeCatch.HookAngleMax <= 120f,
-                        "hook loop angles " + KH_FrisbeeCatch.HookAngleMin.ToString("F0") + " - " + KH_FrisbeeCatch.HookAngleMax.ToString("F0")
-                        + " deg bracket the wait hook " + KH_FrisbeeCatch.HookAngleDeg.ToString("F0") + " and stay within [10, 120]");
-                    Check(KH_FrisbeeCatch.HookCombos >= 2 && KH_FrisbeeCatch.HookCombos <= 16,
-                        "hook loop count " + KH_FrisbeeCatch.HookCombos + " in [2, 16] (walked per candidate per replan)");
+                    // IMP-DOG-017: the hook loop grid (Hook*) is gone. What replaced it is per catcher: the chase-down
+                    // sprint (B only) sits between the chase run and a real dog's burst, the launch turn between the
+                    // running turn and a spin, and the jump floor is the breed table's and still leaves a band to jump in.
+                    Check(catcher.chaseSprintSpeed >= catcher.chaseRunSpeed && catcher.chaseSprintSpeed <= 11f,
+                        "chase-down sprint " + catcher.chaseSprintSpeed.ToString("F1") + " m/s in [chaseRunSpeed " + catcher.chaseRunSpeed.ToString("F1") + ", 11.0] (B only; A / C run at chaseRunSpeed)");
+                    Check(catcher.launchTurnDegPerSec >= 240f && catcher.launchTurnDegPerSec <= 720f,
+                        "launch turn " + catcher.launchTurnDegPerSec.ToString("F0") + " deg/s in [240, 720] (from a standstill; running turns stay at " + catcher.turnSpeedDegPerSec.ToString("F0") + ")");
+                    Check(Mathf.Abs(catcher.jumpFloorRise - JumpFloorRiseFor(sceneFacts)) < 1e-3f && catcher.jumpFloorRise < catcher.maxRootRise,
+                        "jump floor " + catcher.jumpFloorRise.ToString("F3") + " == min(0.25, 0.6 x stand mouth " + sceneFacts.mouthOffsetStand.y.ToString("F3") + ") and < maxRootRise " + catcher.maxRootRise.ToString("F2"));
+                    Check(KH_FrisbeeCatch.HookMinPace > 0f && KH_FrisbeeCatch.HookMinPace < catcher.chaseRunSpeed,
+                        "approach pace floor " + KH_FrisbeeCatch.HookMinPace.ToString("F1") + " m/s in (0, chaseRunSpeed) (a jog, never a stop)");
                     // Codex D1 高: the landing rule, as pure geometry. The prototype scene has no play area
                     // (playAreaRadius stays 0, so DogMayGo is always true there - see the harness notCovered), so
                     // this is the only place the edge case is exercised at all. Both halves are the SAME code the
@@ -723,10 +759,6 @@ namespace KominkaHillside.Editor
                         && KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff < KH_FrisbeeCatch.RunJumpMaxTakeoff,
                         "take-off band " + KH_FrisbeeCatch.RunJumpMinTakeoff.ToString("F1") + " / head-on " + KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff.ToString("F1")
                         + " / " + KH_FrisbeeCatch.RunJumpMaxTakeoff.ToString("F1") + " m/s is ordered, ceiling in [5, 9]");
-                    Check(KH_FrisbeeCatch.RunJumpMaxLoiter > 0f && KH_FrisbeeCatch.RunJumpMaxLoiter <= 0.6f,
-                        "a running jump may arrive at most " + KH_FrisbeeCatch.RunJumpMaxLoiter.ToString("F2") + " s early (in (0, 0.60]); beyond that it would stand on the take-off point");
-                    Check(KH_FrisbeeCatch.StandStraightSlack >= 0.1f && KH_FrisbeeCatch.StandStraightSlack <= 1f,
-                        "thin stand catches run straight below " + KH_FrisbeeCatch.StandStraightSlack.ToString("F2") + " s of slack (in [0.10, 1.00])");
                     // The overtake is every preset's now, so its pace floor has to be a real chase-down for all of
                     // them: below the walking-world run it would start taking throws a jog could reach.
                     Check(KH_FrisbeeCatch.OvertakeMinPace > catcher.runSpeed && KH_FrisbeeCatch.OvertakeMinPace <= catcher.chaseRunSpeed,

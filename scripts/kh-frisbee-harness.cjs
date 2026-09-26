@@ -12,7 +12,7 @@
 //   **順序**の 4 ケースを repeats 回 (既定 2) 流す。合否は req の行の順序 (netOk) だけ。
 //
 //   --breed=<Key> (IMP-DOG-012) は試作シーンの犬種レーンを選ぶ (Corgi / Pome / Lab / Dachs / Shiba / Samoyed、既定 Lab)。
-//   Lab 以外のレーンは Lab と同じ配置を x へずらしたもので、投げ表と期待する終わり方は同じ表を使う。
+//   Lab 以外のレーンは Lab と同じ配置を x へずらしたもので、投げ表と期待する終わり方は同じ表を使う (IMP-DOG-017 の beside だけ Lab の期待が別: lab* の列)。
 //   --mode=sixdogs (IMP-DOG-012) は負荷測定。各周で Lab 1 匹 → 6 匹同時 に flat を投げ、同じ区間の frameTime
 //   (上限を外した値)・描画コール数・計画器の候補探索回数を並べる。repeats 周 (既定 2)。
 const fs = require('fs');
@@ -24,16 +24,26 @@ process.chdir(root);
 const base = 'Logs/kh-frisbee-harness';
 const MENU = 'Tools/KominkaHillside/Frisbee/';
 
-// expectKind は「どう終わったか」の期待 (jump / stand / over / ground / any)。
+// expectKind は「どう終わったか」の期待 (jump / stand / over / ground / any、"a|b" はどれか)。
 // Unity 側の KH_FrisbeeHarnessEditor.Shots と同じ表を持つ (片方だけ直さないこと)。
+// IMP-DOG-017: variant (-1 = --variants の各プリセット、0 以上 = そのプリセットで 1 回)、place (犬の置き方)、
+// expectMode (跳んだ投げの mode)、lab* (Lab レーンだけの期待) を足した。
 const SHOTS = [
-  { name: 'flat', speed: 7.5, elevationDeg: 10, allowed: ['caught'], expectKind: 'jump', note: '基準の投げ。跳んで取る' },
-  { name: 'mid', speed: 5.8, elevationDeg: 8, allowed: ['caught'], expectKind: 'any', note: 'ClientSim の Desktop 投げの再現 (低く短い)。終わり方は問わない (round 5: 追い抜き over も全プリセットで出うる)' },
-  { name: 'lob', speed: 6, elevationDeg: 35, allowed: ['caught'], expectKind: 'jump', note: '山なり。滞空が長いので先回りして跳ぶ' },
-  { name: 'low', speed: 5, elevationDeg: 0, allowed: ['caught', 'ground'], expectKind: 'ground', note: '水平・低速。犬の手前に落ちるので拾いに行く' },
-  { name: 'far', speed: 9, elevationDeg: 15, allowed: ['caught'], expectKind: 'jump', note: '遠投。走って追いついて跳ぶ' },
-  { name: 'side', speed: 7, elevationDeg: 10, sideDeg: 25, allowed: ['caught', 'ground'], expectKind: 'any', note: '横 25 度 (round 5)。回り込みと横からの踏み切りを通す。合否ではなく etaErr を横の幾何でも採るための投げ' },
+  { name: 'flat', variant: -1, speed: 7.5, elevationDeg: 10, allowed: ['caught'], expectKind: 'jump', note: '基準の投げ。跳んで取る' },
+  { name: 'mid', variant: -1, speed: 5.8, elevationDeg: 8, allowed: ['caught'], expectKind: 'any', note: 'ClientSim の Desktop 投げの再現 (低く短い)。終わり方は問わない (round 5: 追い抜き over も全プリセットで出うる)' },
+  { name: 'lob', variant: -1, speed: 6, elevationDeg: 35, allowed: ['caught'], expectKind: 'jump', note: '山なり。滞空が長いので先回りして跳ぶ' },
+  { name: 'low', variant: -1, speed: 5, elevationDeg: 0, allowed: ['caught', 'ground'], expectKind: 'ground', note: '水平・低速。犬の手前に落ちるので拾いに行く' },
+  { name: 'far', variant: -1, speed: 9, elevationDeg: 15, allowed: ['caught'], expectKind: 'jump', note: '遠投。走って追いついて跳ぶ' },
+  { name: 'side', variant: -1, speed: 7, elevationDeg: 10, sideDeg: 25, allowed: ['caught', 'ground'], expectKind: 'any', note: '横 25 度 (round 5)。回り込みと横からの踏み切りを通す。合否ではなく etaErr を横の幾何でも採るための投げ' },
+  // IMP-DOG-017: 位置取りの投げ。各 1 回 (自分のプリセットで)。犬は投げ台からの相対位置へ置く。
+  { name: 'beside', variant: 0, place: 'beside (投げ台の横 0.6 m、投げ台向き)', speed: 6, elevationDeg: 10, allowed: ['caught'], expectKind: 'jump', expectMode: 'chase',
+    labAllowed: ['caught', 'ground'], labExpectKind: 'jump|over|ground',
+    note: 'よしよしの後に投げる流れ。Lab 以外は追いついて跳ぶ (mode=chase)。Lab は over / ground も許す (跳ぶなら mode=chase)' },
+  { name: 'chase', variant: 3, place: 'chase (v3 の待機位置: 投げ台の前 4 m・横 2.5 m、投げる方向向き)', speed: 7, elevationDeg: 10, allowed: ['caught'], expectKind: 'jump', expectMode: 'chase',
+    note: '後ろから追いついて跳ぶ。全犬種で mode=chase' },
 ];
+const PER_VARIANT = SHOTS.filter(s => s.variant < 0).length;
+const FIXED = SHOTS.filter(s => s.variant >= 0).length;
 // IMP-DOG-012: 試作シーンのレーン (KH_FrisbeePrototypeEditor.LaneBreeds = KH_FrisbeeJumpClipEditor.Breeds と同じ順)。
 const BREEDS = ['Corgi', 'Pome', 'Lab', 'Dachs', 'Shiba', 'Samoyed'];
 const VARIANTS = [
@@ -263,11 +273,11 @@ function status() {
     throws: `${r.throwsOk}/${throws.length} ok (planned ${r.throwsPlanned})`,
     perVariant: r.perVariant,
     results: (r.throwResults || []).map(t => ({
-      v: t.variant, shot: t.shot, outcome: t.outcome,
+      v: t.variant, shot: t.shot, place: t.place || undefined, dogStart: t.dogStart, outcome: t.outcome,
       // 「取れた」と「一周終わった」は別の列 (Codex M1)。ok は両方 + 動き + 終わり方。
       caught: t.caught, completed: t.completed, ok: t.ok,
       // 終わり方 (Codex M2): 跳んで取ったのか、立って取ったのか、拾いに行ったのか
-      kind: t.kind, expectKind: t.expectKind, expectOk: t.expectOk, expect: t.expectNote,
+      kind: t.kind, expectKind: t.expectKind, expectMode: t.expectMode || undefined, expectOk: t.expectOk, expect: t.expectNote,
       // 動きの質 (round 4): 取れても「機械っぽい」なら ok にしない
       mode: t.mode, yawRateMax: t.yawRateMax, speedMin: t.speedMin, vTake: t.vTake, path: t.approachPath,
       // round 5: Eta の誤差 (実際 - 見積もり)。合否ではなく較正の観測値
@@ -300,21 +310,21 @@ function list() {
     breeds: { flag: '--breed=<Key> (既定 Lab)', lanes: BREEDS, note: 'IMP-DOG-012: 試作シーンは犬種ごとのレーン (x に 12 m ずつ)。Lab レーンは従来の名前と座標のまま。Lab 以外は投げの前にプレイヤーをレーンの出現位置へ移す (犬は投げた人へ持ち帰るため)' },
     sixdogs: {
       flag: 'node scripts/kh-frisbee-harness.cjs start --mode=sixdogs [--repeats=2]',
-      what: '各周: Lab 1 匹だけ (参考値) → 6 匹同時 に flat (v0) を投げる。投げてから 4 s (flight) と全員が Idle へ戻るまで (cycle) の frameTime・UnityStats の描画コール数、捕り手の _planScans / _planEvaluations / _planHookTries の増分を記録',
+      what: '各周: Lab 1 匹だけ (参考値) → 6 匹同時 に flat (v0) を投げる。投げてから 4 s (flight) と全員が Idle へ戻るまで (cycle) の frameTime・UnityStats の描画コール数、捕り手の _planScans / _planEvaluations (と、あれば _planHookTries。IMP-DOG-017 で無くなりうる) の増分を記録',
       pass: '犬ごとに state で「取れた (JumpCarry か、Pickup を経ずに Return)」と「一周 (動いた後に Idle)」。全員 ok・Console エラー 0・frameCapRestored が OK: で PASS。取り方の内訳と動きの質は判定しない (行が犬を名乗らない)',
       frameCap: 'Application.targetFrameRate = -1 / QualitySettings.vSyncCount = 0 で測り、終了時に戻して読み直す',
       cannotSay: '試作シーンの値 (本シーンの地形・草木・他の犬の徘徊は含まない)。Desktop の frameTime は VR の予測にならない (比率と描画コール数だけ使う)',
     },
     variants: VARIANTS,
     shots: SHOTS,
-    throwsPlanned: VARIANTS.length * SHOTS.length,
+    throwsPlanned: `${VARIANTS.length} プリセット x ${PER_VARIANT} 投げ + 位置取り ${FIXED} = ${VARIANTS.length * PER_VARIANT + FIXED} (--shots を省略したとき。位置取りの投げは --variants に関係なく 1 回)`,
     outcomes: ['caught', 'miss', 'ground', 'none', 'timeout', 'blocked'],
     kinds: ['jump', 'stand', 'over', 'ground', 'any (期待側だけ)'],
     throwWindowSeconds: 16,
     pass: '1 投げの合否は 4 つすべて: (1) 想定内の結果 (allowed)、(2) 16 秒の窓の内に Idle へ戻って一周が終わった (completed)、'
       + '(3) 動きの質 (motion)、(4) 期待した終わり方 (expectKind)。全体の PASS は計画した投げが全部走り、全部 ok で、Console エラー 0',
-    motion: 'round 4: 踏み切り / キャッチの行の mode (hook / run / stand / wait / overtake)・yawRateMax・speedMin・vTake で判定。'
-      + '急旋回 (> 300 deg/s) は全 mode で不合格。wait 以外で踏み切り直前 1 秒の最小速度が 1.5 m/s 未満 (減速して跳んだ) も不合格。'
+    motion: 'round 4: 踏み切り / キャッチの行の mode (IMP-DOG-017: around / chase / front / stand / overtake)・yawRateMax・speedMin・vTake で判定。'
+      + '急旋回 (> 300 deg/s) は全 mode で不合格。around (回り込んで止まってから跳ぶ) と stand (立ち取り) 以外で踏み切り直前 1 秒の最小速度が 1.5 m/s 未満 (減速して跳んだ) も不合格。'
       + '跳んだのに数字が行に無い場合も不合格 (判定できない = 合格ではない)',
     netorder: {
       flag: 'node scripts/kh-frisbee-harness.cjs start --mode=netorder [--repeats=2]',
