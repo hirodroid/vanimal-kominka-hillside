@@ -51,7 +51,9 @@ namespace KominkaDogRun
                     // 呼び出し・Fetch と同じく、壁や柱を通過して集合先へ進む。
                     // WallClearance で手前へ寄せると迂回できず止まり続ける (2026-09-10 ユーザー方針)。
                     // 接地・加減速・Owner だけの位置更新は StepToward に任せる。
-                    StepToward(spot, 0f, dist > runDistance ? runSpeed : walkSpeed);
+                    float liveSpeed = dist > runDistance ? runSpeed : walkSpeed;
+                    // Hillside (DES-LIV-001): same as the gathering below — walk the baked NavMesh when a complete path exists; otherwise go straight.
+                    if (hillsideLeashes == null || !GatherStep(spot, liveSpeed)) StepToward(spot, 0f, liveSpeed);
                     return true;
                 }
             }

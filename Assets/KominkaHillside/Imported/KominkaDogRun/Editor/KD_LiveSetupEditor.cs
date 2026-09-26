@@ -46,7 +46,8 @@ namespace KominkaDogRun.Editor
     /// **ユーザー決定で廃止** (暗くなるかならないかだけ。粒だけ上)。代わりに暗さの上限を作品ごとに持つ。
     /// Setup は当時差した複製材質 (Materials/NightQueue/) を元へ戻して消す。
     /// </summary>
-    public static class KD_LiveSetupEditor
+    // 裏山改変 (DES-LIV-001): partial にして裏山の Menu/26・26a・26b を KD_LiveSetupEditor.Hillside.cs に置く (このファイルの部品を再利用する)
+    public static partial class KD_LiveSetupEditor
     {
         public const string SystemScriptPath = "Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_LiveSystem.cs";
         public const string SystemProgramPath = "Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_LiveSystem.asset";
@@ -393,10 +394,15 @@ namespace KominkaDogRun.Editor
         /// <summary>既定 + Android + iOS を Streaming (preload なし) にする。変えたときだけ SaveAndReimport。</summary>
         static bool EnsureAudioStreaming(string slug, StringBuilder log)
         {
-            string path = FindAudioPath(slug);
+            return EnsureAudioStreamingAt(FindAudioPath(slug), ShowFolderOf(slug) + "/audio.*", log);
+        }
+
+        /// <summary>音源のパスを渡す版 (裏山は Timeline の AudioTrack から引く。KD_LiveSetupEditor.Hillside.cs)。</summary>
+        static bool EnsureAudioStreamingAt(string path, string lookedFor, StringBuilder log)
+        {
             if (path == null)
             {
-                log.AppendLine("   FAIL 音源が無い: " + ShowFolderOf(slug) + "/audio.*");
+                log.AppendLine("   FAIL 音源が無い: " + lookedFor);
                 return false;
             }
             var imp = AssetImporter.GetAtPath(path) as AudioImporter;
@@ -438,7 +444,12 @@ namespace KominkaDogRun.Editor
         /// <summary>Verify 用。既定 + override が全部 Streaming か。<paramref name="detail"/> に実測。</summary>
         static bool IsAudioStreaming(string slug, out string detail)
         {
-            string path = FindAudioPath(slug);
+            return IsAudioStreamingAt(FindAudioPath(slug), out detail);
+        }
+
+        /// <summary>音源のパスを渡す版 (Verify 用)。</summary>
+        static bool IsAudioStreamingAt(string path, out string detail)
+        {
             if (path == null) { detail = "音源なし"; return false; }
             var imp = AssetImporter.GetAtPath(path) as AudioImporter;
             if (imp == null) { detail = "AudioImporter なし"; return false; }

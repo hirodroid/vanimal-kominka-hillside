@@ -718,7 +718,7 @@ namespace KominkaDogRun.Editor
             var liveSys = (liveCount == 1 && liveGo != null) ? liveGo.GetUdonSharpComponent<KD_LiveSystem>() : null;
             if (liveSys == null)
                 log.AppendLine("   WARN " + KD_DogDefs.LiveSystemName
-                    + " が取れない — ライブタブは暗いまま。先に Tools/KominkaHillside/Menu/Imported-Unused/Live System/2 - Setup Live System");
+                    + " が取れない — ライブタブは準備中のまま。裏山は先に Tools/KominkaHillside/Menu/26 Adopt Live Stage → 26a Setup Live");
             var liveCatalog = new System.Collections.Generic.List<KD_ShopItem>();
             {
                 var catGo = KD_SceneObjects.Find(KD_DogDefs.ShopCatalogName, out int catN);

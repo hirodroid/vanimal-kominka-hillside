@@ -93,6 +93,16 @@ namespace KominkaHillside.Editor
             finally {EditorSceneManager.CloseScene(source,true);}
         }
 
+        // DES-LIV-001: the live (Menu/26a) is optional. If the scene has a KD_LiveSystem, gathering and every dog point at it
+        // (and the wander controllers at KD_LiveDogSpot); without one they stay null. Build and Verify use the same rule.
+        static KD_LiveSystem SceneLive(out Transform spot)
+        {
+            var lives=EditorSceneManager.GetActiveScene().GetRootGameObjects().SelectMany(r=>r.GetComponentsInChildren<KD_LiveSystem>(true)).ToArray();
+            var live=lives.Length==1?lives[0]:null;
+            var spots=EditorSceneManager.GetActiveScene().GetRootGameObjects().SelectMany(r=>r.GetComponentsInChildren<Transform>(true)).Where(t=>t.name=="KD_LiveDogSpot").ToArray();
+            spot=live!=null&&spots.Length==1?spots[0]:null;
+            return live;
+        }
         static T Find<T>(GameObject root,string name) where T:Component
         {
             var t=root.GetComponentsInChildren<Transform>(true).FirstOrDefault(x=>x.name==name);
@@ -190,7 +200,8 @@ namespace KominkaHillside.Editor
             // Same GameObject as the manager: one Owner adjudicates attach and gather (review D1). Remove the earlier separate object.
             var oldAct=root.transform.Find("KH_Activities");if(oldAct!=null)UnityEngine.Object.DestroyImmediate(oldAct.gameObject);
             var act=Add<KD_GroupActivities>(manager.gameObject,true);
-            act.live=null;act.photos=null;act.formationItem=null;act.playItem=null;act.pack=pack;act.hillsideLeashes=manager;act.hillsidePass=pass;
+            var sceneLive=SceneLive(out var sceneLiveSpot);
+            act.live=sceneLive;act.photos=null;act.formationItem=null;act.playItem=null;act.pack=pack;act.hillsideLeashes=manager;act.hillsidePass=pass;
             act.minGroundNormal=.5f;act.maxSlotHeightDelta=0f;act.groundMask=(1<<0)|(1<<11);act.balls=new KD_BallController[6];
             manager.activities=act;
             // IMP-DOG-007: local-only haptics beside the manager. Build owns the thresholds the same way it owns
@@ -226,7 +237,7 @@ namespace KominkaHillside.Editor
                 w.fetchController=f;w.petController=p;p.fetchController=f;p.wanderController=w;
                 f.pack=pack;w.pack=pack;
                 // Omitted room/stage/services stay null in this world.
-                f.sleepBoard=sleepBoard;f.liveSystem=null;f.activities=act;f.photoDirector=null;w.activities=act;
+                f.sleepBoard=sleepBoard;f.liveSystem=sceneLive;w.liveSystem=sceneLive;w.liveSpot=sceneLiveSpot;f.activities=act;f.photoDirector=null;w.activities=act;
                 if(sleepBoard!=null)w.sleepBoard=sleepBoard;
                 act.balls[i]=b;recall.balls[i]=b;recall.fetchers[i]=f;
                 p.companionSlot=sleepBoard!=null?sleepBoard.SlotOf(i):null;   // IMP-DOG-016: chin rest reads the dog's own slot (Menu/6j wires it too)
@@ -434,7 +445,7 @@ namespace KominkaHillside.Editor
             var act=root.GetComponentInChildren<KD_GroupActivities>(true);Check(act!=null&&m.activities==act&&UdonSharpEditorUtility.GetBackingUdonBehaviour(act).SyncMethod==Networking.SyncType.Manual,"gather authority exists, Manual, wired to manager");
             if(act!=null)
             {
-                Check(act.pack==pack&&act.hillsideLeashes==m&&act.balls!=null&&act.balls.Length==6&&act.balls.All(x=>x!=null)&&act.live==null&&act.minGroundNormal<=.5f&&act.maxSlotHeightDelta==0f,"gather wiring: pack, leashes, 6 balls, no live, slope tolerant");
+                Check(act.pack==pack&&act.hillsideLeashes==m&&act.balls!=null&&act.balls.Length==6&&act.balls.All(x=>x!=null)&&act.live==SceneLive(out _)&&act.minGroundNormal<=.5f&&act.maxSlotHeightDelta==0f,"gather wiring: pack, leashes, 6 balls, live = the scene KD_LiveSystem if any (else null), slope tolerant");
                 var passB=root.GetComponentInChildren<KH_TrainerPass>(true);
                 Check(passB!=null&&act.hillsidePass==passB&&passB.product!=null&&passB.product.ID==TrainerProductId&&passB.listingId==TrainerListingId,"trainer pass: shared Product/Listing IDs");
                 bool actRefs=true;for(int i=0;i<6;i++){var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+Keys[i]);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+Keys[i]);if(w.activities!=act||f.activities!=act)actRefs=false;}
@@ -587,7 +598,8 @@ namespace KominkaHillside.Editor
                 var wb=UdonSharpEditorUtility.GetBackingUdonBehaviour(w);var fb=UdonSharpEditorUtility.GetBackingUdonBehaviour(f);var cbb=UdonSharpEditorUtility.GetBackingUdonBehaviour(c);
                 Check(wb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb&&fb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb,"Wander/Fetch backing frisbeeCatch "+key);
                 var sleepBoardV=root.transform.Find("KD_SleepBoard")?.GetComponent<KD_SleepBoard>();
-                Check(f.sleepBoard==sleepBoardV&&f.liveSystem==null,"sleep board = KH_Dogs/KD_SleepBoard when built (IMP-DOG-016, else null) / live unwired for "+key);
+                var liveV=SceneLive(out var liveSpotV);
+                Check(f.sleepBoard==sleepBoardV&&f.liveSystem==liveV&&w.liveSystem==liveV&&w.liveSpot==liveSpotV,"sleep board = KH_Dogs/KD_SleepBoard when built (IMP-DOG-016, else null) / live = the scene KD_LiveSystem and KD_LiveDogSpot if any (else null) for "+key);
             }
             // IMP-DOG-012: six discs in the row behind the balls. Placement is human-owned once a disc exists (Build only
             // places a NEW one at DiscHome(i); the Lab disc keeps wherever it already rests), so this checks that no two

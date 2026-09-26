@@ -565,15 +565,24 @@ namespace KominkaDogRun.Editor
             pouch.accConfirmRoot = pouch.confirmRoot; pouch.accConfirmLabel = pouch.confirmBodyLabel; pouch.accConfirmYes = pouch.confirmYes;
             pouch.fxConfirmYes = pouch.confirmYes; pouch.fxConfirmNo = pouch.confirmNo;
 
-            // ---- ライブ (Live4) は準備中 1 行。**器 (LiveRow0..8) はそのまま**残し、行 0 に準備中の初期文を置く
-            // (実行時は KD_TreatPouch.HillsidePreparing が同じ文言で描き直す) ----
-            if (pouch.liveLabels != null && pouch.liveLabels.Length > 0 && pouch.liveLabels[0] != null)
-                pouch.liveLabels[0].text = KD_Hillside.Text("KD_TreatPouch.WordLivePreparing", "裏山のライブは準備中", log);
-            if (pouch.liveSubLabels != null && pouch.liveSubLabels.Length > 0 && pouch.liveSubLabels[0] != null)
-                pouch.liveSubLabels[0].text = KD_Hillside.Text("KD_TreatPouch.WordLivePreparingSub", "演目と開催の仕組みは、これから決めます。", log);
+            // ---- ライブ (Live4)。裏山改変 (DES-LIV-001): 行は KD_DogDefs.LiveShows の本数だけ (裏山は 1 曲)。
+            // 古民家の 9 曲ぶんの器 LiveRow{n..} は Scroll.Build が Content へ移さず Page 直下に残ってしまうので、ここで消す
+            // (Scroll.Build と Bind の前。Data/UILocalizationBindings.json の LiveRow1..7 の束縛も同時に外した)。
+            // live が無い間は行 0 に準備中の初期文を置く (実行時は KD_TreatPouch.HillsidePreparing が同じ文言で描き直す)。
+            // live があれば行の文字は実行時の RedrawLive が描く ----
+            int removedLiveRows = HillsideRemoveExtraLiveRows(pages[KD_TreatPouch.TabLive].transform, log);
+            if (pouch.live == null)
+            {
+                if (pouch.liveLabels != null && pouch.liveLabels.Length > 0 && pouch.liveLabels[0] != null)
+                    pouch.liveLabels[0].text = KD_Hillside.Text("KD_TreatPouch.WordLivePreparing", "裏山のライブは準備中", log);
+                if (pouch.liveSubLabels != null && pouch.liveSubLabels.Length > 0 && pouch.liveSubLabels[0] != null)
+                    pouch.liveSubLabels[0].text = KD_Hillside.Text("KD_TreatPouch.WordLivePreparingSub", "演目と開催の仕組みは、これから決めます。", log);
+            }
 
             log.AppendLine("   裏山: Page_Walk " + WalkRowCount + " 行 (犬 " + WalkDogRows + " + 行き先 2) / おもちゃ [ディスク] " + toyRows
-                + " / かざりの群見出し + FxRow " + HillsideFxRowCount + " (既定非表示) / ライブは準備中");
+                + " / かざりの群見出し + FxRow " + HillsideFxRowCount + " (既定非表示) / ライブ "
+                + (pouch.live != null ? KD_DogDefs.LiveShows.Length + " 曲 (live 配線あり)" : "は準備中 (live なし)")
+                + " / 余った LiveRow を " + removedLiveRows + " 行削除");
 
             // ---- 段階 1: ヘッダの残高の入口 + ポイントの面 (入手経路 2 行 + [もどる]) / ようこその面 ----
             if (KD_Hillside.Stage >= 1)
@@ -641,6 +650,159 @@ namespace KominkaDogRun.Editor
             pouch.extraSettingsPages = pages.ToArray();
             page.SetActive(false);
             log.AppendLine("   段階 1: ポイントの面 " + KD_Hillside.PointsPageName + " (入手経路 2 行 + [もどる]。ギフトコードの器なし) / 入口 " + KD_GiftCodeSetupEditor.PointsButtonName + " -> _HillsidePoints");
+        }
+
+        // ================================================================ ライブタブ (裏山改変 DES-LIV-001)
+
+        /// <summary>古民家の器の最大行 (LiveRow0..8) より少し広く掃く上限。</summary>
+        const int HillsideLiveRowSweep = 16;
+
+        /// <summary>シーンの KD_LiveSystem (無ければ null / count 0)。Menu/26a が KH_Dogs/KH_Live に置く。</summary>
+        internal static KD_LiveSystem HillsideSceneLive(out int count)
+        {
+            var go = KD_SceneObjects.Find(KD_DogDefs.LiveSystemName, out count);
+            return (count == 1 && go != null) ? go.GetUdonSharpComponent<KD_LiveSystem>() : null;
+        }
+
+        /// <summary>Page_Live の下 (直下 / Scroll の Content) にある <c>LiveRow{n}</c> のうち n ≥ LiveShows.Length を消す。戻り値は消した数。
+        /// プレハブの中にあれば消さずに FAIL を書く (裏山の板はシーン直置き)。</summary>
+        static int HillsideRemoveExtraLiveRows(Transform livePage, StringBuilder log)
+        {
+            int removed = 0;
+            if (livePage == null) return 0;
+            var content = livePage.Find("Scroll/Viewport/Content");
+            for (int i = KD_DogDefs.LiveShows.Length; i < HillsideLiveRowSweep; i++)
+            {
+                foreach (var parent in new[] { livePage, content })
+                {
+                    if (parent == null) continue;
+                    Transform row;
+                    while ((row = parent.Find("LiveRow" + i)) != null)
+                    {
+                        if (PrefabUtility.IsPartOfPrefabInstance(row.gameObject))
+                        {
+                            log.AppendLine("   FAIL " + row.name + " がプレハブの中にあり消せない (手で Unpack するか、プレハブ側で消す)");
+                            break;
+                        }
+                        Undo.DestroyObjectImmediate(row.gameObject);
+                        removed++;
+                    }
+                }
+            }
+            if (removed > 0) log.AppendLine("   removed 余った LiveRow " + removed + " 行 (LiveShows " + KD_DogDefs.LiveShows.Length + " 本より後ろ)");
+            return removed;
+        }
+
+        /// <summary>Menu/20: Page_Live の下に LiveRow{n ≥ LiveShows.Length} が残っていない (古民家の 9 曲の器の残り)。</summary>
+        static void HillsideCheckNoExtraLiveRows(KD_VerifyLog v, KD_TreatPouch pouch)
+        {
+            var page = pouch.tabPages != null && pouch.tabPages.Length > KD_TreatPouch.TabLive ? pouch.tabPages[KD_TreatPouch.TabLive] : null;
+            if (!v.Check(page != null, "Page_Live (tabPages[" + KD_TreatPouch.TabLive + "]) が配線")) return;
+            int extra = 0;
+            var names = new StringBuilder();
+            foreach (var t in page.GetComponentsInChildren<Transform>(true))
+            {
+                if (!t.name.StartsWith("LiveRow")) continue;
+                int n;
+                if (!int.TryParse(t.name.Substring("LiveRow".Length), out n) || n < KD_DogDefs.LiveShows.Length) continue;
+                extra++; names.Append(t.name + " ");
+            }
+            v.Check(extra == 0, "Page_Live に余った LiveRow が無い (LiveShows " + KD_DogDefs.LiveShows.Length + " 本より後ろ。actual " + extra + " " + names + "— Menu/7 が消す)");
+        }
+
+        /// <summary>Menu/20 の裏山ライブ検査 (live があるときだけ呼ぶ)。古民家の Verify (KD_TreatSetupEditor.Verify.cs の「ライブタブ」節) から、
+        /// 裏山で意味のある項目だけを写した: 行 = 作品 (添字 = liveId) の中身・押し先、一覧の行 = 商品、詳細の面の配線、文言キー。
+        /// 参考画像 (Textures/LiveThumbs/&lt;productKey&gt;.png) は任意 (無ければ色面 + 準備中) なので NOTE。</summary>
+        static void HillsideVerifyLive(KD_VerifyLog v, KD_TreatPouch pouch, StringBuilder log)
+        {
+            var shows = KD_DogDefs.LiveShows;
+            int n = shows.Length;
+            var liveUdon = UdonSharpEditorUtility.GetBackingUdonBehaviour(pouch);
+            v.Check(n >= 1 && n <= 9, "LiveShows が 1〜9 本 (板の口 _Live0.._Live8。actual " + n + ")");
+            v.Check(pouch.live.stageDirectors != null && pouch.live.stageDirectors.Length == n,
+                "KD_LiveSystem.stageDirectors の本数 == LiveShows " + n + " (添字 = liveId がずれない。Menu/26a)");
+            v.Check(pouch.liveItems != null && pouch.liveItems.Length == n, PouchName + ".liveItems が " + n + " 本 (行 = 作品)");
+            v.Check(pouch.liveTitles != null && pouch.liveTitles.Length == n, PouchName + ".liveTitles が " + n + " 本");
+            v.Check(pouch.liveTitleKeys != null && pouch.liveTitleKeys.Length == n,
+                PouchName + ".liveTitleKeys が " + n + " 本 (Data/UILocalizationBindings.json の names。Menu/11 が書く。actual "
+                + (pouch.liveTitleKeys == null ? -1 : pouch.liveTitleKeys.Length) + ")");
+            v.Check(pouch.liveSubLabels != null && pouch.liveSubLabels.Length == n
+                && pouch.liveButtons != null && pouch.liveButtons.Length == n
+                && pouch.liveButtonComponents != null && pouch.liveButtonComponents.Length == n
+                && pouch.liveButtonImages != null && pouch.liveButtonImages.Length == n
+                && pouch.liveButtonLabels != null && pouch.liveButtonLabels.Length == n
+                && pouch.liveGiftButtons != null && pouch.liveGiftButtons.Length == n
+                && pouch.liveGiftLabels != null && pouch.liveGiftLabels.Length == n,
+                PouchName + ".liveSubLabels / liveButton* / liveGift* が " + n + " 本ずつ");
+            var catalog = KD_LocalizationEditor.Load();
+            for (int i = 0; i < n; i++)
+            {
+                string tag = "ライブ行 " + i + " (" + shows[i].slug + ") ";
+                var it = ArrayAt(pouch.liveItems, i);
+                v.Check(it != null && it.categoryKey == KD_ShopSetupEditor.CategoryLive && it.productKey == shows[i].productKey,
+                    tag + "の liveItems.productKey == " + shows[i].productKey + " (actual " + (it == null ? "null" : it.productKey) + ")");
+                v.Check(ArrayAt(pouch.liveTitles, i) == shows[i].title, tag + "の liveTitles == \"" + shows[i].title + "\"");
+                string wantKey = "KD_TreatPouch.liveTitleKeys." + i;
+                v.Check(ArrayAt(pouch.liveTitleKeys, i) == wantKey, tag + "の liveTitleKeys == " + wantKey);
+                var btn = ArrayAt(pouch.liveButtonComponents, i);
+                Object tgt;
+                string want = "_Live" + i;
+                v.Check(OnClickEventName(btn, out tgt) == want && liveUdon != null && tgt == (Object)liveUdon
+                    && typeof(KD_TreatPouch).GetMethod(want) != null, tag + "の onClick が SendCustomEvent(\"" + want + "\") で pouch 宛 (口が実在)");
+                var gift = ArrayAt(pouch.liveGiftButtons, i);
+                var giftBtn = gift == null ? null : gift.GetComponent<UnityEngine.UI.Button>();
+                string wantGift = "_LiveGift" + i;
+                v.Check(gift != null && !gift.activeSelf && OnClickEventName(giftBtn, out tgt) == wantGift && tgt == (Object)liveUdon
+                    && typeof(KD_TreatPouch).GetMethod(wantGift) != null, tag + "の [ギフト] が既定非表示で " + wantGift);
+                // 曲名の枠 (ja / en の文言。Overflow は黙って隣へ描かれる)
+                var lbl = ArrayAt(pouch.liveLabels, i);
+                if (lbl != null && lbl.font != null)
+                    foreach (var lang in new[] { "ja", "en" })
+                    {
+                        string text;
+                        try { text = KD_LocalizationEditor.Text(catalog, lang, wantKey); }
+                        catch (System.InvalidOperationException) { v.Check(false, tag + "の文言キー " + wantKey + " が UITranslations.json に無い"); continue; }
+                        float need = PreferredUiWidth(lbl, text);
+                        v.Check(need <= lbl.rectTransform.sizeDelta.x, tag + "の曲名 " + lang + " \"" + text + "\" が枠に収まる (要 " + need.ToString("F0") + "px / 枠 " + lbl.rectTransform.sizeDelta.x.ToString("F0") + "px)");
+                    }
+            }
+            v.Check(pouch.liveStatusLabel != null, PouchName + ".liveStatusLabel 配線 (残り秒の出し先)");
+            // 一覧の行 = 商品 (KD_DogDefs.LiveProducts)
+            var products = KD_DogDefs.LiveProducts;
+            v.Check(pouch.liveProducts != null && pouch.liveProducts.Length == products.Length, PouchName + ".liveProducts が " + products.Length + " 本");
+            for (int i = 0; pouch.liveProducts != null && i < pouch.liveProducts.Length && i < products.Length; i++)
+            {
+                var it = pouch.liveProducts[i];
+                v.Check(it != null && it.productKey == products[i].productKey && System.Array.IndexOf(pouch.liveItems ?? new KD_ShopItem[0], it) >= 0,
+                    "ライブ商品行 " + i + " が " + products[i].productKey + " で、作品の表 (liveItems) に居る");
+                if (it == null) continue;
+                string k = it.productKey.StartsWith("live.") ? it.productKey.Substring(5) : it.productKey;
+                int missingKeys = 0;
+                var missingNames = new StringBuilder();
+                foreach (var key in new[] { it.displayNameKey, "live.detail." + k + ".jp", "live.detail." + k + ".meta", "live.detail." + k + ".mood", "live.detail." + k + ".scene" })
+                    foreach (var lang in new[] { "ja", "en" })
+                    {
+                        try { KD_LocalizationEditor.Text(catalog, lang, key); }
+                        catch (System.InvalidOperationException) { missingKeys++; missingNames.Append(lang + ":" + key + " "); }
+                    }
+                v.Check(missingKeys == 0, "ライブ商品 " + it.productKey + " の名前と詳細 4 本の文言キーが ja / en にある (欠け " + missingKeys + " " + missingNames + ")");
+                if (pouch.liveThumbs == null || i >= pouch.liveThumbs.Length || pouch.liveThumbs[i] == null)
+                    v.Note("参考画像なし: " + it.productKey + " (Textures/LiveThumbs/" + it.productKey + ".png。任意。無ければ色面 + 準備中)");
+            }
+            v.Check(pouch.liveDetailRoot != null && pouch.liveDetailTitle != null && pouch.liveDetailMeta != null && pouch.liveDetailMood != null
+                && pouch.liveDetailScene != null && pouch.liveDetailNote != null && pouch.liveDetailPosterLabel != null,
+                PouchName + ".liveDetail* の面と文字が配線 (無いと [くわしく] が空の面を出す)");
+            v.Check(pouch.liveDetailRoot != null && !pouch.liveDetailRoot.activeSelf, "LiveDetail は既定で非アクティブ (一覧から開く)");
+            v.Check(pouch.liveDetailBack != null && pouch.liveDetailAction != null && pouch.liveDetailActionButton != null
+                && !pouch.liveDetailBack.activeSelf && !pouch.liveDetailAction.activeSelf, PouchName + ".liveDetailBack / Action 配線 (既定で非アクティブ)");
+            {
+                Object tgt;
+                var backBtn = pouch.liveDetailBack == null ? null : pouch.liveDetailBack.GetComponent<UnityEngine.UI.Button>();
+                v.Check(backBtn != null && OnClickEventName(backBtn, out tgt) == "_LiveBack" && tgt == (Object)liveUdon, "[もどる] が _LiveBack へ配線");
+                v.Check(pouch.liveDetailActionButton != null && OnClickEventName(pouch.liveDetailActionButton, out tgt) == "_LiveDetailAction" && tgt == (Object)liveUdon,
+                    "[買う / 開催] が _LiveDetailAction へ配線");
+            }
+            log.AppendLine("  NOTE 開催許可 (live.access) と hostingItems は Menu/11 と Menu/26b が見る。ステージ・犬・夜の配線は Menu/26b");
         }
 
         // ================================================================ 文言 (字形の宣言)

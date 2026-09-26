@@ -96,6 +96,9 @@ namespace KominkaDogRun.Editor
             new Row("petfx.lantern", "petfx", "KD_ShopItem_Fx_Lantern", 0, 0, 0, 0, LivePackListing, LivePackProduct, 200, "KD_Product_KominkaLivePack"),
             new Row("petfx.meteor", "petfx", "KD_ShopItem_Fx_Meteor", 0, 0, 0, 0, LivePackListing, LivePackProduct, 200, "KD_Product_KominkaLivePack"),
             new Row("petfx.confetti", "petfx", "KD_ShopItem_Fx_Confetti", 0, 0, 0, 0, LivePackListing, LivePackProduct, 200, "KD_Product_KominkaLivePack"),
+            // 裏山改変 (DES-LIV-001 / 002): 裏山専用ライブ「紅葉が星になる」(Point 30pt の買い切り)。末尾に足す (既存行の並びを動かさない)。
+            // 古民家のライブ 7 行は台帳の行として残す (画面に出るのは KD_DogDefs.LiveProducts に載せたものだけ)
+            new Row("live.hillside_dusk", "live", "KD_ShopItem_Live_HillsideDusk", 30, 0, 0, 0, ""),
         };
         public static Row Get(string key)
         { var row=Array.Find(All,x=>x.key==key); if(row==null) throw new InvalidOperationException("Unknown product: "+key); return row; }

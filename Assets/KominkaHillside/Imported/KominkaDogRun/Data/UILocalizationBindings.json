@@ -77,11 +77,6 @@
     },
     {
       "root": "KD_TreatPouchPanel",
-      "path": "Page_Live/Scroll/Viewport/Content/LiveRow3/Button/Label",
-      "key": "KD_TreatPouch.WordLiveHost"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
       "path": "SettingsButton/Label",
       "key": "KD_TreatPouch.WordSettings"
     },
@@ -127,18 +122,8 @@
     },
     {
       "root": "KD_TreatPouchPanel",
-      "path": "Page_Live/Scroll/Viewport/Content/LiveRow1/Button/Label",
-      "key": "KD_TreatPouch.WordLiveHost"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
       "path": "Page_Settings/VolumeSettings/OutsideHeading",
       "key": "KD_TreatPouch.WordOutside"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
-      "path": "Page_Live/Scroll/Viewport/Content/LiveRow2/Button/Label",
-      "key": "KD_TreatPouch.WordLiveHost"
     },
     {
       "root": "KD_TreatPouchPanel",
@@ -227,11 +212,6 @@
     },
     {
       "root": "KD_TreatPouchPanel",
-      "path": "Page_Live/Scroll/Viewport/Content/LiveRow5/Button/Label",
-      "key": "KD_TreatPouch.WordLiveHost"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
       "path": "Page_Treat/Scroll/Viewport/Content/Row3/Button/Label",
       "key": "KD_TreatPouch.WordDispense"
     },
@@ -287,11 +267,6 @@
     },
     {
       "root": "KD_TreatPouchPanel",
-      "path": "Page_Live/Scroll/Viewport/Content/LiveRow4/Button/Label",
-      "key": "KD_TreatPouch.WordLiveHost"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
       "path": "Tab0/Label",
       "key": "KD_TreatPouch.WordTabTreat"
     },
@@ -319,16 +294,6 @@
       "root": "KD_TreatPouchPanel",
       "path": "Page_Settings/SettingsHome/NightModeNote",
       "key": "settings.night.note"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
-      "path": "Page_Live/Scroll/Viewport/Content/LiveRow6/Button/Label",
-      "key": "KD_TreatPouch.WordLiveHost"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
-      "path": "Page_Live/Scroll/Viewport/Content/LiveRow7/Button/Label",
-      "key": "KD_TreatPouch.WordLiveHost"
     },
     {
       "root": "KD_TreatPouchPanel",
@@ -960,15 +925,7 @@
       "root": "KD_TreatPouch",
       "field": "liveTitleKeys",
       "keys": [
-        "KD_TreatPouch.liveTitleKeys.0",
-        "KD_TreatPouch.liveTitleKeys.1",
-        "KD_TreatPouch.liveTitleKeys.2",
-        "KD_TreatPouch.liveTitleKeys.3",
-        "KD_TreatPouch.liveTitleKeys.4",
-        "KD_TreatPouch.liveTitleKeys.5",
-        "KD_TreatPouch.liveTitleKeys.6",
-        "KD_TreatPouch.liveTitleKeys.7",
-        "KD_TreatPouch.liveTitleKeys.8"
+        "KD_TreatPouch.liveTitleKeys.0"
       ]
     }
   ],

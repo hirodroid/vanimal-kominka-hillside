@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "com.local.vrc-world-tools": "file:C:/work/unity/vrc-world-agent/package/com.local.vrc-world-tools",
+    "com.virtualcampers.live-generator": "file:C:/work/unity/vrc-live-generator/unity-package",
     "com.unity.collab-proxy": "2.3.1",
     "com.unity.feature.development": "1.0.1",
     "com.unity.nuget.newtonsoft-json": "3.2.2",

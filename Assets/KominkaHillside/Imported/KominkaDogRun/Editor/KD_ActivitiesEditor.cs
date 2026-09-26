@@ -200,7 +200,10 @@ namespace KominkaDogRun.Editor
             Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(a).SyncMethod == Networking.SyncType.Manual, "actual hosting Manual sync");
             Check(a.hillsideLeashes == manager && a.hillsidePass != null && a.pack != null, "hillsideLeashes / hillsidePass / pack wired");
             Check(a.pack != null && a.pack.dogFetch != null && a.pack.dogFetch.Length == 6, "six dogs in the pack");
-            Skip("live と開催の所有の共有・管理者の判定 (live = null。集合を終われるのは開催者本人)");
+            // DES-LIV-001: シーンに KD_LiveSystem があれば a.live はそれ (Menu/26a が書く)、無ければ null
+            { var lives = KD_ProductsEditor.SceneComponents<KD_LiveSystem>(); var want = lives.Length == 1 ? lives[0] : null;
+              Check(lives.Length <= 1 && a.live == want, "KD_GroupActivities.live = シーンの KD_LiveSystem があればそれ、無ければ null (KD_LiveSystem " + lives.Length + " 個 / 配線 " + (a.live != null) + ")"); }
+            Skip("開催の所有の共有・管理者の判定 (集合を終われるのは開催者本人。ライブの開催認可は Menu/26b Verify Live)");
             Skip("トレーナー / みんなで遊ぶ / 犬目線の商品 (KD_ShopItem)。権利は KH_TrainerPass");
 
             // 集合のみ (犬目線カメラ・2 匹の遊びが無い)

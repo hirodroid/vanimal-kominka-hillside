@@ -1016,6 +1016,8 @@ namespace KominkaHillside
         {
             if (Claimed()) return false;
             if (fetch != null && !fetch.IsIdle) return false;
+            // DES-LIV-001: no new frisbee while a live plays (same rule as the ball's KD_DogFetchController.LiveWatching)
+            if (fetch != null && fetch.liveSystem != null && fetch.liveSystem.IsPlaying) return false;
             if (wander != null && (wander.IsTreatBusy || wander.IsResting || wander.IsAsleep)) return false;
             if (activities != null && activities.Mode == 2) return false;
             if (!InPlayArea(at, playAreaMargin)) return false;

@@ -221,6 +221,10 @@ namespace KominkaHillside.Editor
             Check(settings.Length == 1 && settings[0].hillsideNight == night && settings[0].nightMode != null && settings[0].nightModeValue != null,
                 "KD_MenuSettings.hillsideNight wired with slider and value label (run Tools/KominkaHillside/Menu/7 Build Menu after Setup; found " + settings.Length + ")");
             Check(settings.Length == 1 && settings[0].pouch != null, "KD_MenuSettings.pouch wired (settings page of the hand menu)");
+            // DES-LIV-001: the live's darkness reaches this night mode only through KH_LiveNight (Menu/26a). Absent = no live yet.
+            var liveNights = UnityEngine.Object.FindObjectsOfType<KH_LiveNight>(true);
+            if (liveNights.Length == 0) log.AppendLine("SKIP KH_LiveNight is not in the scene (no live set up yet: Tools/KominkaHillside/Menu/26a Setup Live)");
+            else Check(liveNights.Length == 1 && liveNights[0].nightMode == night, "KH_LiveNight.nightMode is this KH_NightMode (found " + liveNights.Length + " KH_LiveNight)");
             var descriptor = UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>();
             Check(descriptor != null && descriptor.NetworkIDCollection.Count(x => x.gameObject == null) == 0, "no dangling NetworkIDs");
             Report("night-verify", log + "TOTAL " + total + " FAILED " + failed);

@@ -151,3 +151,6 @@ InitTestScene*.unity*
 # おじいさん (KD_ShopKeeper) の NPC モデル。古民家と同じ購入アセット (polyperfect Low Poly Animated People)。2026-09-24 に KominkaDogRun から .meta ごとコピー (GUID 固定)
 /[Aa]ssets/polyperfect/
 /[Aa]ssets/polyperfect.meta
+
+# ライブの音源 WAV は Git に入れない (正本は vrc-music-agent の曲フォルダ。hash は docs/plans の配線計画に記録。.meta は GUID 維持のため追跡)
+/[Aa]ssets/VirtualCampers.LiveGenerator/Shows/*/master.wav

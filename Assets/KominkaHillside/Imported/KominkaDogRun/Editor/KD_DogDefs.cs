@@ -504,29 +504,20 @@ namespace KominkaDogRun.Editor
         /// 生成器 (vrc-live-generator) の `shows/&lt;slug&gt;/` と 1:1。</summary>
         public static readonly KD_LiveShow[] LiveShows =
         {
-            // 2026-09-15 ユーザー決定: CE Pack 3 曲 (ひかりの庭 / 星降る縁側 / Your Day) + Point 単品 4 曲。
-            // 行 (liveId) は並べ替えない — 商品 (productKey) だけ付け替える
-            new KD_LiveShow("kd-happy-tails",   "Happy Tails, Sunny Trails",   "live.happy_tails", 0.7f),
-            new KD_LiveShow("kd-garden-lights", "Garden of Little Lights",     "live.garden_lights", 1.0f),
-            new KD_LiveShow("kd-your-day",      "Today Is Your Day!",          "live.kominka_pack", 0.7f),
-            new KD_LiveShow("kd-quiet-wishes",  "A Sky Full of Quiet Wishes",  "live.kominka_pack", 1.0f),
-            new KD_LiveShow("kd-petal-waltz",   "Petal Waltz",                 "live.petal_waltz", 0.9f),
-            new KD_LiveShow("kd-after-rain",    "After the Rain, a Rainbow",   "live.after_rain", 0.9f),
-            new KD_LiveShow("kd-gardenlights-004-lotus-r003", "きみと、ひかりの庭", "live.kominka_pack", 1.0f),
-            new KD_LiveShow("kd-candystep-002", "キャンディ・ステップ", "live.candy_step_set", 0.45f),
-            new KD_LiveShow("kd-pumpkinparade-002", "パンプキン・パレード", "live.pumpkin_parade_set", 0.45f),
+            // 裏山改変 (DES-LIV-001 / 002、2026-09-26 統括決定 D1): 裏山専用ライブ 1 本だけ。古民家の 9 曲はここから外した
+            // (古民家の商品 7 行は KD_ProductDefinitions に台帳の行として残る)。暗さ上限 1.0 (夜で終わる)。
+            // 暗くなり方 (曲の頭から山へ向けて上限へ) は KH_LiveNight が liveId ごとの到達秒で持つ (D2 (b))
+            new KD_LiveShow(HillsideDuskSlug, "紅葉が星になる", "live.hillside_dusk", 1.0f),
         };
+
+        /// <summary>裏山専用ライブの演出 slug (生成器の `shows/&lt;slug&gt;/`、シーンの `KD_LiveStage_&lt;slug&gt;`)。</summary>
+        public const string HillsideDuskSlug = "kh-hillside-dusk";
 
         /// <summary>商品の表。購入方法・未設定CEの状態は KD_ProductDefinitions が持つ。</summary>
         public static readonly KD_LiveProduct[] LiveProducts =
         {
-            new KD_LiveProduct("live.happy_tails", "Happy Tails, Sunny Trails"),
-            new KD_LiveProduct("live.garden_lights", "Garden of Little Lights"),
-            new KD_LiveProduct("live.petal_waltz", "Petal Waltz"),
-            new KD_LiveProduct("live.after_rain", "After the Rain, a Rainbow"),
-            new KD_LiveProduct("live.kominka_pack", "Kominka Live Pack (3 songs)"),
-            new KD_LiveProduct("live.candy_step_set", "キャンディ・ステップと飾り"),
-            new KD_LiveProduct("live.pumpkin_parade_set", "パンプキン・パレードと飾り"),
+            // 裏山改変: 裏山専用ライブの 1 商品だけ (Point 30pt)
+            new KD_LiveProduct("live.hillside_dusk", "紅葉が星になる"),
         };
 
         /// <summary>ステージの置き場所 (`KD_Places` 直下の local)。**全曲同じ** —

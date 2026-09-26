@@ -240,6 +240,15 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.virtualcampers.live-generator": {
+      "version": "file:C:/work/unity/vrc-live-generator/unity-package",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.unity.timeline": "1.7.0",
+        "com.unity.nuget.newtonsoft-json": "3.0.0"
+      }
+    },
     "com.vrchat.base": {
       "version": "file:com.vrchat.base",
       "depth": 0,

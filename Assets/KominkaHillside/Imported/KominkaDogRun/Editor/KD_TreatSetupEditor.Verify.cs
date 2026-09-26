@@ -1260,8 +1260,13 @@ namespace KominkaDogRun.Editor
             StageRef(pouch.sleepBoard != null, PouchName + ".sleepBoard (KD_SleepBoard)", 2, "IMP-DOG-016");
             StageRef(pouch.sleepPlacement != null, PouchName + ".sleepPlacement (KD_SleepPlacement)", 2, "IMP-DOG-016");
             StageRef(pouch.callPose != null, PouchName + ".callPose (KD_CallPose)", 2, "IMP-DOG-016");
-            // ライブは DES-LIV-001 の採用まで置かない (段階の番号を持たない)。null であることだけ見る
-            v.Check(pouch.live == null, PouchName + ".live は null (ライブは DES-LIV-001 の採用まで準備中。KD_LiveSystem を置かない)");
+            // ライブは段階の番号を持たない (DES-LIV-001: 「あれば検査」)。シーンに KD_LiveSystem が無ければ null、あればそれを指す
+            var sceneLive = HillsideSceneLive(out int sceneLiveCount);
+            if (sceneLiveCount == 0)
+                v.Check(pouch.live == null, PouchName + ".live は null (シーンに " + KD_DogDefs.LiveSystemName + " が無い = ライブは準備中)");
+            else
+                v.Check(sceneLiveCount == 1 && sceneLive != null && pouch.live == sceneLive,
+                    PouchName + ".live == シーンの " + KD_DogDefs.LiveSystemName + " (actual " + sceneLiveCount + " 個 / 配線 " + (pouch.live != null) + "。Menu/26a → Menu/7)");
             {
                 // U# 参照は backing に相手の backing UdonBehaviour として入る (vrc-udonsharp §4)
                 object wired;
@@ -1535,8 +1540,12 @@ namespace KominkaDogRun.Editor
             v.Check(AllSet(pouch.accRows, KD_AccessorySetsEditor.MenuCount) && AllSet(pouch.accRowLabels, KD_AccessorySetsEditor.MenuCount), "かざりの器 AccRow0..15");
             v.Check(AllSet(pouch.sleepLabels, dogsN) && AllSet(pouch.sleepButtons, dogsN), "呼ぶの器 SleepRow0..5");
             v.Check(pouch.liveLabels != null && pouch.liveLabels.Length == KD_DogDefs.LiveShows.Length && pouch.liveLabels[0] != null
-                && pouch.liveSubLabels != null && pouch.liveSubLabels.Length > 0 && pouch.liveSubLabels[0] != null, "ライブの器 LiveRow0..8 (行 0 = 準備中 1 行の出し先)");
-            log.AppendLine("  SKIP ライブ行の onClick リフレクション検査 (_Live{i} / _LiveGift{i})・liveItems / liveProducts / 参考画像・確認カードの題の寸法 (裏山では対象外: DES-LIV-001 まで準備中 1 行だけ)");
+                && pouch.liveSubLabels != null && pouch.liveSubLabels.Length > 0 && pouch.liveSubLabels[0] != null,
+                "ライブの器 LiveRow0.." + (KD_DogDefs.LiveShows.Length - 1) + " (KD_DogDefs.LiveShows の本数。live が無い間は行 0 = 準備中 1 行の出し先)");
+            // 裏山改変 (DES-LIV-001): KD_LiveSystem があればライブ行の中身まで検査する (無ければ準備中 1 行だけなので SKIP)
+            if (pouch.live != null) HillsideVerifyLive(v, pouch, log);
+            else log.AppendLine("  SKIP ライブ行の onClick リフレクション検査 (_Live{i} / _LiveGift{i})・liveItems / liveProducts / 詳細の面 (live が null = 準備中 1 行だけ。Menu/26a Setup Live → Menu/7 で入る)");
+            HillsideCheckNoExtraLiveRows(v, pouch);
             log.AppendLine("  SKIP 棚 (KD_ShopShelf) の配線・棚の効果音・棚の商品の Collider (裏山では対象外: 棚は置かない。商品は menuOnly で KH_Dogs/KD_ShopCatalog の子。購入はメニュー)");
             if (stage >= 2)
             {

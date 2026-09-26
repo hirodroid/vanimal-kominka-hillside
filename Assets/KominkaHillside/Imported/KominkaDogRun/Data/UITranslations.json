@@ -878,6 +878,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "紅葉が星になる"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -1495,6 +1499,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "パンプキン・パレードと飾り"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "紅葉が星になる"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -2203,6 +2211,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "おばけが次の灯りへ渡るたびに音が返り、かぼちゃが行進に沿って灯っていく。最後は犬が客席へ向いてお座り。"
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "紅葉が星になる"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "夕暮れから夜の広場"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "広場を囲む木から紅葉の光が舞い上がり、夜空で星に変わる。犬と並んで見る、静かな夕暮れの曲。"
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "一枚の葉から始まり、ゆるい渦になって昇る。山で葉が星に変わり、夜の広場に余韻が残る。"
         },
         {
           "key": "event.halloween.text",
@@ -3617,6 +3641,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -4234,6 +4262,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "Pumpkin Parade & Costumes"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "Leaves into Stars"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -4942,6 +4974,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "Each time the ghost hops to the next light a note answers, and pumpkins light up along the march. At the end the dogs sit facing the audience."
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "The plaza, from dusk into night"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "Glowing autumn leaves rise from the trees around the plaza and turn into stars. A quiet dusk song to watch beside your dogs."
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "It begins with a single leaf that grows into a slow, rising swirl. At the peak the leaves become stars, and the night lingers over the plaza."
         },
         {
           "key": "event.halloween.text",
@@ -6356,6 +6404,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -6973,6 +7025,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "Pumpkin Parade и костюмы"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "Leaves into Stars"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -7681,6 +7737,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "Каждый раз, когда привидение перепрыгивает к следующему огоньку, отвечает нота, и тыквы зажигаются вдоль шествия. В конце собаки садятся лицом к зрителям."
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "The plaza, from dusk into night"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "Glowing autumn leaves rise from the trees around the plaza and turn into stars. A quiet dusk song to watch beside your dogs."
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "It begins with a single leaf that grows into a slow, rising swirl. At the peak the leaves become stars, and the night lingers over the plaza."
         },
         {
           "key": "event.halloween.text",
@@ -9095,6 +9167,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -9712,6 +9788,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "Pumpkin Parade і костюми"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "Leaves into Stars"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -10420,6 +10500,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "Щоразу, коли привид перестрибує до наступного вогника, відповідає нота, і гарбузи засвічуються вздовж ходи. Наприкінці собаки сідають обличчям до глядачів."
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "The plaza, from dusk into night"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "Glowing autumn leaves rise from the trees around the plaza and turn into stars. A quiet dusk song to watch beside your dogs."
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "It begins with a single leaf that grows into a slow, rising swirl. At the peak the leaves become stars, and the night lingers over the plaza."
         },
         {
           "key": "event.halloween.text",
@@ -11834,6 +11930,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -12451,6 +12551,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "Pumpkin Parade & 의상"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "Leaves into Stars"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -13159,6 +13263,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "유령이 다음 불빛으로 건너갈 때마다 소리가 대답하고, 행진을 따라 호박이 켜집니다. 마지막에는 강아지들이 객석을 향해 앉습니다."
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "The plaza, from dusk into night"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "Glowing autumn leaves rise from the trees around the plaza and turn into stars. A quiet dusk song to watch beside your dogs."
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "It begins with a single leaf that grows into a slow, rising swirl. At the peak the leaves become stars, and the night lingers over the plaza."
         },
         {
           "key": "event.halloween.text",
@@ -14573,6 +14693,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -15190,6 +15314,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "Pumpkin Parade & Kostüme"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "Leaves into Stars"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -15898,6 +16026,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "Jedes Mal, wenn das Gespenst zum nächsten Licht hüpft, antwortet ein Ton, und entlang des Marsches leuchten Kürbisse auf. Am Ende setzen sich die Hunde zum Publikum hin."
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "The plaza, from dusk into night"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "Glowing autumn leaves rise from the trees around the plaza and turn into stars. A quiet dusk song to watch beside your dogs."
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "It begins with a single leaf that grows into a slow, rising swirl. At the peak the leaves become stars, and the night lingers over the plaza."
         },
         {
           "key": "event.halloween.text",
@@ -17312,6 +17456,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -17929,6 +18077,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "Pumpkin Parade 与装扮"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "Leaves into Stars"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -18637,6 +18789,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "小幽灵每跳到下一盏灯，就有一个音符回应，南瓜也沿着队伍一盏盏亮起。最后狗狗们面向观众席坐下。"
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "The plaza, from dusk into night"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "Glowing autumn leaves rise from the trees around the plaza and turn into stars. A quiet dusk song to watch beside your dogs."
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "It begins with a single leaf that grows into a slow, rising swirl. At the peak the leaves become stars, and the night lingers over the plaza."
         },
         {
           "key": "event.halloween.text",
@@ -20051,6 +20219,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -20668,6 +20840,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "Pumpkin Parade y disfraces"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "Leaves into Stars"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -21376,6 +21552,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "Cada vez que el fantasma salta a la siguiente luz suena una nota, y las calabazas se van encendiendo a lo largo del desfile. Al final, los perros se sientan mirando al público."
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "The plaza, from dusk into night"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "Glowing autumn leaves rise from the trees around the plaza and turn into stars. A quiet dusk song to watch beside your dogs."
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "It begins with a single leaf that grows into a slow, rising swirl. At the peak the leaves become stars, and the night lingers over the plaza."
         },
         {
           "key": "event.halloween.text",
@@ -22790,6 +22982,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -23407,6 +23603,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "Pumpkin Parade et costumes"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "Leaves into Stars"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -24115,6 +24315,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "Chaque fois que le fantôme saute vers la lumière suivante, une note lui répond, et les citrouilles s'allument le long du défilé. À la fin, les chiens s'assoient face au public."
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "The plaza, from dusk into night"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "Glowing autumn leaves rise from the trees around the plaza and turn into stars. A quiet dusk song to watch beside your dogs."
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "It begins with a single leaf that grows into a slow, rising swirl. At the peak the leaves become stars, and the night lingers over the plaza."
         },
         {
           "key": "event.halloween.text",
@@ -25529,6 +25745,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -26146,6 +26366,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "Pumpkin Parade e fantasias"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "Leaves into Stars"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -26854,6 +27078,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "Cada vez que o fantasma pula para a luz seguinte, uma nota responde, e as abóboras vão acendendo ao longo do desfile. No fim, os cachorros sentam virados para o público."
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "The plaza, from dusk into night"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "Glowing autumn leaves rise from the trees around the plaza and turn into stars. A quiet dusk song to watch beside your dogs."
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "It begins with a single leaf that grows into a slow, rising swirl. At the peak the leaves become stars, and the night lingers over the plaza."
         },
         {
           "key": "event.halloween.text",
@@ -28268,6 +28508,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -28885,6 +29129,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "Pumpkin Parade e costumi"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "Leaves into Stars"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -29593,6 +29841,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "Ogni volta che il fantasma salta alla luce successiva, risponde una nota, e le zucche si accendono lungo la parata. Alla fine i cani si siedono rivolti al pubblico."
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "The plaza, from dusk into night"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "Glowing autumn leaves rise from the trees around the plaza and turn into stars. A quiet dusk song to watch beside your dogs."
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "It begins with a single leaf that grows into a slow, rising swirl. At the peak the leaves become stars, and the night lingers over the plaza."
         },
         {
           "key": "event.halloween.text",
@@ -31007,6 +31271,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -31624,6 +31892,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "Pumpkin Parade i kostiumy"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "Leaves into Stars"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -32332,6 +32604,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "Za każdym razem, gdy duszek przeskakuje do kolejnego światła, odpowiada mu dźwięk, a wzdłuż pochodu zapalają się dynie. Na koniec psy siadają zwrócone do widowni."
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "The plaza, from dusk into night"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "Glowing autumn leaves rise from the trees around the plaza and turn into stars. A quiet dusk song to watch beside your dogs."
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "It begins with a single leaf that grows into a slow, rising swirl. At the peak the leaves become stars, and the night lingers over the plaza."
         },
         {
           "key": "event.halloween.text",
@@ -33750,6 +34038,10 @@
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.0",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "KD_ShopItem_Live_25.displayNameKey.0",
           "text": "Happy Tails, Sunny Trails"
         },
         {
@@ -34367,6 +34659,10 @@
         {
           "key": "KD_ShopItem_Live_PumpkinParadeSet.displayNameKey.0",
           "text": "Pumpkin Parade 與裝扮"
+        },
+        {
+          "key": "KD_ShopItem_Live_HillsideDusk.displayNameKey.0",
+          "text": "Leaves into Stars"
         },
         {
           "key": "accessory.PumpkinParade",
@@ -35075,6 +35371,22 @@
         {
           "key": "live.detail.pumpkin_parade_set.scene",
           "text": "小幽靈每跳到下一盞燈，就有一個音符回應，南瓜也沿著隊伍一盞盞亮起。最後狗狗們面向觀眾席坐下。"
+        },
+        {
+          "key": "live.detail.hillside_dusk.jp",
+          "text": "Leaves into Stars"
+        },
+        {
+          "key": "live.detail.hillside_dusk.meta",
+          "text": "The plaza, from dusk into night"
+        },
+        {
+          "key": "live.detail.hillside_dusk.mood",
+          "text": "Glowing autumn leaves rise from the trees around the plaza and turn into stars. A quiet dusk song to watch beside your dogs."
+        },
+        {
+          "key": "live.detail.hillside_dusk.scene",
+          "text": "It begins with a single leaf that grows into a slow, rising swirl. At the peak the leaves become stars, and the night lingers over the plaza."
         },
         {
           "key": "event.halloween.text",
