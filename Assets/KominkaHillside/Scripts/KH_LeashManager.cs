@@ -142,8 +142,15 @@ namespace KominkaHillside
             VRCPlayerApi caller = NetworkCalling.CallingPlayer;
             if (!Utilities.IsValid(caller)) return;
             bool changed = false;
+            int mine = 0;
             for (int i = 0; i < walkers.Length; i++)
-                if (walkers[i] == caller.playerId && destinations[i] != destination) { destinations[i] = destination; changed = true; }
+            {
+                if (walkers[i] != caller.playerId) continue;
+                mine++;
+                if (destinations[i] != destination) { destinations[i] = destination; changed = true; }
+            }
+            // BUG-DOG-004: the owner-side trail for "my choice did not reach my dogs" reports (playtest 2026-09-26).
+            Debug.Log("[KH_Leash] ReqDestination from player " + caller.playerId + " dest=" + destination + " dogs=" + mine + " changed=" + changed);
             if (changed) RequestSerialization();
         }
 
@@ -189,6 +196,7 @@ namespace KominkaHillside
             walkers[dog] = caller.playerId;
             hands[dog] = hand;
             destinations[dog] = route != null && route._DestinationNode(destination) >= 0 ? destination : defaultDestination;
+            Debug.Log("[KH_Leash] ReqAttach dog" + dog + " by player " + caller.playerId + " hand=" + hand + " dest=" + destinations[dog]); // BUG-DOG-004 trail
             RequestSerialization();
         }
 

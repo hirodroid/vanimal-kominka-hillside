@@ -280,7 +280,91 @@ namespace KominkaHillside.Editor
             disc.desktopMinThrowSpeed = 6f; disc.desktopMaxThrowSpeed = 11f; disc.desktopThrowRise = 0.25f; // a short press must still fly ~2 s
             var descriptor = UnityEngine.Object.FindObjectOfType<VRCSceneDescriptor>();
             if (descriptor != null) disc.respawnBelowY = descriptor.RespawnHeightY;
+            BuildFaces(discGo, FaceKeyFor(materialName), disc);
             return disc;
+        }
+
+        // ---------------------------------------------------------------- IMP-DOG-018 dog face prints
+        // A round print of the dog's face (Frisbee/6 Capture Dog Faces) on both faces of the disc, so whose disc it is
+        // reads without the colour (BUG-DOG-005: iOS loses the colours). Two child renderers of one shared fan mesh,
+        // no colliders (the parent's box stays the only one). The holder does not see them while holding: KH_Frisbee
+        // turns faceRenderers off with the see-through material and back on at the drop.
+        public const string FaceMeshPath = Data + "/KH_FrisbeeFace.asset";
+        public const float FaceDiameter = .16f, FaceLift = .001f;
+        public const int FaceSegments = 24;
+        public static readonly string[] FaceChildren = { "FaceTop", "FaceBottom" };
+        public static string FaceMaterialPathFor(string key) { return Data + "/KH_FrisbeeFace_" + key + ".mat"; }
+
+        // The dog key from the disc material name: KH_FrisbeeDisc_<key> (world scene and the prototype's other lanes);
+        // the bare KH_FrisbeeDisc is the prototype's orange Lab lane.
+        public static string FaceKeyFor(string materialName)
+        {
+            const string prefix = "KH_FrisbeeDisc_";
+            if (materialName.StartsWith(prefix, StringComparison.Ordinal)) return materialName.Substring(prefix.Length);
+            if (materialName == "KH_FrisbeeDisc") return KH_FrisbeeJumpClipEditor.Breed;
+            throw new InvalidOperationException("No dog key in disc material name " + materialName);
+        }
+
+        // Unit disc (diameter 1) in the xz plane facing +y: centre + FaceSegments rim vertices, UV (cos, sin) * 0.5 + 0.5,
+        // so the square picture is seen unmirrored from above. Made once and reused (delete the asset to regenerate).
+        public static Mesh FaceMesh()
+        {
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(FaceMeshPath);
+            if (mesh != null) return mesh;
+            Directory.CreateDirectory(Data);
+            int n = FaceSegments;
+            var v = new Vector3[n + 1]; var uv = new Vector2[n + 1]; var nm = new Vector3[n + 1]; var tri = new int[n * 3];
+            v[0] = Vector3.zero; uv[0] = new Vector2(.5f, .5f); nm[0] = Vector3.up;
+            for (int i = 0; i < n; i++)
+            {
+                float a = 2f * Mathf.PI * i / n, c = Mathf.Cos(a), s = Mathf.Sin(a);
+                v[i + 1] = new Vector3(c * .5f, 0f, s * .5f); uv[i + 1] = new Vector2(c * .5f + .5f, s * .5f + .5f); nm[i + 1] = Vector3.up;
+                // Clockwise seen from +y (Unity's front face): centre, next rim vertex, this rim vertex.
+                tri[i * 3] = 0; tri[i * 3 + 1] = (i + 1) % n + 1; tri[i * 3 + 2] = i + 1;
+            }
+            mesh = new Mesh { name = "KH_FrisbeeFace", vertices = v, uv = uv, normals = nm, triangles = tri };
+            mesh.RecalculateBounds(); mesh.RecalculateTangents();
+            AssetDatabase.CreateAsset(mesh, FaceMeshPath);
+            return mesh;
+        }
+
+        // KH_FrisbeeFace_<key>.mat: Mobile Standard Lite, white, _MainTex = the captured PNG. The texture is re-linked
+        // on every Build, so capturing after the first Build only needs a rebuild. No PNG yet: material without a
+        // texture and a warning (the Build goes on; Frisbee/5 Verify fails on it).
+        public static Material FaceMaterial(string key)
+        {
+            Directory.CreateDirectory(Data);
+            string path = FaceMaterialPathFor(key); var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null) { m = new Material(Shader.Find("VRChat/Mobile/Standard Lite")); m.color = Color.white; AssetDatabase.CreateAsset(m, path); }
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(KH_DogFaceCaptureEditor.TexturePathFor(key));
+            if (tex == null) Debug.LogWarning("[KH Frisbee] " + KH_DogFaceCaptureEditor.TexturePathFor(key) + " missing: run Tools/KominkaHillside/Frisbee/6 Capture Dog Faces, then Build again (" + path + " has no texture)");
+            if (m.mainTexture != tex || m.color != Color.white) { m.mainTexture = tex; m.color = Color.white; EditorUtility.SetDirty(m); }
+            return m;
+        }
+
+        static void BuildFaces(GameObject discGo, string key, KH_Frisbee disc)
+        {
+            var mesh = FaceMesh(); var mat = FaceMaterial(key);
+            Vector3 ps = discGo.transform.localScale;   // (0.24, 0.012, 0.24): undo it so the print is FaceDiameter across
+            var renderers = new Renderer[FaceChildren.Length];
+            for (int k = 0; k < FaceChildren.Length; k++)
+            {
+                bool top = k == 0;
+                var go = Obj(FaceChildren[k], discGo.transform);
+                go.layer = discGo.layer;
+                // The Cylinder primitive's caps are at local y = +-1; lift the print FaceLift (world) off each cap.
+                go.transform.localPosition = new Vector3(0f, (top ? 1f : -1f) * (1f + FaceLift / ps.y), 0f);
+                // Bottom: turned over about z, so it faces down and still reads unmirrored from below.
+                go.transform.localRotation = top ? Quaternion.identity : Quaternion.Euler(0f, 0f, 180f);
+                go.transform.localScale = new Vector3(FaceDiameter / ps.x, 1f, FaceDiameter / ps.z);
+                foreach (var col in go.GetComponents<Collider>()) UnityEngine.Object.DestroyImmediate(col);
+                var mf = go.GetComponent<MeshFilter>(); if (mf == null) mf = go.AddComponent<MeshFilter>(); mf.sharedMesh = mesh;
+                var mr = go.GetComponent<MeshRenderer>(); if (mr == null) mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterial = mat; mr.enabled = true;
+                mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.receiveShadows = true;
+                renderers[k] = mr;
+            }
+            disc.faceRenderers = renderers;
         }
 
         // Pose facts (from both clip JSONs) and the code-owned tuning; neighbours / play area are the caller's.
@@ -503,6 +587,45 @@ namespace KominkaHillside.Editor
             if (bad.Count > 0) throw new InvalidOperationException("Frisbee facts / clips not usable (run Frisbee/2 Build Jump Clip first): " + string.Join(" | ", bad));
         }
 
+        // IMP-DOG-018: what Build promised about one disc's face prints; empty when all is well. Public so another
+        // builder's Verify (the world scene discs) can reuse it.
+        public static string FaceProblems(KH_Frisbee disc, string key)
+        {
+            var bad = new System.Collections.Generic.List<string>();
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(FaceMeshPath);
+            if (mesh == null) bad.Add("mesh " + FaceMeshPath + " missing");
+            var found = new Renderer[FaceChildren.Length];
+            for (int k = 0; k < FaceChildren.Length; k++)
+            {
+                var t = disc.transform.Find(FaceChildren[k]);
+                if (t == null) { bad.Add(FaceChildren[k] + " missing"); continue; }
+                if (disc.transform.Cast<Transform>().Count(c => c.name == FaceChildren[k]) != 1) bad.Add(FaceChildren[k] + " duplicated");
+                var mf = t.GetComponent<MeshFilter>(); var mr = t.GetComponent<MeshRenderer>(); found[k] = mr;
+                if (mf == null || mf.sharedMesh != mesh || mesh == null) bad.Add(FaceChildren[k] + " does not use " + FaceMeshPath);
+                if (mr == null || !mr.enabled) { bad.Add(FaceChildren[k] + " has no enabled MeshRenderer"); continue; }
+                var mat = mr.sharedMaterial;
+                if (mat == null || AssetDatabase.GetAssetPath(mat) != FaceMaterialPathFor(key)) bad.Add(FaceChildren[k] + " material is not " + FaceMaterialPathFor(key));
+                else if (mat.mainTexture == null) bad.Add(FaceMaterialPathFor(key) + " has no texture (Frisbee/6, then Build)");
+                else
+                {
+                    string tp = AssetDatabase.GetAssetPath(mat.mainTexture), why;
+                    if (tp != KH_DogFaceCaptureEditor.TexturePathFor(key)) bad.Add("texture is " + tp + ", expected " + KH_DogFaceCaptureEditor.TexturePathFor(key));
+                    else if (!KH_DogFaceCaptureEditor.ImporterOk(tp, out why)) bad.Add(tp + " importer: " + why);
+                }
+                if (t.GetComponents<Collider>().Length > 0) bad.Add(FaceChildren[k] + " carries a collider");
+                if (t.gameObject.layer != disc.gameObject.layer) bad.Add(FaceChildren[k] + " layer " + t.gameObject.layer + " != disc " + disc.gameObject.layer);
+                float facing = Vector3.Dot(t.up, disc.transform.up);
+                if (k == 0 ? facing < .99f : facing > -.99f) bad.Add(FaceChildren[k] + " faces the wrong way (up . disc up = " + facing.ToString("F2") + ")");
+                float across = (t.lossyScale.x + t.lossyScale.z) * .5f;
+                if (Mathf.Abs(across - FaceDiameter) > .005f) bad.Add(FaceChildren[k] + " is " + across.ToString("F3") + " m across, expected " + FaceDiameter.ToString("F3"));
+            }
+            if (disc.faceRenderers == null || disc.faceRenderers.Length != FaceChildren.Length || !disc.faceRenderers.SequenceEqual(found)) bad.Add("KH_Frisbee.faceRenderers (proxy) is not FaceTop / FaceBottom");
+            var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(disc);
+            if (backing == null || !backing.publicVariables.TryGetVariableValue("faceRenderers", out Renderer[] bfr) || bfr == null || !bfr.SequenceEqual(found))
+                bad.Add("backing heap faceRenderers is not FaceTop / FaceBottom (Build copies the proxy)");
+            return string.Join("; ", bad);
+        }
+
         [MenuItem("Tools/KominkaHillside/Frisbee/5 Verify")]
         public static void Verify()
         {
@@ -513,6 +636,15 @@ namespace KominkaHillside.Editor
             {
                 var asset = AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>("Assets/KominkaHillside/Scripts/" + name + ".asset");
                 Check(asset != null && asset.sourceCsScript != null, "program asset " + name);
+            }
+            // IMP-DOG-018: the six captured face pictures (Frisbee/6), each at most 256 on every platform.
+            foreach (string key in KH_DogWalkingEditor.FrisbeeKeys)
+            {
+                string fp = KH_DogFaceCaptureEditor.TexturePathFor(key);
+                var ft = AssetDatabase.LoadAssetAtPath<Texture2D>(fp);
+                string why = "missing";
+                Check(ft != null && KH_DogFaceCaptureEditor.ImporterOk(fp, out why) && Mathf.Max(ft.width, ft.height) <= KH_DogFaceCaptureEditor.Size,
+                    "face picture " + fp + (ft == null ? " missing (run Frisbee/6 Capture Dog Faces)" : " " + ft.width + "x" + ft.height + ", importer " + why));
             }
             var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(KH_FrisbeeJumpClipEditor.ClipPath);
             Check(clip != null, "clip exists " + KH_FrisbeeJumpClipEditor.ClipPath);
@@ -673,6 +805,8 @@ namespace KominkaHillside.Editor
                         "lane " + breed + ": dog stands at the lane's copy of the Lab spot (x " + (dx + 1.5f).ToString("F1") + ", z 6.5, y 0)");
                     Check(lc.variant == KH_FrisbeeCatch.VariantNormal && lc.pendingVariant == -1 && lc.debugHeldOverride == 0 && lc.playAreaRadius == 0f,
                         "lane " + breed + ": variant Normal, nothing queued, held override 0, no play area (same as the Lab lane)");
+                    string faceProblem = FaceProblems(ld, breed);
+                    Check(faceProblem.Length == 0, "lane " + breed + ": FaceTop / FaceBottom prints of " + breed + " on " + ld.name + (faceProblem.Length == 0 ? "" : " -- " + faceProblem));
                 }
                 if (catcher != null && disc != null)
                 {

@@ -2,12 +2,20 @@
 id: DES-DOG-003
 type: DES
 system: DOG
-status: todo
+status: review
 priority: Medium
-summary: 体験会 (2026-09-26) で「広場のリード置き場が遠い」。同日に広場中心の拠点を撤去し見晴らしの拠点 (広場中心から約 22 m) が広場を兼ねる決定をしたので、広場の縁に拠点を戻すか・見晴らしの拠点を寄せるかを決め直す
-next: 広場の縁 (通行・おもちゃ・眺めを邪魔しない位置) の候補を 2 つ出してユーザーが選ぶ。決めたら game-design §4 の 2026-09-26 決定を更新する
+summary: 体験会 (2026-09-26) で「広場のリード置き場が遠い」。同日夜に決定: 広場の拠点を広場の縁に戻す (3 拠点 × 左右 1 本)。Build が初回だけ縁に置き、位置はユーザーが手で微調整する。実装・Verify 済み、位置の手調整と PCVR 確認待ち
+next: ユーザーが Unity で KH_Station_Plaza の位置を広場の縁で微調整 (中心から 6〜12.5 m の帯内。Build は Crossbar があれば位置を触らない) → PCVR で遠くないか確認。OK なら done
 updated: 2026-09-26
 ---
+
+決定: 2026-09-26 夜 (ユーザー) 「広場の真ん中にあったので、広場のちょっと縁かな。場所は手動で調整する」。→ 広場の縁に拠点を戻し、位置の微調整はユーザーが Unity で行う。仕様は [game-design §4](../../game-design.md#集合と拠点のリード) の決定行 (2026-09-26 夜)。
+
+## 実装 (2026-09-26 夜)
+
+- [KH_DogWalkingEditor.cs](../../../Assets/KominkaHillside/Scripts/Editor/KH_DogWalkingEditor.cs): `PlazaStation` を復活。`Walking/3 Build` は `KH_Station_Plaza` に Crossbar が無いときだけ広場の縁 (中心から 10 m、おもちゃの置き場の反対側、中心向き) に置く。以後は人の配置を尊重する。3 拠点 × SlotL / SlotR に戻し、27e703f の 4 枠 (SlotL2 / SlotR2) は削除。メニュー板 (`MenuPlate`) は見晴らしのものを複製
+- Verify (`Walking/5 Verify`): 3 拠点の枠、古い 4 枠が無いこと、広場の拠点が中心から 6〜12.5 m にあること
+- `KD_TreatSetupEditor.Hillside.cs` の `OpenerStations` と `KD_SleepSetupEditor.cs` の実測対象を 3 拠点に
 
 # DES-DOG-003 広場のリード拠点の位置を決め直す
 

@@ -23,7 +23,7 @@ namespace KominkaDogRun.Editor
         public const string ToyRecallName = "KH_ToyRecall";
         public const string LegacyHandMenuName = "KH_HandMenu";
         /// <summary>拠点の「メニューをひらく」板の親 (KH_Dogs 直下)。子の名前は MenuPlate。</summary>
-        public static readonly string[] OpenerStations = { "KH_LeashRack", "KH_Station_Viewpoint" };
+        public static readonly string[] OpenerStations = { "KH_LeashRack", "KH_Station_Viewpoint", "KH_Station_Plaza" }; // 2026-09-26 夜: 広場の縁の拠点を復活 (DES-DOG-003)。KH_DogWalkingEditor.StationNames と同じ並び
         public const string OpenerPlateName = "MenuPlate";
         /// <summary>段階 2 (IMP-DOG-014 おやつ / 015 かざり・撫でFX・ミニチュア / 016 呼ぶ・ポーズ・場所決め)。
         /// 1 = IMP-PRG-001 (台帳・カタログ・残高・ポイントの面・ようこそ最小版)、0 = 段階 0-b。

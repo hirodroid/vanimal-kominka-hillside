@@ -50,6 +50,8 @@ namespace KominkaHillside
         [Tooltip("Swapped in while held by the local player so the preview line shows through the disc")]
         public Renderer discRenderer;
         public Material discMaterial, discHeldMaterial;
+        [Tooltip("IMP-DOG-018: the dog face prints (FaceTop / FaceBottom). Hidden for the holder while held, like the see-through disc (set by Build)")]
+        public Renderer[] faceRenderers;
         public LineRenderer aimLine;
         public Transform aimMarker;
         [Header("Play area feedback (Codex U/V/P review 2026-09-21; values are provisional until Play)")]
@@ -246,6 +248,7 @@ namespace KominkaHillside
         {
             _charging = false; _hasPendingThrow = false; _heldLocal = true; _lookAxis = 0f;
             if (discRenderer != null && discHeldMaterial != null) discRenderer.sharedMaterial = discHeldMaterial; // local: the holder sees through it
+            SetFacesVisible(false); // local: the opaque face prints would block the see-through disc
             bool wasFlying = _flying;
             _flying = false;
             if (_sync != null)
@@ -255,6 +258,17 @@ namespace KominkaHillside
                 _sync.SetKinematic(false);
             }
             if (wasFlying) NotifyEnd(EndGrabbed);
+        }
+
+        // IMP-DOG-018: local only (Renderer.enabled is not synced). Null entries are skipped.
+        void SetFacesVisible(bool visible)
+        {
+            if (faceRenderers == null) return;
+            for (int i = 0; i < faceRenderers.Length; i++)
+            {
+                Renderer r = faceRenderers[i];
+                if (r != null) r.enabled = visible;
+            }
         }
 
         float AimSpeedNow() { return Mathf.Lerp(aimSpeedMin, aimSpeedMax, _aimPower); }
@@ -432,6 +446,7 @@ namespace KominkaHillside
         {
             _heldLocal = false;
             if (discRenderer != null && discMaterial != null) discRenderer.sharedMaterial = discMaterial;
+            SetFacesVisible(true);
             _checksRemaining = throwCheckFrames; _maxObservedSpeed = 0f;
             SendCustomEventDelayedFrames(nameof(_CheckThrow), 1);
         }

@@ -21,8 +21,11 @@ namespace KominkaHillside.Editor
         const string WorldScene = "Assets/Scenes/VRCDefaultWorldScene.unity";
         const string SourceScene = "Assets/KominkaHillside/Imported/KH_DogPortSource.unity";
         const string Data = "Assets/KominkaHillside/Data/Walking";
-        // Retired 2026-09-26 (the viewpoint rack serves the plaza). Build deletes it; Verify checks it is gone.
-        public const string RetiredPlazaStation = "KH_Station_Plaza";
+        // Plaza station: retired 2026-09-26 morning (in the way at the plaza centre), brought back the same evening
+        // at the plaza EDGE after the group playtest found the viewpoint rack too far (DES-DOG-003). Placement is
+        // human-owned once the rack exists (the user nudges it by hand); Build only places it the first time.
+        public const string PlazaStation = "KH_Station_Plaza";
+        static readonly string[] StationNames = {"KH_LeashRack","KH_Station_Viewpoint",PlazaStation};
         static readonly string[] Keys = {"Corgi","Pome","Lab","Dachs","Shiba","Samoyed"};
         // Same Product (ownership) and Listing (purchase page) as KominkaDogRun (world-ui-spec section 6). Asset copied with its GUID.
         public const string TrainerProductPath="Assets/KominkaHillside/Data/CE/KD_Product_Trainer.asset";
@@ -292,8 +295,7 @@ namespace KominkaHillside.Editor
             var wood=Mat("KH_RackWood",new Color(.32f,.19f,.10f));
             var rack=Child(root.transform,"KH_LeashRack");
             if(initial)rack.position=new Vector3(45,Ground(45,43)+.8f,43);
-            var retired=root.transform.Find(RetiredPlazaStation);if(retired!=null)UnityEngine.Object.DestroyImmediate(retired.gameObject);
-            var stations=new Transform[]{rack,Child(root.transform,"KH_Station_Viewpoint")};
+            var stations=new Transform[]{rack,Child(root.transform,"KH_Station_Viewpoint"),Child(root.transform,PlazaStation)};
             // Initial placement comes from the terrain places, so build order does not matter.
             var placesRoot=GameObject.Find("KH_World");
             if(placesRoot==null)throw new InvalidOperationException("KH_World (terrain places) is required to place stations.");
@@ -303,16 +305,31 @@ namespace KominkaHillside.Editor
                 var rot=Quaternion.Euler(0f,45f,0f);Vector3 p=place.position+new Vector3(2.4f,0f,1.2f)+rot*new Vector3(1.3f,0f,0f);
                 stations[1].rotation=rot;stations[1].position=new Vector3(p.x,Ground(p.x,p.z)+.8f,p.z);
             }
-            // Tool i rests at slot (i/3)*3+(i%3): column 0 on the entrance rack, columns 1 and 2 on the viewpoint rack
-            // (four slots there, clear of the menu plate at x=.45).
-            manager.stationSlots=new Transform[6];manager.slotHand=new int[6];manager.stationOf=new int[6];
-            foreach(var st in stations)KH_LeashModelsEditor.MakeRack(st,wood);
-            string[] slotName={"SlotL","SlotL2","SlotR","SlotR2"};
-            for(int h=0;h<2;h++)for(int c=0;c<3;c++)
+            if(stations[2].Find("Crossbar")==null) // plaza EDGE (DES-DOG-003): 10 m from the centre (r=12) on the side away from the toys, facing inward
             {
-                int s=c==0?0:1;var slot=Child(stations[s],slotName[h*2+(c==2?1:0)]);
-                float x=s==0?.2f:(c==1?.11f:.33f);slot.localPosition=new Vector3(h==0?-x:x,0f,0f);slot.localRotation=Quaternion.identity;
-                int k=h*3+c;manager.stationSlots[k]=slot;manager.slotHand[k]=h;manager.stationOf[k]=s;
+                float cx=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],cz=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1];
+                Vector3 centre=new Vector3(cx,0f,cz);Vector3 p=centre+new Vector3(-.6f,0f,-.8f)*10f;
+                stations[2].rotation=Quaternion.LookRotation(new Vector3(centre.x-p.x,0f,centre.z-p.z));stations[2].position=new Vector3(p.x,Ground(p.x,p.z)+.8f,p.z);
+            }
+            // The "open the menu" plate (KH_MenuOpener, human-owned since KH_HandMenuEditor retired) is copied from the viewpoint
+            // rack once; KD_TreatSetupEditor (Menu) wires it to the pouch and its Verify counts OpenerStations (3).
+            if(stations[2].Find("MenuPlate")==null)
+            {
+                var srcPlate=stations[1].Find("MenuPlate");
+                if(srcPlate!=null){var copy=UnityEngine.Object.Instantiate(srcPlate.gameObject,stations[2]);copy.name="MenuPlate";copy.transform.localPosition=srcPlate.localPosition;copy.transform.localRotation=srcPlate.localRotation;copy.transform.localScale=srcPlate.localScale;}
+                else Debug.LogWarning("[KH_DogWalking] viewpoint MenuPlate not found; the plaza station has no menu plate (run Menu wiring after placing one)");
+            }
+            // Tool i rests at slot (i/3)*3+(i%3): hand = i/3 (0 left, 1 right), station = i%3 (entrance / viewpoint / plaza), one slot per side.
+            manager.stationSlots=new Transform[6];manager.slotHand=new int[6];manager.stationOf=new int[6];
+            foreach(var st in stations)
+            {
+                KH_LeashModelsEditor.MakeRack(st,wood);
+                foreach(string stale in new[]{"SlotL2","SlotR2"}){var t=st.Find(stale);if(t!=null)UnityEngine.Object.DestroyImmediate(t.gameObject);} // four-slot viewpoint layout of 27e703f
+            }
+            for(int h=0;h<2;h++)for(int s=0;s<3;s++)
+            {
+                var slot=Child(stations[s],h==0?"SlotL":"SlotR");slot.localPosition=new Vector3(h==0?-.2f:.2f,0f,0f);slot.localRotation=Quaternion.identity;
+                int k=h*3+s;manager.stationSlots[k]=slot;manager.slotHand[k]=h;manager.stationOf[k]=s;
             }
             var tools=Child(root.transform,"KH_LeashTools");
             for(int i=0;i<6;i++)
@@ -458,6 +475,7 @@ namespace KominkaHillside.Editor
             {
                 string key=Keys[i];bool wanted=Array.IndexOf(FrisbeeKeys,key)>=0;var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+key);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+key);var p=Find<KD_DogPetController>(root,"KD_PetSystem_"+key);
                 var ct=root.transform.Find("KH_FrisbeeCatch_"+key);var dt=root.transform.Find("KH_Frisbee_"+key);
+                if(wanted&&dt!=null){string faceProblems=KH_FrisbeePrototypeEditor.FaceProblems(dt.GetComponent<KH_Frisbee>(),key);Check(string.IsNullOrEmpty(faceProblems),"disc "+key+" carries the dog face top and bottom (IMP-DOG-018)"+(string.IsNullOrEmpty(faceProblems)?"":": "+faceProblems));}
                 // IMP-DOG-008 wave 2: only the frisbee dogs lose the 追従GIMMICK body-follow ParentConstraint, so the
                 // change stays scoped - the other five must still have it (their body trails the root as bought).
                 if(!wanted){Check(ct==null&&dt==null&&w.frisbeeCatch==null&&f.frisbeeCatch==null&&(m.frisbeeCatchers==null||m.frisbeeCatchers[i]==null)&&(act.frisbeeCatchers==null||act.frisbeeCatchers[i]==null),"no disc for "+key+" yet (deliberate)");
@@ -637,9 +655,10 @@ namespace KominkaHillside.Editor
                 Check(callers.Length==1&&callers[0]=="KH_LeashHaptics.cs","PlayHapticEventInHand called from KH_LeashHaptics.cs only ("+string.Join(", ",callers)+")");
             }
             bool slotsOk=m.stationSlots!=null&&m.stationSlots.Length==6&&m.stationSlots.All(x=>x!=null)&&m.stationSlots.Distinct().Count()==6&&m.slotHand.All(h=>h==0||h==1)
-                &&m.stationOf.All(s=>s==0||s==1)&&Enumerable.Range(0,2).All(s=>Enumerable.Range(0,2).All(h=>Enumerable.Range(0,6).Count(k=>m.stationOf[k]==s&&m.slotHand[k]==h)==(s==0?1:2)))
-                &&Enumerable.Range(0,6).All(k=>m.stationSlots[k].parent==new[]{root.transform.Find("KH_LeashRack"),root.transform.Find("KH_Station_Viewpoint")}[m.stationOf[k]]);
-            Check(slotsOk,"two stations: entrance rack 1 left + 1 right, viewpoint rack 2 left + 2 right, slots parented to their station");
+                &&m.stationOf.All(s=>s>=0&&s<3)&&Enumerable.Range(0,3).All(s=>Enumerable.Range(0,2).All(h=>Enumerable.Range(0,6).Count(k=>m.stationOf[k]==s&&m.slotHand[k]==h)==1))
+                &&Enumerable.Range(0,6).All(k=>m.stationSlots[k].parent==root.transform.Find(StationNames[m.stationOf[k]]));
+            Check(slotsOk,"three stations (entrance / viewpoint / plaza edge): 1 left + 1 right each, slots parented to their station");
+            Check(StationNames.All(st=>{var t=root.transform.Find(st);return t!=null&&t.Find("SlotL2")==null&&t.Find("SlotR2")==null;}),"no stale four-slot layout (SlotL2 / SlotR2) left on any station");
             bool toolsHome=true;for(int i=0;i<6;i++){var c=m.localClips[i];if(c==null||c.desktopHand!=i/3||Vector3.Distance(c.transform.position,m.stationSlots[(i/3)*3+(i%3)].position)>.01f)toolsHome=false;}
             Check(toolsHome&&m.localClips.Select(c=>c.transform.position).Distinct().Count()==6,"six tools rest one per slot with matching side, no two at one spot");
             Check(act!=null&&act.gameObject==m.gameObject,"gather authority shares the manager GameObject (single Owner)");
@@ -647,8 +666,12 @@ namespace KominkaHillside.Editor
             Check(desc.NetworkIDCollection.Select(x=>x.ID).Distinct().Count()==desc.NetworkIDCollection.Count&&desc.NetworkIDCollection.Where(x=>x.gameObject!=null).Select(x=>x.gameObject).Distinct().Count()==desc.NetworkIDCollection.Count(x=>x.gameObject!=null),"NetworkIDs unique per ID and per GameObject");
             var networked=root.GetComponentsInChildren<VRCObjectSync>(true).Select(x=>x.gameObject).Concat(root.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true).Where(u=>u.SyncMethod!=Networking.SyncType.None).Select(u=>u.gameObject)).Distinct().ToArray();
             Check(networked.All(g=>desc.NetworkIDCollection.Any(x=>x.gameObject==g)),"every synced object under KH_Dogs has a NetworkID ("+networked.Length+")");
-            Check(root.transform.Find(RetiredPlazaStation)==null,"plaza-centre station retired");
-            foreach(var st in new[]{"KH_LeashRack","KH_Station_Viewpoint"}){var t=root.transform.Find(st);Check(t!=null&&t.Find("Crossbar")!=null&&Mathf.Abs(t.position.y-.8f-Ground(t.position.x,t.position.z))<.3f,"station "+st+" placed at rack height");}
+            foreach(var st in StationNames){var t=root.transform.Find(st);Check(t!=null&&t.Find("Crossbar")!=null&&Mathf.Abs(t.position.y-.8f-Ground(t.position.x,t.position.z))<.3f,"station "+st+" placed at rack height");}
+            {   // DES-DOG-003: the plaza station sits on the plaza flat but not at its centre (edge band 6..12 m; the user may nudge it within that band)
+                var t=root.transform.Find(PlazaStation);float cx=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],cz=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1];
+                float d=t==null?-1f:Vector2.Distance(new Vector2(t.position.x,t.position.z),new Vector2(cx,cz));
+                Check(d>=6f&&d<=12.5f,"plaza station on the plaza edge, not the centre (distance from centre "+d.ToString("F1")+" m, expected 6..12.5)");
+            }
             Check(root.transform.Find(KH_WalkRouteEditor.RetiredSignsRoot)==null,"temporary destination signs removed (destinations live in the hand menu)");
             int missing=root.GetComponentsInChildren<Transform>(true).Sum(t=>GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(t.gameObject));
             Check(missing==0,"no missing scene scripts");
