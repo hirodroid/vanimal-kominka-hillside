@@ -103,7 +103,9 @@ namespace KominkaHillside
                     + " slack=" + _planSlack.ToString("F2") + " eta=" + _planEta.ToString("F2")
                     + " entry=" + EntryAngle().ToString("F0") + " v=" + variant
                     // Which pose facts this plan was aimed with: the twist set is the one under suspicion (v4).
-                    + (_twist ? " facts=(" + _mouthCatch.x.ToString("F3") + "," + _mouthCatch.y.ToString("F3") + "," + _mouthCatch.z.ToString("F3") + ")" : ""));
+                    + (_twist ? " facts=(" + _mouthCatch.x.ToString("F3") + "," + _mouthCatch.y.ToString("F3") + "," + _mouthCatch.z.ToString("F3") + ")" : "")
+                    // IMP-DOG-017: when (flight time), where and how fast the dog was when it changed its mind.
+                    + DogTag() + " tNow=" + tNow.ToString("F2") + " dogV=" + _speed.ToString("F2") + " dogPos=" + V3(dogPos));
                 _loggedRunning = _runningCatch; _loggedMode = _mode;
             }
             _plan = chosen;

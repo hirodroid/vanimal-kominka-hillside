@@ -24,7 +24,30 @@ namespace KominkaHillside
                 + " ahead=" + Vector3.Dot(rel, dir).ToString("F1")
                 + " lateral=" + (lateral >= 0f ? "+" : "") + lateral.ToString("F1")
                 + " dogDist=" + Vector3.Distance(dogRoot.position, p0).ToString("F1")
-                + " curve=" + curve.ToString("F2"));   // the throw's own bend; every prediction below uses this value
+                + " curve=" + curve.ToString("F2")    // the throw's own bend; every prediction below uses this value
+                // IMP-DOG-017: enough to replay the throw offline. p0 / v0 are the launch facts every prediction uses;
+                // relH is the release height above the ground under the hand (0 = no ground hit), elev the launch
+                // angle above horizontal, dogHdg the dog's heading against the throw (0 = facing downfield,
+                // +-180 = facing the thrower). Appended at the end: the harness reads the columns before it.
+                + DogTag() + " gen=" + _gen + " p0=" + V3(p0) + " v0=" + V3(v0)
+                + " relH=" + (p0.y - SnapToGround(p0).y).ToString("F2")
+                + " elev=" + (Mathf.Atan2(v0.y, flat.magnitude) * Mathf.Rad2Deg).ToString("F1")
+                + " dogPos=" + V3(dogRoot.position) + " dogHdg=" + HeadingAgainst(dir).ToString("F0"));
+        }
+
+        // IMP-DOG-017: which dog wrote the line. Several dogs chase at once, and without this the lines of two
+        // throws in flight interleave with nothing to tell them apart (PCVR 2026-09-25).
+        string DogTag() { return " dog=" + dogRoot.name; }
+
+        string V3(Vector3 v) { return "(" + v.x.ToString("F3") + "," + v.y.ToString("F3") + "," + v.z.ToString("F3") + ")"; }
+
+        // Signed horizontal angle from dir to the dog's forward, degrees (positive = the dog is turned to the right).
+        float HeadingAgainst(Vector3 dir)
+        {
+            Vector3 f = dogRoot.forward; f.y = 0f;
+            if (f.sqrMagnitude < 1e-6f) return 0f;
+            f = f.normalized;
+            return Mathf.Atan2(Vector3.Dot(Vector3.Cross(dir, f), Vector3.up), Vector3.Dot(dir, f)) * Mathf.Rad2Deg;
         }
 
         // BUG-DOG-003. One line per event, never per frame. kind carries its own padding so the columns line up.
@@ -36,7 +59,7 @@ namespace KominkaHillside
             s = s + "path=" + (local ? "local" : "net") + " thrower=" + thrower + " gen=" + gen + " age=" + ((float)age).ToString("F2");
             if (heldFor >= 0f) s = s + " ageAtReceipt=" + ((float)ageAtReceipt).ToString("F2") + " heldFor=" + heldFor.ToString("F2");
             s = s + " held=" + (held ? "true" : "false") + " ended=" + (ended ? endReason : 0) + " state=" + state
-                + " owner=" + OwnerIdOf(dogRoot.gameObject) + "/" + OwnerIdOf(gameObject) + "/" + OwnerIdOf(frisbee.gameObject);
+                + " owner=" + OwnerIdOf(dogRoot.gameObject) + "/" + OwnerIdOf(gameObject) + "/" + OwnerIdOf(frisbee.gameObject) + DogTag();
             Debug.Log(s);
         }
 
@@ -66,7 +89,7 @@ namespace KominkaHillside
         void LogEnd(int reason, int sender, int gen, double opTime, string target)
         {
             Debug.Log("[KH_FrisbeeCatch] req end      reason=" + reason + " sender=" + sender + " gen=" + gen
-                + " opAge=" + ((float)(Networking.GetServerTimeInSeconds() - opTime)).ToString("F2") + " target=" + target);
+                + " opAge=" + ((float)(Networking.GetServerTimeInSeconds() - opTime)).ToString("F2") + " target=" + target + DogTag());
         }
 
         void LogReject(string reason, bool local, int thrower, int gen, double age)
@@ -89,7 +112,7 @@ namespace KominkaHillside
             Debug.Log("[KH_FrisbeeCatch] etaErr=" + (err >= 0f ? "+" : "") + err.ToString("F2")
                 + " est=" + _planEta.ToString("F2") + " actual=" + actual.ToString("F2")
                 + " at=" + at + " mode=" + ModeName() + " path=" + _planPath.ToString("F1")
-                + " slack=" + _planSlack.ToString("F2") + " dist=" + off.magnitude.ToString("F2") + " v=" + variant);
+                + " slack=" + _planSlack.ToString("F2") + " dist=" + off.magnitude.ToString("F2") + " v=" + variant + DogTag());
         }
 
         // ---- Motion quality (round 4). Owner-only, Chase only; the harness reads the two numbers off the log. ----
@@ -196,7 +219,7 @@ namespace KominkaHillside
             return MotionTail() + " v=" + variant + " entry=" + EntryAngle().ToString("F0")
                 + " mouthLocal=(" + ml.x.ToString("F3") + "," + ml.y.ToString("F3") + "," + ml.z.ToString("F3") + ")"
                 + " rootFwd=" + Vector3.Angle(dogRoot.forward, _forward).ToString("F0")
-                + " clipT=" + (si.normalizedTime * si.length).ToString("F3") + " animSpd=" + dogAnimator.speed.ToString("F2");
+                + " clipT=" + (si.normalizedTime * si.length).ToString("F3") + " animSpd=" + dogAnimator.speed.ToString("F2") + DogTag();
         }
 
         // ---- Harness read-outs (IMP-DOG-012). Read-only views of the planner cost counters (declared in the main file,

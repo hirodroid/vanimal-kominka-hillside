@@ -354,7 +354,7 @@ namespace KominkaHillside
             Debug.Log("[KH_FrisbeeCatch] takeoff v=" + variant
                 + " settled=" + (_settledSince < 0f ? -1f : Time.time - _settledSince).ToString("F2")
                 + " off=" + offTo.magnitude.ToString("F2")
-                + " face=" + _faceErrAtTakeoff.ToString("F0") + MotionTail());
+                + " face=" + _faceErrAtTakeoff.ToString("F0") + MotionTail() + DogTag());
             TransitionTo(StateJump);
         }
 
