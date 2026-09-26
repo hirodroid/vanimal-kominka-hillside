@@ -34,7 +34,7 @@ namespace KominkaHillside
                 if (catcher != null)
                 {
                     int cur = catcher.PendingVariant >= 0 ? catcher.PendingVariant : catcher.Variant;
-                    catcher._RequestVariant((cur + 1) % KH_FrisbeeCatch.VariantCount);
+                    catcher._RequestVariant(KH_FrisbeeCatch.NextVariant(cur));   // skips the retired v1 / v2 (2026-09-26)
                 }
                 return;
             }

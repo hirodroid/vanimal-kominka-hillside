@@ -30,7 +30,7 @@ node scripts/kh-frisbee-harness.cjs status    # latest.json の要約 (PASS な�
 node scripts/kh-frisbee-harness.cjs stop      # 停止フラグ + メニューの停止
 ```
 
-モードは 3 つ。既定は下の 36 投げ + 位置取りの 2 投げ (IMP-DOG-017、`--shots` を省略すると 38)、`--mode=netorder` は
+モードは 3 つ。既定は 4 プリセット (v0 / v3 / v4 / v5) x 下の 6 投げ = 24 投げ + 位置取りの 2 投げ = **26 投げ** (IMP-DOG-017、`--variants` / `--shots` を省略したとき)、`--mode=netorder` は
 [ネット順序モード](#ネット順序モード---modenetorder-bug-dog-003) の 5 ケース x 2 周 = 10 投げ、
 `--mode=sixdogs` は [6 匹同時の負荷](#6-匹同時の負荷---modesixdogs-imp-dog-012) (IMP-DOG-012)。
 既定モードと netorder は `--breed=<Key>` で[犬種のレーン](#犬種のレーン---breed-imp-dog-012)を選ぶ (既定 Lab)。
@@ -64,13 +64,14 @@ Unity 側が起動時に 1 度だけ読む。Unity のメニュー
 全体の選択条件はCLIから明示し、実行後のreportで予定ケースを照合する。メニュー直実行は前回optionsが残るので全体実行の保証にならない。
 
 ```bash
-node scripts/kh-frisbee-harness.cjs start --mode=default --variants=0,1,2,3,4,5 --shots=flat,mid,lob,low,far,side
-node scripts/kh-frisbee-harness.cjs start --mode=default --shots=beside,chase
+node scripts/kh-frisbee-harness.cjs start --mode=default --variants=0,3,4,5 --shots=flat,mid,lob,low,far,side,beside,chase
 node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=2
 ```
 
-1 行目が従来の 36 投げ (比較できる基準)。2 行目は IMP-DOG-017 の位置取りの 2 投げで、`--variants` に関係なく各 1 回。
-`--shots` を省略すると 1 回の実行で両方 (38 投げ) を流す。
+1 行目は 4 プリセット x 6 投げ = 24 投げ + 位置取りの 2 投げ (`--variants` に関係なく各 1 回) = 26 投げ。
+**v1 (走り込み: 横) / v2 (走り込み: 遠く) は 2026-09-26 に退役** (IMP-DOG-017。番号は残り、切替台と手元メニューは飛ばす)。
+既定の一覧には入らないが、`--variants=1` / `2` と明示すれば流せる (trace と start の `plan` に `retired` の注記が付く)。
+退役前の記録 (36 投げ = 6 プリセット x 6) と比べるときは v0 / v3 / v4 / v5 の行だけを比べる。
 
 この2コマンドは各runの終了・復旧を確認してから順に実行する。同じコード・条件の合格を修正のたびに取り直さない。失敗時は再現条件を絞って原因を調べ、変更前からの失敗は証拠付きで別件へ残す。今回の回帰や必須条件の失敗を既知扱いで除外せず、期待値を緩めて通さない。
 
@@ -78,7 +79,7 @@ node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=2
 
 1. 今開いているシーンのパスを覚え、**未変更であることを確認**してからプロトタイプシーンを単独で開く。
 2. Play へ入り、ClientSim のローカルプレイヤーが出るまで待つ (30 秒で打ち切り)。
-3. プリセット `v` = 0..5 それぞれについて、次の 6 投げを順に流す (合計 36 投げ)。
+3. プリセット `v` = 0 / 3 / 4 / 5 それぞれについて、次の 6 投げを順に流す (合計 24 投げ。退役の v1 / v2 は明示したときだけ)。
 
    | 投げ | speed | elevationDeg | sideDeg | 想定内の結果 | 期待する終わり方 (`expectKind`) |
    |------|-------|--------------|---------|--------------|--------------|
@@ -137,7 +138,7 @@ node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=2
 
 ## 結果の読み方
 
-以下は既定モード (36 投げ) の話。`--mode=netorder` の読み方は
+以下は既定モード (26 投げ。退役前は 36) の話。`--mode=netorder` の読み方は
 [ネット順序モード](#ネット順序モード---modenetorder-bug-dog-003) を見る
 (`status` は `PASS` / `FAIL` / `BLOCKED` の意味だけ共通)。
 
@@ -215,7 +216,7 @@ node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=2
 
 - 1 投げ: 判定の窓 16 秒 + 番犬 18 秒 (投げてから判定まで。プリセット合わせと片付けは含まない)。
 - 全体: 240 秒を下限に、**計画した投げ数 x 28 秒 + 30 秒**。
-  6 プリセット x 6 投げ = 36 投げの全面実行は 240 秒では収まらないため
+  既定の 26 投げ (退役前は 6 プリセット x 6 投げ = 36 投げ) の全面実行は 240 秒では収まらないため
   (1 投げで走って跳んで咥えて戻すまで 6-14 秒かかる)、既定でこの式を使う。
   `--budget` で上書きできる。上限に当たった実行は `BLOCKED` で、そこまでの投げは残る。
 - Editor が一時停止 (Pause) された場合も自動再開はせず打ち切る。

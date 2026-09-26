@@ -46,6 +46,8 @@ const PER_VARIANT = SHOTS.filter(s => s.variant < 0).length;
 const FIXED = SHOTS.filter(s => s.variant >= 0).length;
 // IMP-DOG-012: 試作シーンのレーン (KH_FrisbeePrototypeEditor.LaneBreeds = KH_FrisbeeJumpClipEditor.Breeds と同じ順)。
 const BREEDS = ['Corgi', 'Pome', 'Lab', 'Dachs', 'Shiba', 'Samoyed'];
+// IMP-DOG-017 (2026-09-26): v1 / v2 は退役 (retired)。--variants を省略すると流さない (0,3,4,5)。明示すれば流せる。
+const RETIRED = [1, 2];
 const VARIANTS = [
   { v: 0, name: 'Normal' }, { v: 1, name: 'RunInSide' }, { v: 2, name: 'RunInFar' },
   { v: 3, name: 'RunInBeside' }, { v: 4, name: 'Twist' }, { v: 5, name: 'Curve' },
@@ -176,7 +178,9 @@ function start() {
       ? `${NET_CASES.length} cases x ${options.repeats} repeats = ${NET_CASES.length * options.repeats} throws (${NET_CASES.map(c => c.name).join(', ')})`
       : mode === 'sixdogs'
         ? `${options.repeats} rounds x (Lab only + ${BREEDS.length} dogs at once) = ${options.repeats * (1 + BREEDS.length)} dog-throws, shot flat, v0`
-        : `lane ${breed}`,
+        : `lane ${breed}` + (mode === "default" && (arg("variants") || "").split(",").some(v => RETIRED.includes(Number(v.trim())) && v.trim() !== "")
+          ? ` (NOTE: retired preset(s) ${(arg("variants") || "").split(",").map(v => v.trim()).filter(v => v !== "" && RETIRED.includes(Number(v))).map(v => "v" + v).join(",")} requested explicitly - IMP-DOG-017, not in the default list)`
+          : ""),
     note: 'Unity が Play へ入り、終わると Edit モードへ戻る。結果は status で読む。受付は PASS ではない。'
       + (mode === 'netorder'
         ? ' netorder は捕り手の debugHeldOverride を 0/1 に切り替えて req の行の順序を測る。捕り手にその変数が無ければ BLOCKED (FAIL ではない)。'
@@ -317,7 +321,8 @@ function list() {
     },
     variants: VARIANTS,
     shots: SHOTS,
-    throwsPlanned: `${VARIANTS.length} プリセット x ${PER_VARIANT} 投げ + 位置取り ${FIXED} = ${VARIANTS.length * PER_VARIANT + FIXED} (--shots を省略したとき。位置取りの投げは --variants に関係なく 1 回)`,
+    retiredVariants: RETIRED,
+    throwsPlanned: `${VARIANTS.length - RETIRED.length} プリセット (退役の v1 / v2 を除く) x ${PER_VARIANT} 投げ + 位置取り ${FIXED} = ${(VARIANTS.length - RETIRED.length) * PER_VARIANT + FIXED} (--variants / --shots を省略したとき。位置取りの投げは --variants に関係なく 1 回)`,
     outcomes: ['caught', 'miss', 'ground', 'none', 'timeout', 'blocked'],
     kinds: ['jump', 'stand', 'over', 'ground', 'any (期待側だけ)'],
     throwWindowSeconds: 16,

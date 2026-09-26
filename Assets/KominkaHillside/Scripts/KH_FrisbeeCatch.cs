@@ -206,9 +206,22 @@ namespace KominkaHillside
         const int PlanNone = 0, PlanJump = 1, PlanRetrieve = 2, PlanStandOrOvertake = 3;
 
         // ---- IMP-DOG-008 presets (numbers from docs/plans/2026-09-21-frisbee-variations.md; public so Verify reads them) ----
+        // VariantRunInSide (1) / VariantRunInFar (2): retired 2026-09-26 - kept as numbers only (see IsRetiredVariant).
         public const int VariantNormal = 0, VariantRunInSide = 1, VariantRunInFar = 2, VariantRunInBeside = 3,
             VariantTwist = 4, VariantCurve = 5;
         public const int VariantCount = 6;
+        // v1 (VariantRunInSide) and v2 (VariantRunInFar): retired 2026-09-26 (IMP-DOG-017 PCVR round 2 - the user: the
+        // normal preset already gives those run-ins through the timing of the throw). The numbers stay (log contract,
+        // harness); they are refused as requests, skipped by the cycle, and a synced 1 / 2 (an old scene, a late
+        // joiner) runs as Normal.
+        public static bool IsRetiredVariant(int v) { return v == VariantRunInSide || v == VariantRunInFar; }
+        // The next preset a switch should ask for: cur + 1, wrapping, skipping retired numbers (0 -> 3 -> 4 -> 5 -> 0).
+        public static int NextVariant(int cur)
+        {
+            int v = cur;
+            for (int k = 0; k < VariantCount; k++) { v = (v + 1) % VariantCount; if (v < 0) v = 0; if (!IsRetiredVariant(v)) return v; }
+            return VariantNormal;
+        }
         // Run-in (v1..3). Round 2: the planner no longer differs per preset (every catch is an intercept), so all
         // that is left of the run-in is WHERE the dog waits for the throw - the run in from there is the effect.
         public const float RunInReadySlack = 2.5f;
@@ -322,7 +335,8 @@ namespace KominkaHillside
         public const float RunInReadyTurnDeg = 45f;
         // Sideways lift of v5 (1/m, same units as KH_Frisbee.lift; positive = the disc bends right). KH_Frisbee
         // reads it through FlightCurve at launch and hands it back with ReqCatch, so flight and prediction agree.
-        public const float CurveDefault = 0.04f;
+        // 2026-09-26 (IMP-DOG-017 PCVR round 2, "もっと曲がってほしい"): 0.04 -> 0.07. ReqCatch's |curve| <= 1 gate still holds.
+        public const float CurveDefault = 0.07f;
 
         [UdonSynced] private int state = StateIdle;
         [UdonSynced] private int throwerId = -1;
@@ -505,6 +519,9 @@ namespace KominkaHillside
             _stateEntered = Networking.GetServerTimeInSeconds();
             if (IsDogOwner()) dogRoot.position = SnapToGround(dogRoot.position); // net: owner-only
             ApplyVariant();
+            // 2026-09-26: a scene still carrying a retired preset is normalized by the Owner (both Owners, as SetVariant
+            // requires); everyone else only maps it to Normal in ApplyVariant and never writes the synced number.
+            if (IsRetiredVariant(variant) && IsDogOwner() && Networking.IsOwner(gameObject)) SetVariant(VariantNormal);
             ApplyState();
         }
 
@@ -516,6 +533,7 @@ namespace KominkaHillside
         public void _RequestVariant(int v)
         {
             if (v < 0 || v >= VariantCount) return;
+            if (IsRetiredVariant(v)) { Debug.Log("[KH_FrisbeeCatch] variant " + v + " retired"); return; }
             if (Networking.IsOwner(gameObject)) ReqVariant(v);
             else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqVariant), v);
         }
@@ -529,6 +547,7 @@ namespace KominkaHillside
             // (an ownership split would write `variant` on a client nobody reads it from; Codex D review).
             if (!IsDogOwner() || !Networking.IsOwner(gameObject)) return;
             if (v < 0 || v >= VariantCount) return;
+            if (IsRetiredVariant(v)) { Debug.Log("[KH_FrisbeeCatch] variant " + v + " retired"); return; }   // 2026-09-26
             if (v == variant)
             {
                 // Asking for what is already running is the way back out of a queued switch (Codex review).
@@ -550,6 +569,7 @@ namespace KominkaHillside
         {
             if (!IsDogOwner() || !Networking.IsOwner(gameObject)) return; // net: owner-writes-synced (Codex D: both Owners)
             int was = variant;
+            if (IsRetiredVariant(v)) v = VariantNormal;   // 2026-09-26: a queued / scene-stored retired number lands as Normal
             variant = v;                    // net: owner-only
             pendingVariant = -1;
             ApplyVariant();                 // the Owner never gets OnDeserialization, so it expands the preset here
@@ -563,16 +583,18 @@ namespace KominkaHillside
         void ApplyVariant()
         {
             _appliedVariant = variant;
-            _runIn = variant == VariantRunInSide || variant == VariantRunInFar || variant == VariantRunInBeside;
-            _twist = variant == VariantTwist;   // ApplyState picks the Twist Bool and the twist facts from this
+            // 2026-09-26: v1 / v2 are retired - a synced retired number runs as Normal (no write here: non-owners never write).
+            int wv = IsRetiredVariant(variant) ? VariantNormal : variant;
+            _runIn = wv == VariantRunInSide || wv == VariantRunInFar || wv == VariantRunInBeside;
+            _twist = wv == VariantTwist;   // ApplyState picks the Twist Bool and the twist facts from this
             // v3 waits ahead of the holder looking downfield, so the disc passes it from behind. IMP-DOG-017: the only
             // preset whose planner differs - B chase scores highest there (A around elsewhere); D' is everyone's fallback.
-            _overtake = variant == VariantRunInBeside;
+            _overtake = wv == VariantRunInBeside;
             // Ready target. v4 / v5 keep the Normal stand-off: only the pose / the flight differ there.
             _readyAhead = standoffDistance; _readyLateral = 0f; _readyFaceForward = false;
-            if (variant == VariantRunInSide) { _readyAhead = ReadyAhead1; _readyLateral = ReadyLateral1; }
-            else if (variant == VariantRunInFar) { _readyAhead = ReadyAhead2; _readyLateral = ReadyLateral2; }
-            else if (variant == VariantRunInBeside) { _readyAhead = ReadyAhead3; _readyLateral = ReadyLateral3; _readyFaceForward = true; }
+            if (wv == VariantRunInSide) { _readyAhead = ReadyAhead1; _readyLateral = ReadyLateral1; }
+            else if (wv == VariantRunInFar) { _readyAhead = ReadyAhead2; _readyLateral = ReadyLateral2; }
+            else if (wv == VariantRunInBeside) { _readyAhead = ReadyAhead3; _readyLateral = ReadyLateral3; _readyFaceForward = true; }
             // A 4 m sideways target swings 4 m when the head turns 30 degrees: a wider slack, not a faster refresh.
             _readySlack = _runIn ? Mathf.Max(standoffSlack, RunInReadySlack) : standoffSlack;
             // Round 2: the planner reads nothing else from the preset. v1..3 differ from v0 only in where the dog

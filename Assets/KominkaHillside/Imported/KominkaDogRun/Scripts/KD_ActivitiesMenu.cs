@@ -168,8 +168,7 @@ namespace KominkaDogRun
         {
             KominkaHillside.KH_FrisbeeCatch first = FirstCatcher();
             if (first == null) return;
-            int next = (FrisbeeCurrent(first) + 1) % KominkaHillside.KH_FrisbeeCatch.VariantCount;
-            _frisbeeAsked = next; _frisbeeAskedUntil = Time.time + 1.5f;
+            int next = KominkaHillside.KH_FrisbeeCatch.NextVariant(FrisbeeCurrent(first));   // 引退した v1 / v2 を飛ばす (2026-09-26)            _frisbeeAsked = next; _frisbeeAskedUntil = Time.time + 1.5f;
             bool engaged = false;
             for (int i = 0; i < frisbeeCatchers.Length; i++)
             {

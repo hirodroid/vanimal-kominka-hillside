@@ -60,6 +60,14 @@ namespace KominkaHillside.Editor
         // IMP-DOG-017: beside の投げで犬を置く、投げ台からの横の距離 (よしよしの後の、手の届く距離)。
         const float BesideGap = 0.6f;
         const int VariantCount = 6;
+        // IMP-DOG-017 (2026-09-26): v1 走り込み: 横 / v2 走り込み: 遠く は退役 (番号は残る)。--variants を省略したときは
+        // 流さない。明示すれば流せるが、trace に "retired" の注記を残す。
+        static readonly int[] RetiredVariants = { KH_FrisbeeCatch.VariantRunInSide, KH_FrisbeeCatch.VariantRunInFar };
+        static string RetiredNote(Options o)
+        {
+            var r = Variants(o).Where(v => RetiredVariants.Contains(v)).ToArray();
+            return r.Length == 0 ? "" : " NOTE: retired preset(s) " + string.Join(",", r.Select(v => "v" + v).ToArray()) + " requested explicitly (IMP-DOG-017; not in the default list)";
+        }
         // 全体の番犬。下限 240 秒 (設計値)。36 投げの全面実行は 1 投げ 16 秒 + 片付けで 240 秒に収まらないので、
         // 計画した投げ数に応じて伸ばす。options.json の globalTimeoutSeconds で上書きできる。
         const double MinBudget = 240.0;
@@ -548,7 +556,7 @@ namespace KominkaHillside.Editor
                   " shot=" + SixShot + " variant=" + SixVariant + " flightWindow=" + SixFlightWindow + "s settle=" + SixSettle + "s budget=" + report.budgetSeconds + "s"
                 : "breed=" + BreedOf(options) + " variants=" + string.Join(",", Variants(options).Select(v => v.ToString()).ToArray()) +
                   " shots=" + string.Join(",", Plan(options).Select(s => s.name).ToArray()) +
-                  " budget=" + report.budgetSeconds + "s");
+                  " budget=" + report.budgetSeconds + "s" + RetiredNote(options));
             SessionState.SetString(Key, report.runId);
             SessionState.SetString(Key + ".options", JsonUtility.ToJson(options));
             Directory.CreateDirectory(RunDir);
@@ -2004,7 +2012,7 @@ namespace KominkaHillside.Editor
                     .Where(n => n >= 0 && n < VariantCount).Distinct().ToArray();
                 if (picked.Length > 0) return picked;
             }
-            return Enumerable.Range(0, VariantCount).ToArray();
+            return Enumerable.Range(0, VariantCount).Where(v => !RetiredVariants.Contains(v)).ToArray();   // 0,3,4,5
         }
 
         static Shot[] Plan(Options o)

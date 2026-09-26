@@ -300,7 +300,7 @@ namespace KominkaHillside.Editor
             // rates can be a dog's (240 running / 180 walking / 120 standing in a catch state).
             // chaseRunSpeed is per breed since PCVR 2026-09-26 (ChaseRunSpeedFor, written below with the other breed values).
             catcher.chaseAcceleration = 14f; catcher.chaseDeceleration = 10f;
-            catcher.maxRunAnimScale = 2.5f;
+            catcher.maxRunAnimScale = MaxRunAnimScaleFor(facts.breed);   // per breed (PCVR 2026-09-26, table below)
             catcher.noticeDelay = 0.1f; catcher.settleTime = 0.2f; catcher.returnRunSpeed = 4.5f;
             catcher.turnSpeedDegPerSec = 240f; catcher.walkTurnDegPerSec = 180f; catcher.standTurnDegPerSec = 120f;
             // IMP-DOG-012 (Codex D1): how high the standing jump reaches is the BREED's ceiling from its facts (Lab 0.90,
@@ -359,6 +359,20 @@ namespace KominkaHillside.Editor
                 case "Corgi": case "Dachs": return 7.0f;
                 case "Pome": return 6.5f;
                 default: throw new InvalidOperationException("No chaseRunSpeed for breed " + breed + " (IMP-DOG-017 table)");
+            }
+        }
+        // Run clip speed-up cap per breed. PCVR 2026-09-26 "大型犬は一歩がでかい感じの速さにしたい": at the sprint the
+        // shared 2.5x turned the big dogs' run into tiny rapid steps (Samoyed worst). Big dogs read as long strides
+        // at the cost of some foot slide; the small dogs' quick cadence reads as cute and keeps 2.5x.
+        //   Lab / Samoyed 1.7, Shiba 2.0, Corgi / Dachs / Pome 2.5
+        public static float MaxRunAnimScaleFor(string breed)
+        {
+            switch (breed)
+            {
+                case "Lab": case "Samoyed": return 1.7f;
+                case "Shiba": return 2.0f;
+                case "Corgi": case "Dachs": case "Pome": return 2.5f;
+                default: throw new InvalidOperationException("No maxRunAnimScale for breed " + breed + " (IMP-DOG-017 table)");
             }
         }
         public static float ChaseSprintSpeedFor(string breed)
@@ -627,6 +641,9 @@ namespace KominkaHillside.Editor
                         "lane " + breed + ": catcher maxRootRise " + lc.maxRootRise.ToString("F2") + " == facts " + lf.maxRootRise.ToString("F2") + " (proxy and backing)");
                     // IMP-DOG-017: the breed table, proxy and backing heap.
                     float lfloor = JumpFloorRiseFor(lf);
+                    Check(Mathf.Abs(lc.maxRunAnimScale - MaxRunAnimScaleFor(breed)) < 1e-4f && lc.maxRunAnimScale >= 1.5f && lc.maxRunAnimScale <= 3f
+                        && lcb.publicVariables.TryGetVariableValue("maxRunAnimScale", out float lra) && Mathf.Abs(lra - lc.maxRunAnimScale) < 1e-4f,
+                        "lane " + breed + ": run clip speed cap " + lc.maxRunAnimScale.ToString("F1") + "x == breed table " + MaxRunAnimScaleFor(breed).ToString("F1") + " within [1.5, 3.0], proxy and backing (PCVR 2026-09-26)");
                     Check(Mathf.Abs(lc.chaseRunSpeed - ChaseRunSpeedFor(breed)) < 1e-4f && Mathf.Abs(lc.chaseSprintSpeed - ChaseSprintSpeedFor(breed)) < 1e-4f && Mathf.Abs(lc.launchTurnDegPerSec - LaunchTurnDegPerSec) < 1e-4f && Mathf.Abs(lc.jumpFloorRise - lfloor) < 1e-3f
                         && lcb.publicVariables.TryGetVariableValue("chaseRunSpeed", out float lrs) && Mathf.Abs(lrs - lc.chaseRunSpeed) < 1e-4f
                         && lcb.publicVariables.TryGetVariableValue("chaseSprintSpeed", out float lss) && Mathf.Abs(lss - lc.chaseSprintSpeed) < 1e-4f
@@ -742,7 +759,9 @@ namespace KominkaHillside.Editor
                     Check(catcher.chaseDeceleration > 0f && catcher.chaseDeceleration < catcher.deceleration, "chase braking " + catcher.chaseDeceleration.ToString("F1") + " m/s2 < the generic " + catcher.deceleration.ToString("F1") + " (the chase rolls out, it does not stop dead)");
                     Check(catcher.standTurnDegPerSec <= catcher.walkTurnDegPerSec && catcher.walkTurnDegPerSec <= catcher.turnSpeedDegPerSec && catcher.standTurnDegPerSec > catcher.idleTurnSpeedDegPerSec,
                         "turn rates stand " + catcher.standTurnDegPerSec.ToString("F0") + " <= walk " + catcher.walkTurnDegPerSec.ToString("F0") + " <= run " + catcher.turnSpeedDegPerSec.ToString("F0") + ", all above idle " + catcher.idleTurnSpeedDegPerSec.ToString("F0"));
-                    Check(catcher.maxRunAnimScale >= 1.5f && catcher.maxRunAnimScale <= 3f, "run clip speed cap " + catcher.maxRunAnimScale.ToString("F1") + "x in [1.5, 3.0] (higher reads as jitter)");
+                    // PCVR 2026-09-26 "大型犬は一歩がでかい感じの速さにしたい": the cap is the breed's own; [1.5, 3.0] stays as a sanity bound.
+                    Check(Mathf.Abs(catcher.maxRunAnimScale - MaxRunAnimScaleFor(KH_FrisbeeJumpClipEditor.Breed)) < 1e-4f && catcher.maxRunAnimScale >= 1.5f && catcher.maxRunAnimScale <= 3f,
+                        "run clip speed cap " + catcher.maxRunAnimScale.ToString("F1") + "x == breed table " + MaxRunAnimScaleFor(KH_FrisbeeJumpClipEditor.Breed).ToString("F1") + " (" + KH_FrisbeeJumpClipEditor.Breed + "), within [1.5, 3.0] (higher reads as jitter)");
                     Check(KH_FrisbeeCatch.HoldEnterRadius >= 0.2f && KH_FrisbeeCatch.HoldEnterRadius <= 0.6f, "hold band " + KH_FrisbeeCatch.HoldEnterRadius.ToString("F2") + " m in [0.20, 0.60] (must sit outside the 0.1 m arrive radius)");
                     Check(catcher.returnRunSpeed <= catcher.chaseRunSpeed, "return pace " + catcher.returnRunSpeed.ToString("F1") + " <= chase sprint " + catcher.chaseRunSpeed.ToString("F1") + " (only the chase has a deadline)");
                     // The highest jump the planner may pick still has to play the clip at a believable speed.

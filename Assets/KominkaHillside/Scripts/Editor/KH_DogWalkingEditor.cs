@@ -527,7 +527,10 @@ namespace KominkaHillside.Editor
                 Check(KH_FrisbeeCatch.HookMinPace>0f&&KH_FrisbeeCatch.HookMinPace<c.chaseRunSpeed,"approach pace floor "+KH_FrisbeeCatch.HookMinPace.ToString("F1")+" m/s in (0, chaseRunSpeed) "+key);
                 Check(c.chaseDeceleration>0f&&c.chaseDeceleration<c.deceleration,"chase braking "+c.chaseDeceleration.ToString("F1")+" m/s2 < the generic "+c.deceleration.ToString("F1")+" "+key);
                 Check(c.standTurnDegPerSec<=c.walkTurnDegPerSec&&c.walkTurnDegPerSec<=c.turnSpeedDegPerSec&&c.standTurnDegPerSec>c.idleTurnSpeedDegPerSec,"turn rates stand "+c.standTurnDegPerSec.ToString("F0")+" <= walk "+c.walkTurnDegPerSec.ToString("F0")+" <= run "+c.turnSpeedDegPerSec.ToString("F0")+", all above idle "+key);
-                Check(c.maxRunAnimScale>=1.5f&&c.maxRunAnimScale<=3f,"run clip speed cap "+c.maxRunAnimScale.ToString("F1")+"x in [1.5, 3.0] (higher reads as jitter) "+key);
+                // PCVR 2026-09-26 "大型犬は一歩がでかい感じの速さにしたい": the cap is the breed's own; [1.5, 3.0] stays as a sanity bound.
+                Check(Mathf.Abs(c.maxRunAnimScale-KH_FrisbeePrototypeEditor.MaxRunAnimScaleFor(key))<1e-4f&&c.maxRunAnimScale>=1.5f&&c.maxRunAnimScale<=3f
+                    &&cb.publicVariables.TryGetVariableValue("maxRunAnimScale",out bv)&&bv is float&&Mathf.Abs((float)bv-c.maxRunAnimScale)<1e-5f,
+                    "run clip speed cap "+c.maxRunAnimScale.ToString("F1")+"x == breed table "+KH_FrisbeePrototypeEditor.MaxRunAnimScaleFor(key).ToString("F1")+", within [1.5, 3.0], proxy and backing "+key);
                 Check(KH_FrisbeeCatch.HoldEnterRadius>=0.2f&&KH_FrisbeeCatch.HoldEnterRadius<=0.6f,"hold band "+KH_FrisbeeCatch.HoldEnterRadius.ToString("F2")+" m in [0.20, 0.60] (must sit outside the 0.1 m arrive radius) "+key);
                 Check(c.returnRunSpeed<=c.chaseRunSpeed,"return pace "+c.returnRunSpeed.ToString("F1")+" <= chase sprint "+c.chaseRunSpeed.ToString("F1")+" (only the chase has a deadline) "+key);
                 // The highest jump the planner may pick still has to play the clip at a believable speed.
