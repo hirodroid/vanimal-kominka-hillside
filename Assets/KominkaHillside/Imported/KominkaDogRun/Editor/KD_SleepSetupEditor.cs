@@ -461,7 +461,7 @@ namespace KominkaDogRun.Editor
             v.Check(KD_SleepSlot.HillsideMinGroundNormal > 0.5f && KD_SleepSlot.HillsideMinGroundNormal < 1f, "法線の下限が (0.5, 1) の範囲 (仮値 0.9)");
             if (dogs != null)
             {
-                foreach (var name in new[] { "KH_LeashRack", "KH_Station_Plaza", "KH_Station_Viewpoint" })
+                foreach (var name in new[] { "KH_LeashRack", "KH_Station_Viewpoint" })
                 {
                     var t = dogs.transform.Find(name);
                     if (t == null) { v.Note(name + " が無い (実測を飛ばす)"); continue; }

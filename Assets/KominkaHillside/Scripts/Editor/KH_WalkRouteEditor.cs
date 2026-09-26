@@ -13,9 +13,9 @@ using C = KH_TerrainPrototypeConfig;
 
 namespace KominkaHillside.Editor
 {
-    // IMP-DOG-003: trail nodes + routing table + destination signs. Values here are design-owned
-    // (docs/game-design.md §4), so Build Walk Route rewrites them every run (boards, labels, materials
-    // included); only each sign root position/rotation is human-owned and written once.
+    // IMP-DOG-003: trail nodes + routing table. Values here are design-owned (docs/game-design.md §4),
+    // so Build Walk Route rewrites them every run. The destination is chosen in the hand menu; the
+    // temporary Interact signs (KH_WalkSigns) were retired 2026-09-26 and Build deletes any left over.
     public static class KH_WalkRouteEditor
     {
         const string WorldScene = "Assets/Scenes/VRCDefaultWorldScene.unity";
@@ -23,10 +23,7 @@ namespace KominkaHillside.Editor
         public const float NodeSpacing = 7f;
         public const float RadiusEntrance = 3f, RadiusTrail = 2.2f, RadiusPlaza = 5f;
         public const int DestinationEntrance = 0, DestinationPlaza = 1;
-        public static readonly string[] SignNames = { "Entrance", "Viewpoint", "Plaza" };
-        // Interaction text is what VRChat shows on hover; Japanese is fine there (client font).
-        public static readonly string[] DestinationLabels = { "GATE", "PLAZA" };
-        public static readonly string[] DestinationInteraction = { "古民家側へ帰ろう", "広場へ行こう" };
+        public const string RetiredSignsRoot = "KH_WalkSigns";
 
         static void Report(string name, string text) { Directory.CreateDirectory("Temp/KH_DogPort"); File.WriteAllText("Temp/KH_DogPort/" + name + ".txt", text); Debug.Log("[KH Route] " + text); }
         static void Guard()
@@ -51,13 +48,6 @@ namespace KominkaHillside.Editor
             backing.SyncMethod = VRC.SDKBase.Networking.SyncType.None;
             EditorUtility.SetDirty(backing); return b;
         }
-        static Material Mat(string name, Color color)
-        {
-            string path = Data + "/" + name + ".mat"; var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (m == null) { m = new Material(Shader.Find("VRChat/Mobile/Standard Lite")); m.color = color; AssetDatabase.CreateAsset(m, path); }
-            return m;
-        }
-
         // Trail samples every NodeSpacing metres from the gate to the plaza centre, snapped to terrain and NavMesh.
         public static List<Vector3> NodePositions(StringBuilder log)
         {
@@ -127,79 +117,12 @@ namespace KominkaHillside.Editor
             route.destinationNodes = new[] { 0, n - 1 };
             UdonSharpEditorUtility.CopyProxyToUdon(route); EditorUtility.SetDirty(route);
             if (manager != null) { manager.route = route; UdonSharpEditorUtility.CopyProxyToUdon(manager); EditorUtility.SetDirty(manager); }
-            BuildSigns(root, manager);
+            var signs = root.transform.Find(RetiredSignsRoot);
+            if (signs != null) { UnityEngine.Object.DestroyImmediate(signs.gameObject); log.AppendLine("removed retired " + RetiredSignsRoot); }
             for (int i = 0; i < n; i++) log.AppendLine("node " + i + " " + positions[i].ToString("F2") + " r=" + radius[i] + " costToPlaza=" + cost[i * n + n - 1].ToString("F1"));
             log.AppendLine("nodes=" + n + " trail=" + cost[n - 1].ToString("F1") + "m");
             EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveOpenScenes(); AssetDatabase.SaveAssets();
             Report("route", log.ToString());
-        }
-
-        // Signs: a post with two boards, one per destination. Placement is written only when the sign is new.
-        static void BuildSigns(GameObject root, KH_LeashManager manager)
-        {
-            var signs = Child(root.transform, "KH_WalkSigns");
-            var wood = Mat("KH_RackWood", new Color(.32f, .19f, .10f));
-            var boardMats = new[] { Mat("KH_SignHome", new Color(.55f, .36f, .20f)), Mat("KH_SignPlaza", new Color(.30f, .55f, .28f)) };
-            var flash = Mat("KH_SignFlash", new Color(.95f, .90f, .60f));
-            var world = GameObject.Find("KH_World");
-            Transform rack = root.transform.Find("KH_LeashRack");
-            Vector3[] positions =
-            {
-                rack != null ? new Vector3(rack.position.x + 1.1f, 0f, rack.position.z) : new Vector3(46.1f, 0f, 43f),
-                world != null ? world.transform.Find("KH_Places/KH_Viewpoint").position + new Vector3(2.4f, 0f, 1.2f) : new Vector3(82.4f, 0f, 109.2f),
-                world != null ? world.transform.Find("KH_Places/KH_Plaza").position + new Vector3(-3f, 0f, -2.5f) : new Vector3(69f, 0f, 124.5f),
-            };
-            // TextMesh reads from the local -Z side: faces south at the gate, south-west at the viewpoint, south-east on the plaza.
-            float[] yaw = { 0f, 45f, 315f };
-            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            for (int s = 0; s < SignNames.Length; s++)
-            {
-                string name = "KH_WalkSign_" + SignNames[s];
-                var sign = signs.Find(name);
-                bool fresh = sign == null;
-                if (fresh)
-                {
-                    sign = Child(signs, name);
-                    sign.position = new Vector3(positions[s].x, Ground(positions[s].x, positions[s].z), positions[s].z);
-                    sign.rotation = Quaternion.Euler(0f, yaw[s], 0f);
-                }
-                if (sign.Find("Post") == null)
-                {
-                    var post = GameObject.CreatePrimitive(PrimitiveType.Cube); post.name = "Post"; post.layer = 14;
-                    post.transform.SetParent(sign, false); post.transform.localPosition = new Vector3(0f, .65f, 0f); post.transform.localScale = new Vector3(.07f, 1.3f, .07f);
-                    post.GetComponent<Renderer>().sharedMaterial = wood; UnityEngine.Object.DestroyImmediate(post.GetComponent<Collider>());
-                }
-                for (int d = 0; d < 2; d++)
-                {
-                    string boardName = "Board_" + DestinationLabels[d];
-                    var board = sign.Find(boardName);
-                    if (board == null)
-                    {
-                        var go = GameObject.CreatePrimitive(PrimitiveType.Cube); go.name = boardName; board = go.transform;
-                        board.SetParent(sign, false);
-                        go.GetComponent<Renderer>().sharedMaterial = boardMats[d];
-                    }
-                    // Board geometry is code-owned (only the sign root is placed by hand): in front of the post.
-                    board.localPosition = new Vector3(0f, d == DestinationPlaza ? 1.28f : 1.02f, -.045f);
-                    board.localScale = new Vector3(.62f, .18f, .04f);
-                    board.gameObject.layer = 14;
-                    var col = board.GetComponent<BoxCollider>(); if (col == null) col = board.gameObject.AddComponent<BoxCollider>();
-                    col.isTrigger = false;
-                    board.GetComponent<Renderer>().sharedMaterial = boardMats[d];
-                    var label = board.Find("Label");
-                    if (label == null) { var go = new GameObject("Label"); label = go.transform; label.SetParent(board, false); go.AddComponent<TextMesh>(); }
-                    label.localPosition = new Vector3(0f, 0f, -.55f);
-                    label.localScale = new Vector3(1f / .62f * .012f, 1f / .18f * .012f, 1f);
-                    var tm = label.GetComponent<TextMesh>(); tm.text = DestinationLabels[d] + (d == DestinationPlaza ? "  >" : "  <");
-                    tm.font = font; tm.fontSize = 64; tm.characterSize = 1f; tm.anchor = TextAnchor.MiddleCenter; tm.alignment = TextAlignment.Center; tm.color = new Color(.96f, .93f, .85f);
-                    label.GetComponent<MeshRenderer>().sharedMaterial = font.material;
-                    var ws = Add<KH_WalkSign>(board.gameObject); ws.manager = manager; ws.destination = d;
-                    ws.board = board.GetComponent<Renderer>(); ws.normalMaterial = boardMats[d]; ws.flashMaterial = flash;
-                    var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(ws);
-                    backing.InteractionText = DestinationInteraction[d]; backing.proximity = 2.5f;
-                    UdonSharpEditorUtility.CopyProxyToUdon(ws); EditorUtility.SetDirty(ws);
-                }
-            }
         }
 
         [MenuItem("Tools/KominkaHillside/Walking/4c Inspect Walk Route")]
@@ -221,8 +144,6 @@ namespace KominkaHillside.Editor
             var m = root.GetComponentInChildren<KH_LeashManager>(true);
             var mb = UdonSharpEditorUtility.GetBackingUdonBehaviour(m);
             object r; log.AppendLine("manager.route backing=" + (mb.publicVariables.TryGetVariableValue("route", out r) && r != null));
-            foreach (var sign in root.GetComponentsInChildren<KH_WalkSign>(true))
-                log.AppendLine("sign " + sign.transform.parent.name + "/" + sign.name + " dest=" + sign.destination + " text=" + UdonSharpEditorUtility.GetBackingUdonBehaviour(sign).InteractionText.Length + "chars manager=" + (sign.manager == m));
             Report("route-inspect", log.ToString());
         }
     }

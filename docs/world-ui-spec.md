@@ -209,7 +209,7 @@ Focus Viewの設定：unknown。通常入口：unknown。再配置・見失い�
 | `Page_Settings` | 設定面 (音量・距離フェード・ナイトモード・許可2種・言語・クレジット・案内) | `KD_MenuSettings` 側ビルダー | 面内 Button/Slider | 入口ボタン・再描画 | 既定 非表示 | 寝室・ラジオ・解像度を外す。ナイトモードは `KH_NightMode` |
 | `Page_Welcome` | 初回のみの案内 (`KD_Onboarding_v1`) | `KD_WelcomeGuideEditor` | 面内 Button | 初回入室 | 既定 非表示 | 裏山向け文言 |
 | `KD_TouchLauncher > LauncherButton` | Touch の起動ボタン。ScreenSpaceOverlay、sortingOrder 100 | ビルダー | Button | 入力方式が Touch のときだけ表示 | 既定 非表示 | なし |
-| `KD_MenuOpener` プレート ×3 (`KH_MenuOpener`) | 拠点の「メニューをひらく」板。Interact → `pouch._Toggle` | `KH_DogWalkingEditor` | Interact (layer 14) | Interact | 常駐 | **裏山だけの追加** (片手・座位の入口) |
+| `KD_MenuOpener` プレート ×2 (`KH_MenuOpener`、入口と見晴らし) | 拠点の「メニューをひらく」板。Interact → `pouch._Toggle` | `KH_DogWalkingEditor` | Interact (layer 14) | Interact | 常駐 | **裏山だけの追加** (片手・座位の入口) |
 | `KD_UiRound.png` / `KD_UiCircle.png` | 角丸 (Sliced・半径12・border30) と色玉 (Simple)。色は Image.color の乗算 1 本 | `KD_UiSpriteEditor` (96×96・PPU100) | — | ビルド時に毎回焼き直す | 資産 | なし |
 | `KD_NotoSerif SDF` (Static) | 共通フォント。実効 26/24/22/20/18 pt | `AddGlyphs` (唯一の口) | — | 文言追加時 | 資産 | **48 pt へ再ベイク** (779/784 で満杯) |
 
