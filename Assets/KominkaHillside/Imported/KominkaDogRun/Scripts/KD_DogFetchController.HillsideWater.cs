@@ -122,7 +122,7 @@ namespace KominkaDogRun
         /// <summary>6-8: the dog's legs are the Wander's (_WaterFetchStep), so the Wander's "Fetch busy" branch must keep its
         /// _speed (run 20260927-095400: zeroed every frame, the W3 dogs crawled at one frame's acceleration, 0.05-0.09 m/s).</summary>
         public bool IsWaterFetching { get { return dogState >= StateWaterChase; } }
-        const float WaterMouthReach = 0.25f, WaterExitStand = 1.2f;
+        const float WaterMouthReach = 0.25f, WaterMouthAboveMax = 1f, WaterExitStand = 1.2f;
         int _waterExitIdx = -1;
 
         /// <summary>From Update (after the Idle branch). True = this frame is handled here.</summary>
@@ -144,8 +144,14 @@ namespace KominkaDogRun
                 Vector3 ball = _ballT.position;
                 if (!w.waterSpot._FloatsAt(ball)) { TransitionTo(StateChase); w._InvalidateLeashAnimation(); return true; }   // back on land: land chase
                 w._WaterFetchStep(ball, false);
+                // Horizontal reach (mouth, or the dog standing over the ball) and the ball not above the mouth: a wading Lab's
+                // mouth is ~0.45 m above a ball at the water line, so a 3D 0.25 m never held (run 20260927-102801, W3-Lab-shallow
+                // stood on the ball for 90 s). The ball then sits in the mouth (LateUpdate glue), as on land.
                 Vector3 mouth = mouthAnchor != null ? mouthAnchor.position : dog;
-                if ((mouth - ball).magnitude <= WaterMouthReach) { _waterExitIdx = w.waterSpot._NearestExit(dog); TransitionTo(StateWaterReturn); return true; }
+                Vector3 dm = mouth - ball; float above = dm.y; dm.y = 0f;
+                Vector3 dr = dog - ball; dr.y = 0f;
+                if ((dm.magnitude <= WaterMouthReach || dr.magnitude <= WaterMouthReach) && above > -0.1f && above < WaterMouthAboveMax)
+                { _waterExitIdx = w.waterSpot._NearestExit(dog); TransitionTo(StateWaterReturn); return true; }
                 if (elapsed > WaterTimeout(w)) WaterGiveUp("water-timeout");
                 return true;
             }

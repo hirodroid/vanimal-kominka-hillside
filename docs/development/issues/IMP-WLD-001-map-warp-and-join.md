@@ -5,7 +5,7 @@ system: WLD
 status: review
 priority: Medium
 summary: 地図の副画面、川辺・奥広場の 2 地点ワープ、インスタンス内のプレイヤーへの合流、接続犬の同行、暗転を、DES-WLD-003 の確定設計 (2026-09-27) どおりに実装する
-next: PCVR 2〜3 人で設計書の「実機チェックリスト (2026-09-27)」(§C.2 #1〜#7 と地図・人の一覧・取消) を行う。Quest 単体・iOS の Touch・通知板と Focus View・暗転・表示名の字と 16 人の通知間隔は VER-WLD-001 の回で行う
+next: PCVR チェックリスト (設計書末尾「実機チェックリスト (2026-09-27)」、表示名の字の #8b を含む) と VER-WLD-001 (Quest 単体・iOS の Touch・通知板と Focus View・暗転・表示名の字・16 人の通知間隔)
 updated: 2026-09-27
 ---
 
@@ -104,15 +104,17 @@ updated: 2026-09-27
 
 完了条件:
 
-- [ ] Course/81 で、対象集合の字の欠字が 0 (見本: 英・日・記号は欠字 0、中 (簡体字を含む)・ハングル・絵文字は対象外の字を記録だけ)。フォント 2 本が Static・元フォントの参照なし (実行時用・Editor 用とも)・アトラス 1 枚でフォント内の Alpha8 (取り込み設定が無いので全プラットフォーム共通)・大きさ・fallback の配線、ラベル 17 本の配線が PASS。シーンが使う TMP フォント全部 (fallback を辿る) と部品の直の Font 参照から、ビルドに入る TTF の参照が 0 (`nameFontBuildRefs`)。アトラスのバイト数 (幅 × 高さ、Alpha8) と使用率を `travel-verify.json` に出す (`nameFontAtlasBytes`・`nameFontUsage`)。
-- [ ] Build Size (Android / iOS) で、Dynamic を入れる前 (Android 44.88 MB) からの**圧縮後の増分 ≤ 1.0 MB** (Android ≤ 45.88 MB)。内訳は Build Size/5 (Android)・5b (iOS) の `kh-fonts` 行。超えるなら漢字を頻出 1,500 字 (教育漢字 + 人名用の頻出) に絞る (一覧の出典は別途決める)。
+- [x] Course/81 で、対象集合の字の欠字が 0 (見本: 英・日・記号は欠字 0、中 (簡体字を含む)・ハングル・絵文字は対象外の字を記録だけ)。フォント 2 本が Static・元フォントの参照なし (実行時用・Editor 用とも)・アトラス 1 枚でフォント内の Alpha8 (取り込み設定が無いので全プラットフォーム共通)・大きさ・fallback の配線、ラベル 17 本の配線が PASS。シーンが使う TMP フォント全部 (fallback を辿る) と部品の直の Font 参照から、ビルドに入る TTF の参照が 0 (`nameFontBuildRefs`)。アトラスのバイト数 (幅 × 高さ、Alpha8) と使用率を `travel-verify.json` に出す (`nameFontAtlasBytes`・`nameFontUsage`)。
+- [x] Build Size (Android / iOS) で、Dynamic を入れる前 (Android 44.88 MB) からの**圧縮後の増分 ≤ 1.0 MB** (Android ≤ 45.88 MB)。内訳は Build Size/5 (Android)・5b (iOS) の `kh-fonts` 行。超えるなら漢字を頻出 1,500 字 (教育漢字 + 人名用の頻出) に絞る (一覧の出典は別途決める)。
 - [ ] PCVR と Quest / iOS で、日本語・英語以外 (欧文の記号付き文字) を含む表示名が人の一覧と通知板で読めるか (VER-WLD-001)。
 
-#### 実装 (2026-09-27、段階 4。Static 版は未コンパイル・未検証)
+#### 実装 (2026-09-27、段階 4。Static 1024×2048 版で確定。PCVR・端末は未確認)
 
 - 変更: 新規 `scripts/kh-gen-name-charset.js` と生成物 `Font/KH_DisplayName_Charset.txt`、新規 `Editor/KH_CourseTravelNameFontEditor.cs` (`Course/86 - Build Display Name Font`: 2 本のフォントを消して作り直し、Dynamic の間に TryAddCharacters で焼いて Static へ戻し、ラベルへ配線してシーンを保存。`Temp/imp-wld-001/name-font-build.json` に焼けた字数・欠字。81 の検査)、`Editor/KH_CourseTravelEditor.cs` (81 から呼ぶ・容量と使用率の欄)、`Editor/KH_CourseTravelJoinEditor.cs` (85 を流し直しても配線を戻す)、`Imported/.../KD_BuildSizeEditor.cs` (`Build Size/5b - Group Cost iOS` を追加)。
 - 測定 (2026-09-27、20 pt・2048² 版): 86 BUILT (字形 3,582 + 98、欠字 0、ラベル 17)。Android 46.11 MB (+1.23)、iOS 45.29 MB (+1.22)。iOS の 47.60 MB は `bundle-sizes.txt` の一つ前の行 (Dynamic 版) で、Static 版の iOS は Android と同じ増分。
 - 設計からの変更: 設計書 §A.6 の「共通フォントの TMP fallback」ではなく、表示名のラベルだけのフォントを差し替えた (共通フォントの字形の検査と見え方を変えないため)。Dynamic 版の記録: 81 で Ł (Noto Serif JP に無い) と「张伟」(簡体字) が欠字、Android +3.53 MB。これを受けて上の Static 版へ替えた。
+- 確定版の実測 (2026-09-27、18 pt・余白 2・1024×2048 + Latin 512²): 86 BUILT (3,582 + 98、欠字 0)、81 TRAVEL_OK (アトラス 2,359,296 B、使用率 75.2 %、TTF の参照 0 / TMP フォント 3 本)。Build Size は Android 45.86 MB (44.88 から +0.98)、iOS 45.04 MB (44.07 から +0.97) で、どちらも目標 +1.0 MB の内側 (`bundle-sizes.txt` の最終 2 行)。
+- 判断 (2026-09-27、統括): この版で確定。頻出 1,500 字への絞り込みは、表示名の欠字 (□) を増やすので採らない。
 
 ### 端末と人数
 

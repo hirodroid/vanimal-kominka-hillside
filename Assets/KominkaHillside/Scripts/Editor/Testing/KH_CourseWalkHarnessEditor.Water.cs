@@ -91,7 +91,7 @@ namespace KominkaHillside.Editor
             public double simultaneousWetSeconds, allSixWetSeconds, closeSeconds;
             public bool seen6, seen7, seen8, seenReturn, seenDrop, fetchEnded, ballNearPlayer, deepBallLogged, ballStillFloating, refusedToy;
             public int ballTopBelowFrames, maxFetchState;
-            public bool teleportExempted;
+            public bool teleportSplit;
             public float ballEndDistance = -1f;
             public List<WhDogStat> stats = new List<WhDogStat>();
         }
@@ -104,7 +104,8 @@ namespace KominkaHillside.Editor
             public double landedAt = -1;
             [NonSerialized] public Vector3 prev; [NonSerialized] public int pose; [NonSerialized] public float swimRun, mouth, wetSince = -1, sincePose;
             [NonSerialized] public Transform mouthBone;
-            [NonSerialized] public bool teleportPending;
+            [NonSerialized] public bool teleportPending;   // (kept for the log hook; the jump rule reads the dog's own teleport record)
+            [NonSerialized] public int prevFrame = -1; [NonSerialized] public float prevTime;
             public string bigStepAt;   // the first counted big step: positions, states, nearest other dog   // a stage-3 teleport was logged; exempt only the next observation
         }
         [Serializable] public class WhReport
@@ -126,6 +127,29 @@ namespace KominkaHillside.Editor
         static float[] whPolyX, whPolyZ;
         static bool whLogHooked;
         static WhCase WC => wh.cases[caseIndex];
+        static int whPrevFrame = -1; static float whPrevTime;
+
+        // Jump rule (decision 2026-09-27): a step between two observations counts when it is longer than 0.2 m AND faster than
+        // WhMaxSpeed over the game time between them (Unity caps one frame's deltaTime at 0.333 s: the W3-Shiba 0.801 m and
+        // W3-Corgi 0.639 m of run 20260927-102801 were a run at 2.4 m/s through one long editor frame, along the direction of
+        // travel). A stage-3 recovery teleport between the observations (the dog's _waterRecoverFrame / From / To) splits the
+        // step: the move before it and the move after it are judged on their own, the teleport itself is not a jump, every time.
+        const float WhMaxSpeed = 3.5f;
+        static float WhJump(int dog, Vector3 prev, Vector3 p, int prevFrame, float prevTime, out string how)
+        {
+            float gameDt = prevFrame < 0 ? 0f : Mathf.Max(0f, Time.time - prevTime);
+            float limit = Mathf.Max(.2f, WhMaxSpeed * gameDt);
+            int rf = Get<int>(wander[dog], "_waterRecoverFrame");
+            if (prevFrame >= 0 && rf > prevFrame)
+            {
+                float a = Vector3.Distance(prev, Get<Vector3>(wander[dog], "_waterRecoverFrom")), b = Vector3.Distance(Get<Vector3>(wander[dog], "_waterRecoverTo"), p);
+                how = "teleport frame=" + rf + " before=" + a.ToString("F3") + " after=" + b.ToString("F3") + " limit=" + limit.ToString("F3");
+                return Mathf.Max(a, b) > limit ? Mathf.Max(a, b) : 0f;
+            }
+            float s = Vector3.Distance(prev, p);
+            how = "dt=" + gameDt.ToString("F3") + " frames=" + (Time.frameCount - prevFrame) + " limit=" + limit.ToString("F3");
+            return s > limit ? s : 0f;
+        }
 
         [MenuItem("Tools/KominkaHillside/Course/79 - Walk Harness Water Swim W1 W2")]
         public static void WaterSwimHarness()
@@ -224,17 +248,12 @@ namespace KominkaHillside.Editor
         static void WhObserve(WhCase c)
         {
             var p = roots[WhDog].position; c.frames++;
-            float step = Vector3.Distance(p, whPrev); whPrev = p;
+            float step = Vector3.Distance(p, whPrev);
+            string how; float jump = WhJump(WhDog, whPrev, p, whPrevFrame, whPrevTime, out how);
+            whPrev = p; whPrevFrame = Time.frameCount; whPrevTime = Time.time;
             if (step > c.maxStep) c.maxStep = step;
-            // Stage-3 teleport: exempt exactly one step >= 9 m, once the dog's recovery has begun (its own heap _waterRecover >= 1,
-            // the teleport's precondition) or the stage-3 log was seen. Not the log time alone: in run 20260927-100739 (W6-all-blocked,
-            // 9.827 m) the log was taken after the observation of the teleport. Every later big step counts.
-            if (step > .2f)
-            {
-                bool teleport = !c.teleportExempted && step >= 9f && (c.recoverStage >= 3 || Get<int>(wander[WhDog], "_waterRecover") >= 1);
-                if (teleport) { c.teleportExempted = true; if (c.log.Count < 40) c.log.Add("teleport step exempted once: " + step.ToString("F2") + " m"); }
-                else c.bigSteps++;
-            }
+            if (jump > 0f) { c.bigSteps++; if (c.log.Count < 40) c.log.Add("jump " + jump.ToString("F3") + " m at " + p.ToString("F2") + " " + how); }
+            else if (how.StartsWith("teleport") && c.log.Count < 40) c.log.Add("recovery teleport split: " + how);
             if (RiverInBand(p) && !WhInSpot(p)) c.bandOutsideSpotFrames++;
             float surface = KH_CourseGroundEditor.RiverAt(p.z).y, depth = surface - p.y;
             int pose = WhPose();
@@ -286,7 +305,7 @@ namespace KominkaHillside.Editor
                     NavMeshHit d; if (!NavMesh.SamplePosition(h.position + facing * new Vector3(-.8f, 0, .3f), out d, 2, NavMesh.AllAreas)) throw new InvalidOperationException("Dog placement lacks NavMesh");
                     roots[WhDog].SetPositionAndRotation(d.position, facing);
                     var sync = roots[WhDog].GetComponent<VRC.SDK3.Components.VRCObjectSync>(); if (sync != null) sync.FlagDiscontinuity();
-                    whPrev = d.position;
+                    whPrev = d.position; whPrevFrame = -1;
                     if (!report.waterSwim)
                     {
                         // Decision 2026-09-27 (2nd): no release step. A free dog placed within 25 m of the spot starts by itself;
@@ -303,8 +322,8 @@ namespace KominkaHillside.Editor
                     if (Vector3.Distance(roots[WhDog].position, entry) > 12f) throw new InvalidOperationException("Dog not within 12 m of the entry at release");
                     if (c.name != "W0") wander[WhDog].SetProgramVariable("_waterFirstUsed", false);
                     pouch.SendCustomEvent("_WalkOff" + WhDog); c.released = now - cc.startedAt;
-                    whPrev = roots[WhDog].position; whWetSince = -1; whNextTrace = now; whLastPose = 0;
-                    if (c.stats.Count > 0) c.stats[0].prev = whPrev;   // continuity starts at the release (the leashed walk before is not measured)
+                    whPrev = roots[WhDog].position; whPrevFrame = -1; whWetSince = -1; whNextTrace = now; whLastPose = 0;
+                    if (c.stats.Count > 0) { c.stats[0].prev = whPrev; c.stats[0].prevFrame = -1; }   // continuity starts at the release (the leashed walk before is not measured)
                     whPhase = 2; whPhaseAt = now; whLastState = WhState(); return;
                 case 2: // wait for the play (W0 limits) and wading
                     if (c.playStarted < 0 && WhState() >= 1) c.playStarted = t;
@@ -591,9 +610,10 @@ namespace KominkaHillside.Editor
         static void WhObserveDog(WhDogStat d, float dt)
         {
             var p = roots[d.dog].position; d.frames++;
-            Vector3 from = d.prev; float step = Vector3.Distance(p, from); d.prev = p; if (step > d.maxStep) d.maxStep = step;
-            // Only the one observation right after this dog's own stage-3 teleport is exempt (not every later frame)
-            if (step > .2f && !d.teleportPending)
+            Vector3 from = d.prev; float step = Vector3.Distance(p, from);
+            string how; float jump = WhJump(d.dog, from, p, d.prevFrame, d.prevTime, out how);
+            d.prev = p; d.prevFrame = Time.frameCount; d.prevTime = Time.time; if (step > d.maxStep) d.maxStep = step;
+            if (jump > 0f)
             {
                 d.bigSteps++;
                 if (d.bigStepAt == null)
@@ -602,7 +622,7 @@ namespace KominkaHillside.Editor
                     float near = 99f; for (int k = 0; k < roots.Length; k++) if (k != d.dog && roots[k] != null) near = Mathf.Min(near, Vector3.Distance(roots[k].position, p));
                     d.bigStepAt = "step=" + step.ToString("F3") + " from=" + from.ToString("F2") + " to=" + p.ToString("F2") + " fetch=" + Get<int>(whFetches[d.dog], "dogState")
                         + " water=" + Get<int>(wander[d.dog], "waterState") + " pose=" + Get<int>(whFetches[d.dog], "waterPose") + " nearestDog=" + near.ToString("F2")
-                        + " inSpot=" + WhInSpot(p) + " frame=" + Time.frameCount;
+                        + " inSpot=" + WhInSpot(p) + " frame=" + Time.frameCount + " " + how;
                 }
             }
             d.teleportPending = false;
@@ -832,7 +852,7 @@ namespace KominkaHillside.Editor
                         ball.position = new Vector3(cell.x, KH_CourseGroundEditor.RiverAt(cell.z).y + .2f, cell.z); if (bs != null) bs.FlagDiscontinuity();
                         whStep = 1; whNext = now + 1.5; return;   // KH_ToyRecall takes it over as a floating ball
                     }
-                    if (c.stats.Count > 0) c.stats[0].prev = roots[WhDog].position;   // continuity starts at the throw
+                    if (c.stats.Count > 0) { c.stats[0].prev = roots[WhDog].position; c.stats[0].prevFrame = -1; }   // continuity starts at the throw
                     whNextTrace = now;
                     if (c.dog >= 0) { whFetch.SendCustomEvent("_OnBallThrown"); c.actionAt = now - Current.startedAt; }
                     whPhase = 2; whPhaseAt = now; c.done = -1; return;
@@ -863,6 +883,8 @@ namespace KominkaHillside.Editor
             if (fs == 6) c.seen6 = true;
             if (fs == 7) c.seen7 = true;
             if (fs == 8) c.seen8 = true;
+            if (c.seen8 && c.stats.Count > 0 && !c.stats[0].landed && Get<int>(whFetch, "waterPose") == 0)
+            { c.stats[0].landed = true; c.stats[0].landedAt = EditorApplication.timeSinceStartup - whPhaseAt; }
             if (fs == 4 && c.seen8) c.seenReturn = true;
             if (fs == 5 && c.seen8) c.seenDrop = true;
             if (fs == 0 && (c.seenReturn || c.seenDrop)) c.fetchEnded = true;

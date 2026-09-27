@@ -71,6 +71,10 @@ namespace KominkaDogRun
         // Last refusal of _BlockedByRiver (1 sink-guard / 2 wade-limit / 3 band outside the spot) and its frame: local, read by the
         // harness trace only (run 20260927-093227: W3 dogs stood 90 s on the bank, every step refused by the band rule).
         private int _waterBlock, _waterBlockFrame = -1;
+        // The last stage-3 recovery teleport: its frame and both ends (local, not synced). The harness splits an observed step
+        // at it instead of guessing from the log time (run 20260927-102045, W6-all-blocked).
+        private int _waterRecoverFrame = -1;
+        private Vector3 _waterRecoverFrom, _waterRecoverTo;
         private Vector3 _bobBase;
         private float _nextSinkLog;
         private float _swimShallowSince = -1f, _waterSwimY;
@@ -414,6 +418,7 @@ namespace KominkaDogRun
                     Vector3 back = waterSpot._ReturnPointFor(_waterExit);
                     VRCObjectSync sync = dogRoot.GetComponent<VRCObjectSync>();
                     if (sync != null) sync.FlagDiscontinuity();
+                    _waterRecoverFrame = Time.frameCount; _waterRecoverFrom = dogRoot.position; _waterRecoverTo = back;
                     dogRoot.position = back; // net: owner-only: _dogOwner checked in UpdateWaterPlay
                     _waterSwimming = false; _swimYValid = false; _swimShallowSince = -1f;   // no float height on the bank (Codex D-高)
                     _speed = 0f;
