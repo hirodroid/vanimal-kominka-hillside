@@ -28,6 +28,29 @@ namespace KominkaHillside
         public int gridNx, gridNz;
         public float[] bed;
         public float entryRadius = 12f;    // B-1: a release within this of the entry starts the first water play
+        // ---- water-play tuning: the single source (DES-DOG-004 B-2 trial values; Codex 2026-09-27 M-低). The dogs, Course/76-77
+        // and the harness all read these. M = the dog's standing mouth height (KD_DogWanderController.waterMouthHeight).
+        // The constants are the one place to change a value: the fields start from them and Course/76 writes them into the
+        // scene again, so an existing spot never keeps an old value.
+        public const float DefaultWadeLimitRatio = 0.45f, DefaultSwimEnterRatio = 0.75f, DefaultSwimLeaveRatio = 0.6f, DefaultSwimLeaveHold = 0.5f;
+        // swimClear 0.04 -> 0.06 (run 20260927-072549): with the walk clip the Pome's real mouth sat 2.6 cm below root + M,
+        // leaving 0.014 m; 0.06 gives every breed >= 0.03 m at the real mouth (Pome about 0.034).
+        public const float DefaultSwimClear = 0.06f, DefaultSwimSpeedLab = 0.8f, DefaultSwimMouthScale = 1f, DefaultSwimBob = 0.01f, DefaultSwimBobHz = 0.8f;
+        public float wadeLimitRatio = DefaultWadeLimitRatio;   // stage 0 / non-swimmers: never deeper than 0.45 M
+        public float swimEnterRatio = DefaultSwimEnterRatio;   // into swimming when the ground ahead is >= 0.75 M deep
+        public float swimLeaveRatio = DefaultSwimLeaveRatio;   // back to wading after < 0.6 M for swimLeaveHold s
+        public float swimLeaveHold = DefaultSwimLeaveHold;
+        public float swimClear = DefaultSwimClear;             // afloat: root = water + swimClear - Ms (mouth just above the water)
+        public float swimSpeedLab = DefaultSwimSpeedLab;       // swim speed = swimSpeedLab x sqrt(M / 0.556) m/s
+        public float swimMouthScale = DefaultSwimMouthScale;   // Ms = M x this (mouth height with the walk clip; no swim clip)
+        public float swimBob = DefaultSwimBob;                 // +- m on the dog's mesh skeleton root (0 when there is none)
+        // Ms (KD_DogWanderController.waterSwimMouth) = M x swimMouthScale - the breed's measured walk-clip head drop; the drop
+        // table is in KH_WaterSpotEditor.WalkHeadDrop (build time only; U# has no static fields).
+        // Walking (not afloat), the walk-clip mouth stays at least this far above the water: a swimmer starts to float before
+        // that, and anyone else stops (sink guard). Design floor 0.03 m + 1 cm.
+        public const float DefaultWadeClear = 0.04f;
+        public float wadeClear = DefaultWadeClear;
+        public float swimBobHz = DefaultSwimBobHz;
 
         public bool _Ready()
         {

@@ -352,7 +352,8 @@ namespace KominkaDogRun
         /// 待機中も毎フレーム呼ばれるため、変化したときだけ Animator へ書く。</summary>
         void ApplyMoveAnim()
         {
-            bool moving = _speed > stopSpeedThreshold;
+            // IMP-DOG-020: a swimming dog paddles with the Walk legs whatever its speed (synced waterPose, every client)
+            bool moving = _speed > stopSpeedThreshold || (fetchController != null && fetchController.WaterPose == 2);
             bool running = moving && _speed >= runAnimSpeed;
 
             // 停止後の保持 (2026-08-14 Play フィードバック 3 巡目)。

@@ -252,7 +252,12 @@ namespace KominkaDogRun
                 if (_push[i].sqrMagnitude > maxStep * maxStep)
                     _push[i] = _push[i].normalized * maxStep;
                 if (_push[i].sqrMagnitude > 1e-10f && Networking.IsOwner(t.gameObject))
-                    t.position = SnapToGround(_pos[i] + _push[i]); // net: owner-only: IsOwner(dogRoots[i])
+                {
+                    bool floating = dogWander != null && i < dogWander.Length && dogWander[i] != null && dogWander[i]._WaterFloating();
+                    // IMP-DOG-020: afloat, keep the height (no snap to the riverbed) and push at most 0.1 m per frame
+                    if (floating && _push[i].sqrMagnitude > 0.01f) _push[i] = _push[i].normalized * 0.1f;
+                    t.position = floating ? _pos[i] + _push[i] : SnapToGround(_pos[i] + _push[i]); // net: owner-only: IsOwner(dogRoots[i])
+                }
                 _prevPos[i] = t.position;
                 _prevValid[i] = true;
             }

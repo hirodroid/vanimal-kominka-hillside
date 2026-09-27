@@ -31,7 +31,10 @@ namespace KominkaHillside.Editor
         const string DogsRoot = "KH_Dogs", NodeName = "KH_WaterSpot";
         const string FxDir = "Assets/KominkaHillside/Data/Water";
         static readonly string[] Breeds = { "Corgi", "Pome", "Lab", "Dachs", "Shiba", "Samoyed" };   // dogIndex order (KH_DogWalkingEditor.Keys)
-        static readonly bool[] Swims = { true, true, false, true, true, false };                      // B-2 (Shiba decided in step 4)
+        // Step 4 breed table (decision 2026-09-27): small breeds swim, Shiba on trial (decided after the PCVR look), Lab and
+        // Samoyed wade only. Written to KD_DogWanderController.waterSwimAllowed.
+        static readonly bool[] Swims = { true, true, false, true, true, false };
+        // Ms = M x KH_WaterSpot.swimMouthScale; the water-play tuning values have one source, KH_WaterSpot (Codex M-低).
         const int RiverbankDestination = 5;         // KH_WalkRoute.destinationNodes[5] = "川辺" (KH_CourseRouteEditor)
         const float CentreZ = 285f, HalfSpanZ = 6f, EntryMaxDistance = 11.5f, EntryLimit = 12f;
         const float Step = .5f, InnerLat = .3f, OuterExtra = .6f, ReturnOut = 2.5f;
@@ -46,6 +49,7 @@ namespace KominkaHillside.Editor
             public int gridNx, gridNz, wetCells, dogsWired, paintedCells;
             public float[] mouthHeights;
             public bool pouchWired;
+            public string[] bobTargets;   // per dog: the visual child that carries the swim bob, or why there is none
         }
         // swimBandOk (width >= 2.5 m for a swimming breed, B-3 check 5) belongs to step 4 (swimming): recorded, not judged here.
         [Serializable] public class Breed { public string name; public float mouth, wadeLimit, wadeCells, wadeWidth, swimCells, swimWidth; public bool swims, swimBandOk; public int blockedLines; }
@@ -60,7 +64,7 @@ namespace KominkaHillside.Editor
             public List<Breed> breeds = new List<Breed>();
             public List<string> stones = new List<string>(), findings = new List<string>();
             public int dogsWired; public bool pouchWired;
-            public string stage1SwimCheck = "NOT_CHECKED: the swim band >= 2.5 m (check 5) is judged in step 4 (swimming); breeds[].swimBandOk is recorded only";
+            public string stage1SwimCheck = "Step 4: every swimming breed needs at least one swimmable cell (depth >= 0.75 M) in the region (judged). The design's swim band >= 2.5 m is recorded only (breeds[].swimBandOk) because the spot has no pool (decision 2026-09-27)";
             public string slopeTolerance = "Check 4 limit 5 % (design); judged at <= 5.05 %: the formula gives exactly 5.00 % here and float rounding must not flip it. Values above 5.00 % are reported in findings as a note when <= 5.05 %";
             public List<string> notes = new List<string>();
             public string limitations = "Static data only. Water play itself: ClientSim harness W0/W4/W6 (Course/78) and PCVR. Swim widths are recorded for step 4 only.";
@@ -140,6 +144,17 @@ namespace KominkaHillside.Editor
             so.FindProperty("gridX0").floatValue = x0; so.FindProperty("gridZ0").floatValue = z0; so.FindProperty("gridStep").floatValue = Step;
             so.FindProperty("gridNx").intValue = nx; so.FindProperty("gridNz").intValue = nz;
             SetFloats(so, "bed", bed); so.FindProperty("entryRadius").floatValue = EntryLimit;
+            // Tuning: the constants in KH_WaterSpot are the single source; written every build so the scene never keeps an old value.
+            so.FindProperty("wadeLimitRatio").floatValue = KH_WaterSpot.DefaultWadeLimitRatio;
+            so.FindProperty("swimEnterRatio").floatValue = KH_WaterSpot.DefaultSwimEnterRatio;
+            so.FindProperty("swimLeaveRatio").floatValue = KH_WaterSpot.DefaultSwimLeaveRatio;
+            so.FindProperty("swimLeaveHold").floatValue = KH_WaterSpot.DefaultSwimLeaveHold;
+            so.FindProperty("swimClear").floatValue = KH_WaterSpot.DefaultSwimClear;
+            so.FindProperty("swimSpeedLab").floatValue = KH_WaterSpot.DefaultSwimSpeedLab;
+            so.FindProperty("swimMouthScale").floatValue = KH_WaterSpot.DefaultSwimMouthScale;
+            so.FindProperty("wadeClear").floatValue = KH_WaterSpot.DefaultWadeClear;
+            so.FindProperty("swimBob").floatValue = KH_WaterSpot.DefaultSwimBob;
+            so.FindProperty("swimBobHz").floatValue = KH_WaterSpot.DefaultSwimBobHz;
             so.ApplyModifiedProperties(); UdonSharpEditorUtility.CopyProxyToUdon(spot); EditorUtility.SetDirty(spot);
 
             // ---- FX ----
@@ -151,6 +166,12 @@ namespace KominkaHillside.Editor
                 var ws = new SerializedObject(w);
                 ws.FindProperty("waterSpot").objectReferenceValue = spot;
                 ws.FindProperty("waterMouthHeight").floatValue = mouths[w.dogIndex];
+                ws.FindProperty("waterSwimAllowed").boolValue = Swims[w.dogIndex];
+                ws.FindProperty("waterSwimMouth").floatValue = SwimMouth(mouths[w.dogIndex], w.dogIndex);
+                string why; var bob = BobTarget(w, out why);
+                ws.FindProperty("waterBob").objectReferenceValue = bob;
+                if (report.bobTargets == null) report.bobTargets = new string[6];
+                report.bobTargets[w.dogIndex] = bob != null ? bob.name : "none: " + why;
                 ws.FindProperty("waterSplash").objectReferenceValue = splash;
                 ws.FindProperty("waterRipple").objectReferenceValue = ripple;
                 ws.ApplyModifiedProperties(); UdonSharpEditorUtility.CopyProxyToUdon(w); EditorUtility.SetDirty(w); report.dogsWired++;
@@ -430,7 +451,7 @@ namespace KominkaHillside.Editor
             for (int b = 0; b < Breeds.Length; b++)
             {
                 float m = ReadMouth(Breeds[b]);
-                var br = new Breed { name = Breeds[b], mouth = m, wadeLimit = KD_WaterLimit(m), swims = Swims[b] };
+                var br = new Breed { name = Breeds[b], mouth = m, wadeLimit = spot.wadeLimitRatio * m, swims = Swims[b] };
                 for (int i = 0; i < spot.bed.Length; i++)
                 {
                     if (spot.bed[i] <= KH_WaterSpot.NoBed + 1) continue;
@@ -445,11 +466,12 @@ namespace KominkaHillside.Editor
                             if (Physics.Linecast(c + Vector3.up * .3f, e + Vector3.up * .3f, out hit, ~0, QueryTriggerInteraction.Ignore) && !(hit.collider is TerrainCollider)) br.blockedLines++;
                         }
                     }
-                    if (d >= .75f * m) br.swimCells++;
+                    if (d >= spot.swimEnterRatio * m) br.swimCells++;
                 }
                 br.wadeWidth = br.wadeCells * Step * Step / span; br.swimWidth = br.swimCells * Step * Step / span;
                 br.swimBandOk = !br.swims || br.swimWidth >= 2.5f;
-                if (!br.swimBandOk) r.notes.Add("Step 4 (not judged now): swim band " + br.swimWidth.ToString("F2") + " m < 2.5 m for " + br.name);
+                if (!br.swimBandOk) r.notes.Add("Swim band " + br.swimWidth.ToString("F2") + " m < 2.5 m for " + br.name + " (recorded only)");
+                if (br.swims && br.swimCells < 1) r.findings.Add("Stage 1: no swimmable cell (depth >= " + spot.swimEnterRatio + " M = " + (spot.swimEnterRatio * m).ToString("F3") + " m) for " + br.name);
                 if (br.wadeCells == 0) r.findings.Add("Check 5: no wadeable cell for " + br.name);
                 if (br.blockedLines > 0) r.findings.Add("Check 5: " + br.blockedLines + " straight lines to exits blocked for " + br.name);
                 r.breeds.Add(br);
@@ -464,7 +486,9 @@ namespace KominkaHillside.Editor
 
             // wiring
             foreach (var w in UnityEngine.Object.FindObjectsOfType<KD_DogWanderController>(true))
-                if (w.waterSpot == spot && w.waterMouthHeight > .05f && w.waterSplash != null && w.waterRipple != null && w.riverData != null) r.dogsWired++;
+                if (w.waterSpot == spot && w.waterMouthHeight > .05f && w.waterSplash != null && w.waterRipple != null && w.riverData != null
+                    && w.dogIndex >= 0 && w.dogIndex < Swims.Length && w.waterSwimAllowed == Swims[w.dogIndex]
+                    && Mathf.Abs(w.waterSwimMouth - SwimMouth(ReadMouth(Breeds[w.dogIndex]), w.dogIndex)) < .001f) r.dogsWired++;   // Ms = the breed's expected value
             r.pouchWired = pouch.waterSpot == spot;
             if (r.dogsWired != 6 || !r.pouchWired) r.findings.Add("Wiring incomplete dogs=" + r.dogsWired + "/6 pouch=" + r.pouchWired);
 
@@ -473,7 +497,35 @@ namespace KominkaHillside.Editor
             Debug.Log("[KH Water Spot] verify " + r.status + " errors=" + r.errors + " entry=" + r.entryDistance.ToString("F2") + "m slope=" + (r.surfaceSlopeMax * 100).ToString("F2") + "% bed=" + r.check2MaxBedError.ToString("F4"));
         }
 
-        static float KD_WaterLimit(float mouth) { return .45f * mouth; }   // = KD_DogWanderController.WaterDepthRatio (stage 0, C-2)
+        /// <summary>The bob goes on the mesh-side skeleton root of the purchased two-tier rig (KH_DogRig.meshSkelRoot): the clips
+        /// animate the driver bones under inu/アーマチュア and RotationConstraints copy only rotations onto the mesh side, so no
+        /// Animator write touches that transform's position (run 20260927-072549: the Animator itself is on the synced root). It is
+        /// accepted only when no clip has a position curve on its path and it carries no position/parent constraint; otherwise there
+        /// is no bob (amplitude 0) and the reason is recorded.</summary>
+        /// <summary>Ms: the mouth height with the walk clip = M x scale - the breed's measured head drop (WalkHeadDrop below).</summary>
+        // Walk-clip head drop per breed, measured by the swim harness (run 20260927-073904: float root + M 0.060 vs the real mouth
+        // anchor in W1; Lab / Samoyed from their wading frames). Dog order Corgi, Pome, Lab, Dachs, Shiba, Samoyed. Pome's 2.6 cm
+        // drop left its real mouth 0.021 m above the water in W2.
+        static readonly float[] WalkHeadDrop = { 0.008f, 0.026f, 0.057f, 0f, 0.008f, 0.049f };
+        static float SwimMouth(float m, int dog) { return m * KH_WaterSpot.DefaultSwimMouthScale - WalkHeadDrop[dog]; }
+
+        static Transform BobTarget(KD_DogWanderController w, out string why)
+        {
+            why = ""; var anim = w.dogAnimator;
+            if (anim == null || w.dogRoot == null) { why = "no animator/root"; return null; }
+            var rig = KH_DogRig.Resolve(w.dogRoot.gameObject, "KD_FetchAnchor_Mouth");
+            var t = rig.meshSkelRoot;
+            if (t == null) { why = "no two-tier mesh skeleton"; return null; }
+            if (!t.IsChildOf(w.dogRoot) || t == w.dogRoot) { why = "mesh skeleton outside the root"; return null; }
+            if (t.GetComponent<UnityEngine.Animations.PositionConstraint>() != null || t.GetComponent<UnityEngine.Animations.ParentConstraint>() != null) { why = "position constraint on the mesh skeleton root"; return null; }
+            var ctrl = anim.runtimeAnimatorController;
+            if (ctrl == null) { why = "no controller"; return null; }
+            string path = AnimationUtility.CalculateTransformPath(t, anim.transform);
+            foreach (var clip in ctrl.animationClips)
+                foreach (var b in AnimationUtility.GetCurveBindings(clip))
+                    if (b.path == path && b.propertyName.StartsWith("m_LocalPosition")) { why = "clip " + clip.name + " animates " + path; return null; }
+            return t;
+        }
         static bool Outside(Vector3 p) { return Mathf.Abs(p.x - KH_CourseGroundEditor.RiverAt(p.z).x) > BandEdge(p.z); }
 
         static void SetFloats(SerializedObject so, string name, float[] v) { var p = so.FindProperty(name); p.arraySize = v.Length; for (int i = 0; i < v.Length; i++) p.GetArrayElementAtIndex(i).floatValue = v[i]; }
