@@ -57,6 +57,13 @@ namespace KominkaHillside.Editor
         // 段階 2: 暗転の観測 (KH_TravelFade の _alpha と、プレイヤーの 5 m 以上の跳び)
         static VRC.Udon.UdonBehaviour tvFade;
         static float tvPrevAlpha, tvMaxAlpha, tvJumpAlpha = -1f, tvJumpPrevAlpha = -1f;
+        static double tvJumpAt = -1, tvLastDarkAt = -1, tvJumpDarkGap = -1, tvFadeBackAt = -1;
+        // 段階 3: 合流の相手 (人形) を歩かせる
+        static bool tvPuppetWalk;
+        static int tvPuppetNode;
+        static Vector3 tvPuppetPos;
+        static double tvPuppetLast;
+        static VRC.Udon.UdonBehaviour tvBox;
         static int tvJumps;
         static Vector3 tvPrevPlayer;
         static bool tvPrevPlayerValid;
@@ -73,7 +80,7 @@ namespace KominkaHillside.Editor
         static void MakeTravelCases()
         {
             Application.logMessageReceived -= TravelLog; Application.logMessageReceived += TravelLog;
-            tvStep = 0; tvCaseAt = -1; tvPrev = null; tvObsValid = false; tvTrackMask = 0; tvRemote = null; tvWalkLast = 0;
+            tvStep = 0; tvCaseAt = -1; tvPrev = null; tvObsValid = false; tvBox = null; tvPuppetWalk = false; tvTrackMask = 0; tvRemote = null; tvWalkLast = 0;
             tvFade = UnityEngine.Object.FindObjectsOfType<VRC.Udon.UdonBehaviour>().FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_TravelFade");
             if (tvFade == null) throw new InvalidOperationException("KH_TravelFade not in the scene (run Course/84)");
             tvLogs.Clear(); tvScripts = new List<List<Func<double, bool>>>(); tvReport = new TravelReport { runId = report.runId };
@@ -98,6 +105,7 @@ namespace KominkaHillside.Editor
             if (report.full)
             {
                 TvT2(mask); TvT3(mask); TvT4(mask); TvT5(mask); TvT6(mask); TvT7(mask); TvT8(); TvT9();
+                TvT10(); TvT9Join();
             }
             TvT11(report.full ? 7 : 1);
         }
@@ -140,14 +148,16 @@ namespace KominkaHillside.Editor
             s.Add(TvUntil(() => TvFlat(Networking.LocalPlayer.GetPosition(), TvSpot(spot)) < 6f, 12, "player did not arrive at spot " + spot));
             s.Add(TvDo(() => c.arrived = TvNow()));
             s.Add(TvUntil(() => TvAllNear(mask, TvNear), 2, "not every dog within 3.75 m of the hand 2 s after arrival"));
-            // 段階 2 (§D.1): 暗転 → 黒 (alpha 1) が描かれた後に移動 → 明転。移動の観測の前後とも alpha 1、1.5 秒以内に 0 へ戻る
-            s.Add(TvUntil(() => Get<float>(tvFade, "_alpha") <= 0.001f, 1.5, "screen did not fade back in"));
+            // 段階 2 (§D.1): 暗転 → 黒 → 移動 → 明転。W2 レビュー M5: 期限は跳びを観測した時刻から数える。
+            // 観測は毎フレームとは限らないので「跳びの直前 0.3 秒以内に alpha >= 0.99 の観測がある」で判定する (描画そのものは見ていない)
+            s.Add(TvUntil(() => tvFadeBackAt >= 0, 3, "screen did not fade back in after the move"));
             s.Add(TvDo(() =>
             {
                 TvExpect(tvJumps == 1, "exactly one player jump (" + tvJumps + ")");
-                TvExpect(tvMaxAlpha >= 0.999f, "fade reached black (max " + tvMaxAlpha.ToString("F3") + ")");
-                TvExpect(tvJumpPrevAlpha >= 0.999f && tvJumpAlpha >= 0.999f, "black was drawn before the move (alpha before " + tvJumpPrevAlpha.ToString("F3") + ", at " + tvJumpAlpha.ToString("F3") + ")");
-                TvNote("fade: black before the move (alpha " + tvJumpPrevAlpha.ToString("F2") + " -> " + tvJumpAlpha.ToString("F2") + "), back to 0 within 1.5 s");
+                TvExpect(tvMaxAlpha >= 0.99f, "fade reached black (max alpha observed " + tvMaxAlpha.ToString("F3") + ")");
+                TvExpect(tvJumpDarkGap >= 0 && tvJumpDarkGap <= 0.3, "alpha >= 0.99 observed within 0.3 s before the move (gap " + tvJumpDarkGap.ToString("F2") + " s)");
+                TvExpect(tvFadeBackAt - tvJumpAt <= 1.5, "back to alpha 0 within 1.5 s of the move (" + (tvFadeBackAt - tvJumpAt).ToString("F2") + " s)");
+                TvNote("fade: alpha >= 0.99 observed " + tvJumpDarkGap.ToString("F2") + " s before the move, alpha 0 again " + (tvFadeBackAt - tvJumpAt).ToString("F2") + " s after");
             }));
             s.Add(TvUntil(() => TvAllPhase(mask, KH_LeashManager.TravelPhaseDone), 3, "Phase 2 not reached"));
             s.Add(TvUntil(() => Get<int>(manager, "travelResultCode") == KH_LeashManager.TravelArrived, 1, "requester did not switch from 'waiting for dogs' to 'arrived'"));
@@ -415,6 +425,139 @@ namespace KominkaHillside.Editor
             s.Add(TvDo(() => { tvRemote = null; TvNote("leave: dogs 3..5 released and tickets cleared. Join-side T9 (ReqJoin/AnsJoin) is stage 3."); }));
         }
 
+        // ============================================================
+        // 段階 3: 合流 (T10 着地点、T9 の合流側)。相手は ClientSim の人形 (Udon は動かない) なので、
+        // 自分の受付箱の debugJoinLoopback で相手の箱を使わずに待ちへ入り、_DebugAnswerNow で相手の答えを模す
+        // ============================================================
+
+        static VRC.Udon.UdonBehaviour TvMyBox()
+        {
+            if (tvBox != null) return tvBox;
+            var objs = Networking.GetPlayerObjects(Networking.LocalPlayer);
+            if (objs != null)
+                foreach (var o in objs)
+                {
+                    if (o == null) continue;
+                    var u = o.GetComponents<VRC.Udon.UdonBehaviour>().FirstOrDefault(b => b.programSource != null && b.programSource.name == "KH_TravelMailbox");
+                    if (u != null) { tvBox = u; return u; }
+                }
+            return null;
+        }
+
+        static void TvPlacePuppet(Vector3 p, Vector3 facing)
+        {
+            var cs = tvRemote.GetClientSimPlayer();
+            cs.transform.position = p; facing.y = 0;
+            if (facing.sqrMagnitude > 1e-6f) cs.transform.rotation = Quaternion.LookRotation(facing);
+        }
+
+        static void TvJoinPress(TvCtx c)
+        {
+            var box = TvMyBox();
+            c.press = TvNow(); c.serial = Get<int>(box, "joinResultSerial"); c.logFrom = tvLogs.Count; c.pos = Networking.LocalPlayer.GetPosition();
+            c.old = (int[])Get<int[]>(manager, "travelReq").Clone();
+            TvReset();
+            pouch.SendCustomEvent("_TravelOpenMap"); pouch.SendCustomEvent("_TravelModePeople"); pouch.SendCustomEvent("_JoinPick0"); pouch.SendCustomEvent("_TravelGo");
+        }
+
+        static void TvAnswer(int code)
+        {
+            var box = TvMyBox();
+            box.SetProgramVariable("debugAnswerCode", code); box.SendCustomEvent("_DebugAnswerNow");
+        }
+
+        static void TvT10()
+        {
+            var s = TvCase("T10-join-landing", true, 3);
+            s.Add(TvDo(() => ClientSimMain.SpawnRemotePlayer("KH_TravelJoinTarget")));
+            s.Add(TvUntil(() => (tvRemote = TvRemotePlayer()) != null, 5, "remote player spawn"));
+            s.Add(TvUntil(() => TvMyBox() != null, 5, "local KH_TravelMailbox (VRCPlayerObject) not found"));
+            s.Add(TvDo(() => { TvMyBox().SetProgramVariable("debugJoinLoopback", 1); TvNote("simulated: the target is a ClientSim puppet (no Udon); requests loop back (debugJoinLoopback=1) and the answer is injected with _DebugAnswerNow"); }));
+            // 条件ごとに相手を置く: 通常 / 橋の上 / 川の中 / 歩行中 (2 m/s) / コースの外 (安全な点が無い)
+            var conds = new (string name, int expect)[] { ("near", KH_LeashManager.JoinReasonNear), ("bridge", KH_LeashManager.JoinReasonBridge), ("water", KH_LeashManager.JoinReasonWater), ("walking", KH_LeashManager.JoinReasonBehind), ("offcourse", -1) };
+            foreach (var (name, expect) in conds)
+            {
+                var c = new TvCtx();
+                s.Add(TvCooldown());
+                s.Add(TvDo(() =>
+                {
+                    tvPuppetWalk = false;
+                    var bz = Get<float[]>(manager, "travelBridgeZs"); var bx = Get<float[]>(manager, "travelBridgeXs");
+                    var rx = Get<float[]>(manager, "travelRiverXs"); float z0 = Get<float>(manager, "travelRiverZ0"), step = Get<float>(manager, "travelRiverStep");
+                    int plaza = Closest(TvSpot(KH_LeashManager.SpotPlaza));
+                    if (name == "near") { int n = (plaza + 8) % nodes.Length; TvPlacePuppet(nodes[n], nodes[(n + 1) % nodes.Length] - nodes[n]); }
+                    else if (name == "bridge") { int n = Closest(new Vector3(bx[1], 0, bz[1])); TvPlacePuppet(nodes[n], Vector3.forward); }
+                    else if (name == "water") { float z = 505f; int k = Mathf.Clamp(Mathf.RoundToInt((z - z0) / step), 0, rx.Length - 1); int n = Closest(new Vector3(rx[k], 0, z)); TvPlacePuppet(new Vector3(rx[k], nodes[n].y - 1f, z), Vector3.forward); }
+                    else if (name == "walking") { tvPuppetNode = (plaza + 20) % nodes.Length; tvPuppetPos = nodes[tvPuppetNode]; tvPuppetLast = TvNow(); tvPuppetWalk = true; TvPlacePuppet(tvPuppetPos, nodes[(tvPuppetNode + 1) % nodes.Length] - tvPuppetPos); }
+                    else TvPlacePuppet(new Vector3(-55f, 0f, 715f), Vector3.forward);
+                }));
+                s.Add(TvWait(1.5));   // 相手の速さ (0.5 秒ごと) が決まるまで
+                s.Add(TvDo(() => TvJoinPress(c)));
+                s.Add(TvUntil(() => Get<int>(TvMyBox(), "_outTo") >= 0, 2, "join request did not start (" + name + ")"));
+                s.Add(TvWait(1.1));   // 受付箱が相手の速さを 0.5 秒ごとに測る (待っている間だけ)
+                s.Add(TvDo(() => { c.pos = Networking.LocalPlayer.GetPosition(); TvAnswer(KH_TravelMailbox.CodeYes); }));
+                if (expect < 0)
+                {
+                    s.Add(TvUntil(() => Get<int>(TvMyBox(), "joinResultCode") == KH_TravelMailbox.JoinNoSafe, 2, "expected 'no safe spot' (" + name + ")"));
+                    s.Add(TvWait(1));
+                    s.Add(TvDo(() =>
+                    {
+                        TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), c.pos) < 1f && tvDisc.All(d => d == 0), "nothing moved (" + name + ")");
+                        TvNote(name + ": no safe landing within 30 m -> no move, 'no safe spot' shown");
+                    }));
+                    continue;
+                }
+                s.Add(TvUntil(() => TvFlat(Networking.LocalPlayer.GetPosition(), c.pos) > 5f, 12, "player did not move (" + name + ")"));
+                s.Add(TvUntil(() => TvAllPhase(7, KH_LeashManager.TravelPhaseDone), 4, "dog tickets not done (" + name + ")"));
+                s.Add(TvDo(() =>
+                {
+                    int reason = Get<int>(TvMyBox(), "joinReason");
+                    var land = Networking.LocalPlayer.GetPosition(); var target = tvRemote.GetPosition();
+                    var water = new KH_CourseTravelEditor.Water { xs = Get<float[]>(manager, "travelRiverXs"), z0 = Get<float>(manager, "travelRiverZ0"), step = Get<float>(manager, "travelRiverStep"), bridgeZs = Get<float[]>(manager, "travelBridgeZs"), bridgeXs = Get<float[]>(manager, "travelBridgeXs") };
+                    TvExpect(reason == expect, name + ": reason " + reason + " (expected " + expect + ")");
+                    TvExpect(KH_CourseTravelEditor.WaterOk(land, water), name + ": landing is 10 m from the river and off the bridges");
+                    TvExpect(TvFlat(land, target) <= 40f, name + ": landing within 40 m of the target (" + TvFlat(land, target).ToString("F1") + " m)");
+                    TvExpect(TvFlat(land, target) >= 1f, name + ": landing not on top of the target");
+                    for (int i = 0; i < 3; i++) TvExpect(tvDisc[i] == 1, name + ": dog" + i + " moved once with the holder");
+                    TvNote(name + ": reason " + reason + ", landed " + TvFlat(land, target).ToString("F1") + " m from the target, dogs followed once");
+                    tvPuppetWalk = false;
+                }));
+            }
+        }
+
+        static void TvT9Join()
+        {
+            var s = TvCase("T9-join-leave-and-cancel", true, 3); var a = new TvCtx(); var b = new TvCtx();
+            // (a) 申し込み中に相手が退室 → 「相手が退室しました」、移動しない
+            s.Add(TvCooldown());
+            s.Add(TvDo(() => { TvPlacePuppet(nodes[Closest(TvSpot(KH_LeashManager.SpotPlaza))], Vector3.forward); TvJoinPress(a); }));
+            s.Add(TvUntil(() => Get<int>(TvMyBox(), "_outTo") >= 0, 2, "join request did not start"));
+            s.Add(TvDo(() => { a.pos = Networking.LocalPlayer.GetPosition(); ClientSimMain.RemovePlayer(tvRemote); tvRemote = null; }));
+            s.Add(TvUntil(() => Get<int>(TvMyBox(), "joinResultCode") == KH_TravelMailbox.JoinLeft, 3, "target left but no 'left' result"));
+            s.Add(TvDo(() =>
+            {
+                TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), a.pos) < 1f && tvDisc.All(d => d == 0), "nothing moved after the target left");
+                TvNote("leave during the request: 'target left', no move");
+            }));
+            // (b) 取り消した後に承認が届く → 取消が勝つ (保留中の seq が無いので捨てる)
+            s.Add(TvDo(() => ClientSimMain.SpawnRemotePlayer("KH_TravelJoinTarget2")));
+            s.Add(TvUntil(() => (tvRemote = TvRemotePlayer()) != null, 5, "remote player spawn"));
+            s.Add(TvDo(() => { TvPlacePuppet(nodes[Closest(TvSpot(KH_LeashManager.SpotPlaza))], Vector3.forward); TvJoinPress(b); }));
+            s.Add(TvUntil(() => Get<int>(TvMyBox(), "_outTo") >= 0, 2, "second join request did not start"));
+            s.Add(TvDo(() => { b.pos = Networking.LocalPlayer.GetPosition(); pouch.SendCustomEvent("_TravelGo"); }));   // 返事待ちの [取り消す]
+            s.Add(TvUntil(() => Get<int>(TvMyBox(), "joinResultCode") == KH_TravelMailbox.JoinCanceled, 2, "cancel not reported"));
+            s.Add(TvDo(() => TvAnswer(KH_TravelMailbox.CodeYes)));   // 行き違いで届いた承認
+            s.Add(TvWait(2));
+            s.Add(TvDo(() =>
+            {
+                TvExpect(Get<int>(TvMyBox(), "joinResultCode") == KH_TravelMailbox.JoinCanceled, "late accept after cancel was ignored");
+                TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), b.pos) < 1f && tvDisc.All(d => d == 0), "nothing moved after cancel + late accept");
+                TvMyBox().SetProgramVariable("debugJoinLoopback", 0);
+                ClientSimMain.RemovePlayer(tvRemote); tvRemote = null;
+                TvNote("cancel then late accept: cancel wins, no move. Real two-client ReqJoin/AnsJoin order is a PCVR check (§C.2 #3-#5)");
+            }));
+        }
+
         static void TvT11(int mask)
         {
             // 設計書 §D.5: 連打は門番で弾き、理由が分かる表示を出す。ClientSim は Owner = 本人なので切符が同じフレームで書かれ、
@@ -495,8 +638,25 @@ namespace KominkaHillside.Editor
             if (tvFade != null)
             {
                 float alpha = Get<float>(tvFade, "_alpha"); var pp = Networking.LocalPlayer.GetPosition();
-                if (tvPrevPlayerValid && TvFlat(pp, tvPrevPlayer) > 5f) { tvJumps++; tvJumpAlpha = alpha; tvJumpPrevAlpha = tvPrevAlpha; }
+                if (tvPrevPlayerValid && TvFlat(pp, tvPrevPlayer) > 5f)
+                {
+                    tvJumps++; tvJumpAlpha = alpha; tvJumpPrevAlpha = tvPrevAlpha; tvJumpAt = now;
+                    tvJumpDarkGap = alpha >= 0.99f ? 0 : (tvLastDarkAt >= 0 ? now - tvLastDarkAt : -1);
+                }
+                if (alpha >= 0.99f) tvLastDarkAt = now;
+                if (tvJumpAt >= 0 && tvFadeBackAt < 0 && alpha <= 0.001f && now > tvJumpAt) tvFadeBackAt = now;
                 tvMaxAlpha = Mathf.Max(tvMaxAlpha, alpha); tvPrevAlpha = alpha; tvPrevPlayer = pp; tvPrevPlayerValid = true;
+            }
+            if (tvPuppetWalk && Utilities.IsValid(tvRemote))
+            {
+                // 合流の相手を道の正方向へ 2 m/s で歩かせる (T10 の「歩行中」)
+                float step = Mathf.Min((float)(now - tvPuppetLast), .1f) * 2f; tvPuppetLast = now;
+                int next = (tvPuppetNode + 1) % nodes.Length;
+                var before = tvPuppetPos; tvPuppetPos = Vector3.MoveTowards(tvPuppetPos, nodes[next], step);
+                if (Vector3.Distance(tvPuppetPos, nodes[next]) < .001f) tvPuppetNode = next;
+                var cs = tvRemote.GetClientSimPlayer(); var heading = tvPuppetPos - before; heading.y = 0;
+                cs.transform.position = tvPuppetPos;
+                if (heading.sqrMagnitude > 1e-6f) cs.transform.rotation = Quaternion.LookRotation(heading);
             }
             for (int i = 0; i < 6; i++)
             {
@@ -519,6 +679,7 @@ namespace KominkaHillside.Editor
         {
             tvPrev = roots.Select(r => r.position).ToArray(); tvDisc = new int[6];
             tvJumps = 0; tvMaxAlpha = 0f; tvJumpAlpha = -1f; tvJumpPrevAlpha = -1f; tvPrevPlayerValid = false;
+            tvJumpAt = -1; tvLastDarkAt = -1; tvJumpDarkGap = -1; tvFadeBackAt = -1;
             if (tvPrevNext == null) { tvPrevNext = new int[6]; tvForward = new int[6]; tvReverse = new int[6]; }
         }
 

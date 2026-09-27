@@ -78,6 +78,7 @@ namespace KominkaDogRun
             if (manager._IsGathering(dog)) return 3;
             if (sleepBoard != null && sleepBoard._IsCalled(dog)) return 7;   // 裏山改変 (IMP-DOG-016): 呼ばれて待機中は接続不可
             if (manager.fetchers == null || dog >= manager.fetchers.Length || manager.fetchers[dog] == null || !manager.fetchers[dog].IsIdle) return 4;
+            if (WaterBusy(dog)) return WalkGateWater;   // IMP-DOG-020 (KD_TreatPouch.Water.cs)
             if (manager._MyCount(hand) >= 3) return 5;
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (manager.dogRoots == null || dog >= manager.dogRoots.Length || manager.dogRoots[dog] == null || !Utilities.IsValid(lp)) return 9;
@@ -88,7 +89,7 @@ namespace KominkaDogRun
         private void WalkAttach(int dog, int hand)
         {
             int gate = WalkAttachGate(dog, hand);
-            if (gate != 0) { HillsideNote(TabWalk, WalkGateKey(gate, hand), ""); Redraw(); return; }
+            if (gate != 0) { if (gate == WalkGateWater) WaterAsk(dog); HillsideNote(TabWalk, WalkGateKey(gate, hand), ""); Redraw(); return; }
             manager._RequestAttach(dog, hand);
             WalkPending(1, dog, hand, -1);
             HillsideNote(TabWalk, hand == 0 ? "KD_TreatPouch.WordWalkAttachingLeft" : "KD_TreatPouch.WordWalkAttachingRight", "");
@@ -117,6 +118,7 @@ namespace KominkaDogRun
 
         private string WalkGateKey(int gate, int hand)
         {
+            if (gate == WalkGateWater) return "course.water.busy";
             if (gate == 1) return "KD_TreatPouch.WordWalkGateAlready";
             if (gate == 2) return "KD_TreatPouch.WordWalkGateOther";
             if (gate == 3) return "KD_TreatPouch.WordWalkGateGathering";
@@ -148,7 +150,7 @@ namespace KominkaDogRun
             else if (_walkPendingKind == 2)
             {
                 done = !manager._IsLeashed(_walkPendingDog);
-                key = "KD_TreatPouch.WordWalkDetached";
+                key = WaterReleaseKey(_walkPendingDog, "KD_TreatPouch.WordWalkDetached");   // IMP-DOG-020: once per stay near the spot
             }
             else if (_walkPendingKind == 3)
             {

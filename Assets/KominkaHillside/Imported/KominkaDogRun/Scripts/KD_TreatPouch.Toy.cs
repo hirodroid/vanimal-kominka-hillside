@@ -229,6 +229,7 @@ namespace KominkaDogRun
             int gate = recall._GateToy(row, kind);
             if (gate != KominkaHillside.KH_ToyRecall.Ok)
             {
+                if (gate == KominkaHillside.KH_ToyRecall.InWater) WaterAsk(row);   // IMP-DOG-020
                 string key = gate == KominkaHillside.KH_ToyRecall.Unwired && kind == KominkaHillside.KH_ToyRecall.KindDisc
                     ? "KD_TreatPouch.WordToyGateNoDisc" : HillsideToyGateKey(gate);
                 HillsideNote(TabToy, key, "");
@@ -255,6 +256,7 @@ namespace KominkaDogRun
 
         private string HillsideToyGateKey(int gate)
         {
+            if (gate == KominkaHillside.KH_ToyRecall.InWater) return "course.water.busyToy";
             if (gate == KominkaHillside.KH_ToyRecall.Held) return "KD_TreatPouch.WordToyGateHeld";
             if (gate == KominkaHillside.KH_ToyRecall.DogBusy) return "KD_TreatPouch.WordToyGateBusy";
             if (gate == KominkaHillside.KH_ToyRecall.Cooldown) return "KD_TreatPouch.WordToyGateCooldown";
@@ -265,6 +267,7 @@ namespace KominkaDogRun
         private string HillsideToyShort(int gate)
         {
             if (gate == KominkaHillside.KH_ToyRecall.Ok) return L("KD_TreatPouch.WordToyStateOk");
+            if (gate == KominkaHillside.KH_ToyRecall.InWater) return L("course.water.state");
             if (gate == KominkaHillside.KH_ToyRecall.Held) return L("KD_TreatPouch.WordToyStateHeld");
             if (gate == KominkaHillside.KH_ToyRecall.DogBusy) return L("KD_TreatPouch.WordToyStateBusy");
             if (gate == KominkaHillside.KH_ToyRecall.Pending) return L("KD_TreatPouch.WordToyStatePending");

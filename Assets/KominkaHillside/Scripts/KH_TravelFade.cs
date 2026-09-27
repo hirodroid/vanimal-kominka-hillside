@@ -1,5 +1,6 @@
 using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
 
 namespace KominkaHillside
 {
@@ -10,7 +11,11 @@ namespace KominkaHillside
     /// 0.3 秒で戻す。黒のまま 3 秒放っておかれたら自分で戻す (画面が黒いまま残らない床)。
     ///
     /// 板は KH_NightMode と同じ全画面の quad (KH_FullscreenQuad) に KH_TravelFade.mat。材質は Renderer.material の複製を使い、
-    /// 共有アセットは書き換えない。</summary>
+    /// 共有アセットは書き換えない。
+    ///
+    /// **描く順 (W2 レビュー D1)**: renderQueue は Unity 2022.3 の記載範囲 (0〜5000) の上限 5000。ライブの粒も 5000 なので、
+    /// 透明の描画が「遠 → 近」の順であることを使い、出している間は板 (の bounds の中心) を毎フレーム頭の位置へ寄せて最後に描かせる。
+    /// Renderer の sortingOrder も Course/84 が最大に書く。</summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_TravelFade : UdonSharpBehaviour
     {
@@ -21,7 +26,7 @@ namespace KominkaHillside
         public float fadeInSeconds = 0.3f;
         public float blackTimeout = 3f;
 
-        public const int OverlayQueue = 5001;   // ナイトモードの乗算板 (4999) とライブの粒 (5000) より上
+        public const int OverlayQueue = 5000;   // 記載範囲の上限。ライブの粒 (5000) とは「頭の位置 = 最も近い」で後に描く
 
         private Material _mat;
         private bool _ready;
@@ -46,6 +51,7 @@ namespace KominkaHillside
         {
             if (!_ready) return;
             _state = 1;
+            FollowHead();
             overlayRenderer.enabled = true;
         }
 
@@ -70,6 +76,7 @@ namespace KominkaHillside
         void Update()
         {
             if (!_ready || _state == 0) return;
+            FollowHead();
             if (_state == 1)
             {
                 _alpha = fadeOutSeconds <= 0f ? 1f : Mathf.Min(1f, _alpha + Time.deltaTime / fadeOutSeconds);
@@ -93,5 +100,13 @@ namespace KominkaHillside
         }
 
         private void Apply() { if (_mat != null) _mat.SetFloat("_Alpha", _alpha); }
+
+        /// <summary>板を頭の位置へ。全画面の quad なので見た目は変わらず、透明の並べ替えで最も近い = 最後に描かれる。</summary>
+        private void FollowHead()
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) return;
+            overlayRenderer.transform.position = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+        }
     }
 }

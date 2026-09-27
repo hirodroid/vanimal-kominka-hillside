@@ -2,7 +2,8 @@
 //
 // ナイトモードの覆い (KH_NightOverlay) と同じ「頂点 xy をそのままクリップ座標にする全画面の板」だが、
 // **乗算ではなく alpha で黒へ補間する** (Blend SrcAlpha OneMinusSrcAlpha)。_Alpha 1 のとき下に何があっても黒になるので、
-// ナイトモードの乗算板 (queue 4999) やライブの粒 (5000) と重なっても黒い。queue は 5001 で、それらより後に描く。
+// ナイトモードの乗算板 (queue 4999) やライブの粒 (5000) と重なっても黒い。queue は記載範囲の上限 5000 で、同じ 5000 の粒より
+// 後に描かれるよう、KH_TravelFade が出している間は板を頭の位置へ寄せる (透明は遠 → 近の順。W2 レビュー D1)。
 // GrabPass は使わないので Android / iOS でも描ける。ミラー用カメラでは描かない (主視点の板が鏡の面も覆う)。
 Shader "KominkaHillside/KH_TravelFade"
 {
@@ -12,7 +13,7 @@ Shader "KominkaHillside/KH_TravelFade"
     }
     SubShader
     {
-        Tags { "RenderType"="Transparent" "Queue"="Transparent+2001" "IgnoreProjector"="True" }   // 5001
+        Tags { "RenderType"="Transparent" "Queue"="Transparent+2000" "IgnoreProjector"="True" }   // 5000
         ZTest Always
         ZWrite Off
         Cull Off

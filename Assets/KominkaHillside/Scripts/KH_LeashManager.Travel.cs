@@ -230,15 +230,26 @@ namespace KominkaHillside
         {
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp)) { _tvState = 0; if (travelFade != null) travelFade._Release(); return; }
-            if (_tvMask != 0 && _TravelMyMask() != _tvMask)
+            // レビュー W2 D2: 0 匹で始めても比べる (暗転中に接続が成立したら、切符の無い犬を置いていかない)。取消の送信は切符があるときだけ
+            if (_TravelMyMask() != _tvMask)
             {
                 Debug.Log("[KH_Leash] travel req=" + _tvReq + " stopped during fade: leashed dogs changed");
-                TravelSendCancel();
+                if (_tvReq != 0) TravelSendCancel();
                 if (travelFade != null) travelFade._Release();
                 TravelFinish(TravelChanged, travelCooldownFail);
                 return;
             }
-            if (travelFade != null && !travelFade._IsBlack()) return;
+            if (travelFade != null && !travelFade._IsBlack())
+            {
+                // レビュー W2 D4: 板が自分で明るく戻った (黒のまま 3 秒の保護) なら、待ち続けずに取りやめて次を受け付ける
+                if (!travelFade._Busy())
+                {
+                    Debug.Log("[KH_Leash] travel req=" + _tvReq + " stopped: fade released before the move");
+                    if (_tvReq != 0) TravelSendCancel();
+                    TravelFinish(TravelCanceledByMe, travelCooldownFail);
+                }
+                return;
+            }
             if (!TravelPeopleClear(_tvCenter))
             {
                 Debug.Log("[KH_Leash] travel req=" + _tvReq + " stopped: landing occupied");
@@ -334,6 +345,117 @@ namespace KominkaHillside
 
         /// <summary>地点の基準点 → 半径 1.5 m の 6 点 (開始角 playerId × 137.5°) → 半径 3 m の 12 点 → 前後のノード (±1〜5)。
         /// 通った点を _tvLanding に置く。全部だめなら false (移動しない)。</summary>
+        // ============================================================
+        // 段階 3: 合流 (§D.3 の合流の表)。KH_TravelMailbox が承認を受けたときに呼ぶ
+        // ============================================================
+
+        public const int JoinReasonNear = 0, JoinReasonBehind = 1, JoinReasonBridge = 2, JoinReasonWater = 3, JoinReasonOffTrail = 4;
+        const float JoinWalkSpeed = 1.5f, JoinSearch = 30f, JoinOffTrail = 25f, JoinBankOffset = 22f, JoinWaterBand = 4.5f;
+
+        /// <summary>直前に通った着地点 (_TravelLandingOk が書く)。</summary>
+        public Vector3 _TravelLastLanding() { return _tvLanding; }
+
+        /// <summary>相手 T の位置 p・向き・速さ (0.5 秒の差) から、R の着地点を決める。共通の検査 5 つを全候補に通す。
+        /// 戻り値は理由 (JoinReason*)、-1 = 安全な点が無い (移動しない)。着地点は _TravelLastLanding()。
+        /// 橋の上: 相手が向かう岸 (止まっていれば R に近い岸) → 反対の岸 / 川床・水中: 30 m 以内の最寄りのノード /
+        /// 歩行中 (1.5 m/s 超): 進行方向の逆へ 5 m の道のノード / 道から 25 m より遠い: 30 m 以内のノード /
+        /// 通常: 相手の向きの逆へ 3.5 m → その周り 1.5 m の 6 点 → 最寄りのノード。</summary>
+        public int _TravelFindJoinLanding(Vector3 p, Quaternion rot, Vector3 vel, Vector3 from)
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            int pid = Utilities.IsValid(lp) ? lp.playerId : 1;
+            Vector3 flatVel = vel; flatVel.y = 0f;
+            float speed = flatVel.magnitude;
+            int bridge = TravelBridgeAt(p);
+            if (bridge >= 0)
+            {
+                float bx = travelBridgeXs[bridge], bz = travelBridgeZs[bridge];
+                float side = speed > 0.5f ? Mathf.Sign(flatVel.x) : Mathf.Sign(from.x - bx);
+                if (side == 0f) side = 1f;
+                if (JoinNear(new Vector3(bx + side * JoinBankOffset, p.y, bz), JoinSearch)) return JoinReasonBridge;
+                if (JoinNear(new Vector3(bx - side * JoinBankOffset, p.y, bz), JoinSearch)) return JoinReasonBridge;
+                return -1;
+            }
+            if (TravelRiverDistance(p) < JoinWaterBand) return JoinNear(p, JoinSearch) ? JoinReasonWater : -1;
+            if (route != null && route._DistanceToTrail(p) > JoinOffTrail) return JoinNear(p, JoinSearch) ? JoinReasonOffTrail : -1;
+            if (speed > JoinWalkSpeed)
+                return JoinNear(p - flatVel / speed * 5f, JoinSearch) ? JoinReasonBehind : -1;
+            Vector3 fwd = rot * Vector3.forward; fwd.y = 0f;
+            if (fwd.sqrMagnitude < 0.0001f) fwd = Vector3.forward;
+            Vector3 c = p - fwd.normalized * 3.5f;
+            if (_TravelLandingOk(c)) return JoinReasonNear;
+            float start = pid * 137.5f;
+            for (int k = 0; k < 6; k++)
+            {
+                float a = (start + k * 60f) * Mathf.Deg2Rad;
+                if (_TravelLandingOk(c + new Vector3(Mathf.Sin(a) * 1.5f, 0f, Mathf.Cos(a) * 1.5f))) return JoinReasonNear;
+            }
+            return JoinNear(p, JoinSearch) ? JoinReasonNear : -1;
+        }
+
+        /// <summary>q に最も近い道のノード (maxDist 以内) と、その前後 ±1〜5 のノードの中心を順に検査する。</summary>
+        private bool JoinNear(Vector3 q, float maxDist)
+        {
+            if (route == null || route.count <= 0) return false;
+            int best = -1; float bestD = maxDist * maxDist;
+            for (int i = 0; i < route.count; i++)
+            {
+                Vector3 d = route._Position(i) - q; d.y = 0f;
+                if (d.sqrMagnitude <= bestD) { bestD = d.sqrMagnitude; best = i; }
+            }
+            if (best < 0) return false;
+            if (_TravelLandingOk(route._Position(best))) return true;
+            for (int k = 1; k <= 5; k++)
+            {
+                if (_TravelLandingOk(route._Position((best + k) % route.count))) return true;
+                if (_TravelLandingOk(route._Position((best - k + route.count) % route.count))) return true;
+            }
+            return false;
+        }
+
+        /// <summary>橋の区域 (川の中心から x±18 m・橋から z±8 m) に入っている橋の番号。無ければ -1。</summary>
+        private int TravelBridgeAt(Vector3 p)
+        {
+            if (travelBridgeZs == null || travelBridgeXs == null) return -1;
+            for (int b = 0; b < travelBridgeZs.Length && b < travelBridgeXs.Length; b++)
+                if (Mathf.Abs(p.z - travelBridgeZs[b]) <= TravelBridgeHalfZ && Mathf.Abs(p.x - travelBridgeXs[b]) <= TravelBridgeHalfX) return b;
+            return -1;
+        }
+
+        /// <summary>川の中心線までの水平距離 (保存した 2 m ごとの標本から)。データが無ければ大きな値。</summary>
+        private float TravelRiverDistance(Vector3 p)
+        {
+            if (travelRiverXs == null || travelRiverXs.Length == 0 || travelRiverStep <= 0f) return 1e6f;
+            int k0 = Mathf.Max(0, Mathf.FloorToInt((p.z - TravelRiverWindow - travelRiverZ0) / travelRiverStep));
+            int k1 = Mathf.Min(travelRiverXs.Length - 1, Mathf.CeilToInt((p.z + TravelRiverWindow - travelRiverZ0) / travelRiverStep));
+            float best = 1e12f;
+            for (int k = k0; k <= k1; k++)
+            {
+                float dx = p.x - travelRiverXs[k], dz = p.z - (travelRiverZ0 + k * travelRiverStep);
+                best = Mathf.Min(best, dx * dx + dz * dz);
+            }
+            return best >= 1e12f ? 1e6f : Mathf.Sqrt(best);
+        }
+
+        /// <summary>合流の移動 (L は _TravelFindJoinLanding で決めた点)。切符・暗転・犬の同行は地点ワープと同じ。ローカル専用。</summary>
+        public int _TravelBeginJoin(Vector3 landing, float yaw)
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) return TravelUnavailable;
+            if (_tvState == 1 || _tvState == 3) { _tvBusyRejects++; return TravelBusy; }
+            if (Time.time < _tvCooldownUntil) return TravelCooling;
+            int mask = _TravelMyMask();
+            if (TravelAnyChasing(mask)) return TravelBall;
+            _tvSpot = -1; _tvCenter = landing; _tvYaw = yaw;
+            if (mask == 0) { _tvReq = 0; _tvMask = 0; TravelStartFade(); return TravelStarted; }
+            _tvSeq = (_tvSeq % 65535) + 1;
+            _tvReq = lp.playerId * 65536 + _tvSeq;
+            _tvMask = mask;
+            _tvState = 1; _tvResent = false; _tvSentAt = Time.time;
+            TravelSend();
+            return TravelStarted;
+        }
+
         private bool TravelFindLanding(int spot, int playerId)
         {
             Vector3 c = spotPositions[spot];

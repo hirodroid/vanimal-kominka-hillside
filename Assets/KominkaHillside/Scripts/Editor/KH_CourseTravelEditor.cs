@@ -202,11 +202,11 @@ namespace KominkaHillside.Editor
 
         /// <summary>検査 4 に使う川と橋のデータ。Build は生成式から作り、Verify は **Manager に保存された値** から作る (レビュー M4)。</summary>
         public class Water { public float[] xs, bridgeZs, bridgeXs; public float z0, step; }
-        static Water GeneratedWater()
+        public static Water GeneratedWater()
         {
             return new Water { xs = RiverSamples(), z0 = RiverZ0, step = RiverStep, bridgeZs = (float[])BridgeZs.Clone(), bridgeXs = BridgeZs.Select(z => KH_CourseGroundEditor.RiverAt(z).x).ToArray() };
         }
-        static Water SavedWater(KH_LeashManager m)
+        public static Water SavedWater(KH_LeashManager m)
         {
             return new Water { xs = m.travelRiverXs, z0 = m.travelRiverZ0, step = m.travelRiverStep, bridgeZs = m.travelBridgeZs, bridgeXs = m.travelBridgeXs };
         }
@@ -319,6 +319,7 @@ namespace KominkaHillside.Editor
             var scroll = (RectTransform)p.tabScrolls[KD_TreatPouch.TabWalk].transform;
             Require(e, Mathf.Abs(scroll.anchoredPosition.y + scroll.sizeDelta.y / 2 - ContentTopWithRow) < 0.5f, "walk scroll top = 140 (below the map row)");
             KH_CourseTravelMapEditor.Validate(p, e, report);
+            KH_CourseTravelJoinEditor.Validate(p, e, report);   // 段階 3: 受付箱・通知板・人の一覧
             // 翻訳・字形・収まり
             var catalog = CourseCatalog(p.language);
             foreach (var lang in catalog.languages) foreach (var entry in lang.texts)
@@ -358,12 +359,15 @@ namespace KominkaHillside.Editor
                 "Assets/KominkaHillside/Scripts/KH_LeashManager.Travel.cs",
                 "Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogWanderController.HillsideTravel.cs",
                 "Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatPouch.Travel.cs",
-                "Assets/KominkaHillside/Scripts/KH_TravelFade.cs" })
+                "Assets/KominkaHillside/Scripts/KH_TravelFade.cs",
+                "Assets/KominkaHillside/Scripts/KH_TravelMailbox.cs",
+                "Assets/KominkaHillside/Scripts/KH_TravelNotice.cs" })
             {
                 var lines = File.ReadAllLines(path);
                 for (int i = 0; i < lines.Length; i++)
                 {
-                    var mm = Regex.Match(lines[i], @"public\s+(?:override\s+)?\w+(?:\[\])?\s+([A-Za-z]\w*)\s*\(");
+                    // VRChat のイベントの override (OnPlayerRestored など) は対象外
+                    var mm = Regex.Match(lines[i], @"public\s+(?!override\b)\w+(?:\[\])?\s+([A-Za-z]\w*)\s*\(");
                     if (!mm.Success || mm.Groups[1].Value.StartsWith("_")) continue;
                     bool callable = i > 0 && lines[i - 1].Contains("[NetworkCallable");
                     if (!callable) e.Add("Public method without '_' and without [NetworkCallable]: " + path + ":" + (i + 1) + " " + mm.Groups[1].Value);
@@ -444,7 +448,8 @@ namespace KominkaHillside.Editor
             foreach (var m in UnityEngine.Object.FindObjectsOfType<KH_LeashManager>(true))
             {
                 if (m.route == null || !m.route.closedLoop) continue;
-                bool debugOff = m.debugDropTravel == 0 && m.debugDropTravelDone == 0 && m.debugSkipTravelTeleport == 0 && m.debugForgeTravelMask == 0 && m.debugDelayTravel == 0f;
+                bool debugOff = m.debugDropTravel == 0 && m.debugDropTravelDone == 0 && m.debugSkipTravelTeleport == 0 && m.debugForgeTravelMask == 0 && m.debugDelayTravel == 0f
+                    && UnityEngine.Object.FindObjectsOfType<KH_TravelMailbox>(true).All(b => b.debugJoinLoopback == 0 && b.debugAnswerCode == 0);
                 bool data = m.spotPositions != null && m.spotPositions.Length == 6 && m.spotWarpEnabled != null && m.spotWarpEnabled.Length == 6 && m.travelRiverXs != null && m.travelRiverXs.Length > 0;
                 if (!debugOff || !data)
                 {

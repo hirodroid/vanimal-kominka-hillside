@@ -175,6 +175,166 @@
         {
           "key": "course.water.state",
           "text": "水遊び中"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "ワープ先: {0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "犬 {0} 匹もいっしょ"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "散歩先: {0} のまま"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "人"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "地点"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "合流をたのむ"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "取り消す ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "相手を選んでください"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "いまはほかの人がいません"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "準備中"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "申し込みを受けていません"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "{0}の近く"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} m"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "合流の申し込みを受ける: ON"
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "合流の申し込みを受ける: OFF"
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "返事を待っています ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "今は合流できないようです"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "相手はいま別の申し込みに対応しています。少しあとで"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "相手はいま申し込みを受けていません"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "相手が退室しました"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "同じ相手へは少し待ってから"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "相手の近くに安全な場所がありません"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "申し込みを取り消しました"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "いまは申し込めません"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "相手の近くに着きます"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "相手の少し後ろに着きます"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "橋の手前に着きます"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "川の近くなので、岸の道に着きます"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "相手の近くの道に着きます"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} さんが近くに来たいそうです"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "いいよ"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "いまはだめ"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "しばらく受けない (10分)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "この人からはこの滞在中は受けない"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "申し込み 1 件"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "上流の橋"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "下流の橋"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "合流しました"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "合流しました。犬を待っています"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "合流先: {0} さん"
         }
       ]
     },
@@ -350,6 +510,166 @@
         {
           "key": "course.water.state",
           "text": "In the water"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "Warp to: {0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "{0} dogs come along"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "Walk stays: {0}"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "People"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "Places"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "Ask to join"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "Cancel ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "Choose someone"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "Nobody else is here now"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "Getting ready"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "Not taking requests"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "Near {0}"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} m"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "Accept join requests: ON"
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "Accept join requests: OFF"
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "Waiting for a reply ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "They cannot meet up right now"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "They are answering another request. Try a bit later"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "They are not taking requests now"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "They left the instance"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "Wait a little before asking them again"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "No safe spot near them"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "Request cancelled"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "You cannot ask right now"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "You will land near them"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "You will land a little behind them"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "You will land before the bridge"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "Near the river: you will land on the bank path"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "You will land on the path near them"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} would like to come to you"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "Sure"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "Not now"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "Pause requests (10 min)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "Not from this person this visit"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "1 join request"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "Upstream bridge"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "Downstream bridge"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "You joined them"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "You joined them. Waiting for your dogs"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "Join: {0}"
         }
       ]
     },
@@ -525,6 +845,166 @@
         {
           "key": "course.water.state",
           "text": "В воде"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "Телепорт: {0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "Собак с вами: {0}"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "Прогулка: {0}"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "Люди"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "Места"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "Попросить встречу"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "Отменить ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "Выберите человека"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "Сейчас никого нет"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "Готовится"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "Не принимает запросы"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "Рядом: {0}"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} м"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "Принимать запросы: ВКЛ"
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "Принимать запросы: ВЫКЛ"
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "Ждём ответа ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "Сейчас встретиться не получится"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "Отвечает на другой запрос. Попробуйте позже"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "Сейчас не принимает запросы"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "Игрок вышел"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "Подождите, прежде чем просить снова"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "Рядом нет безопасного места"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "Запрос отменён"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "Сейчас нельзя отправить запрос"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "Вы окажетесь рядом"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "Вы окажетесь чуть позади"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "Вы окажетесь перед мостом"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "Рядом река: вы окажетесь на тропе у берега"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "Вы окажетесь на тропе рядом"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} хочет подойти к вам"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "Да"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "Не сейчас"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "Пауза (10 мин)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "Не от этого игрока сейчас"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "Запрос: 1"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "Верхний мост"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "Нижний мост"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "Вы встретились"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "Вы встретились. Ждём собак"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "Встреча: {0}"
         }
       ]
     },
@@ -700,6 +1180,166 @@
         {
           "key": "course.water.state",
           "text": "У воді"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "Телепорт: {0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "Собак з вами: {0}"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "Прогулянка: {0}"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "Люди"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "Місця"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "Попросити зустріч"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "Скасувати ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "Виберіть людину"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "Зараз нікого немає"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "Готується"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "Не приймає запити"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "Поруч: {0}"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} м"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "Приймати запити: УВІМК"
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "Приймати запити: ВИМК"
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "Чекаємо відповіді ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "Зараз зустрітися не вийде"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "Відповідає на інший запит. Спробуйте пізніше"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "Зараз не приймає запити"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "Гравець вийшов"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "Зачекайте, перш ніж просити знову"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "Поруч немає безпечного місця"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "Запит скасовано"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "Зараз не можна надіслати запит"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "Ви опинитеся поруч"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "Ви опинитеся трохи позаду"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "Ви опинитеся перед мостом"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "Поруч річка: ви опинитеся на стежці біля берега"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "Ви опинитеся на стежці поруч"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} хоче підійти до вас"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "Так"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "Не зараз"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "Пауза (10 хв)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "Не від цього гравця зараз"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "Запит: 1"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "Верхній міст"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "Нижній міст"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "Ви зустрілися"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "Ви зустрілися. Чекаємо собак"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "Зустріч: {0}"
         }
       ]
     },
@@ -875,6 +1515,166 @@
         {
           "key": "course.water.state",
           "text": "물놀이 중"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "워프할 곳: {0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "강아지 {0}마리도 함께"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "산책 목적지: {0} 그대로"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "사람"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "장소"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "합류 요청"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "취소 ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "상대를 고르세요"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "지금은 다른 사람이 없어요"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "준비 중"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "요청을 받지 않음"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "{0} 근처"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} m"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "합류 요청 받기: ON"
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "합류 요청 받기: OFF"
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "답을 기다리는 중 ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "지금은 합류할 수 없어요"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "상대가 다른 요청에 답하는 중이에요. 잠시 후에"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "상대가 지금 요청을 받지 않아요"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "상대가 나갔어요"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "같은 상대에게는 잠시 후에"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "상대 근처에 안전한 곳이 없어요"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "요청을 취소했어요"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "지금은 요청할 수 없어요"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "상대 근처에 도착해요"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "상대 조금 뒤에 도착해요"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "다리 앞에 도착해요"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "강 근처라서 강가 길에 도착해요"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "상대 근처 길에 도착해요"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} 님이 가까이 오고 싶대요"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "좋아요"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "지금은 안 돼요"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "잠시 받지 않기 (10분)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "이번에는 이 사람에게 받지 않기"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "합류 요청 1건"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "위쪽 다리"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "아래쪽 다리"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "합류했어요"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "합류했어요. 강아지를 기다리는 중"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "합류: {0}"
         }
       ]
     },
@@ -1050,6 +1850,166 @@
         {
           "key": "course.water.state",
           "text": "Im Wasser"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "Teleport nach: {0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "{0} Hunde kommen mit"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "Ziel bleibt: {0}"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "Leute"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "Orte"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "Treffen anfragen"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "Abbrechen ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "Wähle jemanden"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "Gerade ist niemand sonst da"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "Wird vorbereitet"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "Nimmt keine Anfragen an"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "Nahe {0}"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} m"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "Anfragen annehmen: AN"
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "Anfragen annehmen: AUS"
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "Warte auf Antwort ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "Gerade ist kein Treffen möglich"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "Beantwortet eine andere Anfrage. Gleich noch einmal"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "Nimmt gerade keine Anfragen an"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "Hat die Instanz verlassen"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "Bitte etwas warten vor der nächsten Anfrage"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "Kein sicherer Ort in der Nähe"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "Anfrage abgebrochen"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "Gerade keine Anfrage möglich"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "Du landest in der Nähe"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "Du landest etwas dahinter"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "Du landest vor der Brücke"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "Nahe am Fluss: du landest auf dem Uferweg"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "Du landest auf dem Weg in der Nähe"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} möchte zu dir kommen"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "Gern"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "Jetzt nicht"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "Pause (10 Min.)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "Von dieser Person nicht mehr"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "1 Anfrage"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "Obere Brücke"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "Untere Brücke"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "Ihr habt euch getroffen"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "Ihr habt euch getroffen. Warte auf die Hunde"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "Treffen: {0}"
         }
       ]
     },
@@ -1225,6 +2185,166 @@
         {
           "key": "course.water.state",
           "text": "玩水中"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "传送到：{0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "{0}只狗狗一起"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "散步目的地：{0} 不变"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "人"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "地点"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "请求会合"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "取消 ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "请选择对象"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "现在没有其他人"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "准备中"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "不接受请求"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "{0}附近"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} 米"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "接受会合请求：开"
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "接受会合请求：关"
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "等待回复 ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "现在无法会合"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "对方正在处理其他请求，请稍后"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "对方现在不接受请求"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "对方已离开"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "请稍后再向同一人请求"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "对方附近没有安全的地方"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "已取消请求"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "现在无法请求"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "将到达对方附近"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "将到达对方稍后方"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "将到达桥前"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "靠近河边，将到达岸边的路上"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "将到达对方附近的路上"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} 想来你身边"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "好的"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "现在不行"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "暂时不接受 (10分钟)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "本次不接受此人的请求"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "会合请求 1 件"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "上游的桥"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "下游的桥"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "已会合"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "已会合，正在等狗狗"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "会合：{0}"
         }
       ]
     },
@@ -1400,6 +2520,166 @@
         {
           "key": "course.water.state",
           "text": "En el agua"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "Teletransporte a: {0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "Vienen {0} perros"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "El paseo sigue: {0}"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "Personas"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "Lugares"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "Pedir reunirse"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "Cancelar ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "Elige a alguien"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "No hay nadie más ahora"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "Preparando"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "No acepta solicitudes"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "Cerca de {0}"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} m"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "Aceptar solicitudes: SÍ"
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "Aceptar solicitudes: NO"
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "Esperando respuesta ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "Ahora no puede reunirse"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "Está atendiendo otra solicitud. Prueba luego"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "Ahora no acepta solicitudes"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "Salió de la instancia"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "Espera un poco antes de volver a pedir"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "No hay un lugar seguro cerca"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "Solicitud cancelada"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "Ahora no puedes pedirlo"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "Llegarás cerca"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "Llegarás un poco detrás"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "Llegarás antes del puente"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "Cerca del río: llegarás al camino de la orilla"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "Llegarás al camino cercano"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} quiere venir contigo"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "Vale"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "Ahora no"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "Pausar (10 min)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "No de esta persona en esta visita"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "1 solicitud"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "Puente de arriba"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "Puente de abajo"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "Te reuniste"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "Te reuniste. Esperando a tus perros"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "Reunirse: {0}"
         }
       ]
     },
@@ -1575,6 +2855,166 @@
         {
           "key": "course.water.state",
           "text": "Dans l'eau"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "Téléporter vers : {0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "{0} chiens viennent"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "Promenade : {0} inchangée"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "Personnes"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "Lieux"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "Demander à rejoindre"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "Annuler ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "Choisis quelqu’un"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "Personne d’autre ici"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "En préparation"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "N’accepte pas de demandes"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "Près de {0}"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} m"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "Accepter les demandes : OUI"
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "Accepter les demandes : NON"
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "En attente de réponse ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "Pas possible de se rejoindre"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "Répond à une autre demande. Réessaie plus tard"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "N’accepte pas de demandes"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "A quitté l’instance"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "Attends un peu avant de redemander"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "Pas d’endroit sûr à proximité"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "Demande annulée"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "Impossible de demander maintenant"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "Tu arriveras près de lui"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "Tu arriveras un peu derrière"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "Tu arriveras avant le pont"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "Près de la rivière : sentier de la rive"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "Tu arriveras sur le sentier proche"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} voudrait venir te voir"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "D’accord"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "Pas maintenant"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "Pause (10 min)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "Pas de cette personne cette fois"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "1 demande"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "Pont amont"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "Pont aval"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "Vous vous êtes rejoints"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "Vous vous êtes rejoints. On attend tes chiens"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "Rejoindre : {0}"
         }
       ]
     },
@@ -1750,6 +3190,166 @@
         {
           "key": "course.water.state",
           "text": "Na água"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "Teleportar para: {0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "{0} cães vão junto"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "Passeio continua: {0}"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "Pessoas"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "Lugares"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "Pedir para encontrar"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "Cancelar ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "Escolha alguém"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "Não há mais ninguém agora"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "Preparando"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "Não aceita pedidos"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "Perto de {0}"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} m"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "Aceitar pedidos: SIM"
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "Aceitar pedidos: NÃO"
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "Aguardando resposta ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "Não dá para encontrar agora"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "Respondendo outro pedido. Tente depois"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "Não aceita pedidos agora"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "Saiu da instância"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "Espere um pouco antes de pedir de novo"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "Não há lugar seguro por perto"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "Pedido cancelado"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "Não é possível pedir agora"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "Você vai chegar perto"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "Você vai chegar um pouco atrás"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "Você vai chegar antes da ponte"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "Perto do rio: você vai chegar ao caminho da margem"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "Você vai chegar ao caminho próximo"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} quer ir até você"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "Pode ser"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "Agora não"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "Pausar (10 min)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "Não desta pessoa nesta visita"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "1 pedido"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "Ponte de cima"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "Ponte de baixo"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "Vocês se encontraram"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "Vocês se encontraram. Esperando seus cães"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "Encontrar: {0}"
         }
       ]
     },
@@ -1925,6 +3525,166 @@
         {
           "key": "course.water.state",
           "text": "In acqua"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "Teletrasporto a: {0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "Vengono {0} cani"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "Passeggiata: {0} invariata"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "Persone"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "Luoghi"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "Chiedi di raggiungere"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "Annulla ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "Scegli qualcuno"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "Non c’è nessun altro"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "In preparazione"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "Non accetta richieste"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "Vicino a {0}"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} m"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "Accetta richieste: SÌ"
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "Accetta richieste: NO"
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "In attesa di risposta ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "Ora non è possibile"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "Sta rispondendo a un’altra richiesta. Riprova dopo"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "Ora non accetta richieste"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "Ha lasciato l’istanza"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "Aspetta un po’ prima di richiedere"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "Nessun posto sicuro vicino"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "Richiesta annullata"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "Ora non puoi chiedere"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "Arriverai vicino"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "Arriverai poco dietro"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "Arriverai prima del ponte"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "Vicino al fiume: arriverai sul sentiero della riva"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "Arriverai sul sentiero vicino"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} vorrebbe venire da te"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "Va bene"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "Non ora"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "Pausa (10 min)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "Non da questa persona per ora"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "1 richiesta"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "Ponte a monte"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "Ponte a valle"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "Vi siete raggiunti"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "Vi siete raggiunti. Aspetto i tuoi cani"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "Raggiungi: {0}"
         }
       ]
     },
@@ -2100,6 +3860,166 @@
         {
           "key": "course.water.state",
           "text": "W wodzie"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "Teleport do: {0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "Psy z tobą: {0}"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "Spacer: {0} bez zmian"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "Ludzie"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "Miejsca"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "Poproś o spotkanie"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "Anuluj ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "Wybierz osobę"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "Nikogo innego teraz nie ma"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "Przygotowanie"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "Nie przyjmuje próśb"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "Blisko: {0}"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} m"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "Przyjmuj prośby: WŁ."
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "Przyjmuj prośby: WYŁ."
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "Czekam na odpowiedź ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "Teraz nie da się spotkać"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "Odpowiada na inną prośbę. Spróbuj później"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "Teraz nie przyjmuje próśb"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "Opuścił instancję"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "Poczekaj chwilę przed kolejną prośbą"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "Brak bezpiecznego miejsca w pobliżu"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "Prośba anulowana"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "Teraz nie można poprosić"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "Pojawisz się blisko"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "Pojawisz się trochę za nim"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "Pojawisz się przed mostem"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "Blisko rzeki: pojawisz się na ścieżce przy brzegu"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "Pojawisz się na ścieżce w pobliżu"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} chce do ciebie przyjść"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "Dobrze"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "Nie teraz"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "Wstrzymaj (10 min)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "Nie od tej osoby podczas wizyty"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "Prośby: 1"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "Górny most"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "Dolny most"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "Spotkaliście się"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "Spotkaliście się. Czekam na psy"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "Spotkanie: {0}"
         }
       ]
     },
@@ -2279,6 +4199,166 @@
         {
           "key": "course.water.state",
           "text": "玩水中"
+        },
+        {
+          "key": "course.travel.map.target",
+          "text": "傳送到：{0}"
+        },
+        {
+          "key": "course.travel.map.dogs",
+          "text": "{0}隻狗狗一起"
+        },
+        {
+          "key": "course.travel.map.walkdest",
+          "text": "散步目的地：{0} 不變"
+        },
+        {
+          "key": "course.travel.join.people",
+          "text": "人"
+        },
+        {
+          "key": "course.travel.join.spots",
+          "text": "地點"
+        },
+        {
+          "key": "course.travel.join.ask",
+          "text": "請求會合"
+        },
+        {
+          "key": "course.travel.join.cancel",
+          "text": "取消 ({0})"
+        },
+        {
+          "key": "course.travel.join.pick",
+          "text": "請選擇對象"
+        },
+        {
+          "key": "course.travel.join.alone",
+          "text": "現在沒有其他人"
+        },
+        {
+          "key": "course.travel.join.notReady",
+          "text": "準備中"
+        },
+        {
+          "key": "course.travel.join.notAccepting",
+          "text": "不接受請求"
+        },
+        {
+          "key": "course.travel.join.near",
+          "text": "{0}附近"
+        },
+        {
+          "key": "course.travel.join.distance",
+          "text": "{0} 米"
+        },
+        {
+          "key": "course.travel.join.accept.on",
+          "text": "接受會合請求：開"
+        },
+        {
+          "key": "course.travel.join.accept.off",
+          "text": "接受會合請求：關"
+        },
+        {
+          "key": "course.travel.join.waiting",
+          "text": "等待回覆 ({0})"
+        },
+        {
+          "key": "course.travel.join.code0",
+          "text": "現在無法會合"
+        },
+        {
+          "key": "course.travel.join.code2",
+          "text": "對方正在處理其他請求，請稍後"
+        },
+        {
+          "key": "course.travel.join.code3",
+          "text": "對方現在不接受請求"
+        },
+        {
+          "key": "course.travel.join.left",
+          "text": "對方已離開"
+        },
+        {
+          "key": "course.travel.join.again",
+          "text": "請稍後再向同一人請求"
+        },
+        {
+          "key": "course.travel.join.nosafe",
+          "text": "對方附近沒有安全的地方"
+        },
+        {
+          "key": "course.travel.join.canceled",
+          "text": "已取消請求"
+        },
+        {
+          "key": "course.travel.join.busy",
+          "text": "現在無法請求"
+        },
+        {
+          "key": "course.travel.join.reason.near",
+          "text": "將到達對方附近"
+        },
+        {
+          "key": "course.travel.join.reason.behind",
+          "text": "將到達對方稍後方"
+        },
+        {
+          "key": "course.travel.join.reason.bridge",
+          "text": "將到達橋前"
+        },
+        {
+          "key": "course.travel.join.reason.water",
+          "text": "靠近河邊，將到達岸邊的路上"
+        },
+        {
+          "key": "course.travel.join.reason.offtrail",
+          "text": "將到達對方附近的路上"
+        },
+        {
+          "key": "course.travel.join.notice.title",
+          "text": "{0} 想來你身邊"
+        },
+        {
+          "key": "course.travel.join.notice.yes",
+          "text": "好的"
+        },
+        {
+          "key": "course.travel.join.notice.no",
+          "text": "現在不行"
+        },
+        {
+          "key": "course.travel.join.notice.pause",
+          "text": "暫時不接受 (10分鐘)"
+        },
+        {
+          "key": "course.travel.join.notice.block",
+          "text": "今次不接受此人的請求"
+        },
+        {
+          "key": "course.travel.join.pending",
+          "text": "會合請求 1 件"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeUp",
+          "text": "上游的橋"
+        },
+        {
+          "key": "course.travel.join.spot.bridgeDown",
+          "text": "下游的橋"
+        },
+        {
+          "key": "course.travel.join.arrived",
+          "text": "已會合"
+        },
+        {
+          "key": "course.travel.join.dogs",
+          "text": "已會合，正在等狗狗"
+        },
+        {
+          "key": "course.travel.join.target",
+          "text": "會合：{0}"
         }
       ]
     }

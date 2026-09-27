@@ -1,3 +1,4 @@
+using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.SDK3.Components;
@@ -186,7 +187,9 @@ namespace KominkaDogRun
                 }
                 Coast(); return;
             }
-            StepToward(_waterTarget, 0f, walkSpeed);   // wading is never faster than walking (0.3 M rule)
+            // In the water never faster than walking (the 0.3 M rule); the dry strip between the entry and the band (about 2.4 m
+            // at this spot) is crossed at a run, so the first wet step comes within about 5 s of the release (B-1, W0).
+            StepToward(_waterTarget, 0f, waterSpot._Depth(p) > WaterWet ? walkSpeed : runSpeed);
         }
 
         void WaterStepExit(Vector3 p)

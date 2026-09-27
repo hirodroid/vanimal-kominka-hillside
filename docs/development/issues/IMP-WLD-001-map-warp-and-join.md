@@ -67,7 +67,8 @@ updated: 2026-09-27
 - 変更: 新規 `KH_TravelFade.cs` (ローカルの暗転。0.2 秒で黒 → 黒を描いたフレームの次に移動 → 1 フレーム後に 0.3 秒で戻す、黒のまま 3 秒で自動で戻す) と `Shaders/KH_TravelFade.shader` (alpha で黒へ、queue 5001、ミラーでは描かない) / `KH_LeashManager.Travel.cs` (状態 3「暗転中」、`travelFade` の参照、暗転の間も取消・接続の変化・人の検査) / `KD_TreatPouch.Travel.cs` (副画面、10 Hz の自分の位置と向き、選ぶ → [ここへワープ]、着いたら `PlaceInFront` と [さんぽへもどる]) / 新規 `Editor/KH_CourseTravelMapEditor.cs` / `Editor/KH_CourseTravelEditor.cs` (Course/80 は地点と翻訳だけにし、81 から段階 2 の検査を呼ぶ) / ハーネス T1 に暗転の観測 / `CourseUITranslations.json` に `course.travel.map.*` 12 キー × 13 言語。
 - メニュー: `Course/84 - Build Travel Map and Fade` (1 回目は KH_TravelFade の Program Asset を作って止まる。2 回目で地図テクスチャ `Assets/KominkaHillside/Textures/Map/KH_TravelMap.png`、暗転の板、[地図と移動] と副画面を作ってシーンを保存。`Temp/imp-wld-001/travel-map-build.json`)。検査は `Course/81` に含めた (容量は `travel-verify.json` の `mapPngBytes` / `mapGpuBytesPC` / `mapGpuBytesMobile`)。
 - 統括が実行する順: C# コンパイル → Course/84 (PROGRAM_ASSET_CREATED) → `unity-compile.sh --udon` → Course/84 (BUILT) → Course/27 → Course/81 (TRAVEL_OK) と Course/26 → Course/83 → Course/82 (T1 の notes に「fade: black before the move」)。
-- 設計からの変更: 地図の番号は ①〜⑥ ではなく数字 1〜6 (丸数字の字形を足さないため)。状態の 1 行は板の下端ではなく副画面の右下 (設定の枠の中では下端の Feedback が出ないため)。[人] の切替は段階 3。暗転中の他のボタンの無視はしていない (暗転中に押せるのは [ここへワープ] だけで、それは処理中として弾く)。
+- 翻訳表の `course.travel.map.with` は残し、使わない: 英語が 590 幅からはみ出したため `course.travel.map.footer2` に差し替え、表は追記のみの規則なので旧キーを消さない。段階 3 の W2 レビュー U10 で、フッターは「ワープ先 / 犬の数 / 散歩先」の 3 行 (`map.target` / `map.dogs` / `map.walkdest`) に分けた。
+- 設計からの変更: 地図の番号は ①〜⑥ ではなく数字 1〜6 (丸数字の字形を足さないため)。状態の 1 行は板の下端ではなく副画面の右下 (設定の枠の中では下端の Feedback が出ないため)。[人] の切替は段階 3。暗転中 (明けるまで) は副画面の入力 ([もどる]・地点の選択・[ここへワープ]) を受け付けない (W2 レビュー D3 で追加)。暗転の queue は 5000 (W2 レビュー D1。設計書 §D.1 の実装の行)。
 
 ### 段階 3: 合流 (設計書 §A.4・A.6・A.7・D.3・D.4)
 
@@ -82,6 +83,13 @@ updated: 2026-09-27
 
 - [ ] Verify で、受付箱の同期方式と配線、通知板、設定の行が PASS する。ClientSim で T10 (合流の着地点) と T9 (退出・取消の競合) が PASS する。
 - [ ] PCVR 2〜3 人で、設計書 §C.2 の #3〜#5 を行う (申し込みの code ごとの文言、相手が橋の上・川床・歩行中、退出)。
+
+#### 実装 (2026-09-27、段階 3。未コンパイル・未検証)
+
+- 変更: 新規 `KH_TravelMailbox.cs` (VRCPlayerObject・Manual・同期は `accepting` 1 本。`ReqJoin` / `AnsJoin` / `CancelJoin` は `[NetworkCallable]` で CallingPlayer と seq を照合。受け手の保留 1 件・20 秒の時間切れ・前の通知から 20 秒は code 2・10 分の休止は code 3・「この人からは受けない」は code 0。同じ相手へは断り・時間切れから 30 秒。受け付けの ON/OFF は PlayerData `KH_TravelJoin.accepting` に保存) / 新規 `KH_TravelNotice.cs` (通知板。目の前 1.1 m・15° 下、3 m 歩いたら置き直し、手元の「申し込み 1 件」から出し直し) / `KH_LeashManager.Travel.cs` (`_TravelFindJoinLanding`: 通常・歩行中・橋の上・川の中・道の外の 5 つと理由、`_TravelBeginJoin`: 地点ワープと同じ切符と暗転) / `KD_TreatPouch.Travel.cs` ([地点] / [人] の切替、16 行の人の一覧、[合流をたのむ] / [取り消す]) / 新規 `Editor/KH_CourseTravelJoinEditor.cs` / ハーネス T10 (合流の着地点 5 条件) と T9 の合流側 (退出・取消と承認の行き違い) / `course.travel.join.*` ほか 40 キー × 13 言語。
+- メニュー: `Course/85 - Build Travel Join` (1 回目は KH_TravelMailbox / KH_TravelNotice の Program Asset を作って止まる。2 回目で受付箱の雛形・通知板・[人] の一覧・「申し込み 1 件」を作ってシーンを保存。`Temp/imp-wld-001/travel-join-build.json`)。検査は `Course/81` に含めた。
+- 設計からの変更: 「合流の申し込みを受ける」は設定面ではなく副画面の [人] の上段に置いた (設定ホームの「この部屋のみんな」の群に 44 px の行を足す余白が無く、配置の正本 `KD_MenuFinishEditor.Hillside` の再配置が要るため)。表示名の補助フォント (§A.6) は入れていない: 共通フォントに無い字は □ で出る。距離と最寄りの地点名を並べて出すので相手は判別できる。補助フォントの試作は DES-UI-004 へ引き継ぐ。`ReqJoin` の引数は `seq` だけ (送り主は CallingPlayer で決まるので playerId を運ばない)。
+- 未確認: 2 端末での ReqJoin / AnsJoin の順序、VRCPlayerObject の入室直後の「準備中」、通知板の見え方と Focus View、16 人のときの通知の間隔。ClientSim の T10 / T9 は人形 (Udon なし) を相手にした模擬 (`debugJoinLoopback`)。
 
 ### 端末と人数
 

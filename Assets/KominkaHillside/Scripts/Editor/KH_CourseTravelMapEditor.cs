@@ -39,6 +39,7 @@ namespace KominkaHillside.Editor
         // 地図の正方形が覆う世界: x -60..660 / z 0..720 (コース x 0〜600・z 0〜720 を縦いっぱいに)
         public const float CenterX = 300f, CenterZ = 360f, Span = 720f;
         public const float MapSize = 380f;
+        public const int FadeSortingOrder = 32767;
         static readonly Vector2 MapPos = new Vector2(-350f, -55f);
         static readonly string[] OldButtons = { "TravelUpper", "TravelRiver" };
         static readonly string[] RowEvents = { "_TravelPick0", "_TravelPick1" };
@@ -102,6 +103,7 @@ namespace KominkaHillside.Editor
                 var mf = overlay.GetComponent<MeshFilter>(); if (mf == null) mf = overlay.AddComponent<MeshFilter>(); mf.sharedMesh = quad;
                 var mr = overlay.GetComponent<MeshRenderer>(); if (mr == null) mr = overlay.AddComponent<MeshRenderer>();
                 mr.sharedMaterial = mat; mr.enabled = false;
+                mr.sortingOrder = FadeSortingOrder;   // W2 D1: 同じ queue 5000 のライブの粒より後に描く (頭の位置へ寄せるのと併用)
                 mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.receiveShadows = false;
                 mr.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off; mr.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
                 var fade = root.GetComponent<KH_TravelFade>(); if (fade == null) fade = root.AddUdonSharpComponent<KH_TravelFade>();
@@ -117,7 +119,7 @@ namespace KominkaHillside.Editor
                 // ---- 3. さんぽタブ上段と副画面 ----
                 var walk = p.tabPages[KD_TreatPouch.TabWalk].transform;
                 foreach (var name in OldButtons) { var old = walk.Find(name); if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject); }
-                var open = KD_ShopSetupEditor.EnsureButton(walk, OpenName, new Vector2(0f, KH_CourseTravelEditor.TopRowY), new Vector2(530f, 40f),
+                var open = KD_ShopSetupEditor.EnsureButton(walk, OpenName, new Vector2(-272f, KH_CourseTravelEditor.TopRowY), new Vector2(530f, 40f),
                     KD_UiSpriteEditor.ActionNeutral, font, Ja("course.travel.map.open"), pouchBacking, "_TravelOpenMap", log);
                 var openLabel = Label(open, 20f);
                 KH_CourseTravelEditor.LowerScroll(p);
@@ -149,7 +151,8 @@ namespace KominkaHillside.Editor
                     rows[k] = row.GetComponent<Button>(); rowImages[k] = row.GetComponent<Image>();
                     rowLabels[k] = Label(row, 24f); rowLabels[k].alignment = TextAlignmentOptions.Left;
                 }
-                var footer = MakeText(page.transform, "Footer", new Vector2(155f, -148f), new Vector2(590f, 40f), 18f, TextAlignmentOptions.Left, font, Ja("course.travel.map.pick"));
+                // W2 U10: ワープ先 / 犬の数 / 散歩先のまま の 3 行 (一覧の下 -46 〜 実行ボタンの上 -150)
+                var footer = MakeText(page.transform, "Footer", new Vector2(155f, -98f), new Vector2(590f, 104f), 18f, TextAlignmentOptions.Left, font, Ja("course.travel.map.pick"));
                 var go = KD_ShopSetupEditor.EnsureButton(page.transform, "Go", new Vector2(155f, -205f), new Vector2(500f, 90f), KD_UiSpriteEditor.ActionNeutral, font, Ja("course.travel.map.go"), pouchBacking, "_TravelGo", log);
                 var goLabel = Label(go, 26f);
                 var status = MakeText(page.transform, "Status", new Vector2(155f, -285f), new Vector2(590f, 40f), 20f, TextAlignmentOptions.Center, font, "");
@@ -165,6 +168,7 @@ namespace KominkaHillside.Editor
                 p.travelMapRect = (RectTransform)mapGo.transform; p.travelMapPlayer = (RectTransform)player.transform; p.travelMapSelection = (RectTransform)ring.transform;
                 p.travelMapCenterX = CenterX; p.travelMapCenterZ = CenterZ; p.travelMapSpan = Span;
                 p.travelButtons = rows; p.travelImages = rowImages; p.travelLabels = rowLabels;
+                p.travelLegendLabel = legend;
                 p.travelFooterLabel = footer; p.travelGoImage = go.GetComponent<Image>(); p.travelGoLabel = goLabel; p.travelStatusLabel = status;
                 ring.gameObject.SetActive(false);
 
@@ -308,7 +312,8 @@ namespace KominkaHillside.Editor
                 var r = f.overlayRenderer as MeshRenderer;
                 Req(e, r != null && !r.enabled && r.GetComponent<MeshFilter>() != null && r.GetComponent<MeshFilter>().sharedMesh == AssetDatabase.LoadAssetAtPath<Mesh>(KH_NightModeEditor.QuadMeshPath), "fade overlay = disabled full-screen quad");
                 var mat = r != null ? r.sharedMaterial : null;
-                Req(e, mat != null && AssetDatabase.GetAssetPath(mat) == FadeMaterialPath && mat.shader != null && mat.shader.name == FadeShaderName && mat.renderQueue == KH_TravelFade.OverlayQueue, "fade material " + FadeMaterialPath + " queue " + KH_TravelFade.OverlayQueue);
+                Req(e, mat != null && AssetDatabase.GetAssetPath(mat) == FadeMaterialPath && mat.shader != null && mat.shader.name == FadeShaderName && mat.renderQueue == KH_TravelFade.OverlayQueue && mat.renderQueue <= 5000, "fade material " + FadeMaterialPath + " queue " + KH_TravelFade.OverlayQueue + " (<= 5000, W2 D1)");
+                Req(e, r != null && r.sortingOrder == FadeSortingOrder, "fade renderer sortingOrder " + FadeSortingOrder);
                 Req(e, Mathf.Approximately(f.fadeOutSeconds, .2f) && Mathf.Approximately(f.fadeInSeconds, .3f), "fade 0.2 s / 0.3 s");
                 Req(e, m.travelFade == f, "manager.travelFade wired (proxy)");
                 var mb = UdonSharpEditorUtility.GetBackingUdonBehaviour(m);
@@ -348,6 +353,10 @@ namespace KominkaHillside.Editor
                 Req(e, rt.anchoredPosition.y - rt.sizeDelta.y / 2 >= KH_CourseTravelEditor.ContentTopWithRow, "open button above the walk scroll");
             }
             Req(e, p.travelMapPage != null && p.travelMapPage.transform.parent == p.settingsPage.transform && p.extraSettingsPages != null && p.extraSettingsPages.Contains(p.travelMapPage) && !p.travelMapPage.activeSelf, "map page registered in extraSettingsPages, inactive at start");
+            // W2 M6: backing の extraSettingsPages にも入っていること
+            if (pb == null || !pb.publicVariables.TryGetVariableValue("extraSettingsPages", out object pagesObj) || !(pagesObj is GameObject[] pagesArr) || !pagesArr.Contains(p.travelMapPage))
+                e.Add("FAIL map page registered in extraSettingsPages (backing)");
+            Req(e, p.travelLegendLabel != null && p.travelMapPage != null && p.travelLegendLabel.transform.parent == p.travelMapPage.transform, "legend label wired (localized at runtime, W2 U9)");
             if (e.Count > 0) return;
             var page = p.travelMapPage.transform;
             Req(e, p.travelMapRect != null && p.travelMapRect.parent == page && p.travelMapRect.GetComponent<RawImage>() != null && p.travelMapRect.GetComponent<RawImage>().texture == tex, "map RawImage uses the map texture");
@@ -394,12 +403,11 @@ namespace KominkaHillside.Editor
                     Fit(sample, p.travelBackLabel, T("course.travel.map.backwalk"), code + " backwalk", e, report);
                     for (int k = 0; k < 2; k++)
                         Fit(sample, p.travelLabels[k], (RowSpots[k] + 1) + "  " + T(RowNameKeys[k]) + "    " + T("course.travel.map.distance").Replace("{0}", "999"), code + " row " + k, e, report);
-                    Fit(sample, p.travelFooterLabel, T("course.travel.map.footer2").Replace("{0}", "6").Replace("{1}", longest), code + " footer with", e, report);
+                    Fit(sample, p.travelFooterLabel, T("course.travel.map.target").Replace("{0}", T("course.walk.upper")) + "\n" + T("course.travel.map.dogs").Replace("{0}", "6") + "\n" + T("course.travel.map.walkdest").Replace("{0}", longest), code + " footer 3 lines", e, report);
                     Fit(sample, p.travelFooterLabel, T("course.travel.map.alone"), code + " footer alone", e, report);
                     Fit(sample, p.travelFooterLabel, T("course.travel.map.pick"), code + " footer pick", e, report);
                     Fit(sample, p.travelGoLabel, T("course.travel.map.go") + " (10)", code + " go", e, report);
-                    var legend = p.travelMapPage.transform.Find("Legend");
-                    if (legend != null) Fit(sample, legend.GetComponent<TextMeshProUGUI>(), T("course.travel.map.legend"), code + " legend", e, report);
+                    Fit(sample, p.travelLegendLabel, T("course.travel.map.legend"), code + " legend", e, report);
                     foreach (var key in new[] { "course.travel.preparing", "course.travel.dogs", "course.travel.arrived", "course.travel.stop.noanswer", "course.travel.stop.changed", "course.travel.stop.blocked", "course.travel.busy", "course.travel.cooling", "course.travel.ball", "course.travel.crowded", "course.travel.here", "course.travel.canceled", "course.travel.map.moving", "course.travel.map.pick" })
                         Fit(sample, p.travelStatusLabel, T(key).Replace("{0}", T("course.walk.upper")), code + " status " + key, e, report);
                 }

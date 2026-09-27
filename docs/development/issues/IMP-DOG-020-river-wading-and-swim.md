@@ -106,25 +106,39 @@ updated: 2026-09-27
 - [ ] ハーネス W4 (水中での接続・集合・呼ぶ・おもちゃの呼び出し・陸への投げ)
 - [ ] ハーネス W6 (Owner 交代・復帰点を塞いだときの復旧)
 
-**実装 (2026-09-27、段階 2・3。途中)**
+**実装 (2026-09-27、段階 2・3。ファイル編集まで。Unity での Build・Verify・ハーネスは未実行)**
 
-- 済み (コンパイル OK、`KH_WaterSpot` のプログラムアセット作成済み):
-  - `KH_WaterSpot` (同期 None)。領域の多角形、入水点、出水点と復帰点、0.5 m の河床格子を持つ。
-  - `waterPose` を `KD_DogFetchController` に置いた。増やした同期変数はこの 1 個だけ。
-  - Wander 側の `WaterPlay`。入り方、滞在、中断、取り残しの出水 (C-11)、復旧 3 段 (C-6・C-9)、段階 0 の深さの上限 (0.45 M) を入れた。
+- 変更ファイル:
+  - `KH_WaterSpot` (同期 None)。領域の多角形、入水点、出水点 3 つと復帰点、0.5 m の河床格子を持つ。
+  - `waterPose` を `KD_DogFetchController` に置いた。増やした同期変数はこの 1 個だけ。水中の犬への要求は、ネットワークイベント `WaterExitAsk` で出水を頼む。
+  - Wander 側の `WaterPlay` (`HillsideWater.cs`)。入り方、滞在、中断、取り残しの出水 (C-11)、復旧 3 段 (C-6・C-9)、段階 0 の深さの上限 (0.45 M) を入れた。
   - しぶきと波紋は、同期した姿勢から各端末で出す。
-  - リードの接続を拒否する (`KH_LeashManager.Water.cs`)。集合の対象からも外す。
+  - 拒否: リードの接続 (`KH_LeashManager.Water.cs`)、おもちゃの呼び出し (`KH_ToyRecall.InWater`)、集合の対象 (`KD_GroupActivities.Available`)。
+  - 手元メニューの一言は `KD_TreatPouch.Water.cs` に置き、`Walk` と `Toy` に最小の挿入をした。
   - 翻訳表に `course.water.*` の 4 キー × 13 言語を追記した。
-- 残り:
-  - `KH_WaterSpotEditor` の Build と Verify (Course/76・77)。
-  - `KH_ToyRecall` の `InWater`。
-  - 手元メニューの一言 (`KD_TreatPouch.Water.cs`)。
-  - ハーネス W0・W4・W6 (Course/78)。
+  - 新規: `Editor/KH_WaterSpotEditor.cs`、`Testing/KH_CourseWalkHarnessEditor.Water.cs`。
+- メニュー (`Tools/KominkaHillside/Course/`):
+  - `76 - Build Water Spot`: 領域・点・格子・FX を作り、配線し、翻訳を入れ直し、踏み分け道を塗って、シーンを保存する。
+  - `77 - Verify Water Spot`: 検査 2〜5 と配線。
+  - `78 - Walk Harness Water W0 W4 W6`
+- 結果の出力先: `Temp/imp-dog-020/water-spot-build.json`、`water-spot-verify.json`、`Logs/kh-course-walk/<run>/water.json`
+- 統括の手順:
+  1. コンパイルする。
+  2. `76` を実行する。
+  3. `27` で翻訳の字形を足す。
+  4. `77` を実行し、PASS を確かめる。
+  5. `78` を実行し、WATER_PASS を確かめる。呼ぶケースが実行されなかったときは WATER_PASS_PARTIAL になる。
+  - Nav と遮蔽の再生成は要らない (Terrain の塗りだけで、Collider を足さない)。Course/15 を実行すると踏み分け道が消えるので、その後に 76 をもう一度実行する。
 - 設計からずらした点:
-  - 入水点: 「川辺」の通過点から帯の縁まで約 14 m あるため、12 m 以内に収めるには入水点を帯の縁から約 2.5 m 陸側に置く。実際の距離は Verify が出す。
-  - 水中からの陸への投げ: 出水を待たず、Fetch がそのまま帯の外向きに歩いて取りに行く。帯の中からは外向きの歩だけ許しているため。
+  - 入水点: 「川辺」の通過点から帯の縁まで約 14 m あるため、12 m 以内に収めるには帯の縁から約 2.5 m 陸側に置く。実際の距離は Verify が出す。
+  - 水中からの陸への投げ: 出水を待たず、Fetch がそのまま帯の外向きに歩いて取りに行く。
+  - 呼ぶ・おやつ・睡眠・ライブ: 優先順位で水遊びより強いので、要求した人へそのまま向かって上がる (10 s 以内の自動の反応を兼ねる)。
+  - 接続とおもちゃの呼び出し: 拒否して出水を頼み、上陸後にもう一度操作してもらう。
   - 案内の一言: 手で外したとき (メニューを使わない解除) には出ない。
-- 水の SE: プロジェクト内にも購入アセットにも無い。音なしで成立させ、音を足すかはユーザーが決める。
+  - 身震い: 段階 0 では 1.2 s 立ち止まるだけ。PhysBone を揺らす身震いは段階 1。
+  - 停滞検知 (C-9) の対象: 出水の失敗から戻すだけで、石の Collider は通り抜ける (直線移動で物理を使わないため)。検査 5 が領域の中の石を数える。
+- 水の SE: プロジェクト内にも購入アセットにも無い。音なしで成立させ、`waterAudio` と `waterStepClip` は空のまま。音を足すかはユーザーが決める。
+- FX は Build が生成する: 64² のテクスチャ 2 枚と、`Legacy Shaders/Particles/Alpha Blended` の材質 2 つを `Data/Water` に置く。
 
 ### 4. 段階 1 (浮いて泳ぐ)
 
