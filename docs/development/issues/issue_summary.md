@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-48 件 — 対応中 14 / 確認待ち 12 / 未着手 12 / 保留 3 / 完了 7
+50 件 — 対応中 14 / 確認待ち 10 / 未着手 14 / 保留 3 / 完了 9
 
 ## 実行キュー
 
@@ -29,8 +29,6 @@
 | [IMP-PRG-001](IMP-PRG-001-ledger-shopkeeper-points.md) | High | 台帳・おじいさん (門)・支度用ポイント (初回 200pt 一回・滞在 1分1pt)・購入と CE 判定。2026-09-24 実装済み・Verify 全 PASS (e4f5906、名前空間 KH_Commerce_v1)。T-007 / T-008・復元の実機確認待ち | review | 200pt が一回だけ入る (T-007)、滞在加算と再入室の復元、購入の保存と CE の所持判定、残高 0 で基本機能が使える (T-008)。**AI 側の残作業**: 台帳用の ClientSim ハーネスが未作成で、付与・購入・復元の固定手順が未実行 (ユーザーの PCVR 確認とは別) |
 | [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) | High | 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換え、設定面を作る。段階 0-a / 0-b / 3 は実装済み・Verify 全 PASS、0-b は 2026-09-24 PCVR OK。段階 3 (距離フェード・許可初期 ON・ようこそ等) の実機確認待ち。クレジット URL 3 件はユーザー記入待ち | review | 段階 0-b は PCVR OK (2026-09-24)。残り: 退行・取り違えの確認、段階 3 の距離フェード (T-011)・ナイトモードのスライダー・許可トグル 2 種・状態表示の規律。クレジット URL 3 件はユーザー記入。Quest/iOS は VER-WLD-001 |
 | [DES-DOG-003](DES-DOG-003-plaza-leash-station.md) | Medium | 体験会 (2026-09-26) で「広場のリード置き場が遠い」。同日夜に決定: 広場の拠点を広場の縁に戻す (3 拠点 × 左右 1 本)。Build が初回だけ縁に置き、位置はユーザーが手で微調整する。実装・Verify 済み、位置の手調整と PCVR 確認待ち | review | ユーザーが Unity で KH_Station_Plaza の位置を広場の縁で微調整 (中心から 6〜12.5 m の帯内。Build は Crossbar があれば位置を触らない) → PCVR で遠くないか確認。OK なら done |
-| [DES-DOG-004](DES-DOG-004-river-play-and-floating-fetch.md) | Medium | 小川で犬が入水・浮遊・泳ぐ動作と、浮くボールを泳いで回収する遊びを設計する | review | 設計書の段階案と「ユーザーに決めてもらうこと」5 件をユーザーが確認する (Codex レビュー反映済み) |
-| [DES-WLD-003](DES-WLD-003-map-and-travel.md) | Medium | 広い周回コースの地図、地点ワープ、プレイヤーへの合流と接続犬の同行を設計する | review | 設計書 (第 2 版、Codex 指摘 24 件を反映) の推奨案と「決めてもらうこと」5 件をユーザーが確認する。確定後も実装 Issue の採番と ClientSim / PCVR 検証が残り、それが済むまで受け入れ条件は閉じない |
 | [IMP-DOG-014](IMP-DOG-014-treats-port.md) | Medium | おやつ 4 種を古民家から移植 (メニューの [買う] 含む)。2026-09-24 実装済み・Verify 全 PASS (c27a7e3)。出す/あげる/しまう・補充・T-009 (枠 3) の Play・実機確認待ち。接続犬の反応は IMP-DOG-006 | review | 出す / あげる / しまう が 1 人で成立、在庫の増減と復元、[買う] の補充、4 人で枠 3 (T-009)、6 匹の食べ・お礼。**AI 側の残作業**: おやつ用の ClientSim ハーネスが未作成で、出す → あげる → しまう → 在庫確認の固定手順が未実行 (ユーザーの PCVR 確認とは別) |
 | [IMP-DOG-015](IMP-DOG-015-accessories-and-petfx-port.md) | Medium | 飾り 14 商品と撫でFX 11 種を移植。2026-09-24 実装済み・Verify 全 PASS (c27a7e3)。首輪干渉は 2026-09-24 案 C で決定・適用 (5 件は (b) で下げ、3 件は犬ごとに除外、Verify 6f PASS。049b173)。装着・同期・見た目の PCVR 確認待ち | review | 6 匹への装着と他人への表示、購入・試着と台帳の一致、撫でFX の配布、60 秒ルールと退室後の残存 (2 人)、首まわりの見た目 (案 C 適用後) |
 | [IMP-DOG-016](IMP-DOG-016-call-pose-port-and-slope.md) | Medium | 呼ぶ・ポーズを移植し、リード接続中の除外と斜面 (接地・法線) の判定を足す。2026-09-24 実装済み・Verify 全 PASS (c27a7e3)。法線 0.9 は仮採用。Play・T-010・斜面の PCVR 確認待ち | review | 6 匹で平地の流れが成立、リード中の除外と逆方向 (T-010)、斜面の赤マーカーと法線 0.9 の確定、4 動作の課金ゲート、許可トグル、2 人の予約の取り合い |
@@ -45,7 +43,9 @@
 | [DES-WLD-001](DES-WLD-001-round-trip.md) | Medium | 古民家からの出発・帰還と状態の扱いを設計する | todo |  |
 | [DES-WLD-002](DES-WLD-002-sound.md) | Medium | 裏山の音 (BGM・環境音) の方針・音源・ライブとの切替を設計する | todo |  |
 | [IMP-DOG-006](IMP-DOG-006-leashed-treat-approach.md) | Medium | おやつで自分の接続犬の最寄り1匹を呼び、少し待つ間に撫でる/首輪を外す→次の1匹。9/23 操作方針了承、詳細設計・実装は未 | todo |  |
+| [IMP-DOG-020](IMP-DOG-020-river-wading-and-swim.md) | Medium | 川の水遊びの初期公開範囲を実装する。前提 (犬とボールを水遊び場の外で川へ入れない) → 段階 0 (浅瀬を歩く・しぶきと音) → 段階 1 (小型犬は浮いて歩き/走りのクリップで泳ぐ、大型犬は浅瀬のみ)。水遊び場は「川辺」脇の 1 か所、リードを外した犬だけ | todo | 前提作業 (KH_RiverData・直線移動の川回避・落ちたボールを岸へ) と Editor 検査 1・6、ハーネス W5 |
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |  |
+| [IMP-WLD-001](IMP-WLD-001-map-warp-and-join.md) | Medium | 地図の副画面、川辺・奥広場の 2 地点ワープ、インスタンス内のプレイヤーへの合流、接続犬の同行、暗転を、DES-WLD-003 の確定設計 (2026-09-27) どおりに実装する | todo | 段階 1 (2 地点ワープ + 接続犬の同行) の実装に着手する。まず KH_LeashManager に切符の配列を足し、犬の側の適用処理と、travel モードのハーネスを作る |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo |  |
 | [IMP-DOG-011](IMP-DOG-011-muchio-greeting.md) | Medium | 裏山で空いている犬が、自由行動の一つとしてたまにムチォの匂いを嗅ぎに行く。2026-09-22 保留 (他者のアバターギミック依存・集客寄りの動機)。理由と再検討条件は本文末尾の保留の記録 | hold | 再検討: 「これがあると散歩・犬との体験そのものが良くなる」と Play で感じたとき。集客目的だけでは解除しない |
 | [VER-DOG-001](VER-DOG-001-avatar-pet-contact-research.md) | Medium | 来訪者の無改変が条件。ムチォは既存Senderで対応候補、犬っこは通常時の対象外。静的調査まで完了、IMP-DOG-011 と共に保留 | hold | 再検討: IMP-DOG-011 の保留解除時。静的調査結果は [調査結果](../../plans/2026-09-21-avatar-pet-contact-research.md) に残す |
@@ -55,6 +55,8 @@
 
 | ID | 重要度 | 概要 | 日付 |
 |----|--------|------|------|
+| [DES-DOG-004](DES-DOG-004-river-play-and-floating-fetch.md) | Medium | 小川で犬が入水・浮遊・泳ぐ動作と、浮くボールを泳いで回収する遊びを設計する | 2026-09-27 |
+| [DES-WLD-003](DES-WLD-003-map-and-travel.md) | Medium | 広い周回コースの地図、地点ワープ、プレイヤーへの合流と接続犬の同行を設計する | 2026-09-27 |
 | [DES-ENV-001](DES-ENV-001-terrain-vs-blender.md) | High | 地形を Unity Terrain で作るか Blender で作るか → **Terrain 採用** | 2026-09-22 |
 | [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) | High | 古民家と揃えた手元メニュー (さんぽ / あそぶ / おもちゃ)・接続補助・目的地選択・集合・ボール個別回収 | 2026-09-22 |
 | [IMP-DOG-002](IMP-DOG-002-leash-walking.md) | High | 先端 Pickup → 首輪接続、片手 3 匹・合計 6 匹、接続中の追従、Fetch 競合抑止、退出時解除、途中参加復元 | 2026-09-22 |
