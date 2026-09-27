@@ -472,9 +472,14 @@ namespace KominkaHillside
             Debug.Log("[KH_Frisbee] drop ignored (max v=" + _maxObservedSpeed.ToString("F2") + ")");
         }
 
+        // IMP-DOG-020 段階 7 (Codex W6 D-中): 飛行の終わり以外で帯に入ったディスク (投球速度未満の落下・壁で止まった後・岸から転がり込んだ) も、
+        // Owner が 0.25 s ごとに見て岸へ戻す (KH_ToyRecall.CheckRiverBalls の作法。ディスクは ToyRecall に載せない方針なのでここで持つ)
+        const float RiverCheckInterval = 0.25f;
+        private float _nextRiverAt;
+
         void Update()
         {
-            if (!_flying) { UpdateAim(); return; }
+            if (!_flying) { UpdateAim(); CheckRiver(); return; }
             if (!Networking.IsOwner(gameObject)) { _flying = false; return; }
             float t = _ElapsedSince(_t0);
             Vector3 prev = transform.position;
@@ -508,19 +513,47 @@ namespace KominkaHillside
         {
             _flying = false;
             // IMP-DOG-020 段階 7: 川の帯 (水遊び場の外) に落ちたディスクは、ボールと同じく近い方の岸へ戻す。水面に当たり判定は無いので川床で止まる
-            if (reason == EndLanded && riverData != null && riverData._InBand(pos, KH_RiverData.BandMargin) && (waterSpot == null || !waterSpot._Contains(pos)))
+            bool moved = false;
+            if (reason == EndLanded && InRiverBand(pos))
             {
-                float side = pos.x >= riverData._CenterX(pos.z) ? 1f : -1f;
-                Vector3 bank = riverData._BankPoint(pos, side, KH_RiverData.BankExtra);
-                RaycastHit g;
-                if (Physics.Raycast(bank + Vector3.up * 5f, Vector3.down, out g, 12f, obstacleMask, QueryTriggerInteraction.Ignore)) bank = g.point + Vector3.up * 0.02f;
-                Debug.Log("[KH_Frisbee] landed in the river band; moved to the bank " + bank);
-                pos = bank; velocity = Vector3.zero;
+                pos = BankFor(pos); velocity = Vector3.zero; moved = true;
+                Debug.Log("[KH_Frisbee] landed in the river band; moved to the bank " + pos);
             }
             transform.position = pos;
             if (_sync != null) _sync.SetKinematic(false);
             if (_rb != null && !_rb.isKinematic) { _rb.velocity = velocity; _rb.angularVelocity = Vector3.zero; }
+            if (moved && _sync != null) _sync.FlagDiscontinuity();   // 瞬間移動: 他の端末で補間させない (Codex W6 D-中)
             NotifyEnd(reason);
+        }
+
+        /// <summary>飛んでいない・持たれていない・くわえられていないディスクが帯の中にあれば、Owner が岸へ移す。</summary>
+        void CheckRiver()
+        {
+            if (riverData == null || Time.time < _nextRiverAt) return;
+            _nextRiverAt = Time.time + RiverCheckInterval;
+            if (!Networking.IsOwner(gameObject) || IsHeldNow || (catcher != null && catcher.IsCarrying)) return;
+            Vector3 p = transform.position;
+            if (!InRiverBand(p)) return;
+            Vector3 bank = BankFor(p);
+            Debug.Log("[KH_Frisbee] resting in the river band; moved to the bank " + bank);
+            transform.position = bank;
+            if (_rb != null && !_rb.isKinematic) { _rb.velocity = Vector3.zero; _rb.angularVelocity = Vector3.zero; }
+            if (_sync != null) _sync.FlagDiscontinuity();
+        }
+
+        bool InRiverBand(Vector3 p)
+        {
+            return riverData != null && riverData._InBand(p, KH_RiverData.BandMargin) && (waterSpot == null || !waterSpot._Contains(p));
+        }
+
+        /// <summary>近い方の岸 (帯の外 BankExtra) の地面。</summary>
+        Vector3 BankFor(Vector3 p)
+        {
+            float side = p.x >= riverData._CenterX(p.z) ? 1f : -1f;
+            Vector3 bank = riverData._BankPoint(p, side, KH_RiverData.BankExtra);
+            RaycastHit g;
+            if (Physics.Raycast(bank + Vector3.up * 5f, Vector3.down, out g, 12f, obstacleMask, QueryTriggerInteraction.Ignore)) bank = g.point + Vector3.up * 0.02f;
+            return bank;
         }
 
         private void NotifyEnd(int reason)

@@ -79,6 +79,8 @@ namespace KominkaHillside.Editor
             public List<Breed> breeds = new List<Breed>();
             public List<string> stones = new List<string>(), findings = new List<string>();
             public int dogsWired; public bool pouchWired;
+            public List<string> bobWiring = new List<string>();
+            public List<string> signTooBig = new List<string>(); public float signWorstHeight;
             public string stage1SwimCheck = "Step 4: every swimming breed needs at least one swimmable cell (depth >= 0.75 M) in the region (judged). The design's swim band >= 2.5 m is recorded only (breeds[].swimBandOk) because the spot has no pool (decision 2026-09-27)";
             public string slopeTolerance = "Check 4 limit 5 % (design); judged at <= 5.05 %: the formula gives exactly 5.00 % here and float rounding must not flip it. Values above 5.00 % are reported in findings as a note when <= 5.05 %";
             public List<string> notes = new List<string>();
@@ -174,6 +176,7 @@ namespace KominkaHillside.Editor
             var signLabel = BuildMarkers(node, entry, pass, pouch, report);
             so.FindProperty("language").objectReferenceValue = pouch.language;
             so.FindProperty("signLabel").objectReferenceValue = signLabel;
+            so.FindProperty("signShadow").objectReferenceValue = signShadowBuilt;
             so.FindProperty("signKey").stringValue = "course.water.sign";
             so.ApplyModifiedProperties(); UdonSharpEditorUtility.CopyProxyToUdon(spot); EditorUtility.SetDirty(spot);
 
@@ -189,9 +192,11 @@ namespace KominkaHillside.Editor
                 ws.FindProperty("waterSwimAllowed").boolValue = Swims[w.dogIndex];
                 ws.FindProperty("waterSwimMouth").floatValue = SwimMouth(mouths[w.dogIndex], w.dogIndex);
                 string why; var bob = BobTarget(w, out why);
+                string hipsWhy = ""; var hips = bob == null ? HipsTarget(w, out hipsWhy) : null;
                 ws.FindProperty("waterBob").objectReferenceValue = bob;
+                ws.FindProperty("waterBobHips").objectReferenceValue = hips;
                 if (report.bobTargets == null) report.bobTargets = new string[6];
-                report.bobTargets[w.dogIndex] = bob != null ? bob.name : "none: " + why;
+                report.bobTargets[w.dogIndex] = bob != null ? bob.name : hips != null ? "hips (LateUpdate): " + hips.name : "none: " + why + "; " + hipsWhy;
                 ws.FindProperty("waterSplash").objectReferenceValue = splash;
                 ws.FindProperty("waterRipple").objectReferenceValue = ripple;
                 ws.ApplyModifiedProperties(); UdonSharpEditorUtility.CopyProxyToUdon(w); EditorUtility.SetDirty(w); report.dogsWired++;
@@ -339,15 +344,53 @@ namespace KominkaHillside.Editor
                 var r = c.GetComponent<MeshRenderer>(); if (wood != null) r.sharedMaterial = wood; r.shadowCastingMode = ShadowCastingMode.Off; r.receiveShadows = false;
                 return c.transform;
             }
-            Part("Post", new Vector3(0, .5f, .03f), new Vector3(.08f, 1f, .08f));
-            Part("Board", new Vector3(0, 1f, 0), new Vector3(.9f, .42f, .04f));
-            var labelGo = new GameObject("Label"); labelGo.transform.SetParent(sign, false); labelGo.transform.localPosition = new Vector3(0, 1f, -.03f);
-            var label = labelGo.AddComponent<TextMeshPro>();
-            if (pouch.sectionTitleLabel != null) label.font = pouch.sectionTitleLabel.font;
-            label.text = "犬の水あそび"; label.fontSize = 2.2f; label.alignment = TextAlignmentOptions.Center; label.enableWordWrapping = true;
-            label.color = new Color(.2f, .13f, .06f, 1f); label.rectTransform.sizeDelta = new Vector2(.84f, .38f);
+            // Codex 2026-09-27 U-中 (water-spot-marker-close.png: "あそび" left the board, low contrast): the board 1.4 x, the text
+            // auto-sized into it (min 0.6), light unbleached #F2E8D0 over a dark copy just behind it. Course/77 checks every
+            // language's sign text fits (SignFits).
+            Part("Post", new Vector3(0, .55f, .03f), new Vector3(.08f, 1.1f, .08f));
+            Part("Board", new Vector3(0, SignBoardY, 0), new Vector3(SignBoardW, SignBoardH, .04f));
+            TextMeshPro Text(string name, Vector3 local, Color color)
+            {
+                var go = new GameObject(name); go.transform.SetParent(sign, false); go.transform.localPosition = local;
+                var t = go.AddComponent<TextMeshPro>();
+                if (pouch.sectionTitleLabel != null) t.font = pouch.sectionTitleLabel.font;
+                t.text = "犬の水あそび"; t.alignment = TextAlignmentOptions.Center; t.enableWordWrapping = true;
+                t.enableAutoSizing = true; t.fontSizeMin = .6f; t.fontSizeMax = 3f;
+                t.color = color; t.rectTransform.sizeDelta = new Vector2(SignTextW, SignTextH);
+                return t;
+            }
+            var shadow = Text("LabelShadow", new Vector3(.012f, SignBoardY - .012f, -.025f), new Color(.12f, .08f, .04f, 1f));
+            var label = Text("Label", new Vector3(0, SignBoardY, -.03f), new Color(0xF2 / 255f, 0xE8 / 255f, 0xD0 / 255f, 1f));
+            signShadowBuilt = shadow;
             report.sign = true;
             return label;
+        }
+        const float SignBoardW = .9f * 1.4f, SignBoardH = .42f * 1.4f, SignBoardY = 1.05f, SignTextW = SignBoardW - .08f, SignTextH = SignBoardH - .06f;
+        static TextMeshPro signShadowBuilt;
+
+        [Serializable] class SignCatalog { public SignLang[] languages; }
+        [Serializable] class SignLang { public string code; public SignText[] texts; }
+        [Serializable] class SignText { public string key, text; }
+
+        /// <summary>77: every language's course.water.sign, auto-sized, stays inside the text box on the board (height and width).
+        /// The label's text is put back afterwards.</summary>
+        static List<string> SignFits(TextMeshPro label, out float worstHeight)
+        {
+            var bad = new List<string>(); worstHeight = 0f;
+            var cat = JsonUtility.FromJson<SignCatalog>(File.ReadAllText(KH_CourseMenuEditor.CatalogPath));
+            string keep = label.text;
+            var box = label.rectTransform.rect;
+            foreach (var l in cat.languages)
+            {
+                var e = l.texts == null ? null : l.texts.FirstOrDefault(x => x.key == "course.water.sign");
+                if (e == null) { bad.Add(l.code + ": no sign text"); continue; }
+                label.text = e.text; label.ForceMeshUpdate();
+                var b = label.textBounds.size; worstHeight = Mathf.Max(worstHeight, b.y);
+                if (b.y > box.height + .001f || b.x > box.width + .001f || label.isTextOverflowing)
+                    bad.Add(l.code + ": " + b.x.ToString("F3") + " x " + b.y.ToString("F3") + " m in " + box.width.ToString("F3") + " x " + box.height.ToString("F3") + " (font " + label.fontSize.ToString("F2") + ")");
+            }
+            label.text = keep; label.ForceMeshUpdate();
+            return bad;
         }
 
         static bool Inside(List<Vector2> poly, float x, float z)
@@ -515,6 +558,12 @@ namespace KominkaHillside.Editor
             r.markerStones = markerNode == null ? 0 : markerNode.GetComponentsInChildren<MeshRenderer>(true).Count(m => m.name.StartsWith("Stone_"));
             r.signWired = spot.signLabel != null && spot.language != null && spot.signKey == "course.water.sign" && spot.signLabel.transform.IsChildOf(node.transform);
             if (r.markerStones < 2 || !r.signWired) r.findings.Add("Step 5: marker incomplete (stones " + r.markerStones + ", sign " + r.signWired + ")");
+            if (spot.signShadow == null || !spot.signShadow.transform.IsChildOf(node.transform)) r.findings.Add("Step 5: sign shadow not wired");
+            if (spot.signLabel != null)
+            {
+                r.signTooBig = SignFits(spot.signLabel, out r.signWorstHeight);
+                foreach (var b in r.signTooBig) r.findings.Add("Step 5: sign text does not fit the board: " + b);
+            }
             r.toyRecallWired = UnityEngine.Object.FindObjectsOfType<KH_ToyRecall>(true).All(t => t.waterSpot == spot);
             if (!r.toyRecallWired) r.findings.Add("Step 6: KH_ToyRecall.waterSpot not wired");
 
@@ -607,6 +656,15 @@ namespace KominkaHillside.Editor
                     && w.dogIndex >= 0 && w.dogIndex < Swims.Length && w.waterSwimAllowed == Swims[w.dogIndex]
                     && Mathf.Abs(w.waterSwimMouth - SwimMouth(ReadMouth(Breeds[w.dogIndex]), w.dogIndex)) < .001f) r.dogsWired++;   // Ms = the breed's expected value
             r.pouchWired = pouch.waterSpot == spot;
+            // step 7: every swimming breed has exactly one bob target (the mesh skeleton, or the hips of a single-tier rig)
+            foreach (var w in UnityEngine.Object.FindObjectsOfType<KD_DogWanderController>(true))
+            {
+                if (w.waterSpot != spot || w.dogIndex < 0 || w.dogIndex >= Swims.Length) continue;
+                bool one = (w.waterBob != null) != (w.waterBobHips != null);
+                bool under = (w.waterBob == null || w.waterBob.IsChildOf(w.dogRoot)) && (w.waterBobHips == null || w.waterBobHips.IsChildOf(w.dogRoot));
+                if (Swims[w.dogIndex] && (!one || !under)) r.findings.Add("Bob: dog " + w.dogIndex + " needs exactly one bob target under its root (waterBob / waterBobHips)");
+                r.bobWiring.Add(w.dogIndex + ":" + (w.waterBob != null ? "mesh " + w.waterBob.name : w.waterBobHips != null ? "hips (LateUpdate) " + w.waterBobHips.name : "none"));
+            }
             if (r.dogsWired != 6 || !r.pouchWired) r.findings.Add("Wiring incomplete dogs=" + r.dogsWired + "/6 pouch=" + r.pouchWired);
 
             r.errors = r.findings.Count; r.status = r.errors == 0 ? "PASS" : "FAIL";
@@ -643,6 +701,22 @@ namespace KominkaHillside.Editor
                     if (b.path == path && b.propertyName.StartsWith("m_LocalPosition")) { why = "clip " + clip.name + " animates " + path; return null; }
             return t;
         }
+        /// <summary>Step 7: a single-tier rig (no mesh skeleton) bobs its hips in LateUpdate, after the Animator: the first child
+        /// bone of inu/アーマチュア ("Bone", KH_DogRig.AnimationRoot). Clip position curves there are fine (the offset is added
+        /// after the Animator's write); a position / parent constraint is not (it would be evaluated after LateUpdate).</summary>
+        static Transform HipsTarget(KD_DogWanderController w, out string why)
+        {
+            why = "";
+            if (w.dogRoot == null) { why = "no root"; return null; }
+            var rig = KH_DogRig.Resolve(w.dogRoot.gameObject, "KD_FetchAnchor_Mouth");
+            if (rig.srcSkelRoot == null) { why = "no inu/アーマチュア"; return null; }
+            var t = rig.AnimationRoot;
+            if (t == null) { why = "no hips bone under アーマチュア"; return null; }
+            if (!t.IsChildOf(w.dogRoot)) { why = "hips outside the root"; return null; }
+            if (t.GetComponent<UnityEngine.Animations.PositionConstraint>() != null || t.GetComponent<UnityEngine.Animations.ParentConstraint>() != null) { why = "position constraint on the hips"; return null; }
+            return t;
+        }
+
         static bool Outside(Vector3 p) { return Mathf.Abs(p.x - KH_CourseGroundEditor.RiverAt(p.z).x) > BandEdge(p.z); }
 
         static void SetFloats(SerializedObject so, string name, float[] v) { var p = so.FindProperty(name); p.arraySize = v.Length; for (int i = 0; i < v.Length; i++) p.GetArrayElementAtIndex(i).floatValue = v[i]; }

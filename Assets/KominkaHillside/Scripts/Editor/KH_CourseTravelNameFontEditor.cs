@@ -23,7 +23,7 @@ namespace KominkaHillside.Editor
     /// - Noto Serif JP に無い Latin 拡張 A などは、TMP 付属の LiberationSans から作る小さな Static の fallback (KH_DisplayName Latin SDF) で出す。
     /// - 大きさ: サンプリング 18 pt・余白 2・SDFAA・Alpha8。本体 1024×2048、fallback 512²。Verify がバイト数と使用率を JSON に出す。
     ///   (2026-09-27: 20 pt・余白 3・2048² は Android +1.23 MB で目標 1.0 MB を超えたので、アトラスを半分にした)
-    /// - 焼いた後は元フォントの参照を 2 本とも外す (実行時の m_SourceFontFile と Editor 用の m_SourceFontFile_EditorRef)。作り直しは 86 が毎回最初から行う。
+    /// - 焼いた後は元フォントの参照を 2 本とも外す (実行時の m_SourceFontFile と Editor 用の m_SourceFontFile_EditorRef)。86 は既存のアセットの中身だけを入れ替える (GUID を保つ)。
     /// Course/86 がフォントを作り直して配線し、シーンを保存する。Course/85 を流し直したときも ApplyIfPresent で配線を戻す。</summary>
     public static class KH_CourseTravelNameFontEditor
     {
@@ -88,43 +88,71 @@ namespace KominkaHillside.Editor
             return sb.ToString();
         }
 
-        /// <summary>Static のフォントを作り直して文字を焼く。Dynamic の間に焼き、Static へ戻して元フォントの参照 (ビルドに入る側) を外す。
-        /// 大きさ・サンプリングが違う旧版 (Dynamic 版を含む) は消して作り直す (ラベルは Apply で配線し直す)。</summary>
+        /// <summary>Static のフォントを焼く。メモリ上の Dynamic フォントに焼いてから Static へ戻し、元フォントの参照 (実行時用・Editor 用) を外す。
+        /// 既にアセットがあれば**中身だけ入れ替える** (Codex W6 M-中): GUID とサブアセット (アトラス・材質) の識別子を保つので、ラベルの参照は切れない。
+        /// 焼く途中で失敗したら既存のアセットには触れない。無ければ新しく作る。</summary>
         static TMP_FontAsset Bake(string path, string sourcePath, string name, int w, int h, string wanted, out string missing)
         {
             var source = AssetDatabase.LoadAssetAtPath<Font>(sourcePath);
             if (source == null) throw new InvalidOperationException("Source font missing: " + sourcePath);
-            var old = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
-            if (old != null) AssetDatabase.DeleteAsset(path);
-            var font = TMP_FontAsset.CreateFontAsset(source, SamplingPoints, Padding, GlyphRenderMode.SDFAA, w, h, AtlasPopulationMode.Dynamic, false);
-            if (font == null) throw new InvalidOperationException("TMP could not load " + sourcePath + " (Include Font Data?)");
-            font.name = name;
-            AssetDatabase.CreateAsset(font, path);
-            font.atlasTextures[0].name = name + " Atlas";
-            font.material.name = name + " Material";
-            AssetDatabase.AddObjectToAsset(font.atlasTextures[0], font);
-            AssetDatabase.AddObjectToAsset(font.material, font);
+            var fresh = TMP_FontAsset.CreateFontAsset(source, SamplingPoints, Padding, GlyphRenderMode.SDFAA, w, h, AtlasPopulationMode.Dynamic, false);
+            if (fresh == null) throw new InvalidOperationException("TMP could not load " + sourcePath + " (Include Font Data?)");
+            fresh.name = name;
+            var freshTex = fresh.atlasTextures[0]; var freshMat = fresh.material;
+            freshTex.name = name + " Atlas"; freshMat.name = name + " Material";
             missing = "";
             string need = string.Concat(wanted.Where(c => !char.IsControl(c) && !char.IsWhiteSpace(c)).Distinct());
             try
             {
-                if (need.Length > 0) font.TryAddCharacters(need, out missing);
+                if (need.Length > 0) fresh.TryAddCharacters(need, out missing);
                 missing = missing ?? "";
             }
-            finally
+            catch
             {
-                // **必ず Static へ戻す**。Dynamic のまま残ると元の TTF がビルドへ入る (段階 4 の最初の版の +3.5 MB)
-                font.atlasPopulationMode = AtlasPopulationMode.Static;
-                font.isMultiAtlasTexturesEnabled = false;
-                // Editor 用の参照も外す (ビルドには入らないが、TTF への参照 0 を 81 で機械的に確かめるため)。Dynamic へ戻すと TMP はこの参照から元フォントを戻す
-                var so = new SerializedObject(font);
-                so.FindProperty("m_SourceFontFile").objectReferenceValue = null;
-                so.FindProperty("m_SourceFontFile_EditorRef").objectReferenceValue = null;
-                so.ApplyModifiedPropertiesWithoutUndo();
-                EditorUtility.SetDirty(font);
-                AssetDatabase.SaveAssets();
+                UnityEngine.Object.DestroyImmediate(freshMat); UnityEngine.Object.DestroyImmediate(freshTex); UnityEngine.Object.DestroyImmediate(fresh);
+                throw;
             }
-            return font;
+            // **必ず Static へ戻す**。Dynamic のまま残ると元の TTF がビルドへ入る (段階 4 の最初の版の +3.5 MB)
+            fresh.atlasPopulationMode = AtlasPopulationMode.Static;
+            fresh.isMultiAtlasTexturesEnabled = false;
+            // Editor 用の参照も外す (ビルドには入らないが、TTF への参照 0 を 81 で機械的に確かめるため)。Dynamic へ戻すと TMP はこの参照から元フォントを戻す
+            var so = new SerializedObject(fresh);
+            so.FindProperty("m_SourceFontFile").objectReferenceValue = null;
+            so.FindProperty("m_SourceFontFile_EditorRef").objectReferenceValue = null;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            var existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
+            if (existing == null)
+            {
+                AssetDatabase.CreateAsset(fresh, path);
+                AssetDatabase.AddObjectToAsset(freshTex, fresh);
+                AssetDatabase.AddObjectToAsset(freshMat, fresh);
+                EditorUtility.SetDirty(fresh);
+                AssetDatabase.SaveAssets();
+                return fresh;
+            }
+            // 既存のアトラス・材質 (同じファイルのサブアセット) を残して中身だけ写す。無ければ新しい方を足す
+            Texture2D keepTex = existing.atlasTextures != null && existing.atlasTextures.Length > 0 ? existing.atlasTextures[0] : null;
+            if (keepTex != null && AssetDatabase.GetAssetPath(keepTex) != path) keepTex = null;
+            Material keepMat = existing.material != null && AssetDatabase.GetAssetPath(existing.material) == path ? existing.material : null;
+            EditorUtility.CopySerialized(fresh, existing);   // 字形表・文字表・FaceInfo・作成設定。参照はいったん fresh 側を指す
+            if (keepTex != null) { EditorUtility.CopySerialized(freshTex, keepTex); UnityEngine.Object.DestroyImmediate(freshTex); }
+            else { keepTex = freshTex; AssetDatabase.AddObjectToAsset(keepTex, existing); }
+            if (keepMat != null) { EditorUtility.CopySerialized(freshMat, keepMat); UnityEngine.Object.DestroyImmediate(freshMat); }
+            else { keepMat = freshMat; AssetDatabase.AddObjectToAsset(keepMat, existing); }
+            keepTex.name = name + " Atlas"; keepMat.name = name + " Material";
+            keepMat.SetTexture(ShaderUtilities.ID_MainTex, keepTex);
+            existing.atlasTextures = new[] { keepTex };
+            existing.material = keepMat;
+            existing.name = name;
+            UnityEngine.Object.DestroyImmediate(fresh);
+            // 旧版 (Dynamic の Multi Atlas) が残した余分なアトラスを外す
+            foreach (var sub in AssetDatabase.LoadAllAssetsAtPath(path))
+                if (sub is Texture2D t && t != keepTex) { AssetDatabase.RemoveObjectFromAsset(t); UnityEngine.Object.DestroyImmediate(t, true); }
+            existing.ReadFontAssetDefinition();
+            EditorUtility.SetDirty(keepTex); EditorUtility.SetDirty(keepMat); EditorUtility.SetDirty(existing);
+            AssetDatabase.SaveAssets();
+            return existing;
         }
 
         /// <summary>表示名のラベル (人の一覧 16 行・通知板の名前) にだけ補助フォントを付ける。フォントがまだ無ければ何もしない (Course/85 から呼ぶ)。</summary>

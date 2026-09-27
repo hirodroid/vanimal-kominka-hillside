@@ -74,30 +74,66 @@ namespace KominkaDogRun
             if (w != null && Utilities.IsValid(VRCPlayerApi.GetPlayerById(playerId))) w._WaterExitAsked(playerId);
         }
 
-        // ---- a throw while the dog is in the water (DES-DOG-004 B-1: exit first, the Fetch starts after landing, 10 s max) ----
-        const float WaterThrowHold = 10f;
+        // ---- a throw while the dog is in the water (DES-DOG-004 B-1) ----
+        // The throw is held while the ball flies (at most WaterThrowFlight). A ball that comes down floating in the spot starts the
+        // water fetch at once (WaterPlay -> WaterChase, Codex 2026-09-27 D-中); a non-swimmer takes only a ball within its wading
+        // limit and ignores a deep one (it keeps playing). A ball at rest anywhere else (on land): the dog walks out first and the
+        // Fetch starts after landing (10 s from the ask), as before (W4-throw).
+        const float WaterThrowHold = 10f, WaterThrowFlight = 3f;
         int _waterThrowPlayer = -1;
         float _waterThrowAt;
+        bool _waterThrowExitAsked, _waterDirect;
 
-        /// <summary>From StartFetch (Owner). True = the throw is held (the dog walks out first); false = start as usual.</summary>
+        /// <summary>From StartFetch (Owner). True = the throw is held; false = start as usual.</summary>
         bool WaterHoldsThrow(int playerId)
         {
-            if (waterPose == 0) return false;
+            if (waterPose == 0 || _waterDirect) return false;
             if (_waterThrowPlayer < 0)
             {
-                _waterThrowPlayer = playerId; _waterThrowAt = Time.time;
+                _waterThrowPlayer = playerId; _waterThrowAt = Time.time; _waterThrowExitAsked = false;
                 Debug.Log("[KD_DogFetchController] throw held dog=" + dogIndex + " (in the water)");
             }
-            KD_DogWanderController w = MyWander();
-            if (w != null) w._WaterExitAsked(playerId);
             return true;
         }
 
-        /// <summary>Top of Update (Owner): start the held throw once landed, drop it after 10 s or when the ball was taken.</summary>
+        /// <summary>Top of Update (Owner): the held throw goes straight into the water fetch, or waits for landing (10 s max).</summary>
         void WaterThrowTick()
         {
             if (_waterThrowPlayer < 0) return;
-            if (!_dogOwner || Time.time - _waterThrowAt > WaterThrowHold || (_ballPickup != null && _ballPickup.IsHeld))
+            if (!_dogOwner || (_ballPickup != null && _ballPickup.IsHeld))
+            {
+                Debug.Log("[KD_DogFetchController] throw dropped dog=" + dogIndex);
+                _waterThrowPlayer = -1; return;
+            }
+            KD_DogWanderController ww = MyWander();
+            if (!_waterThrowExitAsked)
+            {
+                if (dogState == StateIdle && ww != null && ww.waterSpot != null && _ballT != null && ww.waterSpot._FloatsAt(_ballT.position))
+                {
+                    int thrower = _waterThrowPlayer; _waterThrowPlayer = -1;
+                    if (!ww._WaterCanSwim() && ww.waterSpot._Depth(_ballT.position) > ww._WaterWadeLimit())
+                    {
+                        Debug.Log("[KD_DogFetchController] throw dropped dog=" + dogIndex + " reason=deep-ball (in the water)");
+                        return;
+                    }
+                    bool direct = false;
+                    if (Utilities.IsValid(VRCPlayerApi.GetPlayerById(thrower)))
+                    {
+                        _waterDirect = true; direct = StartFetch(thrower); _waterDirect = false;
+                        if (direct) { ww._InvalidateLeashAnimation(); TransitionTo(StateWaterChase); }
+                    }
+                    Debug.Log("[KD_DogFetchController] throw into the water dog=" + dogIndex + " direct=" + (direct ? "true" : "false"));
+                    return;
+                }
+                bool resting = _ballRb == null || _ballRb.isKinematic || _ballRb.velocity.sqrMagnitude < 0.09f;
+                if ((resting && Time.time - _waterThrowAt > 0.3f) || Time.time - _waterThrowAt > WaterThrowFlight)
+                {
+                    _waterThrowExitAsked = true; _waterThrowAt = Time.time;
+                    if (ww != null) ww._WaterExitAsked(_waterThrowPlayer);
+                }
+                return;
+            }
+            if (Time.time - _waterThrowAt > WaterThrowHold)
             {
                 Debug.Log("[KD_DogFetchController] throw dropped dog=" + dogIndex);
                 _waterThrowPlayer = -1; return;
@@ -119,6 +155,10 @@ namespace KominkaDogRun
         // 1.5 x (region diagonal / swim speed) + 5 s; after landing the land Return's 20 s starts again. A thrower with no complete
         // land path from the exit (far bank) gets the ball dropped at the exit (Drop). Owner logs: water-timeout / deep-ball.
         public const int StateWaterChase = 6, StateWaterReturn = 7, StateWaterExit = 8;
+        // State 8 on a thrower across the river (or out of reach): walk to the entered bank's return point and Drop there.
+        const float WaterToReturnMax = 20f;
+        bool _waterToReturn;
+        float _waterToReturnAt;
         /// <summary>6-8: the dog's legs are the Wander's (_WaterFetchStep), so the Wander's "Fetch busy" branch must keep its
         /// _speed (run 20260927-095400: zeroed every frame, the W3 dogs crawled at one frame's acceleration, 0.05-0.09 m/s).</summary>
         public bool IsWaterFetching { get { return dogState >= StateWaterChase; } }
@@ -151,7 +191,7 @@ namespace KominkaDogRun
                 Vector3 dm = mouth - ball; float above = dm.y; dm.y = 0f;
                 Vector3 dr = dog - ball; dr.y = 0f;
                 if ((dm.magnitude <= WaterMouthReach || dr.magnitude <= WaterMouthReach) && above > -0.1f && above < WaterMouthAboveMax)
-                { _waterExitIdx = w.waterSpot._NearestExit(dog); TransitionTo(StateWaterReturn); return true; }
+                { _waterExitIdx = w.waterSpot._NearestExit(dog); _waterToReturn = false; TransitionTo(StateWaterReturn); return true; }
                 if (elapsed > WaterTimeout(w)) WaterGiveUp("water-timeout");
                 return true;
             }
@@ -161,17 +201,37 @@ namespace KominkaDogRun
                 Vector3 exit = w.waterSpot._Exit(_waterExitIdx);
                 w._WaterFetchStep(exit, true);
                 Vector3 d = exit - dog; d.y = 0f;
-                if (d.magnitude < 0.4f && w.waterSpot._Depth(dog) <= 0.02f) { TransitionTo(StateWaterExit); return true; }
+                if (d.magnitude < 0.4f && w.waterSpot._Depth(dog) <= 0.02f) { _waterToReturn = false; TransitionTo(StateWaterExit); return true; }
                 if (elapsed > WaterTimeout(w)) WaterGiveUp("water-timeout");
                 return true;
             }
-            // StateWaterExit: landed with the ball, stand, then the land Return (or a Drop here when the thrower is out of reach)
+            // StateWaterExit: landed with the ball, stand, then the land Return to a thrower on this bank. A thrower across the river
+            // (the land Return walks straight and would stop at the band, even with a bridge path) or out of reach gets the ball
+            // dropped at this bank's return point (design B-1; Codex 2026-09-27 D-中: not at the exit, not a Return).
+            if (_waterToReturn)
+            {
+                if (_waterExitIdx < 0 || _waterExitIdx >= w.waterSpot._ExitCount()) _waterExitIdx = w.waterSpot._NearestExit(dog);
+                Vector3 rp = w.waterSpot._ReturnPointFor(_waterExitIdx);
+                w._WaterFetchWalkTo(rp);
+                Vector3 dd = rp - dog; dd.y = 0f;
+                if (dd.magnitude < 0.5f || Time.time - _waterToReturnAt > WaterToReturnMax)
+                {
+                    _waterToReturn = false; w._InvalidateLeashAnimation(); TransitionTo(StateDrop);
+                }
+                return true;
+            }
             w._WaterFetchHold(true);
             if (elapsed < WaterExitStand) return true;
-            bool reachable = WaterPathToPlayer(dog, p.GetPosition());
-            if (!reachable) Debug.Log("[KD_DogFetchController] water exit dog=" + dogIndex + " thrower out of reach: drop at the exit");
+            Vector3 thrower = p.GetPosition();
+            bool farBank = WaterOtherBank(w, dog, thrower);
+            if (farBank || !WaterPathToPlayer(dog, thrower))
+            {
+                Debug.Log("[KD_DogFetchController] water exit dog=" + dogIndex + " thrower " + (farBank ? "across the river" : "out of reach") + ": drop at the return point");
+                _waterToReturn = true; _waterToReturnAt = Time.time;
+                return true;
+            }
             w._InvalidateLeashAnimation();
-            TransitionTo(reachable ? StateReturn : StateDrop);
+            TransitionTo(StateReturn);
             return true;
         }
 
@@ -192,6 +252,14 @@ namespace KominkaDogRun
             w._InvalidateLeashAnimation();   // the wander legs take over the Animator in the water states
             TransitionTo(StateWaterChase);
             return true;
+        }
+
+        /// <summary>a and b on opposite banks of the river (by the river's centre line at each z); false where the data ends.</summary>
+        bool WaterOtherBank(KD_DogWanderController w, Vector3 a, Vector3 b)
+        {
+            KominkaHillside.KH_RiverData rd = w.riverData;
+            if (rd == null || !rd._Ready() || !rd._Covers(a.z) || !rd._Covers(b.z)) return false;
+            return (a.x - rd._CenterX(a.z)) * (b.x - rd._CenterX(b.z)) < 0f;
         }
 
         float WaterTimeout(KD_DogWanderController w)

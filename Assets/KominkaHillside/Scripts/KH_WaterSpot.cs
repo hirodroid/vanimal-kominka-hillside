@@ -62,6 +62,7 @@ namespace KominkaHillside
         // language change reaches it; sync None, no events.
         public KominkaDogRun.KD_Language language;
         public TMPro.TextMeshPro signLabel;
+        public TMPro.TextMeshPro signShadow;   // the dark copy just behind the label (contrast on the wood), same text
         public string signKey = "course.water.sign";
         private float _nextSign;
         private string _signText;
@@ -71,7 +72,7 @@ namespace KominkaHillside
             if (signLabel == null || language == null || Time.time < _nextSign) return;
             _nextSign = Time.time + 1f;
             string t = language._Text(signKey);
-            if (t != _signText) { _signText = t; signLabel.text = t; }
+            if (t != _signText) { _signText = t; signLabel.text = t; if (signShadow != null) signShadow.text = t; }
         }
 
         /// <summary>The downstream end of the region (smallest z, 0.5 m inside): a floating ball stops here.</summary>

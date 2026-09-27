@@ -126,9 +126,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71c1514a6bd24e1e882cebbe1904ce04, type: 3}
   m_Name: KH_DisplayName SDF
   m_EditorClassIdentifier: 
-  hashCode: 0
+  hashCode: 698057968
   material: {fileID: -4774115904778920216}
-  materialHashCode: -2006316128
+  materialHashCode: 484025680
   m_Version: 1.1.0
   m_SourceFontFileGUID: 6545dfe16d06b884fb207651952267a8
   m_SourceFontFile_EditorRef: {fileID: 0}

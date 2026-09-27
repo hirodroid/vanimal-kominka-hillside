@@ -14,7 +14,7 @@ namespace KominkaHillside.Editor
     ///
     /// Course/87 は次を行い、本番シーンを保存する:
     /// 1. Assets/KominkaHillside/Audio/Water/*.wav のインポート設定: Vorbis 品質 0.4・Load In Background・mono。Android / iOS も同じ値を上書きで固定。
-    /// 2. KH_Dogs/KH_WaterSpot/Fx の下に、犬ごとの AudioSource (WaterAudio0..5。3D、Logarithmic、最大距離 20 m、playOnAwake なし) を置く。
+    /// 2. KH_Dogs/KH_WaterSpot/Fx の下に、犬ごとの AudioSource (WaterAudio0..5。3D、カスタム減衰 (1 m で 1、20 m で 0)、playOnAwake なし) を置く。
     ///    KD_DogWanderController.HillsideWater が鳴らす位置を毎回その犬の足元へ動かすので、犬 1 匹に 1 つ。
     /// 3. 各犬の `waterAudio` / `waterStepClip` (HillsideWater の既存の欄) へ、その AudioSource と「ぱしゃ」(KH_WaterStep) を配線する。
     /// 再生の呼び出しは HillsideWater (別担当) にある。大きい水音 (KH_WaterSplash) と犬かき (KH_WaterPaddle) は取り込むだけで、
@@ -62,13 +62,24 @@ namespace KominkaHillside.Editor
                 go.transform.SetParent(fx, false);
                 var src = go.GetComponent<AudioSource>(); if (src == null) src = go.AddComponent<AudioSource>();
                 src.playOnAwake = false; src.loop = false; src.clip = null; src.volume = 0.8f;
-                src.spatialBlend = 1f; src.rolloffMode = AudioRolloffMode.Logarithmic; src.minDistance = MinDistance; src.maxDistance = MaxDistance; src.dopplerLevel = 0f;
+                src.spatialBlend = 1f; src.minDistance = MinDistance; src.maxDistance = MaxDistance; src.dopplerLevel = 0f;
+                // Codex W6 D-低: Logarithmic は maxDistance で音が切れない (20 m でも 1/20 残る)。終端 0 のカスタム曲線にする
+                src.rolloffMode = AudioRolloffMode.Custom; src.SetCustomCurve(AudioSourceCurveType.CustomRolloff, Rolloff());
                 EditorUtility.SetDirty(src); r.sources++;
                 var so = new SerializedObject(wanders[i]);
                 var a = so.FindProperty("waterAudio"); var c = so.FindProperty("waterStepClip");
                 if (a == null || c == null) throw new InvalidOperationException("KD_DogWanderController.waterAudio / waterStepClip missing (compile first)");
                 a.objectReferenceValue = src; c.objectReferenceValue = step; so.ApplyModifiedProperties();
-                UdonSharpEditorUtility.CopyProxyToUdon(wanders[i]); EditorUtility.SetDirty(wanders[i]); r.dogsWired++;
+            }
+            // 順序 (2026-09-27、76 → 77 → 87 で backing が FAIL した件): 全部の proxy を配線 → Udon ヒープへ写す → 保存 → 検査。
+            // 写すのは proxy の全欄なので、76 が書いた水遊びの欄もそのまま backing へ戻る
+            for (int i = 0; i < wanders.Length; i++)
+            {
+                UdonSharpEditorUtility.CopyProxyToUdon(wanders[i]);
+                EditorUtility.SetDirty(wanders[i]);
+                var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(wanders[i]);
+                if (backing != null) EditorUtility.SetDirty(backing);
+                r.dogsWired++;
             }
             EditorSceneManager.MarkSceneDirty(fx.gameObject.scene);
             if (!EditorSceneManager.SaveScene(fx.gameObject.scene)) throw new IOException("Water audio save failed");
@@ -77,6 +88,35 @@ namespace KominkaHillside.Editor
             File.WriteAllText(OutDir + "/water-audio.json", JsonUtility.ToJson(r, true));
             if (r.findings.Count > 0) throw new InvalidOperationException("[KH Water Audio] " + string.Join("\n", r.findings));
             Debug.Log("[KH Water Audio] BUILT sources=" + r.sources + " dogs=" + r.dogsWired + " wav=" + r.wavBytes + " bytes");
+        }
+
+        /// <summary>UdonBehaviour の publicVariables の値が期待どおりなら null、違えば理由。</summary>
+        static string BackingMismatch(VRC.Udon.UdonBehaviour backing, string field, UnityEngine.Object expected)
+        {
+            if (backing == null) return field + ": no backing UdonBehaviour";
+            if (!backing.publicVariables.TryGetVariableValue(field, out object v))
+                return field + ": not in the Udon variable table (program without this field? recompile U#, then 87)";
+            var o = v as UnityEngine.Object;
+            if (o != expected) return field + ": is " + (o != null ? o.name : v == null ? "null" : v.GetType().Name) + ", expected " + (expected != null ? expected.name : "null");
+            return null;
+        }
+
+        /// <summary>距離の減衰 (横軸は距離 ÷ maxDistance)。1 m まで 1、その先は 1/d に (20 - d)/19 を掛けて 20 m で 0。
+        /// 2 m 0.47・5 m 0.16・10 m 0.05 (Logarithmic の 1/d に近いまま、終端だけ 0 へ寄せる)。</summary>
+        static AnimationCurve Rolloff()
+        {
+            var d = new[] { 0f, MinDistance, 2f, 3f, 5f, 7.5f, 10f, 15f, MaxDistance };
+            var keys = new Keyframe[d.Length];
+            for (int i = 0; i < d.Length; i++)
+            {
+                float dist = Mathf.Max(d[i], MinDistance);
+                float v = d[i] <= MinDistance ? 1f : (MinDistance / dist) * (MaxDistance - dist) / (MaxDistance - MinDistance);
+                keys[i] = new Keyframe(d[i] / MaxDistance, Mathf.Clamp01(v));
+            }
+            var c = new AnimationCurve(keys);
+            for (int i = 0; i < keys.Length; i++) AnimationUtility.SetKeyLeftTangentMode(c, i, AnimationUtility.TangentMode.Linear);
+            for (int i = 0; i < keys.Length; i++) AnimationUtility.SetKeyRightTangentMode(c, i, AnimationUtility.TangentMode.Linear);
+            return c;
         }
 
         static void Import(string path)
@@ -108,10 +148,17 @@ namespace KominkaHillside.Editor
             for (int i = 0; i < wanders.Length; i++)
             {
                 var src = fx.Find("WaterAudio" + i)?.GetComponent<AudioSource>();
-                if (src == null || src.playOnAwake || src.spatialBlend < 0.99f || src.rolloffMode != AudioRolloffMode.Logarithmic || Mathf.Abs(src.maxDistance - MaxDistance) > 0.01f) r.findings.Add("audio source " + i);
+                if (src == null || src.playOnAwake || src.spatialBlend < 0.99f || src.rolloffMode != AudioRolloffMode.Custom || Mathf.Abs(src.maxDistance - MaxDistance) > 0.01f) r.findings.Add("audio source " + i);
+                else
+                {
+                    var curve = src.GetCustomCurve(AudioSourceCurveType.CustomRolloff);
+                    if (curve == null || Mathf.Abs(curve.Evaluate(MinDistance / MaxDistance) - 1f) > 0.01f || curve.Evaluate(1f) > 0.001f) r.findings.Add("audio source " + i + " rolloff (1 m = 1, 20 m = 0)");
+                }
                 if (wanders[i].waterAudio != src || wanders[i].waterStepClip != step) r.findings.Add("dog " + i + " not wired");
+                // Udon ヒープ側 (実行時に読むのはこちら)。比べるのは Unity の同一性 (== は instance ID)。失敗の理由を分けて出す
                 var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(wanders[i]);
-                if (backing == null || !backing.publicVariables.TryGetVariableValue("waterStepClip", out object v) || !ReferenceEquals(v, step)) r.findings.Add("dog " + i + " backing waterStepClip");
+                string why = BackingMismatch(backing, "waterStepClip", step) ?? BackingMismatch(backing, "waterAudio", src);
+                if (why != null) r.findings.Add("dog " + i + " backing " + why);
             }
         }
     }

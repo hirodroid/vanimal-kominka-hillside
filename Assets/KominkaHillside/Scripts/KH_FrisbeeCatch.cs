@@ -949,6 +949,7 @@ namespace KominkaHillside
 
         void Update()
         {
+            _riverStop = false;   // Codex W6 D-中: 川の停止はそのフレームの移動で立ったものだけを見る (Ready の立ち位置移動で立ったものを次の Chase へ持ち越さない)
             _dogOwner = IsDogOwner();
             if (!_dogOwner) ObserveSpeed();
             WarnIfOwnerSplit();

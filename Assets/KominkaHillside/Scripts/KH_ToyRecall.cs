@@ -328,7 +328,9 @@ namespace KominkaHillside
                 Vector3 p = go.transform.position;
                 // In the spot: float (every new Owner does the same from the position, so an Owner change keeps it afloat, S4).
                 if (waterSpot != null && waterSpot._FloatsAt(p)) { FloatBall(i, go, p); _riverSince[i] = -1f; continue; }
-                if (_floating[i]) StopFloat(i, go);   // left the spot water (or released on land): gravity back
+                // Left the spot water (or released on land): gravity back. Judged from the physical state too, not only the local
+                // history: a ball another Owner floated and a dog then carried out has _floating false here (Codex 2026-09-27 D-高)
+                if (_floating[i] || GravityOff(go)) StopFloat(i, go);
                 if (!riverData._InBand(p, KH_RiverData.BandMargin)) { _riverSince[i] = -1f; continue; }
                 if (_riverSince[i] < 0f) _riverSince[i] = Time.time;
                 bool sunk = p.y < riverData._SurfaceY(p.z);
@@ -432,6 +434,12 @@ namespace KominkaHillside
             float wantY = riverData._SurfaceY(p.z) - radius * waterSpot.floatSink;
             float vz = p.z > waterSpot._DownstreamZ() ? -waterSpot.floatDrift : 0f;
             rb.velocity = new Vector3(0f, Mathf.Clamp((wantY - p.y) * 4f, -1f, 1f), vz);
+        }
+
+        bool GravityOff(GameObject go)
+        {
+            Rigidbody rb = go.GetComponent<Rigidbody>();
+            return rb != null && !rb.isKinematic && !rb.useGravity;
         }
 
         void StopFloat(int i, GameObject go)

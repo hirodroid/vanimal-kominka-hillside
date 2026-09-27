@@ -256,7 +256,11 @@ namespace KominkaDogRun
                     bool floating = dogWander != null && i < dogWander.Length && dogWander[i] != null && dogWander[i]._WaterFloating();
                     // IMP-DOG-020: afloat, keep the height (no snap to the riverbed) and push at most 0.1 m per frame
                     if (floating && _push[i].sqrMagnitude > 0.01f) _push[i] = _push[i].normalized * 0.1f;
-                    t.position = floating ? _pos[i] + _push[i] : SnapToGround(_pos[i] + _push[i]); // net: owner-only: IsOwner(dogRoots[i])
+                    // IMP-DOG-020 step 7: a dog on its feet (wading or on land) is not pushed where its own step would be refused
+                    // (the wading depth limit, the sink guard, the band outside the spot: KD_DogWanderController._WaterPushBlocked).
+                    bool refused = !floating && dogWander != null && i < dogWander.Length && dogWander[i] != null
+                        && dogWander[i]._WaterPushBlocked(_pos[i], _pos[i] + _push[i]);
+                    if (!refused) t.position = floating ? _pos[i] + _push[i] : SnapToGround(_pos[i] + _push[i]); // net: owner-only: IsOwner(dogRoots[i])
                 }
                 _prevPos[i] = t.position;
                 _prevValid[i] = true;

@@ -31,8 +31,37 @@ namespace KominkaDogRun
         private bool[] _waterMine;
         private float _nextWaterPoll;
 
+        // IMP-DOG-020 (Codex 2026-09-27 U-中): the new way in (a free dog within 25 m goes by itself) needs its own hint. A dog this
+        // player last had (on their leash; cleared once someone else leashes it) that starts a water play (waterPose 0 -> wet)
+        // gets "(name) が水遊びに行きました。上がったらまたつなげます" once per dog per stay. Local only.
+        private bool[] _waterTouched, _waterWentShown;
+        private int[] _waterPrevPose;
+        private float _nextWentPoll;
+
+        private void PollWaterWent()
+        {
+            if (manager == null || manager.walkers == null || manager.fetchers == null || Time.time < _nextWentPoll) return;
+            _nextWentPoll = Time.time + 0.25f;
+            int n = manager.walkers.Length;
+            if (_waterTouched == null || _waterTouched.Length != n) { _waterTouched = new bool[n]; _waterWentShown = new bool[n]; _waterPrevPose = new int[n]; }
+            for (int i = 0; i < n; i++)
+            {
+                if (manager._IsMine(i)) _waterTouched[i] = true;
+                else if (manager._IsLeashed(i)) _waterTouched[i] = false;   // someone else has it now
+                int pose = i < manager.fetchers.Length && manager.fetchers[i] != null ? manager.fetchers[i].WaterPose : 0;
+                if (pose != 0 && _waterPrevPose[i] == 0 && _waterTouched[i] && !_waterWentShown[i])
+                {
+                    _waterWentShown[i] = true;
+                    HillsideNote(TabWalk, "course.water.went", HillsideDogName(i));
+                    Redraw();
+                }
+                _waterPrevPose[i] = pose;
+            }
+        }
+
         private void PollWaterRelease()
         {
+            PollWaterWent();
             if (_waterNoteShown || waterSpot == null || manager == null || manager.walkers == null || manager.dogRoots == null) return;
             if (Time.time < _nextWaterPoll) return;
             _nextWaterPoll = Time.time + 0.25f;

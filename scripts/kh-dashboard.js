@@ -74,6 +74,7 @@ function parseIssue(file) {
 function kindOf(r) {
   if (r.travelOnly) return r.full ? 'travel' : 'travel quick';
   if (r.riverOnly) return 'W5';
+  if (r.waterFetch) return 'fetch';   // Course/88 (W3 / S4 / S5b)。waterOnly も立つので water より先に見る
   if (r.waterOnly) return r.waterSwim || /^SWIM/.test(r.status || '') ? 'swim' : 'water';
   return null;
 }
@@ -95,6 +96,7 @@ function harness() {
 }
 const KIND_RULES = [
   { kind: 'W5', re: /W5/ },
+  { kind: 'fetch', re: /W3|Course\/88/ },
   { kind: 'water', re: /W0|W4|W6/ },
   { kind: 'swim', re: /W1|W2/ },
   { kind: 'travel', re: /\bT1\b|T1〜|T9|T10|T11|travel/ },
@@ -207,7 +209,7 @@ const waitRows = features.map((f) => {
   return `<article class="card"><h3>${esc(f.name)}</h3>${cl ? `<p>PCVR: <a href="${esc(cl.href)}">${esc(cl.title)}</a> (${esc(path.basename(f.plan))})</p>` : '<p class="muted">実機チェックリストが見つからない</p>'}
 ${js.length ? `<p><strong>判断待ち</strong></p><ul>${js.map((j) => `<li>${md(j.text, path.dirname(j.file))}</li>`).join('')}</ul>` : '<p class="muted">判断待ちの行は見つからない</p>'}</article>`;
 }).join('');
-const kinds = ['W5', 'water', 'swim', 'travel quick', 'travel'];
+const kinds = ['W5', 'water', 'swim', 'fetch', 'travel quick', 'travel'];
 const runRows = kinds.map((k) => { const r = runs[k]; return r ? `<tr><td>${esc(k)}</td><td><code>${esc(r.runId)}</code></td><td class="${/PASS|OBSERVED/.test(r.status) ? 'ok' : 'ng'}">${esc(r.status)}</td><td>${r.pass} / ${r.total}</td><td class="muted">${esc(r.failed.join(', ') || '—')}</td><td class="muted small">${esc((r.reason || '').slice(0, 160))}</td></tr>` : `<tr><td>${esc(k)}</td><td colspan="5" class="muted">run なし</td></tr>`; }).join('');
 const verifyRows = [
   ['水遊び場 (Course/77)', 'Temp/imp-dog-020/water-spot-verify.json', verifyWater],

@@ -52,6 +52,7 @@ namespace KominkaDogRun
         public bool waterSwimAllowed;           // step 4: breed table (Course/76)
         public float waterSwimMouth = 0.3f;     // Ms: mouth height with the walk clip (Course/76: = M x KH_WaterSpot.swimMouthScale)
         public Transform waterBob;              // visual child for the swim bob (Course/76); null = no bob
+        public Transform waterBobHips;          // single-tier rigs (Pome / Dachs / Samoyed): the hips bone, bobbed in LateUpdate (Course/76)
         public ParticleSystem waterSplash;      // shared by the six dogs: moved to the feet, then Emit
         public ParticleSystem waterRipple;
         public AudioSource waterAudio;          // optional; null = silent
@@ -76,6 +77,8 @@ namespace KominkaDogRun
         private int _waterRecoverFrame = -1;
         private Vector3 _waterRecoverFrom, _waterRecoverTo;
         private Vector3 _bobBase;
+        private bool _hipsWrote;
+        private Vector3 _hipsLast, _hipsLastOff;
         private float _nextSinkLog;
         private float _swimShallowSince = -1f, _waterSwimY;
         [HideInInspector] public int waterState;   // read by the harness; Owner local, never synced
@@ -119,6 +122,19 @@ namespace KominkaDogRun
         // The Owner's own state, not the synced pose: waterPose follows one frame later, and in that frame the push-apart snapped
         // a just-afloat dog to the riverbed (W1-Dachs run 20260927-072549, a 0.376 m step). Also true while easing back down.
         public bool _WaterFloating() { return _waterSwimming || _swimYValid; }
+
+        /// <summary>KD_DogPack (Owner): would a push from -> to take this dog, on its feet, where its own step is refused? Same
+        /// rule as a step (_BlockedByRiver: the wading limit, the sink guard, the band outside the spot); a push toward shallower
+        /// water is always allowed. Afloat dogs keep the existing handling (height kept, at most 0.1 m per frame).</summary>
+        public bool _WaterPushBlocked(Vector3 from, Vector3 to)
+        {
+            if (_WaterFloating()) return false;
+            int old = _waterFetchFrame;
+            if (fetchController != null && fetchController.IsWaterFetching) _waterFetchFrame = Time.frameCount;   // the spot exception, as for its steps
+            bool blocked = _BlockedByRiver(from, to);
+            _waterFetchFrame = old;
+            return blocked;
+        }
 
         bool WaterWetAt(Vector3 p)
         {
@@ -237,6 +253,29 @@ namespace KominkaDogRun
             waterBob.localPosition = _bobBase + Vector3.up * off;
         }
 
+        /// <summary>Every client, LateUpdate (after the Animator): the same bob on the hips of a single-tier rig. The clips animate
+        /// the hips, so the offset is added to what the Animator wrote this frame; when nothing overwrote our last value (a clip
+        /// without a position curve there), the base is our value minus our offset, so it never accumulates. Vertical in world
+        /// space (the bone's local axes are the armature's). Local only, never synced.</summary>
+        void WaterHipsBobLate()
+        {
+            if (waterBobHips == null || waterSpot == null || fetchController == null) return;
+            Vector3 cur = waterBobHips.localPosition;
+            Vector3 basePos = (_hipsWrote && cur == _hipsLast) ? cur - _hipsLastOff : cur;
+            float off = fetchController.WaterPose == 2 ? waterSpot.swimBob * Mathf.Sin(Time.time * waterSpot.swimBobHz * 2f * Mathf.PI) : 0f;
+            if (off == 0f)
+            {
+                if (_hipsWrote) { waterBobHips.localPosition = basePos; _hipsWrote = false; }
+                return;
+            }
+            Transform parent = waterBobHips.parent;
+            Vector3 up = parent != null ? parent.InverseTransformDirection(Vector3.up) : Vector3.up;
+            _hipsLastOff = up * off;
+            _hipsLast = basePos + _hipsLastOff;
+            waterBobHips.localPosition = _hipsLast;
+            _hipsWrote = true;
+        }
+
         // ---- step 6: the Fetch's water states (6 WaterChase / 7 WaterReturn / 8 WaterExit) move the dog through these legs, so
         // the swim height, the look-ahead, the depth rules and the spot's band exception are the same as in WaterPlay.
 
@@ -266,6 +305,15 @@ namespace KominkaDogRun
             _waterFetchFrame = Time.frameCount;
             if (carrying) _waterCarryFrame = Time.frameCount;
             Coast();
+            WaterApplySwimHeight();
+        }
+
+        /// <summary>Fetch state 8 on a far-bank thrower: walk (NavMesh) to the entered bank's return point, carrying.</summary>
+        public void _WaterFetchWalkTo(Vector3 goal)
+        {
+            if (!_dogOwner || waterSpot == null) { ApplyMoveAnim(); return; }
+            _waterFetchFrame = Time.frameCount; _waterCarryFrame = Time.frameCount;
+            if (hillsideLeashes == null || !GatherStep(goal, walkSpeed)) StepToward(goal, 0f, walkSpeed);
             WaterApplySwimHeight();
         }
 
@@ -327,7 +375,7 @@ namespace KominkaDogRun
             {
                 // First play of the stay: near (25 m) and free is enough; a short settle so a dog passing by does not jerk.
                 if (!waterSpot._NearEntry(p)) { _waterFirstDue = 0f; return false; }
-                if (_waterFirstDue <= 0f) _waterFirstDue = Time.time + WaterFirstDelay;
+                if (_waterFirstDue <= 0f) _waterFirstDue = Time.time + WaterFirstDelayFor();
                 if (Time.time < _waterFirstDue) return false;
                 _waterFirstDue = 0f; _waterFirstUsed = true;
                 return true;
@@ -435,13 +483,19 @@ namespace KominkaDogRun
         // First target of a stay: the nearest wadeable cell, so the dog goes straight into the water from the entry (W0 run
         // 20260927-062317: random draws over the whole baked box often missed, fell back to the entry itself, "arrived" there at
         // once and waited 1-3 s before drawing again: wet 7.07 s). Later targets are random. Both searches run in KH_WaterSpot.
+        /// <summary>The first play's wait: 0.2 s + 0.3 s x dogIndex (0.2-1.7 s, at most 2 s), so six dogs arriving together do not
+        /// all head for the entry in the same frame (Codex 2026-09-27 U-中).</summary>
+        float WaterFirstDelayFor() { return Mathf.Min(2f, WaterFirstDelay + 0.3f * Mathf.Max(0, dogIndex)); }
+
         Vector3 WaterPickCell(bool nearest)
         {
             float limit = WaterDepthLimit() * 0.9f;
             // The first leg must end clearly in the water (W0 run 20260927-063601: the nearest cell above 0.03 m had 0.04 m, the
             // dog "arrived" 0.22 m short of it on dry ground and then held 3 s). Half the dog's limit, 0.03-0.08 m (Pome 0.035).
             float firstMin = Mathf.Clamp(0.5f * limit, 0.03f, 0.08f);
-            Vector3 c = nearest ? waterSpot._NearestWetCell(dogRoot.position, firstMin, limit) : waterSpot._RandomWetCell(0.03f, waterSwimAllowed ? 5f : limit);   // swimmers may aim at deep cells
+            // The first leg: the cell nearest a point 1 m per dog along the bank (dogIndex - 2.5 m in z), so the dogs spread out
+            Vector3 firstFrom = dogRoot.position + new Vector3(0f, 0f, (dogIndex - 2.5f) * 1f);
+            Vector3 c = nearest ? waterSpot._NearestWetCell(firstFrom, firstMin, limit) : waterSpot._RandomWetCell(0.03f, waterSwimAllowed ? 5f : limit);   // swimmers may aim at deep cells
             if (c.y <= KominkaHillside.KH_WaterSpot.NoBed + 1f) c = waterSpot._NearestWetCell(dogRoot.position, 0.03f, limit);
             return c.y <= KominkaHillside.KH_WaterSpot.NoBed + 1f ? waterSpot.entry : c;
         }

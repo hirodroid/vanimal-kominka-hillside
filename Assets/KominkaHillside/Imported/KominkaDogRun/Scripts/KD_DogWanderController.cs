@@ -1758,6 +1758,7 @@ namespace KominkaDogRun
         void LateUpdate()
         {
             FinishInterruptedGreeting();
+            WaterHipsBobLate();   // IMP-DOG-020 step 7: the swim bob on a single-tier rig's hips, after the Animator (HillsideWater.cs)
             float dt = Time.deltaTime;
             if (dt <= 0f) return;
 

@@ -11,7 +11,7 @@ namespace KominkaHillside
     /// 本人が 3 m 以上歩いたら置き直す (歩いていても通り過ぎない)。中身は「(名前) さんが近くに来たいそうです」+ 相手の場所
     /// (最寄りの地点の名前) + 残り秒数、[いいよ] [いまはだめ] [しばらく受けない (10分)] [この人からはこの滞在中は受けない]。
     /// 20 秒の時間切れ・申し込みの取り消し・相手の退出では受付箱が <see cref="_Hide"/> を呼ぶ。手元メニューの「申し込み 1 件」から
-    /// <see cref="_Reshow"/> でもう一度出せる。名前のラベルは表示名の補助フォント KH_DisplayName SDF (Dynamic。§A.6、Course/86) を使う。</summary>
+    /// <see cref="_Reshow"/> でもう一度出せる。名前のラベルは表示名の補助フォント KH_DisplayName SDF (Static。JIS 第 1 水準まで焼いたもの + Latin fallback。§A.6、Course/86) を使う。</summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_TravelNotice : UdonSharpBehaviour
     {
