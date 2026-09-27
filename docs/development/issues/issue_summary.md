@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-50 件 — 対応中 14 / 確認待ち 12 / 未着手 12 / 保留 3 / 完了 9
+51 件 — 対応中 15 / 確認待ち 12 / 未着手 12 / 保留 3 / 完了 9
 
 ## 実行キュー
 
@@ -14,6 +14,7 @@
 | [IMP-DOG-001](IMP-DOG-001-port-dog-system.md) | High | 古民家ドッグランの犬ギミックを移植する (タグ `export/kominka-hillside-v1` + 移植記録) | wip |  |
 | [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、Desktop/Touch、複数人。看板の本制作・分かりやすさは DES-UI-004 へ分離 | wip |  |
 | [IMP-DOG-009](IMP-DOG-009-walk-speed-tiers.md) | High | 散歩の犬の速さを 4 段階に (最速は現状の速歩の 3 倍)。人が犬を引っ張る状態をなくす。Run クリップの再生速度・減速も合わせる。9/22 PCVR 1 人 1 匹で OK・採用、3〜6 匹・2 人以上・Desktop は未確認 | wip |  |
+| [IMP-DOG-021](IMP-DOG-021-river-wide-fetch-and-recall.md) | High | 川のどこへ投げたボールでも犬が取りに行く (川全体で浮かせ、安全な岸から入って取る)。水中の犬のボール・ディスクも、口に無ければ手元へ呼べる | wip | 実装 (Opus)、ClientSim ハーネス 88 の拡張、Codex 独立レビュー。PCVR は設計書末尾のチェックリストに追加 |
 | [BUG-DOG-002](BUG-DOG-002-leash-handle-orientation.md) | Medium | リードの輪と紐の接続部が横向き。肘→手の延長上・手の前側へ向くよう左右とも調整する (9/23 要望具体化) | wip |  |
 | [DES-ENV-002](DES-ENV-002-longer-course.md) | Medium | 約2.41kmの川沿い周回を別シーンへ実装中。地形・経路・景観・容量とEditor描画を確認し、Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する | wip | 接続済みの436点経路・手元メニューで犬の周回を検証。LODと遮蔽の実機表示、犬連れの歩行時間と16人性能から最終距離/予算を確定する |
 | [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK)、段階 2・3 は 9/24 実装済み・PCVR 待ち | wip |  |
