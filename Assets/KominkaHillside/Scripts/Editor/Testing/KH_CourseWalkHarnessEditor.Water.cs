@@ -79,12 +79,13 @@ namespace KominkaHillside.Editor
         [Serializable] public class WhDogStat
         {
             public int dog; public string breed;
-            public bool swimmer, wet, landed, landedOnSpotBank, sentDeep;
+            public bool swimmer, wet, landed, landedOnSpotBank, sentDeep, mouthBoneMissing;
             public int frames, bandOutsideSpotFrames, tooDeepFrames, bigSteps, mouthLowFrames, footLowFrames, swimEntries, swimToggles, backToShallow, recoverStage;
             public float maxStep, minMouthAboveWater = 9f, minMouthAboveWaterFromRoot = 9f, minFootAboveBed = 9f, swimSeconds, longestSwim, wetSeconds;
             public double landedAt = -1;
             [NonSerialized] public Vector3 prev; [NonSerialized] public int pose; [NonSerialized] public float swimRun, mouth, wetSince = -1, sincePose;
             [NonSerialized] public Transform mouthBone;
+            [NonSerialized] public bool teleportPending;   // a stage-3 teleport was logged; exempt only the next observation
         }
         [Serializable] public class WhReport
         {
@@ -161,7 +162,7 @@ namespace KominkaHillside.Editor
                 int end = condition.IndexOf(' ', at + 4); if (end < 0) end = condition.Length;
                 if (int.TryParse(condition.Substring(at + 4, end - at - 4), out n))
                     foreach (var st in c.stats)
-                        if (st.dog == n) { if (condition.Contains("stage=2")) st.recoverStage = Math.Max(st.recoverStage, 2); if (condition.Contains("stage=3")) st.recoverStage = 3; }
+                        if (st.dog == n) { if (condition.Contains("stage=2")) st.recoverStage = Math.Max(st.recoverStage, 2); if (condition.Contains("stage=3")) { st.recoverStage = 3; st.teleportPending = true; } }
             }
         }
 
@@ -506,6 +507,7 @@ namespace KominkaHillside.Editor
         {
             var d = new WhDogStat { dog = dog, breed = WhBreeds[dog], swimmer = Get<bool>(wander[dog], "waterSwimAllowed"), mouth = Get<float>(wander[dog], "waterMouthHeight"), prev = roots[dog].position };
             object bone; if (whFetches[dog].TryGetProgramVariable("mouthAnchor", out bone)) d.mouthBone = bone as Transform;
+            d.mouthBoneMissing = d.mouthBone == null;   // the real mouth is required: no silent root + M fallback
             return d;
         }
 
@@ -515,7 +517,9 @@ namespace KominkaHillside.Editor
         {
             var p = roots[d.dog].position; d.frames++;
             float step = Vector3.Distance(p, d.prev); d.prev = p; if (step > d.maxStep) d.maxStep = step;
-            if (step > .2f && d.recoverStage < 3) d.bigSteps++;   // only this dog's own stage-3 teleport is exempt
+            // Only the one observation right after this dog's own stage-3 teleport is exempt (not every later frame)
+            if (step > .2f && !d.teleportPending) d.bigSteps++;
+            d.teleportPending = false;
             if (RiverInBand(p) && !WhInSpot(p)) d.bandOutsideSpotFrames++;
             int pose = Get<int>(whFetches[d.dog], "waterPose");
             if (pose != d.pose)
@@ -532,7 +536,8 @@ namespace KominkaHillside.Editor
             if (!WhInSpot(p) || pose == 0) return;
             float surface = KH_CourseGroundEditor.RiverAt(p.z).y, depth = surface - p.y;
             if (pose != 2 && !d.swimmer && depth > Get<float>(whSpot, "wadeLimitRatio") * d.mouth + .02f) d.tooDeepFrames++;
-            float mouthY = d.mouthBone != null ? d.mouthBone.position.y : p.y + d.mouth;
+            if (d.mouthBone == null) { d.mouthBoneMissing = true; return; }
+            float mouthY = d.mouthBone.position.y;
             float above = mouthY - surface, fromRoot = p.y + d.mouth - surface;
             if (above < d.minMouthAboveWater) d.minMouthAboveWater = above;
             if (fromRoot < d.minMouthAboveWaterFromRoot) d.minMouthAboveWaterFromRoot = fromRoot;
@@ -553,6 +558,7 @@ namespace KominkaHillside.Editor
 
         static bool WhDogOk(WhDogStat d)
         {
+            if (d.mouthBoneMissing) return false;   // reason "mouth bone missing" in the summary
             bool clean = d.bandOutsideSpotFrames == 0 && d.bigSteps == 0 && d.tooDeepFrames == 0 && d.mouthLowFrames == 0 && d.footLowFrames == 0;
             bool swimRule = d.swimmer ? d.swimEntries >= 1 && d.swimToggles <= 4 : d.swimEntries == 0;
             return clean && swimRule && d.landed && d.landedOnSpotBank;
@@ -564,7 +570,7 @@ namespace KominkaHillside.Editor
                 + " tooDeep=" + d.tooDeepFrames + " mouthLow=" + d.mouthLowFrames + " minMouth=" + d.minMouthAboveWater.ToString("F3") + " (root+M " + d.minMouthAboveWaterFromRoot.ToString("F3")
                 + ") footLow=" + d.footLowFrames + " minFoot=" + d.minFootAboveBed.ToString("F3") + " swims=" + d.swimEntries + " toggles=" + d.swimToggles
                 + " swimS=" + d.swimSeconds.ToString("F1") + " longest=" + d.longestSwim.ToString("F1") + " backToWade=" + d.backToShallow + " wetS=" + d.wetSeconds.ToString("F1")
-                + " landed=" + d.landed + " sameBank=" + d.landedOnSpotBank + " recover=" + d.recoverStage + "]";
+                + " landed=" + d.landed + " sameBank=" + d.landedOnSpotBank + " recover=" + d.recoverStage + (d.mouthBoneMissing ? " FAIL: mouth bone missing" : "") + "]";
         }
 
         static void WhEvaluateW1(WhCase c, double now, double t)

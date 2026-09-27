@@ -354,7 +354,8 @@ namespace KominkaDogRun
         {
             // IMP-DOG-020: a swimming dog paddles with the Walk legs whatever its speed (synced waterPose, every client)
             bool moving = _speed > stopSpeedThreshold || (fetchController != null && fetchController.WaterPose == 2);
-            bool running = moving && _speed >= runAnimSpeed;
+            // Never Run while swimming: a non-Owner's observed speed can pass runAnimSpeed and would show Run where the Owner shows Walk
+            bool running = moving && _speed >= runAnimSpeed && (fetchController == null || fetchController.WaterPose != 2);
 
             // 停止後の保持 (2026-08-14 Play フィードバック 3 巡目)。
             // **足が止まるより先に静止ポーズへ入らせない。**

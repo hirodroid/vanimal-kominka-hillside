@@ -32,6 +32,8 @@ summary: Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/�
 | 7 | 境界 | Terrain の縁・遠景の継ぎ目 (南東・南西の隅)、柵・斜面の外への落下が端末でも同じか | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) |
 | 8 | 容量 | Android / iOS のダウンロードサイズがモバイル上限 100 MB を下回っているか。実機に載せる前に `Tools/KominkaHillside/Build Size/8 - Verify Mobile Caps` を 0 件にして `2 - Bundle Size Android` を測る。最新の実測と余力は [ビルドサイズ実測](../../plans/2026-09-24-build-size-audit.md) だけが持つ (ここに数字を書かない)。実機での見た目 (1024 に落とした樹皮・古民家・空) はこの Issue で見る | [ビルドサイズ実測](../../plans/2026-09-24-build-size-audit.md) |
 | 9 | 地図・ワープ・合流 | Touch で [地図と移動]・一覧の行・[ここへワープ]・通知板の 4 ボタンを押し分けられるか、通知板 (目の前 1.1 m・15° 下) と Focus View の重なり、暗転の板 (queue 5000) が両眼・スマホ画面で黒くなるか、表示名の欠けた字 (□)、16 人で申し込みが重なったときの通知の間隔 (受け手ごとに 20 秒) | [IMP-WLD-001](IMP-WLD-001-map-warp-and-join.md)、[実機チェックリスト](../../plans/2026-09-27-map-and-travel.md#実機チェックリスト-2026-09-27) |
+| 10 | 川の水遊び | 不透明な水面の上で、泳ぐ小型犬 (頭だけが出る) と浅瀬の大型犬が、通常の目線と撫でる低い目線で見分けられるか。しぶき・波紋の粒子が Quest の両眼・iPhone で出るか (ピンク・片眼欠落が無いか)。夜のモードでも見分けられるか | [IMP-DOG-020](IMP-DOG-020-river-wading-and-swim.md)、[設計書 D-2](../../plans/2026-09-27-river-play-and-floating-fetch.md#d-2-quest-単体--ios-ver-wld-001-へ集約) |
+| 11 | 水遊びの負荷と途中参加 | 6 匹が同時に水遊びしているときの fps (Editor の目安はフレーム時間 平均 11.1 ms・最大 45.8 ms)。泳いでいる犬がいるときに途中参加した人の画面で、最初から泳ぎの姿勢 (浮いた高さ・Walk) で見えるか。iPhone のタッチでリードを外して水遊びを始められ、案内の一言が読めるか | [IMP-DOG-020](IMP-DOG-020-river-wading-and-swim.md) (設計書 D-1 の S2・D-4) |
 
 ## 体験会 (2026-09-26) の所感 — 合格には読み替えない
 
