@@ -302,6 +302,13 @@ namespace KominkaDogRun
                     _routeNext = -1;
                 }
             }
+            else if (handDist > leash * 1.25f && TravelPending() && _travelAppliedReq != hillsideLeashes.travelReq[dogIndex])
+            {
+                // IMP-WLD-001 RC-01: 本人は TeleportTo したが Phase 4 (移動済み) がまだ届いていない数フレーム。ここで Return に入ると
+                // 588 m 先の飼い主へ走り出す (T1 の Return 0 件で検出)。切符の期限 (15 s) までその場で待ち、切れたら通常の Return で追いつく。適用済み (完了の再送中) なら通常どおり追う
+                Coast();
+                return true;
+            }
             else if (handDist > leash * 1.25f)
             {
                 if (pausing) EndPause("cutoff"); // 滞在の記録は残して帰る

@@ -1323,7 +1323,8 @@ namespace KominkaDogRun
             if (_dogOwner != wasOwner) _behaviorSelectionValid = false;
             if (!_dogOwner) ObserveSpeed();
             WaterTick(); // IMP-DOG-020: 水遊びの姿勢・しぶき・リード解除の観測 (HillsideWater.cs)。早期 return より前
-            if (UpdateHillsideLeash()) { _behaviorSelectionValid = false; NotifyPlay(); return; }
+            // RC-14: a leash first seen while the dog is in the water is not taken up (WaterLeashTick, HillsideWater.cs)
+            if (!_waterLeashVeto && UpdateHillsideLeash()) { _behaviorSelectionValid = false; NotifyPlay(); return; }
 
             if (UpdateCandyPerformance()) { _behaviorSelectionValid = false; NotifyPlay(); return; }
 

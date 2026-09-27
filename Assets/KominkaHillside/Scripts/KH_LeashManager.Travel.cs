@@ -10,9 +10,14 @@ namespace KominkaHillside
     /// <summary>IMP-WLD-001 段階 1: 地点ワープと接続犬の同行 (設計書 docs/plans/2026-09-27-map-and-travel.md §B・§D.3〜D.6)。
     ///
     /// 三者の役割:
-    /// - **要求する人 (ローカル)**: `_TravelBegin` で門番 → 着地点の検査 5 つ → 要求 ID 付きの切符を要求 → 確認できたら自分を TeleportTo。
-    /// - **Manager Owner**: `ReqTravel` / `CancelTravel` / `ReqTravelDone` で切符 (同期配列 7 本) を書く唯一の人。
-    /// - **犬の Owner**: KD_DogWanderController.HillsideTravel.cs が、飼い主が着地点に着いたのを見てから 1 回だけ適用し、完了を報告する。
+    /// - **要求する人 (ローカル)**: `_TravelBegin` で門番 → 着地点の検査 5 つ → 要求 ID 付きの切符を要求 → 確認できたら自分を TeleportTo →
+    ///   着地点 (2 m 以内) に着いたのを一度確かめてから「移動済み」(`ReqTravelMoved`) を送る。その後は距離によらず、自分の犬に Phase 1 が残る間 1 秒ごとに送り直す。
+    /// - **Manager Owner**: `ReqTravel` / `CancelTravel` / `ReqTravelMoved` / `ReqTravelDone` で切符 (同期配列 7 本) を書く唯一の人。
+    /// - **犬の Owner**: KD_DogWanderController.HillsideTravel.cs が、Phase 4 (本人が移動済み) かつ飼い主が着地点から 6 m 以内になってから
+    ///   1 回だけ適用し、完了を報告する。
+    /// Phase: 0 無し → 1 準備 (切符を書いた) → 4 移動済み (本人の TeleportTo の後) → 2 完了 (犬が適用した)。取消は 1 → 3 だけ。
+    /// 破壊監査 2026-09-28 RC-01: 以前は Phase 1 と「飼い主が L から 6 m 以内」だけで犬が適用したので、着地点が本人から 3〜5 m の合流や
+    /// 確認待ち中の徒歩接近では本人の移動前に犬が跳び、その後の取消が効かなかった。移動済みは同期の Phase に残すので、途中参加と Owner 交代でも復元できる。
     ///
     /// ログは `[KH_Leash] ReqTravel ...` / `[KH_Leash] travel ...` (BUG-DOG-004 と同じ書式)。</summary>
     public partial class KH_LeashManager
@@ -20,7 +25,7 @@ namespace KominkaHillside
         // ---- 地点 (Course/80 が周回路のノードから解決して書く。並びは固定) ----
         public const int SpotGate = 0, SpotPlaza = 1, SpotUpper = 2, SpotBridgeUp = 3, SpotRiver = 4, SpotBridgeDown = 5, SpotCount = 6;
         // ---- 切符の Phase ----
-        public const int TravelPhaseNone = 0, TravelPhaseReady = 1, TravelPhaseDone = 2, TravelPhaseCanceled = 3;
+        public const int TravelPhaseNone = 0, TravelPhaseReady = 1, TravelPhaseDone = 2, TravelPhaseCanceled = 3, TravelPhaseMoved = 4;
         // ---- 要求の結果 (手元メニューが文言に変える)。0〜9 は押した瞬間、20〜 は待ちの後 ----
         public const int TravelStarted = 0, TravelBusy = 1, TravelCooling = 2, TravelBall = 3, TravelCrowded = 4,
             TravelUnavailable = 5, TravelAlreadyHere = 6, TravelArrived = 20, TravelChanged = 21, TravelNoAnswer = 22,
@@ -32,8 +37,8 @@ namespace KominkaHillside
         [UdonSynced] public Vector3[] travelCenter = new Vector3[6];               // 飼い主の着地点 L
         [UdonSynced] public Vector3[] travelPoint = new Vector3[6];                // その犬の配置点
         [UdonSynced] public float[] travelYaw = new float[6];                      // 着地したときの向き (度)
-        [UdonSynced] public int[] travelAtMs = new int[6];                         // 準備した時刻 (GetServerTimeInMilliseconds)
-        [UdonSynced] public int[] travelPhase = new int[] {0,0,0,0,0,0};          // 0 無し / 1 準備 / 2 完了 / 3 取消
+        [UdonSynced] public int[] travelAtMs = new int[6];                         // 準備した時刻。移動済みにした時刻で書き直す (犬の適用期限はそこから 15 秒)
+        [UdonSynced] public int[] travelPhase = new int[] {0,0,0,0,0,0};          // 0 無し / 1 準備 / 2 完了 / 3 取消 / 4 本人が移動済み
 
         [Header("Travel spots (IMP-WLD-001). Course/80 が書く。手で変えない")]
         public string[] spotIds;
@@ -63,11 +68,13 @@ namespace KominkaHillside
         public int debugDropTravelDone;      // >0 なら完了報告をこの数だけ捨てる (T6)
         public int debugSkipTravelTeleport;  // >0 なら確認の後の TeleportTo をこの回数だけ飛ばす (T4・T5)
         public int debugForgeTravelMask;     // 送る dogMask にこのビットを足す (T8 の偽装)
+        public float debugDelayTravelMoved;  // >0 なら移動済みの通知をこの秒数だけ Owner が抱え (その間の再送も抱える)、放すときに 2 回処理する (遅延と重複)。1 回で 0 に戻る
+        public int debugDropTravelMoved;     // >0 なら移動済みの通知をこの数だけ Owner が捨てる (初回通知の喪失。T12-moved-first-lost)
 
         // ---- 要求する人 (ローカル。同期しない) ----
         private int _tvState;                // 0 なし / 1 確認待ち / 2 本人は着いた・犬を待っている (レビュー X6) / 3 暗転中 (段階 2)
         private float _tvArrivedAt;
-        const float TravelDogsWait = 15f;    // 犬の適用期限と同じ。過ぎたら待つのをやめて「着きました」
+        const float TravelDogsWait = 15f;    // 秒数だけ犬の適用期限と同じ (こちらは TeleportTo から、犬の期限は Phase 4 になった時から数える)。過ぎたら待つのをやめて「着きました」
         private int _tvSeq, _tvReq, _tvMask, _tvSpot;
         private Vector3 _tvCenter;
         private float _tvYaw;
@@ -76,6 +83,10 @@ namespace KominkaHillside
         private float _tvCooldownUntil;
         private Vector3 _tvLanding;
         private int _tvBusyRejects;          // 処理中に押された回数 (T11 の観測用)
+        private float _tvMovedSentAt;        // 移動済みを最後に送った時刻 (Phase 1 の犬が残る間 1 秒ごと)
+        private bool _tvArrivedOnce;         // この要求で着地点 (2 m 以内) に着いたのを一度確かめた。以後の再送は距離によらない (レビュー 2026-09-28 高)
+        const float TravelArriveNear = 2f;   // TeleportTo の後、着地点からこの距離に入ったら「着いた」とみなして移動済みを送る
+        const float TravelMovedRetry = 1f;
         /// <summary>待ちの後に出た結果。手元メニューは serial の変化を見て文言を出す。</summary>
         [HideInInspector] public int travelResultSerial;
         [HideInInspector] public int travelResultCode;
@@ -85,6 +96,7 @@ namespace KominkaHillside
         private int[] _tvCanceled = new int[] {0,0,0,0,0,0,0,0};
         private int _tvCanceledAt;
         private int _dbgDelayReq, _dbgDelayCaller, _dbgDelayMask;
+        private int _dbgMovedReq, _dbgMovedCaller;
         private Vector3 _dbgDelayCenter;
         private float _dbgDelayYaw;
 
@@ -145,6 +157,8 @@ namespace KominkaHillside
         public bool _TravelAwaitingDogs() { return _tvState == 2; }
         public int _TravelWaitingSpot() { return _tvState == 1 || _tvState == 3 ? _tvSpot : -1; }
         public bool _TravelFading() { return _tvState == 3; }
+        /// <summary>地点ワープ・合流の移動を取り消せるか (確認待ち・暗転中)。本人が TeleportTo した後 (犬待ち) は含めない (RC-06)。</summary>
+        public bool _TravelCancelable() { return _tvState == 1 || _tvState == 3; }
         public float _TravelCooldownLeft() { return Mathf.Max(0f, _tvCooldownUntil - Time.time); }
 
         public bool _TravelWarpable(int spot)
@@ -263,19 +277,30 @@ namespace KominkaHillside
             if (travelFade != null) travelFade._Release();
             _tvCooldownUntil = Time.time + travelCooldownOk;
             if (_tvMask == 0) { _tvState = 0; TravelPost(TravelArrived); return; }
-            _tvState = 2; _tvArrivedAt = Time.time;
+            _tvState = 2; _tvArrivedAt = Time.time; _tvMovedSentAt = -1000f; _tvArrivedOnce = false;
             TravelPost(TravelWaitingDogs);
         }
 
-        /// <summary>本人は着いた。全頭の Phase 2 (犬の Owner が適用した) か 15 秒で「着きました」。接続が変わっても待つのをやめる。</summary>
+        /// <summary>本人は TeleportTo した。着地点 (2 m 以内) に着いたのを一度確かめてから移動済みを送り、全頭の Phase 2 (犬の Owner が適用した) か
+        /// 15 秒で「着きました」。移動済みは、まだ Phase 1 の犬がいる間 1 秒ごとに送り直す (Owner は冪等に扱う)。着いたのを確かめた後の再送は
+        /// 距離によらない (初回が Owner 交代等で失われた後に本人が 2 m より離れても、再送で Phase 4 に進める)。</summary>
         private void TravelTickDogs()
         {
-            bool done = true;
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            int me = Utilities.IsValid(lp) ? lp.playerId : -1;
+            bool done = true, waitingMoved = false;
             for (int i = 0; i < travelReq.Length; i++)
             {
                 if ((_tvMask & (1 << i)) == 0) continue;
-                if (walkers[i] != (Utilities.IsValid(Networking.LocalPlayer) ? Networking.LocalPlayer.playerId : -1)) continue;
-                if (travelReq[i] != _tvReq || travelPhase[i] != TravelPhaseDone) { done = false; break; }
+                if (walkers[i] != me) continue;
+                if (travelReq[i] == _tvReq && travelPhase[i] == TravelPhaseReady) waitingMoved = true;
+                if (travelReq[i] != _tvReq || travelPhase[i] != TravelPhaseDone) done = false;
+            }
+            if (waitingMoved && !_tvArrivedOnce && Utilities.IsValid(lp) && TravelFlat(lp.GetPosition(), _tvCenter) <= TravelArriveNear) _tvArrivedOnce = true;
+            if (waitingMoved && _tvArrivedOnce && Time.time - _tvMovedSentAt >= TravelMovedRetry)
+            {
+                _tvMovedSentAt = Time.time;
+                TravelSendMoved();
             }
             if (!done && Time.time - _tvArrivedAt < TravelDogsWait) return;
             _tvState = 0;
@@ -288,7 +313,7 @@ namespace KominkaHillside
             {
                 if ((_tvMask & (1 << i)) == 0) continue;
                 if (travelReq[i] != _tvReq) return false;
-                if (travelPhase[i] != TravelPhaseReady && travelPhase[i] != TravelPhaseDone) return false;
+                if (travelPhase[i] != TravelPhaseReady && travelPhase[i] != TravelPhaseMoved && travelPhase[i] != TravelPhaseDone) return false;
             }
             return true;
         }
@@ -313,6 +338,17 @@ namespace KominkaHillside
             if (Networking.IsOwner(gameObject)) ReceiveTravel(lp.playerId, _tvReq, sendMask, _tvCenter, _tvYaw);
             else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqTravel), _tvReq, sendMask, _tvCenter, _tvYaw);
         }
+
+        private void TravelSendMoved()
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp) || _tvReq == 0) return;
+            if (Networking.IsOwner(gameObject)) ReceiveMoved(lp.playerId, _tvReq);
+            else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqTravelMoved), _tvReq);
+        }
+
+        /// <summary>ハーネス専用 (T5): 要求する人の TeleportTo をハーネスが代わりに行ったとき、その後の移動済みを送る。ローカル専用。</summary>
+        public void _DebugTravelMovedNow() { TravelSendMoved(); }
 
         private void TravelSendCancel()
         {
@@ -567,6 +603,15 @@ namespace KominkaHillside
             CancelFrom(caller.playerId, reqId);
         }
 
+        [NetworkCallable(maxEventsPerSecond: 2)]
+        public void ReqTravelMoved(int reqId) // net: callable-ok: CallingPlayer must own reqId and hold the dogs; only Phase 1 -> 4
+        {
+            if (!Networking.IsOwner(gameObject)) return;
+            VRCPlayerApi caller = NetworkCalling.CallingPlayer;
+            if (!Utilities.IsValid(caller)) return;
+            ReceiveMoved(caller.playerId, reqId);
+        }
+
         // 1 回の移動で最大 6 匹ぶん届くので 6/s (ReqAttach と同じ)。設計書 §B.5 の 2/s からの変更。取りこぼしは犬の側が 1 秒ごとに再送する
         [NetworkCallable(maxEventsPerSecond: 6)]
         public void ReqTravelDone(int dog, int reqId) // net: callable-ok: sender must own that dog's root; reqId must match
@@ -593,6 +638,60 @@ namespace KominkaHillside
             if (req == 0) return;
             Debug.Log("[KH_Leash] ReqTravel req=" + req + " delayed write now (debugDelayTravel)");
             WriteTravel(_dbgDelayCaller, req, _dbgDelayMask, _dbgDelayCenter, _dbgDelayYaw);
+        }
+
+        /// <summary>試験用の遅延 (debugDelayTravelMoved) を放す。2 回処理して重複を模す。ローカル専用。</summary>
+        public void _DebugDelayedTravelMoved()
+        {
+            int req = _dbgMovedReq;
+            _dbgMovedReq = 0;
+            if (req == 0) return;
+            Debug.Log("[KH_Leash] travel moved req=" + req + " delayed notice released twice (debugDelayTravelMoved)");
+            MovedFrom(_dbgMovedCaller, req);
+            MovedFrom(_dbgMovedCaller, req);
+        }
+
+        private void ReceiveMoved(int callerId, int reqId)
+        {
+            if (debugDropTravelMoved > 0)
+            {
+                debugDropTravelMoved--;
+                Debug.Log("[KH_Leash] travel moved req=" + reqId + " dropped (debugDropTravelMoved)");
+                return;
+            }
+            if (reqId != 0 && reqId == _dbgMovedReq)
+            {
+                Debug.Log("[KH_Leash] travel moved req=" + reqId + " held (debugDelayTravelMoved)");
+                return;
+            }
+            if (debugDelayTravelMoved > 0f && _dbgMovedReq == 0)
+            {
+                _dbgMovedReq = reqId; _dbgMovedCaller = callerId;
+                Debug.Log("[KH_Leash] travel moved req=" + reqId + " delayed " + debugDelayTravelMoved.ToString("F1") + "s (debugDelayTravelMoved)");
+                SendCustomEventDelayedSeconds(nameof(_DebugDelayedTravelMoved), debugDelayTravelMoved);
+                debugDelayTravelMoved = 0f;
+                return;
+            }
+            MovedFrom(callerId, reqId);
+        }
+
+        /// <summary>本人の移動済み (RC-01)。その人の犬で、同じ要求 ID の Phase 1 だけを 4 にし、犬の適用期限をここから数え直す。
+        /// 取消済み・別の要求・もう 4 / 2 の切符は変えない (遅延・重複の通知は冪等。取り消した切符を復活させない)。</summary>
+        private void MovedFrom(int callerId, int reqId)
+        {
+            if (!Networking.IsOwner(gameObject)) return;
+            string head = "[KH_Leash] travel moved from player " + callerId + " req=" + reqId;
+            if (reqId <= 0 || reqId / 65536 != callerId) { Debug.Log(head + " rejected: reqId"); return; }
+            if (TravelWasCanceled(reqId)) { Debug.Log(head + " rejected: cancelled earlier"); return; }
+            int now = Networking.GetServerTimeInMilliseconds();
+            int dogs = 0;
+            for (int i = 0; i < travelReq.Length; i++)
+            {
+                if (travelReq[i] != reqId || travelHolder[i] != callerId || walkers[i] != callerId || travelPhase[i] != TravelPhaseReady) continue;
+                travelPhase[i] = TravelPhaseMoved; travelAtMs[i] = now; dogs++;
+            }
+            Debug.Log(head + (dogs > 0 ? " phase=4 dogs=" + dogs : " unchanged"));
+            if (dogs > 0) RequestSerialization();
         }
 
         private void ReceiveTravel(int callerId, int reqId, int dogMask, Vector3 center, float yaw)
@@ -678,7 +777,7 @@ namespace KominkaHillside
                 Debug.Log("[KH_Leash] travel done dog" + dog + " req=" + reqId + " dropped (debugDropTravelDone)");
                 return;
             }
-            if (travelReq[dog] != reqId || travelPhase[dog] != TravelPhaseReady) return;
+            if (travelReq[dog] != reqId || travelPhase[dog] != TravelPhaseMoved) return;   // RC-01: 完了は本人の移動済みの後だけ
             travelPhase[dog] = TravelPhaseDone;
             Debug.Log("[KH_Leash] travel done dog" + dog + " req=" + reqId);
             RequestSerialization();
@@ -734,7 +833,7 @@ namespace KominkaHillside
             travelReq[dog] = 0; travelHolder[dog] = -1; travelPhase[dog] = TravelPhaseNone;
         }
 
-        /// <summary>Owner の保守 (0.5 秒ごと)。20 秒 (TravelExpireMs) を過ぎた準備の切符を Phase 0 に片付ける。犬は 15 秒
+        /// <summary>Owner の保守 (0.5 秒ごと)。20 秒 (TravelExpireMs) を過ぎた準備・移動済みの切符を Phase 0 に片付ける。犬は 15 秒
         /// (TravelTicketLifeMs) で見なくなるので、その後の片付け。変わったら true。</summary>
         private bool ExpireTravel()
         {
@@ -742,7 +841,7 @@ namespace KominkaHillside
             int now = Networking.GetServerTimeInMilliseconds();
             for (int i = 0; i < travelPhase.Length; i++)
             {
-                if (travelPhase[i] != TravelPhaseReady || now - travelAtMs[i] < TravelExpireMs) continue;
+                if ((travelPhase[i] != TravelPhaseReady && travelPhase[i] != TravelPhaseMoved) || now - travelAtMs[i] < TravelExpireMs) continue;
                 travelPhase[i] = TravelPhaseNone;
                 Debug.Log("[KH_Leash] travel expired dog" + i + " req=" + travelReq[i]);
                 changed = true;

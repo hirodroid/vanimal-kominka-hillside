@@ -127,11 +127,12 @@ namespace KominkaDogRun
         /// <summary>実行ボタン。地点なら [ここへワープ]、人なら [合流をたのむ] / [取り消す]。ローカル専用。</summary>
         public void _TravelGo()
         {
-            // 移動の途中 (切符待ち・暗転中) は [取り消す]。暗転中でも押せる唯一の入力 (§D.6・W3 レビュー 3)
-            if (manager != null && (manager._TravelWaiting() || manager._TravelFading()))
+            // 取り消せる間 (返事待ち・承認後の測定待ち・切符待ち・暗転中) は [取り消す]。暗転中でも押せる唯一の入力 (§D.6・W3 レビュー 3)。
+            // 破壊監査 RC-06: 判定は TravelCancelable() 1 か所 (表示も同じ)。以前は承認後の測定待ちが漏れ、押すと新しい申し込みになっていた
+            if (TravelCancelable())
             {
                 KominkaHillside.KH_TravelMailbox mine = TravelMyBox();
-                if (mine != null && mine._MovingWith() >= 0) mine._CancelJoinRequest();
+                if (mine != null && mine._JoinCancelable()) mine._CancelJoinRequest();
                 else manager._TravelCancel();
                 TravelMapRedraw();
                 return;
@@ -160,6 +161,15 @@ namespace KominkaDogRun
         // 段階 1 からの入口 (選んで即ワープ)。ClientSim ハーネス (Course/82・83) が使う
         public void _TravelUpper() { _travelPick = 0; TravelPress(0); }
         public void _TravelRiver() { _travelPick = 1; TravelPress(1); }
+
+        /// <summary>地点ワープ・合流の移動を取り消せるか (RC-06)。地点ワープの確認待ち・暗転中、合流の返事待ち・測定待ち・切符待ち・暗転中。
+        /// 本人が移動した後 (犬待ち) は含めない。実行ボタンの表示と押したときの処理の両方がこれを使う。</summary>
+        private bool TravelCancelable()
+        {
+            if (manager != null && manager._TravelCancelable()) return true;
+            KominkaHillside.KH_TravelMailbox box = TravelMyBox();
+            return box != null && box._JoinCancelable();
+        }
 
         /// <summary>暗転が明けるまでは副画面の入力を受け付けない (W2 レビュー D3)。</summary>
         private bool TravelInputLocked()
@@ -304,7 +314,7 @@ namespace KominkaDogRun
         {
             if (TravelInputLocked() || row < 0 || row >= _joinCount) return;
             KominkaHillside.KH_TravelMailbox box = TravelMyBox();
-            if (box != null && box._WaitingFor() >= 0) return;   // 返事待ちの間は相手を変えない
+            if (box != null && box._JoinCancelable()) return;   // 返事待ち・承認後の移動の間は相手を変えない
             _joinPick = _joinIds[row];
             TravelMapRedraw();
         }
@@ -313,7 +323,7 @@ namespace KominkaDogRun
         {
             KominkaHillside.KH_TravelMailbox box = TravelMyBox();
             if (box == null) { HillsideNote(TabWalk, "course.travel.join.notReady", ""); TravelMapRedraw(); return; }
-            if (box._WaitingFor() >= 0) { box._CancelJoinRequest(); TravelMapRedraw(); return; }
+            if (box._JoinCancelable()) { box._CancelJoinRequest(); TravelMapRedraw(); return; }
             if (_joinPick < 0) { HillsideNote(TabWalk, "course.travel.join.pick", ""); TravelMapRedraw(); return; }
             _travelArrived = false; _travelPlaced = false;
             JoinNote(box._RequestJoin(_joinPick), box);
@@ -539,13 +549,13 @@ namespace KominkaDogRun
                 travelFooterLabel.text = footer;
             }
             // ---- 実行ボタン ----
-            bool moving = manager._TravelWaiting() || manager._TravelFading();
+            bool moving = TravelCancelable();   // RC-06: 押したときの判定 (_TravelGo) と同じ
+            bool joinCancel = box != null && box._JoinCancelable();
             if (travelGoLabel != null)
             {
                 string go;
-                if (moving) go = L("course.travel.join.cancel").Replace("{0}", Mathf.CeilToInt(manager._TravelWaitLeft()).ToString());
-                else if (people)
-                    go = waitingFor >= 0 ? L("course.travel.join.cancel").Replace("{0}", Mathf.CeilToInt(box._WaitLeft()).ToString()) : L("course.travel.join.ask");
+                if (moving) go = L("course.travel.join.cancel").Replace("{0}", Mathf.CeilToInt(joinCancel ? box._CancelLeft() : manager._TravelWaitLeft()).ToString());
+                else if (people) go = L("course.travel.join.ask");
                 else
                 {
                     go = L("course.travel.map.go");

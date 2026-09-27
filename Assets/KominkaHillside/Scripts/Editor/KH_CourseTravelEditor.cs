@@ -107,8 +107,9 @@ namespace KominkaHillside.Editor
                 SetFloats(so, "travelYaw", new float[6]);
                 SetInts(so, "travelAtMs", new int[6]);
                 SetInts(so, "travelPhase", new int[6]);
-                foreach (var name in new[] { "debugDropTravel", "debugDropTravelDone", "debugSkipTravelTeleport", "debugForgeTravelMask" }) so.FindProperty(name).intValue = 0;
+                foreach (var name in new[] { "debugDropTravel", "debugDropTravelDone", "debugSkipTravelTeleport", "debugForgeTravelMask", "debugDropTravelMoved" }) so.FindProperty(name).intValue = 0;
                 so.FindProperty("debugDelayTravel").floatValue = 0f;
+                so.FindProperty("debugDelayTravelMoved").floatValue = 0f;
                 so.ApplyModifiedPropertiesWithoutUndo();
                 if (managerBacking.SyncMethod != Networking.SyncType.Manual) { managerBacking.SyncMethod = Networking.SyncType.Manual; EditorUtility.SetDirty(managerBacking); }
 
@@ -284,7 +285,7 @@ namespace KominkaHillside.Editor
             Require(e, m.travelPoint != null && m.travelPoint.Length == 6 && m.travelPoint.All(v => v == Vector3.zero), "travelPoint length 6 zero");
             Require(e, m.travelYaw != null && m.travelYaw.Length == 6 && m.travelYaw.All(v => v == 0f), "travelYaw length 6 zero");
             // 試験用の値は 0
-            Require(e, m.debugDropTravel == 0 && m.debugDropTravelDone == 0 && m.debugSkipTravelTeleport == 0 && m.debugForgeTravelMask == 0 && m.debugDelayTravel == 0f, "debug travel hooks are 0 (proxy)");
+            Require(e, m.debugDropTravel == 0 && m.debugDropTravelDone == 0 && m.debugSkipTravelTeleport == 0 && m.debugForgeTravelMask == 0 && m.debugDelayTravel == 0f && m.debugDelayTravelMoved == 0f && m.debugDropTravelMoved == 0, "debug travel hooks are 0 (proxy)");
             foreach (var name in new[] { "debugDropTravel", "debugDropTravelDone", "debugSkipTravelTeleport", "debugForgeTravelMask" })
                 if (backing != null && backing.publicVariables.TryGetVariableValue(name, out object v) && v is int iv && iv != 0) e.Add("debug " + name + " nonzero in backing");
             // 地点
@@ -453,7 +454,7 @@ namespace KominkaHillside.Editor
             foreach (var m in UnityEngine.Object.FindObjectsOfType<KH_LeashManager>(true))
             {
                 if (m.route == null || !m.route.closedLoop) continue;
-                bool debugOff = m.debugDropTravel == 0 && m.debugDropTravelDone == 0 && m.debugSkipTravelTeleport == 0 && m.debugForgeTravelMask == 0 && m.debugDelayTravel == 0f
+                bool debugOff = m.debugDropTravel == 0 && m.debugDropTravelDone == 0 && m.debugSkipTravelTeleport == 0 && m.debugForgeTravelMask == 0 && m.debugDelayTravel == 0f && m.debugDelayTravelMoved == 0f && m.debugDropTravelMoved == 0
                     && UnityEngine.Object.FindObjectsOfType<KH_TravelMailbox>(true).All(b => b.debugJoinLoopback == 0 && b.debugAnswerCode == 0);
                 bool data = m.spotPositions != null && m.spotPositions.Length == 6 && m.spotWarpEnabled != null && m.spotWarpEnabled.Length == 6 && m.travelRiverXs != null && m.travelRiverXs.Length > 0;
                 if (!debugOff || !data)

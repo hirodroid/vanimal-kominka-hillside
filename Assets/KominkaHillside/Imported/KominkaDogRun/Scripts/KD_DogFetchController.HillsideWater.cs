@@ -16,7 +16,8 @@ namespace KominkaDogRun
     //
     // IMP-DOG-020 steps 2-3 (DES-DOG-004 A-1): waterPose lives here because this behaviour is Manual and has the same Owner
     // as the dog root (the root itself is VRCObjectSync / Continuous). 0 land / 1 wading / 2 swimming (step 4, not yet).
-    // Written only by the dog Owner (KD_DogWanderController.HillsideWater) and serialized only when it changes. Every
+    // Written only by the dog Owner (KD_DogWanderController.HillsideWater.WaterPoseRefresh: at the top of its Update, and again
+    // after every water move - the water play and the Fetch's water steps, RC-14) and serialized only when it changes. Every
     // client reads it for the splash FX; the leash manager and the toy recall read it to refuse a dog that is in the water.
     public partial class KD_DogFetchController
     {
@@ -42,9 +43,23 @@ namespace KominkaDogRun
         /// <summary>Dog Owner only (the wander layer derives the pose). Sends only on a change.</summary>
         public void _SetWaterPose(int pose)
         {
-            if (pose == waterPose || !IsDogOwner()) return;
+            if (pose == waterPose || !IsDogOwner() || _debugPoseHold) return;
             waterPose = pose;
             RequestSerialization();
+        }
+
+        /// <summary>Harness only (Course/78 W4-leash-stale): keep waterPose as written, standing in for a leash arbiter whose view
+        /// of the pose is older than the dog's position (RC-14). Local, never synced.</summary>
+        bool _debugPoseHold;
+
+        /// <summary>RC-14 (破壊監査 2026-09-28, FUNC-04 BUG-02): the dog's root is wet in the water-play spot (the spot's riverbed
+        /// grid, the same rule as the pose). The leash arbiter asks this as well as the synced pose: the dog Owner writes the pose at
+        /// the top of its Update and again after each water move, but on another client (the arbiter's) the pose can arrive
+        /// later than the position, and before RC-14 the frame that stepped in showed pose 0 until the next frame.</summary>
+        public bool _WetAtRoot()
+        {
+            KD_DogWanderController w = MyWander();
+            return w != null && dogRoot != null && w._WaterWetAt(dogRoot.position);
         }
 
         /// <summary>Local: someone asked for this dog while it is in the water (leash / toy). The dog Owner turns to the
@@ -174,13 +189,20 @@ namespace KominkaDogRun
             if (w == null || w.waterSpot == null) { if (_dogOwner) GiveUp(); return true; }
             bool carrying = dogState != StateWaterChase;
             if (!_dogOwner) { w._WaterFetchHold(carrying); return true; }   // legs from the observed speed; the root is synced
-            if (_ballPickup != null && _ballPickup.IsHeld) { GiveUp(); return true; }
+            if (BallHeld())
+            {
+                if (_claimNext >= 0) Debug.Log("[KD_DogFetchController] give-up dog=" + dogIndex + " state=" + dogState + " reason=held-while-claiming");
+                GiveUp(); return true;
+            }
             VRCPlayerApi p = VRCPlayerApi.GetPlayerById(attentionPlayerId);
             if (!Utilities.IsValid(p) || _ballT == null) { GiveUp(); return true; }
+            if (carrying && HoldTick()) return true;   // RC-17: 7 / 8 keep the ball ours and frozen (Owner.cs)
             float elapsed = Time.time - _stateEnteredTime;
             Vector3 dog = dogRoot.position;
             if (dogState == StateWaterChase)
             {
+                // RC-17: reached the ball, waiting for its ownership (at most 2 s): stay on it, then 7 frozen, or give up
+                if (_claimNext >= 0) { w._WaterFetchHold(false); ClaimTick(); return true; }
                 Vector3 ball = _ballT.position;
                 if (!w.waterSpot._FloatsAt(ball)) { TransitionTo(StateChase); w._InvalidateLeashAnimation(); return true; }   // back on land: land chase
                 w._WaterFetchStep(ball, false);
@@ -191,7 +213,7 @@ namespace KominkaDogRun
                 Vector3 dm = mouth - ball; float above = dm.y; dm.y = 0f;
                 Vector3 dr = dog - ball; dr.y = 0f;
                 if ((dm.magnitude <= WaterMouthReach || dr.magnitude <= WaterMouthReach) && above > -0.1f && above < WaterMouthAboveMax)
-                { _waterExitIdx = w.waterSpot._NearestExit(dog); _waterToReturn = false; TransitionTo(StateWaterReturn); return true; }
+                { _waterExitIdx = w.waterSpot._NearestExit(dog); _waterToReturn = false; BeginCarry(StateWaterReturn); return true; }
                 if (elapsed > WaterTimeout(w)) WaterGiveUp("water-timeout");
                 return true;
             }

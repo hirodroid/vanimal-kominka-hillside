@@ -23,12 +23,15 @@ namespace KominkaHillside.Editor
         public static void TravelFull() { BeginTravel(true); }
         [MenuItem("Tools/KominkaHillside/Course/83 - Walk Harness Travel Quick (T1 one dog, T11)")]
         public static void TravelQuick() { BeginTravel(false); }
+        [MenuItem("Tools/KominkaHillside/Course/82b - Walk Harness Travel RC cases (T6b, T12, T9 new)")]
+        public static void TravelRc() { BeginTravel(false, true); }
 
-        static void BeginTravel(bool full)
+        static void BeginTravel(bool full, bool rc = false)
         {
             Begin(full);
             report.travelOnly = true;
-            report.deadline = EditorApplication.timeSinceStartup + (full ? 1800 : 600);
+            report.travelRc = rc;
+            report.deadline = EditorApplication.timeSinceStartup + (full ? 2700 : rc ? 1200 : 600);   // 破壊監査 RC-01/02/06/07 のケースで 6 本増えた
             report.limitations = "Single local ClientSim: the local player is requester, Manager Owner and every dog Owner (the same-Owner contract of design B.4). "
                 + "Owner handover (T5/T6), late answers (T3), non-Owner/forged requests (T8) and departure (T9) are SIMULATED through debug hooks on KH_LeashManager and runtime heap writes; see each case's notes. "
                 + "CallingPlayer is always local. No real network order, VRCObjectSync latency, late joiner, fade (stage 2) or join (stage 3). Holder walks by short TeleportTo steps.";
@@ -58,6 +61,8 @@ namespace KominkaHillside.Editor
         static int tvLastFrameObs;
         static float tvLastGameTime, tvLastRealtime;   // 2 回目以降の跳びの証拠 (位置・時刻・その時の犬の状態)
         static VRCPlayerApi tvRemote;
+        static List<VRCPlayerApi> tvHist;   // T9-join-history-kept の在室中 16 人
+        static List<int> tvHistValid; static int tvHistX;
         // 段階 2: 暗転の観測 (KH_TravelFade の _alpha と、プレイヤーの 5 m 以上の跳び)
         static VRC.Udon.UdonBehaviour tvFade;
         static float tvPrevAlpha, tvMaxAlpha, tvJumpAlpha = -1f, tvJumpPrevAlpha = -1f;
@@ -75,7 +80,7 @@ namespace KominkaHillside.Editor
         static Vector3 tvWalkPos;
         const float TvDisc = 1.5f, TvNear = 3.75f + 0.45f; // 手 = 体から横 0.23 m・前 0.32 m (Desktop の _HandPosition)
 
-        class TvCtx { public double press, arrived, walkStart = -1; public int serial, logFrom, req, req1, busy; public int[] old, oldPhase, applies; public Vector3 pos; }
+        class TvCtx { public double press, arrived, walkStart = -1; public int serial, logFrom, req, req1, busy, spot; public int[] old, oldPhase, applies, disc; public Vector3 pos, center; public string text; }
 
         // ============================================================
         // ケースの組み立て
@@ -92,7 +97,9 @@ namespace KominkaHillside.Editor
             var warp = Get<bool[]>(manager, "spotWarpEnabled");
             if (spots == null || spots.Length != 6 || warp == null || warp.Count(w => w) != 2 || !warp[KH_LeashManager.SpotUpper] || !warp[KH_LeashManager.SpotRiver])
                 throw new InvalidOperationException("Travel spots not built (run Course/80 and 81 first)");
-            var configs = report.full
+            var configs = report.travelRc
+                ? new[] { ("RC-setup-dogs-3-L3", new[] { 0, 1, 2 }, new[] { 0, 0, 0 }) }
+                : report.full
                 ? new[] { ("T1-dogs-1-L1", new[] { 0 }, new[] { 0 }), ("T1-dogs-3-L3", new[] { 0, 1, 2 }, new[] { 0, 0, 0 }), ("T1-dogs-3-L2R1", new[] { 0, 1, 2 }, new[] { 0, 0, 1 }), ("T1-dogs-6-L3R3", new[] { 0, 1, 2, 3, 4, 5 }, new[] { 0, 0, 0, 1, 1, 1 }) }
                 : new[] { ("T1-dogs-1-L1", new[] { 0 }, new[] { 0 }) };
             int mask = 0;
@@ -102,16 +109,30 @@ namespace KominkaHillside.Editor
                 mask = dogs.Aggregate(0, (a, d) => a | (1 << d));
                 TvSetup(s, dogs, hands);
                 TvMove(s, "_TravelUpper", KH_LeashManager.SpotUpper, mask, true);
+                if (report.travelRc) { s.Add(TvDo(() => TvNote("Course/82b setup: dogs 0-2 on the left hand, one move to the upper plaza (same attach state as the full run before the RC cases)"))); continue; }
                 TvMove(s, "_TravelRiver", KH_LeashManager.SpotRiver, mask, true);
                 TvMove(s, "_TravelUpper", KH_LeashManager.SpotUpper, mask, true);
                 s.Add(TvDo(() => TvNote("non-warp spots: spotWarpEnabled has only upper/river; the menu has only _TravelUpper/_TravelRiver. Their common checks 1-4 are certified statically by Course/81.")));
+            }
+            if (report.travelRc)
+            {
+                TvRcCases();
+                return;
             }
             if (report.full)
             {
                 TvT2(mask); TvT3(mask); TvT4(mask); TvT5(mask); TvT6(mask); TvT7(mask); TvT8(); TvT9();
                 TvT10(); TvT9Join();
+                // 破壊監査 2026-09-28 (T8/T9 の後は犬 0..2 だけが自分に繋がっている)
+                TvRcCases();
             }
             TvT11(report.full ? 7 : 1);
+        }
+
+        /// <summary>破壊監査 2026-09-28 の新規ケース (82 の後半と 82b で共通。前提: 犬 0..2 だけが自分に繋がっている)。</summary>
+        static void TvRcCases()
+        {
+            TvT6b(7); TvT12WalkIn(7); TvT12MovedLate(7); TvT12MovedFirstLost(7); TvT12Join(7); TvT9JoinFastCancel(); TvT9JoinHistory();
         }
 
         static List<Func<double, bool>> TvCase(string name, bool simulated, int count)
@@ -256,7 +277,7 @@ namespace KominkaHillside.Editor
                 TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), c.pos) < 1f, "player stayed");
                 TvExpect(TvAllNear(mask, 5f), "dogs stayed with the holder");
             }));
-            s.Add(TvUntil(() => TvAllPhase(mask, KH_LeashManager.TravelPhaseNone), 8, "ticket did not expire"));
+            s.Add(TvUntil(() => TvAllPhase(mask, KH_LeashManager.TravelPhaseNone), 14, "ticket did not expire (Owner expires at ~20 s after the write; 12 s wait + 14 s)"));
             s.Add(TvDo(() => TvNote("15 s: no position change; Owner expired the tickets (Phase 0) at ~20 s")));
         }
 
@@ -276,6 +297,9 @@ namespace KominkaHillside.Editor
                 Networking.LocalPlayer.TeleportTo(center, Quaternion.Euler(0, yaw, 0));
                 c.arrived = TvNow();
             }));
+            // RC-01: 犬は本人の移動済み (Phase 4) の後だけ適用する。代わりに TeleportTo したハーネスが、要求する人の移動済みも代わりに送る
+            s.Add(TvWait(.3));
+            s.Add(TvDo(() => { TvExpect(TvAllPhase(mask, KH_LeashManager.TravelPhaseReady), "no dog applied before the moved notice"); manager.SendCustomEvent("_DebugTravelMovedNow"); }));
             s.Add(TvUntil(() => TvAllPhase(mask, KH_LeashManager.TravelPhaseDone), 4, "tickets not done after arrival"));
             s.Add(TvWait(1));
             s.Add(TvDo(() =>
@@ -298,7 +322,7 @@ namespace KominkaHillside.Editor
             s.Add(TvUntil(() => TvCountLogs(c.logFrom, "dropped (debugDropTravelDone)") == n, 2, "first completion reports were not all sent"));
             s.Add(TvDo(() =>
             {
-                TvExpect(TvAllPhase(mask, KH_LeashManager.TravelPhaseReady), "tickets still Phase 1 after the lost reports");
+                TvExpect(TvAllPhase(mask, KH_LeashManager.TravelPhaseMoved), "tickets still Phase 4 (moved, not done) after the lost reports");
                 for (int i = 0; i < 6; i++)
                 {
                     if ((mask & (1 << i)) == 0) continue;
@@ -460,8 +484,40 @@ namespace KominkaHillside.Editor
             var box = TvMyBox();
             c.press = TvNow(); c.serial = Get<int>(box, "joinResultSerial"); c.logFrom = tvLogs.Count; c.pos = Networking.LocalPlayer.GetPosition();
             c.old = (int[])Get<int[]>(manager, "travelReq").Clone();
+            c.applies = wander.Select(w => Get<int>(w, "_travelApplies")).ToArray();
             TvReset();
-            pouch.SendCustomEvent("_TravelOpenMap"); pouch.SendCustomEvent("_TravelModePeople"); pouch.SendCustomEvent("_JoinPick0"); pouch.SendCustomEvent("_TravelGo");
+            pouch.SendCustomEvent("_TravelOpenMap"); pouch.SendCustomEvent("_TravelModePeople"); pouch.SendCustomEvent("_JoinPick0");
+            c.text = TvGoLabel();   // [合流をたのむ] の表示 (RC-06 の比較用)
+            pouch.SendCustomEvent("_TravelGo");
+        }
+
+        /// <summary>実行ボタンの表示 (TMP の text)。</summary>
+        static string TvGoLabel()
+        {
+            object o; if (!pouch.TryGetProgramVariable("travelGoLabel", out o) || !(o is Component comp) || comp == null) return "";
+            var p = comp.GetType().GetProperty("text"); return p == null ? "" : (string)p.GetValue(comp);
+        }
+
+        /// <summary>今の位置から 20 m 以上離れた方のワープ地点 (イベント名)。c.spot に地点を入れる。</summary>
+        static string TvFarEvt(TvCtx c)
+        {
+            var p = Networking.LocalPlayer.GetPosition();
+            c.spot = TvFlat(p, TvSpot(KH_LeashManager.SpotUpper)) >= 20f ? KH_LeashManager.SpotUpper : KH_LeashManager.SpotRiver;
+            return c.spot == KH_LeashManager.SpotUpper ? "_TravelUpper" : "_TravelRiver";
+        }
+
+        static int TvFirstLog(int from, string contains) { for (int i = from; i < tvLogs.Count; i++) if (tvLogs[i].Contains(contains)) return i; return -1; }
+        static int TvAppliesSince(TvCtx c, int dog) { return Get<int>(wander[dog], "_travelApplies") - c.applies[dog]; }
+        static bool TvNoApplies(TvCtx c, int mask) { for (int i = 0; i < 6; i++) if ((mask & (1 << i)) != 0 && TvAppliesSince(c, i) != 0) return false; return true; }
+
+        /// <summary>合流の相手 (人形) を、本人の正面 ahead m に同じ向きで置く。着地点は相手の後ろ 3.5 m = 本人から ahead - 3.5 m (RC-01 の 3〜5 m)。</summary>
+        static void TvPuppetAhead(float ahead)
+        {
+            int n = (Closest(TvSpot(KH_LeashManager.SpotPlaza)) + 8) % nodes.Length;
+            var fwd = nodes[(n + 1) % nodes.Length] - nodes[n]; fwd.y = 0; fwd.Normalize();
+            holder = nodes[n];
+            Networking.LocalPlayer.TeleportTo(nodes[n], Quaternion.LookRotation(fwd));
+            TvPlacePuppet(nodes[n] + fwd * ahead, fwd);
         }
 
         static void TvAnswer(int code)
@@ -602,6 +658,328 @@ namespace KominkaHillside.Editor
             }));
         }
 
+        // ============================================================
+        // 破壊監査 2026-09-28 (docs/_sessions/destructive-audit-2026-09-28/triage.md の RC-01・02・06・07)
+        // ============================================================
+
+        /// <summary>RC-02: 完了報告を犬ごとに 3 回落とし、その間に本人が着地点から 6 m より離れる。位置を置き直さずに Phase 2 へ収束する。</summary>
+        static void TvT6b(int mask)
+        {
+            var s = TvCase("T6b-done-lost-holder-walks-away", true, TvBits(mask)); var c = new TvCtx();
+            int n = TvBits(mask);
+            s.Add(TvCooldown());
+            s.Add(TvDo(() => { TvSet("debugDropTravelDone", 3 * n); TvNote("simulated: the first 3 completion reports of every dog are lost (debugDropTravelDone=" + (3 * n) + "); the holder walks away along the trail at 4 m/s right after arriving"); TvPress(c, TvFarEvt(c)); c.req = Get<int>(manager, "_tvReq"); }));
+            s.Add(TvUntil(() => TvFlat(Networking.LocalPlayer.GetPosition(), TvSpot(c.spot)) < 6f, 12, "player did not arrive"));
+            s.Add(TvDo(() => c.center = Get<Vector3[]>(manager, "travelCenter")[TvFirst(mask)]));
+            s.Add(TvWalk(2.5, 4f));
+            s.Add(TvUntil(() => TvCountLogs(c.logFrom, "dropped (debugDropTravelDone)") >= 3 * n, 5, "three completion reports per dog were not all lost"));
+            s.Add(TvDo(() => TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), c.center) > 6f, "the holder is more than 6 m from the landing while the reports are retried (" + TvFlat(Networking.LocalPlayer.GetPosition(), c.center).ToString("F1") + " m)")));
+            s.Add(TvUntil(() => TvReqPhase(mask, KH_LeashManager.TravelPhaseDone, c.req), 4, "completion was not retried after the holder walked away (RC-02)"));
+            s.Add(TvDo(() =>
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    bool mine = (mask & (1 << i)) != 0;
+                    if (mine) TvExpect(TvAppliesSince(c, i) == 1, "dog" + i + " applied the ticket once (no re-apply after walking away)");
+                    TvExpect(TvCountLogs(c.logFrom, "dog" + i + " travel apply") == (mine ? 1 : 0), "dog" + i + " apply logs");
+                }
+                TvSet("debugDropTravelDone", 0);
+                TvNote("3 reports per dog lost, holder " + TvFlat(Networking.LocalPlayer.GetPosition(), c.center).ToString("F1") + " m from the landing: retries continued, Phase 2 without a second apply");
+            }));
+        }
+
+        /// <summary>RC-01: 確認待ちの間に本人が歩いて着地点の 4.5 m まで近づく (Owner の書き込みを 3 秒遅らせる)。犬は本人の移動済みの後だけ適用する。</summary>
+        static void TvT12WalkIn(int mask)
+        {
+            var s = TvCase("T12-walk-in-while-confirming", true, TvBits(mask)); var c = new TvCtx();
+            s.Add(TvCooldown());
+            s.Add(TvDo(() =>
+            {
+                var spot = TvSpot(KH_LeashManager.SpotUpper); int pick = -1;
+                for (int i = 0; i < nodes.Length && pick < 0; i++) { float d = TvFlat(nodes[i], spot); if (d >= 17f && d <= 24f) pick = i; }
+                if (pick < 0) throw new InvalidOperationException("no trail node 17-24 m from the upper plaza");
+                var face = spot - nodes[pick]; face.y = 0;
+                holder = nodes[pick]; Networking.LocalPlayer.TeleportTo(nodes[pick], Quaternion.LookRotation(face));
+            }));
+            s.Add(TvWait(3));   // 犬が追いつくまで
+            s.Add(TvDo(() => { TvSet("debugDelayTravel", 3f); TvNote("simulated: the ticket is written 3 s late (debugDelayTravel=3); meanwhile the holder walks to 4.5 m from the landing"); TvPress(c, "_TravelUpper"); c.req = Get<int>(manager, "_tvReq"); c.center = Get<Vector3>(manager, "_tvCenter"); c.spot = KH_LeashManager.SpotUpper; }));
+            s.Add(now =>
+            {
+                var lp = Networking.LocalPlayer; var d = c.center - c.pos; d.y = 0; float len = d.magnitude;
+                double t = Math.Min(1.0, (now - tvStepAt) / 1.8);
+                var at = c.pos + d / Math.Max(len, 0.001f) * (float)(Math.Max(0f, len - 4.5f) * t);
+                lp.TeleportTo(at, lp.GetRotation());
+                return t >= 1.0;
+            });
+            s.Add(TvDo(() => TvExpect(TvNoApplies(c, mask), "no dog applied while the holder walked in (ticket not written yet)")));
+            // 歩いている間の Return は切符が書かれる前なので正当 (合否に含めない)。ここからは今回の要求 ID だけを見る
+            s.Add(TvUntil(() => TvCountLogs(c.logFrom, "delayed write now (debugDelayTravel)") >= 1, 6, "the delayed ticket was not written"));
+            s.Add(TvUntil(() => TvReqWritten(mask, c.req), 2, "the new reqId is not on every ticket"));
+            s.Add(TvUntil(() => TvCountLogs(c.logFrom, "travel req=" + c.req + " teleported to spot") >= 1, 8, "the requester did not teleport after the confirmation"));
+            s.Add(TvUntil(() => TvReqPhase(mask, KH_LeashManager.TravelPhaseDone, c.req), 8, "tickets of this request not done after the move"));
+            s.Add(TvDo(() =>
+            {
+                int moved = TvFirstLog(c.logFrom, "travel moved from player"), apply = TvFirstLog(c.logFrom, " travel apply req=");
+                TvExpect(moved >= 0 && apply > moved, "the first dog apply came after the requester's moved notice (moved log " + moved + ", apply log " + apply + ")");
+                for (int i = 0; i < 6; i++) if ((mask & (1 << i)) != 0) TvExpect(TvAppliesSince(c, i) == 1, "dog" + i + " applied once");
+                TvNote("walked to 4.5 m during the wait; dogs applied once, only after the moved notice");
+            }));
+        }
+
+        /// <summary>RC-01: 移動済みの通知が 2 秒遅れ、届いたときに 2 回処理される。遅れの間は適用 0 回、届いたら 1 回だけ。</summary>
+        static void TvT12MovedLate(int mask)
+        {
+            var s = TvCase("T12-moved-notice-late-and-twice", true, TvBits(mask)); var c = new TvCtx();
+            s.Add(TvCooldown());
+            s.Add(TvDo(() => { TvSet("debugDelayTravelMoved", 2f); TvNote("simulated: the Owner holds the moved notice 2 s and then handles it twice (debugDelayTravelMoved=2)"); TvPress(c, TvFarEvt(c)); c.req = Get<int>(manager, "_tvReq"); }));
+            s.Add(TvUntil(() => TvFlat(Networking.LocalPlayer.GetPosition(), TvSpot(c.spot)) < 6f, 12, "player did not arrive"));
+            s.Add(TvWait(1));
+            s.Add(TvDo(() =>
+            {
+                TvExpect(TvReqPhase(mask, KH_LeashManager.TravelPhaseReady, c.req), "tickets of this request stay Phase 1 while the moved notice is held");
+                TvExpect(TvNoApplies(c, mask) && tvDisc.All(d => d == 0), "no dog applied or moved before the moved notice");
+            }));
+            s.Add(TvUntil(() => TvReqPhase(mask, KH_LeashManager.TravelPhaseDone, c.req), 5, "tickets not done after the moved notice was released"));
+            s.Add(TvDo(() =>
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    bool mine = (mask & (1 << i)) != 0;
+                    if (mine) TvExpect(TvAppliesSince(c, i) == 1, "dog" + i + " applied once despite the duplicate notice");
+                    TvExpect(tvDisc[i] == (mine ? 1 : 0), "dog" + i + " position changes " + tvDisc[i]);
+                }
+                TvExpect(TvCountLogs(c.logFrom, "released twice (debugDelayTravelMoved)") == 1, "the held notice was released once");
+                TvExpect(TvCountLogs(c.logFrom, " unchanged") >= 1, "the duplicate moved notice changed nothing");
+                TvNote("moved notice 2 s late + duplicated: 0 applies while held, then exactly one per dog; duplicate ignored");
+            }));
+        }
+
+        /// <summary>RC-01 (レビュー 2026-09-28 高): 初回の移動済みを Owner が捨て、その直後に本人が着地点の 2〜6 m へ歩く。
+        /// 着いたのを一度確かめた後の再送は距離によらないので、次の再送で Phase 4 → 適用 → Done まで進む (直す前は再送が止まり Phase 1 のまま)。</summary>
+        static void TvT12MovedFirstLost(int mask)
+        {
+            var s = TvCase("T12-moved-first-lost-then-walk", true, TvBits(mask)); var c = new TvCtx();
+            s.Add(TvCooldown());
+            s.Add(TvDo(() => { TvSet("debugDropTravelMoved", 1); TvNote("simulated: the Owner loses the first moved notice (debugDropTravelMoved=1, e.g. Owner change); right after, the holder steps to 4 m from the landing"); TvPress(c, TvFarEvt(c)); c.req = Get<int>(manager, "_tvReq"); }));
+            s.Add(TvUntil(() => TvCountLogs(c.logFrom, "dropped (debugDropTravelMoved)") >= 1, 12, "the first moved notice was not sent"));
+            s.Add(TvDo(() =>
+            {
+                c.center = Get<Vector3>(manager, "_tvCenter");
+                int pick = -1;
+                for (int i = 0; i < nodes.Length && pick < 0; i++) { float d = TvFlat(nodes[i], c.center); if (d >= 3.5f && d <= 5f) pick = i; }
+                var lp = Networking.LocalPlayer;
+                var to = pick >= 0 ? nodes[pick] : c.center + lp.GetRotation() * Vector3.forward * 4f;
+                lp.TeleportTo(to, lp.GetRotation());
+            }));
+            s.Add(TvWait(.3));
+            s.Add(TvDo(() =>
+            {
+                float d = TvFlat(Networking.LocalPlayer.GetPosition(), c.center);
+                TvExpect(d > 2f && d < 6f, "the holder is 2-6 m from the landing after the lost notice (" + d.ToString("F1") + " m)");
+                TvExpect(TvNoApplies(c, mask), "no dog applied before a moved notice reached the Owner");
+            }));
+            s.Add(TvUntil(() => TvReqPhase(mask, KH_LeashManager.TravelPhaseDone, c.req), 6, "moved notice was not resent after the holder left the 2 m circle (review high)"));
+            s.Add(TvDo(() =>
+            {
+                TvExpect(TvCountLogs(c.logFrom, "dropped (debugDropTravelMoved)") == 1, "exactly one moved notice was lost");
+                TvExpect(TvCountLogs(c.logFrom, " phase=4 dogs=") >= 1, "a resent moved notice set Phase 4");
+                for (int i = 0; i < 6; i++)
+                {
+                    bool mine = (mask & (1 << i)) != 0;
+                    if (mine) TvExpect(TvAppliesSince(c, i) == 1, "dog" + i + " applied once");
+                    TvExpect(tvDisc[i] == (mine ? 1 : 0), "dog" + i + " position changes " + tvDisc[i]);
+                }
+                TvSet("debugDropTravelMoved", 0);
+                TvNote("first moved notice lost, holder " + TvFlat(Networking.LocalPlayer.GetPosition(), c.center).ToString("F1") + " m from the landing: resent, Phase 4, one apply per dog, Phase 2");
+            }));
+        }
+
+        /// <summary>RC-01 の合流側: 着地点が本人から 3〜5 m。(a) TeleportTo を省く → 犬の適用 0 回、切符は期限切れ。
+        /// (b) 暗転中に実ボタンで取り消す → 本人も犬も動かず、切符は取消。</summary>
+        static void TvT12Join(int mask)
+        {
+            var s = TvCase("T12-join-near-landing", true, TvBits(mask)); var a = new TvCtx(); var b = new TvCtx();
+            s.Add(TvDo(() => ClientSimMain.SpawnRemotePlayer("KH_TravelJoinNear")));
+            s.Add(TvUntil(() => (tvRemote = TvRemotePlayer()) != null, 5, "remote player spawn"));
+            s.Add(TvUntil(() => TvMyBox() != null, 5, "local KH_TravelMailbox not found"));
+            // (a) 3〜5 m + TeleportTo を省く
+            s.Add(TvCooldown());
+            s.Add(TvDo(() => { TvMyBox().SetProgramVariable("debugJoinLoopback", 1); TvPuppetAhead(7.5f); }));
+            s.Add(TvWait(2));
+            s.Add(TvDo(() => { TvSet("debugSkipTravelTeleport", 1); TvNote("simulated: target 7.5 m ahead (landing 4 m from the requester); the requester skips TeleportTo after confirmation"); TvJoinPress(a); }));
+            s.Add(TvUntil(() => Get<int>(TvMyBox(), "_outTo") >= 0, 2, "join request did not start"));
+            s.Add(TvWait(1.1));
+            s.Add(TvDo(() => { a.pos = Networking.LocalPlayer.GetPosition(); a.disc = (int[])tvDisc.Clone(); a.req1 = Get<int>(manager, "travelResultSerial"); TvAnswer(KH_TravelMailbox.CodeYes); }));
+            s.Add(TvUntil(() => Get<int>(manager, "travelResultSerial") != a.req1 && Get<int>(manager, "travelResultCode") == KH_LeashManager.TravelStayed && Get<int>(manager, "_tvState") == 0, 10, "join was not confirmed"));
+            s.Add(TvDo(() =>
+            {
+                float land = TvFlat(Get<Vector3>(manager, "_tvCenter"), a.pos);
+                TvExpect(land >= 2.4f && land <= 5.6f, "landing is 3-5 m from the requester (" + land.ToString("F1") + " m)");
+                TvNote("(a) landing " + land.ToString("F1") + " m from the requester, TeleportTo skipped");
+            }));
+            // 切符の寿命 (15 s) の内側で検査する。期限切れの後は通常の Return (追従テレポートを含む) が正当なので合否に含めない (82 初回の FAIL、2026-09-28)
+            s.Add(TvWait(12));
+            s.Add(TvDo(() =>
+            {
+                TvExpect(TvNoApplies(a, mask), "no dog applied the ticket while the requester had not moved (RC-01)");
+                TvExpect(TvReqPhase(mask, KH_LeashManager.TravelPhaseReady, Get<int[]>(manager, "travelReq")[TvFirst(mask)]), "tickets are still Phase 1 (inside the 15 s life) when checked");
+                TvExpect(TvDiscSince(a.disc) && TvFlat(Networking.LocalPlayer.GetPosition(), a.pos) < 1f, "nothing moved while the ticket was alive");
+            }));
+            s.Add(TvUntil(() => TvAllPhase(mask, KH_LeashManager.TravelPhaseNone), 14, "ticket did not expire (Owner expires at ~20 s after the write; 12 s wait + 14 s)"));
+            // (b) 3〜5 m + 暗転中の取消 (暗転を 2 秒に伸ばして、その間に実ボタン)
+            s.Add(TvCooldown());
+            s.Add(TvDo(() => { TvPuppetAhead(7.5f); }));
+            s.Add(TvWait(2));
+            s.Add(TvDo(() => { tvFade.SetProgramVariable("fadeOutSeconds", 2f); TvNote("(b) fade-out slowed to 2 s; the requester presses [cancel] while it darkens"); TvJoinPress(b); }));
+            s.Add(TvUntil(() => Get<int>(TvMyBox(), "_outTo") >= 0, 2, "second join request did not start"));
+            s.Add(TvWait(1.1));
+            s.Add(TvDo(() => { b.pos = Networking.LocalPlayer.GetPosition(); b.disc = (int[])tvDisc.Clone(); TvAnswer(KH_TravelMailbox.CodeYes); }));
+            s.Add(TvUntil(() => Get<int>(manager, "_tvState") == 3, 3, "fade did not start"));
+            s.Add(TvDo(() => pouch.SendCustomEvent("_TravelGo")));
+            s.Add(TvUntil(() => Get<int>(manager, "_tvState") == 0 && Get<int>(TvMyBox(), "joinResultCode") == KH_TravelMailbox.JoinCanceled, 2, "cancel during the fade not reported"));
+            s.Add(TvUntil(() => Get<float>(tvFade, "_alpha") <= 0.001f, 3, "screen left dark after the cancel"));
+            s.Add(TvWait(1));
+            s.Add(TvDo(() =>
+            {
+                TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), b.pos) < 1f && TvDiscSince(b.disc), "neither the requester nor a dog moved");
+                TvExpect(TvNoApplies(b, mask), "no dog applied the ticket (RC-01)");
+                TvExpect(TvAllPhase(mask, KH_LeashManager.TravelPhaseCanceled), "tickets are Phase 3 (cancelled)");
+                tvFade.SetProgramVariable("fadeOutSeconds", 0.2f); TvSet("debugSkipTravelTeleport", 0);
+                TvNote("(b) cancelled during the fade: no move, no apply, Phase 3");
+            }));
+        }
+
+        /// <summary>RC-06: 返事待ちから 0.2 秒で承認 (速さの測定待ち) → 0.3 秒で実ボタンの [取り消す]。表示も取消で、本人も犬も動かない。</summary>
+        static void TvT9JoinFastCancel()
+        {
+            var s = TvCase("T9-join-fast-accept-cancel", true, 3); var c = new TvCtx();
+            s.Add(TvCooldown());
+            s.Add(TvDo(() => { TvMyBox().SetProgramVariable("debugJoinLoopback", 1); TvPuppetAhead(20f); }));
+            s.Add(TvWait(1.5));
+            s.Add(TvDo(() => TvJoinPress(c)));
+            s.Add(TvUntil(() => Get<int>(TvMyBox(), "_outTo") >= 0, 2, "join request did not start"));
+            s.Add(TvWait(.2));
+            s.Add(TvDo(() => { c.pos = Networking.LocalPlayer.GetPosition(); TvAnswer(KH_TravelMailbox.CodeYes); }));
+            s.Add(TvWait(.1));
+            s.Add(TvDo(() =>
+            {
+                TvExpect(Get<int>(TvMyBox(), "_acceptFor") >= 0, "accepted and still measuring the target's speed");
+                pouch.SendCustomEvent("_TravelModePeople");   // 表示を描き直す
+                string label = TvGoLabel();
+                TvExpect(label.Length > 0 && label != c.text, "the button shows [cancel] while measuring (shown '" + label + "', ask was '" + c.text + "')");
+                pouch.SendCustomEvent("_TravelGo");
+            }));
+            s.Add(TvUntil(() => Get<int>(TvMyBox(), "joinResultCode") == KH_TravelMailbox.JoinCanceled && Get<int>(TvMyBox(), "_acceptFor") < 0, 2, "cancel while measuring not reported (RC-06)"));
+            s.Add(TvWait(2));
+            s.Add(TvDo(() =>
+            {
+                TvExpect(Get<int>(manager, "_tvState") == 0 && TvFlat(Networking.LocalPlayer.GetPosition(), c.pos) < 1f && tvDisc.All(d => d == 0), "neither the requester nor a dog moved");
+                TvExpect(Get<int[]>(manager, "travelReq").SequenceEqual(c.old), "no ticket was written");
+                TvNote("accept at 0.2 s, real [cancel] at 0.3 s while measuring: cancelled, no ticket, no move");
+            }));
+        }
+
+        /// <summary>RC-07: (1) 在室中の A を「この人からは受けない」にしたまま、退室済みの 16 人を同じく拒否 → A の拒否が残り、枠は再利用される。
+        /// (2) A を含む 9 人に断られる → 最初の A への 30 秒が残る (実ボタンでの再申請は「もう少し待って」)。</summary>
+        static void TvT9JoinHistory()
+        {
+            var s = TvCase("T9-join-history-kept", true, 0); var c = new TvCtx();
+            s.Add(TvDo(() =>
+            {
+                var box = TvMyBox(); int a = tvRemote.playerId;
+                box.SetProgramVariable("_inFrom", a); box.SendCustomEvent("_BlockIncoming");
+                for (int k = 1; k <= 16; k++) { box.SetProgramVariable("_inFrom", 900000 + k); box.SendCustomEvent("_BlockIncoming"); }
+                var blocked = Get<int[]>(box, "_blocked");
+                TvExpect(blocked.Contains(a), "A (still in the instance) is still blocked after 16 more blocks");
+                TvExpect(blocked.Length == 16, "departed players' slots were reused (length " + blocked.Length + ")");
+                TvNote("simulated: 16 blocked ids are players that already left (not in the instance); A = puppet " + a + " kept, array length " + blocked.Length);
+            }));
+            s.Add(TvDo(() =>
+            {
+                var box = TvMyBox(); int a = tvRemote.playerId;
+                box.SetProgramVariable("debugJoinLoopback", 1); box.SetProgramVariable("debugAnswerCode", KH_TravelMailbox.CodeNo);
+                box.SetProgramVariable("_outTo", a); box.SendCustomEvent("_DebugAnswerNow");
+                for (int k = 1; k <= 8; k++) { box.SetProgramVariable("_outTo", 910000 + k); box.SendCustomEvent("_DebugAnswerNow"); }
+                TvExpect(Get<int[]>(box, "_deniedIds").Contains(a), "the first refusal (A) is still remembered after 8 more");
+                TvJoinPress(c);   // A へもう一度 (実ボタン)
+                TvExpect(Get<int>(box, "_outTo") < 0, "no new request to A within 30 s");
+                string key = Get<string[]>(pouch, "_hsNoteKeys")[0];
+                TvExpect(key == "course.travel.join.again", "the menu says 'ask again later' (shown " + key + ")");
+                TvNote("9 refusals (A first, 8 departed ids): A's 30 s gap kept; the real button shows " + key);
+            }));
+            // (3) レビュー 2026-09-28 中: 在室中の有効 ID で 16 枠を満たしてからの 17 件目 (伸長して既存を保持)、30 秒経過した断りの枠の再利用、
+            // 退室 (RemovePlayer) の後に両方の履歴から枠が空くこと。循環配列 16 枠のままでは (a)(c) が落ちる
+            s.Add(TvDo(() => { for (int k = 1; k <= 16; k++) ClientSimMain.SpawnRemotePlayer("KH_TravelHist" + k); }));
+            s.Add(TvUntil(() => VRCPlayerApi.GetPlayerCount() >= 18, 10, "16 extra remote players did not spawn"));
+            s.Add(TvWait(1));   // 同じフレームで湧かせた 16 人の初期化を待つ (82b 初回の NullReference の疑い 1)
+            s.Add(TvDo(() =>
+            {
+                TvExpect(tvRemote != null && Utilities.IsValid(tvRemote), "the join puppet A is still in the instance");
+                TvExpect(TvMyBox() != null, "the local KH_TravelMailbox is found with 18 players");
+                int me = Networking.LocalPlayer.playerId, a = tvRemote.playerId;
+                var all = new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()]; VRCPlayerApi.GetPlayers(all);
+                tvHist = all.Where(p => p != null && Utilities.IsValid(p) && p.playerId != me && p.playerId != a).OrderBy(p => p.playerId).Take(16).ToList();
+                TvExpect(tvHist.Count == 16, "16 extra players in the instance (" + tvHist.Count + ")");
+                tvHistValid = new List<int> { a }; for (int k = 0; k < 15; k++) tvHistValid.Add(tvHist[k].playerId);
+                tvHistX = tvHist[15].playerId;
+                TvNote("history players: A=" + a + ", extras " + string.Join(",", tvHist.Select(p => p.playerId)));
+            }));
+            s.Add(TvDo(() =>
+            {
+                var box = TvMyBox(); var valid = tvHistValid; int x = tvHistX;
+                // (a) 拒否: 在室中 16 人で満杯 → 17 人目で伸長
+                box.SetProgramVariable("_blocked", Enumerable.Repeat(-1, 16).ToArray());
+                foreach (int id in valid) { box.SetProgramVariable("_inFrom", id); box.SendCustomEvent("_BlockIncoming"); }
+                TvExpect(Get<int[]>(box, "_blocked").Length == 16, "16 in-room blocks fit in 16 slots");
+                box.SetProgramVariable("_inFrom", x); box.SendCustomEvent("_BlockIncoming");
+                var bl = Get<int[]>(box, "_blocked");
+                TvExpect(bl.Length == 32, "the 17th in-room block grew the array (length " + bl.Length + ")");
+                TvExpect(valid.All(id => bl.Contains(id)) && bl.Contains(x), "all 17 in-room blocks are kept");
+            }));
+            s.Add(TvDo(() =>
+            {
+                var box = TvMyBox(); var valid = tvHistValid; int x = tvHistX;
+                // (b) 断り: 在室中 16 人で満杯 → 30 秒経過にしてから 17 人目 → 期限切れの枠を再利用 (伸長しない)
+                box.SetProgramVariable("debugJoinLoopback", 1); box.SetProgramVariable("debugAnswerCode", KH_TravelMailbox.CodeNo);
+                box.SetProgramVariable("_deniedIds", Enumerable.Repeat(-1, 16).ToArray()); box.SetProgramVariable("_deniedAts", new float[16]);
+                foreach (int id in valid) { box.SetProgramVariable("_outTo", id); box.SendCustomEvent("_DebugAnswerNow"); }
+                TvExpect(Get<int[]>(box, "_deniedIds").Length == 16 && valid.All(id => Get<int[]>(box, "_deniedIds").Contains(id)), "16 in-room refusals fit in 16 slots");
+                var ats = (float[])Get<float[]>(box, "_deniedAts").Clone(); for (int i = 0; i < ats.Length; i++) ats[i] -= 31f;
+                box.SetProgramVariable("_deniedAts", ats);
+                box.SetProgramVariable("_outTo", x); box.SendCustomEvent("_DebugAnswerNow");
+                var dn = Get<int[]>(box, "_deniedIds");
+                TvExpect(dn.Length == 16 && dn.Contains(x), "after 30 s the 17th refusal reused an expired slot (length " + dn.Length + ")");
+            }));
+            s.Add(TvDo(() =>
+            {
+                var box = TvMyBox(); var valid = tvHistValid; int x = tvHistX;
+                // (c) 断り: 在室中 16 人の新しい断りで満杯 → 17 人目で伸長して既存を保持
+                box.SetProgramVariable("_deniedIds", Enumerable.Repeat(-1, 16).ToArray()); box.SetProgramVariable("_deniedAts", new float[16]);
+                foreach (int id in valid) { box.SetProgramVariable("_outTo", id); box.SendCustomEvent("_DebugAnswerNow"); }
+                box.SetProgramVariable("_outTo", x); box.SendCustomEvent("_DebugAnswerNow");
+                var dn = Get<int[]>(box, "_deniedIds");
+                TvExpect(dn.Length == 32 && valid.All(id => dn.Contains(id)) && dn.Contains(x), "the 17th fresh refusal grew the array and kept all (length " + dn.Length + ")");
+                TvNote("in-room history: 17 blocks -> 32 slots, all kept; 30 s-old refusals reused (16 slots); 17 fresh refusals -> 32 slots, all kept");
+                c.req = tvHist[0].playerId;
+                ClientSimMain.RemovePlayer(tvHist[0]);
+            }));
+            s.Add(TvWait(1));
+            s.Add(TvDo(() =>
+            {
+                var box = TvMyBox(); int gone = c.req;
+                TvExpect(!Get<int[]>(box, "_blocked").Contains(gone) && !Get<int[]>(box, "_deniedIds").Contains(gone), "the departed player's slots were freed in both histories (OnPlayerLeft)");
+                TvExpect(Get<int[]>(box, "_blocked").Contains(tvRemote.playerId), "others' blocks are unchanged after the leave");
+                TvNote("RemovePlayer(" + gone + "): freed in _blocked and _deniedIds");
+                for (int k = 1; k < tvHist.Count; k++) ClientSimMain.RemovePlayer(tvHist[k]);
+                tvHist = null;
+            }));
+            s.Add(TvDo(() =>
+            {
+                TvMyBox().SetProgramVariable("debugJoinLoopback", 0); TvMyBox().SetProgramVariable("debugAnswerCode", 0);
+                ClientSimMain.RemovePlayer(tvRemote); tvRemote = null;
+            }));
+        }
+
         static void TvT11(int mask)
         {
             // 設計書 §D.5: 連打は門番で弾き、理由が分かる表示を出す。ClientSim は Owner = 本人なので切符が同じフレームで書かれ、
@@ -659,12 +1037,12 @@ namespace KominkaHillside.Editor
                 WriteTravel(); Save();
                 tvStep = 0;
                 if (caseIndex + 1 == report.cases.Count)
-                    End(report.full ? "TRAVEL_OBSERVED" : "TRAVEL_QUICK_OBSERVED", "Local ClientSim travel cases passed (same-Owner contract; handover/late/forged/leave are simulated). Not network, device or PCVR acceptance.");
+                    End(report.travelRc ? "TRAVEL_RC_OBSERVED" : report.full ? "TRAVEL_OBSERVED" : "TRAVEL_QUICK_OBSERVED", "Local ClientSim travel cases passed (same-Owner contract; handover/late/forged/leave are simulated). Not network, device or PCVR acceptance.");
                 else Next();
             }
             catch (Exception e)
             {
-                if (tvReport != null && caseIndex >= 0 && caseIndex < tvReport.cases.Count) { tvReport.cases[caseIndex].status = "FAIL"; tvReport.cases[caseIndex].notes.Add("FAIL at step " + tvStep + ": " + e.Message); }
+                if (tvReport != null && caseIndex >= 0 && caseIndex < tvReport.cases.Count) { tvReport.cases[caseIndex].status = "FAIL"; tvReport.cases[caseIndex].notes.Add("FAIL at step " + tvStep + ": " + e.Message); tvReport.cases[caseIndex].notes.Add("at: " + TvWhere(e)); }
                 try { WriteTravel(); } catch { }
                 throw;
             }
@@ -767,6 +1145,12 @@ namespace KominkaHillside.Editor
 
         // ---- 手順の部品 ----
         static Func<double, bool> TvDo(Action a) { return now => { a(); return true; }; }
+        /// <summary>例外の発生箇所 (型名とスタックの先頭 4 行)。ハーネスは例外を捕まえて記録するので、場所をここで残す。</summary>
+        static string TvWhere(Exception e)
+        {
+            var lines = (e.ToString() ?? "").Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).Take(5);
+            return string.Join(" | ", lines);
+        }
         static Func<double, bool> TvWait(double seconds) { return now => now - tvStepAt >= seconds; }
         static Func<double, bool> TvUntil(Func<bool> condition, double limit, string what)
         { return now => { if (condition()) return true; if (now - tvStepAt > limit) throw new TimeoutException(what + " (" + limit + " s)"); return false; }; }
@@ -774,7 +1158,7 @@ namespace KominkaHillside.Editor
         {
             return TvUntil(() => Get<float>(manager, "_tvCooldownUntil") <= Time.time && Get<int>(manager, "_tvState") == 0, 15, "requester cooldown");
         }
-        static Func<double, bool> TvWalk(double seconds)
+        static Func<double, bool> TvWalk(double seconds, float speed = 1.2f)
         {
             return now =>
             {
@@ -783,7 +1167,7 @@ namespace KominkaHillside.Editor
                 {
                     tvWalkPos = lp.GetPosition(); tvWalkNode = Closest(tvWalkPos); tvWalkLast = now; return false;
                 }
-                float step = Mathf.Min((float)(now - tvWalkLast), .1f) * 1.2f; tvWalkLast = now;
+                float step = Mathf.Min((float)(now - tvWalkLast), .1f) * speed; tvWalkLast = now;
                 int next = (tvWalkNode + 1) % nodes.Length;
                 var before = tvWalkPos; tvWalkPos = Vector3.MoveTowards(tvWalkPos, nodes[next], step);
                 if (Vector3.Distance(tvWalkPos, nodes[next]) < .001f) tvWalkNode = next;
@@ -818,6 +1202,23 @@ namespace KominkaHillside.Editor
             for (int i = 0; i < 6; i++) if ((mask & (1 << i)) != 0 && TvFlat(roots[i].position, p) > limit) return false;
             return true;
         }
+        /// <summary>今回の要求 ID の切符だけを数える (前のケースの Phase 2 を読んで先へ進まないように)。</summary>
+        static bool TvReqPhase(int mask, int phase, int req)
+        {
+            var r = Get<int[]>(manager, "travelReq"); var ph = Get<int[]>(manager, "travelPhase");
+            for (int i = 0; i < 6; i++) if ((mask & (1 << i)) != 0 && (r[i] != req || ph[i] != phase)) return false;
+            return req != 0;
+        }
+        static bool TvReqWritten(int mask, int req)
+        {
+            var r = Get<int[]>(manager, "travelReq");
+            for (int i = 0; i < 6; i++) if ((mask & (1 << i)) != 0 && r[i] != req) return false;
+            return req != 0;
+        }
+
+        /// <summary>記録した時点から、どの犬も位置が変わっていない (ケースの途中から数える)。</summary>
+        static bool TvDiscSince(int[] at) { for (int i = 0; i < 6; i++) if (tvDisc[i] != at[i]) return false; return true; }
+
         static bool TvAllPhase(int mask, int phase)
         {
             var ph = Get<int[]>(manager, "travelPhase");

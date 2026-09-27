@@ -28,6 +28,8 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const SCAN_DIRS = ['docs'];
 const EXTRA_FILES = ['CLAUDE.md'];
+/** 走査しないディレクトリ (gitignore されたセッション出力。監査ログ等は他所のパスを含むので検査対象外) */
+const SKIP_DIRS = ['docs/_sessions'];
 const WRITE_ORPHANS = process.argv.includes('--write-orphans-baseline');
 const SHOW_ORPHANS = process.argv.includes('--orphans') || WRITE_ORPHANS;
 const ORPHAN_BASELINE = path.join(ROOT, 'config/doc-orphans.baseline.txt');
@@ -73,7 +75,7 @@ function walk(dir, out = []) {
   if (!fs.existsSync(dir)) return out;
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
-    if (e.isDirectory()) walk(p, out);
+    if (e.isDirectory()) { if (!SKIP_DIRS.includes(norm(path.relative(ROOT, p)))) walk(p, out); }
     else if (e.name.endsWith('.md')) out.push(norm(path.relative(ROOT, p)));
   }
   return out;

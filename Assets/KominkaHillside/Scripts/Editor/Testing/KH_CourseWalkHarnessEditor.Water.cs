@@ -64,6 +64,26 @@ namespace KominkaHillside.Editor
     //   S5b-sim             dog 2 wading: menu leash and "call the ball" in the same tick -> both refused, the dog comes out; after
     //                       landing the ball call is accepted (ball within 3 m of the player).
     //   Not simulable in one client: S1 (a non-Owner's throw) and two people asking at once (first asker) -> PCVR / 2 people.
+    //   Destructive audit 2026-09-28 (docs/_sessions/destructive-audit-2026-09-28/triage.md), one-client stand-ins:
+    //   every carried case  the first frame of the hold (4 or 7) has the ball frozen (RC-17) and the first frame after the Drop's
+    //                       release has gravity (RC-09, the ball was floated with gravity off).
+    //   R09-regrab          Pome, no throw: a floating ball gets gravity on (what a pickup shorter than one 0.25 s look leaves) while the
+    //                       Owner's float flag stays set -> gravity off again <= 0.6 s, still floating 3 s later.
+    //   R09-owner-ABA       the same, let go 0.12 m above the water (A floated it, B picked it up and let go, A is the Owner again).
+    //   R17-delay           Pome, deep ball, the ball's ownership reaches the dog 1.2 s late: the dog waits in 6, then 7 with the ball
+    //                       frozen from its first frame (claim wait / ok logged, waited >= 1.1 s), and the W3 rules.
+    //   R17-refuse          the ownership never comes: never 7, give-up reason=claim-timeout, the ball keeps floating, not frozen.
+    //   R17-pickup          a person takes the ball while the dog waits (_debugBallHeld): give-up reason=held-while-claiming < 0.5 s,
+    //                       never 7, the ball untouched (floats again once let go).
+    //   R17-lost            the ownership is lost in 7: give-up reason=ball-lost <= 3 s, the ball let go and floating (gravity off).
+    //   R17-land            Corgi, a ball on the bank, ownership 1.2 s late: Pickup waits, Return frozen from its first frame, the Drop's
+    //                       release has gravity, the ball ends within 2.5 m of the player.
+    // Water mode additions (78): W4-throw now runs on to the Drop's release (gravity on at once). W4-throw-regrab: Lab wading, its ball
+    //   floating at 0.6 x its limit gets gravity on and is thrown at once -> gravity off again <= 0.6 s, direct water fetch 6 -> 7 -> ...
+    //   -> Drop with gravity at the release. W4-leash-stale: the synced pose held at 0 while the dog is wet, menu attach -> refused (the
+    //   depth under the root), exit <= 1.5 s, landed <= 10 s, attach after landing accepted. W4-leash-late: an accepted connection
+    //   written into the arbiter while the dog is wet -> the dog Owner vetoes it (log), released <= 2.5 s, exit <= 1.5 s, landed
+    //   <= 10 s, no leash move in the water (band / jump / depth rules), attach after landing accepted.
     // Water mode W0 (decision 2026-09-27, 2nd): no release step; a free dog placed within 25 m of the spot must start its play
     // within 5 s and be wet within 6 s. The other water-mode cases start the same way.
     public static partial class KH_CourseWalkHarnessEditor
@@ -97,6 +117,15 @@ namespace KominkaHillside.Editor
             public float pickupDepth = -1f;   // depth under the dog when the Fetch went 6 -> 7 (it took the ball standing in water)
             public bool ballAtDownstreamEnd, gravityBack, farBankDrop;
             public float ballEndDistance = -1f;
+            // 破壊監査 2026-09-28: RC-17 (ball ownership before the hold), RC-09 (gravity reconciled), RC-14 (leash vs. water)
+            public int stage;
+            public bool claimWaitLogged, claimOkLogged, claimTimeoutLogged, claimHeldLogged, ballLostLogged, vetoLogged, vetoReleasedLogged;
+            public bool holdSeen, holdKinematic, releaseSeen, releaseGravity, seen3, seen4, seen5, injected, floatingBefore;
+            public float claimWaitGame = -1f, holdGame = -1f, injectedGame = -1f, idleAfterInject = -1f, gravityOffAfter = -1f;
+            public double pickupAt = -1, releasedAt = -1;
+            // W0: the play's start in game time from the placement (run 20260927-212540: 1.0035 s in editor time, a long placement
+            // frame counted in; the dog's own wait runs on Time.time)
+            public float placedGame = -1f, playGame = -1f;
             public List<WhDogStat> stats = new List<WhDogStat>();
         }
         [Serializable] public class WhDogStat
@@ -193,12 +222,16 @@ namespace KominkaHillside.Editor
             whPolyX = Get<float[]>(whSpot, "polyX"); whPolyZ = Get<float[]>(whSpot, "polyZ");
             whExitsBackup = (Vector3[])Get<Vector3[]>(whSpot, "exits").Clone();
             wh = new WhReport { runId = report.runId };
-            wh.limitations += " Jump rule (all modes, decision 2026-09-27): a step between two observations counts when it is longer than 0.2 m AND faster than 3.5 m/s over the game time between them; a stage-3 recovery teleport between them splits the step (before / after judged alone). Detection limit: Unity caps one frame's deltaTime at 0.333 s, so one long editor frame can hide a jump of up to 1.17 m; in a normal frame (16 ms) anything over 0.2 m counts (J-selftest injects 0.8 m). Fetch mode: S1 (a non-Owner's throw) and two people asking at once need two clients; S4 / S4b wipe the local float history in the heap instead of a real Owner change.";
+            wh.limitations += " Jump rule (all modes, decision 2026-09-27): a step between two observations counts when it is longer than 0.2 m AND faster than 3.5 m/s over the game time between them; a stage-3 recovery teleport between them splits the step (before / after judged alone). Detection limit: Unity caps one frame's deltaTime at 0.333 s, so one long editor frame can hide a jump of up to 1.17 m; in a normal frame (16 ms) anything over 0.2 m counts (J-selftest injects 0.8 m). Fetch mode: S1 (a non-Owner's throw) and two people asking at once need two clients; S4 / S4b wipe the local float history in the heap instead of a real Owner change."
+                + " Audit 2026-09-28 stand-ins (one client, never a network or ownership test): R17-* delay / refuse the ball ownership as the dog sees it (_debugClaimDelay / _debugClaimRefuse on the Fetch) and stand in for a person's pickup with _debugBallHeld (the Fetch's own held checks only); R09-regrab / R09-owner-ABA write what a pickup shorter than one 0.25 s look leaves (gravity on, the local float flag still set) instead of a real pickup or Owner change; W4-leash-stale holds the synced pose at 0 (_debugPoseHold) while the dog is wet; W4-leash-late writes an accepted connection into the arbiter's synced heap (standing in for any entry that got through, the hand clip included: a clip needs a held pickup, which ClientSim cannot make); W4-throw-regrab turns the floating ball's gravity on just before the throw. Two clients are required for S1 / S3 / S5a and for a real delayed / refused ownership transfer.";
             if (report.waterFetch)
             {
                 foreach (var pair in new[] { new[] { "W3-Pome", "1" }, new[] { "W3-Shiba", "4" }, new[] { "W3-Corgi", "0" }, new[] { "W3-Dachs", "3" },
                     new[] { "W3-Lab-shallow", "2" }, new[] { "W3-Lab-deep", "2" }, new[] { "W3-Samoyed-shallow", "5" }, new[] { "W3-Samoyed-deep", "5" },
-                    new[] { "W3-Pome-farbank", "1" }, new[] { "S4-sim", "-1" }, new[] { "S4b-sim", "1" }, new[] { "S5b-sim", "2" }, new[] { "J-selftest", "0" } })
+                    new[] { "W3-Pome-farbank", "1" }, new[] { "S4-sim", "-1" }, new[] { "S4b-sim", "1" }, new[] { "S5b-sim", "2" },
+                    // 破壊監査 2026-09-28 RC-09 / RC-17 (see the header of this file)
+                    new[] { "R09-regrab", "1" }, new[] { "R09-owner-ABA", "1" }, new[] { "R17-delay", "1" }, new[] { "R17-refuse", "1" },
+                    new[] { "R17-pickup", "1" }, new[] { "R17-lost", "1" }, new[] { "R17-land", "0" }, new[] { "J-selftest", "0" } })
                 { report.cases.Add(new Case { name = pair[0], count = 1 }); wh.cases.Add(new WhCase { name = pair[0], dog = int.Parse(pair[1]) }); }
             }
             else if (report.waterSwim)
@@ -208,7 +241,8 @@ namespace KominkaHillside.Editor
                 report.cases.Add(new Case { name = "W2", count = 6 }); wh.cases.Add(new WhCase { name = "W2", dog = -1 });
             }
             else
-                foreach (var name in new[] { "W0", "W0-24m", "W4-leash", "W4-gather", "W4-toy", "W4-throw", "W6-owner", "W6-exit-blocked", "W6-all-blocked", "W4-call" })
+                foreach (var name in new[] { "W0", "W0-24m", "W4-leash", "W4-gather", "W4-toy", "W4-throw", "W4-throw-regrab", "W4-leash-stale", "W4-leash-late",
+                    "W6-owner", "W6-exit-blocked", "W6-all-blocked", "W4-call" })
                 { report.cases.Add(new Case { name = name, count = 1 }); wh.cases.Add(new WhCase { name = name }); }
             whPhase = 0; whStep = 0; whNext = 0;
             if (!whLogHooked) { Application.logMessageReceived += WhLog; whLogHooked = true; }
@@ -218,7 +252,23 @@ namespace KominkaHillside.Editor
         {
             if (wh == null || caseIndex < 0 || caseIndex >= wh.cases.Count || !EditorApplication.isPlaying) return;
             if (condition.StartsWith("[KD_DogFetchController] give-up dog=" + WhDog + " ") || condition.StartsWith("[KD_DogFetchController] water exit dog=" + WhDog + " "))
-            { if (condition.Contains("reason=deep-ball")) WC.deepBallLogged = true; if (WC.log.Count < 40) WC.log.Add(condition); return; }
+            {
+                if (condition.Contains("reason=deep-ball")) WC.deepBallLogged = true;
+                if (condition.Contains("reason=claim-timeout")) WC.claimTimeoutLogged = true;
+                if (condition.Contains("reason=held-while-claiming")) WC.claimHeldLogged = true;
+                if (condition.Contains("reason=ball-lost")) WC.ballLostLogged = true;
+                if (WC.log.Count < 40) WC.log.Add(condition); return;
+            }
+            // RC-17: the ball ownership claim / hold watch (KD_DogFetchController.Owner.cs)
+            if (condition.StartsWith("[KD_DogFetchController] ball ") && condition.Contains("dog=" + WhDog + " "))
+            {
+                if (condition.Contains("ball claim wait") && !WC.claimWaitLogged) { WC.claimWaitLogged = true; WC.claimWaitGame = Time.time; }
+                if (condition.Contains("ball claim ok")) WC.claimOkLogged = true;
+                if (WC.log.Count < 40) WC.log.Add(condition); return;
+            }
+            // RC-14: the dog Owner's leash veto (KD_DogWanderController.HillsideWater.cs WaterLeashTick)
+            if (condition.StartsWith("[KD_DogWanderController] water leash veto dog=" + WhDog + " ")) WC.vetoLogged = true;
+            if (condition == "[KD_DogWanderController] water leash released dog=" + WhDog) WC.vetoReleasedLogged = true;
             if (condition.StartsWith("[KD_DogWanderController] water step refused dog=" + WhDog + " ")) { if (WC.log.Count < 40) WC.log.Add(condition); return; }
             if (!condition.StartsWith("[KD_DogWanderController] water ")) return;
             if (WC.name != "W2" && !condition.Contains("dog=" + WhDog + " ") && !condition.EndsWith("dog=" + WhDog)) return;
@@ -322,7 +372,7 @@ namespace KominkaHillside.Editor
                         c.pathToEntry = WhPathLength(d.position, entry);
                         wander[WhDog].SetProgramVariable("_waterFirstDue", 0f);
                         wander[WhDog].SetProgramVariable("_waterFirstUsed", false);
-                        c.released = now - cc.startedAt; whWetSince = -1; whNextTrace = now; whLastPose = 0;
+                        c.released = now - cc.startedAt; whWetSince = -1; whNextTrace = now; whLastPose = 0; c.placedGame = Time.time;
                         whPhase = 2; whPhaseAt = now; whLastState = WhState(); return;
                     }
                     pouch.SendCustomEvent("_WalkLeft" + WhDog); whPhase = 1; whNext = now + 1; return;
@@ -335,7 +385,7 @@ namespace KominkaHillside.Editor
                     if (c.stats.Count > 0) { c.stats[0].prev = whPrev; c.stats[0].prevFrame = -1; }   // continuity starts at the release (the leashed walk before is not measured)
                     whPhase = 2; whPhaseAt = now; whLastState = WhState(); return;
                 case 2: // wait for the play (W0 limits) and wading
-                    if (c.playStarted < 0 && WhState() >= 1) c.playStarted = t;
+                    if (c.playStarted < 0 && WhState() >= 1) { c.playStarted = t; if (c.placedGame >= 0f) c.playGame = Time.time - c.placedGame; }
                     if (c.wading < 0 && WhState() == 2)
                     {
                         c.wading = t; var at = roots[WhDog].position;
@@ -358,7 +408,7 @@ namespace KominkaHillside.Editor
                         // dog 2: 0.8 s, judged <= 1 s); wet within start + NavMesh path to the entry / 2.4 m/s (run) + 2 s.
                         if (c.playStarted < 0 && t > 5) { WhFinish(c, now, false, "no WaterPlay within 5 s of the placement (no release)"); return; }
                         if (c.playStarted >= 0 && c.wetLimit < 0) c.wetLimit = (float)c.playStarted + c.pathToEntry / 2.4f + 2f;
-                        if (ready && t - c.wet > 3) { WhFinish(c, now, WhClean(c) && c.maxDepth > .02f && c.playStarted <= 1.0 && c.wet <= c.wetLimit, "play " + c.playStarted.ToString("F2") + " s, wading " + c.wading.ToString("F2") + " s, wet " + c.wet.ToString("F2") + " s (limit " + c.wetLimit.ToString("F2") + ", path " + c.pathToEntry.ToString("F2") + " m)" + WhSummary(c)); return; }
+                        if (ready && t - c.wet > 3) { WhFinish(c, now, WhClean(c) && c.maxDepth > .02f && c.playGame >= 0f && c.playGame <= 1.0f && c.wet <= c.wetLimit, "play " + c.playStarted.ToString("F2") + " s (game " + c.playGame.ToString("F3") + " s, limit 1.0), wading " + c.wading.ToString("F2") + " s, wet " + c.wet.ToString("F2") + " s (limit " + c.wetLimit.ToString("F2") + ", path " + c.pathToEntry.ToString("F2") + " m)" + WhSummary(c)); return; }
                         if (t > 25) { WhFinish(c, now, false, "not wet (waterPose 1) within 25 s" + WhSummary(c)); return; }   // the 6 s limit is judged above
                         return;
                     }
@@ -404,6 +454,34 @@ namespace KominkaHillside.Editor
                     ball.position = h.position + Vector3.up * .06f; if (sync != null) sync.FlagDiscontinuity();
                     whFetch.SendCustomEvent("_OnBallThrown");
                     break;
+                }
+                case "W4-throw-regrab":
+                {
+                    // RC-09 (audit 2026-09-28): the dog's ball floating in the spot at 0.6 x the Lab's wading limit (as W3-Lab-shallow, no
+                    // drift); after 1.5 s (floating, gravity off) its gravity is turned on the way a pickup shorter than one 0.25 s look
+                    // leaves it, and it is thrown at once (WhEvaluate). The floating ball must get its gravity off again at the next look.
+                    float limit = Get<float>(whSpot, "wadeLimitRatio") * c.mouth; string why;
+                    var cell = WhCellAtDepth(.6f * limit, limit, out why);
+                    if (c.log.Count < 40) c.log.Add("regrab cell " + why + " limit=" + limit.ToString("F3"));
+                    whSpot.SetProgramVariable("floatDrift", 0f);
+                    var ball = Get<Transform>(whFetch, "_ballT"); var bs = ball.GetComponent<VRC.SDK3.Components.VRCObjectSync>();
+                    if (bs != null) bs.SetKinematic(false);
+                    var rb = ball.GetComponent<Rigidbody>(); if (rb != null && !rb.isKinematic) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
+                    ball.position = new Vector3(cell.x, KH_CourseGroundEditor.RiverAt(cell.z).y + .2f, cell.z); if (bs != null) bs.FlagDiscontinuity();
+                    c.stage = 0; break;
+                }
+                case "W4-leash-stale":
+                    // RC-14: the arbiter's view of the pose is older than the dog (pose held at 0 while the dog is wet); the menu attach
+                    // must still be refused (the depth under the root) and the dog must walk out
+                    whFetch.SetProgramVariable("waterPose", 0); whFetch.SetProgramVariable("_debugPoseHold", true);
+                    pouch.SendCustomEvent("_WalkLeft" + WhDog); c.stage = 0; break;
+                case "W4-leash-late":
+                {
+                    // RC-14: a connection that got through anyway (any entry, the hand clip included) reaches the wet dog: its Owner must
+                    // not take it up, must have it released and keep walking out
+                    var wk = (int[])Get<int[]>(manager, "walkers").Clone(); wk[WhDog] = Networking.LocalPlayer.playerId; manager.SetProgramVariable("walkers", wk);
+                    var hs = (int[])Get<int[]>(manager, "hands").Clone(); hs[WhDog] = 0; manager.SetProgramVariable("hands", hs);
+                    c.stage = 0; break;
                 }
                 case "W6-owner": wander[WhDog].SetProgramVariable("waterState", 0); break;
                 case "W6-exit-blocked":
@@ -495,14 +573,90 @@ namespace KominkaHillside.Editor
                     if (fetchState != 0 && pose != 0) c.fetchWhileWet = true;
                     if (fetchState != 0 && c.landed >= 0 && c.fetchAfterLanding < 0) c.fetchAfterLanding = t - c.landed;
                     if (fetchState >= 3) c.pickedUp = true;
-                    if (c.pickedUp)
+                    if (c.pickedUp && c.pickupAt < 0) c.pickupAt = t;
+                    // RC-09 (audit 2026-09-28): watched on to the Drop; at the release the ball falls at once (gravity on)
+                    WhReleaseWatch(c, fetchState);
+                    if (fetchState == 5) c.seen5 = true;
+                    if (c.pickedUp && ((c.seen5 && fetchState == 0) || t - c.pickupAt > 25))
                     {
                         bool ok = !c.fetchWhileWet && c.exitStarted >= 0 && c.exitStarted <= 1.5 && c.landed <= 10
-                            && c.fetchAfterLanding >= 0 && c.fetchAfterLanding <= 10 && t <= 25 && WhClean(c);
+                            && c.fetchAfterLanding >= 0 && c.fetchAfterLanding <= 10 && c.pickupAt <= 25 && c.releaseSeen && c.releaseGravity && WhClean(c);
                         WhFinish(c, now, ok, "exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2") + " fetchAfterLanding=" + c.fetchAfterLanding.ToString("F2")
-                            + " fetchWhileWet=" + c.fetchWhileWet + " pickup " + t.ToString("F2") + " s" + WhSummary(c)); return;
+                            + " fetchWhileWet=" + c.fetchWhileWet + " pickup " + c.pickupAt.ToString("F2") + " s dropRelease=" + c.releaseSeen + " gravityAtRelease=" + c.releaseGravity + WhSummary(c)); return;
                     }
                     break;
+                }
+                case "W4-throw-regrab":
+                {
+                    var ball = Get<Transform>(whFetch, "_ballT"); var rb = ball.GetComponent<Rigidbody>(); var bs = ball.GetComponent<VRC.SDK3.Components.VRCObjectSync>();
+                    int fs = Get<int>(whFetch, "dogState");
+                    if (c.stage == 0)
+                    {
+                        if (t < 1.5) return;
+                        c.floatingBefore = rb != null && !rb.useGravity && !rb.isKinematic;
+                        if (bs != null) bs.SetGravity(true);   // what a pickup shorter than one look leaves (KD_BallController.OnPickup)
+                        whFetch.SendCustomEvent("_OnBallThrown");
+                        c.stage = 1; c.done = t; return;
+                    }
+                    if (c.gravityOffAfter < 0 && rb != null && !rb.useGravity && !rb.isKinematic) c.gravityOffAfter = (float)(t - c.done);
+                    if (fs == 6) c.seen6 = true;
+                    if (fs == 7) c.seen7 = true;
+                    if (fs == 5) c.seen5 = true;
+                    WhReleaseWatch(c, fs);
+                    if (c.seen5 && fs == 0) c.fetchEnded = true;
+                    if (c.fetchEnded || t - c.done > 60)
+                    {
+                        whSpot.SetProgramVariable("floatDrift", KH_WaterSpot.DefaultFloatDrift);
+                        bool ok = c.floatingBefore && c.gravityOffAfter >= 0 && c.gravityOffAfter <= .6f && c.seen6 && c.seen7 && c.fetchEnded
+                            && c.releaseSeen && c.releaseGravity && WhClean(c);
+                        WhFinish(c, now, ok, "floatingBefore=" + c.floatingBefore + " gravityOffAfter=" + c.gravityOffAfter.ToString("F2") + " s states 6/7/5=" + c.seen6 + "/" + c.seen7 + "/" + c.seen5
+                            + " ended=" + c.fetchEnded + " dropRelease=" + c.releaseSeen + " gravityAtRelease=" + c.releaseGravity + WhSummary(c)); return;
+                    }
+                    return;   // its own 60 s cap (the Lab fetches from the water, then walks back)
+                }
+                case "W4-leash-stale":
+                case "W4-leash-late":
+                {
+                    bool late = c.name == "W4-leash-late";
+                    int holder = Get<int[]>(manager, "walkers")[WhDog];
+                    if (c.stage == 0)
+                    {
+                        if (!late)
+                        {
+                            if (holder >= 0) c.accepted = true;
+                            if (t < 1.0) return;
+                            whFetch.SetProgramVariable("_debugPoseHold", false);   // the pose follows the dog again from here
+                            c.refused = !c.accepted; c.stage = 1; return;
+                        }
+                        if (holder < 0) { c.releasedAt = t; c.stage = 1; return; }
+                        if (t > 3) { WhFinish(c, now, false, "the connection made in the water was not released within 3 s (veto logged " + c.vetoLogged + ")" + WhSummary(c)); return; }
+                        return;
+                    }
+                    if (c.stage == 1)
+                    {
+                        if (!late && t < 1.5) return;
+                        if (!late) c.landed = -1;   // the held pose read 0 while wet: count landing only from the real pose
+                        c.stage = 2; return;
+                    }
+                    if (c.stage == 2)
+                    {
+                        if (c.landed >= 0 && t - c.landed > 1.5)
+                        {
+                            // Within attachReach (4 m): stand beside the landed dog, then attach the regular way
+                            NavMeshHit near; var dp = roots[WhDog].position;
+                            if (NavMesh.SamplePosition(dp + new Vector3(1.2f, 0, 0), out near, 2, NavMesh.AllAreas)) Networking.LocalPlayer.TeleportTo(near.position, Networking.LocalPlayer.GetRotation());
+                            c.stage = 3; whNext = now + .5; return;
+                        }
+                        break;
+                    }
+                    if (c.stage == 3) { pouch.SendCustomEvent("_WalkLeft" + WhDog); c.stage = 4; c.done = t; return; }
+                    if (t - c.done < 1.5) return;
+                    bool acceptedAfter = holder == Networking.LocalPlayer.playerId;
+                    bool okL = c.exitStarted >= 0 && c.exitStarted <= 1.5 && c.landed >= 0 && c.landed <= 10 && acceptedAfter && WhClean(c)
+                        // stale: refused by the arbiter itself, never connected-then-vetoed (Codex review 2026-09-28 中)
+                        && (late ? c.vetoLogged && c.releasedAt >= 0 && c.releasedAt <= 2.5 : c.refused && !c.vetoLogged);
+                    WhFinish(c, now, okL, (late ? "vetoLogged=" + c.vetoLogged + " released=" + c.releasedAt.ToString("F2") : "refusedWithStalePose=" + c.refused + " vetoLogged=" + c.vetoLogged)
+                        + " exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2") + " acceptedAfter=" + acceptedAfter + WhSummary(c)); return;
                 }
                 case "W6-owner":
                     if (c.landed >= 0 && t - c.landed > 1)
@@ -537,7 +691,7 @@ namespace KominkaHillside.Editor
                     if (t > 20) { WhFinish(c, now, false, "called but not out of the water in 20 s" + WhSummary(c)); return; }
                     break;
             }
-            double cap = c.name == "W6-all-blocked" ? 50 : c.name == "W6-exit-blocked" ? 40 : c.name == "W4-throw" ? 35 : 25;
+            double cap = c.name == "W6-all-blocked" ? 50 : c.name == "W6-exit-blocked" ? 40 : c.name == "W4-throw" ? 60 : 25;   // W4-throw: on to the Drop's release (audit 2026-09-28 RC-09)
             if (t > cap)
             {
                 if (c.name.StartsWith("W6")) whSpot.SetProgramVariable("exits", (Vector3[])whExitsBackup.Clone());
@@ -546,12 +700,35 @@ namespace KominkaHillside.Editor
         }
 
         static bool WhClean(WhCase c) { return c.bandOutsideSpotFrames == 0 && c.tooDeepFrames == 0 && c.bigSteps == 0 && c.mouthLowFrames == 0; }
+
+        /// <summary>RC-09 (audit 2026-09-28): the first frame of the Drop (5) whose ball is no longer frozen = the release; the ball's
+        /// gravity at that frame must already be on (the old code left a ball floated earlier weightless until Idle, ~0.9 s).</summary>
+        static void WhReleaseWatch(WhCase c, int fs)
+        {
+            if (fs != 5 || c.releaseSeen) return;
+            var rb = Get<Transform>(whFetch, "_ballT").GetComponent<Rigidbody>();
+            if (rb == null || rb.isKinematic) return;
+            c.releaseSeen = true; c.releaseGravity = rb.useGravity;
+        }
+
+        /// <summary>Every case ends with the audit stand-ins cleared on all six dogs (a failed case must not leak into the next).</summary>
+        static void WhClearDebug()
+        {
+            if (whFetches == null) return;
+            foreach (var f in whFetches)
+            {
+                if (f == null) continue;
+                f.SetProgramVariable("_debugClaimDelay", 0f); f.SetProgramVariable("_debugClaimRefuse", false);
+                f.SetProgramVariable("_debugBallHeld", false); f.SetProgramVariable("_debugPoseHold", false);
+            }
+        }
         static string WhSummary(WhCase c)
         { return " | frames=" + c.frames + " bandOutsideSpot=" + c.bandOutsideSpotFrames + " tooDeep=" + c.tooDeepFrames + " maxDepth=" + c.maxDepth.ToString("F3") + " maxStep=" + c.maxStep.ToString("F3") + " bigSteps=" + c.bigSteps + " stateChanges=" + c.stateChanges
             + " mouthLow=" + c.mouthLowFrames + " minMouthAboveWater=" + c.minMouthAboveWater.ToString("F3") + " swimEntries=" + c.swimEntries + " swimToggles=" + c.swimToggles; }
 
         static void WhFinish(WhCase c, double now, bool pass, string reason, bool notExercised = false)
         {
+            WhClearDebug();
             c.status = notExercised ? "NOT_EXERCISED" : pass ? "PASS" : "FAIL"; c.reason = reason;
             Current.status = c.status; Current.reason = reason; Current.endedAt = now;
             WhSave(null); Save();
@@ -1000,15 +1177,29 @@ namespace KominkaHillside.Editor
                         // took it dry): no drift for the case; every other case runs with the spot's own value
                         whSpot.SetProgramVariable("floatDrift", c.name.Contains("shallow") ? 0f : KH_WaterSpot.DefaultFloatDrift);
                         var ball = Get<Transform>(whFetch, "_ballT"); var bs = ball.GetComponent<VRC.SDK3.Components.VRCObjectSync>();
-                        if (bs != null) bs.SetKinematic(false);
+                        if (bs != null) { bs.SetKinematic(false); bs.SetGravity(true); }
                         var rb = ball.GetComponent<Rigidbody>(); if (rb != null && !rb.isKinematic) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
-                        ball.position = new Vector3(cell.x, KH_CourseGroundEditor.RiverAt(cell.z).y + .2f, cell.z); if (bs != null) bs.FlagDiscontinuity();
+                        if (c.name == "R17-land")
+                        {
+                            // RC-17 on land (the regular Return): the ball on the bank 3 m inland of the thrower, out of the band
+                            NavMeshHit lh; var pp = Networking.LocalPlayer.GetPosition();
+                            if (!NavMesh.SamplePosition(pp + new Vector3(3f, 0, 2f), out lh, 2, NavMesh.AllAreas) || RiverInBand(lh.position) || WhInSpot(lh.position))
+                                throw new InvalidOperationException("R17-land: no dry bank point for the ball");
+                            ball.position = lh.position + Vector3.up * (WhBallRadius() + .02f);
+                        }
+                        else ball.position = new Vector3(cell.x, KH_CourseGroundEditor.RiverAt(cell.z).y + .2f, cell.z);
+                        if (bs != null) bs.FlagDiscontinuity();
                         whStep = 1; whNext = now + 1.5; return;   // KH_ToyRecall takes it over as a floating ball
                     }
                     if (c.name.StartsWith("S4b")) { var fl = Get<bool[]>(whRecall, "_floating"); whRecall.SetProgramVariable("_floating", new bool[fl.Length]); }   // floated by "someone else"
                     if (c.stats.Count > 0) { c.stats[0].prev = roots[WhDog].position; c.stats[0].prevFrame = -1; }   // continuity starts at the throw
                     whNextTrace = now;
-                    if (c.dog >= 0) { whFetch.SendCustomEvent("_OnBallThrown"); c.actionAt = now - Current.startedAt; }
+                    // RC-17 stand-ins (audit 2026-09-28): the ball's ownership as this dog sees it, delayed or refused from its next claim
+                    if (c.name == "R17-delay" || c.name == "R17-land") whFetch.SetProgramVariable("_debugClaimDelay", 1.2f);
+                    if (c.name == "R17-pickup") whFetch.SetProgramVariable("_debugClaimDelay", 6f);
+                    if (c.name == "R17-refuse") whFetch.SetProgramVariable("_debugClaimRefuse", true);
+                    // R09-*: no throw, the ball only floats (the dog stays idle on the bank)
+                    if (c.dog >= 0 && !c.name.StartsWith("R09")) { whFetch.SendCustomEvent("_OnBallThrown"); c.actionAt = now - Current.startedAt; }
                     whPhase = 2; whPhaseAt = now; c.done = -1; return;
                 case 2:
                     WhFetchEvaluate(c, now, t); return;
@@ -1034,6 +1225,19 @@ namespace KominkaHillside.Editor
                     + " ballBelowSurface=" + (KH_CourseGroundEditor.RiverAt(b.z).y - b.y).ToString("F3") + " bedDepth=" + WhDepthUnder(b).ToString("F3") + " speed=" + Get<float>(wander[WhDog], "_speed").ToString("F2") + " block=" + block);
             }
             if (fs > c.maxFetchState) c.maxFetchState = fs;
+            // RC-17 / RC-09 (audit 2026-09-28): the first frame of the hold (4 or 7) must already have the ball frozen; the first
+            // frame after the Drop's release must already have gravity
+            var rbH = Get<Transform>(whFetch, "_ballT").GetComponent<Rigidbody>();
+            if (!c.holdSeen && (fs == 7 || fs == 4)) { c.holdSeen = true; c.holdKinematic = rbH != null && rbH.isKinematic; c.holdGame = Time.time; }
+            if (fs == 3) c.seen3 = true;
+            if (fs == 4) c.seen4 = true;
+            if (fs == 5) c.seen5 = true;
+            WhReleaseWatch(c, fs);
+            if (c.name == "R17-pickup" && !c.injected && c.claimWaitGame >= 0 && Time.time - c.claimWaitGame > .3f)
+            { whFetch.SetProgramVariable("_debugBallHeld", true); c.injected = true; c.injectedGame = Time.time; }   // a person takes the ball while the dog waits
+            if (c.name == "R17-lost" && !c.injected && fs == 7)
+            { whFetch.SetProgramVariable("_debugClaimRefuse", true); c.injected = true; c.injectedGame = Time.time; }   // ownership lost while carrying
+            if (c.injected && fs == 0 && c.idleAfterInject < 0) c.idleAfterInject = Time.time - c.injectedGame;
             if (fs == 6) c.seen6 = true;
             if (fs == 7 && !c.seen7)
             {
@@ -1108,6 +1312,83 @@ namespace KominkaHillside.Editor
                 }
                 return;
             }
+            if (c.name.StartsWith("R09") || c.name.StartsWith("R17-"))
+            {
+                // Audit 2026-09-28 cases (header of this file). t counts from the throw (R09: from the float without a throw).
+                var ballR = Get<Transform>(whFetch, "_ballT"); var rbR = ballR.GetComponent<Rigidbody>(); var bsR = ballR.GetComponent<VRC.SDK3.Components.VRCObjectSync>();
+                int fsR = Get<int>(whFetch, "dogState");
+                var stR = c.stats.Count > 0 ? c.stats[0] : null;
+                if (c.name.StartsWith("R09"))
+                {
+                    // RC-09: the float flag says "floating" while a pickup shorter than one 0.25 s look (regrab) or another Owner's
+                    // pickup and release (A -> B -> A: let go 0.12 m above the water) turned the gravity on. The next look must turn it off.
+                    if (c.stage == 0)
+                    {
+                        if (t < 1) return;
+                        c.floatingBefore = rbR != null && !rbR.useGravity && !rbR.isKinematic && WhBallFloats();
+                        if (bsR != null) { bsR.SetKinematic(false); bsR.SetGravity(true); }
+                        if (c.name.EndsWith("ABA")) { ballR.position += Vector3.up * .12f; if (bsR != null) bsR.FlagDiscontinuity(); }
+                        c.stage = 1; c.done = t; return;
+                    }
+                    if (c.gravityOffAfter < 0 && rbR != null && !rbR.useGravity) c.gravityOffAfter = (float)(t - c.done);
+                    if (t - c.done < 3) return;
+                    c.ballStillFloating = WhBallFloats();
+                    bool okR9 = c.floatingBefore && c.gravityOffAfter >= 0 && c.gravityOffAfter <= .6f && c.ballStillFloating && rbR != null && !rbR.useGravity;
+                    WhFinish(c, now, okR9, "floatingBefore=" + c.floatingBefore + " gravityOffAfter=" + c.gravityOffAfter.ToString("F2") + " s ballStillFloating=" + c.ballStillFloating
+                        + " gravityNow=" + (rbR != null && rbR.useGravity)); return;
+                }
+                if (c.name == "R17-refuse")
+                {
+                    // The claim is refused: the dog never holds, gives up within the 2 s limit, the ball keeps floating (not frozen)
+                    // Judged 3 s after the give-up (the swim to the ball takes longer than a fixed 8 s: run 20260927-214343 ended
+                    // at 7.6 s with the Pome still swimming in 6); 60 s cap as for the other R17 cases
+                    if (c.claimTimeoutLogged && c.done < 0) c.done = t;
+                    if ((c.done < 0 || t - c.done < 3) && t <= 60) return;
+                    bool okRf = c.claimWaitLogged && c.claimTimeoutLogged && !c.seen7 && fsR == 0 && rbR != null && !rbR.isKinematic && WhBallFloats() && WhStatClean(stR);
+                    WhFinish(c, now, okRf, "claimWait=" + c.claimWaitLogged + " claimTimeout=" + c.claimTimeoutLogged + " seen7=" + c.seen7 + " fetch=" + fsR
+                        + " ballKinematic=" + (rbR != null && rbR.isKinematic) + " ballFloats=" + WhBallFloats() + (stR != null ? WhDogSummary(stR) : "")); return;
+                }
+                if (c.name == "R17-pickup")
+                {
+                    // A person takes the ball while the dog waits for its ownership: give up at once, never hold, do not touch the ball
+                    if (c.injected && c.idleAfterInject >= 0 && c.stage == 0 && Time.time - c.injectedGame - c.idleAfterInject > .5f)
+                    { whFetch.SetProgramVariable("_debugBallHeld", false); c.stage = 1; c.done = t; return; }
+                    if (c.stage == 1 && t - c.done > 2)
+                    {
+                        bool okP = c.claimWaitLogged && c.claimHeldLogged && !c.seen7 && c.idleAfterInject >= 0 && c.idleAfterInject < .5f && rbR != null && !rbR.isKinematic && WhBallFloats();
+                        WhFinish(c, now, okP, "claimWait=" + c.claimWaitLogged + " heldWhileClaiming=" + c.claimHeldLogged + " seen7=" + c.seen7 + " idleAfter=" + c.idleAfterInject.ToString("F2")
+                            + " s ballKinematic=" + (rbR != null && rbR.isKinematic) + " ballFloats=" + WhBallFloats()); return;
+                    }
+                    if (t > 30) WhFinish(c, now, false, "no claim wait / give-up within 30 s (claimWait=" + c.claimWaitLogged + " injected=" + c.injected + " fetch=" + fsR + ")");
+                    return;
+                }
+                if (c.name == "R17-lost")
+                {
+                    // Ownership lost while carrying (state 7): asked again, not back in 2 s -> give up; the ball is let go and floats
+                    if (c.injected && c.idleAfterInject >= 0 && c.stage == 0) { whFetch.SetProgramVariable("_debugClaimRefuse", false); c.stage = 1; c.done = t; return; }
+                    if (c.stage == 1 && t - c.done > 2.5)
+                    {
+                        bool okL = c.seen7 && c.ballLostLogged && c.idleAfterInject <= 3f && rbR != null && !rbR.isKinematic && !rbR.useGravity && WhBallFloats();
+                        WhFinish(c, now, okL, "seen7=" + c.seen7 + " ballLost=" + c.ballLostLogged + " idleAfter=" + c.idleAfterInject.ToString("F2") + " s ballKinematic=" + (rbR != null && rbR.isKinematic)
+                            + " gravity=" + (rbR != null && rbR.useGravity) + " ballFloats=" + WhBallFloats()); return;
+                    }
+                    if (t > 60) WhFinish(c, now, false, "no loss / give-up within 60 s (seen7=" + c.seen7 + " injected=" + c.injected + " fetch=" + fsR + ")");
+                    return;
+                }
+                if (c.name == "R17-land")
+                {
+                    // The land Return: Pickup waits for the (delayed) ownership, Return starts frozen, the Drop's release has gravity
+                    bool endedL = c.seen5 && fsR == 0;
+                    if (!endedL && t <= 60) return;
+                    float toP = Vector3.Distance(ballR.position, Networking.LocalPlayer.GetPosition());
+                    float waitedL = c.holdGame >= 0 && c.claimWaitGame >= 0 ? c.holdGame - c.claimWaitGame : -1f;
+                    bool okLd = c.seen3 && c.seen4 && c.claimWaitLogged && c.claimOkLogged && c.holdKinematic && waitedL >= 1.1f && c.releaseSeen && c.releaseGravity
+                        && endedL && toP <= 2.5f && WhStatClean(stR);
+                    WhFinish(c, now, okLd, "states 3/4/5=" + c.seen3 + "/" + c.seen4 + "/" + c.seen5 + " claimWait=" + c.claimWaitLogged + " claimOk=" + c.claimOkLogged + " waited=" + waitedL.ToString("F2")
+                        + " s frozenAtHold=" + c.holdKinematic + " dropRelease=" + c.releaseSeen + " gravityAtRelease=" + c.releaseGravity + " ballToPlayer=" + toP.ToString("F2") + (stR != null ? WhDogSummary(stR) : "")); return;
+                }
+                // R17-delay falls through to the W3 rules below (plus its claim checks)
+            }
             if (c.name.EndsWith("-deep"))
             {
                 // Not chased (checked from 8 s), and the ball then drifts to the downstream end and stops there (z = end +- 0.5 m)
@@ -1151,6 +1432,17 @@ namespace KominkaHillside.Editor
                 {
                     var rb = ball.GetComponent<Rigidbody>(); c.gravityBack = rb != null && rb.useGravity && !rb.isKinematic;
                     ok &= c.gravityBack; extra += " gravityBack=" + c.gravityBack;
+                }
+                // Audit 2026-09-28 (every carried case): RC-17 the hold starts with the ball frozen; RC-09 the Drop's release has gravity
+                // A completed carry must pass through the Drop and its release (Codex review 2026-09-28 中: a Return that gave up
+                // also ends the Fetch, so "no release seen" no longer passes)
+                ok &= c.holdSeen && c.holdKinematic && c.seen5 && c.releaseSeen && c.releaseGravity;
+                extra += " frozenAtHold=" + c.holdKinematic + " drop=" + c.seen5 + " dropRelease=" + c.releaseSeen + " gravityAtRelease=" + c.releaseGravity;
+                if (c.name == "R17-delay")
+                {
+                    float waited = c.holdGame >= 0 && c.claimWaitGame >= 0 ? c.holdGame - c.claimWaitGame : -1f;
+                    ok &= c.claimWaitLogged && c.claimOkLogged && waited >= 1.1f;
+                    extra += " claimWait=" + c.claimWaitLogged + " claimOk=" + c.claimOkLogged + " waited=" + waited.ToString("F2") + " s";
                 }
                 WhFinish(c, now, ok, "states 6/7/8/4/5=" + c.seen6 + "/" + c.seen7 + "/" + c.seen8 + "/" + c.seenReturn + "/" + c.seenDrop + " ended=" + c.fetchEnded
                     + " t=" + t.ToString("F1") + " ballToPlayer=" + c.ballEndDistance.ToString("F2") + " ballTopBelow=" + c.ballTopBelowFrames + " carryMouthLow=" + c.carryMouthLowFrames

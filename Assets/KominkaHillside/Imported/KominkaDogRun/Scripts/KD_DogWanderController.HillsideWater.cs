@@ -181,7 +181,7 @@ namespace KominkaDogRun
             if (waterSpot == null || fetchController == null) return;
             WaterFx();
             WaterBobTick();
-            if (!_dogOwner) { waterState = WaterOff; _waterWasOwner = false; return; }   // the local play belongs to the Owner (C-11)
+            if (!_dogOwner) { waterState = WaterOff; _waterWasOwner = false; _waterLeashVeto = false; return; }   // the local play belongs to the Owner (C-11)
             if (!_waterWasOwner)
             {
                 // A new Owner inherits the synced pose and the synced height, so a swimming dog does not sink (Codex D-高).
@@ -189,7 +189,16 @@ namespace KominkaDogRun
                 if (fetchController.WaterPose == 2) { _waterSwimming = true; _waterSwimY = dogRoot.position.y; _swimYValid = true; _swimShallowSince = -1f; }
             }
             if (waterState != WaterOff && _waterSeenFrame < Time.frameCount - 1) WaterEnd("preempted");
-            _waterWasLeashed = hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex);
+            bool wet = WaterPoseRefresh();
+            WaterLeashTick(wet);
+        }
+
+        /// <summary>Owner: the pose from where the dog stands now. Runs at the top of Update and again after every water move
+        /// (UpdateWaterPlay, _WaterFetchStep / Hold / WalkTo). RC-14 (破壊監査 2026-09-28, FUNC-04 BUG-02): with the top-of-Update
+        /// write only, the frame that stepped into the water still showed pose 0 until the next frame, and a leash request
+        /// arriving in between was accepted. Returns whether the root is wet.</summary>
+        bool WaterPoseRefresh()
+        {
             Vector3 p = dogRoot.position;
             bool wetNow = WaterWetAt(p);
             if (!wetNow) { _waterSwimming = false; _swimShallowSince = -1f; }
@@ -203,7 +212,56 @@ namespace KominkaDogRun
                 else _swimShallowSince = -1f;
             }
             fetchController._SetWaterPose(!wetNow ? 0 : _waterSwimming ? 2 : 1);
+            return wetNow;
         }
+
+        // ---- RC-14: a leash that arrives while the dog is in the water (破壊監査 2026-09-28, FUNC-04 BUG-02) ----
+        // The arbiter refuses a wet dog (synced pose + the root's depth, KH_LeashManager.Water), but its view can be older than the
+        // dog: another client's pose and position arrive later, and a request can be judged in the frame before the pose update.
+        // So the dog Owner checks the connection itself when it first sees it: wet (or afloat) at that moment = the leash is not
+        // taken up (Update skips UpdateHillsideLeash, the water play keeps running and walks out, turning to the holder) and the
+        // arbiter is asked to release it (ReqWaterRelease with the vetoed holder, once a second, at most WaterLeashTries sends).
+        // Released -> back to normal; attaching again after landing is accepted as usual. The veto itself lasts until the
+        // connection is gone or the dog has landed (dry, out of the play or shaking on the bank): running out of sends never
+        // takes up the refused connection in the water (Codex review 2026-09-28 中). A connection first seen on land is
+        // untouched (a leashed walk may still get its feet wet on the bank). Owner-local; nothing synced.
+        const int WaterLeashTries = 10;
+        private bool _waterLeashVeto;
+        private int _waterLeashTries, _waterLeashHolder = -1;
+        private float _waterLeashSentAt = -1000f;
+
+        void WaterLeashTick(bool wet)
+        {
+            bool leashed = hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex);
+            int holder = leashed ? hillsideLeashes.walkers[dogIndex] : -1;
+            bool edge = leashed && (!_waterWasLeashed || holder != _waterLeashHolder);
+            _waterWasLeashed = leashed; _waterLeashHolder = holder;
+            if (!leashed)
+            {
+                if (_waterLeashVeto) { _waterLeashVeto = false; Debug.Log("[KD_DogWanderController] water leash released dog=" + dogIndex); }
+                return;
+            }
+            if (edge && (wet || _waterSwimming))
+            {
+                _waterLeashVeto = true; _waterLeashTries = 0;   // _waterLeashSentAt kept: once a second across vetoes
+                _WaterExitAsked(holder);
+                Debug.Log("[KD_DogWanderController] water leash veto dog=" + dogIndex + " holder=" + holder + " state=" + waterState);
+            }
+            if (!_waterLeashVeto) return;
+            if (!wet && !_waterSwimming && (waterState == WaterOff || waterState == WaterShake))
+            {
+                _waterLeashVeto = false;   // landed: a leash on the bank is a normal one
+                Debug.Log("[KD_DogWanderController] water leash veto ended dog=" + dogIndex + " (landed, leash taken up)");
+                return;
+            }
+            if (_waterLeashTries >= WaterLeashTries || Time.time - _waterLeashSentAt < 1f) return;
+            _waterLeashTries++; _waterLeashSentAt = Time.time;
+            if (_waterLeashTries == WaterLeashTries) Debug.Log("[KD_DogWanderController] water leash veto last request dog=" + dogIndex + " (kept until landing)");
+            hillsideLeashes._RequestWaterRelease(dogIndex, holder);
+        }
+
+        /// <summary>The leash arbiter (KH_LeashManager._InWater, via KD_DogFetchController._WetAtRoot): wet in the spot at p.</summary>
+        public bool _WaterWetAt(Vector3 p) { return waterSpot != null && WaterWetAt(p); }
 
         bool UpdateWaterPlay()
         {
@@ -214,7 +272,8 @@ namespace KominkaDogRun
                 if (fetchController.WaterPose == 0) return false;
                 Coast(); return true;
             }
-            if (hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex)) { if (waterState != WaterOff) WaterEnd("leashed"); return false; }
+            // RC-14: a leash vetoed in the water (WaterLeashTick) is not taken up; the play keeps walking the dog out
+            if (hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex) && !_waterLeashVeto) { if (waterState != WaterOff) WaterEnd("leashed"); return false; }
             Vector3 p = dogRoot.position;
             bool wet = fetchController.WaterPose != 0 || WaterWetAt(p);
             // Cheap exit for the usual dry dog far from the spot (the errand lookups below are cross-behaviour calls).
@@ -245,6 +304,7 @@ namespace KominkaDogRun
                 if (Time.time >= _waterHoldUntil) WaterEnd("landed");
             }
             WaterApplySwimHeight();
+            WaterPoseRefresh();   // RC-14: the pose of where the dog stands after this frame's step
             return true;
         }
 
@@ -303,11 +363,13 @@ namespace KominkaDogRun
             if (!carrying && !waterSpot._Contains(p) && Horizontal(p, waterSpot.entry) >= 0.5f)
             {
                 if (hillsideLeashes == null || !GatherStep(waterSpot.entry, runSpeed)) StepToward(waterSpot.entry, 0f, runSpeed);
+                WaterPoseRefresh();   // RC-14: the pose after the step
                 return;
             }
             WaterSwimLookAhead(p, goal);
             StepToward(goal, 0f, WaterStepSpeed(p));
             WaterApplySwimHeight();
+            WaterPoseRefresh();
         }
 
         /// <summary>Stand (WaterExit's 1.2 s on the bank): legs and height only.</summary>
@@ -318,6 +380,7 @@ namespace KominkaDogRun
             if (carrying) _waterCarryFrame = Time.frameCount;
             Coast();
             WaterApplySwimHeight();
+            WaterPoseRefresh();
         }
 
         /// <summary>Fetch state 8 on a far-bank thrower: walk (NavMesh) to the entered bank's return point, carrying.</summary>
@@ -327,6 +390,7 @@ namespace KominkaDogRun
             _waterFetchFrame = Time.frameCount; _waterCarryFrame = Time.frameCount;
             if (hillsideLeashes == null || !GatherStep(goal, walkSpeed)) StepToward(goal, 0f, walkSpeed);
             WaterApplySwimHeight();
+            WaterPoseRefresh();
         }
 
         public bool _WaterCanSwim() { return waterSwimAllowed; }

@@ -1068,11 +1068,14 @@ namespace KominkaDogRun
             // **Return / Drop も対象** (破壊的監査 v2 RC-12) — 咥えて帰る最中に
             // 掴まれると、全クライアントの口元貼り付けと保持者の手がボールを
             // 奪い合い続ける。掴まれた時点でボールは保持者のものとして手放す
-            if (_ballPickup != null && _ballPickup.IsHeld)
+            if (BallHeld())
             {
+                if (_claimNext >= 0) Debug.Log("[KD_DogFetchController] give-up dog=" + dogIndex + " state=" + dogState + " reason=held-while-claiming");
                 GiveUp();
                 return;
             }
+            // RC-17 (破壊監査 2026-09-28): while the ball is in the mouth it must stay ours and frozen (Owner.cs HoldTick)
+            if ((dogState == StateReturn || (dogState == StateDrop && !_ballReleased)) && HoldTick()) return;
 
             // リセットボタン等でボールが 1 フレームに大きく動いたら諦める (IMP-FET-002 —
             // ボールが消えたのに追い続けない)。テレポート検知なのでネットワークイベント
@@ -1107,7 +1110,8 @@ namespace KominkaDogRun
             }
             else if (dogState == StatePickup)
             {
-                if (elapsed >= pickupDuration) TransitionTo(StateReturn);
+                // RC-17: Return only once the ball is ours and frozen (BeginCarry waits here, asks once a second, gives up after 2 s)
+                if (elapsed >= pickupDuration) BeginCarry(StateReturn);
             }
             else if (dogState == StateReturn)
             {

@@ -19,7 +19,12 @@ namespace KominkaHillside
     ///   (KH_LeashManager._TravelBeginJoin) で自分が移動する。移動が終わるまで相手を覚え、途中で相手が退出したら取りやめる (§D.4)。
     ///   断り・時間切れの後、同じ相手へは 30 秒あける (相手ごとに覚える)。
     /// code: 0 断り・時間切れ / 1 承認 / 2 対応中 / 3 休止中。受け付けの ON/OFF (`accepting`) は PlayerData に保存する (ナイトモードと同じ作法)。
-    /// 相手を動かす機能は無い。フレンド判定は使わない。</summary>
+    /// 相手を動かす機能は無い。フレンド判定は使わない。
+    /// 破壊監査 2026-09-28 RC-07: 「この人からは受けない」と「同じ相手へ 30 秒」の履歴は固定長の循環上書きで、在室中の相手の記録を
+    /// 押し出していた (17 人目の拒否で最初の人の拒否が消える・9 人に断られると最初の相手の 30 秒が消える)。今は、同じ人の枠 → 空き枠 →
+    /// 退室した人の枠 (30 秒の方は期限切れの枠も) の順に使い、それでも無ければ配列を 16 枠ずつ伸ばす。退室した人の枠は OnPlayerLeft でも空ける
+    /// (playerId はインスタンス内で使い回されない。再入室した人を同じ人として覚える仕組みは入れない)。
+    /// RC-06: 取消できるかは _JoinCancelable() 1 か所で決め、手元メニューの表示と押したときの処理の両方がそれを使う。</summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class KH_TravelMailbox : UdonSharpBehaviour
     {
@@ -45,14 +50,13 @@ namespace KominkaHillside
         // ---- 受け手 (Owner のローカル) ----
         private int _inFrom = -1, _inSeq;
         private float _inAt, _closedAt = -1000f, _pauseUntil;
-        private int[] _blocked = new int[] {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
-        private int _blockedAt;
+        private int[] _blocked = new int[] {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};   // 足りなければ 16 枠ずつ伸ばす
         // ---- 申し込む人 (Owner のローカル) ----
         private int _outTo = -1, _outSeq;
         private float _outAt;
-        private int[] _deniedIds = new int[] {-1,-1,-1,-1,-1,-1,-1,-1};   // 断り・時間切れの相手 (相手ごとに 30 秒)
-        private float[] _deniedAts = new float[8];
-        private int _deniedAt;
+        private int[] _deniedIds = new int[] {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};   // 断り・時間切れの相手 (相手ごとに 30 秒)。人数の上限 16 を収める
+        private float[] _deniedAts = new float[16];
+        const int HistoryGrow = 16;
         // 相手の速さ (0.5 秒ごと)。承認の後もそろうまで測る
         private int _sampleId = -1, _samples;
         private Vector3 _tPrev, _tVel;
@@ -104,7 +108,7 @@ namespace KominkaHillside
                 return;
             }
             if (_acceptFor >= 0) { int to = _acceptFor; _acceptFor = -1; _sampleId = -1; Post(JoinCanceled, to); return; }
-            if (_movingWith >= 0 && manager != null && (manager._TravelWaiting() || manager._TravelFading()))
+            if (_movingWith >= 0 && manager != null && manager._TravelCancelable())
             {
                 int to = _movingWith; _movingWith = -1;
                 manager._TravelCancel();
@@ -113,6 +117,20 @@ namespace KominkaHillside
         }
 
         public int _WaitingFor() { return _outTo; }
+        /// <summary>合流を取り消せるか: 返事待ち・承認後の速さの測定待ち・切符待ち・暗転中。本人が移動した後 (犬待ち) は含めない (RC-06)。
+        /// 手元メニューは表示 ([取り消す]) と押したとき (_CancelJoinRequest へ回す) の両方でこれを使う。</summary>
+        public bool _JoinCancelable()
+        {
+            if (_outTo >= 0 || _acceptFor >= 0) return true;
+            return _movingWith >= 0 && manager != null && manager._TravelCancelable();
+        }
+        /// <summary>取消の表示に出す残り秒数 (返事待ち = 返事の期限、測定待ち = 測定の上限、切符待ち = 確認の期限、暗転中 = 0)。</summary>
+        public float _CancelLeft()
+        {
+            if (_outTo >= 0) return _WaitLeft();
+            if (_acceptFor >= 0) return Mathf.Max(0f, MeasureCap - (Time.time - _acceptAt));
+            return manager != null ? manager._TravelWaitLeft() : 0f;
+        }
         /// <summary>承認された後、移動が終わるまでの相手 (測定待ち・切符待ち・暗転中)。無ければ -1。</summary>
         public int _MovingWith() { return _acceptFor >= 0 ? _acceptFor : _movingWith; }
         public float _WaitLeft() { return _outTo >= 0 ? Mathf.Max(0f, AnswerSeconds - (Time.time - _outAt)) : 0f; }
@@ -221,7 +239,7 @@ namespace KominkaHillside
         public void _BlockIncoming()
         {
             if (_inFrom < 0) return;
-            _blocked[_blockedAt] = _inFrom; _blockedAt = (_blockedAt + 1) % _blocked.Length;
+            Block(_inFrom);
             AnswerIncoming(CodeNo);
         }
 
@@ -252,11 +270,46 @@ namespace KominkaHillside
             return false;
         }
 
+        /// <summary>在室中の個別拒否 (RC-07)。同じ人 → 空き枠 → 退室した人の枠の順に使い、在室中の人の記録は上書きしない。無ければ伸ばす。</summary>
+        private void Block(int id)
+        {
+            int slot = -1;
+            for (int i = 0; i < _blocked.Length; i++) if (_blocked[i] == id) return;
+            for (int i = 0; i < _blocked.Length && slot < 0; i++) if (_blocked[i] < 0) slot = i;
+            for (int i = 0; i < _blocked.Length && slot < 0; i++) if (!Utilities.IsValid(VRCPlayerApi.GetPlayerById(_blocked[i]))) slot = i;
+            if (slot < 0)
+            {
+                int n = _blocked.Length;
+                int[] grown = new int[n + HistoryGrow];
+                for (int i = 0; i < grown.Length; i++) grown[i] = i < n ? _blocked[i] : -1;
+                _blocked = grown; slot = n;
+            }
+            _blocked[slot] = id;
+        }
+
+        /// <summary>断り・時間切れの 30 秒 (RC-07)。同じ人 → 空き枠 → 期限切れか退室した人の枠の順に使う。無ければ伸ばす。</summary>
         private void Deny(int id)
         {
             for (int i = 0; i < _deniedIds.Length; i++) if (_deniedIds[i] == id) { _deniedAts[i] = Time.time; return; }
-            _deniedIds[_deniedAt] = id; _deniedAts[_deniedAt] = Time.time;
-            _deniedAt = (_deniedAt + 1) % _deniedIds.Length;
+            int slot = -1;
+            for (int i = 0; i < _deniedIds.Length && slot < 0; i++) if (_deniedIds[i] < 0) slot = i;
+            for (int i = 0; i < _deniedIds.Length && slot < 0; i++)
+                if (Time.time - _deniedAts[i] >= SameTargetGap || !Utilities.IsValid(VRCPlayerApi.GetPlayerById(_deniedIds[i]))) slot = i;
+            if (slot < 0)
+            {
+                int n = _deniedIds.Length;
+                int[] ids = new int[n + HistoryGrow]; float[] ats = new float[n + HistoryGrow];
+                for (int i = 0; i < ids.Length; i++) { ids[i] = i < n ? _deniedIds[i] : -1; ats[i] = i < n ? _deniedAts[i] : 0f; }
+                _deniedIds = ids; _deniedAts = ats; slot = n;
+            }
+            _deniedIds[slot] = id; _deniedAts[slot] = Time.time;
+        }
+
+        /// <summary>退室した人の枠を空ける (RC-07)。</summary>
+        private void ForgetHistory(int id)
+        {
+            for (int i = 0; i < _blocked.Length; i++) if (_blocked[i] == id) _blocked[i] = -1;
+            for (int i = 0; i < _deniedIds.Length; i++) if (_deniedIds[i] == id) _deniedIds[i] = -1;
         }
 
         private bool DeniedRecently(int id)
@@ -299,6 +352,7 @@ namespace KominkaHillside
             if (id == _acceptFor) { _acceptFor = -1; _sampleId = -1; Post(JoinLeft, id); }
             if (id == _movingWith) TargetLeftWhileMoving();
             if (id == _inFrom) ClearIncoming();
+            ForgetHistory(id);
         }
 
         /// <summary>§D.4: 承認の後、切符待ち・暗転中に相手が退出したら取りやめる (明るく戻して、その場に残る)。移動した後なら何もしない。</summary>
@@ -306,7 +360,7 @@ namespace KominkaHillside
         {
             int to = _movingWith;
             _movingWith = -1;
-            if (manager != null && (manager._TravelWaiting() || manager._TravelFading()))
+            if (manager != null && manager._TravelCancelable())
             {
                 Debug.Log("[KH_Join] target " + to + " left before the move; cancelling");
                 manager._TravelCancel();
@@ -337,7 +391,7 @@ namespace KominkaHillside
             if (_movingWith >= 0)
             {
                 if (!Utilities.IsValid(VRCPlayerApi.GetPlayerById(_movingWith))) TargetLeftWhileMoving();
-                else if (manager == null || (!manager._TravelWaiting() && !manager._TravelFading())) _movingWith = -1;   // 移動した (または取りやめた)
+                else if (manager == null || !manager._TravelCancelable()) _movingWith = -1;   // 移動した (または取りやめた)
             }
             if (_outTo >= 0)
             {

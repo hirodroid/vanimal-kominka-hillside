@@ -315,7 +315,9 @@ namespace KominkaHillside
                 KominkaDogRun.KD_BallController b = balls[i];
                 if (b == null) continue;
                 GameObject go = b.gameObject;
-                bool carried = fetchers != null && i < fetchers.Length && fetchers[i] != null && fetchers[i].IsCarrying;
+                // In the mouth now (RC-09, 破壊監査 2026-09-28 FUNC-05 BUG-04): Drop after the release is not a hold, so the
+                // physics below applies from the release on instead of waiting for Idle (IsCarrying covers the whole Drop)
+                bool carried = fetchers != null && i < fetchers.Length && fetchers[i] != null && fetchers[i]._BallInMouth();
                 // Held or carried = a new play: forget earlier returns, so only a ball that rolls back by itself counts
                 // toward the park (Codex 2026-09-27 U-中: three quick throws into the river must not park the third)
                 // (a throw starts that dog's Fetch, which also catches a grab-and-throw shorter than one 0.25 s look)
@@ -324,6 +326,10 @@ namespace KominkaHillside
                 if (b.IsHeldNow || carried) _riverSettleUntil[i] = 0f;   // a dog merely chasing does not touch it
                 if (b.IsHeldNow && _floating[i] && Networking.IsOwner(go)) StopFloat(i, go);   // picked up: normal physics
                 if (!Networking.IsOwner(go) || b.IsHeldNow || carried) { _riverSince[i] = -1f; continue; }
+                // Codex review 2026-09-28 高 (RC-17 / RC-09): a dog that lost the ball while carrying gives up without touching its
+                // physics (only the Owner may write them), so the ball's Owner - this client - unfreezes a kinematic ball that no
+                // dog has in its mouth (a race ball is its winner's). Then the rules below float it or give its gravity back.
+                if (UnfreezeIfFree(i, go)) continue;
                 if (Time.time < _riverSettleUntil[i]) SettleBall(go);
                 Vector3 p = go.transform.position;
                 // In the spot: float (every new Owner does the same from the position, so an Owner change keeps it afloat, S4).
@@ -424,16 +430,39 @@ namespace KominkaHillside
         // downstream (-z) at floatDrift until the region's downstream end. Not kinematic, so the idle Fetch's "release a kinematic
         // ball" safety net does not fight it, and a dog's carry (Fetch 7, kinematic) simply overrides it. A pickup restores gravity
         // (KD_BallController.OnPickup), a ball outside the spot gets it back here.
+        // RC-09 (破壊監査 2026-09-28, FUNC-03 BUG-01 / FUNC-05 BUG-02 / FUNC-06 BUG-02): the gravity is reconciled with the physical
+        // state on every look, not only when the local history says "not floating yet". A pickup shorter than one look (0.25 s)
+        // turns gravity on without this client ever seeing the hold, and an Owner that floated the ball, lost it to someone
+        // who picked it up, and got it back keeps _floating true: both left a floating ball with gravity on. Held balls and
+        // balls in a mouth never reach here (CheckRiverBalls skips them), so a person's or a dog's physics is not overridden.
         void FloatBall(int i, GameObject go, Vector3 p)
         {
             Rigidbody rb = go.GetComponent<Rigidbody>();
             if (rb == null || rb.isKinematic) return;
             VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
-            if (!_floating[i]) { if (sync != null) sync.SetGravity(false); _floating[i] = true; rb.angularVelocity = Vector3.zero; }
+            if (!_floating[i]) { _floating[i] = true; rb.angularVelocity = Vector3.zero; }
+            if (rb.useGravity && sync != null) sync.SetGravity(false);
             float radius = go.transform.localScale.x * 0.5f;
             float wantY = riverData._SurfaceY(p.z) - radius * waterSpot.floatSink;
             float vz = p.z > waterSpot._DownstreamZ() ? -waterSpot.floatDrift : 0f;
             rb.velocity = new Vector3(0f, Mathf.Clamp((wantY - p.y) * 4f, -1f, 1f), vz);
+        }
+
+        /// <summary>Owner, not held: true = the ball was frozen with no dog carrying it and has just been unfrozen (looked at again
+        /// on the next pass, when the physics has settled).</summary>
+        bool UnfreezeIfFree(int i, GameObject go)
+        {
+            Rigidbody rb = go.GetComponent<Rigidbody>();
+            if (rb == null || !rb.isKinematic) return false;
+            if (activities != null && activities.BallClaimed(i, -1)) return false;
+            if (fetchers != null)
+                for (int k = 0; k < fetchers.Length; k++)
+                    if (fetchers[k] != null && fetchers[k]._Carries(go.transform)) return false;
+            VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
+            if (sync == null) return false;
+            sync.SetKinematic(false);
+            Debug.Log("[KH_ToyRecall] unfrozen ball=" + i + " (kinematic, no dog carrying it)");
+            return true;
         }
 
         bool GravityOff(GameObject go)
