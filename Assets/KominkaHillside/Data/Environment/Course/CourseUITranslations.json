@@ -335,6 +335,14 @@
         {
           "key": "course.travel.join.target",
           "text": "合流先: {0} さん"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "このインスタンスにいる間は、この人から受けない"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "水遊び中 — 岸へ戻ります。上がったらもう一度押してください"
         }
       ]
     },
@@ -670,6 +678,14 @@
         {
           "key": "course.travel.join.target",
           "text": "Join: {0}"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "Not from this person while in this instance"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "Playing in the water — coming back to the bank. Press again once it's out"
         }
       ]
     },
@@ -1005,6 +1021,14 @@
         {
           "key": "course.travel.join.target",
           "text": "Встреча: {0}"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "Не от этого игрока, пока я в этом инстансе"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "Играет в воде — возвращается на берег. Когда выйдет, нажмите ещё раз"
         }
       ]
     },
@@ -1340,6 +1364,14 @@
         {
           "key": "course.travel.join.target",
           "text": "Зустріч: {0}"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "Не від цього гравця, поки я в цьому інстансі"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "Грається у воді — повертається на берег. Коли вийде, натисніть ще раз"
         }
       ]
     },
@@ -1675,6 +1707,14 @@
         {
           "key": "course.travel.join.target",
           "text": "합류: {0}"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "이 인스턴스에 있는 동안 이 사람에게 받지 않기"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "물놀이 중 — 물가로 돌아와요. 나오면 다시 눌러 주세요"
         }
       ]
     },
@@ -2010,6 +2050,14 @@
         {
           "key": "course.travel.join.target",
           "text": "Treffen: {0}"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "Von dieser Person nicht, solange ich in dieser Instanz bin"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "Spielt im Wasser – kommt ans Ufer zurück. Wenn er draußen ist, noch einmal drücken"
         }
       ]
     },
@@ -2345,6 +2393,14 @@
         {
           "key": "course.travel.join.target",
           "text": "会合：{0}"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "在此实例期间不接受此人的请求"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "正在玩水 — 正在回到岸边。上岸后请再按一次"
         }
       ]
     },
@@ -2680,6 +2736,14 @@
         {
           "key": "course.travel.join.target",
           "text": "Reunirse: {0}"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "No de esta persona mientras esté en esta instancia"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "Jugando en el agua — vuelve a la orilla. Cuando salga, pulsa otra vez"
         }
       ]
     },
@@ -3015,6 +3079,14 @@
         {
           "key": "course.travel.join.target",
           "text": "Rejoindre : {0}"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "Pas de cette personne tant que je suis dans cette instance"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "Joue dans l'eau — revient vers la rive. Appuie encore une fois qu'il est sorti"
         }
       ]
     },
@@ -3350,6 +3422,14 @@
         {
           "key": "course.travel.join.target",
           "text": "Encontrar: {0}"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "Não desta pessoa enquanto eu estiver nesta instância"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "Brincando na água — voltando para a margem. Quando sair, aperte de novo"
         }
       ]
     },
@@ -3685,6 +3765,14 @@
         {
           "key": "course.travel.join.target",
           "text": "Raggiungi: {0}"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "Non da questa persona finché sono in questa istanza"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "Gioca in acqua — torna a riva. Quando esce, premi di nuovo"
         }
       ]
     },
@@ -4020,6 +4108,14 @@
         {
           "key": "course.travel.join.target",
           "text": "Spotkanie: {0}"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "Nie od tej osoby, dopóki jestem w tej instancji"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "Bawi się w wodzie — wraca na brzeg. Gdy wyjdzie, naciśnij jeszcze raz"
         }
       ]
     },
@@ -4359,6 +4455,14 @@
         {
           "key": "course.travel.join.target",
           "text": "會合：{0}"
+        },
+        {
+          "key": "course.travel.join.notice.block2",
+          "text": "在此實例期間不接受此人的請求"
+        },
+        {
+          "key": "course.water.busyToyBack",
+          "text": "玩緊水 — 返緊去岸邊。上岸之後請再撳一次"
         }
       ]
     }

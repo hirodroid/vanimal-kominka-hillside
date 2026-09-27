@@ -53,6 +53,7 @@ namespace KominkaHillside.Editor
         static int tvTrackMask;
         static HashSet<int> tvSeenReqs = new HashSet<int>();
         static List<string> tvLogs = new List<string>();
+        static List<string> tvJumpNotes = new List<string>();   // 2 回目以降の跳びの証拠 (位置・時刻・その時の犬の状態)
         static VRCPlayerApi tvRemote;
         // 段階 2: 暗転の観測 (KH_TravelFade の _alpha と、プレイヤーの 5 m 以上の跳び)
         static VRC.Udon.UdonBehaviour tvFade;
@@ -80,7 +81,7 @@ namespace KominkaHillside.Editor
         static void MakeTravelCases()
         {
             Application.logMessageReceived -= TravelLog; Application.logMessageReceived += TravelLog;
-            tvStep = 0; tvCaseAt = -1; tvPrev = null; tvObsValid = false; tvBox = null; tvPuppetWalk = false; tvTrackMask = 0; tvRemote = null; tvWalkLast = 0;
+            tvStep = 0; tvCaseAt = -1; tvPrev = null; tvObsValid = false; tvBox = null; tvPuppetWalk = false; tvJumpNotes.Clear(); tvTrackMask = 0; tvRemote = null; tvWalkLast = 0;
             tvFade = UnityEngine.Object.FindObjectsOfType<VRC.Udon.UdonBehaviour>().FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_TravelFade");
             if (tvFade == null) throw new InvalidOperationException("KH_TravelFade not in the scene (run Course/84)");
             tvLogs.Clear(); tvScripts = new List<List<Func<double, bool>>>(); tvReport = new TravelReport { runId = report.runId };
@@ -189,7 +190,7 @@ namespace KominkaHillside.Editor
                     if ((mask & (1 << i)) == 0) continue;
                     if (TvCountLogs(c.logFrom, "[KH_Leash] dog" + i + " Return") != 0) throw new InvalidOperationException("dog" + i + " entered Return within 30 s after arrival");
                     if (tvReverse[i] != 0) throw new InvalidOperationException("dog" + i + " reversed on the loop after arrival (reverse steps " + tvReverse[i] + ")");
-                    if (tvDisc[i] != 1) throw new InvalidOperationException("dog" + i + " jumped again after arrival");
+                    if (tvDisc[i] != 1) throw new InvalidOperationException("dog" + i + " jumped again after arrival: " + string.Join(" | ", tvJumpNotes));
                 }
                 TvNote("30 s after arrival: Return 0, reverse 0, forward steps " + string.Join("/", Enumerable.Range(0, 6).Where(i => (mask & (1 << i)) != 0).Select(i => tvForward[i])));
                 tvTrackMask = 0;
@@ -487,7 +488,7 @@ namespace KominkaHillside.Editor
                     int plaza = Closest(TvSpot(KH_LeashManager.SpotPlaza));
                     if (name == "near") { int n = (plaza + 8) % nodes.Length; TvPlacePuppet(nodes[n], nodes[(n + 1) % nodes.Length] - nodes[n]); }
                     else if (name == "bridge") { int n = Closest(new Vector3(bx[1], 0, bz[1])); TvPlacePuppet(nodes[n], Vector3.forward); }
-                    else if (name == "water") { float z = 505f; int k = Mathf.Clamp(Mathf.RoundToInt((z - z0) / step), 0, rx.Length - 1); int n = Closest(new Vector3(rx[k], 0, z)); TvPlacePuppet(new Vector3(rx[k], nodes[n].y - 1f, z), Vector3.forward); }
+                    else if (name == "water") { float z = 285f; /* 川辺の地点の近く。前の「橋」の条件の着地点 (上流の橋の手前) から離す — 505 だと本人がもう着地点のそばにいて「5 m 以上動いた」が成り立たなかった */ int k = Mathf.Clamp(Mathf.RoundToInt((z - z0) / step), 0, rx.Length - 1); int n = Closest(new Vector3(rx[k], 0, z)); TvPlacePuppet(new Vector3(rx[k], nodes[n].y - 1f, z), Vector3.forward); }
                     else if (name == "walking") { tvPuppetNode = (plaza + 20) % nodes.Length; tvPuppetPos = nodes[tvPuppetNode]; tvPuppetLast = TvNow(); tvPuppetWalk = true; TvPlacePuppet(tvPuppetPos, nodes[(tvPuppetNode + 1) % nodes.Length] - tvPuppetPos); }
                     else TvPlacePuppet(new Vector3(-55f, 0f, 715f), Vector3.forward);
                 }));
@@ -554,7 +555,47 @@ namespace KominkaHillside.Editor
                 TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), b.pos) < 1f && tvDisc.All(d => d == 0), "nothing moved after cancel + late accept");
                 TvMyBox().SetProgramVariable("debugJoinLoopback", 0);
                 ClientSimMain.RemovePlayer(tvRemote); tvRemote = null;
-                TvNote("cancel then late accept: cancel wins, no move. Real two-client ReqJoin/AnsJoin order is a PCVR check (§C.2 #3-#5)");
+                TvNote("cancel then late accept: cancel wins, no move");
+            }));
+            // (c) 承認の後、切符待ちの間に相手が退室 → 移動を取りやめる (§D.4)。切符待ちを保つため Owner は要求を捨てる (debugDropTravel)
+            var c3 = new TvCtx();
+            s.Add(TvCooldown());
+            s.Add(TvDo(() => ClientSimMain.SpawnRemotePlayer("KH_TravelJoinTarget3")));
+            s.Add(TvUntil(() => (tvRemote = TvRemotePlayer()) != null, 5, "remote player spawn"));
+            s.Add(TvDo(() => { TvMyBox().SetProgramVariable("debugJoinLoopback", 1); TvSet("debugDropTravel", 1); TvPlacePuppet(nodes[Closest(TvSpot(KH_LeashManager.SpotGate)) + 5], Vector3.forward); TvJoinPress(c3); }));
+            s.Add(TvUntil(() => Get<int>(TvMyBox(), "_outTo") >= 0, 2, "third join request did not start"));
+            s.Add(TvWait(1.1));
+            s.Add(TvDo(() => { c3.pos = Networking.LocalPlayer.GetPosition(); TvAnswer(KH_TravelMailbox.CodeYes); }));
+            s.Add(TvUntil(() => Get<int>(manager, "_tvState") == 1, 2, "accepted join did not start the ticket wait"));
+            s.Add(TvDo(() => { ClientSimMain.RemovePlayer(tvRemote); tvRemote = null; }));
+            s.Add(TvUntil(() => Get<int>(manager, "_tvState") == 0 && Get<int>(TvMyBox(), "joinResultCode") == KH_TravelMailbox.JoinLeft, 3, "move not cancelled after the target left"));
+            s.Add(TvWait(1));
+            s.Add(TvDo(() =>
+            {
+                TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), c3.pos) < 1f && tvDisc.All(d => d == 0), "nothing moved after the target left during the ticket wait");
+                TvExpect(Get<float>(tvFade, "_alpha") <= 0.001f, "screen is not left dark");
+                TvNote("accepted, target left during the ticket wait: move cancelled, no move (§D.4)");
+            }));
+            // (d) 承認の後、切符待ちの間に本人が [取り消す] (§D.6)
+            var c4 = new TvCtx();
+            s.Add(TvCooldown());
+            s.Add(TvDo(() => ClientSimMain.SpawnRemotePlayer("KH_TravelJoinTarget4")));
+            s.Add(TvUntil(() => (tvRemote = TvRemotePlayer()) != null, 5, "remote player spawn"));
+            s.Add(TvDo(() => { TvPlacePuppet(nodes[Closest(TvSpot(KH_LeashManager.SpotGate)) + 5], Vector3.forward); TvJoinPress(c4); }));
+            s.Add(TvUntil(() => Get<int>(TvMyBox(), "_outTo") >= 0, 2, "fourth join request did not start"));
+            s.Add(TvWait(1.1));
+            s.Add(TvDo(() => { c4.pos = Networking.LocalPlayer.GetPosition(); TvAnswer(KH_TravelMailbox.CodeYes); }));
+            s.Add(TvUntil(() => Get<int>(manager, "_tvState") == 1, 2, "accepted join did not start the ticket wait"));
+            s.Add(TvDo(() => pouch.SendCustomEvent("_TravelGo")));   // 切符待ちの [取り消す]
+            s.Add(TvUntil(() => Get<int>(manager, "_tvState") == 0 && Get<int>(TvMyBox(), "joinResultCode") == KH_TravelMailbox.JoinCanceled, 2, "cancel during the ticket wait not reported"));
+            s.Add(TvWait(1));
+            s.Add(TvDo(() =>
+            {
+                TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), c4.pos) < 1f && tvDisc.All(d => d == 0), "nothing moved after cancelling during the ticket wait");
+                TvSet("debugDropTravel", 0);
+                TvMyBox().SetProgramVariable("debugJoinLoopback", 0);
+                ClientSimMain.RemovePlayer(tvRemote); tvRemote = null;
+                TvNote("accepted, requester cancelled during the ticket wait: no move. Real two-client ReqJoin/AnsJoin order is a PCVR check (§C.2 #3-#5)");
             }));
         }
 
@@ -661,7 +702,20 @@ namespace KominkaHillside.Editor
             for (int i = 0; i < 6; i++)
             {
                 var p = roots[i].position;
-                if (Vector3.Distance(tvPrev[i], p) > TvDisc) tvDisc[i]++;
+                // 跳びの判定は観測間隔に比例させる (8 m/s = 全力 7.2 m/s より上)。0.3 秒の引っかかりで走っている犬を「跳んだ」と数えない
+                float stepLimit = Mathf.Max(TvDisc, 8f * (float)gap + 0.3f);
+                float moved = Vector3.Distance(tvPrev[i], p);
+                if (moved > stepLimit)
+                {
+                    tvDisc[i]++;
+                    if (tvDisc[i] >= 2 && tvJumpNotes.Count < 20)
+                    {
+                        string state = "";
+                        try { state = " mode=" + Get<int>(wander[i], "leashMode") + " pauseMode=" + Get<int>(wander[i], "_pauseMode") + " next=" + Get<int>(wander[i], "_routeNext") + " resume=" + Get<int>(wander[i], "_routeResume"); } catch (Exception) { }
+                        object wp; if (wander[i].TryGetProgramVariable("waterPose", out wp)) state += " waterPose=" + wp;
+                        tvJumpNotes.Add("dog" + i + " jump#" + tvDisc[i] + " " + moved.ToString("F2") + " m in " + gap.ToString("F2") + " s at t=" + (now - Current.startedAt).ToString("F1") + " from " + tvPrev[i] + " to " + p + " holder=" + Networking.LocalPlayer.GetPosition() + state);
+                    }
+                }
                 tvPrev[i] = p;
                 if (req[i] != 0) tvSeenReqs.Add(req[i]);
                 if ((tvTrackMask & (1 << i)) == 0) continue;

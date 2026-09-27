@@ -24,6 +24,7 @@ UnityをEditモード・保存済みにして `Tools/KominkaHillside/Course/` �
 | 地点ワープ (IMP-WLD-001) | 地点 = 80、地図・暗転・副画面 = 84、合流の受付箱・通知板・[人] = 85。経路や地点を変えたら 80 → 84 → 27 | 81 |
 | 遮蔽 | 52で再生成し、完了後36で保存 | 37、必要に応じ38の表示比較 |
 | 秋の橋・地面 | Inspectorで調整。68の初回適用は繰り返さない | 69 |
+| 水遊び場 (IMP-DOG-020) | 76 (水遊び場のデータと踏み分け道。道は Terrain 層 2 の塗り)。15 を実行した後は、76 と 77 をもう一度実行する | 77 |
 
 旧 `Terrain Prototype/Build Stage A・B`、`Walking/3 Build・4 Bake Navigation・4b Build Walk Route`、`Menu/7 Build Menu・12 Rebuild Panel・13 Apply Scroll Layout・17 Refresh Menus` と Imported-UnusedのTreat System再構築は、周回版を旧道・旧メニューで上書きするため拒否する。通常の局所編集・検査は可能。全メニューの再生成が必要になったときは、周回の行き先を保持する対応を先に行う。
 

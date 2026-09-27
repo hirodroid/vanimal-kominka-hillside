@@ -22,9 +22,12 @@ namespace KominkaDogRun
     //   pose   : waterPose (KD_DogFetchController, synced) = 1 while the feet are wet in the spot (depth > 0.02 m), else 0.
     //            Stage 0 has no swimming: a step deeper than 0.45 M (M = standing mouth height, B-2 / C-2) is refused, so
     //            the mouth always stays >= 0.55 M above the water, and wading is at walking speed (the 0.3 M rule).
-    //   break  : a stronger behaviour (sleep call, live, gathering, treat, nudge), a Fetch or a leash takes over the dog;
-    //            the play is dropped and, from inside the band, only outward steps are allowed, so the dog walks out.
-    //            A leash / toy request while wading is refused and asks the dog to come out (turning to the asker first).
+    //   break  : in the water, WaterPlay runs before the people's errands (Update: right after the behaviour selection). A
+    //            call to sleep beside someone, a treat, a live show or a gathering starts the exit first (turning to the
+    //            asker) and is taken up by its own branch once the dog has landed (B-1 "受理は上陸後"; Codex 2026-09-27 D-高:
+    //            a preempted play could leave the dog stuck at the band with no exit watch). A throw is held by the Fetch
+    //            (KD_DogFetchController.HillsideWater) and started after landing if it is at most 10 s old. A leash / toy
+    //            request is refused and asks the dog to come out. The first asker is kept until the exit starts.
     //   strand : a dog that is wet with no play (Owner change C-11, a dropped play) starts the exit at once (6b: the nearest
     //            exit from the spot's static data, which every client holds).
     //   recover: exit not done in 10 s or stuck (< 0.1 m per 1 s for 2 s, C-9) -> 2nd: another exit -> 3rd: teleport to
@@ -59,20 +62,44 @@ namespace KominkaDogRun
         {
             if (riverData == null || _navStep) return false;
             // The water-play spot: a dog in WaterPlay may move inside it, but not deeper than its stage-0 limit.
-            if (waterState != WaterOff && waterSpot != null && waterSpot._Contains(next))
+            if (waterState != WaterOff && waterSpot != null && waterSpot._Contains(next)
+                && waterSpot._Bed(next) > KominkaHillside.KH_WaterSpot.NoBed + 1f)
             {
                 float d = waterSpot._Depth(next);
                 return d > WaterDepthLimit() && d > waterSpot._Depth(from);
             }
+            // Outside the spot, or a spot cell without riverbed data (Codex 2026-09-27 D-中): the plain band rule, so a step
+            // deeper into the band stops and the exit watch / recovery takes over.
             return riverData._BlocksStep(from, next, KominkaHillside.KH_RiverData.BandMargin);
         }
 
         float WaterDepthLimit() { return WaterDepthRatio * waterMouthHeight; }
 
+        bool WaterWetAt(Vector3 p)
+        {
+            if (!waterSpot._Contains(p)) return false;
+            if (waterSpot._Bed(p) <= KominkaHillside.KH_WaterSpot.NoBed + 1f)
+                return riverData != null && riverData._InBand(p, KominkaHillside.KH_RiverData.BandMargin);   // unknown = assume wet
+            return waterSpot._Depth(p) > WaterWet;
+        }
+
         /// <summary>From KD_DogFetchController (leash or toy asked while wading). Dog Owner only.</summary>
         public void _WaterExitAsked(int playerId)
         {
+            // First asker wins while the request is still unhandled (Codex 2026-09-27 U-中).
+            if (Time.time - _waterAskAt < 2f) return;
             _waterAskPlayer = playerId; _waterAskAt = Time.time;
+        }
+
+        /// <summary>Someone's errand that outranks idle play: the asker's playerId, -1 for an errand without one person
+        /// (live show, gathering), -2 for none. The errands' own branches decide acceptance once the dog is on land.</summary>
+        int WaterRequester()
+        {
+            if (sleepBoard != null && dogIndex >= 0) { int sleeper = sleepBoard.LiveSleeperOf(dogIndex); if (sleeper >= 0) return sleeper; }
+            if (treatBox != null && dogIndex >= 0) { KD_TreatSlot slot = treatBox.LiveSlotOf(dogIndex); if (slot != null) return slot.GiverId(); }
+            if (liveSystem != null && liveSystem.IsPlaying) return -1;
+            if (activities != null && activities.Mode == 1) return -1;
+            return -2;
         }
 
         // Called once at the top of Update on every client (before the early returns).
@@ -87,7 +114,7 @@ namespace KominkaDogRun
                 _waterFirstDue = Time.time + WaterFirstDelay;
             _waterWasLeashed = leashed;
             Vector3 p = dogRoot.position;
-            fetchController._SetWaterPose(waterSpot._Contains(p) && waterSpot._Depth(p) > WaterWet ? 1 : 0);
+            fetchController._SetWaterPose(WaterWetAt(p) ? 1 : 0);
         }
 
         bool UpdateWaterPlay()
@@ -101,18 +128,25 @@ namespace KominkaDogRun
             }
             if (hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex)) { if (waterState != WaterOff) WaterEnd("leashed"); return false; }
             Vector3 p = dogRoot.position;
+            bool wet = fetchController.WaterPose != 0 || WaterWetAt(p);
+            // Cheap exit for the usual dry dog far from the spot (the errand lookups below are cross-behaviour calls).
+            if (waterState == WaterOff && !wet && _waterFirstDue <= 0f && (Time.time < _waterNextRoll || !waterSpot._NearEntry(p))) return false;
+            int requester = WaterRequester();
             if (waterState == WaterOff)
             {
-                bool wet = fetchController.WaterPose != 0 || (waterSpot._Contains(p) && waterSpot._Depth(p) > WaterWet);
-                if (wet) WaterBeginExit(waterSpot._NearestExit(p), "stranded");
-                else if (WaterWantsToStart(p)) WaterBegin();
+                if (wet) { if (requester >= 0) _WaterExitAsked(requester); WaterBeginExit(waterSpot._NearestExit(p), "stranded"); }
+                else if (requester == -2 && WaterWantsToStart(p)) WaterBegin();
                 else return false;
             }
-            _waterSeenFrame = Time.frameCount;
             bool asked = Time.time - _waterAskAt < 2f;
-            bool gathering = activities != null && activities.Mode == 1;
-            if ((waterState == WaterApproach || waterState == WaterWade) && (asked || gathering))
-                WaterBeginExit(waterState == WaterApproach ? 0 : _waterExit, asked ? "asked" : "gathering");
+            if ((waterState == WaterApproach || waterState == WaterWade) && (asked || requester != -2))
+            {
+                // Still dry on the way in: just drop the play and let the errand run now.
+                if (waterState == WaterApproach && !wet) { WaterEnd(asked ? "asked-dry" : "errand-dry"); return false; }
+                if (requester >= 0) _WaterExitAsked(requester);
+                WaterBeginExit(waterState == WaterApproach ? 0 : _waterExit, asked ? "asked" : "errand");
+            }
+            _waterSeenFrame = Time.frameCount;
 
             if (waterState == WaterApproach) WaterStepApproach(p);
             else if (waterState == WaterWade) WaterStepWade(p);
@@ -167,8 +201,8 @@ namespace KominkaDogRun
             float dist = Horizontal(p, goal);
             if (dist < 0.5f) { waterState = WaterWade; _waterUntil = Time.time + Random.Range(WaterStayMin, WaterStayMax); _waterHasTarget = false; WaterResetProgress(); return; }
             if (Time.time - _waterStageAt > WaterApproachTimeout) { WaterEnd("approach-timeout"); Coast(); return; }
-            float speed = dist > runDistance ? runSpeed : walkSpeed;
-            if (hillsideLeashes == null || !GatherStep(goal, speed)) StepToward(goal, 0f, speed);
+            // At a run all the way (Codex 2026-09-27: B-1's 5 s runs to the first wet step, not to the start of the play).
+            if (hillsideLeashes == null || !GatherStep(goal, runSpeed)) StepToward(goal, 0f, runSpeed);
         }
 
         void WaterStepWade(Vector3 p)

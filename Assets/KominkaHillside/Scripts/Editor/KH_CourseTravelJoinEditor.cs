@@ -92,13 +92,18 @@ namespace KominkaHillside.Editor
                 var bg = board.GetComponent<Image>(); if (bg == null) bg = board.AddComponent<Image>(); bg.color = new Color(.14f, .12f, .11f, .96f); bg.raycastTarget = true;
                 KD_UiSpriteEditor.ApplyRoundSkin(bg, KD_UiSpriteEditor.LoadRound());
                 notice.board = board; notice.language = p.language; notice.manager = m;
+                notice.distance = 1.1f; notice.lowerDegrees = 15f; notice.replaceMeters = 3f;
+                // 通知音 (§A.4「音 1 回」。W3 レビュー 15): 手元メニューの成功音を流用。2D、1 回だけ鳴らす
+                var chime = noticeRoot.GetComponent<AudioSource>(); if (chime == null) chime = noticeRoot.AddComponent<AudioSource>();
+                chime.clip = p.uiSuccessClip; chime.playOnAwake = false; chime.loop = false; chime.spatialBlend = 0f; chime.volume = 0.6f;
+                notice.chime = chime;
                 notice.titleLabel = MakeText(board.transform, "Title", new Vector2(-30f, 130f), new Vector2(660f, 50f), 26f, font, Ja("course.travel.join.notice.title").Replace("{0}", "VRChatUser"));
                 notice.countLabel = MakeText(board.transform, "Count", new Vector2(330f, 130f), new Vector2(60f, 44f), 26f, font, "20");
                 notice.placeLabel = MakeText(board.transform, "Place", new Vector2(0f, 78f), new Vector2(720f, 36f), 20f, font, Ja("course.travel.join.near").Replace("{0}", Ja("course.walk.upper")));
                 var labels = new TextMeshProUGUI[4];
-                Vector2[] pos = { new Vector2(-175f, -10f), new Vector2(175f, -10f), new Vector2(-175f, -120f), new Vector2(175f, -120f) };
-                Vector2[] size = { new Vector2(300f, 80f), new Vector2(300f, 80f), new Vector2(330f, 56f), new Vector2(330f, 56f) };
-                string[] keys = { "course.travel.join.notice.yes", "course.travel.join.notice.no", "course.travel.join.notice.pause", "course.travel.join.notice.block" };
+                Vector2[] pos = { new Vector2(-175f, -10f), new Vector2(175f, -10f), new Vector2(0f, -90f), new Vector2(0f, -148f) };
+                Vector2[] size = { new Vector2(300f, 80f), new Vector2(300f, 80f), new Vector2(700f, 48f), new Vector2(700f, 48f) };
+                string[] keys = { "course.travel.join.notice.yes", "course.travel.join.notice.no", "course.travel.join.notice.pause", "course.travel.join.notice.block2" };
                 for (int i = 0; i < 4; i++)
                 {
                     var b = KD_ShopSetupEditor.EnsureButton(board.transform, "Button" + i, pos[i], size[i], i == 0 ? KD_UiSpriteEditor.ActionNeutral * 1.2f : KD_UiSpriteEditor.ActionNeutral, font, Ja(keys[i]), noticeBacking, NoticeEvents[i], log);
@@ -147,10 +152,13 @@ namespace KominkaHillside.Editor
                 var rows = new Button[PeopleRows]; var rowImages = new Image[PeopleRows]; var rowLabels = new TextMeshProUGUI[PeopleRows];
                 for (int i = 0; i < PeopleRows; i++)
                 {
-                    var row = KD_ShopSetupEditor.EnsureButton(content.transform, "Person" + i, new Vector2(0f, contentH / 2f - RowHeight / 2f - i * RowPitch - 2f), new Vector2(PeopleWidth - 20f, RowHeight),
+                    var row = KD_ShopSetupEditor.EnsureButton(content.transform, "Person" + i, Vector2.zero, new Vector2(PeopleWidth - 20f, RowHeight),
                         KD_UiSpriteEditor.ActionNeutral, font, "VRChatUser    " + Ja("course.travel.join.near").Replace("{0}", Ja("course.walk.upper")) + "  35 m", pouchBacking, "_JoinPick" + i, log);
                     rows[i] = row.GetComponent<Button>(); rowImages[i] = row.GetComponent<Image>();
-                    rowLabels[i] = row.transform.Find("Label").GetComponent<TextMeshProUGUI>(); rowLabels[i].fontSize = 20f; rowLabels[i].alignment = TextAlignmentOptions.Left;
+                    rowLabels[i] = row.transform.Find("Label").GetComponent<TextMeshProUGUI>(); rowLabels[i].fontSize = 18f; rowLabels[i].alignment = TextAlignmentOptions.Left; rowLabels[i].overflowMode = TextOverflowModes.Ellipsis; rowLabels[i].lineSpacing = -10f;
+                    // 行は content の上端から並べる (人数で content の高さを変えても行が動かない。W3 レビュー 13)
+                    var rrt = (RectTransform)row.transform; rrt.anchorMin = rrt.anchorMax = new Vector2(.5f, 1f); rrt.pivot = new Vector2(.5f, 1f);
+                    rrt.anchoredPosition = new Vector2(0f, -2f - i * RowPitch);
                     row.SetActive(false);
                 }
                 var empty = MakeText(people.transform, "Empty", Vector2.zero, new Vector2(PeopleWidth, 40f), 20f, font, Ja("course.travel.join.alone"));
@@ -159,6 +167,7 @@ namespace KominkaHillside.Editor
                 p.travelModeSpotsImage = modeSpots.GetComponent<Image>(); p.travelModePeopleImage = modePeople.GetComponent<Image>();
                 p.travelModeSpotsLabel = modeSpots.transform.Find("Label").GetComponent<TextMeshProUGUI>(); p.travelModePeopleLabel = modePeople.transform.Find("Label").GetComponent<TextMeshProUGUI>();
                 p.travelModeSpotsLabel.fontSize = 20f; p.travelModePeopleLabel.fontSize = 20f;
+                p.travelPeopleContent = crt;
                 p.travelPeopleRoot = people; p.travelPeopleButtons = rows; p.travelPeopleImages = rowImages; p.travelPeopleLabels = rowLabels; p.travelPeopleEmpty = empty;
                 p.travelAcceptButton = accept; p.travelAcceptLabel = acceptLabel;
                 p.travelJoinPendingButton = pending; p.travelJoinPendingLabel = pendingLabel;
@@ -213,6 +222,24 @@ namespace KominkaHillside.Editor
                     && board.GetComponent<VRCUiShape>() != null && board.GetComponent<BoxCollider>() != null && board.GetComponent<GraphicRaycaster>() != null, "notice board: WorldSpace Canvas + VRCUiShape + BoxCollider + Raycaster on Default");
                 for (int i = 0; i < 4; i++) { var b = board.transform.Find("Button" + i); if (b == null) e.Add("FAIL notice button " + i); else CheckEvent(e, b.gameObject, nb, NoticeEvents[i]); }
             }
+            // W3 レビュー 10: 配置の値・Collider・通知音・一覧のスクロールと行の対応
+            Req(e, Mathf.Approximately(notice.distance, 1.1f) && Mathf.Approximately(notice.lowerDegrees, 15f) && Mathf.Approximately(notice.replaceMeters, 3f), "notice placement 1.1 m / 15 deg / 3 m");
+            Req(e, notice.chime != null && notice.chime.clip != null && !notice.chime.playOnAwake && !notice.chime.loop, "notice chime wired (one shot)");
+            if (board != null)
+            {
+                var bcol = board.GetComponent<BoxCollider>(); var brect = (RectTransform)board.transform;
+                Req(e, bcol != null && Mathf.Approximately(bcol.size.x, brect.sizeDelta.x) && Mathf.Approximately(bcol.size.y, brect.sizeDelta.y) && Mathf.Approximately(brect.localScale.x, 0.001f), "notice collider matches the board (scale 0.001)");
+            }
+            var scroll = p.travelPeopleRoot != null ? p.travelPeopleRoot.GetComponent<ScrollRect>() : null;
+            Req(e, scroll != null && scroll.content == p.travelPeopleContent && scroll.viewport != null && scroll.viewport.GetComponent<RectMask2D>() != null && !scroll.horizontal && scroll.vertical, "people ScrollRect wired (viewport mask, content)");
+            if (p.travelPeopleButtons != null && p.travelPeopleContent != null)
+                for (int i = 0; i < p.travelPeopleButtons.Length; i++)
+                {
+                    var b = p.travelPeopleButtons[i];
+                    Req(e, b != null && b.transform.parent == p.travelPeopleContent && b.name == "Person" + i && p.travelPeopleImages[i] == b.GetComponent<Image>() && p.travelPeopleLabels[i] == b.transform.Find("Label").GetComponent<TextMeshProUGUI>(), "people row " + i + " matches the arrays");
+                    var rt = b != null ? (RectTransform)b.transform : null;
+                    Req(e, rt != null && Mathf.Approximately(rt.anchorMin.y, 1f) && Mathf.Approximately(rt.anchoredPosition.y, -2f - i * RowPitch), "people row " + i + " anchored to the content top");
+                }
             Req(e, notice.language == p.language && notice.manager == m && notice.titleLabel != null && notice.placeLabel != null && notice.countLabel != null && notice.yesLabel != null && notice.noLabel != null && notice.pauseLabel != null && notice.blockLabel != null, "notice wired");
             // 手元メニュー
             var pb = UdonSharpEditorUtility.GetBackingUdonBehaviour(p);
@@ -244,14 +271,15 @@ namespace KominkaHillside.Editor
                     Fit(sample, p.travelModeSpotsLabel, T("course.travel.join.spots"), code + " mode spots", e, report);
                     Fit(sample, p.travelModePeopleLabel, T("course.travel.join.people"), code + " mode people", e, report);
                     Fit(sample, p.travelJoinPendingLabel, T("course.travel.join.pending"), code + " pending", e, report);
-                    Fit(sample, p.travelPeopleLabels[0], "VRChatUser    " + T("course.travel.join.near").Replace("{0}", T("course.travel.join.spot.bridgeDown")) + "  999 m  (" + T("course.travel.join.notAccepting") + ")", code + " person row", e, report);
+                    // 表示名は VRChat の上限に近い 15 字で測る (2 段。1 行目 = 名前、2 行目 = 地点・距離・状態)
+                    Fit(sample, p.travelPeopleLabels[0], "VRChatUser12345\n" + T("course.travel.join.near").Replace("{0}", T("course.travel.join.spot.bridgeDown")) + "  999 m  (" + T("course.travel.join.notAccepting") + ")", code + " person row", e, report);
                     Fit(sample, p.travelGoLabel, T("course.travel.join.cancel").Replace("{0}", "20"), code + " go cancel", e, report);
                     Fit(sample, p.travelGoLabel, T("course.travel.join.ask"), code + " go ask", e, report);
                     Fit(sample, notice.titleLabel, T("course.travel.join.notice.title").Replace("{0}", "VRChatUser12"), code + " notice title", e, report);
                     Fit(sample, notice.yesLabel, T("course.travel.join.notice.yes"), code + " notice yes", e, report);
                     Fit(sample, notice.noLabel, T("course.travel.join.notice.no"), code + " notice no", e, report);
                     Fit(sample, notice.pauseLabel, T("course.travel.join.notice.pause"), code + " notice pause", e, report);
-                    Fit(sample, notice.blockLabel, T("course.travel.join.notice.block"), code + " notice block", e, report);
+                    Fit(sample, notice.blockLabel, T("course.travel.join.notice.block2"), code + " notice block", e, report);
                     foreach (var key in new[] { "code0", "code2", "code3", "left", "again", "nosafe", "canceled", "busy", "notReady", "reason.near", "reason.behind", "reason.bridge", "reason.water", "reason.offtrail", "arrived", "dogs" })
                         Fit(sample, p.travelStatusLabel, T("course.travel.join." + key).Replace("{0}", "20"), code + " status join." + key, e, report);
                     Fit(sample, p.travelStatusLabel, T("course.travel.join.waiting").Replace("{0}", "20"), code + " status join.waiting", e, report);

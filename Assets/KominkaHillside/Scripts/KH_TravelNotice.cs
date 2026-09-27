@@ -29,6 +29,7 @@ namespace KominkaHillside
         private bool _showing;
         private Vector3 _placedFrom;
         private float _nextRefresh;
+        private float _chimedAt = -1000f;
 
         void Start()
         {
@@ -40,7 +41,8 @@ namespace KominkaHillside
         {
             _box = box;
             _showing = true;
-            if (chime != null) chime.Play();
+            // 音は 1 回。続けて届いても 5 秒は鳴らし直さない (W3 レビュー 15)
+            if (chime != null && Time.time - _chimedAt > 5f) { _chimedAt = Time.time; chime.Play(); }
             Place();
             Refresh();
         }
@@ -87,12 +89,12 @@ namespace KominkaHillside
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (board == null || !Utilities.IsValid(lp)) return;
             VRCPlayerApi.TrackingData head = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
-            Vector3 fwd = head.rotation * Vector3.forward; fwd.y = 0f;
-            if (fwd.sqrMagnitude < 0.0001f) { fwd = lp.GetRotation() * Vector3.forward; fwd.y = 0f; }
-            if (fwd.sqrMagnitude < 0.0001f) fwd = Vector3.forward;
-            fwd = fwd.normalized;
-            float rad = lowerDegrees * Mathf.Deg2Rad;
-            Vector3 pos = head.position + fwd * (distance * Mathf.Cos(rad)) - Vector3.up * (distance * Mathf.Sin(rad));
+            // 視線 (頭の向きの上下を含む) から 15° 下 (W3 レビュー 14)。頭の右方向を軸に下へ回す
+            Vector3 look = head.rotation * Vector3.forward;
+            Vector3 right = head.rotation * Vector3.right;
+            Vector3 dir = Quaternion.AngleAxis(lowerDegrees, right) * look;
+            if (dir.sqrMagnitude < 0.0001f) dir = lp.GetRotation() * Vector3.forward;
+            Vector3 pos = head.position + dir.normalized * distance;
             // 板の前面は -Z。読む人から板への向きで LookRotation する (vrc-world-ui §2)
             transform.SetPositionAndRotation(pos, Quaternion.LookRotation(pos - head.position, Vector3.up));
             _placedFrom = lp.GetPosition();
@@ -111,7 +113,7 @@ namespace KominkaHillside
             if (yesLabel != null) yesLabel.text = T("course.travel.join.notice.yes");
             if (noLabel != null) noLabel.text = T("course.travel.join.notice.no");
             if (pauseLabel != null) pauseLabel.text = T("course.travel.join.notice.pause");
-            if (blockLabel != null) blockLabel.text = T("course.travel.join.notice.block");
+            if (blockLabel != null) blockLabel.text = T("course.travel.join.notice.block2");
         }
 
         /// <summary>最寄りの地点の名前 (地図の目印 6 つから)。</summary>

@@ -47,6 +47,7 @@ namespace KominkaDogRun
         public UnityEngine.UI.Image travelModeSpotsImage, travelModePeopleImage;
         public TextMeshProUGUI travelModeSpotsLabel, travelModePeopleLabel;
         public GameObject travelPeopleRoot;              // 人の一覧 (スクロール)
+        public RectTransform travelPeopleContent;        // 一覧の中身 (人数で高さを変える)
         public UnityEngine.UI.Button[] travelPeopleButtons;   // 16 行
         public UnityEngine.UI.Image[] travelPeopleImages;
         public TextMeshProUGUI[] travelPeopleLabels;
@@ -72,6 +73,11 @@ namespace KominkaDogRun
         private float _joinNextRefresh;
         private int _joinSeenSerial;
         private KominkaHillside.KH_TravelMailbox _travelBox;
+        // 行ごとの相手の受付箱 (W3 レビュー 8: 探すのは開いたとき・入退室・未取得のときだけ。10 Hz では探さない)
+        private KominkaHillside.KH_TravelMailbox[] _joinBoxes = new KominkaHillside.KH_TravelMailbox[16];
+        private string _joinReasonKey = "";      // 合流の着地点の理由 (W3 レビュー 12: 着いた後もフッターに残す)
+        private float _joinReasonUntil;
+        const float PeopleViewHeight = 176f, PeopleRowPitch = 60f;
 
         // ============================================================
         // 入口
@@ -121,6 +127,15 @@ namespace KominkaDogRun
         /// <summary>実行ボタン。地点なら [ここへワープ]、人なら [合流をたのむ] / [取り消す]。ローカル専用。</summary>
         public void _TravelGo()
         {
+            // 移動の途中 (切符待ち・暗転中) は [取り消す]。暗転中でも押せる唯一の入力 (§D.6・W3 レビュー 3)
+            if (manager != null && (manager._TravelWaiting() || manager._TravelFading()))
+            {
+                KominkaHillside.KH_TravelMailbox mine = TravelMyBox();
+                if (mine != null && mine._MovingWith() >= 0) mine._CancelJoinRequest();
+                else manager._TravelCancel();
+                TravelMapRedraw();
+                return;
+            }
             if (TravelInputLocked()) return;
             if (_travelMode == 1) { JoinGo(); return; }
             if (_travelPick < 0) { HillsideNote(TabWalk, "course.travel.map.pick", ""); TravelMapRedraw(); return; }
@@ -249,6 +264,9 @@ namespace KominkaDogRun
                 dist[best] = -1f;
             }
             for (int i = _joinCount; i < _joinIds.Length; i++) _joinIds[i] = -1;
+            KominkaHillside.KH_TravelMailbox mine = TravelMyBox();
+            for (int i = 0; i < _joinBoxes.Length; i++)
+                _joinBoxes[i] = i < _joinCount && mine != null ? mine._FindBox(VRCPlayerApi.GetPlayerById(_joinIds[i])) : null;
             if (_joinPick >= 0 && JoinRowOf(_joinPick) < 0) _joinPick = -1;
             _joinNextRefresh = Time.time + 1f;
         }
@@ -259,9 +277,10 @@ namespace KominkaDogRun
             int w = 0;
             for (int i = 0; i < _joinCount; i++)
             {
-                if (Utilities.IsValid(VRCPlayerApi.GetPlayerById(_joinIds[i]))) _joinIds[w++] = _joinIds[i];
+                if (Utilities.IsValid(VRCPlayerApi.GetPlayerById(_joinIds[i]))) { _joinBoxes[w] = _joinBoxes[i]; _joinIds[w++] = _joinIds[i]; }
                 else if (_joinIds[i] == _joinPick) { _joinPick = -1; HillsideNote(TabWalk, "course.travel.join.left", ""); }
             }
+            for (int i = w; i < _joinBoxes.Length; i++) _joinBoxes[i] = null;
             _joinCount = w;
             int n = VRCPlayerApi.GetPlayerCount();
             VRCPlayerApi[] all = new VRCPlayerApi[n];
@@ -269,6 +288,10 @@ namespace KominkaDogRun
             for (int i = 0; i < n && _joinCount < _joinIds.Length; i++)
                 if (Utilities.IsValid(all[i]) && !all[i].isLocal && JoinRowOf(all[i].playerId) < 0) _joinIds[_joinCount++] = all[i].playerId;
             for (int i = _joinCount; i < _joinIds.Length; i++) _joinIds[i] = -1;
+            // 未取得 (入室直後の「準備中」) と新しく足した行だけ探す
+            KominkaHillside.KH_TravelMailbox mine = TravelMyBox();
+            for (int i = 0; i < _joinCount; i++)
+                if (_joinBoxes[i] == null && mine != null) _joinBoxes[i] = mine._FindBox(VRCPlayerApi.GetPlayerById(_joinIds[i]));
         }
 
         private int JoinRowOf(int playerId)
@@ -311,6 +334,8 @@ namespace KominkaDogRun
             else if (code == KominkaHillside.KH_TravelMailbox.JoinNotAccepting || code == KominkaHillside.KH_TravelMailbox.CodePaused) key = "course.travel.join.code3";
             else if (code == KominkaHillside.KH_TravelMailbox.CodeNo) key = "course.travel.join.code0";
             else if (code == KominkaHillside.KH_TravelMailbox.CodeBusy) key = "course.travel.join.code2";
+            else if (code == KominkaHillside.KH_TravelMailbox.JoinMeasuring) key = "course.travel.map.moving";
+            else if (code == KominkaHillside.KH_TravelMailbox.JoinStartFailed) { TravelNote(box.joinTravelCode, -1); return; }   // W3 レビュー 4: 始められなかった理由
             else if (code == KominkaHillside.KH_TravelMailbox.JoinStarted)
             {
                 int r = box.joinReason;
@@ -319,6 +344,7 @@ namespace KominkaDogRun
                     : r == KominkaHillside.KH_LeashManager.JoinReasonWater ? "course.travel.join.reason.water"
                     : r == KominkaHillside.KH_LeashManager.JoinReasonOffTrail ? "course.travel.join.reason.offtrail"
                     : "course.travel.join.reason.near";
+                _joinReasonKey = key; _joinReasonUntil = Time.time + 60f;   // 移動が終わるまで + 着いた後もしばらくフッターに出す
             }
             HillsideNote(TabWalk, key, arg);
         }
@@ -338,6 +364,7 @@ namespace KominkaDogRun
                 // 本人の移動 1 回につき 1 回だけ、板を新しい位置の目の前へ置き直す (§A.3。W2 レビュー U7)。
                 // 犬の完了 (TravelArrived) は表示の更新だけ。犬がいない移動は TravelArrived が本人の移動なのでそこで置く
                 bool moved = code == KominkaHillside.KH_LeashManager.TravelWaitingDogs || code == KominkaHillside.KH_LeashManager.TravelArrived;
+                if (moved && manager.travelResultSpot < 0 && code == KominkaHillside.KH_LeashManager.TravelArrived) _joinReasonUntil = Time.time + 8f;
                 if (moved)
                 {
                     _travelArrived = true;
@@ -445,6 +472,15 @@ namespace KominkaDogRun
                     if (travelPeopleEmpty.gameObject.activeSelf != empty) travelPeopleEmpty.gameObject.SetActive(empty);
                     if (empty) travelPeopleEmpty.text = L("course.travel.join.alone");
                 }
+                if (travelPeopleContent != null)
+                {
+                    // 人数に合わせて中身の高さを変え、減ったときは見える範囲へ戻す (W3 レビュー 13)
+                    float h = Mathf.Max(PeopleViewHeight, _joinCount * PeopleRowPitch + 4f);
+                    if (Mathf.Abs(travelPeopleContent.sizeDelta.y - h) > 0.5f) travelPeopleContent.sizeDelta = new Vector2(travelPeopleContent.sizeDelta.x, h);
+                    Vector2 at = travelPeopleContent.anchoredPosition;
+                    float maxY = h - PeopleViewHeight;
+                    if (at.y > maxY || at.y < 0f) travelPeopleContent.anchoredPosition = new Vector2(at.x, Mathf.Clamp(at.y, 0f, maxY));
+                }
                 for (int i = 0; travelPeopleButtons != null && i < travelPeopleButtons.Length; i++)
                 {
                     bool on = i < _joinCount;
@@ -452,9 +488,10 @@ namespace KominkaDogRun
                     if (!on) continue;
                     VRCPlayerApi p = VRCPlayerApi.GetPlayerById(_joinIds[i]);
                     if (!Utilities.IsValid(p)) continue;
-                    KominkaHillside.KH_TravelMailbox theirs = box != null ? box._FindBox(p) : null;
+                    KominkaHillside.KH_TravelMailbox theirs = _joinBoxes[i];
                     string place = travelNotice != null ? L("course.travel.join.near").Replace("{0}", travelNotice._NearestSpotName(p.GetPosition())) : "";
-                    string text = p.displayName + "    " + place + "  " + TravelDistanceText(p.GetPosition(), me);
+                    // 2 段: 1 行目 = 表示名 (長ければ … で切る)、2 行目 = 最寄りの地点・距離・状態 (81 の測定で幅が足りなかったため)
+                    string text = p.displayName + "\n" + place + "  " + TravelDistanceText(p.GetPosition(), me);
                     if (theirs == null) text += "  (" + L("course.travel.join.notReady") + ")";
                     else if (!theirs.accepting) text += "  (" + L("course.travel.join.notAccepting") + ")";
                     if (travelPeopleLabels != null && i < travelPeopleLabels.Length && travelPeopleLabels[i] != null && travelPeopleLabels[i].text != text) travelPeopleLabels[i].text = text;
@@ -493,6 +530,8 @@ namespace KominkaDogRun
                     VRCPlayerApi p = VRCPlayerApi.GetPlayerById(_joinPick);
                     if (Utilities.IsValid(p)) target = L("course.travel.join.target").Replace("{0}", p.displayName);
                 }
+                // 合流の着地点の理由は、移動中と着いた後しばらく 1 行目に出す (状態の 1 行は 4 秒で消えるため)
+                if (people && _joinReasonKey.Length > 0 && Time.time < _joinReasonUntil) target = L(_joinReasonKey);
                 string footer;
                 if (target.Length == 0) footer = L(people ? "course.travel.join.pick" : "course.travel.map.pick");
                 else footer = target + "\n" + (dogs == 0 ? L("course.travel.map.alone") : L("course.travel.map.dogs").Replace("{0}", dogs.ToString()))
@@ -500,10 +539,12 @@ namespace KominkaDogRun
                 travelFooterLabel.text = footer;
             }
             // ---- 実行ボタン ----
+            bool moving = manager._TravelWaiting() || manager._TravelFading();
             if (travelGoLabel != null)
             {
                 string go;
-                if (people)
+                if (moving) go = L("course.travel.join.cancel").Replace("{0}", Mathf.CeilToInt(manager._TravelWaitLeft()).ToString());
+                else if (people)
                     go = waitingFor >= 0 ? L("course.travel.join.cancel").Replace("{0}", Mathf.CeilToInt(box._WaitLeft()).ToString()) : L("course.travel.join.ask");
                 else
                 {
@@ -514,7 +555,11 @@ namespace KominkaDogRun
             }
             if (travelGoImage != null)
             {
-                bool ready = people ? (waitingFor >= 0 || (_joinPick >= 0 && !busy && left <= 0f)) : (!busy && left <= 0f && _travelPick >= 0);
+                KominkaHillside.KH_TravelMailbox pickedBox = null;
+                int pickRow = _joinPick >= 0 ? JoinRowOf(_joinPick) : -1;
+                if (pickRow >= 0) pickedBox = _joinBoxes[pickRow];
+                bool peopleReady = pickedBox != null && pickedBox.accepting && !busy && left <= 0f;   // 準備中・受付 OFF の相手には暗くする (押すと理由が出る)
+                bool ready = moving || (people ? (waitingFor >= 0 || peopleReady) : (!busy && left <= 0f && _travelPick >= 0));
                 travelGoImage.color = ready ? equipOnColor : recallOffColor;
             }
             if (travelStatusLabel != null) travelStatusLabel.text = HillsideNoteOr(TabWalk, "");

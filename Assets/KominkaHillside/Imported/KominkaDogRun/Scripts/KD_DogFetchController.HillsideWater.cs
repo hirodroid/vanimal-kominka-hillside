@@ -56,6 +56,57 @@ namespace KominkaDogRun
             SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(WaterExitAsk));
         }
 
+        /// <summary>Like _AskWaterExit, for a request someone else made (the leash arbiter refusing a clip attach): the dog turns
+        /// to that player (Codex 2026-09-27 D-中).</summary>
+        public void _AskWaterExitFor(int playerId)
+        {
+            if (IsDogOwner()) { KD_DogWanderController w = MyWander(); if (w != null) w._WaterExitAsked(playerId); return; }
+            SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(WaterExitAskFor), playerId);
+        }
+
+        // net: callable-ok: same as WaterExitAsk; the id only chooses whom the dog looks at before it walks out.
+        [NetworkCallable(maxEventsPerSecond: 4)]
+        public void WaterExitAskFor(int playerId)
+        {
+            if (!IsDogOwner()) return;
+            KD_DogWanderController w = MyWander();
+            if (w != null && Utilities.IsValid(VRCPlayerApi.GetPlayerById(playerId))) w._WaterExitAsked(playerId);
+        }
+
+        // ---- a throw while the dog is in the water (DES-DOG-004 B-1: exit first, the Fetch starts after landing, 10 s max) ----
+        const float WaterThrowHold = 10f;
+        int _waterThrowPlayer = -1;
+        float _waterThrowAt;
+
+        /// <summary>From StartFetch (Owner). True = the throw is held (the dog walks out first); false = start as usual.</summary>
+        bool WaterHoldsThrow(int playerId)
+        {
+            if (waterPose == 0) return false;
+            if (_waterThrowPlayer < 0)
+            {
+                _waterThrowPlayer = playerId; _waterThrowAt = Time.time;
+                Debug.Log("[KD_DogFetchController] throw held dog=" + dogIndex + " (in the water)");
+            }
+            KD_DogWanderController w = MyWander();
+            if (w != null) w._WaterExitAsked(playerId);
+            return true;
+        }
+
+        /// <summary>Top of Update (Owner): start the held throw once landed, drop it after 10 s or when the ball was taken.</summary>
+        void WaterThrowTick()
+        {
+            if (_waterThrowPlayer < 0) return;
+            if (!_dogOwner || Time.time - _waterThrowAt > WaterThrowHold || (_ballPickup != null && _ballPickup.IsHeld))
+            {
+                Debug.Log("[KD_DogFetchController] throw dropped dog=" + dogIndex);
+                _waterThrowPlayer = -1; return;
+            }
+            if (waterPose != 0 || dogState != StateIdle) return;
+            int player = _waterThrowPlayer; _waterThrowPlayer = -1;
+            bool started = Utilities.IsValid(VRCPlayerApi.GetPlayerById(player)) && StartFetch(player);
+            Debug.Log("[KD_DogFetchController] throw after landing dog=" + dogIndex + " started=" + (started ? "true" : "false"));
+        }
+
         // net: callable-ok: anyone may ask a wading dog to come out (the dog is shared, B-1 "誰の要求でも中断する");
         // the only effect is that the dog turns to the caller and leaves the water.
         [NetworkCallable(maxEventsPerSecond: 4)]

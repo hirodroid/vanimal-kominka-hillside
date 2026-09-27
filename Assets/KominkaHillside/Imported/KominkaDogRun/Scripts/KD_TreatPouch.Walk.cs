@@ -150,7 +150,7 @@ namespace KominkaDogRun
             else if (_walkPendingKind == 2)
             {
                 done = !manager._IsLeashed(_walkPendingDog);
-                key = WaterReleaseKey(_walkPendingDog, "KD_TreatPouch.WordWalkDetached");   // IMP-DOG-020: once per stay near the spot
+                key = "KD_TreatPouch.WordWalkDetached";
             }
             else if (_walkPendingKind == 3)
             {

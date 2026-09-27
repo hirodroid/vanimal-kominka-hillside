@@ -165,6 +165,7 @@ namespace KominkaDogRun
         {
             // 裏山改変: さんぽの要求とおもちゃの結果もここで毎フレーム解決する (Redraw は板が閉じていると何もしないので、その外で回す)
             PollWalkPending();
+            PollWaterRelease();   // IMP-DOG-020: 水遊び場の近くで自分の犬のリードが外れたら初回だけ案内 (KD_TreatPouch.Water.cs)
             PollTravel();   // IMP-WLD-001: 地点ワープの結果とボタンの秒数 (KD_TreatPouch.Travel.cs)
             PollHillsideToy();
             if (_pendingRecallRow >= 0)
@@ -256,7 +257,7 @@ namespace KominkaDogRun
 
         private string HillsideToyGateKey(int gate)
         {
-            if (gate == KominkaHillside.KH_ToyRecall.InWater) return "course.water.busyToy";
+            if (gate == KominkaHillside.KH_ToyRecall.InWater) return "course.water.busyToyBack";
             if (gate == KominkaHillside.KH_ToyRecall.Held) return "KD_TreatPouch.WordToyGateHeld";
             if (gate == KominkaHillside.KH_ToyRecall.DogBusy) return "KD_TreatPouch.WordToyGateBusy";
             if (gate == KominkaHillside.KH_ToyRecall.Cooldown) return "KD_TreatPouch.WordToyGateCooldown";

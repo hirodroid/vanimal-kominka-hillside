@@ -1409,6 +1409,10 @@ namespace KominkaDogRun
             }
             ScheduleBehaviorSelection(Time.time);
 
+            // IMP-DOG-020: 水遊び (HillsideWater.cs)。水の中では人の用事 (呼ぶ・ライブ・集合・おやつ) より先に出水し、
+            // 用事は上陸してから受ける (設計 B-1「受理は上陸後」)。陸では何もせず下へ流す
+            if (UpdateWaterPlay()) { _selectedBehavior = BehaviorWater; NotifyPlay(); return; }
+
             // ---- 割り込み 1.1: そばで寝る (IMP-DOG-019 Phase 2) ----
             //
             // **人の用事の中でいちばん強い。** 呼んだ人の横へ行って寝る間は、
@@ -1466,8 +1470,6 @@ namespace KominkaDogRun
                 return;
             }
 
-            // IMP-DOG-020: 水遊び (HillsideWater.cs)。人の用事より弱く、挨拶・休憩・接近・じゃれ合い・徘徊より強い
-            if (UpdateWaterPlay()) { _selectedBehavior = BehaviorWater; NotifyPlay(); return; }
 
             // Continue an accepted welcome before proximity/rest can stop it short of the person.
             if (UpdateGreeting(false)) { _selectedBehavior = BehaviorGreeting; NotifyPlay(); return; }

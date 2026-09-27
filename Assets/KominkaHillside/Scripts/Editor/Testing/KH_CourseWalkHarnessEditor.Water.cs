@@ -15,21 +15,25 @@ namespace KominkaHillside.Editor
     // widest wading band in stage 0). Every case starts the regular way: menu attach near the spot, then menu detach within
     // 12 m of the entry (the release rule). For every case after W0 the dog's per-stay "first play used" flag is cleared in
     // its heap first (standing in for a new stay), so the same release starts the play again.
-    //   W0              release -> WaterPlay started (waterState >= 1) within 5 s, wading (state 2) within 20 s. No debug entry.
+    //   W0              release -> WaterPlay started (waterState >= 1) within 5 s and the first wet step (waterPose 1) within 6 s
+    //                   (decision 2026-09-27: B-1's 5 s runs to wet feet; 1 s margin for the measured spread). No debug entry.
     //   W4-leash        wading, menu attach -> refused (walkers stays -1), exit starts <= 1.5 s, landed (waterPose 0) <= 10 s,
     //                   then a menu attach is accepted.
     //   W4-gather       wading, a gathering starts (written into KD_GroupActivities' synced heap, roster empty as the arbiter
     //                   would freeze it) -> exit <= 1.5 s, landed <= 10 s, the dog never joins.
     //   W4-toy          wading, menu "call the ball" -> refused (ball does not move), exit <= 1.5 s, landed <= 10 s.
-    //   W4-throw        wading, the dog's ball placed on the bank and "thrown" (_OnBallThrown) -> the Fetch reaches Pickup
-    //                   <= 15 s (it walks out of the water on its own).
+    //   W4-throw        wading, the dog's ball placed on the bank and "thrown" (_OnBallThrown) -> the throw is held (no Fetch
+    //                   state while wet), exit <= 1.5 s, landed <= 10 s, the Fetch starts <= 10 s after landing, Pickup <= 25 s.
     //   W6-owner        wading, the Owner's local play wiped in the heap (a new Owner has no WaterPlay, C-11) -> exit <= 1.5 s,
     //                   landed <= 10 s.
     //   W6-exit-blocked wading, the saved exit moved into the deep channel (spot heap) and the stay ended -> recovery stage 2
     //                   (another exit) logged, landed <= 30 s.
     //   W6-all-blocked  every exit moved into the deep channel -> recovery stage 3 (teleport to the return point) logged,
     //                   landed <= 40 s.
-    //   W4-call         last (a called dog stays out of the leash): wading, menu "call" (_Sleep) -> the play is dropped
+    //   W4-call         last (a called dog stays out of the leash). Exit <= 1.5 s, landed <= 10 s, then the call is taken up
+    //                   (_sleepCalled) <= 10 s after landing. wading, "call" through the dog's KD_SleepSlot._TryCall (the
+    //                   same entry the menu uses without the pose chooser; the chooser's _Apply only re-poses a dog that is
+    //                   already called, run 20260927-054541) -> the play is dropped
     //                   (waterState 0) and the dog is out (waterPose 0) <= 10 s. NOT_EXERCISED when the call is refused.
     // Actions start only once the dog is really in the water: waterPose 1 held for 1.5 s (run 20260927-053222 acted 2 s after
     // waterState 2, while the dog was still crossing the dry 2.4 m between the entry and the band, so every case saw a dry dog).
@@ -44,6 +48,7 @@ namespace KominkaHillside.Editor
             public double released = -1, playStarted = -1, wading = -1, wet = -1, actionAt = -1, exitStarted = -1, landed = -1, done = -1;
             public int frames, bandOutsideSpotFrames, tooDeepFrames, bigSteps, stateChanges, recoverStage;
             public float maxDepth, maxStep, mouth;
+            public bool fetchWhileWet; public double fetchAfterLanding = -1;
             public bool refusedLogged, refused, accepted, joined, ballMoved, pickedUp, calledObserved;
             public List<string> log = new List<string>();
         }
@@ -54,7 +59,7 @@ namespace KominkaHillside.Editor
             public string limitations = "Single local ClientSim, dog 2. The per-stay first-play flag is cleared in the heap before each case after W0; the gathering is written into the synced heap; the Owner change is a heap wipe of the local play; blocked exits are heap edits of the spot. Not network, Owner handover, device or visual acceptance.";
         }
         static WhReport wh;
-        static UdonBehaviour whFetch, whSpot, whActivities, whCallPose;
+        static UdonBehaviour whFetch, whSpot, whActivities, whCallPose, whSlot;
         static double whWetSince = -1, whCallApplyAt = -1;
         static int whPhase, whStep, whLastState;
         static double whNext, whPhaseAt;
@@ -79,6 +84,7 @@ namespace KominkaHillside.Editor
             whSpot = all.Single(u => u.programSource != null && u.programSource.name == "KH_WaterSpot");
             whActivities = all.Single(u => u.programSource != null && u.programSource.name == "KD_GroupActivities");
             whCallPose = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KD_CallPose");
+            whSlot = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KD_SleepSlot" && Get<int>(u, "dogIndex") == WhDog);
             whPolyX = Get<float[]>(whSpot, "polyX"); whPolyZ = Get<float[]>(whSpot, "polyZ");
             whExitsBackup = (Vector3[])Get<Vector3[]>(whSpot, "exits").Clone();
             wh = new WhReport { runId = report.runId };
@@ -166,8 +172,8 @@ namespace KominkaHillside.Editor
                     if (c.name == "W0")
                     {
                         if (c.playStarted < 0 && t > 5) { WhFinish(c, now, false, "no WaterPlay within 5 s of the release"); return; }
-                        if (ready && t - c.wet > 3) { WhFinish(c, now, WhClean(c) && c.maxDepth > .02f, "play " + c.playStarted.ToString("F2") + " s, wading " + c.wading.ToString("F2") + " s, wet " + c.wet.ToString("F2") + " s" + WhSummary(c)); return; }
-                        if (t > 25) { WhFinish(c, now, false, "not wet (waterPose 1) within 25 s" + WhSummary(c)); return; }
+                        if (ready && t - c.wet > 3) { WhFinish(c, now, WhClean(c) && c.maxDepth > .02f && c.playStarted <= 5 && c.wet <= 6.0, "play " + c.playStarted.ToString("F2") + " s, wading " + c.wading.ToString("F2") + " s, wet " + c.wet.ToString("F2") + " s" + WhSummary(c)); return; }
+                        if (t > 25) { WhFinish(c, now, false, "not wet (waterPose 1) within 25 s" + WhSummary(c)); return; }   // the 6 s limit is judged above
                         return;
                     }
                     if (ready) { WhAct(c, now); whPhase = 3; whPhaseAt = now; return; }
@@ -216,8 +222,11 @@ namespace KominkaHillside.Editor
                     break;
                 }
                 case "W4-call":
-                    // _Sleep{i} only opens the pose chooser (KD_CallPose._Open); the call itself is the chooser's _Apply.
-                    pouch.SendCustomEvent("_Sleep" + WhDog); whCallApplyAt = now + .5; break;
+                    // _Sleep{i} only opens the pose chooser (KD_CallPose._Open) and its _Apply only re-poses an already called dog.
+                    // The call itself: KD_SleepSlot._TryCall with a base pose (reserve, then submit once the selection is ready).
+                    if (whSlot == null) throw new InvalidOperationException("KD_SleepSlot of dog 2 missing");
+                    whSlot.SetProgramVariable("requestedPose", 0);
+                    whSlot.SendCustomEvent("_TryCall"); whCallApplyAt = -1; break;
             }
         }
 
@@ -271,12 +280,20 @@ namespace KominkaHillside.Editor
                     }
                     break;
                 case "W4-throw":
-                    if (Get<int>(whFetch, "dogState") >= 3) c.pickedUp = true;
+                {
+                    int fetchState = Get<int>(whFetch, "dogState");
+                    if (fetchState != 0 && pose != 0) c.fetchWhileWet = true;
+                    if (fetchState != 0 && c.landed >= 0 && c.fetchAfterLanding < 0) c.fetchAfterLanding = t - c.landed;
+                    if (fetchState >= 3) c.pickedUp = true;
                     if (c.pickedUp)
                     {
-                        WhFinish(c, now, t <= 15 && WhClean(c), "pickup " + t.ToString("F2") + " s landed=" + c.landed.ToString("F2") + WhSummary(c)); return;
+                        bool ok = !c.fetchWhileWet && c.exitStarted >= 0 && c.exitStarted <= 1.5 && c.landed <= 10
+                            && c.fetchAfterLanding >= 0 && c.fetchAfterLanding <= 10 && t <= 25 && WhClean(c);
+                        WhFinish(c, now, ok, "exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2") + " fetchAfterLanding=" + c.fetchAfterLanding.ToString("F2")
+                            + " fetchWhileWet=" + c.fetchWhileWet + " pickup " + t.ToString("F2") + " s" + WhSummary(c)); return;
                     }
                     break;
+                }
                 case "W6-owner":
                     if (c.landed >= 0 && t - c.landed > 1)
                     {
@@ -295,16 +312,22 @@ namespace KominkaHillside.Editor
                     }
                     break;
                 case "W4-call":
-                    if (whCallApplyAt > 0 && now >= whCallApplyAt) { whCallApplyAt = -1; if (whCallPose != null) whCallPose.SendCustomEvent("_Apply"); }
-                    if (s == 0) c.calledObserved = true;
-                    if (c.landed >= 0 && s == 0 && t > 3)
+                    // In the water the call starts the exit (errand); the sleep branch takes it up once the dog has landed.
+                    if (Get<bool>(wander[WhDog], "_sleepCalled")) { if (!c.calledObserved) c.done = t; c.calledObserved = true; }
+                    if (c.calledObserved && c.landed >= 0)
                     {
-                        WhFinish(c, now, c.landed <= 10 && WhClean(c), "landed=" + c.landed.ToString("F2") + WhSummary(c)); return;
+                        bool ok = c.exitStarted >= 0 && c.exitStarted <= 1.5 && c.landed <= 10 && c.done - c.landed <= 10 && WhClean(c);
+                        WhFinish(c, now, ok, "exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2") + " calledAfterLanding=" + (c.done - c.landed).ToString("F2") + WhSummary(c)); return;
                     }
-                    if (t > 12 && s != 0) { c.status = "NOT_EXERCISED"; WhFinish(c, now, false, "the call did not take over the dog (call refused? sleep board gate)" + WhSummary(c), true); return; }
+                    if (t > 12 && !c.calledObserved && c.exitStarted < 0)
+                    {
+                        bool selecting = whSlot != null && Get<int>(whSlot, "_selectionToken") != 0;
+                        WhFinish(c, now, false, "the call was not accepted (KD_SleepSlot._TryCall: selection " + (selecting ? "started, no commit" : "refused, board.CanCall / reservation") + ")" + WhSummary(c), true); return;
+                    }
+                    if (t > 20) { WhFinish(c, now, false, "called but not out of the water in 20 s" + WhSummary(c)); return; }
                     break;
             }
-            double cap = c.name == "W6-all-blocked" ? 50 : c.name == "W6-exit-blocked" ? 40 : 25;
+            double cap = c.name == "W6-all-blocked" ? 50 : c.name == "W6-exit-blocked" ? 40 : c.name == "W4-throw" ? 35 : 25;
             if (t > cap)
             {
                 if (c.name.StartsWith("W6")) whSpot.SetProgramVariable("exits", (Vector3[])whExitsBackup.Clone());

@@ -11,7 +11,8 @@ namespace KominkaHillside
     //   entry   : where a dog walks in (bank NavMesh, outside the riverbed exclusion).
     //   exits   : bank NavMesh points; exits[0] is the entry. returns[k] is the bank point behind exits[k], with a complete
     //             NavMesh path from the "川辺" pass point (Course/77 check 3).
-    //   grid    : riverbed height every 0.5 m (bed, gridNx * gridNz, row-major in z); -1000 = outside the region.
+    //   grid    : riverbed height every 0.5 m over the region's bounding box (bed, gridNx * gridNz, row-major in z); -1000 =
+    //             no data (older builds baked only the inside; callers treat it as unknown, not as dry).
     // Depth = water surface (KH_RiverData) - riverbed (grid, bilinear). Return values only (no out parameters).
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_WaterSpot : UdonSharpBehaviour

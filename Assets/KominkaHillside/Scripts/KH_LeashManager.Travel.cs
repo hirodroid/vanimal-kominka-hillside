@@ -404,13 +404,20 @@ namespace KominkaHillside
                 if (d.sqrMagnitude <= bestD) { bestD = d.sqrMagnitude; best = i; }
             }
             if (best < 0) return false;
-            if (_TravelLandingOk(route._Position(best))) return true;
+            if (JoinCandidate(route._Position(best), q, maxDist)) return true;
             for (int k = 1; k <= 5; k++)
             {
-                if (_TravelLandingOk(route._Position((best + k) % route.count))) return true;
-                if (_TravelLandingOk(route._Position((best - k + route.count) % route.count))) return true;
+                if (JoinCandidate(route._Position((best + k) % route.count), q, maxDist)) return true;
+                if (JoinCandidate(route._Position((best - k + route.count) % route.count), q, maxDist)) return true;
             }
             return false;
+        }
+
+        /// <summary>前後のノードにも 30 m の制限をかける (W3 レビュー 7)。</summary>
+        private bool JoinCandidate(Vector3 node, Vector3 q, float maxDist)
+        {
+            Vector3 d = node - q; d.y = 0f;
+            return d.sqrMagnitude <= maxDist * maxDist && _TravelLandingOk(node);
         }
 
         /// <summary>橋の区域 (川の中心から x±18 m・橋から z±8 m) に入っている橋の番号。無ければ -1。</summary>

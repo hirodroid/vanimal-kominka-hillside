@@ -47,7 +47,8 @@ namespace KominkaHillside.Editor
             public float[] mouthHeights;
             public bool pouchWired;
         }
-        [Serializable] public class Breed { public string name; public float mouth, wadeLimit, wadeCells, wadeWidth, swimCells, swimWidth; public bool swims; public int blockedLines; }
+        // swimBandOk (width >= 2.5 m for a swimming breed, B-3 check 5) belongs to step 4 (swimming): recorded, not judged here.
+        [Serializable] public class Breed { public string name; public float mouth, wadeLimit, wadeCells, wadeWidth, swimCells, swimWidth; public bool swims, swimBandOk; public int blockedLines; }
         [Serializable] public class VerifyReport
         {
             public string status, utc, scene;
@@ -59,6 +60,9 @@ namespace KominkaHillside.Editor
             public List<Breed> breeds = new List<Breed>();
             public List<string> stones = new List<string>(), findings = new List<string>();
             public int dogsWired; public bool pouchWired;
+            public string stage1SwimCheck = "NOT_CHECKED: the swim band >= 2.5 m (check 5) is judged in step 4 (swimming); breeds[].swimBandOk is recorded only";
+            public string slopeTolerance = "Check 4 limit 5 % (design); judged at <= 5.05 %: the formula gives exactly 5.00 % here and float rounding must not flip it. Values above 5.00 % are reported in findings as a note when <= 5.05 %";
+            public List<string> notes = new List<string>();
             public string limitations = "Static data only. Water play itself: ClientSim harness W0/W4/W6 (Course/78) and PCVR. Swim widths are recorded for step 4 only.";
         }
 
@@ -114,7 +118,9 @@ namespace KominkaHillside.Editor
             for (int iz = 0; iz < nz; iz++) for (int ix = 0; ix < nx; ix++)
             {
                 float x = x0 + ix * Step, z = z0 + iz * Step;
-                bed[iz * nx + ix] = Inside(poly, x, z) ? Ground(x, z) : KH_WaterSpot.NoBed;
+                // The whole bounding box is baked, so the bilinear lookup near the region's edge never meets a missing corner
+                // (Codex 2026-09-27 D-中). Inside / outside is decided by the polygon alone.
+                bed[iz * nx + ix] = Ground(x, z);
                 if (Inside(poly, x, z) && KH_CourseGroundEditor.RiverAt(z).y - bed[iz * nx + ix] > .02f) report.wetCells++;
             }
             report.gridNx = nx; report.gridNz = nz;
@@ -323,8 +329,10 @@ namespace KominkaHillside.Editor
 
         // ============================================================ trail (Terrain paint only)
 
+        static string BackupStamp;
         static int PaintTrail(Vector3 a, Vector3 b)
         {
+            BackupStamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
             int painted = 0; const float width = 1.2f;
             float minX = Mathf.Min(a.x, b.x) - 3, maxX = Mathf.Max(a.x, b.x) + 3, minZ = Mathf.Min(a.z, b.z) - 3, maxZ = Mathf.Max(a.z, b.z) + 3;
             var seg = new Vector2(b.x - a.x, b.z - a.z);
@@ -334,7 +342,9 @@ namespace KominkaHillside.Editor
                 if (maxX < p.x || minX > p.x + s.x || maxZ < p.z || minZ > p.z + s.z) continue;
                 if (td.alphamapLayers != 4) throw new InvalidOperationException("Expected 4 terrain layers on " + td.name);
                 string path = AssetDatabase.GetAssetPath(td);
-                Directory.CreateDirectory(OutDir + "/terrain-backup"); File.Copy(path, OutDir + "/terrain-backup/" + Path.GetFileName(path), true);
+                // One folder per run, so running 76 again never overwrites the state before an earlier run (Codex 2026-09-27 M-中).
+                string backupDir = OutDir + "/terrain-backup/" + BackupStamp; Directory.CreateDirectory(backupDir);
+                File.Copy(path, backupDir + "/" + Path.GetFileName(path), false);
                 int n = td.alphamapResolution;
                 int ix0 = Mathf.Clamp(Mathf.FloorToInt((minX - p.x) / s.x * (n - 1)), 0, n - 1), ix1 = Mathf.Clamp(Mathf.CeilToInt((maxX - p.x) / s.x * (n - 1)), 0, n - 1);
                 int iz0 = Mathf.Clamp(Mathf.FloorToInt((minZ - p.z) / s.z * (n - 1)), 0, n - 1), iz1 = Mathf.Clamp(Mathf.CeilToInt((maxZ - p.z) / s.z * (n - 1)), 0, n - 1);
@@ -413,6 +423,7 @@ namespace KominkaHillside.Editor
                 r.surfaceSlopeMax = Mathf.Max(r.surfaceSlopeMax, Mathf.Abs(KH_CourseGroundEditor.RiverAt(z + .5f).y - KH_CourseGroundEditor.RiverAt(z).y) / .5f);
             r.surfaceSlopeMean = Mathf.Abs(KH_CourseGroundEditor.RiverAt(maxZ).y - KH_CourseGroundEditor.RiverAt(minZ).y) / (maxZ - minZ);
             if (r.surfaceSlopeMax > .0505f) r.findings.Add("Check 4: water-surface slope " + (r.surfaceSlopeMax * 100).ToString("F2") + " % (> 5)");
+            else if (r.surfaceSlopeMax > .05f) r.notes.Add("Check 4: water-surface slope " + (r.surfaceSlopeMax * 100).ToString("F3") + " % is above 5 % only by rounding (tolerance 0.05 point)");
 
             // check 5: per breed wading / swimming widths, straight lines to the exits, stones in the region
             float span = maxZ - minZ;
@@ -423,7 +434,8 @@ namespace KominkaHillside.Editor
                 for (int i = 0; i < spot.bed.Length; i++)
                 {
                     if (spot.bed[i] <= KH_WaterSpot.NoBed + 1) continue;
-                    var c = spot._CellPoint(i); float d = KH_CourseGroundEditor.RiverAt(c.z).y - c.y;
+                    var c = spot._CellPoint(i); if (!Inside(poly, c.x, c.z)) continue;
+                    float d = KH_CourseGroundEditor.RiverAt(c.z).y - c.y;
                     if (d > .02f && d <= br.wadeLimit)
                     {
                         br.wadeCells++;
@@ -436,6 +448,8 @@ namespace KominkaHillside.Editor
                     if (d >= .75f * m) br.swimCells++;
                 }
                 br.wadeWidth = br.wadeCells * Step * Step / span; br.swimWidth = br.swimCells * Step * Step / span;
+                br.swimBandOk = !br.swims || br.swimWidth >= 2.5f;
+                if (!br.swimBandOk) r.notes.Add("Step 4 (not judged now): swim band " + br.swimWidth.ToString("F2") + " m < 2.5 m for " + br.name);
                 if (br.wadeCells == 0) r.findings.Add("Check 5: no wadeable cell for " + br.name);
                 if (br.blockedLines > 0) r.findings.Add("Check 5: " + br.blockedLines + " straight lines to exits blocked for " + br.name);
                 r.breeds.Add(br);

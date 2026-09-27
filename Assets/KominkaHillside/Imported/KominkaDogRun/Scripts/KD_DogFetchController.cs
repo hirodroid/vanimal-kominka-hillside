@@ -811,6 +811,7 @@ namespace KominkaDogRun
         /// **`_lastReqResult` が嘘をつく**。増える入口も同じ戻り値で守られる。</summary>
         bool StartFetch(int playerId)
         {
+            if (WaterHoldsThrow(playerId)) return false;   // IMP-DOG-020: in the water, walk out first (HillsideWater.cs)
             if (hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex)) return false;
             if (frisbeeCatch != null && frisbeeCatch.IsEngaged) return false;
             // **Fetch が始まる唯一の口。** `_OnBallThrown` (ローカル) と
@@ -834,6 +835,7 @@ namespace KominkaDogRun
             // 判定は常に dogRoot の Owner (不変条件 8)。非 Owner は
             // `VRCObjectSync` が配ってくる実位置の差分から _speed を作る
             _dogOwner = IsDogOwner();
+            WaterThrowTick();   // IMP-DOG-020: a throw held while the dog was in the water (HillsideWater.cs)
             // Cross-object delivery can race with a throw. Once a leash is observed it wins,
             // and the existing release path restores carried-ball physics before walking.
             if (_dogOwner && hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex) && !IsIdle)

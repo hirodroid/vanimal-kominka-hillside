@@ -208,7 +208,7 @@ namespace KominkaHillside
             if (Vector3.Distance(caller.GetPosition(), dogRoots[dog].position) > attachReach) return;
             // A carrying/chasing dog must finish its current Fetch before attachment; a gathering dog stays in formation.
             if (fetchers[dog] == null || !fetchers[dog].IsIdle || _IsGathering(dog)) return;
-            if (_InWater(dog)) return;   // IMP-DOG-020: accepted only after landing (KH_LeashManager.Water.cs)
+            if (_InWater(dog)) { fetchers[dog]._AskWaterExitFor(caller.playerId); return; }   // IMP-DOG-020: after landing (KH_LeashManager.Water.cs)
             if (frisbeeCatchers != null && dog < frisbeeCatchers.Length && frisbeeCatchers[dog] != null && frisbeeCatchers[dog].IsEngaged) return;
             // IMP-DOG-016: a dog waiting where it was called stays out of the walk until its caller (or the owner) lets it roam.
             if (sleepBoard != null && sleepBoard._IsCalled(dog)) return;
