@@ -69,7 +69,7 @@ namespace KominkaDogRun
         const float SwimEaseRate = 1.2f, SinkGuard = 0.03f, SwimLookAhead = 0.3f;
         private bool _waterSwimming, _swimYValid, _waterWasOwner, _bobBaseValid, _swimSettled;
         private int _waterFetchFrame = -1, _waterCarryFrame = -1;
-        // Last refusal of _BlockedByRiver (1 sink-guard / 2 wade-limit / 3 band outside the spot) and its frame: local, read by the
+        // Last refusal of _BlockedByRiver (1 sink-guard / 2 wade-limit / 3 band outside the spot / 4 leaving the spot into the band) and its frame: local, read by the
         // harness trace only (run 20260927-093227: W3 dogs stood 90 s on the bank, every step refused by the band rule).
         private int _waterBlock, _waterBlockFrame = -1;
         // The last stage-3 recovery teleport: its frame and both ends (local, not synced). The harness splits an observed step
@@ -108,6 +108,15 @@ namespace KominkaDogRun
                 if (!waterSwimAllowed && d > WaterDepthLimit()) { _waterBlock = 2; _waterBlockFrame = Time.frameCount; return true; }
                 return false;
             }
+            // Leaving the spot into the band is refused (run 20260927-114759, W2-Pome: 97 frames in the band outside the spot; the
+            // plain band rule below lets a body inside the band move sideways, so a swimmer at the region's river-side edge or its
+            // up/downstream end could slide out of the polygon). The landward side of the region lies outside the band (exits and
+            // return points are outside the NavMesh riverbed exclusion), so walking out through an exit is not affected.
+            if (waterSpot != null && waterSpot._Contains(from) && !waterSpot._Contains(next) && riverData._InBand(next, KominkaHillside.KH_RiverData.BandMargin))
+            {
+                _waterBlock = 4; _waterBlockFrame = Time.frameCount;
+                return true;
+            }
             // Outside the spot, or a spot cell without riverbed data (Codex 2026-09-27 D-中): the plain band rule, so a step
             // deeper into the band stops and the exit watch / recovery takes over.
             bool band = riverData._BlocksStep(from, next, KominkaHillside.KH_RiverData.BandMargin);
@@ -128,7 +137,10 @@ namespace KominkaDogRun
         /// water is always allowed. Afloat dogs keep the existing handling (height kept, at most 0.1 m per frame).</summary>
         public bool _WaterPushBlocked(Vector3 from, Vector3 to)
         {
-            if (_WaterFloating()) return false;
+            // Afloat: the height is kept by KD_DogPack; only a push out of the spot into the band is refused (W2-Pome, see above)
+            if (_WaterFloating())
+                return waterSpot != null && riverData != null && waterSpot._Contains(from) && !waterSpot._Contains(to)
+                    && riverData._InBand(to, KominkaHillside.KH_RiverData.BandMargin);
             int old = _waterFetchFrame;
             if (fetchController != null && fetchController.IsWaterFetching) _waterFetchFrame = Time.frameCount;   // the spot exception, as for its steps
             bool blocked = _BlockedByRiver(from, to);

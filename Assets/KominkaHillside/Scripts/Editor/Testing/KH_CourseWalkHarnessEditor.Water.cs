@@ -94,6 +94,7 @@ namespace KominkaHillside.Editor
             public bool teleportSplit;
             public float pathToEntry = -1f, wetLimit = -1f, ballEndToReturn = -1f, ballEndZ = -1f;
             public int carryMouthLowFrames;
+            public float pickupDepth = -1f;   // depth under the dog when the Fetch went 6 -> 7 (it took the ball standing in water)
             public bool ballAtDownstreamEnd, gravityBack, farBankDrop;
             public float ballEndDistance = -1f;
             public List<WhDogStat> stats = new List<WhDogStat>();
@@ -110,6 +111,7 @@ namespace KominkaHillside.Editor
             [NonSerialized] public bool teleportPending;   // (kept for the log hook; the jump rule reads the dog's own teleport record)
             [NonSerialized] public int prevFrame = -1; [NonSerialized] public float prevTime;
             public string bigStepAt;
+            public string bandAt;   // the first frame in the band outside the spot: positions, states, the dog's target
             public int wadeDeepFrames;   // on its feet (pose 1) and deeper than its limit (wading limit, or the swim entry for a swimmer) + 0.02   // the first counted big step: positions, states, nearest other dog   // a stage-3 teleport was logged; exempt only the next observation
         }
         [Serializable] public class WhReport
@@ -583,16 +585,75 @@ namespace KominkaHillside.Editor
 
         static float Flat(Vector3 v) { v.y = 0; return v.magnitude; }
 
-        /// <summary>The region cell whose depth is nearest target (fetch mode's shallow ball).</summary>
-        static Vector3 WhCellAtDepth(float target)
+        /// <summary>Depth under p from the spot's riverbed grid (nearest cell); 0 outside the grid or without a bed.</summary>
+        static float WhDepthUnder(Vector3 p)
         {
-            var bed = Get<float[]>(whSpot, "bed"); int nx = Get<int>(whSpot, "gridNx");
+            var bed = Get<float[]>(whSpot, "bed"); int nx = Get<int>(whSpot, "gridNx"), nz = bed.Length / Mathf.Max(1, nx);
+            float x0 = Get<float>(whSpot, "gridX0"), z0 = Get<float>(whSpot, "gridZ0"), step = Get<float>(whSpot, "gridStep");
+            int ix = Mathf.RoundToInt((p.x - x0) / step), iz = Mathf.RoundToInt((p.z - z0) / step);
+            if (ix < 0 || iz < 0 || ix >= nx || iz >= nz) return 0f;
+            float b = bed[iz * nx + ix];
+            return b <= KH_WaterSpot.NoBed + 1 ? 0f : Mathf.Max(0f, KH_CourseGroundEditor.RiverAt(p.z).y - b);
+        }
+
+        /// <summary>Fetch mode's shallow ball. Riverbed depth (the grid, as the runtime's deep-ball rule uses) between 0.05 m and
+        /// 0.9 x the dog's wading limit, and as far as possible from dry ground (a cell outside the spot or 0.02 m or shallower,
+        /// searched up to 3 m); ties go to the depth nearest target. Run 20260927-115252: "every cell within 1 m wet" left only a
+        /// 0.30 m cell for the Lab (limit 0.25 m), so the runtime rightly gave up (deep-ball).</summary>
+        static Vector3 WhCellAtDepth(float target, float limit, out string why)
+        {
+            var bedA = Get<float[]>(whSpot, "bed"); int nxA = Get<int>(whSpot, "gridNx"), nzA = bedA.Length / Mathf.Max(1, nxA);
+            float x0A = Get<float>(whSpot, "gridX0"), z0A = Get<float>(whSpot, "gridZ0"), stepA = Get<float>(whSpot, "gridStep");
+            bool WetA(int ix, int iz)
+            {
+                if (ix < 0 || iz < 0 || ix >= nxA || iz >= nzA) return false;
+                float b = bedA[iz * nxA + ix]; var q = new Vector3(x0A + ix * stepA, b, z0A + iz * stepA);
+                return b > KH_WaterSpot.NoBed + 1 && WhInSpot(q) && KH_CourseGroundEditor.RiverAt(q.z).y - b > .02f;
+            }
+            int R = Mathf.CeilToInt(3f / stepA), bestI = -1; float bestDry = -1f, bestErr = float.MaxValue;
+            for (int i = 0; i < bedA.Length; i++)
+            {
+                int cx = i % nxA, cz = i / nxA;
+                if (!WetA(cx, cz)) continue;
+                float depth = KH_CourseGroundEditor.RiverAt(z0A + cz * stepA).y - bedA[i];
+                if (depth < .05f || depth > .9f * limit) continue;
+                float dry = R * stepA;
+                for (int dz = -R; dz <= R; dz++)
+                    for (int dx = -R; dx <= R; dx++)
+                    {
+                        float dist = Mathf.Sqrt(dx * dx + dz * dz) * stepA;
+                        if (dist < dry && !WetA(cx + dx, cz + dz)) dry = dist;
+                    }
+                float err = Mathf.Abs(depth - target);
+                if (dry > bestDry + .001f || (Mathf.Abs(dry - bestDry) <= .001f && err < bestErr)) { bestDry = dry; bestErr = err; bestI = i; }
+            }
+            if (bestI < 0) { why = "none within 0.05-" + (.9f * limit).ToString("F3") + " m: the old nearest-depth pick"; return WhCellAtDepthOld(target); }
+            var cell = new Vector3(x0A + (bestI % nxA) * stepA, bedA[bestI], z0A + (bestI / nxA) * stepA);
+            why = "at=" + cell.ToString("F2") + " depth=" + (KH_CourseGroundEditor.RiverAt(cell.z).y - bedA[bestI]).ToString("F3") + " fromDry=" + bestDry.ToString("F2") + " m";
+            return cell;
+        }
+
+        static Vector3 WhCellAtDepthOld(float target)
+        {
+            var bed = Get<float[]>(whSpot, "bed"); int nx = Get<int>(whSpot, "gridNx"), nz = bed.Length / Mathf.Max(1, nx);
             float x0 = Get<float>(whSpot, "gridX0"), z0 = Get<float>(whSpot, "gridZ0"), step = Get<float>(whSpot, "gridStep");
             Vector3 best = Get<Vector3>(whSpot, "entry"); float bestErr = float.MaxValue;
+            int reach = Mathf.CeilToInt(1f / step);
+            bool Wet(int ix, int iz)
+            {
+                if (ix < 0 || iz < 0 || ix >= nx || iz >= nz) return false;
+                float b = bed[iz * nx + ix]; var q = new Vector3(x0 + ix * step, b, z0 + iz * step);
+                return b > KH_WaterSpot.NoBed + 1 && WhInSpot(q) && KH_CourseGroundEditor.RiverAt(q.z).y - b > .02f;
+            }
             for (int i = 0; i < bed.Length; i++)
             {
                 var c = new Vector3(x0 + (i % nx) * step, bed[i], z0 + (i / nx) * step);
                 if (bed[i] <= KH_WaterSpot.NoBed + 1 || !WhInSpot(c)) continue;
+                bool inner = true;
+                for (int dz = -reach; dz <= reach && inner; dz++)
+                    for (int dx = -reach; dx <= reach && inner; dx++)
+                        if (dx * dx + dz * dz <= reach * reach && !Wet(i % nx + dx, i / nx + dz)) inner = false;
+                if (!inner) continue;
                 float err = Mathf.Abs(KH_CourseGroundEditor.RiverAt(c.z).y - bed[i] - target);
                 if (err < bestErr) { bestErr = err; best = c; }
             }
@@ -680,7 +741,18 @@ namespace KominkaHillside.Editor
                 }
             }
             d.teleportPending = false;
-            if (RiverInBand(p) && !WhInSpot(p)) d.bandOutsideSpotFrames++;
+            if (RiverInBand(p) && !WhInSpot(p))
+            {
+                d.bandOutsideSpotFrames++;
+                if (d.bandAt == null)
+                {
+                    float near = 99f; for (int k = 0; k < roots.Length; k++) if (k != d.dog && roots[k] != null) near = Mathf.Min(near, Vector3.Distance(roots[k].position, p));
+                    d.bandAt = "at=" + p.ToString("F2") + " from=" + from.ToString("F2") + " fromInSpot=" + WhInSpot(from) + " water=" + Get<int>(wander[d.dog], "waterState")
+                        + " pose=" + Get<int>(whFetches[d.dog], "waterPose") + " swimming=" + Get<bool>(wander[d.dog], "_waterSwimming") + " fetch=" + Get<int>(whFetches[d.dog], "dogState")
+                        + " target=" + Get<Vector3>(wander[d.dog], "_waterTarget").ToString("F2") + " targetInSpot=" + WhInSpot(Get<Vector3>(wander[d.dog], "_waterTarget"))
+                        + " nearestDog=" + near.ToString("F2") + " frame=" + Time.frameCount;
+                }
+            }
             int pose = Get<int>(whFetches[d.dog], "waterPose");
             if (pose != d.pose)
             {
@@ -718,11 +790,21 @@ namespace KominkaHillside.Editor
             }
         }
 
-        static bool WhDogOk(WhDogStat d)
+        // Swim <-> wade toggles: W1 (one out-and-back) at most 4. W2 (a free 45 s stay, the targets move between shallow and deep
+        // cells) at most 4 per 20 s wet, rounded (decision 2026-09-27: W2-Corgi run 20260927-112936 had 6 toggles in a normal stay,
+        // every other count 0).
+        static int WhToggleLimit(WhDogStat d, bool perStay) { return perStay ? Mathf.Max(4, Mathf.RoundToInt(4f * d.wetSeconds / 20f)) : 4; }
+        static bool WhDogOk(WhDogStat d, bool perStay)
+        {
+            if (d.swimmer && d.swimToggles > WhToggleLimit(d, perStay)) return false;
+            return WhDogOkBase(d, perStay);
+        }
+        static bool WhDogOk(WhDogStat d) { return WhDogOk(d, false); }
+        static bool WhDogOkBase(WhDogStat d, bool perStay)
         {
             if (d.mouthBoneMissing) return false;   // reason "mouth bone missing" in the summary
             bool clean = d.bandOutsideSpotFrames == 0 && d.bigSteps == 0 && d.tooDeepFrames == 0 && d.mouthLowFrames == 0 && d.footLowFrames == 0;
-            bool swimRule = d.swimmer ? d.swimEntries >= 1 && d.swimToggles <= 4 : d.swimEntries == 0;
+            bool swimRule = d.swimmer ? d.swimEntries >= 1 && d.swimToggles <= WhToggleLimit(d, perStay) : d.swimEntries == 0;
             return clean && swimRule && d.landed && d.landedOnSpotBank;
         }
 
@@ -730,10 +812,10 @@ namespace KominkaHillside.Editor
         {
             return " [" + d.breed + (d.swimmer ? " swimmer" : " wades") + " ok=" + WhDogOk(d) + " band=" + d.bandOutsideSpotFrames + " big=" + d.bigSteps + " maxStep=" + d.maxStep.ToString("F3")
                 + " tooDeep=" + d.tooDeepFrames + " wadeDeep=" + d.wadeDeepFrames + " mouthLow=" + d.mouthLowFrames + " minMouth=" + d.minMouthAboveWater.ToString("F3") + " (root+M " + d.minMouthAboveWaterFromRoot.ToString("F3")
-                + ") footLow=" + d.footLowFrames + " minFoot=" + d.minFootAboveBed.ToString("F3") + " swims=" + d.swimEntries + " toggles=" + d.swimToggles
+                + ") footLow=" + d.footLowFrames + " minFoot=" + d.minFootAboveBed.ToString("F3") + " swims=" + d.swimEntries + " toggles=" + d.swimToggles + " (limit W1 4 / W2 " + WhToggleLimit(d, true) + ")"
                 + " swimS=" + d.swimSeconds.ToString("F1") + " longest=" + d.longestSwim.ToString("F1") + " backToWade=" + d.backToShallow + " wetS=" + d.wetSeconds.ToString("F1")
                 + " landed=" + d.landed + " sameBank=" + d.landedOnSpotBank + " recover=" + d.recoverStage + (d.mouthBoneMissing ? " FAIL: mouth bone missing" : "")
-                + (d.bigStepAt != null ? " firstBig{" + d.bigStepAt + "}" : "") + "]";
+                + (d.bigStepAt != null ? " firstBig{" + d.bigStepAt + "}" : "") + (d.bandAt != null ? " firstBand{" + d.bandAt + "}" : "") + "]";
         }
 
         static void WhEvaluateW1(WhCase c, double now, double t)
@@ -827,7 +909,7 @@ namespace KominkaHillside.Editor
                     string sum = " wetDogs=" + c.wetDogs + " frameMsAvg=" + c.frameMsAvg.ToString("F2") + " frameMsMax=" + c.frameMsMax.ToString("F2")
                         + " minPairDistance=" + c.minPairDistance.ToString("F2") + " together>=2 " + c.simultaneousWetSeconds.ToString("F1") + " s, all6 " + c.allSixWetSeconds.ToString("F1")
                         + " s, closer<0.3m " + c.closeSeconds.ToString("F1") + " s" + string.Concat(c.stats.Select(WhDogSummary));
-                    if (allLanded) { c.landed = t; WhFinish(c, now, c.wetDogs == 6 && c.stats.All(WhDogOk) && c.stats.All(x => x.wadeDeepFrames == 0), "all landed " + t.ToString("F2") + " s" + sum); return; }
+                    if (allLanded) { c.landed = t; WhFinish(c, now, c.wetDogs == 6 && c.stats.All(x => WhDogOk(x, true)) && c.stats.All(x => x.wadeDeepFrames == 0), "all landed " + t.ToString("F2") + " s" + sum); return; }
                     if (t > 30) WhFinish(c, now, false, "not all landed 30 s after the stays ended" + sum);
                     return;
             }
@@ -911,7 +993,12 @@ namespace KominkaHillside.Editor
                     {
                         // Shallow = 0.6 x the dog's wading limit (Codex 2026-09-27 M-中: the old 0.04-0.08 m cell at the bank edge
                         // let Lab / Samoyed take the ball from the dry strip, wetS 0)
-                        var cell = c.name.Contains("shallow") ? WhCellAtDepth(.6f * Get<float>(whSpot, "wadeLimitRatio") * c.mouth) : WhCellBy(true); c.deepTarget = cell;
+                        float limit = Get<float>(whSpot, "wadeLimitRatio") * c.mouth; string why = "";
+                        var cell = c.name.Contains("shallow") ? WhCellAtDepth(.6f * limit, limit, out why) : WhCellBy(true); c.deepTarget = cell;
+                        if (why.Length > 0 && c.log.Count < 40) c.log.Add("shallow cell " + why + " limit=" + limit.ToString("F3"));
+                        // Shallow: the ball must not drift to the bank edge before the dog gets there (run 20260927-113409, W3-Lab-shallow
+                        // took it dry): no drift for the case; every other case runs with the spot's own value
+                        whSpot.SetProgramVariable("floatDrift", c.name.Contains("shallow") ? 0f : KH_WaterSpot.DefaultFloatDrift);
                         var ball = Get<Transform>(whFetch, "_ballT"); var bs = ball.GetComponent<VRC.SDK3.Components.VRCObjectSync>();
                         if (bs != null) bs.SetKinematic(false);
                         var rb = ball.GetComponent<Rigidbody>(); if (rb != null && !rb.isKinematic) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
@@ -944,10 +1031,14 @@ namespace KominkaHillside.Editor
                 int block = Time.frameCount - blockFrame <= 1 ? Get<int>(wander[WhDog], "_waterBlock") : 0;
                 c.trace.Add("t=" + (EditorApplication.timeSinceStartup - whPhaseAt).ToString("F1") + " fetch=" + fs + " water=" + WhState() + " pose=" + WhPose()
                     + " dog=" + q.ToString("F2") + " dogInSpot=" + WhInSpot(q) + " dogBand=" + RiverInBand(q) + " ball=" + b.ToString("F2") + " ballInSpot=" + WhInSpot(b)
-                    + " ballDepth=" + (KH_CourseGroundEditor.RiverAt(b.z).y - b.y).ToString("F3") + " speed=" + Get<float>(wander[WhDog], "_speed").ToString("F2") + " block=" + block);
+                    + " ballBelowSurface=" + (KH_CourseGroundEditor.RiverAt(b.z).y - b.y).ToString("F3") + " bedDepth=" + WhDepthUnder(b).ToString("F3") + " speed=" + Get<float>(wander[WhDog], "_speed").ToString("F2") + " block=" + block);
             }
             if (fs > c.maxFetchState) c.maxFetchState = fs;
             if (fs == 6) c.seen6 = true;
+            if (fs == 7 && !c.seen7)
+            {
+                var q7 = roots[WhDog].position; c.pickupDepth = WhDepthUnder(q7);
+            }
             if (fs == 7) c.seen7 = true;
             if (fs == 8) c.seen8 = true;
             if (c.seen8 && c.stats.Count > 0 && !c.stats[0].landed && Get<int>(whFetch, "waterPose") == 0)
@@ -1041,7 +1132,7 @@ namespace KominkaHillside.Editor
             {
                 var ball = Get<Transform>(whFetch, "_ballT"); var bp = ball.position; var st = c.stats[0];
                 c.ballEndDistance = Vector3.Distance(bp, Networking.LocalPlayer.GetPosition());
-                bool water = st.wetSeconds > 0f && st.minMouthAboveWater < 9f;   // really wet, and the mouth was measured
+                bool water = st.wetSeconds > 0f && st.minMouthAboveWater < 9f && c.pickupDepth > .02f;   // really wet, the mouth measured, the ball taken in water
                 bool ok = c.seen6 && c.seen7 && c.seen8 && c.fetchEnded && c.ballTopBelowFrames == 0 && c.carryMouthLowFrames == 0 && WhStatClean(st) && water
                     && st.landed && st.landedOnSpotBank;
                 string extra = "";
@@ -1063,7 +1154,7 @@ namespace KominkaHillside.Editor
                 }
                 WhFinish(c, now, ok, "states 6/7/8/4/5=" + c.seen6 + "/" + c.seen7 + "/" + c.seen8 + "/" + c.seenReturn + "/" + c.seenDrop + " ended=" + c.fetchEnded
                     + " t=" + t.ToString("F1") + " ballToPlayer=" + c.ballEndDistance.ToString("F2") + " ballTopBelow=" + c.ballTopBelowFrames + " carryMouthLow=" + c.carryMouthLowFrames
-                    + " wet=" + water + extra + stat); return;
+                    + " wet=" + water + " pickupDepth=" + c.pickupDepth.ToString("F3") + extra + stat); return;
             }
         }
 

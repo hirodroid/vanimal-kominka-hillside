@@ -75,10 +75,11 @@ namespace KominkaDogRun
         }
 
         // ---- a throw while the dog is in the water (DES-DOG-004 B-1) ----
-        // The throw is held while the ball flies (at most WaterThrowFlight). A ball that comes down floating in the spot starts the
-        // water fetch at once (WaterPlay -> WaterChase, Codex 2026-09-27 D-中); a non-swimmer takes only a ball within its wading
-        // limit and ignores a deep one (it keeps playing). A ball at rest anywhere else (on land): the dog walks out first and the
-        // Fetch starts after landing (10 s from the ask), as before (W4-throw).
+        // At the throw the dog is asked out at once, as before (W4-throw: the exit starts within 1.5 s; run 20260927-112624 failed
+        // at 3.02 s when the ask waited for the ball). While the ball flies (at most WaterThrowFlight) only the way of going after it
+        // is open: a ball that comes down floating in the spot starts the water fetch at once (WaterPlay / its exit -> WaterChase,
+        // Codex 2026-09-27 D-中); a non-swimmer takes only a ball within its wading limit and drops a deep one. A ball at rest
+        // anywhere else (on land): the dog keeps walking out and the Fetch starts after landing (10 s from the throw).
         const float WaterThrowHold = 10f, WaterThrowFlight = 3f;
         int _waterThrowPlayer = -1;
         float _waterThrowAt;
@@ -92,6 +93,8 @@ namespace KominkaDogRun
             {
                 _waterThrowPlayer = playerId; _waterThrowAt = Time.time; _waterThrowExitAsked = false;
                 Debug.Log("[KD_DogFetchController] throw held dog=" + dogIndex + " (in the water)");
+                KD_DogWanderController w0 = MyWander();
+                if (w0 != null) w0._WaterExitAsked(playerId);   // the exit starts now; the landing spot of the ball decides later
             }
             return true;
         }
@@ -125,12 +128,9 @@ namespace KominkaDogRun
                     Debug.Log("[KD_DogFetchController] throw into the water dog=" + dogIndex + " direct=" + (direct ? "true" : "false"));
                     return;
                 }
+                // Decided "on land" once the ball rests elsewhere (or after the flight time): wait for the landing as before
                 bool resting = _ballRb == null || _ballRb.isKinematic || _ballRb.velocity.sqrMagnitude < 0.09f;
-                if ((resting && Time.time - _waterThrowAt > 0.3f) || Time.time - _waterThrowAt > WaterThrowFlight)
-                {
-                    _waterThrowExitAsked = true; _waterThrowAt = Time.time;
-                    if (ww != null) ww._WaterExitAsked(_waterThrowPlayer);
-                }
+                if ((resting && Time.time - _waterThrowAt > 0.3f) || Time.time - _waterThrowAt > WaterThrowFlight) _waterThrowExitAsked = true;
                 return;
             }
             if (Time.time - _waterThrowAt > WaterThrowHold)

@@ -14,6 +14,7 @@ const ISSUE_FILE = path.join(ROOT, 'docs/development/issues/IMP-DOG-020-river-wa
 const RUNS_DIR = path.join(ROOT, 'Logs/kh-course-walk');
 const TEMP_DIR = path.join(ROOT, 'Temp/imp-dog-020');
 const ISSUE_START_COMMIT = '5dea996'; // Issue 作成 (2026-09-27 11:57)
+// 別セッションの全体版 (両 Issue): node scripts/kh-dashboard.js → docs/plans/2026-09-27-progress-dashboard.html。こちらはハーネスの履歴と失敗理由に寄せている。
 const JST_OFFSET_MIN = 9 * 60;
 
 const argOut = (() => { const i = process.argv.indexOf('--out'); return i >= 0 ? process.argv[i + 1] : null; })();
@@ -45,12 +46,12 @@ const sections = [];
 {
   const parts = issueText.split(/\r?\n(?=### )/);
   for (const p of parts) {
-    const h = p.match(/^### (\d+)\. (.+)/);
+    const h = p.match(/^### (\d+)\. (.+?)(?:\s+[—-]\s+(.+))?\s*$/m);
     if (!h) continue;
     const boxes = [...p.matchAll(/^- \[( |x|X)\] (.+)$/gm)].map((m) => ({ done: m[1] !== ' ', text: m[2].trim() }));
     const uncertain = [...p.matchAll(/^- (未確定|未対応)[:：]?\s*(.+)$/gm)].map((m) => m[1] + ' ' + m[2]);
     const pendingBold = [...p.matchAll(/\*\*([^*]*(?:まだ|要る|待ち)[^*]*)\*\*/g)].map((m) => m[1]);
-    sections.push({ n: +h[1], title: h[2].trim(), boxes, uncertain, pendingBold });
+    sections.push({ n: +h[1], title: h[2].trim(), note: (h[3] || '').trim(), boxes, uncertain, pendingBold });
   }
 }
 
@@ -75,7 +76,7 @@ if (fs.existsSync(RUNS_DIR)) {
     const p = path.join(RUNS_DIR, d);
     const rep = readJson(path.join(p, 'report.json')) || {};
     let kind = null, detail = null;
-    if (fs.existsSync(path.join(p, 'water.json'))) { detail = readJson(path.join(p, 'water.json')); kind = rep.waterSwim ? 'swim' : 'water'; }
+    if (fs.existsSync(path.join(p, 'water.json'))) { detail = readJson(path.join(p, 'water.json')); kind = rep.waterFetch ? 'fetch' : rep.waterSwim ? 'swim' : 'water'; }
     else if (fs.existsSync(path.join(p, 'river-w5.json'))) { detail = readJson(path.join(p, 'river-w5.json')); kind = 'river'; }
     if (!kind) continue;
     const start = toJst(rep.utc), end = toJst(rep.endedUtc);
@@ -85,6 +86,7 @@ if (fs.existsSync(RUNS_DIR)) {
         name: c.name, status: c.status, reason: c.reason || '', wet: c.wet, landed: c.landed,
         frameMsAvg: c.frameMsAvg, frameMsMax: c.frameMsMax, minPair: c.minPairDistance,
         simul: c.simultaneousWetSeconds, all6: c.allSixWetSeconds, close: c.closeSeconds,
+        pickedUp: c.pickedUp, ballStillFloating: c.ballStillFloating, ballEndDistance: c.ballEndDistance, maxFetchState: c.maxFetchState, fetchEnded: c.fetchEnded, deepBallLogged: c.deepBallLogged,
         stats: (c.stats || []).map((s) => ({
           breed: s.breed, swimmer: s.swimmer, landed: s.landed, mouthLow: s.mouthLowFrames, footLow: s.footLowFrames, big: s.bigSteps,
           band: s.bandOutsideSpotFrames, tooDeep: s.tooDeepFrames, minMouth: s.minMouthAboveWater, minMouthRoot: s.minMouthAboveWaterFromRoot,
@@ -98,9 +100,11 @@ const KIND = {
   river: { menu: '75', label: '川の帯 W5', desc: '水遊び場の外で犬が川へ入らず、ボールが岸へ戻る' },
   water: { menu: '78', label: '浅瀬 W0 / W4 / W6', desc: '解除から入水、水中での要求、Owner 交代と復旧' },
   swim: { menu: '79', label: '泳ぎ W1 × 6 / W2', desc: '小型犬が浮いて泳ぎ、大型犬は浅瀬のみ。6 匹同時' },
+  fetch: { menu: '88', label: '浮くボール W3 × 6 / S4 / S5b', desc: '川へ投げる → 追う → くわえる → 上陸 → 持ち帰る。大型犬は深いボールを追わない' },
 };
+const KINDS = Object.keys(KIND);
 const latestOf = (k) => [...runs].reverse().find((r) => r.kind === k);
-const latestRiver = latestOf('river'), latestWater = latestOf('water'), latestSwim = latestOf('swim');
+const latestRiver = latestOf('river'), latestWater = latestOf('water'), latestSwim = latestOf('swim'), latestFetch = latestOf('fetch');
 const latestRun = runs[runs.length - 1];
 const isRunning = latestRun && latestRun.status === 'RUNNING';
 const isPass = (s) => /PASS$|OBSERVED$|^BUILT$/.test(String(s || '')) && !/PARTIAL/.test(String(s || ''));
@@ -110,33 +114,44 @@ const riverBuild = readJson(path.join(TEMP_DIR, 'river-data-build.json'));
 const riverVerify = readJson(path.join(TEMP_DIR, 'river-data-verify.json'));
 const spotBuild = readJson(path.join(TEMP_DIR, 'water-spot-build.json'));
 const spotVerify = readJson(path.join(TEMP_DIR, 'water-spot-verify.json'));
+const frisbeeRiver = readJson(path.join(TEMP_DIR, 'frisbee-river.json'));
+const waterAudio = readJson(path.join(TEMP_DIR, 'water-audio.json'));
 
 // ---------- stage states ----------
-// 段階 = Issue の ### 1〜5。状態は成果物 (Verify / ハーネスの最新結果 / チェック箱) から決める。
-function stageState(n) {
-  const sec = sections.find((s) => s.n === n);
-  const boxes = sec?.boxes || [];
-  if (n === 1) {
-    const ok = isPass(riverVerify?.status) && isPass(latestRiver?.status);
-    return { state: ok ? 'done' : latestRiver ? 'wip' : 'todo', evidence: `Course/74 ${riverVerify?.status || '未実行'}・W5 最新 ${latestRiver ? latestRiver.status + ' (' + hm(latestRiver.start) + ')' : '未実行'}` };
+// 段階 = Issue の ### N. 見出し (数と名前は決め打ちしない)。状態は成果物 (Verify / ハーネスの最新結果) と、
+// 成果物の無い段はチェック箱から決める。見出しの語で成果物を選ぶ。
+const runEv = (menu, r, running) => {
+  if (!r) return { ok: false, text: `Course/${menu} 未実行` };
+  const passN = r.cases.filter((c) => c.status === 'PASS').length;
+  return { ok: isPass(r.status), running: r.status === 'RUNNING', text: `Course/${menu} 最新 ${r.status} ${passN}/${r.cases.length} (${hm(r.start)}${r.end ? '' : '〜実行中'})` };
+};
+const jsonEv = (menu, j) => ({ ok: isPass(j?.status) || /_OK$/.test(String(j?.status || '')), text: `Course/${menu} ${j?.status || '未実行'}${j?.utc ? ' (' + hm(toJst(j.utc)) + ')' : ''}` });
+function stageState(sec) {
+  const t = sec.title;
+  const evs = [];
+  if (/前提/.test(t)) evs.push(jsonEv('74', riverVerify), runEv('75', latestRiver));
+  else if (/拡張/.test(t)) evs.push(jsonEv('77', spotVerify), runEv('78', latestWater));
+  else if (/^水遊び場/.test(t)) evs.push(jsonEv('76', spotBuild), jsonEv('77', spotVerify));
+  else if (/浅瀬/.test(t)) evs.push(runEv('78', latestWater));
+  else if (/泳ぎ/.test(t)) evs.push(runEv('79', latestSwim));
+  else if (/ボール/.test(t)) evs.push(runEv('88', latestFetch));
+  else if (/積み残し/.test(t)) evs.push(jsonEv('89', frisbeeRiver), jsonEv('87', waterAudio));
+  const boxes = sec.boxes;
+  const doneB = boxes.filter((b) => b.done).length;
+  const userBoxes = boxes.filter((b) => /PCVR|実機|Quest|iOS|ユーザー|2 人|16 人/.test(b.text));
+  const aiBoxes = boxes.filter((b) => !userBoxes.includes(b));
+  const aiDone = aiBoxes.filter((b) => b.done).length;
+  let state;
+  if (evs.length) {
+    if (evs.some((e) => e.running)) state = 'running';
+    else if (evs.every((e) => e.ok)) state = aiBoxes.length && aiDone < aiBoxes.length ? 'wip' : 'done';
+    else if (evs.some((e) => e.ok) || evs.some((e) => /未実行/.test(e.text) === false)) state = 'wip';
+    else state = 'todo';
+  } else {
+    state = boxes.length && doneB === boxes.length ? 'done' : doneB ? 'wip' : 'todo';
   }
-  if (n === 2) {
-    const ok = isPass(spotVerify?.status);
-    return { state: ok ? 'done' : spotBuild ? 'wip' : 'todo', evidence: `Course/76 ${spotBuild?.status || '未実行'} (${hm(toJst(spotBuild?.utc))})・Course/77 ${spotVerify?.status || '未実行'} (${hm(toJst(spotVerify?.utc))})` };
-  }
-  if (n === 3) {
-    const r = latestWater; const ok = r && isPass(r.status);
-    const passN = r ? r.cases.filter((c) => c.status === 'PASS').length : 0;
-    return { state: ok ? 'done' : r ? 'wip' : 'todo', evidence: r ? `Course/78 最新 ${r.status} ${passN}/${r.cases.length} (${hm(r.start)})` : 'Course/78 未実行' };
-  }
-  if (n === 4) {
-    const r = latestSwim; const ok = r && isPass(r.status);
-    const passN = r ? r.cases.filter((c) => c.status === 'PASS').length : 0;
-    const st = ok ? 'done' : r ? (r.status === 'RUNNING' ? 'running' : 'wip') : 'todo';
-    return { state: st, evidence: r ? `Course/79 最新 ${r.status} ${passN}/${r.cases.length} (${hm(r.start)}${r.end ? '〜' + hm(r.end) : '〜実行中'})` : 'Course/79 未実行' };
-  }
-  const done = boxes.filter((b) => b.done).length;
-  return { state: done === boxes.length && boxes.length ? 'done' : done ? 'wip' : 'todo', evidence: `チェック ${done}/${boxes.length}` };
+  const evidence = evs.map((e) => e.text).concat(boxes.length ? [`チェック ${doneB}/${boxes.length}` + (userBoxes.length ? ` (うちユーザー担当 ${userBoxes.filter((b) => b.done).length}/${userBoxes.length})` : '')] : []).join('・');
+  return { state, evidence };
 }
 const STAGE_LABEL = { done: 'ClientSim 通過', running: '実行中', wip: '作業中', todo: '未着手' };
 
@@ -152,15 +167,12 @@ function breedRows(run) {
 }
 
 // ---------- render ----------
-const stageMeta = [
-  { n: 1, short: '前提', title: '前提作業', sub: '川の帯の回避・ボールの岸戻し' },
-  { n: 2, short: '水遊び場', title: '水遊び場', sub: 'KH_WaterSpot・踏み分け道・検査 2〜5' },
-  { n: 3, short: '段階 0', title: '浅瀬を歩く', sub: 'しぶき・waterPose・入水 5 s・復旧 3 段' },
-  { n: 4, short: '段階 1', title: '浮いて泳ぐ', sub: '小型犬が泳ぐ・大型犬は浅瀬のみ' },
-  { n: 5, short: '公開前', title: '公開前の検証', sub: 'Codex・2 人実機・Quest/iOS・容量' },
-];
-const stages = stageMeta.map((m) => ({ ...m, ...stageState(m.n), sec: sections.find((s) => s.n === m.n) }));
+const stages = sections.map((sec) => {
+  const m = sec.title.match(/^(.+?)\s*\((.+)\)\s*$/);
+  return { n: sec.n, short: `段階 ${sec.n}`, title: m ? m[1] : sec.title, sub: m ? m[2] : (sec.note || ''), note: sec.note, sec, ...stageState(sec) };
+});
 const doneStages = stages.filter((s) => s.state === 'done').length;
+const stageCols = Math.min(4, Math.max(1, stages.length));
 
 const caseCell = (c) => {
   const cls = c.status === 'PASS' ? 'ok' : c.status === 'FAIL' ? 'ng' : c.status === 'RUNNING' ? 'run' : 'na';
@@ -201,7 +213,20 @@ function swimDetail(run) {
   return `<div class="scroll"><table class="detail"><thead><tr><th>ケース</th><th>犬</th><th>結果</th><th>口 − 水面 の最小 (m、下限 ${SWIM_CLEAR})</th><th>泳いだ s</th><th>浅瀬へ戻る</th><th>違反 (口 / 足 / 飛び / 帯外 / 深すぎ)</th><th>陸</th></tr></thead><tbody>${body}</tbody></table></div>${w2line}`;
 }
 
-const failLog = runs.filter((r) => r.kind !== 'river' || true).flatMap((r) => r.cases.filter((c) => c.status === 'FAIL').map((c) => ({ run: r, c })));
+const failLog = runs.flatMap((r) => r.cases.filter((c) => c.status === 'FAIL').map((c) => ({ run: r, c })));
+
+function fetchDetail(run) {
+  if (!run) return '<p class="muted">Course/88 は未実行</p>';
+  const body = run.cases.map((c) => {
+    const st = c.stats && c.stats[0];
+    return `<tr><td>${esc(c.name)}</td><td><span class="pill ${c.status === 'PASS' ? 'ok' : c.status === 'FAIL' ? 'ng' : 'na'}">${esc(c.status)}</span></td>
+      <td>${c.pickedUp ? 'くわえた' : '<span class="muted">-</span>'}</td><td>${typeof c.landed === 'number' && c.landed >= 0 ? f1(c.landed) + ' s' : '<span class="muted">-</span>'}</td>
+      <td>${c.ballStillFloating ? '浮いたまま' : c.fetchEnded ? '終了' : '<span class="muted">-</span>'}</td><td class="mono num">${f2(c.ballEndDistance)}</td>
+      <td class="mono num">${st ? [st.mouthLow, st.footLow, st.big, st.band, st.tooDeep].map((v) => v ?? '-').join(' / ') : '-'}</td>
+      <td class="muted" style="font-size:11px;overflow-wrap:anywhere">${esc((c.reason || '').slice(0, 140))}</td></tr>`;
+  }).join('');
+  return `<div class="scroll"><table class="detail"><thead><tr><th>ケース</th><th>結果</th><th>くわえ</th><th>上陸</th><th>ボール</th><th>ボール→人 m</th><th>違反 (口 / 足 / 飛び / 帯外 / 深すぎ)</th><th>理由</th></tr></thead><tbody>${body}</tbody></table></div>`;
+}
 
 const nextText = fm.next || '';
 const elapsedIssue = issueStartTime ? nowJst - issueStartTime : null;
@@ -252,8 +277,9 @@ header .stamp{margin-left:auto;text-align:right;color:var(--ink2);font-size:13px
 .tile .s{font-size:12px;color:var(--ink2);margin-top:4px}
 h2{font-size:17px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
 h2 small{font-size:12px;color:var(--muted);font-weight:400}
-.stages{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-@media (max-width:760px){.stages{grid-template-columns:1fr}}
+.stages{display:grid;grid-template-columns:repeat(${stageCols},1fr);gap:8px}
+@media (max-width:980px){.stages{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.stages{grid-template-columns:1fr}}
 .stage{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--na);border-radius:6px;padding:10px 12px;min-height:120px}
 .stage.done{border-left-color:var(--ok)} .stage.wip{border-left-color:var(--warn)} .stage.running{border-left-color:var(--run)} .stage.todo{border-left-color:var(--na)}
 .stage .n{font-size:11px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
@@ -301,22 +327,22 @@ code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;backgroun
 </header>
 
 <div class="tiles">
-  <div class="tile"><div class="k">段階の到達</div><div class="v">${doneStages} / ${stages.length}</div><div class="s">ClientSim 通過。段階 ${stages.find((s) => s.state !== 'done')?.n ?? '-'} を${isRunning ? '検証中' : '作業中'}</div></div>
+  <div class="tile"><div class="k">段階の到達</div><div class="v">${doneStages} / ${stages.length}</div><div class="s">ClientSim 通過。${stages.filter((s) => s.state === 'wip' || s.state === 'running').map((s) => '段階 ' + s.n).join('・') || '残りは未着手'} を${isRunning ? '検証中' : '作業中'}</div></div>
   <div class="tile"><div class="k">Issue 着手から</div><div class="v">${fmtDur(elapsedIssue)}</div><div class="s">${hm(issueStartTime)} に作成 (${esc(ISSUE_START_COMMIT)})</div></div>
   <div class="tile"><div class="k">コミット (今日)</div><div class="v">${dogCommits.length}</div><div class="s">最後のコミットから ${fmtDur(sinceHead)}</div></div>
   <div class="tile"><div class="k">ハーネス実行</div><div class="v">${runs.length}<span class="muted" style="font-size:14px"> 回</span></div><div class="s">ケース通過 ${totalPass} / ${totalCases} (累計)</div></div>
   <div class="tile"><div class="k">未コミットの変更</div><div class="v">+${uncommitted.reduce((a, x) => a + x.add, 0)} <span class="muted" style="font-size:14px">/ −${uncommitted.reduce((a, x) => a + x.del, 0)}</span></div><div class="s">水遊び関連 ${uncommitted.length} ファイル${sceneDirty ? '・シーン変更あり' : ''}</div></div>
 </div>
 
-<h2>段階 <small>Issue の ### 1〜5。状態は Verify とハーネスの最新結果から</small></h2>
+<h2>段階 <small>Issue の ### 1〜${stages.length}。状態は Verify とハーネスの最新結果から。見出しの注記は Issue のまま</small></h2>
 <div class="stages">
 ${stages.map((s) => `<div class="stage ${s.state}">
-  <div class="n">${esc(s.short)}</div><div class="t">${esc(s.title)}</div><div class="sub">${esc(s.sub)}</div>
+  <div class="n">${esc(s.short)}${s.note ? ` <span style="text-transform:none;letter-spacing:0;color:var(--accent-ink)">— ${esc(s.note)}</span>` : ''}</div><div class="t">${esc(s.title)}</div><div class="sub">${esc(s.sub)}</div>
   <div class="ev"><span class="pill ${s.state === 'done' ? 'ok' : s.state === 'running' ? 'run' : s.state === 'wip' ? 'warn' : 'na'}">${esc(STAGE_LABEL[s.state])}</span><br>${esc(s.evidence)}</div>
   ${s.sec && s.sec.boxes.length ? `<ul>${s.sec.boxes.map((b) => `<li class="${b.done ? 'd' : 'u'}">${b.done ? '☑' : '☐'} ${esc(b.text.replace(/\(.*?\)/g, '').slice(0, 60))}</li>`).join('')}</ul>` : ''}
 </div>`).join('')}
 </div>
-<p class="muted" style="font-size:12px;margin-top:8px">Issue のチェック箱は AI 側がまだ付けていない (実測は本文に記録)。段階の色は成果物の JSON から判定している。ClientSim の通過は PCVR・実通信・Quest/iOS の合格ではない。</p>
+<p class="muted" style="font-size:12px;margin-top:8px">段階の色は成果物の JSON (Verify・ハーネスの最新 run) から判定し、成果物の無い段はチェック箱で判定している。「ClientSim 通過」は PCVR・実通信・Quest/iOS の合格ではない。ユーザー担当のチェック (PCVR・実機) は色に入れていない。</p>
 
 <h2>次にやること <small>Issue frontmatter の next</small></h2>
 <div class="next">
@@ -329,8 +355,11 @@ ${stages.map((s) => `<div class="stage ${s.state}">
 ${swimDetail(latestSwim)}
 ${latestSwim && latestSwim.status === 'RUNNING' && runs.filter((r) => r.kind === 'swim' && r.end).length ? (() => { const prev = [...runs].reverse().find((r) => r.kind === 'swim' && r.end); return `<h2>1 つ前の完了した泳ぎハーネス <small>${esc(prev.id)} · ${esc(prev.status)}</small></h2>${swimDetail(prev)}`; })() : ''}
 
+<h2>浮くボールハーネス 88 の最新結果 <small>${latestFetch ? esc(latestFetch.id) + ' · ' + esc(latestFetch.status) : '未実行'}</small></h2>
+${fetchDetail(latestFetch)}
+
 <h2>ハーネスの履歴 <small>Logs/kh-course-walk。セルにカーソルを載せると理由</small></h2>
-${['river', 'water', 'swim'].map((k) => `<h3 style="font-size:14px;margin:18px 0 6px">Course/${KIND[k].menu} ${esc(KIND[k].label)} <span class="muted" style="font-weight:400;font-size:12px">${esc(KIND[k].desc)}</span></h3>${runTable(k)}`).join('')}
+${KINDS.map((k) => `<h3 style="font-size:14px;margin:18px 0 6px">Course/${KIND[k].menu} ${esc(KIND[k].label)} <span class="muted" style="font-weight:400;font-size:12px">${esc(KIND[k].desc)}</span></h3>${runTable(k)}`).join('')}
 
 <div class="two">
 <div>
@@ -357,8 +386,10 @@ ${uncommitted.sort((a, b) => (b.add + b.del) - (a.add + a.del)).map((x) => `<tr>
 <div class="two">
 <div class="scroll"><table><thead><tr><th colspan="2">水遊び場 (76 / 77) ${spotVerify ? hm(toJst(spotVerify.utc)) : ''}</th></tr></thead><tbody>
 <tr><td>Build / Verify</td><td>${esc(spotBuild?.status || '-')} / ${esc(spotVerify?.status || '-')}</td></tr>
-<tr><td>格子・濡れたセル</td><td class="mono">${spotBuild?.gridNx ?? '-'}×${spotBuild?.gridNz ?? '-'} · ${spotBuild?.wetCells ?? '-'}</td></tr>
+<tr><td>格子・濡れたセル</td><td class="mono">${spotBuild?.gridNx ?? '-'}×${spotBuild?.gridNz ?? '-'} · ${spotBuild?.wetCells ?? '-'}${spotBuild?.zFrom != null ? ` (z ${f1(spotBuild.zFrom)}〜${f1(spotBuild.zTo)})` : ''}</td></tr>
 <tr><td>入水点 (通過点から)</td><td class="mono">${f2(spotBuild?.entryDistance)} m</td></tr>
+<tr><td>目印の石・仮看板</td><td class="mono">${Array.isArray(spotBuild?.markerStones) ? spotBuild.markerStones.length : (spotBuild?.markerStones ?? '-')} · ${spotBuild?.sign ? (typeof spotBuild.sign === 'string' ? esc(spotBuild.sign) : 'あり') : '-'}</td></tr>
+<tr><td>フリスビー帯判定 (89) / 水音 (87)</td><td class="mono">${esc(frisbeeRiver?.status || '-')} / ${esc(waterAudio?.status || '-')}${waterAudio?.wavBytes ? ' (' + Math.round(waterAudio.wavBytes / 1024) + ' KB)' : ''}</td></tr>
 <tr><td>水面の勾配 最大 / 平均</td><td class="mono">${spotVerify ? (spotVerify.surfaceSlopeMax * 100).toFixed(2) + ' % / ' + (spotVerify.surfaceSlopeMean * 100).toFixed(2) + ' %' : '-'}</td></tr>
 <tr><td>出水点の傾き</td><td class="mono">${(spotVerify?.exitSlopeDeg || []).map((v) => v.toFixed(1)).join(' / ')} °</td></tr>
 <tr><td>領域の石</td><td class="mono">${spotVerify?.stonesInRegion ?? '-'}</td></tr>
