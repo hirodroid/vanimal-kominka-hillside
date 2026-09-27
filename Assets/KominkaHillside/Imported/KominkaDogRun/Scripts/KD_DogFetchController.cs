@@ -1035,18 +1035,28 @@ namespace KominkaDogRun
                 }
             }
             // IMP-NET-005: 位置を書くのは Owner だけ
+            bool riverBlocked = false; // IMP-DOG-020: 川の帯へ入る歩は進めず、下の Owner 判定で GiveUp する
             if (_dogOwner && _speed > 0f && dist > 0.0001f)
             {
                 float step = _speed * Time.deltaTime;
                 if (step > remain) step = remain;
-                pos += (to / dist) * step;
-                dogRoot.position = SnapToGround(pos); // net: owner-only: _dogOwner
+                if (_BlockedByRiver(pos, pos + (to / dist) * Mathf.Max(step, RiverProbe)))
+                {
+                    _speed = 0f;
+                    riverBlocked = true;
+                }
+                else
+                {
+                    pos += (to / dist) * step;
+                    dogRoot.position = SnapToGround(pos); // net: owner-only: _dogOwner
+                }
             }
 
             UpdateLocomotionAnim();
 
             // ---- ここから Owner だけの状態遷移判定 ----
             if (!_dogOwner) return;
+            if (riverBlocked) { GiveUpAtRiver(); return; }
             float elapsed = Time.time - _stateEnteredTime;
 
             // 誰かがボールを掴んだら諦める (pickupable=false が届く前の一瞬に

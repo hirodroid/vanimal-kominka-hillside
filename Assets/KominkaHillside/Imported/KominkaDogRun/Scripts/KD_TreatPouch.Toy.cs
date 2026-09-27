@@ -165,6 +165,7 @@ namespace KominkaDogRun
         {
             // 裏山改変: さんぽの要求とおもちゃの結果もここで毎フレーム解決する (Redraw は板が閉じていると何もしないので、その外で回す)
             PollWalkPending();
+            PollTravel();   // IMP-WLD-001: 地点ワープの結果とボタンの秒数 (KD_TreatPouch.Travel.cs)
             PollHillsideToy();
             if (_pendingRecallRow >= 0)
             {

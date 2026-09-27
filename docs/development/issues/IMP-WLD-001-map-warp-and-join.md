@@ -2,10 +2,10 @@
 id: IMP-WLD-001
 type: IMP
 system: WLD
-status: todo
+status: wip
 priority: Medium
 summary: 地図の副画面、川辺・奥広場の 2 地点ワープ、インスタンス内のプレイヤーへの合流、接続犬の同行、暗転を、DES-WLD-003 の確定設計 (2026-09-27) どおりに実装する
-next: 段階 1 (2 地点ワープ + 接続犬の同行) の実装に着手する。まず KH_LeashManager に切符の配列を足し、犬の側の適用処理と、travel モードのハーネスを作る
+next: 段階 1 は ClientSim (81 TRAVEL_OK、83、82 TRAVEL_OBSERVED 12 ケース) まで通過。段階 2 (地図の副画面と暗転) を実装し、PCVR 2〜3 人の #1・#2・#6・#7 はユーザーへ引き継ぐ
 updated: 2026-09-27
 ---
 
@@ -39,6 +39,15 @@ updated: 2026-09-27
 - [ ] コンパイルのエラーが 0。`_` の規約の検査を通す。Verify で、Manager の同期配列の長さと初期値、2 地点の解決と共通の検査、`spotWarpEnabled` が PASS する。
 - [ ] ClientSim ハーネス `KH_CourseWalkHarnessEditor` の travel モードで、設計書 §C.1 の T1〜T9 と T11 が PASS する。T1 は 4 構成 × 3 回の移動。T10 は段階 3 で行う。
 - [ ] PCVR 2〜3 人で、設計書 §C.2 の #1・#2・#6・#7 を行う。1 人で 2 地点、Owner でない人の移動、Owner の交代、途中参加。
+
+#### 実装 (2026-09-27)
+
+- 変更: `KH_LeashManager.cs` (partial 化、解除で切符を消す、Update で要求の待ちと期限切れ) / 新規 `KH_LeashManager.Travel.cs` (切符 7 本、`ReqTravel` / `CancelTravel` / `ReqTravelDone`、要求する人の門番と待ち、共通の検査 5 つ、試験用の debug 値) / 新規 `KD_DogWanderController.HillsideTravel.cs` (適用処理) と `HillsideLeash.cs` の 2 行 (Return より前の呼び出し、準備中は追従テレポートを止める) / 新規 `KD_TreatPouch.Travel.cs` と `Walk.cs`・`Toy.cs` の 1 行ずつ / 新規 `Editor/KH_CourseTravelEditor.cs` / 新規 `Editor/Testing/KH_CourseWalkHarnessEditor.Travel.cs` と本体の 3 行 / `CourseUITranslations.json` に `course.travel.*` 13 キー × 13 言語。
+- メニュー: `Course/80 - Build Travel Spots and Warp Buttons` (地点の解決・Manager への書き込み・上段の 2 ボタン・翻訳の入れ直し。シーンを保存する)、`Course/81 - Verify Travel Spots and Warp Buttons` (`Temp/imp-wld-001/travel-verify.json`、PASS は `TRAVEL_OK`)、`Course/82 - Walk Harness Travel (T1-T9, T11)`、`Course/83 - Walk Harness Travel Quick`。停止は `Course/41`、PlayerData の復旧は `Course/46`。
+- 統括が実行する順: コンパイル (`bash scripts/unity-compile.sh --udon`) → Course/80 → Course/27 (新しい字形) → Course/81 と Course/26 → Course/83 → Course/82。ハーネスの結果は `Logs/kh-course-walk/<runId>/report.json` と `travel.json`、PASS は `TRAVEL_OBSERVED`。
+- 設計からの変更: `ReqTravelDone` の上限は 6/s (1 回の移動で最大 6 匹ぶん届くため)。T9 は合流の部分を段階 3 に回し、取消と書き込みの行き違いと退出だけを行う。
+- 実測 (2026-09-27、統括が実行): C#/U# のコンパイル エラー 0。Course/80 BUILT (6 地点を解決、ワープは upper / river)。Course/27、Course/81 TRAVEL_OK、Course/26 OK。Course/83 TRAVEL_QUICK_OBSERVED (T1 犬 1 匹 × 3 回の移動: 位置の変更は全頭ちょうど 1 回、Phase 1→2、到着後 30 秒の Return 0。T11 連打: 新しい reqId は 1 つ、2 回目以降はクールダウンの表示)。Course/82 TRAVEL_OBSERVED (20260927-043153: T1 の 4 構成、T2〜T9、T11 の 12 ケース PASS。T2〜T9 の Owner 交代・遅着・偽装・退出は 1 端末の模擬で、実通信・PCVR は未確認)。
+- 独立レビュー (Codex、D+M / U+X+P) の反映: 移動の直前に人の検査をやり直す、送り主の犬に載っている reqId より古い要求を捨てる、T6 を Owner 交代の模擬にする、Verify は保存した川・橋の値で検査する、待ちの残り秒数・「犬を待っています」・「ワープを取りやめました: 理由」の表示 (course.travel.* に 5 キー追加)。反映後は Course/80 と 27 を流し直してから 81 → 83 → 82。
 
 ### 段階 2: 地図の副画面と暗転 (設計書 §A.1〜A.3・A.5・D.1・D.2・D.8)
 

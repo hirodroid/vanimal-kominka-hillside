@@ -35,6 +35,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "行き先を伝えました"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "{0}へワープ"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "犬に伝えています"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "{0}に着きました"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "犬に伝わりませんでした"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "つないでいる犬が変わりました"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "少し待ってから押してください"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "あと{0}秒でワープできます"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "ボールを追っている犬がいます。戻ってから"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "混み合っています。少し待ってから"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "もうここにいます"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "いまはワープできません"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "ワープしませんでした"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "ワープを取りやめました"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "ワープの準備中… あと最大{0}秒"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "{0}に着きました。犬を待っています"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "ワープを取りやめました: 犬に伝わりませんでした"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "ワープを取りやめました: つないでいる犬が変わりました"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "ワープを取りやめました: 着地点がふさがっています"
         }
       ]
     },
@@ -70,6 +142,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "Destination updated"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "Warp to {0}"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "Telling your dogs"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "Arrived at {0}"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "Your dogs did not get the message"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "Your leashed dogs changed"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "Please wait a moment"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "Warp ready in {0}s"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "A dog is chasing a ball. Wait until it returns"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "Too crowded here. Try again shortly"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "You are already here"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "Warp is not available now"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "Did not warp"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "Warp cancelled"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "Preparing warp… up to {0}s"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "Arrived at {0}. Waiting for your dogs"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "Warp cancelled: your dogs did not get the message"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "Warp cancelled: your leashed dogs changed"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "Warp cancelled: the landing spot is occupied"
         }
       ]
     },
@@ -105,6 +249,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "Маршрут обновлён"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "Телепорт: {0}"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "Сообщаем собакам"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "Вы на месте: {0}"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "Собаки не получили сигнал"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "Собаки на поводке изменились"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "Подождите немного"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "Телепорт через {0} с"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "Собака гонится за мячом. Дождитесь её"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "Здесь тесно. Попробуйте позже"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "Вы уже здесь"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "Телепорт сейчас недоступен"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "Телепорт не выполнен"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "Телепорт отменён"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "Готовим телепорт… до {0} с"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "Вы на месте: {0}. Ждём собак"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "Телепорт отменён: собаки не получили сигнал"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "Телепорт отменён: собаки на поводке изменились"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "Телепорт отменён: место прибытия занято"
         }
       ]
     },
@@ -140,6 +356,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "Маршрут оновлено"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "Телепорт: {0}"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "Повідомляємо собакам"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "Ви на місці: {0}"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "Собаки не отримали сигнал"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "Собаки на повідку змінилися"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "Зачекайте трохи"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "Телепорт за {0} с"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "Собака женеться за м’ячем. Дочекайтеся її"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "Тут тісно. Спробуйте згодом"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "Ви вже тут"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "Телепорт зараз недоступний"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "Телепорт не виконано"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "Телепорт скасовано"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "Готуємо телепорт… до {0} с"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "Ви на місці: {0}. Чекаємо собак"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "Телепорт скасовано: собаки не отримали сигнал"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "Телепорт скасовано: собаки на повідку змінилися"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "Телепорт скасовано: місце прибуття зайняте"
         }
       ]
     },
@@ -175,6 +463,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "목적지를 알렸어요"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "{0}(으)로 워프"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "강아지에게 알리는 중"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "{0}에 도착했어요"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "강아지에게 전해지지 않았어요"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "연결한 강아지가 바뀌었어요"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "잠시 후에 눌러 주세요"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "{0}초 후에 워프할 수 있어요"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "공을 쫓는 강아지가 있어요. 돌아온 뒤에"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "붐비고 있어요. 잠시 후에"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "이미 여기에 있어요"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "지금은 워프할 수 없어요"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "워프하지 않았어요"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "워프를 취소했어요"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "워프 준비 중… 최대 {0}초"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "{0}에 도착했어요. 강아지를 기다리는 중"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "워프를 취소했어요: 강아지에게 전해지지 않았어요"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "워프를 취소했어요: 연결한 강아지가 바뀌었어요"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "워프를 취소했어요: 도착 지점이 막혀 있어요"
         }
       ]
     },
@@ -210,6 +570,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "Ziel aktualisiert"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "Teleport: {0}"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "Sage es den Hunden"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "Angekommen: {0}"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "Die Hunde haben es nicht erhalten"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "Angeleinte Hunde haben sich geändert"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "Bitte einen Moment warten"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "Teleport in {0} s bereit"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "Ein Hund jagt einen Ball. Warte, bis er zurück ist"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "Zu voll hier. Gleich noch einmal"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "Du bist schon hier"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "Teleport gerade nicht möglich"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "Nicht teleportiert"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "Teleport abgebrochen"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "Teleport wird vorbereitet… bis zu {0} s"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "Angekommen: {0}. Warte auf die Hunde"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "Teleport abgebrochen: Die Hunde haben es nicht erhalten"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "Teleport abgebrochen: Angeleinte Hunde haben sich geändert"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "Teleport abgebrochen: Der Zielort ist belegt"
         }
       ]
     },
@@ -245,6 +677,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "已告知目的地"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "传送到{0}"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "正在告诉狗狗"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "已到达{0}"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "狗狗没有收到"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "牵着的狗狗变了"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "请稍等再按"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "{0}秒后可以传送"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "有狗狗在追球，等它回来"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "这里太拥挤，请稍后再试"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "你已经在这里了"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "现在无法传送"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "没有传送"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "已取消传送"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "正在准备传送… 最多{0}秒"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "已到达{0}，正在等狗狗"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "已取消传送：狗狗没有收到"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "已取消传送：牵着的狗狗变了"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "已取消传送：落脚点被占用"
         }
       ]
     },
@@ -280,6 +784,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "Destino actualizado"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "Teletransporte: {0}"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "Avisando a tus perros"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "Llegaste a {0}"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "Tus perros no recibieron el aviso"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "Cambiaron los perros con correa"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "Espera un momento"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "Teletransporte en {0} s"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "Un perro persigue una pelota. Espera a que vuelva"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "Hay mucha gente. Inténtalo en un rato"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "Ya estás aquí"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "Teletransporte no disponible ahora"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "No te teletransportaste"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "Teletransporte cancelado"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "Preparando teletransporte… hasta {0} s"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "Llegaste a {0}. Esperando a tus perros"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "Teletransporte cancelado: tus perros no recibieron el aviso"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "Teletransporte cancelado: cambiaron los perros con correa"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "Teletransporte cancelado: el punto de llegada está ocupado"
         }
       ]
     },
@@ -315,6 +891,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "Destination mise à jour"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "Téléporter : {0}"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "On prévient tes chiens"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "Arrivé : {0}"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "Tes chiens n’ont pas reçu le message"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "Les chiens en laisse ont changé"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "Patiente un instant"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "Téléportation dans {0} s"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "Un chien court après une balle. Attends son retour"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "Trop de monde ici. Réessaie bientôt"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "Tu es déjà ici"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "Téléportation indisponible"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "Pas de téléportation"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "Téléportation annulée"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "Préparation de la téléportation… {0} s max"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "Arrivé : {0}. On attend tes chiens"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "Téléportation annulée : tes chiens n’ont pas reçu le message"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "Téléportation annulée : les chiens en laisse ont changé"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "Téléportation annulée : le point d’arrivée est occupé"
         }
       ]
     },
@@ -350,6 +998,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "Destino atualizado"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "Teleportar: {0}"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "Avisando seus cães"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "Você chegou: {0}"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "Seus cães não receberam o aviso"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "Os cães na coleira mudaram"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "Espere um pouco"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "Teleporte em {0} s"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "Um cão está atrás da bola. Espere ele voltar"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "Está cheio aqui. Tente daqui a pouco"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "Você já está aqui"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "Teleporte indisponível agora"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "Não teleportou"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "Teleporte cancelado"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "Preparando o teleporte… até {0} s"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "Você chegou: {0}. Esperando seus cães"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "Teleporte cancelado: seus cães não receberam o aviso"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "Teleporte cancelado: os cães na coleira mudaram"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "Teleporte cancelado: o ponto de chegada está ocupado"
         }
       ]
     },
@@ -385,6 +1105,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "Destinazione aggiornata"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "Teletrasporto: {0}"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "Avviso i tuoi cani"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "Arrivato: {0}"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "I cani non hanno ricevuto il messaggio"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "I cani al guinzaglio sono cambiati"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "Aspetta un momento"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "Teletrasporto tra {0} s"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "Un cane insegue una palla. Aspetta che torni"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "Troppa gente qui. Riprova tra poco"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "Sei già qui"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "Teletrasporto non disponibile"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "Nessun teletrasporto"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "Teletrasporto annullato"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "Preparo il teletrasporto… fino a {0} s"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "Arrivato: {0}. Aspetto i tuoi cani"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "Teletrasporto annullato: i cani non hanno ricevuto il messaggio"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "Teletrasporto annullato: i cani al guinzaglio sono cambiati"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "Teletrasporto annullato: il punto di arrivo è occupato"
         }
       ]
     },
@@ -420,6 +1212,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "Cel zaktualizowany"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "Teleport: {0}"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "Informuję psy"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "Jesteś na miejscu: {0}"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "Psy nie dostały sygnału"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "Psy na smyczy się zmieniły"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "Poczekaj chwilę"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "Teleport za {0} s"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "Pies goni piłkę. Poczekaj, aż wróci"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "Za tłoczno. Spróbuj za chwilę"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "Już tu jesteś"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "Teleport teraz niedostępny"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "Bez teleportu"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "Teleport anulowany"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "Przygotowuję teleport… do {0} s"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "Jesteś na miejscu: {0}. Czekam na psy"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "Teleport anulowany: psy nie dostały sygnału"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "Teleport anulowany: psy na smyczy się zmieniły"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "Teleport anulowany: miejsce przybycia jest zajęte"
         }
       ]
     },
@@ -459,6 +1323,78 @@
         {
           "key": "course.walk.confirmed",
           "text": "已告知目的地"
+        },
+        {
+          "key": "course.travel.button",
+          "text": "傳送到{0}"
+        },
+        {
+          "key": "course.travel.waiting",
+          "text": "正在告訴狗狗"
+        },
+        {
+          "key": "course.travel.arrived",
+          "text": "已到達{0}"
+        },
+        {
+          "key": "course.travel.noanswer",
+          "text": "狗狗沒有收到"
+        },
+        {
+          "key": "course.travel.changed",
+          "text": "牽著的狗狗變了"
+        },
+        {
+          "key": "course.travel.busy",
+          "text": "請稍等再按"
+        },
+        {
+          "key": "course.travel.cooling",
+          "text": "{0}秒後可以傳送"
+        },
+        {
+          "key": "course.travel.ball",
+          "text": "有狗狗在追球，等牠回來"
+        },
+        {
+          "key": "course.travel.crowded",
+          "text": "這裡太擠，請稍後再試"
+        },
+        {
+          "key": "course.travel.here",
+          "text": "你已經在這裡了"
+        },
+        {
+          "key": "course.travel.unavailable",
+          "text": "現在無法傳送"
+        },
+        {
+          "key": "course.travel.stayed",
+          "text": "沒有傳送"
+        },
+        {
+          "key": "course.travel.canceled",
+          "text": "已取消傳送"
+        },
+        {
+          "key": "course.travel.preparing",
+          "text": "正在準備傳送… 最多{0}秒"
+        },
+        {
+          "key": "course.travel.dogs",
+          "text": "已到達{0}，正在等狗狗"
+        },
+        {
+          "key": "course.travel.stop.noanswer",
+          "text": "已取消傳送：狗狗沒有收到"
+        },
+        {
+          "key": "course.travel.stop.changed",
+          "text": "已取消傳送：牽著的狗狗變了"
+        },
+        {
+          "key": "course.travel.stop.blocked",
+          "text": "已取消傳送：落腳點被佔用"
         }
       ]
     }

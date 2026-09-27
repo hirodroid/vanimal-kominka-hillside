@@ -13,7 +13,7 @@ namespace KominkaHillside.Editor
 {
     // ClientSim walking through real menu events and runtime Udon heaps. No scene save.
     [InitializeOnLoad]
-    public static class KH_CourseWalkHarnessEditor
+    public static partial class KH_CourseWalkHarnessEditor
     {
         const string Key="KH.CourseWalkHarness",Dir="Logs/kh-course-walk",Journal=Dir+"/journal.json";
         [Serializable] public class DogResult
@@ -56,6 +56,8 @@ namespace KominkaHillside.Editor
             public double deadline;
             public bool full,gateOnly,benchOnly,returnOnly,originalBackground,settingsRestored,sceneFileUnchanged,dirtyAfterPlay,playerDataRestored;
             public string playerDataBackup;
+            public bool riverOnly; // IMP-DOG-020 W5 (KH_CourseWalkHarnessEditor.River.cs)
+            public bool travelOnly; // IMP-WLD-001 travel (KH_CourseWalkHarnessEditor.Travel.cs)
             public int lapChoice;
             public List<Case> cases=new List<Case>();
             public List<string> errors=new List<string>();
@@ -141,6 +143,8 @@ namespace KominkaHillside.Editor
                     MakeCases();Next();return;
                 }
                 if(report.errors.Count>0)throw new InvalidOperationException("Runtime error: "+report.errors[0]);
+                if(report.riverOnly){RiverTick(now);return;}
+                if(report.travelOnly){TravelTick(now);return;}
                 if(now-Current.startedAt>(report.returnOnly?Current.plannedDistance/2+100:report.lapChoice!=0?1500:80))throw new TimeoutException("Case deadline exceeded");
                 if(phase==0) // Detach through the regular menu, then place the next case.
                 {
@@ -212,6 +216,8 @@ namespace KominkaHillside.Editor
         }
         static void MakeCases()
         {
+            if(report.riverOnly){MakeRiverCases();return;}
+            if(report.travelOnly){MakeTravelCases();return;}
             if(report.returnOnly)
             {
                 var distances=Get<float[]>(route,"loopDistances");float length=Get<float>(route,"loopLength");

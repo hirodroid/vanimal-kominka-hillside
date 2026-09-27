@@ -2,6 +2,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
 using VRC.SDK3.Components;
+using UnityEngine.AI;
 
 namespace KominkaHillside
 {
@@ -52,6 +53,19 @@ namespace KominkaHillside
         private VRC_Pickup[] _discPickups;
         private bool[] _ballVetoed;
         private bool[] _discVetoed;
+        // IMP-DOG-020 stage 1 (DES-DOG-004 C-7/8): a ball in the river band is brought back to the bank by its Owner.
+        public KH_RiverData riverData;
+        const float RiverCheckInterval = 0.25f; // the ball Owner looks this often
+        const float RiverStrandSeconds = 10f;   // inside the band this long without sinking = stranded
+        private float _nextRiverAt;
+        private float[] _riverSince;
+        private float[] _riverLastReturn;
+        private int[] _riverRepeat;
+        const int RiverBankTries = 6;           // bank candidates at +2, +3.5 ... +9.5 m beyond the band edge
+        const float RiverSlopeAccept = -0.10f;  // RiverBankSpot: steepest accepted fall toward the water (normal · outward)
+        const float RiverSlopeTie = 0.01f;      // a farther candidate must beat the nearer one by this much
+        private float _riverSpotScore;
+        const float RiverRepeatWindow = 20f;    // returned again within this = it came back; third time = park
 
         public int _LastResult() { return _lastResult; }
         public int _LastRow() { return _lastRow; }
@@ -178,6 +192,7 @@ namespace KominkaHillside
         private void Update()
         {
             if (Time.time >= _nextExclusiveAt) { _nextExclusiveAt = Time.time + ExclusiveInterval; ApplyExclusive(); }
+            if (riverData != null && Time.time >= _nextRiverAt) { _nextRiverAt = Time.time + RiverCheckInterval; CheckRiverBalls(); }
             if (_pendingRow < 0) return;
             int row = _pendingRow; int kind = _pendingKind;
             if (_stage == 2) { StepPark(row, kind); return; }
@@ -263,6 +278,115 @@ namespace KominkaHillside
             if (a == null || row < 0 || row >= a.Length) return null;
             return a[row];
         }
+
+        // ---- IMP-DOG-020 stage 1: balls that fell into the river (DES-DOG-004 C-7 / C-8) ----
+        // Only the ball's Owner acts (the thrower, since a Pickup moves ownership), so nothing new is synced: the move is a
+        // teleport carried by VRCObjectSync. A ball in the band (centre ± (half width + 1 m)) goes back at once when it
+        // has sunk (centre below the water surface; the surface has no collider, so a real ball always sinks), or after
+        // RiverStrandSeconds when it lies in the band above the water. Destination: the bank on the Owner's side
+        // (the NavMesh point 2..9.5 m beyond the band edge sloping least toward the water, RiverBankSpot); failing that, or on the
+        // third return within 20 s, the park (IMP-DOG-019).
+        // Parking never brings the same dog's disc out, so "one toy out per dog" still holds (at most one).
+        // Held balls and balls in a dog's mouth (Return / Drop) are left alone. Stage 2 (floating balls) and the
+        // water-play spot exception belong here later.
+        void CheckRiverBalls()
+        {
+            if (balls == null) return;
+            if (_riverSince == null || _riverSince.Length != balls.Length)
+            {
+                _riverSince = new float[balls.Length];
+                _riverLastReturn = new float[balls.Length];
+                _riverRepeat = new int[balls.Length];
+                for (int k = 0; k < _riverSince.Length; k++) { _riverSince[k] = -1f; _riverLastReturn[k] = -1000f; }
+            }
+            for (int i = 0; i < balls.Length; i++)
+            {
+                KominkaDogRun.KD_BallController b = balls[i];
+                if (b == null) continue;
+                GameObject go = b.gameObject;
+                bool carried = fetchers != null && i < fetchers.Length && fetchers[i] != null && fetchers[i].IsCarrying;
+                // Held or carried = a new play: forget earlier returns, so only a ball that rolls back by itself counts
+                // toward the park (Codex 2026-09-27 U-中: three quick throws into the river must not park the third)
+                // (a throw starts that dog's Fetch, which also catches a grab-and-throw shorter than one 0.25 s look)
+                bool fetching = fetchers != null && i < fetchers.Length && fetchers[i] != null && !fetchers[i].IsIdle;
+                if (b.IsHeldNow || fetching) { _riverRepeat[i] = 0; _riverLastReturn[i] = -1000f; }
+                if (!Networking.IsOwner(go) || b.IsHeldNow || carried) { _riverSince[i] = -1f; continue; }
+                Vector3 p = go.transform.position;
+                if (!riverData._InBand(p, KH_RiverData.BandMargin)) { _riverSince[i] = -1f; continue; }
+                if (_riverSince[i] < 0f) _riverSince[i] = Time.time;
+                bool sunk = p.y < riverData._SurfaceY(p.z);
+                if (!sunk && Time.time - _riverSince[i] < RiverStrandSeconds) continue;
+                _riverSince[i] = -1f;
+                ReturnFromRiver(i, sunk);
+            }
+        }
+
+        // Bank destination on the given side. The bank slopes down into the water, and a sphere rolls on any slope, so a
+        // point just outside the band sends the ball straight back in (measured 2026-09-27 W5: returned 1 m outside the band,
+        // rolled back, sank and was returned again every ~2 s). Candidates: NavMesh points 2 .. 9.5 m beyond the band edge in
+        // 1.5 m steps. Score = ground normal (horizontal part = downhill) · the band's outward normal in x/z. The edge is
+        // side * (x - centreX(z)) = halfWidth(z) + 1, so the outward normal is (side, -(side * dcx/dz + dhw/dz)); this also holds
+        // where the river runs diagonally (Codex 2026-09-27 D-中).
+        // Calibration (generating formula, z 140-160, 2026-09-27): on the bank slope (+2 / +3.5 m) the score is -0.15 .. -0.34
+        // (9-20 deg toward the water); past the crest (+5 m and beyond) it is -0.022 .. +0.023 at 1.3-1.7 deg, i.e. only the
+        // water's own fall along z. The first threshold (-0.005) rejected the crest on the -x side at z 140 and parked the ball
+        // on its first return (run 20260927-041222). Accept score >= RiverSlopeAccept (-0.10, about 5.7 deg toward the water)
+        // and take the best score, nearer first on ties. None accepted = y -10000 (no out parameter): the caller parks.
+        // The chosen score is left in _riverSpotScore for the log.
+        Vector3 RiverBankSpot(Vector3 from, float side)
+        {
+            Vector3 best = new Vector3(0f, -10000f, 0f);
+            float bestScore = -2f;
+            for (int k = 0; k < RiverBankTries; k++)
+            {
+                Vector3 bank = riverData._BankPoint(from, side, KH_RiverData.BandMargin + KH_RiverData.BankExtra + k * 1.5f);
+                NavMeshHit hit;
+                if (!NavMesh.SamplePosition(bank, out hit, 2f, NavMesh.AllAreas)) continue;
+                Vector3 p = hit.position;
+                if (riverData._InBand(p, KH_RiverData.BandMargin)) continue;
+                RaycastHit g;
+                if (!Physics.Raycast(p + Vector3.up, Vector3.down, out g, 3f, groundMask, QueryTriggerInteraction.Ignore)) continue;
+                float dcx = riverData._CenterX(p.z + 0.5f) - riverData._CenterX(p.z - 0.5f);
+                float dhw = riverData._HalfWidth(p.z + 0.5f) - riverData._HalfWidth(p.z - 0.5f);
+                Vector3 outward = new Vector3(side, 0f, -(side * dcx + dhw));
+                outward = outward.normalized;
+                float score = g.normal.x * outward.x + g.normal.z * outward.z;
+                if (score < RiverSlopeAccept) continue;
+                if (score > bestScore + RiverSlopeTie) { bestScore = score; best = g.point; }
+            }
+            _riverSpotScore = bestScore;
+            return best;
+        }
+
+        void ReturnFromRiver(int i, bool sunk)
+        {
+            GameObject go = balls[i].gameObject;
+            Vector3 from = go.transform.position;
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            float centre = riverData._CenterX(from.z);
+            float sideX = Utilities.IsValid(lp) ? lp.GetPosition().x : from.x;
+            float side = sideX >= centre ? 1f : -1f;
+            // A ball that keeps coming back (returned again within RiverRepeatWindow) goes to the park on the third time.
+            if (Time.time - _riverLastReturn[i] < RiverRepeatWindow) _riverRepeat[i]++; else _riverRepeat[i] = 0;
+            _riverLastReturn[i] = Time.time;
+            Vector3 spot = _riverRepeat[i] >= 2 ? new Vector3(0f, -10000f, 0f) : RiverBankSpot(from, side);
+            bool found = spot.y > -9999f;
+            if (found)
+            {
+                VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
+                if (sync != null) sync.SetKinematic(false);
+                float radius = go.transform.localScale.x * 0.5f;
+                go.transform.position = spot + Vector3.up * (radius + 0.02f);
+                if (sync != null) sync.FlagDiscontinuity();
+                Rigidbody rb = go.GetComponent<Rigidbody>();
+                if (rb != null && !rb.isKinematic) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
+            }
+            else Park(i, KindBall);
+            Debug.Log("[KH_ToyRecall] river-return ball=" + i + " reason=" + (sunk ? "sunk" : "stranded") + " to=" + (found ? "bank" : "park")
+                + " side=" + (side > 0f ? "+x" : "-x") + " repeat=" + _riverRepeat[i] + " slope=" + (found ? _riverSpotScore.ToString("F3") : "none") + " from=" + RiverV3(from) + " at=" + RiverV3(go.transform.position));
+        }
+
+        string RiverV3(Vector3 v) { return "(" + v.x.ToString("F2") + "," + v.y.ToString("F2") + "," + v.z.ToString("F2") + ")"; }
 
         // Owner only (StepPark checked). A teleport: FlagDiscontinuity so other clients do not see it slide
         // through the ground (KD_TreatController._RespawnHome, measured 2026-08-24).

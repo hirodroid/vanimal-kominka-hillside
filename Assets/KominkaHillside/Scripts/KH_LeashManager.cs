@@ -9,7 +9,7 @@ namespace KominkaHillside
 {
     // One authority arbitrates all six dogs, so concurrent requests cannot exceed a hand's limit.
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-    public class KH_LeashManager : UdonSharpBehaviour
+    public partial class KH_LeashManager : UdonSharpBehaviour
     {
         // Scene references are allocated by Build. Do not give them same-length program defaults:
         // U#'s array serializer can mutate that default without creating a per-behaviour override.
@@ -154,6 +154,27 @@ namespace KominkaHillside
             if (changed) RequestSerialization();
         }
 
+        // ---- 誘いの一声 (IMP-DOG-003) の中継 ----
+        // 犬の UdonBehaviour (KD_WanderSystem_*) は Sync None なので自分ではネットワークイベントを送れない。
+        // 犬の Owner がここ (Manual) から全員へ送り、受け手は送り主が dogRoot の Owner かを確かめて犬のローカルの鳴き声を鳴らす
+        public void _RelayInviteBark(int dog)
+        {
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(LeashInviteBark), dog);
+        }
+
+        [NetworkCallable(maxEventsPerSecond: 6)]
+        public void LeashInviteBark(int dog) // net: callable-ok: sound only; sender must own that dog's root
+        {
+            if (dog < 0 || dogRoots == null || dog >= dogRoots.Length || dogRoots[dog] == null) return;
+            VRCPlayerApi caller = NetworkCalling.CallingPlayer;
+            VRCPlayerApi owner = Networking.GetOwner(dogRoots[dog].gameObject);
+            if (!Utilities.IsValid(caller) || !Utilities.IsValid(owner) || caller.playerId != owner.playerId) return;
+            if (fetchers == null || dog >= fetchers.Length || fetchers[dog] == null) return;
+            KominkaDogRun.KD_DogPack pack = fetchers[dog].pack;
+            if (pack == null || pack.dogWander == null || dog >= pack.dogWander.Length || pack.dogWander[dog] == null) return;
+            pack.dogWander[dog]._InviteBark();
+        }
+
         public Vector3 _WalkingTarget(int dog)
         {
             VRCPlayerApi player = VRCPlayerApi.GetPlayerById(walkers[dog]);
@@ -220,6 +241,7 @@ namespace KominkaHillside
         private void Release(int dog)
         {
             walkers[dog] = -1;
+            ClearTravel(dog); // IMP-WLD-001: a released dog carries no travel ticket (KH_LeashManager.Travel.cs)
             if (dogRoots[dog] != null) releasedHomes[dog] = dogRoots[dog].position;
             ApplyHomes();
         }
@@ -279,6 +301,7 @@ namespace KominkaHillside
 
         private void Update()
         {
+            TravelTick(); // IMP-WLD-001: the requester's wait runs every frame (KH_LeashManager.Travel.cs)
             if (Time.time < _nextMaintenance) return;
             _nextMaintenance = Time.time + 0.5f;
             if (!Networking.IsOwner(gameObject)) { ApplyHomes(); return; }
@@ -291,6 +314,7 @@ namespace KominkaHillside
             // Also repairs connections whose holder left during automatic ownership transfer.
             for (int i = 0; i < walkers.Length; i++)
                 if (walkers[i] >= 0 && !Utilities.IsValid(VRCPlayerApi.GetPlayerById(walkers[i]))) { Release(i); changed = true; }
+            if (ExpireTravel()) changed = true;
             if (changed) RequestSerialization();
             ApplyHomes();
         }

@@ -181,13 +181,11 @@ namespace KominkaDogRun
         public void _InvalidateLeashAnimation() { _leashAnimationDirty = true; }
         private bool _leashAnimationDirty;
 
-        // Sound only, but only the dog Owner (the one deciding invitations) may ring it.
-        [NetworkCallable(maxEventsPerSecond: 3)]
-        public void LeashInviteBark()
-        {
-            if (dogRoot == null || NetworkCalling.CallingPlayer != Networking.GetOwner(dogRoot.gameObject)) return;
-            Bark();
-        }
+        // Sound only. This UdonBehaviour is Sync None, so it can neither send nor receive network events
+        // ("Unable to send network event ... SyncType 'None'", found by the IMP-WLD-001 travel harness T3 while the
+        // holder stood still). The dog Owner relays through KH_LeashManager (Manual), which checks that the sender
+        // owns this dog's root and then calls this local method on every client.
+        public void _InviteBark() { Bark(); }
 
         private bool UpdateHillsideLeash()
         {
@@ -277,6 +275,7 @@ namespace KominkaDogRun
             bool settling = stillFor > restAfter && handDist < 2.2f;
             LeashPose(holder, toHand, handDist, handPos, route, settling);
             if (!_dogOwner) { ApplyMoveAnim(); return true; }
+            if (UpdateHillsideTravel(holderPos, handDist, leash)) return true; // IMP-WLD-001: travel ticket first, before Return (HillsideTravel.cs)
 
             // The stopover badge means "standing at that spot right now" and nothing else. Rest, the
             // return and the off-trail branches below all take the dog away without asking, so the badge
@@ -315,7 +314,7 @@ namespace KominkaDogRun
             if (leashMode == LeashReturn)
             {
                 Vector3 back = handPos - toHand / Mathf.Max(handDist, 0.001f) * 0.9f;
-                if (handDist > hillsideLeashes.catchUpDistance && Time.time >= _nextTeleportTry)
+                if (handDist > hillsideLeashes.catchUpDistance && Time.time >= _nextTeleportTry && !TravelPending()) // IMP-WLD-001: a pending ticket owns the move
                 {
                     _nextTeleportTry = Time.time + 1f;
                     if (TeleportTo(back)) return true;
@@ -363,7 +362,7 @@ namespace KominkaDogRun
                     if (!_inviteBarked)
                     {
                         _inviteBarked = true; _modeUntil = Time.time + 2.5f;
-                        SendCustomNetworkEvent(NetworkEventTarget.All, nameof(LeashInviteBark));
+                        hillsideLeashes._RelayInviteBark(dogIndex); // via the Manual manager (this behaviour is Sync None)
                     }
                     if (Time.time >= _modeUntil)
                     {
@@ -1108,7 +1107,9 @@ namespace KominkaDogRun
                 if (turn > TurnSlowDeg) { if (speed > walkSpeed) speed = walkSpeed; }
                 else if (turn > TurnEaseDeg && speed > hillsideLeashes.dashSpeed) speed = hillsideLeashes.dashSpeed;
             }
+            _navStep = true; // IMP-DOG-020: NavMesh の移動は川の帯の判定から外す (HillsideWater.cs)
             StepToward(dogRoot.position + delta / distance * clearance, _leashCorner == _leashCorners.Length - 1 ? stop : 0.05f, speed);
+            _navStep = false;
         }
 
         // Gathering (KD_GroupActivities mode 1) on the hillside: follow a complete NavMesh path to the slot.
@@ -1133,7 +1134,11 @@ namespace KominkaDogRun
             if (!_gatherPathOk || _leashCorners == null || _leashCorners.Length < 2) return false;
             while (_leashCorner < _leashCorners.Length - 1 && Vector3.Distance(dogRoot.position, _leashCorners[_leashCorner]) < 0.35f) _leashCorner++;
             bool last = _leashCorner == _leashCorners.Length - 1;
+            // IMP-DOG-020: 完全経路の角までは NavMesh の移動として帯の判定から外す。最後の区間は NavMesh へ投影した終点ではなく
+            // 元の goal (枠) へ直進するので、帯の判定を掛ける (枠が帯の中なら岸で止まる。Codex 2026-09-27 D-高)
+            _navStep = !last;
             StepToward(last ? goal : _leashCorners[_leashCorner], 0f, speed);
+            _navStep = false;
             return true;
         }
 

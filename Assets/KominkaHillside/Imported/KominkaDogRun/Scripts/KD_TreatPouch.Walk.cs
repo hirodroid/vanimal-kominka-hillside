@@ -236,6 +236,7 @@ namespace KominkaDogRun
                 : L("course.walk.summary").Replace("{0}", mine.ToString()).Replace("{1}", WalkDestinationName(firstDestination));
             else if (plaza > 0 && gate > 0) summary = L("KD_TreatPouch.WordWalkSummaryMixed").Replace("{0}", plaza.ToString()).Replace("{1}", gate.ToString());
             else summary = L(plaza > 0 ? "KD_TreatPouch.WordWalkSummaryPlaza" : "KD_TreatPouch.WordWalkSummaryGate").Replace("{0}", mine.ToString());
+            RedrawTravel();   // IMP-WLD-001: 上段の地点ワープ (KD_TreatPouch.Travel.cs)
             HillsideFooter(HillsideNoteOr(TabWalk, summary));
         }
 

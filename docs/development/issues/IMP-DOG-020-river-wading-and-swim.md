@@ -40,6 +40,49 @@ updated: 2026-09-27
 - [ ] Editor 検査 1 (配列と水面メッシュの照合)、検査 6 (除外の縁の水面下の点の一覧) が通る
 - [ ] ClientSim ハーネス W5: 水遊び場の外の川へ投げたボール・対岸の集合で、犬が川の帯へ入らず、ボールが岸へ戻る
 
+**実装 (2026-09-27)**
+
+- 変更ファイル:
+  - 新規 `Scripts/KH_RiverData.cs` (同期 None。z 0〜720 を 1 m 間隔の配列で持ち、`_InBand` / `_BlocksStep` / `_BankPoint` などを返り値で引く。橋の床の上は帯の外)。
+  - 新規 `KD_DogWanderController.HillsideWater.cs` と `KD_DogFetchController.HillsideWater.cs`。判定の入口 `_BlockedByRiver` を 1 つずつ置いた。水遊び場の例外は後でここへ足す。
+  - `KD_DogWanderController.cs`: `StepToward` と `Coast` が帯へ入る歩を止める。`HillsideLeash.cs` の `LeashGo` と `GatherStep` は `_navStep` で判定の対象外にした (NavMesh の移動)。
+  - `KD_DogFetchController.cs`: 帯へ入る歩で `GiveUp` し、Owner ログに `reason=river-band` を出す。
+  - `Scripts/KH_ToyRecall.cs`: ボールの Owner が 0.25 s ごとに確認する。沈んだボールはすぐに、帯の中に 10 s あるボールはその時点で、Owner の側の岸 (NavMesh) へ移す。岸が見つからなければ置き場へ移す。Owner ログは `[KH_ToyRecall] river-return`。
+  - 新規 `Scripts/Editor/KH_RiverDataEditor.cs`、`Testing/KH_CourseWalkHarnessEditor.River.cs` (本体は `partial` 化と 3 行の分岐だけ)。
+- メニュー (`Tools/KominkaHillside/Course/`):
+  - `73 - Build River Data`: 1 回目はプログラムアセットを作るだけ。U# のコンパイル後にもう一度実行すると、`KH_Dogs/KH_RiverData` を作って犬 6 匹・Fetch 6・ToyRecall に配線し、シーンを保存する。
+  - `74 - Verify River Data`: 検査 1・6。シーンは保存しない。
+  - `75 - Walk Harness River Band W5`: 停止は `41`、PlayerData の復元は `46` (既存と同じ)。
+- 結果の出力先:
+  - `Temp/imp-dog-020/river-data-build.json`、`river-data-verify.json`
+  - `Logs/kh-course-walk/<run>/report.json` と `river-w5.json`
+- 統括の手順:
+  1. refresh → `unity-compile.sh --udon`。U# は `KH_RiverData` のアセットが無いのでエラーになる見込み。
+  2. `73` を実行 → U# のコンパイル → もう一度 `73`。
+  3. 保存後に `74` を実行し、`PASS` を確かめる。
+  4. `75` を実行し、`W5_PASS` を確かめる。
+- 1 回目の W5 (2026-09-27、run 20260927-032848): 川の中のボールと対岸の集合は PASS、帯の縁のボールは FAIL だった。わかったことと直したこと:
+  - 実装の不具合: 岸へ戻したボールが斜面を転がって川へ戻り、約 2 s ごとに沈んで戻されるのを繰り返していた。
+    - 戻し先の点は帯の縁から 1 m 外で、そこから川へ下る斜面だった。
+    - 修正: 戻し先は帯の縁から 2〜9.5 m 外で、平らか川と反対へ下る NavMesh 上の点にした。20 s 以内に 3 回戻ったら置き場へ移す。
+  - ハーネスの誤り: 帯の縁に置いたボールの中心が水面より下だったため、10 s の取り残しではなく、沈んだボールとして即座に戻された。
+    - 修正: ボールを Rigidbody の FreezeAll で水面より上に止めて置く。戻ったら 1 回きりで、その後 6 s 帯へ戻らないことも合格条件に加えた。
+- ハーネス W5 の疑似入力: 投げはボールを置いてから `_OnBallThrown` を呼ぶ。集合は `KD_GroupActivities` の同期変数へ直接書く (メニューの権限と置き場所の検査は通らない)。
+- 実測 (2026-09-27、統括が Unity で実行):
+  - C# と U# のコンパイルはエラー 0。
+  - Course/73 は BUILT (721 サンプル、橋 z 190 / 490、配線 6 / 6 / 1)。
+  - Course/74 は PASS (誤差 y 0.000 / x 0.019 / hw 0.001 m、水面下の NavMesh 点 0)。
+  - W5 は W5_PASS (3 ケース、run 20260927-033516)。
+- Codex の独立レビュー (2026-09-27) を受けて直した点。レビュー反映後に W5 を再実行する予定:
+  - 集合の最後の区間: NavMesh の終点ではなく枠へ直進するので、ここにも帯の判定を掛けた。
+  - 加速後の歩幅: 加速前の速さで先読みしていたので、実際の歩幅でもう一度判定するようにした。
+  - 岸の点の判定: 斜めに流れる区間でも正しく判定できるよう、帯の外向きの法線で見るようにした。安全な点が無ければ置き場へ移す。
+  - 置き場送りの数え方: 拾われたときと Fetch の間は回数を戻す。
+  - W5 の合格条件: 戻した先が NavMesh 上であることと、置き場送りでないことを加えた。戻したボールは次にハーネスが置き直すまで監視を続ける。
+- 2 回目の W5 (run 20260927-041222) は W5_FAIL だった。岸の点の判定が厳しすぎ、z 140 で候補をすべて落として、1 回目から置き場へ送っていた。
+  - 生成式で確かめた値: 岸の斜面 (帯の縁から +2 / +3.5 m) は -0.15〜-0.34 (9〜20°)。斜面の上端より先 (+5 m 以遠) は -0.022〜+0.023 (1.3〜1.7°) で、水面の z 方向の傾きの分だけだった。
+  - 修正: 内積 -0.10 以上 (水へ向かう下りが約 5.7° 以下) を受け入れ、内積が最大の点を選ぶ。3 回目の置き場送りはそのまま。ログに  を出す。
+
 ### 2. 水遊び場
 
 - `KH_WaterSpot` を置く (領域・入水点・出水点・復帰点・河床格子)。淵は掘らない。
@@ -75,5 +118,6 @@ updated: 2026-09-27
 - [ ] Quest 単体 / iOS: [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) に「川の水遊び」の行を足して確認する (設計書 D-2)
 - [ ] game-design §3 の条件 (16 人・犬 6 匹、集合時と分散時、端末・画質・アバター表示条件の記録) での計測を、[IMP-ENV-004](IMP-ENV-004-river-loop-course.md) の計測と同じ回で行う (設計書 D-4)
 - [ ] 容量の増分が予算 +0.5 MiB 以内 (Android / iOS の代理容量で測る)
+- [ ] 未対応の直線移動: `KD_DogPack` の押し合い (`KD_DogPack.cs:255`) と `KH_FrisbeeCatch` の直線移動 (`KH_FrisbeeCatch.Motion.cs:641`) が川の帯の判定を通らない。川へ落ちたディスクも岸へ戻らない (Codex レビュー 2026-09-27、別件として記録)
 
 関連: [DES-DOG-004](DES-DOG-004-river-play-and-floating-fetch.md) (設計と決定)、[IMP-DOG-019](IMP-DOG-019-ball-and-disc-placement.md) (置き場・おもちゃの排他)、[IMP-ENV-004](IMP-ENV-004-river-loop-course.md) (川・NavMesh・河床除外)、[VER-WLD-001](VER-WLD-001-quest-ios-devices.md) (端末の確認の集約先)。

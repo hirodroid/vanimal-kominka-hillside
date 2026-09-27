@@ -1626,7 +1626,12 @@ namespace KominkaDogRun
                 // ここは目標速度が常に 0 なので無条件に畳んでよい (StepToward と同じ不変条件)
                 if (_speed <= stopSpeedThreshold) _speed = 0f;
                 if (_speed > 0f)
-                    dogRoot.position = SnapToGround(dogRoot.position + _moveDir * (_speed * Time.deltaTime)); // net: owner-only: _dogOwner (惰性)
+                {
+                    Vector3 coastNext = dogRoot.position + _moveDir * (_speed * Time.deltaTime);
+                    // IMP-DOG-020: 惰性でも川の帯へは入らない (HillsideWater.cs)
+                    if (_BlockedByRiver(dogRoot.position, coastNext)) _speed = 0f;
+                    else dogRoot.position = SnapToGround(coastNext); // net: owner-only: _dogOwner (惰性)
+                }
             }
             ApplyMoveAnim();
         }
@@ -1656,6 +1661,15 @@ namespace KominkaDogRun
             // 撮影通知エッジは非 Owner 側でも今までどおり出る
             if (!_dogOwner)
             {
+                ApplyMoveAnim();
+                return;
+            }
+
+            // IMP-DOG-020: 直線移動は川の帯の手前で止まる (HillsideWater.cs。NavMesh の移動は対象外)。
+            // 加速より前に見るので、止まっている間は _speed が 0 のまま (足踏みに見えない)
+            if (_BlockedByRiver(pos, pos + to / dist * Mathf.Max(_speed * Time.deltaTime, RiverProbe)))
+            {
+                _speed = 0f;
                 ApplyMoveAnim();
                 return;
             }
@@ -1697,7 +1711,9 @@ namespace KominkaDogRun
             {
                 float step = _speed * Time.deltaTime;
                 if (step > remain) step = remain;
-                dogRoot.position = SnapToGround(pos + _moveDir * step); // net: owner-only: 上の早期 return が非 Owner を弾く
+                // IMP-DOG-020: 加速後の実際の歩幅でもう一度見る (上の先読みは加速前の速さ。低 fps の加速中に越えないため)
+                if (_BlockedByRiver(pos, pos + _moveDir * step)) _speed = 0f;
+                else dogRoot.position = SnapToGround(pos + _moveDir * step); // net: owner-only: 上の早期 return が非 Owner を弾く
             }
 
             ApplyMoveAnim();
