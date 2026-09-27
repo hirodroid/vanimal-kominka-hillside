@@ -406,7 +406,7 @@ namespace KominkaDogRun
         /// **手元メニューの「呼ぶ」は これではなく <see cref="IsIdle"/> で見る** (IMP-FET-011) —
         /// `IsCarrying` だけだと Chase / Pickup 中が素通りして、犬の追跡を横から折れてしまう。
         /// ここが残っているのは Fetch 内部と撮影が使うため。</summary>
-        public bool IsCarrying { get { return dogState == StateReturn || dogState == StateDrop; } }
+        public bool IsCarrying { get { return dogState == StateReturn || dogState == StateDrop || dogState == StateWaterReturn || dogState == StateWaterExit; } }
 
         // ---- IMP-NET-001: 撫での同期状態 (KD_DogPetController が毎フレーム導出する) ----
         // **Idle 以外では必ず「撫でていない」を返す** — Fetch が始まった瞬間に
@@ -899,6 +899,8 @@ namespace KominkaDogRun
                 return;
             }
 
+            if (WaterFetchTick()) return;   // IMP-DOG-020 step 6: water states 6-8 and the entry from Chase (HillsideWater.cs)
+
             // 目標位置: 追跡系はボール、帰還系は投げた本人。
             // stopDist (止まるべき点) は状態が変わっても同じ値を使う — Pickup / Drop は
             // 「そこへ向かって減速し切る」区間であって、瞬間停止ではない
@@ -1299,7 +1301,7 @@ namespace KominkaDogRun
             // (表示ローカル、状態は同期変数から導出)。
             // VRCObjectSync の書き込みより後に走るため、このフレームの描画はこちらが勝つ。
             // 非 Owner の起点は自分の OnDeserialization 時刻 — 数フレームのずれは許容
-            bool carrying = dogState == StateReturn
+            bool carrying = dogState == StateReturn || dogState == StateWaterReturn || dogState == StateWaterExit   // IMP-DOG-020
                 || (dogState == StateDrop && (Time.time - _stateEnteredTime) < dropWaitDuration + dropDelay);
             // IMP-FET-014: 口から掴まれたら**手が勝つ**。Owner の Idle が届くまでの数フレーム、
             // 貼り付けを続けると保持者の手と口元がボールを奪い合う (IsHeld は同期された保持状態)

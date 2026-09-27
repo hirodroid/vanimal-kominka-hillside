@@ -15,8 +15,9 @@ namespace KominkaDogRun
     // so a dog that walked straight to the bank waits there and takes the bridge as soon as a complete path appears.
     //
     // IMP-DOG-020 steps 2-3 (DES-DOG-004 B-1, B-2 "stage 0", C-6/6b/9/11): WaterPlay, the Owner's local state.
-    //   start  : a release within 12 m of the spot's entry -> the first play within 5 s (100 %, once per dog per stay);
-    //            later, near the entry, a 30 % roll every 45 s. Never while leashed / fetching / in a stronger behaviour
+    //   start  : (decision 2026-09-27, 2nd) a free dog within 25 m of the spot's entry starts its first play of the stay within
+    //            5 s (100 %), whatever released it; later, near the entry, a 30 % roll every 45 s. (The first version waited
+    //            for a release within 12 m.) Never while leashed / fetching / in a stronger behaviour
     //            (those branches come first in Update), never while a gathering runs.
     //   states : 1 walk to the entry -> 2 wade (random grid cells, 20-40 s) -> 3 walk out to the saved exit -> 4 stand 1.2 s.
     //   pose   : waterPose (KD_DogFetchController, synced) = 1 while the feet are wet in the spot (depth > 0.02 m), else 0.
@@ -66,6 +67,10 @@ namespace KominkaDogRun
         const float WaterStuckStep = 0.1f, WaterFxRange = 20f, WaterSplashInterval = 0.25f;
         const float SwimEaseRate = 1.2f, SinkGuard = 0.03f, SwimLookAhead = 0.3f;
         private bool _waterSwimming, _swimYValid, _waterWasOwner, _bobBaseValid, _swimSettled;
+        private int _waterFetchFrame = -1, _waterCarryFrame = -1;
+        // Last refusal of _BlockedByRiver (1 sink-guard / 2 wade-limit / 3 band outside the spot) and its frame: local, read by the
+        // harness trace only (run 20260927-093227: W3 dogs stood 90 s on the bank, every step refused by the band rule).
+        private int _waterBlock, _waterBlockFrame = -1;
         private Vector3 _bobBase;
         private float _nextSinkLog;
         private float _swimShallowSince = -1f, _waterSwimY;
@@ -80,7 +85,7 @@ namespace KominkaDogRun
         {
             if (riverData == null || _navStep) return false;
             // The water-play spot: a dog in WaterPlay may move inside it, but not deeper than its stage-0 limit.
-            if (waterState != WaterOff && waterSpot != null && waterSpot._Contains(next)
+            if ((waterState != WaterOff || _waterFetchFrame == Time.frameCount) && waterSpot != null && waterSpot._Contains(next)
                 && waterSpot._Bed(next) > KominkaHillside.KH_WaterSpot.NoBed + 1f)
             {
                 float d = waterSpot._Depth(next), dFrom = waterSpot._Depth(from);
@@ -89,14 +94,18 @@ namespace KominkaDogRun
                 // past its wading limit. A swimmer switches to swimming before this matters (WaterSwimLookAhead).
                 if (waterSwimMouth - d < SinkGuard)   // Ms: the mouth with the walk clip (head drop included)
                 {
+                    _waterBlock = 1; _waterBlockFrame = Time.frameCount;
                     if (Time.time >= _nextSinkLog) { _nextSinkLog = Time.time + 2f; Debug.Log("[KD_DogWanderController] water step refused dog=" + dogIndex + " reason=sink-guard depth=" + d.ToString("F3")); }
                     return true;
                 }
-                return !waterSwimAllowed && d > WaterDepthLimit();
+                if (!waterSwimAllowed && d > WaterDepthLimit()) { _waterBlock = 2; _waterBlockFrame = Time.frameCount; return true; }
+                return false;
             }
             // Outside the spot, or a spot cell without riverbed data (Codex 2026-09-27 D-中): the plain band rule, so a step
             // deeper into the band stops and the exit watch / recovery takes over.
-            return riverData._BlocksStep(from, next, KominkaHillside.KH_RiverData.BandMargin);
+            bool band = riverData._BlocksStep(from, next, KominkaHillside.KH_RiverData.BandMargin);
+            if (band) { _waterBlock = 3; _waterBlockFrame = Time.frameCount; }
+            return band;
         }
 
         float WaterDepthLimit() { return waterSpot.wadeLimitRatio * waterMouthHeight; }
@@ -148,10 +157,7 @@ namespace KominkaDogRun
                 if (fetchController.WaterPose == 2) { _waterSwimming = true; _waterSwimY = dogRoot.position.y; _swimYValid = true; _swimShallowSince = -1f; }
             }
             if (waterState != WaterOff && _waterSeenFrame < Time.frameCount - 1) WaterEnd("preempted");
-            bool leashed = hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex);
-            if (_waterWasLeashed && !leashed && !_waterFirstUsed && waterSpot._NearEntry(dogRoot.position))
-                _waterFirstDue = Time.time + WaterFirstDelay;
-            _waterWasLeashed = leashed;
+            _waterWasLeashed = hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex);
             Vector3 p = dogRoot.position;
             bool wetNow = WaterWetAt(p);
             if (!wetNow) { _waterSwimming = false; _swimShallowSince = -1f; }
@@ -180,7 +186,7 @@ namespace KominkaDogRun
             Vector3 p = dogRoot.position;
             bool wet = fetchController.WaterPose != 0 || WaterWetAt(p);
             // Cheap exit for the usual dry dog far from the spot (the errand lookups below are cross-behaviour calls).
-            if (waterState == WaterOff && !wet && _waterFirstDue <= 0f && (Time.time < _waterNextRoll || !waterSpot._NearEntry(p))) return false;
+            if (waterState == WaterOff && !wet && (!waterSpot._NearEntry(p) || (_waterFirstUsed && Time.time < _waterNextRoll))) { _waterFirstDue = 0f; return false; }
             int requester = WaterRequester();
             if (waterState == WaterOff)
             {
@@ -227,6 +233,42 @@ namespace KominkaDogRun
             waterBob.localPosition = _bobBase + Vector3.up * off;
         }
 
+        // ---- step 6: the Fetch's water states (6 WaterChase / 7 WaterReturn / 8 WaterExit) move the dog through these legs, so
+        // the swim height, the look-ahead, the depth rules and the spot's band exception are the same as in WaterPlay.
+
+        /// <summary>From KD_DogFetchController (Owner, every frame of a water state): one step toward goal.</summary>
+        public void _WaterFetchStep(Vector3 goal, bool carrying)
+        {
+            if (!_dogOwner || waterSpot == null) { ApplyMoveAnim(); return; }
+            _waterFetchFrame = Time.frameCount;
+            if (carrying) _waterCarryFrame = Time.frameCount;
+            Vector3 p = dogRoot.position;
+            // From the bank the way in is the entry, as for WaterPlay (WaterStepApproach): the strip between the bank and the
+            // spot polygon is band outside the spot, where every straight step is refused (run 20260927-093227, W3 x 6).
+            if (!carrying && !waterSpot._Contains(p) && Horizontal(p, waterSpot.entry) >= 0.5f)
+            {
+                if (hillsideLeashes == null || !GatherStep(waterSpot.entry, runSpeed)) StepToward(waterSpot.entry, 0f, runSpeed);
+                return;
+            }
+            WaterSwimLookAhead(p, goal);
+            StepToward(goal, 0f, WaterStepSpeed(p));
+            WaterApplySwimHeight();
+        }
+
+        /// <summary>Stand (WaterExit's 1.2 s on the bank): legs and height only.</summary>
+        public void _WaterFetchHold(bool carrying)
+        {
+            if (!_dogOwner || waterSpot == null) { ApplyMoveAnim(); return; }
+            _waterFetchFrame = Time.frameCount;
+            if (carrying) _waterCarryFrame = Time.frameCount;
+            Coast();
+            WaterApplySwimHeight();
+        }
+
+        public bool _WaterCanSwim() { return waterSwimAllowed; }
+        public float _WaterWadeLimit() { return waterSpot == null ? 0f : WaterDepthLimit(); }
+        public float _WaterSwimSpeedNow() { return waterSpot == null ? walkSpeed : WaterSwimSpeed(); }
+
         float WaterStepSpeed(Vector3 p)
         {
             if (_waterSwimming) return WaterSwimSpeed();
@@ -255,7 +297,8 @@ namespace KominkaDogRun
             Vector3 q = dogRoot.position;
             if (_waterSwimming)
             {
-                float want = riverData._SurfaceY(q.z) + waterSpot.swimClear - waterSwimMouth;   // the bob is on the visual child
+                // the bob is on the visual child; carrying a ball (Fetch state 7/8) lifts the mouth by the ball's radius (B-1)
+                float want = riverData._SurfaceY(q.z) + waterSpot.swimClear + (_waterCarryFrame == Time.frameCount ? waterSpot.carryExtra : 0f) - waterSwimMouth;
                 if (!_swimYValid) { _waterSwimY = q.y; _swimYValid = true; _swimSettled = false; }
                 // Rising only at the start; once afloat the height follows the water surface exactly every frame, so a slope
                 // or a push cannot leave the mouth low for a few frames (W2-Pome run 20260927-073904).
@@ -276,11 +319,14 @@ namespace KominkaDogRun
         bool WaterWantsToStart(Vector3 p)
         {
             if (activities != null && activities.Mode == 1) return false;
-            if (_waterFirstDue > 0f)
+            if (!_waterFirstUsed)
             {
+                // First play of the stay: near (25 m) and free is enough; a short settle so a dog passing by does not jerk.
+                if (!waterSpot._NearEntry(p)) { _waterFirstDue = 0f; return false; }
+                if (_waterFirstDue <= 0f) _waterFirstDue = Time.time + WaterFirstDelay;
                 if (Time.time < _waterFirstDue) return false;
                 _waterFirstDue = 0f; _waterFirstUsed = true;
-                return waterSpot._NearEntry(p);
+                return true;
             }
             if (!waterSpot._NearEntry(p) || Time.time < _waterNextRoll) return false;
             _waterNextRoll = Time.time + WaterRollInterval;

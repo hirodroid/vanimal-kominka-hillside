@@ -343,6 +343,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "水遊び中 — 岸へ戻ります。上がったらもう一度押してください"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "犬の水あそび"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "川の近くで放すと水遊びします。上がったらまたつなげます"
         }
       ]
     },
@@ -686,6 +694,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "Playing in the water — coming back to the bank. Press again once it's out"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "Dog water play"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "Let go near the river and the dog plays in the water. You can leash it again once it's out"
         }
       ]
     },
@@ -1029,6 +1045,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "Играет в воде — возвращается на берег. Когда выйдет, нажмите ещё раз"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "Собаки играют в воде"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "Отпустите у реки — собака поиграет в воде. Когда выйдет, можно снова взять на поводок"
         }
       ]
     },
@@ -1372,6 +1396,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "Грається у воді — повертається на берег. Коли вийде, натисніть ще раз"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "Собаки граються у воді"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "Відпустіть біля річки — пес погратиметься у воді. Коли вийде, можна знову взяти на повідок"
         }
       ]
     },
@@ -1715,6 +1747,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "물놀이 중 — 물가로 돌아와요. 나오면 다시 눌러 주세요"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "강아지 물놀이"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "강 근처에서 풀어 주면 물놀이를 해요. 나오면 다시 목줄을 맬 수 있어요"
         }
       ]
     },
@@ -2058,6 +2098,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "Spielt im Wasser – kommt ans Ufer zurück. Wenn er draußen ist, noch einmal drücken"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "Wasserspiel für Hunde"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "In Flussnähe losgelassen, spielt der Hund im Wasser. Sobald er draußen ist, kannst du ihn wieder anleinen"
         }
       ]
     },
@@ -2401,6 +2449,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "正在玩水 — 正在回到岸边。上岸后请再按一次"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "狗狗玩水"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "在河边放开，狗狗会去玩水。上岸后可以再牵上"
         }
       ]
     },
@@ -2744,6 +2800,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "Jugando en el agua — vuelve a la orilla. Cuando salga, pulsa otra vez"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "Juego de perros en el agua"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "Si lo sueltas cerca del río, jugará en el agua. Cuando salga, podrás volver a atarlo"
         }
       ]
     },
@@ -3087,6 +3151,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "Joue dans l'eau — revient vers la rive. Appuie encore une fois qu'il est sorti"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "Jeux d'eau pour chiens"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "Lâché près de la rivière, le chien joue dans l'eau. Tu pourras le rattacher une fois sorti"
         }
       ]
     },
@@ -3430,6 +3502,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "Brincando na água — voltando para a margem. Quando sair, aperte de novo"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "Brincadeira na água para cães"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "Solte perto do rio e o cachorro brinca na água. Quando sair, dá para prender de novo"
         }
       ]
     },
@@ -3773,6 +3853,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "Gioca in acqua — torna a riva. Quando esce, premi di nuovo"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "Giochi d'acqua per cani"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "Se lo lasci vicino al fiume, gioca in acqua. Quando esce puoi rimettergli il guinzaglio"
         }
       ]
     },
@@ -4116,6 +4204,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "Bawi się w wodzie — wraca na brzeg. Gdy wyjdzie, naciśnij jeszcze raz"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "Zabawa psów w wodzie"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "Puść przy rzece, a pies pobawi się w wodzie. Gdy wyjdzie, możesz znów go przypiąć"
         }
       ]
     },
@@ -4463,6 +4559,14 @@
         {
           "key": "course.water.busyToyBack",
           "text": "玩緊水 — 返緊去岸邊。上岸之後請再撳一次"
+        },
+        {
+          "key": "course.water.sign",
+          "text": "狗狗玩水"
+        },
+        {
+          "key": "course.water.release2",
+          "text": "喺河邊附近放開，狗狗會去玩水。上岸之後可以再拖返"
         }
       ]
     }

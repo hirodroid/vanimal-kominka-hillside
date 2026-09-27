@@ -60,6 +60,7 @@ namespace KominkaHillside.Editor
             public bool travelOnly; // IMP-WLD-001 travel (KH_CourseWalkHarnessEditor.Travel.cs)
             public bool waterOnly; // IMP-DOG-020 W0/W4/W6 (KH_CourseWalkHarnessEditor.Water.cs)
             public bool waterSwim; // IMP-DOG-020 step 4 W1 x6 / W2 (same file, Course/79)
+            public bool waterFetch; // IMP-DOG-020 step 6 W3 / S4 / S5b (same file, Course/88)
             public int lapChoice;
             public List<Case> cases=new List<Case>();
             public List<string> errors=new List<string>();

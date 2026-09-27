@@ -27,7 +27,7 @@ namespace KominkaHillside
         public float gridX0, gridZ0, gridStep = 0.5f;
         public int gridNx, gridNz;
         public float[] bed;
-        public float entryRadius = 12f;    // B-1: a release within this of the entry starts the first water play
+        public float entryRadius = 25f;    // B-1 (decision 2026-09-27, 2nd): a free dog within this of the entry starts the first water play
         // ---- water-play tuning: the single source (DES-DOG-004 B-2 trial values; Codex 2026-09-27 M-低). The dogs, Course/76-77
         // and the harness all read these. M = the dog's standing mouth height (KD_DogWanderController.waterMouthHeight).
         // The constants are the one place to change a value: the fields start from them and Course/76 writes them into the
@@ -50,6 +50,58 @@ namespace KominkaHillside
         // that, and anyone else stops (sink guard). Design floor 0.03 m + 1 cm.
         public const float DefaultWadeClear = 0.04f;
         public float wadeClear = DefaultWadeClear;
+        // Step 6 (floating ball retrieval): while carrying, the swimming mouth sits the ball's radius higher (B-1, 0.5 x 0.085 m).
+        public const float DefaultCarryExtra = 0.043f;
+        public float carryExtra = DefaultCarryExtra;
+        // Floating ball (C-8): y = water - radius x floatSink, drifting downstream (-z: the water surface rises with z) at
+        // floatDrift m/s until the region's downstream end.
+        public const float DefaultFloatSink = 0.3f, DefaultFloatDrift = 0.15f;
+        public float floatSink = DefaultFloatSink, floatDrift = DefaultFloatDrift;
+
+        // Step 5: the temporary sign "犬の水あそび" (the real sign is DES-UI-004). Local text, refreshed once a second so a
+        // language change reaches it; sync None, no events.
+        public KominkaDogRun.KD_Language language;
+        public TMPro.TextMeshPro signLabel;
+        public string signKey = "course.water.sign";
+        private float _nextSign;
+        private string _signText;
+
+        void Update()
+        {
+            if (signLabel == null || language == null || Time.time < _nextSign) return;
+            _nextSign = Time.time + 1f;
+            string t = language._Text(signKey);
+            if (t != _signText) { _signText = t; signLabel.text = t; }
+        }
+
+        /// <summary>The downstream end of the region (smallest z, 0.5 m inside): a floating ball stops here.</summary>
+        public float _DownstreamZ()
+        {
+            if (polyZ == null || polyZ.Length == 0) return 0f;
+            float m = polyZ[0];
+            for (int i = 1; i < polyZ.Length; i++) if (polyZ[i] < m) m = polyZ[i];
+            return m + 0.5f;
+        }
+
+        /// <summary>Diagonal of the region's bounding box (the water Fetch timeout, B-1: 1.5 x diagonal / swim speed + 5 s).</summary>
+        public float _Diagonal()
+        {
+            if (polyX == null || polyX.Length == 0) return 0f;
+            float x0 = polyX[0], x1 = polyX[0], z0 = polyZ[0], z1 = polyZ[0];
+            for (int i = 1; i < polyX.Length; i++)
+            {
+                if (polyX[i] < x0) x0 = polyX[i]; if (polyX[i] > x1) x1 = polyX[i];
+                if (polyZ[i] < z0) z0 = polyZ[i]; if (polyZ[i] > z1) z1 = polyZ[i];
+            }
+            float dx = x1 - x0, dz = z1 - z0;
+            return Mathf.Sqrt(dx * dx + dz * dz);
+        }
+
+        /// <summary>The ball floats here: inside the region, inside the river band, and not far above the water.</summary>
+        public bool _FloatsAt(Vector3 p)
+        {
+            return _Contains(p) && riverData != null && riverData._InBand(p, KH_RiverData.BandMargin) && p.y < riverData._SurfaceY(p.z) + 0.3f;
+        }
         public float swimBobHz = DefaultSwimBobHz;
 
         public bool _Ready()

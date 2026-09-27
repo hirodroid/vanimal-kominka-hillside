@@ -638,8 +638,20 @@ namespace KominkaHillside
             if (_speed > 0f && dist > 0.0001f)
             {
                 float step = _speed * Time.deltaTime; if (step > remain) step = remain;
-                dogRoot.position = SnapToGround(pos + (to / dist) * step); // net: owner-only
+                Vector3 next = pos + (to / dist) * step;
+                // IMP-DOG-020 段階 7: KD_DogWanderController._BlockedByRiver と同じ判定 (帯へ入る歩幅は断る。水遊び場の中は例外)
+                if (RiverBlocks(pos, next)) { _speed = 0f; _riverStop = true; }
+                else dogRoot.position = SnapToGround(next); // net: owner-only
             }
+        }
+
+        private bool _riverStop;   // このフレームの直線移動が川の帯の手前で止まった (Update が諦めの経路へ回す)
+
+        bool RiverBlocks(Vector3 from, Vector3 to)
+        {
+            if (riverData == null) return false;
+            if (waterSpot != null && waterSpot._Contains(to)) return false;
+            return riverData._BlocksStep(from, to, KH_RiverData.BandMargin);
         }
 
         void FaceToward(Vector3 dir)

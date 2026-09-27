@@ -11,6 +11,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
+using TMPro;
 using VRC.SDKBase;
 
 namespace KominkaHillside.Editor
@@ -36,7 +37,13 @@ namespace KominkaHillside.Editor
         static readonly bool[] Swims = { true, true, false, true, true, false };
         // Ms = M x KH_WaterSpot.swimMouthScale; the water-play tuning values have one source, KH_WaterSpot (Codex M-低).
         const int RiverbankDestination = 5;         // KH_WalkRoute.destinationNodes[5] = "川辺" (KH_CourseRouteEditor)
-        const float CentreZ = 285f, HalfSpanZ = 6f, EntryMaxDistance = 11.5f, EntryLimit = 12f;
+        const float CentreZ = 285f, EntryLimit = 15f,   // decision 2026-09-27: 12 -> 15 m (the trigger no longer depends on where the leash comes off)
+                    TriggerRadius = 25f;
+        // Step 5 (decision 2026-09-27, 2nd): the region runs along the bend's bank, z 270-300 as a guide, in 1.5 m slices. A slice is
+        // taken only when it passes every check (water slope <= 5.05 %, outside the bridge zones, a bank exit on the NavMesh with a
+        // slope <= 25 deg, a return point with a complete path from the pass point, no stone collider in its water); the longest
+        // run of passing slices becomes the region. The entry is the passing exit nearest the pass point; exits every 5 m.
+        const float SliceZ0 = 270f, SliceZ1 = 300f, SliceStep = 1.5f, ExitEvery = 5f;
         const float Step = .5f, InnerLat = .3f, OuterExtra = .6f, ReturnOut = 2.5f;
         const int GroundMask = (1 << 0) | (1 << 11);
 
@@ -50,6 +57,14 @@ namespace KominkaHillside.Editor
             public float[] mouthHeights;
             public bool pouchWired;
             public string[] bobTargets;   // per dog: the visual child that carries the swim bob, or why there is none
+            public float zFrom, zTo; public int markerStones; public bool sign, toyRecallWired;
+            public List<Slice> slices = new List<Slice>();
+        }
+        [Serializable] public class Slice
+        {
+            public float z, slope, lateral, exitSlopeDeg;
+            public bool slopeOk, bridgeOk, exitOk, returnOk, pathOk, stonesOk, ok, adopted;
+            public Vector3 exit, ret;
         }
         // swimBandOk (width >= 2.5 m for a swimming breed, B-3 check 5) belongs to step 4 (swimming): recorded, not judged here.
         [Serializable] public class Breed { public string name; public float mouth, wadeLimit, wadeCells, wadeWidth, swimCells, swimWidth; public bool swims, swimBandOk; public int blockedLines; }
@@ -67,6 +82,8 @@ namespace KominkaHillside.Editor
             public string stage1SwimCheck = "Step 4: every swimming breed needs at least one swimmable cell (depth >= 0.75 M) in the region (judged). The design's swim band >= 2.5 m is recorded only (breeds[].swimBandOk) because the spot has no pool (decision 2026-09-27)";
             public string slopeTolerance = "Check 4 limit 5 % (design); judged at <= 5.05 %: the formula gives exactly 5.00 % here and float rounding must not flip it. Values above 5.00 % are reported in findings as a note when <= 5.05 %";
             public List<string> notes = new List<string>();
+            public List<Slice> slices = new List<Slice>();
+            public int markerStones; public bool signWired, toyRecallWired;
             public string limitations = "Static data only. Water play itself: ClientSim harness W0/W4/W6 (Course/78) and PCVR. Swim widths are recorded for step 4 only.";
         }
 
@@ -96,25 +113,20 @@ namespace KominkaHillside.Editor
             var mouths = Breeds.Select(ReadMouth).ToArray();
             report.mouthHeights = mouths;
 
-            // ---- geometry ----
+            // ---- geometry: slices along the bank (step 5) ----
             var pass = PassPoint(pouch.manager.route); report.passPoint = pass;
-            float entryLat; var entry = FindEntry(pass, out entryLat); report.entry = entry; report.entryLateral = entryLat;
+            var slices = ComputeSlices(pass); report.slices = slices;
+            var run = slices.Where(x => x.adopted).ToList();
+            if (run.Count < 3) throw new InvalidOperationException("Fewer than 3 passing slices along the bank (see water-spot-build.json slices); nothing changed");
+            report.zFrom = run[0].z - SliceStep * .5f; report.zTo = run[run.Count - 1].z + SliceStep * .5f;
+            var entrySlice = run.OrderBy(x => Flat(x.exit - pass)).First();
+            var entry = entrySlice.exit; float entryLat = entrySlice.lateral; report.entry = entry; report.entryLateral = entryLat;
             report.entryDistance = Flat(entry - pass);
-            var exits = new List<Vector3> { entry }; var returns = new List<Vector3>();
-            foreach (float z in new[] { CentreZ - 3.5f, CentreZ + 3.5f })
-            {
-                Vector3 e;
-                if (!OnBank(new Vector3(KH_CourseGroundEditor.RiverAt(z).x + entryLat, 0, z), .8f, out e)) throw new InvalidOperationException("No bank NavMesh for exit at z " + z);
-                exits.Add(e);
-            }
-            foreach (var e in exits)
-            {
-                Vector3 r;
-                if (!OnBank(e + new Vector3(ReturnOut, 0, 0), 1f, out r)) throw new InvalidOperationException("No NavMesh for return point behind " + e);
-                returns.Add(r);
-            }
+            var chosen = new List<Slice> { entrySlice };
+            foreach (var sl in run) if (chosen.All(c => Mathf.Abs(c.z - sl.z) >= ExitEvery - .01f)) chosen.Add(sl);
+            var exits = chosen.Select(x => x.exit).ToList(); var returns = chosen.Select(x => x.ret).ToList();
             report.exits = exits.ToArray(); report.returns = returns.ToArray();
-            var poly = Polygon(entryLat);
+            var poly = Polygon(run);
             float minX = poly.Min(v => v.x), maxX = poly.Max(v => v.x), minZ = poly.Min(v => v.y), maxZ = poly.Max(v => v.y);
             float x0 = Mathf.Floor(minX / Step) * Step, z0 = Mathf.Floor(minZ / Step) * Step;
             int nx = Mathf.CeilToInt((maxX - x0) / Step) + 1, nz = Mathf.CeilToInt((maxZ - z0) / Step) + 1;
@@ -143,7 +155,7 @@ namespace KominkaHillside.Editor
             SetVectors(so, "exits", exits.ToArray()); SetVectors(so, "returns", returns.ToArray());
             so.FindProperty("gridX0").floatValue = x0; so.FindProperty("gridZ0").floatValue = z0; so.FindProperty("gridStep").floatValue = Step;
             so.FindProperty("gridNx").intValue = nx; so.FindProperty("gridNz").intValue = nz;
-            SetFloats(so, "bed", bed); so.FindProperty("entryRadius").floatValue = EntryLimit;
+            SetFloats(so, "bed", bed); so.FindProperty("entryRadius").floatValue = TriggerRadius;
             // Tuning: the constants in KH_WaterSpot are the single source; written every build so the scene never keeps an old value.
             so.FindProperty("wadeLimitRatio").floatValue = KH_WaterSpot.DefaultWadeLimitRatio;
             so.FindProperty("swimEnterRatio").floatValue = KH_WaterSpot.DefaultSwimEnterRatio;
@@ -155,6 +167,14 @@ namespace KominkaHillside.Editor
             so.FindProperty("wadeClear").floatValue = KH_WaterSpot.DefaultWadeClear;
             so.FindProperty("swimBob").floatValue = KH_WaterSpot.DefaultSwimBob;
             so.FindProperty("swimBobHz").floatValue = KH_WaterSpot.DefaultSwimBobHz;
+            so.FindProperty("carryExtra").floatValue = KH_WaterSpot.DefaultCarryExtra;
+            so.FindProperty("floatSink").floatValue = KH_WaterSpot.DefaultFloatSink;
+            so.FindProperty("floatDrift").floatValue = KH_WaterSpot.DefaultFloatDrift;
+            // Step 5 marker: stones beside the entry and the temporary sign (its text follows the viewer's language at run time)
+            var signLabel = BuildMarkers(node, entry, pass, pouch, report);
+            so.FindProperty("language").objectReferenceValue = pouch.language;
+            so.FindProperty("signLabel").objectReferenceValue = signLabel;
+            so.FindProperty("signKey").stringValue = "course.water.sign";
             so.ApplyModifiedProperties(); UdonSharpEditorUtility.CopyProxyToUdon(spot); EditorUtility.SetDirty(spot);
 
             // ---- FX ----
@@ -178,6 +198,9 @@ namespace KominkaHillside.Editor
             }
             var ps = new SerializedObject(pouch); ps.FindProperty("waterSpot").objectReferenceValue = spot; ps.ApplyModifiedProperties();
             UdonSharpEditorUtility.CopyProxyToUdon(pouch); EditorUtility.SetDirty(pouch); report.pouchWired = true;
+            // Step 6: the toy recall floats a ball that lands in the spot
+            foreach (var t in UnityEngine.Object.FindObjectsOfType<KH_ToyRecall>(true))
+            { var ts = new SerializedObject(t); ts.FindProperty("waterSpot").objectReferenceValue = spot; ts.ApplyModifiedProperties(); UdonSharpEditorUtility.CopyProxyToUdon(t); EditorUtility.SetDirty(t); report.toyRecallWired = true; }
             KH_CourseTravelEditor.ApplyCatalog(pouch);
 
             // ---- trail ----
@@ -204,20 +227,56 @@ namespace KominkaHillside.Editor
 
         static float BandEdge(float z) { return KH_CourseGroundEditor.HalfWidth(z) + KH_RiverData.BandMargin; }
 
-        static Vector3 FindEntry(Vector3 pass, out float lateral)
+        /// <summary>Step 5: the bank in 1.5 m slices, each checked on its own; the longest run of passing slices is adopted.</summary>
+        static List<Slice> ComputeSlices(Vector3 pass)
         {
-            float cx = KH_CourseGroundEditor.RiverAt(CentreZ).x, edge = BandEdge(CentreZ);
-            Vector3 best = Vector3.zero; float bestD = float.MaxValue; lateral = 0;
-            for (float o = 1f; o <= 4.001f; o += .25f)
+            NavMeshHit from; bool fromOk = NavMesh.SamplePosition(pass, out from, 1f, NavMesh.AllAreas);
+            var path = new NavMeshPath(); var list = new List<Slice>();
+            for (float z = SliceZ0; z <= SliceZ1 + .001f; z += SliceStep)
             {
-                Vector3 p;
-                if (!OnBank(new Vector3(cx + edge + o, 0, CentreZ), .3f, out p)) continue;
-                float d = Flat(p - pass);
-                if (d <= EntryMaxDistance) { lateral = p.x - cx; return p; }
-                if (d < bestD) { bestD = d; best = p; lateral = p.x - cx; }
+                var sl = new Slice { z = z }; float cx = KH_CourseGroundEditor.RiverAt(z).x, edge = BandEdge(z), surface = KH_CourseGroundEditor.RiverAt(z).y;
+                sl.slope = Mathf.Abs(KH_CourseGroundEditor.RiverAt(z + SliceStep * .5f).y - KH_CourseGroundEditor.RiverAt(z - SliceStep * .5f).y) / SliceStep;
+                sl.slopeOk = sl.slope <= .0505f;
+                sl.bridgeOk = true;
+                foreach (float bz in new[] { 190f, 490f })
+                {
+                    float bx = KH_CourseGroundEditor.RiverAt(bz).x;
+                    if (Mathf.Abs(z - bz) <= 8f + SliceStep && cx + edge + 4f >= bx - 18f && cx <= bx + 18f) sl.bridgeOk = false;
+                }
+                for (float o = 1f; o <= 4.001f && !sl.exitOk; o += .25f)
+                {
+                    Vector3 e;
+                    if (OnBank(new Vector3(cx + edge + o, 0, z), .3f, out e)) { sl.exit = e; sl.lateral = e.x - cx; sl.exitOk = true; }
+                }
+                if (sl.exitOk)
+                {
+                    RaycastHit g;
+                    if (Physics.Raycast(sl.exit + Vector3.up, Vector3.down, out g, 3, GroundMask, QueryTriggerInteraction.Ignore)) sl.exitSlopeDeg = Vector3.Angle(g.normal, Vector3.up);
+                    if (sl.exitSlopeDeg > 25f) sl.exitOk = false;
+                }
+                if (sl.exitOk)
+                {
+                    Vector3 r; sl.returnOk = OnBank(sl.exit + new Vector3(ReturnOut, 0, 0), 1f, out r); sl.ret = r;
+                    NavMeshHit rh;
+                    sl.pathOk = sl.returnOk && fromOk && NavMesh.SamplePosition(r, out rh, .3f, NavMesh.AllAreas)
+                        && NavMesh.CalculatePath(from.position, rh.position, NavMesh.AllAreas, path) && path.status == NavMeshPathStatus.PathComplete;
+                }
+                float width = (sl.exitOk ? sl.lateral : edge) + OuterExtra;
+                var box = Physics.OverlapBox(new Vector3(cx + width * .5f, surface, z), new Vector3(width * .5f, 1.5f, SliceStep * .5f), Quaternion.identity, 1 << 11, QueryTriggerInteraction.Ignore);
+                sl.stonesOk = !box.Any(c => !(c is TerrainCollider));
+                sl.ok = sl.slopeOk && sl.bridgeOk && sl.exitOk && sl.returnOk && sl.pathOk && sl.stonesOk;
+                list.Add(sl);
             }
-            if (bestD == float.MaxValue) throw new InvalidOperationException("No bank NavMesh for the entry at z " + CentreZ);
-            return best;
+            int bestStart = -1, bestLen = 0;
+            for (int i = 0; i < list.Count; )
+            {
+                if (!list[i].ok) { i++; continue; }
+                int j = i; while (j < list.Count && list[j].ok) j++;
+                if (j - i > bestLen) { bestLen = j - i; bestStart = i; }
+                i = j;
+            }
+            for (int k = 0; k < bestLen; k++) list[bestStart + k].adopted = true;
+            return list;
         }
 
         /// <summary>NavMesh point near (x, z) at ground height, outside the river band.</summary>
@@ -231,16 +290,64 @@ namespace KominkaHillside.Editor
             nav = h.position; return true;
         }
 
-        /// <summary>Region: inner edge centre + 0.3 m, outer edge entry lateral + 0.6 m, z 285 ± 6 m, vertices every 3 m.</summary>
-        static List<Vector2> Polygon(float entryLat)
+        /// <summary>Region over the adopted slices: inner edge centre + 0.3 m, outer edge that slice's bank lateral + 0.6 m, capped
+        /// half a slice beyond both ends.</summary>
+        static List<Vector2> Polygon(List<Slice> run)
         {
+            var zs = new List<float> { run[0].z - SliceStep * .5f }; zs.AddRange(run.Select(x => x.z)); zs.Add(run[run.Count - 1].z + SliceStep * .5f);
             var inner = new List<Vector2>(); var outer = new List<Vector2>();
-            for (float z = CentreZ - HalfSpanZ; z <= CentreZ + HalfSpanZ + .001f; z += 3f)
+            foreach (float z in zs)
             {
                 float cx = KH_CourseGroundEditor.RiverAt(z).x;
-                inner.Add(new Vector2(cx + InnerLat, z)); outer.Add(new Vector2(cx + entryLat + OuterExtra, z));
+                var near = run.OrderBy(x => Mathf.Abs(x.z - z)).First();
+                inner.Add(new Vector2(cx + InnerLat, z)); outer.Add(new Vector2(cx + near.lateral + OuterExtra, z));
             }
             outer.Reverse(); inner.AddRange(outer); return inner;
+        }
+
+        /// <summary>Step 5 marker: 3 stone clusters beside the entry (the course's own bank-stone meshes and material, no collider so
+        /// the NavMesh is unchanged) and a temporary board with a WorldSpace TMP label on the path side. Rebuilt every run.</summary>
+        static TextMeshPro BuildMarkers(Transform spotNode, Vector3 entry, Vector3 pass, KD_TreatPouch pouch, BuildReport report)
+        {
+            var old = spotNode.Find("Marker"); if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            var marker = new GameObject("Marker").transform; marker.SetParent(spotNode, false);
+            string scenery = KH_CourseGroundEditor.Dir + "/Scenery";
+            var stoneMat = AssetDatabase.LoadAssetAtPath<Material>(scenery + "/KH_CourseStones.mat");
+            var offsets = new[] { new Vector3(.5f, 0, 1.3f), new Vector3(.5f, 0, -1.3f), new Vector3(1.1f, 0, -.7f) };
+            for (int i = 0; i < offsets.Length; i++)
+            {
+                var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(scenery + "/KH_StoneCluster_" + (i % 4) + ".asset");
+                if (mesh == null || stoneMat == null) continue;
+                var p = entry + offsets[i]; p.y = Ground(p.x, p.z) - .05f;
+                var go = new GameObject("Stone_" + i); go.transform.SetParent(marker, false); go.transform.position = p;
+                go.transform.rotation = Quaternion.Euler(0, 40 * i, 0); go.transform.localScale = Vector3.one * .55f; go.layer = 11;
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var r = go.AddComponent<MeshRenderer>(); r.sharedMaterial = stoneMat; r.shadowCastingMode = ShadowCastingMode.Off; r.receiveShadows = false;
+                report.markerStones++;
+            }
+            // The board: 1.8 m inland of the entry, facing the pass point (the path it is read from).
+            var signPos = entry + new Vector3(1.8f, 0, 0); signPos.y = Ground(signPos.x, signPos.z);
+            var toReader = pass - signPos; toReader.y = 0;
+            var sign = new GameObject("Sign").transform; sign.SetParent(marker, false); sign.position = signPos;
+            sign.rotation = Quaternion.LookRotation(-toReader.normalized, Vector3.up);   // TMP faces -z: the reader looks along +z
+            var wood = AssetDatabase.LoadAssetAtPath<Material>("Assets/KominkaHillside/Data/Environment/River/KH_RiverWood.mat");
+            Transform Part(string name, Vector3 pos, Vector3 size)
+            {
+                var c = GameObject.CreatePrimitive(PrimitiveType.Cube); c.name = name;
+                UnityEngine.Object.DestroyImmediate(c.GetComponent<Collider>());   // no walking obstacle, no NavMesh change
+                c.transform.SetParent(sign, false); c.transform.localPosition = pos; c.transform.localScale = size;
+                var r = c.GetComponent<MeshRenderer>(); if (wood != null) r.sharedMaterial = wood; r.shadowCastingMode = ShadowCastingMode.Off; r.receiveShadows = false;
+                return c.transform;
+            }
+            Part("Post", new Vector3(0, .5f, .03f), new Vector3(.08f, 1f, .08f));
+            Part("Board", new Vector3(0, 1f, 0), new Vector3(.9f, .42f, .04f));
+            var labelGo = new GameObject("Label"); labelGo.transform.SetParent(sign, false); labelGo.transform.localPosition = new Vector3(0, 1f, -.03f);
+            var label = labelGo.AddComponent<TextMeshPro>();
+            if (pouch.sectionTitleLabel != null) label.font = pouch.sectionTitleLabel.font;
+            label.text = "犬の水あそび"; label.fontSize = 2.2f; label.alignment = TextAlignmentOptions.Center; label.enableWordWrapping = true;
+            label.color = new Color(.2f, .13f, .06f, 1f); label.rectTransform.sizeDelta = new Vector2(.84f, .38f);
+            report.sign = true;
+            return label;
         }
 
         static bool Inside(List<Vector2> poly, float x, float z)
@@ -354,7 +461,7 @@ namespace KominkaHillside.Editor
         static int PaintTrail(Vector3 a, Vector3 b)
         {
             BackupStamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
-            int painted = 0; const float width = 1.2f;
+            int painted = 0; const float width = 1.5f;   // step 5: a wider, denser footpath from the pass point to the entry
             float minX = Mathf.Min(a.x, b.x) - 3, maxX = Mathf.Max(a.x, b.x) + 3, minZ = Mathf.Min(a.z, b.z) - 3, maxZ = Mathf.Max(a.z, b.z) + 3;
             var seg = new Vector2(b.x - a.x, b.z - a.z);
             foreach (var t in UnityEngine.Object.FindObjectsOfType<Terrain>())
@@ -375,7 +482,7 @@ namespace KominkaHillside.Editor
                     float px = p.x + (ix0 + x) * s.x / (n - 1), pz = p.z + (iz0 + z) * s.z / (n - 1);
                     var q = new Vector2(px - a.x, pz - a.z); float tt = Mathf.Clamp01(Vector2.Dot(q, seg) / seg.sqrMagnitude);
                     float d = (q - seg * tt).magnitude, fine = Mathf.PerlinNoise(px * .29f + 13, pz * .29f + 9);
-                    float trail = (1 - KH_CourseGroundEditor.Smooth(width * .35f, width + .7f, d + (fine - .5f) * .75f)) * (.48f + .16f * fine);
+                    float trail = (1 - KH_CourseGroundEditor.Smooth(width * .35f, width + .7f, d + (fine - .5f) * .75f)) * (.72f + .14f * fine);
                     float old = map[z, x, 2]; if (trail <= old + 1e-4f) continue;
                     float scale = old < .9999f ? (1 - trail) / (1 - old) : 0;
                     for (int l = 0; l < 4; l++) map[z, x, l] = l == 2 ? trail : map[z, x, l] * scale;
@@ -400,6 +507,16 @@ namespace KominkaHillside.Editor
             var pouch = UnityEngine.Object.FindObjectsOfType<KD_TreatPouch>(true).Single();
             var pass = PassPoint(pouch.manager.route);
             var poly = spot.polyX.Select((x, i) => new Vector2(x, spot.polyZ[i])).ToList();
+            // step 5: every slice's checks and whether it is in the adopted run (recomputed from the saved scene)
+            r.slices = ComputeSlices(pass);
+            float polyZ0 = poly.Min(v => v.y), polyZ1 = poly.Max(v => v.y);
+            foreach (var sl in r.slices) if (sl.z > polyZ0 && sl.z < polyZ1 && !sl.ok) r.findings.Add("Step 5: slice z " + sl.z + " inside the region fails its checks");
+            var markerNode = node.transform.Find("Marker");
+            r.markerStones = markerNode == null ? 0 : markerNode.GetComponentsInChildren<MeshRenderer>(true).Count(m => m.name.StartsWith("Stone_"));
+            r.signWired = spot.signLabel != null && spot.language != null && spot.signKey == "course.water.sign" && spot.signLabel.transform.IsChildOf(node.transform);
+            if (r.markerStones < 2 || !r.signWired) r.findings.Add("Step 5: marker incomplete (stones " + r.markerStones + ", sign " + r.signWired + ")");
+            r.toyRecallWired = UnityEngine.Object.FindObjectsOfType<KH_ToyRecall>(true).All(t => t.waterSpot == spot);
+            if (!r.toyRecallWired) r.findings.Add("Step 6: KH_ToyRecall.waterSpot not wired");
 
             // check 2: grid vs saved Terrain
             for (int i = 0; i < spot.bed.Length; i++)
@@ -415,7 +532,7 @@ namespace KominkaHillside.Editor
             r.entryOnNav = NavMesh.SamplePosition(spot.entry, out h, .3f, NavMesh.AllAreas) && Outside(spot.entry);
             if (!r.entryOnNav) r.findings.Add("Check 3: entry not on bank NavMesh");
             r.entryDistance = Flat(spot.entry - pass);
-            if (r.entryDistance > EntryLimit) r.findings.Add("Check 3: entry " + r.entryDistance.ToString("F2") + " m from the 川辺 pass point (> 12)");
+            if (r.entryDistance > EntryLimit) r.findings.Add("Check 3: entry " + r.entryDistance.ToString("F2") + " m from the 川辺 pass point (> " + EntryLimit.ToString("F0") + ")");
             int n = spot.exits.Length; r.exitsOnNav = new bool[n]; r.returnsOnNav = new bool[n]; r.returnsPathComplete = new bool[n]; r.exitSlopeDeg = new float[n];
             NavMeshHit from; bool fromOk = NavMesh.SamplePosition(pass, out from, 1f, NavMesh.AllAreas);
             if (!fromOk) r.findings.Add("Check 3: pass point not on NavMesh");
@@ -476,7 +593,7 @@ namespace KominkaHillside.Editor
                 if (br.blockedLines > 0) r.findings.Add("Check 5: " + br.blockedLines + " straight lines to exits blocked for " + br.name);
                 r.breeds.Add(br);
             }
-            var centre = new Vector3((minX + maxX) / 2, KH_CourseGroundEditor.RiverAt(CentreZ).y, (minZ + maxZ) / 2);
+            var centre = new Vector3((minX + maxX) / 2, KH_CourseGroundEditor.RiverAt((minZ + maxZ) / 2).y, (minZ + maxZ) / 2);
             foreach (var c in Physics.OverlapBox(centre, new Vector3((maxX - minX) / 2, 1.5f, span / 2), Quaternion.identity, ~0, QueryTriggerInteraction.Ignore))
             {
                 if (c is TerrainCollider || !Inside(poly, c.bounds.center.x, c.bounds.center.z)) continue;

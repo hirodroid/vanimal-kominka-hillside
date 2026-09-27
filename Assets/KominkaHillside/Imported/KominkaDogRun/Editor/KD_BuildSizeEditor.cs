@@ -106,6 +106,10 @@ public static class KD_BuildSizeEditor
     [MenuItem("Tools/KominkaHillside/Build Size/5 - Group Cost Android")]
     public static void GroupCostAndroid() { GroupCost(BuildTarget.Android, "android"); }
 
+    // 裏山 (2026-09-27、IMP-WLD-001 段階 4): iOS の内訳を Android と並べるため。出力は group-cost-ios.md
+    [MenuItem("Tools/KominkaHillside/Build Size/5b - Group Cost iOS")]
+    public static void GroupCostIOS() { GroupCost(BuildTarget.iOS, "ios"); }
+
     // 裏山改変 (2026-09-24): 裏山に実在するフォルダだけ。古民家にしか無い行 (IKA / RBS / Blanket / _Originals / Atelier /
     // VirtualCampers / hoboradio / qvpen / vvmw) は落とし、Terrain (kinds d) と polyperfect / LMArt / モサンゴ屋のメッシュを足した。
     static List<Group> Groups()

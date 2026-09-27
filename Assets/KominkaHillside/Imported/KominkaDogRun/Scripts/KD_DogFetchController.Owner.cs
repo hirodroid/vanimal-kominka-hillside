@@ -102,7 +102,7 @@ namespace KominkaDogRun
             // 今の保持状態を引き継ぐ (口から取られて Idle へ戻った直後の放しを取りこぼさない — Codex 指摘)
             _ballHeldPrev = _ballPickup != null && _ballPickup.IsHeld;
 
-            if (next == StateReturn)
+            if (next == StateReturn || next == StateWaterReturn)   // IMP-DOG-020: the water carry takes the ball the same way
             {
                 // くわえた: 物理を止める (VRCObjectSync 経由でないと巻き戻される)。
                 // 書けるのはボールの Owner — 引き継ぎでずれていたら取る (ReleaseBall と同じ妥協)
@@ -137,7 +137,7 @@ namespace KominkaDogRun
             // 保持者の Pickup と Ownership・kinematic を奪い合うことになる。
             // kinematic が残った場合は Idle 中の出しっぱなし保険が実態と突き合わせて放す
             bool held = _ballPickup != null && _ballPickup.IsHeld;
-            if ((dogState == StateReturn || dogState == StateDrop) && !held) ReleaseBall();
+            if ((dogState == StateReturn || dogState == StateDrop || dogState == StateWaterReturn || dogState == StateWaterExit) && !held) ReleaseBall();
             TransitionTo(StateIdle);
         }
 

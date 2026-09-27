@@ -1362,9 +1362,14 @@ namespace KominkaDogRun
                 _liveFrozen = false;
                 // Animator は Fetch 側が毎フレーム書いている。こちらの書き込み状態だけ畳む。
                 // ただし LookAt は Fetch が触らない Bool なので、ここで自分で下ろす
-                _wasMoving = false;
-                _wasRunning = false;
-                _speed = 0f;
+                // IMP-DOG-020: Fetch の水中の状態 (6〜8) は、足を _WaterFetchStep (HillsideWater.cs) が動かしている。
+                // ここで毎フレーム _speed を 0 にすると、1 フレーム分の加速しか残らず這うように進む (run 20260927-095400)
+                if (!fetchController.IsWaterFetching)
+                {
+                    _wasMoving = false;
+                    _wasRunning = false;
+                    _speed = 0f;
+                }
                 // 再生速度もここで返す (IMP-DOG-009 / Codex D1)。**リードの引き渡しだけでは足りない** —
                 // 速い散歩の途中でリードを外し、次の更新より前に Fetch が始まると、
                 // Fetch は `Animator.speed` を一度も書かないので倍率が上がったまま残る。

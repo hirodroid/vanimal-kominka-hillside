@@ -88,12 +88,31 @@ updated: 2026-09-27
 
 - 変更: 新規 `KH_TravelMailbox.cs` (VRCPlayerObject・Manual・同期は `accepting` 1 本。`ReqJoin` / `AnsJoin` / `CancelJoin` は `[NetworkCallable]` で CallingPlayer と seq を照合。受け手の保留 1 件・20 秒の時間切れ・前の通知から 20 秒は code 2・10 分の休止は code 3・「この人からは受けない」は code 0。同じ相手へは断り・時間切れから 30 秒。受け付けの ON/OFF は PlayerData `KH_TravelJoin.accepting` に保存) / 新規 `KH_TravelNotice.cs` (通知板。目の前 1.1 m・15° 下、3 m 歩いたら置き直し、手元の「申し込み 1 件」から出し直し) / `KH_LeashManager.Travel.cs` (`_TravelFindJoinLanding`: 通常・歩行中・橋の上・川の中・道の外の 5 つと理由、`_TravelBeginJoin`: 地点ワープと同じ切符と暗転) / `KD_TreatPouch.Travel.cs` ([地点] / [人] の切替、16 行の人の一覧、[合流をたのむ] / [取り消す]) / 新規 `Editor/KH_CourseTravelJoinEditor.cs` / ハーネス T10 (合流の着地点 5 条件) と T9 の合流側 (退出・取消と承認の行き違い) / `course.travel.join.*` ほか 40 キー × 13 言語。
 - メニュー: `Course/85 - Build Travel Join` (1 回目は KH_TravelMailbox / KH_TravelNotice の Program Asset を作って止まる。2 回目で受付箱の雛形・通知板・[人] の一覧・「申し込み 1 件」を作ってシーンを保存。`Temp/imp-wld-001/travel-join-build.json`)。検査は `Course/81` に含めた。
-- 設計からの変更: 「合流の申し込みを受ける」は設定面ではなく副画面の [人] の上段に置いた (設定ホームの「この部屋のみんな」の群に 44 px の行を足す余白が無く、配置の正本 `KD_MenuFinishEditor.Hillside` の再配置が要るため)。表示名の補助フォント (§A.6) は入れていない: 共通フォントに無い字は □ で出る。距離と最寄りの地点名を並べて出すので相手は判別できる。補助フォントの試作は DES-UI-004 へ引き継ぐ。`ReqJoin` の引数は `seq` だけ (送り主は CallingPlayer で決まるので playerId を運ばない)。
+- 設計からの変更: 「合流の申し込みを受ける」は設定面ではなく副画面の [人] の上段に置いた (設定ホームの「この部屋のみんな」の群に 44 px の行を足す余白が無く、配置の正本 `KD_MenuFinishEditor.Hillside` の再配置が要るため)。表示名の補助フォント (§A.6) は段階 4 で入れた (当初の「DES-UI-004 へ引き継ぐ」は撤回。2026-09-27 ユーザー決定「初期公開にこれ全て入れる」)。`ReqJoin` の引数は `seq` だけ (送り主は CallingPlayer で決まるので playerId を運ばない)。
 - 採用の理由: 人の一覧は入退室のイベントではなく 1 秒ごとの見直しで保つ (KD_TreatPouch に OnPlayerJoined / Left の override を足さず、古民家から移した本体に手を入れないため。反映は最大 1 秒遅れる)。距離と自分の位置は副画面を開いている間だけ 10 Hz で書く (相手の受付箱は行ごとに覚え、開いたとき・入退室・未取得のときだけ探す)。「この人からは受けない」は「このインスタンスにいる間」で 13 言語をそろえた (`course.travel.join.notice.block2`。旧キーは残す)。
 - T10 の記録: 相手は ClientSim の人形 (Udon なし) で、playerId は SpawnRemotePlayer が割り当てたもの。置き場所は 通常 = 広場のノード +8 / 橋の上 = z 490 の床のノード / 川の中 = z 285 の川の中心 / 歩行中 = 広場のノード +20 から 2 m/s で道の正方向 / コースの外 = (-55, 0, 715)。速さは受付箱が 0.5 秒ごとに 2 回以上測ってから着地点を決める。
 - 未確認: 2 端末での ReqJoin / AnsJoin の順序、VRCPlayerObject の入室直後の「準備中」、通知板の見え方と Focus View、16 人のときの通知の間隔。ClientSim の T10 / T9 は人形 (Udon なし) を相手にした模擬 (`debugJoinLoopback`)。
 - ClientSim で確かめたこと (2026-09-27、82 TRAVEL_OBSERVED 15/15、コミット a4935ab): T1 4 構成 × 3 移動 (位置の変更は全頭ちょうど 1 回・Phase 1→2・到着後 30 秒 Return 0・alpha ≥ 0.99 を観測してから移動し 1.5 秒以内に明転)、T2〜T9、T10 の 5 条件 (通常 3.5 m / 橋 18 m / 川 14.1 m / 歩行中 5.5 m / コースの外は移動しない)、T9 の合流側 4 件、T11。81 TRAVEL_OK (配線・収まり・欠字 0・地図テクスチャ 35,051 byte、GPU PC 131,072 / mobile 118,336 byte)。
-- 実機でしか分からないこと: 2 端末での申し込みと返事の順序・Owner の交代・途中参加、暗転の見え方 (昼・夜・ライブ・両眼) と取消が暗転中に押せるか、通知板・通知音・Focus View、表示名の欠字 (□)、Touch の押し分け、16 人での通知の間隔。T1 の「跳び」の失敗は、走りの歩幅をハーネスが誤って数えたもので、判定をゲーム時間の間隔に直して確定した。
+- 実機でしか分からないこと: 2 端末での申し込みと返事の順序・Owner の交代・途中参加、暗転の見え方 (昼・夜・ライブ・両眼) と取消が暗転中に押せるか、通知板・通知音・Focus View、表示名の字 (段階 4 の補助フォントで出るか)、Touch の押し分け、16 人での通知の間隔。T1 の「跳び」の失敗は、走りの歩幅をハーネスが誤って数えたもので、判定をゲーム時間の間隔に直して確定した。
+
+### 段階 4: 積み残し — 表示名の補助フォント (設計書 §A.6。2026-09-27 ユーザー決定「初期公開にこれ全て入れる」)
+
+- 表示名を出すラベル (人の一覧 16 行・通知板の名前) に限って、共通フォントと同じ書体の **Static** フォント `KH_DisplayName SDF` を使う。元のフォントはプロジェクト内の `NotoSerifJP-Regular.ttf` (OFL)。Noto Serif JP に無い Latin 拡張 A (Ł など) は、TMP 付属の LiberationSans から作る小さな Static の fallback `KH_DisplayName Latin SDF` (512²) で出す。OS のフォントには頼らない。
+- 文字集合は `scripts/kh-gen-name-charset.js` が作る `Font/KH_DisplayName_Charset.txt` (3,680 字: ASCII 94・Latin-1 94・Latin 拡張 A 128・ひらがな 90・カタカナ 156 (半角を含む)・全角英数記号 94・JIS 第 1 水準 2,965 (Node の EUC-JP で 16〜47 区を引く)・記号 59)。**対象外**: 簡体字の多く・ハングル・絵文字・JIS 第 2 水準以降 (□ で出る。記録だけ)。
+- 大きさ: サンプリング 18 pt・余白 2・SDFAA・Alpha8、本体 1024×2048 (1 マス約 22 px で約 4,200 マス、使用率の見込み約 7 割)。最初の Static 版 (20 pt・余白 3・2048²) は Android 46.11 MB (+1.23) で目標を超えたので半分にした (2048² 版は残さない)。焼いた後は元フォントの参照を実行時用・Editor 用とも外す。
+- 方式の変更 (2026-09-27): 最初の版は Dynamic (512²・Multi Atlas・実行時に焼く) だったが、Dynamic は元の TTF (7.33 MiB) をビルドに同梱するため **Android が +3.53 MB** (44.88 → 48.41 MB) になった。Static で焼いてから元フォントの参照を外す作法 (Course/27 と同じ) に替え、TTF をビルドに入れない。
+
+完了条件:
+
+- [ ] Course/81 で、対象集合の字の欠字が 0 (見本: 英・日・記号は欠字 0、中 (簡体字を含む)・ハングル・絵文字は対象外の字を記録だけ)。フォント 2 本が Static・元フォントの参照なし (実行時用・Editor 用とも)・アトラス 1 枚でフォント内の Alpha8 (取り込み設定が無いので全プラットフォーム共通)・大きさ・fallback の配線、ラベル 17 本の配線が PASS。シーンが使う TMP フォント全部 (fallback を辿る) と部品の直の Font 参照から、ビルドに入る TTF の参照が 0 (`nameFontBuildRefs`)。アトラスのバイト数 (幅 × 高さ、Alpha8) と使用率を `travel-verify.json` に出す (`nameFontAtlasBytes`・`nameFontUsage`)。
+- [ ] Build Size (Android / iOS) で、Dynamic を入れる前 (Android 44.88 MB) からの**圧縮後の増分 ≤ 1.0 MB** (Android ≤ 45.88 MB)。内訳は Build Size/5 (Android)・5b (iOS) の `kh-fonts` 行。超えるなら漢字を頻出 1,500 字 (教育漢字 + 人名用の頻出) に絞る (一覧の出典は別途決める)。
+- [ ] PCVR と Quest / iOS で、日本語・英語以外 (欧文の記号付き文字) を含む表示名が人の一覧と通知板で読めるか (VER-WLD-001)。
+
+#### 実装 (2026-09-27、段階 4。Static 版は未コンパイル・未検証)
+
+- 変更: 新規 `scripts/kh-gen-name-charset.js` と生成物 `Font/KH_DisplayName_Charset.txt`、新規 `Editor/KH_CourseTravelNameFontEditor.cs` (`Course/86 - Build Display Name Font`: 2 本のフォントを消して作り直し、Dynamic の間に TryAddCharacters で焼いて Static へ戻し、ラベルへ配線してシーンを保存。`Temp/imp-wld-001/name-font-build.json` に焼けた字数・欠字。81 の検査)、`Editor/KH_CourseTravelEditor.cs` (81 から呼ぶ・容量と使用率の欄)、`Editor/KH_CourseTravelJoinEditor.cs` (85 を流し直しても配線を戻す)、`Imported/.../KD_BuildSizeEditor.cs` (`Build Size/5b - Group Cost iOS` を追加)。
+- 測定 (2026-09-27、20 pt・2048² 版): 86 BUILT (字形 3,582 + 98、欠字 0、ラベル 17)。Android 46.11 MB (+1.23)、iOS 45.29 MB (+1.22)。iOS の 47.60 MB は `bundle-sizes.txt` の一つ前の行 (Dynamic 版) で、Static 版の iOS は Android と同じ増分。
+- 設計からの変更: 設計書 §A.6 の「共通フォントの TMP fallback」ではなく、表示名のラベルだけのフォントを差し替えた (共通フォントの字形の検査と見え方を変えないため)。Dynamic 版の記録: 81 で Ł (Noto Serif JP に無い) と「张伟」(簡体字) が欠字、Android +3.53 MB。これを受けて上の Static 版へ替えた。
 
 ### 端末と人数
 

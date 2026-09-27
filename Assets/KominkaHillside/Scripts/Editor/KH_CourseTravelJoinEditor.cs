@@ -176,6 +176,7 @@ namespace KominkaHillside.Editor
                 var descriptor = UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>();
                 if (descriptor != null) { int dropped = descriptor.NetworkIDCollection.RemoveAll(x => x.gameObject == null && (x.SerializedTypeNames == null || x.SerializedTypeNames.Count == 0)); if (dropped > 0) { report.droppedNetworkIds = dropped; EditorUtility.SetDirty(descriptor); } }
                 KH_CourseTravelEditor.ApplyCatalog(p);
+                KH_CourseTravelNameFontEditor.ApplyIfPresent(p, notice);   // 85 を流し直しても表示名の補助フォントを戻す (段階 4)
                 UdonSharpEditorUtility.CopyProxyToUdon(p); EditorUtility.SetDirty(p);
                 EditorSceneManager.MarkSceneDirty(scene);
                 if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Travel join build save failed");

@@ -16,6 +16,9 @@ namespace KominkaHillside
     public class KH_Frisbee : UdonSharpBehaviour
     {
         public KH_FrisbeeCatch catcher;
+        [Tooltip("IMP-DOG-020 段階 7: 川の帯に落ちたら岸へ戻す。null = 判定なし (試作シーン)。Course/89 が配線する")]
+        public KH_RiverData riverData;
+        public KH_WaterSpot waterSpot;
         [Header("Flight model (provisional; tune in Play)")]
         public float gravity = 9.81f;
         [Tooltip("1/s. Horizontal speed decays as e^(-drag*t); lift decays as e^(-2 drag t)")]
@@ -504,6 +507,16 @@ namespace KominkaHillside
         private void EndFlight(Vector3 pos, Vector3 velocity, int reason)
         {
             _flying = false;
+            // IMP-DOG-020 段階 7: 川の帯 (水遊び場の外) に落ちたディスクは、ボールと同じく近い方の岸へ戻す。水面に当たり判定は無いので川床で止まる
+            if (reason == EndLanded && riverData != null && riverData._InBand(pos, KH_RiverData.BandMargin) && (waterSpot == null || !waterSpot._Contains(pos)))
+            {
+                float side = pos.x >= riverData._CenterX(pos.z) ? 1f : -1f;
+                Vector3 bank = riverData._BankPoint(pos, side, KH_RiverData.BankExtra);
+                RaycastHit g;
+                if (Physics.Raycast(bank + Vector3.up * 5f, Vector3.down, out g, 12f, obstacleMask, QueryTriggerInteraction.Ignore)) bank = g.point + Vector3.up * 0.02f;
+                Debug.Log("[KH_Frisbee] landed in the river band; moved to the bank " + bank);
+                pos = bank; velocity = Vector3.zero;
+            }
             transform.position = pos;
             if (_sync != null) _sync.SetKinematic(false);
             if (_rb != null && !_rb.isKinematic) { _rb.velocity = velocity; _rb.angularVelocity = Vector3.zero; }

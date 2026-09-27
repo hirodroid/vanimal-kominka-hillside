@@ -50,7 +50,7 @@ namespace KominkaDogRun
                     && waterSpot._NearEntry(manager.dogRoots[i].position))
                 {
                     _waterNoteShown = true;
-                    HillsideNote(TabWalk, "course.water.release", "");
+                    HillsideNote(TabWalk, "course.water.release2", "");   // 2026-09-27: "near the river" (the trigger no longer needs the release spot)
                     Redraw();
                 }
                 _waterMine[i] = mine;

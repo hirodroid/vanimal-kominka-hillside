@@ -71,6 +71,10 @@ namespace KominkaHillside
         public KominkaDogRun.KD_DogWanderController wander;
         public KominkaDogRun.KD_GroupActivities activities;
         public KominkaDogRun.KD_DogPetController pet;
+        [Tooltip("IMP-DOG-020 段階 7: 川の帯。直線移動 (MoveToward) が帯へ入る歩幅を断り、その回は諦める。null = 判定なし (試作シーン)。Course/89 が配線する")]
+        public KH_RiverData riverData;
+        [Tooltip("水遊び場の中は帯の判定の例外 (犬が水遊び場にいるときに止めない)。Course/89 が配線する")]
+        public KH_WaterSpot waterSpot;
         public int dogIndex = -1;
         [Tooltip("Flat play area (the plaza). 0 radius = unlimited. Ready and throws are refused outside it")]
         public Vector3 playAreaCenter;
@@ -1007,6 +1011,17 @@ namespace KominkaHillside
             else if (state == StateRetrieve) UpdateRetrieve(elapsed);
             else if (state == StatePickup) UpdatePickup(elapsed);
             else if (state == StateReturn || state == StateDrop) UpdateReturn(elapsed);
+            // IMP-DOG-020 段階 7: 直線移動が川の帯の手前で止まった。追いかけ・回り込み・拾いは諦め、くわえて戻る途中ならその場 (岸) に置く
+            if (_riverStop)
+            {
+                _riverStop = false;
+                if (_dogOwner && state != StateIdle && !IsAirborne)
+                {
+                    Debug.Log("[KH_FrisbeeCatch] river stop state=" + state + " reason=river-band");
+                    CancelLaunch("river-band");
+                    return;
+                }
+            }
             if (state != StateIdle) UpdateLocomotionAnim(); // a transition above may have handed the Animator back (review D2)
         }
 

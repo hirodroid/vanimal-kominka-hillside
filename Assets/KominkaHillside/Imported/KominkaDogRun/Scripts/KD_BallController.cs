@@ -195,6 +195,7 @@ namespace KominkaDogRun
                 if (Utilities.IsValid(lp) && !Networking.IsOwner(gameObject))
                     Networking.SetOwner(lp, gameObject); // net: setowner-ok: ボール自身 (掴んだ本人)。犬とは別軸
                 _sync.SetKinematic(false);
+                _sync.SetGravity(true);   // IMP-DOG-020: a ball picked up out of the water is thrown with gravity (KH_ToyRecall floats with it off)
             }
             // OnPickup は掴んだ本人のクライアントでだけ発火するローカルイベント
             if (fetchController != null) fetchController._OnBallHeldLocal();

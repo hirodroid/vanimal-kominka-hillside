@@ -56,6 +56,9 @@ namespace KominkaHillside
         private bool[] _discVetoed;
         // IMP-DOG-020 stage 1 (DES-DOG-004 C-7/8): a ball in the river band is brought back to the bank by its Owner.
         public KH_RiverData riverData;
+        // IMP-DOG-020 step 6 (DES-DOG-004 C-8): a ball in the water-play spot floats instead of going back to the bank.
+        public KH_WaterSpot waterSpot;
+        private bool[] _floating;
         const float RiverCheckInterval = 0.25f; // the ball Owner looks this often
         const float RiverStrandSeconds = 10f;   // inside the band this long without sinking = stranded
         private float _nextRiverAt;
@@ -303,6 +306,7 @@ namespace KominkaHillside
                 _riverSince = new float[balls.Length];
                 _riverLastReturn = new float[balls.Length];
                 _riverSettleUntil = new float[balls.Length];
+                _floating = new bool[balls.Length];
                 _riverRepeat = new int[balls.Length];
                 for (int k = 0; k < _riverSince.Length; k++) { _riverSince[k] = -1f; _riverLastReturn[k] = -1000f; }
             }
@@ -318,9 +322,13 @@ namespace KominkaHillside
                 bool fetching = fetchers != null && i < fetchers.Length && fetchers[i] != null && !fetchers[i].IsIdle;
                 if (b.IsHeldNow || fetching) { _riverRepeat[i] = 0; _riverLastReturn[i] = -1000f; }
                 if (b.IsHeldNow || carried) _riverSettleUntil[i] = 0f;   // a dog merely chasing does not touch it
+                if (b.IsHeldNow && _floating[i] && Networking.IsOwner(go)) StopFloat(i, go);   // picked up: normal physics
                 if (!Networking.IsOwner(go) || b.IsHeldNow || carried) { _riverSince[i] = -1f; continue; }
                 if (Time.time < _riverSettleUntil[i]) SettleBall(go);
                 Vector3 p = go.transform.position;
+                // In the spot: float (every new Owner does the same from the position, so an Owner change keeps it afloat, S4).
+                if (waterSpot != null && waterSpot._FloatsAt(p)) { FloatBall(i, go, p); _riverSince[i] = -1f; continue; }
+                if (_floating[i]) StopFloat(i, go);   // left the spot water (or released on land): gravity back
                 if (!riverData._InBand(p, KH_RiverData.BandMargin)) { _riverSince[i] = -1f; continue; }
                 if (_riverSince[i] < 0f) _riverSince[i] = Time.time;
                 bool sunk = p.y < riverData._SurfaceY(p.z);
@@ -408,6 +416,29 @@ namespace KominkaHillside
             rb.velocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             rb.Sleep();
+        }
+
+        // Floating (C-8): gravity off (synced by VRCObjectSync) and a velocity that holds y = water - radius x floatSink and drifts
+        // downstream (-z) at floatDrift until the region's downstream end. Not kinematic, so the idle Fetch's "release a kinematic
+        // ball" safety net does not fight it, and a dog's carry (Fetch 7, kinematic) simply overrides it. A pickup restores gravity
+        // (KD_BallController.OnPickup), a ball outside the spot gets it back here.
+        void FloatBall(int i, GameObject go, Vector3 p)
+        {
+            Rigidbody rb = go.GetComponent<Rigidbody>();
+            if (rb == null || rb.isKinematic) return;
+            VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
+            if (!_floating[i]) { if (sync != null) sync.SetGravity(false); _floating[i] = true; rb.angularVelocity = Vector3.zero; }
+            float radius = go.transform.localScale.x * 0.5f;
+            float wantY = riverData._SurfaceY(p.z) - radius * waterSpot.floatSink;
+            float vz = p.z > waterSpot._DownstreamZ() ? -waterSpot.floatDrift : 0f;
+            rb.velocity = new Vector3(0f, Mathf.Clamp((wantY - p.y) * 4f, -1f, 1f), vz);
+        }
+
+        void StopFloat(int i, GameObject go)
+        {
+            _floating[i] = false;
+            VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
+            if (sync != null) sync.SetGravity(true);
         }
 
         string RiverV3(Vector3 v) { return "(" + v.x.ToString("F2") + "," + v.y.ToString("F2") + "," + v.z.ToString("F2") + ")"; }

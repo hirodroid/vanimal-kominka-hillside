@@ -51,6 +51,21 @@ namespace KominkaHillside.Editor
     //                   wet (same debug entry). 45 s observed, then every stay is ended. Every dog must meet the W1 rules, all six
     //                   must get wet and land <= 30 s. Recorded: frame time avg / max, closest distance of two wet dogs, seconds
     //                   with >= 2 / all 6 dogs in the water, seconds with two wet dogs closer than 0.3 m.
+    // Fetch mode (Course/88, IMP-DOG-020 step 6 = design stage 2, B-3 W3, D-1 S4 / S5b one-client stand-ins):
+    //   W3-<breed>          the player stands on the spot's bank; the dog's ball is put on the water at the deepest cell (swimmers)
+    //                       or a shallow cell (Lab / Samoyed "-shallow") and "thrown" (_OnBallThrown). Pass: Fetch goes 6 -> 7 -> 8
+    //                       -> Return / Drop and ends with the ball within 2.5 m of the player (<= 90 s); every frame the dog's
+    //                       real mouth - water >= 0.03 m, the ball's top stays above the water while carried (7 / 8), no band frame
+    //                       outside the spot, no jump, feet not under the bed while wading.
+    //   W3-<breed>-deep     Lab / Samoyed and a deep ball: the Fetch gives up (reason=deep-ball), the dog never swims or goes past
+    //                       its wading limit, and the ball keeps floating.
+    //   S4-sim              a floating ball's local float state is wiped (what a new ball Owner has): it keeps floating (does not
+    //                       sink to the bed, is not sent to the bank) for 5 s.
+    //   S5b-sim             dog 2 wading: menu leash and "call the ball" in the same tick -> both refused, the dog comes out; after
+    //                       landing the ball call is accepted (ball within 3 m of the player).
+    //   Not simulable in one client: S1 (a non-Owner's throw) and two people asking at once (first asker) -> PCVR / 2 people.
+    // Water mode W0 (decision 2026-09-27, 2nd): no release step; a free dog placed within 25 m of the spot must start its play
+    // within 5 s and be wet within 6 s. The other water-mode cases start the same way.
     public static partial class KH_CourseWalkHarnessEditor
     {
         static int WhDog = 2;   // the dog of the current case (swim mode: per case)
@@ -74,6 +89,10 @@ namespace KominkaHillside.Editor
             public double frameMsAvg, frameMsMax, exitAt = -1;
             public Vector3 deepTarget, shallowTarget;
             public double simultaneousWetSeconds, allSixWetSeconds, closeSeconds;
+            public bool seen6, seen7, seen8, seenReturn, seenDrop, fetchEnded, ballNearPlayer, deepBallLogged, ballStillFloating, refusedToy;
+            public int ballTopBelowFrames, maxFetchState;
+            public bool teleportExempted;
+            public float ballEndDistance = -1f;
             public List<WhDogStat> stats = new List<WhDogStat>();
         }
         [Serializable] public class WhDogStat
@@ -85,7 +104,8 @@ namespace KominkaHillside.Editor
             public double landedAt = -1;
             [NonSerialized] public Vector3 prev; [NonSerialized] public int pose; [NonSerialized] public float swimRun, mouth, wetSince = -1, sincePose;
             [NonSerialized] public Transform mouthBone;
-            [NonSerialized] public bool teleportPending;   // a stage-3 teleport was logged; exempt only the next observation
+            [NonSerialized] public bool teleportPending;
+            public string bigStepAt;   // the first counted big step: positions, states, nearest other dog   // a stage-3 teleport was logged; exempt only the next observation
         }
         [Serializable] public class WhReport
         {
@@ -94,7 +114,7 @@ namespace KominkaHillside.Editor
             public string limitations = "Single local ClientSim. Water mode: dog 2; the per-stay first-play flag is cleared in the heap before each case after W0; the gathering is written into the synced heap; the Owner change is a heap wipe of the local play; blocked exits are heap edits of the spot. Swim mode: W1 / W2 targets are written into the dog's heap (_waterTarget, the W1 debug entry of B-3); W2 holds the random play roll off during its setup. Not network, Owner handover, device or visual acceptance.";
         }
         static WhReport wh;
-        static UdonBehaviour whFetch, whSpot, whActivities, whCallPose, whSlot;
+        static UdonBehaviour whFetch, whSpot, whActivities, whCallPose, whSlot, whRecall;
         static UdonBehaviour[] whFetches;
         static int whLastPose;
         static double whW2FrameSum; static int whW2Frames;
@@ -114,6 +134,13 @@ namespace KominkaHillside.Editor
             report.waterOnly = true; report.waterSwim = true; report.deadline = EditorApplication.timeSinceStartup + 1500; Save();
         }
 
+        [MenuItem("Tools/KominkaHillside/Course/88 - Walk Harness Water Fetch W3")]
+        public static void WaterFetchHarness()
+        {
+            Begin(false);
+            report.waterOnly = true; report.waterFetch = true; report.deadline = EditorApplication.timeSinceStartup + 1500; Save();
+        }
+
         [MenuItem("Tools/KominkaHillside/Course/78 - Walk Harness Water W0 W4 W6")]
         public static void WaterPlayHarness()
         {
@@ -131,11 +158,19 @@ namespace KominkaHillside.Editor
             whSpot = all.Single(u => u.programSource != null && u.programSource.name == "KH_WaterSpot");
             whActivities = all.Single(u => u.programSource != null && u.programSource.name == "KD_GroupActivities");
             whCallPose = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KD_CallPose");
+            whRecall = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_ToyRecall");
             whSlot = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KD_SleepSlot" && Get<int>(u, "dogIndex") == WhDog);
             whPolyX = Get<float[]>(whSpot, "polyX"); whPolyZ = Get<float[]>(whSpot, "polyZ");
             whExitsBackup = (Vector3[])Get<Vector3[]>(whSpot, "exits").Clone();
             wh = new WhReport { runId = report.runId };
-            if (report.waterSwim)
+            if (report.waterFetch)
+            {
+                foreach (var pair in new[] { new[] { "W3-Pome", "1" }, new[] { "W3-Shiba", "4" }, new[] { "W3-Corgi", "0" }, new[] { "W3-Dachs", "3" },
+                    new[] { "W3-Lab-shallow", "2" }, new[] { "W3-Lab-deep", "2" }, new[] { "W3-Samoyed-shallow", "5" }, new[] { "W3-Samoyed-deep", "5" },
+                    new[] { "S4-sim", "-1" }, new[] { "S5b-sim", "2" } })
+                { report.cases.Add(new Case { name = pair[0], count = 1 }); wh.cases.Add(new WhCase { name = pair[0], dog = int.Parse(pair[1]) }); }
+            }
+            else if (report.waterSwim)
             {
                 foreach (int dog in new[] { 1, 4, 0, 3, 2, 5 })   // Pome and Shiba first (design D-5)
                 { string name = "W1-" + WhBreeds[dog]; report.cases.Add(new Case { name = name, count = 1 }); wh.cases.Add(new WhCase { name = name, dog = dog }); }
@@ -151,6 +186,9 @@ namespace KominkaHillside.Editor
         static void WhLog(string condition, string stack, LogType type)
         {
             if (wh == null || caseIndex < 0 || caseIndex >= wh.cases.Count || !EditorApplication.isPlaying) return;
+            if (condition.StartsWith("[KD_DogFetchController] give-up dog=" + WhDog + " ") || condition.StartsWith("[KD_DogFetchController] water exit dog=" + WhDog + " "))
+            { if (condition.Contains("reason=deep-ball")) WC.deepBallLogged = true; if (WC.log.Count < 40) WC.log.Add(condition); return; }
+            if (condition.StartsWith("[KD_DogWanderController] water step refused dog=" + WhDog + " ")) { if (WC.log.Count < 40) WC.log.Add(condition); return; }
             if (!condition.StartsWith("[KD_DogWanderController] water ")) return;
             if (WC.name != "W2" && !condition.Contains("dog=" + WhDog + " ") && !condition.EndsWith("dog=" + WhDog)) return;
             var c = WC; if (c.log.Count < 40) c.log.Add(condition);
@@ -188,7 +226,15 @@ namespace KominkaHillside.Editor
             var p = roots[WhDog].position; c.frames++;
             float step = Vector3.Distance(p, whPrev); whPrev = p;
             if (step > c.maxStep) c.maxStep = step;
-            if (step > .2f && c.recoverStage < 3) c.bigSteps++;
+            // Stage-3 teleport: exempt exactly one step >= 9 m, once the dog's recovery has begun (its own heap _waterRecover >= 1,
+            // the teleport's precondition) or the stage-3 log was seen. Not the log time alone: in run 20260927-100739 (W6-all-blocked,
+            // 9.827 m) the log was taken after the observation of the teleport. Every later big step counts.
+            if (step > .2f)
+            {
+                bool teleport = !c.teleportExempted && step >= 9f && (c.recoverStage >= 3 || Get<int>(wander[WhDog], "_waterRecover") >= 1);
+                if (teleport) { c.teleportExempted = true; if (c.log.Count < 40) c.log.Add("teleport step exempted once: " + step.ToString("F2") + " m"); }
+                else c.bigSteps++;
+            }
             if (RiverInBand(p) && !WhInSpot(p)) c.bandOutsideSpotFrames++;
             float surface = KH_CourseGroundEditor.RiverAt(p.z).y, depth = surface - p.y;
             int pose = WhPose();
@@ -214,6 +260,7 @@ namespace KominkaHillside.Editor
         static void WhStepTick(double now)
         {
             var c = WC; var cc = Current;
+            if (report.waterFetch && !c.name.StartsWith("S5b")) { WhFetchTick(c, now); return; }
             if (c.name == "W2") { WhW2Tick(c, now); return; }
             if (whPhase == 0 && whStep == 0) { WhDog = c.dog; whFetch = whFetches[WhDog]; }
             if (whPhase >= 2) { if (report.waterSwim && c.stats.Count > 0) WhObserveDog(c.stats[0], Time.unscaledDeltaTime); else WhObserve(c); }
@@ -224,7 +271,8 @@ namespace KominkaHillside.Editor
             {
                 case 0: // detach everyone; wait for dog 2 out of the water, idle Fetch; place near the spot and attach
                     if (whStep < 6) { pouch.SendCustomEvent("_WalkOff" + whStep++); whNext = now + .3; return; }
-                    if (WhPose() != 0 || Get<int>(whFetch, "dogState") != 0) { if (now - cc.startedAt > 45) throw new TimeoutException("Dog " + WhDog + " not back on land / idle"); whNext = now + .5; return; }
+                    if (!report.waterSwim) { wander[WhDog].SetProgramVariable("_waterNextRoll", Time.time + 600f); if (WhState() != 0) wander[WhDog].SetProgramVariable("_waterUntil", 0f); }
+                    if (WhPose() != 0 || (!report.waterSwim && WhState() != 0) || Get<int>(whFetch, "dogState") != 0) { if (now - cc.startedAt > 45) throw new TimeoutException("Dog " + WhDog + " not back on land / idle"); whNext = now + .5; return; }
                     if (report.waterSwim) WhQuietOthers(WhDog);
                     c.mouth = Get<float>(wander[WhDog], "waterMouthHeight");
                     c.swimmer = Get<bool>(wander[WhDog], "waterSwimAllowed");
@@ -239,6 +287,16 @@ namespace KominkaHillside.Editor
                     roots[WhDog].SetPositionAndRotation(d.position, facing);
                     var sync = roots[WhDog].GetComponent<VRC.SDK3.Components.VRCObjectSync>(); if (sync != null) sync.FlagDiscontinuity();
                     whPrev = d.position;
+                    if (!report.waterSwim)
+                    {
+                        // Decision 2026-09-27 (2nd): no release step. A free dog placed within 25 m of the spot starts by itself;
+                        // the first-play flag is cleared (a new stay) and everything is measured from the placement.
+                        if (Vector3.Distance(d.position, entry) > 25f) throw new InvalidOperationException("Dog not within 25 m of the entry");
+                        wander[WhDog].SetProgramVariable("_waterFirstDue", 0f);
+                        wander[WhDog].SetProgramVariable("_waterFirstUsed", false);
+                        c.released = now - cc.startedAt; whWetSince = -1; whNextTrace = now; whLastPose = 0;
+                        whPhase = 2; whPhaseAt = now; whLastState = WhState(); return;
+                    }
                     pouch.SendCustomEvent("_WalkLeft" + WhDog); whPhase = 1; whNext = now + 1; return;
                 case 1: // release within 12 m of the entry
                     if (Get<int[]>(manager, "walkers")[WhDog] != Networking.LocalPlayer.playerId) throw new InvalidOperationException("Menu attach rejected for dog " + WhDog);
@@ -268,7 +326,7 @@ namespace KominkaHillside.Editor
                     bool ready = whWetSince >= 0 && now - whWetSince >= 1.5;
                     if (c.name == "W0")
                     {
-                        if (c.playStarted < 0 && t > 5) { WhFinish(c, now, false, "no WaterPlay within 5 s of the release"); return; }
+                        if (c.playStarted < 0 && t > 5) { WhFinish(c, now, false, "no WaterPlay within 5 s of the placement (no release)"); return; }
                         if (ready && t - c.wet > 3) { WhFinish(c, now, WhClean(c) && c.maxDepth > .02f && c.playStarted <= 5 && c.wet <= 6.0, "play " + c.playStarted.ToString("F2") + " s, wading " + c.wading.ToString("F2") + " s, wet " + c.wet.ToString("F2") + " s" + WhSummary(c)); return; }
                         if (t > 25) { WhFinish(c, now, false, "not wet (waterPose 1) within 25 s" + WhSummary(c)); return; }   // the 6 s limit is judged above
                         return;
@@ -292,6 +350,9 @@ namespace KominkaHillside.Editor
             switch (c.name)
             {
                 case "W4-leash": pouch.SendCustomEvent("_WalkLeft" + WhDog); break;
+                case "S5b-sim":   // one person stands in for both: leash and "call the ball" in the same tick
+                    whBallAt = Get<Transform>(whFetch, "_ballT").position;
+                    pouch.SendCustomEvent("_WalkLeft" + WhDog); pouch.SendCustomEvent("_Toy" + WhDog); break;
                 case "W4-gather":
                     whActivities.SetProgramVariable("participants", 0);
                     whActivities.SetProgramVariable("formation", 0);
@@ -366,6 +427,20 @@ namespace KominkaHillside.Editor
                         WhFinish(c, now, ok, "refused=" + c.refused + " exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2") + " acceptedAfter=" + accepted + WhSummary(c)); return;
                     }
                     break;
+                case "S5b-sim":
+                {
+                    var ballNow = Get<Transform>(whFetch, "_ballT").position;
+                    if (c.landed < 0) { if (Get<int[]>(manager, "walkers")[WhDog] >= 0) c.accepted = true; if (Vector3.Distance(ballNow, whBallAt) > .5f) c.ballMoved = true; return; }
+                    if (c.done < 0 && t - c.landed > 1.5) { c.done = t; pouch.SendCustomEvent("_Toy" + WhDog); return; }
+                    if (c.done >= 0 && t - c.done > 3)
+                    {
+                        float toPlayer = Vector3.Distance(ballNow, Networking.LocalPlayer.GetPosition());
+                        bool ok = !c.accepted && !c.ballMoved && c.exitStarted >= 0 && c.exitStarted <= 1.5 && c.landed <= 10 && toPlayer <= 3f && WhClean(c);
+                        WhFinish(c, now, ok, "leashRefused=" + !c.accepted + " toyRefusedInWater=" + !c.ballMoved + " exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2")
+                            + " ballToPlayerAfter=" + toPlayer.ToString("F2") + WhSummary(c)); return;
+                    }
+                    break;
+                }
                 case "W4-gather":
                     if (Get<bool>(wander[WhDog], "_groupCalled")) c.joined = true;
                     if (c.landed >= 0 && t - c.landed > 2)
@@ -451,10 +526,10 @@ namespace KominkaHillside.Editor
             WhSave(null); Save();
             if (caseIndex + 1 < report.cases.Count) { Next(); whPhase = 0; whStep = 0; whNext = 0; return; }
             bool all = wh.cases.All(x => x.status == "PASS" || (x.status == "NOT_EXERCISED" && x.name == "W4-call"));
-            string status = report.waterSwim ? (all ? "SWIM_PASS" : "SWIM_FAIL")
+            string status = report.waterFetch ? (all ? "FETCH_PASS" : "FETCH_FAIL") : report.waterSwim ? (all ? "SWIM_PASS" : "SWIM_FAIL")
                 : all ? (wh.cases.Any(x => x.status == "NOT_EXERCISED") ? "WATER_PASS_PARTIAL" : "WATER_PASS") : "WATER_FAIL";
             WhSave(status);
-            End(status, all ? (report.waterSwim ? "Swim W1 x6 / W2 local cases" : "Water W0/W4/W6 local cases") + " (see water.json); not network/device/visual acceptance" : "Water harness: see water.json");
+            End(status, all ? (report.waterFetch ? "Water fetch W3 x6 / S4 / S5b local cases" : report.waterSwim ? "Swim W1 x6 / W2 local cases" : "Water W0/W4/W6 local cases") + " (see water.json); not network/device/visual acceptance" : "Water harness: see water.json");
         }
 
         // ============================================================ swim mode
@@ -516,9 +591,20 @@ namespace KominkaHillside.Editor
         static void WhObserveDog(WhDogStat d, float dt)
         {
             var p = roots[d.dog].position; d.frames++;
-            float step = Vector3.Distance(p, d.prev); d.prev = p; if (step > d.maxStep) d.maxStep = step;
+            Vector3 from = d.prev; float step = Vector3.Distance(p, from); d.prev = p; if (step > d.maxStep) d.maxStep = step;
             // Only the one observation right after this dog's own stage-3 teleport is exempt (not every later frame)
-            if (step > .2f && !d.teleportPending) d.bigSteps++;
+            if (step > .2f && !d.teleportPending)
+            {
+                d.bigSteps++;
+                if (d.bigStepAt == null)
+                {
+                    // Evidence for the first jump (W3-Pome run 20260927-095400: one 0.39 m step, not visible in the 0.5 s trace)
+                    float near = 99f; for (int k = 0; k < roots.Length; k++) if (k != d.dog && roots[k] != null) near = Mathf.Min(near, Vector3.Distance(roots[k].position, p));
+                    d.bigStepAt = "step=" + step.ToString("F3") + " from=" + from.ToString("F2") + " to=" + p.ToString("F2") + " fetch=" + Get<int>(whFetches[d.dog], "dogState")
+                        + " water=" + Get<int>(wander[d.dog], "waterState") + " pose=" + Get<int>(whFetches[d.dog], "waterPose") + " nearestDog=" + near.ToString("F2")
+                        + " inSpot=" + WhInSpot(p) + " frame=" + Time.frameCount;
+                }
+            }
             d.teleportPending = false;
             if (RiverInBand(p) && !WhInSpot(p)) d.bandOutsideSpotFrames++;
             int pose = Get<int>(whFetches[d.dog], "waterPose");
@@ -551,7 +637,8 @@ namespace KominkaHillside.Editor
                 {
                     float foot = p.y - g.point.y;
                     if (foot < d.minFootAboveBed) d.minFootAboveBed = foot;
-                    if (foot < -.02f) d.footLowFrames++;
+                    // -0.03 (decision 2026-09-27): the 0.5 m riverbed grid's interpolation error; -0.022 once in W1-Shiba (run 20260927-100739)
+                    if (foot < -.03f) d.footLowFrames++;
                 }
             }
         }
@@ -570,7 +657,8 @@ namespace KominkaHillside.Editor
                 + " tooDeep=" + d.tooDeepFrames + " mouthLow=" + d.mouthLowFrames + " minMouth=" + d.minMouthAboveWater.ToString("F3") + " (root+M " + d.minMouthAboveWaterFromRoot.ToString("F3")
                 + ") footLow=" + d.footLowFrames + " minFoot=" + d.minFootAboveBed.ToString("F3") + " swims=" + d.swimEntries + " toggles=" + d.swimToggles
                 + " swimS=" + d.swimSeconds.ToString("F1") + " longest=" + d.longestSwim.ToString("F1") + " backToWade=" + d.backToShallow + " wetS=" + d.wetSeconds.ToString("F1")
-                + " landed=" + d.landed + " sameBank=" + d.landedOnSpotBank + " recover=" + d.recoverStage + (d.mouthBoneMissing ? " FAIL: mouth bone missing" : "") + "]";
+                + " landed=" + d.landed + " sameBank=" + d.landedOnSpotBank + " recover=" + d.recoverStage + (d.mouthBoneMissing ? " FAIL: mouth bone missing" : "")
+                + (d.bigStepAt != null ? " firstBig{" + d.bigStepAt + "}" : "") + "]";
         }
 
         static void WhEvaluateW1(WhCase c, double now, double t)
@@ -696,6 +784,140 @@ namespace KominkaHillside.Editor
             if (wetCount >= 2) c.simultaneousWetSeconds += dt;
             if (wetCount == 6) c.allSixWetSeconds += dt;
             if (close) c.closeSeconds += dt;
+        }
+
+        // ============================================================ fetch mode (W3 / S4)
+
+        static void WhFetchTick(WhCase c, double now)
+        {
+            if (whPhase >= 2 && c.stats.Count > 0) WhObserveDog(c.stats[0], Time.unscaledDeltaTime);
+            if (whPhase >= 2) WhFetchObserve(c);
+            if (now < whNext) return;
+            double t = now - whPhaseAt; var entry = Get<Vector3>(whSpot, "entry");
+            switch (whPhase)
+            {
+                case 0:
+                    if (whStep < 6) { pouch.SendCustomEvent("_WalkOff" + whStep++); whNext = now + .3; return; }
+                    if (whStep == 6)
+                    {
+                        for (int i = 0; i < 6; i++)
+                        {
+                            wander[i].SetProgramVariable("_waterNextRoll", Time.time + 600f); wander[i].SetProgramVariable("_waterFirstDue", 0f);
+                            wander[i].SetProgramVariable("_waterFirstUsed", true);   // nobody starts a water play of its own in this mode
+                            if (Get<int>(wander[i], "waterState") != 0) wander[i].SetProgramVariable("_waterUntil", 0f);
+                        }
+                        whStep = 7; whNext = now + .5; return;
+                    }
+                    if (c.dog >= 0) { WhDog = c.dog; whFetch = whFetches[WhDog]; }
+                    for (int i = 0; i < 6; i++)
+                        if (Get<int>(whFetches[i], "waterPose") != 0 || Get<int>(whFetches[i], "dogState") != 0)
+                        { if (now - Current.startedAt > 60) throw new TimeoutException(c.name + ": dog " + i + " not back on land / idle"); whNext = now + .5; return; }
+                    NavMeshHit h; if (!NavMesh.SamplePosition(entry + new Vector3(2.5f, 0, 0), out h, 2, NavMesh.AllAreas)) throw new InvalidOperationException("No bank point for the thrower");
+                    Networking.LocalPlayer.TeleportTo(h.position, Quaternion.LookRotation(new Vector3(-1, 0, 0)));
+                    if (c.dog >= 0)
+                    {
+                        NavMeshHit d; if (!NavMesh.SamplePosition(h.position + new Vector3(.6f, 0, .9f), out d, 2, NavMesh.AllAreas)) throw new InvalidOperationException("Dog placement lacks NavMesh");
+                        roots[WhDog].SetPositionAndRotation(d.position, Quaternion.LookRotation(new Vector3(-1, 0, 0)));
+                        var sync = roots[WhDog].GetComponent<VRC.SDK3.Components.VRCObjectSync>(); if (sync != null) sync.FlagDiscontinuity();
+                        c.stats.Clear(); c.stats.Add(WhNewStat(WhDog)); c.mouth = Get<float>(wander[WhDog], "waterMouthHeight"); c.swimmer = Get<bool>(wander[WhDog], "waterSwimAllowed");
+                    }
+                    whPhase = 1; whStep = 0; whNext = now + 1; return;
+                case 1:
+                    if (whStep == 0)
+                    {
+                        var cell = c.name.Contains("shallow") ? WhCellBy(false) : WhCellBy(true); c.deepTarget = cell;
+                        var ball = Get<Transform>(whFetch, "_ballT"); var bs = ball.GetComponent<VRC.SDK3.Components.VRCObjectSync>();
+                        if (bs != null) bs.SetKinematic(false);
+                        var rb = ball.GetComponent<Rigidbody>(); if (rb != null && !rb.isKinematic) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
+                        ball.position = new Vector3(cell.x, KH_CourseGroundEditor.RiverAt(cell.z).y + .2f, cell.z); if (bs != null) bs.FlagDiscontinuity();
+                        whStep = 1; whNext = now + 1.5; return;   // KH_ToyRecall takes it over as a floating ball
+                    }
+                    if (c.stats.Count > 0) c.stats[0].prev = roots[WhDog].position;   // continuity starts at the throw
+                    whNextTrace = now;
+                    if (c.dog >= 0) { whFetch.SendCustomEvent("_OnBallThrown"); c.actionAt = now - Current.startedAt; }
+                    whPhase = 2; whPhaseAt = now; c.done = -1; return;
+                case 2:
+                    WhFetchEvaluate(c, now, t); return;
+            }
+        }
+
+        static float WhBallRadius() { return Get<Transform>(whFetch, "_ballT").localScale.x * .5f; }
+
+        static void WhFetchObserve(WhCase c)
+        {
+            if (c.dog < 0) return;
+            int fs = Get<int>(whFetch, "dogState");
+            if (EditorApplication.timeSinceStartup >= whNextTrace && c.trace.Count < 240)
+            {
+                // Every 0.5 s: Fetch state, water play state, pose, dog / ball, inside the spot, the last river refusal (this or
+                // the previous frame): 1 sink-guard / 2 wade-limit / 3 band outside the spot.
+                whNextTrace = EditorApplication.timeSinceStartup + .5;
+                var q = roots[WhDog].position; var b = Get<Transform>(whFetch, "_ballT").position;
+                int blockFrame = Get<int>(wander[WhDog], "_waterBlockFrame");
+                int block = Time.frameCount - blockFrame <= 1 ? Get<int>(wander[WhDog], "_waterBlock") : 0;
+                c.trace.Add("t=" + (EditorApplication.timeSinceStartup - whPhaseAt).ToString("F1") + " fetch=" + fs + " water=" + WhState() + " pose=" + WhPose()
+                    + " dog=" + q.ToString("F2") + " dogInSpot=" + WhInSpot(q) + " dogBand=" + RiverInBand(q) + " ball=" + b.ToString("F2") + " ballInSpot=" + WhInSpot(b)
+                    + " ballDepth=" + (KH_CourseGroundEditor.RiverAt(b.z).y - b.y).ToString("F3") + " speed=" + Get<float>(wander[WhDog], "_speed").ToString("F2") + " block=" + block);
+            }
+            if (fs > c.maxFetchState) c.maxFetchState = fs;
+            if (fs == 6) c.seen6 = true;
+            if (fs == 7) c.seen7 = true;
+            if (fs == 8) c.seen8 = true;
+            if (fs == 4 && c.seen8) c.seenReturn = true;
+            if (fs == 5 && c.seen8) c.seenDrop = true;
+            if (fs == 0 && (c.seenReturn || c.seenDrop)) c.fetchEnded = true;
+            if (fs == 7 || fs == 8)
+            {
+                var b = Get<Transform>(whFetch, "_ballT").position;
+                if (WhInSpot(b) && b.y + WhBallRadius() < KH_CourseGroundEditor.RiverAt(b.z).y) c.ballTopBelowFrames++;
+            }
+        }
+
+        static bool WhStatClean(WhDogStat d)
+        {
+            return d != null && !d.mouthBoneMissing && d.bandOutsideSpotFrames == 0 && d.bigSteps == 0 && d.tooDeepFrames == 0 && d.mouthLowFrames == 0 && d.footLowFrames == 0;
+        }
+
+        static bool WhBallFloats()
+        {
+            var b = Get<Transform>(whFetch, "_ballT").position;
+            float want = KH_CourseGroundEditor.RiverAt(b.z).y - WhBallRadius() * Get<float>(whSpot, "floatSink");
+            return WhInSpot(b) && Mathf.Abs(b.y - want) < .05f;
+        }
+
+        static void WhFetchEvaluate(WhCase c, double now, double t)
+        {
+            string stat = c.stats.Count > 0 ? WhDogSummary(c.stats[0]) : "";
+            if (c.name.StartsWith("S4"))
+            {
+                if (c.done < 0 && t > 2)
+                {
+                    // What a new ball Owner has: no local float state at all
+                    var fl = Get<bool[]>(whRecall, "_floating"); whRecall.SetProgramVariable("_floating", new bool[fl.Length]); c.done = t; return;
+                }
+                if (c.done >= 0 && t - c.done > 5)
+                {
+                    c.ballStillFloating = WhBallFloats();
+                    WhFinish(c, now, c.ballStillFloating, "ballStillFloating=" + c.ballStillFloating + " (float state wiped as for a new Owner)"); return;
+                }
+                return;
+            }
+            if (c.name.EndsWith("-deep"))
+            {
+                if (t < 8) return;
+                c.ballStillFloating = WhBallFloats();
+                var d = c.stats[0];
+                bool ok = !c.seen6 && c.deepBallLogged && d.swimEntries == 0 && WhStatClean(d) && c.ballStillFloating;
+                WhFinish(c, now, ok, "entered=" + c.seen6 + " deepBallLogged=" + c.deepBallLogged + " ballStillFloating=" + c.ballStillFloating + stat); return;
+            }
+            if (c.fetchEnded || t > 90)
+            {
+                var ball = Get<Transform>(whFetch, "_ballT").position;
+                c.ballEndDistance = Vector3.Distance(ball, Networking.LocalPlayer.GetPosition()); c.ballNearPlayer = c.ballEndDistance <= 2.5f;
+                bool ok = c.seen6 && c.seen7 && c.seen8 && (c.seenReturn || c.seenDrop) && c.fetchEnded && c.ballNearPlayer && c.ballTopBelowFrames == 0 && WhStatClean(c.stats[0]);
+                WhFinish(c, now, ok, "states 6/7/8/4/5=" + c.seen6 + "/" + c.seen7 + "/" + c.seen8 + "/" + c.seenReturn + "/" + c.seenDrop + " ended=" + c.fetchEnded
+                    + " t=" + t.ToString("F1") + " ballToPlayer=" + c.ballEndDistance.ToString("F2") + " ballTopBelow=" + c.ballTopBelowFrames + stat); return;
+            }
         }
 
         static void WhSave(string status)

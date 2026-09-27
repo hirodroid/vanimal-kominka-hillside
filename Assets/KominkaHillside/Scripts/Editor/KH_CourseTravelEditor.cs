@@ -60,6 +60,10 @@ namespace KominkaHillside.Editor
             public List<string> labelFit = new List<string>();
             public long mapPngBytes, mapGpuBytesPC, mapGpuBytesMobile, mapEditorMemoryBytes;   // 段階 2: 地図テクスチャの容量 (GPU は形式からの計算値)
             public string mapFormats;
+            public string[] nameFontCoverage;                          // 段階 4: 表示名の見本ごとの欠字 (対象外は記録だけ)
+            public int nameFontCharset, nameFontGlyphs;                 // 対象の文字数・焼いたグリフ数 (本体 + Latin)
+            public string nameFontLacking, nameFontUsage, nameFontBuildRefs;               // 元のフォントに無い字・アトラスの使用率
+            public long nameFontAtlasBytes, nameFontAssetBytes;         // アトラス (Alpha8 = 幅 × 高さ) の合計・保存したアセット
             public string limitations = "Editor static data, saved Udon values and physics against scene colliders only. Check 5 (other players 1 m) runs only at request time. No Play, network, VR/Touch input or device font fallback is tested.";
         }
 
@@ -320,6 +324,7 @@ namespace KominkaHillside.Editor
             Require(e, Mathf.Abs(scroll.anchoredPosition.y + scroll.sizeDelta.y / 2 - ContentTopWithRow) < 0.5f, "walk scroll top = 140 (below the map row)");
             KH_CourseTravelMapEditor.Validate(p, e, report);
             KH_CourseTravelJoinEditor.Validate(p, e, report);   // 段階 3: 受付箱・通知板・人の一覧
+            KH_CourseTravelNameFontEditor.Validate(p, e, report);   // 段階 4: 表示名の補助フォント
             // 翻訳・字形・収まり
             var catalog = CourseCatalog(p.language);
             foreach (var lang in catalog.languages) foreach (var entry in lang.texts)
