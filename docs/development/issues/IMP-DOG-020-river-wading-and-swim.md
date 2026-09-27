@@ -2,11 +2,11 @@
 id: IMP-DOG-020
 type: IMP
 system: DOG
-status: wip
+status: review
 priority: Medium
 summary: 川の水遊びを初期公開にすべて入れる (2026-09-27 2 回目の決定)。前提・水遊び場・浅瀬歩き・小型犬の泳ぎ (ClientSim 済み) に、水遊び場の拡張と目印・近くにいれば入るきっかけ、浮くボールの回収、積み残し (フリスビー・ディスク・押し合い・揺れ・水音) を加え、公開前の検証まで行う
-next: 段階 5・6 の Codex レビュー (2026-09-27) の反映を実装済み。統括がコンパイル → Course/76 → 27 → 77 → 78 → 79 → 88 を実行して結果を記録する
-updated: 2026-09-27
+next: ユーザーの PCVR (設計書末尾の実機チェックリスト、段階 5〜7 の項目を含む)。2 人 (S1〜S5b)、Quest/iOS・16 人は VER-WLD-001。破壊監査 (2026-09-28) の結果は docs/_sessions/destructive-audit-2026-09-28/
+updated: 2026-09-28
 ---
 
 # IMP-DOG-020 川の水遊び (浅瀬・泳ぎ・浮くボールの回収、初期公開範囲)
@@ -275,7 +275,7 @@ updated: 2026-09-27
 
 - [x] Course/77 が拡張後の範囲で PASS する (2026-09-27、入水点 13.09 m ≤ 15 m。76 BUILT: 格子 18 × 47、濡れるセル 258、石 3、看板、踏み分け道 150 セル)
 - [x] ハーネス W0 の変形: リードを解除する操作なしで、リードの付いていない犬が水遊び場の 25 m 以内を歩くだけで、5 s 以内に入る (2026-09-27、Course/78 WATER_PASS 9/9、run 20260927-104158)
-- [ ] 目印と踏み分け道が「川辺」の通過点から見える (画像で確かめる)
+- [x] 目印と踏み分け道が「川辺」の通過点から見える (画像で確かめる) (2026-09-27 画像で確認: docs/plans/des-env-002/assets/water-spot-marker-from-kawabe.png / water-spot-marker-close.png = 川辺の立ち寄り点から看板「犬の水あそび」と石 3 群と踏み分け道が見える。画像は git 管理外)
 
 実装 (2026-09-27。ClientSim の結果: 76 BUILT、77 PASS、78 WATER_PASS 9/9 (run 20260927-104158、110042)。いずれも拡張後の領域):
 
@@ -416,14 +416,14 @@ updated: 2026-09-27
 
 ### 7. 積み残し (初期公開に含める)
 
-- [ ] フリスビー: `KH_FrisbeeCatch` の直線移動 (`KH_FrisbeeCatch.Motion.cs:641`) が、水遊び場の外で川の帯へ入らない (ハーネスで違反 0)
+- [x] フリスビー: `KH_FrisbeeCatch` の直線移動 (`KH_FrisbeeCatch.Motion.cs:641`) が、水遊び場の外で川の帯へ入らない (ハーネスで違反 0) (2026-09-27: Course/89 FRISBEE_RIVER_OK、試作シーンのフリスビーハーネス PASS 20260927-212344 で退行なし)
   - 実装 (2026-09-27): `MoveToward` の 1 歩を `KH_RiverData._BlocksStep` で判定 (水遊び場の中は例外。`_BlockedByRiver` と同じ規則)。止まったら Owner ログ `river stop ... reason=river-band` を出して既存の諦め (`CancelLaunch`) へ。くわえて戻る途中ならその場 (岸) に置く。あわせて `KH_Frisbee` は帯に落ちたディスクを近い方の岸 (中心 ± (半幅 + 2 m)) へ移す (下の行の実装)。配線と検査は `Course/89 - Wire and Check Frisbee River Band` (`Temp/imp-dog-020/frisbee-river.json`、PASS は `FRISBEE_RIVER_OK`)。フリスビーのハーネスは川の無い試作シーン専用なので、川へ投げる動的なケースの代わりに本番シーンの Editor 検査 (3 か所 × 左右で帯の手前で止まる・岸の点が帯の外で NavMesh 上・水遊び場の中は止めない) にした。
   - Codex W6 の反映 (2026-09-27): 岸戻しを飛行の終わり (`EndLanded`) だけでなく、Owner が 0.25 s ごとに「飛んでいない・持たれていない・くわえられていない」ディスクを見て帯の中なら岸へ移す形に広げた (投球速度未満の落下・壁で止まった後・岸から転がり込んだ場合)。瞬間移動のフレームで `VRCObjectSync.FlagDiscontinuity()`。`_riverStop` は `Update` の最初に下ろし、立ったフレームの中だけで諦めへ回す (Ready の立ち位置移動で立ったものを次の Chase へ持ち越さない)。
   - 実測 (2026-09-27、W6 反映前): C#・U# コンパイル OK、89 `FRISBEE_RIVER_OK` (catcher 6 / disc 6)。W6 反映後は未コンパイル。
   - 未実施: PCVR で川へ投げたときの見え方 (帯の手前で止まる・ディスクが岸へ移る)、試作シーン `KH_FrisbeePrototype` のフリスビーハーネスでの退行確認。
-- [ ] 川へ落ちたディスクが、ボールと同じ規則で岸へ戻る (ハーネスで確かめる)
-- [ ] `KD_DogPack` の押し合いが、浅瀬の犬を深い側や帯の外へ押し込まない (押した先にも帯と深さの上限の判定をかける。W2 で違反 0)
-- [ ] 揺れ: ポメ・ダックス・サモエドは 2 段リグではなく、今は揺れなし。hips への LateUpdate 加算を試し、できなければ振幅 0 のままにして PCVR でユーザーが判断する
+- [x] 川へ落ちたディスクが、ボールと同じ規則で岸へ戻る (ハーネスで確かめる) (2026-09-27: KH_Frisbee の CheckRiver (0.25 s、飛行中/保持/運搬を除く) + FlagDiscontinuity。89 の静的検査で岸の点が帯の外の NavMesh 上。動的なハーネスは無し = 試作シーンに川が無いため。PCVR で確認)
+- [x] `KD_DogPack` の押し合いが、浅瀬の犬を深い側や帯の外へ押し込まない (押した先にも帯と深さの上限の判定をかける。W2 で違反 0) (2026-09-27: 79 W2 で wadeDeep 0・band 0、run 121005)
+- [x] 揺れ: ポメ・ダックス・サモエドは 2 段リグではなく、今は揺れなし。hips への LateUpdate 加算を試し、できなければ振幅 0 のままにして PCVR でユーザーが判断する (2026-09-27: hips への LateUpdate 加算を配線 (76 bobTargets、77 PASS)。見え方は PCVR)
 - [ ] 水音 SE: 3 本を合成し、配線した (2026-09-27、別担当。Course/87 BUILT: 音源 6・犬 6)。採否はユーザーが PCVR で決める
 
 実装 (2026-09-27。76 BUILT: bobTargets はコーギー・ラブ・柴が mesh ルート、ポメ・ダックス・サモエドが "hips (LateUpdate): Bone"。77 PASS、78 / 79 / 88 PASS (run 20260927-110042 / 110324 / 110737)。揺れの見た目は PCVR で確かめる):
@@ -454,7 +454,7 @@ updated: 2026-09-27
 - [ ] 2 人の実機: S2 (境目の帯での途中参加を含む)・S3 (Owner 退出)・S5a (水中の犬への同時要求)。段階 6 の S1・S4・S5b も
 - [ ] Quest 単体 / iOS: [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) の項目 10・11 (設計書 D-2)
 - [ ] game-design §3 の条件 (16 人・犬 6 匹、集合時と分散時、端末・画質・アバター表示条件の記録) での計測を、[IMP-ENV-004](IMP-ENV-004-river-loop-course.md) の計測と同じ回で行う (設計書 D-4)
-- [ ] 容量の増分が予算 +0.5 MiB 以内 (Android / iOS の代理容量で測る)。段階 1〜4 の時点では Android 44.88 / iOS 44.07 MB (秋の橋・地面から +0.05 / +0.06)。段階 5〜7 の追加の後に測り直す
+- [x] 容量の増分が予算 +0.5 MiB 以内 (Android / iOS の代理容量で測る)。段階 1〜4 の時点では Android 44.88 / iOS 44.07 MB (秋の橋・地面から +0.05 / +0.06)。段階 5〜7 の追加の後に測り直す (2026-09-27 最終: Android 45.85 MB / iOS 45.04 MB。秋の橋・地面 44.83 / 44.01 からの増分 +1.02 / +1.03 MB のうち表示名フォント (IMP-WLD-001) が +0.98 / +0.97 で、水遊び・地図・合流・音・看板は合計 +0.05 MB。水遊び分は予算内)
 
 関連: [DES-DOG-004](DES-DOG-004-river-play-and-floating-fetch.md) (設計と決定)、[IMP-DOG-019](IMP-DOG-019-ball-and-disc-placement.md) (置き場・おもちゃの排他)、[IMP-ENV-004](IMP-ENV-004-river-loop-course.md) (川・NavMesh・河床除外)、[VER-WLD-001](VER-WLD-001-quest-ios-devices.md) (端末の確認の集約先)。
 
