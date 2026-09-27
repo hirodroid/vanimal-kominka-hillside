@@ -47,7 +47,7 @@ namespace KominkaDogRun
 
         const int BehaviorWater = 12;
         const int WaterOff = 0, WaterApproach = 1, WaterWade = 2, WaterExit = 3, WaterShake = 4;
-        const float WaterWet = 0.02f, WaterDepthRatio = 0.45f, WaterFirstDelay = 0.5f;
+        const float WaterWet = 0.02f, WaterDepthRatio = 0.45f, WaterFirstDelay = 0.2f;
         const float WaterRollInterval = 45f, WaterRollChance = 0.3f, WaterStayMin = 20f, WaterStayMax = 40f;
         const float WaterApproachTimeout = 20f, WaterExitTimeout = 10f, WaterShakeSeconds = 1.2f, WaterLookSeconds = 1f;
         const float WaterStuckStep = 0.1f, WaterFxRange = 20f, WaterSplashInterval = 0.25f;
@@ -56,7 +56,7 @@ namespace KominkaDogRun
         private float _waterAskAt = -1000f, _waterLookUntil, _nextSplashAt, _nextRippleAt, _nextWaterSoundAt;
         private Vector3 _waterTarget, _waterProgressPos;
         private int _waterExit, _waterRecover, _waterStuck, _waterSeenFrame, _waterAskPlayer = -1, _waterLookPlayer = -1;
-        private bool _waterFirstUsed, _waterWasLeashed, _waterHasTarget, _waterFirstCellDone;
+        private bool _waterFirstUsed, _waterWasLeashed, _waterHasTarget, _waterFirstCellDone, _waterFirstLeg;
 
         bool _BlockedByRiver(Vector3 from, Vector3 next)
         {
@@ -209,11 +209,12 @@ namespace KominkaDogRun
         {
             if (Time.time >= _waterUntil) { WaterBeginExit(_waterExit, "stay-over"); return; }
             if (Time.time < _waterHoldUntil) { Coast(); WaterResetProgress(); return; }
-            if (!_waterHasTarget) { _waterTarget = WaterPickCell(!_waterFirstCellDone); _waterFirstCellDone = true; _waterHasTarget = true; WaterResetProgress(); }
+            if (!_waterHasTarget) { _waterFirstLeg = !_waterFirstCellDone; _waterTarget = WaterPickCell(!_waterFirstCellDone); _waterFirstCellDone = true; _waterHasTarget = true; WaterResetProgress(); }
             if (Horizontal(p, _waterTarget) < 0.3f || WaterStuck(p))
             {
                 bool stuck = _waterStuck >= 2;
-                _waterHasTarget = false; _waterHoldUntil = Time.time + Random.Range(1f, 3f);
+                // No pause after the first leg (the way in); the sniffing pauses belong to the wading itself.
+                _waterHasTarget = false; _waterHoldUntil = _waterFirstLeg ? Time.time : Time.time + Random.Range(1f, 3f); _waterFirstLeg = false;
                 if (stuck)
                 {
                     _waterRecover++;
@@ -269,7 +270,10 @@ namespace KominkaDogRun
         Vector3 WaterPickCell(bool nearest)
         {
             float limit = WaterDepthLimit() * 0.9f;
-            Vector3 c = nearest ? waterSpot._NearestWetCell(dogRoot.position, 0.03f, limit) : waterSpot._RandomWetCell(0.03f, limit);
+            // The first leg must end clearly in the water (W0 run 20260927-063601: the nearest cell above 0.03 m had 0.04 m, the
+            // dog "arrived" 0.22 m short of it on dry ground and then held 3 s). Half the dog's limit, 0.03-0.08 m (Pome 0.035).
+            float firstMin = Mathf.Clamp(0.5f * limit, 0.03f, 0.08f);
+            Vector3 c = nearest ? waterSpot._NearestWetCell(dogRoot.position, firstMin, limit) : waterSpot._RandomWetCell(0.03f, limit);
             if (c.y <= KominkaHillside.KH_WaterSpot.NoBed + 1f) c = waterSpot._NearestWetCell(dogRoot.position, 0.03f, limit);
             return c.y <= KominkaHillside.KH_WaterSpot.NoBed + 1f ? waterSpot.entry : c;
         }

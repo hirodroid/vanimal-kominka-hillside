@@ -31,6 +31,7 @@ summary: Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/�
 | 6 | 負荷 | Quest 単体・iOS の fps と描画コールの目安 (`vrc-performance` の手順)。6 匹散歩・複数人での数字 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) の「負荷の初回測定」③ |
 | 7 | 境界 | Terrain の縁・遠景の継ぎ目 (南東・南西の隅)、柵・斜面の外への落下が端末でも同じか | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) |
 | 8 | 容量 | Android / iOS のダウンロードサイズがモバイル上限 100 MB を下回っているか。実機に載せる前に `Tools/KominkaHillside/Build Size/8 - Verify Mobile Caps` を 0 件にして `2 - Bundle Size Android` を測る。最新の実測と余力は [ビルドサイズ実測](../../plans/2026-09-24-build-size-audit.md) だけが持つ (ここに数字を書かない)。実機での見た目 (1024 に落とした樹皮・古民家・空) はこの Issue で見る | [ビルドサイズ実測](../../plans/2026-09-24-build-size-audit.md) |
+| 9 | 地図・ワープ・合流 | Touch で [地図と移動]・一覧の行・[ここへワープ]・通知板の 4 ボタンを押し分けられるか、通知板 (目の前 1.1 m・15° 下) と Focus View の重なり、暗転の板 (queue 5000) が両眼・スマホ画面で黒くなるか、表示名の欠けた字 (□)、16 人で申し込みが重なったときの通知の間隔 (受け手ごとに 20 秒) | [IMP-WLD-001](IMP-WLD-001-map-warp-and-join.md)、[実機チェックリスト](../../plans/2026-09-27-map-and-travel.md#実機チェックリスト-2026-09-27) |
 
 ## 体験会 (2026-09-26) の所感 — 合格には読み替えない
 
