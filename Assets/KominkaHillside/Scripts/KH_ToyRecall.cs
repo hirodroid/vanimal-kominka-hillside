@@ -31,6 +31,7 @@ namespace KominkaHillside
         public float recallDistance = 1.2f;
         public float recallCooldown = 2f;
         public const int Ok = 0, Held = 1, DogBusy = 2, Cooldown = 3, Unwired = 4, Pending = 5;
+        public const int InWater = 6;   // IMP-DOG-020: the dog is wading; called again after it lands (DES-DOG-004 B-1)
         private float[] _recallAt;
         private float[] _discRecallAt;
         private int _pendingRow = -1;
@@ -61,9 +62,12 @@ namespace KominkaHillside
         private float[] _riverSince;
         private float[] _riverLastReturn;
         private int[] _riverRepeat;
+        private float[] _riverSettleUntil;      // after a bank return: keep the ball asleep until this time
+        const float RiverSettleSeconds = 1.25f; // 5 looks: the teleport and the first ground contact can wake it
         const int RiverBankTries = 6;           // bank candidates at +2, +3.5 ... +9.5 m beyond the band edge
         const float RiverSlopeAccept = -0.10f;  // RiverBankSpot: steepest accepted fall toward the water (normal · outward)
-        const float RiverSlopeTie = 0.01f;      // a farther candidate must beat the nearer one by this much
+        const float RiverSlopeTie = 0.01f;
+        const float RiverBankShiftZ = 3f;       // RiverBankSpot also tries the same distances 3 m up and down the river      // a farther candidate must beat the nearer one by this much
         private float _riverSpotScore;
         const float RiverRepeatWindow = 20f;    // returned again within this = it came back; third time = park
 
@@ -81,6 +85,7 @@ namespace KominkaHillside
                 if (_pendingRow >= 0) return Pending;
                 if (discs[row].IsHeldNow) return Held;
                 if (discCatchers[row].IsEngaged) return DogBusy;
+                if (fetchers != null && row < fetchers.Length && fetchers[row] != null && fetchers[row].WaterPose != 0) return InWater;
                 if (BallInUse(row)) return DogBusy;   // IMP-DOG-019: the same dog's ball is out (menu text = "dog is playing")
                 if (_discRecallAt != null && Time.time - _discRecallAt[row] < recallCooldown) return Cooldown;
                 return Ok;
@@ -90,6 +95,7 @@ namespace KominkaHillside
             if (balls[row].IsHeldNow) return Held;
             if (activities != null && activities.RaceBall == row) return DogBusy;
             if (!fetchers[row].IsIdle) return DogBusy;
+            if (fetchers[row].WaterPose != 0) return InWater;
             if (DiscInUse(row)) return DogBusy;   // IMP-DOG-019: the same dog's disc is out
             if (_recallAt != null && Time.time - _recallAt[row] < recallCooldown) return Cooldown;
             return Ok;
@@ -296,6 +302,7 @@ namespace KominkaHillside
             {
                 _riverSince = new float[balls.Length];
                 _riverLastReturn = new float[balls.Length];
+                _riverSettleUntil = new float[balls.Length];
                 _riverRepeat = new int[balls.Length];
                 for (int k = 0; k < _riverSince.Length; k++) { _riverSince[k] = -1f; _riverLastReturn[k] = -1000f; }
             }
@@ -310,7 +317,9 @@ namespace KominkaHillside
                 // (a throw starts that dog's Fetch, which also catches a grab-and-throw shorter than one 0.25 s look)
                 bool fetching = fetchers != null && i < fetchers.Length && fetchers[i] != null && !fetchers[i].IsIdle;
                 if (b.IsHeldNow || fetching) { _riverRepeat[i] = 0; _riverLastReturn[i] = -1000f; }
+                if (b.IsHeldNow || carried) _riverSettleUntil[i] = 0f;   // a dog merely chasing does not touch it
                 if (!Networking.IsOwner(go) || b.IsHeldNow || carried) { _riverSince[i] = -1f; continue; }
+                if (Time.time < _riverSettleUntil[i]) SettleBall(go);
                 Vector3 p = go.transform.position;
                 if (!riverData._InBand(p, KH_RiverData.BandMargin)) { _riverSince[i] = -1f; continue; }
                 if (_riverSince[i] < 0f) _riverSince[i] = Time.time;
@@ -324,7 +333,7 @@ namespace KominkaHillside
         // Bank destination on the given side. The bank slopes down into the water, and a sphere rolls on any slope, so a
         // point just outside the band sends the ball straight back in (measured 2026-09-27 W5: returned 1 m outside the band,
         // rolled back, sank and was returned again every ~2 s). Candidates: NavMesh points 2 .. 9.5 m beyond the band edge in
-        // 1.5 m steps. Score = ground normal (horizontal part = downhill) · the band's outward normal in x/z. The edge is
+        // 1.5 m steps, each also 3 m up and down the river (local search for a flatter spot). Score = ground normal (horizontal part = downhill) · the band's outward normal in x/z. The edge is
         // side * (x - centreX(z)) = halfWidth(z) + 1, so the outward normal is (side, -(side * dcx/dz + dhw/dz)); this also holds
         // where the river runs diagonally (Codex 2026-09-27 D-中).
         // Calibration (generating formula, z 140-160, 2026-09-27): on the bank slope (+2 / +3.5 m) the score is -0.15 .. -0.34
@@ -337,9 +346,11 @@ namespace KominkaHillside
         {
             Vector3 best = new Vector3(0f, -10000f, 0f);
             float bestScore = -2f;
-            for (int k = 0; k < RiverBankTries; k++)
+            for (int c = 0; c < RiverBankTries * 3; c++)
             {
-                Vector3 bank = riverData._BankPoint(from, side, KH_RiverData.BandMargin + KH_RiverData.BankExtra + k * 1.5f);
+                int k = c / 3;
+                float dz = (c % 3 == 0) ? 0f : (c % 3 == 1 ? -RiverBankShiftZ : RiverBankShiftZ);   // local search along the bank
+                Vector3 bank = riverData._BankPoint(from + new Vector3(0f, 0f, dz), side, KH_RiverData.BandMargin + KH_RiverData.BankExtra + k * 1.5f);
                 NavMeshHit hit;
                 if (!NavMesh.SamplePosition(bank, out hit, 2f, NavMesh.AllAreas)) continue;
                 Vector3 p = hit.position;
@@ -376,14 +387,27 @@ namespace KominkaHillside
                 VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
                 if (sync != null) sync.SetKinematic(false);
                 float radius = go.transform.localScale.x * 0.5f;
-                go.transform.position = spot + Vector3.up * (radius + 0.02f);
+                go.transform.position = spot + Vector3.up * (radius + 0.005f);   // resting on the ground: no drop to wake it
                 if (sync != null) sync.FlagDiscontinuity();
-                Rigidbody rb = go.GetComponent<Rigidbody>();
-                if (rb != null && !rb.isKinematic) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
+                // A rigid sphere has no rolling resistance: on the crest's gentle fall (-0.03) it rolled back into the water
+                // in about a minute (run 20260927-042802). Put it to sleep after the teleport; gravity alone does not wake a
+                // sleeping body (contact, force or a pickup does). The teleport and the first contact can wake it, so the
+                // settle pass keeps re-sleeping it for RiverSettleSeconds (cleared by a hold or a Fetch).
+                SettleBall(go);
+                _riverSettleUntil[i] = Time.time + RiverSettleSeconds;
             }
             else Park(i, KindBall);
             Debug.Log("[KH_ToyRecall] river-return ball=" + i + " reason=" + (sunk ? "sunk" : "stranded") + " to=" + (found ? "bank" : "park")
                 + " side=" + (side > 0f ? "+x" : "-x") + " repeat=" + _riverRepeat[i] + " slope=" + (found ? _riverSpotScore.ToString("F3") : "none") + " from=" + RiverV3(from) + " at=" + RiverV3(go.transform.position));
+        }
+
+        void SettleBall(GameObject go)
+        {
+            Rigidbody rb = go.GetComponent<Rigidbody>();
+            if (rb == null || rb.isKinematic) return;
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.Sleep();
         }
 
         string RiverV3(Vector3 v) { return "(" + v.x.ToString("F2") + "," + v.y.ToString("F2") + "," + v.z.ToString("F2") + ")"; }

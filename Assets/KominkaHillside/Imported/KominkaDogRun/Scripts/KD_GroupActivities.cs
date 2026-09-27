@@ -154,6 +154,7 @@ namespace KominkaDogRun
             if (frisbeeCatchers != null && i < frisbeeCatchers.Length && frisbeeCatchers[i] != null && frisbeeCatchers[i].IsEngaged) return false; // IMP-DOG-005
             if (Mode == 1 && !_IsParticipant(i)) return false;
             return f != null && w != null && f.gameObject.activeInHierarchy && f.IsIdle && !f.PetActive
+                && f.WaterPose == 0   // IMP-DOG-020: a wading dog does not join (it walks out instead, DES-DOG-004 B-1)
                 && !w.CandyReserved
                 && (w.petController == null || !w.petController.IsPetting)
                 && (w.sleepBoard == null || !w.sleepBoard.IsSleeping(i)) && !w.IsAsleep && !w.IsResting;

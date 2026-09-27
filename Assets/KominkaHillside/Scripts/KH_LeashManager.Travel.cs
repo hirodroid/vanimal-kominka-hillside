@@ -48,6 +48,9 @@ namespace KominkaHillside
         public float[] travelBridgeZs;
         public float[] travelBridgeXs;
 
+        [Header("Travel fade (IMP-WLD-001 段階 2。Course/84 が配線する。null なら暗転なしで移動)")]
+        public KH_TravelFade travelFade;
+
         [Header("Travel tuning (設計書 §D.5。Play で決める)")]
         public float travelCooldownOk = 10f;
         public float travelCooldownFail = 3f;
@@ -62,7 +65,7 @@ namespace KominkaHillside
         public int debugForgeTravelMask;     // 送る dogMask にこのビットを足す (T8 の偽装)
 
         // ---- 要求する人 (ローカル。同期しない) ----
-        private int _tvState;                // 0 なし / 1 確認待ち / 2 本人は着いた・犬を待っている (レビュー X6)
+        private int _tvState;                // 0 なし / 1 確認待ち / 2 本人は着いた・犬を待っている (レビュー X6) / 3 暗転中 (段階 2)
         private float _tvArrivedAt;
         const float TravelDogsWait = 15f;    // 犬の適用期限と同じ。過ぎたら待つのをやめて「着きました」
         private int _tvSeq, _tvReq, _tvMask, _tvSpot;
@@ -104,7 +107,7 @@ namespace KominkaHillside
         {
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp)) return TravelUnavailable;
-            if (_tvState == 1) { _tvBusyRejects++; return TravelBusy; }
+            if (_tvState == 1 || _tvState == 3) { _tvBusyRejects++; return TravelBusy; }
             if (Time.time < _tvCooldownUntil) return TravelCooling;
             if (!_TravelWarpable(spot)) return TravelUnavailable;
             if (TravelFlat(lp.GetPosition(), spotPositions[spot]) < TravelHereDistance) return TravelAlreadyHere;
@@ -114,10 +117,10 @@ namespace KominkaHillside
             float yaw = spotYaws[spot];
             if (mask == 0)
             {
-                // 犬がいなければ切符は出さない (§B.1 の 0 匹)
-                TravelTeleport(lp, _tvLanding, yaw);
-                _tvCooldownUntil = Time.time + travelCooldownOk;
-                return TravelArrived;
+                // 犬がいなければ切符は出さない (§B.1 の 0 匹)。暗転だけして移動する
+                _tvReq = 0; _tvMask = 0; _tvSpot = spot; _tvCenter = _tvLanding; _tvYaw = yaw;
+                TravelStartFade();
+                return TravelStarted;
             }
             _tvSeq = (_tvSeq % 65535) + 1;
             _tvReq = lp.playerId * 65536 + _tvSeq;
@@ -130,8 +133,9 @@ namespace KominkaHillside
         /// <summary>確認待ちを自分で取りやめる。ローカル専用 (段階 2 で暗転中の取消にも使う)。</summary>
         public void _TravelCancel()
         {
-            if (_tvState != 1) return;
-            TravelSendCancel();
+            if (_tvState != 1 && _tvState != 3) return;
+            if (_tvReq != 0) TravelSendCancel();
+            if (_tvState == 3 && travelFade != null) travelFade._Release();
             TravelFinish(TravelCanceledByMe, travelCooldownFail);
         }
 
@@ -139,7 +143,8 @@ namespace KominkaHillside
         /// <summary>確認待ちの残り (取りやめまで。秒)。待っていなければ 0。</summary>
         public float _TravelWaitLeft() { return _tvState == 1 ? Mathf.Max(0f, travelGiveUpAfter - (Time.time - _tvSentAt)) : 0f; }
         public bool _TravelAwaitingDogs() { return _tvState == 2; }
-        public int _TravelWaitingSpot() { return _tvState == 1 ? _tvSpot : -1; }
+        public int _TravelWaitingSpot() { return _tvState == 1 || _tvState == 3 ? _tvSpot : -1; }
+        public bool _TravelFading() { return _tvState == 3; }
         public float _TravelCooldownLeft() { return Mathf.Max(0f, _tvCooldownUntil - Time.time); }
 
         public bool _TravelWarpable(int spot)
@@ -162,6 +167,7 @@ namespace KominkaHillside
         private void TravelTick()
         {
             if (_tvState == 2) { TravelTickDogs(); return; }
+            if (_tvState == 3) { TravelTickFade(); return; }
             if (_tvState != 1) return;
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp)) { _tvState = 0; return; }
@@ -192,11 +198,7 @@ namespace KominkaHillside
                     TravelFinish(TravelBlocked, travelCooldownFail);
                     return;
                 }
-                TravelTeleport(lp, _tvCenter, _tvYaw);
-                Debug.Log("[KH_Leash] travel req=" + _tvReq + " confirmed; teleported to spot " + _tvSpot);
-                _tvCooldownUntil = Time.time + travelCooldownOk;
-                _tvState = 2; _tvArrivedAt = Time.time;
-                TravelPost(TravelWaitingDogs);
+                TravelStartFade();
                 return;
             }
             float age = Time.time - _tvSentAt;
@@ -212,6 +214,46 @@ namespace KominkaHillside
                 TravelSendCancel();
                 TravelFinish(TravelNoAnswer, travelCooldownFail);
             }
+        }
+
+        /// <summary>段階 2 (§D.1): 黒へ向かい始める。板が無ければその場で移動する。</summary>
+        private void TravelStartFade()
+        {
+            _tvState = 3;
+            if (travelFade != null) travelFade._Begin();
+            TravelTickFade();
+        }
+
+        /// <summary>暗転中 (毎フレーム)。**黒が描かれたフレームの次**に、人の検査をもう一度してから TeleportTo し、明転を始める。
+        /// 暗転が終わるまでは取消できる (_TravelCancel)。接続が変わった・着地点が塞がったら取りやめて明るく戻す。</summary>
+        private void TravelTickFade()
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) { _tvState = 0; if (travelFade != null) travelFade._Release(); return; }
+            if (_tvMask != 0 && _TravelMyMask() != _tvMask)
+            {
+                Debug.Log("[KH_Leash] travel req=" + _tvReq + " stopped during fade: leashed dogs changed");
+                TravelSendCancel();
+                if (travelFade != null) travelFade._Release();
+                TravelFinish(TravelChanged, travelCooldownFail);
+                return;
+            }
+            if (travelFade != null && !travelFade._IsBlack()) return;
+            if (!TravelPeopleClear(_tvCenter))
+            {
+                Debug.Log("[KH_Leash] travel req=" + _tvReq + " stopped: landing occupied");
+                if (_tvReq != 0) TravelSendCancel();
+                if (travelFade != null) travelFade._Release();
+                TravelFinish(TravelBlocked, travelCooldownFail);
+                return;
+            }
+            TravelTeleport(lp, _tvCenter, _tvYaw);
+            Debug.Log("[KH_Leash] travel req=" + _tvReq + " teleported to spot " + _tvSpot + (travelFade != null ? " after black" : " (no fade)"));
+            if (travelFade != null) travelFade._Release();
+            _tvCooldownUntil = Time.time + travelCooldownOk;
+            if (_tvMask == 0) { _tvState = 0; TravelPost(TravelArrived); return; }
+            _tvState = 2; _tvArrivedAt = Time.time;
+            TravelPost(TravelWaitingDogs);
         }
 
         /// <summary>本人は着いた。全頭の Phase 2 (犬の Owner が適用した) か 15 秒で「着きました」。接続が変わっても待つのをやめる。</summary>

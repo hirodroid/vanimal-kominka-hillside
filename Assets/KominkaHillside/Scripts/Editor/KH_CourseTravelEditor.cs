@@ -40,11 +40,8 @@ namespace KominkaHillside.Editor
         static readonly float[] BridgeZs = { 190f, 490f };
         const float RiverZ0 = -30f, RiverZ1 = 740f, RiverStep = 2f;
         const string KominkaPath = "KH_World/KH_Places/KH_FarKominka";
-        static readonly string[] ButtonNames = { "TravelUpper", "TravelRiver" };
-        static readonly string[] ButtonEvents = { "_TravelUpper", "_TravelRiver" };
-        static readonly string[] ButtonNameKeys = { "course.walk.upper", "course.walk.river" };
-        static readonly int[] ButtonSpots = { KH_LeashManager.SpotUpper, KH_LeashManager.SpotRiver };
-        const float TopRowY = 164, ButtonHeight = 40, ButtonWidth = 530, ContentTopWithRow = 140, PageBottom = -250;
+        // 段階 2 (2026-09-27): 上段の仮ボタン 2 つは [地図と移動] 1 つに置き換えた。上段とスクロールの寸法は KH_CourseTravelMapEditor と共有する
+        public const float TopRowY = 164, ContentTopWithRow = 140, PageBottom = -250;
 
         [Serializable] public class SpotResult
         {
@@ -61,6 +58,8 @@ namespace KominkaHillside.Editor
             public List<string> findings = new List<string>();
             public List<SpotResult> spots = new List<SpotResult>();
             public List<string> labelFit = new List<string>();
+            public long mapPngBytes, mapGpuBytesPC, mapGpuBytesMobile, mapEditorMemoryBytes;   // 段階 2: 地図テクスチャの容量 (GPU は形式からの計算値)
+            public string mapFormats;
             public string limitations = "Editor static data, saved Udon values and physics against scene colliders only. Check 5 (other players 1 m) runs only at request time. No Play, network, VR/Touch input or device font fallback is tested.";
         }
 
@@ -68,7 +67,7 @@ namespace KominkaHillside.Editor
         // Course/80 生成
         // ============================================================
 
-        [MenuItem("Tools/KominkaHillside/Course/80 - Build Travel Spots and Warp Buttons")]
+        [MenuItem("Tools/KominkaHillside/Course/80 - Build Travel Spots")]
         public static void Build()
         {
             KH_CourseGroundEditor.Idle(KH_CourseGroundEditor.ScenePath);
@@ -78,9 +77,6 @@ namespace KominkaHillside.Editor
             var water = GeneratedWater();
             var spots = Resolve(route, water, report);
             foreach (var s in spots) if (s.warpEnabled && s.node < 0) throw new InvalidOperationException("Warp spot failed common checks 1-4: " + s.id + " " + s.why);
-            var page = p.tabPages[KD_TreatPouch.TabWalk].transform;
-            var template = p.walkHereButtons != null && p.walkHereButtons.Length > 0 ? p.walkHereButtons[0] : null;
-            if (template == null || template.transform.Find("Label") == null) throw new InvalidOperationException("Destination [ここへ] template button missing (run nothing else; check Course/26)");
             var managerBacking = UdonSharpEditorUtility.GetBackingUdonBehaviour(m);
             var pouchBacking = UdonSharpEditorUtility.GetBackingUdonBehaviour(p);
             if (managerBacking == null || pouchBacking == null) throw new InvalidOperationException("Missing backing behaviours");
@@ -112,39 +108,9 @@ namespace KominkaHillside.Editor
                 so.ApplyModifiedPropertiesWithoutUndo();
                 if (managerBacking.SyncMethod != Networking.SyncType.Manual) { managerBacking.SyncMethod = Networking.SyncType.Manual; EditorUtility.SetDirty(managerBacking); }
 
-                // ---- 上段のボタンとスクロールの上端 ----
-                var buttons = new Button[2]; var images = new Image[2]; var labels = new TextMeshProUGUI[2];
-                for (int k = 0; k < 2; k++)
-                {
-                    var existing = page.Find(ButtonNames[k]);
-                    GameObject go = existing != null ? existing.gameObject : UnityEngine.Object.Instantiate(template.gameObject, page);
-                    go.name = ButtonNames[k]; go.SetActive(true);
-                    var rt = (RectTransform)go.transform;
-                    rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(.5f, .5f);
-                    rt.anchoredPosition = new Vector2(k == 0 ? -272f : 272f, TopRowY); rt.sizeDelta = new Vector2(ButtonWidth, ButtonHeight); rt.localScale = Vector3.one;
-                    var element = go.GetComponent<LayoutElement>(); if (element != null) UnityEngine.Object.DestroyImmediate(element);
-                    var button = go.GetComponent<Button>();
-                    button.onClick = new Button.ButtonClickedEvent();
-                    UnityEventTools.AddStringPersistentListener(button.onClick, pouchBacking.SendCustomEvent, ButtonEvents[k]);
-                    button.interactable = true;
-                    var label = go.transform.Find("Label").GetComponent<TextMeshProUGUI>();
-                    var lrt = label.rectTransform; lrt.anchorMin = lrt.anchorMax = lrt.pivot = new Vector2(.5f, .5f);
-                    lrt.anchoredPosition = Vector2.zero; lrt.sizeDelta = new Vector2(ButtonWidth - 12, ButtonHeight - 4);
-                    label.fontSize = 20; label.enableWordWrapping = false;
-                    label.text = KD_LocalizationEditor.Text(catalog, "ja", "course.travel.button").Replace("{0}", KD_LocalizationEditor.Text(catalog, "ja", ButtonNameKeys[k]));
-                    buttons[k] = button; images[k] = go.GetComponent<Image>(); labels[k] = label;
-                    EditorUtility.SetDirty(go); EditorUtility.SetDirty(label);
-                }
-                LowerScroll(p);
-                p.travelButtons = buttons; p.travelImages = images; p.travelLabels = labels;
-
                 // ---- 翻訳表を extension に入れ直す (Course/25 と同じ式) ----
-                var language = p.language;
-                language.extensionKeys = catalog.languages.First(l => l.code == catalog.fallbackLanguage).texts.Select(e => e.key).ToArray();
-                language.extensionTexts = catalog.languages.SelectMany(l => language.extensionKeys.Select(k => KD_LocalizationEditor.Text(catalog, l.code, k))).ToArray();
-
-                UdonSharpEditorUtility.CopyProxyToUdon(m); UdonSharpEditorUtility.CopyProxyToUdon(p); UdonSharpEditorUtility.CopyProxyToUdon(language);
-                EditorUtility.SetDirty(m); EditorUtility.SetDirty(p); EditorUtility.SetDirty(language);
+                ApplyCatalog(p);
+                UdonSharpEditorUtility.CopyProxyToUdon(m); EditorUtility.SetDirty(m);
                 EditorSceneManager.MarkSceneDirty(p.gameObject.scene);
                 if (!EditorSceneManager.SaveScene(p.gameObject.scene)) throw new IOException("Travel build save failed");
             }
@@ -155,10 +121,20 @@ namespace KominkaHillside.Editor
             }
             report.status = "BUILT";
             File.WriteAllText(OutDir + "/travel-build.json", JsonUtility.ToJson(report, true));
-            Debug.Log("[KH Travel] Built spots=" + string.Join(",", spots.Select(s => s.id + ":" + s.node)) + ". Run Course/27 (glyphs) and then Course/81 Verify.");
+            Debug.Log("[KH Travel] Built spots=" + string.Join(",", spots.Select(s => s.id + ":" + s.node)) + ". Run Course/84 (map and fade), Course/27 (glyphs) and then Course/81 Verify.");
         }
 
-        static void LowerScroll(KD_TreatPouch p)
+        /// <summary>コースの翻訳表 (CourseUITranslations.json) を KD_Language の extension に入れ直す (Course/25 と同じ式)。Course/80・84 が使う。</summary>
+        public static void ApplyCatalog(KD_TreatPouch p)
+        {
+            var catalog = CourseCatalog(p.language);
+            var language = p.language;
+            language.extensionKeys = catalog.languages.First(l => l.code == catalog.fallbackLanguage).texts.Select(e => e.key).ToArray();
+            language.extensionTexts = catalog.languages.SelectMany(l => language.extensionKeys.Select(k => KD_LocalizationEditor.Text(catalog, l.code, k))).ToArray();
+            UdonSharpEditorUtility.CopyProxyToUdon(language); EditorUtility.SetDirty(language);
+        }
+
+        public static void LowerScroll(KD_TreatPouch p)
         {
             var scroll = p.tabScrolls != null && p.tabScrolls.Length > KD_TreatPouch.TabWalk ? p.tabScrolls[KD_TreatPouch.TabWalk] : null;
             if (scroll == null || scroll.viewport == null || scroll.verticalScrollbar == null) throw new InvalidOperationException("Walk scroll missing");
@@ -339,29 +315,10 @@ namespace KominkaHillside.Editor
                 if (r.warpEnabled && r.candidatesPassed < 3) e.Add("Spot " + r.id + " has only " + r.candidatesPassed + " passing alternatives");
                 report.spots.Add(r);
             }
-            // ボタンとスクロール
-            var page = p.tabPages[KD_TreatPouch.TabWalk].transform;
-            var pouchBacking = UdonSharpEditorUtility.GetBackingUdonBehaviour(p);
-            Require(e, p.travelButtons != null && p.travelButtons.Length == 2 && p.travelImages != null && p.travelImages.Length == 2 && p.travelLabels != null && p.travelLabels.Length == 2, "pouch travel arrays length 2");
-            if (e.Count > 0) return;
-            for (int k = 0; k < 2; k++)
-            {
-                var b = p.travelButtons[k];
-                Require(e, b != null && b.transform.parent == page && b.name == ButtonNames[k], "button " + ButtonNames[k] + " under Page_Walk");
-                if (b == null) continue;
-                Require(e, p.travelImages[k] == b.GetComponent<Image>() && p.travelLabels[k] == b.transform.Find("Label").GetComponent<TextMeshProUGUI>(), "button parts " + k);
-                Require(e, b.onClick.GetPersistentEventCount() == 1 && b.onClick.GetPersistentTarget(0) == pouchBacking && b.onClick.GetPersistentMethodName(0) == "SendCustomEvent", "button target " + k);
-                var call = new SerializedObject(b).FindProperty("m_OnClick.m_PersistentCalls.m_Calls");
-                Require(e, call.arraySize == 1 && call.GetArrayElementAtIndex(0).FindPropertyRelative("m_Arguments.m_StringArgument").stringValue == ButtonEvents[k], "button event " + ButtonEvents[k]);
-                var rt = (RectTransform)b.transform;
-                Require(e, rt.anchoredPosition.y - rt.sizeDelta.y / 2 >= ContentTopWithRow, "button above scroll " + k);
-                Require(e, m.spotWarpEnabled[ButtonSpots[k]], "button spot is warpable " + k);
-            }
+            // 上段・副画面・暗転・地図テクスチャ (段階 2)
             var scroll = (RectTransform)p.tabScrolls[KD_TreatPouch.TabWalk].transform;
-            Require(e, Mathf.Abs(scroll.anchoredPosition.y + scroll.sizeDelta.y / 2 - ContentTopWithRow) < 0.5f, "walk scroll top = 140 (below the warp row)");
-            CheckArray(e, pouchBacking, "travelButtons", p.travelButtons);
-            CheckArray(e, pouchBacking, "travelImages", p.travelImages);
-            CheckArray(e, pouchBacking, "travelLabels", p.travelLabels);
+            Require(e, Mathf.Abs(scroll.anchoredPosition.y + scroll.sizeDelta.y / 2 - ContentTopWithRow) < 0.5f, "walk scroll top = 140 (below the map row)");
+            KH_CourseTravelMapEditor.Validate(p, e, report);
             // 翻訳・字形・収まり
             var catalog = CourseCatalog(p.language);
             foreach (var lang in catalog.languages) foreach (var entry in lang.texts)
@@ -381,8 +338,6 @@ namespace KominkaHillside.Editor
                 var sample = go.AddComponent<TextMeshProUGUI>();
                 foreach (string code in new[] { "ja", "en" })
                 {
-                    for (int k = 0; k < 2; k++)
-                        Measure(sample, p.travelLabels[k], p.language._TextForLanguage("course.travel.button", code).Replace("{0}", p.language._TextForLanguage(ButtonNameKeys[k], code)) + " (10)", code + " button " + k, e, report);
                     foreach (var key in new[] { "waiting", "arrived", "noanswer", "changed", "busy", "cooling", "ball", "crowded", "here", "unavailable", "stayed", "canceled", "preparing", "dogs", "stop.noanswer", "stop.changed", "stop.blocked" })
                         Measure(sample, p.feedbackLabel, p.language._TextForLanguage("course.travel." + key, code).Replace("{0}", p.language._TextForLanguage("course.walk.upper", code)), code + " note " + key, e, report);
                 }
@@ -402,7 +357,8 @@ namespace KominkaHillside.Editor
             foreach (var path in new[] {
                 "Assets/KominkaHillside/Scripts/KH_LeashManager.Travel.cs",
                 "Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogWanderController.HillsideTravel.cs",
-                "Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatPouch.Travel.cs" })
+                "Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatPouch.Travel.cs",
+                "Assets/KominkaHillside/Scripts/KH_TravelFade.cs" })
             {
                 var lines = File.ReadAllLines(path);
                 for (int i = 0; i < lines.Length; i++)
@@ -418,6 +374,8 @@ namespace KominkaHillside.Editor
         // ============================================================
         // 共通
         // ============================================================
+
+        public static KD_TreatPouch FindPouch() { return Pouch(); }
 
         static KD_TreatPouch Pouch()
         {

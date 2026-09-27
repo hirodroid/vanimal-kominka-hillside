@@ -1322,6 +1322,7 @@ namespace KominkaDogRun
             _dogOwner = IsDogOwner();
             if (_dogOwner != wasOwner) _behaviorSelectionValid = false;
             if (!_dogOwner) ObserveSpeed();
+            WaterTick(); // IMP-DOG-020: 水遊びの姿勢・しぶき・リード解除の観測 (HillsideWater.cs)。早期 return より前
             if (UpdateHillsideLeash()) { _behaviorSelectionValid = false; NotifyPlay(); return; }
 
             if (UpdateCandyPerformance()) { _behaviorSelectionValid = false; NotifyPlay(); return; }
@@ -1464,6 +1465,9 @@ namespace KominkaDogRun
                 NotifyPlay(); // 早期 return では必ず呼ぶ (呼ばないと じゃれ合いの撮影エッジが死ぬ)
                 return;
             }
+
+            // IMP-DOG-020: 水遊び (HillsideWater.cs)。人の用事より弱く、挨拶・休憩・接近・じゃれ合い・徘徊より強い
+            if (UpdateWaterPlay()) { _selectedBehavior = BehaviorWater; NotifyPlay(); return; }
 
             // Continue an accepted welcome before proximity/rest can stop it short of the person.
             if (UpdateGreeting(false)) { _selectedBehavior = BehaviorGreeting; NotifyPlay(); return; }

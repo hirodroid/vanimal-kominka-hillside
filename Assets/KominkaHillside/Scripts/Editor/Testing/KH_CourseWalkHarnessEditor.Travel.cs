@@ -54,6 +54,12 @@ namespace KominkaHillside.Editor
         static HashSet<int> tvSeenReqs = new HashSet<int>();
         static List<string> tvLogs = new List<string>();
         static VRCPlayerApi tvRemote;
+        // 段階 2: 暗転の観測 (KH_TravelFade の _alpha と、プレイヤーの 5 m 以上の跳び)
+        static VRC.Udon.UdonBehaviour tvFade;
+        static float tvPrevAlpha, tvMaxAlpha, tvJumpAlpha = -1f, tvJumpPrevAlpha = -1f;
+        static int tvJumps;
+        static Vector3 tvPrevPlayer;
+        static bool tvPrevPlayerValid;
         static int tvWalkNode;
         static Vector3 tvWalkPos;
         const float TvDisc = 1.5f, TvNear = 3.75f + 0.45f; // 手 = 体から横 0.23 m・前 0.32 m (Desktop の _HandPosition)
@@ -68,6 +74,8 @@ namespace KominkaHillside.Editor
         {
             Application.logMessageReceived -= TravelLog; Application.logMessageReceived += TravelLog;
             tvStep = 0; tvCaseAt = -1; tvPrev = null; tvObsValid = false; tvTrackMask = 0; tvRemote = null; tvWalkLast = 0;
+            tvFade = UnityEngine.Object.FindObjectsOfType<VRC.Udon.UdonBehaviour>().FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_TravelFade");
+            if (tvFade == null) throw new InvalidOperationException("KH_TravelFade not in the scene (run Course/84)");
             tvLogs.Clear(); tvScripts = new List<List<Func<double, bool>>>(); tvReport = new TravelReport { runId = report.runId };
             var spots = Get<Vector3[]>(manager, "spotPositions");
             var warp = Get<bool[]>(manager, "spotWarpEnabled");
@@ -132,6 +140,15 @@ namespace KominkaHillside.Editor
             s.Add(TvUntil(() => TvFlat(Networking.LocalPlayer.GetPosition(), TvSpot(spot)) < 6f, 12, "player did not arrive at spot " + spot));
             s.Add(TvDo(() => c.arrived = TvNow()));
             s.Add(TvUntil(() => TvAllNear(mask, TvNear), 2, "not every dog within 3.75 m of the hand 2 s after arrival"));
+            // 段階 2 (§D.1): 暗転 → 黒 (alpha 1) が描かれた後に移動 → 明転。移動の観測の前後とも alpha 1、1.5 秒以内に 0 へ戻る
+            s.Add(TvUntil(() => Get<float>(tvFade, "_alpha") <= 0.001f, 1.5, "screen did not fade back in"));
+            s.Add(TvDo(() =>
+            {
+                TvExpect(tvJumps == 1, "exactly one player jump (" + tvJumps + ")");
+                TvExpect(tvMaxAlpha >= 0.999f, "fade reached black (max " + tvMaxAlpha.ToString("F3") + ")");
+                TvExpect(tvJumpPrevAlpha >= 0.999f && tvJumpAlpha >= 0.999f, "black was drawn before the move (alpha before " + tvJumpPrevAlpha.ToString("F3") + ", at " + tvJumpAlpha.ToString("F3") + ")");
+                TvNote("fade: black before the move (alpha " + tvJumpPrevAlpha.ToString("F2") + " -> " + tvJumpAlpha.ToString("F2") + "), back to 0 within 1.5 s");
+            }));
             s.Add(TvUntil(() => TvAllPhase(mask, KH_LeashManager.TravelPhaseDone), 3, "Phase 2 not reached"));
             s.Add(TvUntil(() => Get<int>(manager, "travelResultCode") == KH_LeashManager.TravelArrived, 1, "requester did not switch from 'waiting for dogs' to 'arrived'"));
             s.Add(TvDo(() =>
@@ -475,6 +492,12 @@ namespace KominkaHillside.Editor
             Current.maxObservationGap = Math.Max(Current.maxObservationGap, gap);
             if (gap > .75) throw new InvalidOperationException("Observation gap " + gap.ToString("F2") + " s too large to count position changes");
             var req = Get<int[]>(manager, "travelReq");
+            if (tvFade != null)
+            {
+                float alpha = Get<float>(tvFade, "_alpha"); var pp = Networking.LocalPlayer.GetPosition();
+                if (tvPrevPlayerValid && TvFlat(pp, tvPrevPlayer) > 5f) { tvJumps++; tvJumpAlpha = alpha; tvJumpPrevAlpha = tvPrevAlpha; }
+                tvMaxAlpha = Mathf.Max(tvMaxAlpha, alpha); tvPrevAlpha = alpha; tvPrevPlayer = pp; tvPrevPlayerValid = true;
+            }
             for (int i = 0; i < 6; i++)
             {
                 var p = roots[i].position;
@@ -495,6 +518,7 @@ namespace KominkaHillside.Editor
         static void TvReset()
         {
             tvPrev = roots.Select(r => r.position).ToArray(); tvDisc = new int[6];
+            tvJumps = 0; tvMaxAlpha = 0f; tvJumpAlpha = -1f; tvJumpPrevAlpha = -1f; tvPrevPlayerValid = false;
             if (tvPrevNext == null) { tvPrevNext = new int[6]; tvForward = new int[6]; tvReverse = new int[6]; }
         }
 

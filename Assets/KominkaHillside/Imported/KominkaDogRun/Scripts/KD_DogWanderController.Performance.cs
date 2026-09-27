@@ -36,6 +36,7 @@ namespace KominkaDogRun
                 case BehaviorNudge: return UpdateNudge();
                 case BehaviorGreeting: return UpdateGreeting(false);
                 case BehaviorRest: return UpdateRest();
+                case BehaviorWater: return UpdateWaterPlay(); // IMP-DOG-020
                 case BehaviorPaused:
                     if (!_paused) return false;
                     Coast();

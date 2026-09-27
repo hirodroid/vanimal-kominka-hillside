@@ -62,6 +62,13 @@ updated: 2026-09-27
 - [ ] Verify で、面の配線・文言の収まり・欠けた字 0・テクスチャの設定 (ミップマップなし・Clamp・圧縮形式) が PASS する。容量を測って記録する。
 - [ ] PCVR 1 人で、設計書 §C.2 #1 の暗転 (昼・夜・ライブ中、両眼)・向き・「ワープした後に歩き出すか」を、ユーザーが確かめる。
 
+#### 実装 (2026-09-27、段階 2。未コンパイル・未検証)
+
+- 変更: 新規 `KH_TravelFade.cs` (ローカルの暗転。0.2 秒で黒 → 黒を描いたフレームの次に移動 → 1 フレーム後に 0.3 秒で戻す、黒のまま 3 秒で自動で戻す) と `Shaders/KH_TravelFade.shader` (alpha で黒へ、queue 5001、ミラーでは描かない) / `KH_LeashManager.Travel.cs` (状態 3「暗転中」、`travelFade` の参照、暗転の間も取消・接続の変化・人の検査) / `KD_TreatPouch.Travel.cs` (副画面、10 Hz の自分の位置と向き、選ぶ → [ここへワープ]、着いたら `PlaceInFront` と [さんぽへもどる]) / 新規 `Editor/KH_CourseTravelMapEditor.cs` / `Editor/KH_CourseTravelEditor.cs` (Course/80 は地点と翻訳だけにし、81 から段階 2 の検査を呼ぶ) / ハーネス T1 に暗転の観測 / `CourseUITranslations.json` に `course.travel.map.*` 12 キー × 13 言語。
+- メニュー: `Course/84 - Build Travel Map and Fade` (1 回目は KH_TravelFade の Program Asset を作って止まる。2 回目で地図テクスチャ `Assets/KominkaHillside/Textures/Map/KH_TravelMap.png`、暗転の板、[地図と移動] と副画面を作ってシーンを保存。`Temp/imp-wld-001/travel-map-build.json`)。検査は `Course/81` に含めた (容量は `travel-verify.json` の `mapPngBytes` / `mapGpuBytesPC` / `mapGpuBytesMobile`)。
+- 統括が実行する順: C# コンパイル → Course/84 (PROGRAM_ASSET_CREATED) → `unity-compile.sh --udon` → Course/84 (BUILT) → Course/27 → Course/81 (TRAVEL_OK) と Course/26 → Course/83 → Course/82 (T1 の notes に「fade: black before the move」)。
+- 設計からの変更: 地図の番号は ①〜⑥ ではなく数字 1〜6 (丸数字の字形を足さないため)。状態の 1 行は板の下端ではなく副画面の右下 (設定の枠の中では下端の Feedback が出ないため)。[人] の切替は段階 3。暗転中の他のボタンの無視はしていない (暗転中に押せるのは [ここへワープ] だけで、それは処理中として弾く)。
+
 ### 段階 3: 合流 (設計書 §A.4・A.6・A.7・D.3・D.4)
 
 - `KH_TravelMailbox` を作る。`VRCPlayerObject` に載せ、同期は Manual で `accepting` を 1 本。`ReqJoin` / `AnsJoin` / `CancelJoin` を持つ。

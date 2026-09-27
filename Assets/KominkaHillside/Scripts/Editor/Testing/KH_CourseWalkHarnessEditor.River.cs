@@ -43,6 +43,9 @@ namespace KominkaHillside.Editor
             public double startedAt, ballPlacedAt, ballReturnSeconds = -1, fetchStartedAt = -1, joinedAt = -1, arrivalSeconds = -1;
             public bool ballReentered, fetchStarted, ballReturned, ballReturnedOnSide, ballReturnedOnNav, joined, crossedOnBridge, arrived;
             public int frames, riverGiveUps, riverReturnLogs, crossingsOffBridge, gatheringRefreshes;
+            // Ball after the bank return: Rigidbody.IsSleeping 2 s after it and at the case end, and the drift from the return point.
+            public bool ballSleeping2s, ballSleepingAtEnd, watchedBallSleepingAtEnd;
+            public float ballDriftAtEnd = -1f;
             public int[] violationFrames = new int[6];
             public float[] deepestInside = new float[6];   // most negative lateral distance seen (m, negative = inside)
             public List<string> log = new List<string>();
@@ -292,6 +295,7 @@ namespace KominkaHillside.Editor
                 NavMeshHit h; c.ballReturnedOnNav = NavMesh.SamplePosition(ball, out h, .6f, NavMesh.AllAreas);
             }
             // After the return the ball must stay out of the band (a ball that rolls back in loops through the river).
+            if (c.ballReturned && !c.ballSleeping2s && now - c.ballPlacedAt - c.ballReturnSeconds >= 2) c.ballSleeping2s = RiverBallSleeping();
             bool edge = c.name == "w5-ball-band-edge";
             bool done = c.ballReturned && t - c.ballReturnSeconds > 6 && (!edge || c.riverGiveUps > 0);
             if (!done && t < 25) return;
@@ -301,9 +305,13 @@ namespace KominkaHillside.Editor
                 + " nav=" + c.ballReturnedOnNav + " fetchStarted=" + c.fetchStarted + " riverGiveUps=" + c.riverGiveUps + " returnLogs=" + c.riverReturnLogs + " reentered=" + c.ballReentered);
         }
 
+        static bool RiverBallSleeping()
+        { var rb = Get<Transform>(riverFetch[RiverDog], "_ballT").GetComponent<Rigidbody>(); return rb != null && rb.IsSleeping(); }
+
         static void RiverLate(int index, string why)
         {
             var x = river.cases[index]; if (x.ballReentered) return;
+            why += " sleeping=" + RiverBallSleeping();
             x.ballReentered = true;
             if (x.status == "PASS") { x.status = "FAIL"; x.reason += " | late: " + why; report.cases[index].status = "FAIL"; report.cases[index].reason = x.reason; }
             else if (x.status == "PENDING" || x.status == "RUNNING") x.reason = "late: " + why;
@@ -312,6 +320,9 @@ namespace KominkaHillside.Editor
         static void RiverFinish(RiverCase c, double now, bool pass, string reason)
         {
             RiverUnfreezeBall();
+            var endBall = Get<Transform>(riverFetch[RiverDog], "_ballT").position;
+            if (c.ballReturned) { c.ballSleepingAtEnd = RiverBallSleeping(); c.ballDriftAtEnd = Vector3.Distance(endBall, c.ballReturnedTo); reason += " sleep2s=" + c.ballSleeping2s + " sleepEnd=" + c.ballSleepingAtEnd + " drift=" + c.ballDriftAtEnd.ToString("F2"); }
+            if (riverWatchCase >= 0 && riverWatchCase != caseIndex) c.watchedBallSleepingAtEnd = RiverBallSleeping();
             c.status = pass ? "PASS" : "FAIL"; c.reason = reason;
             Current.status = c.status; Current.reason = reason; Current.endedAt = now;
             SaveRiverDetail(null); Save();
