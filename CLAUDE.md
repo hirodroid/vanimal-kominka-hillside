@@ -37,7 +37,7 @@ Packages/
 └── com.local.vrc-world-tools               # 共有診断ツール (manifest.json の file: 参照)
 ```
 
-**作業対象シーンは `Assets/Scenes/VRCDefaultWorldScene.unity`** (VCC テンプレートのまま。改名するときはここも直す)。
+**作業対象シーンは `Assets/Scenes/VRCDefaultWorldScene.unity`**。2026-09-27に承認済みの川沿い周回版を本番へ採用し、元のファイル名・GUID・公開先IDを維持した。旧版は `Assets/Scenes/Archive/KH_HillsideBeforeRiverLoop.unity`（旧道の比較用）。更新は `Tools/KominkaHillside/Course/` を使う。旧Terrain Prototypeの再生成、Walking/3・4・4b、Menu/7・12・13・17の旧メニュー再生成は周回構成を失うため拒否する。[運用・切替記録](docs/plans/des-env-002/production.md)。
 
 購入アセット (Git 管理外、`.gitignore` 末尾の枠に列挙): `Assets/LMArt-StylizedEnvironmentKit/` (古民家と同じ広葉樹・遠景)、`Assets/モサンゴ屋/` (遠景の古民家外観と庭 Terrain の素材)、`Assets/TORINOSUKE/` (犬のモデル・モーション)、`Assets/Allsky/` (空)、`Assets/polyperfect/` (おじいさんの NPC)。ほかに `Assets/Synaptic AI Pro/` (AI 操作ツール) と、モサンゴ屋の取り込みで生成される `Assets/_TerrainAutoUpgrade/` も除外。秋色などの派生物は `Assets/KominkaHillside/` 側へコピーして管理する。
 

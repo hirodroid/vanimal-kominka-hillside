@@ -18,6 +18,7 @@ namespace KominkaDogRun.Editor
         [MenuItem("Tools/KominkaHillside/Menu/17 Refresh Menus")]
         public static void Apply()
         {
+            KominkaHillside.Editor.KH_ProductionScene.RejectLegacyRebuild();
             var scene = SceneManager.GetActiveScene();
             if (EditorApplication.isPlaying || scene.path != KD_Hillside.ScenePath /* 裏山改変: シーンの正本は KD_Hillside */)
                 throw new InvalidOperationException("Open " + KD_Hillside.ScenePath + " in Edit mode.");

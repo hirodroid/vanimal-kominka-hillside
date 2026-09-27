@@ -23,6 +23,7 @@ public static class KH_TerrainPrototypeEditor
     [MenuItem(Menu + "Build Stage A (Ground)")]
     public static void BuildStageA()
     {
+            KominkaHillside.Editor.KH_ProductionScene.RejectLegacyRebuild();
         var log = new StringBuilder();
         var scene = EditorSceneManager.GetActiveScene();
         if (scene.isDirty)
@@ -89,6 +90,7 @@ public static class KH_TerrainPrototypeEditor
     [MenuItem(Menu + "Build Stage B (Dressing)")]
     public static void BuildStageB()
     {
+            KominkaHillside.Editor.KH_ProductionScene.RejectLegacyRebuild();
         var log = new StringBuilder();
         var root = GameObject.Find(RootName);
         var terrain = root != null ? root.GetComponentInChildren<Terrain>() : null;
@@ -276,10 +278,12 @@ public static class KH_TerrainPrototypeEditor
             GameObjectUtility.SetStaticEditorFlags(r.gameObject, StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccluderStatic | StaticEditorFlags.OccludeeStatic);
         // 遠景専用: 障子の Udon (ネットワークに露出する) / Animator / Collider を削除 (プレハブの removed-component override)
         int removed = 0, remain = 0;
+        // Remove U# proxies first: surviving proxies recreate removed Udon components during Play/build.
+        foreach (var proxy in holder.GetComponentsInChildren<UdonSharp.UdonSharpBehaviour>(true)) { Object.DestroyImmediate(proxy); removed++; }
         foreach (var ub in holder.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true)) { Object.DestroyImmediate(ub); removed++; }
         foreach (var an in holder.GetComponentsInChildren<Animator>(true)) { Object.DestroyImmediate(an); removed++; }
         foreach (var col in holder.GetComponentsInChildren<Collider>(true)) { Object.DestroyImmediate(col); removed++; }
-        remain = holder.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true).Length + holder.GetComponentsInChildren<Animator>(true).Length + holder.GetComponentsInChildren<Collider>(true).Length;
+        remain = holder.GetComponentsInChildren<UdonSharp.UdonSharpBehaviour>(true).Length + holder.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true).Length + holder.GetComponentsInChildren<Animator>(true).Length + holder.GetComponentsInChildren<Collider>(true).Length;
         log.AppendLine("kominka removed components (udon/animator/collider)=" + removed + " remaining=" + remain);
         // 塀は歩ける側にあるので MeshCollider で塞ぐ (敷地に入れない)
         var wallMesh = wall.transform.Find(C.KominkaWallMeshChild);

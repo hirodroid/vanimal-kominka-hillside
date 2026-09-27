@@ -73,6 +73,7 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Walking/4b Build Walk Route")]
         public static void BuildRoute()
         {
+            KominkaHillside.Editor.KH_ProductionScene.RejectLegacyRebuild();
             Guard(); var scene = EditorSceneManager.GetActiveScene();
             if (NavMesh.CalculateTriangulation().vertices.Length == 0) throw new InvalidOperationException("Bake Navigation first.");
             var root = GameObject.Find("KH_Dogs"); if (root == null) throw new InvalidOperationException("Build first");

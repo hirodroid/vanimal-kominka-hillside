@@ -134,6 +134,7 @@ namespace KominkaDogRun.Editor
         [MenuItem("Tools/KominkaHillside/Menu/Imported-Unused/Treat System/2 - Setup Treat System (Kominka)")]
         public static void Setup()
         {
+            KominkaHillside.Editor.KH_ProductionScene.RejectLegacyRebuild();
             var log = new StringBuilder();
             log.AppendLine("[KD_TreatSetup] Setup");
             bool ok = true;

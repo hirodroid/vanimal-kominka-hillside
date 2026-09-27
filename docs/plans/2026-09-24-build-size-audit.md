@@ -1,6 +1,6 @@
 # ビルドサイズ実測 — 裏山 PC / Android と削り代 (2026-09-24)
 
-> **Android の余力は十分。基準 51.56 MB → モバイル上限適用後 41.94 MB → アルベド以外を半分にして 37.91 MB (上限 100 MB)。PC は 75.93 MB で不変。**
+> **拡張前の本シーン（2026-09-27）：Android 42.75 MiB / iOS 41.78 MiB。別シーンの最新コースは43.20 / 42.40 MiB（斜面の連続補間とNav/PVS更新後、下記）。** 下の2026-09-24の37.91 MBは過去の測定値。PCの最新再計測は未実施。
 > 手順・罠・相場の正本は共有 Skill `vrc-performance` の「ビルドサイズチェック」。この文書は裏山の実測値と上限表の運用だけを持つ。
 > 古民家の記録は [KominkaDogRun 2026-09-10](../../../KominkaDogRun/docs/plans/2026-09-10-build-size-audit.md)。
 >
@@ -9,6 +9,75 @@
 計測ツールは `Tools/KominkaHillside/Build Size/1〜8` ([KD_BuildSizeEditor.cs](../../Assets/KominkaHillside/Imported/KominkaDogRun/Editor/KD_BuildSizeEditor.cs)。古民家からの取り込みを 2026-09-24 に Imported-Unused から昇格し、表を裏山向けに書き換えた)。出力は `Temp/kd-buildsize/` (Git 対象外)。
 
 ---
+
+## 2026-09-27 遠景スクリプト除去・周回復帰修正後
+
+| 対象 | 圧縮ダウンロード | 非圧縮 |
+|---|---:|---:|
+| Android | 43.22 MiB (45316353 bytes) | 116.15 MiB |
+| iOS | 42.41 MiB (44471305 bytes) | 112.55 MiB |
+
+保存シーンの代理容量。SDKアップロードや端末メモリ・16人性能ではない。[原記録](des-env-002/verification-records.md#full-course-walk-measurements)。
+
+## 2026-09-27 地形の遮蔽を追加した全周コピー
+
+| 対象 | 圧縮ダウンロード | 非圧縮 | 遮蔽追加前との差（圧縮） |
+|---|---:|---:|---:|
+| Android | 43.23 MiB (45,326,664 bytes) | 116.15 MiB | +437.2 KiB |
+| iOS | 42.41 MiB (44,471,721 bytes) | 112.55 MiB | +453.0 KiB |
+
+地形の遮蔽フラグ・20 View Volumeと所有PVSデータを含む保存シーンの同条件代理計測。夜の確認は材質の複製によるEditor描画だけで、ランタイム資産は追加していない。非圧縮サイズは実機の使用メモリではない。SDKアップロード・Quest 3/iPhone 15 Proの実表示・16人性能は未確認。 [原データ](des-env-002/verification-records.md#full-course-occlusion-measurements) / [画像と描画量の比較](des-env-002/verification-records.md#full-course-occlusion)。
+
+## 2026-09-27 景観・LODを追加した全周コピー
+
+| 対象 | 圧縮ダウンロード | 非圧縮 | 景観追加前との差（圧縮） |
+|---|---:|---:|---:|
+| Android | 42.80 MiB (44,878,960 bytes) | 114.87 MiB | +0.95 MiB |
+| iOS | 41.97 MiB (44,007,872 bytes) | 111.28 MiB | +0.93 MiB |
+
+木15本・石61群・草24区画、LOD用の材質と更新NavMeshを含む保存シーンの代理バンドル。遠景木の秋色アトラス Tex_BroadNature02_Autumn はモバイルのみ2048→1024上限・圧縮ありへ設定し、PCと元画像は維持。共有秋色画像の変更で、上限の正本はKD_BuildSizeEditorの個別行と追跡対象.meta。前段と同じ圧縮・対象で比較し、景観追加分を記録した。非圧縮サイズは端末メモリの実測ではない。Quest 3／iPhone 15 Proの実表示、犬連れと16人の性能は未検証。 [原データ](des-env-002/verification-records.md#full-course-scenery-measurements) / [描画寄与](des-env-002/verification-records.md#full-course-scenery-benchmark)。下記の41.85 / 41.03 MiBは景観追加前の値。
+
+## 2026-09-27 経路とメニューを接続した全周コピー
+
+| 対象 | 圧縮ダウンロード | 非圧縮 |
+|---|---:|---:|
+| Android | 41.85 MiB (43,882,121 bytes) | 112.80 MiB |
+| iOS | 41.03 MiB (43,028,246 bytes) | 109.21 MiB |
+
+全周NavMesh・436地点の経路・6目的地メニューを含む別シーンの代理容量。字形追加時に共有フォントのランタイムTTF参照が外れたため、前回より容量が減った。経路だけの削減量ではなく、共有フォント変更を含む値。基本／追加文言の字形と旧817グリフの保全は別検査済み。16人時の性能・使用メモリ・Quest 3/iPhone 15 Proの見た目は未検証。 [原データ](des-env-002/verification-records.md#full-course-route-measurements) / [制作と検査](des-env-002/implementation.md)。同じ共有フォントを参照する本シーンも依存資産が変わっているので、拡張前42.75/41.78 MiBを現在の本シーン容量とは呼ばない。本シーン自体の再計測は未実施。
+
+## 2026-09-27 コース拡張前の再計測
+
+同じ代理計測メニューで、保存済み `VRCDefaultWorldScene` を再ビルド。Unity 2022.3.22f1 / SDK 3.10.5。モバイルテクスチャ上限は対象71枚・不足0。以下は **MiB (1,048,576 bytes)**。非圧縮バンドルは実機の使用メモリではない。
+
+| 対象 | 圧縮ダウンロード | 非圧縮 | 100 MiBまでの差 |
+|---|---:|---:|---:|
+| Android / ASTC | 42.75 MiB (44,828,470 bytes) | 110.03 MiB | 57.25 MiB |
+| iOS | 41.78 MiB (43,806,128 bytes) | 105.64 MiB | 58.22 MiB |
+
+川の代表区間を含まない追加前の値。過去との差の内訳は未分解。SDKアップロード・Quest 3 / iPhone 15 Proでの合格を示すものではない。原データは `Temp/kd-buildsize/bundle-sizes.txt`（ローカル生成物）、作業記録は [コース拡張の計測と制作](des-env-002/implementation.md)。
+
+### 別シーンの川代表区間を加えた比較（同日）
+
+`KH_RiverRepresentative.unity`は、既存ワールドのコピーに180mの川岸・水面・小橋1基・樹木2本・代表区間用NavMeshを加えた検証シーン。最新は自然な川岸へ改修したv2（非対称の浅瀬、小石48個、128²木目）。全周コースの完成版ではない。圧縮/非圧縮とも別の新規出力先へビルドし、完了とファイル生成を確認した。
+
+| 対象 | 圧縮ダウンロード | 非圧縮 | 追加前との差（圧縮） |
+|---|---:|---:|---:|
+| Android / ASTC | 43.65 MiB (45,770,965 bytes) | 111.81 MiB | +0.90 MiB |
+| iOS | 42.84 MiB (44,924,909 bytes) | 108.22 MiB | +1.07 MiB |
+
+[測定原データとシーンハッシュ](des-env-002/verification-records.md#measurements)。River Lite / Scenery LiteのGLES3/Metalバリアントをビルドした範囲で確認。v1からの自然化による増分はAndroid +63,379 bytes（61.89 KiB）/ iOS +82,830 bytes（80.89 KiB）。v1は [旧測定](des-env-002/verification-records.md#measurements-v1) に保存した。容量から実機FPS・常駐メモリ・16人時の動作を判断しない。本シーン/既存Terrain/QualitySettingsのハッシュ不変も同JSONに記録した。
+
+### 全周地形の別シーン（同日、NavMesh統合前）
+
+KH_RiverLoopCourse.unity：既存シーンのコピーへ600×720m・20 Terrain、24水面区間、小橋2基、外周余白を構築。地表材質・川・橋・遠景素材は共有。旧NavMeshは残るが新道のNavMeshと犬の経路は未接続。
+
+| 対象 | 圧縮ダウンロード | 非圧縮 | 拡張前との差（圧縮） |
+|---|---:|---:|---:|
+| Android | 45.06 MiB (47,244,780 bytes) | 119.73 MiB | +2.30 MiB |
+| iOS | 44.11 MiB (46,247,543 bytes) | 115.34 MiB | +2.33 MiB |
+
+[全周地形の計測JSON](des-env-002/verification-records.md#full-course-measurements)。Unity 2022.3.22f1 / SDK 3.10.5、Android ASTC・iOSの新規出力先で圧縮/非圧縮の完了を確認。主シーン・旧Terrain・QualitySettingsのSHA256は拡張前と一致。容量は現段階の値で、植生・全周NavMesh・仕上げによる増分は今後再計測する。常駐メモリ・描画性能・16人の実機合格ではない。
 
 ## 1. 実測値 (2026-09-24、Unity 2022.3.22f1 / Worlds SDK 3.10.5、代理計測 = シーンの LZMA バンドル。SDK 実ビルドは未実施)
 
@@ -88,7 +157,7 @@
 
 | 手 | 見積り (Android) | 何を判断するか |
 |---|---|---|
-| フォントの元 ttf を最終ビルドから外す | -4 MB | 構築ツールが字形追加で差し直す運用と両立させる手順。字形欠落の確認 |
+| フォントの元 ttf を最終ビルドから外す | 9/27に共有フォントのランタイム参照解除を確認 | 上記の全周コピー容量へ反映済み。単独の削減量は未分解。将来の字形追加でもEditorRefと収録字を検査する |
 | 空を 512 に | -1 MB | Quest の帯。ユーザー指示「スカイボックスも下げる。下面は限りなく」は単一 Cubemap では面別にできず、`Skybox/6 Sided` に分ける形になる (未実測) |
 | 犬のプレビュー姿勢を間引く | -2 MB 前後 | 姿勢は商品。最後 |
 | 犬・木のアルベドを 512 に | -3〜5 MB | 主役と景観の見た目。実機で見てから |
@@ -102,3 +171,39 @@
 1. **Quest / iOS の実機で見た目を確認する** (VER-WLD-001 #8)。1024 の樹皮・古民家・山、512 の犬のノーマル・メタリック、256 のおもちゃのノーマル・AO。NG なら `Caps()` の該当行を戻して `7 - Apply` → 再計測。
 2. 素材を足したら `7 - Apply` → `8 - Verify` 0 件 → `2 - Bundle Size Android`。この表に日付順で積む。
 3. 最後に Android の SDK 実ビルドで確定させる (代理計測との差は古民家で 0.01%)。
+
+## 2026-09-27 樹皮・接地・Nav/PVS更新後
+
+| 対象 | 圧縮 | 非圧縮 |
+|---|---:|---:|
+| Android | 43.22 MiB (45319246 bytes) | 116.15 MiB |
+| iOS | 42.41 MiB (44475140 bytes) | 112.55 MiB |
+
+保存シーンの代理容量。実機メモリ・性能ではない。[原記録](des-env-002/verification-records.md#full-course-polish-measurements)。
+
+## 2026-09-27 ベンチ回避Nav更新後
+
+| 対象 | 圧縮 | 非圧縮 |
+|---|---:|---:|
+| Android | 43.22 MiB (45318865 bytes) | 116.15 MiB |
+| iOS | 42.41 MiB (44469408 bytes) | 112.55 MiB |
+
+保存シーンの代理容量。[原記録](des-env-002/verification-records.md#full-course-bench-measurements)。
+
+## 2026-09-27 外周地形/PVS更新後
+
+| 対象 | 圧縮 | 非圧縮 |
+|---|---:|---:|
+| Android | 43.23 MiB (45328377 bytes) | 116.15 MiB |
+| iOS | 42.41 MiB (44466545 bytes) | 112.55 MiB |
+
+保存シーンの代理容量。[原記録](des-env-002/verification-records.md#full-course-landscape-measurements)。
+
+## 2026-09-27 斜面の連続補間とNav/PVS更新後
+
+| 対象 | 圧縮 | 非圧縮 |
+|---|---:|---:|
+| Android | 43.20 MiB (45302927 bytes) | 116.09 MiB |
+| iOS | 42.40 MiB (44455391 bytes) | 112.50 MiB |
+
+保存シーンの代理容量。[原記録](des-env-002/verification-records.md#full-course-shoulder-measurements)。

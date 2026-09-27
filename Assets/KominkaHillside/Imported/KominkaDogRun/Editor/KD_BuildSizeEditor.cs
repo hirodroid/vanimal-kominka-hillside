@@ -574,6 +574,7 @@ public static class KD_BuildSizeEditor
         c.Add(new Cap { prefix = "Assets/TORINOSUKE/", maxSize = 1024, why = "6 dogs, the star of the world -- 2048 stays on PC" });
         c.Add(new Cap { prefix = "Assets/モサンゴ屋/", maxSize = 1024, why = "kominka seen from the hill (far view only)" });
         c.Add(new Cap { prefix = "Assets/LMArt-StylizedEnvironmentKit/", maxSize = 1024, why = "trees and environment kit" });
+        c.Add(new Cap { prefix = "Assets/KominkaHillside/Textures/Environment/Autumn/Tex_BroadNature02_Autumn.png", maxSize = 1024, why = "course far-tree atlas; matching environment cap, PC unchanged" });
         c.Add(new Cap { prefix = "Assets/polyperfect/", maxSize = 1024, why = "the old man (NPC)" });
         c.Add(new Cap { prefix = "Assets/Allsky/", maxSize = 1024, why = "sky cubemap; same value KH_NightModeEditor writes (IMP-ENV-002)" });
         c.Add(new Cap { prefix = "Assets/_TerrainAutoUpgrade/", maxSize = 1024, why = "terrain layer textures" });

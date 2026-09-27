@@ -152,6 +152,7 @@ namespace KominkaDogRun.Editor
         [MenuItem("Tools/KominkaHillside/Menu/13 Apply Scroll Layout")]
         public static void Apply()
         {
+            KominkaHillside.Editor.KH_ProductionScene.RejectLegacyRebuild();
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode only");
             var p = KD_SceneObjects.Find(KD_DogDefs.TreatPouchName).GetComponent<KD_TreatPouch>();
             if (p.tabPages == null || p.tabPages.Length != KD_TreatPouch.TabCount) throw new InvalidOperationException(KD_TreatPouch.TabCount + " hand menu pages required");

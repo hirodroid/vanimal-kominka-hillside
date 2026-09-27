@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-45 件 — 対応中 12 / 確認待ち 10 / 未着手 13 / 保留 3 / 完了 7
+48 件 — 対応中 14 / 確認待ち 10 / 未着手 14 / 保留 3 / 完了 7
 
 ## 実行キュー
 
@@ -15,12 +15,14 @@
 | [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、Desktop/Touch、複数人。看板の本制作・分かりやすさは DES-UI-004 へ分離 | wip |  |
 | [IMP-DOG-009](IMP-DOG-009-walk-speed-tiers.md) | High | 散歩の犬の速さを 4 段階に (最速は現状の速歩の 3 倍)。人が犬を引っ張る状態をなくす。Run クリップの再生速度・減速も合わせる。9/22 PCVR 1 人 1 匹で OK・採用、3〜6 匹・2 人以上・Desktop は未確認 | wip |  |
 | [BUG-DOG-002](BUG-DOG-002-leash-handle-orientation.md) | Medium | リードの輪と紐の接続部が横向き。肘→手の延長上・手の前側へ向くよう左右とも調整する (9/23 要望具体化) | wip |  |
+| [DES-ENV-002](DES-ENV-002-longer-course.md) | Medium | 約2.41kmの川沿い周回を別シーンへ実装中。地形・経路・景観・容量とEditor描画を確認し、Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する | wip | 接続済みの436点経路・手元メニューで犬の周回を検証。LODと遮蔽の実機表示、犬連れの歩行時間と16人性能から最終距離/予算を確定する |
 | [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK)、段階 2・3 は 9/24 実装済み・PCVR 待ち | wip |  |
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開は012 | wip |  |
 | [IMP-DOG-007](IMP-DOG-007-leash-pull-haptics.md) | Medium | リードを引っ張られたら、接続している側の手に振動を伝える (Haptics)。9/22 に VR 限定で実装 (伸び比率 + 止まっている時の引き、手ごとに最大)、PCVR の体感確認が残る | wip |  |
 | [IMP-DOG-010](IMP-DOG-010-walk-stopovers.md) | Medium | 寄り道が分かりにくい (嗅ぐ姿勢が無い・ずれが小さい・短い) ので作り直し、道沿いの立ち寄り場所と夜の散歩の違いを足す。9/22 PCVR 1 人 1 匹で OK・採用 (Sniff クリップは保留)、3〜6 匹・2 人以上・Desktop は未確認 | wip |  |
 | [IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md) | Medium | フリスビー (先回り型 + 6 プリセット) を 6 匹へ展開する。2026-09-24 実装済み (ff76602): 犬種別クリップ・facts、犬別ディスク 6 枚、犬種別の跳躍上限 (小型犬 0.45 m)、Verify・縮小ハーネス・6 匹同時の負荷 PASS。残り: Shiba / Samoyed の縮小表の取り直し・全 36 投げ (AI)、PCVR (ユーザー) | wip |  |
 | [IMP-DOG-013](IMP-DOG-013-frisbee-pet-after-return.md) | Medium | フリスビーを持ち帰った犬をよしよしできる。くわえて待っている間は撫でを再開し (撫でている間はディスクを落とさない)、受け取っても 4 秒 / 2.5 m の猶予はその場で待つ。9/22 実装・Editor 検査済み、PCVR 確認が残る | wip |  |
+| [IMP-ENV-004](IMP-ENV-004-river-loop-course.md) | Medium | 既存の登り道を保全し、奥広場・川岸・小橋を経て門へ戻る周回コースを軽量に制作する。約2.41kmの地形・436点の周回経路・手元の6目的地を別シーンへ実装 | wip | ユーザー了承済みの周回版を本番へ採用。細部を調整し、Quest 3/iPhone 15 Pro・16人性能の実機検証へ |
 | [IMP-DOG-004](IMP-DOG-004-leash-models-release.md) | High | 首輪・リードの本制作。PCVR 1 人は合格。2 人・Quest/iOS・座位/木陰の確認待ち | review | PCVR 1 人は合格 (2026-09-20)。残り: 2 人・Quest/iOS・座位/木陰。持ち手の向きは BUG-DOG-002 |
 | [IMP-DOG-017](IMP-DOG-017-frisbee-intercept-solver.md) | High | 小型犬 (Pome / Dachs / Corgi) と Shiba がフリスビーの下に回り込み、振り向いて跳ばずに取るのがほとんど。プランナーは軌道を知っているが、0.1 秒刻みの候補を決まった近づき方で合否判定し、落ちたら次の案へ回すため、跳べる時間帯が短い犬ほど立ち取りに落ちる。投げた瞬間に「どこで何秒後に跳ぶか・どの速さで走るか」を解く方式へ見直す | review | PCVR 3 回目: 大型犬の走り (再生倍率 1.7 で足の滑りが気にならないか)、横曲がり 0.07 の曲がり具合、退役プリセットがメニューから消えているか |
 | [IMP-DOG-018](IMP-DOG-018-frisbee-dog-face.md) | High | フリスビーが誰の (どの犬の) ものか分からない (体験会 2026-09-26)。ディスクの上下面に犬の顔 (シーン内モデルのスクリーンショット 256px) を印字。2026-09-26 実装・撮影・Build・Verify PASS、PCVR / 実機の見え方とユーザーの権利確認待ち | review | PCVR で 3 m 離れて誰のディスクか分かるか、持ったときに顔が消えて離すと戻るか。撮った 6 枚 (Textures/Frisbee) の見た目をユーザーが確認 (首輪の輪が頭の上に写っている)。iOS / Quest は VER-WLD-001 |
@@ -35,12 +37,13 @@
 | [DES-UI-004](DES-UI-004-walk-destinations-and-boards.md) | High | 散歩の目的地・位置と案内／説明ボードの内容・配置・役割を検討する (仮看板は 2026-09-26 に撤去済み)。体験会 (2026-09-26、15 人) で「リードの付け方が分からない、簡単な説明ボードが要る」と報告があり、説明ボードを先に決める | todo | 入口 (スポーン付近) に置く「リードの付け方」の説明ボード 1 枚の文言・位置案を出してユーザー確認。目的地の案内板は後 |
 | [BUG-DOG-005](BUG-DOG-005-ios-disc-colors.md) | Medium | 体験会 (2026-09-26) で iOS 参加者から「フリスビーの色が全部同じ」。ディスクは Standard Lite + _Color で犬別 6 色。iOS 実機で再現し、材質・ビルドのどこで色が落ちるかを特定する | todo | iOS 実機で 6 枚の色を見る。同じなら iOS ビルドの材質 (Standard Lite の _Color、持ち中の Transparent/Diffuse) と Android ビルドとの差を疑う |
 | [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビーは 1 匹で採用内容を確定 (IMP-DOG-008 完了)。複数ディスク・犬の割当は犬別 6 枚で開発側決定 (2026-09-24、ユーザー確認待ち)。残り: 他のおもちゃの挙動、ボールの柄違いの持たせ方、公開範囲 | todo |  |
-| [DES-ENV-002](DES-ENV-002-longer-course.md) | Medium | 散歩コースが短い (2〜3 分)。周回コース・川が欲しい、20 分くらいかかるコースがあってもいい、ワールドを広げてもいい (体験会 2026-09-26)。容量・FPS・スマホの快適さと合わせて範囲を決める | todo | 現行の道 (113.9 m) を基準に、周回案と川の候補を地形図で 2〜3 案出し、Terrain 拡張の容量・負荷の見積りを添えてユーザーが範囲を決める |
+| [DES-DOG-004](DES-DOG-004-river-play-and-floating-fetch.md) | Medium | 小川で犬が入水・浮遊・泳ぐ動作と、浮くボールを泳いで回収する遊びを設計する | todo | 6犬種の既存モーションと接地・回収・同期を調べ、浅瀬の水遊びから段階を決める |
 | [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 古民家の有料ライブ購入者の利用と、裏山ライブの開催・再生・競合・復帰を設計する。演目企画は DES-LIV-002 | todo |  |
 | [DES-LIV-002](DES-LIV-002-live-lineup-and-parade.md) | Medium | ハロウィン・Candy Step・ライブパックの裏山向け演目を企画する。散歩道を犬たちがパレードする専用ライブ 1 本を含め、枠・本数・構成を整理 | todo |  |
 | [DES-UI-002](DES-UI-002-frisbee-settings.md) | Medium | フリスビーの設定 (待つ場所・曲げ・取り方) の選ぶ / 自動の切り分けと操作権、開発用切替の撤去時期を設計する。[試作] 入口は 9/23 の KH_HandMenu 退役で消え、代替はユーザー判断 | todo |  |
 | [DES-WLD-001](DES-WLD-001-round-trip.md) | Medium | 古民家からの出発・帰還と状態の扱いを設計する | todo |  |
 | [DES-WLD-002](DES-WLD-002-sound.md) | Medium | 裏山の音 (BGM・環境音) の方針・音源・ライブとの切替を設計する | todo |  |
+| [DES-WLD-003](DES-WLD-003-map-and-travel.md) | Medium | 広い周回コースの地図、地点ワープ、プレイヤーへの合流と接続犬の同行を設計する | todo | 地点と現在地を示す地図、合流先の選択・受入れ、接続犬の移動契約を決める |
 | [IMP-DOG-006](IMP-DOG-006-leashed-treat-approach.md) | Medium | おやつで自分の接続犬の最寄り1匹を呼び、少し待つ間に撫でる/首輪を外す→次の1匹。9/23 操作方針了承、詳細設計・実装は未 | todo |  |
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |  |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo |  |

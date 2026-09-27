@@ -24,6 +24,9 @@ namespace KominkaDogRun
         public string[] languageAliasCodes;
         public string[] languageAliasTargets;
         public string[] texts;
+        // Optional scene-specific catalog. Same language order as texts; base keys cannot be overridden.
+        public string[] extensionKeys;
+        public string[] extensionTexts;
         public string defaultLanguage = "en";
         public string fallbackLanguage = "ja";
         public TMP_Text[] fixedLabels;
@@ -122,7 +125,22 @@ namespace KominkaDogRun
                 for (int i = 0; keys != null && i < keys.Length; i++) _lookup[keys[i]] = i;
             }
             DataToken token;
-            if (!_lookup.TryGetValue(key, out token)) return key;
+            if (!_lookup.TryGetValue(key, out token))
+            {
+                for (int k = 0; extensionKeys != null && k < extensionKeys.Length; k++)
+                {
+                    if (extensionKeys[k] != key) continue;
+                    int at = languageIndex * extensionKeys.Length + k;
+                    if (extensionTexts == null || at >= extensionTexts.Length) return key;
+                    string extra = extensionTexts[at];
+                    if (!string.IsNullOrEmpty(extra)) return extra;
+                    for (int l = 0; l < languageCodes.Length; l++)
+                        if (languageCodes[l] == fallbackLanguage && l * extensionKeys.Length + k < extensionTexts.Length)
+                            return extensionTexts[l * extensionKeys.Length + k];
+                    return key;
+                }
+                return key;
+            }
             int index = token.Int;
             string value = texts[languageIndex * keys.Length + index];
             if (!string.IsNullOrEmpty(value)) return value;

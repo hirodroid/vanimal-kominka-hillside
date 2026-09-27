@@ -1,0 +1,466 @@
+{
+  "schemaVersion": 2,
+  "defaultLanguage": "en",
+  "fallbackLanguage": "ja",
+  "languages": [
+    {
+      "code": "ja",
+      "displayName": "日本語",
+      "glyphs": "self",
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "山道から周回"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "川から周回"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "奥の広場"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "川辺"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "{0}匹：{1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "{0}匹：行き先はそれぞれ"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "行き先を伝えました"
+        }
+      ]
+    },
+    {
+      "code": "en",
+      "displayName": "English",
+      "glyphs": "self",
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "Loop via mountain"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "Loop via river"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "Upper clearing"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "Riverbank"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "{0} dogs: {1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "{0} dogs: different destinations"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "Destination updated"
+        }
+      ]
+    },
+    {
+      "code": "ru",
+      "displayName": "Русский",
+      "glyphs": "client",
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "Круг через гору"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "Круг вдоль реки"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "Верхняя поляна"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "Берег реки"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "Собак: {0} — {1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "Собак: {0} — разные цели"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "Маршрут обновлён"
+        }
+      ]
+    },
+    {
+      "code": "uk",
+      "displayName": "Українська",
+      "glyphs": "client",
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "Коло через гору"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "Коло вздовж річки"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "Верхня галявина"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "Берег річки"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "Собак: {0} — {1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "Собак: {0} — різні цілі"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "Маршрут оновлено"
+        }
+      ]
+    },
+    {
+      "code": "ko",
+      "displayName": "한국어",
+      "glyphs": "client",
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "산길부터 한 바퀴"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "강부터 한 바퀴"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "위쪽 공터"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "강가"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "{0}마리: {1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "{0}마리: 각자 다른 목적지"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "목적지를 알렸어요"
+        }
+      ]
+    },
+    {
+      "code": "de",
+      "displayName": "Deutsch",
+      "glyphs": "client",
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "Runde über den Berg"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "Runde am Fluss"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "Obere Lichtung"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "Flussufer"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "{0} Hunde: {1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "{0} Hunde: verschiedene Ziele"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "Ziel aktualisiert"
+        }
+      ]
+    },
+    {
+      "code": "zh-cn",
+      "displayName": "简体中文",
+      "glyphs": "client",
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "从山路绕行"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "从河边绕行"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "上方空地"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "河岸"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "{0}只狗：{1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "{0}只狗：各自的目的地"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "已告知目的地"
+        }
+      ]
+    },
+    {
+      "code": "es",
+      "displayName": "Español",
+      "glyphs": "client",
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "Vuelta por la montaña"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "Vuelta por el río"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "Claro superior"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "Orilla del río"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "{0} perros: {1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "{0} perros: distintos destinos"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "Destino actualizado"
+        }
+      ]
+    },
+    {
+      "code": "fr",
+      "displayName": "Français",
+      "glyphs": "client",
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "Boucle par la montagne"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "Boucle par la rivière"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "Clairière du haut"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "Bord de rivière"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "{0} chiens : {1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "{0} chiens : destinations variées"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "Destination mise à jour"
+        }
+      ]
+    },
+    {
+      "code": "pt-br",
+      "displayName": "Português (Brasil)",
+      "glyphs": "client",
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "Volta pela montanha"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "Volta pelo rio"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "Clareira superior"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "Margem do rio"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "{0} cães: {1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "{0} cães: destinos diferentes"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "Destino atualizado"
+        }
+      ]
+    },
+    {
+      "code": "it",
+      "displayName": "Italiano",
+      "glyphs": "client",
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "Giro dalla montagna"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "Giro dal fiume"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "Radura superiore"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "Riva del fiume"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "{0} cani: {1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "{0} cani: mete diverse"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "Destinazione aggiornata"
+        }
+      ]
+    },
+    {
+      "code": "pl",
+      "displayName": "Polski",
+      "glyphs": "client",
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "Pętla przez górę"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "Pętla wzdłuż rzeki"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "Górna polana"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "Brzeg rzeki"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "Psy: {0} — {1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "Psy: {0} — różne cele"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "Cel zaktualizowany"
+        }
+      ]
+    },
+    {
+      "code": "zh-hk",
+      "displayName": "繁體中文",
+      "glyphs": "client",
+      "aliases": [
+        "zh-tw",
+        "zh-hant"
+      ],
+      "texts": [
+        {
+          "key": "course.walk.forward",
+          "text": "從山路繞行"
+        },
+        {
+          "key": "course.walk.reverse",
+          "text": "從河邊繞行"
+        },
+        {
+          "key": "course.walk.upper",
+          "text": "上方空地"
+        },
+        {
+          "key": "course.walk.river",
+          "text": "河岸"
+        },
+        {
+          "key": "course.walk.summary",
+          "text": "{0}隻狗：{1}"
+        },
+        {
+          "key": "course.walk.mixed",
+          "text": "{0}隻狗：各自的目的地"
+        },
+        {
+          "key": "course.walk.confirmed",
+          "text": "已告知目的地"
+        }
+      ]
+    }
+  ]
+}

@@ -85,5 +85,5 @@ UI制作・改修・レビューは `vrc-world-ui` と `.claude/skills/vrc-world
 | 地形・境界・負荷 | [IMP-ENV-001](development/issues/IMP-ENV-001-hillside-polish.md)、[完了した地形判断](development/issues/issue_summary.md) |
 | 犬ギミックの出所 | [移植記録](development/imports/kominka-dog-system.md) |
 
-Build は KH_World を作り直す。手修正は設定へ写してから再生成する。数値は Assets/KominkaHillside/Scripts/Editor/KH_TerrainPrototypeConfig.cs が正本。手置きは KH_World 外へ。
+本番は周回版を採用した `VRCDefaultWorldScene`。旧Terrain PrototypeのBuildはKH_Worldを破棄するため本番で使わない。周回の更新・検査はCourseメニューと[切替記録](plans/des-env-002/production.md)を参照。元の道の比較用設定はKH_TerrainPrototypeConfig、全周地形はKH_CourseGroundEditorを使う。
 Unity 操作前は scripts/unity-api.sh 経由で接続と Application.dataPath を確認する。

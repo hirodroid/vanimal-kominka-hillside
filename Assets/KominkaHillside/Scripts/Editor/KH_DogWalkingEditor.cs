@@ -208,6 +208,7 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Walking/3 Build")]
         public static void Build()
         {
+            KominkaHillside.Editor.KH_ProductionScene.RejectLegacyRebuild();
             Guard();var scene=EditorSceneManager.GetActiveScene();
             if(scene.isDirty)throw new InvalidOperationException("Save scene before the initial walking build.");
             KH_FrisbeePrototypeEditor.Facts[] frisbeeJump,frisbeeTwist;RequireFrisbeeAssets(out frisbeeJump,out frisbeeTwist); // IMP-DOG-012: before anything in the scene changes
@@ -430,6 +431,7 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Walking/4 Bake Navigation")]
         public static void Navigation()
         {
+            KominkaHillside.Editor.KH_ProductionScene.RejectLegacyRebuild();
             Guard();var root=GameObject.Find("KH_Dogs");if(root==null)throw new InvalidOperationException("Build first");
             var go=Child(root.transform,"KH_Navigation").gameObject;var surface=go.GetComponent<NavMeshSurface>();if(surface==null)surface=go.AddComponent<NavMeshSurface>();
             surface.collectObjects=CollectObjects.Volume;surface.center=new Vector3(60,25,90);surface.size=new Vector3(120,70,180);

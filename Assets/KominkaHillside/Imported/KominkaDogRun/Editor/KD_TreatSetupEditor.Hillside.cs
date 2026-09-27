@@ -91,6 +91,7 @@ namespace KominkaDogRun.Editor
         [MenuItem("Tools/KominkaHillside/Menu/7 Build Menu")]
         public static void SetupHillside()
         {
+            KominkaHillside.Editor.KH_ProductionScene.RejectLegacyRebuild();
             var log = new StringBuilder();
             log.AppendLine("[KD_TreatSetup] Setup (裏山 段階 " + KD_Hillside.Stage + ")");
             bool ok = true;

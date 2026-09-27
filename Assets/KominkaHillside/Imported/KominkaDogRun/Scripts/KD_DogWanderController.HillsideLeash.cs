@@ -36,6 +36,8 @@ namespace KominkaDogRun
         private bool _wasLeashed;
         private int _routeNext = -1;   // next trail node; -1 = not on the trail
         private int _routeDest = -1;
+        private int _routeChoice = -1; // loop directions can share the same destination anchor
+        private int _routeResume = -1; // progression hint after returning to the holder
         private float _nextRouteEntry;
         private float _nextHolderSample;
         private Vector3 _holderSample;      // where the holder was when they last counted as moving
@@ -235,7 +237,7 @@ namespace KominkaDogRun
                 // A client that has just taken the dog over did not make the decision that is in progress
                 // and has no history behind it, so it starts the walk from scratch (Codex D1).
                 if (!_wasDogOwner || holderId != _holderTracked)
-                { _holderTracked = holderId; ResetHolderSpeed(); ResetPauseAndPoseState(); }
+                { _holderTracked = holderId; _routeNext = -1; _routeChoice = -1; _routeResume = -1; ResetHolderSpeed(); ResetPauseAndPoseState(); }
                 TrackHolderSpeed(holderPos);
             }
             // **手放した側も畳む** (Codex D)。ローカルの滞在状態が残ったままだと、この画面では
@@ -250,16 +252,18 @@ namespace KominkaDogRun
             float leash = hillsideLeashes.leashLength;
             int destNode = hillsideLeashes._DestinationNode(dogIndex);
             KominkaHillside.KH_WalkRoute route = hillsideLeashes.route;
-            if (destNode != _routeDest)
+            int routeChoice = hillsideLeashes.destinations[dogIndex];
+            bool loopWalk = route != null && route._LoopDirection(routeChoice) != 0;
+            if (destNode != _routeDest || routeChoice != _routeChoice)
             {
                 // A new destination is a fresh start: leave rest/invite state and the stillness clock behind.
-                _routeDest = destNode; _routeNext = -1; _arrived = false;
+                _routeDest = destNode; _routeChoice = routeChoice; _routeNext = -1; _routeResume = -1; _arrived = false;
                 _holderMovedAt = Time.time; _holderSample = holderPos; _inviteCount = 0; _nextInviteAt = 0f;
                 if (leashMode == LeashRest || leashMode == LeashInvite) leashMode = LeashWalk;
                 // 引き返すと「これから通る場所」も入れ替わる。前の向きで当てた立ち寄りは捨てる
                 _stopoverPending = -1; _stopoverRolledFor = -1;
             }
-            if (destNode >= 0)
+            if (destNode >= 0 && !loopWalk)
             {
                 float destDist = Horizontal(dogRoot.position, route._Position(destNode));
                 if (destDist < route._Radius(destNode)) _arrived = true;
@@ -267,7 +271,7 @@ namespace KominkaDogRun
             }
             else _arrived = false;
 
-            SampleHolder(holderPos, destNode, route);
+            SampleHolder(holderPos, loopWalk ? -1 : destNode, route);
             float stillFor = Time.time - _holderMovedAt;
             float restAfter = (_arrived ? 20f : hillsideLeashes.inviteAfter + hillsideLeashes.inviteInterval * hillsideLeashes.inviteLimit) + dogIndex * 2f;
             bool settling = stillFor > restAfter && handDist < 2.2f;
@@ -284,7 +288,21 @@ namespace KominkaDogRun
             UpdateStopoverPass(handPos, route);
 
             // 1. Stretched too far: come back to the hand (run), teleport only after a real separation.
-            if (leashMode == LeashReturn) { if (handDist < leash * 0.6f) { leashMode = LeashWalk; _routeNext = -1; } }
+            if (leashMode == LeashReturn)
+            {
+                // Return also crosses nodes. Record them before choosing a fresh forward entry,
+                // particularly at the shared gate stem where position alone cannot identify a lap.
+                if (loopWalk && _routeNext >= 0 && Horizontal(dogRoot.position, route._Position(_routeNext)) < route._Radius(_routeNext))
+                    _routeNext = route._Advance(_routeNext, routeChoice);
+                if (handDist < leash * 0.6f)
+                {
+                    leashMode = LeashWalk;
+                    // A second return while awaiting reentry must retain the last known progress.
+                    if (!loopWalk) _routeResume = -1;
+                    else if (_routeNext >= 0) _routeResume = _routeNext;
+                    _routeNext = -1;
+                }
+            }
             else if (handDist > leash * 1.25f)
             {
                 if (pausing) EndPause("cutoff"); // 滞在の記録は残して帰る
@@ -315,7 +333,7 @@ namespace KominkaDogRun
             }
 
             // 3. No destination, holder off the trail, or no reachable entry: keep them company around the hand.
-            if (destNode < 0 || _holderOffTrail) { _routeNext = -1; FollowHand(handDist, leash, LeashFree); return true; }
+            if (destNode < 0 || _holderOffTrail) { _routeNext = -1; _routeResume = -1; FollowHand(handDist, leash, LeashFree); return true; }
             if (_arrived) { _routeNext = -1; FollowHand(handDist, leash, LeashArrived); return true; }
             if (_routeNext < 0 && Time.time >= _nextRouteEntry)
             {
@@ -326,9 +344,9 @@ namespace KominkaDogRun
 
             // 4. Advance along the routing table; arrival at the destination node ends the trip.
             Vector3 nodePos = route._Position(_routeNext);
-            if (Horizontal(dogRoot.position, nodePos) < route._Radius(_routeNext) && _routeNext != destNode)
+            if (Horizontal(dogRoot.position, nodePos) < route._Radius(_routeNext) && (loopWalk || _routeNext != destNode))
             {
-                _routeNext = route._Next(_routeNext, destNode);
+                _routeNext = route._Advance(_routeNext, routeChoice);
                 if (_routeNext < 0) { FollowHand(handDist, leash, LeashFree); return true; }
                 nodePos = route._Position(_routeNext);
             }
@@ -681,9 +699,25 @@ namespace KominkaDogRun
             if (_leashPath == null) _leashPath = new NavMeshPath();
             NavMeshHit from;
             if (!NavMesh.SamplePosition(dogRoot.position, out from, 2f, NavMesh.AllAreas)) return -1;
-            int best = -1, nearest = -1; float bestScore = 1e9f, nearestLen = 1e9f;
-            for (int i = 0; i < route.count; i++)
+            bool loopWalk = route._LoopDirection(_routeChoice) != 0;
+            if (loopWalk)
             {
+                int ahead = route._LoopReentry(dogRoot.position, _routeChoice, _routeResume);
+                if (ahead >= 0 && NavMesh.CalculatePath(from.position, route._Position(ahead), NavMesh.AllAreas, _leashPath)
+                    && _leashPath.status == NavMeshPathStatus.PathComplete && PathLength(_leashPath) <= hillsideLeashes.entryMaxPath)
+                { _routeResume = -1; _leashCorners = null; _nextLeashPath = 0f; return ahead; }
+                // Follow the hand and retry the forward entry; nearest-node fallback can select
+                // a passed node on the shared gate stem. Initial attachment still uses fallback.
+                if (_routeResume >= 0 && _routeResume < route.count) return -1;
+                _routeResume = -1;
+            }
+            int best = -1, nearest = -1; float bestScore = 1e9f, nearestLen = 1e9f;
+            int cell = route._EntryCell(dogRoot.position);
+            int start = cell < 0 ? 0 : route.entryCellStarts[cell];
+            int end = cell < 0 ? route.count : route.entryCellStarts[cell + 1];
+            for (int index = start; index < end; index++)
+            {
+                int i = cell < 0 ? index : route.entryCellNodes[index];
                 if (route._Cost(i, destNode) >= 1e5f) continue;
                 Vector3 p = route._Position(i);
                 if (Horizontal(dogRoot.position, p) > 30f) continue;
@@ -693,7 +727,7 @@ namespace KominkaDogRun
                 float len = PathLength(_leashPath);
                 if (len < nearestLen) { nearestLen = len; nearest = i; }
                 if (len > hillsideLeashes.entryMaxPath) continue;
-                float score = len + route._Cost(i, destNode);
+                float score = len + (loopWalk ? 0f : route._Cost(i, destNode));
                 if (score < bestScore) { bestScore = score; best = i; }
             }
             _leashCorners = null; _nextLeashPath = 0f;
@@ -709,7 +743,7 @@ namespace KominkaDogRun
         /// front of the holder; the other side is the fallback.</summary>
         private bool PickDetour(Vector3 nodePos, Vector3 handPos, float leash, KominkaHillside.KH_WalkRoute route)
         {
-            if (route == null) return false;
+            if (route == null || !route._AllowsDetour(handPos)) return false;
             Vector3 onTrail = route._ProjectToTrail(handPos);
             Vector3 dir = route._TrailDirection(handPos);
             Vector3 toNode = nodePos - onTrail; toNode.y = 0f;

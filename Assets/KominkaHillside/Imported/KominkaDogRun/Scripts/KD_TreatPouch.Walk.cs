@@ -30,6 +30,10 @@ namespace KominkaDogRun
         [Tooltip("行き先 2 行の [ここへ]。0 = 広場 (WalkRow6)、1 = 古民家側の入口 (WalkRow7)")]
         public UnityEngine.UI.Button[] walkHereButtons;
         public UnityEngine.UI.Image[] walkHereImages;
+        public TextMeshProUGUI[] walkHereLabels;
+        [Tooltip("Optional destination rows after the six dogs. Empty keeps the original plaza/gate menu.")]
+        public int[] walkDestinationIds;
+        public string[] walkDestinationKeys;
 
         /// <summary>KH_LeashManager の行き先の値 (destinations[] / _ChooseDestination)。</summary>
         public const int WalkDestGate = 0;
@@ -60,6 +64,10 @@ namespace KominkaDogRun
         public void _WalkOff5() { WalkDetach(5); }
         public void _WalkPlaza() { WalkChooseDestination(WalkDestPlaza); }
         public void _WalkGate() { WalkChooseDestination(WalkDestGate); }
+        public void _WalkLoopForward() { WalkChooseDestination(2); }
+        public void _WalkLoopReverse() { WalkChooseDestination(3); }
+        public void _WalkUpperPlaza() { WalkChooseDestination(4); }
+        public void _WalkRiverbank() { WalkChooseDestination(5); }
 
         /// <summary>理由は正本 (KH_LeashManager) の規則を写したもの。拒否が不意打ちにならないため (Owner がもう一度判定する)。
         /// 0 ok / 1 自分がつないでいる / 2 他人 / 3 集合中 / 4 ボール / 5 片手 3 匹 / 6 遠い / 7 呼ばれて待機中 / 9 使えない。</summary>
@@ -98,7 +106,7 @@ namespace KominkaDogRun
 
         private void WalkChooseDestination(int destination)
         {
-            if (manager == null) return;
+            if (manager == null || manager.route == null || manager.route._DestinationNode(destination) < 0) return;
             manager._ChooseDestination(destination);
             int mine = 0;
             for (int i = 0; i < manager.walkers.Length; i++) if (manager._IsMine(i)) mine++;
@@ -148,7 +156,8 @@ namespace KominkaDogRun
                 for (int i = 0; i < manager.walkers.Length; i++)
                     if (manager._IsMine(i)) { any = true; if (manager.destinations[i] != _walkPendingDest) all = false; }
                 done = any && all;
-                key = _walkPendingDest == WalkDestPlaza ? "KD_TreatPouch.WordWalkToPlaza" : "KD_TreatPouch.WordWalkToGate";
+                key = _walkPendingDest == WalkDestPlaza ? "KD_TreatPouch.WordWalkToPlaza" :
+                    (_walkPendingDest == WalkDestGate ? "KD_TreatPouch.WordWalkToGate" : "course.walk.confirmed");
             }
             if (!done && Time.time - _walkPendingAt > 4f) { done = true; key = "KD_TreatPouch.WordWalkUnknown"; }
             if (!done) return;
@@ -163,7 +172,8 @@ namespace KominkaDogRun
         {
             if (manager == null) { HillsideFooter(L("KD_TreatPouch.WordWalkGateUnavailable")); return; }
             VRCPlayerApi lp = Networking.LocalPlayer;
-            int mine = 0, plaza = 0, gate = 0;
+            int mine = 0, plaza = 0, gate = 0, firstDestination = -1;
+            bool mixedDestinations = false;
             for (int i = 0; i < 6; i++)
             {
                 bool leashed = manager._IsLeashed(i);
@@ -173,7 +183,11 @@ namespace KominkaDogRun
                 {
                     state = L(manager.hands[i] == 0 ? "KD_TreatPouch.WordWalkStateLeft" : "KD_TreatPouch.WordWalkStateRight");
                     mine++;
-                    if (manager.destinations[i] == WalkDestPlaza) plaza++; else gate++;
+                    int destination = manager.destinations[i];
+                    if (firstDestination < 0) firstDestination = destination;
+                    else if (firstDestination != destination) mixedDestinations = true;
+                    if (destination == WalkDestPlaza) plaza++;
+                    else if (destination == WalkDestGate) gate++;
                 }
                 else if (leashed) state = L("KD_TreatPouch.WordWalkStateOther");   // 表示名は出さない (フォントに無い字は豆腐になる)
                 else if (manager._IsGathering(i)) state = L("KD_TreatPouch.WordWalkStateGathering");
@@ -199,23 +213,39 @@ namespace KominkaDogRun
 
             // 行き先 2 行 (6 = 広場、7 = 古民家側の入口)。選んでいる方を状態ラベルと点灯色で示す
             int choice = manager._MyChoice();
-            for (int k = 0; k < 2; k++)
+            bool extended = walkDestinationIds != null && walkDestinationIds.Length > 0;
+            int destinationCount = extended ? walkDestinationIds.Length : 2;
+            for (int k = 0; k < destinationCount; k++)
             {
                 int row = 6 + k;
-                int dest = k == 0 ? WalkDestPlaza : WalkDestGate;
+                int dest = extended ? walkDestinationIds[k] : (k == 0 ? WalkDestPlaza : WalkDestGate);
                 bool chosen = choice == dest;
                 if (walkLabels != null && row < walkLabels.Length && walkLabels[row] != null)
-                    walkLabels[row].text = L(k == 0 ? "KD_TreatPouch.WordWalkPlaza" : "KD_TreatPouch.WordWalkGate");
+                    walkLabels[row].text = WalkDestinationName(dest);
                 if (walkStateLabels != null && row < walkStateLabels.Length && walkStateLabels[row] != null)
                     walkStateLabels[row].text = L(chosen ? "KD_TreatPouch.WordWalkStateDestChosen" : "KD_TreatPouch.WordWalkStateDest");
                 WalkTint(walkHereImages, k, chosen ? openOnColor : hillsideNeutralColor);
+                if (walkHereLabels != null && k < walkHereLabels.Length && walkHereLabels[k] != null)
+                    walkHereLabels[k].text = L("KD_TreatPouch.WordWalkHere");
             }
 
             string summary;
             if (mine == 0) summary = L("KD_TreatPouch.WordWalkSummaryNone");
+            else if (extended) summary = mixedDestinations
+                ? L("course.walk.mixed").Replace("{0}", mine.ToString())
+                : L("course.walk.summary").Replace("{0}", mine.ToString()).Replace("{1}", WalkDestinationName(firstDestination));
             else if (plaza > 0 && gate > 0) summary = L("KD_TreatPouch.WordWalkSummaryMixed").Replace("{0}", plaza.ToString()).Replace("{1}", gate.ToString());
             else summary = L(plaza > 0 ? "KD_TreatPouch.WordWalkSummaryPlaza" : "KD_TreatPouch.WordWalkSummaryGate").Replace("{0}", mine.ToString());
             HillsideFooter(HillsideNoteOr(TabWalk, summary));
+        }
+
+        private string WalkDestinationName(int destination)
+        {
+            if (destination == WalkDestPlaza) return L("KD_TreatPouch.WordWalkPlaza");
+            if (destination == WalkDestGate) return L("KD_TreatPouch.WordWalkGate");
+            for (int i = 0; walkDestinationIds != null && walkDestinationKeys != null && i < walkDestinationIds.Length && i < walkDestinationKeys.Length; i++)
+                if (walkDestinationIds[i] == destination) return L(walkDestinationKeys[i]);
+            return L("KD_TreatPouch.WordWalkGateUnavailable");
         }
 
         private void WalkTint(UnityEngine.UI.Image[] images, int i, Color color)

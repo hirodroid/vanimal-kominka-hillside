@@ -397,6 +397,7 @@ namespace KominkaDogRun.Editor
         internal static void BuildPouchPanel(GameObject root, KD_TreatPouch pouch,
             KD_ShopItem[] items, KD_ShopItem[] fxItems, TMPro.TMP_FontAsset font, StringBuilder log)
         {
+            KominkaHillside.Editor.KH_ProductionScene.RejectLegacyRebuild();
             // 裏山改変: 段階 0 は items / fxItems が無い (null)。おやつの行は器の本数 (4) だけ作り、
             // 撫でFX の行は HillsideBuildPages が かざりの Content に作る (旧 PetFx 頁には作らない)
             if (items == null || items.Length == 0) items = new KD_ShopItem[KD_ShopSetupEditor.TreatProductCount];

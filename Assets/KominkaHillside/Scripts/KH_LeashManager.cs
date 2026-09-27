@@ -130,7 +130,7 @@ namespace KominkaHillside
         // The player's choice for this stay; also applied to every dog they are leashing right now.
         public void _ChooseDestination(int destination)
         {
-            if (!Utilities.IsValid(Networking.LocalPlayer)) return;
+            if (!Utilities.IsValid(Networking.LocalPlayer) || route == null || route._DestinationNode(destination) < 0) return;
             _myChoice = destination;
             SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqDestination), destination);
         }
