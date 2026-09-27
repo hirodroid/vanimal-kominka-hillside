@@ -34,3 +34,4 @@ VRChat で確認してもらう項目は、**必ず次の形式で書く**。
 - 完了した計画書は消さずに残す (前回何をどう確かめたかが次回の出発点になる)
 - このフォルダには計画書のほか、実測・調査・報告の記録も置いてある。**完了した計画・実測は記録として残すもので、正本にしない** (仕様は game-design / world-ui-spec、状態は Issue)。**最新の現在地は [開発全体像](../development/overview.md) §3** を見る
 - 一般化できる知見は**共有リポジトリの Skill へ**、残った課題は Issue へ
+- 進捗ダッシュボード (水遊び・地図/ワープ/合流): `node scripts/kh-dashboard.js` で [2026-09-27-progress-dashboard.html](2026-09-27-progress-dashboard.html) を作り直す (Issue・ハーネス・検査・容量・git log から毎回読む。手で編集しない)
