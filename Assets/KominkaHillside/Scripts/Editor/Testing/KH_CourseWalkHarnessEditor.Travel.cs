@@ -53,7 +53,10 @@ namespace KominkaHillside.Editor
         static int tvTrackMask;
         static HashSet<int> tvSeenReqs = new HashSet<int>();
         static List<string> tvLogs = new List<string>();
-        static List<string> tvJumpNotes = new List<string>();   // 2 回目以降の跳びの証拠 (位置・時刻・その時の犬の状態)
+        static List<string> tvJumpNotes = new List<string>();
+        // 観測間隔は 3 つで測る: 壁時計 (EditorApplication)、ゲーム時間 (Time.time = 犬が歩幅に掛ける時間)、フレーム数
+        static int tvLastFrameObs;
+        static float tvLastGameTime, tvLastRealtime;   // 2 回目以降の跳びの証拠 (位置・時刻・その時の犬の状態)
         static VRCPlayerApi tvRemote;
         // 段階 2: 暗転の観測 (KH_TravelFade の _alpha と、プレイヤーの 5 m 以上の跳び)
         static VRC.Udon.UdonBehaviour tvFade;
@@ -671,8 +674,11 @@ namespace KominkaHillside.Editor
         {
             // Same rule as the main Observe (lastObserveAt starts at the case, maxObservationGap is recorded): the first
             // observation of a case only sets the reference time and positions, so no gap or position change is counted.
-            if (!tvObsValid || tvPrev == null) { TvReset(); tvLastObs = now; tvObsValid = true; return; }
+            if (!tvObsValid || tvPrev == null) { TvReset(); tvLastObs = now; tvLastFrameObs = Time.frameCount; tvLastGameTime = Time.time; tvLastRealtime = Time.realtimeSinceStartup; tvObsValid = true; return; }
             double gap = now - tvLastObs; tvLastObs = now;
+            int frames = Time.frameCount - tvLastFrameObs; tvLastFrameObs = Time.frameCount;
+            float gameGap = Time.time - tvLastGameTime; tvLastGameTime = Time.time;
+            float realGap = Time.realtimeSinceStartup - tvLastRealtime; tvLastRealtime = Time.realtimeSinceStartup;
             Current.maxObservationGap = Math.Max(Current.maxObservationGap, gap);
             if (gap > .75) throw new InvalidOperationException("Observation gap " + gap.ToString("F2") + " s too large to count position changes");
             var req = Get<int[]>(manager, "travelReq");
@@ -703,7 +709,9 @@ namespace KominkaHillside.Editor
             {
                 var p = roots[i].position;
                 // 跳びの判定は観測間隔に比例させる (8 m/s = 全力 7.2 m/s より上)。0.3 秒の引っかかりで走っている犬を「跳んだ」と数えない
-                float stepLimit = Mathf.Max(TvDisc, 8f * (float)gap + 0.3f);
+                // 犬の歩幅は「速さ × Time.deltaTime (ゲーム時間)」。壁時計ではなくゲーム時間の間隔で上限を決める。
+                // 上限 = 9 m/s (全力 7.2 m/s より上) × ゲーム時間 + 0.3 m。1 フレームの差でも 1.5 m より小さい上限にはしない
+                float stepLimit = Mathf.Max(frames <= 1 ? TvDisc : 0.5f, 9f * Mathf.Max(gameGap, (float)gap) + 0.3f);
                 float moved = Vector3.Distance(tvPrev[i], p);
                 if (moved > stepLimit)
                 {
@@ -713,7 +721,7 @@ namespace KominkaHillside.Editor
                         string state = "";
                         try { state = " mode=" + Get<int>(wander[i], "leashMode") + " pauseMode=" + Get<int>(wander[i], "_pauseMode") + " next=" + Get<int>(wander[i], "_routeNext") + " resume=" + Get<int>(wander[i], "_routeResume"); } catch (Exception) { }
                         object wp; if (wander[i].TryGetProgramVariable("waterPose", out wp)) state += " waterPose=" + wp;
-                        tvJumpNotes.Add("dog" + i + " jump#" + tvDisc[i] + " " + moved.ToString("F2") + " m in " + gap.ToString("F2") + " s at t=" + (now - Current.startedAt).ToString("F1") + " from " + tvPrev[i] + " to " + p + " holder=" + Networking.LocalPlayer.GetPosition() + state);
+                        tvJumpNotes.Add("dog" + i + " jump#" + tvDisc[i] + " " + moved.ToString("F2") + " m in wall " + gap.ToString("F3") + " s / game " + gameGap.ToString("F3") + " s / real " + realGap.ToString("F3") + " s / frames=" + frames + " dt=" + Time.deltaTime.ToString("F3") + " limit=" + stepLimit.ToString("F2") + " speed=" + SafeSpeed(i) + " at t=" + (now - Current.startedAt).ToString("F1") + " from " + tvPrev[i] + " to " + p + " holder=" + Networking.LocalPlayer.GetPosition() + state);
                     }
                 }
                 tvPrev[i] = p;
@@ -728,6 +736,8 @@ namespace KominkaHillside.Editor
                 if (next >= 0) tvPrevNext[i] = next;
             }
         }
+
+        static string SafeSpeed(int i) { try { return Get<float>(wander[i], "_speed").ToString("F2"); } catch (Exception) { return "?"; } }
 
         static void TvReset()
         {

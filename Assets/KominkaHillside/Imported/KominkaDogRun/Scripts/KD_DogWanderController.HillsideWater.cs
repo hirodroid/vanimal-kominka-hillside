@@ -56,7 +56,7 @@ namespace KominkaDogRun
         private float _waterAskAt = -1000f, _waterLookUntil, _nextSplashAt, _nextRippleAt, _nextWaterSoundAt;
         private Vector3 _waterTarget, _waterProgressPos;
         private int _waterExit, _waterRecover, _waterStuck, _waterSeenFrame, _waterAskPlayer = -1, _waterLookPlayer = -1;
-        private bool _waterFirstUsed, _waterWasLeashed, _waterHasTarget;
+        private bool _waterFirstUsed, _waterWasLeashed, _waterHasTarget, _waterFirstCellDone;
 
         bool _BlockedByRiver(Vector3 from, Vector3 next)
         {
@@ -199,7 +199,7 @@ namespace KominkaDogRun
         {
             Vector3 goal = waterSpot.entry;
             float dist = Horizontal(p, goal);
-            if (dist < 0.5f) { waterState = WaterWade; _waterUntil = Time.time + Random.Range(WaterStayMin, WaterStayMax); _waterHasTarget = false; WaterResetProgress(); return; }
+            if (dist < 0.5f) { waterState = WaterWade; _waterUntil = Time.time + Random.Range(WaterStayMin, WaterStayMax); _waterHasTarget = false; _waterFirstCellDone = false; _waterHoldUntil = 0f; WaterResetProgress(); return; }
             if (Time.time - _waterStageAt > WaterApproachTimeout) { WaterEnd("approach-timeout"); Coast(); return; }
             // At a run all the way (Codex 2026-09-27: B-1's 5 s runs to the first wet step, not to the start of the play).
             if (hillsideLeashes == null || !GatherStep(goal, runSpeed)) StepToward(goal, 0f, runSpeed);
@@ -209,7 +209,7 @@ namespace KominkaDogRun
         {
             if (Time.time >= _waterUntil) { WaterBeginExit(_waterExit, "stay-over"); return; }
             if (Time.time < _waterHoldUntil) { Coast(); WaterResetProgress(); return; }
-            if (!_waterHasTarget) { _waterTarget = WaterPickCell(); _waterHasTarget = true; WaterResetProgress(); }
+            if (!_waterHasTarget) { _waterTarget = WaterPickCell(!_waterFirstCellDone); _waterFirstCellDone = true; _waterHasTarget = true; WaterResetProgress(); }
             if (Horizontal(p, _waterTarget) < 0.3f || WaterStuck(p))
             {
                 bool stuck = _waterStuck >= 2;
@@ -263,19 +263,15 @@ namespace KominkaDogRun
             StepToward(goal, 0f, walkSpeed);
         }
 
-        Vector3 WaterPickCell()
+        // First target of a stay: the nearest wadeable cell, so the dog goes straight into the water from the entry (W0 run
+        // 20260927-062317: random draws over the whole baked box often missed, fell back to the entry itself, "arrived" there at
+        // once and waited 1-3 s before drawing again: wet 7.07 s). Later targets are random. Both searches run in KH_WaterSpot.
+        Vector3 WaterPickCell(bool nearest)
         {
-            int n = waterSpot._CellCount();
             float limit = WaterDepthLimit() * 0.9f;
-            for (int t = 0; t < 16 && n > 0; t++)
-            {
-                Vector3 c = waterSpot._CellPoint(Random.Range(0, n));
-                if (c.y <= KominkaHillside.KH_WaterSpot.NoBed + 1f || !waterSpot._Contains(c)) continue;
-                float d = waterSpot._Depth(c);
-                if (d < 0.03f || d > limit) continue;
-                return c;
-            }
-            return waterSpot.entry;
+            Vector3 c = nearest ? waterSpot._NearestWetCell(dogRoot.position, 0.03f, limit) : waterSpot._RandomWetCell(0.03f, limit);
+            if (c.y <= KominkaHillside.KH_WaterSpot.NoBed + 1f) c = waterSpot._NearestWetCell(dogRoot.position, 0.03f, limit);
+            return c.y <= KominkaHillside.KH_WaterSpot.NoBed + 1f ? waterSpot.entry : c;
         }
 
         void WaterResetProgress() { _waterProgressPos = dogRoot.position; _waterProgressAt = Time.time + 1f; _waterStuck = 0; }

@@ -51,6 +51,9 @@ namespace KominkaHillside.Editor
             public bool fetchWhileWet; public double fetchAfterLanding = -1;
             public bool refusedLogged, refused, accepted, joined, ballMoved, pickedUp, calledObserved;
             public List<string> log = new List<string>();
+            // W0 only: where wading began and the first target, then every 0.5 s: time, state, pose, speed, depth, position.
+            public string wadingStart;
+            public List<string> trace = new List<string>();
         }
         [Serializable] public class WhReport
         {
@@ -60,7 +63,7 @@ namespace KominkaHillside.Editor
         }
         static WhReport wh;
         static UdonBehaviour whFetch, whSpot, whActivities, whCallPose, whSlot;
-        static double whWetSince = -1, whCallApplyAt = -1;
+        static double whWetSince = -1, whCallApplyAt = -1, whNextTrace;
         static int whPhase, whStep, whLastState;
         static double whNext, whPhaseAt;
         static Vector3 whPrev, whBallAt;
@@ -161,11 +164,23 @@ namespace KominkaHillside.Editor
                     if (Vector3.Distance(roots[WhDog].position, entry) > 12f) throw new InvalidOperationException("Dog not within 12 m of the entry at release");
                     if (c.name != "W0") wander[WhDog].SetProgramVariable("_waterFirstUsed", false);
                     pouch.SendCustomEvent("_WalkOff" + WhDog); c.released = now - cc.startedAt;
-                    whPrev = roots[WhDog].position; whWetSince = -1;   // continuity starts at the release (the leashed walk before is not measured)
+                    whPrev = roots[WhDog].position; whWetSince = -1; whNextTrace = now;   // continuity starts at the release (the leashed walk before is not measured)
                     whPhase = 2; whPhaseAt = now; whLastState = WhState(); return;
                 case 2: // wait for the play (W0 limits) and wading
                     if (c.playStarted < 0 && WhState() >= 1) c.playStarted = t;
-                    if (c.wading < 0 && WhState() == 2) c.wading = t;
+                    if (c.wading < 0 && WhState() == 2)
+                    {
+                        c.wading = t; var at = roots[WhDog].position;
+                        c.wadingStart = "t=" + t.ToString("F2") + " at=" + at.ToString("F2") + " depth=" + (KH_CourseGroundEditor.RiverAt(at.z).y - at.y).ToString("F3")
+                            + " entry=" + entry.ToString("F2");
+                    }
+                    if (c.name == "W0" && now >= whNextTrace && c.trace.Count < 80)
+                    {
+                        whNextTrace = now + .5; var q = roots[WhDog].position;
+                        c.trace.Add("t=" + t.ToString("F2") + " state=" + WhState() + " pose=" + WhPose() + " speed=" + Get<float>(wander[WhDog], "_speed").ToString("F2")
+                            + " depth=" + (KH_CourseGroundEditor.RiverAt(q.z).y - q.y).ToString("F3") + " at=" + q.ToString("F2")
+                            + " target=" + Get<Vector3>(wander[WhDog], "_waterTarget").ToString("F2"));
+                    }
                     bool wetNow = WhPose() == 1 && WhState() == 2;
                     if (wetNow) { if (whWetSince < 0) whWetSince = now; if (c.wet < 0) c.wet = t; } else whWetSince = -1;
                     bool ready = whWetSince >= 0 && now - whWetSince >= 1.5;

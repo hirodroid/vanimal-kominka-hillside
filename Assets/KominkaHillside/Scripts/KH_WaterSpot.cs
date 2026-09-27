@@ -118,6 +118,51 @@ namespace KominkaHillside
             return new Vector3(gridX0 + ix * gridStep, bed[i], gridZ0 + iz * gridStep);
         }
 
+        /// <summary>The region's cell nearest to p (x/z) with minDepth <= depth <= maxDepth; y = NoBed when none. One call scans
+        /// the grid here (the water surface is read once per row), instead of hundreds of cross-behaviour calls from the dog.</summary>
+        public Vector3 _NearestWetCell(Vector3 p, float minDepth, float maxDepth)
+        {
+            Vector3 best = new Vector3(0f, NoBed, 0f);
+            if (!_Ready()) return best;
+            float bestD = 1e9f;
+            for (int iz = 0; iz < gridNz; iz++)
+            {
+                float z = gridZ0 + iz * gridStep, surface = riverData._SurfaceY(z);
+                for (int ix = 0; ix < gridNx; ix++)
+                {
+                    float b = bed[iz * gridNx + ix];
+                    if (b <= NoBed + 1f) continue;
+                    float d = surface - b;
+                    if (d < minDepth || d > maxDepth) continue;
+                    Vector3 c = new Vector3(gridX0 + ix * gridStep, b, z);
+                    float dx = c.x - p.x, dz = c.z - p.z, dd = dx * dx + dz * dz;
+                    if (dd >= bestD || !_Contains(c)) continue;
+                    bestD = dd; best = c;
+                }
+            }
+            return best;
+        }
+
+        /// <summary>A random region cell with minDepth <= depth <= maxDepth (48 draws); y = NoBed when none was found.</summary>
+        public Vector3 _RandomWetCell(float minDepth, float maxDepth)
+        {
+            if (!_Ready()) return new Vector3(0f, NoBed, 0f);
+            int n = bed.Length;
+            for (int t = 0; t < 48; t++)
+            {
+                int i = Random.Range(0, n);
+                float b = bed[i];
+                if (b <= NoBed + 1f) continue;
+                int ix = i % gridNx, iz = i / gridNx;
+                float z = gridZ0 + iz * gridStep;
+                float d = riverData._SurfaceY(z) - b;
+                if (d < minDepth || d > maxDepth) continue;
+                Vector3 c = new Vector3(gridX0 + ix * gridStep, b, z);
+                if (_Contains(c)) return c;
+            }
+            return new Vector3(0f, NoBed, 0f);
+        }
+
         public bool _NearEntry(Vector3 p)
         {
             Vector3 d = entry - p; d.y = 0f;
