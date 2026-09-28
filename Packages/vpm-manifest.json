@@ -8,6 +8,9 @@
     },
     "jp.sigmal00.uzumore-shader": {
       "version": "1.0.20"
+    },
+    "dev.onevr.vrworldtoolkit": {
+      "version": "3.4.1"
     }
   },
   "locked": {
@@ -30,6 +33,10 @@
       "dependencies": {
         "jp.lilxyzw.liltoon": ">=1.9.0"
       }
+    },
+    "dev.onevr.vrworldtoolkit": {
+      "version": "3.4.1",
+      "dependencies": {}
     }
   }
 }

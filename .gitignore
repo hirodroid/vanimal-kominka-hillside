@@ -83,6 +83,10 @@ InitTestScene*.unity*
 /[Aa]ssets/XR/
 /[Aa]ssets/XR.meta
 
+# VRWorld Toolkit が Library からコピーするローカルのビルドレポート
+/[Aa]ssets/_LastBuild/
+/[Aa]ssets/_LastBuild.meta
+
 # SDK がインポートするもの
 /[Aa]ssets/VRCSDK/
 /[Aa]ssets/VRChat Examples/
