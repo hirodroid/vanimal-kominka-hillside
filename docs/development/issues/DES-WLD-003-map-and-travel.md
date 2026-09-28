@@ -7,7 +7,7 @@ priority: Medium
 summary: 広い周回コースの地図、地点ワープ、プレイヤーへの合流と接続犬の同行を設計する
 next: 実装は IMP-WLD-001
 decided: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-29
 ---
 
 # DES-WLD-003 地図・地点ワープ・プレイヤーへの合流
@@ -30,6 +30,8 @@ updated: 2026-09-27
 - [x] VR酔い、Touch操作、到着位置と安全な失敗時動作を確認する。
 
 関連：[周回コース](IMP-ENV-004-river-loop-course.md)、[案内と目的地](DES-UI-004-walk-destinations-and-boards.md)、[古民家との往復](DES-WLD-001-round-trip.md) (ワールド間の出発・帰還は DES-WLD-001、本 Issue はワールド内の移動だけ)。
+
+追加 (2026-09-29): 「呼ぶ」(1 人を呼び、呼ばれた人が自分で移動する) を設計書 §F に足した。決定: 2026-09-29 (ユーザー)。実装は [IMP-WLD-002](IMP-WLD-002-call-player.md)。
 
 ## 決定 (2026-09-27)
 

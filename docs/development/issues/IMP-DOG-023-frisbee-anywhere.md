@@ -5,8 +5,7 @@ system: DOG
 status: wip
 priority: Medium
 summary: フリスビーをどこでも (DES-DOG-005 段階 3)。M1 陸の地面基準ジャンプと到達判定、M2 川のディスクの浮き、M3 岸からのドボンと水中回収、M4 取り出しの門の置き換え
-next: M4 実装済み・未検証 (2026-09-28)。統括がコンパイル → Course/92 → 93 → Walking/5 → Frisbee/5 → Course/85 → 27 → 81 → Course/95 → Course/94 (F15-gate を含む 9 ケース)。そのあと PCVR 37〜48 (ユーザー)、VER-WLD-001 項目 12
-updated: 2026-09-28
+next: M4 実装済み・未検証 (2026-09-28)。実機 (09-28 夜、7 人・170 投げ) で空中 69/69・例外 0。ドボンは 0 件で未確認 (PCVR 40/41 が残る)。統括がコンパイル → Course/92 → 93 → Walking/5 → Frisbee/5 → Course/85 → 27 → 81 → Course/95 → Course/94 (F15-gate を含む 9 ケース)。そのあと PCVR 37〜48 (ユーザー)、VER-WLD-001 項目 12updated: 2026-09-29
 ---
 
 # IMP-DOG-023 フリスビーをどこでも (段階 3)
@@ -116,6 +115,8 @@ M4 でやったこと (2026-09-28):
 - M2 (2026-09-28、Codex レビュー 4 件反映後): コンパイル C#/U# 0。Course/89 FRISBEE_RIVER_OK (float: water=24 / bridge=8 / edge=6 / noBank=0 / spot=True)。Course/94 FRISBEE_M2_PASS 8/8 (run 082637: F5a-river・F5b-spot・F5c-grab・F5c-recall・F5d-roll・F6-bridge・F7-nobank・F7b-edge)。ボール側の回帰: 78 WATER_PASS 14、75 W5_PASS、試作既定 26/26 (171911)。**88b は RW-down-Pome / RW-up-Pome が FAIL だが M2 の差分が原因ではない**: c4fd29a (ポメの swimSink 0.035 m、PCVR 決定) で泳ぐ口の高さが 0.086 → 0.051 m に下がり、ハーネスの口の余裕 0.03 m の基準を川の流路で割る (mouthLow)。c4fd29a 以降の最初の 88b (075505) から一貫して FAIL、時間・漂流・入水点は合格運転と同じ。PCVR の決定を変える (swimSink / swimPitch) かハーネス基準を下げるかはユーザー判断 → IMP-DOG-020 / 021 の範囲で別件。
 
 - M3 (2026-09-28 夕、中断時点・**未コミット**): Codex レビュー 9 件 (高 3) を反映済み。修正前コードの部分走行: 試作既定 26/26 (180823)、terrain 9/10 (181350。T-up10 の stand は Play 中の編集によるフレーム停止で最初の計画が 0.23 s 遅れたため。修正版で再確認)、89 OK、94 M2 8/8 (100037)。**94b (100355): F2-dobon-Pome / F3-dobon-Lab が 6 試行すべて RETRY で「ドボンの捕りが 1 度も成立しない」** (設計書 I のリスクどおり。狙いの配置か計画器の点数の見直しが要る)。同 run で FMOD の出力デバイス初期化エラーも出た (環境)。88a (101543): W3-Dachs FAIL (t=24.3、carryMouthLow=1) → M3 の Fetch の切り出し (`_EntrySlice` / `_ExitSlice`) の回帰か、swimSink の件の Dachs 版かは未切り分け。
+
+- 実機 (2026-09-28 夜、ユーザーの PC VR ログ `output_log_2026-09-28_22-33-09.txt`、［TEST］ 古民家の裏山、最大 5 人・延べ 7 人、84 分): ビルドは M3 以降を確実に含む (`water chase entry=` など。M4 は実行時ログが無いので判別できず、0440455 の可能性が高い)。投げ 170 (7 人全員)、捕球 74 (空中 69・立ち 4・追い越し 1)。**liftoff 69 はすべて catch OK、`landGap` は全件 0.000**。etaErr の絶対値の平均 0.12〜0.22、Udon の例外 0。水では、浮き (着水) 6、water chase 8・入水 7・水中運搬 5・出口の計画 6。**ドボンは 0 件で、M3 の岸からの跳び込みは未確認 (PCVR 40/41 が残る)**。水中追跡の 7 回はすべて着水後に歩いて入る経路だった。ほかに `hold-lost` 89 (86 件が state 9 Drop、口から取られた。[IMP-DOG-013](IMP-DOG-013-frisbee-pet-after-return.md) の検討候補)、`cannot-play` 取消 6・拒否 4、`in-water` 拒否 10。別件で [BUG-DOG-006](BUG-DOG-006-steal-held-pickup.md) (steal ownership 15 件) と [BUG-DOG-007](BUG-DOG-007-shiba-throw-implausible.md) (柴の implausible 5 件) を起票した。
 
 ## 関連
 

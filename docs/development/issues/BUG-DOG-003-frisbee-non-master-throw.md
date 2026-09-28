@@ -237,6 +237,8 @@ ClientSim ハーネス `--mode=netorder` の結果は版ごとに分けて記録
 | M4 (中) | 受け取った終了通知が追跡できない | 採用。`req end` を 1 通 1 行で追加 (`reason` / `sender` / `gen` / `opAge` / `target`) |
 | docs | 「1 つの通知は 2 つの組のどちらか一方にしか一致しない」は他人の `EndGrabbed` については誤り | 採用。コードのコメントと本文を修正 (`target=both` が正当に起きる) |
 
+確認記録 (実機 2026-09-28 夜、ユーザーの PC VR ログ、最大 5 人・延べ 7 人): 6 匹の Owner は本人のまま、他の 6 人全員の投げを受けた (投げ手別 p2 44 / p3 37 / p5 27 / p6 16 / p4 8 / p7 7)。`req hold` 138 → resolved 131 / expired 5、所有権の奪い合いは無し。別件で [BUG-DOG-006](BUG-DOG-006-steal-held-pickup.md) (持たれているピックアップへの SetOwner) と [BUG-DOG-007](BUG-DOG-007-shiba-throw-implausible.md) (柴の implausible) を起票した。
+
 ## 完了条件
 
 - [ ] 2 人の実機で再現条件と原因を特定し、記録する

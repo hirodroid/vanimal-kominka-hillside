@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-54 件 — 対応中 15 / 確認待ち 15 / 未着手 12 / 保留 3 / 完了 9
+57 件 — 対応中 16 / 確認待ち 15 / 未着手 14 / 保留 3 / 完了 9
 
 ## 実行キュー
 
@@ -22,8 +22,9 @@
 | [IMP-DOG-010](IMP-DOG-010-walk-stopovers.md) | Medium | 寄り道が分かりにくい (嗅ぐ姿勢が無い・ずれが小さい・短い) ので作り直し、道沿いの立ち寄り場所と夜の散歩の違いを足す。9/22 PCVR 1 人 1 匹で OK・採用 (Sniff クリップは保留)、3〜6 匹・2 人以上・Desktop は未確認 | wip |  |
 | [IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md) | Medium | フリスビー (先回り型 + 6 プリセット) を 6 匹へ展開する。2026-09-24 実装済み (ff76602): 犬種別クリップ・facts、犬別ディスク 6 枚、犬種別の跳躍上限 (小型犬 0.45 m)、Verify・縮小ハーネス・6 匹同時の負荷 PASS。残り: Shiba / Samoyed の縮小表の取り直し・全 36 投げ (AI)、PCVR (ユーザー) | wip |  |
 | [IMP-DOG-013](IMP-DOG-013-frisbee-pet-after-return.md) | Medium | フリスビーを持ち帰った犬をよしよしできる。くわえて待っている間は撫でを再開し (撫でている間はディスクを落とさない)、受け取っても 4 秒 / 2.5 m の猶予はその場で待つ。9/22 実装・Editor 検査済み、PCVR 確認が残る | wip |  |
-| [IMP-DOG-023](IMP-DOG-023-frisbee-anywhere.md) | Medium | フリスビーをどこでも (DES-DOG-005 段階 3)。M1 陸の地面基準ジャンプと到達判定、M2 川のディスクの浮き、M3 岸からのドボンと水中回収、M4 取り出しの門の置き換え | wip | M4 実装済み・未検証 (2026-09-28)。統括がコンパイル → Course/92 → 93 → Walking/5 → Frisbee/5 → Course/85 → 27 → 81 → Course/95 → Course/94 (F15-gate を含む 9 ケース)。そのあと PCVR 37〜48 (ユーザー)、VER-WLD-001 項目 12 |
+| [IMP-DOG-023](IMP-DOG-023-frisbee-anywhere.md) | Medium | フリスビーをどこでも (DES-DOG-005 段階 3)。M1 陸の地面基準ジャンプと到達判定、M2 川のディスクの浮き、M3 岸からのドボンと水中回収、M4 取り出しの門の置き換え | wip | M4 実装済み・未検証 (2026-09-28)。実機 (09-28 夜、7 人・170 投げ) で空中 69/69・例外 0。ドボンは 0 件で未確認 (PCVR 40/41 が残る)。統括がコンパイル → Course/92 → 93 → Walking/5 → Frisbee/5 → Course/85 → 27 → 81 → Course/95 → Course/94 (F15-gate を含む 9 ケース)。そのあと PCVR 37〜48 (ユーザー)、VER-WLD-001 項目 12updated: 2026-09-29 |
 | [IMP-ENV-004](IMP-ENV-004-river-loop-course.md) | Medium | 既存の登り道を保全し、奥広場・川岸・小橋を経て門へ戻る周回コースを軽量に制作する。約2.41kmの地形・436点の周回経路・手元の6目的地を別シーンへ実装 | wip | ユーザー了承済みの周回版を本番へ採用。細部を調整し、Quest 3/iPhone 15 Pro・16人性能の実機検証へ |
+| [IMP-WLD-002](IMP-WLD-002-call-player.md) | Medium | 在室の 1 人を呼ぶ ([来てもらう]。呼ばれた人が [行く] を押したときだけ自分で呼んだ人の近くへ移動し、接続犬も同行する) を、合流の受付箱の交渉を流用して実装する | wip | Codex 相談 → 実装 |
 | [IMP-DOG-004](IMP-DOG-004-leash-models-release.md) | High | 首輪・リードの本制作。PCVR 1 人は合格。2 人・Quest/iOS・座位/木陰の確認待ち | review | PCVR 1 人は合格 (2026-09-20)。残り: 2 人・Quest/iOS・座位/木陰。持ち手の向きは BUG-DOG-002 |
 | [IMP-DOG-017](IMP-DOG-017-frisbee-intercept-solver.md) | High | 小型犬 (Pome / Dachs / Corgi) と Shiba がフリスビーの下に回り込み、振り向いて跳ばずに取るのがほとんど。プランナーは軌道を知っているが、0.1 秒刻みの候補を決まった近づき方で合否判定し、落ちたら次の案へ回すため、跳べる時間帯が短い犬ほど立ち取りに落ちる。投げた瞬間に「どこで何秒後に跳ぶか・どの速さで走るか」を解く方式へ見直す | review | PCVR 3 回目: 大型犬の走り (再生倍率 1.7 で足の滑りが気にならないか)、横曲がり 0.07 の曲がり具合、退役プリセットがメニューから消えているか |
 | [IMP-DOG-018](IMP-DOG-018-frisbee-dog-face.md) | High | フリスビーが誰の (どの犬の) ものか分からない (体験会 2026-09-26)。ディスクの上下面に犬の顔 (シーン内モデルのスクリーンショット 256px) を印字。2026-09-26 実装・撮影・Build・Verify PASS、PCVR / 実機の見え方とユーザーの権利確認待ち | review | PCVR で 3 m 離れて誰のディスクか分かるか、持ったときに顔が消えて離すと戻るか。撮った 6 枚 (Textures/Frisbee) の見た目をユーザーが確認 (首輪の輪が頭の上に写っている)。iOS / Quest は VER-WLD-001 |
@@ -42,6 +43,7 @@
 | [BUG-DOG-004](BUG-DOG-004-destination-per-player.md) | High | 体験会 (2026-09-26、15 人) で「行き先が犬ごとに決まっていて、プレイヤーごとのローカル選択になっていない」と報告。コードは自分の選択を自分の接続犬に写す設計なので、何がどう見えたかを 2 人で再現して切り分ける | todo | 2 人で別の行き先を選び、自分の犬だけが従うか・メニューの点灯が自分の選択を示すかを確認。NG なら Manager Owner 側の ReqDestination / ReqAttach の経路を疑う |
 | [DES-UI-004](DES-UI-004-walk-destinations-and-boards.md) | High | 散歩の目的地・位置と案内／説明ボードの内容・配置・役割を検討する (仮看板は 2026-09-26 に撤去済み)。体験会 (2026-09-26、15 人) で「リードの付け方が分からない、簡単な説明ボードが要る」と報告があり、説明ボードを先に決める | todo | 入口 (スポーン付近) に置く「リードの付け方」の説明ボード 1 枚の文言・位置案を出してユーザー確認。目的地の案内板は後 |
 | [BUG-DOG-005](BUG-DOG-005-ios-disc-colors.md) | Medium | 体験会 (2026-09-26) で iOS 参加者から「フリスビーの色が全部同じ」。ディスクは Standard Lite + _Color で犬別 6 色。iOS 実機で再現し、材質・ビルドのどこで色が落ちるかを特定する | todo | iOS 実機で 6 枚の色を見る。同じなら iOS ビルドの材質 (Standard Lite の _Color、持ち中の Transparent/Diffuse) と Android ビルドとの差を疑う |
+| [BUG-DOG-006](BUG-DOG-006-steal-held-pickup.md) | Medium | 実機 (2026-09-28 夜、7 人) で VRChat の「Attempted to steal ownership of a held pickup.」が 15 件 (22:57:07 に 2 件、22:57:21 に 13 件)。他人が持っているピックアップへ、こちらの端末が SetOwner を呼んでいる。呼び出し元は未特定で、候補はドロップの時間切れ時の ReleaseDisc とメニューの呼び寄せ | todo | 2 人で「犬が Drop でくわえている間に相手がディスクを掴む」「相手が持っているディスクや同じ犬のもう一方のおもちゃを呼び寄せる」を再現し、エラーが出るかを確かめる。出たら SetOwner の直前に HeldNow の検査を足す |
 | [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビーは 1 匹で採用内容を確定 (IMP-DOG-008 完了)。複数ディスク・犬の割当は犬別 6 枚で開発側決定 (2026-09-24、ユーザー確認待ち)。残り: 他のおもちゃの挙動、ボールの柄違いの持たせ方、公開範囲 | todo |  |
 | [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 古民家の有料ライブ購入者の利用と、裏山ライブの開催・再生・競合・復帰を設計する。演目企画は DES-LIV-002 | todo |  |
 | [DES-LIV-002](DES-LIV-002-live-lineup-and-parade.md) | Medium | ハロウィン・Candy Step・ライブパックの裏山向け演目を企画する。散歩道を犬たちがパレードする専用ライブ 1 本を含め、枠・本数・構成を整理 | todo |  |
@@ -51,6 +53,7 @@
 | [IMP-DOG-006](IMP-DOG-006-leashed-treat-approach.md) | Medium | おやつで自分の接続犬の最寄り1匹を呼び、少し待つ間に撫でる/首輪を外す→次の1匹。9/23 操作方針了承、詳細設計・実装は未 | todo |  |
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |  |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo |  |
+| [BUG-DOG-007](BUG-DOG-007-shiba-throw-implausible.md) | Low | 実機 (2026-09-28 夜) で柴のディスクの投げが 22:53〜22:59 に 5 回、`req reject reason=implausible` で断られた。速度・curve は正常で、残る条件は「投げ位置と犬の距離が 200 m を超えた」。柴が遠くにいたか、どこかに引っかかっていた疑い。LogReject は理由を分けていない | todo | `implausible` を条件ごとの理由 (nonfinite / time / speed / far / curve) に分け、far のときは犬の位置と距離をログに出す。次の実機で柴が遠くにいた理由を確かめる |
 | [IMP-DOG-011](IMP-DOG-011-muchio-greeting.md) | Medium | 裏山で空いている犬が、自由行動の一つとしてたまにムチォの匂いを嗅ぎに行く。2026-09-22 保留 (他者のアバターギミック依存・集客寄りの動機)。理由と再検討条件は本文末尾の保留の記録 | hold | 再検討: 「これがあると散歩・犬との体験そのものが良くなる」と Play で感じたとき。集客目的だけでは解除しない |
 | [VER-DOG-001](VER-DOG-001-avatar-pet-contact-research.md) | Medium | 来訪者の無改変が条件。ムチォは既存Senderで対応候補、犬っこは通常時の対象外。静的調査まで完了、IMP-DOG-011 と共に保留 | hold | 再検討: IMP-DOG-011 の保留解除時。静的調査結果は [調査結果](../../plans/2026-09-21-avatar-pet-contact-research.md) に残す |
 | [IMP-ENV-003](IMP-ENV-003-spawn-and-dropped-portals.md) | Low | 参加者が落としたポータルがスポーン地点の真後ろに置かれ、間違って入りそうだった (体験会 2026-09-26)。ユーザーがスポーン周りを手で調整する (2026-09-26 決定)。AI 側の作業は無し | hold | 再検討: ユーザーの手動調整後の体験会でまた真後ろにポータルが置かれたとき。それまで AI は触らない |
@@ -59,8 +62,8 @@
 
 | ID | 重要度 | 概要 | 日付 |
 |----|--------|------|------|
+| [DES-WLD-003](DES-WLD-003-map-and-travel.md) | Medium | 広い周回コースの地図、地点ワープ、プレイヤーへの合流と接続犬の同行を設計する | 2026-09-29 |
 | [DES-DOG-004](DES-DOG-004-river-play-and-floating-fetch.md) | Medium | 小川で犬が入水・浮遊・泳ぐ動作と、浮くボールを泳いで回収する遊びを設計する | 2026-09-27 |
-| [DES-WLD-003](DES-WLD-003-map-and-travel.md) | Medium | 広い周回コースの地図、地点ワープ、プレイヤーへの合流と接続犬の同行を設計する | 2026-09-27 |
 | [DES-ENV-001](DES-ENV-001-terrain-vs-blender.md) | High | 地形を Unity Terrain で作るか Blender で作るか → **Terrain 採用** | 2026-09-22 |
 | [DES-UI-001](DES-UI-001-menu-and-leash-assist.md) | High | 古民家と揃えた手元メニュー (さんぽ / あそぶ / おもちゃ)・接続補助・目的地選択・集合・ボール個別回収 | 2026-09-22 |
 | [IMP-DOG-002](IMP-DOG-002-leash-walking.md) | High | 先端 Pickup → 首輪接続、片手 3 匹・合計 6 匹、接続中の追従、Fetch 競合抑止、退出時解除、途中参加復元 | 2026-09-22 |
