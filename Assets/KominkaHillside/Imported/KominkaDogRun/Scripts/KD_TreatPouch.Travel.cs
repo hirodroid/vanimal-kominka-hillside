@@ -19,7 +19,9 @@ namespace KominkaDogRun
     /// ここは結果を出すだけ (同期変数 0 本)。暗転が明けるまで副画面の入力は受け付けない。本人が移動したら PlaceInFront を 1 回だけ呼ぶ。
     /// さんぽタブ上段の「申し込み 1 件」は、保留中の申し込みがあるときだけ出て、通知板 (KH_TravelNotice) を出し直す。
     /// すべて Course/84・85 が生成・配線する。文言は course.travel.*。
-    /// `_TravelUpper` / `_TravelRiver` (選んで即ワープ) は段階 1 からの入口で、ClientSim ハーネスが使う。</summary>
+    /// `_TravelUpper` / `_TravelRiver` (選んで即ワープ) は段階 1 からの入口で、ClientSim ハーネスが使う。
+    /// IMP-WLD-002 (設計書 §F.2): [人] のときは [ここへワープ] を隠し、フッターに [合流をたのむ] (`_TravelGo`) と [来てもらう] (`_TravelCall`) を横に 2 つ出す。
+    /// 取消は送信済みの要求に作用し、送った方のボタンだけが [取り消す] になる (もう一方は押しても何もしない)。</summary>
     public partial class KD_TreatPouch
     {
         [Header("地図と移動 (IMP-WLD-001 段階 2。Course/84 が配線する)")]
@@ -57,6 +59,10 @@ namespace KominkaDogRun
         public GameObject travelJoinPendingButton;       // Page_Walk の上段 (保留中だけ出す)
         public TextMeshProUGUI travelJoinPendingLabel;
         public KominkaHillside.KH_TravelNotice travelNotice;
+        [Header("呼ぶ (IMP-WLD-002。Course/85 が配線する)")]
+        public GameObject travelAskButton, travelCallButton;   // [人] のフッター (245×90 × 2)
+        public UnityEngine.UI.Image travelAskImage, travelCallImage;
+        public TextMeshProUGUI travelAskLabel, travelCallLabel;
 
         // KH_LeashManager.SpotUpper / SpotRiver と、その呼び名 (行き先の行と同じキー)。地図の番号 (1〜6 = 地点の並び + 1)
         private int[] _travelSpots = { 2, 4 };
@@ -132,18 +138,35 @@ namespace KominkaDogRun
             if (TravelCancelable())
             {
                 KominkaHillside.KH_TravelMailbox mine = TravelMyBox();
+                // [人] の [合流をたのむ] は、送ったのが呼ぶなら何もしない (取消は [来てもらう] の側。§F.2)
+                if (_travelMode == 1 && mine != null && mine._WaitingFor() >= 0 && mine._OutKind() == KominkaHillside.KH_TravelMailbox.KindCall) return;
                 if (mine != null && mine._JoinCancelable()) mine._CancelJoinRequest();
                 else manager._TravelCancel();
                 TravelMapRedraw();
                 return;
             }
             if (TravelInputLocked()) return;
-            if (_travelMode == 1) { JoinGo(); return; }
+            if (_travelMode == 1) { JoinGo(KominkaHillside.KH_TravelMailbox.KindJoin); return; }
             if (_travelPick < 0) { HillsideNote(TabWalk, "course.travel.map.pick", ""); TravelMapRedraw(); return; }
             TravelPress(_travelPick);
         }
 
-        /// <summary>「合流の申し込みを受ける」の切替。ローカル専用。</summary>
+        /// <summary>[人] のフッターの [来てもらう] / 呼ぶの返事待ちの [取り消す]。ローカル専用。</summary>
+        public void _TravelCall()
+        {
+            KominkaHillside.KH_TravelMailbox box = TravelMyBox();
+            if (box != null && box._JoinCancelable())
+            {
+                // 取消は送信済みの呼ぶにだけ作用する (合流の返事待ち・移動中は何もしない)
+                if (box._WaitingFor() >= 0 && box._OutKind() == KominkaHillside.KH_TravelMailbox.KindCall) { box._CancelJoinRequest(); TravelMapRedraw(); }
+                return;
+            }
+            if (TravelInputLocked() || _travelMode != 1) return;
+            if (manager != null && manager._TravelCancelable()) return;
+            JoinGo(KominkaHillside.KH_TravelMailbox.KindCall);
+        }
+
+        /// <summary>「合流・呼び出しを受ける」の切替。ローカル専用。</summary>
         public void _TravelToggleAccept()
         {
             KominkaHillside.KH_TravelMailbox box = TravelMyBox();
@@ -319,14 +342,14 @@ namespace KominkaDogRun
             TravelMapRedraw();
         }
 
-        private void JoinGo()
+        private void JoinGo(int kind)
         {
             KominkaHillside.KH_TravelMailbox box = TravelMyBox();
             if (box == null) { HillsideNote(TabWalk, "course.travel.join.notReady", ""); TravelMapRedraw(); return; }
             if (box._JoinCancelable()) { box._CancelJoinRequest(); TravelMapRedraw(); return; }
             if (_joinPick < 0) { HillsideNote(TabWalk, "course.travel.join.pick", ""); TravelMapRedraw(); return; }
             _travelArrived = false; _travelPlaced = false;
-            JoinNote(box._RequestJoin(_joinPick), box);
+            JoinNote(box._Request(_joinPick, kind), box);
             _joinSeenSerial = box.joinResultSerial;
             TravelMapRedraw();
         }
@@ -345,6 +368,13 @@ namespace KominkaDogRun
             else if (code == KominkaHillside.KH_TravelMailbox.CodeNo) key = "course.travel.join.code0";
             else if (code == KominkaHillside.KH_TravelMailbox.CodeBusy) key = "course.travel.join.code2";
             else if (code == KominkaHillside.KH_TravelMailbox.JoinMeasuring) key = "course.travel.map.moving";
+            else if (code == KominkaHillside.KH_TravelMailbox.CallComing) { key = "course.travel.call.coming"; arg = JoinName(box.joinResultTarget); }
+            else if (code == KominkaHillside.KH_TravelMailbox.CallArrived) { key = "course.travel.call.arrived"; arg = JoinName(box.joinResultTarget); }
+            else if (code == KominkaHillside.KH_TravelMailbox.CallNotComing) key = "course.travel.call.notcoming";
+            else if (code == KominkaHillside.KH_TravelMailbox.CallUnknown) key = "course.travel.call.unknown";
+            else if (code == KominkaHillside.KH_TravelMailbox.CallCanceledBy) { key = "course.travel.call.canceledby"; arg = JoinName(box.joinResultTarget); }
+            else if (code == KominkaHillside.KH_TravelMailbox.CrossYield) key = "course.travel.call.crossyield";
+            else if (code == KominkaHillside.KH_TravelMailbox.AnswerFirst) key = "course.travel.call.answerfirst";
             else if (code == KominkaHillside.KH_TravelMailbox.JoinStartFailed) { TravelNote(box.joinTravelCode, -1); return; }   // W3 レビュー 4: 始められなかった理由
             else if (code == KominkaHillside.KH_TravelMailbox.JoinStarted)
             {
@@ -357,6 +387,12 @@ namespace KominkaDogRun
                 _joinReasonKey = key; _joinReasonUntil = Time.time + 60f;   // 移動が終わるまで + 着いた後もしばらくフッターに出す
             }
             HillsideNote(TabWalk, key, arg);
+        }
+
+        private string JoinName(int playerId)
+        {
+            VRCPlayerApi p = VRCPlayerApi.GetPlayerById(playerId);
+            return Utilities.IsValid(p) ? p.displayName : "?";
         }
 
         // ============================================================
@@ -407,7 +443,10 @@ namespace KominkaDogRun
                 else HillsideNote(TabWalk, "course.travel.dogs", TravelSpotName(spot));
             }
             else if (box != null && box._WaitingFor() >= 0)
-                HillsideNote(TabWalk, "course.travel.join.waiting", Mathf.CeilToInt(box._WaitLeft()).ToString());
+            {
+                if (box._OutPhase() == 1) HillsideNote(TabWalk, "course.travel.call.coming", JoinName(box._WaitingFor()));
+                else HillsideNote(TabWalk, "course.travel.join.waiting", Mathf.CeilToInt(box._WaitLeft()).ToString());
+            }
             if (panelRoot == null || !panelRoot.activeSelf) return;
             if (TravelMapOpen())
             {
@@ -429,7 +468,7 @@ namespace KominkaDogRun
             KominkaHillside.KH_TravelMailbox box = TravelMyBox();
             bool pending = box != null && box._IncomingFrom() >= 0;
             if (travelJoinPendingButton != null && travelJoinPendingButton.activeSelf != pending) travelJoinPendingButton.SetActive(pending);
-            if (pending && travelJoinPendingLabel != null) travelJoinPendingLabel.text = L("course.travel.join.pending");
+            if (pending && travelJoinPendingLabel != null) travelJoinPendingLabel.text = L(box._IncomingKind() == KominkaHillside.KH_TravelMailbox.KindCall ? "course.travel.call.pending" : "course.travel.join.pending");
         }
 
         /// <summary>副画面。開いている間は 10 Hz で呼ばれる (自分の位置と向きもここで動かす)。</summary>
@@ -502,7 +541,9 @@ namespace KominkaDogRun
                     string place = travelNotice != null ? L("course.travel.join.near").Replace("{0}", travelNotice._NearestSpotName(p.GetPosition())) : "";
                     // 2 段: 1 行目 = 表示名 (長ければ … で切る)、2 行目 = 最寄りの地点・距離・状態 (81 の測定で幅が足りなかったため)
                     string text = p.displayName + "\n" + place + "  " + TravelDistanceText(p.GetPosition(), me);
-                    if (theirs == null) text += "  (" + L("course.travel.join.notReady") + ")";
+                    // 返事待ちの行は 2 行目を置き換える (§F.2)
+                    if (waitingFor == _joinIds[i]) text = p.displayName + "\n" + (box._OutPhase() == 1 ? L("course.travel.call.onway") : L("course.travel.join.waiting").Replace("{0}", Mathf.CeilToInt(box._WaitLeft()).ToString()));
+                    else if (theirs == null) text += "  (" + L("course.travel.join.notReady") + ")";
                     else if (!theirs.accepting) text += "  (" + L("course.travel.join.notAccepting") + ")";
                     if (travelPeopleLabels != null && i < travelPeopleLabels.Length && travelPeopleLabels[i] != null && travelPeopleLabels[i].text != text) travelPeopleLabels[i].text = text;
                     Color tint = waitingFor == _joinIds[i] ? openOnColor : (_joinPick == _joinIds[i] ? equipOnColor : (theirs == null || !theirs.accepting ? recallOffColor : hillsideNeutralColor));
@@ -563,14 +604,31 @@ namespace KominkaDogRun
                 }
                 travelGoLabel.text = go;
             }
+            KominkaHillside.KH_TravelMailbox pickedBox = null;
+            int pickRow = _joinPick >= 0 ? JoinRowOf(_joinPick) : -1;
+            if (pickRow >= 0) pickedBox = _joinBoxes[pickRow];
+            bool peopleReady = pickedBox != null && pickedBox.accepting && !busy && left <= 0f;   // 準備中・受付 OFF の相手には暗くする (押すと理由が出る)
             if (travelGoImage != null)
             {
-                KominkaHillside.KH_TravelMailbox pickedBox = null;
-                int pickRow = _joinPick >= 0 ? JoinRowOf(_joinPick) : -1;
-                if (pickRow >= 0) pickedBox = _joinBoxes[pickRow];
-                bool peopleReady = pickedBox != null && pickedBox.accepting && !busy && left <= 0f;   // 準備中・受付 OFF の相手には暗くする (押すと理由が出る)
                 bool ready = moving || (people ? (waitingFor >= 0 || peopleReady) : (!busy && left <= 0f && _travelPick >= 0));
                 travelGoImage.color = ready ? equipOnColor : recallOffColor;
+            }
+            // [人] のフッター: [合流をたのむ] [来てもらう] (§F.2)。[ここへワープ] は [地点] のときだけ
+            if (travelAskButton != null)
+            {
+                if (travelGoImage != null && travelGoImage.gameObject.activeSelf == people) travelGoImage.gameObject.SetActive(!people);
+                if (travelAskButton.activeSelf != people) travelAskButton.SetActive(people);
+                if (travelCallButton != null && travelCallButton.activeSelf != people) travelCallButton.SetActive(people);
+                if (people)
+                {
+                    bool callSent = box != null && box._WaitingFor() >= 0 && box._OutKind() == KominkaHillside.KH_TravelMailbox.KindCall;
+                    bool askCancel = moving && !callSent;
+                    string cancel = L("course.travel.join.cancel").Replace("{0}", Mathf.CeilToInt(joinCancel ? box._CancelLeft() : manager._TravelWaitLeft()).ToString());
+                    if (travelAskLabel != null) travelAskLabel.text = askCancel ? cancel : L("course.travel.join.ask");
+                    if (travelCallLabel != null) travelCallLabel.text = callSent ? cancel : L("course.travel.call.ask");
+                    if (travelAskImage != null) travelAskImage.color = askCancel || (!moving && peopleReady) ? equipOnColor : recallOffColor;
+                    if (travelCallImage != null) travelCallImage.color = callSent || (!moving && peopleReady) ? equipOnColor : recallOffColor;
+                }
             }
             if (travelStatusLabel != null) travelStatusLabel.text = HillsideNoteOr(TabWalk, "");
         }

@@ -5,7 +5,7 @@ system: WLD
 status: wip
 priority: Medium
 summary: 在室の 1 人を呼ぶ ([来てもらう]。呼ばれた人が [行く] を押したときだけ自分で呼んだ人の近くへ移動し、接続犬も同行する) を、合流の受付箱の交渉を流用して実装する
-next: Codex 相談 → 実装
+next: 統括が コンパイル (--udon) → Course/85 → Course/27 → Course/81 (TRAVEL_OK) → Course/82c を 1 回 (TRAVEL_CALL_PASS) → 同じ版で 82・82b の回帰。その後 PCVR (設計書 §F.7 #10〜#15)
 updated: 2026-09-29
 ---
 
@@ -15,20 +15,32 @@ updated: 2026-09-29
 
 決定: 2026-09-29 (ユーザー。1 人を呼ぶ。呼ばれた人が自分で移動し、誰も他人に動かされない)
 
+決定: 2026-09-29 (Codex 相談。設計書 §F 第 2 版: 入口は `ReqCall(int)` を別に足す、呼ぶの返事は準備中 (4) → 到着 (1) / 中止 (5) の 2 段、承認は (送り主, seq, 種類, 世代) に固定、交差は確定優先 → playerId の小さい方、30 秒は拒否だけ、受付 OFF は新規だけ止める)
+
 ## 要点 (正本は設計書 §F)
 
-- R が [人] の一覧で T を選び、フッターの [来てもらう] を押す。T の通知板に「○○さんが呼んでいます [行く] [今は行かない]」。T が [行く] を押し、着地点の検査 (§D.3、基準は R) を通ったときだけ T が自分で移動する。T の接続犬は合流と同じ切符で同行する。
-- 通信は `ReqJoin(int seq)` を `ReqJoin(int seq, int kind)` に置き換えるだけ。`AnsJoin` / `CancelJoin` と同期変数 (`accepting` 1 本) は変えない。受け付けの設定は「合流・呼び出しを受ける」の 1 つ。
-- 同じ送り主から種類が変わったら差し替え、互いに申し込んだら playerId の小さい側だけ残す、T の移動中は R の取消が勝つ。
+- R が [人] の一覧で T を選び、フッターの [来てもらう] を押す。T の通知板に「○○さんが呼んでいます [行く] [今は行かない]」。T が [行く] を押し、T の端末で移動を始められたときだけ T が自分で移動する。T の接続犬は合流と同じ切符で同行する。R は動かない。
+- ネットワークから呼べるのは `ReqJoin(int)` / `ReqCall(int)` / `AnsJoin(int, int)` / `CancelJoin(int)` の 4 つ。同期変数は `accepting` 1 本のまま。受け付けの設定は「合流・呼び出しを受ける」の 1 つ。
 
 ## 段階と完了条件
 
-- [ ] Codex 相談 (`vrc-review` 相談モード): 設計書 §F の通信の変更・差し替え・交差の規則・T が暗転中に取り消したときの R の表示・水中の犬への切符。
-- [ ] 実装: `KH_TravelMailbox.cs`・`KH_TravelNotice.cs`・`KD_TreatPouch.Travel.cs`・Course/85 (フッターの 2 つのボタン・通知板)・Course/81 の門番・文言 (13 言語と Course/27 の字形)。見積りは設計書 §F.8。
-- [ ] コンパイルのエラーが 0。`_` の規約の検査を通す (ネットワークから呼べるのは `ReqJoin` / `AnsJoin` / `CancelJoin` の 3 つのまま)。Verify で、2 つのボタンと通知板の配線・文言の収まり・欠けた字 0・試験用の値が 0 / -1。
-- [ ] ClientSim: Course/82c の C1〜C8 が PASS (設計書 §F.6)。既存の Course/82・82b が引き続き PASS。
+- [x] Codex 相談 (`vrc-review` 相談モード)。指摘は設計書 §F 第 2 版に反映した。
+- [x] 実装 (下の「実装 (2026-09-29)」)。C#・翻訳表・ハーネスまで。シーンの再生成は統括。
+- [ ] コンパイルのエラーが 0 (`unity-compile.sh --udon`)。Course/85 → Course/27 → Course/81 が `TRAVEL_OK` (新しい 2 つのボタン・通知板のボタン 2 つと理由の行の配線とイベント、13 言語の収まり、ネットワーク入口の名前と署名、試験用の値が 0)。
+- [ ] ClientSim: Course/82c が `TRAVEL_CALL_PASS` (設計書 §F.6 の期待表。C7-wet は除く)。同じ版で Course/82 (`TRAVEL_OBSERVED`)・82b (`TRAVEL_RC_OBSERVED`) が通る。
+- [ ] C7-wet (陸で接続した犬が濡れてから [行く]): 到達手順を Edit で確かめてから 82c に足す。
 - [ ] PCVR 2〜3 人: 設計書 §F.7 の #10〜#15 (ユーザー)。
 - [ ] Quest / iOS の Touch で 2 つのボタンと通知板の [行く] [今は行かない] を押し分けられる ([VER-WLD-001](VER-WLD-001-quest-ios-devices.md) の回)。
+
+## 実装 (2026-09-29、未コンパイル・未検証)
+
+- `Assets/KominkaHillside/Scripts/KH_TravelMailbox.cs`: `ReqCall` と共通の `Receive` / `ReceiveCancel`、送り主ごとの見た最大の seq、世代と 0.5 秒、種類の差し替え、交差 (確定優先 → playerId、`debugCrossInvert`)、R の 2 段の期限 (返事 22 秒・到着 20 秒、無応答は `CallUnknown`)、T の [行く] (測定 → 着地点 → `_TravelBeginJoin` → code 4、Manager の結果で code 1 / 5)、`CancelJoin` の照合先に「呼ばれて移動中」を追加、試験用の入口 (`debugIncomingFrom/Kind/Seq`・`_DebugIncomingNow`・`_DebugIncomingCancelNow`・`debugReply*`)。合流の既存の動き (承認・測定・30 秒・T9/T10/T12) は変えない。
+- `Assets/KominkaHillside/Scripts/KH_TravelNotice.cs`: 種類ごとのボタン実体 (`joinButtons` / `callButtons`)、世代つきの押下 (`_Yes/_No/_Go/_NotNow`)、呼ぶの題と犬の数、理由の行。
+- `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_TreatPouch.Travel.cs`: [人] のフッターの [合流をたのむ] / [来てもらう] (`_TravelCall`)、取消は送った側のボタンだけ、返事待ちの行の 2 行目、結果の文言、印「呼ばれています」。
+- `Assets/KominkaHillside/Scripts/Editor/KH_CourseTravelJoinEditor.cs`: Course/85 の生成・配線 (`JoinAsk` / `JoinCall`、`Button4` / `Button5`、`Reason`、自動縮小) と Course/81 の検査 (配線・イベント・装飾の Raycast・Canvas の条件・ネットワーク入口・試験用の値・13 言語の収まり)。
+- `Assets/KominkaHillside/Scripts/Editor/KH_CourseTravelEditor.cs`: ビルドの門番に新しい試験用の値。
+- `Assets/KominkaHillside/Data/Environment/Course/CourseUITranslations.json`: `course.travel.call.*` 13 キーと設定の文言 2 つ × 13 言語。
+- `Assets/KominkaHillside/Scripts/Editor/Testing/KH_CourseWalkHarnessEditor.Call.cs` (新) ほか: Course/82c (C0 準備・R 側 4・T 側 C1〜C8・C9 片付け)。`[KH_Join]` のログも取り込む。[人] の実行ボタンの表示は [合流をたのむ] から読む (82・82b の T9 の表示の比較)。
 
 ## 関連
 

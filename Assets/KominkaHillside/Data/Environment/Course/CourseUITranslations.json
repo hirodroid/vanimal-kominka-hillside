@@ -230,11 +230,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "合流の申し込みを受ける: ON"
+          "text": "合流・呼び出しを受ける: ON"
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "合流の申し込みを受ける: OFF"
+          "text": "合流・呼び出しを受ける: OFF"
         },
         {
           "key": "course.travel.join.waiting",
@@ -363,6 +363,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "ここでは不可"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "来てもらう"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} さんが呼んでいます"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "行く"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "今は行かない"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "呼ばれています"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} さんが来ます"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} さんが着きました"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "今は来られないようです"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "結果を確認できませんでした"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} さんが取り消しました"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "こちらへ向かっています"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "相手からの申し込みを先に表示します"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "相手からの申し込みに先に答えてください"
         }
       ]
     },
@@ -593,11 +645,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "Accept join requests: ON"
+          "text": "Accept join/call requests: ON"
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "Accept join requests: OFF"
+          "text": "Accept join/call requests: OFF"
         },
         {
           "key": "course.travel.join.waiting",
@@ -726,6 +778,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "Not here"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "Ask to come"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} is calling you over"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "Go"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "Not now"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "Someone is calling you"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} is coming"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} has arrived"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "They cannot come right now"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "Could not confirm the result"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} cancelled"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "On the way to you"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "Showing their request first"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "Answer their request first"
         }
       ]
     },
@@ -956,11 +1060,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "Принимать запросы: ВКЛ"
+          "text": "Принимать запросы и вызовы: ВКЛ"
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "Принимать запросы: ВЫКЛ"
+          "text": "Принимать запросы и вызовы: ВЫКЛ"
         },
         {
           "key": "course.travel.join.waiting",
@@ -1089,6 +1193,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "Здесь нельзя"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "Позвать"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} зовёт вас"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "Иду"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "Не сейчас"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "Вас зовут"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} идёт к вам"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} на месте"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "Сейчас прийти не получится"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "Не удалось узнать результат"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} отменил(а)"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "Идёт к вам"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "Сначала их запрос"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "Сначала ответьте им"
         }
       ]
     },
@@ -1319,11 +1475,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "Приймати запити: УВІМК"
+          "text": "Приймати запити й виклики: УВІМК"
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "Приймати запити: ВИМК"
+          "text": "Приймати запити й виклики: ВИМК"
         },
         {
           "key": "course.travel.join.waiting",
@@ -1452,6 +1608,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "Тут не можна"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "Покликати"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} кличе вас"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "Іду"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "Не зараз"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "Вас кличуть"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} іде до вас"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} на місці"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "Зараз прийти не вийде"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "Не вдалося дізнатися результат"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} скасував(ла)"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "Іде до вас"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "Спершу їхній запит"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "Спершу дайте відповідь"
         }
       ]
     },
@@ -1682,11 +1890,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "합류 요청 받기: ON"
+          "text": "합류·호출 받기: ON"
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "합류 요청 받기: OFF"
+          "text": "합류·호출 받기: OFF"
         },
         {
           "key": "course.travel.join.waiting",
@@ -1815,6 +2023,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "여기선 불가"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "부르기"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} 님이 부르고 있어요"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "갈게요"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "지금은 안 가요"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "부르고 있어요"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} 님이 와요"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} 님이 도착했어요"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "지금은 올 수 없대요"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "결과를 확인하지 못했어요"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} 님이 취소했어요"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "오고 있어요"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "상대의 요청을 먼저 보여 줄게요"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "상대의 요청에 먼저 답해 주세요"
         }
       ]
     },
@@ -2045,11 +2305,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "Anfragen annehmen: AN"
+          "text": "Anfragen und Rufe annehmen: AN"
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "Anfragen annehmen: AUS"
+          "text": "Anfragen und Rufe annehmen: AUS"
         },
         {
           "key": "course.travel.join.waiting",
@@ -2178,6 +2438,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "Hier nicht"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "Herbitten"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} ruft dich"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "Hingehen"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "Jetzt nicht"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "Du wirst gerufen"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} kommt"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} ist da"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "Gerade kann niemand kommen"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "Ergebnis unbekannt"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} hat abgesagt"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "Ist unterwegs"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "Zuerst ihre Anfrage"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "Beantworte zuerst die Anfrage"
         }
       ]
     },
@@ -2408,11 +2720,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "接受会合请求：开"
+          "text": "接受会合和呼叫：开"
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "接受会合请求：关"
+          "text": "接受会合和呼叫：关"
         },
         {
           "key": "course.travel.join.waiting",
@@ -2541,6 +2853,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "此处不可"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "请对方过来"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} 在叫你过去"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "过去"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "现在不去"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "有人在叫你"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} 要过来了"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} 到了"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "对方现在来不了"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "无法确认结果"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} 取消了"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "正在过来"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "先显示对方的请求"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "请先回复对方的请求"
         }
       ]
     },
@@ -2771,11 +3135,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "Aceptar solicitudes: SÍ"
+          "text": "Aceptar solicitudes y llamadas: SÍ"
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "Aceptar solicitudes: NO"
+          "text": "Aceptar solicitudes y llamadas: NO"
         },
         {
           "key": "course.travel.join.waiting",
@@ -2904,6 +3268,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "Aquí no"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "Pedir que venga"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} te llama"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "Ir"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "Ahora no"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "Te están llamando"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} viene"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} ha llegado"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "Ahora no puede venir"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "No se pudo confirmar"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} lo canceló"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "De camino"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "Primero su solicitud"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "Responde primero"
         }
       ]
     },
@@ -3134,11 +3550,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "Accepter les demandes : OUI"
+          "text": "Accepter demandes et appels : OUI"
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "Accepter les demandes : NON"
+          "text": "Accepter demandes et appels : NON"
         },
         {
           "key": "course.travel.join.waiting",
@@ -3267,6 +3683,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "Pas ici"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "Faire venir"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} t’appelle"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "J’y vais"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "Pas maintenant"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "On t’appelle"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} arrive"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} est là"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "Pas possible de venir"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "Résultat inconnu"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} a annulé"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "En route"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "Leur demande d’abord"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "Réponds d’abord"
         }
       ]
     },
@@ -3497,11 +3965,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "Aceitar pedidos: SIM"
+          "text": "Aceitar pedidos e chamados: SIM"
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "Aceitar pedidos: NÃO"
+          "text": "Aceitar pedidos e chamados: NÃO"
         },
         {
           "key": "course.travel.join.waiting",
@@ -3630,6 +4098,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "Aqui não"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "Pedir para vir"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} está chamando você"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "Ir"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "Agora não"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "Estão chamando você"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} está vindo"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} chegou"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "Não dá para vir agora"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "Não foi possível confirmar"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} cancelou"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "A caminho"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "Primeiro o pedido deles"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "Responda primeiro"
         }
       ]
     },
@@ -3860,11 +4380,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "Accetta richieste: SÌ"
+          "text": "Accetta richieste e chiamate: SÌ"
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "Accetta richieste: NO"
+          "text": "Accetta richieste e chiamate: NO"
         },
         {
           "key": "course.travel.join.waiting",
@@ -3993,6 +4513,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "Non qui"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "Chiedi di venire"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} ti chiama"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "Vado"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "Non ora"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "Ti stanno chiamando"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} sta arrivando"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} è qui"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "Ora non può venire"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "Esito non confermato"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} ha annullato"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "In arrivo"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "Prima la sua richiesta"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "Rispondi prima"
         }
       ]
     },
@@ -4223,11 +4795,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "Przyjmuj prośby: WŁ."
+          "text": "Przyjmuj prośby i wezwania: WŁ."
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "Przyjmuj prośby: WYŁ."
+          "text": "Przyjmuj prośby i wezwania: WYŁ."
         },
         {
           "key": "course.travel.join.waiting",
@@ -4356,6 +4928,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "Nie tutaj"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "Zaproś"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} woła cię"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "Idę"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "Nie teraz"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "Ktoś cię woła"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} idzie do ciebie"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} już jest"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "Teraz nie da się przyjść"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "Nie udało się potwierdzić"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} anulował(a)"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "W drodze"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "Najpierw ich prośba"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "Najpierw odpowiedz"
         }
       ]
     },
@@ -4590,11 +5214,11 @@
         },
         {
           "key": "course.travel.join.accept.on",
-          "text": "接受會合請求：開"
+          "text": "接受會合和呼叫：開"
         },
         {
           "key": "course.travel.join.accept.off",
-          "text": "接受會合請求：關"
+          "text": "接受會合和呼叫：關"
         },
         {
           "key": "course.travel.join.waiting",
@@ -4723,6 +5347,58 @@
         {
           "key": "course.toy.discAreaState",
           "text": "呢度唔得"
+        },
+        {
+          "key": "course.travel.call.ask",
+          "text": "請對方過來"
+        },
+        {
+          "key": "course.travel.call.notice.title",
+          "text": "{0} 在叫你過去"
+        },
+        {
+          "key": "course.travel.call.notice.go",
+          "text": "過去"
+        },
+        {
+          "key": "course.travel.call.notice.notnow",
+          "text": "現在不去"
+        },
+        {
+          "key": "course.travel.call.pending",
+          "text": "有人在叫你"
+        },
+        {
+          "key": "course.travel.call.coming",
+          "text": "{0} 要過來了"
+        },
+        {
+          "key": "course.travel.call.arrived",
+          "text": "{0} 到了"
+        },
+        {
+          "key": "course.travel.call.notcoming",
+          "text": "對方現在來不了"
+        },
+        {
+          "key": "course.travel.call.unknown",
+          "text": "無法確認結果"
+        },
+        {
+          "key": "course.travel.call.canceledby",
+          "text": "{0} 取消了"
+        },
+        {
+          "key": "course.travel.call.onway",
+          "text": "正在過來"
+        },
+        {
+          "key": "course.travel.call.crossyield",
+          "text": "先顯示對方的請求"
+        },
+        {
+          "key": "course.travel.call.answerfirst",
+          "text": "請先回覆對方的請求"
         }
       ]
     }

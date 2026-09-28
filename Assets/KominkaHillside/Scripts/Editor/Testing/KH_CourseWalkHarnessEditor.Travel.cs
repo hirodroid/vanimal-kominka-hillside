@@ -26,12 +26,13 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Course/82b - Walk Harness Travel RC cases (T6b, T12, T9 new)")]
         public static void TravelRc() { BeginTravel(false, true); }
 
-        static void BeginTravel(bool full, bool rc = false)
+        static void BeginTravel(bool full, bool rc = false, bool call = false)
         {
             Begin(full);
             report.travelOnly = true;
             report.travelRc = rc;
-            report.deadline = EditorApplication.timeSinceStartup + (full ? 2700 : rc ? 1200 : 600);   // 破壊監査 RC-01/02/06/07 のケースで 6 本増えた
+            report.travelCall = call;   // IMP-WLD-002 Course/82c (KH_CourseWalkHarnessEditor.Call.cs)
+            report.deadline = EditorApplication.timeSinceStartup + (full ? 2700 : rc ? 1200 : call ? 1800 : 600);   // 破壊監査 RC-01/02/06/07 のケースで 6 本増えた
             report.limitations = "Single local ClientSim: the local player is requester, Manager Owner and every dog Owner (the same-Owner contract of design B.4). "
                 + "Owner handover (T5/T6), late answers (T3), non-Owner/forged requests (T8) and departure (T9) are SIMULATED through debug hooks on KH_LeashManager and runtime heap writes; see each case's notes. "
                 + "CallingPlayer is always local. No real network order, VRCObjectSync latency, late joiner, fade (stage 2) or join (stage 3). Holder walks by short TeleportTo steps.";
@@ -97,8 +98,8 @@ namespace KominkaHillside.Editor
             var warp = Get<bool[]>(manager, "spotWarpEnabled");
             if (spots == null || spots.Length != 6 || warp == null || warp.Count(w => w) != 2 || !warp[KH_LeashManager.SpotUpper] || !warp[KH_LeashManager.SpotRiver])
                 throw new InvalidOperationException("Travel spots not built (run Course/80 and 81 first)");
-            var configs = report.travelRc
-                ? new[] { ("RC-setup-dogs-3-L3", new[] { 0, 1, 2 }, new[] { 0, 0, 0 }) }
+            var configs = report.travelRc || report.travelCall
+                ? new[] { (report.travelCall ? "C-setup-dogs-3-L3" : "RC-setup-dogs-3-L3", new[] { 0, 1, 2 }, new[] { 0, 0, 0 }) }
                 : report.full
                 ? new[] { ("T1-dogs-1-L1", new[] { 0 }, new[] { 0 }), ("T1-dogs-3-L3", new[] { 0, 1, 2 }, new[] { 0, 0, 0 }), ("T1-dogs-3-L2R1", new[] { 0, 1, 2 }, new[] { 0, 0, 1 }), ("T1-dogs-6-L3R3", new[] { 0, 1, 2, 3, 4, 5 }, new[] { 0, 0, 0, 1, 1, 1 }) }
                 : new[] { ("T1-dogs-1-L1", new[] { 0 }, new[] { 0 }) };
@@ -110,6 +111,7 @@ namespace KominkaHillside.Editor
                 TvSetup(s, dogs, hands);
                 TvMove(s, "_TravelUpper", KH_LeashManager.SpotUpper, mask, true);
                 if (report.travelRc) { s.Add(TvDo(() => TvNote("Course/82b setup: dogs 0-2 on the left hand, one move to the upper plaza (same attach state as the full run before the RC cases)"))); continue; }
+                if (report.travelCall) { s.Add(TvDo(() => TvNote("Course/82c setup: dogs 0-2 on the left hand, one move to the upper plaza"))); continue; }
                 TvMove(s, "_TravelRiver", KH_LeashManager.SpotRiver, mask, true);
                 TvMove(s, "_TravelUpper", KH_LeashManager.SpotUpper, mask, true);
                 s.Add(TvDo(() => TvNote("non-warp spots: spotWarpEnabled has only upper/river; the menu has only _TravelUpper/_TravelRiver. Their common checks 1-4 are certified statically by Course/81.")));
@@ -117,6 +119,11 @@ namespace KominkaHillside.Editor
             if (report.travelRc)
             {
                 TvRcCases();
+                return;
+            }
+            if (report.travelCall)
+            {
+                MakeCallCases();
                 return;
             }
             if (report.full)
@@ -491,10 +498,12 @@ namespace KominkaHillside.Editor
             pouch.SendCustomEvent("_TravelGo");
         }
 
-        /// <summary>実行ボタンの表示 (TMP の text)。</summary>
+        /// <summary>実行ボタンの表示 (TMP の text)。[人] のときは [合流をたのむ] (IMP-WLD-002 で [ここへワープ] は [地点] のときだけになった)。</summary>
         static string TvGoLabel()
         {
-            object o; if (!pouch.TryGetProgramVariable("travelGoLabel", out o) || !(o is Component comp) || comp == null) return "";
+            object mode; string field = "travelGoLabel";
+            if (pouch.TryGetProgramVariable("_travelMode", out mode) && mode is int m && m == 1 && pouch.TryGetProgramVariable("travelAskLabel", out object ask) && ask is Component ac && ac != null) field = "travelAskLabel";
+            object o; if (!pouch.TryGetProgramVariable(field, out o) || !(o is Component comp) || comp == null) return "";
             var p = comp.GetType().GetProperty("text"); return p == null ? "" : (string)p.GetValue(comp);
         }
 
@@ -1037,13 +1046,30 @@ namespace KominkaHillside.Editor
                 WriteTravel(); Save();
                 tvStep = 0;
                 if (caseIndex + 1 == report.cases.Count)
-                    End(report.travelRc ? "TRAVEL_RC_OBSERVED" : report.full ? "TRAVEL_OBSERVED" : "TRAVEL_QUICK_OBSERVED", "Local ClientSim travel cases passed (same-Owner contract; handover/late/forged/leave are simulated). Not network, device or PCVR acceptance.");
+                    End(report.travelCall ? (tvCallFailed ? "TRAVEL_CALL_FAIL" : "TRAVEL_CALL_PASS") : report.travelRc ? "TRAVEL_RC_OBSERVED" : report.full ? "TRAVEL_OBSERVED" : "TRAVEL_QUICK_OBSERVED", "Local ClientSim travel cases passed (same-Owner contract; handover/late/forged/leave are simulated). Not network, device or PCVR acceptance.");
                 else Next();
             }
             catch (Exception e)
             {
                 if (tvReport != null && caseIndex >= 0 && caseIndex < tvReport.cases.Count) { tvReport.cases[caseIndex].status = "FAIL"; tvReport.cases[caseIndex].notes.Add("FAIL at step " + tvStep + ": " + e.Message); tvReport.cases[caseIndex].notes.Add("at: " + TvWhere(e)); }
                 try { WriteTravel(); } catch { }
+                // 82c (IMP-WLD-002): ケースの失敗は FAIL に記録して次のケースへ進む (片付けの C11 まで流す)。台本が失われたときは止める
+                if (report != null && report.travelCall && tvScripts != null && caseIndex >= 0 && caseIndex < tvScripts.Count && Current != null)
+                {
+                    tvCallFailed = true;
+                    Current.status = "FAIL"; Current.endedAt = now; Current.reason = e.GetType().Name + ": " + e.Message;
+                    try
+                    {
+                        TvSet("debugDropTravel", 0); tvPuppetWalk = false;
+                        if (tvFade != null) tvFade.SetProgramVariable("fadeOutSeconds", 0.2f);
+                        var box = TvMyBox(); if (box != null) box.SetProgramVariable("debugCrossInvert", 0);
+                    }
+                    catch { }
+                    tvStep = 0; Save();
+                    if (caseIndex + 1 == report.cases.Count) End("TRAVEL_CALL_FAIL", "One or more 82c cases failed; see travel.json");
+                    else Next();
+                    return;
+                }
                 throw;
             }
         }
@@ -1133,7 +1159,7 @@ namespace KominkaHillside.Editor
         static void TravelLog(string condition, string stack, LogType type)
         {
             if (report == null || !report.travelOnly || !EditorApplication.isPlaying) return;
-            if (condition.StartsWith("[KH_Leash]")) tvLogs.Add(condition);
+            if (condition.StartsWith("[KH_Leash]") || condition.StartsWith("[KH_Join]")) tvLogs.Add(condition);   // [KH_Join] は 82c の順序の検査 (IMP-WLD-002)
         }
 
         static void WriteTravel()

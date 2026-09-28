@@ -455,7 +455,7 @@ namespace KominkaHillside.Editor
             {
                 if (m.route == null || !m.route.closedLoop) continue;
                 bool debugOff = m.debugDropTravel == 0 && m.debugDropTravelDone == 0 && m.debugSkipTravelTeleport == 0 && m.debugForgeTravelMask == 0 && m.debugDelayTravel == 0f && m.debugDelayTravelMoved == 0f && m.debugDropTravelMoved == 0
-                    && UnityEngine.Object.FindObjectsOfType<KH_TravelMailbox>(true).All(b => b.debugJoinLoopback == 0 && b.debugAnswerCode == 0);
+                    && UnityEngine.Object.FindObjectsOfType<KH_TravelMailbox>(true).All(b => b.debugJoinLoopback == 0 && b.debugAnswerCode == 0 && b.debugIncomingFrom == 0 && b.debugIncomingKind == 0 && b.debugIncomingSeq == 0 && b.debugCrossInvert == 0);   // IMP-WLD-002 の試験用の入口も
                 bool data = m.spotPositions != null && m.spotPositions.Length == 6 && m.spotWarpEnabled != null && m.spotWarpEnabled.Length == 6 && m.travelRiverXs != null && m.travelRiverXs.Length > 0;
                 if (!debugOff || !data)
                 {
