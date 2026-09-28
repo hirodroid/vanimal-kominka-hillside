@@ -583,6 +583,14 @@ namespace KominkaHillside
             if (!_dogOwner) { UpdateLocomotionAnim(); return; }
             if (elapsed > chaseTimeout) { CancelLaunch("retrieve-timeout"); return; }
             if (_flightEnded && !Retrievable()) { CancelLaunch("flight-ended:" + _flightEndReason); return; }
+            // DES-DOG-005 M2 (Codex M2 review 5): a disc that came to rest on land and then rolled / was moved into water where it
+            // floats is not fetched in M2 (no water chase until M3). _Reachable only guarded the entrances (Chase / Land), and the
+            // walking gate lets the dog into the water-play spot, so the resting disc is looked at again here, 4 times a second.
+            if (_flightEnded && Time.time >= _floatCheckAt)
+            {
+                _floatCheckAt = Time.time + FloatCheckInterval;
+                if (DiscInFloatWater(frisbee.transform.position)) { CancelLaunch("cannot-play"); return; }
+            }
             Vector3 target = frisbee.transform.position;
             // DES-DOG-005 C-2: no plaza test here any more; a step or a drop on the way is the walking gate's (ground).
             if (!_flightEnded) target = _landingValid ? _landing : frisbee._PositionAt(_p0, _v0, _curve, frisbee._ElapsedSince(_t0));
@@ -601,7 +609,20 @@ namespace KominkaHillside
             if (elapsed < pickupDuration) return;
             Vector3 to = frisbee.transform.position - dogRoot.position; to.y = 0f;
             if (to.magnitude > arriveRadius * 1.5f) { TransitionTo(StateRetrieve); return; } // it moved while the head was down
+            // DES-DOG-005 M2 (Codex M2 review 5): never take a floating disc into the mouth (M3 does it from the water chase)
+            if (DiscInFloatWater(frisbee.transform.position)) { CancelLaunch("cannot-play"); return; }
             TransitionTo(StateReturn);
+        }
+
+        // DES-DOG-005 M2: KH_Frisbee.FloatKind's rule (the water-play spot's water, then the river's), for the resting disc.
+        // Cheapest first: outside the band (margin 1 m, which contains the spot's water) nothing floats.
+        const float FloatCheckInterval = 0.25f;
+        private float _floatCheckAt;
+        bool DiscInFloatWater(Vector3 p)
+        {
+            if (riverData == null || !riverData._InBand(p, KH_RiverData.BandMargin)) return false;
+            if (waterSpot != null && waterSpot._FloatsAt(p)) return true;
+            return riverData._FloatsAt(p);
         }
 
         // ---- Return to the thrower, wait so they can take it from the mouth, else set it down ----

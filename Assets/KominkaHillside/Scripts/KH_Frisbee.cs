@@ -106,6 +106,10 @@ namespace KominkaHillside
         private float _curve;  // per-throw fact (IMP-DOG-008 v5), captured at launch beside p0 / v0 / the generation
         private float _spin;
         private int _gen;      // throw generation (this Owner's count; the catcher matches start and end notices)
+        // DES-DOG-005 D-2 (M2): floating in the river / the water-play spot, as KH_ToyRecall floats a ball (Owner only; the
+        // physics - gravity off, velocity - reach everyone and late joiners through VRCObjectSync, nothing new is synced).
+        private bool _floating;       // this Owner floated it (local history; the gravity itself is reconciled on every look)
+        private bool _waterRefused;   // this flight went under the surface where it does not float (checked once per flight)
 
         public bool IsFlying { get { return _flying; } }
         public bool IsHeldNow { get { return _pickup != null && _pickup.IsHeld; } }
@@ -200,7 +204,7 @@ namespace KominkaHillside
             // The curve is read once, here: a flight already in the air keeps the bend it was launched with even
             // if the preset is switched mid-flight (the dog is told the same number with ReqCatch).
             _curve = catcher != null ? catcher.FlightCurve : 0f;
-            _p0 = p0; _v0 = v0; _t0 = Networking.GetServerTimeInSeconds(); _spin = 0f; _flying = true; _gen++;
+            _p0 = p0; _v0 = v0; _t0 = Networking.GetServerTimeInSeconds(); _spin = 0f; _flying = true; _gen++; _waterRefused = false;
             _sync.SetKinematic(true);
             transform.position = p0;
             VRCPlayerApi lp = Networking.LocalPlayer;
@@ -221,6 +225,9 @@ namespace KominkaHillside
             _flying = false;
             if (_sync != null) _sync.SetKinematic(true);
             if (_rb != null && !_rb.isKinematic) { _rb.velocity = Vector3.zero; _rb.angularVelocity = Vector3.zero; }
+            // D-2: in the mouth = normal physics once let go. Only the disc's Owner writes it (Codex M2 review 2: ClaimDisc does not
+            // wait for the ownership; a transfer that arrives later re-applies it in OnOwnershipTransferred)
+            if (Networking.IsOwner(gameObject)) StopFloat();
         }
 
         // Released from the mouth (Owner of the disc).
@@ -228,6 +235,10 @@ namespace KominkaHillside
         {
             _flying = false;
             if (_sync != null) _sync.SetKinematic(false);
+            // D-2 (the ball's RC-09, KD_DogFetchController.ReleaseBall): gravity follows where it is let go, at once - on land it
+            // falls, in floating water it floats (CheckRiver holds it from its next look). M2 never releases in the water (M3 does).
+            _floating = false;
+            if (_sync != null && Networking.IsOwner(gameObject)) _sync.SetGravity(!FloatsHere(transform.position));   // Owner only (review 2)
             if (_rb != null && !_rb.isKinematic) { _rb.velocity = velocity; _rb.angularVelocity = Vector3.zero; }
         }
 
@@ -238,6 +249,7 @@ namespace KominkaHillside
             bool wasFlying = _flying;
             _flying = false;
             if (_sync != null) _sync.SetKinematic(false);
+            StopFloat();   // D-2: the menu recall / the park lands it with gravity at once (KH_ToyRecall.Place / Park)
             if (_rb != null && !_rb.isKinematic) { _rb.velocity = Vector3.zero; _rb.angularVelocity = Vector3.zero; }
             if (wasFlying || (catcher != null && !catcher.IsIdle)) NotifyEnd(EndGrabbed); // gen may not match: accepted by reason
         }
@@ -246,6 +258,9 @@ namespace KominkaHillside
         {
             // Only the Owner steps the flight; a transfer mid-air (grab, catch, launcher) ends it here.
             if (!Networking.IsOwner(gameObject)) { _flying = false; return; }
+            // DES-DOG-005 M2 (Codex M2 review 2): the dog's claim arrived after _Caught ran as a non-Owner - the gravity it could not
+            // write is written now (a disc in a mouth has gravity; it floats again only after the release, by position).
+            if (catcher != null && catcher.IsCarrying && !_flying) { _floating = false; if (_sync != null) _sync.SetGravity(true); }
             // Inherited a kinematic disc that nobody holds or carries (previous Owner left mid-flight): let it fall.
             if (_flying || (_pickup != null && _pickup.IsHeld) || (catcher != null && catcher.IsCarrying)) return;
             if (_rb != null && _rb.isKinematic && _sync != null) _sync.SetKinematic(false);
@@ -263,7 +278,9 @@ namespace KominkaHillside
                 VRCPlayerApi lp = Networking.LocalPlayer;
                 if (Utilities.IsValid(lp) && !Networking.IsOwner(gameObject)) Networking.SetOwner(lp, gameObject); // net: setowner-ok: disc only (grabber)
                 _sync.SetKinematic(false);
+                _sync.SetGravity(true);   // D-2: taken out of the water, thrown with gravity (as KD_BallController.OnPickup)
             }
+            _floating = false;
             if (wasFlying) NotifyEnd(EndGrabbed);
         }
 
@@ -501,6 +518,30 @@ namespace KominkaHillside
             Vector3 d = next - prev;
             float len = d.magnitude;
             RaycastHit hit;
+            // DES-DOG-005 D-2 (M2): under the water surface where a disc floats = landed on the water, at the surface (no new end
+            // reason). Cheapest first: in the water (half width), below the surface, then FloatsHere (the slice search) once per
+            // flight - a flight that went under where it does not float (bridge zone, no bank) keeps its old ending on the riverbed.
+            if (!_waterRefused && riverData != null && riverData._InBand(next, 0f))
+            {
+                float surface = riverData._SurfaceY(next.z);
+                if (next.y < surface)
+                {
+                    Vector3 w = next;
+                    if (prev.y > surface && prev.y - next.y > 1e-5f) w = Vector3.Lerp(prev, next, (prev.y - surface) / (prev.y - next.y));
+                    w.y = surface;
+                    if (FloatsHere(w))
+                    {
+                        // A wall or a bank before the water still wins (the ray below finds it on this same frame)
+                        Vector3 dw = w - prev; float lw = dw.magnitude;
+                        if (lw <= 1e-4f || !Physics.Raycast(prev, dw / lw, lw, obstacleMask, QueryTriggerInteraction.Ignore))
+                        {
+                            EndFlight(w, Vector3.zero, EndLanded);
+                            return;
+                        }
+                    }
+                    else _waterRefused = true;
+                }
+            }
             if (len > 1e-4f && Physics.Raycast(prev, d / len, out hit, len + radius * 0.6f, obstacleMask, QueryTriggerInteraction.Ignore))
             {
                 // Wall or ground in the way: stop there and drop (no bounce back into the air).
@@ -525,33 +566,111 @@ namespace KominkaHillside
         private void EndFlight(Vector3 pos, Vector3 velocity, int reason)
         {
             _flying = false;
-            // IMP-DOG-020 段階 7: 川の帯 (水遊び場の外) に落ちたディスクは、ボールと同じく近い方の岸へ戻す。水面に当たり判定は無いので川床で止まる
-            bool moved = false;
-            if (reason == EndLanded && InRiverBand(pos))
+            // DES-DOG-005 D-2 (M2, 0-6 reordered): landed where a disc floats (river water with a usable bank within reach, or the
+            // water-play spot's water) = it floats there, BankFor is not reached. IMP-DOG-020 段階 7: the rest of the band (bridge
+            // zones, stretches without a bank, the band-edge slope; D-6) still sends it to the nearer bank. The water surface has no
+            // collider, so a landing found on the riverbed is lifted to the float height here.
+            bool moved = false, floatNow = false;
+            int kind = reason == EndLanded ? FloatKind(pos) : FloatNone;
+            if (kind != FloatNone)
+            {
+                floatNow = true;
+                float fy = FloatY(pos);
+                if (pos.y < fy) pos.y = fy;
+                velocity = Vector3.zero;
+                Debug.Log("[KH_Frisbee] landed in the water; floating at " + pos + (kind == FloatSpot ? " (water spot)" : " (river)") + " disc=" + gameObject.name);
+            }
+            else if (reason == EndLanded && InRiverBand(pos))
             {
                 pos = BankFor(pos); velocity = Vector3.zero; moved = true;
-                Debug.Log("[KH_Frisbee] landed in the river band; moved to the bank " + pos);
+                Debug.Log("[KH_Frisbee] landed in the river band; moved to the bank " + pos + " disc=" + gameObject.name);
             }
             transform.position = pos;
             if (_sync != null) _sync.SetKinematic(false);
-            if (_rb != null && !_rb.isKinematic) { _rb.velocity = velocity; _rb.angularVelocity = Vector3.zero; }
+            if (floatNow) { transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f); FloatDisc(pos, kind == FloatSpot); }
+            else
+            {
+                if (_floating || GravityOff()) StopFloat();   // D-2: a landing on land always has gravity
+                if (_rb != null && !_rb.isKinematic) { _rb.velocity = velocity; _rb.angularVelocity = Vector3.zero; }
+            }
             if (moved && _sync != null) _sync.FlagDiscontinuity();   // 瞬間移動: 他の端末で補間させない (Codex W6 D-中)
             NotifyEnd(reason);
         }
 
-        /// <summary>飛んでいない・持たれていない・くわえられていないディスクが帯の中にあれば、Owner が岸へ移す。</summary>
+        /// <summary>Owner, every RiverCheckInterval, for a disc that is not flying, held or in a mouth (DES-DOG-005 D-2, in this order):
+        /// a kinematic disc nobody carries is unfrozen (the ball's UnfreezeIfFree); where a disc floats it floats (every Owner does the
+        /// same from the position, so an Owner change keeps it afloat); a disc that no longer floats gets its gravity back (judged from
+        /// the physics too, RC-09); anything else in the band goes to the nearer bank as before (IMP-DOG-020 段階 7).</summary>
         void CheckRiver()
         {
             if (riverData == null || Time.time < _nextRiverAt) return;
             _nextRiverAt = Time.time + RiverCheckInterval;
             if (!Networking.IsOwner(gameObject) || IsHeldNow || (catcher != null && catcher.IsCarrying)) return;
+            // D-2 放した後の復旧 (the ball's RC-17 / UnfreezeIfFree): not flying (Update only calls this then), not held, not carried,
+            // yet kinematic - a dog that lost it while carrying gives up without touching its physics. Looked at again next time.
+            if (_rb != null && _rb.isKinematic)
+            {
+                if (_sync != null) { _sync.SetKinematic(false); Debug.Log("[KH_Frisbee] unfrozen (kinematic, not flying, held or carried) disc=" + gameObject.name); }
+                return;
+            }
             Vector3 p = transform.position;
+            int kind = FloatKind(p);
+            if (kind != FloatNone) { FloatDisc(p, kind == FloatSpot); return; }
+            if (_floating || GravityOff()) StopFloat();
             if (!InRiverBand(p)) return;
             Vector3 bank = BankFor(p);
-            Debug.Log("[KH_Frisbee] resting in the river band; moved to the bank " + bank);
+            Debug.Log("[KH_Frisbee] resting in the river band; moved to the bank " + bank + " disc=" + gameObject.name);
             transform.position = bank;
             if (_rb != null && !_rb.isKinematic) { _rb.velocity = Vector3.zero; _rb.angularVelocity = Vector3.zero; }
             if (_sync != null) _sync.FlagDiscontinuity();
+        }
+
+        // ---- DES-DOG-005 D-2 (M2): floating, the same rules as KH_ToyRecall.FloatBall ----
+        const int FloatNone = 0, FloatSpot = 1, FloatRiver = 2;
+
+        /// <summary>D-1 「浮く」: the water-play spot's water (KH_WaterSpot._FloatsAt) or the river's (KH_RiverData._FloatsAt: in the water,
+        /// outside the bridge zones, riverbed data, below surface + 0.3 m, a usable bank within reach).</summary>
+        int FloatKind(Vector3 p)
+        {
+            if (riverData == null) return FloatNone;
+            if (waterSpot != null && waterSpot._FloatsAt(p)) return FloatSpot;
+            return riverData._FloatsAt(p) ? FloatRiver : FloatNone;
+        }
+
+        bool FloatsHere(Vector3 p) { return FloatKind(p) != FloatNone; }
+
+        float FloatY(Vector3 p)
+        {
+            float sink = waterSpot != null ? waterSpot.floatSink : KH_WaterSpot.DefaultFloatSink;
+            return riverData._SurfaceY(p.z) - radius * sink;
+        }
+
+        /// <summary>Gravity off (synced by VRCObjectSync), a velocity that holds y = surface - radius x floatSink and drifts as the
+        /// ball does (KH_RiverData._DriftVelocity: the spot's downstream end / the river's stops), no spin, level. Not kinematic.</summary>
+        void FloatDisc(Vector3 p, bool inSpot)
+        {
+            if (_rb == null || _rb.isKinematic || _sync == null) return;
+            if (!_floating)
+            {
+                _floating = true;
+                Debug.Log("[KH_Frisbee] floating at " + p + (inSpot ? " (water spot)" : " (river)") + " disc=" + gameObject.name);
+            }
+            if (_rb.useGravity) _sync.SetGravity(false);
+            float drift = waterSpot != null ? waterSpot.floatDrift : KH_WaterSpot.DefaultFloatDrift;
+            Vector3 h = riverData._DriftVelocity(p, drift, inSpot, inSpot ? waterSpot._DownstreamZ() : 0f);
+            _rb.velocity = new Vector3(h.x, Mathf.Clamp((FloatY(p) - p.y) * 4f, -1f, 1f), h.z);
+            _rb.angularVelocity = Vector3.zero;
+            if (transform.up.y < 0.9999f) transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);   // level (flat on the water)
+        }
+
+        bool GravityOff() { return _rb != null && !_rb.isKinematic && !_rb.useGravity; }
+
+        /// <summary>Gravity back (Owner). Called on a pickup, a catch, a recall, a landing on land and when the disc leaves the water.</summary>
+        void StopFloat()
+        {
+            if (_floating) Debug.Log("[KH_Frisbee] float ended at " + transform.position + " disc=" + gameObject.name);
+            _floating = false;
+            if (_sync != null) _sync.SetGravity(true);
         }
 
         bool InRiverBand(Vector3 p)

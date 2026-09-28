@@ -486,17 +486,9 @@ namespace KominkaHillside
             float sink = waterSpot != null ? waterSpot.floatSink : KH_WaterSpot.DefaultFloatSink;
             float drift = waterSpot != null ? waterSpot.floatDrift : KH_WaterSpot.DefaultFloatDrift;
             float wantY = riverData._SurfaceY(p.z) - radius * sink;
-            float vx = 0f, vz;
-            if (inSpot) vz = p.z > waterSpot._DownstreamZ() ? -drift : 0f;
-            else if (riverData._DriftStops(p)) vz = 0f;
-            else
-            {
-                vz = -drift;
-                vx = drift * (riverData._CenterX(p.z - 0.5f) - riverData._CenterX(p.z + 0.5f));   // along the centre line
-                float lat = p.x - riverData._CenterX(p.z), keep = Mathf.Max(0f, riverData._HalfWidth(p.z) - 0.3f);
-                if (lat > keep) vx -= (lat - keep) * 0.5f; else if (lat < -keep) vx += (-keep - lat) * 0.5f;
-            }
-            rb.velocity = new Vector3(vx, Mathf.Clamp((wantY - p.y) * 4f, -1f, 1f), vz);
+            // DES-DOG-005 D-2 (M2): the drift rule moved to KH_RiverData._DriftVelocity unchanged (the disc floats with it too)
+            Vector3 h = riverData._DriftVelocity(p, drift, inSpot, inSpot ? waterSpot._DownstreamZ() : 0f);
+            rb.velocity = new Vector3(h.x, Mathf.Clamp((wantY - p.y) * 4f, -1f, 1f), h.z);
         }
 
         /// <summary>Owner, not held: true = the ball was frozen with no dog carrying it and has just been unfrozen (looked at again

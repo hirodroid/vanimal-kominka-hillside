@@ -43,6 +43,8 @@ namespace KominkaHillside
         // Ground height under a point on the trajectory. The scan needs it per candidate (the disc may come down
         // over a different part of the flat than the dog stands on). DES-DOG-005 B-5: no hit (a drop of more than
         // groundRayDistance below the dog, a cliff) is NoGround - the sample is discarded, never the dog's own ground.
+        // TODO(M3, DES-DOG-005 D-2 last line): where the disc floats (FloatsHere), return max(ray, water surface) here. Left out of
+        // M2 on purpose: it would change the band scan's rise above the water, which M1 refuses anyway (InJumpWater).
         float GroundYAt(Vector3 p)
         {
             RaycastHit hit;
@@ -96,8 +98,15 @@ namespace KominkaHillside
         }
 
         // Reachable(L, dog), land only in M1: PlayableAt(L) and PathOk(dog, the ground under L).
+        // DES-DOG-005 M2 (decision 2026-09-28): a disc now FLOATS in the water (KH_Frisbee), but the dog does not fetch from the
+        // water until M3, so floating water is never reachable: the aim keeps its cross there and a floating disc is not
+        // retrieved. The river band outside the spot is already refused by PlayableAt (InRunRiver); the extra test is the
+        // water-play spot's water, where the pre-M1 walking exception would otherwise send the dog to a disc on the water.
+        // TODO(M3, DES-DOG-005 C-1 / D-1): replace this line with the water branch of Reachable - D-1 "floats" is true and, for
+        // a dog that does not swim, _DepthAt(L) <= _WaterFetchWadeLimit() - and route it to the water chase (state 11).
         public bool _Reachable(Vector3 at)
         {
+            if (waterSpot != null && waterSpot._FloatsAt(at)) return false;
             if (!_PlayableAt(at)) return false;
             return _PathOk(dogRoot.position, new Vector3(at.x, _playY, at.z));
         }

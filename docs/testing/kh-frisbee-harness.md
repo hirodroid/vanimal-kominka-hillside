@@ -440,6 +440,24 @@ node scripts/kh-frisbee-harness.cjs start --mode=terrain --shots=T-cliff,T-rock 
 **保証しないもの**: パッドは平面の上の箱と板。本シーンの地形・木立・川・橋の床と、照準の × の見え方 (VR) は Course/93 (静的) と実機 Play (37-39) で見る。
 空中の弧は障害物を検査しない (設計 I-2) ので、岩や枝を通り抜けるかはここでは分からない。
 
+## 本シーンの川のディスク (Course/94, DES-DOG-005 M2)
+
+試作シーンに川が無いので、川のディスク (浮き・岸戻し) は**本シーンの歩行ハーネス**の 1 モードとして走らせる。CLI は無く、Unity のメニュー
+`Tools/KominkaHillside/Course/94 - Walk Harness Frisbee Anywhere (M2 float)` から。枠 (journal・watchdog 720 s・PlayerData の退避と復元・シーンを保存しない・
+失敗で Play 停止) は Course/75 (W5) と同じ。台本は `Assets/KominkaHillside/Scripts/Editor/Testing/KH_CourseWalkHarnessEditor.Frisbee.cs`。
+前提: Course/89 (ディスクの `riverData` 配線) と Course/90 (川の輪切りデータ) が済んでいること。
+
+- 犬 0 (コーギー) とそのディスク。投げは、ディスクを手の位置に置き `_pendingThrowVelocity` / `_hasPendingThrow` を書いて `_CheckThrow` を送る
+  (照準投げの OnDrop の 1 フレーム後と同じ入口)。本物の `_Launch` → `ReqCatch` → 飛行が走る。速さと仰角は Editor 側で `_PositionAt` の写しを
+  保存済みの Collider に当てて解く (誤差 0.6 m 未満)。
+- 8 ケース: F5a-river (浮く・漂う・橋の帯の手前 ±0.3 m で止まる・5 s 静止・岸へ戻さない・犬は帯に入らず Idle へ)、F5c-grab (`_onPickup` で重力が戻り、
+  持たれていないので 0.6 s 以内に浮き直す)、F5c-recall (広場からメニュー `_Disc0` → 4 s 以内に手元 2.5 m、重力あり、2 s 後も重力あり)、
+  F5b-spot (水遊び場の下流端 ±0.5 m で止まる)、F5d-roll (水遊び場の 35 m 下流の岸へ短く投げ、犬が Retrieve に入ったらディスクを場の水へ移す → `cannot-play` で取り消し、Return / Drop / くわえは無し、4 s 後も浮いている)、F6-bridge / F7-nobank (岸の無い区間。データに無ければ `sliceOk` の差し替えで代用し、ケースの後に戻す) /
+  F7b-edge (帯の縁の坂): 着地から 2 s 以内に岸戻しのログ、そのあと帯の外・重力ありが 6 s (F7b は 8 s) 続く・浮かない。犬が Idle / Ready に戻った後は kinematic でなく重力ありが必須。
+- 全ケース共通: 捕り手が Chase / Retrieve / Pickup の間に犬が水遊び場の水へ入ったら失敗 (`dogSpotChaseFrames`)。犬自身の水遊びは数えない。
+- 結果: `Logs/kh-course-walk/<run>/frisbee-m2.json` と `report.json`。全体の状態は **`FRISBEE_M2_PASS`** / `FRISBEE_M2_FAIL`。
+- 保証しないもの: 本物の手 (VRC_Pickup の保持)、別の Owner・途中参加 (重力は VRCObjectSync が運ぶ)、水中の追跡 (M3)。実機では[設計書の PCVR 46〜48](../plans/2026-09-28-frisbee-anywhere.md#pcvr-川の設計書のチェックリストの続き) (浮いたまま途中参加・Owner の退出・取得後に陸で放す) と 42・43 で見る。
+
 ## 保証する範囲
 
 実際に通るもの:

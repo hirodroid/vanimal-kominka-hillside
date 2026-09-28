@@ -263,5 +263,20 @@ namespace KominkaHillside
             Vector3 q = new Vector3(p.x + _CenterX(z1) - _CenterX(p.z), p.y, z1);
             return _NearestSlice(q, 0, _BankReach(), -1) < 0;
         }
+
+        /// <summary>DES-DOG-005 D-2 (M2): the horizontal drift of a floating toy (ball: KH_ToyRecall.FloatBall, disc: KH_Frisbee),
+        /// moved here unchanged from FloatBall so both float the same way. y is always 0 (the caller holds the height).
+        /// In the water-play spot (inSpot): downstream (-z) at drift until spotDownstreamZ (KH_WaterSpot._DownstreamZ), then still;
+        /// x 0. Elsewhere: still when _DriftStops, else along the centre line, pulled back inside half width - 0.3 m.
+        /// drift is the caller's (waterSpot.floatDrift, or KH_WaterSpot.DefaultFloatDrift without a spot).</summary>
+        public Vector3 _DriftVelocity(Vector3 p, float drift, bool inSpot, float spotDownstreamZ)
+        {
+            if (inSpot) return new Vector3(0f, 0f, p.z > spotDownstreamZ ? -drift : 0f);
+            if (_DriftStops(p)) return Vector3.zero;
+            float vx = drift * (_CenterX(p.z - 0.5f) - _CenterX(p.z + 0.5f));   // along the centre line
+            float lat = p.x - _CenterX(p.z), keep = Mathf.Max(0f, _HalfWidth(p.z) - 0.3f);
+            if (lat > keep) vx -= (lat - keep) * 0.5f; else if (lat < -keep) vx += (-keep - lat) * 0.5f;
+            return new Vector3(vx, 0f, -drift);
+        }
     }
 }

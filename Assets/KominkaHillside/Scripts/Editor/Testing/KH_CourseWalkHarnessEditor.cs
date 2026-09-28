@@ -57,6 +57,7 @@ namespace KominkaHillside.Editor
             public bool full,gateOnly,benchOnly,returnOnly,originalBackground,settingsRestored,sceneFileUnchanged,dirtyAfterPlay,playerDataRestored;
             public string playerDataBackup;
             public bool riverOnly; // IMP-DOG-020 W5 (KH_CourseWalkHarnessEditor.River.cs)
+            public bool frisbeeOnly; // DES-DOG-005 M2 Course/94 (KH_CourseWalkHarnessEditor.Frisbee.cs)
             public bool travelOnly; // IMP-WLD-001 travel (KH_CourseWalkHarnessEditor.Travel.cs)
             public bool travelRc;   // Course/82b: 破壊監査 RC の新規ケースだけ (同じファイル)
             public bool waterOnly; // IMP-DOG-020 W0/W4/W6 (KH_CourseWalkHarnessEditor.Water.cs)
@@ -149,6 +150,7 @@ namespace KominkaHillside.Editor
                 }
                 if(report.errors.Count>0)throw new InvalidOperationException("Runtime error: "+report.errors[0]);
                 if(report.riverOnly){RiverTick(now);return;}
+                if(report.frisbeeOnly){FrisbeeTick(now);return;}
                 if(report.travelOnly){TravelTick(now);return;}
                 if(report.waterOnly){WaterHarnessTick(now);return;}
                 if(now-Current.startedAt>(report.returnOnly?Current.plannedDistance/2+100:report.lapChoice!=0?1500:80))throw new TimeoutException("Case deadline exceeded");
@@ -223,6 +225,7 @@ namespace KominkaHillside.Editor
         static void MakeCases()
         {
             if(report.riverOnly){MakeRiverCases();return;}
+            if(report.frisbeeOnly){MakeFrisbeeCases();return;}
             if(report.travelOnly){MakeTravelCases();return;}
             if(report.waterOnly){MakeWaterCases();return;}
             if(report.returnOnly)
