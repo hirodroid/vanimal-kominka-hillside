@@ -694,7 +694,8 @@ namespace KominkaHillside.Editor
                 if (!KH_FrisbeeCatch.PetAllowedIn(s)) return false;
             foreach (int s in new[] { KH_FrisbeeCatch.StateChase, KH_FrisbeeCatch.StateJump, KH_FrisbeeCatch.StateJumpCarry,
                 KH_FrisbeeCatch.StateLand, KH_FrisbeeCatch.StateLandCarry, KH_FrisbeeCatch.StateRetrieve,
-                KH_FrisbeeCatch.StatePickup, KH_FrisbeeCatch.StateReturn })
+                KH_FrisbeeCatch.StatePickup, KH_FrisbeeCatch.StateReturn,
+                KH_FrisbeeCatch.StateWaterChase, KH_FrisbeeCatch.StateWaterCarry, KH_FrisbeeCatch.StateWaterExit })   // DES-DOG-005 M3
                 if (KH_FrisbeeCatch.PetAllowedIn(s)) return false;
             return true;
         }
@@ -1207,6 +1208,14 @@ namespace KominkaHillside.Editor
             else log.AppendLine("INFO prototype scene missing; scene wiring not checked");
             }
             finally { if (opened) ClosePrototype(previousScene, open); }
+            // 2026-09-28 計画プローブ (Frisbee/10) を同じ Verify で: 期待の形にならないケースは WARN PROBE_MISMATCH (失敗数には数えない。
+            // 最初の計画だけを見るので)。試作シーンだけが開いているときに限る (他のシーンのコライダーがレイに当たらないように)。
+            if (SceneManager.sceneCount == 1 && SceneManager.GetActiveScene().path == ScenePath)
+            {
+                foreach (string probeLine in KH_FrisbeePlanProbeEditor.Preflight("Frisbee/5 Verify", () => KH_FrisbeePlanProbeEditor.RunPrototype(true, true, null)))
+                    log.AppendLine((probeLine.StartsWith("PLAN_PROBE_OK") ? "INFO " : "WARN ") + probeLine);
+            }
+            else log.AppendLine("INFO PLAN_PROBE skipped: open " + ScenePath + " alone and run Frisbee/10 Plan Probe");
             log.AppendLine("RESULT failures=" + fail);
             Report("verify", log.ToString());
             if (fail > 0) Debug.LogError("[KH Frisbee] verify failures=" + fail);

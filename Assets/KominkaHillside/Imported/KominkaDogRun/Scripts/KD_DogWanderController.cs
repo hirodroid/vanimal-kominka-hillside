@@ -1365,7 +1365,8 @@ namespace KominkaDogRun
                 // ただし LookAt は Fetch が触らない Bool なので、ここで自分で下ろす
                 // IMP-DOG-020: Fetch の水中の状態 (6〜8) は、足を _WaterFetchStep (HillsideWater.cs) が動かしている。
                 // ここで毎フレーム _speed を 0 にすると、1 フレーム分の加速しか残らず這うように進む (run 20260927-095400)
-                if (!fetchController.IsWaterFetching)
+                // DES-DOG-005 D-4 (M3): the disc's water states (KH_FrisbeeCatch 11-13) borrow the same legs, on every client
+                if (!fetchController.IsWaterFetching && !FrisbeeWaterBusy)
                 {
                     _wasMoving = false;
                     _wasRunning = false;

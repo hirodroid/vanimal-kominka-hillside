@@ -50,7 +50,50 @@ Unity 側が起動時に 1 度だけ読む。Unity のメニュー
 `Tools/KominkaHillside/Frisbee/7 Harness (ClientSim)` から直接呼ぶこともできる
 (その場合は前回の options.json がそのまま効く)。停止は `8 Harness Stop`。
 
+## 実行スクリプト (`scripts/kh-harness-run.sh`、2026-09-28)
+
+試作シーンのハーネス・本シーンの歩行ハーネス (Course/94・94b・88・78・75 など)・Edit モードの検査メニュー・コンパイル確認を、同じ前提確認と結果の読み方で回す入口。自作の待ちループを場当たりで書かない (前の run を新しい結果と読む・Play 中のメニュー空振り・孤児プロセスの二重実行を 2026-09-28 に全部踏んだ)。
+
+```bash
+bash scripts/kh-harness-run.sh compile                               # unity-compile.sh --udon。C#・U# のエラー 0 で exit 0
+bash scripts/kh-harness-run.sh menu  "Course/89 - Wire and Check Frisbee River Band"   # Edit モードの検査。Editor.log の増分から要約行 (_OK / _FAIL / _PASS 等) を返す
+bash scripts/kh-harness-run.sh proto terrain --shots=T-up04          # 試作シーン。kh-frisbee-harness.cjs start の引数をそのまま渡す
+bash scripts/kh-harness-run.sh walk  "Course/94b - Walk Harness Frisbee Anywhere (M3 water)"   # 本シーン。Tools/KominkaHillside/ 以下のメニュー名
+```
+
+- **実行前の照合**: `unity-api.sh check` (接続先) と `isPlaying` / `isCompiling` がともに False。違えば何もせず exit 3。
+- **終わりの判定**: 新しい runId が出て、status が `RUNNING` 以外になり、Play を抜けるまで待つ。walk は Finish の証拠 (`endedUtc`) まで待つ (`EVIDENCE_ERROR` は除く)。前の runId の結果は使わない。walk でメニューを叩いて 60 s 以内に新しい run が出なければ `NO_NEW_RUN`。
+- **結果**: 1 行で返す (runId・status・ケース数・落ちたケースと理由)。proto は要求した mode と report の mode が違えば `MODE_MISMATCH` で FAIL。
+- **終了コード**: 0 = PASS (walk は status に `PASS` を含むとき。`MEASURED` など PASS を含まない終わり方は 1) / 1 = FAIL / 2 = 待ち切れ・メニュー未実行・新しい run が出ない / 3 = 実行前の照合失敗 / 64 = 使い方の誤り。
+- **連鎖**: 複数の run を続けるときは `set -e` で並べ、目的のケースが落ちたら後続の回帰を回さない。
+- **実行中はコード・シーン・アセット・options.json を書き換えない** (別セッション・サブエージェントも)。Play 中の再コンパイルはフレームを止め (最初の計画が 0.2 s 遅れて別の取り方になる)、途中状態が混ざると run が壊れる。書くなら先に stop して、終了・復旧を確かめてから。
+- Unity を操作するのは 1 人 (統括)。サブエージェントにこのスクリプトを回させない。
+
+## Play の前に: 計画プローブ (2026-09-28)
+
+**規則: プローブを先に、Play は 1 回。** ケースの配置 (高さ・縁の位置・台・岩・狙い) を直したら、Play の前に計画プローブで「そのケースが期待の形を計画するか」を確かめる。PLAN_PROBE_OK になってから Play を 1 回流す。2026-09-28 は配置だけの誤り (T-up10 の仰角、T-down04 / T-up04 の縁、T-up04 の台、T-rock の位置) に Play を 3 回、94b の「ドボンを 1 度も選ばない」に 40 分の Play を使った。どれも Edit モードで決まる計画の判断だった。
+
+- 仕組み: `KH_FrisbeeCatch._ProbePlan` (`KH_FrisbeeCatch.Probe.cs`。`UNITY_EDITOR && !COMPILER_UDONSHARP` の中なので Udon とビルドには入らない) が、Edit モードの U# プロキシで実行時と同じ `Plan(tNow)` を 1 回呼ぶ (Solve → JumpGround / AirLanding / JumpLand・DobonAt / LaneClear → PathOk → D / D' / E → Reachable)。犬は一時の隠し Transform、投げ台は一時のコライダーの写しで置き、呼び出しの前後で捕り手の全フィールドを写して戻す。シーンは変えない
+- 配置と期待はハーネスの表と関数をそのまま使う (`TerrainCaseTable` / `Shots` / `TerrainPlace` / `PlaceForGeometry`、Course/94 の `FbPlaceGeometry`、94b の `F3PlaceGeometry` と `F3Defs`)。数字を複製しない
+
+```bash
+node scripts/kh-plan-probe.cjs proto            # Frisbee/10 Plan Probe: Terrain 10 ケース + 投げ表 (6 犬種 x 26)。試作シーン単独で (未保存でなければ開いて戻す)
+node scripts/kh-plan-probe.cjs course           # Course/95 - Frisbee Plan Probe: Course/94 の 8 ケース + 94b の 11 ケース x 狙い 6 通り。本シーン
+node scripts/kh-plan-probe.cjs proto --cases=my.json   # 臨時のケース (コードを書き換えずに仮説を試す)
+node scripts/kh-plan-probe.cjs course --all     # 94b の狙いごとの行 (情報行) も出す
+```
+
+- 出力: `Temp/frisbee-plan-probe.json` と Console の表、最終行 `PLAN_PROBE_OK n/m` / `PLAN_PROBE_FAIL n/m` (CLI の終了コード 0 / 1)。合わない行は `PROBE_MISMATCH <suite> <case>: <理由>` の警告
+- 表の列: kind/mode (jump / stand / over / ground / none、jump は around / chase / front と `/water` = ドボン)、dY (踏み切り → 着地の地面差)、landing (`float` / `land` と `+` 届く / `x` 届かない)、next (実行時の次の一手: `cancel cannot-play` / `dobon` / `water fetch (11)` / `deep-disc` など)、跳ばないときは `why=A:..,B:..,C:..` (plan= 行と同じ語)
+- 判定: Terrain は expectKind、`none` のケースは cannot-play、段のケースは段を跨ぐ跳躍 (takeoffY / landY / tDown と tUp の大小)、T-rock は lane の拒否、跳躍の |dY| <= jumpMaxRise。投げ表は expectKind と expectMode (Lab は lab* 列)。Course/94 は犬の計画先が川の帯に入らないこと (F5d は ground)。94b はケースごとに「狙い 6 通りのどれかが形を作るか」(ドボン / float / deep)。F13 (水中の拒否) は waterPose が実行時の状態なので情報行
+- 臨時のケース (`Temp/frisbee-plan-probe-cases.json`、座標は形の例): `{"cases":[{"name":"t1","catcher":"KH_FrisbeeCatch_Terrain","p0":{"x":0,"y":1.3,"z":-49},"v0":{"x":0,"y":1.9,"z":7.3},"dogPos":{"x":1.5,"y":0,"z":-38.5},"dogFwd":{"x":0,"y":0,"z":-1},"variant":0,"expect":"jump"}]}`。catcher は捕り手の GameObject 名か犬の名前 (空 = 最初の捕り手)。省略可: curve (既定 = variant の値)、tNow (既定 noticeDelay)、dogSpeed (0)、waterFetchOff (M2 の規則)。expect は `jump|stand|over|ground|none|any|dobon|nodobon|float|deep|cannot-play|reach` の `|` 区切り。ファイルは残るので不要になったら `--no-cases`
+- **継続 (2026-09-28)**: 最初の計画は捕りの証拠ではない (ラブ 1 投目は t=0.12 で chase を採用し、t=0.54・4.46 m/s で drop=ground / B:banned)。`_ProbePlan(..., cont)` は採用した計画を保持したまま、次の入力 (tNow・dogPos・speed・dogFwd) で Plan をもう一度回し、KeepPlan の vTake / fit / crouchStart / t0 / slid / 再検査、KeepPlan が落とした理由 (再 Solve に上書きされる前の `_jgWhy`・drop=・banned) と、その tick の結果を返す。Course/95 の 94b ドボン系は、狙いごとに入力 6 通り (tick1 = 初回 + 0.4 s の予定経路、tick2 = しゃがみ直前に C0 の予定位置 / 前方 +0.57 m / 遅れ -0.3 m / 横 ±0.3 m、負例 = T0 を 0.3 m 過ぎた位置・速度差 > 3.5 m/s) を回す。合格は **すべての tick で** 同じ `_plan`・`_mode`・`_catchT`、`_fxT0` の水平差 ≤ 1e-3 m (固定 T0 が無い計画は C0 + f·vTake·crouch で ≤ 0.05 m)、`_landWater`、kept、`_bannedModes` のビット増なし、drop= 空、tick2 のしゃがみ開始 (`FixedCrouchBegin` を写しで呼ぶ) が通り、続く離陸の門 (`FixedCrouchEnd` で `_groundY = T0.y` → `JumpGround` / `AirLanding`) が水への着地 (`_alWater`) を返すこと。ドボンは投げる位置が Playable (`p0Playable`、ReqCatch の CanPlay) でなければ OK にしない。落ちた tick は行に出る。slid (C0 − `_jumpRayAt`) は条件にしない。負例は tick で落ちるかしゃがみで `refused=` になれば合格 (救済しない)。T0 を水側へ 1 m 動かした点が踏み切りとして拒否されることも確かめる。出力に `crouchV / dv / aheadRemain / lateral / endErr / airCap` と `_fxOn / _fxT0 (前後) / _fxAhead / _fxLat / _fxCrouchV / _fxDv / _fxEndErr / C0`、地面の検査を呼んだか (`groundChecked`) を並べる。陸の既知成功例 (試作 Lab の v0 の跳躍、94 の F5d-roll) は suite `landctl` として判断の署名を `Temp/frisbee-plan-probe-landctl-baseline.json` と比べる (変更前のコードで `--save-baseline` を付けて作る。無ければ情報行)。臨時のケースは `continue:[{tNow, dogPos, speed, dogFwd?}]` を受け付け、`node scripts/kh-plan-probe.cjs adhoc --cases=<file>` (Frisbee/11、開いているシーンでケースだけ) で流す。区間の間の Motion 側の取り消し (slot / gate / liftoff の踏み切り判定) と実際の加速は再現しない
+- Play の入口にも組み込み済み: `Frisbee/7 Harness` (terrain / default) と `Course/94`・`94b` は Play へ入る前に同じケースを流し、`PROBE_MISMATCH` を警告と report の trace に出す (止めはしない)。`Frisbee/5 Verify` は試作シーン単独のとき末尾に `WARN PROBE_MISMATCH` / `INFO PLAN_PROBE_OK` を足す (失敗数には数えない)
+- **見ないもの (Play の役目)**: 最初の計画と、与えた位置・時刻・速さでの継続 tick (KeepPlan / KeepFixedT0、しゃがみ開始、離陸の門 = FixedCrouchEnd → JumpGround / AirLanding) までは見る。Motion の slot / gate の取り消し、犬の実際の動き・加速・旋回・フレーム時刻と到着時刻、所有権・同期・Owner の移譲、Animator とクリップ、CanPlay の生きた状態 (リード・Fetch・おやつ・休憩・waterPose)。本シーンの犬は Play では置いてから 3 s ほど待つ (その間に動く) が、プローブは置いた位置のまま。PROBE_MISMATCH が出ないことは Play の合格ではない。出たら Play の前に配置か期待を直す
+
 ## 変更に応じた実行範囲
+
+**部分実行 → 対象ケースが通ってから、確定前に回帰を 1 回。** 修正のたびに全体を回さない。目的のケースが落ちたら回帰へ進まず、入力・計画・離陸のどこで予測とずれたかを先に調べる (Play の前に Edit モードで決まることは詰める: `vrc-verification` §7)。
 
 調整中は再現ケースと影響する周辺ケースを選ぶ。選んだ条件と理由、結果、今回走らせない範囲を既存の作業記録へ短く残す。部分PASSを全体PASSにしない。
 
@@ -457,6 +500,31 @@ node scripts/kh-frisbee-harness.cjs start --mode=terrain --shots=T-cliff,T-rock 
 - 全ケース共通: 捕り手が Chase / Retrieve / Pickup の間に犬が水遊び場の水へ入ったら失敗 (`dogSpotChaseFrames`)。犬自身の水遊びは数えない。
 - 結果: `Logs/kh-course-walk/<run>/frisbee-m2.json` と `report.json`。全体の状態は **`FRISBEE_M2_PASS`** / `FRISBEE_M2_FAIL`。
 - 保証しないもの: 本物の手 (VRC_Pickup の保持)、別の Owner・途中参加 (重力は VRCObjectSync が運ぶ)、水中の追跡 (M3)。実機では[設計書の PCVR 46〜48](../plans/2026-09-28-frisbee-anywhere.md#pcvr-川の設計書のチェックリストの続き) (浮いたまま途中参加・Owner の退出・取得後に陸で放す) と 42・43 で見る。
+- M3 以降: この 8 ケースは浮きだけを見るので、開始時に犬 0 の捕り手のヒープ `_debugWaterFetchOff` を立てて **M2 の規則** (浮いたディスクは取りに行かない: `cannot-play` / `river-band`) で走らせる。Play を止めると消える (シーンの値ではない)。
+
+## 本シーンの水中回収 (Course/94b, DES-DOG-005 M3)
+
+`Tools/KominkaHillside/Course/94b - Walk Harness Frisbee Anywhere (M3 water)`。枠は Course/94 と同じ (watchdog 2400 s)。台本は
+`KH_CourseWalkHarnessEditor.FrisbeeWater.cs`。前提は Course/89・90 (と 91 の岸の輪切り)。
+
+- ケースごとに犬を選び、その犬のディスクを投げる (ポメ = 犬 1、ラブ = 犬 2)。場所は川の輪切りデータの使える岸 (z 150 付近。F4 は中央がラブの限界 0.85 M より深い所)。
+  投げた人は輪切りの復帰点、犬はその 1.2 m 後ろ (Course/88 RW-* と同じ置き方)。投げは Course/94 と同じ入口 (`_CheckThrow`)。
+- **ドボンのケース (F2・F3・F14b・F2m-*) の狙いは Play の前に探す** (Edit モード、`Temp/frisbee-m3-aims.json`)。犬は投げ手の側で帯の縁から 2.5 m 外 (投げ手はその 1.2 m 後ろ)。川を横切る投げ (4〜9 m/s・仰角 5〜40°) をレイで測った地面の断面にかけ、B (追う) の踏み切りが帯の縁 +0.2 m より陸、着地が水際 −0.3 m より水、rise が犬の帯の中 (ポメは 0.25 m 付近も)、ETA で 0.15 s 以上余る投げを残す。踏み切りは帯の縁 +0.2 m より陸で、踏み切り点が跳べる地面 (傾き ≤ 15°)。(94c run 20260928-112611 では実際の踏み切りが 0.5〜0.64 m ずれて岸の急な面で断られた。製品側で水着地の踏み切り点を固定したので (設計書 §D-3 の決定)、一時的に足した ±0.6 m の平らな帯の条件は外した。)そのうえで犬の本物の計画器 (`_ProbePlan`、最初の Plan) が「水に着地する跳躍、余裕 0.15 s 以上」と答えたものだけを採る (A の回り込みや地面が勝つ投げはここで落ちる)。さらに「最初の Plan が 0.15 s 遅れる」「犬の向きが ±25° ずれる」の 3 通りでも水への跳躍になることを求める (Course/95 も同じ判定)。犬 1 匹あたり最大 6、1 か所 2。試行 k は狙い k。ポメかラブの狙いが 0 なら **`FRISBEE_M3_BLOCKED`** (理由付き) で Play に入らない。`Course/94c` は F2・F3 だけを走らせる。
+- F4-deep-Lab: 川のデータに「ラブの限界 (0.85 M) より深い水の隣の使える岸」が無ければ **SKIP (N/A、理由付き)**。run 全体の合否には数えない。深い水の拒否 (`deep-disc`) は設計書 PCVR 41 で見る。
+- 捕り方は計画器が決めるので、1 回の投げがケースの形にならないことがある。**形にならなかった試行は RETRY** (狙いを変えて最大 6 回。各 RETRY の狙いと理由は `retries` に残る)、形になった試行の結果だけで PASS / FAIL を決める。6 回とも形にならなければ FAIL (そのこと自体が所見)。
+- 11 ケース:
+  - F2-dobon-Pome: 岸から踏み切って水へ着地 (ログ `dobon carrying=true`) → 12 → 13 → Return / Drop、投げた人の側へ上がる、ディスクは手元 2.5 m、取り消し無し。
+  - F3-dobon-Lab: 同じ形をラブで (流路を歩く。`waterPose` が 2 にならない)。
+  - F4-deep-Lab: 深い所。水への着地が無い (dobon のログ無し)、ディスクは浮き、`deep-disc` で取り消し。陸で取れた試行は RETRY。
+  - F5-float-Pome: 平たく川へ投げて浮かせる → 11 → 12 → 13 → Return / Drop、手元 2.5 m。ドボンで取れた試行は RETRY。
+  - F11-recall-11: 11 の間に広場へ移ってメニュー `_Disc1` → `target-lost`、ディスクは手元で重力あり、犬は 30 s 以内に陸へ (waterPose 0)。
+  - F12-recall-12: 12 の間に広場で `_Disc1` → 断られる (メニューの門の戻り値 `KD_TreatPouch._hsLastGate` が `InWater`、`KH_ToyRecall._pendingRow` が -1 のまま・`_hsToyRow` が立たない)、元の場所へ戻って回収が手元まで完了する。
+  - F13-inwater: 場所はドボンの狙いと一緒に **Play 前に Edit モードで探す** (`F3SearchF13`、`Temp/frisbee-m3-aims.json`)。z 150 に近い使える岸の輪切りを順に、F13 が Play で使う条件を全部検査し、最初に全部通った所を使う: その岸の側に 0.10〜0.22 m の浅瀬が水際から 1 m 以上内側 / そこで犬が濡れていると読まれる (`_FetchWater`・`_DepthAt` > 0.05) / 投げ手の横に犬の岸の点 (NavMesh・帯の外) / 岸沿い 5 m に乾いた地面 (投げの着地点、帯の外) / そこへ届く 5〜25° の投げ。Play 中は探し直さない。無ければ SKIP (輪切りごとの最初に落ちた条件の件数付き)。Course/95 の F13 行は `site OK (z=…)` か N/A を出す。ラブを川の浅瀬に置き、濡れを確かめてから岸へ投げる → `req reject reason=in-water`、捕り手は Idle / Ready のまま、犬は 25 s 以内に陸へ。
+  - F14-claim: F5 の形で、ディスクの所有権を「取れない」ことにする (捕り手のヒープ `_debugClaimRefuse`) → 11 で取得待ちに入り (`disc claim wait (in the water)`) `claim-failed`、12 に入らない、犬が休んだ 3 s 後もディスクは浮いている。ドボンした試行は RETRY。
+  - F14b-claim-dobon: ドボンで取った後に所有権が届かない → 12 で止まって `claim-failed`、13・Return・Drop に進まない、ディスクは浮く。
+  - F2m-miss-float / F2m-miss-land: 水へ着地する跳躍の離陸直後に捕り手のヒープ `_catchDecided` を立てて外させ、ディスクを計画の着地点の水面 / 犬の出発点の陸へ置く (捕り手には `EndLanded` を書く)。水: `dobon carrying=false` → 11 → 12 → 13 → 手元。陸: `missed-water`、30 s 以内に陸へ、12 に入らない。
+- 結果: `Logs/kh-course-walk/<run>/frisbee-m3.json` と `report.json`。全体の状態は **`FRISBEE_M3_PASS`** (全ケースが PASS か SKIP) / `FRISBEE_M3_FAIL`、狙いが無ければ Play 前に `FRISBEE_M3_BLOCKED`。Course/95 (計画プローブ) は同じ狙いで F2・F3・F14b・F2m-* を「jump / 水に着地」と照合し、F4 の SKIP は数えない (N/A)。
+- 保証しないもの: 11〜13 の間の犬の Owner の交代 (PCVR 45)、途中参加 (44)、本物の手、端末の時間。
 
 ## 保証する範囲
 

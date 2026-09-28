@@ -43,8 +43,12 @@ namespace KominkaHillside
         // Ground height under a point on the trajectory. The scan needs it per candidate (the disc may come down
         // over a different part of the flat than the dog stands on). DES-DOG-005 B-5: no hit (a drop of more than
         // groundRayDistance below the dog, a cliff) is NoGround - the sample is discarded, never the dog's own ground.
-        // TODO(M3, DES-DOG-005 D-2 last line): where the disc floats (FloatsHere), return max(ray, water surface) here. Left out of
-        // M2 on purpose: it would change the band scan's rise above the water, which M1 refuses anyway (InJumpWater).
+        // DES-DOG-005 D-2 last line (M3; decision revised 2026-09-28 after the Lab's jumps into the water never planned): over the
+        // river-wide water (_FetchWater: the band outside the bridge zones, with riverbed data) the ground under the disc is
+        // max(ray, water surface). With the riverbed, a catch point over the water read 0.5-1 m higher than from the bank; the band
+        // sieve clamped the rise to the top of the band, and the take-off re-measured from the bank (B-2 step 2) then slid down the bank
+        // and was refused ("iter"). Only while the water states are on (_gyWater, fixed per Plan): the prototype, the M2 harness switch
+        // and a scene without the water legs keep the ray alone (their M1 / M2 results are unchanged).
         float GroundYAt(Vector3 p)
         {
             RaycastHit hit;
@@ -52,10 +56,18 @@ namespace KominkaHillside
             float len = top - _groundY + groundRayDistance;
             if (len < groundRayDistance) len = groundRayDistance;
             _planRays++;   // C-2: _planRays counts every planner ray (the band scan's too)
+            float y = NoGround;
             if (Physics.Raycast(new Vector3(p.x, top, p.z), Vector3.down, out hit, len, groundLayerMask, QueryTriggerInteraction.Ignore))
-                return hit.point.y;
-            return NoGround;
+                y = hit.point.y;
+            // M3 (decision revised 2026-09-28, see above): over the river-wide water the disc comes down on the water line
+            if (_gyWater && riverData._FetchWater(p))
+            {
+                float s = riverData._SurfaceY(p.z);
+                if (y == NoGround || y < s) y = s;
+            }
+            return y;
         }
+        private bool _gyWater;   // GroundYAt reads the water line during this Plan (WaterFetchOn, set once per Plan)
 
         // ---- DES-DOG-005 C-1: reachability (shared by the dog and the holder's aim; '_' = local only) ----
 
@@ -97,16 +109,15 @@ namespace KominkaHillside
             return r >= 0;
         }
 
-        // Reachable(L, dog), land only in M1: PlayableAt(L) and PathOk(dog, the ground under L).
-        // DES-DOG-005 M2 (decision 2026-09-28): a disc now FLOATS in the water (KH_Frisbee), but the dog does not fetch from the
-        // water until M3, so floating water is never reachable: the aim keeps its cross there and a floating disc is not
-        // retrieved. The river band outside the spot is already refused by PlayableAt (InRunRiver); the extra test is the
-        // water-play spot's water, where the pre-M1 walking exception would otherwise send the dog to a disc on the water.
-        // TODO(M3, DES-DOG-005 C-1 / D-1): replace this line with the water branch of Reachable - D-1 "floats" is true and, for
-        // a dog that does not swim, _DepthAt(L) <= _WaterFetchWadeLimit() - and route it to the water chase (state 11).
+        // Reachable(L, dog): on land PlayableAt(L) and PathOk(dog, the ground under L).
+        // DES-DOG-005 C-1 water branch (M3): where a disc floats (D-1, DiscInFloatWater: the spot's water or the river's) the dog
+        // fetches it from the water (state 11), so it is reachable unless the dog does not swim and it is deeper than the dog's
+        // Fetch wading limit (0.85 M). The aim's cross follows the same rule. With the water states off (M2 harness switch, or a
+        // scene without the Wander's water legs) floating water is unreachable, as in M2 (the spot's water had to be named there:
+        // the river band is already refused by PlayableAt, the spot's water is not).
         public bool _Reachable(Vector3 at)
         {
-            if (waterSpot != null && waterSpot._FloatsAt(at)) return false;
+            if (DiscInFloatWater(at)) return WaterFetchOn() && WaterDepthOk(at);
             if (!_PlayableAt(at)) return false;
             return _PathOk(dogRoot.position, new Vector3(at.x, _playY, at.z));
         }
@@ -149,10 +160,28 @@ namespace KominkaHillside
             float span = jumpMaxRise + 1f;
             if (!RayDown(p, refY + span, 2f * span)) { _jgWhy = _solveCapped && _inSolve ? "cap" : "noground"; _jgY = NoGround; return false; }
             _jgY = _rayY; _jgSlope = SlopeDeg(_rayNy);
-            if (!SlopeOk(_rayNy, jumpMaxSlopeDeg)) { _jgWhy = "slope"; return false; }
+            if (!SlopeOk(_rayNy, jumpMaxSlopeDeg)) { _jgWhy = "slope"; return false; }   // (JumpLand reads _jgY after a slope refusal)
             Vector3 g = new Vector3(p.x, _jgY, p.z);
             if (riverData != null && riverData._OnBridgeDeck(g)) { _jgWhy = "bridge"; return false; }
             if (InJumpWater(g)) { _jgWhy = "river"; return false; }
+            return true;
+        }
+
+        // DES-DOG-005 D-3 (M3): a LANDING point L0. On land exactly JumpGround. Where JumpGround refuses only because the ground is
+        // the riverbed / the water-play spot's bed ("river", or the bed's own slope under the water), the point may still take a
+        // landing in the water (DobonAt: D-1 "floats", _FetchWater, and a non-swimmer no deeper than its Fetch limit and its sink
+        // guard); then _jgY is the root height in the water (Wander._WaterLandY: afloat or on the bed) and _jgWater is set.
+        // Never used for the take-off (T0 / S) - the dog does not take off from the water.
+        bool JumpLand(Vector3 p, float refY)
+        {
+            _jgWater = false;
+            if (JumpGround(p, refY)) return true;
+            if (_jgWhy != "river" && _jgWhy != "slope") return false;
+            Vector3 g = new Vector3(p.x, _jgY, p.z);
+            if (!InJumpWater(g)) return false;               // a slope on land stays a slope
+            if (!DobonAt(g)) { _jgWhy = "river"; return false; }
+            _jgY = wander._WaterLandY(g, true);   // planned as a catch: the carry height (the touchdown eases the rest)
+            _jgWater = true; _jgWhy = "";
             return true;
         }
 
@@ -163,6 +192,7 @@ namespace KominkaHillside
         bool AirLanding(Vector3 takeoff, float takeoffY, Vector3 fwd, float vTake, float vy)
         {
             float g = frisbee.gravity;
+            _alWater = false;
             float ta0 = AirTime(vy, g, 0f);
             if (ta0 <= 0f) { _jgWhy = "apex"; return false; }
             Vector3 l0 = takeoff + fwd * (vTake * ta0);
@@ -176,19 +206,30 @@ namespace KominkaHillside
                 _alTime = taS; _alPt = new Vector3(l0.x, _jgY, l0.z); _alY = _jgY;
                 return true;
             }
-            if (!JumpGround(l0, takeoffY)) return false;
-            float land1 = _jgY;
-            if (Mathf.Abs(land1 - takeoffY) > jumpMaxRise) { _jgWhy = "rise"; return false; }
+            // DES-DOG-005 D-3 (M3): the landing may be in the water (JumpLand: ドボン) where the take-off never is (JumpGround above
+            // and at the liftoff). Both landing rays must agree on it (water or not), and a landing in the water may be up to
+            // DobonMaxDrop below the take-off (a bank above the water; decision 2026-09-28 M3) instead of jumpMaxRise.
+            if (!JumpLand(l0, takeoffY)) return false;
+            float land1 = _jgY; bool water1 = _jgWater;
+            if (!RiseOk(land1 - takeoffY, water1)) { _jgWhy = "rise"; return false; }
             float ta1 = AirTime(vy, g, land1 - takeoffY);
             if (ta1 <= 0f) { _jgWhy = "apex"; return false; }
             Vector3 l1 = takeoff + fwd * (vTake * ta1);
-            if (!JumpGround(l1, land1)) return false;
+            if (!JumpLand(l1, land1)) return false;
             float land2 = _jgY;
+            if (_jgWater != water1) { _jgWhy = "iter"; return false; }   // the two rays straddle the water's edge
             if (Mathf.Abs(land2 - land1) > JumpIterTolerance) { _jgWhy = "iter"; return false; }
-            if (Mathf.Abs(land2 - takeoffY) > jumpMaxRise) { _jgWhy = "rise"; return false; }
+            if (!RiseOk(land2 - takeoffY, _jgWater)) { _jgWhy = "rise"; return false; }
             if (takeoffY + vy * vy / (2f * g) < land2 + JumpApexClearance) { _jgWhy = "apex"; return false; }
-            _alTime = ta1; _alPt = new Vector3(l1.x, land2, l1.z); _alY = land2;
+            _alTime = ta1; _alPt = new Vector3(l1.x, land2, l1.z); _alY = land2; _alWater = _jgWater;
             return true;
+        }
+
+        // The landing ground's height rule: |delta| <= jumpMaxRise on land; into the water, up to DobonMaxDrop down (M3).
+        bool RiseOk(float delta, bool water)
+        {
+            if (water) return delta <= jumpMaxRise && delta >= -DobonMaxDrop;
+            return Mathf.Abs(delta) <= jumpMaxRise;
         }
 
         // The ground near refY under p (+- groundRayDistance): C0 / V before their lanes (Codex M1 1-2). NoGround = none.
@@ -255,6 +296,7 @@ namespace KominkaHillside
         // this throw (or a kept shape was just dropped), and then the fallbacks D -> D' -> E.
         void Plan(float tNow)
         {
+            _gyWater = WaterFetchOn();   // M3: GroundYAt's water line for this Plan (the cross-behaviour reads once, not per sample)
             _groundY = SnapToGround(dogRoot.position).y;
             Vector3 dogPos = dogRoot.position;
             float held = _catchT - tNow;
@@ -267,7 +309,8 @@ namespace KominkaHillside
                 chosen = Solve(tNow, dogPos); _solved = true;
                 // DES-DOG-005 C-2: the committed jump pays PathOk(dog, L0) once. A path the dog cannot run (a step, a cliff,
                 // the river) bans this shape; the next tick solves again without it, the fallbacks run now.
-                if (chosen == PlanJump && !PlanPathOk(dogPos, _landPt)) { DropMode("path"); chosen = PlanNone; }
+                // M3: a jump that comes down in the water is run to its crouch start (the landing is the water, by design D-3)
+                if (chosen == PlanJump && !PlanPathOk(dogPos, _landWater ? _standRoot : _landPt)) { DropMode("path"); chosen = PlanNone; }
             }
             // IMP-DOG-017: the fallbacks, in this order for every preset. v3 no longer tries the overtake first -
             // its preference is expressed inside Solve (B chase scores highest), and D' is only for no-jump throws.
@@ -309,12 +352,15 @@ namespace KominkaHillside
             _dropReason = reason;
             _bannedModes = _bannedModes | (1 << _mode);
             _solved = false;
+            _fxOn = false;   // M3 (Codex M3b review 3): a dropped shape takes its fixed take-off with it
             return false;
         }
 
         // True = the plan the dog is already executing still works, so leave it alone.
         bool KeepPlan(float tNow, Vector3 dogPos, float held)
         {
+            // DES-DOG-005 M3 (Codex consult 2026-09-28): a momentum jump into the water keeps its take-off point (KeepFixedT0)
+            if (_plan == PlanJump && (_mode == ModeChase || _mode == ModeFront) && _fxOn) return KeepFixedT0(tNow, dogPos);
             if (_plan == PlanJump && (_mode == ModeChase || _mode == ModeFront))
             {
                 // Every momentum jump is re-derived, not merely re-checked: the crouch start follows the speed the
@@ -430,7 +476,7 @@ namespace KominkaHillside
             if (!AirLanding(t0, takeoffY, _forward, vTake, vy)) return false;
             // No lane ray here (design B-2: <= 4 rays at 10 Hz); the lane was judged at the commit, the landing ground
             // is judged again by the liftoff gate.
-            _takeoffY = takeoffY; _landY = _alY; _landPt = _alPt; _tDown = _alTime - _tUp; _jumpRayAt = crouchStart;
+            _takeoffY = takeoffY; _landY = _alY; _landPt = _alPt; _tDown = _alTime - _tUp; _jumpRayAt = crouchStart; _landWater = _alWater;
             return true;
         }
 
@@ -458,7 +504,7 @@ namespace KominkaHillside
             if (Vector3.Distance(_geoStandRoot, _standRoot) > 0.03f)
             {
                 _catchRoot = _geoCatchRoot; _standRoot = _geoStandRoot; _forward = _geoForward;
-                _takeoffY = takeoffY; _landY = takeoffY; _landPt = _geoStandRoot; _tDown = _tUp; _jumpRayAt = _geoStandRoot;
+                _takeoffY = takeoffY; _landY = takeoffY; _landPt = _geoStandRoot; _tDown = _tUp; _jumpRayAt = _geoStandRoot; _landWater = false;
             }
             return true;
         }
@@ -798,7 +844,7 @@ namespace KominkaHillside
             _cVia = V; _cViaActive = via; _cVReq = vReq; _cVCap = chaseRunSpeed; _cEta = eta; _cPath = path;
             _cSlack = avail - (eta + settleTime);
             _cTakeMin = RunJumpMinTakeoff; _cTakeCap = RunJumpMaxTakeoff;
-            _cTakeoffY = takeoffY; _cLandY = takeoffY; _cTDown = tUp; _cLand = S;
+            _cTakeoffY = takeoffY; _cLandY = takeoffY; _cTDown = tUp; _cLand = S; _cLandWater = false;
             Vector3 entry = S - V; entry.y = 0f;
             if (!via) entry = to;
             _cEntry = entry.sqrMagnitude > 1e-4f ? entry.normalized : F;
@@ -898,7 +944,11 @@ namespace KominkaHillside
             float vy = frisbee.gravity * tUp;
             // why= says which landing rule refused it (land-rise / land-iter / land-apex / land-slope ...; "landing" = its lane).
             if (!AirLanding(t0, takeoffY, fwd, vTake, vy)) { WhyRun(behind, "land-" + _jgWhy); return; }
-            if (!LaneClear(crouchStart, _alPt + fwd * LandingLaneMargin)) { if (_solveCapped) WhyRun(behind, "cap"); else { WhyRun(behind, "landing"); _solveLaneRefused++; } return; }   // Codex D1 (a blocked landing lane counts in laneRefused=)
+            // DES-DOG-005 M3: a landing in the water is judged at the water line (the root under it may be on the riverbed, and a
+            // lane down there would run into the bank's own slope)
+            Vector3 laneEnd = _alPt + fwd * LandingLaneMargin;
+            if (_alWater) { float sy = riverData._SurfaceY(laneEnd.z); if (laneEnd.y < sy) laneEnd.y = sy; }
+            if (!LaneClear(crouchStart, laneEnd)) { if (_solveCapped) WhyRun(behind, "cap"); else { WhyRun(behind, "landing"); _solveLaneRefused++; } return; }   // Codex D1 (a blocked landing lane counts in laneRefused=)
             _cScore = score; _cMode = mode; _cT = t; _cRise = rise; _cTUp = tUp; _cScale = scale; _cCrouch = crouch;
             _cCatchRoot = catchRoot; _cDrive = crouchStart; _cFwd = fwd; _cJumpSpeed = vTake;
             _cVia = crouchStart; _cViaActive = false; _cVReq = vReq; _cVCap = vCap; _cEta = eta; _cPath = dist;
@@ -907,7 +957,7 @@ namespace KominkaHillside
             // a shortened run-up grows back out behind the dog.
             _cTakeMin = lo; _cTakeCap = lo > cap ? lo : cap;
             _cEntry = fwd;
-            _cTakeoffY = takeoffY; _cLandY = _alY; _cTDown = _alTime - tUp; _cLand = _alPt;
+            _cTakeoffY = takeoffY; _cLandY = _alY; _cTDown = _alTime - tUp; _cLand = _alPt; _cLandWater = _alWater;
         }
         // Round 7 diagnostics: the last reason B / C failed at (plan= why=). Log only.
         void WhyRun(bool behind, string r) { if (behind) _whyB = r; else _whyC = r; }
@@ -926,12 +976,18 @@ namespace KominkaHillside
             _takeoffMin = _cTakeMin; _takeoffCap = _cTakeCap;
             _entryDir = _cEntry; _pickVReq = _cVReq; _pickVCap = _cVCap;
             _takeoffY = _cTakeoffY; _landY = _cLandY; _tDown = _cTDown; _landPt = _cLand; _jumpRayAt = _cDrive;   // DES-DOG-005
+            _landWater = _cLandWater;   // M3: the committed jump comes down in the water
+            // DES-DOG-005 M3 (decision 2026-09-28, Codex consult): a momentum jump into the water keeps its VERIFIED take-off point.
+            // T0 = the crouch start + the run-up covered in the crouch (EvalRun's t0), at the take-off ground the rays measured.
+            _fxOn = _cLandWater && (_cMode == ModeChase || _cMode == ModeFront);
+            _fxT0 = _cDrive + _cFwd * (_cJumpSpeed * _cCrouch); _fxT0.y = _cTakeoffY;
+            _fxAhead = -1f; _fxLat = 0f; _fxCrouchV = -1f; _fxDv = 0f; _fxEndErr = -1f;
         }
 
         // No-jump plans (D / D'): the take-off and landing ground are the spot's own.
         void CommitGroundSpot(Vector3 spot)
         {
-            _takeoffY = spot.y; _landY = spot.y; _tDown = 0f; _landPt = spot; _jumpRayAt = spot;
+            _takeoffY = spot.y; _landY = spot.y; _tDown = 0f; _landPt = spot; _jumpRayAt = spot; _landWater = false; _fxOn = false;
         }
 
         // ---- D: stand under it (no jump reachable). Straight in at up to the run speed, settle, face the disc. ----

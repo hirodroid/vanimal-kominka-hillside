@@ -325,7 +325,7 @@ namespace KominkaDogRun
                 // Limit: path to the thrower / run speed + WaterSlack from the start of the carry (over = water-timeout).
                 if (!_wfLandCarry)
                 {
-                    float len = NavPathLength(dog, thrower);
+                    float len = riverData._NavPathLength(dog, thrower);
                     _wfLandLimit = (len >= 0f ? len : FlatDist(dog, thrower) * 1.5f) / Mathf.Max(0.5f, runSpeed) + WaterSlack;
                     _wfLandCarry = true; _wfLandAt = Time.time;
                     Debug.Log("[KD_DogFetchController] river carry dog=" + dogIndex + " path=" + len.ToString("F1") + " limit=" + _wfLandLimit.ToString("F1"));
@@ -388,21 +388,11 @@ namespace KominkaDogRun
         /// entry and the state-6 time limit. False = no usable bank within reach (KH_RiverData._FloatsAt already requires one).</summary>
         bool RiverPlanEntry(KD_DogWanderController w, Vector3 ball)
         {
-            float reach = riverData._BankReach();
-            int a = riverData._NearestSlice(ball, -1, reach, -1), b = riverData._NearestSlice(ball, 1, reach, -1);
-            if (a < 0 && b < 0) return false;
+            // DES-DOG-005 D-4 (M3): the choice itself moved to KH_RiverData._EntrySlice (shared with the disc; unchanged rules)
             Vector3 dog = dogRoot.position;
-            float la = a >= 0 ? NavPathLength(dog, riverData._SliceBank(a)) : -1f;
-            float lb = b >= 0 ? NavPathLength(dog, riverData._SliceBank(b)) : -1f;
-            int code; float land;
-            if (la >= 0f && (lb < 0f || la <= lb)) { code = a; land = la; }
-            else if (lb >= 0f) { code = b; land = lb; }
-            else
-            {
-                // neither side has a complete path: the bank point nearer the ball, walked straight (as the old fallback)
-                code = a < 0 ? b : b < 0 ? a : (FlatDist(riverData._SliceBank(a), ball) <= FlatDist(riverData._SliceBank(b), ball) ? a : b);
-                land = FlatDist(dog, riverData._SliceBank(code)) * 1.5f;
-            }
+            int code = riverData._EntrySlice(dog, ball);
+            if (code < 0) return false;
+            float land = riverData._LastEntryPath();
             _wfEntryCode = code; _wfEntry = riverData._SliceBank(code); _wfPlanLand = land;
             _wfLimit = land / Mathf.Max(0.5f, runSpeed) + FlatDist(_wfEntry, ball) / WaterSpeed(w) + WaterSlack;
             Debug.Log("[KD_DogFetchController] river fetch dog=" + dogIndex + " entry=" + V3(_wfEntry) + " side=" + riverData._SliceSide(code)
@@ -415,11 +405,8 @@ namespace KominkaDogRun
         /// none at all: back where it came in. Sets the state-7 time limit.</summary>
         void RiverPlanExit(KD_DogWanderController w, Vector3 dog, Vector3 thrower)
         {
-            int side = thrower.x >= riverData._CenterX(thrower.z) ? 1 : -1;
-            float reach = riverData._BankReach();
-            int code = riverData._NearestSlice(dog, side, reach, -1);
-            if (code < 0) code = riverData._NearestSlice(dog, -side, reach, -1);
-            if (code < 0) code = _wfEntryCode;
+            int side = thrower.x >= riverData._CenterX(thrower.z) ? 1 : -1;   // log only (the rule is KH_RiverData._ExitSlice's)
+            int code = riverData._ExitSlice(dog, thrower, _wfEntryCode);   // DES-DOG-005 D-4 (M3): shared with the disc
             if (code < 0) { _wfExit = _wfEntry; _wfExitReturn = _wfEntry; }
             else { _wfExit = riverData._SliceBank(code); _wfExitReturn = riverData._SliceReturn(code); }
             _wfExitCode = code;
@@ -447,17 +434,7 @@ namespace KominkaDogRun
             return Mathf.Max(0.2f, v - drift);
         }
 
-        /// <summary>Length of the complete NavMesh path a -> b (both sampled within 2 m); -1 when there is none.</summary>
-        float NavPathLength(Vector3 a, Vector3 b)
-        {
-            NavMeshHit ha, hb; NavMeshPath path = new NavMeshPath();
-            if (!NavMesh.SamplePosition(a, out ha, 2f, NavMesh.AllAreas) || !NavMesh.SamplePosition(b, out hb, 2f, NavMesh.AllAreas)) return -1f;
-            if (!NavMesh.CalculatePath(ha.position, hb.position, NavMesh.AllAreas, path) || path.status != NavMeshPathStatus.PathComplete) return -1f;
-            Vector3[] c = path.corners;
-            float len = 0f;
-            for (int i = 1; i < c.Length; i++) len += Vector3.Distance(c[i - 1], c[i]);
-            return len;
-        }
+        // NavPathLength moved to KH_RiverData._NavPathLength (DES-DOG-005 D-4, M3; shared with the disc, unchanged).
 
         float FlatDist(Vector3 a, Vector3 b) { a.y = 0f; b.y = 0f; return Vector3.Distance(a, b); }
 

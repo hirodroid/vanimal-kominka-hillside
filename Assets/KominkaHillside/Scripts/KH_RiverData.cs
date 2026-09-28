@@ -1,5 +1,6 @@
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace KominkaHillside
 {
@@ -278,5 +279,73 @@ namespace KominkaHillside
             if (lat > keep) vx -= (lat - keep) * 0.5f; else if (lat < -keep) vx += (-keep - lat) * 0.5f;
             return new Vector3(vx, 0f, -drift);
         }
+
+        // ================================================================ DES-DOG-005 D-4 (M3): the river water fetch's bank planning
+        // Moved unchanged from KD_DogFetchController.HillsideWater (RiverPlanEntry / RiverPlanExit / NavPathLength) so the ball and
+        // the disc (KH_FrisbeeCatch.Water) choose their banks by the same rules (design §E-3). Return values only; the NavMesh path
+        // of the last _EntrySlice is read back with _LastEntryPath() (no out parameters across behaviours). Local, never synced:
+        // every caller is its dog's Owner, one call at a time, so the scratch below cannot be read by another dog's call.
+        private float _entryPath = -1f;
+
+        /// <summary>The NavMesh path length (m) the last _EntrySlice chose by; the straight fallback (x 1.5) when neither side had a
+        /// complete path; -1 when it found no slice.</summary>
+        public float _LastEntryPath() { return _entryPath; }
+
+        /// <summary>E-3: the way in for a floating target. The ok slice nearest the target on each side (z within the bank reach, same
+        /// bridge section); the side whose bank point has the shorter complete NavMesh path from the dog; no complete path on either
+        /// side: the bank point nearer the target. Returns the slice code, -1 when there is none (_LastEntryPath says the path).</summary>
+        public int _EntrySlice(Vector3 dog, Vector3 target)
+        {
+            _entryPath = -1f;
+            float reach = _BankReach();
+            int a = _NearestSlice(target, -1, reach, -1), b = _NearestSlice(target, 1, reach, -1);
+            if (a < 0 && b < 0) return -1;
+            float la = a >= 0 ? _NavPathLength(dog, sliceBank[a]) : -1f;
+            float lb = b >= 0 ? _NavPathLength(dog, sliceBank[b]) : -1f;
+            int code; float land;
+            if (la >= 0f && (lb < 0f || la <= lb)) { code = a; land = la; }
+            else if (lb >= 0f) { code = b; land = lb; }
+            else
+            {
+                // neither side has a complete path: the bank point nearer the target, walked straight (as the old fallback)
+                code = a < 0 ? b : b < 0 ? a : (FlatDist(sliceBank[a], target) <= FlatDist(sliceBank[b], target) ? a : b);
+                land = FlatDist(dog, sliceBank[code]) * 1.5f;
+            }
+            _entryPath = land;
+            return code;
+        }
+
+        /// <summary>E-3: the way out, at the pickup. The ok slice nearest the dog on the thrower's side (by the centre line at the
+        /// thrower's z); none within reach there: the other side; none at all: fallback (the caller's entry code, may be -1).</summary>
+        public int _ExitSlice(Vector3 dog, Vector3 thrower, int fallback)
+        {
+            int side = thrower.x >= _CenterX(thrower.z) ? 1 : -1;
+            float reach = _BankReach();
+            int code = _NearestSlice(dog, side, reach, -1);
+            if (code < 0) code = _NearestSlice(dog, -side, reach, -1);
+            if (code < 0) code = fallback;
+            return code;
+        }
+
+        /// <summary>Length of the complete NavMesh path a -> b (both sampled within 2 m); -1 when there is none.</summary>
+        public float _NavPathLength(Vector3 a, Vector3 b)
+        {
+            NavMeshHit ha, hb; NavMeshPath path = new NavMeshPath();
+            if (!NavMesh.SamplePosition(a, out ha, 2f, NavMesh.AllAreas) || !NavMesh.SamplePosition(b, out hb, 2f, NavMesh.AllAreas)) return -1f;
+            if (!NavMesh.CalculatePath(ha.position, hb.position, NavMesh.AllAreas, path) || path.status != NavMeshPathStatus.PathComplete) return -1f;
+            Vector3[] c = path.corners;
+            float len = 0f;
+            for (int i = 1; i < c.Length; i++) len += Vector3.Distance(c[i - 1], c[i]);
+            return len;
+        }
+
+        /// <summary>a and b on opposite banks (by the centre line at each z); false where the data ends.</summary>
+        public bool _OtherBank(Vector3 a, Vector3 b)
+        {
+            if (!_Ready() || !_Covers(a.z) || !_Covers(b.z)) return false;
+            return (a.x - _CenterX(a.z)) * (b.x - _CenterX(b.z)) < 0f;
+        }
+
+        float FlatDist(Vector3 a, Vector3 b) { a.y = 0f; b.y = 0f; return Vector3.Distance(a, b); }
     }
 }

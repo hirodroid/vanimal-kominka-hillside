@@ -206,6 +206,12 @@ namespace KominkaHillside.Editor
         static WhCase WC => wh.cases[caseIndex];
         static int whPrevFrame = -1; static float whPrevTime;
 
+        // 口の余裕 (実口 − 水面) の判定。WhObserve の mouthLowFrames と WhObserveDog の mouthLowFrames の 2 か所で使う。
+        // 2026-09-28 ユーザー決定 (IMP-DOG-023 の 88b 調査): PCVR で決めた泳ぎの沈み (ポメ swimSink 0.035) を優先し、0.029 → 0.010 m に緩める。
+        // 歩く一歩の沈み止め (SinkGuard: 口 − 水深 < 0.03 の一歩へ進まない) はコード側にそのまま残る。ここは「口が水面から 0.010 m 未満」の観測だけを数える。
+        // 運搬中の carryMouthLow (口 − 水面 < ボール半径 + 0.01、設計 B-1) は別の基準で、この値を流用しない (Dachs の運搬基準は未決定)。
+        const float MouthLowLimit = 0.010f;
+
         // Jump rule (decision 2026-09-27): a step between two observations counts when it is longer than 0.2 m AND faster than
         // WhMaxSpeed over the game time between them (Unity caps one frame's deltaTime at 0.333 s: the W3-Shiba 0.801 m and
         // W3-Corgi 0.639 m of run 20260927-102801 were a run at 2.4 m/s through one long editor frame, along the direction of
@@ -404,7 +410,7 @@ namespace KominkaHillside.Editor
                 {
                     float mouthAbove = p.y + c.mouth - surface;
                     if (mouthAbove < c.minMouthAboveWater) c.minMouthAboveWater = mouthAbove;
-                    if (mouthAbove < .029f) c.mouthLowFrames++;
+                    if (mouthAbove < MouthLowLimit) c.mouthLowFrames++;
                 }
             }
             int s = WhState(); if (s != whLastState) { c.stateChanges++; whLastState = s; }
@@ -1121,7 +1127,7 @@ namespace KominkaHillside.Editor
             float above = mouthY - surface, fromRoot = p.y + d.mouth - surface;
             if (above < d.minMouthAboveWater) d.minMouthAboveWater = above;
             if (fromRoot < d.minMouthAboveWaterFromRoot) d.minMouthAboveWaterFromRoot = fromRoot;
-            if (above < .029f) d.mouthLowFrames++;
+            if (above < MouthLowLimit) d.mouthLowFrames++;
             // Feet only while steadily wading: afloat the root is at water + c - Ms, below the riverbed wherever d < M - c (B-2:
             // not visible under the opaque water), and it eases back after swimming (run 20260927-072549 counted those frames).
             if (pose == 1 && d.sincePose >= .5f)

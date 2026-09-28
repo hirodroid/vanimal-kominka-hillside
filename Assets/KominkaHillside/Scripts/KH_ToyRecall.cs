@@ -95,9 +95,14 @@ namespace KominkaHillside
                 if (_pendingRow >= 0) return Pending;
                 if (!LocalNearDiscArea(discCatchers[row])) return OutOfArea;   // IMP-DOG-022 (DES-DOG-005 stage 1)
                 if (discs[row].IsHeldNow) return Held;
-                if (discCatchers[row].IsEngaged) return DogBusy;
+                // DES-DOG-005 D-5 (M3): the disc in the mouth in the water (12 / 13) is refused with the water one-liner (the premise of
+                // IMP-DOG-021:47 no longer holds). A dog swimming after it (11) does not block the call: the disc comes, the dog loses
+                // its target (KH_FrisbeeCatch.Water: target-lost) and walks out. Everything else engaged is "the dog is playing".
+                int cs = discCatchers[row].State;
+                if (cs == KH_FrisbeeCatch.StateWaterCarry || cs == KH_FrisbeeCatch.StateWaterExit) return InWater;
+                if (cs != KH_FrisbeeCatch.StateWaterChase && discCatchers[row].IsEngaged) return DogBusy;
                 // IMP-DOG-021 (DES-DOG-004 E-4): a dog in the water no longer blocks its disc; a disc that is not engaged is not in
-                // any mouth (the disc chase stops at the river band), so it is called as usual and the dog stays in the water.
+                // any mouth, so it is called as usual and the dog stays in the water.
                 if (BallInUse(row)) return DogBusy;   // IMP-DOG-019: the same dog's ball is out (menu text = "dog is playing")
                 if (_discRecallAt != null && Time.time - _discRecallAt[row] < recallCooldown) return Cooldown;
                 return Ok;
@@ -205,7 +210,7 @@ namespace KominkaHillside
                         // KH_FrisbeeCatch.ApplyState's rule, copied; no catcher (prototype) = nobody else writes it
                         int st = c == null ? KH_FrisbeeCatch.StateIdle : c.State;
                         if (st == KH_FrisbeeCatch.StateIdle || st == KH_FrisbeeCatch.StateReady || st == KH_FrisbeeCatch.StateDrop
-                            || st == KH_FrisbeeCatch.StateChase || st == KH_FrisbeeCatch.StateRetrieve) { dp.pickupable = true; _discVetoed[i] = false; }
+                            || st == KH_FrisbeeCatch.StateChase || st == KH_FrisbeeCatch.StateRetrieve || st == KH_FrisbeeCatch.StateWaterChase) { dp.pickupable = true; _discVetoed[i] = false; }
                     }
                 }
             }

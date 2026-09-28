@@ -62,7 +62,7 @@ namespace KominkaHillside.Editor
         const int VariantCount = 6;
         // IMP-DOG-017 (2026-09-26): v1 走り込み: 横 / v2 走り込み: 遠く は退役 (番号は残る)。--variants を省略したときは
         // 流さない。明示すれば流せるが、trace に "retired" の注記を残す。
-        static readonly int[] RetiredVariants = { KH_FrisbeeCatch.VariantRunInSide, KH_FrisbeeCatch.VariantRunInFar };
+        internal static readonly int[] RetiredVariants = { KH_FrisbeeCatch.VariantRunInSide, KH_FrisbeeCatch.VariantRunInFar };
         static string RetiredNote(Options o)
         {
             var r = Variants(o).Where(v => RetiredVariants.Contains(v)).ToArray();
@@ -147,14 +147,14 @@ namespace KominkaHillside.Editor
         //   variant     -1 = --variants の各プリセットで流す (従来)。0 以上 = そのプリセットで 1 回だけ流す
         //   expectMode  "" = 問わない。跳んだ投げ (kind=jump) の takeoff / catch 行の mode= がこれであること
         //   labAllowed / labExpectKind / labExpectMode  Lab レーンだけの期待 (null = 上と同じ)
-        struct Shot
+        internal struct Shot
         {
             public string name; public float speed, elevation, side; public string[] allowed; public string expectKind; public string note;
             public string place; public int variant; public string expectMode;
             public string[] labAllowed; public string labExpectKind, labExpectMode;
         }
 
-        static readonly Shot[] Shots =
+        internal static readonly Shot[] Shots =   // shared with the Frisbee/10 plan probe (KH_FrisbeePlanProbeEditor)
         {
             new Shot { variant = -1, name = "flat", speed = 7.5f, elevation = 10f, allowed = new[] { "caught" }, expectKind = "jump",
                 note = "基準の投げ。跳んで取る (立って取ったら不合格)" },
@@ -506,6 +506,18 @@ namespace KominkaHillside.Editor
             StopInternal();
         }
 
+        static List<string> probeLines;
+
+        /// <summary>Frisbee/10 の計画プローブを、この実行と同じケースだけ流す (terrain = Terrain レーン、default = --breed のレーンの投げ表)。
+        /// netorder / sixdogs は順序・負荷の測定なので流さない。返る行は PROBE_MISMATCH / PROBE_SKIPPED / PLAN_PROBE_OK|FAIL。</summary>
+        static List<string> PlanProbePreflight(Options o)
+        {
+            if (IsNetOrder(o) || IsSixDogs(o)) return new List<string>();
+            var lines = KH_FrisbeePlanProbeEditor.Preflight("Frisbee/7 preflight", () => KH_FrisbeePlanProbeEditor.RunPrototype(IsTerrain(o), !IsTerrain(o), new[] { BreedOf(o) }));
+            foreach (var l in lines) { if (l.StartsWith("PLAN_PROBE_OK")) Debug.Log("[KH Frisbee Harness] " + l); else Debug.LogWarning("[KH Frisbee Harness] " + l); }
+            return lines;
+        }
+
         static void Begin()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || BuildPipeline.isBuildingPlayer)
@@ -525,6 +537,10 @@ namespace KominkaHillside.Editor
                 if (s.isDirty)
                     throw new InvalidOperationException("Open scene has unsaved changes: " + (string.IsNullOrEmpty(s.path) ? s.name : s.path) + ". Save or discard it yourself first.");
             }
+            // 2026-09-28 計画プローブ (Play の前に): この実行のケースを Edit モードで 1 回ずつ計画させ、期待の形にならないケースを
+            // PROBE_MISMATCH として先に出す (配置の誤りを Play へ持ち込まない)。止めはしない (最初の計画と最終の結果は違いうる)。
+            // シーンを切り替えることがあるので、active を読む前に走らせる。
+            probeLines = PlanProbePreflight(ReadOptions());
             var active = SceneManager.GetActiveScene();
             if (string.IsNullOrEmpty(active.path))
                 throw new InvalidOperationException("The active scene has never been saved; the harness could not put it back.");
@@ -565,6 +581,7 @@ namespace KominkaHillside.Editor
                     : Math.Max(MinBudget, planned * BudgetPerThrow + 30.0),
             };
             report.deadline = EditorApplication.timeSinceStartup + report.budgetSeconds;
+            if (probeLines != null) report.trace.AddRange(probeLines.Select(l => "plan probe: " + l));
             report.trace.Add(IsNetOrder(options)
                 ? "mode=netorder cases=" + string.Join(",", NetCases.Select(n => n.name).ToArray()) +
                   " repeats=" + Repeats(options) + " variant=" + NetVariant + " shot=" + NetShot +
@@ -1203,11 +1220,11 @@ namespace KominkaHillside.Editor
         // 試作シーンの Terrain レーン (KH_FrisbeePrototypeEditor.TerrainCases の 10 枚のパッド) で、地面基準のジャンプと到達の規則を
         // 1 ケース 1 投げで通す。投げ台・犬・プレイヤーをパッドへ移すのが注入 (report.injection に同じ)。投げは flat (v0)。
         // 表は CLI 側 (TERRAIN_CASES) にもあるので、直すときは 2 か所そろえる。
-        const string TerrainShot = "flat";
+        internal const string TerrainShot = "flat";
         const int TerrainVariant = 0;
         const float LandGapMax = 0.05f;          // 設計 G M1: 着地後 0.2 s の |根元 - 地面| <= 0.05 m
 
-        struct TerrainCaseDef
+        internal struct TerrainCaseDef
         {
             public string name; public string[] allowed; public string expectKind; public string note;
             public bool needLandGap, needTDown, needCannotPlay, needAimCross, needLaneRefused;
@@ -1221,7 +1238,7 @@ namespace KominkaHillside.Editor
             public string[] cancelOk;   // null = 取消の理由は問わない。空でない = 出てよい req cancel の理由
         }
 
-        static readonly TerrainCaseDef[] TerrainCaseTable =
+        internal static readonly TerrainCaseDef[] TerrainCaseTable =   // shared with the Frisbee/10 plan probe
         {
             new TerrainCaseDef { name = "T-slope10", allowed = new[] { "caught" }, expectKind = "jump", needLandGap = true,
                 note = "10 度の横傾斜 (+x へ上る板)。跳んで取る。着地後 0.2 s の landGap <= 0.05 m" },
@@ -1306,14 +1323,35 @@ namespace KominkaHillside.Editor
         // The highest ground under xz (layers 0 | 11), skipping the harness's own cubes (stand / recall / variant).
         static bool TerrainGround(Vector3 xz, out RaycastHit best)
         {
+            return TerrainGround(xz, new[] { thrower != null ? thrower.transform : null, recaller != null ? recaller.transform : null, cycler != null ? cycler.transform : null }, out best);
+        }
+        internal static bool TerrainGround(Vector3 xz, Transform[] skip, out RaycastHit best)
+        {
             best = default(RaycastHit); bool found = false;
             foreach (var h in Physics.RaycastAll(new Vector3(xz.x, 40f, xz.z), Vector3.down, 80f, (1 << 0) | (1 << 11), QueryTriggerInteraction.Ignore))
             {
                 var t = h.collider.transform;
-                if ((thrower != null && t.IsChildOf(thrower.transform)) || (recaller != null && t.IsChildOf(recaller.transform)) || (cycler != null && t.IsChildOf(cycler.transform))) continue;
+                if (skip != null && skip.Any(k => k != null && t.IsChildOf(k))) continue;
                 if (!found || h.point.y > best.point.y) { best = h; found = true; }
             }
             return found;
+        }
+
+        /// <summary>Where a terrain case puts the stand (its root; rotation identity = throws +Z), the dog and the player. Shared with the
+        /// Frisbee/10 plan probe, so the probe and Play place a case identically. false = no ground under the pad.</summary>
+        internal static bool TerrainPlace(TerrainCaseDef tc, Transform[] skip, out Vector3 standPos, out Vector3 dogPos, out Quaternion dogRot, out Vector3 playerPos)
+        {
+            standPos = dogPos = playerPos = Vector3.zero; dogRot = Quaternion.identity;
+            Vector3 pad = KH_FrisbeePrototypeEditor.TerrainPad(tc.name);
+            RaycastHit gs, gd, gp;
+            Vector3 standXZ = pad + KH_FrisbeePrototypeEditor.TerrainStandLocal(tc.name), dogXZ = pad + KH_FrisbeePrototypeEditor.TerrainDogLocal(tc.name);
+            Vector3 playerXZ = standXZ + new Vector3(0f, 0f, -2f);
+            if (!TerrainGround(standXZ, skip, out gs) || !TerrainGround(dogXZ, skip, out gd) || !TerrainGround(playerXZ, skip, out gp)) return false;
+            standPos = gs.point + Vector3.up * 0.5f;
+            Vector3 face = tc.faceThrow ? Vector3.forward : gs.point - gd.point; face.y = 0f;
+            dogPos = gd.point; dogRot = face.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(face.normalized, Vector3.up) : Quaternion.identity;
+            playerPos = gp.point;
+            return true;
         }
 
         static IEnumerator RunTerrainThrow(int index, TerrainCaseDef tc, Shot shot)
@@ -1330,18 +1368,14 @@ namespace KominkaHillside.Editor
             if (rec.variantApplied != tc.variant) { rec.outcome = "blocked"; rec.ok = false; rec.terrainNote = "preset " + tc.variant + " could not be selected"; yield break; }
 
             // Place: stand (+ its muzzle), dog, player. The recall puts the disc on the moved muzzle.
-            Vector3 pad = KH_FrisbeePrototypeEditor.TerrainPad(tc.name);
-            RaycastHit gs, gd, gp;
-            Vector3 standXZ = pad + KH_FrisbeePrototypeEditor.TerrainStandLocal(tc.name), dogXZ = pad + KH_FrisbeePrototypeEditor.TerrainDogLocal(tc.name);
-            Vector3 playerXZ = standXZ + new Vector3(0f, 0f, -2f);
-            if (!TerrainGround(standXZ, out gs) || !TerrainGround(dogXZ, out gd) || !TerrainGround(playerXZ, out gp))
+            Vector3 standPos, dogPos, playerPos; Quaternion dogRot;
+            if (!TerrainPlace(tc, new[] { thrower.transform, recaller.transform, cycler.transform }, out standPos, out dogPos, out dogRot, out playerPos))
             { rec.outcome = "blocked"; rec.ok = false; rec.terrainNote = "no ground under the pad " + tc.name + " (Frisbee/4 Build Scene)"; yield break; }
-            thrower.transform.SetPositionAndRotation(gs.point + Vector3.up * 0.5f, Quaternion.identity);
-            Vector3 face = tc.faceThrow ? Vector3.forward : gs.point - gd.point; face.y = 0f;
-            dogRoot.SetPositionAndRotation(gd.point, face.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(face.normalized, Vector3.up) : Quaternion.identity);
-            Networking.LocalPlayer.TeleportTo(gp.point, Quaternion.identity);
+            thrower.transform.SetPositionAndRotation(standPos, Quaternion.identity);
+            dogRoot.SetPositionAndRotation(dogPos, dogRot);
+            Networking.LocalPlayer.TeleportTo(playerPos, Quaternion.identity);
             var tidy0 = Recall(); while (tidy0.MoveNext()) yield return null;   // the disc onto the moved muzzle
-            dogRoot.SetPositionAndRotation(gd.point, face.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(face.normalized, Vector3.up) : Quaternion.identity);
+            dogRoot.SetPositionAndRotation(dogPos, dogRot);
             var settle = Wait(0.5); while (settle.MoveNext()) yield return null;
             rec.dogStart = dogRoot.position.ToString("F2") + " (" + tc.name + ", stand " + thrower.transform.position.ToString("F1") + ")";
             Vector3 dogStart = dogRoot.position;
@@ -1631,11 +1665,20 @@ namespace KominkaHillside.Editor
         static IEnumerator PlaceDogFor(string place, ThrowResult rec)
         {
             if (dogRoot == null || thrower == null) yield break;
-            Vector3 stand = thrower.transform.position; stand.y = dogHome.y;
-            Vector3 fwd = Vector3.forward;
-            float sideSign = dogHome.x - stand.x >= 0f ? 1f : -1f;
-            Vector3 side = Vector3.right * sideSign;
             Vector3 at; Quaternion rot;
+            PlaceForGeometry(place, thrower.transform.position, dogHome, out at, out rot);
+            dogRoot.SetPositionAndRotation(at, rot);
+            yield return null;
+            rec.dogStart = dogRoot.position.ToString("F2") + " yaw=" + dogRoot.eulerAngles.y.ToString("F0") + " (" + place + ")";
+        }
+
+        /// <summary>PlaceDogFor の位置と向き (Frisbee/10 plan probe と共有)。stand = 投げ台の位置、home = 犬のシーンの立ち位置。</summary>
+        internal static void PlaceForGeometry(string place, Vector3 stand, Vector3 home, out Vector3 at, out Quaternion rot)
+        {
+            stand.y = home.y;
+            Vector3 fwd = Vector3.forward;
+            float sideSign = home.x - stand.x >= 0f ? 1f : -1f;
+            Vector3 side = Vector3.right * sideSign;
             if (place == "beside")
             {
                 at = stand + side * BesideGap;
@@ -1647,9 +1690,6 @@ namespace KominkaHillside.Editor
                 rot = Quaternion.LookRotation(fwd, Vector3.up);
             }
             else throw new InvalidOperationException("Unknown dog placement '" + place + "' (beside / chase)");
-            dogRoot.SetPositionAndRotation(at, rot);
-            yield return null;
-            rec.dogStart = dogRoot.position.ToString("F2") + " yaw=" + dogRoot.eulerAngles.y.ToString("F0") + " (" + place + ")";
         }
 
         /// <summary>手順 5 (共有)。次の投げのために円盤を台へ戻す (犬の現在の追いかけも終わる)。</summary>

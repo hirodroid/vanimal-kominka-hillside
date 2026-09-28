@@ -203,18 +203,20 @@ namespace KominkaDogRun
         public bool _WaterPushBlocked(Vector3 from, Vector3 to)
         {
             // Afloat: the height is kept by KD_DogPack; only a push out of the spot into the band is refused (W2-Pome, see above)
+            // DES-DOG-005 D-4 (M3): the disc's water states (KH_FrisbeeCatch 11-13) always run under the river rules
+            bool discWater = FrisbeeWaterBusy;
             if (_WaterFloating())
             {
                 // IMP-DOG-021: a river swimmer is never pushed into the band where the river-wide water is not (a bridge zone)
-                if (fetchController != null && fetchController.IsRiverWaterFetching && riverData != null
+                if (((fetchController != null && fetchController.IsRiverWaterFetching) || discWater) && riverData != null
                     && riverData._InBand(to, KominkaHillside.KH_RiverData.BandMargin) && !riverData._FetchWater(to)) return true;
             }
             if (_WaterFloating())
                 return waterSpot != null && riverData != null && waterSpot._Contains(from) && !waterSpot._Contains(to)
                     && riverData._InBand(to, KominkaHillside.KH_RiverData.BandMargin);
             int old = _waterFetchFrame, oldRiver = _waterRiverFrame;
-            if (fetchController != null && fetchController.IsWaterFetching) _waterFetchFrame = Time.frameCount;   // the spot exception, as for its steps
-            if (fetchController != null && fetchController.IsRiverWaterFetching) _waterRiverFrame = Time.frameCount;   // IMP-DOG-021: river rules
+            if ((fetchController != null && fetchController.IsWaterFetching) || discWater) _waterFetchFrame = Time.frameCount;   // the spot exception, as for its steps
+            if ((fetchController != null && fetchController.IsRiverWaterFetching) || discWater) _waterRiverFrame = Time.frameCount;   // IMP-DOG-021: river rules
             bool blocked = _BlockedByRiver(from, to);
             _waterFetchFrame = old; _waterRiverFrame = oldRiver;
             return blocked;
@@ -519,6 +521,44 @@ namespace KominkaDogRun
             if (carrying) _waterCarryFrame = Time.frameCount;
             Coast();
             WaterApplySwimHeight();
+            WaterPoseRefresh();
+        }
+
+        // ---- DES-DOG-005 D-3 (M3): a disc catch that lands in the water (ドボン, KH_FrisbeeCatch) ----
+
+        /// <summary>The afloat root height at p (the formula of WaterApplySwimHeight, no max with the riverbed): water + swimClear
+        /// (+ carryExtra while carrying) - Ms - the dog's swimSink. Local, read by the disc planner.</summary>
+        public float _WaterSwimRootY(Vector3 p, bool carrying)
+        {
+            if (waterSpot == null || riverData == null) return p.y;
+            return riverData._SurfaceY(p.z) + waterSpot.swimClear + (carrying ? waterSpot.carryExtra : 0f) - waterSwimMouth - waterSpot._SwimSink(dogIndex);
+        }
+
+        /// <summary>Where a jump that comes down in the water at p leaves the root: afloat (a swimmer where the water is at least the
+        /// swim entry depth) or on the riverbed. Local, read by the disc planner (design D-3 landY).</summary>
+        public float _WaterLandY(Vector3 p, bool carrying)
+        {
+            if (waterSpot == null || riverData == null) return p.y;
+            float depth = WDepth(p);
+            if (waterSwimAllowed && depth >= WaterSwimEnterDepth()) return _WaterSwimRootY(p, carrying);
+            return riverData._SurfaceY(p.z) - depth;
+        }
+
+        /// <summary>The walk-clip mouth height Ms (the sink guard of a wading dog: never where Ms - depth < 0.03 m).</summary>
+        public float _WaterWalkMouth() { return waterSwimMouth; }
+
+        /// <summary>Dog Owner, the frame a jump lands in the water at p (the root is already there): afloat from here when p is at least
+        /// the swim entry depth for a swimmer (the height then eases onto the water line, as a swim start does), and the pose now.</summary>
+        public void _WaterBeginAt(Vector3 p, bool carrying)
+        {
+            if (!_dogOwner || waterSpot == null || riverData == null) return;
+            _swimShallowSince = -1f;
+            if (waterSwimAllowed && WDepth(p) >= WaterSwimEnterDepth())
+            {
+                _waterSwimming = true; _waterSwimY = p.y; _swimYValid = true; _swimSettled = false;
+                Debug.Log("[KD_DogWanderController] water swim start dog=" + dogIndex + " (landed in the water)");
+            }
+            if (carrying) _waterCarryFrame = Time.frameCount;
             WaterPoseRefresh();
         }
 

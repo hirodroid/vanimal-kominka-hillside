@@ -214,6 +214,7 @@ namespace KominkaDogRun
 
         /// <summary>結果を待っている行と種類 (-1 = 待っていない)。KH_ToyRecall の最後の結果がこの行・種類のときだけ表示する。</summary>
         private int _hsToyRow = -1;
+        private int _hsLastGate = -1;   // the last toy gate a press got (KH_ToyRecall.Ok / InWater ...); harness read-out (DES-DOG-005 M3)
         private int _hsToyKind;
 
         private void HillsideToy(int row, int kind)
@@ -228,6 +229,7 @@ namespace KominkaDogRun
                 return;
             }
             int gate = recall._GateToy(row, kind);
+            _hsLastGate = gate;   // read by the harness only (Course/94b F12: the refusal reason); nothing reads it at runtime
             if (gate != KominkaHillside.KH_ToyRecall.Ok)
             {
                 if (gate == KominkaHillside.KH_ToyRecall.InWater) WaterAsk(row);   // IMP-DOG-020

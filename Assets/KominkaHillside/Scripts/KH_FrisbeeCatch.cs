@@ -58,6 +58,7 @@ namespace KominkaHillside
     //   KH_FrisbeeCatch.Planner.cs     the intercept planner (Plan / KeepPlan, Solve over the jump band, D / D' fallbacks)
     //   KH_FrisbeeCatch.Motion.cs      Ready / Chase execution, jump, landing, pickup, return, locomotion
     //   KH_FrisbeeCatch.Diagnostics.cs log lines, motion quality, and the harness read-outs
+    //   KH_FrisbeeCatch.Water.cs       DES-DOG-005 M3: the landing in the water (ドボン) and the water states 11-13
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public partial class KH_FrisbeeCatch : UdonSharpBehaviour
     {
@@ -213,6 +214,11 @@ namespace KominkaHillside
 
         public const int StateIdle = 0, StateChase = 1, StateJump = 2, StateJumpCarry = 3, StateLand = 4,
             StateLandCarry = 5, StateRetrieve = 6, StatePickup = 7, StateReturn = 8, StateDrop = 9, StateReady = 10;
+        // DES-DOG-005 D-4 (M3, KH_FrisbeeCatch.Water.cs): the disc in the water. Same synced `state`, no new synced variable.
+        //   11 WaterChase  to a floating disc (wade / swim; the Wander's river legs), then the ownership wait (ClaimDisc, <= 2 s)
+        //   12 WaterCarry  the disc in the mouth, to the exit bank (E-3: the thrower's side first)
+        //   13 WaterExit   landed with it: 1.2 s, then over the NavMesh to the thrower (-> Return) or a Drop at the return point
+        public const int StateWaterChase = 11, StateWaterCarry = 12, StateWaterExit = 13;
         // Catch kind (_plan). The numbers are the log contract (`plan=N`, the harness reads plan=2 as "ground"), so
         // only the names were tidied in IMP-DOG-012 (was PlanGround / PlanRun):
         //   PlanJump            1  taken in the air (log kind `jump`: catch OK / catch MISS)
@@ -565,7 +571,10 @@ namespace KominkaHillside
         // flight already in the air keeps the curve it was launched with.
         public float FlightCurve { get { return variant == VariantCurve ? CurveDefault : 0f; } }
         public bool IsIdle { get { return state == StateIdle; } }
-        public bool IsCarrying { get { return state == StateJumpCarry || state == StateLandCarry || state == StateReturn || state == StateDrop; } }
+        // DES-DOG-005 D-4 (M3): 12 / 13 carry the disc too (the mouth glue, the busy refusals, KH_Frisbee.CheckRiver's hands-off).
+        public bool IsCarrying { get { return state == StateJumpCarry || state == StateLandCarry || state == StateReturn || state == StateDrop || state == StateWaterCarry || state == StateWaterExit; } }
+        // The water states 11-13: the Wander's legs move the dog (its busy branch keeps _speed, its push-apart uses the river rules).
+        public bool IsWaterBusy { get { return state >= StateWaterChase && state <= StateWaterExit; } }
         public bool IsAirborne { get { return state == StateJump || state == StateJumpCarry || state == StateLand || state == StateLandCarry; } }
         // Busy for the other systems: Ready (standing off while someone holds the disc) is NOT engaged, so a
         // held disc never takes the dog away from Fetch, the leash or a gathering (review M1).
@@ -849,6 +858,7 @@ namespace KominkaHillside
         void AcceptLaunch(int gen, Vector3 p0, Vector3 v0, double launchServerTime, int thrower, float curve, bool local, float heldFor, bool ended, int endReason)
         {
             _haveLaunch = true; _gen = gen; _p0 = p0; _v0 = v0; _t0 = launchServerTime; _curve = curve;
+            _fxOn = false;   // M3: a new throw starts with no fixed take-off
             // BUG-DOG-003 (Codex D2): an end notice that arrived while the notice was parked is not forgotten here.
             _flightEnded = ended; _flightEndReason = endReason;
             _plan = PlanNone; _nextPlan = 0f; _deviationSince = -1f; _landingValid = false; _localPlanValid = true;
@@ -932,6 +942,10 @@ namespace KominkaHillside
             state = next;
             _stateEntered = Networking.GetServerTimeInSeconds();
             _released = false;
+            _riverWaitSince = -1f;   // DES-DOG-005 M3: the band wait belongs to one Chase
+            // M3 (Codex M3b review 3): the fixed take-off lives only through the approach and the jump that uses it
+            if (next != StateChase && next != StateJump && next != StateJumpCarry) _fxOn = false;
+            if (next == StateIdle) { _discConfirmed = false; _wfClaimAt = -1f; _wfHoldLostAt = -1f; }   // M3: the hold watch belongs to one carry
             if (next == StateIdle) { throwerId = -1; animSpeed = 1f; _plan = PlanNone; _haveLaunch = false; _localPlanValid = false; _yieldAfterLanding = false; _speed = 0f; _settledSince = -1f; _holding = false; _runningCatch = false; _seenReleased = false; }   // BUG-DOG-003: a parked notice is NOT dropped here (the next frame resolves it); only the release flag is
             if (next == StateJumpCarry || next == StateReturn) ClaimDisc();
             // IMP-DOG-013. Ready: start the よしよし window (one per entry, logged once). Drop: the petting
@@ -978,7 +992,14 @@ namespace KominkaHillside
         void GiveUp()
         {
             bool held = HeldNow();
-            if (IsCarrying && !held) ReleaseDisc(Vector3.zero);
+            // DES-DOG-005 D-4 (M3): a disc whose ownership was lost (or never arrived) is left as it is (_keepDisc): taking it
+            // back here would fight the hand / the client that has it. Its new Owner's KH_Frisbee.CheckRiver frees / floats it.
+            // Codex M3b review 2: in the water states (12 / 13) any cancel - not only the hold watch's - leaves a disc that is not ours
+            // alone (a thrower leaving or a gathering can cancel before WaterHoldTick has run this frame). The owner-change recovery
+            // (the new dog Owner lets the mouth's disc go, design D-4) keeps its release.
+            if (IsWaterBusy && !_ownerChangeGiveUp && !DiscOwned()) _keepDisc = true;
+            if (IsCarrying && !held && !_keepDisc) ReleaseDisc(Vector3.zero);
+            _keepDisc = false;
             TransitionTo(StateIdle);
         }
 
@@ -1007,6 +1028,14 @@ namespace KominkaHillside
                 // Petting: allowed while Idle / Ready / Drop, suppressed while the dog is moving (review M2 +
                 // IMP-DOG-013; same hooks Fetch uses). The jump must never have a second writer on the head bone.
                 if (pet != null) { if (!PetAllowed) pet._SuppressPetting(); else if (fetch == null || fetch.IsIdle) pet._ResumePetting(); }
+                // DES-DOG-005 D-4 (M3): in 11-13 the Wander's legs write Walk / Run (every client); on the way in and out its cached
+                // outputs are stale (ours are made stale by _outputValid below). The speed is observed there, on every client.
+                bool water = IsWaterBusy, wasWater = _lastApplied >= StateWaterChase && _lastApplied <= StateWaterExit;
+                if (water != wasWater)
+                {
+                    if (wander != null && state != StateIdle) wander._InvalidateLeashAnimation();   // Idle does it above
+                    _obsValid = false;
+                }
                 _outputValid = false;
             }
             if (state != StateIdle) ApplyAnimatorSpeed();
@@ -1017,7 +1046,8 @@ namespace KominkaHillside
             if (twistBool != _wroteTwist || _lastApplied < 0 || !_outputValid) { dogAnimator.SetBool("Twist", twistBool); _wroteTwist = twistBool; }
             bool pickup = state == StatePickup;
             if (pickup != _wrotePickup || _lastApplied < 0) { dogAnimator.SetBool("Pickup", pickup); _wrotePickup = pickup; }
-            if (_discPickup != null) _discPickup.pickupable = state == StateIdle || state == StateReady || state == StateDrop || state == StateChase || state == StateRetrieve;
+            // DES-DOG-005 M3: a floating disc the dog swims to (11) may be taken by hand, as on land (Chase / Retrieve); in the mouth (12 / 13) not
+            if (_discPickup != null) _discPickup.pickupable = state == StateIdle || state == StateReady || state == StateDrop || state == StateChase || state == StateRetrieve || state == StateWaterChase;
             _lastApplied = state;
         }
 
@@ -1026,7 +1056,9 @@ namespace KominkaHillside
             _riverStop = false;   // Codex W6 D-中: 川の停止はそのフレームの移動で立ったものだけを見る (Ready の立ち位置移動で立ったものを次の Chase へ持ち越さない)
             _groundStop = false;  // DES-DOG-005: the same rule for the walking gate
             _dogOwner = IsDogOwner();
-            if (!_dogOwner) ObserveSpeed();
+            // DES-DOG-005 D-4 (M3): in the water states the Wander's legs move the root, so the Owner observes its speed too
+            // (Animator.speed is still ours: ApplyAnimatorSpeed, from this observed speed on every client).
+            if (!_dogOwner || IsWaterBusy) ObserveSpeed();
             WarnIfOwnerSplit();
             // BUG-DOG-003. A parked launch notice is judged every frame in every state, and accepted only while the
             // dog is free. Expiry and acceptance are separate so a stale notice cannot be revived (Codex D1).
@@ -1067,7 +1099,7 @@ namespace KominkaHillside
                 UpdateReady(); if (state == StateReady) UpdateLocomotionAnim(); return;
             }
             // Became Owner mid-sequence (previous Owner left): no local plan, so stop safely.
-            if (_dogOwner && !_localPlanValid) { CancelLaunch("owner-change"); return; }   // Codex M3: every live cancel says why, once
+            if (_dogOwner && !_localPlanValid) { _ownerChangeGiveUp = true; CancelLaunch("owner-change"); _ownerChangeGiveUp = false; return; }   // Codex M3: every live cancel says why, once
             double now = Networking.GetServerTimeInSeconds();
             float elapsed = (float)(now - _stateEntered);
 
@@ -1088,6 +1120,13 @@ namespace KominkaHillside
             else if (state == StateRetrieve) UpdateRetrieve(elapsed);
             else if (state == StatePickup) UpdatePickup(elapsed);
             else if (state == StateReturn || state == StateDrop) UpdateReturn(elapsed);
+            else if (IsWaterBusy)
+            {
+                // DES-DOG-005 D-4 (M3): the Wander's legs write Walk / Run; ours are not written here (no UpdateLocomotionAnim)
+                UpdateWater(elapsed);
+                if (IsWaterBusy) { ApplyAnimatorSpeed(); _outputValid = true; }
+                return;
+            }
             // DES-DOG-005 C-2: the walking gate found no ground / a step the dog cannot take. A fetch (Chase / Retrieve /
             // Pickup) gives up; Return / Drop already handled it (UpdateReturn sets the disc down there); airborne states
             // only stop the slide.
@@ -1105,6 +1144,9 @@ namespace KominkaHillside
             if (_riverStop)
             {
                 _riverStop = false;
+                // DES-DOG-005 D-4 (M3) transition table, row 1: stopped at the band while the disc is still flying = wait for it
+                // (at most RiverBlockWait): a disc that comes down floating starts the water chase from UpdateChase.
+                if (_dogOwner && RiverBlockWait()) { FaceToward(frisbee.transform.position - dogRoot.position); Coast(); return; }
                 if (_dogOwner && state != StateIdle && !IsAirborne)
                 {
                     Debug.Log("[KH_FrisbeeCatch] river stop state=" + state + " reason=river-band");

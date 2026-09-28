@@ -19,6 +19,8 @@ namespace KominkaDogRun
         // IMP-DOG-005: the disc catcher moves the root (Ready and engaged); Wander yields exactly as it does for Fetch.
         public KominkaHillside.KH_FrisbeeCatch frisbeeCatch;
         private bool FrisbeeActive { get { return frisbeeCatch != null && !frisbeeCatch.IsIdle; } }
+        // DES-DOG-005 D-4 (M3): the disc's water states 11-13 move the dog through this controller's water legs (HillsideWater.cs)
+        private bool FrisbeeWaterBusy { get { return frisbeeCatch != null && frisbeeCatch.IsWaterBusy; } }
         // Fetch and the disc catcher own the Animator (bools and playback speed) while they run. Wander's
         // own writes must stand back for exactly as long, or the two fight over Animator.speed (IMP-DOG-009).
         private bool AnimatorYielded() { return (fetchController != null && !fetchController.IsIdle) || FrisbeeActive; }

@@ -158,6 +158,8 @@ namespace KominkaHillside
                 // Landed or stopped by a wall: fetch from the ground if it is within reach; never re-arm the jump.
                 // Grabbed / recalled: nothing to fetch.
                 // DES-DOG-005 C-2: Reachable(disc) once, instead of the plaza circle.
+                // DES-DOG-005 D-4 (M3): a disc floating in the water is fetched from the water (state 11) first.
+                if (Retrievable() && WaterIntercept(frisbee.transform.position)) return;
                 if (Retrievable() && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance && _Reachable(frisbee.transform.position)) TransitionTo(StateRetrieve);
                 else CancelLaunch("flight-ended:" + _flightEndReason);   // Codex M3: grabbed / lost / out of reach, said once
                 return;
@@ -303,7 +305,9 @@ namespace KominkaHillside
             // Paced to arrive PaceLeadRun before the crouch (harness round 1: exactly on time left every stride of
             // error as a late arrival). The jog floor holds until the last RunPaceFloorPath metres, so the dog is
             // never standing on the crouch start (round 1: v0 mid took off with speedMin 0, off 0.39).
-            float pace = avail > 0.05f ? PaceToArrive(dT, Mathf.Max(0.05f, avail - PaceLeadRun), vCap) : vCap;
+            // M3 fixed take-off (a jump into the water): paced to reach the crouch start ON time, not early - an early arrival runs on
+            // toward the fixed T0 and the crouch would have to brake hard to meet it (KH_FrisbeeCatch.Water.cs, KeepFixedT0)
+            float pace = avail > 0.05f ? PaceToArrive(dT, Mathf.Max(0.05f, avail - (_fxOn ? 0f : PaceLeadRun)), vCap) : vCap;
             if (dT > RunPaceFloorPath && pace < HookMinPace) pace = HookMinPace;
             if (pace > vCap) pace = vCap;
             // The last few metres are held at the take-off ceiling, so the speed the dog crosses the crouch start
@@ -322,7 +326,9 @@ namespace KominkaHillside
             // Arriving early means the dog can run past the crouch start before the 10 Hz replan slides it on;
             // once past it, keep aiming ahead along the run-up rather than turning back for it.
             bool past = Vector3.Dot(toC, _forward) < 0f;
-            MoveToward(dT < 0.6f || past ? _standRoot + _forward * 2f : _standRoot, pace, 0f, chaseAcceleration, false, chaseDeceleration);
+            // M3 fixed take-off: the aim past the crouch start is the fixed T0 itself (never beyond it)
+            Vector3 aimPast = _fxOn ? new Vector3(_fxT0.x, _standRoot.y, _fxT0.z) : _standRoot + _forward * 2f;
+            MoveToward(dT < 0.6f || past ? aimPast : _standRoot, pace, 0f, chaseAcceleration, false, chaseDeceleration);
             if (dT > 0.05f && !past)
             {
                 // The heading rolls onto the take-off facing over the last HoldBlendLength metres (B may come in up
@@ -411,6 +417,8 @@ namespace KominkaHillside
             // starts now, at most a frame or two behind the arc (starts more than 0.1 s late are replanned above).
             _jumpStart = _t0 + (_catchT - _tUp - _crouchReal);
             if (_jumpStart > now) _jumpStart = now;
+            // M3 fixed take-off: the crouch must be able to glide onto T0 from here, in the time left of it; else no jump (re-plan)
+            if (_fxOn && !FixedCrouchBegin(now)) return;
             _jumpFrom = dogRoot.position; _jumpFrom.y = _groundY; _catchDecided = false; _airborne = false; _bestGap = 99f;
             animSpeed = _animScale;
             _apexWritten = false; _landGapLogged = false;   // DES-DOG-005 B-4 / harness landGap: once per jump
@@ -442,7 +450,9 @@ namespace KominkaHillside
             _speed = _jumpSpeed;
             if (e < _crouchReal)
             {
-                Vector3 p = _jumpFrom + _forward * (_jumpSpeed * e);
+                // M3 fixed take-off: from where the crouch began to T0 (the vector, lateral error included) over the crouch time left;
+                // the crouch's own speed is kept apart from _jumpSpeed (the air / Land values)
+                Vector3 p = _fxOn ? FixedCrouchAt(e) : _jumpFrom + _forward * (_jumpSpeed * e);
                 dogRoot.position = SnapToGround(p); // net: owner-only
                 _jumpFrom.y = dogRoot.position.y; _groundY = _jumpFrom.y;
                 return;
@@ -454,6 +464,8 @@ namespace KominkaHillside
                 // Horizontal air velocity is whatever brings the root from here to the planned catch root at tUp.
                 // Round 2: the takeoff is from a standstill, so this only ever corrects the few centimetres the
                 // fine-tune left over (the cap stays, for the case where the dog had to jump from up to 0.5 m off).
+                // M3 fixed take-off: the crouch ends ON T0 (the last crouch frame may stop short of it by one frame's glide)
+                if (_fxOn) FixedCrouchEnd();
                 Vector3 start = dogRoot.position; start.y = _groundY;
                 Vector3 need = _catchRoot - start; need.y = 0f;
                 Vector3 vel = need / Mathf.Max(0.05f, _tUp);
@@ -480,7 +492,7 @@ namespace KominkaHillside
                 if (!takeoffOk || !AirLanding(start, _groundY, hdir, hv, vy))
                 {
                     Debug.Log("[KH_FrisbeeCatch] liftoff refused: " + (takeoffOk ? "landing outside" : "take-off") + " (" + _jgWhy + ")" + DogTag());
-                    _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false; _solved = false; _dropReason = "liftoff";   // IMP-DOG-017: solve again
+                    _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false; _solved = false; _dropReason = "liftoff"; _fxOn = false;   // IMP-DOG-017: solve again (M3: the fixed take-off ends with its plan)
                     _catchDecided = false; _runningCatch = false; _airborne = false; animSpeed = 1f;
                     dogRoot.position = SnapToGround(start); // net: owner-only
                     TransitionTo(StateChase);
@@ -488,6 +500,7 @@ namespace KominkaHillside
                 }
                 _airborne = true; _airStart = start; _airVel = vel;
                 _airVy = vy; _taLand = _alTime; _airLandY = _alY;
+                _airLandWater = _alWater;   // DES-DOG-005 D-3 (M3): this arc comes down in the water (ドボン)
                 LogLiftoff(start, _alPt, hv);
             }
             Vector3 pos = _airStart + _airVel * ta;
@@ -534,6 +547,9 @@ namespace KominkaHillside
             }
             if (ta >= _taLand)
             {
+                // DES-DOG-005 D-3 (M3): landed in the water - straight into the water states (12 with the disc, 11 without), never
+                // Land / LandCarry (the land recover would stop at the band as river-band and let the disc go in the water).
+                if (_airLandWater) { EnterWaterFromJump(); return; }
                 // IMP-DOG-017 (Codex review): B's run-through is only taken when the whole run (recover + RunThroughSeconds
                 // at chaseSprintSpeed * ChaseTakeoffFraction) is clear of obstacles; otherwise it lands and stops as usual.
                 if (state == StateJumpCarry && _mode == ModeChase)
@@ -571,6 +587,7 @@ namespace KominkaHillside
             if (HeldNow()) { CancelLaunch("held-regrab"); return; }
             if (_flightEnded)
             {
+                if (Retrievable() && WaterIntercept(frisbee.transform.position)) return;   // DES-DOG-005 D-4 (M3): floating = the water chase
                 if (Retrievable() && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance && _Reachable(frisbee.transform.position)) TransitionTo(StateRetrieve);
                 else CancelLaunch("flight-ended:" + _flightEndReason);
             }
@@ -586,10 +603,16 @@ namespace KominkaHillside
             // DES-DOG-005 M2 (Codex M2 review 5): a disc that came to rest on land and then rolled / was moved into water where it
             // floats is not fetched in M2 (no water chase until M3). _Reachable only guarded the entrances (Chase / Land), and the
             // walking gate lets the dog into the water-play spot, so the resting disc is looked at again here, 4 times a second.
+            // DES-DOG-005 M3: with the water states the floating disc is fetched from the water (WaterIntercept: 11, or deep-disc /
+            // no-bank); the M2 refusal stays for the M2 harness switch (_debugWaterFetchOff) and for a scene without the water legs.
             if (_flightEnded && Time.time >= _floatCheckAt)
             {
                 _floatCheckAt = Time.time + FloatCheckInterval;
-                if (DiscInFloatWater(frisbee.transform.position)) { CancelLaunch("cannot-play"); return; }
+                if (DiscInFloatWater(frisbee.transform.position))
+                {
+                    if (!WaterIntercept(frisbee.transform.position)) CancelLaunch("cannot-play");
+                    return;
+                }
             }
             Vector3 target = frisbee.transform.position;
             // DES-DOG-005 C-2: no plaza test here any more; a step or a drop on the way is the walking gate's (ground).
@@ -609,13 +632,19 @@ namespace KominkaHillside
             if (elapsed < pickupDuration) return;
             Vector3 to = frisbee.transform.position - dogRoot.position; to.y = 0f;
             if (to.magnitude > arriveRadius * 1.5f) { TransitionTo(StateRetrieve); return; } // it moved while the head was down
-            // DES-DOG-005 M2 (Codex M2 review 5): never take a floating disc into the mouth (M3 does it from the water chase)
-            if (DiscInFloatWater(frisbee.transform.position)) { CancelLaunch("cannot-play"); return; }
+            // DES-DOG-005 M2 (Codex M2 review 5): never take a floating disc into the mouth from the bank - M3 does it from the water
+            // chase (11 and its ownership wait), or refuses as M2 did where the water states are off
+            if (DiscInFloatWater(frisbee.transform.position))
+            {
+                if (!WaterIntercept(frisbee.transform.position)) CancelLaunch("cannot-play");
+                return;
+            }
             TransitionTo(StateReturn);
         }
 
         // DES-DOG-005 M2: KH_Frisbee.FloatKind's rule (the water-play spot's water, then the river's), for the resting disc.
-        // Cheapest first: outside the band (margin 1 m, which contains the spot's water) nothing floats.
+        // Cheapest first: outside the band (margin 1 m, which contains the spot's water) nothing floats. M3: also the D-1 "floats"
+        // of the planner (the landing in the water, Reachable's water branch).
         const float FloatCheckInterval = 0.25f;
         private float _floatCheckAt;
         bool DiscInFloatWater(Vector3 p)
@@ -629,6 +658,8 @@ namespace KominkaHillside
         void UpdateReturn(float elapsed)
         {
             if (!_dogOwner) { UpdateLocomotionAnim(); return; }
+            // DES-DOG-005 D-4 (M3): the hold watch (the disc must stay ours while it is in the mouth); see HoldWatch
+            if (!_released && HoldWatch()) return;
             VRCPlayerApi p = VRCPlayerApi.GetPlayerById(throwerId);
             if (!Utilities.IsValid(p)) { CancelLaunch("thrower-left"); return; }
             Vector3 playerPos = p.GetPosition();

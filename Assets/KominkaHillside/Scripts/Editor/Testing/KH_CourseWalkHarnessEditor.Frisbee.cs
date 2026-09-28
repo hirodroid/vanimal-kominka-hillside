@@ -42,6 +42,8 @@ namespace KominkaHillside.Editor
     //               gravity for 8 s (no roll back into the water and float, design I-5).
     // Not simulable here: a real hand (VRC_Pickup), another Owner / a late joiner (VRCObjectSync carries the gravity), PCVR 42-43.
     // Evidence: Logs/kh-course-walk/<run>/frisbee-m2.json. Final status FRISBEE_M2_PASS / FRISBEE_M2_FAIL.
+    // DES-DOG-005 M3: dog 0's catcher runs these under the M2 rules (heap flag _debugWaterFetchOff, set at the start), so the float
+    // cases stay what they were; the water fetch itself is Course/94b (KH_CourseWalkHarnessEditor.FrisbeeWater.cs).
     public static partial class KH_CourseWalkHarnessEditor
     {
         const int FbDog = 0;
@@ -54,7 +56,7 @@ namespace KominkaHillside.Editor
             public double startedAt = -1, launchedAt = -1, landedT = -1, bankT = -1, decidedT = -1;
             public bool launched, floated, standIn, gravityAfterPickup, flagClearedAfterPickup, refloated, recalledNear, gravityStill;
             public int frames, dogBandFrames, dogSpotChaseFrames, bankLogs, waterLogs, floatLogs, cannotPlayLogs, catcherEnd = -1;
-            public Vector3 injectAt;
+            public Vector3 injectAt, dogAt;
             public double injectedT = -1;
             public bool retrieveSeen, carriedAfterInject;
             public List<string> log = new List<string>();
@@ -77,12 +79,17 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Course/94 - Walk Harness Frisbee Anywhere (M2 float)")]
         public static void FrisbeeAnywhere()
         {
+            CoursePlanPreflight(true, false);   // Course/95 plan probe on these cases first: PROBE_MISMATCH before the Play (warning only)
             Begin(false);
             report.frisbeeOnly = true; report.deadline = EditorApplication.timeSinceStartup + 720; Save();
         }
 
+        // The cases in run order (shared with the Course/95 plan probe, KH_CourseWalkHarnessEditor.PlanProbe.cs).
+        static readonly string[] FbCaseNames = { "F5a-river", "F5c-grab", "F5c-recall", "F5b-spot", "F5d-roll", "F6-bridge", "F7-nobank", "F7b-edge" };
+
         static void MakeFrisbeeCases()
         {
+            if (report.frisbeeM3) { MakeFrisbeeM3Cases(); return; }   // Course/94b (KH_CourseWalkHarnessEditor.FrisbeeWater.cs)
             var all = UnityEngine.Object.FindObjectsOfType<UdonBehaviour>();
             fbRiver = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_RiverData");
             fbSpot = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_WaterSpot");
@@ -93,8 +100,12 @@ namespace KominkaHillside.Editor
             if (fbDisc == null) throw new InvalidOperationException("Dog 0's catcher has no disc");
             object rv; if (!fbDisc.TryGetProgramVariable("riverData", out rv) || rv == null) throw new InvalidOperationException("The disc has no riverData: run Course/89 first");
             if (Get<bool[]>(fbRiver, "sliceOk").Length < 2) throw new InvalidOperationException("River fetch data missing: run Course/90 first");
+            // DES-DOG-005 M3: these eight cases test the float alone, under the M2 rules (a floating disc is not fetched). The water
+            // states are switched off for dog 0's catcher through its harness-only heap flag (Play-mode heap; gone when Play stops).
+            fbCatcher.SetProgramVariable("_debugWaterFetchOff", true);
+            if (!Get<bool>(fbCatcher, "_debugWaterFetchOff")) throw new InvalidOperationException("Could not switch dog 0's water states off (_debugWaterFetchOff)");
             fb = new FbReport { runId = report.runId };
-            foreach (var name in new[] { "F5a-river", "F5c-grab", "F5c-recall", "F5b-spot", "F5d-roll", "F6-bridge", "F7-nobank", "F7b-edge" })
+            foreach (var name in FbCaseNames)
             { report.cases.Add(new Case { name = name, count = 1 }); fb.cases.Add(new FbCase { name = name }); }
             fbPhase = 0; fbStep = 0; fbNext = 0; fbSliceOkBackup = null;
             if (!fbLogHooked) { Application.logMessageReceived += FbLog; fbLogHooked = true; }
@@ -123,6 +134,7 @@ namespace KominkaHillside.Editor
 
         static void FrisbeeTick(double now)
         {
+            if (report.frisbeeM3) { FrisbeeM3Tick(now); return; }
             try { FbStepCase(now); }
             catch { FbRestoreSlices(); SaveFbDetail("FAIL"); throw; }
         }
@@ -176,6 +188,17 @@ namespace KominkaHillside.Editor
         static bool FbFloatingNow() { var rb = FbRb(); return rb != null && !rb.isKinematic && !rb.useGravity; }
 
         static void FbPlace(FbCase c)
+        {
+            FbPlaceGeometry(c);
+            var facing = Quaternion.LookRotation(new Vector3(-c.side, 0, 0));
+            Networking.LocalPlayer.TeleportTo(c.thrower, facing);
+            roots[FbDog].SetPositionAndRotation(c.dogAt, facing);
+            var sync = roots[FbDog].GetComponent<VRC.SDK3.Components.VRCObjectSync>(); if (sync != null) sync.FlagDiscontinuity();
+        }
+
+        // The placement without touching the scene (the Course/95 plan probe calls it in Edit mode): c.z / side / thrower / target /
+        // dogAt (facing -side) / p0 / v0. Throws as FbPlace did. F7-nobank's heap stand-in (sliceOk) only takes effect in Play.
+        static void FbPlaceGeometry(FbCase c)
         {
             var bank = Get<Vector3[]>(fbRiver, "sliceBank"); var ok = Get<bool[]>(fbRiver, "sliceOk");
             float z0 = Get<float>(fbRiver, "sliceZ0"), st = Get<float>(fbRiver, "sliceStep"), reach = Get<float>(fbRiver, "bankReach");
@@ -268,12 +291,9 @@ namespace KominkaHillside.Editor
                 if (float.IsNaN(wx)) throw new InvalidOperationException("F5d: no spot water at z " + wz);
                 c.injectAt = new Vector3(wx, FbFloatY(wz), wz);
             }
-            var facing = Quaternion.LookRotation(new Vector3(-side, 0, 0));
-            Networking.LocalPlayer.TeleportTo(site, facing);
             NavMeshHit dog;
             if (!NavMesh.SamplePosition(site + new Vector3(side * 1.2f, 0, .8f), out dog, 2, NavMesh.AllAreas) || RiverInBand(dog.position)) throw new InvalidOperationException(c.name + ": dog placement lacks NavMesh");
-            roots[FbDog].SetPositionAndRotation(dog.position, facing);
-            var sync = roots[FbDog].GetComponent<VRC.SDK3.Components.VRCObjectSync>(); if (sync != null) sync.FlagDiscontinuity();
+            c.dogAt = dog.position;
             // The hand point and the aimed velocity (the disc's own flight, the catcher's curve preset)
             Vector3 toT = c.target - site; toT.y = 0f; toT.Normalize();
             c.p0 = site + Vector3.up * 1.2f + toT * .4f;

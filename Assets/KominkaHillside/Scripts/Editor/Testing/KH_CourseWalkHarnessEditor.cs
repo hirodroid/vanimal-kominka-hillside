@@ -58,6 +58,7 @@ namespace KominkaHillside.Editor
             public string playerDataBackup;
             public bool riverOnly; // IMP-DOG-020 W5 (KH_CourseWalkHarnessEditor.River.cs)
             public bool frisbeeOnly; // DES-DOG-005 M2 Course/94 (KH_CourseWalkHarnessEditor.Frisbee.cs)
+            public bool frisbeeM3;   // DES-DOG-005 M3 Course/94b (with frisbeeOnly; KH_CourseWalkHarnessEditor.FrisbeeWater.cs)
             public bool travelOnly; // IMP-WLD-001 travel (KH_CourseWalkHarnessEditor.Travel.cs)
             public bool travelRc;   // Course/82b: 破壊監査 RC の新規ケースだけ (同じファイル)
             public bool waterOnly; // IMP-DOG-020 W0/W4/W6 (KH_CourseWalkHarnessEditor.Water.cs)
@@ -417,7 +418,8 @@ namespace KominkaHillside.Editor
             catch(Exception e){f.diagnosticError=e.Message;}
         }
         static T Get<T>(UdonBehaviour u,string key)
-        {object value;if(u==null||!u.TryGetProgramVariable(key,out value)||!(value is T))throw new InvalidOperationException("Missing runtime symbol "+key);return (T)value;}
+        {object value;if(u!=null&&!EditorApplication.isPlaying&&ProxyTryGet(u,key,out value)&&value is T)return (T)value;   // Course/95 plan probe (Edit mode): the U# proxy's serialized value
+         if(u==null||!u.TryGetProgramVariable(key,out value)||!(value is T))throw new InvalidOperationException("Missing runtime symbol "+key);return (T)value;}
         [Serializable] class Progress
         {public string utc,runId;public int holderNode,holderLinks,requiredLinks;public double seconds;public List<DogResult> dogs;}
         static string Hash(string path){using(var sha=SHA256.Create())return BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(path))).Replace("-","");}
