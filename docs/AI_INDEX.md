@@ -46,6 +46,7 @@ UI制作・改修・レビューは `vrc-world-ui` と `.claude/skills/vrc-world
 | `development/git-workflow.md` | Git 運用ルール |
 | `development/imports/kominka-autumn-assets.md` | 古民家ドッグランからの秋色資産 (草・葉・遠景の材質と TerrainData) の移植記録。Layer の使い分けもここ |
 | `development/imports/kominka-dog-system.md` | 古民家ドッグランからの犬ギミック移植記録 (移植時に作成。書式は古民家側 `C:/work/unity/vcc/KominkaDogRun/docs/development/dog-system-porting.md`) |
+| `reference/VRChat_World_Performance_Checklist_2026-09-26.md` | 2026-09-26 時点の性能調査・検査項目の参考資料。ワールドの実測結果や合格記録ではない |
 | `reference/world/*.png` | 空間構成のイメージ図 (雰囲気の参考。地形図・確定レイアウトではない。犬の頭数・犬種の根拠にもしない) |
 | `plans/` | 実装計画書・実機チェックリスト |
 | `../.claude/skills/vrc-*/` | 共有 Skills (VRChat World 開発一般の知識・手順) |
