@@ -314,6 +314,13 @@ Solve は DropMode・期限切れ・踏み切りの拒否・ミスのたびに�
   - `course.toy.discArea`: 「犬が走れる場所で取り出せます」
   - `course.toy.discAreaState`: 「ここでは不可」
 
+決定: 2026-09-28 M4 実装で変更
+
+- **門の規則**: `_PlayableAt` そのものではなく、新しい `KH_FrisbeeCatch._TakeoutOkAt(足もと)` = D-1 の踏み切りの水の範囲 (`InJumpWater`: 帯 + 水遊び場の多角形) の外 かつ `PlayableAt` の地面と傾き (≤ `runMaxSlopeDeg`)。`_PlayableAt` は水遊び場を歩く例外で通すため、水から遊びを始めない (D-1) に合わせた。レイ 1 本で `_planRays` に数えない。場所ごとの期待は [IMP-DOG-023 M4](../development/issues/IMP-DOG-023-frisbee-anywhere.md#m4-段階-1-の門の置き換えと文書) の表。崖の上の平らな所は局所判定なので通す (照準の × で断る)。
+- **キャッシュ**: 6 匹の値は同じ (Course/92) なので、行ごとではなく 1 つを 0.5 s 使い回す。
+- **文言**: 「犬が走れる場所」は橋・崖の上の平らな所で誤解を招くので、断る所 (川・急な斜面) を名指しした「川や急な斜面を離れると取り出せます」にした。状態は「ここでは不可」のまま。
+- **残すもの・消すもの**: `playAreaCenter` は実行時には誰も読まないが、ハーネスの広場の目印 (Course/94 F5c-recall、94b F11・F12) として残す。`playAreaRadius` は 0 (欄は残す)。`playAreaMargin` と `InCircleXZ` も削除 (使う所が無い)。
+
 ## G. 検証 (マイルストーンごと)
 
 新しい Course メニュー:
@@ -385,6 +392,8 @@ Solve は DropMode・期限切れ・踏み切りの拒否・ミスのたびに�
 | メニュー、道の上 | 取り出せる |
 | メニュー、崖の縁・川の中 | `OutOfArea` と新しい文言 |
 | Walking/5 | :596 を「半径 0」に直して PASS |
+
+決定: 2026-09-28 M4 実装で変更 — メニューの 2 行は Course/94 の F15-gate (道 = Ok / 川の中 = OutOfArea / 橋の床 = Ok / 32〜42° の急斜面 = OutOfArea。場所は Edit モードで探し、Course/95 が `_TakeoutOkAt` と照合) にした。「崖の縁」は平らなら通るので、急斜面に置き換えた。文言の見え方は PCVR
 
 ### PCVR (川の設計書のチェックリストの続き)
 

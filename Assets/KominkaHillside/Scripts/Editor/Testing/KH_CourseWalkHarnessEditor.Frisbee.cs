@@ -40,6 +40,8 @@ namespace KominkaHillside.Editor
     //               3 m of z 150 for the case and restores it).
     //   F7b-edge    thrown onto the band-edge slope (half width + 0.6 m, the thrower's side): bank return, then out of the band with
     //               gravity for 8 s (no roll back into the water and float, design I-5).
+    //   F15-gate    (DES-DOG-005 F, M4) the disc take-out gate at the player's feet on four Edit-mode-searched sites (road Ok, river
+    //               OutOfArea, bridge deck Ok, steep ground OutOfArea). See the F15-gate section at the end.
     // Not simulable here: a real hand (VRC_Pickup), another Owner / a late joiner (VRCObjectSync carries the gravity), PCVR 42-43.
     // Evidence: Logs/kh-course-walk/<run>/frisbee-m2.json. Final status FRISBEE_M2_PASS / FRISBEE_M2_FAIL.
     // DES-DOG-005 M3: dog 0's catcher runs these under the M2 rules (heap flag _debugWaterFetchOff, set at the start), so the float
@@ -59,6 +61,8 @@ namespace KominkaHillside.Editor
             public Vector3 injectAt, dogAt;
             public double injectedT = -1;
             public bool retrieveSeen, carriedAfterInject;
+            public int gateIdx = -1, gatePass, gateFail, gateSkip;   // F15-gate
+            public List<string> gateNotes = new List<string>();
             public List<string> log = new List<string>();
             [NonSerialized] public float lastZ; [NonSerialized] public double stillSince = -1, outSince = -1;
         }
@@ -79,13 +83,15 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Course/94 - Walk Harness Frisbee Anywhere (M2 float)")]
         public static void FrisbeeAnywhere()
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Start Course/94 from Edit mode");
+            FgPrepare();   // F15-gate: the sites are searched here, in Edit mode (Temp/frisbee-gate-sites.json)
             CoursePlanPreflight(true, false);   // Course/95 plan probe on these cases first: PROBE_MISMATCH before the Play (warning only)
             Begin(false);
-            report.frisbeeOnly = true; report.deadline = EditorApplication.timeSinceStartup + 720; Save();
+            report.frisbeeOnly = true; report.deadline = EditorApplication.timeSinceStartup + 780; Save();
         }
 
         // The cases in run order (shared with the Course/95 plan probe, KH_CourseWalkHarnessEditor.PlanProbe.cs).
-        static readonly string[] FbCaseNames = { "F5a-river", "F5c-grab", "F5c-recall", "F5b-spot", "F5d-roll", "F6-bridge", "F7-nobank", "F7b-edge" };
+        static readonly string[] FbCaseNames = { "F5a-river", "F5c-grab", "F5c-recall", "F5b-spot", "F5d-roll", "F6-bridge", "F7-nobank", "F7b-edge", FgCase };
 
         static void MakeFrisbeeCases()
         {
@@ -139,7 +145,7 @@ namespace KominkaHillside.Editor
             catch { FbRestoreSlices(); SaveFbDetail("FAIL"); throw; }
         }
 
-        static bool FbSetupCase(string n) { return n != "F5c-grab" && n != "F5c-recall"; }
+        static bool FbSetupCase(string n) { return n != "F5c-grab" && n != "F5c-recall" && n != FgCase; }
 
         static void FbStepCase(double now)
         {
@@ -362,6 +368,7 @@ namespace KominkaHillside.Editor
         static void FbStart(FbCase c, double now)
         {
             c.startedAt = now;
+            if (c.name == FgCase) { FgStart(c, now); return; }
             if (c.name == "F5c-grab")
             {
                 if (!FbFloatingNow()) { FbFinish(c, now, false, "no floating disc to take (F5a did not leave one)"); return; }
@@ -409,6 +416,7 @@ namespace KominkaHillside.Editor
             var dp = fbDisc.transform.position;
             int cs = Get<int>(fbCatcher, "state");
             bool catcherRest = cs == KH_FrisbeeCatch.StateIdle || cs == KH_FrisbeeCatch.StateReady;
+            if (c.name == FgCase) { FgEvaluate(c, now); return; }
             if (c.name == "F5c-grab")
             {
                 if (!c.refloated && FbFloatingNow()) { c.refloated = true; c.decidedT = t; }
@@ -532,7 +540,204 @@ namespace KominkaHillside.Editor
             if (caseIndex + 1 < report.cases.Count) { Next(); fbPhase = 0; fbStep = 0; fbNext = 0; return; }
             bool all = fb.cases.All(x => x.status == "PASS");
             SaveFbDetail(all ? "FRISBEE_M2_PASS" : "FRISBEE_M2_FAIL");
-            End(all ? "FRISBEE_M2_PASS" : "FRISBEE_M2_FAIL", all ? "Frisbee M2 float: eight local cases passed (not network/device acceptance)" : "Frisbee M2 float: see frisbee-m2.json");
+            End(all ? "FRISBEE_M2_PASS" : "FRISBEE_M2_FAIL", all ? "Frisbee M2 float: " + fb.cases.Count + " local cases passed incl. the M4 take-out gate (not network/device acceptance)" : "Frisbee M2 float: see frisbee-m2.json");
+        }
+
+        // ---- F15-gate (DES-DOG-005 F, IMP-DOG-023 M4): the disc take-out gate at the player's feet ----
+        // Four sites searched in Edit mode (FgSearch, from the route nodes and the formula river; Course/94's menu and the Course/95
+        // probe write FgFile, the Play only reads it - no Play-time search). Expected: road = Ok, river (inside the band) = OutOfArea,
+        // bridge deck = Ok (the deck is not band; the dog may run and pick up there, it only does not jump), steep ground
+        // (FgSteepMin..FgSteepMax deg, above runMaxSlopeDeg 25) = OutOfArea. A class without a site in this world is N/A (reason in
+        // the file). In Play: teleport, wait FgSettle (> the gate's 0.5 s cache), read KH_ToyRecall._GateToy(dog 0, disc) through the
+        // harness-only _HsGateDisc. Codex M4 review (中): road and river are REQUIRED - missing from the search or the player not
+        // staying on it fails the case. bridge / steep may be N/A (not in this world's data, or the player slid more than FgMoved)
+        // and each N/A is listed with its reason in the case's reason. PASS = every read site agrees and both required sites passed.
+        const string FgCase = "F15-gate";
+        const string FgFile = "Temp/frisbee-gate-sites.json";
+        const float FgSteepMin = 32f, FgSteepMax = 42f, FgSettle = 1.2f, FgMoved = .6f;
+        [Serializable] public class FgSite { public string cls, why = ""; public bool found; public Vector3 pos; public int expect = -1; public float slopeDeg; }
+        [Serializable] public class FgSet { public string utc; public float runMaxSlopeDeg; public List<FgSite> sites = new List<FgSite>(); }
+        static FgSet fgSet;
+        static bool FgRequired(string cls) { return cls == "road" || cls == "river"; }
+        static UdonBehaviour fgRecall;
+        const int FgMask = (1 << 0) | (1 << 11);
+
+        static float FgMaxSlope()
+        {
+            float v = fbCatcher != null ? Get<float>(fbCatcher, "runMaxSlopeDeg") : KH_FrisbeeCatch.DefaultRunMaxSlopeDeg;
+            return v > 0f ? v : KH_FrisbeeCatch.DefaultRunMaxSlopeDeg;
+        }
+
+        /// <summary>The gate's rule restated in the Editor (formula river, the spot polygon, one ray): true = the take-out is allowed.
+        /// KH_FrisbeeCatch._TakeoutOkAt is the runtime; Course/95 compares the two on every site.</summary>
+        static bool FgRule(Vector3 p, float maxSlope, out string why, out float deg)
+        {
+            deg = -1f;
+            if (RiverInBand(p)) { why = "band"; return false; }
+            if (FbInSpot(p)) { why = "spot"; return false; }
+            RaycastHit h;
+            if (!Physics.Raycast(p + Vector3.up * .5f, Vector3.down, out h, 4f, FgMask, QueryTriggerInteraction.Ignore)) { why = "no ground"; return false; }
+            deg = Vector3.Angle(h.normal, Vector3.up);
+            if (deg > maxSlope) { why = "slope " + deg.ToString("F1"); return false; }
+            why = "ground slope " + deg.ToString("F1"); return true;
+        }
+
+        static float FgSlopeAt(Vector3 p, out Vector3 ground)
+        {
+            RaycastHit h; ground = p;
+            if (!Physics.Raycast(new Vector3(p.x, p.y + 10f, p.z), Vector3.down, out h, 30f, FgMask, QueryTriggerInteraction.Ignore)) return -1f;
+            ground = h.point; return Vector3.Angle(h.normal, Vector3.up);
+        }
+
+        /// <summary>Edit mode (needs Bind, fbSpot, fbCatcher): the four sites.</summary>
+        static FgSet FgSearch()
+        {
+            float max = FgMaxSlope();
+            var set = new FgSet { utc = DateTime.UtcNow.ToString("o"), runMaxSlopeDeg = max };
+            string why; float deg; Vector3 g;
+            // road: a route node on nearly flat ground, 5 m clear of the band, away from the bridges and the spot
+            var road = new FgSite { cls = "road", expect = KH_ToyRecall.Ok };
+            for (int i = 0; i < nodes.Length && !road.found; i++)
+            {
+                float s = FgSlopeAt(nodes[i], out g);
+                if (s < 0f || s > 10f || RiverLateral(g) < 5f || RwBridgeZone(g.z, 6f) || FbInSpot(g)) continue;
+                if (!FgRule(g, max, out why, out deg)) continue;
+                road.found = true; road.pos = g; road.slopeDeg = deg; road.why = "route node " + i + ", " + why;
+            }
+            if (!road.found) road.why = "no route node on ground <= 10 deg, 5 m clear of the band";
+            set.sites.Add(road);
+            // river: the riverbed 1.5 m inside the band edge, outside the bridge zones and the spot
+            var river = new FgSite { cls = "river", expect = KH_ToyRecall.OutOfArea };
+            for (float z = 20f; z <= 700f && !river.found; z += 5f)
+            {
+                if (RwBridgeZone(z, 4f)) continue;
+                var r = KH_CourseGroundEditor.RiverAt(z);
+                if (KH_CourseGroundEditor.HalfWidth(z) < 1.5f || FbInSpot(new Vector3(r.x, r.y, z))) continue;
+                RaycastHit h;
+                if (!Physics.Raycast(new Vector3(r.x, r.y + 2f, z), Vector3.down, out h, 10f, FgMask, QueryTriggerInteraction.Ignore)) continue;
+                if (RiverLateral(h.point) > -1.5f || FbInSpot(h.point)) continue;
+                if (FgRule(h.point, max, out why, out deg)) continue;
+                river.found = true; river.pos = h.point; river.slopeDeg = Vector3.Angle(h.normal, Vector3.up); river.why = "riverbed z " + z.ToString("F0") + ", " + why;
+            }
+            if (!river.found) river.why = "no riverbed hit inside the band outside the bridge zones and the spot";
+            set.sites.Add(river);
+            // bridge: the deck over the river centre (a hit higher than the water + 0.6 m, RiverOnDeck), flat enough
+            var bridge = new FgSite { cls = "bridge", expect = KH_ToyRecall.Ok };
+            var bridgeNotes = new List<string>();
+            foreach (float b in RiverBridges)
+            {
+                foreach (float dz in new[] { 0f, .5f, -.5f, 1f, -1f })
+                {
+                    if (bridge.found) break;
+                    float z = b + dz; var r = KH_CourseGroundEditor.RiverAt(z); RaycastHit h;
+                    if (!Physics.Raycast(new Vector3(r.x, r.y + 6f, z), Vector3.down, out h, 12f, FgMask, QueryTriggerInteraction.Ignore)) { bridgeNotes.Add("z " + z + ": no hit"); continue; }
+                    if (!RiverOnDeck(h.point)) { bridgeNotes.Add("z " + z + ": hit y " + h.point.y.ToString("F2") + " is not a deck (layer 0 / 11)"); continue; }
+                    if (!FgRule(h.point, max, out why, out deg)) { bridgeNotes.Add("z " + z + ": deck refused (" + why + ")"); continue; }
+                    bridge.found = true; bridge.pos = h.point; bridge.slopeDeg = deg; bridge.why = "deck z " + z.ToString("F1") + ", " + why;
+                }
+            }
+            if (!bridge.found) bridge.why = string.Join("; ", bridgeNotes.Take(6).ToArray());
+            set.sites.Add(bridge);
+            // steep: ground FgSteepMin..FgSteepMax deg 4-16 m beside the route, 3 m clear of the band, steep over +-0.4 m as well
+            var steep = new FgSite { cls = "steep", expect = KH_ToyRecall.OutOfArea };
+            for (int i = 0; i + 1 < nodes.Length && !steep.found; i += 2)
+            {
+                Vector3 seg = nodes[i + 1] - nodes[i]; seg.y = 0f;
+                if (seg.sqrMagnitude < 1e-4f) continue;
+                Vector3 side = Vector3.Cross(Vector3.up, seg.normalized);
+                foreach (int sg in new[] { 1, -1 })
+                {
+                    if (steep.found) break;
+                    for (float off = 4f; off <= 16f && !steep.found; off += 1f)
+                    {
+                        float s = FgSlopeAt(nodes[i] + side * (sg * off), out g);
+                        if (s < FgSteepMin || s > FgSteepMax || RiverLateral(g) < 3f || FbInSpot(g)) continue;
+                        bool around = true; Vector3 gg;
+                        foreach (var d in new[] { new Vector3(.4f, 0, 0), new Vector3(-.4f, 0, 0), new Vector3(0, 0, .4f), new Vector3(0, 0, -.4f) })
+                        { float sn = FgSlopeAt(g + d, out gg); if (sn < max + 3f) { around = false; break; } }
+                        if (!around || FgRule(g, max, out why, out deg)) continue;
+                        steep.found = true; steep.pos = g; steep.slopeDeg = s; steep.why = "node " + i + " side " + sg + " +" + off.ToString("F0") + " m, " + why;
+                    }
+                }
+            }
+            if (!steep.found) steep.why = "no ground of " + FgSteepMin + "-" + FgSteepMax + " deg (and > " + (max + 3f) + " deg within 0.4 m) 4-16 m beside the route";
+            set.sites.Add(steep);
+            return set;
+        }
+
+        static void FgWrite(FgSet set)
+        {
+            Directory.CreateDirectory("Temp");
+            File.WriteAllText(FgFile, JsonUtility.ToJson(set, true));
+        }
+
+        static string FgLine(FgSite s)
+        {
+            return s.cls + (s.found ? " " + s.pos.ToString("F2") + " expect=" + (s.expect == KH_ToyRecall.Ok ? "Ok" : "OutOfArea") + " (" + s.why + ")" : " N/A (" + s.why + ")");
+        }
+
+        /// <summary>Course/94 menu, Edit mode, before Begin: search and write FgFile.</summary>
+        static void FgPrepare()
+        {
+            try
+            {
+                Bind();
+                var all = UnityEngine.Object.FindObjectsOfType<UdonBehaviour>();
+                fbRiver = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_RiverData");
+                fbSpot = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_WaterSpot");
+                fbCatcher = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_FrisbeeCatch" && Get<Transform>(u, "dogRoot") == roots[FbDog]);
+                if (fbSpot == null) throw new InvalidOperationException("KH_WaterSpot missing");
+                var set = FgSearch(); FgWrite(set);
+                foreach (var s in set.sites) Debug.Log("[KH Course Walk] F15 gate site: " + FgLine(s));
+            }
+            finally { manager = null; pouch = null; route = null; wander = null; roots = null; nodes = null; fbRiver = fbSpot = fbCatcher = null; }
+        }
+
+        static void FgStart(FbCase c, double now)
+        {
+            if (!File.Exists(FgFile)) { FbFinish(c, now, false, FgFile + " missing: start from the Course/94 menu (it searches the sites in Edit mode)"); return; }
+            fgSet = JsonUtility.FromJson<FgSet>(File.ReadAllText(FgFile));
+            fgRecall = UnityEngine.Object.FindObjectsOfType<UdonBehaviour>().FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_ToyRecall");
+            if (fgRecall == null) { FbFinish(c, now, false, "KH_ToyRecall missing"); return; }
+            foreach (var s in fgSet.sites) c.log.Add("site " + FgLine(s));
+            c.gateIdx = -1;
+            FgNextSite(c, now);
+        }
+
+        static void FgNextSite(FbCase c, double now)
+        {
+            for (c.gateIdx++; c.gateIdx < fgSet.sites.Count; c.gateIdx++)
+            {
+                var s = fgSet.sites[c.gateIdx];
+                if (s.found) { Networking.LocalPlayer.TeleportTo(s.pos, Quaternion.identity); fbNext = now + FgSettle; return; }
+                if (FgRequired(s.cls)) { c.gateFail++; c.gateNotes.Add(s.cls + " REQUIRED but not found: " + s.why); }
+                else { c.gateSkip++; c.gateNotes.Add(s.cls + " N/A: " + s.why); }
+            }
+            bool ok = c.gateFail == 0 && c.gatePass >= 2;
+            FbFinish(c, now, ok, "gate sites pass=" + c.gatePass + " fail=" + c.gateFail + " n/a=" + c.gateSkip
+                + (c.gateNotes.Count > 0 ? " | " + string.Join(" | ", c.gateNotes.ToArray()) : "") + " (per-site lines in the log)");
+        }
+
+        static void FgEvaluate(FbCase c, double now)
+        {
+            var s = fgSet.sites[c.gateIdx];
+            fgRecall.SetProgramVariable("_hsGateRow", FbDog);
+            fgRecall.SetProgramVariable("_hsGate", -99);
+            fgRecall.SendCustomEvent("_HsGateDisc");
+            int gate = Get<int>(fgRecall, "_hsGate");
+            var at = Networking.LocalPlayer.GetPosition();
+            float moved = new Vector2(at.x - s.pos.x, at.z - s.pos.z).magnitude;
+            string why; float deg; bool rule = FgRule(at, FgMaxSlope(), out why, out deg);
+            string line = s.cls + " gate=" + gate + " expect=" + s.expect + " at=" + at.ToString("F2") + " moved=" + moved.ToString("F2") + " ruleAtFeet=" + rule + " (" + why + ")";
+            if (moved > FgMoved)
+            {
+                if (FgRequired(s.cls)) { c.gateFail++; line += " -> FAIL (required site; the player did not stay on it)"; c.gateNotes.Add(s.cls + " REQUIRED: the player moved " + moved.ToString("F2") + " m"); }
+                else { c.gateSkip++; line += " -> N/A (the player did not stay on the site)"; c.gateNotes.Add(s.cls + " N/A: the player slid " + moved.ToString("F2") + " m"); }
+            }
+            else if (gate == s.expect) { c.gatePass++; line += " -> PASS"; }
+            else { c.gateFail++; line += " -> FAIL"; c.gateNotes.Add(s.cls + " FAIL gate=" + gate + " expect=" + s.expect); }
+            c.log.Add(line);
+            FgNextSite(c, now);
         }
 
         static void SaveFbDetail(string status)

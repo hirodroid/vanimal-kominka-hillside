@@ -35,10 +35,19 @@ namespace KominkaHillside
         // IMP-DOG-020: the dog is wading; called again after it lands (DES-DOG-004 B-1). IMP-DOG-021 (E-4): only while the ball is
         // in its mouth in the water (Fetch 7 / 8); a ball the dog is not holding is called even when the dog is in the water.
         public const int InWater = 6;
-        // IMP-DOG-022 (DES-DOG-005 stage 1): the disc is taken out only near the place it can be thrown (the catcher's plaza
-        // circle + discTakeoutMargin, XZ). Stage 3 is to replace this with "can the dog play on the ground right here".
+        // IMP-DOG-022 (DES-DOG-005 stage 1) -> DES-DOG-005 F (IMP-DOG-023 M4, 2026-09-28): the disc is taken out only where the dog
+        // could start its play at the local player's feet (KH_FrisbeeCatch._TakeoutOkAt: not in the river band / the water-play spot,
+        // ground within reach below, no steeper than runMaxSlopeDeg). The plaza circle + discTakeoutMargin it replaces is gone.
         public const int OutOfArea = 7;
-        public float discTakeoutMargin = 5f;
+        // F: the menu asks the gate for all six rows on every redraw (KD_TreatPouch.Toy RedrawHillsideToy), so the feet are judged
+        // at most once per TakeoutCacheSeconds and the answer is shared by the rows (<= 2 rays/s). The six catchers carry the same
+        // river / spot / slope values (Course/92), so the row that happens to ask first decides for all.
+        const float TakeoutCacheSeconds = 0.5f;
+        private float _takeoutAt = -10f;
+        private bool _takeoutOk = true;
+        // Harness read-out (Course/94 F15-gate): the disc gate of row _hsGateRow without pressing the menu. Nothing calls it at runtime.
+        private int _hsGateRow = -1;
+        private int _hsGate = -99;
         private float[] _recallAt;
         private float[] _discRecallAt;
         private int _pendingRow = -1;
@@ -93,7 +102,7 @@ namespace KominkaHillside
             {
                 if (discs == null || row < 0 || row >= discs.Length || discs[row] == null || discCatchers == null || row >= discCatchers.Length || discCatchers[row] == null) return Unwired;
                 if (_pendingRow >= 0) return Pending;
-                if (!LocalNearDiscArea(discCatchers[row])) return OutOfArea;   // IMP-DOG-022 (DES-DOG-005 stage 1)
+                if (!LocalTakeoutOk(discCatchers[row])) return OutOfArea;   // DES-DOG-005 F (M4): the player's feet, not the plaza circle
                 if (discs[row].IsHeldNow) return Held;
                 // DES-DOG-005 D-5 (M3): the disc in the mouth in the water (12 / 13) is refused with the water one-liner (the premise of
                 // IMP-DOG-021:47 no longer holds). A dog swimming after it (11) does not block the call: the disc comes, the dog loses
@@ -128,19 +137,21 @@ namespace KominkaHillside
             return Ok;
         }
 
-        // IMP-DOG-022: local player within the catcher's play circle + discTakeoutMargin (XZ). A catcher without an area
-        // (radius <= 0: prototype scene, frisbee harness) and no local player (editor without ClientSim) count as inside.
-        // Local read only: nothing is synced, the menu just refuses to call the disc.
-        bool LocalNearDiscArea(KH_FrisbeeCatch c)
+        // DES-DOG-005 F (M4): can the dog start its play at the local player's feet? One ray per TakeoutCacheSeconds, shared by the
+        // six rows. No local player (Editor without ClientSim) counts as allowed. Local read only: nothing is synced, the menu just
+        // refuses to call the disc.
+        bool LocalTakeoutOk(KH_FrisbeeCatch c)
         {
-            float r = c.playAreaRadius;
-            if (r <= 0f) return true;
+            if (Time.time - _takeoutAt < TakeoutCacheSeconds) return _takeoutOk;
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp)) return true;
-            Vector3 d = lp.GetPosition() - c.playAreaCenter; d.y = 0f;
-            float limit = r + discTakeoutMargin;
-            return d.sqrMagnitude <= limit * limit;
+            _takeoutAt = Time.time;
+            _takeoutOk = c._TakeoutOkAt(lp.GetPosition());
+            return _takeoutOk;
         }
+
+        // Harness only (Course/94 F15-gate): the disc gate of _hsGateRow into _hsGate. '_' = not callable over the network.
+        public void _HsGateDisc() { _hsGate = _GateToy(_hsGateRow, KindDisc); }
 
         // ---- IMP-DOG-019: ball and disc of one dog are mutually exclusive ----
         // "In use" is derived on every client from state that is already synced (no new synced variable):

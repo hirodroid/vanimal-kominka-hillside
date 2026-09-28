@@ -84,6 +84,7 @@ namespace KominkaHillside.Editor
             foreach (string name in FbCaseNames)
             {
                 var row = new KH_FrisbeePlanProbeEditor.Row { suite = "94", name = name, catcher = catcher != null ? catcher.gameObject.name : "-", expect = name == "F5d-roll" ? "ground" : "noband" };
+                if (name == FgCase) { ProbeGate(rep, catcher); continue; }   // M4: no throw; the gate sites instead
                 rep.rows.Add(row);
                 if (!FbSetupCase(name)) { row.counted = false; row.verdict = "no throw of its own (uses F5a's floating disc)"; continue; }
                 var c = new FbCase { name = name };
@@ -123,6 +124,24 @@ namespace KominkaHillside.Editor
                 if (r.kind == "ground" && RiverInBand(r.landing)) bad.Add("ground retrieve into the band " + r.landing.ToString("F1"));
                 row.pass = bad.Count == 0;
                 row.verdict = row.pass ? "OK (" + r.runtimeNext + ")" : "MISMATCH " + string.Join("; ", bad.ToArray());
+            }
+        }
+
+        // Course/94 F15-gate (DES-DOG-005 F, M4): the Edit-mode site search (the same FgSearch the Course/94 menu runs; it also writes
+        // Temp/frisbee-gate-sites.json) and, per site found, the runtime rule KH_FrisbeeCatch._TakeoutOkAt on the proxy against the
+        // expected class value. A class without a site is an (info) N/A row. Known refusals (river, steep) are part of the set.
+        static void ProbeGate(KH_FrisbeePlanProbeEditor.Report rep, KH_FrisbeeCatch catcher)
+        {
+            var set = FgSearch(); FgWrite(set);
+            foreach (var s in set.sites)
+            {
+                var row = new KH_FrisbeePlanProbeEditor.Row { suite = "94", name = FgCase + "/" + s.cls, catcher = catcher.gameObject.name, expect = s.expect == KH_ToyRecall.Ok ? "Ok" : "OutOfArea" };
+                rep.rows.Add(row);
+                // Codex M4 review: road and river are required (a missing one is a counted failure); bridge / steep may be N/A
+                if (!s.found) { row.counted = FgRequired(s.cls); row.pass = false; row.verdict = (row.counted ? "MISSING (required) " : "N/A ") + s.why; continue; }
+                bool runtime = catcher._TakeoutOkAt(s.pos);
+                row.pass = runtime == (s.expect == KH_ToyRecall.Ok);
+                row.verdict = (row.pass ? "OK " : "MISMATCH ") + "_TakeoutOkAt=" + runtime + " at " + s.pos.ToString("F2") + " slope " + s.slopeDeg.ToString("F1") + " (" + s.why + ")";
             }
         }
 

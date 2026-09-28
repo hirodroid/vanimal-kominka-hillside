@@ -43,6 +43,8 @@ updated: 2026-09-28
 
 段階 3 (どこでも) では、この判定は「その場の地面で遊べるか」の判定に置き換わる予定。`OutOfArea` の文言と `discTakeoutMargin` もそのときに見直す。段階 2 (平らな場所を増やす) では、円の一覧のどれかの近くにいれば取り出せる形に広げる。
 
+決定: 2026-09-28 DES-DOG-005 (IMP-DOG-023 M4) で置換 — 円 + 5 m をやめ、自分の足もとで犬が遊び始められるか (`KH_FrisbeeCatch._TakeoutOkAt`: 川の帯・水遊び場の外、地面あり、傾き ≤ 25°) で決める。`discTakeoutMargin` は削除、文言は「川や急な斜面を離れると取り出せます」/「ここでは不可」。上の PCVR の項目 (17 m で切り替わる) は検証しない ([IMP-DOG-023 M4](IMP-DOG-023-frisbee-anywhere.md#m4-段階-1-の門の置き換えと文書))
+
 ## 関連
 
 - [DES-DOG-005](DES-DOG-005-frisbee-anywhere.md): フリスビーをどこでも (段階 1〜3)

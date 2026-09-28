@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-54 件 — 対応中 16 / 確認待ち 14 / 未着手 12 / 保留 3 / 完了 9
+54 件 — 対応中 15 / 確認待ち 15 / 未着手 12 / 保留 3 / 完了 9
 
 ## 実行キュー
 
@@ -15,7 +15,6 @@
 | [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、Desktop/Touch、複数人。看板の本制作・分かりやすさは DES-UI-004 へ分離 | wip |  |
 | [IMP-DOG-009](IMP-DOG-009-walk-speed-tiers.md) | High | 散歩の犬の速さを 4 段階に (最速は現状の速歩の 3 倍)。人が犬を引っ張る状態をなくす。Run クリップの再生速度・減速も合わせる。9/22 PCVR 1 人 1 匹で OK・採用、3〜6 匹・2 人以上・Desktop は未確認 | wip |  |
 | [BUG-DOG-002](BUG-DOG-002-leash-handle-orientation.md) | Medium | リードの輪と紐の接続部が横向き。肘→手の延長上・手の前側へ向くよう左右とも調整する (9/23 要望具体化) | wip |  |
-| [DES-DOG-005](DES-DOG-005-frisbee-anywhere.md) | Medium | フリスビーを広場以外 (奥広場・川辺・道) でも投げて取れるようにする。段階 1 は取り出しを投げられるエリアに限る、段階 2 は平らな場所を追加、段階 3 は地面の高さを基準にした滑空・キャッチでどこでも | wip | 設計書 (docs/plans/2026-09-28-frisbee-anywhere.md) に沿って M1 (地面基準のジャンプ・Playable) → M2 (ドボン) → M3 (浮き・水中回収) → M4 (門の置き換え・文書) を実装中。M2/M3 は Codex レビュー後に確定。PCVR 37〜44 はユーザー |
 | [DES-ENV-002](DES-ENV-002-longer-course.md) | Medium | 約2.41kmの川沿い周回を別シーンへ実装中。地形・経路・景観・容量とEditor描画を確認し、Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する | wip | 接続済みの436点経路・手元メニューで犬の周回を検証。LODと遮蔽の実機表示、犬連れの歩行時間と16人性能から最終距離/予算を確定する |
 | [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK)、段階 2・3 は 9/24 実装済み・PCVR 待ち | wip |  |
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開は012 | wip |  |
@@ -23,7 +22,7 @@
 | [IMP-DOG-010](IMP-DOG-010-walk-stopovers.md) | Medium | 寄り道が分かりにくい (嗅ぐ姿勢が無い・ずれが小さい・短い) ので作り直し、道沿いの立ち寄り場所と夜の散歩の違いを足す。9/22 PCVR 1 人 1 匹で OK・採用 (Sniff クリップは保留)、3〜6 匹・2 人以上・Desktop は未確認 | wip |  |
 | [IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md) | Medium | フリスビー (先回り型 + 6 プリセット) を 6 匹へ展開する。2026-09-24 実装済み (ff76602): 犬種別クリップ・facts、犬別ディスク 6 枚、犬種別の跳躍上限 (小型犬 0.45 m)、Verify・縮小ハーネス・6 匹同時の負荷 PASS。残り: Shiba / Samoyed の縮小表の取り直し・全 36 投げ (AI)、PCVR (ユーザー) | wip |  |
 | [IMP-DOG-013](IMP-DOG-013-frisbee-pet-after-return.md) | Medium | フリスビーを持ち帰った犬をよしよしできる。くわえて待っている間は撫でを再開し (撫でている間はディスクを落とさない)、受け取っても 4 秒 / 2.5 m の猶予はその場で待つ。9/22 実装・Editor 検査済み、PCVR 確認が残る | wip |  |
-| [IMP-DOG-023](IMP-DOG-023-frisbee-anywhere.md) | Medium | フリスビーをどこでも (DES-DOG-005 段階 3)。M1 陸の地面基準ジャンプと到達判定、M2 川のディスクの浮き、M3 岸からのドボンと水中回収、M4 取り出しの門の置き換え | wip | M3 は Course/95 15/15・94c PASS まで (2026-09-28 夕)。回帰 (94b 全体・94 M2・88a/88b/78/75/89・試作既定 26 / terrain 10。88a の W3-Dachs carryMouthLow が M3 の Fetch 切り出しの回帰か swimSink の件かの切り分けを含む) → Codex 再確認 → コミット → M4 |
+| [IMP-DOG-023](IMP-DOG-023-frisbee-anywhere.md) | Medium | フリスビーをどこでも (DES-DOG-005 段階 3)。M1 陸の地面基準ジャンプと到達判定、M2 川のディスクの浮き、M3 岸からのドボンと水中回収、M4 取り出しの門の置き換え | wip | M4 実装済み・未検証 (2026-09-28)。統括がコンパイル → Course/92 → 93 → Walking/5 → Frisbee/5 → Course/85 → 27 → 81 → Course/95 → Course/94 (F15-gate を含む 9 ケース)。そのあと PCVR 37〜48 (ユーザー)、VER-WLD-001 項目 12 |
 | [IMP-ENV-004](IMP-ENV-004-river-loop-course.md) | Medium | 既存の登り道を保全し、奥広場・川岸・小橋を経て門へ戻る周回コースを軽量に制作する。約2.41kmの地形・436点の周回経路・手元の6目的地を別シーンへ実装 | wip | ユーザー了承済みの周回版を本番へ採用。細部を調整し、Quest 3/iPhone 15 Pro・16人性能の実機検証へ |
 | [IMP-DOG-004](IMP-DOG-004-leash-models-release.md) | High | 首輪・リードの本制作。PCVR 1 人は合格。2 人・Quest/iOS・座位/木陰の確認待ち | review | PCVR 1 人は合格 (2026-09-20)。残り: 2 人・Quest/iOS・座位/木陰。持ち手の向きは BUG-DOG-002 |
 | [IMP-DOG-017](IMP-DOG-017-frisbee-intercept-solver.md) | High | 小型犬 (Pome / Dachs / Corgi) と Shiba がフリスビーの下に回り込み、振り向いて跳ばずに取るのがほとんど。プランナーは軌道を知っているが、0.1 秒刻みの候補を決まった近づき方で合否判定し、落ちたら次の案へ回すため、跳べる時間帯が短い犬ほど立ち取りに落ちる。投げた瞬間に「どこで何秒後に跳ぶか・どの速さで走るか」を解く方式へ見直す | review | PCVR 3 回目: 大型犬の走り (再生倍率 1.7 で足の滑りが気にならないか)、横曲がり 0.07 の曲がり具合、退役プリセットがメニューから消えているか |
@@ -32,6 +31,7 @@
 | [IMP-PRG-001](IMP-PRG-001-ledger-shopkeeper-points.md) | High | 台帳・おじいさん (門)・支度用ポイント (初回 200pt 一回・滞在 1分1pt)・購入と CE 判定。2026-09-24 実装済み・Verify 全 PASS (e4f5906、名前空間 KH_Commerce_v1)。T-007 / T-008・復元の実機確認待ち | review | 200pt が一回だけ入る (T-007)、滞在加算と再入室の復元、購入の保存と CE の所持判定、残高 0 で基本機能が使える (T-008)。**AI 側の残作業**: 台帳用の ClientSim ハーネスが未作成で、付与・購入・復元の固定手順が未実行 (ユーザーの PCVR 確認とは別) |
 | [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) | High | 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換え、設定面を作る。段階 0-a / 0-b / 3 は実装済み・Verify 全 PASS、0-b は 2026-09-24 PCVR OK。段階 3 (距離フェード・許可初期 ON・ようこそ等) の実機確認待ち。クレジット URL 3 件はユーザー記入待ち | review | 段階 0-b は PCVR OK (2026-09-24)。残り: 退行・取り違えの確認、段階 3 の距離フェード (T-011)・ナイトモードのスライダー・許可トグル 2 種・状態表示の規律。クレジット URL 3 件はユーザー記入。Quest/iOS は VER-WLD-001 |
 | [DES-DOG-003](DES-DOG-003-plaza-leash-station.md) | Medium | 体験会 (2026-09-26) で「広場のリード置き場が遠い」。同日夜に決定: 広場の拠点を広場の縁に戻す (3 拠点 × 左右 1 本)。Build が初回だけ縁に置き、位置はユーザーが手で微調整する。実装・Verify 済み、位置の手調整と PCVR 確認待ち | review | ユーザーが Unity で KH_Station_Plaza の位置を広場の縁で微調整 (中心から 6〜12.5 m の帯内。Build は Crossbar があれば位置を触らない) → PCVR で遠くないか確認。OK なら done |
+| [DES-DOG-005](DES-DOG-005-frisbee-anywhere.md) | Medium | フリスビーを広場以外 (奥広場・川辺・道) でも投げて取れるようにする。段階 1 は取り出しを投げられるエリアに限る、段階 2 は平らな場所を追加、段階 3 は地面の高さを基準にした滑空・キャッチでどこでも | review | 段階 3 は IMP-DOG-023 M1〜M4 で実装済み (M4 は未検証)。残りは IMP-DOG-023 の検証と PCVR 37〜48 (ユーザー)、VER-WLD-001 項目 12。確かめたら done |
 | [IMP-DOG-014](IMP-DOG-014-treats-port.md) | Medium | おやつ 4 種を古民家から移植 (メニューの [買う] 含む)。2026-09-24 実装済み・Verify 全 PASS (c27a7e3)。出す/あげる/しまう・補充・T-009 (枠 3) の Play・実機確認待ち。接続犬の反応は IMP-DOG-006 | review | 出す / あげる / しまう が 1 人で成立、在庫の増減と復元、[買う] の補充、4 人で枠 3 (T-009)、6 匹の食べ・お礼。**AI 側の残作業**: おやつ用の ClientSim ハーネスが未作成で、出す → あげる → しまう → 在庫確認の固定手順が未実行 (ユーザーの PCVR 確認とは別) |
 | [IMP-DOG-015](IMP-DOG-015-accessories-and-petfx-port.md) | Medium | 飾り 14 商品と撫でFX 11 種を移植。2026-09-24 実装済み・Verify 全 PASS (c27a7e3)。首輪干渉は 2026-09-24 案 C で決定・適用 (5 件は (b) で下げ、3 件は犬ごとに除外、Verify 6f PASS。049b173)。装着・同期・見た目の PCVR 確認待ち | review | 6 匹への装着と他人への表示、購入・試着と台帳の一致、撫でFX の配布、60 秒ルールと退室後の残存 (2 人)、首まわりの見た目 (案 C 適用後) |
 | [IMP-DOG-016](IMP-DOG-016-call-pose-port-and-slope.md) | Medium | 呼ぶ・ポーズを移植し、リード接続中の除外と斜面 (接地・法線) の判定を足す。2026-09-24 実装済み・Verify 全 PASS (c27a7e3)。法線 0.9 は仮採用。Play・T-010・斜面の PCVR 確認待ち | review | 6 匹で平地の流れが成立、リード中の除外と逆方向 (T-010)、斜面の赤マーカーと法線 0.9 の確定、4 動作の課金ゲート、許可トグル、2 人の予約の取り合い |

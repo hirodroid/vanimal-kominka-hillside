@@ -99,6 +99,20 @@ namespace KominkaHillside
             return SlopeOk(hit.normal.y, runMaxSlopeDeg);
         }
 
+        // DES-DOG-005 F (M4, decision 2026-09-28): the disc take-out gate (KH_ToyRecall) at the LOCAL player's feet. The dog starts its
+        // play from where the player stands, so the take-out needs what a take-off needs there (D-1 last row): not in the water
+        // (InJumpWater: the river band incl. its 1 m bank margin - bridge decks are not band - and the whole water-play spot, whose
+        // walking exception in PlayableAt is not a place to start play from) and PlayableAt's ground (a hit within groundRayDistance
+        // under p + up * groundRayOffset, no steeper than runMaxSlopeDeg). One ray, local only; not counted in _planRays and _playY is
+        // untouched (the menu calls this, not the planner). Local judgement only: a flat cliff top passes (the throw's cross decides).
+        public bool _TakeoutOkAt(Vector3 p)
+        {
+            if (InJumpWater(p)) return false;
+            RaycastHit hit;
+            if (!Physics.Raycast(p + Vector3.up * groundRayOffset, Vector3.down, out hit, groundRayDistance, groundLayerMask, QueryTriggerInteraction.Ignore)) return false;
+            return SlopeOk(hit.normal.y, runMaxSlopeDeg);
+        }
+
         // PathOk(from, to): the ground walk (PathWalk, <= 25 rays; only the rays really cast are counted) and no sample in
         // the river (InRunRiver) on the way. from.y is the ground at from, to.y the ground (or a disc) at to.
         public bool _PathOk(Vector3 from, Vector3 to)

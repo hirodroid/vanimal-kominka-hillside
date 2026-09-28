@@ -2,10 +2,10 @@
 id: DES-DOG-005
 type: DES
 system: DOG
-status: wip
+status: review
 priority: Medium
 summary: フリスビーを広場以外 (奥広場・川辺・道) でも投げて取れるようにする。段階 1 は取り出しを投げられるエリアに限る、段階 2 は平らな場所を追加、段階 3 は地面の高さを基準にした滑空・キャッチでどこでも
-next: 設計書 (docs/plans/2026-09-28-frisbee-anywhere.md) に沿って M1 (地面基準のジャンプ・Playable) → M2 (ドボン) → M3 (浮き・水中回収) → M4 (門の置き換え・文書) を実装中。M2/M3 は Codex レビュー後に確定。PCVR 37〜44 はユーザー
+next: 段階 3 は IMP-DOG-023 M1〜M4 で実装済み (M4 は未検証)。残りは IMP-DOG-023 の検証と PCVR 37〜48 (ユーザー)、VER-WLD-001 項目 12。確かめたら done
 updated: 2026-09-28
 ---
 
@@ -48,7 +48,7 @@ updated: 2026-09-28
 - [x] 段階 1 の仕様 (取り出せる範囲・案内文) を決め、IMP で入れる → [IMP-DOG-022](IMP-DOG-022-frisbee-takeout-area.md) (円 + 5 m、「広場の近くで取り出せます」。2026-09-28)
 - [x] 段階 2 の場所の条件と候補 (奥広場ほか) を決める → 行わない (決定 2026-09-28: 3 を直接)
 - [x] 段階 3 の設計 (地面基準・滑空・エリア・川) と見積りを設計書にまとめる → [設計書](../../plans/2026-09-28-frisbee-anywhere.md) (2026-09-28)。ユーザー確認は実装と並行 (PCVR 37〜44)
-- [ ] 処理負荷の見積り (6 匹同時、Quest/iOS) を書き (設計書 C-2・G-4)、[VER-WLD-001](VER-WLD-001-quest-ios-devices.md) の項目に加える
+- [x] 処理負荷の見積り (6 匹同時、Quest/iOS) を書き (設計書 C-2・G-4)、[VER-WLD-001](VER-WLD-001-quest-ios-devices.md) の項目に加える → 設計書 [C-2](../../plans/2026-09-28-frisbee-anywhere.md#c-2-置き換えとレイの予算-1-匹あたり) (毎フレームの地形走査なし、1 Solve のレイ ≤ `SolveRayCap` 200) と [G Quest / iOS](../../plans/2026-09-28-frisbee-anywhere.md#quest--ios)。Editor の実測は sixdogs で 1 Solve のレイ ≤ 200 (run 20260928-155713、[IMP-DOG-023](IMP-DOG-023-frisbee-anywhere.md) の検証の記録)。実機の fps は VER-WLD-001 項目 12 (2026-09-28)
 
 ## 関連
 

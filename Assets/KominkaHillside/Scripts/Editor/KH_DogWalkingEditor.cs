@@ -339,7 +339,7 @@ namespace KominkaHillside.Editor
                 KH_FrisbeeJumpClipEditor.MakeBodyRigid(roots[i].gameObject);
                 c.hillsideLeashes=manager;c.fetch=f;c.wander=w;c.activities=act;c.pet=p;c.dogIndex=i;
                 c.playAreaCenter=new Vector3(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,2],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]);
-                c.playAreaRadius=KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3];
+                c.playAreaRadius=0f; // DES-DOG-005 M4: no play circle (the take-out gate is the player's feet); the centre stays as the plaza anchor
                 w.frisbeeCatch=c;f.frisbeeCatch=c;manager.frisbeeCatchers[i]=c;act.frisbeeCatchers[i]=c;recall.discs[i]=disc;recall.discCatchers[i]=c;
             }
             pack.dogRoots=roots;pack.dogFetch=fetch;
@@ -593,7 +593,8 @@ namespace KominkaHillside.Editor
                 float plaza=Vector2.Distance(new Vector2(d.transform.position.x,d.transform.position.z),new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]));
                 Check(plaza<KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3]&&Mathf.Abs(Ground(d.transform.position.x,d.transform.position.z)-KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,2])<.05f,"disc rests on the flat clearing "+key);
                 Check(d.transform.position.y-ParkOrigin().y>=2f,"disc starts out on the plaza, not in the toy park (IMP-DOG-019) "+key);
-                Check(Mathf.Abs(c.playAreaRadius-KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,3])<1e-3f&&Vector2.Distance(new Vector2(c.playAreaCenter.x,c.playAreaCenter.z),new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]))<1e-3f,"play area = plaza flat "+key);
+                // DES-DOG-005 M4 (design F / G M4): the circle is gone - radius 0 (Course/92). The centre stays the plaza's (harness anchor).
+                Check(c.playAreaRadius==0f&&Vector2.Distance(new Vector2(c.playAreaCenter.x,c.playAreaCenter.z),new Vector2(KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,0],KH_TerrainPrototypeConfig.Flats[KH_TerrainPrototypeConfig.PlazaFlat,1]))<1e-3f,"play area radius 0 (no circle, DES-DOG-005 M4), centre = plaza flat "+key);
                 Check(d.GetComponent<VRCObjectSync>()!=null&&d.GetComponent<VRCPickup>()!=null&&d.aimLine!=null&&d.aimMarker!=null&&d.discHeldMaterial!=null&&d.discRenderer!=null&&Mathf.Abs(d.respawnBelowY-desc0().RespawnHeightY)<1e-3f,"disc components, aim preview, held material, respawn height "+key);
                 var cb=UdonSharpEditorUtility.GetBackingUdonBehaviour(c);object bv;
                 Check(cb.publicVariables.TryGetVariableValue("dogRoot",out bv)&&(bv as Transform)==c.dogRoot,"catcher backing dogRoot "+key);
@@ -678,8 +679,7 @@ namespace KominkaHillside.Editor
                 Check(KH_FrisbeeCatch.OvertakeMinPace>c.runSpeed&&KH_FrisbeeCatch.OvertakeMinPace<=c.chaseRunSpeed,"overtake pace floor "+KH_FrisbeeCatch.OvertakeMinPace.ToString("F1")+" m/s above the walking run and within the sprint "+key);
                 // DES-DOG-005 M1 (0-9): the Ready-spot-within-the-radius check is retired (C-3: the spot is chosen by PlayableAt,
                 // the catcher no longer reads the circle), and Codex D1's circle landing check is replaced by the asymmetric arc
-                // (the same statics the planner and the liftoff gate call). The circle itself (:596 above) stays for the
-                // stage-1 take-out gate until M4.
+                // (the same statics the planner and the liftoff gate call). M4 removed the circle itself (radius 0, checked above).
                 {
                     string asym=KH_FrisbeePrototypeEditor.AsymmetricLandingProblems();
                     Check(asym.Length==0,"asymmetric landing (DescentTime / AirTime / LandingOf / SlopeOk) "+key+(asym.Length==0?"":" -- "+asym));

@@ -13,9 +13,10 @@ namespace KominkaHillside.Editor
     /// <summary>DES-DOG-005 stage 3 M1 (docs/plans/2026-09-28-frisbee-anywhere.md §G): the world-scene side of "frisbee anywhere".
     ///
     /// Course/92 writes the four reachability values (jumpMaxSlopeDeg 15 / jumpMaxRise 0.5 / runMaxSlopeDeg 25 / runMaxStep 0.5,
-    /// the code defaults) to the six KH_FrisbeeCatch, hides each disc's area ring GameObject (the `areaRing` field stays; M4
-    /// removes it) and rewrites the aim hint to KH_FrisbeePrototypeEditor.AimHint, then saves. playAreaRadius / playAreaCenter
-    /// are NOT touched: the stage-1 take-out gate (KH_ToyRecall) keeps using them until M4.
+    /// the code defaults) and playAreaRadius 0 (M4: the circle is gone; the take-out gate is KH_FrisbeeCatch._TakeoutOkAt at the
+    /// player's feet) to the six KH_FrisbeeCatch, deletes each disc's old area ring GameObject (`<disc>_Aim/AreaRing`; M4 removed
+    /// KH_Frisbee.areaRing - a ring inside a prefab instance is only deactivated) and rewrites the aim hint to
+    /// KH_FrisbeePrototypeEditor.AimHint, then saves. playAreaCenter is kept (the harness's plaza anchor; nothing at runtime reads it).
     ///
     /// Course/93 re-checks that configuration and measures the loop with the same static rules the runtime uses
     /// (KH_FrisbeeCatch.PlayableGround / PathGround / SlopeOk + the river band): route nodes every 2 m, points at -3 / 0 / +3 m
@@ -71,21 +72,29 @@ namespace KominkaHillside.Editor
                 so.FindProperty("jumpMaxRise").floatValue = KH_FrisbeeCatch.DefaultJumpMaxRise;
                 so.FindProperty("runMaxSlopeDeg").floatValue = KH_FrisbeeCatch.DefaultRunMaxSlopeDeg;
                 so.FindProperty("runMaxStep").floatValue = KH_FrisbeeCatch.DefaultRunMaxStep;
+                so.FindProperty("playAreaRadius").floatValue = 0f;   // M4 (design F)
                 so.ApplyModifiedProperties();
                 UdonSharpEditorUtility.CopyProxyToUdon(c); EditorUtility.SetDirty(c);
             }
             foreach (var d in discs)
             {
-                if (d.areaRing != null && d.areaRing.gameObject.activeSelf) { d.areaRing.gameObject.SetActive(false); EditorUtility.SetDirty(d.areaRing.gameObject); }
+                var ring = OldRing(d);
+                if (ring != null)
+                {
+                    if (PrefabUtility.IsPartOfPrefabInstance(ring)) { if (ring.activeSelf) { ring.SetActive(false); EditorUtility.SetDirty(ring); } }
+                    else UnityEngine.Object.DestroyImmediate(ring);
+                }
                 var tmp = d.aimHint.GetComponent<TMPro.TextMeshPro>();
                 if (tmp.text != KH_FrisbeePrototypeEditor.AimHint) { tmp.text = KH_FrisbeePrototypeEditor.AimHint; EditorUtility.SetDirty(tmp); }
             }
+            var recalls = UnityEngine.Object.FindObjectsOfType<KH_ToyRecall>(true);
+            int purged = PurgeRemovedM4Vars(catchers.Cast<UdonSharpBehaviour>().Concat(discs).Concat(recalls), false, null);
             EditorSceneManager.MarkSceneDirty(scene);
             if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Frisbee anywhere save failed");
             var findings = new List<string>();
             CheckConfig(catchers, discs, findings);
             if (findings.Count > 0) throw new InvalidOperationException("[KH Frisbee Anywhere] FRISBEE_ANYWHERE_BUILD_FAIL " + string.Join(" | ", findings));
-            Debug.Log("[KH Frisbee Anywhere] FRISBEE_ANYWHERE_BUILD_OK catchers=6 discs=6 values=" + Values() + " rings hidden, hint \"" + KH_FrisbeePrototypeEditor.AimHint + "\" (playAreaRadius kept for the stage-1 take-out gate)");
+            Debug.Log("[KH Frisbee Anywhere] FRISBEE_ANYWHERE_BUILD_OK catchers=6 discs=6 values=" + Values() + " playAreaRadius 0, old rings removed, stale M4 variables purged=" + purged + ", hint \"" + KH_FrisbeePrototypeEditor.AimHint + "\"");
         }
 
         [MenuItem("Tools/KominkaHillside/Course/93 - Verify Frisbee Anywhere")]
@@ -143,18 +152,60 @@ namespace KominkaHillside.Editor
             {
                 string p = KH_FrisbeePrototypeEditor.AnywhereProblems(c);
                 if (p.Length > 0) findings.Add(c.name + ": " + p + " (run Course/92)");
-                // Stage 1 (IMP-DOG-022) still needs the circle until M4.
-                if (c.playAreaRadius <= 0f) findings.Add(c.name + ": playAreaRadius " + c.playAreaRadius + " (the stage-1 take-out gate needs the plaza circle until M4)");
+                // M4 (design F): no circle. Proxy and backing, since Course/92 writes it through the proxy.
+                object rb; var cb = UdonSharpEditorUtility.GetBackingUdonBehaviour(c);
+                if (c.playAreaRadius != 0f || cb == null || !cb.publicVariables.TryGetVariableValue("playAreaRadius", out rb) || !(rb is float) || (float)rb != 0f)
+                    findings.Add(c.name + ": playAreaRadius is not 0 on the proxy and the backing (run Course/92; M4 removed the circle)");
             }
+            var stale = new List<string>();
+            if (PurgeRemovedM4Vars(catchers.Cast<UdonSharpBehaviour>().Concat(discs).Concat(UnityEngine.Object.FindObjectsOfType<KH_ToyRecall>(true)), true, stale) > 0)
+                findings.Add("removed M4 fields still in the backing publicVariables (run Course/92): " + string.Join(", ", stale.Take(6).ToArray()));
             foreach (var d in discs)
             {
-                if (d.areaRing != null && d.areaRing.gameObject.activeSelf) findings.Add(d.name + ": the area ring GameObject is still active (Course/92 hides it)");
-                if (d.areaRing == null) findings.Add(d.name + ": areaRing field is empty (keep it until M4)");
+                var ring = OldRing(d);
+                if (ring != null && ring.activeSelf) findings.Add(d.name + ": the old area ring GameObject is still there and active (Course/92 removes it)");
                 var tmp = d.aimHint == null ? null : d.aimHint.GetComponent<TMPro.TextMeshPro>();
                 if (tmp == null || tmp.text != KH_FrisbeePrototypeEditor.AimHint) findings.Add(d.name + ": aim hint is \"" + (tmp == null ? "(none)" : tmp.text) + "\", want \"" + KH_FrisbeePrototypeEditor.AimHint + "\"");
                 else { string g = MissingGlyphs(tmp); if (g.Length > 0) findings.Add(d.name + ": hint font lacks " + g); }
                 if (d.catcher == null) findings.Add(d.name + ": no catcher");
             }
+        }
+
+        // M4 removed public fields; their values stay in each backing UdonBehaviour's publicVariables until something rewrites
+        // it. UdonSharp's scene hooks do that for EVERY loaded scene when another scene is opened (Frisbee/4 / 5 open the prototype
+        // additively), which left the saved world scene dirty after Frisbee/4 / 5 (2026-09-28). Course/92 purges them and saves,
+        // Frisbee/4 purges the prototype's, Course/93 reports any left. Returns how many were removed (dry = count only).
+        static readonly string[][] RemovedM4Vars = {
+            new[] { "KH_Frisbee", "areaRing", "areaRingPoints", "areaRingLift" },
+            new[] { "KH_FrisbeeCatch", "playAreaMargin" },
+            new[] { "KH_ToyRecall", "discTakeoutMargin" } };
+        public static int PurgeRemovedM4Vars(IEnumerable<UdonSharpBehaviour> behaviours, bool dry, List<string> where)
+        {
+            int n = 0;
+            foreach (var u in behaviours)
+            {
+                if (u == null) continue;
+                var row = RemovedM4Vars.FirstOrDefault(r => r[0] == u.GetType().Name);
+                if (row == null) continue;
+                var b = UdonSharpEditorUtility.GetBackingUdonBehaviour(u);
+                if (b == null || b.publicVariables == null) continue;
+                for (int i = 1; i < row.Length; i++)
+                {
+                    Type t;
+                    if (!b.publicVariables.TryGetVariableType(row[i], out t)) continue;
+                    n++; if (where != null) where.Add(u.name + "." + row[i]);
+                    if (!dry) { b.publicVariables.RemoveVariable(row[i]); EditorUtility.SetDirty(b); }
+                }
+            }
+            return n;
+        }
+
+        // The old play-area ring (removed in M4) under the disc's aim root, the hint's parent (KH_FrisbeePrototypeEditor.BuildDisc).
+        static GameObject OldRing(KH_Frisbee d)
+        {
+            var root = d.aimHint != null ? d.aimHint.parent : null;
+            var t = root != null ? root.Find("AreaRing") : null;
+            return t != null ? t.gameObject : null;
         }
 
         // The runtime's two water rules (KH_FrisbeeCatch.InRunRiver / InJumpWater, M1 decision 2026-09-28): the dog may run

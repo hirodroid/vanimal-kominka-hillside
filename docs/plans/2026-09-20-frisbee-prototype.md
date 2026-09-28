@@ -88,6 +88,8 @@
 | 寝床・ライブ | この世界には配置していない (Build が null にする)。Verify で「未配線」を検査し、再導入時は競合検証を必須にする |
 | 遊べる場所 | ディスクの発射点と Ready の目標が `playArea` (広場の円) の内側 (P2: 斜面・広場の縁・地面のない前方へは Ready も追走も出さない。計画の候補が地面検査で落ちるのは保険であって保証ではない) |
 
+決定: 2026-09-28 DES-DOG-005 (IMP-DOG-023 M4) で置換 — P2 の「遊べる場所 = 広場の円」: 円をやめ、Ready は `PlayableAt`、投げの受付は足もとの `PlayableAt`、犬の行き先は `Reachable` / `PathOk` で決める ([設計書 C](2026-09-28-frisbee-anywhere.md#c-到達の可否))
+
 ### 取り合いの規則
 
 | 状況 | 規則 | 実装箇所 |
@@ -152,6 +154,8 @@ Editor 検査 (`Walking/5 Verify` に上の項目) + Codex D/M → **NetworkID �
 
 是正後: Walking Verify **134/134**、Menu Verify 22/22、C#/U# エラー 0、Console 0。
 
+決定: 2026-09-28 DES-DOG-005 (IMP-DOG-023 M4) で置換 — D1 の「犬が行く場所すべてを playArea の円で検査」: 円の検査 (`InCircleXZ`・`playAreaMargin`) は削除し、地面の判定 (`PlayableAt` / `PathOk` / 歩幅の門) に置き換えた
+
 ### 広場の見せ方 (2026-09-21、ユーザー要望 → Codex U/V/P 設計レビュー → 実装)
 
 要望: 広場でしか遊べないことを分かるようにしたい、ただし景観を壊さない。検討 4 案 (照準で教える / 犬の位置取りで教える / 持っている間だけ薄い輪 / 地面そのもので表す) のうちユーザーは **1 + 3**。Codex は「進めてよい、ただし 4 点」→ 反映:
@@ -164,6 +168,8 @@ Editor 検査 (`Walking/5 Verify` に上の項目) + Codex D/M → **NetworkID �
 | V 中: 3 cm・alpha 0.3・水色は仮値、Quest 未検証 | 輪は淡い暖白 (alpha 0.3、幅 3 cm、地面 +3 cm)、照準は水色のまま。PCVR/Quest で見て確定 |
 
 見送り: 取得直後だけ全周を見せて通常は弱める (V) — Play 後に判断。6 匹でも輪は各画面 1 つ (自分が持つディスクの分だけ)。実装: `KH_Frisbee` (輪の生成は持った時に 64 点を地面へレイ、材質差し替え、× 印、ヒント)、`BuildDisc` (材質 `KH_FrisbeeAimOut` / `KH_FrisbeeArea`、`Cross`、`AreaRing`、`Hint`)、字形は Menu/2 (289 字に含まれ追加なし)。試作シーンは playArea 無しなので出ない。Walking Verify 134/134、Menu 22/22、試作 35/35。
+
+決定: 2026-09-28 DES-DOG-005 (IMP-DOG-023 M4) で置換 — 輪 (`AreaRing`・`KH_Frisbee.areaRing`) は削除 (Course/92・Frisbee/4 が GameObject を消す)。灰色 + × は残り、一言は「犬はここへ行けません」
 
 ### Play 5 回目 (2026-09-21、本シーン・PCVR 1 人、ユーザー)
 

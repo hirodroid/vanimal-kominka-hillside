@@ -78,11 +78,10 @@ namespace KominkaHillside
         [Tooltip("水遊び場の中は帯の判定の例外 (犬が水遊び場にいるときに止めない)。Course/89 が配線する")]
         public KH_WaterSpot waterSpot;
         public int dogIndex = -1;
-        [Tooltip("DES-DOG-005: the plaza circle. Only the take-out gate (KH_ToyRecall, stage 1) and the holder's ring read it; " +
-            "the catcher itself no longer decides anything by it (PlayableAt / PathOk replace it). M4 removes it")]
+        [Tooltip("DES-DOG-005 M4: nothing at runtime reads these. playAreaCenter = the plaza's centre, kept as the harness's plaza anchor " +
+            "(Course/94 F5c-recall, 94b F11 / F12; Walking/3 writes it). playAreaRadius stays 0 (Course/92 writes 0): the circle, its ring and the stage-1 gate are gone")]
         public Vector3 playAreaCenter;
         public float playAreaRadius;
-        public float playAreaMargin = 2f;
 
         [Header("DES-DOG-005 anywhere (Course/92 and Frisbee/4 Build Scene write these; PCVR tunes them)")]
         [Tooltip("A jump (and a stand / overtake catch) only where the take-off and the landing ground are at most this steep (deg)")]
@@ -586,7 +585,7 @@ namespace KominkaHillside
         // KD_DogFetchController.ApplyState reads this, so the two controllers resume on the same rule.
         public bool PetAllowed { get { return PetAllowedIn(state); } }
         // The same rule as a pure function of the state number, so Verify can prove it over every state without a
-        // running dog (the LandingOf / InCircleXZ pattern).
+        // running dog (the LandingOf pattern).
         public static bool PetAllowedIn(int s) { return s == StateIdle || s == StateReady || s == StateDrop; }
         public int DebugPlan { get { return _plan; } }
 
@@ -1216,15 +1215,6 @@ namespace KominkaHillside
             if (pet != null && pet.IsPetting) return true;
             if (fetch != null && fetch.PetActive) return true;
             return false;
-        }
-
-        // The old play-area test as a pure function. DES-DOG-005: the catcher no longer calls it (DogMayGo / InPlayArea are
-        // gone); kept only as a static for callers outside the runtime decision until M4 removes the circle.
-        public static bool InCircleXZ(Vector3 p, Vector3 center, float radius, float margin)
-        {
-            if (radius <= 0f) return true;
-            Vector3 d = p - center; d.y = 0f;
-            return d.magnitude <= radius + margin;
         }
 
         // Where a jump that leaves `liftoff` along `fwd` at `vTake` comes down when the landing ground is the take-off

@@ -78,7 +78,7 @@ bash scripts/kh-harness-run.sh walk  "Course/94b - Walk Harness Frisbee Anywhere
 
 ```bash
 node scripts/kh-plan-probe.cjs proto            # Frisbee/10 Plan Probe: Terrain 10 ケース + 投げ表 (6 犬種 x 26)。試作シーン単独で (未保存でなければ開いて戻す)
-node scripts/kh-plan-probe.cjs course           # Course/95 - Frisbee Plan Probe: Course/94 の 8 ケース + 94b の 11 ケース x 狙い 6 通り。本シーン
+node scripts/kh-plan-probe.cjs course           # Course/95 - Frisbee Plan Probe: Course/94 の 8 ケース (+ F15-gate の 4 か所) + 94b の 11 ケース x 狙い 6 通り。本シーン
 node scripts/kh-plan-probe.cjs proto --cases=my.json   # 臨時のケース (コードを書き換えずに仮説を試す)
 node scripts/kh-plan-probe.cjs course --all     # 94b の狙いごとの行 (情報行) も出す
 ```
@@ -493,10 +493,11 @@ node scripts/kh-frisbee-harness.cjs start --mode=terrain --shots=T-cliff,T-rock 
 - 犬 0 (コーギー) とそのディスク。投げは、ディスクを手の位置に置き `_pendingThrowVelocity` / `_hasPendingThrow` を書いて `_CheckThrow` を送る
   (照準投げの OnDrop の 1 フレーム後と同じ入口)。本物の `_Launch` → `ReqCatch` → 飛行が走る。速さと仰角は Editor 側で `_PositionAt` の写しを
   保存済みの Collider に当てて解く (誤差 0.6 m 未満)。
-- 8 ケース: F5a-river (浮く・漂う・橋の帯の手前 ±0.3 m で止まる・5 s 静止・岸へ戻さない・犬は帯に入らず Idle へ)、F5c-grab (`_onPickup` で重力が戻り、
+- 9 ケース: F5a-river (浮く・漂う・橋の帯の手前 ±0.3 m で止まる・5 s 静止・岸へ戻さない・犬は帯に入らず Idle へ)、F5c-grab (`_onPickup` で重力が戻り、
   持たれていないので 0.6 s 以内に浮き直す)、F5c-recall (広場からメニュー `_Disc0` → 4 s 以内に手元 2.5 m、重力あり、2 s 後も重力あり)、
   F5b-spot (水遊び場の下流端 ±0.5 m で止まる)、F5d-roll (水遊び場の 35 m 下流の岸へ短く投げ、犬が Retrieve に入ったらディスクを場の水へ移す → `cannot-play` で取り消し、Return / Drop / くわえは無し、4 s 後も浮いている)、F6-bridge / F7-nobank (岸の無い区間。データに無ければ `sliceOk` の差し替えで代用し、ケースの後に戻す) /
   F7b-edge (帯の縁の坂): 着地から 2 s 以内に岸戻しのログ、そのあと帯の外・重力ありが 6 s (F7b は 8 s) 続く・浮かない。犬が Idle / Ready に戻った後は kinematic でなく重力ありが必須。
+- F15-gate (M4、取り出しの門): 足もとの 4 か所 (道 = 取り出せる、川の中 = `OutOfArea`、橋の床 = 取り出せる、25° を超える急斜面 = `OutOfArea`) へプレイヤーを移し、1.2 s 待って (門の 0.5 s のキャッシュより長く) `KH_ToyRecall._HsGateDisc` (ハーネス専用) で犬 0 のディスクの門を読む。場所は **Play の前に Edit モードで探す** (Course/94 のメニューが `Temp/frisbee-gate-sites.json` に書く。Course/95 も同じ探索を流し、実行時の `_TakeoutOkAt` と期待を照合する)。この世界に無い種類の場所は N/A (理由を書く)。プレイヤーが 0.6 m より滑ったらその場所は N/A。道と川は必須 (探索で見つからない・プレイヤーが留まらない = FAIL。Course/95 でも数える行)。橋・急斜面は N/A を理由付きで case の reason に並べる。合格は読めた場所の食い違い 0 かつ道と川が PASS。崖の上の平らな所・木立は局所判定なので門は通す (照準の × で断る) — ケースにしていない。
 - 全ケース共通: 捕り手が Chase / Retrieve / Pickup の間に犬が水遊び場の水へ入ったら失敗 (`dogSpotChaseFrames`)。犬自身の水遊びは数えない。
 - 結果: `Logs/kh-course-walk/<run>/frisbee-m2.json` と `report.json`。全体の状態は **`FRISBEE_M2_PASS`** / `FRISBEE_M2_FAIL`。
 - 保証しないもの: 本物の手 (VRC_Pickup の保持)、別の Owner・途中参加 (重力は VRCObjectSync が運ぶ)、水中の追跡 (M3)。実機では[設計書の PCVR 46〜48](../plans/2026-09-28-frisbee-anywhere.md#pcvr-川の設計書のチェックリストの続き) (浮いたまま途中参加・Owner の退出・取得後に陸で放す) と 42・43 で見る。

@@ -5,7 +5,7 @@ system: DOG
 status: wip
 priority: Medium
 summary: フリスビーをどこでも (DES-DOG-005 段階 3)。M1 陸の地面基準ジャンプと到達判定、M2 川のディスクの浮き、M3 岸からのドボンと水中回収、M4 取り出しの門の置き換え
-next: M3 は Course/95 15/15・94c PASS まで (2026-09-28 夕)。回帰 (94b 全体・94 M2・88a/88b/78/75/89・試作既定 26 / terrain 10。88a の W3-Dachs carryMouthLow が M3 の Fetch 切り出しの回帰か swimSink の件かの切り分けを含む) → Codex 再確認 → コミット → M4
+next: M4 実装済み・未検証 (2026-09-28)。統括がコンパイル → Course/92 → 93 → Walking/5 → Frisbee/5 → Course/85 → 27 → 81 → Course/95 → Course/94 (F15-gate を含む 9 ケース)。そのあと PCVR 37〜48 (ユーザー)、VER-WLD-001 項目 12
 updated: 2026-09-28
 ---
 
@@ -80,8 +80,31 @@ M3 の検証で直したこと (2026-09-28、Play の前に静的に詰める方
 
 ### M4. 段階 1 の門の置き換えと文書
 
-- [ ] `OutOfArea` の門を `_PlayableAt(自分の位置)` に。`playAreaRadius` を 0 に。文言 2 キー (13 言語)。`HasArea` / `InArea` / `BuildRing` の削除
-- [ ] 置き換わる決定の記録 (DES-DOG-002 / IMP-DOG-012 / IMP-DOG-020 段階 7 / IMP-DOG-021:47)、ハーネス文書、game-design、[VER-WLD-001](VER-WLD-001-quest-ios-devices.md) 項目 12
+- [x] `OutOfArea` の門を足もとの判定 (`KH_FrisbeeCatch._TakeoutOkAt`) に。0.5 s に 1 回だけ撃ち、6 行で使い回す。`discTakeoutMargin` 削除 — 2026-09-28 実装 (コンパイル・ハーネス未)
+- [x] `playAreaRadius` を 0 に (Course/92 が書く、Course/93・Walking/5 が 0 を検査)。`HasArea` / `InArea` / `BuildRing` / `areaRing`、`InCircleXZ`、`playAreaMargin` の削除。輪の GameObject は Course/92 (本シーン) と Frisbee/4 (試作) が消す
+- [x] 文言 2 キー (13 言語): `course.toy.discArea`「川や急な斜面を離れると取り出せます」、`course.toy.discAreaState`「ここでは不可」
+- [x] 置き換わる決定の記録 (DES-DOG-002 / IMP-DOG-012 / IMP-DOG-020 段階 7 / IMP-DOG-021 §1 / IMP-DOG-022 / 試作記録 P2・D1・輪)、ハーネス文書、game-design、[VER-WLD-001](VER-WLD-001-quest-ios-devices.md) 項目 12
+- [ ] コンパイル (C#・U#)、Course/92 → 93、Walking/5、Frisbee/5、翻訳の入れ直し (Course/85 → 27 → 81)
+- [ ] Course/95 の F15-gate 行が期待どおり、Course/94 が `FRISBEE_M2_PASS` 9/9 (F15-gate を含む)
+
+M4 でやったこと (2026-09-28):
+- 門の規則 (設計 F を具体化): 取り出せるのは、ローカルのプレイヤーの足もとで犬が遊び始められるとき。(1) 川の帯 (半幅 + 1 m。橋の床は帯ではない) と水遊び場の多角形の外 (`InJumpWater`。D-1 の「水の中からは跳ばない」と同じ範囲。`PlayableAt` の水遊び場の例外は歩く・立つためのもので、遊びの始点にはしない)、(2) 足もと + 0.5 m から 4 m 以内に地面 (layer 0 / 11)、(3) 傾き ≤ `runMaxSlopeDeg` 25°。レイ 1 本、`_planRays` に数えず `_playY` も書かない。6 匹の値は同じなので、最初に聞いた行の捕り手で判定し 0.5 s 使い回す (≤ 2 本/s)。優先順は Unwired → Pending → OutOfArea → Held → 12・13 は InWater / 11 は通す / 他の係りは DogBusy → BallInUse → Cooldown のまま。
+- 場所ごとの期待:
+
+| 場所 | 門 | 理由 |
+|---|---|---|
+| 道・広場 | 取り出せる | 地面あり・緩い (Course/93 で周回路の 99.5% が到達可) |
+| 川の中 (帯、岸から 1 m を含む) | `OutOfArea` | 水から遊びを始めない (D-1) |
+| 水遊び場 (水も、多角形の中の岸も) | `OutOfArea` | 同上。M1 の歩く例外は門には使わない |
+| 橋の床 | 取り出せる | 床は帯ではない。犬は床を走って拾える (跳ばないだけ) |
+| 崖の上の平らな所・崖際の平らな所 | 取り出せる | 局所判定。犬が行けない投げは照準の × と一言で断る |
+| 25° を超える斜面 (崖の斜面) | `OutOfArea` | `runMaxSlopeDeg` |
+| 木立 | 地面が 25° 以下なら取り出せる | 木は門では見ない (照準の lane で断る) |
+| 足もとの 0.5 m 上から下へ 4 m (足もとより 3.5 m 下まで) に地面が無い所 | `OutOfArea` | 地面なし |
+
+- ハーネス: Course/94 に F15-gate (道 / 川の中 / 橋の床 / 32〜42° の急斜面の 4 か所。Edit モードで探して `Temp/frisbee-gate-sites.json` に書き、Play は読むだけ)。道と川は必須 (見つからない・プレイヤーが留まらない = FAIL)。橋・急斜面は N/A を理由付きで数える (Codex M4 レビュー 中)。読み出しはハーネス専用の `KH_ToyRecall._HsGateDisc` (ローカル、`_` 付き)。Course/95 は同じ探索を流し、`_TakeoutOkAt` (proxy) と期待を照合する。詳細は[ハーネス文書](../../testing/kh-frisbee-harness.md#本シーンの川のディスク-course94-des-dog-005-m2)。
+
+どこをずらしたか: 設計書 §F と §G M4 の節末の「決定: 2026-09-28 M4 実装で変更」 (水遊び場も断る、文言、`playAreaCenter` はハーネスの広場の目印として残す、`playAreaMargin` も削除)。
 
 ## 検証の記録
 

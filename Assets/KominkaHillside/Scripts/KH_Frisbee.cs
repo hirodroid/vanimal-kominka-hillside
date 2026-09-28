@@ -63,10 +63,6 @@ namespace KominkaHillside
         public Renderer aimMarkerRenderer;
         [Tooltip("Child of the marker shown only when the landing point is outside (a shape, not just a colour)")]
         public GameObject aimMarkerCross;
-        [Tooltip("Ring on the ground around the play area, shown to the holder only")]
-        public LineRenderer areaRing;
-        public int areaRingPoints = 64;
-        public float areaRingLift = 0.03f;
         [Tooltip("Short hint near the marker while holding outside the play area or aiming out of it")]
         public Transform aimHint; // the hint text object (TextMeshPro itself is not exposed to Udon; text is set by Build)
         public int aimPoints = 40;
@@ -97,7 +93,6 @@ namespace KominkaHillside
         const float AimJudgeInterval = 0.1f;
         private float _aimJudgeNext;
         private bool _aimBad;
-        private bool _ringBuilt;
         private float _lookAxis;
         private bool _heldLocal;
         private bool _flying;
@@ -335,34 +330,8 @@ namespace KominkaHillside
         }
 
         // Preview for the holder only (local). Same _PositionAt as the flight, stopped at the first obstacle.
-        // DES-DOG-005 C-4: HasArea / InArea / the ring stay only for the ring's display (Course/92 hides the ring object;
-        // M4 deletes them). The cross is decided by the catcher's Reachable / PlayableAt, never by the circle.
-        bool HasArea() { return catcher != null && catcher.playAreaRadius > 0f; }
-        bool InArea(Vector3 p)
-        {
-            if (!HasArea()) return true;
-            Vector3 d = p - catcher.playAreaCenter; d.y = 0f;
-            return d.magnitude <= catcher.playAreaRadius;
-        }
-
-        // Ring = the range the dog may run in (same circle the catcher checks; no margin, so the ring never
-        // promises more than the dog does). Built once per pickup from ground hits, shown to the holder only.
-        void BuildRing()
-        {
-            if (areaRing == null || !HasArea()) return;
-            int n = areaRingPoints < 8 ? 8 : areaRingPoints;
-            areaRing.positionCount = n; areaRing.loop = true;
-            RaycastHit hit;
-            for (int i = 0; i < n; i++)
-            {
-                float a = i * Mathf.PI * 2f / n;
-                Vector3 p = catcher.playAreaCenter + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * catcher.playAreaRadius;
-                float y = catcher.playAreaCenter.y;
-                if (Physics.Raycast(p + Vector3.up * 3f, Vector3.down, out hit, 8f, catcher.groundLayerMask, QueryTriggerInteraction.Ignore)) y = hit.point.y;
-                areaRing.SetPosition(i, new Vector3(p.x, y + areaRingLift, p.z));
-            }
-            _ringBuilt = true;
-        }
+        // DES-DOG-005 C-4 / M4: the cross is decided by the catcher's Reachable / PlayableAt. The play-area circle and its ring
+        // (HasArea / InArea / BuildRing / areaRing) were removed in M4; Course/92 deletes the ring GameObjects.
 
         void SetAimOutside(bool outside)
         {
@@ -384,15 +353,9 @@ namespace KominkaHillside
             {
                 if (aimLine != null && aimLine.enabled) aimLine.enabled = false;
                 if (aimMarker != null && aimMarker.gameObject.activeSelf) aimMarker.gameObject.SetActive(false);
-                if (areaRing != null && areaRing.enabled) { areaRing.enabled = false; _ringBuilt = false; }
                 if (aimHint != null && aimHint.gameObject.activeSelf) aimHint.gameObject.SetActive(false);
                 _aimJudgeNext = 0f;   // DES-DOG-005: the next hold judges its cross on its first frame
                 return;
-            }
-            if (areaRing != null && HasArea())
-            {
-                if (!_ringBuilt) BuildRing();
-                if (!areaRing.enabled) areaRing.enabled = true;
             }
             UpdateAimPower();
             Vector3 p0 = transform.position;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -118,14 +119,30 @@ namespace KominkaHillside.Editor
             _openedHere = false;
         }
 
+        // 2026-09-28 (M4): opening the prototype additively let UdonSharp's scene hooks rewrite the world scene's backings (removed
+        // fields) and left it dirty. Course/92 now purges those, and Frisbee/4 / 5 say so if another loaded scene turns dirty.
+        static List<Scene> CleanOtherScenes()
+        {
+            var list = new List<Scene>();
+            for (int i = 0; i < SceneManager.sceneCount; i++) { var s = SceneManager.GetSceneAt(i); if (s.isLoaded && !s.isDirty && s.path != ScenePath) list.Add(s); }
+            return list;
+        }
+        static void WarnDirtied(List<Scene> clean, string menu)
+        {
+            foreach (var s in clean)
+                if (s.IsValid() && s.isLoaded && s.isDirty)
+                    Debug.LogWarning("[KH Frisbee] " + menu + " left " + s.path + " dirty (not saved by this menu). Reopen it from disk; if it repeats, run Course/92 there (it purges the backing variables M4 removed) and save.");
+        }
+
         [MenuItem("Tools/KominkaHillside/Frisbee/4 Build Scene")]
         public static void BuildScene()
         {
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode only");
+            var clean = CleanOtherScenes();
             var previous = OpenPrototype(true);
             var scene = SceneManager.GetActiveScene();
             try { BuildInto(scene); }
-            finally { ClosePrototype(previous, scene); }
+            finally { ClosePrototype(previous, scene); WarnDirtied(clean, "Frisbee/4"); }
         }
 
         static void BuildInto(Scene scene)
@@ -174,6 +191,7 @@ namespace KominkaHillside.Editor
                 TerrainParkOrigin, TerrainParkOrigin + new Vector3(1.5f, 0f, 6.5f), laneFacts[labLane], laneTwist[labLane]);
 
             foreach (var u in scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<UdonSharpBehaviour>(true))) { UdonSharpEditorUtility.CopyProxyToUdon(u); EditorUtility.SetDirty(u); }
+            KH_CourseFrisbeeAnywhereEditor.PurgeRemovedM4Vars(scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<UdonSharpBehaviour>(true)), false, null);   // M4 removed fields
             int dropped = desc.NetworkIDCollection.RemoveAll(x => x.gameObject == null && (x.SerializedTypeNames == null || x.SerializedTypeNames.Count == 0));
             EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); AssetDatabase.SaveAssets();
             Report("build-scene", "scene=" + ScenePath + " lanes=" + string.Join(",", LaneBreeds) + " + " + TerrainTag + " (" + TerrainCases.Length + " pads) (Lab mouthOffsetCatch=" + facts.mouthOffsetCatch.ToString("F3") + ") droppedNetworkIds=" + dropped + "; run 5 Verify.");
@@ -413,13 +431,8 @@ namespace KominkaHillside.Editor
                 bar.GetComponent<Renderer>().sharedMaterial = disc.aimOutsideMaterial;
             }
             cross.SetActive(false); disc.aimMarkerCross = cross;
-            var ringGo = Obj("AreaRing", aimRoot.transform);
-            var ring = ringGo.GetComponent<LineRenderer>(); if (ring == null) ring = ringGo.AddComponent<LineRenderer>();
-            string ringPath = Data + "/KH_FrisbeeArea.mat"; var ringMat = AssetDatabase.LoadAssetAtPath<Material>(ringPath);
-            if (ringMat == null) { ringMat = new Material(Shader.Find("Legacy Shaders/Transparent/Diffuse")); ringMat.color = new Color(1f, .95f, .85f, .3f); AssetDatabase.CreateAsset(ringMat, ringPath); }
-            ring.sharedMaterial = ringMat; ring.useWorldSpace = true; ring.loop = true; ring.startWidth = .03f; ring.endWidth = .03f; ring.positionCount = 0; ring.enabled = false;
-            ring.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; ring.receiveShadows = false;
-            disc.areaRing = ring; disc.areaRingLift = .03f;
+            // DES-DOG-005 M4: the play-area ring is gone (KH_Frisbee.areaRing removed); a ring left by an older Build is deleted.
+            var oldRing = aimRoot.transform.Find("AreaRing"); if (oldRing != null) UnityEngine.Object.DestroyImmediate(oldRing.gameObject);
             var hintGo = Obj("Hint", aimRoot.transform);
             var hint = hintGo.GetComponent<TMPro.TextMeshPro>(); if (hint == null) hint = hintGo.AddComponent<TMPro.TextMeshPro>();
             hint.font = AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>(KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath /* KH_HandMenuEditor は 2026-09-23 に退役 (IMP-UI-001 段階 0-b)。同じ Assets/KominkaHillside/Font/KD_NotoSerif SDF.asset */); hint.fontSize = 3f; hint.alignment = TMPro.TextAlignmentOptions.Center; hint.color = Color.white;
@@ -551,7 +564,6 @@ namespace KominkaHillside.Editor
             // for me" when both halves agree, so they are not left to drift apart in an Inspector.
             catcher.readyGraceSeconds = 2f; catcher.readyGraceDistance = 2.5f;
             catcher.variant = KH_FrisbeeCatch.VariantNormal; catcher.pendingVariant = -1; // code-owned: every instance starts on the baseline
-            catcher.playAreaMargin = 0f; // the ring the holder sees is exactly the acceptance circle (Codex P)
             // DES-DOG-005 M1: where the dog may jump / go at all. Code-owned defaults (the world scene gets the same numbers
             // from Course/92); PCVR tunes them in the Inspector, then the numbers are copied into KH_FrisbeeCatch.Default*.
             WriteAnywhereDefaults(catcher);
@@ -951,6 +963,7 @@ namespace KominkaHillside.Editor
 
             // Scene wiring (only when the prototype scene is open; the world scene is never inspected here).
             Scene previousScene = default(Scene); Scene open = default(Scene); bool opened = false;
+            var cleanOthers = CleanOtherScenes();
             if (File.Exists(ScenePath)) { previousScene = OpenPrototype(false); open = SceneManager.GetActiveScene(); opened = true; }
             try
             {
@@ -1207,7 +1220,7 @@ namespace KominkaHillside.Editor
             }
             else log.AppendLine("INFO prototype scene missing; scene wiring not checked");
             }
-            finally { if (opened) ClosePrototype(previousScene, open); }
+            finally { if (opened) ClosePrototype(previousScene, open); WarnDirtied(cleanOthers, "Frisbee/5"); }
             // 2026-09-28 計画プローブ (Frisbee/10) を同じ Verify で: 期待の形にならないケースは WARN PROBE_MISMATCH (失敗数には数えない。
             // 最初の計画だけを見るので)。試作シーンだけが開いているときに限る (他のシーンのコライダーがレイに当たらないように)。
             if (SceneManager.sceneCount == 1 && SceneManager.GetActiveScene().path == ScenePath)

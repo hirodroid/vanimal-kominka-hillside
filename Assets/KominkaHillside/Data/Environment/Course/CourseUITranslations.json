@@ -358,11 +358,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "広場の近くで取り出せます"
+          "text": "川や急な斜面を離れると取り出せます"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "広場の外"
+          "text": "ここでは不可"
         }
       ]
     },
@@ -721,11 +721,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "You can take it out near the plaza"
+          "text": "Move away from the river or steep slopes to take it out"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "Away from plaza"
+          "text": "Not here"
         }
       ]
     },
@@ -1084,11 +1084,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "Можно взять рядом с площадкой"
+          "text": "Можно взять вдали от реки и крутых склонов"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "Вне площадки"
+          "text": "Здесь нельзя"
         }
       ]
     },
@@ -1447,11 +1447,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "Можна взяти поруч із майданчиком"
+          "text": "Можна взяти подалі від річки та крутих схилів"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "Поза майданчиком"
+          "text": "Тут не можна"
         }
       ]
     },
@@ -1810,11 +1810,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "광장 근처에서 꺼낼 수 있어요"
+          "text": "강이나 가파른 비탈에서 벗어나면 꺼낼 수 있어요"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "광장 밖"
+          "text": "여기선 불가"
         }
       ]
     },
@@ -2173,11 +2173,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "In der Nähe des Platzes kannst du sie holen"
+          "text": "Abseits von Fluss und steilen Hängen kannst du sie holen"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "Nicht am Platz"
+          "text": "Hier nicht"
         }
       ]
     },
@@ -2536,11 +2536,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "在广场附近才能取出"
+          "text": "离开河边或陡坡才能取出"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "广场外"
+          "text": "此处不可"
         }
       ]
     },
@@ -2899,11 +2899,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "Puedes sacarlo cerca de la plaza"
+          "text": "Puedes sacarlo lejos del río y de las pendientes pronunciadas"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "Lejos de la plaza"
+          "text": "Aquí no"
         }
       ]
     },
@@ -3262,11 +3262,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "Tu peux le sortir près de la place"
+          "text": "Tu peux le sortir loin de la rivière et des pentes raides"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "Loin de la place"
+          "text": "Pas ici"
         }
       ]
     },
@@ -3625,11 +3625,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "Você pode pegar perto da praça"
+          "text": "Você pode pegar longe do rio e de encostas íngremes"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "Longe da praça"
+          "text": "Aqui não"
         }
       ]
     },
@@ -3988,11 +3988,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "Puoi prenderlo vicino alla piazza"
+          "text": "Puoi prenderlo lontano dal fiume e dai pendii ripidi"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "Lontano dalla piazza"
+          "text": "Non qui"
         }
       ]
     },
@@ -4351,11 +4351,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "Można wyjąć w pobliżu placu"
+          "text": "Można wyjąć z dala od rzeki i stromych zboczy"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "Poza placem"
+          "text": "Nie tutaj"
         }
       ]
     },
@@ -4718,11 +4718,11 @@
         },
         {
           "key": "course.toy.discArea",
-          "text": "喺廣場附近先可以攞出嚟"
+          "text": "離開河邊或者陡斜嘅斜坡先可以攞出嚟"
         },
         {
           "key": "course.toy.discAreaState",
-          "text": "廣場外"
+          "text": "呢度唔得"
         }
       ]
     }
