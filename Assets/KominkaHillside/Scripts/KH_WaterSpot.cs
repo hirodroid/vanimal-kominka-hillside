@@ -55,6 +55,15 @@ namespace KominkaHillside
         public float carryExtra = DefaultCarryExtra;
         // Floating ball (C-8): y = water - radius x floatSink, drifting downstream (-z: the water surface rises with z) at
         // floatDrift m/s until the region's downstream end.
+        // PCVR 2026-09-28 (user): the Pome floats with its belly out of the water, the others could sit a touch lower. Per dog
+        // (dogIndex order Corgi, Pome, Lab, Dachs, Shiba, Samoyed): swimSink lowers the afloat root by this many metres below the
+        // B-2 height (surface + swimClear - Ms); swimPitch tilts the visual (mesh child / hips bone) nose-up by degrees while afloat
+        // so the mouth stays out although the body sits lower. Course/76 writes the defaults; the harness reads the real mouth bone.
+        public const float DefaultSwimSinkSmall = 0.015f, DefaultSwimSinkPome = 0.035f, DefaultSwimPitchPome = 10f;
+        public float[] swimSink;
+        public float[] swimPitch;
+        public float _SwimSink(int dog) { return swimSink != null && dog >= 0 && dog < swimSink.Length ? swimSink[dog] : 0f; }
+        public float _SwimPitch(int dog) { return swimPitch != null && dog >= 0 && dog < swimPitch.Length ? swimPitch[dog] : 0f; }
         public const float DefaultFloatSink = 0.3f, DefaultFloatDrift = 0.15f;
         public float floatSink = DefaultFloatSink, floatDrift = DefaultFloatDrift;
 

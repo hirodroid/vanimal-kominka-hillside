@@ -84,6 +84,17 @@ namespace KominkaDogRun
         private Vector3 _bobBase;
         private bool _hipsWrote;
         private Vector3 _hipsLast, _hipsLastOff;
+        private float _swimPitchNow;             // PCVR 2026-09-28: nose-up pitch (deg) blended in 0.3 s while afloat, on the visual only
+        private Quaternion _bobBaseRot; private bool _bobBaseRotValid;
+        const float SwimPitchRate = 30f;         // deg/s
+
+        /// <summary>Every client: the nose-up pitch target for this frame (0 unless afloat). Local only.</summary>
+        float SwimPitchTick()
+        {
+            float target = (fetchController != null && fetchController.WaterPose == 2 && waterSpot != null) ? waterSpot._SwimPitch(dogIndex) : 0f;
+            _swimPitchNow = Mathf.MoveTowards(_swimPitchNow, target, SwimPitchRate * Time.deltaTime);
+            return _swimPitchNow;
+        }
         private float _nextSinkLog;
         private float _swimShallowSince = -1f, _waterSwimY;
         [HideInInspector] public int waterState;   // read by the harness; Owner local, never synced
@@ -389,6 +400,9 @@ namespace KominkaDogRun
             if (!_bobBaseValid) { _bobBase = waterBob.localPosition; _bobBaseValid = true; }
             float off = fetchController.WaterPose == 2 ? waterSpot.swimBob * Mathf.Sin(Time.time * waterSpot.swimBobHz * 2f * Mathf.PI) : 0f;
             waterBob.localPosition = _bobBase + Vector3.up * off;
+            if (!_bobBaseRotValid) { _bobBaseRot = waterBob.localRotation; _bobBaseRotValid = true; }
+            float pitch = SwimPitchTick();
+            waterBob.localRotation = pitch != 0f ? _bobBaseRot * Quaternion.AngleAxis(-pitch, Vector3.right) : _bobBaseRot;   // nose up
         }
 
         /// <summary>Every client, LateUpdate (after the Animator): the same bob on the hips of a single-tier rig. The clips animate
@@ -398,6 +412,8 @@ namespace KominkaDogRun
         void WaterHipsBobLate()
         {
             if (waterBobHips == null || waterSpot == null || fetchController == null) return;
+            float hipsPitch = SwimPitchTick();
+            if (hipsPitch != 0f) waterBobHips.rotation = Quaternion.AngleAxis(-hipsPitch, dogRoot.right) * waterBobHips.rotation;   // nose up, visual only
             Vector3 cur = waterBobHips.localPosition;
             Vector3 basePos = (_hipsWrote && cur == _hipsLast) ? cur - _hipsLastOff : cur;
             float off = fetchController.WaterPose == 2 ? waterSpot.swimBob * Mathf.Sin(Time.time * waterSpot.swimBobHz * 2f * Mathf.PI) : 0f;
@@ -544,7 +560,7 @@ namespace KominkaDogRun
             if (_waterSwimming)
             {
                 // the bob is on the visual child; carrying a ball (Fetch state 7/8) lifts the mouth by the ball's radius (B-1)
-                float want = riverData._SurfaceY(q.z) + waterSpot.swimClear + (_waterCarryFrame == Time.frameCount ? waterSpot.carryExtra : 0f) - waterSwimMouth;
+                float want = riverData._SurfaceY(q.z) + waterSpot.swimClear + (_waterCarryFrame == Time.frameCount ? waterSpot.carryExtra : 0f) - waterSwimMouth - waterSpot._SwimSink(dogIndex);   // PCVR 2026-09-28: per-dog sink
                 if (!_swimYValid) { _waterSwimY = q.y; _swimYValid = true; _swimSettled = false; }
                 // Rising only at the start; once afloat the height follows the water surface exactly every frame, so a slope
                 // or a push cannot leave the mouth low for a few frames (W2-Pome run 20260927-073904).

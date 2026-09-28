@@ -170,6 +170,9 @@ namespace KominkaHillside.Editor
             so.FindProperty("swimBob").floatValue = KH_WaterSpot.DefaultSwimBob;
             so.FindProperty("swimBobHz").floatValue = KH_WaterSpot.DefaultSwimBobHz;
             so.FindProperty("carryExtra").floatValue = KH_WaterSpot.DefaultCarryExtra;
+            // PCVR 2026-09-28: per-dog afloat sink / nose-up pitch (dogIndex order Corgi, Pome, Lab, Dachs, Shiba, Samoyed)
+            SetFloats(so, "swimSink", new[] { KH_WaterSpot.DefaultSwimSinkSmall, KH_WaterSpot.DefaultSwimSinkPome, KH_WaterSpot.DefaultSwimSinkSmall, KH_WaterSpot.DefaultSwimSinkSmall, KH_WaterSpot.DefaultSwimSinkSmall, KH_WaterSpot.DefaultSwimSinkSmall });
+            SetFloats(so, "swimPitch", new[] { 0f, KH_WaterSpot.DefaultSwimPitchPome, 0f, 0f, 0f, 0f });
             so.FindProperty("floatSink").floatValue = KH_WaterSpot.DefaultFloatSink;
             so.FindProperty("floatDrift").floatValue = KH_WaterSpot.DefaultFloatDrift;
             // Step 5 marker: stones beside the entry and the temporary sign (its text follows the viewer's language at run time)
