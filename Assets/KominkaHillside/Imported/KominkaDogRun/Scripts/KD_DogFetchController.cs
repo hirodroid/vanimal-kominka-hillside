@@ -1060,7 +1060,8 @@ namespace KominkaDogRun
 
             // ---- ここから Owner だけの状態遷移判定 ----
             if (!_dogOwner) return;
-            if (riverBlocked) { GiveUpAtRiver(); return; }
+            // IMP-DOG-021: a Chase stopped at the band while its ball is still coming down waits for it (HillsideWater.RiverBlockWait)
+            if (riverBlocked) { if (RiverBlockWait()) return; GiveUpAtRiver(); return; }
             float elapsed = Time.time - _stateEnteredTime;
 
             // 誰かがボールを掴んだら諦める (pickupable=false が届く前の一瞬に
@@ -1126,7 +1127,8 @@ namespace KominkaDogRun
                 // (プレイヤーが走って逃げ続ける = 4m/s > runSpeed 2.4m/s) を拾えない。
                 // **Drop ではなく GiveUp** — 追い付けていない以上「受け渡し」の絵にならず、
                 // その場でボールを放すほうが復帰手段 (掴み直し・リセット) が全部戻る
-                if (elapsed > returnTimeout) { GiveUp(); return; }
+                // IMP-DOG-021 (E-3): after a river exit the limit is the path to the thrower / run speed + slack when that is longer
+                if (elapsed > Mathf.Max(returnTimeout, _returnTimeoutExtra)) { GiveUp(); return; }
 
                 bool nearPlayer = distToPlayer <= returnStopDistance + ReturnSettleBand;
                 if (nearPlayer && _settleStartTime < 0f) _settleStartTime = Time.time;

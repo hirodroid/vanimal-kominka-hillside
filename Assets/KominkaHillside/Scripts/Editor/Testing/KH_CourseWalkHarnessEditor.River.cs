@@ -13,6 +13,8 @@ namespace KominkaHillside.Editor
     // IMP-DOG-020 stage 1, ClientSim harness W5 (DES-DOG-004 B-3). Same run frame as the walk harness (journal, global
     // watchdog, PlayerData backup/restore, runInBackground restore, no scene save, Play stop on any failure); only the
     // cases differ. Dog 0 only; the other five are observed too.
+    //   (IMP-DOG-021, 2026-09-28: both ball cases now stand inside a bridge zone, the one part of the river where a ball still goes
+    //   back to the bank; elsewhere it floats and is fetched, which Course/88b covers.)
     //   w5-ball-in-river     : the dog's ball is put under the water at the river centre and the dog is told it was thrown.
     //                          Pass = no dog frame inside the band, ball back on the bank (player's side, out of the band)
     //                          within 10 s (it has sunk, so KH_ToyRecall returns it on its next 0.25 s look).
@@ -168,8 +170,10 @@ namespace KominkaHillside.Editor
             }
             else
             {
-                // Away from the water-play spot (z 285) and both bridges.
-                foreach (float z in new[] { 140f, 150f, 160f, 380f, 400f, 420f, 600f })
+                // Away from the water-play spot (z 285). IMP-DOG-021 (2026-09-28): a ball anywhere else in the river now floats and is
+                // fetched (DES-DOG-004 §E), so the "dog stays out of the band, the ball goes back to the bank" cases run where that is
+                // still the rule: inside a bridge zone (bridge z +- 8 m), clear of the deck (+- 1.75 m). The criteria are unchanged.
+                foreach (float z in new[] { 184f, 196f, 185f, 195f, 484f, 496f })
                 {
                     foreach (int side in new[] { -1, 1 }) if (RiverTrySite(z, side, 5, out site)) { c.z = z; c.side = side; found = true; break; }
                     if (found) break;

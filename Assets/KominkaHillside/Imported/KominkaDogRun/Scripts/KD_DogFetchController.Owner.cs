@@ -106,6 +106,9 @@ namespace KominkaDogRun
             // RC-17 (破壊監査 2026-09-28): a claim belongs to the state it was asked from; a hold watch to the carry it watched
             _claimNext = -1;
             if (!holdGoesOn) _holdLostAt = -1f;
+            // IMP-DOG-021: the river-band wait belongs to one Chase; the longer land Return limit to one river fetch
+            RiverBlockClear();
+            if (next == StateChaseStart || next == StateIdle) _returnTimeoutExtra = 0f;
 
             if (next == StateReturn || next == StateWaterReturn)   // IMP-DOG-020: the water carry takes the ball the same way
             {
@@ -256,7 +259,8 @@ namespace KominkaDogRun
         {
             if (_ballT == null) return false;
             KD_DogWanderController w = MyWander();
-            return w != null && w.waterSpot != null && w.waterSpot._FloatsAt(_ballT.position);
+            if (w != null && w.waterSpot != null && w.waterSpot._FloatsAt(_ballT.position)) return true;
+            return riverData != null && riverData._FloatsAt(_ballT.position);   // IMP-DOG-021 (E-2): anywhere along the river
         }
 
         /// <summary>Preview-only caller opts this dog into the show before cancelling its work.</summary>

@@ -7,7 +7,8 @@ using UnityEngine.AI;
 namespace KominkaHillside
 {
     // "Call the ball to me", ported from KominkaDogRun KD_TreatPouch.Toy (IMP-FET-011): one ball at a time,
-    // never taken from a hand or from a dog that is chasing/carrying it. No bulk reset (game-design §4).
+    // never taken from a hand, from a dog chasing it on land (Fetch 1-3) or from a mouth (4 / 7 / 8, a Drop before the release);
+    // IMP-DOG-021 (DES-DOG-004 E-4): a dog after it in the water (6) or a Drop that has let it go gives it up. No bulk reset (game-design §4).
     // The ball is placed in front of the head on the ground found by a downward ray, since the hillside slopes.
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_ToyRecall : UdonSharpBehaviour
@@ -31,7 +32,9 @@ namespace KominkaHillside
         public float recallDistance = 1.2f;
         public float recallCooldown = 2f;
         public const int Ok = 0, Held = 1, DogBusy = 2, Cooldown = 3, Unwired = 4, Pending = 5;
-        public const int InWater = 6;   // IMP-DOG-020: the dog is wading; called again after it lands (DES-DOG-004 B-1)
+        // IMP-DOG-020: the dog is wading; called again after it lands (DES-DOG-004 B-1). IMP-DOG-021 (E-4): only while the ball is
+        // in its mouth in the water (Fetch 7 / 8); a ball the dog is not holding is called even when the dog is in the water.
+        public const int InWater = 6;
         private float[] _recallAt;
         private float[] _discRecallAt;
         private int _pendingRow = -1;
@@ -88,7 +91,8 @@ namespace KominkaHillside
                 if (_pendingRow >= 0) return Pending;
                 if (discs[row].IsHeldNow) return Held;
                 if (discCatchers[row].IsEngaged) return DogBusy;
-                if (fetchers != null && row < fetchers.Length && fetchers[row] != null && fetchers[row].WaterPose != 0) return InWater;
+                // IMP-DOG-021 (DES-DOG-004 E-4): a dog in the water no longer blocks its disc; a disc that is not engaged is not in
+                // any mouth (the disc chase stops at the river band), so it is called as usual and the dog stays in the water.
                 if (BallInUse(row)) return DogBusy;   // IMP-DOG-019: the same dog's ball is out (menu text = "dog is playing")
                 if (_discRecallAt != null && Time.time - _discRecallAt[row] < recallCooldown) return Cooldown;
                 return Ok;
@@ -97,8 +101,18 @@ namespace KominkaHillside
             if (_pendingRow >= 0) return Pending;
             if (balls[row].IsHeldNow) return Held;
             if (activities != null && activities.RaceBall == row) return DogBusy;
-            if (!fetchers[row].IsIdle) return DogBusy;
-            if (fetchers[row].WaterPose != 0) return InWater;
+            if (!fetchers[row].IsIdle)
+            {
+                // IMP-DOG-021 (DES-DOG-004 E-4): only a ball in a mouth is refused. In the water (7 / 8) with the old one-liner
+                // ("水遊び中 — ..."), elsewhere as before. A dog swimming / wading after it (6, not in the mouth yet) loses its target
+                // and walks out (KD_DogFetchController.HillsideWater: target-lost). The land chase (1-3) keeps "dog is playing".
+                KominkaDogRun.KD_DogFetchController f = fetchers[row];
+                if (f._BallInMouth()) return f.IsWaterFetching || f.WaterPose != 0 ? InWater : DogBusy;
+                // Codex 2026-09-28 中: a Drop that has let the ball go (5 after the release; IsCarrying minus the mouth) holds
+                // nothing either: called as an idle dog's ball would be
+                if (f.DebugState != KominkaDogRun.KD_DogFetchController.StateWaterChase && !f.IsCarrying) return DogBusy;
+            }
+            // E-4: an idle dog in the water (playing, not after this ball) no longer refuses: the ball comes, the dog stays in.
             if (DiscInUse(row)) return DogBusy;   // IMP-DOG-019: the same dog's disc is out
             if (_recallAt != null && Time.time - _recallAt[row] < recallCooldown) return Cooldown;
             return Ok;
@@ -333,7 +347,10 @@ namespace KominkaHillside
                 if (Time.time < _riverSettleUntil[i]) SettleBall(go);
                 Vector3 p = go.transform.position;
                 // In the spot: float (every new Owner does the same from the position, so an Owner change keeps it afloat, S4).
-                if (waterSpot != null && waterSpot._FloatsAt(p)) { FloatBall(i, go, p); _riverSince[i] = -1f; continue; }
+                // IMP-DOG-021 (E-2): anywhere along the river as well (KH_RiverData._FloatsAt: in the water, outside the bridge
+                // zones, a usable bank within reach). The bridge zones and the stretches without a bank keep the bank return below.
+                bool inSpot = waterSpot != null && waterSpot._FloatsAt(p);
+                if (inSpot || riverData._FloatsAt(p)) { FloatBall(i, go, p, inSpot); _riverSince[i] = -1f; continue; }
                 // Left the spot water (or released on land): gravity back. Judged from the physical state too, not only the local
                 // history: a ball another Owner floated and a dog then carried out has _floating false here (Codex 2026-09-27 D-高)
                 if (_floating[i] || GravityOff(go)) StopFloat(i, go);
@@ -435,7 +452,11 @@ namespace KominkaHillside
         // turns gravity on without this client ever seeing the hold, and an Owner that floated the ball, lost it to someone
         // who picked it up, and got it back keeps _floating true: both left a floating ball with gravity on. Held balls and
         // balls in a mouth never reach here (CheckRiverBalls skips them), so a person's or a dog's physics is not overridden.
-        void FloatBall(int i, GameObject go, Vector3 p)
+        // IMP-DOG-021 (E-2): outside the spot the drift follows the river's centre line (the lateral offset is kept, pulled back
+        // inside half width - 0.3 m where the water narrows) and stops 1 m before a bridge zone / a stretch without a usable bank
+        // (KH_RiverData._DriftStops), so a ball never drifts into the places where it would be sent to the bank. In the spot the
+        // old rule stays: it drifts to the spot's downstream end and stops there (a ball left in the spot stays by "川辺").
+        void FloatBall(int i, GameObject go, Vector3 p, bool inSpot)
         {
             Rigidbody rb = go.GetComponent<Rigidbody>();
             if (rb == null || rb.isKinematic) return;
@@ -443,9 +464,20 @@ namespace KominkaHillside
             if (!_floating[i]) { _floating[i] = true; rb.angularVelocity = Vector3.zero; }
             if (rb.useGravity && sync != null) sync.SetGravity(false);
             float radius = go.transform.localScale.x * 0.5f;
-            float wantY = riverData._SurfaceY(p.z) - radius * waterSpot.floatSink;
-            float vz = p.z > waterSpot._DownstreamZ() ? -waterSpot.floatDrift : 0f;
-            rb.velocity = new Vector3(0f, Mathf.Clamp((wantY - p.y) * 4f, -1f, 1f), vz);
+            float sink = waterSpot != null ? waterSpot.floatSink : KH_WaterSpot.DefaultFloatSink;
+            float drift = waterSpot != null ? waterSpot.floatDrift : KH_WaterSpot.DefaultFloatDrift;
+            float wantY = riverData._SurfaceY(p.z) - radius * sink;
+            float vx = 0f, vz;
+            if (inSpot) vz = p.z > waterSpot._DownstreamZ() ? -drift : 0f;
+            else if (riverData._DriftStops(p)) vz = 0f;
+            else
+            {
+                vz = -drift;
+                vx = drift * (riverData._CenterX(p.z - 0.5f) - riverData._CenterX(p.z + 0.5f));   // along the centre line
+                float lat = p.x - riverData._CenterX(p.z), keep = Mathf.Max(0f, riverData._HalfWidth(p.z) - 0.3f);
+                if (lat > keep) vx -= (lat - keep) * 0.5f; else if (lat < -keep) vx += (-keep - lat) * 0.5f;
+            }
+            rb.velocity = new Vector3(vx, Mathf.Clamp((wantY - p.y) * 4f, -1f, 1f), vz);
         }
 
         /// <summary>Owner, not held: true = the ball was frozen with no dog carrying it and has just been unfrozen (looked at again
@@ -506,6 +538,13 @@ namespace KominkaHillside
             // Unfreeze before moving: a kinematic ball left by an interrupted Return would hang in the air.
             VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
             if (sync != null) sync.SetKinematic(false);
+            // IMP-DOG-021 (E-4): a ball called out of the water was floating with gravity off; it lands by the player at once
+            // instead of hanging until the next river look (0.25 s)
+            if (kind == KindBall)
+            {
+                if (sync != null) sync.SetGravity(true);
+                if (_floating != null && row < _floating.Length) _floating[row] = false;
+            }
             VRCPlayerApi.TrackingData head = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
             Vector3 fwd = head.rotation * Vector3.forward; fwd.y = 0f;
             if (fwd.sqrMagnitude < 0.0001f) { fwd = lp.GetRotation() * Vector3.forward; fwd.y = 0f; }
