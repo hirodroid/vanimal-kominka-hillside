@@ -355,6 +355,14 @@
         {
           "key": "course.water.went",
           "text": "{0}が水遊びに行きました。上がったらまたつなげます"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "広場の近くで取り出せます"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "広場の外"
         }
       ]
     },
@@ -710,6 +718,14 @@
         {
           "key": "course.water.went",
           "text": "{0} went to play in the water. You can leash it again once it's out"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "You can take it out near the plaza"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "Away from plaza"
         }
       ]
     },
@@ -1065,6 +1081,14 @@
         {
           "key": "course.water.went",
           "text": "{0} пошла играть в воду. Когда выйдет, можно снова взять на поводок"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "Можно взять рядом с площадкой"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "Вне площадки"
         }
       ]
     },
@@ -1420,6 +1444,14 @@
         {
           "key": "course.water.went",
           "text": "{0} пішов гратися у воду. Коли вийде, можна знову взяти на повідок"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "Можна взяти поруч із майданчиком"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "Поза майданчиком"
         }
       ]
     },
@@ -1775,6 +1807,14 @@
         {
           "key": "course.water.went",
           "text": "{0}(이)가 물놀이하러 갔어요. 나오면 다시 목줄을 맬 수 있어요"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "광장 근처에서 꺼낼 수 있어요"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "광장 밖"
         }
       ]
     },
@@ -2130,6 +2170,14 @@
         {
           "key": "course.water.went",
           "text": "{0} ist im Wasser spielen gegangen. Sobald er draußen ist, kannst du ihn wieder anleinen"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "In der Nähe des Platzes kannst du sie holen"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "Nicht am Platz"
         }
       ]
     },
@@ -2485,6 +2533,14 @@
         {
           "key": "course.water.went",
           "text": "{0}去玩水了。上岸后可以再牵上"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "在广场附近才能取出"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "广场外"
         }
       ]
     },
@@ -2840,6 +2896,14 @@
         {
           "key": "course.water.went",
           "text": "{0} se fue a jugar al agua. Cuando salga, podrás volver a atarlo"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "Puedes sacarlo cerca de la plaza"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "Lejos de la plaza"
         }
       ]
     },
@@ -3195,6 +3259,14 @@
         {
           "key": "course.water.went",
           "text": "{0} est parti jouer dans l'eau. Tu pourras le rattacher une fois sorti"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "Tu peux le sortir près de la place"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "Loin de la place"
         }
       ]
     },
@@ -3550,6 +3622,14 @@
         {
           "key": "course.water.went",
           "text": "{0} foi brincar na água. Quando sair, dá para prender de novo"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "Você pode pegar perto da praça"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "Longe da praça"
         }
       ]
     },
@@ -3905,6 +3985,14 @@
         {
           "key": "course.water.went",
           "text": "{0} è andato a giocare in acqua. Quando esce puoi rimettergli il guinzaglio"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "Puoi prenderlo vicino alla piazza"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "Lontano dalla piazza"
         }
       ]
     },
@@ -4260,6 +4348,14 @@
         {
           "key": "course.water.went",
           "text": "{0} poszedł bawić się w wodzie. Gdy wyjdzie, możesz znów go przypiąć"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "Można wyjąć w pobliżu placu"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "Poza placem"
         }
       ]
     },
@@ -4619,6 +4715,14 @@
         {
           "key": "course.water.went",
           "text": "{0}去咗玩水。上岸之後可以再拖返"
+        },
+        {
+          "key": "course.toy.discArea",
+          "text": "喺廣場附近先可以攞出嚟"
+        },
+        {
+          "key": "course.toy.discAreaState",
+          "text": "廣場外"
         }
       ]
     }

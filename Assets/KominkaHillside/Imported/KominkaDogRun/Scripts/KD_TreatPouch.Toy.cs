@@ -258,6 +258,7 @@ namespace KominkaDogRun
         private string HillsideToyGateKey(int gate)
         {
             if (gate == KominkaHillside.KH_ToyRecall.InWater) return "course.water.busyToyBack";
+            if (gate == KominkaHillside.KH_ToyRecall.OutOfArea) return "course.toy.discArea";   // IMP-DOG-022: disc only (DES-DOG-005 stage 1)
             if (gate == KominkaHillside.KH_ToyRecall.Held) return "KD_TreatPouch.WordToyGateHeld";
             if (gate == KominkaHillside.KH_ToyRecall.DogBusy) return "KD_TreatPouch.WordToyGateBusy";
             if (gate == KominkaHillside.KH_ToyRecall.Cooldown) return "KD_TreatPouch.WordToyGateCooldown";
@@ -269,6 +270,7 @@ namespace KominkaDogRun
         {
             if (gate == KominkaHillside.KH_ToyRecall.Ok) return L("KD_TreatPouch.WordToyStateOk");
             if (gate == KominkaHillside.KH_ToyRecall.InWater) return L("course.water.state");
+            if (gate == KominkaHillside.KH_ToyRecall.OutOfArea) return L("course.toy.discAreaState");   // IMP-DOG-022
             if (gate == KominkaHillside.KH_ToyRecall.Held) return L("KD_TreatPouch.WordToyStateHeld");
             if (gate == KominkaHillside.KH_ToyRecall.DogBusy) return L("KD_TreatPouch.WordToyStateBusy");
             if (gate == KominkaHillside.KH_ToyRecall.Pending) return L("KD_TreatPouch.WordToyStatePending");

@@ -35,6 +35,10 @@ namespace KominkaHillside
         // IMP-DOG-020: the dog is wading; called again after it lands (DES-DOG-004 B-1). IMP-DOG-021 (E-4): only while the ball is
         // in its mouth in the water (Fetch 7 / 8); a ball the dog is not holding is called even when the dog is in the water.
         public const int InWater = 6;
+        // IMP-DOG-022 (DES-DOG-005 stage 1): the disc is taken out only near the place it can be thrown (the catcher's plaza
+        // circle + discTakeoutMargin, XZ). Stage 3 is to replace this with "can the dog play on the ground right here".
+        public const int OutOfArea = 7;
+        public float discTakeoutMargin = 5f;
         private float[] _recallAt;
         private float[] _discRecallAt;
         private int _pendingRow = -1;
@@ -89,6 +93,7 @@ namespace KominkaHillside
             {
                 if (discs == null || row < 0 || row >= discs.Length || discs[row] == null || discCatchers == null || row >= discCatchers.Length || discCatchers[row] == null) return Unwired;
                 if (_pendingRow >= 0) return Pending;
+                if (!LocalNearDiscArea(discCatchers[row])) return OutOfArea;   // IMP-DOG-022 (DES-DOG-005 stage 1)
                 if (discs[row].IsHeldNow) return Held;
                 if (discCatchers[row].IsEngaged) return DogBusy;
                 // IMP-DOG-021 (DES-DOG-004 E-4): a dog in the water no longer blocks its disc; a disc that is not engaged is not in
@@ -116,6 +121,20 @@ namespace KominkaHillside
             if (DiscInUse(row)) return DogBusy;   // IMP-DOG-019: the same dog's disc is out
             if (_recallAt != null && Time.time - _recallAt[row] < recallCooldown) return Cooldown;
             return Ok;
+        }
+
+        // IMP-DOG-022: local player within the catcher's play circle + discTakeoutMargin (XZ). A catcher without an area
+        // (radius <= 0: prototype scene, frisbee harness) and no local player (editor without ClientSim) count as inside.
+        // Local read only: nothing is synced, the menu just refuses to call the disc.
+        bool LocalNearDiscArea(KH_FrisbeeCatch c)
+        {
+            float r = c.playAreaRadius;
+            if (r <= 0f) return true;
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) return true;
+            Vector3 d = lp.GetPosition() - c.playAreaCenter; d.y = 0f;
+            float limit = r + discTakeoutMargin;
+            return d.sqrMagnitude <= limit * limit;
         }
 
         // ---- IMP-DOG-019: ball and disc of one dog are mutually exclusive ----
