@@ -676,22 +676,15 @@ namespace KominkaHillside.Editor
                     &&KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff<KH_FrisbeeCatch.RunJumpMaxTakeoff,
                     "take-off band "+KH_FrisbeeCatch.RunJumpMinTakeoff.ToString("F1")+" / head-on "+KH_FrisbeeCatch.RunJumpHeadOnMaxTakeoff.ToString("F1")+" / "+KH_FrisbeeCatch.RunJumpMaxTakeoff.ToString("F1")+" m/s ordered, ceiling in [5, 9] "+key);
                 Check(KH_FrisbeeCatch.OvertakeMinPace>c.runSpeed&&KH_FrisbeeCatch.OvertakeMinPace<=c.chaseRunSpeed,"overtake pace floor "+KH_FrisbeeCatch.OvertakeMinPace.ToString("F1")+" m/s above the walking run and within the sprint "+key);
-                // A Ready spot is measured from the holder, so it only ever lands inside the plaza if its own radius does.
-                float[] readyAhead={KH_FrisbeeCatch.ReadyAhead1,KH_FrisbeeCatch.ReadyAhead2,KH_FrisbeeCatch.ReadyAhead3};
-                float[] readyLateral={KH_FrisbeeCatch.ReadyLateral1,KH_FrisbeeCatch.ReadyLateral2,KH_FrisbeeCatch.ReadyLateral3};
-                float readyMax=0f;for(int v=0;v<3;v++){float r=Mathf.Sqrt(readyAhead[v]*readyAhead[v]+readyLateral[v]*readyLateral[v]);if(r>readyMax)readyMax=r;}
-                Check(readyMax<=c.playAreaRadius,"run-in Ready spots reach "+readyMax.ToString("F1")+" m <= play area radius "+c.playAreaRadius.ToString("F1")+" "+key);
-                // Codex D1 高: the landing rule as pure geometry, against THIS dog's real plaza circle - the same
-                // LandingOf / InCircleXZ the planner and the liftoff gate call. A jump that leaves the ground
-                // 0.70 m inside the ring and travels 1.00 m must be refused; the same jump 1 m further in must not.
+                // DES-DOG-005 M1 (0-9): the Ready-spot-within-the-radius check is retired (C-3: the spot is chosen by PlayableAt,
+                // the catcher no longer reads the circle), and Codex D1's circle landing check is replaced by the asymmetric arc
+                // (the same statics the planner and the liftoff gate call). The circle itself (:596 above) stays for the
+                // stage-1 take-out gate until M4.
                 {
-                    Vector3 pc=c.playAreaCenter;float prad=c.playAreaRadius;
-                    Vector3 pf=new Vector3(0.6f,0f,0.8f);float pv=2f,pt=0.25f;
-                    Vector3 lo=pc+pf*(prad-0.7f),la=KH_FrisbeeCatch.LandingOf(lo,pf,pv,pt);
-                    Vector3 lo2=pc+pf*(prad-1.7f),la2=KH_FrisbeeCatch.LandingOf(lo2,pf,pv,pt);
-                    Check(Mathf.Abs(((la-pc).magnitude-prad)-0.3f)<1e-3f,"LandingOf puts a "+(pv*2f*pt).ToString("F2")+" m arc 0.30 m past the plaza edge (measured "+((la-pc).magnitude-prad).ToString("F3")+") "+key);
-                    Check(KH_FrisbeeCatch.InCircleXZ(lo,pc,prad,0f)&&!KH_FrisbeeCatch.InCircleXZ(la,pc,prad,0f)&&KH_FrisbeeCatch.InCircleXZ(la2,pc,prad,0f),
-                        "the play-area predicate refuses a landing 0.30 m outside the plaza although the take-off is inside, and accepts the one 0.70 m in "+key);
+                    string asym=KH_FrisbeePrototypeEditor.AsymmetricLandingProblems();
+                    Check(asym.Length==0,"asymmetric landing (DescentTime / AirTime / LandingOf / SlopeOk) "+key+(asym.Length==0?"":" -- "+asym));
+                    string anywhere=KH_FrisbeePrototypeEditor.AnywhereProblems(c);
+                    Check(anywhere.Length==0,"DES-DOG-005 values == defaults, proxy and backing (Course/92) "+key+(anywhere.Length==0?"":" -- "+anywhere));
                 }
                 var wb=UdonSharpEditorUtility.GetBackingUdonBehaviour(w);var fb=UdonSharpEditorUtility.GetBackingUdonBehaviour(f);var cbb=UdonSharpEditorUtility.GetBackingUdonBehaviour(c);
                 Check(wb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb&&fb.publicVariables.TryGetVariableValue("frisbeeCatch",out bv)&&(bv as UnityEngine.Object)==cbb,"Wander/Fetch backing frisbeeCatch "+key);

@@ -20,7 +20,7 @@ namespace KominkaHillside
             VRCPlayerApi holder = HolderNow();
             if (holder == null) { TransitionTo(StateIdle); return; } // dropped without a throw, or thrown: ReqCatch overrides
             Vector3 holderPos = holder.GetPosition();
-            if (!CanPlay(holderPos)) { TransitionTo(StateIdle); return; } // Ready never takes the dog from anyone (review M1)
+            if (!CanPlay(holderPos, holder.playerId)) { TransitionTo(StateIdle); return; } // Ready never takes the dog from anyone (review M1)
             if (!_graceEnded && ReadyGrace(holderPos)) return;
             if (!_standoffValid || Time.time >= _nextStandoff)
             {
@@ -46,11 +46,16 @@ namespace KominkaHillside
                     // (Codex review). Variant 0 keeps the distance-based slack below.
                     Vector3 moved = holderPos - _standoffHolderPos; moved.y = 0f;
                     if (first || Vector3.Angle(fwd, _standoffFwd) > RunInReadyTurnDeg || moved.magnitude > _readySlack)
-                    { _standoffSpot = ReadySpot(holderPos, fwd); _standoffFwd = fwd; _standoffHolderPos = holderPos; _standoffValid = true; }
+                    {
+                        Vector3 rs = ReadySpot(holderPos, fwd);
+                        if (!_readySpotOk) { ReadyRefused(); return; }
+                        _standoffSpot = rs; _standoffFwd = fwd; _standoffHolderPos = holderPos; _standoffValid = true;
+                    }
                 }
                 else
                 {
                     Vector3 spot = ReadySpot(holderPos, fwd);
+                    if (!_readySpotOk) { ReadyRefused(); return; }
                     if (first || Vector3.Distance(spot, _standoffSpot) > _readySlack)
                     { _standoffSpot = spot; _standoffFwd = fwd; _standoffHolderPos = holderPos; _standoffValid = true; }
                 }
@@ -105,19 +110,40 @@ namespace KominkaHillside
             return false;
         }
 
-        // spot = holder + head direction * ahead + right * (lateral * side), pulled back inside the flat.
-        // For variant 0 (ahead = standoffDistance, lateral = 0) this is exactly the stage-2 formula.
+        // spot = holder + head direction * ahead + right * (lateral * side). For variant 0 (ahead = standoffDistance,
+        // lateral = 0) this is exactly the stage-2 formula. DES-DOG-005 C-3: instead of pulling it into the plaza circle,
+        // the first of (1) that spot, (2) the same direction at half the distance, (3) 1.5 m beside the holder that passes
+        // PlayableAt is taken (<= 3 rays, only at the 10 Hz refresh). _readySpotOk = false: none did.
         Vector3 ReadySpot(Vector3 holderPos, Vector3 fwd)
         {
             Vector3 right = Vector3.Cross(Vector3.up, fwd);
-            Vector3 spot = holderPos + fwd * _readyAhead + right * (_readyLateral * _readySide);
-            if (playAreaRadius > 0f)
-            {
-                // Keep the stand-off spot inside the flat (review P2): pull it toward the centre if needed.
-                Vector3 c = spot - playAreaCenter; c.y = 0f;
-                if (c.magnitude > playAreaRadius) spot = playAreaCenter + c.normalized * playAreaRadius + Vector3.up * (spot.y - playAreaCenter.y);
-            }
-            return spot;
+            Vector3 offset = fwd * _readyAhead + right * (_readyLateral * _readySide);
+            Vector3 spot = holderPos + offset;
+            _readySpotOk = true;
+            if (ReadyPlayable(spot)) return spot;
+            spot = holderPos + offset * 0.5f;
+            if (ReadyPlayable(spot)) return spot;
+            spot = holderPos + right * (1.5f * _readySide);
+            if (ReadyPlayable(spot)) return spot;
+            _readySpotOk = false;
+            return holderPos;
+        }
+
+        // PlayableAt for a spot measured from the holder's feet: the ground there may be well above or below them on a
+        // slope, so the one ray starts 3 m up and reaches 6 m (holder + 3 .. holder - 3).
+        bool ReadyPlayable(Vector3 spot)
+        {
+            if (InRunRiver(spot)) return false;
+            _planRays++;
+            return PlayableGround(spot + Vector3.up * 2.5f, groundLayerMask, 0.5f, 6f, runMaxSlopeDeg);
+        }
+
+        // C-3: no playable stand-off spot. Back to Idle, and Idle does not come back into Ready for ReadyRetrySeconds.
+        void ReadyRefused()
+        {
+            _readyRetryAt = Time.time + ReadyRetrySeconds;
+            Debug.Log("[KH_FrisbeeCatch] ready refused: no playable stand-off spot" + DogTag());
+            TransitionTo(StateIdle);
         }
 
         // ---- Chase: sprint to the spot under the catch point, settle there, replanning ----
@@ -131,7 +157,8 @@ namespace KominkaHillside
             {
                 // Landed or stopped by a wall: fetch from the ground if it is within reach; never re-arm the jump.
                 // Grabbed / recalled: nothing to fetch.
-                if (Retrievable() && DogMayGo(frisbee.transform.position) && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance) TransitionTo(StateRetrieve);
+                // DES-DOG-005 C-2: Reachable(disc) once, instead of the plaza circle.
+                if (Retrievable() && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance && _Reachable(frisbee.transform.position)) TransitionTo(StateRetrieve);
                 else CancelLaunch("flight-ended:" + _flightEndReason);   // Codex M3: grabbed / lost / out of reach, said once
                 return;
             }
@@ -222,10 +249,11 @@ namespace KominkaHillside
             }
             else
             {
-                // Nothing reachable yet: follow the disc from behind until the prediction offers a point,
-                // but never out of the flat (review D1): a throw leaving the plaza is simply not chased.
+                // Nothing reachable yet: follow the disc from behind until the prediction offers a point. DES-DOG-005
+                // C-2 (:228): no per-frame test of the predicted disc any more (the walking gate stops a step on the way);
+                // a landing the dog cannot reach (Plan computed _landingReachable once) is not chased: cannot-play.
                 Vector3 disc = frisbee._PositionAt(_p0, _v0, _curve, tNow);
-                if (!DogMayGo(disc) || (_landingValid && !DogMayGo(_landing))) { CancelLaunch("out-of-area"); return; }
+                if (_landingValid && _landingChecked && !_landingReachable) { CancelLaunch("cannot-play"); return; }
                 MoveToward(disc, chaseRunSpeed, 1.0f, chaseAcceleration, true, chaseDeceleration);
             }
             ObserveFlight(tNow);
@@ -385,6 +413,7 @@ namespace KominkaHillside
             if (_jumpStart > now) _jumpStart = now;
             _jumpFrom = dogRoot.position; _jumpFrom.y = _groundY; _catchDecided = false; _airborne = false; _bestGap = 99f;
             animSpeed = _animScale;
+            _apexWritten = false; _landGapLogged = false;   // DES-DOG-005 B-4 / harness landGap: once per jump
             // settled = seconds spent standing on the spot before the crouch (round 2 wants this >= settleTime),
             // off = how far from it the dog actually was when the crouch began (the air solve absorbs the rest),
             // face = how many degrees of the about-face were still missing (round 2b: the twist misses came from
@@ -420,7 +449,6 @@ namespace KominkaHillside
             }
             float ta = e - _crouchReal;
             float g = frisbee.gravity;
-            float vy = g * _tUp;
             if (!_airborne)
             {
                 // Horizontal air velocity is whatever brings the root from here to the planned catch root at tUp.
@@ -432,15 +460,26 @@ namespace KominkaHillside
                 float cap = chaseRunSpeed * 1.2f;
                 if (vel.magnitude > cap) vel = vel.normalized * cap;
                 if (Vector3.Dot(vel, _forward) < 0f) vel = Vector3.zero; // never fly backwards
+                // DES-DOG-005 B-3: the vertical speed that puts the root on the planned catch root at tUp (the PLANNED catch
+                // time, not necessarily the apex of this arc - the real apex is at vy / g) from the ground the dog actually
+                // crouched on (level ground: vy == g * tUp, the apex is at tUp, as before).
+                float vy = (_catchRoot.y - _groundY) / Mathf.Max(0.05f, _tUp) + 0.5f * g * _tUp;
                 // Codex D1: last gate before the feet leave the ground. The crouch start has been sliding with the
                 // dog's own speed for the last 10 Hz replans and the air solve has just corrected the residual, so
-                // the arc that is about to be flown is only final HERE. A jump that would come down outside the
-                // flat (or off the ground) is not taken at all: drop the plan and let the scan offer a later
-                // candidate, or the ground retrieve.
-                Vector3 landing = start + vel * (2f * _tUp);
-                if (!DogMayGo(landing) || !GroundOk(landing, _groundY))
+                // the arc that is about to be flown is only final HERE. A jump that would come down off the ground,
+                // on a slope / bridge deck / the river, or more than jumpMaxRise from the take-off (DES-DOG-005 B-1,
+                // B-2 step 3: two rays) is not taken at all: drop the plan and let the scan offer a later candidate,
+                // or the ground retrieve.
+                float hv = vel.magnitude;
+                Vector3 hdir = hv > 1e-4f ? vel / hv : _forward;
+                // Codex M1 6-1: the crouch moved the dog by SnapToGround alone (no river / slope / step rule), so the REAL
+                // take-off spot is judged here once more - the jump-ground rule (slope, bridge deck, river / water spot) and
+                // the dog's water pose - before the landing.
+                bool takeoffOk = JumpGround(start, _groundY);
+                if (takeoffOk && fetch != null && fetch.WaterPose != 0) { takeoffOk = false; _jgWhy = "water"; }
+                if (!takeoffOk || !AirLanding(start, _groundY, hdir, hv, vy))
                 {
-                    Debug.Log("[KH_FrisbeeCatch] liftoff refused: landing outside");
+                    Debug.Log("[KH_FrisbeeCatch] liftoff refused: " + (takeoffOk ? "landing outside" : "take-off") + " (" + _jgWhy + ")" + DogTag());
                     _plan = PlanNone; _nextPlan = 0f; _settledSince = -1f; _holding = false; _solved = false; _dropReason = "liftoff";   // IMP-DOG-017: solve again
                     _catchDecided = false; _runningCatch = false; _airborne = false; animSpeed = 1f;
                     dogRoot.position = SnapToGround(start); // net: owner-only
@@ -448,11 +487,26 @@ namespace KominkaHillside
                     return;
                 }
                 _airborne = true; _airStart = start; _airVel = vel;
+                _airVy = vy; _taLand = _alTime; _airLandY = _alY;
+                LogLiftoff(start, _alPt, hv);
             }
             Vector3 pos = _airStart + _airVel * ta;
-            pos.y = _groundY + vy * ta - 0.5f * g * ta * ta;
-            if (ta >= 2f * _tUp) pos.y = _groundY;
+            pos.y = _groundY + _airVy * ta - 0.5f * g * ta * ta;
+            if (ta >= _taLand) pos.y = _airLandY;
             dogRoot.position = pos; // net: owner-only
+            // DES-DOG-005 B-4: at the PLANNED catch time tUp (the clip's catch frame; the arc's real apex is at vy / g and
+            // may differ slightly), once, the clip's second half is re-timed to the time left to the landing (_taLand - tUp
+            // differs from tUp when the landing is lower / higher). Not tied to the catch: the catch may happen either side.
+            if (!_apexWritten && ta >= _tUp)
+            {
+                _apexWritten = true;
+                float fall = _taLand - _tUp;
+                if (Mathf.Abs(fall - _tUp) > 0.02f && fall > 0.01f)
+                {
+                    animSpeed = _animScale * _tUp / fall;   // net: owner-only; one extra serialization per such jump
+                    RequestSerialization();
+                }
+            }
             if (!_catchDecided && ta >= _tUp - catchWindow)
             {
                 float tNow = frisbee._ElapsedSince(_t0);
@@ -478,13 +532,13 @@ namespace KominkaHillside
                         + " inJumpState=" + inJump + " rise=" + _rootRise.ToString("F2") + " scale=" + _animScale.ToString("F2") + " flightEnded=" + _flightEnded + VariantTail());
                 }
             }
-            if (ta >= 2f * _tUp)
+            if (ta >= _taLand)
             {
                 // IMP-DOG-017 (Codex review): B's run-through is only taken when the whole run (recover + RunThroughSeconds
                 // at chaseSprintSpeed * ChaseTakeoffFraction) is clear of obstacles; otherwise it lands and stops as usual.
                 if (state == StateJumpCarry && _mode == ModeChase)
                 {
-                    float runLen = chaseSprintSpeed * ChaseTakeoffFraction * (_recoverDur / Mathf.Max(0.1f, _animScale) + RunThroughSeconds);
+                    float runLen = chaseSprintSpeed * ChaseTakeoffFraction * (_recoverDur / Mathf.Max(0.1f, animSpeed) + RunThroughSeconds);
                     _runThroughClear = LaneClear(dogRoot.position, dogRoot.position + dogRoot.forward * runLen);
                 }
                 else _runThroughClear = false;
@@ -495,7 +549,10 @@ namespace KominkaHillside
         void UpdateLand(double now, float elapsed)
         {
             if (!_dogOwner) { UpdateLocomotionAnim(); return; }
-            float recover = _recoverDur / Mathf.Max(0.1f, _animScale);
+            // DES-DOG-005 B-4: the recover plays at the speed the clip actually has now (animSpeed; the apex may have
+            // rewritten it for a landing lower / higher than the take-off). Level ground: animSpeed == _animScale.
+            float recover = _recoverDur / Mathf.Max(0.1f, animSpeed);
+            if (!_landGapLogged && elapsed >= LandGapDelay) LogLandGap();
             // Round 2: a standing jump lands on the spot and simply stops. The lerp is kept so a jump with residual
             // speed still eases out.
             float desired = Mathf.Lerp(_jumpSpeed, 0f, Mathf.Clamp01(elapsed / recover));
@@ -505,18 +562,16 @@ namespace KominkaHillside
             // One stride ahead is re-checked every frame; a blocked stride ends the run-through for good (Codex review).
             if (runThrough && !LaneClear(dogRoot.position, dogRoot.position + _forward * LandingLaneMargin)) { _runThroughClear = false; runThrough = false; }
             if (runThrough) desired = chaseSprintSpeed * ChaseTakeoffFraction;
-            // Every preset: the slide never carries the root off the flat. At the edge the dog holds its ground and
-            // the clip plays on, so the landing still reads as a landing (Codex D).
-            float reach = _speed > desired ? _speed : desired;
-            if (DogMayGo(dogRoot.position + _forward * (reach * Time.deltaTime))) MoveToward(dogRoot.position + _forward * 2f, desired, 0f);
-            else _speed = 0f;
+            // Every preset: the slide never carries the root over a step or a drop - the walking gate in MoveToward
+            // stops it (DES-DOG-005; was the plaza edge). The dog holds its ground and the clip plays on (Codex D).
+            MoveToward(dogRoot.position + _forward * 2f, desired, 0f);
             if (elapsed < recover) return;
             if (_yieldAfterLanding) { CancelLaunch("claimed"); return; } // leash / gathering took the dog while airborne
             if (state == StateLandCarry) { _runThrough = runThrough && _speed > 0f; TransitionTo(StateReturn); return; }
             if (HeldNow()) { CancelLaunch("held-regrab"); return; }
             if (_flightEnded)
             {
-                if (Retrievable() && DogMayGo(frisbee.transform.position) && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance) TransitionTo(StateRetrieve);
+                if (Retrievable() && Vector3.Distance(dogRoot.position, frisbee.transform.position) <= retrieveMaxDistance && _Reachable(frisbee.transform.position)) TransitionTo(StateRetrieve);
                 else CancelLaunch("flight-ended:" + _flightEndReason);
             }
             else { _plan = PlanNone; _nextPlan = 0f; _solved = false; _dropReason = "miss"; TransitionTo(StateChase); } // missed while still flying: solve again
@@ -529,7 +584,7 @@ namespace KominkaHillside
             if (elapsed > chaseTimeout) { CancelLaunch("retrieve-timeout"); return; }
             if (_flightEnded && !Retrievable()) { CancelLaunch("flight-ended:" + _flightEndReason); return; }
             Vector3 target = frisbee.transform.position;
-            if (!DogMayGo(target)) { CancelLaunch("out-of-area"); return; } // rolled or was carried out of the flat
+            // DES-DOG-005 C-2: no plaza test here any more; a step or a drop on the way is the walking gate's (ground).
             if (!_flightEnded) target = _landingValid ? _landing : frisbee._PositionAt(_p0, _v0, _curve, frisbee._ElapsedSince(_t0));
             Vector3 to = target - dogRoot.position; to.y = 0f;
             float dist = to.magnitude;
@@ -568,19 +623,21 @@ namespace KominkaHillside
                     // of the old straight run followed by MoveToward's sideways slide (Codex review). Same flat clamp
                     // as the landing, plus one stride of lane: at the edge or an obstacle the run-through ends.
                     float keep = chaseSprintSpeed * ChaseTakeoffFraction;
-                    float reach = _speed > keep ? _speed : keep;
                     Vector3 head = dogRoot.forward; head.y = 0f;
                     if (elapsed < RunThroughSeconds && head.sqrMagnitude > 1e-4f
-                        && DogMayGo(dogRoot.position + head * (reach * Time.deltaTime))
                         && LaneClear(dogRoot.position, dogRoot.position + head.normalized * LandingLaneMargin))
                     {
                         MoveToward(dogRoot.position + head.normalized * 2f, keep, 0f, chaseAcceleration, false, chaseDeceleration);
                         TurnAt(to, turnSpeedDegPerSec); // net: owner-only
-                        return;
+                        if (!_groundStop) return;
+                        _groundStop = false;   // DES-DOG-005: a step / drop ends the run-through (was the plaza edge)
                     }
                     _runThrough = false;
                 }
                 MoveToward(playerPos, dist > returnRunDistance ? returnRunSpeed : walkSpeed, returnStopDistance);
+                // DES-DOG-005: the way back has a step / drop the dog cannot take - it sets the disc down here (Drop) instead
+                // of standing at the foot of it until the return timeout.
+                if (_groundStop) { _groundStop = false; Debug.Log("[KH_FrisbeeCatch] return blocked by the ground; dropping here" + DogTag()); TransitionTo(StateDrop); return; }
                 if (dist <= returnStopDistance + 0.05f && _speed <= stopSpeedThreshold) TransitionTo(StateDrop);
                 return;
             }
@@ -641,7 +698,15 @@ namespace KominkaHillside
                 Vector3 next = pos + (to / dist) * step;
                 // IMP-DOG-020 段階 7: KD_DogWanderController._BlockedByRiver と同じ判定 (帯へ入る歩幅は断る。水遊び場の中は例外)
                 if (RiverBlocks(pos, next)) { _speed = 0f; _riverStop = true; }
-                else dogRoot.position = SnapToGround(next); // net: owner-only
+                else
+                {
+                    // DES-DOG-005 C-2 walking gate (this ray is the one the step already cast): no ground under the stride
+                    // (a cliff / hole) or a stride that climbs more than runMaxStep / drops more than RunMaxDrop stops the
+                    // dog; Update turns that into CancelLaunch("ground") for a fetch.
+                    Vector3 snapped = SnapToGround(next);
+                    if (!_snapHit || snapped.y - pos.y > runMaxStep || pos.y - snapped.y > RunMaxDrop) { _speed = 0f; _groundStop = true; }
+                    else dogRoot.position = snapped; // net: owner-only
+                }
             }
         }
 
@@ -705,11 +770,12 @@ namespace KominkaHillside
         }
 
         // No ground under the point: keep the height (the flat prototype ground has an edge; see review U4).
+        // _snapHit says whether this call found ground (DES-DOG-005: the walking gate reads it).
         Vector3 SnapToGround(Vector3 pos)
         {
             RaycastHit hit;
-            if (Physics.Raycast(pos + Vector3.up * groundRayOffset, Vector3.down, out hit, groundRayDistance, groundLayerMask, QueryTriggerInteraction.Ignore))
-                pos.y = hit.point.y;
+            _snapHit = Physics.Raycast(pos + Vector3.up * groundRayOffset, Vector3.down, out hit, groundRayDistance, groundLayerMask, QueryTriggerInteraction.Ignore);
+            if (_snapHit) pos.y = hit.point.y;
             return pos;
         }
 

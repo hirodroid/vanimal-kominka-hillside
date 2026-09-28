@@ -85,14 +85,14 @@
 
 - しゃがみの間は今のまま `SnapToGround` で `_groundY` を撃ち直す (:418)。
 - 足が離れる瞬間 (`!_airborne` の枝、:425-450) に、補正済みの水平速度 `vel` (:431) を使って次を計算する。
-  - `vy = (_catchRoot.y − _groundY) / tUp + ½·g·tUp`。キャッチ時刻 tUp に、口の世界 Y が計画どおりになるように出し直す。
+  - `vy = (_catchRoot.y − _groundY) / tUp + ½·g·tUp`。**計画上のキャッチ時刻** tUp に、口の世界 Y が計画どおりになるように出し直す。実際の放物線の頂点は `vy / g` で、踏み切りの地面が計画とずれると tUp と一致しない (平地では一致する)。
   - 着地時刻は `ta_land = (vy + √(vy² − 2g(landY − _groundY))) / g`。着地点は `start + vel·ta_land`。
   - `landY` は B-2 手順 3 と同じく 2 回撃って決める。残差が 0.10 m を超えたら、今の「liftoff refused」の経路へ進む。
 - 空中の高さは `pos.y = _groundY + vy·ta − ½g·ta²` とし、`ta ≥ ta_land` になったら `landY` に置いて Land へ移る。
 
 ### B-4. クリップの尺
 
-- `animSpeed` は**頂点 (ta ≥ tUp) で 1 回だけ**書き直し、`_animScale · tUp / (ta_land − tUp)` にする。差が 0.02 s 以下なら書かない。
+- `animSpeed` は**計画上のキャッチ時刻 (ta ≥ tUp。クリップのキャッチの齣。物理的な頂点 `vy / g` とは限らない) で 1 回だけ**書き直し、`_animScale · tUp / (ta_land − tUp)` にする。差が 0.02 s 以下なら書かない。
 - キャッチが成立して JumpCarry へ移ることとは切り離す。キャッチは頂点の前後 `catchWindow` の間に起きるので、成立の瞬間には書かない。
 - 着地の回復時間は、`UpdateLand` の `_recoverDur / _animScale` を `_recoverDur / animSpeed` に変える (同じ係数で直す)。Idle へ戻るときに 1 に戻す (今のまま)。
 - 同期変数は増えない。書き直すたびに、既存の `animSpeed` の直列化が 1 回増える。非 Owner は、状態が同じまま届いた `animSpeed` を反映できる (:913・:938)。
@@ -100,6 +100,17 @@
 ### B-5. 地面が取れないとき
 
 `GroundYAt` のレイが外れたら (4 m を超える段差・崖の下)、今のように犬の地面で代用せず `NoGround` を返す。その時刻の候補は捨て、着地の予測が外れたら `_landingValid = false` とする。
+
+### B-6. M1 実装で変えた点
+
+決定: 2026-09-28 M1 実装で変更 (Codex M1 レビュー 1-1・1-2・6-1・6-2 を反映)
+
+- **帯の拡張 (B-2 手順 1)**: まず犬の帯 [lo, hi] で走査して評価する (平地の採用結果は今と同じ)。ディスク直下の地面の高低差が 0.05 m を超える (またはレイが外れる点がある) とき、**または犬の帯で候補が 1 つも無いとき**に、[lo − jumpMaxRise, hi + jumpMaxRise] で走査し直して追加評価する。追加の候補は点数が上回るときだけ入れ替わる。
+- **A (回り込み)** の T0 は S。S の xz は rise に依存しないので、T0 = L0 = S のレイは 1 本。経由点 V は地面を実測してから lane を撃つ。
+- **B・C** は T0 の反復のあと、C0 の地面を実測し (1 本)、その高さから `LaneClear(犬, C0)` と `LaneClear(C0, L0 + 0.6 m)` を撃つ (C-1 の斜面の lane の両端は実測値)。
+- **離陸直前の実位置**: 足が離れる瞬間に、実際の踏み切り位置で `JumpGround` (傾き・橋の床・帯と水遊び場) と `fetch.WaterPose == 0` を確かめる。不適合なら既存の liftoff 拒否 (`liftoff refused: take-off (理由)`) へ進む。しゃがみ中の移動は `SnapToGround` だけで、他の門を通らないため。
+- 跳躍の T0 / L0 と、D・D' の立ち位置は、帯と**水遊び場の両方**を拒否する (`InJumpWater`)。走る・立つ判定 (`PlayableAt` / `PathOk` / Ready) は、水遊び場を除いた帯だけを拒否する (`InRunRiver`)。水遊び場で走れる M1 前の例外 (`RiverBlocks`) はそのまま。浮きは M2。
+- KeepPlan の撃ち直しは T0 1 本 + L0 2 本で、lane は撃たない (lane は採用時に判定済み)。
 
 ## C. 到達の可否
 
@@ -110,7 +121,7 @@
 | `PlayableAt(p)` | レイ 1 本: `p + up·0.5` から 4 m の範囲に地面があり、傾き ≤ `runMaxSlopeDeg` 25°、帯の外 |
 | `PathOk(from, to)` | from→to の直線を 1 m 間隔でたどり、各点で地面へレイを撃つ。レイが外れるか、隣り合う点の高低差が `runMaxStep` 0.5 m を超えたら不可。25 m で打ち切り (最大 26 本)。崖の上面・段差・4 m を超える落差はここで落とす |
 | `LaneClear(from, to)` | **斜面に沿わせる**: 始点の地面 + 0.3 m から終点の地面 + 0.3 m へ撃つ (両端の地面は既に撃ったレイの値を使う) |
-| 到達可能 `Reachable(L, dog)` | 陸: `PlayableAt(L) && PathOk(犬, L)`。水 (M2 以降): D-1 の「浮く」が真で、泳がない犬なら `_DepthAt(L) ≤ _WaterFetchWadeLimit()` |
+| 到達可能 `Reachable(L, dog)` | 陸: `PlayableAt(L) && PathOk(犬, L の真下の地面)`。水 (M2 以降): D-1 の「浮く」が真で、泳がない犬なら `_DepthAt(L) ≤ _WaterFetchWadeLimit()` |
 
 - NavMesh は使わない。犬の足は `SnapToGround` のレイで動く。NavMesh は帯を除外しており、`SamplePosition` の 2 m の吸着は崖の縁で誤って合格を出す。
 - 木立は `LaneClear` と飛行の `EndWall` で扱う。Collider の無い木を Course/93 が数える (I-3)。
@@ -138,6 +149,18 @@ Solve は DropMode・期限切れ・踏み切りの拒否・ミスのたびに�
 3. 持ち手の横 1.5 m
 
 3 つとも失敗したら Idle へ戻し、`_readyRetryAt = 今 + 1 s` とする。Idle の分岐はこの時刻まで Ready に入らない (毎フレームの行き来を防ぐ)。
+
+### C-3b. M1 実装で変えた点
+
+決定: 2026-09-28 M1 実装で変更 (Codex M1 レビュー 1-3・5 を反映)
+
+- **PathOk の段差は上りと下りで違う**: 上り ≤ `runMaxStep` 0.5 m、下り ≤ `RunMaxDrop` 1.0 m (定数)。A の「4 m を超える段差の先へは断る」と T-down08 (0.8 m は降りられる) を両立させる。歩幅の門も同じ (上り 0.5 / 下り 1.0、地面が無ければ止まる)。
+- **PathOk のレイ**: 各点で、前の地面 + (`groundRayDistance` 4 + `groundRayOffset` 0.5) = 4.5 m から下へ、前の地面 − 1.0 m まで撃つ。当たった高さが前の地面 + 0.5 を超えれば不可。始点を高くするのは、始点が Collider の中にあるとその Collider に当たらない (Unity の仕様) ため、箱や崖の天面を取り逃がさないようにするため。25 m を全部たどれたときは、終点の地面の高さと歩いた地面の高さの差も同じ範囲に収まることを求める (箱の天面にある目標を、箱の根元まで歩いて「着いた」としない)。`Reachable` の終点は `PlayableAt` のレイが当たった地面。
+- **SolveRayCap 200 の集計範囲**: 1 回の Solve で**候補の置き場所に撃つレイ** (T0・L0・C0・V・lane) だけを数える。レイを撃つたびに予算を確かめ、使い切ったらその候補は `cap` で捨てる (上限を超えない)。帯の走査 (`GroundYAt`) は数えない (平地でも既に 120 本を超えるため)。ハーネスは `_solveRayMax` を読む。
+- **カウンタの集計範囲**: `_planRays` は計画器が実際に撃ったレイの総数 (帯の走査、PlayableAt、PathOk は途中で失敗したらそこまでの本数、照準の判定を含む。歩幅の門の `SnapToGround` は既存のレイなので数えない)。`_solveRuns` は Solve の回数、`_solveRayMax` は 1 Solve の置き場所レイの最大。
+- **Ready のレイの範囲**: 立ち位置は持ち手の足の高さから測った点なので、斜面では地面が上下にずれる。立ち位置の `PlayableAt` は持ち手の足 + 3 m から 6 m 下まで撃つ (C-3 の 3 点それぞれ 1 本)。
+- **Return で段に阻まれたら Drop**: 持ち帰りの途中で歩幅の門に止められたら、その場で Drop へ移ってディスクを置く (返却の時間切れまで立ち尽くさない)。Chase・Retrieve・Pickup で止められたときは `CancelLaunch("ground")`。
+- 行けない着地点を追わないときの取消の理由は `cannot-play` (旧 `out-of-area`)。
 
 ### C-4. 狙いの表示 (持っている人の端末だけ)
 
@@ -281,13 +304,17 @@ Solve は DropMode・期限切れ・踏み切りの拒否・ミスのたびに�
 | ケース | 期待 |
 |---|---|
 | 既定 26 投げ (Lab + Pome)・netorder | 今と同じ PASS (平面では規則が変わらない。`CanPlay` の引数を変えるので netorder も回す) |
-| T-slope10 | `jump`。着地後 0.2 s の \|根元 − 地面\| ≤ 0.05 m (新しい列 `landGap`) |
+| T-slope10 | `jump`。着地後 0.2 s の \|根元 − 地面\| ≤ 0.05 m (新しい列 `landGap`)。板は横傾斜 |
+| T-up10 / T-down10 | 投げる方向へ上る / 下る 10° の板。`jump`・`landGap` ≤ 0.05 (C0 の実測の地面からの lane) |
 | T-slope20 | `ground` (跳ばない) |
-| T-down04 / T-up04 | `jump`・`landGap` ≤ 0.05・`tDown=` の行 |
-| T-down08 | `stand` か `ground` |
-| T-cliff (箱の上へ) | `none` + `cannot-play` (`PathOk` の段差)。照準の静的検査で × |
-| T-rock (途中に岩) | `LaneClear` で B・C を捨てる (`why=lane`)。拾いに行く途中で止まったら `cancel reason=ground` |
-| sixdogs | `_planRays` の 1 Solve あたりの最大が 200 以下。frame の比を今の記録と比べる |
+| T-down04 / T-up04 | 縁は z +4.4 (v3 の待機位置からの B chase の踏み切りと着地の間)。T-up04 の投げ台は 0.4 m の台の上 (平地からの投げでは rise が 0.3 m 前後で、0.4 m 上への着地は頂点の余裕 0.10 m を満たさない)。`jump`・`landGap` ≤ 0.05・**段を跨ぐ跳躍が 1 本以上**: 踏み切りと着地の地面が台と平地 (\|dY\| ≥ 0.3、下りは tDown > tUp、上りは tDown < tUp) |
+| T-down08 | `jump`・`stand`・`ground` のどれか + 全跳躍の \|dY\| ≤ jumpMaxRise。段を降りて下で跳ぶのは規則どおり (C-3b の下り 1.0 m) |
+| T-cliff | 5 m の箱の上から投げ、円盤は下へ落ちる。`none` + `cannot-play`。照準の静的検査で × |
+| T-boxtop (箱の上へ) | 2 m の台から 2.5 m の箱の天面へ投げる。犬は平地。`none` + `cannot-play` (`PathOk` の段と終点の高さ)。照準の静的検査で × |
+| T-rock (途中に岩) | 高さ 0.45 m・厚さ 0.2 m、犬の 0.5 m 先 (lane の 0.3 m には当たり、`runMaxStep` 以下なので PathOk は通る。助走の始点が岩の上に乗らない位置)。`LaneClear` (助走・着地) で候補を捨てる (`laneRefused` か `why=lane`)。取消が出るなら `cancel reason=ground` だけ |
+| sixdogs | `_solveRayMax` (1 Solve の置き場所レイの最大) が 200 以下。frame の比を今の記録と比べる |
+
+決定: 2026-09-28 M1 実装で変更 (T-down08・T-cliff の期待、T-up10 / T-down10 / T-boxtop の追加、T-down04 / T-up04 の跨ぎ条件、T-rock の高さ、sixdogs の指標。Codex M1 レビュー 1-2・1-3・7)
 | Frisbee/5・Walking/5 | 全検査が通る。:683 は廃止し、:688-693 と PrototypeEditor の :876-890 は非対称の `LandingOf` の検査に置き換える |
 | Course/94 | F1 (広場の回帰)、F8 (橋の床は拾うだけ)、F9 (20° は ground)、F10 (崖は × と cannot-play)、R1 (川の上へ投げる → 跳ばず、今の岸戻し)、R2 (水遊び中の犬に投げる → 受けずに出水の要求) |
 | 75・89 | PASS のまま |
@@ -355,10 +382,12 @@ Solve は DropMode・期限切れ・踏み切りの拒否・ミスのたびに�
 
 | M | 内容 | 主なファイル | 規模 |
 |---|---|---|---|
-| M1 | B、C (`PlayableAt`・`PathOk`・斜面の `LaneClear`・歩幅の門・Ready・×)、輪の非表示、**川への踏み切り・着地の明示的な拒否** (帯は今の岸戻し、水遊び場の例外もそのまま)、水中の犬は受けない (D-1 の拒否分)、Course/92・93、terrain レーン、Walking/5 と PrototypeEditor の全検査 | `KH_FrisbeeCatch`・`.Planner`・`.Motion`・`.Diagnostics`、`KH_Frisbee`、`KH_FrisbeePrototypeEditor`、`KH_FrisbeeHarnessEditor` + cjs、新しい `KH_CourseFrisbeeAnywhereEditor`、`KH_DogWalkingEditor` | +550 / −150 |
+| M1 | B、C (`PlayableAt`・`PathOk`・斜面の `LaneClear`・歩幅の門・Ready・×)、輪の非表示、**川への踏み切り・着地の明示的な拒否** (帯は今の岸戻し。水遊び場は走る・立つのは今の例外のまま、跳躍の T0 / L0 だけ拒否。B-6)、水中の犬は受けない (D-1 の拒否分)、Course/92・93、terrain レーン、Walking/5 と PrototypeEditor の全検査 | `KH_FrisbeeCatch`・`.Planner`・`.Motion`・`.Diagnostics`、`KH_Frisbee`、`KH_FrisbeePrototypeEditor`、`KH_FrisbeeHarnessEditor` + cjs、新しい `KH_CourseFrisbeeAnywhereEditor`、`KH_DogWalkingEditor` | +550 / −150 |
 | M2 | D-2 (浮き・着水・`EndFlight` の分岐・放した後の復旧・漂流の共有)、D-6、Course/89 | `KH_Frisbee`、`KH_RiverData`、`KH_ToyRecall`、`KH_CourseFrisbeeRiverEditor` | +200 / −40 |
 | M3 | D-3・D-4・D-5 (状態 11〜13、取得待ちと喪失、非 Owner の表示、Wander の例外、計画器の移設) | 新しい `KH_FrisbeeCatch.Water`、`KH_RiverData`、`KD_DogFetchController.HillsideWater`、`KD_DogWanderController` (+`.HillsideWater`)、`KH_ToyRecall`、ハーネス | +500 / −90 |
 | M4 | F、`HasArea` / `InArea` / `BuildRing` の削除、文言、A の決定の記録、ハーネスの文書・game-design | `KH_ToyRecall`、`KD_TreatPouch.Toy`、翻訳表、文書 | +80 + 文書 |
+
+決定: 2026-09-28 M1 実装で変更 (M1 の行の水遊び場の扱い。段差・帯の拡張・SolveRayCap・カウンタ・Ready・Return の変更は B-6 / C-3b、ケースは G M1)
 
 ## I. 決めていないこと / リスク
 

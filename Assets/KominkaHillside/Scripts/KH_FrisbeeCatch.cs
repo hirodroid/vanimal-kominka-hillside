@@ -43,8 +43,9 @@ namespace KominkaHillside
     // IMP-DOG-008 invariant: the prototype `variant` only affects the Ready target, the clip selection, the flight
     // curve and - for v3 alone - which catch shape the solve prefers (IMP-DOG-017: B chase first). The intercept planner,
     // the jump and the landing are identical across presets. GiveUp, the
-    // ground retrieve, CanPlay, Claimed, the yield-after-landing reservation, playArea (DogMayGo) and ObserveFlight
-    // never read it. UpdateLand still clamps the recover slide at the edge of the flat for every preset (Codex D).
+    // ground retrieve, CanPlay, Claimed, the yield-after-landing reservation, the reachability rules (PlayableAt /
+    // PathOk / the jump ground, DES-DOG-005; was playArea / DogMayGo) and ObserveFlight never read it. UpdateLand still
+    // stops the recover slide at a step or a drop for every preset (the walking gate; was the edge of the flat, Codex D).
     //
     // IMP-DOG-017 (user 2026-09-26): the planner is SOLVED, not tried shape by shape. At the throw the dog finds when
     // the disc is inside its own jump band (jumpFloorRise..maxRootRise, per breed), and for each instant the average
@@ -76,10 +77,21 @@ namespace KominkaHillside
         [Tooltip("水遊び場の中は帯の判定の例外 (犬が水遊び場にいるときに止めない)。Course/89 が配線する")]
         public KH_WaterSpot waterSpot;
         public int dogIndex = -1;
-        [Tooltip("Flat play area (the plaza). 0 radius = unlimited. Ready and throws are refused outside it")]
+        [Tooltip("DES-DOG-005: the plaza circle. Only the take-out gate (KH_ToyRecall, stage 1) and the holder's ring read it; " +
+            "the catcher itself no longer decides anything by it (PlayableAt / PathOk replace it). M4 removes it")]
         public Vector3 playAreaCenter;
         public float playAreaRadius;
         public float playAreaMargin = 2f;
+
+        [Header("DES-DOG-005 anywhere (Course/92 and Frisbee/4 Build Scene write these; PCVR tunes them)")]
+        [Tooltip("A jump (and a stand / overtake catch) only where the take-off and the landing ground are at most this steep (deg)")]
+        public float jumpMaxSlopeDeg = DefaultJumpMaxSlopeDeg;
+        [Tooltip("A jump only when |landing ground - take-off ground| is at most this (m)")]
+        public float jumpMaxRise = DefaultJumpMaxRise;
+        [Tooltip("PlayableAt: the ground may be at most this steep for the dog to go there at all (deg)")]
+        public float runMaxSlopeDeg = DefaultRunMaxSlopeDeg;
+        [Tooltip("PathOk and the walking gate: the most the ground may rise between two samples / in one stride (m)")]
+        public float runMaxStep = DefaultRunMaxStep;
 
         [Header("Pose facts (written by Tools/KominkaHillside/Frisbee/4 Build Scene from the clip JSON)")]
         [Tooltip("Mouth anchor relative to dogRoot (dogRoot frame, world units) at the clip's catch frame")]
@@ -341,6 +353,30 @@ namespace KominkaHillside
         // reads it through FlightCurve at launch and hands it back with ReqCatch, so flight and prediction agree.
         // 2026-09-26 (IMP-DOG-017 PCVR round 2, "もっと曲がってほしい"): 0.04 -> 0.07. ReqCatch's |curve| <= 1 gate still holds.
         public const float CurveDefault = 0.07f;
+        // ---- DES-DOG-005 stage 3 M1 (docs/plans/2026-09-28-frisbee-anywhere.md) ----
+        // Code defaults of the four Inspector values above (Course/92 and ConfigureCatcher write the same numbers).
+        public const float DefaultJumpMaxSlopeDeg = 15f, DefaultJumpMaxRise = 0.5f, DefaultRunMaxSlopeDeg = 25f, DefaultRunMaxStep = 0.5f;
+        // B-2: two rays at the same point must agree within this, else the candidate is refused. B-1: the apex of the
+        // root must clear the landing ground by this.
+        public const float JumpIterTolerance = 0.10f, JumpApexClearance = 0.10f;
+        // C-1 PathOk: one ground ray every PathStep metres, the first PathMaxLength metres only (<= 25 rays). Each ray
+        // starts PathRayTop (= groundRayDistance 4 + groundRayOffset 0.5, the runtime passes its own two) above the
+        // previous ground, so the top of a box / cliff up to that height is hit rather than started inside (a ray that
+        // starts inside a collider does not see it). A rise of more than runMaxStep, a fall of more than RunMaxDrop (or
+        // no ground within that) refuses, and so does an end point whose own ground is not the walked ground. Up 0.5 /
+        // down 1.0 is the M1 decision (design B / C, 2026-09-28): a 0.8 m drop is walked down (T-down08).
+        public const float PathStep = 1f, PathMaxLength = 25f, PathRayTop = 4.5f, RunMaxDrop = 1.0f;
+        // C-2: the most placement rays one Solve may spend on its candidates (T0 / L0 / lanes); beyond it the best so far wins.
+        public const int SolveRayCap = 200;
+        // D / D': give up the scan after this many ground refusals (slope / step) so a steep throw cannot cost 120 rays.
+        public const int ScanGroundRefusals = 8;
+        // No ground under a point (B-5): GroundYAt returns this and the sample is discarded.
+        public const float NoGround = -100000f;
+        // C-2 / C-3: CanPlay re-shoots its one ray at most this often; a refused Ready waits this long before trying again;
+        // a dog in the water is asked out at most once per WaterAskInterval.
+        public const float PlayableCacheSeconds = 0.25f, ReadyRetrySeconds = 1f, WaterAskInterval = 1f;
+        // Harness only (terrain lane): the landing gap is read this long after touchdown.
+        public const float LandGapDelay = 0.2f;
 
         [UdonSynced] private int state = StateIdle;
         [UdonSynced] private int throwerId = -1;
@@ -443,6 +479,43 @@ namespace KominkaHillside
         // declined); _planEvaluations = trajectory samples examined by the scans (pass x time; each sample may also
         // cost ground / lane raycasts); _planHookTries = A via points sized by Solve (IMP-DOG-017; was hook loops).
         private int _planScans, _planEvaluations, _planHookTries;
+        // DES-DOG-005 C-2 cost counters (same rules as above: Owner-local, never reset, harness reads the heap).
+        // _planRays = every ray the DES-DOG-005 helpers cast (PlayableAt / PathOk / jump ground / lanes; the band scan's
+        // GroundYAt is not counted, it is _planEvaluations' cost as before). _solveRuns = Solve calls. _solveRays = the
+        // placement rays of the running Solve (capped at SolveRayCap), _solveRayMax = the largest of those so far.
+        private int _planRays, _solveRuns, _solveRays, _solveRayMax;
+        private bool _solveCapped;         // the last Solve hit SolveRayCap (log only)
+        private bool _inSolve;             // a Solve is running: RayDown / LaneClear check SolveRayCap per ray
+        private float _playY;              // the ground the last _PlayableAt ray hit
+        private int _solveLaneRefused;     // candidates the last Solve refused for a blocked run-up OR landing lane (log only: laneRefused=)
+        private bool _bandUneven;          // FindBand saw more than 0.05 m of ground spread (or no ground) under the flight (B-2 step 1)
+        // DES-DOG-005 jump ground of the committed plan (B-2). _takeoffY / _landY: the ground the plan jumps from / lands
+        // on, _tDown: fall time from the apex, _landPt: the landing point L0, _jumpRayAt: the crouch start the last T0 / L0
+        // rays were shot for (KeepPlan re-shoots only when the crouch start slid >= 0.5 m).
+        private float _takeoffY, _landY, _tDown;
+        private Vector3 _landPt, _jumpRayAt;
+        private float _cTakeoffY, _cLandY, _cTDown; private Vector3 _cLand;
+        // Scratch of the last ray (RayDown) and of the last jump-ground test (JumpGround).
+        private float _rayY, _rayNy;
+        private float _jgY, _jgSlope; private string _jgWhy = "";
+        // Scratch of the last air solve (AirLanding): the landing, its ground and the time to it.
+        private Vector3 _alPt; private float _alY, _alTime;
+        // The predicted landing is reachable (Reachable = PlayableAt + PathOk), computed once per landing (C-2 :228).
+        private bool _landingReachable; private Vector3 _landingCheckedAt; private bool _landingChecked;
+        // A plan whose PathOk failed at this spot is not re-tested every 10 Hz tick (D / D').
+        private Vector3 _pathFailAt; private bool _pathFailValid;
+        // CanPlay's one ray, cached (C-2).
+        private Vector3 _playAt; private bool _playOk; private float _playNext = -1f;
+        private float _waterAskNext;
+        private string _canPlayWhy = "";
+        // C-3: Ready found no playable stand-off spot; Idle does not re-enter Ready before this.
+        private float _readyRetryAt = -1f; private bool _readySpotOk;
+        // B-3 / B-4 execution: the air solve at liftoff (vertical speed, time to land, landing ground) and the one
+        // apex write of animSpeed.
+        private float _airVy, _taLand, _airLandY;
+        private bool _apexWritten, _landGapLogged;
+        // The walking gate (C-2): this frame's straight move found no ground / too big a step. Update cancels the fetch.
+        private bool _groundStop, _snapHit;
         // Jump execution (Owner).
         private double _jumpStart;
         private Vector3 _jumpFrom;
@@ -645,7 +718,7 @@ namespace KominkaHillside
             // poison the prediction, the plan and the dog's transform for the whole flight (Codex D3).
             if (!Finite(p0) || !Finite(v0)) { LogReject("implausible", local, thrower, gen, age); return; }
             if (double.IsNaN(launchServerTime) || double.IsInfinity(launchServerTime)) { LogReject("implausible", local, thrower, gen, age); return; }
-            if (!CanPlay(p0)) { LogReject(Claimed() ? "claimed" : "cannot-play", local, thrower, gen, age); return; }  // same gate as Ready: leash / Fetch / gathering / treat / rest / play area
+            if (!CanPlay(p0, thrower)) { LogReject(_canPlayWhy, local, thrower, gen, age); return; }  // same gate as Ready: leash / Fetch / gathering / treat / rest / water / playable ground (DES-DOG-005)
             // A real launch is capped by the disc and starts nearby.
             if (v0.magnitude > frisbee.maxSpeed * 1.05f || Vector3.Distance(p0, dogRoot.position) > 200f) { LogReject("implausible", local, thrower, gen, age); return; }
             // Too old: the flight is over. In the future: a forged timestamp would make _ElapsedSince negative and
@@ -734,7 +807,7 @@ namespace KominkaHillside
             if (!IsDogOwner() || !Networking.IsOwner(gameObject)) { LogPending("cancel   ", "owner-change"); ClearPending(); return; }
             if (!Utilities.IsValid(VRCPlayerApi.GetPlayerById(_pendingThrower))) { LogPending("cancel   ", "thrower-left"); ClearPending(); return; }
             // _pendingP0 is the launch point, so this is literally the test ReqCatch ran on arrival.
-            if (!CanPlay(_pendingP0)) { LogPending("cancel   ", Claimed() ? "claimed" : "cannot-play"); ClearPending(); return; }
+            if (!CanPlay(_pendingP0, _pendingThrower)) { LogPending("cancel   ", _canPlayWhy); ClearPending(); return; }
             // BUG-DOG-003 (Codex D1, 2nd review). Two different situations read the same way here:
             //   (a) somebody else really has the disc now. That notice must die, because a foreign grab sends no end
             //       notice of its own (KH_Frisbee.OnPickup only notifies while ITS client had the disc flying), so
@@ -779,6 +852,7 @@ namespace KominkaHillside
             // BUG-DOG-003 (Codex D2): an end notice that arrived while the notice was parked is not forgotten here.
             _flightEnded = ended; _flightEndReason = endReason;
             _plan = PlanNone; _nextPlan = 0f; _deviationSince = -1f; _landingValid = false; _localPlanValid = true;
+            _landingChecked = false; _landingReachable = false; _pathFailValid = false; _groundStop = false;   // DES-DOG-005
             _settledSince = -1f; _holding = false; _runningCatch = false; _faceErrAtTakeoff = -1f;
             _mode = ModeAround; _viaActive = false; _viaDone = false; _motionLatched = false;
             _solved = false; _bannedModes = 0; _runThrough = false; _runThroughClear = false; _dropReason = ""; _mRanSince = -1f; _mRanBucketEnd = -1f;   // IMP-DOG-017: a new throw is solved from scratch
@@ -950,6 +1024,7 @@ namespace KominkaHillside
         void Update()
         {
             _riverStop = false;   // Codex W6 D-中: 川の停止はそのフレームの移動で立ったものだけを見る (Ready の立ち位置移動で立ったものを次の Chase へ持ち越さない)
+            _groundStop = false;  // DES-DOG-005: the same rule for the walking gate
             _dogOwner = IsDogOwner();
             if (!_dogOwner) ObserveSpeed();
             WarnIfOwnerSplit();
@@ -968,7 +1043,8 @@ namespace KominkaHillside
             {
                 // Idle: Wander owns the Animator and the root; we only watch for a held disc.
                 VRCPlayerApi holder = HolderNow();
-                if (_dogOwner && standoffWhenHeld && holder != null && CanPlay(holder.GetPosition())) { _standoffValid = false; _nextStandoff = 0f; TransitionTo(StateReady); }
+                // DES-DOG-005 C-3: a Ready that found no playable stand-off spot waits _readyRetryAt out (no per-frame flip).
+                if (_dogOwner && standoffWhenHeld && holder != null && Time.time >= _readyRetryAt && CanPlay(holder.GetPosition(), holder.playerId)) { _standoffValid = false; _nextStandoff = 0f; TransitionTo(StateReady); }
                 return;
             }
             if (state == StateReady)
@@ -1012,6 +1088,19 @@ namespace KominkaHillside
             else if (state == StateRetrieve) UpdateRetrieve(elapsed);
             else if (state == StatePickup) UpdatePickup(elapsed);
             else if (state == StateReturn || state == StateDrop) UpdateReturn(elapsed);
+            // DES-DOG-005 C-2: the walking gate found no ground / a step the dog cannot take. A fetch (Chase / Retrieve /
+            // Pickup) gives up; Return / Drop already handled it (UpdateReturn sets the disc down there); airborne states
+            // only stop the slide.
+            if (_groundStop)
+            {
+                _groundStop = false;
+                if (_dogOwner && (state == StateChase || state == StateRetrieve || state == StatePickup))
+                {
+                    Debug.Log("[KH_FrisbeeCatch] ground stop state=" + state + " reason=ground" + DogTag());
+                    CancelLaunch("ground");
+                    return;
+                }
+            }
             // IMP-DOG-020 段階 7: 直線移動が川の帯の手前で止まった。追いかけ・回り込み・拾いは諦め、くわえて戻る途中ならその場 (岸) に置く
             if (_riverStop)
             {
@@ -1028,16 +1117,41 @@ namespace KominkaHillside
 
         // Everything that must be true for the dog to stand off for a held disc or to accept a throw.
         // Null neighbours (prototype scene) mean "no such system" (review M1/M3: one gate for both entrances).
-        bool CanPlay(Vector3 at)
+        // DES-DOG-005 C-2: `at` is where the requester stands (thrower's launch point / holder's position), `requester`
+        // who asked (ReqCatch: the thrower; Idle -> Ready: the holder). _canPlayWhy says why for the reject / cancel line.
+        bool CanPlay(Vector3 at, int requester)
         {
-            if (Claimed()) return false;
+            _canPlayWhy = "cannot-play";
+            if (Claimed()) { _canPlayWhy = "claimed"; return false; }
             if (fetch != null && !fetch.IsIdle) return false;
             // DES-LIV-001: no new frisbee while a live plays (same rule as the ball's KD_DogFetchController.LiveWatching)
             if (fetch != null && fetch.liveSystem != null && fetch.liveSystem.IsPlaying) return false;
             if (wander != null && (wander.IsTreatBusy || wander.IsResting || wander.IsAsleep)) return false;
             if (activities != null && activities.Mode == 2) return false;
-            if (!InPlayArea(at, playAreaMargin)) return false;
+            // DES-DOG-005 D-1 (M1): a dog in the water does not take the throw (it never jumps from the water, and before
+            // this the water play ended as `preempted` with the dog dropped onto the riverbed, 0-5). It is asked out
+            // instead, at most once a second, turning to whoever asked (the bank return of the disc is unchanged).
+            if (fetch != null && fetch.WaterPose != 0)
+            {
+                _canPlayWhy = "in-water";
+                if (Time.time >= _waterAskNext) { _waterAskNext = Time.time + WaterAskInterval; fetch._AskWaterExitFor(requester); }
+                return false;
+            }
+            // DES-DOG-005: the plaza circle is gone from the decision; the requester must stand on ground the dog could
+            // play on (one ray, re-shot at most every PlayableCacheSeconds or after a 1 m move).
+            if (!PlayableCached(at)) return false;
             return true;
+        }
+
+        bool PlayableCached(Vector3 at)
+        {
+            Vector3 moved = at - _playAt; moved.y = 0f;
+            if (_playNext < 0f || Time.time >= _playNext || moved.sqrMagnitude > 1f)
+            {
+                _playAt = at; _playNext = Time.time + PlayableCacheSeconds;
+                _playOk = _PlayableAt(at);
+            }
+            return _playOk;
         }
 
         // Leash attached or gathering participant: authorities that beat the frisbee once they are accepted.
@@ -1062,10 +1176,8 @@ namespace KominkaHillside
             return false;
         }
 
-        bool InPlayArea(Vector3 p, float margin) { return InCircleXZ(p, playAreaCenter, playAreaRadius, margin); }
-
-        // The play-area test as a pure function. The planner reaches it through InPlayArea / DogMayGo; Verify calls
-        // it directly, so the landing rule can be proven on a mock circle without a scene (Codex D1).
+        // The old play-area test as a pure function. DES-DOG-005: the catcher no longer calls it (DogMayGo / InPlayArea are
+        // gone); kept only as a static for callers outside the runtime decision until M4 removes the circle.
         public static bool InCircleXZ(Vector3 p, Vector3 center, float radius, float margin)
         {
             if (radius <= 0f) return true;
@@ -1073,17 +1185,88 @@ namespace KominkaHillside
             return d.magnitude <= radius + margin;
         }
 
-        // Where a jump that leaves `liftoff` along `fwd` at `vTake` comes down. The arc is symmetric (UpdateJump
-        // flies for 2 * tUp), so this is pure geometry - static, so Verify can assert on the same expression the
-        // planner and the liftoff gate use (Codex D1).
+        // Where a jump that leaves `liftoff` along `fwd` at `vTake` comes down when the landing ground is the take-off
+        // ground (the symmetric arc, 2 * tUp). Static, so Verify can assert on the same expression (Codex D1).
         public static Vector3 LandingOf(Vector3 liftoff, Vector3 fwd, float vTake, float tUp)
         {
             return liftoff + fwd * (vTake * 2f * tUp);
         }
 
-        // Anywhere the dog itself would run, crouch, land or pick up must be inside the flat (review D1); the
-        // launch point alone gets playAreaMargin because a thrower may stand at the edge.
-        bool DogMayGo(Vector3 p) { return InPlayArea(p, 0f); }
+        // DES-DOG-005 B: the asymmetric arc. The root rises for tUp and falls for tDown (DescentTime), so the landing is
+        // vTake * (tUp + tDown) along fwd. tDown == tUp gives LandingOf above.
+        public static Vector3 LandingOf(Vector3 liftoff, Vector3 fwd, float vTake, float tUp, float tDown)
+        {
+            return liftoff + fwd * (vTake * (tUp + tDown));
+        }
+
+        // DES-DOG-005 B-2 / B-3: seconds from the apex down to ground landDelta above the take-off ground (negative =
+        // lower), for a root that rises 0.5 g tUp^2. -1 = the apex does not clear the landing by JumpApexClearance.
+        public static float DescentTime(float tUp, float g, float landDelta)
+        {
+            float apex = 0.5f * g * tUp * tUp;
+            float fall = apex - landDelta;
+            if (fall < JumpApexClearance || g <= 0f) return -1f;
+            return Mathf.Sqrt(2f * fall / g);
+        }
+
+        // B-3: time from lift-off to landing for a vertical speed vy from ground groundY onto ground landY
+        // (ta = (vy + sqrt(vy^2 - 2 g (landY - groundY))) / g). -1 = the apex does not clear the landing ground.
+        public static float AirTime(float vy, float g, float landDelta)
+        {
+            if (g <= 0f || vy <= 0f) return -1f;
+            float apex = vy * vy / (2f * g);
+            if (apex - landDelta < JumpApexClearance) return -1f;
+            return (vy + Mathf.Sqrt(vy * vy - 2f * g * landDelta)) / g;
+        }
+
+        // ground normal y -> within maxDeg of flat (slope = acos(normal.y)).
+        public static bool SlopeOk(float normalY, float maxDeg) { return normalY >= Mathf.Cos(maxDeg * Mathf.Deg2Rad) - 1e-4f; }
+        public static float SlopeDeg(float normalY) { return Mathf.Acos(Mathf.Clamp(normalY, -1f, 1f)) * Mathf.Rad2Deg; }
+
+        // C-1 PlayableAt, the ground half: one ray from p + up * offset, dist long; hit and no steeper than maxSlopeDeg.
+        // Static so Course/93 and the harness run the very same test in the Editor (the river half is the instance's).
+        public static bool PlayableGround(Vector3 p, LayerMask mask, float offset, float dist, float maxSlopeDeg)
+        {
+            RaycastHit hit;
+            if (!Physics.Raycast(p + Vector3.up * offset, Vector3.down, out hit, dist, mask, QueryTriggerInteraction.Ignore)) return false;
+            return SlopeOk(hit.normal.y, maxSlopeDeg);
+        }
+
+        // C-1 PathOk, the ground half: walk from -> to (xz) in PathStep steps over the first PathMaxLength metres. Each
+        // sample casts one ray from the previous ground + top down to the previous ground - maxDrop. No hit (a hole, a drop
+        // past maxDrop, the 4 m cliff) or a hit more than maxUp above the previous ground (a step, the top of a box or a
+        // cliff wall) refuses. When the whole way was walked, the end's own height (to.y, a ground / disc point) must also
+        // agree with the walked ground (within maxUp above / maxDrop below): a target on top of a box is not reached by
+        // walking round its foot. from.y must be ground. Returns the rays cast (>= 0) when the path is fine, -(rays + 1)
+        // when it is refused (the caller counts real rays, C-2). Static so Course/93 and the harness run the same rule.
+        public static int PathWalk(Vector3 from, Vector3 to, LayerMask mask, float maxUp, float maxDrop, float top)
+        {
+            Vector3 d = to - from; d.y = 0f;
+            float len = d.magnitude;
+            if (len < 0.05f) return 0;
+            Vector3 dir = d / len;
+            bool whole = len <= PathMaxLength;
+            if (!whole) len = PathMaxLength;
+            int n = Mathf.CeilToInt(len / PathStep);
+            float y = from.y;
+            RaycastHit hit;
+            for (int i = 1; i <= n; i++)
+            {
+                float s = i * PathStep; if (s > len) s = len;
+                Vector3 p = from + dir * s;
+                if (!Physics.Raycast(new Vector3(p.x, y + top, p.z), Vector3.down, out hit, top + maxDrop, mask, QueryTriggerInteraction.Ignore)) return -(i + 1);
+                if (hit.point.y - y > maxUp) return -(i + 1);
+                y = hit.point.y;
+            }
+            if (whole && (to.y - y > maxUp || y - to.y > maxDrop)) return -(n + 1);
+            return n;
+        }
+
+        // PathWalk with the default ray top (groundRayDistance 4 + groundRayOffset 0.5), true = fine. Editor callers.
+        public static bool PathGround(Vector3 from, Vector3 to, LayerMask mask, float maxUp, float maxDrop)
+        {
+            return PathWalk(from, to, mask, maxUp, maxDrop, PathRayTop) >= 0;
+        }
 
         // Same contract as KD_DogFetchController (IMP-NET-005 invariant 8): dogRoot and this object share an Owner.
         void WarnIfOwnerSplit()

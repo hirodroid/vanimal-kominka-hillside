@@ -93,6 +93,10 @@ namespace KominkaHillside
         // Flight (meaningful on the Owner while _flying; other clients only see the synced transform).
         private float _aimPower = 0.5f;
         private bool _aimOutside;      // last preview ended outside the play area (material state)
+        // DES-DOG-005 C-4: the cross is judged at this rate and reused in between (the holder's client only).
+        const float AimJudgeInterval = 0.1f;
+        private float _aimJudgeNext;
+        private bool _aimBad;
         private bool _ringBuilt;
         private float _lookAxis;
         private bool _heldLocal;
@@ -314,7 +318,8 @@ namespace KominkaHillside
         }
 
         // Preview for the holder only (local). Same _PositionAt as the flight, stopped at the first obstacle.
-        // The play area is the catcher's (the dog's flat); no catcher or radius 0 = no area feedback at all.
+        // DES-DOG-005 C-4: HasArea / InArea / the ring stay only for the ring's display (Course/92 hides the ring object;
+        // M4 deletes them). The cross is decided by the catcher's Reachable / PlayableAt, never by the circle.
         bool HasArea() { return catcher != null && catcher.playAreaRadius > 0f; }
         bool InArea(Vector3 p)
         {
@@ -364,6 +369,7 @@ namespace KominkaHillside
                 if (aimMarker != null && aimMarker.gameObject.activeSelf) aimMarker.gameObject.SetActive(false);
                 if (areaRing != null && areaRing.enabled) { areaRing.enabled = false; _ringBuilt = false; }
                 if (aimHint != null && aimHint.gameObject.activeSelf) aimHint.gameObject.SetActive(false);
+                _aimJudgeNext = 0f;   // DES-DOG-005: the next hold judges its cross on its first frame
                 return;
             }
             if (areaRing != null && HasArea())
@@ -397,8 +403,15 @@ namespace KominkaHillside
                 aimMarker.rotation = Quaternion.identity;
             }
             // Outside: the path is still drawn to where the disc really lands (never cut short), but grey with a
-            // cross on the marker, and a one-line hint says why the dog will not come.
-            bool outside = HasArea() && (!InArea(end) || !InArea(p0));
+            // cross on the marker, and a one-line hint says why the dog will not come. DES-DOG-005 C-4: "outside" is
+            // !Reachable(predicted landing, dog) or !PlayableAt(throw point), judged at 10 Hz and reused in between
+            // (<= 28 rays x 10 Hz, the holder's client only). Jumpable-or-not is NOT shown (15-25 deg, bridge decks).
+            if (catcher != null && Time.time >= _aimJudgeNext)
+            {
+                _aimJudgeNext = Time.time + AimJudgeInterval;
+                _aimBad = !catcher._PlayableAt(p0) || !catcher._Reachable(end);
+            }
+            bool outside = catcher != null && _aimBad;
             SetAimOutside(outside);
             if (aimHint != null)
             {

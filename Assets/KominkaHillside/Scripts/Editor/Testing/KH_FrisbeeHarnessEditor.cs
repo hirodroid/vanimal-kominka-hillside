@@ -194,9 +194,8 @@ namespace KominkaHillside.Editor
 
         static readonly string[] NotCovered =
         {
-            // Codex D1: 試作シーンの捕り手は playAreaRadius = 0 (広場無し) なので、DogMayGo は常に真。
-            // 着地点が広場の外へ出る候補を落とす規則は、ここでは 1 度も働かない。
-            "広場の縁 (playArea)。試作シーンの捕り手は playAreaRadius = 0 なので、着地点・踏み切り・待機の広場判定 (DogMayGo) は常に真になる。縁での着地・回復のはみ出しは本シーンの Verify (幾何) と実機 Play でしか見ていない",
+            // DES-DOG-005 M1: 捕り手はもう広場の円で判定しない (DogMayGo は廃止)。既定モードの平面では到達の規則が常に通る。
+            "地形の規則 (PlayableAt / PathOk / 地面基準の跳躍 / 歩幅の門)。既定モードの平面では常に通るので、傾き・段・崖・岩は --mode=terrain、本シーンの地形・川・橋は Course/93 (静的) と実機 Play でしか見ていない",
             "Ready (持ち手が構えている間の待機位置)。プロトタイプに持ち手がいないので Ready へ入らず、走り込み系プリセット v1..v3 は待機位置の違いが出ない = ここでは v0 と同じ投げになる",
             // IMP-DOG-013: 猶予は Ready の頭にあり、撫では pet / fetch の配線が要る。試作シーンはどちらも無い。
             "持ち帰り後のよしよし (IMP-DOG-013)。readyGraceSeconds / readyGraceDistance は Ready に入って初めて働くので 1 度も通らず、撫での判定 (pet.IsPetting / fetch.PetActive) も試作シーンには撫で・Fetch の配線が無いので常に偽 = Drop の待ちも止まらない。猶予・撫で・Drop のタイマー停止は本シーンの Verify (値と状態の規則) と実機 Play でしか見ていない",
@@ -207,6 +206,8 @@ namespace KominkaHillside.Editor
             "他プレイヤー、Owner 移譲、同期 (単一 ClientSim クライアント)。--mode=netorder は debugHeldOverride で順序を作って保留の論理を通すが、通すのは 1 クライアント上の論理であって通信ではない。実際の到着順・Owner 移譲・IsHeld の同期は 2 人以上の実機でしか見ていない",
             // Codex U3/M4: netorder の holder は「円盤の Owner = 自分」を騙っているだけ。
             "保留中に相手が取得 → 弱く放す (別人の保持者・Owner) は単一クライアントでは再現できない。netorder の HolderNow() は円盤の Owner (= ローカルプレイヤー) を返すだけで、別人が持つ・別人へ Owner が移る・その人が弱く放すという経路は 1 度も通らない。2 人実機で確認する",
+            // DES-DOG-005 M1: the terrain lane is boxes and slabs on the prototype plane, not the world's terrain.
+            "--mode=terrain は試作シーンの箱と板 (傾き・段・崖・岩) だけ。本シーンの地形・木立・川・橋の床と照準の × の見え方は Course/93 (静的) と実機 Play (37-39)。空中の弧は障害物を検査しない (設計 I-2)",
             "体験としての見え方 (間・迫力・不自然さ) は人の Play でしか判定できない",
             "実機ビルド (PCVR / Quest / iOS) と実クライアント",
         };
@@ -218,6 +219,7 @@ namespace KominkaHillside.Editor
 
         static bool IsNetOrder(Options o) { return o != null && o.mode == "netorder"; }
         static bool IsSixDogs(Options o) { return o != null && o.mode == "sixdogs"; }
+        static bool IsTerrain(Options o) { return o != null && o.mode == "terrain"; }   // DES-DOG-005 M1
         static int Repeats(Options o) { return o != null && o.repeats > 0 ? o.repeats : 2; }
         static string BreedOf(Options o) { return o != null && !string.IsNullOrEmpty(o.breed) ? o.breed : DefaultBreed; }
 
@@ -283,6 +285,19 @@ namespace KominkaHillside.Editor
             public string dogStart, launchLine, planLine, takeoffLine, outcomeLine, note;
             public string place = "";            // IMP-DOG-017: "" = シーンの立ち位置 / beside / chase
             public string expectMode = "";       // IMP-DOG-017: 跳んだ投げに期待する mode ("" = 問わない)
+            // DES-DOG-005 M1 (--mode=terrain)。既定モードでは terrainCase が "" のまま = 以下は意味を持たない。
+            // 合否は terrainOk (ok と同じ値): outcomeOk + completed + expectOk + ケースごとの検査 + 全 liftoff 行の |dY| <= jumpMaxRise。
+            public string terrainCase = "";
+            public bool terrainOk;
+            public string terrainNote = "";
+            public float landGap = -1f;          // 着地後 0.2 s の |根元 - 地面| (m)。-1 = landGap 行が無い
+            public float tDown = -99f;           // 最後の liftoff 行の tDown (s)。-99 = 跳んでいない
+            public float maxAbsDY = 0f;          // liftoff 行の |landY - takeoffY| の最大 (m)
+            public int liftoffs;                 // liftoff 行の数
+            public int laneRefused;              // solve 行の laneRefused= の合計 (+ plan 行の why= に lane があれば 1 以上)
+            public string cancelReasons = "";    // req cancel / reject 行の reason= (出た順)
+            public bool aimCross;                // 投げの後、円盤の位置へ Reachable でない (Editor の静的検査。照準の × と同じ規則)
+            public string liftoffLine = "";
             public List<string> lines = new List<string>();
         }
 
@@ -328,6 +343,8 @@ namespace KominkaHillside.Editor
             public string states = "";
             public double seconds;
             public int planScans, planEvaluations, planHookTries;   // この区間での増分
+            public int planRays = -1, solveRuns = -1;               // DES-DOG-005 C-2: この区間での増分 (-1 = 捕り手に無い)
+            public int solveRayMax = -1;                            // DES-DOG-005 C-2: 1 Solve の置き場所レイの最大 (起動以来)。SolveRayCap 以下
         }
 
         [Serializable]
@@ -339,6 +356,7 @@ namespace KominkaHillside.Editor
             public FrameStats flight = new FrameStats();   // 投げてから SixFlightWindow 秒 (追う区間)。比率はこちらで出す
             public FrameStats cycle = new FrameStats();    // 投げてから全員が Idle へ戻るまで
             public int planScans, planEvaluations, planHookTries;   // 投げた犬の合計 (増分)
+            public int planRays, solveRuns, solveRayMax;             // DES-DOG-005 C-2 (合計 / 合計 / 最大)
             public bool ok;
             public List<SixDogResult> perDog = new List<SixDogResult>();
         }
@@ -520,15 +538,16 @@ namespace KominkaHillside.Editor
             int lanes = KH_FrisbeePrototypeEditor.LaneBreeds.Length;
             int planned = IsNetOrder(options)
                 ? NetCases.Length * Repeats(options)
+                : IsTerrain(options) ? TerrainPlan(options).Length       // DES-DOG-005 M1: 1 ケース 1 投げ
                 : IsSixDogs(options) ? Repeats(options) * (1 + lanes)   // 各周: Lab 1 匹 + 6 匹同時
                 : Variants(options).Length * Plan(options).Count(s => s.variant < 0) + Plan(options).Count(s => s.variant >= 0);
 
             report = new Report
             {
                 runId = DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N").Substring(0, 6),
-                mode = IsNetOrder(options) ? "netorder" : IsSixDogs(options) ? "sixdogs" : "default",
+                mode = IsNetOrder(options) ? "netorder" : IsSixDogs(options) ? "sixdogs" : IsTerrain(options) ? "terrain" : "default",
                 repeats = IsNetOrder(options) || IsSixDogs(options) ? Repeats(options) : 0,
-                breed = IsSixDogs(options) ? string.Join(",", KH_FrisbeePrototypeEditor.LaneBreeds) : BreedOf(options),
+                breed = IsSixDogs(options) ? string.Join(",", KH_FrisbeePrototypeEditor.LaneBreeds) : IsTerrain(options) ? KH_FrisbeePrototypeEditor.TerrainBreed + " (" + KH_FrisbeePrototypeEditor.TerrainTag + " lane)" : BreedOf(options),
                 sixdogs = IsSixDogs(options) ? new SixDogsReport() : null,
                 unity = Application.unityVersion,
                 sdk = SdkVersion(),
@@ -551,6 +570,9 @@ namespace KominkaHillside.Editor
                   " repeats=" + Repeats(options) + " variant=" + NetVariant + " shot=" + NetShot +
                   " PendingHoldSeconds=" + NetHold.ToString("F2", CultureInfo.InvariantCulture) +
                   " budget=" + report.budgetSeconds + "s" + " breed=" + BreedOf(options)
+                : IsTerrain(options)
+                ? "mode=terrain cases=" + string.Join(",", TerrainPlan(options).Select(c => c.name).ToArray()) + " variant=" + TerrainVariant + " shot=" + TerrainShot
+                  + " budget=" + report.budgetSeconds + "s (DES-DOG-005 M1; the Terrain lane of " + KH_FrisbeePrototypeEditor.ScenePath + ")"
                 : IsSixDogs(options)
                 ? "mode=sixdogs lanes=" + string.Join(",", KH_FrisbeePrototypeEditor.LaneBreeds) + " repeats=" + Repeats(options) +
                   " shot=" + SixShot + " variant=" + SixVariant + " flightWindow=" + SixFlightWindow + "s settle=" + SixSettle + "s budget=" + report.budgetSeconds + "s"
@@ -813,6 +835,12 @@ namespace KominkaHillside.Editor
                 while (six.MoveNext()) yield return null;
                 yield break;
             }
+            if (IsTerrain(options))
+            {
+                var terrain = TerrainSuite(options);
+                while (terrain.MoveNext()) yield return null;
+                yield break;
+            }
             laneBreed = BreedOf(options);
             string missingLane = MissingLaneObjects(laneBreed);
             if (missingLane != null)
@@ -1027,11 +1055,12 @@ namespace KominkaHillside.Editor
                     var calm = Wait(0.5); while (calm.MoveNext()) yield return null;
 
                     // 2. Counters before, then every stand in the set fires in the same frame.
-                    var before = new int[set.Length, 3];
+                    var before = new int[set.Length, 5];
                     for (int k = 0; k < set.Length; k++)
                     {
                         var c = lanes[set[k]].catcher;
                         before[k, 0] = ReadInt(c, "_planScans"); before[k, 1] = ReadInt(c, "_planEvaluations"); before[k, 2] = ReadIntOr(c, "_planHookTries", 0);
+                        before[k, 3] = ReadIntOr(c, "_planRays", 0); before[k, 4] = ReadIntOr(c, "_solveRuns", 0);
                         lanes[set[k]].thrower.SetProgramVariable("speed", shot.speed);
                         lanes[set[k]].thrower.SetProgramVariable("elevationDeg", shot.elevation);
                         lanes[set[k]].thrower.SetProgramVariable("sideDeg", shot.side);
@@ -1088,16 +1117,22 @@ namespace KominkaHillside.Editor
                         dog.planScans = ReadInt(l.catcher, "_planScans") - before[k, 0];
                         dog.planEvaluations = ReadInt(l.catcher, "_planEvaluations") - before[k, 1];
                         dog.planHookTries = ReadIntOr(l.catcher, "_planHookTries", 0) - before[k, 2];
+                        // DES-DOG-005 C-2: the reachability rays and the Solve runs of this window, and the per-Solve ray peak.
+                        if (Has(l.catcher, "_planRays")) { dog.planRays = ReadInt(l.catcher, "_planRays") - before[k, 3]; dog.solveRuns = ReadInt(l.catcher, "_solveRuns") - before[k, 4]; dog.solveRayMax = ReadInt(l.catcher, "_solveRayMax"); }
                         bool jumpCarry = seen[k, StateJumpCarry], pickup = seen[k, StatePickup], ret = seen[k, StateReturn] || seen[k, StateDrop];
                         dog.kind = jumpCarry ? "jump" : pickup ? "ground" : ret ? "stand-or-over" : "";
                         dog.caught = jumpCarry || (ret && !pickup);
                         dog.completed = done[k] && ret;
-                        dog.ok = dog.caught && dog.completed;
+                        // DES-DOG-005 C-2: a Solve that spent more placement rays than SolveRayCap is a failure of the cap itself.
+                        dog.ok = dog.caught && dog.completed && dog.solveRayMax <= KH_FrisbeeCatch.SolveRayCap;
                         dog.seconds = Math.Round(done[k] ? doneAt[k] : took, 2);
                         var got = new List<string>(); for (int s = 0; s < NetStateCount; s++) if (seen[k, s]) got.Add(s.ToString());
                         dog.states = got.Count == 0 ? "(none)" : string.Join(",", got.ToArray());
                         round.perDog.Add(dog);
                         round.planScans += dog.planScans; round.planEvaluations += dog.planEvaluations; round.planHookTries += dog.planHookTries;
+                        if (dog.planRays > 0) round.planRays += dog.planRays;
+                        if (dog.solveRuns > 0) round.solveRuns += dog.solveRuns;
+                        if (dog.solveRayMax > round.solveRayMax) round.solveRayMax = dog.solveRayMax;
                         round.ok &= dog.ok;
 
                         var rec = recs[k];
@@ -1117,7 +1152,8 @@ namespace KominkaHillside.Editor
                     report.throwsOk = report.throwResults.Count(t => t.ok);
                     report.trace.Add("sixdogs r" + (r + 1) + " " + round.label + ": flight mean " + round.flight.meanMs.ToString("F2", CultureInfo.InvariantCulture)
                         + " ms max " + round.flight.maxMs.ToString("F2", CultureInfo.InvariantCulture) + " ms batches " + round.flight.meanBatches.ToString("F0", CultureInfo.InvariantCulture)
-                        + " | planEvaluations " + round.planEvaluations + " scans " + round.planScans + " hookTries " + round.planHookTries + " | ok=" + round.ok);
+                        + " | planEvaluations " + round.planEvaluations + " scans " + round.planScans + " hookTries " + round.planHookTries
+                        + " | planRays " + round.planRays + " solveRuns " + round.solveRuns + " solveRayMax " + round.solveRayMax + " (cap " + KH_FrisbeeCatch.SolveRayCap + ") | ok=" + round.ok);
 
                     // 5. Tidy: every thrown disc back on its stand.
                     throwDeadline = 0;
@@ -1161,6 +1197,278 @@ namespace KominkaHillside.Editor
                 + " ms; planEvaluations six(total)/lab = " + sixEval.ToString("F0", ic) + "/" + soloEval.ToString("F0", ic) + " (x"
                 + (soloEval > 0 ? (sixEval / soloEval).ToString("F2", ic) : "-") + "); flight batches six/lab = "
                 + sixB.ToString("F0", ic) + "/" + soloB.ToString("F0", ic) + " (UnityStats)";
+        }
+
+        // ---------------------------------------------------------------- terrain (DES-DOG-005 M1)
+        // 試作シーンの Terrain レーン (KH_FrisbeePrototypeEditor.TerrainCases の 10 枚のパッド) で、地面基準のジャンプと到達の規則を
+        // 1 ケース 1 投げで通す。投げ台・犬・プレイヤーをパッドへ移すのが注入 (report.injection に同じ)。投げは flat (v0)。
+        // 表は CLI 側 (TERRAIN_CASES) にもあるので、直すときは 2 か所そろえる。
+        const string TerrainShot = "flat";
+        const int TerrainVariant = 0;
+        const float LandGapMax = 0.05f;          // 設計 G M1: 着地後 0.2 s の |根元 - 地面| <= 0.05 m
+
+        struct TerrainCaseDef
+        {
+            public string name; public string[] allowed; public string expectKind; public string note;
+            public bool needLandGap, needTDown, needCannotPlay, needAimCross, needLaneRefused;
+            // Codex M1 7: a jump that CROSSES the step must exist. crossSign -1 = lands lower (tDown > tUp), +1 = higher
+            // (tDown < tUp), 0 = not required; fromY / toY = the take-off / landing ground the crossing jump must read.
+            public int crossSign; public float fromY, toY;
+            // Throw / placement overrides (run 20260928-145752: the flat v0 throw from the lanes' spot did not exercise
+            // every case). speed 0 = the flat shot. variant = the preset. faceThrow = the dog looks +Z (the v3 chase
+            // placement) instead of at the stand.
+            public int variant; public float speed, elevation; public bool faceThrow;
+            public string[] cancelOk;   // null = 取消の理由は問わない。空でない = 出てよい req cancel の理由
+        }
+
+        static readonly TerrainCaseDef[] TerrainCaseTable =
+        {
+            new TerrainCaseDef { name = "T-slope10", allowed = new[] { "caught" }, expectKind = "jump", needLandGap = true,
+                note = "10 度の横傾斜 (+x へ上る板)。跳んで取る。着地後 0.2 s の landGap <= 0.05 m" },
+            // 20260928-145752: 仰角 10 度では上り 10 度の地面と円盤がほぼ平行で、8 m 先で地面から 0.65 m しか無く跳躍帯に入らない
+            // (why=A:speed,B:side,C:eta で stand)。地形の規則ではなく投げの幾何の問題なので、仰角 15 度で帯を作る。
+            new TerrainCaseDef { name = "T-up10", allowed = new[] { "caught" }, expectKind = "jump", needLandGap = true, speed = 7.5f, elevation = 15f,
+                note = "投げる方向へ上る 10 度の板 (Codex M1 1-2: C0 / V の実測の地面からの lane)。7.5 m/s・仰角 15 度 (10 度では円盤が地面と平行で跳躍帯に入らない)。跳んで取る。landGap <= 0.05 m" },
+            new TerrainCaseDef { name = "T-down10", allowed = new[] { "caught" }, expectKind = "jump", needLandGap = true,
+                note = "投げる方向へ下る 10 度の板 (Codex M1 1-2)。跳んで取る。landGap <= 0.05 m" },
+            new TerrainCaseDef { name = "T-slope20", allowed = new[] { "ground" }, expectKind = "ground",
+                note = "20 度: 跳ばない (jumpMaxSlopeDeg 15 を超える)、走って拾う (runMaxSlopeDeg 25 以下)" },
+            new TerrainCaseDef { name = "T-down04", allowed = new[] { "caught" }, expectKind = "jump", needLandGap = true, needTDown = true,
+                crossSign = -1, fromY = 0.4f, toY = 0f, variant = KH_FrisbeeCatch.VariantRunInBeside, speed = 7f, elevation = 10f, faceThrow = true,
+                note = "0.4 m の台の上 (縁は z +4.4 = 20260928-154904 で測った B chase の踏み切り +2.6 と着地 +6.1 の間)。犬は v3 の待機位置 (投げ台の前 4 m・横 2.5 m、投げる方向向き) から追いついて跳ぶ (B chase: 踏み切りと着地が P0 の前後 ~2 m)。台の上で踏み切り (takeoffY 0.4) 下へ着地 (landY 0) する跳躍が 1 本以上: dY <= -0.3、tDown > tUp。landGap <= 0.05 m" },
+            new TerrainCaseDef { name = "T-up04", allowed = new[] { "caught" }, expectKind = "jump", needLandGap = true, needTDown = true,
+                crossSign = 1, fromY = 0f, toY = 0.4f, variant = KH_FrisbeeCatch.VariantRunInBeside, speed = 7f, elevation = 10f, faceThrow = true,
+                note = "平地 (段は z +4.4 から。踏み切り +2.6 / 着地 +6.1 の間)。投げ台は 0.4 m の台の上 (160613 では平地からの投げが低く rise ~0.3 で、0.4 m 上への着地は頂点の余裕 0.10 を満たさず全候補が B:landing で落ちた)。犬は v3 の待機位置から追いついて跳ぶ (B chase)。平地で踏み切り (takeoffY 0) 0.4 m の段の上へ着地 (landY 0.4) する跳躍が 1 本以上: dY >= 0.3、tDown < tUp。landGap <= 0.05 m" },
+            new TerrainCaseDef { name = "T-down08", allowed = new[] { "caught", "ground" }, expectKind = "jump|stand|ground",
+                note = "0.8 m の台の上から。段を跨ぐ跳躍は無い (全 liftoff 行の |dY| <= jumpMaxRise)。設計 G の期待は stand|ground だが、段を降りて下で跳ぶのは規則どおり (報告の逸脱を参照)" },
+            new TerrainCaseDef { name = "T-cliff", allowed = new[] { "none" }, expectKind = "any", needCannotPlay = true, needAimCross = true,
+                note = "5 m の箱の上から投げ、円盤は箱の外 (下) へ落ちる。犬は行けない: none + cannot-play、照準の静的検査で ×" },
+            new TerrainCaseDef { name = "T-boxtop", allowed = new[] { "none" }, expectKind = "any", needCannotPlay = true, needAimCross = true,
+                note = "2 m の台から、2.5 m の箱の天面へ投げる。犬 (箱の手前の平地) は上れない (PathOk の段と終点の高さ): none + cannot-play、照準の静的検査で ×" },
+            new TerrainCaseDef { name = "T-rock", allowed = new[] { "caught", "ground" }, expectKind = "any", needLaneRefused = true, cancelOk = new[] { "ground" },
+                note = "高さ 0.45 m・厚さ 0.2 m の岩の帯 (z +1.0..+1.2) の 0.5 m 手前から。助走か着地の lane が岩で塞がる候補を捨てる (laneRefused / why=lane)。取消が出るなら reason=ground だけ。145752 / 154904 では C0 が岩の上に乗り、実測の地面 (岩の天面) からの lane が岩の上を通っていた" },
+        };
+
+        static TerrainCaseDef[] TerrainPlan(Options o)
+        {
+            if (o != null && !string.IsNullOrEmpty(o.shots))
+            {
+                var names = o.shots.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToArray();
+                var picked = TerrainCaseTable.Where(c => names.Contains(c.name)).ToArray();
+                if (picked.Length > 0) return picked;
+            }
+            return TerrainCaseTable;
+        }
+
+        static IEnumerator TerrainSuite(Options options)
+        {
+            string tag = KH_FrisbeePrototypeEditor.TerrainTag;
+            catcher = TryFind("KH_FrisbeeCatch_" + tag); thrower = TryFind("KH_FrisbeeStand_" + tag);
+            recaller = TryFind("KH_FrisbeeRecall_" + tag); cycler = TryFind("KH_FrisbeeVariant_" + tag);
+            if (catcher == null || thrower == null || recaller == null || cycler == null)
+            {
+                report.status = "BLOCKED";
+                report.failure = "The Terrain lane is not built (KH_FrisbeeCatch_/Stand_/Recall_/Variant_" + tag + "). Run Tools/KominkaHillside/Frisbee/4 Build Scene (DES-DOG-005 M1).";
+                yield break;
+            }
+            if (!Has(catcher, "_planRays") || !Has(catcher, "jumpMaxRise"))
+            {
+                report.status = "BLOCKED";
+                report.failure = "KH_FrisbeeCatch does not expose _planRays / jumpMaxRise (the DES-DOG-005 M1 runtime). Compile first.";
+                yield break;
+            }
+            object value;
+            if (catcher.TryGetProgramVariable("dogRoot", out value)) dogRoot = value as Transform;
+            if (dogRoot == null) throw new InvalidOperationException("KH_FrisbeeCatch_" + tag + ".dogRoot is not wired.");
+            dogHome = dogRoot.position; dogHomeRot = dogRoot.rotation;
+            Shot shot = Shots.First(s => s.name == TerrainShot);
+            report.injection = "DES-DOG-005 terrain: before each throw the stand, the dog and the player are moved onto the case's pad (heights from a ground ray; the dog faces the stand). No other injection.";
+            report.trace.Add("terrain: catcher=" + catcher.gameObject.name + " stand=" + thrower.gameObject.name + " jumpMaxRise=" + ReadFloat(catcher, "jumpMaxRise").ToString("F2", CultureInfo.InvariantCulture)
+                + " jumpMaxSlopeDeg=" + ReadFloat(catcher, "jumpMaxSlopeDeg").ToString("F1", CultureInfo.InvariantCulture));
+            int index = 0;
+            foreach (var tc in TerrainPlan(options))
+            {
+                var one = RunTerrainThrow(index++, tc, shot);
+                while (one.MoveNext()) yield return null;
+                Save();
+            }
+            int peak = ReadIntOr(catcher, "_solveRayMax", -1);
+            report.trace.Add("terrain: _solveRayMax=" + peak + " (cap " + KH_FrisbeeCatch.SolveRayCap + ") _planRays=" + ReadIntOr(catcher, "_planRays", -1) + " _solveRuns=" + ReadIntOr(catcher, "_solveRuns", -1));
+            if (peak > KH_FrisbeeCatch.SolveRayCap) report.errors.Add("[KH Frisbee Harness] a Solve spent " + peak + " placement rays > SolveRayCap " + KH_FrisbeeCatch.SolveRayCap);
+        }
+
+        static float ReadFloat(UdonBehaviour u, string symbol)
+        {
+            object v;
+            return u.TryGetProgramVariable(symbol, out v) && v is float ? (float)v : float.NaN;
+        }
+
+        // The highest ground under xz (layers 0 | 11), skipping the harness's own cubes (stand / recall / variant).
+        static bool TerrainGround(Vector3 xz, out RaycastHit best)
+        {
+            best = default(RaycastHit); bool found = false;
+            foreach (var h in Physics.RaycastAll(new Vector3(xz.x, 40f, xz.z), Vector3.down, 80f, (1 << 0) | (1 << 11), QueryTriggerInteraction.Ignore))
+            {
+                var t = h.collider.transform;
+                if ((thrower != null && t.IsChildOf(thrower.transform)) || (recaller != null && t.IsChildOf(recaller.transform)) || (cycler != null && t.IsChildOf(cycler.transform))) continue;
+                if (!found || h.point.y > best.point.y) { best = h; found = true; }
+            }
+            return found;
+        }
+
+        static IEnumerator RunTerrainThrow(int index, TerrainCaseDef tc, Shot shot)
+        {
+            float speed = tc.speed > 0f ? tc.speed : shot.speed, elevation = tc.speed > 0f ? tc.elevation : shot.elevation;
+            var rec = new ThrowResult
+            {
+                index = index, variant = tc.variant, shot = tc.name, speed = speed, elevationDeg = elevation,
+                allowed = tc.allowed, expectKind = tc.expectKind, note = tc.note, terrainCase = tc.name, place = tc.name,
+            };
+            report.throwResults.Add(rec);
+            report.throwsRun++;
+            var pre = EnsureVariant(tc.variant, rec); while (pre.MoveNext()) yield return null;
+            if (rec.variantApplied != tc.variant) { rec.outcome = "blocked"; rec.ok = false; rec.terrainNote = "preset " + tc.variant + " could not be selected"; yield break; }
+
+            // Place: stand (+ its muzzle), dog, player. The recall puts the disc on the moved muzzle.
+            Vector3 pad = KH_FrisbeePrototypeEditor.TerrainPad(tc.name);
+            RaycastHit gs, gd, gp;
+            Vector3 standXZ = pad + KH_FrisbeePrototypeEditor.TerrainStandLocal(tc.name), dogXZ = pad + KH_FrisbeePrototypeEditor.TerrainDogLocal(tc.name);
+            Vector3 playerXZ = standXZ + new Vector3(0f, 0f, -2f);
+            if (!TerrainGround(standXZ, out gs) || !TerrainGround(dogXZ, out gd) || !TerrainGround(playerXZ, out gp))
+            { rec.outcome = "blocked"; rec.ok = false; rec.terrainNote = "no ground under the pad " + tc.name + " (Frisbee/4 Build Scene)"; yield break; }
+            thrower.transform.SetPositionAndRotation(gs.point + Vector3.up * 0.5f, Quaternion.identity);
+            Vector3 face = tc.faceThrow ? Vector3.forward : gs.point - gd.point; face.y = 0f;
+            dogRoot.SetPositionAndRotation(gd.point, face.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(face.normalized, Vector3.up) : Quaternion.identity);
+            Networking.LocalPlayer.TeleportTo(gp.point, Quaternion.identity);
+            var tidy0 = Recall(); while (tidy0.MoveNext()) yield return null;   // the disc onto the moved muzzle
+            dogRoot.SetPositionAndRotation(gd.point, face.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(face.normalized, Vector3.up) : Quaternion.identity);
+            var settle = Wait(0.5); while (settle.MoveNext()) yield return null;
+            rec.dogStart = dogRoot.position.ToString("F2") + " (" + tc.name + ", stand " + thrower.transform.position.ToString("F1") + ")";
+            Vector3 dogStart = dogRoot.position;
+
+            double start = EditorApplication.timeSinceStartup;
+            throwDeadline = start + ThrowBudget;
+            thrower.SetProgramVariable("speed", speed);
+            thrower.SetProgramVariable("elevationDeg", elevation);
+            thrower.SetProgramVariable("sideDeg", shot.side);
+            int mark = Lines.Count;
+            thrower.Interact();
+            bool engaged = false;
+            double limit = Math.Min(start + ThrowSettle, throwDeadline);
+            while (EditorApplication.timeSinceStartup < limit)
+            {
+                int st = ReadInt(catcher, "state");
+                if (st != StateIdle && st != StateReady) engaged = true;
+                if (engaged && st == StateIdle) break;
+                yield return null;
+            }
+            rec.seconds = Math.Round(EditorApplication.timeSinceStartup - start, 2);
+            rec.endState = ReadInt(catcher, "state");
+            rec.reachedIdle = rec.endState == StateIdle;
+            for (int i = mark; i < Lines.Count; i++) rec.lines.Add(Lines[i]);
+            // The aim's static rule (C-4) on where the disc comes to REST, from where the dog started. 20260928-145752: the
+            // dog refused at 0.12 s, the window closed with the disc still over the box, and the rule was asked about the
+            // box top (reachable) instead of the ground below it. So wait for the flight to end and the disc to settle.
+            object dv;
+            var discB = catcher.TryGetProgramVariable("frisbee", out dv) ? dv as UdonBehaviour : null;
+            if (discB != null)
+            {
+                double restUntil = EditorApplication.timeSinceStartup + 6.0;
+                object fv;
+                while (EditorApplication.timeSinceStartup < restUntil && discB.TryGetProgramVariable("_flying", out fv) && fv is bool && (bool)fv) yield return null;
+                var rest = Wait(0.8); while (rest.MoveNext()) yield return null;
+            }
+            if (discB != null)
+            {
+                RaycastHit gdisc;
+                Vector3 dp = discB.transform.position;
+                bool reach = TerrainGround(dp, out gdisc)
+                    && KH_FrisbeeCatch.PlayableGround(gdisc.point, (1 << 0) | (1 << 11), 0.5f, 4f, KH_FrisbeeCatch.DefaultRunMaxSlopeDeg)
+                    && KH_FrisbeeCatch.PathGround(dogStart, gdisc.point, (1 << 0) | (1 << 11), KH_FrisbeeCatch.DefaultRunMaxStep, KH_FrisbeeCatch.RunMaxDrop);
+                rec.aimCross = !reach;
+            }
+            Classify(rec, engaged);
+            JudgeMotion(rec);
+            JudgeKind(rec);
+            rec.caught = rec.outcome == "caught";
+            rec.completed = rec.reachedIdle;
+            rec.outcomeOk = rec.allowed.Contains(rec.outcome);
+            JudgeTerrain(rec, tc);
+            // Motion (yaw / speed) is reported, not judged, on the pads: the design's M1 table asks for the ground rules only.
+            rec.ok = rec.terrainOk;
+            if (rec.ok) report.throwsOk++;
+            throwDeadline = 0;
+            var tidy = Recall(); while (tidy.MoveNext()) yield return null;
+        }
+
+        /// <summary>DES-DOG-005 M1 の判定。行はすべて新しい行 (liftoff / landGap / solve) と既存の req / plan 行から読む。</summary>
+        static void JudgeTerrain(ThrowResult rec, TerrainCaseDef tc)
+        {
+            var notes = new List<string>();
+            float riseMax = ReadFloat(catcher, "jumpMaxRise"); if (float.IsNaN(riseMax)) riseMax = KH_FrisbeeCatch.DefaultJumpMaxRise;
+            bool dyOk = true, tDownSeen = false, laneSeen = false, cannotPlay = false, cancelOk = true, crossed = false;
+            string crossNote = "";
+            var reasons = new List<string>();
+            foreach (string l in rec.lines)
+            {
+                if (l.Contains("] liftoff tUp="))
+                {
+                    rec.liftoffs++; rec.liftoffLine = l;
+                    float dy, td;
+                    if (TryNum(l, " dY=", out dy)) { if (Mathf.Abs(dy) > rec.maxAbsDY) rec.maxAbsDY = Mathf.Abs(dy); if (Mathf.Abs(dy) > riseMax + 0.02f) dyOk = false; }
+                    if (TryNum(l, " tDown=", out td)) { rec.tDown = td; tDownSeen = true; }
+                    float tu, fy, ly;
+                    if (tc.crossSign != 0 && TryNum(l, " tUp=", out tu) && TryNum(l, " takeoffY=", out fy) && TryNum(l, " landY=", out ly) && TryNum(l, " dY=", out dy) && TryNum(l, " tDown=", out td))
+                    {
+                        bool c = Mathf.Abs(dy) >= 0.3f && Mathf.Sign(dy) == tc.crossSign
+                            && (tc.crossSign < 0 ? td > tu + 0.01f : td < tu - 0.01f)
+                            && Mathf.Abs(fy - tc.fromY) <= 0.1f && Mathf.Abs(ly - tc.toY) <= 0.1f;
+                        if (c) crossed = true;
+                        crossNote += " [from " + fy.ToString("F2", CultureInfo.InvariantCulture) + " to " + ly.ToString("F2", CultureInfo.InvariantCulture) + " tUp " + tu.ToString("F2", CultureInfo.InvariantCulture) + " tDown " + td.ToString("F2", CultureInfo.InvariantCulture) + (c ? " CROSS" : "") + "]";
+                    }
+                }
+                if (l.Contains("] landGap="))
+                {
+                    float g;
+                    rec.landGap = TryNum(l, "] landGap=", out g) ? g : 99f;   // "nohit" reads as a failure
+                }
+                if (l.Contains("] solve rays="))
+                {
+                    float lr;
+                    if (TryNum(l, " laneRefused=", out lr) && lr >= 1f) { rec.laneRefused += (int)lr; laneSeen = true; }
+                }
+                if (l.Contains("] plan=") && l.Contains(" why=") && Field(l, " why=").Contains(":lane")) laneSeen = true;
+                if (l.Contains("[KH_FrisbeeCatch] req cancel") || l.Contains("[KH_FrisbeeCatch] req reject"))
+                {
+                    string why = Field(l, "reason=");
+                    reasons.Add(why);
+                    if (why == "cannot-play") cannotPlay = true;
+                    if (l.Contains("req cancel") && tc.cancelOk != null && !tc.cancelOk.Contains(why)) cancelOk = false;
+                }
+            }
+            rec.cancelReasons = string.Join(",", reasons.ToArray());
+            bool ok = rec.outcomeOk && rec.completed && rec.expectOk && dyOk;
+            notes.Add("outcome=" + rec.outcome + (rec.outcomeOk ? "" : " (want " + string.Join("|", tc.allowed) + ")") + " kind=" + (rec.kind.Length == 0 ? "-" : rec.kind)
+                + (rec.expectOk ? "" : " (" + rec.expectNote + ")") + " completed=" + rec.completed);
+            notes.Add("liftoffs=" + rec.liftoffs + " max|dY|=" + rec.maxAbsDY.ToString("F2", CultureInfo.InvariantCulture) + (dyOk ? "" : " > jumpMaxRise " + riseMax.ToString("F2", CultureInfo.InvariantCulture)));
+            if (tc.needLandGap)
+            {
+                bool g = rec.landGap >= 0f && rec.landGap <= LandGapMax;
+                ok &= g; notes.Add("landGap=" + (rec.landGap < 0f ? "(none)" : rec.landGap.ToString("F3", CultureInfo.InvariantCulture)) + (g ? "" : " (want <= " + LandGapMax + ")"));
+            }
+            if (tc.needTDown) { ok &= tDownSeen; notes.Add("tDown=" + (tDownSeen ? rec.tDown.ToString("F3", CultureInfo.InvariantCulture) : "(no liftoff line)")); }
+            if (tc.crossSign != 0)
+            {
+                ok &= crossed;
+                notes.Add("step-crossing jump (" + (tc.crossSign < 0 ? "down" : "up") + ", |dY| >= 0.3, takeoff " + tc.fromY + " -> land " + tc.toY + ") " + (crossed ? "seen" : "NONE") + crossNote);
+            }
+            if (tc.needCannotPlay) { ok &= cannotPlay; notes.Add("cannot-play " + (cannotPlay ? "seen" : "MISSING") + " (reasons " + (rec.cancelReasons.Length == 0 ? "-" : rec.cancelReasons) + ")"); }
+            if (tc.needAimCross) { ok &= rec.aimCross; notes.Add("aim cross (static Reachable of the disc from the dog's start) " + (rec.aimCross ? "yes" : "NO")); }
+            if (tc.needLaneRefused) { ok &= laneSeen; notes.Add("lane refusals " + (laneSeen ? rec.laneRefused.ToString() + " (or why=lane)" : "NONE")); }
+            if (tc.cancelOk != null) { ok &= cancelOk; if (!cancelOk) notes.Add("unexpected cancel reason in " + rec.cancelReasons + " (only " + string.Join("|", tc.cancelOk) + ")"); }
+            if (!rec.motionOk) notes.Add("motion (not judged here): " + rec.motionNote);
+            rec.terrainOk = ok;
+            rec.terrainNote = string.Join(" | ", notes.ToArray());
         }
 
         // ---------------------------------------------------------------- netorder (BUG-DOG-003)

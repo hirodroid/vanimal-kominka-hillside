@@ -22,8 +22,9 @@ namespace KominkaHillside.Editor
     public static class KH_FrisbeePrototypeEditor
     {
         public const string ScenePath = "Assets/Scenes/KH_FrisbeePrototype.unity";
-        // Shown near the aim marker when the holder stands or aims outside the dog's flat (font glyphs via Menu/2).
-        public const string AimHint = "広場の中で遊ぼう";
+        // Shown near the aim marker when the holder stands or aims where the dog cannot go (font glyphs via Menu/2).
+        // DES-DOG-005 C-4 (was "広場の中で遊ぼう"): Course/92 writes the same text to the six discs of the world scene.
+        public const string AimHint = "犬はここへ行けません";
         const string Data = "Assets/KominkaHillside/Data/Frisbee";
         static readonly string[] Programs = { "KH_Frisbee", "KH_FrisbeeCatch", "KH_FrisbeeLauncher" };
         const int DogLayer = 14, PickupLayer = 13;
@@ -142,7 +143,8 @@ namespace KominkaHillside.Editor
             desc.spawns = new[] { spawn }; desc.RespawnHeightY = -20f; desc.spawnOrder = VRC_SceneDescriptor.SpawnOrder.First;
             // IMP-DOG-012: the plane grows from 80 m to 120 m square so the outer lanes (x -24 .. +36, side throws drift
             // about 6 m further) still have ground under them. Same height (y = 0) and centre, so the Lab lane is unchanged.
-            var ground = Prim("Ground", PrimitiveType.Plane, world.transform); ground.transform.localScale = Vector3.one * 12f; ground.isStatic = true;
+            // DES-DOG-005 M1: 120 -> 140 m so the ten Terrain pads (x +-58.5, slabs +-7 m) stay on it. Same height and centre.
+            var ground = Prim("Ground", PrimitiveType.Plane, world.transform); ground.transform.localScale = Vector3.one * 14f; ground.isStatic = true;
             ground.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeGround", new Color(.45f, .58f, .32f));
 
             var dogs = Obj("KH_FrisbeeDogs");
@@ -154,43 +156,71 @@ namespace KominkaHillside.Editor
                 Vector3 lane = new Vector3(LaneOffsetX(breed), 0f, 0f);
                 var wall = Prim(LaneName("Wall", breed), PrimitiveType.Cube, world.transform); wall.transform.position = lane + new Vector3(0f, 1.25f, 22f); wall.transform.localScale = new Vector3(16f, 2.5f, .3f); wall.isStatic = true;
                 wall.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeWall", new Color(.6f, .55f, .5f));
+                int colour = Array.IndexOf(KH_DogWalkingEditor.FrisbeeKeys, breed);
+                BuildLane(scene, dogs, props, breed, "KD_Dog_" + breed, "KH_FrisbeeCatch_" + breed,
+                    lab ? "KH_Frisbee" : LaneName("KH_Frisbee", breed), lab ? "KH_FrisbeeDisc" : "KH_FrisbeeDisc_" + breed,
+                    lab ? new Color(1f, .5f, .15f) : KH_DogWalkingEditor.DiscColors[colour < 0 ? 0 : colour],
+                    LaneName("KH_FrisbeeStand", breed), LaneName("KH_FrisbeeRecall", breed), LaneName("KH_FrisbeeVariant", breed),
+                    lane, lane + new Vector3(1.5f, 0f, 6.5f), laneFacts[li], laneTwist[li]);
+            }
+            // DES-DOG-005 M1: the Terrain lane (harness --mode=terrain). A second Lab (its own dog, catcher, disc, stand,
+            // recall and variant cube, all suffixed _Terrain) parked south of the pads; the harness moves the stand, the
+            // dog and the player onto one pad per case. Not in LaneBreeds, so the breed lanes and sixdogs are untouched.
+            int labLane = Array.IndexOf(LaneBreeds, TerrainBreed);
+            BuildTerrainPads(world.transform);
+            BuildLane(scene, dogs, props, TerrainBreed, "KD_Dog_" + TerrainTag, "KH_FrisbeeCatch_" + TerrainTag,
+                "KH_Frisbee_" + TerrainTag, "KH_FrisbeeDisc_" + TerrainBreed, KH_DogWalkingEditor.DiscColors[Math.Max(0, Array.IndexOf(KH_DogWalkingEditor.FrisbeeKeys, TerrainBreed))],
+                "KH_FrisbeeStand_" + TerrainTag, "KH_FrisbeeRecall_" + TerrainTag, "KH_FrisbeeVariant_" + TerrainTag,
+                TerrainParkOrigin, TerrainParkOrigin + new Vector3(1.5f, 0f, 6.5f), laneFacts[labLane], laneTwist[labLane]);
 
+            foreach (var u in scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<UdonSharpBehaviour>(true))) { UdonSharpEditorUtility.CopyProxyToUdon(u); EditorUtility.SetDirty(u); }
+            int dropped = desc.NetworkIDCollection.RemoveAll(x => x.gameObject == null && (x.SerializedTypeNames == null || x.SerializedTypeNames.Count == 0));
+            EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); AssetDatabase.SaveAssets();
+            Report("build-scene", "scene=" + ScenePath + " lanes=" + string.Join(",", LaneBreeds) + " + " + TerrainTag + " (" + TerrainCases.Length + " pads) (Lab mouthOffsetCatch=" + facts.mouthOffsetCatch.ToString("F3") + ") droppedNetworkIds=" + dropped + "; run 5 Verify.");
+        }
+
+        // One lane: the dog (a clone of the port-source dog of cloneBreed, without its world behaviours), the stand /
+        // recall / variant cubes, the disc and the catcher. lane = the lane origin (stand at lane + (0, .5, -4)).
+        static void BuildLane(Scene scene, GameObject dogs, GameObject props, string cloneBreed, string dogName, string catcherName,
+            string discName, string discMaterial, Color discColor, string standName, string recallName, string cyclerName,
+            Vector3 lane, Vector3 dogAt, Facts laneFact, Facts laneTwistFact)
+        {
+            {
                 // Dog: copy of the port-source dog of this breed, without walk/fetch/pet behaviours (they belong to the world scene).
-                var dogT = dogs.transform.Find("KD_Dog_" + breed);
+                var dogT = dogs.transform.Find(dogName);
                 if (dogT == null)
                 {
-                    var dog = KH_FrisbeeJumpClipEditor.CloneSourceDog(scene, breed);
+                    var dog = KH_FrisbeeJumpClipEditor.CloneSourceDog(scene, cloneBreed);
+                    dog.name = dogName;
                     dog.transform.SetParent(dogs.transform, true); dogT = dog.transform;
                     foreach (var u in dog.GetComponentsInChildren<UdonSharpBehaviour>(true)) UnityEngine.Object.DestroyImmediate(u);
                     foreach (var u in dog.GetComponentsInChildren<UdonBehaviour>(true)) UnityEngine.Object.DestroyImmediate(u);
                     foreach (var t in dog.GetComponentsInChildren<Transform>(true)) GameObjectUtility.RemoveMonoBehavioursWithMissingScript(t.gameObject);
                 }
-                dogT.SetPositionAndRotation(lane + new Vector3(1.5f, 0f, 6.5f), Quaternion.Euler(0f, 180f, 0f)); // beside where the fixed throw comes down (z 6-8), watching the stand (user, 2026-09-21)
+                dogT.SetPositionAndRotation(dogAt, Quaternion.Euler(0f, 180f, 0f)); // beside where the fixed throw comes down (z 6-8), watching the stand (user, 2026-09-21)
                 foreach (var t in dogT.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = DogLayer;
                 if (dogT.GetComponent<VRCObjectSync>() == null) dogT.gameObject.AddComponent<VRCObjectSync>();
                 var animator = dogT.GetComponentInChildren<Animator>(true);
-                if (animator == null) throw new InvalidOperationException("Dog " + breed + " has no Animator");
+                if (animator == null) throw new InvalidOperationException("Dog " + dogName + " has no Animator");
                 var mouth = dogT.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == KH_FrisbeeJumpClipEditor.MouthAnchorName);
-                if (mouth == null) throw new InvalidOperationException("Dog " + breed + " has no " + KH_FrisbeeJumpClipEditor.MouthAnchorName);
+                if (mouth == null) throw new InvalidOperationException("Dog " + dogName + " has no " + KH_FrisbeeJumpClipEditor.MouthAnchorName);
 
                 // Stand (fixed throw) and recall button.
-                var stand = Prim(LaneName("KH_FrisbeeStand", breed), PrimitiveType.Cube, props.transform);
+                var stand = Prim(standName, PrimitiveType.Cube, props.transform);
                 stand.transform.position = lane + new Vector3(0f, .5f, -4f); stand.transform.localScale = new Vector3(.4f, 1f, .4f);
                 stand.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeStand", new Color(.35f, .25f, .18f));
                 var muzzle = Obj("Muzzle", stand.transform).transform; muzzle.localPosition = new Vector3(0f, .75f, 0f); muzzle.localRotation = Quaternion.identity; muzzle.localScale = new Vector3(2.5f, 1f, 2.5f);
-                var recall = Prim(LaneName("KH_FrisbeeRecall", breed), PrimitiveType.Cube, props.transform);
+                var recall = Prim(recallName, PrimitiveType.Cube, props.transform);
                 recall.transform.position = lane + new Vector3(-.8f, .35f, -4f); recall.transform.localScale = new Vector3(.3f, .7f, .3f);
                 recall.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeRecall", new Color(.25f, .35f, .5f));
 
                 // Disc + catcher: the same helpers place the discs in the world scene (KH_DogWalkingEditor). The Lab lane
                 // keeps its orange KH_FrisbeeDisc; the other lanes wear the world scene's colour for that dog.
                 bool discCreated;
-                int colour = Array.IndexOf(KH_DogWalkingEditor.FrisbeeKeys, breed);
-                var disc = lab ? BuildDisc(props.transform, "KH_Frisbee", "KH_FrisbeeDisc", new Color(1f, .5f, .15f), out discCreated)
-                    : BuildDisc(props.transform, LaneName("KH_Frisbee", breed), "KH_FrisbeeDisc_" + breed, KH_DogWalkingEditor.DiscColors[colour < 0 ? 0 : colour], out discCreated);
+                var disc = BuildDisc(props.transform, discName, discMaterial, discColor, out discCreated);
                 disc.transform.position = muzzle.position; disc.transform.rotation = Quaternion.identity; // prototype: always on the stand
-                var catcher = Add<KH_FrisbeeCatch>(Obj("KH_FrisbeeCatch_" + breed, dogs.transform), true);
-                ConfigureCatcher(catcher, disc, dogT, animator, mouth, laneFacts[li], laneTwist[li]);
+                var catcher = Add<KH_FrisbeeCatch>(Obj(catcherName, dogs.transform), true);
+                ConfigureCatcher(catcher, disc, dogT, animator, mouth, laneFact, laneTwistFact);
                 // IMP-DOG-008 wave 2: the purchased body hangs off the 追従GIMMICK ParentConstraint and trails the root
                 // by up to 30 deg / 0.5 m while the dog turns and jumps, which put the real mouth 1.3 m from where the
                 // plan (root + rotation * mouthOffsetCatch) put it. Idempotent, so a rebuild on an existing dog is fine.
@@ -200,17 +230,142 @@ namespace KominkaHillside.Editor
                 var recaller = Add<KH_FrisbeeLauncher>(recall); recaller.frisbee = disc; recaller.catcher = catcher; recaller.muzzle = muzzle; recaller.recallOnly = true;
                 UdonSharpEditorUtility.GetBackingUdonBehaviour(recaller).InteractionText = "Recall disc";
                 // IMP-DOG-008: the prototype scene has no hand menu, so a third cube cycles the variant.
-                var cycle = Prim(LaneName("KH_FrisbeeVariant", breed), PrimitiveType.Cube, props.transform);
+                var cycle = Prim(cyclerName, PrimitiveType.Cube, props.transform);
                 cycle.transform.position = lane + new Vector3(-1.6f, .35f, -4f); cycle.transform.localScale = new Vector3(.3f, .7f, .3f);
                 cycle.GetComponent<Renderer>().sharedMaterial = Mat("KH_FrisbeeVariant", new Color(.45f, .35f, .22f));
                 var cycler = Add<KH_FrisbeeLauncher>(cycle); cycler.frisbee = disc; cycler.catcher = catcher; cycler.muzzle = muzzle; cycler.recallOnly = false; cycler.cycleVariant = true;
                 UdonSharpEditorUtility.GetBackingUdonBehaviour(cycler).InteractionText = "Next variant";
             }
+        }
 
-            foreach (var u in scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<UdonSharpBehaviour>(true))) { UdonSharpEditorUtility.CopyProxyToUdon(u); EditorUtility.SetDirty(u); }
-            int dropped = desc.NetworkIDCollection.RemoveAll(x => x.gameObject == null && (x.SerializedTypeNames == null || x.SerializedTypeNames.Count == 0));
-            EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); AssetDatabase.SaveAssets();
-            Report("build-scene", "scene=" + ScenePath + " lanes=" + string.Join(",", LaneBreeds) + " (Lab mouthOffsetCatch=" + facts.mouthOffsetCatch.ToString("F3") + ") droppedNetworkIds=" + dropped + "; run 5 Verify.");
+        // ---------------------------------------------------------------- DES-DOG-005 M1 Terrain lane
+        // Ten pads side by side along x at z = TerrainZ (the breed lanes sit at z -6 .. +22, so nothing overlaps; the
+        // 140 m plane reaches x +-70). Pad origin O = TerrainPad(case); every pad's geometry is static, layer 0 (in both the
+        // ground and the obstacle masks), rebuilt on every Build. The harness (--mode=terrain) places the stand at
+        // O + TerrainStandLocal, the dog at O + TerrainDogLocal (heights from a ground ray) and throws +Z:
+        //   T-slope10 / T-slope20  a slab tilted 10 / 20 deg about z (rising to +x, x in O +-7, z in O -10 .. +20)
+        //   T-up10 / T-down10      a 10 deg slab along the throw (rising / falling toward +z, same extent; Codex M1 1-2)
+        //   T-down04 / T-down08    a 0.4 / 0.8 m platform under the stand and the dog, its edge at z = O + 4.4 / 7.5 (lower beyond)
+        //   T-up04                 a 0.4 m step from z = O + 4.4 on; the stand on a 0.4 m pedestal (x O +-3, z O -8 .. -2),
+        //                          the dog on the plane
+        //   T-cliff                a 5 m box (x O +-6, z O -14 .. -1): the stand and the dog on top, the disc flies off it
+        //   T-boxtop               a 2.5 m box (x O +-6, z O +3 .. +20) the disc lands ON, thrown from a 2 m pedestal
+        //                          (x O +-3, z O -8 .. -2); the dog on the plane in front of the box (Codex M1 1-3)
+        //   T-rock                 a 0.45 m high, 0.2 m thick rock band at z = O + 1.0 .. 1.2 (x O +-5), the dog 0.5 m before it
+        public const string TerrainTag = "Terrain", TerrainBreed = "Lab";
+        public const float TerrainZ = -45f, TerrainPadSpacing = 13f;
+        public static readonly string[] TerrainCases = { "T-slope10", "T-up10", "T-down10", "T-slope20", "T-down04", "T-up04", "T-down08", "T-cliff", "T-boxtop", "T-rock" };
+        // Where the terrain dog and stand wait between runs (plane, south of the pads).
+        public static readonly Vector3 TerrainParkOrigin = new Vector3(0f, 0f, TerrainZ - 16f);
+        public static Vector3 TerrainPad(string name)
+        {
+            int i = Array.IndexOf(TerrainCases, name);
+            if (i < 0) throw new InvalidOperationException("No terrain pad " + name);
+            return new Vector3((i - (TerrainCases.Length - 1) * 0.5f) * TerrainPadSpacing, 0f, TerrainZ);
+        }
+        public static Vector3 TerrainStandLocal(string name) { return new Vector3(0f, 0f, -4f); }
+        public static Vector3 TerrainDogLocal(string name)
+        {
+            if (name == "T-cliff") return new Vector3(1.5f, 0f, -8f);   // behind the stand on the box: no catch before the edge
+            if (name == "T-rock") return new Vector3(1.5f, 0f, 0.5f);   // 0.8 m in front of the rock band: every run-up crosses it
+            // T-down04 / T-up04: the v3 chase spot (4 m ahead of the stand, 2.5 m aside, facing +Z; the harness sets v3 and
+            // turns the dog): B takes off ~2 m before and lands ~2 m after the catch point, which is near the step's edge.
+            if (name == "T-down04" || name == "T-up04") return new Vector3(KH_FrisbeeCatch.ReadyLateral3, 0f, -4f + KH_FrisbeeCatch.ReadyAhead3);
+            if (name == "T-boxtop") return new Vector3(1.5f, 0f, 0f);   // on the plane, in front of the box the disc lands on
+            return new Vector3(1.5f, 0f, 6.5f);                          // the breed lanes' spot
+        }
+        // The rock is 0.45 m high and 0.2 m thick: above the lane ray (0.3 m) so a run-up across it is refused, below
+        // runMaxStep so PathOk / the walk still let the dog fetch across it (the case the design wants: why=lane, and a stop
+        // on the way would say reason=ground). It sits 0.5 m in front of the dog (z 1.0 .. 1.2), closer than any crouch start
+        // (the B / C run-ups measured 1.5 - 2.7 m): in runs 20260928-145752 (z 3) and -154904 (z 1.3 .. 2.1) the crouch start
+        // fell ON the rock, its measured ground was the rock top and the (correct, slope-following) lane went over it.
+        // TerrainCrossEdgeZ (T-down04 / T-up04): the B chase from the v3 spot took off at z +2.6 and landed at z +6.1 over
+        // level ground in run 20260928-154904 (catch point ~ +4.4), so the step's edge is put at +4.4, between the two.
+        public const float TerrainStepEdgeZ = 7.5f, TerrainCrossEdgeZ = 4.4f, TerrainCliffHeight = 5f, TerrainRockZ = 1.1f, TerrainRockHeight = 0.45f, TerrainRockDepth = 0.2f, TerrainUpPedestal = 0.4f,
+            TerrainBoxTop = 2.5f, TerrainPedestal = 2f;
+
+        static void BuildTerrainPads(Transform world)
+        {
+            var root = Obj("KH_FrisbeeTerrain", world).transform;
+            var mat = Mat("KH_FrisbeeTerrain", new Color(.52f, .47f, .36f));
+            var rockMat = Mat("KH_FrisbeeRock", new Color(.42f, .42f, .44f));
+            foreach (string c in TerrainCases)
+            {
+                var pad = Obj(c, root).transform; pad.position = TerrainPad(c); pad.rotation = Quaternion.identity; pad.localScale = Vector3.one;
+                Vector3 o = pad.position;
+                if (c == "T-boxtop")
+                {
+                    // Two parts: the pedestal the stand (and the player) stand on, and the box the disc lands on.
+                    var ped = Prim("Pedestal", PrimitiveType.Cube, pad);
+                    ped.transform.SetPositionAndRotation(o + new Vector3(0f, TerrainPedestal * 0.5f, -5f), Quaternion.identity); ped.transform.localScale = new Vector3(6f, TerrainPedestal, 6f);
+                    ped.layer = 0; ped.isStatic = true; ped.GetComponent<Renderer>().sharedMaterial = mat;
+                    var box = Prim("Box", PrimitiveType.Cube, pad);
+                    box.transform.SetPositionAndRotation(o + new Vector3(0f, TerrainBoxTop * 0.5f, 11.5f), Quaternion.identity); box.transform.localScale = new Vector3(12f, TerrainBoxTop, 17f);
+                    box.layer = 0; box.isStatic = true; box.GetComponent<Renderer>().sharedMaterial = mat;
+                    continue;
+                }
+                string part; Vector3 centre, scale; Quaternion rot = Quaternion.identity; Material m = mat;
+                switch (c)
+                {
+                    case "T-slope10":
+                    case "T-slope20":
+                    {
+                        float th = c == "T-slope10" ? 10f : 20f, rad = th * Mathf.Deg2Rad;
+                        float h0 = 7f * Mathf.Tan(rad) + 0.05f;   // surface height at x = O.x (0.05 m above the plane at x = O.x - 7)
+                        part = "Slab"; rot = Quaternion.Euler(0f, 0f, th);
+                        scale = new Vector3(14f / Mathf.Cos(rad), 0.5f, 30f);
+                        centre = o + new Vector3(0f, h0 - 0.25f / Mathf.Cos(rad), 5f);
+                        break;
+                    }
+                    case "T-up10":
+                    case "T-down10":
+                    {
+                        // Along the throw: rising (up) / falling (down) toward +z, 0.05 m above the plane at its low end.
+                        float rad = 10f * Mathf.Deg2Rad;
+                        float hMid = 0.05f + 15f * Mathf.Tan(rad);   // surface height at z = O + 5 (the slab's middle)
+                        part = "Slab"; rot = Quaternion.Euler(c == "T-up10" ? -10f : 10f, 0f, 0f);
+                        scale = new Vector3(14f, 0.5f, 30f / Mathf.Cos(rad));
+                        centre = o + new Vector3(0f, hMid - 0.25f / Mathf.Cos(rad), 5f);
+                        break;
+                    }
+                    case "T-down04":
+                    case "T-down08":
+                    {
+                        float top = c == "T-down04" ? 0.4f : 0.8f;
+                        float edge = c == "T-down04" ? TerrainCrossEdgeZ : TerrainStepEdgeZ;
+                        part = "Platform"; scale = new Vector3(12f, top, edge + 10f);
+                        centre = o + new Vector3(0f, top * 0.5f, (edge - 10f) * 0.5f);
+                        break;
+                    }
+                    case "T-up04":
+                        part = "Step"; scale = new Vector3(12f, 0.4f, 20f - TerrainCrossEdgeZ);
+                        centre = o + new Vector3(0f, 0.2f, (TerrainCrossEdgeZ + 20f) * 0.5f);
+                        break;
+                    case "T-cliff":
+                        part = "Cliff"; scale = new Vector3(12f, TerrainCliffHeight, 13f);
+                        centre = o + new Vector3(0f, TerrainCliffHeight * 0.5f, -7.5f);
+                        break;
+                    default:   // T-rock
+                        part = "Rock"; scale = new Vector3(10f, TerrainRockHeight, TerrainRockDepth); m = rockMat;
+                        centre = o + new Vector3(0f, TerrainRockHeight * 0.5f, TerrainRockZ);
+                        break;
+                }
+                var go = Prim(part, PrimitiveType.Cube, pad);
+                go.transform.SetPositionAndRotation(centre, rot); go.transform.localScale = scale;
+                go.layer = 0; go.isStatic = true;
+                go.GetComponent<Renderer>().sharedMaterial = m;
+                if (c == "T-up04")
+                {
+                    // Run 20260928-160613: from the plane the chase's rise was ~0.3 m, and a landing 0.4 m up needs the apex
+                    // to clear it by JumpApexClearance (rise >= 0.5), so every crossing candidate was refused (B:landing)
+                    // and the dog fetched from the ground. The rule is right; the throw was too low. The stand gets a
+                    // 0.4 m pedestal (T-down04 mirrored: the same absolute flight, whose catch there read rise 0.29 over
+                    // 0.4 ground = ~0.69 over the plane here), so the crossing jump clears the step.
+                    var ped = Prim("Pedestal", PrimitiveType.Cube, pad);
+                    ped.transform.SetPositionAndRotation(o + new Vector3(0f, TerrainUpPedestal * 0.5f, -5f), Quaternion.identity); ped.transform.localScale = new Vector3(6f, TerrainUpPedestal, 6f);
+                    ped.layer = 0; ped.isStatic = true; ped.GetComponent<Renderer>().sharedMaterial = mat;
+                }
+            }
         }
 
         // ---------------------------------------------------------------- shared with the world-scene builder
@@ -397,6 +552,9 @@ namespace KominkaHillside.Editor
             catcher.readyGraceSeconds = 2f; catcher.readyGraceDistance = 2.5f;
             catcher.variant = KH_FrisbeeCatch.VariantNormal; catcher.pendingVariant = -1; // code-owned: every instance starts on the baseline
             catcher.playAreaMargin = 0f; // the ring the holder sees is exactly the acceptance circle (Codex P)
+            // DES-DOG-005 M1: where the dog may jump / go at all. Code-owned defaults (the world scene gets the same numbers
+            // from Course/92); PCVR tunes them in the Inspector, then the numbers are copied into KH_FrisbeeCatch.Default*.
+            WriteAnywhereDefaults(catcher);
             // Inspector tuning survives a rebuild for everything not written above, except the one value the clip dictates: the smallest rise
             // must keep clip playback at or below 1.8x (review D2), so an older scene value is raised here.
             // Both clips play from the same minRootRise, so the floor follows the longer rise (Codex P: the
@@ -417,6 +575,59 @@ namespace KominkaHillside.Editor
                 Debug.LogWarning("[KH Frisbee] " + catcher.name + ": minRootRise " + catcher.minRootRise.ToString("F3") + " > jumpFloorRise " + catcher.jumpFloorRise.ToString("F3")
                     + " (" + facts.breed + "): the jump floor does not take effect, the clip playback floor decides");
             disc.catcher = catcher;
+        }
+
+        // DES-DOG-005 M1: the four reachability values, the same in the prototype (ConfigureCatcher) and the world scene
+        // (Course/92). Raw assignment here because ConfigureCatcher's caller copies proxy -> Udon for the whole scene.
+        public static void WriteAnywhereDefaults(KH_FrisbeeCatch c)
+        {
+            c.jumpMaxSlopeDeg = KH_FrisbeeCatch.DefaultJumpMaxSlopeDeg; c.jumpMaxRise = KH_FrisbeeCatch.DefaultJumpMaxRise;
+            c.runMaxSlopeDeg = KH_FrisbeeCatch.DefaultRunMaxSlopeDeg; c.runMaxStep = KH_FrisbeeCatch.DefaultRunMaxStep;
+        }
+
+        // What Verify / Course/93 / Walking/5 require of one catcher's DES-DOG-005 values: proxy AND backing heap equal the
+        // defaults. Empty = fine.
+        public static string AnywhereProblems(KH_FrisbeeCatch c)
+        {
+            var bad = new System.Collections.Generic.List<string>();
+            var b = UdonSharpEditorUtility.GetBackingUdonBehaviour(c);
+            void One(string name, float proxy, float want)
+            {
+                if (Mathf.Abs(proxy - want) > 1e-4f) bad.Add(name + " proxy " + proxy + " != " + want);
+                if (b == null || !b.publicVariables.TryGetVariableValue(name, out float heap) || Mathf.Abs(heap - want) > 1e-4f) bad.Add(name + " backing heap is not " + want);
+            }
+            One("jumpMaxSlopeDeg", c.jumpMaxSlopeDeg, KH_FrisbeeCatch.DefaultJumpMaxSlopeDeg);
+            One("jumpMaxRise", c.jumpMaxRise, KH_FrisbeeCatch.DefaultJumpMaxRise);
+            One("runMaxSlopeDeg", c.runMaxSlopeDeg, KH_FrisbeeCatch.DefaultRunMaxSlopeDeg);
+            One("runMaxStep", c.runMaxStep, KH_FrisbeeCatch.DefaultRunMaxStep);
+            return string.Join("; ", bad);
+        }
+
+        // DES-DOG-005 B (replaces the circle half of Codex D1's pure check): the asymmetric arc as pure geometry, the same
+        // statics the planner and the liftoff gate call (DescentTime / AirTime / LandingOf). Returns "" or the failures.
+        public static string AsymmetricLandingProblems()
+        {
+            var bad = new System.Collections.Generic.List<string>();
+            float g = 9.81f, tUp = 0.25f, vTake = 2f;               // rise = 0.5 g tUp^2 = 0.307 m
+            var lift = new Vector3(3f, 1f, -7f); var fwd = new Vector3(0.6f, 0f, 0.8f);
+            float level = KH_FrisbeeCatch.DescentTime(tUp, g, 0f);
+            if (Mathf.Abs(level - tUp) > 1e-4f) bad.Add("level ground: tDown " + level.ToString("F4") + " != tUp " + tUp);
+            if ((KH_FrisbeeCatch.LandingOf(lift, fwd, vTake, tUp, level) - KH_FrisbeeCatch.LandingOf(lift, fwd, vTake, tUp)).magnitude > 1e-4f)
+                bad.Add("level ground: the asymmetric LandingOf differs from the symmetric one");
+            float down = KH_FrisbeeCatch.DescentTime(tUp, g, -0.4f), up = KH_FrisbeeCatch.DescentTime(tUp, g, 0.15f);
+            float downWant = Mathf.Sqrt(2f * (0.5f * g * tUp * tUp + 0.4f) / g), upWant = Mathf.Sqrt(2f * (0.5f * g * tUp * tUp - 0.15f) / g);
+            if (Mathf.Abs(down - downWant) > 1e-4f || down <= tUp) bad.Add("0.4 m lower: tDown " + down.ToString("F4") + " (want " + downWant.ToString("F4") + ", > tUp)");
+            if (Mathf.Abs(up - upWant) > 1e-4f || up >= tUp) bad.Add("0.15 m higher: tDown " + up.ToString("F4") + " (want " + upWant.ToString("F4") + ", < tUp)");
+            float dDown = (KH_FrisbeeCatch.LandingOf(lift, fwd, vTake, tUp, down) - lift).magnitude;
+            if (Mathf.Abs(dDown - vTake * (tUp + downWant)) > 1e-3f) bad.Add("0.4 m lower: the jump travels " + dDown.ToString("F3") + " m, want " + (vTake * (tUp + downWant)).ToString("F3"));
+            // The apex must clear the landing ground by JumpApexClearance (0.307 m rise: a 0.25 m step up is refused).
+            if (KH_FrisbeeCatch.DescentTime(tUp, g, 0.25f) >= 0f) bad.Add("a landing 0.25 m up (apex clears it by only 0.057 m) was not refused");
+            // AirTime (the liftoff's form, from vy) agrees with tUp + DescentTime when vy = g tUp.
+            float ta = KH_FrisbeeCatch.AirTime(g * tUp, g, -0.4f);
+            if (Mathf.Abs(ta - (tUp + downWant)) > 1e-4f) bad.Add("AirTime " + ta.ToString("F4") + " != tUp + tDown " + (tUp + downWant).ToString("F4"));
+            // The slope rule reads acos(normal.y): 14.9 deg passes 15, 15.1 does not.
+            if (!KH_FrisbeeCatch.SlopeOk(Mathf.Cos(14.9f * Mathf.Deg2Rad), 15f) || KH_FrisbeeCatch.SlopeOk(Mathf.Cos(15.2f * Mathf.Deg2Rad), 15f)) bad.Add("SlopeOk does not split 14.9 / 15.2 deg at 15");
+            return string.Join("; ", bad);
         }
 
         // IMP-DOG-017 breed table. Real sprints: Lab / Shiba / Samoyed 30-40 km/h (8-11 m/s), Corgi / Dachs 25-30,
@@ -752,8 +963,39 @@ namespace KominkaHillside.Editor
                 var disc = catcher == null ? null : catcher.frisbee;
                 var launchers = allLaunchers.Where(l => catcher != null && l.catcher == catcher).ToArray();
                 Check(catcher != null && disc != null && launchers.Length == 3, "Lab lane has catcher, disc and three launchers");
-                Check(allCatchers.Length == LaneBreeds.Length && allLaunchers.Length == 3 * LaneBreeds.Length,
-                    "one lane per breed: " + allCatchers.Length + " catchers / " + allLaunchers.Length + " launchers (expect " + LaneBreeds.Length + " / " + (3 * LaneBreeds.Length) + ")");
+                // DES-DOG-005 M1: + the Terrain lane (one more catcher and three more launchers).
+                Check(allCatchers.Length == LaneBreeds.Length + 1 && allLaunchers.Length == 3 * (LaneBreeds.Length + 1),
+                    "one lane per breed + the Terrain lane: " + allCatchers.Length + " catchers / " + allLaunchers.Length + " launchers (expect " + (LaneBreeds.Length + 1) + " / " + (3 * (LaneBreeds.Length + 1)) + ")");
+                foreach (var kc in allCatchers)
+                {
+                    string ap = AnywhereProblems(kc);
+                    Check(ap.Length == 0, kc.name + ": DES-DOG-005 values jumpMaxSlopeDeg / jumpMaxRise / runMaxSlopeDeg / runMaxStep == defaults, proxy and backing" + (ap.Length == 0 ? "" : " -- " + ap));
+                }
+                {
+                    // DES-DOG-005 M1 Terrain lane: its catcher / disc / launchers, and every pad's geometry.
+                    var tc = allCatchers.FirstOrDefault(x => x.name == "KH_FrisbeeCatch_" + TerrainTag);
+                    var td = tc == null ? null : tc.frisbee;
+                    var tl = allLaunchers.Where(l => tc != null && l.catcher == tc).ToArray();
+                    Check(tc != null && td != null && td.name == "KH_Frisbee_" + TerrainTag && td.catcher == tc && tc.dogRoot != null && tc.dogRoot.name == "KD_Dog_" + TerrainTag
+                        && tc.dogAnimator != null && tc.mouthAnchor != null && tl.Length == 3 && tl.All(l => l.frisbee == td && l.muzzle != null)
+                        && tl.Any(l => !l.recallOnly && !l.cycleVariant && l.name == "KH_FrisbeeStand_" + TerrainTag),
+                        "Terrain lane: catcher, disc KH_Frisbee_" + TerrainTag + ", dog KD_Dog_" + TerrainTag + ", three launchers (KH_FrisbeeStand_" + TerrainTag + " throws)");
+                    if (tc != null)
+                    {
+                        var tf = ReadFacts("Jump", TerrainBreed);
+                        Check(Vector3.Distance(tc.mouthOffsetCatch, tf.mouthOffsetCatch) < 1e-4f && Mathf.Abs(tc.maxRootRise - tf.maxRootRise) < 1e-4f
+                            && Mathf.Abs(tc.chaseRunSpeed - ChaseRunSpeedFor(TerrainBreed)) < 1e-4f && tc.playAreaRadius == 0f && tc.variant == KH_FrisbeeCatch.VariantNormal && tc.debugHeldOverride == 0,
+                            "Terrain lane: the " + TerrainBreed + " facts and breed table, no play area, variant Normal, held override 0");
+                    }
+                    var troot = open.GetRootGameObjects().Select(r => r.transform.Find("KH_FrisbeeTerrain")).FirstOrDefault(t => t != null);
+                    foreach (string tcase in TerrainCases)
+                    {
+                        var pad = troot == null ? null : troot.Find(tcase);
+                        bool padOk = pad != null && Vector3.Distance(pad.position, TerrainPad(tcase)) < 1e-3f && pad.childCount == (tcase == "T-boxtop" || tcase == "T-up04" ? 2 : 1)
+                            && pad.Cast<Transform>().All(ch => ch.GetComponent<Collider>() != null && ch.gameObject.layer == 0 && ch.gameObject.isStatic);
+                        Check(padOk, "Terrain pad " + tcase + " at " + TerrainPad(tcase).ToString("F0") + " with its static layer-0 collider(s)" + (pad == null ? " (missing: Frisbee/4 Build Scene)" : ""));
+                    }
+                }
                 foreach (string breed in LaneBreeds)
                 {
                     var lc = allCatchers.FirstOrDefault(x => x.name == "KH_FrisbeeCatch_" + breed);
@@ -870,25 +1112,13 @@ namespace KominkaHillside.Editor
                         "jump floor " + catcher.jumpFloorRise.ToString("F3") + " == min(0.25, 0.6 x stand mouth " + sceneFacts.mouthOffsetStand.y.ToString("F3") + ") and < maxRootRise " + catcher.maxRootRise.ToString("F2"));
                     Check(KH_FrisbeeCatch.HookMinPace > 0f && KH_FrisbeeCatch.HookMinPace < catcher.chaseRunSpeed,
                         "approach pace floor " + KH_FrisbeeCatch.HookMinPace.ToString("F1") + " m/s in (0, chaseRunSpeed) (a jog, never a stop)");
-                    // Codex D1 高: the landing rule, as pure geometry. The prototype scene has no play area
-                    // (playAreaRadius stays 0, so DogMayGo is always true there - see the harness notCovered), so
-                    // this is the only place the edge case is exercised at all. Both halves are the SAME code the
-                    // planner and the liftoff gate use: LandingOf for the arc, InCircleXZ for the circle.
+                    // DES-DOG-005 B (replaces Codex D1's circle check, 0-9): the circle no longer decides anything at run
+                    // time; the landing is the ASYMMETRIC arc, checked here as pure geometry with the same statics the
+                    // planner and the liftoff gate call (DescentTime / AirTime / LandingOf / SlopeOk).
                     {
-                        var c0 = new Vector3(3f, 0f, -7f); float rad = 10f;   // an off-origin circle, so a sign error shows
-                        var fwd = new Vector3(0.6f, 0f, 0.8f);                // normalised, and not axis-aligned
-                        float vTake = 2f, tUp = 0.25f;                        // the jump travels vTake * 2 * tUp = 1.00 m
-                        var liftOut = c0 + fwd * (rad - 0.7f);                // 0.70 m inside the ring
-                        var landOut = KH_FrisbeeCatch.LandingOf(liftOut, fwd, vTake, tUp);
-                        var liftIn = c0 + fwd * (rad - 1.7f);                 // the same jump one metre further in
-                        var landIn = KH_FrisbeeCatch.LandingOf(liftIn, fwd, vTake, tUp);
-                        float outBy = (landOut - c0).magnitude - rad, inBy = rad - (landIn - c0).magnitude;
-                        Check(Mathf.Abs(outBy - 0.3f) < 1e-3f && Mathf.Abs(inBy - 0.7f) < 1e-3f,
-                            "LandingOf puts the take-off + " + (vTake * 2f * tUp).ToString("F2") + " m arc 0.30 m outside / 0.70 m inside the ring (measured "
-                            + outBy.ToString("F3") + " / " + inBy.ToString("F3") + ")");
-                        Check(KH_FrisbeeCatch.InCircleXZ(liftOut, c0, rad, 0f) && !KH_FrisbeeCatch.InCircleXZ(landOut, c0, rad, 0f)
-                            && KH_FrisbeeCatch.InCircleXZ(landIn, c0, rad, 0f),
-                            "the play-area predicate rejects a landing 0.30 m outside the ring even though the take-off is inside, and accepts the one 0.70 m in (Codex D1)");
+                        string asym = AsymmetricLandingProblems();
+                        Check(asym.Length == 0, "asymmetric landing: level ground == LandingOf(2 tUp), 0.4 m lower lands further (tDown > tUp), 0.15 m higher shorter, a landing the apex does not clear by "
+                            + KH_FrisbeeCatch.JumpApexClearance.ToString("F2") + " m is refused, AirTime == tUp + tDown, 15 deg slope split" + (asym.Length == 0 ? "" : " -- " + asym));
                     }
                     Check(catcher.chaseDeceleration > 0f && catcher.chaseDeceleration < catcher.deceleration, "chase braking " + catcher.chaseDeceleration.ToString("F1") + " m/s2 < the generic " + catcher.deceleration.ToString("F1") + " (the chase rolls out, it does not stop dead)");
                     Check(catcher.standTurnDegPerSec <= catcher.walkTurnDegPerSec && catcher.walkTurnDegPerSec <= catcher.turnSpeedDegPerSec && catcher.standTurnDegPerSec > catcher.idleTurnSpeedDegPerSec,

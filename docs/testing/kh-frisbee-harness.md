@@ -30,9 +30,10 @@ node scripts/kh-frisbee-harness.cjs status    # latest.json の要約 (PASS な�
 node scripts/kh-frisbee-harness.cjs stop      # 停止フラグ + メニューの停止
 ```
 
-モードは 3 つ。既定は 4 プリセット (v0 / v3 / v4 / v5) x 下の 6 投げ = 24 投げ + 位置取りの 2 投げ = **26 投げ** (IMP-DOG-017、`--variants` / `--shots` を省略したとき)、`--mode=netorder` は
+モードは 4 つ。既定は 4 プリセット (v0 / v3 / v4 / v5) x 下の 6 投げ = 24 投げ + 位置取りの 2 投げ = **26 投げ** (IMP-DOG-017、`--variants` / `--shots` を省略したとき)、`--mode=netorder` は
 [ネット順序モード](#ネット順序モード---modenetorder-bug-dog-003) の 5 ケース x 2 周 = 10 投げ、
-`--mode=sixdogs` は [6 匹同時の負荷](#6-匹同時の負荷---modesixdogs-imp-dog-012) (IMP-DOG-012)。
+`--mode=sixdogs` は [6 匹同時の負荷](#6-匹同時の負荷---modesixdogs-imp-dog-012) (IMP-DOG-012)、
+`--mode=terrain` は [地形のレーン](#地形のレーン---modeterrain-des-dog-005-m1) (DES-DOG-005 M1)。
 既定モードと netorder は `--breed=<Key>` で[犬種のレーン](#犬種のレーン---breed-imp-dog-012)を選ぶ (既定 Lab)。
 
 `start` が返す `START_REQUEST_ACCEPTED` は **受け付けただけで PASS ではない**。
@@ -368,7 +369,8 @@ node scripts/kh-frisbee-harness.cjs start --mode=sixdogs --repeats=2
 - 1 周 = **Lab 1 匹だけ (参考値) → 6 匹同時**。`--repeats` 周 (既定 2) で `周数 x (1 + 6)` 犬ぶん (既定 14)。
 - 区間 **flight** (投げてから 4 s) と **cycle** (全員が Idle へ戻るまで) の frameTime (平均 / p95 / 最大)、
   `UnityEditor.UnityStats` の batches / drawCalls / setPass、捕り手の計画器カウンタ
-  (`_planScans` / `_planEvaluations` / `_planHookTries` の増分) を記録する。
+  (`_planScans` / `_planEvaluations` / `_planHookTries` の増分) を記録する。DES-DOG-005 から `_planRays` / `_solveRuns` の増分と
+  `_solveRayMax` (1 Solve の置き場所レイの最大) も並べ、`_solveRayMax` が `SolveRayCap` (200) を超えた犬は ok にしない。
   `_planHookTries` は IMP-DOG-017 の計画器の書き直しで無くなりうるので、無ければ 0 として読む (前 2 つは必須)。
   report の `sixdogs.rounds[]` に周ごと、その `perDog` に犬ごと、`sixdogs.ratio` に 6 匹 / Lab の比。
 - **PASS = 全犬が「取った (`caught`)」かつ「一周した (`completed`)」**。`expectKind` は `any`、`motionOk` は判定しない
@@ -393,6 +395,51 @@ node scripts/kh-frisbee-harness.cjs start --mode=sixdogs --repeats=2
 Unity を Edit モードにしたまま `git checkout -- ProjectSettings/QualitySettings.asset` で戻す
 (意図した設定変更と混ぜてコミットしない)。
 
+## 地形のレーン (`--mode=terrain`, DES-DOG-005 M1)
+
+```bash
+node scripts/kh-frisbee-harness.cjs start --mode=terrain                       # 10 ケース x 1 投げ
+node scripts/kh-frisbee-harness.cjs start --mode=terrain --shots=T-cliff,T-rock  # ケース名で絞る
+```
+
+- 試作シーンの **Terrain レーン** (`Frisbee/4 Build Scene` が作る。犬種のレーンと別の Lab 1 匹、名前は `_Terrain`) で、
+  z = -45 に並ぶ 10 枚のパッド (x 13 m 間隔。地面は 140 m 四方) を使う。投げの前に**投げ台・犬・プレイヤーをケースのパッドへ移す** (高さは地面のレイ。これが唯一の注入)。
+  投げは既定で flat (7.5 m/s・仰角 10 度・v0)。T-up10 は仰角 15 度 (10 度では円盤が上り斜面とほぼ平行で跳躍帯に入らない)、T-down04 / T-up04 は chase (7 m/s・10 度・v3、犬は v3 の待機位置に +Z 向きで置く。B chase の踏み切りと着地が縁の前後に来る)。レーンが無ければ `BLOCKED`。`--breed` は付けられない。
+- 表は Unity 側 (`KH_FrisbeeHarnessEditor.TerrainCaseTable`) と CLI 側 (`TERRAIN_CASES`) の 2 か所。パッドの形は `KH_FrisbeePrototypeEditor.BuildTerrainPads`。
+
+| ケース | パッド | 想定内の結果 | 期待 / 検査 |
+|---|---|---|---|
+| T-slope10 | 10 度の横傾斜の板 | caught | `jump`・`landGap` <= 0.05 m |
+| T-up10 / T-down10 | 投げる方向へ上る / 下る 10 度の板 | caught | `jump`・`landGap` <= 0.05 m (C0 の実測の地面からの lane) |
+| T-slope20 | 20 度の横傾斜の板 | ground | `ground` (跳ばない) |
+| T-down04 | 0.4 m の台 (縁は z +4.4) の上から | caught | `jump`・`landGap` <= 0.05・**段を跨ぐ跳躍** (takeoffY 0.4 → landY 0、dY <= -0.3、tDown > tUp) が 1 本以上 |
+| T-up04 | 平地から (z +4.4 から 0.4 m の段。投げ台は 0.4 m の台の上) | caught | 同上の上り (takeoffY 0 → landY 0.4、dY >= 0.3、tDown < tUp) |
+| T-down08 | 0.8 m の台の上から | caught / ground | `jump|stand|ground` + 全 liftoff 行の \|dY\| <= jumpMaxRise (設計 G の期待 stand|ground との差は設計書 H) |
+| T-cliff | 5 m の箱の上から (犬は投げ台の後ろ)。円盤は下へ落ちる | none | `req cancel|reject reason=cannot-play` + 照準の静的検査で × (`aimCross`) |
+| T-boxtop | 2 m の台から 2.5 m の箱の天面へ (犬は箱の手前の平地) | none | 同上 (PathOk の段と終点の高さの照合) |
+
+`aimCross` は円盤が止まってから (飛行の終わり + 0.8 s、最大 6 s 待つ) その位置の真下の地面で判定する。犬が先に断っても、飛行中の位置では判定しない。
+| T-rock | 高さ 0.45 m・厚さ 0.2 m の岩の帯 (z +1.0..+1.2) の 0.5 m 手前から | caught / ground | solve 行の `laneRefused` >= 1 (か plan 行の `why=…:lane`)、取消は `reason=ground` だけ |
+
+**1 ケースの合否は `terrainOk`** (= `ok`): 想定内の結果 + 一周 (`completed`) + 期待した終わり方 (`expectKind`) + 上の検査 +
+**全 liftoff 行の \|dY\| <= jumpMaxRise + 0.02**。動き (`motionOk`) は参考で、合否に入れない。全体の PASS は全ケース `terrainOk`・Console エラー 0・
+`_solveRayMax` <= 200。
+
+新しい列 (`status` の `cases[]`):
+
+| 列 | 意味 | 出どころ |
+|---|---|---|
+| `landGap` | 着地後 0.2 s の \|根元 - 地面\| (m)。-1 = 行が無い、99 = 地面に当たらなかった | `[KH_FrisbeeCatch] landGap=…` |
+| `tDown` / `maxAbsDY` / `liftoffs` | 最後の跳躍の落下時間、跳躍ごとの \|着地の地面 - 踏み切りの地面\| の最大、跳躍の数 | `[KH_FrisbeeCatch] liftoff tUp=… tDown=… dY=…` |
+| `laneRefused` | Solve が lane (助走・着地) で捨てた候補の数 (合計) | `[KH_FrisbeeCatch] solve rays=… laneRefused=…` |
+| `cancelReasons` | req cancel / reject の理由 (出た順) | 既存の req 行 |
+| `aimCross` | 投げの後の円盤の位置が、犬の出発点から Reachable でない (照準の × と同じ静的規則を Editor で) | `KH_FrisbeeCatch.PlayableGround` / `PathGround` |
+
+新しい 3 行 (`liftoff` / `landGap` / `solve rays=`) は既存の行の書式を変えずに足したもの。既定モードの分類 (`plan=` / `takeoff` / `catch …`) は読まない。
+
+**保証しないもの**: パッドは平面の上の箱と板。本シーンの地形・木立・川・橋の床と、照準の × の見え方 (VR) は Course/93 (静的) と実機 Play (37-39) で見る。
+空中の弧は障害物を検査しない (設計 I-2) ので、岩や枝を通り抜けるかはここでは分からない。
+
 ## 保証する範囲
 
 実際に通るもの:
@@ -405,10 +452,10 @@ Unity を Edit モードにしたまま `git checkout -- ProjectSettings/Quality
 
 **通っていないもの (`notCovered`)。PASS でも NOT_TESTED のまま:**
 
-- **広場の縁 (playArea)。** 試作シーンの捕り手は `playAreaRadius = 0` (広場無し) なので `DogMayGo` は常に真で、
-  **着地点が広場の外へ出る候補を落とす規則 (Codex D1) はここでは 1 度も働かない**。
-  この規則は本シーン (`Walking/5 Verify`) と試作 Verify の幾何検査 (`LandingOf` / `InCircleXZ` を
-  模擬の円に当てる) で見ており、実際の縁での着地は実機 Play のチェックリストで見る。
+- **地形の規則 (DES-DOG-005)。** 捕り手はもう広場の円で判定しない (`DogMayGo` は廃止)。既定モードの平面では
+  到達の規則 (PlayableAt / PathOk / 地面基準の跳躍 / 歩幅の門) が常に通るので、傾き・段・崖・岩は `--mode=terrain`、
+  非対称の弧の式は試作 Verify と `Walking/5 Verify` の幾何検査 (`DescentTime` / `AirTime` / `LandingOf`)、
+  本シーンの地形・川・橋は Course/93 (静的) と実機 Play のチェックリスト (37-39) で見る。
 - **Ready (持ち手が構えている間の待機位置)。** プロトタイプに持ち手がいないので犬は Ready へ入らず、
   走り込み系プリセット v1..v3 は「どこで待つか」しか違わない = **ここでは v0 と同じ投げになる**。
   v1..v3 の PASS は「同じ投げを繰り返しても壊れない」以上の意味を持たない。

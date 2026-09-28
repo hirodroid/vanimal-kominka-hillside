@@ -209,7 +209,9 @@ namespace KominkaHillside
             return " solve=" + _solveCount + " pick=" + pick + " vReq=" + _pickVReq.ToString("F2")
                 + " vCap=" + _pickVCap.ToString("F1") + " band=" + band
                 // Round 7: a band existed but no jump came of it - why each shape failed at the last instant tried
-                // (time / area / speed / eta / close / side / banned / lane / ground / landing; ok = passed, lost on score).
+                // (time / speed / eta / close / side / banned / lane / landing; ok = passed, lost on score). DES-DOG-005:
+                // area is gone; ground reasons are noground / slope / bridge / river / rise / iter / cap, and B / C landing
+                // reasons land-<rise|iter|apex|slope|noground|bridge|river> ("landing" = the landing lane).
                 + (chosen != PlanJump && _bandIn >= 0f ? " why=A:" + _whyA + ",B:" + _whyB + ",C:" + _whyC : "");
         }
 
@@ -265,5 +267,33 @@ namespace KominkaHillside
         public int PlanScans { get { return _planScans; } }
         public int PlanEvaluations { get { return _planEvaluations; } }
         public int PlanHookTries { get { return _planHookTries; } }
+        // DES-DOG-005 C-2 (read off the heap by the harness: _planRays / _solveRuns / _solveRayMax).
+        public int PlanRays { get { return _planRays; } }
+        public int SolveRuns { get { return _solveRuns; } }
+        public int SolveRayMax { get { return _solveRayMax; } }
+
+        // ---- DES-DOG-005 M1 lines (new lines only; no existing line changed its format) ----
+
+        // One line per jump, at the moment the feet leave the ground: the real arc (B-3). tDown = landing time - tUp (the
+        // PLANNED catch time), != tUp when the landing ground is lower / higher than the take-off; dY = landing - take-off
+        // ground (|dY| <= jumpMaxRise by the rule); slopeL = the landing ground's slope (deg); from = the take-off spot.
+        void LogLiftoff(Vector3 start, Vector3 land, float hv)
+        {
+            Debug.Log("[KH_FrisbeeCatch] liftoff tUp=" + _tUp.ToString("F3") + " tDown=" + (_taLand - _tUp).ToString("F3")
+                + " takeoffY=" + start.y.ToString("F2") + " landY=" + _airLandY.ToString("F2") + " dY=" + (_airLandY - start.y).ToString("F2")
+                + " vy=" + _airVy.ToString("F2") + " vh=" + hv.ToString("F2") + " slopeL=" + _jgSlope.ToString("F1")
+                + " planLandY=" + _landY.ToString("F2") + " land=" + V3(land) + " from=" + V3(start) + " jumpMode=" + ModeName() + DogTag());
+        }
+
+        // LandGapDelay after touchdown: how far the root is from the ground under it (the terrain lane's landGap; the
+        // design wants <= 0.05 m - no landing in the air, none into the ground).
+        void LogLandGap()
+        {
+            _landGapLogged = true;
+            Vector3 p = dogRoot.position;
+            Vector3 g = SnapToGround(p);
+            Debug.Log("[KH_FrisbeeCatch] landGap=" + (_snapHit ? Mathf.Abs(p.y - g.y).ToString("F3") : "nohit")
+                + " rootY=" + p.y.ToString("F2") + " groundY=" + (_snapHit ? g.y.ToString("F2") : "-") + " animSpd=" + animSpeed.ToString("F2") + DogTag());
+        }
     }
 }

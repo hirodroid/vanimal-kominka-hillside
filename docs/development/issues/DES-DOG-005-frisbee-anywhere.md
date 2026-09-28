@@ -53,7 +53,7 @@ updated: 2026-09-28
 ## 関連
 
 - [設計書 2026-09-28 フリスビーをどこでも](../../plans/2026-09-28-frisbee-anywhere.md): 段階 3 の正本
-- [IMP-DOG-022](IMP-DOG-022-frisbee-takeout-area.md): 段階 1
+- [IMP-DOG-022](IMP-DOG-022-frisbee-takeout-area.md): 段階 1 / [IMP-DOG-023](IMP-DOG-023-frisbee-anywhere.md): 段階 3 (M1〜M4)
 
 - [DES-DOG-002](DES-DOG-002-toy-behaviour.md): おもちゃの挙動の決定 (遊び場は広場)
 - [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) / [IMP-DOG-017](IMP-DOG-017-frisbee-intercept-solver.md) / [IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md): 現在のキャッチと 6 匹展開
