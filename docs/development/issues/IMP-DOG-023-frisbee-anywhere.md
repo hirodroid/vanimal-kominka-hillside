@@ -5,7 +5,7 @@ system: DOG
 status: wip
 priority: Medium
 summary: フリスビーをどこでも (DES-DOG-005 段階 3)。M1 陸の地面基準ジャンプと到達判定、M2 川のディスクの浮き、M3 岸からのドボンと水中回収、M4 取り出しの門の置き換え
-next: M2 実装済み (コンパイル・Course/89・Course/94・88/78/75 の回帰・Codex レビューが残り)。各 M の終わりにコンパイル → ハーネス → Codex レビュー (M2・M3 は必須) → コミット。PCVR 37〜45 はユーザー
+next: 【中断 2026-09-28 夕】M3 のコード (KH_FrisbeeCatch.Water.cs ほか、Codex 9 件反映済み) は作業ツリーに未コミット。最初の 94b で F2/F3 のドボンが 6 回とも RETRY (計画器がドボンを選ばない) → 狙いか計画器の点数を見直す。88a の W3-Dachs FAIL (carryMouthLow) が M3 の Fetch 切り出しの回帰か swimSink の件かを切り分ける。その後 compile → 試作既定/terrain → 89 → 94 → 94b → 88a/78/75 → Codex 再確認 → コミット → M4
 updated: 2026-09-28
 ---
 
@@ -54,8 +54,21 @@ M2 でやったこと (2026-09-28):
 
 ### M3. ドボンと水中回収
 
-- [ ] 着地の帯を §D-3 の条件で許す。状態 11〜13 (`KH_FrisbeeCatch.Water.cs`)、Wander の足を借りる、非 Owner の表示経路、`ClaimDisc` の取得待ちと喪失処理、Wander の `_speed = 0` の例外、`_GateToy` の門 (§D-5)
-- [ ] Course/94 (F2〜F13)
+- [x] 着地の帯を §D-3 の条件で許す。状態 11〜13 (`KH_FrisbeeCatch.Water.cs`)、Wander の足を借りる、非 Owner の表示経路、`ClaimDisc` の取得待ちと喪失処理、Wander の `_speed = 0` の例外、`_GateToy` の門 (§D-5) — 2026-09-28 実装 (コンパイル・ハーネス未)
+- [ ] Course/94b (F2・F3・F4・F5・F11・F12・F13・F14・F14b・F2m-miss-float・F2m-miss-land) が `FRISBEE_M3_PASS`
+- [ ] 回帰: 試作既定 26/26・terrain 10/10、Course/94 `FRISBEE_M2_PASS` 8/8、88a / 88b / 78 / 75 / 89 (ボールの計画器の移設は純粋な切り出し)
+- [x] Codex レビュー (同期・所有権) — 2026-09-28。観点 2・3・5・6 は問題なし。高 3 (12 の取得未確認のまま 13 へ進む、11 の取得待ちで EndGrabbed を見ない、近くの陸へ出たディスクで泳ぐ犬を川床へ落とす)・中 4 (水遊び場のドボンに岸の条件、F14 の分割、外したドボンの検証、F12 の門の値)・低 2 を反映 (再実行は未)
+
+M3 でやったこと (2026-09-28):
+- `KH_FrisbeeCatch.Water.cs` (新規 partial): ドボンの判定 `DobonAt` (D-1 の「浮く」・`_FetchWater`・泳がない犬は 0.85 M と沈み止め)、着地で直接 12 / 11 へ (`EnterWaterFromJump`)、11 WaterChase (入口の輪切り → 川の足、口が届いたら所有権を待つ・2 s で `claim-failed`)、12 WaterCarry (出口は投げた人の側から)、13 WaterExit (1.2 s → NavMesh で投げた人の 3 m まで → Return、対岸・経路無しは復帰点で Drop)、保持の見張り (`hold-lost`)、帯での 3 s 待ち (`RiverBlockWait`)。
+- Planner: 着地点だけ `JumpLand` (水への着地を許す。踏み切りは今のまま陸だけ)、水への落差は最大 1.0 m、着地の lane は水面で判定、`_Reachable` の水の行 (浮く所は泳ぐ犬なら可、泳がない犬は 0.85 M まで)。
+- Motion / 本体: Chase・Land・Retrieve・Pickup の「浮いている」分岐を 11 へ (M2 の `cannot-play` は切り替えで残す)、水中では Owner も速さを観測し `Animator.speed` だけ書く (Walk / Run は Wander の足)、`IsCarrying` に 12・13、11 は手で取れる、GiveUp は所有権を失ったディスクに触れない。
+- `KH_RiverData`: `_EntrySlice` / `_ExitSlice` / `_NavPathLength` / `_LastEntryPath` / `_OtherBank` を足し、`KD_DogFetchController.HillsideWater` の入口・出口・経路長をそれに切り替えた (式はそのまま)。
+- `KD_DogWanderController`: 忙しい分岐の `_speed = 0` と `_WaterPushBlocked` の水中の例外に `frisbeeCatch.IsWaterBusy`、`_WaterBeginAt` / `_WaterSwimRootY` / `_WaterLandY` / `_WaterWalkMouth` を公開 (`_` 付き、ローカル)。
+- `KH_ToyRecall._GateToy`: 12・13 は `InWater`、11 は `DogBusy` にしない (§D-5)。
+- ハーネス: Course/94 (M2) は犬 0 のヒープ `_debugWaterFetchOff` で M2 の規則のまま。M3 は Course/94b。
+
+どこをずらしたか: 設計書 §D-5b と §G M3・§H の節末の「決定: 2026-09-28 M3 実装で変更」。
 
 ### M4. 段階 1 の門の置き換えと文書
 
@@ -70,6 +83,8 @@ M2 でやったこと (2026-09-28):
 - M1 の実装のずれ (上り 0.5 / 下り 1.0 m、帯の拡張条件、SolveRayCap の集計範囲、Ready のレイ範囲、Return の Drop、水遊び場は走り込み可・跳躍不可) は設計書 §B-6・§C-3b に「決定: 2026-09-28 M1 実装で変更」として記録。Codex の M1 レビュー 9 件 (高 3) はすべて反映。
 
 - M2 (2026-09-28、Codex レビュー 4 件反映後): コンパイル C#/U# 0。Course/89 FRISBEE_RIVER_OK (float: water=24 / bridge=8 / edge=6 / noBank=0 / spot=True)。Course/94 FRISBEE_M2_PASS 8/8 (run 082637: F5a-river・F5b-spot・F5c-grab・F5c-recall・F5d-roll・F6-bridge・F7-nobank・F7b-edge)。ボール側の回帰: 78 WATER_PASS 14、75 W5_PASS、試作既定 26/26 (171911)。**88b は RW-down-Pome / RW-up-Pome が FAIL だが M2 の差分が原因ではない**: c4fd29a (ポメの swimSink 0.035 m、PCVR 決定) で泳ぐ口の高さが 0.086 → 0.051 m に下がり、ハーネスの口の余裕 0.03 m の基準を川の流路で割る (mouthLow)。c4fd29a 以降の最初の 88b (075505) から一貫して FAIL、時間・漂流・入水点は合格運転と同じ。PCVR の決定を変える (swimSink / swimPitch) かハーネス基準を下げるかはユーザー判断 → IMP-DOG-020 / 021 の範囲で別件。
+
+- M3 (2026-09-28 夕、中断時点・**未コミット**): Codex レビュー 9 件 (高 3) を反映済み。修正前コードの部分走行: 試作既定 26/26 (180823)、terrain 9/10 (181350。T-up10 の stand は Play 中の編集によるフレーム停止で最初の計画が 0.23 s 遅れたため。修正版で再確認)、89 OK、94 M2 8/8 (100037)。**94b (100355): F2-dobon-Pome / F3-dobon-Lab が 6 試行すべて RETRY で「ドボンの捕りが 1 度も成立しない」** (設計書 I のリスクどおり。狙いの配置か計画器の点数の見直しが要る)。同 run で FMOD の出力デバイス初期化エラーも出た (環境)。88a (101543): W3-Dachs FAIL (t=24.3、carryMouthLow=1) → M3 の Fetch の切り出し (`_EntrySlice` / `_ExitSlice`) の回帰か、swimSink の件の Dachs 版かは未切り分け。
 
 ## 関連
 
