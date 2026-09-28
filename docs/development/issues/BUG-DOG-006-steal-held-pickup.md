@@ -2,10 +2,10 @@
 id: BUG-DOG-006
 type: BUG
 system: DOG
-status: todo
+status: review
 priority: Medium
-summary: 実機 (2026-09-28 夜、7 人) で VRChat の「Attempted to steal ownership of a held pickup.」が 15 件 (22:57:07 に 2 件、22:57:21 に 13 件)。他人が持っているピックアップへ、こちらの端末が SetOwner を呼んでいる。呼び出し元は未特定で、候補はドロップの時間切れ時の ReleaseDisc とメニューの呼び寄せ
-next: 2 人で「犬が Drop でくわえている間に相手がディスクを掴む」「相手が持っているディスクや同じ犬のもう一方のおもちゃを呼び寄せる」を再現し、エラーが出るかを確かめる。出たら SetOwner の直前に HeldNow の検査を足す
+summary: 実機 (2026-09-28 夜、7 人) で VRChat の「Attempted to steal ownership of a held pickup.」が 15 件 (22:57:07 に 2 件、22:57:21 に 13 件)。ログとコードでは、その時刻にこちらの端末のフリスビー側が SetOwner を呼んだ経路は見つからない (3 匹とも Ready・持ち直し直後で、SetOwner する状態遷移が無い)。同じ文言は他ワールドのログ 60 本にも出る。犬のディスクの SetOwner を AskDisc 1 か所にまとめて持たれている間は呼ばないようにし、全ての SetOwner を送り元の Owner 付きでログに出す
+next: コンパイル確認のあと、次の複数人実機でエラーの時刻に `setowner` の行がこちらに出ているかを見る (出ていなければ他の端末の要求)。相手のログも同じ時刻に同じ行があるかを比べる
 updated: 2026-09-29
 ---
 
@@ -38,6 +38,32 @@ SetOwner の呼び出し元のうち、「他人が持っている間でも呼�
 - 2 人で候補 1 (Drop 中に相手が掴む、所有権がまだ確認されていない Drop) と候補 4 (相手が持っているおもちゃの呼び寄せ・もう一方の片付け) を再現し、エラーが出るかを見る。
 - 候補 6 を切り分ける: 片手で他人が持っているディスクに触る。
 - 当たった経路で、SetOwner の直前に `HeldNow()` (ディスク) か `IsHeld` (ボール) の検査を足す。挙動は変えない (所有権を取らずにあきらめる)。
+
+## 期待する挙動 (2026-09-29)
+
+- ディスクの SetOwner を呼んでよいのは 4 か所だけ: (a) 自分が掴んだとき (`KH_Frisbee.OnPickup`、その時点で持っているのは自分)、(b) 犬の Owner が捕球・回収で口に入れるとき (`ClaimDisc`)、(c) 犬の Owner が口から離すとき (`ReleaseDisc`)、(d) 水中の回収待ち (`RequestDisc`、1 秒に 1 回、最大 2 秒)。呼び寄せと片付け (`KH_ToyRecall`) はメニュー 1 回につき 1 回。
+- (b)〜(d) は **他人が持っている間 (`HeldNow()`) は呼ばない**。犬はディスクを取り返さずにあきらめる (Drop なら Idle、水中なら claim-failed / hold-lost)。1 フレームごとに呼ぶ経路を作らない。
+- 呼び出しはすべて 1 行ログに残す (送り元の Owner 付き)。
+
+## 調査 (2026-09-29、ログとコード)
+
+- 22:57:07: ログは 2 行だけで、前後 6 秒に `[KH_*]` の行が無い。3 匹の状態: ラブは本人がディスクを持って Ready (22:56:47 に持ち直し)、サモエドは player 3 が 22:56:58 に Drop から取って Ready、ポメは player 2 が 22:56:48 に取って Ready。Ready は SetOwner を呼ばない。
+- 22:57:21: 本人が 22:57:20 にラブの Drop から持ち直した (`held-regrab`、`GiveUp` は held を見て `ReleaseDisc` を呼ばない)。13 行のすぐ後に player 3 のサモエドへの投げ (`req hold`) が届いている。この間に Drop の時間切れ・捕球・回収・水中の状態は無い。
+- こちらの 4 か所 (b)〜(d) は、同じフレームで先に `_seenReleased && HeldNow()` → `held-regrab` の取消が走るので、所有権が先に移って `IsHeld` の同期が遅れる数フレームの隙間でしか held のディスクに届かない。13 回を 1 秒で出すループ (0.25 s の検査を含む) はフリスビー側に無い: `RequestDisc` は 1 秒 1 回、`KH_ToyRecall` の 0.25 s ループ (排他・川) は SetOwner を呼ばない。
+- 同じ文言は、このワールドと関係の無いワールドのログにも出ている (2024-06 以降のログ 60 本、焚き火・剣などのワールドで 1 秒に 3〜22 行のまとまり)。`[NetworkProcessing]` は受信処理の分類で、**こちらが送り元とは限らない** (他の端末が、誰かの持っているピックアップへ要求したときにも出る可能性がある)。このログだけでは送り元を決められない。
+
+## 修正 (2026-09-29)
+
+- `KH_FrisbeeCatch.AskDisc` ([KH_FrisbeeCatch.cs](../../../Assets/KominkaHillside/Scripts/KH_FrisbeeCatch.cs)): 犬のディスクの SetOwner を 1 か所にまとめた。自分が Owner なら何もしない、`HeldNow()` なら呼ばずに `setowner skipped: held` を 1 行、呼ぶときは `setowner disc why=claim|release|water from=<前の Owner>` を 1 行。`ClaimDisc` / `ReleaseDisc` / `RequestDisc` (Water.cs) はここを通る。
+- `ReleaseDisc`: 持たれていれば何もしない (`release skipped: held`)。Drop の時間切れはその後 Idle へ移るだけ。
+- `KH_Frisbee.OnPickup` と `KH_ToyRecall` (呼び寄せ / 片付け) の SetOwner にも送り元付きのログ (`[KH_Frisbee] setowner grab from=` / `[KH_ToyRecall] setowner recall|park`) を足した。門 (`_GateToy` の Held、`OtherInUse`) は元から持たれたおもちゃを断っている。
+- 再試行の間隔は変えていない (水中 1 秒、他は 1 回きり)。スキップ行も同じ間隔でしか出ない。
+
+## 検証
+
+- 静的: 呼び出し元は上の 4 か所 + `KH_FrisbeeLauncher` (元から `IsHeldNow` で拒否) だけ。
+- ClientSim では検査を足さない。held のガードが効くのは「ディスクの Owner が他人で、その人が持っている」ときだけで、1 人の ClientSim では再現できない (`debugHeldOverride` で持たせても、その前に `held-regrab` の取消が走る)。
+- 実機 (2 人以上、PCVR): (1) 犬が Drop でくわえている間に相手が掴み、そのまま Drop の時間切れを待つ → こちらのログに `setowner` 行が無く、エラーも出ない。(2) エラーが出たら、同じ時刻のこちらの `setowner` 行の有無と、相手のログの同じ時刻を比べて送り元を決める。
 
 ## 関連
 

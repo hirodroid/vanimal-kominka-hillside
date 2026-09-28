@@ -16,7 +16,9 @@ namespace KominkaHillside.Editor
     /// the code defaults) and playAreaRadius 0 (M4: the circle is gone; the take-out gate is KH_FrisbeeCatch._TakeoutOkAt at the
     /// player's feet) to the six KH_FrisbeeCatch, deletes each disc's old area ring GameObject (`<disc>_Aim/AreaRing`; M4 removed
     /// KH_Frisbee.areaRing - a ring inside a prefab instance is only deactivated) and rewrites the aim hint to
-    /// KH_FrisbeePrototypeEditor.AimHint, then saves. playAreaCenter is kept (the harness's plaza anchor; nothing at runtime reads it).
+    /// KH_FrisbeePrototypeEditor.AimHint, then saves. BUG-DOG-007 (決定 2026-09-29): also readyMaxDistance = DefaultReadyMaxDistance (40 m)
+    /// on the six catchers and a second hint "FarHint" (a copy of the hint with KH_FrisbeePrototypeEditor.AimFarHint) wired to
+    /// KH_Frisbee.aimFarHint. playAreaCenter is kept (the harness's plaza anchor; nothing at runtime reads it).
     ///
     /// Course/93 re-checks that configuration and measures the loop with the same static rules the runtime uses
     /// (KH_FrisbeeCatch.PlayableGround / PathGround / SlopeOk + the river band): route nodes every 2 m, points at -3 / 0 / +3 m
@@ -57,11 +59,11 @@ namespace KominkaHillside.Editor
             foreach (var d in discs)
             {
                 if (d.aimHint == null || d.aimHint.GetComponent<TMPro.TextMeshPro>() == null) throw new InvalidOperationException(d.name + ": aimHint has no TextMeshPro (nothing changed)");
-                string glyphs = MissingGlyphs(d.aimHint.GetComponent<TMPro.TextMeshPro>());
-                if (glyphs.Length > 0) throw new InvalidOperationException(d.name + ": the hint font lacks " + glyphs + " for \"" + KH_FrisbeePrototypeEditor.AimHint + "\" (add them to the atlas first; nothing changed)");
+                string glyphs = MissingGlyphs(d.aimHint.GetComponent<TMPro.TextMeshPro>(), KH_FrisbeePrototypeEditor.AimHint + KH_FrisbeePrototypeEditor.AimFarHint);
+                if (glyphs.Length > 0) throw new InvalidOperationException(d.name + ": the hint font lacks " + glyphs + " for \"" + KH_FrisbeePrototypeEditor.AimHint + "\" / \"" + KH_FrisbeePrototypeEditor.AimFarHint + "\" (run Course/27 first; nothing changed)");
             }
             foreach (var c in catchers)
-                if (new SerializedObject(c).FindProperty("jumpMaxSlopeDeg") == null) throw new InvalidOperationException("KH_FrisbeeCatch.jumpMaxSlopeDeg missing (compile first; nothing changed)");
+                if (new SerializedObject(c).FindProperty("jumpMaxSlopeDeg") == null || new SerializedObject(c).FindProperty("readyMaxDistance") == null) throw new InvalidOperationException("KH_FrisbeeCatch.jumpMaxSlopeDeg / readyMaxDistance missing (compile first; nothing changed)");
             var scene = catchers[0].gameObject.scene;
             Directory.CreateDirectory(OutDir);
             File.Copy(KH_CourseGroundEditor.ScenePath, OutDir + "/before-frisbee-anywhere.unity", true);
@@ -73,6 +75,7 @@ namespace KominkaHillside.Editor
                 so.FindProperty("runMaxSlopeDeg").floatValue = KH_FrisbeeCatch.DefaultRunMaxSlopeDeg;
                 so.FindProperty("runMaxStep").floatValue = KH_FrisbeeCatch.DefaultRunMaxStep;
                 so.FindProperty("playAreaRadius").floatValue = 0f;   // M4 (design F)
+                so.FindProperty("readyMaxDistance").floatValue = KH_FrisbeeCatch.DefaultReadyMaxDistance;   // BUG-DOG-007
                 so.ApplyModifiedProperties();
                 UdonSharpEditorUtility.CopyProxyToUdon(c); EditorUtility.SetDirty(c);
             }
@@ -86,6 +89,18 @@ namespace KominkaHillside.Editor
                 }
                 var tmp = d.aimHint.GetComponent<TMPro.TextMeshPro>();
                 if (tmp.text != KH_FrisbeePrototypeEditor.AimHint) { tmp.text = KH_FrisbeePrototypeEditor.AimHint; EditorUtility.SetDirty(tmp); }
+                // BUG-DOG-007: the far hint, a copy of the hint beside it (same font / size / facing), inactive until the aim shows it
+                var farT = d.aimHint.parent != null ? d.aimHint.parent.Find(FarHintName) : null;
+                if (farT == null)
+                {
+                    var farGo = UnityEngine.Object.Instantiate(d.aimHint.gameObject, d.aimHint.parent);
+                    farGo.name = FarHintName; farT = farGo.transform;
+                    farT.localPosition = d.aimHint.localPosition; farT.localRotation = d.aimHint.localRotation; farT.localScale = d.aimHint.localScale;
+                }
+                if (farT.gameObject.activeSelf) farT.gameObject.SetActive(false);
+                var farTmp = farT.GetComponent<TMPro.TextMeshPro>();
+                if (farTmp.text != KH_FrisbeePrototypeEditor.AimFarHint) { farTmp.text = KH_FrisbeePrototypeEditor.AimFarHint; EditorUtility.SetDirty(farTmp); }
+                if (d.aimFarHint != farT) { d.aimFarHint = farT; UdonSharpEditorUtility.CopyProxyToUdon(d); EditorUtility.SetDirty(d); }
             }
             var recalls = UnityEngine.Object.FindObjectsOfType<KH_ToyRecall>(true);
             int purged = PurgeRemovedM4Vars(catchers.Cast<UdonSharpBehaviour>().Concat(discs).Concat(recalls), false, null);
@@ -94,7 +109,7 @@ namespace KominkaHillside.Editor
             var findings = new List<string>();
             CheckConfig(catchers, discs, findings);
             if (findings.Count > 0) throw new InvalidOperationException("[KH Frisbee Anywhere] FRISBEE_ANYWHERE_BUILD_FAIL " + string.Join(" | ", findings));
-            Debug.Log("[KH Frisbee Anywhere] FRISBEE_ANYWHERE_BUILD_OK catchers=6 discs=6 values=" + Values() + " playAreaRadius 0, old rings removed, stale M4 variables purged=" + purged + ", hint \"" + KH_FrisbeePrototypeEditor.AimHint + "\"");
+            Debug.Log("[KH Frisbee Anywhere] FRISBEE_ANYWHERE_BUILD_OK catchers=6 discs=6 values=" + Values() + " playAreaRadius 0, readyMaxDistance " + KH_FrisbeeCatch.DefaultReadyMaxDistance + ", old rings removed, stale M4 variables purged=" + purged + ", hint \"" + KH_FrisbeePrototypeEditor.AimHint + "\" / far \"" + KH_FrisbeePrototypeEditor.AimFarHint + "\"");
         }
 
         [MenuItem("Tools/KominkaHillside/Course/93 - Verify Frisbee Anywhere")]
@@ -136,11 +151,13 @@ namespace KominkaHillside.Editor
                 + " (RunMaxDrop " + KH_FrisbeeCatch.RunMaxDrop + ", SolveRayCap " + KH_FrisbeeCatch.SolveRayCap + ")";
         }
 
-        static string MissingGlyphs(TMPro.TextMeshPro tmp)
+        const string FarHintName = "FarHint";
+
+        static string MissingGlyphs(TMPro.TextMeshPro tmp, string text)
         {
             if (tmp.font == null) return "(no font)";
             List<char> missing;
-            if (tmp.font.HasCharacters(KH_FrisbeePrototypeEditor.AimHint, out missing) || missing == null) return "";
+            if (tmp.font.HasCharacters(text, out missing) || missing == null) return "";
             return string.Join("", missing.Distinct().Select(ch => ch.ToString()).ToArray());
         }
 
@@ -156,6 +173,10 @@ namespace KominkaHillside.Editor
                 object rb; var cb = UdonSharpEditorUtility.GetBackingUdonBehaviour(c);
                 if (c.playAreaRadius != 0f || cb == null || !cb.publicVariables.TryGetVariableValue("playAreaRadius", out rb) || !(rb is float) || (float)rb != 0f)
                     findings.Add(c.name + ": playAreaRadius is not 0 on the proxy and the backing (run Course/92; M4 removed the circle)");
+                // BUG-DOG-007 (決定 2026-09-29): Ready / the throw only within 40 m
+                object rd;
+                if (c.readyMaxDistance != KH_FrisbeeCatch.DefaultReadyMaxDistance || cb == null || !cb.publicVariables.TryGetVariableValue("readyMaxDistance", out rd) || !(rd is float) || (float)rd != KH_FrisbeeCatch.DefaultReadyMaxDistance)
+                    findings.Add(c.name + ": readyMaxDistance is not " + KH_FrisbeeCatch.DefaultReadyMaxDistance + " on the proxy and the backing (run Course/92)");
             }
             var stale = new List<string>();
             if (PurgeRemovedM4Vars(catchers.Cast<UdonSharpBehaviour>().Concat(discs).Concat(UnityEngine.Object.FindObjectsOfType<KH_ToyRecall>(true)), true, stale) > 0)
@@ -166,7 +187,10 @@ namespace KominkaHillside.Editor
                 if (ring != null && ring.activeSelf) findings.Add(d.name + ": the old area ring GameObject is still there and active (Course/92 removes it)");
                 var tmp = d.aimHint == null ? null : d.aimHint.GetComponent<TMPro.TextMeshPro>();
                 if (tmp == null || tmp.text != KH_FrisbeePrototypeEditor.AimHint) findings.Add(d.name + ": aim hint is \"" + (tmp == null ? "(none)" : tmp.text) + "\", want \"" + KH_FrisbeePrototypeEditor.AimHint + "\"");
-                else { string g = MissingGlyphs(tmp); if (g.Length > 0) findings.Add(d.name + ": hint font lacks " + g); }
+                else { string g = MissingGlyphs(tmp, KH_FrisbeePrototypeEditor.AimHint); if (g.Length > 0) findings.Add(d.name + ": hint font lacks " + g); }
+                var far = d.aimFarHint == null ? null : d.aimFarHint.GetComponent<TMPro.TextMeshPro>();
+                if (far == null || far.text != KH_FrisbeePrototypeEditor.AimFarHint) findings.Add(d.name + ": far hint is \"" + (far == null ? "(none)" : far.text) + "\", want \"" + KH_FrisbeePrototypeEditor.AimFarHint + "\" (run Course/92)");
+                else { string g = MissingGlyphs(far, KH_FrisbeePrototypeEditor.AimFarHint); if (g.Length > 0) findings.Add(d.name + ": far hint font lacks " + g + " (run Course/27)"); }
                 if (d.catcher == null) findings.Add(d.name + ": no catcher");
             }
         }

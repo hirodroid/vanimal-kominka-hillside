@@ -465,8 +465,7 @@ namespace KominkaHillside
         {
             if (Time.time - _wfClaimSentAt < DiscClaimRetry) return;
             _wfClaimSentAt = Time.time;
-            VRCPlayerApi lp = Networking.LocalPlayer;
-            if (Utilities.IsValid(lp) && !Networking.IsOwner(frisbee.gameObject)) Networking.SetOwner(lp, frisbee.gameObject); // net: setowner-ok: disc only, never the dog; retried once a second
+            AskDisc("water");   // BUG-DOG-006: skipped while held; the claim wait's timeout (claim-failed) ends it
         }
 
         // 12 / 13, every frame (Owner). True = this frame is handled (gave up, or still waiting). A disc that was ours and is not any

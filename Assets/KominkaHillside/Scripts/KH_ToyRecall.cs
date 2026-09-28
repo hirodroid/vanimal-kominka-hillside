@@ -244,7 +244,7 @@ namespace KominkaHillside
             _otherAtAskValid = ToyWired(row, otherKind);
             if (_otherAtAskValid) _otherAtAsk = ToyObject(row, otherKind).transform.position;
             GameObject go = ToyObject(row, kind);
-            if (!Networking.IsOwner(go)) Networking.SetOwner(lp, go); // net: setowner-ok: toy only; position waits for ownership
+            if (!Networking.IsOwner(go)) { LogAsk("recall", row, kind, go); Networking.SetOwner(lp, go); } // net: setowner-ok: toy only, gated against a hand (_GateToy Held); position waits for ownership
         }
 
         private void Update()
@@ -291,7 +291,14 @@ namespace KominkaHillside
             GameObject go = ToyObject(row, other);
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp)) { EndPark(); return; }
-            if (!Networking.IsOwner(go)) Networking.SetOwner(lp, go); // net: setowner-ok: the same dog's other toy only, never while in use; position waits for ownership
+            if (!Networking.IsOwner(go)) { LogAsk("park", row, other, go); Networking.SetOwner(lp, go); } // net: setowner-ok: the same dog's other toy only, never while in use; position waits for ownership
+        }
+
+        // BUG-DOG-006: every toy ask is logged with the Owner it takes from (one per menu press / park, never per frame)
+        void LogAsk(string why, int row, int kind, GameObject go)
+        {
+            VRCPlayerApi prevOwner = Networking.GetOwner(go);
+            Debug.Log("[KH_ToyRecall] setowner " + why + " row=" + row + " kind=" + kind + " from=" + (Utilities.IsValid(prevOwner) ? prevOwner.playerId : -1) + " toy=" + go.name);
         }
 
         void StepPark(int row, int kind)

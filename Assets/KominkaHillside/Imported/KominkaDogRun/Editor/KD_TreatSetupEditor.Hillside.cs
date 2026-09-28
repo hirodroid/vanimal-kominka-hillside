@@ -833,6 +833,7 @@ namespace KominkaDogRun.Editor
                     sb.Append(m.Groups[1].Value.Replace("\\n", "").Replace("\\\"", "\""));
             }
             sb.Append(global::KominkaHillside.Editor.KH_FrisbeePrototypeEditor.AimHint);
+            sb.Append(global::KominkaHillside.Editor.KH_FrisbeePrototypeEditor.AimFarHint);   // BUG-DOG-007
             // 拠点板の Interact 文言は VRChat の UI が描くので焼かない。制御文字・ZWSP は描かれないので除く
             var drawn = new StringBuilder();
             foreach (char c in sb.ToString()) if (KD_LocalizationEditor.Drawn(c)) drawn.Append(c);

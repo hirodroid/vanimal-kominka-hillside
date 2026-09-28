@@ -48,7 +48,7 @@ namespace KominkaHillside.Editor
                 for (int i = 1; i < corners.Length; i++) sample.pathLength += Vector3.Distance(corners[i-1], corners[i]);
                 output.samples.Add(sample);
             }
-            File.WriteAllText("Temp/des-env-002/gate-reentry-navmesh.json", JsonUtility.ToJson(output, true));
+            Directory.CreateDirectory("Temp/des-env-002"); File.WriteAllText("Temp/des-env-002/gate-reentry-navmesh.json", JsonUtility.ToJson(output, true));
             Debug.Log("[KH Course] Gate reentry NavMesh replay: " + output.samples.Count);
         }
     }

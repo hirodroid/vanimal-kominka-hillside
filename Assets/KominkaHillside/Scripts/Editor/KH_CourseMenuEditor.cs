@@ -28,8 +28,8 @@ namespace KominkaHillside.Editor
         {
             KH_CourseGroundEditor.Idle(KH_CourseGroundEditor.ScenePath);
             var p=Pouch();var catalog=Catalog(p.language);var log=new System.Text.StringBuilder();
-            KD_ShopSetupEditor.AddGlyphs(KD_LocalizationEditor.BundledCharacters(catalog),log);
-            File.WriteAllText("Temp/des-env-002/course-menu-glyphs.txt",log.ToString());
+            KD_ShopSetupEditor.AddGlyphs(KD_LocalizationEditor.BundledCharacters(catalog)+KH_FrisbeePrototypeEditor.AimHint+KH_FrisbeePrototypeEditor.AimFarHint,log); // BUG-DOG-007: the two aim hints share this font
+            Directory.CreateDirectory("Temp/des-env-002");File.WriteAllText("Temp/des-env-002/course-menu-glyphs.txt",log.ToString());
             KD_LocalizationEditor.ValidateGlyphs(catalog,p.sectionTitleLabel.font);
             Debug.Log("[KH Course Menu] Course glyphs present; font identity and existing glyphs retained");
         }
@@ -148,7 +148,7 @@ namespace KominkaHillside.Editor
             var fit=MeasureLabels(p,errors);
             var r=new Report{utc=DateTime.UtcNow.ToString("o"),scene=p.gameObject.scene.path,status=errors.Count==0?"COURSE_MENU_DATA_OK":"FAIL",rows=p.walkLabels.Length,buttons=p.walkHereButtons.Length,languages=p.language.languageCodes.Length,translations=p.language.extensionTexts.Length,errors=errors.Count,findings=errors.ToArray()};
             r.labelFit=fit;
-            File.WriteAllText("Temp/des-env-002/full-course-menu-verification.json",JsonUtility.ToJson(r,true));
+            Directory.CreateDirectory("Temp/des-env-002");File.WriteAllText("Temp/des-env-002/full-course-menu-verification.json",JsonUtility.ToJson(r,true));
             if(errors.Count!=0)throw new InvalidOperationException(string.Join("\n",errors));
             Debug.Log("[KH Course Menu] COURSE_MENU_DATA_OK rows=12 destinations=6 languages="+r.languages);
         }

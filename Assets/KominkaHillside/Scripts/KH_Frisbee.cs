@@ -65,6 +65,8 @@ namespace KominkaHillside
         public GameObject aimMarkerCross;
         [Tooltip("Short hint near the marker while holding outside the play area or aiming out of it")]
         public Transform aimHint; // the hint text object (TextMeshPro itself is not exposed to Udon; text is set by Build)
+        [Tooltip("BUG-DOG-007: 犬が遠い (KH_FrisbeeCatch.readyMaxDistance の外) ときの一言。Course/92 が作って文字を書く。null = aimHint を使う")]
+        public Transform aimFarHint;
         public int aimPoints = 40;
         public float aimStep = 0.08f;
         [Header("Desktop throw (aimLaunch off)")]
@@ -93,6 +95,7 @@ namespace KominkaHillside
         const float AimJudgeInterval = 0.1f;
         private float _aimJudgeNext;
         private bool _aimBad;
+        private bool _aimFar;   // BUG-DOG-007: the dog is beyond readyMaxDistance of the disc in the hand (judged with _aimBad)
         private float _lookAxis;
         private bool _heldLocal;
         private bool _flying;
@@ -271,7 +274,13 @@ namespace KominkaHillside
             if (_sync != null)
             {
                 VRCPlayerApi lp = Networking.LocalPlayer;
-                if (Utilities.IsValid(lp) && !Networking.IsOwner(gameObject)) Networking.SetOwner(lp, gameObject); // net: setowner-ok: disc only (grabber)
+                if (Utilities.IsValid(lp) && !Networking.IsOwner(gameObject))
+                {
+                    // BUG-DOG-006: logged with the Owner it takes from (a grab out of another hand is VRChat's theft, not ours)
+                    VRCPlayerApi prevOwner = Networking.GetOwner(gameObject);
+                    Debug.Log("[KH_Frisbee] setowner grab from=" + (Utilities.IsValid(prevOwner) ? prevOwner.playerId : -1) + " disc=" + gameObject.name);
+                    Networking.SetOwner(lp, gameObject); // net: setowner-ok: disc only (grabber)
+                }
                 _sync.SetKinematic(false);
                 _sync.SetGravity(true);   // D-2: taken out of the water, thrown with gravity (as KD_BallController.OnPickup)
             }
@@ -354,6 +363,7 @@ namespace KominkaHillside
                 if (aimLine != null && aimLine.enabled) aimLine.enabled = false;
                 if (aimMarker != null && aimMarker.gameObject.activeSelf) aimMarker.gameObject.SetActive(false);
                 if (aimHint != null && aimHint.gameObject.activeSelf) aimHint.gameObject.SetActive(false);
+                if (aimFarHint != null && aimFarHint.gameObject.activeSelf) aimFarHint.gameObject.SetActive(false);
                 _aimJudgeNext = 0f;   // DES-DOG-005: the next hold judges its cross on its first frame
                 return;
             }
@@ -389,21 +399,32 @@ namespace KominkaHillside
             if (catcher != null && Time.time >= _aimJudgeNext)
             {
                 _aimJudgeNext = Time.time + AimJudgeInterval;
-                _aimBad = !catcher._PlayableAt(p0) || !catcher._Reachable(end);
+                // BUG-DOG-007: the dog too far away comes first (no rays spent on a throw it will refuse anyway)
+                _aimFar = catcher._TooFar(p0);
+                _aimBad = _aimFar || !catcher._PlayableAt(p0) || !catcher._Reachable(end);
             }
             bool outside = catcher != null && _aimBad;
+            bool far = outside && _aimFar;
             SetAimOutside(outside);
+            // One line at a time: "the dog is far away" (aimFarHint) or "the dog cannot go there" (aimHint)
+            Transform farHint = aimFarHint != null ? aimFarHint : aimHint;
+            if (aimFarHint != null && aimFarHint.gameObject.activeSelf != far) aimFarHint.gameObject.SetActive(far);
             if (aimHint != null)
             {
-                if (aimHint.gameObject.activeSelf != outside) aimHint.gameObject.SetActive(outside);
-                if (outside)
+                bool plain = outside && (!far || aimFarHint == null);
+                if (aimHint.gameObject.activeSelf != plain) aimHint.gameObject.SetActive(plain);
+            }
+            if (outside)
+            {
+                Transform h = far ? farHint : aimHint;
+                if (h != null)
                 {
                     VRCPlayerApi lp = Networking.LocalPlayer;
                     Vector3 headPos = Utilities.IsValid(lp) ? lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position : p0 + Vector3.up;
                     Vector3 at = end + Vector3.up * 0.5f;
-                    aimHint.position = at;
+                    h.position = at;
                     Vector3 face = at - headPos; face.y = 0f;
-                    if (face.sqrMagnitude > 1e-4f) aimHint.rotation = Quaternion.LookRotation(face.normalized, Vector3.up);
+                    if (face.sqrMagnitude > 1e-4f) h.rotation = Quaternion.LookRotation(face.normalized, Vector3.up);
                 }
             }
         }

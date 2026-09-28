@@ -26,6 +26,9 @@ namespace KominkaHillside.Editor
         // Shown near the aim marker when the holder stands or aims where the dog cannot go (font glyphs via Menu/2).
         // DES-DOG-005 C-4 (was "広場の中で遊ぼう"): Course/92 writes the same text to the six discs of the world scene.
         public const string AimHint = "犬はここへ行けません";
+        // BUG-DOG-007 (決定 2026-09-29): the dog is beyond KH_FrisbeeCatch.readyMaxDistance. Course/92 writes it to KH_Frisbee.aimFarHint;
+        // Course/27 adds its glyphs. The prototype keeps readyMaxDistance 0, so it never shows there.
+        public const string AimFarHint = "犬が遠くにいます";
         const string Data = "Assets/KominkaHillside/Data/Frisbee";
         static readonly string[] Programs = { "KH_Frisbee", "KH_FrisbeeCatch", "KH_FrisbeeLauncher" };
         const int DogLayer = 14, PickupLayer = 13;
@@ -564,6 +567,7 @@ namespace KominkaHillside.Editor
             // for me" when both halves agree, so they are not left to drift apart in an Inspector.
             catcher.readyGraceSeconds = 2f; catcher.readyGraceDistance = 2.5f;
             catcher.variant = KH_FrisbeeCatch.VariantNormal; catcher.pendingVariant = -1; // code-owned: every instance starts on the baseline
+            catcher.readyMaxDistance = 0f;   // BUG-DOG-007: no distance limit in the prototypes / harness scenes (the world gets 40 m from Course/92)
             // DES-DOG-005 M1: where the dog may jump / go at all. Code-owned defaults (the world scene gets the same numbers
             // from Course/92); PCVR tunes them in the Inspector, then the numbers are copied into KH_FrisbeeCatch.Default*.
             WriteAnywhereDefaults(catcher);

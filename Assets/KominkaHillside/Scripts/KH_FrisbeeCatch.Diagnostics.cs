@@ -97,6 +97,13 @@ namespace KominkaHillside
             LogReq("reject   ", reason, local, thrower, gen, age, 0.0, -1f, HeldNow(), false, 0);
         }
 
+        // BUG-DOG-007: the far cap names the distance and both ends (one line per refused throw, never per frame)
+        void LogRejectFar(float dist, Vector3 p0, bool local, int thrower, int gen, double age)
+        {
+            LogReject("implausible-far", local, thrower, gen, age);
+            Debug.Log("[KH_FrisbeeCatch] reject far dist=" + dist.ToString("F1") + " p0=" + V3(p0) + " dogPos=" + V3(dogRoot.position) + " state=" + state + DogTag());
+        }
+
         // Round 5: what the approach ACTUALLY cost against what Eta promised, once per committed plan, at the first
         // moment the dog can be said to have arrived (the hold band for a wait / stand, the crouch for a momentum
         // jump). Positive = the estimate was optimistic. This is a measurement, not a correction: nothing reads it,

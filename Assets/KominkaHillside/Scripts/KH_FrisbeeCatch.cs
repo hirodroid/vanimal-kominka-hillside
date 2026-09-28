@@ -82,6 +82,10 @@ namespace KominkaHillside
             "(Course/94 F5c-recall, 94b F11 / F12; Walking/3 writes it). playAreaRadius stays 0 (Course/92 writes 0): the circle, its ring and the stage-1 gate are gone")]
         public Vector3 playAreaCenter;
         public float playAreaRadius;
+        [Tooltip("BUG-DOG-007 (決定 2026-09-29): Ready と投げの受理は、犬と持ち手 / 投げ手の水平距離がこれ以下のときだけ (m)。0 = 無制限 " +
+            "(試作・ハーネス: ConfigureCatcher が 0 を書く)。本番は Course/92 が DefaultReadyMaxDistance を書く。遠い犬はリードか呼び寄せで連れて来る")]
+        public float readyMaxDistance = DefaultReadyMaxDistance;
+        public const float DefaultReadyMaxDistance = 40f;
 
         [Header("DES-DOG-005 anywhere (Course/92 and Frisbee/4 Build Scene write these; PCVR tunes them)")]
         [Tooltip("A jump (and a stand / overtake catch) only where the take-off and the landing ground are at most this steep (deg)")]
@@ -724,17 +728,21 @@ namespace KominkaHillside
             // Plausibility (network callable; anyone may send). Non-finite first: NaN survives every comparison
             // below (NaN > x and NaN < x are both false), so a forged launch would sail through the caps and then
             // poison the prediction, the plan and the dog's transform for the whole flight (Codex D3).
-            if (!Finite(p0) || !Finite(v0)) { LogReject("implausible", local, thrower, gen, age); return; }
-            if (double.IsNaN(launchServerTime) || double.IsInfinity(launchServerTime)) { LogReject("implausible", local, thrower, gen, age); return; }
+            if (!Finite(p0) || !Finite(v0)) { LogReject("implausible-nonfinite", local, thrower, gen, age); return; }
+            if (double.IsNaN(launchServerTime) || double.IsInfinity(launchServerTime)) { LogReject("implausible-time", local, thrower, gen, age); return; }
             if (!CanPlay(p0, thrower)) { LogReject(_canPlayWhy, local, thrower, gen, age); return; }  // same gate as Ready: leash / Fetch / gathering / treat / rest / water / playable ground (DES-DOG-005)
             // A real launch is capped by the disc and starts nearby.
-            if (v0.magnitude > frisbee.maxSpeed * 1.05f || Vector3.Distance(p0, dogRoot.position) > 200f) { LogReject("implausible", local, thrower, gen, age); return; }
+            // BUG-DOG-007: each cap has its own reason, and the far one says where the dog was (the loop is 600 x 720 m, so a dog left
+            // elsewhere on the course is legitimately far from a thrower; the 200 m cap itself is unchanged)
+            if (v0.magnitude > frisbee.maxSpeed * 1.05f) { LogReject("implausible-speed", local, thrower, gen, age); return; }
+            float launchDist = Vector3.Distance(p0, dogRoot.position);
+            if (launchDist > 200f) { LogRejectFar(launchDist, p0, local, thrower, gen, age); return; }
             // Too old: the flight is over. In the future: a forged timestamp would make _ElapsedSince negative and
             // run the whole scan on a trajectory that has not started (1 s covers clock skew between clients,
             // which is all a real launch can be out by).
             if (age > 5.0 || age < -1.0) { LogReject("age", local, thrower, gen, age); return; }
-            if (float.IsNaN(curve) || float.IsInfinity(curve)) { LogReject("implausible", local, thrower, gen, age); return; }   // a forged value would poison every prediction (Codex D)
-            if (curve < -1f || curve > 1f) { LogReject("implausible", local, thrower, gen, age); return; } // a real throw carries FlightCurve (0 or CurveDefault); clamping would split flight and prediction
+            if (float.IsNaN(curve) || float.IsInfinity(curve)) { LogReject("implausible-curve", local, thrower, gen, age); return; }   // a forged value would poison every prediction (Codex D)
+            if (curve < -1f || curve > 1f) { LogReject("implausible-curve", local, thrower, gen, age); return; } // a real throw carries FlightCurve (0 or CurveDefault); clamping would split flight and prediction
             // BUG-DOG-003: the notice beat the pickup sync. Park it instead of starting a chase the very next
             // frame would cancel (L708). No state is touched here: Ready stays Ready, an engaged sequence runs on.
             if (HeldNow())
@@ -963,24 +971,32 @@ namespace KominkaHillside
         // previous Owner leaves it; KH_Frisbee.OnOwnershipTransferred drops a kinematic disc nobody carries.
         void ClaimDisc()
         {
-            GameObject go = frisbee.gameObject;
-            if (!Networking.IsOwner(go))
-            {
-                VRCPlayerApi lp = Networking.LocalPlayer;
-                if (Utilities.IsValid(lp)) Networking.SetOwner(lp, go); // net: setowner-ok: disc only, never the dog
-            }
+            AskDisc("claim");
             frisbee._Caught();
         }
 
         void ReleaseDisc(Vector3 velocity)
         {
-            GameObject go = frisbee.gameObject;
-            if (!Networking.IsOwner(go))
-            {
-                VRCPlayerApi lp = Networking.LocalPlayer;
-                if (Utilities.IsValid(lp)) Networking.SetOwner(lp, go); // net: setowner-ok: disc only
-            }
+            // BUG-DOG-006: a hand has it - there is nothing in the mouth to let go, and asking for it would be a steal
+            if (HeldNow()) { Debug.Log("[KH_FrisbeeCatch] release skipped: held state=" + state + DogTag()); return; }
+            AskDisc("release");
             frisbee._Release(velocity);
+        }
+
+        // BUG-DOG-006: the one place the dog asks for its disc. Never while a hand holds it (VRChat refuses that and logs
+        // "Attempted to steal ownership of a held pickup"); the callers are one-shot (claim / release) or already once a second
+        // (RequestDisc), so neither the skip nor the ask can repeat per frame. Each ask is logged with the Owner it takes from, so a
+        // real session can tell our asks from another client's.
+        void AskDisc(string why)
+        {
+            GameObject go = frisbee.gameObject;
+            if (Networking.IsOwner(go)) return;
+            if (HeldNow()) { Debug.Log("[KH_FrisbeeCatch] setowner skipped: held why=" + why + " state=" + state + DogTag()); return; }
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) return;
+            VRCPlayerApi prevOwner = Networking.GetOwner(go);
+            Debug.Log("[KH_FrisbeeCatch] setowner disc why=" + why + " from=" + (Utilities.IsValid(prevOwner) ? prevOwner.playerId : -1) + " state=" + state + DogTag());
+            Networking.SetOwner(lp, go); // net: setowner-ok: disc only, never the dog; never while held (BUG-DOG-006)
         }
 
         // Landed / stopped by a wall / lost track: worth walking to. Grabbed or out of the world: not (review D5).
@@ -1160,6 +1176,14 @@ namespace KominkaHillside
         // Null neighbours (prototype scene) mean "no such system" (review M1/M3: one gate for both entrances).
         // DES-DOG-005 C-2: `at` is where the requester stands (thrower's launch point / holder's position), `requester`
         // who asked (ReqCatch: the thrower; Idle -> Ready: the holder). _canPlayWhy says why for the reject / cancel line.
+        // BUG-DOG-007: beyond readyMaxDistance (horizontal) of this dog. 0 = no limit. Also read by the aim (KH_Frisbee.UpdateAim).
+        public bool _TooFar(Vector3 at)
+        {
+            if (readyMaxDistance <= 0f || dogRoot == null) return false;
+            Vector3 d = at - dogRoot.position; d.y = 0f;
+            return d.sqrMagnitude > readyMaxDistance * readyMaxDistance;
+        }
+
         bool CanPlay(Vector3 at, int requester)
         {
             _canPlayWhy = "cannot-play";
@@ -1169,6 +1193,9 @@ namespace KominkaHillside
             if (fetch != null && fetch.liveSystem != null && fetch.liveSystem.IsPlaying) return false;
             if (wander != null && (wander.IsTreatBusy || wander.IsResting || wander.IsAsleep)) return false;
             if (activities != null && activities.Mode == 2) return false;
+            // BUG-DOG-007: a dog left far away on the loop neither stands off for a holder nor takes a throw (it used to run
+            // hundreds of metres in Ready and then refuse the throw as implausible). Before the water ask: a far dog is not asked out.
+            if (_TooFar(at)) { _canPlayWhy = "far"; return false; }
             // DES-DOG-005 D-1 (M1): a dog in the water does not take the throw (it never jumps from the water, and before
             // this the water play ended as `preempted` with the dog dropped onto the riverbed, 0-5). It is asked out
             // instead, at most once a second, turning to whoever asked (the bank return of the disc is unchanged).
