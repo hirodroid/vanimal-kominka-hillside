@@ -5,8 +5,8 @@ system: DOG
 status: review
 priority: Medium
 summary: フリスビーを広場以外 (奥広場・川辺・道) でも投げて取れるようにする。段階 1 は取り出しを投げられるエリアに限る、段階 2 は平らな場所を追加、段階 3 は地面の高さを基準にした滑空・キャッチでどこでも
-next: 段階 3 は IMP-DOG-023 M1〜M4 で実装済み (M4 は未検証)。残りは IMP-DOG-023 の検証と PCVR 37〜48 (ユーザー)、VER-WLD-001 項目 12。確かめたら done
-updated: 2026-09-28
+next: 段階 3 は IMP-DOG-023 M1〜M4 で実装・ClientSim 検証済み (2026-09-28)。残りはユーザーの PCVR 37〜48 と VER-WLD-001 項目 12。確かめたら done
+updated: 2026-09-29
 ---
 
 # DES-DOG-005 フリスビーをどこでも投げられるようにする

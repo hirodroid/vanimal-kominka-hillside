@@ -2,10 +2,11 @@
 id: IMP-DOG-023
 type: IMP
 system: DOG
-status: wip
+status: review
 priority: Medium
 summary: フリスビーをどこでも (DES-DOG-005 段階 3)。M1 陸の地面基準ジャンプと到達判定、M2 川のディスクの浮き、M3 岸からのドボンと水中回収、M4 取り出しの門の置き換え
-next: M4 実装済み・未検証 (2026-09-28)。実機 (09-28 夜、7 人・170 投げ) で空中 69/69・例外 0。ドボンは 0 件で未確認 (PCVR 40/41 が残る)。統括がコンパイル → Course/92 → 93 → Walking/5 → Frisbee/5 → Course/85 → 27 → 81 → Course/95 → Course/94 (F15-gate を含む 9 ケース)。そのあと PCVR 37〜48 (ユーザー)、VER-WLD-001 項目 12updated: 2026-09-29
+next: AI 側の検証は M1〜M4 とも済み (ClientSim、2026-09-28)。残りはユーザーの PCVR 37〜48 (実機 09-28 夜はドボン 0 件で、岸からの跳び込み 40/41 が未確認)、VER-WLD-001 項目 12
+updated: 2026-09-29
 ---
 
 # IMP-DOG-023 フリスビーをどこでも (段階 3)
@@ -37,8 +38,8 @@ next: M4 実装済み・未検証 (2026-09-28)。実機 (09-28 夜、7 人・170
 ### M2. 川のディスクの浮き
 
 - [x] `KH_Frisbee` の着水と浮き (`EndFlight` の岸戻し分岐の変更を含む)、漂流の共有 (`_DriftVelocity`。場内の停止規則と `floatDrift` を保つ)、解放後の復旧、岸戻しの残る所 (§D-6)、Course/89 の追加検査 — 2026-09-28 実装 (コンパイル・ハーネス未)
-- [ ] Course/94 (M2 の 8 ケース) が `FRISBEE_M2_PASS`
-- [ ] 88 / 78 / 89 / W5 (75) が PASS のまま (ボール側の回帰)
+- [x] Course/94 (M2 の 8 ケース) が `FRISBEE_M2_PASS` — 2026-09-28 (run 082637、下の検証の記録)
+- [x] 88 / 78 / 89 / W5 (75) が PASS のまま (ボール側の回帰) — 2026-09-28。88b のポメは swimSink の件で基準を 0.010 に緩和 (ユーザー決定、c88b893)
 - [x] Codex レビュー (同期・所有権) — 2026-09-28。観点 1・3・4・6 は問題なし。高 1 (Retrieve 中に浮く水へ移ったディスク) と中 3 (非 Owner の重力操作、ハーネスの凍結合格と水遊び場の除外、M2 の実機項目) を反映 (再実行は未)
 
 M2 でやったこと (2026-09-28):
@@ -55,8 +56,8 @@ M2 でやったこと (2026-09-28):
 
 - [x] 着地の帯を §D-3 の条件で許す。状態 11〜13 (`KH_FrisbeeCatch.Water.cs`)、Wander の足を借りる、非 Owner の表示経路、`ClaimDisc` の取得待ちと喪失処理、Wander の `_speed = 0` の例外、`_GateToy` の門 (§D-5) — 2026-09-28 実装 (コンパイル・ハーネス未)
 - [x] Course/95 (計画プローブ、継続判定込み) PLAN_PROBE_OK 15/15、Course/94c (F2・F3) PASS — 2026-09-28 (ポメは 1 試行目、ラブは 2 試行目)
-- [ ] Course/94b (F2・F3・F4・F5・F11・F12・F13・F14・F14b・F2m-miss-float・F2m-miss-land) が `FRISBEE_M3_PASS` (F4 は川のデータに該当が無く SKIP。F13 は場所を探索、無ければ SKIP)
-- [ ] 回帰: 試作既定 26/26・terrain 10/10、Course/94 `FRISBEE_M2_PASS` 8/8、88a / 88b / 78 / 75 / 89 (ボールの計画器の移設は純粋な切り出し)
+- [x] Course/94b (F2・F3・F4・F5・F11・F12・F13・F14・F14b・F2m-miss-float・F2m-miss-land) が `FRISBEE_M3_PASS` (F4 は川のデータに該当が無く SKIP。F13 は場所を探索、無ければ SKIP) — 2026-09-28 10/11 (F4 N/A)、c88b893
+- [x] 回帰: 試作既定 26/26・terrain 10/10、Course/94 `FRISBEE_M2_PASS` 8/8、88a / 88b / 78 / 75 / 89 (ボールの計画器の移設は純粋な切り出し) — 2026-09-28 すべて PASS (88a 20・78 14・75 3・89 OK、c88b893)
 - [x] Codex レビュー (同期・所有権) — 2026-09-28。観点 2・3・5・6 は問題なし。高 3 (12 の取得未確認のまま 13 へ進む、11 の取得待ちで EndGrabbed を見ない、近くの陸へ出たディスクで泳ぐ犬を川床へ落とす)・中 4 (水遊び場のドボンに岸の条件、F14 の分割、外したドボンの検証、F12 の門の値)・低 2 を反映 (再実行は未)
 
 M3 でやったこと (2026-09-28):
@@ -83,8 +84,8 @@ M3 の検証で直したこと (2026-09-28、Play の前に静的に詰める方
 - [x] `playAreaRadius` を 0 に (Course/92 が書く、Course/93・Walking/5 が 0 を検査)。`HasArea` / `InArea` / `BuildRing` / `areaRing`、`InCircleXZ`、`playAreaMargin` の削除。輪の GameObject は Course/92 (本シーン) と Frisbee/4 (試作) が消す
 - [x] 文言 2 キー (13 言語): `course.toy.discArea`「川や急な斜面を離れると取り出せます」、`course.toy.discAreaState`「ここでは不可」
 - [x] 置き換わる決定の記録 (DES-DOG-002 / IMP-DOG-012 / IMP-DOG-020 段階 7 / IMP-DOG-021 §1 / IMP-DOG-022 / 試作記録 P2・D1・輪)、ハーネス文書、game-design、[VER-WLD-001](VER-WLD-001-quest-ios-devices.md) 項目 12
-- [ ] コンパイル (C#・U#)、Course/92 → 93、Walking/5、Frisbee/5、翻訳の入れ直し (Course/85 → 27 → 81)
-- [ ] Course/95 の F15-gate 行が期待どおり、Course/94 が `FRISBEE_M2_PASS` 9/9 (F15-gate を含む)
+- [x] コンパイル (C#・U#)、Course/92 → 93、Walking/5、Frisbee/5、翻訳の入れ直し (Course/85 → 27 → 81) — 2026-09-28 (0440455。Walking/5 の M4 項目 6 件 PASS)
+- [x] Course/95 の F15-gate 行が期待どおり、Course/94 が `FRISBEE_M2_PASS` 9/9 (F15-gate を含む) — 2026-09-28 Course/94 9/9 (F15 4/4)、88b 11/11 (0440455)。Course/95 の gate 行の結果はコミットに記録が無い
 
 M4 でやったこと (2026-09-28):
 - 門の規則 (設計 F を具体化): 取り出せるのは、ローカルのプレイヤーの足もとで犬が遊び始められるとき。(1) 川の帯 (半幅 + 1 m。橋の床は帯ではない) と水遊び場の多角形の外 (`InJumpWater`。D-1 の「水の中からは跳ばない」と同じ範囲。`PlayableAt` の水遊び場の例外は歩く・立つためのもので、遊びの始点にはしない)、(2) 足もと + 0.5 m から 4 m 以内に地面 (layer 0 / 11)、(3) 傾き ≤ `runMaxSlopeDeg` 25°。レイ 1 本、`_planRays` に数えず `_playY` も書かない。6 匹の値は同じなので、最初に聞いた行の捕り手で判定し 0.5 s 使い回す (≤ 2 本/s)。優先順は Unwired → Pending → OutOfArea → Held → 12・13 は InWater / 11 は通す / 他の係りは DogBusy → BallInUse → Cooldown のまま。
@@ -115,6 +116,8 @@ M4 でやったこと (2026-09-28):
 - M2 (2026-09-28、Codex レビュー 4 件反映後): コンパイル C#/U# 0。Course/89 FRISBEE_RIVER_OK (float: water=24 / bridge=8 / edge=6 / noBank=0 / spot=True)。Course/94 FRISBEE_M2_PASS 8/8 (run 082637: F5a-river・F5b-spot・F5c-grab・F5c-recall・F5d-roll・F6-bridge・F7-nobank・F7b-edge)。ボール側の回帰: 78 WATER_PASS 14、75 W5_PASS、試作既定 26/26 (171911)。**88b は RW-down-Pome / RW-up-Pome が FAIL だが M2 の差分が原因ではない**: c4fd29a (ポメの swimSink 0.035 m、PCVR 決定) で泳ぐ口の高さが 0.086 → 0.051 m に下がり、ハーネスの口の余裕 0.03 m の基準を川の流路で割る (mouthLow)。c4fd29a 以降の最初の 88b (075505) から一貫して FAIL、時間・漂流・入水点は合格運転と同じ。PCVR の決定を変える (swimSink / swimPitch) かハーネス基準を下げるかはユーザー判断 → IMP-DOG-020 / 021 の範囲で別件。
 
 - M3 (2026-09-28 夕、中断時点・**未コミット**): Codex レビュー 9 件 (高 3) を反映済み。修正前コードの部分走行: 試作既定 26/26 (180823)、terrain 9/10 (181350。T-up10 の stand は Play 中の編集によるフレーム停止で最初の計画が 0.23 s 遅れたため。修正版で再確認)、89 OK、94 M2 8/8 (100037)。**94b (100355): F2-dobon-Pome / F3-dobon-Lab が 6 試行すべて RETRY で「ドボンの捕りが 1 度も成立しない」** (設計書 I のリスクどおり。狙いの配置か計画器の点数の見直しが要る)。同 run で FMOD の出力デバイス初期化エラーも出た (環境)。88a (101543): W3-Dachs FAIL (t=24.3、carryMouthLow=1) → M3 の Fetch の切り出し (`_EntrySlice` / `_ExitSlice`) の回帰か、swimSink の件の Dachs 版かは未切り分け。
+
+- M3・M4 (2026-09-28、コミット c88b893 / 0440455 のメッセージから転記): 上のチェック欄のとおり。M3 は 95 15/15、94c PASS、94b 10/11 (F4 N/A)、94 8/8、試作 26/26・terrain 10/10、88a 20・78 14・75 3、89・93 OK。M4 は 94 9/9 (F15 4/4)、88b 11/11、92 / 93 / Frisbee/5 / 81 OK、Walking/5 の M4 項目 6 件 PASS。
 
 - 実機 (2026-09-28 夜、ユーザーの PC VR ログ `output_log_2026-09-28_22-33-09.txt`、［TEST］ 古民家の裏山、最大 5 人・延べ 7 人、84 分): ビルドは M3 以降を確実に含む (`water chase entry=` など。M4 は実行時ログが無いので判別できず、0440455 の可能性が高い)。投げ 170 (7 人全員)、捕球 74 (空中 69・立ち 4・追い越し 1)。**liftoff 69 はすべて catch OK、`landGap` は全件 0.000**。etaErr の絶対値の平均 0.12〜0.22、Udon の例外 0。水では、浮き (着水) 6、water chase 8・入水 7・水中運搬 5・出口の計画 6。**ドボンは 0 件で、M3 の岸からの跳び込みは未確認 (PCVR 40/41 が残る)**。水中追跡の 7 回はすべて着水後に歩いて入る経路だった。ほかに `hold-lost` 89 (86 件が state 9 Drop、口から取られた。[IMP-DOG-013](IMP-DOG-013-frisbee-pet-after-return.md) の検討候補)、`cannot-play` 取消 6・拒否 4、`in-water` 拒否 10。別件で [BUG-DOG-006](BUG-DOG-006-steal-held-pickup.md) (steal ownership 15 件) と [BUG-DOG-007](BUG-DOG-007-shiba-throw-implausible.md) (柴の implausible 5 件) を起票した。
 

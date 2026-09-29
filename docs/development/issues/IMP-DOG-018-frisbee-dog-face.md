@@ -4,9 +4,9 @@ type: IMP
 system: DOG
 status: review
 priority: High
-summary: フリスビーが誰の (どの犬の) ものか分からない (体験会 2026-09-26)。ディスクの上下面に犬の顔 (シーン内モデルのスクリーンショット 256px) を印字。2026-09-26 実装・撮影・Build・Verify PASS、PCVR / 実機の見え方とユーザーの権利確認待ち
-next: PCVR で 3 m 離れて誰のディスクか分かるか、持ったときに顔が消えて離すと戻るか。撮った 6 枚 (Textures/Frisbee) の見た目をユーザーが確認 (首輪の輪が頭の上に写っている)。iOS / Quest は VER-WLD-001
-updated: 2026-09-26
+summary: フリスビーが誰の (どの犬の) ものか分からない (体験会 2026-09-26)。ディスクの上下面に犬の顔 (シーン内モデルのスクリーンショット 256px) を印字。2026-09-26 実装・撮影・Build・Verify PASS、権利と 6 枚の見た目はユーザー確認済み (2026-09-29、微調整は後で)。PCVR / 実機の見え方待ち
+next: PCVR で 3 m 離れて誰のディスクか分かるか、持ったときに顔が消えて離すと戻るか。6 枚の見た目の微調整はユーザーが後で (首輪の輪が頭の上に写っている)。iOS / Quest は VER-WLD-001
+updated: 2026-09-29
 ---
 
 # IMP-DOG-018 フリスビーに犬の顔を印字して、誰のディスクか分かるようにする
@@ -27,11 +27,11 @@ updated: 2026-09-26
 - 確認日: 2026-09-26
 - 生成手順: `Tools/KominkaHillside/Frisbee/6 Capture Dog Faces` (`Assets/KominkaHillside/Scripts/Editor/KH_DogFaceCaptureEditor.cs`)。Edit モードで犬の初期位置のまま、頭の少し前・上から正射影カメラ (犬レイヤーのみ) で 256×256 を撮り、背景をディスクの識別色で塗る。出力 `Assets/KominkaHillside/Textures/Frisbee/KH_DogFace_{犬}.png`、ログ `Temp/KH_Frisbee/dog-faces.txt`
 - 貼り付け: `KH_FrisbeePrototypeEditor.BuildDisc` がディスクの上下面に円メッシュ `FaceTop` / `FaceBottom` (直径 0.16 m、材質 `Data/Frisbee/KH_FrisbeeFace_{犬}.mat`) を付ける。持っている本人の画面でだけ非表示 (`KH_Frisbee.faceRenderers`)
-- 権利の可否: ユーザー確認待ち
+- 権利の可否: 問題なし (ユーザー確認 2026-09-29)。見た目は一旦 OK、微調整は後で
 
 ## 完了条件
 
-- [x] 6 匹の顔画像の出どころを記録した (上の「素材の記録」。権利の可否はユーザー確認待ち)
+- [x] 6 匹の顔画像の出どころを記録した (上の「素材の記録」。権利はユーザー確認済み 2026-09-29)
 - [x] 撮影 6 枚 OK (犬の画素率 33〜74%、向きは鼻方向)、`Walking/3 Build` → `Walking/5 Verify` 490/0、`Frisbee/4 Build Scene` → `Frisbee/5 Verify` 0 件、`Build Size/8 - Verify Mobile Caps` missing 0 (2026-09-26)
 - [ ] PCVR で 3 m 離れて誰のディスクか分かる、iOS / Quest 単体で顔が潰れない
 - [ ] Android / iOS のビルドサイズがモバイル上限内 (実測を記録へ追記)

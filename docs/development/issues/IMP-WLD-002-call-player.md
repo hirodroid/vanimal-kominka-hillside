@@ -5,7 +5,7 @@ system: WLD
 status: wip
 priority: Medium
 summary: 在室の 1 人を呼ぶ ([来てもらう]。呼ばれた人が [行く] を押したときだけ自分で呼んだ人の近くへ移動し、接続犬も同行する) を、合流の受付箱の交渉を流用して実装する
-next: 統括が コンパイル (--udon) → Course/85 → Course/27 → Course/81 (TRAVEL_OK) → Course/82c を 1 回 (TRAVEL_CALL_PASS) → 同じ版で 82・82b の回帰。その後 PCVR (設計書 §F.7 #10〜#15)
+next: 実装と ClientSim は済み (82c 29/29、82・82b の回帰なし、3c307f8)。残りは C7-wet (到達手順を Edit で確かめてから 82c に足す、AI) と PCVR 2〜3 人 (設計書 §F.7 #10〜#15、ユーザー)
 updated: 2026-09-29
 ---
 
@@ -26,13 +26,13 @@ updated: 2026-09-29
 
 - [x] Codex 相談 (`vrc-review` 相談モード)。指摘は設計書 §F 第 2 版に反映した。
 - [x] 実装 (下の「実装 (2026-09-29)」)。C#・翻訳表・ハーネスまで。シーンの再生成は統括。
-- [ ] コンパイルのエラーが 0 (`unity-compile.sh --udon`)。Course/85 → Course/27 → Course/81 が `TRAVEL_OK` (新しい 2 つのボタン・通知板のボタン 2 つと理由の行の配線とイベント、13 言語の収まり、ネットワーク入口の名前と署名、試験用の値が 0)。
-- [ ] ClientSim: Course/82c が `TRAVEL_CALL_PASS` (設計書 §F.6 の期待表。C7-wet は除く)。同じ版で Course/82 (`TRAVEL_OBSERVED`)・82b (`TRAVEL_RC_OBSERVED`) が通る。
+- [x] コンパイルのエラーが 0 (`unity-compile.sh --udon`)。Course/85 → Course/27 → Course/81 が `TRAVEL_OK` (新しい 2 つのボタン・通知板のボタン 2 つと理由の行の配線とイベント、13 言語の収まり、ネットワーク入口の名前と署名、試験用の値が 0)。 — 2026-09-29 (3c307f8)
+- [x] ClientSim: Course/82c が `TRAVEL_CALL_PASS` (設計書 §F.6 の期待表。C7-wet は除く)。同じ版で Course/82 (`TRAVEL_OBSERVED`)・82b (`TRAVEL_RC_OBSERVED`) が通る。 — 2026-09-29 82c C1〜C11 29/29 PASS、82 (22)・82b (8) 回帰なし (3c307f8)
 - [ ] C7-wet (陸で接続した犬が濡れてから [行く]): 到達手順を Edit で確かめてから 82c に足す。
 - [ ] PCVR 2〜3 人: 設計書 §F.7 の #10〜#15 (ユーザー)。
 - [ ] Quest / iOS の Touch で 2 つのボタンと通知板の [行く] [今は行かない] を押し分けられる ([VER-WLD-001](VER-WLD-001-quest-ios-devices.md) の回)。
 
-## 実装 (2026-09-29、未コンパイル・未検証)
+## 実装 (2026-09-29)
 
 - `Assets/KominkaHillside/Scripts/KH_TravelMailbox.cs`: `ReqCall` と共通の `Receive` / `ReceiveCancel`、送り主ごとの見た最大の seq、世代と 0.5 秒、種類の差し替え、交差 (確定優先 → playerId、`debugCrossInvert`)、R の 2 段の期限 (返事 22 秒・到着 20 秒、無応答は `CallUnknown`)、T の [行く] (測定 → 着地点 → `_TravelBeginJoin` → code 4、Manager の結果で code 1 / 5)、`CancelJoin` の照合先に「呼ばれて移動中」を追加、試験用の入口 (`debugIncomingFrom/Kind/Seq`・`_DebugIncomingNow`・`_DebugIncomingCancelNow`・`debugReply*`)。合流の既存の動き (承認・測定・30 秒・T9/T10/T12) は変えない。
 - `Assets/KominkaHillside/Scripts/KH_TravelNotice.cs`: 種類ごとのボタン実体 (`joinButtons` / `callButtons`)、世代つきの押下 (`_Yes/_No/_Go/_NotNow`)、呼ぶの題と犬の数、理由の行。

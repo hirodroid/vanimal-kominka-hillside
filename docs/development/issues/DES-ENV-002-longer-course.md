@@ -4,9 +4,9 @@ type: DES
 system: ENV
 status: wip
 priority: Medium
-summary: 約2.41kmの川沿い周回を別シーンへ実装中。地形・経路・景観・容量とEditor描画を確認し、Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する
-next: 接続済みの436点経路・手元メニューで犬の周回を検証。LODと遮蔽の実機表示、犬連れの歩行時間と16人性能から最終距離/予算を確定する
-updated: 2026-09-27
+summary: 約2.41kmの川沿い周回を実装し、2026-09-27に本番シーン (VRCDefaultWorldScene) へ採用済み。Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する
+next: 犬連れの実歩行時間、LODと遮蔽の実機表示、Quest 3・iPhone 15 Pro・16人の性能から最終距離/予算を確定する (ユーザーの実機。VER-WLD-001)
+updated: 2026-09-29
 ---
 
 # DES-ENV-002 散歩コースの延長 (周回・川) とワールドの広さを決める
@@ -64,3 +64,5 @@ updated: 2026-09-27
 関連: [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) (道・休憩場所の磨き。コースが変わるならそちらの前提も変わる)、[DES-UI-004](DES-UI-004-walk-destinations-and-boards.md) (目的地の追加)。
 
 2026-09-27 全周地形へ展開：別シーンに600×720m・20枚のTerrainと小橋2基を構築。中心線は2,406.89m（設定2m/sで20.06分）。当初の1.81km案を延長した。旧道保護・足場・地形接合の静的検査は通過し、全周NavMeshの静的検査も通過。436点の周回経路と手元の6目的地も接続しEditor検査済み。犬の実移動・景観仕上げ・実機確認は残る。検査根拠は上記制作記録を参照。
+
+2026-09-27 本番へ採用：ユーザーが周回版を了承し、元の本番ファイル `VRCDefaultWorldScene` (ファイル名・GUID・公開先IDは維持) へ切り替えた。旧版は `Assets/Scenes/Archive/KH_HillsideBeforeRiverLoop.unity`。[切替記録](../../plans/des-env-002/production.md)。残りは実機での距離・予算の確定。
