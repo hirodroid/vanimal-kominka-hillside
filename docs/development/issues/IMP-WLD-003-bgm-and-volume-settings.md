@@ -2,10 +2,10 @@
 id: IMP-WLD-003
 type: IMP
 system: WLD
-status: todo
+status: review
 priority: Medium
 summary: 専用BGM「木漏れ日の帰り道」003を導入し、古民家と同じ設定メニューで個人のON/OFF・音量調整を可能にする
-next: 既存BGM・音量UIの配線と古民家の挙動を照合し、003音源の取り込み・設定接続・モバイル検証を一括実装する
+next: 実装と Edit モードの検査は済み (Course/98 Build・99 Verify BGM_OK、Menu/16a PASS、f32cd77 / a06178c)。残り: ユーザー判断 3 件 (ON/OFF ボタンを残すか、WAV 62 MB を git へ入れるか、基準音量 0.35 と圧縮品質の確定)、ライブ連動と実際の出音の確認 (ClientSim / PCVR)、Android / iOS の容量の実測
 updated: 2026-09-29
 decided: 2026-09-29
 ---
