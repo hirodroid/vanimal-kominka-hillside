@@ -17,6 +17,13 @@ namespace KominkaHillside.Editor
         const string Data="Assets/KominkaHillside/Data/Walking/";
         static readonly string[] Keys={"Corgi","Pome","Lab","Dachs","Shiba","Samoyed"};
         static readonly float[] RingY={.10f,.105f,.15f,.09f,.105f,.185f};
+        // BUG-DOG-002: the one place the handle placement values live (Production 7 writes them, Production 3 checks
+        // them, Walking/3 Build uses them). Values tuned by feel in PCVR come back HERE, then Production 7.
+        // HandleGripOffset: the rear belt (handle local +Y 0.062..0.065) sits on the grip point at .062; larger = the
+        // loop moves forward along the rope axis, smaller = back into the fist (forward only, no up/down/sideways).
+        // HandleRollDegrees: roll of the ring plane about the rope axis for the right hand; the left hand uses the
+        // negated value. 0 = the belt runs along the knuckle line (finger-bone path).
+        public const float HandleGripOffset=.062f, HandleRollDegrees=0f;
         static void Guard()
         {
             if(Application.isPlaying || EditorSceneManager.GetActiveScene().path!="Assets/Scenes/VRCDefaultWorldScene.unity")
@@ -174,8 +181,27 @@ namespace KominkaHillside.Editor
             log.AppendLine("handleGripOffset="+m.handleGripOffset.ToString("F4")+"m handleRollDegrees="+m.handleRollDegrees.ToString("F1")+"deg (right hand; left hand uses the negated roll)");
             check(m.handleGripOffset>=0f&&m.handleGripOffset<=.1f,"handle grip offset within 0..0.1 m");
             check(m.handleRollDegrees>=-180f&&m.handleRollDegrees<=180f,"handle ring roll within -180..180 deg");
+            // Builder-owned: the scene must hold the editor constants (Production 7), not an Inspector leftover
+            var mb=UdonSharpEditorUtility.GetBackingUdonBehaviour(m);
+            mb.publicVariables.TryGetVariableValue("handleGripOffset",out float storedGrip);
+            mb.publicVariables.TryGetVariableValue("handleRollDegrees",out float storedRoll);
+            check(Mathf.Abs(m.handleGripOffset-HandleGripOffset)<1e-5f&&Mathf.Abs(storedGrip-HandleGripOffset)<1e-5f,"handle grip offset == builder "+HandleGripOffset.ToString("F4")+" (proxy and backing)");
+            check(Mathf.Abs(m.handleRollDegrees-HandleRollDegrees)<1e-4f&&Mathf.Abs(storedRoll-HandleRollDegrees)<1e-4f,"handle ring roll == builder "+HandleRollDegrees.ToString("F1")+" (proxy and backing)");
             log.AppendLine("failed="+failed);Report("verify",log.ToString());
             if(failed>0)throw new InvalidOperationException("Production verification failed");
+        }
+        // BUG-DOG-002: Walking/3 Build is refused on the river-loop production scene (KH_ProductionScene), so this is the
+        // builder that writes the handle placement values. Touches only these two fields of KH_LeashManager.
+        [MenuItem("Tools/KominkaHillside/Walking/Production 7 Apply Handle Tuning")]
+        public static void ApplyHandleTuning()
+        {
+            Guard();var m=UnityEngine.Object.FindObjectOfType<KH_LeashManager>();
+            if(m==null)throw new InvalidOperationException("KH_LeashManager required");
+            string before="handleGripOffset="+m.handleGripOffset.ToString("F4")+" handleRollDegrees="+m.handleRollDegrees.ToString("F1");
+            m.handleGripOffset=HandleGripOffset;m.handleRollDegrees=HandleRollDegrees;
+            UdonSharpEditorUtility.CopyProxyToUdon(m);EditorUtility.SetDirty(m);
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            Report("handle-tuning","before "+before+"\nafter handleGripOffset="+HandleGripOffset.ToString("F4")+" handleRollDegrees="+HandleRollDegrees.ToString("F1")+"\n(scene marked dirty; save it, then Production 3 Verify)");
         }
         [MenuItem("Tools/KominkaHillside/Walking/Production 4 Capture")]
         public static void Capture()
