@@ -287,6 +287,11 @@
     },
     {
       "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/VolumeSettings/BgmNote",
+      "key": "KD_TreatPouch.WordBgmNote"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
       "path": "Page_Settings/SettingsHome/NightModeLabel",
       "key": "settings.night.title"
     },

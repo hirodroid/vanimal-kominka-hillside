@@ -56,6 +56,27 @@ decided: 2026-09-29
 - [ ] Android/iOSの圧縮後サイズとワールド容量の増分を実測し、再生時のメモリ/負荷を容量と区別して記録する。
 - [ ] PC/VR・Quest/Android・iOSで操作性、会話や犬との音量バランス、圧縮後の余韻、複数周回の継ぎ目を確認する。実機待ちはreviewとし、完了にしない。
 
+## 実装記録 (2026-09-29、コードと Editor ビルダーまで。Unity 未実行)
+
+### 着手前の事実 (コードとシーン YAML から確定)
+
+- 裏山: `KD_BgmPlayer` と `KD_TreatPouch` の BGM 設定コード (`_BgmChanged` / `_ToggleBgm` / `ApplyBgmSettings`) は古民家と**同一** (差分なし) だが**未配線**。本番シーンに `KD_BgmPlayer` は 0 個、`KD_TreatPouch` の `bgmPlayer` / `bgmSlider` / `bgmValueLabel` / `bgmToggleLabel` / `bgmToggleImage` はすべて `{fileID: 0}`。音量頁の構築 (`KD_DogVoiceSettingsEditor.Hillside.cs`) が BGM の行を毎回消して参照を null にし、Menu/16a・Verify 22 が「BGM が無いこと」を検査していた。
+- 古民家 (比較元): `KD_Bgm` (2D・loop・PlayOnAwake、`baseVolume` 0.35、`live` 配線済み)。取り込みは Vorbis・Streaming、品質 PC 1.0 / Android・iOS 0.5。音量頁は IMP-ENV-011 で「外・寝室 × BGM・犬の声・ライブ」の 6 スライダーにし、**BGM / 犬の声の ON/OFF ボタンは画面から外して 0% で無音に統一**している (シーンの `bgmToggleLabel` / `bgmToggleImage` は null、`BgmToggle` は無い)。
+- 保存・復元: 古民家も裏山も BGM 設定を PlayerData に保存しない。初期値は `_bgmEnabled = true` / `_bgmVolume = 0.5` (コード)、スライダーの焼き値も 0.5。**再入室すると ON・50% に戻る** (古民家と同じ。新しい保存仕様は足していない)。
+- ライブ連携: `KD_BgmPlayer.Update` が `KD_LiveSystem.IsNightWanted` (夜のフェードインの頭〜タイムラインの終わり、同期時計の純関数) で掛け金を 1 秒かけて 0 へ動かし、個人設定は書き換えない。途中入室は `Start` で最初から 0、中止は `startMs` を終端へ送るので同じ式で戻る。古民家と同じコードをそのまま使う。
+
+### 実装
+
+- 音源: `Assets/KominkaHillside/Audio/BGM/KH_Komorebi_003_Loop.wav` (SHA256 一致を確認してコピー。.meta は Unity が作る)。
+- `Tools/KominkaHillside/Course/98 - Build BGM` / `99 - Verify BGM` (`Scripts/Editor/KH_BgmEditor.cs`): SHA256 照合 → 取り込み設定 (Vorbis・Streaming・preload なし・48 kHz 維持・stereo、品質 PC 0.7 / Android・iOS 0.5) → `KH_Dogs/KD_Bgm` (AudioSource 2D・loop・PlayOnAwake + `KD_BgmPlayer` SyncMode None、`live` = `KD_LiveSystem`、`baseVolume` 0.35) → 音量頁の BGM の行と文言の束縛 → 保存 → 検査。検査は取り込み設定・クリップ (stereo・48 kHz・10,368,000 フレーム)・配線 (proxy と backing)・頁の配置と重なり・13 言語の注記の収まり・別シーンでの振る舞い (0/50/100%、OFF→ON、OFF 中の変更、ライブ中の変更、元 OFF はライブ後も OFF、ライブ中に ON) を見る。結果は `Temp/imp-wld-003/bgm-build.json` / `bgm-verify.json`。
+- 音量頁 (`KD_DogVoiceSettingsEditor.Hillside.cs`、Menu/7・11・16 の共通本体): 「外」の列に BGM の行 (題字 BGM・値・スライダー・右に [ON/OFF]) を犬の声の上に置き (88 間隔、古民家と同じ)、注記を 2 行 (既存「自分だけに反映・0% で消音」+ 古民家の `KD_TreatPouch.WordBgmNote`「ライブ中は自動で止まります」、13 言語は文言表に既存) にした。`KD_Bgm` が居れば `pouch.bgmPlayer` を配線する (古民家と同じく両方向)。Menu/16a・Verify 22 の検査を「BGM の行がある」に改めた。束縛は `Data/UILocalizationBindings.json` に `Page_Settings/VolumeSettings/BgmNote` を 1 件追加。
+- 新しい翻訳キーは足していない。Udon のコードは変更なし。
+
+### 未確認・判断待ち
+
+- [ON/OFF] ボタンは本 Issue の実装範囲 2・3 に合わせて付けた。**古民家の現行画面にはこのボタンが無い** (上記)。古民家に揃えるならボタンを外し 0% を OFF とする (コードは両対応)。
+- `baseVolume` 0.35 は古民家の値を仮に使った。003 は peak -3.0 dBFS / RMS -23.1 dBFS で、古民家の曲 (mp3、取り込みで normalize あり) との聞こえの差は実機で決める。品質 0.7 / 0.5 も容量実測の前の候補。
+
 ## 今回の範囲外
 
 楽曲の追加改作、環境音の新規制作、場所別の曲切替、ラジオ、ライブ曲の差し替え、公開操作。環境音などの残る音設計はDES-WLD-002で扱う。

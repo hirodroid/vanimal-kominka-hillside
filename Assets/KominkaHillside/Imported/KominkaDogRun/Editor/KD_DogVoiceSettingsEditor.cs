@@ -49,12 +49,13 @@ namespace KominkaDogRun.Editor
             }
             foreach (var child in legacy) Undo.SetTransformParent(child, audio.transform, "Move volume controls");
             // Old explanatory rows are replaced by two shared footnotes.
-            foreach (string name in new[] { "VoiceScope", "VolumeTitle", "VoiceKinds", "SoundDivider", "BgmVolumeTitle", "BgmNote", "VoiceToggle", "BgmToggle", "BedroomVolumeTitle", "BedroomVolumeValue", "BedroomVolumeSlider" })
+            // 裏山改変 (IMP-WLD-003): "BgmNote" / "BgmToggle" は裏山では今の部品名なので消さない (EnsureHillsideVolume が作り直さずに使う)
+            foreach (string name in new[] { "VoiceScope", "VolumeTitle", "VoiceKinds", "SoundDivider", "BgmVolumeTitle", "VoiceToggle", "BedroomVolumeTitle", "BedroomVolumeValue", "BedroomVolumeSlider" })
             {
                 var old = audio.transform.Find(name);
                 if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
             }
-            // 裏山改変 (段階 3): 音量の頁は「外」の 1 群 = 犬の声だけ。BGM・ライブ (DES-WLD-002 / DES-LIV-001 後) と寝室 (裏山に無い) の行は作らず、
+            // 裏山改変 (段階 3 → IMP-WLD-003): 音量の頁は「外」の 1 群 = BGM + 犬の声。ライブ (DES-LIV-001 後) と寝室 (裏山に無い) の行は作らず、
             // 以前の構築で残っていれば消す。入口・戻る・行・音源の配線は EnsureHillsideVolume (KD_DogVoiceSettingsEditor.Hillside.cs) が持つ
             EnsureHillsideVolume(pouch, font, log);
             home.SetActive(true);

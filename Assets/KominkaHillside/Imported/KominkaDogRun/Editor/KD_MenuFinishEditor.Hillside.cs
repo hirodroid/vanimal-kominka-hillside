@@ -83,7 +83,7 @@ namespace KominkaDogRun.Editor
         internal static void BuildHillsideSettings(KD_TreatPouch pouch, KD_MenuSettings settings, TMP_FontAsset font, StringBuilder log)
         {
             var home = pouch.settingsHome.transform;
-            // 1) 音量 (犬の声のみ)。入口 VolumeSettingsButton もここで表示に戻る
+            // 1) 音量 (BGM + 犬の声。IMP-WLD-003)。入口 VolumeSettingsButton もここで表示に戻る
             KD_DogVoiceSettingsEditor.EnsureHillsideVolume(pouch, font, log);
             // 2) 距離フェード (PCのみ)。系 KH_Dogs/KD_DistanceFadeSettings が無ければ作る
             KD_DistanceFadeSettingsEditor.EnsureHillside(pouch, log);
@@ -275,10 +275,12 @@ namespace KominkaDogRun.Editor
             check(fade != null && fade.entryButton != null && fade.entryButton.transform == home.Find("DistanceFadeSettingsButton"), "distance fade entryButton (interactable is decided on device by Start)");
             check(fade != null && fade.language == language, "distance fade language wired");
 
-            // ---- 音量 (犬の声のみ)
+            // ---- 音量 (BGM + 犬の声。IMP-WLD-003。行の細部は Menu/16a、音源は Course/99)
             check(pouch.dogVoiceSlider != null && pouch.volumeSettingsPage != null && pouch.dogVoiceSlider.transform.parent == pouch.volumeSettingsPage.transform, "volume page has the dog voice slider");
-            check(pouch.bgmSlider == null && pouch.liveVolumeSlider == null && pouch.bedroomBgmVolumeSlider == null && pouch.bedroomVoiceVolumeSlider == null && pouch.bedroomLiveVolumeSlider == null,
-                "no BGM / live / bedroom sliders (当面 犬の声のみ)");
+            check(pouch.bgmSlider != null && pouch.volumeSettingsPage != null && pouch.bgmSlider.transform.parent == pouch.volumeSettingsPage.transform
+                && pouch.bgmValueLabel != null && pouch.bgmToggleLabel != null && pouch.bgmToggleImage != null && pouch.bgmPlayer != null, "volume page has the BGM row (slider / value / ON-OFF) and the BGM player");
+            check(pouch.liveVolumeSlider == null && pouch.bedroomBgmVolumeSlider == null && pouch.bedroomVoiceVolumeSlider == null && pouch.bedroomLiveVolumeSlider == null,
+                "no live / bedroom sliders");
 
             // ---- クレジット頁
             var page = settings.creditPage;
