@@ -406,6 +406,7 @@ namespace KominkaHillside.Editor
             public List<VariantSummary> perVariant = new List<VariantSummary>();
             public EtaStats eta = new EtaStats();
             public List<string> errors = new List<string>();
+            public int clientLogErrors;
             public List<string> trace = new List<string>();
         }
 
@@ -2389,6 +2390,9 @@ namespace KominkaHillside.Editor
         {
             if (report == null) return;
             if (message != null && message.StartsWith("[KH_Frisbee") && Lines.Count < 4000) Lines.Add(message);
+            // VRChat クライアントを同じ PC で動かしていると、UdonSharp のログ監視がクライアントの output_log の Udon 例外 (他のワールドのものを含む) を
+            // Editor のコンソールへ Error で流す。先頭が下の文言の行はこの Play の結果ではないので、数だけ記録して失敗にしない (実測 2026-09-29)。
+            if (message != null && message.Contains("Runtime error detected, but the client has not been launched with")) { report.clientLogErrors++; return; }
             if ((type == LogType.Error || type == LogType.Exception || type == LogType.Assert) && report.errors.Count < 50)
             {
                 report.errors.Add(message + "\n" + stack);

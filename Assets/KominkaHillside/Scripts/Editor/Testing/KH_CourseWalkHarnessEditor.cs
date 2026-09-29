@@ -71,7 +71,7 @@ namespace KominkaHillside.Editor
             public string commerceSource; // 96b: the PlayerData snapshot of the 96 run that was installed before Play
             public int lapChoice;
             public List<Case> cases=new List<Case>();
-            public List<string> errors=new List<string>();
+            public List<string> errors=new List<string>();public int clientLogErrors;
             public string limitations="Single local ClientSim. Menu Udon events exercise attachment and destination request paths; no physical UI click, pickup or real network/Owner handover. Initial actors are placed by the harness. Holder follows saved route by short TeleportTo steps at 2 m/s; dog transforms are never assigned during observation. lapChoice=0 is segment coverage only; lapChoice=2/3 is a continuous synthetic-holder lap. Neither measures user walking time or device performance. Random dog pauses remain enabled.";
         }
         static Report report;
@@ -132,6 +132,9 @@ namespace KominkaHillside.Editor
         static void Log(string condition,string stack,LogType type)
         {
             if(report==null||!SessionState.GetBool(Key,false)||!EditorApplication.isPlaying)return;
+            // VRChat クライアントを同じ PC で動かしていると、UdonSharp のログ監視がクライアントの output_log の Udon 例外 (他のワールドのものを含む) を
+            // Editor のコンソールへ Error で流す。先頭が下の文言の行はこの Play の結果ではないので、数だけ記録して失敗にしない (実測 2026-09-29)。
+            if(condition!=null&&condition.Contains("Runtime error detected, but the client has not been launched with")){report.clientLogErrors++;return;}
             if((type==LogType.Exception||type==LogType.Error||type==LogType.Assert)&&report.errors.Count<20)report.errors.Add(condition);
         }
         static void Tick()
@@ -307,7 +310,9 @@ namespace KominkaHillside.Editor
             {
                 var d=Current.dogs[i];var p=roots[i].position;int next=Get<int>(wander[i],"_routeNext"),choice=Get<int>(wander[i],"_routeChoice");
                 float movement=Vector3.Distance(previous[i],p);d.maxObservedStep=Mathf.Max(d.maxObservedStep,movement);
-                if(movement>Mathf.Max(.4f,8f*(float)gap+.15f))
+                // 犬は Time.deltaTime ぶん進む。観測の間隔 gap (Editor の時刻) だけで上限を決めると、フレームが伸びた回 (実測 2026-09-29: gap 0.018 s に対し
+                // deltaTime 0.10〜0.33 s、速さ 4.5 m/s で 0.44〜0.46 m) の正しい歩きを不連続と数える。長い方で上限を決める (瞬間移動は 1 m 単位なので検出は保たれる)。
+                if(movement>Mathf.Max(.4f,8f*Mathf.Max((float)gap,Time.deltaTime)+.15f))
                 {
                     CaptureMovementFailure(i,p,now,gap);
                     throw new InvalidOperationException("Discontinuous dog movement (possible catch-up teleport), dog "+i+" step="+movement+" interval="+gap);

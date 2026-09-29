@@ -133,6 +133,7 @@ namespace KominkaHillside.Editor
             if (report.travelRc)
             {
                 TvRcCases();
+                TvSwimResidue();   // 82b だけの末尾 (82 の件数は変えない)
                 return;
             }
             if (report.travelCall)
@@ -154,6 +155,79 @@ namespace KominkaHillside.Editor
         static void TvRcCases()
         {
             TvT6b(7); TvT12WalkIn(7); TvT12MovedLate(7); TvT12MovedFirstLost(7); TvT12Join(7); TvT9JoinFastCancel(); TvT9JoinHistory();
+        }
+
+        /// <summary>浮きの高さの取り残し (_swimYValid) が消えるか (82b の末尾、2 件とも模擬)。犬 0 を陸でリードに繋いで落ち着かせ、
+        /// 補間の途中でリードが制御を取った状態をヒープの書き込みで作る (_swimYValid = true、_waterSwimY = 根の高さ + 0.3)。
+        /// - T-swimresidue-ticket: 書き込みと同じ手順 (同じエディタの Tick) で T1 と同じワープを押す。切符の適用 (KD_DogWanderController.HillsideTravel の
+        ///   状態の初期化の WaterClearFloat) で消えることを見るつもりだが、押してから Phase 4 まで (暗転) 何フレームも犬の Update が走り、
+        ///   毎フレーム リードの処理 (UpdateHillsideLeash の非 Owner 排除の直後の WaterClearFloat) が切符の適用より先に走る。エディタからの書き込みを
+        ///   その間に差し込めないので、**どちらの経路で消えたかは区別しない** (notes にも書く)。切符が適用されたこと (適用 1 回・位置の変更 1 回) は見る。
+        /// - T-swimresidue-leash: 書き込みの後ワープせず 3 フレーム → リードの経路 (2) だけを見る。(2) が無いコードでは FAIL が正しい。
+        /// 合格 (両方): _swimYValid false、_waterSwimming false、_WaterFloating() false (= 両者の OR、Udon の戻り値は読まない)、地面との差 ≤ 0.2 m、waterPose 0。
+        /// leash を後に置く (82b は FAIL でその場で止まるため、先の ticket の結果を残す)。</summary>
+        static void TvSwimResidue()
+        {
+            foreach (bool ticket in new[] { true, false })
+            {
+                string tag = ticket ? "T-swimresidue-ticket" : "T-swimresidue-leash";
+                var s = TvCase(tag, true, 1); var c = new TvCtx(); int frame = 0, mask = 0;
+                s.Add(TvCooldown());
+                s.Add(TvDo(() =>
+                {
+                    holder = nodes[0]; var heading = nodes[1] - nodes[0]; heading.y = 0;
+                    Networking.LocalPlayer.TeleportTo(holder, Quaternion.LookRotation(heading));
+                    if (Get<int[]>(manager, "walkers")[0] != TvMe()) { PlaceDog(0, Networking.LocalPlayer.GetRotation()); pouch.SendCustomEvent("_WalkLeft0"); }
+                }));
+                s.Add(TvUntil(() => Get<int[]>(manager, "walkers")[0] == TvMe(), 5, tag + ": dog 0 not leashed to me"));
+                s.Add(TvWait(2));
+                s.Add(TvUntil(() => TvAllNear(TvMask(), TvNear), 30, tag + ": dogs did not catch up on land"));
+                s.Add(TvWait(2));
+                s.Add(TvDo(() =>
+                {
+                    float gap = CwGroundGap(0);
+                    TvExpect(CwPose(0) == 0 && !Get<bool>(wander[0], "_swimYValid") && !Get<bool>(wander[0], "_waterSwimming") && gap >= 0f && gap <= .2f, tag + ": dog 0 settled on dry land before the write (gap " + gap.ToString("F3") + ")" + CwDogState(0));
+                    mask = TvMask();
+                    wander[0].SetProgramVariable("_swimYValid", true);
+                    wander[0].SetProgramVariable("_waterSwimY", roots[0].position.y + .3f);
+                    frame = Time.frameCount;
+                    if (ticket) TvPress(c, TvFarEvt(c));   // 同じ Tick のうちにワープを押す
+                    TvNote("simulated: heap write _swimYValid=true, _waterSwimY=root.y+0.3 on leashed dog 0 at frame " + frame + (ticket ? ", warp pressed in the same editor tick (mask " + mask + ")" : ", no warp"));
+                }));
+                if (ticket)
+                {
+                    s.Add(TvUntil(() => TvFlat(Networking.LocalPlayer.GetPosition(), TvSpot(c.spot)) < 6f, 12, tag + ": player did not arrive at spot " + c.spot));
+                    s.Add(TvUntil(() => TvAllPhase(mask, KH_LeashManager.TravelPhaseDone), 5, tag + ": Phase 2 not reached"));
+                    s.Add(TvWait(1));
+                    s.Add(TvDo(() =>
+                    {
+                        TvExpect(TvAppliesSince(c, 0) == 1 && tvDisc[0] == 1, tag + ": dog 0 applied the ticket once and moved once (applies " + TvAppliesSince(c, 0) + ", moves " + tvDisc[0] + ")");
+                        TvSwimResidueCheck(tag);
+                        TvNote("which path cleared it is NOT distinguished: between the press and Phase 4 the dog's Update runs many frames, and in each the leash takeover (UpdateHillsideLeash) runs before the ticket apply; the ticket was applied once (frames " + frame + " -> " + Time.frameCount + ")");
+                    }));
+                }
+                else
+                {
+                    s.Add(TvUntil(() => Time.frameCount >= frame + 3, 2, tag + ": 3 frames did not pass"));
+                    s.Add(TvDo(() =>
+                    {
+                        TvSwimResidueCheck(tag);
+                        TvNote("leash path only: no warp, cleared within " + (Time.frameCount - frame) + " frames of the write");
+                    }));
+                }
+            }
+        }
+
+        static void TvSwimResidueCheck(string tag)
+        {
+            bool swimY = Get<bool>(wander[0], "_swimYValid"), swim = Get<bool>(wander[0], "_waterSwimming");
+            float gap = CwGroundGap(0); int pose = CwPose(0);
+            string st = CwDogState(0);
+            TvExpect(!swimY, tag + ": _swimYValid false" + st);
+            TvExpect(!swim, tag + ": _waterSwimming false" + st);
+            TvExpect(!(swim || swimY), tag + ": _WaterFloating() false (_waterSwimming || _swimYValid)" + st);
+            TvExpect(gap >= 0f && gap <= .2f, tag + ": root within 0.2 m of the ground (" + gap.ToString("F3") + ")" + st);
+            TvExpect(pose == 0, tag + ": waterPose 0" + st);
         }
 
         static List<Func<double, bool>> TvCase(string name, bool simulated, int count)
