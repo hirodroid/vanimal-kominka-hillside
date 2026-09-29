@@ -54,7 +54,26 @@ namespace KominkaHillside.Editor
             public List<string> findings = new List<string>();
             public List<string> labelFit = new List<string>();
             public List<string> notes = new List<string>();
+            /// <summary>「掛け算と設定保持の単体検査」が何を見て何を見ていないか。</summary>
+            public string unitScope = UnitScope;
+            /// <summary>この検査では確かめていないこと (ClientSim / 実機で見る)。</summary>
+            public List<string> notCovered = new List<string>(NotCovered);
         }
+
+        /// <summary>振る舞いの検査の項目名の頭。**ライブの時計・Start・Update は通っていない**ことを名前で分かるようにする。</summary>
+        const string U = "unit (multiply + keep settings): ";
+        const string UnitScope = "掛け算と設定保持の単体検査: 別シーンで KD_TreatPouch._BgmChanged / _ToggleBgm と KD_BgmPlayer._SetBgm を呼び、"
+            + "ライブの掛け金 _duck は反射で直接 0 / 1 を書く。出力 = baseVolume × 個人の音量 × 掛け金、OFF / 0% の消音、個人設定が掛け金で書き換わらないことだけを見る。"
+            + "KD_BgmPlayer.Start / Update と KD_LiveSystem.IsNightWanted は通らない";
+        static readonly string[] NotCovered =
+        {
+            "ライブ開始で BGM が下がること (KD_LiveSystem.IsNightWanted → KD_BgmPlayer.Update の掛け金)",
+            "ライブ終了で戻ること (タイムラインの終わりで IsNightWanted が false)",
+            "ライブ中止で戻ること (startMs を終端へ送る経路)",
+            "途中入室: ライブ中に入った人が Start で最初から 0",
+            "掛け金の 1 秒フェード (FadeSeconds、Update の MoveTowards)",
+            "実際の出音・ループの継ぎ目・他プレイヤーに影響しないこと (同期変数 0 本はコード上の事実。実通信は未検査)",
+        };
 
         // ================================================================ 96
 
@@ -144,7 +163,7 @@ namespace KominkaHillside.Editor
             r.status = r.findings.Count == 0 ? "BGM_OK" : "FAIL";
             Write(r, "bgm-verify.json");
             if (r.findings.Count > 0) throw new InvalidOperationException("[KH BGM] Verify failed (" + r.findings.Count + "):\n" + string.Join("\n", r.findings));
-            Debug.Log("[KH BGM] BGM_OK (" + OutDir + "/bgm-verify.json)");
+            Debug.Log("[KH BGM] BGM_OK (" + OutDir + "/bgm-verify.json). Live link itself not verified here (unit test writes _duck directly): live start / end / cancel, late join and the 1 s fade are in notCovered for ClientSim / device.");
         }
 
         // ================================================================ 検査 (96 の最後と 97)
@@ -199,24 +218,39 @@ namespace KominkaHillside.Editor
             var pb = UdonSharpEditorUtility.GetBackingUdonBehaviour(pouch);
             var page = pouch.volumeSettingsPage;
             Req(e, page != null && page.name == "VolumeSettings" && pouch.settingsPage != null && page.transform.parent == pouch.settingsPage.transform && !page.activeSelf, "volume page Page_Settings/VolumeSettings (hidden)");
-            Req(e, pouch.bgmPlayer == player && (BackingIs(pb, "bgmPlayer", player) || BackingIs(pb, "bgmPlayer", backing)), "pouch.bgmPlayer = KD_Bgm (proxy + backing)");
-            var slider = pouch.bgmSlider;
-            Req(e, slider != null && page != null && slider.transform.parent == page.transform && slider.minValue == 0f && slider.maxValue == 1f && !slider.wholeNumbers && Mathf.Approximately(slider.value, .5f), "BGM slider 0..1 continuous, default 50%");
-            if (slider != null)
-            {
-                Req(e, slider.onValueChanged.GetPersistentEventCount() == 1 && slider.onValueChanged.GetPersistentTarget(0) == pb && slider.onValueChanged.GetPersistentMethodName(0) == "SendCustomEvent"
-                    && new SerializedObject(slider).FindProperty("m_OnValueChanged.m_PersistentCalls.m_Calls").GetArrayElementAtIndex(0).FindPropertyRelative("m_Arguments.m_StringArgument").stringValue == "_BgmChanged",
-                    "BGM slider -> pouch _BgmChanged once");
-                Req(e, slider.handleRect != null && Mathf.Approximately(slider.handleRect.rect.height, 52f), "BGM slider thumb 52 tall");
-            }
-            Req(e, pouch.bgmValueLabel != null && pouch.bgmValueLabel.text == "50%", "BGM value label 50%");
-            var toggle = page != null ? page.transform.Find(KD_DogVoiceSettingsEditor.HillsideBgmToggleName) : null;
+            Req(e, pb != null, "KD_TreatPouch backing UdonBehaviour exists");
+            // 期待する実体は「音量頁の BGM の行の部品」と「KH_Dogs/KD_Bgm の KD_BgmPlayer」から引く (pouch の欄から引かない)。
+            // proxy と backing (Udon 側。実行時に読むのはこちら) の両方がそれと**同一**であることを比べる — 非 null だけだと、
+            // 例えば backing の bgmSlider が犬の声のスライダーを指していても通ってしまう
+            Transform pageT = page != null ? page.transform : null;
+            var wantSlider = pageT != null ? pageT.Find("BgmSlider")?.GetComponent<Slider>() : null;
+            var wantValue = pageT != null ? pageT.Find("BgmValue")?.GetComponent<TextMeshProUGUI>() : null;
+            var toggle = pageT != null ? pageT.Find(KD_DogVoiceSettingsEditor.HillsideBgmToggleName) : null;
+            var wantToggleImage = toggle != null ? toggle.GetComponent<Image>() : null;
+            var wantToggleLabel = toggle != null ? toggle.Find("Label")?.GetComponent<TextMeshProUGUI>() : null;
             var toggleButton = toggle != null ? toggle.GetComponent<Button>() : null;
-            Req(e, toggleButton != null && toggleButton.interactable && ClickIs(toggleButton, pb, "_ToggleBgm"), "BGM [ON/OFF] -> pouch _ToggleBgm once");
-            Req(e, toggle != null && pouch.bgmToggleImage == toggle.GetComponent<Image>() && pouch.bgmToggleLabel != null && pouch.bgmToggleLabel.transform.parent == toggle
-                && pouch.bgmToggleLabel.text == KD_TreatPouch.WordVoiceOn, "BGM [ON/OFF] image / label wired (ON)");
-            foreach (var field in new[] { "bgmSlider", "bgmValueLabel", "bgmToggleLabel", "bgmToggleImage" })
-                Req(e, pb != null && pb.publicVariables.TryGetVariableValue(field, out object v) && v != null, "backing " + field);
+            bool playerAtHome = go.transform.parent != null && go.transform.parent.name == KD_Hillside.DogsRootName && go.transform.parent.parent == null;
+            Same(e, "bgmPlayer = KH_Dogs/KD_Bgm KD_BgmPlayer", pouch.bgmPlayer, pb, "bgmPlayer", playerAtHome ? player : null, backing);
+            Same(e, "bgmSlider = VolumeSettings/BgmSlider", pouch.bgmSlider, pb, "bgmSlider", wantSlider, null);
+            Same(e, "bgmValueLabel = VolumeSettings/BgmValue", pouch.bgmValueLabel, pb, "bgmValueLabel", wantValue, null);
+            Same(e, "bgmToggleImage = VolumeSettings/BgmToggle (Image)", pouch.bgmToggleImage, pb, "bgmToggleImage", wantToggleImage, null);
+            Same(e, "bgmToggleLabel = VolumeSettings/BgmToggle/Label", pouch.bgmToggleLabel, pb, "bgmToggleLabel", wantToggleLabel, null);
+            // 犬の声の行と取り違えていないこと (上の同一性で足りるが、壊れ方を名指しで出す)
+            Req(e, wantSlider == null || !ReferenceEquals(wantSlider, pouch.dogVoiceSlider), "BGM slider is not the dog voice slider");
+            Req(e, wantSlider != null && wantSlider.minValue == 0f && wantSlider.maxValue == 1f && !wantSlider.wholeNumbers && Mathf.Approximately(wantSlider.value, .5f), "BGM slider 0..1 continuous, default 50%");
+            if (wantSlider != null)
+            {
+                // イベントの宛先も実体で比べる: この 1 本の手元メニューの backing UdonBehaviour の SendCustomEvent("_BgmChanged") が 1 件だけ
+                Req(e, EventIs(wantSlider, "m_OnValueChanged", wantSlider.onValueChanged, pb, "_BgmChanged"), "BGM slider event -> KD_TreatPouch backing SendCustomEvent(_BgmChanged), exactly one");
+                // つまみのアンカーは Slider が駆動する値で、シーンには保存されない (読み込み直後は 0,0 で高さ 0、OnEnable の UpdateVisuals で縦いっぱいに戻る)。
+                // 実行時の高さを決めるのは HandleArea の高さなので、そちらを見る。
+                var handleArea = wantSlider.handleRect != null ? wantSlider.handleRect.parent as RectTransform : null;
+                Req(e, handleArea != null && Mathf.Approximately(handleArea.rect.height, 52f) && Mathf.Approximately(wantSlider.handleRect.sizeDelta.y, 0f), "BGM slider thumb 52 tall (HandleArea 52, thumb stretches)");
+            }
+            Req(e, wantValue != null && wantValue.text == "50%", "BGM value label 50%");
+            Req(e, toggleButton != null && toggleButton.interactable && EventIs(toggleButton, "m_OnClick", toggleButton.onClick, pb, "_ToggleBgm"),
+                "BGM [ON/OFF] event -> KD_TreatPouch backing SendCustomEvent(_ToggleBgm), exactly one");
+            Req(e, wantToggleLabel != null && wantToggleLabel.text == KD_TreatPouch.WordVoiceOn, "BGM [ON/OFF] label ON");
             Req(e, pouch.dogVoiceSlider != null && page != null && pouch.dogVoiceSlider.transform.parent == page.transform, "dog voice row kept");
             Req(e, pouch.liveVolumeSlider == null && pouch.bedroomBgmVolumeSlider == null && pouch.sleepAudio == null, "no live / bedroom rows (not in this world)");
             var language = pouch.language;
@@ -228,15 +262,17 @@ namespace KominkaHillside.Editor
             if (page != null) CheckLayout(page.transform, e);
             if (language != null && page != null) FitLabels(pouch, page.transform, note, r);
 
-            // ---- 振る舞い (別シーンで実物のコードを呼ぶ。ライブの掛け金は同期時計から Update が作るので直に入れる) ----
-            Behaviour(e);
+            // ---- 掛け算と設定保持の単体検査 (別シーンで実物のコードを呼ぶ。掛け金 _duck は直に書く = ライブの時計・Start・Update は通らない。
+            //      通っていないものは r.notCovered に出す) ----
+            UnitMultiplyAndKeep(e);
             r.notes.Add("保存・復元: 古民家と同じく無し (KD_TreatPouch._bgmEnabled = true / _bgmVolume = 0.5 の初期値、PlayerData 不使用)。再入室で ON・50% に戻る");
-            r.notes.Add("ライブ: KD_BgmPlayer.Update が KD_LiveSystem.IsNightWanted (夜のフェードインの頭〜タイムラインの終わり、同期時計の純関数) で掛け金を 1 s かけて 0 へ。途中入室は Start で最初から 0。中止は startMs を終端へ送るので同じ式で戻る");
+            r.notes.Add("ライブ (コード上の事実。この検査では未検証 = notCovered): KD_BgmPlayer.Update が KD_LiveSystem.IsNightWanted (夜のフェードインの頭〜タイムラインの終わり、同期時計の純関数) で掛け金を 1 s かけて 0 へ。途中入室は Start で最初から 0。中止は startMs を終端へ送るので同じ式で戻る");
             r.errors = e.Count;
             return r;
         }
 
-        static void Behaviour(List<string> e)
+        /// <summary>掛け算と設定保持の単体検査 (<see cref="UnitScope"/>)。ライブとの連動そのものは見ない (<see cref="NotCovered"/>)。</summary>
+        static void UnitMultiplyAndKeep(List<string> e)
         {
             var preview = EditorSceneManager.NewPreviewScene();
             try
@@ -251,26 +287,26 @@ namespace KominkaHillside.Editor
                 var slider = sliderHost.GetComponent<Slider>(); slider.minValue = 0f; slider.maxValue = 1f;
                 pouch.bgmSlider = slider; pouch.bgmPlayer = player;
                 var duck = typeof(KD_BgmPlayer).GetField("_duck", BindingFlags.Instance | BindingFlags.NonPublic);
-                if (duck == null) { e.Add("FAIL KD_BgmPlayer._duck not found (code changed?)"); return; }
+                if (duck == null) { e.Add("FAIL " + U + "KD_BgmPlayer._duck not found (code changed?)"); return; }
                 void Set(float v) { slider.value = v; pouch._BgmChanged(); }
                 void Reapply() { player._SetBgm(player.UserVolume, player.UserEnabled); }
 
-                Set(1f); Req(e, Mathf.Approximately(src.volume, .4f) && !src.mute, "100% = base volume");
-                Set(.5f); Req(e, Mathf.Approximately(src.volume, .2f) && !src.mute, "50% = half");
-                Set(0f); Req(e, src.mute, "0% is silent (muted)");
+                Set(1f); Req(e, Mathf.Approximately(src.volume, .4f) && !src.mute, U+"100% = base volume");
+                Set(.5f); Req(e, Mathf.Approximately(src.volume, .2f) && !src.mute, U+"50% = half");
+                Set(0f); Req(e, src.mute, U+"0% is silent (muted)");
                 Set(.6f); pouch._ToggleBgm();
-                Req(e, src.mute && !player.UserEnabled && Mathf.Approximately(player.UserVolume, .6f), "OFF mutes and keeps the chosen 60%");
-                Set(.3f); Req(e, src.mute && Mathf.Approximately(player.UserVolume, .3f), "slider while OFF stays muted, value remembered (30%)");
-                pouch._ToggleBgm(); Req(e, !src.mute && player.UserEnabled && Mathf.Approximately(src.volume, .12f), "ON restores the value chosen while OFF (30%)");
+                Req(e, src.mute && !player.UserEnabled && Mathf.Approximately(player.UserVolume, .6f), U+"OFF mutes and keeps the chosen 60%");
+                Set(.3f); Req(e, src.mute && Mathf.Approximately(player.UserVolume, .3f), U+"slider while OFF stays muted, value remembered (30%)");
+                pouch._ToggleBgm(); Req(e, !src.mute && player.UserEnabled && Mathf.Approximately(src.volume, .12f), U+"ON restores the value chosen while OFF (30%)");
                 duck.SetValue(player, 0f); Reapply();
-                Req(e, Mathf.Approximately(src.volume, 0f) && player.UserEnabled && Mathf.Approximately(player.UserVolume, .3f), "live: output 0, personal settings untouched");
-                Set(.8f); Req(e, Mathf.Approximately(src.volume, 0f) && Mathf.Approximately(player.UserVolume, .8f), "change during live stays silent, value remembered (80%)");
+                Req(e, Mathf.Approximately(src.volume, 0f) && player.UserEnabled && Mathf.Approximately(player.UserVolume, .3f), U+"gain 0 (_duck written directly): output 0, personal settings untouched");
+                Set(.8f); Req(e, Mathf.Approximately(src.volume, 0f) && Mathf.Approximately(player.UserVolume, .8f), U+"change while gain 0 stays silent, value remembered (80%)");
                 duck.SetValue(player, 1f); Reapply();
-                Req(e, Mathf.Approximately(src.volume, .32f) && !src.mute, "after live: the current personal setting (80%), not the pre-live one");
+                Req(e, Mathf.Approximately(src.volume, .32f) && !src.mute, U+"gain back to 1: the current personal setting (80%), not the earlier one");
                 pouch._ToggleBgm(); duck.SetValue(player, 0f); Reapply(); duck.SetValue(player, 1f); Reapply();
-                Req(e, src.mute && !player.UserEnabled, "OFF before live stays OFF after live (no restore step)");
+                Req(e, src.mute && !player.UserEnabled, U+"OFF before gain 0 stays OFF after gain 1 (no restore step)");
                 duck.SetValue(player, 0f); pouch._ToggleBgm(); duck.SetValue(player, 1f); Reapply();
-                Req(e, !src.mute && Mathf.Approximately(src.volume, .32f), "turned ON during live -> plays at 80% after live");
+                Req(e, !src.mute && Mathf.Approximately(src.volume, .32f), U+"turned ON while gain 0 -> plays at 80% after gain 1");
             }
             finally { EditorSceneManager.ClosePreviewScene(preview); }
         }
@@ -407,11 +443,33 @@ namespace KominkaHillside.Editor
             return backing.publicVariables.TryGetVariableValue(field, out object v) && v as UnityEngine.Object == want;
         }
 
-        static bool ClickIs(Button b, VRC.Udon.UdonBehaviour target, string evt)
+        /// <summary>proxy の欄と backing (Udon 側) の変数が、どちらも期待する実体と同一か。
+        /// backing の Udon 参照は proxy のまま入る場合と UdonBehaviour で入る場合があるので、<paramref name="expectedBackingAlt"/> も受ける。</summary>
+        static void Same(List<string> e, string what, UnityEngine.Object proxyValue, VRC.Udon.UdonBehaviour backing, string field, UnityEngine.Object expected, UnityEngine.Object expectedBackingAlt)
         {
-            if (b == null || b.onClick.GetPersistentEventCount() != 1 || b.onClick.GetPersistentTarget(0) != target || b.onClick.GetPersistentMethodName(0) != "SendCustomEvent") return false;
-            var call = new SerializedObject(b).FindProperty("m_OnClick.m_PersistentCalls.m_Calls");
-            return call.arraySize == 1 && call.GetArrayElementAtIndex(0).FindPropertyRelative("m_Arguments.m_StringArgument").stringValue == evt;
+            if (expected == null) { e.Add("FAIL " + what + ": expected object missing in the scene"); return; }
+            Req(e, ReferenceEquals(proxyValue, expected), what + " (proxy is " + Describe(proxyValue) + ")");
+            object v = null;
+            bool found = backing != null && backing.publicVariables.TryGetVariableValue(field, out v);
+            bool same = found && (ReferenceEquals(v, expected) || (expectedBackingAlt != null && ReferenceEquals(v, expectedBackingAlt)));
+            Req(e, same, what + " (backing is " + (!found ? "(no variable)" : Describe(v as UnityEngine.Object)) + ")");
+        }
+
+        /// <summary>永続イベントが 1 件だけで、宛先がその UdonBehaviour の実体・メソッドが SendCustomEvent・引数が <paramref name="evt"/>。
+        /// 宛先 null 同士の一致で通らないよう、target が null なら常に false。</summary>
+        static bool EventIs(UnityEngine.Object owner, string eventProperty, UnityEngine.Events.UnityEventBase ev, VRC.Udon.UdonBehaviour target, string evt)
+        {
+            if (owner == null || ev == null || target == null) return false;
+            if (ev.GetPersistentEventCount() != 1 || !ReferenceEquals(ev.GetPersistentTarget(0), target) || ev.GetPersistentMethodName(0) != "SendCustomEvent") return false;
+            var calls = new SerializedObject(owner).FindProperty(eventProperty + ".m_PersistentCalls.m_Calls");
+            return calls != null && calls.arraySize == 1 && calls.GetArrayElementAtIndex(0).FindPropertyRelative("m_Arguments.m_StringArgument").stringValue == evt;
+        }
+
+        static string Describe(UnityEngine.Object o)
+        {
+            if (o == null) return "null";
+            var c = o as Component;
+            return c != null ? KD_SceneObjects.PathOf(c.gameObject) + " (" + c.GetType().Name + ")" : o.name;
         }
 
         static Rect RectOf(RectTransform t)
