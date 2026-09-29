@@ -66,6 +66,9 @@ namespace KominkaHillside.Editor
             public bool waterSwim; // IMP-DOG-020 step 4 W1 x6 / W2 (same file, Course/79)
             public bool waterFetch; // IMP-DOG-020 step 6 W3 / S4 / S5b (same file, Course/88)
             public int waterFetchSet; // IMP-DOG-021: 0 = every Course/88 case, 1 = the IMP-DOG-020 cases only (88a), 2 = the IMP-DOG-021 cases only (88b)
+            public bool commerceOnly;     // IMP-PRG-001 / IMP-DOG-014 Course/96・96b・97 (KH_CourseWalkHarnessEditor.Commerce.cs)
+            public int commerceSet;       // 0 = ledger (96), 1 = ledger re-entry (96b), 2 = treats (97)
+            public string commerceSource; // 96b: the PlayerData snapshot of the 96 run that was installed before Play
             public int lapChoice;
             public List<Case> cases=new List<Case>();
             public List<string> errors=new List<string>();
@@ -151,6 +154,7 @@ namespace KominkaHillside.Editor
                     MakeCases();Next();return;
                 }
                 if(report.errors.Count>0)throw new InvalidOperationException("Runtime error: "+report.errors[0]);
+                if(report.commerceOnly){CommerceTick(now);return;}
                 if(report.riverOnly){RiverTick(now);return;}
                 if(report.frisbeeOnly){FrisbeeTick(now);return;}
                 if(report.travelOnly){TravelTick(now);return;}
@@ -226,6 +230,7 @@ namespace KominkaHillside.Editor
         }
         static void MakeCases()
         {
+            if(report.commerceOnly){MakeCommerceCases();return;}
             if(report.riverOnly){MakeRiverCases();return;}
             if(report.frisbeeOnly){MakeFrisbeeCases();return;}
             if(report.travelOnly){MakeTravelCases();return;}
