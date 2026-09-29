@@ -45,7 +45,21 @@ namespace KominkaHillside.Editor
             public bool simulated;
             public List<string> notes = new List<string>();
         }
-        [Serializable] class TravelReport { public string runId; public List<TravelCase> cases = new List<TravelCase>(); }
+        [Serializable] class TravelReport
+        {
+            public string runId; public List<TravelCase> cases = new List<TravelCase>();
+            public int casesPass, casesNotRun, casesFail;   // WriteTravel が数える (実施して PASS / 未実施 NOT_RUN / FAIL)
+        }
+        static bool tvCaseNotRun;   // 82c C7-wet: このケースは実施しなかった (TravelTick が NOT_RUN にする)
+
+        /// <summary>82c の件数の要約 (End の reason の先頭)。例: "cases 30: pass 29, not run 1 (C7-wet), fail 0"。</summary>
+        static string TvCountLine()
+        {
+            if (tvReport == null) return "cases ?";
+            var nr = tvReport.cases.Where(x => x.status == "NOT_RUN").Select(x => x.name).ToArray();
+            return "cases " + tvReport.cases.Count + ": pass " + tvReport.cases.Count(x => x.status == "PASS") + ", not run " + nr.Length + (nr.Length > 0 ? " (" + string.Join(",", nr) + ")" : "")
+                + ", fail " + tvReport.cases.Count(x => x.status == "FAIL");
+        }
 
         static List<List<Func<double, bool>>> tvScripts;
         static TravelReport tvReport;
@@ -1032,7 +1046,7 @@ namespace KominkaHillside.Editor
             try
             {
                 if (tvScripts == null || caseIndex < 0 || caseIndex >= tvScripts.Count) throw new InvalidOperationException("Travel script lost (domain reload?)");
-                if (tvStep == 0 && tvCaseAt != Current.startedAt) { tvCaseAt = Current.startedAt; tvStepAt = now; tvSeenReqs.Clear(); TvReset(); tvObsValid = false; tvTrackMask = 0; }
+                if (tvStep == 0 && tvCaseAt != Current.startedAt) { tvCaseAt = Current.startedAt; tvStepAt = now; tvSeenReqs.Clear(); TvReset(); tvObsValid = false; tvTrackMask = 0; tvCaseNotRun = false; }
                 ObserveTravel(now);
                 if (now - Current.startedAt > 420) throw new TimeoutException("Travel case deadline (420 s)");
                 var steps = tvScripts[caseIndex];
@@ -1041,12 +1055,15 @@ namespace KominkaHillside.Editor
                     if (!steps[tvStep](now)) return;
                     tvStep++; tvStepAt = now;
                 }
-                Current.status = "PASS"; Current.endedAt = now; Current.reason = string.Join(" | ", tvReport.cases[caseIndex].notes);
-                tvReport.cases[caseIndex].status = "PASS";
+                // 82c C7-wet: 地点が無く実施しなかったケースは NOT_RUN (PASS に数えない)。82 / 82b は立てないので従来どおり PASS
+                string done = tvCaseNotRun ? "NOT_RUN" : "PASS";
+                Current.status = done; Current.endedAt = now; Current.reason = string.Join(" | ", tvReport.cases[caseIndex].notes);
+                tvReport.cases[caseIndex].status = done;
                 WriteTravel(); Save();
                 tvStep = 0;
                 if (caseIndex + 1 == report.cases.Count)
-                    End(report.travelCall ? (tvCallFailed ? "TRAVEL_CALL_FAIL" : "TRAVEL_CALL_PASS") : report.travelRc ? "TRAVEL_RC_OBSERVED" : report.full ? "TRAVEL_OBSERVED" : "TRAVEL_QUICK_OBSERVED", "Local ClientSim travel cases passed (same-Owner contract; handover/late/forged/leave are simulated). Not network, device or PCVR acceptance.");
+                    End(report.travelCall ? (tvCallFailed ? "TRAVEL_CALL_FAIL" : "TRAVEL_CALL_PASS") : report.travelRc ? "TRAVEL_RC_OBSERVED" : report.full ? "TRAVEL_OBSERVED" : "TRAVEL_QUICK_OBSERVED",
+                        (report.travelCall ? TvCountLine() + ". " : "") + "Local ClientSim travel cases passed (same-Owner contract; handover/late/forged/leave are simulated). Not network, device or PCVR acceptance.");
                 else Next();
             }
             catch (Exception e)
@@ -1066,7 +1083,7 @@ namespace KominkaHillside.Editor
                     }
                     catch { }
                     tvStep = 0; Save();
-                    if (caseIndex + 1 == report.cases.Count) End("TRAVEL_CALL_FAIL", "One or more 82c cases failed; see travel.json");
+                    if (caseIndex + 1 == report.cases.Count) End("TRAVEL_CALL_FAIL", TvCountLine() + ". One or more 82c cases failed; see travel.json");
                     else Next();
                     return;
                 }
@@ -1165,6 +1182,9 @@ namespace KominkaHillside.Editor
         static void WriteTravel()
         {
             if (report == null || tvReport == null) return;
+            tvReport.casesPass = tvReport.cases.Count(x => x.status == "PASS");
+            tvReport.casesNotRun = tvReport.cases.Count(x => x.status == "NOT_RUN");
+            tvReport.casesFail = tvReport.cases.Count(x => x.status == "FAIL");
             Directory.CreateDirectory(Dir + "/" + report.runId);
             File.WriteAllText(Dir + "/" + report.runId + "/travel.json", JsonUtility.ToJson(tvReport, true));
         }

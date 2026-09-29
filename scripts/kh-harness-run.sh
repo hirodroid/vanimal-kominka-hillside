@@ -108,6 +108,6 @@ case "$cmd" in
       done_=1; break
     done
     [ "$done_" = 1 ] || { echo "walk TIMEOUT: no finished run after 2500 s (latest: $s)"; exit 2; }
-    node -e 'const j=require("./Logs/kh-course-walk/latest.json");const c=(j.cases||[]);const f=c.filter(x=>x.status!=="PASS").map(x=>x.name+": "+x.status+" "+(x.reason||"").slice(0,160)).join(" | ");console.log("walk",j.runId,j.status,(j.reason||"").slice(0,120),"cases",c.length,"sceneUnchanged",j.sceneFileUnchanged,f?"FAILS="+f:"");process.exit(/PASS/.test(j.status)?0:1)';;
+    node -e 'const j=require("./Logs/kh-course-walk/latest.json");const c=(j.cases||[]);const nr=c.filter(x=>x.status==="NOT_RUN");const f=c.filter(x=>x.status!=="PASS"&&x.status!=="NOT_RUN").map(x=>x.name+": "+x.status+" "+(x.reason||"").slice(0,160)).join(" | ");console.log("walk",j.runId,j.status,(j.reason||"").slice(0,120),"cases",c.length,"pass",c.filter(x=>x.status==="PASS").length,"notRun",nr.length,"sceneUnchanged",j.sceneFileUnchanged,nr.length?"NOT_RUN="+nr.map(x=>x.name).join(","):"",f?"FAILS="+f:"");process.exit(/PASS/.test(j.status)?0:1)';;
   *) echo "usage: kh-harness-run.sh compile | menu <name> | proto <mode> [args] | walk <menu>"; exit 64;;
 esac
