@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-60 件 — 対応中 15 / 確認待ち 18 / 未着手 14 / 保留 3 / 完了 10
+60 件 — 対応中 14 / 確認待ち 19 / 未着手 14 / 保留 3 / 完了 10
 
 ## 実行キュー
 
@@ -14,7 +14,6 @@
 | [IMP-DOG-001](IMP-DOG-001-port-dog-system.md) | High | 古民家ドッグランの犬ギミックを移植する (タグ `export/kominka-hillside-v1` + 移植記録) | wip |  |
 | [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、Desktop/Touch、複数人。看板の本制作・分かりやすさは DES-UI-004 へ分離 | wip |  |
 | [IMP-DOG-009](IMP-DOG-009-walk-speed-tiers.md) | High | 散歩の犬の速さを 4 段階に (最速は現状の速歩の 3 倍)。人が犬を引っ張る状態をなくす。Run クリップの再生速度・減速も合わせる。9/22 PCVR 1 人 1 匹で OK・採用、3〜6 匹・2 人以上・Desktop は未確認 | wip |  |
-| [BUG-DOG-002](BUG-DOG-002-leash-handle-orientation.md) | Medium | リードの輪と紐の接続部が横向き。肘→手の延長上・手の前側へ向くよう左右とも調整する (9/23 要望具体化) | wip |  |
 | [DES-ENV-002](DES-ENV-002-longer-course.md) | Medium | 約2.41kmの川沿い周回を実装し、2026-09-27に本番シーン (VRCDefaultWorldScene) へ採用済み。Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する | wip | 犬連れの実歩行時間、LODと遮蔽の実機表示、Quest 3・iPhone 15 Pro・16人の性能から最終距離/予算を確定する (ユーザーの実機。VER-WLD-001) |
 | [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK)、段階 2・3 は 9/24 実装済み・PCVR 待ち | wip |  |
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開は012 | wip |  |
@@ -30,6 +29,7 @@
 | [IMP-DOG-021](IMP-DOG-021-river-wide-fetch-and-recall.md) | High | 川のどこへ投げたボールでも犬が取りに行く (川全体で浮かせ、安全な岸から入って取る)。水中の犬のボール・ディスクも、口に無ければ手元へ呼べる | review | ユーザーの PCVR (設計書末尾のチェックリスト 29〜36: 遠投の走りと入水、上陸の場所、大型犬が流路で取る見え方、サモエドの口の余裕、橋の近くの岸戻し)。2 人の実機で所有権の往復 (非 Owner の投げ、Owner 退出) |
 | [IMP-PRG-001](IMP-PRG-001-ledger-shopkeeper-points.md) | High | 台帳・おじいさん (門)・支度用ポイント (初回 200pt 一回・滞在 1分1pt)・購入と CE 判定。2026-09-24 実装済み・Verify 全 PASS (e4f5906、名前空間 KH_Commerce_v1)。T-007 / T-008・復元の実機確認待ち | review | 200pt が一回だけ入る (T-007)、滞在加算と再入室の復元、購入の保存と CE の所持判定、残高 0 で基本機能が使える (T-008)。AI 側の ClientSim ハーネスは済み (Course/96 7/7、96b 4/4、2026-09-29 ccd3ff1)。サーバー保存・実際の再入室・CE 判定は対象外で PCVR / 実機に残る |
 | [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) | High | 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換え、設定面を作る。段階 0-a / 0-b / 3 は実装済み・Verify 全 PASS、0-b は 2026-09-24 PCVR OK。段階 3 (距離フェード・許可初期 ON・ようこそ等) の実機確認待ち。クレジット URL 3 件はユーザー記入待ち | review | 段階 0-b は PCVR OK (2026-09-24)。残り: 退行・取り違えの確認、段階 3 の距離フェード (T-011)・ナイトモードのスライダー・許可トグル 2 種・状態表示の規律。クレジット URL 3 件はユーザー記入。Quest/iOS は VER-WLD-001 |
+| [BUG-DOG-002](BUG-DOG-002-leash-handle-orientation.md) | Medium | リードの輪と紐の接続部が横向き。肘→手の延長上・手の前側へ向くよう左右とも調整する (9/23 要望具体化)。2026-09-29 に輪の面を指の付け根の線と前腕の軸から決める形へ作り直し (57bcf2e、Production 3 PASS)、PCVR の見た目待ち | review | PCVR で右手・左手とも輪の後ろの帯が指の付け根に沿い、輪と紐の接続部が前腕の延長で拳の前へ出るか。握りが拳に食い込む・浮く場合は HandleGripOffset、面の回転は HandleRollDegrees (定数を直して Walking/Production 7)。2 人目から見て左右が同じか、手首を深く曲げて跳ばないか |
 | [BUG-DOG-006](BUG-DOG-006-steal-held-pickup.md) | Medium | 実機 (2026-09-28 夜、7 人) で VRChat の「Attempted to steal ownership of a held pickup.」が 15 件 (22:57:07 に 2 件、22:57:21 に 13 件)。ログとコードでは、その時刻にこちらの端末のフリスビー側が SetOwner を呼んだ経路は見つからない (3 匹とも Ready・持ち直し直後で、SetOwner する状態遷移が無い)。同じ文言は他ワールドのログ 60 本にも出る。犬のディスクの SetOwner を AskDisc 1 か所にまとめて持たれている間は呼ばないようにし、全ての SetOwner を送り元の Owner 付きでログに出す | review | コンパイルと ClientSim の回帰は済み (7178d1f)。次の複数人実機でエラーの時刻に `setowner` の行がこちらに出ているかを見る (出ていなければ他の端末の要求)。相手のログも同じ時刻に同じ行があるかを比べる |
 | [DES-DOG-003](DES-DOG-003-plaza-leash-station.md) | Medium | 体験会 (2026-09-26) で「広場のリード置き場が遠い」。同日夜に決定: 広場の拠点を広場の縁に戻す (3 拠点 × 左右 1 本)。Build が初回だけ縁に置き、位置はユーザーが手で微調整する。実装・Verify 済み、位置はユーザーが手調整済み (2026-09-29)。PCVR 確認待ち | review | PCVR で広場の拠点が遠くないか確認 (位置は 2026-09-29 にユーザーが手調整済み)。OK なら done |
 | [DES-DOG-005](DES-DOG-005-frisbee-anywhere.md) | Medium | フリスビーを広場以外 (奥広場・川辺・道) でも投げて取れるようにする。段階 1 は取り出しを投げられるエリアに限る、段階 2 は平らな場所を追加、段階 3 は地面の高さを基準にした滑空・キャッチでどこでも | review | 段階 3 は IMP-DOG-023 M1〜M4 で実装・ClientSim 検証済み (2026-09-28)。残りはユーザーの PCVR 37〜48 と VER-WLD-001 項目 12。確かめたら done |

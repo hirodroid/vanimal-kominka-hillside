@@ -2,9 +2,10 @@
 id: BUG-DOG-002
 type: BUG
 system: DOG
-status: wip
+status: review
 priority: Medium
-summary: リードの輪と紐の接続部が横向き。肘→手の延長上・手の前側へ向くよう左右とも調整する (9/23 要望具体化)
+summary: リードの輪と紐の接続部が横向き。肘→手の延長上・手の前側へ向くよう左右とも調整する (9/23 要望具体化)。2026-09-29 に輪の面を指の付け根の線と前腕の軸から決める形へ作り直し (57bcf2e、Production 3 PASS)、PCVR の見た目待ち
+next: PCVR で右手・左手とも輪の後ろの帯が指の付け根に沿い、輪と紐の接続部が前腕の延長で拳の前へ出るか。握りが拳に食い込む・浮く場合は HandleGripOffset、面の回転は HandleRollDegrees (定数を直して Walking/Production 7)。2 人目から見て左右が同じか、手首を深く曲げて跳ばないか
 ---
 
 # BUG-DOG-002 リードの輪と紐の接続部を腕から手の前方へ向ける
