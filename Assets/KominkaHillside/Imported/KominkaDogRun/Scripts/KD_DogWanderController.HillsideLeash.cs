@@ -277,6 +277,9 @@ namespace KominkaDogRun
             bool settling = stillFor > restAfter && handDist < 2.2f;
             LeashPose(holder, toHand, handDist, handPos, route, settling);
             if (!_dogOwner) { ApplyMoveAnim(); return true; }
+            // map-and-travel §F.4: the leash owns the root from here (leashed, no water veto - the caller checks it -, Fetch /
+            // disc not holding the dog, Owner), so an unfinished swim-height ease must not outlive it. Flags only, no height write.
+            WaterClearFloat();
             if (UpdateHillsideTravel(holderPos, handDist, leash)) return true; // IMP-WLD-001: travel ticket first, before Return (HillsideTravel.cs)
 
             // The stopover badge means "standing at that spot right now" and nothing else. Rest, the

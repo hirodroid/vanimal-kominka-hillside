@@ -197,6 +197,16 @@ namespace KominkaDogRun
         // a just-afloat dog to the riverbed (W1-Dachs run 20260927-072549, a 0.376 m step). Also true while easing back down.
         public bool _WaterFloating() { return _waterSwimming || _swimYValid; }
 
+        /// <summary>Owner: drop the afloat height hold (the swim flag and the held height). For a dog whose root the leash or a travel
+        /// ticket now owns on land: the leashed branch returns before UpdateWaterPlay, so an ease back to the ground that was not
+        /// finished when the leash took over (landing / Shake) would otherwise keep _WaterFloating true (the push-apart keeps the
+        /// height) and make the next water entry start from the old _waterSwimY (map-and-travel §F.4). Local only: waterPose is
+        /// rewritten from the position by WaterPoseRefresh and nothing synced changes.</summary>
+        void WaterClearFloat()
+        {
+            _waterSwimming = false; _swimYValid = false; _swimSettled = false; _swimShallowSince = -1f;
+        }
+
         /// <summary>KD_DogPack (Owner): would a push from -> to take this dog, on its feet, where its own step is refused? Same
         /// rule as a step (_BlockedByRiver: the wading limit, the sink guard, the band outside the spot); a push toward shallower
         /// water is always allowed. Afloat dogs keep the existing handling (height kept, at most 0.1 m per frame).</summary>

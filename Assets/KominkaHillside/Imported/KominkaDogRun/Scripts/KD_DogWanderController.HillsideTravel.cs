@@ -77,6 +77,7 @@ namespace KominkaDogRun
             ResetPauseAndPoseState();
             ResetHolderSpeed();
             _leashCorners = null; _nextLeashPath = 0f;
+            WaterClearFloat();   // §F.4: an unfinished swim-height ease left by a leash taken up on the bank (HillsideWater.cs)
             _nextTeleportTry = Time.time + 1f;
             if (leashMode == LeashReturn) leashMode = LeashWalk;
             _travelDoneSentAt = Time.time;
