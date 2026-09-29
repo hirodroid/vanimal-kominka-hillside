@@ -65,3 +65,87 @@ summary: おやつで自分の接続犬の最寄り1匹を呼び、少し待つ�
 - [DES-DOG-001 リード散歩](DES-DOG-001-leash-walking.md): 接続・他の行動との優先順位
 - [IMP-DOG-003 散歩の磨き込み](IMP-DOG-003-walking-polish.md): 自由な散歩からの切替と復帰
 - [DES-UI-003 メニュー全体の整理](DES-UI-003-menu-scope-and-polish.md): 2026-09-23におやつの持ち込みをユーザーが決定。種類・補充・メニューの入口と操作はここで決め、接続中の反応は本Issueで扱う
+
+## 設計案 (2026-09-29、AI 下書き・未決定)
+
+### 事実 (コードで確認)
+
+- **出す手順** (`KD_TreatPouch.Treat.cs`): 手元メニューで出す → 枠と実体の Owner を取る → 手へ吸着 → 枠を Out にする → 在庫を 1 減らす。消費は「出した時点」で 1 回だけ。1 人 1 個、枠は 3 つ。手に持っている間に Use を離すと、放す = あげる
+- **割当** (`KD_TreatBox`、Manual): Owner はマスター固定 (SetOwner を呼ばない)。0.25 s ごとの `Reconcile` で `EligibleDog` と `DistMmOf` (犬からおやつの実体までの距離) を集め、純関数 `ResolveClaimsWith` が犬に枠を割り当てる
+  - パス 1: 有効な Claim を保つ。パス 2: 先に出された枠から順に、最寄りの犬へ配る
+  - 同期は犬ごとの `dogSlot` / `dogSlotOutMs` / `dogEatMs`
+- **Claim はおやつが手の中にある (Out) うちに立つ** → 犬は出した人へ寄っておやつを見つめる (`UpdateTreat` の「見せる」、立ち止まる距離は `nudgeStandoff` 1.1 m + 体の半径) → 放すと、落ちた位置へ歩いて食べる (`eatDuration` 2.6 s) → 出した人を見る (`treatThanksDuration` 1.6 s) → 次の枠を受けるまで 2.6 s あける (`thanksCooldown`)
+  - 地面に落ちたまま食べられないおやつは 60 s で回収される (`abandonTimeout`)
+- **接続犬は今は対象外**: `HillsideCauseOf` がリード接続中を忙しいとして除外する (コメント「IMP-DOG-006: ここを置き換える」)。犬側でも `Update` が `UpdateHillsideLeash` を先に通し、そこで return するので、`UpdateTreat` まで届かない
+  - 全頭が来られないときは、手元メニューが「リード中」の理由を出す (`HillsideDogsBusyText`)
+- **Owner**: 犬・`KH_LeashManager`・`KD_TreatBox` はどれも SetOwner を呼ばないので、通常は同じ 1 人 (マスター) が持つ。`walkers[]` / `hands[]` は `KH_LeashManager` の同期値、出した人は枠の `giverId`
+- **解除**: 首輪の Interact (`KH_LeashCollar`) かメニューの [はずす] → `ReqDetach`。距離の条件は無く、walker 本人だけが外せる。外すと、その犬の自由行動の中心 (`releasedHomes`) が解除した位置になる
+- **撫でている間** は `KD_DogFetchController.PetActive` が立つ (EligibleDog が読んでいる)
+
+### 状態遷移 (1 匹、接続したまま)
+
+`散歩` → (自分の枠に Claim) → `寄る` (手の中のおやつへ) → `食べる` (放した位置へ) → `返事` → `待つ` (新) → `散歩` (経路へ入り直す)
+
+- **どの段階でも解除されたら**: `UpdateHillsideLeash` は false を返し、以後は通常の層で処理する。Claim は保つので、食べる・返事を通常どおり終えてから、解除位置を中心に自由行動へ戻る
+- **待つ** (新しい leashMode `LeashTreat`)
+  - 犬の Owner がローカルで持つ (同期しない)。持ち主の方を向いて止まる
+  - 基本 8 s。撫でられている (`PetActive`) 間は延ばし、上限 20 s
+  - 持ち主が 1 s 以上歩いたら、または手からの距離が leash × 1.25 を超えたら、そこで終える
+  - Owner が交代したときは散歩から始め直す (既存の `_wasDogOwner` のエッジと同じ扱い)
+
+### 誰が何を決めるか
+
+| 決めること | 書き手 | 増える同期 |
+|---|---|---|
+| どの犬がどの枠へ (最寄り・自分の接続犬を優先) | `KD_TreatBox` Owner (マスター) | なし (既存の `dogSlot`) |
+| 食べ始め | 同上 (`_ReportArrived`) | なし |
+| 寄る・待つ・散歩へ戻るの足 | 犬の Owner | なし (位置は VRCObjectSync) |
+| 解除 | `KH_LeashManager` Owner | なし (既存の `walkers`) |
+
+### 割当の規則 (`Reconcile` / `ResolveClaimsWith`)
+
+- **絶対に除外**: 出した人以外がつないでいる犬 (横取りしない)。パス 1 も、この場合だけは Claim を外す
+- **優先**: 枠を出した人 g に反応できる接続犬がいれば、その中の最寄り 1 匹だけを候補にする。未接続犬は候補にしない。最寄りはおやつの実体からの距離 (既存の `DistMmOf`) で測り、同じ距離なら犬番号の小さい方
+- **接続犬が 0 匹のとき**: 従来どおり、未接続犬の最寄り
+- **対象の保持**: パス 1 は優先規則を見直さない。途中で外しても、他の犬がつながれても、選び直さない
+- **実装**: `ResolveClaimsWith` に (犬, 枠) ごとの許可配列を引数で足し、純関数のまま保つ。パス 2 は、距離が `int.MaxValue` の組や不許可の組を選ばないようにする (今は候補が 1 匹だけだと MaxValue でも選ばれる)
+
+### 届かない位置・競合
+
+- おやつを投げた・落とした位置が遠いとき: 接続犬はリード長の 1.25 倍までは向かい、その先では見つめて待つ。60 s で回収されるか、持ち主が [しまう] で終わる
+- 2 人が同時に出したとき: 各自の枠は、出した本人の接続犬にしか割り当てない。枠の上限 3 と 1 人 1 個はそのまま
+- 寄ってくる途中に別人がつないだとき: 絶対除外によって Claim は外れ、その人の散歩へ入る
+
+### 変更するファイルの見込み
+
+| ファイル | 変更 |
+|---|---|
+| `KD_TreatBox.cs` | `HillsideCauseOf` のリードの行、許可配列、`ResolveClaimsWith` のパス 2。`AllDogsEngaged` / `HillsideAllBusyCause` は、押す人の接続犬を「来られる」に数える |
+| 新 partial `KD_DogWanderController.HillsideTreat.cs` | `UpdateHillsideLeash` へのフックと `LeashTreat` の待つ処理。フックは非 Owner にも通す。姿勢は `UpdateTreat` の食べるポーズと視線を使い、`LeashPose` とは二重に書かない |
+| `KD_DogWanderController.Treat.cs` | 接続犬の立ち止まる距離 (手が頭と首輪に届くよう 0.6 m 前後。仮値) と、リード長での打ち切り |
+| `KD_TreatPouch.Treat.cs` / `.Redraw.cs` | 自分の接続犬が全頭来られないときの文言 (新キーなら 13 言語、Course/85・27・81) |
+| `KD_TreatSetupEditor.SelfTest.cs` | 下の机上ケース |
+| `game-design.md` §4 | 決定の反映 |
+
+### 検証
+
+- **机上** (`ResolveClaimsWith` の自己テスト、Play なし):
+  - 接続犬 3 匹と、より近い未接続犬 → 接続犬の最寄りを選ぶ
+  - 他人の接続犬は選ばない
+  - 接続犬 0 匹 → 未接続犬の最寄り
+  - 同じ距離 → 犬番号の小さい方
+  - Claim の後に解除 → Claim を保つ
+  - Claim の後に他人が接続 → Claim が外れる
+- **ClientSim ハーネス** (新 Course/9x。[kh-frisbee-harness](../../testing/kh-frisbee-harness.md) の形に倣う):
+  - T が 3 匹つないで出す → 最寄りが寄る → 食べる → 待つ 8 s → 散歩へ戻る
+  - 待つ間に `_RequestDetach` → 自由行動の中心が解除位置になる。次のおやつで次の接続犬が来る
+  - 人形の接続犬には割り当たらない
+- **ユーザー (PCVR / Quest / スマホ)**: 待つ間に手で撫でられるか、首輪の Interact に届くか、秒数の体感。ClientSim の結果を撫で・届き方の合格にはしない
+
+### ユーザーに決めてもらう点
+
+1. **反応のきっかけ**: 手に出た時点で寄る (推奨。今の「見せる」と同じ) か、放した (あげた) 時点で初めて寄るか
+2. **接続犬がいるのに全頭来られないとき**: 出すのを止めて理由を出す (推奨。在庫が減らない) か、未接続犬へ回すか
+3. **最後の 1 匹を外した直後**: 足元に残った犬がそのまま次のおやつに来てよい (推奨。0 匹時は従来どおり) か、外した犬をしばらく除くか
+4. **待つ時間**: 基本 8 s・撫で中は上限 20 s (仮値) でよいか
+5. **遠くへ投げたとき**: リード長の 1.25 倍で止まって待つ (推奨) か、紐を伸ばしてでも取りに行くか
