@@ -686,7 +686,9 @@ namespace KominkaHillside.Editor
             pickup.orientation = VRC_Pickup.PickupOrientation.Any;
             pickup.proximity = 0.3f; pickup.pickupable = true; pickup.allowManipulationWhenEquipped = false;
             pickup.InteractionText = ToolLabels[spec.tool];
-            pickup.UseText = spec.tool == KH_DogWash.ToolShower ? "Spray" : "Wash";
+            // The shower toggles (2026-09-30). ASCII placeholders; the Japanese is typed in the Inspector (kept once changed).
+            string useText = spec.tool == KH_DogWash.ToolShower ? "Shower on/off" : "Wash";
+            if (string.IsNullOrEmpty(pickup.UseText) || pickup.UseText == "Use" || pickup.UseText == "Spray" || pickup.UseText == "Wash" || pickup.UseText == "Shower on/off") pickup.UseText = useText;
             if (root.GetComponent<VRCObjectSync>() == null) root.gameObject.AddComponent<VRCObjectSync>();
             EditorUtility.SetDirty(rb); EditorUtility.SetDirty(pickup);
 

@@ -65,6 +65,16 @@
 - 各道具: **誰かが持っていれば飛ばす** (手から奪わない)。押した人が Owner なら即座に、そうでなければ `Networking.SetOwner` で Owner を取り、`OnOwnershipTransferred` で移譲を確かめてから (その間に誰かが持ったら諦める) 位置と回転を `home` へ書いて `FlagDiscontinuity()`。接触を終え、シャワーは放水を止める (`_SetSpraying(false)` とローカルの粒・音)。4 秒で届かない要求は捨てる (押し直す)。`VRCObjectSync` が全員・途中参加者へ位置を配る
 - **未確認 (実機・複数人):** 他の人が Owner の道具の SetOwner の往復、持ち始めた直後 (持っているのがまだ見えない) の道具を押した時に手から外れないか、2 人が同時に押した時・同時の Pickup、放水の子 (`State`) の Owner 移譲
 
+## 3b. シャワーの操作 (トグル)
+
+決定: 2026-09-30 (ユーザー) 「シャワーは Use したら出っぱなし、ON/OFF のトグル式にする。ずっとトリガーを押しているのがつらい」。
+
+- シャワー: `OnPickupUseDown` で放水を反転 (OFF → ON → OFF)。`OnPickupUseUp` では何もしない。持った時は OFF から始まり、手放した時・リセットで戻る時は OFF。VR も Desktop も同じ。放水の判定 (Raycast → `_LocalContact`) は「ON で持っている間」
+- 連打: 前の切り替えから `toggleGuardSeconds` (0.15 s) 以内の Use は無視
+- Use の表示 (VRC_Pickup の UseText): シャワー `Shower on/off` (ASCII の仮。日本語は Inspector で。Build は仮の値以外を上書きしない)
+- スポンジ・タオルは変えない (VR は当てるだけ、Desktop は Use を押している間)
+- ハーネス W-tool-toggle: 持つ → Use で ON (連打の 2 回目は無視) → Use を離しても ON → Use で OFF → Use で ON → 手放すと OFF
+
 ## 4. 検査
 
 - **Wash/12 (`KH_DogWashSetupEditor.StationVerify.cs` の `CheckStationLayout`)**: 棚の回転が yaw だけ・前回の Build の位置のまま / 天板と脚 4 本 / 道具 6 個の `home` が `Homes` の下・棚の上・道具がそこに置かれている / `returnSeconds` 0・`homeTolerance` 0.05・`debugHeldOverride` 0 (proxy と backing) / リセットボタン (`KH_WashStationReset`、同期 None、`tools` = 6 個を順に、Collider、Interaction Text、札の文字と字形) / すのこの Collider (固い Box 1 つ、Default、0.6 × 0.03 × 0.9、地面に据えてある、上からの光線が最初に当たる) / 両側各 1 m (すのこの縁から 2 cm 離す) に固い Collider が無い (洗い場自身の部品も数える) / 桶と札 / スポーン・周回の起点・おやつ・店番・歓迎・リード台・犬の待機の輪から 1.5 m 以上 / 地面の傾き (notes)
@@ -138,3 +148,4 @@
 - 2026-09-30: Codex レビュー反映 (7-1 地面をテレインに限定・空き検査の底を独立に、9-2 タオル 2 枚、観点 6 の Owner 交代で数え直し)
 - 2026-09-30: ユーザー決定で自動の戻りを無効 (returnSeconds 0) にし、リセットボタン (KH_WashStationReset) を追加
 - 2026-09-30: IMP-ENV-008 道中の洗い場 3 か所 (§6) を追加 (コードのみ。コンパイル・Build・Verify・ハーネスは未実行、座標は推定)
+- 2026-09-30: ユーザー決定でシャワーを Use のトグル (ON/OFF) に

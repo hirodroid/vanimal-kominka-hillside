@@ -59,6 +59,8 @@ namespace KominkaHillside
         public float hapticDuration = 0.03f;
         public float hapticAmplitude = 0.2f;
         public float hapticFrequency = 120f;
+        [Tooltip("シャワーの ON/OFF: 前の切り替えからこの秒数以内の Use は無視 (連打の誤操作)")]
+        public float toggleGuardSeconds = 0.15f;
 
         [Header("置き場へ戻る (IMP-ENV-007。ビルダーが書く)")]
         [Tooltip("棚の定位置 (KH_WashStation/Homes または KH_WashStations/{名前}/Homes の子。棚と一緒に動く)")]
@@ -78,7 +80,9 @@ namespace KominkaHillside
         private float _returnAskedAt = -100f;
         const float ReturnAskTimeout = 4f;
         private bool _held;
-        private bool _useHeld;
+        private bool _useHeld;             // sponge / towel: Use is held (Desktop contact)
+        private bool _sprayOn;             // shower: the holder's toggle
+        private float _lastToggleAt = -100f;
         private bool _sprayShown;
         private float _lastHaptic;
 
@@ -209,17 +213,24 @@ namespace KominkaHillside
 
         // ---- Pickup (these fire only on the holder's client) ----
 
+        // The shower is a toggle (user decision 2026-09-30: holding the trigger down is tiring): Use down flips the
+        // spray (off -> on -> off), Use up does nothing, and letting go (or the reset's return) turns it off. The same
+        // for VR and Desktop. The sponge and the towel are unchanged (VR: touch; Desktop: while Use is held).
         public override void OnPickup()
         {
             _held = true;
             _useHeld = false;
+            _sprayOn = false;                     // picked up: always starts off
             EndAllContacts();
+            if (tool == KH_DogWash.ToolShower && state != null && state.spraying) state._SetSpraying(false);
+            ApplySpray(Want());
         }
 
         public override void OnDrop()
         {
             _held = false;
             _useHeld = false;
+            _sprayOn = false;
             EndAllContacts();
             if (tool == KH_DogWash.ToolShower && state != null) state._SetSpraying(false);
             ApplySpray(Want());
@@ -227,18 +238,26 @@ namespace KominkaHillside
 
         public override void OnPickupUseDown()
         {
+            if (tool == KH_DogWash.ToolShower)
+            {
+                float now = Time.time;
+                if (now - _lastToggleAt < toggleGuardSeconds) return;   // a double tap: ignore the second flip
+                _lastToggleAt = now;
+                _sprayOn = !_sprayOn;
+                if (state != null) state._SetSpraying(_sprayOn);
+                if (!_sprayOn) EndAllContacts();
+                ApplySpray(Want());
+                return;
+            }
             _useHeld = true;
-            if (tool == KH_DogWash.ToolShower && state != null) state._SetSpraying(true);
-            ApplySpray(Want());
         }
 
         public override void OnPickupUseUp()
         {
+            if (tool == KH_DogWash.ToolShower) return;   // the toggle ignores the release
             _useHeld = false;
-            if (tool == KH_DogWash.ToolShower && state != null) state._SetSpraying(false);
-            // The VR sponge keeps working without Use; everything else stops touching here.
-            if (tool == KH_DogWash.ToolShower || !IsLocalVR()) EndAllContacts();
-            ApplySpray(Want());
+            // The VR sponge keeps working without Use; the Desktop sponge / towel stops touching here.
+            if (!IsLocalVR()) EndAllContacts();
         }
 
         // Called by KH_WashToolState (local C# call, not a network event).
@@ -250,7 +269,7 @@ namespace KominkaHillside
         bool Want()
         {
             if (tool != KH_DogWash.ToolShower) return false;
-            if (_held) return _useHeld;               // the holder's own truth, no round trip
+            if (_held) return _sprayOn;               // the holder's own truth, no round trip
             return state != null && state.spraying;
         }
 
@@ -308,6 +327,7 @@ namespace KominkaHillside
         {
             _awaySince = -1f;
             _useHeld = false;
+            _sprayOn = false;
             EndAllContacts();
             if (tool == KH_DogWash.ToolShower && state != null) state._SetSpraying(false);
             ApplySpray(false);
@@ -364,7 +384,7 @@ namespace KominkaHillside
             if (!Utilities.IsValid(lp)) return;
             bool vr = lp.IsUserInVR();
             bool any;
-            if (tool == KH_DogWash.ToolShower) any = _useHeld && SprayRays();
+            if (tool == KH_DogWash.ToolShower) any = _sprayOn && SprayRays();   // spray on while held (the toggle)
             else if (vr) any = ContactSphere();
             else any = _useHeld && ContactGaze(lp);
             if (any && vr) Haptic(lp);

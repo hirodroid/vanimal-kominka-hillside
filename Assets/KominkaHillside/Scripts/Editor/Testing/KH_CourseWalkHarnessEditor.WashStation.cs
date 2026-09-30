@@ -102,6 +102,58 @@ namespace KominkaHillside.Editor
                 WsNote("reset: 5 tools not held went home (home rotation), the held sponge stayed " + WtAwayMeters + " m away, the spraying shower stopped (state, particles, loop)");
             }));
             s.Add(WsDo(() => { WtOverride(0); WtHomeAll(); }));
+
+            // ---- W-tool-toggle: シャワーは Use で ON/OFF (離しても出たまま)、連打の 2 回目は無視、手放すと OFF ----
+            // The holder's own events (_onPickup / _onPickupUseDown / _onPickupUseUp / _onDrop) are sent directly (the treat harness's way).
+            s = WsCase("W-tool-toggle", 20);
+            UdonBehaviour tgState = null; ParticleSystem tgPs = null;
+            Func<bool> on = () => Get<bool>(wtU[2], "_sprayOn");
+            Func<string> tgWhat = () => "(_sprayOn " + on() + ", state.spraying " + Get<bool>(tgState, "spraying") + ", emitting " + (tgPs != null && tgPs.isEmitting) + ")";
+            s.Add(WsDo(() =>
+            {
+                WtBind(); WtOverride(0); WtHomeAll();
+                tgState = WsRef(wtU[2], "state") as UdonBehaviour; tgPs = WsRef(wtU[2], "spray") as ParticleSystem;
+                WsExpect(tgState != null && Networking.IsOwner(tgState.gameObject), "the shower's State is owned by the local player");
+                wtU[2].SendCustomEvent("_onPickup");
+            }));
+            s.Add(WsWait(0.3));
+            s.Add(WsDo(() =>
+            {
+                WsExpect(!on() && !Get<bool>(tgState, "spraying"), "picked up: off " + tgWhat());
+                wtU[2].SendCustomEvent("_onPickupUseDown");
+                wtU[2].SendCustomEvent("_onPickupUseDown");   // a double tap within toggleGuardSeconds: the second is ignored
+            }));
+            s.Add(WsWait(0.3));
+            s.Add(WsDo(() =>
+            {
+                WsExpect(on() && Get<bool>(tgState, "spraying") && tgPs != null && tgPs.isEmitting, "Use down: on, the double tap did not flip it back " + tgWhat());
+                wtU[2].SendCustomEvent("_onPickupUseUp");
+            }));
+            s.Add(WsWait(0.5));
+            s.Add(WsDo(() =>
+            {
+                WsExpect(on() && Get<bool>(tgState, "spraying") && tgPs.isEmitting, "Use up: still on (the toggle ignores the release) " + tgWhat());
+                wtU[2].SendCustomEvent("_onPickupUseDown");
+            }));
+            s.Add(WsWait(0.3));
+            s.Add(WsDo(() =>
+            {
+                WsExpect(!on() && !Get<bool>(tgState, "spraying") && !tgPs.isEmitting, "second Use down: off " + tgWhat());
+                wtU[2].SendCustomEvent("_onPickupUseDown");
+            }));
+            s.Add(WsWait(0.3));
+            s.Add(WsDo(() =>
+            {
+                WsExpect(on() && Get<bool>(tgState, "spraying"), "third Use down: on again " + tgWhat());
+                wtU[2].SendCustomEvent("_onDrop");
+            }));
+            s.Add(WsWait(0.3));
+            s.Add(WsDo(() =>
+            {
+                WsExpect(!on() && !Get<bool>(tgState, "spraying") && !tgPs.isEmitting, "dropped while on: off " + tgWhat());
+                WsNote("shower toggle: pick up off -> Use on (double tap ignored) -> release stays on -> Use off -> Use on -> drop off");
+                WtHomeAll();
+            }));
         }
 
         static void WtBind()
