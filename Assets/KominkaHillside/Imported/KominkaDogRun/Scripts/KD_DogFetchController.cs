@@ -814,6 +814,10 @@ namespace KominkaDogRun
             if (WaterHoldsThrow(playerId)) return false;   // IMP-DOG-020: in the water, walk out first (HillsideWater.cs)
             if (hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex)) return false;
             if (frisbeeCatch != null && frisbeeCatch.IsEngaged) return false;
+            // IMP-DOG-027: 洗われ中 (最後のストロークから holdSeconds。同期値) は投げに反応しない。断り方はリードと同じ
+            // (false を返すだけ。ReqStartFetch の保留は残り、猶予切れで ReqTimedOut)。wash の無い犬は常に false で素通り
+            KD_DogWanderController washed = MyWander();
+            if (washed != null && washed.WashHeld) return false;
             // **Fetch が始まる唯一の口。** `_OnBallThrown` (ローカル) と
             // `ReqStartFetch` (ネットワーク経由) の両方がここを通るので、
             // 判定を 1 箇所に置けば経路ごとの書き分けが要らない
@@ -851,7 +855,10 @@ namespace KominkaDogRun
                 if (_dogOwner && activities != null && activities.RaceWinner == dogIndex && activities.RaceRound != completedRaceRound)
                 {
                     completedRaceRound = activities.RaceRound;
-                    if (activities.Available(dogIndex) && activities.RaceBall >= 0)
+                    // IMP-DOG-027 (Codex 4-2): the race winner's own path to ChaseStart honours the wash gate as StartFetch does.
+                    // A refused round is marked completed like any other refusal here, so the race ends instead of retrying
+                    KD_DogWanderController raceWander = MyWander();
+                    if (activities.Available(dogIndex) && activities.RaceBall >= 0 && (raceWander == null || !raceWander.WashHeld))
                     {
                         raceBallIndex = activities.RaceBall; BindRaceBall();
                         petState = -1; attentionPlayerId = activities.RaceThrower; targetObjectId = 0;

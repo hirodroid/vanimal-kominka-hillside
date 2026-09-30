@@ -1205,6 +1205,9 @@ namespace KominkaHillside
                 if (Time.time >= _waterAskNext) { _waterAskNext = Time.time + WaterAskInterval; fetch._AskWaterExitFor(requester); }
                 return false;
             }
+            // IMP-DOG-027: a dog being washed (a stroke within holdSeconds, synced) neither stands off nor takes a throw. After the
+            // water ask so a wet dog is still asked out as before; the reason goes to the reject / cancel line like the others.
+            if (wander != null && wander.WashHeld) { _canPlayWhy = "washing"; return false; }
             // DES-DOG-005: the plaza circle is gone from the decision; the requester must stand on ground the dog could
             // play on (one ray, re-shot at most every PlayableCacheSeconds or after a 1 m move).
             if (!PlayableCached(at)) return false;

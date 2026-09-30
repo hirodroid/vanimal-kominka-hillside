@@ -116,17 +116,53 @@ namespace KominkaHillside
             return key;
         }
 
-        // For KH_DogWash's receive check: the player holds this tool now (the Pickup's current player) or owns it (the
-        // Pickup hands the ownership to the holder; either may lag a stroke by the sync delay, so both count).
+        // For KH_DogWash's receive check (remote senders only; the own echo is trusted there): the player actually
+        // holds this tool now (VRC_Pickup.currentPlayer, which every client sees). The pickup state and a stroke travel
+        // separately, so two short graces: the player held it until HoldGrace ago (the last strokes after a drop or a
+        // hand-over), or became its Owner within HoldGrace while nobody is seen holding it yet (the first strokes
+        // before the held state arrives; the Pickup hands the ownership to the holder). Owning it alone is not enough:
+        // the Owner stays the Owner after the drop.
         public bool _IsHeldBy(int playerId)
         {
+            TrackHolder();
+            if (_holderId >= 0) { if (_holderId == playerId) return true; }
+            float now = Time.time;
+            if (_prevHolderId == playerId && now <= _prevHolderUntil) return true;
+            if (_holderId >= 0 || _ownerSinceId != playerId || now - _ownerSinceAt > HoldGrace) return false;
+            VRCPlayerApi o = Networking.GetOwner(gameObject);
+            return Utilities.IsValid(o) && o.playerId == playerId;
+        }
+
+        const float HoldGrace = 1.5f;
+        private int _holderId = -1;
+        private int _prevHolderId = -1;
+        private float _prevHolderUntil = -100f;
+        private int _ownerSinceId = -1;
+        private float _ownerSinceAt = -100f;
+
+        // Every client, every frame (and on demand): who holds the tool, and who held it last.
+        void TrackHolder()
+        {
+            int id = -1;
             if (_pickup != null)
             {
                 VRCPlayerApi p = _pickup.currentPlayer;
-                if (Utilities.IsValid(p) && p.playerId == playerId) return true;
+                if (Utilities.IsValid(p)) id = p.playerId;
             }
-            VRCPlayerApi o = Networking.GetOwner(gameObject);
-            return Utilities.IsValid(o) && o.playerId == playerId;
+            if (id == _holderId) return;
+            if (_holderId >= 0)
+            {
+                _prevHolderId = _holderId;
+                _prevHolderUntil = Time.time + HoldGrace;
+            }
+            _holderId = id;
+        }
+
+        public override void OnOwnershipTransferred(VRCPlayerApi player)
+        {
+            if (!Utilities.IsValid(player)) return;
+            _ownerSinceId = player.playerId;
+            _ownerSinceAt = Time.time;
         }
 
         // ---- Pickup (these fire only on the holder's client) ----
@@ -205,6 +241,7 @@ namespace KominkaHillside
 
         void Update()
         {
+            TrackHolder();
             ApplySpray(Want());   // catches a missed deserialization; no-op when unchanged
 
             // A spray left on by a holder who is gone: the state's new Owner clears it (vrc-networking §6).

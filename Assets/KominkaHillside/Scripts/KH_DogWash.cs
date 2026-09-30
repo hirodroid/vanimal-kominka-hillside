@@ -30,8 +30,51 @@ namespace KominkaHillside
     // 8 Hz as NetStroke to All. The sender skips drawing its own echo but the Owner integrates the echo like any
     // other stroke, so there is one integration path for the truth. `amount` carries the contact time.
     //
-    // Ownership: this object follows the dog root's Owner (checked every 2 s). Strokes never take ownership, so two
-    // people can wash the same dog.
+    // Ownership: this object follows the dog root's Owner (checked every 2 s, one request per 6 s, only after the dog
+    // root has been ours for two checks, so a transfer in flight or two clients briefly both owning the root do not
+    // fight). Strokes never take ownership, so two people can wash the same dog.
+    //
+    // ---- Operations and their results (design §1-2; IMP-DOG-026). The mask (FragBrush) and the cells (ApplyCell)
+    // use the same formulas; only the weight differs: mask w = the shader's soft capsule falloff x clumps x part gate
+    // (foam removal uses the wider wOut), cells w = 1 for every cell centre within (r + cellReach) of the capsule, x
+    // cellGain. s = Dwell(sec) x w. sat = clamp 0..1. D, F, W = dirt, foam, wet before; D', F', W' after.
+    //
+    //  op                | delta (dD, dF, dW) per s                          | result
+    //  sponge (foam)     | (0, spongeFoamRate, spongeWetRate)                | F' = sat(F + dF (1 - ease F))  ease = _FoamGrowEase
+    //                    |                                                   | D' = D (foam never changes dirt; foam also grows on a clean dog)
+    //                    |                                                   | W' = sat(W + dW)
+    //  shower (rinse)    | (showerDirtRate, showerFoamRate, showerWetRate)   | F' = sat(F + dF)
+    //                    |                                                   | Dn = sat(D + dD (1 + F rinseFoamBoost))   (water alone removes dirt; foam is faster)
+    //                    |                                                   | g  = foamRinseGate x smoothstep(0.03, 0.2, F)
+    //                    |                                                   | D' = sat(lerp(Dn, min(D F' / max(F, 1e-4), D), g))
+    //                    |                                                   | W' = sat(W + dW)
+    //  towel (dry)       | (towelDirtRate, towelFoamRate, towelWetRate)      | as the shower with g = 0: D' = sat(D + dD (1 + F boost))
+    //  dry (Decay, 2 s)  | fd = washing ? 0 : 2 / foamDrySeconds             | F' = max(0, F - fd), W' = max(0, W - wd), D' = D
+    //                    | wd = 2 / wetDrySeconds                            | washing = _WashHold() || a stroke seen here within holdSeconds
+    //  get dirty         | (IMP-DOG-029, not yet)                            |
+    //  reset (Owner)     | _DebugSetDirt(v): D = v on valid cells, F = W = 0 | epoch++ -> every client repaints once (Restore)
+    //                    | _DebugClear(): D = F = W = 0                      | cleanArmed = (v >= dirtyDirtThreshold), arm set cleared
+    //  repaint (Restore) | mask = cells (bilinear) with D x (0.5 + noise)    | only: first receive, epoch change, lost RT, long gap, dried out
+    //  sync (Owner)      | D 2 bit, F 3 bit, W 3 bit per cell                | decoded on receive into the floats (a coarse copy)
+    //
+    // Clean edge (Owner, every 0.5 s, n = valid cells, avg over the valid cells):
+    //   arm   : !armed && (avgD >= dirtyDirtThreshold || #(F >= dirtyFoamThreshold) >= max(1, ceil(armFoamCellFraction n)))
+    //           -> the arm set = the cells with F >= dirtyFoamThreshold (cells reaching it later while armed join the set)
+    //   clean :  armed && avgD < cleanDirtThreshold && avgF < cleanFoamThreshold && (set empty || avg F over the set < cleanFoamThreshold)
+    //           -> cleanSerial++, disarm, set cleared
+    //           -> quiet set = the cells still >= dirtyFoamThreshold at the edge; a quiet cell does not count toward the
+    //              next arm until its foam is < cleanFoamThreshold (left-over foam of the same wash is not a new wash)
+    // Foaming only the legs (>= the fraction) and rinsing them gives the edge; after it, re-arming needs that many
+    // fresh cells at 0.3 again, so wobbling around 0.1 cannot repeat it (hysteresis 0.3 / 0.1, a count, the quiet set).
+    //
+    // Epoch: identifies the version only (equal or not, never ordered; FreshEpoch is random). A stroke is taken when
+    // its epoch equals this client's or is 0 ("the sender holds no state yet": a joiner before its first receive),
+    // checked before any budget is spent; anything else is dropped (a reset in flight costs a short visual gap).
+    // Cells: only the Owner integrates, and syncs per sender the newest seq it holds (appliedIds / appliedSeqs). Every
+    // client records the accepted strokes; a new Owner re-integrates the recorded ones newer than appliedSeqs.
+    // Repaint keeps the own band: a joiner's own segments are logged; after its first repaint it draws the ones the
+    // received cells do not hold (seq newer than appliedSeqs[own]) plus the unsent ones, in the Blit budget.
+    // _ReleaseHold ends the hold explicitly (gather / recall / warp); only a stroke after it holds again.
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class KH_DogWash : UdonSharpBehaviour
     {
@@ -50,6 +93,11 @@ namespace KominkaHillside
         const int QueueMax = 10;
         const int PendMax = 8;
         const int SenderSlots = 8;
+        const int ArmWords = 8;              // 256 bits
+        const int LogMax = 48;               // 32 sent + QueueMax queued + 3 open
+        const int LogSentMax = 32;
+        const int RecMax = 48;               // ~3 s of two washers at 8 Hz
+        const int AppliedSlots = 8;
         const float MaxBlitSeconds = 0.25f;  // one Blit takes at most this much contact time; the rest waits
 
         [Header("Wiring (KH_DogWashSetupEditor)")]
@@ -118,6 +166,8 @@ namespace KominkaHillside
         public float cleanFoamThreshold = 0.1f;
         public float dirtyDirtThreshold = 0.2f;
         public float dirtyFoamThreshold = 0.3f;
+        [Tooltip("泡 dirtyFoamThreshold 以上のセルが、有効セルのこの割合以上になったら再洗浄の合図を構える (足だけでもよい)")]
+        [Range(0f, 1f)] public float armFoamCellFraction = 0.15f;
         public float holdSeconds = 3f;
         public float foamDrySeconds = 120f;
         public float wetDrySeconds = 90f;
@@ -144,6 +194,18 @@ namespace KominkaHillside
         [UdonSynced] private bool washSeen;
         [UdonSynced] private int cleanSerial;
         [UdonSynced] private bool cleanArmed;        // became dirty since the last "clean"; one edge per wash
+        // The arm set (bit c of armBits[c >> 5]): the cells that were foamed while armed; "clean" waits for them.
+        // Synced so a new Owner keeps judging the same place (32 bytes).
+        [UdonSynced] private int[] armBits = new int[ArmWords];
+        // Cells that were still foamy (>= dirtyFoamThreshold) when the last clean edge fired. They do not count toward
+        // the next arm until they have dropped below cleanFoamThreshold (the rest of the same wash is not a new wash).
+        [UdonSynced] private int[] quietBits = new int[ArmWords];
+        // Which strokes the cells hold: per sender (playerId, 0 = free slot), the newest sequence number integrated.
+        // A new Owner re-integrates its recorded strokes that are newer than this (the cells it received are older
+        // than the strokes it has seen), and a joiner draws on top of its first repaint only its own segments newer
+        // than this. 8 x 2 ints.
+        [UdonSynced] private int[] appliedIds = new int[AppliedSlots];
+        [UdonSynced] private int[] appliedSeqs = new int[AppliedSlots];
 
         // ---- Local ----
         private bool _ready;
@@ -185,6 +247,58 @@ namespace KominkaHillside
         private int _lastStrokePart = -1;
         private float _lastStrokeTime = -100f;
         private int _lastWasherId = -1;
+
+        // Ownership follow (FollowDogOwner): consecutive checks the dog root was ours while this was not, and the
+        // time of the last request.
+        private int _dogOwnerStreak;
+        private float _ownerAskAt = -100f;
+
+        // Joiner's log: the own segments sent before the first receive (seq = the number they went out with). At the
+        // first receive it becomes the replay list: the logged segments the received cells do not hold (seq newer
+        // than appliedSeqs[own]) plus the queued and open segments (not sent yet), drawn after the Restore within the
+        // normal Blit budget, over as many frames as it takes (_rpIndex / _rpLeft).
+        private int _lgCount;
+        private int[] _lgTool = new int[LogMax];
+        private int[] _lgPart = new int[LogMax];
+        private int[] _lgSeq = new int[LogMax];
+        private Vector3[] _lgA = new Vector3[LogMax];
+        private Vector3[] _lgB = new Vector3[LogMax];
+        private float[] _lgRad = new float[LogMax];
+        private float[] _lgSec = new float[LogMax];
+        private bool _replayPending;     // the list is built; start after the next Restore
+        private bool _replaying;
+        private int _rpIndex;
+        private float _rpLeft = -1f;
+
+        // Every client: the accepted current strokes of the last seconds (sender, seq, epoch, capsule). Only the Owner
+        // integrates strokes into the cells; a client that becomes the Owner re-integrates from here what the cells it
+        // received do not hold yet (appliedSeqs).
+        private int _rcCount;
+        private int[] _rcSender = new int[RecMax];
+        private int[] _rcSeq = new int[RecMax];
+        private int[] _rcEpoch = new int[RecMax];
+        private int[] _rcTool = new int[RecMax];
+        private int[] _rcPart = new int[RecMax];
+        private Vector3[] _rcA = new Vector3[RecMax];
+        private Vector3[] _rcB = new Vector3[RecMax];
+        private float[] _rcRad = new float[RecMax];
+        private float[] _rcSec = new float[RecMax];
+        private float[] _apAt = new float[AppliedSlots];   // Owner-local: last use of each applied slot (eviction)
+
+        // _ReleaseHold: the hold ends now; strokes up to this point (per sender slot: the accepted seq, plus those
+        // arriving within ReleaseGrace, i.e. in flight) do not start it again.
+        private int _releaseMs;
+        private bool _released;
+        private float _releaseTime = -1000f;
+        private bool[] _relValid = new bool[SenderSlots];
+        private int[] _relSeq = new int[SenderSlots];
+        private int _acceptSlot = -1;     // AcceptSender's slot of the last accepted stroke
+        const float ReleaseGrace = 0.6f;
+
+        // Harness read-outs: Restore passes run / replay entries drawn / strokes re-integrated at a handover.
+        private int _restoreCount;
+        private int _replayCount;
+        private int _reintCount;
 
         // Blit budget (per frame, every pass counts) and the draws that did not fit, in order, never mixed across
         // tool / part.
@@ -233,6 +347,8 @@ namespace KominkaHillside
         private int[] _sndSeq = new int[SenderSlots];
         private float[] _sndTokens = new float[SenderSlots];
         private float[] _sndAt = new float[SenderSlots];
+        private float[] _sndLast = new float[SenderSlots];   // Time.time of the sender's last accepted stroke
+        private float _localStrokeAt = -1e9f;                 // this client's own last stroke (drawn at once)
         const float BudgetRate = 2.2f;       // contact seconds per second a sender may give (2 tools + margin)
         const float BudgetCap = 3f;
 
@@ -285,7 +401,7 @@ namespace KominkaHillside
             _idFoamGrowEase = VRCShader.PropertyToID("_FoamGrowEase");
 
             if (meshToWorldScale <= 0f) meshToWorldScale = 1f;
-            for (int i = 0; i < SenderSlots; i++) _sndId[i] = -1;
+            for (int i = 0; i < SenderSlots; i++) { _sndId[i] = -1; _sndLast[i] = -1e9f; }
             EnsureArrays();
             BuildIndex();
 
@@ -325,9 +441,12 @@ namespace KominkaHillside
                 InitialCells();
                 if (Networking.IsOwner(gameObject) && epoch == 0)
                 {
-                    epoch = 1;
-                    _appliedEpoch = 1;
+                    // A fresh epoch, not 1: if this Owner is a joiner whose Owner left before anything arrived, the
+                    // others hold another epoch and repaint to this seed instead of silently mixing two states.
+                    epoch = FreshEpoch();
+                    _appliedEpoch = epoch;
                     cleanArmed = true;
+                    ClearArm();
                     _gotFirst = true;   // the seed IS the state: a later receive (after losing the ownership) must not repaint
                     // Start's RequestSerialization does not reach late joiners (vrc-networking §5): send later.
                     _syncDue = true;
@@ -348,8 +467,24 @@ namespace KominkaHillside
             SilenceAll();
         }
 
+        void EnsureSyncedArrays()
+        {
+            if (armBits == null || armBits.Length != ArmWords) armBits = new int[ArmWords];
+            if (quietBits == null || quietBits.Length != ArmWords) quietBits = new int[ArmWords];
+            if (appliedIds == null || appliedIds.Length != AppliedSlots) appliedIds = new int[AppliedSlots];
+            if (appliedSeqs == null || appliedSeqs.Length != AppliedSlots) appliedSeqs = new int[AppliedSlots];
+        }
+
+        // Somewhere in the upper half of the 30-bit space, never 0 (0 = "no state"). The epoch only identifies a
+        // version (equal or not); it is never compared for order.
+        int FreshEpoch()
+        {
+            return UnityEngine.Random.Range(0x10000000, 0x3FFFFFFF);
+        }
+
         void EnsureArrays()
         {
+            EnsureSyncedArrays();
             if (_dirt != null) return;
             _dirt = new float[CellCount];
             _foam = new float[CellCount];
@@ -502,6 +637,7 @@ namespace KominkaHillside
 
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (Utilities.IsValid(lp)) _lastWasherId = lp.playerId;
+            _localStrokeAt = Time.time;
             _lastStrokePart = part;
             _lastStrokeTime = Time.time;
             _lastActivity = Time.time;
@@ -525,19 +661,27 @@ namespace KominkaHillside
             if (seq < 0 || strokeEpoch < 0) return;
             VRCPlayerApi caller = NetworkCalling.CallingPlayer;
             if (!Utilities.IsValid(caller)) return;
+
+            // Epoch first, before the sender's sequence and budget are touched: a stale stroke must not use up the
+            // budget of the fresh ones behind it. The epoch only identifies the version: a stroke is taken when it
+            // matches this client's epoch, or is 0 (the sender held no state yet: a joiner). Anything else is
+            // dropped, also a stroke of a reset that has not reached this client yet (a short visual gap only; the
+            // cells come with the reset).
+            if (strokeEpoch != 0 && strokeEpoch != epoch) return;
+
             if (dogRoot != null && Vector3.Distance(caller.GetPosition(), dogRoot.position) > maxWasherDistance) return;
-            if (!HoldsTool(caller.playerId, tool)) return;
+            // The own echo comes from this client's own _LocalContact (only the local holder calls it): trusted.
+            if (!caller.isLocal && !HoldsTool(caller.playerId, tool)) return;
             float sec = ms * 0.001f;
             if (!AcceptSender(caller.playerId, seq, sec)) return;
+            int slot = _acceptSlot;
 
             float rad = rmm * 0.001f;
             Vector3 a = Unpack(part, from);
             Vector3 b = Unpack(part, to);
             _lastWasherId = caller.playerId;
 
-            // A stroke made before a reset this client has already applied is stale; a newer epoch only means the
-            // reset has not reached us yet (events outrun synced variables), so it is drawn.
-            if (!caller.isLocal && strokeEpoch >= _appliedEpoch)
+            if (!caller.isLocal)
             {
                 QueueOrDraw(tool, part, a, b, rad, sec);
                 _lastStrokePart = part;
@@ -547,18 +691,132 @@ namespace KominkaHillside
                 ShowShell(true);
             }
 
-            if (strokeEpoch != epoch) return;
+            Record(caller.playerId, seq, epoch, tool, part, a, b, rad, sec);
+            // Only the Owner integrates (a non-Owner's own sums would be overwritten by an older receive anyway; it
+            // keeps the record instead and re-integrates when it becomes the Owner).
+            if (!Networking.IsOwner(gameObject)) return;
             ApplyToCells(tool, part, a, b, rad, sec);
-            if (Networking.IsOwner(gameObject))
+            SetApplied(caller.playerId, seq);
+            _syncDue = true;
+            // A stroke from before _ReleaseHold (accepted seq at the release, or in flight within ReleaseGrace)
+            // changes the cells but does not start the hold again.
+            bool old = _released && (Time.time - _releaseTime < ReleaseGrace
+                || (slot >= 0 && _relValid[slot] && !SeqNewer(seq, _relSeq[slot])));
+            if (!old)
             {
                 washMs = Networking.GetServerTimeInMilliseconds();   // net: owner-only
                 washSeen = true;                                      // net: owner-only
-                _syncDue = true;
             }
         }
 
-        // Tools are wired: the sender must be the holder (or the Owner, which the Pickup hands to the holder; either
-        // may lag the stroke by the sync delay) of at least one tool of this kind.
+        // seq a is after b (30-bit wrap, the same rule as AcceptSender).
+        bool SeqNewer(int a, int b)
+        {
+            int diff = (a - b) & 0x3FFFFFFF;
+            return diff != 0 && diff < 0x20000000;
+        }
+
+        // Every client: keep the accepted stroke for a later re-integration (ring, the oldest goes).
+        void Record(int sender, int seq, int ep, int tool, int part, Vector3 a, Vector3 b, float rad, float sec)
+        {
+            if (_rcCount >= RecMax)
+            {
+                for (int i = 1; i < RecMax; i++) CopyRecord(i, i - 1);
+                _rcCount = RecMax - 1;
+            }
+            int k = _rcCount;
+            _rcSender[k] = sender;
+            _rcSeq[k] = seq;
+            _rcEpoch[k] = ep;
+            _rcTool[k] = tool;
+            _rcPart[k] = part;
+            _rcA[k] = a;
+            _rcB[k] = b;
+            _rcRad[k] = rad;
+            _rcSec[k] = sec;
+            _rcCount++;
+        }
+
+        void CopyRecord(int from, int to)
+        {
+            _rcSender[to] = _rcSender[from];
+            _rcSeq[to] = _rcSeq[from];
+            _rcEpoch[to] = _rcEpoch[from];
+            _rcTool[to] = _rcTool[from];
+            _rcPart[to] = _rcPart[from];
+            _rcA[to] = _rcA[from];
+            _rcB[to] = _rcB[from];
+            _rcRad[to] = _rcRad[from];
+            _rcSec[to] = _rcSec[from];
+        }
+
+        // The newest sequence number the cells hold for this sender; found = false when the sender is not listed.
+        int AppliedSlotOf(int sender)
+        {
+            for (int i = 0; i < AppliedSlots; i++) if (appliedIds[i] == sender && sender != 0) return i;
+            return -1;
+        }
+
+        // net: owner-only (appliedIds / appliedSeqs). A new sender takes a free slot, else the least recently used.
+        void SetApplied(int sender, int seq)
+        {
+            int k = AppliedSlotOf(sender);
+            if (k < 0)
+            {
+                k = 0;
+                for (int i = 0; i < AppliedSlots; i++)
+                {
+                    if (appliedIds[i] == 0) { k = i; break; }
+                    if (_apAt[i] < _apAt[k]) k = i;
+                }
+                appliedIds[k] = sender;
+                appliedSeqs[k] = seq;
+            }
+            else if (SeqNewer(seq, appliedSeqs[k])) appliedSeqs[k] = seq;
+            _apAt[k] = Time.time;
+        }
+
+        // A stroke the cells do not hold yet: the sender is not listed, or its seq is newer than the listed one.
+        bool NotApplied(int sender, int seq)
+        {
+            int k = AppliedSlotOf(sender);
+            return k < 0 || SeqNewer(seq, appliedSeqs[k]);
+        }
+
+        // The new Owner: integrate the recorded strokes of this epoch the received cells do not hold, in order.
+        void Reintegrate()
+        {
+            for (int i = 0; i < _rcCount; i++)
+            {
+                if (_rcEpoch[i] != epoch || !NotApplied(_rcSender[i], _rcSeq[i])) continue;
+                ApplyToCells(_rcTool[i], _rcPart[i], _rcA[i], _rcB[i], _rcRad[i], _rcSec[i]);
+                SetApplied(_rcSender[i], _rcSeq[i]);
+                _reintCount++;
+            }
+        }
+
+        // Explicit end of the hold (gather, recall, warp: the behaviour side calls it on the request). Owner: the hold
+        // is expired now and synced; the strokes up to now (per sender: the accepted seq, and those arriving within
+        // ReleaseGrace) still wash the cells but do not start it again; a newer stroke does. Non-Owner: the same,
+        // locally (_WashHold() is false until the Owner syncs a stroke made after the release).
+        public void _ReleaseHold()
+        {
+            if (!_ready) return;
+            _released = true;
+            _releaseTime = Time.time;
+            _releaseMs = Networking.GetServerTimeInMilliseconds();
+            for (int i = 0; i < SenderSlots; i++) { _relValid[i] = _sndId[i] >= 0; _relSeq[i] = _sndSeq[i]; }
+            if (Networking.IsOwner(gameObject) && washSeen)
+            {
+                washMs = _releaseMs - Mathf.RoundToInt(holdSeconds * 1000f) - 1000;   // net: owner-only
+                _syncDue = true;
+                _nextSync = Time.time;
+            }
+        }
+
+        // Tools are wired: the sender must actually hold (VRC_Pickup.currentPlayer) at least one tool of this kind, or
+        // have held it / become its Owner within a short grace (the pickup state and the stroke travel separately;
+        // KH_WashTool._IsHeldBy). Being the tool's Owner alone is not enough (the Owner stays after the drop).
         bool HoldsTool(int playerId, int tool)
         {
             if (tools == null || tools.Length == 0) return true;
@@ -589,6 +847,8 @@ namespace KominkaHillside
                 _sndSeq[slot] = seq - 1;
                 _sndTokens[slot] = BudgetCap;
                 _sndAt[slot] = now;
+                _sndLast[slot] = -1e9f;
+                _relValid[slot] = false;
             }
             int diff = (seq - _sndSeq[slot]) & 0x3FFFFFFF;
             if (diff == 0 || diff >= 0x20000000) return false;
@@ -597,7 +857,35 @@ namespace KominkaHillside
             if (tokens < sec) { _sndTokens[slot] = tokens; return false; }
             _sndTokens[slot] = tokens - sec;
             _sndSeq[slot] = seq;
+            _sndLast[slot] = now;
+            _acceptSlot = slot;
             return true;
+        }
+
+        // The player of the last stroke seen here (own or received); -1 before any or after that player left.
+        public int _WasherPlayerId() { return _lastWasherId; }
+
+        // Seconds (Time.time) since that player's last stroke seen here: the own strokes as they are drawn, the others'
+        // as their NetStroke is accepted. 1e9 when there is no record (never, or evicted from the sender table).
+        public float _StrokeAgeOf(int playerId)
+        {
+            float now = Time.time;
+            float age = 1e9f;
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (Utilities.IsValid(lp) && lp.playerId == playerId && _localStrokeAt > -1e8f) age = now - _localStrokeAt;
+            for (int i = 0; i < SenderSlots; i++)
+            {
+                if (_sndId[i] != playerId || _sndLast[i] < -1e8f) continue;
+                age = Mathf.Min(age, now - _sndLast[i]);
+            }
+            return age;
+        }
+
+        // Harness only (ClientSim has one player, so CallingPlayer is always local): the per-sender check with a
+        // made-up player id. Local-only (`_`), changes only the budget table.
+        public bool _DebugAcceptSender(int playerId, int seq, float sec)
+        {
+            return AcceptSender(playerId, seq, sec);
         }
 
         // Washed within holdSeconds. No stroke yet = false (not "server time < 0"). The age is an int subtraction
@@ -606,6 +894,7 @@ namespace KominkaHillside
         public bool _WashHold()
         {
             if (!washSeen) return false;
+            if (_released && washMs - _releaseMs <= 0) return false;   // no stroke after _ReleaseHold yet
             int age = Networking.GetServerTimeInMilliseconds() - washMs;
             return age > -1000 && age < Mathf.RoundToInt(holdSeconds * 1000f);
         }
@@ -640,14 +929,19 @@ namespace KominkaHillside
                 _wet[c] = 0f;
             }
             cleanArmed = value >= dirtyDirtThreshold;
+            ClearArm();
+            ClearBits(quietBits);
             BumpEpoch();
         }
 
+        // The whole-dog reset: Owner only (a non-Owner call does nothing); everyone repaints once via the epoch.
         public void _DebugClear()
         {
             if (!_ready || !Networking.IsOwner(gameObject)) return;
             for (int c = 0; c < CellCount; c++) { _dirt[c] = 0f; _foam[c] = 0f; _wet[c] = 0f; }
             cleanArmed = false;
+            ClearArm();
+            ClearBits(quietBits);
             BumpEpoch();
         }
 
@@ -658,6 +952,7 @@ namespace KominkaHillside
             _appliedEpoch = epoch;
             _gotFirst = true;
             DropInFlight();
+            StopReplay();             // the Owner's own reset: nothing from before it is drawn again
             _restorePending = true;
             EvaluateState();
             _syncDue = true;
@@ -689,7 +984,17 @@ namespace KominkaHillside
                 _nextRtCheck = now + 0.5f;
                 if (EnsureCreated() || gap) _restorePending = true;
             }
-            if (_restorePending && CanBlit()) Restore();
+            if (_restorePending && CanBlit())
+            {
+                bool restored = Restore();
+                if (_replayPending)
+                {
+                    _replayPending = false;
+                    if (restored) { _replaying = true; _rpIndex = 0; _rpLeft = -1f; }
+                    else StopReplay();
+                }
+            }
+            ReplayStep();
             DrainPending();
 
             UpdateSend(now);
@@ -719,24 +1024,60 @@ namespace KominkaHillside
             }
         }
 
+        // Only the client that owns the dog root asks, only after it has owned the root for two checks in a row (a
+        // transfer in flight, or two clients briefly both believing they own it, does not start a tug of war), and at
+        // most once per 6 s (repeated SetOwner calls in a short time fight and roll back, vrc-networking §4). When the
+        // Owner leaves, VRChat hands this object to someone at once (OnOwnershipTransferred); this only corrects it
+        // toward the dog's Owner afterwards.
         void FollowDogOwner()
         {
             if (dogRoot == null) return;
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp)) return;
-            if (Networking.IsOwner(dogRoot.gameObject) && !Networking.IsOwner(gameObject))
-                Networking.SetOwner(lp, gameObject); // net: setowner-ok: wash state only, never the dog; follows the dog root's Owner (DES-DOG-006 §1-4)
+            if (!Networking.IsOwner(dogRoot.gameObject) || Networking.IsOwner(gameObject)) { _dogOwnerStreak = 0; return; }
+            _dogOwnerStreak++;
+            if (_dogOwnerStreak < 2) return;
+            float now = Time.time;
+            if (now - _ownerAskAt < 6f) return;
+            _ownerAskAt = now;
+            Networking.SetOwner(lp, gameObject); // net: setowner-ok: wash state only, never the dog; follows the dog root's Owner (DES-DOG-006 §1-4)
+        }
+
+        public override void OnPlayerLeft(VRCPlayerApi player)
+        {
+            if (!Utilities.IsValid(player)) return;
+            int id = player.playerId;
+            if (_lastWasherId == id) _lastWasherId = -1;
+            for (int i = 0; i < SenderSlots; i++) if (_sndId[i] == id) { _sndId[i] = -1; _sndAt[i] = -1000f; _sndLast[i] = -1e9f; _relValid[i] = false; }
+            // Ownership of this and of the dog root may both move now: look again soon.
+            if (_ready) _nextOwnerCheck = Mathf.Min(_nextOwnerCheck, Time.time + 1f);
         }
 
         public override void OnOwnershipTransferred(VRCPlayerApi player)
         {
-            // The new Owner continues from the cells it last received (already decoded). Its own mask is kept: a
-            // repaint here would wipe the fine band it is looking at for a coarse copy of the same state.
+            // The new Owner continues from the cells it last received, plus the recorded strokes of this epoch those
+            // cells do not hold yet (appliedSeqs came with them), so strokes accepted between that receive and the
+            // transfer are not lost. washMs is server time, the same clock for every Owner, so the hold carries over.
+            // Its own mask is kept: a repaint here would wipe the fine band it is looking at for a coarse copy of the
+            // same state, and the others see only a normal receive (no repaint) from it.
             if (!Networking.IsOwner(gameObject)) return;
-            if (epoch == 0) { epoch = 1; _appliedEpoch = 1; }
+            EnsureArrays();
+            Reintegrate();
+            for (int i = 0; i < AppliedSlots; i++) _apAt[i] = Time.time;
+            if (!_gotFirst)
+            {
+                // Became the Owner before anything arrived (a joiner whose Owner left at once): the seed and the own
+                // strokes on it (re-integrated just now, epoch 0) are all this client has. A fresh epoch makes
+                // everyone else repaint to it, so no client mixes this seed into another state; the own band stays.
+                if (epoch == 0) epoch = FreshEpoch();
+                _appliedEpoch = epoch;
+                StopReplay();
+            }
+            else if (epoch == 0) { epoch = FreshEpoch(); _appliedEpoch = epoch; }
             _gotFirst = true;
             _syncDue = true;
             _nextSync = Time.time + 1f;
+            if (_ready) EvaluateState();
         }
 
         public override void OnPreSerialization()
@@ -763,16 +1104,36 @@ namespace KominkaHillside
                 _foam[c] = ((v >> 2) & 7) / 7f;
                 _wet[c] = ((v >> 5) & 7) / 7f;
             }
+            EnsureSyncedArrays();
             // Repaint only on a joiner's first receive and after a reset; a normal receive (and a former Owner's
             // first receive: it already holds the state) leaves the mask alone.
+            bool first = !_gotFirst;
             bool reset = epoch != _appliedEpoch;
-            bool repaint = !_gotFirst || reset;
+            bool repaint = first || reset;
+            if (reset && !first)
+            {
+                // Everything made before the reset is meaningless. A joiner's first receive keeps its unsent
+                // segments instead: they go out with the epoch of the time they are sent, and 0-epoch ones count.
+                DropInFlight();
+                StopReplay();
+            }
+            if (repaint)
+            {
+                _restorePending = true;
+                if (first)
+                {
+                    // The own draws so far are all in the segments (sent = logged, queued, open). The Restore wipes
+                    // them; the replay list puts back only what the received cells do not hold. The waiting draws
+                    // are part of those segments, so they are dropped here (drawing them too would double them).
+                    _pdCount = 0;
+                    BuildReplay();
+                }
+                else _pdCount = 0;
+            }
             _gotFirst = true;
             _appliedEpoch = epoch;
-            if (reset) DropInFlight();
-            if (repaint) _restorePending = true;
             if (_ready && repaint) EvaluateState();
-            // Before Start: Start sees _gotFirst, keeps these values and repaints from them.
+            // Before Start: Start sees _gotFirst, keeps these values and repaints from them (the log is still empty).
         }
 
         // ================= Mask =================
@@ -791,7 +1152,8 @@ namespace KominkaHillside
         void QueueOrDraw(int tool, int part, Vector3 a, Vector3 b, float rad, float sec)
         {
             DrainPending();
-            if (_pdCount == 0 && CanBlit()) { DrawBrush(tool, part, a, b, rad, sec); return; }
+            // While a repaint is due the draw waits: the Restore would wipe it (it runs first in the next Update).
+            if (_pdCount == 0 && !_restorePending && !_replaying && !_replayPending && CanBlit()) { DrawBrush(tool, part, a, b, rad, sec); return; }
             int k = _pdCount - 1;
             if (k >= 0 && _pdTool[k] == tool && _pdPart[k] == part) { MergePending(k, b, rad, sec); return; }
             if (_pdCount >= PendMax)
@@ -833,6 +1195,7 @@ namespace KominkaHillside
         // One Blit takes at most MaxBlitSeconds of an entry; the rest stays at the head for the next Blit / frame.
         void DrainPending()
         {
+            if (_restorePending || _replaying || _replayPending) return;
             while (_pdCount > 0 && CanBlit())
             {
                 float s = Mathf.Min(_pdSec[0], MaxBlitSeconds);
@@ -881,17 +1244,107 @@ namespace KominkaHillside
 
         // Whole mask from the cells (first receive, reset, lost texture, dried out). Restore writes every texel, so
         // the undefined content of a fresh RenderTexture does not matter. Counted in the Blit budget.
-        void Restore()
+        bool Restore()
         {
             _restorePending = false;
             _blitCount++;
-            if (_maskMat == null || _cur == null || _next == null || cellTex == null) return;
+            if (_maskMat == null || _cur == null || _next == null || cellTex == null) return false;
             for (int c = 0; c < CellCount; c++) _cellColors[c] = new Color(_dirt[c], _foam[c], _wet[c], 1f);
             cellTex.SetPixels(_cellColors);
             cellTex.Apply(false);
             _maskMat.SetTexture(_idCellTex, cellTex);
             VRCGraphics.Blit(_cur, _next, _maskMat, PassRestore);
             Swap();
+            _restoreCount++;
+            if (_replaying) { _rpIndex = 0; _rpLeft = -1f; }   // the partly replayed band was just wiped
+            return true;
+        }
+
+        // Joiner, before the first receive: a segment it has just sent (UpdateSend). Only the newest LogSentMax are kept.
+        void LogSent(int tool, int part, int fromPacked, int toPacked, int ms, int rmm, int seq)
+        {
+            if (_lgCount >= LogSentMax)
+            {
+                for (int i = 1; i < _lgCount; i++) CopyLog(i, i - 1);
+                _lgCount--;
+            }
+            AddLog(tool, part, Unpack(part, fromPacked), Unpack(part, toPacked), rmm * 0.001f, ms * 0.001f, seq);
+        }
+
+        void AddLog(int tool, int part, Vector3 a, Vector3 b, float rad, float sec, int seq)
+        {
+            if (_lgCount >= LogMax || !(sec > 0f)) return;
+            int k = _lgCount;
+            _lgTool[k] = tool;
+            _lgPart[k] = part;
+            _lgSeq[k] = seq;
+            _lgA[k] = a;
+            _lgB[k] = b;
+            _lgRad[k] = rad;
+            _lgSec[k] = sec;
+            _lgCount++;
+        }
+
+        void CopyLog(int from, int to)
+        {
+            _lgTool[to] = _lgTool[from];
+            _lgPart[to] = _lgPart[from];
+            _lgSeq[to] = _lgSeq[from];
+            _lgA[to] = _lgA[from];
+            _lgB[to] = _lgB[from];
+            _lgRad[to] = _lgRad[from];
+            _lgSec[to] = _lgSec[from];
+        }
+
+        // First receive: the log becomes the replay list. Sent segments the received cells already hold (seq not
+        // newer than appliedSeqs[own]) are removed; the queued and open segments (not sent, so certainly not held) are
+        // appended. Their draws were all made before this moment; later draws wait in the pending queue.
+        void BuildReplay()
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            int own = Utilities.IsValid(lp) ? lp.playerId : -1;
+            int n = 0;
+            for (int i = 0; i < _lgCount; i++)
+            {
+                if (!NotApplied(own, _lgSeq[i])) continue;
+                if (n != i) CopyLog(i, n);
+                n++;
+            }
+            _lgCount = n;
+            for (int i = 0; i < _qCount; i++)
+                AddLog(_qTool[i], _qPart[i], Unpack(_qPart[i], _qFrom[i]), Unpack(_qPart[i], _qTo[i]), _qRmm[i] * 0.001f, _qMs[i] * 0.001f, -1);
+            for (int t = 0; t < 3; t++)
+                if (_segOpen[t]) AddLog(t, _segPart[t], _segFrom[t], _segTo[t], _segRad[t], _segSec[t], -1);
+            _replayPending = _lgCount > 0;
+            _replaying = false;
+        }
+
+        // After the Restore: the replay list in order, inside the normal per-frame Blit budget, over as many frames as
+        // it takes (new draws wait in the pending queue meanwhile). A Restore during it starts it over.
+        void ReplayStep()
+        {
+            if (!_replaying) return;
+            while (_rpIndex < _lgCount && CanBlit())
+            {
+                if (_rpLeft < 0f) _rpLeft = _lgSec[_rpIndex];
+                float s = Mathf.Min(_rpLeft, MaxBlitSeconds);
+                DrawBrush(_lgTool[_rpIndex], _lgPart[_rpIndex], _lgA[_rpIndex], _lgB[_rpIndex], _lgRad[_rpIndex], s);
+                _rpLeft -= s;
+                if (_rpLeft > 0.0005f) continue;
+                _replayCount++;
+                _rpIndex++;
+                _rpLeft = -1f;
+            }
+            if (_rpIndex >= _lgCount) StopReplay();
+        }
+
+        void StopReplay()
+        {
+            _replaying = false;
+            _replayPending = false;
+            _lgCount = 0;
+            _rpIndex = 0;
+            _rpLeft = -1f;
         }
 
         // Drying keeps running until the mask can hold nothing more: while the cells have foam / wet, and for a full
@@ -902,7 +1355,11 @@ namespace KominkaHillside
             float now = Time.time;
             float drain = Mathf.Max(foamDrySeconds, wetDrySeconds);
             if (!_anyFoamOrWet && now - _lastActivity > drain) return;
-            float fd = _WashHold() ? 0f : dt / Mathf.Max(1f, foamDrySeconds);
+            // Foam does not dry while the dog is being washed. _WashHold() alone lags on a non-Owner by the sync (the
+            // washer's own foam would melt at the start of the wash), so a stroke seen here counts as well. The same
+            // fd / wd go to the mask and the cells, and both clamp at 0 (never negative, however long it runs).
+            bool washing = _WashHold() || (now - _lastStrokeTime < holdSeconds && _lastStrokeTime > _releaseTime + ReleaseGrace);
+            float fd = washing ? 0f : dt / Mathf.Max(1f, foamDrySeconds);
             float wd = dt / Mathf.Max(1f, wetDrySeconds);
             if (_maskMat != null && _cur != null && _next != null)
             {
@@ -1058,19 +1515,92 @@ namespace KominkaHillside
             if (off && _shellOn) { _restorePending = true; ShowShell(false); }
             else if (!off && !_shellOn) ShowShell(true);
 
+            // The clean edge (formulas in the header): arm on the average dirt or on enough foamed cells anywhere
+            // (legs only is fine); fire when the averages are low AND the foamed set itself has been rinsed.
             if (!Networking.IsOwner(gameObject) || epoch == 0) return;
-            if (!cleanArmed && (_avgDirt >= dirtyDirtThreshold || _avgFoam >= dirtyFoamThreshold))
+            // Quiet cells (still foamy at the last edge) leave the quiet set once rinsed / dried below the clean
+            // threshold; until then they are the rest of the same wash and do not count toward a new arm.
+            int fresh = 0;
+            bool quietChanged = false;
+            for (int c = 0; c < CellCount; c++)
             {
-                cleanArmed = true;          // net: owner-only
-                _syncDue = true;
+                if (_cellsOk && !cellValid[c]) continue;
+                int bit = 1 << (c & 31);
+                int w = c >> 5;
+                bool quiet = (quietBits[w] & bit) != 0;
+                if (quiet && _foam[c] < cleanFoamThreshold) { quietBits[w] &= ~bit; quiet = false; quietChanged = true; }
+                if (!quiet && _foam[c] >= dirtyFoamThreshold) fresh++;
             }
-            else if (cleanArmed && _avgDirt < cleanDirtThreshold && _avgFoam < cleanFoamThreshold)
+            if (quietChanged) _syncDue = true;
+            if (!cleanArmed)
+            {
+                int need = Mathf.Max(1, Mathf.CeilToInt(Mathf.Clamp01(armFoamCellFraction) * n));
+                if (_avgDirt >= dirtyDirtThreshold || (n > 0 && fresh >= need))
+                {
+                    cleanArmed = true;      // net: owner-only
+                    ClearArm();
+                    MarkArm();
+                    _syncDue = true;
+                }
+                return;
+            }
+            if (MarkArm()) _syncDue = true;
+            float setAvg = ArmAverage();   // U#: no out parameters on own methods; the count is in _armCount
+            if (_avgDirt < cleanDirtThreshold && _avgFoam < cleanFoamThreshold && (_armCount == 0 || setAvg < cleanFoamThreshold))
             {
                 cleanArmed = false;         // net: owner-only
+                ClearArm();
+                // net: owner-only (quietBits): what is still foamy now is left over from this wash.
+                for (int c = 0; c < CellCount; c++)
+                    if ((!_cellsOk || cellValid[c]) && _foam[c] >= dirtyFoamThreshold) quietBits[c >> 5] |= 1 << (c & 31);
                 cleanSerial++;
                 _syncDue = true;
                 _nextSync = Time.time;      // the edge is what the dog waits for
             }
+        }
+
+        // net: owner-only (armBits). Adds every valid cell with foam >= dirtyFoamThreshold; true when one was new.
+        bool MarkArm()
+        {
+            bool added = false;
+            for (int c = 0; c < CellCount; c++)
+            {
+                if ((_cellsOk && !cellValid[c]) || _foam[c] < dirtyFoamThreshold) continue;
+                int bit = 1 << (c & 31);
+                int w = c >> 5;
+                if ((armBits[w] & bit) != 0) continue;
+                armBits[w] |= bit;
+                added = true;
+            }
+            return added;
+        }
+
+        void ClearArm()
+        {
+            if (armBits == null || armBits.Length != ArmWords) armBits = new int[ArmWords];
+            for (int i = 0; i < ArmWords; i++) armBits[i] = 0;
+        }
+
+        void ClearBits(int[] bits)
+        {
+            if (bits == null) return;
+            for (int i = 0; i < bits.Length; i++) bits[i] = 0;
+        }
+
+        // Average foam over the arm set (0 when empty); the set's size goes to _armCount.
+        private int _armCount;
+        float ArmAverage()
+        {
+            int count = 0;
+            float sum = 0f;
+            for (int c = 0; c < CellCount; c++)
+            {
+                if ((armBits[c >> 5] & (1 << (c & 31))) == 0) continue;
+                count++;
+                sum += _foam[c];
+            }
+            _armCount = count;
+            return count > 0 ? sum / count : 0f;
         }
 
         // ================= Outgoing =================
@@ -1194,6 +1724,7 @@ namespace KominkaHillside
             if (_qCount == 0) return;
             int amount = _qMs[0] | (_qRmm[0] << 12);
             SendCustomNetworkEvent(NetworkEventTarget.All, nameof(NetStroke), _qTool[0], _qPart[0], _qFrom[0], _qTo[0], amount, _seq, epoch);
+            if (!_gotFirst) LogSent(_qTool[0], _qPart[0], _qFrom[0], _qTo[0], _qMs[0], _qRmm[0], _seq);
             _seq = (_seq + 1) & 0x3FFFFFFF;
             for (int i = 1; i < _qCount; i++) CopyQueue(i, i - 1);
             _qCount--;

@@ -35,7 +35,7 @@ namespace KominkaHillside.Editor
         {
             Begin(false);
             report.washOnly = true;
-            report.deadline = EditorApplication.timeSinceStartup + 1500;
+            report.deadline = EditorApplication.timeSinceStartup + 2200; // Wash 1500 + WashBehavior ~260 + WashSync ~400
             report.limitations = "Single local ClientSim; the local player is instance master and every Owner (the wash object, the dog root, the tools). "
                 + "Contacts are injected at KH_DogWash._LocalContact / _EndContact (the entry KH_WashTool calls every frame) with collider surface points; "
                 + "the tool's pickup, raycasts, VR sphere and Desktop gaze are not exercised. NetStroke only takes the local echo path. "
@@ -513,6 +513,9 @@ namespace KominkaHillside.Editor
             }, 60, () => "not every other dog moved 0.3 m in 60 s: " + string.Join(", ", others.Select(o => o + ":" + otPath[o].ToString("F2") + "m rest" + Get<int>(wander[o], "_restPhase")))));
             s.Add(WsDo(() => WsNote("other dogs " + string.Join(",", others) + ": wash null, never in the wash branch while the Shiba was washed, each walked >= 0.3 m (" + string.Join(", ", others.Select(o => otPath[o].ToString("F1"))) + " m)")));
 
+            MakeWashBehaviorCases(); // IMP-DOG-027 (WashBehavior.cs): leashed stop, the gates, gathering
+            MakeWashSyncCases();     // IMP-DOG-026 (WashSync.cs): decay, local arm, late join / reset / handover (simulated), budget. Last: they reset the drying values
+
             WsWrite();
         }
 
@@ -520,11 +523,11 @@ namespace KominkaHillside.Editor
         {
             var n = wsReport.notCovered;
             n.Add("Real network: other clients drawing a received NetStroke, the 8 Hz send and the per-sender budget between clients, the Owner integrating someone else's strokes, two washers at once -> PCVR with 2 people");
-            n.Add("Late joiner / epoch repaint (Restore on the first receive), Owner handover (FollowDogOwner, OnOwnershipTransferred) -> PCVR");
+            n.Add("Late joiner / epoch repaint and Owner handover with real clients (W-latejoin / W-reset / W-handover call the events directly) -> PCVR");
             n.Add("The tool: VRC_Pickup hold, shower centre + ring raycasts and radius by distance, VR sponge sphere, Desktop gaze + Use, haptics, spray particles / audio and KH_WashToolState sync. The harness calls _LocalContact with collider surface points instead");
             n.Add("Visuals of the shell (foam layers, dirt pattern, wet darkening, face foam limit), splash / foam puff particles, contact audio -> Play / PCVR");
             n.Add("The dog's head gaze and tilt, the body turn toward the washer (only _washActive, _WashHold and the horizontal speed are read)");
-            n.Add("Priority over washing (water, gathering, sleep call; design 1-5) and the leashed stop (IMP-DOG-027)");
+            n.Add("Priority over washing by water / sleep call (design 1-5); the leashed stop with a stroke from someone other than the holder (ClientSim has one player)");
             n.Add("Drying (foamDrySeconds / wetDrySeconds, 90-120 s) and the shell switching off after drying; RenderTexture loss recovery");
             n.Add("Quest / iOS rendering of the mask and the shell");
         }
@@ -807,6 +810,8 @@ namespace KominkaHillside.Editor
             string key = method + "#ret", e;
             if (wsEntryCache.TryGetValue(key, out e)) return e;
             var m = WsMangled(wsSymTable, method + "__ret");
+            // 引数のあるメソッドは付け替えた名前に番号が付く: __{n}_ + __{k}_{名前} + __ret (例 __0___0__DebugAcceptSender__ret、uasm で確認)
+            for (int k = 0; m.Count == 0 && k <= 5; k++) m = WsMangled(wsSymTable, "__" + k + "_" + method + "__ret");
             if (m.Count != 1) throw new InvalidOperationException("KH_DogWash return symbol of " + method + ": " + m.Count + " matches (" + string.Join(",", m) + ")");
             wsEntryCache[key] = m[0]; return m[0];
         }

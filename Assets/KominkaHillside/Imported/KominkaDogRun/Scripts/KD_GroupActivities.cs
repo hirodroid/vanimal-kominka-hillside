@@ -300,6 +300,9 @@ namespace KominkaDogRun
                         for (int i = 0; i < pack.dogRoots.Length; i++)
                         {
                             if (!Available(i)) continue;
+                            // IMP-DOG-027 (Codex 4-2): a dog being washed is not picked as the race winner (the winner goes straight
+                            // to ChaseStart, past StartFetch's wash gate). Only here: Available() also serves the gathering
+                            if (pack.dogWander[i].WashHeld) continue;
                             float distance = Vector3.Distance(pack.dogRoots[i].position, balls[raceBall].transform.position);
                             if (distance < closest) { closest = distance; winner = i; }
                         }

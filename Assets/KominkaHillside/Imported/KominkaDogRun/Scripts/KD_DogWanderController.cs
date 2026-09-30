@@ -1311,6 +1311,7 @@ namespace KominkaDogRun
             _liveCalled = false;
             _activityBusy = false; // かけっこ・じゃれも同じ作法 (UpdateActivity の拘束する枝だけが立てる)
             _washActive = false;   // IMP-DOG-025: 洗われ中も同じ作法 (UpdateHillsideWash だけが立てる。HillsideWash.cs)
+            WashErrandTick();      // IMP-DOG-027: 集合・呼び戻し・ワープの受理のエッジで洗浄の保持を解く (wash が null なら即 return)
 
             // ---- IMP-NET-005: Owner 権威。**ルートを書くのは Owner だけ** ----
             //

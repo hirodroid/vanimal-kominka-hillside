@@ -275,7 +275,11 @@ namespace KominkaDogRun
             float stillFor = Time.time - _holderMovedAt;
             float restAfter = (_arrived ? 20f : hillsideLeashes.inviteAfter + hillsideLeashes.inviteInterval * hillsideLeashes.inviteLimit) + dogIndex * 2f;
             bool settling = stillFor > restAfter && handDist < 2.2f;
-            LeashPose(holder, toHand, handDist, handPos, route, settling);
+            // IMP-DOG-027: the leashed wash stop (HillsideWash.cs) is decided here, on every client and before LeashPose and the
+            // non-Owner return, so every screen picks the same pose (head to the washer, no LieDown / sniff). false whenever
+            // wash is null or not held, and then LeashPose and everything below run exactly as before.
+            bool washStop = WashLeashStop(holder, handDist, leash);
+            LeashPose(holder, toHand, handDist, handPos, route, settling, washStop);
             if (!_dogOwner) { ApplyMoveAnim(); return true; }
             // map-and-travel §F.4: the leash owns the root from here (leashed, no water veto - the caller checks it -, Fetch /
             // disc not holding the dog, Owner), so an unfinished swim-height ease must not outlive it. Flags only, no height write.
@@ -334,6 +338,10 @@ namespace KominkaDogRun
                 LeashGo(back, handDist > leash * 1.6f ? hillsideLeashes.sprintSpeed : hillsideLeashes.dashSpeed, 0.2f);
                 return true;
             }
+
+            // 1b. IMP-DOG-027: the holder washes the dog (their own stroke, standing, slack leash): stand still until they walk
+            //     on. After the return (a stretched leash comes back first) and the travel ticket above, before rest and the rest.
+            if (washStop) { WashLeashHold(); return true; }
 
             // 2. Holder has stood still for long (or all invitations are spent): settle down beside them until they move.
             if (stillFor > restAfter || (_inviteCount >= hillsideLeashes.inviteLimit && stillFor > 1f))
@@ -553,7 +561,7 @@ namespace KominkaDogRun
         // 1 つだけ立てて抜ける。立ち寄り場所が道からの距離より強いのは、場所ごとに何をするかが決まって
         // いるから (座る場所で嗅がれると「眺めている」に見えない)。
         private void LeashPose(VRCPlayerApi holder, Vector3 toHand, float handDist, Vector3 handPos,
-            KominkaHillside.KH_WalkRoute route, bool settling)
+            KominkaHillside.KH_WalkRoute route, bool settling, bool washStop)
         {
             bool stopped = _speed <= stopSpeedThreshold;
             // **その場で回っている犬は「止まっている」ではない** (Codex 4)。足が止まっていても向きを
@@ -565,6 +573,9 @@ namespace KominkaDogRun
             // 「止まっている」ではなく「止まって何秒経ったか」で決める — 通過中のわずかな停止では立たない
             if (!stopped || yawRate > PoseYawRateMax) _stoppedSince = -1f;
             else if (_stoppedSince < 0f) _stoppedSince = Time.time;
+            // IMP-DOG-027: washed on the leash - stronger than settling (the holder standing to wash is not the holder resting).
+            // The Owner's decision already includes "the holder is standing"; the others follow the observed stop.
+            if (washStop && (_dogOwner || stopped)) { ClearPoseLatches(); WashLeashPose(); return; }
             if (settling && stopped) { ClearPoseLatches(); _wantLieDown = true; return; }
             if (!stopped) { ClearPoseLatches(); return; }
             bool settled = _stoppedSince >= 0f && Time.time - _stoppedSince >= PoseStoppedFor;

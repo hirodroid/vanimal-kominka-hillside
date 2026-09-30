@@ -212,6 +212,10 @@ namespace KominkaHillside
             if (frisbeeCatchers != null && dog < frisbeeCatchers.Length && frisbeeCatchers[dog] != null && frisbeeCatchers[dog].IsEngaged) return;
             // IMP-DOG-016: a dog waiting where it was called stays out of the walk until its caller (or the owner) lets it roam.
             if (sleepBoard != null && sleepBoard._IsCalled(dog)) return;
+            // IMP-DOG-027: a dog being washed (a stroke within holdSeconds, synced) takes no new leash; ask again once the wash
+            // has paused. Same silent refusal as the other gates (the menu's pending request times out). Only this new-attach
+            // path: a dog already leashed is washed on its leash (KD_DogWanderController.HillsideWash.cs).
+            if (WashHeld(dog)) return;
             int count = 0;
             for (int i = 0; i < walkers.Length; i++) if (walkers[i] == caller.playerId && hands[i] == hand) count++;
             if (count >= 3) return;
@@ -220,6 +224,14 @@ namespace KominkaHillside
             destinations[dog] = route != null && route._DestinationNode(destination) >= 0 ? destination : defaultDestination;
             Debug.Log("[KH_Leash] ReqAttach dog" + dog + " by player " + caller.playerId + " hand=" + hand + " dest=" + destinations[dog]); // BUG-DOG-004 trail
             RequestSerialization();
+        }
+
+        // IMP-DOG-027: the dog's wash hold through its wander layer (fetchers[dog].pack, as LeashInviteBark). Unwired = false.
+        private bool WashHeld(int dog)
+        {
+            KominkaDogRun.KD_DogPack pack = fetchers[dog].pack;
+            if (pack == null || pack.dogWander == null || dog >= pack.dogWander.Length || pack.dogWander[dog] == null) return false;
+            return pack.dogWander[dog].WashHeld;
         }
 
         public void _RequestDetach(int dog)

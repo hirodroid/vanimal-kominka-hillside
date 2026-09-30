@@ -32,11 +32,19 @@ namespace KominkaHillside
                 return;
             }
             if (spraying == value && !_pending) return;   // nothing to change: do not take the ownership for it
+            // A request is already on its way: the newest wish is written when it lands. Repeated SetOwner calls in
+            // a short time fight and roll back (vrc-networking §4), so tapping Use asks once. There is no automatic
+            // retry: a request that did not land (someone else took it) is asked again only by a call made 3 s or
+            // more after it (the next Use down / up or drop).
+            if (_pending && Time.time - _askedAt < 3f) return;
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp)) return;
             _pending = true;
+            _askedAt = Time.time;
             Networking.SetOwner(lp, gameObject); // net: setowner-ok: tool state only (the holder writes); written after the transfer is confirmed
         }
+
+        private float _askedAt = -100f;
 
         public override void OnOwnershipTransferred(VRCPlayerApi player)
         {
