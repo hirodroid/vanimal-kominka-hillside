@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-73 件 — 対応中 18 / 確認待ち 23 / 未着手 19 / 保留 3 / 完了 10
+75 件 — 対応中 18 / 確認待ち 23 / 未着手 21 / 保留 3 / 完了 10
 
 ## 実行キュー
 
@@ -63,11 +63,13 @@
 | [DES-WLD-002](DES-WLD-002-sound.md) | Medium | BGM003の導入・個人音量設定はIMP-WLD-003へ。環境音・場所別構成と残る音の方針を整理する | todo | BGM採用決定とIMP-WLD-003を前提に、環境音・場所別構成の残件をgame-designへ整理する |
 | [IMP-DOG-006](IMP-DOG-006-leashed-treat-approach.md) | Medium | おやつで自分の接続犬の最寄り1匹を呼び、少し待つ間に撫でる/首輪を外す→次の1匹。9/23 操作方針了承、詳細設計・実装は未 | todo |  |
 | [IMP-DOG-031](IMP-DOG-031-collar-release-interact-only-own-walk.md) | Medium | 首輪の「外す」インタラクトを、自分が散歩中の犬にだけ出す (撫でる・洗う時に判定を取られない) | todo | KH_LeashCollar で、自分がリードを持っている時だけインタラクトを有効にする |
+| [IMP-DOG-032](IMP-DOG-032-call-placement-free-height.md) | Medium | 場所を決めて呼ぶのマーカーを古民家どおり手の高さに追従させる (地面への吸着と斜面で置けない判定を外す) | todo | KD_SleepPlacement / KD_SleepSlot / KD_DogWanderController.Sleep の IMP-DOG-016 変更 2・3 の該当部分を古民家へ戻し、Editor の Verify を追従させる |
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |  |
 | [IMP-ENV-005](IMP-ENV-005-auto-night-mode.md) | Medium | ナイトモードに時間経過で暗くなるグローバルのオートと、個人で調整するローカルのマニュアルを追加する | todo | 時間の起点・暗くなる所要時間・到達後の挙動・モードの初期値と保存方針を決める |
 | [IMP-ENV-006](IMP-ENV-006-river-ambience.md) | Medium | 制作中の川のせせらぎ音を専用ディレクトリへ格納し、本番シーンの川沿いに環境音として設定する | todo | Audio/Ambience/River に完成音源を受け取り、川沿いの配置・ループ・距離減衰・音量を調整する |
 | [IMP-ENV-008](IMP-ENV-008-wash-stations-along-course.md) | Medium | 主洗い場と同じ洗浄処理を、川辺・広場・裏山の採用地点へ展開する | todo | IMP-ENV-007 の主洗い場が成立してから、道中の採用地点の数と位置を導線・負荷・制作量から決める |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo |  |
+| [IMP-DOG-033](IMP-DOG-033-call-placement-tilt.md) | Low | 場所を決めて呼ぶで、手の傾きに合わせて犬を傾けて置けるようにする (斜面で抱っこしている感じに置く) | todo | IMP-DOG-032 (古民家どおりに戻す) の後に、同期・犬の姿勢・Desktop/Touch の扱いを設計する |
 | [IMP-ENV-009](IMP-ENV-009-course-roadside-scenery.md) | Low | 周回コースの道沿い (古民家→川、川沿いの外周、川→奥広場) が殺風景なので、負荷と相談して木などを少し置く。後回し | todo | 他の作業の後に着手。負荷の測定 (IMP-ENV-001 ③) の結果を見て、置ける量を決める |
 | [IMP-DOG-011](IMP-DOG-011-muchio-greeting.md) | Medium | 裏山で空いている犬が、自由行動の一つとしてたまにムチォの匂いを嗅ぎに行く。2026-09-22 保留 (他者のアバターギミック依存・集客寄りの動機)。理由と再検討条件は本文末尾の保留の記録 | hold | 再検討: 「これがあると散歩・犬との体験そのものが良くなる」と Play で感じたとき。集客目的だけでは解除しない |
 | [VER-DOG-001](VER-DOG-001-avatar-pet-contact-research.md) | Medium | 来訪者の無改変が条件。ムチォは既存Senderで対応候補、犬っこは通常時の対象外。静的調査まで完了、IMP-DOG-011 と共に保留 | hold | 再検討: IMP-DOG-011 の保留解除時。静的調査結果は [調査結果](../../plans/2026-09-21-avatar-pet-contact-research.md) に残す |
