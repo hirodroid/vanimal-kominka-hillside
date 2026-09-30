@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using KominkaDogRun;
+using KominkaDogRun.Editor;
 using UdonSharpEditor;
 using UnityEditor;
 using UnityEngine;
@@ -502,7 +504,79 @@ namespace KominkaHillside.Editor
                 p.objectReferenceValue = want;
                 so.ApplyModifiedProperties();
                 r.log.Add("wander " + w.dogIndex + " (" + w.name + ").wash = " + (want != null ? want.name : "null"));
+                WireReactions(w, want, r);
             }
+            WireVoiceLedger(r);
+        }
+
+        // ================================================================ IMP-DOG-028 反応と個人音量
+
+        /// <summary>IMP-DOG-028: 洗う犬のブルブルと反応音の配線。洗わない犬 (want == null) は shakeBones を空にし、音を null に戻す (洗浄の枝に入らないので使われない)。
+        /// - KD_DogPetController.shakeBones = 胴 Bone.001 / .002 / .003 の書き先 (KD_DogRig.WriteBone: 2 段構えは Constraint のソース、1 段構えはそのボーン)。
+        ///   頭 (Bone.004) は既存の sourceBone に合成するので入れない。PhysBone のルートと同じ骨なら入れない (vrc-character-rig §11)
+        /// - KD_DogWanderController.washShakeClip = KH_Wash_Shake (犬の声 = barkSource で鳴らす)。washHappyClip は null (barkClip を小さく高めに流用)
+        /// - KH_DogWash.voiceDog = この犬 (KH_DogWash 側にこの欄が足されたときだけ。個人音量の gain を読む口)
+        /// 犬の側 (pet) はここで backing へ写す。wander と wash は呼び手 (Build) が後で写す。</summary>
+        static void WireReactions(KD_DogWanderController w, KH_DogWash want, BuildReport r)
+        {
+            var pet = UnityEngine.Object.FindObjectsOfType<KD_DogPetController>(true).FirstOrDefault(x => x.dogRoot == w.dogRoot);
+            var bones = new List<Transform>();
+            if (want != null && w.dogRoot != null)
+            {
+                var rig = KD_DogRig.Resolve(w.dogRoot.gameObject);
+                var pbRoots = new HashSet<Transform>(PhysBones(w.dogRoot.gameObject).Select(PbRoot));
+                foreach (var name in new[] { "Bone.001", "Bone.002", "Bone.003" })
+                {
+                    var mesh = rig.Bone(name, null);
+                    var write = mesh != null ? rig.WriteBone(mesh, "shake " + name) : null;
+                    if (write == null) { r.log.Add("WARN " + w.name + ": shake bone " + name + " not resolved (" + string.Join("; ", rig.problems) + ") - the body does not shake, the head still does"); continue; }
+                    if (pbRoots.Contains(write)) { r.log.Add("WARN " + w.name + ": shake bone " + name + " is a PhysBone root - skipped (vrc-character-rig §11)"); continue; }
+                    bones.Add(write);
+                }
+            }
+            if (pet != null)
+            {
+                var so = new SerializedObject(pet);
+                var sp = so.FindProperty("shakeBones");
+                if (sp == null) throw new InvalidOperationException("KD_DogPetController.shakeBones missing (compile first)");
+                sp.arraySize = bones.Count;
+                for (int i = 0; i < bones.Count; i++) sp.GetArrayElementAtIndex(i).objectReferenceValue = bones[i];
+                so.ApplyModifiedProperties();
+                Copy(pet);
+                r.log.Add("pet " + pet.name + ".shakeBones = [" + string.Join(", ", bones.Select(b => KominkaDogRun.Editor.KD_SceneObjects.PathOf(b.gameObject))) + "]");
+            }
+            else if (want != null) r.log.Add("WARN " + w.name + ": no KD_DogPetController with this dogRoot - no shake, no stroke tail / face");
+
+            var wso = new SerializedObject(w);
+            var clip = wso.FindProperty("washShakeClip");
+            if (clip == null) throw new InvalidOperationException("KD_DogWanderController.washShakeClip missing (compile first)");
+            clip.objectReferenceValue = want != null ? AssetDatabase.LoadAssetAtPath<AudioClip>(ClipPath(ClipShake)) : null;
+            var happy = wso.FindProperty("washHappyClip");
+            if (happy != null) happy.objectReferenceValue = null;
+            wso.ApplyModifiedProperties();
+            if (want != null && clip.objectReferenceValue == null) r.log.Add("WARN " + ClipPath(ClipShake) + " not loaded - the shake is silent");
+            if (want != null && w.barkSource == null) r.log.Add("WARN " + w.name + ": no barkSource - the shake / satisfied voice are silent");
+
+            if (want != null)
+            {
+                var wso2 = new SerializedObject(want);
+                var vd = wso2.FindProperty("voiceDog");
+                if (vd != null) { vd.objectReferenceValue = w; wso2.ApplyModifiedProperties(); r.log.Add(want.name + ".voiceDog = " + w.name); }
+                else r.log.Add("NOTE " + want.name + " has no voiceDog field yet: its loops follow the ledger's mute (0 % / OFF) but not the slider level");
+            }
+        }
+
+        /// <summary>IMP-DOG-028: 洗浄の音 (犬の 3 本 + 噴射) を個人音量の台帳 (KD_TreatPouch の犬の声) へ載せ直す。Menu/16 と同じ集め方
+        /// (KD_DogVoiceSettingsEditor.CollectHillsideVoiceSources)。道具 (BuildStation) の後に呼ばれること。ポーチが無ければ WARN だけ。</summary>
+        static void WireVoiceLedger(BuildReport r)
+        {
+            var go = KominkaDogRun.Editor.KD_SceneObjects.Find(KD_DogDefs.TreatPouchName, out int count);
+            var pouch = go != null && count == 1 ? go.GetComponent<KD_TreatPouch>() : null;
+            if (pouch == null) { r.log.Add("WARN " + KD_DogDefs.TreatPouchName + " not found (" + count + ") - the wash sounds are not on the personal-volume ledger (run Menu/16 after Menu/7)"); return; }
+            var log = new System.Text.StringBuilder();
+            KD_DogVoiceSettingsEditor.CollectHillsideVoiceSources(pouch, log);
+            Copy(pouch);
+            r.log.Add(log.ToString().Trim());
         }
     }
 }

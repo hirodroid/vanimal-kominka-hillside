@@ -104,10 +104,24 @@ namespace KominkaDogRun.Editor
             if (bgmPlayer == null) log.AppendLine("   WARN " + KD_DogDefs.BgmName + " が無い (" + bgmCount + " 個) — BGM の行は作ったが音源は未配線。Tools/KominkaHillside/Course/98 - Build BGM を流す");
             else log.AppendLine("   BGM: pouch.bgmPlayer -> " + KD_SceneObjects.PathOf(bgmGo));
 
-            // 音源: 古民家と同じ (吠え声 = bark、息 = breath は犬が持つ、撫でた時の喜び声 = joyAudioSource)。root を KH_Dogs に読み替える
+            CollectHillsideVoiceSources(pouch, log);
+            audioGo.SetActive(wasActive);
+            EditorUtility.SetDirty(pouch);
+            log.AppendLine("Volume (裏山: BGM + 犬の声): bgmPlayer=" + (pouch.bgmPlayer != null));
+        }
+
+        /// <summary>犬の声の台帳 (pouch.voiceDogs / dogVoiceSources / dogVoiceBaseVolumes) を集め直す (冪等)。Menu/16 と Wash/11 (KH_DogWashSetupEditor.Dog) から呼ぶ。
+        /// 音源: 古民家と同じ (吠え声 = bark、息 = breath は犬が持つ、撫でた時の喜び声 = joyAudioSource)。root を KH_Dogs に読み替える。
+        /// IMP-DOG-028: 洗浄の音 (KH_DogWash の contactFur / contactFoam / scrub、KH_WashTool の sprayAudio) も犬の声へ載せる
+        /// (設計書 §8 の既定: 「効果音」の行は作らない)。base はビルド時の volume。洗浄のループは volume 0 で焼かれ、実行時に
+        /// KH_DogWash が「目標の音量 × 犬の localVoiceGain」を書く (台帳の Apply はその 0 × gain と mute を書くだけ)。噴射は Play / Stop だけなので
+        /// base 0.7 × gain がそのまま効く。焼いた mute は常に true (KD_TreatPouch.Start → ApplyDogVoiceSettings が決める)。
+        /// proxy だけ書く (backing への写しは呼び手: Menu/16 は CopyProxyToUdon、Wash/11 は Copy)。</summary>
+        internal static void CollectHillsideVoiceSources(KD_TreatPouch pouch, StringBuilder log)
+        {
             var dogs = new List<KD_DogWanderController>();
             var sources = new List<AudioSource>();
-            int joy = 0;
+            int joy = 0, wash = 0;
             foreach (var dog in Resources.FindObjectsOfTypeAll<KD_DogWanderController>())
             {
                 if (dog.gameObject.scene != pouch.gameObject.scene || dog.transform.root.name != KD_Hillside.DogsRootName) continue;
@@ -120,6 +134,8 @@ namespace KominkaDogRun.Editor
                 if (pet.gameObject.scene != pouch.gameObject.scene || pet.transform.root.name != KD_Hillside.DogsRootName) continue;
                 if (pet.joyAudioSource != null && !sources.Contains(pet.joyAudioSource)) { sources.Add(pet.joyAudioSource); joy++; }
             }
+            foreach (var s in HillsideWashSources(pouch.gameObject.scene))
+                if (!sources.Contains(s)) { sources.Add(s); wash++; }
             pouch.voiceDogs = dogs.ToArray();
             pouch.dogVoiceSources = sources.ToArray();
             pouch.dogVoiceBaseVolumes = new float[sources.Count];
@@ -130,9 +146,22 @@ namespace KominkaDogRun.Editor
                 sources[i].mute = true;
                 EditorUtility.SetDirty(sources[i]);
             }
-            audioGo.SetActive(wasActive);
             EditorUtility.SetDirty(pouch);
-            log.AppendLine("Volume (裏山: BGM + 犬の声): bgmPlayer=" + (pouch.bgmPlayer != null) + " dogs=" + dogs.Count + " sources=" + sources.Count + " (joy=" + joy + ")");
+            log.AppendLine("Voice ledger: dogs=" + dogs.Count + " sources=" + sources.Count + " (joy=" + joy + ", wash=" + wash + ")");
+        }
+
+        /// <summary>IMP-DOG-028: 洗浄の音源 (シーン内の KH_DogWash 3 本ずつ + KH_WashTool の sprayAudio)。null は除く。</summary>
+        static List<AudioSource> HillsideWashSources(UnityEngine.SceneManagement.Scene scene)
+        {
+            var list = new List<AudioSource>();
+            foreach (var w in Resources.FindObjectsOfTypeAll<KominkaHillside.KH_DogWash>())
+            {
+                if (w.gameObject.scene != scene) continue;
+                foreach (var s in new[] { w.contactFur, w.contactFoam, w.scrub }) if (s != null && !list.Contains(s)) list.Add(s);
+            }
+            foreach (var t in Resources.FindObjectsOfTypeAll<KominkaHillside.KH_WashTool>())
+                if (t.gameObject.scene == scene && t.sprayAudio != null && !list.Contains(t.sprayAudio)) list.Add(t.sprayAudio);
+            return list;
         }
 
         /// <summary>Menu/16。前提: Menu/7 Build Menu (BGM を鳴らすには Course/98 も)。音量の頁を揃え、設定面を組み直して文言を束縛し直す (KD_MenuSettings が居れば)。シーンは保存しない。</summary>
@@ -167,10 +196,47 @@ namespace KominkaDogRun.Editor
             Action<bool, string> check = (ok, label) => { log.AppendLine((ok ? "PASS " : "FAIL ") + label); if (!ok) failed++; };
             try
             {
-                VerifyCore(KD_Hillside.DogsRootName, log, check);
+                // IMP-DOG-028: 古民家の検査本体は台帳 = bark + joy と数える。裏山は洗浄の音も載せるので、その 2 行だけ下の検査に置き換える
+                // (本体の他の行はそのまま通す)
+                Action<bool, string> core = (ok, label) =>
+                {
+                    if (label.StartsWith("all one-shot voice sources wired") || label.StartsWith("base volumes match sources"))
+                    { log.AppendLine("NOTE (裏山: 洗浄の音を含めて下で検査) " + label); return; }
+                    check(ok, label);
+                };
+                VerifyCore(KD_Hillside.DogsRootName, log, core);
                 var pouch = KD_SceneObjects.Find(KD_DogDefs.TreatPouchName)?.GetComponent<KD_TreatPouch>();
                 if (pouch != null)
                 {
+                    // 台帳 = bark + joy + 洗浄 (KH_DogWash 3 本 / KH_WashTool の噴射)。proxy と backing (実行時に読む側) の両方
+                    var expected = new HashSet<AudioSource>();
+                    foreach (var dog in Resources.FindObjectsOfTypeAll<KD_DogWanderController>())
+                        if (dog.gameObject.scene == pouch.gameObject.scene && dog.transform.root.name == KD_Hillside.DogsRootName && dog.barkSource != null) expected.Add(dog.barkSource);
+                    foreach (var pet in Resources.FindObjectsOfTypeAll<KD_DogPetController>())
+                        if (pet.gameObject.scene == pouch.gameObject.scene && pet.transform.root.name == KD_Hillside.DogsRootName && pet.joyAudioSource != null) expected.Add(pet.joyAudioSource);
+                    var washSources = HillsideWashSources(pouch.gameObject.scene);
+                    foreach (var s in washSources) expected.Add(s);
+                    check(pouch.dogVoiceSources != null && new HashSet<AudioSource>(pouch.dogVoiceSources).SetEquals(expected), "voice ledger = bark + joy + wash sources (" + expected.Count + ", wash " + washSources.Count + ")");
+                    check(pouch.dogVoiceBaseVolumes != null && pouch.dogVoiceSources != null && pouch.dogVoiceBaseVolumes.Length == pouch.dogVoiceSources.Length, "base volumes match sources");
+                    int washRegistered = 0, washBaseOk = 0;
+                    if (pouch.dogVoiceSources != null && pouch.dogVoiceBaseVolumes != null)
+                        for (int i = 0; i < pouch.dogVoiceSources.Length && i < pouch.dogVoiceBaseVolumes.Length; i++)
+                        {
+                            var s = pouch.dogVoiceSources[i];
+                            if (s == null || !washSources.Contains(s)) continue;
+                            washRegistered++;
+                            if (Mathf.Approximately(pouch.dogVoiceBaseVolumes[i], s.volume)) washBaseOk++;
+                        }
+                    check(washRegistered == washSources.Count, "every wash sound on the ledger (" + washRegistered + "/" + washSources.Count + "; 0/0 = no wash built yet)");
+                    check(washBaseOk == washRegistered, "wash base volume = the baked volume (" + washBaseOk + "/" + washRegistered + "; the loops are 0, the spray 0.7)");
+                    object rawSources = null;
+                    var backingPouch = UdonSharpEditorUtility.GetBackingUdonBehaviour(pouch);
+                    var stored = backingPouch != null && backingPouch.publicVariables.TryGetVariableValue("dogVoiceSources", out rawSources) ? rawSources as Array : null;
+                    int storedWash = 0;
+                    if (stored != null) foreach (var o in stored) if (o is AudioSource a && washSources.Contains(a)) storedWash++;
+                    check(stored != null && stored.Length == (pouch.dogVoiceSources == null ? -1 : pouch.dogVoiceSources.Length) && storedWash == washSources.Count,
+                        "backing Udon holds the ledger incl. wash (" + (stored == null ? "null" : stored.Length + " sources, wash " + storedWash) + ")");
+                    foreach (var s in washSources) check(s.mute, "wash sound baked muted (the pouch unmutes at Start): " + KD_SceneObjects.PathOf(s.gameObject));
                     check(pouch.voiceDogs != null && pouch.voiceDogs.Length == KD_DogDefs.All.Length, "six dogs wired (" + (pouch.voiceDogs == null ? 0 : pouch.voiceDogs.Length) + ")");
                     int barks = 0;
                     if (pouch.voiceDogs != null) foreach (var dog in pouch.voiceDogs) if (dog != null && dog.barkSource != null) barks++;

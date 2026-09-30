@@ -1804,9 +1804,13 @@ namespace KominkaDogRun
                 if (pose == 2 && slot != null && slot.PawHeld) animation = 3;
                 if (pose == 1 && slot != null && slot.ChinHand != 0) animation = 6;
                 if (stretch) animation = 7;
+                // IMP-DOG-028: 洗われ中の足上げ (CallPaw = 3)。優先は最後 (Sit / LieDown / 集合 / 寝床の呼び出しが立っていれば出さない)。
+                // 洗われていない犬は WashPawPose が false (_washActive が立たない) なので、下の 2 式は従来と同じ値になる
+                // _wasMoving: the Walk / Run this frame's ApplyMoveAnim wrote (incl. its stop hold) - no static pose while the legs move
+                bool washPaw = WashPawPose && !_wasMoving && !_wantSit && !_wantLieDown && !_groupSit && !IsCompanionReady;
                 ApplyCompanionAnimation(_wantSleep && pose == 0 && !stretch,
-                    _groupSit || (IsCompanionReady && (pose != 0 || stretch)),
-                    _groupSit ? 2 : animation, stretch ? slot.StretchTime : 0f);
+                    washPaw || _groupSit || (IsCompanionReady && (pose != 0 || stretch)),
+                    washPaw ? 3 : (_groupSit ? 2 : animation), stretch ? slot.StretchTime : 0f);
             }
 
             if (breathSource == null) return;

@@ -51,7 +51,13 @@ namespace KominkaHillside
     //  towel (dry)       | (towelDirtRate, towelFoamRate, towelWetRate)      | as the shower with g = 0: D' = sat(D + dD (1 + F boost))
     //  dry (Decay, 2 s)  | fd = washing ? 0 : 2 / foamDrySeconds             | F' = max(0, F - fd), W' = max(0, W - wd), D' = D
     //                    | wd = 2 / wetDrySeconds                            | washing = _WashHold() || a stroke seen here within holdSeconds
-    //  get dirty         | (IMP-DOG-029, not yet)                            |
+    //  get dirty (Owner, | walk: legs +walkLegDirt per walkDirtMeters of    | D' = min(1, D + inc) per valid cell of the part (a full cell stays 1)
+    //   every 2 s)       |   leashed / Fetch / disc movement                 | river: D' = D > floor ? max(floor, D - drop) : D   (floor = riverDirtFloor)
+    //                    | zone: legs +zoneLegDirt, hip + chest +zoneBodyDirt| W' = min(1, W + riverWetPerSecond x water time) (legs; + hip / chest when swimming)
+    //                    |   per zoneDirtSeconds inside a dirt zone          | none while washed (_WashHold), within dirtGraceSeconds of the last clean edge,
+    //                    | river (WaterPose != 0): legs -riverLegDrop per    |   or within dirtStationRadius of the wash station (the river still rinses there)
+    //                    |   riverDropSeconds, + wet                         | mask: the part's average change, as a whole-part Brush (see "Dirt on the mask")
+    //                    |                                                   | a river drop alone never fires the clean edge (riverBlocksEdge until a wash stroke)
     //  reset (Owner)     | _DebugSetDirt(v): D = v on valid cells, F = W = 0 | epoch++ -> every client repaints once (Restore)
     //                    | _DebugClear(): D = F = W = 0                      | cleanArmed = (v >= dirtyDirtThreshold), arm set cleared
     //  repaint (Restore) | mask = cells (bilinear) with D x (0.5 + noise)    | only: first receive, epoch change, lost RT, long gap, dried out
@@ -75,12 +81,32 @@ namespace KominkaHillside
     // Repaint keeps the own band: a joiner's own segments are logged; after its first repaint it draws the ones the
     // received cells do not hold (seq newer than appliedSeqs[own]) plus the unsent ones, in the Blit budget.
     // _ReleaseHold ends the hold explicitly (gather / recall / warp); only a stroke after it holds again.
+    //
+    // ---- Dirt on the mask (IMP-DOG-029). A normal receive never repaints (the washed band would come back), so a dirt
+    // increase the Owner makes in the cells has to be drawn into every client's mask as well. It goes out as a NetStroke
+    // with tool = ToolDirt (3): one event per 2 s tick at most, only when something changed, sent only by the Owner of
+    // this object and accepted only from it. Arguments: part = 0 (unused), from = the dirt change of the legs 3..6, to =
+    // of the parts 0, 1, 2, 8 (7 bit each, offset 64, unit DirtUnit, -63..63), amount = the wet change of the legs
+    // (bits 0..9) and of hip + chest (bits 10..19), unit 0.001. Every client (the Owner at once, the others on receipt)
+    // draws each part's change as ONE Brush pass: a capsule of zero length at the part's centre, large enough to cover
+    // the whole part (_partReach), _AllowPart = that part only, _Delta = (dD, 0, dW). The Brush pass ADDS dD to every
+    // texel of the part (x the shader's clump noise = the mud pattern) and leaves foam alone, so a washed band stays
+    // lighter than its surroundings by exactly what it was washed: nothing is overwritten. The alternative (repainting
+    // the part from the cells with Restore) was not taken: Restore writes every texel from the 16 x 16 cells, i.e. it
+    // would replace the band with the coarse cell value (and it has no part gate at all).
+    // The amount drawn is the part's AVERAGE cell change (quantised, the remainder carried to the next tick), so a
+    // saturated part (cells at 1) draws nothing more. The mask clamps at 0..1 itself.
+    // Which events a state holds (Codex review 3, 1-1): the synced dirtSeq is the newest dirt event the cells contain
+    // (one sequence per object, continued by each Owner). Every client logs the accepted events; a Restore makes the mask
+    // equal to the cells (= up to dirtSeq) and draws again only the logged events newer than dirtSeq; a received event is
+    // drawn only when newer than what the mask holds. A new Owner integrates the logged events its cells lack.
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class KH_DogWash : UdonSharpBehaviour
     {
         public const int ToolSponge = 0;
         public const int ToolShower = 1;
         public const int ToolTowel = 2;
+        public const int ToolDirt = 3;       // NetStroke only: the Owner's dirt change (IMP-DOG-029), never a held tool
         public const int PartCount = 9;
         const int CellCount = 256;
         const int AllowSlots = 16;   // _AllowPart / _PartFoamLimit length in the shaders
@@ -132,6 +158,8 @@ namespace KominkaHillside
         public float[] partFoamLimit;
 
         [Header("Effects (null is fine)")]
+        [Tooltip("個人音量: 接触の音 3 本は「目標の音量 × この犬の localVoiceGain」を書く (KD_TreatPouch.ApplyDogVoiceSettings が gain と mute を決める)。null なら gain 1")]
+        public KominkaDogRun.KD_DogWanderController voiceDog;
         [Tooltip("Emit で使う。Simulation Space = World")]
         public ParticleSystem hitSplash;
         public ParticleSystem foamPuff;
@@ -183,6 +211,43 @@ namespace KominkaHillside
         public float splashPerSecond = 60f;
         public float foamPuffPerSecond = 20f;
 
+        [Header("Getting dirty (IMP-DOG-029, wired by Wash/20 KH_DirtZoneEditor; prototype values)")]
+        [Tooltip("犬の Fetch (IsIdle / WaterPose)。null なら Fetch 中の移動と川を見ない")]
+        public KominkaDogRun.KD_DogFetchController dirtFetcher;
+        [Tooltip("リード (walkers[dogIndex] >= 0 = 接続中)。null ならリードの移動を見ない")]
+        public KH_LeashManager dirtLeashes;
+        [Tooltip("ディスク (IsEngaged)。null ならディスクの移動を見ない")]
+        public KH_FrisbeeCatch dirtFrisbee;
+        [Tooltip("洗い場 (KH_WashStation)。ここから dirtStationRadius 以内では汚れない。null なら判定しない")]
+        public Transform washStation;
+        // Scene-reference arrays: no program defaults (vrc-udonsharp §4). Wash/20 allocates them.
+        [Tooltip("泥の地点。球 = 中心から lossyScale.x / 2 以内、箱 (dirtZoneBox[i]) = Transform のローカルの ±0.5 の立方体の中")]
+        public Transform[] dirtZones;
+        public bool[] dirtZoneBox;
+        public bool dirtEnabled = true;
+        [Tooltip("リード接続中・Fetch 中・ディスク中にこの距離 (m) を進むと、足が walkLegDirt 汚れる")]
+        public float walkDirtMeters = 300f;
+        public float walkLegDirt = 0.5f;
+        [Tooltip("泥の地点にこの秒数いると、足が zoneLegDirt、腰と胸が zoneBodyDirt 汚れる")]
+        public float zoneDirtSeconds = 10f;
+        public float zoneLegDirt = 0.5f;
+        public float zoneBodyDirt = 0.2f;
+        [Tooltip("水の中 (WaterPose != 0) にこの秒数いると、足の汚れが riverLegDrop 落ちる。riverDirtFloor より下へは落とさない (川だけで清潔にしない)")]
+        public float riverDropSeconds = 30f;
+        public float riverLegDrop = 0.3f;
+        public float riverDirtFloor = 0.15f;
+        [Tooltip("水の中で足 (泳ぐと腰と胸も) が 1 秒あたりに濡れる量")]
+        public float riverWetPerSecond = 0.1f;
+        [Tooltip("清潔の合図 (cleanSerial) からこの秒数は汚れない")]
+        public float dirtGraceSeconds = 120f;
+        public float dirtStationRadius = 6f;
+        [Tooltip("汚れの増減をセルへ入れて配る間隔 (s)。増減が無い回は送らない")]
+        public float dirtApplyInterval = 2f;
+        [Tooltip("部位全体を覆うブラシの半径 = 部位の中心から最も遠いセルまで × この値 (セルの中心より外の毛も覆う)")]
+        public float dirtReachScale = 1.6f;
+        [Tooltip("これより速い位置の変化はワープとして距離に数えない (m/s)")]
+        public float dirtMaxSpeed = 12f;
+
         // ---- Synced (Owner of this object writes; the Owner follows the dog root) ----
         // Per cell: dirt 2 bit | foam 3 bit << 2 | wet 3 bit << 5 (design §1-4).
         [UdonSynced] private byte[] cells = new byte[CellCount];
@@ -193,6 +258,18 @@ namespace KominkaHillside
         [UdonSynced] private int washMs;
         [UdonSynced] private bool washSeen;
         [UdonSynced] private int cleanSerial;
+        // Server milliseconds of the last clean edge (cleanSerial++): the dirt grace (IMP-DOG-029) carries over an Owner
+        // change. Meaningful only when cleanSerial > 0.
+        [UdonSynced] private int cleanMs;
+        // The Owner's shake (IMP-DOG-028): _RequestShake bumps it and syncs; the others play the shake on the edge.
+        [UdonSynced] private int shakeSerial;
+        // IMP-DOG-029 (Codex review 3, 1-1): the newest dirt event (NetStroke tool 3) whose change these cells hold. One
+        // sequence for the object, continued by every Owner (the next event is dirtSeq + 1), so a receiver can tell which
+        // dirt events a received / repainted state already contains.
+        [UdonSynced] private int dirtSeq;
+        // (review 3, 1-2) a river drop changed the dirt since the last accepted wash stroke: the clean edge waits for a
+        // stroke. Synced so a new Owner keeps holding the edge back (the 2-bit dirt rounds the floor 0.15 down to 0).
+        [UdonSynced] private bool riverBlocksEdge;
         [UdonSynced] private bool cleanArmed;        // became dirty since the last "clean"; one edge per wash
         // The arm set (bit c of armBits[c >> 5]): the cells that were foamed while armed; "clean" waits for them.
         // Synced so a new Owner keeps judging the same place (32 bytes).
@@ -243,6 +320,7 @@ namespace KominkaHillside
         private bool _shellOn = true;
         private float _avgDirt;
         private float _avgFoam;
+        private float _avgWet;
 
         private int _lastStrokePart = -1;
         private float _lastStrokeTime = -100f;
@@ -363,6 +441,64 @@ namespace KominkaHillside
         private float _foamNearAt = -100f;
         private float _foamNearValue;
 
+        // ---- Getting dirty (IMP-DOG-029) ----
+        const float DirtUnit = 0.002f;        // one step of a sent dirt change (7 bit signed: +-0.126 per event)
+        const int DirtQMax = 63;
+        const float DirtWetUnit = 0.001f;     // one step of a sent wet change (10 bit)
+        const int DirtWetQMax = 1023;
+        const float DirtSampleInterval = 0.25f;
+        private float[] _partReach;           // mesh units: the part's centre to its farthest cell centre
+        // Owner: what happened since the last apply (metres counted, seconds in a zone / in the water / swimming)
+        private float _dirtSampleAt = -1f;
+        private float _dirtNextApply;
+        private Vector3 _dirtPrevPos;
+        private bool _dirtPrevValid;
+        private float _walkAcc;
+        private float _zoneAcc;
+        private float _waterAcc;
+        private float _swimAcc;
+        // Owner: the part's average change not sent yet (quantisation remainder; a saturated part gains nothing)
+        private float[] _dirtCarry = new float[PartCount];
+        private float _wetCarryLeg;
+        private float _wetCarryBody;
+        private bool _dirtOutPending;
+        private int _dirtOutFrom;
+        private int _dirtOutTo;
+        private int _dirtOutAmount;
+        private int _dirtOutSeq;
+        // Every client: the dirt events received lately (ring, oldest out). After a Restore the ones newer than the
+        // cells' dirtSeq are drawn again; a new Owner integrates them into its cells (review 3, 1-1).
+        const int DirtLogMax = 8;
+        private int _dlCount;
+        private int[] _dlSeq = new int[DirtLogMax];
+        private int[] _dlEpoch = new int[DirtLogMax];
+        private int[] _dlFrom = new int[DirtLogMax];
+        private int[] _dlTo = new int[DirtLogMax];
+        private int[] _dlAmount = new int[DirtLogMax];
+        private int _dirtMaskSeq;        // the mask holds the dirt events up to this (the cells' dirtSeq at the last Restore)
+        private bool _dirtLastValid;
+        private int _dirtLastSeq;        // the newest accepted dirt event
+        // Owner tracking for the dirt check: the current Owner and, for a short time after a change, the previous one
+        // (its events still in flight are accepted, so the masks match the new Owner's re-integrated cells).
+        private int _ownerId = -1;
+        private int _prevOwnerId = -1;
+        private float _prevOwnerUntil = -1f;
+        const float PrevOwnerGrace = 5f;
+        const int DirtDrawsPerFrame = 2;  // whole-part Brushes per dog per frame (six dogs at once stay bounded)
+        // Every client: dirt / wet changes waiting to be drawn (the Owner's own, or received), one Brush per part
+        private float[] _dirtDrawPend = new float[PartCount];
+        private float[] _wetDrawPend = new float[PartCount];
+        private bool _anyDirtDraw;
+        // Harness read-outs: totals counted (m / s / s), apply ticks, events sent, Brush draws, the last block reason
+        // (0 none, 1 disabled, 2 washed, 3 grace, 4 station, 5 water)
+        private float _dirtWalkTotal;
+        private float _dirtZoneTotal;
+        private float _dirtWaterTotal;
+        private int _dirtTicks;
+        private int _dirtEvents;
+        private int _dirtDraws;
+        private int _dirtBlock;
+
         // Shader property IDs
         private int _idMask;
         private int _idPosMap;
@@ -463,6 +599,10 @@ namespace KominkaHillside
             _nextDecay = now + 2f;
             _nextRtCheck = now + 0.5f;
             _nextOwnerCheck = now + 1f;
+            // Staggered per dog (review 3, 8): six dogs dirtied at once do not all apply, send and Blit in the same frame.
+            _dirtNextApply = now + Mathf.Max(0.5f, dirtApplyInterval) + (dogIndex >= 0 ? (dogIndex % 7) * 0.3f : 0f);
+            VRCPlayerApi owner0 = Networking.GetOwner(gameObject);
+            if (Utilities.IsValid(owner0)) _ownerId = owner0.playerId;
             _lastRealtime = Time.realtimeSinceStartup;
             SilenceAll();
         }
@@ -520,6 +660,7 @@ namespace KominkaHillside
             _partCellStart[PartCount] = total;
             _partCells = new int[total];
             int[] fill = new int[PartCount];
+            _partReach = new float[PartCount];
             if (_cellsOk)
             {
                 for (int c = 0; c < CellCount; c++)
@@ -528,6 +669,7 @@ namespace KominkaHillside
                     if (!cellValid[c] || p < 0 || p >= PartCount) continue;
                     _partCells[_partCellStart[p] + fill[p]] = c;
                     fill[p]++;
+                    _partReach[p] = Mathf.Max(_partReach[p], (cellCenter[c] - _partCenter[p]).magnitude);
                 }
             }
 
@@ -652,6 +794,7 @@ namespace KominkaHillside
         public void NetStroke(int tool, int part, int from, int to, int amount, int seq, int strokeEpoch)
         {
             if (!_ready) return;
+            if (tool == ToolDirt) { ReceiveDirt(part, from, to, amount, seq, strokeEpoch); return; }
             if (tool < ToolSponge || tool > ToolTowel || part < 0 || part >= PartCount) return;
             if (from < 0 || from > PackMax || to < 0 || to > PackMax) return;
             if (amount < 0 || (amount >> 20) != 0) return;
@@ -697,6 +840,10 @@ namespace KominkaHillside
             if (!Networking.IsOwner(gameObject)) return;
             ApplyToCells(tool, part, a, b, rad, sec);
             SetApplied(caller.playerId, seq);
+            riverBlocksEdge = false;   // net: owner-only. Washed by a tool: the clean edge may fire again (IMP-DOG-029)
+            // (review 3, 2-1) a wash started: what was counted before it is not applied after it.
+            _walkAcc = 0f;
+            _zoneAcc = 0f;
             _syncDue = true;
             // A stroke from before _ReleaseHold (accepted seq at the release, or in flight within ReleaseGrace)
             // changes the cells but does not start the hold again.
@@ -791,6 +938,7 @@ namespace KominkaHillside
                 if (_rcEpoch[i] != epoch || !NotApplied(_rcSender[i], _rcSeq[i])) continue;
                 ApplyToCells(_rcTool[i], _rcPart[i], _rcA[i], _rcB[i], _rcRad[i], _rcSec[i]);
                 SetApplied(_rcSender[i], _rcSeq[i]);
+                riverBlocksEdge = false;
                 _reintCount++;
             }
         }
@@ -915,6 +1063,22 @@ namespace KominkaHillside
         // Harness read-outs (last evaluation, every 0.5 s).
         public float _AverageDirt() { return _avgDirt; }
         public float _AverageFoam() { return _avgFoam; }
+        public float _AverageWet() { return _avgWet; }
+
+        // This client holds a state: its first receive arrived, or it seeded / took the state as the Owner.
+        public bool _HasState() { return _gotFirst; }
+
+        // IMP-DOG-028: the Owner's shake. Owner only (a non-Owner call does nothing); synced at once, the others see the
+        // edge of _ShakeSerial(). Never repaints anything.
+        public void _RequestShake()
+        {
+            if (!_ready || !Networking.IsOwner(gameObject)) return;
+            shakeSerial = (shakeSerial + 1) & 0x3FFFFFFF;   // net: owner-only
+            _syncDue = true;
+            _nextSync = Mathf.Min(_nextSync, Time.time);
+        }
+
+        public int _ShakeSerial() { return shakeSerial; }
 
         // Prototype / harness: Owner only. A whole-dog reset bumps the epoch, so everyone repaints once.
         public void _DebugSetDirt(float value)
@@ -931,6 +1095,7 @@ namespace KominkaHillside
             cleanArmed = value >= dirtyDirtThreshold;
             ClearArm();
             ClearBits(quietBits);
+            riverBlocksEdge = false;
             BumpEpoch();
         }
 
@@ -942,6 +1107,7 @@ namespace KominkaHillside
             cleanArmed = false;
             ClearArm();
             ClearBits(quietBits);
+            riverBlocksEdge = false;
             BumpEpoch();
         }
 
@@ -966,6 +1132,17 @@ namespace KominkaHillside
             _pdCount = 0;
             _qCount = 0;
             for (int t = 0; t < 3; t++) { _segOpen[t] = false; _segCarry[t] = false; _hValid[t] = false; }
+            // Dirt (IMP-DOG-029): the waiting draws, the unsent event and the Owner's carry / counts belong to the old state.
+            DropDirtDraws();
+            _dlCount = 0;
+            _dirtOutPending = false;
+            for (int p = 0; p < PartCount; p++) _dirtCarry[p] = 0f;
+            _wetCarryLeg = 0f;
+            _wetCarryBody = 0f;
+            _walkAcc = 0f;
+            _zoneAcc = 0f;
+            _waterAcc = 0f;
+            _swimAcc = 0f;
         }
 
         // ================= Update =================
@@ -996,6 +1173,11 @@ namespace KominkaHillside
             }
             ReplayStep();
             DrainPending();
+            DrainDirt();
+
+            // Getting dirty (IMP-DOG-029): the Owner samples the dog 4 times a second and applies every dirtApplyInterval.
+            if (Networking.IsOwner(gameObject)) DirtTick(now);
+            else _dirtPrevValid = false;
 
             UpdateSend(now);
             UpdateAudio(now);
@@ -1060,9 +1242,17 @@ namespace KominkaHillside
             // transfer are not lost. washMs is server time, the same clock for every Owner, so the hold carries over.
             // Its own mask is kept: a repaint here would wipe the fine band it is looking at for a coarse copy of the
             // same state, and the others see only a normal receive (no repaint) from it.
+            // Dirt events (review 3, 1-1): the previous Owner's events in flight are still accepted for a short time.
+            if (Utilities.IsValid(player) && player.playerId != _ownerId)
+            {
+                _prevOwnerId = _ownerId;
+                _prevOwnerUntil = Time.time + PrevOwnerGrace;
+                _ownerId = player.playerId;
+            }
             if (!Networking.IsOwner(gameObject)) return;
             EnsureArrays();
             Reintegrate();
+            ReintegrateDirt();
             for (int i = 0; i < AppliedSlots; i++) _apAt[i] = Time.time;
             if (!_gotFirst)
             {
@@ -1247,6 +1437,12 @@ namespace KominkaHillside
         bool Restore()
         {
             _restorePending = false;
+            // Dirt (review 3, 1-1): the mask becomes the cells, which hold the dirt events up to dirtSeq. The waiting draws are
+            // dropped and the logged events newer than dirtSeq (received but not in these cells yet) are queued again.
+            DropDirtDraws();
+            _dirtMaskSeq = dirtSeq;
+            for (int i = 0; i < _dlCount; i++)
+                if (_dlEpoch[i] == epoch && SeqNewer(_dlSeq[i], dirtSeq)) QueueDirtFields(_dlFrom[i], _dlTo[i], _dlAmount[i] & 1023, (_dlAmount[i] >> 10) & 1023);
             _blitCount++;
             if (_maskMat == null || _cur == null || _next == null || cellTex == null) return false;
             for (int c = 0; c < CellCount; c++) _cellColors[c] = new Color(_dirt[c], _foam[c], _wet[c], 1f);
@@ -1486,6 +1682,7 @@ namespace KominkaHillside
             if (_dirt == null) return;
             float sd = 0f;
             float sf = 0f;
+            float sw = 0f;
             int n = 0;
             bool dirty = false;
             bool foamWet = false;
@@ -1497,12 +1694,14 @@ namespace KominkaHillside
                 float w = _wet[c];
                 sd += d;
                 sf += f;
+                sw += w;
                 n++;
                 if (f > 0f || w > 0f) foamWet = true;
                 if (d > 0.002f) dirty = true;   // dirt never dries; a rinse leaves tiny floats behind
             }
             _avgDirt = n > 0 ? sd / n : 0f;
             _avgFoam = n > 0 ? sf / n : 0f;
+            _avgWet = n > 0 ? sw / n : 0f;
             _anyFoamOrWet = foamWet;
             if (foamWet) _lastActivity = Time.time;
             _cellsEmpty = !dirty && !foamWet;
@@ -1546,9 +1745,17 @@ namespace KominkaHillside
             }
             if (MarkArm()) _syncDue = true;
             float setAvg = ArmAverage();   // U#: no out parameters on own methods; the count is in _armCount
-            if (_avgDirt < cleanDirtThreshold && _avgFoam < cleanFoamThreshold && (_armCount == 0 || setAvg < cleanFoamThreshold))
+            // IMP-DOG-029: a river drop alone does not make the dog "clean" (design §8 default); a wash stroke after it does.
+            if (_avgDirt < cleanDirtThreshold && _avgFoam < cleanFoamThreshold && (_armCount == 0 || setAvg < cleanFoamThreshold) && !riverBlocksEdge)
             {
                 cleanArmed = false;         // net: owner-only
+                cleanMs = Networking.GetServerTimeInMilliseconds();   // net: owner-only (the dirt grace starts here)
+                // (review 3, 2-1) nothing counted before the clean edge is applied after it (the water time would set
+                // riverBlocksEdge again).
+                _walkAcc = 0f;
+                _zoneAcc = 0f;
+                _waterAcc = 0f;
+                _swimAcc = 0f;
                 ClearArm();
                 // net: owner-only (quietBits): what is still foamy now is left over from this wash.
                 for (int c = 0; c < CellCount; c++)
@@ -1601,6 +1808,381 @@ namespace KominkaHillside
             }
             _armCount = count;
             return count > 0 ? sum / count : 0f;
+        }
+
+        // ================= Getting dirty (IMP-DOG-029) =================
+        // Owner only: sample the dog 4 times a second, add up what happened, and every dirtApplyInterval put it into the
+        // cells (the synced truth) and send the part averages as one ToolDirt NetStroke (see "Dirt on the mask" in the
+        // header). Nothing changes = nothing is synced or sent. Dirt is never a penalty: nothing depends on it except the
+        // look and the clean edge's arming (a dirty dog can be washed again).
+
+        void DirtTick(float now)
+        {
+            if (!_cellsOk || dogRoot == null || _partCells == null) return;
+            if (_dirtSampleAt < 0f || now - _dirtSampleAt >= DirtSampleInterval) DirtSample(now);
+            if (now >= _dirtNextApply)
+            {
+                _dirtNextApply = now + Mathf.Max(0.5f, dirtApplyInterval);
+                ApplyDirt();
+            }
+        }
+
+        void DirtSample(float now)
+        {
+            float dt = _dirtSampleAt < 0f ? 0f : now - _dirtSampleAt;
+            _dirtSampleAt = now;
+            Vector3 p = dogRoot.position;
+            float step = 0f;
+            if (_dirtPrevValid) { Vector3 d = p - _dirtPrevPos; d.y = 0f; step = d.magnitude; }
+            _dirtPrevPos = p;
+            _dirtPrevValid = true;
+            if (dt > 1f) { dt = 0f; step = 0f; }                                  // a hitch or a gap: not counted
+            if (step > dt * Mathf.Max(1f, dirtMaxSpeed) + 0.5f) step = 0f;       // a warp (travel, recall, placement)
+            if (!(dt > 0f)) return;
+            if (!dirtEnabled) { _dirtBlock = 1; return; }
+            int pose = dirtFetcher != null ? dirtFetcher.WaterPose : 0;
+            if (pose != 0)
+            {
+                // The river only rinses and wets, so it runs near the station and in the grace too.
+                _dirtBlock = 5;
+                _waterAcc += dt;
+                if (pose == 2) _swimAcc += dt;
+                _dirtWaterTotal += dt;
+                return;
+            }
+            // (review 3, 2-1) a block also drops what was counted before it in this period: it is never applied after a wash.
+            if (_WashHold()) { _dirtBlock = 2; _walkAcc = 0f; _zoneAcc = 0f; return; }
+            if (InDirtGrace()) { _dirtBlock = 3; _walkAcc = 0f; _zoneAcc = 0f; return; }   // a washed dog stays clean for a while (IMP-DOG-024)
+            if (NearStation(p)) { _dirtBlock = 4; _walkAcc = 0f; _zoneAcc = 0f; return; }  // a few steps from the wash place do not undo the wash
+            _dirtBlock = 0;
+            if (step > 0f && DirtMoving()) { _walkAcc += step; _dirtWalkTotal += step; }
+            if (InDirtZone(p)) { _zoneAcc += dt; _dirtZoneTotal += dt; }
+        }
+
+        bool InDirtGrace()
+        {
+            if (cleanSerial <= 0) return false;
+            int age = Networking.GetServerTimeInMilliseconds() - cleanMs;
+            return age > -1000 && age < Mathf.RoundToInt(Mathf.Max(0f, dirtGraceSeconds) * 1000f);
+        }
+
+        bool NearStation(Vector3 p)
+        {
+            if (washStation == null || !(dirtStationRadius > 0f)) return false;
+            Vector3 d = p - washStation.position;
+            d.y = 0f;
+            return d.magnitude <= dirtStationRadius;
+        }
+
+        // Leashed, or in a Fetch, or in a disc play: the dog is out walking / running with someone.
+        bool DirtMoving()
+        {
+            if (dirtLeashes != null && dogIndex >= 0)
+            {
+                int[] w = dirtLeashes.walkers;
+                if (w != null && dogIndex < w.Length && w[dogIndex] >= 0) return true;
+            }
+            if (dirtFetcher != null && !dirtFetcher.IsIdle) return true;
+            if (dirtFrisbee != null && dirtFrisbee.IsEngaged) return true;
+            return false;
+        }
+
+        // The dog's root inside a dirt zone: a sphere (radius lossyScale.x / 2) or, with dirtZoneBox[i], the zone's
+        // local unit cube (its scale is the box size). Distances only, no trigger.
+        bool InDirtZone(Vector3 p)
+        {
+            if (dirtZones == null) return false;
+            for (int i = 0; i < dirtZones.Length; i++)
+            {
+                Transform z = dirtZones[i];
+                if (z == null) continue;
+                bool box = dirtZoneBox != null && i < dirtZoneBox.Length && dirtZoneBox[i];
+                if (box)
+                {
+                    Vector3 l = z.InverseTransformPoint(p);
+                    if (Mathf.Abs(l.x) <= 0.5f && Mathf.Abs(l.y) <= 0.5f && Mathf.Abs(l.z) <= 0.5f) return true;
+                }
+                else if ((p - z.position).magnitude <= Mathf.Abs(z.lossyScale.x) * 0.5f) return true;
+            }
+            return false;
+        }
+
+        // Owner: the counted walk / zone / water time into the cells. Legs (3..6) first, hip and chest (0, 1) from the
+        // zone only (the cell table has no up / down, so the belly is the whole torso, thinly). A cell never goes above 1
+        // (a dirty cell does not grow further), and the river never takes a cell below riverDirtFloor.
+        void ApplyDirt()
+        {
+            // (review 3, 2-1) the conditions again at the apply: a hold / grace / station now drops the counted dirt.
+            if (dogRoot != null && (_WashHold() || InDirtGrace() || NearStation(dogRoot.position))) { _walkAcc = 0f; _zoneAcc = 0f; }
+            float zoneK = _zoneAcc / Mathf.Max(0.1f, zoneDirtSeconds);
+            float legInc = _walkAcc / Mathf.Max(1f, walkDirtMeters) * walkLegDirt + zoneK * zoneLegDirt;
+            float bodyInc = zoneK * zoneBodyDirt;
+            float legDrop = _waterAcc / Mathf.Max(0.1f, riverDropSeconds) * riverLegDrop;
+            float legWet = _waterAcc * riverWetPerSecond;
+            float bodyWet = _swimAcc * riverWetPerSecond;
+            _walkAcc = 0f;
+            _zoneAcc = 0f;
+            _waterAcc = 0f;
+            _swimAcc = 0f;
+            _dirtTicks++;
+            bool changed = false;
+            if (legInc > 0f || bodyInc > 0f || legDrop > 0f || legWet > 0f || bodyWet > 0f)
+            {
+                float floor = Mathf.Clamp01(riverDirtFloor);
+                float wetLeg = 0f;
+                float wetBody = 0f;
+                for (int p = 0; p < PartCount; p++)
+                {
+                    bool leg = p >= 3 && p <= 6;
+                    bool body = p == 0 || p == 1;
+                    float inc = leg ? legInc : (body ? bodyInc : 0f);
+                    float drop = leg ? legDrop : 0f;
+                    float wa = leg ? legWet : (body ? bodyWet : 0f);
+                    if (!(inc > 0f) && !(drop > 0f) && !(wa > 0f)) continue;
+                    int s = _partCellStart[p];
+                    int e = _partCellStart[p + 1];
+                    if (e <= s) continue;
+                    float sd = 0f;
+                    float sw = 0f;
+                    for (int k = s; k < e; k++)
+                    {
+                        int c = _partCells[k];
+                        float d0 = _dirt[c];
+                        float d = Mathf.Min(1f, d0 + Mathf.Max(0f, inc));
+                        if (drop > 0f && d > floor) d = Mathf.Max(floor, d - drop);
+                        _dirt[c] = d;
+                        sd += d - d0;
+                        float w0 = _wet[c];
+                        float w = Mathf.Min(1f, w0 + Mathf.Max(0f, wa));
+                        _wet[c] = w;
+                        sw += w - w0;
+                    }
+                    if (sd == 0f && sw == 0f) continue;
+                    changed = true;
+                    if (drop > 0f) riverBlocksEdge = true;   // net: owner-only (synced with the cells below)
+                    int n = e - s;
+                    _dirtCarry[p] = Mathf.Clamp(_dirtCarry[p] + sd / n, -0.5f, 0.5f);
+                    if (leg) wetLeg += sw / n * 0.25f;
+                    else wetBody += sw / n * 0.5f;
+                }
+                _wetCarryLeg = Mathf.Min(1f, _wetCarryLeg + wetLeg);
+                _wetCarryBody = Mathf.Min(1f, _wetCarryBody + wetBody);
+            }
+            if (changed) { _syncDue = true; _lastActivity = Time.time; }
+            BuildDirtEvent();
+        }
+
+        // Owner: quantise the carried part averages into one event; draw the same quantised change here at once.
+        void BuildDirtEvent()
+        {
+            if (_dirtOutPending) return;   // the last one has not gone out yet: the carry waits for the next tick
+            int from = 0;
+            int to = 0;
+            bool any = false;
+            for (int k = 0; k < 4; k++)
+            {
+                int qa = DirtQuant(3 + k);
+                int qb = DirtQuant(k < 3 ? k : 8);
+                if (qa != 0 || qb != 0) any = true;
+                from |= (qa + 64) << (7 * k);
+                to |= (qb + 64) << (7 * k);
+            }
+            int wl = Mathf.Clamp(Mathf.FloorToInt(_wetCarryLeg / DirtWetUnit), 0, DirtWetQMax);
+            int wb = Mathf.Clamp(Mathf.FloorToInt(_wetCarryBody / DirtWetUnit), 0, DirtWetQMax);
+            if (wl > 0 || wb > 0) any = true;
+            if (!any) return;
+            _wetCarryLeg -= wl * DirtWetUnit;
+            _wetCarryBody -= wb * DirtWetUnit;
+            QueueDirtFields(from, to, wl, wb);
+            // net: owner-only (dirtSeq): these cells now hold this event; the next sync says so (review 3, 1-1).
+            dirtSeq = (dirtSeq + 1) & 0x3FFFFFFF;
+            _dirtMaskSeq = dirtSeq;
+            _dirtOutSeq = dirtSeq;
+            _dirtOutFrom = from;
+            _dirtOutTo = to;
+            _dirtOutAmount = wl | (wb << 10);
+            _dirtOutPending = true;
+            _syncDue = true;
+        }
+
+        int DirtQuant(int p)
+        {
+            int q = Mathf.Clamp(Mathf.RoundToInt(_dirtCarry[p] / DirtUnit), -DirtQMax, DirtQMax);
+            _dirtCarry[p] -= q * DirtUnit;
+            return q;
+        }
+
+        // Non-Owner: the Owner's dirt change (NetStroke tool 3). Everything is checked (anyone may send): the packing,
+        // the epoch, that the sender is this object's Owner (or was, within PrevOwnerGrace of a change), and that the
+        // object's dirt sequence moves forward. Review 3, 1-1: every accepted event is logged; it is drawn only when the
+        // mask does not hold it yet (seq newer than _dirtMaskSeq = the cells' dirtSeq at the last Restore). An event that
+        // arrives before this client's first receive is only logged: the first Restore draws the ones its cells lack.
+        void ReceiveDirt(int part, int from, int to, int amount, int seq, int strokeEpoch)
+        {
+            if (part != 0 || from < 0 || from > PackMax || to < 0 || to > PackMax) return;
+            if ((from >> 28) != 0 || (to >> 28) != 0) return;
+            if (amount < 0 || (amount >> 20) != 0 || seq < 0) return;
+            if (strokeEpoch == 0) return;
+            if (_gotFirst && strokeEpoch != epoch) return;
+            for (int k = 0; k < 4; k++)
+            {
+                if (((from >> (7 * k)) & 127) == 0 || ((to >> (7 * k)) & 127) == 0) return;   // -64 is never sent
+            }
+            VRCPlayerApi caller = NetworkCalling.CallingPlayer;
+            if (!Utilities.IsValid(caller) || caller.isLocal) return;   // the Owner drew its own change when it made it
+            bool owner = Networking.IsOwner(caller, gameObject)
+                || (caller.playerId == _prevOwnerId && Time.time < _prevOwnerUntil);   // in flight across an Owner change
+            if (!owner) return;
+            if (_dirtLastValid && !SeqNewer(seq, _dirtLastSeq)) return;
+            _dirtLastValid = true;
+            _dirtLastSeq = seq;
+            LogDirt(seq, strokeEpoch, from, to, amount);
+            if (!_gotFirst) return;
+            if (SeqNewer(seq, _dirtMaskSeq)) QueueDirtFields(from, to, amount & 1023, (amount >> 10) & 1023);
+        }
+
+        void LogDirt(int seq, int ep, int from, int to, int amount)
+        {
+            if (_dlCount >= DirtLogMax)
+            {
+                for (int i = 1; i < DirtLogMax; i++)
+                {
+                    _dlSeq[i - 1] = _dlSeq[i]; _dlEpoch[i - 1] = _dlEpoch[i]; _dlFrom[i - 1] = _dlFrom[i];
+                    _dlTo[i - 1] = _dlTo[i]; _dlAmount[i - 1] = _dlAmount[i];
+                }
+                _dlCount = DirtLogMax - 1;
+            }
+            int k = _dlCount;
+            _dlSeq[k] = seq; _dlEpoch[k] = ep; _dlFrom[k] = from; _dlTo[k] = to; _dlAmount[k] = amount;
+            _dlCount++;
+        }
+
+        // A new Owner (review 3, 1-1): the logged events of this epoch its received cells do not hold (seq newer than
+        // dirtSeq) go into the cells as the part averages they carry (uniform over the part, clamped 0..1; the floor of a
+        // river drop is kept), in order, and dirtSeq moves to the newest. Its own mask already shows them.
+        void ReintegrateDirt()
+        {
+            if (!_cellsOk || _partCells == null) return;
+            for (int i = 0; i < _dlCount; i++)
+            {
+                if (_dlEpoch[i] != epoch || !SeqNewer(_dlSeq[i], dirtSeq)) continue;
+                float wl = (_dlAmount[i] & 1023) * DirtWetUnit;
+                float wb = ((_dlAmount[i] >> 10) & 1023) * DirtWetUnit;
+                for (int k = 0; k < 4; k++)
+                {
+                    int pa = 3 + k;
+                    int pb = k < 3 ? k : 8;
+                    AddPartCells(pa, (((_dlFrom[i] >> (7 * k)) & 127) - 64) * DirtUnit, wl);
+                    AddPartCells(pb, (((_dlTo[i] >> (7 * k)) & 127) - 64) * DirtUnit, pb <= 1 ? wb : 0f);
+                }
+                dirtSeq = _dlSeq[i];   // net: owner-only
+                _syncDue = true;
+            }
+            _dirtMaskSeq = dirtSeq;
+        }
+
+        void AddPartCells(int part, float dD, float dW)
+        {
+            if (dD == 0f && dW == 0f) return;
+            float floor = Mathf.Clamp01(riverDirtFloor);
+            int e = _partCellStart[part + 1];
+            for (int k = _partCellStart[part]; k < e; k++)
+            {
+                int c = _partCells[k];
+                float d = _dirt[c];
+                if (dD > 0f) d = Mathf.Min(1f, d + dD);
+                else if (dD < 0f && d > floor) d = Mathf.Max(floor, d + dD);
+                _dirt[c] = d;
+                _wet[c] = Mathf.Clamp01(_wet[c] + dW);
+            }
+        }
+
+        void QueueDirtFields(int from, int to, int wetLegQ, int wetBodyQ)
+        {
+            float wl = wetLegQ * DirtWetUnit;
+            float wb = wetBodyQ * DirtWetUnit;
+            for (int k = 0; k < 4; k++)
+            {
+                int pa = 3 + k;
+                int pb = k < 3 ? k : 8;
+                float da = (((from >> (7 * k)) & 127) - 64) * DirtUnit;
+                float db = (((to >> (7 * k)) & 127) - 64) * DirtUnit;
+                QueueDirtDraw(pa, da, wl);
+                QueueDirtDraw(pb, db, pb <= 1 ? wb : 0f);
+            }
+        }
+
+        void QueueDirtDraw(int part, float dD, float dW)
+        {
+            if (dD == 0f && dW == 0f) return;
+            _dirtDrawPend[part] += dD;
+            _wetDrawPend[part] += dW;
+            _anyDirtDraw = true;
+            // The shell must not switch off (and repaint from cells that do not have this yet) before the sync arrives.
+            _lastActivity = Time.time;
+            ShowShell(true);
+        }
+
+        // One whole-part Brush per waiting part, inside the Blit budget, after any repaint / replay.
+        void DrainDirt()
+        {
+            if (!_anyDirtDraw || _restorePending || _replaying || _replayPending) return;
+            bool left = false;
+            int drawn = 0;
+            for (int p = 0; p < PartCount; p++)
+            {
+                float dD = _dirtDrawPend[p];
+                float dW = _wetDrawPend[p];
+                if (dD == 0f && dW == 0f) continue;
+                if (drawn >= DirtDrawsPerFrame || !CanBlit()) { left = true; break; }
+                drawn++;
+                _dirtDrawPend[p] = 0f;
+                _wetDrawPend[p] = 0f;
+                DrawDirt(p, dD, dW);
+            }
+            _anyDirtDraw = left;
+        }
+
+        void DropDirtDraws()
+        {
+            for (int p = 0; p < PartCount; p++) { _dirtDrawPend[p] = 0f; _wetDrawPend[p] = 0f; }
+            _anyDirtDraw = false;
+        }
+
+        // The Brush pass as an additive whole-part change: a zero-length capsule at the part's centre whose radius covers
+        // the part even at the rim noise's smallest (r (1 - edgeNoise)) with a hard edge, only this part allowed. Inside,
+        // w = the clump noise (mean ~1, fixed in mesh space: repeated dirt builds the same mud pattern). Foam is not
+        // touched (dF = 0); the rinse boost and gate are off (a river drop is plain).
+        void DrawDirt(int part, float dD, float dW)
+        {
+            _blitCount++;
+            _dirtDraws++;
+            if (_maskMat == null || _cur == null || _next == null || _partReach == null || _partCenter == null) return;
+            float en = Mathf.Clamp(edgeNoise, 0f, 0.9f);
+            float minR = 0.05f / Mathf.Max(1e-4f, meshToWorldScale);
+            float r = Mathf.Max(_partReach[part], minR) * Mathf.Max(1f, dirtReachScale) / ((1f - en) * 0.99f);
+            Vector3 c = _partCenter[part];
+            Vector4 c4 = new Vector4(c.x, c.y, c.z, 1f);
+            _maskMat.SetVector(_idBrushA, c4);
+            _maskMat.SetVector(_idBrushB, c4);
+            _maskMat.SetFloat(_idBrushRadius, r);
+            _maskMat.SetFloat(_idBrushSoft, 0.01f);
+            _maskMat.SetVector(_idDelta, new Vector4(dD, 0f, dW, 0f));
+            _maskMat.SetFloat(_idRinseFoamBoost, 0f);
+            _maskMat.SetFloat(_idFoamRinseGate, 0f);
+            _maskMat.SetFloat(_idEdgeNoise, en);
+            SetAllowOnly(part);
+            VRCGraphics.Blit(_cur, _next, _maskMat, PassBrush);
+            Swap();
+        }
+
+        // _AllowPart = this part only (no neighbours: the leg's dirt must not spill onto the chest). _allowFor = -3 so the
+        // next tool stroke writes its own set again.
+        void SetAllowOnly(int part)
+        {
+            for (int i = 0; i < AllowSlots; i++) _allow[i] = i == part ? 1f : 0f;
+            _maskMat.SetFloatArray(_idAllowPart, _allow);
+            _allowFor = -3;
         }
 
         // ================= Outgoing =================
@@ -1711,6 +2293,15 @@ namespace KominkaHillside
                 else if (now - _segStart[t] > SegmentMaxAge) CloseSegment(t, true);
             }
             if (now < _nextSend) return;
+            // The Owner's dirt change shares the 8 Hz slot with the strokes (one event, then the next slot).
+            if (_dirtOutPending)
+            {
+                _dirtOutPending = false;
+                SendCustomNetworkEvent(NetworkEventTarget.All, nameof(NetStroke), ToolDirt, 0, _dirtOutFrom, _dirtOutTo, _dirtOutAmount, _dirtOutSeq, epoch);
+                _dirtEvents++;
+                _nextSend = now + SendInterval;
+                return;
+            }
             if (_qCount == 0)
             {
                 int oldest = -1;
@@ -1837,26 +2428,42 @@ namespace KominkaHillside
             if (_puffAcc > 1000f) _puffAcc = 0f;
         }
 
+        // The fade runs on this behaviour's own levels (_furVol / _foamVol / _scrubVol); what reaches the source is the level x
+        // the dog's personal voice gain (KD_DogWanderController.localVoiceGain, written by KD_TreatPouch.ApplyDogVoiceSettings;
+        // the ledger bakes base 0 for these sources, so this write is what plays; mute stays the ledger's).
+        private float _furVol;
+        private float _foamVol;
+        private float _scrubVol;
+
         void UpdateAudio(float now)
         {
             float step = audioFadeSpeed * Time.deltaTime;
             bool shower = now < _showerUntil;
-            Fade(contactFur, shower ? _furTarget : 0f, step);
-            Fade(contactFoam, shower ? _foamTarget : 0f, step);
-            Fade(scrub, now < _scrubUntil ? scrubVolume : 0f, step);
+            _furVol = Mathf.MoveTowards(_furVol, shower ? _furTarget : 0f, step);
+            _foamVol = Mathf.MoveTowards(_foamVol, shower ? _foamTarget : 0f, step);
+            _scrubVol = Mathf.MoveTowards(_scrubVol, now < _scrubUntil ? scrubVolume : 0f, step);
+            if (_furVol <= 0f && _foamVol <= 0f && _scrubVol <= 0f && !_audioOn) return;   // silent: no cross-behaviour read
+            float gain = voiceDog != null ? Mathf.Clamp01(voiceDog.localVoiceGain) : 1f;
+            Fade(contactFur, _furVol, gain);
+            Fade(contactFoam, _foamVol, gain);
+            Fade(scrub, _scrubVol, gain);
+            _audioOn = _furVol > 0f || _foamVol > 0f || _scrubVol > 0f;
         }
+        private bool _audioOn = true;   // one pass after Start / the last sound so the sources end at 0 and stopped
 
-        void Fade(AudioSource s, float target, float step)
+        void Fade(AudioSource s, float level, float gain)
         {
             if (s == null) return;
-            float v = Mathf.MoveTowards(s.volume, target, step);
-            s.volume = v;
-            if (v > 0.001f) { if (!s.isPlaying) s.Play(); }
+            s.volume = level * gain;
+            if (level > 0.001f) { if (!s.isPlaying) s.Play(); }
             else if (s.isPlaying) s.Stop();
         }
 
         void SilenceAll()
         {
+            _furVol = 0f;
+            _foamVol = 0f;
+            _scrubVol = 0f;
             if (contactFur != null) { contactFur.volume = 0f; contactFur.Stop(); }
             if (contactFoam != null) { contactFoam.volume = 0f; contactFoam.Stop(); }
             if (scrub != null) { scrub.volume = 0f; scrub.Stop(); }

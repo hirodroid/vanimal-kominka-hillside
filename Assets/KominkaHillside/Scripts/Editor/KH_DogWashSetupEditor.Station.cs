@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UdonSharpEditor;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -11,8 +12,13 @@ using VRC.SDKBase;
 
 namespace KominkaHillside.Editor
 {
-    // IMP-DOG-025 builder: the tool shelf KH_WashStation (scene root) with 2 sponges, 2 showers and 1 towel. Placeholder
-    // primitives; the look is replaced later (IMP-ENV-007). The shelf position is human-owned once it exists.
+    // IMP-DOG-025 builder: the tool shelf KH_WashStation (scene root) with 2 sponges, 2 showers and 1 towel.
+    // IMP-ENV-007 (main wash station, docs/plans/2026-09-30-wash-station-layout.md): a low wooden stand (top "Shelf" +
+    // 4 legs), the duckboard "WashTable" 1.2 m in front of it (station local -Z, toward the spawn), a tub, a small board
+    // sign, and a home Transform per tool under "Homes" (KH_WashTool.home: the tool returns there 20 s after it was let go).
+    // Everything is a child of KH_WashStation with code-owned local transforms, so it moves with the station. The
+    // station's own position and rotation are human-owned once it exists (never written here after creation); the
+    // duckboard and the tub are seated on the ground under them on every Build (run 11 again after moving the station).
     public static partial class KH_DogWashSetupEditor
     {
         class ToolSpec
@@ -22,13 +28,36 @@ namespace KominkaHillside.Editor
         }
 
         const float ShelfHeight = 0.8f, ShelfWidth = 1.2f, ShelfDepth = 0.45f;
+        // ---- IMP-ENV-007 layout (station local; +X east, -Z = the front, toward the spawn) ----
+        const float ShelfTopThickness = 0.04f, ShelfLegSize = 0.05f;
+        static readonly Vector2 ShelfLegInset = new Vector2(0.05f, 0.04f);             // leg centre from the top's corner (x, z)
+        const float TableFront = 1.2f;                                                  // duckboard centre: 1.2 m in front of the shelf centre
+        static readonly Vector3 TableSize = new Vector3(0.6f, 0.03f, 0.9f);             // 0.9 m along Z (the dog stands along it), top 0.03 m above the ground
+        const int TableSlats = 5;
+        const float SideMargin = 1.0f;                                                  // free standing room on each side (±X) of the duckboard
+        static readonly Vector3 TubLocal = new Vector3(-0.95f, 0f, -0.05f);            // west of the shelf (the east side faces the leash rack)
+        const float TubRadius = 0.2f, TubHeight = 0.26f;
+        static readonly Vector3 SignSize = new Vector3(0.34f, 0.12f, 0.02f);
+        const float SignZ = 0.19f;                                                      // at the back of the shelf top, facing the front (-Z)
+        const string SignText = "WASH";                                                 // ASCII placeholder; the Japanese is typed in the Inspector (layout doc §5)
+        const string HomesName = "Homes", TableName = "WashTable", TubName = "Tub", SignName = "Sign", SignTextName = "SignText";
+        const float ReturnSeconds = 20f, HomeTolerance = 0.05f;
+        /// <summary>Not the tool's own name (a scene-wide search by the tool's name stays unique).</summary>
+        static string HomeName(ToolSpec s) { return "Home_" + s.name; }
+        const string WoodMatPath = "Assets/KominkaHillside/Data/Environment/River/KH_RiverWood.mat";
+        // Sponge yellow and shower-head silver are the shared tool materials (Dog.cs); the towel gets its own unbleached one here.
+        static readonly Color TowelKinari = new Color(0.93f, 0.89f, 0.80f);
+        const string TowelKinariMat = "KH_WashTool_TowelKinari";
+        static readonly Color SignInk = new Color(0xF2 / 255f, 0xE8 / 255f, 0xD0 / 255f, 1f);
         static readonly ToolSpec[] ToolSpecs =
         {
-            new ToolSpec("KH_WashSponge_0", KH_DogWash.ToolSponge, new Vector3(-0.46f, ShelfHeight + 0.031f, 0f), Vector3.zero),
-            new ToolSpec("KH_WashSponge_1", KH_DogWash.ToolSponge, new Vector3(-0.30f, ShelfHeight + 0.031f, 0f), Vector3.zero),
-            new ToolSpec("KH_WashShower_0", KH_DogWash.ToolShower, new Vector3(-0.08f, ShelfHeight + 0.081f, 0f), Vector3.zero),
-            new ToolSpec("KH_WashShower_1", KH_DogWash.ToolShower, new Vector3(0.10f, ShelfHeight + 0.081f, 0f), Vector3.zero),
-            new ToolSpec("KH_WashTowel_0", KH_DogWash.ToolTowel, new Vector3(0.38f, ShelfHeight + 0.011f, 0f), Vector3.zero),
+            // IMP-ENV-007: 2 sets (design §2). Towels turned 90° (0.20 m along X, 0.30 m along Z) so both fit the 1.2 m top.
+            new ToolSpec("KH_WashSponge_0", KH_DogWash.ToolSponge, new Vector3(-0.52f, ShelfHeight + 0.031f, 0f), Vector3.zero),
+            new ToolSpec("KH_WashSponge_1", KH_DogWash.ToolSponge, new Vector3(-0.36f, ShelfHeight + 0.031f, 0f), Vector3.zero),
+            new ToolSpec("KH_WashShower_0", KH_DogWash.ToolShower, new Vector3(-0.18f, ShelfHeight + 0.081f, 0f), Vector3.zero),
+            new ToolSpec("KH_WashShower_1", KH_DogWash.ToolShower, new Vector3(-0.02f, ShelfHeight + 0.081f, 0f), Vector3.zero),
+            new ToolSpec("KH_WashTowel_0", KH_DogWash.ToolTowel, new Vector3(0.22f, ShelfHeight + 0.011f, 0f), new Vector3(0f, 90f, 0f)),
+            new ToolSpec("KH_WashTowel_1", KH_DogWash.ToolTowel, new Vector3(0.46f, ShelfHeight + 0.011f, 0f), new Vector3(0f, 90f, 0f)),
         };
         static readonly string[] ToolLabels = { "Sponge", "Shower", "Towel" };
 
@@ -52,16 +81,27 @@ namespace KominkaHillside.Editor
             station.transform.localScale = Vector3.one;
             r.stationPosition = station.transform.position;
 
-            // ---- placeholder shelf (collider kept: players and tools rest on it) ----
-            var shelf = Prim(station.transform, "Shelf", PrimitiveType.Cube, true);
-            shelf.transform.localPosition = new Vector3(0f, ShelfHeight * 0.5f, 0f);
-            shelf.transform.localRotation = Quaternion.identity;
-            shelf.transform.localScale = new Vector3(ShelfWidth, ShelfHeight, ShelfDepth);
-            shelf.layer = 0;
-            SetLook(shelf, shared.shelf);
+            var wood = AssetDatabase.LoadAssetAtPath<Material>(WoodMatPath);
+            if (wood == null) { wood = shared.shelf; r.log.Add("WARN " + WoodMatPath + " missing: the stand uses " + (shared.shelf != null ? shared.shelf.name : "null")); }
+            BuildStand(station.transform, wood, shared.shelf, r);
+
+            // ---- homes (one per tool; the tools rest there and return there) ----
+            var homes = Child(station.transform, HomesName);
+            homes.gameObject.layer = 0;
+            homes.localPosition = Vector3.zero; homes.localRotation = Quaternion.identity; homes.localScale = Vector3.one;
+            foreach (Transform h in homes.Cast<Transform>().ToArray())
+                if (!ToolSpecs.Any(s => HomeName(s) == h.name)) { r.log.Add("removed stale home " + h.name); UnityEngine.Object.DestroyImmediate(h.gameObject); }
+            var towelMat = ToolMaterial(TowelKinariMat, TowelKinari);
 
             var tools = new List<KH_WashTool>();
-            foreach (var spec in ToolSpecs) tools.Add(BuildTool(station.transform, spec, shared, audio));
+            foreach (var spec in ToolSpecs)
+            {
+                var home = Child(homes, HomeName(spec));
+                home.gameObject.layer = 0;
+                home.localPosition = spec.slot; home.localRotation = Quaternion.Euler(spec.euler); home.localScale = Vector3.one;
+                foreach (var comp in home.GetComponents<Component>()) if (!(comp is Transform)) UnityEngine.Object.DestroyImmediate(comp);   // a bare marker
+                tools.Add(BuildTool(station.transform, spec, shared, audio, home, towelMat));
+            }
             // stale tools of an earlier layout
             foreach (Transform t in station.transform.Cast<Transform>().ToArray())
                 if ((t.name.StartsWith("KH_WashSponge_") || t.name.StartsWith("KH_WashShower_") || t.name.StartsWith("KH_WashTowel_")) && !ToolSpecs.Any(s => s.name == t.name))
@@ -69,7 +109,7 @@ namespace KominkaHillside.Editor
             return tools;
         }
 
-        static KH_WashTool BuildTool(Transform station, ToolSpec spec, Shared shared, Audio audio)
+        static KH_WashTool BuildTool(Transform station, ToolSpec spec, Shared shared, Audio audio, Transform home, Material towelMat)
         {
             var root = Child(station, spec.name);
             root.gameObject.layer = PickupLayer;
@@ -116,7 +156,7 @@ namespace KominkaHillside.Editor
                 {
                     box.size = new Vector3(0.30f, 0.02f, 0.20f);
                     look.transform.localScale = box.size;
-                    SetLook(look, shared.towel);
+                    SetLook(look, towelMat != null ? towelMat : shared.towel);
                     nozzle.localPosition = Vector3.zero;
                 }
                 nozzle.localRotation = Quaternion.identity; nozzle.localScale = Vector3.one;
@@ -147,6 +187,10 @@ namespace KominkaHillside.Editor
             tool.nozzle = nozzle;
             tool.state = state;
             tool.washLayer = 1 << WashLayer;
+            tool.home = home;                       // IMP-ENV-007: the return target (moves with the station)
+            tool.returnSeconds = ReturnSeconds;
+            tool.homeTolerance = HomeTolerance;
+            tool.debugHeldOverride = 0;             // harness only
             if (spec.tool == KH_DogWash.ToolShower)
             {
                 tool.spray = SprayParticles(sprayT.gameObject, shared.spray);
@@ -160,6 +204,139 @@ namespace KominkaHillside.Editor
             }
             EditorUtility.SetDirty(tool);
             return tool;
+        }
+
+        // ================================================================ IMP-ENV-007: the stand, the duckboard, the tub, the sign
+
+        static void BuildStand(Transform station, Material wood, Material dark, BuildReport r)
+        {
+            // ---- the stand: the top is "Shelf" (the tools rest on it; Wash/12 checks its solid collider) + 4 legs ----
+            var top = Prim(station, "Shelf", PrimitiveType.Cube, true);
+            top.layer = 0;
+            top.transform.localPosition = new Vector3(0f, ShelfHeight - ShelfTopThickness * 0.5f, 0f);
+            top.transform.localRotation = Quaternion.identity;
+            top.transform.localScale = new Vector3(ShelfWidth, ShelfTopThickness, ShelfDepth);
+            UnitBox(top);
+            SetLook(top, wood);
+            float legH = ShelfHeight - ShelfTopThickness;
+            for (int i = 0; i < 4; i++)
+            {
+                var leg = Prim(station, "ShelfLeg_" + i, PrimitiveType.Cube, true);
+                leg.layer = 0;
+                float sx = (i & 1) == 0 ? -1f : 1f, sz = (i & 2) == 0 ? -1f : 1f;
+                leg.transform.localPosition = new Vector3(sx * (ShelfWidth * 0.5f - ShelfLegInset.x), legH * 0.5f, sz * (ShelfDepth * 0.5f - ShelfLegInset.y));
+                leg.transform.localRotation = Quaternion.identity;
+                leg.transform.localScale = new Vector3(ShelfLegSize, legH, ShelfLegSize);
+                UnitBox(leg);
+                SetLook(leg, wood);
+            }
+
+            // ---- the duckboard (すのこ): one solid, walkable BoxCollider on Default (players, and the dogs' ground rays 0|11) + slats ----
+            var table = Child(station, TableName);
+            table.gameObject.layer = 0;
+            float tableY = MaxGround(station, new Vector3(0f, 0f, -TableFront), TableSize.x, TableSize.z);
+            table.localPosition = new Vector3(0f, tableY, -TableFront);
+            table.localRotation = Quaternion.identity; table.localScale = Vector3.one;
+            foreach (var c in table.GetComponents<Collider>()) if (!(c is BoxCollider)) UnityEngine.Object.DestroyImmediate(c);
+            var box = table.GetComponent<BoxCollider>(); if (box == null) box = table.gameObject.AddComponent<BoxCollider>();
+            box.isTrigger = false; box.enabled = true; box.size = TableSize; box.center = new Vector3(0f, TableSize.y * 0.5f, 0f);
+            EditorUtility.SetDirty(box);
+            float slatDepth = 0.15f, pitch = (TableSize.z - slatDepth) / (TableSlats - 1);
+            for (int i = 0; i < TableSlats; i++)
+            {
+                var slat = Prim(table, "Slat_" + i, PrimitiveType.Cube, false);
+                slat.transform.localPosition = new Vector3(0f, TableSize.y * 0.5f, -TableSize.z * 0.5f + slatDepth * 0.5f + pitch * i);
+                slat.transform.localRotation = Quaternion.identity;
+                slat.transform.localScale = new Vector3(TableSize.x, TableSize.y, slatDepth);
+                SetLook(slat, wood);
+            }
+            foreach (Transform t in table.Cast<Transform>().ToArray())
+                if (t.name.StartsWith("Slat_") && (!int.TryParse(t.name.Substring(5), out int k) || k >= TableSlats)) UnityEngine.Object.DestroyImmediate(t.gameObject);
+            r.log.Add(TableName + " local y " + tableY.ToString("F3") + " (highest ground under the board)");
+
+            // ---- the tub (桶) ----
+            var tub = Prim(station, TubName, PrimitiveType.Cylinder, true);
+            tub.layer = 0;
+            float tubY = MaxGround(station, TubLocal, TubRadius * 2f, TubRadius * 2f);
+            tub.transform.localPosition = new Vector3(TubLocal.x, tubY + TubHeight * 0.5f, TubLocal.z);
+            tub.transform.localRotation = Quaternion.identity;
+            tub.transform.localScale = new Vector3(TubRadius * 2f, TubHeight * 0.5f, TubRadius * 2f);   // the Cylinder primitive is 2 units tall
+            SetLook(tub, dark);
+
+            // ---- the sign: a small board at the back of the top, text facing the front (-Z; TMP faces -Z) ----
+            var sign = Prim(station, SignName, PrimitiveType.Cube, false);   // no collider: never blocks a pickup ray
+            sign.layer = 0;
+            float signY = ShelfHeight + SignSize.y * 0.5f;
+            sign.transform.localPosition = new Vector3(0f, signY, SignZ);
+            sign.transform.localRotation = Quaternion.identity;
+            sign.transform.localScale = SignSize;
+            SetLook(sign, dark);
+            var textT = Child(station, SignTextName);
+            textT.gameObject.layer = 0;
+            var tmp = textT.GetComponent<TextMeshPro>();
+            bool fresh = tmp == null;
+            if (fresh) tmp = textT.gameObject.AddComponent<TextMeshPro>();
+            textT = tmp.transform;
+            textT.localPosition = new Vector3(0f, signY, SignZ - SignSize.z * 0.5f - 0.002f);
+            textT.localRotation = Quaternion.identity; textT.localScale = Vector3.one;
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath);
+            if (font == null) throw new InvalidOperationException("Shared UI font missing: " + KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath);
+            tmp.font = font;
+            // The words are the user's once written (the Japanese is typed in the Inspector): only an empty label gets the placeholder.
+            if (fresh || string.IsNullOrEmpty(tmp.text)) tmp.text = SignText;
+            tmp.alignment = TextAlignmentOptions.Center; tmp.enableWordWrapping = false;
+            tmp.enableAutoSizing = true; tmp.fontSizeMin = 0.2f; tmp.fontSizeMax = 0.9f;
+            tmp.color = SignInk;
+            tmp.rectTransform.sizeDelta = new Vector2(SignSize.x - 0.03f, SignSize.y - 0.02f);
+            var tr = tmp.GetComponent<MeshRenderer>();
+            if (tr != null) { tr.shadowCastingMode = ShadowCastingMode.Off; tr.receiveShadows = false; EditorUtility.SetDirty(tr); }
+            EditorUtility.SetDirty(tmp);
+        }
+
+        /// <summary>A primitive whose BoxCollider is the unit box (the transform's scale sizes it).</summary>
+        static void UnitBox(GameObject go)
+        {
+            var b = go.GetComponent<BoxCollider>();
+            if (b == null) return;
+            b.isTrigger = false; b.center = Vector3.zero; b.size = Vector3.one; EditorUtility.SetDirty(b);
+        }
+
+        /// <summary>The highest ground (station local y) under a rectangle (centre + corners) around a station-local point.</summary>
+        static float MaxGround(Transform station, Vector3 local, float sizeX, float sizeZ)
+        {
+            float best = float.NegativeInfinity;
+            foreach (var p in RectSamples(local, sizeX, sizeZ))
+                best = Mathf.Max(best, StationGround(station, station.TransformPoint(p)) - station.position.y);
+            return best;
+        }
+
+        static Vector3[] RectSamples(Vector3 c, float sx, float sz)
+        {
+            float hx = sx * 0.5f, hz = sz * 0.5f;
+            return new[] { c, c + new Vector3(-hx, 0f, -hz), c + new Vector3(hx, 0f, -hz), c + new Vector3(-hx, 0f, hz), c + new Vector3(hx, 0f, hz) };
+        }
+
+        /// <summary>The ground under a world point = the terrain only (the course tiles are Terrains on layer 11). A rock,
+        /// a stand or a board is never taken for the ground (Codex 2026-09-30 7-1: the side-room check lifted its box onto
+        /// whatever solid top it found). The TerrainCollider hit is used when there is one (what the players stand on),
+        /// otherwise the covering Terrain's SampleHeight. No Terrain under the point: an exception (nothing is guessed).</summary>
+        static float StationGround(Transform station, Vector3 world)
+        {
+            Physics.SyncTransforms();
+            var hits = Physics.RaycastAll(new Vector3(world.x, world.y + 3f, world.z), Vector3.down, 10f, ~0, QueryTriggerInteraction.Ignore);
+            float bestDist = float.PositiveInfinity, y = 0f;
+            foreach (var h in hits)
+            {
+                if (!(h.collider is TerrainCollider)) continue;
+                if (h.distance < bestDist) { bestDist = h.distance; y = h.point.y; }
+            }
+            if (bestDist < float.PositiveInfinity) return y;
+            foreach (var t in UnityEngine.Object.FindObjectsOfType<Terrain>())
+            {
+                var p = t.transform.position; var s = t.terrainData.size;
+                if (world.x >= p.x && world.x <= p.x + s.x && world.z >= p.z && world.z <= p.z + s.z) return t.SampleHeight(world) + p.y;
+            }
+            throw new InvalidOperationException("No Terrain under " + world.ToString("F2") + " (the wash station is seated on the terrain only)");
         }
 
         /// <summary>放水: 円錐、3〜4 m/s、寿命 0.4 s、重力あり、World。Collision (World) で地面・環境に当たって消え、Trigger で部位 Collider に入ると消える

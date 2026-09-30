@@ -1,5 +1,6 @@
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Components;
 using VRC.SDKBase;
 
 namespace KominkaHillside
@@ -20,6 +21,13 @@ namespace KominkaHillside
     // One stroke per dog per frame per tool: the shower's centre ray wins over the four ring rays, the nearest
     // overlap wins for the sponge, so a dog never gets several parts per frame from one tool (the send side cuts
     // a segment on every part change, which would flood the 8 Hz budget).
+    //
+    // Return to the shelf (IMP-ENV-007): a tool nobody holds that has been away from its home (a Transform under
+    // KH_WashStation/Homes, so it moves with the shelf) for returnSeconds goes back there. Every client keeps its own
+    // clock (reset while it sees the tool held, and when the tool leaves home); only the Owner of this GameObject (the
+    // last holder: the Pickup hands it over, or whoever inherited it) moves it, the same way KH_ToyRecall parks a toy
+    // (write the position, FlagDiscontinuity). The others see it through VRCObjectSync. Nobody takes the ownership
+    // for it, so a tool in someone's hand is never pulled away. The spray and the contacts end before the move.
     [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class KH_WashTool : UdonSharpBehaviour
     {
@@ -48,7 +56,20 @@ namespace KominkaHillside
         public float hapticAmplitude = 0.2f;
         public float hapticFrequency = 120f;
 
+        [Header("置き場へ戻る (IMP-ENV-007。ビルダーが書く)")]
+        [Tooltip("棚の定位置 (KH_WashStation/Homes の子。棚と一緒に動く)")]
+        public Transform home;
+        [Tooltip("誰も持たずに定位置から離れてからこの秒数で戻る")]
+        public float returnSeconds = 20f;
+        [Tooltip("定位置からこの距離 (m) 以内なら戻っているとみなす")]
+        public float homeTolerance = 0.05f;
+        [Tooltip("ハーネス専用: 1 = 持っている扱い / -1 = 持っていない扱い / 0 = 実値。本番は 0 (Wash/12 が確かめる)")]
+        public int debugHeldOverride = 0;
+
         private VRC_Pickup _pickup;
+        private VRCObjectSync _sync;
+        private float _awaySince = -1f;    // local clock: last seen held or left home (-1 = at home)
+        private int _returnCount;          // harness read-out only
         private bool _held;
         private bool _useHeld;
         private bool _sprayShown;
@@ -69,6 +90,7 @@ namespace KominkaHillside
         void Start()
         {
             _pickup = (VRC_Pickup)GetComponent(typeof(VRC_Pickup));
+            _sync = GetComponent<VRCObjectSync>();
             BuildMap();
             // Force the spray off once (a particle system may be Play On Awake).
             _sprayShown = true;
@@ -163,6 +185,9 @@ namespace KominkaHillside
             if (!Utilities.IsValid(player)) return;
             _ownerSinceId = player.playerId;
             _ownerSinceAt = Time.time;
+            // A new Owner (a pickup hand-over, or the old Owner left) counts the return from now: its own clock may have missed
+            // the last hold (seen late / joined late), so it waits the full returnSeconds instead of snapping the tool away at once.
+            if (_awaySince >= 0f) _awaySince = Time.time;
         }
 
         // ---- Pickup (these fire only on the holder's client) ----
@@ -239,14 +264,60 @@ namespace KominkaHillside
             if (washes[d] != null) washes[d]._EndContact(tool);
         }
 
+        // ---- return to the shelf (every client counts; only the Owner moves it) ----
+
+        bool HeldForReturn()
+        {
+            if (debugHeldOverride > 0) return true;
+            if (debugHeldOverride < 0) return false;
+            return _held || _holderId >= 0 || (_pickup != null && _pickup.IsHeld);
+        }
+
+        void ReturnTick()
+        {
+            if (home == null || returnSeconds <= 0f) return;
+            float now = Time.time;
+            if (HeldForReturn()) { _awaySince = now; return; }
+            Vector3 d = transform.position - home.position;
+            if (d.sqrMagnitude <= homeTolerance * homeTolerance) { _awaySince = -1f; return; }
+            if (_awaySince < 0f) { _awaySince = now; return; }   // just left home (moved by someone else's sync, or put down)
+            if (now - _awaySince < returnSeconds) return;
+            if (!Networking.IsOwner(gameObject)) return;          // the Owner moves it; do not take the ownership for this
+            ReturnHome();
+        }
+
+        void ReturnHome()
+        {
+            _awaySince = -1f;
+            _useHeld = false;
+            EndAllContacts();
+            if (tool == KH_DogWash.ToolShower && state != null) state._SetSpraying(false);
+            ApplySpray(false);
+            transform.position = home.position;
+            transform.rotation = home.rotation;
+            if (_sync != null) _sync.FlagDiscontinuity();          // a teleport: others do not see it slide there
+            _returnCount++;
+        }
+
+        /// <summary>Harness only (Course/100 W-tool-spray): the return itself, now, even while debugHeldOverride plays a
+        /// holder, so the spray stop on the return path is seen apart from the Owner's clean-up of an orphaned spray.
+        /// Owner only (a no-op for anyone else). Local; nothing in the world calls it.</summary>
+        public void _DebugReturnHome()
+        {
+            if (home == null || !Networking.IsOwner(gameObject)) return;
+            ReturnHome();
+        }
+
         void Update()
         {
             TrackHolder();
+            ReturnTick();
             ApplySpray(Want());   // catches a missed deserialization; no-op when unchanged
 
             // A spray left on by a holder who is gone: the state's new Owner clears it (vrc-networking §6).
+            // (debugHeldOverride > 0: the harness plays a holder, so the spray it switched on stays on.)
             if (!_held && state != null && state.spraying && Networking.IsOwner(state.gameObject)
-                && (_pickup == null || !_pickup.IsHeld))
+                && (_pickup == null || !_pickup.IsHeld) && debugHeldOverride <= 0)
                 state._SetSpraying(false);
 
             if (!_held || nozzle == null || washes == null || _strokeFrame == null) return;

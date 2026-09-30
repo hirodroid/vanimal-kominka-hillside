@@ -35,7 +35,7 @@ namespace KominkaHillside.Editor
         {
             Begin(false);
             report.washOnly = true;
-            report.deadline = EditorApplication.timeSinceStartup + 2200; // Wash 1500 + WashBehavior ~260 + WashSync ~400
+            report.deadline = EditorApplication.timeSinceStartup + 3500; // Wash 1500 + WashBehavior ~260 + WashReact ~200 + WashSync ~400 + WashStation ~130 + WashDirt ~620
             report.limitations = "Single local ClientSim; the local player is instance master and every Owner (the wash object, the dog root, the tools). "
                 + "Contacts are injected at KH_DogWash._LocalContact / _EndContact (the entry KH_WashTool calls every frame) with collider surface points; "
                 + "the tool's pickup, raycasts, VR sphere and Desktop gaze are not exercised. NetStroke only takes the local echo path. "
@@ -514,7 +514,10 @@ namespace KominkaHillside.Editor
             s.Add(WsDo(() => WsNote("other dogs " + string.Join(",", others) + ": wash null, never in the wash branch while the Shiba was washed, each walked >= 0.3 m (" + string.Join(", ", others.Select(o => otPath[o].ToString("F1"))) + " m)")));
 
             MakeWashBehaviorCases(); // IMP-DOG-027 (WashBehavior.cs): leashed stop, the gates, gathering
+            MakeWashReactCases();    // IMP-DOG-028 (WashReact.cs): shake, satisfied, paw, no-repeat
             MakeWashSyncCases();     // IMP-DOG-026 (WashSync.cs): decay, local arm, late join / reset / handover (simulated), budget. Last: they reset the drying values
+            MakeWashStationCases();  // IMP-ENV-007 (WashStation.cs): tool return / held / spray off
+            MakeWashDirtCases();     // IMP-DOG-029 (WashDirt.cs): walk / zone / grace / station / river
 
             WsWrite();
         }

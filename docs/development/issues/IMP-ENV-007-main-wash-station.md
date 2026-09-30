@@ -2,10 +2,10 @@
 id: IMP-ENV-007
 type: IMP
 system: ENV
-status: todo
+status: review
 priority: High
 summary: 門の外の主洗い場の整備 (洗い台、道具の棚と戻し先、蛇口・ホース・桶、犬を呼ぶ方法)
-next: IMP-DOG-025 の試作を受けて、Unity で地形の高さと空きを測り、リード台の西側の平地に位置を決める
+next: ユーザーの Play (棚の位置と高さ、道具の取りやすさ、札の日本語の記入、手動配置との干渉) が残り
 updated: 2026-09-30
 ---
 
@@ -45,3 +45,9 @@ AI 側で確かめる。
 ## 記録
 
 2026-09-30: 起票。実装は未着手。
+
+2026-09-30: 実装。道具は手放して 20 秒で棚の定位置 (`KH_WashStation/Homes/Home_*`、棚と一緒に動く) へ戻る (`KH_ToyRecall.Park` と同じ作法: Owner が位置を書いて FlagDiscontinuity。持っている間は戻らず、戻る時は放水を止める)。棚は木の台 + 脚、犬が乗るすのこ (0.6 × 0.9 m) は棚の前 1.2 m、桶と札 (文字は仮の ASCII。**日本語は `KH_WashStation/SignText` に Inspector で入れてもらう**)。棚の位置 (42.5, 2.07, 43.0) は保つ。手動配置との距離: おやつ 1.60 m、リード台 1.90 m、待機の輪 2.92 m、歓迎 4.05 m、店番 4.90 m。地面の傾きは約 5° の推定 (未実測)。Verify (`StationVerify`) は Wash/12 に含め 690 項目 PASS。[配置の制作票](../../plans/2026-09-30-wash-station-layout.md)。ハーネス W-tool-return / held / spray を追加。NavMesh は焼き直していない。
+
+2026-09-30 (Codex レビュー後): タオルを 2 枚に (道具 6 個)。空きの検査は地面を Terrain だけに限定し、Terrain 以外の固い Collider はすべて障害物 (洗い場自身の部品も含む)。Owner が替わったら新しい Owner が戻りの秒数を数え直す。**後へ送ったもの**: 蛇口とホース、犬を洗い台へ呼ぶ仕組み、小物の作り込み、NavMesh の焼き直し。**未確認**: 退出による移譲の後に戻るか、持っている人と Owner が違う間、同時の Pickup、放水の子 (State) の Owner の移譲、端末ごとの戻り時刻の差 (きっかり 20 秒は保証せず、遅い側へずれる)。Wash/12 725 項目 PASS。
+
+2026-09-30 (ClientSim、run 20260930-051545、Course/100 46 ケース): 44 PASS / 2 SKIP (2 人が要る W-leash-other / W-react-remote)。W-tool-return (6 個とも定位置へ) / W-tool-held (持っている間は戻らない) / W-tool-spray (戻る時に放水が止まる) PASS。棚の位置・見た目は Play 待ち。

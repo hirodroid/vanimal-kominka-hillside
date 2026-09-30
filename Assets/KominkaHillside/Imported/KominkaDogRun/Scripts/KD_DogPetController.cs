@@ -270,6 +270,11 @@ namespace KominkaDogRun
                  "**null なら常に自分の選択のまま** (Phase 2 までの挙動)")]
         public KD_PetFxBox petFxBox;
 
+        [Header("ブルブル (IMP-DOG-028。Tools/KominkaHillside/Wash/11 が配線する)")]
+        [Tooltip("胴の追加回転の書き先 (アーマチュア側 Bone.001, .002, .003 の順 = 根元から。2 段構えは Constraint のソース、1 段構えはそのボーン)。" +
+                 "null / 長さ 0 なら胴は揺らさず、頭 (sourceBone) だけ揺らす。耳と尻尾は PhysBone に任せる")]
+        public Transform[] shakeBones;
+
         [Header("デバッグ表示 (Tools/KominkaDogRun/Pet System/4 で作成。公開前に 5 で撤去)")]
         [Tooltip("null なら何もしない。配線されているときだけモード/強度を表示する")]
         public TMPro.TextMeshPro debugText;
@@ -410,6 +415,29 @@ namespace KominkaDogRun
         bool _petBoolWritten; // Animator へ書いた Pet Bool (変化時だけ書くためのキャッシュ)
         bool _petBoolOnce;
 
+        // ---- IMP-DOG-028: ブルブル (手続き的) と洗浄中の表情 ----
+        // 胴と頭へ、犬の前後軸まわりの減衰するロールを足す。頭は既存の 1 本の書き手 (_worldDelta の後) に合成し、
+        // 胴は同じ LateUpdate の頭より前に書く (頭の書き手が読む親の回転に胴の揺れが入る = 累積で ShakeAmplitudeDeg)。
+        // 蓄積防止ガードは骨ごとに独立 (§4 手順 5 と同じ)。ShakeAmplitudeDeg は頭の先での合計の振幅。
+        const float ShakeAmplitudeDeg = 15f;
+        const float ShakeFrequency = 12f;       // Hz
+        const float ShakeMaxSeconds = 3f;       // _StartShake に渡せる上限 (呼び手の誤りで震え続けない)
+        const float ShakePhaseLag = 0.45f;      // rad / 骨。根元 → 頭へ少し遅れて波が伝わる
+        const float ShakeHeadWeight = 0.2f;     // 頭の分 (胴の骨の重みは ShakeBodyWeight と合わせて 1)
+        const float FaceResponsiveness = 5f;    // _SetFace の立ち上がり・減衰 (1/s)
+        float _shakeStart = -1000f;
+        float _shakeSeconds;
+        bool _shakeFlush;                       // 揺れ終わりのフレームで基準姿勢を 1 回書き戻す
+        Transform[] _shakeParents;
+        Quaternion[] _shakeLastWritten;
+        Quaternion[] _shakeLastBase;
+        bool[] _shakeHasLast;
+        float _shakeEnvelope;                   // このフレームの振幅 (度、頭の先の合計)。ハーネスが読む
+        float _shakeBodyDeg;                    // このフレームに胴の根元 (shakeBones[0]) へ足した角度 (度)。ハーネスが読む
+        float _faceMetozi, _faceEgao;           // _SetFace の値 (そのフレームだけ有効)
+        int _faceFrame = -1;
+        float _faceMetoziW, _faceEgaoW;         // 滑らかにした重み (0..1)
+
         // 同期へ送った (= fetchController へ渡した) ローカル状態。変化したときだけ渡す
         bool _pushedPetting;
         int _pushedZone = -1;
@@ -529,6 +557,14 @@ namespace KominkaDogRun
 
             if (tailSourceBone != null) _tailParent = tailSourceBone.parent;
             else Debug.LogWarning("[KD_DogPetController] tailSourceBone not wired - tail wag disabled.");
+            // IMP-DOG-028: 胴のブルブルの書き先。null の要素は飛ばす (配線されていない犬は頭だけ揺れる)
+            int shakeCount = shakeBones != null ? shakeBones.Length : 0;
+            _shakeParents = new Transform[shakeCount];
+            _shakeLastWritten = new Quaternion[shakeCount];
+            _shakeLastBase = new Quaternion[shakeCount];
+            _shakeHasLast = new bool[shakeCount];
+            for (int i = 0; i < shakeCount; i++)
+                _shakeParents[i] = shakeBones[i] != null ? shakeBones[i].parent : null;
             if (faceRenderer == null)
             {
                 Debug.LogWarning("[KD_DogPetController] faceRenderer not wired - expression disabled.");
@@ -586,6 +622,72 @@ namespace KominkaDogRun
         {
             _urge = level < 0f ? 0f : (level > 1f ? 1f : level);
             _urgeFrame = Time.frameCount;
+        }
+
+        /// <summary>IMP-DOG-028: ブルブルを始める (呼び直しで最初から)。胴 (shakeBones) と頭 (sourceBone) へ、
+        /// 犬の前後軸まわりに ShakeFrequency Hz・振幅 ShakeAmplitudeDeg → 0 の減衰するロールを seconds 秒足す。
+        /// 撫で・注視の追加回転とは加算で合成する (頭は _worldDelta の上に乗せるだけで、_worldDelta には混ぜない)。
+        /// 呼ぶのは KD_DogWanderController (洗われ中の枝) だけ。ローカル演出 (同期しない)。</summary>
+        public void _StartShake(float seconds)
+        {
+            if (seconds <= 0f) return;
+            _shakeStart = Time.time;
+            _shakeSeconds = Mathf.Min(seconds, ShakeMaxSeconds);
+        }
+
+        /// <summary>IMP-DOG-028: 揺れている間か (飛沫と音の呼び手、ハーネスが読む)。</summary>
+        public bool IsShaking { get { return Time.time - _shakeStart < _shakeSeconds; } } // net: callable-ok: read-only
+
+        /// <summary>IMP-DOG-028: このフレームだけ、洗浄の表情を足す (metozi = 目を細める / egao = 笑顔、0〜1。_SetGaze と同じ契約:
+        /// Update から呼び、寿命はそのフレームだけ)。撫での表情とは大きい方を採る。寝ている間は効かない。</summary>
+        public void _SetFace(float metozi01, float egao01)
+        {
+            _faceMetozi = Mathf.Clamp01(metozi01);
+            _faceEgao = Mathf.Clamp01(egao01);
+            _faceFrame = Time.frameCount;
+        }
+
+        /// <summary>頭の先での合計の角度 (度) のうち、骨 index (0.. = 胴の根元から、count = 頭) の分。t は開始からの秒。</summary>
+        float ShakeAngle(float t, int index, int bodyCount)
+        {
+            if (t < 0f || t >= _shakeSeconds || _shakeSeconds <= 0f) return 0f;
+            float k = 1f - t / _shakeSeconds;
+            float weight = index >= bodyCount ? (bodyCount > 0 ? ShakeHeadWeight : 1f) : (1f - ShakeHeadWeight) / bodyCount;
+            return ShakeAmplitudeDeg * k * k * weight * Mathf.Sin(2f * Mathf.PI * ShakeFrequency * t - index * ShakePhaseLag);
+        }
+
+        /// <summary>IMP-DOG-028: 胴の骨へブルブルを書く (LateUpdate、頭の書き手より前)。揺れ終わりのフレームは基準姿勢を 1 回書き戻す
+        /// (Animator が書き戻さないフレームに揺れの最後の値を残さない)。揺れていなければ何もしない。</summary>
+        void WriteShakeBody(float t, bool live)
+        {
+            _shakeBodyDeg = 0f;
+            int n = shakeBones != null && _shakeParents != null ? Mathf.Min(shakeBones.Length, _shakeParents.Length) : 0;
+            if (n == 0) return;
+            Vector3 axis = dogRoot.forward;
+            for (int i = 0; i < n; i++)
+            {
+                Transform bone = shakeBones[i];
+                Transform parent = _shakeParents[i];
+                if (bone == null || parent == null) continue;
+                if (!live && !_shakeHasLast[i]) continue;
+                Quaternion pose = bone.localRotation;
+                if (_shakeHasLast[i] && Mathf.Abs(Quaternion.Dot(pose, _shakeLastWritten[i])) > PoseSameDot) pose = _shakeLastBase[i];
+                if (!live)
+                {
+                    bone.localRotation = pose;   // 基準へ戻す (Animator が書いたフレームなら同じ値)
+                    _shakeHasLast[i] = false;
+                    continue;
+                }
+                _shakeLastBase[i] = pose;
+                float deg = ShakeAngle(t, i, n);
+                if (i == 0) _shakeBodyDeg = deg;
+                Quaternion worldPose = parent.rotation * pose;
+                Quaternion additive = Quaternion.Inverse(worldPose) * Quaternion.AngleAxis(deg, axis) * worldPose;
+                Quaternion written = pose * additive;
+                bone.localRotation = written;
+                _shakeLastWritten[i] = written;
+                _shakeHasLast[i] = true;
+            }
         }
 
         public void _SuppressPetting()
@@ -1052,6 +1154,27 @@ namespace KominkaDogRun
                 asleep = wanderController.IsAsleep;
             }
 
+            // ---- IMP-DOG-028: ブルブル。胴を頭より先に書く (頭の書き手が読む _sourceParent.rotation に胴の揺れが入る) ----
+            // 揺れていない間 (_StartShake が呼ばれていない犬) は WriteShakeBody も頭の合成も何もしない = 従来と 1 フレームも変わらない
+            float shakeT = Time.time - _shakeStart;
+            bool shakeLive = shakeT >= 0f && shakeT < _shakeSeconds;
+            bool shakeFlush = !shakeLive && _shakeFlush;
+            Quaternion shakeHead = Quaternion.identity;
+            _shakeEnvelope = 0f;
+            if (shakeLive || shakeFlush)
+            {
+                WriteShakeBody(shakeT, shakeLive);
+                if (shakeLive)
+                {
+                    float k = 1f - shakeT / _shakeSeconds;
+                    _shakeEnvelope = ShakeAmplitudeDeg * k * k;
+                    int bodyCount = shakeBones != null ? shakeBones.Length : 0;
+                    shakeHead = Quaternion.AngleAxis(ShakeAngle(shakeT, bodyCount, bodyCount), dogRoot.forward);
+                }
+                _shakeFlush = shakeLive;
+            }
+            else _shakeBodyDeg = 0f;
+
             // ---- 頭の目標回転 (ゾーン別 / 注視 / 余韻) ----
             Quaternion target = Quaternion.identity;
             float resp = returnResponsiveness;
@@ -1156,8 +1279,10 @@ namespace KominkaDogRun
 
             // アイドル時はボーンへ触らない (Udon VM は遅い — 目標も現在値も identity なら
             // 書き込みごとスキップし、Animator にボーンを返す。再開時はガードの基準を取り直す)
+            // IMP-DOG-028: 揺れている間と揺れ終わりの 1 フレームも書く (最後の揺れの値を基準へ戻す)
             bool headActive = Quaternion.Angle(target, Quaternion.identity) > 0.01f ||
-                              Quaternion.Angle(_worldDelta, Quaternion.identity) > 0.02f;
+                              Quaternion.Angle(_worldDelta, Quaternion.identity) > 0.02f ||
+                              shakeLive || shakeFlush;
             if (headActive)
             {
                 // 補間の遅れが「犬が追ってきている」感覚を作る (瞬間追従にしない)
@@ -1175,7 +1300,8 @@ namespace KominkaDogRun
 
                 // ワールド差分をボーンローカルの追加回転へ変換して、Animator の出力に乗せる
                 Quaternion worldPose = _sourceParent.rotation * pose;
-                Quaternion additiveLocal = Quaternion.Inverse(worldPose) * _worldDelta * worldPose;
+                // IMP-DOG-028: ブルブルは書く値にだけ乗せる (_worldDelta の補間には混ぜない = 12 Hz が遅れで潰れない。揺れていなければ identity)
+                Quaternion additiveLocal = Quaternion.Inverse(worldPose) * (shakeHead * _worldDelta) * worldPose;
                 Quaternion written = pose * additiveLocal;
                 sourceBone.localRotation = written;
                 _lastWritten = written;
@@ -1283,9 +1409,20 @@ namespace KominkaDogRun
             // ボーン実行順の実測をそのまま BlendShape に広げない)。
             // 睡眠中は撫での強度に関係なく閉眼。起きていて撫でてもいないときは
             // 最後の書き込みを解除し、クリップへ表情を返す ----
+            // IMP-DOG-028: 洗浄の表情 (_SetFace、そのフレームだけ)。滑らかにして撫での値と大きい方を採る。
+            // 差し込まれない犬は重みが 0 のまま = max(撫で, 0) で従来と同じ値
+            bool faceIn = _faceFrame == Time.frameCount;
+            if (faceIn || _faceMetoziW > 0f || _faceEgaoW > 0f)   // Udon: no extern calls for the dogs nobody washes
+            {
+                float faceT = 1f - Mathf.Exp(-FaceResponsiveness * dt);
+                _faceMetoziW = Mathf.Lerp(_faceMetoziW, faceIn ? _faceMetozi : 0f, faceT);
+                _faceEgaoW = Mathf.Lerp(_faceEgaoW, faceIn ? _faceEgao : 0f, faceT);
+                if (_faceMetoziW < 0.001f) _faceMetoziW = 0f;
+                if (_faceEgaoW < 0.001f) _faceEgaoW = 0f;
+            }
             if (faceRenderer != null && !stretch && !chinRest)
             {
-                float metozi = asleep ? 100f : metoziMax * _intensity;
+                float metozi = asleep ? 100f : Mathf.Max(metoziMax * _intensity, metoziMax * _faceMetoziW);
                 if (metozi > 0.5f)
                 {
                     if (metoziIndex >= 0) faceRenderer.SetBlendShapeWeight(metoziIndex, Mathf.Min(metozi, 100f));
@@ -1298,7 +1435,7 @@ namespace KominkaDogRun
                 }
 
                 // 笑顔の目と閉眼を重ねない。寝たままの撫でには頭・尻尾・ハートで返事する。
-                float egao = asleep ? 0f : egaoMax * bigT;
+                float egao = asleep ? 0f : Mathf.Max(egaoMax * bigT, egaoMax * _faceEgaoW);
                 if (egao > 0.5f)
                 {
                     if (egaoIndex >= 0) faceRenderer.SetBlendShapeWeight(egaoIndex, Mathf.Min(egao, 100f));

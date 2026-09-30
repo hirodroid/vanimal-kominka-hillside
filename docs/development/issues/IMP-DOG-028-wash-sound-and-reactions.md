@@ -2,10 +2,10 @@
 id: IMP-DOG-028
 type: IMP
 system: DOG
-status: todo
+status: wip
 priority: High
 summary: 洗浄の音と犬の反応の仕上げ (音素材の制作と記録、個人音量、タオル、ブルブル、満足の合図)
-next: IMP-DOG-025 の仮の音と反応 1 種を受けて、音素材の制作方針 (合成) と反応の一覧を決める
+next: ハーネス (W-shake / satisfied / paw / no-repeat) の結果、ユーザーの Play (反応の見え方、音の試聴)、試聴の後の音素材の作り直しが残り
 updated: 2026-09-30
 ---
 
@@ -45,3 +45,9 @@ AI 側で確かめる。
 ## 記録
 
 2026-09-30: 起票。実装は未着手。
+
+2026-09-30: 反応と音の接続を実装 (音素材の作り直しはユーザーの試聴の後)。ブルブルは `KD_DogPetController._StartShake` (胴 Bone.001〜.003 と頭へ減衰する往復のロール、12 Hz、15°、1.2 秒。撫での回転と加算で共存)。きっかけは濡れが多い状態で最後のストロークから 0.8 秒 (泡 0.15 以上なら出さない、8 秒あける) と清潔の合図の前。Owner が `_RequestShake()` を呼び、全員が `shakeSerial` のエッジで出す。満足の合図: 清潔のエッジで座る (`_wantSit` 経由、2.5 秒) + 尻尾 + 笑顔 + 声。途中参加の最初の受信では出さない (`_HasState()`)。足上げは柴の CallPaw (CallReady + CallPose 3) を要求として LateUpdate の既存の調停へ (優先は最下位)。洗浄の音 (犬の接触 3 本、道具の噴射) は犬の声の台帳へ登録し、`KH_DogWash` が「目標の音量 × 個人の gain」を書く。ハーネス W-shake / W-shake-remote / W-no-repeat / W-satisfied / W-satisfied-join / W-paw を追加。タオルの仕上げの音・素材の作り直しは未着手。
+
+2026-09-30 (Codex レビュー後): 満足の合図は洗浄の保持が切れても専用の終了時刻まで続く (途中で終わるのは水・集合・呼び出し・ワープ・Fetch・持ち主が歩き出した時だけ)。清潔の時のブルブルも Owner が決めて shakeSerial で配り、座り始めは同期された清潔のエッジから 1.2 秒後に全端末で揃える。8 秒の間隔はブルブルだけに掛け、満足の合図は毎回出す。足上げは止まっている時だけ。ハーネス W-satisfied-hold を追加。
+
+2026-09-30 (ClientSim、run 20260930-051545、Course/100 46 ケース): 44 PASS / 2 SKIP (2 人が要る W-leash-other / W-react-remote)。W-shake (濡れで +1.06 s、泡が多い間は出ない) / W-shake-remote (shakeSerial のエッジ) / W-no-repeat (8 秒の間隔) / W-satisfied (清潔のエッジで座る、洗い続けられる) / W-satisfied-hold (保持が切れても座りが続く) / W-satisfied-join (途中参加の最初の受信では出ない) / W-paw (前足で要求、6 秒あける。Animator の見た目は未確認) PASS。反応の見た目・音は Play / PCVR 待ち。

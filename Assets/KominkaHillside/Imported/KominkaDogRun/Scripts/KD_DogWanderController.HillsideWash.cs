@@ -24,8 +24,10 @@ namespace KominkaDogRun
     // gaze / tilt is injected locally on every client (KD_DogPetController._SetGaze is per frame, called from Update).
     //
     // Writers are not added: the root is written only through the existing Owner-only movers (Coast eases the dog to a stop,
-    // FaceTowards turns it), no pose Bool is raised (the dog is washed standing),
-    // the legs go through ApplyMoveAnim (via Coast), the head through the pet controller's single additive writer.
+    // FaceTowards turns it), no pose Bool is raised directly (the dog is washed standing; IMP-DOG-028's satisfied sit is a
+    // _wantSit request that LateUpdate writes, the paw lift a WashPawPose request for the companion writer),
+    // the legs go through ApplyMoveAnim (via Coast), the head through the pet controller's single additive writer
+    // (IMP-DOG-028: the shake is composed there too, with the body bones written just before the head).
     public partial class KD_DogWanderController
     {
         public KominkaHillside.KH_DogWash wash;   // null = washing does nothing (unwired scenes keep the old behaviour)
@@ -54,6 +56,61 @@ namespace KominkaDogRun
         // wider band to keep a stop that has started (the hand moves a little while washing).
         const float WashLeashSlackEnter = 0.7f, WashLeashSlackHold = 0.85f;
 
+        // ---- IMP-DOG-028: reactions (design §1-6, trial values until Play) ----
+        // Clips go through the dog's own voice source (barkSource: already on the personal-volume ledger, design §1-8).
+        [Tooltip("IMP-DOG-028: ブルブルの音 (barkSource で PlayOneShot)。null なら無音。Wash/11 が KH_Wash_Shake を配線する")]
+        public AudioClip washShakeClip;
+        [Tooltip("IMP-DOG-028: 満足の合図の短い声 (barkSource で PlayOneShot)。null なら barkClip を小さく高めに鳴らす")]
+        public AudioClip washHappyClip;
+        const float WashShakeSeconds = 1.2f;     // design §1-6 / IMP-DOG-028: 1.2 s, 12 Hz, 15 deg -> 0 (KD_DogPetController)
+        const float WashShakeDelay = 0.8f;       // "水を止めて 0.8 秒後"
+        const float WashShakeSpacing = 8f;       // the same trigger at most once per 8 s
+        const float WashShakeFoamMax = 0.15f;    // foam before the rinse is never shaken off (the rinse is the show)
+        const float WashShakeWet = 0.05f;        // average wet over the valid cells (trial: 2 s of shower on the flank)
+        const float WashSitSeconds = 2.5f;       // satisfied: sit this long (the strokes still land: part colliders are bone children)
+        const float WashPawSeconds = 1.5f;       // comic: lift the paw when a front leg starts being washed
+        const float WashPawSpacing = 6f;
+        const float WashStrokeRecent = 0.35f;    // "ストローク中" = the washer's last stroke is this recent
+        const float WashStrokeWag = 0.35f;       // thin tail wag while stroked (_SetUrge level)
+        const float WashStrokeMetozi = 0.4f;     // eyes narrowed a little while stroked (x metoziMax)
+        const float WashHappyEgao = 0.9f;        // satisfied smile (x egaoMax)
+        const float WashHappyVolume = 0.6f;      // barkClip stand-in for the short happy voice
+        const float WashCleanPendingSeconds = 1f;// a clean edge not consumed by a wash frame within this is dropped
+        const float WashFxRange = 15f;           // splash only when the local player is this close
+        // Wet shake trigger (Owner only until KH_DogWash syncs a shake counter; see WashReact)
+        private bool _washShakeArmed;            // a stroke was seen within WashShakeDelay (one chance per stroke end)
+        private float _washShakeWetNextAt;
+        private float _washShakeCleanNextAt;
+        private float _washShakeUntil = -1000f;  // splash / sound window of the current shake
+        private float _washSplashNextAt;
+        private int _washShakeCount;             // harness read-outs
+        private int _washShakeKind;              // 1 = wet (stroke end), 2 = clean edge
+        // Clean edge (every client, from the synced cleanSerial; WashCleanTick at Update top)
+        private bool _washCleanInit;
+        private int _washCleanSeen;
+        private bool _washHeldPrev;              // KH_DogWash had a state last frame (_HasState): an edge seen without it is a first receive
+        private int _washShakeSeen;              // synced shake counter (KH_DogWash._ShakeSerial), every client
+        private bool _washShakePending;
+        private float _washShakePendingAt;
+        private bool _washCleanPending;
+        private float _washCleanPendingAt;
+        // Satisfied sequence: [start, sitAt) shake, [sitAt, until) sit; tail wag and smile over the whole window
+        private float _washSatisfyStart = -1000f;
+        private float _washSatisfySitAt = -1000f;
+        private float _washSatisfyUntil = -1000f;
+        private bool _washVoiceDone = true;
+        private int _washSatisfiedCount;
+        // Paw lift
+        private int _washPawSeenPart = -1;
+        private float _washPawUntil = -1000f;
+        private float _washPawNextAt;
+        private int _washPawCount;
+
+        /// <summary>IMP-DOG-028: this frame's paw-lift request (CallReady + CallPose 3 = CallPaw on the Hillside controllers).
+        /// Frame-accurate for LateUpdate: _washActive is this frame's flag. Read by LateUpdate's ApplyCompanionAnimation call
+        /// (KD_DogWanderController.cs), lowest priority there.</summary>
+        public bool WashPawPose { get { return _washActive && Time.time < _washPawUntil && Time.time >= _washSatisfyUntil; } } // net: callable-ok: read-only
+
         /// <summary>Being washed this frame (a wash branch ran). Frame flag, every client.</summary>
         public bool IsBeingWashed { get { return _washActive; } } // net: callable-ok: read-only
 
@@ -67,7 +124,8 @@ namespace KominkaDogRun
         bool UpdateHillsideWash()
         {
             if (wash == null || fetchController == null) return false;
-            if (!wash._WashHold()) return false;
+            // IMP-DOG-028 (Codex 4-1): a satisfied sign in progress keeps the branch after the hold ran out (its own end time)
+            if (!wash._WashHold() && !WashSatisfyRunning()) return false;
             // Water is stronger than washing (design §1-5): in the water (synced pose, every client) or in the Owner's water play
             // (walking out / shaking on the bank; non-Owners always see WaterOff) the dog is not stopped. It stops once landed.
             // Nothing below is touched on that path, so WaterTick's veto / preempt checks and UpdateWaterPlay (further down in
@@ -112,6 +170,182 @@ namespace KominkaDogRun
             bool now = WashYieldsToErrand();
             if (now && !_washErrandPrev && wash._WashHold()) wash._ReleaseHold();
             _washErrandPrev = now;
+            WashCleanTick();
+        }
+
+        /// <summary>IMP-DOG-028 (every client, every frame, from WashErrandTick): the clean edge from the synced cleanSerial.
+        /// Also the synced shake counter. An increase counts only when KH_DogWash already held a state in the previous frame
+        /// (_HasState): a joiner's first receive is the new baseline, not "just got clean". The edges are only recorded here;
+        /// the wash branch consumes them (WashReact) within 1 s, so an unwashed dog never reacts.</summary>
+        void WashCleanTick()
+        {
+            // KH_DogWash._HasState(): this client holds a state (seeded as Owner, or received). A change seen on the frame the
+            // state arrives (a joiner's first receive) is the baseline; only changes after that are edges. Same rule for both counters.
+            bool had = _washHeldPrev;   // reused as "had a state last frame"
+            bool has = wash._HasState();
+            int serial = wash._CleanSerial();
+            int shakes = wash._ShakeSerial();
+            if (!_washCleanInit) { _washCleanInit = true; _washCleanSeen = serial; _washShakeSeen = shakes; }
+            else
+            {
+                if (serial != _washCleanSeen)
+                {
+                    if (had && serial - _washCleanSeen > 0) { _washCleanPending = true; _washCleanPendingAt = Time.time; }
+                    _washCleanSeen = serial;
+                }
+                if (shakes != _washShakeSeen)
+                {
+                    if (had && shakes - _washShakeSeen > 0) { _washShakePending = true; _washShakePendingAt = Time.time; }
+                    _washShakeSeen = shakes;
+                }
+            }
+            if (_washCleanPending && Time.time - _washCleanPendingAt > WashCleanPendingSeconds) _washCleanPending = false;
+            // Codex 4-1: a satisfied sign ends early only when a frame went by without the wash branch (water, gathering, the
+            // sleep call, the travel ticket, Fetch / disc, or the leash holder walking off took the dog). It never resumes.
+            if (WashSatisfyRunning() && _washLastFrame < Time.frameCount - 1) { _washSatisfyUntil = -1000f; _washSatisfySitAt = -1000f; }
+            if (_washShakePending && Time.time - _washShakePendingAt > WashCleanPendingSeconds) _washShakePending = false;
+            _washHeldPrev = has;
+        }
+
+        /// <summary>IMP-DOG-028: a satisfied sign has started and not reached its own end (_washSatisfyUntil).</summary>
+        bool WashSatisfyRunning()
+        {
+            return Time.time >= _washSatisfyStart && Time.time < _washSatisfyUntil;
+        }
+
+        /// <summary>IMP-DOG-028: the reactions (every client, every washed frame, from WashLook = both branches). Order:
+        /// satisfied (clean edge) > shake > paw > the small stroke reactions. None of them stops the washing (no hold, no gate):
+        /// the dog sits or lifts a paw in place and the part colliders stay on the bones.
+        /// - Satisfied (every client, synced cleanSerial): 1.2 s (the Owner's shake via shakeSerial if the foam is rinsed), then
+        ///   sit 2.5 s (_wantSit, the stopover's arbitration: LateUpdate writes Sit), tail wag and smile over the whole window, one
+        ///   short voice at the sit. Once started it runs to its own end even after the hold (UpdateHillsideWash keeps the branch);
+        ///   only water, the errands and Fetch / disc (any frame without the wash branch) end it (WashCleanTick).
+        /// - Wet shake: 0.8 s after the washer's last stroke, wet >= WashShakeWet and foam <= WashShakeFoamMax, 8 s apart.
+        ///   The Owner decides (its own cells) and calls wash._RequestShake() (synced shakeSerial); every client starts the shake
+        ///   from that counter's edge (WashCleanTick, the same first-receive rule as cleanSerial).
+        /// - Paw: the stroke moves onto a front leg (part 3 / 4) -> WashPawPose for 1.5 s, 6 s apart (every client: strokes are
+        ///   seen everywhere), only when stopped. LateUpdate's ApplyCompanionAnimation turns it into CallReady + CallPose 3 at the
+        ///   lowest priority (not while Sit / LieDown / group / the sleep call stand, nor while the legs move).
+        /// - Small: while stroked, a thin tail wag (_SetUrge) and narrowed eyes (_SetFace); the head tilt stays in WashLook.</summary>
+        void WashReact()
+        {
+            float now = Time.time;
+            int washer = wash._WasherPlayerId();
+            float age = washer >= 0 ? wash._StrokeAgeOf(washer) : 1e9f;
+            bool stroking = age < WashStrokeRecent;
+
+            bool shaking = petController != null && petController.IsShaking;
+
+            // ---- satisfied (the clean edge recorded by WashCleanTick this frame or within the last second) ----
+            // Every client runs the same timeline from the synced edge: [start, +1.2 s) the shake window, then the sit 2.5 s.
+            // The sit time does not depend on whether a shake plays (Codex 4-2: the same result on every screen). The shake itself
+            // is the Owner's decision (its foam), distributed through shakeSerial like the wet one; the spacing applies to the
+            // shake only, the satisfied sign always plays (Codex 4-3).
+            if (_washCleanPending)
+            {
+                _washCleanPending = false;
+                if (_dogOwner && now >= _washShakeCleanNextAt && !shaking && wash._AverageFoam() <= WashShakeFoamMax)
+                {
+                    _washShakeCleanNextAt = now + WashShakeSpacing;
+                    wash._RequestShake();
+                }
+                _washSatisfyStart = now;
+                _washSatisfySitAt = now + WashShakeSeconds;
+                _washSatisfyUntil = _washSatisfySitAt + WashSitSeconds;
+                _washVoiceDone = false;
+                _washPawUntil = -1000f;   // the satisfied sit wins over a paw in progress (one pose Bool at a time)
+                _washSatisfiedCount++;
+            }
+            bool satisfied = now >= _washSatisfyStart && now < _washSatisfyUntil;
+            bool sitting = satisfied && now >= _washSatisfySitAt;
+
+            // ---- wet shake (stroke end + 0.8 s) ----
+            if (age < WashShakeDelay) _washShakeArmed = true;
+            else if (_washShakeArmed)
+            {
+                _washShakeArmed = false;
+                if (_dogOwner && !satisfied && !shaking && now >= _washPawUntil && now >= _washShakeWetNextAt
+                    && wash._AverageFoam() <= WashShakeFoamMax && wash._AverageWet() >= WashShakeWet)
+                {
+                    // Owner decides (its cells), KH_DogWash syncs the counter; every client (the Owner too, next tick) starts
+                    // the shake from that counter's edge below
+                    _washShakeWetNextAt = now + WashShakeSpacing;
+                    wash._RequestShake();
+                }
+            }
+            if (_washShakePending)
+            {
+                _washShakePending = false;
+                // In the satisfied window only before the sit (a late receive does not shake a sitting dog); kind 2 = the clean shake
+                if (!shaking && !sitting) { StartWashShake(satisfied ? 2 : 1); shaking = true; }
+            }
+
+            // ---- paw lift (a front leg starts being washed) ----
+            int part = wash._LastStrokePart();
+            if (part != _washPawSeenPart)
+            {
+                // Codex 4-4: only once the legs have stopped (_wasMoving = the Walk / Run written, incl. ApplyMoveAnim's stop hold)
+                if ((part == 3 || part == 4) && stroking && !satisfied && !shaking && !_wasMoving && now >= _washPawNextAt)
+                {
+                    _washPawUntil = now + WashPawSeconds;
+                    _washPawNextAt = now + WashPawSpacing;
+                    _washPawCount++;
+                }
+                _washPawSeenPart = part;
+            }
+
+            // ---- pose: sit through the existing request (stopped only; ApplyMoveAnim folds it if the legs still move) ----
+            if (sitting && _speed <= stopSpeedThreshold) _wantSit = true;
+            if (sitting && !_washVoiceDone) { _washVoiceDone = true; WashVoice(); }
+
+            // ---- tail and face (per frame, the pet controller's own writers) ----
+            if (petController != null)
+            {
+                if (satisfied) { petController._SetUrge(1f); petController._SetFace(0f, WashHappyEgao); }
+                else if (stroking) { petController._SetUrge(WashStrokeWag); petController._SetFace(WashStrokeMetozi, 0f); }
+            }
+
+            WashShakeFx(now);
+        }
+
+        /// <summary>Start a shake (kind 1 = wet, 2 = clean): the procedural roll in the pet controller, the sound through the
+        /// dog's voice source, and the splash window.</summary>
+        void StartWashShake(int kind)
+        {
+            float now = Time.time;
+            if (petController != null) petController._StartShake(WashShakeSeconds);
+            _washShakeUntil = now + WashShakeSeconds;
+            _washSplashNextAt = now;
+            _washShakeCount++;
+            _washShakeKind = kind;
+            if (barkSource != null && washShakeClip != null) { barkSource.pitch = 1f; barkSource.PlayOneShot(washShakeClip); }
+        }
+
+        /// <summary>The satisfied voice: washHappyClip, or the dog's bark a little higher and quieter. Through barkSource (the
+        /// personal-volume ledger's dog voice).</summary>
+        void WashVoice()
+        {
+            if (barkSource == null) return;
+            if (washHappyClip != null) { barkSource.pitch = 1f; barkSource.PlayOneShot(washHappyClip); }
+            else if (barkClip != null) { barkSource.pitch = 1.15f; barkSource.PlayOneShot(barkClip, WashHappyVolume); }
+        }
+
+        /// <summary>Splash while shaking: KH_DogWash's hitSplash (World space, Emit only), moved to both flanks of the body
+        /// every 0.1 s (the water play's Emit pattern: move, then Emit). Only near the local player.</summary>
+        void WashShakeFx(float now)
+        {
+            if (now >= _washShakeUntil || now < _washSplashNextAt) return;
+            _washSplashNextAt = now + 0.1f;
+            ParticleSystem ps = wash.hitSplash;
+            if (ps == null) return;
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp) || (lp.GetPosition() - dogRoot.position).sqrMagnitude > WashFxRange * WashFxRange) return;
+            Vector3 head = petController != null && petController.headAnchor != null ? petController.headAnchor.position : dogRoot.position + dogRoot.up * 0.4f;
+            Vector3 body = Vector3.Lerp(dogRoot.position, head, 0.5f);
+            float side = Vector3.Distance(dogRoot.position, head) * 0.25f;
+            int n = now < _washShakeUntil - WashShakeSeconds * 0.5f ? 5 : 2;   // most of it in the first half
+            ps.transform.position = body + dogRoot.right * side; ps.Emit(n);
+            ps.transform.position = body - dogRoot.right * side; ps.Emit(n);
         }
 
         bool WashYieldsToErrand()
@@ -132,7 +366,8 @@ namespace KominkaDogRun
             // which returns above this call, must not widen it)
             bool was = _washLeashStop && _washLastFrame == Time.frameCount - 1;
             _washLeashStop = false;
-            if (wash == null || fetchController == null || !wash._WashHold()) return false;
+            bool satisfy = WashSatisfyRunning();   // IMP-DOG-028: runs to its end after the hold / the holder's last stroke
+            if (wash == null || fetchController == null || (!satisfy && !wash._WashHold())) return false;
             if (WashYieldsToWater() || TravelPending()) return false;
             // Owner: the Return branch owns a stretched leash (handDist > 0.6x is still "returning" there)
             if (_dogOwner && leashMode == LeashReturn) return false;
@@ -146,7 +381,7 @@ namespace KominkaDogRun
             // Someone else's stroke changes the mask and the values only (design §1-5: 他人のストロークでは足を止めない).
             // The holder's own last stroke (KH_DogWash._StrokeAgeOf, per player; 1e9 = none) within holdSeconds. A second washer
             // stroking after the holder does not cut a stop the holder's own stroke started, and never starts one.
-            if (wash._StrokeAgeOf(holder.playerId) >= wash.holdSeconds) return false;
+            if (!satisfy && wash._StrokeAgeOf(holder.playerId) >= wash.holdSeconds) return false;
             // The holder walking off ends the stop at once (TrackHolderSpeed's tier, the same one the walk paces from)
             if (_dogOwner && HolderMoving()) return false;
             _washLeashStop = true;
@@ -224,6 +459,7 @@ namespace KominkaDogRun
                 gaze.y += WashGazeRise;
                 petController._SetGaze(gaze, roll);   // valid for this frame only: passed every washed frame
             }
+            WashReact();   // IMP-DOG-028: both branches reach here (unleashed after Coast, leashed through WashLeashPose)
         }
 
         /// <summary>The first washed frame: fold what must not resume after the wash (same set as the Fetch branch, minus
@@ -241,6 +477,9 @@ namespace KominkaDogRun
             _washTurning = false;
             // The part at entry is the reference; the first tilt comes when the stroke moves on
             _washSeenPart = wash._LastStrokePart();
+            // IMP-DOG-028: a stroke end from before this wash does not shake; the first stroke may start a paw lift
+            _washShakeArmed = false;
+            _washPawSeenPart = -1;
         }
     }
 }

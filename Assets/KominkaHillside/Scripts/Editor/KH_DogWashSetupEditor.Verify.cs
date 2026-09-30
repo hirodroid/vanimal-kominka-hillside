@@ -68,6 +68,7 @@ namespace KominkaHillside.Editor
             }
             CheckWanders(req, ctx, washes);
             CheckStation(r, req, dogsGo.scene, washes);
+            CheckStationLayout(r, req, dogsGo.scene); // IMP-ENV-007 (StationVerify.cs): homes, return timing, spacing from the hand-placed spots
             CheckAudio(req, washes);
             r.status = r.failed == 0 ? "PASS" : "FAIL";
             return r;
