@@ -43,6 +43,7 @@ Material:
     - _FoamScale: 59.99982
     - _FoamSoft: 0.12
     - _FoamThickness: 0.05
+    - _FurBrightness: 0.5
     - _WetDarken: 0.25
     - _WetGloss: 0.6
     m_Colors:

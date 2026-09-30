@@ -76,8 +76,65 @@
 - 位置の微調整: `KH_WashStation` を手で動かしてよい (回転は y だけ)。動かしたら Wash/11 → Wash/12
 - Play / PCVR: スポーンから見えるか、初見で道具を取って洗い始められるか、両側へ回れるか、おやつの前の通路 (余白の東端から 0.6 m) が詰まらないか、道具の戻し先とリセットボタンが分かるか (押して戻るか)
 
+## 6. 道中の洗い場 (IMP-ENV-008)
+
+2026-09-30。[IMP-ENV-008](../development/issues/IMP-ENV-008-wash-stations-along-course.md)。主洗い場と**同じ部品・同じ道具・同じ犬の処理**を、道中の 3 か所に置く (親 [IMP-DOG-024](../development/issues/IMP-DOG-024-walk-and-wash-experience.md)「場所を増やしても操作と状態の意味は同じにする」)。犬・洗浄ロジックは複製しない。**コードのみ。コンパイル・Build・Verify・ハーネスは未実行で、下の座標は推定。実測値は Wash/11 の log (`Temp/KH_DogWashSetupBuild.json`) と Wash/12 の notes (`Temp/KH_DogWashSetupVerify.json`) で確かめる。**
+
+### 6-1. 表 (`KH_DogWashSetupEditor.Station.cs` の `CourseStations`)
+
+| 名前 (`KH_WashStations/…`) | 地点 | 道具 | 候補 (上から試す。(道に沿って, 道から離れて) m) | 推定座標 | 根拠 |
+|---|---|---|---|---|---|
+| `River` | 川辺 | スポンジ 1・シャワー 1・タオル 1 + リセット | 目的地「川辺」のノード (行き先 5、`spot.river` ≈ (502.39, 10.14, 285.19)) から、川と反対 (+x) へ: (0, 6) / (4, 5) / (-4, 5) / (0, 7.5) / (6, 4) / (-6, 4)。原点がノードから 5〜8 m のものだけ | ≈ (508, 10〜11, 285) | 水遊びの後にそのまま洗える。川 (中心はノードの約 17 m 西) と入水の導線 (ノード → 水遊びの入口) の反対側なので、入水・看板・石を妨げない |
+| `Upper` | 奥広場 | 同上 | 目的地「奥広場」のノード (行き先 4、`spot.upper` ≈ (214.59, 40.11, 605.23)) から、泥の地点 `KH_DirtZone_Upper` の反対側へ: (0, 11) / (8, 9) / (-8, 9) / (15, 3) / (-15, 3) / (0, 13) | ≈ ノードから 11 m (向きは道と泥の地点で決まる) | ワープで着いて遊んだ後に洗える。泥の地点 (ノードから 3〜6 m) から 15 m 以上離すため、ノードの反対側へ 10 m 以上 |
+| `Hillside` | 展望のベンチ (裏山の要所) | 同上 | `KH_World/KH_Places/KH_Viewpoint/KH_Bench` (≈ (80, 19, 110)) から道に沿って: (5, 0) / (-5, 0) / (6, 1.5) / (-6, 1.5)。全部だめなら既存広場 (行き先 1、(72, 19.04, 127)) の縁 (0, ±8) / (6, 8) / (-6, -8) | ≈ (75〜85, 19, 108〜112) | 長い散歩の途中の休憩点 (ベンチの立ち寄り `Stop00_Sit`)。展望は半径 3 m の平坦部なので傾斜 5° 未満が取りやすい。ベンチから古民家への眺め (15 m) を塞がない |
+
+向き: 正面 (-Z、すのこ側) を**最も近い道の点**へ向ける (人は道から来て、すのこの両側に立つ)。棚・すのこ・桶・札・リセットボタンの形と寸法は主洗い場と同じ (`BuildStationParts` を共有)。道具は 1 組なので、棚の上の定位置は スポンジ (-0.40)、シャワー (-0.12)、タオル (0.22、y 90°)。
+
+### 6-2. 置き方の条件 (`PlacementChecks`。Build は候補の選択に、Wash/12 は置いた後の検査に同じものを使う)
+
+| 条件 | 値 | 測り方 |
+|---|---|---|
+| 傾き | 5° 未満 | 棚 + すのこ + 両側 1 m の範囲 (2.6 × 2.1 m、63 点) の Terrain に当てはめた面。隣り合う点の最大の傾きは記録だけ |
+| 周回の道 | 2 m 以上 | `KH_WalkRoute.nodePositions` の折れ線 (ノードの間も含む) から、棚・すのこ・桶の外形まで |
+| 川 | 川の帯 + 3 m の外 | `KH_RiverData._InBand(原点, 3)` |
+| 川辺: 目的地からの距離 | 5〜8 m | 原点と行き先 5 のノード |
+| 川辺: 入水の導線 | 2 m 以上 | 行き先 5 のノード → `KH_WaterSpot.entry` の線分から外形まで。入口そのものからは 3 m、看板・石 (`KH_WaterSpot/Marker/*`) からは 1.5 m |
+| 展望: 眺め | 1.5 m 以上 | ベンチから `KH_FarKominka` の方へ 15 m の線分から外形まで |
+| 泥の地点 | 15 m 以上 | 原点と `KH_DirtZones` の子の中心。`dirtStationRadius` 6 m の中に泥の地点が入らない |
+| 洗い場どうし | 20 m 以上 | 原点どうし (主洗い場を含む) |
+| ワープ地点 | 奥広場 5 m、ほか 3.5 m 以上 | `KH_LeashManager.spotPositions` のうち `spotWarpEnabled`。着地は半径 3 m までの輪なので 3.5 m |
+| リードの拠点 | 奥広場 5 m、ほか 1.5 m 以上 | `KH_LeashRack` / `KH_Station_Viewpoint` / `KH_Station_Plaza` |
+| ベンチ・立ち寄り | 1.5 m 以上 | `KH_Bench`、`KH_Dogs/KH_Stopovers/*` |
+| 障害物 | 無し | 作業範囲 (上と同じ 2.6 × 1.9 m、地面 + 0.02〜1.8 m) に Terrain 以外の固い Collider (木・岩・ベンチ) が無い |
+| 犬が届く | 1 m 以内 | すのこの中心から NavMesh |
+
+候補が 1 つも通らなければ、その洗い場は作らず Build の log に `WARN` と各候補の理由を残す (Wash/12 はその洗い場が無いことで FAIL)。**一度できた洗い場の位置と回転は人のもの**: Build は二度と動かさず、すのこと桶を地面へ据え直すだけ。動かしたら Wash/11 → Wash/12 (上の条件を置いた位置で見直す)。
+
+### 6-3. 配線と状態
+
+- 道具: 全洗い場の道具 (主 6 + 道中 3 × 3 = 15) を、Build が **同じ手順で** 全犬へ配る (`KH_WashTool.washes` = 犬の全 `KH_DogWash`、`KH_DogWash.tools` = 全道具、放水の Trigger = 全犬の部位 Collider)。`BuildStation` が全洗い場の道具を返すので、呼び出し側 (`KH_DogWashSetupEditor.cs` の Build) は変えていない
+- 汚れない範囲: `KH_DogWash.washStations` (新規、Transform[]) = 全洗い場 (主が先頭)。`NearStation` は `washStation` (Wash/20 が書く主洗い場) と `washStations` のどちらかから `dirtStationRadius` (6 m) 以内で止める。道の 2 m 横に置くので、**通り過ぎるだけでも約 12 m の区間は歩きの汚れが数えられない** (洗い場の近くでは汚れない、の範囲。気になれば半径を下げる)
+- リセット: 洗い場ごとに `ResetButton` (自分の 3 個だけ)。ほかの洗い場の道具は動かさない。地点を跨いで持って行った道具は、その道具の洗い場のボタンで戻る (**持ち出し先のボタンでは戻らない**。未確認: 初見で分かるか)
+- 汚れと清潔の状態は犬の `KH_DogWash` 1 つだけにあるので、地点を移っても保たれる (洗い場ごとの状態は無い)
+- 同期: 道具 1 個 = `VRCObjectSync` 1 + Manual の `KH_WashToolState` 1。道中 9 個で **ネットワーク オブジェクト +18**。リセットボタンは同期 None
+
+### 6-4. 検査
+
+- **Wash/12 (`StationVerify.cs` の `CheckCourseStations`)**: `KH_WashStations` が原点・無回転・表に無い子が無い / 洗い場ごとに主洗い場と同じ本体の検査 (`CheckStationBody`: 棚と脚、道具 3 個の Home と戻りの設定、リセットボタンの配線、すのこ、両側 1 m、桶、札) / 道具の部品 (Pickup・ObjectSync・State・放水の Trigger・backing、`washes` = 全犬で主の道具と同じ順) / 上の置き方の条件 / 全犬の `washStations` と `tools` (proxy と backing) / シーンの `KH_WashTool` がすべて表の洗い場のもの
+- **ClientSim (`KH_CourseWalkHarnessEditor.WashStations.cs` の `MakeWashStationsCases`)**: W-stations-tools / W-stations-reset / W-stations-grace (内容はファイル先頭の説明)
+
+### 6-5. 未確認・後へ送ったもの
+
+- **導線の見た目 (Play / PCVR)**: 各地点で洗い場が道から見えるか、散歩を止めずに通り過ぎられるか、川辺で入水の流れを邪魔しないか、奥広場のおもちゃの回収範囲と重ならないか (`KH_ToyRecall` の範囲は検査していない)、展望の眺め
+- **実測**: 座標・傾き・障害物は Build で測る。Terrain の高さの量子化、木の Collider の有無で候補が変わる
+- 川辺の洗い場は水遊びの入口から 25 m (`KH_WaterSpot.entryRadius`) 以内に入りうる。放した犬が洗い場の近くで水遊びへ向かうか (洗われている間は `_washActive` で止まる) は Play で見る
+- 犬を洗い台へ呼ぶ仕組み、蛇口とホース、NavMesh の焼き直し (棚の脚を犬が避けない) は主洗い場と同じく後回し
+- `Tools/KominkaHillside/Course/NN` の Build / Verify の組と [production.md](des-env-002/production.md) の表への登録は、Wash/11・12 に入れたので未実施 (Issue の完了条件と差がある)
+- Wash/20 (`KH_DirtZoneEditor`) が泥の地点を置き直すとき、道中の洗い場からの距離は見ていない (主洗い場から 20 m だけ)。Wash/12 の 15 m の検査が後から捕まえる
+
 ## 記録
 
 - 2026-09-30: 作成 (コードのみ。コンパイル・Build・Verify・ハーネスは未実行)
 - 2026-09-30: Codex レビュー反映 (7-1 地面をテレインに限定・空き検査の底を独立に、9-2 タオル 2 枚、観点 6 の Owner 交代で数え直し)
 - 2026-09-30: ユーザー決定で自動の戻りを無効 (returnSeconds 0) にし、リセットボタン (KH_WashStationReset) を追加
+- 2026-09-30: IMP-ENV-008 道中の洗い場 3 か所 (§6) を追加 (コードのみ。コンパイル・Build・Verify・ハーネスは未実行、座標は推定)

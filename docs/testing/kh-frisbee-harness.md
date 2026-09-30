@@ -531,10 +531,11 @@ node scripts/kh-frisbee-harness.cjs start --mode=terrain --shots=T-cliff,T-rock 
 
 ## 本シーンの犬を洗う (Course/100, IMP-DOG-025)
 
-`Tools/KominkaHillside/Course/100 - Harness Wash (Shiba)`。フリスビーではないが、本シーンの歩行ハーネスの 1 モードとして同じ枠で走らせる (journal・全体の締切 1500 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。台本は `KH_CourseWalkHarnessEditor.Wash.cs`。前提は `Wash/11` (組み立て) が済み、柴の `KD_DogWanderController.wash` が配線されていること (他の 5 匹は null)。
+`Tools/KominkaHillside/Course/100 - Harness Wash (all groups)`。**全体 (53 ケース、45〜70 分) は確定前に 1 回だけ回し、普段は変更に関係する群だけを回す** (2026-09-30 ユーザー指定、全プロジェクト共通の方針): `100a` 基本 (泡・すすぎ・停止・清潔・拒否、約 8 分)、`100b` 行動の切替 + 反応 (約 10 分)、`100c` 同期 (約 8 分)、`100d` 汚れ + 主洗い場 (約 12 分)、`100e` 6 匹 + 道中の洗い場 (実測 1 分 43 秒)。全体は同日の実測で 53 ケース約 60 分。部分実行の wash.json には notCovered に `Partial run` の行が付く。フリスビーではないが、本シーンの歩行ハーネスの 1 モードとして同じ枠で走らせる (journal・全体の締切 1500 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。台本は `KH_CourseWalkHarnessEditor.Wash.cs`。前提は `Wash/11` (組み立て) が済み、柴の `KD_DogWanderController.wash` が配線されていること (他の 5 匹は null)。
 
 ```bash
-bash scripts/kh-harness-run.sh walk "Course/100 - Harness Wash (Shiba)"
+bash scripts/kh-harness-run.sh walk "Course/100e - Harness Wash dogs + course stations"   # 群だけ
+bash scripts/kh-harness-run.sh walk "Course/100 - Harness Wash (all groups)"              # 確定前に 1 回
 ```
 
 - **疑似の入力**: 道具 (`KH_WashTool`) の当たり判定を通さず、道具が毎フレーム呼ぶ入口 `KH_DogWash._LocalContact` へ、表面の点 (ワールド座標) と実際の経過時間を渡す。横腹の経路 (W-foam・W-rinse・W-break など) は**ワールド空間**で作る: 腰の Collider の中心から胸を通って首の付け根 (胸と首の中点) までの線の各点へ、体の右 0.6 m から体の中へ Raycast (道具の `washLayer`、Trigger も当てる) し、最も手前の柴の部位 Collider とその点を使う (道具と同じ。部位をまたぐと実行時が区間を切る。当たらないフレームは `_EndContact` して数える)。1 点のケース (W-leg・W-clean) は Collider の `ClosestPoint`。接触の終わりは `_EndContact`、状態は `_DebugSetDirt` / `_DebugClear` で作る。範囲外の引数は `SendCustomNetworkEvent(All, "NetStroke", ...)` で送る。各ケースは最初に状態を作り直し、接触のケースは柴を門の道の横へ置いてから始める (歩行ハーネスの置き方と同じ注入)

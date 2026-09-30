@@ -11,7 +11,8 @@ using UnityEngine.SceneManagement;
 
 namespace KominkaHillside.Editor
 {
-    // IMP-DOG-025 builder: Edit-mode looks at the shell (contract §8). Nothing is saved: the Blit material is a
+    // IMP-DOG-025 / 030 builder: Edit-mode looks at the shell (contract §8), on the dog chosen with Wash/18 (default the Shiba;
+    // images are Temp/KH_WashShot_{dog}_{scene}_{view}.png, masks Temp/KH_WashMask_{dog}_{scene}.png). Nothing is saved: the Blit material is a
     // temporary copy, the cell texture is temporary, the shell gets its arrays through a MaterialPropertyBlock, and the
     // shell's `enabled` is set without Undo / SetDirty (the scene is not marked dirty; if the scene is saved before 14,
     // Wash/12 reports the shell as enabled). Capture cameras are HideAndDontSave and destroyed after each shot.
@@ -44,44 +45,83 @@ namespace KominkaHillside.Editor
         [MenuItem(TestMenu + "6 Wet Only")] public static void Test6() { PaintScene(6); }
         [MenuItem(TestMenu + "7 Clean Dog Foam")] public static void Test7() { PaintScene(7); }
 
+        // ---- 18: 試し描きと撮影の対象の犬 (IMP-DOG-030)。SessionState に持つ (Editor を閉じるまで。既定は柴 = Targets[0]) ----
+        const string SelectedDogKey = "KH_WashTest.SelectedDog";
+        const string SelectMenu = Menu + "18 - Select Dog/";
+        [MenuItem(SelectMenu + "Shiba")] public static void SelectShiba() { SelectDog("Shiba"); }
+        [MenuItem(SelectMenu + "Corgi")] public static void SelectCorgi() { SelectDog("Corgi"); }
+        [MenuItem(SelectMenu + "Pome")] public static void SelectPome() { SelectDog("Pome"); }
+        [MenuItem(SelectMenu + "Lab")] public static void SelectLab() { SelectDog("Lab"); }
+        [MenuItem(SelectMenu + "Dachs")] public static void SelectDachs() { SelectDog("Dachs"); }
+        [MenuItem(SelectMenu + "Samoyed")] public static void SelectSamoyed() { SelectDog("Samoyed"); }
+        [MenuItem(SelectMenu + "Shiba", true)] static bool SelectShibaCheck() { return SelectCheck("Shiba"); }
+        [MenuItem(SelectMenu + "Corgi", true)] static bool SelectCorgiCheck() { return SelectCheck("Corgi"); }
+        [MenuItem(SelectMenu + "Pome", true)] static bool SelectPomeCheck() { return SelectCheck("Pome"); }
+        [MenuItem(SelectMenu + "Lab", true)] static bool SelectLabCheck() { return SelectCheck("Lab"); }
+        [MenuItem(SelectMenu + "Dachs", true)] static bool SelectDachsCheck() { return SelectCheck("Dachs"); }
+        [MenuItem(SelectMenu + "Samoyed", true)] static bool SelectSamoyedCheck() { return SelectCheck("Samoyed"); }
+
+        static bool SelectCheck(string key) { UnityEditor.Menu.SetChecked(SelectMenu + key, SelectedTarget().key == key); return true; }
+
+        /// <summary>試し描き・撮影の対象を選ぶ。前の犬の試し描きは消す (殻を切り、マスクを黒へ)。</summary>
+        public static void SelectDog(string key)
+        {
+            if (!Targets.Any(t => t.key == key)) throw new ArgumentException("[KH Wash Test] unknown dog " + key + " (" + string.Join(", ", Targets.Select(t => t.key)) + ")");
+            var prev = SelectedTarget().key;
+            SessionState.SetString(SelectedDogKey, key);
+            if (prev != key && !EditorApplication.isPlayingOrWillChangePlaymode && SceneManager.GetActiveScene().path == KH_CourseGroundEditor.ScenePath) ClearTestStroke();
+            Debug.Log("[KH Wash Test] selected dog " + key + " (13 paints, 15 / 16 capture this dog)");
+        }
+
+        static DogTarget SelectedTarget()
+        {
+            string key = SessionState.GetString(SelectedDogKey, Targets[0].key);
+            return Targets.FirstOrDefault(t => t.key == key) ?? Targets[0];
+        }
+
         [MenuItem(Menu + "14 - Clear Test Stroke (Edit)")]
         public static void ClearTestStroke()
         {
             GuardTest();
+            int cleared = 0;
             foreach (var t in Targets)
             {
-                var wash = FindWash(t.key);
+                var wash = FindWashOrNull(t.key);
+                if (wash == null) continue;   // not built yet: nothing painted on it
                 if (wash.shellRenderer != null) { wash.shellRenderer.SetPropertyBlock(null); wash.shellRenderer.enabled = false; }
                 ClearRt(wash.maskA); ClearRt(wash.maskB);
+                cleared++;
             }
             lastScene = "none";
             SceneView.RepaintAll();
-            Debug.Log("[KH Wash Test] cleared (shell off, masks black). scene dirty = " + SceneManager.GetActiveScene().isDirty);
+            Debug.Log("[KH Wash Test] cleared " + cleared + " dogs (shell off, masks black). scene dirty = " + SceneManager.GetActiveScene().isDirty);
         }
 
-        [MenuItem(Menu + "15 - Capture Shiba")]
-        public static void CaptureShiba()
+        [MenuItem(Menu + "15 - Capture Selected Dog")]
+        public static void CaptureSelected()
         {
             GuardTest();
-            var files = Capture(Targets[0].key, lastScene);
-            Debug.Log("[KH Wash Shot] " + files.Count + " images (scene " + lastScene + "): " + string.Join(", ", files) + ". scene dirty = " + SceneManager.GetActiveScene().isDirty);
+            var t = SelectedTarget();
+            var files = Capture(t, lastScene);
+            Debug.Log("[KH Wash Shot] " + t.key + ": " + files.Count + " images (scene " + lastScene + "): " + string.Join(", ", files) + ". scene dirty = " + SceneManager.GetActiveScene().isDirty);
         }
 
         [MenuItem(Menu + "16 - Capture All Scenes")]
         public static void CaptureAll()
         {
             GuardTest();
+            var t = SelectedTarget();
             var files = new List<string>();
             try
             {
                 for (int s = 1; s <= SceneNames.Length; s++)
                 {
                     PaintScene(s);
-                    files.AddRange(Capture(Targets[0].key, lastScene));
+                    files.AddRange(Capture(t, lastScene));
                 }
             }
             finally { ClearTestStroke(); }
-            Debug.Log("[KH Wash Shot] all scenes: " + files.Count + " images in Temp/ (KH_WashShot_{scene}_{view}.png). scene dirty = " + SceneManager.GetActiveScene().isDirty);
+            Debug.Log("[KH Wash Shot] " + t.key + ", all scenes: " + files.Count + " images in Temp/ (KH_WashShot_" + t.key + "_{scene}_{view}.png). scene dirty = " + SceneManager.GetActiveScene().isDirty);
         }
 
         // ================================================================ 場面
@@ -96,7 +136,7 @@ namespace KominkaHillside.Editor
         static void PaintScene(int scene)
         {
             GuardTest();
-            var t = Targets[0];
+            var t = SelectedTarget();
             var wash = FindWash(t.key);
             if (wash.maskA == null || wash.maskB == null || wash.maskMaterial == null || wash.posMap == null || wash.shellRenderer == null || wash.cellValid == null || wash.cellValid.Length != CellCount)
                 throw new InvalidOperationException(WashName(t.key) + " not built (run 11)");
@@ -151,13 +191,12 @@ namespace KominkaHillside.Editor
             Debug.Log("[KH Wash Test] " + name + ": " + r.strokes.Count + " strokes, " + r.blits + " blits -> " + r.png + " (scene dirty = " + SceneManager.GetActiveScene().isDirty + "). 15 captures it, 14 clears.");
         }
 
-        /// <summary>Restore (パス 1): 実行時の初期値 (initialDirt × PartDirtFactor) か、汚れ 0。</summary>
+        /// <summary>Restore (パス 1): 実行時の初期値 (initialDirt × 高さの重み = KH_DogWash.InitialCells、値は proxy から) か、汚れ 0。</summary>
         static void Restore(Painter p, Texture2D cells, bool dirty)
         {
             var w = p.wash;
-            var seed = new Color[CellCount];
-            for (int c = 0; c < CellCount; c++)
-                seed[c] = new Color(dirty && w.cellValid[c] ? Mathf.Clamp01(w.initialDirt * PartDirtFactor(w.cellPart[c])) : 0f, 0f, 0f, 1f);
+            var weights = RuntimeDirtWeights(w);
+            var seed = InitialCellColors(w.cellValid, weights, dirty ? w.initialDirt : 0f);
             cells.SetPixels(seed); cells.Apply(false, false);
             p.mat.SetTexture("_PosMap", w.posMap);
             p.mat.SetTexture("_CellTex", cells);
@@ -165,7 +204,7 @@ namespace KominkaHillside.Editor
             p.cur = w.maskA; p.next = w.maskB;
             Graphics.Blit(p.cur, p.next, p.mat, 1); p.blits++;
             Swap(ref p.cur, ref p.next);
-            p.r.strokes.Add("restore " + (dirty ? "initialDirt " + w.initialDirt : "clean"));
+            p.r.strokes.Add("restore " + (dirty ? "initialDirt " + w.initialDirt + " x height weight (full " + w.dirtHeightFull + " / mid " + w.dirtHeightMid + " / top " + w.dirtHeightTop + " m)" : "clean"));
         }
 
         /// <summary>体の向き (メッシュ座標): 前 = 腰 → 頭、上 = 足 → 胴、横 = その外積。横腹 = 胴のセルのうち横側の 1/4 より外。</summary>
@@ -322,9 +361,12 @@ namespace KominkaHillside.Editor
 
         // ================================================================ 撮影
 
-        /// <summary>胸と腰の骨の中点を中心に 6 構図 (横・斜め前・斜め後ろ・近接 0.7 m・上・顔の正面)、1024x768、Temp/KH_WashShot_{場面}_{構図}.png。</summary>
-        static List<string> Capture(string key, string scene)
+        /// <summary>胸と腰の骨の中点を中心に 6 構図 (横・斜め前・斜め後ろ・近接・上・顔の正面)、1024x768、Temp/KH_WashShot_{犬}_{場面}_{構図}.png。
+        /// 距離は柴 (横 1.3 m、近接 0.7 m、顔 0.7 m) を犬の高さの比 (0.55〜1.3 倍) で伸び縮みさせる (小型犬が画面の中で小さくなりすぎないように)。</summary>
+        static List<string> Capture(DogTarget target, string scene)
         {
+            string key = target.key;
+            float k = Mathf.Clamp(target.heightM / ShibaHeightM, 0.55f, 1.3f);
             int idx = Array.FindIndex(KD_DogDefs.All, x => x.key == key);
             var dog = KD_SceneObjects.Find(KD_DogDefs.All[idx].DogName);
             if (dog == null) throw new InvalidOperationException(KD_DogDefs.All[idx].DogName + " not found");
@@ -334,21 +376,21 @@ namespace KominkaHillside.Editor
             if (hipB == null || chestB == null || headB == null) throw new InvalidOperationException("Bone.001 / .002 / .004 not found");
             Vector3 c = (hipB.position + chestB.position) * 0.5f;
             Vector3 right = dog.transform.right, fwd = dog.transform.forward;
-            const float d = 1.3f;
+            float d = 1.3f * k;
             var files = new List<string>();
             void Shot(string view, Vector3 pos, Vector3 look)
             {
-                string path = "Temp/KH_WashShot_" + scene + "_" + view + ".png";
+                string path = "Temp/KH_WashShot_" + key + "_" + scene + "_" + view + ".png";
                 ShotOne(path, pos, look);
                 files.Add(path);
             }
-            Shot("side", c + right * d + Vector3.up * 0.15f, c);
-            Shot("frontq", c + (right + fwd).normalized * d + Vector3.up * 0.25f, c);
-            Shot("backq", c + (-right - fwd).normalized * d + Vector3.up * 0.35f, c);
-            Shot("close", c + right * 0.7f + Vector3.up * 0.1f, c);
-            Shot("top", c + Vector3.up * 1.2f + right * 0.15f, c);
+            Shot("side", c + right * d + Vector3.up * 0.15f * k, c);
+            Shot("frontq", c + (right + fwd).normalized * d + Vector3.up * 0.25f * k, c);
+            Shot("backq", c + (-right - fwd).normalized * d + Vector3.up * 0.35f * k, c);
+            Shot("close", c + right * 0.7f * k + Vector3.up * 0.1f * k, c);
+            Shot("top", c + Vector3.up * 1.2f * k + right * 0.15f * k, c);
             Vector3 face = headB.position;
-            Shot("face", face + fwd * 0.7f + Vector3.up * 0.05f, face);
+            Shot("face", face + fwd * 0.7f * k + Vector3.up * 0.05f * k, face);
             return files;
         }
 
@@ -403,7 +445,7 @@ namespace KominkaHillside.Editor
                 float mts = JsonUtility.FromJson<KH_DogWashBakeEditor.PosMapBones>(ta.text).meshToWorldScale;
                 log.Add(k + " mask: " + ResetToDefaults(maskMat, MaskBuilderProps));
                 log.Add(k + " shell: " + ResetToDefaults(shellMat, ShellBuilderProps));
-                ApplyBuilderMaterialProps(maskMat, shellMat, maskA, posMap, cellTex, mts);
+                ApplyBuilderMaterialProps(maskMat, shellMat, maskA, posMap, cellTex, mts, t.baseOffset);
             }
             AssetDatabase.SaveAssets();
             Debug.Log("[KH Wash Setup] materials reset to shader defaults (builder values re-applied):\n" + string.Join("\n", log));
@@ -457,11 +499,16 @@ namespace KominkaHillside.Editor
 
         static KH_DogWash FindWash(string key)
         {
-            var dogs = KD_SceneObjects.Find(KD_Hillside.DogsRootName);
-            var node = dogs != null ? dogs.transform.Find(WashName(key)) : null;
-            var w = node != null ? node.GetComponent<KH_DogWash>() : null;
+            var w = FindWashOrNull(key);
             if (w == null) throw new InvalidOperationException(KD_Hillside.DogsRootName + "/" + WashName(key) + " missing (run 11)");
             return w;
+        }
+
+        static KH_DogWash FindWashOrNull(string key)
+        {
+            var dogs = KD_SceneObjects.Find(KD_Hillside.DogsRootName);
+            var node = dogs != null ? dogs.transform.Find(WashName(key)) : null;
+            return node != null ? node.GetComponent<KH_DogWash>() : null;
         }
 
         static void Swap(ref RenderTexture a, ref RenderTexture b) { var t = a; a = b; b = t; }

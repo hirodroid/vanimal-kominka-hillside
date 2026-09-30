@@ -31,21 +31,36 @@ namespace KominkaHillside.Editor
             public List<string> notes = new List<string>();
             public List<ColliderCheck> colliders = new List<ColliderCheck>();
             public List<PartCheck> parts = new List<PartCheck>();
+            public List<DogSummary> dogs = new List<DogSummary>();
             public List<string> notCovered = new List<string>(NotCovered);
         }
         [Serializable] class ColliderCheck
         {
-            public string name, bone; public int part, samples;
+            public string dog, name, bone; public int part, samples, surfaceVertices;
             public float radiusM, heightM, lossyScale, boneLossyScale, bindposeScale, metresPerMeshUnitViaBone, meshToWorldScale;
             public float maxRoundTripErrorM, maxBakeVsSkinM, maxRoundTripViaBakeM, minSampleWeight;
+            public float surfaceMedianM, surfaceP90M;   // |capsule surface - fur surface (vertex + _BaseOffset)| over the collider's vertices (bind pose, m)
         }
         [Serializable] class PartCheck
         {
-            public string part; public int colliders, validCells, rays, reachable, occluded, missed;
+            public string dog, part; public int colliders, validCells, rays, reachable, occluded, missed;
             public float maxRoundTripErrorM, reachableFraction; public string occludedBy = "";
+        }
+        /// <summary>IMP-DOG-030: 犬種ごとの記録 (完了条件「犬種ごとに記録」)。</summary>
+        [Serializable] class DogSummary
+        {
+            public string key, coat, fur; public int dogIndex, bones, vertices, validCells, colliders, failedChecks;
+            public float meshToWorldScale, heightM, jsonHeightM, baseOffset, initialDirt, dirtHeightFull, dirtHeightMid, dirtHeightTop;
+            public float maxRoundTripErrorM, worstSurfaceMedianM, minReachableFraction;
+            public List<string> partCells = new List<string>();
         }
 
         const float RoundTripLimit = 0.01f;
+        /// <summary>毛の表面 (殻) と部位 Collider の表面の差の中央値の上限 (m)。道具のブラシの半径 (小さい方 = シャワー 0.07 m) を超えると、
+        /// 表面に当てた点から描く範囲が毛へ届かない。</summary>
+        const float SurfaceGapLimitFallback = 0.07f;
+        /// <summary>犬の高さの表 (DogTarget.heightM) と json の差の上限 (割合)。</summary>
+        const float HeightTableTolerance = 0.03f;
 
         static VerifyReport Check()
         {
@@ -61,11 +76,25 @@ namespace KominkaHillside.Editor
             req(ctx.wanders.Length == KD_DogDefs.All.Length && ctx.wanders.Select(w => w.dogIndex).Distinct().Count() == ctx.wanders.Length, "6 wander controllers with distinct dogIndex (" + ctx.wanders.Length + ")");
 
             var washes = new List<KH_DogWash>();
+            req(Targets.Select(t => t.key).Distinct().Count() == Targets.Length && Targets.All(t => KD_DogDefs.All.Any(x => x.key == t.key)), "targets are distinct dog keys (" + string.Join(", ", Targets.Select(t => t.key)) + ")");
             foreach (var t in Targets)
             {
+                int before = r.failed;
                 var w = CheckDog(r, req, ctx, t);
                 if (w != null) washes.Add(w);
+                var sum = r.dogs.FirstOrDefault(x => x.key == t.key);
+                if (sum == null) { sum = new DogSummary { key = t.key, coat = t.coat }; r.dogs.Add(sum); }
+                sum.failedChecks = r.failed - before;
             }
+            // no collider / mask / cell texture shared between two dogs (a stroke on one dog must not reach another)
+            var colOwners = new Dictionary<Collider, string>(); var dup = new List<string>();
+            foreach (var w in washes)
+                foreach (var c in w.partColliders ?? new Collider[0])
+                    if (c != null) { if (colOwners.TryGetValue(c, out string o) && o != w.name) dup.Add(c.name + " (" + o + ", " + w.name + ")"); else colOwners[c] = w.name; }
+            req(dup.Count == 0, "no part collider is wired to two dogs" + (dup.Count > 0 ? " (" + string.Join(", ", dup) + ")" : ""));
+            var assets = washes.SelectMany(w => new UnityEngine.Object[] { w.maskA, w.maskB, w.cellTex, w.maskMaterial, w.shellRenderer }).Where(x => x != null).ToList();
+            req(assets.Distinct().Count() == assets.Count, "masks / cell textures / mask materials / shells are per dog (" + assets.Count + " objects, " + assets.Distinct().Count() + " distinct)");
+            req(washes.Select(w => w.dogIndex).Distinct().Count() == washes.Count, "KH_DogWash dogIndex distinct (" + string.Join(",", washes.Select(w => w.dogIndex)) + ")");
             CheckWanders(req, ctx, washes);
             CheckStation(r, req, dogsGo.scene, washes);
             CheckStationLayout(r, req, dogsGo.scene); // IMP-ENV-007 (StationVerify.cs): homes, return timing, spacing from the hand-placed spots
@@ -83,6 +112,17 @@ namespace KominkaHillside.Editor
             try { d = ResolveDog(ctx, t); }
             catch (Exception e) { req(false, k + ": resolve dog / mesh / position map: " + e.Message); return null; }
             float mts = d.json.meshToWorldScale;
+            var dh = DirtHeights(t);
+            var sum = new DogSummary
+            {
+                key = k, coat = t.coat, fur = FurNote(d.body), dogIndex = d.dogIndex, bones = d.body.bones.Length, vertices = d.geo.v.Length, validCells = d.cells.validCells, colliders = d.fits.Count,
+                meshToWorldScale = mts, heightM = t.heightM, jsonHeightM = JsonHeightM(d), baseOffset = t.baseOffset, initialDirt = InitialDirt,
+                dirtHeightFull = dh[0], dirtHeightMid = dh[1], dirtHeightTop = dh[2], minReachableFraction = 1f,
+            };
+            r.dogs.Add(sum);
+            foreach (var note in d.map.notes) r.notes.Add(k + " " + note);
+            req(Mathf.Abs(sum.jsonHeightM - t.heightM) <= HeightTableTolerance * sum.jsonHeightM, k + " height table " + t.heightM.ToString("0.###") + " m ~ json " + sum.jsonHeightM.ToString("0.###") + " m (within " + HeightTableTolerance.ToString("P0") + "; the dirt heights scale with it)");
+            req(t.baseOffset > 0f && t.baseOffset <= 0.02f, k + " shell _BaseOffset table " + t.baseOffset.ToString("0.###") + " m within 0..0.02");
 
             // ---- the body is untouched ----
             var mats = d.body.sharedMaterials;
@@ -123,6 +163,11 @@ namespace KominkaHillside.Editor
                 {
                     req(sm[0].GetTexture("_Mask") == wash.maskA && sm[0].GetTexture("_PosMap") == d.posMap, k + " shell material _Mask = mask A, _PosMap = position map");
                     req(Mathf.Abs(sm[0].GetFloat("_FoamScale") - FoamGrainPerMeter * mts) < 1e-3f, k + " shell _FoamScale " + sm[0].GetFloat("_FoamScale").ToString("F2") + " = " + (FoamGrainPerMeter * mts).ToString("F2"));
+                    req(Mathf.Abs(sm[0].GetFloat("_FoamThickness") - FoamThickness(t)) < 1e-6f, k + " shell _FoamThickness " + sm[0].GetFloat("_FoamThickness").ToString("0.####") + " = table " + FoamThickness(t).ToString("0.###") + " m (Shiba 0.05 x height ratio)");
+                    if (sm[0].HasProperty(FurBrightnessProp))
+                        req(Mathf.Abs(sm[0].GetFloat(FurBrightnessProp) - FurBrightnessOf(t)) < 1e-6f, k + " shell " + FurBrightnessProp + " " + sm[0].GetFloat(FurBrightnessProp).ToString("0.###") + " = table " + FurBrightnessOf(t).ToString("0.##"));
+                    else r.notes.Add(k + " shell shader has no " + FurBrightnessProp + ": fur brightness " + FurBrightnessOf(t).ToString("0.##") + " not written (table only)");
+                    req(Mathf.Abs(sm[0].GetFloat("_BaseOffset") - t.baseOffset) < 1e-6f, k + " shell _BaseOffset " + sm[0].GetFloat("_BaseOffset").ToString("0.####") + " = table " + t.baseOffset.ToString("0.####") + " m (" + t.coat + ")");
                     req(AssetDatabase.GetAssetPath(sm[0]) == ShellMatPath(k), k + " shell material asset " + ShellMatPath(k));
                 }
                 var lb = shell.localBounds; var bb = d.body.localBounds;
@@ -148,7 +193,7 @@ namespace KominkaHillside.Editor
                 && ct.isReadable && ct.mipmapCount == 1 && ct.wrapMode == TextureWrapMode.Clamp && ct.filterMode == FilterMode.Bilinear && AssetDatabase.GetAssetPath(ct) == CellTexPath(k),
                 k + " cellTex 16x16 RGBA32 linear, readable, no mips, clamp bilinear (" + (ct != null ? ct.width + "x" + ct.height + " " + ct.graphicsFormat + " readable=" + ct.isReadable + " mips=" + ct.mipmapCount : "null") + ")");
             req(Mathf.Abs(wash.meshToWorldScale - mts) < 1e-5f, k + " meshToWorldScale " + wash.meshToWorldScale.ToString("R") + " = json " + mts.ToString("R"));
-            req(wash.tools != null && wash.tools.Length == ToolSpecs.Length && wash.tools.All(x => x != null), k + " tools: " + (wash.tools != null ? wash.tools.Length : 0) + " / " + ToolSpecs.Length + ", none null");
+            req(wash.tools != null && wash.tools.Length == AllToolCount() && wash.tools.All(x => x != null), k + " tools: " + (wash.tools != null ? wash.tools.Length : 0) + " / " + AllToolCount() + ", none null");
 
             // ---- arrays ----
             int n = wash.partColliders != null ? wash.partColliders.Length : 0;
@@ -176,8 +221,19 @@ namespace KominkaHillside.Editor
                 for (int p = 0; p < PartCount; p++)
                 {
                     int cellsOfPart = Enumerable.Range(0, CellCount).Count(c => wash.cellValid[c] && wash.cellPart[c] == p);
-                    req(cellsOfPart > 0, k + " part " + PartNames[p] + " has valid cells (" + cellsOfPart + ")");
+                    sum.partCells.Add(PartNames[p] + " " + cellsOfPart);
+                    // IMP-DOG-030: a small dog's chest / neck can lose every 16x16 cell to a bigger neighbour (a cell takes the part
+                    // with the most texels). The runtime handles an empty part (KH_DogWash builds _partCells per part, the clean
+                    // judgement is over the valid cells); the mask still draws there. Legs / head / hip / tail must have cells.
+                    bool mayBeEmpty = (p == 1 || p == 2) && Enumerable.Range(0, CellCount).Any(c => wash.cellValid[c] && (wash.cellPart[c] == 0 || wash.cellPart[c] == 1 || wash.cellPart[c] == 7));
+                    if (cellsOfPart == 0 && mayBeEmpty) r.notes.Add(k + " part " + PartNames[p] + " has no cell of its own (its texels are in the neighbouring torso / head cells): the mask draws it, the cells judge it with the neighbour");
+                    req(cellsOfPart > 0 || mayBeEmpty, k + " part " + PartNames[p] + " has valid cells (" + cellsOfPart + ")" + (cellsOfPart == 0 && mayBeEmpty ? " - none, allowed for chest / neck (see notes)" : ""));
                 }
+                // the initial dirt the runtime seeds (initialDirt x height weight): legs dirtiest, the top at dirtTopWeight
+                var wts = RuntimeDirtWeights(wash);
+                float legW = AvgWeight(wash, wts, q => q >= 3 && q <= 6), headW = AvgWeight(wash, wts, q => q == 7), tailW = AvgWeight(wash, wts, q => q == 8);
+                r.notes.Add(k + " initial dirt weight (height, feet 1 -> top " + wash.dirtTopWeight + "): legs " + legW.ToString("F2") + ", head " + headW.ToString("F2") + ", tail " + tailW.ToString("F2"));
+                req(legW > headW + 0.2f, k + " initial dirt from the feet up: legs " + legW.ToString("F2") + " > head " + headW.ToString("F2") + " + 0.2 (height weights " + string.Join(" / ", dh.Select(x => x.ToString("0.###"))) + " m)");
             }
 
             // ---- effects ----
@@ -185,12 +241,13 @@ namespace KominkaHillside.Editor
             CheckFx(req, k + " foamPuff", wash.foamPuff, node);
 
             // ---- colliders ----
-            if (lengths) CheckColliders(r, req, d, wash, node);
+            if (lengths) CheckColliders(r, req, d, wash, node, sum);
 
             // ---- backing (the runtime reads this) ----
             Backing(req, backing, k + " KH_DogWash", "dogIndex", wash.dogIndex);
-            // the dirt tuning table (IMP-DOG-029, KH_DogWashSetupEditor.Dog.cs DirtTuning): proxy and backing = the table
-            foreach (var dt in DirtTuning)
+            // the dirt tuning table (IMP-DOG-029, KH_DogWashSetupEditor.Dog.cs DirtTuning) + this dog's initialDirt and dirt heights
+            // (IMP-DOG-030, DogDirtValues): proxy and backing = the table
+            foreach (var dt in DogDirtValues(t))
             {
                 var fi = typeof(KH_DogWash).GetField(dt.field);
                 float pv = fi != null ? (float)fi.GetValue(wash) : float.NaN;
@@ -208,6 +265,13 @@ namespace KominkaHillside.Editor
             return wash;
         }
 
+        static float AvgWeight(KH_DogWash w, float[] weights, Func<int, bool> part)
+        {
+            float s = 0f; int n = 0;
+            for (int c = 0; c < CellCount; c++) if (w.cellValid[c] && part(w.cellPart[c])) { s += weights[c]; n++; }
+            return n > 0 ? s / n : 0f;
+        }
+
         static void CheckFx(Action<bool, string> req, string what, ParticleSystem ps, Transform node)
         {
             req(ps != null && ps.transform.IsChildOf(node), what + " under the wash object");
@@ -218,9 +282,11 @@ namespace KominkaHillside.Editor
 
         // ================================================================ 部位 Collider と変換
 
-        static void CheckColliders(VerifyReport r, Action<bool, string> req, DogCtx d, KH_DogWash wash, Transform node)
+        static void CheckColliders(VerifyReport r, Action<bool, string> req, DogCtx d, KH_DogWash wash, Transform node, DogSummary sum)
         {
             string k = d.target.key;
+            req(d.fits.Count == wash.partColliders.Length, k + " collider count " + wash.partColliders.Length + " = a fresh fit of the mesh (" + d.fits.Count + ")");
+            float surfaceLimit = Mathf.Min(wash.spongeRadius > 0f ? wash.spongeRadius : SurfaceGapLimitFallback, wash.showerRadius > 0f ? wash.showerRadius : SurfaceGapLimitFallback);
             float mts = d.json.meshToWorldScale;
             var g = d.geo; var bones = d.body.bones;
             var baked = new Mesh();
@@ -239,7 +305,7 @@ namespace KominkaHillside.Editor
             var index = new Dictionary<Collider, int>();
             for (int i = 0; i < n; i++) if (wash.partColliders[i] != null && !index.ContainsKey(wash.partColliders[i])) index[wash.partColliders[i]] = i;
             var pbs = PhysBones(d.dog);
-            var parts = Enumerable.Range(0, PartCount).Select(p => new PartCheck { part = PartNames[p] }).ToArray();
+            var parts = Enumerable.Range(0, PartCount).Select(p => new PartCheck { dog = k, part = PartNames[p] }).ToArray();
             var occluders = Enumerable.Range(0, PartCount).Select(p => new Dictionary<string, int>()).ToArray();
             Physics.SyncTransforms();
             var dirs = RayDirs();
@@ -271,7 +337,34 @@ namespace KominkaHillside.Editor
                 req(MaxAbs(wash.boneToMesh[i], inv) < 1e-4f && MaxAbs(wash.boneToMesh[i], d.jsonBoneToMesh[b]) < 1e-5f, k + " " + name + ": boneToMesh = inverse(bindposes[" + b + "]) = json (" + MaxAbs(wash.boneToMesh[i], inv).ToString("E1") + ")");
                 // units: bone lossyScale x bindpose scale = metres per mesh unit
                 float kb = AxisScaleOf(g.bindposes[b]), sb = MeanScale(bone.lossyScale);
-                var cc = new ColliderCheck { name = name, bone = bone.name, part = part, radiusM = rad, heightM = h, lossyScale = s, boneLossyScale = sb, bindposeScale = kb, metresPerMeshUnitViaBone = sb * kb, meshToWorldScale = mts };
+                var cc = new ColliderCheck { dog = k, name = name, bone = bone.name, part = part, radiusM = rad, heightM = h, lossyScale = s, boneLossyScale = sb, bindposeScale = kb, metresPerMeshUnitViaBone = sb * kb, meshToWorldScale = mts };
+                // IMP-DOG-030 (Codex review): the scene's CapsuleCollider surface (its centre, direction, radius, height, in world
+                // space) vs the drawn fur surface (the skinned vertex of the current bones pushed out by the shell's _BaseOffset),
+                // over the vertices this collider carries (dominant bone owned by this collider's bone). A contact on the collider
+                // surface paints within the brush radius, so the median gap must stay under the smaller brush.
+                {
+                    Vector3 axisL = col.direction == 0 ? Vector3.right : col.direction == 2 ? Vector3.forward : Vector3.up;
+                    Vector3 cWorld = col.transform.TransformPoint(col.center), aWorld = col.transform.TransformDirection(axisL).normalized;
+                    float half = Mathf.Max(0f, h * 0.5f - rad);
+                    Vector3 pa = cWorld - aWorld * half, pb = cWorld + aWorld * half, ab = pb - pa;
+                    var gaps = new List<float>();
+                    for (int vi = 0; vi < g.v.Length; vi++)
+                    {
+                        int dom = g.dom[vi];
+                        if (dom < 0 || dom >= d.map.owner.Length || d.map.owner[dom] != b) continue;
+                        Vector3 pw = SkinWorld(g, bones, vi);
+                        float tt = ab.sqrMagnitude > 1e-12f ? Mathf.Clamp01(Vector3.Dot(pw - pa, ab) / ab.sqrMagnitude) : 0f;
+                        float sd = (pw - (pa + ab * tt)).magnitude - rad;
+                        gaps.Add(Mathf.Abs(sd + d.target.baseOffset));
+                    }
+                    gaps.Sort();
+                    cc.surfaceVertices = gaps.Count;
+                    if (gaps.Count > 0) { cc.surfaceMedianM = gaps[gaps.Count / 2]; cc.surfaceP90M = gaps[Mathf.Min(gaps.Count - 1, (int)(gaps.Count * 0.9f))]; }
+                    sum.worstSurfaceMedianM = Mathf.Max(sum.worstSurfaceMedianM, cc.surfaceMedianM);
+                    req(gaps.Count == 0 || cc.surfaceMedianM <= surfaceLimit, k + " " + name + ": scene collider surface ~ fur surface (median gap " + cc.surfaceMedianM.ToString("F3") + " m, p90 " + cc.surfaceP90M.ToString("F3")
+                        + " m over " + gaps.Count + " skinned vertices, _BaseOffset " + d.target.baseOffset.ToString("0.###") + ") <= brush " + surfaceLimit.ToString("F3") + " m");
+                }
+                req(i < d.fits.Count && d.fits[i].bone == b, k + " " + name + ": collider " + i + " on " + bone.name + " = a fresh fit's collider " + i + " (else run Wash/11)");
                 req(Mathf.Abs(sb * kb - mts) / mts < 0.02f, k + " " + name + ": bone lossyScale " + sb.ToString("F4") + " x bindpose scale " + kb.ToString("F4") + " = " + (sb * kb).ToString("F4") + " m per mesh unit ~ meshToWorldScale " + mts.ToString("F4"));
                 // PhysBone chain (vrc-character-rig §10)
                 foreach (var pb in pbs)
@@ -328,6 +421,8 @@ namespace KominkaHillside.Editor
                 req(pc.rays == 0 || pc.reachableFraction >= 0.1f, k + " part " + pc.part + " reachable from outside: " + pc.reachableFraction.ToString("P0") + " of " + pc.rays + " rays (occluded " + pc.occluded + (pc.occludedBy.Length > 0 ? " by " + pc.occludedBy : "") + ", missed " + pc.missed + ")");
                 if (pc.rays > 0 && pc.reachableFraction < 0.5f) r.notes.Add(k + " part " + pc.part + " reachable only " + pc.reachableFraction.ToString("P0") + " (occluded by " + pc.occludedBy + "): judge in Play (vrc-character-rig §14, not a failure above 10%)");
                 r.parts.Add(pc);
+                sum.maxRoundTripErrorM = Mathf.Max(sum.maxRoundTripErrorM, pc.maxRoundTripErrorM);
+                if (pc.rays > 0) sum.minReachableFraction = Mathf.Min(sum.minReachableFraction, pc.reachableFraction);
             }
 
             // ---- the shell under a PhysBone chain ----
@@ -489,7 +584,7 @@ namespace KominkaHillside.Editor
                 Backing(req, tb, who, "state", tool.state);
             }
             foreach (var w in washes)
-                req(w.tools != null && w.tools.Length == tools.Count && tools.All(x => w.tools.Contains(x)), w.name + ".tools = the " + tools.Count + " tools of " + StationName);
+                req(w.tools != null && w.tools.Length == AllToolCount() && tools.All(x => w.tools.Contains(x)), w.name + ".tools = the " + tools.Count + " tools of " + StationName);
         }
 
         // ================================================================ 音

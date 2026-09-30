@@ -37,16 +37,42 @@ namespace KominkaHillside.Editor
             ("riverDirtFloor", 0.15f),
         };
 
-        static void WriteDirtTuning(KH_DogWash wash)
+        static void WriteDirtTuning(KH_DogWash wash, DogTarget target)
         {
             var so = new SerializedObject(wash);
-            foreach (var t in DirtTuning)
+            foreach (var t in DogDirtValues(target))
             {
                 var p = so.FindProperty(t.field);
                 if (p == null) throw new InvalidOperationException("KH_DogWash." + t.field + " missing (compile first)");
                 p.floatValue = t.value;
             }
             so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>この犬の KH_DogWash へ書く値: 共通の <see cref="DirtTuning"/> + 犬ごとの initialDirt と汚れの高さの境目 (IMP-DOG-030)。Wash/12 も同じ表で検査する。</summary>
+        static List<(string field, float value)> DogDirtValues(DogTarget target)
+        {
+            var list = new List<(string field, float value)>(DirtTuning);
+            list.Add(("initialDirt", InitialDirt));
+            var h = DirtHeights(target);
+            for (int i = 0; i < DirtHeightFields.Length; i++) list.Add((DirtHeightFields[i], h[i]));
+            return list;
+        }
+
+        /// <summary>胴体の材質の毛の値 (記録だけ。殻の押し出しは DogTarget.baseOffset の表で持つ)。</summary>
+        static string FurNote(SkinnedMeshRenderer body)
+        {
+            var parts = new List<string>();
+            foreach (var m in body.sharedMaterials)
+            {
+                if (m == null) continue;
+                var s = new List<string>();
+                if (m.HasProperty("_FurVector")) s.Add("_FurVector.w " + m.GetVector("_FurVector").w.ToString("0.###"));
+                foreach (var n in new[] { "_FurCutoutLength", "_FurRootOffset", "_FurVectorScale", "_FurLayerNum" })
+                    if (m.HasProperty(n)) s.Add(n + " " + m.GetFloat(n).ToString("0.###"));
+                parts.Add(m.name + (s.Count > 0 ? " (" + string.Join(", ", s) + ")" : " (no fur properties)"));
+            }
+            return "fur material: " + string.Join("; ", parts) + ", renderer lossyScale " + MeanScale(body.transform.lossyScale).ToString("0.##");
         }
 
         class Shared
@@ -65,21 +91,54 @@ namespace KominkaHillside.Editor
             string k = d.target.key;
             d.maskA = EnsureMaskRt(MaskRtPath(k, "A"), "KH_WashMask_" + k + "_A");
             d.maskB = EnsureMaskRt(MaskRtPath(k, "B"), "KH_WashMask_" + k + "_B");
-            d.cellTex = EnsureCellTex(CellTexPath(k), "KH_WashCells_" + k, InitialCellColors(d.cells, 0.6f));
+            d.cellTex = EnsureCellTex(CellTexPath(k), "KH_WashCells_" + k, InitialCellColors(d));
             float mts = d.json.meshToWorldScale;
 
             d.maskMat = EnsureMaterial(MaskMatPath(k), Shader.Find(MaskShaderName));
             d.shellMat = EnsureMaterial(ShellMatPath(k), Shader.Find(ShellShaderName));
-            ApplyBuilderMaterialProps(d.maskMat, d.shellMat, d.maskA, d.posMap, d.cellTex, mts);
-            r.log.Add(k + ": masks " + MaskRtPath(k, "A") + " / B, cells " + CellTexPath(k) + ", _FoamScale " + (FoamGrainPerMeter * mts).ToString("F2") + ", _EdgeNoiseScale " + (EdgeNoisePerMeter * mts).ToString("F2"));
+            ApplyBuilderMaterialProps(d.maskMat, d.shellMat, d.maskA, d.posMap, d.cellTex, mts, d.target.baseOffset, d.target);
+            r.log.Add(k + ": masks " + MaskRtPath(k, "A") + " / B, cells " + CellTexPath(k) + ", _FoamScale " + (FoamGrainPerMeter * mts).ToString("F2") + ", _EdgeNoiseScale " + (EdgeNoisePerMeter * mts).ToString("F2")
+                + ", _BaseOffset " + d.target.baseOffset.ToString("0.###") + " m (" + d.target.coat + ")");
         }
 
-        /// <summary>ビルダーが持つマテリアルの値 (これ以外はシェーダーの既定値のまま。Wash/17 が戻す)。</summary>
+        /// <summary>ビルダーが持つマテリアルの値 (これ以外はシェーダーの既定値のまま。Wash/17 が戻す)。_BaseOffset は犬ごと (IMP-DOG-030)。</summary>
         static readonly string[] MaskBuilderProps = { "_PosMap", "_CellTex", "_EdgeNoiseScale" };
-        static readonly string[] ShellBuilderProps = { "_Mask", "_PosMap", "_FoamScale" };
+        static readonly string[] ShellBuilderProps = { "_Mask", "_PosMap", "_FoamScale", "_BaseOffset", "_FoamThickness", FurBrightnessProp };
 
-        static void ApplyBuilderMaterialProps(Material maskMat, Material shellMat, RenderTexture maskA, Texture posMap, Texture2D cellTex, float mts)
+        // ---- 泡の厚みと毛の明るさ (IMP-DOG-030、統括の指示 2026-09-30) ----
+        /// <summary>泡の一番上の層の高さ (m)。柴の 0.05 (シェーダーの既定、2026-09-30 PCVR で採用) を犬の高さの比で伸び縮みさせる
+        /// (一定の 5 cm ではダックスの尻尾が太い靴下に見えた: Temp/KH_WashShot_Dachs_RinseBandOnFoam_side.png)。</summary>
+        const float ShibaFoamThickness = 0.05f;
+        static float FoamThickness(DogTarget t) { return Mathf.Round(ShibaFoamThickness * (t.heightM / ShibaHeightM) * 1000f) / 1000f; }
+
+        /// <summary>毛の明るさ (殻の _FurBrightness、Range 0..1、シェーダーの既定 0.5。白い毛の上で泡と汚れの対比を保つ)。実測ではなく見た目の調整値で、
+        /// シェーダー担当の推奨を採用 (サモエド・ポメ 1.0、ラブ 0.7、柴・コーギー・ダックス 0.5)。撮影と PCVR で見て直す。
+        /// プロパティが殻のシェーダーに無い時は書かない (古いシェーダーでも Build が止まらないように)。</summary>
+        const string FurBrightnessProp = "_FurBrightness";
+        static readonly Dictionary<string, float> FurBrightness = new Dictionary<string, float>
         {
+            // 調整値 (2026-09-30 シェーダー担当の推奨を統括が採用)
+            { "Samoyed", 1.0f }, { "Pome", 1.0f }, { "Lab", 0.7f }, { "Shiba", 0.5f }, { "Corgi", 0.5f }, { "Dachs", 0.5f },
+        };
+        static float FurBrightnessOf(DogTarget t)
+        {
+            if (!FurBrightness.TryGetValue(t.key, out float v)) throw new InvalidOperationException(t.key + ": no fur brightness in the table (KH_DogWashSetupEditor.Dog.cs FurBrightness)");
+            return v;
+        }
+
+        /// <summary>殻のマテリアルの犬ごとの値 (泡の厚み、毛の明るさ = プロパティがある時だけ)。</summary>
+        static void ApplyDogShellProps(Material shellMat, DogTarget t)
+        {
+            shellMat.SetFloat("_FoamThickness", FoamThickness(t));
+            if (shellMat.HasProperty(FurBrightnessProp)) shellMat.SetFloat(FurBrightnessProp, FurBrightnessOf(t));
+            EditorUtility.SetDirty(shellMat);
+        }
+
+        /// <summary>target が null なら殻のマテリアルのパスから犬を引く (Wash/17 の呼び出しは犬を渡さない)。</summary>
+        static void ApplyBuilderMaterialProps(Material maskMat, Material shellMat, RenderTexture maskA, Texture posMap, Texture2D cellTex, float mts, float baseOffset, DogTarget target = null)
+        {
+            if (target == null) { string path = AssetDatabase.GetAssetPath(shellMat); target = Targets.FirstOrDefault(x => ShellMatPath(x.key) == path); }
+            if (target != null) ApplyDogShellProps(shellMat, target);
             maskMat.SetTexture("_PosMap", posMap);
             maskMat.SetTexture("_CellTex", cellTex);
             maskMat.SetFloat("_EdgeNoiseScale", EdgeNoisePerMeter * mts);
@@ -87,6 +146,7 @@ namespace KominkaHillside.Editor
             shellMat.SetTexture("_Mask", maskA);
             shellMat.SetTexture("_PosMap", posMap);
             shellMat.SetFloat("_FoamScale", FoamGrainPerMeter * mts);
+            shellMat.SetFloat("_BaseOffset", baseOffset);
             shellMat.enableInstancing = true;
             EditorUtility.SetDirty(shellMat);
         }
@@ -276,6 +336,10 @@ namespace KominkaHillside.Editor
                 dr.boneParts.Add(b + ":" + (d.map.bones[b] != null ? d.map.bones[b].name : "(null)") + " -> " + PartNames[d.map.part[b]]
                     + (d.map.owner[b] >= 0 ? " (collider " + d.map.bones[d.map.owner[b]].name + ")" : " (no collider)") + " v" + d.map.domCount[b]);
             dr.notes.AddRange(d.map.notes);
+            var dh = DirtHeights(d.target);
+            dr.notes.Add("height " + d.target.heightM.ToString("0.###") + " m (json " + JsonHeightM(d).ToString("0.###") + "), dirt heights " + string.Join(" / ", dh.Select(x => x.ToString("0.###"))) + " m, initialDirt " + InitialDirt
+                + ", shell _BaseOffset " + d.target.baseOffset.ToString("0.###") + " m (" + d.target.coat + ")");
+            dr.notes.Add(FurNote(d.body));
 
             var shell = BuildShell(d, dr);
             var colliders = BuildColliders(d, dr);
@@ -330,9 +394,10 @@ namespace KominkaHillside.Editor
             wash.hitSplash = splash; wash.foamPuff = puff;
             wash.contactFur = fur; wash.contactFoam = foam; wash.scrub = scrub;
             EditorUtility.SetDirty(wash);
-            WriteDirtTuning(wash);   // the dirt tuning table above (IMP-DOG-029); copied to Udon with the rest
-            // the cell texture shows the runtime seed with this dog's initialDirt (Play tuning value, not written here)
-            EnsureCellTex(CellTexPath(d.target.key), d.cellTex.name, InitialCellColors(d.cells, wash.initialDirt));
+            // the dirt tuning table above (IMP-DOG-029) + this dog's initialDirt and dirt heights (IMP-DOG-030); copied to Udon with the rest
+            WriteDirtTuning(wash, d.target);
+            // the cell texture shows the runtime seed (initialDirt x the height weight, KH_DogWash.InitialCells) of this proxy
+            EnsureCellTex(CellTexPath(d.target.key), d.cellTex.name, InitialCellColors(wash.cellValid, RuntimeDirtWeights(wash), wash.initialDirt));
             return wash;
         }
 

@@ -1028,7 +1028,8 @@ MonoBehaviour:
       Data: 55|UnityEngine.TooltipAttribute, UnityEngine.CoreModule
     - Name: tooltip
       Entry: 1
-      Data: "\u68DA\u306E\u5B9A\u4F4D\u7F6E (KH_WashStation/Homes \u306E\u5B50\u3002\u68DA\u3068\u4E00\u7DD2\u306B\u52D5\u304F)"
+      Data: "\u68DA\u306E\u5B9A\u4F4D\u7F6E (KH_WashStation/Homes \u307E\u305F\u306F
+        KH_WashStations/{\u540D\u524D}/Homes \u306E\u5B50\u3002\u68DA\u3068\u4E00\u7DD2\u306B\u52D5\u304F)"
     - Name: 
       Entry: 8
       Data: 

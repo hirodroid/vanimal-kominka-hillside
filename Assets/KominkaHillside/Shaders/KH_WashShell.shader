@@ -33,6 +33,7 @@ Shader "KominkaHillside/Wash Shell"
         _FoamThickness ("Foam height of the top layer (m, world)", Float) = 0.05
         _FoamColor ("Foam colour", Color) = (0.95,0.96,0.98,1)
         _FoamShadow ("Foam valley tint (multiplier)", Color) = (0.66,0.73,0.86,1)
+        _FurBrightness ("Fur brightness (0.5 brown fur, 1 white fur)", Range(0,1)) = 0.5
         _DirtColor ("Dirt colour (A = max opacity)", Color) = (0.15,0.10,0.065,0.88)
         _WetDarken ("Wet darkening at wet 1", Range(0,1)) = 0.25
         _WetGloss ("Wet gloss", Range(0,2)) = 0.6
@@ -61,7 +62,7 @@ Shader "KominkaHillside/Wash Shell"
     half _WetDarken, _WetGloss;
     float4 _FurFlowAxis;
     float _FoamScale;
-    half _FoamSoft, _FoamRim;
+    half _FoamSoft, _FoamRim, _FurBrightness;
     float _BoneToPart[64];
     float _PartFoamLimit[16];
 
@@ -259,14 +260,25 @@ Shader "KominkaHillside/Wash Shell"
         // Colour from the CONTINUOUS height h (not the layer index, not the distance to this layer's cut), so there is
         // no brightness step between layers: low foam / valleys / heap flanks in _FoamShadow, crowns white. Fine thin
         // bubbles: white centre, tinted rim. No point highlights.
-        float occl = saturate(0.05 + 0.55 * h + 0.4 * big + 0.15 * grain + 0.35 * thin * (1.0 - h));
-        half3 shade = lerp(_FoamShadow.rgb, half3(1, 1, 1), occl);
+        // _FurBrightness (rev 6): 0.5 = brown fur (the look approved on the Shiba / Dachs, unchanged), 1.0 = white fur.
+        // Towards 1: most of the heap turns white and crowns go brighter than the fur, valleys and the gaps between
+        // grains get darker (neutral grey), and the silhouette gets a bright rounded rim, so foam still reads on white.
+        half fb = saturate(_FurBrightness * 2.0 - 1.0);
+        float occlBrown = saturate(0.05 + 0.55 * h + 0.4 * big + 0.15 * grain + 0.35 * thin * (1.0 - h));
+        float occlWhite = saturate(0.1 + 0.5 * h + 0.65 * big + 0.2 * grain + 0.35 * thin * (1.0 - h));
+        occlWhite = saturate((occlWhite - 0.5) * 1.6 + 0.62);            // steeper: narrow dark valleys, broad crowns
+        float occl = lerp(occlBrown, occlWhite, fb);
+        // fb = 0: _FoamShadow as is (brown fur look). fb = 1: a darker neutral grey derived here (no extra material value).
+        half3 shadowCol = lerp(_FoamShadow.rgb, half3(0.70, 0.72, 0.77) * 0.75, fb);
+        half3 shade = lerp(shadowCol, half3(1, 1, 1) * (1.0 + 0.3 * fb * big), occl);
+        // Gaps between the small grains: outlines of the bubbles.
+        shade *= 1.0 - 0.25 * fb * (1.0 - smoothstep(0.0, 0.4, grain)) * saturate(foam * 2.0);   // 0 when fb = 0
 
         float3 L = MainLightDir();
         half dirF = lerp(0.85, 1.0, saturate(dot(n, L) * 0.5 + 0.5)) * (0.92 + 0.08 * n.y);
-        half rim = pow(1.0 - ndv, 3.0) * _FoamRim * 0.4;
+        half rim = pow(1.0 - ndv, 3.0) * _FoamRim * 0.4 + pow(1.0 - ndv, 2.0) * 0.35 * fb * saturate(big + 0.3);
         half3 foamBase = _FoamColor.rgb * lerp(half3(1, 1, 1), half3(0.86, 0.8, 0.72), dirt * 0.5); // dirty suds
-        half3 c = foamBase * LightLevel(i.ambient, 1.0) * (dirF * shade + rim);
+        half3 c = foamBase * LightLevel(i.ambient, 1.0 + 0.35 * fb) * (dirF * shade + rim);
 
         fixed4 col = fixed4(c, a);
         UNITY_APPLY_FOG(i.fogCoord, col);

@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-75 件 — 対応中 18 / 確認待ち 23 / 未着手 21 / 保留 3 / 完了 10
+75 件 — 対応中 18 / 確認待ち 25 / 未着手 19 / 保留 3 / 完了 10
 
 ## 実行キュー
 
@@ -33,6 +33,7 @@
 | [IMP-DOG-021](IMP-DOG-021-river-wide-fetch-and-recall.md) | High | 川のどこへ投げたボールでも犬が取りに行く (川全体で浮かせ、安全な岸から入って取る)。水中の犬のボール・ディスクも、口に無ければ手元へ呼べる | review | ユーザーの PCVR (設計書末尾のチェックリスト 29〜36: 遠投の走りと入水、上陸の場所、大型犬が流路で取る見え方、サモエドの口の余裕、橋の近くの岸戻し)。2 人の実機で所有権の往復 (非 Owner の投げ、Owner 退出) |
 | [IMP-DOG-026](IMP-DOG-026-wash-state-and-sync.md) | High | 洗浄の状態と同期の仕上げ (セルの正本、清潔の判定、再洗浄、途中参加、Owner 交代、2 人の同時操作) | review | ユーザーの PCVR 2 人 (同時操作、途中参加、Owner 交代) と、送信量の実測が残り |
 | [IMP-DOG-027](IMP-DOG-027-wash-behavior-switching.md) | High | 洗われ中の犬と既存行動 (リード・Fetch・フリスビー・水遊び・集合・呼び戻し・ワープ) の切替 | review | ユーザーの PCVR (リード接続中の停止と解除、他人のストロークで止まらないこと、Fetch・集合との切替) が残り |
+| [IMP-DOG-030](IMP-DOG-030-wash-six-dogs.md) | High | 洗浄を 6 匹へ展開する (位置マップ・部位・体格・毛色・動く部位) | review | ユーザーの Play (6 匹の見え方、特に白い毛と小型犬)、本シーンの負荷の実測が残り。本番では initialDirt を 0 に |
 | [IMP-ENV-007](IMP-ENV-007-main-wash-station.md) | High | 門の外の主洗い場の整備 (洗い台、道具の棚と戻し先、蛇口・ホース・桶、犬を呼ぶ方法) | review | ユーザーの Play (棚の位置と高さ、道具の取りやすさ、札の日本語の記入、手動配置との干渉) が残り |
 | [IMP-PRG-001](IMP-PRG-001-ledger-shopkeeper-points.md) | High | 台帳・おじいさん (門)・支度用ポイント (初回 200pt 一回・滞在 1分1pt)・購入と CE 判定。2026-09-24 実装済み・Verify 全 PASS (e4f5906、名前空間 KH_Commerce_v1)。T-007 / T-008・復元の実機確認待ち | review | 200pt が一回だけ入る (T-007)、滞在加算と再入室の復元、購入の保存と CE の所持判定、残高 0 で基本機能が使える (T-008)。AI 側の ClientSim ハーネスは済み (Course/96 7/7、96b 4/4、2026-09-29 ccd3ff1)。サーバー保存・実際の再入室・CE 判定は対象外で PCVR / 実機に残る |
 | [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) | High | 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換え、設定面を作る。段階 0-a / 0-b / 3 は実装済み・Verify 全 PASS、0-b は 2026-09-24 PCVR OK。段階 3 (距離フェード・許可初期 ON・ようこそ等) の実機確認待ち。クレジット URL 3 件はユーザー記入待ち | review | 段階 0-b は PCVR OK (2026-09-24)。残り: 退行・取り違えの確認、段階 3 の距離フェード (T-011)・ナイトモードのスライダー・許可トグル 2 種・状態表示の規律。クレジット URL 3 件はユーザー記入。Quest/iOS は VER-WLD-001 |
@@ -47,12 +48,12 @@
 | [IMP-DOG-020](IMP-DOG-020-river-wading-and-swim.md) | Medium | 川の水遊びを初期公開にすべて入れる (2026-09-27 2 回目の決定)。前提・水遊び場・浅瀬歩き・小型犬の泳ぎ (ClientSim 済み) に、水遊び場の拡張と目印・近くにいれば入るきっかけ、浮くボールの回収、積み残し (フリスビー・ディスク・押し合い・揺れ・水音) を加え、公開前の検証まで行う | review | ユーザーの PCVR (設計書末尾の実機チェックリスト、段階 5〜7 の項目を含む)。2 人 (S1〜S5b と監査の実機確認 4 件)、Quest/iOS・16 人は VER-WLD-001。破壊監査 (2026-09-28) は反映済み、記録は docs/_sessions/destructive-audit-2026-09-28/ |
 | [IMP-DOG-023](IMP-DOG-023-frisbee-anywhere.md) | Medium | フリスビーをどこでも (DES-DOG-005 段階 3)。M1 陸の地面基準ジャンプと到達判定、M2 川のディスクの浮き、M3 岸からのドボンと水中回収、M4 取り出しの門の置き換え | review | AI 側の検証は M1〜M4 とも済み (ClientSim、2026-09-28)。残りはユーザーの PCVR 37〜48 (実機 09-28 夜はドボン 0 件で、岸からの跳び込み 40/41 が未確認)、VER-WLD-001 項目 12 |
 | [IMP-DOG-029](IMP-DOG-029-dirt-accumulation.md) | Medium | 散歩・土や泥・川で犬が汚れる条件と、洗った後の清潔の余韻 | review | ハーネス (W-dirt-*) の結果と、ユーザーの Play (散歩の後に足が汚れて見えるか、洗い場の近くで汚れ直さないか) が残り。本番では initialDirt を 0 にする |
+| [IMP-ENV-008](IMP-ENV-008-wash-stations-along-course.md) | Medium | 主洗い場と同じ洗浄処理を、川辺・広場・裏山の採用地点へ展開する | review | ユーザーの Play (3 か所の位置と導線、川辺の看板・石との干渉) が残り。production.md の表に登録済み |
 | [IMP-WLD-001](IMP-WLD-001-map-warp-and-join.md) | Medium | 地図の副画面、川辺・奥広場の 2 地点ワープ、インスタンス内のプレイヤーへの合流、接続犬の同行、暗転を、DES-WLD-003 の確定設計 (2026-09-27) どおりに実装する | review | PCVR チェックリスト (設計書末尾「実機チェックリスト (2026-09-27)」、表示名の字の |
 | [IMP-WLD-003](IMP-WLD-003-bgm-and-volume-settings.md) | Medium | 専用BGM「木漏れ日の帰り道」003を導入し、古民家と同じ設定メニューで個人のON/OFF・音量調整を可能にする | review | 実装と Edit モードの検査は済み (Course/98 Build・99 Verify BGM_OK、Menu/16a PASS、f32cd77 / a06178c)。残り: ユーザー判断 3 件 (ON/OFF ボタンを残すか、WAV 62 MB を git へ入れるか、基準音量 0.35 と圧縮品質の確定)、ライブ連動と実際の出音の確認 (ClientSim / PCVR)、Android / iOS の容量の実測 |
 | [BUG-DOG-007](BUG-DOG-007-shiba-throw-implausible.md) | Low | 実機 (2026-09-28 夜) で柴のディスクの投げが 22:53〜22:59 に 5 回 `implausible` で断られた。原因は 200 m の距離の上限で、柴は投げ手から約 430〜516 m 離れた場所に残っていた (周回コース 600×720 m では正当に起こる)。拒否理由を条件ごとに分けた。統括の決定で、Ready と投げの受理を犬から 40 m 以内に限り (`readyMaxDistance`、理由 `far`)、照準は × と「犬が遠くにいます」を出す。200 m の `implausible-far` は二重の安全として残す | review | コンパイル・Course/27・92・93・試作の既定は済み (7178d1f)。実機で 40 m の外から持つ・投げると犬が動かず、照準に「犬が遠くにいます」が出ることを確かめる |
 | [BUG-DOG-004](BUG-DOG-004-destination-per-player.md) | High | 体験会 (2026-09-26、15 人) で「行き先が犬ごとに決まっていて、プレイヤーごとのローカル選択になっていない」と報告。コードは自分の選択を自分の接続犬に写す設計なので、何がどう見えたかを 2 人で再現して切り分ける | todo | 2 人で別の行き先を選び、自分の犬だけが従うか・メニューの点灯が自分の選択を示すかを確認。NG なら Manager Owner 側の ReqDestination / ReqAttach の経路を疑う |
 | [DES-UI-004](DES-UI-004-walk-destinations-and-boards.md) | High | 散歩の目的地・位置と案内／説明ボードの内容・配置・役割を検討する (仮看板は 2026-09-26 に撤去済み)。体験会 (2026-09-26、15 人) で「リードの付け方が分からない、簡単な説明ボードが要る」と報告があり、説明ボードを先に決める | todo | 入口 (スポーン付近) に置く「リードの付け方」の説明ボード 1 枚の文言・位置案を出してユーザー確認。目的地の案内板は後 |
-| [IMP-DOG-030](IMP-DOG-030-wash-six-dogs.md) | High | 洗浄を 6 匹へ展開する (位置マップ・部位・体格・毛色・動く部位) | todo | IMP-DOG-025 の評価で方式が成立したのを確かめてから、犬種ごとの位置マップと部位を焼く |
 | [VER-DOG-002](VER-DOG-002-wash-experience-and-devices.md) | High | 洗浄の体験の評価 (ASMR、先行作との比較、2 人、入力機器) と対象端末の実機確認を、各段の到達条件として行う | todo | IMP-DOG-025 の試作が動いた時点で、先行 Animal Wash の比較対象の版と場面を選び、対象端末の最小の描画の確認を依頼する |
 | [BUG-DOG-005](BUG-DOG-005-ios-disc-colors.md) | Medium | 体験会 (2026-09-26) で iOS 参加者から「フリスビーの色が全部同じ」。ディスクは Standard Lite + _Color で犬別 6 色。iOS 実機で再現し、材質・ビルドのどこで色が落ちるかを特定する | todo | iOS 実機で 6 枚の色を見る。同じなら iOS ビルドの材質 (Standard Lite の _Color、持ち中の Transparent/Diffuse) と Android ビルドとの差を疑う |
 | [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビーは 1 匹で採用内容を確定 (IMP-DOG-008 完了)。複数ディスク・犬の割当は犬別 6 枚 (2026-09-24 開発側で決め、2026-09-29 ユーザー了承)。残り: 他のおもちゃの挙動、ボールの柄違いの持たせ方、公開範囲 | todo |  |
@@ -67,7 +68,6 @@
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |  |
 | [IMP-ENV-005](IMP-ENV-005-auto-night-mode.md) | Medium | ナイトモードに時間経過で暗くなるグローバルのオートと、個人で調整するローカルのマニュアルを追加する | todo | 時間の起点・暗くなる所要時間・到達後の挙動・モードの初期値と保存方針を決める |
 | [IMP-ENV-006](IMP-ENV-006-river-ambience.md) | Medium | 制作中の川のせせらぎ音を専用ディレクトリへ格納し、本番シーンの川沿いに環境音として設定する | todo | Audio/Ambience/River に完成音源を受け取り、川沿いの配置・ループ・距離減衰・音量を調整する |
-| [IMP-ENV-008](IMP-ENV-008-wash-stations-along-course.md) | Medium | 主洗い場と同じ洗浄処理を、川辺・広場・裏山の採用地点へ展開する | todo | IMP-ENV-007 の主洗い場が成立してから、道中の採用地点の数と位置を導線・負荷・制作量から決める |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo |  |
 | [IMP-DOG-033](IMP-DOG-033-call-placement-tilt.md) | Low | 場所を決めて呼ぶで、手の傾きに合わせて犬を傾けて置けるようにする (斜面で抱っこしている感じに置く) | todo | IMP-DOG-032 (古民家どおりに戻す) の後に、同期・犬の姿勢・Desktop/Touch の扱いを設計する |
 | [IMP-ENV-009](IMP-ENV-009-course-roadside-scenery.md) | Low | 周回コースの道沿い (古民家→川、川沿いの外周、川→奥広場) が殺風景なので、負荷と相談して木などを少し置く。後回し | todo | 他の作業の後に着手。負荷の測定 (IMP-ENV-001 ③) の結果を見て、置ける量を決める |

@@ -98,13 +98,22 @@ namespace KominkaHillside.Editor
             for (int i = 0; i < n; i++) if (m.bones[i] != null && !index.ContainsKey(m.bones[i])) index[m.bones[i]] = i;
             var tablePart = Enumerable.Repeat(-1, n).ToArray();
             var ordered = new List<int>();
+            // IMP-DOG-030: a table bone missing from this dog (the Pome has 31 bones: no Bone.022 / .023, which are not in the
+            // table; the table's own bones are in all 6 dogs per the Wash/1 survey) is skipped with a note: its vertices, if a
+            // child bone has any, go to the nearest collider bone above (the owner rule below). A part with none of its
+            // table bones stops the build (nothing to hang the part's collider on).
             for (int p = 0; p < PartCount; p++)
+            {
+                int found = 0;
                 foreach (var name in PartBoneNames[p])
                 {
                     int b = Array.FindIndex(m.bones, x => x != null && x.name == name);
-                    if (b < 0) throw new InvalidOperationException("bone " + name + " (part " + PartNames[p] + ") not in the renderer's bones");
-                    tablePart[b] = p; ordered.Add(b);
+                    if (b < 0) { m.notes.Add("table bone " + name + " (part " + PartNames[p] + ") not in the renderer's bones: skipped (its part keeps the other bones' colliders)"); continue; }
+                    if (tablePart[b] >= 0) throw new InvalidOperationException("bone " + name + " is listed for two parts");
+                    tablePart[b] = p; ordered.Add(b); found++;
                 }
+                if (found == 0) throw new InvalidOperationException("part " + PartNames[p] + ": none of its bones (" + string.Join(", ", PartBoneNames[p]) + ") in the renderer's bones");
+            }
             m.domCount = new int[n];
             foreach (int d in g.dom) if (d >= 0 && d < n) m.domCount[d]++;
 
@@ -263,6 +272,15 @@ namespace KominkaHillside.Editor
             Vector3 a = f.center - f.axis * half, b = f.center + f.axis * half, ab = b - a;
             float t = ab.sqrMagnitude > 1e-12f ? Mathf.Clamp01(Vector3.Dot(p - a, ab) / ab.sqrMagnitude) : 0f;
             return (p - (a + ab * t)).sqrMagnitude < f.radius * f.radius;
+        }
+
+        /// <summary>カプセルの表面からの符号付き距離 (メッシュ座標、外が正)。</summary>
+        static float CapsuleSignedDistance(Vector3 p, Fit f)
+        {
+            float half = Mathf.Max(0f, f.height * 0.5f - f.radius);
+            Vector3 a = f.center - f.axis * half, b = f.center + f.axis * half, ab = b - a;
+            float t = ab.sqrMagnitude > 1e-12f ? Mathf.Clamp01(Vector3.Dot(p - a, ab) / ab.sqrMagnitude) : 0f;
+            return (p - (a + ab * t)).magnitude - f.radius;
         }
 
         static float Pct(List<float> sorted, float q)

@@ -23,6 +23,8 @@ namespace KominkaHillside.Editor
     /// - Wash/21 Verify Dirt Zones: proxy と backing (publicVariables)、地点の置き場所 (NavMesh・地形の高さ・川の帯の外・洗い場から十分遠い) を見る。
     ///   シーンを書かない。Temp/imp-dog-029/dirt-zones-verify.json。失敗があれば最後に例外。
     ///
+    /// IMP-DOG-030: KH_DogWash は 6 匹分 (Wash/11 が作る)。20 はシーンの全 KH_DogWash へ書くので犬の数によらず同じ手順、21 は 6 匹そろっていることも見る。
+    ///
     /// 地点は Transform だけ (Udon も Collider も無い)。球 = 中心から lossyScale.x / 2 以内 (KH_DogWash.InDirtZone)。見た目は今は無し
     /// (IMP-ENV-008 で地面の見た目を足す)。initialDirt (試作の初期値) は触らない: 本番では 0 にする (Wash/11 のビルダー側の値)。</summary>
     public static class KH_DirtZoneEditor
@@ -310,6 +312,11 @@ namespace KominkaHillside.Editor
             try { c = Resolve(); }
             catch (Exception e) { req(false, "resolve: " + e.Message); v.status = "FAIL"; return v; }
             req(c.root != null, RootName + " at the scene root");
+            // IMP-DOG-030: every dog the wash builder targets has its KH_DogWash (Wash/11 before Wash/20), so all of them get the zones
+            var keys = KH_DogWashSetupEditor.TargetKeys;
+            var names = new HashSet<string>(c.washes.Select(w => w.name));
+            var missing = keys.Where(k => !names.Contains("KH_Wash_" + k)).ToArray();
+            req(missing.Length == 0 && c.washes.Length == keys.Length, "KH_DogWash for every wash target (" + c.washes.Length + " / " + keys.Length + (missing.Length > 0 ? ", missing " + string.Join(", ", missing) + ": run Wash/11, then Wash/20" : "") + ")");
             var zoneTs = new List<Transform>();
             foreach (var z in Zones)
             {

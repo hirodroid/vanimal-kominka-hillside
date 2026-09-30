@@ -23,7 +23,7 @@ namespace KominkaHillside
     // a segment on every part change, which would flood the 8 Hz budget).
     //
     // Return to the shelf (IMP-ENV-007): a tool nobody holds that has been away from its home (a Transform under
-    // KH_WashStation/Homes, so it moves with the shelf) for returnSeconds goes back there. Every client keeps its own
+    // KH_WashStation/Homes, or KH_WashStations/{name}/Homes along the course (IMP-ENV-008), so it moves with the shelf) for returnSeconds goes back there. Every client keeps its own
     // clock (reset while it sees the tool held, and when the tool leaves home); only the Owner of this GameObject (the
     // last holder: the Pickup hands it over, or whoever inherited it) moves it, the same way KH_ToyRecall parks a toy
     // (write the position, FlagDiscontinuity). The others see it through VRCObjectSync. Nobody takes the ownership
@@ -61,7 +61,7 @@ namespace KominkaHillside
         public float hapticFrequency = 120f;
 
         [Header("置き場へ戻る (IMP-ENV-007。ビルダーが書く)")]
-        [Tooltip("棚の定位置 (KH_WashStation/Homes の子。棚と一緒に動く)")]
+        [Tooltip("棚の定位置 (KH_WashStation/Homes または KH_WashStations/{名前}/Homes の子。棚と一緒に動く)")]
         public Transform home;
         [Tooltip("誰も持たずに定位置から離れてからこの秒数で戻る。0 以下 = 自動では戻らない (2026-09-30 ユーザー決定: リセットボタンで戻す)")]
         public float returnSeconds = 0f;

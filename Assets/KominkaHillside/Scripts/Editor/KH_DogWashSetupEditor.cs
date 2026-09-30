@@ -13,17 +13,18 @@ using VRC.SDKBase;
 
 namespace KominkaHillside.Editor
 {
-    /// <summary>IMP-DOG-025: 犬を洗う試作 (代表 1 匹 = 柴) をシーンへ組み立てる。約束は docs/plans/2026-09-30-dog-wash-prototype.md。
+    /// <summary>IMP-DOG-025 / 030: 犬を洗う仕組み (6 匹) をシーンへ組み立てる。約束は docs/plans/2026-09-30-dog-wash-prototype.md。
     ///
     /// - Wash/10 Create Programs: KH_DogWash / KH_WashTool / KH_WashToolState の Program Asset を作る (あれば何もしない)。作ったら U# をコンパイルしてから 11 へ
-    /// - Wash/11 Build Prototype (Shiba): 本番シーン (Idle 必須) を Temp へ退避してから、アセット (Data/Wash)、犬の側 (殻・部位 Collider・KH_Wash_{犬})、
+    /// - Wash/11 Build Wash (All Dogs): 本番シーン (Idle 必須) を Temp へ退避してから、アセット (Data/Wash)、犬の側 (殻・部位 Collider・KH_Wash_{犬})、
     ///   道具の棚 (KH_WashStation) を組み、proxy → Udon へ写して保存し、続けて 12 と同じ検査をする。何度流しても同じ結果 (名前で見つけて作り直す)。
     ///   棚 (KH_WashStation) の位置と回転は、既にあれば保つ (人が動かした位置を上書きしない)。道具の棚の上での並びはコードが持つ
-    /// - Wash/12 Verify Prototype: proxy と backing (publicVariables) を見る。Temp/KH_DogWashSetupVerify.json。失敗があれば最後に例外
-    /// - Wash/13 - Paint Test/1〜7 (場面別の試し描き) / 14 Clear Test Stroke (Edit) / 15 Capture Shiba / 16 Capture All Scenes: Edit モードで殻を見る補助。シーンを保存しない
+    /// - Wash/12 Verify Wash (All Dogs): proxy と backing (publicVariables) を見る。Temp/KH_DogWashSetupVerify.json。失敗があれば最後に例外
+    /// - Wash/13 - Paint Test/1〜7 (場面別の試し描き) / 14 Clear Test Stroke (Edit) / 15 Capture Selected Dog / 16 Capture All Scenes: Edit モードで殻を見る補助。
+    ///   対象は Wash/18 - Select Dog/{犬} で選んだ犬 (既定は柴)。シーンを保存しない
     /// - Wash/17 Reset Shell Material to Shader Defaults: 殻とマスクのマテリアルをシェーダーの既定値へ戻し、ビルダーの値を入れ直す
     ///
-    /// 対象の犬は <see cref="Targets"/> (今は柴だけ)。6 匹へ広げるときはここへ行を足す (犬ごとの差は位置マップ・JSON・骨の名前から実測する)。</summary>
+    /// 対象の犬は <see cref="Targets"/> (6 匹)。犬ごとの差は位置マップ・JSON・骨の名前から実測し、実測できない値 (毛の長さ) は表で持つ。</summary>
     public static partial class KH_DogWashSetupEditor
     {
         const string Menu = "Tools/KominkaHillside/Wash/";
@@ -35,16 +36,55 @@ namespace KominkaHillside.Editor
         const string BackupDir = "Temp/imp-dog-025";
         static readonly string[] Programs = { "KH_DogWash", "KH_WashTool", "KH_WashToolState" };
 
-        /// <summary>組み立てる犬。bodyMaterials = 胴体 (karada) の sharedMaterials の名前 (Verify が「変えていない」を確かめる。Wash/1 Survey の値)。</summary>
+        /// <summary>組み立てる犬 (IMP-DOG-030: 6 匹)。bodyMaterials = 胴体 (karada) の sharedMaterials の名前 (Verify が「変えていない」を確かめる。Wash/1 Survey の値)。
+        /// heightM = バインドポーズの高さ (m、Wash/1 の bindAabbSizeMeters.z = メッシュの z の幅 × meshToWorldScale。Wash/12 が json と 3% 以内で照合)。
+        ///   汚れの高さの重みの境目 (<see cref="DirtHeights"/>) を柴の値からこの比で伸び縮みさせる。
+        /// baseOffset = 殻の _BaseOffset (毛の表面までの押し出し、m、ワールド)。柴の 0.005 は 2026-09-30 の Edit の試し描きと PCVR で「毛の上に乗る」を確認済み。
+        ///   ほかの犬は犬種の毛の長さによる定数 (下の表の coat)。材質の毛の値 (Uzumore / lilToon の _FurVector.w・_FurCutoutLength・_FurRootOffset) は
+        ///   読めるが、SkinnedMeshRenderer の object 空間の倍率 (lossyScale 50 / 100) が毛の長さへどう掛かるかを Unity の外で確かめられないため比例させない。
+        ///   材質の値は Wash/11 の報告 (notes) と Wash/12 の dogs[] へ記録するだけ。18 で犬を選んで 16 の撮影で確かめ、合わなければここを直して Wash/11。</summary>
         class DogTarget
         {
-            public string key; public string[] bodyMaterials;
-            public DogTarget(string key, params string[] bodyMaterials) { this.key = key; this.bodyMaterials = bodyMaterials; }
+            public string key; public string[] bodyMaterials; public float heightM, baseOffset; public string coat;
+            public DogTarget(string key, float heightM, float baseOffset, string coat, params string[] bodyMaterials)
+            { this.key = key; this.heightM = heightM; this.baseOffset = baseOffset; this.coat = coat; this.bodyMaterials = bodyMaterials; }
         }
+        // 順番 = KH_WashTool.washes と検査の順。柴を先頭に (試し描きの既定の犬、既存の Course/100 は柴を洗う)。
+        //   毛 (Survey の材質の値: _FurVector.w / _FurCutoutLength / _FurRootOffset、renderer の lossyScale)
+        //   柴      0.010 / 0.8 / 0     (50)  中毛のダブルコート。基準 0.005 (確認済み)
+        //   コーギー 0.020 / 0.7 / -0.15 (50)  中毛のダブルコート。柴と同じ 0.005
+        //   ポメ    0.020 / 0.8 / -0.5  (100) 長毛・丸いシルエット。0.008 (毛の中へ殻が沈んで泡が隠れないように、柴の 1.6 倍)
+        //   ラブ    0.010 / 0.8 / 0     (100) 短毛。0.004
+        //   ダックス 0.025 / 0.8 / -0.5  (100) 短毛 (設計書 §4 の暗い毛・小型)。0.004。材質の毛の値は柴より長いので、撮影で浮き・沈みを見る
+        //   サモエド 0.030 / 0.8 / -0.65 (100) 長毛の白 (設計書 §4)。0.008
+        // 範囲は 0.004〜0.008 m に留める (泡の層は _FoamThickness 0.05 m を上に積むので、基準の差は汚れと濡れの層の見え方だけに効く)。
         static readonly DogTarget[] Targets =
         {
-            new DogTarget("Shiba", "ke 1_Uzumore"),
+            new DogTarget("Shiba",   0.621f, 0.005f, "medium double coat (reference, confirmed 2026-09-30)", "ke 1_Uzumore"),
+            new DogTarget("Corgi",   0.401f, 0.005f, "medium double coat", "ke_Uzumore"),
+            new DogTarget("Pome",    0.278f, 0.008f, "long fluffy coat", "ke_Uzumore"),
+            new DogTarget("Lab",     0.735f, 0.004f, "short smooth coat", "ke_Uzumore"),
+            new DogTarget("Dachs",   0.358f, 0.004f, "short smooth coat (dark, small, short legs)", "ke_Uzumore"),
+            new DogTarget("Samoyed", 0.711f, 0.008f, "long white double coat", "サモエド毛 2_Uzumore"),
         };
+        /// <summary>組み立てる犬の key (KH_DirtZoneEditor の検査が「全部の犬に KH_DogWash がある」を確かめる)。</summary>
+        public static string[] TargetKeys { get { return Targets.Select(t => t.key).ToArray(); } }
+
+        // ---- 犬ごとの汚れ (IMP-DOG-029 / 030)。Wash/11 が KH_DogWash へ書き、Wash/12 が proxy と backing の一致を検査する ----
+        /// <summary>初期の汚れ (試作は 6 匹とも 0.6。本番で 0 にするのは統括の指示で、ここを変えて Wash/11)。</summary>
+        const float InitialDirt = 0.6f;
+        /// <summary>汚れの高さの重みの境目 (m、地面 = 最も低いセルから)。柴の値 (設計書 §1-9、2026-09-30 PCVR の決定) を犬の高さの比で伸び縮みさせる。</summary>
+        const float ShibaHeightM = 0.621f;
+        static readonly float[] ShibaDirtHeights = { 0.08f, 0.25f, 0.45f };
+        static readonly string[] DirtHeightFields = { "dirtHeightFull", "dirtHeightMid", "dirtHeightTop" };
+        /// <summary>位置マップの json のバインドポーズの高さ (m) = (aabbMax.z - aabbMin.z) × meshToWorldScale (メッシュは z が上)。</summary>
+        static float JsonHeightM(DogCtx d) { return (d.json.aabbMax.z - d.json.aabbMin.z) * d.json.meshToWorldScale; }
+
+        static float[] DirtHeights(DogTarget t)
+        {
+            float k = t.heightM / ShibaHeightM;   // 柴 = ちょうど 1 (同じ float 同士の割り算)
+            return ShibaDirtHeights.Select(h => Mathf.Round(h * k * 1000f) / 1000f).ToArray();
+        }
 
         // ---- 部位 (約束 §3)。骨の名前は 6 犬種で共通 ----
         public const int PartCount = 9, FallbackPart = 0;
@@ -119,6 +159,8 @@ namespace KominkaHillside.Editor
             "VRChat の Interact / Pickup の光線が層 2 (Ignore Raycast) の Trigger を無視するか (首輪の Interact、道具・ボールを掴む光線)",
             "PhysBone が実際に揺れ続けるか (ignoreTransforms へ登録したことだけを見ている)",
             "動いた姿勢での部位 Collider の追従と遮蔽 (検査は保存された姿勢 1 つだけ)",
+            "犬ごとの殻の押し出し (_BaseOffset) は毛の長さの表の定数 (材質から比例させていない) — 18 で犬を選び 16 の画像と PCVR で見る。端末別の押し出しは未対応",
+            "6 匹の殻が同時に有効なときの描画負荷 (initialDirt 0.6 では全部の犬の殻が最初から有効) と、スプレーの Trigger モジュールが全部の犬の部位 Collider を持つ負荷 — 実機で測る",
         };
 
         // ================================================================ 10
@@ -167,7 +209,7 @@ namespace KominkaHillside.Editor
             public List<string> notes = new List<string>();
         }
 
-        [MenuItem(Menu + "11 - Build Prototype (Shiba)")]
+        [MenuItem(Menu + "11 - Build Wash (All Dogs)")]
         public static void Build()
         {
             KH_CourseGroundEditor.Idle(KH_CourseGroundEditor.ScenePath);
@@ -237,7 +279,7 @@ namespace KominkaHillside.Editor
 
         // ================================================================ 12
 
-        [MenuItem(Menu + "12 - Verify Prototype")]
+        [MenuItem(Menu + "12 - Verify Wash (All Dogs)")]
         public static void Verify()
         {
             KH_CourseGroundEditor.Idle(KH_CourseGroundEditor.ScenePath);
@@ -408,22 +450,45 @@ namespace KominkaHillside.Editor
             return l;
         }
 
-        /// <summary>KH_DogWash.PartDirtFactor の写し (13 の Restore が実行時の初期値と同じ分布を描くため。実行時を変えたらここも)。</summary>
-        static float PartDirtFactor(int part)
+        /// <summary>KH_DogWash.ComputeCellHeights + DirtHeightWeight の写し (実行時の初期の汚れ = initialDirt × 高さの重み。13 の Restore とセルのテクスチャが
+        /// 実行時と同じ分布を描くため。実行時の式を変えたらここも)。高さ = (セルの中心の z - 有効なセルの最小の z) × meshToWorldScale。</summary>
+        static float[] RuntimeDirtWeights(bool[] valid, Vector3[] center, float meshToWorldScale, float full, float mid, float top, float midWeight, float topWeight)
         {
-            if (part >= 3 && part <= 6) return 1f;
-            if (part == 0 || part == 1) return 0.6f;
-            if (part == 8) return 0.4f;
-            if (part == 2) return 0.3f;
-            return 0.15f;
+            var w = new float[CellCount];
+            float minZ = 1e9f;
+            for (int c = 0; c < CellCount; c++) if (valid[c] && center[c].z < minZ) minZ = center[c].z;
+            if (minZ > 1e8f) minZ = 0f;
+            full = Mathf.Max(0f, full);
+            mid = Mathf.Max(full + 0.001f, mid);
+            top = Mathf.Max(mid + 0.001f, top);
+            for (int c = 0; c < CellCount; c++)
+            {
+                float h = (center[c].z - minZ) * meshToWorldScale;
+                if (h <= full) w[c] = 1f;
+                else if (h <= mid) w[c] = Mathf.Lerp(1f, midWeight, (h - full) / (mid - full));
+                else w[c] = Mathf.Lerp(midWeight, topWeight, Mathf.Clamp01((h - mid) / (top - mid)));
+            }
+            return w;
         }
 
-        static Color[] InitialCellColors(Cells cells, float initialDirt)
+        static float[] RuntimeDirtWeights(KH_DogWash w)
+        {
+            return RuntimeDirtWeights(w.cellValid, w.cellCenter, w.meshToWorldScale, w.dirtHeightFull, w.dirtHeightMid, w.dirtHeightTop, w.dirtMidWeight, w.dirtTopWeight);
+        }
+
+        static Color[] InitialCellColors(bool[] valid, float[] weights, float initialDirt)
         {
             var cols = new Color[CellCount];
             for (int c = 0; c < CellCount; c++)
-                cols[c] = new Color(cells.valid[c] ? Mathf.Clamp01(initialDirt * PartDirtFactor(cells.part[c])) : 0f, 0f, 0f, 1f);
+                cols[c] = new Color(valid[c] ? Mathf.Clamp01(initialDirt * weights[c]) : 0f, 0f, 0f, 1f);
             return cols;
+        }
+
+        /// <summary>アセットを作る時の仮の中身: ビルダーの高さの境目と KH_DogWash の既定の重み (0.35 / 0.05)。BuildDog が proxy の値で描き直す。</summary>
+        static Color[] InitialCellColors(DogCtx d)
+        {
+            var h = DirtHeights(d.target);
+            return InitialCellColors(d.cells.valid, RuntimeDirtWeights(d.cells.valid, d.cells.center, d.json.meshToWorldScale, h[0], h[1], h[2], 0.35f, 0.05f), InitialDirt);
         }
     }
 }

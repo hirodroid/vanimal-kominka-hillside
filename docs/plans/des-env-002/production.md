@@ -28,6 +28,7 @@ UnityをEditモード・保存済みにして `Tools/KominkaHillside/Course/` �
 | 水遊び場 (IMP-DOG-020) | 76 (水遊び場のデータ、踏み分け道 (Terrain 層 2 の塗り)、目印の石と仮看板、犬ごとの揺れの配線)。次の後は、76 → 77 をもう一度実行する: 15 (地形)、30 (NavMesh)、経路・通過点「川辺」の変更、川岸の石や障害物の変更 (76 はこれらから採る区間・入水点・出水点・復帰点を決める)、仮看板の寸法や色の変更。仮看板の文言だけを変えるときは、訳のファイルの `course.water.sign` を直して 27 → 77 (77 が 13 言語の収まりを検査する) | 77 |
 | 水音 (IMP-DOG-020 段階 7) | 87 (WAV の取り込み設定と犬ごとの AudioSource の配線。音を作り直したら先に `node scripts/kh-gen-water-se.js`。76 で水遊び場を作り直した後も 87) | 87 (自前の検査。`Temp/imp-dog-020/water-audio.json`) |
 | フリスビーと川 (IMP-DOG-020 段階 7) | 89 (犬 6 匹とディスク 6 枚へ川のデータと水遊び場を配線) | 89 (`FRISBEE_RIVER_OK`。帯の手前で止まる・岸の点・水遊び場の中は止めない) |
+| 犬を洗う (IMP-DOG-024〜030、IMP-ENV-007 / 008) | メニューは `Tools/KominkaHillside/Wash/` (Course ではない)。初回だけ 10 と 10b (Program Asset) → U# のコンパイル。11 (6 匹の殻・部位 Collider・KH_Wash_*・主洗い場と道中の洗い場 3 か所・道具・音の取り込み。棚と洗い場の位置は保つ) → 20 (泥の地点)。位置マップを 2 で焼き直したら 11 をもう一度。シェーダーの既定値を変えたら 17 → 11 | 12 (`Temp/KH_DogWashSetupVerify.json`)、21 (泥の地点)。見た目は 18 で犬を選び 13 → 15 / 16 → 14 (保存しない)。ClientSim は `Course/100` |
 
 旧 `Terrain Prototype/Build Stage A・B`、`Walking/3 Build・4 Bake Navigation・4b Build Walk Route`、`Menu/7 Build Menu・12 Rebuild Panel・13 Apply Scroll Layout・17 Refresh Menus` と Imported-UnusedのTreat System再構築は、周回版を旧道・旧メニューで上書きするため拒否する。通常の局所編集・検査は可能。全メニューの再生成が必要になったときは、周回の行き先を保持する対応を先に行う。
 

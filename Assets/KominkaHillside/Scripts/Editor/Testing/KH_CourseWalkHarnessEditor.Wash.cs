@@ -30,12 +30,29 @@ namespace KominkaHillside.Editor
     /// 「Owner のセルの積算」で、実通信・2 人・途中参加・Owner の交代は対象外 (wash.json の notCovered)。</summary>
     public static partial class KH_CourseWalkHarnessEditor
     {
-        [MenuItem("Tools/KominkaHillside/Course/100 - Harness Wash (Shiba)")]
-        public static void WashHarness()
+        // 群ごとに回す (2026-09-30 ユーザー指定: 全体は確定前に 1 回だけ)。null = 全体。名前は MakeWashCases の各群と同じ
+        static string[] wsGroups;
+        static bool WsGroup(string name) { return wsGroups == null || wsGroups.Length == 0 || Array.IndexOf(wsGroups, name) >= 0; }
+
+        [MenuItem("Tools/KominkaHillside/Course/100 - Harness Wash (all groups)")]
+        public static void WashHarness() { WashHarnessGroups(null); }
+        [MenuItem("Tools/KominkaHillside/Course/100a - Harness Wash base (foam, rinse, hold, clean, reject)")]
+        public static void WashHarnessBase() { WashHarnessGroups(new[] { "base" }); }
+        [MenuItem("Tools/KominkaHillside/Course/100b - Harness Wash behavior + react")]
+        public static void WashHarnessBehavior() { WashHarnessGroups(new[] { "behavior", "react" }); }
+        [MenuItem("Tools/KominkaHillside/Course/100c - Harness Wash sync")]
+        public static void WashHarnessSync() { WashHarnessGroups(new[] { "sync" }); }
+        [MenuItem("Tools/KominkaHillside/Course/100d - Harness Wash dirt + station")]
+        public static void WashHarnessDirt() { WashHarnessGroups(new[] { "station", "dirt" }); }
+        [MenuItem("Tools/KominkaHillside/Course/100e - Harness Wash dogs + course stations")]
+        public static void WashHarnessDogs() { WashHarnessGroups(new[] { "stations", "dogs" }); }
+
+        static void WashHarnessGroups(string[] groups)
         {
             Begin(false);
             report.washOnly = true;
-            report.deadline = EditorApplication.timeSinceStartup + 3500; // Wash 1500 + WashBehavior ~260 + WashReact ~200 + WashSync ~400 + WashStation ~130 + WashDirt ~620
+            report.washGroups = groups == null ? "" : string.Join(",", groups); // read back in MakeWashCases after the domain reload
+            report.deadline = EditorApplication.timeSinceStartup + 4000; // Wash 1500 + WashBehavior ~260 + WashReact ~200 + WashSync ~400 + WashStation ~130 + WashDirt ~620 + WashDogs ~210
             report.limitations = "Single local ClientSim; the local player is instance master and every Owner (the wash object, the dog root, the tools). "
                 + "Contacts are injected at KH_DogWash._LocalContact / _EndContact (the entry KH_WashTool calls every frame) with collider surface points; "
                 + "the tool's pickup, raycasts, VR sphere and Desktop gaze are not exercised. NetStroke only takes the local echo path. "
@@ -109,8 +126,11 @@ namespace KominkaHillside.Editor
             wsStep = 0; wsCaseAt = -1; wsFailed = false; wsProbed = false; wsMaxDt = 0f;
             wsEntryCache.Clear(); wsParamCache.Clear(); wsPosHist.Clear();
             wsReport = new WsReport { runId = report.runId };
+            wsGroups = string.IsNullOrEmpty(report.washGroups) ? null : report.washGroups.Split(',');
             WsBind();
             WsNotCovered();
+            if (wsGroups != null) wsReport.notCovered.Add("Partial run: groups " + string.Join(",", wsGroups) + " only (the other groups were not run this time)");
+            if (WsGroup("base")) {
 
             // ---- W-idle (必ず最初: まだストロークが無いので、汚れ 0 で殻が消える) ----
             var s = WsCase("W-idle", 60);
@@ -486,11 +506,7 @@ namespace KominkaHillside.Editor
             var otPath = new float[wander.Length]; var otPrev = new Vector3[wander.Length];
             s.Add(WsDo(() =>
             {
-                foreach (int o in others)
-                {
-                    var v = WsRef(wander[o], "wash");   // 記号が無ければ例外
-                    WsExpect(v == null || (v as UnityEngine.Object) == null, "dog " + o + " wash is null (" + v + ")");
-                }
+                // IMP-DOG-030: the other dogs have a wash too; "not washed = unchanged behaviour" is W-dogs-others (WashDogs.cs)
                 WsPlaceShiba(); WsPlayerNear(1.3f); WsSetDirt(0.6f);
                 foreach (int o in others) otPrev[o] = roots[o].position;
             }));
@@ -511,13 +527,16 @@ namespace KominkaHillside.Editor
                 foreach (int o in others) { var p = roots[o].position; otPath[o] += Flat(p - otPrev[o]); otPrev[o] = p; if (Get<bool>(wander[o], "_washActive")) throw new InvalidOperationException("dog " + o + " wash branch active"); }
                 return others.All(o => otPath[o] >= 0.3f);
             }, 60, () => "not every other dog moved 0.3 m in 60 s: " + string.Join(", ", others.Select(o => o + ":" + otPath[o].ToString("F2") + "m rest" + Get<int>(wander[o], "_restPhase")))));
-            s.Add(WsDo(() => WsNote("other dogs " + string.Join(",", others) + ": wash null, never in the wash branch while the Shiba was washed, each walked >= 0.3 m (" + string.Join(", ", others.Select(o => otPath[o].ToString("F1"))) + " m)")));
+            s.Add(WsDo(() => WsNote("other dogs " + string.Join(",", others) + ": never in the wash branch while the Shiba was washed, each walked >= 0.3 m (" + string.Join(", ", others.Select(o => otPath[o].ToString("F1"))) + " m)")));
 
-            MakeWashBehaviorCases(); // IMP-DOG-027 (WashBehavior.cs): leashed stop, the gates, gathering
-            MakeWashReactCases();    // IMP-DOG-028 (WashReact.cs): shake, satisfied, paw, no-repeat
-            MakeWashSyncCases();     // IMP-DOG-026 (WashSync.cs): decay, local arm, late join / reset / handover (simulated), budget. Last: they reset the drying values
-            MakeWashStationCases();  // IMP-ENV-007 (WashStation.cs): tool return / held / spray off
-            MakeWashDirtCases();     // IMP-DOG-029 (WashDirt.cs): walk / zone / grace / station / river
+            } // base
+            if (WsGroup("behavior")) MakeWashBehaviorCases(); // IMP-DOG-027 (WashBehavior.cs): leashed stop, the gates, gathering
+            if (WsGroup("react")) MakeWashReactCases();    // IMP-DOG-028 (WashReact.cs): shake, satisfied, paw, no-repeat
+            if (WsGroup("sync")) MakeWashSyncCases();     // IMP-DOG-026 (WashSync.cs): decay, local arm, late join / reset / handover (simulated), budget. Last: they reset the drying values
+            if (WsGroup("station")) MakeWashStationCases();  // IMP-ENV-007 (WashStation.cs): tool return / held / spray off
+            if (WsGroup("dirt")) MakeWashDirtCases();     // IMP-DOG-029 (WashDirt.cs): walk / zone / grace / station / river
+            if (WsGroup("stations")) MakeWashStationsCases(); // IMP-ENV-008 (WashStations.cs): course stations, tools wired to all dogs, grace near them
+            if (WsGroup("dogs")) MakeWashDogsCases();     // IMP-DOG-030 (WashDogs.cs): all six wired, Dachs foam, the others unchanged. Last: re-binds wsWash to the Dachs
 
             WsWrite();
         }
@@ -687,8 +706,8 @@ namespace KominkaHillside.Editor
             {
                 var u = WsRef(wander[i], "wash") as UdonBehaviour;
                 if (u == null) continue;
-                if (wsWash != null && wsDog != i) throw new InvalidOperationException("more than one dog has a wash (" + wsDog + ", " + i + "); the prototype expects the Shiba only");
-                wsWash = u; wsDog = i; wsWander = wander[i];
+                // IMP-DOG-030: every dog has a wash now; the shared cases still run on the Shiba (WashDogs.cs re-binds for the others)
+                if (wsWash == null || roots[i].name == "KD_Dog_Shiba") { wsWash = u; wsDog = i; wsWander = wander[i]; }
             }
             if (wsWash == null) throw new InvalidOperationException("no dog has KD_DogWanderController.wash wired (run Wash/11)");
             wsRoot = roots[wsDog];

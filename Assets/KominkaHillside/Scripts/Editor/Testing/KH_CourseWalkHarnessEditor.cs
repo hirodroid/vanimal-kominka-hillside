@@ -70,6 +70,7 @@ namespace KominkaHillside.Editor
             public int commerceSet;       // 0 = ledger (96), 1 = ledger re-entry (96b), 2 = treats (97)
             public string commerceSource; // 96b: the PlayerData snapshot of the 96 run that was installed before Play
             public bool washOnly;         // IMP-DOG-025 Course/100 (KH_CourseWalkHarnessEditor.Wash.cs)
+            public string washGroups;     // Course/100a-e: comma-separated groups to run (empty = all). Persisted here because Play mode reloads the domain and clears statics
             public int lapChoice;
             public List<Case> cases=new List<Case>();
             public List<string> errors=new List<string>();public int clientLogErrors;

@@ -11,6 +11,8 @@ namespace KominkaHillside
     // out of a hand); for the others the presser takes the ownership and writes home after the transfer lands, stopping
     // the spray. VRCObjectSync carries the positions to everyone and to late joiners, so nothing here is synced and no
     // network event exists: anyone can press it, and the only entry points are Interact and the local _ResetTools.
+    // IMP-ENV-008: every station (the main KH_WashStation and each KH_WashStations/{name} along the course) has its own
+    // board wired to its own tools only; a press never moves another station's tools.
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_WashStationReset : UdonSharpBehaviour
     {

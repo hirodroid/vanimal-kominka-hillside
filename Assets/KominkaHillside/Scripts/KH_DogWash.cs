@@ -55,7 +55,7 @@ namespace KominkaHillside
     //   every 2 s)       |   leashed / Fetch / disc movement                 | river: D' = D > floor ? max(floor, D - drop) : D   (floor = riverDirtFloor)
     //                    | zone: legs +zoneLegDirt, hip + chest +zoneBodyDirt| W' = min(1, W + riverWetPerSecond x water time) (legs; + hip / chest when swimming)
     //                    |   per zoneDirtSeconds inside a dirt zone          | none while washed (_WashHold), within dirtGraceSeconds of the last clean edge,
-    //                    | river (WaterPose != 0): legs -riverLegDrop per    |   or within dirtStationRadius of the wash station (the river still rinses there)
+    //                    | river (WaterPose != 0): legs -riverLegDrop per    |   or within dirtStationRadius of a wash station (washStation or washStations[]; the river still rinses there)
     //                    |   riverDropSeconds, + wet                         | mask: the part's average change, as a whole-part Brush (see "Dirt on the mask")
     //                    |                                                   | a river drop alone never fires the clean edge (riverBlocksEdge until a wash stroke)
     //  reset (Owner)     | _DebugSetDirt(v): D = v on valid cells, F = W = 0 | epoch++ -> every client repaints once (Restore)
@@ -220,6 +220,8 @@ namespace KominkaHillside
         public KH_FrisbeeCatch dirtFrisbee;
         [Tooltip("洗い場 (KH_WashStation)。ここから dirtStationRadius 以内では汚れない。null なら判定しない")]
         public Transform washStation;
+        [Tooltip("道中の洗い場も含む全洗い場 (IMP-ENV-008、Wash/11 が書く)。どれかから dirtStationRadius 以内では汚れない。null / 空なら washStation だけ")]
+        public Transform[] washStations;
         // Scene-reference arrays: no program defaults (vrc-udonsharp §4). Wash/20 allocates them.
         [Tooltip("泥の地点。球 = 中心から lossyScale.x / 2 以内、箱 (dirtZoneBox[i]) = Transform のローカルの ±0.5 の立方体の中")]
         public Transform[] dirtZones;
@@ -1932,8 +1934,17 @@ namespace KominkaHillside
 
         bool NearStation(Vector3 p)
         {
-            if (washStation == null || !(dirtStationRadius > 0f)) return false;
-            Vector3 d = p - washStation.position;
+            if (!(dirtStationRadius > 0f)) return false;
+            if (NearOne(washStation, p)) return true;
+            if (washStations == null) return false;
+            for (int i = 0; i < washStations.Length; i++) if (NearOne(washStations[i], p)) return true;   // IMP-ENV-008: the stations along the course
+            return false;
+        }
+
+        bool NearOne(Transform station, Vector3 p)
+        {
+            if (station == null) return false;
+            Vector3 d = p - station.position;
             d.y = 0f;
             return d.magnitude <= dirtStationRadius;
         }
