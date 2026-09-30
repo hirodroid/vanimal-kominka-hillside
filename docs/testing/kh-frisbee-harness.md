@@ -529,6 +529,37 @@ node scripts/kh-frisbee-harness.cjs start --mode=terrain --shots=T-cliff,T-rock 
 - 結果: `Logs/kh-course-walk/<run>/frisbee-m3.json` と `report.json`。全体の状態は **`FRISBEE_M3_PASS`** (全ケースが PASS か SKIP) / `FRISBEE_M3_FAIL`、狙いが無ければ Play 前に `FRISBEE_M3_BLOCKED`。Course/95 (計画プローブ) は同じ狙いで F2・F3・F14b・F2m-* を「jump / 水に着地」と照合し、F4 の SKIP は数えない (N/A)。
 - 保証しないもの: 11〜13 の間の犬の Owner の交代 (PCVR 45)、途中参加 (44)、本物の手、端末の時間。
 
+## 本シーンの犬を洗う (Course/100, IMP-DOG-025)
+
+`Tools/KominkaHillside/Course/100 - Harness Wash (Shiba)`。フリスビーではないが、本シーンの歩行ハーネスの 1 モードとして同じ枠で走らせる (journal・全体の締切 1500 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。台本は `KH_CourseWalkHarnessEditor.Wash.cs`。前提は `Wash/11` (組み立て) が済み、柴の `KD_DogWanderController.wash` が配線されていること (他の 5 匹は null)。
+
+```bash
+bash scripts/kh-harness-run.sh walk "Course/100 - Harness Wash (Shiba)"
+```
+
+- **疑似の入力**: 道具 (`KH_WashTool`) の当たり判定を通さず、道具が毎フレーム呼ぶ入口 `KH_DogWash._LocalContact` へ、表面の点 (ワールド座標) と実際の経過時間を渡す。横腹の経路 (W-foam・W-rinse・W-break など) は**ワールド空間**で作る: 腰の Collider の中心から胸を通って首の付け根 (胸と首の中点) までの線の各点へ、体の右 0.6 m から体の中へ Raycast (道具の `washLayer`、Trigger も当てる) し、最も手前の柴の部位 Collider とその点を使う (道具と同じ。部位をまたぐと実行時が区間を切る。当たらないフレームは `_EndContact` して数える)。1 点のケース (W-leg・W-clean) は Collider の `ClosestPoint`。接触の終わりは `_EndContact`、状態は `_DebugSetDirt` / `_DebugClear` で作る。範囲外の引数は `SendCustomNetworkEvent(All, "NetStroke", ...)` で送る。各ケースは最初に状態を作り直し、接触のケースは柴を門の道の横へ置いてから始める (歩行ハーネスの置き方と同じ注入)
+- 引数のある U# のメソッドは名前と引数の記号が付け替えられる (`__0__LocalContact`・`__N_tool__param`)。ハーネスは実行中のプログラムの記号表から候補を引き、同じ名前の引数の候補すべてへ同じ値を書いてから呼ぶ。最初の `_LocalContact` の後にヒープの `_hCollider` / `_hMesh` を読んで届いたことを確かめる。解決した名前は `wash.json` の `resolved`
+- 観測: マスクは実行時の現在の面 (ヒープの `_cur`。殻のマテリアルの `_Mask` とも照合し、違えば `maskSource` に出る) を `ReadPixels` (RGBAHalf) で読む。「区間に沿って」は、接触の点を実行時と同じ変換 (`partBones[i].InverseTransformPoint` → `boneToMesh[i]`) でメッシュ座標へ直し、位置マップ (`posMap`) の RGB がその点に近いテクセル (その部位と隣の部位、6 個) の平均で見る。接触の点から 0.6 r 以内にテクセルが無ければ失敗 (Collider の表面が毛から離れている)。セルと合図はヒープ (`_dirt` / `_foam` / `_wet` / `cleanArmed`) と読み出しの入口 (`_AverageDirt` など)
+
+| ケース | 内容 | 合格 |
+|---|---|---|
+| W-idle | 何もしない (必ず最初: まだストロークが無い) | `_WashHold()` false、洗われ中の枝に入らない、`_DebugClear` の後に殻が無効、45 s 以内に 0.5 m 歩く |
+| W-dirt | `_DebugSetDirt(0.6)` | `_AverageDirt()` > 0.2、殻が有効、マスクの R > 0.05 のテクセルがある |
+| W-foam | 横腹の経路 (腰 → 胸 → 首の付け根、ワールドで 0.2〜0.3 m) をスポンジ 2.5 s | Raycast が毎フレーム当たる (外れ = 部位 Collider の隙間で FAIL)、メッシュ上で 0.15 m 以上動く、区間の 5 点で G +0.1 以上、**経路を 24 等分した点の G の最小が +0.1 より大きい** (部位の境目で帯が切れていない。切れていれば実行時の不具合の候補として FAIL と数値)、区間から 2r + 0.05 m より遠いテクセルは G +0.02 未満、`_AverageFoam()` が増える、当たった部位の集合に腰 (0) と胸 (1) が含まれ、ほかは首 (2) か右前足 (4) だけ (終点付近で右から打った光線が右前足に当たるのは実際の道具でも起こる正しい当たり)、`_LastStrokePart()` がその集合の中 |
+| W-rinse | 同じ経路の全体に泡 3 s → 前の 1/3 だけシャワー 1 s | 水の区間で G −0.1・R −0.05・B +0.1、水の区間から (水の半径 + 0.04 m) より遠い泡は 70 % 以上残る (帯)。**仕様の「同じ区間へ」から変えた**: 同じ区間では「区間の外の泡」が無い |
+| W-hold | 犬が動き出すのを最大 8 s 待ち、胴の 1 点へ 3 s | 1.5 s 以内に `_WashHold()` true、洗われ中の枝 (`_washActive`)、終わりの 0.5 s の水平の速さ < 0.05 m/s。接触をやめて人を 12 m 離し、`holdSeconds − 0.5` s でまだ true、`holdSeconds + 1` s で false、その後 30 s 以内に 0.3 m 歩く |
+| W-break | 同じ経路の始点 (u 0、腰) へ 0.5 s → `_EndContact` (同じフレーム) → 終点 (u 1、0.15 m 以上離す) へ 0.5 s | 両方の点に泡、間の経路の点 (両端から r + 0.04 m、無ければ r + 0.01 m より離れた所) の G・B の変化が 0.01 未満。Collider が違ってよい (接触が切れていれば区間はつながらない)。始点が腰に当たらない・2 点が 0.15 m 未満・間の点が無ければ **SKIP** (N/A) |
+| W-leg | 前足 (部位 3) の一番低い Collider (すね) の外側の表面の 1 点へスポンジ 1 s | その足のテクセルの G +0.1 以上、反対の前足 (部位 4) のテクセルは全部 G +0.02 未満 (バインドポーズで近い別の部位へ貫通しない)、胴 (0 / 1) は接触の点から r + 0.02 m より遠いテクセルが G +0.02 未満 (胸は前足の隣の部位なので、r 以内は増えてよい。notes に最も近い胴のテクセルまでの距離) |
+| W-rate | 同じ点へ 0.6 s、毎フレームと 3 フレームに 1 回 (seconds = 実際の経過時間、最後の呼び出しで合計をそろえる) | G の差が 15 % 以内。0.25 s を超える呼び出し (伸びたフレーム) があれば失敗 (単独で回し直す)。**2 s ではなく 0.6 s**: 2 s は G が 1 に張り付き、差が見えない |
+| W-clean | 汚れ 0.6 から、全 Collider の表面の点 (犬の向きの 6 方向 + 斜め 8 方向、0.08 m で間引く) へシャワー (半径 0.11 m = 実際の道具の範囲) 1 s ずつ、1 か所ずつ | 90 s 以内に `_AverageDirt()` < `cleanDirtThreshold` かつ `_CleanSerial()` +1 (ちょうど)。かかったゲーム内の秒を notes に出す (1 匹 1〜2 分の目標の目安。道具 1 本・1 か所ずつの値) |
+| W-reclean | `_DebugClear` から、全身へスポンジ → シャワー | 泡で `cleanArmed` が立つまで (`_AverageFoam()` >= `dirtyFoamThreshold`) は `_CleanSerial()` が増えない、流して +1 (ちょうど)。W-clean の後ではなく自分で「きれい」から始める |
+| W-reject | `NetStroke` へ 道具 9 / −1、部位 −1 / 99、量が負・時間 0・半径 10 mm・2^20 以上、座標 2^30 / −1、seq −1 (0.25 s 間隔) | 例外が出ない (Console のエラーは全体の失敗)、マスクとセルが変わらない。対照に正しい 1 本: セルが変わり、自分の送った分はマスクへ描き直さない |
+| W-others | 他の 5 匹 | `wash` が null、柴を洗っている間も洗われ中の枝に入らない、その後 60 s 以内にそれぞれ 0.3 m 歩く |
+
+- 結果: `Logs/kh-course-walk/<run>/wash.json` (ケースごとの notes・`resolved`・`maskSource`・`notCovered`) と `report.json`。全体の状態は **`WASH_PASS`** (全ケース PASS か SKIP) / `WASH_FAIL`。落ちたケースは片付け (`_EndContact`) をして次へ進む
+- 偽の失敗: VRChat クライアントのログの混入は他のモードと同じく `clientLogErrors` に数えて失敗にしない。各ケースの notes に最大のフレーム時間を出し、100 ms を超えた回は「単独で回し直す」を付ける。歩く・動くの判定 (W-idle・W-hold・W-others) は犬の休憩・近接の停止で遅れることがある (notes に `restPhase` / `paused`)
+- **見ていないもの (ClientSim は 1 クライアント)**: `NetStroke` は自分へ返る経路 (Owner = 自分) だけ。他のクライアントでの描画、クライアント間の 8 Hz と送り主ごとの予算、他人のストロークの Owner による積算、2 人同時、途中参加の描き直し (Restore)、Owner の交代。道具 (掴む・シャワーの Raycast・VR のスポンジの球・Desktop の視線と Use・振動・放水の同期)。殻の見た目・飛沫・音、犬の顔の向きと首かしげ、水・集合・呼び戻しとの優先、乾き (90〜120 s) と乾いた後の殻の消灯、Quest / iOS の描画。これらは Play と PCVR (2 人) で見る
+
 ## 保証する範囲
 
 実際に通るもの:
