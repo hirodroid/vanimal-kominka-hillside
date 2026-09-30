@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-75 件 — 対応中 18 / 確認待ち 25 / 未着手 19 / 保留 3 / 完了 10
+76 件 — 対応中 19 / 確認待ち 25 / 未着手 19 / 保留 3 / 完了 10
 
 ## 実行キュー
 
@@ -18,6 +18,7 @@
 | [IMP-DOG-024](IMP-DOG-024-walk-and-wash-experience.md) | High | Animal Wash以上のASMR的な洗浄の気持ちよさを最優先に、散歩帰りのお手入れと複数洗い場を作る大型Issue | wip | IMP-DOG-025 で代表 1 匹 (柴) の一周を作り、賭け 3 つを確かめる |
 | [IMP-DOG-025](IMP-DOG-025-wash-prototype-one-dog.md) | High | 代表 1 匹 (柴) で洗浄の一周を細く通し、設計書の賭け 3 つを確かめる試作 | wip | 2026-09-30 の PCVR の指摘 (泡の層の切れ目、犬が向きすぎる、座りすぎる、汚れは足元から、汚れと濡れの区別) を直す |
 | [IMP-DOG-028](IMP-DOG-028-wash-sound-and-reactions.md) | High | 洗浄の音と犬の反応の仕上げ (音素材の制作と記録、個人音量、タオル、ブルブル、満足の合図) | wip | ハーネス (W-shake / satisfied / paw / no-repeat) の結果、ユーザーの Play (反応の見え方、音の試聴)、試聴の後の音素材の作り直しが残り |
+| [IMP-ENV-010](IMP-ENV-010-quest-performance.md) | High | Quest 3 単体で 10〜20 fps・地形が光る (2026-09-30 実機報告)。Android/iOS ビルドだけ地形を Lite シェーダーへ差し替え、群ごとの ON/OFF プローブで寄与を実機で測る | wip | Android ビルド (ログ replaced=20) → ユーザーの Quest 3 で光りの有無と群ごとの fps を §4 に記録 |
 | [DES-ENV-002](DES-ENV-002-longer-course.md) | Medium | 約2.41kmの川沿い周回を実装し、2026-09-27に本番シーン (VRCDefaultWorldScene) へ採用済み。Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する | wip | 犬連れの実歩行時間、LODと遮蔽の実機表示、Quest 3・iPhone 15 Pro・16人の性能から最終距離/予算を確定する (ユーザーの実機。VER-WLD-001) |
 | [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK)、段階 2・3 は 9/24 実装済み・PCVR 待ち | wip |  |
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開は012 | wip |  |
