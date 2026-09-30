@@ -28,6 +28,10 @@ namespace KominkaHillside
     // last holder: the Pickup hands it over, or whoever inherited it) moves it, the same way KH_ToyRecall parks a toy
     // (write the position, FlagDiscontinuity). The others see it through VRCObjectSync. Nobody takes the ownership
     // for it, so a tool in someone's hand is never pulled away. The spray and the contacts end before the move.
+    // Decided 2026-09-30 (user): tools stay where they were put; the automatic return is off (returnSeconds 0, written
+    // by the builder; the code stays). They go home only from the station's reset button (KH_WashStationReset ->
+    // _RequestReturn): the presser takes the ownership of each tool nobody holds, and writes the home position once the
+    // transfer is confirmed (OnOwnershipTransferred; vrc-networking §4), as KH_TreatPouch's recall does.
     [UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
     public class KH_WashTool : UdonSharpBehaviour
     {
@@ -59,8 +63,8 @@ namespace KominkaHillside
         [Header("置き場へ戻る (IMP-ENV-007。ビルダーが書く)")]
         [Tooltip("棚の定位置 (KH_WashStation/Homes の子。棚と一緒に動く)")]
         public Transform home;
-        [Tooltip("誰も持たずに定位置から離れてからこの秒数で戻る")]
-        public float returnSeconds = 20f;
+        [Tooltip("誰も持たずに定位置から離れてからこの秒数で戻る。0 以下 = 自動では戻らない (2026-09-30 ユーザー決定: リセットボタンで戻す)")]
+        public float returnSeconds = 0f;
         [Tooltip("定位置からこの距離 (m) 以内なら戻っているとみなす")]
         public float homeTolerance = 0.05f;
         [Tooltip("ハーネス専用: 1 = 持っている扱い / -1 = 持っていない扱い / 0 = 実値。本番は 0 (Wash/12 が確かめる)")]
@@ -70,6 +74,9 @@ namespace KominkaHillside
         private VRCObjectSync _sync;
         private float _awaySince = -1f;    // local clock: last seen held or left home (-1 = at home)
         private int _returnCount;          // harness read-out only
+        private bool _returnPending;       // the reset asked for this tool's ownership; write home when it lands
+        private float _returnAskedAt = -100f;
+        const float ReturnAskTimeout = 4f;
         private bool _held;
         private bool _useHeld;
         private bool _sprayShown;
@@ -188,6 +195,16 @@ namespace KominkaHillside
             // A new Owner (a pickup hand-over, or the old Owner left) counts the return from now: its own clock may have missed
             // the last hold (seen late / joined late), so it waits the full returnSeconds instead of snapping the tool away at once.
             if (_awaySince >= 0f) _awaySince = Time.time;
+            // The reset's request landed: write home now, unless someone picked it up meanwhile (then the pickup took it).
+            if (_returnPending)
+            {
+                if (Networking.IsOwner(gameObject))
+                {
+                    _returnPending = false;
+                    if (!HeldForReturn() && home != null) ReturnHome();
+                }
+                else if (Utilities.IsValid(Networking.LocalPlayer) && player.playerId != Networking.LocalPlayer.playerId) _returnPending = false;   // someone else took it: give up
+            }
         }
 
         // ---- Pickup (these fire only on the holder's client) ----
@@ -275,7 +292,8 @@ namespace KominkaHillside
 
         void ReturnTick()
         {
-            if (home == null || returnSeconds <= 0f) return;
+            if (_returnPending && Time.time - _returnAskedAt >= ReturnAskTimeout) _returnPending = false;
+            if (home == null || returnSeconds <= 0f) return;   // 0 or less: never returns by itself (the production value)
             float now = Time.time;
             if (HeldForReturn()) { _awaySince = now; return; }
             Vector3 d = transform.position - home.position;
@@ -298,6 +316,27 @@ namespace KominkaHillside
             if (_sync != null) _sync.FlagDiscontinuity();          // a teleport: others do not see it slide there
             _returnCount++;
         }
+
+        /// <summary>The reset button (KH_WashStationReset, local, from Interact): send this tool home unless someone holds it.
+        /// Already the Owner: at once. Otherwise take the ownership (a tool nobody holds: nobody's hand is emptied) and write
+        /// home in OnOwnershipTransferred. A request that has not landed in ReturnAskTimeout is dropped (press again).
+        /// Returns false when the tool is held (skipped).</summary>
+        public bool _RequestReturn()
+        {
+            if (home == null) return true;
+            if (HeldForReturn()) return false;
+            if (Networking.IsOwner(gameObject)) { _returnPending = false; ReturnHome(); return true; }
+            if (_returnPending && Time.time - _returnAskedAt < ReturnAskTimeout) return true;   // already asked: do not fight (vrc-networking §4)
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) return true;
+            _returnPending = true;
+            _returnAskedAt = Time.time;
+            Networking.SetOwner(lp, gameObject); // net: setowner-ok: reset button, only a tool nobody holds; home is written after the transfer
+            return true;
+        }
+
+        /// <summary>Held as far as this client can see (the reset skips it; the harness reads it).</summary>
+        public bool _HeldNow() { return HeldForReturn(); }
 
         /// <summary>Harness only (Course/100 W-tool-spray): the return itself, now, even while debugHeldOverride plays a
         /// holder, so the spray stop on the return path is seen apart from the Owner's clean-up of an orphaned spray.

@@ -226,10 +226,10 @@ namespace KominkaHillside
         public bool[] dirtZoneBox;
         public bool dirtEnabled = true;
         [Tooltip("リード接続中・Fetch 中・ディスク中にこの距離 (m) を進むと、足が walkLegDirt 汚れる")]
-        public float walkDirtMeters = 300f;
+        public float walkDirtMeters = 900f;   // Wash/11 writes KH_DogWashSetupEditor.DirtTuning
         public float walkLegDirt = 0.5f;
         [Tooltip("泥の地点にこの秒数いると、足が zoneLegDirt、腰と胸が zoneBodyDirt 汚れる")]
-        public float zoneDirtSeconds = 10f;
+        public float zoneDirtSeconds = 25f;
         public float zoneLegDirt = 0.5f;
         public float zoneBodyDirt = 0.2f;
         [Tooltip("水の中 (WaterPose != 0) にこの秒数いると、足の汚れが riverLegDrop 落ちる。riverDirtFloor より下へは落とさない (川だけで清潔にしない)")]
@@ -239,7 +239,7 @@ namespace KominkaHillside
         [Tooltip("水の中で足 (泳ぐと腰と胸も) が 1 秒あたりに濡れる量")]
         public float riverWetPerSecond = 0.1f;
         [Tooltip("清潔の合図 (cleanSerial) からこの秒数は汚れない")]
-        public float dirtGraceSeconds = 120f;
+        public float dirtGraceSeconds = 300f;
         public float dirtStationRadius = 6f;
         [Tooltip("汚れの増減をセルへ入れて配る間隔 (s)。増減が無い回は送らない")]
         public float dirtApplyInterval = 2f;

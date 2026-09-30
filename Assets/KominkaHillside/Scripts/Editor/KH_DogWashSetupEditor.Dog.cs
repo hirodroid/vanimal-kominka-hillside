@@ -17,6 +17,38 @@ namespace KominkaHillside.Editor
     // PhysBone ignores, KH_Wash_{dog} with its effects).
     public static partial class KH_DogWashSetupEditor
     {
+        // ---- 汚れの調整値 (IMP-DOG-029)。Wash/11 がこの表を KH_DogWash へ書き、Wash/12 が一致を検査する。変えたら Wash/11 ----
+        // 根拠 (2026-09-30 PCVR「もう少しゆっくり。洗ったのに散歩ですぐ汚れる」を受けた統括の目安):
+        //   周回 1 周 2.4 km を 25〜30 分で歩く前提。walkDirtMeters 900 = 1 周で足が 0.5 x 2.4 / 0.9 ≒ 1.3 → 1 周弱で足が真っ黒
+        //   (途中で汚れが目に見えて進み、1 周のうちに洗いたくなる)。
+        //   洗った後は周回の 1/3 (約 800 m、8〜10 分) はきれいなまま: 猶予 300 s (5 分) + 汚れ始めの薄い間。
+        //   泥の地点は 25 s 居て足が半分 (通りすがりではほとんど汚れない、遊ぶと汚れる)。
+        static readonly (string field, float value)[] DirtTuning =
+        {
+            ("walkDirtMeters", 900f),
+            ("walkLegDirt", 0.5f),
+            ("zoneDirtSeconds", 25f),
+            ("zoneLegDirt", 0.5f),
+            ("zoneBodyDirt", 0.2f),
+            ("dirtGraceSeconds", 300f),
+            ("dirtStationRadius", 6f),
+            ("riverDropSeconds", 30f),
+            ("riverLegDrop", 0.3f),
+            ("riverDirtFloor", 0.15f),
+        };
+
+        static void WriteDirtTuning(KH_DogWash wash)
+        {
+            var so = new SerializedObject(wash);
+            foreach (var t in DirtTuning)
+            {
+                var p = so.FindProperty(t.field);
+                if (p == null) throw new InvalidOperationException("KH_DogWash." + t.field + " missing (compile first)");
+                p.floatValue = t.value;
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
         class Shared
         {
             public Material splash, foam, spray;
@@ -298,6 +330,7 @@ namespace KominkaHillside.Editor
             wash.hitSplash = splash; wash.foamPuff = puff;
             wash.contactFur = fur; wash.contactFoam = foam; wash.scrub = scrub;
             EditorUtility.SetDirty(wash);
+            WriteDirtTuning(wash);   // the dirt tuning table above (IMP-DOG-029); copied to Udon with the rest
             // the cell texture shows the runtime seed with this dog's initialDirt (Play tuning value, not written here)
             EnsureCellTex(CellTexPath(d.target.key), d.cellTex.name, InitialCellColors(d.cells, wash.initialDirt));
             return wash;

@@ -13,6 +13,7 @@
 | `WashTable` | すのこ | 中心 (0, 地面, -1.2)、0.6 (X) × 0.03 × 0.9 (Z)。上面は地面から 0.03 m | 板 5 枚 `Slat_0..4` (0.15 m 幅、隙間 0.0375 m) | 固い Box 1 つ (Default 層。人が歩ける、犬の地面レイ 0\|11 が見る)。板には無し |
 | `Tub` | 桶 (Cylinder) | 中心 (-0.95, 地面 + 0.13, -0.05)、直径 0.4 × 高さ 0.26 | `KH_WashTool_Shelf` (濃い茶) | 固い Capsule |
 | `Sign` / `SignText` | 札 (Cube) + TextMeshPro | 天板の奥 (z 0.19)、0.34 × 0.12 × 0.02。文字は板の正面 (-Z 向き) | 札は濃い茶、文字は生成り #F2E8D0、フォント `KD_NotoSerif SDF` (自動サイズ 0.2〜0.9) | 札・文字とも無し (Pickup の光線を遮らない) |
+| `ResetButton` / `ResetText` | リセットの札 (Cube) + TextMeshPro | 中心 (0.40, 0.72, -0.237)、0.22 × 0.10 × 0.02 (天板の正面の縁の下) | 濃い茶、文字は生成り | 固い Box (Interact の的) |
 | `Homes/Home_<道具名>` | 空の Transform | 道具の棚の上の定位置 (下表)。棚と一緒に動く | — | — |
 
 道具の見た目は今のプリミティブのまま、色だけ整えた: スポンジ = 黄 (`KH_WashTool_Sponge`)、シャワーの頭 = 銀 (`KH_WashTool_ShowerHead`)、タオル = 生成り (新規 `KH_WashTool_TowelKinari` 0.93 / 0.89 / 0.80)。
@@ -54,28 +55,29 @@
 
 地面の傾き: 未実測。棚の原点 (2.07) とおやつ (1.85、ピボットの高さ) の差からの粗い推定は約 5°。**Wash/12 が棚・すのこ・余白の範囲 (2.6 × 2.1 m、63 点) で面の当てはめの傾きと隣り合う点の最大の傾きを notes に出し、5° を超えたら `WARN` を付ける** (失敗にはしない。ユーザーへ報告する)。
 
-## 3. 道具の戻り
+## 3. 道具の戻し方 (リセットボタン)
 
-- 誰も持たずに定位置から離れて **20 秒** (`KH_WashTool.returnSeconds`、ビルダーが書く) たった道具は、棚の定位置 (`home`) へ戻る
-- 方式は既存の置き場 (IMP-DOG-019 の `KH_ToyRecall.Park`) と同じ: **道具の Owner が位置と回転を書いて `VRCObjectSync.FlagDiscontinuity()`**。`Respawn()` はシーン開始時の位置へ戻すので使わない (棚が動いても `home` は一緒に動く)
-- 秒数は各端末が数える (持っているのを見た時・定位置を離れた時に数え直す)。動かすのは Owner だけで、戻すために Owner を取らない (人の手から奪わない)。Pickup が持った人へ Owner を移すので、通常は最後に持った人。その人が抜けたら引き継いだ人
-- 持っている間は戻らない (`_held` / `VRC_Pickup.currentPlayer` / `IsHeld`)。戻る時は接触を終え、シャワーは放水を止める (`KH_WashToolState._SetSpraying(false)` とローカルの粒・音)
-- 定位置から 0.05 m 以内 (`homeTolerance`) は戻っているとみなす
-- Owner が替わった時 (Pickup の受け渡し・退出による自動移譲) は、新しい Owner が秒数を数え直す (見落とした持ち時間で即座に戻さない。Codex 観点 6 への最小の対処)
-- **未確認 (実機・複数人):** 退出による自動移譲の後に戻るか、持っている人と Owner が一時的に違う間の振る舞い、2 人が同時に Pickup した時、放水の子 (`State`) の Owner 移譲 (戻る時に `_SetSpraying(false)` が Owner を取りに行くことがある)、戻る時刻の端末差 (各端末の時計なので「手放してきっかり 20 秒」は保証しない。数え直しで遅くなる側へずれる)
+決定: 2026-09-30 (ユーザー) 「道具は自動で戻さず、置いた所に置いておきたい。リセットボタンを作って戻す」。
+
+- **自動の戻りは無効**: `KH_WashTool.returnSeconds` = 0 (ビルダーが書く。0 以下 = 戻らない)。数える処理はコードに残す
+- **リセットボタン** `KH_WashStation/ResetButton`: 天板の正面の縁の下 (東寄り、タオルの下) に下げた小さな札 (Cube + BoxCollider + `KH_WashStationReset`、Interact)。Interaction Text は ASCII の仮 `Reset tools`、札の文字は `ResetText` の仮 `RESET` (どちらも日本語はユーザーが Inspector で。Build は既定値 "Use"・空以外を上書きしない)
+- 押すと、その洗い場の道具 6 個に `_RequestReturn()` を頼む (ローカル処理。同期変数もネットワークイベントも無く、入口は Interact と `_ResetTools` だけ。誰でも押せる。連打は 1 秒抑制)
+- 各道具: **誰かが持っていれば飛ばす** (手から奪わない)。押した人が Owner なら即座に、そうでなければ `Networking.SetOwner` で Owner を取り、`OnOwnershipTransferred` で移譲を確かめてから (その間に誰かが持ったら諦める) 位置と回転を `home` へ書いて `FlagDiscontinuity()`。接触を終え、シャワーは放水を止める (`_SetSpraying(false)` とローカルの粒・音)。4 秒で届かない要求は捨てる (押し直す)。`VRCObjectSync` が全員・途中参加者へ位置を配る
+- **未確認 (実機・複数人):** 他の人が Owner の道具の SetOwner の往復、持ち始めた直後 (持っているのがまだ見えない) の道具を押した時に手から外れないか、2 人が同時に押した時・同時の Pickup、放水の子 (`State`) の Owner 移譲
 
 ## 4. 検査
 
-- **Wash/12 (`KH_DogWashSetupEditor.StationVerify.cs` の `CheckStationLayout`)**: 棚の回転が yaw だけ・前回の Build の位置のまま / 天板と脚 4 本 / 道具 6 個の `home` が `Homes` の下・棚の上・道具がそこに置かれている / `returnSeconds` 20・`homeTolerance` 0.05・`debugHeldOverride` 0 (proxy と backing) / すのこの Collider (固い Box 1 つ、Default、0.6 × 0.03 × 0.9、地面に据えてある、上からの光線が最初に当たる) / 両側各 1 m に固い Collider が無い / 桶と札 (札は Collider 無し、文字が共通フォントにある) / スポーン・周回の起点・おやつ・店番・歓迎・リード台・犬の待機の輪から 1.5 m 以上 / 地面の傾き (notes)
-- **ClientSim (Course/100 に足す `MakeWashStationCases`)**: W-tool-return (2 m 離す → 短縮した秒数の後に戻る、早すぎない) / W-tool-held (持っている扱いの間は戻らない、離してから数える) / W-tool-spray (放水中の戻りで放水が止まる)。持つのは `debugHeldOverride` の疑似で、実際の Pickup・他の人・途中参加は対象外
+- **Wash/12 (`KH_DogWashSetupEditor.StationVerify.cs` の `CheckStationLayout`)**: 棚の回転が yaw だけ・前回の Build の位置のまま / 天板と脚 4 本 / 道具 6 個の `home` が `Homes` の下・棚の上・道具がそこに置かれている / `returnSeconds` 0・`homeTolerance` 0.05・`debugHeldOverride` 0 (proxy と backing) / リセットボタン (`KH_WashStationReset`、同期 None、`tools` = 6 個を順に、Collider、Interaction Text、札の文字と字形) / すのこの Collider (固い Box 1 つ、Default、0.6 × 0.03 × 0.9、地面に据えてある、上からの光線が最初に当たる) / 両側各 1 m (すのこの縁から 2 cm 離す) に固い Collider が無い (洗い場自身の部品も数える) / 桶と札 / スポーン・周回の起点・おやつ・店番・歓迎・リード台・犬の待機の輪から 1.5 m 以上 / 地面の傾き (notes)
+- **ClientSim (Course/100 に足す `MakeWashStationCases`)**: W-tool-stay (本番の 0 のまま 2 m 離して 30 s (`WtStillSeconds`) 置いても動かない) / W-tool-reset (`_ResetTools` を直接呼ぶ → 持っていない 5 個が定位置へ、持っている 1 個は残る、放水が止まる)。持つのは `debugHeldOverride` の疑似で、Interact の光線・他の人・途中参加は対象外
 
 ## 5. ユーザーに頼むこと
 
-- 札の文字: 今は ASCII の仮 `WASH`。`KH_WashStation/SignText` の TextMeshPro へ Inspector で日本語 (例「いぬのおてあれ」) を入れる。Build は空でない文字を上書きしない。`KD_NotoSerif SDF` は Static なので、無い字は Wash/12 がコードポイントで挙げる (フォントの AddGlyphs で足す)
+- 札の文字: 今は ASCII の仮 `WASH` (リセットボタンは Interaction Text `Reset tools`・札 `RESET`)。`KH_WashStation/SignText` の TextMeshPro へ Inspector で日本語 (例「いぬのおてあれ」) を入れる。Build は空でない文字を上書きしない。`KD_NotoSerif SDF` は Static なので、無い字は Wash/12 がコードポイントで挙げる (フォントの AddGlyphs で足す)
 - 位置の微調整: `KH_WashStation` を手で動かしてよい (回転は y だけ)。動かしたら Wash/11 → Wash/12
-- Play / PCVR: スポーンから見えるか、初見で道具を取って洗い始められるか、両側へ回れるか、おやつの前の通路 (余白の東端から 0.6 m) が詰まらないか、道具の戻し先が分かるか
+- Play / PCVR: スポーンから見えるか、初見で道具を取って洗い始められるか、両側へ回れるか、おやつの前の通路 (余白の東端から 0.6 m) が詰まらないか、道具の戻し先とリセットボタンが分かるか (押して戻るか)
 
 ## 記録
 
 - 2026-09-30: 作成 (コードのみ。コンパイル・Build・Verify・ハーネスは未実行)
 - 2026-09-30: Codex レビュー反映 (7-1 地面をテレインに限定・空き検査の底を独立に、9-2 タオル 2 枚、観点 6 の Owner 交代で数え直し)
+- 2026-09-30: ユーザー決定で自動の戻りを無効 (returnSeconds 0) にし、リセットボタン (KH_WashStationReset) を追加

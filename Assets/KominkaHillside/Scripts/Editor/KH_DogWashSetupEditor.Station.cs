@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using UdonSharp;
 using UdonSharpEditor;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -15,7 +16,8 @@ namespace KominkaHillside.Editor
     // IMP-DOG-025 builder: the tool shelf KH_WashStation (scene root) with 2 sponges, 2 showers and 1 towel.
     // IMP-ENV-007 (main wash station, docs/plans/2026-09-30-wash-station-layout.md): a low wooden stand (top "Shelf" +
     // 4 legs), the duckboard "WashTable" 1.2 m in front of it (station local -Z, toward the spawn), a tub, a small board
-    // sign, and a home Transform per tool under "Homes" (KH_WashTool.home: the tool returns there 20 s after it was let go).
+    // sign, and a home Transform per tool under "Homes" (KH_WashTool.home), and the reset button "ResetButton" (KH_WashStationReset: sends every tool nobody holds
+    // home; the automatic return is off by the user's decision 2026-09-30, returnSeconds 0).
     // Everything is a child of KH_WashStation with code-owned local transforms, so it moves with the station. The
     // station's own position and rotation are human-owned once it exists (never written here after creation); the
     // duckboard and the tub are seated on the ground under them on every Build (run 11 again after moving the station).
@@ -41,7 +43,13 @@ namespace KominkaHillside.Editor
         const float SignZ = 0.19f;                                                      // at the back of the shelf top, facing the front (-Z)
         const string SignText = "WASH";                                                 // ASCII placeholder; the Japanese is typed in the Inspector (layout doc §5)
         const string HomesName = "Homes", TableName = "WashTable", TubName = "Tub", SignName = "Sign", SignTextName = "SignText";
-        const float ReturnSeconds = 20f, HomeTolerance = 0.05f;
+        // 2026-09-30 (user): no automatic return; the reset button sends the tools home. 0 = never returns by itself.
+        const float ReturnSeconds = 0f, HomeTolerance = 0.05f;
+        // ---- the reset button: a small board hanging under the top's front edge (east), below the towels ----
+        const string ResetName = "ResetButton", ResetTextName = "ResetText", ResetProgram = "KH_WashStationReset";
+        static readonly Vector3 ResetLocal = new Vector3(0.40f, 0.72f, -(ShelfDepth * 0.5f) - 0.012f);
+        static readonly Vector3 ResetSize = new Vector3(0.22f, 0.10f, 0.02f);
+        const string ResetInteractText = "Reset tools", ResetLabel = "RESET";   // ASCII placeholders; the Japanese is typed in the Inspector
         /// <summary>Not the tool's own name (a scene-wide search by the tool's name stays unique).</summary>
         static string HomeName(ToolSpec s) { return "Home_" + s.name; }
         const string WoodMatPath = "Assets/KominkaHillside/Data/Environment/River/KH_RiverWood.mat";
@@ -106,7 +114,70 @@ namespace KominkaHillside.Editor
             foreach (Transform t in station.transform.Cast<Transform>().ToArray())
                 if ((t.name.StartsWith("KH_WashSponge_") || t.name.StartsWith("KH_WashShower_") || t.name.StartsWith("KH_WashTowel_")) && !ToolSpecs.Any(s => s.name == t.name))
                 { r.log.Add("removed stale tool " + t.name); UnityEngine.Object.DestroyImmediate(t.gameObject); }
+            BuildReset(station.transform, tools, shared.shelf, r);
             return tools;
+        }
+
+        // ================================================================ IMP-ENV-007: the reset button (10b makes its program)
+
+        [MenuItem(Menu + "10b - Create Station Programs")]
+        public static void CreateStationPrograms()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) throw new InvalidOperationException("[KH Wash Setup] Edit mode only (not compiling)");
+            string asset = ScriptsDir + "/" + ResetProgram + ".asset";
+            if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(asset) != null) { Debug.Log("[KH Wash Setup] " + ResetProgram + " program asset exists; nothing changed"); return; }
+            var script = AssetDatabase.LoadAssetAtPath<MonoScript>(ScriptsDir + "/" + ResetProgram + ".cs");
+            if (script == null) throw new InvalidOperationException(ResetProgram + ".cs not imported yet; refresh first");
+            var created = ScriptableObject.CreateInstance<UdonSharpProgramAsset>();
+            created.sourceCsScript = script;
+            AssetDatabase.CreateAsset(created, asset);
+            AssetDatabase.SaveAssets();
+            UdonSharpProgramAsset.CompileAllCsPrograms(true);
+            Debug.Log("[KH Wash Setup] created " + asset + ". Compile U# (scripts/unity-compile.sh --udon), then run 11.");
+        }
+
+        static void BuildReset(Transform station, List<KH_WashTool> tools, Material dark, BuildReport r)
+        {
+            if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(ScriptsDir + "/" + ResetProgram + ".asset") == null)
+                throw new InvalidOperationException(ResetProgram + ".asset missing: run Wash/10b, compile U#, then 11 again (reopen the scene without saving to drop this run)");
+            var board = Prim(station, ResetName, PrimitiveType.Cube, true);   // the collider is what Interact aims at
+            board.layer = 0;
+            board.transform.localPosition = ResetLocal;
+            board.transform.localRotation = Quaternion.identity;
+            board.transform.localScale = ResetSize;
+            UnitBox(board);
+            SetLook(board, dark);
+            var reset = AddUdon<KH_WashStationReset>(board, Networking.SyncType.None);
+            reset.tools = tools.ToArray();
+            EditorUtility.SetDirty(reset);
+            var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(reset);
+            // The words are the user's once written: only the UdonBehaviour default ("Use") or an empty text gets the placeholder.
+            if (string.IsNullOrEmpty(backing.interactText) || backing.interactText == "Use") { backing.interactText = ResetInteractText; EditorUtility.SetDirty(backing); }
+            if (backing.proximity < 1.5f) { backing.proximity = 1.5f; EditorUtility.SetDirty(backing); }
+
+            // the label on the board's front (-Z), like the sign
+            var textT = Child(station, ResetTextName);
+            textT.gameObject.layer = 0;
+            var tmp = textT.GetComponent<TextMeshPro>();
+            bool fresh = tmp == null;
+            if (fresh) tmp = textT.gameObject.AddComponent<TextMeshPro>();
+            textT = tmp.transform;
+            textT.localPosition = new Vector3(ResetLocal.x, ResetLocal.y, ResetLocal.z - ResetSize.z * 0.5f - 0.002f);
+            textT.localRotation = Quaternion.identity; textT.localScale = Vector3.one;
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath);
+            if (font == null) throw new InvalidOperationException("Shared UI font missing: " + KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath);
+            tmp.font = font;
+            if (fresh || string.IsNullOrEmpty(tmp.text)) tmp.text = ResetLabel;
+            tmp.alignment = TextAlignmentOptions.Center; tmp.enableWordWrapping = false;
+            tmp.enableAutoSizing = true; tmp.fontSizeMin = 0.15f; tmp.fontSizeMax = 0.7f;
+            tmp.color = SignInk;
+            tmp.rectTransform.sizeDelta = new Vector2(ResetSize.x - 0.03f, ResetSize.y - 0.02f);
+            var mr = tmp.GetComponent<MeshRenderer>();
+            if (mr != null) { mr.shadowCastingMode = ShadowCastingMode.Off; mr.receiveShadows = false; EditorUtility.SetDirty(mr); }
+            EditorUtility.SetDirty(tmp);
+
+            Copy(reset);   // the main Build copies the tools; this behaviour is the station's own (its tools are wired above)
+            r.log.Add(ResetName + " wired to " + tools.Count + " tools");
         }
 
         static KH_WashTool BuildTool(Transform station, ToolSpec spec, Shared shared, Audio audio, Transform home, Material towelMat)

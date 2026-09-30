@@ -94,6 +94,33 @@ namespace KominkaHillside.Editor
                 Backing(req, tb, who, "debugHeldOverride", 0);
             }
 
+            // ---- the reset button: Interact board wired to every tool of this station, in the builder's order ----
+            var rb = st.Find(ResetName);
+            var reset = rb != null ? rb.GetComponent<KH_WashStationReset>() : null;
+            req(reset != null, "layout: " + StationName + "/" + ResetName + " with KH_WashStationReset");
+            if (reset != null)
+            {
+                var want = ToolSpecs.Select(s => { var t = st.Find(s.name); return t != null ? t.GetComponent<KH_WashTool>() : null; }).ToArray();
+                req(want.All(x => x != null) && reset.tools != null && reset.tools.Length == want.Length && reset.tools.Zip(want, (a, b) => a == b).All(x => x),
+                    "layout: reset.tools = the " + want.Length + " tools of " + StationName + " (" + (reset.tools != null ? reset.tools.Length : 0) + ")");
+                var col = rb.GetComponent<Collider>();
+                req(col != null && col.enabled && rb.gameObject.activeInHierarchy && rb.gameObject.layer == 0, "layout: " + ResetName + " has a collider for Interact, active, Default layer");
+                var rbk = UdonSharpEditorUtility.GetBackingUdonBehaviour(reset);
+                req(rbk != null && rbk.SyncMethod == Networking.SyncType.None, "layout: KH_WashStationReset backing sync None (local only; the tools' VRCObjectSync carries the result)");
+                req(rbk != null && !string.IsNullOrEmpty(rbk.interactText) && rbk.interactText != "Use", "layout: " + ResetName + " interaction text '" + (rbk != null ? rbk.interactText : "") + "'");
+                if (rbk != null && rbk.interactText == ResetInteractText) r.notes.Add("layout: the reset button still reads the ASCII placeholder '" + ResetInteractText + "' (Japanese in the Inspector)");
+                Backing(req, rbk, "layout: KH_WashStationReset", "tools", reset.tools);
+                var rt = st.Find(ResetTextName);
+                var rtm = rt != null ? rt.GetComponent<TextMeshPro>() : null;
+                req(rtm != null && !string.IsNullOrEmpty(rtm.text), "layout: " + ResetTextName + " label (" + (rtm != null ? "'" + rtm.text + "'" : "none") + ")");
+                var fnt = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KD_ShopSetupEditor.SharedFontPath);
+                if (rtm != null && fnt != null && !string.IsNullOrEmpty(rtm.text))
+                {
+                    List<char> miss; bool ok = rtm.font == fnt && fnt.HasCharacters(rtm.text, out miss);
+                    req(ok, "layout: the reset label uses the shared font and every character is in it");
+                }
+            }
+
             // ---- the duckboard: one solid walkable box, 0.6 x 0.03 x 0.9, seated on the ground, 1.2 m in front ----
             var table = st.Find(TableName);
             var box = table != null ? table.GetComponent<BoxCollider>() : null;
