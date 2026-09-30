@@ -14,7 +14,8 @@
 //                 only sparse small grains on the bottom layer (no film). Near-opaque, alpha only for the cut edge,
 //                 ZWrite On so foam sorts against itself.
 // Layer count: SubShader 1 = PC (d3d11 only; every pass has #pragma only_renderers d3d11, so the whole SubShader is
-// unsupported elsewhere) with 4 foam layers. SubShader 2 = everything else (Android / iOS) with 2 foam layers.
+// unsupported elsewhere) with 4 foam layers. SubShader 2 = everything else (Android / iOS): ONE pass, no foam layers,
+// one noise (IMP-ENV-010, 2026-09-30; the 3-pass / 2-layer version was the Quest GPU cost).
 // Fragment noise: foam layer 1 value noise (mask UV jitter) + 2 cellular calls (8 cells each); BASE 2 value noises
 // + 1 cellular. The mask is read with a texel-scale UV jitter so its 256^2 staircase does not show on cut edges.
 //
@@ -376,55 +377,72 @@ Shader "KominkaHillside/Wash Shell"
         }
     }
 
-    // ================= Mobile (and anything not d3d11): 2 foam layers =================
+    // ================= Mobile (and anything not d3d11): ONE pass, no foam layers =================
+    // IMP-ENV-010 (2026-09-30, Quest 3 measured 30-40 -> 60-70 fps with the dogs out of view): the 3-pass shell with
+    // procedural noise in every fragment was the GPU cost on Quest. Mobile now draws dirt + wet + foam in a single
+    // premultiplied pass: mask read, ONE value noise (mud blotches and foam heap edge), no cellular bubbles, no foam
+    // stack, no specular. Foam is a flat lit white cut by the heap shape. The early clip keeps clean dogs almost free.
+    // The PC SubShader above is unchanged.
     SubShader
     {
         Tags { "Queue"="Transparent+10" "RenderType"="Transparent" "IgnoreProjector"="True" "ForceNoShadowCasting"="True" }
         LOD 100
         Pass
         {
-            Name "BASE"
+            Name "MOBILE"
             Tags { "LightMode"="ForwardBase" }
             ZTest LEqual ZWrite Off Cull Back
             Blend One OneMinusSrcAlpha
             CGPROGRAM
             #pragma vertex VertBase
-            #pragma fragment FragBase
+            #pragma fragment FragMobile
             #pragma target 3.0
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
-            ENDCG
-        }
-        Pass
-        {
-            Name "FOAM0"
-            Tags { "LightMode"="ForwardBase" }
-            ZTest LEqual ZWrite On Cull Back
-            Blend SrcAlpha OneMinusSrcAlpha
-            CGPROGRAM
-            #pragma vertex V0
-            #pragma fragment F0
-            #pragma target 3.0
-            #pragma multi_compile_fog
-            #pragma multi_compile_instancing
-            v2f V0(appdata v) { return VertLayer(v, 0.0); }
-            fixed4 F0(v2f i) : SV_Target { return FragFoam(i, 0.0, 2.0); }
-            ENDCG
-        }
-        Pass
-        {
-            Name "FOAM1"
-            Tags { "LightMode"="ForwardBase" }
-            ZTest LEqual ZWrite On Cull Back
-            Blend SrcAlpha OneMinusSrcAlpha
-            CGPROGRAM
-            #pragma vertex V1
-            #pragma fragment F1
-            #pragma target 3.0
-            #pragma multi_compile_fog
-            #pragma multi_compile_instancing
-            v2f V1(appdata v) { return VertLayer(v, 1.0); }
-            fixed4 F1(v2f i) : SV_Target { return FragFoam(i, 1.0, 2.0); }
+            fixed4 FragMobile(v2f i) : SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+                float4 m = tex2D(_Mask, i.uv);
+                half dirt = saturate(m.r);
+                half foam = min(saturate(m.g), i.limit);
+                half wet = saturate(m.b);
+                clip(max(dirt, max(foam, wet)) - 0.003);                // before any noise: clean fur costs one fetch
+
+                float3 n = normalize(i.worldNormal);
+                float3 V = normalize(_WorldSpaceCameraPos.xyz - i.worldPos);
+                half ndv = saturate(dot(n, V));
+                half sil = saturate(ndv * 3.0 + 0.1);                     // fade at the silhouette (as PC)
+                half3 lit = LightLevel(i.ambient, 1.2);
+                // One bind-pose noise shared by mud blotches and foam heaps (sticks to the body, same on every client).
+                float nz = KHWash_VNoise3(i.bindPos * (_FoamScale * 0.4));
+
+                // Dirt: blotches grow with the mask value, pattern texture for the fine detail (no cellular lumps).
+                half pat = tex2D(_DirtPattern, TRANSFORM_TEX(i.uv, _DirtPattern)).r;
+                float thd = lerp(1.05, 0.0, saturate(dirt * 1.2));
+                float ad = smoothstep(thd - 0.15, thd + 0.15, nz) * saturate(dirt * 6.0) * pat * _DirtColor.a * sil;
+                half3 cd = _DirtColor.rgb * lerp(1.1, 0.8, nz) * lerp(1.0, 0.75, wet) * lit;
+
+                // Wet: mild darkening plus a faint cool sheen (no specular highlight on mobile).
+                float aw = wet * _WetDarken * sil;
+                half3 cw = _WetTint.rgb * lit * 0.2 * _WetGloss;
+
+                // Foam: flat lit white, edge cut by the heap height (PC bottom layer threshold), valleys in _FoamShadow.
+                float h = foam * (0.55 + 0.45 * nz) * smoothstep(0.15, 0.4, foam);
+                float af = smoothstep(0.1, 0.22, h) * sil;
+                half fb = saturate(_FurBrightness * 2.0 - 1.0);
+                half3 shadowCol = lerp(_FoamShadow.rgb, half3(0.70, 0.72, 0.77) * 0.75, fb);
+                half3 shade = lerp(shadowCol, half3(1, 1, 1), saturate(0.35 + 0.65 * nz));
+                half rim = pow(1.0 - ndv, 3.0) * _FoamRim * 0.4;
+                half3 cf = _FoamColor.rgb * LightLevel(i.ambient, 1.0 + 0.35 * fb) * (shade + rim);
+
+                // Premultiplied composite: foam over dirt over wet.
+                half3 c = cw * aw; float a = aw;
+                c = cd * ad + c * (1.0 - ad); a = ad + a * (1.0 - ad);
+                c = cf * af + c * (1.0 - af); a = af + a * (1.0 - af);
+                fixed4 col = fixed4(c, saturate(a));
+                UNITY_APPLY_FOG_COLOR(i.fogCoord, col, unity_FogColor * col.a);
+                return col;
+            }
             ENDCG
         }
     }
