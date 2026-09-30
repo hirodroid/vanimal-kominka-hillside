@@ -65,9 +65,9 @@ namespace KominkaDogRun
                 position.y += arc * Mathf.Sin(Mathf.PI * u);
                 // A delayed state packet must not skip the visible start of a landing.
                 // The shared curve is the aim; only the root Owner approaches it.
-                if (_dogOwner) position = Vector3.MoveTowards(dogRoot.position, position, 3f * Mathf.Min(Time.deltaTime, .05f));
+                if (_dogOwner) position = Vector3.MoveTowards(dogRoot.position, position, 3f * Mathf.Min(Dt(), .05f));
                 var rotation = Quaternion.Slerp(candyMountLive.DogMountRotation, candyMountYaw, e);
-                if (_dogOwner) rotation = Quaternion.RotateTowards(dogRoot.rotation, rotation, 360f * Mathf.Min(Time.deltaTime, .05f));
+                if (_dogOwner) rotation = Quaternion.RotateTowards(dogRoot.rotation, rotation, 360f * Mathf.Min(Dt(), .05f));
                 MoveCandyMount(position, rotation, true, u, 0);
                 _candyMountRecoveryLastPosition = dogRoot.position;
                 if (u >= 1) ReportLiveMount(4);

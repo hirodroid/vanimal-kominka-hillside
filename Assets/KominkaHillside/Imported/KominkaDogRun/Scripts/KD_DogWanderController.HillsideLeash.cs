@@ -412,7 +412,7 @@ namespace KominkaDogRun
                 // ひとつの締切にまとめると、向きを整えている間に「着けなかった」と判定される
                 bool atSpot = _sniffUntil > 0f || Horizontal(dogRoot.position, _detourPoint) <= DetourArrive;
                 if (atSpot && _alignUntil <= 0f) { _alignUntil = Time.time + PauseAlignCap; _detourArrived++; }
-                if (_eatPose) { _pauseHeld += Time.deltaTime; if (!_pausePosed) { _pausePosed = true; _detourPoseReq++; } }
+                if (_eatPose) { _pauseHeld += Dt(); if (!_pausePosed) { _pausePosed = true; _detourPoseReq++; } }
                 // 切り上げに固定の待ち時間は置かない — ポーズは足が動いた時点で ApplyMoveAnim が下ろす (Codex X2/D1)
                 bool leaving = PauseShouldBreak(handDist, leash, PauseBreakLeash, handOpening);
                 bool tooSlow = _alignUntil <= 0f && Time.time > _detourEnteredAt + DetourReachCap;
@@ -474,7 +474,7 @@ namespace KominkaDogRun
                 bool atSpot = !gone && (_stopoverUntil > 0f || Horizontal(dogRoot.position, spot) <= StopoverArrive);
                 if (atSpot && _alignUntil <= 0f) { _alignUntil = Time.time + PauseAlignCap; _stopoverArrived++; }
                 if (_eatPose || _wantSit)
-                { _pauseHeld += Time.deltaTime; if (!_pausePosed) { _pausePosed = true; _stopoverPoseReq++; } }
+                { _pauseHeld += Dt(); if (!_pausePosed) { _pausePosed = true; _stopoverPoseReq++; } }
                 // 入場も切り上げも寄り道より緩い倍率で測る (歩いている人に付いていける幅)
                 bool leaving = PauseShouldBreak(handDist, leash, StopoverBreakLeash, handOpening);
                 bool tooSlow = _alignUntil <= 0f && Time.time > _stopoverEnteredAt + StopoverReachCap;
@@ -567,7 +567,7 @@ namespace KominkaDogRun
             // **その場で回っている犬は「止まっている」ではない** (Codex 4)。足が止まっていても向きを
             // 変えている間に頭を下げさせると、回りながら嗅ぐ犬になる
             float yaw = dogRoot.eulerAngles.y;
-            float dt = Time.deltaTime;
+            float dt = Dt();
             float yawRate = dt > 0.0001f ? Mathf.Abs(Mathf.DeltaAngle(_prevYaw, yaw)) / dt : 0f;
             _prevYaw = yaw;
             // 「止まっている」ではなく「止まって何秒経ったか」で決める — 通過中のわずかな停止では立たない
@@ -666,7 +666,7 @@ namespace KominkaDogRun
         /// for the next second and send every dog off at full speed.</summary>
         private void TrackHolderSpeed(Vector3 holderPos)
         {
-            float dt = Time.deltaTime;
+            float dt = Dt();
             if (dt <= 0.0001f) return;
             holderPos.y = 0f;
             if (!_holderPrevValid) { _holderPrevPos = holderPos; _holderPrevValid = true; return; }

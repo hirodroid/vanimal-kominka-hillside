@@ -92,7 +92,7 @@ namespace KominkaDogRun
         float SwimPitchTick()
         {
             float target = (fetchController != null && fetchController.WaterPose == 2 && waterSpot != null) ? waterSpot._SwimPitch(dogIndex) : 0f;
-            _swimPitchNow = Mathf.MoveTowards(_swimPitchNow, target, SwimPitchRate * Time.deltaTime);
+            _swimPitchNow = Mathf.MoveTowards(_swimPitchNow, target, SwimPitchRate * Dt());
             return _swimPitchNow;
         }
         private float _nextSinkLog;
@@ -615,12 +615,12 @@ namespace KominkaDogRun
                 // Rising only at the start; once afloat the height follows the water surface exactly every frame, so a slope
                 // or a push cannot leave the mouth low for a few frames (W2-Pome run 20260927-073904).
                 if (_swimSettled) _waterSwimY = want;
-                else { _waterSwimY = Mathf.MoveTowards(_waterSwimY, want, SwimEaseRate * Time.deltaTime); _swimSettled = Mathf.Abs(_waterSwimY - want) < 0.002f; }
+                else { _waterSwimY = Mathf.MoveTowards(_waterSwimY, want, SwimEaseRate * Dt()); _swimSettled = Mathf.Abs(_waterSwimY - want) < 0.002f; }
             }
             else if (_swimYValid)
             {
                 float ground = SnapToGround(q).y;
-                _waterSwimY = Mathf.MoveTowards(_waterSwimY, ground, SwimEaseRate * Time.deltaTime);
+                _waterSwimY = Mathf.MoveTowards(_waterSwimY, ground, SwimEaseRate * Dt());
                 if (Mathf.Abs(_waterSwimY - ground) < 0.005f) _swimYValid = false;
             }
             else return;

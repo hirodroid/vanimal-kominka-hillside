@@ -200,7 +200,7 @@ namespace KominkaDogRun
             if (_dogOwner)
             {
                 dogRoot.rotation = Quaternion.Euler(0f, slot.SpotYaw, 0f); // net: owner-only: _dogOwner、指定向きへ最後の許容角を合わせる
-                Vector3 lifted = Vector3.MoveTowards(dogRoot.position, target, Mathf.Max(.05f, placedSleepLiftSpeed) * Time.deltaTime);
+                Vector3 lifted = Vector3.MoveTowards(dogRoot.position, target, Mathf.Max(.05f, placedSleepLiftSpeed) * Dt());
                 // 裏山改変: IMP-DOG-016 変更 3。裏山の指定寝床は必ず地面 (KD_SleepSlot._PlacementGroundOk) なので、
                 // 収まる途中も接地させる (古民家は縁側・寝台へ上げるため接地しなかった)。斜面で体が地面へめり込まない / 浮かない
                 if (hillsideLeashes != null) lifted = SnapToGround(lifted);

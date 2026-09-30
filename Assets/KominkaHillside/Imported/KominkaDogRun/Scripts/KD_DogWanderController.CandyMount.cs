@@ -112,7 +112,7 @@ namespace KominkaDogRun
                 { candyMountFailed = true; return true; }
                 // Accumulate only executed movement frames. Re-enabling after a
                 // pause must not jump directly to a wall-clock landing endpoint.
-                _candyMountRecoveryElapsed += Mathf.Min(Time.deltaTime, .05f);
+                _candyMountRecoveryElapsed += Mathf.Min(Dt(), .05f);
                 float u = Mathf.Clamp01(_candyMountRecoveryElapsed / 1.4f);
                 float e = Mathf.SmoothStep(0, 1, u);
                 var position = Vector3.Lerp(_candyMountRecoveryFrom, _candyMountRecoveryTo, e);

@@ -1277,7 +1277,9 @@ namespace KominkaDogRun
             _lastBusyTime = Time.time - postFetchCalm;
         }
 
-        void Update()
+        // IMP-DOG-034: Update() itself is in KD_DogWanderController.Tick.cs (the fps-adaptive skip of an idle dog);
+        // this is the old Update body, run on every executed frame
+        void UpdateTick()
         {
             _greetingActive = false;
             _groupReady = false;
@@ -1328,7 +1330,8 @@ namespace KominkaDogRun
             // RC-14: a leash first seen while the dog is in the water is not taken up (WaterLeashTick, HillsideWater.cs)
             if (!_waterLeashVeto && UpdateHillsideLeash()) { _behaviorSelectionValid = false; NotifyPlay(); return; }
 
-            if (UpdateCandyPerformance()) { _behaviorSelectionValid = false; NotifyPlay(); return; }
+            _candyTicked = UpdateCandyPerformance();   // IMP-DOG-034: remembered for TickBusy (Tick.cs)
+            if (_candyTicked) { _behaviorSelectionValid = false; NotifyPlay(); return; }
 
             // Complete any live landing above even if Fetch disappeared. Once grounded,
             // wait without halting the Udon VM so repairing the reference can resume AI.
@@ -1641,12 +1644,13 @@ namespace KominkaDogRun
             // (_speed は Update 冒頭の ObserveSpeed が観測値で埋めている)
             if (_dogOwner && _speed > 0f)
             {
-                _speed = Mathf.MoveTowards(_speed, 0f, deceleration * Time.deltaTime);
+                float dt = Dt();   // IMP-DOG-034: includes the skipped frames' time (Tick.cs)
+                _speed = Mathf.MoveTowards(_speed, 0f, deceleration * dt);
                 // ここは目標速度が常に 0 なので無条件に畳んでよい (StepToward と同じ不変条件)
                 if (_speed <= stopSpeedThreshold) _speed = 0f;
                 if (_speed > 0f)
                 {
-                    Vector3 coastNext = dogRoot.position + _moveDir * (_speed * Time.deltaTime);
+                    Vector3 coastNext = dogRoot.position + _moveDir * (_speed * dt);
                     // IMP-DOG-020: 惰性でも川の帯へは入らない (HillsideWater.cs)
                     if (_BlockedByRiver(dogRoot.position, coastNext)) _speed = 0f;
                     else dogRoot.position = SnapToGround(coastNext); // net: owner-only: _dogOwner (惰性)
@@ -1686,7 +1690,8 @@ namespace KominkaDogRun
 
             // IMP-DOG-020: 直線移動は川の帯の手前で止まる (HillsideWater.cs。NavMesh の移動は対象外)。
             // 加速より前に見るので、止まっている間は _speed が 0 のまま (足踏みに見えない)
-            if (_BlockedByRiver(pos, pos + to / dist * Mathf.Max(_speed * Time.deltaTime, RiverProbe)))
+            float dt = Dt();   // IMP-DOG-034: includes the skipped frames' time (Tick.cs)
+            if (_BlockedByRiver(pos, pos + to / dist * Mathf.Max(_speed * dt, RiverProbe)))
             {
                 _speed = 0f;
                 ApplyMoveAnim();
@@ -1695,7 +1700,7 @@ namespace KominkaDogRun
 
             float brakeSpeed = Mathf.Sqrt(2f * deceleration * remain);
             if (desired > brakeSpeed) desired = brakeSpeed;
-            float rate = (desired > _speed ? acceleration : deceleration) * Time.deltaTime;
+            float rate = (desired > _speed ? acceleration : deceleration) * dt;
             _speed = Mathf.MoveTowards(_speed, desired, rate);
 
             // **デッドバンド (2026-08-14 Play 計測)。滑りの本体はここだった。**
@@ -1723,12 +1728,12 @@ namespace KominkaDogRun
             {
                 Quaternion look = Quaternion.LookRotation(_moveDir, Vector3.up);
                 dogRoot.rotation = Quaternion.RotateTowards(dogRoot.rotation, look, // net: owner-only: 上の早期 return が非 Owner を弾く
-                    turnSpeedDegPerSec * Time.deltaTime);
+                    turnSpeedDegPerSec * dt);
             }
 
             if (_speed > 0f)
             {
-                float step = _speed * Time.deltaTime;
+                float step = _speed * dt;
                 if (step > remain) step = remain;
                 // IMP-DOG-020: 加速後の実際の歩幅でもう一度見る (上の先読みは加速前の速さ。低 fps の加速中に越えないため)
                 if (_BlockedByRiver(pos, pos + _moveDir * step)) _speed = 0f;
@@ -1765,9 +1770,14 @@ namespace KominkaDogRun
         /// 同じ AudioSource だと `PlayOneShot` と `loop` が噛み合わない。</summary>
         void LateUpdate()
         {
+            // IMP-DOG-034: a frame whose Update was skipped (idle dog, Tick.cs) does nothing here. Nothing below has to run
+            // every frame for an idle dog: the greeting finish and the hips bob only act in busy states (TickBusy), the
+            // Animator Bools / companion values are write-on-change of flags that did not change (the stretch's running
+            // CallTime counts as busy), and the breath fades integrate the carried time through _dt on the next tick.
+            if (!_tickedThisFrame) return;
             FinishInterruptedGreeting();
             WaterHipsBobLate();   // IMP-DOG-020 step 7: the swim bob on a single-tier rig's hips, after the Animator (HillsideWater.cs)
-            float dt = Time.deltaTime;
+            float dt = _dt;       // IMP-DOG-034: this frame's Update dt (+ the skipped frames' time)
             if (dt <= 0f) return;
 
             // ---- IMP-DOG-014: 伏せを Animator へ書く ----
@@ -1963,7 +1973,7 @@ namespace KominkaDogRun
         void ObserveSpeed()
         {
             Vector3 pos = dogRoot.position;
-            float dt = Time.deltaTime;
+            float dt = Dt();   // IMP-DOG-034: the time since the last observation (skipped frames included)
             if (_obsPrevValid && dt > 0.0001f)
             {
                 Vector3 moved = pos - _obsPrevPos;

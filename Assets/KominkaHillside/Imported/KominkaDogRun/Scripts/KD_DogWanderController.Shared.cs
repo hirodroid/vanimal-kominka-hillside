@@ -324,7 +324,7 @@ namespace KominkaDogRun
             float rate = _speed > stopSpeedThreshold ? turnSpeedDegPerSec : idleTurnSpeedDegPerSec;
             Quaternion look = Quaternion.LookRotation(d.normalized, Vector3.up);
             dogRoot.rotation = Quaternion.RotateTowards(dogRoot.rotation, look, // net: owner-only: 冒頭の早期 return が非 Owner を弾く
-                rate * Time.deltaTime);
+                rate * Dt());
         }
 
         /// <summary>向きを指定の速さで変える (IMP-DOG-010)。
@@ -343,7 +343,7 @@ namespace KominkaDogRun
             if (d.sqrMagnitude < 0.0001f) return;
             Quaternion look = Quaternion.LookRotation(d.normalized, Vector3.up);
             dogRoot.rotation = Quaternion.RotateTowards(dogRoot.rotation, look, // net: owner-only: 冒頭の早期 return が非 Owner を弾く
-                degPerSec * Time.deltaTime);
+                degPerSec * Dt());
         }
 
         // ================================================================
