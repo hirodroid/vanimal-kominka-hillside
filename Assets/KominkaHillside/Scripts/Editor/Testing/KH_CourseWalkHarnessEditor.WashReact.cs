@@ -28,7 +28,7 @@ namespace KominkaHillside.Editor
             wrAnim = WsRef(wsWander, "dogAnimator") as Animator;
 
             // ---- W-shake (濡れ + 最後のストロークから 0.8 s でブルブル、1.2 s で 0 へ。泡が多い間は出ない) ----
-            var s = WsCase("W-shake", 70);
+            var s = WsCase("W-shake", 100);
             WsAnchor skA = default; float skEnd = 0f, skStartAt = -1f, skMaxBody = 0f, skMaxEnv = 0f, skWet = 0f, skFoam = 0f, skShakeT0 = 0f, skBackAt = -1f;
             int skC0 = 0, skC1 = 0; float skNegFoam = 0f, skNegWet = 0f;
             s.Add(WsDo(() =>
@@ -38,6 +38,7 @@ namespace KominkaHillside.Editor
                 WsPlaceShiba(); WsPlayerNear(1.3f); wsWash.SendCustomEvent("_DebugClear");
             }));
             s.Add(WsUntil(() => !WsHold(), 6, () => "a hold left over from an earlier case did not end"));
+            s.Add(WsUntil(() => Time.time >= Get<float>(wsWander, "_washShakeWetNextAt") + 0.5f, 25, () => "the wet-shake spacing (washShakeWetSpacing) from an earlier case did not run out"));
             s.Add(WsWait(0.8));
             // 対照 (泡が多い): 泡 0.5・濡れ 0.8 をセルへ書き、短いストロークの後 2 s 何も起きない
             s.Add(WsDo(() => { WrSetCells(0.5f, 0.8f); skA = WsAnchorOf(WsPathHit(0.2f)); skC0 = WrCount("_washShakeCount"); }));
@@ -53,7 +54,8 @@ namespace KominkaHillside.Editor
             // 本番: 泡なし、シャワー 2 s で濡らす
             s.Add(WsDo(() => wsWash.SendCustomEvent("_DebugClear")));
             s.Add(WsWait(0.8));
-            s.Add(WsDrive(2f, 1, u => WsPath(u), WsShower, -1f, null));
+            // hip / chest only (u <= 0.7): the flank path's end can hit the right front leg and start a paw lift (run 20260930-062530)
+            s.Add(WsDrive(2f, 1, u => WsPath(0.7f * u), WsShower, -1f, null));
             s.Add(WsDo(() => { WsEnd(WsShower); skEnd = Time.time; skC1 = WrCount("_washShakeCount"); }));
             s.Add(now =>
             {
@@ -65,7 +67,7 @@ namespace KominkaHillside.Editor
                     skMaxEnv = Mathf.Max(skMaxEnv, Get<float>(wrPet, "_shakeEnvelope"));
                 }
                 if (skStartAt < 0f && t > 2f)
-                    throw new InvalidOperationException("no shake 2 s after the shower ended (avg wet " + WrAvgWet().ToString("F3") + " vs the trigger 0.05, avg foam " + WsAvgFoam().ToString("F3") + ", washActive " + Get<bool>(wsWander, "_washActive") + ", hold " + WsHold() + ")");
+                    throw new InvalidOperationException("no shake 2 s after the shower ended (avg wet " + WrAvgWet().ToString("F3") + " vs the trigger washShakeWet " + Get<float>(wsWander, "washShakeWet") + ", avg foam " + WsAvgFoam().ToString("F3") + ", washActive " + Get<bool>(wsWander, "_washActive") + ", hold " + WsHold() + ")");
                 return skStartAt >= 0f && Time.time - skShakeT0 >= 0.5f;
             });
             s.Add(now =>
@@ -89,38 +91,42 @@ namespace KominkaHillside.Editor
             }));
 
             // ---- W-no-repeat (同じきっかけは 8 s あける。8 s 後は出る = 対照) ----
-            s = WsCase("W-no-repeat", 70);
+            s = WsCase("W-no-repeat", 110);
             float nrT1 = -1f, nrEnd2 = 0f, nrBlocked = 0f; int nrC = 0; float nrSecond = -1f;
             s.Add(WsDo(() => { WrRequire(); WsPlaceShiba(); WsPlayerNear(1.3f); wsWash.SendCustomEvent("_DebugClear"); }));
             s.Add(WsUntil(() => !WsHold(), 6, () => "a hold left over from an earlier case did not end"));
             s.Add(WsWait(0.8));
-            // the 8 s spacing left by an earlier case (W-shake / W-shake-remote) must run out first: wait for the dog's own next-at + 0.5 s
-            s.Add(WsUntil(() => Time.time >= Get<float>(wsWander, "_washShakeWetNextAt") + 0.5f, 10,
+            // the wet-shake spacing (washShakeWetSpacing) left by an earlier case (W-shake / W-shake-remote) must run out first: wait for the dog's own next-at + 0.5 s
+            s.Add(WsUntil(() => Time.time >= Get<float>(wsWander, "_washShakeWetNextAt") + 0.5f, 25,
                 () => "the wet-shake spacing from an earlier case did not run out (next at " + Get<float>(wsWander, "_washShakeWetNextAt").ToString("F1") + ", now " + Time.time.ToString("F1") + ")"));
-            s.Add(WsDo(() => { nrC = WrCount("_washShakeCount"); }));
-            s.Add(WsDrive(1.5f, 1, u => WsPath(u), WsShower, -1f, null));
+            // wet well above the trigger (cells written directly, foam 0; the runtime reads the 0.5 s average), then the stroke
+            s.Add(WsDo(() => { WrSetCells(0f, 0.5f); nrC = WrCount("_washShakeCount"); }));
+            s.Add(WsWait(0.7));
+            s.Add(WsDrive(1.5f, 1, u => WsPath(0.7f * u), WsShower, -1f, null));
             s.Add(WsDo(() => WsEnd(WsShower)));
             s.Add(WsUntil(() => { if (WrCount("_washShakeCount") > nrC) { nrT1 = Time.time; return true; } return false; }, 2.5,
                 () => "first shake did not come (avg wet " + WrAvgWet().ToString("F3") + ", foam " + WsAvgFoam().ToString("F3") + ")"));
             s.Add(WsWait(2.0));
-            s.Add(WsDrive(1.5f, 1, u => WsPath(u), WsShower, -1f, null));
+            s.Add(WsDrive(1.5f, 1, u => WsPath(0.7f * u), WsShower, -1f, null));
             s.Add(WsDo(() => { WsEnd(WsShower); nrEnd2 = Time.time; nrBlocked = nrEnd2 - nrT1; nrC = WrCount("_washShakeCount"); }));
             s.Add(now =>
             {
-                if (WrCount("_washShakeCount") != nrC) throw new InvalidOperationException("a second wet shake " + (Time.time - nrT1).ToString("F1") + " s after the first (spacing 8 s)");
+                if (WrCount("_washShakeCount") != nrC) throw new InvalidOperationException("a second wet shake " + (Time.time - nrT1).ToString("F1") + " s after the first (washShakeWetSpacing " + Get<float>(wsWander, "washShakeWetSpacing") + " s)");
                 return Time.time - nrEnd2 >= 2f;
             });
-            s.Add(WsUntil(() => Time.time - nrT1 >= 8.3f, 10, () => "waiting for the spacing"));
-            s.Add(WsDrive(1f, 1, u => WsPath(u), WsShower, -1f, null));
+            s.Add(WsUntil(() => Time.time >= Get<float>(wsWander, "_washShakeWetNextAt") + 0.3f, 25, () => "waiting for the spacing (washShakeWetSpacing " + Get<float>(wsWander, "washShakeWetSpacing") + " s)"));
+            s.Add(WsDo(() => WrSetCells(0f, 0.5f)));   // after the 20 s wait: back well above the trigger
+            s.Add(WsWait(0.7));
+            s.Add(WsDrive(1f, 1, u => WsPath(0.7f * u), WsShower, -1f, null));
             s.Add(WsDo(() => { WsEnd(WsShower); nrEnd2 = Time.time; }));
             s.Add(WsUntil(() => { if (WrCount("_washShakeCount") > nrC) { nrSecond = Time.time - nrT1; return true; } return false; }, 2.5,
-                () => "control: no shake after the 8 s spacing (avg wet " + WrAvgWet().ToString("F3") + ", foam " + WsAvgFoam().ToString("F3") + ")"));
-            s.Add(WsDo(() => WsNote("wet shake 1; a second 1.5 s shower ending " + nrBlocked.ToString("F1") + " s after it gave none within 2 s (spacing 8 s); after the spacing a 1 s shower gave the next shake at +" + nrSecond.ToString("F1") + " s from the first (control)")));
+                () => "control: no shake after the washShakeWetSpacing (avg wet " + WrAvgWet().ToString("F3") + ", foam " + WsAvgFoam().ToString("F3") + ")"));
+            s.Add(WsDo(() => WsNote("wet shake 1; a second 1.5 s shower ending " + nrBlocked.ToString("F1") + " s after it gave none within 2 s (washShakeWetSpacing " + Get<float>(wsWander, "washShakeWetSpacing") + " s); after the spacing a 1 s shower gave the next shake at +" + nrSecond.ToString("F1") + " s from the first (control)")));
 
             // ---- W-satisfied (清潔のエッジで ブルブル → 座る 2.5 s + 尻尾 + 笑顔、1 回だけ。座っている間も洗える) ----
             s = WsCase("W-satisfied", 60);
             WsAnchor saA = default; float saEdge = 0f, saLast = -1f, saShake = -1f, saSitOn = -1f, saSitOff = -1f;
-            int saS0 = 0, saCount0 = 0, saShake0 = 0, saCells = 0; float[] saD = null, saF = null, saW = null; bool saSitAtEdge = false;
+            int saS0 = 0, saNext = 0, saCount0 = 0, saShake0 = 0, saCells = 0; float[] saD = null, saF = null, saW = null; bool saSitAtEdge = false;
             s.Add(WsDo(() =>
             {
                 WrRequire();
@@ -136,7 +142,8 @@ namespace KominkaHillside.Editor
                 WsExpect(WsHold() && Get<bool>(wsWander, "_washActive"), "washed before the edge (hold " + WsHold() + ")");
                 saS0 = Get<int>(wsWash, "cleanSerial"); saCount0 = WrCount("_washSatisfiedCount"); saShake0 = WrCount("_washShakeCount");
                 saSitAtEdge = wrAnim.GetBool("Sit");
-                wsWash.SetProgramVariable("cleanSerial", saS0 + 1);   // the Owner's clean edge (what EvaluateState does)
+                saNext = WrSitSerial(saS0);
+                wsWash.SetProgramVariable("cleanSerial", saNext);   // the Owner's clean edge (what EvaluateState does), a sitting one
                 saEdge = Time.time; saLast = -1f;
             }));
             // 5 s のあいだ、腰を軽く洗い続けながら見る (座っている間もストロークがセルを変える)
@@ -162,13 +169,13 @@ namespace KominkaHillside.Editor
                 WsExpect(saSitOn >= 1.0f && saSitOn <= 1.6f, "Sit requested after the shake (+" + saSitOn.ToString("F2") + " s; Animator Sit)");
                 WsExpect(saSitOff > 0f && saSitOff - saSitOn >= 2.1f && saSitOff - saSitOn <= 2.9f, "Sit released after 2.5 s (" + (saSitOff < 0f ? "never" : (saSitOff - saSitOn).ToString("F2") + " s") + ")");
                 WsExpect(saCells > 0, "the strokes kept washing while sitting (" + saCells + " cells changed between sit on and off)");
-                WsNote("cleanSerial " + saS0 + " -> " + (saS0 + 1) + " while stroked: shake +" + saShake.ToString("F2") + " s, Sit +" + saSitOn.ToString("F2") + " .. +" + saSitOff.ToString("F2") + " s, " + saCells + " cells changed by the sponge during the sit; satisfied count +1");
+                WsNote("cleanSerial " + saS0 + " -> " + saNext + " (a multiple of washSitEvery " + Get<int>(wsWander, "washSitEvery") + ") while stroked: shake +" + saShake.ToString("F2") + " s, Sit +" + saSitOn.ToString("F2") + " .. +" + saSitOff.ToString("F2") + " s, " + saCells + " cells changed by the sponge during the sit; satisfied count +1");
             }));
 
             // ---- W-satisfied-hold (Codex 4-1 / 4-3: 最後のストロークから 3 s で保持が切れても座りは 2.5 s 完走する。
             //      8 s 以内の次の清潔のエッジは、ブルブルは出さずに満足の合図 (座る) だけ出す) ----
             s = WsCase("W-satisfied-hold", 60);
-            WsAnchor shA = default; float shEdge = 0f, shOn = -1f, shOff = -1f, shHoldEnd = -1f, shOn2 = -1f;
+            WsAnchor shA = default; float shEdge = 0f, shOn = -1f, shOff = -1f, shHoldEnd = -1f, shOn2 = -1f, shHappy = -1f;
             int shSat0 = 0, shShake0 = 0;
             s.Add(WsDo(() =>
             {
@@ -184,7 +191,7 @@ namespace KominkaHillside.Editor
             {
                 WsEnd(WsSponge);
                 shSat0 = WrCount("_washSatisfiedCount"); shShake0 = WrCount("_washShakeCount");
-                wsWash.SetProgramVariable("cleanSerial", Get<int>(wsWash, "cleanSerial") + 1);
+                wsWash.SetProgramVariable("cleanSerial", WrSitSerial(Get<int>(wsWash, "cleanSerial")));
                 shEdge = Time.time;
             }));
             // no more strokes: the hold ends about 3 s after the sponge, the sit (+1.2 .. +3.7 s) must still finish
@@ -204,16 +211,17 @@ namespace KominkaHillside.Editor
                     "the sit ran its 2.5 s past the hold (on +" + shOn.ToString("F2") + ", off " + (shOff < 0f ? "never" : "+" + shOff.ToString("F2")) + " s, hold ended +" + shHoldEnd.ToString("F2") + " s)");
                 WsExpect(WrCount("_washShakeCount") == shShake0 + 1, "the clean shake once (" + shShake0 + " -> " + WrCount("_washShakeCount") + ")");
             }));
-            // a second clean edge inside the 8 s spacing: the satisfied sign again, no shake
+            // the next clean edge (+1: not a multiple of washSitEvery): the satisfied sign (tail / smile / voice) without sit or shake
             s.Add(WsDrive(0.4f, 1, u => WsAt(shA), WsSponge, -1f, null));
             s.Add(WsDo(() => { WsEnd(WsSponge); shShake0 = WrCount("_washShakeCount"); wsWash.SetProgramVariable("cleanSerial", Get<int>(wsWash, "cleanSerial") + 1); shEdge = Time.time; }));
-            s.Add(now => { if (shOn2 < 0f && wrAnim.GetBool("Sit")) shOn2 = Time.time - shEdge; return Time.time - shEdge >= 2.5f; });
+            s.Add(now => { if (shOn2 < 0f && wrAnim.GetBool("Sit")) shOn2 = Time.time - shEdge; if (shHappy < 0f && Time.time < Get<float>(wsWander, "_washSatisfyUntil")) shHappy = Time.time - shEdge; return Time.time - shEdge >= 4f; });
             s.Add(WsDo(() =>
             {
                 WsExpect(WrCount("_washSatisfiedCount") == shSat0 + 2, "the satisfied sign for both edges (" + shSat0 + " -> " + WrCount("_washSatisfiedCount") + ")");
-                WsExpect(shOn2 >= 1.0f && shOn2 <= 1.6f, "the second sit came (+" + shOn2.ToString("F2") + " s)");
-                WsExpect(WrCount("_washShakeCount") == shShake0, "no shake for the edge inside the 8 s spacing");
-                WsNote("edge 1 without further strokes: hold ended +" + shHoldEnd.ToString("F2") + " s, sit +" + shOn.ToString("F2") + " .. +" + shOff.ToString("F2") + " s, one shake; edge 2 inside the spacing: sit +" + shOn2.ToString("F2") + " s, no shake");
+                WsExpect(shHappy >= 0f && shHappy <= 0.3f, "the second edge started the satisfied window (+" + shHappy.ToString("F2") + " s)");
+                WsExpect(shOn2 < 0f, "no sit on the non-sitting edge (Sit at +" + shOn2.ToString("F2") + " s)");
+                WsExpect(WrCount("_washShakeCount") == shShake0, "no shake on the non-sitting edge");
+                WsNote("edge 1 without further strokes: hold ended +" + shHoldEnd.ToString("F2") + " s, sit +" + shOn.ToString("F2") + " .. +" + shOff.ToString("F2") + " s, one shake; edge 2 (+1, not a multiple of washSitEvery): satisfied window from +" + shHappy.ToString("F2") + " s, no sit, no shake");
             }));
 
             // ---- W-satisfied-join (保持の無いところへ届いた cleanSerial = 途中参加の最初の受信: 何も出さない) ----
@@ -280,7 +288,7 @@ namespace KominkaHillside.Editor
             }));
 
             // ---- W-paw (前足を洗い始めると足上げの要求 1.5 s、6 s あける。Animator への接続は保留) ----
-            s = WsCase("W-paw", 40);
+            s = WsCase("W-paw", 70);
             WsAnchor pwHip = default, pwLeg = default; int pwC0 = 0; float pwLen = 0f; bool pwHas = false;
             s.Add(WsDo(() =>
             {
@@ -293,6 +301,7 @@ namespace KominkaHillside.Editor
             }));
             s.Add(WsUntil(() => !WsHold(), 6, () => "a hold left over from an earlier case did not end"));
             s.Add(WsWait(0.8));
+            s.Add(WsUntil(() => Time.time >= Get<float>(wsWander, "_washPawNextAt") + 0.3f, 25, () => "the paw spacing (washPawSpacing) from an earlier case did not run out"));
             s.Add(WsDrive(0.5f, 1, u => WsAt(pwHip), WsSponge, -1f, null));
             s.Add(WsDo(() => { pwC0 = WrCount("_washPawCount"); }));
             s.Add(WsDrive(0.5f, 1, u =>
@@ -312,13 +321,68 @@ namespace KominkaHillside.Editor
             s.Add(WsDo(() =>
             {
                 WsEnd(WsSponge);
-                WsExpect(WrCount("_washPawCount") == pwC0 + 1, "no second paw lift within 6 s (" + WrCount("_washPawCount") + ")");
-                WsNote("hip 0.5 s -> front leg (" + wsCols[pwLeg.ci].name + ") 0.5 s: WashPawPose requested for " + pwLen.ToString("F2") + " s; hip -> leg again within 6 s: none. NOT checked: the Animator pose on screen (CallReady + CallPose 3 = CallPaw, written by KD_DogWanderController.LateUpdate) -> Play");
+                WsExpect(WrCount("_washPawCount") == pwC0 + 1, "no second paw lift within washPawSpacing (" + WrCount("_washPawCount") + ")");
+                WsNote("hip 0.5 s -> front leg (" + wsCols[pwLeg.ci].name + ") 0.5 s: WashPawPose requested for " + pwLen.ToString("F2") + " s; hip -> leg again within washPawSpacing (" + Get<float>(wsWander, "washPawSpacing") + " s): none. NOT checked: the Animator pose on screen (CallReady + CallPose 3 = CallPaw, written by KD_DogWanderController.LateUpdate) -> Play");
+            }));
+
+            // ---- W-gaze (2026-09-30: 体を回さない。頭は washGazeIntervalMin..Max 秒に 1 回 washGazeSeconds だけ洗う人を見る。首かしげはその中だけ) ----
+            s = WsCase("W-gaze", 60);
+            WsAnchor gzA = default, gzB = default; float gzYaw0 = 0f, gzYawMax = 0f, gzT0 = 0f, gzLast = -1f, gzFirst = -1f, gzSwitch = 0f;
+            int gzG0 = 0, gzTl0 = 0, gzTiltOut = 0, gzTiltSeen = 0; bool gzUseB = false;
+            s.Add(WsDo(() =>
+            {
+                WrRequire();
+                WsPlaceShiba(); WsPlayerNear(1.3f); wsWash.SendCustomEvent("_DebugClear");   // the washer 90 deg to the side: the old code turned the body here
+            }));
+            s.Add(WsUntil(() => !WsHold(), 6, () => "a hold left over from an earlier case did not end"));
+            s.Add(WsWait(0.5));
+            s.Add(WsDo(() =>
+            {
+                gzA = WsAnchorOf(WsPathHit(0.1f)); gzB = WsAnchorOf(WsPathHit(0.8f));
+                if (wsColPart[gzA.ci] == wsColPart[gzB.ci]) throw new WsSkip("the two flank points are on the same part (" + wsColPart[gzA.ci] + "): no part change for the tilt");
+                gzYaw0 = wsRoot.eulerAngles.y; gzG0 = WrCount("_washGazeCount"); gzTl0 = WrCount("_washTiltCount");
+                gzT0 = Time.time; gzLast = -1f; gzSwitch = 0f;
+            }));
+            // 20 s of sponge, switching between the two parts every 0.25 s (a part change is always there for the tilt)
+            s.Add(now =>
+            {
+                float t = Time.time;
+                if (gzLast < 0f) gzLast = t - Mathf.Max(Time.deltaTime, 1e-3f);
+                float sec = Mathf.Min(t - gzLast, 0.1f); gzLast = t;
+                gzSwitch += sec; if (gzSwitch >= 0.25f) { gzSwitch = 0f; gzUseB = !gzUseB; }
+                if (sec > 1e-5f) { var h = WsAt(gzUseB ? gzB : gzA); WsContact(WsSponge, h.ci, h.p, sec, -1f); }
+                gzYawMax = Mathf.Max(gzYawMax, Mathf.Abs(Mathf.DeltaAngle(gzYaw0, wsRoot.eulerAngles.y)));
+                if (gzFirst < 0f && WrCount("_washGazeCount") > gzG0) gzFirst = t - gzT0;
+                int tilts = WrCount("_washTiltCount");
+                if (tilts > gzTl0 + gzTiltSeen)
+                {
+                    gzTiltSeen = tilts - gzTl0;
+                    if (!(Get<float>(wsWander, "_washTiltStart") < Get<float>(wsWander, "_washGazeUntil"))) gzTiltOut++;
+                }
+                return t - gzT0 >= 20f;
+            });
+            s.Add(WsDo(() =>
+            {
+                WsEnd(WsSponge);
+                float lo = Get<float>(wsWander, "washGazeIntervalMin"), hi = Get<float>(wsWander, "washGazeIntervalMax");
+                int glances = WrCount("_washGazeCount") - gzG0;
+                WsExpect(gzYawMax < 3f, "the body did not turn toward the washer 90 deg to the side (max yaw change " + gzYawMax.ToString("F1") + " deg)");
+                WsExpect(gzFirst >= lo - 0.3f && gzFirst <= hi + 0.3f, "the first glance after one interval (+" + gzFirst.ToString("F1") + " s, interval " + lo + ".." + hi + " s)");
+                WsExpect(glances >= 1 && glances <= 2, "one or two glances in 20 s (" + glances + ")");
+                WsExpect(gzTiltSeen >= 1 && gzTiltOut == 0, "tilts only inside a glance (" + gzTiltSeen + " tilts, " + gzTiltOut + " outside)");
+                WsNote("sponge 20 s switching parts " + wsColPart[gzA.ci] + "/" + wsColPart[gzB.ci] + " every 0.25 s, washer 90 deg to the side: yaw change max " + gzYawMax.ToString("F1") + " deg; glances " + glances + " (first +" + gzFirst.ToString("F1") + " s, " + Get<float>(wsWander, "washGazeSeconds") + " s each); tilts " + gzTiltSeen + " (outside a glance " + gzTiltOut + ")");
             }));
 
             // ---- W-react-remote ----
             s = WsCase("W-react-remote", 5);
             s.Add(WsDo(() => { throw new WsSkip("ClientSim has one player (always the Owner): a non-Owner seeing the satisfied sign from the synced cleanSerial, the wet shake from a received shakeSerial (W-shake-remote runs the same edge locally) and the paw from received strokes -> PCVR with 2 people"); }));
+        }
+
+        /// <summary>The next serial after s that is a multiple of washSitEvery (a sitting edge).</summary>
+        static int WrSitSerial(int s)
+        {
+            int every = Mathf.Max(1, Get<int>(wsWander, "washSitEvery"));
+            return (s / every + 1) * every;
         }
 
         static void WrRequire()

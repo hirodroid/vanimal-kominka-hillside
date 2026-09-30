@@ -247,6 +247,14 @@ namespace KominkaHillside
         public float dirtReachScale = 1.6f;
         [Tooltip("これより速い位置の変化はワープとして距離に数えない (m/s)")]
         public float dirtMaxSpeed = 12f;
+        [Tooltip("汚れは足元から (決定 2026-09-30 PCVR): 地面 (最も低いセル) からの高さ (m) で増え方の重みを落とす。この高さまで 1")]
+        public float dirtHeightFull = 0.08f;
+        [Tooltip("ここまでに 1 → dirtMidWeight")]
+        public float dirtHeightMid = 0.25f;
+        [Tooltip("ここまでに dirtMidWeight → dirtTopWeight (その上は dirtTopWeight)")]
+        public float dirtHeightTop = 0.45f;
+        public float dirtMidWeight = 0.35f;
+        public float dirtTopWeight = 0.05f;
 
         // ---- Synced (Owner of this object writes; the Owner follows the dog root) ----
         // Per cell: dirt 2 bit | foam 3 bit << 2 | wet 3 bit << 5 (design §1-4).
@@ -367,6 +375,7 @@ namespace KominkaHillside
         // arriving within ReleaseGrace, i.e. in flight) do not start it again.
         private int _releaseMs;
         private bool _released;
+        private bool _dryFinished;       // Decay has made its final clearing pass since the last foam / wet / stroke
         private float _releaseTime = -1000f;
         private bool[] _relValid = new bool[SenderSlots];
         private int[] _relSeq = new int[SenderSlots];
@@ -448,6 +457,11 @@ namespace KominkaHillside
         const int DirtWetQMax = 1023;
         const float DirtSampleInterval = 0.25f;
         private float[] _partReach;           // mesh units: the part's centre to its farthest cell centre
+        // Height above the ground (m) of each cell centre, and its dirt weight (DirtHeightWeight). The ground is the lowest
+        // valid cell centre; the bind-pose mesh is Z-up (position map / cellCenter z; KH_DogWashBake AABB z from 0).
+        private float[] _cellHeight;
+        private float[] _cellW;
+        private float _groundZ;               // mesh units
         // Owner: what happened since the last apply (metres counted, seconds in a zone / in the water / swimming)
         private float _dirtSampleAt = -1f;
         private float _dirtNextApply;
@@ -516,6 +530,8 @@ namespace KominkaHillside
         private int _idCellTex;
         private int _idDecay;
         private int _idFoamGrowEase;
+        private int _idDirtHeightFade;
+        private int _idDirtHeightWeight;
 
         void Start()
         {
@@ -535,6 +551,8 @@ namespace KominkaHillside
             _idCellTex = VRCShader.PropertyToID("_CellTex");
             _idDecay = VRCShader.PropertyToID("_Decay");
             _idFoamGrowEase = VRCShader.PropertyToID("_FoamGrowEase");
+            _idDirtHeightFade = VRCShader.PropertyToID("_DirtHeightFade");
+            _idDirtHeightWeight = VRCShader.PropertyToID("_DirtHeightWeight");
 
             if (meshToWorldScale <= 0f) meshToWorldScale = 1f;
             for (int i = 0; i < SenderSlots; i++) { _sndId[i] = -1; _sndLast[i] = -1e9f; }
@@ -661,6 +679,7 @@ namespace KominkaHillside
             _partCells = new int[total];
             int[] fill = new int[PartCount];
             _partReach = new float[PartCount];
+            ComputeCellHeights();
             if (_cellsOk)
             {
                 for (int c = 0; c < CellCount; c++)
@@ -703,8 +722,38 @@ namespace KominkaHillside
                 _wet[c] = 0f;
                 _dirt[c] = 0f;
                 if (!_cellsOk || !cellValid[c]) continue;
-                _dirt[c] = Mathf.Clamp01(initialDirt * PartDirtFactor(cellPart[c]));
+                // From the feet up (decision 2026-09-30): the height weight, not the part table
+                _dirt[c] = Mathf.Clamp01(initialDirt * (_cellW != null ? _cellW[c] : PartDirtFactor(cellPart[c])));
             }
+        }
+
+        // The cell centres' height above the lowest valid one (m) and their dirt weight.
+        void ComputeCellHeights()
+        {
+            _cellHeight = new float[CellCount];
+            _cellW = new float[CellCount];
+            if (!_cellsOk) { for (int c = 0; c < CellCount; c++) _cellW[c] = 1f; return; }
+            float minZ = 1e9f;
+            for (int c = 0; c < CellCount; c++) if (cellValid[c] && cellCenter[c].z < minZ) minZ = cellCenter[c].z;
+            if (minZ > 1e8f) minZ = 0f;
+            _groundZ = minZ;
+            for (int c = 0; c < CellCount; c++)
+            {
+                _cellHeight[c] = (cellCenter[c].z - minZ) * meshToWorldScale;
+                _cellW[c] = DirtHeightWeight(_cellHeight[c]);
+            }
+        }
+
+        // 1 up to dirtHeightFull, 1 -> dirtMidWeight up to dirtHeightMid, -> dirtTopWeight up to dirtHeightTop, then flat.
+        // The mask shader uses the same curve (_DirtHeightFade / _DirtHeightWeight, see DrawDirt).
+        float DirtHeightWeight(float h)
+        {
+            float full = Mathf.Max(0f, dirtHeightFull);
+            float mid = Mathf.Max(full + 0.001f, dirtHeightMid);
+            float top = Mathf.Max(mid + 0.001f, dirtHeightTop);
+            if (h <= full) return 1f;
+            if (h <= mid) return Mathf.Lerp(1f, dirtMidWeight, (h - full) / (mid - full));
+            return Mathf.Lerp(dirtMidWeight, dirtTopWeight, Mathf.Clamp01((h - mid) / (top - mid)));
         }
 
         float PartDirtFactor(int part)
@@ -1550,7 +1599,22 @@ namespace KominkaHillside
         {
             float now = Time.time;
             float drain = Mathf.Max(foamDrySeconds, wetDrySeconds);
-            if (!_anyFoamOrWet && now - _lastActivity > drain) return;
+            if (!_anyFoamOrWet && now - _lastActivity > drain)
+            {
+                // Drying stops here. The mask's band can be stronger than the coarse cells, and the drying time may
+                // have been shortened meanwhile (the rate and the window no longer match), so the last pass takes all
+                // foam and wet off the mask once: the cells are 0, nothing can be left on it.
+                if (!_dryFinished && _maskMat != null && _cur != null && _next != null)
+                {
+                    _dryFinished = true;
+                    _blitCount++;
+                    _maskMat.SetVector(_idDecay, new Vector4(0f, 1f, 1f, 0f));
+                    VRCGraphics.Blit(_cur, _next, _maskMat, PassDecay);
+                    Swap();
+                }
+                return;
+            }
+            _dryFinished = false;
             // Foam does not dry while the dog is being washed. _WashHold() alone lags on a non-Owner by the sync (the
             // washer's own foam would melt at the start of the wash), so a stroke seen here counts as well. The same
             // fd / wd go to the mask and the cells, and both clamp at 0 (never negative, however long it runs).
@@ -1944,12 +2008,18 @@ namespace KominkaHillside
                     if (e <= s) continue;
                     float sd = 0f;
                     float sw = 0f;
+                    float neg = 0f;
+                    bool rose = false;
                     for (int k = s; k < e; k++)
                     {
                         int c = _partCells[k];
                         float d0 = _dirt[c];
-                        float d = Mathf.Min(1f, d0 + Mathf.Max(0f, inc));
+                        // From the feet up: the increase is weighted by the cell's height (the river drop is not)
+                        float d1 = Mathf.Min(1f, d0 + Mathf.Max(0f, inc) * _cellW[c]);
+                        if (d1 > d0) rose = true;
+                        float d = d1;
                         if (drop > 0f && d > floor) d = Mathf.Max(floor, d - drop);
+                        neg += d - d1;
                         _dirt[c] = d;
                         sd += d - d0;
                         float w0 = _wet[c];
@@ -1961,7 +2031,10 @@ namespace KominkaHillside
                     changed = true;
                     if (drop > 0f) riverBlocksEdge = true;   // net: owner-only (synced with the cells below)
                     int n = e - s;
-                    _dirtCarry[p] = Mathf.Clamp(_dirtCarry[p] + sd / n, -0.5f, 0.5f);
+                    // What the mask is told: the UNWEIGHTED increase (the Brush weights it by each texel's height with the
+                    // same curve; the mask saturates at 1 like the cells), plus the average drop. A fully saturated part adds 0.
+                    float told = (rose ? Mathf.Max(0f, inc) : 0f) + neg / n;
+                    _dirtCarry[p] = Mathf.Clamp(_dirtCarry[p] + told, -0.5f, 0.5f);
                     if (leg) wetLeg += sw / n * 0.25f;
                     else wetBody += sw / n * 0.5f;
                 }
@@ -2090,7 +2163,7 @@ namespace KominkaHillside
             {
                 int c = _partCells[k];
                 float d = _dirt[c];
-                if (dD > 0f) d = Mathf.Min(1f, d + dD);
+                if (dD > 0f) d = Mathf.Min(1f, d + dD * _cellW[c]);   // the event carries the unweighted increase
                 else if (dD < 0f && d > floor) d = Mathf.Max(floor, d + dD);
                 _dirt[c] = d;
                 _wet[c] = Mathf.Clamp01(_wet[c] + dW);
@@ -2171,6 +2244,14 @@ namespace KominkaHillside
             _maskMat.SetFloat(_idRinseFoamBoost, 0f);
             _maskMat.SetFloat(_idFoamRinseGate, 0f);
             _maskMat.SetFloat(_idEdgeNoise, en);
+            // From the feet up (mask shader, same curve as DirtHeightWeight): only a dirt INCREASE (_Delta.x > 0, never a
+            // tool) is weighted by the texel's height = (position map z - ground) in mesh units. z = enabled.
+            float inv = 1f / Mathf.Max(1e-4f, meshToWorldScale);
+            float full = Mathf.Max(0f, dirtHeightFull);
+            float mid = Mathf.Max(full + 0.001f, dirtHeightMid);
+            float top = Mathf.Max(mid + 0.001f, dirtHeightTop);
+            _maskMat.SetVector(_idDirtHeightFade, new Vector4(_groundZ, _groundZ + full * inv, _groundZ + mid * inv, _groundZ + top * inv));
+            _maskMat.SetVector(_idDirtHeightWeight, new Vector4(dirtMidWeight, dirtTopWeight, 1f, 0f));
             SetAllowOnly(part);
             VRCGraphics.Blit(_cur, _next, _maskMat, PassBrush);
             Swap();

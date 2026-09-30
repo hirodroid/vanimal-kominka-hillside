@@ -33,9 +33,10 @@ Shader "KominkaHillside/Wash Shell"
         _FoamThickness ("Foam height of the top layer (m, world)", Float) = 0.05
         _FoamColor ("Foam colour", Color) = (0.95,0.96,0.98,1)
         _FoamShadow ("Foam valley tint (multiplier)", Color) = (0.66,0.73,0.86,1)
-        _DirtColor ("Dirt colour (A = max opacity)", Color) = (0.36,0.27,0.18,0.7)
-        _WetDarken ("Wet darkening at wet 1", Range(0,1)) = 0.5
-        _WetGloss ("Wet gloss", Range(0,2)) = 0.12
+        _DirtColor ("Dirt colour (A = max opacity)", Color) = (0.15,0.10,0.065,0.88)
+        _WetDarken ("Wet darkening at wet 1", Range(0,1)) = 0.25
+        _WetGloss ("Wet gloss", Range(0,2)) = 0.6
+        _WetTint ("Wet cool tint (sheen colour)", Color) = (0.45,0.6,0.85,1)
         _DirtPattern ("Dirt pattern (R, multiplies the procedural mud)", 2D) = "white" {}
         _FurFlowAxis ("Fur flow axis (bind-pose mesh space, dirt streaks)", Vector) = (0,0,1,0)
         _FoamScale ("Foam frequency (1 / mesh unit; mounds x0.65, grains x2.6)", Float) = 60
@@ -56,7 +57,7 @@ Shader "KominkaHillside/Wash Shell"
     sampler2D _DirtPattern;
     float4 _DirtPattern_ST;
     float _BaseOffset, _FoamThickness;
-    half4 _FoamColor, _FoamShadow, _DirtColor;
+    half4 _FoamColor, _FoamShadow, _DirtColor, _WetTint;
     half _WetDarken, _WetGloss;
     float4 _FurFlowAxis;
     float _FoamScale;
@@ -161,9 +162,10 @@ Shader "KominkaHillside/Wash Shell"
         half wet = saturate(m.b);
         clip(max(dirt, wet) - 0.003);
         // Splatter: few, small, irregular (cells warped by the blot noise, cut by the streaks).
-        float3 pk = i.bindPos * (_FoamScale * 1.6) + (blot - 0.5) * 1.2;
-        float speckCap = KHWash_Bubbles2(pk, saturate(dirt * 1.5) * 0.22, 0.3, 0, 0).x;
-        float aSpeck = smoothstep(0.35, 0.6, speckCap - (streak - 0.5) * 0.6) * 0.7;
+        // Mud clumps (rev 5): coarse irregular lumps on the blotches instead of dots.
+        float3 pk = i.bindPos * (_FoamScale * 0.9) + (blot - 0.5) * 1.5;
+        float lumpCap = KHWash_Bubbles2(pk, saturate(dirt * 1.3) * 0.5, 0.5, 0, 0).x;
+        float aSpeck = smoothstep(0.2, 0.55, lumpCap - (streak - 0.5) * 0.5) * 0.9;
 
         float3 n = normalize(i.worldNormal);
         float3 V = normalize(_WorldSpaceCameraPos.xyz - i.worldPos);
@@ -176,17 +178,23 @@ Shader "KominkaHillside/Wash Shell"
         half pat = tex2D(_DirtPattern, TRANSFORM_TEX(i.uv, _DirtPattern)).r;
         float field = blot * 0.65 + streak * 0.35;
         float thd = lerp(1.05, 0.0, saturate(dirt * 1.2));
-        float aMain = smoothstep(thd - 0.1, thd + 0.14, field) * (0.55 + 0.45 * blot);
-        float ad = max(aMain, aSpeck) * saturate(dirt * 6.0) * pat * _DirtColor.a * sil;
+        float aMain = smoothstep(thd - 0.12, thd + 0.16, field) * (0.75 + 0.25 * blot);
+        float ad = saturate(max(aMain, aSpeck * saturate(field * 1.5)) * (0.8 + 0.2 * aSpeck))
+                 * saturate(dirt * 6.0) * pat * _DirtColor.a * sil;
         half ndlD = saturate(dot(n, L) * 0.5 + 0.5);
-        half3 cd = lerp(_DirtColor.rgb * 1.3, _DirtColor.rgb * 0.8, blot) * lerp(1.0, 0.7, wet)
+        // Dark mud: lumps darker (thicker), thin areas a bit lighter; wet mud darker still.
+        half3 cd = _DirtColor.rgb * lerp(1.25, 0.7, saturate(blot * 0.6 + aSpeck * 0.5)) * lerp(1.0, 0.75, wet)
                  * lit * lerp(0.75, 1.0, ndlD);
 
-        // Wet: darken what is below, small broken gloss (no milky sheen).
+        // Wet (rev 5): read as "wet" by gloss and a cool tint, only mildly darker, so a rinsed band = clean fur that
+        // shines, clearly unlike the dark mud. Gloss = tight highlight + a broad soft sheen, broken by the streaks.
         float aw = wet * _WetDarken * sil;
         float3 H = normalize(L + V + float3(0, 1e-4, 0));
-        half spec = pow(saturate(dot(n, H)), 80.0) * (dot(n, L) > 0 ? 1.0 : 0.0) * (0.3 + 0.7 * streak);
-        half3 c = spec * lightCol * _WetGloss * wet;
+        half ndh = saturate(dot(n, H));
+        half lightOn = dot(n, L) > 0 ? 1.0 : 0.0;
+        half spec = (pow(ndh, 60.0) * 0.8 + pow(ndh, 10.0) * 0.12) * lightOn * (0.35 + 0.65 * streak);
+        half fres = pow(1.0 - ndv, 3.0);
+        half3 c = (spec * lightCol + (0.05 + 0.2 * fres) * _WetTint.rgb * lit) * _WetGloss * wet * sil;
 
         // Premultiplied: wet < dirt.
         c = cd * ad + c * (1.0 - ad);
@@ -216,16 +224,22 @@ Shader "KominkaHillside/Wash Shell"
         float graze = saturate(1.0 - ndv * 2.5);
         thr += graze * graze * 0.45 * t;
         float thinPeak = 1.2 / layers;                                   // thin grains reach the bottom layer only
+        // Upper layers fade in over a wide band around their cut (60 % of the layer spacing, in height units) and so
+        // melt into the layer below instead of ending in a visible contour. The bottom layer keeps a short edge.
+        float fadeW = layer < 0.5 ? max(_FoamSoft, 0.01) * 0.3 : 0.6 / layers;
+        float thrLo = layer < 0.5 ? thr : thr - fadeW * 0.5;
         // h never exceeds foam (thick) or thinPeak (grains, bottom layer): skip the noise when nothing can show.
         float hMax = max(foam, layer < 0.5 ? thinPeak * step(0.01, foam) : 0.0);
-        clip(hMax - thr);
+        clip(hMax - thrLo);
 
         float3 p = i.bindPos * _FoamScale;
-        // Mounds (~4 cm on the Shiba), some cells empty and sizes mixed so the heaps are uneven.
+        // Mounds (~4 cm on the Shiba), some cells empty and sizes mixed so the heaps are uneven. Same for every layer
+        // (the heap shape must line up through the stack).
         float2 bigC = KHWash_Bubbles2(p * 0.65, 0.85, 0.55, 0.0, 0.0);
         // Thin foam: fine bubbles, clustered where a mound would be (starting lather), not an even dot scatter.
         float covThin = smoothstep(0.0, 0.35, foam) * saturate(0.35 + bigC.x) * 0.8;
-        float2 smC = KHWash_Bubbles2(p * 2.6 + 11.3, 1.5, 0.5, covThin, 0.32);  // grains (~1 cm): dense / thin
+        // Grains get a per-layer phase shift, so the cut lines of successive layers are not concentric copies.
+        float2 smC = KHWash_Bubbles2(p * 2.6 + 11.3 + layer * float3(3.7, 1.9, 5.3), 1.5, 0.5, covThin, 0.32);
         // Far away a pixel spans many cells: fade to the mean instead of shimmering.
         float gB = saturate(1.6 - fw * 0.52);
         float gS = saturate(1.6 - fw * 2.1);
@@ -237,20 +251,21 @@ Shader "KominkaHillside/Wash Shell"
         float hFull = foam * (0.55 + 0.45 * shape) * smoothstep(0.2, 0.45, foam);
         float h = max(hFull, thin * thinPeak);
 
-        float edgeW = max(_FoamSoft, 0.01) * 0.3;
-        float a = smoothstep(thr, thr + edgeW, h);
+        float a = smoothstep(thrLo, thrLo + fadeW, h);
+        // Top layers also thin out at grazing angles (on top of the raised threshold above).
+        a *= lerp(1.0, saturate(ndv * 3.0), t * 0.6);
         clip(a - 0.02);
 
-        // Colour: bottom layers / valleys / heap flanks in _FoamShadow, top layers / heap crowns white, so the heaps
-        // read as overlapping. Fine thin bubbles: white centre, tinted rim. No point highlights.
-        float side = 1.0 - saturate((h - thr) / 0.15);                  // just inside the cut = flank of a heap
-        float occl = saturate(0.05 + 0.45 * t + 0.5 * big + 0.15 * grain + 0.35 * thin * (1.0 - t) - 0.3 * side);
+        // Colour from the CONTINUOUS height h (not the layer index, not the distance to this layer's cut), so there is
+        // no brightness step between layers: low foam / valleys / heap flanks in _FoamShadow, crowns white. Fine thin
+        // bubbles: white centre, tinted rim. No point highlights.
+        float occl = saturate(0.05 + 0.55 * h + 0.4 * big + 0.15 * grain + 0.35 * thin * (1.0 - h));
         half3 shade = lerp(_FoamShadow.rgb, half3(1, 1, 1), occl);
 
         float3 L = MainLightDir();
         half dirF = lerp(0.85, 1.0, saturate(dot(n, L) * 0.5 + 0.5)) * (0.92 + 0.08 * n.y);
         half rim = pow(1.0 - ndv, 3.0) * _FoamRim * 0.4;
-        half3 foamBase = lerp(_FoamColor.rgb, _DirtColor.rgb * 1.8, dirt * 0.2);   // slightly dirty suds
+        half3 foamBase = _FoamColor.rgb * lerp(half3(1, 1, 1), half3(0.86, 0.8, 0.72), dirt * 0.5); // dirty suds
         half3 c = foamBase * LightLevel(i.ambient, 1.0) * (dirF * shade + rim);
 
         fixed4 col = fixed4(c, a);

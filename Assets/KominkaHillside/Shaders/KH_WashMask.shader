@@ -31,6 +31,8 @@ Shader "KominkaHillside/Wash Mask"
         _FoamGrowEase ("Foam growth slows near full (0 = linear)", Range(0,0.95)) = 0.7
         _CellTex ("Cells 16x16 (dirt, foam, wet), bilinear", 2D) = "black" {}
         _Decay ("Decay (dirt, foam, wet) to subtract", Vector) = (0,0,0,0)
+        _DirtHeightFade ("Dirt height fade (ground z, full z, mid z, top z; mesh units)", Vector) = (0,0,0,0)
+        _DirtHeightWeight ("Dirt height weight (mid weight, top weight, enabled, -)", Vector) = (0.35,0.05,0,0)
     }
 
     CGINCLUDE
@@ -47,6 +49,17 @@ Shader "KominkaHillside/Wash Mask"
     float _RinseFoamBoost, _FoamRinseGate;
     float _EdgeNoise, _EdgeNoiseScale, _FoamGrowEase;
     float4 _Decay;
+    float4 _DirtHeightFade, _DirtHeightWeight;
+
+    // IMP-DOG-029 (decision 2026-09-30): dirt builds from the feet up. The same curve as KH_DogWash.DirtHeightWeight on
+    // the bind-pose mesh z (Z-up): 1 up to full, 1 -> mid weight up to mid, -> top weight up to top, then flat.
+    float DirtHeightWeight(float z)
+    {
+        float full = _DirtHeightFade.y, mid = max(_DirtHeightFade.z, full + 1e-4), top = max(_DirtHeightFade.w, mid + 1e-4);
+        if (z <= full) return 1.0;
+        if (z <= mid) return lerp(1.0, _DirtHeightWeight.x, (z - full) / (mid - full));
+        return lerp(_DirtHeightWeight.x, _DirtHeightWeight.y, saturate((z - mid) / (top - mid)));
+    }
     float _AllowPart[16];
     float _BoneToPart[64];
 
@@ -114,6 +127,8 @@ Shader "KominkaHillside/Wash Mask"
 
         // Dirt: removal is faster under foam (_RinseFoamBoost).
         float dD = _Delta.x * w;
+        // Only a dirt increase (the Owner's dirt event; tools never add dirt) is weighted by height, when enabled.
+        if (_Delta.x > 0 && _DirtHeightWeight.z > 0.5) dD *= DirtHeightWeight(p.z);
         float boost = dD < 0 ? (1.0 + foam * _RinseFoamBoost) : 1.0;
         float dirtNormal = saturate(dirt + dD * boost);
         // Gate: while rinsing (dirt and foam both going down), dirt under foam falls in the same ratio as the foam,

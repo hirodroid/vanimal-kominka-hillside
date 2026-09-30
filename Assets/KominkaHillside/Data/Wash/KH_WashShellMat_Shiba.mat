@@ -43,11 +43,12 @@ Material:
     - _FoamScale: 59.99982
     - _FoamSoft: 0.12
     - _FoamThickness: 0.05
-    - _WetDarken: 0.5
-    - _WetGloss: 0.12
+    - _WetDarken: 0.25
+    - _WetGloss: 0.6
     m_Colors:
-    - _DirtColor: {r: 0.36, g: 0.27, b: 0.18, a: 0.7}
+    - _DirtColor: {r: 0.15, g: 0.1, b: 0.065, a: 0.88}
     - _FoamColor: {r: 0.95, g: 0.96, b: 0.97999996, a: 1}
     - _FoamShadow: {r: 0.66, g: 0.73, b: 0.86, a: 1}
     - _FurFlowAxis: {r: 0, g: 0, b: 1, a: 0}
+    - _WetTint: {r: 0.45, g: 0.6, b: 0.85, a: 1}
   m_BuildTextureStacks: []

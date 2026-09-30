@@ -51,13 +51,13 @@ namespace KominkaHillside.Editor
                 WsPlayerNear(1.3f);
             }));
             s.Add(WsWait(1.2));
-            s.Add(WsDo(() => { zLeg0 = WdPartAvg("_dirt", 3, 6); zBody0 = WdPartAvg("_dirt", 0, 1); zT0 = Get<float>(wsWash, "_dirtZoneTotal"); }));
+            s.Add(WsDo(() => { zLeg0 = WdFoot("_dirt"); zBody0 = WdPartAvg("_dirt", 0, 1); zT0 = Get<float>(wsWash, "_dirtZoneTotal"); }));
             s.Add(WsWait(5.0));
             s.Add(WsDo(() =>
             {
                 zOutBlock = Get<int>(wsWash, "_dirtBlock");
                 WsExpect(Get<float>(wsWash, "_dirtZoneTotal") == zT0, "outside the zone no zone time was counted (" + zT0 + " -> " + Get<float>(wsWash, "_dirtZoneTotal") + ")");
-                WsExpect(WdPartAvg("_dirt", 3, 6) == zLeg0 && WdPartAvg("_dirt", 0, 1) == zBody0, "outside the zone the cells did not change (legs " + zLeg0.ToString("F3") + " -> " + WdPartAvg("_dirt", 3, 6).ToString("F3") + ")");
+                WsExpect(WdFoot("_dirt") == zLeg0 && WdPartAvg("_dirt", 0, 1) == zBody0, "outside the zone the cells did not change (legs " + zLeg0.ToString("F3") + " -> " + WdFoot("_dirt").ToString("F3") + ")");
                 WsExpect(zOutBlock == 0, "the outside check was not blocked by something else (_dirtBlock " + zOutBlock + "; 4 = the station is within reach of this spot)");
                 WdPlaceAt(zn.position); WsPlayerNear(1.3f);
                 zm0 = WsMask(); zT0 = Get<float>(wsWash, "_dirtZoneTotal"); zEv0 = Get<int>(wsWash, "_dirtEvents");
@@ -72,21 +72,77 @@ namespace KominkaHillside.Editor
             s.Add(WsDo(() =>
             {
                 zT1 = Get<float>(wsWash, "_dirtZoneTotal") - zT0;
-                float leg = WdPartAvg("_dirt", 3, 6), body = WdPartAvg("_dirt", 0, 1), head = WdPartAvg("_dirt", 7, 7);
-                WsExpect(leg >= 0.4f && leg <= 0.6f, "legs 0.4..0.6 after " + zT1.ToString("F2") + " s in the zone (" + leg.ToString("F3") + ")");
-                WsExpect(body >= 0.1f && body <= 0.3f, "hip + chest 0.1..0.3 (" + body.ToString("F3") + ")");
+                float leg = WdFoot("_dirt"), body = WdPartAvg("_dirt", 0, 1), head = WdPartAvg("_dirt", 7, 7);
+                WsExpect(leg >= 0.4f && leg <= 0.6f, "feet (leg cells within dirtHeightFull of the ground) 0.4..0.6 after " + zT1.ToString("F2") + " s in the zone (" + leg.ToString("F3") + ")");
+                // hip + chest: zoneBodyDirt 0.2 x the height weight (the torso is high: most of it near dirtTopWeight)
+                WsExpect(body > 0f && body <= 0.2f, "hip + chest a little dirty, at most 0.2 (" + body.ToString("F3") + ")");
                 WsExpect(head == 0f, "the head did not get dirty (" + head.ToString("F3") + ")");
                 WsExpect(leg > body, "legs dirtier than the body (the coefficient order)");
                 int ev = Get<int>(wsWash, "_dirtEvents") - zEv0;
                 WsExpect(ev >= 3 && ev <= 8, "dirt NetStrokes sent at the apply rate (" + ev + " in ~" + (zT1 + 2.6f).ToString("F0") + " s; 0.5 Hz, only when changed)");
                 var m = WsMask();
-                float mLeg = WdMaskAvg(m, 3, 6) - WdMaskAvg(zm0, 3, 6), mBody = WdMaskAvg(m, 0, 1) - WdMaskAvg(zm0, 0, 1), mHead = WdMaskAvg(m, 7, 7) - WdMaskAvg(zm0, 7, 7), mNeck = WdMaskAvg(m, 2, 2) - WdMaskAvg(zm0, 2, 2);
-                WsExpect(mLeg >= 0.3f && mLeg <= 0.7f, "mask R on the legs grew like the cells (+" + mLeg.ToString("F3") + ")");
-                WsExpect(mBody >= 0.05f && mBody <= 0.35f, "mask R on hip + chest grew (+" + mBody.ToString("F3") + ")");
+                float mLeg = WdMaskFoot(m) - WdMaskFoot(zm0), mBody = WdMaskAvg(m, 0, 1) - WdMaskAvg(zm0, 0, 1), mHead = WdMaskAvg(m, 7, 7) - WdMaskAvg(zm0, 7, 7), mNeck = WdMaskAvg(m, 2, 2) - WdMaskAvg(zm0, 2, 2);
+                WsExpect(mLeg >= 0.3f && mLeg <= 0.7f, "mask R on the feet grew like the cells (+" + mLeg.ToString("F3") + ")");
+                WsExpect(mBody > 0f && mBody <= 0.25f, "mask R on hip + chest grew a little (+" + mBody.ToString("F3") + ")");
                 WsExpect(Mathf.Abs(mHead) < 0.02f && Mathf.Abs(mNeck) < 0.02f, "mask R on the head / neck unchanged (" + mHead.ToString("F3") + " / " + mNeck.ToString("F3") + ": the part gate)");
                 WsExpect(wsShell.enabled, "shell renderer enabled");
                 WsNote("outside the zone (" + (znR + 3f).ToString("F1") + " m from its centre) 5 s: nothing counted, cells unchanged, block " + zOutBlock + "; inside " + zT1.ToString("F2") + " s (re-placed " + zRe + " times): legs " + leg.ToString("F3") + ", hip+chest " + body.ToString("F3") + ", head " + head.ToString("F3")
                     + "; mask R legs +" + mLeg.ToString("F3") + ", body +" + mBody.ToString("F3") + ", neck " + mNeck.ToString("F3") + ", head " + mHead.ToString("F3") + "; " + ev + " dirt events; zone " + zn.name + " r " + znR.ToString("F2") + " m");
+                WdRestore();
+            }));
+
+            // ---- W-dirt-height (決定 2026-09-30: 足元から汚れる。泥の地点 10 s: 足先 > 0.4、尻尾と頭 < 0.05、腰の低いセル > 高いセル、マスクも低い所ほど濃い) ----
+            s = WsCase("W-dirt-height", 60);
+            Transform hz = null; float hzR = 0f, htT0 = 0f; Color[] hm0 = null;
+            s.Add(WsDo(() =>
+            {
+                WdRestore();
+                hz = WdZone(0, out hzR);
+                WdSet("dirtGraceSeconds", 0f);
+                wsWash.SendCustomEvent("_DebugClear");
+                WdPlaceAt(hz.position); WsPlayerNear(1.3f);
+            }));
+            s.Add(WsWait(1.2));
+            s.Add(WsDo(() => { htT0 = Get<float>(wsWash, "_dirtZoneTotal"); hm0 = WsMask(); }));
+            s.Add(WsUntil(() =>
+            {
+                if (Flat(wsRoot.position - hz.position) > hzR * 0.6f) { WdPlaceAt(hz.position); WsPlayerNear(1.3f); }
+                return Get<float>(wsWash, "_dirtZoneTotal") - htT0 >= 10f;
+            }, 25, () => "10 s of zone time not counted"));
+            s.Add(WsDo(() => WdPlaceNear(hz.position, hzR + 3f)));
+            s.Add(WsWait(2.6));
+            s.Add(WsDo(() =>
+            {
+                var d = Get<float[]>(wsWash, "_dirt"); var part = Get<int[]>(wsWash, "cellPart"); var valid = Get<bool[]>(wsWash, "cellValid"); var h = Get<float[]>(wsWash, "_cellHeight");
+                float foot = WdFoot("_dirt"), tail = WdPartAvg("_dirt", 8, 8), head = WdPartAvg("_dirt", 7, 7);
+                // hip (0): cells in the lower and the upper third of its height range
+                float hmin = float.MaxValue, hmax = float.MinValue;
+                for (int c = 0; c < d.Length; c++) if (valid[c] && part[c] == 0) { hmin = Mathf.Min(hmin, h[c]); hmax = Mathf.Max(hmax, h[c]); }
+                float lo = 0f, hi = 0f; int nlo = 0, nhi = 0, third = 0;
+                for (int c = 0; c < d.Length; c++)
+                {
+                    if (!valid[c] || part[c] != 0) continue;
+                    if (h[c] <= hmin + (hmax - hmin) / 3f) { lo += d[c]; nlo++; }
+                    else if (h[c] >= hmax - (hmax - hmin) / 3f) { hi += d[c]; nhi++; }
+                    else third++;
+                }
+                lo = nlo > 0 ? lo / nlo : 0f; hi = nhi > 0 ? hi / nhi : 0f;
+                WsExpect(foot > 0.4f, "feet > 0.4 (" + foot.ToString("F3") + ")");
+                WsExpect(tail < 0.05f && head < 0.05f, "tail and head < 0.05 (tail " + tail.ToString("F3") + ", head " + head.ToString("F3") + ")");
+                WsExpect(nlo > 0 && nhi > 0 && lo > hi, "the hip's low cells dirtier than its high cells (" + lo.ToString("F3") + " over " + nlo + " vs " + hi.ToString("F3") + " over " + nhi + "; hip " + hmin.ToString("F2") + ".." + hmax.ToString("F2") + " m)");
+                // the mask: the feet texels gained more than the upper leg texels (the Brush's height weight)
+                var m = WsMask(); float gz = Get<float>(wsWash, "_groundZ");
+                float fl = 0f, up = 0f; int nf = 0, nu = 0; float full = Get<float>(wsWash, "dirtHeightFull"), mid = Get<float>(wsWash, "dirtHeightMid");
+                for (int k = 0; k < wsTexCount; k++)
+                {
+                    int q = wsTexPart[k]; if (q < 3 || q > 6) continue;
+                    float th = (wsTexPos[k].z - gz) * wsMts, dr = m[wsTexIdx[k]].r - hm0[wsTexIdx[k]].r;
+                    if (th <= full) { fl += dr; nf++; } else if (th >= mid) { up += dr; nu++; }
+                }
+                fl = nf > 0 ? fl / nf : 0f; up = nu > 0 ? up / nu : 0f;
+                WsExpect(nf > 0 && fl > 0.3f, "mask R on the foot texels +0.3 or more (+" + fl.ToString("F3") + " over " + nf + ")");
+                WsExpect(nu == 0 || up < fl * 0.6f, "mask R on the leg texels above dirtHeightMid grew clearly less than the feet (+" + up.ToString("F3") + " over " + nu + " vs +" + fl.ToString("F3") + ": the Brush's _DirtHeightFade)");
+                WsNote("10 s in the zone: feet " + foot.ToString("F3") + ", tail " + tail.ToString("F3") + ", head " + head.ToString("F3") + "; hip low third " + lo.ToString("F3") + " (" + nlo + ") vs high third " + hi.ToString("F3") + " (" + nhi + "), hip " + hmin.ToString("F2") + ".." + hmax.ToString("F2") + " m; mask legs feet +" + fl.ToString("F3") + " (" + nf + " texels) vs above " + mid + " m +" + up.ToString("F3") + " (" + nu + ")");
                 WdRestore();
             }));
 
@@ -112,7 +168,7 @@ namespace KominkaHillside.Editor
             s.Add(WsWait(2.6));
             s.Add(WsDo(() =>
             {
-                rsMask1 = WdMaskAvg(WsMask(), 3, 6); rsCell1 = WdPartAvg("_dirt", 3, 6);
+                rsMask1 = WdMaskFoot(WsMask()); rsCell1 = WdFoot("_dirt");
                 WsExpect(rsCell1 > 0.1f, "the zone dirtied the legs (" + rsCell1.ToString("F3") + ")");
                 WsExpect(Get<int>(wsWash, "_dirtMaskSeq") == Get<int>(wsWash, "dirtSeq"), "the Owner's mask holds every event of its cells (maskSeq " + Get<int>(wsWash, "_dirtMaskSeq") + ", dirtSeq " + Get<int>(wsWash, "dirtSeq") + ")");
                 rsRc0 = Get<int>(wsWash, "_restoreCount");
@@ -122,7 +178,7 @@ namespace KominkaHillside.Editor
             s.Add(WsWait(0.3));
             s.Add(WsDo(() =>
             {
-                rsMask2 = WdMaskAvg(WsMask(), 3, 6);
+                rsMask2 = WdMaskFoot(WsMask());
                 WsExpect(Mathf.Abs(rsMask2 - rsMask1) < 0.08f, "a Restore keeps the legs' dirt (mask " + rsMask1.ToString("F3") + " -> " + rsMask2.ToString("F3") + ", cells " + rsCell1.ToString("F3") + "): not doubled, not lost");
                 // A logged event the cells do not hold (seq = dirtSeq + 1, legs +0.1): the next Restore must draw it once
                 int ds = Get<int>(wsWash, "dirtSeq"), ep = Get<int>(wsWash, "epoch"), f = 0, t = 0;
@@ -140,7 +196,7 @@ namespace KominkaHillside.Editor
             s.Add(WsWait(0.3));
             s.Add(WsDo(() =>
             {
-                float m3 = WdMaskAvg(WsMask(), 3, 6);
+                float m3 = WdMaskFoot(WsMask());
                 wsWash.SetProgramVariable<int>("_dlCount", 0);
                 WsExpect(m3 - rsMask2 >= 0.06f && m3 - rsMask2 <= 0.14f, "the logged event newer than dirtSeq was drawn once after the Restore (legs mask " + rsMask2.ToString("F3") + " -> " + m3.ToString("F3") + ", expected about +0.1)");
                 WsNote("4 s in the zone: legs cells " + rsCell1.ToString("F3") + ", mask " + rsMask1.ToString("F3") + " -> forced Restore " + rsMask2.ToString("F3") + "; injected log entry seq dirtSeq+1 (+0.1 legs) -> Restore " + m3.ToString("F3") + ". Not covered: a real receiver's log (ClientSim skips the own echo)");
@@ -162,13 +218,13 @@ namespace KominkaHillside.Editor
             s.Add(WsDo(() => bdTick0 = Get<int>(wsWash, "_dirtTicks")));
             s.Add(WsUntil(() => Get<int>(wsWash, "_dirtTicks") > bdTick0, 4, () => "no apply tick"));
             s.Add(WsWait(1.0));   // 1 s of zone time counted, the next apply ~1 s away
-            s.Add(WsDo(() => { bdLeg0 = WdPartAvg("_dirt", 3, 6); bdA = WsAnchorOf(WsPathHit(0.5f)); bdTick0 = Get<int>(wsWash, "_dirtTicks"); }));
+            s.Add(WsDo(() => { bdLeg0 = WdFoot("_dirt"); bdA = WsAnchorOf(WsPathHit(0.5f)); bdTick0 = Get<int>(wsWash, "_dirtTicks"); }));
             s.Add(WsDrive(0.3f, 1, u => WsAt(bdA), WsSponge, -1f, null));
             s.Add(WsDo(() => WsEnd(WsSponge)));
             s.Add(WsUntil(() => Get<int>(wsWash, "_dirtTicks") > bdTick0, 4, () => "no apply tick after the stroke"));
             s.Add(WsDo(() =>
             {
-                float leg = WdPartAvg("_dirt", 3, 6);
+                float leg = WdFoot("_dirt");
                 WsExpect(WsHold(), "still washed at the apply");
                 WsExpect(leg <= bdLeg0 + 1e-4f, "the zone time counted before the wash was not applied after it (" + bdLeg0.ToString("F3") + " -> " + leg.ToString("F3") + ")");
                 WsNote("1 s of zone time, then a 0.3 s sponge before the next apply: legs " + bdLeg0.ToString("F3") + " -> " + leg.ToString("F3") + " at the apply (dropped at the wash start)");
@@ -197,7 +253,7 @@ namespace KominkaHillside.Editor
             s.Add(WsWait(1.0));
             s.Add(WsDo(() =>
             {
-                wkW0 = Get<float>(wsWash, "_dirtWalkTotal"); wkLeg0 = WdPartAvg("_dirt", 3, 6); wkBody0 = WdPartAvg("_dirt", 0, 1);
+                wkW0 = Get<float>(wsWash, "_dirtWalkTotal"); wkLeg0 = WdFoot("_dirt"); wkBody0 = WdPartAvg("_dirt", 0, 1);
                 wkFrom = Networking.LocalPlayer.GetPosition(); wkT0 = -1f;
             }));
             // 持ち主が周回のノードに沿って 2 m/s で歩く (毎フレーム小さく TeleportTo)。Owner の数えた距離が 30 m に届くまで
@@ -218,7 +274,7 @@ namespace KominkaHillside.Editor
             s.Add(WsDo(() =>
             {
                 float extra = Get<float>(wsWash, "_dirtWalkTotal") - wkW0 - wkCounted;
-                float leg = WdPartAvg("_dirt", 3, 6), body = WdPartAvg("_dirt", 0, 1);
+                float leg = WdFoot("_dirt"), body = WdPartAvg("_dirt", 0, 1);
                 WsExpect(Get<int[]>(manager, "walkers")[wsDog] < 0, "detached after the walk");
                 WsExpect(leg - wkLeg0 >= 0.4f && leg - wkLeg0 <= 0.6f, "legs +0.4..0.6 after " + (wkCounted + extra).ToString("F1") + " m counted (= " + ((wkCounted + extra) * 300f / WkMeters).ToString("F0") + " m at the real 300 m) (" + wkLeg0.ToString("F3") + " -> " + leg.ToString("F3") + ")");
                 WsExpect(Mathf.Abs(body - wkBody0) < 1e-4f, "walking dirties the legs only (hip + chest " + wkBody0.ToString("F3") + " -> " + body.ToString("F3") + ")");
@@ -242,7 +298,7 @@ namespace KominkaHillside.Editor
             s.Add(WsDo(() =>
             {
                 WdPlaceAt(gz.position); WsPlayerNear(1.3f);
-                grLeg0 = WdPartAvg("_dirt", 3, 6); grZ0 = Get<float>(wsWash, "_dirtZoneTotal"); grPlacedAt = EditorApplication.timeSinceStartup;
+                grLeg0 = WdFoot("_dirt"); grZ0 = Get<float>(wsWash, "_dirtZoneTotal"); grPlacedAt = EditorApplication.timeSinceStartup;
             }));
             s.Add(now =>
             {
@@ -255,7 +311,7 @@ namespace KominkaHillside.Editor
             s.Add(WsWait(2.6));
             s.Add(WsDo(() =>
             {
-                float leg = WdPartAvg("_dirt", 3, 6);
+                float leg = WdFoot("_dirt");
                 WsExpect(grSaw3 && !grSaw0, "blocked by the grace in the zone (saw grace " + grSaw3 + ", saw unblocked " + grSaw0 + ")");
                 WsExpect(Get<float>(wsWash, "_dirtZoneTotal") == grZ0, "no zone time counted in the grace");
                 WsExpect(leg <= grLeg0 + 1e-4f, "legs did not get dirtier in the grace (" + grLeg0.ToString("F3") + " -> " + leg.ToString("F3") + ")");
@@ -270,7 +326,7 @@ namespace KominkaHillside.Editor
             s.Add(WsWait(2.6));
             s.Add(WsDo(() =>
             {
-                float leg = WdPartAvg("_dirt", 3, 6);
+                float leg = WdFoot("_dirt");
                 WsExpect(leg >= grLeg0 + 0.1f, "after the grace the zone dirties the legs again (" + grLeg0.ToString("F3") + " -> " + leg.ToString("F3") + ")");
                 WsNote("clean edge (serial " + grS0 + " -> " + WsSerial() + ") then 10 s in the zone: grace block, legs unchanged; grace shortened to 1 s: " + (Get<float>(wsWash, "_dirtZoneTotal") - grZ0).ToString("F1") + " s counted, legs " + grLeg0.ToString("F3") + " -> " + leg.ToString("F3") + " (re-placed " + grRe + ")");
                 WdRestore();
@@ -295,7 +351,7 @@ namespace KominkaHillside.Editor
                 WdPlaceAt(stAt); WsPlayerNear(1.3f);
             }));
             s.Add(WsWait(1.2));
-            s.Add(WsDo(() => { stLeg0 = WdPartAvg("_dirt", 3, 6); stZ0 = Get<float>(wsWash, "_dirtZoneTotal"); stPlacedAt = EditorApplication.timeSinceStartup; }));
+            s.Add(WsDo(() => { stLeg0 = WdFoot("_dirt"); stZ0 = Get<float>(wsWash, "_dirtZoneTotal"); stPlacedAt = EditorApplication.timeSinceStartup; }));
             s.Add(now =>
             {
                 if (Flat(wsRoot.position - stAt) > szR * 0.6f) { WdPlaceAt(stAt); WsPlayerNear(1.3f); }
@@ -306,7 +362,7 @@ namespace KominkaHillside.Editor
             s.Add(WsWait(2.6));
             s.Add(WsDo(() =>
             {
-                float leg = WdPartAvg("_dirt", 3, 6);
+                float leg = WdFoot("_dirt");
                 WsExpect(stSaw4 && !stSawOther, "blocked by the station the whole time (saw station " + stSaw4 + ", saw other " + stSawOther + ")");
                 WsExpect(leg <= stLeg0 + 1e-4f && Get<float>(wsWash, "_dirtZoneTotal") == stZ0, "no dirt within the station radius (" + stLeg0.ToString("F3") + " -> " + leg.ToString("F3") + ")");
                 WdSet("dirtStationRadius", 0f);
@@ -320,7 +376,7 @@ namespace KominkaHillside.Editor
             s.Add(WsWait(2.6));
             s.Add(WsDo(() =>
             {
-                float leg = WdPartAvg("_dirt", 3, 6);
+                float leg = WdFoot("_dirt");
                 WsExpect(leg >= stLeg0 + 0.1f, "control: with the station radius 0 the same spot dirties the legs (" + stLeg0.ToString("F3") + " -> " + leg.ToString("F3") + ")");
                 WsNote("zone moved " + stDist.ToString("F1") + " m from the station: 10 s blocked (station), legs unchanged; radius 0 -> legs " + stLeg0.ToString("F3") + " -> " + leg.ToString("F3"));
                 WdRestore();
@@ -352,7 +408,7 @@ namespace KominkaHillside.Editor
             s.Add(WsUntil(() =>
             {
                 float wt = Get<float>(wsWash, "_dirtWaterTotal") - rvW0;
-                if (rvMid < 0f && wt >= 2.5f && Get<int>(wsWash, "_dirtTicks") > 0) { float l = WdPartAvg("_dirt", 3, 6); if (l < 0.4f - 1e-3f) rvMid = l; }
+                if (rvMid < 0f && wt >= 2.5f && Get<int>(wsWash, "_dirtTicks") > 0) { float l = WdFoot("_dirt"); if (l < 0.4f - 1e-3f) rvMid = l; }
                 return wt >= 10f;
             }, 20, () => "10 s of water time not counted (" + (Get<float>(wsWash, "_dirtWaterTotal") - rvW0).ToString("F1") + " s, block " + Get<int>(wsWash, "_dirtBlock") + ", waterPose " + Get<int>(wdFetch, "waterPose") + ")"));
             s.Add(WsDo(() => WdReleasePose()));
@@ -361,7 +417,7 @@ namespace KominkaHillside.Editor
             {
                 var d = Get<float[]>(wsWash, "_dirt"); var part = Get<int[]>(wsWash, "cellPart"); var valid = Get<bool[]>(wsWash, "cellValid");
                 float min = 1f; for (int c = 0; c < d.Length; c++) if (c < valid.Length && valid[c] && part[c] >= 3 && part[c] <= 6) min = Mathf.Min(min, d[c]);
-                float leg = WdPartAvg("_dirt", 3, 6), wet = WdPartAvg("_wet", 3, 6), mask = WdMaskAvg(WsMask(), 3, 6);
+                float leg = WdFoot("_dirt"), wet = WdPartAvg("_wet", 3, 6), mask = WdMaskAvg(WsMask(), 3, 6);
                 float thr = Get<float>(wsWash, "cleanDirtThreshold");
                 WsExpect(rvMid > 0f, "the legs' dirt went down while in the water (a mid sample below 0.4)");
                 WsExpect(min >= rvFloor - 1e-4f && leg <= rvFloor + 0.01f, "the legs stopped at the floor " + rvFloor + " (avg " + leg.ToString("F3") + ", min cell " + min.ToString("F3") + ")");
@@ -465,6 +521,34 @@ namespace KominkaHillside.Editor
                 sum += v[c]; n++;
             }
             if (n == 0) throw new InvalidOperationException("no valid cells of parts " + lo + ".." + hi);
+            return sum / n;
+        }
+
+        /// <summary>足先: 足 (3..6) の有効なセルのうち地面から dirtHeightFull 以内 (実行時の _cellHeight)。無ければ足のセルの低い方 1/4。</summary>
+        static float WdFoot(string key)
+        {
+            var v = Get<float[]>(wsWash, key); var part = Get<int[]>(wsWash, "cellPart"); var valid = Get<bool[]>(wsWash, "cellValid");
+            var h = Get<float[]>(wsWash, "_cellHeight"); float full = Get<float>(wsWash, "dirtHeightFull");
+            var legs = new List<int>();
+            for (int c = 0; c < v.Length && c < part.Length && c < valid.Length && c < h.Length; c++) if (valid[c] && part[c] >= 3 && part[c] <= 6) legs.Add(c);
+            if (legs.Count == 0) throw new InvalidOperationException("no valid leg cells");
+            var feet = legs.FindAll(c => h[c] <= full);
+            if (feet.Count == 0) { legs.Sort((a, b) => h[a].CompareTo(h[b])); feet = legs.GetRange(0, Mathf.Max(1, legs.Count / 4)); }
+            float sum = 0f; foreach (int c in feet) sum += v[c];
+            return sum / feet.Count;
+        }
+
+        /// <summary>足 (3..6) のテクセルのうち地面から dirtHeightFull 以内 (位置マップの z、実行時の _groundZ) のマスクの R の平均。</summary>
+        static float WdMaskFoot(Color[] m)
+        {
+            float gz = Get<float>(wsWash, "_groundZ"), full = Get<float>(wsWash, "dirtHeightFull"), sum = 0f; int n = 0;
+            for (int k = 0; k < wsTexCount; k++)
+            {
+                int q = wsTexPart[k];
+                if (q < 3 || q > 6 || (wsTexPos[k].z - gz) * wsMts > full) continue;
+                sum += m[wsTexIdx[k]].r; n++;
+            }
+            if (n == 0) throw new InvalidOperationException("no foot texels within " + full + " m of the ground");
             return sum / n;
         }
 

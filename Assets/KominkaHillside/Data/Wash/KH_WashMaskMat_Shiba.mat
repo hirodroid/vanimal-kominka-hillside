@@ -49,4 +49,6 @@ Material:
     - _BrushB: {r: 0, g: 0, b: 0, a: 0}
     - _Decay: {r: 0, g: 0, b: 0, a: 0}
     - _Delta: {r: 0, g: 0, b: 0, a: 0}
+    - _DirtHeightFade: {r: 0, g: 0, b: 0, a: 0}
+    - _DirtHeightWeight: {r: 0.35, g: 0.05, b: 0, a: 0}
   m_BuildTextureStacks: []
