@@ -1310,6 +1310,7 @@ namespace KominkaDogRun
             // IMP-PRG-004: ライブの観客も同じ作法 (観客の枝だけが立てる)
             _liveCalled = false;
             _activityBusy = false; // かけっこ・じゃれも同じ作法 (UpdateActivity の拘束する枝だけが立てる)
+            _washActive = false;   // IMP-DOG-025: 洗われ中も同じ作法 (UpdateHillsideWash だけが立てる。HillsideWash.cs)
 
             // ---- IMP-NET-005: Owner 権威。**ルートを書くのは Owner だけ** ----
             //
@@ -1406,6 +1407,10 @@ namespace KominkaDogRun
             _paused = _paused ? _nearestSqr < resumeRadius * resumeRadius
                               : _nearestSqr < pauseRadius * pauseRadius;
             if (_paused != wasPaused) _behaviorSelectionValid = false;
+
+            // IMP-DOG-025: 洗われ中はその場で止まって洗う人を見る (HillsideWash.cs)。選択済みの行動の継続より前
+            // (後ろだと 0.1 秒の継続に遮られる。設計書 §1-5)。wash が null・洗われていない時は何も触らず false
+            if (UpdateHillsideWash()) { NotifyPlay(); return; }
 
             // Select priority at 10 Hz; the selected branch still drives motion and
             // frame-scoped gaze/tail injections every frame. Ended branches reselect now.

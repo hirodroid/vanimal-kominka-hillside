@@ -76,7 +76,7 @@ Unity の操作 (refresh・コンパイル・メニュー・Play・保存) と g
 
 ## 5. 殻のシェーダー `KominkaHillside/Wash Shell` (担当 A)
 
-2 つ目の SkinnedMeshRenderer に付ける。geometry シェーダーを使わない。1 パス、`Queue = Transparent+10` から始める。`ZTest LEqual`、`ZWrite Off`、`Blend SrcAlpha OneMinusSrcAlpha`。影は落とさない・受けない。シングルパスステレオのインスタンシングに対応する。
+2 つ目の SkinnedMeshRenderer に付ける。geometry シェーダーを使わない。1 パス、`Queue = Transparent+10` から始める。`ZTest LEqual`、`ZWrite Off`、`Blend One OneMinusSrcAlpha` (合成済みの色で重ねる。暗さとつやを 1 パスで両立させるため。Blend だけを変えると暗くなる)。影は落とさない・受けない。シングルパスステレオのインスタンシングに対応する。
 
 | プロパティ | 内容 |
 |---|---|
@@ -85,7 +85,8 @@ Unity の操作 (refresh・コンパイル・メニュー・Play・保存) と g
 | `_BoneToPart` / `_PartFoamLimit` (配列 16) | 部位ごとの泡の上限 (頭は 0.35 から) |
 | `_BaseOffset` | 毛の表面までの押し出し (メッシュ座標ではなく実寸 m。シェーダーの中でワールド空間で足す) |
 | `_FoamThickness` | 泡の量 1 の時の追加の押し出し (m) |
-| `_DirtColor` / `_FoamColor` / `_WetDarken` | 色 |
+| `_DirtColor` / `_FoamColor` | 色 |
+| `_WetDarken` | 濡れの暗さ (Float、0〜1) |
 | `_DirtPattern` | 汚れの模様 (無ければ手続きのノイズ) |
 | `_FoamScale` / `_FoamSoft` | 泡の粒のノイズの細かさと縁 |
 
