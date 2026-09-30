@@ -20,7 +20,8 @@ namespace KominkaHillside.Editor
     ///   道具の棚 (KH_WashStation) を組み、proxy → Udon へ写して保存し、続けて 12 と同じ検査をする。何度流しても同じ結果 (名前で見つけて作り直す)。
     ///   棚 (KH_WashStation) の位置と回転は、既にあれば保つ (人が動かした位置を上書きしない)。道具の棚の上での並びはコードが持つ
     /// - Wash/12 Verify Prototype: proxy と backing (publicVariables) を見る。Temp/KH_DogWashSetupVerify.json。失敗があれば最後に例外
-    /// - Wash/13 Paint Test Stroke (Edit) / 14 Clear Test Stroke (Edit): Edit モードで殻に帯が出るかを見る補助。シーンを保存しない
+    /// - Wash/13 - Paint Test/1〜7 (場面別の試し描き) / 14 Clear Test Stroke (Edit) / 15 Capture Shiba / 16 Capture All Scenes: Edit モードで殻を見る補助。シーンを保存しない
+    /// - Wash/17 Reset Shell Material to Shader Defaults: 殻とマスクのマテリアルをシェーダーの既定値へ戻し、ビルダーの値を入れ直す
     ///
     /// 対象の犬は <see cref="Targets"/> (今は柴だけ)。6 匹へ広げるときはここへ行を足す (犬ごとの差は位置マップ・JSON・骨の名前から実測する)。</summary>
     public static partial class KH_DogWashSetupEditor
@@ -343,7 +344,12 @@ namespace KominkaHillside.Editor
             UdonSharpEditorUtility.CopyProxyToUdon(b);
             EditorUtility.SetDirty(b);
             var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(b);
-            if (backing != null) EditorUtility.SetDirty(backing);
+            if (backing == null) return;
+            // UdonSharp hides the backing UdonBehaviour (HideInInspector = 2) the next time the editor looks at it, which
+            // dirtied the scene right after the first Build's save (2026-09-30: 11 behaviours, m_ObjectHideFlags 0 -> 2). Set
+            // it here, before the save, so a second Build finds the scene clean.
+            if ((backing.hideFlags & HideFlags.HideInInspector) == 0) backing.hideFlags |= HideFlags.HideInInspector;
+            EditorUtility.SetDirty(backing);
         }
 
         static T AddUdon<T>(GameObject go, Networking.SyncType sync) where T : UdonSharpBehaviour

@@ -56,21 +56,38 @@ Shader "KominkaHillside/Wash Mask"
         return tex2Dlod(_PosMap, float4(KHWash_SnapUV(uv, _PosMap_TexelSize), 0, 0));
     }
 
+    // 1 when the bone's part may be painted, 0 when blocked or the texel is outside the islands (bone < 0).
+    float AllowAt(int bone)
+    {
+        if (bone < 0) return 0.0;
+        int part = clamp((int)(_BoneToPart[bone] + 0.5), 0, 15);
+        return _AllowPart[part] > 0.5 ? 1.0 : 0.0;
+    }
+
     float4 FragBrush(v2f_img i) : SV_Target
     {
         float4 prev = tex2D(_MainTex, i.uv);
         float4 pm = ReadPos(i.uv);
         int bone = KHWash_BoneIndex(pm.a);
         if (bone < 0) return prev;                                     // outside the UV islands: keep
-        int part = clamp((int)(_BoneToPart[bone] + 0.5), 0, 15);
-        if (_AllowPart[part] < 0.5) return prev;                       // not the hit part or its neighbour
+        // Part gate, softened over the 4 neighbouring texels: the part border (max-weight bone per texel) is a texel
+        // staircase in UV, and a hard 0/1 gate printed that staircase as a saw-tooth foam edge. Only the weight is
+        // scaled; the amount formulas below are unchanged. Neighbours outside the islands count as blocked.
+        // A blocked texel is never painted (no leak into a non-neighbour part); the ramp lies on the allowed side.
+        if (AllowAt(bone) < 0.5) return prev;
+        float allowSoft = 2.0;
+        allowSoft += AllowAt(KHWash_BoneIndex(ReadPos(i.uv + float2(_PosMap_TexelSize.x, 0)).a));
+        allowSoft += AllowAt(KHWash_BoneIndex(ReadPos(i.uv - float2(_PosMap_TexelSize.x, 0)).a));
+        allowSoft += AllowAt(KHWash_BoneIndex(ReadPos(i.uv + float2(0, _PosMap_TexelSize.y)).a));
+        allowSoft += AllowAt(KHWash_BoneIndex(ReadPos(i.uv - float2(0, _PosMap_TexelSize.y)).a));
+        allowSoft /= 6.0;
 
         float3 p = pm.rgb;
         float3 ab = _BrushB.xyz - _BrushA.xyz;
         float t = saturate(dot(p - _BrushA.xyz, ab) / max(dot(ab, ab), 1e-12));
         float d = length(p - (_BrushA.xyz + ab * t));
         float r = max(_BrushRadius, 1e-6);
-        if (d > r * (1.0 + _EdgeNoise) + 1e-6) return prev;           // cheap reject before the noise
+        if (d > r * (1.0 + _EdgeNoise) * 1.2 + 1e-6) return prev;     // cheap reject before the noise
 
         // Rim: two octaves, both directions (in and out), so the circle never shows.
         float3 q = p * _EdgeNoiseScale;
@@ -81,12 +98,17 @@ Shader "KominkaHillside/Wash Mask"
         float w = 1.0 - smoothstep(inner, rr, d);
         // Clumps: the amount is uneven inside, so foam grows and melts in lumps rather than as a flat disc.
         float clump = KHWash_Contrast(KHWash_VNoise3(q * 3.1 + 41.7), 1.6);
-        w *= 1.0 + (clump * 2.0 - 1.0) * 0.5 * saturate(_EdgeNoise * 2.0);
+        float clumpMul = 1.0 + (clump * 2.0 - 1.0) * 0.5 * saturate(_EdgeNoise * 2.0);
+        // Foam removal uses a wider, softer falloff (reaching ~20 % past the rim), so the foam left at the band edge
+        // thins out gradually and the shell draws it as small sparse bubbles instead of a cut-out edge.
+        float wOut = 1.0 - smoothstep(rr * (1.0 - min(1.0, max(_BrushSoft, 0.01) * 1.8)), rr * 1.2, d);
+        w *= clumpMul * allowSoft;
+        wOut *= clumpMul * allowSoft;
 
         float dirt = prev.r, foam = prev.g, wet = prev.b;
 
         // Foam: growth slows as it fills (scrubbing the same place keeps building; one pass never tops out).
-        float dF = _Delta.y * w;
+        float dF = _Delta.y * (_Delta.y < 0 ? wOut : w);
         float ease = dF > 0 ? (1.0 - _FoamGrowEase * foam) : 1.0;
         float foamNew = saturate(foam + dF * ease);
 

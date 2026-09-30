@@ -37,15 +37,17 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _BaseOffset: 0.008
-    - _FoamBump: 1
+    - _BaseOffset: 0.005
+    - _FoamBump: 0.6
     - _FoamRim: 0.3
     - _FoamScale: 59.99982
     - _FoamSoft: 0.12
-    - _FoamThickness: 0.025
-    - _WetDarken: 0.4
-    - _WetGloss: 0.35
+    - _FoamThickness: 0.05
+    - _WetDarken: 0.5
+    - _WetGloss: 0.12
     m_Colors:
-    - _DirtColor: {r: 0.29999998, g: 0.20999995, b: 0.12999997, a: 0.9}
+    - _DirtColor: {r: 0.36, g: 0.27, b: 0.18, a: 0.7}
     - _FoamColor: {r: 0.95, g: 0.96, b: 0.97999996, a: 1}
+    - _FoamShadow: {r: 0.66, g: 0.73, b: 0.86, a: 1}
+    - _FurFlowAxis: {r: 0, g: 0, b: 1, a: 0}
   m_BuildTextureStacks: []

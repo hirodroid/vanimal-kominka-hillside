@@ -35,18 +35,26 @@ namespace KominkaHillside.Editor
             float mts = d.json.meshToWorldScale;
 
             d.maskMat = EnsureMaterial(MaskMatPath(k), Shader.Find(MaskShaderName));
-            d.maskMat.SetTexture("_PosMap", d.posMap);
-            d.maskMat.SetTexture("_CellTex", d.cellTex);
-            d.maskMat.SetFloat("_EdgeNoiseScale", EdgeNoisePerMeter * mts);
-            EditorUtility.SetDirty(d.maskMat);
-
             d.shellMat = EnsureMaterial(ShellMatPath(k), Shader.Find(ShellShaderName));
-            d.shellMat.SetTexture("_Mask", d.maskA);
-            d.shellMat.SetTexture("_PosMap", d.posMap);
-            d.shellMat.SetFloat("_FoamScale", FoamGrainPerMeter * mts);
-            d.shellMat.enableInstancing = true;
-            EditorUtility.SetDirty(d.shellMat);
+            ApplyBuilderMaterialProps(d.maskMat, d.shellMat, d.maskA, d.posMap, d.cellTex, mts);
             r.log.Add(k + ": masks " + MaskRtPath(k, "A") + " / B, cells " + CellTexPath(k) + ", _FoamScale " + (FoamGrainPerMeter * mts).ToString("F2") + ", _EdgeNoiseScale " + (EdgeNoisePerMeter * mts).ToString("F2"));
+        }
+
+        /// <summary>ビルダーが持つマテリアルの値 (これ以外はシェーダーの既定値のまま。Wash/17 が戻す)。</summary>
+        static readonly string[] MaskBuilderProps = { "_PosMap", "_CellTex", "_EdgeNoiseScale" };
+        static readonly string[] ShellBuilderProps = { "_Mask", "_PosMap", "_FoamScale" };
+
+        static void ApplyBuilderMaterialProps(Material maskMat, Material shellMat, RenderTexture maskA, Texture posMap, Texture2D cellTex, float mts)
+        {
+            maskMat.SetTexture("_PosMap", posMap);
+            maskMat.SetTexture("_CellTex", cellTex);
+            maskMat.SetFloat("_EdgeNoiseScale", EdgeNoisePerMeter * mts);
+            EditorUtility.SetDirty(maskMat);
+            shellMat.SetTexture("_Mask", maskA);
+            shellMat.SetTexture("_PosMap", posMap);
+            shellMat.SetFloat("_FoamScale", FoamGrainPerMeter * mts);
+            shellMat.enableInstancing = true;
+            EditorUtility.SetDirty(shellMat);
         }
 
         static void ReloadDogAssets(DogCtx d)

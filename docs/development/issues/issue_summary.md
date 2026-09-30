@@ -16,7 +16,7 @@
 | [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、Desktop/Touch、複数人。看板の本制作・分かりやすさは DES-UI-004 へ分離 | wip |  |
 | [IMP-DOG-009](IMP-DOG-009-walk-speed-tiers.md) | High | 散歩の犬の速さを 4 段階に (最速は現状の速歩の 3 倍)。人が犬を引っ張る状態をなくす。Run クリップの再生速度・減速も合わせる。9/22 PCVR 1 人 1 匹で OK・採用、3〜6 匹・2 人以上・Desktop は未確認 | wip |  |
 | [IMP-DOG-024](IMP-DOG-024-walk-and-wash-experience.md) | High | Animal Wash以上のASMR的な洗浄の気持ちよさを最優先に、散歩帰りのお手入れと複数洗い場を作る大型Issue | wip | IMP-DOG-025 で代表 1 匹 (柴) の一周を作り、賭け 3 つを確かめる |
-| [IMP-DOG-025](IMP-DOG-025-wash-prototype-one-dog.md) | High | 代表 1 匹 (柴) で洗浄の一周を細く通し、設計書の賭け 3 つを確かめる試作 | wip | 犬メッシュの調査と位置マップの焼き込みツールを作り、賭け 1 (UV の重なり) を Editor で確かめる |
+| [IMP-DOG-025](IMP-DOG-025-wash-prototype-one-dog.md) | High | 代表 1 匹 (柴) で洗浄の一周を細く通し、設計書の賭け 3 つを確かめる試作 | wip | 泡と汚れの見た目を磨き、ユーザーの Play / PCVR のチェックリスト (本文の末尾) の結果を受けて直す |
 | [DES-ENV-002](DES-ENV-002-longer-course.md) | Medium | 約2.41kmの川沿い周回を実装し、2026-09-27に本番シーン (VRCDefaultWorldScene) へ採用済み。Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する | wip | 犬連れの実歩行時間、LODと遮蔽の実機表示、Quest 3・iPhone 15 Pro・16人の性能から最終距離/予算を確定する (ユーザーの実機。VER-WLD-001) |
 | [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK)、段階 2・3 は 9/24 実装済み・PCVR 待ち | wip |  |
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開は012 | wip |  |

@@ -32,6 +32,43 @@ float KHWash_VNoise3(float3 p)
     return lerp(x0, x1, f.z);
 }
 
+// Sine-free 3-channel hash (Dave Hoskins).
+float3 KHWash_Hash33(float3 p3)
+{
+    p3 = frac(p3 * float3(0.1031, 0.1030, 0.0973));
+    p3 += dot(p3, p3.yxz + 33.33);
+    return frac((p3.xxy + p3.yxx) * p3.zyx);
+}
+
+// Round bubbles on a jittered 3D grid, 8 cells (2x2x2 around p). Each cell holds one bubble with its own radius and
+// an "appear" id 0..1. A bubble exists when id < cov (fuzzy), so low coverage gives sparse bubbles and high coverage a
+// packed cluster. Two parameter sets share the same cells (x = set A, y = set B); each returns the max of the bubbles'
+// paraboloid caps (1 at a bubble's centre, 0 at its rim). The max over all 8 cells (not only the nearest) keeps the
+// outlines round instead of cut along Voronoi edges. Jitter is kept inside 0.25..0.75 of a cell and radii should stay
+// <= ~0.55 so a bubble from an unsearched cell rarely reaches p.
+//   covA / covB : coverage 0..1      rA / rB : max radius in cell units (the actual radius is 40..100 % of it)
+float2 KHWash_Bubbles2(float3 p, float covA, float rA, float covB, float rB)
+{
+    float3 b = floor(p - 0.5);
+    float2 best = 0;
+    [unroll] for (int k = 0; k < 8; k++)
+    {
+        float3 c = b + float3(k & 1, (k >> 1) & 1, (k >> 2) & 1);
+        float3 h = KHWash_Hash33(c);
+        float3 dv = p - (c + 0.25 + 0.5 * h);
+        float d2 = dot(dv, dv);
+        float id = frac((h.x + h.y + h.z) * 13.7);
+        float s = frac(h.x * 7.31 + h.z * 3.17);
+        float size = 0.4 + 0.6 * s * (2.0 - s);                     // mixed sizes, more big than small
+        float rA2 = rA * size; rA2 *= rA2;
+        float rB2 = rB * size; rB2 *= rB2;
+        float capA = saturate(1.0 - d2 / max(rA2, 1e-6)) * saturate((covA - id) * 7.0);
+        float capB = saturate(1.0 - d2 / max(rB2, 1e-6)) * saturate((covB - id) * 7.0);
+        best = max(best, float2(capA, capB));
+    }
+    return best;
+}
+
 // Value noise piles up near 0.5; stretch it so thresholds bite (result 0..1).
 float KHWash_Contrast(float n, float k)
 {

@@ -76,7 +76,7 @@ Unity の操作 (refresh・コンパイル・メニュー・Play・保存) と g
 
 ## 5. 殻のシェーダー `KominkaHillside/Wash Shell` (担当 A)
 
-2 つ目の SkinnedMeshRenderer に付ける。geometry シェーダーを使わない。1 パス、`Queue = Transparent+10` から始める。`ZTest LEqual`、`ZWrite Off`、`Blend One OneMinusSrcAlpha` (合成済みの色で重ねる。暗さとつやを 1 パスで両立させるため。Blend だけを変えると暗くなる)。影は落とさない・受けない。シングルパスステレオのインスタンシングに対応する。
+2 つ目の SkinnedMeshRenderer に付ける。geometry シェーダーを使わない。汚れと濡れの 1 パス (下の設定) と、泡の層のパス (PC 4 層・それ以外 2 層、`ZWrite On`、高さで切り抜く)。汚れと濡れのパスは`Queue = Transparent+10` から始める。`ZTest LEqual`、`ZWrite Off`、`Blend One OneMinusSrcAlpha` (合成済みの色で重ねる。暗さとつやを 1 パスで両立させるため。Blend だけを変えると暗くなる)。影は落とさない・受けない。シングルパスステレオのインスタンシングに対応する。
 
 | プロパティ | 内容 |
 |---|---|
@@ -175,3 +175,12 @@ Editor が配線する値 (public か `[SerializeField]`):
 | Editor での描画の確認 | Edit モードでマスクへブラシを 1 本描き、殻に帯が出た画像を撮る | 統括 |
 | Play / PCVR | 泡 → 水 → 帯、音、反応、Desktop の入力 | ユーザー |
 | 実機 | Quest 単体・iOS での描画 (賭け 2・3) | ユーザー |
+
+## 9. 試し描きと撮影 (見た目を磨く時)
+
+| メニュー | 内容 |
+|---|---|
+| `Wash/13 - Paint Test/1〜7` | 場面別の試し描き (泡 → すすぎ / 汚れだけ / 薄い泡 / 厚い泡 / 泡の上の帯 / 濡れだけ / きれいな犬の泡)。実行時と同じ式で描く。シーンは保存しない |
+| `Wash/14` | 試し描きを消す |
+| `Wash/15`・`Wash/16` | 6 構図の撮影、全場面の撮影 (`Temp/KH_WashShot_{場面}_{構図}.png`) |
+| `Wash/17` | シェーダーの既定値を変えた時に、殻とマスクのマテリアルへ書き直す |
