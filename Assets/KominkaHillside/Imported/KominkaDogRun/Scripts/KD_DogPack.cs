@@ -117,6 +117,13 @@ namespace KominkaDogRun
         // before they touch and their push starts on the same frame as before.
         const float ScanInterval = 0.1f;
         const float HotMargin = 0.1f;
+        // ---- IMP-DOG-034 C2-3 (user decision 2026-10-01): dogs on the same holder's leash do not push each other ----
+        // Six dogs walking side by side on one leash holder kept the scan hot every frame, so the 10 Hz gate never applied.
+        // A slight overlap between one player's own dogs is accepted. The holder is KH_LeashManager.walkers[dog]
+        // (synced playerId, -1 = free), so every client reaches the same exemption (up to the sync delay).
+        // The manager is borrowed from the wander controllers' existing wiring (Start); null = no exemption (old behaviour).
+        KominkaHillside.KH_LeashManager _leashes;
+        int[] _holder;          // walkers[i] read once per scan (-1 = free / unknown)
         float _sinceScan;       // time accumulated since the last scan (s)
         bool _hot = true;       // true -> scan next frame. Starts true so the first frame initialises _prevPos
 
@@ -140,6 +147,27 @@ namespace KominkaDogRun
             _form = new int[_count];
             _wanderRoster = dogWander != null && dogWander.Length == _count;
             _wanderLen = dogWander != null ? dogWander.Length : 0;
+            // IMP-DOG-034 C2-3: borrow the leash manager from the first wired wander controller, and use it only if its
+            // dog order is ours (walkers[] is indexed by the manager's dogRoots). Both are built from KD_DogDefs.All and
+            // KH_DogWalkingEditor Verify pins it; a mismatch here would exempt the wrong pairs, so it disables the exemption
+            _holder = new int[_count];
+            for (int k = 0; k < _wanderLen; k++)
+            {
+                if (dogWander[k] == null) continue;
+                _leashes = dogWander[k].hillsideLeashes;
+                if (_leashes != null) break;
+            }
+            if (_leashes != null)
+            {
+                Transform[] lr = _leashes.dogRoots;
+                bool same = lr != null && lr.Length >= _count;
+                for (int i = 0; same && i < _count; i++) same = lr[i] == dogRoots[i];
+                if (!same)
+                {
+                    Debug.LogWarning("[KD_DogPack] KH_LeashManager.dogRoots の並びが名簿と違う - 同じ人のリードの犬どうしも押し出す (C2-3 無効)");
+                    _leashes = null;
+                }
+            }
 
             // 既存シーンへ後から足したフィールドが 0 のまま入る事故を無言で通さない
             // (KD_DogFetchController.Start と同じ検査)。spacing 0 は間合いが消えて
@@ -189,12 +217,18 @@ namespace KominkaDogRun
             _sinceScan = 0f;
             bool hot = false;
 
+            // IMP-DOG-034 C2-3: one cross-behaviour read per scan. Re-read every scan - a synced array is replaced on
+            // deserialization, so a cached reference would go stale
+            int[] walkers = _leashes != null ? _leashes.walkers : null;
+            int walkersLen = walkers != null ? walkers.Length : 0;
+
             // ---- 1) 位置と「自分の脚で動いた量」を採る ----
             // IMP-DOG-034 B5a: active / position / reach are taken here once per dog and reused by steps 2 and 3
             for (int i = 0; i < _count; i++)
             {
                 _push[i] = Vector3.zero;
                 _form[i] = -1;
+                _holder[i] = i < walkersLen ? walkers[i] : -1; // IMP-DOG-034 C2-3
                 Transform t = dogRoots[i];
                 bool act = t != null && t.gameObject.activeInHierarchy;
                 _active[i] = act;
@@ -230,9 +264,13 @@ namespace KominkaDogRun
                 if (radI <= 0.001f) continue;
                 Vector3 posI = _pos[i];
                 float reachI = _reach[i];
+                int holderI = _holder[i];
                 for (int j = i + 1; j < _count; j++)
                 {
                     if (!_active[j]) continue;
+                    // IMP-DOG-034 C2-3: both on the same holder's leash -> no push and not hot (like the formation pair).
+                    // Different holders, one leashed + one free, or both free: unchanged
+                    if (holderI >= 0 && holderI == _holder[j]) continue;
                     float radJ = dogRadius[j];
                     if (radJ <= 0.001f) continue;
 

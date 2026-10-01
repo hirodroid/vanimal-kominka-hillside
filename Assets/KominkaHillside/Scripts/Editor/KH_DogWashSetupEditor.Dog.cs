@@ -25,16 +25,19 @@ namespace KominkaHillside.Editor
         //   泥の地点は 25 s 居て足が半分 (通りすがりではほとんど汚れない、遊ぶと汚れる)。
         static readonly (string field, float value)[] DirtTuning =
         {
-            ("walkDirtMeters", 900f),
+            ("walkDirtMeters", 2700f),   // 決定: 2026-10-01 ユーザー。散歩の汚れを 3 倍ゆっくり (900 m → 2,700 m で足 0.5。一周 2.4 km で足 4〜5 割)
             ("walkLegDirt", 0.5f),
-            ("zoneDirtSeconds", 25f),
+            ("zoneDirtSeconds", 100f),   // 決定: 2026-10-01。泥を 4 倍ゆっくり (25 s → 100 s で足 0.5)。20 s ごとの 1 段が足 +0.1 / 体 +0.04 になる
             ("zoneLegDirt", 0.5f),
             ("zoneBodyDirt", 0.2f),
             ("dirtGraceSeconds", 300f),
             ("dirtStationRadius", 6f),
-            ("riverDropSeconds", 30f),
+            ("riverDropSeconds", 50f),   // 30 → 50 (2026-10-02): 20 s ごとの 1 回の減少 0.12 を 1 イベントの上限 0.126 以内に収める
             ("riverLegDrop", 0.3f),
             ("riverDirtFloor", 0.15f),
+            // IMP-DOG-034 C2-1 (ユーザー決定 2026-10-01): 汚れは数値で溜めて 20 s ごとにセル・マスクへ反映 (泥・水の中も同じ)。
+            // 洗い始め・洗い場では従来どおり未反映分を捨てる (20 s ぶん = 散歩で足 +0.005、泥で +0.1)。
+            ("dirtApplyInterval", 20f),
         };
 
         static void WriteDirtTuning(KH_DogWash wash, DogTarget target)

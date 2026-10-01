@@ -84,7 +84,9 @@ namespace KominkaHillside
             UpdateGeometry(manager._HandPosition(holder, hand),b,false);
         }
         // IMP-DOG-034 C1-rope (3): straight two-point rope instead of the 12-bone curve. Default false: the default
-        // look does not change. Set it on all six collars together (a full-mode rope reads its hand's grip owner).
+        // look does not change. Set it on all six collars together (a full-mode rope reads its hand's grip owner):
+        // IMP-DOG-034 C2-4 KH_LeashManager._ApplyLightRopeMode does that, from its Update, so every collar sees the
+        // new value in the same frame's PostLateUpdate. Unleashed collars stay hidden and pick it up when leashed.
         // Turning it off restores the full rope on the next frame: ApplyDrawn re-enables the rope/snap/handle,
         // every bone, the rope centre and bounds are rewritten each frame, and the handle pose starts fresh.
         public bool lightRope;

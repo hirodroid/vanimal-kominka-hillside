@@ -113,7 +113,7 @@ namespace KominkaHillside.Editor
                     float radius = Get<float>(wsWash, "dirtStationRadius");
                     zn = WdZone(0, out znR);
                     WdSet("dirtGraceSeconds", 0f);
-                    WdSet("zoneDirtSeconds", 10f);   // the test rate (the release table says 25 s)
+                    WdSet("zoneDirtSeconds", 10f); WdSet("dirtApplyInterval", 2f);   // the test rates (release: 100 s / 20 s)
                     wsWash.SendCustomEvent("_DebugClear");
                     at = CmGround(st.position + st.rotation * new Vector3(0f, 0f, -3f));   // in front of the duckboard, toward the path
                     WsExpect(Flat(at - st.position) <= radius - 0.5f, "the spot " + Flat(at - st.position).ToString("F1") + " m from " + st.name + " is within its radius " + radius);

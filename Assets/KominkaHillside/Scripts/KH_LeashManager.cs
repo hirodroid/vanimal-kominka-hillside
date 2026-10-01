@@ -312,9 +312,64 @@ namespace KominkaHillside
             if (changed) RequestSerialization();
         }
 
+        // IMP-DOG-034 C2-4: straight leash when this client's fps is low (user decision 2026-10-01, IMP-DOG-034
+        // "決定: 2026-10-01 (ユーザー) — 段階 3 C-2 の採否", C2-4). Decided once per minute so it never flips often:
+        // the average fps of the last 60 s window < 30 -> straight, >= 40 -> full rope, in between -> keep.
+        // Local only (no sync, no events): each client judges its own fps and only its own drawing changes.
+        const float LightRopeWindow = 60f;     // s, one decision per window (user: 判定は 1 分ごと)
+        const float LightRopeOnBelow = 30f;    // fps, average below this -> straight rope
+        const float LightRopeOffAt = 40f;      // fps, average at or above this -> full rope again
+        // 0 = auto (default), 1 = always the full rope, 2 = always straight. After changing it, call
+        // _ApplyLightRopeMode() (or _LightRopeAuto / _LightRopeFull / _LightRopeStraight, which set and apply);
+        // the once-a-minute tick also applies it. No per-frame check of this field.
+        public int lightRopeMode;
+        private int _lrFrames;
+        private float _lrWindowStart, _lrNextAt;   // _lrNextAt 0: the first Update opens the first window
+        private bool _lrPartial;   // the last write did not reach every collar: write again whatever the remembered state
+        private bool _lrStarted, _lrAuto, _lrOn;   // auto decision / what the collars currently have (both start OFF)
+        private KH_LeashCollar[] _lrCollars;
+        private void LightRopeTick(float now)
+        {
+            if (!_lrStarted) { _lrStarted = true; _lrWindowStart = now; _lrFrames = 0; _lrNextAt = now + LightRopeWindow; return; }
+            float elapsed = now - _lrWindowStart;
+            float fps = elapsed > 0f ? _lrFrames / elapsed : 0f;
+            if (fps < LightRopeOnBelow) _lrAuto = true;
+            else if (fps >= LightRopeOffAt) _lrAuto = false;
+            _lrWindowStart = now; _lrFrames = 0; _lrNextAt = now + LightRopeWindow;
+            _ApplyLightRopeMode();
+        }
+        public void _LightRopeAuto() { lightRopeMode = 0; _ApplyLightRopeMode(); }
+        public void _LightRopeFull() { lightRopeMode = 1; _ApplyLightRopeMode(); }
+        public void _LightRopeStraight() { lightRopeMode = 2; _ApplyLightRopeMode(); }
+        // Writes lightRope to all six collars together, and only when the wanted state differs from the last write.
+        public void _ApplyLightRopeMode()
+        {
+            bool on = lightRopeMode == 2 || (lightRopeMode == 0 && _lrAuto);
+            if (on == _lrOn && !_lrPartial) return;
+            // Same lookup as KH_LeashCollar.PeerCollar: anchor = child "ClipAnchor" of the collar object.
+            int n = collarAnchors != null ? collarAnchors.Length : 0;
+            if (_lrCollars == null || _lrCollars.Length != n) _lrCollars = new KH_LeashCollar[n];
+            bool all = true;
+            for (int i = 0; i < n; i++)
+            {
+                // A collar that could not be found is looked up again on every apply (at most once a minute).
+                if (_lrCollars[i] == null && collarAnchors[i] != null && collarAnchors[i].parent != null)
+                    _lrCollars[i] = collarAnchors[i].parent.GetComponent<KH_LeashCollar>();
+                if (_lrCollars[i] != null) _lrCollars[i].lightRope = on;
+                else all = false;
+            }
+            // Remember what was written; a partial write is repeated on the next tick or mode change (Codex 2026-10-02).
+            _lrOn = on; _lrPartial = !all;
+            if (!all) Debug.LogWarning("[KH_LeashManager] light rope: a collar was not found; will retry");
+        }
+
         private void Update()
         {
             TravelTick(); // IMP-WLD-001: the requester's wait runs every frame (KH_LeashManager.Travel.cs)
+            // IMP-DOG-034 C2-4: per frame only a counter, one unscaled-time read and one compare.
+            _lrFrames++;
+            float lrNow = Time.unscaledTime;
+            if (lrNow >= _lrNextAt) LightRopeTick(lrNow);
             if (Time.time < _nextMaintenance) return;
             _nextMaintenance = Time.time + 0.5f;
             if (!Networking.IsOwner(gameObject)) { ApplyHomes(); return; }

@@ -227,8 +227,25 @@ namespace KominkaHillside.Editor
                     t0 = -1;
                     return true;
                 }
-                if (anyHold && now - t0 > holdLimit())
-                    throw new TimeoutException("a hold did not end within " + holdLimit().ToString("F1") + " s " + label + " (stuck hold?): " + string.Join(", ", Enumerable.Range(0, wander.Length).Where(i => WxHold(WxWash(i))).Select(i => roots[i].name)));
+                // IMP-DOG-034 C2-1 fix 8: a stuck hold is judged on the hold's own clock. _WashHold() runs on server milliseconds
+                // (washMs = the last accepted stroke); the editor clock (now) runs ahead of it whenever frames are stretched past
+                // maximumDeltaTime ("max frame dt 333 ms" in these runs: the passing run 20261001-131707 already released at 4.20 s
+                // against the 3.5 s limit and passed only by where the ticks fell). Stuck = still held although the server time is
+                // more than holdSeconds + 0.5 s past washMs (washMs not refreshed: a runtime bug), or washMs keeps being refreshed
+                // for holdLimit + 10 s of editor time (strokes still accepted after the last one).
+                if (anyHold)
+                {
+                    int srv = VRC.SDKBase.Networking.GetServerTimeInMilliseconds();
+                    for (int i = 0; i < wander.Length; i++)
+                    {
+                        var u = WxWash(i);
+                        if (!WxHold(u)) continue;
+                        int age = srv - Get<int>(u, "washMs");
+                        int lim = Mathf.RoundToInt(Get<float>(u, "holdSeconds") * 1000f) + 500;
+                        if (age > lim || now - t0 > holdLimit() + 10.0)
+                            throw new TimeoutException("a hold did not end " + label + " (stuck hold?): " + roots[i].name + WxHoldWhy(u, age) + ", editor " + (now - t0).ToString("F2") + " s since the check began (limit " + holdLimit().ToString("F1") + " s on the hold clock)");
+                    }
+                }
                 if (!anyHold && now - holdAt > WxBranchGrace)
                     throw new TimeoutException("the wash branch stayed open " + WxBranchGrace + " s after every hold ended " + label + ": " + string.Join(", ", Enumerable.Range(0, wander.Length).Where(i => Get<bool>(wander[i], "_washActive")).Select(i => roots[i].name)));
                 return false;
@@ -290,6 +307,14 @@ namespace KominkaHillside.Editor
         }
 
         /// <summary>ある犬の _WashHold() (WsHold は束縛中の犬だけ)。入口と戻り値の記号は同じプログラムなので Wash.cs のキャッシュを使う。</summary>
+        /// <summary>IMP-DOG-034 C2-1 fix 8: why a hold is still on (the stroke clock and what is still in flight).</summary>
+        static string WxHoldWhy(UdonBehaviour u, int ageMs)
+        {
+            return " (washMs age " + ageMs + " ms, released " + Get<bool>(u, "_released") + ", epoch " + Get<int>(u, "epoch")
+                + ", last stroke " + (Time.time - Get<float>(u, "_lastStrokeTime")).ToString("F2") + " s ago (game), queue " + Get<int>(u, "_qCount")
+                + ", pending draws " + Get<int>(u, "_pdCount") + ", dirt draws " + Get<bool>(u, "_anyDirtDraw") + ", dirt event " + Get<bool>(u, "_dirtOutPending") + ")";
+        }
+
         static bool WxHold(UdonBehaviour u)
         {
             u.SendCustomEvent(WsEntry("_WashHold"));

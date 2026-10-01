@@ -46,7 +46,7 @@ namespace KominkaHillside.Editor
                 WdRestore();
                 zn = WdZone(0, out znR);
                 WdSet("dirtGraceSeconds", 0f);   // an earlier clean edge (W-clean) must not hold the dirt back here
-                WdSet("zoneDirtSeconds", 10f);   // the test rate (the release table says 25 s; KH_DogWashSetupEditor.DirtTuning)
+                WdSet("zoneDirtSeconds", 10f); WdSet("dirtApplyInterval", 2f);   // the test rate (the release table says 25 s; KH_DogWashSetupEditor.DirtTuning)
                 wsWash.SendCustomEvent("_DebugClear");
                 znOut = WdPlaceNear(zn.position, znR + 3f);
                 WsPlayerNear(1.3f);
@@ -100,7 +100,7 @@ namespace KominkaHillside.Editor
                 WdRestore();
                 hz = WdZone(0, out hzR);
                 WdSet("dirtGraceSeconds", 0f);
-                WdSet("zoneDirtSeconds", 10f);   // the test rate (the release table says 25 s; KH_DogWashSetupEditor.DirtTuning)
+                WdSet("zoneDirtSeconds", 10f); WdSet("dirtApplyInterval", 2f);   // the test rate (the release table says 25 s; KH_DogWashSetupEditor.DirtTuning)
                 wsWash.SendCustomEvent("_DebugClear");
                 WdPlaceAt(hz.position); WsPlayerNear(1.3f);
             }));
@@ -156,7 +156,7 @@ namespace KominkaHillside.Editor
                 WdRestore();
                 rz = WdZone(0, out rzR);
                 WdSet("dirtGraceSeconds", 0f);
-                WdSet("zoneDirtSeconds", 10f);   // the test rate (the release table says 25 s; KH_DogWashSetupEditor.DirtTuning)
+                WdSet("zoneDirtSeconds", 10f); WdSet("dirtApplyInterval", 2f);   // the test rate (the release table says 25 s; KH_DogWashSetupEditor.DirtTuning)
                 wsWash.SendCustomEvent("_DebugClear");
                 WdPlaceAt(rz.position); WsPlayerNear(1.3f);
             }));
@@ -214,7 +214,7 @@ namespace KominkaHillside.Editor
                 WdRestore();
                 bz = WdZone(0, out bzR);
                 WdSet("dirtGraceSeconds", 0f);
-                WdSet("zoneDirtSeconds", 10f);   // the test rate (the release table says 25 s; KH_DogWashSetupEditor.DirtTuning)
+                WdSet("zoneDirtSeconds", 10f); WdSet("dirtApplyInterval", 2f);   // the test rate (the release table says 25 s; KH_DogWashSetupEditor.DirtTuning)
                 wsWash.SendCustomEvent("_DebugClear");
                 WdPlaceAt(bz.position); WsPlayerNear(1.3f);
             }));
@@ -244,7 +244,7 @@ namespace KominkaHillside.Editor
             {
                 WdRestore();
                 WdSet("dirtGraceSeconds", 0f);
-                WdSet("zoneDirtSeconds", 10f);   // the test rate (the release table says 25 s; KH_DogWashSetupEditor.DirtTuning)
+                WdSet("zoneDirtSeconds", 10f); WdSet("dirtApplyInterval", 2f);   // the test rate (the release table says 25 s; KH_DogWashSetupEditor.DirtTuning)
                 WdSet("walkDirtMeters", WkMeters);
                 WsPlaceShiba(); WsPlayerNear(1.3f);
                 wsWash.SendCustomEvent("_DebugClear");
@@ -294,7 +294,7 @@ namespace KominkaHillside.Editor
             {
                 WdRestore();
                 gz = WdZone(0, out gzR);
-                WdSet("zoneDirtSeconds", 10f);   // the test rate (release 25 s)
+                WdSet("zoneDirtSeconds", 10f); WdSet("dirtApplyInterval", 2f);   // the test rate (release 25 s)
                 WsPlaceShiba(); WsPlayerNear(1.5f); WsSetDirt(0.6f);
             }));
             s.Add(WsWait(1.2));
@@ -348,7 +348,7 @@ namespace KominkaHillside.Editor
                 if (st == null) throw new WsSkip("wash.washStation is not wired (run Wash/20)");
                 sz = WdZone(0, out szR);
                 WdSet("dirtGraceSeconds", 0f);
-                WdSet("zoneDirtSeconds", 10f);   // the test rate (the release table says 25 s; KH_DogWashSetupEditor.DirtTuning)
+                WdSet("zoneDirtSeconds", 10f); WdSet("dirtApplyInterval", 2f);   // the test rate (the release table says 25 s; KH_DogWashSetupEditor.DirtTuning)
                 wsWash.SendCustomEvent("_DebugClear");
                 // the zone moved beside the station for this case (Play only; the scene is not saved). Put back in WdRestore
                 Vector3 side = WsFlat(wsRoot.position - st.position); if (side == Vector3.forward) side = Vector3.right;
@@ -408,7 +408,7 @@ namespace KominkaHillside.Editor
                 for (int c = 0; c < d.Length; c++) if (c < valid.Length && valid[c] && (part[c] < 3 || part[c] > 6)) d[c] = 0f;
                 wsWash.SetProgramVariable<float[]>("_dirt", d);
                 rvS0 = WsSerial(); rvArmed = Get<bool>(wsWash, "cleanArmed");
-                WdSet("riverDropSeconds", 3f);   // -0.3 per 3 s: the floor within the case
+                WdSet("dirtApplyInterval", 2f); WdSet("riverDropSeconds", 3f);   // -0.3 per 3 s: the floor within the case
                 rvW0 = Get<float>(wsWash, "_dirtWaterTotal"); rvWet0 = WdPartAvg("_wet", 3, 6); rvMask0 = WdMaskAvg(WsMask(), 3, 6);
                 wdFetch.SetProgramVariable("waterPose", 1); wdFetch.SetProgramVariable("_debugPoseHold", true); wdPoseHeld = true;
             }));

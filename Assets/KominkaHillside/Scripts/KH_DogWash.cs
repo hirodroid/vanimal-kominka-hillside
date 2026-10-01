@@ -168,7 +168,7 @@ namespace KominkaHillside
         public AudioSource scrub;
 
         [Header("Prototype values (Play で決め直す)")]
-        [Range(0f, 1f)] public float initialDirt = 0.6f;
+        [Range(0f, 1f)] public float initialDirt = 0f;   // 決定: 2026-10-01 (IMP-DOG-034 C2-2)。犬はきれいな状態で始まる
         public float spongeRadius = 0.09f;
         public float showerRadius = 0.07f;
         public float towelRadius = 0.10f;
@@ -228,14 +228,14 @@ namespace KominkaHillside
         public bool[] dirtZoneBox;
         public bool dirtEnabled = true;
         [Tooltip("リード接続中・Fetch 中・ディスク中にこの距離 (m) を進むと、足が walkLegDirt 汚れる")]
-        public float walkDirtMeters = 900f;   // Wash/11 writes KH_DogWashSetupEditor.DirtTuning
+        public float walkDirtMeters = 2700f;   // Wash/11 writes KH_DogWashSetupEditor.DirtTuning
         public float walkLegDirt = 0.5f;
         [Tooltip("泥の地点にこの秒数いると、足が zoneLegDirt、腰と胸が zoneBodyDirt 汚れる")]
-        public float zoneDirtSeconds = 25f;
+        public float zoneDirtSeconds = 100f;
         public float zoneLegDirt = 0.5f;
         public float zoneBodyDirt = 0.2f;
         [Tooltip("水の中 (WaterPose != 0) にこの秒数いると、足の汚れが riverLegDrop 落ちる。riverDirtFloor より下へは落とさない (川だけで清潔にしない)")]
-        public float riverDropSeconds = 30f;
+        public float riverDropSeconds = 50f;
         public float riverLegDrop = 0.3f;
         public float riverDirtFloor = 0.15f;
         [Tooltip("水の中で足 (泳ぐと腰と胸も) が 1 秒あたりに濡れる量")]
@@ -244,7 +244,7 @@ namespace KominkaHillside
         public float dirtGraceSeconds = 300f;
         public float dirtStationRadius = 6f;
         [Tooltip("汚れの増減をセルへ入れて配る間隔 (s)。増減が無い回は送らない")]
-        public float dirtApplyInterval = 2f;
+        public float dirtApplyInterval = 20f;   // 決定: 2026-10-01 (IMP-DOG-034 C2-1)。散歩中は数値だけ積み、20 s ごとにセル・マスクへ
         [Tooltip("部位全体を覆うブラシの半径 = 部位の中心から最も遠いセルまで × この値 (セルの中心より外の毛も覆う)")]
         public float dirtReachScale = 1.6f;
         [Tooltip("これより速い位置の変化はワープとして距離に数えない (m/s)")]
@@ -503,6 +503,7 @@ namespace KominkaHillside
         // Owner: what happened since the last apply (metres counted, seconds in a zone / in the water / swimming)
         private float _dirtSampleAt = -1f;
         private float _dirtNextApply;
+        private float _dirtIvUsed;   // the dirtApplyInterval the current deadline was computed with
         private Vector3 _dirtPrevPos;
         private bool _dirtPrevValid;
         private float _walkAcc;
@@ -637,7 +638,9 @@ namespace KominkaHillside
                     // others hold another epoch and repaint to this seed instead of silently mixing two states.
                     epoch = FreshEpoch();
                     _appliedEpoch = epoch;
-                    cleanArmed = true;
+                    // IMP-DOG-034 C2-2: a dog that starts clean must not fire the clean edge (and its dirt grace) on the
+                    // first evaluation; EvaluateState arms it once it is dirty / foamed enough.
+                    cleanArmed = initialDirt > 0f;
                     ClearArm();
                     _gotFirst = true;   // the seed IS the state: a later receive (after losing the ownership) must not repaint
                     // Start's RequestSerialization does not reach late joiners (vrc-networking §5): send later.
@@ -662,7 +665,11 @@ namespace KominkaHillside
             _nextRtCheck = now + 0.5f;
             _nextOwnerCheck = now + 1f;
             // Staggered per dog (review 3, 8): six dogs dirtied at once do not all apply, send and Blit in the same frame.
-            _dirtNextApply = now + Mathf.Max(0.5f, dirtApplyInterval) + (dogIndex >= 0 ? (dogIndex % 7) * 0.3f : 0f);
+            // IMP-DOG-034 C2-1: the six dogs apply 1/6 of the interval apart; the first apply comes within one interval, so no
+            // apply ever covers more than dirtApplyInterval (one event carries at most 0.126 per part: 20 s of mud = 0.1,
+            // 20 s of river = 0.12 with riverDropSeconds 50).
+            _dirtIvUsed = Mathf.Max(0.5f, dirtApplyInterval);
+            _dirtNextApply = now + _dirtIvUsed * ((dogIndex >= 0 ? dogIndex % 6 : 0) + 1) / 6f;
             VRCPlayerApi owner0 = Networking.GetOwner(gameObject);
             if (Utilities.IsValid(owner0)) _ownerId = owner0.playerId;
             _lastRealtime = Time.realtimeSinceStartup;
@@ -2038,9 +2045,15 @@ namespace KominkaHillside
                 _dirtNextSample = NextGrid(now, DirtSampleInterval, _phase);
                 DirtSample(now);
             }
+            float iv = Mathf.Max(0.5f, dirtApplyInterval);
+            if (iv != _dirtIvUsed)   // the interval was changed (harness): do not wait out the old one
+            {
+                if (iv < _dirtIvUsed && _dirtNextApply > now + iv) _dirtNextApply = now + iv;
+                _dirtIvUsed = iv;
+            }
             if (now >= _dirtNextApply)
             {
-                _dirtNextApply = now + Mathf.Max(0.5f, dirtApplyInterval);
+                _dirtNextApply = now + iv;
                 ApplyDirt();
             }
         }

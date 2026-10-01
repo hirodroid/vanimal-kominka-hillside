@@ -72,7 +72,8 @@ namespace KominkaHillside.Editor
 
         // ---- 犬ごとの汚れ (IMP-DOG-029 / 030)。Wash/11 が KH_DogWash へ書き、Wash/12 が proxy と backing の一致を検査する ----
         /// <summary>初期の汚れ (試作は 6 匹とも 0.6。本番で 0 にするのは統括の指示で、ここを変えて Wash/11)。</summary>
-        const float InitialDirt = 0.6f;
+        /// IMP-DOG-034 C2-2 (ユーザー決定 2026-10-01): 本番の 0 にした。殻は汚れが見えるまで OFF (KH_DogWash.ShellDirtVisible)。
+        const float InitialDirt = 0f;
         /// <summary>汚れの高さの重みの境目 (m、地面 = 最も低いセルから)。柴の値 (設計書 §1-9、2026-09-30 PCVR の決定) を犬の高さの比で伸び縮みさせる。</summary>
         const float ShibaHeightM = 0.621f;
         static readonly float[] ShibaDirtHeights = { 0.08f, 0.25f, 0.45f };
