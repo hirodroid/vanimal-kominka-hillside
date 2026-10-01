@@ -5,8 +5,8 @@ system: ENV
 status: todo
 priority: Medium
 summary: 制作中の川のせせらぎ音を専用ディレクトリへ格納し、本番シーンの川沿いに環境音として設定する
-next: Audio/Ambience/River に完成音源を受け取り、川沿いの配置・ループ・距離減衰・音量を調整する
-updated: 2026-09-29
+next: Audio/Ambience/River にある候補3本の制作条件と採用版を確認し、川沿いの配置・ループ・距離減衰・音量を調整する
+updated: 2026-10-02
 ---
 
 # IMP-ENV-006 川のせせらぎ音を配置する
@@ -15,11 +15,19 @@ updated: 2026-09-29
 
 ## 音源の格納先
 
-- **`Assets/KominkaHillside/Audio/Ambience/River/`** — 今回作成。音源は未受領。
+- **`Assets/KominkaHillside/Audio/Ambience/River/`** — 2026-10-02の整理時に候補3本を確認。採用・配置の完了ではない。
 - 既存の `Assets/KominkaHillside/Audio/Water/` は犬の水しぶき・水遊び用。川の常時環境音は上記に置く。
 - ユーザー制作音源を使う。ファイル名・形式・長さ・ループ点は受領後に確認し、必要なインポート設定を決める。
 
 ## 実装すること
+
+2026-10-02 保管確認: 以下を既存の `.meta` と併せて版管理へ収録する。各WAVは1,536,770 bytes。生成機能・契約条件・入力素材の記録は未確認で、ファイル名のみから推定しない。採用前に制作元と条件を確認し、試聴・ループ・取り込み設定を決める。今回シーンへ新たに配置していない。
+
+| 候補ファイル | SHA256 |
+|---|---|
+| `Firefly_audio_小川の水音_big.wav` | `f280c4a1994d3cdff4fddbdac3c030f7f6e790672a5cad706f52be2bf7010ebc` |
+| `Firefly_audio_小川の水音_middle.wav` | `c440dbd630e1b884e29c936b980ae46b405a5b2941a408d3af1d4c9e0029e84a` |
+| `Firefly_audio_小川の水音_little.wav` | `8005231452321a11ff86a1cf16b75139ac1eb141f729e66280a3fdbe01571af6` |
 
 - 本番 `Assets/Scenes/VRCDefaultWorldScene.unity` の川沿いにせせらぎ音を配置する。川の形と散歩道からの聞こえ方に合わせて音源位置・数を決める。
 - 川へ近づくと自然に聞こえ、離れると減衰するように3D音源の範囲と音量を調整する。複数音源が重なる場所で音量が過大にならないようにする。

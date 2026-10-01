@@ -5,8 +5,8 @@ system: WLD
 status: review
 priority: Medium
 summary: 専用BGM「木漏れ日の帰り道」003を導入し、古民家と同じ設定メニューで個人のON/OFF・音量調整を可能にする
-next: 実装と Edit モードの検査は済み (Course/98 Build・99 Verify BGM_OK、Menu/16a PASS、f32cd77 / a06178c)。残り: ユーザー判断 3 件 (ON/OFF ボタンを残すか、WAV 62 MB を git へ入れるか、基準音量 0.35 と圧縮品質の確定)、ライブ連動と実際の出音の確認 (ClientSim / PCVR)、Android / iOS の容量の実測
-updated: 2026-09-29
+next: 実装と Edit モードの検査は済み (Course/98 Build・99 Verify BGM_OK、Menu/16a PASS、f32cd77 / a06178c)。残り: ON/OFF ボタンを残すか、基準音量 0.35 と圧縮品質の確定、ライブ連動と実際の出音の確認 (ClientSim / PCVR)、Android / iOS の容量の実測。WAV は2026-10-02の未コミット整理依頼に基づき版管理へ収録
+updated: 2026-10-02
 decided: 2026-09-29
 ---
 
@@ -79,5 +79,7 @@ decided: 2026-09-29
 - `baseVolume` 0.35 は古民家の値を仮に使った。003 は peak -3.0 dBFS / RMS -23.1 dBFS で、古民家の曲 (mp3、取り込みで normalize あり) との聞こえの差は実機で決める。品質 0.7 / 0.5 も容量実測の前の候補。
 
 ## 今回の範囲外
+
+2026-10-02 未コミット整理: 完成WAV 62,208,044 bytesのSHA256が上記003版と一致し、既存のAudioImporter設定とフォルダmetaを併せて版管理へ収録する。音源の改変・シーン再構築・試聴の代行は行っていない。聴感と実機の未確認条件は継続する。
 
 楽曲の追加改作、環境音の新規制作、場所別の曲切替、ラジオ、ライブ曲の差し替え、公開操作。環境音などの残る音設計はDES-WLD-002で扱う。
