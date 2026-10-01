@@ -52,8 +52,6 @@ namespace KominkaHillside.Editor
         static readonly Vector3 TableSize = new Vector3(1.3f, 0.03f, 0.7f);
         const int TableSlats = 5;
         const float SideMargin = 1.0f;                                                  // free standing room on each side (±X) of the duckboard
-        static readonly Vector3 TubLocal = new Vector3(-0.95f, 0f, -0.05f);            // west of the shelf (the east side faces the leash rack)
-        const float TubRadius = 0.2f, TubHeight = 0.26f;
         static readonly Vector3 SignSize = new Vector3(0.34f, 0.12f, 0.02f);
         const float SignZ = 0.19f;                                                      // at the back of the shelf top, facing the front (-Z)
         const string SignText = "WASH";                                                 // ASCII placeholder; the Japanese is typed in the Inspector (layout doc §5)
@@ -115,6 +113,7 @@ namespace KominkaHillside.Editor
             // ---- IMP-ENV-011 / IMP-DOG-035: Call, PersonalFloor and the board on every station (the dogs' washCalls: WireWanders) ----
             foreach (var st in stations) BuildStationControls(st, StationIndexOf(st), r);
             SetFloorPassthrough(r);
+            foreach (var st in stations) SetStandLayers(st, r);   // last: BuildStand / Prim put the parts back on Default
             return tools;
         }
 
@@ -530,7 +529,7 @@ namespace KominkaHillside.Editor
                 float bottom = hmin + 0.02f, top = hmax + 1.8f;
                 var centre = pos + rot * new Vector3(0f, 0f, (z0 + z1) * 0.5f); centre.y = (bottom + top) * 0.5f;
                 var hits = Physics.OverlapBox(centre, new Vector3(halfX, (top - bottom) * 0.5f, (z1 - z0) * 0.5f), rot, ~0, QueryTriggerInteraction.Ignore)
-                    .Where(x => !(x is TerrainCollider) && x.attachedRigidbody == null && (self == null || !x.transform.IsChildOf(self)))
+                    .Where(x => !(x is TerrainCollider) && x.attachedRigidbody == null && HitsPlayers(x) && (self == null || !x.transform.IsChildOf(self)))
                     .Select(x => KominkaDogRun.Editor.KD_SceneObjects.PathOf(x.gameObject)).ToArray();
                 add(hits.Length == 0, "no solid collider over the working area " + (2f * halfX).ToString("F1") + " x " + (z1 - z0).ToString("F2") + " m (the station's own parts aside: " + string.Join(", ", hits) + ")");
             }
@@ -623,7 +622,9 @@ namespace KominkaHillside.Editor
         const float FloorHalf = 2.5f, FloorThickness = 0.1f, FloorMaxHeight = 1.2f, FloorStep = 0.1f, FloorSpeed = 0.5f, FloorLeaveMeters = 8f;
         // the hole, in PersonalFloor local (origin = the duckboard centre on the station's ground plane): the duckboard (±0.65, ±0.35) and the
         // shelf / board (station z -0.225..0.245 = local 0.975..1.445) with a margin
-        static readonly Vector2 FloorHoleMin = new Vector2(-0.75f, -0.45f), FloorHoleMax = new Vector2(0.75f, 1.5f);
+        // No hole any more (2026-10-01): the players pass through the stand and the shelf (StandLayer), so the floor is one 5 x 5 m slab
+        // (a hole made a raised player fall beside the stand). The interact ray passes it (layer 22 in interactThruLayers).
+        static readonly Vector2 FloorHoleMin = Vector2.zero, FloorHoleMax = Vector2.zero;
         // ---- the board: a World Space Canvas standing at the back of the shelf top, above the sign, facing the front (-Z) ----
         static readonly Vector2 BoardPixels = new Vector2(600f, 360f);
         const float BoardScale = 0.001f;   // 1 px = 1 mm: 0.60 x 0.36 m
@@ -695,6 +696,28 @@ namespace KominkaHillside.Editor
             for (int i = 0; i < values.Length; i++) p.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
         }
 
+        /// <summary>Walkthrough (17): the players (9, 10) pass through it, everything else hits it (user's decision 2026-10-01: the
+        /// stand and the shelf must not bump the players). Checked against the collision matrix at Build and in Wash/12.</summary>
+        const int StandLayer = 17;
+
+        /// <summary>Every solid collider of a station on StandLayer, except the tools (rigidbody: Pickup), the reset board (Interact
+        /// target, Default), the board's UI shape (a trigger) and my floor (layer 22, the players stand on it).</summary>
+        static void SetStandLayers(Transform st, BuildReport r)
+        {
+            if (!Physics.GetIgnoreLayerCollision(StandLayer, 10) || !Physics.GetIgnoreLayerCollision(StandLayer, 9))
+                throw new InvalidOperationException("layer " + StandLayer + " collides with the players in this project's collision matrix (expected Walkthrough)");
+            var pf = st.Find(FloorName);
+            int n = 0;
+            foreach (var c in st.GetComponentsInChildren<Collider>(true))
+            {
+                if (c.isTrigger || c.attachedRigidbody != null || c.transform.name == ResetName || (pf != null && c.transform.IsChildOf(pf))) continue;
+                if (c.gameObject.layer != StandLayer) { c.gameObject.layer = StandLayer; n++; }
+            }
+            if (n > 0) r.log.Add(st.name + ": " + n + " solid colliders on layer " + StandLayer + " (players pass through)");
+        }
+
+        static bool HitsPlayers(Collider c) { return !Physics.GetIgnoreLayerCollision(c.gameObject.layer, 10); }
+
         /// <summary>The interact ray passes through my floor: the floor layer's bit in VRCSceneDescriptor.interactThruLayers (the other bits kept).</summary>
         static void SetFloorPassthrough(BuildReport r)
         {
@@ -750,10 +773,7 @@ namespace KominkaHillside.Editor
             boxesT.localPosition = new Vector3(0f, baseY, 0f); boxesT.localRotation = Quaternion.identity; boxesT.localScale = Vector3.one;
             var rects = new[]
             {
-                new KeyValuePair<string, Rect>("West", Rect.MinMaxRect(-FloorHalf, -FloorHalf, FloorHoleMin.x, FloorHalf)),
-                new KeyValuePair<string, Rect>("East", Rect.MinMaxRect(FloorHoleMax.x, -FloorHalf, FloorHalf, FloorHalf)),
-                new KeyValuePair<string, Rect>("Front", Rect.MinMaxRect(FloorHoleMin.x, -FloorHalf, FloorHoleMax.x, FloorHoleMin.y)),
-                new KeyValuePair<string, Rect>("Back", Rect.MinMaxRect(FloorHoleMin.x, FloorHoleMax.y, FloorHoleMax.x, FloorHalf)),
+                new KeyValuePair<string, Rect>("All", Rect.MinMaxRect(-FloorHalf, -FloorHalf, FloorHalf, FloorHalf)),
             };
             var cols = new List<Collider>();
             foreach (var kv in rects)
@@ -1005,7 +1025,7 @@ namespace KominkaHillside.Editor
                 SetLook(leg, wood);
             }
 
-            // ---- the duckboard (すのこ): one solid, walkable BoxCollider on Default (players, and the dogs' ground rays 0|11) + slats ----
+            // ---- the duckboard (すのこ): one solid BoxCollider (StandLayer at the end of the Build: the players pass through it) + slats ----
             // IMP-ENV-011: the duckboard lives under "Lift" (the stand KH_WashStationCall raises: liftRoot). Lift sits at the
             // station's origin with no rotation, so the board keeps the same local numbers as before; an older duckboard
             // directly under the station is moved under it (same world pose).
@@ -1041,14 +1061,9 @@ namespace KominkaHillside.Editor
             anchor.localPosition = new Vector3(0f, tableY + TableSize.y, -TableFront); anchor.localRotation = Quaternion.identity; anchor.localScale = Vector3.one;
             foreach (var comp in anchor.GetComponents<Component>()) if (!(comp is Transform)) UnityEngine.Object.DestroyImmediate(comp);
 
-            // ---- the tub (桶) ----
-            var tub = Prim(station, TubName, PrimitiveType.Cylinder, true);
-            tub.layer = 0;
-            float tubY = MaxGround(station, TubLocal, TubRadius * 2f, TubRadius * 2f);
-            tub.transform.localPosition = new Vector3(TubLocal.x, tubY + TubHeight * 0.5f, TubLocal.z);
-            tub.transform.localRotation = Quaternion.identity;
-            tub.transform.localScale = new Vector3(TubRadius * 2f, TubHeight * 0.5f, TubRadius * 2f);   // the Cylinder primitive is 2 units tall
-            SetLook(tub, dark);
+            // ---- the tub (桶): removed (user's decision 2026-10-01: a decoration with no function). An older one is deleted. ----
+            var oldTub = station.Find(TubName);
+            if (oldTub != null) { UnityEngine.Object.DestroyImmediate(oldTub.gameObject); r.log.Add("removed " + station.name + "/" + TubName + " (no tub any more)"); }
 
             // ---- the sign: a small board at the back of the top, text facing the front (-Z; TMP faces -Z) ----
             var sign = Prim(station, SignName, PrimitiveType.Cube, false);   // no collider: never blocks a pickup ray

@@ -8,9 +8,9 @@ namespace KominkaHillside
     // client moves its own copy only, so it lifts only the local player (remote players are drawn where their own client
     // puts them). Nothing is synced and there is no network event: the only entry points are the local _Adjust / _Up / _Down.
     //
-    // The floor is a frame of 4 boxes (5 x 5 m around the duckboard, a hole over the duckboard and the shelf, so the dog,
-    // the tools and the board stay outside it), 0.1 m thick, on a layer the players collide with but the dogs' ground rays
-    // (0|11), the frisbee and the wash rays (2) do not see (the builder picks it; Wash/12 checks the dogs' masks).
+    // The floor is one 5 x 5 m slab around the duckboard (no hole since 2026-10-01: the stand and the shelf are on a layer the
+    // players pass through), 0.1 m thick, on user layer 22: the players collide with it, the interact ray passes it
+    // (interactThruLayers), and the dogs' ground rays (0|11), the frisbee and the wash rays (2) do not see it (Wash/12 checks).
     // 0 = off (the colliders are disabled). 0.1 m steps up to maxHeight, moved at speed m/s. 8 m away -> back to 0.
     //
     // Lifting the player (coordinator's decision 2026-10-01): the floor rises slowly under the player (the controller may
@@ -28,9 +28,9 @@ namespace KominkaHillside
         public float baseY;
         [Tooltip("床の外形 (ローカル xz、中心からの半分)")]
         public Vector2 outerHalf = new Vector2(2.5f, 2.5f);
-        [Tooltip("穴 (すのこと棚。ローカル xz の最小・最大)")]
-        public Vector2 holeMin = new Vector2(-0.75f, -0.45f);
-        public Vector2 holeMax = new Vector2(0.75f, 1.5f);
+        [Tooltip("穴 (ローカル xz の最小・最大)。2026-10-01 から無し (0, 0): 台と棚はプレイヤーが通り抜ける層 (17) なので床は 5 x 5 m の 1 枚")]
+        public Vector2 holeMin = Vector2.zero;
+        public Vector2 holeMax = Vector2.zero;
         public float maxHeight = 1.2f;
         public float step = 0.1f;
         [Tooltip("動かす速さ (m/s)")]

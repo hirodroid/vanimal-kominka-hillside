@@ -274,6 +274,9 @@ namespace KominkaDogRun
             if (treatBox != null && dogIndex >= 0) { KD_TreatSlot slot = treatBox.LiveSlotOf(dogIndex); if (slot != null) return slot.GiverId(); }
             if (liveSystem != null && liveSystem.IsPlaying) return -1;
             if (activities != null && activities.Mode == 1) return -1;
+            // IMP-DOG-035 (2026-10-01 user decision 「川で遊んでいる時は、呼んだら来てほしい」): a call to a wash station is an errand
+            // like the ones above: the play walks out (turning to the caller) and no new play starts while the dog is held
+            if (washCalls != null) { KominkaHillside.KH_WashStationCall st = HeldStation(); if (st != null) { int c = st._CallerId(); return c >= 0 ? c : -1; } }
             return -2;
         }
 

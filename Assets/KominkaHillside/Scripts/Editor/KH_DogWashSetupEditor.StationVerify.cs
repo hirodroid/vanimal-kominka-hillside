@@ -33,7 +33,6 @@ namespace KominkaHillside.Editor
             {
                 new Footprint("shelf", Vector2.zero, new Vector2(ShelfWidth, ShelfDepth)),
                 new Footprint("duckboard", new Vector2(0f, -TableFront), new Vector2(TableSize.x, TableSize.z)),
-                new Footprint("tub", new Vector2(TubLocal.x, TubLocal.z), new Vector2(TubRadius * 2f, TubRadius * 2f)),
             };
         }
 
@@ -59,7 +58,7 @@ namespace KominkaHillside.Editor
             try { if (File.Exists(BuildReportPath)) built = JsonUtility.FromJson<BuildReport>(File.ReadAllText(BuildReportPath)); } catch (Exception) { built = null; }
             if (built != null && built.status == "BUILT")
                 req((built.stationPosition - st.position).magnitude < 1e-3f, "layout: " + StationName + " at the position the last Build kept/created " + built.stationPosition.ToString("F3")
-                    + " (now " + st.position.ToString("F3") + "; moved by hand after the Build? run Wash/11 again to seat the duckboard and the tub on the new ground)");
+                    + " (now " + st.position.ToString("F3") + "; moved by hand after the Build? run Wash/11 again to seat the duckboard on the new ground)");
             else r.notes.Add("layout: no BUILT report in " + BuildReportPath + " (Temp is cleared when Unity closes): the station position was not compared with the last Build");
 
             CheckStationBody(r, req, st, ToolSpecs, "layout: " + StationName);
@@ -103,7 +102,7 @@ namespace KominkaHillside.Editor
         }
 
         /// <summary>What every wash station has (the main one and those along the course, IMP-ENV-008): yaw only, the stand, the
-        /// tools' homes and return settings, the reset button wired to this station's tools, the duckboard, the side room, the tub
+        /// tools' homes and return settings, the reset button wired to this station's tools, the duckboard, the side room, no tub
         /// and the sign. label prefixes every line.</summary>
         static void CheckStationBody(VerifyReport r, Action<bool, string> req, Transform st, ToolSpec[] specs, string label)
         {
@@ -178,8 +177,8 @@ namespace KominkaHillside.Editor
             // ---- the duckboard: one solid walkable box, TableSize (1.3 x 0.03 x 0.7 since IMP-ENV-011), seated on the ground, 1.2 m in front ----
             var table = FindTable(st);
             var box = table != null ? table.GetComponent<BoxCollider>() : null;
-            req(box != null && box.enabled && !box.isTrigger && table.gameObject.layer == 0 && table.gameObject.activeInHierarchy && table.GetComponents<Collider>().Length == 1,
-                label + ": " + TableName + " one solid BoxCollider on Default (players walk on it; the dogs' ground rays 0|11 see it)");
+            req(box != null && box.enabled && !box.isTrigger && table.gameObject.layer == StandLayer && table.gameObject.activeInHierarchy && table.GetComponents<Collider>().Length == 1,
+                label + ": " + TableName + " one solid BoxCollider on layer " + StandLayer + " (the players pass through it; the dogs' ground rays 0|11 do not see it: a held dog's root is written by the dog side, a released one lands on the terrain)");
             if (box != null)
             {
                 var size = Vector3.Scale(box.size, table.lossyScale);
@@ -191,8 +190,8 @@ namespace KominkaHillside.Editor
                 float want = MaxGround(st, new Vector3(0f, 0f, -TableFront), TableSize.x, TableSize.z);
                 req(Mathf.Abs(table.localPosition.y - want) < 0.005f, label + ": " + TableName + " seated on the ground (local y " + table.localPosition.y.ToString("F3") + ", highest ground under it " + want.ToString("F3") + "; top " + TableSize.y + " m above it)");
                 var c = table.TransformPoint(box.center);
-                bool onTop = Physics.Raycast(c + Vector3.up * 1f, Vector3.down, out RaycastHit hit, 2f, (1 << 0) | (1 << 11), QueryTriggerInteraction.Ignore) && hit.collider == box;
-                req(onTop, label + ": a downward ray (0|11) above the duckboard lands on it first (" + (hit.collider != null ? hit.collider.name : "nothing") + ")");
+                bool onTop = Physics.Raycast(c + Vector3.up * 1f, Vector3.down, out RaycastHit hit, 2f, 1 << StandLayer, QueryTriggerInteraction.Ignore) && hit.collider == box;
+                req(onTop, label + ": a downward ray (layer " + StandLayer + ") above the duckboard lands on it first (" + (hit.collider != null ? hit.collider.name : "nothing") + ")");
                 int slats = table.Cast<Transform>().Count(x => x.name.StartsWith("Slat_") && x.GetComponent<Collider>() == null);
                 req(slats == TableSlats, label + ": " + TableSlats + " slats without colliders (" + slats + ")");
             }
@@ -202,7 +201,7 @@ namespace KominkaHillside.Editor
             {
                 // The zone is the 1 m strip beside the duckboard (x from its edge to 1 m beyond, z over its depth). It starts SideGap
                 // off the board's edge: the strip and the board share that face, and OverlapBox reports a collider that only touches
-                // the box (2026-09-30 Build: both sides failed on WashTable itself). The station's own parts (shelf, legs, tub, sign,
+                // the box (2026-09-30 Build: both sides failed on WashTable itself). The station's own parts (shelf, legs, sign,
                 // the board) are NOT excluded: none of them may reach into the room people stand in, so they count like anything else.
                 const float SideGap = 0.02f;
                 var local = new Vector3(side * (TableSize.x * 0.5f + SideGap + (SideMargin - SideGap) * 0.5f), 0f, -TableFront);
@@ -213,14 +212,22 @@ namespace KominkaHillside.Editor
                 float h = MaxGround(st, local, zoneW, TableSize.z) - bottom + 1.8f;   // up to head height above the highest terrain
                 var centre = st.TransformPoint(new Vector3(local.x, bottom + h * 0.5f, local.z));
                 var hits = Physics.OverlapBox(centre, new Vector3(zoneW * 0.5f, h * 0.5f, TableSize.z * 0.5f), st.rotation, ~0, QueryTriggerInteraction.Ignore)
-                    .Where(x => !(x is TerrainCollider) && x.attachedRigidbody == null).Select(x => KD_SceneObjects.PathOf(x.gameObject)).ToArray();
+                    .Where(x => !(x is TerrainCollider) && x.attachedRigidbody == null && HitsPlayers(x)).Select(x => KD_SceneObjects.PathOf(x.gameObject)).ToArray();
                 req(hits.Length == 0, label + ": " + (side < 0 ? "west" : "east") + " side of the duckboard: " + zoneW.ToString("F2") + " m (from " + SideGap + " m off its edge) x " + TableSize.z
-                    + " m free of solid colliders, the station's own parts included (" + string.Join(", ", hits) + ")");
+                    + " m free of colliders the players bump (the station's own parts too; layer " + StandLayer + " is passed through) (" + string.Join(", ", hits) + ")");
             }
 
-            // ---- the tub and the sign ----
-            var tub = st.Find(TubName);
-            req(tub != null && tub.GetComponent<Collider>() != null && !tub.GetComponent<Collider>().isTrigger && tub.GetComponent<MeshRenderer>() != null, label + ": " + TubName + " with a solid collider");
+            // ---- no tub (user's decision 2026-10-01), the sign; the players pass through the stand and the shelf ----
+            req(st.Find(TubName) == null, label + ": no " + TubName + " (removed)");
+            {
+                var solid = st.GetComponentsInChildren<Collider>(true).Where(x => !x.isTrigger && x.attachedRigidbody == null && x.transform.name != ResetName
+                    && !(st.Find(FloorName) != null && x.transform.IsChildOf(st.Find(FloorName)))).ToArray();
+                var bump = solid.Where(x => x.gameObject.layer != StandLayer || HitsPlayers(x)).Select(x => KD_SceneObjects.PathOf(x.gameObject)).ToArray();
+                req(solid.Length >= 6 && bump.Length == 0 && Physics.GetIgnoreLayerCollision(StandLayer, 10) && Physics.GetIgnoreLayerCollision(StandLayer, 9),
+                    label + ": the shelf, its legs and the duckboard (" + solid.Length + " solid colliders) are on layer " + StandLayer + ", which does not collide with Player 9 / PlayerLocal 10 (" + string.Join(", ", bump) + ")");
+                var resetTf = st.Find(ResetName);
+                req(resetTf != null && resetTf.gameObject.layer == 0, label + ": " + ResetName + " stays on Default (Interact)");
+            }
             var sign = st.Find(SignName);
             req(sign != null && sign.GetComponent<Collider>() == null && sign.GetComponent<MeshRenderer>() != null, label + ": " + SignName + " board without a collider (does not block a pickup ray)");
             var tt = st.Find(SignTextName);
@@ -503,19 +510,11 @@ namespace KominkaHillside.Editor
                 req(boxes != null && boxes.parent == pfT && boxes.gameObject.layer == FloorLayer, label + ": PersonalFloor.floor = " + FloorName + "/" + FloorBoxesName + " on layer " + FloorLayer);
                 req(table != null && Mathf.Abs(pf.baseY - table.localPosition.y) < 1e-4f && boxes != null && Mathf.Abs(boxes.localPosition.y - pf.baseY) < 1e-4f, label + ": floor base = the ground under the duckboard (" + pf.baseY.ToString("F3") + "), resting at height 0");
                 var fc = pf.floorColliders ?? new Collider[0];
-                req(fc.Length == 4 && fc.All(c => c is BoxCollider && !c.isTrigger && !c.enabled && c.gameObject.layer == FloorLayer && boxes != null && c.transform.parent == boxes && c.GetComponent<Renderer>() == null),
-                    label + ": 4 solid floor boxes, disabled in the saved scene, invisible, layer " + FloorLayer + " (" + fc.Length + ")");
+                req(fc.Length == 1 && fc.All(c => c is BoxCollider && !c.isTrigger && !c.enabled && c.gameObject.layer == FloorLayer && boxes != null && c.transform.parent == boxes && c.GetComponent<Renderer>() == null),
+                    label + ": one solid floor slab, disabled in the saved scene, invisible, layer " + FloorLayer + " (" + fc.Length + ")");
                 float area = fc.OfType<BoxCollider>().Sum(c => c.size.x * c.size.z);
                 float want = 4f * FloorHalf * FloorHalf - (FloorHoleMax.x - FloorHoleMin.x) * (FloorHoleMax.y - FloorHoleMin.y);
-                req(Mathf.Abs(area - want) < 1e-3f, label + ": floor area " + area.ToString("F2") + " m2 = 5 x 5 minus the hole over the duckboard and the shelf (" + want.ToString("F2") + ")");
-                // the hole covers the duckboard, the shelf and the board (no floor collider over them at any height)
-                var hole = Rect.MinMaxRect(FloorHoleMin.x, FloorHoleMin.y, FloorHoleMax.x, FloorHoleMax.y);
-                foreach (var nm in new[] { "Shelf", BoardName })
-                {
-                    var o = st.Find(nm); if (o == null) continue;
-                    var l = pfT.InverseTransformPoint(o.position);
-                    req(hole.Contains(new Vector2(l.x, l.z)), label + ": " + nm + " inside the floor's hole (" + l.x.ToString("F2") + ", " + l.z.ToString("F2") + ")");
-                }
+                req(Mathf.Abs(area - want) < 1e-3f && pf.holeMin == pf.holeMax, label + ": floor area " + area.ToString("F2") + " m2 = 5 x 5, no hole (the players pass through the stand and the shelf)");
                 req(Mathf.Abs(pf.maxHeight - FloorMaxHeight) < 1e-4f && Mathf.Abs(pf.step - FloorStep) < 1e-4f && Mathf.Abs(pf.speed - FloorSpeed) < 1e-4f && Mathf.Abs(pf.leaveMeters - FloorLeaveMeters) < 1e-4f,
                     label + ": floor 0.." + FloorMaxHeight + " m, step " + FloorStep + ", " + FloorSpeed + " m/s, back to 0 beyond " + FloorLeaveMeters + " m");
                 foreach (var f in new[] { "floor", "floorColliders", "baseY", "maxHeight", "step", "speed", "leaveMeters" })

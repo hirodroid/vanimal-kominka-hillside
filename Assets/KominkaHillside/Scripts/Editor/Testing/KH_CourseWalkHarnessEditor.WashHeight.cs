@@ -53,7 +53,7 @@ namespace KominkaHillside.Editor
                 top = whFloorRoot.position.y + Get<float>(whPf, "baseY") + 0.3f;
                 float y1 = Networking.LocalPlayer.GetPosition().y;
                 var cols = WsArr<Collider>(whPf, "floorColliders");
-                WsExpect(cols.Length == 4 && Array.TrueForAll(cols, c => c != null && c.enabled), "the 4 floor colliders are on above 0");
+                WsExpect(cols.Length >= 1 && Array.TrueForAll(cols, c => c != null && c.enabled), "the floor collider(s) are on above 0 (" + cols.Length + ")");
                 WsExpect(Mathf.Abs(whFloor.localPosition.y - (Get<float>(whPf, "baseY") + 0.3f)) < 1e-3f, "the floor boxes moved to base + 0.3 (" + whFloor.localPosition.y.ToString("F3") + ")");
                 WsExpect(Mathf.Abs(y1 - top) < 0.08f && y1 > y0 + 0.1f, "the player stands on the raised floor (feet " + y0.ToString("F3") + " -> " + y1.ToString("F3") + ", top " + top.ToString("F3") + ")");
                 int rescues = Get<int>(whPf, "_rescues") - rescues0;

@@ -330,8 +330,9 @@ MonoBehaviour:
       Data: 19|UnityEngine.TooltipAttribute, UnityEngine.CoreModule
     - Name: tooltip
       Entry: 1
-      Data: "\u7A74 (\u3059\u306E\u3053\u3068\u68DA\u3002\u30ED\u30FC\u30AB\u30EB
-        xz \u306E\u6700\u5C0F\u30FB\u6700\u5927)"
+      Data: "\u7A74 (\u30ED\u30FC\u30AB\u30EB xz \u306E\u6700\u5C0F\u30FB\u6700\u5927)\u30022026-10-01
+        \u304B\u3089\u7121\u3057 (0, 0): \u53F0\u3068\u68DA\u306F\u30D7\u30EC\u30A4\u30E4\u30FC\u304C\u901A\u308A\u629C\u3051\u308B\u5C64
+        (17) \u306A\u306E\u3067\u5E8A\u306F 5 x 5 m \u306E 1 \u679A"
     - Name: 
       Entry: 8
       Data: 

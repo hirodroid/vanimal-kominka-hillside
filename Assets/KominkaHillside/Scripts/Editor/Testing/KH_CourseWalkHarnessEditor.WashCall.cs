@@ -211,6 +211,7 @@ namespace KominkaHillside.Editor
             WcFree(s);   // end the Fetch (and any hold) here, so the next cases start with an idle Shiba
 
             MakeWashCallReviewCases(other);
+            MakeWashCallWaterCase();
         }
 
         /// <summary>Codex review 5: the re-call keeps the caller (1), a new choice cancels an older wait (6), an inactive station
@@ -288,6 +289,65 @@ namespace KominkaHillside.Editor
                 WsExpect(Get<int>(wcStation, "heldDog") < 0, "the station's hold was cleared by the disable / enable (heldDog " + Get<int>(wcStation, "heldDog") + ")");
                 WsExpect(Get<int>(wsWander, "_stationIdx") < 0, "the Shiba is not taken back");
                 WsNote("station inactive: the Shiba let go at once; re-enabled: heldDog -1");
+            }));
+        }
+
+        /// <summary>2026-10-01 user decision 「川で遊んでいる時は、呼んだら来てほしい」: C-water-call. The Shiba is put into its water
+        /// play the water harness's way (placed within 25 m of the spot's entry, the first-play flags cleared: it starts by itself),
+        /// then called. Expected: held at once (the play is not busy), out through the play's own exit, no swim height left, no
+        /// new play while held, on the stand. Uses a station under a "River" object when there is one, else station 0.</summary>
+        static void MakeWashCallWaterCase()
+        {
+            var s = WsCase("C-water-call", 180);
+            UdonBehaviour spot = null, st = null; Transform anchor = null; double heldAt = 0; float landedAt = -1f; bool reentered = false, landedSeen = false;
+            WcSetup(s);
+            s.Add(WsDo(() =>
+            {
+                spot = WsRef(wsWander, "waterSpot") as UdonBehaviour;
+                if (spot == null || wcFetch == null) throw new WsSkip("the Shiba has no waterSpot / fetchController");
+                foreach (var u in UnityEngine.Object.FindObjectsOfType<UdonBehaviour>())
+                {
+                    if (u.programSource == null || u.programSource.name != "KH_WashStationCall" || !u.gameObject.activeInHierarchy) continue;
+                    bool river = false; for (var t = u.transform; t != null; t = t.parent) if (t.name.Contains("River")) { river = true; break; }
+                    if (river || (st == null && Get<int>(u, "stationIndex") == 0)) st = u;
+                    if (river) break;
+                }
+                if (st == null) throw new WsSkip("no active station");
+                anchor = WsRef(st, "anchor") as Transform;
+                if (anchor == null) throw new InvalidOperationException("the station's anchor is not wired");
+                // the water harness's start: me and the dog near the entry, the first play due now
+                Vector3 entry = Get<Vector3>(spot, "entry");
+                UnityEngine.AI.NavMeshHit h;
+                Vector3 toward = entry + (anchor.position - entry).normalized * 8f;
+                if (!UnityEngine.AI.NavMesh.SamplePosition(toward, out h, 4f, UnityEngine.AI.NavMesh.AllAreas)) throw new InvalidOperationException("no NavMesh near the entry");
+                var face = Quaternion.LookRotation(new Vector3(entry.x - h.position.x, 0f, entry.z - h.position.z));
+                Networking.LocalPlayer.TeleportTo(h.position, face);
+                UnityEngine.AI.NavMeshHit d;
+                if (!UnityEngine.AI.NavMesh.SamplePosition(h.position + face * new Vector3(-.8f, 0f, .3f), out d, 2f, UnityEngine.AI.NavMesh.AllAreas)) throw new InvalidOperationException("dog placement lacks NavMesh");
+                wsRoot.SetPositionAndRotation(d.position, face);
+                var sync = wsRoot.GetComponent<VRC.SDK3.Components.VRCObjectSync>(); if (sync != null) sync.FlagDiscontinuity();
+                wsWander.SetProgramVariable("_waterFirstDue", 0f);
+                wsWander.SetProgramVariable("_waterFirstUsed", false);
+            }));
+            s.Add(WsUntil(() => Get<int>(wsWander, "waterState") == 2 && Get<int>(wcFetch, "waterPose") != 0, 60,
+                () => "the Shiba did not start wading (waterState " + Get<int>(wsWander, "waterState") + ", pose " + Get<int>(wcFetch, "waterPose") + ")"));
+            s.Add(WsWait(2.0));
+            s.Add(WsDo(() => { st.SendCustomNetworkEvent(NetworkEventTarget.Owner, "ReqCall", wsDog); heldAt = EditorApplication.timeSinceStartup; }));
+            s.Add(WsUntil(() => Get<int>(st, "heldDog") == wsDog, 2, () => "the call during the water play was not accepted (heldDog " + Get<int>(st, "heldDog") + ", refused " + Get<int>(st, "refusedDog") + "/" + Get<int>(st, "refusedReason") + ")"));
+            s.Add(WsUntil(() =>
+            {
+                bool wet = Get<int>(wsWander, "waterState") != 0 || Get<int>(wcFetch, "waterPose") != 0;
+                if (!wet && !landedSeen) { landedSeen = true; landedAt = (float)(EditorApplication.timeSinceStartup - heldAt); }
+                if (landedSeen && wet) reentered = true;
+                if (Get<int>(st, "heldDog") != wsDog) throw new InvalidOperationException("the hold was lost before arrival");
+                return landedSeen && Get<bool>(st, "arrived") && Flat(wsRoot.position - anchor.position) < 0.35f;
+            }, 120, () => "not out and on the stand (landed " + landedSeen + " at " + landedAt.ToString("F1") + " s, waterState " + Get<int>(wsWander, "waterState") + ", pose " + Get<int>(wcFetch, "waterPose") + ", " + Flat(wsRoot.position - anchor.position).ToString("F1") + " m)"));
+            s.Add(WsDo(() =>
+            {
+                WsExpect(!reentered, "no new water play while held");
+                WsExpect(!Get<bool>(wsWander, "_waterSwimming") && !Get<bool>(wsWander, "_swimYValid"), "no swim height left (WaterClearFloat)");
+                WsNote("called while wading: held at once, landed " + landedAt.ToString("F1") + " s after the call (timeout 20 s), no re-entry, on the stand of " + st.gameObject.name);
+                st.SendCustomNetworkEvent(NetworkEventTarget.Owner, "ReqRelease");
             }));
         }
 

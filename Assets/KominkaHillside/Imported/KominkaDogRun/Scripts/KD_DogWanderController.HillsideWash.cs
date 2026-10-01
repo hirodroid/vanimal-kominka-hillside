@@ -150,6 +150,8 @@ namespace KominkaDogRun
         const float StationArrive = 0.3f;      // horizontal distance that counts as "on the stand"
         const float StationSettleSpeed = 1.5f; // m/s, the root eased onto the anchor (faster than the stand's 0.5 m/s)
         const float StationTurnRate = 180f;    // deg/s, the root turned to standYaw once on the stand
+        const float StationWaterTimeout = 20f; // in the water this long after the call: end the play and appear near the station
+        private float _stationWaterSince = -1f;
         private int _stationIdx = -1;          // the station holding this dog last tick (-1 = none)
         private bool _stationLocked;           // on the stand (local; the synced `arrived` also counts)
         private float _stationTeleportNext;
@@ -185,6 +187,7 @@ namespace KominkaDogRun
         {
             int idx = HeldStationIndex();   // the same scan as HeldStation (active stations only, the newest hold)
             if (idx == _stationIdx) return;
+            _stationWaterSince = -1f;
             if (_stationIdx >= 0)
             {
                 // released (or moved to another station): back to the ground, then the usual behaviour picks up next frame
@@ -206,8 +209,42 @@ namespace KominkaDogRun
             KominkaHillside.KH_WashStationCall st = HeldStation();
             if (st == null) return false;
             if (fetchController == null) return false;
-            // Water is stronger (walks out first, design §3); the errands release the dog on their accept edge (WashErrandTick)
-            if (WashYieldsToWater() || WashYieldsToErrand()) return false;
+            // The errands release the dog on their accept edge (WashErrandTick)
+            if (WashYieldsToErrand()) return false;
+            // In the water: the water play walks the dog out by its own exit first (the station hold is an errand for it:
+            // WaterRequester, design B-1 「受理は上陸後」) and starts no new play while held. Nothing here is touched meanwhile.
+            // If it has not landed within StationWaterTimeout (stuck), the Owner ends the play and lets the dog appear near the
+            // station (the same TeleportTo as a far call), with the swim height dropped (WaterClearFloat).
+            if (WashYieldsToWater())
+            {
+                if (_stationWaterSince < 0f) _stationWaterSince = Time.time;
+                if (!(_dogOwner && Time.time - _stationWaterSince > StationWaterTimeout)) return false;
+                Vector3 a0 = st._AnchorPosition();
+                Vector3 f0 = a0 - dogRoot.position; f0.y = 0f;
+                WaterEnd("station-timeout");
+                WaterClearFloat();
+                Vector3 goal = f0.sqrMagnitude > 0.01f ? a0 - f0.normalized * Mathf.Min(StationAppear, f0.magnitude) : a0;
+                // TeleportTo needs the NavMesh under the dog too, which a swimming dog may not have: then place it on the
+                // sampled goal directly (the same discontinuity flag)
+                if (!TeleportTo(goal))
+                {
+                    UnityEngine.AI.NavMeshHit hit;
+                    if (UnityEngine.AI.NavMesh.SamplePosition(goal, out hit, 3f, UnityEngine.AI.NavMesh.AllAreas))
+                    {
+                        VRC.SDK3.Components.VRCObjectSync sync = dogRoot.GetComponent<VRC.SDK3.Components.VRCObjectSync>();
+                        if (sync != null) sync.FlagDiscontinuity();
+                        dogRoot.position = hit.position; // net: owner-only: _dogOwner checked above
+                        _speed = 0f;
+                    }
+                }
+                WaterPoseRefresh();
+                _stationWaterSince = Time.time;   // one try per timeout
+                if (WashYieldsToWater()) return false;
+            }
+            else _stationWaterSince = -1f;
+            // Landed: an ease back to the ground that the play did not finish must not outlive it (the leash's WaterClearFloat
+            // rule, map-and-travel §F.4). Flags only; the walk below snaps to the ground.
+            if (_WaterFloating()) WaterClearFloat();
             if (leashed)
             {
                 // Only the caller's own leash (somebody else's leashed dog is never held: the station refuses / releases it)

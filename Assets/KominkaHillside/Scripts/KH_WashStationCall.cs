@@ -261,12 +261,14 @@ namespace KominkaHillside
             Accept(dog, pid);
         }
 
-        /// <summary>Fetch / the disc / in the water / a gathering participant / called to sleep: comes once that is over.</summary>
+        /// <summary>Fetch / the disc (their water retrieves included: Fetch is not Idle, the disc not Idle) / a gathering participant /
+        /// called to sleep: comes once that is over. 2026-10-01 user decision: the water play itself is not busy - the call is
+        /// accepted and the dog walks out by the play's own exit (KD_DogWanderController.WaterRequester), then comes.</summary>
         bool DogBusy(int dog)
         {
             KominkaDogRun.KD_DogWanderController w = dogs[dog];
             KominkaDogRun.KD_DogFetchController f = w.fetchController;
-            if (f != null && (!f.IsIdle || f.WaterPose != 0)) return true;
+            if (f != null && !f.IsIdle) return true;
             if (w.frisbeeCatch != null && !w.frisbeeCatch.IsIdle) return true;
             if (w.activities != null && w.activities.Mode == 1 && w.activities._IsParticipant(dog)) return true;
             if (w.sleepBoard != null && w.sleepBoard.LiveSleeperOf(dog) >= 0) return true;
