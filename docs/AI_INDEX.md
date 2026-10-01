@@ -85,6 +85,7 @@ UI制作・改修・レビューは `vrc-world-ui` と `.claude/skills/vrc-world
 | 体験会 (複数人・スマホ参加) | [2026-09-26 の記録と振り分け](plans/2026-09-26-group-playtest.md)。端末別の合格には読み替えない (不変条件 7) |
 | 地形・境界・負荷 | [IMP-ENV-001](development/issues/IMP-ENV-001-hillside-polish.md)、[完了した地形判断](development/issues/issue_summary.md) |
 | 犬ギミックの出所 | [移植記録](development/imports/kominka-dog-system.md) |
+| 散歩帰りのお手入れ・洗い場 | [IMP-DOG-024](development/issues/IMP-DOG-024-walk-and-wash-experience.md)。主洗い場は門外の犬の集合場所・リード設備付近。仕様はgame-design §4、体験の意図と最優先品質はcore-concept §1・2 |
 
 本番は周回版を採用した `VRCDefaultWorldScene`。旧Terrain PrototypeのBuildはKH_Worldを破棄するため本番で使わない。周回の更新・検査はCourseメニューと[切替記録](plans/des-env-002/production.md)を参照。元の道の比較用設定はKH_TerrainPrototypeConfig、全周地形はKH_CourseGroundEditorを使う。
 Unity 操作前は scripts/unity-api.sh 経由で接続と Application.dataPath を確認する。
