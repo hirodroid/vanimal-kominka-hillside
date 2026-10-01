@@ -106,6 +106,7 @@ namespace KominkaHillside
             // Force the spray off once (a particle system may be Play On Awake).
             _sprayShown = true;
             ApplySpray(false);
+            _idleNext = Time.time + UnityEngine.Random.Range(0f, IdleInterval);   // IMP-DOG-034 B2: a phase per tool
         }
 
         void BuildMap()
@@ -344,6 +345,7 @@ namespace KominkaHillside
         public bool _RequestReturn()
         {
             if (home == null) return true;
+            TrackHolder();   // IMP-DOG-034 B2: the idle Update tracks the holder at 2 Hz only
             if (HeldForReturn()) return false;
             if (Networking.IsOwner(gameObject)) { _returnPending = false; ReturnHome(); return true; }
             if (_returnPending && Time.time - _returnAskedAt < ReturnAskTimeout) return true;   // already asked: do not fight (vrc-networking §4)
@@ -356,7 +358,7 @@ namespace KominkaHillside
         }
 
         /// <summary>Held as far as this client can see (the reset skips it; the harness reads it).</summary>
-        public bool _HeldNow() { return HeldForReturn(); }
+        public bool _HeldNow() { TrackHolder(); return HeldForReturn(); }   // IMP-DOG-034 B2: TrackHolder (idle Update is 2 Hz)
 
         /// <summary>Harness only (Course/100 W-tool-spray): the return itself, now, even while debugHeldOverride plays a
         /// holder, so the spray stop on the return path is seen apart from the Owner's clean-up of an orphaned spray.
@@ -367,17 +369,28 @@ namespace KominkaHillside
             ReturnHome();
         }
 
+        // IMP-DOG-034 B2: a tool that is not held here, not spraying (as shown here) and has no reset request in flight does
+        // its checks (another player's hold, the shelf return clock, a missed spray state) at IdleInterval on its own random
+        // phase, so the 15 tools do not share a frame. Held here, spraying or a reset in flight = every frame, as before.
+        // The receive check (_IsHeldBy) and the reset (_RequestReturn / _HeldNow) track the holder themselves when called.
+        const float IdleInterval = 0.5f;
+        private float _idleNext;
+
         void Update()
         {
+            if (!_held && !_sprayShown && !_returnPending)
+            {
+                float now = Time.time;
+                if (now < _idleNext) return;
+                _idleNext = now + IdleInterval;
+                TrackHolder();
+                ReturnTick();
+                if (tool == KH_DogWash.ToolShower) SprayChecks();   // a sponge / towel never sprays (only the shower sets it)
+                return;
+            }
             TrackHolder();
             ReturnTick();
-            ApplySpray(Want());   // catches a missed deserialization; no-op when unchanged
-
-            // A spray left on by a holder who is gone: the state's new Owner clears it (vrc-networking §6).
-            // (debugHeldOverride > 0: the harness plays a holder, so the spray it switched on stays on.)
-            if (!_held && state != null && state.spraying && Networking.IsOwner(state.gameObject)
-                && (_pickup == null || !_pickup.IsHeld) && debugHeldOverride <= 0)
-                state._SetSpraying(false);
+            if (tool == KH_DogWash.ToolShower) SprayChecks();
 
             if (!_held || nozzle == null || washes == null || _strokeFrame == null) return;
             VRCPlayerApi lp = Networking.LocalPlayer;
@@ -395,6 +408,18 @@ namespace KominkaHillside
             {
                 if (_touching[d] && _strokeFrame[d] != frame) EndContact(d);
             }
+        }
+
+        // Shower only (IMP-DOG-034 B2: the sponge / towel state never sprays, so these were no-ops for them).
+        void SprayChecks()
+        {
+            ApplySpray(Want());   // catches a missed deserialization; no-op when unchanged
+
+            // A spray left on by a holder who is gone: the state's new Owner clears it (vrc-networking §6).
+            // (debugHeldOverride > 0: the harness plays a holder, so the spray it switched on stays on.)
+            if (!_held && state != null && state.spraying && Networking.IsOwner(state.gameObject)
+                && (_pickup == null || !_pickup.IsHeld) && debugHeldOverride <= 0)
+                state._SetSpraying(false);
         }
 
         // Centre ray + 4 ring rays; the brush widens with distance.

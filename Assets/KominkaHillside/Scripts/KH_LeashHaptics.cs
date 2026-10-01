@@ -46,6 +46,16 @@ namespace KominkaHillside
 
         private const int ModeNone = 0, ModePulse = 1, ModeTug = 2;
         private const float SpeedTau = 0.3f;  // EMA time constant for the holder's own speed
+        // IMP-DOG-034 B3: the pull is evaluated at 10 Hz, not every frame (lightness over realtime; the pulse
+        // rhythm is 0.12 s and the tug 0.5 s, so a 0.1 s decision is below what the hand can tell apart).
+        // Pulse playback below still runs every frame from the last decision, so pulse timing and duration
+        // are unchanged; only the start/stop of a pull can lag by up to one evaluation.
+        private const float EvalInterval = 0.1f;
+        private float _nextEval;
+        private float _lastEval;
+        private bool _evalVR;                 // last evaluation found the local player valid and in VR
+        private bool _pulsing;                // last evaluation left a pull on at least one hand
+        private VRCPlayerApi _local;
 
         private float[] _prevDist;            // per dog, -1 = no usable previous frame (detached / just attached / teleport)
         private float[] _nextPulse;           // per hand
@@ -72,15 +82,48 @@ namespace KominkaHillside
 
         private void Update()
         {
-            if (!hapticsOn || manager == null || manager.walkers == null || _handMode == null) return;
-            VRCPlayerApi local = Networking.LocalPlayer;
+            if (!hapticsOn || _handMode == null) return;
+            float now = Time.time;
+            // IMP-DOG-034 B3: between evaluations only the per-hand pulse playback runs (from the last decision).
+            if (now < _nextEval)
+            {
+                if (_pulsing) PlayPulses(now);
+                return;
+            }
+            _nextEval = now + EvalInterval;
+            Evaluate(now);
+            _pulsing = _evalVR && (_handMode[0] != ModeNone || _handMode[1] != ModeNone);
+            if (_pulsing) PlayPulses(now);
+        }
+
+        // IMP-DOG-034 B3: the whole pull decision, at 10 Hz. The manager's arrays and values are read once into
+        // locals, and each hand's tracking at most once (was: _IsMine + _HandPosition + 3 array reads per dog).
+        private void Evaluate(float now)
+        {
+            _evalVR = false;
+            _handMode[0] = ModeNone; _handMode[1] = ModeNone;
+            _handAmp[0] = 0f; _handAmp[1] = 0f;
+            if (manager == null) return;
+            int[] walkers = manager.walkers;
+            if (walkers == null) return;
+            if (!Utilities.IsValid(_local)) _local = Networking.LocalPlayer;
+            VRCPlayerApi local = _local;
             // Desktop/Touch: no tracked hand to pull, no controller to shake. Forget the history as well,
             // so a player who switches into VR does not inherit a stale position.
             if (!Utilities.IsValid(local) || !local.IsUserInVR()) { _hasPrevPos = false; return; }
-            float dt = Time.deltaTime;
+            // The speeds below are per second over the real time since the previous evaluation (~0.1 s),
+            // never Time.deltaTime: a 0.1 s distance change divided by one frame would read 3-6x too fast.
+            float dt = now - _lastEval;
+            _lastEval = now;
             if (dt <= 0f) return;
-            int dogs = manager.walkers.Length;
-            if (manager.hands == null || manager.hands.Length < dogs) return;   // Build keeps them the same length
+            int dogs = walkers.Length;
+            int[] hands = manager.hands;
+            if (hands == null || hands.Length < dogs) return;   // Build keeps them the same length
+            Transform[] collars = manager.collarAnchors;
+            int collarCount = collars == null ? 0 : collars.Length;
+            float leash = manager.leashLength;
+            int localId = local.playerId;
+            _evalVR = true;
             if (_prevDist == null || _prevDist.Length != dogs)
             {
                 _prevDist = new float[dogs];
@@ -88,8 +131,10 @@ namespace KominkaHillside
             }
 
             // --- the holder's own movement (teleports are not movement) ---
+            // teleportJump is now per evaluation (~0.1 s, or one frame below 10 fps): a 4 m/s run covers 0.4 m.
+            // A gap of more than a second (haptics switched off and on, a long hitch) is history, not a pull.
             Vector3 pos = local.GetPosition();
-            bool jumped = !_hasPrevPos;
+            bool jumped = !_hasPrevPos || dt > 1f;
             if (_hasPrevPos)
             {
                 Vector3 delta = pos - _prevPos;
@@ -105,28 +150,41 @@ namespace KominkaHillside
                 for (int i = 0; i < dogs; i++) _prevDist[i] = -1f;
             }
 
-            _handMode[0] = ModeNone; _handMode[1] = ModeNone;
-            _handAmp[0] = 0f; _handAmp[1] = 0f;
+            // IMP-DOG-034 B3: each hand's position is read at most once per evaluation, through the same
+            // manager._HandPosition as before (VR here, so it is that hand's tracking position).
+            bool hasHand0 = false, hasHand1 = false;
+            Vector3 hand0 = Vector3.zero, hand1 = Vector3.zero;
 
             // --- per dog: how far the leash is stretched and whether it is still stretching ---
             for (int i = 0; i < dogs; i++)
             {
-                if (!manager._IsMine(i) || manager.collarAnchors == null || i >= manager.collarAnchors.Length
-                    || manager.collarAnchors[i] == null || manager.hands[i] < 0 || manager.hands[i] > 1)
+                int walker = walkers[i];
+                int hand = hands[i];
+                // Same test as manager._IsMine(i): leashed (walker >= 0) by the local player.
+                Transform collar = (walker >= 0 && walker == localId && i < collarCount) ? collars[i] : null;
+                if (collar == null || hand < 0 || hand > 1)
                 {
                     _prevDist[i] = -1f;   // detached, or somebody else's dog: no history, no vibration
                     continue;
                 }
-                int hand = manager.hands[i];
-                Vector3 h = manager._HandPosition(local, hand);
-                Vector3 c = manager.collarAnchors[i].position;
+                Vector3 h;
+                if (hand == 0)
+                {
+                    if (!hasHand0) { hand0 = manager._HandPosition(local, 0); hasHand0 = true; }
+                    h = hand0;
+                }
+                else
+                {
+                    if (!hasHand1) { hand1 = manager._HandPosition(local, 1); hasHand1 = true; }
+                    h = hand1;
+                }
+                Vector3 c = collar.position;
                 // Horizontal: a dog on a slope below the trail must not feel like a pull.
                 float dx = c.x - h.x, dz = c.z - h.z;
                 float dist = Mathf.Sqrt(dx * dx + dz * dz);
                 float prev = _prevDist[i];
                 _prevDist[i] = dist;
-                float leash = manager.leashLength;
-                if (prev < 0f || jumped || leash <= 0.01f) continue;  // first frame after attach / after a teleport
+                if (prev < 0f || jumped || leash <= 0.01f) continue;  // first evaluation after attach / after a teleport
                 float ratio = dist / leash;
                 float away = (dist - prev) / dt;
 
@@ -153,20 +211,27 @@ namespace KominkaHillside
                 if (mode > _handMode[hand]) _handMode[hand] = mode;
                 if (amp > _handAmp[hand]) _handAmp[hand] = amp;
             }
+        }
 
-            // --- one haptic event per hand per interval, whatever the number of dogs ---
+        // --- one haptic event per hand per interval, whatever the number of dogs ---
+        // IMP-DOG-034 B3: every frame, from the last 10 Hz decision, so the 0.12 s / 0.5 s rhythm and the
+        // pulse durations are exactly as before.
+        private void PlayPulses(float now)
+        {
+            VRCPlayerApi local = _local;
             for (int hand = 0; hand < 2; hand++)
             {
                 if (_handMode[hand] == ModeNone) continue;
-                if (Time.time < _nextPulse[hand]) continue;
+                if (now < _nextPulse[hand]) continue;
+                if (!Utilities.IsValid(local)) return;
                 bool tug = _handMode[hand] == ModeTug;
                 float amplitude = Mathf.Clamp01(_handAmp[hand]);
                 local.PlayHapticEventInHand(hand == 0 ? VRC_Pickup.PickupHand.Left : VRC_Pickup.PickupHand.Right,
                     tug ? tugDuration : pulseDuration, amplitude, frequency);
-                _nextPulse[hand] = Time.time + (tug ? tugInterval : pulseInterval);
-                if (logPulls && Time.time >= _nextLog[hand])
+                _nextPulse[hand] = now + (tug ? tugInterval : pulseInterval);
+                if (logPulls && now >= _nextLog[hand])
                 {
-                    _nextLog[hand] = Time.time + 1f;
+                    _nextLog[hand] = now + 1f;
                     Debug.Log("[KH_LeashHaptics] hand=" + (hand == 0 ? "L" : "R") + " dog=" + _logDog[hand]
                         + " ratio=" + _logRatio[hand].ToString("F2") + " away=" + _logAway[hand].ToString("F1")
                         + " holder=" + _holderSpeed.ToString("F1") + " mode=" + (tug ? "tug" : "pulse")

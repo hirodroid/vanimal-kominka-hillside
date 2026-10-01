@@ -93,6 +93,17 @@ namespace KominkaDogRun
             "**VRChat 側に `--enable-udon-debug-logging` が要る** (無いと 1 行も出ない)")]
         public bool logToConsole;
 
+        // IMP-DOG-034 A7 (2026-10-01): production default is OFF. This behaviour has been a pure instrument since IMP-NET-005
+        // Phase B (no position correction); no runtime Udon reads Drift / HasAnchor / the synced anchor fields (only the
+        // instrument board, the [KDNET] log and the Editor setup/verify/release-check menus touch it). Off = Update returns at
+        // once: no per-frame speed measurement and no per-stop RequestSerialization. The script, its wiring and its synced
+        // fields stay so the measurement can be switched back on. Wiring the instruments (debugText or logToConsole, i.e.
+        // Stop Anchor/4) also turns it on, so the existing 4/5 menus keep working without touching this flag.
+        [Tooltip("IMP-DOG-034 A7: 停止アンカーの計測を回す (既定 false = 本番。計測専用で実行時に読む Udon は無い)。\n" +
+            "debugText か logToConsole が配線されていれば、これが false でも計測は回る")]
+        public bool measureDrift;
+        bool _measuring; // Start で 1 回だけ決める (Update の入口を分岐 1 つにする)
+
         // ---- 既定値の正本 (IMP-INF-001 / B の方針。宣言と 0 フォールバックが同じ定数を見る) ----
         const float DefaultStopSettleTime = 0.25f;
         const float DefaultMinSendInterval = 1.0f;
@@ -202,6 +213,8 @@ namespace KominkaDogRun
                     + "計器の局面ビット (PLAY) が立たない。");
 
             _prevPos = dogRoot.position;
+            // IMP-DOG-034 A7: measure only when asked for or when an instrument is wired (see measureDrift)
+            _measuring = measureDrift || debugText != null || logToConsole;
 
             // **これが出ないなら launch option が効いていない。**
             // ワールド読み込み直後に必ず 1 行出るので、セッションを始める前の自己診断になる
@@ -243,6 +256,7 @@ namespace KominkaDogRun
 
         void Update()
         {
+            if (!_measuring) return; // IMP-DOG-034 A7: instrument off in production (nothing at runtime reads it)
             if (dogRoot == null) return;
             float dt = Time.deltaTime;
             if (dt <= 0.0001f) return;

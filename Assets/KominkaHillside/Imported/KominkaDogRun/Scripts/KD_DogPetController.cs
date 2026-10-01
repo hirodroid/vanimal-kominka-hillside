@@ -76,7 +76,7 @@ namespace KominkaDogRun
     /// - 分岐するのは**立っている前提で書いた身体リアクションだけ** —
     ///   頭 (ゾーン別の到達ポーズ → 可動域を絞った LookTarget) ・尻尾 (振幅と速さを落とす) ・
     ///   余韻と外からの注視 (寝ている犬には出さない)
-    /// - `IsAsleep` は毎フレーム `wanderController` から引き、触れていない睡眠中も閉眼を維持する
+    /// - `IsAsleep` は `wanderController` から引き (IMP-DOG-034 B4 で 5 Hz)、触れていない睡眠中も閉眼を毎フレーム書いて維持する
     /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KD_DogPetController : UdonSharpBehaviour
@@ -448,6 +448,22 @@ namespace KominkaDogRun
         // 待機アニメの自然な 1 フレーム変化 (実測 1.43°) より十分小さい範囲で緩めてある
         const float PoseSameDot = 0.999999f;
 
+        // ---- IMP-DOG-034 B4: 見た目に出ない監視の低頻度化 (軽さ優先。撫でている間・差し込みのある間は従来どおり毎フレーム) ----
+        // 位相: 6 匹の 0.1 s / 0.25 s / 0.2 s の判定が同じフレームに集まらないよう、犬ごとに格子の位相をずらす。
+        // 格子なので間隔は従来どおり (前回の判定から interval を超えて待つことはない)
+        const int PhaseSlots = 6;
+        const float StatePollInterval = 0.2f;   // 他スクリプトの遅い状態 (寝ている / 伸び / 顎乗せ) を読む間隔
+        const float RemotePollInterval = 0.1f;  // 誰も撫でて見えていない間、リモートの撫での開始を探す間隔
+        const float RestEpsilon = 0.001f;       // 0 へ漸近するだけのエンベロープを 0 に丸める閾値 (尻尾の既存の閾値と同じ)
+        const float CoarseReachMargin = 0.3f;   // 粗い事前判定の余裕 (顎の開閉などアンカー間の広がりの変化ぶん)
+        const float CoarseReachMin = 0.6f;
+        float _phaseNear, _phaseFar, _phaseState, _phaseRemote;
+        float _nextStatePoll;
+        float _nextRemotePoll;
+        bool _cAsleep, _cStretch, _cChinRest;   // 5 Hz で読んだ wanderController / companionSlot の状態
+        bool _lateIdle;                         // LateUpdate が何も書かない静止状態に入っている
+        float _coarseReachSq;                   // 0 = 粗い事前判定を使わない (Start 前 = Editor の検査からの直接呼び出し)
+
         void Start()
         {
             _localPlayer = Networking.LocalPlayer;
@@ -588,6 +604,48 @@ namespace KominkaDogRun
                 Debug.LogWarning("[KD_DogPetController] faceRenderer.sharedMesh is null - expression disabled.");
             }
             dogAnimator.SetFloat("PetIndex", petClipIndex);
+
+            // IMP-DOG-034 B4: 犬ごとの判定の位相 (dogIndex は配線済みの値を起動時に 1 回だけ読む)
+            int slot = 0;
+            if (wanderController != null && wanderController.dogIndex >= 0) slot = wanderController.dogIndex;
+            else if (fetchController != null && fetchController.dogIndex >= 0) slot = fetchController.dogIndex;
+            slot = slot % PhaseSlots;
+            _phaseNear = slot * ContactSampleInterval / PhaseSlots;
+            _phaseFar = slot * FarContactSampleInterval / PhaseSlots;
+            _phaseState = slot * StatePollInterval / PhaseSlots;
+            _phaseRemote = ((slot + PhaseSlots / 2) % PhaseSlots) * RemotePollInterval / PhaseSlots; // 接触判定と半周ずらす
+            // 遅い状態の初回は最初の LateUpdate で読む (_nextStatePoll = 0。従来と同じく相手の Start 後に読む)
+
+            // IMP-DOG-034 B4: 粗い事前判定の半径。どのゾーンアンカーも headAnchor から spread 以内にあるので、
+            // headAnchor から touchRadius + spread より遠い手はどのアンカーにも touchRadius 以内に入れない (三角不等式)。
+            // 実行中の広がりの変化 (顎など) は CoarseReachMargin で吸収する = 本当の接触を 1 サンプルも遅らせない
+            Vector3 hp = headAnchor.position;
+            float spread = (HeadZonePos() - hp).magnitude;
+            if (cheekAnchorL != null) spread = Mathf.Max(spread, (cheekAnchorL.position - hp).magnitude);
+            if (cheekAnchorR != null) spread = Mathf.Max(spread, (cheekAnchorR.position - hp).magnitude);
+            if (chinAnchor != null) spread = Mathf.Max(spread, (chinAnchor.position - hp).magnitude);
+            float reach = Mathf.Max(CoarseReachMin, touchRadius + spread + CoarseReachMargin);
+            _coarseReachSq = reach * reach;
+        }
+
+        /// <summary>IMP-DOG-034 B4: 位相 phase の格子で、now より後の最初の時刻。
+        /// 前回からの間隔は interval を超えない (今の「now + interval」より遅れることはない)。</summary>
+        float NextOnGrid(float now, float interval, float phase)
+        {
+            return (Mathf.Floor((now - phase) / interval) + 1f) * interval + phase;
+        }
+
+        /// <summary>IMP-DOG-034 B4: 他スクリプトの遅い状態を 5 Hz で読んで手元に持つ。
+        /// どれも Time.frameCount の握手ではなく数秒単位で続く状態 (寝姿勢・伸び 6 s・顎乗せ) なので、
+        /// 入り・抜けが最大 0.2 s 遅れるだけ。顎乗せ中の手の追従は従来どおり毎フレーム ChinHand を読む。</summary>
+        void PollSlowState(float now)
+        {
+            _nextStatePoll = NextOnGrid(now, StatePollInterval, _phaseState);
+            bool hasWander = wanderController != null;
+            _cAsleep = hasWander && wanderController.IsAsleep;
+            _cStretch = hasWander && wanderController.IsStretching;
+            _cChinRest = companionSlot != null && companionSlot.ChinHand != 0
+                && hasWander && wanderController.IsCompanionReady;
         }
 
         /// <summary>Fetch 中の抑制 (IMP-FET-001)。撫で状態を即座に落とすが、
@@ -847,7 +905,7 @@ namespace KominkaDogRun
         /// 出しっぱなし防止の本体は**ここで毎フレーム `Utilities.IsValid` を見ること**
         /// (`vrc-networking` §6)。撫でていた人が抜けた同期が届かなくても、
         /// 導出が落ちるので ♡ と SE は必ず止まる。</summary>
-        void ResolveEffective()
+        void ResolveEffective(float now)
         {
             bool petting = _petting && !_suppressed;
             bool two = _twoHands;
@@ -856,7 +914,16 @@ namespace KominkaDogRun
             bool followValid = _followHandValid;
             bool remote = false;
 
-            if (!petting && !_suppressed && fetchController != null)
+            // IMP-DOG-034 B4: 誰の撫でも見えていない間は、リモートの撫での開始を 10 Hz で探す
+            // (開始が最大 0.1 s 遅れる。ネットワーク遅延より小さい)。**リモートを再現している間は毎フレーム読む** —
+            // 手の追従と、抜けた人の ♡ を止める IsValid は従来どおり毎フレーム
+            bool lookRemote = _effRemote;
+            if (!lookRemote && !petting && !_suppressed && now >= _nextRemotePoll)
+            {
+                _nextRemotePoll = NextOnGrid(now, RemotePollInterval, _phaseRemote);
+                lookRemote = true;
+            }
+            if (lookRemote && !petting && !_suppressed && fetchController != null)
             {
                 int pid = fetchController.PetPlayerId;
                 bool mine = Utilities.IsValid(_localPlayer) && pid == _localPlayer.playerId;
@@ -924,7 +991,7 @@ namespace KominkaDogRun
                 // 抑制中は判定ごと止める (状態は _SuppressPetting で落とし済み)。
                 // リモート再現も止まる — 実効状態は毎フレーム決め直すので、
                 // 抑制が解ければそのまま復帰する
-                ResolveEffective();
+                ResolveEffective(0f); // 抑制中はリモートを探さない (now は使われない)
                 return;
             }
 
@@ -953,7 +1020,7 @@ namespace KominkaDogRun
                 _prevSampleValid = false;
                 // 自分が無効な間もリモートの撫では見えていてよい (相手のアバターは生きている)
                 PushLocalPet(false, _zone, false);
-                ResolveEffective();
+                ResolveEffective(Time.time);
                 return;
             }
 
@@ -968,12 +1035,13 @@ namespace KominkaDogRun
                 {
                     // 遠方では頭位置だけを読み、両手の取得と接触ゾーン探索を省く。
                     // 復帰時に遠方滞在中の移動量を「撫で速度」に加えない。
-                    _nextContactSampleTime = now + FarContactSampleInterval;
+                    // IMP-DOG-034 B4: 犬ごとの位相の格子 (6 匹が同じフレームでそろって判定しない。間隔は 0.25 s のまま)
+                    _nextContactSampleTime = NextOnGrid(now, FarContactSampleInterval, _phaseFar);
                     _prevSampleValid = false;
                 }
                 else
                 {
-                    _nextContactSampleTime = now + ContactSampleInterval;
+                    _nextContactSampleTime = NextOnGrid(now, ContactSampleInterval, _phaseNear); // IMP-DOG-034 B4: 同上 (0.1 s のまま)
                     Vector3 leftPos = _localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand).position;
                     Vector3 rightPos = _localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand).position;
                     SampleLocalContact(now, headPos, leftPos, rightPos);
@@ -992,7 +1060,7 @@ namespace KominkaDogRun
 
             // リモートの手追従・退出時の解除は判定間隔の外に残す。
             PushLocalPet(_petting, _zone, _twoHands);
-            ResolveEffective();
+            ResolveEffective(now);
         }
 
         bool IsFarFromContact(Vector3 headPos)
@@ -1057,8 +1125,15 @@ namespace KominkaDogRun
             {
                 int zoneL = ZoneHead; int zoneR = ZoneHead;
                 float dl = 9999f; float dr = 9999f;
-                if (leftValid) dl = NearestZone(leftPos, out zoneL);
-                if (rightValid) dr = NearestZone(rightPos, out zoneR);
+                // IMP-DOG-034 B4: 粗い事前判定。headAnchor から _coarseReachSq より遠い手はどのゾーンにも
+                // touchRadius 以内に入れない (Start の注記) ので、ゾーン探索 (アンカー 4 本) を省く。
+                // 届きうる手は従来どおり同じサンプルで探索する = 接触の開始は遅れない
+                bool coarse = _coarseReachSq > 0f;
+                Vector3 coarseCenter = coarse ? headAnchor.position : Vector3.zero;
+                if (leftValid && (!coarse || (leftPos - coarseCenter).sqrMagnitude <= _coarseReachSq))
+                    dl = NearestZone(leftPos, out zoneL);
+                if (rightValid && (!coarse || (rightPos - coarseCenter).sqrMagnitude <= _coarseReachSq))
+                    dr = NearestZone(rightPos, out zoneR);
                 bool rightCloser = dr <= dl;
                 float best = rightCloser ? dr : dl;
                 if (best <= touchRadius)
@@ -1124,9 +1199,33 @@ namespace KominkaDogRun
 
         void LateUpdate()
         {
+            // ---- IMP-DOG-034 B4: 完全な待機なら何も計算しない ----
+            // 静止状態 (_lateIdle) は、下の全経路を通った結果「頭・尻尾・胴・表情・♡ のどれも書かず、
+            // どのエンベロープも 0」になったフレームの終わりで入る (このメソッドの末尾)。その状態のまま
+            // 起こすものが無ければ、全経路を通しても書き込みは起きないので、ここで返しても絵は同じ。
+            // 起こすもの (どれか 1 つで全経路へ戻る。戻ったフレームから従来どおり毎フレーム):
+            //   _effPetting (ローカル / リモートの撫で) ・ ♡ が出ている ・ _SetGaze / _SetUrge / _SetFace の
+            //   今フレームの差し込み (frameCount の契約はそのまま) ・ ブルブル (_StartShake) ・ 余韻の期限内 ・
+            //   5 Hz で読む寝ている / 伸び / 顎乗せ
+            if (_lateIdle)
+            {
+                float idleNow = Time.time;
+                if (idleNow >= _nextStatePoll) PollSlowState(idleNow);
+                int fc = Time.frameCount;
+                float idleShakeT = idleNow - _shakeStart;
+                if (!_effPetting && !_heartsPlaying
+                    && _gazeFrame != fc && _urgeFrame != fc && _faceFrame != fc
+                    && !(idleShakeT >= 0f && idleShakeT < _shakeSeconds)
+                    && idleNow >= _farewellUntil
+                    && !_cAsleep && !_cStretch && !_cChinRest) return;
+                _lateIdle = false;
+            }
+
             if (_sourceParent == null) return;
 
             float dt = Time.deltaTime;
+            float now = Time.time; // IMP-DOG-034 B4: フレーム内で同じ値。読みを 1 回にまとめる
+            if (now >= _nextStatePoll) PollSlowState(now);
 
             // ---- IMP-PET-005: 強度エンベロープ (段階の芯。時間蓄積ではなく現在の接触強度へ追従) ----
             // IMP-NET-001: ここから下は実効状態 (_eff*) だけを見る。ローカルの撫でと
@@ -1135,6 +1234,8 @@ namespace KominkaDogRun
             if (_effPetting) intensityTarget = _effTwoHands ? 1f : oneHandIntensity;
             float resp2 = (intensityTarget > _intensity) ? intensityAttack : intensityRelease;
             _intensity = Mathf.Lerp(_intensity, intensityTarget, 1f - Mathf.Exp(-resp2 * dt));
+            // IMP-DOG-034 B4: 漸近するだけだと 0 に届かず静止状態に入れない。0.001 は metozi 0.06 (書く閾値 0.5 未満) で絵に出ない
+            if (intensityTarget <= 0f && _intensity < RestEpsilon) _intensity = 0f;
             // 両手ぶんの正規化係数 (片手 = 0 / 両手 = 1)。表現の「上乗せ」はこれで掛ける
             float bigT = (oneHandIntensity < 0.999f)
                 ? Mathf.Clamp01((_intensity - oneHandIntensity) / (1f - oneHandIntensity))
@@ -1146,17 +1247,14 @@ namespace KominkaDogRun
             float urgeNow = _urgeFrame == Time.frameCount ? _urge : 0f;
 
             // ---- IMP-DOG-019 Phase 4: 寝ているか ----
-            // 閉眼は接触が無くても維持するため、毎フレーム読む。
             // 呼び出し中の移動ではなく、寝姿勢に入った IsAsleep を全リアクションで共有する。
-            bool asleep = false;
-            if (wanderController != null)
-            {
-                asleep = wanderController.IsAsleep;
-            }
+            // IMP-DOG-034 B4: 読むのは 5 Hz (PollSlowState)。閉眼は寝ている間は静止状態に入らず毎フレーム書き続ける
+            // (寝るクリップが metozi を書き戻すかは未確認なので、変化時だけにはしない)
+            bool asleep = _cAsleep;
 
             // ---- IMP-DOG-028: ブルブル。胴を頭より先に書く (頭の書き手が読む _sourceParent.rotation に胴の揺れが入る) ----
             // 揺れていない間 (_StartShake が呼ばれていない犬) は WriteShakeBody も頭の合成も何もしない = 従来と 1 フレームも変わらない
-            float shakeT = Time.time - _shakeStart;
+            float shakeT = now - _shakeStart;
             bool shakeLive = shakeT >= 0f && shakeT < _shakeSeconds;
             bool shakeFlush = !shakeLive && _shakeFlush;
             Quaternion shakeHead = Quaternion.identity;
@@ -1179,9 +1277,9 @@ namespace KominkaDogRun
             Quaternion target = Quaternion.identity;
             float resp = returnResponsiveness;
             _dbgMode = _suppressed ? "FETCH" : "IDLE";
-            bool stretch = wanderController != null && wanderController.IsStretching;
-            bool chinRest = companionSlot != null && companionSlot.ChinHand != 0
-                && wanderController != null && wanderController.IsCompanionReady;
+            // IMP-DOG-034 B4: 5 Hz で読んだ値 (PollSlowState)。顎乗せ中の手の位置と ChinHand は下で毎フレーム読む
+            bool stretch = _cStretch;
+            bool chinRest = _cChinRest;
             if (stretch) _dbgMode = "STRETCH";
             else if (chinRest)
             {
@@ -1267,7 +1365,7 @@ namespace KominkaDogRun
                 }
                 _dbgMode = "GAZE";
             }
-            else if (!_suppressed && !asleep && _playerHeadValid && Time.time < _farewellUntil)
+            else if (!_suppressed && !asleep && _playerHeadValid && now < _farewellUntil)
             {
                 // 余韻: 減衰しながら最後にプレイヤーを見る (仕様 §10 — 急に無表情へ戻さない)。
                 // **寝ている犬は出さない** (IMP-DOG-019 Phase 4) — 手が離れたら顔を上げて
@@ -1309,6 +1407,11 @@ namespace KominkaDogRun
             }
             else
             {
+                // IMP-DOG-034 B4: 止める直前に 1 回だけ基準姿勢へ戻す (ブルブルの揺れ終わりと同じ作り)。
+                // Animator が今フレーム書き戻していなければ、最後の追加回転 (<= 0.02°) を残さず基準へ返す。
+                // 書き戻していれば Dot が一致しないので触らない = 従来と同じ
+                if (_hasLast && Mathf.Abs(Quaternion.Dot(sourceBone.localRotation, _lastWritten)) > PoseSameDot)
+                    sourceBone.localRotation = _lastBase;
                 _worldDelta = Quaternion.identity;
                 _hasLast = false;
             }
@@ -1347,7 +1450,7 @@ namespace KominkaDogRun
             // ---- 部位別エンベロープ (気づく導入 = 接触開始からの部位別ディレイ。仕様 §4:
             // 視線 (頭・即時) → 尻尾 → 頭寄せ (追従補間の遅れが担う) の順。
             // 耳は Udon から動かさない = 導入の順序にも入らない) ----
-            float sinceContact = Time.time - _contactStartTime;
+            float sinceContact = now - _contactStartTime;
             bool tailOn = _effPetting && sinceContact >= tailStartDelay;
             float envT = 1f - Mathf.Exp(-tailWagResponsiveness * dt);
             _tailWeight = Mathf.Lerp(_tailWeight, tailOn ? 1f : 0f, envT);
@@ -1355,6 +1458,9 @@ namespace KominkaDogRun
             // 両手撫で用の egao が催促で出るのに tailOn は false のまま、という
             // ちぐはぐが起きる (設計書 §10 決定 3)
             _urgeWeight = Mathf.Lerp(_urgeWeight, urgeNow, envT);
+            // IMP-DOG-034 B4: 0 に丸める (書く閾値 wagWeight > 0.001 と同じ値なので絵は変わらない)
+            if (!tailOn && _tailWeight < RestEpsilon) _tailWeight = 0f;
+            if (urgeNow <= 0f && _urgeWeight < RestEpsilon) _urgeWeight = 0f;
             float wagWeight = _tailWeight > _urgeWeight ? _tailWeight : _urgeWeight;
 
             // ---- 尻尾 (IMP-PET-004 / 005): ヨー往復 + 撫で中のベース角ピッチ ----
@@ -1398,6 +1504,9 @@ namespace KominkaDogRun
             {
                 // アイドル: 減衰し切ったらボーンへ触らない (Animator へ返す)。
                 // 次の撫でを常に中央 (振れ角 0) + 取り直した基準から始める
+                // IMP-DOG-034 B4: 頭と同じく、止める直前に 1 回だけ基準姿勢へ戻す (なで1 は尻尾を書き戻さない)
+                if (_tailHasLast && Mathf.Abs(Quaternion.Dot(tailSourceBone.localRotation, _tailLastWritten)) > PoseSameDot)
+                    tailSourceBone.localRotation = _tailLastBase;
                 _tailPhase = 0f;
                 _tailHasLast = false;
             }
@@ -1449,9 +1558,9 @@ namespace KominkaDogRun
             }
 
             // ---- デバッグ表示 (IMP-PET-005。配線されているときだけ。0.25s 間隔で組む) ----
-            if (debugText != null && Time.time >= _nextDebugTime)
+            if (debugText != null && now >= _nextDebugTime)
             {
-                _nextDebugTime = Time.time + 0.25f;
+                _nextDebugTime = now + 0.25f;
                 string hands = !_handHeld ? "NONE" : (_twoHands ? "TWO" : "ONE");
                 // IMP-NET-001: net= は同期側の状態 (誰が撫でているか)。
                 // **自分の hands/pet と食い違っていてよい** — 自分の画面は自分の撫でを優先する
@@ -1474,6 +1583,19 @@ namespace KominkaDogRun
                         debugTextTransform.rotation = Quaternion.LookRotation(dp - _playerHeadPos);
                 }
             }
+
+            // ---- IMP-DOG-034 B4: 静止状態へ入るか ----
+            // 頭・尻尾は上の else で基準姿勢へ 1 回戻し済み (_hasLast / _tailHasLast が false)、表情は 0 を 1 回書いて
+            // 書き込み中フラグが落ち済み、胴のブルブルは揺れ終わりの書き戻し済み、どのエンベロープも 0。
+            // この状態から起こすものが来なければ、次フレームに全経路を通しても何も書かない。
+            // 寝ている・伸び・顎乗せの間は入らない (閉眼の毎フレーム書き込みと、顎乗せの手追従を残す)。
+            // デバッグ表示が配線されている間も入らない (0.25 s ごとの表示を止めない)
+            _lateIdle = !_effPetting && !_heartsPlaying && !_hasLast && !_tailHasLast
+                && _intensity == 0f && _tailWeight == 0f && _urgeWeight == 0f
+                && _faceMetoziW == 0f && _faceEgaoW == 0f && !_metoziWriting && !_egaoWriting
+                && !shakeLive && !_shakeFlush
+                && !asleep && !stretch && !chinRest
+                && now >= _farewellUntil && debugText == null;
         }
 
         void FollowHeartEmitters()

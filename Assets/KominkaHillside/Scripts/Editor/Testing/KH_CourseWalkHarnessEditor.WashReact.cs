@@ -408,6 +408,7 @@ namespace KominkaHillside.Editor
             for (int c = 0; c < f.Length && c < valid.Length; c++) if (valid[c]) { f[c] = foam; w[c] = wet; }
             wsWash.SetProgramVariable("_foam", f);
             wsWash.SetProgramVariable("_wet", w);
+            wsWash.SendCustomEvent("_DebugCellsChanged");   // IMP-DOG-034 B1a: same array written in place, tell the wash to re-evaluate
         }
     }
 }

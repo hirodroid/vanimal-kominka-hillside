@@ -49,8 +49,8 @@ namespace KominkaHillside
     //                    |                                                   | D' = sat(lerp(Dn, min(D F' / max(F, 1e-4), D), g))
     //                    |                                                   | W' = sat(W + dW)
     //  towel (dry)       | (towelDirtRate, towelFoamRate, towelWetRate)      | as the shower with g = 0: D' = sat(D + dD (1 + F boost))
-    //  dry (Decay, 2 s)  | fd = washing ? 0 : 2 / foamDrySeconds             | F' = max(0, F - fd), W' = max(0, W - wd), D' = D
-    //                    | wd = 2 / wetDrySeconds                            | washing = _WashHold() || a stroke seen here within holdSeconds
+    //  dry (Decay, dt)   | fd = washing ? 0 : dt / foamDrySeconds            | F' = max(0, F - fd), W' = max(0, W - wd), D' = D
+    //   (4 s / 2 s)      | wd = dt / wetDrySeconds                           | washing = _WashHold() || a stroke seen here within holdSeconds
     //  get dirty (Owner, | walk: legs +walkLegDirt per walkDirtMeters of    | D' = min(1, D + inc) per valid cell of the part (a full cell stays 1)
     //   every 2 s)       |   leashed / Fetch / disc movement                 | river: D' = D > floor ? max(floor, D - drop) : D   (floor = riverDirtFloor)
     //                    | zone: legs +zoneLegDirt, hip + chest +zoneBodyDirt| W' = min(1, W + riverWetPerSecond x water time) (legs; + hip / chest when swimming)
@@ -63,7 +63,7 @@ namespace KominkaHillside
     //  repaint (Restore) | mask = cells (bilinear) with D x (0.5 + noise)    | only: first receive, epoch change, lost RT, long gap, dried out
     //  sync (Owner)      | D 2 bit, F 3 bit, W 3 bit per cell                | decoded on receive into the floats (a coarse copy)
     //
-    // Clean edge (Owner, every 0.5 s, n = valid cells, avg over the valid cells):
+    // Clean edge (Owner, every 0.5 s while the cells change, else every 4 s (IMP-DOG-034 B1a), n = valid cells, avg over the valid cells):
     //   arm   : !armed && (avgD >= dirtyDirtThreshold || #(F >= dirtyFoamThreshold) >= max(1, ceil(armFoamCellFraction n)))
     //           -> the arm set = the cells with F >= dirtyFoamThreshold (cells reaching it later while armed join the set)
     //   clean :  armed && avgD < cleanDirtThreshold && avgF < cleanFoamThreshold && (set empty || avg F over the set < cleanFoamThreshold)
@@ -332,6 +332,40 @@ namespace KominkaHillside
         private float _avgFoam;
         private float _avgWet;
 
+        // ---- IMP-DOG-034 B1: lower-rate monitoring (user policy 2026-09-30: lightness over realtime; washing needs little) ----
+        // B1a: EvaluateState loops the cells only when they may have changed since the last one. Every writer of _dirt /
+        // _foam / _wet sets _cellsDirty (InitialCells, ApplyToCells, _DebugSetDirt / _DebugClear, OnDeserialization, Decay,
+        // ApplyDirt, AddPartCells, _DebugCellsChanged); a replaced array (the harness's SetProgramVariable) counts as well.
+        // A missed writer degrades to "late" (SafeEvalInterval), never "never". The time-only part (shell off) runs on the
+        // 0.5 s schedule without the loop (EvaluateTime).
+        private bool _cellsDirty = true;
+        private float _nextSafeEval;
+        private float[] _evDirt;
+        private float[] _evFoam;
+        private float[] _evWet;
+        private int[] _validCells;          // the cells EvaluateState counts (cellValid, or all 256 when the tables are missing)
+        // B1a / B1c / B1d / B1e: this dog's phase (0..1) on every fixed-period grid, so six dogs do not share a frame.
+        private float _phase;
+        // B1e: an idle Update returns after a cheap check and does its periodic work on a IdleInterval grid. A stroke keeps
+        // it per-frame until _busyUntil; a network event / restore / sync request wakes it for the next frame (Wake).
+        private float _idleNext;
+        private float _busyUntil = -1f;
+        // B1c: the last stroke / foam / wet (the mask may hold foam or wet until a full drying time after it). Unlike
+        // _lastActivity, a dirt-only change does not extend it, so a walking dog whose dirt grows does not keep Decay
+        // (256 cells + Blit) running. _lastActivity keeps its meaning for the shell switch.
+        private float _lastWetActivity = -1000f;
+        // B1d: the main station is also in washStations (checked against the array reference, so a replaced array is re-checked)
+        private Transform[] _stationsRef;
+        private bool _mainInList;
+        private float _dirtNextSample;
+        const float EvalInterval = 0.5f;
+        const float SafeEvalInterval = 4f;
+        const float DecayInterval = 4f;     // B1c: was 2 s with Decay(2f); Decay(elapsed) keeps the same rate
+        const float DecayWashInterval = 2f; // B1c: while washing (and the grid the 4 s runs sit on)
+        private float _lastDecayAt;
+        const float IdleInterval = 0.2f;    // B1e: 5 Hz
+        const float BusyHold = 1f;          // B1e: per-frame this long after a stroke (segments close in SegmentGap, audio fades)
+
         private int _lastStrokePart = -1;
         private float _lastStrokeTime = -100f;
         private int _lastWasherId = -1;
@@ -457,7 +491,9 @@ namespace KominkaHillside
         const int DirtQMax = 63;
         const float DirtWetUnit = 0.001f;     // one step of a sent wet change (10 bit)
         const int DirtWetQMax = 1023;
-        const float DirtSampleInterval = 0.25f;
+        // IMP-DOG-034 B1d: 4 Hz -> 1 Hz. Every accumulation is by elapsed time / distance, so the dirt per second is unchanged
+        // (a curved walk is measured by a slightly shorter chord: negligible at walkDirtMeters 900 m).
+        const float DirtSampleInterval = 1f;
         private float[] _partReach;           // mesh units: the part's centre to its farthest cell centre
         // Height above the ground (m) of each cell centre, and its dirt weight (DirtHeightWeight). The ground is the lowest
         // valid cell centre; the bind-pose mesh is Z-up (position map / cellCenter z; KH_DogWashBake AABB z from 0).
@@ -615,8 +651,14 @@ namespace KominkaHillside
             _ready = true;
             _restorePending = true;   // first thing in the first Update, inside the Blit budget
             float now = Time.time;
-            _nextEval = now;
-            _nextDecay = now + 2f;
+            // IMP-DOG-034 B1a / B1c / B1d / B1e: one phase per dog (six dogs = 1/6 of each period apart).
+            _phase = dogIndex >= 0 ? (dogIndex % 6) / 6f : 0f;
+            _nextEval = now + _phase * EvalInterval;
+            _nextSafeEval = NextGrid(now, SafeEvalInterval, _phase + 0.5f);
+            _nextDecay = NextGrid(now + 1f, DecayWashInterval, _phase);
+            _lastDecayAt = now;
+            _idleNext = now;
+            _dirtNextSample = now + _phase * DirtSampleInterval;
             _nextRtCheck = now + 0.5f;
             _nextOwnerCheck = now + 1f;
             // Staggered per dog (review 3, 8): six dogs dirtied at once do not all apply, send and Blit in the same frame.
@@ -679,6 +721,13 @@ namespace KominkaHillside
             }
             _partCellStart[PartCount] = total;
             _partCells = new int[total];
+            // IMP-DOG-034 B1a: exactly the cells EvaluateState / Decay counted before (`_cellsOk && !cellValid[c]` skipped).
+            // _partCells is not the same set (it also drops a valid cell whose part is out of range).
+            int nv = 0;
+            for (int c = 0; c < CellCount; c++) if (!_cellsOk || cellValid[c]) nv++;
+            _validCells = new int[nv];
+            nv = 0;
+            for (int c = 0; c < CellCount; c++) if (!_cellsOk || cellValid[c]) { _validCells[nv] = c; nv++; }
             int[] fill = new int[PartCount];
             _partReach = new float[PartCount];
             ComputeCellHeights();
@@ -718,6 +767,7 @@ namespace KominkaHillside
         // Prototype seed: legs dirtiest, then the body (belly), little on the head (design §1-9 order).
         void InitialCells()
         {
+            _cellsDirty = true;   // IMP-DOG-034 B1a
             for (int c = 0; c < CellCount; c++)
             {
                 _foam[c] = 0f;
@@ -834,6 +884,8 @@ namespace KominkaHillside
             _lastStrokePart = part;
             _lastStrokeTime = Time.time;
             _lastActivity = Time.time;
+            _lastWetActivity = _lastActivity;          // IMP-DOG-034 B1c
+            _busyUntil = _lastActivity + BusyHold;     // IMP-DOG-034 B1e: per-frame while washing (segments, audio)
             ContactEffects(tool, part, worldTo, b, seconds);
             ShowShell(true);
         }
@@ -874,6 +926,7 @@ namespace KominkaHillside
             Vector3 a = Unpack(part, from);
             Vector3 b = Unpack(part, to);
             _lastWasherId = caller.playerId;
+            _busyUntil = Time.time + BusyHold;   // IMP-DOG-034 B1e: an accepted stroke brings Update back to per-frame
 
             if (!caller.isLocal)
             {
@@ -881,6 +934,7 @@ namespace KominkaHillside
                 _lastStrokePart = part;
                 _lastStrokeTime = Time.time;
                 _lastActivity = Time.time;
+                _lastWetActivity = _lastActivity;   // IMP-DOG-034 B1c
                 ContactEffects(tool, part, MeshToWorld(part, b), b, sec);
                 ShowShell(true);
             }
@@ -1010,6 +1064,7 @@ namespace KominkaHillside
                 washMs = _releaseMs - Mathf.RoundToInt(holdSeconds * 1000f) - 1000;   // net: owner-only
                 _syncDue = true;
                 _nextSync = Time.time;
+                Wake();   // IMP-DOG-034 B1e: the sync goes out next frame, not on the next idle tick
             }
         }
 
@@ -1111,7 +1166,7 @@ namespace KominkaHillside
         // Part of the last stroke seen here (own or received); -1 before any.
         public int _LastStrokePart() { return _lastStrokePart; }
 
-        // Harness read-outs (last evaluation, every 0.5 s).
+        // Harness read-outs (last evaluation: within 0.5 s of a cell change, IMP-DOG-034 B1a).
         public float _AverageDirt() { return _avgDirt; }
         public float _AverageFoam() { return _avgFoam; }
         public float _AverageWet() { return _avgWet; }
@@ -1127,6 +1182,7 @@ namespace KominkaHillside
             shakeSerial = (shakeSerial + 1) & 0x3FFFFFFF;   // net: owner-only
             _syncDue = true;
             _nextSync = Mathf.Min(_nextSync, Time.time);
+            Wake();   // IMP-DOG-034 B1e
         }
 
         public int _ShakeSerial() { return shakeSerial; }
@@ -1136,6 +1192,7 @@ namespace KominkaHillside
         {
             if (!_ready || !Networking.IsOwner(gameObject)) return;
             value = Mathf.Clamp01(value);
+            _cellsDirty = true;   // IMP-DOG-034 B1a (BumpEpoch evaluates at once as well)
             for (int c = 0; c < CellCount; c++)
             {
                 bool v = _cellsOk && cellValid[c];
@@ -1154,12 +1211,39 @@ namespace KominkaHillside
         public void _DebugClear()
         {
             if (!_ready || !Networking.IsOwner(gameObject)) return;
+            _cellsDirty = true;   // IMP-DOG-034 B1a
             for (int c = 0; c < CellCount; c++) { _dirt[c] = 0f; _foam[c] = 0f; _wet[c] = 0f; }
             cleanArmed = false;
             ClearArm();
             ClearBits(quietBits);
             riverBlocksEdge = false;
             BumpEpoch();
+        }
+
+        // IMP-DOG-034 B1a, harness only: the cells were written from outside in place (the same array, e.g. WrSetCells), which
+        // the array-reference check cannot see. Evaluates on the next 0.5 s tick instead of within SafeEvalInterval. Local.
+        public void _DebugCellsChanged()
+        {
+            _cellsDirty = true;
+            Wake();
+        }
+
+        // IMP-DOG-034 B1a: a writer set the flag, or an array was replaced from outside (the harness's SetProgramVariable).
+        bool CellsMayHaveChanged()
+        {
+            return _cellsDirty || _dirt != _evDirt || _foam != _evFoam || _wet != _evWet;
+        }
+
+        // IMP-DOG-034 B1e: run the next Update fully (an event that wants its periodic work soon: sync, evaluation).
+        void Wake()
+        {
+            _idleNext = 0f;
+        }
+
+        // IMP-DOG-034 B1: the first time after `now` on the grid `period` shifted by phase x period (phase 0..1, wraps).
+        float NextGrid(float now, float period, float phase)
+        {
+            return now + period - Mathf.Repeat(now - phase * period, period);
         }
 
         void BumpEpoch()
@@ -1203,6 +1287,14 @@ namespace KominkaHillside
             if (!_ready) return;
             float now = Time.time;
 
+            // IMP-DOG-034 B1e: idle (no stroke within BusyHold, nothing waiting to be drawn / replayed / repainted / sent, no
+            // sound fading) = only the field checks below every frame; the periodic work runs on this dog's IdleInterval grid.
+            // A stroke sets _busyUntil; a received dirt draw / repaint sets its own flag here; other events call Wake().
+            // An open segment always comes with a stroke within SegmentGap (< BusyHold), so _segOpen needs no check.
+            if (now < _idleNext && now >= _busyUntil && _pdCount == 0 && _qCount == 0 && !_anyDirtDraw && !_restorePending
+                && !_replaying && !_replayPending && !_dirtOutPending && !_audioOn && !_syncDue) return;   // _syncDue: a send waiting for its time goes out on time
+            if (now >= _idleNext) _idleNext = NextGrid(now, IdleInterval, _phase);
+
             // Lost RenderTexture (device reset, app resume) or a long real-time gap: repaint from the cells.
             float real = Time.realtimeSinceStartup;
             bool gap = real - _lastRealtime > 5f;
@@ -1226,7 +1318,8 @@ namespace KominkaHillside
             DrainPending();
             DrainDirt();
 
-            // Getting dirty (IMP-DOG-029): the Owner samples the dog 4 times a second and applies every dirtApplyInterval.
+            // Getting dirty (IMP-DOG-029): the Owner samples the dog once a second (IMP-DOG-034 B1d) and applies every
+            // dirtApplyInterval.
             if (Networking.IsOwner(gameObject)) DirtTick(now);
             else _dirtPrevValid = false;
 
@@ -1235,13 +1328,27 @@ namespace KominkaHillside
 
             if (now >= _nextDecay && CanBlit())
             {
-                _nextDecay = now + 2f;
-                Decay(2f);
+                // IMP-DOG-034 B1c: checked on a 2 s grid (this dog's phase); runs every 4 s, or every 2 s while a stroke is
+                // within holdSeconds + 2 s (the washer is looking at it). The step is the time since the last run, so the
+                // drying rate is the same as the old 2 s / Decay(2f).
+                _nextDecay = NextGrid(now, DecayWashInterval, _phase);
+                float every = now - _lastStrokeTime < holdSeconds + 2f ? DecayWashInterval : DecayInterval;
+                if (now - _lastDecayAt >= every - 0.25f)
+                {
+                    // Capped at two periods: a longer gap (Blit budget full, a hitch) dries only that much, as the old fixed Decay(2f)
+                    // per tick also dropped the time it did not run.
+                    float dt = Mathf.Clamp(now - _lastDecayAt, 0f, 2f * DecayInterval);
+                    _lastDecayAt = now;
+                    Decay(dt);
+                }
             }
             if (now >= _nextEval)
             {
-                _nextEval = now + 0.5f;
-                EvaluateState();
+                // IMP-DOG-034 B1a: the cell loop only when the cells may have changed (or the arrays were replaced, or the
+                // SafeEvalInterval fallback is due); otherwise only the time-dependent shell switch.
+                _nextEval = NextGrid(now, EvalInterval, _phase);
+                if (CellsMayHaveChanged() || now >= _nextSafeEval) EvaluateState();
+                else EvaluateTime(now);
             }
 
             if (now >= _nextOwnerCheck)
@@ -1300,6 +1407,7 @@ namespace KominkaHillside
                 _prevOwnerUntil = Time.time + PrevOwnerGrace;
                 _ownerId = player.playerId;
             }
+            Wake();   // IMP-DOG-034 B1e: the Owner's periodic work (dirt, sync) from the next frame
             if (!Networking.IsOwner(gameObject)) return;
             EnsureArrays();
             Reintegrate();
@@ -1325,19 +1433,27 @@ namespace KominkaHillside
         {
             if (_dirt == null) return;
             if (cells == null || cells.Length != CellCount) cells = new byte[CellCount];
-            for (int c = 0; c < CellCount; c++)
-            {
-                int d = Mathf.Clamp(Mathf.RoundToInt(_dirt[c] * 3f), 0, 3);
-                int f = Mathf.Clamp(Mathf.RoundToInt(_foam[c] * 7f), 0, 7);
-                int w = Mathf.Clamp(Mathf.RoundToInt(_wet[c] * 7f), 0, 7);
-                cells[c] = (byte)(d | (f << 2) | (w << 5));
-            }
+            for (int c = 0; c < CellCount; c++) cells[c] = (byte)CellByte(c);
+        }
+
+        // One cell as it is sent (OnPreSerialization) and as IMP-DOG-034 B1b compares it with the last sent byte.
+        int CellByte(int c)
+        {
+            int d = Mathf.Clamp(Mathf.RoundToInt(_dirt[c] * 3f), 0, 3);
+            return d | (Q7(_foam[c]) << 2) | (Q7(_wet[c]) << 5);
+        }
+
+        int Q7(float x)
+        {
+            return Mathf.Clamp(Mathf.RoundToInt(x * 7f), 0, 7);
         }
 
         public override void OnDeserialization()
         {
             EnsureArrays();
             if (cells == null || cells.Length != CellCount) return;
+            _cellsDirty = true;   // IMP-DOG-034 B1a: the received cells replace the floats
+            Wake();               // IMP-DOG-034 B1e
             for (int c = 0; c < CellCount; c++)
             {
                 int v = cells[c];
@@ -1599,9 +1715,13 @@ namespace KominkaHillside
         // than the coarse cells report). Counted in the Blit budget.
         void Decay(float dt)
         {
+            // IMP-DOG-034 B1c: _anyFoamOrWet must describe the cells as they are now (the skips below depend on it). The
+            // evaluation was due within 0.5 s anyway; running it here clears the flag, so it is not repeated.
+            if (CellsMayHaveChanged()) EvaluateState();
             float now = Time.time;
             float drain = Mathf.Max(foamDrySeconds, wetDrySeconds);
-            if (!_anyFoamOrWet && now - _lastActivity > drain)
+            // IMP-DOG-034 B1c: _lastWetActivity (not _lastActivity): a dirt-only change adds no foam / wet to the mask.
+            if (!_anyFoamOrWet && now - _lastWetActivity > drain)
             {
                 // Drying stops here. The mask's band can be stronger than the coarse cells, and the drying time may
                 // have been shortened meanwhile (the rate and the window no longer match), so the last pass takes all
@@ -1630,14 +1750,31 @@ namespace KominkaHillside
                 VRCGraphics.Blit(_cur, _next, _maskMat, PassDecay);
                 Swap();
             }
+            // IMP-DOG-034 B1c: no foam / wet in the cells = nothing in them can dry (only the mask's band, Blit above).
+            if (!_anyFoamOrWet || _validCells == null) return;
+            // Only the counted cells (_validCells; the others are never written above 0 at run time). A zero cell stays 0, so
+            // it is skipped (Max(0, 0 - fd) = 0 as before).
+            // IMP-DOG-034 B1b: the Owner syncs only when a sent value (3 bit foam / wet) changed; each other writer of the
+            // cells sets _syncDue itself, so "changed since the last send" is the same as "changed in some write".
+            bool owner = Networking.IsOwner(gameObject);
             bool changed = false;
-            for (int c = 0; c < CellCount; c++)
+            bool qChanged = false;
+            int nv = _validCells.Length;
+            for (int k = 0; k < nv; k++)
             {
-                if (_foam[c] > 0f || _wet[c] > 0f) changed = true;
-                _foam[c] = Mathf.Max(0f, _foam[c] - fd);
-                _wet[c] = Mathf.Max(0f, _wet[c] - wd);
+                int c = _validCells[k];
+                float f0 = _foam[c];
+                float w0 = _wet[c];
+                if (!(f0 > 0f) && !(w0 > 0f)) continue;
+                changed = true;
+                float f1 = Mathf.Max(0f, f0 - fd);
+                float w1 = Mathf.Max(0f, w0 - wd);
+                _foam[c] = f1;
+                _wet[c] = w1;
+                if (owner && !qChanged && (Q7(f1) != Q7(f0) || Q7(w1) != Q7(w0))) qChanged = true;
             }
-            if (changed && Networking.IsOwner(gameObject)) _syncDue = true;
+            if (changed) _cellsDirty = true;   // IMP-DOG-034 B1a
+            if (qChanged) _syncDue = true;
         }
 
         void Swap()
@@ -1691,6 +1828,7 @@ namespace KominkaHillside
         void ApplyToCells(int tool, int part, Vector3 a, Vector3 b, float radMeters, float sec)
         {
             if (!_cellsOk) return;
+            _cellsDirty = true;   // IMP-DOG-034 B1a (the callers set _syncDue)
             float rMesh = radMeters / meshToWorldScale;
             float reach = (radMeters + cellReach) / meshToWorldScale;
             float reach2 = reach * reach;
@@ -1742,62 +1880,69 @@ namespace KominkaHillside
             return t * t * (3f - 2f * t);
         }
 
-        // Every 0.5 s: averages over the valid cells, the shell switch, and (Owner) the clean edge with hysteresis.
+        // When the cells may have changed (IMP-DOG-034 B1a; at least every SafeEvalInterval): averages over the valid
+        // cells, the shell switch, and (Owner) the clean edge with hysteresis. One pass over _validCells does the averages,
+        // the quiet set, the fresh count and, while armed, MarkArm + ArmAverage (IMP-DOG-034 B1a; same results: every
+        // loop already skipped the cells outside _validCells, and arm bits are only ever set on those cells).
         void EvaluateState()
         {
-            if (_dirt == null) return;
+            if (_dirt == null || _validCells == null) return;
+            float now = Time.time;
+            // IMP-DOG-034 B1a: what this evaluation has seen
+            _cellsDirty = false;
+            _evDirt = _dirt;
+            _evFoam = _foam;
+            _evWet = _wet;
+            _nextSafeEval = NextGrid(now, SafeEvalInterval, _phase + 0.5f);
+            bool edge = Networking.IsOwner(gameObject) && epoch != 0;
+            bool armed = edge && cleanArmed;
             float sd = 0f;
             float sf = 0f;
             float sw = 0f;
-            int n = 0;
+            int n = _validCells.Length;
             bool dirty = false;
             bool foamWet = false;
-            for (int c = 0; c < CellCount; c++)
+            // Owner only: quiet cells (still foamy at the last edge) leave the quiet set once rinsed / dried below the
+            // clean threshold; until then they are the rest of the same wash and do not count toward a new arm.
+            int fresh = 0;
+            bool quietChanged = false;
+            bool armAdded = false;   // MarkArm
+            int armCount = 0;        // ArmAverage
+            float armSum = 0f;
+            for (int k = 0; k < n; k++)
             {
-                if (_cellsOk && !cellValid[c]) continue;
+                int c = _validCells[k];
                 float d = _dirt[c];
                 float f = _foam[c];
                 float w = _wet[c];
                 sd += d;
                 sf += f;
                 sw += w;
-                n++;
                 if (f > 0f || w > 0f) foamWet = true;
                 if (d > 0.002f) dirty = true;   // dirt never dries; a rinse leaves tiny floats behind
+                if (!edge) continue;
+                int bit = 1 << (c & 31);
+                int wi = c >> 5;
+                bool quiet = (quietBits[wi] & bit) != 0;
+                if (quiet && f < cleanFoamThreshold) { quietBits[wi] &= ~bit; quiet = false; quietChanged = true; }
+                if (!quiet && f >= dirtyFoamThreshold) fresh++;
+                if (!armed) continue;
+                int ab = armBits[wi];
+                if ((ab & bit) == 0 && f >= dirtyFoamThreshold) { ab |= bit; armBits[wi] = ab; armAdded = true; }
+                if ((ab & bit) != 0) { armCount++; armSum += f; }
             }
             _avgDirt = n > 0 ? sd / n : 0f;
             _avgFoam = n > 0 ? sf / n : 0f;
             _avgWet = n > 0 ? sw / n : 0f;
             _anyFoamOrWet = foamWet;
-            if (foamWet) _lastActivity = Time.time;
             _cellsEmpty = !dirty && !foamWet;
-
-            // The shell goes off only when the cells are all zero AND the mask has had a full drying time since the
-            // last stroke / foam / wet (its band can outlast the coarse cells). The mask is then set to the cells
-            // (all zero), so a residue cannot come back on the next touch.
-            float drain = Mathf.Max(foamDrySeconds, wetDrySeconds);
-            bool off = _cellsEmpty && Time.time - _lastActivity > drain + 2f;
-            if (off && _shellOn) { _restorePending = true; ShowShell(false); }
-            else if (!off && !_shellOn) ShowShell(true);
+            EvaluateTime(now);
 
             // The clean edge (formulas in the header): arm on the average dirt or on enough foamed cells anywhere
             // (legs only is fine); fire when the averages are low AND the foamed set itself has been rinsed.
-            if (!Networking.IsOwner(gameObject) || epoch == 0) return;
-            // Quiet cells (still foamy at the last edge) leave the quiet set once rinsed / dried below the clean
-            // threshold; until then they are the rest of the same wash and do not count toward a new arm.
-            int fresh = 0;
-            bool quietChanged = false;
-            for (int c = 0; c < CellCount; c++)
-            {
-                if (_cellsOk && !cellValid[c]) continue;
-                int bit = 1 << (c & 31);
-                int w = c >> 5;
-                bool quiet = (quietBits[w] & bit) != 0;
-                if (quiet && _foam[c] < cleanFoamThreshold) { quietBits[w] &= ~bit; quiet = false; quietChanged = true; }
-                if (!quiet && _foam[c] >= dirtyFoamThreshold) fresh++;
-            }
+            if (!edge) return;
             if (quietChanged) _syncDue = true;
-            if (!cleanArmed)
+            if (!armed)
             {
                 int need = Mathf.Max(1, Mathf.CeilToInt(Mathf.Clamp01(armFoamCellFraction) * n));
                 if (_avgDirt >= dirtyDirtThreshold || (n > 0 && fresh >= need))
@@ -1809,8 +1954,9 @@ namespace KominkaHillside
                 }
                 return;
             }
-            if (MarkArm()) _syncDue = true;
-            float setAvg = ArmAverage();   // U#: no out parameters on own methods; the count is in _armCount
+            if (armAdded) _syncDue = true;
+            _armCount = armCount;
+            float setAvg = armCount > 0 ? armSum / armCount : 0f;
             // IMP-DOG-029: a river drop alone does not make the dog "clean" (design §8 default); a wash stroke after it does.
             if (_avgDirt < cleanDirtThreshold && _avgFoam < cleanFoamThreshold && (_armCount == 0 || setAvg < cleanFoamThreshold) && !riverBlocksEdge)
             {
@@ -1830,6 +1976,20 @@ namespace KominkaHillside
                 _syncDue = true;
                 _nextSync = Time.time;      // the edge is what the dog waits for
             }
+        }
+
+        // IMP-DOG-034 B1a: the part of the evaluation that depends on the time only (EvaluateState's last results +
+        // _lastActivity), every 0.5 s without the cell loop. Unchanged cells = unchanged _anyFoamOrWet / _cellsEmpty.
+        void EvaluateTime(float now)
+        {
+            if (_anyFoamOrWet) { _lastActivity = now; _lastWetActivity = now; }
+            // The shell goes off only when the cells are all zero AND the mask has had a full drying time since the
+            // last stroke / foam / wet (its band can outlast the coarse cells). The mask is then set to the cells
+            // (all zero), so a residue cannot come back on the next touch.
+            float drain = Mathf.Max(foamDrySeconds, wetDrySeconds);
+            bool off = _cellsEmpty && now - _lastActivity > drain + 2f;
+            if (off && _shellOn) { _restorePending = true; ShowShell(false); }
+            else if (!off && !_shellOn) ShowShell(true);
         }
 
         // net: owner-only (armBits). Adds every valid cell with foam >= dirtyFoamThreshold; true when one was new.
@@ -1860,24 +2020,11 @@ namespace KominkaHillside
             for (int i = 0; i < bits.Length; i++) bits[i] = 0;
         }
 
-        // Average foam over the arm set (0 when empty); the set's size goes to _armCount.
+        // The arm set's size at the last evaluation (its average foam is computed in EvaluateState's pass, IMP-DOG-034 B1a).
         private int _armCount;
-        float ArmAverage()
-        {
-            int count = 0;
-            float sum = 0f;
-            for (int c = 0; c < CellCount; c++)
-            {
-                if ((armBits[c >> 5] & (1 << (c & 31))) == 0) continue;
-                count++;
-                sum += _foam[c];
-            }
-            _armCount = count;
-            return count > 0 ? sum / count : 0f;
-        }
 
         // ================= Getting dirty (IMP-DOG-029) =================
-        // Owner only: sample the dog 4 times a second, add up what happened, and every dirtApplyInterval put it into the
+        // Owner only: sample the dog once a second (IMP-DOG-034 B1d), add up what happened, and every dirtApplyInterval put it into the
         // cells (the synced truth) and send the part averages as one ToolDirt NetStroke (see "Dirt on the mask" in the
         // header). Nothing changes = nothing is synced or sent. Dirt is never a penalty: nothing depends on it except the
         // look and the clean edge's arming (a dirty dog can be washed again).
@@ -1885,7 +2032,12 @@ namespace KominkaHillside
         void DirtTick(float now)
         {
             if (!_cellsOk || dogRoot == null || _partCells == null) return;
-            if (_dirtSampleAt < 0f || now - _dirtSampleAt >= DirtSampleInterval) DirtSample(now);
+            // IMP-DOG-034 B1d: once a second on this dog's phase (the six dogs do not sample in the same frame)
+            if (now >= _dirtNextSample)
+            {
+                _dirtNextSample = NextGrid(now, DirtSampleInterval, _phase);
+                DirtSample(now);
+            }
             if (now >= _dirtNextApply)
             {
                 _dirtNextApply = now + Mathf.Max(0.5f, dirtApplyInterval);
@@ -1902,7 +2054,8 @@ namespace KominkaHillside
             if (_dirtPrevValid) { Vector3 d = p - _dirtPrevPos; d.y = 0f; step = d.magnitude; }
             _dirtPrevPos = p;
             _dirtPrevValid = true;
-            if (dt > 1f) { dt = 0f; step = 0f; }                                  // a hitch or a gap: not counted
+            // a hitch or a gap: not counted (IMP-DOG-034 B1d: 2.5 sample intervals; was 1 s at 0.25 s sampling)
+            if (dt > DirtSampleInterval * 2.5f) { dt = 0f; step = 0f; }
             if (step > dt * Mathf.Max(1f, dirtMaxSpeed) + 0.5f) step = 0f;       // a warp (travel, recall, placement)
             if (!(dt > 0f)) return;
             if (!dirtEnabled) { _dirtBlock = 1; return; }
@@ -1935,7 +2088,16 @@ namespace KominkaHillside
         bool NearStation(Vector3 p)
         {
             if (!(dirtStationRadius > 0f)) return false;
-            if (NearOne(washStation, p)) return true;
+            // IMP-DOG-034 B1d: Wash/11 lists the main station in washStations as well; it is checked once (in the list).
+            // Decided per array reference, so a replaced array (harness) is looked at again.
+            if (washStations != _stationsRef)
+            {
+                _stationsRef = washStations;
+                _mainInList = false;
+                if (washStations != null && washStation != null)
+                    for (int i = 0; i < washStations.Length; i++) if (washStations[i] == washStation) { _mainInList = true; break; }
+            }
+            if (!_mainInList && NearOne(washStation, p)) return true;
             if (washStations == null) return false;
             for (int i = 0; i < washStations.Length; i++) if (NearOne(washStations[i], p)) return true;   // IMP-ENV-008: the stations along the course
             return false;
@@ -2001,6 +2163,8 @@ namespace KominkaHillside
             _swimAcc = 0f;
             _dirtTicks++;
             bool changed = false;
+            bool riverBefore = riverBlocksEdge;   // IMP-DOG-034 B1b
+            int changedParts = 0;                 // IMP-DOG-034 B1b: bit p = part p's cells changed
             if (legInc > 0f || bodyInc > 0f || legDrop > 0f || legWet > 0f || bodyWet > 0f)
             {
                 float floor = Mathf.Clamp01(riverDirtFloor);
@@ -2037,6 +2201,7 @@ namespace KominkaHillside
                         float w = Mathf.Min(1f, w0 + Mathf.Max(0f, wa));
                         _wet[c] = w;
                         sw += w - w0;
+                        if (d != d0 || w != w0) changedParts |= 1 << p;   // IMP-DOG-034 B1a / B1b (per cell, not the sums)
                     }
                     if (sd == 0f && sw == 0f) continue;
                     changed = true;
@@ -2052,8 +2217,32 @@ namespace KominkaHillside
                 _wetCarryLeg = Mathf.Min(1f, _wetCarryLeg + wetLeg);
                 _wetCarryBody = Mathf.Min(1f, _wetCarryBody + wetBody);
             }
-            if (changed) { _syncDue = true; _lastActivity = Time.time; }
+            if (changed) _lastActivity = Time.time;
+            if (changedParts != 0) _cellsDirty = true;   // IMP-DOG-034 B1a
+            // IMP-DOG-034 B1b: was _syncDue on every change. The cells go out quantised (dirt 2 bit, wet 3 bit) and a walk adds
+            // ~0.0015 per tick, so most ticks would resend the same bytes. Sync when riverBlocksEdge changed, when the event
+            // below moves dirtSeq (BuildDirtEvent sets _syncDue), or when a changed cell's byte differs from the last sent one.
+            if (riverBlocksEdge != riverBefore) _syncDue = true;
             BuildDirtEvent();
+            if (changedParts != 0 && !_syncDue && PartsDifferFromSent(changedParts)) _syncDue = true;
+        }
+
+        // IMP-DOG-034 B1b: a cell of the marked parts whose byte (as OnPreSerialization would write it) differs from the
+        // last serialized one (`cells`; on a new Owner the last received one, which OnOwnershipTransferred resends anyway).
+        bool PartsDifferFromSent(int parts)
+        {
+            if (cells == null || cells.Length != CellCount) return true;
+            for (int p = 0; p < PartCount; p++)
+            {
+                if (((parts >> p) & 1) == 0) continue;
+                int e = _partCellStart[p + 1];
+                for (int k = _partCellStart[p]; k < e; k++)
+                {
+                    int c = _partCells[k];
+                    if (CellByte(c) != (int)cells[c]) return true;
+                }
+            }
+            return false;
         }
 
         // Owner: quantise the carried part averages into one event; draw the same quantised change here at once.
@@ -2168,6 +2357,7 @@ namespace KominkaHillside
         void AddPartCells(int part, float dD, float dW)
         {
             if (dD == 0f && dW == 0f) return;
+            _cellsDirty = true;   // IMP-DOG-034 B1a (ReintegrateDirt sets _syncDue)
             float floor = Mathf.Clamp01(riverDirtFloor);
             int e = _partCellStart[part + 1];
             for (int k = _partCellStart[part]; k < e; k++)
@@ -2204,6 +2394,7 @@ namespace KominkaHillside
             _anyDirtDraw = true;
             // The shell must not switch off (and repaint from cells that do not have this yet) before the sync arrives.
             _lastActivity = Time.time;
+            if (dW != 0f) _lastWetActivity = _lastActivity;   // IMP-DOG-034 B1c: wet on the mask has to dry (Decay)
             ShowShell(true);
         }
 
@@ -2529,6 +2720,8 @@ namespace KominkaHillside
 
         void UpdateAudio(float now)
         {
+            // IMP-DOG-034 B1e: silent and no contact = every level is 0 and stays 0 (the return below, without the reads)
+            if (!_audioOn && now >= _showerUntil && now >= _scrubUntil) return;
             float step = audioFadeSpeed * Time.deltaTime;
             bool shower = now < _showerUntil;
             _furVol = Mathf.MoveTowards(_furVol, shower ? _furTarget : 0f, step);

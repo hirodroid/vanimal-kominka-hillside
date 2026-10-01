@@ -102,6 +102,24 @@ namespace KominkaDogRun
         bool[] _prevValid;
         float[] _ownSpeed;      // 犬自身の Update が動かした速度 (押し出し分を含まない)
 
+        // ---- IMP-DOG-034 B5a: per-dog values read ONCE per scan (was per pair: activeInHierarchy 27x, InFormation up to 30x) ----
+        bool[] _active;         // dogRoots[i] != null && activeInHierarchy, this scan
+        float[] _reach;         // per-dog half of the "close enough to watch every frame" radius (see B5b)
+        int[] _form;            // InFormation, read lazily for close pairs only: -1 = not read this scan, 0/1
+        bool _wanderRoster;     // dogWander != null && Length == _count (static wiring; was re-checked per pair)
+        int _wanderLen;         // dogWander.Length or 0 (the apply loop's `i < dogWander.Length` guard)
+
+        // ---- IMP-DOG-034 B5b: pair scan at 10 Hz while nothing is near contact, every frame while something is ----
+        // Policy (IMP-DOG-034): lightness over realtime. The push itself is unchanged; only how often we look for it.
+        // ScanInterval bounds the added delay before a push starts to ~0.1 s (measured from the first frame the pair overlaps).
+        // A pair counts as "hot" (scan next frame too) when it is within its gap + HotMargin + the distance both dogs
+        // could cover by the next 10 Hz scan at their measured speed - so approaching dogs are normally already hot
+        // before they touch and their push starts on the same frame as before.
+        const float ScanInterval = 0.1f;
+        const float HotMargin = 0.1f;
+        float _sinceScan;       // time accumulated since the last scan (s)
+        bool _hot = true;       // true -> scan next frame. Starts true so the first frame initialises _prevPos
+
         void Start()
         {
             if (dogRoots == null || dogRadius == null || dogRoots.Length != dogRadius.Length)
@@ -116,6 +134,12 @@ namespace KominkaDogRun
             _prevPos = new Vector3[_count];
             _prevValid = new bool[_count];
             _ownSpeed = new float[_count];
+            // IMP-DOG-034 B5a
+            _active = new bool[_count];
+            _reach = new float[_count];
+            _form = new int[_count];
+            _wanderRoster = dogWander != null && dogWander.Length == _count;
+            _wanderLen = dogWander != null ? dogWander.Length : 0;
 
             // 既存シーンへ後から足したフィールドが 0 のまま入る事故を無言で通さない
             // (KD_DogFetchController.Start と同じ検査)。spacing 0 は間合いが消えて
@@ -152,14 +176,31 @@ namespace KominkaDogRun
             float dt = Time.deltaTime;
             if (dt <= 0.0001f) return;
 
+            // ---- 0) IMP-DOG-034 B5b: 10 Hz while no pair is near contact, every frame while one is ----
+            // Non-scan frames do nothing at all: no push is applied on them, so _prevPos (last scan's post-push position)
+            // stays the right baseline and step 1 divides the dog's own movement by the real elapsed time.
+            // The push below still uses this frame's dt (not `elapsed`) - a late first push is not "caught up" in one jump,
+            // it simply starts; per-frame strength while in contact is unchanged.
+            // Note (IMP-NET-005 asymmetry, see step 3): the cadence is decided per client from local positions, so owner and
+            // non-owner may scan on different frames. Only the owner writes, so only the owner's cadence matters.
+            _sinceScan += dt;
+            if (!_hot && _sinceScan < ScanInterval) return;
+            float elapsed = _sinceScan; // == dt while hot (the previous frame scanned and reset it)
+            _sinceScan = 0f;
+            bool hot = false;
+
             // ---- 1) 位置と「自分の脚で動いた量」を採る ----
+            // IMP-DOG-034 B5a: active / position / reach are taken here once per dog and reused by steps 2 and 3
             for (int i = 0; i < _count; i++)
             {
                 _push[i] = Vector3.zero;
-                _ownSpeed[i] = 0f;
+                _form[i] = -1;
                 Transform t = dogRoots[i];
-                if (t == null || !t.gameObject.activeInHierarchy)
+                bool act = t != null && t.gameObject.activeInHierarchy;
+                _active[i] = act;
+                if (!act)
                 {
+                    _ownSpeed[i] = 0f;
                     _prevValid[i] = false;
                     continue;
                 }
@@ -170,28 +211,56 @@ namespace KominkaDogRun
                 float m = moved.magnitude;
                 // 前フレームの押し出しは _prevPos に含まれているため、ここに残るのは
                 // 犬自身の Update が動かした分だけ (押し出しの自己増幅が起きない)
-                if (_prevValid[i] && m <= teleportThreshold) _ownSpeed[i] = m / dt;
+                // IMP-DOG-034 B5b: divided by `elapsed` (== dt while hot, so identical to before; on a 10 Hz scan it is the
+                // average speed over the last ~0.1 s). teleportThreshold stays a distance: 1.5 m in 0.1 s is still a warp.
+                float s = 0f;
+                if (_prevValid[i] && m <= teleportThreshold) s = m / elapsed;
+                _ownSpeed[i] = s;
+                // half of this dog's share of "close enough to watch every frame": its gap share + what it can walk by the
+                // next 10 Hz scan + half the fixed margin. Two halves always exceed the push gap, so every pushed pair is hot
+                _reach[i] = dogRadius[i] * spacing + s * ScanInterval + HotMargin * 0.5f;   // full approach distance per dog (Codex 2026-10-01: halving it let a head-on pair overlap ~5 cm before the scan went hot)
             }
 
             // ---- 2) 総当たりで押し出しを積む (犬は数匹。O(n^2) で足りる) ----
+            // IMP-DOG-034 B5a: cheap distance test first; InFormation (cross-behaviour) only for pairs that are actually close
             for (int i = 0; i < _count; i++)
             {
-                if (!_prevValid[i] && (dogRoots[i] == null || !dogRoots[i].gameObject.activeInHierarchy)) continue;
-                if (dogRadius[i] <= 0.001f) continue;
+                if (!_active[i]) continue; // == old `!_prevValid[i] && (null || inactive)`: step 1 cleared _prevValid for inactive dogs
+                float radI = dogRadius[i];
+                if (radI <= 0.001f) continue;
+                Vector3 posI = _pos[i];
+                float reachI = _reach[i];
                 for (int j = i + 1; j < _count; j++)
                 {
-                    Transform tj = dogRoots[j];
-                    if (tj == null || !tj.gameObject.activeInHierarchy) continue;
-                    if (dogRadius[j] <= 0.001f) continue;
+                    if (!_active[j]) continue;
+                    float radJ = dogRadius[j];
+                    if (radJ <= 0.001f) continue;
+
+                    Vector3 d = posI - _pos[j];
+                    d.y = 0f;
+                    // far apart: no push now and they cannot touch before the next scan -> neither push nor hot
+                    float reach = reachI + _reach[j];
+                    if (d.sqrMagnitude >= reach * reach) continue;
+
                     // 両方が隊形の枠に着いている (集合 / Live の観客) ペアは押さない — 隊形は体を密着させるので、
                     // 押し出しと枠へ戻る歩きが往復する。片方だけなら通りすがりの犬として従来どおり押す (2026-09-13)
-                    if (dogWander != null && dogWander.Length == _count && dogWander[i] != null && dogWander[j] != null
-                        && dogWander[i].InFormation && dogWander[j].InFormation) continue;
+                    // IMP-DOG-034 B5a: same rule, InFormation read at most once per dog per scan (cached in _form).
+                    // Such pairs do not make the scan hot either - a packed formation would otherwise pin it to every frame
+                    if (_wanderRoster && dogWander[i] != null && dogWander[j] != null)
+                    {
+                        int fi = _form[i];
+                        if (fi < 0) { fi = dogWander[i].InFormation ? 1 : 0; _form[i] = fi; }
+                        if (fi == 1)
+                        {
+                            int fj = _form[j];
+                            if (fj < 0) { fj = dogWander[j].InFormation ? 1 : 0; _form[j] = fj; }
+                            if (fj == 1) continue;
+                        }
+                    }
+                    hot = true; // IMP-DOG-034 B5b: in contact or about to be -> keep scanning every frame
 
-                    Vector3 d = _pos[i] - _pos[j];
-                    d.y = 0f;
                     float dist = d.magnitude;
-                    float gap = (dogRadius[i] + dogRadius[j]) * spacing;
+                    float gap = (radI + radJ) * spacing;
                     if (gap <= 0.001f || dist >= gap) continue;
 
                     Vector3 dir;
@@ -213,8 +282,8 @@ namespace KominkaDogRun
                     float yi = _ownSpeed[i] > movingThreshold ? 1f : plantedYieldScale;
                     float yj = _ownSpeed[j] > movingThreshold ? 1f : plantedYieldScale;
                     // 抵抗 = 体格 / 譲りやすさ。止まっている犬と大きい犬ほど動かない
-                    float ri = dogRadius[i] / yi;
-                    float rj = dogRadius[j] / yj;
+                    float ri = radI / yi;
+                    float rj = radJ / yj;
                     float sum = ri + rj;
                     if (sum <= 0.0001f) continue;
 
@@ -244,18 +313,32 @@ namespace KominkaDogRun
             // 位置を書くのがマスターだけなので実害はマスター交代の 1 フレームに
             // 限られるが、この非対称を知らずに「全員同じ結論のはず」を前提に
             // 観測の間引き等を入れると割れが表に出る。変更時はここを思い出すこと
+            //
+            // IMP-DOG-034 B5b: the scan cadence (step 0) is also decided per client from these local measurements, so owner
+            // and non-owner may scan on different frames. Harmless for the same reason (only the owner writes), and on an
+            // owner change the new owner's _ownSpeed is at most one 10 Hz scan old.
             float maxStep = separationSpeed * dt;
             for (int i = 0; i < _count; i++)
             {
+                if (!_active[i]) continue; // IMP-DOG-034 B5a: step 1's value (nothing in this method toggles a dog)
+                // IMP-DOG-034 B5a: a dog with no push writes nothing, so its root is still where step 1 read it -> reuse _pos
+                // and skip the clamp / StationLocked / IsOwner reads. Equivalent to before: clamping only shortens a push to
+                // maxStep, and maxStep^2 >= (1.2 * 1e-4)^2 > 1e-10, so "push > 1e-10 after the clamp" == "before the clamp".
+                float pushSq = _push[i].sqrMagnitude;
+                if (pushSq <= 1e-10f)
+                {
+                    _prevPos[i] = _pos[i];
+                    _prevValid[i] = true;
+                    continue;
+                }
                 Transform t = dogRoots[i];
-                if (t == null || !t.gameObject.activeInHierarchy) continue;
-                if (_push[i].sqrMagnitude > maxStep * maxStep)
+                if (pushSq > maxStep * maxStep)
                     _push[i] = _push[i].normalized * maxStep;
                 // IMP-DOG-035: a dog held on a wash station's stand is never the pushed side (the push snaps to the ground and
                 // would drop it off the raised stand). Its own push is discarded; the other dog's share is unchanged, so it still
                 // gets pushed away by this one as before. Every other dog runs exactly as before.
-                bool onStand = dogWander != null && i < dogWander.Length && dogWander[i] != null && dogWander[i].StationLocked;
-                if (!onStand && _push[i].sqrMagnitude > 1e-10f && Networking.IsOwner(t.gameObject))
+                bool onStand = i < _wanderLen && dogWander[i] != null && dogWander[i].StationLocked;
+                if (!onStand && Networking.IsOwner(t.gameObject))
                 {
                     bool floating = dogWander != null && i < dogWander.Length && dogWander[i] != null && dogWander[i]._WaterFloating();
                     // IMP-DOG-020: afloat, keep the height (no snap to the riverbed) and push at most 0.1 m per frame
@@ -270,6 +353,7 @@ namespace KominkaDogRun
                 _prevPos[i] = t.position;
                 _prevValid[i] = true;
             }
+            _hot = hot; // IMP-DOG-034 B5b: scan again next frame only if some pair is in contact or about to be
         }
 
         /// <summary>KD_DogFetchController.SnapToGround と同じ (穴の上では高さを変えない)。</summary>
