@@ -103,6 +103,8 @@ Unity操作は `vrc-synaptic-unity` と `scripts/unity-api.sh` 経由 (`check` �
 
 フリスビーのClientSimハーネスはAI実行可。[実行・停止・復旧と部分／全体の選択](docs/testing/kh-frisbee-harness.md)に従う。疑似入力の結果を実通信・PCVRの合格にしない。
 
+**6匹の連続一周 (Course/53・54、約20分) を通常改修の確認へ毎回入れない。** 歩行の局所変更は `scripts/kh-harness-run.sh segment <case>` で橋・門の対象区間と影響する周辺ケースを選ぶ。他機能の変更はその機能の部分確認を使い、歩行スモークも無条件に足さない。一周は長時間で蓄積する不具合の調査、経路・追従の大変更の確定、公開前の必要な回帰に限定し、`lap <forward|reverse> --reason "一周でしか確認できないこと"` で目的を記録する。区間確認の `SEGMENTS_OBSERVED` は一周・実機・機能全体の合格ではない。
+
 ---
 
 ## ドキュメント検査

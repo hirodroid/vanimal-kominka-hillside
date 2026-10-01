@@ -72,6 +72,7 @@ namespace KominkaHillside.Editor
             public bool washOnly;         // IMP-DOG-025 Course/100 (KH_CourseWalkHarnessEditor.Wash.cs)
             public string washGroups;     // Course/100a-e: comma-separated groups to run (empty = all). Persisted here because Play mode reloads the domain and clears statics
             public int lapChoice;
+            public string selectedWalkCase,executionPurpose;
             public List<Case> cases=new List<Case>();
             public List<string> errors=new List<string>();public int clientLogErrors;
             public string limitations="Single local ClientSim. Menu Udon events exercise attachment and destination request paths; no physical UI click, pickup or real network/Owner handover. Initial actors are placed by the harness. Holder follows saved route by short TeleportTo steps at 2 m/s; dog transforms are never assigned during observation. lapChoice=0 is segment coverage only; lapChoice=2/3 is a continuous synthetic-holder lap. Neither measures user walking time or device performance. Random dog pauses remain enabled.";
@@ -106,19 +107,51 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Course/45 - Walk Harness Gate Boundary")]
         public static void Gate(){Begin(true,true);}
         [MenuItem("Tools/KominkaHillside/Course/53 - Walk Harness Six Dogs Full Forward Lap")]
-        public static void ForwardLap(){Begin(true,false,2);}
+        public static void ForwardLap(){LapPurposeWindow.Open(2);}
         [MenuItem("Tools/KominkaHillside/Course/54 - Walk Harness Six Dogs Full Reverse Lap")]
-        public static void ReverseLap(){Begin(true,false,3);}
+        public static void ReverseLap(){LapPurposeWindow.Open(3);}
+        // Ordinary changes use a single existing segment, with exactly the same setup and assertions.
+        public static void RunSegment(string caseName)
+        {
+            if(!System.Text.RegularExpressions.Regex.IsMatch(caseName??"",@"\A(?:bridge-(?:190|490)|gate-wrap)-choice-[23]-dogs-[136]\z"))
+                throw new ArgumentException("Use bridge-190|bridge-490|gate-wrap, then -choice-2|3-dogs-1|3|6.");
+            Begin(true,selectedWalkCase:caseName);
+        }
+        public static void RunLap(int choice,string purpose)
+        {
+            if(choice!=2&&choice!=3)throw new ArgumentException("Lap choice must be 2 (forward) or 3 (reverse).");
+            if(string.IsNullOrWhiteSpace(purpose))throw new ArgumentException("A continuous lap needs a verification purpose. Use RunSegment for local changes.");
+            Begin(true,lapChoice:choice,executionPurpose:purpose.Trim());
+        }
+        public class LapPurposeWindow:EditorWindow
+        {
+            [SerializeField] int choice;
+            [SerializeField] string purpose="";
+            public static void Open(int direction)
+            {
+                var window=GetWindow<LapPurposeWindow>(true,"Continuous lap (~20 min)",true);
+                window.choice=direction;window.purpose="";window.minSize=new Vector2(440,150);
+            }
+            void OnGUI()
+            {
+                EditorGUILayout.HelpBox("Use a bridge / gate segment for ordinary changes. A full lap is for long-running defects or broad route / follow regression.",MessageType.Info);
+                EditorGUILayout.LabelField(choice==2?"Six dogs: forward lap":"Six dogs: reverse lap");
+                purpose=EditorGUILayout.TextField("Verification purpose",purpose);
+                using(new EditorGUI.DisabledScope(string.IsNullOrWhiteSpace(purpose)||EditorApplication.isPlayingOrWillChangePlaymode||EditorApplication.isCompiling))
+                    if(GUILayout.Button("Run continuous lap")){RunLap(choice,purpose);Close();}
+            }
+        }
         [MenuItem("Tools/KominkaHillside/Course/57 - Walk Harness Viewpoint Bench")]
         public static void Bench(){Begin(false,false,0,true);}
         [MenuItem("Tools/KominkaHillside/Course/63 - Walk Harness Midway Attach and Return")]
         public static void MidwayReturn(){Begin(true,false,0,false,true);}
-        static void Begin(bool full,bool gateOnly=false,int lapChoice=0,bool benchOnly=false,bool returnOnly=false)
+        static void Begin(bool full,bool gateOnly=false,int lapChoice=0,bool benchOnly=false,bool returnOnly=false,string selectedWalkCase=null,string executionPurpose=null)
         {
+            if(lapChoice!=0&&string.IsNullOrWhiteSpace(executionPurpose))throw new ArgumentException("Continuous lap requires a verification purpose.");
             KH_CourseGroundEditor.Idle(KH_CourseGroundEditor.ScenePath);
             if(SessionState.GetBool(Key,false)||SessionState.GetBool(Key+".restorePending",false))throw new InvalidOperationException("Harness active or PlayerData restoration pending");
-            report=new Report{runId=DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"),utc=DateTime.UtcNow.ToString("o"),scene=KH_CourseGroundEditor.ScenePath,full=full,gateOnly=gateOnly,benchOnly=benchOnly,returnOnly=returnOnly,lapChoice=lapChoice,originalBackground=Application.runInBackground};
-            report.hashBefore=Hash(report.scene);report.deadline=EditorApplication.timeSinceStartup+(lapChoice!=0?1800:full?1700:150);
+            report=new Report{runId=DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"),utc=DateTime.UtcNow.ToString("o"),scene=KH_CourseGroundEditor.ScenePath,full=full,gateOnly=gateOnly,benchOnly=benchOnly,returnOnly=returnOnly,lapChoice=lapChoice,selectedWalkCase=selectedWalkCase,executionPurpose=executionPurpose,originalBackground=Application.runInBackground};
+            report.hashBefore=Hash(report.scene);report.deadline=EditorApplication.timeSinceStartup+(lapChoice!=0?1800:full&&string.IsNullOrEmpty(selectedWalkCase)?1700:150);
             BackupPlayerData();
             SessionState.SetBool(Key+".background",report.originalBackground);SessionState.SetBool(Key+".entered",false);
             Save();ending=false;interrupted=false;caseIndex=-1;phase=-1;SessionState.SetBool(Key,true);EditorApplication.EnterPlaymode();
@@ -284,6 +317,11 @@ namespace KominkaHillside.Editor
             // The last three nodes lie inside a tight gate bend. Attaching there can advance to node 0
             // before observation starts. Use a longer approach/departure so the wrap is actually observed.
             if(report.full)foreach(int count in new[]{1,3,6})foreach(int choice in new[]{2,3})report.cases.Add(new Case{name="gate-wrap-choice-"+choice+"-dogs-"+count,count=count,choice=choice,startNode=choice==2?nodes.Length-8:5,endNode=choice==2?5:nodes.Length-8});
+            if(!string.IsNullOrEmpty(report.selectedWalkCase))
+            {
+                report.cases=report.cases.Where(c=>c.name==report.selectedWalkCase).ToList();
+                if(report.cases.Count!=1)throw new InvalidOperationException("Selected walk case was not generated: "+report.selectedWalkCase);
+            }
         }
         static int Closest(Vector3 target)
         {int best=-1;float distance=float.MaxValue;for(int i=0;i<nodes.Length;i++){var delta=nodes[i]-target;delta.y=0;if(delta.sqrMagnitude<distance){distance=delta.sqrMagnitude;best=i;}}return best;}

@@ -59,12 +59,15 @@ bash scripts/kh-harness-run.sh compile                               # unity-com
 bash scripts/kh-harness-run.sh menu  "Course/89 - Wire and Check Frisbee River Band"   # Edit モードの検査。Editor.log の増分から要約行 (_OK / _FAIL / _PASS 等) を返す
 bash scripts/kh-harness-run.sh proto terrain --shots=T-up04          # 試作シーン。kh-frisbee-harness.cjs start の引数をそのまま渡す
 bash scripts/kh-harness-run.sh walk  "Course/94b - Walk Harness Frisbee Anywhere (M3 water)"   # 本シーン。Tools/KominkaHillside/ 以下のメニュー名
+bash scripts/kh-harness-run.sh segment bridge-190-choice-2-dogs-6    # 通常の歩行改修: 対象の橋を6匹で1ケース
+bash scripts/kh-harness-run.sh segment gate-wrap-choice-3-dogs-6     # 周回の継ぎ目を逆方向で1ケース
+bash scripts/kh-harness-run.sh lap forward --reason "長時間追従で蓄積する位置ずれの再現" # 必要なときだけ、約20分
 ```
 
 - **実行前の照合**: `unity-api.sh check` (接続先) と `isPlaying` / `isCompiling` がともに False。違えば何もせず exit 3。
 - **終わりの判定**: 新しい runId が出て、status が `RUNNING` 以外になり、Play を抜けるまで待つ。walk は Finish の証拠 (`endedUtc`) まで待つ (`EVIDENCE_ERROR` は除く)。前の runId の結果は使わない。walk でメニューを叩いて 60 s 以内に新しい run が出なければ `NO_NEW_RUN`。
 - **結果**: 1 行で返す (runId・status・ケース数・落ちたケースと理由)。proto は要求した mode と report の mode が違えば `MODE_MISMATCH` で FAIL。
-- **終了コード**: 0 = PASS (walk は status に `PASS` を含むとき。`MEASURED` など PASS を含まない終わり方は 1) / 1 = FAIL / 2 = 待ち切れ・メニュー未実行・新しい run が出ない / 3 = 実行前の照合失敗 / 64 = 使い方の誤り。
+- **終了コード**: 0 = 対応するPASS状態、または歩行の `SEGMENTS_OBSERVED` / `LAP_OBSERVED`。予定ケースの完了と、シーン不変・設定とPlayerDataの復旧・終了証拠・実行時エラーなしも必要。`WATER_PASS_PARTIAL` の未実施は引き続き未実施。`MEASURED`・その他のOBSERVEDなど未対応の状態は1 / 1 = 失敗・未完了 / 2 = 待ち切れ・メニュー未実行・新しい run が出ない / 3 = 実行前の照合失敗 / 64 = 使い方の誤り。終了コード0を機能全体・一周・端末の合格に読み替えず、reportのstatusと対象を見る。
 - **連鎖**: 複数の run を続けるときは `set -e` で並べ、目的のケースが落ちたら後続の回帰を回さない。
 - **実行中はコード・シーン・アセット・options.json を書き換えない** (別セッション・サブエージェントも)。Play 中の再コンパイルはフレームを止め (最初の計画が 0.2 s 遅れて別の取り方になる)、途中状態が混ざると run が壊れる。書くなら先に stop して、終了・復旧を確かめてから。
 - Unity を操作するのは 1 人 (統括)。サブエージェントにこのスクリプトを回させない。
@@ -94,6 +97,36 @@ node scripts/kh-plan-probe.cjs course --all     # 94b の狙いごとの行 (情
 - **見ないもの (Play の役目)**: 最初の計画と、与えた位置・時刻・速さでの継続 tick (KeepPlan / KeepFixedT0、しゃがみ開始、離陸の門 = FixedCrouchEnd → JumpGround / AirLanding) までは見る。Motion の slot / gate の取り消し、犬の実際の動き・加速・旋回・フレーム時刻と到着時刻、所有権・同期・Owner の移譲、Animator とクリップ、CanPlay の生きた状態 (リード・Fetch・おやつ・休憩・waterPose)。本シーンの犬は Play では置いてから 3 s ほど待つ (その間に動く) が、プローブは置いた位置のまま。PROBE_MISMATCH が出ないことは Play の合格ではない。出たら Play の前に配置か期待を直す
 
 ## 変更に応じた実行範囲
+
+### 歩行: 通常は区間、連続一周は目的を指定 (2026-10-02)
+
+6匹の連続一周を通常改修・コミットのたびに実行しない。変更の再現ケースと影響範囲を先に選ぶ。フリスビー・洗浄・UI等の変更なら、その機能の部分確認から入り、歩行検査を自動追加しない。
+
+| 変更・目的 | 選ぶ確認 |
+|---|---|
+| 橋の追従・段差・高さ | `segment bridge-190-choice-2-dogs-6` 等、該当する橋・方向・頭数。必要な周辺条件を追加 |
+| 門・周回の継ぎ目 | `segment gate-wrap-choice-2-dogs-6` / `gate-wrap-choice-3-dogs-6` の影響する方向 |
+| 広い経路・追従変更 | まず対象区間。確定時に区間群 (Course/42・45) と必要なら連続一周 |
+| 長時間で蓄積する不具合・公開前の必要な回帰 | `lap forward` または `lap reverse` に `--reason` を付ける。一周で判別する仮説・条件を記録 |
+
+`segment` は既存のケース定義・初期配置・メニュー経由の接続・実Udonヒープの観測・判定をそのまま使い、1ケースだけ選ぶ。名前は `{bridge-190|bridge-490|gate-wrap}-choice-{2|3}-dogs-{1|3|6}` (choice 2=順方向、3=逆方向)。`report.selectedWalkCase` と実際のケース名が一致することをCLIも照合する。長時間の蓄積・全経路・途中参加・実機入力の検査を代替するものではない。
+
+連続一周は通常の `walk` / `menu` コマンドからは起動しない。専用の `lap` は方向・空でない目的を必須とし、目的を `report.executionPurpose` へ保存する。UnityのCourse/53・54を直接選んだ場合も目的入力画面を開き、入力して開始するまでPlayに入らない。目的は「回帰」だけで済ませず、何を一周で確認するかを書く。
+
+部分確認で足りるか不明なら影響を調べて範囲を広げる。区間を通しただけで連続一周の結果を更新しない。失敗は理由・フレーム証拠を回収し、同じ全体を無条件に再実行しない。
+
+導入時の実測 (2026-10-02 JST、Unity 2022.3.22f1 / SDK 3.10.5、当日の作業ツリー):
+
+| 選択ケース | runId (UTC) | 開始〜復旧 | ケース実行 | 結果 |
+|---|---|---:|---:|---|
+| `bridge-190-choice-2-dogs-6` | `20261001-162014` | 48.4 s | 20.4 s | `SEGMENTS_OBSERVED`、CLI exit 0 |
+| `gate-wrap-choice-3-dogs-6` | `20261001-162116` | 61.8 s | 34.5 s | `SEGMENTS_OBSERVED`、CLI exit 0 |
+
+両runとも予定した1ケースのみ、errors 0、sceneFileUnchanged / settingsRestored / playerDataRestored が true。証拠は `Logs/kh-course-walk/<runId>/report.json`。時間はreportのutc〜endedUtcで、CLIの起動・ポーリング待ちや事前コンパイルを含まない。連続一周の実行時間を短縮した値ではなく、局所改修で選ぶ確認範囲の実測。6匹一周はこの変更検証では未実行。Course/53直実行は目的入力画面のみを開き、Playに入らないことも確認した。
+
+CLIの入力拒否・結果照合は `node --test scripts/kh-walk-cli.test.cjs` (7 tests)、C#コンパイルはerrors 0、実装に関わっていないレビュー担当による今回の入口・選択・結果判定の独立レビューは指摘なし。
+
+### フリスビー等の部分実行
 
 **部分実行 → 対象ケースが通ってから、確定前に回帰を 1 回。** 修正のたびに全体を回さない。目的のケースが落ちたら回帰へ進まず、入力・計画・離陸のどこで予測とずれたかを先に調べる (Play の前に Edit モードで決まることは詰める: `vrc-verification` §7)。
 

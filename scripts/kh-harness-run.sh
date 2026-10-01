@@ -4,10 +4,12 @@
 #
 #   bash scripts/kh-harness-run.sh proto <mode> [harness の追加引数]   # 試作シーン (kh-frisbee-harness.cjs)。例: proto terrain --shots=T-up04
 #   bash scripts/kh-harness-run.sh walk  "<Course メニュー名>"          # 本シーン (Logs/kh-course-walk)。例: walk "Course/94b - Walk Harness Frisbee Anywhere (M3 water)"
+#   bash scripts/kh-harness-run.sh segment bridge-190-choice-2-dogs-6    # 通常改修: 橋か門の既存ケースを1件
+#   bash scripts/kh-harness-run.sh lap forward --reason "確認する仮説"    # 約20分の連続一周。通常改修では使わない
 #   bash scripts/kh-harness-run.sh menu  "<メニュー名>"                 # Edit モードの静的検査 (Course/89・93、Frisbee/5 など)。Editor.log の増分から要約行だけ返す
 #   bash scripts/kh-harness-run.sh compile                              # unity-compile.sh --udon (照合失敗は 1 回だけ待って再試行)
 #
-# 終了コード: 0 = PASS (walk は status に PASS を含むとき) / 1 = FAIL・PASS 以外の終了 / 2 = 待ち切れ・新しい run が出ない
+# 終了コード: 0 = PASS または歩行の SEGMENTS_OBSERVED / LAP_OBSERVED (範囲はreportどおり) / 1 = 失敗・未完了 / 2 = 待ち切れ・新しい run が出ない
 #            3 = 実行前の照合失敗 (接続先違い、Play 中、コンパイル中。何もしない) / 64 = 使い方の誤り
 #
 # 守ること (実測 2026-09-28):
@@ -63,6 +65,7 @@ case "$cmd" in
     case "$out" in *'"csErrors":0'*'"udonErrors":0'*) exit 0;; *) exit 1;; esac;;
   menu)
     [ -n "${1:-}" ] || { echo "usage: menu <name>"; exit 64; }
+    case "$1" in Course/53\ -*|Course/54\ -*) echo 'Use lap <forward|reverse> --reason "..." (continuous ~20 minute regression).'; exit 64;; esac
     guard
     pos=$(log_size)
     ok=$(run_menu "$1")
@@ -89,11 +92,11 @@ case "$cmd" in
     done
     [ "$done_" = 1 ] || { echo "proto TIMEOUT: no finished run after 1500 s (latest: $s)"; exit 2; }
     node -e 'const j=require("./Logs/kh-frisbee-harness/latest.json");const want=process.argv[1];const bad=(j.throwResults||[]).filter(x=>!x.ok).map(x=>(x.shot||"?")+": "+(x.terrainNote||x.expectNote||"")).join(" | ");const mm=(j.mode||"default")!==want?" MODE_MISMATCH(want "+want+")":"";console.log("proto",j.mode,j.runId,j.status+mm,j.failure||"",j.throwsRun+"/"+j.throwsPlanned,"ok",j.throwsOk,bad?"FAILS="+bad:"");process.exit(j.status==="PASS"&&!mm?0:1)' "$mode";;
-  walk)
-    [ -n "${1:-}" ] || { echo "usage: walk <Course menu>"; exit 64; }
+  walk|segment|lap)
+    request=$(node scripts/kh-walk-cli.cjs request "$cmd" "$@") || exit 64
     guard
     prev=$(node -e 'try{console.log(require("./Logs/kh-course-walk/latest.json").runId)}catch(e){console.log("")}')
-    ok=$(run_menu "$1")
+    ok=$($API execute "$request" | result_of)
     [ "$ok" = "True" ] || { echo "walk NOT_EXECUTED ($1): ExecuteMenuItem=$ok"; exit 2; }
     # latest.json は開始時に RUNNING で書かれ、End で最終 status、Play を抜けた後の Finish で証拠 (endedUtc 等) が足される
     done_=0; t=0
@@ -108,6 +111,6 @@ case "$cmd" in
       done_=1; break
     done
     [ "$done_" = 1 ] || { echo "walk TIMEOUT: no finished run after 2500 s (latest: $s)"; exit 2; }
-    node -e 'const j=require("./Logs/kh-course-walk/latest.json");const c=(j.cases||[]);const nr=c.filter(x=>x.status==="NOT_RUN");const f=c.filter(x=>x.status!=="PASS"&&x.status!=="NOT_RUN").map(x=>x.name+": "+x.status+" "+(x.reason||"").slice(0,160)).join(" | ");console.log("walk",j.runId,j.status,(j.reason||"").slice(0,120),"cases",c.length,"pass",c.filter(x=>x.status==="PASS").length,"notRun",nr.length,"sceneUnchanged",j.sceneFileUnchanged,nr.length?"NOT_RUN="+nr.map(x=>x.name).join(","):"",f?"FAILS="+f:"");process.exit(/PASS/.test(j.status)?0:1)';;
-  *) echo "usage: kh-harness-run.sh compile | menu <name> | proto <mode> [args] | walk <menu>"; exit 64;;
+    node scripts/kh-walk-cli.cjs result "$cmd" "$@";;
+  *) echo 'usage: kh-harness-run.sh compile | menu <name> | proto <mode> [args] | walk <menu> | segment <case> | lap <forward|reverse> --reason "..."'; exit 64;;
 esac
