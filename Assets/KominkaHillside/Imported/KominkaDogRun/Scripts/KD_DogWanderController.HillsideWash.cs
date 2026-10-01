@@ -169,6 +169,22 @@ namespace KominkaDogRun
         /// An inactive station is never a holder (Codex 3: its Update and release paths are stopped).</summary>
         int HeldStationIndex()
         {
+            // IMP-DOG-034 C1-1a: the scan (4 stations x activeInHierarchy + 2 cross-behaviour calls) ran twice per tick (StationTick at
+            // the top, UpdateWashStation in the leash / wash branch; WaterRequester a third time). It only reads synced station state,
+            // which nothing in this tick changes except our own _ReleaseDog (WashErrandTick invalidates after it), so inside this dog's
+            // own tick the first answer is reused. Invalidated at the top of UpdateTick. Outside the tick (WashHeld read by other
+            // behaviours) it scans as before.
+            if (_inTick && _heldStationMemoFrame == Time.frameCount) return _heldStationMemo;
+            int found = HeldStationIndexScan();
+            if (_inTick) { _heldStationMemo = found; _heldStationMemoFrame = Time.frameCount; }
+            return found;
+        }
+
+        private int _heldStationMemoFrame = -1;   // IMP-DOG-034 C1-1a
+        private int _heldStationMemo = -1;
+
+        int HeldStationIndexScan()
+        {
             if (washCalls == null || dogIndex < 0) return -1;
             int best = -1, bestMs = 0, bestIdx = 0;
             for (int i = 0; i < washCalls.Length; i++)
@@ -361,6 +377,7 @@ namespace KominkaDogRun
             {
                 if (wash != null && wash._WashHold()) wash._ReleaseHold();
                 if (_stationIdx >= 0 && washCalls[_stationIdx] != null) washCalls[_stationIdx]._ReleaseDog(dogIndex);
+                _heldStationMemoFrame = -1;   // IMP-DOG-034 C1-1a: the station Owner's _ReleaseDog clears heldDog right here
             }
             _washErrandPrev = now;
             if (wash != null) WashCleanTick();

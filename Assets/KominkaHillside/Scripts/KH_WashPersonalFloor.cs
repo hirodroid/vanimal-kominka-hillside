@@ -69,6 +69,9 @@ namespace KominkaHillside
 
         void Update()
         {
+            // IMP-DOG-034 C1-misc: idle check before LocalPlayer / GetPosition. Unchanged behaviour: with _steps == 0 the leave
+            // check below does nothing and target == 0, so this is exactly the later "idle" return (both paths just return).
+            if (_steps <= 0 && !_on && _height <= 0f) return;
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp)) return;
             Vector3 feet = lp.GetPosition();

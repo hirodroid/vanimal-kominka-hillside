@@ -189,10 +189,152 @@ namespace KominkaDogRun
         // owns this dog's root and then calls this local method on every client.
         public void _InviteBark() { Bark(); }
 
+        // ---- IMP-DOG-034 C1-1c: static data the leash reads every frame, cached on the attach edge (LeashStaticCache) ----
+        // KH_LeashManager.route / stopovers / leashLength / inviteAfter / inviteInterval / inviteLimit are scene wiring and tuning written
+        // by Build in the editor (KH_DogWalkingEditor); nothing writes them at runtime (harnesses included: they set walkers / hands
+        // only). The stopover spots are scene Transforms under KH_Stopovers, never moved at runtime. Re-read on every attach edge, so
+        // the only difference from the per-frame reads would be an Inspector edit during Play, which applies from the next leash.
+        private KominkaHillside.KH_WalkRoute _leashRoute;
+        private KominkaHillside.KH_WalkStopovers _spotsRef;
+        private float _leashLen = 3f, _inviteAfterC = 8f, _inviteIntervalC = 14f;
+        private int _inviteLimitC = 3;
+        private int _spotCount;
+        private Vector3[] _spotPos, _spotLook;
+        private int[] _spotKind;
+        // ---- IMP-DOG-034 C1-1b: route data keyed by the synced destination choice ----
+        const int DestCacheNone = -1000000;
+        private int _destCacheChoice = DestCacheNone;   // nothing cached (LeashStaticCache resets it)
+        private int _destCacheNode = -1;
+        private bool _destCacheLoop;
+        private Vector3 _destCachePos;
+        private float _destCacheRadius;
+
+        private void LeashStaticCache()
+        {
+            _leashRoute = hillsideLeashes.route;
+            _leashLen = hillsideLeashes.leashLength;
+            _inviteAfterC = hillsideLeashes.inviteAfter;
+            _inviteIntervalC = hillsideLeashes.inviteInterval;
+            _inviteLimitC = hillsideLeashes.inviteLimit;
+            KominkaHillside.KH_WalkStopovers s = hillsideLeashes.stopovers;
+            _spotsRef = s;
+            int n = s == null ? 0 : s.count;
+            if (n < 0) n = 0;
+            if (_spotPos == null || _spotPos.Length != n) { _spotPos = new Vector3[n]; _spotLook = new Vector3[n]; _spotKind = new int[n]; }
+            for (int k = 0; k < n; k++) { _spotPos[k] = s._Position(k); _spotLook[k] = s._LookTarget(k); _spotKind[k] = s._Kind(k); }
+            _spotCount = n;
+            _destCacheChoice = DestCacheNone;
+        }
+
+        /// <summary>The same values as hillsideLeashes._DestinationNode(dogIndex), route._LoopDirection(choice) and route._Position /
+        /// _Radius of that node, for this routeChoice (= destinations[dogIndex] this frame).</summary>
+        private void LeashDestCache(int routeChoice, KominkaHillside.KH_WalkRoute route)
+        {
+            _destCacheChoice = routeChoice;
+            _destCacheNode = hillsideLeashes._DestinationNode(dogIndex);
+            _destCacheLoop = route != null && route._LoopDirection(routeChoice) != 0;
+            if (_destCacheNode >= 0 && route != null)
+            { _destCachePos = route._Position(_destCacheNode); _destCacheRadius = route._Radius(_destCacheNode); }
+        }
+
+        // ---- IMP-DOG-034 C1-3: the standing fast path (walk.md S-1) ----
+        // A leashed dog the Owner has settled standing beside / ahead of a still holder (LeashWait at the leash end, LeashRest, or
+        // FollowHand that ended standing) makes the full decision at 5 Hz (StandDecisionPeriod, phased by dogIndex). The frames in
+        // between (LeashStandFrame) keep the per-frame work of that decision: the holder's pace (TrackHolderSpeed, so "started to walk"
+        // is seen on its frame), LeashPose's stillness clock (yaw rate / _stoppedSince), the pose flags it raised, the one-frame gaze +
+        // tail injection to the pet controller (sent every frame with the holder's current head, as LeashPose does), and the legs the
+        // branch used (Coast, plus FaceTowards(holder) for LeashWait). They leave for a full decision on the same frame when anything
+        // that decision watches per frame changes: owner / leash / holder, Fetch or the disc taking the Animator, a wash hold or
+        // satisfied sign, a wash station, the travel ticket, any water state, a stopover in hand, the holder tier rising, the holder's
+        // body moving StandHolderMove from where the decision saw it, a yaw rate above PoseYawRateMax, or the 0.5 s "settled" mark.
+        // Bounded difference: what the decision derives from the hand only (Return at 1.25x leash, invite / rest timers, the look-at
+        // angle, FollowHand re-targeting, the 1 Hz SampleHolder phase) is seen up to StandDecisionPeriod late while the body stands.
+        const int FastLegCoast = 1, FastLegCoastFace = 2;
+        const float StandDecisionPeriod = 0.2f;
+        const float StandHolderMove = 0.15f;   // m, horizontal
+        private int _fastLeg;                  // set by the branch the full decision ended in (0 = none)
+        private bool _standFast;               // the last full decision armed the fast path
+        private float _standDecideAt;          // next full decision
+        private VRCPlayerApi _standHolder;
+        private Vector3 _standHolderAt;
+        private bool _standLook, _standLie, _standSit, _standEat, _standGaze, _standSettled;
+        private int _holderSpeedFrame = -1;
+        private int _standFastFrames;          // harness read-out: frames served by LeashStandFrame
+
+        /// <summary>After a full Owner decision that returned true: may the next frames take the fast path?</summary>
+        private void LeashStandArm(bool chained)
+        {
+            if (_fastLeg == 0 || !_dogOwner || !_wasDogOwner || !_wasLeashed || _leashYielded || _speed != 0f || HolderMoving()) return;
+            if (leashMode != LeashWait && leashMode != LeashRest && leashMode != LeashFree && leashMode != LeashArrived) return;
+            if (pausing || stopoverIndex >= 0 || _stopoverRolledFor >= 0 || _stopoverPending >= 0) return;
+            if (_washLeashStop || _washActive || _stationIdx >= 0 || _activityBusy) return;
+            if (_waterLeashVeto || waterState != WaterOff || _waterSwimming || _swimYValid) return;
+            if (_wlFrame != Time.frameCount || !Utilities.IsValid(_standHolder)) return;
+            _standFast = true;
+            // Six dogs that stop on the same frame decide on six different frames from then on
+            _standDecideAt = Time.time + (chained ? StandDecisionPeriod : StandDecisionPeriod * (dogIndex + 1) / 6f);
+        }
+
+        /// <summary>One frame between two full decisions. False = something changed: run the full decision on this frame (nothing
+        /// that it does twice has been done here, except TrackHolderSpeed, which it then skips for this frame).</summary>
+        private bool LeashStandFrame()
+        {
+            float now = Time.time;
+            if (now >= _standDecideAt || !_dogOwner || !_wasDogOwner || _waterLeashVeto || _leashYielded) return false;
+            if (_wlFrame != Time.frameCount || !_wlLeashed || _wlHolder != _holderTracked) return false;
+            if (_stationIdx >= 0 || waterState != WaterOff || _waterSwimming || _swimYValid || _speed != 0f) return false;
+            if (pausing || stopoverIndex >= 0 || _stopoverRolledFor >= 0 || _stopoverPending >= 0) return false;
+            if (wash != null && (wash._WashHold() || WashSatisfyRunning())) return false;
+            if (TravelPending()) return false;      // memo of this tick (WashErrandTick asked already)
+            if (AnimatorYielded()) return false;    // Fetch / the disc took the root: the edge is handled by the full decision
+            if (!Utilities.IsValid(_standHolder)) return false;
+            Vector3 holderPos = _standHolder.GetPosition();
+            TrackHolderSpeed(holderPos);            // every frame, as the full decision does
+            if (HolderMoving()) return false;
+            Vector3 moved = holderPos - _standHolderAt; moved.y = 0f;
+            if (moved.sqrMagnitude > StandHolderMove * StandHolderMove) return false;
+            // LeashPose's stillness bookkeeping with stopped == true (_speed is 0)
+            float yaw = dogRoot.eulerAngles.y;
+            float dt = Dt();
+            float yawRate = dt > 0.0001f ? Mathf.Abs(Mathf.DeltaAngle(_prevYaw, yaw)) / dt : 0f;
+            if (yawRate > PoseYawRateMax) return false;   // LeashPose would reset _stoppedSince: let it
+            if (!_standSettled && _stoppedSince >= 0f && now - _stoppedSince >= PoseStoppedFor) return false;   // the pose may change now
+            _prevYaw = yaw;
+            if (_stoppedSince < 0f) _stoppedSince = now;
+            // What UpdateHillsideLeash does every frame before its branches, then the pose and the legs of the last decision
+            _pauseEndedThisFrame = false;
+            _wantSleep = false; _paused = false;
+            _lastBusyTime = now;
+            _look = _standLook; _wantLieDown = _standLie; _wantSit = _standSit; _eatPose = _standEat;
+            if (_standGaze && petController != null)
+            {
+                petController._SetGaze(_standHolder.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position, 0f);
+                petController._SetUrge(0.5f);
+            }
+            Coast();
+            if (_fastLeg == FastLegCoastFace && _speed <= stopSpeedThreshold) FaceTowards(holderPos);
+            _standFastFrames++;
+            return true;
+        }
+
+        /// <summary>IMP-DOG-034 C1-3: the standing fast path in front of the full leash decision (see LeashStandFrame).</summary>
         private bool UpdateHillsideLeash()
         {
+            if (_standFast && LeashStandFrame()) return true;
+            bool chained = _standFast;   // the previous full decision armed the fast path (keeps the 0.2 s rhythm)
+            _standFast = false; _fastLeg = 0; _standGaze = false;
+            if (!UpdateHillsideLeashFull()) return false;
+            LeashStandArm(chained);
+            return true;
+        }
+
+        private bool UpdateHillsideLeashFull()
+        {
             if (hillsideLeashes == null || dogRoot == null) return false;
-            if (!hillsideLeashes._IsLeashed(dogIndex))
+            // IMP-DOG-034 C1-1e: the Owner's WaterTick read _IsLeashed / walkers a moment ago in this tick (nothing in between writes
+            // them: its only writer, _RequestWaterRelease, invalidates _wlFrame and runs only with the water veto, which skips this)
+            bool wlNow = _wlFrame == Time.frameCount;
+            if (!(wlNow ? _wlLeashed : hillsideLeashes._IsLeashed(dogIndex)))
             {
                 // Unleashing also gives the run clip back its normal playback speed: off the leash the dog
                 // never exceeds runSpeed, and Fetch may take over before the next wander frame (Codex D1).
@@ -200,11 +342,13 @@ namespace KominkaDogRun
                     ResetPauseAndPoseState(); leashMode = LeashFree; ResetHolderSpeed(); ReleaseAnimatorSpeed(); }
                 return false;
             }
+            int walkerId = wlNow ? _wlHolder : hillsideLeashes.walkers[dogIndex];   // IMP-DOG-034 C1-1e
             if (!_wasLeashed)
             {
+                LeashStaticCache();   // IMP-DOG-034 C1-1c: before anything below reads the cached route / spots / tuning
                 _leashAnimationDirty = true; _routeNext = -1; _routeDest = -1; _inviteCount = 0; _nextInviteAt = 0f;
                 _holderMovedAt = Time.time; _nextHolderSample = 0f; _holderOffTrail = false; _arrived = false; leashMode = LeashWalk;
-                ResetHolderSpeed(); _holderTracked = hillsideLeashes.walkers[dogIndex]; _leashYielded = false;
+                ResetHolderSpeed(); _holderTracked = walkerId; _leashYielded = false;
                 ResetPauseAndPoseState();
             }
             _wasLeashed = true;
@@ -225,20 +369,24 @@ namespace KominkaDogRun
             _pauseEndedThisFrame = false;
             _wantSleep = false; _paused = false;
             _lastBusyTime = Time.time;
-            VRCPlayerApi holder = VRCPlayerApi.GetPlayerById(hillsideLeashes.walkers[dogIndex]);
+            VRCPlayerApi holder = VRCPlayerApi.GetPlayerById(walkerId);
             if (!Utilities.IsValid(holder)) { if (_dogOwner) _speed = 0f; ApplyMoveAnim(); return true; }
 
             Vector3 handPos = hillsideLeashes._HandPosition(holder, hillsideLeashes.hands[dogIndex]);
             Vector3 holderPos = holder.GetPosition();
+            _standHolder = holder; _standHolderAt = holderPos;   // IMP-DOG-034 C1-3
             // The pace comes from the body, not the hand: a hand waved beside a standing player is not walking.
             if (_dogOwner)
             {
-                int holderId = hillsideLeashes.walkers[dogIndex];
+                int holderId = walkerId;
                 // A client that has just taken the dog over did not make the decision that is in progress
                 // and has no history behind it, so it starts the walk from scratch (Codex D1).
-                if (!_wasDogOwner || holderId != _holderTracked)
+                bool fresh = !_wasDogOwner || holderId != _holderTracked;
+                if (fresh)
                 { _holderTracked = holderId; _routeNext = -1; _routeChoice = -1; _routeResume = -1; ResetHolderSpeed(); ResetPauseAndPoseState(); }
-                TrackHolderSpeed(holderPos);
+                // IMP-DOG-034 C1-3: a fast frame that left after tracking this frame already took this frame's sample (same holder,
+                // same position); tracking twice would integrate one frame twice
+                if (fresh || _holderSpeedFrame != Time.frameCount) TrackHolderSpeed(holderPos);
             }
             // **手放した側も畳む** (Codex D)。ローカルの滞在状態が残ったままだと、この画面では
             // その犬がいつまでも「立ち寄り中」に見え、同じ人の他の犬が場所を取れなくなる
@@ -249,11 +397,15 @@ namespace KominkaDogRun
             // Is the hand pulling away from the dog this frame? (the detour reads it to know when to look up)
             bool handOpening = handDist > _handDistPrev;
             _handDistPrev = handDist;
-            float leash = hillsideLeashes.leashLength;
-            int destNode = hillsideLeashes._DestinationNode(dogIndex);
-            KominkaHillside.KH_WalkRoute route = hillsideLeashes.route;
-            int routeChoice = hillsideLeashes.destinations[dogIndex];
-            bool loopWalk = route != null && route._LoopDirection(routeChoice) != 0;
+            float leash = _leashLen;                                     // IMP-DOG-034 C1-1c: cached on the attach edge
+            KominkaHillside.KH_WalkRoute route = _leashRoute;            // IMP-DOG-034 C1-1c: cached on the attach edge
+            int routeChoice = hillsideLeashes.destinations[dogIndex];    // synced: still read every frame
+            // IMP-DOG-034 C1-1b: the destination node, the loop direction and the destination's position / radius are static route data
+            // given routeChoice (KH_WalkRoute is written by Build only), so they are re-read only when routeChoice changes (or on the
+            // attach edge, LeashStaticCache). Same values as the per-frame reads.
+            if (routeChoice != _destCacheChoice) LeashDestCache(routeChoice, route);
+            int destNode = _destCacheNode;
+            bool loopWalk = _destCacheLoop;
             if (destNode != _routeDest || routeChoice != _routeChoice)
             {
                 // A new destination is a fresh start: leave rest/invite state and the stillness clock behind.
@@ -265,15 +417,15 @@ namespace KominkaDogRun
             }
             if (destNode >= 0 && !loopWalk)
             {
-                float destDist = Horizontal(dogRoot.position, route._Position(destNode));
-                if (destDist < route._Radius(destNode)) _arrived = true;
-                else if (Horizontal(holderPos, route._Position(destNode)) > route._Radius(destNode) + 6f) _arrived = false;
+                float destDist = Horizontal(dogRoot.position, _destCachePos);
+                if (destDist < _destCacheRadius) _arrived = true;
+                else if (Horizontal(holderPos, _destCachePos) > _destCacheRadius + 6f) _arrived = false;
             }
             else _arrived = false;
 
             SampleHolder(holderPos, loopWalk ? -1 : destNode, route);
             float stillFor = Time.time - _holderMovedAt;
-            float restAfter = (_arrived ? 20f : hillsideLeashes.inviteAfter + hillsideLeashes.inviteInterval * hillsideLeashes.inviteLimit) + dogIndex * 2f;
+            float restAfter = (_arrived ? 20f : _inviteAfterC + _inviteIntervalC * _inviteLimitC) + dogIndex * 2f;   // IMP-DOG-034 C1-1c
             bool settling = stillFor > restAfter && handDist < 2.2f;
             // IMP-DOG-027: the leashed wash stop (HillsideWash.cs) is decided here, on every client and before LeashPose and the
             // non-Owner return, so every screen picks the same pose (head to the washer, no LieDown / sniff). false whenever
@@ -284,6 +436,9 @@ namespace KominkaDogRun
             if (UpdateWashStation(true)) return true;
             bool washStop = WashLeashStop(holder, handDist, leash);
             LeashPose(holder, toHand, handDist, handPos, route, settling, washStop);
+            // IMP-DOG-034 C1-3: what LeashPose decided this frame (before ApplyMoveAnim folds _wantSit) - a fast frame raises the same
+            _standLook = _look; _standLie = _wantLieDown; _standSit = _wantSit; _standEat = _eatPose;
+            _standSettled = _stoppedSince >= 0f && Time.time - _stoppedSince >= PoseStoppedFor;
             if (!_dogOwner) { ApplyMoveAnim(); return true; }
             // map-and-travel §F.4: the leash owns the root from here (leashed, no water veto - the caller checks it -, Fetch /
             // disc not holding the dog, Owner), so an unfinished swim-height ease must not outlive it. Flags only, no height write.
@@ -348,9 +503,10 @@ namespace KominkaDogRun
             if (washStop) { WashLeashHold(); return true; }
 
             // 2. Holder has stood still for long (or all invitations are spent): settle down beside them until they move.
-            if (stillFor > restAfter || (_inviteCount >= hillsideLeashes.inviteLimit && stillFor > 1f))
+            if (stillFor > restAfter || (_inviteCount >= _inviteLimitC && stillFor > 1f))
             {
                 leashMode = LeashRest;
+                _fastLeg = FastLegCoast;   // IMP-DOG-034 C1-3: once the dog stands, the frames between decisions only Coast
                 if (handDist > 1.8f) LeashGo(handPos - toHand / handDist * 1.0f, walkSpeed, 0.2f); else Coast();
                 return true;
             }
@@ -391,7 +547,7 @@ namespace KominkaDogRun
                     if (Time.time >= _modeUntil)
                     {
                         _inviteCount++; leashInviteEndedAt = Time.time;
-                        _nextInviteAt = Time.time + hillsideLeashes.inviteInterval * (1f + 0.3f * _inviteCount);
+                        _nextInviteAt = Time.time + _inviteIntervalC * (1f + 0.3f * _inviteCount);
                         leashMode = LeashWalk;
                     }
                 }
@@ -400,8 +556,8 @@ namespace KominkaDogRun
             // 足を止めている最中の犬に催促を上書きさせない (Codex U) — 嗅いでいる犬が急に
             // 人を呼びに戻ると、見ている側には「何をしていたのか」が読めない
             else if (leashMode != LeashDetour && leashMode != LeashStopover
-                && stillFor > hillsideLeashes.inviteAfter + dogIndex * 1.3f && handDist > leash * 0.55f && DogAhead(nodePos, toHand)
-                && _inviteCount < hillsideLeashes.inviteLimit && Time.time >= _nextInviteAt && !SiblingInviting())
+                && stillFor > _inviteAfterC + dogIndex * 1.3f && handDist > leash * 0.55f && DogAhead(nodePos, toHand)
+                && _inviteCount < _inviteLimitC && Time.time >= _nextInviteAt && !SiblingInviting())
             {
                 leashMode = LeashInvite; _inviteBarked = false;
                 return true;
@@ -472,9 +628,9 @@ namespace KominkaDogRun
             //     the walk never changes: this is a detour whose point was placed by hand.
             if (leashMode == LeashStopover)
             {
-                KominkaHillside.KH_WalkStopovers spots = hillsideLeashes.stopovers;
-                bool gone = spots == null || stopoverIndex < 0 || stopoverIndex >= spots.count;
-                Vector3 spot = gone ? dogRoot.position : spots._Position(stopoverIndex);
+                // IMP-DOG-034 C1-1c: the spots' data cached on the attach edge (LeashStaticCache), same values as the calls
+                bool gone = _spotsRef == null || stopoverIndex < 0 || stopoverIndex >= _spotCount;
+                Vector3 spot = gone ? dogRoot.position : _spotPos[stopoverIndex];
                 bool atSpot = !gone && (_stopoverUntil > 0f || Horizontal(dogRoot.position, spot) <= StopoverArrive);
                 if (atSpot && _alignUntil <= 0f) { _alignUntil = Time.time + PauseAlignCap; _stopoverArrived++; }
                 if (_eatPose || _wantSit)
@@ -490,7 +646,7 @@ namespace KominkaDogRun
                 {
                     Coast();
                     // 見る先は場所ごとに決まっている (古民家・水場など)。**向き切ってから**ポーズを立てる
-                    Vector3 look = spots._LookTarget(stopoverIndex);
+                    Vector3 look = _spotLook[stopoverIndex];
                     Vector3 want = look - dogRoot.position; want.y = 0f;
                     float off = want.sqrMagnitude <= SniffFaceMinDist * SniffFaceMinDist
                         ? 0f : Vector3.Angle(dogRoot.forward, want);
@@ -499,7 +655,7 @@ namespace KominkaDogRun
                     // 「何を見ているのか」が読めないので、そのときは座らずに切り上げる。
                     // 嗅ぐ場所は鼻先が地面なので、多少ずれていても成立する
                     if (expired && off > PauseAlignGiveUpDeg
-                        && spots._Kind(stopoverIndex) == KominkaHillside.KH_WalkStopovers.KindSit)
+                        && _spotKind[stopoverIndex] == KominkaHillside.KH_WalkStopovers.KindSit)
                     { EndPause("align"); }
                     else if (!(expired || off <= SniffFaceToleranceDeg))
                     { FaceTowardsRate(look, PauseAlignRate); return true; }
@@ -529,6 +685,7 @@ namespace KominkaDogRun
             if (ahead && handDist >= waitAt && !leadHold)
             {
                 leashMode = LeashWait;
+                _fastLeg = FastLegCoastFace;   // IMP-DOG-034 C1-3: the frames between decisions repeat these two lines
                 Coast();
                 if (_speed <= stopSpeedThreshold) FaceTowards(holderPos);
                 return true;
@@ -585,20 +742,20 @@ namespace KominkaDogRun
             bool settled = _stoppedSince >= 0f && Time.time - _stoppedSince >= PoseStoppedFor;
             // 立ち寄り場所の上で止まっているなら、**その場所の種類がポーズを決める** (道からの距離より優先)。
             // モード (leashMode) は見ない — 見ると Owner だけが正しく、他の画面が立ち姿になる
-            KominkaHillside.KH_WalkStopovers spots = hillsideLeashes.stopovers;
-            if (spots != null && settled && handDist >= (_poseSpotActive ? StopoverPoseHandHold : StopoverPoseHandMin))
+            // IMP-DOG-034 C1-1c: the spots' positions / kinds cached on the attach edge (LeashStaticCache), same values as the calls
+            if (_spotsRef != null && settled && handDist >= (_poseSpotActive ? StopoverPoseHandHold : StopoverPoseHandMin))
             {
                 // 一度その場所のポーズに入ったら、少し広い半径まではその場所で測り続ける
                 int found = -1;
-                if (_poseSpotActive && _poseSpotIndex >= 0 && _poseSpotIndex < spots.count
-                    && Horizontal(dogRoot.position, spots._Position(_poseSpotIndex)) <= StopoverPoseHold)
+                if (_poseSpotActive && _poseSpotIndex >= 0 && _poseSpotIndex < _spotCount
+                    && Horizontal(dogRoot.position, _spotPos[_poseSpotIndex]) <= StopoverPoseHold)
                     found = _poseSpotIndex;
                 else
-                    for (int k = 0; k < spots.count; k++)
-                        if (Horizontal(dogRoot.position, spots._Position(k)) <= StopoverPoseRadius) { found = k; break; }
+                    for (int k = 0; k < _spotCount; k++)
+                        if (Horizontal(dogRoot.position, _spotPos[k]) <= StopoverPoseRadius) { found = k; break; }
                 if (found >= 0)
                 {
-                    if (spots._Kind(found) == KominkaHillside.KH_WalkStopovers.KindSit) _wantSit = true;
+                    if (_spotKind[found] == KominkaHillside.KH_WalkStopovers.KindSit) _wantSit = true;
                     else _eatPose = true;
                     _poseSpotActive = true; _poseSpotIndex = found;
                     _poseTrailActive = false;
@@ -624,6 +781,7 @@ namespace KominkaDogRun
             if (handDist < 0.8f || Vector3.Angle(forward, toHand) > 40f) return;
             _look = true;
             if (petController == null) return;
+            _standGaze = true;   // IMP-DOG-034 C1-3: a fast frame re-sends this pair every frame (valid for one frame only)
             petController._SetGaze(holder.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position, 0f);
             petController._SetUrge(0.5f);
         }
@@ -680,15 +838,66 @@ namespace KominkaDogRun
                 _holderMovedAt = Time.time; _inviteCount = 0; _nextInviteAt = 0f; _holderSample = holderPos;
             }
             if (route == null) { _holderOffTrail = true; return; }
-            float trailDist = route._DistanceToTrail(holderPos);
-            bool nearDest = destNode >= 0 && Horizontal(holderPos, route._Position(destNode)) < route._Radius(destNode) + 2f;
-            if (_holderOffTrail) { if (trailDist < hillsideLeashes.trailOnDistance || nearDest) _holderOffTrail = false; }
-            else if (trailDist > hillsideLeashes.trailOffDistance && !nearDest) _holderOffTrail = true;
+            // IMP-DOG-034 C1-1b: destNode is this tick's _destCacheNode (or -1), so its position / radius are the cached ones
+            bool nearDest = destNode >= 0 && Horizontal(holderPos, _destCachePos) < _destCacheRadius + 2f;
+            // IMP-DOG-034 C1-1f: the distance itself is only compared with one threshold, so nearDest goes first (both are pure) and
+            // the comparison is answered from a measured (point, distance) pair when that decides it (HolderTrailCompare)
+            if (_holderOffTrail) { if (nearDest || HolderTrailCompare(route, holderPos, hillsideLeashes.trailOnDistance, true)) _holderOffTrail = false; }
+            else if (!nearDest && HolderTrailCompare(route, holderPos, hillsideLeashes.trailOffDistance, false)) _holderOffTrail = true;
+        }
+
+        // ---- IMP-DOG-034 C1-1f: the holder's distance to the trail, shared by the dogs (SampleHolder, 1 Hz per dog) ----
+        // _DistanceToTrail is the exact horizontal distance to the nearest link (KH_WalkRoute.NearestLink falls back to the global
+        // search), so it moves by at most m when the point moves horizontally by m: from a measured pair (a, d) the true distance at p
+        // is inside [d - m, d + m], m = |p - a| horizontal (the A3 rule). When that interval is on one side of the threshold the
+        // answer is the one a fresh scan would give; otherwise the link scan (≈ 350〜1,500 extern) runs and its pair is published.
+        // Six dogs on one holder asked the same question about the same point six times a second; now the first scan answers the
+        // others whenever it decides their comparison. Any dog's pair is a valid fact about the (static) route, whoever measured it
+        // and whatever holder it was for, so only "same leash manager" (= same route) is checked. 1e6 (no link) is never reused.
+        const float HolderTrailEps = 0.001f;   // float slack on the interval (decides nothing that close to the threshold)
+        // Read by sibling dogs (pack.dogWander). Valid only once holderTrailSet is 1 (0 = nothing measured; an int whose default
+        // is 0 whether or not the scene has serialized these fields yet, so a never-written pair is never trusted)
+        [HideInInspector] public Vector3 holderTrailAt;
+        [HideInInspector] public float holderTrailDist;
+        [HideInInspector] public int holderTrailSet;
+
+        /// <summary>below: trailDist &lt; limit; otherwise trailDist &gt; limit. Same answer as comparing a fresh _DistanceToTrail(p).</summary>
+        private bool HolderTrailCompare(KominkaHillside.KH_WalkRoute route, Vector3 p, float limit, bool below)
+        {
+            int r = holderTrailSet > 0 ? TrailBound(holderTrailAt, holderTrailDist, p, limit, below) : -1;
+            if (r >= 0) return r == 1;
+            if (pack != null)
+            {
+                KD_DogWanderController[] all = pack.dogWander;
+                if (all != null)
+                    for (int i = 0; i < all.Length; i++)
+                    {
+                        KD_DogWanderController other = all[i];
+                        if (other == null || i == dogIndex || other.holderTrailSet <= 0 || other.hillsideLeashes != hillsideLeashes) continue;
+                        r = TrailBound(other.holderTrailAt, other.holderTrailDist, p, limit, below);
+                        if (r >= 0) return r == 1;
+                    }
+            }
+            float d = route._DistanceToTrail(p);
+            holderTrailAt = p; holderTrailDist = d; holderTrailSet = 1;
+            return below ? d < limit : d > limit;
+        }
+
+        /// <summary>1 = decided true, 0 = decided false, -1 = the interval straddles the threshold (scan needed).</summary>
+        private int TrailBound(Vector3 at, float d, Vector3 p, float limit, bool below)
+        {
+            if (d < 0f || d >= 1e5f) return -1;   // 1e6 = no link: not a distance
+            Vector3 moved = p - at; moved.y = 0f;
+            float m = moved.magnitude + HolderTrailEps;
+            if (below) { if (d + m < limit) return 1; if (d - m >= limit) return 0; }
+            else { if (d - m > limit) return 1; if (d + m <= limit) return 0; }
+            return -1;
         }
 
         private void FollowHand(float handDist, float leash, int mode)
         {
             leashMode = mode;
+            _fastLeg = FastLegCoast;   // IMP-DOG-034 C1-3: armed only if the dog ends this decision standing (LeashStandArm)
             // Three tiers around the hand: sprint from outside the leash, run while it is taut, walk on slack.
             float speed = handDist > leash * 1.2f ? hillsideLeashes.sprintSpeed
                 : (handDist > leash * 0.7f ? hillsideLeashes.dashSpeed : walkSpeed);
@@ -710,6 +919,7 @@ namespace KominkaDogRun
         /// for the next second and send every dog off at full speed.</summary>
         private void TrackHolderSpeed(Vector3 holderPos)
         {
+            _holderSpeedFrame = Time.frameCount;   // IMP-DOG-034 C1-3: one sample per frame (fast frame or full decision)
             float dt = Dt();
             if (dt <= 0.0001f) return;
             holderPos.y = 0f;
@@ -866,15 +1076,14 @@ namespace KominkaDogRun
         /// the hand is close, and expires if that never happens).</summary>
         private void UpdateStopoverPass(Vector3 handPos, KominkaHillside.KH_WalkRoute route)
         {
-            KominkaHillside.KH_WalkStopovers spots = hillsideLeashes.stopovers;
-            if (spots == null || route == null) { _stopoverRolledFor = -1; _stopoverPending = -1; return; }
+            if (_spotsRef == null || route == null) { _stopoverRolledFor = -1; _stopoverPending = -1; return; }   // IMP-DOG-034 C1-1c
             if (_stopoverPending >= 0 && Time.time > _stopoverPendingUntil) _stopoverPending = -1;
             // 追うものが無ければ道の向きも要らない。**_TrailDirection はリンク全走査**なので、
             // 何も持っていない大半のフレームでは引かない
             if (_stopoverRolledFor < 0 && _stopoverPending < 0) return;
             Vector3 dir = PassDirection(route, handPos);
-            if (_stopoverRolledFor >= 0 && PassedBy(spots, _stopoverRolledFor, handPos, dir)) _stopoverRolledFor = -1;
-            if (_stopoverPending >= 0 && PassedBy(spots, _stopoverPending, handPos, dir)) _stopoverPending = -1;
+            if (_stopoverRolledFor >= 0 && PassedBy(_stopoverRolledFor, handPos, dir)) _stopoverRolledFor = -1;
+            if (_stopoverPending >= 0 && PassedBy(_stopoverPending, handPos, dir)) _stopoverPending = -1;
         }
 
         /// <summary>The direction the walk is going, at the hand, signed toward the destination through
@@ -892,10 +1101,10 @@ namespace KominkaDogRun
 
         // その場所を手がもう通り過ぎたか (手から 8 m より遠い、または道沿いに 1 m 以上後ろ)。
         // 向きが決まらないとき (dir = zero) は距離だけで見る
-        private bool PassedBy(KominkaHillside.KH_WalkStopovers spots, int k, Vector3 handPos, Vector3 dir)
+        private bool PassedBy(int k, Vector3 handPos, Vector3 dir)   // IMP-DOG-034 C1-1c: cached spots
         {
-            if (k >= spots.count) return true;
-            Vector3 to = spots._Position(k) - handPos; to.y = 0f;
+            if (k >= _spotCount) return true;
+            Vector3 to = _spotPos[k] - handPos; to.y = 0f;
             if (to.magnitude > StopoverForget) return true;
             return dir.sqrMagnitude > 0.0001f && Vector3.Dot(to, dir) <= -StopoverBehind;
         }
@@ -906,8 +1115,7 @@ namespace KominkaDogRun
         /// leash going taut.</summary>
         private bool TryStopover(Vector3 handPos, float leash, KominkaHillside.KH_WalkRoute route)
         {
-            KominkaHillside.KH_WalkStopovers spots = hillsideLeashes.stopovers;
-            if (spots == null || spots.count <= 0 || route == null) return false;
+            if (_spotsRef == null || _spotCount <= 0 || route == null) return false;   // IMP-DOG-034 C1-1c: cached spots
             // IMP-DOG-034 A1: PassDirection (_TrailDirection = リンク全走査 ≈ 650 extern) は、向きを実際に使う所でだけ引く。
             // 以前は先頭で毎フレーム引いてから HolderMoving / クールダウンで捨てていた。PassDirection は route を読むだけの
             // 純関数 (書き込み無し) なので、引く位置を後ろへ移しても戻り値も副作用も変わらない
@@ -915,7 +1123,7 @@ namespace KominkaDogRun
             // (Codex D) — 立ち止まって手を伸ばしてくれた人にこそ、犬は寄って行ってよい
             if (_stopoverPending >= 0)
             {
-                Vector3 pendingSpot = spots._Position(_stopoverPending);
+                Vector3 pendingSpot = _spotPos[_stopoverPending];
                 if (Horizontal(pendingSpot, handPos) > leash * StopoverHandMax) return false;
                 // 待っている間に引き返していることがある。持ち越しを使う直前にもう一度前後を見る
                 Vector3 pendingDir = PassDirection(route, handPos);
@@ -923,27 +1131,31 @@ namespace KominkaDogRun
                 if (pendingDir.sqrMagnitude > 0.0001f && Vector3.Dot(toPending, pendingDir) <= -StopoverBehind)
                 { _stopoverPending = -1; return false; }
                 if (SiblingAtStopover(_stopoverPending) || SiblingPausedRecently()) return false;
-                return EnterStopover(spots, _stopoverPending);
+                return EnterStopover(_stopoverPending);
             }
             // ここから下は新しい抽選。**歩いている人の前を通るときだけ引く**
             if (!HolderMoving()) return false;
             // 犬ごとのクールダウンと、同じ人の犬全体の静穏間隔 (寄り道と共通)
-            if (Time.time - _lastStopoverAt < StopoverCooldown || SiblingPausedRecently()) return false;
+            if (Time.time - _lastStopoverAt < StopoverCooldown) return false;
             // IMP-DOG-034 A1: 手から StopoverRange 以内に場所が 1 つも無ければ、下の走査は向きに関係なく best = -1 で
             // false を返す (副作用無し)。同じ距離の判定を先に安く回し、道の大半ではリンク走査を引かない
             bool anyInRange = false;
-            for (int k = 0; k < spots.count; k++)
+            for (int k = 0; k < _spotCount; k++)
             {
-                Vector3 near = spots._Position(k) - handPos; near.y = 0f;
+                Vector3 near = _spotPos[k] - handPos; near.y = 0f;
                 if (!(near.magnitude > StopoverRange)) { anyInRange = true; break; }
             }
             if (!anyInRange) return false;
+            // IMP-DOG-034 C1-1g: the pack-wide quiet check (6 siblings x ~6 cross-behaviour reads ≈ 100 extern) moved behind the cheap
+            // range test. SiblingPausedRecently and the range test only read (no writes), and both lead to the same `return false`,
+            // so the order does not change the result: it now runs only when a spot is within StopoverRange of the hand
+            if (SiblingPausedRecently()) return false;
             Vector3 dir = PassDirection(route, handPos);   // IMP-DOG-034 A1: ここで初めて使う
             if (dir.sqrMagnitude < 0.0001f) return false;   // 前後が決まらないなら「これから通る」も決まらない
             int best = -1; float bestDist = 1e6f;
-            for (int k = 0; k < spots.count; k++)
+            for (int k = 0; k < _spotCount; k++)
             {
-                Vector3 to = spots._Position(k) - handPos; to.y = 0f;
+                Vector3 to = _spotPos[k] - handPos; to.y = 0f;
                 float dist = to.magnitude;
                 // 手から 6 m 以内で、道沿いに 1 m 以上は後ろへ下がっていない = これから通る場所
                 if (dist > StopoverRange || Vector3.Dot(to, dir) <= -StopoverBehind) continue;
@@ -955,16 +1167,16 @@ namespace KominkaDogRun
             _stopoverRolls++;
             if (_stopoverRolls % 10 == 0) LogStopoverFunnel();
             if (Rand01((int)Time.time, 4271) >= hillsideLeashes.stopoverChance) return false;
-            if (Horizontal(spots._Position(best), handPos) > leash * StopoverHandMax)
+            if (Horizontal(_spotPos[best], handPos) > leash * StopoverHandMax)
             {
                 // 当たったが手はまだ遠い。持ち越して、近づいた瞬間に入る
                 _stopoverPending = best; _stopoverPendingUntil = Time.time + StopoverPendingCap;
                 return false;
             }
-            return EnterStopover(spots, best);
+            return EnterStopover(best);
         }
 
-        private bool EnterStopover(KominkaHillside.KH_WalkStopovers spots, int k)
+        private bool EnterStopover(int k)   // IMP-DOG-034 C1-1c: cached spots
         {
             _stopoverOk++; _stopoverPending = -1;
             BeginPause(LeashStopover);
@@ -972,7 +1184,7 @@ namespace KominkaDogRun
             _stopoverEnteredAt = Time.time; _stopoverModeUntil = Time.time + StopoverModeCap;
             _stopoverUntil = 0f; _stopoverExtended = false;
             _leashCorners = null; _nextLeashPath = 0f;
-            Debug.Log("[KH_Leash] dog" + dogIndex + " stopover k=" + k + " kind=" + spots._Kind(k));
+            Debug.Log("[KH_Leash] dog" + dogIndex + " stopover k=" + k + " kind=" + _spotKind[k]);
             return true;
         }
 
@@ -1134,7 +1346,7 @@ namespace KominkaDogRun
                 if (i == dogIndex || pack.dogWander[i] == null) continue;
                 if (hillsideLeashes.walkers[i] != hillsideLeashes.walkers[dogIndex]) continue;
                 if (pack.dogWander[i].leashMode == LeashInvite) return true;
-                if (Time.time - pack.dogWander[i].leashInviteEndedAt < hillsideLeashes.inviteInterval * 0.5f) return true; // quiet gap for the holder
+                if (Time.time - pack.dogWander[i].leashInviteEndedAt < _inviteIntervalC * 0.5f) return true; // quiet gap for the holder (IMP-DOG-034 C1-1c)
             }
             return false;
         }

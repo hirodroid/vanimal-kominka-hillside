@@ -215,6 +215,11 @@ namespace KominkaDogRun
             _prevPos = dogRoot.position;
             // IMP-DOG-034 A7: measure only when asked for or when an instrument is wired (see measureDrift)
             _measuring = measureDrift || debugText != null || logToConsole;
+            // IMP-DOG-034 C1-misc: not measuring = Update would only return, so stop it entirely (removes the per-frame
+            // entry; KH_PerfProbe confirmed a disabled UdonBehaviour gets no Update). Unchanged behaviour: no runtime
+            // Udon reads this behaviour, and Owner never sends when not measuring. OnDeserialization (if still delivered)
+            // only feeds the instrument counters. Instruments wired before Play (Stop Anchor/4) set _measuring true here.
+            if (!_measuring) { enabled = false; return; }
 
             // **これが出ないなら launch option が効いていない。**
             // ワールド読み込み直後に必ず 1 行出るので、セッションを始める前の自己診断になる

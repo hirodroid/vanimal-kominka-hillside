@@ -37,13 +37,18 @@ namespace KominkaDogRun
         private bool[] _waterTouched, _waterWentShown;
         private int[] _waterPrevPose;
         private float _nextWentPoll;
+        private bool _waterWentDone;   // IMP-DOG-034 C1-misc: every dog's "went" note shown (once per stay, never re-armed)
 
         private void PollWaterWent()
         {
+            // IMP-DOG-034 C1-misc: once every dog's note has been shown the loop can no longer show anything (it only updates
+            // _waterTouched / _waterPrevPose, which are read solely for dogs whose note is still unshown), so stop polling.
+            if (_waterWentDone) return;
             if (manager == null || manager.walkers == null || manager.fetchers == null || Time.time < _nextWentPoll) return;
             _nextWentPoll = Time.time + 0.25f;
             int n = manager.walkers.Length;
             if (_waterTouched == null || _waterTouched.Length != n) { _waterTouched = new bool[n]; _waterWentShown = new bool[n]; _waterPrevPose = new int[n]; }
+            int shown = 0;
             for (int i = 0; i < n; i++)
             {
                 if (manager._IsMine(i)) _waterTouched[i] = true;
@@ -56,7 +61,9 @@ namespace KominkaDogRun
                     Redraw();
                 }
                 _waterPrevPose[i] = pose;
+                if (_waterWentShown[i]) shown++;
             }
+            if (n > 0 && shown == n) _waterWentDone = true;   // IMP-DOG-034 C1-misc
         }
 
         private void PollWaterRelease()

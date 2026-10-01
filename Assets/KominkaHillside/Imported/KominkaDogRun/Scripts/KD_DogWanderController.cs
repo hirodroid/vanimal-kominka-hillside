@@ -1314,6 +1314,7 @@ namespace KominkaDogRun
             _activityBusy = false; // かけっこ・じゃれも同じ作法 (UpdateActivity の拘束する枝だけが立てる)
             _washActive = false;   // IMP-DOG-025: 洗われ中も同じ作法 (UpdateHillsideWash だけが立てる。HillsideWash.cs)
             _selfAvailableValid = false; _wetMemoValid = false;   // IMP-DOG-034 A5: tick 内の使い回しはこの tick の分だけ (Performance.cs / HillsideWater.cs)
+            _heldStationMemoFrame = -1; _travelMemoFrame = -1;    // IMP-DOG-034 C1-1a / C1-1d: 同上 (HillsideWash.cs / HillsideTravel.cs)
             WashErrandTick();     // IMP-DOG-027: 集合・呼び戻し・ワープの受理のエッジで洗浄の保持を解く (wash が null なら即 return)
 
             // ---- IMP-NET-005: Owner 権威。**ルートを書くのは Owner だけ** ----
@@ -1809,8 +1810,11 @@ namespace KominkaDogRun
             if (dogAnimator != null)
             {
                 _wasSleep = _wantSleep;
-                int pose = CompanionPose;
-                KD_SleepSlot slot = sleepBoard == null ? null : sleepBoard.SlotOf(dogIndex);
+                // IMP-DOG-034 C1-4: CompanionPose and the line below looked the same slot up twice (sleepBoard.SlotOf = slots[dogIndex],
+                // a static array wired by Build); the reference is now taken once and kept (LateSleepSlot). PoseId is still read every
+                // frame (it can be non-zero with no live caller, so "nobody called" cannot skip it). Same values as before.
+                KD_SleepSlot slot = LateSleepSlot();
+                int pose = slot == null ? 0 : slot.PoseId;
                 bool stretch = IsCompanionReady && slot != null && slot.StretchActive;
                 int animation = pose == 3 ? 4 : pose == 4 ? 5 : pose;
                 if (pose == 2 && slot != null && slot.PawHeld) animation = 3;
@@ -1833,6 +1837,16 @@ namespace KominkaDogRun
             float sp = _speed;
             if (fetchController != null && fetchController.DebugSpeed > sp)
                 sp = fetchController.DebugSpeed;
+
+            // IMP-DOG-034 C1-4: the breath is silent and stays silent this frame. _breathSilent records that the last pass ended with
+            // everything at rest (level 0, run accumulator 0, no clip held, pitch 1 and volume 0 written, the source seen stopped),
+            // and nothing else plays breathSource (playOnAwake off, only this block calls Play). With no run (sp below
+            // breathRunSpeed), no run pant left, not asleep beside someone (IsCompanionReady false) and not _paused (no idle pant),
+            // the code below would compute target 0, keep every value and write nothing; only its reads are skipped
+            // (_breathLevel / _writtenBreathVolume are checked again: a harness may set the level and call _ApplyVoiceVolume directly)
+            if (_breathSilent && sp < breathRunSpeed && Time.time >= _breathUntil && !IsCompanionReady && !_paused
+                && _breathLevel == 0f && _writtenBreathVolume == 0f) return;
+            _breathSilent = false;
 
             if (sp >= breathRunSpeed)
             {
@@ -1919,10 +1933,30 @@ namespace KominkaDogRun
                     }
                 }
             }
-            else if (breathSource.isPlaying && _breathLevel <= 0.001f)
+            else
             {
-                breathSource.Stop();
+                bool playing = breathSource.isPlaying;
+                if (playing && _breathLevel <= 0.001f)
+                {
+                    breathSource.Stop();
+                    playing = false;
+                }
+                // IMP-DOG-034 C1-4: at rest -> the next frames may skip this block (see the gate above)
+                _breathSilent = !playing && _breathLevel == 0f && _breathRunAccum == 0f && _pantClip == null
+                    && _breathPitchWritten == 1f && _breathVolumeValid && _writtenBreathVolume == 0f && !runPant;
             }
+        }
+
+        // ---- IMP-DOG-034 C1-4 ----
+        private bool _breathSilent;            // the breath block ended at rest (cleared by OnEnable / ResetPerformanceOutputs)
+        private KD_SleepSlot _lateSleepSlot;   // sleepBoard.SlotOf(dogIndex): slots is a static array, so the reference never changes
+
+        KD_SleepSlot LateSleepSlot()
+        {
+            if (_lateSleepSlot != null) return _lateSleepSlot;
+            if (sleepBoard == null) return null;
+            _lateSleepSlot = sleepBoard.SlotOf(dogIndex);   // null (unwired / out of range) is asked again next frame, as before
+            return _lateSleepSlot;
         }
 
         // ローカルな音色の抽選だけ。動きの乱数・Owner状態には関与しない。

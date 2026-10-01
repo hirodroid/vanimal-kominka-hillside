@@ -180,6 +180,7 @@ namespace KominkaDogRun
         {
             _companionAnimationValid = false;
             _breathVolumeValid = false;
+            _breathSilent = false;   // IMP-DOG-034 C1-4: the volume must be written again, so the breath block runs in full
         }
 
         void ApplyCompanionAnimation(bool sleep, bool ready, int pose, float time)

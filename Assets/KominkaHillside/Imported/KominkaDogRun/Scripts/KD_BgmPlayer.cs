@@ -111,8 +111,18 @@ namespace KominkaDogRun
         {
             if (source == null) return;
             float roomGain = sleepAudio != null ? sleepAudio.VolumeFor(_userVolume, sleepAudio.BedroomBgmVolume) : _userVolume;
-            source.volume = baseVolume * _duck * roomGain;
-            source.mute = !_userEnabled || roomGain <= 0f;
+            float vol = baseVolume * _duck * roomGain;
+            bool mute = !_userEnabled || roomGain <= 0f;
+            // IMP-DOG-034 C1-misc: write the native AudioSource only when the value changes (first Apply always writes).
+            // Unchanged behaviour: this behaviour is the only writer of `source` (no other Udon touches it), so the
+            // AudioSource already holds the cached value whenever the computed one is equal.
+            if (!_written || vol != _lastVolume) { source.volume = vol; _lastVolume = vol; }
+            if (!_written || mute != _lastMute) { source.mute = mute; _lastMute = mute; }
+            _written = true;
         }
+
+        private bool _written;     // IMP-DOG-034 C1-misc: false until the first Apply wrote both values
+        private float _lastVolume;
+        private bool _lastMute;
     }
 }

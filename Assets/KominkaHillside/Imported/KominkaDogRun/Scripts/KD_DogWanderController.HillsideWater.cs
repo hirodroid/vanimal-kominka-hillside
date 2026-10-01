@@ -89,9 +89,10 @@ namespace KominkaDogRun
         const float SwimPitchRate = 30f;         // deg/s
 
         /// <summary>Every client: the nose-up pitch target for this frame (0 unless afloat). Local only.</summary>
-        float SwimPitchTick()
+        // IMP-DOG-034 C1-5: the caller passes this frame's fetchController.WaterPose (it read it already; same frame, same value)
+        float SwimPitchTick(int pose)
         {
-            float target = (fetchController != null && fetchController.WaterPose == 2 && waterSpot != null) ? waterSpot._SwimPitch(dogIndex) : 0f;
+            float target = (fetchController != null && pose == 2 && waterSpot != null) ? waterSpot._SwimPitch(dogIndex) : 0f;
             _swimPitchNow = Mathf.MoveTowards(_swimPitchNow, target, SwimPitchRate * Dt());
             return _swimPitchNow;
         }
@@ -284,18 +285,59 @@ namespace KominkaDogRun
         void WaterTick()
         {
             if (waterSpot == null || fetchController == null) return;
-            WaterFx();
-            WaterBobTick();
+            int pose = fetchController.WaterPose;   // IMP-DOG-034 C1-5: one read for WaterFx / WaterBobTick (nothing writes it before them)
+            WaterFx(pose);
+            WaterBobTick(pose);
             if (!_dogOwner) { waterState = WaterOff; _waterWasOwner = false; _waterLeashVeto = false; return; }   // the local play belongs to the Owner (C-11)
+            bool ownerEdge = !_waterWasOwner;
             if (!_waterWasOwner)
             {
                 // A new Owner inherits the synced pose and the synced height, so a swimming dog does not sink (Codex D-高).
                 _waterWasOwner = true;
-                if (fetchController.WaterPose == 2) { _waterSwimming = true; _waterSwimY = dogRoot.position.y; _swimYValid = true; _swimShallowSince = -1f; }
+                if (pose == 2) { _waterSwimming = true; _waterSwimY = dogRoot.position.y; _swimYValid = true; _swimShallowSince = -1f; }
             }
             if (waterState != WaterOff && _waterSeenFrame < Time.frameCount - 1) WaterEnd("preempted");
-            bool wet = WaterPoseRefresh();
-            WaterLeashTick(wet);
+            // The leash read moved up from WaterLeashTick (same reads, same frame) so the edge is known before the pose refresh.
+            // UpdateHillsideLeash reuses it this frame (_wlFrame) instead of asking KH_LeashManager again (IMP-DOG-034 C1-1e).
+            bool leashed = hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex);
+            int holder = leashed ? hillsideLeashes.walkers[dogIndex] : -1;
+            _wlFrame = Time.frameCount; _wlLeashed = leashed; _wlHolder = holder;
+            bool edge = leashed && (!_waterWasLeashed || holder != _waterLeashHolder);
+            // IMP-DOG-034 C1-2 (W1): a leash already taken up on a dry dog with no water state refreshes the pose at most every
+            // WaterDryRefresh s (phased by dogIndex) or as soon as the root has moved WaterDryMove m from the last refresh - instead of
+            // every frame. WaterWetAt is a pure function of the root position (baked data), so an unmoved dog gets the same answer;
+            // the bounded difference is a leashed dog stepping onto wet ground inside WaterDryMove of the last refresh: its pose 1
+            // (splash, the arbiter's view) comes up to 0.25 s late. Leashed walks run on the NavMesh (the riverbed is excluded), so
+            // this is the bank's edge only. RC-14 is untouched: the attach edge (and a new holder) always refreshes on that frame,
+            // and anything wet / afloat / vetoed / in a water state / pose != 0 refreshes every frame as before.
+            bool wet;
+            if (leashed && !edge && !ownerEdge && !_waterLeashVeto && waterState == WaterOff && !_waterSwimming && !_swimYValid
+                && pose == 0 && !_waterLastWet && !WaterDryRefreshDue())
+                wet = false;   // = the last refresh's answer (_waterLastWet is false)
+            else
+            {
+                wet = WaterPoseRefresh();
+                _waterDryNextAt = Time.time + (edge ? WaterDryRefresh * (dogIndex + 1) / 6f : WaterDryRefresh);   // phase the six dogs
+            }
+            WaterLeashTick(wet, leashed, holder);
+        }
+
+        // ---- IMP-DOG-034 C1-2 (W1) ----
+        const float WaterDryRefresh = 0.25f;   // s
+        const float WaterDryMove = 0.5f;       // m since the last refresh
+        private float _waterDryNextAt;
+        private bool _waterLastWet;            // WaterPoseRefresh's last answer (every caller)
+        private Vector3 _waterLastAt;          // ... and where it was asked
+        // This frame's leash read (WaterTick, Owner only): reused by UpdateHillsideLeash when _wlFrame is this frame
+        private int _wlFrame = -1;
+        private bool _wlLeashed;
+        private int _wlHolder = -1;
+
+        bool WaterDryRefreshDue()
+        {
+            if (Time.time >= _waterDryNextAt) return true;
+            Vector3 moved = dogRoot.position - _waterLastAt;
+            return moved.sqrMagnitude >= WaterDryMove * WaterDryMove;
         }
 
         /// <summary>Owner: the pose from where the dog stands now. Runs at the top of Update and again after every water move
@@ -317,6 +359,7 @@ namespace KominkaDogRun
                 else _swimShallowSince = -1f;
             }
             fetchController._SetWaterPose(!wetNow ? 0 : _waterSwimming ? 2 : 1);
+            _waterLastWet = wetNow; _waterLastAt = p;   // IMP-DOG-034 C1-2
             return wetNow;
         }
 
@@ -335,10 +378,9 @@ namespace KominkaDogRun
         private int _waterLeashTries, _waterLeashHolder = -1;
         private float _waterLeashSentAt = -1000f;
 
-        void WaterLeashTick(bool wet)
+        // IMP-DOG-034 C1-2: leashed / holder are read by WaterTick just before (the same two reads, same frame)
+        void WaterLeashTick(bool wet, bool leashed, int holder)
         {
-            bool leashed = hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex);
-            int holder = leashed ? hillsideLeashes.walkers[dogIndex] : -1;
             bool edge = leashed && (!_waterWasLeashed || holder != _waterLeashHolder);
             _waterWasLeashed = leashed; _waterLeashHolder = holder;
             if (!leashed)
@@ -363,6 +405,7 @@ namespace KominkaDogRun
             _waterLeashTries++; _waterLeashSentAt = Time.time;
             if (_waterLeashTries == WaterLeashTries) Debug.Log("[KD_DogWanderController] water leash veto last request dog=" + dogIndex + " (kept until landing)");
             hillsideLeashes._RequestWaterRelease(dogIndex, holder);
+            _travelMemoFrame = -1; _wlFrame = -1;   // IMP-DOG-034 C1-1d / C1-1e: the manager Owner may have released the leash just now
         }
 
         /// <summary>The leash arbiter (KH_LeashManager._InWater, via KD_DogFetchController._WetAtRoot): wet in the spot at p.</summary>
@@ -422,14 +465,14 @@ namespace KominkaDogRun
 
         /// <summary>Speed for a step from p: afloat = swim speed; wet = walk (0.3 M rule); dry strip = run.</summary>
         /// <summary>Every client: the +-bob on the visual child while waterPose is 2, back to rest otherwise. Local only.</summary>
-        void WaterBobTick()
+        void WaterBobTick(int pose)   // IMP-DOG-034 C1-5: pose = this frame's fetchController.WaterPose (WaterTick)
         {
             if (waterBob == null) return;
             if (!_bobBaseValid) { _bobBase = waterBob.localPosition; _bobBaseValid = true; }
-            float off = fetchController.WaterPose == 2 ? waterSpot.swimBob * Mathf.Sin(Time.time * waterSpot.swimBobHz * 2f * Mathf.PI) : 0f;
+            float off = pose == 2 ? waterSpot.swimBob * Mathf.Sin(Time.time * waterSpot.swimBobHz * 2f * Mathf.PI) : 0f;
             waterBob.localPosition = _bobBase + Vector3.up * off;
             if (!_bobBaseRotValid) { _bobBaseRot = waterBob.localRotation; _bobBaseRotValid = true; }
-            float pitch = SwimPitchTick();
+            float pitch = SwimPitchTick(pose);
             waterBob.localRotation = pitch != 0f ? _bobBaseRot * Quaternion.AngleAxis(-pitch, Vector3.right) : _bobBaseRot;   // nose up
         }
 
@@ -440,11 +483,15 @@ namespace KominkaDogRun
         void WaterHipsBobLate()
         {
             if (waterBobHips == null || waterSpot == null || fetchController == null) return;
-            float hipsPitch = SwimPitchTick();
+            int pose = fetchController.WaterPose;   // IMP-DOG-034 C1-4: one read (SwimPitchTick and the offset read the same frame's value)
+            // IMP-DOG-034 C1-4: on land with the pitch at rest and nothing of ours on the hips, the code below changes nothing (target 0
+            // and _swimPitchNow 0 -> MoveTowards stays 0, no rotation, off 0 and !_hipsWrote -> return), so skip its reads
+            if (pose != 2 && _swimPitchNow == 0f && !_hipsWrote) return;
+            float hipsPitch = SwimPitchTick(pose);
             if (hipsPitch != 0f) waterBobHips.rotation = Quaternion.AngleAxis(-hipsPitch, dogRoot.right) * waterBobHips.rotation;   // nose up, visual only
             Vector3 cur = waterBobHips.localPosition;
             Vector3 basePos = (_hipsWrote && cur == _hipsLast) ? cur - _hipsLastOff : cur;
-            float off = fetchController.WaterPose == 2 ? waterSpot.swimBob * Mathf.Sin(Time.time * waterSpot.swimBobHz * 2f * Mathf.PI) : 0f;
+            float off = pose == 2 ? waterSpot.swimBob * Mathf.Sin(Time.time * waterSpot.swimBobHz * 2f * Mathf.PI) : 0f;
             if (off == 0f)
             {
                 if (_hipsWrote) { waterBobHips.localPosition = basePos; _hipsWrote = false; }
@@ -824,9 +871,9 @@ namespace KominkaDogRun
 
         // Local look on every client. The shared particle systems are moved to each wet dog's feet and emitted at once
         // (world simulation, so earlier particles stay where they were). Within 20 m of the viewer only (D-4).
-        void WaterFx()
+        void WaterFx(int pose)   // IMP-DOG-034 C1-5: pose = this frame's fetchController.WaterPose (WaterTick)
         {
-            if (fetchController.WaterPose == 0 || Time.time < _nextSplashAt) return;
+            if (pose == 0 || Time.time < _nextSplashAt) return;
             _nextSplashAt = Time.time + WaterSplashInterval;
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp)) return;
@@ -837,7 +884,7 @@ namespace KominkaDogRun
             if (moving && waterSplash != null) { waterSplash.transform.position = at; waterSplash.Emit(3); }
             if (waterRipple != null && Time.time >= _nextRippleAt)
             {
-                _nextRippleAt = Time.time + (moving || fetchController.WaterPose == 2 ? 0.5f : 1.2f);
+                _nextRippleAt = Time.time + (moving || pose == 2 ? 0.5f : 1.2f);
                 waterRipple.transform.position = at + Vector3.up * 0.01f; waterRipple.Emit(1);
             }
             if (moving && waterAudio != null && waterStepClip != null && Time.time >= _nextWaterSoundAt)

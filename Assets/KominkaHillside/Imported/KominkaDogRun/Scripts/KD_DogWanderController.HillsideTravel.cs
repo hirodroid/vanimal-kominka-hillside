@@ -29,8 +29,24 @@ namespace KominkaDogRun
         const float TravelHolderNear = 6f;
         const float TravelDoneRetry = 1f;
 
-        /// <summary>この犬に、今の飼い主あての準備中の切符があるか。Return の追従テレポートを止める条件。</summary>
+        // IMP-DOG-034 C1-1d: TravelPending は 1 tick に 2〜4 回呼ばれる (WashYieldsToErrand・UpdateHillsideTravel・Return の枝・
+        // WashLeashStop)。中身は manager の同期配列と GetServerTimeInMilliseconds の読みだけの純関数なので、自分の tick の中では
+        // 最初の答えを使い回す。無効化: UpdateTick の先頭、manager の切符・接続を書き換え得る呼び出しの直後 (_ReportTravelDone、
+        // _RequestWaterRelease)。差: 期限 15 s の境目が同じ tick の 2 回目の呼び出しの間 (同一フレーム内の ms) に来た場合だけ、
+        // その tick は最初の答えで揃う (1 フレーム以内)。tick の外 (他 Behaviour からの呼び出し) では従来どおり毎回読む
+        private int _travelMemoFrame = -1;
+        private bool _travelMemo;
+
         private bool TravelPending()
+        {
+            if (_inTick && _travelMemoFrame == Time.frameCount) return _travelMemo;
+            bool pending = TravelPendingRead();
+            if (_inTick) { _travelMemo = pending; _travelMemoFrame = Time.frameCount; }
+            return pending;
+        }
+
+        /// <summary>この犬に、今の飼い主あての準備中の切符があるか。Return の追従テレポートを止める条件。</summary>
+        private bool TravelPendingRead()
         {
             KominkaHillside.KH_LeashManager m = hillsideLeashes;
             if (m == null || m.travelPhase == null || dogIndex < 0 || dogIndex >= m.travelPhase.Length) return false;
@@ -55,6 +71,7 @@ namespace KominkaDogRun
                 {
                     _travelDoneSentAt = Time.time;
                     m._ReportTravelDone(dogIndex, req);
+                    _travelMemoFrame = -1;   // IMP-DOG-034 C1-1d: the manager Owner may have moved the phase to Done just now
                 }
                 return false;
             }
@@ -83,6 +100,7 @@ namespace KominkaDogRun
             _travelDoneSentAt = Time.time;
             Debug.Log("[KH_Leash] dog" + dogIndex + " travel apply req=" + req + " moved=" + moved + " handDist=" + handDist.ToString("F1"));
             m._ReportTravelDone(dogIndex, req);
+            _travelMemoFrame = -1;   // IMP-DOG-034 C1-1d: see TravelPending
             if (moved) ApplyMoveAnim();
             return moved;
         }

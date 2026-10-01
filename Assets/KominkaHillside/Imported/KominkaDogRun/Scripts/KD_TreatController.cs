@@ -159,6 +159,11 @@ namespace KominkaDogRun
         private void ApplySlot(bool force)
         {
             int state = slot.State();
+            // IMP-DOG-034 C1-misc: a not-live slot (Free / Returning) whose state did not change needs no product / giver read
+            // or string compare. Unchanged behaviour, no latency: when !live every output below (meshes all off, pickupable
+            // false, ClearAttach, kinematic) depends only on `live`, and a change to Reserved/Out changes `state`, which
+            // still applies on the same frame. Live slots compare all three every frame as before.
+            if (!force && state == _appliedState && state != KD_TreatBox.SlotReserved && state != KD_TreatBox.SlotOut) return;
             string prod = slot.Product();
             int giver = slot.GiverId();
             if (!force && state == _appliedState && prod == _appliedProduct && giver == _appliedGiver) return;

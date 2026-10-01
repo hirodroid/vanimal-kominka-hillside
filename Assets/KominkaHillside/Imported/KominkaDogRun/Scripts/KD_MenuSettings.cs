@@ -170,7 +170,12 @@ namespace KominkaDogRun
             if (liveAccessLabel != null && liveAccessLabel.gameObject.activeInHierarchy && liveAccess != null)
                 liveAccessLabel.text = liveAccess.Pending ? L("ui.extra.039") : L(liveAccess.IsOpenToAll ? "ui.extra.046" : "ui.extra.045");
             // 押せるのは共通の管理者だけ (オーナー優先、不在時だけ Master。判定は KD_LiveAccess → KD_SleepBoard)
-            if (liveAccessButton != null && liveAccess != null)
+            // IMP-DOG-034 C1-misc: only while the button is visible (settings home open). The result feeds nothing but this
+            // button's interactable (the press itself re-checks CanManageNow in KD_LiveAccess._SetOpen), and KD_SleepBoard's
+            // presence cache is lazy (every reader rescans when older than 0.5 s), so no other reader depends on this poll.
+            // Bounded difference: after opening, interactable reflects the state within <= 0.25 s (same 4 Hz tick bound as a
+            // state change while open today), instead of carrying a value <= 0.25 s old from while closed.
+            if (liveAccessButton != null && liveAccess != null && liveAccessButton.gameObject.activeInHierarchy)
                 liveAccessButton.interactable = liveAccess.IsLocalManager && !liveAccess.Pending;
         }
         private void RefreshNightMode()

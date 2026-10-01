@@ -92,7 +92,7 @@ namespace KominkaDogRun
 
         /// <summary>突き合わせの間隔 (秒)。毎フレーム全犬を見ない (Udon VM)。
         /// 食べる時間 (2.6s 前後) に対して十分細かいので、エッジがずれても目に見えない。</summary>
-        const float TickInterval = 0.05f;
+        // IMP-DOG-034 C1-misc: replaced by TickIntervalEating (0.1) / TickIntervalIdle (0.25) below Update.
 
         private float _nextTick;
         private int _dogCount;
@@ -141,11 +141,24 @@ namespace KominkaDogRun
         {
             if (box == null || _dogCount <= 0) return;
             if (Time.time < _nextTick) return;
-            _nextTick = Time.time + TickInterval;
 
             int now = Networking.GetServerTimeInMilliseconds();
-            for (int d = 0; d < _dogCount; d++) StepDog(d, now);
+            bool pending = false;
+            for (int d = 0; d < _dogCount; d++)
+            {
+                StepDog(d, now);
+                if (_armedEatMs[d] != 0 && !_armedFired[d]) pending = true;
+            }
+            // IMP-DOG-034 C1-misc: 20 Hz -> 10 Hz while a meal is armed (fire pending), 4 Hz otherwise. Bounded difference:
+            // the burst fires <= 0.1 s after the meal's end (was <= 0.05 s). Detecting a new meal up to 0.25 s later only
+            // arms it (product / position are read from the slot, which stays Out for the whole 2.6 s meal; the fire time
+            // comes from eatMs, not from when it was seen), so nothing visible moves at the start.
+            _nextTick = Time.time + (pending ? TickIntervalEating : TickIntervalIdle);
         }
+
+        /// <summary>IMP-DOG-034 C1-misc: tick while a meal is armed / while no dog is eating.</summary>
+        const float TickIntervalEating = 0.1f;
+        const float TickIntervalIdle = 0.25f;
 
         /// <summary>犬 1 匹ぶんの立ち上がり検出。</summary>
         private void StepDog(int d, int now)

@@ -158,10 +158,13 @@ namespace KominkaDogRun
             var lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp)) { Hide(); HideHandHint(); return; }
             // 「開いている」ではなく「自分の操作で開けた」を数える — 庭に置いた板 (IMP-INF-020) は自動で開く
-            if (pouch != null && pouch.SelfOpened()) _menuUsed = true;
-            for (int i = 0; pet != null && i < pet.Length; i++) if (pet[i] != null && pet[i].IsPetting) _petted = true;
-            for (int i = 0; sleepSlots != null && i < sleepSlots.Length; i++) if (sleepSlots[i] != null && sleepSlots[i].IsSleeperLocal) _slept = true;
-            for (int i = 0; balls != null && i < balls.Length; i++) if (balls[i] != null && balls[i].lastThrowerPlayerId == lp.playerId) _thrown = true;
+            // IMP-DOG-034 C1-misc: skip each "learned" scan once its flag is set. Unchanged behaviour: _menuUsed / _petted /
+            // _slept / _thrown are only ever set true (never re-armed in this stay), and the getters read are side-effect free
+            // (SelfOpened / IsPetting / IsSleeperLocal / lastThrowerPlayerId). Focused() keeps its own sleep scan.
+            if (!_menuUsed && pouch != null && pouch.SelfOpened()) _menuUsed = true;
+            if (!_petted) for (int i = 0; pet != null && i < pet.Length; i++) if (pet[i] != null && pet[i].IsPetting) { _petted = true; break; }
+            if (!_slept) for (int i = 0; sleepSlots != null && i < sleepSlots.Length; i++) if (sleepSlots[i] != null && sleepSlots[i].IsSleeperLocal) { _slept = true; break; }
+            if (!_thrown) for (int i = 0; balls != null && i < balls.Length; i++) if (balls[i] != null && balls[i].lastThrowerPlayerId == lp.playerId) { _thrown = true; break; }
             Hide();
             bool focused = Focused();
             if (_noticeKind != 0 && (focused || Time.time >= _noticeUntil || (_noticeKind == 1 && _menuUsed) || (_noticeKind == 2 && _slept)))

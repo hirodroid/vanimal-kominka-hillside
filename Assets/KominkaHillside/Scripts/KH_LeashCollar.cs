@@ -35,64 +35,141 @@ namespace KominkaHillside
                 if (_drawn != DrawnHidden) ApplyDrawn(DrawnHidden);
                 return;
             }
-            bool modeled = ropeMesh != null && ropeBones != null && ropeBones.Length == 12;
             int[] hands = manager.hands;
             int hand = hands[dogIndex];
+            // IMP-DOG-034 C1-rope (3): optional straight two-point line, OFF by default (lightRope false), so the
+            // default look is untouched. Real 2-point path: no 12-point curve, no hand pose, no handle/snap/rope mesh.
+            if (lightRope)
+            {
+                if (_drawn != DrawnLine) ApplyDrawn(DrawnLine);
+                // Back in full mode the handle starts fresh (no blend from a pose shown before light mode).
+                _shownValid = false;
+                if (!_lineShort) { line.positionCount = 2; _lineShort = true; }
+                line.SetPosition(0, manager._HandPosition(holder, hand));
+                line.SetPosition(1, anchor.position);
+                return;
+            }
+            bool modeled = ropeMesh != null && ropeBones != null && ropeBones.Length == 12;
             int drawn = modeled ? DrawnModeled : DrawnLine;
             // One grip per holder/hand; coincident copies for 2-3 dogs otherwise flicker in VR.
             // IMP-DOG-034 A4: decided before writing (was: write on, then off), so the final state is the same.
+            // IMP-DOG-034 C1-rope (2): remembers which collar shows the grip (the lowest dogIndex on this holder/hand).
+            int gripOwner = -1;
             if (modeled && handleVisual != null)
                 for (int i=0;i<dogIndex;i++)
-                    if (walkers[i]==holderId && hands[i]==hand) { drawn = DrawnModeledNoHandle; break; }
+                    if (walkers[i]==holderId && hands[i]==hand) { drawn = DrawnModeledNoHandle; gripOwner = i; break; }
             if (_drawn != drawn) ApplyDrawn(drawn);
             Vector3 b = anchor.position;
             if (modeled)
             {
-                Quaternion rotation;
-                Vector3 a;
-                if (holder.IsUserInVR())
+                // IMP-DOG-034 C1-rope (2): a collar whose own handle is hidden only needs the rope start, i.e. the
+                // socket of the grip that IS shown. It asks that collar (which computes its pose at most once per
+                // frame, whichever of the two runs first) instead of recomputing the same hand's tracking, four
+                // finger/arm bones, HandleRotation, the blend and its own hidden handle's transform. The visible
+                // grip and the rope it draws are computed exactly as before; only the hidden duplicates are gone.
+                KH_LeashCollar owner = null;
+                if (gripOwner >= 0) owner = PeerCollar(gripOwner);
+                Vector3 start;
+                if (owner != null)
                 {
-                    // IMP-DOG-034 A4: one GetTrackingData for both the position (was manager._HandPosition, which
-                    // returns this same .position for a VR player) and the rotation; same player, same frame.
-                    VRCPlayerApi.TrackingData handData = holder.GetTrackingData(hand == 0
-                        ? VRCPlayerApi.TrackingDataType.LeftHand : VRCPlayerApi.TrackingDataType.RightHand);
-                    a = handData.position;
-                    Quaternion handRotation = handData.rotation;
-                    // A new connection or a change of hand/holder starts fresh: path chosen with the entry
-                    // thresholds, and the first frame is placed on the target (no blend from an old pose).
-                    bool fresh = !_shownValid || holderId != _shownHolder || hand != _shownHand;
-                    if (fresh) { _pathFingers = false; _blendStartAt = -1000f; }
-                    rotation = HandleRotation(holder, hand, handRotation, a);
-                    // Put the handle's local (0, +handleGripOffset, 0) - the rear belt of the loop - on the grip
-                    // point (the knuckle line when the avatar has finger bones, else the tracked hand), so the loop
-                    // and the rope socket sit in front of the fist instead of straddling it.
-                    a = _grip - rotation * new Vector3(0f, manager.handleGripOffset, 0f);
-                    // Path switch (finger bones <-> tracking fallback): ease from the pose shown last frame over
-                    // HandlePathBlend instead of jumping in one frame. A switch during a blend starts from the
-                    // blended pose, so it never jumps either.
-                    // IMP-DOG-034 A4: the blend is only evaluated when not fresh (it was computed and discarded) and
-                    // Time.time is read once; same frame, same value.
-                    if (!fresh)
-                    {
-                        float now = Time.time;
-                        if (_pathFingers != _shownFingers)
-                        { _blendFromPos = _shownPos; _blendFromRot = _shownRot; _blendStartAt = now; }
-                        float blend = (now - _blendStartAt) / HandlePathBlend;
-                        if (blend < 1f)
-                        {
-                            a = Vector3.Lerp(_blendFromPos, a, blend);
-                            rotation = Quaternion.Slerp(_blendFromRot, rotation, blend);
-                        }
-                    }
-                    _shownValid = true; _shownHolder = holderId; _shownHand = hand; _shownFingers = _pathFingers;
-                    _shownPos = a; _shownRot = rotation;
+                    // Not the shown grip: if this collar becomes the grip owner later it starts fresh.
+                    _shownValid = false;
+                    start = owner._SharedRopeStart();
                 }
-                // Desktop/touch has no tracked hand: keep the body rotation the handle has always used.
-                else { a = manager._HandPosition(holder, hand); rotation = holder.GetRotation(); _shownValid = false; }
-                UpdateModeledGeometry(a,b,rotation);
+                else if (_poseFrame == Time.frameCount) start = _poseRopeStart;   // a later dog on this hand ran first
+                else start = PoseHandle(holder, holderId, hand);
+                UpdateRopeFrom(start, b);
                 return;
             }
             UpdateGeometry(manager._HandPosition(holder, hand),b,false);
+        }
+        // IMP-DOG-034 C1-rope (3): straight two-point rope instead of the 12-bone curve. Default false: the default
+        // look does not change. Set it on all six collars together (a full-mode rope reads its hand's grip owner).
+        // Turning it off restores the full rope on the next frame: ApplyDrawn re-enables the rope/snap/handle,
+        // every bone, the rope centre and bounds are rewritten each frame, and the handle pose starts fresh.
+        public bool lightRope;
+        private bool _lineShort;   // the LineRenderer was cut to 2 points by lightRope (the builder leaves 12)
+        // IMP-DOG-034 C1-rope (2): this collar's grip pose for the current frame (frame key, rope start = socket).
+        private int _poseFrame = -1;
+        private Vector3 _poseRopeStart;
+        private KH_LeashCollar[] _peers;
+        // The collar of dog `index`, looked up once from manager.collarAnchors (anchor = child "ClipAnchor" of the
+        // collar object, see KH_DogWalkingEditor). null (lookup failed) -> the caller computes its own pose as before.
+        private KH_LeashCollar PeerCollar(int index)
+        {
+            if (_peers == null)
+            {
+                Transform[] anchors = manager.collarAnchors;
+                int n = anchors != null ? anchors.Length : 0;
+                _peers = new KH_LeashCollar[n];
+                for (int i = 0; i < n; i++)
+                {
+                    if (anchors[i] == null || anchors[i].parent == null) continue;
+                    KH_LeashCollar c = anchors[i].parent.GetComponent<KH_LeashCollar>();
+                    if (c != null && c.dogIndex == i) _peers[i] = c;
+                }
+            }
+            return index < _peers.Length ? _peers[index] : null;
+        }
+        // IMP-DOG-034 C1-rope (2): called by the other collars on this collar's holder/hand. Same synced arrays and
+        // same frame as this collar's own PostLateUpdate, so the pose computed here is the one it would compute.
+        public Vector3 _SharedRopeStart()
+        {
+            if (_poseFrame == Time.frameCount) return _poseRopeStart;
+            int[] walkers = manager.walkers;
+            int holderId = dogIndex >= 0 && dogIndex < walkers.Length ? walkers[dogIndex] : -1;
+            VRCPlayerApi holder = holderId >= 0 ? VRCPlayerApi.GetPlayerById(holderId) : null;
+            if (holderId < 0 || !Utilities.IsValid(holder)) return _poseRopeStart;
+            return PoseHandle(holder, holderId, manager.hands[dogIndex]);
+        }
+        // The grip pose (unchanged from the inline code it was moved out of), the handle placed there, and the rope
+        // start (the handle's socket) cached for this frame.
+        private Vector3 PoseHandle(VRCPlayerApi holder, int holderId, int hand)
+        {
+            Quaternion rotation;
+            Vector3 a;
+            if (holder.IsUserInVR())
+            {
+                // IMP-DOG-034 A4: one GetTrackingData for both the position (was manager._HandPosition, which
+                // returns this same .position for a VR player) and the rotation; same player, same frame.
+                VRCPlayerApi.TrackingData handData = holder.GetTrackingData(hand == 0
+                    ? VRCPlayerApi.TrackingDataType.LeftHand : VRCPlayerApi.TrackingDataType.RightHand);
+                a = handData.position;
+                Quaternion handRotation = handData.rotation;
+                // A new connection or a change of hand/holder starts fresh: path chosen with the entry
+                // thresholds, and the first frame is placed on the target (no blend from an old pose).
+                bool fresh = !_shownValid || holderId != _shownHolder || hand != _shownHand;
+                if (fresh) { _pathFingers = false; _blendStartAt = -1000f; }
+                rotation = HandleRotation(holder, hand, handRotation, a);
+                // Put the handle's local (0, +handleGripOffset, 0) - the rear belt of the loop - on the grip
+                // point (the knuckle line when the avatar has finger bones, else the tracked hand), so the loop
+                // and the rope socket sit in front of the fist instead of straddling it.
+                a = _grip - rotation * new Vector3(0f, manager.handleGripOffset, 0f);
+                // Path switch (finger bones <-> tracking fallback): ease from the pose shown last frame over
+                // HandlePathBlend instead of jumping in one frame. A switch during a blend starts from the
+                // blended pose, so it never jumps either.
+                // IMP-DOG-034 A4: the blend is only evaluated when not fresh (it was computed and discarded) and
+                // Time.time is read once; same frame, same value.
+                if (!fresh)
+                {
+                    float now = Time.time;
+                    if (_pathFingers != _shownFingers)
+                    { _blendFromPos = _shownPos; _blendFromRot = _shownRot; _blendStartAt = now; }
+                    float blend = (now - _blendStartAt) / HandlePathBlend;
+                    if (blend < 1f)
+                    {
+                        a = Vector3.Lerp(_blendFromPos, a, blend);
+                        rotation = Quaternion.Slerp(_blendFromRot, rotation, blend);
+                    }
+                }
+                _shownValid = true; _shownHolder = holderId; _shownHand = hand; _shownFingers = _pathFingers;
+                _shownPos = a; _shownRot = rotation;
+            }
+            // Desktop/touch has no tracked hand: keep the body rotation the handle has always used.
+            else { a = manager._HandPosition(holder, hand); rotation = holder.GetRotation(); _shownValid = false; }
+            _poseRopeStart = PlaceHandle(a, rotation);
+            _poseFrame = Time.frameCount;
+            return _poseRopeStart;
         }
         // IMP-DOG-034 A4: the four enabled writes the frame used to repeat, now done only on a change of state.
         // Hidden = all off; Line = LineRenderer only; Modeled = rope, snap and handle; NoHandle = the handle of a
@@ -202,7 +279,14 @@ namespace KominkaHillside
             q = q * Quaternion.AngleAxis(hand == 0 ? -manager.handleRollDegrees : manager.handleRollDegrees, Vector3.forward);
             return q * Quaternion.Euler(-90f, 0f, 0f);
         }
+        // IMP-DOG-034 C1-rope (2): split into PlaceHandle + UpdateRopeFrom (same statements, same order) so a collar can
+        // start its rope at another collar's grip. Kept with this signature for the Editor check (reflection).
         private void UpdateModeledGeometry(Vector3 a, Vector3 b, Quaternion handRotation)
+        {
+            UpdateRopeFrom(PlaceHandle(a, handRotation), b);
+        }
+        // Places the handle and returns its rope socket (a itself when there is no handle).
+        private Vector3 PlaceHandle(Vector3 a, Quaternion handRotation)
         {
                 if (handleVisual != null)
                 {
@@ -211,6 +295,10 @@ namespace KominkaHillside
                     handle.SetPositionAndRotation(a, handRotation);
                     a = handle.TransformPoint(new Vector3(0f, -0.077f, 0f));
                 }
+                return a;
+        }
+        private void UpdateRopeFrom(Vector3 a, Vector3 b)
+        {
                 Vector3 direction = b-a;
                 if (direction.sqrMagnitude < 0.000001f) direction = Vector3.up;
                 if (snapVisual != null)
@@ -250,9 +338,32 @@ namespace KominkaHillside
                 ropeMesh.transform.position=(a+b)*.5f;
                 ropeMesh.localBounds=new Bounds(Vector3.zero,Vector3.one*(distance+1f));
             }
+            // IMP-DOG-034 C1-rope (3): the LineRenderer path needs its 12 points back after lightRope cut it to 2.
+            else if (_lineShort) { line.positionCount = 12; _lineShort = false; }
             float slack = Mathf.Clamp(manager.leashLength - distance, 0f, 0.8f);
             // IMP-DOG-034 A4: loop-invariant values read once (Vector3.up/right are constants, b-a does not change).
             Vector3 up = Vector3.up, right = Vector3.right, ab = b-a;
+            // IMP-DOG-034 C1-rope (1): taut rope (Clamp returned exactly 0, i.e. distance >= leashLength). The general
+            // loop below then subtracts up*(x*0*0.3) = a (+/-)0 vector from each point and from ab, which leaves
+            // Lerp(a,b,t) and ab unchanged, so every bone has the same tangent ab and the same LookRotation(ab, right).
+            // Same positions (same Lerp call) and the same rotation computed once: the look does not change.
+            if (slack == 0f)
+            {
+                Quaternion straight = Quaternion.identity;
+                if (modeled)
+                {
+                    Vector3 tangent = ab;
+                    if (tangent.sqrMagnitude < .000001f) tangent = Vector3.forward;
+                    straight = Quaternion.LookRotation(tangent, right);
+                }
+                for (int i = 0; i < 12; i++)
+                {
+                    Vector3 point = Vector3.Lerp(a,b,_ropeT[i]);
+                    if (modeled) ropeBones[i].SetPositionAndRotation(point,straight);
+                    else line.SetPosition(i,point);
+                }
+                return;
+            }
             for (int i = 0; i < 12; i++)
             {
                 Vector3 point = Vector3.Lerp(a,b,_ropeT[i]) - up * (_ropeSin[i] * slack * 0.3f);
