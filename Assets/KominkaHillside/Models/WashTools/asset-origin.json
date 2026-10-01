@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "source_repository": "vrc-asset-lab",
+  "source_git_commit": "8ba4b31ccd6052233a49eab42731e46b05a009b0",
+  "asset_id": "wash-tools",
+  "asset_revision": "0.1.0",
+  "config_sha256": "afc8483ff0ee75906ade65c5c0c220dd124bd113879f5bb7d09b47f2f099b1d1",
+  "imported_on": "2026-10-01",
+  "destination_project": "KominkaHillside",
+  "destination_paths": [
+    "Assets/KominkaHillside/Models/WashTools/"
+  ],
+  "local_changes": [
+    "Fit tool visuals to existing colliders and nozzle; fit shower capsule to new mesh",
+    "Fit shelf to 1.2 x 0.45 m and 0.8 m top; turn back rail toward station rear",
+    "Fit platform to existing 0.6 x 0.9 m footprint and 0.03 m top",
+    "Shared Standard opaque material; 256px metallic-smoothness conversion; mobile texture caps"
+  ],
+  "verification": {
+    "unity": "Saved-scene reload: 23 models, 25040 triangles, art failures 0; Wash/12 3887 passed",
+    "vrchat": "Not tested this change"
+  },
+  "source_file_sha256": {
+    "Shower.fbx": "a32209481c4705723a1021e088d99e224b76f566ceeb7f6763d57e59456c7102",
+    "Towel.fbx": "caecfbfec1db0e2aa0dc49258cbc855de960569103eba6db59cacff4d3509082",
+    "Sponge.fbx": "8dbc72a665010a96a21c70d8d03765f02f77051097af26b6afcafb9982d23416",
+    "ToolShelf.fbx": "7e305b98b12d0ac1425f8cda65009feed2e05e198f770a6118be2850418152a9",
+    "WashPlatform.fbx": "d32e75d27bd6d0dabb1215827727f337ad5f8cbc202ffa24b8324b5fde23dac8",
+    "WashTools_BaseColor.png": "6d9e4ef1018c73cf9fac6a880e5216c694658c368719c11a532cde597e0c9cd8",
+    "WashTools_Roughness.png": "c2a87ce25edeb99643a7cb58b13d42a609124c487016c8ea194bc12d3741103f"
+  }
+}

@@ -720,6 +720,7 @@ namespace KominkaHillside.Editor
                 tool.sprayAudio = null;
             }
             EditorUtility.SetDirty(tool);
+            ApplyToolArt(root, spec.tool);
             return tool;
         }
 
@@ -808,6 +809,7 @@ namespace KominkaHillside.Editor
             var tr = tmp.GetComponent<MeshRenderer>();
             if (tr != null) { tr.shadowCastingMode = ShadowCastingMode.Off; tr.receiveShadows = false; EditorUtility.SetDirty(tr); }
             EditorUtility.SetDirty(tmp);
+            ApplyStationArt(station);
         }
 
         /// <summary>A primitive whose BoxCollider is the unit box (the transform's scale sizes it).</summary>

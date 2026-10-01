@@ -6,7 +6,7 @@ status: review
 priority: Medium
 summary: 主洗い場と同じ洗浄処理を、川辺・広場・裏山の採用地点へ展開する
 next: ユーザーの Play (3 か所の位置と導線、川辺の看板・石との干渉) が残り。production.md の表に登録済み
-updated: 2026-09-30
+updated: 2026-10-01
 ---
 
 # IMP-ENV-008 複数ポイントへの洗い場の展開
@@ -47,3 +47,5 @@ AI 側で確かめる。
 2026-09-30: 実装。洗い場の表 (`CourseStations`): 川辺 River (目的地「川辺」から 6 m、川の帯から 21 m、傾き 4.1°)、奥広場 Upper (ワープ地点から約 11 m、泥の地点の反対側、傾き 0°)、展望のベンチ Hillside (ベンチから道に沿って 5 m、傾き 0°)。各 スポンジ 1・シャワー 1・タオル 1 + リセット。候補を傾き 5° 未満・周回の道から 2 m・泥の地点から 15 m・他の洗い場から 20 m・手動配置との距離で順に試す。生成は `KH_WashStations/{名前}`。全道具 15 個を全犬の `KH_WashTool.washes` / `KH_DogWash.tools` へ、全洗い場を `KH_DogWash.washStations` へ配線 (各洗い場の 6 m 以内では汚れない)。同期オブジェクト +18 (VRCObjectSync 9、放水の状態 9)。Wash/11 3738 項目 PASS。ClientSim W-stations-tools / W-stations-reset (各洗い場のリセットは自分の道具だけ) / W-stations-grace PASS (run 20260930-115102)。[配置の制作票](../../plans/2026-09-30-wash-station-layout.md) §6。Play・見た目・NavMesh は未確認。
 
 2026-09-30 (Codex レビュー後): 候補の 20 m の間隔の判定に、表の処理済みの地点だけでなくシーンの既存の全洗い場を使う (部分的な作り直しで距離を見落とさない)。
+
+2026-10-01: River/Upper/Hillsideの3か所も制作モデルへ差し替え。各地点の位置・Home・Nozzleを保ち、道具は各1組を配置。保存再読込後のWash/12は3,887項目PASS。詳細は [取込記録](../imports/wash-tools.md)。

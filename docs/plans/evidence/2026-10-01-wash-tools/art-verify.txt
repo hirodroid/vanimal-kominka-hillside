@@ -1,0 +1,149 @@
+PASS four wash stations
+PASS shared opaque textured material
+PASS KH_WashStation shelf/platform present
+PASS KH_WashStation shelf footprint (1.20, 0.87, 0.45)
+PASS KH_WashStation platform matches solid walkable collider (0.60, 0.03, 0.90)
+PASS KH_WashStation shelf surface aligns with tools/collider
+PASS KH_WashStation old Shelf hidden
+PASS KH_WashStation old ShelfLeg_0 hidden
+PASS KH_WashStation old ShelfLeg_1 hidden
+PASS KH_WashStation old ShelfLeg_2 hidden
+PASS KH_WashStation old ShelfLeg_3 hidden
+PASS KH_WashSponge_0 imported visual
+PASS KH_WashSponge_0 no extra pickup colliders
+PASS KH_WashSponge_0 mesh fits pickup collider
+PASS KH_WashSponge_0 primitive art hidden
+PASS KH_WashSponge_0 above shelf (minY=0.8010)
+PASS KH_WashSponge_1 imported visual
+PASS KH_WashSponge_1 no extra pickup colliders
+PASS KH_WashSponge_1 mesh fits pickup collider
+PASS KH_WashSponge_1 primitive art hidden
+PASS KH_WashSponge_1 above shelf (minY=0.8010)
+PASS KH_WashShower_0 imported visual
+PASS KH_WashShower_0 no extra pickup colliders
+PASS KH_WashShower_0 nozzle position/direction match spray
+PASS KH_WashShower_0 capsule fitted to imported shower: center=(0.00, 0.02, 0.00) height=0.20351 radius=0.03563
+PASS KH_WashShower_0 primitive art hidden
+PASS KH_WashShower_0 above shelf (minY=0.8031)
+PASS KH_WashShower_1 imported visual
+PASS KH_WashShower_1 no extra pickup colliders
+PASS KH_WashShower_1 nozzle position/direction match spray
+PASS KH_WashShower_1 capsule fitted to imported shower: center=(0.00, 0.02, 0.00) height=0.20351 radius=0.03563
+PASS KH_WashShower_1 primitive art hidden
+PASS KH_WashShower_1 above shelf (minY=0.8031)
+PASS KH_WashTowel_0 imported visual
+PASS KH_WashTowel_0 no extra pickup colliders
+PASS KH_WashTowel_0 mesh fits pickup collider
+PASS KH_WashTowel_0 primitive art hidden
+PASS KH_WashTowel_0 above shelf (minY=0.8010)
+PASS KH_WashTowel_1 imported visual
+PASS KH_WashTowel_1 no extra pickup colliders
+PASS KH_WashTowel_1 mesh fits pickup collider
+PASS KH_WashTowel_1 primitive art hidden
+PASS KH_WashTowel_1 above shelf (minY=0.8010)
+PASS ImportedVisual one shared material
+PASS ImportedVisual one shared material
+PASS ImportedVisual one shared material
+PASS ImportedVisual one shared material
+PASS ImportedVisual one shared material
+PASS ImportedPlatform one shared material
+PASS ImportedVisual one shared material
+PASS ImportedShelf one shared material
+PASS River shelf/platform present
+PASS River shelf footprint (1.20, 0.87, 0.45)
+PASS River platform matches solid walkable collider (0.60, 0.03, 0.90)
+PASS River shelf surface aligns with tools/collider
+PASS River old Shelf hidden
+PASS River old ShelfLeg_0 hidden
+PASS River old ShelfLeg_1 hidden
+PASS River old ShelfLeg_2 hidden
+PASS River old ShelfLeg_3 hidden
+PASS KH_WashSponge_River_0 imported visual
+PASS KH_WashSponge_River_0 no extra pickup colliders
+PASS KH_WashSponge_River_0 mesh fits pickup collider
+PASS KH_WashSponge_River_0 primitive art hidden
+PASS KH_WashSponge_River_0 above shelf (minY=0.8010)
+PASS KH_WashShower_River_0 imported visual
+PASS KH_WashShower_River_0 no extra pickup colliders
+PASS KH_WashShower_River_0 nozzle position/direction match spray
+PASS KH_WashShower_River_0 capsule fitted to imported shower: center=(0.00, 0.02, 0.00) height=0.20351 radius=0.03563
+PASS KH_WashShower_River_0 primitive art hidden
+PASS KH_WashShower_River_0 above shelf (minY=0.8031)
+PASS KH_WashTowel_River_0 imported visual
+PASS KH_WashTowel_River_0 no extra pickup colliders
+PASS KH_WashTowel_River_0 mesh fits pickup collider
+PASS KH_WashTowel_River_0 primitive art hidden
+PASS KH_WashTowel_River_0 above shelf (minY=0.8010)
+PASS ImportedPlatform one shared material
+PASS ImportedVisual one shared material
+PASS ImportedVisual one shared material
+PASS ImportedVisual one shared material
+PASS ImportedShelf one shared material
+PASS Upper shelf/platform present
+PASS Upper shelf footprint (1.20, 0.87, 0.45)
+PASS Upper platform matches solid walkable collider (0.60, 0.03, 0.90)
+PASS Upper shelf surface aligns with tools/collider
+PASS Upper old Shelf hidden
+PASS Upper old ShelfLeg_0 hidden
+PASS Upper old ShelfLeg_1 hidden
+PASS Upper old ShelfLeg_2 hidden
+PASS Upper old ShelfLeg_3 hidden
+PASS KH_WashSponge_Upper_0 imported visual
+PASS KH_WashSponge_Upper_0 no extra pickup colliders
+PASS KH_WashSponge_Upper_0 mesh fits pickup collider
+PASS KH_WashSponge_Upper_0 primitive art hidden
+PASS KH_WashSponge_Upper_0 above shelf (minY=0.8010)
+PASS KH_WashShower_Upper_0 imported visual
+PASS KH_WashShower_Upper_0 no extra pickup colliders
+PASS KH_WashShower_Upper_0 nozzle position/direction match spray
+PASS KH_WashShower_Upper_0 capsule fitted to imported shower: center=(0.00, 0.02, 0.00) height=0.20351 radius=0.03563
+PASS KH_WashShower_Upper_0 primitive art hidden
+PASS KH_WashShower_Upper_0 above shelf (minY=0.8031)
+PASS KH_WashTowel_Upper_0 imported visual
+PASS KH_WashTowel_Upper_0 no extra pickup colliders
+PASS KH_WashTowel_Upper_0 mesh fits pickup collider
+PASS KH_WashTowel_Upper_0 primitive art hidden
+PASS KH_WashTowel_Upper_0 above shelf (minY=0.8010)
+PASS ImportedPlatform one shared material
+PASS ImportedVisual one shared material
+PASS ImportedVisual one shared material
+PASS ImportedVisual one shared material
+PASS ImportedShelf one shared material
+PASS Hillside shelf/platform present
+PASS Hillside shelf footprint (1.20, 0.87, 0.45)
+PASS Hillside platform matches solid walkable collider (0.60, 0.03, 0.90)
+PASS Hillside shelf surface aligns with tools/collider
+PASS Hillside old Shelf hidden
+PASS Hillside old ShelfLeg_0 hidden
+PASS Hillside old ShelfLeg_1 hidden
+PASS Hillside old ShelfLeg_2 hidden
+PASS Hillside old ShelfLeg_3 hidden
+PASS KH_WashSponge_Hillside_0 imported visual
+PASS KH_WashSponge_Hillside_0 no extra pickup colliders
+PASS KH_WashSponge_Hillside_0 mesh fits pickup collider
+PASS KH_WashSponge_Hillside_0 primitive art hidden
+PASS KH_WashSponge_Hillside_0 above shelf (minY=0.8010)
+PASS KH_WashShower_Hillside_0 imported visual
+PASS KH_WashShower_Hillside_0 no extra pickup colliders
+PASS KH_WashShower_Hillside_0 nozzle position/direction match spray
+PASS KH_WashShower_Hillside_0 capsule fitted to imported shower: center=(0.00, 0.02, 0.00) height=0.20351 radius=0.03563
+PASS KH_WashShower_Hillside_0 primitive art hidden
+PASS KH_WashShower_Hillside_0 above shelf (minY=0.8031)
+PASS KH_WashTowel_Hillside_0 imported visual
+PASS KH_WashTowel_Hillside_0 no extra pickup colliders
+PASS KH_WashTowel_Hillside_0 mesh fits pickup collider
+PASS KH_WashTowel_Hillside_0 primitive art hidden
+PASS KH_WashTowel_Hillside_0 above shelf (minY=0.8010)
+PASS ImportedPlatform one shared material
+PASS ImportedVisual one shared material
+PASS ImportedVisual one shared material
+PASS ImportedVisual one shared material
+PASS ImportedShelf one shared material
+PASS 23 models (15 tools + 8 fixtures): 23
+PASS WashTools_BaseColor.png no CPU read/write copy
+PASS WashTools_BaseColor.png Android bounded ASTC
+PASS WashTools_BaseColor.png iPhone bounded ASTC
+PASS WashTools_MetallicSmoothness.png no CPU read/write copy
+PASS WashTools_MetallicSmoothness.png Android bounded ASTC
+PASS WashTools_MetallicSmoothness.png iPhone bounded ASTC
+TRIANGLES 25040 MODELS 23 FAILURES 0
