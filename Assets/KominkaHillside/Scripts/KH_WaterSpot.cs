@@ -114,16 +114,49 @@ namespace KominkaHillside
         }
         public float swimBobHz = DefaultSwimBobHz;
 
+        // IMP-DOG-034 A2: _Ready() and the polygon's bounding box are cached. The inputs are baked by Course/76 and only ever replaced
+        // as whole arrays (the harness swaps `exits` for a same-length copy); array lengths cannot change in place, so a pass with the
+        // same references, grid size and a live riverData returns what the full test would. Any other change re-runs the full test.
+        private bool _readyOk;
+        private float[] _readyPolyX, _readyPolyZ, _readyBed;
+        private Vector3[] _readyExits, _readyReturns;
+        private int _readyNx, _readyNz;
+        private float _boxX0, _boxX1, _boxZ0, _boxZ1;   // polygon bounds padded by BoxPad (set with _readyOk)
+        const float BoxPad = 0.01f;   // >> the float error of the crossing x below (~1e-4 m at these coordinates)
+
         public bool _Ready()
         {
-            return riverData != null && polyX != null && polyZ != null && polyX.Length >= 3 && polyZ.Length == polyX.Length
+            if (_readyOk && riverData != null && polyX == _readyPolyX && polyZ == _readyPolyZ && exits == _readyExits
+                && returns == _readyReturns && bed == _readyBed && gridNx == _readyNx && gridNz == _readyNz) return true;
+            _readyOk = riverData != null && polyX != null && polyZ != null && polyX.Length >= 3 && polyZ.Length == polyX.Length
                 && exits != null && returns != null && exits.Length > 0 && returns.Length == exits.Length
                 && bed != null && gridNx >= 2 && gridNz >= 2 && bed.Length == gridNx * gridNz;
+            if (_readyOk)
+            {
+                _readyPolyX = polyX; _readyPolyZ = polyZ; _readyExits = exits; _readyReturns = returns; _readyBed = bed;
+                _readyNx = gridNx; _readyNz = gridNz;
+                float x0 = polyX[0], x1 = polyX[0], z0 = polyZ[0], z1 = polyZ[0];
+                bool finite = x0 == x0 && z0 == z0;   // NaN != NaN
+                for (int i = 1; i < polyX.Length; i++)
+                {
+                    if (polyX[i] != polyX[i] || polyZ[i] != polyZ[i]) finite = false;
+                    if (polyX[i] < x0) x0 = polyX[i]; if (polyX[i] > x1) x1 = polyX[i];
+                    if (polyZ[i] < z0) z0 = polyZ[i]; if (polyZ[i] > z1) z1 = polyZ[i];
+                }
+                _boxX0 = x0 - BoxPad; _boxX1 = x1 + BoxPad; _boxZ0 = z0 - BoxPad; _boxZ1 = z1 + BoxPad;
+                // A NaN vertex is skipped by the min / max above, so the box would not bound the old loop: no pre-check then.
+                if (!finite) { _boxX0 = -1e30f; _boxX1 = 1e30f; _boxZ0 = -1e30f; _boxZ1 = 1e30f; }
+            }
+            return _readyOk;
         }
 
         public bool _Contains(Vector3 p)
         {
             if (!_Ready()) return false;
+            // IMP-DOG-034 A2: outside the (padded) bounding box the loop below cannot toggle an odd number of times: z outside
+            // [min, max] makes every (zi > p.z) equal, and x left of / right of every crossing toggles an even number (closed polygon)
+            // or none. NaN fails these tests and falls through to the loop, as before.
+            if (p.x < _boxX0 || p.x > _boxX1 || p.z < _boxZ0 || p.z > _boxZ1) return false;
             bool inside = false;
             int n = polyX.Length;
             int j = n - 1;

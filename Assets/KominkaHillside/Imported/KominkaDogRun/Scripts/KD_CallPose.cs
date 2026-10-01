@@ -171,14 +171,23 @@ namespace KominkaDogRun
         private void Start() { SetPage(false); }
         private void OnDisable() { _Dismiss(); }
 
+        // IMP-DOG-034 A8: 20 Hz only while this player has called a dog or has the pose page open; otherwise 4 Hz (nothing to judge:
+        // UpdatePaw returns at once for dogs this player has not called). Calling a dog switches back within one slow tick (0.25 s,
+        // while the dog is still walking over). dt is measured from the last tick (the old "now - next + .05" was the same value).
+        private float _lastTick = -.05f;
+        private bool _anyLocalCall;
+
         private void Update()
         {
             if (Time.time < _nextTick) return;
-            float dt = Mathf.Clamp(Time.time - _nextTick + .05f, 0f, .1f);
+            float dt = Mathf.Clamp(Time.time - _lastTick, 0f, .1f);
+            _lastTick = Time.time;
             _nextTick = Time.time + .05f;
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp) || board == null || dogs == null) return;
+            _anyLocalCall = false;
             for (int i = 0; i < dogs.Length && i < _dwell.Length; i++) UpdatePaw(i, lp, dt);
+            if (!_anyLocalCall && _dog < 0) _nextTick = Time.time + .25f;
             if (_dog >= 0 && panel != null && panel.activeInHierarchy)
             {
                 KD_SleepSlot selected = board.SlotOf(_dog);
@@ -191,6 +200,16 @@ namespace KominkaDogRun
         {
             KD_SleepSlot slot = board.SlotOf(i);
             if (slot == null) return;
+            // IMP-DOG-034 A8: a dog this player has not called is never ready, and _SetPaw / _SetChin return at their first line
+            // (!IsSleeperLocal), so the old path only zeroed the local arrays below. _interactionPose / _interactionCall are not
+            // refreshed here; the first tick after this player calls compares against them, finds a change and zeroes the same
+            // arrays again (already zero), so nothing observable differs.
+            if (!slot.IsSleeperLocal)
+            {
+                _dwell[i] = 0; _outside[i] = 0; _desktopUntil[i] = 0; _sampled[i] = false;
+                return;
+            }
+            _anyLocalCall = true;
             Transform root = slot.DogRoot();
             if (_interactionPose[i] != slot.PoseId || _interactionCall[i] != slot.CalledMs)
             {

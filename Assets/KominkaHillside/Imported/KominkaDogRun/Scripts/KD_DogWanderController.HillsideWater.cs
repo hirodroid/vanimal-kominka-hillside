@@ -245,6 +245,19 @@ namespace KominkaDogRun
             return riverData._DepthAt(p) > WaterWet;
         }
 
+        // IMP-DOG-034 A5: WaterWetAt は焼き込みデータだけを読む純関数 (_Contains の 34 頂点走査を含む)。同じ tick で
+        // **まったく同じ位置** を 2 度聞く (先頭の WaterPoseRefresh と、選び直しの UpdateWaterPlay) ので、直前の 1 件を控えて
+        // 使い回す。位置は成分の完全一致でだけ使い回すので結果は同一。UpdateTick の先頭で捨てる
+        private bool _wetMemoValid, _wetMemoValue;
+        private Vector3 _wetMemoAt;
+
+        bool WaterWetAtMemo(Vector3 p)
+        {
+            if (_wetMemoValid && p.x == _wetMemoAt.x && p.y == _wetMemoAt.y && p.z == _wetMemoAt.z) return _wetMemoValue;
+            _wetMemoValue = WaterWetAt(p); _wetMemoAt = p; _wetMemoValid = true;
+            return _wetMemoValue;
+        }
+
         /// <summary>From KD_DogFetchController (leash or toy asked while wading). Dog Owner only.</summary>
         public void _WaterExitAsked(int playerId)
         {
@@ -289,7 +302,7 @@ namespace KominkaDogRun
         bool WaterPoseRefresh()
         {
             Vector3 p = dogRoot.position;
-            bool wetNow = WaterWetAt(p);
+            bool wetNow = WaterWetAtMemo(p);   // IMP-DOG-034 A5
             if (!wetNow) { _waterSwimming = false; _swimShallowSince = -1f; }
             else if (_waterSwimming)
             {
@@ -364,7 +377,7 @@ namespace KominkaDogRun
             // RC-14: a leash vetoed in the water (WaterLeashTick) is not taken up; the play keeps walking the dog out
             if (hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex) && !_waterLeashVeto) { if (waterState != WaterOff) WaterEnd("leashed"); return false; }
             Vector3 p = dogRoot.position;
-            bool wet = fetchController.WaterPose != 0 || WaterWetAt(p);
+            bool wet = fetchController.WaterPose != 0 || WaterWetAtMemo(p);   // IMP-DOG-034 A5: 先頭の WaterPoseRefresh と同じ位置なら再計算しない
             // Cheap exit for the usual dry dog far from the spot (the errand lookups below are cross-behaviour calls).
             if (waterState == WaterOff && !wet && (!waterSpot._NearEntry(p) || (_waterFirstUsed && Time.time < _waterNextRoll))) { _waterFirstDue = 0f; return false; }
             int requester = WaterRequester();

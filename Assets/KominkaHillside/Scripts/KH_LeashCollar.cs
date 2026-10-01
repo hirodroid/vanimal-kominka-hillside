@@ -16,34 +16,48 @@ namespace KominkaHillside
         public Renderer snapVisual;
         public Renderer handleVisual;
         public override void Interact() { if (manager != null) manager._RequestDetach(dogIndex); }
+        // IMP-DOG-034 A4: which renderers were last switched on (-1 = not written yet, so the first frame always writes).
+        private const int DrawnHidden = 0, DrawnLine = 1, DrawnModeled = 2, DrawnModeledNoHandle = 3;
+        private int _drawn = -1;
         public override void PostLateUpdate()
         {
             if (line == null || manager == null) return;
-            bool connected = manager._IsLeashed(dogIndex);
-            VRCPlayerApi holder = connected ? VRCPlayerApi.GetPlayerById(manager.walkers[dogIndex]) : null;
-            bool visible = connected && Utilities.IsValid(holder);
+            // IMP-DOG-034 A4: the manager's synced arrays are read once per frame (each cross-behaviour read is an
+            // extern). Same array references as _IsLeashed / walkers[dogIndex] / hands[dogIndex], so same values.
+            int[] walkers = manager.walkers;
+            int holderId = dogIndex >= 0 && dogIndex < walkers.Length ? walkers[dogIndex] : -1;
+            VRCPlayerApi holder = holderId >= 0 ? VRCPlayerApi.GetPlayerById(holderId) : null;
+            bool visible = holderId >= 0 && Utilities.IsValid(holder);
+            if (!visible)
+            {
+                _shownValid = false;
+                // IMP-DOG-034 A4: all four renderers off, written only when that differs from the last write.
+                if (_drawn != DrawnHidden) ApplyDrawn(DrawnHidden);
+                return;
+            }
             bool modeled = ropeMesh != null && ropeBones != null && ropeBones.Length == 12;
-            line.enabled = visible && !modeled;
-            if (ropeMesh != null) ropeMesh.enabled = visible && modeled;
-            if (snapVisual != null) snapVisual.enabled = visible && modeled;
-            if (handleVisual != null) handleVisual.enabled = visible && modeled;
-            if (!visible) { _shownValid = false; return; }
+            int[] hands = manager.hands;
+            int hand = hands[dogIndex];
+            int drawn = modeled ? DrawnModeled : DrawnLine;
             // One grip per holder/hand; coincident copies for 2-3 dogs otherwise flicker in VR.
-            if (handleVisual != null)
+            // IMP-DOG-034 A4: decided before writing (was: write on, then off), so the final state is the same.
+            if (modeled && handleVisual != null)
                 for (int i=0;i<dogIndex;i++)
-                    if (manager.walkers[i]==manager.walkers[dogIndex] && manager.hands[i]==manager.hands[dogIndex])
-                        handleVisual.enabled=false;
-            Vector3 a = manager._HandPosition(holder, manager.hands[dogIndex]);
+                    if (walkers[i]==holderId && hands[i]==hand) { drawn = DrawnModeledNoHandle; break; }
+            if (_drawn != drawn) ApplyDrawn(drawn);
             Vector3 b = anchor.position;
             if (modeled)
             {
                 Quaternion rotation;
+                Vector3 a;
                 if (holder.IsUserInVR())
                 {
-                    int hand = manager.hands[dogIndex];
-                    Quaternion handRotation = holder.GetTrackingData(hand == 0
-                        ? VRCPlayerApi.TrackingDataType.LeftHand : VRCPlayerApi.TrackingDataType.RightHand).rotation;
-                    int holderId = manager.walkers[dogIndex];
+                    // IMP-DOG-034 A4: one GetTrackingData for both the position (was manager._HandPosition, which
+                    // returns this same .position for a VR player) and the rotation; same player, same frame.
+                    VRCPlayerApi.TrackingData handData = holder.GetTrackingData(hand == 0
+                        ? VRCPlayerApi.TrackingDataType.LeftHand : VRCPlayerApi.TrackingDataType.RightHand);
+                    a = handData.position;
+                    Quaternion handRotation = handData.rotation;
                     // A new connection or a change of hand/holder starts fresh: path chosen with the entry
                     // thresholds, and the first frame is placed on the target (no blend from an old pose).
                     bool fresh = !_shownValid || holderId != _shownHolder || hand != _shownHand;
@@ -56,23 +70,40 @@ namespace KominkaHillside
                     // Path switch (finger bones <-> tracking fallback): ease from the pose shown last frame over
                     // HandlePathBlend instead of jumping in one frame. A switch during a blend starts from the
                     // blended pose, so it never jumps either.
-                    if (!fresh && _pathFingers != _shownFingers)
-                    { _blendFromPos = _shownPos; _blendFromRot = _shownRot; _blendStartAt = Time.time; }
-                    float blend = (Time.time - _blendStartAt) / HandlePathBlend;
-                    if (!fresh && blend < 1f)
+                    // IMP-DOG-034 A4: the blend is only evaluated when not fresh (it was computed and discarded) and
+                    // Time.time is read once; same frame, same value.
+                    if (!fresh)
                     {
-                        a = Vector3.Lerp(_blendFromPos, a, blend);
-                        rotation = Quaternion.Slerp(_blendFromRot, rotation, blend);
+                        float now = Time.time;
+                        if (_pathFingers != _shownFingers)
+                        { _blendFromPos = _shownPos; _blendFromRot = _shownRot; _blendStartAt = now; }
+                        float blend = (now - _blendStartAt) / HandlePathBlend;
+                        if (blend < 1f)
+                        {
+                            a = Vector3.Lerp(_blendFromPos, a, blend);
+                            rotation = Quaternion.Slerp(_blendFromRot, rotation, blend);
+                        }
                     }
                     _shownValid = true; _shownHolder = holderId; _shownHand = hand; _shownFingers = _pathFingers;
                     _shownPos = a; _shownRot = rotation;
                 }
                 // Desktop/touch has no tracked hand: keep the body rotation the handle has always used.
-                else { rotation = holder.GetRotation(); _shownValid = false; }
+                else { a = manager._HandPosition(holder, hand); rotation = holder.GetRotation(); _shownValid = false; }
                 UpdateModeledGeometry(a,b,rotation);
                 return;
             }
-            UpdateGeometry(a,b,false);
+            UpdateGeometry(manager._HandPosition(holder, hand),b,false);
+        }
+        // IMP-DOG-034 A4: the four enabled writes the frame used to repeat, now done only on a change of state.
+        // Hidden = all off; Line = LineRenderer only; Modeled = rope, snap and handle; NoHandle = the handle of a
+        // later dog on the same holder/hand stays off (same rule as before, see the loop above).
+        private void ApplyDrawn(int state)
+        {
+            _drawn = state;
+            line.enabled = state == DrawnLine;
+            if (ropeMesh != null) ropeMesh.enabled = state >= DrawnModeled;
+            if (snapVisual != null) snapVisual.enabled = state >= DrawnModeled;
+            if (handleVisual != null) handleVisual.enabled = state == DrawnModeled;
         }
         // Orients the handle so the rope leaves it along the forearm, in front of the hand (BUG-DOG-002).
         // Axis map of Quaternion.Euler(-90,0,0) (checked numerically): local +Y -> -Z, local -Y -> +Z,
@@ -175,36 +206,61 @@ namespace KominkaHillside
         {
                 if (handleVisual != null)
                 {
-                    handleVisual.transform.SetPositionAndRotation(a, handRotation);
-                    a = handleVisual.transform.TransformPoint(new Vector3(0f, -0.077f, 0f));
+                    // IMP-DOG-034 A4: .transform fetched once (same component, same Transform).
+                    Transform handle = handleVisual.transform;
+                    handle.SetPositionAndRotation(a, handRotation);
+                    a = handle.TransformPoint(new Vector3(0f, -0.077f, 0f));
                 }
                 Vector3 direction = b-a;
                 if (direction.sqrMagnitude < 0.000001f) direction = Vector3.up;
                 if (snapVisual != null)
                 {
+                    Transform snap = snapVisual.transform;   // IMP-DOG-034 A4: fetched once
                     Quaternion rotation = Quaternion.FromToRotation(Vector3.up, direction.normalized);
-                    snapVisual.transform.SetPositionAndRotation(b-rotation*new Vector3(0f,.045f,0f),rotation);
-                    b=snapVisual.transform.TransformPoint(new Vector3(0f,-.047f,0f));
+                    snap.SetPositionAndRotation(b-rotation*new Vector3(0f,.045f,0f),rotation);
+                    b=snap.TransformPoint(new Vector3(0f,-.047f,0f));
                 }
             UpdateGeometry(a,b,true);
         }
-        private void UpdateGeometry(Vector3 a, Vector3 b, bool modeled)
+        // IMP-DOG-034 A4: per-bone constants of the rope curve, filled on first use (also when the Editor check calls
+        // UpdateGeometry by reflection without Start). Each entry is the exact sub-expression the loop used to compute
+        // every frame - t = i/11, Sin(t*PI), Cos(t*PI)*PI - so the products below keep the old evaluation order and
+        // give the same floats.
+        private bool _ropeReady;
+        private float[] _ropeT, _ropeSin, _ropeCosPi;
+        private void PrepareRope()
         {
-            if(modeled)
-            {
-                ropeMesh.transform.position=(a+b)*.5f;
-                ropeMesh.localBounds=new Bounds(Vector3.zero,Vector3.one*(Vector3.Distance(a,b)+1f));
-            }
-            float slack = Mathf.Clamp(manager.leashLength - Vector3.Distance(a,b), 0f, 0.8f);
+            _ropeT = new float[12]; _ropeSin = new float[12]; _ropeCosPi = new float[12];
             for (int i = 0; i < 12; i++)
             {
                 float t = i / 11f;
-                Vector3 point = Vector3.Lerp(a,b,t) - Vector3.up * (Mathf.Sin(t * Mathf.PI) * slack * 0.3f);
+                _ropeT[i] = t;
+                _ropeSin[i] = Mathf.Sin(t * Mathf.PI);
+                _ropeCosPi[i] = Mathf.Cos(t * Mathf.PI) * Mathf.PI;
+            }
+            _ropeReady = true;
+        }
+        private void UpdateGeometry(Vector3 a, Vector3 b, bool modeled)
+        {
+            if (!_ropeReady) PrepareRope();
+            // IMP-DOG-034 A4: the distance is computed once (it was computed twice from the same a, b).
+            float distance = Vector3.Distance(a,b);
+            if(modeled)
+            {
+                ropeMesh.transform.position=(a+b)*.5f;
+                ropeMesh.localBounds=new Bounds(Vector3.zero,Vector3.one*(distance+1f));
+            }
+            float slack = Mathf.Clamp(manager.leashLength - distance, 0f, 0.8f);
+            // IMP-DOG-034 A4: loop-invariant values read once (Vector3.up/right are constants, b-a does not change).
+            Vector3 up = Vector3.up, right = Vector3.right, ab = b-a;
+            for (int i = 0; i < 12; i++)
+            {
+                Vector3 point = Vector3.Lerp(a,b,_ropeT[i]) - up * (_ropeSin[i] * slack * 0.3f);
                 if (modeled)
                 {
-                    Vector3 tangent = b-a-Vector3.up*(Mathf.Cos(t*Mathf.PI)*Mathf.PI*slack*.3f);
+                    Vector3 tangent = ab-up*(_ropeCosPi[i]*slack*.3f);
                     if (tangent.sqrMagnitude < .000001f) tangent = Vector3.forward;
-                    ropeBones[i].SetPositionAndRotation(point,Quaternion.LookRotation(tangent,Vector3.right));
+                    ropeBones[i].SetPositionAndRotation(point,Quaternion.LookRotation(tangent,right));
                 }
                 else line.SetPosition(i,point);
             }

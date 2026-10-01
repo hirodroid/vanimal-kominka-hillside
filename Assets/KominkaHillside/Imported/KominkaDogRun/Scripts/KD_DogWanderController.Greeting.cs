@@ -25,7 +25,7 @@ namespace KominkaDogRun
         {
             if (dogBook == null || fetchController == null || activities == null) return false;
             bool active = fetchController.GreetingActive;
-            if (!activities.Available(dogIndex)) return false;
+            if (!SelfAvailable()) return false;   // IMP-DOG-034 A5: tick 内で 1 回 (Performance.cs)
             if (!active && mayStart && _dogOwner && Time.time >= _nextGreetingPick)
             {
                 _nextGreetingPick = Time.time + 2f;

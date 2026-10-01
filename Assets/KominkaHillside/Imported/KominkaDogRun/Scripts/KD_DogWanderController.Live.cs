@@ -97,7 +97,7 @@ namespace KominkaDogRun
 
         bool UpdateActivity()
         {
-            if (activities == null || !activities.Available(dogIndex)) return false;
+            if (activities == null || !SelfAvailable()) return false;   // IMP-DOG-034 A5: tick 内で 1 回 (Performance.cs)
             int mode = activities.Mode;
             if (mode == 1)
             {

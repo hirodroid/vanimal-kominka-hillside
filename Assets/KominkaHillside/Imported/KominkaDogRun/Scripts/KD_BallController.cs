@@ -217,6 +217,9 @@ namespace KominkaDogRun
         {
             if (_pickup == null) return;
             bool held = _pickup.IsHeld;
+            // IMP-DOG-034 A6: not held and no swing pending = the frame below only stores pos (never read: _heldPrevPos is read only
+            // while _heldPrevValid, set false here as below) and returns. Skips Time.deltaTime / transform.position for a resting ball.
+            if (!held && !_swingPending) { _heldPrevValid = false; return; }
             float dt = Time.deltaTime;
             Vector3 pos = transform.position;
 

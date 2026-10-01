@@ -77,8 +77,12 @@ namespace KominkaHillside
         private bool[] _floating;
         const float RiverCheckInterval = 0.25f; // the ball Owner looks this often
         const float RiverStrandSeconds = 10f;   // inside the band this long without sinking = stranded
-        private float _nextRiverAt;
+        private float _nextRiverAt = RiverCheckInterval * 0.5f;   // IMP-DOG-034 B6: half a period after the exclusive look
         private float[] _riverSince;
+        // IMP-DOG-034 B6: the balls' Rigidbody / VRCObjectSync, read once with the river arrays (the components never change) instead
+        // of GetComponent on every 0.25 s look. A missing component is cached as null, which the callers already handle.
+        private Rigidbody[] _ballRb;
+        private VRCObjectSync[] _ballSync;
         private float[] _riverLastReturn;
         private int[] _riverRepeat;
         private float[] _riverSettleUntil;      // after a bank return: keep the ball asleep until this time
@@ -247,10 +251,17 @@ namespace KominkaHillside
             if (!Networking.IsOwner(go)) { LogAsk("recall", row, kind, go); Networking.SetOwner(lp, go); } // net: setowner-ok: toy only, gated against a hand (_GateToy Held); position waits for ownership
         }
 
+        // IMP-DOG-034 B6: the two 0.25 s looks used to start together and stay on the same frame (one ~2,800-extern spike). Each now
+        // (Steady state only: the grid is on absolute Time.time, so the first Update after load or after a pause longer than
+        // a period finds both due at once; from the next period on they are 0.125 s apart.)
+        // keeps its own fixed grid (next = the first grid point after now), the river look half a period after the exclusive one, so
+        // they share a frame only when one frame spans 0.125 s. Same period; the first river look is 0.125 s after load.
+        float NextOnGrid(float phase, float interval) { return (Mathf.Floor((Time.time - phase) / interval) + 1f) * interval + phase; }
+
         private void Update()
         {
-            if (Time.time >= _nextExclusiveAt) { _nextExclusiveAt = Time.time + ExclusiveInterval; ApplyExclusive(); }
-            if (riverData != null && Time.time >= _nextRiverAt) { _nextRiverAt = Time.time + RiverCheckInterval; CheckRiverBalls(); }
+            if (Time.time >= _nextExclusiveAt) { _nextExclusiveAt = NextOnGrid(0f, ExclusiveInterval); ApplyExclusive(); }
+            if (riverData != null && Time.time >= _nextRiverAt) { _nextRiverAt = NextOnGrid(RiverCheckInterval * 0.5f, RiverCheckInterval); CheckRiverBalls(); }
             if (_pendingRow < 0) return;
             int row = _pendingRow; int kind = _pendingKind;
             if (_stage == 2) { StepPark(row, kind); return; }
@@ -365,6 +376,9 @@ namespace KominkaHillside
                 _floating = new bool[balls.Length];
                 _riverRepeat = new int[balls.Length];
                 for (int k = 0; k < _riverSince.Length; k++) { _riverSince[k] = -1f; _riverLastReturn[k] = -1000f; }
+                _ballRb = new Rigidbody[balls.Length]; _ballSync = new VRCObjectSync[balls.Length];
+                for (int k = 0; k < balls.Length; k++)
+                    if (balls[k] != null) { GameObject bgo = balls[k].gameObject; _ballRb[k] = bgo.GetComponent<Rigidbody>(); _ballSync[k] = bgo.GetComponent<VRCObjectSync>(); }
             }
             for (int i = 0; i < balls.Length; i++)
             {
@@ -386,7 +400,7 @@ namespace KominkaHillside
                 // physics (only the Owner may write them), so the ball's Owner - this client - unfreezes a kinematic ball that no
                 // dog has in its mouth (a race ball is its winner's). Then the rules below float it or give its gravity back.
                 if (UnfreezeIfFree(i, go)) continue;
-                if (Time.time < _riverSettleUntil[i]) SettleBall(go);
+                if (Time.time < _riverSettleUntil[i]) SettleBall(i);
                 Vector3 p = go.transform.position;
                 // In the spot: float (every new Owner does the same from the position, so an Owner change keeps it afloat, S4).
                 // IMP-DOG-021 (E-2): anywhere along the river as well (KH_RiverData._FloatsAt: in the water, outside the bridge
@@ -395,7 +409,7 @@ namespace KominkaHillside
                 if (inSpot || riverData._FloatsAt(p)) { FloatBall(i, go, p, inSpot); _riverSince[i] = -1f; continue; }
                 // Left the spot water (or released on land): gravity back. Judged from the physical state too, not only the local
                 // history: a ball another Owner floated and a dog then carried out has _floating false here (Codex 2026-09-27 D-高)
-                if (_floating[i] || GravityOff(go)) StopFloat(i, go);
+                if (_floating[i] || GravityOff(i)) StopFloat(i, go);
                 if (!riverData._InBand(p, KH_RiverData.BandMargin)) { _riverSince[i] = -1f; continue; }
                 if (_riverSince[i] < 0f) _riverSince[i] = Time.time;
                 bool sunk = p.y < riverData._SurfaceY(p.z);
@@ -459,7 +473,7 @@ namespace KominkaHillside
             bool found = spot.y > -9999f;
             if (found)
             {
-                VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
+                VRCObjectSync sync = _ballSync[i];   // IMP-DOG-034 B6: cached (same component as GetComponent)
                 if (sync != null) sync.SetKinematic(false);
                 float radius = go.transform.localScale.x * 0.5f;
                 go.transform.position = spot + Vector3.up * (radius + 0.005f);   // resting on the ground: no drop to wake it
@@ -468,7 +482,7 @@ namespace KominkaHillside
                 // in about a minute (run 20260927-042802). Put it to sleep after the teleport; gravity alone does not wake a
                 // sleeping body (contact, force or a pickup does). The teleport and the first contact can wake it, so the
                 // settle pass keeps re-sleeping it for RiverSettleSeconds (cleared by a hold or a Fetch).
-                SettleBall(go);
+                SettleBall(i);
                 _riverSettleUntil[i] = Time.time + RiverSettleSeconds;
             }
             else Park(i, KindBall);
@@ -476,9 +490,10 @@ namespace KominkaHillside
                 + " side=" + (side > 0f ? "+x" : "-x") + " repeat=" + _riverRepeat[i] + " slope=" + (found ? _riverSpotScore.ToString("F3") : "none") + " from=" + RiverV3(from) + " at=" + RiverV3(go.transform.position));
         }
 
-        void SettleBall(GameObject go)
+        // IMP-DOG-034 B6: the river helpers below read the cached components of ball i (filled in CheckRiverBalls before any call)
+        void SettleBall(int i)
         {
-            Rigidbody rb = go.GetComponent<Rigidbody>();
+            Rigidbody rb = _ballRb[i];
             if (rb == null || rb.isKinematic) return;
             rb.velocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
@@ -500,9 +515,9 @@ namespace KominkaHillside
         // old rule stays: it drifts to the spot's downstream end and stops there (a ball left in the spot stays by "川辺").
         void FloatBall(int i, GameObject go, Vector3 p, bool inSpot)
         {
-            Rigidbody rb = go.GetComponent<Rigidbody>();
+            Rigidbody rb = _ballRb[i];
             if (rb == null || rb.isKinematic) return;
-            VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
+            VRCObjectSync sync = _ballSync[i];
             if (!_floating[i]) { _floating[i] = true; rb.angularVelocity = Vector3.zero; }
             if (rb.useGravity && sync != null) sync.SetGravity(false);
             float radius = go.transform.localScale.x * 0.5f;
@@ -518,29 +533,29 @@ namespace KominkaHillside
         /// on the next pass, when the physics has settled).</summary>
         bool UnfreezeIfFree(int i, GameObject go)
         {
-            Rigidbody rb = go.GetComponent<Rigidbody>();
+            Rigidbody rb = _ballRb[i];
             if (rb == null || !rb.isKinematic) return false;
             if (activities != null && activities.BallClaimed(i, -1)) return false;
             if (fetchers != null)
                 for (int k = 0; k < fetchers.Length; k++)
                     if (fetchers[k] != null && fetchers[k]._Carries(go.transform)) return false;
-            VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
+            VRCObjectSync sync = _ballSync[i];
             if (sync == null) return false;
             sync.SetKinematic(false);
             Debug.Log("[KH_ToyRecall] unfrozen ball=" + i + " (kinematic, no dog carrying it)");
             return true;
         }
 
-        bool GravityOff(GameObject go)
+        bool GravityOff(int i)
         {
-            Rigidbody rb = go.GetComponent<Rigidbody>();
+            Rigidbody rb = _ballRb[i];
             return rb != null && !rb.isKinematic && !rb.useGravity;
         }
 
         void StopFloat(int i, GameObject go)
         {
             _floating[i] = false;
-            VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
+            VRCObjectSync sync = _ballSync[i];
             if (sync != null) sync.SetGravity(true);
         }
 

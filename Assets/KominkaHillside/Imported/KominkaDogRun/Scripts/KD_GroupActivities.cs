@@ -51,6 +51,7 @@ namespace KominkaDogRun
         private Vector3[] _previous;
         private float[] _movingAt;
         private int[] _samples;
+        private bool _ballsWatched;   // IMP-DOG-034 A7: _previous holds last frame's positions (the race watch ran last frame)
         private float _readySince = -1;
         public int localFormation = -1;
         // net: callable-ok: read-only state derived from synchronized data
@@ -271,14 +272,22 @@ namespace KominkaDogRun
             if (_requestState == 1 && Time.time - _requestAt > 4f) _requestState = 4;
             if (photoRevision != _seenPhoto) { _seenPhoto = photoRevision; if (Mode == 1 && photos != null) photos._GroupPhoto(anchor, yaw); }
             if (!Networking.IsOwner(gameObject) || _previous == null) return;
-            for (int i = 0; i < balls.Length; i++)
+            // IMP-DOG-034 A7: the ball watch feeds only the race throw check (_movingAt, read at _pendingBall, which needs Mode 2), so it
+            // runs only while the synced mode is the race (op 2; the hillside menus never request it). Entering it, the first frame
+            // re-bases _previous instead of comparing against a position from before the race.
+            if (mode == 2)
             {
-                Vector3 p = balls[i].transform.position;
-                if ((p - _previous[i]).magnitude > .008f && !balls[i].IsHeldNow)
-                { _samples[i]++; if (_samples[i] >= 2) _movingAt[i] = Time.time; }
-                else if (balls[i].IsHeldNow) _samples[i] = 0;
-                _previous[i] = p;
+                for (int i = 0; i < balls.Length; i++)
+                {
+                    Vector3 p = balls[i].transform.position;
+                    if (_ballsWatched && (p - _previous[i]).magnitude > .008f && !balls[i].IsHeldNow)
+                    { _samples[i]++; if (_samples[i] >= 2) _movingAt[i] = Time.time; }
+                    else if (balls[i].IsHeldNow) _samples[i] = 0;
+                    _previous[i] = p;
+                }
+                _ballsWatched = true;
             }
+            else _ballsWatched = false;
             if (Time.time < _nextTick) return; _nextTick = Time.time + .1f;
             if (mode != 0 && (Mode == 0 || !Utilities.IsValid(VRCPlayerApi.GetPlayerById(host)))) { EndGathering(); revision++; RequestSerialization(); }
             if (_pendingBall >= 0)

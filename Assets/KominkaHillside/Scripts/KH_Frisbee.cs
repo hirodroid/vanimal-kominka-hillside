@@ -130,6 +130,11 @@ namespace KominkaHillside
             VRCPlayerApi lp = Networking.LocalPlayer;
             _isDesktop = Utilities.IsValid(lp) && !lp.IsUserInVR();
             if (_isDesktop && _pickup != null) _pickup.AutoHold = VRC_Pickup.AutoHoldMode.Yes;
+            // IMP-DOG-034 B6: river look phase by dog index (dogIndex is a baked field, safe to read before the catcher's Start)
+            int phaseSlot = catcher != null ? catcher.dogIndex : 0;
+            phaseSlot = ((phaseSlot % 6) + 6) % 6;
+            _riverPhase = phaseSlot * (RiverCheckInterval / 6f);
+            _nextRiverAt = _riverPhase;
         }
 
         // ---- Closed-form flight. Pure: callers pass the launch facts they hold. ----
@@ -355,8 +360,14 @@ namespace KominkaHillside
             if (aimMarkerCross != null) aimMarkerCross.SetActive(outside);
         }
 
+        // IMP-DOG-034 A6: true = the preview may be visible (shown last frame, or not hidden yet since load). A disc nobody holds
+        // locally whose preview is already hidden skips the per-frame IsHeld / IsOwner / activeSelf checks. _heldLocal is set by
+        // OnPickup and cleared by OnDrop; while it is set (also when a theft never delivers OnDrop) the full check below still runs.
+        private bool _aimShown = true;
+
         void UpdateAim()
         {
+            if (!_heldLocal && !_aimShown) return;   // IMP-DOG-034 A6: stored disc, preview already hidden
             bool show = aimLaunch && _pickup != null && _pickup.IsHeld && Networking.IsOwner(gameObject) && aimLine != null;
             if (!show)
             {
@@ -365,8 +376,10 @@ namespace KominkaHillside
                 if (aimHint != null && aimHint.gameObject.activeSelf) aimHint.gameObject.SetActive(false);
                 if (aimFarHint != null && aimFarHint.gameObject.activeSelf) aimFarHint.gameObject.SetActive(false);
                 _aimJudgeNext = 0f;   // DES-DOG-005: the next hold judges its cross on its first frame
+                _aimShown = false;
                 return;
             }
+            _aimShown = true;
             UpdateAimPower();
             Vector3 p0 = transform.position;
             Vector3 v0 = AimDirection() * AimSpeedNow();
@@ -490,6 +503,11 @@ namespace KominkaHillside
         // Owner が 0.25 s ごとに見て岸へ戻す (KH_ToyRecall.CheckRiverBalls の作法。ディスクは ToyRecall に載せない方針なのでここで持つ)
         const float RiverCheckInterval = 0.25f;
         private float _nextRiverAt;
+        // IMP-DOG-034 B6: the six discs started at 0 with the same period and looked on the same frame. Each disc now keeps a fixed
+        // (Steady state only: the grid is on absolute Time.time, so the first Update after load or after a long pause can find
+        // all six due at once; from the next period on they keep their phases.)
+        // grid of its own, phased by its dog index (1/6 of the period apart, set in Start); same period, same work per look.
+        private float _riverPhase;
 
         void Update()
         {
@@ -588,7 +606,7 @@ namespace KominkaHillside
         void CheckRiver()
         {
             if (riverData == null || Time.time < _nextRiverAt) return;
-            _nextRiverAt = Time.time + RiverCheckInterval;
+            _nextRiverAt = (Mathf.Floor((Time.time - _riverPhase) / RiverCheckInterval) + 1f) * RiverCheckInterval + _riverPhase;   // IMP-DOG-034 B6
             if (!Networking.IsOwner(gameObject) || IsHeldNow || (catcher != null && catcher.IsCarrying)) return;
             // D-2 放した後の復旧 (the ball's RC-17 / UnfreezeIfFree): not flying (Update only calls this then), not held, not carried,
             // yet kinematic - a dog that lost it while carrying gives up without touching its physics. Looked at again next time.

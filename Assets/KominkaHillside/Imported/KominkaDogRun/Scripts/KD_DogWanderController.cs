@@ -1313,7 +1313,8 @@ namespace KominkaDogRun
             _liveCalled = false;
             _activityBusy = false; // かけっこ・じゃれも同じ作法 (UpdateActivity の拘束する枝だけが立てる)
             _washActive = false;   // IMP-DOG-025: 洗われ中も同じ作法 (UpdateHillsideWash だけが立てる。HillsideWash.cs)
-            WashErrandTick();      // IMP-DOG-027: 集合・呼び戻し・ワープの受理のエッジで洗浄の保持を解く (wash が null なら即 return)
+            _selfAvailableValid = false; _wetMemoValid = false;   // IMP-DOG-034 A5: tick 内の使い回しはこの tick の分だけ (Performance.cs / HillsideWater.cs)
+            WashErrandTick();     // IMP-DOG-027: 集合・呼び戻し・ワープの受理のエッジで洗浄の保持を解く (wash が null なら即 return)
 
             // ---- IMP-NET-005: Owner 権威。**ルートを書くのは Owner だけ** ----
             //
@@ -1423,6 +1424,7 @@ namespace KominkaDogRun
                 NotifyPlay();
                 return;
             }
+            _selfAvailableValid = false;   // IMP-DOG-034 A5: 継続側が引いた値は選び直しへ持ち込まない (Performance.cs)
             ScheduleBehaviorSelection(Time.time);
 
             // IMP-DOG-020: 水遊び (HillsideWater.cs)。水の中では人の用事 (呼ぶ・ライブ・集合・おやつ) より先に出水し、

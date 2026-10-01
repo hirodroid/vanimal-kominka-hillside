@@ -310,6 +310,11 @@ namespace KominkaDogRun
                 _slotSettled[i] = (p - _slotPrevPos[i]).sqrMagnitude <= SettleStep * SettleStep;
                 _slotPrevPos[i] = p;
             }
+            // IMP-DOG-034 B6: no treat out and no dog holding a claim or eating = the rest is a no-op. ClaimStillOut is false (no slot
+            // is Out), so no thanks hold starts (dogEatMs all 0); ResolveClaimsWith gives every dog -1 / 0 (both passes need an Out
+            // slot), which equals dogSlot / dogSlotOutMs, so nothing changes and nothing is sent. EligibleDog / DistMmOf only read.
+            // The slot loop above still runs, so _slotSettled / _slotPrevPos stay exactly as before.
+            if (NothingToResolve()) return;
             for (int d = 0; d < _dogCount; d++)
             {
                 // **食べていた枠が消えた = 食べ終わった。返事の保持へ入れる** (不変条件 4)。
@@ -339,6 +344,15 @@ namespace KominkaDogRun
                 changed = true;
             }
             if (changed) RequestSerialization();
+        }
+
+        /// <summary>IMP-DOG-034 B6: この突き合わせで Out の枠が無く、どの犬も Claim も食べ始めも持っていない。</summary>
+        private bool NothingToResolve()
+        {
+            for (int i = 0; i < _slotCount; i++) if (_slotState[i] == SlotOut) return false;
+            for (int d = 0; d < _dogCount; d++)
+                if (dogSlot[d] != -1 || dogSlotOutMs[d] != 0 || dogEatMs[d] != 0) return false;
+            return true;
         }
 
         /// <summary>犬 d が掴んでいる枠が**まだ同じおやつのまま出ている**か

@@ -842,7 +842,8 @@ namespace KominkaDogRun
             WaterThrowTick();   // IMP-DOG-020: a throw held while the dog was in the water (HillsideWater.cs)
             // Cross-object delivery can race with a throw. Once a leash is observed it wins,
             // and the existing release path restores carried-ball physics before walking.
-            if (_dogOwner && hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex) && !IsIdle)
+            // IMP-DOG-034 A6: !IsIdle (own field) before the cross-behaviour _IsLeashed; both are side-effect-free reads, same result
+            if (_dogOwner && !IsIdle && hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex))
             {
                 GiveUp();
             }
@@ -866,13 +867,15 @@ namespace KominkaDogRun
                     }
                     RequestSerialization();
                 }
-                bool claimedElsewhere = activities != null && activities.BallClaimed(dogIndex, dogIndex) && raceBallIndex < 0;
                 // 出しっぱなし保険 (vrc-networking §6「ON にした人が居なくなる」):
                 // Release の SetKinematic(false) が Ownership 未確定で無視された場合、
                 // ボールが永久に kinematic のまま残る (Codex 指摘・高)。
                 // Idle 中に実態と突き合わせ、効くまで毎フレーム再試行する
-                if (!claimedElsewhere && _dogOwner && _ballRb != null && _ballRb.isKinematic
-                    && (_ballPickup == null || !_ballPickup.IsHeld))
+                // IMP-DOG-034 A6: "claimed elsewhere" (activities.BallClaimed, a cross-behaviour read with no side effects) is only
+                // asked once the Owner sees a kinematic, unheld ball - it was used nowhere else, so the result is the same
+                if (_dogOwner && _ballRb != null && _ballRb.isKinematic
+                    && (_ballPickup == null || !_ballPickup.IsHeld)
+                    && !(raceBallIndex < 0 && activities != null && activities.BallClaimed(dogIndex, dogIndex)))
                     ReleaseBall();
 
                 if (_dogOwner && raceBallIndex >= 0 && (_ballRb == null || !_ballRb.isKinematic))

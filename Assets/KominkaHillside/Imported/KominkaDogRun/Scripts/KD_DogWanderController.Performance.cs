@@ -25,6 +25,25 @@ namespace KominkaDogRun
             _behaviorSelectionSerial++;
         }
 
+        // IMP-DOG-034 A5: activities.Available(dogIndex) (他 Behaviour を 15 前後跨ぐ) を選び直し 1 回で 1 回だけ引く。
+        // 選び直しでは UpdateActivity / UpdateGreeting(false) / UpdateGreeting(true) が順に引いていた。その間に走る
+        // UpdateTreat / UpdateNudge / UpdateRest / UpdatePlay が Available の入力 (Leash・ディスク・集合・Fetch の Idle /
+        // 撫で / 水の姿勢・Candy・撫で中・寝床・この犬の IsAsleep / IsResting) で変えうるのは _restPhase (UpdateRest の
+        // EndRest) だけなので、休憩中かどうかが変わったら引き直す。それ以外は同じ tick で同じ値になる。
+        // 無効化は UpdateTick の先頭と、継続 (ContinueSelectedBehavior) から選び直しへ落ちる所 (ScheduleBehaviorSelection の直前)
+        bool _selfAvailableValid, _selfAvailableValue, _selfAvailableResting;
+
+        bool SelfAvailable()
+        {
+            bool resting = _restPhase != RestPhaseNone;
+            if (!_selfAvailableValid || _selfAvailableResting != resting)
+            {
+                _selfAvailableValue = activities.Available(dogIndex);
+                _selfAvailableResting = resting; _selfAvailableValid = true;
+            }
+            return _selfAvailableValue;
+        }
+
         bool ContinueSelectedBehavior()
         {
             switch (_selectedBehavior)

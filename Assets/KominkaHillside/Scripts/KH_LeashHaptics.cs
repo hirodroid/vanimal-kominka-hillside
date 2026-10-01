@@ -42,7 +42,7 @@ namespace KominkaHillside
         public float minAmplitude = 0.3f;     // the first moment the leash goes taut
         public float frequency = 0.5f;
         public float teleportJump = 1.0f;     // m in one frame: respawn / station teleport, never a pull
-        public bool logPulls = true;          // at most one line per second per hand, for the PCVR record
+        public bool logPulls = false;         // at most one line per second per hand, for the PCVR record. IMP-DOG-034 A7: off in production (string building + Debug.Log)
 
         private const int ModeNone = 0, ModePulse = 1, ModeTug = 2;
         private const float SpeedTau = 0.3f;  // EMA time constant for the holder's own speed

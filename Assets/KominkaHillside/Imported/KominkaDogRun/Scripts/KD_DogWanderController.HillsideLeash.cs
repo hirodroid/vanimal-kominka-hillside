@@ -613,8 +613,8 @@ namespace KominkaDogRun
             float handNeed = _poseTrailActive ? PoseHandHold : PoseHandMin;
             _poseTrailActive = route != null && settled
                 && handDist >= handNeed
-                && route._DistanceToTrail(dogRoot.position) >= trailNeed
-                && route._DistanceToTrail(handPos) < PoseTrailHalfWidth;
+                && PoseTrailDogAtLeast(route, dogRoot.position, trailNeed)       // IMP-DOG-034 A3: 結果は走査と同じ (下のキャッシュ)
+                && PoseTrailHandBelow(route, handPos, PoseTrailHalfWidth);
             if (_poseTrailActive)
             {
                 _eatPose = true; // ApplyMoveAnim が Animator の Pickup へ落とす (IMP-TRT-001 の流用)
@@ -626,6 +626,46 @@ namespace KominkaDogRun
             if (petController == null) return;
             petController._SetGaze(holder.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position, 0f);
             petController._SetUrge(0.5f);
+        }
+
+        // ---- IMP-DOG-034 A3: 嗅ぐ姿勢の判定に使う「道の中心線からの距離」のキャッシュ ----
+        // _DistanceToTrail はリンクの走査 (≈ 650 extern) で、止まっているリード犬では毎フレーム 2 本 (犬と手) 引いていた。
+        // 道は動かず、距離は水平距離なので、測った点から水平に m 動いた点の真の距離は [d - m, d + m] に入る。
+        // **しきい値との大小がこの区間で決まるときだけキャッシュを使い、決まらないときは引き直す** — 比較の結果は毎フレーム
+        // 走査した場合と同じ (ヒステリシスの状態が分かれない。Codex 指摘 2026-10-01: 古い距離をそのまま使うと境目を
+        // 跨いで戻る動きを取りこぼし、姿勢が残り続ける)。リンクが見つからない 1e6 は距離ではないので、その間は
+        // 0.25 m 動いたら引き直す。ResetPauseAndPoseState が無効化する
+        const float PoseTrailCacheMove = 0.25f;
+        private Vector3 _poseTrailDogAt, _poseTrailHandAt;
+        private float _poseTrailDogDist, _poseTrailHandDist;
+        private float _poseTrailDogTime = -1000f, _poseTrailHandTime = -1000f;   // < 0: 無効 (未計測)
+
+        private bool PoseTrailDogAtLeast(KominkaHillside.KH_WalkRoute route, Vector3 p, float need)
+        {
+            if (_poseTrailDogTime >= 0f)
+            {
+                Vector3 moved = p - _poseTrailDogAt; moved.y = 0f;
+                float m = moved.magnitude;
+                float d = _poseTrailDogDist;
+                if (d < 1e5f) { if (d - m >= need) return true; if (d + m < need) return false; }
+                else if (m <= PoseTrailCacheMove) return true;   // 道の外 (リンク無し) のまま
+            }
+            _poseTrailDogDist = route._DistanceToTrail(p); _poseTrailDogAt = p; _poseTrailDogTime = Time.time;
+            return _poseTrailDogDist >= need;
+        }
+
+        private bool PoseTrailHandBelow(KominkaHillside.KH_WalkRoute route, Vector3 p, float limit)
+        {
+            if (_poseTrailHandTime >= 0f)
+            {
+                Vector3 moved = p - _poseTrailHandAt; moved.y = 0f;
+                float m = moved.magnitude;
+                float d = _poseTrailHandDist;
+                if (d < 1e5f) { if (d + m < limit) return true; if (d - m >= limit) return false; }
+                else if (m <= PoseTrailCacheMove) return false;
+            }
+            _poseTrailHandDist = route._DistanceToTrail(p); _poseTrailHandAt = p; _poseTrailHandTime = Time.time;
+            return _poseTrailHandDist < limit;
         }
 
         // 1 Hz: did the holder move, and are they still near the trail (with hysteresis)?
@@ -868,7 +908,9 @@ namespace KominkaDogRun
         {
             KominkaHillside.KH_WalkStopovers spots = hillsideLeashes.stopovers;
             if (spots == null || spots.count <= 0 || route == null) return false;
-            Vector3 dir = PassDirection(route, handPos);
+            // IMP-DOG-034 A1: PassDirection (_TrailDirection = リンク全走査 ≈ 650 extern) は、向きを実際に使う所でだけ引く。
+            // 以前は先頭で毎フレーム引いてから HolderMoving / クールダウンで捨てていた。PassDirection は route を読むだけの
+            // 純関数 (書き込み無し) なので、引く位置を後ろへ移しても戻り値も副作用も変わらない
             // 当たりを持っているなら、あとは手が近づくのを待つだけ。**ここは人が歩いているかを問わない**
             // (Codex D) — 立ち止まって手を伸ばしてくれた人にこそ、犬は寄って行ってよい
             if (_stopoverPending >= 0)
@@ -876,8 +918,9 @@ namespace KominkaDogRun
                 Vector3 pendingSpot = spots._Position(_stopoverPending);
                 if (Horizontal(pendingSpot, handPos) > leash * StopoverHandMax) return false;
                 // 待っている間に引き返していることがある。持ち越しを使う直前にもう一度前後を見る
+                Vector3 pendingDir = PassDirection(route, handPos);
                 Vector3 toPending = pendingSpot - handPos; toPending.y = 0f;
-                if (dir.sqrMagnitude > 0.0001f && Vector3.Dot(toPending, dir) <= -StopoverBehind)
+                if (pendingDir.sqrMagnitude > 0.0001f && Vector3.Dot(toPending, pendingDir) <= -StopoverBehind)
                 { _stopoverPending = -1; return false; }
                 if (SiblingAtStopover(_stopoverPending) || SiblingPausedRecently()) return false;
                 return EnterStopover(spots, _stopoverPending);
@@ -886,6 +929,16 @@ namespace KominkaDogRun
             if (!HolderMoving()) return false;
             // 犬ごとのクールダウンと、同じ人の犬全体の静穏間隔 (寄り道と共通)
             if (Time.time - _lastStopoverAt < StopoverCooldown || SiblingPausedRecently()) return false;
+            // IMP-DOG-034 A1: 手から StopoverRange 以内に場所が 1 つも無ければ、下の走査は向きに関係なく best = -1 で
+            // false を返す (副作用無し)。同じ距離の判定を先に安く回し、道の大半ではリンク走査を引かない
+            bool anyInRange = false;
+            for (int k = 0; k < spots.count; k++)
+            {
+                Vector3 near = spots._Position(k) - handPos; near.y = 0f;
+                if (!(near.magnitude > StopoverRange)) { anyInRange = true; break; }
+            }
+            if (!anyInRange) return false;
+            Vector3 dir = PassDirection(route, handPos);   // IMP-DOG-034 A1: ここで初めて使う
             if (dir.sqrMagnitude < 0.0001f) return false;   // 前後が決まらないなら「これから通る」も決まらない
             int best = -1; float bestDist = 1e6f;
             for (int k = 0; k < spots.count; k++)
@@ -1061,6 +1114,7 @@ namespace KominkaDogRun
             _detourPoint = dogRoot.position; _detourEnteredAt = Time.time;
             // 姿勢の観測履歴 (止まっていた時間・向き・今出している姿勢) もここで捨てる
             _stoppedSince = -1f; _handDistPrev = 0f; _poseTrailActive = false;
+            _poseTrailDogTime = -1000f; _poseTrailHandTime = -1000f;   // IMP-DOG-034 A3: 新しい散歩・Owner は距離を測り直す
             _prevYaw = dogRoot.eulerAngles.y;
             _nextDetourRoll = Time.time + DetourRollInterval;
             // 立ち寄りも同じ: 進行中の滞在は引き継がない。履歴 (_lastStopoverAt / _lastStopoverIndex) は

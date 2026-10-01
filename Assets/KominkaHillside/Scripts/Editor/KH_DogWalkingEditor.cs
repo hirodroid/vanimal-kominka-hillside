@@ -266,7 +266,7 @@ namespace KominkaHillside.Editor
             haptics.manager=manager;haptics.hapticsOn=true;
             haptics.pullRatio=1f;haptics.pullFullRatio=1.25f;haptics.stillSpeed=.4f;haptics.stillPullRatio=.85f;haptics.awaySpeed=.3f;
             haptics.pulseInterval=.12f;haptics.pulseDuration=.08f;haptics.tugInterval=.5f;haptics.tugDuration=.15f;
-            haptics.minAmplitude=.3f;haptics.frequency=.5f;haptics.teleportJump=1f;haptics.logPulls=true;
+            haptics.minAmplitude=.3f;haptics.frequency=.5f;haptics.teleportJump=1f;haptics.logPulls=false;   // IMP-DOG-034 A7: pull log off in production
             var recall=Add<KH_ToyRecall>(Child(root.transform,"KH_ToyRecall").gameObject);
             recall.balls=new KD_BallController[6];recall.fetchers=new KD_DogFetchController[6];recall.activities=act;recall.groundMask=(1<<0)|(1<<11);
             Transform[] parkBall,parkDisc;BuildToyPark(root.transform,out parkBall,out parkDisc);   // IMP-DOG-019: the toy that is not out waits here
