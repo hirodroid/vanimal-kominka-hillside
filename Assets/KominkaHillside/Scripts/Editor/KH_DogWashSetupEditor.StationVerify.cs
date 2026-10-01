@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using KominkaDogRun;
 using KominkaDogRun.Editor;
 using TMPro;
 using UdonSharpEditor;
@@ -42,6 +43,8 @@ namespace KominkaHillside.Editor
             catch (Exception e) { req(false, "layout: check stopped: " + e.GetType().Name + ": " + e.Message); }
             try { CheckCourseStations(r, req, scene); }
             catch (Exception e) { req(false, "course stations: check stopped: " + e.GetType().Name + ": " + e.Message); }
+            try { CheckStationControlsAll(r, req, scene); }
+            catch (Exception e) { req(false, "controls: check stopped: " + e.GetType().Name + ": " + e.Message); }
         }
 
         static void CheckStationLayoutInner(VerifyReport r, Action<bool, string> req, UnityEngine.SceneManagement.Scene scene)
@@ -60,7 +63,7 @@ namespace KominkaHillside.Editor
             else r.notes.Add("layout: no BUILT report in " + BuildReportPath + " (Temp is cleared when Unity closes): the station position was not compared with the last Build");
 
             CheckStationBody(r, req, st, ToolSpecs, "layout: " + StationName);
-            var table = st.Find(TableName);
+            var table = FindTable(st);
 
             // ---- distances to the hand-placed spots (IMP-ENV-003: never moved here), from the footprints ----
             var prints = StationFootprints();
@@ -172,8 +175,8 @@ namespace KominkaHillside.Editor
                 }
             }
 
-            // ---- the duckboard: one solid walkable box, 0.6 x 0.03 x 0.9, seated on the ground, 1.2 m in front ----
-            var table = st.Find(TableName);
+            // ---- the duckboard: one solid walkable box, TableSize (1.3 x 0.03 x 0.7 since IMP-ENV-011), seated on the ground, 1.2 m in front ----
+            var table = FindTable(st);
             var box = table != null ? table.GetComponent<BoxCollider>() : null;
             req(box != null && box.enabled && !box.isTrigger && table.gameObject.layer == 0 && table.gameObject.activeInHierarchy && table.GetComponents<Collider>().Length == 1,
                 label + ": " + TableName + " one solid BoxCollider on Default (players walk on it; the dogs' ground rays 0|11 see it)");
@@ -183,6 +186,8 @@ namespace KominkaHillside.Editor
                 req(Near(size, TableSize) && Near(box.center, new Vector3(0f, TableSize.y * 0.5f, 0f)), label + ": " + TableName + " collider " + size.ToString("F3") + " = " + TableSize.ToString("F3"));
                 req(Mathf.Abs(table.localPosition.x) < 1e-3f && Mathf.Abs(table.localPosition.z + TableFront) < 1e-3f && Quaternion.Angle(table.localRotation, Quaternion.identity) < 0.1f,
                     label + ": " + TableName + " " + TableFront + " m in front of the shelf (local " + table.localPosition.ToString("F3") + ")");
+                float gap = (TableFront - TableSize.z * 0.5f) - ShelfDepth * 0.5f;
+                req(gap >= 0.5f - 1e-4f, label + ": " + gap.ToString("F3") + " m between the duckboard and the shelf (>= 0.5: people stand on the shelf side too)");
                 float want = MaxGround(st, new Vector3(0f, 0f, -TableFront), TableSize.x, TableSize.z);
                 req(Mathf.Abs(table.localPosition.y - want) < 0.005f, label + ": " + TableName + " seated on the ground (local y " + table.localPosition.y.ToString("F3") + ", highest ground under it " + want.ToString("F3") + "; top " + TableSize.y + " m above it)");
                 var c = table.TransformPoint(box.center);
@@ -195,7 +200,7 @@ namespace KominkaHillside.Editor
             // ---- the side room: 1 m on each side (±X) of the duckboard free of solid colliders ----
             foreach (float side in new[] { -1f, 1f })
             {
-                // The zone is the 1 m strip beside the duckboard (x from its edge 0.3 to 1.3 m, z over its 0.9 m). It starts SideGap
+                // The zone is the 1 m strip beside the duckboard (x from its edge to 1 m beyond, z over its depth). It starts SideGap
                 // off the board's edge: the strip and the board share that face, and OverlapBox reports a collider that only touches
                 // the box (2026-09-30 Build: both sides failed on WashTable itself). The station's own parts (shelf, legs, tub, sign,
                 // the board) are NOT excluded: none of them may reach into the room people stand in, so they count like anything else.
@@ -272,7 +277,7 @@ namespace KominkaHillside.Editor
                 courseTools.AddRange(CheckCourseTools(req, st, spec.tools, label, dogs, refWashes, colliderCount));
                 if (cc != null) foreach (var kv in PlacementChecks(cc, spec, st.position, st.rotation, st, stations)) req(kv.Key, label + " placement: " + kv.Value);
                 SlopeNote(r, st);
-                var table = st.Find(TableName);
+                var table = FindTable(st);
                 r.notes.Add(label + " at " + st.position.ToString("F2") + " yaw " + st.eulerAngles.y.ToString("F1") + "; duckboard centre " + (table != null ? table.position.ToString("F2") : "-")
                     + (cc != null && cc.hasRiverNode && spec.place == PlaceRiver ? "; 川辺 node " + FlatDist(st.position, cc.riverNode).ToString("F2") + " m" : "")
                     + (cc != null && cc.hasUpperNode && spec.place == PlaceUpper ? "; 奥広場 node " + FlatDist(st.position, cc.upperNode).ToString("F2") + " m" : "")
@@ -355,6 +360,220 @@ namespace KominkaHillside.Editor
                 Backing(req, tb, who, "state", tool.state);
             }
             return list;
+        }
+
+        // ================================================================ IMP-ENV-011 / IMP-DOG-035: Call, my floor, the board, washCalls
+
+        static void CheckStationControlsAll(VerifyReport r, Action<bool, string> req, UnityEngine.SceneManagement.Scene scene)
+        {
+            var stations = AllStationTransforms(scene);
+            req(stations.Count == 1 + CourseStations.Length, "controls: " + (1 + CourseStations.Length) + " wash stations present (" + stations.Count + ")");
+            KD_DogWanderController[] wanders; KH_DogWash[] washes;
+            DogsByIndex(out wanders, out washes);
+            foreach (var st in stations) CheckStationControls(r, req, st, StationIndexOf(st), "controls: " + st.name, wanders, washes);
+
+            // ---- every dog knows every station's Call (main first) ----
+            var calls = AllStationCalls(scene).ToArray();
+            for (int i = 0; i < wanders.Length; i++)
+            {
+                var w = wanders[i];
+                if (w == null) { req(false, "controls: KD_DogWanderController dogIndex " + i + " found"); continue; }
+                var p = new SerializedObject(w).FindProperty("washCalls");
+                req(p != null && p.isArray, "controls: " + w.name + ".washCalls is serialized (the dog side's field; compile first)");
+                if (p == null || !p.isArray) continue;
+                var got = Enumerable.Range(0, p.arraySize).Select(k => p.GetArrayElementAtIndex(k).objectReferenceValue).ToArray();
+                req(got.Length == calls.Length && got.Zip(calls, (a, b) => a == (UnityEngine.Object)b).All(x => x),
+                    "controls: " + w.name + ".washCalls = the " + calls.Length + " stations' Call, main first (" + got.Length + ")");
+                Backing(req, UdonSharpEditorUtility.GetBackingUdonBehaviour(w), "controls: " + w.name, "washCalls", calls);
+                // the dogs never stand on someone's personal floor
+                var gm = new SerializedObject(w).FindProperty("groundLayerMask");
+                req(gm != null && (gm.intValue & (1 << FloorLayer)) == 0, "controls: " + w.name + ".groundLayerMask leaves out the floor layer " + FloorLayer + " (" + (gm != null ? gm.intValue.ToString() : "none") + ")");
+            }
+            CheckFloorLayer(r, req, scene);
+        }
+
+        /// <summary>Codex review 8 / coordinator 2026-10-01: my floor's user layer 22. The interact ray passes it, the players stand
+        /// on it, nothing else in the world sees it, and nothing else uses it.</summary>
+        static void CheckFloorLayer(VerifyReport r, Action<bool, string> req, UnityEngine.SceneManagement.Scene scene)
+        {
+            Func<int, bool> has = m => (m & (1 << FloorLayer)) != 0;
+            // 1) the interact ray passes through it
+            var descs = UnityEngine.Object.FindObjectsOfType<VRCSceneDescriptor>(true);
+            var pt = descs.Length == 1 ? new SerializedObject(descs[0]).FindProperty("interactThruLayers") : null;
+            req(pt != null && (pt.intValue & FloorPassBit) != 0, "floor layer: VRCSceneDescriptor.interactThruLayers has layer " + FloorLayer + " (bit " + (FloorLayer - FirstUserLayer) + "; "
+                + (pt != null ? pt.intValue.ToString() : descs.Length + " descriptors") + ")");
+            // 2) the players stand on it
+            req(!Physics.GetIgnoreLayerCollision(FloorLayer, 10) && !Physics.GetIgnoreLayerCollision(FloorLayer, 9), "floor layer: " + FloorLayer + " collides with PlayerLocal (10) and Player (9)");
+            // 3) nothing else sees it: the dogs' ground rays, the frisbee, the spray, the wash rays
+            foreach (var w in UnityEngine.Object.FindObjectsOfType<KD_DogWanderController>(true))
+            {
+                var p = new SerializedObject(w).FindProperty("groundLayerMask");
+                req(p != null && !has(p.intValue), "floor layer: " + w.name + " (wander).groundLayerMask leaves out " + FloorLayer);
+            }
+            foreach (var f in UnityEngine.Object.FindObjectsOfType<KH_FrisbeeCatch>(true))
+            {
+                var p = new SerializedObject(f).FindProperty("groundLayerMask");
+                req(p != null && !has(p.intValue), "floor layer: " + f.name + " (KH_FrisbeeCatch).groundLayerMask leaves out " + FloorLayer);
+            }
+            foreach (var f in UnityEngine.Object.FindObjectsOfType<KH_Frisbee>(true))
+            {
+                var p = new SerializedObject(f).FindProperty("obstacleMask");
+                req(p != null && !has(p.intValue), "floor layer: " + f.name + " (KH_Frisbee).obstacleMask leaves out " + FloorLayer);
+            }
+            foreach (var t in UnityEngine.Object.FindObjectsOfType<KH_WashTool>(true))
+            {
+                req(!has(t.washLayer.value), "floor layer: " + t.name + ".washLayer leaves out " + FloorLayer);
+                if (t.spray != null) req(!has(t.spray.collision.collidesWith.value), "floor layer: " + t.name + " spray collision leaves out " + FloorLayer);
+            }
+            // other LayerMask fields that include it (Everything etc.): recorded, not judged
+            var others = new List<string>();
+            foreach (var mb in UnityEngine.Object.FindObjectsOfType<MonoBehaviour>(true))
+            {
+                if (mb == null || mb is KD_DogWanderController || mb is KH_FrisbeeCatch || mb is KH_Frisbee || mb is KH_WashTool) continue;
+                var it = new SerializedObject(mb).GetIterator();
+                while (it.NextVisible(true))
+                    if (it.propertyType == SerializedPropertyType.LayerMask && has(it.intValue)) others.Add(mb.GetType().Name + "." + it.propertyPath + " on " + mb.name);
+            }
+            if (others.Count > 0) r.notes.Add("floor layer: other LayerMask fields that include layer " + FloorLayer + " (they would see my floor): " + string.Join(", ", others.Distinct()));
+            // 4) nothing else uses it
+            var floors = AllStationTransforms(scene).Select(st => st.Find(FloorName + "/" + FloorBoxesName)).Where(x => x != null).ToArray();
+            var strays = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Transform>(true))
+                .Where(x => x.gameObject.layer == FloorLayer && !floors.Any(f => x == f || x.IsChildOf(f))).Select(x => KD_SceneObjects.PathOf(x.gameObject)).ToArray();
+            req(strays.Length == 0, "floor layer: only the personal floors use layer " + FloorLayer + " (" + string.Join(", ", strays.Take(10)) + (strays.Length > 10 ? ", ..." : "") + ")");
+        }
+
+        static void CheckStationControls(VerifyReport r, Action<bool, string> req, Transform st, int index, string label, KD_DogWanderController[] wanders, KH_DogWash[] washes)
+        {
+            // ---- Lift (liftRoot) and Anchor ----
+            var lift = st.Find(LiftName);
+            req(lift != null && lift.localPosition.sqrMagnitude < 1e-8f && Quaternion.Angle(lift.localRotation, Quaternion.identity) < 0.01f && (lift.localScale - Vector3.one).sqrMagnitude < 1e-8f,
+                label + "/" + LiftName + " at the station's origin, no rotation, scale 1 (the stand KH_WashStationCall raises)");
+            var table = FindTable(st);
+            req(st.Find(TableName) == null, label + ": no " + TableName + " left directly under the station");
+            req(table != null && lift != null && table.parent == lift, label + ": " + LiftName + "/" + TableName + " (the duckboard rides the lift)");
+            var cols = table != null ? table.GetComponentsInChildren<Collider>(true) : new Collider[0];
+            req(cols.Length > 0 && lift != null && cols.All(c => c.transform.IsChildOf(lift)), label + ": the duckboard's collider is under " + LiftName + " (" + cols.Length + ")");
+            var anchor = lift != null ? lift.Find(AnchorName) : null;
+            req(anchor != null && anchor.GetComponents<Component>().Length == 1, label + "/" + LiftName + "/" + AnchorName + " a bare Transform");
+            if (anchor != null && table != null)
+                req(Near(anchor.localPosition, new Vector3(0f, table.localPosition.y + TableSize.y, -TableFront)), label + ": anchor at the duckboard's top centre (" + anchor.localPosition.ToString("F3") + ")");
+
+            // ---- Call ----
+            var callT = st.Find(CallName);
+            var call = callT != null ? callT.GetComponent<KH_WashStationCall>() : null;
+            req(call != null, label + "/" + CallName + " with KH_WashStationCall");
+            if (call != null)
+            {
+                var cb = UdonSharpEditorUtility.GetBackingUdonBehaviour(call);
+                req(cb != null && cb.SyncMethod == Networking.SyncType.Manual, label + ": Call backing sync Manual");
+                var so = new SerializedObject(call);
+                Func<string, SerializedProperty> P = f => { var p = so.FindProperty(f); req(p != null, label + ": Call." + f + " serialized"); return p; };
+                var pi = P("stationIndex"); if (pi != null) { req(pi.intValue == index, label + ": Call.stationIndex " + pi.intValue + " = " + index); Backing(req, cb, label + ": Call", "stationIndex", index); }
+                var pa = P("anchor"); if (pa != null) { req(anchor != null && pa.objectReferenceValue == anchor, label + ": Call.anchor = " + LiftName + "/" + AnchorName); Backing(req, cb, label + ": Call", "anchor", anchor); }
+                var pl = P("liftRoot"); if (pl != null) { req(lift != null && pl.objectReferenceValue == lift, label + ": Call.liftRoot = " + LiftName); Backing(req, cb, label + ": Call", "liftRoot", lift); }
+                float yaw = Mathf.Repeat(st.eulerAngles.y + StandYawOffset, 360f);
+                var py = P("standYaw"); if (py != null) { req(Mathf.Abs(Mathf.DeltaAngle(py.floatValue, yaw)) < 0.05f, label + ": Call.standYaw " + py.floatValue.ToString("F1") + " = station yaw + " + StandYawOffset + " (parallel to the shelf; rerun 11 after turning the station)"); Backing(req, cb, label + ": Call", "standYaw", py.floatValue); }
+                foreach (var kv in new[] { new KeyValuePair<string, UnityEngine.Object[]>("dogs", wanders), new KeyValuePair<string, UnityEngine.Object[]>("washes", washes) })
+                {
+                    var p = P(kv.Key);
+                    if (p == null) continue;
+                    var got = Enumerable.Range(0, p.isArray ? p.arraySize : 0).Select(k => p.GetArrayElementAtIndex(k).objectReferenceValue).ToArray();
+                    req(got.Length == kv.Value.Length && kv.Value.All(x => x != null) && got.Zip(kv.Value, (a, b) => a == b).All(x => x), label + ": Call." + kv.Key + " = the " + kv.Value.Length + " dogs by dogIndex (" + got.Length + ")");
+                    Backing(req, cb, label + ": Call", kv.Key, kv.Value);
+                }
+                foreach (var kv in new[] { new KeyValuePair<string, float>("liftMax", CallLiftMax), new KeyValuePair<string, float>("liftStep", CallLiftStep), new KeyValuePair<string, float>("idleReleaseSeconds", CallIdleReleaseSeconds), new KeyValuePair<string, float>("callerFarMeters", CallCallerFarMeters) })
+                {
+                    var p = P(kv.Key);
+                    if (p == null) continue;
+                    req(Mathf.Abs(p.floatValue - kv.Value) < 1e-4f, label + ": Call." + kv.Key + " " + p.floatValue + " = " + kv.Value);
+                    Backing(req, cb, label + ": Call", kv.Key, kv.Value);
+                }
+            }
+
+            // ---- my floor ----
+            var pfT = st.Find(FloorName);
+            var pf = pfT != null ? pfT.GetComponent<KH_WashPersonalFloor>() : null;
+            req(pf != null, label + "/" + FloorName + " with KH_WashPersonalFloor");
+            if (pf != null)
+            {
+                var pb = UdonSharpEditorUtility.GetBackingUdonBehaviour(pf);
+                req(pb != null && pb.SyncMethod == Networking.SyncType.None, label + ": PersonalFloor backing sync None (mine only)");
+                req(Near(pfT.localPosition, new Vector3(0f, 0f, -TableFront)) && Quaternion.Angle(pfT.localRotation, Quaternion.identity) < 0.01f, label + ": PersonalFloor centred on the duckboard (x z)");
+                var boxes = pf.floor;
+                req(boxes != null && boxes.parent == pfT && boxes.gameObject.layer == FloorLayer, label + ": PersonalFloor.floor = " + FloorName + "/" + FloorBoxesName + " on layer " + FloorLayer);
+                req(table != null && Mathf.Abs(pf.baseY - table.localPosition.y) < 1e-4f && boxes != null && Mathf.Abs(boxes.localPosition.y - pf.baseY) < 1e-4f, label + ": floor base = the ground under the duckboard (" + pf.baseY.ToString("F3") + "), resting at height 0");
+                var fc = pf.floorColliders ?? new Collider[0];
+                req(fc.Length == 4 && fc.All(c => c is BoxCollider && !c.isTrigger && !c.enabled && c.gameObject.layer == FloorLayer && boxes != null && c.transform.parent == boxes && c.GetComponent<Renderer>() == null),
+                    label + ": 4 solid floor boxes, disabled in the saved scene, invisible, layer " + FloorLayer + " (" + fc.Length + ")");
+                float area = fc.OfType<BoxCollider>().Sum(c => c.size.x * c.size.z);
+                float want = 4f * FloorHalf * FloorHalf - (FloorHoleMax.x - FloorHoleMin.x) * (FloorHoleMax.y - FloorHoleMin.y);
+                req(Mathf.Abs(area - want) < 1e-3f, label + ": floor area " + area.ToString("F2") + " m2 = 5 x 5 minus the hole over the duckboard and the shelf (" + want.ToString("F2") + ")");
+                // the hole covers the duckboard, the shelf and the board (no floor collider over them at any height)
+                var hole = Rect.MinMaxRect(FloorHoleMin.x, FloorHoleMin.y, FloorHoleMax.x, FloorHoleMax.y);
+                foreach (var nm in new[] { "Shelf", BoardName })
+                {
+                    var o = st.Find(nm); if (o == null) continue;
+                    var l = pfT.InverseTransformPoint(o.position);
+                    req(hole.Contains(new Vector2(l.x, l.z)), label + ": " + nm + " inside the floor's hole (" + l.x.ToString("F2") + ", " + l.z.ToString("F2") + ")");
+                }
+                req(Mathf.Abs(pf.maxHeight - FloorMaxHeight) < 1e-4f && Mathf.Abs(pf.step - FloorStep) < 1e-4f && Mathf.Abs(pf.speed - FloorSpeed) < 1e-4f && Mathf.Abs(pf.leaveMeters - FloorLeaveMeters) < 1e-4f,
+                    label + ": floor 0.." + FloorMaxHeight + " m, step " + FloorStep + ", " + FloorSpeed + " m/s, back to 0 beyond " + FloorLeaveMeters + " m");
+                foreach (var f in new[] { "floor", "floorColliders", "baseY", "maxHeight", "step", "speed", "leaveMeters" })
+                {
+                    object v = f == "floor" ? (object)pf.floor : f == "floorColliders" ? (object)pf.floorColliders : f == "baseY" ? (object)pf.baseY : f == "maxHeight" ? (object)pf.maxHeight : f == "step" ? (object)pf.step : f == "speed" ? (object)pf.speed : (object)pf.leaveMeters;
+                    Backing(req, pb, label + ": PersonalFloor", f, v);
+                }
+            }
+
+            // ---- the board ----
+            var bt = st.Find(BoardName);
+            var board = bt != null ? bt.GetComponent<KH_WashStationBoard>() : null;
+            req(board != null, label + "/" + BoardName + " with KH_WashStationBoard");
+            if (board == null) return;
+            var bb = UdonSharpEditorUtility.GetBackingUdonBehaviour(board);
+            req(bb != null && bb.SyncMethod == Networking.SyncType.None, label + ": board backing sync None");
+            var canvas = bt.GetComponent<Canvas>();
+            var box = bt.GetComponent<BoxCollider>();
+            req(canvas != null && canvas.renderMode == RenderMode.WorldSpace && bt.gameObject.layer == 0 && bt.GetComponent<VRCUiShape>() != null && bt.GetComponent<UnityEngine.UI.GraphicRaycaster>() != null
+                && box != null && box.isTrigger, label + ": board = World Space Canvas on Default + GraphicRaycaster + VRCUiShape + trigger BoxCollider");
+            req(Near(bt.localPosition, BoardLocal) && Quaternion.Angle(bt.localRotation, Quaternion.identity) < 0.01f, label + ": board at the back of the shelf top, facing the front (" + bt.localPosition.ToString("F3") + ")");
+            req(board.call == call && board.personalFloor == pf && board.statusText != null && board.statusText.transform.IsChildOf(bt), label + ": board.call / personalFloor / statusText wired");
+            req(board.dogNames != null && board.dogNames.SequenceEqual(DogNamesJa), label + ": board.dogNames = " + string.Join(" / ", DogNamesJa));
+            req(board.wordPick == WordPick && board.wordCalling == WordCalling && board.wordHere == WordHere && board.wordBusy == WordBusy && board.wordLeashed == WordLeashed && board.wordStand == WordStand && board.wordMe == WordMe,
+                label + ": board words = the builder's (" + WordPick + " / " + WordCalling + " / " + WordHere + " / " + WordBusy + " / " + WordLeashed + ")");
+            Backing(req, bb, label + ": board", "call", board.call);
+            Backing(req, bb, label + ": board", "personalFloor", board.personalFloor);
+            Backing(req, bb, label + ": board", "statusText", board.statusText);
+            Backing(req, bb, label + ": board", "dogNames", board.dogNames);
+            var specs = BoardButtons();
+            var buttons = bt.GetComponentsInChildren<UnityEngine.UI.Button>(true);
+            req(buttons.Length == specs.Length, label + ": " + specs.Length + " buttons (6 dogs, end, stand up/down, me up/down) (" + buttons.Length + ")");
+            foreach (var s in specs)
+            {
+                var b = bt.Find(s.name);
+                var btn = b != null ? b.GetComponent<UnityEngine.UI.Button>() : null;
+                if (btn == null) { req(false, label + ": button " + s.name); continue; }
+                var calls = new SerializedObject(btn).FindProperty("m_OnClick.m_PersistentCalls.m_Calls");
+                bool ok = btn.onClick.GetPersistentEventCount() == 1 && btn.onClick.GetPersistentTarget(0) == bb && btn.onClick.GetPersistentMethodName(0) == "SendCustomEvent"
+                    && calls != null && calls.arraySize == 1 && calls.GetArrayElementAtIndex(0).FindPropertyRelative("m_Arguments.m_StringArgument").stringValue == s.evt;
+                req(ok, label + ": button " + s.name + " -> board " + s.evt + " (one listener)");
+                var lab = b.GetComponentInChildren<TextMeshProUGUI>(true);
+                req(lab != null && lab.text == s.label, label + ": button " + s.name + " reads '" + s.label + "' (" + (lab != null ? lab.text : "none") + ")");
+            }
+
+            // ---- glyphs: every text on the board, and the words the board writes at run time ----
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KD_ShopSetupEditor.SharedFontPath);
+            var texts = bt.GetComponentsInChildren<TMP_Text>(true);
+            req(font != null && texts.All(x => x.font == font), label + ": every board text uses " + KD_ShopSetupEditor.SharedFontPath);
+            if (font != null)
+            {
+                string all = string.Concat(texts.Select(x => x.text)) + string.Concat(DogNamesJa) + WordPick + WordCalling + WordHere + WordBusy + WordLeashed + WordStand + WordMe + "0123456789.m ";
+                var need = new string(all.Where(ch => !char.IsControl(ch)).Distinct().ToArray());
+                List<char> missing;
+                bool okAll = font.HasCharacters(need, out missing);
+                req(okAll, label + ": every board character is in the shared font (missing: " + (missing != null && missing.Count > 0 ? string.Join(" ", missing.Distinct().Select(ch => ch + " U+" + ((int)ch).ToString("X4"))) : "none")
+                    + "; KD_NotoSerif is Static: add them with its AddGlyphs entry)");
+            }
         }
 
         static bool Near(Vector3 a, Vector3 b) { return (a - b).sqrMagnitude < 1e-6f; }

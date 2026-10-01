@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-77 件 — 対応中 20 / 確認待ち 25 / 未着手 19 / 保留 3 / 完了 10
+79 件 — 対応中 20 / 確認待ち 27 / 未着手 19 / 保留 3 / 完了 10
 
 ## 実行キュー
 
@@ -18,7 +18,7 @@
 | [IMP-DOG-024](IMP-DOG-024-walk-and-wash-experience.md) | High | Animal Wash以上のASMR的な洗浄の気持ちよさを最優先に、散歩帰りのお手入れと複数洗い場を作る大型Issue | wip | IMP-DOG-025 で代表 1 匹 (柴) の一周を作り、賭け 3 つを確かめる |
 | [IMP-DOG-025](IMP-DOG-025-wash-prototype-one-dog.md) | High | 代表 1 匹 (柴) で洗浄の一周を細く通し、設計書の賭け 3 つを確かめる試作 | wip | 2026-09-30 の PCVR の指摘 (泡の層の切れ目、犬が向きすぎる、座りすぎる、汚れは足元から、汚れと濡れの区別) を直す |
 | [IMP-DOG-028](IMP-DOG-028-wash-sound-and-reactions.md) | High | 洗浄の音と犬の反応の仕上げ (音素材の制作と記録、個人音量、タオル、ブルブル、満足の合図) | wip | ハーネス (W-shake / satisfied / paw / no-repeat) の結果、ユーザーの Play (反応の見え方、音の試聴)、試聴の後の音素材の作り直しが残り |
-| [IMP-DOG-034](IMP-DOG-034-dog-udon-tick-thinning.md) | High | 犬の Udon を「fps が低いときだけ間引く」(50 fps 以上は毎フレーム、35〜50 は 1/2、35 未満は 1/3)。段階 1 は徘徊 ×6 の待機中 Update の間引きと毎フレーム extern の変化時書き込み | wip | ユーザーの Quest 3 で fps と犬の動きの刻み (自動モード) を確認 → 段階 2 (待機中の Behaviour の 1/5 化) をやるか決める |
+| [IMP-DOG-034](IMP-DOG-034-dog-udon-tick-thinning.md) | High | 犬の Udon を軽くする。段階 1 (待機中の徘徊を fps 連動で間引く) は済。Quest 3 は 20〜30 fps で残りは Udon。棚卸しの結果、リード歩行の毎フレーム走査・首輪ロープ・洗浄セル評価が主因。A (挙動同一の入れ替え・キャッシュ) → B (監視の低頻度化) の順で実装する | wip | ユーザーの承認と Unity の空きを待って A1〜A8 → B1 を実装 (別セッションの IMP-DOG-035 とファイルが重なるので順番を調整) |
 | [IMP-ENV-010](IMP-ENV-010-quest-performance.md) | High | Quest 3 単体で 10〜20 fps・地形が光る (2026-09-30 実機報告)。Android/iOS ビルドだけ地形を Lite シェーダーへ差し替え、群ごとの ON/OFF プローブで寄与を実機で測る | wip | 殻 1 パス版を Android でビルド → Quest 3 で犬を見ている状態の fps と地形の光りを確認 → 犬 Udon の間引きをやるか決める (ユーザー) |
 | [DES-ENV-002](DES-ENV-002-longer-course.md) | Medium | 約2.41kmの川沿い周回を実装し、2026-09-27に本番シーン (VRCDefaultWorldScene) へ採用済み。Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する | wip | 犬連れの実歩行時間、LODと遮蔽の実機表示、Quest 3・iPhone 15 Pro・16人の性能から最終距離/予算を確定する (ユーザーの実機。VER-WLD-001) |
 | [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK)、段階 2・3 は 9/24 実装済み・PCVR 待ち | wip |  |
@@ -36,7 +36,9 @@
 | [IMP-DOG-026](IMP-DOG-026-wash-state-and-sync.md) | High | 洗浄の状態と同期の仕上げ (セルの正本、清潔の判定、再洗浄、途中参加、Owner 交代、2 人の同時操作) | review | ユーザーの PCVR 2 人 (同時操作、途中参加、Owner 交代) と、送信量の実測が残り |
 | [IMP-DOG-027](IMP-DOG-027-wash-behavior-switching.md) | High | 洗われ中の犬と既存行動 (リード・Fetch・フリスビー・水遊び・集合・呼び戻し・ワープ) の切替 | review | ユーザーの PCVR (リード接続中の停止と解除、他人のストロークで止まらないこと、Fetch・集合との切替) が残り |
 | [IMP-DOG-030](IMP-DOG-030-wash-six-dogs.md) | High | 洗浄を 6 匹へ展開する (位置マップ・部位・体格・毛色・動く部位) | review | ユーザーの Play (6 匹の見え方、特に白い毛と小型犬)、本シーンの負荷の実測が残り。本番では initialDirt を 0 に |
+| [IMP-DOG-035](IMP-DOG-035-wash-call-dog-to-station.md) | High | 洗い場のボードで犬を選んで呼ぶと、その犬が洗い場へ来て立ち、洗い終わるまで留まる | review | ユーザーの Play / PCVR (ボードで呼びやすいか、立つ向き、2 人での呼び出しと解放) が残り |
 | [IMP-ENV-007](IMP-ENV-007-main-wash-station.md) | High | 門の外の主洗い場の整備 (洗い台、道具の棚と戻し先、蛇口・ホース・桶、犬を呼ぶ方法) | review | ユーザーの Play (棚の位置と高さ、道具の取りやすさ、札の日本語の記入、手動配置との干渉) が残り |
+| [IMP-ENV-011](IMP-ENV-011-wash-height-adjust.md) | High | 洗い場の台の高さ (犬を上げる) と、自分用の見えない床の高さ (自分が浮く) を調整できるようにする | review | ユーザーの Play / PCVR・Desktop・スマホ (台と自分の高さでの洗いやすさ、自分の床の上げ下げの感触、ボードの文字) が残り |
 | [IMP-PRG-001](IMP-PRG-001-ledger-shopkeeper-points.md) | High | 台帳・おじいさん (門)・支度用ポイント (初回 200pt 一回・滞在 1分1pt)・購入と CE 判定。2026-09-24 実装済み・Verify 全 PASS (e4f5906、名前空間 KH_Commerce_v1)。T-007 / T-008・復元の実機確認待ち | review | 200pt が一回だけ入る (T-007)、滞在加算と再入室の復元、購入の保存と CE の所持判定、残高 0 で基本機能が使える (T-008)。AI 側の ClientSim ハーネスは済み (Course/96 7/7、96b 4/4、2026-09-29 ccd3ff1)。サーバー保存・実際の再入室・CE 判定は対象外で PCVR / 実機に残る |
 | [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) | High | 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換え、設定面を作る。段階 0-a / 0-b / 3 は実装済み・Verify 全 PASS、0-b は 2026-09-24 PCVR OK。段階 3 (距離フェード・許可初期 ON・ようこそ等) の実機確認待ち。クレジット URL 3 件はユーザー記入待ち | review | 段階 0-b は PCVR OK (2026-09-24)。残り: 退行・取り違えの確認、段階 3 の距離フェード (T-011)・ナイトモードのスライダー・許可トグル 2 種・状態表示の規律。クレジット URL 3 件はユーザー記入。Quest/iOS は VER-WLD-001 |
 | [BUG-DOG-002](BUG-DOG-002-leash-handle-orientation.md) | Medium | リードの輪と紐の接続部が横向き。肘→手の延長上・手の前側へ向くよう左右とも調整する (9/23 要望具体化)。2026-09-29 に輪の面を指の付け根の線と前腕の軸から決める形へ作り直し (57bcf2e、Production 3 PASS)、PCVR の見た目待ち | review | PCVR で右手・左手とも輪の後ろの帯が指の付け根に沿い、輪と紐の接続部が前腕の延長で拳の前へ出るか。握りが拳に食い込む・浮く場合は HandleGripOffset、面の回転は HandleRollDegrees (定数を直して Walking/Production 7)。2 人目から見て左右が同じか、手首を深く曲げて跳ばないか |

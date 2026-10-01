@@ -46,13 +46,15 @@ namespace KominkaHillside.Editor
         public static void WashHarnessDirt() { WashHarnessGroups(new[] { "station", "dirt" }); }
         [MenuItem("Tools/KominkaHillside/Course/100e - Harness Wash dogs + course stations")]
         public static void WashHarnessDogs() { WashHarnessGroups(new[] { "stations", "dogs" }); }
+        [MenuItem("Tools/KominkaHillside/Course/100f - Harness Wash call + height")]
+        public static void WashHarnessCall() { WashHarnessGroups(new[] { "call", "height" }); }
 
         static void WashHarnessGroups(string[] groups)
         {
             Begin(false);
             report.washOnly = true;
             report.washGroups = groups == null ? "" : string.Join(",", groups); // read back in MakeWashCases after the domain reload
-            report.deadline = EditorApplication.timeSinceStartup + 4000; // Wash 1500 + WashBehavior ~260 + WashReact ~200 + WashSync ~400 + WashStation ~130 + WashDirt ~620 + WashDogs ~210
+            report.deadline = EditorApplication.timeSinceStartup + 5400; // Wash 1500 + WashBehavior ~260 + WashReact ~200 + WashSync ~400 + WashStation ~130 + WashDirt ~620 + WashDogs ~210
             report.limitations = "Single local ClientSim; the local player is instance master and every Owner (the wash object, the dog root, the tools). "
                 + "Contacts are injected at KH_DogWash._LocalContact / _EndContact (the entry KH_WashTool calls every frame) with collider surface points; "
                 + "the tool's pickup, raycasts, VR sphere and Desktop gaze are not exercised. NetStroke only takes the local echo path. "
@@ -536,6 +538,8 @@ namespace KominkaHillside.Editor
             if (WsGroup("station")) MakeWashStationCases();  // IMP-ENV-007 (WashStation.cs): tool return / held / spray off
             if (WsGroup("dirt")) MakeWashDirtCases();     // IMP-DOG-029 (WashDirt.cs): walk / zone / grace / station / river
             if (WsGroup("stations")) MakeWashStationsCases(); // IMP-ENV-008 (WashStations.cs): course stations, tools wired to all dogs, grace near them
+            if (WsGroup("call")) MakeWashCallCases();     // IMP-DOG-035 (WashCall.cs): call a dog to the station, stay, gates, release, swap
+            if (WsGroup("height")) MakeWashHeightCases(); // IMP-ENV-011 (WashHeight.cs): lift, personal floor, board handlers
             if (WsGroup("dogs")) MakeWashDogsCases();     // IMP-DOG-030 (WashDogs.cs): all six wired, Dachs foam, the others unchanged. Last: re-binds wsWash to the Dachs
 
             WsWrite();

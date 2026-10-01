@@ -251,7 +251,11 @@ namespace KominkaDogRun
                 if (t == null || !t.gameObject.activeInHierarchy) continue;
                 if (_push[i].sqrMagnitude > maxStep * maxStep)
                     _push[i] = _push[i].normalized * maxStep;
-                if (_push[i].sqrMagnitude > 1e-10f && Networking.IsOwner(t.gameObject))
+                // IMP-DOG-035: a dog held on a wash station's stand is never the pushed side (the push snaps to the ground and
+                // would drop it off the raised stand). Its own push is discarded; the other dog's share is unchanged, so it still
+                // gets pushed away by this one as before. Every other dog runs exactly as before.
+                bool onStand = dogWander != null && i < dogWander.Length && dogWander[i] != null && dogWander[i].StationLocked;
+                if (!onStand && _push[i].sqrMagnitude > 1e-10f && Networking.IsOwner(t.gameObject))
                 {
                     bool floating = dogWander != null && i < dogWander.Length && dogWander[i] != null && dogWander[i]._WaterFloating();
                     // IMP-DOG-020: afloat, keep the height (no snap to the riverbed) and push at most 0.1 m per frame

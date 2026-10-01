@@ -278,6 +278,10 @@ namespace KominkaDogRun
             // IMP-DOG-027: the leashed wash stop (HillsideWash.cs) is decided here, on every client and before LeashPose and the
             // non-Owner return, so every screen picks the same pose (head to the washer, no LieDown / sniff). false whenever
             // wash is null or not held, and then LeashPose and everything below run exactly as before.
+            // IMP-DOG-035: the holder called their own leashed dog to a wash station: the station branch moves and holds it (every
+            // client, before LeashPose and the non-Owner return), the leash follow stops until the release. False when not held
+            // (or held for someone else, which the station never keeps), and then everything below runs as before.
+            if (UpdateWashStation(true)) return true;
             bool washStop = WashLeashStop(holder, handDist, leash);
             LeashPose(holder, toHand, handDist, handPos, route, settling, washStop);
             if (!_dogOwner) { ApplyMoveAnim(); return true; }

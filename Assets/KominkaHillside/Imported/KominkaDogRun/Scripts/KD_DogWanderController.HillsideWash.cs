@@ -130,12 +130,147 @@ namespace KominkaDogRun
         /// <summary>IMP-DOG-027: the wash hold is on (a stroke within holdSeconds, synced). What the gates read: StartFetch
         /// (KD_DogFetchController), CanPlay (KH_FrisbeeCatch) and ReqAttach (KH_LeashManager). Not the frame flag - the gates run
         /// outside this Update and on clients that did not run the branch (design §1-5 「入口が読むのは有効期限から求めた状態」).</summary>
-        public bool WashHeld { get { return wash != null && wash._WashHold(); } } // net: callable-ok: read-only
+        /// IMP-DOG-035: also true while a wash station holds this dog (called to the station: the same gates, design §3).
+        public bool WashHeld { get { return (wash != null && wash._WashHold()) || HeldStation() != null; } } // net: callable-ok: read-only
+
+        // ================= IMP-DOG-035: called to a wash station (docs/plans/2026-10-01-wash-call-and-height.md §3 / §4) =================
+        //
+        // The station (KH_WashStationCall) syncs heldDog / callerId / arrived / lift; every client reads them here and runs the same
+        // branch. Walking there: the gathering's and the sleep call's feet (SleepStep = GatherStep on a complete NavMesh path, else
+        // StepToward straight), with the leash Return's TeleportTo (NavMesh-checked, FlagDiscontinuity) to appear StationAppear m
+        // from the station first when farther than StationFar. On the anchor: the placed-sleep freeze (UpdatePlacedSleep): speed /
+        // move dir / stop hold zeroed and ApplyMoveAnim, and the Owner writes the root itself every frame - the position eased to
+        // the anchor (which rides on liftRoot, so the root's y IS the stand's height) and the rotation to standYaw. Nothing else
+        // writes the root meanwhile: Coast / StepToward (their ground snap) are not called, the leash branch returns into this one,
+        // and KD_DogPack's push-apart (which snaps to the ground) never pushes a dog on the stand (StationLocked).
+        public KominkaHillside.KH_WashStationCall[] washCalls;   // all stations (max 4); null / empty = never called (old behaviour)
+
+        const float StationFar = 30f;          // farther than this: appear near the station first (design §4)
+        const float StationAppear = 6f;        // ... this far from the anchor, on the dog's side
+        const float StationArrive = 0.3f;      // horizontal distance that counts as "on the stand"
+        const float StationSettleSpeed = 1.5f; // m/s, the root eased onto the anchor (faster than the stand's 0.5 m/s)
+        const float StationTurnRate = 180f;    // deg/s, the root turned to standYaw once on the stand
+        private int _stationIdx = -1;          // the station holding this dog last tick (-1 = none)
+        private bool _stationLocked;           // on the stand (local; the synced `arrived` also counts)
+        private float _stationTeleportNext;
+        private int _stationFrames;            // harness read-out: frames handled by the station branch
+
+        /// <summary>The station holding this dog now (synced heldDog), or null.</summary>
+        KominkaHillside.KH_WashStationCall HeldStation()
+        {
+            int i = HeldStationIndex();
+            return i >= 0 ? washCalls[i] : null;
+        }
+
+        /// <summary>The active station holding this dog; when two hold it (different Owners, the older one not yet let go), the
+        /// newest hold wins (heldMs, ties: lower stationIndex) - the same rule KH_WashStationCall._Superseded applies (Codex 2).
+        /// An inactive station is never a holder (Codex 3: its Update and release paths are stopped).</summary>
+        int HeldStationIndex()
+        {
+            if (washCalls == null || dogIndex < 0) return -1;
+            int best = -1, bestMs = 0, bestIdx = 0;
+            for (int i = 0; i < washCalls.Length; i++)
+            {
+                KominkaHillside.KH_WashStationCall s = washCalls[i];
+                if (s == null || !s.gameObject.activeInHierarchy || s._HeldDog() != dogIndex) continue;
+                int ms = s._HeldMs();
+                if (best < 0 || ms - bestMs > 0 || (ms == bestMs && s.stationIndex < bestIdx)) { best = i; bestMs = ms; bestIdx = s.stationIndex; }
+            }
+            return best;
+        }
+
+        /// <summary>Every client, every tick (from WashErrandTick, before the early returns): the release edge. Unlocks, gives the
+        /// push-apart its radius back and (Owner) puts the root back on the ground as the placed sleep does on its exit.</summary>
+        void StationTick()
+        {
+            int idx = HeldStationIndex();   // the same scan as HeldStation (active stations only, the newest hold)
+            if (idx == _stationIdx) return;
+            if (_stationIdx >= 0)
+            {
+                // released (or moved to another station): back to the ground, then the usual behaviour picks up next frame
+                if (_stationLocked && _dogOwner && dogRoot != null) dogRoot.position = GroundAfterPlacedSleep(dogRoot.position); // net: owner-only: _dogOwner、洗い場の台から下りる
+                _stationLocked = false;
+                _behaviorSelectionValid = false;
+            }
+            _stationIdx = idx;
+        }
+
+        /// <summary>On a wash station's stand (local lock while still held). KD_DogPack reads it and never pushes this dog (the
+        /// push snaps to the ground and would drop it off a raised stand); the dog keeps its radius, so others are pushed as before.</summary>
+        public bool StationLocked { get { return _stationLocked && _stationIdx >= 0; } } // net: callable-ok: read-only
+
+        /// <summary>Unleashed (from UpdateHillsideWash) and leashed by the caller (from UpdateHillsideLeash): go to the station and
+        /// stay. False = not held / yields (water first, the errands release it), and nothing was touched.</summary>
+        bool UpdateWashStation(bool leashed)
+        {
+            KominkaHillside.KH_WashStationCall st = HeldStation();
+            if (st == null) return false;
+            if (fetchController == null) return false;
+            // Water is stronger (walks out first, design §3); the errands release the dog on their accept edge (WashErrandTick)
+            if (WashYieldsToWater() || WashYieldsToErrand()) return false;
+            if (leashed)
+            {
+                // Only the caller's own leash (somebody else's leashed dog is never held: the station refuses / releases it)
+                if (hillsideLeashes == null || hillsideLeashes.walkers[dogIndex] != st._CallerId()) return false;
+                if (_dogOwner) leashMode = LeashWait;   // a detour / stopover in progress ends as "interrupted" next frame
+            }
+            _activityBusy = true;            // bound to the station (TickBusy every frame, ShowEngaged for the treat assignment)
+            _behaviorSelectionValid = false;
+            _stationFrames++;
+            if (_restPhase != RestPhaseNone) EndRest();
+
+            Vector3 a = st._AnchorPosition();
+            Vector3 flat = a - dogRoot.position; flat.y = 0f;
+            float dist = flat.magnitude;
+            // The synced `arrived` locks a client that has not seen the step onto the stand yet, but only near it (a late joiner
+            // whose copy of the root is still elsewhere must not slide across the ground at the settle speed)
+            if (!_stationLocked && ((st._Arrived() && dist <= 2f) || dist <= StationArrive)) _stationLocked = true;
+
+            if (!_stationLocked)
+            {
+                if (_dogOwner && dist > StationFar && Time.time >= _stationTeleportNext)
+                {
+                    _stationTeleportNext = Time.time + 1f;
+                    TeleportTo(a - flat / dist * StationAppear);   // the leash Return's NavMesh-checked teleport
+                }
+                SleepStep(a, dist > runDistance ? runSpeed : walkSpeed);
+                // Coming because called: looks at the caller on the way (the sleep call's manners)
+                VRCPlayerApi caller = VRCPlayerApi.GetPlayerById(st._CallerId());
+                if (petController != null && Utilities.IsValid(caller))
+                {
+                    petController._SetGaze(caller.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position, 0f);
+                    petController._SetUrge(0.6f);
+                }
+                return true;
+            }
+
+            // On the stand: the placed-sleep freeze, the Owner holds the root on the anchor at the stand's height
+            _speed = 0f; _moveDir = Vector3.zero; _stopHoldUntil = 0f;
+            ApplyMoveAnim();
+            if (_dogOwner)
+            {
+                float dt = Dt();
+                Quaternion want = Quaternion.Euler(0f, st._StandYaw(), 0f);
+                dogRoot.SetPositionAndRotation(Vector3.MoveTowards(dogRoot.position, a, StationSettleSpeed * dt),
+                    Quaternion.RotateTowards(dogRoot.rotation, want, StationTurnRate * dt)); // net: owner-only: _dogOwner、洗い場の台の上に留める
+                if (!st._Arrived() && Horizontal(dogRoot.position, a) <= StationArrive) st._DogArrived(dogIndex);
+            }
+            // Washed on the stand: the usual wash frame (glances, reactions, the satisfied sit = a _wantSit request; the root y is
+            // ours, so the sit happens on the stand)
+            if (wash != null && (wash._WashHold() || WashSatisfyRunning()))
+            {
+                WashFrame();
+                WashLook(wash._WasherPosition());
+            }
+            return true;
+        }
 
         /// <summary>Update (every client): the wash stop. True = this frame is handled (the caller returns).
         /// False on every path where nothing was touched, so the existing branches run exactly as before.</summary>
         bool UpdateHillsideWash()
         {
+            // IMP-DOG-035: called to a wash station (walk there / stay on the stand, washed there as below). False when not held.
+            if (UpdateWashStation(false)) return true;
             if (wash == null || fetchController == null) return false;
             // IMP-DOG-028 (Codex 4-1): a satisfied sign in progress keeps the branch after the hold ran out (its own end time)
             if (!wash._WashHold() && !WashSatisfyRunning()) return false;
@@ -179,11 +314,19 @@ namespace KominkaDogRun
         /// stroke with Fetch / disc / leash still refused. wash == null: returns at once (unwired dogs untouched).</summary>
         void WashErrandTick()
         {
-            if (wash == null) return;
+            // IMP-DOG-035: the station's release edge, and on the errands' accept edge the station lets the dog go (_ReleaseDog:
+            // only the station Owner's call acts; every client calls it on the same synced edge)
+            bool hasCalls = washCalls != null && washCalls.Length > 0;
+            if (hasCalls) StationTick();
+            if (wash == null && !hasCalls) return;
             bool now = WashYieldsToErrand();
-            if (now && !_washErrandPrev && wash._WashHold()) wash._ReleaseHold();
+            if (now && !_washErrandPrev)
+            {
+                if (wash != null && wash._WashHold()) wash._ReleaseHold();
+                if (_stationIdx >= 0 && washCalls[_stationIdx] != null) washCalls[_stationIdx]._ReleaseDog(dogIndex);
+            }
             _washErrandPrev = now;
-            WashCleanTick();
+            if (wash != null) WashCleanTick();
         }
 
         /// <summary>IMP-DOG-028 (every client, every frame, from WashErrandTick): the clean edge from the synced cleanSerial.

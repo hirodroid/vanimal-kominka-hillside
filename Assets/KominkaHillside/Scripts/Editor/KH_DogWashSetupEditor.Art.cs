@@ -215,7 +215,7 @@ namespace KominkaHillside.Editor
             HideArtPrimitive(station,"Shelf");
             for(int i=0;i<4;i++)HideArtPrimitive(station,"ShelfLeg_"+i);
             // Keep the existing walking footprint/top, avoiding changes to navigation and ground-ray contracts.
-            var table=station.Find(TableName);var platform=ArtModel(table,"ImportedPlatform","WashPlatform");
+            var table=FindTable(station);var platform=ArtModel(table,"ImportedPlatform","WashPlatform");
             var pb=ArtBounds(platform,table);
             platform.localScale=new Vector3(TableSize.x/pb.size.x,TableSize.y/pb.size.y,TableSize.z/pb.size.z);
             for(int i=0;i<TableSlats;i++)HideArtPrimitive(table,"Slat_"+i);
@@ -233,7 +233,7 @@ namespace KominkaHillside.Editor
             need(mat!=null && mat.shader.name=="Standard" && mat.mainTexture!=null && mat.GetTexture("_MetallicGlossMap")!=null,"shared opaque textured material");
             foreach(var st in stations)
             {
-                var table=st.Find(TableName);
+                var table=FindTable(st);   // under Lift since IMP-ENV-011
                 var shelf=st.Find("ImportedShelf");var platform=table.Find("ImportedPlatform");
                 need(shelf!=null && platform!=null,st.name+" shelf/platform present");
                 if(shelf==null || platform==null)continue;

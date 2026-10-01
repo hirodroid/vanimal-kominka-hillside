@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KominkaDogRun;
+using KominkaDogRun.Editor;
 using TMPro;
 using UdonSharp;
 using UdonSharpEditor;
@@ -44,7 +46,10 @@ namespace KominkaHillside.Editor
         const float ShelfTopThickness = 0.04f, ShelfLegSize = 0.05f;
         static readonly Vector2 ShelfLegInset = new Vector2(0.05f, 0.04f);             // leg centre from the top's corner (x, z)
         const float TableFront = 1.2f;                                                  // duckboard centre: 1.2 m in front of the shelf centre
-        static readonly Vector3 TableSize = new Vector3(0.6f, 0.03f, 0.9f);             // 0.9 m along Z (the dog stands along it), top 0.03 m above the ground
+        // IMP-ENV-011 (2026-10-01, coordinator): the called dog stands parallel to the shelf (along X), so the board is 1.3 m along X
+        // (a Lab / Samoyed is 0.9-1.0 m long) x 0.7 m deep; its back edge is 0.625 m from the shelf front (>= 0.5: people stand there too).
+        // Was 0.6 x 0.9 (the dog along Z). Top 0.03 m above the ground.
+        static readonly Vector3 TableSize = new Vector3(1.3f, 0.03f, 0.7f);
         const int TableSlats = 5;
         const float SideMargin = 1.0f;                                                  // free standing room on each side (±X) of the duckboard
         static readonly Vector3 TubLocal = new Vector3(-0.95f, 0f, -0.05f);            // west of the shelf (the east side faces the leash rack)
@@ -107,6 +112,9 @@ namespace KominkaHillside.Editor
             var stations = new List<Transform> { station.transform };
             tools.AddRange(BuildCourseStations(scene, stations, wood, shared, audio, r));
             WireStationList(stations, r);
+            // ---- IMP-ENV-011 / IMP-DOG-035: Call, PersonalFloor and the board on every station (the dogs' washCalls: WireWanders) ----
+            foreach (var st in stations) BuildStationControls(st, StationIndexOf(st), r);
+            SetFloorPassthrough(r);
             return tools;
         }
 
@@ -562,28 +570,276 @@ namespace KominkaHillside.Editor
             return best;
         }
 
-        // ================================================================ IMP-ENV-007: the reset button (10b makes its program)
+        // ================================================================ IMP-ENV-007 / 011: the station programs (10b)
+
+        /// <summary>The station's own programs: the reset button (IMP-ENV-007), and the call / my floor / the board (IMP-ENV-011,
+        /// IMP-DOG-035; KH_WashStationCall.cs is written by the dog side's owner).</summary>
+        static readonly string[] StationPrograms = { ResetProgram, CallProgram, FloorProgram, BoardProgram };
 
         [MenuItem(Menu + "10b - Create Station Programs")]
         public static void CreateStationPrograms()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) throw new InvalidOperationException("[KH Wash Setup] Edit mode only (not compiling)");
-            string asset = ScriptsDir + "/" + ResetProgram + ".asset";
-            if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(asset) != null) { Debug.Log("[KH Wash Setup] " + ResetProgram + " program asset exists; nothing changed"); return; }
-            var script = AssetDatabase.LoadAssetAtPath<MonoScript>(ScriptsDir + "/" + ResetProgram + ".cs");
-            if (script == null) throw new InvalidOperationException(ResetProgram + ".cs not imported yet; refresh first");
-            var created = ScriptableObject.CreateInstance<UdonSharpProgramAsset>();
-            created.sourceCsScript = script;
-            AssetDatabase.CreateAsset(created, asset);
+            var made = new List<string>();
+            foreach (var name in StationPrograms)
+            {
+                string asset = ScriptsDir + "/" + name + ".asset";
+                if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(asset) != null) continue;
+                var script = AssetDatabase.LoadAssetAtPath<MonoScript>(ScriptsDir + "/" + name + ".cs");
+                if (script == null) throw new InvalidOperationException(name + ".cs not imported yet; refresh first (created so far: " + string.Join(", ", made) + ")");
+                var created = ScriptableObject.CreateInstance<UdonSharpProgramAsset>();
+                created.sourceCsScript = script;
+                AssetDatabase.CreateAsset(created, asset);
+                made.Add(name);
+            }
+            if (made.Count == 0) { Debug.Log("[KH Wash Setup] station program assets exist (" + string.Join(", ", StationPrograms) + "); nothing changed"); return; }
             AssetDatabase.SaveAssets();
             UdonSharpProgramAsset.CompileAllCsPrograms(true);
-            Debug.Log("[KH Wash Setup] created " + asset + ". Compile U# (scripts/unity-compile.sh --udon), then run 11.");
+            Debug.Log("[KH Wash Setup] created " + string.Join(", ", made) + ". Compile U# (scripts/unity-compile.sh --udon), then run 11.");
+        }
+
+        static void RequireStationProgram(string name)
+        {
+            if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(ScriptsDir + "/" + name + ".asset") == null)
+                throw new InvalidOperationException(name + ".asset missing: run Wash/10b, compile U#, then 11 again (reopen the scene without saving to drop this run)");
+        }
+
+        // ================================================================ IMP-ENV-011 / IMP-DOG-035: call, my floor, the board
+
+        const string LiftName = "Lift", AnchorName = "Anchor", CallName = "Call", FloorName = "PersonalFloor", FloorBoxesName = "Floor", BoardName = "Board";
+        const string CallProgram = "KH_WashStationCall", FloorProgram = "KH_WashPersonalFloor", BoardProgram = "KH_WashStationBoard";
+        /// <summary>The called dog faces the station's +X: parallel to the shelf (docs/plans/2026-10-01-wash-call-and-height.md §2-3).
+        /// The duckboard is 1.3 (X) x 0.7 (Z) for it (TableSize).</summary>
+        const float StandYawOffset = 90f;
+        // the contract's tuning values (§4)
+        const float CallLiftMax = 0.9f, CallLiftStep = 0.1f, CallIdleReleaseSeconds = 120f, CallCallerFarMeters = 10f;
+        // ---- my floor (KH_WashPersonalFloor): 5 x 5 m around the duckboard, a hole over the duckboard + the shelf ----
+        /// <summary>User layer 22 (coordinator's decision 2026-10-01, Codex review 8): the players collide with it (its row in
+        /// DynamicsManager is all on; ProjectSettings unchanged), the dogs' ground rays (0|11), the frisbee's masks, the spray (0|11)
+        /// and the wash rays (2) do not see it, and the Build adds it to VRCSceneDescriptor.interactThruLayers (bit 0 = layer 22)
+        /// so the interact ray passes through the floor (Water 4 blocked it).</summary>
+        const int FloorLayer = 22, FirstUserLayer = 22;
+        const int FloorPassBit = 1 << (FloorLayer - FirstUserLayer);
+        const float FloorHalf = 2.5f, FloorThickness = 0.1f, FloorMaxHeight = 1.2f, FloorStep = 0.1f, FloorSpeed = 0.5f, FloorLeaveMeters = 8f;
+        // the hole, in PersonalFloor local (origin = the duckboard centre on the station's ground plane): the duckboard (±0.65, ±0.35) and the
+        // shelf / board (station z -0.225..0.245 = local 0.975..1.445) with a margin
+        static readonly Vector2 FloorHoleMin = new Vector2(-0.75f, -0.45f), FloorHoleMax = new Vector2(0.75f, 1.5f);
+        // ---- the board: a World Space Canvas standing at the back of the shelf top, above the sign, facing the front (-Z) ----
+        static readonly Vector2 BoardPixels = new Vector2(600f, 360f);
+        const float BoardScale = 0.001f;   // 1 px = 1 mm: 0.60 x 0.36 m
+        static readonly Vector3 BoardLocal = new Vector3(0f, ShelfHeight + 0.14f + 0.18f, ShelfDepth * 0.5f + 0.012f);   // bottom 0.94 m (above the sign), top 1.30 m
+        static readonly string[] DogNamesJa = { "コーギー", "ポメ", "ラブ", "ダックス", "柴", "サモエド" };   // dogIndex order (KD_DogDefs)
+        const string WordPick = "犬をえらんでよぶ", WordCalling = "を呼んでいます", WordHere = "がいます", WordBusy = "いまは来られません", WordLeashed = "ほかの人が散歩中です", WordStand = "台", WordMe = "自分";
+        const string WordEnd = "おわり", WordStandUp = "台 上へ", WordStandDown = "台 下へ", WordMeUp = "自分 上へ", WordMeDown = "自分 下へ";
+        class BoardButton
+        {
+            public string name, label, evt; public Vector2 pos, size; public int kind;   // kind 0 dog / 1 end / 2 stand / 3 me
+            public BoardButton(string name, string label, string evt, Vector2 pos, Vector2 size, int kind) { this.name = name; this.label = label; this.evt = evt; this.pos = pos; this.size = size; this.kind = kind; }
+        }
+        static BoardButton[] BoardButtons()
+        {
+            var list = new List<BoardButton>();
+            for (int i = 0; i < DogNamesJa.Length; i++)
+                list.Add(new BoardButton("Dog_" + i, DogNamesJa[i], "_Dog" + i, new Vector2(-190f + 190f * (i % 3), i < 3 ? 78f : 18f), new Vector2(178f, 52f), 0));
+            list.Add(new BoardButton("StandUp", WordStandUp, "_LiftUp", new Vector2(-210f, -48f), new Vector2(118f, 52f), 2));
+            list.Add(new BoardButton("StandDown", WordStandDown, "_LiftDown", new Vector2(-86f, -48f), new Vector2(118f, 52f), 2));
+            list.Add(new BoardButton("MeUp", WordMeUp, "_MeUp", new Vector2(64f, -48f), new Vector2(138f, 52f), 3));
+            list.Add(new BoardButton("MeDown", WordMeDown, "_MeDown", new Vector2(208f, -48f), new Vector2(138f, 52f), 3));
+            list.Add(new BoardButton("End", WordEnd, "_End", new Vector2(0f, -116f), new Vector2(260f, 52f), 1));
+            return list.ToArray();
+        }
+
+        /// <summary>The duckboard (under Lift since IMP-ENV-011; directly under the station before it).</summary>
+        static Transform FindTable(Transform st)
+        {
+            var t = st.Find(LiftName + "/" + TableName);
+            return t != null ? t : st.Find(TableName);
+        }
+
+        /// <summary>0 = the main station, 1.. = CourseStations in the table's order (fixed, whichever are present).</summary>
+        static int StationIndexOf(Transform st)
+        {
+            if (st.name == StationName && st.parent == null) return 0;
+            int i = Array.FindIndex(CourseStations, s => s.key == st.name);
+            return i >= 0 ? 1 + i : -1;
+        }
+
+        /// <summary>The scene's KD_DogWanderController / KH_DogWash by dogIndex (length 6, null where missing).</summary>
+        static void DogsByIndex(out KD_DogWanderController[] wanders, out KH_DogWash[] washes)
+        {
+            int n = KD_DogDefs.All.Length;
+            wanders = new KD_DogWanderController[n]; washes = new KH_DogWash[n];
+            foreach (var w in UnityEngine.Object.FindObjectsOfType<KD_DogWanderController>(true)) if (w.dogIndex >= 0 && w.dogIndex < n) wanders[w.dogIndex] = w;
+            foreach (var w in UnityEngine.Object.FindObjectsOfType<KH_DogWash>(true)) if (w.dogIndex >= 0 && w.dogIndex < n) washes[w.dogIndex] = w;
+        }
+
+        /// <summary>The Call of every station, main first (what KD_DogWanderController.washCalls holds).</summary>
+        static List<KH_WashStationCall> AllStationCalls(UnityEngine.SceneManagement.Scene scene)
+        {
+            var list = new List<KH_WashStationCall>();
+            foreach (var st in AllStationTransforms(scene)) { var t = st.Find(CallName); var c = t != null ? t.GetComponent<KH_WashStationCall>() : null; if (c != null) list.Add(c); }
+            return list;
+        }
+
+        static SerializedProperty Prop(SerializedObject so, string field)
+        {
+            var p = so.FindProperty(field);
+            if (p == null) throw new InvalidOperationException(so.targetObject.GetType().Name + "." + field + " is not serialized (docs/plans/2026-10-01-wash-call-and-height.md §4; compile first)");
+            return p;
+        }
+
+        static void SetRefs(SerializedObject so, string field, UnityEngine.Object[] values)
+        {
+            var p = Prop(so, field);
+            p.arraySize = values.Length;
+            for (int i = 0; i < values.Length; i++) p.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
+        }
+
+        /// <summary>The interact ray passes through my floor: the floor layer's bit in VRCSceneDescriptor.interactThruLayers (the other bits kept).</summary>
+        static void SetFloorPassthrough(BuildReport r)
+        {
+            var descs = UnityEngine.Object.FindObjectsOfType<VRCSceneDescriptor>(true);
+            if (descs.Length != 1) throw new InvalidOperationException(descs.Length + " VRCSceneDescriptor in the scene (expected 1)");
+            var so = new SerializedObject(descs[0]);
+            var p = Prop(so, "interactThruLayers");
+            if ((p.intValue & FloorPassBit) != 0) return;
+            int before = p.intValue;
+            p.intValue = before | FloorPassBit;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(descs[0]);
+            r.log.Add("VRCSceneDescriptor.interactThruLayers " + before + " -> " + p.intValue + " (layer " + FloorLayer + ": my floor lets the interact ray through)");
+        }
+
+        static void BuildStationControls(Transform st, int index, BuildReport r)
+        {
+            RequireStationProgram(CallProgram); RequireStationProgram(FloorProgram); RequireStationProgram(BoardProgram);
+            if (index < 0) throw new InvalidOperationException(st.name + " has no station index");
+            var lift = st.Find(LiftName);
+            var anchor = lift != null ? lift.Find(AnchorName) : null;
+            var table = FindTable(st);
+            if (lift == null || anchor == null || table == null || table.parent != lift) throw new InvalidOperationException(st.name + ": " + LiftName + "/" + TableName + " and " + LiftName + "/" + AnchorName + " missing (BuildStand runs first)");
+            KD_DogWanderController[] wanders; KH_DogWash[] washes;
+            DogsByIndex(out wanders, out washes);
+
+            // ---- Call (KH_WashStationCall, Manual): the contract's wiring (§4) through SerializedObject (the script is the dog side's) ----
+            var callT = Child(st, CallName);
+            callT.gameObject.layer = 0;
+            callT.localPosition = Vector3.zero; callT.localRotation = Quaternion.identity; callT.localScale = Vector3.one;
+            var call = AddUdon<KH_WashStationCall>(callT.gameObject, Networking.SyncType.Manual);
+            var so = new SerializedObject(call);
+            Prop(so, "stationIndex").intValue = index;
+            Prop(so, "anchor").objectReferenceValue = anchor;
+            Prop(so, "liftRoot").objectReferenceValue = lift;
+            Prop(so, "standYaw").floatValue = Mathf.Repeat(st.eulerAngles.y + StandYawOffset, 360f);
+            SetRefs(so, "dogs", wanders);
+            SetRefs(so, "washes", washes);
+            Prop(so, "liftMax").floatValue = CallLiftMax;
+            Prop(so, "liftStep").floatValue = CallLiftStep;
+            Prop(so, "idleReleaseSeconds").floatValue = CallIdleReleaseSeconds;
+            Prop(so, "callerFarMeters").floatValue = CallCallerFarMeters;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(call);
+
+            // ---- my floor (KH_WashPersonalFloor, None): 4 boxes around a hole, disabled until raised ----
+            var pfT = Child(st, FloorName);
+            pfT.gameObject.layer = 0;
+            pfT.localPosition = new Vector3(0f, 0f, -TableFront); pfT.localRotation = Quaternion.identity; pfT.localScale = Vector3.one;
+            float baseY = table.localPosition.y;   // the highest ground under the duckboard (Lift is at the station's origin)
+            var boxesT = Child(pfT, FloorBoxesName);
+            boxesT.gameObject.layer = FloorLayer;
+            boxesT.localPosition = new Vector3(0f, baseY, 0f); boxesT.localRotation = Quaternion.identity; boxesT.localScale = Vector3.one;
+            var rects = new[]
+            {
+                new KeyValuePair<string, Rect>("West", Rect.MinMaxRect(-FloorHalf, -FloorHalf, FloorHoleMin.x, FloorHalf)),
+                new KeyValuePair<string, Rect>("East", Rect.MinMaxRect(FloorHoleMax.x, -FloorHalf, FloorHalf, FloorHalf)),
+                new KeyValuePair<string, Rect>("Front", Rect.MinMaxRect(FloorHoleMin.x, -FloorHalf, FloorHoleMax.x, FloorHoleMin.y)),
+                new KeyValuePair<string, Rect>("Back", Rect.MinMaxRect(FloorHoleMin.x, FloorHoleMax.y, FloorHoleMax.x, FloorHalf)),
+            };
+            var cols = new List<Collider>();
+            foreach (var kv in rects)
+            {
+                var bt = Child(boxesT, "Floor_" + kv.Key);
+                bt.gameObject.layer = FloorLayer;
+                bt.localPosition = new Vector3(kv.Value.center.x, 0f, kv.Value.center.y); bt.localRotation = Quaternion.identity; bt.localScale = Vector3.one;
+                foreach (var c in bt.GetComponents<Component>()) if (!(c is Transform) && !(c is BoxCollider)) UnityEngine.Object.DestroyImmediate(c);   // invisible: no renderer
+                var bc = bt.GetComponent<BoxCollider>(); if (bc == null) bc = bt.gameObject.AddComponent<BoxCollider>();
+                bc.isTrigger = false; bc.size = new Vector3(kv.Value.width, FloorThickness, kv.Value.height); bc.center = new Vector3(0f, -FloorThickness * 0.5f, 0f);   // the top at the floor's y
+                bc.enabled = false;   // KH_WashPersonalFloor turns them on above 0 (the saved scene has no floor)
+                EditorUtility.SetDirty(bc);
+                cols.Add(bc);
+            }
+            foreach (Transform t in boxesT.Cast<Transform>().ToArray())
+                if (!rects.Any(kv => "Floor_" + kv.Key == t.name)) { r.log.Add("removed stale " + st.name + "/" + FloorName + "/" + t.name); UnityEngine.Object.DestroyImmediate(t.gameObject); }
+            var pf = AddUdon<KH_WashPersonalFloor>(pfT.gameObject, Networking.SyncType.None);
+            pf.floor = boxesT; pf.floorColliders = cols.ToArray(); pf.baseY = baseY;
+            pf.outerHalf = new Vector2(FloorHalf, FloorHalf); pf.holeMin = FloorHoleMin; pf.holeMax = FloorHoleMax;
+            pf.maxHeight = FloorMaxHeight; pf.step = FloorStep; pf.speed = FloorSpeed; pf.leaveMeters = FloorLeaveMeters;
+            EditorUtility.SetDirty(pf);
+
+            // ---- the board ----
+            var board = BuildBoard(st, call, pf, r);
+
+            Copy(call); Copy(pf); Copy(board);
+            r.log.Add(st.name + ": Call (index " + index + ", standYaw " + Mathf.Repeat(st.eulerAngles.y + StandYawOffset, 360f).ToString("F1") + "), " + FloorName + " (base " + baseY.ToString("F3") + "), " + BoardName + " wired");
+        }
+
+        static KH_WashStationBoard BuildBoard(Transform st, KH_WashStationCall call, KH_WashPersonalFloor pf, BuildReport r)
+        {
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath);
+            if (font == null) throw new InvalidOperationException("Shared UI font missing: " + KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath);
+            var t = st.Find(BoardName);
+            GameObject go;
+            if (t == null) { go = new GameObject(BoardName, typeof(RectTransform)); go.transform.SetParent(st, false); }
+            else go = t.gameObject;
+            go.layer = 0;   // VRChat's pointer does not work on the "UI" layer (vrc-world-ui §2)
+            var canvas = go.GetComponent<Canvas>(); if (canvas == null) canvas = go.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            if (go.GetComponent<UnityEngine.UI.CanvasScaler>() == null) go.AddComponent<UnityEngine.UI.CanvasScaler>();
+            if (go.GetComponent<UnityEngine.UI.GraphicRaycaster>() == null) go.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+            if (go.GetComponent<VRCUiShape>() == null) go.AddComponent<VRCUiShape>();
+            var box = go.GetComponent<BoxCollider>(); if (box == null) box = go.AddComponent<BoxCollider>();
+            box.isTrigger = true; box.center = Vector3.zero; box.size = new Vector3(BoardPixels.x, BoardPixels.y, 2f);
+            var rect = (RectTransform)go.transform;
+            rect.sizeDelta = BoardPixels;
+            rect.localScale = Vector3.one * BoardScale;
+            rect.localPosition = BoardLocal;
+            rect.localRotation = Quaternion.identity;   // the Canvas's front is -Z = the station's front
+
+            var bg = KominkaDogRun.Editor.KD_ShopSetupEditor.EnsureUiChild(go.transform, "Bg", Vector2.zero, BoardPixels);
+            bg.transform.SetAsFirstSibling();
+            var bgImg = bg.GetComponent<UnityEngine.UI.Image>(); if (bgImg == null) bgImg = bg.AddComponent<UnityEngine.UI.Image>();
+            bgImg.color = KominkaDogRun.Editor.KD_UiSpriteEditor.SurfacePanel;
+            bgImg.raycastTarget = false;
+
+            var statusGo = KominkaDogRun.Editor.KD_ShopSetupEditor.EnsureUiChild(go.transform, "Status", new Vector2(0f, 140f), new Vector2(560f, 64f));
+            var status = statusGo.GetComponent<TextMeshProUGUI>(); if (status == null) status = statusGo.AddComponent<TextMeshProUGUI>();
+            status.font = font; status.fontSize = 22f; status.alignment = TextAlignmentOptions.Center; status.color = Color.white;
+            status.raycastTarget = false; status.enableWordWrapping = false; status.overflowMode = TextOverflowModes.Overflow;
+            status.text = WordPick + "\n" + WordStand + " 0.0m   " + WordMe + " 0.0m";
+            EditorUtility.SetDirty(status);
+
+            var b = AddUdon<KH_WashStationBoard>(go, Networking.SyncType.None);
+            b.call = call; b.personalFloor = pf; b.statusText = status;
+            b.dogNames = (string[])DogNamesJa.Clone();
+            b.wordPick = WordPick; b.wordCalling = WordCalling; b.wordHere = WordHere; b.wordBusy = WordBusy; b.wordLeashed = WordLeashed; b.wordStand = WordStand; b.wordMe = WordMe;
+            EditorUtility.SetDirty(b);
+            var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(b);
+            var log = new System.Text.StringBuilder();
+            var specs = BoardButtons();
+            foreach (var s in specs)
+            {
+                var color = s.kind == 0 ? KominkaDogRun.Editor.KD_UiSpriteEditor.ActionPrimary : s.kind == 1 ? KominkaDogRun.Editor.KD_UiSpriteEditor.ActionClose : KominkaDogRun.Editor.KD_UiSpriteEditor.ActionNeutral;
+                KominkaDogRun.Editor.KD_ShopSetupEditor.EnsureButton(go.transform, s.name, s.pos, s.size, color, font, s.label, backing, s.evt, log);
+            }
+            foreach (Transform c in go.transform.Cast<Transform>().ToArray())
+                if (c.name != "Bg" && c.name != "Status" && !specs.Any(s => s.name == c.name)) { r.log.Add("removed stale " + st.name + "/" + BoardName + "/" + c.name); UnityEngine.Object.DestroyImmediate(c.gameObject); }
+            if (log.Length > 0) r.log.Add(st.name + "/" + BoardName + ": " + log.ToString().Trim().Replace("\n", " | "));
+            return b;
         }
 
         static void BuildReset(Transform station, List<KH_WashTool> tools, Material dark, BuildReport r)
         {
-            if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(ScriptsDir + "/" + ResetProgram + ".asset") == null)
-                throw new InvalidOperationException(ResetProgram + ".asset missing: run Wash/10b, compile U#, then 11 again (reopen the scene without saving to drop this run)");
+            RequireStationProgram(ResetProgram);
             var board = Prim(station, ResetName, PrimitiveType.Cube, true);   // the collider is what Interact aims at
             board.layer = 0;
             board.transform.localPosition = ResetLocal;
@@ -750,7 +1006,15 @@ namespace KominkaHillside.Editor
             }
 
             // ---- the duckboard (すのこ): one solid, walkable BoxCollider on Default (players, and the dogs' ground rays 0|11) + slats ----
-            var table = Child(station, TableName);
+            // IMP-ENV-011: the duckboard lives under "Lift" (the stand KH_WashStationCall raises: liftRoot). Lift sits at the
+            // station's origin with no rotation, so the board keeps the same local numbers as before; an older duckboard
+            // directly under the station is moved under it (same world pose).
+            var lift = Child(station, LiftName);
+            lift.gameObject.layer = 0;
+            lift.localPosition = Vector3.zero; lift.localRotation = Quaternion.identity; lift.localScale = Vector3.one;
+            var oldTable = station.Find(TableName);
+            if (oldTable != null) { oldTable.SetParent(lift, false); r.log.Add(station.name + "/" + TableName + " moved under " + LiftName); }
+            var table = Child(lift, TableName);
             table.gameObject.layer = 0;
             float tableY = MaxGround(station, new Vector3(0f, 0f, -TableFront), TableSize.x, TableSize.z);
             table.localPosition = new Vector3(0f, tableY, -TableFront);
@@ -771,6 +1035,11 @@ namespace KominkaHillside.Editor
             foreach (Transform t in table.Cast<Transform>().ToArray())
                 if (t.name.StartsWith("Slat_") && (!int.TryParse(t.name.Substring(5), out int k) || k >= TableSlats)) UnityEngine.Object.DestroyImmediate(t.gameObject);
             r.log.Add(station.name + "/" + TableName + " local y " + tableY.ToString("F3") + " (highest ground under the board)");
+            // the point the called dog stands on: the duckboard's top centre, under Lift (moves with the stand)
+            var anchor = Child(lift, AnchorName);
+            anchor.gameObject.layer = 0;
+            anchor.localPosition = new Vector3(0f, tableY + TableSize.y, -TableFront); anchor.localRotation = Quaternion.identity; anchor.localScale = Vector3.one;
+            foreach (var comp in anchor.GetComponents<Component>()) if (!(comp is Transform)) UnityEngine.Object.DestroyImmediate(comp);
 
             // ---- the tub (桶) ----
             var tub = Prim(station, TubName, PrimitiveType.Cylinder, true);

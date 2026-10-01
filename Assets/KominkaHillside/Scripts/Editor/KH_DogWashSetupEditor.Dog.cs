@@ -593,6 +593,8 @@ namespace KominkaHillside.Editor
 
         static void WireWanders(SceneCtx c, List<KH_DogWash> washes, BuildReport r)
         {
+            // IMP-DOG-035 / IMP-ENV-011: every dog knows every station's Call (main first; BuildStation made them before this)
+            var calls = c.wanders.Length > 0 ? AllStationCalls(c.wanders[0].gameObject.scene).ToArray() : new KH_WashStationCall[0];
             foreach (var w in c.wanders)
             {
                 var want = washes.FirstOrDefault(x => x.dogIndex == w.dogIndex);
@@ -600,8 +602,12 @@ namespace KominkaHillside.Editor
                 var p = so.FindProperty("wash");
                 if (p == null) throw new InvalidOperationException("KD_DogWanderController.wash missing (compile first)");
                 p.objectReferenceValue = want;
+                var pc = so.FindProperty("washCalls");
+                if (pc == null) throw new InvalidOperationException("KD_DogWanderController.washCalls missing (the dog side's field, IMP-DOG-035; compile first)");
+                pc.arraySize = calls.Length;
+                for (int i = 0; i < calls.Length; i++) pc.GetArrayElementAtIndex(i).objectReferenceValue = calls[i];
                 so.ApplyModifiedProperties();
-                r.log.Add("wander " + w.dogIndex + " (" + w.name + ").wash = " + (want != null ? want.name : "null"));
+                r.log.Add("wander " + w.dogIndex + " (" + w.name + ").wash = " + (want != null ? want.name : "null") + ", washCalls " + calls.Length);
                 WireReactions(w, want, r);
             }
             WireVoiceLedger(r);
