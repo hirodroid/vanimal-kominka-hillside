@@ -36,6 +36,8 @@ namespace KominkaHillside.Editor
         // RowLeft < 0 puts the row to the right of spawn, clear of the leash rack on the left.
         const float RowAhead = 2.5f, RowLeft = -1.6f, ButtonY = 1.2f, ButtonSpacing = 0.35f, ButtonSize = 0.25f;
 
+        const int ButtonLayer = 17;
+
         public static readonly string[] Names = { "Terrain", "Scenery", "Leaves", "Entrance", "Dogs", "River", "DogUdon" };
         public static readonly string[] InteractTexts =
         {
@@ -153,7 +155,10 @@ namespace KominkaHillside.Editor
 
                 var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 cube.name = "Cube";
-                cube.layer = 0;
+                // Walkthrough (17): still Interact-able, but outside the dogs ground mask (layers 0 and 11). On Default the dogs
+                // SnapToGround ray hit the cube top and a dog walking under the row popped 1.24 m up onto it (found 2026-10-01:
+                // Course/53 and 63 failed with "Discontinuous dog movement", collider KH_PerfProbe/Button0_Terrain/Cube).
+                cube.layer = ButtonLayer;
                 cube.transform.SetParent(holder.transform, false);
                 cube.transform.localPosition = new Vector3(0f, ButtonY, 0f);
                 cube.transform.localRotation = Quaternion.identity;
@@ -290,6 +295,7 @@ namespace KominkaHillside.Editor
                 Req(inRange && bb != null && bb.interactText == InteractTexts[b.group], tag + ": interactText '" + (bb != null ? bb.interactText : "") + "'");
                 var col = b.GetComponent<BoxCollider>();
                 Req(col != null && col.enabled && !col.isTrigger, tag + ": solid BoxCollider on the Interact object");
+                Req(b.gameObject.layer == ButtonLayer, tag + ": layer " + ButtonLayer + " (not ground for the dogs)");
                 Req(inRange && b.transform.parent != null && b.transform.parent.name == "Button" + b.group + "_" + Names[b.group], tag + ": holder name matches group");
                 if (bb != null && bb.publicVariables != null)
                 {
