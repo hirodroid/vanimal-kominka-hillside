@@ -1332,14 +1332,15 @@ namespace KominkaDogRun
             if (!_dogOwner) ObserveSpeed();
             WaterTick(); // IMP-DOG-020: 水遊びの姿勢・しぶき・リード解除の観測 (HillsideWater.cs)。早期 return より前
             // RC-14: a leash first seen while the dog is in the water is not taken up (WaterLeashTick, HillsideWater.cs)
-            if (!_waterLeashVeto && UpdateHillsideLeash()) { _behaviorSelectionValid = false; NotifyPlay(); return; }
+            _dbgTickExit = 0;   // 裏山改変 (2026-10-02 wash keep-out round 5): どこで return したか (ハーネスの読み出し。int の書き込みだけ)
+            if (!_waterLeashVeto && UpdateHillsideLeash()) { _dbgTickExit = 1; _behaviorSelectionValid = false; NotifyPlay(); return; }
 
             _candyTicked = UpdateCandyPerformance();   // IMP-DOG-034: remembered for TickBusy (Tick.cs)
-            if (_candyTicked) { _behaviorSelectionValid = false; NotifyPlay(); return; }
+            if (_candyTicked) { _dbgTickExit = 2; _behaviorSelectionValid = false; NotifyPlay(); return; }
 
             // Complete any live landing above even if Fetch disappeared. Once grounded,
             // wait without halting the Udon VM so repairing the reference can resume AI.
-            if (fetchController == null) { _behaviorSelectionValid = false; Coast(); NotifyPlay(); return; }
+            if (fetchController == null) { _dbgTickExit = 3; _behaviorSelectionValid = false; Coast(); NotifyPlay(); return; }
 
             // ---- 割り込み 1: Fetch 中は何もしない (dogState は同期済み — 全員一致) ----
             // IMP-DOG-005: フリスビー中 (Ready を含む。root と Animator を KH_FrisbeeCatch が書く) も同じ扱い
@@ -1395,6 +1396,7 @@ namespace KominkaDogRun
                     _wasLooking = false;
                 }
                 if (debugInstrument) _dbgReason = DbgFetch;
+                _dbgTickExit = 4;
                 NotifyPlay();
                 return;
             }
@@ -1418,7 +1420,7 @@ namespace KominkaDogRun
 
             // IMP-DOG-025: 洗われ中はその場で止まって洗う人を見る (HillsideWash.cs)。選択済みの行動の継続より前
             // (後ろだと 0.1 秒の継続に遮られる。設計書 §1-5)。wash が null・洗われていない時は何も触らず false
-            if (UpdateHillsideWash()) { NotifyPlay(); return; }
+            if (UpdateHillsideWash()) { _dbgTickExit = 5; NotifyPlay(); return; }
 
             // IMP-DOG-036 S2b: from here every return path has set (or kept, through the continuation) _selectedBehavior to the
             // branch it ran, so RestThinRecord can read it. The 10 Hz reselection below needs no change for the rest cadence: a
@@ -1429,9 +1431,11 @@ namespace KominkaDogRun
             // frame-scoped gaze/tail injections every frame. Ended branches reselect now.
             if (_behaviorSelectionValid && Time.time < _nextBehaviorSelection && ContinueSelectedBehavior())
             {
+                _dbgTickExit = 6;   // continued _selectedBehavior
                 NotifyPlay();
                 return;
             }
+            _dbgTickExit = 7;   // reselected: _selectedBehavior is the branch chosen now
             _selfAvailableValid = false;   // IMP-DOG-034 A5: 継続側が引いた値は選び直しへ持ち込まない (Performance.cs)
             ScheduleBehaviorSelection(Time.time);
 
@@ -1499,6 +1503,11 @@ namespace KominkaDogRun
 
             // Continue an accepted welcome before proximity/rest can stop it short of the person.
             if (UpdateGreeting(false)) { _selectedBehavior = BehaviorGreeting; NotifyPlay(); return; }
+
+            // 裏山改変 (2026-10-02 ユーザー要望): 洗い場から出る / 洗い場の立入りの円から出る (HillsideStationLeave.cs)。
+            // 人の用事 (寝る・ライブ・集合・おやつ・催促・あいさつの継続) には負け、休憩・立ち止まり・静穏・じゃれ合い・徘徊には勝つ
+            // (円の中で伏せない・人のそばで止まらない)。washCalls が無ければ何もせず false
+            if (UpdateStationLeave()) { _selectedBehavior = BehaviorLeave; NotifyPlay(); return; }
 
             // ---- 割り込み 1.8: 休憩 (IMP-DOG-014 Phase 1) ----
             // **人の用事 (Fetch / おやつ / 催促) には全部負ける** ので、ここに置く。
@@ -1631,6 +1640,16 @@ namespace KominkaDogRun
             }
 
             Vector3 target = WanderTarget(hop);
+            // 裏山改変 (2026-10-02 round 3): 洗い場の円をまっすぐ横切る目標点へは歩かない。同じ円盤の別の点 → 円の縁の回り道 → この
+            // ホップは立ち止まる、の順 (WanderPass、HillsideStationLeave.cs。ホップごとに 1 回だけ決める)。washCalls が無ければそのまま
+            target = WanderPass(hop, target);
+            if (_wanderPassStand)
+            {
+                _arrivedHop = hop;
+                Coast();
+                if (debugInstrument) _dbgWanderState = 2;
+                return;
+            }
 
             Vector3 to = target - dogRoot.position;
             to.y = 0f;

@@ -31,7 +31,9 @@ namespace KominkaDogRun
                 _nextGreetingPick = Time.time + 2f;
                 int tick = Networking.GetServerTimeInMilliseconds() / 2000;
                 int player = dogBook.PendingPlayer(dogIndex, Rand01(tick, 91), cyclePeriod);
-                if (player >= 0) fetchController._BeginGreeting(player);
+                // 裏山改変 (2026-10-02 ユーザー要望「洗い場には他の犬は勝手に近寄ってこない」): 洗い場の円の中に居る人へは
+                // 迎えに行かない (2 s 後にまた引く。人が円を出たら迎える)。HillsideStationLeave.cs
+                if (player >= 0) { if (!KeepOutPlayer(player)) fetchController._BeginGreeting(player); }
                 else TryDropBy();
                 active = fetchController.GreetingActive;
             }
@@ -64,11 +66,13 @@ namespace KominkaDogRun
             }
             if (fetchController.GreetingArrived && done && nowMs - doneMs >= 9000) return false;
 
+            Vector3 playerPos = person.GetPosition();
+            Vector3 goal = SleepSpot(person, playerPos);
+            // 裏山改変 (2026-10-02): 向かう途中で相手が洗い場の円へ入ったら、そこへは行かない (このあいさつは終わり、後でまた引く)
+            if (!fetchController.GreetingArrived && KeepOutAt(goal) >= 0) return false;
             _greetingActive = true;
             if (debugInstrument) _dbgReason = dropBy ? DbgDropBy : DbgGreeting;
-            Vector3 playerPos = person.GetPosition();
             Vector3 dogPos = dogRoot.position;
-            Vector3 goal = SleepSpot(person, playerPos);
             Vector3 delta = goal - dogPos; delta.y = 0f;
             float distance = delta.magnitude;
             if (!fetchController.GreetingArrived)
@@ -118,7 +122,8 @@ namespace KominkaDogRun
             _dropByCycle = cycleIdx;
             if (Rand01(cycleIdx, 92) >= dropByChance) return;
             int player = dogBook.DropByPlayer(dogIndex, Rand01(cycleIdx, 93), dropByDogInterval, dropByPlayerInterval, dropByAfterGreeting);
-            if (player >= 0) fetchController._BeginDropBy(player);
+            // 裏山改変 (2026-10-02): 洗い場の円の中に居る人へは立ち寄らない (この周期の抽選は使い切り)
+            if (player >= 0 && !KeepOutPlayer(player)) fetchController._BeginDropBy(player);
         }
         void FinishInterruptedGreeting()
         {

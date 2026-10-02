@@ -56,6 +56,7 @@ namespace KominkaDogRun
                 case BehaviorGreeting: return UpdateGreeting(false);
                 case BehaviorRest: return UpdateRest();
                 case BehaviorWater: return UpdateWaterPlay(); // IMP-DOG-020
+                case BehaviorLeave: return UpdateStationLeave(); // 裏山改変 (2026-10-02): 洗い場から出る (HillsideStationLeave.cs)
                 case BehaviorPaused:
                     if (!_paused) return false;
                     Coast();
@@ -158,8 +159,17 @@ namespace KominkaDogRun
                 _wanderTargetValid = true;
             }
             // A moved/replaced center must take effect immediately without regenerating the offset.
-            return areaCenter.position + _wanderTargetOffset;
+            // 裏山改変 (2026-10-02): a waypoint inside a wash station's keep-out moves out of it (KeepOutFilter: static circles and
+            // the river band only = the same point on every client; HillsideStationLeave.cs). Cached for the last raw point, so the
+            // circle test runs once per waypoint / home move, not every decision
+            Vector3 raw = areaCenter.position + _wanderTargetOffset;
+            // round 3: a home within radius + the disc of a station is moved out first (KeepOutHome: the whole disc outside the circle)
+            if (!_wanderKoValid || raw != _wanderKoRaw) { _wanderKoRaw = raw; _dbgHome = KeepOutHome(areaCenter.position, areaRadius); _wanderKoOut = KeepOutFilter(_dbgHome + _wanderTargetOffset); _wanderKoValid = true; }
+            return _wanderKoOut;
         }
+
+        bool _wanderKoValid;              // 裏山改変 (2026-10-02): WanderTarget's keep-out cache
+        Vector3 _wanderKoRaw, _wanderKoOut;
 
         bool _companionAnimationValid;
         Animator _companionAnimationTarget;

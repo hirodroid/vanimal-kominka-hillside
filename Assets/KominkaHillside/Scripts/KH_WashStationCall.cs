@@ -19,6 +19,9 @@ namespace KominkaHillside
     /// calls _ReleaseDog on its accept edge, on every client; only the Owner's call acts), the caller leaving, the dog leashed by
     /// someone other than the caller, and idleReleaseSeconds since the last stroke (or the call) while the caller is farther than
     /// callerFarMeters from the anchor. The stand goes back to 0 whenever no dog is held.
+    /// 2026-10-02: on that release edge the dog side (every client, from the synced heldDog) drops the wash hold and walks out past
+    /// keepOutRadius at once, riding a raised stand down first; not when an errand or a leash took it, or another station holds it
+    /// (KD_DogWanderController.HillsideStationLeave.cs). Nothing new is synced here.
     ///
     /// Busy dogs (Fetch / the disc / in the water / a gathering participant / called to sleep): the call waits callWaitSeconds for
     /// the dog to be free, then is refused (refuseSerial / refusedDog / refusedReason for the board's 「いまは来られない」).</summary>
@@ -43,6 +46,12 @@ namespace KominkaHillside
         public float operateRange = 6f;      // Codex 5: release / lift only from a player this close to the anchor (Owner-checked)
         public float releaseInterval = 1f;   // Codex 5: Owner-side spacing of releases
         public float liftInterval = 0.2f;    // Codex 5: Owner-side spacing of lift steps
+        // 2026-10-02 user request 「洗い場には他の犬は勝手に近寄ってこない、台の上で休憩し始めたりもしない」: the horizontal circle
+        // around the anchor (the duckboard's centre) a free dog never picks as a destination / rest place and walks out of; the dog
+        // released from here walks to keepOutRadius + its stationLeaveMargin (KD_DogWanderController.HillsideStationLeave.cs).
+        // 4 m covers the duckboard, the shelf (1.2 m behind) and the 5 x 5 m personal floor (corners 3.54 m) with 0.46 m to spare.
+        // Read once by each dog (static: the anchor moves on y only). Written by Wash/11, checked by Wash/12. 0 = no keep-out.
+        public float keepOutRadius = 4f;
 
         public const int RefuseBusy = 1, RefuseLeashedByOther = 2, RefuseInvalid = 3;
 
@@ -103,6 +112,9 @@ namespace KominkaHillside
         public float _StandYaw() { return standYaw; }
         public float _Lift01() { return liftMax > 0f ? Mathf.Clamp01(lift / liftMax) : 0f; }
         public float _LiftMeters() { return lift; }
+        /// <summary>This client's eased stand height (m above the base; 0 when down). The dog released from a raised stand rides it
+        /// down before it walks off (KD_DogWanderController.UpdateLeaveLowering).</summary>
+        public float _LiftNow() { return _liftNow; }
         public int _CallerId() { return heldDog >= 0 ? callerId : -1; }
         public int _RefuseSerial() { return refuseSerial; }
         public int _RefusedDog() { return refusedDog; }

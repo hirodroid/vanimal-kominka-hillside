@@ -119,6 +119,9 @@ namespace KominkaHillside.Editor
                     WsExpect(Flat(at - st.position) <= radius - 0.5f, "the spot " + Flat(at - st.position).ToString("F1") + " m from " + st.name + " is within its radius " + radius);
                     WsExpect(main == null || Flat(at - main.position) > radius + 1f, "the spot is outside the main washStation's radius (only washStations can block it)");
                     wdMovedZone = zn; wdMovedFrom = zn.position; zn.position = at;
+                    // 2026-10-02: 3 m in front of the shelf is inside the station's keep-out; the dirt block is what is tested here, so
+                    // the Shiba's keep-out is off until WdRestore (simulated, WashCall.cs WsKeepOutOff)
+                    WsKeepOutOff();
                     WdPlaceAt(at); WsPlayerNear(1.3f);
                 }));
                 s.Add(WsWait(1.2));

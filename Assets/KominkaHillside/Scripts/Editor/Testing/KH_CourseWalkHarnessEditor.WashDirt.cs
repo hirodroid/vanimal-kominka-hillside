@@ -355,6 +355,9 @@ namespace KominkaHillside.Editor
                 stAt = CmGround(st.position + side * 3f);
                 wdMovedZone = sz; wdMovedFrom = sz.position; sz.position = stAt;
                 stDist = Flat(stAt - st.position);
+                // 2026-10-02: the spot lies inside the station's keep-out, which the free Shiba would walk out of; this case is about
+                // the dirt block, so the Shiba's keep-out is switched off until WdRestore (simulated, WashCall.cs WsKeepOutOff)
+                WsKeepOutOff();
                 WdPlaceAt(stAt); WsPlayerNear(1.3f);
             }));
             s.Add(WsWait(1.2));
@@ -457,6 +460,7 @@ namespace KominkaHillside.Editor
             wdSaved.Clear();
             if (wdMovedZone != null) { wdMovedZone.position = wdMovedFrom; wdMovedZone = null; }
             WdReleasePose();
+            WsKeepOutRestore();   // 2026-10-02: W-dirt-station / W-stations-grace switch the Shiba's keep-out off (WashCall.cs)
         }
 
         static void WdReleasePose()

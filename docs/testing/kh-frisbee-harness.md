@@ -564,7 +564,7 @@ node scripts/kh-frisbee-harness.cjs start --mode=terrain --shots=T-cliff,T-rock 
 
 ## 本シーンの犬を洗う (Course/100, IMP-DOG-025)
 
-`Tools/KominkaHillside/Course/100 - Harness Wash (all groups)`。**全体 (55 ケース、45〜70 分。2026-10-02 に W-shoulder・W-runoff を `100a` へ追加) は確定前に 1 回だけ回し、普段は変更に関係する群だけを回す** (2026-09-30 ユーザー指定、全プロジェクト共通の方針): `100a` 基本 (泡・すすぎ・停止・清潔・拒否、約 8 分)、`100b` 行動の切替 + 反応 (約 10 分)、`100c` 同期 (約 8 分)、`100d` 汚れ + 主洗い場 (約 12 分)、`100e` 6 匹 + 道中の洗い場 (実測 1 分 43 秒)。全体は同日の実測で 53 ケース約 60 分。部分実行の wash.json には notCovered に `Partial run` の行が付く。フリスビーではないが、本シーンの歩行ハーネスの 1 モードとして同じ枠で走らせる (journal・全体の締切 1500 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。台本は `KH_CourseWalkHarnessEditor.Wash.cs`。前提は `Wash/11` (組み立て) が済み、柴の `KD_DogWanderController.wash` が配線されていること (他の 5 匹は null)。
+`Tools/KominkaHillside/Course/100 - Harness Wash (all groups)`。**全体 (55 ケース、45〜70 分。2026-10-02 に W-shoulder・W-runoff を `100a` へ追加) は確定前に 1 回だけ回し、普段は変更に関係する群だけを回す** (2026-09-30 ユーザー指定、全プロジェクト共通の方針): `100a` 基本 (泡・すすぎ・停止・清潔・拒否、約 8 分)、`100b` 行動の切替 + 反応 (約 10 分)、`100c` 同期 (約 8 分)、`100d` 汚れ + 主洗い場 (約 12 分)、`100e` 6 匹 + 道中の洗い場 (実測 1 分 43 秒)、`100f` 呼ぶ + 高さ ([下の節](#洗い場の呼び出しと高さ-course100f))。全体は同日の実測で 53 ケース約 60 分。部分実行の wash.json には notCovered に `Partial run` の行が付く。フリスビーではないが、本シーンの歩行ハーネスの 1 モードとして同じ枠で走らせる (journal・全体の締切 1500 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。台本は `KH_CourseWalkHarnessEditor.Wash.cs`。前提は `Wash/11` (組み立て) が済み、柴の `KD_DogWanderController.wash` が配線されていること (他の 5 匹は null)。
 
 ```bash
 bash scripts/kh-harness-run.sh walk "Course/100e - Harness Wash dogs + course stations"   # 群だけ
@@ -595,6 +595,37 @@ bash scripts/kh-harness-run.sh walk "Course/100 - Harness Wash (all groups)"    
 - 結果: `Logs/kh-course-walk/<run>/wash.json` (ケースごとの notes・`resolved`・`maskSource`・`notCovered`) と `report.json`。全体の状態は **`WASH_PASS`** (全ケース PASS か SKIP) / `WASH_FAIL`。落ちたケースは片付け (`_EndContact`) をして次へ進む
 - 偽の失敗: VRChat クライアントのログの混入は他のモードと同じく `clientLogErrors` に数えて失敗にしない。各ケースの notes に最大のフレーム時間を出し、100 ms を超えた回は「単独で回し直す」を付ける。歩く・動くの判定 (W-idle・W-hold・W-others) は犬の休憩・近接の停止で遅れることがある (notes に `restPhase` / `paused`)
 - **見ていないもの (ClientSim は 1 クライアント)**: `NetStroke` は自分へ返る経路 (Owner = 自分) だけ。他のクライアントでの描画、クライアント間の 8 Hz と送り主ごとの予算、他人のストロークの Owner による積算、2 人同時、途中参加の描き直し (Restore)、Owner の交代。道具 (掴む・シャワーの Raycast・VR のスポンジの球・Desktop の視線と Use・振動・放水の同期)。殻の見た目・飛沫・音、犬の顔の向きと首かしげ、水・集合・呼び戻しとの優先、乾き (90〜120 s) と乾いた後の殻の消灯、Quest / iOS の描画。これらは Play と PCVR (2 人) で見る
+
+### 洗い場の呼び出しと高さ (Course/100f)
+
+`Tools/KominkaHillside/Course/100f - Harness Wash call + height` (群 `call` + `height`、台本 `KH_CourseWalkHarnessEditor.WashCall.cs` / `WashHeight.cs`)。設計は [洗い場の呼び出しと高さ](../plans/2026-10-01-wash-call-and-height.md) §5・§6。主洗い場 (stationIndex 0) へ `ReqCall` / `ReqRelease` / `ReqLift` を `SendCustomNetworkEvent(Owner)` で送る (ClientSim は自分 = Owner)。犬は柴。前提は `Wash/11` の後 (`keepOutRadius`・`stationLeaveMargin`・`stationLeaveGait`・`stationUnleashGrace`・`stationRestMargin` がシーンにあること)。
+
+```bash
+bash scripts/kh-harness-run.sh walk "Course/100f - Harness Wash call + height"
+```
+
+2026-10-02 (「おわりにしたらすぐ出ていく」「洗い場に近寄らない」) に変えた・足したケース。限度の秒は実行時の値から作る: **出る限度** = 台の高さ / `liftSpeed` + 1 s + 1.5 × (`keepOutRadius` + `stationLeaveMargin`) / 出ていく速さ + 2 s。速さは洗いが終わった時 (C-release・C-swap・猶予の後) が `stationLeaveGait` (既定 1 = min(`runSpeed`, `runAnimSpeed` + 0.1)、約 1.8 m/s で台 0 なら約 7.2 s)、ふらっと入った犬 (C-keepout-free) が `walkSpeed` (1.1 m/s で約 9.8 s)。
+
+| ケース | 内容 | 合格 |
+|---|---|---|
+| C-call-stay (追加の見張り) | 呼んで 30 s 留まる | これまでの合格に加えて、留まっている間 `_leaveActive` / `_leaveLowering` が立たない (円は呼ばれた犬を押さない) |
+| C-release (変更) | 台を 0.3 m 上げてから `ReqRelease`。人は台の横 1.5 m に立ったまま (旧: 12 m 離していた) | 1 s 以内に出ていく歩き (`_leaveActive` か `_leaveLowering`)、0.1 m 動き出すのが「台の下りる秒 + 1 s」以内、はね落ちない (round 3 で測り方を変えた: 1 tick の落ち込みから「`liftSpeed` × その tick のゲーム時間 + 0.02 m」を引いた超過が 0 以下 = 伸びたフレームで台が動いた分は許す。さらに台に乗って下りる間は ルートの y と `anchor` の y の差 < 0.03 m)、円の中で `_restPhase` / 伏せ / 座りが無い、出る限度以内に円 (`keepOutRadius`) の外。台は 0、`_stationLocked` は下りる。**旧「30 s 以内に 0.3 m 歩く」は廃止** |
+| C-swap (追加) | 柴を留めて別の犬を呼ぶ | 外れた柴が `_leaveActive` になり、出る限度 (台 0) 以内に円の外。呼んだ犬は来て立つ (従来) |
+| C-gather (追加) | 台の上で集合 | 従来の合格に加えて、洗い場から出ていく歩きを始めない (集合が連れていく) |
+| C-keepout-free (新。round 7: 休憩・伏せ・座りは「その時に円の中」かつ「置いてから犬が 1 回以上判断した」標本だけで判定、時刻は最初の標本から) | 前のケースの出ていく歩きが残っていないこと (対照) を見てから、自由な柴を円の中 (すのこの前 1.5 m) へ置く。休憩がすぐ入る状態 (`_breathRunAccum` 100・`_restReadyAt` 0、ヒープへの書き込み = 模擬)。人は 14 m 離れる | 1.5 s 以内に出ていく歩き (B: `_keepOutExits` が増える)、出る限度 + 1.5 s 以内に円の外、円の中で休憩・伏せ・座りが無い、その後 6 s 円へ戻らない (外で休むのは可) |
+| C-keepout-wander (新、round 3、模擬) | 柴の家を主洗い場の中心から 4.6 m (門の向き。実際の犬の家と同じ距離) に置き、柴を円の反対側 (4.8 m) に置く。休憩なし (`_restReadyAt` 大)、徘徊の窓を常に開け (`wanderDurationMin/Max` = `cyclePeriod`)、`waypointPeriod` 2 s。人は 16 m 離れる。60 s。ヒープ・Transform への書き込みは `WcCleanup` が戻す | じゃれ合い中を除いて一度も円に入らない、ホップ 10 回以上、家の側へ回り込めた、円から出す歩き (B) が一度も要らなかった。notes に回り道・立ち止まったホップの数 |
+| C-keepout-probe (新、模擬) | 柴の家 (`areaCenter`) を 4 か所の洗い場それぞれの台の中心・横 2 m・横 r m へ動かし (実行時の Transform、すぐ戻す)、`_DebugKeepOutProbe` で 200 ホップずつ: 徘徊の `WanderTarget` と、じゃれ合いの `WanderAnchorAt` / `FleeHopTargetByHop` | 4 か所すべて調べた、生の目標点が円に入る例がある (対照)、じゃれ合いの部分が動いた (標本 > 0)、絞った後の目標点とじゃれ合いの点は 1 つも円に入らない。休む場所はその場なので C-keepout-free が見る |
+| C-keepout-leash (新) | 柴を門の横へ置き直してリードを付け (人は柴の横の NavMesh の点、無ければその点そのまま)、台の横へ連れて行く。8 s 後、猶予 (`stationUnleashGrace`) をヒープで 6 s に縮めて (模擬) 外す | 円の中で 8 s、リードのまま `_leaveActive` が立たず円の中に居る (押し出されない)。外した後 4 s (猶予 − 2 s) まで円の中で出ていかず休まない (猶予の枝 `_graceFrames` が回る)、猶予の後に小走り (`_leaveBrisk`) で、猶予 + 1.5 s + 出る限度以内に円の外 (猶予より前には出ない) |
+| C-keepout-unleash-wash (新) | 同じく連れて来て、猶予 6 s (模擬) で外し、1.5 s 後からスポンジで横腹を 10 s | 洗っている間は一度も出ていかない (猶予を過ぎても)、最後に洗い保持中。最後のストロークから「保持 + 猶予 (最後に洗った時から) + 出る限度」以内に円の外、猶予 − 0.5 s より前には出ない |
+
+- C-inactive (round 3 で拡張): 台を 0.3 m 上げてから洗い場 (`Call`) を無効にする。洗い場が無効の間に犬が自分で地面へ下りる (`_leaveOwnEase`、はね落ちない)、再有効化で heldDog -1、その後出る限度以内に円の外
+- 限度の秒は、前の手順で求めた値を使うものは手順が走る時に計算する (`WsUntilF`。round 3: C-keepout-unleash-wash が組み立て時の 0 s で落ちた)
+- 円・家を動かした時 (下の W-dirt-station など・C-keepout-probe) は、徘徊の目標点・ホップごとの道筋の覚えも捨てる (`WcInvalidateWander`)
+- 主洗い場はこのシーンにあるので、円のケースは主洗い場が無いと SKIP ではなく FAIL
+- round 5 の読み出し: C-release・円のケース 4 つは、失敗の notes に 1 行のヒープの写し (`dump at the failure`)、PASS の notes と置いた直後 (+0.3 / +0.4 s)・猶予の終わり 2 s 前にも同じ写しを出す。中身: Owner、判断の回数、Update がどこで戻ったか (`tickExit` 1 リード 2 Candy 3 Fetch 無し 4 Fetch / ディスク 5 洗いの枝 [`washExit` 1 洗い場 2 台と下りる 3 洗い保持] 6 継続 7 選び直し)、選んだ枝、出ていく歩きの状態 (走っている・下りている・自分で下りる・小走り・行き先・失敗回数・休止と締切の残り・最後の失敗の理由)、最後の行き先探し (試した数と、棚・NavMesh・補正後に近い・川・人の線で外した数、選び方 1 きれい 2 人の線だけ 3 最善 0 無し、輪)、猶予、水、Fetch / ディスク、リード、休憩、洗い、遊び・立ち止まり、どの円の中か・中心までの距離、製品側の最後の円の判定、ずらした家までの距離。共通の準備 (`WcFree`) はディスク (`KH_FrisbeeCatch.state`) が Idle であることも待つ。round 6: `WcFree` はどの洗い場 (4 か所) がどの犬を留めていても、その洗い場の台の横 1.5 m (`operateRange` 6 m の内) へ行ってから `ReqRelease` で解放し (1.1 s おきに 1 か所)、主洗い場の横へ戻る。残れば dump 付きで FAIL (run 20261002-141941: C-water-call の終わりの解放が川の洗い場から遠くて断られ、その後のケースで柴が川の洗い場へ歩き続けていた)。C-water-call も解放の前に川の洗い場の横へ行く
+- round 4: C-water-call は最初の水遊びをすぐ始まるようにする (ヒープ) ので、終わりに「10 分は自分から水遊びを始めない」(`_waterFirstUsed` true・`_waterNextRoll` +600 s、模擬) を書く。共通の準備 (`WcFree`) は水遊びが残っていない (`waterState` 0) ことも待ち、残っていれば FAIL (run 20261002-135252 では、川の洗い場の後に始まった水遊びの「入口へ向かう」が主洗い場まで持ち越され、C-keepout-free / -wander が BehaviorWater 12 で落ちた)。C-keepout-leash は外した後 0.5 s 待ってから休んでいないことを見る (犬が外れた端を見るのは次の判断)
+- `100d` の W-dirt-station と `100e` の W-stations-grace は、泥の地点を洗い場の円の中へ動かして柴を置くので、そのケースの間だけ柴の円を切る (ヒープの `_koRadius` を 0 に = 模擬、`WdRestore` で戻す)。見ているのは汚れの止まり方
+- **見ていないもの**: 2 人 (犬の Owner と洗い場の Owner が違う時の解放の伝わり方と台の下り方)、Owner の画面の人をよける判定 (ClientSim の人は 1 人)、6 匹が自由に過ごす長時間の様子 (家が洗い場のそばの犬が円へ入らないか) と、じゃれ合いが円をまたぐ見え方。これらは Play と PCVR
 
 ## 本シーンの首輪の「外す」Interact (Course/83b, IMP-DOG-031)
 

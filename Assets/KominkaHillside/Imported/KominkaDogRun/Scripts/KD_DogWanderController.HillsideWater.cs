@@ -488,6 +488,11 @@ namespace KominkaDogRun
             bool wet = fetchController.WaterPose != 0 || WaterWetAtMemo(p);   // IMP-DOG-034 A5: 先頭の WaterPoseRefresh と同じ位置なら再計算しない
             // Cheap exit for the usual dry dog far from the spot (the errand lookups below are cross-behaviour calls).
             if (waterState == WaterOff && !wet && (!waterSpot._NearEntry(p) || (_waterFirstUsed && Time.time < _waterNextRoll))) { _waterFirstDue = 0f; return false; }
+            // 2026-10-02 (wash keep-out round 4, Course/100f C-keepout-free / -wander): a dry approach starts within entryRadius (25 m)
+            // and walks toward the entry, so a dog far beyond that was moved there (a teleport / a placement), not walking in: drop the
+            // play instead of walking hundreds of metres back to the river (which also outranked the wash station's walk out).
+            // Twice the radius: a NavMesh detour on the way in may bend a little outside it. Wet / wading / exiting are untouched.
+            if (waterState == WaterApproach && !wet && Horizontal(p, waterSpot.entry) > 2f * waterSpot.entryRadius) { WaterEnd("displaced"); return false; }
             int requester = WaterRequester();
             if (waterState == WaterOff)
             {

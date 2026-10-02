@@ -392,6 +392,19 @@ namespace KominkaHillside.Editor
                 req(got.Length == calls.Length && got.Zip(calls, (a, b) => a == (UnityEngine.Object)b).All(x => x),
                     "controls: " + w.name + ".washCalls = the " + calls.Length + " stations' Call, main first (" + got.Length + ")");
                 Backing(req, UdonSharpEditorUtility.GetBackingUdonBehaviour(w), "controls: " + w.name, "washCalls", calls);
+                // 2026-10-02: the walk out after the release (Wash/11 WireWanders)
+                var wso = new SerializedObject(w);
+                var lm = wso.FindProperty("stationLeaveMargin"); var lg = wso.FindProperty("stationLeaveGait");
+                req(lm != null && Mathf.Abs(lm.floatValue - LeaveMargin) < 1e-4f, "controls: " + w.name + ".stationLeaveMargin " + (lm != null ? lm.floatValue.ToString() : "missing") + " = " + LeaveMargin);
+                req(lg != null && lg.intValue == LeaveGait, "controls: " + w.name + ".stationLeaveGait " + (lg != null ? lg.intValue.ToString() : "missing") + " = " + LeaveGait);
+                Backing(req, UdonSharpEditorUtility.GetBackingUdonBehaviour(w), "controls: " + w.name, "stationLeaveMargin", LeaveMargin);
+                Backing(req, UdonSharpEditorUtility.GetBackingUdonBehaviour(w), "controls: " + w.name, "stationLeaveGait", LeaveGait);
+                var lu = wso.FindProperty("stationUnleashGrace");
+                req(lu != null && Mathf.Abs(lu.floatValue - UnleashGrace) < 1e-4f, "controls: " + w.name + ".stationUnleashGrace " + (lu != null ? lu.floatValue.ToString() : "missing") + " = " + UnleashGrace);
+                Backing(req, UdonSharpEditorUtility.GetBackingUdonBehaviour(w), "controls: " + w.name, "stationUnleashGrace", UnleashGrace);
+                var lr = wso.FindProperty("stationRestMargin");
+                req(lr != null && Mathf.Abs(lr.floatValue - RestMargin) < 1e-4f, "controls: " + w.name + ".stationRestMargin " + (lr != null ? lr.floatValue.ToString() : "missing") + " = " + RestMargin);
+                Backing(req, UdonSharpEditorUtility.GetBackingUdonBehaviour(w), "controls: " + w.name, "stationRestMargin", RestMargin);
                 // the dogs never stand on someone's personal floor
                 var gm = new SerializedObject(w).FindProperty("groundLayerMask");
                 req(gm != null && (gm.intValue & (1 << FloorLayer)) == 0, "controls: " + w.name + ".groundLayerMask leaves out the floor layer " + FloorLayer + " (" + (gm != null ? gm.intValue.ToString() : "none") + ")");
@@ -488,7 +501,7 @@ namespace KominkaHillside.Editor
                     req(got.Length == kv.Value.Length && kv.Value.All(x => x != null) && got.Zip(kv.Value, (a, b) => a == b).All(x => x), label + ": Call." + kv.Key + " = the " + kv.Value.Length + " dogs by dogIndex (" + got.Length + ")");
                     Backing(req, cb, label + ": Call", kv.Key, kv.Value);
                 }
-                foreach (var kv in new[] { new KeyValuePair<string, float>("liftMax", CallLiftMax), new KeyValuePair<string, float>("liftStep", CallLiftStep), new KeyValuePair<string, float>("idleReleaseSeconds", CallIdleReleaseSeconds), new KeyValuePair<string, float>("callerFarMeters", CallCallerFarMeters) })
+                foreach (var kv in new[] { new KeyValuePair<string, float>("liftMax", CallLiftMax), new KeyValuePair<string, float>("liftStep", CallLiftStep), new KeyValuePair<string, float>("idleReleaseSeconds", CallIdleReleaseSeconds), new KeyValuePair<string, float>("callerFarMeters", CallCallerFarMeters), new KeyValuePair<string, float>("keepOutRadius", CallKeepOutRadius) })
                 {
                     var p = P(kv.Key);
                     if (p == null) continue;

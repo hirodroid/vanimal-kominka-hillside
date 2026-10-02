@@ -131,7 +131,9 @@ namespace KominkaDogRun
         /// (KD_DogFetchController), CanPlay (KH_FrisbeeCatch) and ReqAttach (KH_LeashManager). Not the frame flag - the gates run
         /// outside this Update and on clients that did not run the branch (design §1-5 「入口が読むのは有効期限から求めた状態」).</summary>
         /// IMP-DOG-035: also true while a wash station holds this dog (called to the station: the same gates, design §3).
-        public bool WashHeld { get { return (wash != null && wash._WashHold()) || HeldStation() != null; } } // net: callable-ok: read-only
+        /// 2026-10-02: and while a released dog rides the stand down (HillsideStationLeave.cs, at most liftMax / liftSpeed + 1 s), so no
+        /// Fetch / disc / new leash moves the root off a raised stand.
+        public bool WashHeld { get { return (wash != null && wash._WashHold()) || HeldStation() != null || _leaveLowering; } } // net: callable-ok: read-only
 
         // ================= IMP-DOG-035: called to a wash station (docs/plans/2026-10-01-wash-call-and-height.md §3 / §4) =================
         //
@@ -206,8 +208,11 @@ namespace KominkaDogRun
             _stationWaterSince = -1f;
             if (_stationIdx >= 0)
             {
+                // 2026-10-02: released (not to another station): the wash is over - drop the hold and walk out at once, riding a
+                // raised stand down first (HillsideStationLeave.cs). True = riding down: no ground snap here (it would pop the dog).
+                bool riding = idx < 0 && StationLeaveEdge(_stationIdx);
                 // released (or moved to another station): back to the ground, then the usual behaviour picks up next frame
-                if (_stationLocked && _dogOwner && dogRoot != null) dogRoot.position = GroundAfterPlacedSleep(dogRoot.position); // net: owner-only: _dogOwner、洗い場の台から下りる
+                if (!riding && _stationLocked && _dogOwner && dogRoot != null) dogRoot.position = GroundAfterPlacedSleep(dogRoot.position); // net: owner-only: _dogOwner、洗い場の台から下りる
                 _stationLocked = false;
                 _behaviorSelectionValid = false;
             }
@@ -216,7 +221,8 @@ namespace KominkaDogRun
 
         /// <summary>On a wash station's stand (local lock while still held). KD_DogPack reads it and never pushes this dog (the
         /// push snaps to the ground and would drop it off a raised stand); the dog keeps its radius, so others are pushed as before.</summary>
-        public bool StationLocked { get { return _stationLocked && _stationIdx >= 0; } } // net: callable-ok: read-only
+        /// 2026-10-02: also while riding a raised stand down after the release (HillsideStationLeave.cs).
+        public bool StationLocked { get { return (_stationLocked && _stationIdx >= 0) || _leaveLowering; } } // net: callable-ok: read-only
 
         /// <summary>Unleashed (from UpdateHillsideWash) and leashed by the caller (from UpdateHillsideLeash): go to the station and
         /// stay. False = not held / yields (water first, the errands release it), and nothing was touched.</summary>
@@ -323,7 +329,10 @@ namespace KominkaDogRun
         bool UpdateHillsideWash()
         {
             // IMP-DOG-035: called to a wash station (walk there / stay on the stand, washed there as below). False when not held.
-            if (UpdateWashStation(false)) return true;
+            _dbgWashExit = 0;   // 2026-10-02 round 5 read-out: 1 station, 2 riding down, 3 wash hold / satisfied sign
+            if (UpdateWashStation(false)) { _dbgWashExit = 1; return true; }
+            // 2026-10-02: released from a raised stand: ride it down (same rank as the stand itself), then the walk out further down
+            if (UpdateLeaveLowering()) { _dbgWashExit = 2; return true; }
             if (wash == null || fetchController == null) return false;
             // IMP-DOG-028 (Codex 4-1): a satisfied sign in progress keeps the branch after the hold ran out (its own end time)
             if (!wash._WashHold() && !WashSatisfyRunning()) return false;
@@ -350,6 +359,7 @@ namespace KominkaDogRun
             Vector3 washer = wash._WasherPosition();
             // 2026-09-30: no body turn while washed (the side being washed must not turn away)
             WashLook(washer);
+            _dbgWashExit = 3;
             return true;
         }
 
@@ -370,7 +380,7 @@ namespace KominkaDogRun
             // IMP-DOG-035: the station's release edge, and on the errands' accept edge the station lets the dog go (_ReleaseDog:
             // only the station Owner's call acts; every client calls it on the same synced edge)
             bool hasCalls = washCalls != null && washCalls.Length > 0;
-            if (hasCalls) StationTick();
+            if (hasCalls) { StationTick(); LeaveGuardTick(); }
             if (wash == null && !hasCalls) return;
             bool now = WashYieldsToErrand();
             if (now && !_washErrandPrev)
@@ -628,6 +638,7 @@ namespace KominkaDogRun
             if (_washLastFrame == Time.frameCount) return;
             if (_washLastFrame != Time.frameCount - 1) WashEnter();
             _washLastFrame = Time.frameCount;
+            _washLastAt = Time.time;   // 2026-10-02 round 2: washing keeps an unleash grace going (HillsideStationLeave.cs)
             _washActive = true;
         }
 

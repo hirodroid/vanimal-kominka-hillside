@@ -831,7 +831,7 @@ namespace KominkaHillside.Editor
         static void WashTick(double now)
         {
             if (wsScripts == null || caseIndex < 0 || caseIndex >= wsScripts.Count) throw new InvalidOperationException("Wash script lost (domain reload?)");
-            if (wsStep == 0 && wsCaseAt != Current.startedAt) { wsCaseAt = Current.startedAt; wsStepAt = now; wsMaxDt = 0f; }
+            if (wsStep == 0 && wsCaseAt != Current.startedAt) { wsCaseAt = Current.startedAt; wsStepAt = now; wsMaxDt = 0f; wsFailDump = null; }   // 2026-10-02 round 5: a case registers its own dump
             wsMaxDt = Mathf.Max(wsMaxDt, Time.deltaTime);
             if (wsRoot != null)
             {
@@ -861,6 +861,7 @@ namespace KominkaHillside.Editor
                 status = "FAIL"; wsFailed = true;
                 wsReport.cases[caseIndex].notes.Add("FAIL at step " + wsStep + ": " + e.GetType().Name + ": " + e.Message);
                 wsReport.cases[caseIndex].notes.Add("at: " + TvWhere(e));
+                if (wsFailDump != null) { string dump; try { dump = wsFailDump(); } catch (Exception de) { dump = "dump failed: " + de.Message; } wsReport.cases[caseIndex].notes.Add("dump at the failure: " + dump); }
                 WsRecover();
             }
             // 伸びたフレーム (VRChat クライアントの並行・重い処理の並行) は偽の失敗の元。落ちた回は単独で回し直す (kh-frisbee-harness.md)

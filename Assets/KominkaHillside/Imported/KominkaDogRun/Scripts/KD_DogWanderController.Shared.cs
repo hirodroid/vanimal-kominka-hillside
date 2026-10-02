@@ -56,8 +56,9 @@ namespace KominkaDogRun
             int hop = ci * WaypointHopStride + wp; // 徘徊 (B7) と同じ合成
             float r = Mathf.Sqrt(Rand01Salt(hop, RandStreamWaypointRadius, _packSalt[i])) * _packAreaRadius[i];
             float ang = Rand01Salt(hop, RandStreamWaypointAngle, _packSalt[i]) * Mathf.PI * 2f;
-            return _packAreaCenter[i].position
-                + new Vector3(Mathf.Cos(ang) * r, 0f, Mathf.Sin(ang) * r);
+            // 裏山改変 (2026-10-02): the same keep-out filter as WanderTarget (static circles + river band: still a shared derivation)
+            return KeepOutFilter(KeepOutHome(_packAreaCenter[i].position, _packAreaRadius[i])   // round 3: the same moved home as WanderTarget
+                + new Vector3(Mathf.Cos(ang) * r, 0f, Mathf.Sin(ang) * r));
         }
 
         /// <summary>逃げ役 fleeIdx のホップ番号 hop の逃げ先 (共有の絶対座標)。
@@ -73,8 +74,9 @@ namespace KominkaDogRun
                 + (PlayRand(cyc, PlayStreamFleeJitterBase + hop) - 0.5f) * FleeJitterRad;
             float rMax = _packAreaRadius[fleeIdx];
             float r = Mathf.Lerp(rMax * _packFleeInner[fleeIdx], rMax, PlayRand(cyc, PlayStreamFleeRadiusBase + hop));
-            return _packAreaCenter[fleeIdx].position
-                + new Vector3(Mathf.Cos(ang) * r, 0f, Mathf.Sin(ang) * r);
+            // 裏山改変 (2026-10-02): no flee point inside a wash station's keep-out (shared: static circles + river band)
+            return KeepOutFilter(KeepOutHome(_packAreaCenter[fleeIdx].position, rMax)   // round 3: the moved home
+                + new Vector3(Mathf.Cos(ang) * r, 0f, Mathf.Sin(ang) * r));
         }
 
         /// <summary>追う役の回り込み点 (IMP-NET-002 / DES-NET-001 §4-4 の案 C)。
@@ -139,7 +141,10 @@ namespace KominkaDogRun
                 dir = d / dist;
             }
             float contact = (_packRadius[me] + _packRadius[other]) * playContactSpacing;
-            return (mineA + otherA) * 0.5f - dir * (contact * 0.5f);
+            // 裏山改変 (2026-10-02): the meeting point (both anchors already outside) moved out of a wash station's keep-out, then
+            // the two stop points beside it as before (within contact / 2 of it: at worst a few cm inside the edge, never on the
+            // table; the face-off is a play, not a rest place)
+            return KeepOutFilter((mineA + otherA) * 0.5f) - dir * (contact * 0.5f);
         }
 
         /// <summary>本体終端 (t = coreLen) でのその犬の共有アンカー (IMP-NET-002)。
@@ -289,6 +294,8 @@ namespace KominkaDogRun
             float fc = fromCenter.magnitude;
             if (fc > areaRadius && fc > 0.0001f)
                 target = areaCenter.position + fromCenter * (areaRadius / fc);
+            // 裏山改変 (2026-10-02): and not into a wash station's keep-out (shared values in, shared value out)
+            target = KeepOutFilter(target);
 
             // 目標が体のすぐそば = 歩く距離が無いとき。**歩けなくても視線は外す** —
             // 「離れる」の芯は距離ではなく、相手を見るのをやめることの方

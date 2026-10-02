@@ -612,6 +612,15 @@ namespace KominkaHillside.Editor
         const float StandYawOffset = 90f;
         // the contract's tuning values (§4)
         const float CallLiftMax = 0.9f, CallLiftStep = 0.1f, CallIdleReleaseSeconds = 120f, CallCallerFarMeters = 10f;
+        // 2026-10-02 (user: other dogs keep away from a wash station, never rest on the stand): the keep-out circle around the anchor.
+        // The 5 x 5 m personal floor's corners are 2.5 x sqrt 2 = 3.54 m from the duckboard's centre, the shelf 1.2 m behind it: 4 m
+        // covers both with 0.46 m to spare and stays far below the 20 m station spacing (CourseStationSpacing).
+        const float CallKeepOutRadius = 4f;
+        // ... and where the released dog walks to (KD_DogWanderController, written by WireWanders, checked with washCalls)
+        const float LeaveMargin = 1.0f;   // m beyond CallKeepOutRadius
+        const int LeaveGait = 1;          // 0 walk, 1 the slowest Run (round 2: 「トコトコ」= brisk), 2 runSpeed
+        const float UnleashGrace = 20f;
+        const float RestMargin = 1.5f;    // m outside a circle's rim where a free dog does not start / keep a rest (round 7)   // s a dog unleashed inside a circle may stand there (round 2: time to pick up the sponge)
         // ---- my floor (KH_WashPersonalFloor): 5 x 5 m around the duckboard, a hole over the duckboard + the shelf ----
         /// <summary>User layer 22 (coordinator's decision 2026-10-01, Codex review 8): the players collide with it (its row in
         /// DynamicsManager is all on; ProjectSettings unchanged), the dogs' ground rays (0|11), the frisbee's masks, the spray (0|11)
@@ -760,6 +769,7 @@ namespace KominkaHillside.Editor
             Prop(so, "liftStep").floatValue = CallLiftStep;
             Prop(so, "idleReleaseSeconds").floatValue = CallIdleReleaseSeconds;
             Prop(so, "callerFarMeters").floatValue = CallCallerFarMeters;
+            Prop(so, "keepOutRadius").floatValue = CallKeepOutRadius;
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(call);
 

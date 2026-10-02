@@ -164,6 +164,7 @@ namespace KominkaDogRun
             if (_paused || _wasLeashed || _waterLeashVeto) return;
             if (waterState != WaterOff || _waterSwimming || _swimYValid || _swimPitchNow != 0f || _hipsWrote) return;
             if (_washActive || _washLeashStop || _stationIdx >= 0 || _activityBusy) return;
+            if (_leaveActive || _leaveLowering) return;   // 2026-10-02: walking out of a wash station (HillsideStationLeave.cs)
             if (_greetingActive || _nudging || _treatBusy || _playing) return;
             if (candyPerformanceActive || _candyTicked || _candyPetResumePending || _writtenCallTime != 0f) return;
             // the breath fades are integrated and written on decision frames only: a longer gap would step the volume
@@ -404,7 +405,8 @@ namespace KominkaDogRun
             // (IMP-DOG-036 S3: a water play the last decision ran is gated by WaterLegsOk instead - Update never asks TickBusy then)
             if (waterState != WaterOff || _waterSwimming || _swimYValid || _swimPitchNow != 0f || _hipsWrote) return true;
             // Being washed (the wash branches raise it; _washLastFrame handshake).
-            if (_washActive) return true;
+            // 2026-10-02: riding a raised wash stand down writes the root itself every frame (HillsideStationLeave.cs), as on the stand
+            if (_washActive || _leaveLowering) return true;
             // Candy performance / mount / exit hold, and a pending petting resume.
             if (candyPerformanceActive || _candyTicked || _candyPetResumePending) return true;
             // Branches that inject the one-frame gaze / tail into the pet controller, or bind the dog to others.

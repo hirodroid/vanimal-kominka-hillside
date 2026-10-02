@@ -271,7 +271,8 @@ namespace KominkaDogRun
                 // Unleashing also gives the run clip back its normal playback speed: off the leash the dog
                 // never exceeds runSpeed, and Fetch may take over before the next wander frame (Codex D1).
                 if (_wasLeashed) { _wasLeashed = false; _speed = 0f; _nextLeashPath = 0f; _routeNext = -1;
-                    ResetPauseAndPoseState(); leashMode = LeashFree; ResetHolderSpeed(); ReleaseAnimatorSpeed(); }
+                    ResetPauseAndPoseState(); leashMode = LeashFree; ResetHolderSpeed(); ReleaseAnimatorSpeed();
+                    KeepOutUnleashed(); }   // 2026-10-02 round 2: unleashed inside a wash station's circle -> a grace before it walks out (HillsideStationLeave.cs)
                 return false;
             }
             int walkerId = wlNow ? _wlHolder : hillsideLeashes.walkers[dogIndex];   // IMP-DOG-034 C1-1e

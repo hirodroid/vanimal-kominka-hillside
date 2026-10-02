@@ -637,8 +637,15 @@ namespace KominkaHillside.Editor
                 if (pc == null) throw new InvalidOperationException("KD_DogWanderController.washCalls missing (the dog side's field, IMP-DOG-035; compile first)");
                 pc.arraySize = calls.Length;
                 for (int i = 0; i < calls.Length; i++) pc.GetArrayElementAtIndex(i).objectReferenceValue = calls[i];
+                // 2026-10-02: the walk out of a station after 「おわり」 (HillsideStationLeave.cs); Wash/12 checks them with washCalls
+                var pm = so.FindProperty("stationLeaveMargin");
+                var pg = so.FindProperty("stationLeaveGait");
+                var pu = so.FindProperty("stationUnleashGrace");
+                var pr = so.FindProperty("stationRestMargin");
+                if (pm == null || pg == null || pu == null || pr == null) throw new InvalidOperationException("KD_DogWanderController.stationLeaveMargin / stationLeaveGait / stationUnleashGrace / stationRestMargin missing (compile first)");
+                pm.floatValue = LeaveMargin; pg.intValue = LeaveGait; pu.floatValue = UnleashGrace; pr.floatValue = RestMargin;
                 so.ApplyModifiedProperties();
-                r.log.Add("wander " + w.dogIndex + " (" + w.name + ").wash = " + (want != null ? want.name : "null") + ", washCalls " + calls.Length);
+                r.log.Add("wander " + w.dogIndex + " (" + w.name + ").wash = " + (want != null ? want.name : "null") + ", washCalls " + calls.Length + ", leave margin " + LeaveMargin + " m gait " + LeaveGait + ", unleash grace " + UnleashGrace + " s");
                 WireReactions(w, want, r);
             }
             WireVoiceLedger(r);
