@@ -2,10 +2,10 @@
 id: BUG-UI-001
 type: BUG
 system: UI
-status: todo
+status: wip
 priority: Low
 summary: おじいさん (KD_ShopKeeper) の「さんぽ」の案内文が、行き先を「広場」と「古民家側の入口」の 2 つだけと言っている (実際は 6 目的地)
-next: 案内文 `KD_ShopKeeper.InfoWalk` の行き先の記述を、現行の手元メニューの 6 目的地に合わせるか、個数に触れない書き方へ直す。13 言語の翻訳と枠への収まりも確認する
+next: "Unity が使えるようになったら Compile とメニューの Verify。UITranslations の KD_ShopKeeper.InfoWalk (13 言語) を焼き直し (まだ)、おじいさんの案内文が 11 言語の枠に収まるか確かめる。移植記録 (imports/kominka-dog-system.md) への変更点の追記"
 updated: 2026-10-03
 ---
 
@@ -32,3 +32,11 @@ updated: 2026-10-03
 ## 記録
 
 2026-10-03: 起票。関連: [IMP-PRG-001](IMP-PRG-001-ledger-shopkeeper-points.md) (おじいさん)、[DES-UI-004](DES-UI-004-walk-destinations-and-boards.md) (看板の行き先案内と揃える)。
+
+## 実装 (2026-10-03、未コンパイル・未検証)
+
+- `KD_ShopKeeper.cs` の `InfoWalk` の行き先の 2 行を、6 目的地の案内へ書き換えた。新しい文 (4 行): 「行き先は6つから選べる。」「「広場」「奥の広場」「川辺」」「と、ぐるっと回る周回が2つ、」「それに「古民家側の入口」だ。」(広場・奥の広場・川辺・周回 2・入口 = 6)。
+- `Assets/KominkaHillside/Imported/KominkaDogRun/Data/UITranslations.json` の `KD_ShopKeeper.InfoWalk` も同じ内容へ変更 (13 言語)。
+- **再焼き込み (Unity 側への取り込み) はまだ。** Unity の橋が切れていたため、Unity ではコンパイルも実行もしていない (`8f7ed6e` より後に書いた分は、オフラインの Roslyn コンパイルで全 C# がエラー 0 になっただけ。UdonSharp の制約と実行時の挙動は未確認)。コミットは未。
+
+- 未確認: 枠への収まり (特に 11 言語)、手元メニューの呼び名との一致。移植記録の裏山側変更への追記も未。

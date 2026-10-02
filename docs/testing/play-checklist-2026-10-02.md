@@ -2,7 +2,7 @@
 
 review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play / PCVR / 2 人 / 端末の確認を、セッション単位に 1 本へまとめたもの。Issue ごとではなく、コースを歩く順に並べた。結果は **○ / × / 気づいた点** を結果欄へ書く。終わったら AI が各 Issue へ転記する (Issue 側の項目番号は「元」の列の括弧)。
 
-- 作成時点のコミット: `f9ed660 (IMP-DOG-025 すすぎ改善)`。2026-10-03 に、その後の追加分 (`ea4baf4`・`2c9c794`・`8f7ed6e`) を A-0 と B54〜B57・C13〜C15・D20〜D22・E18〜E20 へ足した (既存の項目は変えていない)
+- 作成時点のコミット: `f9ed660 (IMP-DOG-025 すすぎ改善)`。2026-10-03 に、その後の追加分 (`ea4baf4`・`2c9c794`・`8f7ed6e`) を A-0 と B54〜B57・C13〜C15・D20〜D22・E18〜E20 へ足した (既存の項目は変えていない)。さらに同日、未コンパイル・未検証の実装 (門の古民家ドッグランの板とポータル・全地点ワープ・洗い場ボードの可否表示と呼べる範囲・フリスビーの取り方の連打・おじいさんの案内文) の確認を A0-14〜A0-20・B58〜B61・C16〜C18・D23〜D25・E21〜E23 へ足した。これらは Unity でコンパイル・Build・ClientSim を通したあとに行う (まだ通っていない)
 - 公開目標 (開発完了 2026-10-03〜04、公開 2026-10-10〜11) は [開発全体像](../development/overview.md)。確認済みの項目 (日付つき) は載せていない。
 - 合否は AI が決めない。1 人の総合評価を、項目別・端末別の合格に読み替えない。疑似入力 (ClientSim) の結果は、ここの合格にならない。
 - 順序は A (PCVR 1 人) → B (PCVR 2 人以上) → C (Desktop) → D (Quest 3) → E (iOS)。A の 1 周を終えてから B 以降へ進むと、同じ場所を何度も往復しない。
@@ -14,7 +14,7 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 - 犬の初期の汚れは 0 (本番値)。汚れを流す確認は、散歩のあと (A-5) に洗い場へ戻って行う。
 - 項目の元になった詳細チェック表: [川の設計書](../plans/2026-09-27-river-play-and-floating-fetch.md) (川 #1〜#36)、[フリスビーどこでも](../plans/2026-09-28-frisbee-anywhere.md) (川設計書 続き #37〜#48)、[地図の設計書](../plans/2026-09-27-map-and-travel.md) (地図設計書 #1〜#9、呼ぶ F.7 #10〜#15)、[メニュー計画](../plans/2026-09-23-menu-rebuild.md)、[散歩計画](../plans/2026-09-20-free-walk.md)、[集合計画](../plans/2026-09-20-menu-gather-stations.md)、[洗い場の呼び出しと高さ](../plans/2026-10-01-wash-call-and-height.md)、[6 匹フリスビー](../plans/2026-09-24-frisbee-six-dogs.md)。
 
-## A. PCVR 1 人 (151 項目)
+## A. PCVR 1 人 (158 項目)
 
 > **2026-10-02 ユーザー確認 (総合判断)**: 「PCVR 1 人 138 — これはもう基本全部見たからOKだよ」。A-2〜A-10 は、この総合判断により確認済みとして扱う (項目別の結果の記録はない。下の結果欄は埋めない)。**A-1 (すすぎ改善、`f9ed660`) は今日の実装のため、この発言に含まれない (ユーザー回答 2026-10-02、未 Play)。未確認のまま残す。** この判断を 2 人・Desktop・Quest 3・iOS (B〜E) の合格に読み替えない。
 
@@ -25,6 +25,13 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 > A-1 以降の総合判断 (「基本全部見たから OK」) の**後**に実装した分なので、この発言に含まれない。未確認。ビルドは `8f7ed6e` 以降の版で入る。
 
 | # | やること・見ること | 元 | 結果 |
+| A0-14 | 門の西側の塀沿いの板「古民家ドッグラン」(スポーンの方を向く) に気づき、文言が読めるか。板や柱が古民家の外壁にめり込んでいないか、門の通行・おじいさん・洗い場・リード台の邪魔にならないか。入室した直後、ポータルが見えていないか。 | [IMP-WLD-006](../development/issues/IMP-WLD-006-farmhouse-portal-board.md) | |
+| A0-15 | 板を Interact (VR はトリガー) すると、板のとなりにポータルが現れるか。もう一度押すとしまい、押さなくても約 1 分で自動でしまうか。現れたポータルに入ると古民家ドッグランへ移動できるか (名前・サムネイルが付くか)。 | [IMP-WLD-006](../development/issues/IMP-WLD-006-farmhouse-portal-board.md) (実機でしか分からない) | |
+| A0-16 | 手元メニュー [地図と移動] で 1 古民家側の入口・2 広場・3 奥の広場・4 上流の橋・5 川辺の 5 か所へワープできるか (犬 1 匹と 6 匹をつないだ状態で)。着地点が洗い場・看板・ポータルに近すぎず、6 匹が並べて着くか。6 下流の橋は選べない (○ の目印のまま) ことの確認。一覧 (2 列 × 3 段) と地図の番号が合っているか。川辺の着地点が以前と少し変わっても不自然でないか。 | [IMP-WLD-004](../development/issues/IMP-WLD-004-warp-all-five-points.md) | |
+| A0-17 | 洗い場のボードで、犬ごとに「呼べます」または呼べない理由が、色だけでなく文字で読めるか。呼べない犬 (ほかの人と散歩中・遊んでいる等) のボタンを押すと、その場で理由が出て犬が動かないか。ボードの文字の大きさ・高さ (6 cm 高くなった) は押しやすいか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
+| A0-18 | 洗い場から呼べる範囲 (主 25 m・川辺 28 m・奥広場 25 m・展望のベンチ 25 m) が自然か。4 か所で範囲の内・境目・外の犬を呼び、外の犬には「遠すぎます」が出て犬が来ないか。川辺の洗い場から、古民家側の犬を呼べないか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
+| A0-19 | トレーナーで、手元メニューの [あそぶ] の「フリスビーの取り方」を、返事が届く前に (1.5 秒以内に) 続けて 2 回押す。通常 → 並走 → ひねり と 2 つ進むか (同じ番号を 2 回頼み直さないか)。トレーナーでない状態では変えられないか。1 人では修正前でも進むので、本命は B60。 | [BUG-DOG-008](../development/issues/BUG-DOG-008-frisbee-style-double-press.md)<br>[BUG-DOG-009](../development/issues/BUG-DOG-009-frisbee-style-receiver-check.md) | |
+| A0-20 | おじいさんに話しかけ [さんぽ] の案内文を読む。行き先が 6 つで、手元メニューの呼び名と合っているか。枠に収まるか (英語・ドイツ語など長い言語も)。 | [BUG-UI-001](../development/issues/BUG-UI-001-shopkeeper-walk-info-destinations.md) | |
 |---|---|---|---|
 | A0-1 | スポーンから入口の看板 A「あそびかた」に気づくか。お散歩 / フリスビー / 洗う / ポイントとトレーナーの 4 枚が読む順に分かり、文字の大きさ・距離が足りるか。昼とナイトモード、立位と座位で読めるか。下半分の余白・本文の小ささが気になるかも書く。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md)<br>[DES-UI-005](../development/issues/DES-UI-005-trainer-and-paid-items-purchase-flow.md) (4 枚目) | |
 | A0-2 | 登り口の看板 B「裏山の地図」が手元の地図と合った絵で、現在地・洗い場・ワープの仕方が分かるか。看板の柱が通行や犬の邪魔にならず、すり抜けた時の違和感がないか。入口の計測プローブの箱が看板の近くに見える (公開前に撤去する開発用) ことは気にしなくてよい。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
@@ -228,7 +235,7 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | A137 | 曲がり角・橋・写真を撮る視点・両眼で、景色が不意に消えないか (LOD・遮蔽)。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md)<br>[DES-ENV-002](../development/issues/DES-ENV-002-longer-course.md) | |
 | A138 | 1 匹・3 匹・6 匹で、橋・両岸・正逆周回・途中開始・帰還が成立し、反対岸の経路へ誤接続しないか。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md) | |
 
-## B. PCVR 2 人以上 (57 項目)
+## B. PCVR 2 人以上 (61 項目)
 
 ユーザー (マスター) と相手 1 人 (必要な項目は 3〜4 人)。相手は別アカウントで、Build & Test をし直した同じ版に入る。役割は「A = マスター、B = 非 Owner」。
 
@@ -318,13 +325,17 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 ### B-7 2026-10-02〜03 の追加分
 
 | # | やること・見ること | 元 | 結果 |
+| B58 | 2 人で、片方が板「古民家ドッグラン」を押してポータルを出す。もう片方の画面にはポータルが見えないか。あとから入った人の画面にポータルが出ていないか。ポータルに入ったのは入った本人だけが移動するか。 | [IMP-WLD-006](../development/issues/IMP-WLD-006-farmhouse-portal-board.md) | |
+| B59 | 洗い場のボードの表示と受理が 2 人で一致するか。相手が連れている犬は「ほかの人と散歩中」と出て押しても来ないか。ボードを見たあとで相手が先にリードを付けた・呼んだ場合に、押した側へ理由が返るか。相手が洗っている犬は少し待ってから来るか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
+| B60 | 犬の Owner ではない側の端末のトレーナーが、「フリスビーの取り方」を 1.5 秒以内に 2 回押す。0 → 3 → 4 と 2 つ進むか。トレーナーでない人が押しても全員の犬の取り方が変わらないか。 | [BUG-DOG-008](../development/issues/BUG-DOG-008-frisbee-style-double-press.md)<br>[BUG-DOG-009](../development/issues/BUG-DOG-009-frisbee-style-receiver-check.md) | |
+| B61 | 2 人が別々に地図から同じ地点 (例: 広場) へワープして、着地点が重ならず、犬も並べるか。ワープ先の洗い場・看板・ポータルの近くに着かないか。 | [IMP-WLD-004](../development/issues/IMP-WLD-004-warp-all-five-points.md) | |
 |---|---|---|---|
 | B54 | 他人が散歩中の犬の首輪に、自分側で「外す」が出ないか。自分が散歩中の犬には出るか。リードの持ち主交代・退出・途中参加のあとも切り替わりが追従するか。 | [IMP-DOG-031](../development/issues/IMP-DOG-031-collar-release-interact-only-own-walk.md) | |
 | B55 | オートナイトモード: 2 人が同じ暗さで進むか。途中参加の人が 3 秒ほどで現在の暗さへ合流するか。最初の人が抜けても夜が昼へ巻き戻らないか。オートの人とマニュアルの人が混ざっても互いに影響しないか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md) | |
 | B56 | 2 人で川沿いにいても、せせらぎが各自の位置で自然に聞こえ (相手の位置に引きずられず)、重なって大きくならないか。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
 | B57 | 犬の Owner と洗い場の Owner が別の人のとき、「おわり」で犬が台から出ていく動きと、台が下りる見え方が両者の画面で同じか。呼ばれていない他人の犬が主洗い場に寄らないか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) | |
 
-## C. Desktop (15 項目)
+## C. Desktop (18 項目)
 
 Desktop (PC 画面、マウスとキーボード) で 1 人。座位・低い視点が関わる項目もここで見る。
 
@@ -358,12 +369,15 @@ Desktop (PC 画面、マウスとキーボード) で 1 人。座位・低い視
 ### C-4 2026-10-02〜03 の追加分
 
 | # | やること・見ること | 元 | 結果 |
+| C16 | 門の西の板「古民家ドッグラン」をクリックでポータルを出し・しまえるか (遠くから押せる距離か)。文字が読めるか。 | [IMP-WLD-006](../development/issues/IMP-WLD-006-farmhouse-portal-board.md) | |
+| C17 | 手元メニューの地図で、1〜5 の地点をクリックで選んでワープできるか。一覧の文字が収まり、6 の下流の橋は選べないか。 | [IMP-WLD-004](../development/issues/IMP-WLD-004-warp-all-five-points.md) | |
+| C18 | 洗い場のボードで、犬ごとの「呼べます」と理由の文字が読めるか。呼べない犬をクリックすると理由が出るか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
 |---|---|---|---|
 | C13 | 散歩していない犬を撫でる・洗うとき、首輪の「外す」に操作を取られないか。散歩中の犬では首輪から外せるか。 | [IMP-DOG-031](../development/issues/IMP-DOG-031-collar-release-interact-only-own-walk.md) | |
 | C14 | 設定のナイトモードの [オート][マニュアル] とスライダーをマウスで操作でき、文字が収まるか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md) | |
 | C15 | 入口の看板 A・B の文字が、Desktop の画面で読める距離と大きさか (立位・座位の低い視点、昼とナイトモード)。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
 
-## D. Quest 3 単体 (22 項目)
+## D. Quest 3 単体 (25 項目)
 
 Quest 3 単体で、PCVR と同じコースを 1 周する。結果欄には OS・VRChat の版・画質・アバター表示設定・発熱の状態も添える。fps は VRChat のデバッグ表示で読む。
 
@@ -414,12 +428,15 @@ Quest 3 単体で、PCVR と同じコースを 1 周する。結果欄には OS�
 ### D-6 2026-10-02〜03 の追加分
 
 | # | やること・見ること | 元 | 結果 |
+| D23 | 門の西の板「古民家ドッグラン」を押してポータルが出し・しまえるか。文字が Quest 3 で読めるか。 | [IMP-WLD-006](../development/issues/IMP-WLD-006-farmhouse-portal-board.md) | |
+| D24 | 地図の 1〜5 の地点をコントローラーで選んでワープできるか。ワープ後に fps が極端に落ちないか。 | [IMP-WLD-004](../development/issues/IMP-WLD-004-warp-all-five-points.md) | |
+| D25 | 洗い場のボードの犬ごとの状態の文字が Quest 3 で読めるか。呼べない犬を押すと理由が出るか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
 |---|---|---|---|
 | D20 | オートナイトモード: 暗くなる様子と暗さ 0.8 の見やすさが PCVR と同程度か。設定の [オート][マニュアル] が押せ、文字が収まるか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
 | D21 | 川のせせらぎが聞こえ、音量・継ぎ目が問題ないか。入れたことで fps・発熱が変わらないか (Android の容量は AI が測る)。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
 | D22 | 入口の看板 A・B の文字が Quest 3 の解像度で読めるか (圧縮でにじまないか)。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
 
-## E. iOS (iPhone 15 Pro) (20 項目)
+## E. iOS (iPhone 15 Pro) (23 項目)
 
 iPhone 15 Pro で、Touch 操作を中心に確認する。結果欄には iOS・VRChat の版・画質・発熱の状態も添える。
 
@@ -463,6 +480,9 @@ iPhone 15 Pro で、Touch 操作を中心に確認する。結果欄には iOS�
 ### E-5 2026-10-02〜03 の追加分
 
 | # | やること・見ること | 元 | 結果 |
+| E21 | 門の西の板「古民家ドッグラン」をタップしてポータルが出し・しまえるか。文字が iPhone の画面で読めるか。 | [IMP-WLD-006](../development/issues/IMP-WLD-006-farmhouse-portal-board.md) | |
+| E22 | 地図の 1〜5 の地点をタップで選んでワープできるか。一覧の文字が収まるか。 | [IMP-WLD-004](../development/issues/IMP-WLD-004-warp-all-five-points.md) | |
+| E23 | 洗い場のボードの犬ごとの状態の文字が読め、呼べない犬をタップすると理由が出るか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
 |---|---|---|---|
 | E18 | 設定のナイトモードの [オート][マニュアル] とスライダーをタッチで押せ、文字が収まるか。暗くなる様子と見やすさが PCVR と同程度か。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
 | E19 | 川のせせらぎが iOS でも聞こえ、音量・継ぎ目が問題ないか。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |

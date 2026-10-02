@@ -31,6 +31,31 @@
 
 Issue単位の状態と次の作業は [Issueサマリ](issues/issue_summary.md) を参照する。この文書は一覧を複製せず、全体の到達点と優先順を示す。進行中の未コミット実装は検証済みに数えない。
 
+### 実装済み・未検証の分と Unity 接続の停止 (2026-10-03)
+
+**Unity の橋が使えず、`8f7ed6e` より後に書いた分は Unity でコンパイルも実行もしていない** (オフラインの Roslyn コンパイルで全 C# がエラー 0 になっただけ。UdonSharp の制約と実行時の挙動は未確認。作業ツリーに未コミットで残っている)。原因: Unity エディタが 2 つ (このプロジェクトと別プロジェクト `A_Cove_to_Unwind`) とも、このプロジェクトの橋 (ポート 8086) に接続していて、橋がどちらのエディタか判別できない。片方を閉じるか接続先を分けるまで、`unity-api.sh` / `unity-compile.sh`・メニュー・ハーネスは使えない。以下は **wip** で、検証済みに数えない。
+
+| Issue | 書いた内容 | 残る確認 (Unity が使えるようになったら) |
+|---|---|---|
+| [IMP-WLD-006](issues/IMP-WLD-006-farmhouse-portal-board.md) | 門の板「古民家ドッグラン」と `KH_PortalBoard` (ローカルのみ、Interact でポータルを出し・しまう、60 秒で自動) | 最初の Build で板とポータルが古民家の外壁と重なって保存され Guide/2 が FAIL 2。ビルダーを物理で空いた位置を探す形に直したが未実行。Guide/1 → Guide/2 → Play。有効にしたポータルが実際に入れるかは VRChat クライアントのみ |
+| [DES-UI-004](issues/DES-UI-004-walk-destinations-and-boards.md) | 看板 A の本文拡大・B の縮小 (コードのみ) | Guide/1 で作り直し → Guide/2 → Guide/3 |
+| [BUG-UI-001](issues/BUG-UI-001-shopkeeper-walk-info-destinations.md) | おじいさんの `InfoWalk` を 6 目的地へ (`KD_ShopKeeper.cs`・`UITranslations.json`) | 焼き直し・枠の収まり |
+| [IMP-WLD-004](issues/IMP-WLD-004-warp-all-five-points.md) | ワープを地図の 1〜5 へ (着地点を置かない円・2 列 × 3 段の一覧・Course/83d) | Course/80 → 84 → 27 → 81 → Guide/1 → Guide/2 → 83d。下流の橋 (6) を含めるかはユーザーの回答待ち |
+| [IMP-DOG-037](issues/IMP-DOG-037-wash-call-availability-and-range.md) | 洗い場ボードの可否表示と呼べる範囲 (25 m / 川辺 28 m)、翻訳 24 キー × 13 言語 | Wash/11 → Wash/12 → Course/100f の C-avail-*。3 つの挙動の変更はユーザーの確認待ち |
+| [IMP-DOG-035](issues/IMP-DOG-035-wash-call-dog-to-station.md) | C-keepout-wander の検査の直し (`releasedHomes` へも書く) | 単独 19 ケースの再実行、修正後の版の 2 回目の独立レビュー |
+| [BUG-DOG-008](issues/BUG-DOG-008-frisbee-style-double-press.md)・[009](issues/BUG-DOG-009-frisbee-style-receiver-check.md) | フリスビーの取り方の連打の行の修正と受け手のトレーナー確認 | Compile (`--udon`)、非 Owner 端末で確認 |
+
+翻訳 (`UITranslations.json` の 13 言語) は 10-02〜03 に追加した分をすべて AI が作った (10-03 に AI が校正。ネイティブの校正ではない)。確認項目は [チェックリスト](../testing/play-checklist-2026-10-02.md) の A0-14〜A0-20・B58〜B61・C16〜C18・D23〜D25・E21〜E23。
+
+**ユーザーの回答待ち (2026-10-03 時点)**:
+
+- IMP-DOG-032 と IMP-DOG-016 のどちらが勝つか (推奨: 032。IMP-DOG-033 の前提)
+- IMP-DOG-006 の 5 点・DES-DOG-002 (ボールの柄) の 5 点: [質問リスト](../plans/2026-10-03-open-questions.md)
+- DES-UI-006 の 2 点: [さんぽタブの整理](../plans/2026-10-03-walk-tab-layout.md) / DES-UI-002 の 3 点: [フリスビーの設定](../plans/2026-10-03-frisbee-settings.md) / IMP-WLD-005 の 3 点: [自動写真とギャラリー](../plans/2026-10-03-auto-photo-gallery.md) / IMP-DOG-033 の 3 点: [傾けて置く](../plans/2026-10-03-call-placement-tilt.md) (いずれも推奨案・ユーザー承認待ち)
+- IMP-WLD-004: 6 下流の橋もワープ先に含めるか
+- IMP-DOG-037: 呼べる範囲・ほかの洗い場の犬を断る・他人が洗っている犬は待つ、の 3 つの挙動の変更
+- 既存の待ち: 川音の参照音声・big/middle/little の関係・クレジットの要否、ライブの演目の範囲 (最後の着手時)
+
 ### 実装・確認の到達点
 
 | 領域 | 現在の到達点 | 残る確認・正本 |
@@ -41,7 +66,7 @@ Issue単位の状態と次の作業は [Issueサマリ](issues/issue_summary.md)
 | 散歩帰りのお手入れ | 代表1匹の試作から6匹・主洗い場＋道中3か所へ展開済み。洗う感じ・汚れていく感じについてユーザーPCVR評価と修正記録あり。10-01に洗浄道具5モデルを取り込み、4地点へ配置。洗い場へ犬を呼ぶ・留める機能、高さ調整も実装。10-02 にすすぎ改善 (`f9ed660`)、10-03 に「おわりで犬がすぐ台から出る・呼ばれていない犬は洗い場へ寄らない」(`8f7ed6e`) を実装 | 6匹・道中・2人協力・端末別操作・音と反応・ASMR品質の確認。すすぎ改善と洗い場の出入りは未 Play (A-0・A-1)。呼び出し／高さ調整はreviewで、操作の合格ではない。10-03 の洗い場の出入りは、全体ハーネスで C-keepout-wander が 1 回落ち (検査の準備の持ち越し)、修正後の版の独立レビューが未実施。[洗浄の親Issueと子Issue](issues/IMP-DOG-024-walk-and-wash-experience.md)、[道具の取り込み](imports/wash-tools.md)、[呼び出し](issues/IMP-DOG-035-wash-call-dog-to-station.md)、[高さ調整](issues/IMP-ENV-011-wash-height-adjust.md) |
 | BGM・川音・ライブ | BGM003を本番へ配線し、設定の音量操作を実装。10-02に完成WAVをハッシュ照合してコミット。川音は 10-02 に Firefly の middle を採用し川沿い 20 音源を配置 (`2c9c794`)。オートナイトモードも同日実装 (昼 10 分 + 夕暮れ 30 分、暗さ 0.8 で止まる)。専用ライブ1曲は09-26に配線・Verify済み | BGM の ON/OFF ボタンは残す・基準音量 0.35 は採用 (10-03 ユーザー決定)。残る: 圧縮品質・実際の出音・ライブ連動。川音は利用条件の根拠 (Firefly 規約の URL・版を AI が記録。ユーザー回答は 10-03 に記録済み。済むまでこの音を含む版は公開しない)・聞こえ方・音量方針・ビルドサイズ実測。オートナイトモードは 2 人の同期・途中参加・暗さ 0.8 の見やすさ・11 言語の文字の収まり。ライブは初期公開に入れるが最後に作る (10-03 ユーザー)。演目の範囲は未回答 (先送り)、設計未着手。[BGM](issues/IMP-WLD-003-bgm-and-volume-settings.md)、[川音](issues/IMP-ENV-006-river-ambience.md)、[ライブ配線](../plans/2026-09-26-hillside-live-wiring.md) |
 
-| 案内の看板・往復導線 | 入口の看板 A「あそびかた」(お散歩・フリスビー・洗う・ポイントとトレーナー) と登り口の看板 B「裏山の地図」を推奨案で作成・配置 (`2c9c794`、Verify 261 項目)。古民家との往復導線は設計未着手 | 看板は文字が小さく紙の下半分に余白が多い、翻訳 13 言語 16 キーは AI 作成で未校正、価格・特典など仕様で未決定の項目は載せていない。VR での読みやすさは未確認。[DES-UI-004](issues/DES-UI-004-walk-destinations-and-boards.md)・[DES-UI-005](issues/DES-UI-005-trainer-and-paid-items-purchase-flow.md)・[IMP-UI-002](issues/IMP-UI-002-guide-board-capture-instructions.md)。往復導線は [DES-WLD-001](issues/DES-WLD-001-round-trip.md) |
+| 案内の看板・往復導線 | 入口の看板 A「あそびかた」(お散歩・フリスビー・洗う・ポイントとトレーナー) と登り口の看板 B「裏山の地図」を推奨案で作成・配置 (`2c9c794`、Verify 261 項目)。古民家との往復導線は、門の板「古民家ドッグラン」+ ポータルを実装済み・未検証 (IMP-WLD-006、上の節) | 看板は文字が小さく紙の下半分に余白が多い、翻訳 13 言語 16 キーは AI 作成で未校正、価格・特典など仕様で未決定の項目は載せていない。VR での読みやすさは未確認。[DES-UI-004](issues/DES-UI-004-walk-destinations-and-boards.md)・[DES-UI-005](issues/DES-UI-005-trainer-and-paid-items-purchase-flow.md)・[IMP-UI-002](issues/IMP-UI-002-guide-board-capture-instructions.md)。往復導線は [DES-WLD-001](issues/DES-WLD-001-round-trip.md) |
 
 ### 性能と検証の最新状況
 
