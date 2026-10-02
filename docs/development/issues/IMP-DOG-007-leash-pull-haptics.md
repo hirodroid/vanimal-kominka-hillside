@@ -2,10 +2,11 @@
 id: IMP-DOG-007
 type: IMP
 system: DOG
-status: wip
+status: review
 priority: Medium
 summary: リードを引っ張られたら、接続している側の手に振動を伝える (Haptics)。9/22 に VR 限定で実装 (伸び比率 + 止まっている時の引き、手ごとに最大)、PCVR の体感確認が残る
-next: "残り: 他人がつないでいる犬・他人が引っ張っているときに鳴らないこと (2 人、B10)、振動を使えない端末 (Desktop/Touch/Quest) の確認。PCVR 1 人 (A42〜A44) は 10-02 ユーザー総合判断で確認済み"
+next: "実装済み・確認待ち。残り: 他人がつないでいる犬・他人が引っ張っているときに鳴らないこと (2 人、B10)、振動を使えない端末 (Desktop/Touch/Quest) の確認。PCVR 1 人 (A42〜A44) は 10-02 ユーザー総合判断で確認済み"
+updated: 2026-10-03
 ---
 
 # IMP-DOG-007 リードを引っ張られたら振動する (Haptics)

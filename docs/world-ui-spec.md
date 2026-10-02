@@ -1,4 +1,4 @@
-| 実装済み・未検証 (2026-09-24 IMP-PRG-001。実機・ClientSim 待ち) | NOT_TESTED || 実装済み・未検証 (2026-09-24 IMP-PRG-001。実機・ClientSim 待ち) | NOT_TESTED || 実装済み・未検証 (2026-09-24 IMP-PRG-001。実機・ClientSim 待ち) | NOT_TESTED |# KominkaHillside -- ワールド固有UI設定
+# KominkaHillside -- ワールド固有UI設定
 
 配置先：`docs/world-ui-spec.md`。共通資料1.0.0の09章を基にしたワールド固有の設定。Unityへ自動インポートするスキーマではない。
 全体のビジュアル方針は `core-concept.md` が正本。この資料は参照先・更新日とUIへの具体化を持ち、全体パレットを二重管理しない。既存のUI仕様が別名ならそちらを正本とし、この資料は案内にする。

@@ -2,7 +2,7 @@
 
 review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play / PCVR / 2 人 / 端末の確認を、セッション単位に 1 本へまとめたもの。Issue ごとではなく、コースを歩く順に並べた。結果は **○ / × / 気づいた点** を結果欄へ書く。終わったら AI が各 Issue へ転記する (Issue 側の項目番号は「元」の列の括弧)。
 
-- 作成時点のコミット: `f9ed660 (IMP-DOG-025 すすぎ改善)`
+- 作成時点のコミット: `f9ed660 (IMP-DOG-025 すすぎ改善)`。2026-10-03 に、その後の追加分 (`ea4baf4`・`2c9c794`・`8f7ed6e`) を A-0 と B54〜B57・C13〜C15・D20〜D22・E18〜E20 へ足した (既存の項目は変えていない)
 - 公開目標 (開発完了 2026-10-03〜04、公開 2026-10-10〜11) は [開発全体像](../development/overview.md)。確認済みの項目 (日付つき) は載せていない。
 - 合否は AI が決めない。1 人の総合評価を、項目別・端末別の合格に読み替えない。疑似入力 (ClientSim) の結果は、ここの合格にならない。
 - 順序は A (PCVR 1 人) → B (PCVR 2 人以上) → C (Desktop) → D (Quest 3) → E (iOS)。A の 1 周を終えてから B 以降へ進むと、同じ場所を何度も往復しない。
@@ -14,11 +14,31 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 - 犬の初期の汚れは 0 (本番値)。汚れを流す確認は、散歩のあと (A-5) に洗い場へ戻って行う。
 - 項目の元になった詳細チェック表: [川の設計書](../plans/2026-09-27-river-play-and-floating-fetch.md) (川 #1〜#36)、[フリスビーどこでも](../plans/2026-09-28-frisbee-anywhere.md) (川設計書 続き #37〜#48)、[地図の設計書](../plans/2026-09-27-map-and-travel.md) (地図設計書 #1〜#9、呼ぶ F.7 #10〜#15)、[メニュー計画](../plans/2026-09-23-menu-rebuild.md)、[散歩計画](../plans/2026-09-20-free-walk.md)、[集合計画](../plans/2026-09-20-menu-gather-stations.md)、[洗い場の呼び出しと高さ](../plans/2026-10-01-wash-call-and-height.md)、[6 匹フリスビー](../plans/2026-09-24-frisbee-six-dogs.md)。
 
-## A. PCVR 1 人 (138 項目)
+## A. PCVR 1 人 (151 項目)
 
 > **2026-10-02 ユーザー確認 (総合判断)**: 「PCVR 1 人 138 — これはもう基本全部見たからOKだよ」。A-2〜A-10 は、この総合判断により確認済みとして扱う (項目別の結果の記録はない。下の結果欄は埋めない)。**A-1 (すすぎ改善、`f9ed660`) は今日の実装のため、この発言に含まれない (ユーザー回答 2026-10-02、未 Play)。未確認のまま残す。** この判断を 2 人・Desktop・Quest 3・iOS (B〜E) の合格に読み替えない。
 
 1 人で入り、スポーン → 主洗い場 → 門 → 散歩 → 展望・広場 → 奥広場・川 → 地図 → 設定の順に 1 周する。最初に Build & Test をし直す。犬の初期の汚れは 0 なので、泡の確認は汚れのない犬で行い、汚れを流す確認は A-4 の散歩のあとに戻って行う。
+
+### A-0 2026-10-02〜03 の追加分 (看板・洗い場の出入り・首輪・川の音・オートナイトモード)
+
+> A-1 以降の総合判断 (「基本全部見たから OK」) の**後**に実装した分なので、この発言に含まれない。未確認。ビルドは `8f7ed6e` 以降の版で入る。
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| A0-1 | スポーンから入口の看板 A「あそびかた」に気づくか。お散歩 / フリスビー / 洗う / ポイントとトレーナーの 4 枚が読む順に分かり、文字の大きさ・距離が足りるか。昼とナイトモード、立位と座位で読めるか。下半分の余白・本文の小ささが気になるかも書く。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md)<br>[DES-UI-005](../development/issues/DES-UI-005-trainer-and-paid-items-purchase-flow.md) (4 枚目) | |
+| A0-2 | 登り口の看板 B「裏山の地図」が手元の地図と合った絵で、現在地・洗い場・ワープの仕方が分かるか。看板の柱が通行や犬の邪魔にならず、すり抜けた時の違和感がないか。入口の計測プローブの箱が看板の近くに見える (公開前に撤去する開発用) ことは気にしなくてよい。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
+| A0-3 | 洗い場で犬を呼び、洗ってから「おわり」を押す。犬が台の上からすぐに (満足の座りを待たずに) 小走りで出ていくか。向き・足の動きが不自然でないか。台を上げていた時は台と一緒に下りて出るか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) (追加要望 10-02) | |
+| A0-4 | 主洗い場のそばを歩く空いている犬 (呼んでいない犬) が、台の周り約 4 m に入ってこず、台の上で休み始めないか。6 匹を放して少し待ち、うろつき方が不自然でないか (縁を回り込む・急に向きを変えるのが目立たないか)。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) (追加要望 10-02) | |
+| A0-5 | 洗い場の中でリードを外してから、洗い始める (または別の犬を呼ぶ) までの猶予 20 秒は足りるか。洗っている間は追い出されないか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) (追加要望 10-02) | |
+| A0-6 | 主洗い場の近くのリード台・おやつ置き場が、犬が寄らない範囲 (約 4 m) のせいで使いにくくなっていないか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) (未確認) | |
+| A0-7 | 散歩していない犬の首まわりを撫でる・洗う。首輪の「外す」インタラクト表示が出ず、手の操作を取られないか。 | [IMP-DOG-031](../development/issues/IMP-DOG-031-collar-release-interact-only-own-walk.md) | |
+| A0-8 | 自分が散歩中 (リード接続中) の犬の首輪には「外す」が出て、押すと外れるか。外したあと (または他の犬) には出ないか。 | [IMP-DOG-031](../development/issues/IMP-DOG-031-collar-release-interact-only-own-walk.md) | |
+| A0-9 | 川沿いを歩く。川へ近づくとせせらぎが聞こえ、離れると消えるか。道が川から離れた所は静かか。音量が BGM・犬の声・会話・洗い場の音を邪魔しないか。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
+| A0-10 | せせらぎのループの継ぎ目・クリックが気にならないか。川の曲がり角など音源が重なる所で音が大きくなりすぎないか。設定に音量の行が無い (BGM の音量にも連動しない) ことが不便か。ライブ中に川の音をどうしたいかも書く。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) (音量・ライブ中の扱いは聞いてから決める) | |
+| A0-11 | オートナイトモード: 入室して時間が経つと自然に暗くなるか (昼約 10 分 → 夕暮れ約 30 分 → 暗さ 0.8 で止まる)。暗さ 0.8 でも道・犬・メニュー・看板が見やすいか。暗くなる速さは適切か。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md) | |
+| A0-12 | 設定のナイトモード行: [オート][マニュアル] が切り替わり、オート中にスライダーを触るとマニュアルへ切り替わるか。マニュアルは自分だけの暗さで、オートへ戻すと共通の暗さへ 3 秒ほどで寄るか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md) | |
+| A0-13 | 入り直すと、モード (オート / マニュアル) とマニュアルの暗さが戻るか。言語を英語・ドイツ語などに変えても、[オート][マニュアル] の文字が枠に収まるか (11 言語は端末の字形)。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md) | |
 
 ### A-1 主洗い場 (スポーン近く): すすぎ改善 (10-02 の最新分。最初にここ)
 
@@ -208,7 +228,7 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | A137 | 曲がり角・橋・写真を撮る視点・両眼で、景色が不意に消えないか (LOD・遮蔽)。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md)<br>[DES-ENV-002](../development/issues/DES-ENV-002-longer-course.md) | |
 | A138 | 1 匹・3 匹・6 匹で、橋・両岸・正逆周回・途中開始・帰還が成立し、反対岸の経路へ誤接続しないか。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md) | |
 
-## B. PCVR 2 人以上 (53 項目)
+## B. PCVR 2 人以上 (57 項目)
 
 ユーザー (マスター) と相手 1 人 (必要な項目は 3〜4 人)。相手は別アカウントで、Build & Test をし直した同じ版に入る。役割は「A = マスター、B = 非 Owner」。
 
@@ -295,7 +315,16 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | B52 | 許可 2 種 (呼ぶ / ライブ開催を全員に許可) が初期 ON で、権限者 (インスタンスオーナー、不在時はマスター) 以外は切り替えられないか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (メニュー計画 §4) | |
 | B53 | 遊び終わったあと、VRChat のログで「Attempted to steal ownership of a held pickup.」の有無と時刻を見る。あれば、その時刻に自分のログに `setowner` の行があるか、相手のログにも同じ時刻の行があるかを比べる。 | [BUG-DOG-006](../development/issues/BUG-DOG-006-steal-held-pickup.md) | |
 
-## C. Desktop (12 項目)
+### B-7 2026-10-02〜03 の追加分
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| B54 | 他人が散歩中の犬の首輪に、自分側で「外す」が出ないか。自分が散歩中の犬には出るか。リードの持ち主交代・退出・途中参加のあとも切り替わりが追従するか。 | [IMP-DOG-031](../development/issues/IMP-DOG-031-collar-release-interact-only-own-walk.md) | |
+| B55 | オートナイトモード: 2 人が同じ暗さで進むか。途中参加の人が 3 秒ほどで現在の暗さへ合流するか。最初の人が抜けても夜が昼へ巻き戻らないか。オートの人とマニュアルの人が混ざっても互いに影響しないか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md) | |
+| B56 | 2 人で川沿いにいても、せせらぎが各自の位置で自然に聞こえ (相手の位置に引きずられず)、重なって大きくならないか。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
+| B57 | 犬の Owner と洗い場の Owner が別の人のとき、「おわり」で犬が台から出ていく動きと、台が下りる見え方が両者の画面で同じか。呼ばれていない他人の犬が主洗い場に寄らないか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) | |
+
+## C. Desktop (15 項目)
 
 Desktop (PC 画面、マウスとキーボード) で 1 人。座位・低い視点が関わる項目もここで見る。
 
@@ -326,7 +355,15 @@ Desktop (PC 画面、マウスとキーボード) で 1 人。座位・低い視
 | C11 | 距離フェード (PC) を変えて保存でき、入り直すと戻るか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (T-011) | |
 | C12 | BGM の音量スライダー・ON/OFF が Desktop でも操作でき、表示と出音が一致するか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
 
-## D. Quest 3 単体 (19 項目)
+### C-4 2026-10-02〜03 の追加分
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| C13 | 散歩していない犬を撫でる・洗うとき、首輪の「外す」に操作を取られないか。散歩中の犬では首輪から外せるか。 | [IMP-DOG-031](../development/issues/IMP-DOG-031-collar-release-interact-only-own-walk.md) | |
+| C14 | 設定のナイトモードの [オート][マニュアル] とスライダーをマウスで操作でき、文字が収まるか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md) | |
+| C15 | 入口の看板 A・B の文字が、Desktop の画面で読める距離と大きさか (立位・座位の低い視点、昼とナイトモード)。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
+
+## D. Quest 3 単体 (22 項目)
 
 Quest 3 単体で、PCVR と同じコースを 1 周する。結果欄には OS・VRChat の版・画質・アバター表示設定・発熱の状態も添える。fps は VRChat のデバッグ表示で読む。
 
@@ -374,7 +411,15 @@ Quest 3 単体で、PCVR と同じコースを 1 周する。結果欄には OS�
 | D18 | BGM: 圧縮後の余韻・継ぎ目・会話や犬とのバランスに問題がないか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
 | D19 | 周回の実歩行・景色が不意に消えないか・発熱。可能なら 16 人・犬 6 匹の条件で、60〜120 分続けた状態も記録する。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md)<br>[DES-ENV-002](../development/issues/DES-ENV-002-longer-course.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
 
-## E. iOS (iPhone 15 Pro) (17 項目)
+### D-6 2026-10-02〜03 の追加分
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| D20 | オートナイトモード: 暗くなる様子と暗さ 0.8 の見やすさが PCVR と同程度か。設定の [オート][マニュアル] が押せ、文字が収まるか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
+| D21 | 川のせせらぎが聞こえ、音量・継ぎ目が問題ないか。入れたことで fps・発熱が変わらないか (Android の容量は AI が測る)。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
+| D22 | 入口の看板 A・B の文字が Quest 3 の解像度で読めるか (圧縮でにじまないか)。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
+
+## E. iOS (iPhone 15 Pro) (20 項目)
 
 iPhone 15 Pro で、Touch 操作を中心に確認する。結果欄には iOS・VRChat の版・画質・発熱の状態も添える。
 
@@ -415,6 +460,14 @@ iPhone 15 Pro で、Touch 操作を中心に確認する。結果欄には iOS�
 | E16 | 呼ぶ・合流の 2 つのボタンと、通知板の [行く] [今は行かない] を押し分けられるか。 | [IMP-WLD-002](../development/issues/IMP-WLD-002-call-player.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#9) | |
 | E17 | BGM の音量操作と聞こえに問題がないか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
 
+### E-5 2026-10-02〜03 の追加分
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| E18 | 設定のナイトモードの [オート][マニュアル] とスライダーをタッチで押せ、文字が収まるか。暗くなる様子と見やすさが PCVR と同程度か。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
+| E19 | 川のせせらぎが iOS でも聞こえ、音量・継ぎ目が問題ないか。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
+| E20 | 入口の看板 A・B の文字が iPhone の画面で読めるか。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
+
 ## 具体的な確認に落とせなかった項目
 
 Issue が「何を見ればよいか」を書いていないため、項目にしていない。ユーザーに期待値を決めてもらうか、AI 側で Issue を直す必要がある。
@@ -436,6 +489,6 @@ Issue が「何を見ればよいか」を書いていないため、項目に�
 
 ### この表の対象外 (AI 側の作業)
 
-IMP-DOG-026 の送信量の実測、IMP-DOG-030 と IMP-DOG-012 の本シーンでの負荷の実測、IMP-WLD-003 の Android / iOS の容量の実測、IMP-DOG-018 のビルドサイズ、IMP-ENV-010 の計測プローブの撤去。DES-UI-003・DES-DOG-006 は、ユーザーの確認が他の Issue (IMP-UI-001・IMP-DOG-025) に出ているため、この表には載せていない。
+IMP-DOG-026 の送信量の実測、IMP-DOG-030 と IMP-DOG-012 の本シーンでの負荷の実測、IMP-WLD-003 の Android / iOS の容量の実測、IMP-DOG-018 のビルドサイズ、IMP-ENV-010 の計測プローブの撤去、IMP-ENV-006 の川の音のビルドサイズの実測と利用条件の記録 (ユーザーの回答待ち)、DES-UI-004 の看板の翻訳の校正、IMP-DOG-035 の全体ハーネスの C-keepout-wander の修正と再レビュー。DES-UI-003・DES-DOG-006 は、ユーザーの確認が他の Issue (IMP-UI-001・IMP-DOG-025) に出ているため、この表には載せていない。
 
-<!-- 項目数: A. 138 / B. 53 / C. 12 / D. 19 / E. 17 -->
+<!-- 項目数: A. 151 (A0-1〜13 + A1〜A138) / B. 57 / C. 15 / D. 22 / E. 20 -->

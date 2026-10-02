@@ -2,9 +2,11 @@
 id: BUG-DOG-003
 type: BUG
 system: DOG
-status: wip
+status: review
 priority: High
 summary: 非マスターの投球で犬が追わない。原因はコード上の経路で確認 (投球通知が Pickup の解放同期より先に届き、古い保持状態で即取消)。犬 Owner 側の 1 秒保留と (送信者, 世代, 発生時刻) 照合で修正、ClientSim netorder 10/10。2 人 PCVR の再検証待ち
+next: "実装と ClientSim netorder 10/10 は済み。2 人の実機で、非マスターの取得 → 待機移動 → 投球 → 追走・キャッチ・持ち帰りが両者から見えること、マスターの投球が引き続き成立すること、交互に持って投げても所有権の切替後に反応が止まらないことを確認 (B18・B19)。NG なら wip へ戻す"
+updated: 2026-10-03
 ---
 
 # BUG-DOG-003 非マスターがフリスビーを投げても犬が追わない

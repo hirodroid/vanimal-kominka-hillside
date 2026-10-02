@@ -564,7 +564,7 @@ node scripts/kh-frisbee-harness.cjs start --mode=terrain --shots=T-cliff,T-rock 
 
 ## 本シーンの犬を洗う (Course/100, IMP-DOG-025)
 
-`Tools/KominkaHillside/Course/100 - Harness Wash (all groups)`。**全体 (55 ケース、45〜70 分。2026-10-02 に W-shoulder・W-runoff を `100a` へ追加) は確定前に 1 回だけ回し、普段は変更に関係する群だけを回す** (2026-09-30 ユーザー指定、全プロジェクト共通の方針): `100a` 基本 (泡・すすぎ・停止・清潔・拒否、約 8 分)、`100b` 行動の切替 + 反応 (約 10 分)、`100c` 同期 (約 8 分)、`100d` 汚れ + 主洗い場 (約 12 分)、`100e` 6 匹 + 道中の洗い場 (実測 1 分 43 秒)、`100f` 呼ぶ + 高さ ([下の節](#洗い場の呼び出しと高さ-course100f))。全体は同日の実測で 53 ケース約 60 分。部分実行の wash.json には notCovered に `Partial run` の行が付く。フリスビーではないが、本シーンの歩行ハーネスの 1 モードとして同じ枠で走らせる (journal・全体の締切 1500 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。台本は `KH_CourseWalkHarnessEditor.Wash.cs`。前提は `Wash/11` (組み立て) が済み、柴の `KD_DogWanderController.wash` が配線されていること (他の 5 匹は null)。
+`Tools/KominkaHillside/Course/100 - Harness Wash (all groups)`。**全体 (55 ケース、45〜70 分。2026-10-02 に W-shoulder・W-runoff を `100a` へ追加) は確定前に 1 回だけ回し、普段は変更に関係する群だけを回す** (2026-09-30 ユーザー指定、全プロジェクト共通の方針): `100a` 基本 (泡・すすぎ・停止・清潔・拒否、約 8 分)、`100b` 行動の切替 + 反応 (約 10 分)、`100c` 同期 (約 8 分)、`100d` 汚れ + 主洗い場 (約 12 分)、`100e` 6 匹 + 道中の洗い場 (実測 1 分 43 秒)、`100f` 呼ぶ + 高さ ([下の節](#洗い場の呼び出しと高さ-course100f))。全体は同日の実測で 53 ケース約 60 分。部分実行の wash.json には notCovered に `Partial run` の行が付く。フリスビーではないが、本シーンの歩行ハーネスの 1 モードとして同じ枠で走らせる (journal・全体の締切 1500 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。台本は `KH_CourseWalkHarnessEditor.Wash.cs`。前提は `Wash/11` (組み立て) が済み、柴の `KD_DogWanderController.wash` が配線されていること (IMP-DOG-030 以降は他の 5 匹も配線済みで、W-dogs-wired / W-dogs-foam / W-dogs-others が見る)。
 
 ```bash
 bash scripts/kh-harness-run.sh walk "Course/100e - Harness Wash dogs + course stations"   # 群だけ
@@ -590,7 +590,7 @@ bash scripts/kh-harness-run.sh walk "Course/100 - Harness Wash (all groups)"    
 | W-clean | 汚れ 0.6 から、全 Collider の表面の点 (犬の向きの 6 方向 + 斜め 8 方向、0.08 m で間引く) へシャワー (半径 0.11 m = 実際の道具の範囲) 1 s ずつ、1 か所ずつ | 90 s 以内に `_AverageDirt()` < `cleanDirtThreshold` かつ `_CleanSerial()` +1 (ちょうど)。かかったゲーム内の秒を notes に出す (1 匹 1〜2 分の目標の目安。道具 1 本・1 か所ずつの値) |
 | W-reclean | `_DebugClear` から、全身へスポンジ → シャワー | 泡で `cleanArmed` が立つまで (`_AverageFoam()` >= `dirtyFoamThreshold`) は `_CleanSerial()` が増えない、流して +1 (ちょうど)。W-clean の後ではなく自分で「きれい」から始める |
 | W-reject | `NetStroke` へ 道具 9 / −1、部位 −1 / 99、量が負・時間 0・半径 10 mm・2^20 以上、座標 2^30 / −1、seq −1 (0.25 s 間隔) | 例外が出ない (Console のエラーは全体の失敗)、マスクとセルが変わらない。対照に正しい 1 本: セルが変わり、自分の送った分はマスクへ描き直さない |
-| W-others | 他の 5 匹 | `wash` が null、柴を洗っている間も洗われ中の枝に入らない、その後 60 s 以内にそれぞれ 0.3 m 歩く |
+| W-others | 他の 5 匹 | (IMP-DOG-030 以降 `wash` は配線済みで、洗われていない犬は既存のまま = W-dogs-others と同じ期待) 柴を洗っている間も洗われ中の枝に入らない、その後 60 s 以内にそれぞれ 0.3 m 歩く |
 
 - 結果: `Logs/kh-course-walk/<run>/wash.json` (ケースごとの notes・`resolved`・`maskSource`・`notCovered`) と `report.json`。全体の状態は **`WASH_PASS`** (全ケース PASS か SKIP) / `WASH_FAIL`。落ちたケースは片付け (`_EndContact`) をして次へ進む
 - 偽の失敗: VRChat クライアントのログの混入は他のモードと同じく `clientLogErrors` に数えて失敗にしない。各ケースの notes に最大のフレーム時間を出し、100 ms を超えた回は「単独で回し直す」を付ける。歩く・動くの判定 (W-idle・W-hold・W-others) は犬の休憩・近接の停止で遅れることがある (notes に `restPhase` / `paused`)

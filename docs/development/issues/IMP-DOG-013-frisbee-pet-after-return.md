@@ -2,10 +2,11 @@
 id: IMP-DOG-013
 type: IMP
 system: DOG
-status: wip
+status: review
 priority: Medium
 summary: フリスビーを持ち帰った犬をよしよしできる。くわえて待っている間は撫でを再開し (撫でている間はディスクを落とさない)、受け取っても 4 秒 / 2.5 m の猶予はその場で待つ。9/22 実装・Editor 検査済み、PCVR 確認が残る
-next: "残り: 複数人 (投げ手 ≠ 犬 Owner、撫でる人 ≠ 投げ手、B22)、Quest 単体・iOS (VER-WLD-001)。PCVR 1 人 (A72〜A74) は 10-02 ユーザー総合判断で確認済み"
+next: "実装済み・確認待ち。残り: 複数人 (投げ手 ≠ 犬 Owner、撫でる人 ≠ 投げ手、B22)、Quest 単体・iOS (VER-WLD-001)。PCVR 1 人 (A72〜A74) は 10-02 ユーザー総合判断で確認済み"
+updated: 2026-10-03
 ---
 
 # IMP-DOG-013 フリスビーを持ち帰った犬をよしよしする
