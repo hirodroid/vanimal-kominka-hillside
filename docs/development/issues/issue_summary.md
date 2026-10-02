@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-80 件 — 対応中 20 / 確認待ち 27 / 未着手 20 / 保留 3 / 完了 10
+80 件 — 対応中 21 / 確認待ち 27 / 未着手 19 / 保留 3 / 完了 10
 
 ## 実行キュー
 
@@ -19,6 +19,7 @@
 | [IMP-DOG-025](IMP-DOG-025-wash-prototype-one-dog.md) | High | 代表 1 匹 (柴) で洗浄の一周を細く通し、設計書の賭け 3 つを確かめる試作 | wip | 2026-09-30 の PCVR の指摘 (泡の層の切れ目、犬が向きすぎる、座りすぎる、汚れは足元から、汚れと濡れの区別) を直す |
 | [IMP-DOG-028](IMP-DOG-028-wash-sound-and-reactions.md) | High | 洗浄の音と犬の反応の仕上げ (音素材の制作と記録、個人音量、タオル、ブルブル、満足の合図) | wip | ハーネス (W-shake / satisfied / paw / no-repeat) の結果、ユーザーの Play (反応の見え方、音の試聴)、試聴の後の音素材の作り直しが残り |
 | [IMP-DOG-034](IMP-DOG-034-dog-udon-tick-thinning.md) | High | 犬の Udon を軽くする。段階 1 (待機中の徘徊を fps 連動で間引く) は済。Quest 3 は 20〜30 fps で残りは Udon。棚卸しの結果、リード歩行の毎フレーム走査・首輪ロープ・洗浄セル評価が主因。A (挙動同一の入れ替え・キャッシュ) → B (監視の低頻度化) の順で実装する | wip | 6 匹が川に入ったときの負荷 (水遊びの毎フレーム経路) を調べて削る。リード歩行は IMP-DOG-036 |
+| [IMP-DOG-036](IMP-DOG-036-leash-decision-thinning.md) | High | 犬の「判断」を全状態で 5 フレームに 1 回 (川の中は 10 フレーム) にし、位置を進める足だけ毎フレームにする。使っていない機能の Update の入口も無くす。2026-10-02 にリードだけから全状態へ拡張 (ユーザー決定) | wip | 段階 1 (リード歩行の判断と足の分離) を実装中 → リード・洗い場・水のハーネス → Codex → Quest 3 |
 | [IMP-ENV-010](IMP-ENV-010-quest-performance.md) | High | Quest 3 単体で 10〜20 fps・地形が光る (2026-09-30 実機報告)。Android/iOS ビルドだけ地形を Lite シェーダーへ差し替え、群ごとの ON/OFF プローブで寄与を実機で測る | wip | 殻 1 パス版を Android でビルド → Quest 3 で犬を見ている状態の fps と地形の光りを確認 → 犬 Udon の間引きをやるか決める (ユーザー) |
 | [DES-ENV-002](DES-ENV-002-longer-course.md) | Medium | 約2.41kmの川沿い周回を実装し、2026-09-27に本番シーン (VRCDefaultWorldScene) へ採用済み。Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する | wip | 犬連れの実歩行時間、LODと遮蔽の実機表示、Quest 3・iPhone 15 Pro・16人の性能から最終距離/予算を確定する (ユーザーの実機。VER-WLD-001) |
 | [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK)、段階 2・3 は 9/24 実装済み・PCVR 待ち | wip |  |
@@ -58,7 +59,6 @@
 | [BUG-DOG-007](BUG-DOG-007-shiba-throw-implausible.md) | Low | 実機 (2026-09-28 夜) で柴のディスクの投げが 22:53〜22:59 に 5 回 `implausible` で断られた。原因は 200 m の距離の上限で、柴は投げ手から約 430〜516 m 離れた場所に残っていた (周回コース 600×720 m では正当に起こる)。拒否理由を条件ごとに分けた。統括の決定で、Ready と投げの受理を犬から 40 m 以内に限り (`readyMaxDistance`、理由 `far`)、照準は × と「犬が遠くにいます」を出す。200 m の `implausible-far` は二重の安全として残す | review | コンパイル・Course/27・92・93・試作の既定は済み (7178d1f)。実機で 40 m の外から持つ・投げると犬が動かず、照準に「犬が遠くにいます」が出ることを確かめる |
 | [BUG-DOG-004](BUG-DOG-004-destination-per-player.md) | High | 体験会 (2026-09-26、15 人) で「行き先が犬ごとに決まっていて、プレイヤーごとのローカル選択になっていない」と報告。コードは自分の選択を自分の接続犬に写す設計なので、何がどう見えたかを 2 人で再現して切り分ける | todo | 2 人で別の行き先を選び、自分の犬だけが従うか・メニューの点灯が自分の選択を示すかを確認。NG なら Manager Owner 側の ReqDestination / ReqAttach の経路を疑う |
 | [DES-UI-004](DES-UI-004-walk-destinations-and-boards.md) | High | 散歩の目的地・位置と案内／説明ボードの内容・配置・役割を検討する (仮看板は 2026-09-26 に撤去済み)。体験会 (2026-09-26、15 人) で「リードの付け方が分からない、簡単な説明ボードが要る」と報告があり、説明ボードを先に決める | todo | 入口 (スポーン付近) に置く「リードの付け方」の説明ボード 1 枚の文言・位置案を出してユーザー確認。目的地の案内板は後 |
-| [IMP-DOG-036](IMP-DOG-036-leash-decision-thinning.md) | High | リードで連れている犬の「判断」を 5 フレームに 1 回にし、足 (移動・向き・接地・アニメ) は毎フレームのまま分ける。IMP-DOG-034 から切り出し (2026-10-01 ユーザー指定で別対応) | todo | 設計の確定 (下の握手の扱い) → 実装 → リード・水・洗い・移動・6 匹一周のハーネス → Codex → Quest 3 で fps と犬の反応の遅れを確認 |
 | [VER-DOG-002](VER-DOG-002-wash-experience-and-devices.md) | High | 洗浄の体験の評価 (ASMR、先行作との比較、2 人、入力機器) と対象端末の実機確認を、各段の到達条件として行う | todo | IMP-DOG-025 の試作が動いた時点で、先行 Animal Wash の比較対象の版と場面を選び、対象端末の最小の描画の確認を依頼する |
 | [BUG-DOG-005](BUG-DOG-005-ios-disc-colors.md) | Medium | 体験会 (2026-09-26) で iOS 参加者から「フリスビーの色が全部同じ」。ディスクは Standard Lite + _Color で犬別 6 色。iOS 実機で再現し、材質・ビルドのどこで色が落ちるかを特定する | todo | iOS 実機で 6 枚の色を見る。同じなら iOS ビルドの材質 (Standard Lite の _Color、持ち中の Transparent/Diffuse) と Android ビルドとの差を疑う |
 | [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビーは 1 匹で採用内容を確定 (IMP-DOG-008 完了)。複数ディスク・犬の割当は犬別 6 枚 (2026-09-24 開発側で決め、2026-09-29 ユーザー了承)。残り: 他のおもちゃの挙動、ボールの柄違いの持たせ方、公開範囲 | todo |  |
