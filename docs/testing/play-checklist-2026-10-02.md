@@ -157,7 +157,7 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | A86 | 撫でエフェクト: 行がかざり一覧の最初の階層にだけ出て、買う → つけるが効くか。入り直すと自分の選択が戻るか。 | [IMP-DOG-015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) | |
 | A87 | 呼ぶ・ポーズ: 6 匹で、犬 → ポーズ → 場所の流れが平地で成立するか (予約・配置・到着・終了)。4 動作 (へそ天・あご乗せ・お手・伸び+あくび) は買うまで価格が出て、買うと使えるか。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | |
 | A88 | リード中の犬の行は暗く「リード中。さんぽで外してから」が出て、外すと呼べるか。呼ばれて待機中の犬はさんぽでつなげず (理由が出る)、集合中の犬も呼べないか。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) (T-010) | |
-| A89 | 斜面で赤いマーカーと「この姿勢には平らな場所が必要です」が出て確定できず、平地では成立するか。地面法線 0.9 前後に置いた犬が沈まず浮かないか (0.9 を採用してよいか)。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | |
+| A89 | 斜面で赤いマーカーと「この姿勢には平らな場所が必要です」が出て確定できず、平地では成立するか。地面法線 0.9 前後に置いた犬が沈まず浮かないか (0.9 を採用してよいか)。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | 決定: 2026-10-03 (ユーザー) 法線 0.9 を採用。斜面で赤マーカーが出る・平地で成立する確認は未 (IMP-DOG-032 で古民家どおりに戻すと判定が外れる点は要確認) |
 | A90 | NavMesh が途切れる場所へ呼んでも、犬が直進でたどり着き固まらないか。場所決めのマーカーの光線が小物に当たって変な高さに出ないか。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) (メニュー計画 段階 2) | |
 
 ### A-7 奥広場・川
@@ -172,14 +172,14 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | A96 | 犬を連れずに川辺へ行く。25 m 以内の犬が自分から入水し、手元に「(犬名) が水遊びに行きました」が出るか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #20) | |
 | A97 | 浅瀬で足元のしぶきと波紋が出るか。量と大きさがうるさくないか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #3) | |
 | A98 | 小型犬 (ポメ・コーギー・ダックス) と柴が深い所で浮いて犬かきに見えるか。口と鼻先が水面から出ているか。止まって見えないか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #4) | |
-| A99 | 泳ぐ犬の上下の揺れ (±1 cm) を、揺れありの犬 (コーギー・柴) と揺れなしの犬 (ポメ・ダックス) で見比べ、要るか判断する。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #5・#25) | |
-| A100 | 柴を泳がせるか (泳がせる / 浅瀬だけ) を決める。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #6) | |
+| A99 | 泳ぐ犬の上下の揺れ (±1 cm) を、揺れありの犬 (コーギー・柴) と揺れなしの犬 (ポメ・ダックス) で見比べ、要るか判断する。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #5・#25) | 決定: 2026-10-03 (ユーザー) 「そのままでOK」= 現状の揺れ ±1 cm のまま採用 |
+| A100 | 柴を泳がせるか (泳がせる / 浅瀬だけ) を決める。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #6) | 決定: 2026-10-03 (ユーザー) 「そのままでOK」= 現状 (柴は泳ぐ犬種の表に入っている) のまま |
 | A101 | 大型犬 (サモエド・ラブ) は浅瀬をチャプチャプ歩き、泳がず、深い方へ行きすぎないか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #7) | |
 | A102 | 水の中の犬にリード接続・おもちゃの呼び出しを試す。拒否の一言が出て、犬が要求した人を向いてから上がるか。上がった後はつながるか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #8・#9) | |
 | A103 | 水の中の犬を「呼ぶ (そばで寝る)」・おやつ・陸へボールを投げる。犬が上がってから来る・取りに行くか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #10・#11) | |
 | A104 | 6 匹を入水点の近くで放す。少しずつ時間と場所をずらして入り、重なり続けないか。見た目が騒がしくないか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #12・#24) | |
 | A105 | 水遊びをナイトモードで見る。水面・犬・粒子が見分けられるか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #13) | |
-| A106 | 水音 (浅瀬の「ぱしゃ」、入水の「ばしゃっ」、犬かき) が犬の位置から聞こえ、20 m で消えるか。採用 / 差し替え / 無音を決める。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #14・#26) | |
+| A106 | 水音 (浅瀬の「ぱしゃ」、入水の「ばしゃっ」、犬かき) が犬の位置から聞こえ、20 m で消えるか。採用 / 差し替え / 無音を決める。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #14・#26) | 決定: 2026-10-03 (ユーザー) 「そのままでOK」= 現在の合成の水音 3 本のまま採用。犬の位置から聞こえる・20 m で消えるの確認は別 |
 | A107 | 浅瀬で犬どうしが押し合う場面 (集合など) で、深い側へ押されず、重なったまま止まらないか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #28) | |
 | A108 | 小型犬がいる所でボールを川へ投げる。浮いて下流へ流れ、犬が泳いで取り、上陸して身震いし、手元へ持ち帰るか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #21) | |
 | A109 | 大型犬で同じことをする。浅い所のボールは歩いて取り、深い所のボールは追わず下流端で止まるか。対岸からボールを川へ投げると、犬は取って東岸の復帰点で置くか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #22・#23) | |
@@ -214,7 +214,7 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | A128 | 設定ホームの 3 群 (自分の見え方・聞こえ方 / この部屋のみんな / 読む) で迷わないか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (メニュー計画 §4) | |
 | A129 | クレジット頁の 7 行が読めるか。インフォメーションの 4 頁 (はじめに / 生成 AI / VAnimal / トレーナー) が開けて本文が読めるか。(クレジットの URL 3 件はユーザー記入後に確認) | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (メニュー計画 §4) | |
 | A130 | BGM: 設定 → 音量に BGM の行があるか。0%・中間・100% で実際の音量が変わり、0% で無音になるか。OFF → ON、OFF 中の音量変更、メニューの開閉で表示と出音が一致するか。入り直すと ON・50% に戻るか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
-| A131 | BGM の [ON/OFF] ボタンを残すか決める (古民家の現行画面には無く、0% で無音に統一している)。基準音量 0.35 が犬や会話を邪魔しないか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) (判断待ち) | |
+| A131 | BGM の [ON/OFF] ボタンを残すか決める (古民家の現行画面には無く、0% で無音に統一している)。基準音量 0.35 が犬や会話を邪魔しないか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) (判断待ち) | 決定: 2026-10-03 (ユーザー) ON/OFF ボタンは残す。基準音量 0.35 は採用 (「残す。OK」) |
 | A132 | BGM の余韻・複数周回の継ぎ目が気にならないか (圧縮品質 PC 0.7 の聞こえ)。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
 | A133 | BGM・洗浄音・犬の声を重ねても、自分の操作の音と会話が聞き取れるか (主洗い場で)。 | [IMP-DOG-024](../development/issues/IMP-DOG-024-walk-and-wash-experience.md) (音)<br>[IMP-DOG-028](../development/issues/IMP-DOG-028-wash-sound-and-reactions.md)<br>[IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
 | A134 | ライブ中に BGM が滑らかに下がり、終了後に自分の設定へ戻るか。ライブ中の設定変更・途中入室でも勝手に ON や以前の音量へ戻らないか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
