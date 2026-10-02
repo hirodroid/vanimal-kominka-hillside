@@ -176,6 +176,9 @@ namespace KominkaDogRun
             _behaviorSelectionValid = false;
             // IMP-DOG-036: re-enabled -> nothing old is replayed and the first frame decides
             _legKind = LegNone; _legFaceKind = LegNone; _decideNow = true;
+            // IMP-DOG-036 S3: no water legs frame before that decision, and a play that was running when the behaviour went off counts
+            // as not seen at the previous decision (WaterTick's preempt check, as the frame gap did before)
+            _waterThin = false; _thisDecisionFrame = Time.frameCount;
         }
 
         void ResetPerformanceOutputs()

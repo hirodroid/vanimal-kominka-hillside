@@ -128,6 +128,8 @@ namespace KominkaHillside.Editor
             // W0 only: where wading began and the first target, then every 0.5 s: time, state, pose, speed, depth, position.
             public string wadingStart;
             public List<string> trace = new List<string>();
+            // IMP-DOG-036 S3 (W0, W1-*): the dog's decisions / legs frames while its water play was thinned (_dbgWaterDecisions / _dbgWaterLegs)
+            public int thinDecisions = -1, thinLegs = -1;
             // Swim mode (W1 / W2)
             public int dog = 2, w1Leg, swimEntries, swimToggles, mouthLowFrames, wetDogs;
             public bool swimmer, reachedDeep, landedOnSpotBank;
@@ -456,6 +458,7 @@ namespace KominkaHillside.Editor
                         wander[WhDog].SetProgramVariable("_waterFirstDue", 0f);
                         wander[WhDog].SetProgramVariable("_waterFirstUsed", false);
                         c.released = now - cc.startedAt; whWetSince = -1; whNextTrace = now; whLastPose = 0; c.placedGame = Time.time;
+                        if (c.name == "W0") WhThinReset(WhDog);   // IMP-DOG-036 S3
                         whPhase = 2; whPhaseAt = now; whLastState = WhState(); return;
                     }
                     pouch.SendCustomEvent("_WalkLeft" + WhDog); whPhase = 1; whNext = now + 1; return;
@@ -491,7 +494,8 @@ namespace KominkaHillside.Editor
                         // dog 2: 0.8 s, judged <= 1 s); wet within start + NavMesh path to the entry / 2.4 m/s (run) + 2 s.
                         if (c.playStarted < 0 && t > 5) { WhFinish(c, now, false, "no WaterPlay within 5 s of the placement (no release)"); return; }
                         if (c.playStarted >= 0 && c.wetLimit < 0) c.wetLimit = (float)c.playStarted + c.pathToEntry / 2.4f + 2f;
-                        if (ready && t - c.wet > 3) { WhFinish(c, now, WhClean(c) && c.maxDepth > .02f && c.playGame >= 0f && c.playGame <= 1.1f && c.wet <= c.wetLimit, "play " + c.playStarted.ToString("F2") + " s (game " + c.playGame.ToString("F3") + " s, limit 1.1: wait 0.2+0.3*dog + one 10 Hz selection tick + 0.1), wading " + c.wading.ToString("F2") + " s, wet " + c.wet.ToString("F2") + " s (limit " + c.wetLimit.ToString("F2") + ", path " + c.pathToEntry.ToString("F2") + " m)" + WhSummary(c)); return; }
+                        // IMP-DOG-036 S3: W0 also requires the water play to be thinned (WhThinOk); W0-24m is unchanged
+                        if (ready && t - c.wet > 3) { bool thin = c.name != "W0" || WhThinOk(c, WhDog); WhFinish(c, now, thin && WhClean(c) && c.maxDepth > .02f && c.playGame >= 0f && c.playGame <= 1.1f && c.wet <= c.wetLimit, "play " + c.playStarted.ToString("F2") + " s (game " + c.playGame.ToString("F3") + " s, limit 1.1: wait 0.2+0.3*dog + one 10 Hz selection tick + 0.1), wading " + c.wading.ToString("F2") + " s, wet " + c.wet.ToString("F2") + " s (limit " + c.wetLimit.ToString("F2") + ", path " + c.pathToEntry.ToString("F2") + " m)" + WhSummary(c) + (c.name == "W0" ? WhThinNote(c) : "")); return; }
                         if (t > 25) { WhFinish(c, now, false, "not wet (waterPose 1) within 25 s" + WhSummary(c)); return; }   // the 6 s limit is judged above
                         return;
                     }
@@ -509,6 +513,7 @@ namespace KominkaHillside.Editor
             {
                 c.deepTarget = WhCellBy(true); c.shallowTarget = WhCellBy(false);
                 WhSetTarget(c.deepTarget); c.w1Leg = 0; c.done = 0;
+                WhThinReset(WhDog);   // IMP-DOG-036 S3: counted from here to the landing (WhEvaluateW1)
                 return;
             }
             switch (c.name)
@@ -899,6 +904,20 @@ namespace KominkaHillside.Editor
         { return " | frames=" + c.frames + " bandOutsideSpot=" + c.bandOutsideSpotFrames + " tooDeep=" + c.tooDeepFrames + " maxDepth=" + c.maxDepth.ToString("F3") + " maxStep=" + c.maxStep.ToString("F3") + " bigSteps=" + c.bigSteps + " stateChanges=" + c.stateChanges
             + " mouthLow=" + c.mouthLowFrames + " minMouthAboveWater=" + c.minMouthAboveWater.ToString("F3") + " swimEntries=" + c.swimEntries + " swimToggles=" + c.swimToggles; }
 
+        // IMP-DOG-036 S3 (Codex review 2026-10-02): a released water play must actually decide every waterDecisionEvery frames and take
+        // legs frames in between. Zeroed when the case's water play begins (W0: the placement; W1-*: wading, before the deep leg);
+        // read when it finishes. Fails when no legs frame ran or when there were more decisions than legs frames.
+        static void WhThinReset(int dog) { wander[dog].SetProgramVariable("_dbgWaterDecisions", 0); wander[dog].SetProgramVariable("_dbgWaterLegs", 0); }
+
+        static bool WhThinOk(WhCase c, int dog)
+        {
+            c.thinDecisions = Get<int>(wander[dog], "_dbgWaterDecisions"); c.thinLegs = Get<int>(wander[dog], "_dbgWaterLegs");
+            return c.thinLegs > 0 && c.thinDecisions <= c.thinLegs;
+        }
+
+        static string WhThinNote(WhCase c)
+        { return " | thinned water decisions=" + c.thinDecisions + " legs=" + c.thinLegs + (c.thinLegs > 0 && c.thinDecisions <= c.thinLegs ? "" : " (FAIL: not thinned)"); }
+
         static void WhFinish(WhCase c, double now, bool pass, string reason, bool notExercised = false)
         {
             WhClearDebug();
@@ -1189,7 +1208,8 @@ namespace KominkaHillside.Editor
             {
                 c.landed = t - c.exitAt; d.landed = true; d.landedAt = c.landed;
                 d.landedOnSpotBank = p.x > KH_CourseGroundEditor.RiverAt(p.z).x;
-                WhFinish(c, now, WhDogOk(d) && c.landed <= 25, "reachedDeep=" + c.reachedDeep + " landed=" + c.landed.ToString("F2") + WhDogSummary(d));
+                bool thin = WhThinOk(c, WhDog);   // IMP-DOG-036 S3
+                WhFinish(c, now, thin && WhDogOk(d) && c.landed <= 25, "reachedDeep=" + c.reachedDeep + " landed=" + c.landed.ToString("F2") + WhDogSummary(d) + WhThinNote(c));
                 return;
             }
             if (t - c.exitAt > 25) WhFinish(c, now, false, "not landed 25 s after the stay ended" + WhDogSummary(d));

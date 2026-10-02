@@ -23,38 +23,58 @@ namespace KominkaDogRun
     // speed EMA, LeashPose's yaw rate and stillness clock, _pauseHeld, ObserveSpeed, the breath in LateUpdate, the placed-sleep lift
     // that only the decision moves) take Dt() = _dt = the time since the previous decision (this frame included). With
     // decisionEvery = 1 every frame decides, _dt == Time.deltaTime and the dog runs exactly the pre-IMP-DOG-034 per-frame code.
+    //
+    // IMP-DOG-036 S3 (user decision 2026-10-02: "川の中の犬はじっと見ないので 10 フレームに 1 回"): a dog whose last decision ran
+    // the water play (UpdateWaterPlay, HillsideWater.cs) decides every `waterDecisionEvery` frames (10, capped at MaxWaterDecisionGap)
+    // and its legs frames are WaterRunLegs(): the same RunLegs replay, with the river / depth checks answered from the line the
+    // decision validated (no spot query on a legs frame), the swim height from the recorded water surface, and the swim bob / pitch
+    // on the visual child and the hips (LateUpdate) from the recorded pose. The gate is WaterLegsOk() instead of TickBusy().
+    // The Fetch's / disc's water states, the RC-14 veto and the ease back after the play keep deciding every frame (TickBusy).
     public partial class KD_DogWanderController
     {
         const int DefaultDecisionEvery = 5;
         const float MaxDecisionGap = 0.2f;    // s: a decision is forced once this has passed (and the frame interval shrinks at low fps)
         const float DtClamp = 0.5f;           // s: IMP-DOG-036 S1/S2 fix 2 - the longest interval the integrators see (see Update)
+        const int DefaultWaterDecisionEvery = 10;   // IMP-DOG-036 S3
+        const float MaxWaterDecisionGap = 0.35f;    // s: IMP-DOG-036 S3 - the water play's cap (the legs' checked reach is built on it)
 
         [Tooltip("IMP-DOG-036: 判断を何フレームに 1 回にするか (既定 5)。1 = 毎フレーム判断 (A/B 用、IMP-DOG-034 以前と同じ経路)。0 以下は既定値")]
         public int decisionEvery = DefaultDecisionEvery;
+        [Tooltip("IMP-DOG-036 S3: 水遊び中 (川の中) の判断を何フレームに 1 回にするか (既定 10、上限 0.35 秒)。1 = 毎フレーム判断。0 以下は既定値")]
+        public int waterDecisionEvery = DefaultWaterDecisionEvery;
+        // IMP-DOG-036 S3: the frames of the previous and of this decision (WaterTick's "seen at the previous decision")
+        private int _prevDecisionFrame = -1, _thisDecisionFrame = -1;
         private float _dt;                // this decision's delta time: the time since the previous decision (this frame included)
         private float _dtSince;           // time accumulated since the previous decision
         private bool _tickedThisFrame = true;   // LateUpdate: did this frame decide
         private bool _inTick;             // inside UpdateTick (Dt() returns _dt only there)
         private bool _candyTicked;        // last tick's UpdateCandyPerformance result (TickBusy)
         private int _decisionCount, _legsFrames;   // harness / measurement read-outs (IMP-DOG-036)
+        private int _dbgWaterDecisions, _dbgWaterLegs;   // IMP-DOG-036 S3: decisions / legs frames while _waterThin (the harness zeroes them)
         private bool _decideNow;          // the next frame decides whatever its slot (OnEnable)
 
         /// <summary>IMP-DOG-036 S1/S2: decide on this dog's slot (or when busy, or once MaxDecisionGap has passed), else move the legs.</summary>
         void Update()
         {
             _dtSince += Time.deltaTime;
-            int every = DecisionEvery();
+            // IMP-DOG-036 S3: the last decision left the dog in the water play -> the water cadence, cap and gate
+            bool water = _waterThin;
+            int every = water ? WaterDecisionFrames() : DecisionEvery();
             Vector3 probeFrom = StepProbeBegin();   // IMP-DOG-036 step probe (harness read-out)
             // IMP-DOG-036 S1/S2 fix 2: the slot only staggers the dogs; elapsed time guarantees the cap. `every` follows the fps
             // (4 <-> 5) and its modulo phase can then skip past a slot, so a decision is also forced once MaxDecisionGap has passed
-            if (every > 1 && !_decideNow && ((Time.frameCount + dogIndex) % every) != 0 && _dtSince < MaxDecisionGap && !TickBusy())
+            if (every > 1 && !_decideNow && ((Time.frameCount + dogIndex) % every) != 0
+                && _dtSince < (water ? MaxWaterDecisionGap : MaxDecisionGap) && (water ? WaterLegsOk() : !TickBusy()))
             {
                 _tickedThisFrame = false;
-                RunLegs();
+                if (water) WaterRunLegs(); else RunLegs();
                 StepProbeEnd(probeFrom, DbgSrcLegs, Time.deltaTime);
                 return;
             }
             _decideNow = false;
+            _prevDecisionFrame = _thisDecisionFrame; _thisDecisionFrame = Time.frameCount;   // IMP-DOG-036 S3
+            if (water) _dbgWaterDecisions++;   // IMP-DOG-036 S3 harness read-out: decisions taken while thinned (legs: WaterRunLegs)
+            _waterPlayedNow = false;                                                          // IMP-DOG-036 S3 (UpdateWaterPlay raises it)
             // IMP-DOG-036 S1/S2 fix 2: with the forced decision _dtSince is at most MaxDecisionGap + one frame (Unity already clamps a
             // frame's deltaTime to maximumDeltaTime, 0.333 s). The integrators (holder-speed EMA: Min(1, dt/tau); yaw rate and
             // ObserveSpeed: divide by dt; _pauseHeld / breath: real time) are bounded for any dt, but the jump tolerances scale with
@@ -69,6 +89,7 @@ namespace KominkaDogRun
             UpdateTick();
             _inTick = false;
             _legRec = false;
+            WaterThinRecord();   // IMP-DOG-036 S3: may the next frames be water legs frames, and what they replay (HillsideWater.cs)
             StepProbeEnd(probeFrom, DbgSrcDecision, _dt);
         }
 
@@ -79,7 +100,8 @@ namespace KominkaDogRun
         //                      else moved the root: KD_DogPack's push, Fetch / disc legs, VRCObjectSync on a non-Owner, a harness write)
         //   _dbgMaxStepMover   the mover recorded / replayed that frame (_legKind: 0 none, 1 Coast, 2 StepToward, 3 GatherStep, 4 LeashGo)
         //   _dbgMaxStepWriter  a direct root write in that frame (0 none, 1 TeleportTo, 2 travel apply, 3 station placement,
-        //                      4 water recover teleport, 5 GroundAfterPlacedSleep (sleep / station release))
+        //                      4 water recover teleport, 5 GroundAfterPlacedSleep (sleep / station release),
+        //                      6 IMP-DOG-036 S3: the water legs frame's swim height (WaterSwimHeight from the recorded surface))
         //   _dbgMaxStepMode / _dbgMaxStepBehavior / _dbgMaxStepWater   leashMode, _selectedBehavior, waterState at the end of the frame
         //   _dbgMaxStepDt      the dt that frame's movers / integrators used (decision: _dt; legs: Time.deltaTime; between: deltaTime)
         //   _dbgMaxStepFrame, _dbgMaxStepFrom, _dbgMaxStepTo, _dbgBigSteps (count of pieces > DbgBigStep), _dbgTeleports
@@ -90,7 +112,7 @@ namespace KominkaDogRun
         //   _dbgRingCount = how many were ever recorded (the newest is at (_dbgRingCount - 1) % DbgRingSize).
         // IMP-DOG-036 S1/S2 fix 4a: reset only by _DebugResetStep(), which also turns the probe on (off until then, ~12 extern/frame).
         const int DbgSrcDecision = 1, DbgSrcLegs = 2, DbgSrcBetween = 3, DbgSrcFrame = 4;
-        const int DbgWTeleport = 1, DbgWTravel = 2, DbgWStation = 3, DbgWWaterRecover = 4, DbgWGround = 5;
+        const int DbgWTeleport = 1, DbgWTravel = 2, DbgWStation = 3, DbgWWaterRecover = 4, DbgWGround = 5, DbgWSwimLegs = 6;
         const float DbgBigStep = 0.5f, DbgRingStep = 0.3f;
         const int DbgRingSize = 4;
         private bool _dbgStepOn;   // off by default (cost); the harness turns it on through _DebugResetStep()
@@ -176,12 +198,23 @@ namespace KominkaDogRun
         /// (20 fps -> 4). 1 = every frame.</summary>
         int DecisionEvery()
         {
-            int e = decisionEvery <= 0 ? DefaultDecisionEvery : decisionEvery;
+            return DecisionFrames(decisionEvery <= 0 ? DefaultDecisionEvery : decisionEvery, MaxDecisionGap);
+        }
+
+        /// <summary>IMP-DOG-036 S3: the water play's interval in frames: waterDecisionEvery (10), shortened at low fps so it stays
+        /// within MaxWaterDecisionGap (20 fps -> 7). 1 = every frame.</summary>
+        int WaterDecisionFrames()
+        {
+            return DecisionFrames(waterDecisionEvery <= 0 ? DefaultWaterDecisionEvery : waterDecisionEvery, MaxWaterDecisionGap);
+        }
+
+        int DecisionFrames(int e, float gap)
+        {
             if (e <= 1) return 1;
             float sdt = Time.smoothDeltaTime;
             if (sdt > 0.0001f)
             {
-                int cap = (int)(MaxDecisionGap / sdt);
+                int cap = (int)(gap / sdt);
                 if (cap < 1) cap = 1;
                 if (cap < e) e = cap;
             }
@@ -278,6 +311,7 @@ namespace KominkaDogRun
             // so its legs never freeze mid-step (a still dog with nothing to replay - the placed sleep - just waits)
             if (_dogOwner && _legKind == LegNone && _speed > 0f) return true;
             // Water play (Owner) and the swim height / nose-up pitch / hips bob still easing back after the water.
+            // (IMP-DOG-036 S3: a water play the last decision ran is gated by WaterLegsOk instead - Update never asks TickBusy then)
             if (waterState != WaterOff || _waterSwimming || _swimYValid || _swimPitchNow != 0f || _hipsWrote) return true;
             // Being washed (the wash branches raise it; _washLastFrame handshake).
             if (_washActive) return true;

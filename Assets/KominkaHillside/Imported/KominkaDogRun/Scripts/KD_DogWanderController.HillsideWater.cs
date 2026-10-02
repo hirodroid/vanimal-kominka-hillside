@@ -93,7 +93,8 @@ namespace KominkaDogRun
         float SwimPitchTick(int pose)
         {
             float target = (fetchController != null && pose == 2 && waterSpot != null) ? waterSpot._SwimPitch(dogIndex) : 0f;
-            _swimPitchNow = Mathf.MoveTowards(_swimPitchNow, target, SwimPitchRate * Dt());
+            // IMP-DOG-036 S3: one frame (MoveDt) - the water legs frames turn it too (SwimPitchLegs); outside the tick it was deltaTime already
+            _swimPitchNow = Mathf.MoveTowards(_swimPitchNow, target, SwimPitchRate * MoveDt());
             return _swimPitchNow;
         }
         private float _nextSinkLog;
@@ -130,6 +131,8 @@ namespace KominkaDogRun
         // p.z only, and the spot's arrays and the river surface are baked (never written at runtime), so a hit on the same
         // (x, z) within the same frame returns what the call would. Two slots each, least recently used is replaced. A NaN never
         // hits (NaN != NaN). Any caller (this tick, the Fetch's water legs, KD_DogPack's push check) may use it: the key is the frame.
+        // IMP-DOG-036 S3: unchanged with decisions 10 frames apart - the frame stays in the key (a hit is only ever the same frame's
+        // answer, and the data is baked). A water legs frame asks only for steps WaterLegSafe cannot clear.
         private int _wcF0 = -1, _wcF1 = -1;
         private float _wcX0, _wcZ0, _wcX1, _wcZ1;
         private bool _wcV0, _wcV1, _wcNext1;
@@ -177,6 +180,9 @@ namespace KominkaDogRun
         bool _BlockedByRiver(Vector3 from, Vector3 next)
         {
             if (riverData == null || _navStep) return false;
+            // IMP-DOG-036 S3: on a water legs frame, a step into a cell proven safe for this decision's limits is allowed without the
+            // spot queries (WaterLegSafe: the same answer the checks below give); anything else asks in full, as before
+            if (_waterLegTrust && WaterLegSafe(next)) return false;
             // IMP-DOG-021: along the river (Fetch water states in river mode, or walking out of the river). Inside the river-wide
             // water the spot's depth rules apply (sink guard; a non-swimmer no deeper than the Fetch limit); the band where that
             // water is not (a bridge zone, no riverbed data) is never entered, and a dog already there may only move outward.
@@ -347,7 +353,9 @@ namespace KominkaDogRun
                 _waterWasOwner = true;
                 if (pose == 2) { _waterSwimming = true; _waterSwimY = dogRoot.position.y; _swimYValid = true; _swimShallowSince = -1f; }
             }
-            if (waterState != WaterOff && _waterSeenFrame < Time.frameCount - 1) WaterEnd("preempted");
+            // IMP-DOG-036 S3: "the previous decision did not run the play" (was: the previous frame; the same with per-frame decisions).
+            // _prevDecisionFrame is the frame of the decision before this one (Tick.cs); OnEnable moves it past a pause
+            if (waterState != WaterOff && _waterSeenFrame < _prevDecisionFrame) WaterEnd("preempted");
             // The leash read moved up from WaterLeashTick (same reads, same frame) so the edge is known before the pose refresh.
             // UpdateHillsideLeash reuses it this frame (_wlFrame) instead of asking KH_LeashManager again (IMP-DOG-034 C1-1e).
             bool leashed = hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex);
@@ -469,7 +477,7 @@ namespace KominkaDogRun
             {
                 // Non-Owners only pick the legs (observed speed); the pose itself comes from the synced waterPose.
                 if (fetchController.WaterPose == 0) return false;
-                Coast(); return true;
+                Coast(); _waterPlayedNow = true; return true;   // IMP-DOG-036 S3
             }
             // RC-14: a leash vetoed in the water (WaterLeashTick) is not taken up; the play keeps walking the dog out
             // IMP-DOG-034 W-5: this frame's leash read from WaterTick when there is one (same value: nothing between writes walkers;
@@ -507,6 +515,7 @@ namespace KominkaDogRun
             }
             WaterApplySwimHeight();
             WaterPoseRefresh();   // RC-14: the pose of where the dog stands after this frame's step
+            _waterPlayedNow = true;   // IMP-DOG-036 S3: this decision ran the play (WaterThinRecord)
             return true;
         }
 
@@ -542,10 +551,25 @@ namespace KominkaDogRun
             // and _swimPitchNow 0 -> MoveTowards stays 0, no rotation, off 0 and !_hipsWrote -> return), so skip its reads
             if (pose != 2 && _swimPitchNow == 0f && !_hipsWrote) return;
             float hipsPitch = SwimPitchTick(pose);
+            WaterHipsBobApply(pose, hipsPitch, pose == 2 ? waterSpot.swimBob : 0f, pose == 2 ? waterSpot.swimBobHz : 0f);
+        }
+
+        /// <summary>IMP-DOG-036 S3: LateUpdate of a water legs frame (every client): the same hips bob / pitch from the decision's
+        /// record (pose, bob, pitch target). The Animator rewrites the hips every frame, so this cannot wait for the decision.</summary>
+        void WaterHipsBobLegs()
+        {
+            if (waterBobHips == null) return;
+            int pose = _wrecPose;
+            if (pose != 2 && _swimPitchNow == 0f && !_hipsWrote) return;
+            WaterHipsBobApply(pose, SwimPitchLegs(), _wrecBobAmp, _wrecBobHz);
+        }
+
+        void WaterHipsBobApply(int pose, float hipsPitch, float bobAmp, float bobHz)
+        {
             if (hipsPitch != 0f) waterBobHips.rotation = Quaternion.AngleAxis(-hipsPitch, dogRoot.right) * waterBobHips.rotation;   // nose up, visual only
             Vector3 cur = waterBobHips.localPosition;
             Vector3 basePos = (_hipsWrote && cur == _hipsLast) ? cur - _hipsLastOff : cur;
-            float off = pose == 2 ? waterSpot.swimBob * Mathf.Sin(Time.time * waterSpot.swimBobHz * 2f * Mathf.PI) : 0f;
+            float off = pose == 2 ? bobAmp * Mathf.Sin(Time.time * bobHz * 2f * Mathf.PI) : 0f;
             if (off == 0f)
             {
                 if (_hipsWrote) { waterBobHips.localPosition = basePos; _hipsWrote = false; }
@@ -721,28 +745,35 @@ namespace KominkaDogRun
 
         /// <summary>Owner, after the step: afloat, the root rides at water + c - Ms (+ bob); after swimming it eases back to the
         /// ground. StepToward / Coast snapped it to the riverbed first; this only overrides the height.</summary>
-        void WaterApplySwimHeight()
+        void WaterApplySwimHeight() { WaterSwimHeight(false); }
+
+        /// <summary>legs = IMP-DOG-036 S3 water legs frame: the water surface from the decision's record (WaterThinRecord: the
+        /// surface at the decision's z and its slope along z, the per-dog offset) instead of KH_RiverData / KH_WaterSpot.</summary>
+        void WaterSwimHeight(bool legs)
         {
             Vector3 q = dogRoot.position;
             if (_waterSwimming)
             {
                 // the bob is on the visual child; carrying a ball (Fetch state 7/8) lifts the mouth by the ball's radius (B-1)
-                float want = riverData._SurfaceY(q.z) + waterSpot.swimClear + (_waterCarryFrame == Time.frameCount ? waterSpot.carryExtra : 0f) - waterSwimMouth - waterSpot._SwimSink(dogIndex);   // PCVR 2026-09-28: per-dog sink
+                float want = legs ? _wrecSurfY + _wrecSurfSlope * (q.z - _wrecSurfZ) + _wrecSwimOff
+                    : riverData._SurfaceY(q.z) + waterSpot.swimClear + (_waterCarryFrame == Time.frameCount ? waterSpot.carryExtra : 0f) - waterSwimMouth - waterSpot._SwimSink(dogIndex);   // PCVR 2026-09-28: per-dog sink
                 if (!_swimYValid) { _waterSwimY = q.y; _swimYValid = true; _swimSettled = false; }
                 // Rising only at the start; once afloat the height follows the water surface exactly every frame, so a slope
                 // or a push cannot leave the mouth low for a few frames (W2-Pome run 20260927-073904).
+                // IMP-DOG-036 S3: the ease is one frame (MoveDt): the water legs frames ease too (outside the tick it was deltaTime already)
                 if (_swimSettled) _waterSwimY = want;
-                else { _waterSwimY = Mathf.MoveTowards(_waterSwimY, want, SwimEaseRate * Dt()); _swimSettled = Mathf.Abs(_waterSwimY - want) < 0.002f; }
+                else { _waterSwimY = Mathf.MoveTowards(_waterSwimY, want, SwimEaseRate * MoveDt()); _swimSettled = Mathf.Abs(_waterSwimY - want) < 0.002f; }
             }
             else if (_swimYValid)
             {
-                float ground = SnapToGround(q).y;
-                _waterSwimY = Mathf.MoveTowards(_waterSwimY, ground, SwimEaseRate * Dt());
+                float ground = SnapToGround(q).y;   // physics only (no spot query): also on a water legs frame
+                _waterSwimY = Mathf.MoveTowards(_waterSwimY, ground, SwimEaseRate * MoveDt());   // IMP-DOG-036 S3: as above
                 if (Mathf.Abs(_waterSwimY - ground) < 0.005f) _swimYValid = false;
             }
             else return;
             q.y = _waterSwimY;
-            dogRoot.position = q; // net: owner-only: UpdateWaterPlay returns before this for non-Owners
+            if (legs) _dbgWriter = DbgWSwimLegs;   // IMP-DOG-036 S3 step probe
+            dogRoot.position = q; // net: owner-only: UpdateWaterPlay returns before this for non-Owners; WaterRunLegs calls it for the Owner only
         }
 
         bool WaterWantsToStart(Vector3 p)
@@ -946,6 +977,269 @@ namespace KominkaDogRun
                 _nextWaterSoundAt = Time.time + 0.6f;
                 waterAudio.transform.position = at; waterAudio.PlayOneShot(waterStepClip, 0.5f);
             }
+        }
+
+        // ---------------------------------------------------------------- IMP-DOG-036 S3: the water play decides every 10 frames
+        // A dog whose decision ran the water play (UpdateWaterPlay returned true: Owner in a water state, or a non-Owner seeing a wet
+        // pose) decides every waterDecisionEvery frames (Tick.cs). Between decisions WaterRunLegs replays the decision's mover for one
+        // frame (RunLegs), then the swim height and the bob. What a per-frame decision did on every frame and the legs frames do instead:
+        //   river / depth checks per step (_BlockedByRiver, spot queries): kept, with a cheap pre-test (Codex review 2026-10-02: a
+        //       checked line was not enough - a 4 cm push or the bilinear bed between 15 cm samples let a step past the wading
+        //       limit). WaterLegSafe answers "allowed" only where KH_WaterSpot._DepthBoundTable proved that every point of the grid
+        //       cell is inside the spot polygon with a riverbed and no deeper than this decision's limit; anywhere else (near the
+        //       polygon's edge, the bank, a cell that may reach the limit, the river rules) the full per-step check runs as before.
+        //       So a legs frame's step is allowed or refused exactly as a per-frame decision's step was, wherever the dog was pushed.
+        //   swim height: the decision records the water surface at its z and the slope along z (KH_RiverData._SurfaceY is linear in z
+        //       between slices) and the per-dog offset; the legs follow it every frame (WaterSwimHeight(true)), the ease is MoveDt.
+        //   bob / nose-up pitch (visual child in Update, hips in LateUpdate): from the decision's pose / bob / pitch target.
+        //   pose (_SetWaterPose), WaterFx, the swim start / end, the state machine, the errands, the leash veto (RC-14): decision only.
+        // Stays per frame (TickBusy, as before): the Fetch's and the disc's water states (driven every frame by their own Update through
+        // _WaterFetchStep / _WaterRiverStep, handshakes _waterFetchFrame / _waterCarryFrame / _waterRiverFrame), a vetoed leash
+        // (_waterLeashVeto), the ease back to the ground / the pitch back to 0 after the play ended, a leashed dog in the water.
+        const float WaterLegLimitEps = 0.0001f;   // m below the real limits (the float rounding of "Ms - d < SinkGuard" / "d > limit")
+        private bool _waterThin;          // the last decision ran the water play: the next frames may be water legs frames (Update)
+        private bool _waterPlayedNow;     // this decision's UpdateWaterPlay returned true (lowered by Update before every decision)
+        private bool _waterLegTrust;      // inside WaterRunLegs' replay only: _BlockedByRiver may take WaterLegSafe's "allowed"
+        // the cell table and grid of KH_WaterSpot, the depth limit and the swim flag of the decision (Owner; null table = no pre-test)
+        private float[] _wrecCells;
+        private float _wrecGX0, _wrecGZ0, _wrecGStep, _wrecLimit;
+        private int _wrecNx, _wrecNz;
+        private bool _wrecSwim;
+        private float[] _wrecLow;                    // swimming breeds: KH_WaterSpot._DepthLowTable
+        private float _wrecEnter, _wrecLeave;        // WaterSwimEnterDepth / WaterSwimLeaveDepth at the decision
+        private float _wrecZLo, _wrecZHi;            // the surface piece of the swim-height record
+        private float _wrecSurfY, _wrecSurfZ, _wrecSurfSlope, _wrecSwimOff;   // swim height record (Owner, swimming)
+        private int _wrecPose;              // the visual record (every client): the pose after the decision,
+        private float _wrecBobAmp, _wrecBobHz, _wrecPitch;                  // the bob and the nose-up pitch target for that pose
+
+        /// <summary>End of every decision (Tick.cs Update, after UpdateTick): may the next frames be water legs frames, and the
+        /// record they replay. Everything TickBusy would keep per frame besides the water play itself keeps the dog per frame.</summary>
+        void WaterThinRecord()
+        {
+            _waterThin = false; _wrecCells = null;
+            if (!_waterPlayedNow) return;
+            int e = waterDecisionEvery <= 0 ? DefaultWaterDecisionEvery : waterDecisionEvery;
+            if (e <= 1) return;
+            // RC-14's veto walks the dog out every frame; a leashed / washed / candy / companion-stretch dog is TickBusy's
+            if (_waterLeashVeto || _wasLeashed || _washActive || candyPerformanceActive || _candyPetResumePending || _writtenCallTime != 0f) return;
+            if (AnimatorYielded()) return;   // Fetch / disc own the root and the Animator (their water states: every frame)
+            if (_dogOwner)
+            {
+                // the play itself (Approach / Wade / Exit / Shake); the movers the play uses (never LeashGo)
+                if (waterState == WaterOff || _legKind == LegLeash) return;
+                WaterLegsRecordCells();
+                if (_waterSwimming)
+                {
+                    WaterRecordSurface(dogRoot.position.z);
+                    _wrecSwimOff = waterSpot.swimClear + (_waterCarryFrame == Time.frameCount ? waterSpot.carryExtra : 0f) - waterSwimMouth - waterSpot._SwimSink(dogIndex);
+                }
+            }
+            _wrecPose = fetchController.WaterPose;   // after this decision's WaterPoseRefresh (non-Owner: the synced pose)
+            if (waterBob != null || waterBobHips != null)
+            {
+                _wrecBobAmp = _wrecPose == 2 ? waterSpot.swimBob : 0f;
+                _wrecBobHz = _wrecPose == 2 ? waterSpot.swimBobHz : 0f;
+                _wrecPitch = _wrecPose == 2 ? waterSpot._SwimPitch(dogIndex) : 0f;   // = SwimPitchTick's target
+            }
+            _waterThin = true;
+        }
+
+        /// <summary>Owner, end of a water-play decision: what WaterLegSafe needs (one cross-behaviour call for the table, the grid
+        /// reads, the limit). The bed branch of _BlockedByRiver refuses a step only when the step goes deeper AND (Ms - d < SinkGuard
+        /// OR, for a non-swimmer, d > WaterDepthLimit()); afloat it never refuses. So d <= min(Ms - SinkGuard, limit) - eps at next
+        /// means "allowed" whatever the depth at from. No table (spot / river not ready) = no pre-test: every step asks in full.</summary>
+        void WaterLegsRecordCells()
+        {
+            _wrecLow = null;
+            float[] t = waterSpot._DepthBoundTable();
+            if (t == null) return;
+            _wrecGX0 = waterSpot.gridX0; _wrecGZ0 = waterSpot.gridZ0; _wrecGStep = waterSpot.gridStep;
+            _wrecNx = waterSpot.gridNx; _wrecNz = waterSpot.gridNz;
+            if (_wrecGStep <= 0f || _wrecNx < 2 || _wrecNz < 2 || t.Length != (_wrecNx - 1) * (_wrecNz - 1)) return;
+            float lim = waterSwimMouth - SinkGuard;
+            if (!waterSwimAllowed) { float w = WaterDepthLimit(); if (w < lim) lim = w; }
+            lim -= WaterLegLimitEps;
+            _wrecSwim = _waterSwimming;
+            // afloat: any proven cell (an unproven one holds float.MaxValue, above 1e30); wading: the limit, never <= 0 (the bound
+            // may be negative on a dry cell where _WetDepth clamps to 0); no positive limit: no step passes the pre-test
+            if (_waterSwimming) _wrecLimit = 1e30f;
+            else _wrecLimit = lim > 0f ? lim : -1e30f;
+            // a swimming breed: the swim start / end thresholds and the lower bounds for WaterLegsSwimOk
+            if (waterSwimAllowed) { _wrecLow = waterSpot._DepthLowTable(); _wrecEnter = WaterSwimEnterDepth(); _wrecLeave = WaterSwimLeaveDepth(); }
+            _wrecCells = t;
+        }
+
+        /// <summary>IMP-DOG-036 S3 (2nd review, optional fix): the surface record for the legs' swim height is the exact linear piece
+        /// of KH_RiverData._SurfaceY that contains z (its knots zLo / zHi; constant outside the table). WaterLegsSwimOk decides
+        /// before the dog's z can leave [_wrecZLo, _wrecZHi], so the replayed height equals _SurfaceY up to float rounding.</summary>
+        void WaterRecordSurface(float z)
+        {
+            float zs = riverData.zStart, zk = riverData.zStep;
+            float[] a = riverData.surfaceY;
+            int n = a != null ? a.Length : 0;
+            if (n >= 2 && zk > 0.0001f)
+            {
+                float f = (z - zs) / zk;
+                if (f <= 0f) { _wrecZLo = -1e30f; _wrecZHi = zs; _wrecSurfZ = zs; _wrecSurfY = riverData._SurfaceY(zs); _wrecSurfSlope = 0f; return; }
+                float zEnd = zs + (n - 1) * zk;
+                if (f >= n - 1) { _wrecZLo = zEnd; _wrecZHi = 1e30f; _wrecSurfZ = zEnd; _wrecSurfY = riverData._SurfaceY(zEnd); _wrecSurfSlope = 0f; return; }
+                int i = (int)f;
+                if (i > n - 2) i = n - 2;
+                float lo = zs + i * zk;
+                _wrecZLo = lo; _wrecZHi = lo + zk; _wrecSurfZ = lo;
+                _wrecSurfY = riverData._SurfaceY(lo);
+                _wrecSurfSlope = (riverData._SurfaceY(lo + zk) - _wrecSurfY) / zk;
+                return;
+            }
+            // no table (not ready): the old secant, no interval limit
+            _wrecZLo = -1e30f; _wrecZHi = 1e30f; _wrecSurfZ = z; _wrecSurfY = riverData._SurfaceY(z);
+            _wrecSurfSlope = riverData._SurfaceY(z + 1f) - _wrecSurfY;
+        }
+
+        /// <summary>Water legs frame (_waterLegTrust): is a step to next certainly allowed by the full check? True only when the
+        /// whole of _BlockedByRiver would return false for any from: the spot rules apply (a water state, not under the river rules),
+        /// next lies in a cell KH_WaterSpot proved to be inside the polygon with a riverbed everywhere (so SpotContains(next) and
+        /// the spot's bed branch are taken), and that cell's depth bound is within this decision's limit (_wrecLimit: the sink
+        /// guard and, for a non-swimmer, the wading limit; afloat, the bed branch never refuses). False = ask the full check
+        /// (the per-step rule, spot queries included) exactly as a per-frame decision did. Same answer either way, never stricter.</summary>
+        bool WaterLegSafe(Vector3 next)
+        {
+            float[] t = _wrecCells;
+            if (t == null || waterState == WaterOff || RiverFetchNow() || RiverExitNow() || _waterSwimming != _wrecSwim) return false;
+            // the same index arithmetic as KH_WaterSpot._Bed (the cell whose corners it interpolates)
+            float fx = (next.x - _wrecGX0) / _wrecGStep, fz = (next.z - _wrecGZ0) / _wrecGStep;
+            if (!(fx >= 0f && fz >= 0f && fx <= _wrecNx - 1 && fz <= _wrecNz - 1)) return false;   // NaN fails too
+            int ix = (int)fx, iz = (int)fz;
+            if (ix > _wrecNx - 2) ix = _wrecNx - 2;
+            if (iz > _wrecNz - 2) iz = _wrecNz - 2;
+            return t[iz * (_wrecNx - 1) + ix] <= _wrecLimit;
+        }
+
+        /// <summary>May this frame be a water legs frame (read only while _waterThin, instead of TickBusy)? False = decide now: the
+        /// events the last decision could not have seen and that must not wait.</summary>
+        bool WaterLegsOk()
+        {
+            // ownership change: a legs frame must never move a root this client no longer owns (and the new Owner's WaterTick edge)
+            if (_dogOwner != IsDogOwner()) return false;
+            // Fetch / the disc took the root and the Animator
+            if (AnimatorYielded()) return false;
+            // RC-14: a leash that appeared since the decision is checked (wet = vetoed) on this frame. KH_LeashManager._IsLeashed
+            // reads walkers[dog] >= 0; read the synced array directly (one cross-behaviour read instead of a call)
+            if (hillsideLeashes != null)
+            {
+                int[] w = hillsideLeashes.walkers;
+                if (w != null && dogIndex >= 0 && dogIndex < w.Length && w[dogIndex] >= 0) return false;
+            }
+            if (!_dogOwner) return true;
+            // a moving dog whose decision recorded no mover (a state switch returning early) decides again, as in TickBusy
+            if (_legKind == LegNone && _speed > 0f) return false;
+            // (a push by KD_DogPack between our frames needs nothing here: WaterLegSafe judges each step's own end point)
+            // a swimming breed near a swim start / end decides on this frame (WaterLegsSwimOk)
+            if (waterSwimAllowed && !WaterLegsSwimOk()) return false;
+            return true;
+        }
+
+        /// <summary>IMP-DOG-036 S3 (2nd review 2026-10-02): may a swimming breed take this legs frame without changing when it starts
+        /// or stops swimming? Per frame, the decision did two things a legs frame does not:
+        ///   wading (not afloat), before a StepToward (WaterStepWade / WaterStepExit): WaterSwimLookAhead starts the swim when the
+        ///     point min(len, SwimLookAhead) toward the goal has WDepth >= WaterSwimEnterDepth().
+        ///   afloat, before and after the step (WaterPoseRefresh): WDepth(root) < WaterSwimLeaveDepth() starts / continues the
+        ///     swimLeaveHold timer, anything deeper resets it (_swimShallowSince = -1).
+        /// True only when every grid cell the frame can touch - the root, the step's end (toward the target, and a coast along
+        /// _moveDir) and, wading, the look-ahead point - is proven by the KH_WaterSpot tables to be shallower than the enter depth
+        /// (wading) / at least the leave depth (afloat). Then the per-frame decision would not have started the swim and would have
+        /// reset the timer (done here). Anything else decides on this frame, so the look-ahead and the pose refresh run before the
+        /// step exactly as they did. Afloat, it also decides before z leaves the recorded surface piece (WaterRecordSurface).</summary>
+        bool WaterLegsSwimOk()
+        {
+            float[] up = _wrecCells, low = _wrecLow;
+            if (up == null || low == null || waterState == WaterOff || RiverFetchNow() || RiverExitNow() || _waterSwimming != _wrecSwim) return false;
+            bool afloat = _waterSwimming;
+            int kind = _legKind;
+            // wading: only a StepToward can be preceded by the look-ahead (the approach's GatherStep, the holds' and the look's
+            // Coast never were); afloat: every mover (the timer reads the root whatever moved it)
+            if (!afloat && kind != LegStep) return true;
+            if (afloat && kind == LegGather) return false;
+            Vector3 p = dogRoot.position;
+            float x0 = p.x, x1 = p.x, z0 = p.z, z1 = p.z;
+            float dt = Time.deltaTime;
+            if (kind == LegStep)
+            {
+                // StepToward: never faster than max(_speed, desired), never past the target
+                float reach = (_speed > _legSpeed ? _speed : _legSpeed) * dt;
+                float a = afloat || reach > SwimLookAhead ? reach : SwimLookAhead;
+                float tx = _legTarget.x - p.x, tz = _legTarget.z - p.z;
+                float len = Mathf.Sqrt(tx * tx + tz * tz);
+                if (len > 0.0001f)
+                {
+                    if (a > len) a = len;
+                    float qx = p.x + tx / len * a, qz = p.z + tz / len * a;
+                    if (qx < x0) x0 = qx; if (qx > x1) x1 = qx; if (qz < z0) z0 = qz; if (qz > z1) z1 = qz;
+                }
+            }
+            if (_speed > 0f)
+            {
+                // a coast (Coast itself, or StepToward inside its stop distance) runs along _moveDir
+                float c = _speed * dt;
+                float qx = p.x + _moveDir.x * c, qz = p.z + _moveDir.z * c;
+                if (qx < x0) x0 = qx; if (qx > x1) x1 = qx; if (qz < z0) z0 = qz; if (qz > z1) z1 = qz;
+            }
+            if (afloat && (z0 < _wrecZLo || z1 > _wrecZHi)) return false;   // the swim height's surface piece (WaterRecordSurface)
+            if (afloat && !(_wrecLeave > WaterWet)) return false;            // proven >= leave must also mean wet (WaterPoseRefresh)
+            // the cells _Bed would use for any point of the box (the index arithmetic of WaterLegSafe, monotonic in x and in z)
+            int ix0 = WaterCellIndex(x0, _wrecGX0, _wrecNx), ix1 = WaterCellIndex(x1, _wrecGX0, _wrecNx);
+            int iz0 = WaterCellIndex(z0, _wrecGZ0, _wrecNz), iz1 = WaterCellIndex(z1, _wrecGZ0, _wrecNz);
+            if (ix0 < 0 || ix1 < 0 || iz0 < 0 || iz1 < 0 || ix1 - ix0 > 2 || iz1 - iz0 > 2) return false;
+            int cx = _wrecNx - 1;
+            for (int iz = iz0; iz <= iz1; iz++)
+                for (int ix = ix0; ix <= ix1; ix++)
+                {
+                    int ci = iz * cx + ix;
+                    if (afloat) { if (!(low[ci] >= _wrecLeave)) return false; }
+                    else if (!(up[ci] < _wrecEnter)) return false;
+                }
+            if (afloat) _swimShallowSince = -1f;   // what the per-frame WaterPoseRefresh did at this depth (before and after the step)
+            return true;
+        }
+
+        /// <summary>The grid cell index along one axis exactly as KH_WaterSpot._Bed computes it; -1 outside the grid (NaN too).</summary>
+        int WaterCellIndex(float v, float origin, int count)
+        {
+            float f = (v - origin) / _wrecGStep;
+            if (!(f >= 0f && f <= count - 1)) return -1;
+            int i = (int)f;
+            if (i > count - 2) i = count - 2;
+            return i;
+        }
+
+        /// <summary>One water legs frame: the decision's mover (RunLegs), its river checks pre-tested by WaterLegSafe, then the
+        /// swim height (Owner) and the bob / pitch on the visual child (every client; the hips follow in LateUpdate).</summary>
+        void WaterRunLegs()
+        {
+            _waterLegTrust = _dogOwner;
+            RunLegs();
+            _waterLegTrust = false;
+            if (_dogOwner) WaterSwimHeight(true);
+            _dbgWaterLegs++;   // IMP-DOG-036 S3 harness read-out (Course/78 W0, Course/79 W1-*)
+            WaterBobLegs();
+        }
+
+        /// <summary>WaterBobTick from the decision's record. At rest (not afloat, pitch 0) the decision already wrote the rest pose.</summary>
+        void WaterBobLegs()
+        {
+            if (waterBob == null || !_bobBaseValid || !_bobBaseRotValid) return;
+            if (_wrecPose != 2 && _swimPitchNow == 0f) return;
+            float off = _wrecPose == 2 ? _wrecBobAmp * Mathf.Sin(Time.time * _wrecBobHz * 2f * Mathf.PI) : 0f;
+            waterBob.localPosition = _bobBase + Vector3.up * off;
+            float pitch = SwimPitchLegs();
+            waterBob.localRotation = pitch != 0f ? _bobBaseRot * Quaternion.AngleAxis(-pitch, Vector3.right) : _bobBaseRot;   // nose up
+        }
+
+        /// <summary>SwimPitchTick from the decision's target (one frame).</summary>
+        float SwimPitchLegs()
+        {
+            _swimPitchNow = Mathf.MoveTowards(_swimPitchNow, _wrecPitch, SwimPitchRate * MoveDt());
+            return _swimPitchNow;
         }
     }
 }

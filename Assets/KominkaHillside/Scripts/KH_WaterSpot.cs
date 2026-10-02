@@ -386,5 +386,103 @@ namespace KominkaHillside
             Vector3 d = entry - p; d.y = 0f;
             return d.magnitude <= entryRadius;
         }
+
+        // ---- IMP-DOG-036 S3: per grid cell, an upper bound of the depth anywhere in the cell (the dogs' water legs frames) ----
+        // Cell (ix, iz) = the closed square [gridX0 + ix s, + s] x [gridZ0 + iz s, + s] (s = gridStep), the cell _Bed interpolates in
+        // for every point of it (ix = (int)fx clamped to gridNx - 2, the same for z). Value = +MaxValue ("never trusted") unless:
+        //   (1) its four corners are inside the polygon (_Contains), and
+        //   (2) no polygon edge's bounding box, padded by CellPad, overlaps the square. Then every edge is at least CellPad away in
+        //       x or in z from every point of the square, so the square (connected, with an inside point) holds no boundary point
+        //       and lies wholly inside the polygon: _Contains is true everywhere in it (CellPad >> the ~1e-4 m float error of the
+        //       crossing test; a point whose (int)fx rounds into this cell lies within ~1e-5 m of the square), and
+        //   (3) its four bed values exist (> NoBed + 1): _Bed / _WetDepth return a riverbed for every point of it.
+        // Then bound = max of the water surface over the cell's z range - the lowest corner (+ CellEps). The bilinear bed is a convex
+        // combination of the four corners (>= the lowest), KH_RiverData._SurfaceY is linear between its knots (zStart + k zStep) and
+        // constant outside them, so its maximum over [z0, z0 + s] is at z0, z0 + s or a knot inside: every point p of the cell has
+        // _WetDepth(p) <= bound. CellEps covers the float rounding of the lerps and of p.z at the cell's z edge (slope x 1e-5).
+        // Static data only (baked bed, polygon, river surface): built once per set of arrays, read by the dogs as one reference.
+        // Cache key: the polyX / polyZ / bed array references, gridNx / gridNz, gridX0 / gridZ0 / gridStep. NOT in the key (assumed
+        // immutable after the bake, no runtime writer exists): the contents of those arrays (in-place edits), riverData itself, its
+        // surfaceY / zStart / zStep. A tool that changes any of these at runtime must replace the arrays (or call nothing here).
+        // A second table, _DepthLowTable, holds the matching LOWER bound (lowest surface over the z range - highest corner - CellEps,
+        // -MaxValue where unproven): _WetDepth(p) >= it, since _WetDepth only clamps upward (to 0).
+        const float CellPad = 0.01f, CellEps = 0.0001f;
+        private float[] _cellBound, _cellLow;
+        private float[] _cellPolyX, _cellPolyZ, _cellBed;
+        private int _cellNx, _cellNz;
+        private float _cellX0, _cellZ0, _cellStep;
+
+        void Start() { _DepthBoundTable(); }   // IMP-DOG-036 S3: build at load, not on the first water decision
+
+        /// <summary>IMP-DOG-036 S3: the per-cell depth bound ((gridNx - 1) x (gridNz - 1), row-major in z; float.MaxValue = never
+        /// trusted). Null when the spot or the river is not ready.</summary>
+        public float[] _DepthBoundTable()
+        {
+            // a non-finite polygon (no slab table, see _Ready) is never trusted: the bounding boxes below need finite vertices
+            if (!_Ready() || _slabZ == null || !riverData._Ready() || gridStep <= 0f) return null;
+            if (_cellBound != null && _cellPolyX == polyX && _cellPolyZ == polyZ && _cellBed == bed && _cellNx == gridNx && _cellNz == gridNz
+                && _cellX0 == gridX0 && _cellZ0 == gridZ0 && _cellStep == gridStep) return _cellBound;
+            int nx = gridNx, nz = gridNz, cx = nx - 1, cz = nz - 1;
+            float s = gridStep;
+            // (1) grid vertices inside the polygon
+            bool[] inV = new bool[nx * nz];
+            for (int iz = 0; iz < nz; iz++)
+                for (int ix = 0; ix < nx; ix++)
+                    inV[iz * nx + ix] = _Contains(new Vector3(gridX0 + ix * s, 0f, gridZ0 + iz * s));
+            // (2) cells a padded edge bounding box overlaps. Cell ix < floor((min - pad - x0) / s) ends at or before min - pad,
+            // cell ix > floor((max + pad - x0) / s) starts after max + pad: the unmarked cells are separated by >= CellPad
+            bool[] near = new bool[cx * cz];
+            int n = polyX.Length;
+            for (int i = 0; i < n; i++)
+            {
+                int j = i == 0 ? n - 1 : i - 1;
+                float ax = polyX[i], bx = polyX[j], az = polyZ[i], bz = polyZ[j];
+                int ix0 = (int)Mathf.Floor(((ax < bx ? ax : bx) - CellPad - gridX0) / s), ix1 = (int)Mathf.Floor(((ax < bx ? bx : ax) + CellPad - gridX0) / s);
+                int iz0 = (int)Mathf.Floor(((az < bz ? az : bz) - CellPad - gridZ0) / s), iz1 = (int)Mathf.Floor(((az < bz ? bz : az) + CellPad - gridZ0) / s);
+                if (ix0 < 0) ix0 = 0; if (iz0 < 0) iz0 = 0; if (ix1 > cx - 1) ix1 = cx - 1; if (iz1 > cz - 1) iz1 = cz - 1;
+                for (int iz = iz0; iz <= iz1; iz++)
+                    for (int ix = ix0; ix <= ix1; ix++) near[iz * cx + ix] = true;
+            }
+            float[] t = new float[cx * cz], lowT = new float[cx * cz];
+            float zs = riverData.zStart, zk = riverData.zStep;
+            for (int iz = 0; iz < cz; iz++)
+            {
+                // the highest water surface over [za, zb]: the ends and every knot strictly inside
+                float za = gridZ0 + iz * s, zb = za + s;
+                float smax = riverData._SurfaceY(za), sb = riverData._SurfaceY(zb);
+                float smin = smax;
+                if (sb > smax) smax = sb;
+                if (sb < smin) smin = sb;
+                if (zk > 0.0001f)
+                {
+                    float k = Mathf.Ceil((za - zs) / zk);
+                    for (float z = zs + k * zk; z < zb; z += zk)
+                        if (z > za) { float sk = riverData._SurfaceY(z); if (sk > smax) smax = sk; if (sk < smin) smin = sk; }
+                }
+                for (int ix = 0; ix < cx; ix++)
+                {
+                    int ci = iz * cx + ix;
+                    t[ci] = float.MaxValue; lowT[ci] = -float.MaxValue;
+                    if (near[ci]) continue;
+                    int v = iz * nx + ix;
+                    if (!inV[v] || !inV[v + 1] || !inV[v + nx] || !inV[v + nx + 1]) continue;
+                    float a = bed[v], b = bed[v + 1], c = bed[v + nx], d = bed[v + nx + 1];
+                    if (a <= NoBed + 1f || b <= NoBed + 1f || c <= NoBed + 1f || d <= NoBed + 1f) continue;
+                    float lo = a; if (b < lo) lo = b; if (c < lo) lo = c; if (d < lo) lo = d;
+                    float hi = a; if (b > hi) hi = b; if (c > hi) hi = c; if (d > hi) hi = d;
+                    t[ci] = smax - lo + CellEps;
+                    lowT[ci] = smin - hi - CellEps;
+                }
+            }
+            _cellBound = t; _cellLow = lowT; _cellPolyX = polyX; _cellPolyZ = polyZ; _cellBed = bed; _cellNx = nx; _cellNz = nz;
+            _cellX0 = gridX0; _cellZ0 = gridZ0; _cellStep = s;
+            return t;
+        }
+
+        /// <summary>IMP-DOG-036 S3: the per-cell LOWER depth bound, same layout as _DepthBoundTable (-float.MaxValue = unproven).</summary>
+        public float[] _DepthLowTable()
+        {
+            return _DepthBoundTable() == null ? null : _cellLow;
+        }
     }
 }

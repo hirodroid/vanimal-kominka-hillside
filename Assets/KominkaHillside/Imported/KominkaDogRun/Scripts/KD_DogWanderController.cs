@@ -1795,6 +1795,9 @@ namespace KominkaDogRun
             if (!_tickedThisFrame)
             {
                 if (dogAnimator != null && _wantSit != _wasSit) { _wasSit = _wantSit; dogAnimator.SetBool("Sit", _wantSit); }
+                // IMP-DOG-036 S3: the Animator rewrites the hips every frame, so a water legs frame bobs / pitches them again from
+                // the decision's record (WaterHipsBobLegs, HillsideWater.cs). Other legs frames have nothing on the hips (TickBusy)
+                if (_waterThin) WaterHipsBobLegs();
                 return;
             }
             FinishInterruptedGreeting();
