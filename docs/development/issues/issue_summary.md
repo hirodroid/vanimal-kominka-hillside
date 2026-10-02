@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-81 件 — 対応中 20 / 確認待ち 28 / 未着手 20 / 保留 3 / 完了 10
+81 件 — 対応中 18 / 確認待ち 28 / 未着手 20 / 保留 3 / 完了 12
 
 ## 実行キュー
 
@@ -15,11 +15,9 @@
 | [IMP-DOG-001](IMP-DOG-001-port-dog-system.md) | High | 古民家ドッグランの犬ギミックを移植する (タグ `export/kominka-hillside-v1` + 移植記録) | wip |  |
 | [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、Desktop/Touch、複数人。看板の本制作・分かりやすさは DES-UI-004 へ分離 | wip |  |
 | [IMP-DOG-009](IMP-DOG-009-walk-speed-tiers.md) | High | 散歩の犬の速さを 4 段階に (最速は現状の速歩の 3 倍)。人が犬を引っ張る状態をなくす。Run クリップの再生速度・減速も合わせる。9/22 PCVR 1 人 1 匹で OK・採用、3〜6 匹・2 人以上・Desktop は未確認 | wip |  |
-| [IMP-DOG-024](IMP-DOG-024-walk-and-wash-experience.md) | High | Animal Wash以上のASMR的な洗浄の気持ちよさを最優先に、散歩帰りのお手入れと複数洗い場を作る大型Issue | wip | IMP-DOG-025 で代表 1 匹 (柴) の一周を作り、賭け 3 つを確かめる |
-| [IMP-DOG-025](IMP-DOG-025-wash-prototype-one-dog.md) | High | 代表 1 匹 (柴) で洗浄の一周を細く通し、設計書の賭け 3 つを確かめる試作 | wip | 2026-09-30 の PCVR の指摘 (泡の層の切れ目、犬が向きすぎる、座りすぎる、汚れは足元から、汚れと濡れの区別) を直す |
+| [IMP-DOG-024](IMP-DOG-024-walk-and-wash-experience.md) | High | Animal Wash以上のASMR的な洗浄の気持ちよさを最優先に、散歩帰りのお手入れと複数洗い場を作る大型Issue | wip | IMP-DOG-025 で泡立てとすすぎの快適さを改善する (10-02 要望: 肩・関節の残り泡をなくし、周囲もさっと流れる)。6 匹・2 人・端末別の仕上げ確認を続ける |
+| [IMP-DOG-025](IMP-DOG-025-wash-prototype-one-dog.md) | High | 代表 1 匹 (柴) の洗浄体験を磨く。こすると泡が広がり、シャワーではさっと流れる手応えへ。肩・関節にしつこく残る泡を改善する | wip | 10-02 のすすぎ改善要望に対応。肩・関節の泡が消えにくい条件を調べ、泡立ちの勢いと、周囲も自然に流れる速く快適なすすぎを調整する |
 | [IMP-DOG-028](IMP-DOG-028-wash-sound-and-reactions.md) | High | 洗浄の音と犬の反応の仕上げ (音素材の制作と記録、個人音量、タオル、ブルブル、満足の合図) | wip | ハーネス (W-shake / satisfied / paw / no-repeat) の結果、ユーザーの Play (反応の見え方、音の試聴)、試聴の後の音素材の作り直しが残り |
-| [IMP-DOG-034](IMP-DOG-034-dog-udon-tick-thinning.md) | High | 犬の Udon を軽くする。段階 1 (待機中の徘徊を fps 連動で間引く) は済。Quest 3 は 20〜30 fps で残りは Udon。棚卸しの結果、リード歩行の毎フレーム走査・首輪ロープ・洗浄セル評価が主因。A (挙動同一の入れ替え・キャッシュ) → B (監視の低頻度化) の順で実装する | wip | 6 匹が川に入ったときの負荷 (水遊びの毎フレーム経路) を調べて削る。リード歩行は IMP-DOG-036 |
-| [IMP-ENV-010](IMP-ENV-010-quest-performance.md) | High | Quest 3 単体で 10〜20 fps・地形が光る (2026-09-30 実機報告)。Android/iOS ビルドだけ地形を Lite シェーダーへ差し替え、群ごとの ON/OFF プローブで寄与を実機で測る | wip | 殻 1 パス版を Android でビルド → Quest 3 で犬を見ている状態の fps と地形の光りを確認 → 犬 Udon の間引きをやるか決める (ユーザー) |
 | [DES-ENV-002](DES-ENV-002-longer-course.md) | Medium | 約2.41kmの川沿い周回を実装し、2026-09-27に本番シーン (VRCDefaultWorldScene) へ採用済み。Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する | wip | 犬連れの実歩行時間、LODと遮蔽の実機表示、Quest 3・iPhone 15 Pro・16人の性能から最終距離/予算を確定する (ユーザーの実機。VER-WLD-001) |
 | [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK)、段階 2・3 は 9/24 実装済み・PCVR 待ち | wip |  |
 | [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) | Medium | フリスビー通常版はPCVRでひとまずOK。項目別・2人の検証を保持。バリエーションは008、6匹展開は012 | wip |  |
@@ -37,8 +35,8 @@
 | [IMP-DOG-027](IMP-DOG-027-wash-behavior-switching.md) | High | 洗われ中の犬と既存行動 (リード・Fetch・フリスビー・水遊び・集合・呼び戻し・ワープ) の切替 | review | ユーザーの PCVR (リード接続中の停止と解除、他人のストロークで止まらないこと、Fetch・集合との切替) が残り |
 | [IMP-DOG-030](IMP-DOG-030-wash-six-dogs.md) | High | 洗浄を 6 匹へ展開する (位置マップ・部位・体格・毛色・動く部位) | review | ユーザーの Play (6 匹の見え方、特に白い毛と小型犬)、本シーンの負荷の実測が残り。本番では initialDirt を 0 に |
 | [IMP-DOG-035](IMP-DOG-035-wash-call-dog-to-station.md) | High | 洗い場のボードで犬を選んで呼ぶと、その犬が洗い場へ来て立ち、洗い終わるまで留まる | review | ユーザーの Play / PCVR (ボードで呼びやすいか、立つ向き、2 人での呼び出しと解放) が残り |
-| [IMP-DOG-036](IMP-DOG-036-leash-decision-thinning.md) | High | 犬の「判断」を全状態で 5 フレームに 1 回 (川の中は 10 フレーム) にし、位置を進める足だけ毎フレームにする。使っていない機能の Update の入口も無くす。2026-10-02 にリードだけから全状態へ拡張 (ユーザー決定) | review | 性能は一旦十分 (2026-10-02 ユーザー判断)。追加の削減は保留。残りは未確認項目の Play / 複数人確認 (他の人の紐、ボール、持ち手、ライブ、視線、店番の Interact、計測ボタン) |
 | [IMP-ENV-007](IMP-ENV-007-main-wash-station.md) | High | 門の外の主洗い場の整備 (洗い台、道具の棚と戻し先、蛇口・ホース・桶、犬を呼ぶ方法) | review | ユーザーの Play (棚の位置と高さ、道具の取りやすさ、札の日本語の記入、手動配置との干渉) が残り |
+| [IMP-ENV-010](IMP-ENV-010-quest-performance.md) | High | 軽量化は2026-10-02ユーザー判断で一旦完了。地形の光り・軽量化後の動作と複数人確認・公開前の計測プローブ撤去を残件として管理する | review | 地形の表示と IMP-DOG-034 / 036 から引き継いだ未確認動作を確認し、公開前に計測プローブを撤去する。端末別の性能記録は VER-WLD-001 |
 | [IMP-ENV-011](IMP-ENV-011-wash-height-adjust.md) | High | 洗い場の台の高さ (犬を上げる) と、自分用の見えない床の高さ (自分が浮く) を調整できるようにする | review | ユーザーの Play / PCVR・Desktop・スマホ (台と自分の高さでの洗いやすさ、自分の床の上げ下げの感触、ボードの文字) が残り |
 | [IMP-PRG-001](IMP-PRG-001-ledger-shopkeeper-points.md) | High | 台帳・おじいさん (門)・支度用ポイント (初回 200pt 一回・滞在 1分1pt)・購入と CE 判定。2026-09-24 実装済み・Verify 全 PASS (e4f5906、名前空間 KH_Commerce_v1)。T-007 / T-008・復元の実機確認待ち | review | 200pt が一回だけ入る (T-007)、滞在加算と再入室の復元、購入の保存と CE の所持判定、残高 0 で基本機能が使える (T-008)。AI 側の ClientSim ハーネスは済み (Course/96 7/7、96b 4/4、2026-09-29 ccd3ff1)。サーバー保存・実際の再入室・CE 判定は対象外で PCVR / 実機に残る |
 | [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) | High | 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換え、設定面を作る。段階 0-a / 0-b / 3 は実装済み・Verify 全 PASS、0-b は 2026-09-24 PCVR OK。段階 3 (距離フェード・許可初期 ON・ようこそ等) の実機確認待ち。クレジット URL 3 件はユーザー記入待ち | review | 段階 0-b は PCVR OK (2026-09-24)。残り: 退行・取り違えの確認、段階 3 の距離フェード (T-011)・ナイトモードのスライダー・許可トグル 2 種・状態表示の規律。クレジット URL 3 件はユーザー記入。Quest/iOS は VER-WLD-001 |
@@ -85,6 +83,8 @@
 
 | ID | 重要度 | 概要 | 日付 |
 |----|--------|------|------|
+| [IMP-DOG-034](IMP-DOG-034-dog-udon-tick-thinning.md) | High | 犬 Udon・洗浄・川の計算を段階的に削減。IMP-DOG-036 の対応と合わせ、2026-10-02 ユーザー判断で軽量化は一旦完了 | 2026-10-02 |
+| [IMP-DOG-036](IMP-DOG-036-leash-decision-thinning.md) | High | 犬の判断と毎フレームの移動を分離し、リード・待機・川・紐・未使用機能の処理を削減。段階 1〜3・6 と 5 の一部で性能は一旦十分とユーザー判断し、2026-10-02 完了 | 2026-10-02 |
 | [DES-WLD-003](DES-WLD-003-map-and-travel.md) | Medium | 広い周回コースの地図、地点ワープ、プレイヤーへの合流と接続犬の同行を設計する | 2026-09-29 |
 | [IMP-DOG-022](IMP-DOG-022-frisbee-takeout-area.md) | Medium | (IMP-DOG-023 M4 で置換済み) ディスクの手元への取り出し (おもちゃタブ) を、投げられる広場の近く (円 + 5 m) に限る。外では「広場の近くで取り出せます」と案内する (DES-DOG-005 段階 1) | 2026-09-29 |
 | [DES-DOG-004](DES-DOG-004-river-play-and-floating-fetch.md) | Medium | 小川で犬が入水・浮遊・泳ぐ動作と、浮くボールを泳いで回収する遊びを設計する | 2026-09-27 |
