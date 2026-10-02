@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-81 件 — 対応中 18 / 確認待ち 25 / 未着手 20 / 保留 3 / 完了 15
+81 件 — 対応中 18 / 確認待ち 26 / 未着手 19 / 保留 3 / 完了 15
 
 ## 実行キュー
 
@@ -49,6 +49,7 @@
 | [IMP-DOG-020](IMP-DOG-020-river-wading-and-swim.md) | Medium | 川の水遊びを初期公開にすべて入れる (2026-09-27 2 回目の決定)。前提・水遊び場・浅瀬歩き・小型犬の泳ぎ (ClientSim 済み) に、水遊び場の拡張と目印・近くにいれば入るきっかけ、浮くボールの回収、積み残し (フリスビー・ディスク・押し合い・揺れ・水音) を加え、公開前の検証まで行う | review | 残り: ユーザーの判断 (泳ぎの揺れの要否 A99、柴を泳がせるか A100、水音の採用 / 差し替え / 無音 A106)、2 人の実機 (S1〜S5b と監査の実機確認 4 件)、Quest/iOS・16 人は VER-WLD-001。PCVR 1 人の観察項目 (A94〜A117) は 10-02 ユーザー総合判断で確認済み。破壊監査 (2026-09-28) は反映済み |
 | [IMP-DOG-023](IMP-DOG-023-frisbee-anywhere.md) | Medium | フリスビーをどこでも (DES-DOG-005 段階 3)。M1 陸の地面基準ジャンプと到達判定、M2 川のディスクの浮き、M3 岸からのドボンと水中回収、M4 取り出しの門の置き換え | review | AI 側の検証は M1〜M4 とも済み。残りは 2 人の実機 (設計書 #44〜#47、B31) と VER-WLD-001 項目 12。PCVR 1 人の 37〜43・48 (跳び込み 40/41 を含む。A78・A79・A113・A115・A116) は 10-02 ユーザー総合判断で確認済み |
 | [IMP-DOG-029](IMP-DOG-029-dirt-accumulation.md) | Medium | 散歩・土や泥・川で犬が汚れる条件と、洗った後の清潔の余韻 | review | 残り: ハーネス (W-dirt-*) の結果の確認 (AI)、300 m で足が半分などの試作値の調整値の記録 (本番は initialDirt を 0 に)。PCVR 1 人の汚れ方・余韻 (A58) は 10-02 ユーザー総合判断で確認済み |
+| [IMP-DOG-031](IMP-DOG-031-collar-release-interact-only-own-walk.md) | Medium | 首輪の「外す」インタラクトを、自分が散歩中の犬にだけ出す (撫でる・洗う時に判定を取られない) | review | 実装と ClientSim は済み。ユーザーの PCVR で、散歩していない犬の首まわりを撫でる・洗うときに「外す」が出ないこと、自分の散歩中の犬では手元に出て外せることを確認。2 人で、他人が散歩中の犬に自分側で出ないことを確認 |
 | [IMP-ENV-008](IMP-ENV-008-wash-stations-along-course.md) | Medium | 主洗い場と同じ洗浄処理を、川辺・広場・裏山の採用地点へ展開する | review | 残り: Verify・ハーネス・production.md の確認 (AI)。PCVR 1 人 (A57・A91〜A93: 3 か所の位置と導線、川辺の看板・石との干渉) は 10-02 ユーザー総合判断で確認済み |
 | [IMP-WLD-001](IMP-WLD-001-map-warp-and-join.md) | Medium | 地図の副画面、川辺・奥広場の 2 地点ワープ、インスタンス内のプレイヤーへの合流、接続犬の同行、暗転を、DES-WLD-003 の確定設計 (2026-09-27) どおりに実装する | review | 残り: PCVR 2〜3 人 (設計書 §C.2 #1・#2・#6・#7、#3〜#5)、VER-WLD-001 (Quest 単体・iOS の Touch・通知板と Focus View・暗転・表示名の字 #8b・16 人の通知間隔)。PCVR 1 人 (A118〜A122) は 10-02 ユーザー総合判断で確認済み。破壊監査 (2026-09-28) の 4 RC は反映済み |
 | [IMP-WLD-003](IMP-WLD-003-bgm-and-volume-settings.md) | Medium | 専用BGM「木漏れ日の帰り道」003を導入し、古民家と同じ設定メニューで個人のON/OFF・音量調整を可能にする | review | 残り: ON/OFF ボタンを残すか・基準音量 0.35 と圧縮品質の決定 (A131・A132)、別プレイヤーへ影響しないこと (2 人)、Android/iOS の容量の実測と Quest/iOS の操作性。PCVR 1 人 (A130・A133・A134) は 10-02 ユーザー総合判断で確認済み。WAV は版管理へ収録済み |
@@ -64,7 +65,6 @@
 | [DES-WLD-001](DES-WLD-001-round-trip.md) | Medium | 古民家からの出発・帰還と状態の扱いを設計する | todo |  |
 | [DES-WLD-002](DES-WLD-002-sound.md) | Medium | BGM003の導入・個人音量設定はIMP-WLD-003へ。環境音・場所別構成と残る音の方針を整理する | todo | BGM採用決定とIMP-WLD-003を前提に、環境音・場所別構成の残件をgame-designへ整理する |
 | [IMP-DOG-006](IMP-DOG-006-leashed-treat-approach.md) | Medium | おやつで自分の接続犬の最寄り1匹を呼び、少し待つ間に撫でる/首輪を外す→次の1匹。9/23 操作方針了承、詳細設計・実装は未 | todo |  |
-| [IMP-DOG-031](IMP-DOG-031-collar-release-interact-only-own-walk.md) | Medium | 首輪の「外す」インタラクトを、自分が散歩中の犬にだけ出す (撫でる・洗う時に判定を取られない) | todo | KH_LeashCollar で、自分がリードを持っている時だけインタラクトを有効にする |
 | [IMP-DOG-032](IMP-DOG-032-call-placement-free-height.md) | Medium | 場所を決めて呼ぶのマーカーを古民家どおり手の高さに追従させる (地面への吸着と斜面で置けない判定を外す) | todo | KD_SleepPlacement / KD_SleepSlot / KD_DogWanderController.Sleep の IMP-DOG-016 変更 2・3 の該当部分を古民家へ戻し、Editor の Verify を追従させる |
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |  |
 | [IMP-ENV-005](IMP-ENV-005-auto-night-mode.md) | Medium | ナイトモードに時間経過で暗くなるグローバルのオートと、個人で調整するローカルのマニュアルを追加する | todo | 時間の起点・暗くなる所要時間・到達後の挙動・モードの初期値と保存方針を決める |

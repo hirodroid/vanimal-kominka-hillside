@@ -233,6 +233,7 @@ namespace KominkaHillside
             Debug.Log("[KH_Leash] ReqAttach dog" + dog + " by player " + caller.playerId + " hand=" + hand + " dest=" + destinations[dog]); // BUG-DOG-004 trail
             RequestSerialization();
             WakeRope(dog);   // IMP-DOG-036 S6: the Owner gets no OnDeserialization for its own write
+            ReleaseInteract(dog);   // IMP-DOG-031: same reason (on only when the Owner itself is the caller)
         }
 
         // IMP-DOG-027: the dog's wash hold through its wander layer (fetchers[dog].pack, as LeashInviteBark). Unwired = false.
@@ -266,6 +267,7 @@ namespace KominkaHillside
             ClearTravel(dog); // IMP-WLD-001: a released dog carries no travel ticket (KH_LeashManager.Travel.cs)
             if (dogRoots[dog] != null) releasedHomes[dog] = dogRoots[dog].position;
             ApplyHomes();
+            ReleaseInteract(dog);   // IMP-DOG-031: every Owner-side release (collar, menu, water, player left, maintenance)
         }
 
         private void ApplyHomes()
@@ -313,7 +315,36 @@ namespace KominkaHillside
         }
 
         // IMP-DOG-036 S6: every non-Owner (and a late joiner's first state) starts the rope loops of the leashed dogs.
-        public override void OnDeserialization() { ApplyHomes(); WakeLeashedRopes(); }
+        public override void OnDeserialization() { ApplyHomes(); WakeLeashedRopes(); ReleaseInteracts(); }
+
+        // IMP-DOG-031: the collar's "Release leash" Interact is on only on the walker's own client (KH_LeashCollar._SetReleasable,
+        // which writes only on a change). Called where walkers changes on this client: ReqAttach / Release (Owner), OnDeserialization
+        // (everyone else, late joiners), and the 0.5 s maintenance below (safety net). No synced state of its own.
+        // _riMask: bit i = "dog i is mine" as last written to all six collars (-1 = unknown / a collar was missing), so the
+        // 0.5 s pass costs one loop over walkers and no collar call while nothing changed.
+        private int _riMask = -1;
+        private void ReleaseInteract(int dog)
+        {
+            KH_LeashCollar collar = LrCollar(dog);
+            if (collar != null) collar._SetReleasable(_IsMine(dog));
+            _riMask = -1;   // the next full pass writes (the collars skip what they already have)
+        }
+        private void ReleaseInteracts()
+        {
+            VRCPlayerApi local = Networking.LocalPlayer;
+            int me = Utilities.IsValid(local) ? local.playerId : -2;   // -2: never a walker id (-1 = free)
+            int mask = 0;
+            for (int i = 0; i < walkers.Length; i++) if (walkers[i] >= 0 && walkers[i] == me) mask |= 1 << i;
+            if (mask == _riMask) return;
+            bool all = true;
+            for (int i = 0; i < walkers.Length; i++)
+            {
+                KH_LeashCollar collar = LrCollar(i);
+                if (collar != null) collar._SetReleasable((mask & (1 << i)) != 0);
+                else all = false;
+            }
+            _riMask = all ? mask : -1;
+        }
 
         // IMP-DOG-036 S6: a collar runs its rope loop only while its dog is leashed (KH_LeashCollar._RopeWake). It stops
         // by itself after hiding the rope, so a detach needs no call; an attach is woken here. _RopeWake ignores a
@@ -408,6 +439,7 @@ namespace KominkaHillside
             // IMP-DOG-036 S6: safety net for the rope loops (state written without OnDeserialization, e.g. by the
             // harness; a holder that was not yet valid on this client; a lost event). Running loops ignore it.
             WakeLeashedRopes();
+            ReleaseInteracts();   // IMP-DOG-031: safety net for the collar Interact (unchanged collars write nothing)
             if (!Networking.IsOwner(gameObject)) { ApplyHomes(); return; }
             bool changed = false;
             if (!homesInitialized)

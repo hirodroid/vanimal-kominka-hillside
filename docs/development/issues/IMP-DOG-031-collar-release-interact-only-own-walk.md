@@ -2,11 +2,11 @@
 id: IMP-DOG-031
 type: IMP
 system: DOG
-status: todo
+status: review
 priority: Medium
 summary: 首輪の「外す」インタラクトを、自分が散歩中の犬にだけ出す (撫でる・洗う時に判定を取られない)
-next: KH_LeashCollar で、自分がリードを持っている時だけインタラクトを有効にする
-updated: 2026-09-30
+next: 実装と ClientSim は済み。ユーザーの PCVR で、散歩していない犬の首まわりを撫でる・洗うときに「外す」が出ないこと、自分の散歩中の犬では手元に出て外せることを確認。2 人で、他人が散歩中の犬に自分側で出ないことを確認
+updated: 2026-10-02
 ---
 
 # IMP-DOG-031 首輪の「外す」は自分が散歩中の犬だけ
@@ -38,3 +38,12 @@ AI 側で確かめる。
 ## 記録
 
 2026-09-30: 起票 (ユーザー指摘)。実装は未着手。関連: [IMP-DOG-004](IMP-DOG-004-leash-models-release.md) (首輪・リードの本制作)、[IMP-DOG-002](IMP-DOG-002-leash-walking.md) (リード散歩)。
+
+## 実装 (2026-10-02)
+
+- `KH_LeashCollar._SetReleasable(bool)` が `DisableInteractive` と首輪の Trigger Collider (層 14、この Interact 専用) の有効を切り替える。自分が散歩中 (`KH_LeashManager.walkers[犬]` が自分の playerId) の犬だけ ON。散歩していない犬では当たり判定ごと消えるので、撫でる・洗うの光線を受けない
+- 呼ぶ場所: 接続 (`ReqAttach`)・解除 (`Release`) の末尾、`OnDeserialization`、既存の 0.5 s の保守 (変化が無ければ首輪を呼ばない)、首輪の `Start`。Update と同期変数は増やしていない。シーンの値は変えていない (どちらも実行時だけの値)
+- リードの先端を首輪へつなぐ処理は `collarAnchors` との距離判定で、この Collider を使わない (Codex のレビューでも確認)
+- 検証 (ClientSim、1 人): コンパイル エラー 0。`Course/83b` (run 20261002-110554) K0〜K3 PASS = 誰も散歩していなければ 6 匹とも OFF、つないだ犬だけ ON、首輪からもメニューからも外した同じ段で OFF、イベント無しで保持者が変わっても保守で追従 (疑似)。`Course/83` 移動の回帰 PASS
+- Codex 独立レビュー: 実行時の不具合の指摘なし。ハーネスの検出力 1 件 (K3) と結果の説明文 1 件を反映
+- 未確認: 他人が散歩中の犬・Owner 交代・退出・途中参加 (2 人)、実際の手の光線と輪郭・撫でる / 洗うとの取り合い (PCVR)。同期の遅れの間に古い「外す」を押しても、Owner 側の照合で他人の犬は外れない (読み取りによる確認)

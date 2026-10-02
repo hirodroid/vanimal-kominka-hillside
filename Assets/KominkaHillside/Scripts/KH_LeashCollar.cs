@@ -17,6 +17,28 @@ namespace KominkaHillside
         public Renderer snapVisual;
         public Renderer handleVisual;
         public override void Interact() { if (manager != null) manager._RequestDetach(dogIndex); }
+        // IMP-DOG-031: the "Release leash" Interact exists only on this client while the local player walks this dog
+        // (manager.walkers[dogIndex] == local playerId, the same test as KH_LeashManager._IsMine). Otherwise both are off:
+        //   DisableInteractive = true -> no outline / tooltip and no Interact (UdonBehaviour.IsInteractive is false);
+        //   the trigger SphereCollider disabled -> nothing of the collar left for VRChat's interact / pickup ray to hit, so a
+        //   hand petting or washing the neck is not taken over by the collar (whether VRChat's ray stops at a trigger whose
+        //   Interact is disabled is not documented; without the collider there is nothing to stop at). The collider is used only for this
+        //   Interact: the leash tip connects by distance to manager.collarAnchors (KH_LeashClip.ClipStep), never through it.
+        // Event driven, no per-frame check (IMP-DOG-036): Start (off; nobody walks yet at load), and from KH_LeashManager:
+        // ReqAttach / Release on the Owner (no OnDeserialization for its own write), OnDeserialization on everyone else and
+        // late joiners, and its 0.5 s maintenance as the safety net (heap writes by the harness, a lost event). Writes only
+        // on a change. Ownership transfer of the manager changes no walker, so it needs nothing of its own.
+        private int _releasable = -1;   // -1 = not written yet (the first call always writes), 0 off, 1 on
+        private Collider _hit;
+        public void _SetReleasable(bool on)
+        {
+            int want = on ? 1 : 0;
+            if (want == _releasable) return;
+            _releasable = want;
+            DisableInteractive = !on;
+            if (_hit == null) _hit = GetComponent<Collider>();
+            if (_hit != null) _hit.enabled = on;
+        }
         // IMP-DOG-034 A4: which renderers were last switched on (-1 = not written yet, so the first frame always writes).
         private const int DrawnHidden = 0, DrawnLine = 1, DrawnModeled = 2, DrawnModeledNoHandle = 3;
         private int _drawn = -1;
@@ -38,7 +60,13 @@ namespace KominkaHillside
         // the attach is received, where the old code drew in the same frame).
         private bool _ropeLoop;
         private int _ropeTickFrame = -1000;   // Time.frameCount of the last tick or wake (the watchdog below)
-        void Start() { _RopeWake(); }
+        void Start()
+        {
+            // IMP-DOG-031: off until the local player walks this dog. A manager event that already ran before this Start
+            // (OnDeserialization of a late joiner) wrote the same rule, so this re-evaluates rather than forcing off.
+            _SetReleasable(manager != null && manager._IsMine(dogIndex));
+            _RopeWake();
+        }
         // IMP-DOG-036 S6 (review 2): disabling the behaviour stops the rope as the old PostLateUpdate did. A scheduled
         // event still reaches a disabled UdonBehaviour (the scheduler calls SendCustomEvent -> RunProgram with no
         // enabled check, UdonBehaviour.cs:2103), so the tick checks `enabled` itself and ends the loop, leaving the

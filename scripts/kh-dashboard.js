@@ -72,6 +72,7 @@ function parseIssue(file) {
 
 // ============================================================ ハーネス
 function kindOf(r) {
+  if (r.collarOnly) return null;   // Course/83b (IMP-DOG-031) は travel の台本で回すが、travel の結果ではない
   if (r.travelOnly) return r.full ? 'travel' : 'travel quick';
   if (r.riverOnly) return 'W5';
   if (r.waterFetch) return 'fetch';   // Course/88 (W3 / S4 / S5b)。waterOnly も立つので water より先に見る

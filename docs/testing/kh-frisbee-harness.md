@@ -596,6 +596,26 @@ bash scripts/kh-harness-run.sh walk "Course/100 - Harness Wash (all groups)"    
 - 偽の失敗: VRChat クライアントのログの混入は他のモードと同じく `clientLogErrors` に数えて失敗にしない。各ケースの notes に最大のフレーム時間を出し、100 ms を超えた回は「単独で回し直す」を付ける。歩く・動くの判定 (W-idle・W-hold・W-others) は犬の休憩・近接の停止で遅れることがある (notes に `restPhase` / `paused`)
 - **見ていないもの (ClientSim は 1 クライアント)**: `NetStroke` は自分へ返る経路 (Owner = 自分) だけ。他のクライアントでの描画、クライアント間の 8 Hz と送り主ごとの予算、他人のストロークの Owner による積算、2 人同時、途中参加の描き直し (Restore)、Owner の交代。道具 (掴む・シャワーの Raycast・VR のスポンジの球・Desktop の視線と Use・振動・放水の同期)。殻の見た目・飛沫・音、犬の顔の向きと首かしげ、水・集合・呼び戻しとの優先、乾き (90〜120 s) と乾いた後の殻の消灯、Quest / iOS の描画。これらは Play と PCVR (2 人) で見る
 
+## 本シーンの首輪の「外す」Interact (Course/83b, IMP-DOG-031)
+
+`Tools/KominkaHillside/Course/83b - Walk Harness Collar Interact (IMP-DOG-031)`。フリスビーではないが、本シーンの歩行ハーネスの 1 モードとして同じ枠で走らせる (journal・全体の締切 300 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。台本は `KH_CourseWalkHarnessEditor.Collar.cs` で、travel (Course/82・83) のケースの実行部 (`TravelTick`) を借りる。ワープ・地点・暗転 (`KH_TravelFade`) は使わない。数十秒で終わる。
+
+```bash
+bash scripts/kh-harness-run.sh walk "Course/83b - Walk Harness Collar Interact (IMP-DOG-031)"
+```
+
+観測は 6 個の首輪の `UdonBehaviour.DisableInteractive` と首輪の `Collider.enabled`。両方がそろって「犬 d だけ有効、他は無効」であることを毎回見る。
+
+| ケース | 内容 | 合格 |
+|---|---|---|
+| K0-none-walked | 全頭を外して 1 s 待つ (0.5 s の保守を 1 回過ぎる) | 6 個とも Interact なし・Collider 無効 |
+| K1-collar-release | 手元メニュー `_WalkLeft0` で犬 0 を繋ぐ → 首輪の `Interact()` で外す | walkers[0] が自分になった最初の観測で犬 0 だけ有効 (Owner の `ReqAttach` で即時)、1 s 後も同じ。外れた最初の観測で全部無効 |
+| K2-menu-release | 繋ぐ → メニューの [はずす] (`_WalkOff0`) | 首輪を通らない解除でも、外れた最初の観測で全部無効 |
+| K3-heap-write (模擬) | walkers[0] をヒープへ直接書く: 自分 → −1 → 自分 → 存在しない id 9999 | 自分で 1.5 s 以内に有効。−1 で 1.5 s 以内に両方とも無効 (誰も `Release` を呼ばないので、保守の照合だけで消えることを見る)。9999 は Owner の保守が解除し、全部無効で終わる |
+
+- 結果: `Logs/kh-course-walk/<run>/travel.json` (ケースごとの notes。首輪の状態を `0:Ic 1:D- ...` の形で残す。`D` = DisableInteractive、`I` = 有効、`c` = Collider 有効、`-` = 無効) と `report.json`。全体の状態は **`COLLAR_INTERACT_OBSERVED`**
+- **見ていないもの**: 他の人が散歩中の犬 (2 人が要る)、Manager の Owner の交代・退室・遅れて入った人 (実通信)。Interact の光線・枠の表示、撫で・洗う道具・つかむ操作が首輪に取られないこと (`Interact()` は直接呼ぶので光線を通らない)。これらは Play と PCVR (2 人) で見る
+
 ## 保証する範囲
 
 実際に通るもの:
