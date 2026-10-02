@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>さんぽタブの整理</title>
+<style>
+:root{
+  --bg:#f3efe8; --ink:#2b2622; --muted:#6b625a;
+  --panel:#231e1b; --panel2:#2f2925; --text:#f4efe8; --sub:#cfc6bb;
+  --tabOn:#5a4a3c; --tabOff:#3a322c; --gold:#d9b25a;
+  --equipOn:#3f7a52; --recallOff:#463f3a; --neutral:#574d47; --openOn:#b8742c; --primary:#6b5a2f;
+  --mine:#2f4a38; --pending:#9e6a2a;
+  --move:#2f7fd6; --merge:#2e9a5a; --gone:#d0463b;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#17140f; --ink:#ece6dc; --muted:#a39a8f; }
+}
+:root[data-theme="dark"]{ --bg:#17140f; --ink:#ece6dc; --muted:#a39a8f; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic UI","Noto Sans JP",system-ui,sans-serif;padding:16px}
+h1{font-size:20px;margin:0 0 4px}
+p.note{margin:4px 0 12px;color:var(--muted);font-size:13px;line-height:1.6;max-width:1200px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px}
+.bar button{font:inherit;font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid var(--muted);background:transparent;color:var(--ink);cursor:pointer}
+.bar button.on{background:var(--ink);color:var(--bg)}
+.bar .lbl{font-size:13px;color:var(--muted);margin-right:4px}
+.cols{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.col h2{font-size:15px;margin:0 0 6px}
+.frame{position:relative;overflow:hidden;border-radius:8px}
+.canvas{position:absolute;left:0;top:0;width:1140px;height:700px;transform-origin:0 0;background:var(--panel);color:var(--text);border-radius:14px;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif}
+.e{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.15;overflow:hidden}
+.t{justify-content:flex-start;text-align:left}
+.btn{border-radius:12px;cursor:pointer;user-select:none;border:2px solid rgba(255,255,255,.12)}
+.btn:active{filter:brightness(1.25)}
+.cell{border-radius:6px;background:var(--panel2)}
+.tab{background:var(--tabOff);font-size:22px}
+.tab.on{background:var(--tabOn)}
+.tab.on::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:var(--gold)}
+.dot{border-radius:50%}
+.fold{position:absolute;left:25px;width:1044px;border-top:3px dashed var(--gone);pointer-events:none}
+.ann{position:absolute;pointer-events:none;border-radius:10px}
+.ann.move{outline:4px solid var(--move)}
+.ann.merge{outline:4px solid var(--merge)}
+.ann.gone{outline:4px dashed var(--gone);background:repeating-linear-gradient(45deg,rgba(208,70,59,.18) 0 10px,transparent 10px 20px)}
+.tag{position:absolute;font:600 18px system-ui,sans-serif;color:#fff;padding:2px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:5}
+.tag.move{background:var(--move)} .tag.merge{background:var(--merge)} .tag.gone{background:var(--gone)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;margin:6px 0 10px}
+.legend span::before{content:"";display:inline-block;width:14px;height:14px;margin-right:5px;vertical-align:-2px;border-radius:3px}
+.lg-move::before{outline:3px solid var(--move)} .lg-merge::before{outline:3px solid var(--merge)} .lg-gone::before{outline:3px dashed var(--gone)}
+.overflow{position:absolute;left:0;top:700px;width:1140px;background:rgba(35,30,27,.45);border-radius:0 0 14px 14px}
+table.spec{border-collapse:collapse;font-size:13px;margin-top:14px;max-width:1200px}
+table.spec td,table.spec th{border:1px solid var(--muted);padding:4px 8px;text-align:left;vertical-align:top}
+</style>
+</head>
+<body>
+<h1>さんぽタブの整理 (DES-UI-006)</h1>
+<p class="note">手元メニューの板は 1140×700 (Canvas 単位。実寸 1.14×0.70 m) で、この図は同じ比率で縮小している。文字の大きさも Canvas の pt をそのまま縮めた。左が現行 (2026-10-03 のコードから再現)、右が提案。右の板は押せる (つなぐ・はずす・行き先・地図。ボタンを押すと結果が出るが、通信や犬は動かない)。設計の説明: <code>docs/plans/2026-10-03-walk-tab-layout.md</code>。</p>
+<div class="bar" id="states"><span class="lbl">状態:</span></div>
+<div class="bar" id="opts"><span class="lbl">表示:</span></div>
+<div class="legend"><span class="lg-move">移る</span><span class="lg-merge">まとまる</span><span class="lg-gone">なくなる・画面外</span></div>
+<div class="cols">
+  <div class="col"><h2>現行 (Before)</h2><div class="frame" id="fBefore"><div class="canvas" id="before"></div></div></div>
+  <div class="col"><h2>提案 (After)</h2><div class="frame" id="fAfter"><div class="canvas" id="after"></div></div></div>
+</div>
+<table class="spec">
+<tr><th>操作</th><th>現行</th><th>提案</th></tr>
+<tr><td>行き先を変える</td><td>スクロール → [ここへ] (2 操作以上。開いた直後は見えない)</td><td>タイルを 1 回押す</td></tr>
+<tr><td>つなぐ / はずす</td><td>1 回 (156×40、18pt。自分の犬の行にも左右が残る)</td><td>1 回 (128×52 / 264×52、20pt。自分の犬は [はずす] だけ)</td></tr>
+<tr><td>結果の出る場所</td><td>板の下端 1 行</td><td>押した犬の行 / 行き先のまとめ + 下端</td></tr>
+<tr><td>地図と移動</td><td>上段の細い帯 (530×40)</td><td>右列の下 (540×72)</td></tr>
+<tr><td>新しい文言</td><td>—</td><td>なし (既存キーだけ)</td></tr>
+</table>
+<script>
+"use strict";
+var DOGS=[["コーギー","#e0a050"],["ポメラニアン","#e8c070"],["ラブラドール","#d8c8a0"],["ダックスフンド","#a0603a"],["柴犬","#d08040"],["サモエド","#f0f0f0"]];
+var DEST=["広場","古民家側の入口","山道から周回","川から周回","奥の広場","川辺"];
+var STATES={
+  start:{label:"はじめ (0 匹)",dogs:[{s:"near"},{s:"near"},{s:"far",d:35},{s:"far",d:62},{s:"far",d:18},{s:"far",d:44}],dest:-1,choice:0},
+  walking:{label:"2 匹と散歩中",dogs:[{s:"mine",h:0},{s:"near"},{s:"far",d:12},{s:"far",d:62},{s:"mine",h:1},{s:"far",d:44}],dest:5,choice:5},
+  blocked:{label:"つなげない理由",dogs:[{s:"other"},{s:"gather"},{s:"ball"},{s:"called"},{s:"water"},{s:"far",d:44}],dest:-1,choice:0},
+  mixed:{label:"行き先がまざる",dogs:[{s:"mine",h:0},{s:"mine",h:0},{s:"mine",h:1},{s:"far",d:62},{s:"near"},{s:"far",d:44}],dest:-2,choice:1},
+  pending:{label:"処理中・結果",dogs:[{s:"mine",h:0},{s:"pendL"},{s:"far",d:12},{s:"far",d:62},{s:"far",d:20},{s:"far",d:44}],dest:5,choice:5,note:"左につなぎます…"},
+  request:{label:"合流の申し込みあり",dogs:[{s:"mine",h:1},{s:"near"},{s:"far",d:12},{s:"far",d:62},{s:"far",d:20},{s:"far",d:44}],dest:4,choice:4,req:true}
+};
+var STATE_TEXT={near:"近くにいる",other:"ほかの人が散歩中",gather:"集合中",ball:"ボールで遊び中",called:"呼ばれて待機中",water:"川で遊び中 (先に呼び戻します)",pendL:"左につなぎます…"};
+var REASON={far:"もう少し近づいてください (4 m)",other:"ほかの人がつないでいます",gather:"集合中は待ってください",ball:"ボールで遊んでいます",called:"呼ばれて待機中です。呼ぶタブで自由にしてから",water:"川から呼び戻しています。上がってから",mine:"もうつないでいます"};
+var cur=JSON.parse(JSON.stringify(STATES.start));var curKey="start";
+var showAnn=true, showFold=true, afterNote="", afterNoteDog=-1, afterNoteUntil=0, mapOpen=false, mapPick=-1;
+
+function E(parent,x,y,w,h,cls,html,style){
+  var d=document.createElement("div");d.className="e "+(cls||"");
+  d.style.left=(570+x-w/2)+"px";d.style.top=(350-y-h/2)+"px";d.style.width=w+"px";d.style.height=h+"px";
+  if(html!==undefined&&html!==null)d.innerHTML=html;
+  if(style)for(var k in style)d.style[k]=style[k];
+  parent.appendChild(d);return d;
+}
+function ann(parent,x,y,w,h,kind,label,lx,ly){
+  if(!showAnn)return;
+  E(parent,x,y,w,h,"ann "+kind,"");
+  var t=document.createElement("div");t.className="tag "+kind;t.textContent=label;
+  t.style.left=(570+(lx!==undefined?lx:x-w/2))+"px";t.style.top=(350-(ly!==undefined?ly:y+h/2)-14)+"px";parent.appendChild(t);
+}
+function stateText(o){
+  if(o.s==="far")return "自由行動 ("+o.d+" m 先)";
+  if(o.s==="mine")return o.h===0?"左手につないでいる":"右手につないでいる";
+  return STATE_TEXT[o.s]||"";
+}
+function mineCount(){var n=0;cur.dogs.forEach(function(o){if(o.s==="mine")n++;});return n;}
+function summary(){
+  var n=mineCount();
+  if(n===0)return "つないでいる犬はいません。行き先は次につなぐ犬に伝わります";
+  if(cur.dest===-2)return n+"匹：行き先はそれぞれ";
+  return n+"匹："+DEST[cur.choice];
+}
+function frame(c,title){
+  E(c,-335,314,430,44,"t",'<span style="font-size:24px">'+title+'</span>');
+  E(c,150,314,284,50,"btn",'<span style="font-size:22px">ポイント 186 pt</span>',{background:"rgba(87,77,71,.55)"});
+  E(c,370,314,120,44,"btn",'<span style="font-size:20px">設定</span>',{background:"var(--neutral)"});
+  E(c,500,314,110,44,"btn",'<span style="font-size:20px">閉じる</span>',{background:"var(--neutral)"});
+  var order=[["さんぽ",145],["おやつ",145],["かざり",145],["呼ぶ",185],["おもちゃ",150],["あそぶ",149],["ライブ",145]];
+  var left=-550;order.forEach(function(t,i){var d=E(c,left+t[1]/2,224,t[1],46,"tab"+(i===0?" on":""),t[0]);left+=t[1]+6;});
+  E(c,-400,-328,300,28,"t",'<span style="font-size:18px;color:var(--sub)">右スティック下を長押しで開閉</span>');
+}
+function btn(c,x,y,w,h,text,color,pt,onclick){
+  var d=E(c,x,y,w,h,"btn",'<span style="font-size:'+(pt||20)+'px">'+text+'</span>',{background:color});
+  if(onclick){d.addEventListener("click",onclick);}
+  return d;
+}
+
+// ---------------- BEFORE ----------------
+function drawBefore(){
+  var c=document.getElementById("before");c.innerHTML="";
+  frame(c,"犬とさんぽ");
+  btn(c,-272,164,530,40,"地図と移動","var(--neutral)",20);
+  if(cur.req)btn(c,272,164,530,40,"申し込み 1 件","#9e6130",20);
+  // scroll viewport 140..-250, content grid 2 col 508x112, padding 8, spacing 12; viewport x -25 width 1044
+  var vx=-25,vw=1044,top=140,bottom=-250;
+  E(c,vx,(top+bottom)/2,vw,top-bottom,"",null,{border:"1px solid rgba(255,255,255,.08)"});
+  E(c,530,(top+bottom)/2,40,top-bottom,"",null,{background:"#3a322c",borderRadius:"6px"});
+  E(c,530,top-60,30,110,"",null,{background:"#7a6d62",borderRadius:"6px"});
+  function cellPos(i){var col=i%2,row=Math.floor(i/2);var x=vx-vw/2+8+col*(508+12)+254;var y=top-8-row*(112+12)-56;return [x,y];}
+  // RectMask2D の再現: ビューポートの外は描かない
+  var holder=document.createElement("div");holder.style.cssText="position:absolute;left:0;top:0;width:1140px;height:700px;clip-path:inset("+(350-top)+"px "+(1140-(570+vx+vw/2))+"px "+(700-(350-bottom))+"px "+(570+vx-vw/2)+"px)";c.appendChild(holder);
+  for(var i=0;i<12;i++){
+    var p=cellPos(i),x=p[0],y=p[1];
+    E(holder,x,y,508,112,"cell",null);
+    if(i<6){
+      var o=cur.dogs[i];var mine=o.s==="mine";
+      E(holder,x-230,y+35,22,22,"dot",null,{background:DOGS[i][1]});
+      E(holder,x+15,y+35,435,30,"t",'<span style="font-size:22px">'+DOGS[i][0]+'</span>');
+      E(holder,x,y+4,480,28,"t",'<span style="font-size:18px;color:var(--sub)">'+stateText(o)+'</span>');
+      var ok=o.s==="near";
+      btn(holder,x-162,y-34,156,40,"左につなぐ",ok?"var(--equipOn)":"var(--recallOff)",18);
+      btn(holder,x,y-34,156,40,"右につなぐ",ok?"var(--equipOn)":"var(--recallOff)",18);
+      if(mine)btn(holder,x+162,y-34,156,40,"はずす","var(--neutral)",18);
+      if(mine)ann(c,x-81,y-34,320,44,"gone","押せるが断るだけ",x-240,y-12);
+    }else{
+      var k=i-6;var chosen=(cur.dest>=0&&cur.choice===k)||(mineCount()===0&&cur.choice===k);
+      E(holder,x,y+32,480,36,"t",'<span style="font-size:22px">'+DEST[k]+'</span>');
+      E(holder,x-76,y-18,328,60,"t",'<span style="font-size:18px;color:var(--sub)">'+(chosen?"いまの行き先":"つないでいる犬の行き先")+'</span>');
+      btn(holder,x+178,y-18,136,44,"ここへ",chosen?"var(--openOn)":"var(--neutral)",20);
+    }
+  }
+  // fold line at viewport bottom
+  if(showFold){var f=document.createElement("div");f.className="fold";f.style.top=(350+250)+"px";c.appendChild(f);
+    var t=document.createElement("div");t.className="tag gone";t.textContent="ここから下はスクロールしないと見えない (行き先 6 つ)";t.style.left="40px";t.style.top=(350+250-34)+"px";t.style.left="560px";c.appendChild(t);}
+  // feedback
+  E(c,0,-285,1100,44,"",'<span style="font-size:20px">'+(cur.note||summary())+'</span>',{zIndex:3,background:"var(--panel)"});
+  ann(c,-272,164,530,40,"move","移る: 右列の下へ",-536,186);
+  ann(c,0,-285,1100,44,"move","移る: まとめは右列へ (結果は残る)",200,-307+30);
+}
+
+// ---------------- AFTER ----------------
+function noteFor(i){ return (afterNoteDog===i && Date.now()<afterNoteUntil) ? afterNote : null; }
+function drawAfter(){
+  var c=document.getElementById("after");c.innerHTML="";
+  frame(c,"犬とさんぽ");
+  if(mapOpen){drawMap(c);return;}
+  // left column: x -550..-10, rows 68 high, gap 8, top 190
+  var lx=-280,lw=540;
+  for(var i=0;i<6;i++){
+    var o=cur.dogs[i];var y=190-34-i*76;var mine=o.s==="mine";
+    E(c,lx,y,lw,68,"cell",null,mine?{background:"var(--mine)",outline:"2px solid #6fae80"}:null);
+    E(c,lx-250,y+12,22,22,"dot",null,{background:DOGS[i][1]});
+    E(c,lx-110,y+12,250,30,"t",'<span style="font-size:22px">'+DOGS[i][0]+'</span>');
+    var st=noteFor(i)||stateText(o);var pend=o.s==="pendL"||noteFor(i);
+    E(c,lx-110,y-16,250,26,"t",'<span style="font-size:18px;color:'+(pend?"#f0c27a":"var(--sub)")+'">'+st+'</span>');
+    (function(i,o,y,mine){
+      if(mine){
+        btn(c,lx+130,y,264,52,"はずす","var(--neutral)",20,function(){act("off",i);});
+      }else{
+        var ok=o.s==="near";
+        btn(c,lx+64,y,128,52,"左につなぐ",ok?"var(--equipOn)":"var(--recallOff)",20,function(){act("L",i);});
+        btn(c,lx+196,y,128,52,"右につなぐ",ok?"var(--equipOn)":"var(--recallOff)",20,function(){act("R",i);});
+      }
+    })(i,o,y,mine);
+  }
+  // right column x 10..550
+  var rx=280,rw=540;
+  E(c,rx,176,rw,30,"t",'<span style="font-size:20px;color:var(--gold)">つないでいる犬の行き先</span>');
+  var sum=(afterNoteDog===-9&&Date.now()<afterNoteUntil)?afterNote:summary();
+  E(c,rx,134,rw,52,"t",'<span style="font-size:18px;line-height:1.3">'+sum+'</span>');
+  for(var k=0;k<6;k++){
+    var col=k%2,row=Math.floor(k/2);var x=rx-137+col*274;var y=100-36-row*80;
+    var chosen=cur.dest!==-2&&cur.choice===k;
+    (function(k){
+      var d=btn(c,x,y,266,72,DEST[k]+(chosen?'<br><span style="font-size:16px;color:#fff3d8">● いまの行き先</span>':''),chosen?"var(--openOn)":"var(--neutral)",22,function(){choose(k);});
+    })(k);
+  }
+  if(cur.req){
+    btn(c,rx-137,-184,266,72,"地図と移動","var(--neutral)",22,function(){mapOpen=true;mapPick=-1;draw();});
+    btn(c,rx+137,-184,266,72,"申し込み 1 件","#9e6130",22);
+  }else btn(c,rx,-184,540,72,"地図と移動","var(--neutral)",22,function(){mapOpen=true;mapPick=-1;draw();});
+  var foot=(Date.now()<afterNoteUntil&&afterNoteDog>=-9)?afterNote:"";
+  E(c,0,-285,1100,44,"",'<span style="font-size:20px">'+foot+'</span>');
+  // annotations
+  ann(c,rx,-184,540,72,"move","移った: 地図と移動",rx-270,-148);
+  ann(c,rx,134,540,52,"move","移った: まとめ (下端から)",rx+60,108-2);
+  ann(c,rx,-16,548,240,"merge","まとめた: 行き先 6 行 → タイル",rx-120,-136-6);
+  var mi=cur.dogs.findIndex(function(o){return o.s==="mine";});
+  if(mi>=0){var yy=190-34-mi*76;ann(c,lx+130,yy,268,56,"merge","自分の犬は [はずす] だけ",lx+0,yy+30+14);}
+}
+function drawMap(c){
+  E(c,-150,164,560,36,"t",'<span style="font-size:24px">地図と移動</span>');
+  btn(c,190,164,90,44,"地点","var(--openOn)",20);
+  btn(c,290,164,90,44,"人","var(--neutral)",20);
+  btn(c,450,164,220,44,"もどる","var(--neutral)",20,function(){mapOpen=false;draw();});
+  // map (MapPos approx -330, -40, size 380)
+  var m=E(c,-330,-40,380,380,"",null,{background:"#cdbf9f",borderRadius:"8px"});
+  var svg='<svg width="380" height="380" viewBox="0 0 380 380"><path d="M70 300 C 60 200 120 120 190 90 C 260 60 320 120 300 200 C 290 260 220 300 150 310 Z" fill="none" stroke="#7a5a36" stroke-width="6"/><path d="M300 60 C 330 160 320 260 260 350" fill="none" stroke="#5d8fb8" stroke-width="10"/>'
+   +'<circle cx="70" cy="300" r="9" fill="#3a2f26"/><text x="82" y="296" font-size="18" fill="#2b2622">1</text>'
+   +'<circle cx="120" cy="170" r="9" fill="#3a2f26"/><text x="132" y="166" font-size="18" fill="#2b2622">2</text>'
+   +'<circle cx="215" cy="85" r="9" fill="#3a2f26"/><text x="227" y="81" font-size="18" fill="#2b2622">3</text>'
+   +'<circle cx="305" cy="110" r="9" fill="none" stroke="#3a2f26" stroke-width="3"/><text x="317" y="106" font-size="18" fill="#2b2622">4</text>'
+   +'<circle cx="300" cy="215" r="9" fill="#3a2f26"/><text x="312" y="211" font-size="18" fill="#2b2622">5</text>'
+   +'<circle cx="215" cy="305" r="9" fill="#3a2f26"/><text x="227" y="301" font-size="18" fill="#2b2622">6</text>'
+   +'<circle cx="160" cy="250" r="8" fill="#2a6fe0"/></svg>';
+  m.innerHTML=svg;
+  E(c,-330,-270,380,26,"",'<span style="font-size:16px">● ワープできる地点　○ 目印</span>');
+  var spots=[["1","古民家側の入口","210 m"],["2","広場","120 m"],["3","奥の広場","350 m"],["5","川辺","いまここ"],["6","下流の橋の手前","90 m"]];
+  for(var k=0;k<spots.length;k++){
+    var col=k%2,row=Math.floor(k/2);var x=155-149+col*298-0;var y=140-28-row*64;
+    (function(k){btn(c,x,y,290,56,'<span style="width:100%;text-align:left;padding-left:12px">'+spots[k][0]+"  "+spots[k][1]+"  <span style='font-size:16px;color:var(--sub)'>"+spots[k][2]+"</span></span>",mapPick===k?"var(--equipOn)":"var(--neutral)",20,function(){mapPick=k;draw();});})(k);
+  }
+  var n=mineCount();
+  var foot=mapPick<0?"行き先を選んでください":("ワープ先: "+spots[mapPick][1]+"<br>"+(n===0?"着いたら: ひとりで移動します":"犬 "+n+" 匹もいっしょ")+"<br>散歩先: "+(cur.dest===-2?"それぞれ":DEST[cur.choice])+" のまま");
+  E(c,155,-98,590,104,"t",'<span style="font-size:18px;line-height:1.4">'+foot+'</span>');
+  btn(c,155,-205,500,90,"ここへワープ",mapPick>=0?"var(--equipOn)":"var(--recallOff)",26);
+  ann(c,155,48,596,196,"merge","IMP-WLD-004: 地点 2 → 5 (2 列 × 3 段、290×56)",-140,166);
+}
+
+// ---------------- interactions (after) ----------------
+function setNote(text,dog){afterNote=text;afterNoteDog=dog;afterNoteUntil=Date.now()+4000;draw();setTimeout(draw,4100);}
+function act(kind,i){
+  var o=cur.dogs[i];
+  if(kind==="off"){o.s="near";setNote("外しました",i);return;}
+  var key=o.s==="pendL"?"mine":o.s;
+  if(key!=="near"){setNote(REASON[key]||"いまは使えません",i);return;}
+  var h=kind==="L"?0:1;var onHand=cur.dogs.filter(function(d){return d.s==="mine"&&d.h===h;}).length;
+  if(onHand>=3){setNote(h===0?"左手は 3 匹までです":"右手は 3 匹までです",i);return;}
+  o.s="mine";o.h=h;if(cur.dest===-1)cur.dest=cur.choice;
+  setNote(h===0?"左手につなぎました":"右手につなぎました",i);
+}
+function choose(k){
+  cur.choice=k;var n=mineCount();
+  cur.dest=n===0?-1:k;
+  setNote(n===0?"行き先をおぼえました。つないだ犬に伝えます":"行き先を伝えました",-9);
+}
+
+// ---------------- scaffolding ----------------
+function fit(){
+  var avail=Math.max(320,(document.body.clientWidth-16));
+  var two=avail>=900;var w=two?(avail-16)/2:avail;var s=Math.min(1,w/1140);
+  [["fBefore","before"],["fAfter","after"]].forEach(function(p){
+    var f=document.getElementById(p[0]),c=document.getElementById(p[1]);
+    c.style.transform="scale("+s+")";f.style.width=(1140*s)+"px";
+    var extra=(p[1]==="before"&&showFold)?0:0;f.style.height=(700*s+extra)+"px";
+  });
+}
+function draw(){drawBefore();drawAfter();fit();}
+(function(){
+  var bar=document.getElementById("states");
+  Object.keys(STATES).forEach(function(k){
+    var b=document.createElement("button");b.textContent=STATES[k].label;if(k===curKey)b.className="on";
+    b.onclick=function(){curKey=k;cur=JSON.parse(JSON.stringify(STATES[k]));mapOpen=false;afterNoteUntil=0;
+      Array.prototype.forEach.call(bar.querySelectorAll("button"),function(x){x.className="";});b.className="on";draw();};
+    bar.appendChild(b);
+  });
+  var ob=document.getElementById("opts");
+  var a=document.createElement("button");a.textContent="印を出す";a.className="on";
+  a.onclick=function(){showAnn=!showAnn;a.className=showAnn?"on":"";draw();};ob.appendChild(a);
+  var m=document.createElement("button");m.textContent="提案: 地図の副画面";
+  m.onclick=function(){mapOpen=!mapOpen;mapPick=-1;draw();};ob.appendChild(m);
+  window.addEventListener("resize",fit);
+  draw();
+})();
+</script>
+</body>
+</html>
