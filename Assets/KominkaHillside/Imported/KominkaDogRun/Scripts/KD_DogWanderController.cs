@@ -1314,6 +1314,7 @@ namespace KominkaDogRun
             _liveCalled = false;
             _activityBusy = false; // かけっこ・じゃれも同じ作法 (UpdateActivity の拘束する枝だけが立てる)
             _washActive = false;   // IMP-DOG-025: 洗われ中も同じ作法 (UpdateHillsideWash だけが立てる。HillsideWash.cs)
+            _reachedSelection = false;   // IMP-DOG-036 S2b: 行動の選択まで来たか (RestThinRecord、Tick.cs)。下の選択の直前で立てる
             _selfAvailableValid = false; _wetMemoValid = false;   // IMP-DOG-034 A5: tick 内の使い回しはこの tick の分だけ (Performance.cs / HillsideWater.cs)
             _heldStationMemoFrame = -1; _travelMemoFrame = -1;    // IMP-DOG-034 C1-1a / C1-1d: 同上 (HillsideWash.cs / HillsideTravel.cs)
             WashErrandTick();     // IMP-DOG-027: 集合・呼び戻し・ワープの受理のエッジで洗浄の保持を解く (wash が null なら即 return)
@@ -1418,6 +1419,11 @@ namespace KominkaDogRun
             // IMP-DOG-025: 洗われ中はその場で止まって洗う人を見る (HillsideWash.cs)。選択済みの行動の継続より前
             // (後ろだと 0.1 秒の継続に遮られる。設計書 §1-5)。wash が null・洗われていない時は何も触らず false
             if (UpdateHillsideWash()) { NotifyPlay(); return; }
+
+            // IMP-DOG-036 S2b: from here every return path has set (or kept, through the continuation) _selectedBehavior to the
+            // branch it ran, so RestThinRecord can read it. The 10 Hz reselection below needs no change for the rest cadence: a
+            // resting decision comes at most every MaxRestDecisionGap, so it reselects once per decision (and looks less often)
+            _reachedSelection = true;
 
             // Select priority at 10 Hz; the selected branch still drives motion and
             // frame-scoped gaze/tail injections every frame. Ended branches reselect now.

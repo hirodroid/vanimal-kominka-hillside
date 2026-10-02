@@ -1,6 +1,7 @@
 using UdonSharp;
 using UnityEngine;
 using VRC.SDKBase;
+using VRC.Udon.Common.Enums;
 
 namespace KominkaHillside
 {
@@ -28,8 +29,41 @@ namespace KominkaHillside
         private float _requestAt;
         private float _retryAfter;
 
-        private void Start() { _home = transform.position; _rotation = transform.rotation; }
-        public override void OnPickup() { _candidate = -1; _pending = -1; }
+        private void Start() { _home = transform.position; _rotation = transform.rotation; _started = true; }
+
+        // IMP-DOG-036 S5: a disabled behaviour got no Update, but delayed events still run on a disabled UdonBehaviour (SDK 3.10.5
+        // RunProgram has no enabled check). _ClipTick stops itself when disabled (no body) and OnEnable restarts it for a tip that is
+        // held or has a request in flight. OnEnable runs before Start on the first activation; nothing is active then.
+        private bool _started;
+        private void OnEnable()
+        {
+            if (!_started) return;
+            if (pickup != null && (_pending >= 0 || pickup.IsHeld)) _Wake();
+        }
+        public override void OnPickup() { _candidate = -1; _pending = -1; _Wake(); }
+
+        // IMP-DOG-036 S5: the frame below used to be Update, which ran every frame for all six tips and returned at once for a tip
+        // that is not held and has no attach request in flight. A tip is a local pickup (no sync), so it only becomes active
+        // through this client's own OnPickup; the loop runs from there (EventTiming.Update: still the Update phase, after the
+        // Update callbacks; it reads the synced walkers / hands, which change only on deserialization, so the order does not
+        // matter) until the frame where it is neither held nor pending (the old early return). The behaviour stays enabled.
+        private bool _looping;
+
+        /// <summary>Starts the per-frame loop if it is not running. Safe to call any number of times (local; not a network target).</summary>
+        public void _Wake()
+        {
+            if (_looping) return;
+            _looping = true;
+            SendCustomEventDelayedFrames(nameof(_ClipTick), 1, EventTiming.Update);
+        }
+
+        /// <summary>IMP-DOG-036 S5: local loop (delayed event). Not a network target.</summary>
+        public void _ClipTick()
+        {
+            if (!enabled) { _looping = false; return; }   // disabled: no body (OnEnable restarts)
+            if (!ClipFrame()) { _looping = false; return; }
+            SendCustomEventDelayedFrames(nameof(_ClipTick), 1, EventTiming.Update);
+        }
         public override void OnDrop() { _candidate = -1; if (_pending < 0) ReturnHome(); }
         private void ReturnHome()
         {
@@ -43,9 +77,18 @@ namespace KominkaHillside
         {
             if (!pickup.IsHeld || Time.time < _retryAfter) return;
             _pending = _candidate; _requestAt = Time.time;
+            _Wake();   // IMP-DOG-036 S5: the request's resolution / timeout is watched by the loop (already running while held)
             manager._RequestAttach(_pending, _hand);
         }
-        private void Update()
+        // IMP-DOG-036 S5: the old Update body. Returns whether the loop must run next frame: held or a request in flight
+        // (every other frame of the old Update returned at "!pickup.IsHeld" with nothing to do).
+        private bool ClipFrame()
+        {
+            ClipStep();
+            return pickup != null && (_pending >= 0 || pickup.IsHeld);
+        }
+
+        private void ClipStep()
         {
             VRCPlayerApi local = Networking.LocalPlayer;
             if (manager == null || pickup == null || !Utilities.IsValid(local)) return;

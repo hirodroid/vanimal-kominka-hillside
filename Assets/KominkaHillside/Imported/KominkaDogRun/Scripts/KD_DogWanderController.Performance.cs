@@ -179,6 +179,7 @@ namespace KominkaDogRun
             // IMP-DOG-036 S3: no water legs frame before that decision, and a play that was running when the behaviour went off counts
             // as not seen at the previous decision (WaterTick's preempt check, as the frame gap did before)
             _waterThin = false; _thisDecisionFrame = Time.frameCount;
+            _restThin = false;   // IMP-DOG-036 S2b: that first decision chooses the cadence again
         }
 
         void ResetPerformanceOutputs()

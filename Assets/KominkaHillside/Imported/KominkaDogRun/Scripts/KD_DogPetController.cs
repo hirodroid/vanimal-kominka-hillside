@@ -415,6 +415,20 @@ namespace KominkaDogRun
         bool _petBoolWritten; // Animator へ書いた Pet Bool (変化時だけ書くためのキャッシュ)
         bool _petBoolOnce;
 
+        // ---- IMP-DOG-036 S2b: 期限つきの注視 / 催促 (_SetGazeFor / _SetUrgeFor / _ClearHeld) ----
+        // 1 フレームの差し込み (_SetGaze / _SetUrge) とは別の器に持つ。そのフレームの差し込みがあればそちらが勝ち
+        // (従来どおり)、無いフレームだけ期限内の値を使う。呼ぶのはリードの犬の LeashPose (判断のときだけ) で、
+        // 判断の間 (足のフレーム) に毎フレーム送り直していた分を無くす
+        const float HeldMaxSeconds = 1f;   // 期限の上限 (呼び手の誤りで見続けない)
+        Vector3 _gazeHoldPos;
+        float _gazeHoldRoll;
+        float _gazeHoldUntil = -1000f;
+        float _urgeHold;
+        float _urgeHoldUntil = -1000f;
+        bool _gazeFromHold;                // このフレームの 1 フレーム枠を最後に書いたのが _SetGazeFor か (その LookTarget を保持中に使い回す)
+        Quaternion _gazeHoldTarget = Quaternion.identity;   // 保持中の LookTarget (差し込まれたフレームで計算した値)
+        bool _gazeHoldTargetValid;
+
         // ---- IMP-DOG-028: ブルブル (手続き的) と洗浄中の表情 ----
         // 胴と頭へ、犬の前後軸まわりの減衰するロールを足す。頭は既存の 1 本の書き手 (_worldDelta の後) に合成し、
         // 胴は同じ LateUpdate の頭より前に書く (頭の書き手が読む親の回転に胴の揺れが入る = 累積で ShakeAmplitudeDeg)。
@@ -672,6 +686,7 @@ namespace KominkaDogRun
             _gazePos = worldPos;
             _gazeRoll = rollDeg;
             _gazeFrame = Time.frameCount;
+            _gazeFromHold = false;   // IMP-DOG-036 S2b: this frame's look point is not the held one (契約は従来どおり)
         }
 
         /// <summary>このフレームの催促の強さ (0〜1)。尻尾がこれで振れる。
@@ -680,6 +695,36 @@ namespace KominkaDogRun
         {
             _urge = level < 0f ? 0f : (level > 1f ? 1f : level);
             _urgeFrame = Time.frameCount;
+        }
+
+        /// <summary>IMP-DOG-036 S2b: _SetGaze の期限つき版 (窓口の契約 3 の例外。ほかは同じ: Update から呼ぶ・撫でに負ける・寝ている犬には効かない)。
+        /// このフレームは _SetGaze と同じ 1 フレームの差し込み (同じフレームの後の _SetGaze が勝つ)。以降 seconds 秒 (上限 1 秒) は、
+        /// 1 フレームの差し込みが無いフレームでもこの点を見る。止めるのは期限か _ClearHeld。</summary>
+        public void _SetGazeFor(Vector3 worldPos, float rollDeg, float seconds)
+        {
+            _SetGaze(worldPos, rollDeg);
+            _gazeFromHold = true;
+            _gazeHoldPos = worldPos;
+            _gazeHoldRoll = rollDeg;
+            _gazeHoldUntil = Time.time + (seconds < 0f ? 0f : (seconds > HeldMaxSeconds ? HeldMaxSeconds : seconds));
+            _gazeHoldTargetValid = false;   // the LookTarget of the new point is taken in this frame's LateUpdate
+        }
+
+        /// <summary>IMP-DOG-036 S2b: _SetUrge の期限つき版。このフレームは _SetUrge と同じ。以降 seconds 秒 (上限 1 秒) は、
+        /// 1 フレームの差し込みが無いフレームでもこの強さで尻尾が振れる。</summary>
+        public void _SetUrgeFor(float level, float seconds)
+        {
+            _SetUrge(level);
+            _urgeHold = _urge;
+            _urgeHoldUntil = Time.time + (seconds < 0f ? 0f : (seconds > HeldMaxSeconds ? HeldMaxSeconds : seconds));
+        }
+
+        /// <summary>IMP-DOG-036 S2b: 期限つきの注視・催促を今すぐ終える (このフレームの 1 フレームの差し込みには触らない)。</summary>
+        public void _ClearHeld()
+        {
+            _gazeHoldUntil = -1000f;
+            _urgeHoldUntil = -1000f;
+            _gazeHoldTargetValid = false;
         }
 
         /// <summary>IMP-DOG-028: ブルブルを始める (呼び直しで最初から)。胴 (shakeBones) と頭 (sourceBone) へ、
@@ -859,9 +904,11 @@ namespace KominkaDogRun
         /// 送信するかどうかの判断は器 (KD_DogFetchController) 側の責務。</summary>
         void PushLocalPet(bool petting, int zone, bool twoHands)
         {
-            if (fetchController == null) return;
+            // IMP-DOG-036 S2b: the unchanged test first (own fields; this runs every frame), the null test (an extern) only on a change.
+            // Same result: with no fetchController nothing is passed and the cache is not touched, as before
             if (petting == _pushedPetting
                 && (!petting || (zone == _pushedZone && twoHands == _pushedTwoHands))) return;
+            if (fetchController == null) return;
             _pushedPetting = petting;
             _pushedZone = zone;
             _pushedTwoHands = twoHands;
@@ -1215,6 +1262,7 @@ namespace KominkaDogRun
                 float idleShakeT = idleNow - _shakeStart;
                 if (!_effPetting && !_heartsPlaying
                     && _gazeFrame != fc && _urgeFrame != fc && _faceFrame != fc
+                    && idleNow >= _gazeHoldUntil && idleNow >= _urgeHoldUntil   // IMP-DOG-036 S2b: a held gaze / urge wakes it too
                     && !(idleShakeT >= 0f && idleShakeT < _shakeSeconds)
                     && idleNow >= _farewellUntil
                     && !_cAsleep && !_cStretch && !_cChinRest) return;
@@ -1243,8 +1291,12 @@ namespace KominkaDogRun
 
             // IMP-FET-005: 外からの差し込みは**そのフレームだけ**有効 (窓口の契約 3)。
             // 差し込みが止まれば下の鎖から自然に落ちて identity へ減衰する
-            bool gazeActive = _gazeFrame == Time.frameCount;
-            float urgeNow = _urgeFrame == Time.frameCount ? _urge : 0f;
+            // IMP-DOG-036 S2b: a frame with no one-frame injection uses the held gaze / urge while it lasts (_SetGazeFor / _SetUrgeFor)
+            int frame = Time.frameCount;
+            bool gazeNow = _gazeFrame == frame;
+            bool gazeHeld = !gazeNow && now < _gazeHoldUntil;
+            bool gazeActive = gazeNow || gazeHeld;
+            float urgeNow = _urgeFrame == frame ? _urge : (now < _urgeHoldUntil ? _urgeHold : 0f);
 
             // ---- IMP-DOG-019 Phase 4: 寝ているか ----
             // 呼び出し中の移動ではなく、寝姿勢に入った IsAsleep を全リアクションで共有する。
@@ -1356,12 +1408,22 @@ namespace KominkaDogRun
                 // IMP-FET-005: 催促 / フェイント。**撫でには必ず負ける** (この else if の位置が
                 // その保証)。首をかしげるロールは頬すり (cheekRollDeg) と同じ作り方
                 resp = gazeResponsiveness;
-                target = LookTarget(_gazePos, maxFollowAngle, false);
-                if (_gazeRoll > 0.01f || _gazeRoll < -0.01f)
+                // IMP-DOG-036 S2b: a held gaze reuses the LookTarget taken on the frame it was sent (the leashed dog's decision, at most
+                // MaxDecisionGap ago); the Slerp below still runs every frame, so the head moves as smoothly as before and only the
+                // aim's update follows the decision's rate. A one-frame injection is computed every frame exactly as before
+                if (gazeHeld && _gazeHoldTargetValid) target = _gazeHoldTarget;
+                else
                 {
-                    Quaternion dogRot2 = dogRoot.rotation;
-                    Quaternion rollLocal = Quaternion.Euler(0f, 0f, -_gazeRoll);
-                    target = (dogRot2 * rollLocal * Quaternion.Inverse(dogRot2)) * target;
+                    Vector3 gazePos = gazeHeld ? _gazeHoldPos : _gazePos;
+                    float gazeRoll = gazeHeld ? _gazeHoldRoll : _gazeRoll;
+                    target = LookTarget(gazePos, maxFollowAngle, false);
+                    if (gazeRoll > 0.01f || gazeRoll < -0.01f)
+                    {
+                        Quaternion dogRot2 = dogRoot.rotation;
+                        Quaternion rollLocal = Quaternion.Euler(0f, 0f, -gazeRoll);
+                        target = (dogRot2 * rollLocal * Quaternion.Inverse(dogRot2)) * target;
+                    }
+                    if (gazeHeld || _gazeFromHold) { _gazeHoldTarget = target; _gazeHoldTargetValid = true; }
                 }
                 _dbgMode = "GAZE";
             }
@@ -1520,7 +1582,7 @@ namespace KominkaDogRun
             // 最後の書き込みを解除し、クリップへ表情を返す ----
             // IMP-DOG-028: 洗浄の表情 (_SetFace、そのフレームだけ)。滑らかにして撫での値と大きい方を採る。
             // 差し込まれない犬は重みが 0 のまま = max(撫で, 0) で従来と同じ値
-            bool faceIn = _faceFrame == Time.frameCount;
+            bool faceIn = _faceFrame == frame;
             if (faceIn || _faceMetoziW > 0f || _faceEgaoW > 0f)   // Udon: no extern calls for the dogs nobody washes
             {
                 float faceT = 1f - Mathf.Exp(-FaceResponsiveness * dt);
@@ -1595,7 +1657,8 @@ namespace KominkaDogRun
                 && _faceMetoziW == 0f && _faceEgaoW == 0f && !_metoziWriting && !_egaoWriting
                 && !shakeLive && !_shakeFlush
                 && !asleep && !stretch && !chinRest
-                && now >= _farewellUntil && debugText == null;
+                && now >= _farewellUntil && debugText == null
+                && now >= _gazeHoldUntil && now >= _urgeHoldUntil;   // IMP-DOG-036 S2b
         }
 
         void FollowHeartEmitters()

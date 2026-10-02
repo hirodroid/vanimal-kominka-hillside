@@ -44,16 +44,32 @@ namespace KominkaDogRun
             // IMP-DOG-034 C1-misc: once every dog's note has been shown the loop can no longer show anything (it only updates
             // _waterTouched / _waterPrevPose, which are read solely for dogs whose note is still unshown), so stop polling.
             if (_waterWentDone) return;
-            if (manager == null || manager.walkers == null || manager.fetchers == null || Time.time < _nextWentPoll) return;
-            _nextWentPoll = Time.time + 0.25f;
-            int n = manager.walkers.Length;
+            // IMP-DOG-036 S5: the clock first (own field), the manager's references only when a poll is due. A null reference returns
+            // without arming the clock, as before, so the result is the same.
+            float now = Time.time;
+            if (now < _nextWentPoll) return;
+            if (manager == null || manager.walkers == null || manager.fetchers == null) return;
+            _nextWentPoll = now + 0.25f;
+            // IMP-DOG-036 S5: why this loop rarely ends: it finishes only once all n dogs' notes were shown, and a note needs that
+            // player to have had that dog and that dog to go into the water. It cannot stop earlier without a notice: any dog can
+            // become this player's at any moment (manager.walkers arrives by deserialization; nothing tells the pouch), and the note
+            // on the poll where it becomes theirs compares with the pose seen on the poll before. So it keeps its 4 Hz, and each poll
+            // reads the walkers array once and compares ids here instead of calling manager._IsMine / _IsLeashed per dog (same
+            // tests: _IsLeashed = walkers[i] >= 0, _IsMine = a valid local player and walkers[i] == its playerId).
+            int[] walkers = manager.walkers;
+            KD_DogFetchController[] fetchers = manager.fetchers;
+            VRCPlayerApi local = Networking.LocalPlayer;
+            int me = Utilities.IsValid(local) ? local.playerId : -1;
+            int n = walkers.Length;
             if (_waterTouched == null || _waterTouched.Length != n) { _waterTouched = new bool[n]; _waterWentShown = new bool[n]; _waterPrevPose = new int[n]; }
             int shown = 0;
             for (int i = 0; i < n; i++)
             {
-                if (manager._IsMine(i)) _waterTouched[i] = true;
-                else if (manager._IsLeashed(i)) _waterTouched[i] = false;   // someone else has it now
-                int pose = i < manager.fetchers.Length && manager.fetchers[i] != null ? manager.fetchers[i].WaterPose : 0;
+                int w = walkers[i];
+                if (w >= 0 && me >= 0 && w == me) _waterTouched[i] = true;
+                else if (w >= 0) _waterTouched[i] = false;   // someone else has it now
+                KD_DogFetchController f = i < fetchers.Length ? fetchers[i] : null;
+                int pose = f != null ? f.WaterPose : 0;
                 if (pose != 0 && _waterPrevPose[i] == 0 && _waterTouched[i] && !_waterWentShown[i])
                 {
                     _waterWentShown[i] = true;
@@ -69,21 +85,30 @@ namespace KominkaDogRun
         private void PollWaterRelease()
         {
             PollWaterWent();
-            if (_waterNoteShown || waterSpot == null || manager == null || manager.walkers == null || manager.dogRoots == null) return;
-            if (Time.time < _nextWaterPoll) return;
-            _nextWaterPoll = Time.time + 0.25f;
-            int n = manager.walkers.Length;
+            // IMP-DOG-036 S5: own flag and clock before the references (a null returns without arming the clock, as before), and the
+            // walkers array read once per poll instead of _IsMine / _IsLeashed per dog (same tests, see PollWaterWent).
+            if (_waterNoteShown) return;
+            float now = Time.time;
+            if (now < _nextWaterPoll) return;
+            if (waterSpot == null || manager == null || manager.walkers == null || manager.dogRoots == null) return;
+            _nextWaterPoll = now + 0.25f;
+            int[] walkers = manager.walkers;
+            Transform[] roots = manager.dogRoots;
+            VRCPlayerApi local = Networking.LocalPlayer;
+            int me = Utilities.IsValid(local) ? local.playerId : -1;
+            int n = walkers.Length;
             if (_waterMine == null || _waterMine.Length != n)
             {
                 _waterMine = new bool[n];
-                for (int i = 0; i < n; i++) _waterMine[i] = manager._IsMine(i);
+                for (int i = 0; i < n; i++) _waterMine[i] = walkers[i] >= 0 && me >= 0 && walkers[i] == me;
                 return;
             }
             for (int i = 0; i < n; i++)
             {
-                bool mine = manager._IsMine(i);
-                if (_waterMine[i] && !mine && !manager._IsLeashed(i) && i < manager.dogRoots.Length && manager.dogRoots[i] != null
-                    && waterSpot._NearEntry(manager.dogRoots[i].position))
+                int w = walkers[i];
+                bool mine = w >= 0 && me >= 0 && w == me;
+                if (_waterMine[i] && !mine && w < 0 && i < roots.Length && roots[i] != null
+                    && waterSpot._NearEntry(roots[i].position))
                 {
                     _waterNoteShown = true;
                     HillsideNote(TabWalk, "course.water.release2", "");   // 2026-09-27: "near the river" (the trigger no longer needs the release spot)

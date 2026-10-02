@@ -925,6 +925,7 @@ namespace KominkaDogRun
 
         private void Start()
         {
+            _voiceFollowsPosition = sleepAudio != null;   // IMP-DOG-036 S5
             ApplyDogVoiceSettings();
             ApplyBgmSettings();
             // 0 で入ると無言で壊れる値 (破壊的監査 RC-1 の 3 規則)。
@@ -1465,8 +1466,13 @@ namespace KominkaDogRun
 
         private void RefreshVoiceForPosition()
         {
+            // IMP-DOG-036 S5: without sleepAudio (this world: the builder writes null) the gain is _voiceVolume, and every write of
+            // _voiceVolume / _voiceEnabled already ends in ApplyDogVoiceSettings, so the per-frame compare can never differ.
+            // With sleepAudio the gain follows the player's position (sleepAudio's own clock, no notice), so it is still compared.
+            if (!_voiceFollowsPosition) return;
             if (_appliedVoiceGain != CurrentVoiceGain()) ApplyDogVoiceSettings();
         }
+        private bool _voiceFollowsPosition;   // IMP-DOG-036 S5: sleepAudio was wired at Start (an Inspector reference; nothing assigns it at run time)
 
         private void Poll()
         {

@@ -348,6 +348,10 @@ namespace KominkaDogRun
 
         void Update()
         {
+            // IMP-DOG-036 S5: no live chosen and nothing playing = the lines below do nothing: CandyPreparing and the mount need
+            // DogPerformanceOf(liveId) != null (null for liveId < 0, so candyPreparing alone cannot start anything), want stays -1
+            // and equals _playingId. Same result without the two IsOwner calls.
+            if (liveId < 0 && _playingId < 0) return;
             UpdateCandyAuthority();
             UpdateMountAuthority();
             var dogPerformance = DogPerformanceOf(liveId);

@@ -45,6 +45,14 @@ namespace KominkaHillside
         public float handleGripOffset = 0.062f;
         [Tooltip("紐の軸まわりの輪の面の傾き (度)。右手の値で、左手は符号を反転して左右の感覚をそろえる。輪が縦/横に見えるときは ±90 単位で回す")]
         public float handleRollDegrees = 0f;
+        // IMP-DOG-036 S6: drawing of other players' ropes (local only; each client decides for itself). Read by the
+        // collars when their rope loop starts (an attach), see KH_LeashCollar.CacheTuning.
+        [Tooltip("他の人が持つ紐を何フレームに 1 回計算するか。間のフレームは前の形のまま。自分の紐は毎フレーム")]
+        public int otherRopeEvery = 2;
+        [Tooltip("他の人が持つ紐を、自分からこの距離 (m) より遠いとき直線で描く")]
+        public float ropeStraightDistance = 15f;
+        [Tooltip("直線にした紐を、この距離 (m) より近づいたら元の形へ戻す (ropeStraightDistance 以下。境目でちらつかないため)")]
+        public float ropeFullDistance = 13f;
         // Walking pace, upper two of the four tiers (IMP-DOG-009). The lower two (walkSpeed 1.1 / runSpeed 2.4)
         // live on each KD_DogWanderController because they are the dog's own legs; these two are the walk's
         // own tiers, so the whole pack shares one number. Prototype values until Play: Build writes them,
@@ -224,6 +232,7 @@ namespace KominkaHillside
             destinations[dog] = route != null && route._DestinationNode(destination) >= 0 ? destination : defaultDestination;
             Debug.Log("[KH_Leash] ReqAttach dog" + dog + " by player " + caller.playerId + " hand=" + hand + " dest=" + destinations[dog]); // BUG-DOG-004 trail
             RequestSerialization();
+            WakeRope(dog);   // IMP-DOG-036 S6: the Owner gets no OnDeserialization for its own write
         }
 
         // IMP-DOG-027: the dog's wash hold through its wander layer (fetchers[dog].pack, as LeashInviteBark). Unwired = false.
@@ -303,7 +312,22 @@ namespace KominkaHillside
             return false;
         }
 
-        public override void OnDeserialization() { ApplyHomes(); }
+        // IMP-DOG-036 S6: every non-Owner (and a late joiner's first state) starts the rope loops of the leashed dogs.
+        public override void OnDeserialization() { ApplyHomes(); WakeLeashedRopes(); }
+
+        // IMP-DOG-036 S6: a collar runs its rope loop only while its dog is leashed (KH_LeashCollar._RopeWake). It stops
+        // by itself after hiding the rope, so a detach needs no call; an attach is woken here. _RopeWake ignores a
+        // collar whose loop is running, so waking every leashed dog is safe.
+        private void WakeLeashedRopes()
+        {
+            for (int i = 0; i < walkers.Length; i++)
+                if (walkers[i] >= 0) WakeRope(i);
+        }
+        private void WakeRope(int dog)
+        {
+            KH_LeashCollar collar = LrCollar(dog);
+            if (collar != null) collar._RopeWake();
+        }
         public override void OnPlayerLeft(VRCPlayerApi player)
         {
             if (!Networking.IsOwner(gameObject)) return;
@@ -348,19 +372,28 @@ namespace KominkaHillside
             if (on == _lrOn && !_lrPartial) return;
             // Same lookup as KH_LeashCollar.PeerCollar: anchor = child "ClipAnchor" of the collar object.
             int n = collarAnchors != null ? collarAnchors.Length : 0;
-            if (_lrCollars == null || _lrCollars.Length != n) _lrCollars = new KH_LeashCollar[n];
             bool all = true;
             for (int i = 0; i < n; i++)
             {
                 // A collar that could not be found is looked up again on every apply (at most once a minute).
-                if (_lrCollars[i] == null && collarAnchors[i] != null && collarAnchors[i].parent != null)
-                    _lrCollars[i] = collarAnchors[i].parent.GetComponent<KH_LeashCollar>();
-                if (_lrCollars[i] != null) _lrCollars[i].lightRope = on;
+                KH_LeashCollar collar = LrCollar(i);
+                if (collar != null) collar.lightRope = on;
                 else all = false;
             }
             // Remember what was written; a partial write is repeated on the next tick or mode change (Codex 2026-10-02).
             _lrOn = on; _lrPartial = !all;
             if (!all) Debug.LogWarning("[KH_LeashManager] light rope: a collar was not found; will retry");
+        }
+        // The collar of dog i (null when not found; looked up again on the next call). Shared by the light-rope
+        // write above and the IMP-DOG-036 S6 rope wake.
+        private KH_LeashCollar LrCollar(int i)
+        {
+            int n = collarAnchors != null ? collarAnchors.Length : 0;
+            if (_lrCollars == null || _lrCollars.Length != n) _lrCollars = new KH_LeashCollar[n];
+            if (i < 0 || i >= n) return null;
+            if (_lrCollars[i] == null && collarAnchors[i] != null && collarAnchors[i].parent != null)
+                _lrCollars[i] = collarAnchors[i].parent.GetComponent<KH_LeashCollar>();
+            return _lrCollars[i];
         }
 
         private void Update()
@@ -372,6 +405,9 @@ namespace KominkaHillside
             if (lrNow >= _lrNextAt) LightRopeTick(lrNow);
             if (Time.time < _nextMaintenance) return;
             _nextMaintenance = Time.time + 0.5f;
+            // IMP-DOG-036 S6: safety net for the rope loops (state written without OnDeserialization, e.g. by the
+            // harness; a holder that was not yet valid on this client; a lost event). Running loops ignore it.
+            WakeLeashedRopes();
             if (!Networking.IsOwner(gameObject)) { ApplyHomes(); return; }
             bool changed = false;
             if (!homesInitialized)

@@ -250,7 +250,7 @@ namespace KominkaDogRun
         private bool _legStanding;             // Owner, holder tier 0 at that decision: watch the holder's body on legs frames
         private VRCPlayerApi _standHolder;
         private Vector3 _standHolderAt;
-        private bool _standGaze;               // LeashPose injected the gaze / tail on the last decision (RunLegs re-sends it)
+        private bool _standGaze;               // LeashPose injected the gaze / tail on this decision (S2b: held, see HeldGazeEnd)
 
         private bool UpdateHillsideLeash()
         {
@@ -706,9 +706,12 @@ namespace KominkaDogRun
             if (handDist < 0.8f || Vector3.Angle(forward, toHand) > 40f) return;
             _look = true;
             if (petController == null) return;
-            _standGaze = true;   // IMP-DOG-034 C1-3: a fast frame re-sends this pair every frame (valid for one frame only)
-            petController._SetGaze(holder.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position, 0f);
-            petController._SetUrge(0.5f);
+            // IMP-DOG-036 S2b: held until the next decision (LeashGazeHold, Tick.cs) instead of re-sent by every legs frame. On this
+            // frame it is the same one-frame injection as before (the last call of the frame wins); HeldGazeEnd clears it when the
+            // next decision does not come here
+            _standGaze = true;
+            petController._SetGazeFor(holder.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position, 0f, LeashGazeHold);
+            petController._SetUrgeFor(0.5f, LeashGazeHold);
         }
 
         // ---- IMP-DOG-034 A3: 嗅ぐ姿勢の判定に使う「道の中心線からの距離」のキャッシュ ----

@@ -372,7 +372,9 @@ namespace KominkaHillside
 
         void Update()
         {
-            if (Networking.IsOwner(gameObject)) OwnerTick();
+            // IMP-DOG-036 S5: OwnerTick does nothing with no pending call and no held dog (its first two branches), so those own
+            // fields are tested before IsOwner (which ran every frame on every client). Same result.
+            if ((_pendingDog >= 0 || heldDog >= 0) && Networking.IsOwner(gameObject)) OwnerTick();
             // Every client: ease the stand toward the synced height (0 with no dog)
             if (liftRoot == null || !_liftBaseOk) return;
             float want = heldDog >= 0 ? lift : 0f;

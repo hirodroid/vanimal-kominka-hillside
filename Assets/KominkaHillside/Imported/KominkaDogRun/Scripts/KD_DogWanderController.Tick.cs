@@ -11,8 +11,8 @@ namespace KominkaDogRun
     //                    do (LegRecord*), the last call of each kind wins, nested calls inside a mover are not recorded.
     //   legs frame     : RunLegs() replays that record for exactly one frame: the same mover with the same arguments (LeashGo and
     //                    GatherStep only advance the corners of the path the decision planned: no NavMesh re-plan; LeashGo's wall
-    //                    clearance is consumed by the distance walked and cast again only when a new corner is reached), and the
-    //                    leashed dog's one-frame gaze / tail injection is sent again with the holder's current head. Nothing else:
+    //                    clearance is consumed by the distance walked and cast again only when a new corner is reached). The
+    //                    leashed dog's gaze / tail is held by the pet controller until the next decision (S2b). Nothing else:
     //                    no route / holder / stopover / invite / pose / errand decision, no WaterTick / WashErrandTick.
     //   per frame      : TickBusy() (as before, extended) decides whether this frame may be a legs frame at all. Busy = decide now
     //                    (and every frame while busy): the frame-count handshakes and one-frame injections of Fetch / disc / wash /
@@ -30,6 +30,13 @@ namespace KominkaDogRun
     // decision validated (no spot query on a legs frame), the swim height from the recorded water surface, and the swim bob / pitch
     // on the visual child and the hips (LateUpdate) from the recorded pose. The gate is WaterLegsOk() instead of TickBusy().
     // The Fetch's / disc's water states, the RC-14 veto and the ease back after the play keep deciding every frame (TickBusy).
+    //
+    // IMP-DOG-036 S2b: a dog whose last decision found it resting (RestThinRecord: lying in the rest, or standing / lying in the
+    // wander or the post-Fetch calm, still, no turn, nobody within pauseRadius, none of TickBusy's own-field states, the breath
+    // silent) decides every `restDecisionEvery` frames (15, capped at MaxRestDecisionGap). Its legs frames are the usual RunLegs
+    // (a still Coast: nothing to write); the gate is TickBusy() as before (ownership, leash attach, Fetch / disc, water, candy...)
+    // plus RestLegsOk() (the root moved by anyone, a wash hold). Every other wake (treat, sleep call, live, gathering, nudge,
+    // greeting, play window, wander waypoint, rest end, an approaching player) is polled by the decision and waits for it.
     public partial class KD_DogWanderController
     {
         const int DefaultDecisionEvery = 5;
@@ -37,11 +44,23 @@ namespace KominkaDogRun
         const float DtClamp = 0.5f;           // s: IMP-DOG-036 S1/S2 fix 2 - the longest interval the integrators see (see Update)
         const int DefaultWaterDecisionEvery = 10;   // IMP-DOG-036 S3
         const float MaxWaterDecisionGap = 0.35f;    // s: IMP-DOG-036 S3 - the water play's cap (the legs' checked reach is built on it)
+        const int DefaultRestDecisionEvery = 15;    // IMP-DOG-036 S2b
+        // s: IMP-DOG-036 S2b - the rest cadence's cap. Below DtClamp by a frame at >= 20 fps, so the integrators (the breath, the
+        // ObserveSpeed interval) still see the whole interval (_dt is not clamped)
+        const float MaxRestDecisionGap = 0.45f;
+        const float RestMoveEps = 0.01f;            // m: IMP-DOG-036 S2b - a root moved this far since the resting decision decides now
 
         [Tooltip("IMP-DOG-036: 判断を何フレームに 1 回にするか (既定 5)。1 = 毎フレーム判断 (A/B 用、IMP-DOG-034 以前と同じ経路)。0 以下は既定値")]
         public int decisionEvery = DefaultDecisionEvery;
         [Tooltip("IMP-DOG-036 S3: 水遊び中 (川の中) の判断を何フレームに 1 回にするか (既定 10、上限 0.35 秒)。1 = 毎フレーム判断。0 以下は既定値")]
         public int waterDecisionEvery = DefaultWaterDecisionEvery;
+        [Tooltip("IMP-DOG-036 S2b: 休んでいる犬 (伏せ・立ち止まり。動かない・向きを変えない・近くに人が居ない・リード / 洗浄 / 水 / Fetch 無し) の判断を何フレームに 1 回にするか (既定 15、上限 0.45 秒)。1 = 使わない (decisionEvery のまま)。0 以下は既定値")]
+        public int restDecisionEvery = DefaultRestDecisionEvery;
+        // IMP-DOG-036 S2b: the last decision found the dog resting (RestThinRecord), and where its root was then
+        private bool _restThin;
+        private Vector3 _restAt;
+        private bool _reachedSelection;   // this decision got past the leash / candy / Fetch / wash returns (UpdateTick)
+        private int _dbgRestDecisions, _dbgRestSkips;   // IMP-DOG-036 S2b: decisions / legs frames while _restThin (the harness zeroes them)
         // IMP-DOG-036 S3: the frames of the previous and of this decision (WaterTick's "seen at the previous decision")
         private int _prevDecisionFrame = -1, _thisDecisionFrame = -1;
         private float _dt;                // this decision's delta time: the time since the previous decision (this frame included)
@@ -59,21 +78,29 @@ namespace KominkaDogRun
             _dtSince += Time.deltaTime;
             // IMP-DOG-036 S3: the last decision left the dog in the water play -> the water cadence, cap and gate
             bool water = _waterThin;
-            int every = water ? WaterDecisionFrames() : DecisionEvery();
+            // IMP-DOG-036 S2b: the last decision found the dog resting -> the rest cadence, cap and gate (never with the water play)
+            bool rest = !water && _restThin;
+            // IMP-DOG-036 S2b: woken (the root moved, a wash hold) -> back to the normal cadence from this frame on: this frame
+            // decides if it is the normal slot or MaxDecisionGap has passed, exactly as if the rest cadence had never been on
+            if (rest && !RestStillOk()) { rest = false; _restThin = false; }
+            int every = water ? WaterDecisionFrames() : (rest ? RestDecisionFrames() : DecisionEvery());
+            float gap = water ? MaxWaterDecisionGap : (rest ? MaxRestDecisionGap : MaxDecisionGap);
             Vector3 probeFrom = StepProbeBegin();   // IMP-DOG-036 step probe (harness read-out)
             // IMP-DOG-036 S1/S2 fix 2: the slot only staggers the dogs; elapsed time guarantees the cap. `every` follows the fps
             // (4 <-> 5) and its modulo phase can then skip past a slot, so a decision is also forced once MaxDecisionGap has passed
             if (every > 1 && !_decideNow && ((Time.frameCount + dogIndex) % every) != 0
-                && _dtSince < (water ? MaxWaterDecisionGap : MaxDecisionGap) && (water ? WaterLegsOk() : !TickBusy()))
+                && _dtSince < gap && (water ? WaterLegsOk() : !TickBusy()))
             {
                 _tickedThisFrame = false;
                 if (water) WaterRunLegs(); else RunLegs();
+                if (rest) _dbgRestSkips++;   // IMP-DOG-036 S2b harness read-out
                 StepProbeEnd(probeFrom, DbgSrcLegs, Time.deltaTime);
                 return;
             }
             _decideNow = false;
             _prevDecisionFrame = _thisDecisionFrame; _thisDecisionFrame = Time.frameCount;   // IMP-DOG-036 S3
             if (water) _dbgWaterDecisions++;   // IMP-DOG-036 S3 harness read-out: decisions taken while thinned (legs: WaterRunLegs)
+            if (rest) _dbgRestDecisions++;     // IMP-DOG-036 S2b harness read-out: decisions taken on the rest cadence
             _waterPlayedNow = false;                                                          // IMP-DOG-036 S3 (UpdateWaterPlay raises it)
             // IMP-DOG-036 S1/S2 fix 2: with the forced decision _dtSince is at most MaxDecisionGap + one frame (Unity already clamps a
             // frame's deltaTime to maximumDeltaTime, 0.333 s). The integrators (holder-speed EMA: Min(1, dt/tau); yaw rate and
@@ -85,12 +112,79 @@ namespace KominkaDogRun
             _decisionCount++;
             // the record of this decision's movers (RunLegs replays it until the next decision)
             _legKind = LegNone; _legFaceKind = LegNone; _legRec = true; _legDepth = 0;
+            _standGaze = false;   // IMP-DOG-036 S2b: raised by LeashPose when this decision holds the gaze (HeldGazeEnd)
             _inTick = true;
             UpdateTick();
             _inTick = false;
             _legRec = false;
             WaterThinRecord();   // IMP-DOG-036 S3: may the next frames be water legs frames, and what they replay (HillsideWater.cs)
+            RestThinRecord();    // IMP-DOG-036 S2b: may the next decision wait the rest cadence (after WaterThinRecord: never both)
+            HeldGazeEnd();       // IMP-DOG-036 S2b: a held gaze this decision did not renew ends on this frame, as before
             StepProbeEnd(probeFrom, DbgSrcDecision, _dt);
+        }
+
+        // ---------------------------------------------------------------- IMP-DOG-036 S2b: the leashed dog's held gaze
+        // LeashPose used to inject a one-frame gaze / tail (KD_DogPetController._SetGaze / _SetUrge) and RunLegs re-sent it on every
+        // legs frame with the holder's current head (GetTrackingData + 2 cross-behaviour calls per frame per dog, on every client).
+        // Now LeashPose sends it once per decision with an expiry (_SetGazeFor / _SetUrgeFor, LeashGazeHold s > the longest legs run,
+        // MaxDecisionGap) and the legs frames send nothing. A decision that does not renew it clears it on its own frame
+        // (HeldGazeEnd), so the gaze ends on the same frame as before; the only difference is that the look point is the holder's
+        // head at the decision (up to MaxDecisionGap old) instead of this frame's.
+        const float LeashGazeHold = 0.3f;   // s: MaxDecisionGap (0.2) + margin. A legs frame is always < MaxDecisionGap after its decision
+        private bool _gazeHeld;              // a held gaze was sent and not cleared yet
+
+        void HeldGazeEnd()
+        {
+            if (_gazeHeld && !_standGaze && petController != null) petController._ClearHeld();
+            _gazeHeld = _standGaze;
+        }
+
+        // ---------------------------------------------------------------- IMP-DOG-036 S2b: the rest cadence
+        /// <summary>The rest cadence in frames: restDecisionEvery (15), shortened at low fps so it stays within MaxRestDecisionGap.</summary>
+        int RestDecisionFrames()
+        {
+            return DecisionFrames(restDecisionEvery <= 0 ? DefaultRestDecisionEvery : restDecisionEvery, MaxRestDecisionGap);
+        }
+
+        /// <summary>End of a decision: did it leave the dog resting, so that the next decision may wait the rest cadence? Own fields
+        /// only. Everything TickBusy reads from other behaviours is still read on every legs frame (Update), so this only has to
+        /// exclude what TickBusy would not see and what a longer gap would show (motion, a turn, the breath fade, a player near).</summary>
+        void RestThinRecord()
+        {
+            _restThin = false;
+            if (!_reachedSelection || _waterThin || dogRoot == null) return;
+            if (restDecisionEvery == 1 || decisionEvery == 1) return;   // off / the per-frame A/B mode
+            // the branches that rest: lying in the rest (after the drink and the move), the wander (outside its window, or arrived
+            // at its waypoint), the post-Fetch calm. Each of them ended in a Coast this decision
+            int b = _selectedBehavior;
+            if (!(b == BehaviorWander || b == BehaviorCalm || (b == BehaviorRest && _restPhase == RestPhaseLie))) return;
+            // still: a Coast at speed 0 (RunLegs skips it) and no turn recorded (the rest's turn before lying down is done)
+            if (_speed != 0f || _legKind != LegCoast || _legFaceKind != LegNone) return;
+            // nobody within pauseRadius (petting, the idle pant, the approach wake), and none of TickBusy's own-field states
+            if (_paused || _wasLeashed || _waterLeashVeto) return;
+            if (waterState != WaterOff || _waterSwimming || _swimYValid || _swimPitchNow != 0f || _hipsWrote) return;
+            if (_washActive || _washLeashStop || _stationIdx >= 0 || _activityBusy) return;
+            if (_greetingActive || _nudging || _treatBusy || _playing) return;
+            if (candyPerformanceActive || _candyTicked || _candyPetResumePending || _writtenCallTime != 0f) return;
+            // the breath fades are integrated and written on decision frames only: a longer gap would step the volume
+            if (breathSource != null && !_breathSilent) return;
+            // a wash hold the wash branch did not take (it yields to an errand): stay on the normal cadence (RestStillOk would end it)
+            if (wash != null && wash._WashHold()) return;
+            _restThin = true;
+            _restAt = dogRoot.position;
+        }
+
+        /// <summary>IMP-DOG-036 S2b: every frame of the rest cadence (before the slot test): may it go on? False = back to the normal
+        /// cadence (Update), never "decide every frame": a dog pushed on every frame by KD_DogPack, or a wash hold the wash branch
+        /// yields (an errand), then decides exactly as often as without S2b, not more. TickBusy still runs on every legs frame.</summary>
+        bool RestStillOk()
+        {
+            // anything moved the root since the decision (KD_DogPack's push, VRCObjectSync on a non-Owner, a teleport, a harness write)
+            Vector3 moved = dogRoot.position - _restAt;
+            if (moved.sqrMagnitude > RestMoveEps * RestMoveEps) return false;
+            // a wash hold started (the washer touching the dog): the wash stop starts within the normal cadence, as before
+            if (wash != null && wash._WashHold()) return false;
+            return true;
         }
 
         // ---------------------------------------------------------------- IMP-DOG-036 step probe (debug read-out)
@@ -255,13 +349,8 @@ namespace KominkaDogRun
         void RunLegs()
         {
             _legsFrames++;
-            // S1: the leashed dog's look at its holder (LeashPose) is valid for one frame in KD_DogPetController: send it again,
-            // at the holder's current head, on every client (the non-Owner derives the same pose)
-            if (_wasLeashed && _standGaze && petController != null && Utilities.IsValid(_standHolder))
-            {
-                petController._SetGaze(_standHolder.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position, 0f);
-                petController._SetUrge(0.5f);
-            }
+            // S1: the leashed dog's look at its holder (LeashPose) was re-sent here every legs frame. IMP-DOG-036 S2b: LeashPose now
+            // sends it with an expiry that outlasts the legs run (_SetGazeFor, HeldGazeEnd above), so nothing is sent here
             // Positions are the Owner's (VRCObjectSync carries them); a non-Owner's legs would only pick the legs from the observed
             // speed, which does not change between decisions
             if (!_dogOwner) return;
@@ -305,8 +394,9 @@ namespace KominkaDogRun
             if (_waterLeashVeto) return true;
             // IMP-DOG-036 S1: a leashed dog takes legs frames unless something in LeashLegsOk is live
             if (_wasLeashed) return !LeashLegsOk();
-            // IMP-DOG-036 S2: a leash attached since the last decision decides now (the attach edge, RC-14's check, the walk)
-            if (hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex)) return true;
+            // IMP-DOG-036 S2: a leash attached since the last decision decides now (the attach edge, RC-14's check, the walk).
+            // S2b: walkers[dog] read directly (= KH_LeashManager._IsLeashed, one field read instead of a call)
+            if (LegsWalker() >= 0) return true;
             // IMP-DOG-036 S2: a moving dog whose decision recorded no mover (a branch switch returning early) decides again now,
             // so its legs never freeze mid-step (a still dog with nothing to replay - the placed sleep - just waits)
             if (_dogOwner && _legKind == LegNone && _speed > 0f) return true;
@@ -333,13 +423,30 @@ namespace KominkaDogRun
             if (_writtenCallTime != 0f) return true;
             // Fetch / disc (cross-behaviour reads). No Fetch at all keeps the old per-frame path.
             if (fetchController == null) return true;
-            if (!fetchController.IsIdle || fetchController.IsWaterFetching || fetchController.WaterPose != 0) return true;
+            // S2b: IsWaterFetching (dogState >= StateWaterChase = 6) is never true when IsIdle (dogState == StateIdle = 0) holds,
+            // so after `!IsIdle` it was a dead read; dropped (the same answer)
+            if (!fetchController.IsIdle || fetchController.WaterPose != 0) return true;
             if (FrisbeeActive) return true;
             return false;
         }
 
+        /// <summary>IMP-DOG-036 S2b: walkers[dogIndex] read straight from the synced array (KH_LeashManager._IsLeashed is
+        /// `walkers[dog] >= 0`; the same direct read as WaterLegsOk). -1 = no manager / not leashed.</summary>
+        int LegsWalker()
+        {
+            if (hillsideLeashes == null) return -1;
+            int[] w = hillsideLeashes.walkers;
+            if (w == null || dogIndex < 0 || dogIndex >= w.Length) return -1;
+            return w[dogIndex];
+        }
+
         /// <summary>IMP-DOG-036 S1: may a leashed dog take a legs frame? False (= decide now, and every frame while it stays false) for
-        /// every frame-count handshake and every event the last decision could not have seen.</summary>
+        /// every frame-count handshake and every event the last decision could not have seen.
+        /// IMP-DOG-036 S2b: what the legs frame still reads from other behaviours is the leash (walkers), the root taken by Fetch / the
+        /// disc (AnimatorYielded) and the holder walking off. The travel ticket, the wash hold / satisfied sign and the non-Owner's
+        /// synced wet pose moved to the decision (read there as before, at most one decision gap later): each of them only starts
+        /// something the decision does (apply the ticket, stop for the wash, pose wet), no legs frame writes anything they guard
+        /// (no teleport, no wash frame, no water handshake on a legs frame), and once started they are own fields read below.</summary>
         bool LeashLegsOk()
         {
             // the last decision went through the leash branch normally (not yielded to Fetch / disc, holder valid)
@@ -351,17 +458,14 @@ namespace KominkaDogRun
             if (waterState != WaterOff || _waterSwimming || _swimYValid || _swimPitchNow != 0f || _hipsWrote) return false;
             // wash: being washed / the leashed wash stop (_washLastFrame), held at a wash station
             if (_washActive || _washLeashStop || _stationIdx >= 0 || _activityBusy) return false;
-            // leash detached or another holder since the decision
-            if (hillsideLeashes == null || !hillsideLeashes._IsLeashed(dogIndex) || hillsideLeashes.walkers[dogIndex] != _legHolderId) return false;
-            // a travel ticket in progress (Ready / Moved; a superset of TravelPending)
-            if (TravelPhaseLive()) return false;
-            // the holder's wash hold or a satisfied sign started (the stop is decided on every client)
-            if (wash != null && (WashSatisfyRunning() || wash._WashHold())) return false;
+            // leash detached or another holder since the decision. S2b: one direct read of walkers[dog]; _legHolderId is >= 0
+            // whenever _legLeashArmed (the decision armed it with walkers[dog] after _IsLeashed), so a detach (-1) differs too
+            if (LegsWalker() != _legHolderId) return false;
             // Fetch / the disc took the root and the Animator: the yield edge is the decision's
             if (AnimatorYielded()) return false;
-            // wet at the last pose refresh (Owner: its own write) / a wet pose seen (non-Owner: synced)
-            if (_dogOwner) { if (_waterLastWet) return false; }
-            else if (fetchController != null && fetchController.WaterPose != 0) return false;
+            // wet at the last pose refresh (Owner: its own write). S2b: the non-Owner's synced WaterPose is the decision's (its legs
+            // frames write nothing; the hips / swim flags its decision raises are the own fields above)
+            if (_dogOwner && _waterLastWet) return false;
             // the holder stood still at the decision and has moved since (walking off: decide on this frame, as C-1 did)
             if (_legStanding && Utilities.IsValid(_standHolder))
             {
@@ -369,14 +473,6 @@ namespace KominkaDogRun
                 if (moved.sqrMagnitude > StandHolderMove * StandHolderMove) return false;
             }
             return true;
-        }
-
-        bool TravelPhaseLive()
-        {
-            KominkaHillside.KH_LeashManager m = hillsideLeashes;
-            if (m == null || m.travelPhase == null || dogIndex < 0 || dogIndex >= m.travelPhase.Length) return false;
-            int ph = m.travelPhase[dogIndex];
-            return ph == KominkaHillside.KH_LeashManager.TravelPhaseReady || ph == KominkaHillside.KH_LeashManager.TravelPhaseMoved;
         }
     }
 }

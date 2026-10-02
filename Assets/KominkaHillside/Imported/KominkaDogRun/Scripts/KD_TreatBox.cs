@@ -282,11 +282,15 @@ namespace KominkaDogRun
 
         private void Update()
         {
+            // IMP-DOG-036 S5: own fields and the 4 Hz clock first, IsOwner only when a reconcile is due (it was every frame on every
+            // client). Non-Owners now advance the clock too, so a client that becomes the Owner (the master left) reconciles within
+            // ReconcileInterval instead of on its first frame as Owner - the Owner's own cadence.
+            if (_dogCount <= 0 || _slotCount <= 0) return;
+            float now = Time.time;
+            if (now < _nextReconcile) return;
+            _nextReconcile = now + ReconcileInterval;
             // **マスターだけが配る。** SetOwner を呼ばないので Owner == マスター
             if (!Networking.IsOwner(gameObject)) return;
-            if (_dogCount <= 0 || _slotCount <= 0) return;
-            if (Time.time < _nextReconcile) return;
-            _nextReconcile = Time.time + ReconcileInterval;
             Reconcile();
         }
 

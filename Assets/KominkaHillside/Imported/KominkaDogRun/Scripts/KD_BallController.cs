@@ -3,6 +3,7 @@ using UnityEngine;
 using VRC.SDKBase;
 using VRC.SDK3.Components;
 using VRC.Udon.Common.Interfaces;
+using VRC.Udon.Common.Enums;
 
 namespace KominkaDogRun
 {
@@ -150,6 +151,18 @@ namespace KominkaDogRun
             // クライアントだけ。VR 側は値も挙動も変わらない。
             // 掴まれた後に書き換えたときの実機挙動は未検証 → Start() で確定させる
             if (_isDesktop && _pickup != null) _pickup.AutoHold = VRC_Pickup.AutoHoldMode.Yes;
+            _started = true;
+            StartIdlePoll();   // IMP-DOG-036 S5: a ball already held when this client joins is found by the poll
+        }
+
+        // IMP-DOG-036 S5: a disabled behaviour got no Update. Delayed events still run on a disabled UdonBehaviour (SDK 3.10.5
+        // UdonBehaviour.RunProgram has no enabled check), so each tick stops itself when disabled, doing nothing else, and the
+        // loop is started again here. OnEnable runs before Start on the first activation: Start starts the loop then.
+        bool _started;
+        void OnEnable()
+        {
+            if (!_started) return;
+            if (_swingPending || (_pickup != null && _pickup.IsHeld)) WakeSwingWatch(); else StartIdlePoll();
         }
 
         // ================================================================ IMP-FET-015
@@ -199,6 +212,54 @@ namespace KominkaDogRun
             }
             // OnPickup は掴んだ本人のクライアントでだけ発火するローカルイベント
             if (fetchController != null) fetchController._OnBallHeldLocal();
+            WakeSwingWatch();   // IMP-DOG-036 S5
+        }
+
+        // IMP-DOG-036 S5: the frame below used to be Update, which ran on every client for every ball and returned at once for a
+        // ball nobody holds. It now runs from a self-rescheduling one-frame loop (EventTiming.Update, so still in the Update
+        // phase, after the Update callbacks: the body only writes this ball's private fields and sends a network event, so its
+        // order against other behaviours does not matter). The behaviour stays enabled (every event still arrives).
+        //  - Starts: OnPickup (the holder's client), OnOwnershipTransferred (every client; a grab by someone who is not the Owner
+        //    yet), and the idle poll below (a remote hold with no ownership change, a late joiner who finds the ball held).
+        //  - Stops: the first frame the ball is not held and no swing is pending (the old early return), then the idle poll resumes.
+        // The remote observation of the swing direction (_observedDir, used by ApplyFeint) may start up to IdlePollSeconds after
+        // the hold is seen when no ownership change announced it; ApplyFeint falls back to the holder's head direction then.
+        const float IdlePollSeconds = 0.2f;
+        bool _swingLoop;   // the one-frame loop is scheduled
+        bool _idlePoll;    // the idle poll is scheduled
+
+        public override void OnOwnershipTransferred(VRCPlayerApi player) { WakeSwingWatch(); }
+
+        void WakeSwingWatch()
+        {
+            if (_swingLoop) return;
+            _swingLoop = true;
+            SendCustomEventDelayedFrames(nameof(_SwingTick), 1, EventTiming.Update);
+        }
+
+        void StartIdlePoll()
+        {
+            if (_idlePoll) return;
+            _idlePoll = true;
+            SendCustomEventDelayedSeconds(nameof(_IdlePoll), IdlePollSeconds, EventTiming.Update);
+        }
+
+        /// <summary>IMP-DOG-036 S5: local loop (delayed event). Not a network target.</summary>
+        public void _IdlePoll()
+        {
+            _idlePoll = false;
+            if (!enabled) return;     // disabled: stop (OnEnable restarts)
+            if (_swingLoop) return;   // the frame loop runs; it restarts this poll when it stops
+            if (_pickup != null && _pickup.IsHeld) { WakeSwingWatch(); return; }
+            StartIdlePoll();
+        }
+
+        /// <summary>IMP-DOG-036 S5: local loop (delayed event). Not a network target.</summary>
+        public void _SwingTick()
+        {
+            if (!enabled) { _swingLoop = false; return; }   // disabled: no body, no poll (OnEnable restarts)
+            if (!SwingFrame()) { _swingLoop = false; StartIdlePoll(); return; }
+            SendCustomEventDelayedFrames(nameof(_SwingTick), 1, EventTiming.Update);
         }
 
         // ================================================================ IMP-FET-005
@@ -213,13 +274,15 @@ namespace KominkaDogRun
         // (手が Transform を動かしているだけで、物理は動いていない)。
         // 差分を経過時間で割るので、Update と LateUpdate のどちらで測っても意味は変わらない。
 
-        void Update()
+        // IMP-DOG-036 S5: the old Update body, run by _SwingTick. Returns false where the old Update returned for a resting ball
+        // (the loop stops there); every other path returns true (the next frame runs, as Update did).
+        bool SwingFrame()
         {
-            if (_pickup == null) return;
+            if (_pickup == null) return false;
             bool held = _pickup.IsHeld;
             // IMP-DOG-034 A6: not held and no swing pending = the frame below only stores pos (never read: _heldPrevPos is read only
             // while _heldPrevValid, set false here as below) and returns. Skips Time.deltaTime / transform.position for a resting ball.
-            if (!held && !_swingPending) { _heldPrevValid = false; return; }
+            if (!held && !_swingPending) { _heldPrevValid = false; return false; }
             float dt = Time.deltaTime;
             Vector3 pos = transform.position;
 
@@ -248,13 +311,13 @@ namespace KominkaDogRun
             _heldPrevPos = pos;
             _heldPrevValid = held;
 
-            if (!_swingPending) return;
-            if (Time.time - _swingTime < feintConfirmDelay) return;
+            if (!_swingPending) return true;
+            if (Time.time - _swingTime < feintConfirmDelay) return true;
 
             _swingPending = false;
             // **まだ持たれていること**がフェイントの定義。離していたら本番の投げで、
             // そちらは _CheckThrow が既に処理している (順序で排他する)
-            if (!_pickup.IsHeld || !Networking.IsOwner(gameObject)) return;
+            if (!_pickup.IsHeld || !Networking.IsOwner(gameObject)) return true;
 
             _lastFeintTime = Time.time;
             _swingDir.y = 0f;
@@ -264,6 +327,7 @@ namespace KominkaDogRun
             // (引数を持てないので 1 ビットをイベント名に載せる)
             bool bark = Random.Range(0f, 1f) < barkChance;
             SendCustomNetworkEvent(NetworkEventTarget.All, bark ? "FeintHappenedBark" : "FeintHappened");
+            return true;
         }
 
         // **`_` を付けていないのは意図的。** VRChat はアンダースコア始まりのメソッドを

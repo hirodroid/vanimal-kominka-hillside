@@ -2,6 +2,7 @@ using UdonSharp;
 using UnityEngine;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
+using VRC.Udon.Common.Enums;
 
 namespace KominkaHillside
 {
@@ -107,6 +108,18 @@ namespace KominkaHillside
             _sprayShown = true;
             ApplySpray(false);
             _idleNext = Time.time + UnityEngine.Random.Range(0f, IdleInterval);   // IMP-DOG-034 B2: a phase per tool
+            _started = true;
+            if (Busy()) WakeFrames(); else StartIdleLoop();   // IMP-DOG-036 S5
+        }
+
+        // IMP-DOG-036 S5: a disabled behaviour got no Update, but delayed events still run on a disabled UdonBehaviour (SDK 3.10.5
+        // RunProgram has no enabled check). Both ticks stop themselves when disabled (no body) and OnEnable starts the loop that fits
+        // the state. OnEnable runs before Start on the first activation (the map and the phase are not built yet): Start starts it then.
+        private bool _started;
+        void OnEnable()
+        {
+            if (!_started) return;
+            if (Busy()) WakeFrames(); else StartIdleLoop();
         }
 
         void BuildMap()
@@ -225,6 +238,7 @@ namespace KominkaHillside
             EndAllContacts();
             if (tool == KH_DogWash.ToolShower && state != null && state.spraying) state._SetSpraying(false);
             ApplySpray(Want());
+            WakeFrames();   // IMP-DOG-036 S5: held = every frame
         }
 
         public override void OnDrop()
@@ -286,6 +300,7 @@ namespace KominkaHillside
             _sprayShown = on;
             if (spray != null) { if (on) spray.Play(); else spray.Stop(); }
             if (sprayAudio != null) { if (on) sprayAudio.Play(); else sprayAudio.Stop(); }
+            if (on) WakeFrames();   // IMP-DOG-036 S5: spraying as shown here = every frame (incl. a remote spray from OnDeserialization)
         }
 
         void EndAllContacts()
@@ -353,6 +368,7 @@ namespace KominkaHillside
             if (!Utilities.IsValid(lp)) return true;
             _returnPending = true;
             _returnAskedAt = Time.time;
+            WakeFrames();   // IMP-DOG-036 S5: a reset in flight = every frame (its timeout is checked there)
             Networking.SetOwner(lp, gameObject); // net: setowner-ok: reset button, only a tool nobody holds; home is written after the transfer
             return true;
         }
@@ -376,18 +392,79 @@ namespace KominkaHillside
         const float IdleInterval = 0.5f;
         private float _idleNext;
 
-        void Update()
+        // IMP-DOG-036 S5: no Update. The same two paths run from two self-rescheduling delayed events (the behaviour stays enabled):
+        //  - _ToolIdle (seconds, on _idleNext): the idle checks above. Started in Start and whenever the frame loop stops.
+        //  - _ToolFrame (one frame, EventTiming.Update): the busy frame below, while Busy(). Woken by OnPickup (_held), ApplySpray(on)
+        //    (_sprayShown: the holder's toggle, OnDeserialization through _OnStateChanged, the idle SprayChecks), and _RequestReturn
+        //    (_returnPending). Those are the only writers that make Busy() true. It stops on the first frame that is not busy, where it
+        //    runs the idle checks if they are due (what the old Update did on that frame) and hands over to _ToolIdle.
+        // Order: a delayed Update-timed event runs after every Update callback of that frame. The stroke handshake (_strokeFrame) is
+        // written and read inside this one frame body; KH_DogWash takes the contact through _LocalContact at once and its draw budget
+        // (CanBlit) is per frame whichever runs first; the dog reads the wash by time (_WashHold / _StrokeAgeOf), not by frame. The old
+        // Update order against KH_DogWash / the dog was not fixed either (Udon runs Updates in no set order), so this is one of the
+        // orders the code already had to accept.
+        private bool _frameLoop;   // _ToolFrame is scheduled
+        private bool _idleLoop;    // _ToolIdle is scheduled
+
+        bool Busy() { return _held || _sprayShown || _returnPending; }
+
+        void WakeFrames()
         {
-            if (!_held && !_sprayShown && !_returnPending)
+            if (_frameLoop) return;
+            _frameLoop = true;
+            SendCustomEventDelayedFrames(nameof(_ToolFrame), 1, EventTiming.Update);
+        }
+
+        void StartIdleLoop()
+        {
+            if (_idleLoop) return;
+            _idleLoop = true;
+            float wait = _idleNext - Time.time;
+            SendCustomEventDelayedSeconds(nameof(_ToolIdle), wait > 0f ? wait : 0f, EventTiming.Update);
+        }
+
+        /// <summary>IMP-DOG-036 S5: local loop (delayed event). Not a network target.</summary>
+        public void _ToolIdle()
+        {
+            _idleLoop = false;
+            if (!enabled) return;                      // disabled: stop (OnEnable restarts)
+            if (_frameLoop) return;                    // the frame loop runs; it restarts this one when it stops
+            if (Busy()) { WakeFrames(); return; }
+            IdleStep();
+            if (_frameLoop) return;                    // the checks woke it (a missed spray state)
+            StartIdleLoop();
+        }
+
+        /// <summary>IMP-DOG-036 S5: local loop (delayed event). Not a network target.</summary>
+        public void _ToolFrame()
+        {
+            // disabled: no body, no idle loop (OnEnable restarts). Before Start (a spray state deserialized first): Start restarts it
+            if (!_started || !enabled) { _frameLoop = false; return; }
+            if (!Busy())
             {
-                float now = Time.time;
-                if (now < _idleNext) return;
-                _idleNext = now + IdleInterval;
-                TrackHolder();
-                ReturnTick();
-                if (tool == KH_DogWash.ToolShower) SprayChecks();   // a sponge / towel never sprays (only the shower sets it)
+                _frameLoop = false;
+                IdleStep();
+                if (!_frameLoop) StartIdleLoop();
                 return;
             }
+            BusyFrame();
+            SendCustomEventDelayedFrames(nameof(_ToolFrame), 1, EventTiming.Update);
+        }
+
+        // The old Update's idle branch (IMP-DOG-034 B2).
+        void IdleStep()
+        {
+            float now = Time.time;
+            if (now < _idleNext) return;
+            _idleNext = now + IdleInterval;
+            TrackHolder();
+            ReturnTick();
+            if (tool == KH_DogWash.ToolShower) SprayChecks();   // a sponge / towel never sprays (only the shower sets it)
+        }
+
+        // The old Update's busy branch.
+        void BusyFrame()
+        {
             TrackHolder();
             ReturnTick();
             if (tool == KH_DogWash.ToolShower) SprayChecks();
