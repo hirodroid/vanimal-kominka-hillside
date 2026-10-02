@@ -1465,6 +1465,18 @@
           "text": "自分だけに反映・次回も復元"
         },
         {
+          "key": "settings.night.auto",
+          "text": "オート"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "マニュアル"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "時間とともに夜へ・みんなと共通 (動かすとマニュアル)"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -2763,6 +2775,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "この犬には付けられません (首輪と重なる)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "あそびかた"
+        },
+        {
+          "key": "guide.menu",
+          "text": "手元メニュー　VR: 右スティックを下に長押し ／ Desktop: T キー ／ スマホ: 画面の［メニュー］ ／ リード台の札を押しても開きます"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "お散歩"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "リードで犬とつながって、裏山を歩こう。\n<color=#B5432A>1</color> 入口のリード台で、リードを手に取る\n<color=#B5432A>2</color> リードの先を犬の首輪に近づける\n<color=#B5432A>3</color> 行き先を手元メニュー「さんぽ」で選ぶ\n片手に3匹、両手で6匹までつなげます。\nはずす: 自分がつないだ犬の首輪を押す\nメニューでも: 「さんぽ」の犬の行で［左につなぐ］［右につなぐ］［はずす］(近くの犬だけ)\nDesktop・スマホはメニューが手軽です"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "フリスビー"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "ディスクは犬ごとに1枚。広場にも置いてあります。\n<color=#B5432A>1</color> 手元メニュー「おもちゃ」で犬を選び［ディスク］→ 目の前に置かれる\n<color=#B5432A>2</color> 持つと、飛ぶ道すじが見える\n<color=#B5432A>3</color> Use で投げる (VR はトリガー) → その犬が跳んでキャッチ\nリードでつないだ犬は取りに行きません。はずしてから。\n狙いに × が出る所へは、犬が行けません。\n川ではディスクが浮き、犬が飛びこんで取ってきます。"
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "洗う"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "散歩で汚れた犬を、きれいにしてあげよう。\n<color=#B5432A>1</color> 洗い場の板で犬の名前を押す → すのこに来る\n<color=#B5432A>2</color> スポンジでこすって、泡をもこもこに\n<color=#B5432A>3</color> シャワーは Use で出す・止める。泡を流そう\n<color=#B5432A>4</color> タオルでふいて仕上げ\n順番は自由。2人でいっしょにも洗えます。\n台と自分の高さ: 板の［上へ］［下へ］　終わり: ［おわり］\nスポンジ・タオル: Desktop・スマホは Use を押したまま\n道具は棚の［RESET］で元へ。道中にも洗い場が3か所。"
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "ポイントとトレーナー"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "お散歩・なでる・ボール・フリスビー・洗うは、だれでも無料。\n<color=#B5432A>ポイント</color>\n入口のおじいさんと話すと200pt (一度だけ)。ここにいると1分ごとに1pt。\n「かざり」「呼ぶ」「おやつ」で、飾り・なでた時の光・ポーズ・おやつと交換。\n<color=#B5432A>ばにまるトレーナー</color> (期間制・Credits)\n犬たちを集合させて、みんなで集合写真。古民家で入った人は、ここでもそのまま。\n入る: 手元メニュー「あそぶ」→［購入画面をひらく］\n使う: 「あそぶ」で隊形を選び［ここに集合］\n<color=#B5432A>Credits のかざり</color>\n「かざり」の一部のセットは VRChat の購入画面で (ギフトも)。"
+        },
+        {
+          "key": "guide.map.title",
+          "text": "裏山の地図"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 古民家側の入口\n2 広場\n3 奥の広場\n4 上流の橋\n5 川辺\n6 下流の橋"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> ワープできる地点\n<color=#403833>○</color> 目印\n<color=#386B9E>■</color> 洗い場"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "ワープ: 手元メニュー「さんぽ」→［地図と移動］\nぐるっと一周: 1→2→3→4→5→6→1 (逆回りも)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "いまここ"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑北"
         }
       ]
     },
@@ -4228,6 +4304,18 @@
           "text": "Personal setting, saved for next visit"
         },
         {
+          "key": "settings.night.auto",
+          "text": "Auto"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "Manual"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "Darkens over time, same for everyone (slide = Manual)"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -5526,6 +5614,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "Can't be worn by this dog (overlaps the collar)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "How to play"
+        },
+        {
+          "key": "guide.menu",
+          "text": "Hand menu  VR: hold the right stick down / Desktop: press T / Phone: tap Menu on screen / or press the plate on the leash rack"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "Walk"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "Leash up a dog and walk the hillside.\n<color=#B5432A>1</color> Take a leash from the leash rack at the gate\n<color=#B5432A>2</color> Bring its tip close to a dog's collar\n<color=#B5432A>3</color> Pick where to go in the hand menu: Walk\nUp to 3 dogs per hand, 6 in all.\nUnleash: press the collar of a dog you are walking\nOr in the menu: on the dog's row in Walk, [Leash left] [Leash right] [Unleash] (nearby dogs only)\nOn Desktop and phones the menu is easier"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "Frisbee"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "Each dog has its own disc. Some wait at the Plaza too.\n<color=#B5432A>1</color> Hand menu Toys: pick a dog, then [Disc] - it lands in front of you\n<color=#B5432A>2</color> Hold it to see its flight path\n<color=#B5432A>3</color> Use to throw (trigger in VR) - that dog leaps to catch it\nLeashed dogs won't fetch. Unleash them first.\nIf the aim shows ×, the dog can't go there.\nIn the river the disc floats and the dog jumps in for it."
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "Wash"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "Muddy from the walk? Give your dog a wash.\n<color=#B5432A>1</color> Press the dog's name on the wash station board - it steps onto the slatted stand\n<color=#B5432A>2</color> Scrub with the sponge to build up suds\n<color=#B5432A>3</color> Shower: Use turns the water on and off. Rinse the suds away\n<color=#B5432A>4</color> Dry off with the towel\nAny order. Two people can wash together.\nStand / your height: [上へ] [下へ] on the board. Done: [おわり]\nSponge and towel on Desktop/phone: hold Use\n[RESET] on the shelf puts the tools back. 3 more stations along the trail."
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "Points & Trainer"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "Walking, petting, balls, frisbee and washing are free for everyone.\n<color=#B5432A>Points</color>\nTalk to Grandpa at the gate for 200 pt (once). Earn 1 pt per minute here.\nTrade them in Dress, Call and Treats for accessories, petting effects, poses and treats.\n<color=#B5432A>VAnimal Trainer</color> (time-limited, Credits)\nGather the dogs for a group photo everyone can enjoy. Joined at the farmhouse? It works here too.\nJoin: hand menu Play → [Open the store]\nUse: in Play, pick a formation → [Gather here]\n<color=#B5432A>Credits accessories</color>\nSome sets in Dress are bought in the VRChat store (gifts too)."
+        },
+        {
+          "key": "guide.map.title",
+          "text": "Hillside map"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 Farmhouse-side gate\n2 Plaza\n3 Upper clearing\n4 Upstream bridge\n5 Riverbank\n6 Downstream bridge"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> warp spot\n<color=#403833>○</color> landmark\n<color=#386B9E>■</color> wash station"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "Warp: hand menu Walk → [Map & travel]\nFull loop: 1→2→3→4→5→6→1 (or the other way)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "You are here"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑N"
         }
       ]
     },
@@ -6991,6 +7143,18 @@
           "text": "Только для вас, сохраняется до следующего визита"
         },
         {
+          "key": "settings.night.auto",
+          "text": "Авто"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "Вручную"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "Темнеет со временем, у всех одинаково (ползунок = вручную)"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -8289,6 +8453,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "Can't be worn by this dog (overlaps the collar)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "Как играть"
+        },
+        {
+          "key": "guide.menu",
+          "text": "Меню  VR: удерживай правый стик вниз / ПК: нажми T / Телефон: «Меню» на экране / или нажми табличку на стойке с поводками"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "Прогулка"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "Пристегни собаку и гуляй по склону.\n<color=#B5432A>1</color> Возьми поводок со стойки у ворот\n<color=#B5432A>2</color> Поднеси его конец к ошейнику собаки\n<color=#B5432A>3</color> Выбери, куда идти, в меню: Walk\nДо 3 собак в одной руке, всего 6.\nОтстегнуть: нажми на ошейник своей собаки\nИли в меню: в строке собаки в Walk — [Leash left] [Leash right] [Unleash] (только рядом)\nНа ПК и телефоне удобнее через меню"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "Фрисби"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "У каждой собаки свой диск. Несколько лежат на Plaza.\n<color=#B5432A>1</color> Меню «Игрушки»: выбери собаку, затем [Disc] — он появится перед тобой\n<color=#B5432A>2</color> Возьми его — увидишь траекторию полёта\n<color=#B5432A>3</color> Use — бросок (в VR курок). Эта собака прыгнет и поймает\nСобака на поводке не побежит за диском. Сначала отстегни.\nЕсли на прицеле ×, собака туда не пройдёт.\nВ реке диск плавает, и собака прыгает за ним."
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "Мытьё"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "Собака испачкалась на прогулке? Помой её.\n<color=#B5432A>1</color> Нажми имя собаки на табло мойки — она встанет на решётку\n<color=#B5432A>2</color> Потри губкой — будет пышная пена\n<color=#B5432A>3</color> Душ: Use включает и выключает воду. Смой пену\n<color=#B5432A>4</color> Вытри полотенцем\nПорядок любой. Можно мыть вдвоём.\nВысота подставки и своя: [上へ] [下へ] на табло. Конец: [おわり]\nГубка и полотенце на ПК/телефоне: держи Use\n[RESET] на полке возвращает инструменты. Ещё 3 мойки по пути."
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "Очки и тренер"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "Прогулка, поглаживание, мячи, фрисби и мытьё — бесплатно для всех.\n<color=#B5432A>Очки</color>\nПоговори с дедушкой у ворот — 200 pt (один раз). Здесь 1 pt в минуту.\nОбменивай во вкладках «Наряды», «Позвать», «Лакомства» на украшения, эффекты, позы и лакомства.\n<color=#B5432A>VAnimal Trainer</color> (на срок, Credits)\nСобери собак для общего фото — радуются все. Оформил на ферме? Работает и здесь.\nОформить: меню «Игры» → [Открыть магазин]\nПользоваться: в «Игры» выбери построение → [Собрать здесь]\n<color=#B5432A>Наряды за Credits</color>\nНекоторые наборы в «Наряды» — в магазине VRChat (можно в подарок)."
+        },
+        {
+          "key": "guide.map.title",
+          "text": "Карта склона"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 Farmhouse-side gate\n2 Plaza\n3 Верхняя поляна\n4 Верхний мост\n5 Берег реки\n6 Нижний мост"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> телепорт\n<color=#403833>○</color> ориентир\n<color=#386B9E>■</color> мойка"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "Телепорт: меню Walk → [Карта и переходы]\nПолный круг: 1→2→3→4→5→6→1 (или обратно)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "Вы здесь"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑С"
         }
       ]
     },
@@ -9754,6 +9982,18 @@
           "text": "Ваші особисті налаштування — їх буде збережено до наступного візиту"
         },
         {
+          "key": "settings.night.auto",
+          "text": "Авто"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "Вручну"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "Темніє з часом, у всіх однаково (повзунок = вручну)"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -11052,6 +11292,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "Can't be worn by this dog (overlaps the collar)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "Як грати"
+        },
+        {
+          "key": "guide.menu",
+          "text": "Меню  VR: утримуй правий стік донизу / ПК: натисни T / Телефон: «Меню» на екрані / або натисни табличку на стійці з повідцями"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "Прогулянка"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "Пристебни собаку й гуляй схилом.\n<color=#B5432A>1</color> Візьми повідець зі стійки біля воріт\n<color=#B5432A>2</color> Піднеси його кінець до нашийника собаки\n<color=#B5432A>3</color> Обери, куди йти, у меню: Walk\nДо 3 собак в одній руці, усього 6.\nВідстебнути: натисни на нашийник своєї собаки\nАбо в меню: у рядку собаки в Walk — [Leash left] [Leash right] [Unleash] (лише поруч)\nНа ПК і телефоні зручніше через меню"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "Фризбі"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "У кожної собаки свій диск. Кілька лежать на Plaza.\n<color=#B5432A>1</color> Меню «Іграшки»: обери собаку, потім [Disc] — він з’явиться перед тобою\n<color=#B5432A>2</color> Візьми його — побачиш траєкторію польоту\n<color=#B5432A>3</color> Use — кидок (у VR курок). Ця собака стрибне й упіймає\nСобака на повідці не побіжить по диск. Спершу відстебни.\nЯкщо на прицілі ×, собака туди не пройде.\nУ річці диск плаває, і собака стрибає по нього."
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "Миття"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "Собака забруднилася на прогулянці? Помий її.\n<color=#B5432A>1</color> Натисни ім’я собаки на табло мийки — вона стане на решітку\n<color=#B5432A>2</color> Потри губкою — буде пишна піна\n<color=#B5432A>3</color> Душ: Use вмикає й вимикає воду. Змий піну\n<color=#B5432A>4</color> Витри рушником\nПорядок будь-який. Можна мити удвох.\nВисота підставки й своя: [上へ] [下へ] на табло. Кінець: [おわり]\nГубка й рушник на ПК/телефоні: тримай Use\n[RESET] на полиці повертає інструменти. Ще 3 мийки дорогою."
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "Бали й тренер"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "Прогулянка, погладжування, м’ячі, фризбі й миття — безкоштовно для всіх.\n<color=#B5432A>Бали</color>\nПоговори з дідусем біля воріт — 200 pt (один раз). Тут 1 pt за хвилину.\nОбмінюй у вкладках «Вбрання», «Покликати», «Ласощі» на прикраси, ефекти, пози й ласощі.\n<color=#B5432A>VAnimal Trainer</color> (на строк, Credits)\nЗбери собак для спільного фото — радіють усі. Оформив на фермі? Працює й тут.\nОформити: меню «Ігри» → [Відкрити магазин]\nКористуватися: в «Ігри» обери шикування → [Зібрати тут]\n<color=#B5432A>Вбрання за Credits</color>\nДеякі набори у «Вбрання» — у магазині VRChat (можна в подарунок)."
+        },
+        {
+          "key": "guide.map.title",
+          "text": "Мапа схилу"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 Farmhouse-side gate\n2 Plaza\n3 Верхня галявина\n4 Верхній міст\n5 Берег річки\n6 Нижній міст"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> телепорт\n<color=#403833>○</color> орієнтир\n<color=#386B9E>■</color> мийка"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "Телепорт: меню Walk → [Мапа й переходи]\nПовне коло: 1→2→3→4→5→6→1 (або навпаки)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "Ви тут"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑Пн"
         }
       ]
     },
@@ -12517,6 +12821,18 @@
           "text": "나에게만 적용, 다음 방문에도 유지"
         },
         {
+          "key": "settings.night.auto",
+          "text": "자동"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "수동"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "시간이 지나면 밤이 됨 · 모두 같음 (움직이면 수동)"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -13815,6 +14131,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "Can't be worn by this dog (overlaps the collar)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "노는 법"
+        },
+        {
+          "key": "guide.menu",
+          "text": "손 메뉴  VR: 오른쪽 스틱을 아래로 길게 ／ Desktop: T 키 ／ 스마트폰: 화면의 [메뉴] ／ 리드 걸이의 팻말을 눌러도 열립니다"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "산책"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "리드로 강아지와 이어져 뒷산을 걸어요.\n<color=#B5432A>1</color> 입구의 리드 걸이에서 리드를 집기\n<color=#B5432A>2</color> 리드 끝을 강아지 목줄에 가까이 대기\n<color=#B5432A>3</color> 손 메뉴 Walk에서 갈 곳을 고르기\n한 손에 3마리, 두 손으로 6마리까지.\n풀기: 내가 연결한 강아지의 목줄을 누르기\n메뉴로도: Walk의 강아지 줄에서 [Leash left] [Leash right] [Unleash] (가까운 강아지만)\nDesktop·스마트폰은 메뉴가 편해요"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "프리스비"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "디스크는 강아지마다 1장. Plaza에도 놓여 있어요.\n<color=#B5432A>1</color> 손 메뉴 장난감에서 강아지를 고르고 [Disc] → 눈앞에 놓여요\n<color=#B5432A>2</color> 들면 날아갈 길이 보여요\n<color=#B5432A>3</color> Use로 던지기 (VR은 트리거) → 그 강아지가 뛰어올라 캐치\n리드에 연결된 강아지는 가지러 가지 않아요. 먼저 풀어 주세요.\n조준에 ×가 뜨는 곳에는 강아지가 갈 수 없어요.\n강에서는 디스크가 떠서 강아지가 뛰어들어 가져와요."
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "씻기기"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "산책하다 더러워진 강아지를 깨끗하게 해 줘요.\n<color=#B5432A>1</color> 세척장 판에서 강아지 이름을 누르기 → 발판 위로 와요\n<color=#B5432A>2</color> 스펀지로 문질러 거품을 몽글몽글\n<color=#B5432A>3</color> 샤워는 Use로 켜고 끄기. 거품을 헹궈요\n<color=#B5432A>4</color> 수건으로 닦아 마무리\n순서는 자유. 둘이 함께 씻길 수도 있어요.\n발판·내 높이: 판의 [上へ] [下へ]  끝: [おわり]\n스펀지·수건은 Desktop·스마트폰에서 Use를 누른 채로\n선반의 [RESET]으로 도구가 제자리로. 길 중간에도 세척장 3곳."
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "포인트와 트레이너"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "산책·쓰다듬기·공·프리스비·씻기기는 누구나 무료.\n<color=#B5432A>포인트</color>\n입구의 할아버지와 이야기하면 200pt (한 번만). 여기 있으면 1분마다 1pt.\n꾸미기·부르기·간식 탭에서 장식·쓰다듬을 때의 빛·포즈·간식과 교환.\n<color=#B5432A>VAnimal Trainer</color> (기간제·Credits)\n강아지들을 모아 다 함께 단체 사진. 고민가에서 가입했다면 여기서도 그대로.\n가입: 손 메뉴 놀기 → [구매 화면 열기]\n사용: 놀기에서 대형을 고르고 [여기에 모이기]\n<color=#B5432A>Credits 꾸미기</color>\n꾸미기의 일부 세트는 VRChat 구매 화면에서 (선물도 가능)."
+        },
+        {
+          "key": "guide.map.title",
+          "text": "뒷산 지도"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 Farmhouse-side gate\n2 Plaza\n3 위쪽 공터\n4 위쪽 다리\n5 강가\n6 아래쪽 다리"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> 워프 지점\n<color=#403833>○</color> 표시\n<color=#386B9E>■</color> 세척장"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "워프: 손 메뉴 Walk → [지도와 이동]\n한 바퀴: 1→2→3→4→5→6→1 (반대로도)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "지금 여기"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑북"
         }
       ]
     },
@@ -15280,6 +15660,18 @@
           "text": "Nur für dich, bleibt bis zum nächsten Besuch"
         },
         {
+          "key": "settings.night.auto",
+          "text": "Auto"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "Manuell"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "Wird mit der Zeit dunkel, für alle gleich (Regler = Manuell)"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -16578,6 +16970,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "Can't be worn by this dog (overlaps the collar)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "So wird gespielt"
+        },
+        {
+          "key": "guide.menu",
+          "text": "Handmenü  VR: rechten Stick nach unten halten / Desktop: Taste T / Handy: [Menü] auf dem Bildschirm / oder das Schild am Leinenständer drücken"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "Spaziergang"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "Leine einen Hund an und spaziere über den Hügel.\n<color=#B5432A>1</color> Nimm eine Leine vom Leinenständer am Tor\n<color=#B5432A>2</color> Halte ihr Ende nah an das Halsband eines Hundes\n<color=#B5432A>3</color> Wähle das Ziel im Handmenü: Walk\nBis zu 3 Hunde pro Hand, 6 insgesamt.\nLösen: Halsband deines Hundes drücken\nOder im Menü: in der Zeile des Hundes unter Walk [Leash left] [Leash right] [Unleash] (nur Hunde in der Nähe)\nAm Desktop und Handy geht es per Menü leichter"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "Frisbee"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "Jeder Hund hat seine eigene Scheibe. Einige liegen auf der Plaza.\n<color=#B5432A>1</color> Handmenü Spielzeug: Hund wählen, dann [Disc] - sie landet vor dir\n<color=#B5432A>2</color> Halte sie, um die Flugbahn zu sehen\n<color=#B5432A>3</color> Mit Use werfen (in VR der Trigger) - dieser Hund springt und fängt\nAngeleinte Hunde holen nicht. Erst lösen.\nZeigt das Zielen ×, kommt der Hund dort nicht hin.\nIm Fluss schwimmt die Scheibe, und der Hund springt hinterher."
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "Waschen"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "Schmutzig vom Spaziergang? Mach deinen Hund sauber.\n<color=#B5432A>1</color> Namen des Hundes auf der Tafel am Waschplatz drücken - er stellt sich auf den Rost\n<color=#B5432A>2</color> Mit dem Schwamm schrubben, bis es schäumt\n<color=#B5432A>3</color> Dusche: Use schaltet das Wasser an und aus. Schaum abspülen\n<color=#B5432A>4</color> Mit dem Handtuch trocknen\nReihenfolge egal. Zu zweit waschen geht auch.\nHöhe von Rost und dir: [上へ] [下へ] auf der Tafel. Fertig: [おわり]\nSchwamm und Handtuch an Desktop/Handy: Use gedrückt halten\n[RESET] am Regal legt die Sachen zurück. 3 weitere Waschplätze unterwegs."
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "Punkte & Trainer"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "Spazieren, Streicheln, Bälle, Frisbee und Waschen sind für alle gratis.\n<color=#B5432A>Punkte</color>\nSprich mit Opa am Tor: 200 pt (einmal). Hier gibt es 1 pt pro Minute.\nTausche sie unter Outfits, Rufen und Leckerlis gegen Schmuck, Streichel-Effekte, Posen und Leckerlis.\n<color=#B5432A>VAnimal Trainer</color> (auf Zeit, Credits)\nVersammle die Hunde zum Gruppenfoto für alle. Im Bauernhaus gebucht? Gilt auch hier.\nBuchen: Handmenü Spielen → [Store öffnen]\nNutzen: unter Spielen Formation wählen → [Hier sammeln]\n<color=#B5432A>Outfits für Credits</color>\nEinige Sets unter Outfits gibt es im VRChat-Store (auch als Geschenk)."
+        },
+        {
+          "key": "guide.map.title",
+          "text": "Karte des Hügels"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 Farmhouse-side gate\n2 Plaza\n3 Obere Lichtung\n4 Obere Brücke\n5 Flussufer\n6 Untere Brücke"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> Teleportpunkt\n<color=#403833>○</color> Orientierung\n<color=#386B9E>■</color> Waschplatz"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "Teleport: Handmenü Walk → [Karte & Reisen]\nGanze Runde: 1→2→3→4→5→6→1 (auch rückwärts)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "Du bist hier"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑N"
         }
       ]
     },
@@ -18043,6 +18499,18 @@
           "text": "仅对自己生效，下次来访也会恢复"
         },
         {
+          "key": "settings.night.auto",
+          "text": "自动"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "手动"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "随时间入夜，所有人相同（拖动即切换为手动）"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -19341,6 +19809,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "Can't be worn by this dog (overlaps the collar)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "玩法"
+        },
+        {
+          "key": "guide.menu",
+          "text": "手边菜单  VR: 长按右摇杆向下 ／ Desktop: T 键 ／ 手机: 画面上的 [菜单] ／ 按牵绳架上的牌子也能打开"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "散步"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "用牵绳牵上狗狗，在后山散步吧。\n<color=#B5432A>1</color> 在入口的牵绳架拿起牵绳\n<color=#B5432A>2</color> 把牵绳末端靠近狗狗的项圈\n<color=#B5432A>3</color> 在手边菜单 Walk 里选择目的地\n一只手最多 3 只，两只手最多 6 只。\n解开: 按一下你牵着的狗狗的项圈\n也可用菜单: Walk 里该狗狗那一行的 [Leash left] [Leash right] [Unleash] (仅限附近的狗狗)\nDesktop・手机用菜单更方便"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "飞盘"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "每只狗狗都有自己的飞盘。Plaza 也放着几个。\n<color=#B5432A>1</color> 手边菜单「玩具」选狗狗，再按 [Disc] → 放在你面前\n<color=#B5432A>2</color> 拿起来就能看到飞行路线\n<color=#B5432A>3</color> 用 Use 投出 (VR 是扳机) → 那只狗狗会跳起来接住\n牵着的狗狗不会去捡。先解开牵绳。\n瞄准处出现 × 的地方，狗狗去不了。\n在河里飞盘会浮起来，狗狗会跳进水里叼回来。"
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "洗澡"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "散步弄脏了？帮狗狗洗干净吧。\n<color=#B5432A>1</color> 在洗澡台的板子上按狗狗的名字 → 它会站到踏板上\n<color=#B5432A>2</color> 用海绵搓出满满的泡泡\n<color=#B5432A>3</color> 淋浴: 用 Use 开关水。把泡泡冲掉\n<color=#B5432A>4</color> 用毛巾擦干收尾\n顺序随意。两个人也能一起洗。\n踏板和自己的高度: 板上的 [上へ] [下へ]　结束: [おわり]\n海绵・毛巾在 Desktop・手机上: 按住 Use\n架子上的 [RESET] 让工具归位。沿途还有 3 处洗澡台。"
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "积分与训练师"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "散步・抚摸・球・飞盘・洗澡，所有人都免费。\n<color=#B5432A>积分</color>\n和入口的爷爷说话可得 200pt (仅一次)。待在这里每分钟 1pt。\n在「装饰」「呼唤」「零食」里换取饰品・抚摸光效・姿势・零食。\n<color=#B5432A>VAnimal Trainer</color> (有期限・Credits)\n让狗狗们集合，大家一起拍合照。在古民家加入过的话，这里也能直接用。\n加入: 手边菜单「玩耍」→ [打开购买界面]\n使用: 在「玩耍」选队形 → [在这里集合]\n<color=#B5432A>Credits 装饰</color>\n「装饰」里的部分套装在 VRChat 购买界面购买 (也可赠送)。"
+        },
+        {
+          "key": "guide.map.title",
+          "text": "后山地图"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 Farmhouse-side gate\n2 Plaza\n3 上方空地\n4 上游的桥\n5 河岸\n6 下游的桥"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> 可传送地点\n<color=#403833>○</color> 标记\n<color=#386B9E>■</color> 洗澡台"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "传送: 手边菜单 Walk → [地图与移动]\n绕一圈: 1→2→3→4→5→6→1 (也可反向)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "你在这里"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑北"
         }
       ]
     },
@@ -20806,6 +21338,18 @@
           "text": "Solo para ti; se guarda para la próxima visita"
         },
         {
+          "key": "settings.night.auto",
+          "text": "Auto"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "Manual"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "Anochece con el tiempo, igual para todos (mover = Manual)"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -22104,6 +22648,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "Can't be worn by this dog (overlaps the collar)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "Cómo jugar"
+        },
+        {
+          "key": "guide.menu",
+          "text": "Menú de mano  VR: mantén el stick derecho hacia abajo / Desktop: pulsa T / Móvil: toca Menú en la pantalla / o pulsa el cartel del soporte de correas"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "Paseo"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "Ponle la correa a un perro y pasea por la colina.\n<color=#B5432A>1</color> Toma una correa del soporte junto a la puerta\n<color=#B5432A>2</color> Acerca su punta al collar de un perro\n<color=#B5432A>3</color> Elige el destino en el menú: Walk\nHasta 3 perros por mano, 6 en total.\nSoltar: pulsa el collar de tu perro\nO en el menú: en la fila del perro en Walk, [Leash left] [Leash right] [Unleash] (solo perros cercanos)\nEn Desktop y móvil es más fácil con el menú"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "Frisbee"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "Cada perro tiene su propio disco. Hay algunos en la Plaza.\n<color=#B5432A>1</color> Menú Juguetes: elige un perro y luego [Disc] - aparece delante de ti\n<color=#B5432A>2</color> Al sostenerlo ves su trayectoria\n<color=#B5432A>3</color> Lánzalo con Use (gatillo en VR) - ese perro salta y lo atrapa\nLos perros con correa no van a buscarlo. Suéltalos antes.\nSi al apuntar sale ×, el perro no puede ir allí.\nEn el río el disco flota y el perro se lanza a por él."
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "Baño"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "¿Se ensució en el paseo? Dale un baño.\n<color=#B5432A>1</color> Pulsa el nombre del perro en el tablero del lavadero - sube a la tarima\n<color=#B5432A>2</color> Frota con la esponja para hacer mucha espuma\n<color=#B5432A>3</color> Ducha: Use abre y cierra el agua. Aclara la espuma\n<color=#B5432A>4</color> Sécalo con la toalla\nEn el orden que quieras. También entre dos.\nAltura de la tarima y la tuya: [上へ] [下へ] en el tablero. Terminar: [おわり]\nEsponja y toalla en Desktop/móvil: mantén Use\n[RESET] en el estante devuelve las cosas. 3 lavaderos más en el camino."
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "Puntos y Trainer"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "Pasear, acariciar, pelotas, frisbee y bañar son gratis para todos.\n<color=#B5432A>Puntos</color>\nHabla con el abuelo de la puerta: 200 pt (una vez). Aquí ganas 1 pt por minuto.\nCámbialos en Adornos, Llamar y Premios por adornos, efectos de caricia, poses y premios.\n<color=#B5432A>VAnimal Trainer</color> (por tiempo limitado, Credits)\nReúne a los perros para una foto de grupo para todos. ¿Te uniste en la casa de campo? También sirve aquí.\nUnirse: menú Jugar → [Abrir la tienda]\nUsar: en Jugar elige una formación → [Reunirlos aquí]\n<color=#B5432A>Adornos con Credits</color>\nAlgunos conjuntos de Adornos se compran en la tienda de VRChat (también para regalar)."
+        },
+        {
+          "key": "guide.map.title",
+          "text": "Mapa de la colina"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 Farmhouse-side gate\n2 Plaza\n3 Claro superior\n4 Puente de arriba\n5 Orilla del río\n6 Puente de abajo"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> punto de teletransporte\n<color=#403833>○</color> referencia\n<color=#386B9E>■</color> lavadero"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "Teletransporte: menú Walk → [Mapa y viaje]\nVuelta completa: 1→2→3→4→5→6→1 (o al revés)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "Estás aquí"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑N"
         }
       ]
     },
@@ -23569,6 +24177,18 @@
           "text": "Réglage perso, conservé pour la prochaine visite"
         },
         {
+          "key": "settings.night.auto",
+          "text": "Auto"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "Manuel"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "La nuit tombe avec le temps, pour tous (curseur = Manuel)"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -24867,6 +25487,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "Can't be worn by this dog (overlaps the collar)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "Comment jouer"
+        },
+        {
+          "key": "guide.menu",
+          "text": "Menu de poche  VR : stick droit maintenu vers le bas / Desktop : touche T / Téléphone : Menu à l'écran / ou appuie sur la plaque du porte-laisses"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "Promenade"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "Mets une laisse à un chien et promène-toi sur la colline.\n<color=#B5432A>1</color> Prends une laisse au porte-laisses près du portail\n<color=#B5432A>2</color> Approche son bout du collier d'un chien\n<color=#B5432A>3</color> Choisis la destination dans le menu : Walk\nJusqu'à 3 chiens par main, 6 en tout.\nDétacher : appuie sur le collier de ton chien\nOu dans le menu : sur la ligne du chien dans Walk, [Leash left] [Leash right] [Unleash] (chiens proches seulement)\nSur Desktop et téléphone, le menu est plus simple"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "Frisbee"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "Chaque chien a son disque. Il y en a aussi sur la Plaza.\n<color=#B5432A>1</color> Menu Jouets : choisis un chien puis [Disc] - il se pose devant toi\n<color=#B5432A>2</color> Tiens-le pour voir sa trajectoire\n<color=#B5432A>3</color> Lance avec Use (gâchette en VR) - ce chien saute pour l'attraper\nUn chien en laisse ne va pas le chercher. Détache-le d'abord.\nSi la visée affiche ×, le chien ne peut pas y aller.\nDans la rivière le disque flotte et le chien plonge le chercher."
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "Bain"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "Sali par la promenade ? Lave ton chien.\n<color=#B5432A>1</color> Appuie sur le nom du chien sur le panneau du lavoir - il monte sur le caillebotis\n<color=#B5432A>2</color> Frotte avec l'éponge pour faire mousser\n<color=#B5432A>3</color> Douche : Use ouvre et ferme l'eau. Rince la mousse\n<color=#B5432A>4</color> Sèche avec la serviette\nDans l'ordre que tu veux. À deux aussi.\nHauteur du caillebotis et la tienne : [上へ] [下へ] sur le panneau. Fin : [おわり]\nÉponge et serviette sur Desktop/téléphone : garde Use enfoncé\n[RESET] sur l'étagère range les outils. 3 autres lavoirs en chemin."
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "Points et Trainer"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "Promenade, caresses, balles, frisbee et bain sont gratuits pour tous.\n<color=#B5432A>Points</color>\nParle au grand-père du portail : 200 pt (une fois). Ici, 1 pt par minute.\nÉchange-les dans Accessoires, Appeler et Friandises contre des accessoires, effets de caresse, poses et friandises.\n<color=#B5432A>VAnimal Trainer</color> (durée limitée, Credits)\nRassemble les chiens pour une photo de groupe à partager. Inscrit à la ferme ? Ça marche ici aussi.\nS'inscrire : menu Jouer → [Ouvrir la boutique]\nUtiliser : dans Jouer, choisis une formation → [Les rassembler ici]\n<color=#B5432A>Accessoires en Credits</color>\nCertains ensembles d'Accessoires s'achètent dans la boutique VRChat (en cadeau aussi)."
+        },
+        {
+          "key": "guide.map.title",
+          "text": "Carte de la colline"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 Farmhouse-side gate\n2 Plaza\n3 Clairière du haut\n4 Pont amont\n5 Bord de rivière\n6 Pont aval"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> point de téléportation\n<color=#403833>○</color> repère\n<color=#386B9E>■</color> lavoir"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "Téléportation : menu Walk → [Carte et déplacement]\nTour complet : 1→2→3→4→5→6→1 (ou à l'envers)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "Tu es ici"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑N"
         }
       ]
     },
@@ -26332,6 +27016,18 @@
           "text": "Só para você; fica salvo para a próxima visita"
         },
         {
+          "key": "settings.night.auto",
+          "text": "Auto"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "Manual"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "Anoitece com o tempo, igual para todos (mover = Manual)"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -27630,6 +28326,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "Can't be worn by this dog (overlaps the collar)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "Como brincar"
+        },
+        {
+          "key": "guide.menu",
+          "text": "Menu de mão  VR: segure o analógico direito para baixo / Desktop: tecle T / Celular: toque em Menu na tela / ou aperte a plaquinha do suporte de guias"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "Passeio"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "Coloque a guia num cachorro e passeie pela colina.\n<color=#B5432A>1</color> Pegue uma guia no suporte perto do portão\n<color=#B5432A>2</color> Aproxime a ponta da coleira de um cachorro\n<color=#B5432A>3</color> Escolha o destino no menu: Walk\nAté 3 cachorros por mão, 6 no total.\nSoltar: aperte a coleira do seu cachorro\nOu no menu: na linha do cachorro em Walk, [Leash left] [Leash right] [Unleash] (só cachorros por perto)\nNo Desktop e no celular o menu é mais fácil"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "Frisbee"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "Cada cachorro tem seu próprio disco. Alguns ficam na Plaza.\n<color=#B5432A>1</color> Menu Brinquedos: escolha um cachorro e depois [Disc] - ele aparece na sua frente\n<color=#B5432A>2</color> Segure para ver a trajetória\n<color=#B5432A>3</color> Jogue com Use (gatilho no VR) - esse cachorro pula e pega\nCachorro na guia não vai buscar. Solte antes.\nSe a mira mostrar ×, o cachorro não consegue ir lá.\nNo rio o disco flutua e o cachorro pula para buscar."
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "Banho"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "Sujou no passeio? Dê um banho no seu cachorro.\n<color=#B5432A>1</color> Aperte o nome do cachorro no painel do lavadouro - ele sobe no estrado\n<color=#B5432A>2</color> Esfregue com a esponja até fazer muita espuma\n<color=#B5432A>3</color> Chuveiro: Use liga e desliga a água. Enxágue a espuma\n<color=#B5432A>4</color> Seque com a toalha\nNa ordem que quiser. Dá para lavar a dois.\nAltura do estrado e a sua: [上へ] [下へ] no painel. Fim: [おわり]\nEsponja e toalha no Desktop/celular: segure Use\n[RESET] na prateleira guarda as coisas. Mais 3 lavadouros no caminho."
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "Pontos e Trainer"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "Passear, fazer carinho, bolas, frisbee e dar banho são grátis para todos.\n<color=#B5432A>Pontos</color>\nFale com o vovô no portão: 200 pt (uma vez). Aqui você ganha 1 pt por minuto.\nTroque em Enfeites, Chamar e Petiscos por enfeites, efeitos de carinho, poses e petiscos.\n<color=#B5432A>VAnimal Trainer</color> (por tempo limitado, Credits)\nReúna os cachorros para uma foto em grupo para todos. Entrou na casa de fazenda? Vale aqui também.\nEntrar: menu Brincar → [Abrir a loja]\nUsar: em Brincar escolha uma formação → [Reunir todos aqui]\n<color=#B5432A>Enfeites com Credits</color>\nAlguns conjuntos de Enfeites são comprados na loja do VRChat (dá para presentear)."
+        },
+        {
+          "key": "guide.map.title",
+          "text": "Mapa da colina"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 Farmhouse-side gate\n2 Plaza\n3 Clareira superior\n4 Ponte de cima\n5 Margem do rio\n6 Ponte de baixo"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> ponto de teleporte\n<color=#403833>○</color> referência\n<color=#386B9E>■</color> lavadouro"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "Teleporte: menu Walk → [Mapa e viagem]\nVolta completa: 1→2→3→4→5→6→1 (ou ao contrário)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "Você está aqui"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑N"
         }
       ]
     },
@@ -29095,6 +29855,18 @@
           "text": "Impostazione personale, salvata per la prossima visita"
         },
         {
+          "key": "settings.night.auto",
+          "text": "Auto"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "Manuale"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "Fa buio col tempo, uguale per tutti (cursore = Manuale)"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -30393,6 +31165,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "Can't be worn by this dog (overlaps the collar)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "Come si gioca"
+        },
+        {
+          "key": "guide.menu",
+          "text": "Menu a mano  VR: tieni la levetta destra verso il basso / Desktop: premi T / Telefono: tocca Menu sullo schermo / o premi la targhetta del portaguinzagli"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "Passeggiata"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "Metti il guinzaglio a un cane e passeggia sulla collina.\n<color=#B5432A>1</color> Prendi un guinzaglio dal portaguinzagli al cancello\n<color=#B5432A>2</color> Avvicina la punta al collare di un cane\n<color=#B5432A>3</color> Scegli la meta nel menu: Walk\nFino a 3 cani per mano, 6 in tutto.\nSganciare: premi il collare del tuo cane\nOppure nel menu: nella riga del cane in Walk, [Leash left] [Leash right] [Unleash] (solo cani vicini)\nSu Desktop e telefono è più facile dal menu"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "Frisbee"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "Ogni cane ha il suo disco. Alcuni sono anche nella Plaza.\n<color=#B5432A>1</color> Menu Giochi: scegli un cane, poi [Disc] - appare davanti a te\n<color=#B5432A>2</color> Tenendolo vedi la traiettoria\n<color=#B5432A>3</color> Lancia con Use (grilletto in VR) - quel cane salta e lo prende\nI cani al guinzaglio non vanno a prenderlo. Sganciali prima.\nSe il mirino mostra ×, il cane non può andarci.\nNel fiume il disco galleggia e il cane si tuffa a prenderlo."
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "Bagno"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "Sporco dalla passeggiata? Fai il bagno al tuo cane.\n<color=#B5432A>1</color> Premi il nome del cane sul pannello del lavatoio - sale sulla pedana\n<color=#B5432A>2</color> Strofina con la spugna per fare tanta schiuma\n<color=#B5432A>3</color> Doccia: Use apre e chiude l'acqua. Sciacqua la schiuma\n<color=#B5432A>4</color> Asciuga con l'asciugamano\nIn qualsiasi ordine. Anche in due.\nAltezza della pedana e tua: [上へ] [下へ] sul pannello. Fine: [おわり]\nSpugna e asciugamano su Desktop/telefono: tieni premuto Use\n[RESET] sulla mensola rimette a posto gli attrezzi. Altri 3 lavatoi lungo il percorso."
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "Punti e Trainer"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "Passeggiare, accarezzare, palline, frisbee e bagno sono gratis per tutti.\n<color=#B5432A>Punti</color>\nParla con il nonno al cancello: 200 pt (una volta). Qui guadagni 1 pt al minuto.\nScambiali in Accessori, Chiama e Snack con accessori, effetti carezza, pose e snack.\n<color=#B5432A>VAnimal Trainer</color> (a tempo, Credits)\nRaduna i cani per una foto di gruppo per tutti. Iscritto alla casa di campagna? Vale anche qui.\nIscriviti: menu Attività → [Apri il negozio]\nUsa: in Attività scegli una formazione → [Radunali qui]\n<color=#B5432A>Accessori con Credits</color>\nAlcuni set di Accessori si comprano nel negozio VRChat (anche in regalo)."
+        },
+        {
+          "key": "guide.map.title",
+          "text": "Mappa della collina"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 Farmhouse-side gate\n2 Plaza\n3 Radura superiore\n4 Ponte a monte\n5 Riva del fiume\n6 Ponte a valle"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> punto di teletrasporto\n<color=#403833>○</color> riferimento\n<color=#386B9E>■</color> lavatoio"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "Teletrasporto: menu Walk → [Mappa e spostamenti]\nGiro completo: 1→2→3→4→5→6→1 (anche al contrario)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "Sei qui"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑N"
         }
       ]
     },
@@ -31858,6 +32694,18 @@
           "text": "Ustawienie osobiste, zapisane na następną wizytę"
         },
         {
+          "key": "settings.night.auto",
+          "text": "Auto"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "Ręcznie"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "Ściemnia się z czasem, tak samo dla wszystkich (suwak = ręcznie)"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -33156,6 +34004,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "Can't be worn by this dog (overlaps the collar)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "Jak się bawić"
+        },
+        {
+          "key": "guide.menu",
+          "text": "Menu podręczne  VR: przytrzymaj prawą gałkę w dół / Desktop: naciśnij T / Telefon: dotknij Menu na ekranie / albo naciśnij tabliczkę na stojaku na smycze"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "Spacer"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "Przypnij psa na smycz i spaceruj po wzgórzu.\n<color=#B5432A>1</color> Weź smycz ze stojaka przy bramie\n<color=#B5432A>2</color> Zbliż jej koniec do obroży psa\n<color=#B5432A>3</color> Wybierz cel w menu: Walk\nDo 3 psów w jednej ręce, razem 6.\nOdpinanie: naciśnij obrożę swojego psa\nAlbo w menu: w wierszu psa w Walk [Leash left] [Leash right] [Unleash] (tylko psy w pobliżu)\nNa Desktopie i telefonie łatwiej przez menu"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "Frisbee"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "Każdy pies ma swój dysk. Kilka leży też na Plaza.\n<color=#B5432A>1</color> Menu Zabawki: wybierz psa, potem [Disc] - pojawi się przed tobą\n<color=#B5432A>2</color> Trzymając go, widzisz tor lotu\n<color=#B5432A>3</color> Rzuć przyciskiem Use (spust w VR) - ten pies skoczy i złapie\nPies na smyczy nie pobiegnie po dysk. Najpierw go odepnij.\nJeśli celownik pokazuje ×, pies tam nie dojdzie.\nW rzece dysk pływa, a pies wskakuje po niego."
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "Kąpiel"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "Pobrudził się na spacerze? Wykąp swojego psa.\n<color=#B5432A>1</color> Naciśnij imię psa na tablicy myjni - wejdzie na podest\n<color=#B5432A>2</color> Szoruj gąbką, aż będzie dużo piany\n<color=#B5432A>3</color> Prysznic: Use włącza i wyłącza wodę. Spłucz pianę\n<color=#B5432A>4</color> Wytrzyj ręcznikiem\nW dowolnej kolejności. Można też we dwoje.\nWysokość podestu i twoja: [上へ] [下へ] na tablicy. Koniec: [おわり]\nGąbka i ręcznik na Desktopie/telefonie: przytrzymaj Use\n[RESET] na półce odkłada przybory. Jeszcze 3 myjnie po drodze."
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "Punkty i Trainer"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "Spacer, głaskanie, piłki, frisbee i kąpiel są darmowe dla wszystkich.\n<color=#B5432A>Punkty</color>\nPorozmawiaj z dziadkiem przy bramie: 200 pt (raz). Tu dostajesz 1 pt na minutę.\nWymieniaj je w Ozdoby, Zawołaj i Smakołyki na ozdoby, efekty głaskania, pozy i smakołyki.\n<color=#B5432A>VAnimal Trainer</color> (czasowy, Credits)\nZbierz psy do wspólnego zdjęcia dla wszystkich. Dołączyłeś w wiejskim domu? Działa też tutaj.\nDołącz: menu Zabawa → [Otwórz sklep]\nUżywaj: w Zabawa wybierz szyk → [Zbiórka tutaj]\n<color=#B5432A>Ozdoby za Credits</color>\nNiektóre zestawy w Ozdoby kupisz w sklepie VRChat (także w prezencie)."
+        },
+        {
+          "key": "guide.map.title",
+          "text": "Mapa wzgórza"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 Farmhouse-side gate\n2 Plaza\n3 Górna polana\n4 Górny most\n5 Brzeg rzeki\n6 Dolny most"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> punkt teleportu\n<color=#403833>○</color> punkt orientacyjny\n<color=#386B9E>■</color> myjnia"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "Teleport: menu Walk → [Mapa i podróż]\nPełne okrążenie: 1→2→3→4→5→6→1 (lub odwrotnie)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "Jesteś tutaj"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑N"
         }
       ]
     },
@@ -34625,6 +35537,18 @@
           "text": "僅對自己生效，下次造訪時會沿用"
         },
         {
+          "key": "settings.night.auto",
+          "text": "自動"
+        },
+        {
+          "key": "settings.night.manual",
+          "text": "手動"
+        },
+        {
+          "key": "settings.night.autoNote",
+          "text": "隨時間入夜，所有人相同（拖動即切換為手動）"
+        },
+        {
           "key": "KD_TreatPouch.liveTitleKeys.6",
           "text": "きみと、ひかりの庭"
         },
@@ -35923,6 +36847,70 @@
         {
           "key": "KD_TreatPouch.WordAccNotForDog",
           "text": "Can't be worn by this dog (overlaps the collar)"
+        },
+        {
+          "key": "guide.board.title",
+          "text": "玩法"
+        },
+        {
+          "key": "guide.menu",
+          "text": "手邊選單  VR: 長按右搖桿向下 ／ Desktop: T 鍵 ／ 手機: 畫面上的 [選單] ／ 按牽繩架上的牌子也能打開"
+        },
+        {
+          "key": "guide.walk.title",
+          "text": "散步"
+        },
+        {
+          "key": "guide.walk.body",
+          "text": "用牽繩牽上狗狗，在後山散步吧。\n<color=#B5432A>1</color> 在入口的牽繩架拿起牽繩\n<color=#B5432A>2</color> 把牽繩末端靠近狗狗的項圈\n<color=#B5432A>3</color> 在手邊選單 Walk 裡選擇目的地\n一隻手最多 3 隻，兩隻手最多 6 隻。\n解開: 按一下你牽著的狗狗的項圈\n也可用選單: Walk 裡該狗狗那一行的 [Leash left] [Leash right] [Unleash] (只限附近的狗狗)\nDesktop・手機用選單更方便"
+        },
+        {
+          "key": "guide.frisbee.title",
+          "text": "飛盤"
+        },
+        {
+          "key": "guide.frisbee.body",
+          "text": "每隻狗狗都有自己的飛盤。Plaza 也放著幾個。\n<color=#B5432A>1</color> 手邊選單「玩具」選狗狗，再按 [Disc] → 放在你面前\n<color=#B5432A>2</color> 拿起來就能看到飛行路線\n<color=#B5432A>3</color> 用 Use 擲出 (VR 是扳機) → 那隻狗狗會跳起來接住\n牽著的狗狗不會去撿。先解開牽繩。\n瞄準處出現 × 的地方，狗狗去不了。\n在河裡飛盤會浮起來，狗狗會跳進水裡叼回來。"
+        },
+        {
+          "key": "guide.wash.title",
+          "text": "洗澡"
+        },
+        {
+          "key": "guide.wash.body",
+          "text": "散步弄髒了？幫狗狗洗乾淨吧。\n<color=#B5432A>1</color> 在洗澡台的板子上按狗狗的名字 → 牠會站到踏板上\n<color=#B5432A>2</color> 用海綿搓出滿滿的泡泡\n<color=#B5432A>3</color> 淋浴: 用 Use 開關水。把泡泡沖掉\n<color=#B5432A>4</color> 用毛巾擦乾收尾\n順序隨意。兩個人也能一起洗。\n踏板和自己的高度: 板上的 [上へ] [下へ]　結束: [おわり]\n海綿・毛巾在 Desktop・手機上: 按住 Use\n架子上的 [RESET] 讓工具歸位。沿途還有 3 處洗澡台。"
+        },
+        {
+          "key": "guide.shop.title",
+          "text": "積分與訓練師"
+        },
+        {
+          "key": "guide.shop.body",
+          "text": "散步・撫摸・球・飛盤・洗澡，所有人都免費。\n<color=#B5432A>積分</color>\n和入口的爺爺說話可得 200pt (僅一次)。待在這裡每分鐘 1pt。\n在「裝飾」「呼喚」「零食」裡換取飾品・撫摸光效・姿勢・零食。\n<color=#B5432A>VAnimal Trainer</color> (有期限・Credits)\n讓狗狗們集合，大家一起拍合照。在古民家加入過的話，這裡也能直接用。\n加入: 手邊選單「玩耍」→ [打開購買介面]\n使用: 在「玩耍」選隊形 → [在這裡集合]\n<color=#B5432A>Credits 裝飾</color>\n「裝飾」裡的部分套裝在 VRChat 購買介面購買 (也可贈送)。"
+        },
+        {
+          "key": "guide.map.title",
+          "text": "後山地圖"
+        },
+        {
+          "key": "guide.map.legend",
+          "text": "1 Farmhouse-side gate\n2 Plaza\n3 上方空地\n4 上游的橋\n5 河岸\n6 下游的橋"
+        },
+        {
+          "key": "guide.map.key",
+          "text": "<color=#D14D33>●</color> 可傳送地點\n<color=#403833>○</color> 標記\n<color=#386B9E>■</color> 洗澡台"
+        },
+        {
+          "key": "guide.map.note",
+          "text": "傳送: 手邊選單 Walk → [地圖與移動]\n繞一圈: 1→2→3→4→5→6→1 (也可反向)"
+        },
+        {
+          "key": "guide.map.here",
+          "text": "你在這裡"
+        },
+        {
+          "key": "guide.map.north",
+          "text": "↑北"
         }
       ]
     }

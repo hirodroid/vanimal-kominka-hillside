@@ -61,6 +61,14 @@ namespace KominkaDogRun
         // 裏山改変: ナイトモードの正本は KH_NightMode (SleepKit は無い。KominkaHillside 段階 0-b、計画書 D-5)。
         // Slider の「暗さ」0〜1 をそのまま渡し、PlayerData の保存・復元も KH_NightMode が持つ (自分だけに反映)。
         public KominkaHillside.KH_NightMode hillsideNight;
+        // 裏山改変 (IMP-ENV-005): ナイトモードの行に [オート][マニュアル]。選んでいる方を pouch.equipOnColor、他方を tabOffColor で塗る。
+        // 注記はモードで差し替え (2 行を同じ位置に置き、片方だけ表示)。オート中のスライダーは共通の値を表示するだけで Fill を淡色にする
+        // (触るとマニュアルへ切り替わる。KH_NightMode._SetDarkness)。配線は Menu/15 (KD_MenuFinishEditor.BuildNightMode)
+        public UnityEngine.UI.Image nightAutoImage, nightManualImage, nightModeFill;
+        public GameObject nightAutoNote, nightManualNote;
+        public const float NightAutoFillAlpha = 0.4f;   // オート中の Fill の不透明度 (元の色に掛ける)
+        private Color _nightFillManual;
+        private bool _nightFillKnown;
         private float _nextRefresh;
         private bool _restored;
 
@@ -80,6 +88,7 @@ namespace KominkaDogRun
         private void Start()
         {
             if (radioButton != null) radioButton.interactable = RadioAvailable();
+            if (nightModeFill != null) { _nightFillManual = nightModeFill.color; _nightFillKnown = true; }
         }
         public void _OpenRadio() { if (!RadioAvailable() || radioPage == null) return; pouch._OpenExtraSettings(radioPage, "ui.extra.028"); RefreshRadio(); }
         public void _OpenInformation() { pouch._OpenExtraSettings(informationPage, "information.title"); }
@@ -146,6 +155,9 @@ namespace KominkaDogRun
 #endif
             RefreshNightMode();
         }
+        // 裏山改変 (IMP-ENV-005): モードの選択は自分だけ (共通の時計は変えない)。保存は KH_NightMode が持つ
+        public void _NightAuto() { if (hillsideNight != null) hillsideNight._UseAuto(); RefreshNightMode(); }
+        public void _NightManual() { if (hillsideNight != null) hillsideNight._UseManual(); RefreshNightMode(); }
         public override void OnPlayerRestored(VRCPlayerApi player)
         {
             // SleepKit も同じイベントで保存値を読み直す。順序は保証されないので、ここでは印だけ立てて補正は Update で行う
@@ -183,13 +195,31 @@ namespace KominkaDogRun
 #if KH_WITH_SLEEPKIT
             if (sleepKit == null || nightMode == null) return;
             float dark = BrightnessToDark(sleepKit.GetNightModeValue());
+            bool auto = false;   // 古民家 (SleepKit) にオートは無い
 #else
             if (nightMode == null) return;
-            // 裏山改変: 表示は KH_NightMode の目標の暗さ (復元値を含む)。未配線なら OFF
+            // 裏山改変: 表示は KH_NightMode の目標の暗さ (復元値を含む)。未配線なら OFF。
+            // IMP-ENV-005: オート中は共通の暗さ (_Darkness がオートの値を返す)。SetValueWithoutNotify なので表示だけではマニュアルにならない
             float dark = hillsideNight != null ? hillsideNight._Darkness() : 0f;
+            bool auto = hillsideNight != null && hillsideNight.IsAuto;
+            RefreshNightModeChoice(auto);
 #endif
             if (!Mathf.Approximately(nightMode.value, dark)) nightMode.SetValueWithoutNotify(dark);
-            if (nightModeValue != null) nightModeValue.text = dark < .005f ? "OFF" : Mathf.RoundToInt(dark * 100f).ToString() + "%";
+            // オート中は 0% も数字で出す (「OFF」はマニュアルで切っている状態だけ)
+            if (nightModeValue != null) nightModeValue.text = !auto && dark < .005f ? "OFF" : Mathf.RoundToInt(dark * 100f).ToString() + "%";
+        }
+        /// <summary>IMP-ENV-005: [オート][マニュアル] の色、注記の差し替え、オート中のスライダーの淡色。Graphic.color は値が同じなら再描画しない。</summary>
+        private void RefreshNightModeChoice(bool auto)
+        {
+            if (pouch != null)
+            {
+                if (nightAutoImage != null) nightAutoImage.color = auto ? pouch.equipOnColor : pouch.tabOffColor;
+                if (nightManualImage != null) nightManualImage.color = auto ? pouch.tabOffColor : pouch.equipOnColor;
+            }
+            if (nightAutoNote != null && nightAutoNote.activeSelf != auto) nightAutoNote.SetActive(auto);
+            if (nightManualNote != null && nightManualNote.activeSelf == auto) nightManualNote.SetActive(!auto);
+            if (nightModeFill != null && _nightFillKnown)
+                nightModeFill.color = auto ? new Color(_nightFillManual.r, _nightFillManual.g, _nightFillManual.b, _nightFillManual.a * NightAutoFillAlpha) : _nightFillManual;
         }
         private void RefreshRadio()
         {

@@ -23,6 +23,10 @@ namespace KominkaDogRun.Editor
         // 群「読む」                : 見出し / [クレジット][インフォメーション]
         // 下端は Feedback (y=-285、高さ 44) の文字に掛からない -250 まで。CloseHint (-400,-328) とも重ならない
         public const float HillsideGroupSelfY = 180f, HillsideEntryRowY = 128f, HillsideNightY = 70f, HillsideNightNoteY = 32f, HillsideLanguageY = -22f;
+        // IMP-ENV-005: ナイトモードの行 = 題字 / スライダー / 値 / [オート][マニュアル]。右端 530 は「この部屋のみんな」の許可ボタン (右端 555) より内側
+        public const float HillsideNightLabelX = -330f, HillsideNightSliderX = -60f, HillsideNightValueX = 150f, HillsideNightAutoX = 290f, HillsideNightManualX = 455f;
+        public static readonly Vector2 HillsideNightLabelSize = new Vector2(220f, 46f), HillsideNightValueSize = new Vector2(100f, 46f), HillsideNightChoiceSize = new Vector2(150f, 44f);
+        public const string NightAutoButtonName = "NightModeAuto", NightManualButtonName = "NightModeManual", NightAutoNoteName = "NightModeAutoNote";
         public const float HillsideGroupRoomY = -74f, HillsideAccessY = -114f;
         public const float HillsideGroupReadY = -168f, HillsideReadRowY = -214f;
         public static readonly Vector2 HillsideEntrySize = new Vector2(340f, 60f);
@@ -232,7 +236,8 @@ namespace KominkaDogRun.Editor
             // 各群の項目は自分の見出しの下・次の見出しの上
             string[][] members =
             {
-                new[] { "VolumeSettingsButton", "DistanceFadeSettingsButton", "NightModeLabel", "NightMode", "NightModeValue", "NightModeNote", "Language", "PreviousLanguage", "NextLanguage" },
+                // IMP-ENV-005: 注記はモードで差し替え。構築時はオート (初回のモード) の注記 NightModeAutoNote が表示、NightModeNote (マニュアル) は非表示
+                new[] { "VolumeSettingsButton", "DistanceFadeSettingsButton", "NightModeLabel", "NightMode", "NightModeValue", NightAutoNoteName, NightAutoButtonName, NightManualButtonName, "Language", "PreviousLanguage", "NextLanguage" },
                 new[] { "CallAccess", "LiveAccess" },
                 new[] { CreditButtonName, "InformationButton" },
             };
@@ -259,7 +264,7 @@ namespace KominkaDogRun.Editor
                 for (int b = a + 1; b < hits.Count; b++)
                     if (ra.Overlaps(RectOf(hits[b]))) check(false, "settings controls overlap: " + hits[a].name + " / " + hits[b].name);
             }
-            check(hits.Count >= 9, "settings home interactive controls counted=" + hits.Count + " (volume, fade, night, <, >, call, live, credit, information)");
+            check(hits.Count >= 11, "settings home interactive controls counted=" + hits.Count + " (volume, fade, night, auto, manual, <, >, call, live, credit, information)");
 
             // ---- 入口 4 つ (表示・配線)
             CheckEntry(home, "VolumeSettingsButton", pouchUdon, "_OpenVolumeSettings", language, "KD_TreatPouch.WordVolumeSettings", check);

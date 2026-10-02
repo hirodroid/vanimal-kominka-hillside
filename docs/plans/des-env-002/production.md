@@ -27,6 +27,7 @@ UnityをEditモード・保存済みにして `Tools/KominkaHillside/Course/` �
 | 秋の橋・地面 | Inspectorで調整。68の初回適用は繰り返さない | 69 |
 | 水遊び場 (IMP-DOG-020) | 76 (水遊び場のデータ、踏み分け道 (Terrain 層 2 の塗り)、目印の石と仮看板、犬ごとの揺れの配線)。次の後は、76 → 77 をもう一度実行する: 15 (地形)、30 (NavMesh)、経路・通過点「川辺」の変更、川岸の石や障害物の変更 (76 はこれらから採る区間・入水点・出水点・復帰点を決める)、仮看板の寸法や色の変更。仮看板の文言だけを変えるときは、訳のファイルの `course.water.sign` を直して 27 → 77 (77 が 13 言語の収まりを検査する) | 77 |
 | 水音 (IMP-DOG-020 段階 7) | 87 (WAV の取り込み設定と犬ごとの AudioSource の配線。音を作り直したら先に `node scripts/kh-gen-water-se.js`。76 で水遊び場を作り直した後も 87) | 87 (自前の検査。`Temp/imp-dog-020/water-audio.json`) |
+| 川のせせらぎ音 (IMP-ENV-006) | 110 (WAV の取り込み設定と、川の中心線に沿ったルート `KH_RiverAmbience` の AudioSource 20 本。川の形・水面 (15 / `KH_CourseGroundEditor.River`) を変えたら 110 をもう一度。音量・Near / Far は `KH_RiverAmbienceEditor` の定数が正本。[制作票](../2026-10-02-river-ambience-production.md)) | 111 (`RIVER_AMBIENCE_OK`。自前の検査。`Temp/imp-env-006/river-ambience-verify.json`) |
 | フリスビーと川 (IMP-DOG-020 段階 7) | 89 (犬 6 匹とディスク 6 枚へ川のデータと水遊び場を配線) | 89 (`FRISBEE_RIVER_OK`。帯の手前で止まる・岸の点・水遊び場の中は止めない) |
 | 犬を洗う (IMP-DOG-024〜030、IMP-ENV-007 / 008) | メニューは `Tools/KominkaHillside/Wash/` (Course ではない)。初回だけ 10 と 10b (Program Asset) → U# のコンパイル。11 (6 匹の殻・部位 Collider・KH_Wash_*・主洗い場と道中の洗い場 3 か所・道具・音の取り込み。棚と洗い場の位置は保つ) → 20 (泥の地点)。位置マップを 2 で焼き直したら 11 をもう一度。シェーダーの既定値を変えたら 17 → 11 | 12 (`Temp/KH_DogWashSetupVerify.json`)、21 (泥の地点)。見た目は 18 で犬を選び 13 → 15 / 16 → 14 (保存しない)。ClientSim は `Course/100` |
 | 洗浄道具の制作モデル (2026-10-01) | Wash/31で全4洗い場へ適用・保存。Wash/11再構築時も適用 | Wash/32 + Wash/12。寸法・材質・検証は [取込記録](../../development/imports/wash-tools.md) |

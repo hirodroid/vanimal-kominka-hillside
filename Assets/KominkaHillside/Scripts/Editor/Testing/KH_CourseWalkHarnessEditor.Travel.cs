@@ -106,9 +106,10 @@ namespace KominkaHillside.Editor
             Application.logMessageReceived -= TravelLog; Application.logMessageReceived += TravelLog;
             tvStep = 0; tvCaseAt = -1; tvPrev = null; tvObsValid = false; tvBox = null; tvPuppetWalk = false; tvJumpNotes.Clear(); tvTrackMask = 0; tvRemote = null; tvWalkLast = 0;
             tvFade = UnityEngine.Object.FindObjectsOfType<VRC.Udon.UdonBehaviour>().FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_TravelFade");
-            if (tvFade == null && !report.collarOnly) throw new InvalidOperationException("KH_TravelFade not in the scene (run Course/84)");
+            if (tvFade == null && !report.collarOnly && !report.nightOnly) throw new InvalidOperationException("KH_TravelFade not in the scene (run Course/84)");
             tvLogs.Clear(); tvScripts = new List<List<Func<double, bool>>>(); tvReport = new TravelReport { runId = report.runId };
             if (report.collarOnly) { MakeCollarCases(); return; }   // IMP-DOG-031 Course/83b (KH_CourseWalkHarnessEditor.Collar.cs): no warp, no spots
+            if (report.nightOnly) { MakeNightCases(); return; }     // IMP-ENV-005 Course/83c (KH_CourseWalkHarnessEditor.Night.cs): no warp, no spots, no dogs
             var spots = Get<Vector3[]>(manager, "spotPositions");
             var warp = Get<bool[]>(manager, "spotWarpEnabled");
             if (spots == null || spots.Length != 6 || warp == null || warp.Count(w => w) != 2 || !warp[KH_LeashManager.SpotUpper] || !warp[KH_LeashManager.SpotRiver])
@@ -1153,8 +1154,8 @@ namespace KominkaHillside.Editor
                 WriteTravel(); Save();
                 tvStep = 0;
                 if (caseIndex + 1 == report.cases.Count)
-                    End(report.collarOnly ? "COLLAR_INTERACT_OBSERVED" : report.travelCall ? (tvCallFailed ? "TRAVEL_CALL_FAIL" : "TRAVEL_CALL_PASS") : report.travelRc ? "TRAVEL_RC_OBSERVED" : report.full ? "TRAVEL_OBSERVED" : "TRAVEL_QUICK_OBSERVED",
-                        report.collarOnly ? CollarReason()
+                    End(report.collarOnly ? "COLLAR_INTERACT_OBSERVED" : report.nightOnly ? "NIGHT_MODE_OBSERVED" : report.travelCall ? (tvCallFailed ? "TRAVEL_CALL_FAIL" : "TRAVEL_CALL_PASS") : report.travelRc ? "TRAVEL_RC_OBSERVED" : report.full ? "TRAVEL_OBSERVED" : "TRAVEL_QUICK_OBSERVED",
+                        report.collarOnly ? CollarReason() : report.nightOnly ? NightReason()
                         : (report.travelCall ? TvCountLine() + ". " : "") + "Local ClientSim travel cases passed (same-Owner contract; handover/late/forged/leave are simulated). Not network, device or PCVR acceptance.");
                 else Next();
             }

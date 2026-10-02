@@ -221,20 +221,38 @@ namespace KominkaDogRun.Editor
 #if KH_WITH_SLEEPKIT
             settings.sleepKit = sleepKit;
 #endif
-            // 裏山改変: 群「自分の見え方・聞こえ方」の 2 行目 (古民家は最下段 -262 / -306)。y の正本は KD_MenuFinishEditor.Hillside
-            Label(home, "NightModeLabel", new Vector2(-300, HillsideNightY), new Vector2(260, 46), T("settings.night.title"), font, 24).alignment = TextAlignmentOptions.Right;
+            // 裏山改変: 群「自分の見え方・聞こえ方」の 2 行目 (古民家は最下段 -262 / -306)。y と x の正本は KD_MenuFinishEditor.Hillside
+            // IMP-ENV-005: 右に [オート][マニュアル] を足すため、題字・スライダー・値を左へ寄せた (HillsideNight*X)
+            Label(home, "NightModeLabel", new Vector2(HillsideNightLabelX, HillsideNightY), HillsideNightLabelSize, T("settings.night.title"), font, 24).alignment = TextAlignmentOptions.Right;
             settings.nightMode = KD_DogVoiceSettingsEditor.BuildSlider(home, "NightMode", HillsideNightY, KD_UiSpriteEditor.LoadRound(), udon, "_NightMode", log);
+            ((RectTransform)settings.nightMode.transform).anchoredPosition = new Vector2(HillsideNightSliderX, HillsideNightY);
             KD_DogVoiceSettingsEditor.SetInitialSliderValue(settings.nightMode, 0f);
-            settings.nightModeValue = Label(home, "NightModeValue", new Vector2(215, HillsideNightY), new Vector2(110, 46), "OFF", font, 24);
+            settings.nightModeValue = Label(home, "NightModeValue", new Vector2(HillsideNightValueX, HillsideNightY), HillsideNightValueSize, "OFF", font, 24);
             settings.nightModeValue.alignment = TextAlignmentOptions.Left;
-            Label(home, "NightModeNote", new Vector2(0, HillsideNightNoteY), new Vector2(700, 26), T("settings.night.note"), font, 18);
+            var manualNote = Label(home, "NightModeNote", new Vector2(0, HillsideNightNoteY), new Vector2(700, 26), T("settings.night.note"), font, 18);
+            // IMP-ENV-005: モードの選択と、モードごとの注記 (同じ位置に 2 行。実行時は KD_MenuSettings.RefreshNightModeChoice が片方だけ出す)。
+            // 初回のモードはオート (KH_NightMode._auto の既定) なので、構築時もオートの見た目を焼く
+            var autoButton = KD_ShopSetupEditor.EnsureButton(home, NightAutoButtonName, new Vector2(HillsideNightAutoX, HillsideNightY), HillsideNightChoiceSize,
+                pouch.equipOnColor, font, T("settings.night.auto"), udon, "_NightAuto", log);
+            var manualButton = KD_ShopSetupEditor.EnsureButton(home, NightManualButtonName, new Vector2(HillsideNightManualX, HillsideNightY), HillsideNightChoiceSize,
+                pouch.tabOffColor, font, T("settings.night.manual"), udon, "_NightManual", log);
+            foreach (var b in new[] { autoButton, manualButton }) b.transform.Find("Label").GetComponent<TextMeshProUGUI>().fontSize = 22f;
+            var autoNote = Label(home, NightAutoNoteName, new Vector2(0, HillsideNightNoteY), new Vector2(700, 26), T("settings.night.autoNote"), font, 18);
+            autoNote.enableWordWrapping = false; autoNote.enableAutoSizing = true; autoNote.fontSizeMax = 18f; autoNote.fontSizeMin = KD_LocalizationEditor.ButtonFontSizeMin;
+            autoNote.gameObject.SetActive(true); manualNote.gameObject.SetActive(false);
+            settings.nightAutoImage = autoButton.GetComponent<Image>();
+            settings.nightManualImage = manualButton.GetComponent<Image>();
+            settings.nightAutoNote = autoNote.gameObject;
+            settings.nightManualNote = manualNote.gameObject;
+            settings.nightModeFill = settings.nightMode.fillRect != null ? settings.nightMode.fillRect.GetComponent<Image>() : null;
+            if (settings.nightModeFill == null) throw new InvalidOperationException("Night mode slider fill Image missing (KD_DogVoiceSettingsEditor.BuildSlider)");
             // 裏山改変: スライダーの先は KH_NightMode (シーンに 1 個)。強度 0〜1 を KD_MenuSettings._NightMode が _SetDarkness で渡す
             settings.hillsideNight = HillsideNight(pouch.gameObject.scene);
             // 裏山改変: 購入アセット (HoboRadio / SleepKit) は裏山に無い
 #if KH_WITH_SLEEPKIT
             log.AppendLine("Night mode: slider on settings home -> SleepKitSettingsManager (" + sleepKit.name + ")");
 #else
-            log.AppendLine("Night mode: slider on settings home -> KH_NightMode (" + settings.hillsideNight.name + ")");
+            log.AppendLine("Night mode: slider on settings home -> KH_NightMode (" + settings.hillsideNight.name + "), [Auto][Manual] -> _NightAuto / _NightManual, notes " + NightAutoNoteName + " / NightModeNote (IMP-ENV-005)");
 #endif
         }
 

@@ -302,6 +302,21 @@
     },
     {
       "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/NightModeAuto/Label",
+      "key": "settings.night.auto"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/NightModeManual/Label",
+      "key": "settings.night.manual"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
+      "path": "Page_Settings/SettingsHome/NightModeAutoNote",
+      "key": "settings.night.autoNote"
+    },
+    {
+      "root": "KD_TreatPouchPanel",
       "path": "Page_Live/LiveDetail/FxRow/Button/Label",
       "key": "KD_TreatPouch.WordLiveSeeFx"
     },
@@ -834,6 +849,86 @@
       "root": "KD_TreatPouchPanel",
       "path": "Page_Sleep/CallPosePanel/Stretch/Label",
       "key": "call.stretch"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Header",
+      "key": "guide.board.title"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/MenuStrip/Text",
+      "key": "guide.menu"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Walk/Title",
+      "key": "guide.walk.title"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Walk/Body",
+      "key": "guide.walk.body"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/Title",
+      "key": "guide.frisbee.title"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/Body",
+      "key": "guide.frisbee.body"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Wash/Title",
+      "key": "guide.wash.title"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Wash/Body",
+      "key": "guide.wash.body"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Shop/Title",
+      "key": "guide.shop.title"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Shop/Body",
+      "key": "guide.shop.body"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Map/Canvas/Header",
+      "key": "guide.map.title"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Map/Canvas/Paper/Legend",
+      "key": "guide.map.legend"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Map/Canvas/Paper/Key",
+      "key": "guide.map.key"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Map/Canvas/Paper/Note",
+      "key": "guide.map.note"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Map/Canvas/Paper/Here/Label",
+      "key": "guide.map.here"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Map/Canvas/Paper/North",
+      "key": "guide.map.north"
     }
   ],
   "interactions": [

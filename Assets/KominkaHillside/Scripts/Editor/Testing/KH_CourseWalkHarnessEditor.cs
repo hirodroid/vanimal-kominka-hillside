@@ -63,6 +63,7 @@ namespace KominkaHillside.Editor
             public bool travelRc;   // Course/82b: 破壊監査 RC の新規ケースだけ (同じファイル)
             public bool travelCall; // IMP-WLD-002 Course/82c: 呼ぶ (KH_CourseWalkHarnessEditor.Call.cs)
             public bool collarOnly; // IMP-DOG-031 Course/83b: 首輪の「外す」Interact の有効／無効 (KH_CourseWalkHarnessEditor.Collar.cs、travel の台本で回す)
+            public bool nightOnly;  // IMP-ENV-005 Course/83c: オート／マニュアルのナイトモード (KH_CourseWalkHarnessEditor.Night.cs、travel の台本で回す)
             public bool waterOnly; // IMP-DOG-020 W0/W4/W6 (KH_CourseWalkHarnessEditor.Water.cs)
             public bool waterSwim; // IMP-DOG-020 step 4 W1 x6 / W2 (same file, Course/79)
             public bool waterFetch; // IMP-DOG-020 step 6 W3 / S4 / S5b (same file, Course/88)

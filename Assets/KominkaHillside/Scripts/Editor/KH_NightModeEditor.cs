@@ -19,6 +19,10 @@ namespace KominkaHillside.Editor
     {
         const string WorldScene = "Assets/Scenes/VRCDefaultWorldScene.unity";
         const string ProgramPath = "Assets/KominkaHillside/Scripts/KH_NightMode";
+        // IMP-ENV-005: the shared Auto timeline (Manual sync, one synced int) on a child of the root (the root is Sync None;
+        // one GameObject cannot mix sync modes).
+        const string AutoProgramPath = "Assets/KominkaHillside/Scripts/KH_AutoNight";
+        public const string AutoNightName = "AutoNight";
         public const string SkyMaterialPath = "Assets/KominkaHillside/Materials/KH_Skybox.mat";
         public const string OverlayMaterialPath = "Assets/KominkaHillside/Materials/KH_NightOverlay.mat";
         public const string QuadMeshPath = "Assets/KominkaHillside/Materials/KH_FullscreenQuad.asset";
@@ -42,14 +46,21 @@ namespace KominkaHillside.Editor
         public static void Setup()
         {
             Guard(); var scene = EditorSceneManager.GetActiveScene(); var log = new StringBuilder();
-            // U# program asset first: other steps add the component, which needs a compiled program.
-            if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(ProgramPath + ".asset") == null)
+            // U# program assets first: other steps add the components, which need a compiled program.
+            // Nothing in the scene is touched in this pass (vrc-udonsharp §2: AddUdonSharpComponent before the compile bakes the wrong sync mode).
+            var created = new System.Collections.Generic.List<string>();
+            foreach (string path in new[] { ProgramPath, AutoProgramPath })
             {
+                if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(path + ".asset") != null) continue;
                 var asset = ScriptableObject.CreateInstance<UdonSharpProgramAsset>();
-                asset.sourceCsScript = AssetDatabase.LoadAssetAtPath<MonoScript>(ProgramPath + ".cs");
-                AssetDatabase.CreateAsset(asset, ProgramPath + ".asset"); AssetDatabase.SaveAssets();
+                asset.sourceCsScript = AssetDatabase.LoadAssetAtPath<MonoScript>(path + ".cs");
+                AssetDatabase.CreateAsset(asset, path + ".asset"); created.Add(Path.GetFileName(path));
+            }
+            if (created.Count > 0)
+            {
+                AssetDatabase.SaveAssets();
                 UdonSharpProgramAsset.CompileAllCsPrograms(true);
-                Report("night-setup", "created KH_NightMode program asset; wait for the U# compile, then run Setup again.");
+                Report("night-setup", "created " + string.Join(", ", created) + " program asset(s); wait for the U# compile (unity-compile.sh --udon), then run Setup again. Scene unchanged.");
                 return;
             }
 
@@ -113,8 +124,20 @@ namespace KominkaHillside.Editor
             if (!backing.enabled) { backing.enabled = true; EditorUtility.SetDirty(backing); }
             if (!night.enabled) { night.enabled = true; }
             night.overlayRenderer = or; night.skyHolder = hr;
-            night.onDarkness = KH_NightMode.DefaultOnDarkness; night.fadeSeconds = KH_NightMode.DefaultFadeSeconds; night.liveDarkness = 0f;
+            night.onDarkness = KH_NightMode.DefaultOnDarkness; night.fadeSeconds = KH_NightMode.DefaultFadeSeconds; night.liveDarkness = 0f; night.autoDarkness = 0f;
             UdonSharpEditorUtility.CopyProxyToUdon(night); EditorUtility.SetDirty(night);
+            // IMP-ENV-005: the shared Auto timeline. Values are design values (code is the source): written every run.
+            var autoGo = Child(root.transform, AutoNightName);
+            var auto = autoGo.GetComponent<KH_AutoNight>(); if (auto == null) { auto = autoGo.AddUdonSharpComponent<KH_AutoNight>(); log.AppendLine("added KH_AutoNight on " + RootName + "/" + AutoNightName); }
+            var autoBacking = UdonSharpEditorUtility.GetBackingUdonBehaviour(auto);
+            if (autoBacking.SyncMethod != Networking.SyncType.Manual) { autoBacking.SyncMethod = Networking.SyncType.Manual; EditorUtility.SetDirty(autoBacking); log.AppendLine("AutoNight sync -> Manual"); }
+            if (!autoBacking.enabled) { autoBacking.enabled = true; EditorUtility.SetDirty(autoBacking); }
+            if (!auto.enabled) auto.enabled = true;
+            auto.nightMode = night;
+            auto.daySeconds = KH_AutoNight.DefaultDaySeconds; auto.duskSeconds = KH_AutoNight.DefaultDuskSeconds;
+            auto.nightDarkness = KH_AutoNight.DefaultNightDarkness; auto.tickSeconds = KH_AutoNight.DefaultTickSeconds;
+            UdonSharpEditorUtility.CopyProxyToUdon(auto); EditorUtility.SetDirty(auto);
+            log.AppendLine("auto night: day " + KH_AutoNight.DefaultDaySeconds + " s + dusk " + KH_AutoNight.DefaultDuskSeconds + " s -> " + KH_AutoNight.DefaultNightDarkness + " (stays), tick " + KH_AutoNight.DefaultTickSeconds + " s. New synced object: run Tools/KominkaHillside/Menu/19b Assign Network IDs");
             // Adding an Udon object leaves NetworkID entries; drop the dangling, typeless ones (vrc-scene-edit-safety).
             var descriptor = UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>();
             if (descriptor != null) { int dropped = descriptor.NetworkIDCollection.RemoveAll(x => x.gameObject == null && (x.SerializedTypeNames == null || x.SerializedTypeNames.Count == 0)); if (dropped > 0) { EditorUtility.SetDirty(descriptor); log.AppendLine("dropped dangling NetworkIDs " + dropped); } }
@@ -219,7 +242,7 @@ namespace KominkaHillside.Editor
             // Menu rebuild stage 0-b (D-5): the entry is the settings slider of KD_TreatPouch's settings page (KD_MenuSettings), not KH_HandMenu.
             var settings = UnityEngine.Object.FindObjectsOfType<KominkaDogRun.KD_MenuSettings>(true);
             Check(settings.Length == 1 && settings[0].hillsideNight == night && settings[0].nightMode != null && settings[0].nightModeValue != null,
-                "KD_MenuSettings.hillsideNight wired with slider and value label (run Tools/KominkaHillside/Menu/7 Build Menu after Setup; found " + settings.Length + ")");
+                "KD_MenuSettings.hillsideNight wired with slider and value label (run Tools/KominkaHillside/Menu/15 Setup Night Mode after Setup; found " + settings.Length + ")");
             Check(settings.Length == 1 && settings[0].pouch != null, "KD_MenuSettings.pouch wired (settings page of the hand menu)");
             // DES-LIV-001: the live's darkness reaches this night mode only through KH_LiveNight (Menu/26a). Absent = no live yet.
             var liveNights = UnityEngine.Object.FindObjectsOfType<KH_LiveNight>(true);
@@ -227,6 +250,38 @@ namespace KominkaHillside.Editor
             else Check(liveNights.Length == 1 && liveNights[0].nightMode == night, "KH_LiveNight.nightMode is this KH_NightMode (found " + liveNights.Length + " KH_LiveNight)");
             var descriptor = UnityEngine.Object.FindObjectOfType<VRC_SceneDescriptor>();
             Check(descriptor != null && descriptor.NetworkIDCollection.Count(x => x.gameObject == null) == 0, "no dangling NetworkIDs");
+            Check(vars != null && vars.TryGetVariableValue("autoDarkness", out v) && v is float && (float)v == 0f && night.autoDarkness == 0f, "autoDarkness 0 in the scene (KH_AutoNight writes it at runtime)");
+            // ---- IMP-ENV-005: the shared Auto timeline ----
+            var autoT = root.transform.Find(AutoNightName);
+            var auto = autoT == null ? null : autoT.GetComponent<KH_AutoNight>();
+            var autos = UnityEngine.Object.FindObjectsOfType<KH_AutoNight>(true);
+            Check(auto != null && autos.Length == 1, "exactly one KH_AutoNight, at " + RootName + "/" + AutoNightName + " (found " + autos.Length + ")");
+            if (auto != null)
+            {
+                var ab = UdonSharpEditorUtility.GetBackingUdonBehaviour(auto);
+                var autoProgram = AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(AutoProgramPath + ".asset");
+                Check(autoProgram != null && autoProgram.sourceCsScript != null && AssetDatabase.GetAssetPath(autoProgram.sourceCsScript) == AutoProgramPath + ".cs" && ab != null && ab.programSource == autoProgram, "program asset points at KH_AutoNight.cs and the backing uses it");
+                Check(ab != null && ab.SyncMethod == Networking.SyncType.Manual, "AutoNight backing sync Manual (actual " + (ab == null ? "-" : ab.SyncMethod.ToString()) + ")");
+                Check(ab != null && ab.enabled && auto.enabled && autoT.gameObject.activeInHierarchy, "AutoNight backing / proxy enabled, GameObject active");
+                Check(autoT.GetComponent<Renderer>() == null && autoT.GetComponent<Collider>() == null && autoT.localPosition == Vector3.zero, "AutoNight is a bare object at the root's origin");
+                Check(auto.nightMode == night, "KH_AutoNight.nightMode is this KH_NightMode");
+                var av = ab == null ? null : ab.publicVariables; object w;
+                Check(av != null && av.TryGetVariableValue("nightMode", out w) && w as UnityEngine.Object == backing, "AutoNight backing holds nightMode (the KH_NightMode backing)");
+                Check(Mathf.Approximately(auto.daySeconds, KH_AutoNight.DefaultDaySeconds) && Mathf.Approximately(auto.duskSeconds, KH_AutoNight.DefaultDuskSeconds)
+                    && Mathf.Approximately(auto.nightDarkness, KH_AutoNight.DefaultNightDarkness) && Mathf.Approximately(auto.tickSeconds, KH_AutoNight.DefaultTickSeconds),
+                    "timeline == defaults (day " + auto.daySeconds + " / dusk " + auto.duskSeconds + " / night " + auto.nightDarkness + " / tick " + auto.tickSeconds + "; a harness may only shorten them at runtime)");
+                bool heap = av != null
+                    && av.TryGetVariableValue("daySeconds", out w) && w is float && Mathf.Approximately((float)w, KH_AutoNight.DefaultDaySeconds)
+                    && av.TryGetVariableValue("duskSeconds", out w) && w is float && Mathf.Approximately((float)w, KH_AutoNight.DefaultDuskSeconds)
+                    && av.TryGetVariableValue("nightDarkness", out w) && w is float && Mathf.Approximately((float)w, KH_AutoNight.DefaultNightDarkness)
+                    && av.TryGetVariableValue("tickSeconds", out w) && w is float && Mathf.Approximately((float)w, KH_AutoNight.DefaultTickSeconds);
+                Check(heap, "AutoNight backing holds the default timeline");
+                Check(descriptor != null && descriptor.NetworkIDCollection.Any(x => x.gameObject == autoT.gameObject), "AutoNight has a NetworkID (Tools/KominkaHillside/Menu/19b Assign Network IDs)");
+                // vrc-networking §8: the Owner stays the default; enforce "never SetOwner" statically, not by discipline.
+                string src = File.Exists(AutoProgramPath + ".cs") ? File.ReadAllText(AutoProgramPath + ".cs") : "";
+                Check(src.Length > 0 && !src.Contains("SetOwner(") && src.Contains("[UdonSynced] private int _epochMs") && System.Text.RegularExpressions.Regex.Matches(src, @"\[UdonSynced\]").Count == 1,
+                    "KH_AutoNight.cs: exactly one synced variable (_epochMs) and no SetOwner");
+            }
             Report("night-verify", log + "TOTAL " + total + " FAILED " + failed);
         }
     }

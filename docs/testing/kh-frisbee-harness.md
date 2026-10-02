@@ -616,6 +616,30 @@ bash scripts/kh-harness-run.sh walk "Course/83b - Walk Harness Collar Interact (
 - 結果: `Logs/kh-course-walk/<run>/travel.json` (ケースごとの notes。首輪の状態を `0:Ic 1:D- ...` の形で残す。`D` = DisableInteractive、`I` = 有効、`c` = Collider 有効、`-` = 無効) と `report.json`。全体の状態は **`COLLAR_INTERACT_OBSERVED`**
 - **見ていないもの**: 他の人が散歩中の犬 (2 人が要る)、Manager の Owner の交代・退室・遅れて入った人 (実通信)。Interact の光線・枠の表示、撫で・洗う道具・つかむ操作が首輪に取られないこと (`Interact()` は直接呼ぶので光線を通らない)。これらは Play と PCVR (2 人) で見る
 
+## 本シーンのオート／マニュアルのナイトモード (Course/83c, IMP-ENV-005)
+
+`Tools/KominkaHillside/Course/83c - Walk Harness Night Mode Auto Manual (IMP-ENV-005)`。83b と同じ枠 (travel の `TravelTick` を借りる。ワープ・地点・暗転・犬は使わない)。全体の締切 400 s、1 分ほどで終わる。PlayerData は 96・97 と同じく退避してから消し、「初めて来た人」で Play に入る (Finish が戻す)。
+
+```bash
+bash scripts/kh-harness-run.sh walk "Course/83c - Walk Harness Night Mode Auto Manual (IMP-ENV-005)"
+```
+
+40 分を待たないため、`KH_AutoNight` の `daySeconds` / `duskSeconds` / `nightDarkness` を**実行時のヒープだけ**縮める (シーンは保存しない。N7 の終わりで既定へ戻す)。操作は本物の入口 (`KD_MenuSettings` の `_NightAuto` / `_NightManual`、`Slider.value` → `_NightMode`)。観測は `KH_NightMode` の `_auto` / `_shown` / `_fading` / `_applied` / `autoDarkness`、`KH_AutoNight._epochMs`、PlayerData (`KH_NightMode.mode` / `KH_NightMode.dark`)。
+
+| ケース | 内容 | 合格 |
+|---|---|---|
+| N0-fresh-auto | 保存なしで入る | オートで始まる。Owner (自分) が入室の 2 s 後に `_epochMs` を 1 回書いた。昼 (0)。保存キーは 2 つとも無い |
+| N1-auto-progress | 昼を「今 + 1 s」、夕暮れ 6 s に縮める | 途中の値を通って 0.8 に達し、2.5 s 後も 0.8 (循環しない)。`_epochMs` 不変 |
+| N2-manual-ignores-clock | [マニュアル] → スライダー 0.4 → 共通の値を 0.3 へ動かす | 初回のマニュアルは OFF (0)。0.4 が表示・保存され、共通の値が動いても 0.4 のまま。`_epochMs` 不変 |
+| N3-slider-flips-manual | [オート] → オート中にスライダー 0.55 | オートで保存値 0.4 は上書きされない。スライダーでマニュアルへ切り替わり 0.55 が保存される |
+| N4-manual-to-auto-fade | [オート] | 1.2 s 後に 0.55 と 0.8 の間 (フェード中)、3 s で 0.8。`_epochMs` 不変 |
+| N5-late-join-mock (模擬) | `_epochMs` を 0 → 元の値とヒープへ書く | 0 の間は昼。値が来るとフェードで合流 (途中の値を観測) |
+| N6-owner-handover-mock (模擬) | 値ありで `_TryStart`。次に「未受信の新 Owner」(`_firstPlayer` / `_received` = false、`_debugUnsettled` = true、`_epochMs` = 0) にして、入室時の `_TryStart` → 引継ぎの `_TryStart` → 再試行 2 回 (11 s) → 元の値を受信 (ヒープ + `_onDeserialization`)。最後に最初の参加者・settle 済みの Owner で 0 から | 値は書き換えない。未受信の間はどの経路も書かない (再試行が 1 本だけ待つ)。受信した値が残り、暗さがそれに従う。最初の参加者は 1 回だけ書く。settle 済みの Owner は本当の 0 なら書く (最後に元の値へ戻す) |
+| N7-live-wins (模擬) | `liveDarkness` を 0.95 → 0.3 → 0 | 0.95 が勝つ、0.3 はオート 0.8 に負ける、0 でオート 0.8 へ戻る (0 にはならない) |
+
+- 結果: `Logs/kh-course-walk/<run>/travel.json` と `report.json`。全体の状態は **`NIGHT_MODE_OBSERVED`**
+- **見ていないもの**: 2 つの実クライアントの一致、実通信の途中参加と Owner の退出、再入室での復元 (`OnPlayerRestored` は 1 回だけ)、メニューの見た目 (淡色・注記の差し替え・13 言語の枠) と暗さの見え方 (PCVR / Quest / iOS)
+
 ## 保証する範囲
 
 実際に通るもの:
