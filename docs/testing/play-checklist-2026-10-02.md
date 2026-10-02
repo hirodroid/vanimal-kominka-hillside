@@ -1,0 +1,439 @@
+# Play チェックリスト 2026-10-02 (まとめ版)
+
+review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play / PCVR / 2 人 / 端末の確認を、セッション単位に 1 本へまとめたもの。Issue ごとではなく、コースを歩く順に並べた。結果は **○ / × / 気づいた点** を結果欄へ書く。終わったら AI が各 Issue へ転記する (Issue 側の項目番号は「元」の列の括弧)。
+
+- 作成時点のコミット: `f9ed660 (IMP-DOG-025 すすぎ改善)`
+- 公開目標 (開発完了 2026-10-03〜04、公開 2026-10-10〜11) は [開発全体像](../development/overview.md)。確認済みの項目 (日付つき) は載せていない。
+- 合否は AI が決めない。1 人の総合評価を、項目別・端末別の合格に読み替えない。疑似入力 (ClientSim) の結果は、ここの合格にならない。
+- 順序は A (PCVR 1 人) → B (PCVR 2 人以上) → C (Desktop) → D (Quest 3) → E (iOS)。A の 1 周を終えてから B 以降へ進むと、同じ場所を何度も往復しない。
+
+## 始める前に
+
+- シーン保存済み・Console エラーなしで **Build & Test をし直す** (古い動きが出たら最初に疑う)。
+- ユーザー作業 (Play ではない): クレジット頁の URL 3 件を記入 ([IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md))。洗い場の棚の札 `KH_WashStation/SignText` と、リセット札の文字 (今は仮の英語) を日本語にする ([IMP-ENV-007](../development/issues/IMP-ENV-007-main-wash-station.md))。
+- 犬の初期の汚れは 0 (本番値)。汚れを流す確認は、散歩のあと (A-5) に洗い場へ戻って行う。
+- 項目の元になった詳細チェック表: [川の設計書](../plans/2026-09-27-river-play-and-floating-fetch.md) (川 #1〜#36)、[フリスビーどこでも](../plans/2026-09-28-frisbee-anywhere.md) (川設計書 続き #37〜#48)、[地図の設計書](../plans/2026-09-27-map-and-travel.md) (地図設計書 #1〜#9、呼ぶ F.7 #10〜#15)、[メニュー計画](../plans/2026-09-23-menu-rebuild.md)、[散歩計画](../plans/2026-09-20-free-walk.md)、[集合計画](../plans/2026-09-20-menu-gather-stations.md)、[洗い場の呼び出しと高さ](../plans/2026-10-01-wash-call-and-height.md)、[6 匹フリスビー](../plans/2026-09-24-frisbee-six-dogs.md)。
+
+## A. PCVR 1 人 (138 項目)
+
+1 人で入り、スポーン → 主洗い場 → 門 → 散歩 → 展望・広場 → 奥広場・川 → 地図 → 設定の順に 1 周する。最初に Build & Test をし直す。犬の初期の汚れは 0 なので、泡の確認は汚れのない犬で行い、汚れを流す確認は A-4 の散歩のあとに戻って行う。
+
+### A-1 主洗い場 (スポーン近く): すすぎ改善 (10-02 の最新分。最初にここ)
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| A1 | スポンジでゴシゴシこする。泡が気持ちよく増えて広がるか。速すぎ・広すぎないか。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (すすぎ確認1) | |
+| A2 | シャワーを当てる。泡がさっと流れ、帯状にきれいな毛が現れる感じが残っているか。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (すすぎ確認2) | |
+| A3 | 肩・脇・足の付け根・関節に、狙い続けないと落ちない泡が残らないか。柴のあと、ポメ・コーギー・サモエドでも見る。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (すすぎ確認3)<br>[IMP-DOG-030](../development/issues/IMP-DOG-030-wash-six-dogs.md) (10-02 要望) | |
+| A4 | 片側を流しているとき、反対側の足や体の裏の泡まで消えて不自然に見えないか (シャワーは距離だけで効く)。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (すすぎ確認4) | |
+| A5 | 流した所の隣に残った小さな泡が、水を止めて 1〜2 秒で続いて消えるか。消え方は自然か。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (すすぎ確認5) | |
+| A6 | 泡を付け直して繰り返し洗っても楽しいか。全身 1 匹にかかる時間 (目標 1〜2 分) を計って書く。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (すすぎ確認6・表 15)<br>[IMP-DOG-024](../development/issues/IMP-DOG-024-walk-and-wash-experience.md) (完了条件) | |
+| A7 | 水から始める / 泡の途中で水を当てる / きれいにしたあとにもう一度泡を付ける、のどれもできるか。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (表 12)<br>[IMP-DOG-024](../development/issues/IMP-DOG-024-walk-and-wash-experience.md) (完了条件) | |
+
+### A-2 主洗い場: 洗い心地 (道具・音・犬の反応)
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| A8 | シャワーは Use を押すたびにオン・オフが切り替わるか (押し続けない)。空中に出している時と犬へ当てている時で、見た目と音が変わるか。水が当たった位置に飛沫が出るか。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (表 5・6)<br>[IMP-ENV-007](../development/issues/IMP-ENV-007-main-wash-station.md) (決定 09-30) | |
+| A9 | 音: 噴射と接触を聞き分けられるか。泡に当てた時と毛に当てた時で変わるか。止めると自然に消えるか。耳障りな成分やループの継ぎ目がないか。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (表 8)<br>[IMP-DOG-028](../development/issues/IMP-DOG-028-wash-sound-and-reactions.md) | |
+| A10 | 足・尻尾・頭・首を洗えるか。届かない・当たらない部位はないか。足を動かしても泡が足についてくるか。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (表 10・11)<br>[IMP-DOG-030](../development/issues/IMP-DOG-030-wash-six-dogs.md) | |
+| A11 | 泡の殻が毛の上に自然に乗り、横腹・脇・足・顔で毛と前後しないか。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (賭け 2) | |
+| A12 | 洗っている間、犬がその場に止まるか。部位を変えると首をかしげるか。洗うのをやめて 3 秒ほどで歩き出すか。(体を回さない点は 09-30 に確認済み) | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (表 9)<br>[IMP-DOG-027](../development/issues/IMP-DOG-027-wash-behavior-switching.md) | |
+| A13 | コミカルな反応 (首かしげ・足上げ・ブルブル) に気づけて楽しいか。洗う対象と音を追えなくならないか。すすぎ前に泡を全部落として見せ場を奪わないか。同じ反応の連発が気にならないか。 | [IMP-DOG-028](../development/issues/IMP-DOG-028-wash-sound-and-reactions.md) | |
+| A14 | きれいになった時の満足の合図 (座る・尻尾・笑顔・声) で「もう十分きれい」と分かるか。続けて洗えるか。 | [IMP-DOG-028](../development/issues/IMP-DOG-028-wash-sound-and-reactions.md) | |
+| A15 | 日向・木陰・ナイトモードで、泡が光って浮いたり暗く沈んだりしないか。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (表 18) | |
+| A16 | 洗い場の近くでも、首輪への Interact、リード接続、撫で、ボール・ディスクをつかむ操作が今までどおりできるか。尻尾と耳が今までどおり揺れるか。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (表 13・14) | |
+| A17 | 先行の Animal Wash と比べて、良くなった点と違和感を書く。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (表 19)<br>[IMP-DOG-028](../development/issues/IMP-DOG-028-wash-sound-and-reactions.md)<br>[VER-DOG-002](../development/issues/VER-DOG-002-wash-experience-and-devices.md) | |
+
+### A-3 主洗い場: 棚・犬を呼ぶ・高さ・6 匹
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| A18 | スポーンから洗い場が見えるか。初見でも道具を取ってすぐ洗い始められるか。リードから手を空ける動作で迷わないか。 | [IMP-ENV-007](../development/issues/IMP-ENV-007-main-wash-station.md) | |
+| A19 | 棚の位置と高さは取りやすいか。犬の横へ回れる余白があり、集合・リードの取り出し・散歩への出発を妨げないか。 | [IMP-ENV-007](../development/issues/IMP-ENV-007-main-wash-station.md) | |
+| A20 | 道具は手放した所に残り、棚のリセットボタンで全部定位置へ戻るか。戻し先が見て分かるか。 | [IMP-ENV-007](../development/issues/IMP-ENV-007-main-wash-station.md) (決定 09-30) | |
+| A21 | 手で置いたもの (おやつ置き場・リード台・待機の輪・おじいさん) と干渉していないか。 | [IMP-ENV-007](../development/issues/IMP-ENV-007-main-wash-station.md) | |
+| A22 | ボードで犬を選んで呼ぶ。犬が来て台に立ち、立つ向きで両側から洗えるか。(ボードの押しやすさは 10-01 に確認済み) | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) | |
+| A23 | 呼んだ犬が洗い終わるまで留まり、「おわり」で台を下りて普段の行動へ戻るか。別の犬を呼ぶと交代するか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) (記録 10-01) | |
+| A24 | 台の ▲▼ で犬が上がる。立ったまま・座ったままで、犬の背中と足が洗えるか。 | [IMP-ENV-011](../development/issues/IMP-ENV-011-wash-height-adjust.md) | |
+| A25 | 自分の ▲▼ で自分が浮く。犬を上から洗えるか。上げ下げで酔わない・落ちない・台や棚に引っかからないか。 | [IMP-ENV-011](../development/issues/IMP-ENV-011-wash-height-adjust.md) | |
+| A26 | ボードの文字 (日本語) が読めるか。 | [IMP-ENV-011](../development/issues/IMP-ENV-011-wash-height-adjust.md) | |
+| A27 | リードを付けたまま洗う。リードに余裕がある時に犬が止まり、歩き出したら直ちに追従へ戻るか。 | [IMP-DOG-027](../development/issues/IMP-DOG-027-wash-behavior-switching.md) | |
+| A28 | 洗い終えたあと、犬が普段の遊び (歩く・撫でられる・ボール) へ自然に戻るか。 | [IMP-DOG-027](../development/issues/IMP-DOG-027-wash-behavior-switching.md) (親 024 また過ごす) | |
+| A29 | 6 匹それぞれで、こする → すすぐ → 仕上げ → 普段の遊びへ戻れるか。 | [IMP-DOG-030](../development/issues/IMP-DOG-030-wash-six-dogs.md) | |
+| A30 | 白・黒・茶の毛で泡と汚れが見え、顔や表情を隠しすぎないか (特にサモエドの白い毛と小型犬)。落ちない部位・過剰な反応がないか。 | [IMP-DOG-030](../development/issues/IMP-DOG-030-wash-six-dogs.md) | |
+| A31 | 小型犬の足・大型犬の背中に無理なく届くか。座ったまま・片手・ゆっくりした操作でも洗えるか。 | [IMP-DOG-030](../development/issues/IMP-DOG-030-wash-six-dogs.md)<br>[IMP-DOG-024](../development/issues/IMP-DOG-024-walk-and-wash-experience.md) (完了条件) | |
+
+### A-4 門: おじいさん・ラック・リード
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| A32 | おじいさんが門のそばに立ち、地面から浮かず埋まらず、待機アニメが動くか。話しかけるまで板が出ず、4 m 離れると閉じるか。ナビ 5 項目が押せ、本文が枠に収まるか。 | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) (メニュー計画 段階 1) | |
+| A33 | 初回の会話で「200pt」が出て残高が +200 になるか。連打しても、入り直しても 2 回目は入らないか。(受け取り済みなら「入り直しても入らない」だけ見る) | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) (T-007) | |
+| A34 | 入室直後は「読み込み中...」、復元後に数値が出るか。滞在 1 分ごとに 1 増えるか。入り直すと残高が戻るか。 | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) | |
+| A35 | ヘッダーの残高を押すと「いま N pt」と入手経路 2 行と [戻る] が出るか。受け取る前は準備中の行に「おじいさんから受け取れます」の案内が出て、受け取ると消えるか。 | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) | |
+| A36 | 初めて入った時だけ、入口の前にようこその板が出るか。[あとで] / [メニューを見る] が効き、ラックやおじいさんへの視界を遮らないか。入り直すと出ないか。フッタ 2 行が枠に収まるか。 | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md)<br>[IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (段階 3) | |
+| A37 | 残高 0 のままで、散歩・リード解除・ボール・フリスビー・撫で・集合が使え、ポイントを求める表示が出ないか。 | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) (T-008) | |
+| A38 | 通しで 1 周: 入室 → おじいさんに話しかけて 200pt → かざりで 1 品買って犬に着ける → さんぽでつないで歩く。案内と画面が食い違わず、途中で詰まらないか。 | [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) (メニュー計画 段階 2 の一周)<br>[IMP-DOG-015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) | |
+| A39 | リードの先を取り出して犬の首輪へ付ける。右手・左手どちらでも、輪の後ろの帯が指の付け根に沿い、輪と紐の接続部が前腕の延長で拳の前へ出るか。握りが拳に食い込まない・浮かないか。 | [BUG-DOG-002](../development/issues/BUG-DOG-002-leash-handle-orientation.md) | |
+| A40 | 腕を前へ出す・下げる・左右へ向ける・手首を回しても、握り位置と紐の接続がずれないか。手首を深く曲げても持ち手が跳ばないか。片手 3 匹でも持ち手は手ごとに 1 個か。 | [BUG-DOG-002](../development/issues/BUG-DOG-002-leash-handle-orientation.md) | |
+| A41 | 首輪・リードを明所と木陰、立位・座位・低い視点で見て、動作中のずれや見え方に問題がないか。 | [IMP-DOG-004](../development/issues/IMP-DOG-004-leash-models-release.md) (残り 座位/木陰) | |
+| A42 | リードが張って引っ張られると、持っている側の手が震えるか (張るほど強くなるか)。立ち止まっているのに犬が離れていく時に「グイッ」と来るか。 | [IMP-DOG-007](../development/issues/IMP-DOG-007-leash-pull-haptics.md) | |
+| A43 | 紐が緩む・犬が待つ・追いついた時に鳴り続けないか。リスポーン・拠点への瞬間移動・解除のあとに鳴らないか。 | [IMP-DOG-007](../development/issues/IMP-DOG-007-leash-pull-haptics.md) | |
+| A44 | 片手 3 匹 (両手 6 匹) で振動がうるさい・強すぎないか。左右が正しい手に来るか。 | [IMP-DOG-007](../development/issues/IMP-DOG-007-leash-pull-haptics.md) | |
+
+### A-5 散歩 (門 → 登り道 → 展望)
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| A45 | 犬 1 匹: つなぐと自分から道を登り始め、リード端で止まってこちらを向いて待つか。近づくと再び先へ行き、歩き続けると犬が前を歩く時間が長いか (後ろに隠れない)。 | [IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) (散歩計画 §0) | |
+| A46 | 立ち止まって 8〜10 秒: 犬が戻って 1 回吠え、こちらを見てまた先へ行くか。1 分止まると誘いは 3 回で止まり、そばで伏せ、歩き出すと起きてついてくるか。 | [IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) (散歩計画 §0) | |
+| A47 | 広場に着くと、まわりをうろうろして落ち着くか (先へ行こうとし続けない)。道から外れて草地を横切ると手のまわりについてくるか。引き返すと目的地を変えずについてくるか。首だけ回す・手だけ振っても進路が反転しないか。 | [IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) (散歩計画 §0) | |
+| A48 | 途中 (坂の途中・展望) で外して付け直すと、すぐ散歩を再開するか。看板 (GATE / PLAZA) を押すと犬が向かうか (他人の犬・未接続の犬は動かない)。 | [IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) (散歩計画 §0) | |
+| A49 | 3 匹・6 匹: 同じ点に固まらず、待つ位置・寄り道のタイミングがばらけるか。全員が同時に戻って吠えず、誘いは 1 匹ずつか。 | [IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) (散歩計画 §1)<br>[IMP-DOG-010](../development/issues/IMP-DOG-010-walk-stopovers.md) (3〜6 匹) | |
+| A50 | 3 匹・6 匹: 同じ立ち寄り場所に 2 匹以上が同時に止まらず、「また待つのか」にならないか。往復の所要時間と寄り道・立ち寄りの合計回数を控える。目的地への到着が遅れすぎないか。 | [IMP-DOG-010](../development/issues/IMP-DOG-010-walk-stopovers.md) (3〜6 匹) | |
+| A51 | 最速の段階で 6 匹が走っても重ならず、紐の見え方が破綻しないか。カクつき・足滑りが許容範囲か。 | [IMP-DOG-009](../development/issues/IMP-DOG-009-walk-speed-tiers.md) (3〜6 匹)<br>[IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) (散歩計画 §1) | |
+| A52 | 直線ロープへの切替 (フレームが落ちた時) と、同じ持ち手の犬同士のめり込み具合が気にならないか。 | [IMP-ENV-010](../development/issues/IMP-ENV-010-quest-performance.md) (034 未確認分) | |
+| A53 | リードの紐の追従タイミング、持ち手での接続、撫でたときの犬の視線、犬同士の挨拶・じゃれ合い、ボールのフェイントが違和感なく動くか。 | [IMP-ENV-010](../development/issues/IMP-ENV-010-quest-performance.md) (036 未確認分) | |
+| A54 | 犬が川に入った時の手元の通知 (ポーチ) と、おじいさんの Interact が動くか。 | [IMP-ENV-010](../development/issues/IMP-ENV-010-quest-performance.md) (036 未確認分) | |
+| A55 | 集合: [あそぶ] (トレーナー所持) で隊形を選び [ここに集合]。足元に印 6 個 (斜面でも地表)、犬が歩いて集まり、つないでいる犬は来ないか。集合中に [つなぐ] を押すと「集合中は待ってください」か。1 分で解散して犬がその場でうろつくか。木や柵の向こうの犬がすり抜けて来るか。 | [DES-DOG-001](../development/issues/DES-DOG-001-leash-walking.md) (集合計画 §0) | |
+| A56 | 拠点 (入口・展望・広場) のラックに左右 1 本ずつ道具があり、首輪につなぐと道具が最寄りの拠点へ戻る (地面に残らない) か。山上で外して山上の拠点から付け直せるか。 | [DES-DOG-001](../development/issues/DES-DOG-001-leash-walking.md) (集合計画 §0) | |
+| A57 | 展望のベンチの洗い場 (ベンチから道に沿って約 5 m): 位置と導線、開始と道具の戻し先が初見で分かるか。散歩の流れを止めず、洗うか通り過ぎるか選べるか。 | [IMP-ENV-008](../development/issues/IMP-ENV-008-wash-stations-along-course.md) | |
+| A58 | 散歩のあと足先から汚れが付くか (足元ほど濃く、上ほど薄い)。洗い場へ戻って洗い、洗い場の近くで汚れ直さないか。洗ったのに散歩ですぐ汚れないか (汚れる距離 900 m・泥 25 秒・猶予 300 秒の体感)。汚れを罰や義務に感じないか。 | [IMP-DOG-029](../development/issues/IMP-DOG-029-dirt-accumulation.md)<br>[IMP-DOG-024](../development/issues/IMP-DOG-024-walk-and-wash-experience.md) (汚れる理由と余韻) | |
+
+### A-6 広場: フリスビー・ボール・おやつ・かざり・呼ぶ・ポーズ
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| A59 | 広場の拠点 (リード置き場) が遠くないか。(位置は 09-29 にユーザーが手調整済み) | [DES-DOG-003](../development/issues/DES-DOG-003-plaza-leash-station.md) | |
+| A60 | 入室時に広場にはディスク 6 枚だけが見え、ボールは見えないか。 | [IMP-DOG-019](../development/issues/IMP-DOG-019-ball-and-disc-placement.md) (夜の追加) | |
+| A61 | [ボール] で目の前にボールが出て同じ犬のディスクが消えるか。[ディスク] で逆に戻るか。 | [IMP-DOG-019](../development/issues/IMP-DOG-019-ball-and-disc-placement.md) (夜の追加) | |
+| A62 | ボール追跡中は [ディスク] が拒否され、現地でも拾えないか (逆も同じ)。持っている手から落ちないか。他の犬に影響しないか。 | [IMP-DOG-019](../development/issues/IMP-DOG-019-ball-and-disc-placement.md) | |
+| A63 | 6 匹とも自分の色のディスクを投げると跳んで取り、持ち帰って置くか。 | [IMP-DOG-012](../development/issues/IMP-DOG-012-frisbee-six-dogs.md) (§0) | |
+| A64 | 犬種ごとの姿勢: ため・跳躍・着地で脚が地面を突き抜けない、腹が床に付かない、胴や尾が折れないか (特にコーギー・ダックスの胴)。口がディスクに届いて見えるか。 | [IMP-DOG-012](../development/issues/IMP-DOG-012-frisbee-six-dogs.md) (§0) | |
+| A65 | 高い投げ (lob) で跳躍の高さが体高に対して自然か (小型犬の 0.45 m は体高の約 2.9 倍。跳びすぎ・低すぎの犬種を記録)。ひねりの投げで 6 犬種とも 90° ひねって取り、着地で前を向くか。 | [IMP-DOG-012](../development/issues/IMP-DOG-012-frisbee-six-dogs.md) (§0) | |
+| A66 | 胴体追従を切った 5 匹 (コーギー・ポメ・ダックス・柴・サモエド) の歩き・向き変えが硬く見えないか。 | [IMP-DOG-012](../development/issues/IMP-DOG-012-frisbee-six-dogs.md) (§0) | |
+| A67 | メニュー「おもちゃ」の 6 行すべてで [ディスク] が押せ、犬の手元へ来るか。2〜3 枚を続けて投げると各犬が自分のディスクだけを追うか。6 枚を順に投げて犬同士がぶつかる・重なる見え方が気にならないか。 | [IMP-DOG-012](../development/issues/IMP-DOG-012-frisbee-six-dogs.md) | |
+| A68 | あそぶタブ「フリスビーの取り方」を切り替えると、ディスクを持つ犬全部が同じ設定になるか。退役した設定 (走り込みの横・遠く) がメニューから消えているか。 | [IMP-DOG-012](../development/issues/IMP-DOG-012-frisbee-six-dogs.md)<br>[IMP-DOG-017](../development/issues/IMP-DOG-017-frisbee-intercept-solver.md) (PCVR 3 回目) | |
+| A69 | リード中・集合中の犬は自分のディスクを投げても追わず、外すと再び遊べるか。追走中に別の犬をつなぐ・集合させても、追走中の犬は影響を受けないか。6 匹同時に遊んで重くならないか。 | [IMP-DOG-012](../development/issues/IMP-DOG-012-frisbee-six-dogs.md) | |
+| A70 | 大型犬 (ラブ・サモエド) の走りで足の滑りが気にならないか (再生倍率 1.7)。横曲がり (0.07) の曲がり具合は適切か。 | [IMP-DOG-017](../development/issues/IMP-DOG-017-frisbee-intercept-solver.md) (PCVR 3 回目) | |
+| A71 | 3 m 離れて、どの犬のディスクか顔の印字で分かるか。持つと顔が消え、離すと戻るか。 | [IMP-DOG-018](../development/issues/IMP-DOG-018-frisbee-dog-face.md) | |
+| A72 | 持ち帰って目の前で待つ犬を撫でられる (ハート・表情・尻尾) か。撫でている間はディスクを落とさず、手を離すと残り時間で落とすか。 | [IMP-DOG-013](../development/issues/IMP-DOG-013-frisbee-pet-after-return.md) | |
+| A73 | ディスクを受け取っても 2 秒または 2.5 m 離れるまでその場で待つか。撫で続けている間は走り出さず、離れると 8 m 先へ走って構えるか。猶予中に投げれば即座に追うか。 | [IMP-DOG-013](../development/issues/IMP-DOG-013-frisbee-pet-after-return.md) | |
+| A74 | ボールを投げると Fetch が勝ち、その間は撫でられないか。リード接続中・集合中はフリスビーが始まらず、途中で取られたら犬がそちらへ行くか。待っている間の撫でで口のディスクが外れたり暴れたりしないか。 | [IMP-DOG-013](../development/issues/IMP-DOG-013-frisbee-pet-after-return.md) | |
+| A75 | ジャンプ 4 段階 (ため → 口が届く瞬間 → 着地の沈み込み) が自然につながって見えるか。 | [IMP-DOG-005](../development/issues/IMP-DOG-005-frisbee-jump-catch.md) | |
+| A76 | 取れない投球 (高すぎ・遠すぎ・壁・人がつかむ・場外) で、中止・着地・場外復帰が破綻しないか。 | [IMP-DOG-005](../development/issues/IMP-DOG-005-frisbee-jump-catch.md) | |
+| A77 | 犬から 40 m より遠い所で持つ・投げると犬が動かず、照準に × と「犬が遠くにいます」が出るか。 | [BUG-DOG-007](../development/issues/BUG-DOG-007-shiba-throw-implausible.md) | |
+| A78 | 道の斜面で上り・下りへ投げる。跳ぶ・拾うの切り替えが自然か。0.3〜0.5 m 低い所で跳んで取ると、宙で着地せず地面に刺さらないか。 | [IMP-DOG-023](../development/issues/IMP-DOG-023-frisbee-anywhere.md) (川設計書 続き #37・38)<br>[DES-DOG-005](../development/issues/DES-DOG-005-frisbee-anywhere.md) | |
+| A79 | 崖・木立・岩の方へ構えて投げると × と一言が出るか。跳ぶ弧が岩や枝を通り抜けないか。 | [IMP-DOG-023](../development/issues/IMP-DOG-023-frisbee-anywhere.md) (川設計書 続き #39)<br>[DES-DOG-005](../development/issues/DES-DOG-005-frisbee-anywhere.md) | |
+| A80 | おやつ: 出す → あげる → しまう が 1 人で成立するか (吸着 → 犬が来る → 食べる → お礼)。6 匹それぞれで食べる動きとお礼の効果の位置がおかしくないか。 | [IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md) | |
+| A81 | 定位置のおやつが地面に沈まず、浮きすぎないか。 | [IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md) (メニュー計画 段階 2) | |
+| A82 | [買う]: ヒントが枠に収まり、確認カードが 上限 / 不足 / 購入可 の 3 態で正しく出るか。[やめる] で「購入をやめました」、買うと在庫が 5 増え、入り直すと在庫が戻るか。 | [IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md) | |
+| A83 | かざり 14 商品が 6 匹に着けられるか。購入・所持・試着が台帳 (残高) と一致し、未所持でも試着へ進めて犬の行から購入確認へ行けるか。 | [IMP-DOG-015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) | |
+| A84 | 首輪と首元の飾り: 下げた 5 件が胸の毛に沈んで見えないか、除外した 3 件の行が暗く理由が出るか、前へずらした 9 件が毛から浮いて見えないか。 | [IMP-DOG-015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) (案 C) | |
+| A85 | リードの線と首元の飾りの交差 (ダックスは留め具まで約 68 mm) が不自然でないか。試着のミニチュアの首輪が実際の犬と同じに見えるか。 | [IMP-DOG-015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) | |
+| A86 | 撫でエフェクト: 行がかざり一覧の最初の階層にだけ出て、買う → つけるが効くか。入り直すと自分の選択が戻るか。 | [IMP-DOG-015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) | |
+| A87 | 呼ぶ・ポーズ: 6 匹で、犬 → ポーズ → 場所の流れが平地で成立するか (予約・配置・到着・終了)。4 動作 (へそ天・あご乗せ・お手・伸び+あくび) は買うまで価格が出て、買うと使えるか。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | |
+| A88 | リード中の犬の行は暗く「リード中。さんぽで外してから」が出て、外すと呼べるか。呼ばれて待機中の犬はさんぽでつなげず (理由が出る)、集合中の犬も呼べないか。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) (T-010) | |
+| A89 | 斜面で赤いマーカーと「この姿勢には平らな場所が必要です」が出て確定できず、平地では成立するか。地面法線 0.9 前後に置いた犬が沈まず浮かないか (0.9 を採用してよいか)。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | |
+| A90 | NavMesh が途切れる場所へ呼んでも、犬が直進でたどり着き固まらないか。場所決めのマーカーの光線が小物に当たって変な高さに出ないか。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) (メニュー計画 段階 2) | |
+
+### A-7 奥広場・川
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| A91 | 奥広場の洗い場: 位置と導線、開始と道具の戻し先が初見で分かるか。 | [IMP-ENV-008](../development/issues/IMP-ENV-008-wash-stations-along-course.md) | |
+| A92 | 川辺の洗い場: 位置と導線、看板・石との干渉がないか。開始と戻し先が初見で分かるか。 | [IMP-ENV-008](../development/issues/IMP-ENV-008-wash-stations-along-course.md) | |
+| A93 | 洗い場を移っても、汚れと道具の扱いが自然に保たれるか。 | [IMP-ENV-008](../development/issues/IMP-ENV-008-wash-stations-along-course.md) | |
+| A94 | 川辺の立ち寄り点から、看板「犬の水あそび」と石 3 群、濃い踏み分け道が見えるか。着いたら入水点とそこへ続く道が見えるか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #19・#1) | |
+| A95 | 入水点の近くでリードを外す。5 秒以内に犬が水へ入るか。手元に「ここで放すと水遊びします。上がったらまたつなげます」が 1 回出るか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #2) | |
+| A96 | 犬を連れずに川辺へ行く。25 m 以内の犬が自分から入水し、手元に「(犬名) が水遊びに行きました」が出るか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #20) | |
+| A97 | 浅瀬で足元のしぶきと波紋が出るか。量と大きさがうるさくないか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #3) | |
+| A98 | 小型犬 (ポメ・コーギー・ダックス) と柴が深い所で浮いて犬かきに見えるか。口と鼻先が水面から出ているか。止まって見えないか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #4) | |
+| A99 | 泳ぐ犬の上下の揺れ (±1 cm) を、揺れありの犬 (コーギー・柴) と揺れなしの犬 (ポメ・ダックス) で見比べ、要るか判断する。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #5・#25) | |
+| A100 | 柴を泳がせるか (泳がせる / 浅瀬だけ) を決める。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #6) | |
+| A101 | 大型犬 (サモエド・ラブ) は浅瀬をチャプチャプ歩き、泳がず、深い方へ行きすぎないか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #7) | |
+| A102 | 水の中の犬にリード接続・おもちゃの呼び出しを試す。拒否の一言が出て、犬が要求した人を向いてから上がるか。上がった後はつながるか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #8・#9) | |
+| A103 | 水の中の犬を「呼ぶ (そばで寝る)」・おやつ・陸へボールを投げる。犬が上がってから来る・取りに行くか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #10・#11) | |
+| A104 | 6 匹を入水点の近くで放す。少しずつ時間と場所をずらして入り、重なり続けないか。見た目が騒がしくないか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #12・#24) | |
+| A105 | 水遊びをナイトモードで見る。水面・犬・粒子が見分けられるか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #13) | |
+| A106 | 水音 (浅瀬の「ぱしゃ」、入水の「ばしゃっ」、犬かき) が犬の位置から聞こえ、20 m で消えるか。採用 / 差し替え / 無音を決める。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #14・#26) | |
+| A107 | 浅瀬で犬どうしが押し合う場面 (集合など) で、深い側へ押されず、重なったまま止まらないか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #28) | |
+| A108 | 小型犬がいる所でボールを川へ投げる。浮いて下流へ流れ、犬が泳いで取り、上陸して身震いし、手元へ持ち帰るか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #21) | |
+| A109 | 大型犬で同じことをする。浅い所のボールは歩いて取り、深い所のボールは追わず下流端で止まるか。対岸からボールを川へ投げると、犬は取って東岸の復帰点で置くか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #22・#23) | |
+| A110 | 道から離れた川 (z 150 付近・z 400 付近) で川の真ん中へボールを投げる。ボールが浮いて下流へ流れ、犬が岸の決まった所まで走ってから水に入るか。 | [IMP-DOG-021](../development/issues/IMP-DOG-021-river-wide-fetch-and-recall.md) (川 #29) | |
+| A111 | 上のボールを、小型犬は泳いで、大型犬は流路を歩いて取り、投げた人の側の岸へ上がって手元へ持ち帰るか。サモエドの口とくわえたボールが水面より上に見えるか。 | [IMP-DOG-021](../development/issues/IMP-DOG-021-river-wide-fetch-and-recall.md) (川 #30・#31) | |
+| A112 | 犬を対岸に置いて自分の岸から投げる。犬は自分の岸から入り、こちらの岸へ上がって持ってくるか。 | [IMP-DOG-021](../development/issues/IMP-DOG-021-river-wide-fetch-and-recall.md) (川 #32) | |
+| A113 | 橋 (z 190 / 490) の近くの川へ投げる。ボールは浮かず 10 秒以内に投げた人の側の岸へ戻り、犬は川に入らないか。橋の上ではフリスビーを拾うだけで、橋の帯では岸へ戻るか。 | [IMP-DOG-021](../development/issues/IMP-DOG-021-river-wide-fetch-and-recall.md) (川 #33)<br>[IMP-DOG-023](../development/issues/IMP-DOG-023-frisbee-anywhere.md) (川設計書 続き #43) | |
+| A114 | 水遊び中の犬のボールを手元メニューで呼ぶ。ボールが来て犬は水遊びを続けるか。犬が水中のボールを追っている最中に呼ぶと、ボールが来て犬は諦めて岸へ上がるか。犬がくわえて泳いでいる最中は断られ、そのまま持ち帰るか。 | [IMP-DOG-021](../development/issues/IMP-DOG-021-river-wide-fetch-and-recall.md) (川 #34〜#36) | |
+| A115 | 小型犬で、岸から川の上へフリスビーを投げる。ドボン → 泳いで投げた人の側の岸へ → 手元へ来るか。ラブ・サモエドは、浅いとドボンして歩き、深いと跳ばないか。 | [IMP-DOG-023](../development/issues/IMP-DOG-023-frisbee-anywhere.md) (川設計書 続き #40・#41)<br>[DES-DOG-005](../development/issues/DES-DOG-005-frisbee-anywhere.md) | |
+| A116 | 川へ低く投げて取り損ねさせる。浮いて流れ、犬が取りに行くか。浮いているディスクを手で取って陸で放す・投げると、取った瞬間から重力があり陸で転がるか。 | [IMP-DOG-023](../development/issues/IMP-DOG-023-frisbee-anywhere.md) (川設計書 続き #42・#48)<br>[DES-DOG-005](../development/issues/DES-DOG-005-frisbee-anywhere.md) | |
+| A117 | 川で遊んでいる犬を、洗い場のボードで呼ぶ。岸へ上がってから洗い場へ来て立つか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) (記録 10-01) | |
+
+### A-8 地図・ワープ
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| A118 | 手元メニュー [地図と移動] → 奥の広場 → [ここへワープ]、次に川辺へ (犬 0 / 1 / 3 / 6 匹、昼・ナイトモード・ライブ中)。画面が黒くなってから移動し、両眼とも黒く、メニューも覆われて、明るく戻るか。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #1a) | |
+| A119 | 着いた向きが道の正方向か (壁・崖を向かない)。メニューが目の前に置き直されるか (移動 1 回につき 1 回)。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #1b) | |
+| A120 | 到着後に [さんぽへもどる] で歩く。犬がそばにいて一緒に歩き出すか。ワープしたあとに歩き出したくなるか (ワープの役割の評価)。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #1c) | |
+| A121 | [ここへワープ] を押して暗転中に [取り消す]。取り消せて、明るく戻りその場に残るか。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #1d) | |
+| A122 | 地図を開いたまま歩く・向きを変える。数字 1〜6、● (ワープできる 2 地点)、○ (目印) が読めるか。自分の点と向きの棒が追従するか。周回路・川・橋の線が潰れないか。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #1e) | |
+
+### A-9 手元メニュー・設定・BGM
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| A123 | 結果表示が取り違わないか: 連打する / 結果が出る前にタブを変える / 閉じて開き直す / 拒否される / 4 秒を超える。それぞれで別の操作の結果が出たり前の結果が残ったりせず、4 秒超は「結果を確認できませんでした」になるか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (メニュー計画 §0) | |
+| A124 | さんぽ・おもちゃ・あそぶが以前と同じに動くか (つなぐ / 外す / 行き先 / 目の前へ / 隊形と集合)。[はずす] がつないでいる犬の行にだけ出るか。おもちゃの理由の行が枠に収まるか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (メニュー計画 §0) | |
+| A125 | ナイトモード: 設定のスライダーで夜の明るさが連続的に変わり、フェードが不自然でないか。入り直すと値が戻るか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (メニュー計画 §0・§4) | |
+| A126 | 距離フェード (PC): 変えて [確定して保存] すると犬の毛の見え方が変わるか。入り直すと戻るか。範囲外の値は保存されず理由が出るか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (T-011) | |
+| A127 | 犬の声: 吠え声・息が鳴るようになったか。音量 50%・頻度がうるさくないか。音量頁の犬の声スライダーで変わるか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (メニュー計画 §4) | |
+| A128 | 設定ホームの 3 群 (自分の見え方・聞こえ方 / この部屋のみんな / 読む) で迷わないか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (メニュー計画 §4) | |
+| A129 | クレジット頁の 7 行が読めるか。インフォメーションの 4 頁 (はじめに / 生成 AI / VAnimal / トレーナー) が開けて本文が読めるか。(クレジットの URL 3 件はユーザー記入後に確認) | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (メニュー計画 §4) | |
+| A130 | BGM: 設定 → 音量に BGM の行があるか。0%・中間・100% で実際の音量が変わり、0% で無音になるか。OFF → ON、OFF 中の音量変更、メニューの開閉で表示と出音が一致するか。入り直すと ON・50% に戻るか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
+| A131 | BGM の [ON/OFF] ボタンを残すか決める (古民家の現行画面には無く、0% で無音に統一している)。基準音量 0.35 が犬や会話を邪魔しないか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) (判断待ち) | |
+| A132 | BGM の余韻・複数周回の継ぎ目が気にならないか (圧縮品質 PC 0.7 の聞こえ)。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
+| A133 | BGM・洗浄音・犬の声を重ねても、自分の操作の音と会話が聞き取れるか (主洗い場で)。 | [IMP-DOG-024](../development/issues/IMP-DOG-024-walk-and-wash-experience.md) (音)<br>[IMP-DOG-028](../development/issues/IMP-DOG-028-wash-sound-and-reactions.md)<br>[IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
+| A134 | ライブ中に BGM が滑らかに下がり、終了後に自分の設定へ戻るか。ライブ中の設定変更・途中入室でも勝手に ON や以前の音量へ戻らないか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
+
+### A-10 周回 (最後に。長い)
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| A135 | 犬を連れて一周 (門 → 広場 → 奥広場 → 川 → 小橋 → 門) を実際に歩き、所要時間を書く (目標は休憩を除いて約 20 分、寄り道込みで 30〜40 分)。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md)<br>[DES-ENV-002](../development/issues/DES-ENV-002-longer-course.md) | |
+| A136 | 既存の道・広場・見晴らし・古民家の視認性が保たれ、新旧の道に穴・段差・遠景の端がないか。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md) | |
+| A137 | 曲がり角・橋・写真を撮る視点・両眼で、景色が不意に消えないか (LOD・遮蔽)。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md)<br>[DES-ENV-002](../development/issues/DES-ENV-002-longer-course.md) | |
+| A138 | 1 匹・3 匹・6 匹で、橋・両岸・正逆周回・途中開始・帰還が成立し、反対岸の経路へ誤接続しないか。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md) | |
+
+## B. PCVR 2 人以上 (53 項目)
+
+ユーザー (マスター) と相手 1 人 (必要な項目は 3〜4 人)。相手は別アカウントで、Build & Test をし直した同じ版に入る。役割は「A = マスター、B = 非 Owner」。
+
+### B-1 主洗い場
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| B1 | 相手のすすぎと、続いて流れる泡が、自分の画面にも同じように見えるか。「きれい」の合図と見た目の泡が食い違わないか。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (すすぎ確認7) | |
+| B2 | 犬の Owner でない人が操作しても、その人の手元で即座に泡と接触が返り、もう 1 人にも帯が見えるか。同じ犬を同時に洗え、泡付けとすすぎを分担できるか。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (表 17・賭け 3)<br>[IMP-DOG-026](../development/issues/IMP-DOG-026-wash-state-and-sync.md)<br>[VER-DOG-002](../development/issues/VER-DOG-002-wash-experience-and-devices.md) | |
+| B3 | 途中参加の人に、洗った跡がおおまかに見えるか。犬の Owner が替わったあとも状態が保たれるか。2 人の表示が一時的に違った時の見え方が許容できるか。 | [IMP-DOG-026](../development/issues/IMP-DOG-026-wash-state-and-sync.md) | |
+| B4 | 相手の洗う音が、相手の手の位置から聞こえるか。近くで 2 人が洗い、BGM と重ねても、自分の操作の音と会話が聞き取れるか。 | [IMP-DOG-028](../development/issues/IMP-DOG-028-wash-sound-and-reactions.md)<br>[IMP-DOG-024](../development/issues/IMP-DOG-024-walk-and-wash-experience.md) (音) | |
+| B5 | 洗われ中の犬の反応 (ブルブル・満足の合図) が相手の画面でも見えるか。 | [IMP-DOG-028](../development/issues/IMP-DOG-028-wash-sound-and-reactions.md) | |
+| B6 | 他人が連れている犬をボードで呼べないか。呼んだ人以外も「おわり」で解放できるか。2 人での呼び出しと解放が成立するか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) | |
+| B7 | 台の高さが全員に見えるか。自分の床 (自分だけ) の上げ下げが、他の人から見て不自然でないか。 | [IMP-ENV-011](../development/issues/IMP-ENV-011-wash-height-adjust.md) | |
+| B8 | 他人が連れている犬を一方的に拘束しないか。他人のストロークで、リード中の犬が止まらないか。リード付きで洗っている犬の停止と解除が、他の人にも同じ姿勢で見えるか。 | [IMP-DOG-027](../development/issues/IMP-DOG-027-wash-behavior-switching.md) | |
+
+### B-2 リード・散歩
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| B9 | 相手から見て自分の首輪とリードが正しく見えるか。持ち手の左右が同じ向きに見えるか。 | [IMP-DOG-004](../development/issues/IMP-DOG-004-leash-models-release.md) (2 人)<br>[BUG-DOG-002](../development/issues/BUG-DOG-002-leash-handle-orientation.md) | |
+| B10 | 他人がつないでいる犬・他人が引っ張っている時に、自分の手が震えないか。 | [IMP-DOG-007](../development/issues/IMP-DOG-007-leash-pull-haptics.md) | |
+| B11 | 2 人が別々の行き先を選ぶ (A が広場、B が入口) とそれぞれの犬だけが従うか。A が途中で変えても B の犬は変わらないか。B が外して A が同じ犬をつなぐと A の選択に従うか。メニューの点灯が自分の選択か。マスター退出後も同じか。 | [BUG-DOG-004](../development/issues/BUG-DOG-004-destination-per-player.md) (再現手順 1〜5)<br>[IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) | |
+| B12 | 相手の画面でも、待っている犬がこちらを見て止まり、伏せた犬が伏せて見えるか。途中参加者にも犬の目的地の状態が復元されるか。接続者・Owner が退出しても残った人の散歩が続くか。 | [IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) (散歩計画 §2) | |
+| B13 | 他人の犬が全力で走る様子が飛んで見えないか。嗅ぐ・座る姿勢が自分の画面でも同じ場所で出るか。途中参加者にも止まっている犬の姿勢が出るか。 | [IMP-DOG-009](../development/issues/IMP-DOG-009-walk-speed-tiers.md) (2 人以上)<br>[IMP-DOG-010](../development/issues/IMP-DOG-010-walk-stopovers.md) (2 人以上) | |
+| B14 | 他の人の紐の見え方と、途中参加した人の紐が違和感なく動くか。 | [IMP-ENV-010](../development/issues/IMP-ENV-010-quest-performance.md) (036 未確認分) | |
+| B15 | 集合: A が集合中に B がその犬をつなげないか。B の接続犬は A の集合に来ないか。途中参加者に残り秒・参加数・犬の位置が復元されるか。開催者が退出すると終了するか。2 人が同じ拠点から道具を取っても互いの道具が消えないか。 | [DES-DOG-001](../development/issues/DES-DOG-001-leash-walking.md) (集合計画 §2) | |
+| B16 | 購入権: 古民家で買った人が裏山で集合を開始できるか。裏山で買って古民家でも使えるか。(実課金はユーザー判断) | [DES-DOG-001](../development/issues/DES-DOG-001-leash-walking.md) (集合計画 §2) | |
+| B17 | 初めて触る人が、リードの接続と解除を迷わず理解できるか。 | [IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) (完了条件) | |
+
+### B-3 広場: フリスビー・ボール・おやつ・かざり・呼ぶ
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| B18 | 非マスターがディスクを持つと犬が待機位置へ行き、投げると追走・キャッチ・持ち帰りをして、両者から見えるか。マスターの投げも引き続き成立するか。 | [BUG-DOG-003](../development/issues/BUG-DOG-003-frisbee-non-master-throw.md) (完了条件) | |
+| B19 | A と B が交互に持って投げても、所有権が替わったあとで犬が反応しなくならないか。 | [BUG-DOG-003](../development/issues/BUG-DOG-003-frisbee-non-master-throw.md) (完了条件) | |
+| B20 | 犬の Owner でない人が投げても犬が取るか。2 人が別の犬のディスクを同時に投げても、それぞれ取るか。途中参加者の画面で 6 匹の追走・跳躍が滑らかか。 | [IMP-DOG-012](../development/issues/IMP-DOG-012-frisbee-six-dogs.md) (2 人)<br>[IMP-DOG-005](../development/issues/IMP-DOG-005-frisbee-jump-catch.md) (2 人以上) | |
+| B21 | 飛行・キャッチの成否・くわえた状態・着地が 2 人の画面で矛盾せず、途中参加でも保たれるか。 | [IMP-DOG-005](../development/issues/IMP-DOG-005-frisbee-jump-catch.md) (2 人以上) | |
+| B22 | 撫でる人が投げ手と別、投げ手が犬の Owner と別でも、持ち帰り後の撫で・待ちが同じ挙動か。 | [IMP-DOG-013](../development/issues/IMP-DOG-013-frisbee-pet-after-return.md) (複数人) | |
+| B23 | 同じ犬のボールとディスクの切り替えで、消えた側が相手の画面でも消えているか。途中参加者にも同じか。かけっこ・集合のあとに各犬のボールが拾えるか。相手が持っているおもちゃを奪わないか。 | [IMP-DOG-019](../development/issues/IMP-DOG-019-ball-and-disc-placement.md) (2 人) | |
+| B24 | おやつ: 4 人が同時に出すと 4 人目に枠の理由が出て在庫が減らないか。枠が空けば出し直せるか。 | [IMP-DOG-014](../development/issues/IMP-DOG-014-treats-port.md) (T-009 (3〜4 人)) | |
+| B25 | かざり: 着けた飾りが他人の画面にも見えるか (途中参加を含む)。相手が着けた犬の同じ枠は 60 秒待たされて理由が出るか。着けた人が退室しても飾りが残るか。 | [IMP-DOG-015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) (2 人) | |
+| B26 | 撫でエフェクト: 選んだ効果が相手の画面でも撫でたときに出るか。 | [IMP-DOG-015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) (2 人) | |
+| B27 | 呼ぶ: 同じ犬を同時に選ぶと先着だけが予約できるか。呼んでいる犬に別の人がリードを付けると、リードが勝って呼ぶが解けるか。「呼ぶを全員に許可」を OFF にすると権限者以外が呼べないか。寝ている犬は OFF にしても起きないか。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | |
+
+### B-4 川
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| B28 | 泳いでいる犬 (浅瀬と泳ぎの境目を含む) の最中に C が途中参加。C の画面で最初から浮いた高さ・Walk で見えるか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #15) | |
+| B29 | 泳いでいる最中に犬の Owner (A) が退出。B の画面で犬が沈まずに上がり、自由行動へ戻るか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #16) | |
+| B30 | 水中の犬に A と B が同時にリード接続・おもちゃの呼び出しを試す。両方拒否され、犬が最初に届いた人を向いて上がるか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (川 #17) | |
+| B31 | A が川へ投げて浮かせ、漂っている間に C が途中参加。C にも最初から水面に浮いて見え (沈まない・跳ねない)、漂流が止まる位置も A と同じか。 | [IMP-DOG-023](../development/issues/IMP-DOG-023-frisbee-anywhere.md) (川設計書 続き #46) | |
+| B32 | 水中で運ぶ間に C が途中参加。浮いた高さ・Walk・口のディスクが最初から見えるか。 | [IMP-DOG-023](../development/issues/IMP-DOG-023-frisbee-anywhere.md) (川設計書 続き #44) | |
+| B33 | ドボン・水中運搬・手元へ持ち帰る間に犬の Owner が退出。ディスクが浮いて残り、犬は岸へ上がるか。 | [IMP-DOG-023](../development/issues/IMP-DOG-023-frisbee-anywhere.md) (川設計書 続き #45) | |
+| B34 | ディスクの Owner (投げた A) が、(a) 浮いている間 (b) 飛行中に退出。(a) 残った人の端末で浮いたまま漂い、橋の帯の手前で止まるか。(b) 飛行は止まり、川の上なら浮き、陸なら落ちるか。宙に止まらないか。 | [IMP-DOG-023](../development/issues/IMP-DOG-023-frisbee-anywhere.md) (川設計書 続き #47) | |
+| B35 | 非 Owner が川へ投げて、犬が水中から持ち帰るか (所有権の本物の移譲)。非 Owner の投げ・Owner の退出で、犬とボールの所有権が往復しても破綻しないか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (S1)<br>[IMP-DOG-021](../development/issues/IMP-DOG-021-river-wide-fetch-and-recall.md) | |
+| B36 | 川の実機確認 4 件: 水遊び場の外の川に犬が入る自然な経路があるか / 山なりの投げ・非 Owner の投げで水中からの直接追跡が打ち切られないか / 通常の退出で犬ルートと Fetch の Owner が割れたままにならないか / 呼び寄せたおもちゃが別端末で滑って見えないか。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) (破壊監査 RC-10・18・19・20) | |
+| B37 | 川の 2 人のその他の場面 (境目の帯での途中参加・Owner 退出・水中の犬への同時要求 = S2・S3・S5a、段階 6 の S1・S4・S5b) を確かめる。 | [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) | |
+
+### B-5 地図・ワープ・合流・呼ぶ
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| B38 | B が犬 3 匹を連れて奥の広場へワープ。A の画面で B の犬がコースを横切らず B と一緒に現れるか。A の犬は動かないか。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #2) | |
+| B39 | B が [人] で A を選び [合流をたのむ]。A は [いいよ] / [いまはだめ] / 放置 20 秒 / [しばらく受けない] を試す。A の目の前に通知板が出て音が 1 回鳴るか。歩くと 3 m で置き直されるか。B に結果ごとの文言が出るか。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #3) | |
+| B40 | A が橋の上・川の中・歩行中・コースの外のときに B が合流。B が安全な点に着き、理由の文言が出るか。コースの外なら移動しないか。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #4) | |
+| B41 | B の申し込み中に A が退出。承認の直後 (暗転中) に A が退出。前者は「相手が退室しました」で移動せず、後者は取りやめて明るく戻るか。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #5) | |
+| B42 | 3 人: C がマスター。B が [ここへワープ] を押した直後に C が退出。B の移動が完了または取りやめになり、犬が往復しないか。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #6) | |
+| B43 | 3 人: B の移動の 5 秒後に D が途中参加。D の画面で B の犬が B のそばにいるか。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #7) | |
+| B44 | [人] の一覧を開いたまま人が出入り。並びが変わらず、出た人の行が消え、入った人が末尾に足されるか。受付 OFF の人が暗く「申し込みを受けていません」、入室直後が「準備中」か。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #8) | |
+| B45 | 表示名の字: 日本語・英語 (Zoë・Łukasz など)・記号 (★♪) の人が □ にならず読めるか。簡体字・ハングル・絵文字の人は □ で出るか (対象外。記録だけ)。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #8b) | |
+| B46 | A が B を呼び、B が [行く] (犬 3 匹)。役割を入れ替えても行う。[今は行かない] / 放置 20 秒 / [しばらく受けない] も試す。B の通知板が「A さんが呼んでいます」、B が暗転して A のそばへ犬 3 匹も一緒に着き、A は動かないか。「着きました」が移動のあとに出るか。 | [IMP-WLD-002](../development/issues/IMP-WLD-002-call-player.md) (呼ぶ F.7 #10) | |
+| B47 | B が水の中・橋の上・犬がディスクを追っている最中に [行く]。B が安全な点に着き、ディスク中は始まらず理由が出て、戻ってからもう一度押せるか。陸でつないだ犬が濡れてから [行く] を押した場合の同行も見る。 | [IMP-WLD-002](../development/issues/IMP-WLD-002-call-player.md) (呼ぶ F.7 #11・C7-wet) | |
+| B48 | A が返事待ちで [取り消す]。B が [行く] を押した直後 (切符待ち・暗転中) に A が [取り消す]。前者は B の通知板が閉じ、後者は移動の前なら B が明るく戻って「A さんが取り消しました」、移動の後なら B が着くか。 | [IMP-WLD-002](../development/issues/IMP-WLD-002-call-player.md) (呼ぶ F.7 #12) | |
+| B49 | B が合流を申し込み、取り消してすぐ呼ぶ。A と B が同時に互いを呼ぶ。通知板が片方にだけ出て、もう片方に「相手からの申し込みを先に表示します」が出るか。 | [IMP-WLD-002](../development/issues/IMP-WLD-002-call-player.md) (呼ぶ F.7 #13) | |
+| B50 | 3 人: C がマスター。A が B を呼び、B が [行く] を押した直後に C が退出。別に B の移動の 5 秒後に D が途中参加。B の移動が完了か取りやめになり、A の表示が「来ます」のまま 20 秒を超えず、D の画面で B の犬が B のそばにいるか。 | [IMP-WLD-002](../development/issues/IMP-WLD-002-call-player.md) (呼ぶ F.7 #14) | |
+| B51 | B が「合流・呼び出しを受ける」を OFF にすると、A の 2 つのボタンが暗く「申し込みを受けていません」になるか。ON に戻して呼ばれると手元メニューの印が「呼ばれています」になるか。長い言語 (de・ru・fr) でボタンの字が収まるか。 | [IMP-WLD-002](../development/issues/IMP-WLD-002-call-player.md) (呼ぶ F.7 #15) | |
+
+### B-6 設定・ログ
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| B52 | 許可 2 種 (呼ぶ / ライブ開催を全員に許可) が初期 ON で、権限者 (インスタンスオーナー、不在時はマスター) 以外は切り替えられないか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (メニュー計画 §4) | |
+| B53 | 遊び終わったあと、VRChat のログで「Attempted to steal ownership of a held pickup.」の有無と時刻を見る。あれば、その時刻に自分のログに `setowner` の行があるか、相手のログにも同じ時刻の行があるかを比べる。 | [BUG-DOG-006](../development/issues/BUG-DOG-006-steal-held-pickup.md) | |
+
+## C. Desktop (12 項目)
+
+Desktop (PC 画面、マウスとキーボード) で 1 人。座位・低い視点が関わる項目もここで見る。
+
+### C-1 主洗い場・リード
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| C1 | スポンジは Use を押している間、画面の中心の先へ効くか。シャワーは向けた先へ当たるか。 | [IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (表 16) | |
+| C2 | ボードのボタン (犬を呼ぶ・おわり・台の ▲▼・自分の ▲▼) を押せるか。台と自分の高さで犬が洗いやすいか。ボードの文字が読めるか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md)<br>[IMP-ENV-011](../development/issues/IMP-ENV-011-wash-height-adjust.md) | |
+| C3 | ラックの板・看板を Interact でき (距離 2.5 m)、ラベルが読めるか。 | [IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) (散歩計画 §3) | |
+| C4 | リードの先を、接続位置 (犬の首輪) まで運んでつなげるか。新しい操作で既存の撫で・ボールを邪魔しないか。 | [IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) (手順 7)<br>[DES-DOG-001](../development/issues/DES-DOG-001-leash-walking.md) (端末別入力) | |
+| C5 | 首輪・リードの見た目が Desktop で悪くなっていないか。 | [BUG-DOG-002](../development/issues/BUG-DOG-002-leash-handle-orientation.md) | |
+
+### C-2 散歩・広場
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| C6 | 3 匹・6 匹で散歩し、犬が速くても自然についてきて、寄り道・立ち寄りが破綻しないか。 | [IMP-DOG-009](../development/issues/IMP-DOG-009-walk-speed-tiers.md) (Desktop)<br>[IMP-DOG-010](../development/issues/IMP-DOG-010-walk-stopovers.md) (Desktop) | |
+| C7 | 手元メニュー: T で開閉し、マウスで押せるか。行き先・つなぐ・外すが動くか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (メニュー計画 §1)<br>[DES-DOG-001](../development/issues/DES-DOG-001-leash-walking.md) (集合計画 §1) | |
+| C8 | 場所を決めて呼ぶ: 斜面ではクリックしても確定できず、文言が頭の前で読めるか。平らな場所では成立するか。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | |
+| C9 | 立位・座位・低い視点で、犬の様子と操作のしやすさに差がないか (犬を追って姿勢を変え続ける必要がないか)。 | [IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) (完了条件) | |
+
+### C-3 地図・設定
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| C10 | [地図と移動] から奥の広場・川辺へワープ。暗転が画面で黒くなり、地図が読めるか。 | [IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) (地図設計書 #1a) | |
+| C11 | 距離フェード (PC) を変えて保存でき、入り直すと戻るか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (T-011) | |
+| C12 | BGM の音量スライダー・ON/OFF が Desktop でも操作でき、表示と出音が一致するか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
+
+## D. Quest 3 単体 (19 項目)
+
+Quest 3 単体で、PCVR と同じコースを 1 周する。結果欄には OS・VRChat の版・画質・アバター表示設定・発熱の状態も添える。fps は VRChat のデバッグ表示で読む。
+
+### D-1 入室・負荷
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| D1 | 入室直後と 6 匹リード散歩のときの fps を書く。6 匹が同時に川へ入ったときも書く。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#6)<br>[IMP-ENV-010](../development/issues/IMP-ENV-010-quest-performance.md) | |
+| D2 | 地形が変に光らなくなったか (Lite の地形に差し替えた版で)。 | [IMP-ENV-010](../development/issues/IMP-ENV-010-quest-performance.md) (完了条件) | |
+| D3 | 地形の縁・遠景の継ぎ目 (南東・南西の隅)、柵・斜面の外への落下が、PCVR と同じか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#7) | |
+| D4 | 1024 に落とした樹皮・古民家・空の見た目に問題がないか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#8) | |
+
+### D-2 散歩・メニュー・空
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| D5 | リード散歩: 先端の取り出し・首輪への接続・解除、片手 3 匹・合計 6 匹、接続中の追従が成立するか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#1) | |
+| D6 | リードで引っ張られると手が震えるか。 | [IMP-DOG-007](../development/issues/IMP-DOG-007-leash-pull-haptics.md) | |
+| D7 | 首輪・リードを明所・木陰で見て、動作中のずれ・持ち手の向き・材質の破綻がないか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#5)<br>[IMP-DOG-004](../development/issues/IMP-DOG-004-leash-models-release.md) | |
+| D8 | 手元メニューを開く操作が届くか。文字が読めるか。3 タブ (さんぽ・あそぶ・おもちゃ) が押せるか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#2) | |
+| D9 | 空とナイトモード: 夜の乗算オーバーレイが出るか。暗さが PCVR と同程度か。空の見え方に問題がないか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#3) | |
+
+### D-3 洗浄
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| D10 | 洗浄でマスクへ描き続けられ、泡・汚れの内容が保たれるか。描けない・消える・負荷が高い場合は症状を書く。 | [VER-DOG-002](../development/issues/VER-DOG-002-wash-experience-and-devices.md)<br>[IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (賭け 3) | |
+| D11 | 6 匹・複数の洗い場がある状態の fps と、洗浄音・BGM を重ねたときの聞き取りやすさ。 | [VER-DOG-002](../development/issues/VER-DOG-002-wash-experience-and-devices.md)<br>[IMP-DOG-024](../development/issues/IMP-DOG-024-walk-and-wash-experience.md) (負荷・音) | |
+
+### D-4 広場・川
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| D12 | フリスビー: 照準線と着地マーカーが両眼で見えるか。持ち中の半透明のディスクが出るか。強さの右スティック上下が効くか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#4)<br>[IMP-DOG-005](../development/issues/IMP-DOG-005-frisbee-jump-catch.md) | |
+| D13 | 6 枚のディスクの色が見分けられるか。顔の印字が潰れていないか。 | [BUG-DOG-005](../development/issues/BUG-DOG-005-ios-disc-colors.md)<br>[IMP-DOG-018](../development/issues/IMP-DOG-018-frisbee-dog-face.md) | |
+| D14 | 6 匹が道の斜面で同時にディスクを追うとき、水中を追う (ドボン・浮いたディスク) ときの fps。照準の × と「犬はここへ行けません」が両眼で見えるか。メニューの「ここでは不可」が読めるか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#12)<br>[IMP-DOG-023](../development/issues/IMP-DOG-023-frisbee-anywhere.md) | |
+| D15 | 川: 不透明な水面の上で、泳ぐ小型犬 (頭だけが出る) と浅瀬の大型犬が、通常の目線と撫でる低い目線で見分けられるか。しぶき・波紋が両眼で出るか (ピンク・片眼欠落がない)。夜でも見分けられるか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#10)<br>[IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) | |
+| D16 | 6 匹が同時に水遊びしているときの fps。泳いでいる犬がいるときに途中参加した人の画面で、最初から泳ぎの姿勢で見えるか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#11)<br>[IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) | |
+
+### D-5 地図・BGM・周回
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| D17 | 地図・ワープ: 暗転の板が両眼で黒くなるか。通知板が読めるか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#9)<br>[IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) | |
+| D18 | BGM: 圧縮後の余韻・継ぎ目・会話や犬とのバランスに問題がないか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
+| D19 | 周回の実歩行・景色が不意に消えないか・発熱。可能なら 16 人・犬 6 匹の条件で、60〜120 分続けた状態も記録する。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md)<br>[DES-ENV-002](../development/issues/DES-ENV-002-longer-course.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
+
+## E. iOS (iPhone 15 Pro) (17 項目)
+
+iPhone 15 Pro で、Touch 操作を中心に確認する。結果欄には iOS・VRChat の版・画質・発熱の状態も添える。
+
+### E-1 入室・操作
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| E1 | 入室直後と 6 匹散歩のときの fps を書く。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#6) | |
+| E2 | リード散歩: 先端の取り出し・接続・解除が Touch でできるか。接続位置まで先端を運べるか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#1)<br>[IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) (手順 7) | |
+| E3 | 手元メニュー: ランチャーの [メニュー] で開けるか (VR では出ない)。横画面で上端中央、縦画面で右中央に出て、画面を回しても崩れないか。3 タブが押せて読めるか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#2)<br>[IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (メニュー計画 §1) | |
+| E4 | 設定面の「距離フェード (PC のみ)」が見えて、押せないか。 | [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) (T-011) | |
+| E5 | 空とナイトモードの乗算オーバーレイが出るか。暗さが PCVR と同程度か。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#3) | |
+| E6 | 首輪・リードの見え方と、動作中のずれに問題がないか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#5)<br>[IMP-DOG-004](../development/issues/IMP-DOG-004-leash-models-release.md) | |
+| E7 | 地形の縁・遠景の継ぎ目、斜面の外への落下が PCVR と同じか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#7) | |
+
+### E-2 洗浄
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| E8 | Touch でスポンジ・シャワーを狙った所へ当てられ、泡・汚れが変わるか。マスクへ描き続けられ、内容が保たれるか。 | [VER-DOG-002](../development/issues/VER-DOG-002-wash-experience-and-devices.md)<br>[IMP-DOG-025](../development/issues/IMP-DOG-025-wash-prototype-one-dog.md) (賭け 3) | |
+| E9 | 洗い場のボード (犬を呼ぶ・おわり・台の ▲▼・自分の ▲▼) がスマホで押せるか。文字が読めるか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md)<br>[IMP-ENV-011](../development/issues/IMP-ENV-011-wash-height-adjust.md) | |
+
+### E-3 広場・川
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| E10 | フリスビー: 照準線と着地マーカーが見えるか。右側のバーチャルスティックが強さ (上下) として効くか (効かなければ、仰角だけ・強さ固定にする判断が要る)。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#4)<br>[IMP-DOG-005](../development/issues/IMP-DOG-005-frisbee-jump-catch.md) | |
+| E11 | 6 枚のディスクの色が iOS 実機でも見分けられるか (同じ色に見えないか)。顔の印字が潰れていないか。 | [BUG-DOG-005](../development/issues/BUG-DOG-005-ios-disc-colors.md)<br>[IMP-DOG-018](../development/issues/IMP-DOG-018-frisbee-dog-face.md) | |
+| E12 | 照準の × と「犬はここへ行けません」、メニューの「ここでは不可」が見えて読めるか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#12)<br>[IMP-DOG-023](../development/issues/IMP-DOG-023-frisbee-anywhere.md) | |
+| E13 | 川: 泳ぐ小型犬と浅瀬の大型犬が見分けられるか。しぶき・波紋が出るか (ピンクがない)。夜でも見分けられるか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#10)<br>[IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) | |
+| E14 | タッチでリードを外して水遊びを始められ、案内の一言が読めるか。泳いでいる犬がいるときに途中参加した人の画面で最初から泳ぎの姿勢で見えるか。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#11)<br>[IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) | |
+
+### E-4 地図・呼ぶ・BGM
+
+| # | やること・見ること | 元 | 結果 |
+|---|---|---|---|
+| E15 | 地図・ワープ: [地図と移動]・一覧の行・[ここへワープ]・通知板の 4 つのボタンを押し分けられるか。通知板と Focus View が重ならないか。暗転が画面で黒くなるか。表示名の欠けた字 (□) が許容範囲か。 | [VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#9)<br>[IMP-WLD-001](../development/issues/IMP-WLD-001-map-warp-and-join.md) | |
+| E16 | 呼ぶ・合流の 2 つのボタンと、通知板の [行く] [今は行かない] を押し分けられるか。 | [IMP-WLD-002](../development/issues/IMP-WLD-002-call-player.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) (#9) | |
+| E17 | BGM の音量操作と聞こえに問題がないか。 | [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | |
+
+## 具体的な確認に落とせなかった項目
+
+Issue が「何を見ればよいか」を書いていないため、項目にしていない。ユーザーに期待値を決めてもらうか、AI 側で Issue を直す必要がある。
+
+| Issue | 足りないこと |
+|---|---|
+| [IMP-DOG-001](../development/issues/IMP-DOG-001-port-dog-system.md) | 「6 匹の撫で・採用するおもちゃが 2 人で同期して動く」の見る点が無い (撫でとおもちゃは他の Issue の項目に分けて入れてある) |
+| [DES-DOG-001](../development/issues/DES-DOG-001-leash-walking.md) | 集合の停滞検知 (到達不能時の救済) は、時間・速度の合格値が無い。「開始から 60 秒以内に移動と整列がどう見えるか」だけで、良し悪しの基準が書かれていない |
+| [IMP-DOG-003](../development/issues/IMP-DOG-003-walking-polish.md) | 犬同士のじゃれ合い (手順 3) は未実装で、見る対象が無い。初期目的地・追加接続・再接続の採用仕様の確認も、観測する点が書かれていない |
+| [IMP-WLD-003](../development/issues/IMP-WLD-003-bgm-and-volume-settings.md) | ライブ連動の確認は、ライブの開始手順 (どの操作で開催するか) が Issue に無い。ライブ中の BGM の確認 (A-9 の最後の項目) は、開催方法が分かってから行う |
+| [IMP-PRG-001](../development/issues/IMP-PRG-001-ledger-shopkeeper-points.md) | 「CE (王様・夏・キャンディ・パンプキン) の所持判定」は、CE 品を持つアカウントでの確認になるが、どのアカウントで見るかが無い (サーバー保存・実際の再入室は A-4 の項目で見る) |
+| [IMP-UI-001](../development/issues/IMP-UI-001-menu-table-driven-and-settings.md) | 「状態表示の規律がモック (DES-UI-003 版 3) と一致し差分を記録した」は、照合する項目がこの Issue に列挙されていない。メニュー計画 §0 の「準備中のタブは行 0 に『準備中』だけ」は、段階 1〜3 の実装で現状と合わない古い期待のため載せていない |
+| [IMP-DOG-020](../development/issues/IMP-DOG-020-river-wading-and-swim.md) | 川 #27 (フリスビーを川へ投げると、犬が手前で諦めてディスクが岸へ戻る) は IMP-DOG-023 で動作が変わった (浮く・ドボンする) ため古い期待。川 #14 (水音が無いのが物足りないか) は #26 の水音の項目に統合した |
+| [VER-DOG-002](../development/issues/VER-DOG-002-wash-experience-and-devices.md) | 先行 Animal Wash との比較は、比較対象の版と場面が未選定のまま。A-2 の最後の項目は、選ぶまでは「気づいた点」の記録だけになる |
+| [DES-ENV-002](../development/issues/DES-ENV-002-longer-course.md) | 最終距離・予算を確定する判断基準が無い (実歩行時間は A-10 で記録するだけ)。夜の見え方と丘の陰の遮蔽の比較は「後段で確認」とあるだけで、見る対象が無い |
+| [IMP-DOG-013](../development/issues/IMP-DOG-013-frisbee-pet-after-return.md) | 「Drop 中に口から取り上げる遊びを仕様に含めるか」は判断事項で、Play で見る点が無い |
+| [IMP-DOG-018](../development/issues/IMP-DOG-018-frisbee-dog-face.md) | 6 枚の顔の見た目の微調整は「ユーザーが後で」とあり、今回の確認に含めていない |
+| [IMP-ENV-010](../development/issues/IMP-ENV-010-quest-performance.md) | 地形の光りが消えない場合の切り分け (仮説 B) は、消えなかったときの作業のため項目にしていない。公開前の計測プローブの撤去は AI の作業 |
+
+### この表の対象外 (AI 側の作業)
+
+IMP-DOG-026 の送信量の実測、IMP-DOG-030 と IMP-DOG-012 の本シーンでの負荷の実測、IMP-WLD-003 の Android / iOS の容量の実測、IMP-DOG-018 のビルドサイズ、IMP-ENV-010 の計測プローブの撤去。DES-UI-003・DES-DOG-006 は、ユーザーの確認が他の Issue (IMP-UI-001・IMP-DOG-025) に出ているため、この表には載せていない。
+
+<!-- 項目数: A. 138 / B. 53 / C. 12 / D. 19 / E. 17 -->
