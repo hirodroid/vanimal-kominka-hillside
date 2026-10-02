@@ -375,17 +375,19 @@ namespace KominkaDogRun
                 // IMP-DOG-035: a dog held on a wash station's stand is never the pushed side (the push snaps to the ground and
                 // would drop it off the raised stand). Its own push is discarded; the other dog's share is unchanged, so it still
                 // gets pushed away by this one as before. Every other dog runs exactly as before.
-                bool onStand = i < _wanderLen && dogWander[i] != null && dogWander[i].StationLocked;
+                // IMP-DOG-034 W-4: the dog's wander controller read once for the three checks below (was 3 array reads + null checks;
+                // _wanderLen == dogWander.Length, static wiring checked in Start, as the onStand line already used)
+                KD_DogWanderController w = i < _wanderLen ? dogWander[i] : null;
+                bool onStand = w != null && w.StationLocked;
                 if (!onStand && Networking.IsOwner(t.gameObject))
                 {
-                    bool floating = dogWander != null && i < dogWander.Length && dogWander[i] != null && dogWander[i]._WaterFloating();
+                    bool floating = w != null && w._WaterFloating();
                     // IMP-DOG-020: afloat, keep the height (no snap to the riverbed) and push at most 0.1 m per frame
                     if (floating && _push[i].sqrMagnitude > 0.01f) _push[i] = _push[i].normalized * 0.1f;
                     // IMP-DOG-020 step 7: a dog on its feet (wading or on land) is not pushed where its own step would be refused
                     // (the wading depth limit, the sink guard, the band outside the spot: KD_DogWanderController._WaterPushBlocked).
                     // afloat too: never out of the spot into the band (_WaterPushBlocked decides for both)
-                    bool refused = dogWander != null && i < dogWander.Length && dogWander[i] != null
-                        && dogWander[i]._WaterPushBlocked(_pos[i], _pos[i] + _push[i]);
+                    bool refused = w != null && w._WaterPushBlocked(_pos[i], _pos[i] + _push[i]);
                     if (!refused) t.position = floating ? _pos[i] + _push[i] : SnapToGround(_pos[i] + _push[i]); // net: owner-only: IsOwner(dogRoots[i])
                 }
                 _prevPos[i] = t.position;

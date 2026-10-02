@@ -118,8 +118,54 @@ namespace KominkaDogRun
 
         float WDepth(Vector3 p)
         {
-            if (waterSpot != null && waterSpot._Bed(p) > KominkaHillside.KH_WaterSpot.NoBed + 1f) return waterSpot._Depth(p);
+            // IMP-DOG-034 W-2/W-3: "_Bed(p) > NoBed + 1 ? _Depth(p)" is one _WetDepth (same value), through the per-frame memo
+            if (waterSpot != null) { float s = SpotWetDepth(p); if (s > KominkaHillside.KH_WaterSpot.NoBed + 1f) return s; }
             return riverData != null ? riverData._DepthAt(p) : 0f;
+        }
+
+        // ---- IMP-DOG-034 W-3: per-frame memo of the spot's polygon test and depth ----
+        // In one wading frame the same horizontal point is asked several times: the root p0 (the pose at the top, WaterStepSpeed,
+        // _BlockedByRiver's "from" twice, the swim-leave check) and the step's end, which is where the root stands for the pose
+        // refresh after it (SnapToGround and the swim height change y only). KH_WaterSpot._Contains / _Bed / _Depth read p.x and
+        // p.z only, and the spot's arrays and the river surface are baked (never written at runtime), so a hit on the same
+        // (x, z) within the same frame returns what the call would. Two slots each, least recently used is replaced. A NaN never
+        // hits (NaN != NaN). Any caller (this tick, the Fetch's water legs, KD_DogPack's push check) may use it: the key is the frame.
+        private int _wcF0 = -1, _wcF1 = -1;
+        private float _wcX0, _wcZ0, _wcX1, _wcZ1;
+        private bool _wcV0, _wcV1, _wcNext1;
+        private int _wdF0 = -1, _wdF1 = -1;
+        private float _wdX0, _wdZ0, _wdX1, _wdZ1, _wdV0, _wdV1;
+        private bool _wdNext1;
+
+        /// <summary>= waterSpot._Contains(p) (the caller has checked waterSpot).</summary>
+        bool SpotContains(Vector3 p)
+        {
+            int f = Time.frameCount; float x = p.x, z = p.z;
+            if (_wcF0 == f && _wcX0 == x && _wcZ0 == z) { _wcNext1 = true; return _wcV0; }
+            if (_wcF1 == f && _wcX1 == x && _wcZ1 == z) { _wcNext1 = false; return _wcV1; }
+            bool v = waterSpot._Contains(p);
+            if (_wcNext1) { _wcF1 = f; _wcX1 = x; _wcZ1 = z; _wcV1 = v; _wcNext1 = false; }
+            else { _wcF0 = f; _wcX0 = x; _wcZ0 = z; _wcV0 = v; _wcNext1 = true; }
+            return v;
+        }
+
+        /// <summary>= waterSpot._WetDepth(p): NoBed where the spot has no riverbed at p, else waterSpot._Depth(p).</summary>
+        float SpotWetDepth(Vector3 p)
+        {
+            int f = Time.frameCount; float x = p.x, z = p.z;
+            if (_wdF0 == f && _wdX0 == x && _wdZ0 == z) { _wdNext1 = true; return _wdV0; }
+            if (_wdF1 == f && _wdX1 == x && _wdZ1 == z) { _wdNext1 = false; return _wdV1; }
+            float v = waterSpot._WetDepth(p);
+            if (_wdNext1) { _wdF1 = f; _wdX1 = x; _wdZ1 = z; _wdV1 = v; _wdNext1 = false; }
+            else { _wdF0 = f; _wdX0 = x; _wdZ0 = z; _wdV0 = v; _wdNext1 = true; }
+            return v;
+        }
+
+        /// <summary>= waterSpot._Depth(p) (0 where the spot has no riverbed).</summary>
+        float SpotDepth(Vector3 p)
+        {
+            float s = SpotWetDepth(p);
+            return s > KominkaHillside.KH_WaterSpot.NoBed + 1f ? s : 0f;
         }
 
         /// <summary>Water depth under p as the dogs use it (the spot's grid, else the river-wide one). Read by the Fetch.</summary>
@@ -156,11 +202,15 @@ namespace KominkaDogRun
                 return true;
             }
             // The water-play spot: a dog in WaterPlay may move inside it, but not deeper than its stage-0 limit.
-            if ((waterState != WaterOff || _waterFetchFrame == Time.frameCount) && waterSpot != null && waterSpot._Contains(next)
-                && waterSpot._Bed(next) > KominkaHillside.KH_WaterSpot.NoBed + 1f)
+            // IMP-DOG-034 W-2/W-3: _Contains / _Bed / _Depth through the per-frame memo; "_Bed(next) > NoBed + 1, then _Depth(next)" is
+            // one _WetDepth (same value), _Depth(from) is SpotDepth (the root: usually a memo hit). All pure reads, same order of answers
+            bool spotStep = (waterState != WaterOff || _waterFetchFrame == Time.frameCount) && waterSpot != null && SpotContains(next);
+            float dNext = spotStep ? SpotWetDepth(next) : 0f;
+            if (spotStep && dNext > KominkaHillside.KH_WaterSpot.NoBed + 1f)
             {
-                float d = waterSpot._Depth(next), dFrom = waterSpot._Depth(from);
-                if (_waterSwimming || d <= dFrom) return false;
+                float d = dNext;
+                if (_waterSwimming) return false;   // (was evaluated after the pure dFrom read: same answer)
+                if (d <= SpotDepth(from)) return false;
                 // Walking: never where the mouth would come within 0.03 m of the water (sink guard), and a non-swimmer never
                 // past its wading limit. A swimmer switches to swimming before this matters (WaterSwimLookAhead).
                 if (waterSwimMouth - d < SinkGuard)   // Ms: the mouth with the walk clip (head drop included)
@@ -176,7 +226,7 @@ namespace KominkaDogRun
             // plain band rule below lets a body inside the band move sideways, so a swimmer at the region's river-side edge or its
             // up/downstream end could slide out of the polygon). The landward side of the region lies outside the band (exits and
             // return points are outside the NavMesh riverbed exclusion), so walking out through an exit is not affected.
-            if (waterSpot != null && waterSpot._Contains(from) && !waterSpot._Contains(next) && riverData._InBand(next, KominkaHillside.KH_RiverData.BandMargin))
+            if (waterSpot != null && SpotContains(from) && !SpotContains(next) && riverData._InBand(next, KominkaHillside.KH_RiverData.BandMargin))   // IMP-DOG-034 W-3
             {
                 _waterBlock = 4; _waterBlockFrame = Time.frameCount;
                 return true;
@@ -223,7 +273,7 @@ namespace KominkaDogRun
                     && riverData._InBand(to, KominkaHillside.KH_RiverData.BandMargin) && !riverData._FetchWater(to)) return true;
             }
             if (_WaterFloating())
-                return waterSpot != null && riverData != null && waterSpot._Contains(from) && !waterSpot._Contains(to)
+                return waterSpot != null && riverData != null && SpotContains(from) && !SpotContains(to)
                     && riverData._InBand(to, KominkaHillside.KH_RiverData.BandMargin);
             int old = _waterFetchFrame, oldRiver = _waterRiverFrame;
             if ((fetchController != null && fetchController.IsWaterFetching) || discWater) _waterFetchFrame = Time.frameCount;   // the spot exception, as for its steps
@@ -235,11 +285,12 @@ namespace KominkaDogRun
 
         bool WaterWetAt(Vector3 p)
         {
-            if (waterSpot._Contains(p))
+            if (SpotContains(p))   // IMP-DOG-034 W-3
             {
-                if (waterSpot._Bed(p) <= KominkaHillside.KH_WaterSpot.NoBed + 1f)
+                float s = SpotWetDepth(p);   // IMP-DOG-034 W-2: _Bed then _Depth in one call (same values)
+                if (s <= KominkaHillside.KH_WaterSpot.NoBed + 1f)
                     return riverData != null && riverData._InBand(p, KominkaHillside.KH_RiverData.BandMargin);   // unknown = assume wet
-                return waterSpot._Depth(p) > WaterWet;
+                return s > WaterWet;
             }
             // IMP-DOG-021: in the river outside the spot (a river fetch, or a dog left there by a give-up) from the river-wide grid
             if (riverData == null || !riverData._InBand(p, KominkaHillside.KH_RiverData.BandMargin)) return false;
@@ -421,7 +472,10 @@ namespace KominkaDogRun
                 Coast(); return true;
             }
             // RC-14: a leash vetoed in the water (WaterLeashTick) is not taken up; the play keeps walking the dog out
-            if (hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex) && !_waterLeashVeto) { if (waterState != WaterOff) WaterEnd("leashed"); return false; }
+            // IMP-DOG-034 W-5: this frame's leash read from WaterTick when there is one (same value: nothing between writes walkers;
+            // _RequestWaterRelease clears _wlFrame), else the call as before
+            bool leashedNow = _wlFrame == Time.frameCount ? _wlLeashed : (hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex));
+            if (leashedNow && !_waterLeashVeto) { if (waterState != WaterOff) WaterEnd("leashed"); return false; }
             Vector3 p = dogRoot.position;
             bool wet = fetchController.WaterPose != 0 || WaterWetAtMemo(p);   // IMP-DOG-034 A5: 先頭の WaterPoseRefresh と同じ位置なら再計算しない
             // Cheap exit for the usual dry dog far from the spot (the errand lookups below are cross-behaviour calls).
@@ -517,7 +571,7 @@ namespace KominkaDogRun
             Vector3 p = dogRoot.position;
             // From the bank the way in is the entry, as for WaterPlay (WaterStepApproach): the strip between the bank and the
             // spot polygon is band outside the spot, where every straight step is refused (run 20260927-093227, W3 x 6).
-            if (!carrying && !waterSpot._Contains(p) && Horizontal(p, waterSpot.entry) >= 0.5f)
+            if (!carrying && !SpotContains(p) && Horizontal(p, waterSpot.entry) >= 0.5f)
             {
                 if (hillsideLeashes == null || !GatherStep(waterSpot.entry, runSpeed)) StepToward(waterSpot.entry, 0f, runSpeed);
                 WaterPoseRefresh();   // RC-14: the pose after the step
@@ -657,7 +711,7 @@ namespace KominkaDogRun
             if (len < 0.001f) return;
             Vector3 ahead = p + d / len * Mathf.Min(len, SwimLookAhead);
             // IMP-DOG-021: along the river too, when this frame runs under the river rules
-            bool water = waterSpot._Contains(ahead) || ((RiverFetchNow() || RiverExitNow()) && riverData != null && riverData._FetchWater(ahead));
+            bool water = SpotContains(ahead) || ((RiverFetchNow() || RiverExitNow()) && riverData != null && riverData._FetchWater(ahead));
             if (water && WDepth(ahead) >= WaterSwimEnterDepth())
             {
                 _waterSwimming = true; _swimShallowSince = -1f; _swimSettled = false;
@@ -719,7 +773,7 @@ namespace KominkaDogRun
         /// river outside the spot through the nearest usable bank of the river-wide slices (design C-6b, the river side of it).</summary>
         void WaterBeginExitFrom(Vector3 p, string reason)
         {
-            if (!waterSpot._Contains(p) && WaterRiverExitPlan(p, -1))
+            if (!SpotContains(p) && WaterRiverExitPlan(p, -1))
             {
                 WaterBeginExit(0, reason);
                 _waterExitRiver = true;

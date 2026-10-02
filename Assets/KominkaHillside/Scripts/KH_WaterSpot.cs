@@ -146,31 +146,131 @@ namespace KominkaHillside
                 _boxX0 = x0 - BoxPad; _boxX1 = x1 + BoxPad; _boxZ0 = z0 - BoxPad; _boxZ1 = z1 + BoxPad;
                 // A NaN vertex is skipped by the min / max above, so the box would not bound the old loop: no pre-check then.
                 if (!finite) { _boxX0 = -1e30f; _boxX1 = 1e30f; _boxZ0 = -1e30f; _boxZ1 = 1e30f; }
+                BuildSlabs(finite);   // IMP-DOG-034 W-1
             }
             return _readyOk;
+        }
+
+        // ---- IMP-DOG-034 W-1: the polygon test by z slabs (same result as the edge loop, bit for bit) ----
+        // The edge loop toggles `inside` for every edge (i, j = i - 1) with (zi > pz) != (zj > pz), at the crossing
+        // x = polyX[i] + (pz - zi) * (polyX[j] - polyX[i]) / (zj - zi), when px < x. Sort the distinct vertex z values into _slabZ.
+        // For pz strictly between two neighbours _slabZ[k] < pz < _slabZ[k + 1], "zi > pz" is the same as "zi >= _slabZ[k + 1]"
+        // (every zi is one of the values and none lies in between), so the set of edges that straddle pz is the same for the whole
+        // open slab: exactly the edges with min(zi, zj) <= _slabZ[k] and max(zi, zj) >= _slabZ[k + 1]. They are listed once here
+        // (_slabEdge[_slabStart[k] .. _slabStart[k + 1]]). The query tests only those edges with the SAME crossing expression and the
+        // same comparison; the parity of toggles does not depend on their order. pz equal to a vertex z, outside (first, last),
+        // or NaN, and any non-finite polygon, take the edge loop (the old code, with the reads hoisted). About 34 edges x ~8 extern
+        // per call -> a binary search (~6 steps) and ~2 edges.
+        private float[] _slabZ;       // sorted distinct vertex z; null = no table (non-finite polygon)
+        private int[] _slabStart;     // per slab k: first index into _slabEdge (length = slabs + 1)
+        private int[] _slabEdge;      // edge i (its j is i - 1, wrapping to n - 1)
+
+        void BuildSlabs(bool finite)
+        {
+            _slabZ = null; _slabStart = null; _slabEdge = null;
+            if (!finite) return;
+            int n = polyZ.Length;
+            float[] zs = new float[n];
+            int m = 0;
+            for (int i = 0; i < n; i++)
+            {
+                float z = polyZ[i];
+                int at = 0;
+                while (at < m && zs[at] < z) at++;
+                if (at < m && zs[at] == z) continue;   // already listed
+                for (int k = m; k > at; k--) zs[k] = zs[k - 1];
+                zs[at] = z; m++;
+            }
+            if (m < 2) return;
+            float[] sz = new float[m];
+            for (int k = 0; k < m; k++) sz[k] = zs[k];
+            int slabs = m - 1;
+            int[] start = new int[slabs + 1];
+            int[] edges = new int[slabs * n];
+            int count = 0;
+            for (int k = 0; k < slabs; k++)
+            {
+                start[k] = count;
+                float lo = sz[k], hi = sz[k + 1];
+                for (int i = 0; i < n; i++)
+                {
+                    int j = i == 0 ? n - 1 : i - 1;
+                    float zi = polyZ[i], zj = polyZ[j];
+                    float mn = zi < zj ? zi : zj, mx = zi < zj ? zj : zi;
+                    if (mn <= lo && mx >= hi) { edges[count] = i; count++; }
+                }
+            }
+            start[slabs] = count;
+            _slabZ = sz; _slabStart = start; _slabEdge = edges;
         }
 
         public bool _Contains(Vector3 p)
         {
             if (!_Ready()) return false;
+            float px = p.x, pz = p.z;   // IMP-DOG-034 W-1: read once (each read of a Vector3 field is an extern)
             // IMP-DOG-034 A2: outside the (padded) bounding box the loop below cannot toggle an odd number of times: z outside
             // [min, max] makes every (zi > p.z) equal, and x left of / right of every crossing toggles an even number (closed polygon)
             // or none. NaN fails these tests and falls through to the loop, as before.
-            if (p.x < _boxX0 || p.x > _boxX1 || p.z < _boxZ0 || p.z > _boxZ1) return false;
+            if (px < _boxX0 || px > _boxX1 || pz < _boxZ0 || pz > _boxZ1) return false;
             bool inside = false;
             int n = polyX.Length;
-            int j = n - 1;
+            float[] sz = _slabZ;
+            if (sz != null)
+            {
+                int hi = sz.Length - 1;
+                if (pz > sz[0] && pz < sz[hi])
+                {
+                    int lo = 0;
+                    bool onVertexZ = false;
+                    while (hi - lo > 1)
+                    {
+                        int mid = (lo + hi) / 2;
+                        float zm = sz[mid];
+                        if (pz > zm) lo = mid;
+                        else if (pz < zm) hi = mid;
+                        else { onVertexZ = true; break; }
+                    }
+                    if (!onVertexZ)
+                    {
+                        int e1 = _slabStart[lo + 1];
+                        for (int e = _slabStart[lo]; e < e1; e++)
+                        {
+                            int i = _slabEdge[e];
+                            int j = i == 0 ? n - 1 : i - 1;
+                            float zi = polyZ[i], zj = polyZ[j];
+                            float x = polyX[i] + (pz - zi) * (polyX[j] - polyX[i]) / (zj - zi);
+                            if (px < x) inside = !inside;
+                        }
+                        return inside;
+                    }
+                }
+            }
+            // The edge loop (the old code; zj / its comparison carried from the previous edge instead of re-read: same values)
+            float zjc = polyZ[n - 1];
+            bool aj = zjc > pz;
+            int jc = n - 1;
             for (int i = 0; i < n; i++)
             {
-                float zi = polyZ[i], zj = polyZ[j];
-                if ((zi > p.z) != (zj > p.z))
+                float zi = polyZ[i];
+                bool ai = zi > pz;
+                if (ai != aj)
                 {
-                    float x = polyX[i] + (p.z - zi) * (polyX[j] - polyX[i]) / (zj - zi);
-                    if (p.x < x) inside = !inside;
+                    float x = polyX[i] + (pz - zi) * (polyX[jc] - polyX[i]) / (zjc - zi);
+                    if (px < x) inside = !inside;
                 }
-                j = i;
+                jc = i; zjc = zi; aj = ai;
             }
             return inside;
+        }
+
+        /// <summary>IMP-DOG-034 W-2: _Bed(p) and _Depth(p) in one call (the callers asked both, and _Depth asked _Bed again).
+        /// NoBed where _Bed(p) is NoBed (<= NoBed + 1); otherwise exactly _Depth(p). Reads p.x / p.z only.</summary>
+        public float _WetDepth(Vector3 p)
+        {
+            float b = _Bed(p);
+            if (b <= NoBed + 1f) return NoBed;
+            float d = riverData._SurfaceY(p.z) - b;
+            return d > 0f ? d : 0f;
         }
 
         /// <summary>Riverbed height at p (bilinear); NoBed outside the grid or where any corner is outside the region.</summary>
