@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-81 件 — 対応中 19 / 確認待ち 28 / 未着手 16 / 保留 3 / 完了 15
+85 件 — 対応中 19 / 確認待ち 28 / 未着手 20 / 保留 3 / 完了 15
 
 ## 実行キュー
 
@@ -58,9 +58,11 @@
 | [IMP-WLD-003](IMP-WLD-003-bgm-and-volume-settings.md) | Medium | 専用BGM「木漏れ日の帰り道」003を導入し、古民家と同じ設定メニューで個人のON/OFF・音量調整を可能にする | review | 残り: ON/OFF ボタンを残すか・基準音量 0.35 と圧縮品質の決定 (A131・A132)、別プレイヤーへ影響しないこと (2 人)、Android/iOS の容量の実測と Quest/iOS の操作性。PCVR 1 人 (A130・A133・A134) は 10-02 ユーザー総合判断で確認済み。WAV は版管理へ収録済み |
 | [BUG-DOG-004](BUG-DOG-004-destination-per-player.md) | High | 体験会 (2026-09-26、15 人) で「行き先が犬ごとに決まっていて、プレイヤーごとのローカル選択になっていない」と報告。コードは自分の選択を自分の接続犬に写す設計なので、何がどう見えたかを 2 人で再現して切り分ける | todo | 2 人で別の行き先を選び、自分の犬だけが従うか・メニューの点灯が自分の選択を示すかを確認。NG なら Manager Owner 側の ReqDestination / ReqAttach の経路を疑う |
 | [DES-UI-005](DES-UI-005-trainer-and-paid-items-purchase-flow.md) | High | バニマルトレーナーと課金アイテムの説明・見せ方・購入導線を見直し、遊び方ガイドと合わせて購入につながる設計にする | todo | DES-UI-004 の看板 A の 4 枚目「ポイントとトレーナー」で、無料 / ポイント / ばにまるトレーナー / Credits の飾りを案内済み。ユーザーが文面と導線を見て直しを指示する。価格・特典の範囲など仕様で未決定の項目を決めたら看板へ足す |
+| [IMP-DOG-037](IMP-DOG-037-wash-call-availability-and-range.md) | High | 洗い場で呼べる犬・呼べない犬と理由を分かりやすく表示し、呼び出し対象をその洗い場の近くのエリアにいる犬へ制限する | todo | 犬ごとの呼び出し可否と理由の表示を設計し、洗い場からの距離・エリアの基準を決めて受理条件へ反映する |
 | [VER-DOG-002](VER-DOG-002-wash-experience-and-devices.md) | High | 洗浄の体験の評価 (ASMR、先行作との比較、2 人、入力機器) と対象端末の実機確認を、各段の到達条件として行う | todo | 先行 Animal Wash との比較の記録 (上回った点・残る違和感の文言は聞いていない)、2 人協力 (B2)、Desktop/Touch、Quest 単体・iOS の実機。PCVR 1 人の洗い心地 (A17 を含む) は 10-02 ユーザー総合判断で確認済み (比較の記録はなし)。10-02 のすすぎ改善 (f9ed660) を含むかは確認中 |
 | [BUG-DOG-005](BUG-DOG-005-ios-disc-colors.md) | Medium | 体験会 (2026-09-26) で iOS 参加者から「フリスビーの色が全部同じ」。ディスクは Standard Lite + _Color で犬別 6 色。iOS 実機で再現し、材質・ビルドのどこで色が落ちるかを特定する | todo | iOS 実機で 6 枚の色を見る。同じなら iOS ビルドの材質 (Standard Lite の _Color、持ち中の Transparent/Diffuse) と Android ビルドとの差を疑う |
 | [DES-DOG-002](DES-DOG-002-toy-behaviour.md) | Medium | フリスビーは 1 匹で採用内容を確定 (IMP-DOG-008 完了)。複数ディスク・犬の割当は犬別 6 枚 (2026-09-24 開発側で決め、2026-09-29 ユーザー了承)。残り: 他のおもちゃの挙動、ボールの柄違いの持たせ方、公開範囲 | todo |  |
+| [DES-DOG-007](DES-DOG-007-hand-washing-and-shampoo.md) | Medium | シャンプーボトルと手でわしゃわしゃ洗う体験を主役にする案を検討し、スポンジの補助用途・撫でとの区別・端末別操作を整理する | todo | ユーザー提供の手洗い案を現行の洗浄と比較し、シャンプー・素手・スポンジの役割と小さな試作の確認項目を決める。採用は未決定 |
 | [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 古民家の有料ライブ購入者の利用と、裏山ライブの開催・再生・競合・復帰を設計する。演目企画は DES-LIV-002 | todo |  |
 | [DES-LIV-002](DES-LIV-002-live-lineup-and-parade.md) | Medium | ハロウィン・Candy Step・ライブパックの裏山向け演目を企画する。散歩道を犬たちがパレードする専用ライブ 1 本を含め、枠・本数・構成を整理 | todo |  |
 | [DES-UI-002](DES-UI-002-frisbee-settings.md) | Medium | フリスビーの設定 (待つ場所・曲げ・取り方) の選ぶ / 自動の切り分けと操作権、開発用切替の撤去時期を設計する。[試作] 入口の代替は不要 (2026-09-29 ユーザー: おもちゃタブで呼び出せる) | todo |  |
@@ -69,6 +71,8 @@
 | [IMP-DOG-006](IMP-DOG-006-leashed-treat-approach.md) | Medium | おやつで自分の接続犬の最寄り1匹を呼び、少し待つ間に撫でる/首輪を外す→次の1匹。9/23 操作方針了承、詳細設計・実装は未 | todo |  |
 | [IMP-DOG-032](IMP-DOG-032-call-placement-free-height.md) | Medium | 場所を決めて呼ぶのマーカーを古民家どおり手の高さに追従させる (地面への吸着と斜面で置けない判定を外す) | todo | KD_SleepPlacement / KD_SleepSlot / KD_DogWanderController.Sleep の IMP-DOG-016 変更 2・3 の該当部分を古民家へ戻し、Editor の Verify を追従させる |
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |  |
+| [IMP-WLD-004](IMP-WLD-004-warp-all-five-points.md) | Medium | ワープ先を現在の2地点から、ユーザー指定のポイント1〜5すべてへ広げる | todo | 現行のポイント1〜5の表示名・地点ID・着地点を照合し、全5ポイントのワープと接続犬の同行を実装・確認する |
+| [IMP-WLD-005](IMP-WLD-005-auto-photo-and-gallery.md) | Medium | 古民家ドッグラン同様の自動写真とギャラリーを追加し、古民家に似合う看板・ボードと手元メニューの専用入口から写真を見られるようにする | todo | 古民家の自動写真・ギャラリーの現行仕様と実装を確認し、裏山への導入範囲、看板・ボードの配置、メニューの写真ギャラリー専用面を設計する |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo |  |
 | [IMP-DOG-033](IMP-DOG-033-call-placement-tilt.md) | Low | 場所を決めて呼ぶで、手の傾きに合わせて犬を傾けて置けるようにする (斜面で抱っこしている感じに置く) | todo | IMP-DOG-032 (古民家どおりに戻す) の後に、同期・犬の姿勢・Desktop/Touch の扱いを設計する |
 | [IMP-ENV-009](IMP-ENV-009-course-roadside-scenery.md) | Low | 周回コースの道沿い (古民家→川、川沿いの外周、川→奥広場) が殺風景なので、負荷と相談して木などを少し置く。後回し | todo | 他の作業の後に着手。負荷の測定 (IMP-ENV-001 ③) の結果を見て、置ける量を決める |
