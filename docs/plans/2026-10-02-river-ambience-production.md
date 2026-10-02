@@ -1,7 +1,7 @@
 # 川のせせらぎ音の制作票・素材記録 (IMP-ENV-006)
 
 2026-10-02。Issue は [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md)。素材記録の型は [source-rights-record](../../.claude/skills/vrc-asset-production/references/source-rights-record.md)、手順は [source-rights](../../.claude/skills/vrc-asset-production/references/source-rights.md)。
-状態: **コードと Editor ビルダー・検査まで (Unity 未実行)。** 利用条件の確認は未完 (§1 の「未確認」)。音の聞こえ・ループの継ぎ目・端末は未確認。
+状態: **コードと Editor ビルダー・検査まで (Unity 未実行)。** 利用条件は公式規約の調査済み (2026-10-03、§1)。公開保留の解除は参照音声の有無などユーザー回答待ち。音の聞こえ・ループの継ぎ目・端末は未確認。
 
 ## 1. 素材記録
 
@@ -17,15 +17,14 @@
   VRChat ワールド「古民家の裏山」の本番シーンへそのまま組み込み (ループ再生の環境音)。加工は取り込み設定 (mono 化・Vorbis 圧縮) のみ。
   商用か非商用か・公開先は公開前に確認 (本ワールドは基本無料。課金のある別機能とは音源を分けている)。
 利用条件の根拠・該当条件 / 確認日 / クレジット:
-  根拠: ユーザー回答のみ。(2026-10-02)「制作元は Adobe Firefly の生成物」、(2026-10-03)「Fireflyの無料プランだが、商用利用もOKなので問題なし。2026/10/2 小川のせせらぎ」。
-  **ユーザー回答で商用利用可。規約の根拠 (URL・版) は未記録** (service-conditions に Adobe Firefly の節が無く、エージェントの公式条件調査も未実施。source-rights §2: 根拠の URL・該当条件・確認日を記録する)。
-  参考 (今回の生成の根拠にはしない): 古民家ドッグランでは、同じユーザーが Firefly で作った吠え声・呼吸音を「商用可・クレジット不要」と記録している
-  (ユーザー確認、2026-08-17。古民家 docs/development/issues/archive/IMP-FET-005-ball-pickup-anticipation.md)。
-  本音源は別の生成日・機能 (サウンド生成) の可能性があり、プランや規約も当時から変わりうるので、同じ条件と読み替えない (source-rights §1・§2)。
-  クレジット表示: 未確認 (必要かどうかは条件の確認後)。
+  根拠: (1) ユーザー回答: (2026-10-02)「制作元は Adobe Firefly の生成物」、(2026-10-03)「Fireflyの無料プランだが、商用利用もOKなので問題なし。2026/10/2 小川のせせらぎ」。
+  (2) 公式規約の調査 (エージェント、2026-10-03): [service-conditions の Adobe Firefly 節](../../.claude/skills/vrc-asset-production/references/service-conditions.md#adobe-firefly-サウンド生成--generate-sound-effectsadobe-製モデル)。Adobe 製モデルの効果音生成の出力は、機能紹介ページが「can be used to create royalty free sound effects for commercial use, provided you adhere to Adobe guidelines and the audio produced is developed using the commercially released version of Adobe Firefly」と述べ、Generative AI Product Specific Terms (2026-04-23 版) §1 は「The Input and Output are your Content」。クレジット表示の義務は規約に見当たらない。Content Credentials・透かしを除去・改変しないことが条件 (§3.1)。
+  この調査で確認できなかったこと: 無料プランの商用利用を直接述べた公式文 (FAQ・ヘルプは 403)、2026-10-02 の生成時にベータ表示だったか (2025-07 のブログは「Generate Sound Effects (beta)」、2026-10-03 の機能紹介ページに「beta」の語なし)、「commercially released version」の意味。規約 3 本には、無料プラン・ベータの出力の商用利用を禁じる文は見当たらない。
+  参考 (今回の根拠にはしない): 古民家ドッグランの吠え声・呼吸音の記録 (ユーザー確認、2026-08-17。古民家 docs/development/issues/archive/IMP-FET-005-ball-pickup-anticipation.md、docs/development/release-checklist.md §4) は、根拠がユーザー確認のみで規約の URL・版は記録されていない。そのため今回の根拠の前例にはならず、同じ条件と読み替えない (source-rights §1・§2)。
+  クレジット表示: 不要 (規約に義務なし。2026-10-03 調査)。ただし Content Credentials の扱いは下の「公開保留の判断」。
 生成ツール・機能・プラン / 生成日 / 条件の確認記録:
-  ツール: Adobe Firefly。プラン: 無料プラン。生成日: 2026-10-02 (いずれもユーザー回答 2026-10-03)。機能 (サウンド生成か等)・生成時点の入力/出力条件: 未確認 (ユーザーの回答に機能名は無い)。
-  [service-conditions](../../.claude/skills/vrc-asset-production/references/service-conditions.md) に Adobe Firefly の節はまだ無い (エージェントの公式条件調査も未実施)。
+  ツール: Adobe Firefly。プラン: 無料プラン。生成日: 2026-10-02 (いずれもユーザー回答 2026-10-03)。機能: ファイル名 (Firefly_audio_) からは効果音生成と推定されるが、ユーザーは機能名を述べていない。ベータ表示だったか: 不明。
+  条件の確認記録: [service-conditions の Adobe Firefly 節](../../.claude/skills/vrc-asset-production/references/service-conditions.md#adobe-firefly-サウンド生成--generate-sound-effectsadobe-製モデル) (2026-10-03)。
 主要な指示・生成設定:
   プロンプト: 「小川のせせらぎ」(ユーザー回答 2026-10-03。ファイル名の「小川の水音」とは別の語)。その他の生成設定・生成画面の記録: 未確認 (「big / middle / little」は名称で設定の記録ではない)。
   ファイルに XMP チャンク (684 byte) あり (生成ツールのメタデータの可能性。内容は未解読)。
@@ -34,14 +33,20 @@
 採用前確認 (担当・日付・対象版・方法・範囲・結果):
   聴取: 未実施 (AI は聴けない。ユーザーの Play で採否)。類似確認: 実在の特定作品の録音・音声を狙った形跡の有無はプロンプトが分かってから。
   数値の検査: 2026-10-02 Node (AI)。長さ 8.000 s・48 kHz・16 bit stereo・peak -11.4 dBFS・RMS -29.2 dBFS・L/R 相関 0.958・継ぎ目の段差 (§4)。
-状態: 確認中 (採用はユーザー決定済み 2026-10-02)。ユーザー回答 (2026-10-03) は §1 の記録に入れたが、規約の根拠が未記録なので、この音を含む版を公開対象に含めてよいかは保留のまま。
+状態: 確認中 (採用はユーザー決定済み 2026-10-02)。規約の根拠は記録した (2026-10-03)。この音を含む版の公開対象への採用は、下の「残る確認」の 1・2 のユーザー回答が済むまで保留のまま (聴取による類似確認も未)。
 ```
 
 ### ユーザー回答 (2026-10-03) と、残る確認
 
-回答済み: 1. ツール = Adobe Firefly、無料プラン、生成日 2026-10-02。2. 商用利用はユーザーの回答で OK (規約の根拠は未記録)。3. プロンプト = 「小川のせせらぎ」。
+回答済み: 1. ツール = Adobe Firefly、無料プラン、生成日 2026-10-02。2. 商用利用はユーザーの回答で OK。3. プロンプト = 「小川のせせらぎ」。
+エージェントの規約調査は完了 (2026-10-03、[service-conditions の Adobe Firefly 節](../../.claude/skills/vrc-asset-production/references/service-conditions.md#adobe-firefly-サウンド生成--generate-sound-effectsadobe-製モデル))。
 
-**残り** (下の元の質問のうち未回答): 3 の参照音源・入力音声を与えたか / 4 big・middle・little が同じ生成のバリエーションか / 2 のクレジット表示の要否 / 5 類似の気づき (聴取後)。**エージェント側の作業**: Adobe Firefly の公式規約を調べ (無料プランの出力の商用利用・サウンド生成の機能の扱い・クレジットの要否)、根拠の URL・版・確認日を `service-conditions.md` へ節として足し、ここからリンクする。
+**残り (ユーザーへの質問。各 1 行で足りる)**:
+1. 参照音声・自分の声を入力したか (入力した場合、その音声の権利の確認が別に要る。規約 §2)。
+2. 使った機能は「サウンド生成 (Generate Sound Effects)」で、Adobe 製モデルか (他社モデルを選んでいないか)。生成画面にベータ表示があったか (覚えていれば)。
+3. big・middle・little は同じ生成のバリエーションか。
+4. 聴取後: 気になる既存音源との類似の気づき (採用前確認)。
+任意: 無料プランの商用利用の確認として、Firefly の FAQ・ヘルプ (エージェントは 403 で開けない) の該当文をユーザーがブラウザで確認して貼る。
 
 元の質問 (2026-10-02):
 
@@ -51,7 +56,7 @@
 4. big / middle / little が同じ生成のバリエーションか (採用は middle)。
 5. 気になる既存音源 (実在の録音) との類似に気づいていないか (聴取後)。
 
-上の「残る確認」のうち規約の根拠の記録が済むまで、この音を入れたビルドの公開は保留する (ユーザーの「進めてよい」だけでは権利確認の代わりにしない: source-rights §5) ([source-rights](../../.claude/skills/vrc-asset-production/references/source-rights.md) §8)。公式規約の調査はエージェントが先に行う手順なので、依頼があれば `service-conditions.md` の方へ Adobe Firefly の節を足す。
+**公開保留の判断 (source-rights §2・§5、2026-10-03): まだ解除しない。** 規約の根拠 (URL・版・該当条件・確認日) は記録でき、Adobe 製モデルの効果音生成の出力が商用利用可・クレジット義務なし・出力は自分の Content であることは公式ページで確認できた。残る妨げは、(a) 参照音声を入力したか (入力していれば規約 §2 の別確認)、(b) 生成機能が Adobe 製モデルの効果音生成か (他社モデルなら別規約)、(c) 無料プラン・ベータ表示の扱い (規約に制限は見当たらないが直接述べた公式文は未取得で、「commercially released version」の意味も不明)。(a)(b) の回答が問題なければ解除してよい見込み。(c) は公式文が取れない限り「制限の記載は見当たらない」止まりで、残るリスクを受け入れるかはユーザーの判断 (ユーザーの「進めてよい」は権利者の許諾の代わりにならない: source-rights §5)。Content Credentials は規約上、除去・改変が禁止。この WAV を取り込み (mono 化・Vorbis 圧縮) で加工してビルドに入れることが問題になるかは、規約から判断できず未確認 ([source-rights](../../.claude/skills/vrc-asset-production/references/source-rights.md) §8)。
 
 ## 2. 音源の実測 (Node、2026-10-02)
 
