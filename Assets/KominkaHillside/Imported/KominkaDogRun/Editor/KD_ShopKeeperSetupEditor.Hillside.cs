@@ -56,6 +56,7 @@ namespace KominkaDogRun.Editor
         internal const int HillsideKeeperPoints = KD_ProgressLedger.HillsideKeeperPoints; // 正本は台帳 (Codex M-2、司令塔 2026-09-24 差替)
 
         const string HillsideSetupLog = KD_Hillside.LogDir + "keeper-setup.txt";
+        const int KeeperLayer = 8;   // Interactive
         const string HillsideVerifyLog = KD_Hillside.LogDir + "keeper-verify.txt";
 
         // ================================================================ 4d: Setup
@@ -122,6 +123,10 @@ namespace KominkaDogRun.Editor
             col.radius = 0.35f;
             col.height = 1.8f;
             col.isTrigger = false;
+            // 犬の接地レイ (Default + Environment) に当てない。Default のままだと、移動の着地が重なった犬が
+            // カプセルの頭上 (約 1.5 m) へ置かれ、歩き出すときに落ちる (Course/82 T12、2026-10-02)。
+            // Interactive はプレイヤーと衝突し Interact も届く。子 (man_farm) は触らない
+            keeperGo.layer = KeeperLayer;
 
             var keeperUdon = UdonSharpEditorUtility.GetBackingUdonBehaviour(keeper);
             if (keeperUdon != null)

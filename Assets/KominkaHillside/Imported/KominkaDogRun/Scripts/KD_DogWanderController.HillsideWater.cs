@@ -880,7 +880,7 @@ namespace KominkaDogRun
                     VRCObjectSync sync = dogRoot.GetComponent<VRCObjectSync>();
                     if (sync != null) sync.FlagDiscontinuity();
                     _waterRecoverFrame = Time.frameCount; _waterRecoverFrom = dogRoot.position; _waterRecoverTo = back;
-                    dogRoot.position = back; // net: owner-only: _dogOwner checked in UpdateWaterPlay
+                    _dbgWriter = DbgWWaterRecover; dogRoot.position = back; // net: owner-only: _dogOwner checked in UpdateWaterPlay
                     _waterSwimming = false; _swimYValid = false; _swimShallowSince = -1f;   // no float height on the bank (Codex D-高)
                     _speed = 0f;
                     Debug.Log("[KD_DogWanderController] water recover dog=" + dogIndex + " stage=3 teleport exit=" + _waterExit);

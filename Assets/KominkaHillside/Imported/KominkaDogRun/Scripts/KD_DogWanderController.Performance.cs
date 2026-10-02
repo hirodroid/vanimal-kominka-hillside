@@ -174,6 +174,8 @@ namespace KominkaDogRun
         {
             ResetPerformanceOutputs();
             _behaviorSelectionValid = false;
+            // IMP-DOG-036: re-enabled -> nothing old is replayed and the first frame decides
+            _legKind = LegNone; _legFaceKind = LegNone; _decideNow = true;
         }
 
         void ResetPerformanceOutputs()

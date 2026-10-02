@@ -84,7 +84,7 @@ namespace KominkaDogRun
             {
                 VRCObjectSync sync = dogRoot.GetComponent<VRCObjectSync>();
                 if (sync != null) sync.FlagDiscontinuity();
-                dogRoot.SetPositionAndRotation(m.travelPoint[dogIndex], Quaternion.Euler(0f, m.travelYaw[dogIndex], 0f)); // net: owner-only: called on the dog Owner path only
+                _dbgWriter = DbgWTravel; dogRoot.SetPositionAndRotation(m.travelPoint[dogIndex], Quaternion.Euler(0f, m.travelYaw[dogIndex], 0f)); // net: owner-only: called on the dog Owner path only
                 _speed = 0f;
                 _travelMoves++;
                 moved = true;

@@ -249,7 +249,7 @@ namespace KominkaDogRun
                     {
                         VRC.SDK3.Components.VRCObjectSync sync = dogRoot.GetComponent<VRC.SDK3.Components.VRCObjectSync>();
                         if (sync != null) sync.FlagDiscontinuity();
-                        dogRoot.position = hit.position; // net: owner-only: _dogOwner checked above
+                        _dbgWriter = DbgWStation; dogRoot.position = hit.position; // net: owner-only: _dogOwner checked above
                         _speed = 0f;
                     }
                 }

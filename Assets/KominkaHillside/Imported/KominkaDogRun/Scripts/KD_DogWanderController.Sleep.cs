@@ -195,8 +195,11 @@ namespace KominkaDogRun
             ApplyMoveAnim();
             Vector3 face = Quaternion.Euler(0f, slot.SpotYaw, 0f) * Vector3.forward;
             bool facing = Vector3.Angle(dogRoot.forward, face) <= SleepFaceToleranceDeg;
-            if (!facing) { FaceTowards(dogRoot.position + face); return true; }
+            // IMP-DOG-036 S1/S2 fix 3: the settle below writes the root itself (no recorded mover), so until it has arrived the dog
+            // decides every frame (TickBusy) and the root moves every frame as before; arrived = only the final yaw is rewritten
+            if (!facing) { _placedSettling = true; FaceTowards(dogRoot.position + face); return true; }
             _wantSleep = true;
+            _placedSettling = false;
             if (_dogOwner)
             {
                 dogRoot.rotation = Quaternion.Euler(0f, slot.SpotYaw, 0f); // net: owner-only: _dogOwner、指定向きへ最後の許容角を合わせる
@@ -205,9 +208,15 @@ namespace KominkaDogRun
                 // 収まる途中も接地させる (古民家は縁側・寝台へ上げるため接地しなかった)。斜面で体が地面へめり込まない / 浮かない
                 if (hillsideLeashes != null) lifted = SnapToGround(lifted);
                 dogRoot.position = lifted; // net: owner-only: _dogOwner、古民家は上昇中は接地スナップしない
+                // fix 3: still settling while the root has not reached the slot horizontally (the ground snap only moves y; MoveTowards
+                // returns the target exactly once within one step, so an arrived dog reads 0 here). Busy until then (TickBusy)
+                Vector3 left = target - lifted; left.y = 0f;
+                _placedSettling = left.sqrMagnitude > 0.000001f;
             }
             return true;
         }
+
+        private bool _placedSettling;   // IMP-DOG-036 S1/S2 fix 3: the placed-sleep settle is still moving the root (TickBusy)
 
         /// <summary>裏山改変: IMP-DOG-016 変更 3。呼ばれた犬の足。**散歩の集合と同じ地形追従**
         /// (KD_DogWanderController.HillsideLeash の GatherStep = NavMesh の完全な経路を角ごとに StepToward + 接地スナップ)。

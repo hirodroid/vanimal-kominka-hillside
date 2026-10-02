@@ -906,7 +906,7 @@ namespace KominkaHillside.Editor
             s.Add(TvDo(() => { TvSet("debugSkipTravelTeleport", 1); TvNote("simulated: target 7.5 m ahead (landing 4 m from the requester); the requester skips TeleportTo after confirmation"); TvJoinPress(a); }));
             s.Add(TvUntil(() => Get<int>(TvMyBox(), "_outTo") >= 0, 2, "join request did not start"));
             s.Add(TvWait(1.1));
-            s.Add(TvDo(() => { a.pos = Networking.LocalPlayer.GetPosition(); a.disc = (int[])tvDisc.Clone(); a.req1 = Get<int>(manager, "travelResultSerial"); TvAnswer(KH_TravelMailbox.CodeYes); }));
+            s.Add(TvDo(() => { a.pos = Networking.LocalPlayer.GetPosition(); a.disc = (int[])tvDisc.Clone(); a.req1 = Get<int>(manager, "travelResultSerial"); TvAnswer(KH_TravelMailbox.CodeYes); foreach (var w in wander) w.SendCustomEvent("_DebugResetStep"); }));
             s.Add(TvUntil(() => Get<int>(manager, "travelResultSerial") != a.req1 && Get<int>(manager, "travelResultCode") == KH_LeashManager.TravelStayed && Get<int>(manager, "_tvState") == 0, 10, "join was not confirmed"));
             s.Add(TvDo(() =>
             {
@@ -920,7 +920,16 @@ namespace KominkaHillside.Editor
             {
                 TvExpect(TvNoApplies(a, mask), "no dog applied the ticket while the requester had not moved (RC-01)");
                 TvExpect(TvReqPhase(mask, KH_LeashManager.TravelPhaseReady, Get<int[]>(manager, "travelReq")[TvFirst(mask)]), "tickets are still Phase 1 (inside the 15 s life) when checked");
-                TvExpect(TvDiscSince(a.disc) && TvFlat(Networking.LocalPlayer.GetPosition(), a.pos) < 1f, "nothing moved while the ticket was alive");
+                // IMP-DOG-036 step probe: which dog made the largest single-frame step, and by which code
+                var probe = new System.Text.StringBuilder();
+                for (int i = 0; i < wander.Length; i++)
+                {
+                    object ms; if (!wander[i].TryGetProgramVariable("_dbgMaxStep", out ms)) continue;
+                    probe.Append(" | dog" + i + " disc " + a.disc[i] + ">" + tvDisc[i] + " max " + ((float)ms).ToString("F2") + " src " + Get<int>(wander[i], "_dbgMaxStepSrc") + " mover " + Get<int>(wander[i], "_dbgMaxStepMover") + " writer " + Get<int>(wander[i], "_dbgMaxStepWriter") + " mode " + Get<int>(wander[i], "_dbgMaxStepMode") + " dt " + Get<float>(wander[i], "_dbgMaxStepDt").ToString("F3") + " from " + Get<Vector3>(wander[i], "_dbgMaxStepFrom").ToString("F2") + " to " + Get<Vector3>(wander[i], "_dbgMaxStepTo").ToString("F2") + " tp " + Get<int>(wander[i], "_dbgTeleports"));
+                }
+                TvNote("step probe: player moved " + TvFlat(Networking.LocalPlayer.GetPosition(), a.pos).ToString("F2") + " m; jumps: " + string.Join(" / ", tvJumpAll) + probe);
+                TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), a.pos) < 1f, "the requester did not move while the ticket was alive");
+                TvExpect(TvDiscSince(a.disc), "no dog jumped while the ticket was alive");
             }));
             s.Add(TvUntil(() => TvAllPhase(mask, KH_LeashManager.TravelPhaseNone), 14, "ticket did not expire (Owner expires at ~20 s after the write; 12 s wait + 14 s)"));
             // (b) 3〜5 m + 暗転中の取消 (暗転を 2 秒に伸ばして、その間に実ボタン)
@@ -930,7 +939,7 @@ namespace KominkaHillside.Editor
             s.Add(TvDo(() => { tvFade.SetProgramVariable("fadeOutSeconds", 2f); TvNote("(b) fade-out slowed to 2 s; the requester presses [cancel] while it darkens"); TvJoinPress(b); }));
             s.Add(TvUntil(() => Get<int>(TvMyBox(), "_outTo") >= 0, 2, "second join request did not start"));
             s.Add(TvWait(1.1));
-            s.Add(TvDo(() => { b.pos = Networking.LocalPlayer.GetPosition(); b.disc = (int[])tvDisc.Clone(); TvAnswer(KH_TravelMailbox.CodeYes); }));
+            s.Add(TvDo(() => { b.pos = Networking.LocalPlayer.GetPosition(); b.disc = (int[])tvDisc.Clone(); TvAnswer(KH_TravelMailbox.CodeYes); foreach (var w in wander) w.SendCustomEvent("_DebugResetStep"); }));
             s.Add(TvUntil(() => Get<int>(manager, "_tvState") == 3, 3, "fade did not start"));
             s.Add(TvDo(() => pouch.SendCustomEvent("_TravelGo")));
             s.Add(TvUntil(() => Get<int>(manager, "_tvState") == 0 && Get<int>(TvMyBox(), "joinResultCode") == KH_TravelMailbox.JoinCanceled, 2, "cancel during the fade not reported"));
@@ -938,6 +947,13 @@ namespace KominkaHillside.Editor
             s.Add(TvWait(1));
             s.Add(TvDo(() =>
             {
+                var probeB = new System.Text.StringBuilder();
+                for (int i = 0; i < wander.Length; i++)
+                {
+                    object ms; if (!wander[i].TryGetProgramVariable("_dbgMaxStep", out ms)) continue;
+                    probeB.Append(" | dog" + i + " disc " + b.disc[i] + ">" + tvDisc[i] + " max " + ((float)ms).ToString("F2") + " src " + Get<int>(wander[i], "_dbgMaxStepSrc") + " mover " + Get<int>(wander[i], "_dbgMaxStepMover") + " writer " + Get<int>(wander[i], "_dbgMaxStepWriter") + " mode " + Get<int>(wander[i], "_dbgMaxStepMode") + " beh " + Get<int>(wander[i], "_dbgMaxStepBehavior") + " water " + Get<int>(wander[i], "_dbgMaxStepWater") + " dt " + Get<float>(wander[i], "_dbgMaxStepDt").ToString("F3") + " from " + Get<Vector3>(wander[i], "_dbgMaxStepFrom").ToString("F2") + " to " + Get<Vector3>(wander[i], "_dbgMaxStepTo").ToString("F2") + " tp " + Get<int>(wander[i], "_dbgTeleports"));
+                }
+                TvNote("step probe (b): player moved " + TvFlat(Networking.LocalPlayer.GetPosition(), b.pos).ToString("F2") + " m; jump notes: " + string.Join(" / ", tvJumpNotes) + probeB);
                 TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), b.pos) < 1f && TvDiscSince(b.disc), "neither the requester nor a dog moved");
                 TvExpect(TvNoApplies(b, mask), "no dog applied the ticket (RC-01)");
                 TvExpect(TvAllPhase(mask, KH_LeashManager.TravelPhaseCanceled), "tickets are Phase 3 (cancelled)");
@@ -1211,6 +1227,8 @@ namespace KominkaHillside.Editor
                 if (moved > stepLimit)
                 {
                     tvDisc[i]++;
+                    // every jump is logged with its positions (2026-10-02: the first one used to be silent, so an intermittent single jump left no evidence)
+                    tvJumpAll.Add("dog" + i + " jump#" + tvDisc[i] + " " + moved.ToString("F2") + " m frames=" + frames + " game " + gameGap.ToString("F3") + " s limit " + stepLimit.ToString("F2") + " from " + tvPrev[i].ToString("F2") + " to " + p.ToString("F2") + " leashMode " + Get<int>(wander[i], "leashMode") + " at " + now.ToString("F1"));
                     if (tvDisc[i] >= 2 && tvJumpNotes.Count < 20)
                     {
                         string state = "";
@@ -1337,6 +1355,7 @@ namespace KominkaHillside.Editor
         }
 
         /// <summary>記録した時点から、どの犬も位置が変わっていない (ケースの途中から数える)。</summary>
+        static readonly List<string> tvJumpAll = new List<string>();
         static bool TvDiscSince(int[] at) { for (int i = 0; i < 6; i++) if (tvDisc[i] != at[i]) return false; return true; }
 
         static bool TvAllPhase(int mask, int phase)

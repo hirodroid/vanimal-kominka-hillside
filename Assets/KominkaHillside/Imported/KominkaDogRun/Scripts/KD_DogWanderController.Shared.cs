@@ -316,6 +316,7 @@ namespace KominkaDogRun
         /// そのフレームだけは通常の旋回速度でよい。</summary>
         void FaceTowards(Vector3 worldPoint)
         {
+            if (LegRecording()) { _legFaceKind = LegFace; _legFacePos = worldPoint; }   // IMP-DOG-036 S1/S2: replayed by RunLegs
             // IMP-NET-005: 向きも `VRCObjectSync` が配る
             if (!_dogOwner) return;
             Vector3 d = worldPoint - dogRoot.position;
@@ -324,7 +325,7 @@ namespace KominkaDogRun
             float rate = _speed > stopSpeedThreshold ? turnSpeedDegPerSec : idleTurnSpeedDegPerSec;
             Quaternion look = Quaternion.LookRotation(d.normalized, Vector3.up);
             dogRoot.rotation = Quaternion.RotateTowards(dogRoot.rotation, look, // net: owner-only: 冒頭の早期 return が非 Owner を弾く
-                rate * Dt());
+                rate * MoveDt());   // IMP-DOG-036: one frame (turned every frame by the decision or RunLegs)
         }
 
         /// <summary>向きを指定の速さで変える (IMP-DOG-010)。
@@ -336,6 +337,7 @@ namespace KominkaDogRun
         /// 既存の呼び出しが黙って速くならないようにするため (名前で違いを見せる)。</summary>
         void FaceTowardsRate(Vector3 worldPoint, float degPerSec)
         {
+            if (LegRecording()) { _legFaceKind = LegFaceRate; _legFacePos = worldPoint; _legFaceRate = degPerSec; }   // IMP-DOG-036
             // IMP-NET-005: 向きも `VRCObjectSync` が配る
             if (!_dogOwner) return;
             Vector3 d = worldPoint - dogRoot.position;
@@ -343,7 +345,7 @@ namespace KominkaDogRun
             if (d.sqrMagnitude < 0.0001f) return;
             Quaternion look = Quaternion.LookRotation(d.normalized, Vector3.up);
             dogRoot.rotation = Quaternion.RotateTowards(dogRoot.rotation, look, // net: owner-only: 冒頭の早期 return が非 Owner を弾く
-                degPerSec * Dt());
+                degPerSec * MoveDt());   // IMP-DOG-036: one frame
         }
 
         // ================================================================

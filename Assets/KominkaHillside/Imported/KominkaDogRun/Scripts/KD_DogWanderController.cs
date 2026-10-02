@@ -508,6 +508,7 @@ namespace KominkaDogRun
         /// `KD_DogPack.teleportThreshold` / `KD_DogStopAnchor` と同じ値・同じ考え方
         /// (`VRCObjectSync` の補正・Late Join・リスポーンを「移動」と読まないため)。</summary>
         const float ObservedTeleportThreshold = 1.5f;
+        const float ObservedTeleportSpeed = 12f;   // IMP-DOG-036 S1: m/s over the observation interval (sprint 7.2 m/s, with margin)
 
         // IMP-DOG-009: 名簿は Start で 1 度だけ読んでローカルへ持つ
         // (Udon の Behaviour 跨ぎアクセスは高い — KD_DogFetchController と同じ扱い)
@@ -1643,11 +1644,12 @@ namespace KominkaDogRun
         /// 既に速度 0 になっているため、ここで実際に滑るのは割り込み (接近・窓外) のときだけ。</summary>
         void Coast()
         {
+            if (LegRecording()) _legKind = LegCoast;   // IMP-DOG-036 S1/S2: replayed by RunLegs until the next decision (Tick.cs)
             // IMP-NET-005: 非 Owner は加減速も位置も書かない
             // (_speed は Update 冒頭の ObserveSpeed が観測値で埋めている)
             if (_dogOwner && _speed > 0f)
             {
-                float dt = Dt();   // IMP-DOG-034: includes the skipped frames' time (Tick.cs)
+                float dt = MoveDt();   // IMP-DOG-036: one frame - the legs move every frame (Tick.cs)
                 _speed = Mathf.MoveTowards(_speed, 0f, deceleration * dt);
                 // ここは目標速度が常に 0 なので無条件に畳んでよい (StepToward と同じ不変条件)
                 if (_speed <= stopSpeedThreshold) _speed = 0f;
@@ -1669,6 +1671,16 @@ namespace KominkaDogRun
         /// 到着点でちょうど 0 になる速度 (v = √(2ad)) で頭打ちにしてから加減速するので、
         /// **止まる過程が必ずある** (これが無いと脚のアニメだけ先に止まって滑って見える)。</summary>
         void StepToward(Vector3 target, float stopDist, float desired)
+        {
+            // IMP-DOG-036 S1/S2: record the step for RunLegs (not when called from inside another mover: GatherStep / LeashGo)
+            // IMP-DOG-036 S1/S2 fix 1: a step turns the dog itself, so a face recorded earlier in this decision was superseded by it
+            if (LegRecording()) { _legKind = LegStep; _legTarget = target; _legStop = stopDist; _legSpeed = desired; _legNav = _navStep; _legFaceKind = LegNone; }
+            _legDepth++;
+            StepTowardBody(target, stopDist, desired);
+            _legDepth--;
+        }
+
+        void StepTowardBody(Vector3 target, float stopDist, float desired)
         {
             Vector3 pos = dogRoot.position;
             Vector3 to = target - pos;
@@ -1693,7 +1705,7 @@ namespace KominkaDogRun
 
             // IMP-DOG-020: 直線移動は川の帯の手前で止まる (HillsideWater.cs。NavMesh の移動は対象外)。
             // 加速より前に見るので、止まっている間は _speed が 0 のまま (足踏みに見えない)
-            float dt = Dt();   // IMP-DOG-034: includes the skipped frames' time (Tick.cs)
+            float dt = MoveDt();   // IMP-DOG-036: one frame - the legs move every frame (Tick.cs)
             if (_BlockedByRiver(pos, pos + to / dist * Mathf.Max(_speed * dt, RiverProbe)))
             {
                 _speed = 0f;
@@ -1777,7 +1789,14 @@ namespace KominkaDogRun
             // every frame for an idle dog: the greeting finish and the hips bob only act in busy states (TickBusy), the
             // Animator Bools / companion values are write-on-change of flags that did not change (the stretch's running
             // CallTime counts as busy), and the breath fades integrate the carried time through _dt on the next tick.
-            if (!_tickedThisFrame) return;
+            // IMP-DOG-036: on a legs frame only the Sit fold can have changed (ApplyMoveAnim lowers _wantSit when the legs move);
+            // write it as the decision frame would. The rest keeps the decision's values (flags unchanged), the breath integrates
+            // the whole interval on the next decision (_dt).
+            if (!_tickedThisFrame)
+            {
+                if (dogAnimator != null && _wantSit != _wasSit) { _wasSit = _wantSit; dogAnimator.SetBool("Sit", _wantSit); }
+                return;
+            }
             FinishInterruptedGreeting();
             WaterHipsBobLate();   // IMP-DOG-020 step 7: the swim bob on a single-tier rig's hips, after the Animator (HillsideWater.cs)
             float dt = _dt;       // IMP-DOG-034: this frame's Update dt (+ the skipped frames' time)
@@ -2015,7 +2034,10 @@ namespace KominkaDogRun
                 Vector3 moved = pos - _obsPrevPos;
                 moved.y = 0f;
                 float m = moved.magnitude;
-                bool warped = m > ObservedTeleportThreshold;
+                // IMP-DOG-036 S1: the observation interval is a decision interval now (up to 0.25 s), over which a sprinting leashed
+                // dog (7.2 m/s) covers 1.8 m. The old 1.5 m stays the floor (unchanged for per-frame decisions); longer intervals
+                // allow ObservedTeleportSpeed x dt
+                bool warped = m > Mathf.Max(ObservedTeleportThreshold, ObservedTeleportSpeed * dt);
                 _speed = warped ? 0f : m / dt;
                 // IMP-DOG-010: ワープの直後を「ずっと止まっていた」と読ませない。姿勢はこちらの
                 // 連続停止時間から導出されるので、飛んだ先で即座に嗅ぐポーズが出てしまう
@@ -2031,6 +2053,7 @@ namespace KominkaDogRun
 
         Vector3 GroundAfterPlacedSleep(Vector3 pos)
         {
+            _dbgWriter = DbgWGround;   // IMP-DOG-036 step probe: every caller writes the result to the root (sleep / station release)
             RaycastHit hit;
             if (Physics.Raycast(pos + Vector3.up * groundRayOffset, Vector3.down, out hit,
                     Mathf.Infinity, groundLayerMask, QueryTriggerInteraction.Ignore))

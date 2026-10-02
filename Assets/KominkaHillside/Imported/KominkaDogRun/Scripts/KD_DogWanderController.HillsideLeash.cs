@@ -67,7 +67,8 @@ namespace KominkaDogRun
 
         // ---- IMP-DOG-009 の仮値 (どれも Play で決める。速さの段そのものは KH_LeashManager 側) ----
         const float HolderSpeedTau = 0.4f;       // 速さの平滑化の時定数 (s)
-        const float HolderJumpMeters = 1f;       // 1 フレームでこれ以上飛んだら不連続 (テレポート・リスポーン)
+        const float HolderJumpMeters = 1f;       // 1 回の観測でこれ以上飛んだら不連続 (テレポート・リスポーン)。毎フレーム判断ならこれまでどおり
+        const float HolderJumpSpeed = 10f;       // IMP-DOG-036 S1: 判断の間隔が長いときはこの速さ (m/s) × 間隔まで許す (走る人を不連続と見ない)
         const float HolderRunEnter = 3f, HolderRunExit = 2.4f;    // 人の走り 4 m/s と歩き 2 m/s の間で切る
         const float HolderMoveEnter = 0.7f, HolderMoveExit = 0.4f; // 「歩き出した」/「止まった」
         const float LeadHoldGain = 2f;           // lead-hold: リード端までの余裕 1 m あたりの上乗せ (m/s / m)
@@ -237,94 +238,25 @@ namespace KominkaDogRun
             { _destCachePos = route._Position(_destCacheNode); _destCacheRadius = route._Radius(_destCacheNode); }
         }
 
-        // ---- IMP-DOG-034 C1-3: the standing fast path (walk.md S-1) ----
-        // A leashed dog the Owner has settled standing beside / ahead of a still holder (LeashWait at the leash end, LeashRest, or
-        // FollowHand that ended standing) makes the full decision at 5 Hz (StandDecisionPeriod, phased by dogIndex). The frames in
-        // between (LeashStandFrame) keep the per-frame work of that decision: the holder's pace (TrackHolderSpeed, so "started to walk"
-        // is seen on its frame), LeashPose's stillness clock (yaw rate / _stoppedSince), the pose flags it raised, the one-frame gaze +
-        // tail injection to the pet controller (sent every frame with the holder's current head, as LeashPose does), and the legs the
-        // branch used (Coast, plus FaceTowards(holder) for LeashWait). They leave for a full decision on the same frame when anything
-        // that decision watches per frame changes: owner / leash / holder, Fetch or the disc taking the Animator, a wash hold or
-        // satisfied sign, a wash station, the travel ticket, any water state, a stopover in hand, the holder tier rising, the holder's
-        // body moving StandHolderMove from where the decision saw it, a yaw rate above PoseYawRateMax, or the 0.5 s "settled" mark.
-        // Bounded difference: what the decision derives from the hand only (Return at 1.25x leash, invite / rest timers, the look-at
-        // angle, FollowHand re-targeting, the 1 Hz SampleHolder phase) is seen up to StandDecisionPeriod late while the body stands.
-        const int FastLegCoast = 1, FastLegCoastFace = 2;
-        const float StandDecisionPeriod = 0.2f;
-        const float StandHolderMove = 0.15f;   // m, horizontal
-        private int _fastLeg;                  // set by the branch the full decision ended in (0 = none)
-        private bool _standFast;               // the last full decision armed the fast path
-        private float _standDecideAt;          // next full decision
+        // ---- IMP-DOG-036 S1: the leashed dog decides every few frames, its legs move every frame (Tick.cs) ----
+        // Replaces IMP-DOG-034 C1-3 (the standing fast path at 5 Hz) with one mechanism for standing and walking. The decision is
+        // this whole UpdateHillsideLeash; on the frames between, RunLegs (Tick.cs) replays its movers (LeashGo along the planned
+        // corners, Coast, FaceTowards*) and re-sends LeashPose's one-frame gaze. LeashLegsOk (Tick.cs) sends the dog back to a decision
+        // on the frame anything per-frame is live or an event happened. The pose flags need no restoring: UpdateTick (which lowers
+        // them) does not run on legs frames, so they keep the decision's values.
+        const float StandHolderMove = 0.15f;   // m, horizontal: a holder who stood still at the decision and moved this far decides now
+        private bool _legLeashArmed;           // the last decision went through the leash branch normally (holder valid, not yielded)
+        private int _legHolderId = -1;         // the holder that decision saw
+        private bool _legStanding;             // Owner, holder tier 0 at that decision: watch the holder's body on legs frames
         private VRCPlayerApi _standHolder;
         private Vector3 _standHolderAt;
-        private bool _standLook, _standLie, _standSit, _standEat, _standGaze, _standSettled;
-        private int _holderSpeedFrame = -1;
-        private int _standFastFrames;          // harness read-out: frames served by LeashStandFrame
+        private bool _standGaze;               // LeashPose injected the gaze / tail on the last decision (RunLegs re-sends it)
 
-        /// <summary>After a full Owner decision that returned true: may the next frames take the fast path?</summary>
-        private void LeashStandArm(bool chained)
-        {
-            if (_fastLeg == 0 || !_dogOwner || !_wasDogOwner || !_wasLeashed || _leashYielded || _speed != 0f || HolderMoving()) return;
-            if (leashMode != LeashWait && leashMode != LeashRest && leashMode != LeashFree && leashMode != LeashArrived) return;
-            if (pausing || stopoverIndex >= 0 || _stopoverRolledFor >= 0 || _stopoverPending >= 0) return;
-            if (_washLeashStop || _washActive || _stationIdx >= 0 || _activityBusy) return;
-            if (_waterLeashVeto || waterState != WaterOff || _waterSwimming || _swimYValid) return;
-            if (_wlFrame != Time.frameCount || !Utilities.IsValid(_standHolder)) return;
-            _standFast = true;
-            // Six dogs that stop on the same frame decide on six different frames from then on
-            _standDecideAt = Time.time + (chained ? StandDecisionPeriod : StandDecisionPeriod * (dogIndex + 1) / 6f);
-        }
-
-        /// <summary>One frame between two full decisions. False = something changed: run the full decision on this frame (nothing
-        /// that it does twice has been done here, except TrackHolderSpeed, which it then skips for this frame).</summary>
-        private bool LeashStandFrame()
-        {
-            float now = Time.time;
-            if (now >= _standDecideAt || !_dogOwner || !_wasDogOwner || _waterLeashVeto || _leashYielded) return false;
-            if (_wlFrame != Time.frameCount || !_wlLeashed || _wlHolder != _holderTracked) return false;
-            if (_stationIdx >= 0 || waterState != WaterOff || _waterSwimming || _swimYValid || _speed != 0f) return false;
-            if (pausing || stopoverIndex >= 0 || _stopoverRolledFor >= 0 || _stopoverPending >= 0) return false;
-            if (wash != null && (wash._WashHold() || WashSatisfyRunning())) return false;
-            if (TravelPending()) return false;      // memo of this tick (WashErrandTick asked already)
-            if (AnimatorYielded()) return false;    // Fetch / the disc took the root: the edge is handled by the full decision
-            if (!Utilities.IsValid(_standHolder)) return false;
-            Vector3 holderPos = _standHolder.GetPosition();
-            TrackHolderSpeed(holderPos);            // every frame, as the full decision does
-            if (HolderMoving()) return false;
-            Vector3 moved = holderPos - _standHolderAt; moved.y = 0f;
-            if (moved.sqrMagnitude > StandHolderMove * StandHolderMove) return false;
-            // LeashPose's stillness bookkeeping with stopped == true (_speed is 0)
-            float yaw = dogRoot.eulerAngles.y;
-            float dt = Dt();
-            float yawRate = dt > 0.0001f ? Mathf.Abs(Mathf.DeltaAngle(_prevYaw, yaw)) / dt : 0f;
-            if (yawRate > PoseYawRateMax) return false;   // LeashPose would reset _stoppedSince: let it
-            if (!_standSettled && _stoppedSince >= 0f && now - _stoppedSince >= PoseStoppedFor) return false;   // the pose may change now
-            _prevYaw = yaw;
-            if (_stoppedSince < 0f) _stoppedSince = now;
-            // What UpdateHillsideLeash does every frame before its branches, then the pose and the legs of the last decision
-            _pauseEndedThisFrame = false;
-            _wantSleep = false; _paused = false;
-            _lastBusyTime = now;
-            _look = _standLook; _wantLieDown = _standLie; _wantSit = _standSit; _eatPose = _standEat;
-            if (_standGaze && petController != null)
-            {
-                petController._SetGaze(_standHolder.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position, 0f);
-                petController._SetUrge(0.5f);
-            }
-            Coast();
-            if (_fastLeg == FastLegCoastFace && _speed <= stopSpeedThreshold) FaceTowards(holderPos);
-            _standFastFrames++;
-            return true;
-        }
-
-        /// <summary>IMP-DOG-034 C1-3: the standing fast path in front of the full leash decision (see LeashStandFrame).</summary>
         private bool UpdateHillsideLeash()
         {
-            if (_standFast && LeashStandFrame()) return true;
-            bool chained = _standFast;   // the previous full decision armed the fast path (keeps the 0.2 s rhythm)
-            _standFast = false; _fastLeg = 0; _standGaze = false;
+            _legLeashArmed = false; _standGaze = false;   // IMP-DOG-036 S1: re-armed by the decision below
             if (!UpdateHillsideLeashFull()) return false;
-            LeashStandArm(chained);
+            _legStanding = _dogOwner && !HolderMoving();
             return true;
         }
 
@@ -374,19 +306,17 @@ namespace KominkaDogRun
 
             Vector3 handPos = hillsideLeashes._HandPosition(holder, hillsideLeashes.hands[dogIndex]);
             Vector3 holderPos = holder.GetPosition();
-            _standHolder = holder; _standHolderAt = holderPos;   // IMP-DOG-034 C1-3
+            _standHolder = holder; _standHolderAt = holderPos;   // IMP-DOG-034 C1-3 / IMP-DOG-036 S1 (LeashLegsOk, RunLegs)
+            _legLeashArmed = true; _legHolderId = walkerId;      // IMP-DOG-036 S1: legs frames may follow this decision
             // The pace comes from the body, not the hand: a hand waved beside a standing player is not walking.
             if (_dogOwner)
             {
                 int holderId = walkerId;
                 // A client that has just taken the dog over did not make the decision that is in progress
                 // and has no history behind it, so it starts the walk from scratch (Codex D1).
-                bool fresh = !_wasDogOwner || holderId != _holderTracked;
-                if (fresh)
+                if (!_wasDogOwner || holderId != _holderTracked)
                 { _holderTracked = holderId; _routeNext = -1; _routeChoice = -1; _routeResume = -1; ResetHolderSpeed(); ResetPauseAndPoseState(); }
-                // IMP-DOG-034 C1-3: a fast frame that left after tracking this frame already took this frame's sample (same holder,
-                // same position); tracking twice would integrate one frame twice
-                if (fresh || _holderSpeedFrame != Time.frameCount) TrackHolderSpeed(holderPos);
+                TrackHolderSpeed(holderPos);   // IMP-DOG-036 S1: once per decision, over the time since the previous one (Dt)
             }
             // **手放した側も畳む** (Codex D)。ローカルの滞在状態が残ったままだと、この画面では
             // その犬がいつまでも「立ち寄り中」に見え、同じ人の他の犬が場所を取れなくなる
@@ -436,9 +366,6 @@ namespace KominkaDogRun
             if (UpdateWashStation(true)) return true;
             bool washStop = WashLeashStop(holder, handDist, leash);
             LeashPose(holder, toHand, handDist, handPos, route, settling, washStop);
-            // IMP-DOG-034 C1-3: what LeashPose decided this frame (before ApplyMoveAnim folds _wantSit) - a fast frame raises the same
-            _standLook = _look; _standLie = _wantLieDown; _standSit = _wantSit; _standEat = _eatPose;
-            _standSettled = _stoppedSince >= 0f && Time.time - _stoppedSince >= PoseStoppedFor;
             if (!_dogOwner) { ApplyMoveAnim(); return true; }
             // map-and-travel §F.4: the leash owns the root from here (leashed, no water veto - the caller checks it -, Fetch /
             // disc not holding the dog, Owner), so an unfinished swim-height ease must not outlive it. Flags only, no height write.
@@ -506,7 +433,6 @@ namespace KominkaDogRun
             if (stillFor > restAfter || (_inviteCount >= _inviteLimitC && stillFor > 1f))
             {
                 leashMode = LeashRest;
-                _fastLeg = FastLegCoast;   // IMP-DOG-034 C1-3: once the dog stands, the frames between decisions only Coast
                 if (handDist > 1.8f) LeashGo(handPos - toHand / handDist * 1.0f, walkSpeed, 0.2f); else Coast();
                 return true;
             }
@@ -685,7 +611,6 @@ namespace KominkaDogRun
             if (ahead && handDist >= waitAt && !leadHold)
             {
                 leashMode = LeashWait;
-                _fastLeg = FastLegCoastFace;   // IMP-DOG-034 C1-3: the frames between decisions repeat these two lines
                 Coast();
                 if (_speed <= stopSpeedThreshold) FaceTowards(holderPos);
                 return true;
@@ -897,7 +822,6 @@ namespace KominkaDogRun
         private void FollowHand(float handDist, float leash, int mode)
         {
             leashMode = mode;
-            _fastLeg = FastLegCoast;   // IMP-DOG-034 C1-3: armed only if the dog ends this decision standing (LeashStandArm)
             // Three tiers around the hand: sprint from outside the leash, run while it is taut, walk on slack.
             float speed = handDist > leash * 1.2f ? hillsideLeashes.sprintSpeed
                 : (handDist > leash * 0.7f ? hillsideLeashes.dashSpeed : walkSpeed);
@@ -919,14 +843,16 @@ namespace KominkaDogRun
         /// for the next second and send every dog off at full speed.</summary>
         private void TrackHolderSpeed(Vector3 holderPos)
         {
-            _holderSpeedFrame = Time.frameCount;   // IMP-DOG-034 C1-3: one sample per frame (fast frame or full decision)
             float dt = Dt();
             if (dt <= 0.0001f) return;
             holderPos.y = 0f;
             if (!_holderPrevValid) { _holderPrevPos = holderPos; _holderPrevValid = true; return; }
             float delta = Vector3.Distance(holderPos, _holderPrevPos);
             _holderPrevPos = holderPos;
-            if (delta > HolderJumpMeters) return;
+            // IMP-DOG-036 S1: a jump is a speed, not a distance - the sample interval is now a decision interval (up to 0.25 s),
+            // over which a running holder covers more than 1 m. The old 1 m stays the floor, so a per-frame decision (decisionEvery
+            // 1, or any interval under 0.1 s) judges exactly as before; a 0.2 s interval allows 2 m (a 7 m/s holder moves 1.4 m)
+            if (delta > Mathf.Max(HolderJumpMeters, HolderJumpSpeed * dt)) return;
             _holderSpeed = Mathf.Lerp(_holderSpeed, delta / dt, Mathf.Min(1f, dt / HolderSpeedTau));
 
             // Hysteresis both ways: a pace hovering on a threshold must not flip the dog's speed every frame.
@@ -1361,14 +1287,25 @@ namespace KominkaDogRun
             if (!NavMesh.CalculatePath(from.position, to.position, NavMesh.AllAreas, _leashPath) || _leashPath.status != NavMeshPathStatus.PathComplete) return false;
             VRCObjectSync sync = dogRoot.GetComponent<VRCObjectSync>();
             if (sync != null) sync.FlagDiscontinuity();
-            dogRoot.position = to.position; // net: owner-only: _dogOwner checked by the caller
+            _dbgWriter = DbgWTeleport; dogRoot.position = to.position; // net: owner-only: _dogOwner checked by the caller
             _speed = 0f; _leashCorners = null; _nextLeashPath = 0f; _routeNext = -1;
+            _legKind = LegNone; _legFaceKind = LegNone;   // IMP-DOG-036: nothing of the old walk is replayed after a warp
             ApplyMoveAnim();
             return true;
         }
 
         // Walks toward goal along the baked NavMesh. The path is refreshed every 0.35 s or when the goal moves.
+        // IMP-DOG-036 S1: recorded for RunLegs, which replays LeashGoLegs (the corners of this path, no re-plan) until the next decision.
         private void LeashGo(Vector3 goal, float speed, float stop)
+        {
+            // IMP-DOG-036 S1/S2 fix 1: LeashGo turns the dog along the walk; an earlier face record in this decision is superseded
+            if (LegRecording()) { _legKind = LegLeash; _legTarget = goal; _legSpeed = speed; _legStop = stop; _legFaceKind = LegNone; }
+            _legDepth++;
+            LeashGoBody(goal, speed, stop);
+            _legDepth--;
+        }
+
+        private void LeashGoBody(Vector3 goal, float speed, float stop)
         {
             if (Time.time >= _nextLeashPath || Vector3.Distance(goal, _leashGoal) > 0.6f)
             {
@@ -1389,6 +1326,7 @@ namespace KominkaDogRun
             float distance = delta.magnitude;
             if (distance < 0.15f) { Coast(); return; }
             float clearance = WallClearance(dogRoot.position, delta / distance, distance);
+            _legClear = clearance; _legClearCorner = _leashCorner; _legClearFrom = dogRoot.position;   // IMP-DOG-036 S1: consumed by LeashGoLegs
             if (clearance < 0.05f) { Coast(); return; }
             // IMP-DOG-009: StepToward points the movement at the target instantly but turns the body only at
             // turnSpeedDegPerSec, so at 7 m/s the dog side-slips through a corner. Hold the pace back until
@@ -1405,11 +1343,68 @@ namespace KominkaDogRun
             _navStep = false;
         }
 
+        /// <summary>IMP-DOG-036 S1: one legs frame of the last LeashGo (RunLegs, Owner). The same steps as LeashGoBody after its path
+        /// refresh - corner advance, the 0.15 m arrival, the turn-dependent pace, the NavMesh step - except the wall clearance: the
+        /// decision's SphereCast result is consumed by the distance walked since (it measured "this far along this segment"), and a
+        /// corner reached on a legs frame casts once for its new segment. No NavMesh query here: the decision re-plans (0.35 s / 0.6 m).</summary>
+        private void LeashGoLegs()
+        {
+            float speed = _legSpeed;
+            if (_leashCorners == null || _leashCorners.Length < 2) { Coast(); return; }
+            Vector3 pos = dogRoot.position;
+            while (_leashCorner < _leashCorners.Length - 1 && Vector3.Distance(pos, _leashCorners[_leashCorner]) < 0.35f) _leashCorner++;
+            Vector3 target = _leashCorners[_leashCorner];
+            Vector3 delta = target - pos; delta.y = 0f;
+            float distance = delta.magnitude;
+            if (distance < 0.15f) { Coast(); return; }
+            float clearance;
+            if (_leashCorner != _legClearCorner)
+            {
+                clearance = WallClearance(pos, delta / distance, distance);
+                _legClear = clearance; _legClearCorner = _leashCorner; _legClearFrom = pos;
+            }
+            else
+            {
+                Vector3 walked = pos - _legClearFrom; walked.y = 0f;
+                clearance = Mathf.Min(distance, _legClear - walked.magnitude);
+            }
+            if (clearance < 0.05f) { Coast(); return; }
+            Vector3 forward = dogRoot.forward; forward.y = 0f;
+            if (forward.sqrMagnitude > 0.0001f)
+            {
+                float turn = Vector3.Angle(forward, delta / distance);
+                if (turn > TurnSlowDeg) { if (speed > walkSpeed) speed = walkSpeed; }
+                else if (turn > TurnEaseDeg && speed > hillsideLeashes.dashSpeed) speed = hillsideLeashes.dashSpeed;
+            }
+            _navStep = true;
+            StepToward(pos + delta / distance * clearance, _leashCorner == _leashCorners.Length - 1 ? _legStop : 0.05f, speed);
+            _navStep = false;
+        }
+
         // Gathering (KD_GroupActivities mode 1) on the hillside: follow a complete NavMesh path to the slot.
         // Returns false when no complete path exists so the caller walks straight (the agreed "pass through" fallback).
         private float _nextGatherPath;
         private bool _gatherPathOk;
+        // IMP-DOG-036 S2: recorded for RunLegs when it walked (true), which replays GatherLegs (corners only) until the next decision.
+        // False = nothing moved, the caller's straight StepToward is recorded instead.
         private bool GatherStep(Vector3 goal, float speed)
+        {
+            bool rec = LegRecording();
+            _legDepth++;
+            bool walked = GatherStepBody(goal, speed);
+            _legDepth--;
+            if (rec && walked) { _legKind = LegGather; _legTarget = goal; _legSpeed = speed; _legFaceKind = LegNone; }   // fix 1: supersedes an earlier face
+            return walked;
+        }
+
+        /// <summary>IMP-DOG-036 S2: one legs frame of the last GatherStep: the corners of the path it planned (no re-plan).</summary>
+        private void GatherLegs(Vector3 goal, float speed)
+        {
+            if (!_gatherPathOk || _leashCorners == null || _leashCorners.Length < 2) { Coast(); return; }
+            GatherTail(goal, speed);
+        }
+
+        private bool GatherStepBody(Vector3 goal, float speed)
         {
             if (!_dogOwner) { ApplyMoveAnim(); return true; }
             if (Time.time >= _nextGatherPath || Vector3.Distance(goal, _leashGoal) > 0.6f)
@@ -1425,6 +1420,13 @@ namespace KominkaDogRun
                 { _leashCorners = _leashPath.corners; _leashCorner = 1; _gatherPathOk = true; }
             }
             if (!_gatherPathOk || _leashCorners == null || _leashCorners.Length < 2) return false;
+            GatherTail(goal, speed);
+            return true;
+        }
+
+        /// <summary>The walking half of GatherStep (unchanged code, shared with GatherLegs).</summary>
+        private void GatherTail(Vector3 goal, float speed)
+        {
             while (_leashCorner < _leashCorners.Length - 1 && Vector3.Distance(dogRoot.position, _leashCorners[_leashCorner]) < 0.35f) _leashCorner++;
             bool last = _leashCorner == _leashCorners.Length - 1;
             // IMP-DOG-020: 完全経路の角までは NavMesh の移動として帯の判定から外す。最後の区間は NavMesh へ投影した終点ではなく
@@ -1432,7 +1434,6 @@ namespace KominkaDogRun
             _navStep = !last;
             StepToward(last ? goal : _leashCorners[_leashCorner], 0f, speed);
             _navStep = false;
-            return true;
         }
 
         private float PathLength(NavMeshPath path)
