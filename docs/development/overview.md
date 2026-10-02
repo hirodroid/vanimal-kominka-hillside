@@ -40,21 +40,20 @@ Issue単位の状態と次の作業は [Issueサマリ](issues/issue_summary.md)
 | [IMP-WLD-006](issues/IMP-WLD-006-farmhouse-portal-board.md) | 門の板「古民家ドッグラン」と `KH_PortalBoard` (ローカルのみ、Interact でポータルを出し・しまう、60 秒で自動) | 最初の Build で板とポータルが古民家の外壁と重なって保存され Guide/2 が FAIL 2。ビルダーを物理で空いた位置を探す形に直したが未実行。Guide/1 → Guide/2 → Play。有効にしたポータルが実際に入れるかは VRChat クライアントのみ |
 | [DES-UI-004](issues/DES-UI-004-walk-destinations-and-boards.md) | 看板 A の本文拡大・B の縮小 (コードのみ) | Guide/1 で作り直し → Guide/2 → Guide/3 |
 | [BUG-UI-001](issues/BUG-UI-001-shopkeeper-walk-info-destinations.md) | おじいさんの `InfoWalk` を 6 目的地へ (`KD_ShopKeeper.cs`・`UITranslations.json`) | 焼き直し・枠の収まり |
-| [IMP-WLD-004](issues/IMP-WLD-004-warp-all-five-points.md) | ワープを地図の 1〜5 へ (着地点を置かない円・2 列 × 3 段の一覧・Course/83d) | Course/80 → 84 → 27 → 81 → Guide/1 → Guide/2 → 83d。下流の橋 (6) を含めるかはユーザーの回答待ち |
-| [IMP-DOG-037](issues/IMP-DOG-037-wash-call-availability-and-range.md) | 洗い場ボードの可否表示と呼べる範囲 (25 m / 川辺 28 m)、翻訳 24 キー × 13 言語 | Wash/11 → Wash/12 → Course/100f の C-avail-*。3 つの挙動の変更はユーザーの確認待ち |
+| [IMP-WLD-004](issues/IMP-WLD-004-warp-all-five-points.md) | ワープを地図の 1〜5 へ (着地点を置かない円・2 列 × 3 段の一覧・Course/83d) | Course/80 → 84 → 27 → 81 → Guide/1 → Guide/2 → 83d。下流の橋 (6) は対象外のまま (10-03 ユーザー「推奨で」。推奨の明示は無く、現状を採る) |
+| [IMP-DOG-037](issues/IMP-DOG-037-wash-call-availability-and-range.md) | 洗い場ボードの可否表示と呼べる範囲 (25 m / 川辺 28 m)、翻訳 24 キー × 13 言語 | Wash/11 → Wash/12 → Course/100f の C-avail-*。3 つの挙動の変更は 10-03 にユーザーが了承済み |
 | [IMP-DOG-035](issues/IMP-DOG-035-wash-call-dog-to-station.md) | C-keepout-wander の検査の直し (`releasedHomes` へも書く) | 単独 19 ケースの再実行、修正後の版の 2 回目の独立レビュー |
 | [BUG-DOG-008](issues/BUG-DOG-008-frisbee-style-double-press.md)・[009](issues/BUG-DOG-009-frisbee-style-receiver-check.md) | フリスビーの取り方の連打の行の修正と受け手のトレーナー確認 | Compile (`--udon`)、非 Owner 端末で確認 |
 
 翻訳 (`UITranslations.json` の 13 言語) は 10-02〜03 に追加した分をすべて AI が作った (10-03 に AI が校正。ネイティブの校正ではない)。確認項目は [チェックリスト](../testing/play-checklist-2026-10-02.md) の A0-14〜A0-20・B58〜B61・C16〜C18・D23〜D25・E21〜E23。
 
+**ユーザーの回答 (2026-10-03「推奨で」、全部の推奨を採用)**: IMP-DOG-032 が IMP-DOG-016 に勝つ (法線 0.9 の判定は撤回。IMP-DOG-033 は 032 の Play が 10-06 までに済めば着手)、IMP-DOG-037 の 3 つの挙動の変更、IMP-DOG-006 の 5 点、DES-DOG-002 の 5 点、DES-UI-006 の 2 点、DES-UI-002 の 3 点、IMP-WLD-005 の 3 点 (10-07 までに Quest で見られなければボードとヘッダーのボタンは置かずに公開)、IMP-DOG-033 の 3 点を採用。IMP-WLD-004 の 6 下流の橋は推奨の明示が無く、実装の現状 (対象外) を採る。DES-UI-006・DES-UI-002・IMP-WLD-005・IMP-DOG-006・DES-DOG-002 は wip (実装中)。採用の決定を実装・Play の合格へ読み替えない。
+
 **ユーザーの回答待ち (2026-10-03 時点)**:
 
-- IMP-DOG-032 と IMP-DOG-016 のどちらが勝つか (推奨: 032。IMP-DOG-033 の前提)
-- IMP-DOG-006 の 5 点・DES-DOG-002 (ボールの柄) の 5 点: [質問リスト](../plans/2026-10-03-open-questions.md)
-- DES-UI-006 の 2 点: [さんぽタブの整理](../plans/2026-10-03-walk-tab-layout.md) / DES-UI-002 の 3 点: [フリスビーの設定](../plans/2026-10-03-frisbee-settings.md) / IMP-WLD-005 の 3 点: [自動写真とギャラリー](../plans/2026-10-03-auto-photo-gallery.md) / IMP-DOG-033 の 3 点: [傾けて置く](../plans/2026-10-03-call-placement-tilt.md) (いずれも推奨案・ユーザー承認待ち)
-- IMP-WLD-004: 6 下流の橋もワープ先に含めるか
-- IMP-DOG-037: 呼べる範囲・ほかの洗い場の犬を断る・他人が洗っている犬は待つ、の 3 つの挙動の変更
-- 既存の待ち: 川音の参照音声・big/middle/little の関係・クレジットの要否、ライブの演目の範囲 (最後の着手時)
+- IMP-ENV-006 川音: 参照音声を入力したか、使った機能が Adobe 製モデルの「Generate Sound Effects」か (ベータ表示の有無)、big/middle/little の関係・クレジットの要否 (回答があるまで、この音を含む版は公開しない)
+- ライブの演目の範囲 (最後の着手時)
+- ユーザーが「後で」記入する作業: クレジット URL 3 件・洗い場の札の日本語化
 
 ### 実装・確認の到達点
 
@@ -85,7 +84,7 @@ Issue単位の状態と次の作業は [Issueサマリ](issues/issue_summary.md)
 | 性能の後始末 | 軽量化の IMP-DOG-034 / 036 は完了 (10-02 ユーザー判断)。残りは確認と片付け | 未確認項目のPlay／複数人確認、地形の見た目、公開前の計測プローブ撤去は [IMP-ENV-010](issues/IMP-ENV-010-quest-performance.md) へ引き継ぎ。再び重く感じたら036の保留項目から再検討 |
 | 体験の仕上げ | 6匹の洗浄、4地点の使いやすさ、呼び出し・高さ・道具・音と反応、洗い場の出入り。AI 側の残り: C-keepout-wander の検査修正と IMP-DOG-035 の再レビュー、W-break の検出力 | IMP-DOG-024と子Issue、IMP-DOG-035、IMP-ENV-011。すすぎ改善と洗い場の出入りのユーザー Play は A-0・A-1。2人協力、PCVR／Desktop／Touch、先行作との比較とASMR評価は [VER-DOG-002](issues/VER-DOG-002-wash-experience-and-devices.md) |
 | 機能の確認 | メニュー・保存・おもちゃ・川遊び・移動・呼ぶの実機／複数人確認 | 各Issueのチェックリスト。非マスター投球・行き先の2人再現・iOSのディスク色・所有権エラー等の未解決条件も継続。クレジットURL3件・洗い場の札の日本語化はユーザーが後で記入 (10-03) |
-| 公開前に入れる制作 | 遊び方の看板、川音、オートナイトモード、ライブ、往復導線は **初期公開に入れる (2026-10-02 ユーザー決定)**。看板・川音・オートナイトモードは推奨案で作成・配置済み (review。ユーザーが見て直しを指示。看板に載せない項目 (トレーナーの価格・「フリスビーの取り方」の特典表記・Credits の飾りセットの名前と価格) は、載せないままで OK (10-03、AI の読み))。**2026-10-03 にユーザーが追加で決めた**: ライブは最後に作る (演目の範囲は未回答のまま先送り)。往復導線は古民家を改変せず、門のポータルを古民家ドッグランの案内ボードにして Interact で隣にポータルを出す ([IMP-WLD-006](issues/IMP-WLD-006-farmhouse-portal-board.md) 実装中、[DES-WLD-001](issues/DES-WLD-001-round-trip.md) は完了)。BGM の ON/OFF ボタンは残し基準音量 0.35 を採用、斜面の法線 0.9 を採用、水遊びの揺れ・柴・水音は現状のまま。初期公開に入れるか書かれていなかった Issue は全部入れる (IMP-DOG-006・032・033・037、IMP-WLD-004・005、IMP-ENV-001・009、IMP-UI-002、DES-UI-002・006、DES-DOG-002)。 | DES-UI-004／005、IMP-ENV-006、IMP-ENV-005、DES-LIV-001／002、IMP-WLD-006、IMP-WLD-003、上記の追加 Issue。**ユーザーの回答待ち**: ライブの演目範囲 (最後の着手時)、川音の参照音声・big/middle/little の関係・クレジットの要否 (規約の根拠は AI が調べる)、IMP-DOG-006 の 5 点。**範囲が増えたので、§1 の目標日 (開発完了 10-03〜04、日付は変えない) に収まるかは再判断が要る**。採用の決定を設計・実装の完了へ読み替えない |
+| 公開前に入れる制作 | 遊び方の看板、川音、オートナイトモード、ライブ、往復導線は **初期公開に入れる (2026-10-02 ユーザー決定)**。看板・川音・オートナイトモードは推奨案で作成・配置済み (review。ユーザーが見て直しを指示。看板に載せない項目 (トレーナーの価格・「フリスビーの取り方」の特典表記・Credits の飾りセットの名前と価格) は、載せないままで OK (10-03、AI の読み))。**2026-10-03 にユーザーが追加で決めた**: ライブは最後に作る (演目の範囲は未回答のまま先送り)。往復導線は古民家を改変せず、門のポータルを古民家ドッグランの案内ボードにして Interact で隣にポータルを出す ([IMP-WLD-006](issues/IMP-WLD-006-farmhouse-portal-board.md) 実装中、[DES-WLD-001](issues/DES-WLD-001-round-trip.md) は完了)。BGM の ON/OFF ボタンは残し基準音量 0.35 を採用、斜面の法線 0.9 の採用は 10-03 の後の回答 (IMP-DOG-032 が勝つ) で撤回、水遊びの揺れ・柴・水音は現状のまま。初期公開に入れるか書かれていなかった Issue は全部入れる (IMP-DOG-006・032・033・037、IMP-WLD-004・005、IMP-ENV-001・009、IMP-UI-002、DES-UI-002・006、DES-DOG-002)。 | DES-UI-004／005、IMP-ENV-006、IMP-ENV-005、DES-LIV-001／002、IMP-WLD-006、IMP-WLD-003、上記の追加 Issue。**ユーザーの回答待ち**: ライブの演目範囲 (最後の着手時)、川音の参照音声・big/middle/little の関係・クレジットの要否 (規約の根拠は AI が調べる)、川音の参照音声の有無・使った機能。**範囲が増えたので、§1 の目標日 (開発完了 10-03〜04、日付は変えない) に収まるかは再判断が要る**。採用の決定を設計・実装の完了へ読み替えない |
 | 公開判定 | 端末別・複数人・長時間・境界／落下・負荷・容量の残条件を揃える | [VER-WLD-001](issues/VER-WLD-001-quest-ios-devices.md)、IMP-ENV-001、game-design §6と追加採用機能の完了条件。公開目標日は§1、未確認端末を対応済みにしない |
 | 後回し・保留 | ユーザー手動のスポーン調整など。ライブは保留ではなく「最後に作る」 | IMP-ENV-003 等の hold は既存の再開条件を維持。IMP-ENV-009 (道沿いの景観) は初期公開に入れる (10-03) が、性能の測定のあとに着手する |
 
