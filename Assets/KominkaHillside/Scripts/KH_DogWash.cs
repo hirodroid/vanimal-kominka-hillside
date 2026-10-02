@@ -36,18 +36,32 @@ namespace KominkaHillside
     //
     // ---- Operations and their results (design §1-2; IMP-DOG-026). The mask (FragBrush) and the cells (ApplyCell)
     // use the same formulas; only the weight differs: mask w = the shader's soft capsule falloff x clumps x part gate
-    // (foam removal uses the wider wOut), cells w = 1 for every cell centre within (r + cellReach) of the capsule, x
-    // cellGain. s = Dwell(sec) x w. sat = clamp 0..1. D, F, W = dirt, foam, wet before; D', F', W' after.
+    // (foam removal uses the wider wOut, whose outer edge is rinseReach x the noisy radius for the shower and 1.2 x for
+    // the towel), cells w = 1 for every cell centre within (r + cellReach) of the capsule, x cellGain (the shower: the
+    // foam part of the delta, with the dirt gate, also out to (r x rinseReach + cellReach), as wOut does on the mask).
+    // s = Dwell(sec) x w. sat = clamp 0..1. D, F, W = dirt, foam, wet before; D', F', W' after.
+    // Part gate: the sponge and the towel paint the hit part and its partNeighbors only (no foam through to the other
+    // leg); the SHOWER has no part gate (2026-10-02, IMP-DOG-025: shoulder texels nearest to the neck / hip collider
+    // were never rinsed by water aimed at the shoulder).
     //
     //  op                | delta (dD, dF, dW) per s                          | result
     //  sponge (foam)     | (0, spongeFoamRate, spongeWetRate)                | F' = sat(F + dF (1 - ease F))  ease = _FoamGrowEase
     //                    |                                                   | D' = D (foam never changes dirt; foam also grows on a clean dog)
     //                    |                                                   | W' = sat(W + dW)
-    //  shower (rinse)    | (showerDirtRate, showerFoamRate, showerWetRate)   | F' = sat(F + dF)
+    //  shower (rinse)    | (showerDirtRate, showerFoamRate, showerWetRate)   | F' = sat(F + dF)       every part (no part gate), dF out to rinseReach
     //                    |                                                   | Dn = sat(D + dD (1 + F rinseFoamBoost))   (water alone removes dirt; foam is faster)
     //                    |                                                   | g  = foamRinseGate x smoothstep(0.03, 0.2, F)
     //                    |                                                   | D' = sat(lerp(Dn, min(D F' / max(F, 1e-4), D), g))
     //                    |                                                   | W' = sat(W + dW)
+    //  runoff (after a   | every runoffInterval until runoffSeconds after    | n  = rinsed neighbours of 8 (W >= 0.5 && F < 0.1; outside the islands do not count)
+    //   shower stroke,   |   the last shower stroke; a = runoffRate x dt     | F' = max(0, F - a n / 8)            (only where F > 0; W' = W)
+    //   every client)    |   (dt <= 0.25 s); mask: neighbours +-runoffStep   | D' = min(D, D F' / max(F, 1e-4))
+    //                    |   texels; cells (Owner): the 8 grid neighbours,    | leftover foam next to a rinsed area flows away by itself (no new
+    //                    |   a x runoffCellGain (1); a cell counts as rinsed |   synced variable / event: the Owner's cells are the truth)
+    //                    |   only if a SHOWER stroke rinsed it (no chain:    | mask: an eroded wet texel counts, so the mask's front moves up to
+    //                    |   one ring around the showered cells)            |   runoffStep texels per pass through wet texels
+    //                    | also after a Restore that repainted (a joiner in  | a new Owner seeds the showered cells from the rinsed cells it holds
+    //                    |   a window) and on a new Owner                    |   and continues the window
     //  towel (dry)       | (towelDirtRate, towelFoamRate, towelWetRate)      | as the shower with g = 0: D' = sat(D + dD (1 + F boost))
     //  dry (Decay, dt)   | fd = washing ? 0 : dt / foamDrySeconds            | F' = max(0, F - fd), W' = max(0, W - wd), D' = D
     //   (4 s / 2 s)      | wd = dt / wetDrySeconds                           | washing = _WashHold() || a stroke seen here within holdSeconds
@@ -114,6 +128,10 @@ namespace KominkaHillside
         const int PassBrush = 0;
         const int PassRestore = 1;
         const int PassDecay = 2;
+        const int PassRunoff = 3;
+        const int AllowAllKey = -4;          // _allowFor: every part allowed (the shower). -2 = nothing set yet, -3 = SetAllowOnly
+        const float TowelFoamReach = 1.2f;   // wOut's outer edge for the towel (and the dirt draw): the value before rinseReach
+        const float MaxRunoffStep = 0.25f;   // one runoff pass covers at most this much time (a hitch does not wipe a patch)
         const int PackMax = (1 << 30) - 1;   // 3 axes x 10 bit
         const int MaxAmountMs = 2000;
         const int QueueMax = 10;
@@ -169,13 +187,14 @@ namespace KominkaHillside
 
         [Header("Prototype values (Play で決め直す)")]
         [Range(0f, 1f)] public float initialDirt = 0f;   // 決定: 2026-10-01 (IMP-DOG-034 C2-2)。犬はきれいな状態で始まる
-        public float spongeRadius = 0.09f;
+        // Wash/11 writes KH_DogWashSetupEditor.WashTuning (spongeRadius, the sponge / shower rates, rinseReach, runoff*)
+        public float spongeRadius = 0.11f;
         public float showerRadius = 0.07f;
         public float towelRadius = 0.10f;
-        public float spongeFoamRate = 0.9f;
+        public float spongeFoamRate = 1.6f;
         public float spongeWetRate = 0.2f;
-        public float showerFoamRate = -1.6f;
-        public float showerDirtRate = -0.5f;
+        public float showerFoamRate = -4f;
+        public float showerDirtRate = -1f;
         [Tooltip("使っていない (マスクのシェーダーに上限が無いので、セルも同じ式にした 2026-09-30)")]
         public float showerDirtRateMax = -1.6f;
         public float showerWetRate = 1.2f;
@@ -185,6 +204,8 @@ namespace KominkaHillside
         [Tooltip("すすぎで汚れを落とす速さ = 基本 × (1 + 泡 × この値)。マスクとセルの両方に使う")]
         public float rinseFoamBoost = 2.2f;
         public float foamRinseGate = 1f;
+        [Tooltip("シャワーが泡を消す範囲の外側の縁 = 縁のノイズ込みの半径 × この値 (マスクの _RinseReach)。セルも泡はブラシの半径 × この値 + cellReach まで。1.2 = 以前の固定値")]
+        public float rinseReach = 1.7f;
         public float brushSoft = 0.35f;
         public float edgeNoise = 0.3f;
         [Tooltip("セルへの積算: ブラシの半径にこの距離 (m) を足した範囲のセルが変わる (セルは帯より粗い)")]
@@ -210,6 +231,18 @@ namespace KominkaHillside
         public float audioFadeSpeed = 6f;
         public float splashPerSecond = 60f;
         public float foamPuffPerSecond = 20f;
+
+        [Header("Runoff (2026-10-02: 流した所の隣に残った泡は自然に流れる。Wash/11 が WashTuning を書く)")]
+        [Tooltip("最後のシャワーのストロークからこの秒数、流れる処理を続ける。0 以下で無効")]
+        public float runoffSeconds = 1.5f;
+        [Tooltip("流れる処理の間隔 (s)。1 回 = マスクの Blit 1 回 (Blit の予算に数える) + Owner のセル")]
+        public float runoffInterval = 0.1f;
+        [Tooltip("8 近傍すべてが流された時に 1 秒で減る泡。0 以下で無効")]
+        public float runoffRate = 3f;
+        [Tooltip("マスクで近傍を見る距離 (テクセル、整数に丸める)")]
+        public float runoffStep = 2f;
+        [Tooltip("セルの流れる量 = マスクの量 × この値。セルはシャワーで流したセルの隣 1 周だけが減る (連鎖しない) ので、1 = 隣のセルがマスクと同じ速さ。大きくすると真実がマスクより先に清潔になる")]
+        public float runoffCellGain = 1f;
 
         [Header("Getting dirty (IMP-DOG-029, wired by Wash/20 KH_DirtZoneEditor; prototype values)")]
         [Tooltip("犬の Fetch (IsIdle / WaterPose)。null なら Fetch 中の移動と川を見ない")]
@@ -335,7 +368,7 @@ namespace KominkaHillside
         // ---- IMP-DOG-034 B1: lower-rate monitoring (user policy 2026-09-30: lightness over realtime; washing needs little) ----
         // B1a: EvaluateState loops the cells only when they may have changed since the last one. Every writer of _dirt /
         // _foam / _wet sets _cellsDirty (InitialCells, ApplyToCells, _DebugSetDirt / _DebugClear, OnDeserialization, Decay,
-        // ApplyDirt, AddPartCells, _DebugCellsChanged); a replaced array (the harness's SetProgramVariable) counts as well.
+        // ApplyDirt, AddPartCells, RunoffCells, _DebugCellsChanged); a replaced array (the harness's SetProgramVariable) counts as well.
         // A missed writer degrades to "late" (SafeEvalInterval), never "never". The time-only part (shell off) runs on the
         // 0.5 s schedule without the loop (EvaluateTime).
         private bool _cellsDirty = true;
@@ -434,6 +467,22 @@ namespace KominkaHillside
         private Vector3[] _pdB = new Vector3[PendMax];
         private float[] _pdRad = new float[PendMax];
         private float[] _pdSec = new float[PendMax];
+
+        // Runoff (2026-10-02): active from an accepted shower stroke until runoffSeconds after the last one. _runoffLast is
+        // the time the last pass covered up to (its elapsed is the next pass's amount); _rinsed is the cells' snapshot.
+        private bool _runoffOn;
+        private float _runoffUntil;
+        private float _runoffNext;
+        private float _runoffLast;
+        private bool[] _rinsed;
+        // Owner-local (round 2): the cells a SHOWER stroke left rinsed (wet >= 0.5, foam < 0.1 after ApplyToCells, inner reach).
+        // Only these count as rinsed neighbours in RunoffCells: a cell eroded by the runoff never becomes one, so the erosion
+        // reaches one ring of cells around the showered ones and does not chain across the grid (the mask's front moves
+        // <= runoffStep texels per pass). Cleared for a cell a sponge stroke foams, and for all on a reset (DropInFlight).
+        private bool[] _cellShowered;
+        // Harness read-outs: mask passes run / cell passes run (Owner)
+        private int _runoffPasses;
+        private int _runoffCellPasses;
 
         // Contact history per tool (mesh space, converted at the frame of contact).
         private bool[] _hValid = new bool[3];
@@ -571,6 +620,9 @@ namespace KominkaHillside
         private int _idFoamGrowEase;
         private int _idDirtHeightFade;
         private int _idDirtHeightWeight;
+        private int _idRinseReach;
+        private int _idRunoffStep;
+        private int _idRunoffAmount;
 
         void Start()
         {
@@ -592,6 +644,9 @@ namespace KominkaHillside
             _idFoamGrowEase = VRCShader.PropertyToID("_FoamGrowEase");
             _idDirtHeightFade = VRCShader.PropertyToID("_DirtHeightFade");
             _idDirtHeightWeight = VRCShader.PropertyToID("_DirtHeightWeight");
+            _idRinseReach = VRCShader.PropertyToID("_RinseReach");
+            _idRunoffStep = VRCShader.PropertyToID("_RunoffStep");
+            _idRunoffAmount = VRCShader.PropertyToID("_RunoffAmount");
 
             if (meshToWorldScale <= 0f) meshToWorldScale = 1f;
             for (int i = 0; i < SenderSlots; i++) { _sndId[i] = -1; _sndLast[i] = -1e9f; }
@@ -694,6 +749,7 @@ namespace KominkaHillside
         void EnsureArrays()
         {
             EnsureSyncedArrays();
+            if (_cellShowered == null || _cellShowered.Length != CellCount) _cellShowered = new bool[CellCount];
             if (_dirt != null) return;
             _dirt = new float[CellCount];
             _foam = new float[CellCount];
@@ -893,6 +949,7 @@ namespace KominkaHillside
             _lastActivity = Time.time;
             _lastWetActivity = _lastActivity;          // IMP-DOG-034 B1c
             _busyUntil = _lastActivity + BusyHold;     // IMP-DOG-034 B1e: per-frame while washing (segments, audio)
+            if (tool == ToolShower) MarkRunoff();
             ContactEffects(tool, part, worldTo, b, seconds);
             ShowShell(true);
         }
@@ -934,6 +991,8 @@ namespace KominkaHillside
             Vector3 b = Unpack(part, to);
             _lastWasherId = caller.playerId;
             _busyUntil = Time.time + BusyHold;   // IMP-DOG-034 B1e: an accepted stroke brings Update back to per-frame
+            // Every client (the own echo too: the Owner's cells take the shower at the echo, so their runoff follows it)
+            if (tool == ToolShower) MarkRunoff();
 
             if (!caller.isLocal)
             {
@@ -1285,6 +1344,8 @@ namespace KominkaHillside
             _zoneAcc = 0f;
             _waterAcc = 0f;
             _swimAcc = 0f;
+            _runoffOn = false;   // the repaint replaces the mask; nothing rinsed before the reset runs off after it
+            if (_cellShowered != null) for (int c = 0; c < _cellShowered.Length; c++) _cellShowered[c] = false;
         }
 
         // ================= Update =================
@@ -1299,7 +1360,8 @@ namespace KominkaHillside
             // A stroke sets _busyUntil; a received dirt draw / repaint sets its own flag here; other events call Wake().
             // An open segment always comes with a stroke within SegmentGap (< BusyHold), so _segOpen needs no check.
             if (now < _idleNext && now >= _busyUntil && _pdCount == 0 && _qCount == 0 && !_anyDirtDraw && !_restorePending
-                && !_replaying && !_replayPending && !_dirtOutPending && !_audioOn && !_syncDue) return;   // _syncDue: a send waiting for its time goes out on time
+                && !_replaying && !_replayPending && !_dirtOutPending && !_audioOn && !_syncDue   // _syncDue: a send waiting for its time goes out on time
+                && !_runoffOn) return;   // the runoff runs on its own runoffInterval schedule (it outlasts BusyHold)
             if (now >= _idleNext) _idleNext = NextGrid(now, IdleInterval, _phase);
 
             // Lost RenderTexture (device reset, app resume) or a long real-time gap: repaint from the cells.
@@ -1314,6 +1376,10 @@ namespace KominkaHillside
             if (_restorePending && CanBlit())
             {
                 bool restored = Restore();
+                // Round 2: a joiner (or any repaint) during someone's runoff window: the repainted mask holds the cells as they
+                // were sent, so the same erosion runs once more from there (one window). Only when the cells hold foam next to a
+                // rinsed cell; nothing here sets _restorePending again, so this cannot loop.
+                if (restored && CellsHaveRunoff()) MarkRunoff();
                 if (_replayPending)
                 {
                     _replayPending = false;
@@ -1324,6 +1390,7 @@ namespace KominkaHillside
             ReplayStep();
             DrainPending();
             DrainDirt();
+            RunoffTick(now);   // after the draws: it takes only the Blit budget they leave
 
             // Getting dirty (IMP-DOG-029): the Owner samples the dog once a second (IMP-DOG-034 B1d) and applies every
             // dirtApplyInterval.
@@ -1419,6 +1486,7 @@ namespace KominkaHillside
             EnsureArrays();
             Reintegrate();
             ReintegrateDirt();
+            SeedShoweredFromCells();   // round 2: the runoff's showered cells, and a window in progress continues here
             for (int i = 0; i < AppliedSlots; i++) _apAt[i] = Time.time;
             if (!_gotFirst)
             {
@@ -1592,17 +1660,28 @@ namespace KominkaHillside
             _maskMat.SetFloat(_idRinseFoamBoost, rinseFoamBoost);   // the shader only boosts a removal
             _maskMat.SetFloat(_idFoamRinseGate, shower ? foamRinseGate : 0f);
             _maskMat.SetFloat(_idEdgeNoise, edgeNoise);
-            SetAllow(part);
+            _maskMat.SetFloat(_idRinseReach, shower ? Mathf.Max(1f, rinseReach) : TowelFoamReach);
+            // The shower has no part gate (2026-10-02): water aimed at the shoulder hits the neck / hip collider there, and
+            // the shoulder texels of the leg are not that part's neighbours. The sponge / towel keep the neighbour gate.
+            SetAllow(shower ? AllowAllKey : part);
             VRCGraphics.Blit(_cur, _next, _maskMat, PassBrush);
             Swap();
         }
 
-        void SetAllow(int part)
+        // key = a part (that part + its partNeighbors) or AllowAllKey (every part). Cached per key (_allowFor).
+        void SetAllow(int key)
         {
-            if (part == _allowFor) return;
-            _allowFor = part;
-            int mask = partNeighbors != null && part >= 0 && part < partNeighbors.Length ? partNeighbors[part] : 0;
-            for (int i = 0; i < AllowSlots; i++) _allow[i] = (i == part || (i < PartCount && ((mask >> i) & 1) != 0)) ? 1f : 0f;
+            if (key == _allowFor) return;
+            _allowFor = key;
+            if (key == AllowAllKey)
+            {
+                for (int i = 0; i < AllowSlots; i++) _allow[i] = 1f;
+            }
+            else
+            {
+                int mask = partNeighbors != null && key >= 0 && key < partNeighbors.Length ? partNeighbors[key] : 0;
+                for (int i = 0; i < AllowSlots; i++) _allow[i] = (i == key || (i < PartCount && ((mask >> i) & 1) != 0)) ? 1f : 0f;
+            }
             _maskMat.SetFloatArray(_idAllowPart, _allow);
         }
 
@@ -1784,6 +1863,149 @@ namespace KominkaHillside
             if (qChanged) _syncDue = true;
         }
 
+        // ---- Runoff (2026-10-02, IMP-DOG-025 user request: "the shower washes the foam away quickly"; no aiming at every
+        // small leftover). Leftover foam next to a rinsed area flows away by itself: an accepted shower stroke (own or
+        // received, on every client) starts it; the mask's Runoff pass (KH_WashMask pass 3) runs every runoffInterval until
+        // runoffSeconds after the last shower stroke, and the Owner erodes its cells the same way. The cells are the synced
+        // truth: a late joiner's Restore holds the Owner's erosion up to the snapshot it received, and the Restore starts one
+        // window of its own so the rest flows away on its mask too. No synced variable and no event is added.
+
+        void MarkRunoff()
+        {
+            if (!(runoffSeconds > 0f) || !(runoffRate > 0f)) return;
+            float now = Time.time;
+            if (!_runoffOn)
+            {
+                _runoffOn = true;
+                _runoffLast = now;
+                _runoffNext = now + Mathf.Max(0.02f, runoffInterval);
+            }
+            _runoffUntil = now + runoffSeconds;
+        }
+
+        void RunoffTick(float now)
+        {
+            if (!_runoffOn || now < _runoffNext) return;
+            if (!(runoffSeconds > 0f) || !(runoffRate > 0f)) { _runoffOn = false; return; }
+            // A repaint / replay first (it would wipe the pass, and a band being put back must not be eroded half-drawn), and
+            // only inside the Blit budget. The time waits meanwhile, up to MaxRunoffStep.
+            if (_restorePending || _replaying || _replayPending || !CanBlit()) return;
+            float dt = Mathf.Clamp(now - _runoffLast, 0f, MaxRunoffStep);
+            _runoffLast = now;
+            _runoffNext = now + Mathf.Max(0.02f, runoffInterval);
+            if (now >= _runoffUntil) _runoffOn = false;   // the last pass
+            float amount = runoffRate * dt;
+            if (!(amount > 0f)) return;
+            DrawRunoff(amount);
+            // The cells (Owner) take runoffCellGain x the amount. Round 2: the cells erode only one ring around the showered
+            // cells (no chain), i.e. about one cell (~16 texels) per window, while the mask's front advances up to runoffStep
+            // texels per pass (~30 per window) through wet texels. Gain 1 keeps the ring cell's rate equal to the mask's, so the
+            // truth neither runs ahead of what the mask shows (a clean edge with foam in view) nor lags it much.
+            if (Networking.IsOwner(gameObject)) RunoffCells(amount * Mathf.Max(0f, runoffCellGain));
+        }
+
+        // The cells hold foam somewhere and a rinsed cell (wet >= 0.5, foam < 0.1) somewhere: a runoff window could change something.
+        bool CellsHaveRunoff()
+        {
+            if (_dirt == null || _validCells == null) return false;
+            bool rinsed = false;
+            bool foam = false;
+            for (int k = 0; k < _validCells.Length; k++)
+            {
+                int c = _validCells[k];
+                if (_wet[c] >= 0.5f && _foam[c] < 0.1f) rinsed = true;
+                if (_foam[c] > 0f) foam = true;
+                if (rinsed && foam) return true;
+            }
+            return false;
+        }
+
+        // Round 2, a new Owner: it did not see which cells the shower rinsed, so it takes the cells that are rinsed now (an
+        // eroded cell with wet >= 0.5 counts once here: at most one extra ring, once per handover), and continues a window
+        // that may be in progress at the handover (one window; nothing to erode = nothing changes).
+        void SeedShoweredFromCells()
+        {
+            EnsureArrays();
+            if (_validCells == null) return;
+            for (int c = 0; c < CellCount; c++) _cellShowered[c] = false;
+            for (int k = 0; k < _validCells.Length; k++)
+            {
+                int c = _validCells[k];
+                if (_wet[c] >= 0.5f && _foam[c] < 0.1f) _cellShowered[c] = true;
+            }
+            if (CellsHaveRunoff()) MarkRunoff();
+        }
+
+        // The mask: foam with rinsed neighbours (+-runoffStep texels, 8 directions) loses amount x n / 8. Counted in the Blit budget.
+        void DrawRunoff(float amount)
+        {
+            _blitCount++;
+            _runoffPasses++;
+            if (_maskMat == null || _cur == null || _next == null) return;
+            _maskMat.SetFloat(_idRunoffStep, Mathf.Max(1f, (float)Mathf.RoundToInt(runoffStep)));
+            _maskMat.SetFloat(_idRunoffAmount, amount);
+            VRCGraphics.Blit(_cur, _next, _maskMat, PassRunoff);
+            Swap();
+        }
+
+        // The cells (Owner): the same rule on the 16 x 16 grid (cell y * 16 + x, the cellTex layout), the 8 grid neighbours.
+        // A neighbour counts when it is valid, was rinsed by a shower stroke (_cellShowered) and is still rinsed (W >= 0.5 &&
+        // F < 0.1) BEFORE this pass (_rinsed is the snapshot), so the result does not depend on the loop order and an eroded
+        // cell never passes the erosion on. Dirt follows the foam's ratio (never increases).
+        void RunoffCells(float amount)
+        {
+            if (!_cellsOk || _validCells == null || !(amount > 0f)) return;
+            _runoffCellPasses++;
+            // Only the valid cells are ever set (validity does not change at run time), so the others stay false.
+            if (_rinsed == null || _rinsed.Length != CellCount) _rinsed = new bool[CellCount];
+            EnsureArrays();   // _cellShowered
+            int nv = _validCells.Length;
+            bool any = false;
+            for (int k = 0; k < nv; k++)
+            {
+                int c = _validCells[k];
+                // round 2: only a cell a shower stroke rinsed counts (an eroded cell does not: no chain across the grid)
+                bool r = _cellShowered[c] && _wet[c] >= 0.5f && _foam[c] < 0.1f;
+                _rinsed[c] = r;
+                if (r) any = true;
+            }
+            if (!any) return;
+            float per = amount / 8f;
+            bool changed = false;
+            bool qChanged = false;
+            for (int k = 0; k < nv; k++)
+            {
+                int c = _validCells[k];
+                float f0 = _foam[c];
+                if (!(f0 > 0f)) continue;
+                int x = c & 15;
+                int y = c >> 4;
+                int n = 0;
+                for (int dy = -1; dy <= 1; dy++)
+                {
+                    int yy = y + dy;
+                    if (yy < 0 || yy > 15) continue;
+                    for (int dx = -1; dx <= 1; dx++)
+                    {
+                        int xx = x + dx;
+                        if ((dx == 0 && dy == 0) || xx < 0 || xx > 15) continue;
+                        if (_rinsed[(yy << 4) | xx]) n++;
+                    }
+                }
+                if (n == 0) continue;
+                float f1 = Mathf.Max(0f, f0 - per * n);
+                float d0 = _dirt[c];
+                float d1 = Mathf.Min(d0, d0 * f1 / Mathf.Max(f0, 1e-4f));
+                _foam[c] = f1;
+                _dirt[c] = d1;
+                changed = true;
+                // IMP-DOG-034 B1b: sync only when a sent value (3 bit foam, 2 bit dirt) changed
+                if (!qChanged && (Q7(f1) != Q7(f0) || Mathf.RoundToInt(d1 * 3f) != Mathf.RoundToInt(d0 * 3f))) qChanged = true;
+            }
+            if (changed) _cellsDirty = true;   // IMP-DOG-034 B1a
+            if (qChanged) _syncDue = true;
+        }
+
         void Swap()
         {
             RenderTexture t = _cur;
@@ -1815,7 +2037,8 @@ namespace KominkaHillside
             return spongeRadius;
         }
 
-        // What a stroke of each kind may claim (the shower widens with distance up to 0.2 m, KH_WashTool).
+        // What a stroke of each kind may claim (the shower widens with distance up to 0.2 m, KH_WashTool). The sponge / towel
+        // limit follows their radius (spongeRadius 0.11 -> 0.121 m = 121 mm in NetStroke's check; the sender clamps to it too).
         float MaxToolRadius(int tool)
         {
             if (tool == ToolShower) return 0.2f;
@@ -1832,16 +2055,26 @@ namespace KominkaHillside
         // The cell version of the Brush pass. Cells are coarser than the band, so every cell within the brush plus
         // cellReach takes the brush's full weight (cellGain tunes it against the mask in Play); the amount is the
         // same Dwell() as the mask's and the reaction is the shader's (ApplyCell).
+        // Shower (2026-10-02): every part (no part gate, as on the mask), and the foam part of the delta reaches out to
+        // (r x rinseReach + cellReach) like wOut on the mask, so the truth never keeps foam the mask has lost. In that outer
+        // ring only the foam changes (and the dirt under it through the gate, as the mask's ring does); dirt and wet keep the
+        // (r + cellReach) reach of w.
         void ApplyToCells(int tool, int part, Vector3 a, Vector3 b, float radMeters, float sec)
         {
             if (!_cellsOk) return;
+            EnsureArrays();   // _cellShowered
             _cellsDirty = true;   // IMP-DOG-034 B1a (the callers set _syncDue)
+            bool shower = tool == ToolShower;
             float rMesh = radMeters / meshToWorldScale;
             float reach = (radMeters + cellReach) / meshToWorldScale;
             float reach2 = reach * reach;
+            float outer = shower ? Mathf.Max(reach, (radMeters * Mathf.Max(1f, rinseReach) + cellReach) / meshToWorldScale) : reach;
+            float outer2 = outer * outer;
             Vector4 delta = ToolDelta(tool, Dwell(sec, a, b, rMesh) * cellGain);
-            float gateParam = tool == ToolShower ? Mathf.Clamp01(foamRinseGate) : 0f;
-            int mask = partNeighbors != null && part < partNeighbors.Length ? partNeighbors[part] : 0;
+            Vector4 foamOnly = new Vector4(0f, delta.y, 0f, 0f);
+            float gateParam = shower ? Mathf.Clamp01(foamRinseGate) : 0f;
+            bool rinsing = delta.x < 0f && delta.y < 0f;   // the shader's `rinsing` reads the uniform _Delta, not the weighted one
+            int mask = shower ? -1 : (partNeighbors != null && part < partNeighbors.Length ? partNeighbors[part] : 0);   // -1 = every part
             Vector3 ab = b - a;
             float l2 = ab.sqrMagnitude;
             for (int q = 0; q < PartCount; q++)
@@ -1853,15 +2086,23 @@ namespace KominkaHillside
                     int c = _partCells[k];
                     Vector3 p = cellCenter[c];
                     float t = l2 > 1e-12f ? Mathf.Clamp01(Vector3.Dot(p - a, ab) / l2) : 0f;
-                    if ((p - (a + ab * t)).sqrMagnitude > reach2) continue;
-                    ApplyCell(c, delta, gateParam);
+                    float d2 = (p - (a + ab * t)).sqrMagnitude;
+                    if (d2 > outer2) continue;
+                    if (d2 <= reach2)
+                    {
+                        ApplyCell(c, delta, gateParam, rinsing);
+                        // round 2: which cells the shower rinsed (RunoffCells counts only these); a sponge's foam undoes it
+                        if (shower) { if (_wet[c] >= 0.5f && _foam[c] < 0.1f) _cellShowered[c] = true; }
+                        else if (delta.y > 0f) _cellShowered[c] = false;
+                    }
+                    else ApplyCell(c, foamOnly, gateParam, rinsing);
                 }
             }
         }
 
         // Same reaction as KH_WashMask.shader FragBrush (w = 1): foam growth eases near full, dirt removal is boosted
         // by foam, and while rinsing the dirt under foam follows the foam's ratio (the gate).
-        void ApplyCell(int c, Vector4 delta, float gateParam)
+        void ApplyCell(int c, Vector4 delta, float gateParam, bool rinsingTool)
         {
             float dirt = _dirt[c];
             float foam = _foam[c];
@@ -1871,7 +2112,7 @@ namespace KominkaHillside
             float dD = delta.x;
             float boost = dD < 0f ? (1f + foam * rinseFoamBoost) : 1f;
             float dirtNormal = Mathf.Clamp01(dirt + dD * boost);
-            float rinsing = (delta.x < 0f && delta.y < 0f) ? 1f : 0f;
+            float rinsing = rinsingTool ? 1f : 0f;
             float gate = gateParam * rinsing * SmoothStep01(0.03f, 0.2f, foam);
             float dirtGated = dirt * (foamNew / Mathf.Max(foam, 1e-4f));
             float dirtNew = Mathf.Clamp01(Mathf.Lerp(dirtNormal, Mathf.Min(dirtGated, dirt), gate));
@@ -2459,6 +2700,7 @@ namespace KominkaHillside
             _maskMat.SetFloat(_idRinseFoamBoost, 0f);
             _maskMat.SetFloat(_idFoamRinseGate, 0f);
             _maskMat.SetFloat(_idEdgeNoise, en);
+            _maskMat.SetFloat(_idRinseReach, TowelFoamReach);   // no foam change here; keeps the shader's cheap reject tight
             // From the feet up (mask shader, same curve as DirtHeightWeight): only a dirt INCREASE (_Delta.x > 0, never a
             // tool) is weighted by the texel's height = (position map z - ground) in mesh units. z = enabled.
             float inv = 1f / Mathf.Max(1e-4f, meshToWorldScale);

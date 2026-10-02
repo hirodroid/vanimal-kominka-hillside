@@ -25,6 +25,7 @@ namespace KominkaHillside.Editor
         const string TestMenu = Menu + "13 - Paint Test/";
         const string TestJsonPath = "Temp/KH_DogWashTestStroke.json";
         const float TestMaxBlitSeconds = 0.25f;   // KH_DogWash.MaxBlitSeconds
+        const float TestTowelFoamReach = 1.2f;    // KH_DogWash.TowelFoamReach
         static string lastScene = "none";
 
         [Serializable] class TestReport
@@ -234,20 +235,23 @@ namespace KominkaHillside.Editor
         }
 
         /// <summary>1 本のストローク: a → b を半径ごとの区間に切り、各区間は 1 点あたり dwell 秒になる接触時間を持つ (実行時の Dwell の逆)。
-        /// 1 回の Blit は <see cref="TestMaxBlitSeconds"/> まで (実行時と同じ)。部位は当たった部位 = part、許可はその隣接 (partNeighbors)。</summary>
+        /// 1 回の Blit は <see cref="TestMaxBlitSeconds"/> まで (実行時と同じ)。部位は当たった部位 = part、許可はその隣接 (partNeighbors)。
+        /// シャワーは部位の許可なし (全部位) で、泡を消す外側の縁は rinseReach (2026-10-02、KH_DogWash.DrawBrush)。流れる処理 (Runoff) は描かない。</summary>
         static void Stroke(Painter p, int tool, int part, Vector3 a, Vector3 b, float dwell, string label)
         {
             var w = p.wash;
-            float radMeters = tool == KH_DogWash.ToolShower ? w.showerRadius : tool == KH_DogWash.ToolTowel ? w.towelRadius : w.spongeRadius;
+            bool shower = tool == KH_DogWash.ToolShower;
+            float radMeters = shower ? w.showerRadius : tool == KH_DogWash.ToolTowel ? w.towelRadius : w.spongeRadius;
             float r = radMeters / Mathf.Max(1e-4f, w.meshToWorldScale);
             var allow = new float[AllowSlots];
             int mask = w.partNeighbors != null && part < w.partNeighbors.Length ? w.partNeighbors[part] : 0;
-            for (int i = 0; i < AllowSlots; i++) allow[i] = (i == part || (i < PartCount && ((mask >> i) & 1) != 0)) ? 1f : 0f;
+            for (int i = 0; i < AllowSlots; i++) allow[i] = (shower || i == part || (i < PartCount && ((mask >> i) & 1) != 0)) ? 1f : 0f;
             p.mat.SetFloatArray("_AllowPart", allow);
             p.mat.SetFloat("_BrushSoft", w.brushSoft);
             p.mat.SetFloat("_EdgeNoise", w.edgeNoise);
             p.mat.SetFloat("_RinseFoamBoost", w.rinseFoamBoost);
-            p.mat.SetFloat("_FoamRinseGate", tool == KH_DogWash.ToolShower ? w.foamRinseGate : 0f);
+            p.mat.SetFloat("_FoamRinseGate", shower ? w.foamRinseGate : 0f);
+            p.mat.SetFloat("_RinseReach", shower ? Mathf.Max(1f, w.rinseReach) : TestTowelFoamReach);
             p.mat.SetFloat("_BrushRadius", r);
             int segs = Mathf.Max(1, Mathf.CeilToInt((b - a).magnitude / r));
             for (int s = 0; s < segs; s++)

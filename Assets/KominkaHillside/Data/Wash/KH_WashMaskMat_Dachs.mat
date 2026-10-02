@@ -44,6 +44,9 @@ Material:
     - _FoamGrowEase: 0.7
     - _FoamRinseGate: 1
     - _RinseFoamBoost: 2.2
+    - _RinseReach: 1.2
+    - _RunoffAmount: 0
+    - _RunoffStep: 2
     m_Colors:
     - _BrushA: {r: 0, g: 0, b: 0, a: 0}
     - _BrushB: {r: 0, g: 0, b: 0, a: 0}

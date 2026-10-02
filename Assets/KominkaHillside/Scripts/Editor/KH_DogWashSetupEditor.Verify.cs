@@ -246,8 +246,8 @@ namespace KominkaHillside.Editor
             // ---- backing (the runtime reads this) ----
             Backing(req, backing, k + " KH_DogWash", "dogIndex", wash.dogIndex);
             // the dirt tuning table (IMP-DOG-029, KH_DogWashSetupEditor.Dog.cs DirtTuning) + this dog's initialDirt and dirt heights
-            // (IMP-DOG-030, DogDirtValues): proxy and backing = the table
-            foreach (var dt in DogDirtValues(t))
+            // (IMP-DOG-030, DogDirtValues) + the wash tuning table (2026-10-02, WashTuning; DogTuningValues): proxy and backing = the table
+            foreach (var dt in DogTuningValues(t))
             {
                 var fi = typeof(KH_DogWash).GetField(dt.field);
                 float pv = fi != null ? (float)fi.GetValue(wash) : float.NaN;

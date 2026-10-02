@@ -16,7 +16,7 @@
 | [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、Desktop/Touch、複数人。看板の本制作・分かりやすさは DES-UI-004 へ分離 | wip |  |
 | [IMP-DOG-009](IMP-DOG-009-walk-speed-tiers.md) | High | 散歩の犬の速さを 4 段階に (最速は現状の速歩の 3 倍)。人が犬を引っ張る状態をなくす。Run クリップの再生速度・減速も合わせる。9/22 PCVR 1 人 1 匹で OK・採用、3〜6 匹・2 人以上・Desktop は未確認 | wip |  |
 | [IMP-DOG-024](IMP-DOG-024-walk-and-wash-experience.md) | High | Animal Wash以上のASMR的な洗浄の気持ちよさを最優先に、散歩帰りのお手入れと複数洗い場を作る大型Issue | wip | IMP-DOG-025 で泡立てとすすぎの快適さを改善する (10-02 要望: 肩・関節の残り泡をなくし、周囲もさっと流れる)。6 匹・2 人・端末別の仕上げ確認を続ける |
-| [IMP-DOG-025](IMP-DOG-025-wash-prototype-one-dog.md) | High | 代表 1 匹 (柴) の洗浄体験を磨く。こすると泡が広がり、シャワーではさっと流れる手応えへ。肩・関節にしつこく残る泡を改善する | wip | 10-02 のすすぎ改善要望に対応。肩・関節の泡が消えにくい条件を調べ、泡立ちの勢いと、周囲も自然に流れる速く快適なすすぎを調整する |
+| [IMP-DOG-025](IMP-DOG-025-wash-prototype-one-dog.md) | High | 代表 1 匹 (柴) の洗浄体験を磨く。こすると泡が広がり、シャワーではさっと流れる手応えへ。肩・関節にしつこく残る泡を改善する | wip | 10-02 のすすぎ改善を実装済み (肩の原因を修正、泡立て・すすぎを速く、周囲の泡も続いて流れる)。ユーザーの Play / PCVR で泡立てとすすぎのテンポ・肩と関節の残り泡・反対側への効き方を確認し、調整値を決める |
 | [IMP-DOG-028](IMP-DOG-028-wash-sound-and-reactions.md) | High | 洗浄の音と犬の反応の仕上げ (音素材の制作と記録、個人音量、タオル、ブルブル、満足の合図) | wip | ハーネス (W-shake / satisfied / paw / no-repeat) の結果、ユーザーの Play (反応の見え方、音の試聴)、試聴の後の音素材の作り直しが残り |
 | [DES-ENV-002](DES-ENV-002-longer-course.md) | Medium | 約2.41kmの川沿い周回を実装し、2026-09-27に本番シーン (VRCDefaultWorldScene) へ採用済み。Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する | wip | 犬連れの実歩行時間、LODと遮蔽の実機表示、Quest 3・iPhone 15 Pro・16人の性能から最終距離/予算を確定する (ユーザーの実機。VER-WLD-001) |
 | [DES-UI-003](DES-UI-003-menu-scope-and-polish.md) | Medium | 9/23 ユーザー回答: 初回付与200pt・獲得は滞在のみ・撫でFX採用・タブ構成A・おじいさんは門・犬目線/かけっこは対象外・距離フェードとおもちゃ柄は採用。正本へ反映済み。モック OK・計画書あり。IMP-UI-001 は段階 0-b まで完了 (9/24 PCVR OK)、段階 2・3 は 9/24 実装済み・PCVR 待ち | wip |  |

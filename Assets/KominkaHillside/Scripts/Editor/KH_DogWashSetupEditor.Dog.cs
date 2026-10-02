@@ -40,10 +40,29 @@ namespace KominkaHillside.Editor
             ("dirtApplyInterval", 20f),
         };
 
+        // ---- 洗いの調整値 (IMP-DOG-025 2026-10-02 体験改善要望「ゴシゴシで泡がバーッと広がり、シャワーでサーッと流れる」)。
+        // Wash/11 が DirtTuning と一緒に書き、Wash/12 が一致を検査する。コードの既定値はシーンへ届かないので、変える値は必ずこの表へ ----
+        //   すすぎ: 泡 −1.6 → −4.0 / s、汚れ −0.5 → −1.0 / s。泡を消す範囲の外側の縁 1.2 → 1.7 × 半径 (rinseReach)。
+        //   流れ: シャワーの後 1.5 s、流した所 (濡れ 0.5 以上・泡 0.1 未満) の隣の泡が最大 3.0 / s で減る (runoff*)。
+        //   泡立て: スポンジ +0.9 → +1.6 / s、半径 0.09 → 0.11 m。
+        static readonly (string field, float value)[] WashTuning =
+        {
+            ("spongeRadius", 0.11f),
+            ("spongeFoamRate", 1.6f),
+            ("showerFoamRate", -4f),
+            ("showerDirtRate", -1f),
+            ("rinseReach", 1.7f),
+            ("runoffSeconds", 1.5f),
+            ("runoffInterval", 0.1f),
+            ("runoffRate", 3f),
+            ("runoffStep", 2f),
+            ("runoffCellGain", 1f),   // 4 → 1 (2026-10-02 round 2): セルはシャワーで流したセルの隣 1 周だけ (連鎖なし)。4 だとマスクより先に清潔になりうる
+        };
+
         static void WriteDirtTuning(KH_DogWash wash, DogTarget target)
         {
             var so = new SerializedObject(wash);
-            foreach (var t in DogDirtValues(target))
+            foreach (var t in DogTuningValues(target))
             {
                 var p = so.FindProperty(t.field);
                 if (p == null) throw new InvalidOperationException("KH_DogWash." + t.field + " missing (compile first)");
@@ -59,6 +78,14 @@ namespace KominkaHillside.Editor
             list.Add(("initialDirt", InitialDirt));
             var h = DirtHeights(target);
             for (int i = 0; i < DirtHeightFields.Length; i++) list.Add((DirtHeightFields[i], h[i]));
+            return list;
+        }
+
+        /// <summary>Wash/11 が書き Wash/12 が検査する全部: <see cref="DogDirtValues"/> + 共通の <see cref="WashTuning"/>。</summary>
+        static List<(string field, float value)> DogTuningValues(DogTarget target)
+        {
+            var list = DogDirtValues(target);
+            list.AddRange(WashTuning);
             return list;
         }
 
@@ -397,7 +424,8 @@ namespace KominkaHillside.Editor
             wash.hitSplash = splash; wash.foamPuff = puff;
             wash.contactFur = fur; wash.contactFoam = foam; wash.scrub = scrub;
             EditorUtility.SetDirty(wash);
-            // the dirt tuning table above (IMP-DOG-029) + this dog's initialDirt and dirt heights (IMP-DOG-030); copied to Udon with the rest
+            // the dirt tuning table above (IMP-DOG-029) + this dog's initialDirt and dirt heights (IMP-DOG-030) + the wash tuning
+            // table (2026-10-02, WashTuning); copied to Udon with the rest
             WriteDirtTuning(wash, d.target);
             // the cell texture shows the runtime seed (initialDirt x the height weight, KH_DogWash.InitialCells) of this proxy
             EnsureCellTex(CellTexPath(d.target.key), d.cellTex.name, InitialCellColors(wash.cellValid, RuntimeDirtWeights(wash), wash.initialDirt));

@@ -109,7 +109,10 @@ namespace KominkaHillside.Editor
         static int[] wsColPart, wsNeighbors;
         static Matrix4x4[] wsB2M;
         static float[] wsBoneToPart;
-        static float wsMts = 1f, wsSpongeR = 0.09f, wsShowerR = 0.07f, wsHoldSeconds = 3f;
+        static float wsMts = 1f, wsSpongeR = 0.11f, wsShowerR = 0.07f, wsHoldSeconds = 3f;
+        // 2026-10-02 (rinse reach / runoff): read from the behaviour in WsBind; wsTexelM = the position map's texel in metres (p90)
+        static float wsRinseReach = 1.7f, wsEdgeNoise = 0.3f, wsRunoffSeconds = 1.5f, wsRunoffRate = 3f, wsRunoffStep = 2f, wsTexelM = 0.01f, wsTexelHiM = 0.02f, wsRunoffInterval = 0.1f;
+        static bool wsRunoffOff;   // W-shoulder set runoffRate to 0; WsRunoffRestore puts wsRunoffRate back
         static int wsLayer = ~0;
         static int[] wsTexIdx, wsTexPart;   // valid texels of the position map
         static Vector3[] wsTexPos;
@@ -125,7 +128,7 @@ namespace KominkaHillside.Editor
         static void MakeWashCases()
         {
             wsScripts = new List<List<Func<double, bool>>>(); wsLimits = new List<double>();
-            wsStep = 0; wsCaseAt = -1; wsFailed = false; wsProbed = false; wsMaxDt = 0f;
+            wsStep = 0; wsCaseAt = -1; wsFailed = false; wsProbed = false; wsMaxDt = 0f; wsRunoffOff = false;
             wsEntryCache.Clear(); wsParamCache.Clear(); wsPosHist.Clear();
             wsReport = new WsReport { runId = report.runId };
             wsGroups = string.IsNullOrEmpty(report.washGroups) ? null : report.washGroups.Split(',');
@@ -205,36 +208,71 @@ namespace KominkaHillside.Editor
                 WsNote("sponge 2.5 s along the flank hip -> chest -> neck base (world " + foLen.ToString("F3") + " m, mesh " + foT.LengthM().ToString("F3") + " m, parts " + foT.Parts() + ", " + foT.calls + " calls, " + foT.sec.ToString("F2") + " s): band " + band + "; min dG along the band " + gmin.ToString("F3") + " (" + gapText + "); far max dG " + far.ToString("F3") + " (" + nFar + " texels); avg foam " + foAvg0.ToString("F3") + " -> " + af.ToString("F3") + "; last part " + lp + " (part set checked as {0,1} + only {2,4}: the flank ray near the path end may hit the right front leg, as a real tool would)");
             }));
 
-            // ---- W-rinse (自分で泡を付けてから、区間の前 1/3 だけ流す: 残りの泡が帯になる) ----
-            s = WsCase("W-rinse", 50);
-            var riF = new WsTrace(); var riR = new WsTrace(); Color[] ri1 = null;
-            s.Add(WsDo(() => { WsPlaceShiba(); WsPlayerNear(1.3f); WsSetDirt(0.6f); }));
+            // ---- W-rinse (自分で泡を付けてから、区間の前 1/3 だけ流す。2026-10-02: 流した所の周りの泡も流れてよい (rinseReach と
+            //      流れる処理)。遠い泡 = ブラシの外側の縁より遠く、かつ流れる処理が届かない (窓全体の上限か、濡れ 0.45 以上のテクセルから
+            //      1 歩より遠い) 泡は残る。横腹の経路は短く (0.2〜0.3 m) 遠い所がほぼ無いので、全身で水の区間から最も遠い表面の点にも
+            //      泡を付けて対照にする (対照は必ず遠い側に入ること) ----
+            s = WsCase("W-rinse", 60);
+            var riF = new WsTrace(); var riR = new WsTrace(); var riC = new WsTrace(); Color[] ri1 = null; WsAnchor riFar = default; float riFarM = 0f;
+            s.Add(WsDo(() =>
+            {
+                WsPlaceShiba(); WsPlayerNear(1.3f); WsSetDirt(0.6f);
+                riFar = WsFarthestFrom(WsPathMesh(0f, 1f / 3f, 8), out riFarM);
+            }));
             s.Add(WsWait(1.2));
             s.Add(WsDrive(3f, 1, u => WsPath(u), WsSponge, -1f, riF));
+            s.Add(WsDo(() => WsEnd(WsSponge)));
+            s.Add(WsDrive(1f, 1, u => WsAt(riFar), WsSponge, -1f, riC));   // the far control patch
             s.Add(WsDo(() => WsEnd(WsSponge)));
             s.Add(WsWait(0.5));
             s.Add(WsDo(() => { ri1 = WsMask(); }));
             s.Add(WsDrive(1f, 1, u => WsPath(u / 3f), WsShower, -1f, riR));
             s.Add(WsDo(() => WsEnd(WsShower)));
-            s.Add(WsWait(0.6));
+            s.Add(WsWait(wsRunoffSeconds + 0.8));   // the runoff after the last shower stroke (its echo + runoffSeconds) is over
             s.Add(WsDo(() =>
             {
                 var ri2 = WsMask();
                 string g = WsBandCheck(riR, ri1, ri2, 1, wsShowerR, 3, d => d < -0.1f, "G -0.1");
                 string r = WsBandCheck(riR, ri1, ri2, 0, wsShowerR, 3, d => d < -0.05f, "R -0.05");
                 string b = WsBandCheck(riR, ri1, ri2, 2, wsShowerR, 3, d => d > 0.1f, "B +0.1");
-                // 流していない側の泡: 泡の区間の点のうち、水の区間から (水の半径 + 0.04 m) より遠い所
-                float gap = (wsShowerR + 0.04f) / wsMts; int kept = 0, outside = 0; var why = new List<string>();
+                // 遠い泡 (round 2): the shower changes foam directly out to its outer edge (WsRinseOuterM, + one step) and the
+                // runoff erodes foam next to rinsed texels; eroded texels that are wet >= 0.5 pass it on, so on the mask it can chain.
+                // A point is "far" when it is beyond the brush's outer edge + one step + 0.04 m from the rinse trace AND beyond the
+                // runoff's reach by one of two upper bounds:
+                //   window: every pass of the whole window moves the front at most one step (passes = ceil((shower 1 s +
+                //           runoffSeconds) / runoffInterval) + 1, step x 1.5 x texel p99)
+                //   wet:    a texel is rinsed only with wet >= 0.5, so the runoff changes foam only within one step of a texel that
+                //           was wet >= 0.5 during the window; wet only grows by water and dries ~0.02 in 2 s, so the texels with
+                //           wet >= 0.45 now cover them all
+                float direct = WsRinseOuterM(wsShowerR) + 0.04f;
+                int passes = Mathf.CeilToInt((1f + wsRunoffSeconds) / Mathf.Max(0.02f, wsRunoffInterval)) + 1;
+                float stepHi = Mathf.Max(1, Mathf.RoundToInt(wsRunoffStep)) * 1.5f * wsTexelHiM;
+                float windowM = direct + passes * stepHi, wetM = stepHi + 0.03f;
+                var wetPos = new List<Vector3>();
+                for (int k = 0; k < wsTexCount; k++) if (ri2[wsTexIdx[k]].b >= 0.45f) wetPos.Add(wsTexPos[k]);
+                int kept = 0, outside = 0, pathFar = 0, pathWindow = 0, pathWet = 0; var why = new List<string>();
+                var pts = new List<KeyValuePair<Vector3, int>>();
                 for (int i = 0; i < riF.mesh.Count; i += Mathf.Max(1, riF.mesh.Count / 20))
                 {
-                    if (WsMinDist(riF.mesh[i], riR.mesh) <= gap) continue;
-                    outside++;
-                    float dm; float before = WsLocal(riF.mesh[i], riF.part[i], null, ri1, 1, out dm), after = WsLocal(riF.mesh[i], riF.part[i], null, ri2, 1, out dm);
-                    if (before > 0.2f && after >= 0.7f * before) kept++; else why.Add(before.ToString("F2") + "->" + after.ToString("F2"));
+                    float dT = WsMinDist(riF.mesh[i], riR.mesh) * wsMts; if (dT <= direct) continue;
+                    bool byWindow = dT > windowM, byWet = WsMinDist(riF.mesh[i], wetPos) * wsMts > wetM;
+                    if (byWindow) pathWindow++;
+                    if (byWet) pathWet++;
+                    if (byWindow || byWet) { pts.Add(new KeyValuePair<Vector3, int>(riF.mesh[i], riF.part[i])); pathFar++; }
                 }
-                WsExpect(outside >= 2, "foam points outside the rinse (" + outside + "; the flank path is too short?)");
-                WsExpect(kept == outside, "foam outside the rinse stays (>= 70 %): " + kept + "/" + outside + " (" + string.Join(" ", why) + ")");
-                WsNote("sponge 3 s along the whole flank path (" + riF.LengthM().ToString("F3") + " m, parts " + riF.Parts() + ", misses " + riF.misses + "), shower 1 s along its first third (" + riR.LengthM().ToString("F3") + " m, parts " + riR.Parts() + "): rinsed " + g + " / " + r + " / " + b + "; foam kept outside the rinse " + kept + "/" + outside);
+                float ctlM = riC.mesh.Count > 0 ? WsMinDist(riC.mesh[0], riR.mesh) * wsMts : 0f;
+                float ctlWetM = riC.mesh.Count > 0 ? WsMinDist(riC.mesh[0], wetPos) * wsMts : 0f;
+                bool ctlFar = riC.mesh.Count > 0 && ctlM > direct && (ctlM > windowM || ctlWetM > wetM);
+                WsExpect(ctlFar, "the control is beyond the runoff's reach (from the rinse " + ctlM.ToString("F3") + " m: direct " + direct.ToString("F3") + ", window bound " + windowM.ToString("F3") + "; from the nearest texel wet >= 0.45 " + ctlWetM.ToString("F3") + " m, wet bound " + wetM.ToString("F3") + ")");
+                pts.Add(new KeyValuePair<Vector3, int>(riC.mesh[0], riC.part[0]));
+                foreach (var pt in pts)
+                {
+                    outside++;
+                    float dm; float before = WsLocal(pt.Key, pt.Value, null, ri1, 1, out dm), after = WsLocal(pt.Key, pt.Value, null, ri2, 1, out dm);
+                    if (before > 0.2f && after >= 0.7f * before) kept++; else why.Add("p" + pt.Value + " " + before.ToString("F2") + "->" + after.ToString("F2"));
+                }
+                WsExpect(kept == outside, "foam beyond the runoff's reach stays (>= 70 %): " + kept + "/" + outside + " (" + string.Join(" ", why) + ")");
+                WsNote("sponge 3 s along the whole flank path (" + riF.LengthM().ToString("F3") + " m, parts " + riF.Parts() + ", misses " + riF.misses + ") + 1 s on the far control (part " + (riC.part.Count > 0 ? riC.part[0] : -1) + ", " + ctlM.ToString("F3") + " m from the rinse, " + ctlWetM.ToString("F3") + " m from wet >= 0.45), shower 1 s along its first third (" + riR.LengthM().ToString("F3") + " m, parts " + riR.Parts() + "), checked after runoffSeconds + 0.8 s: rinsed " + g + " / " + r + " / " + b + "; direct edge " + direct.ToString("F3") + " m, window bound " + windowM.ToString("F3") + " m (" + passes + " passes x " + stepHi.ToString("F4") + " m), wet bound " + wetM.ToString("F3") + " m from " + wetPos.Count + " wet texels; path points beyond: " + pathFar + " (window " + pathWindow + ", wet " + pathWet + "); foam kept " + kept + "/" + outside + " (" + pathFar + " path points + control). Foam between the rinse and these bounds may go (2026-10-02: no longer a requirement)");
             }));
 
             // ---- W-hold ----
@@ -272,13 +310,16 @@ namespace KominkaHillside.Editor
                 () => "the Shiba did not move 0.3 m within 30 s after the hold (path " + hoPath.ToString("F2") + ", restPhase " + Get<int>(wsWander, "_restPhase") + ", paused " + Get<bool>(wsWander, "_paused") + ")"));
             s.Add(WsDo(() => WsNote((hoMoving ? "moving before the contact" : "still before the contact (did not start moving within 8 s)") + "; hold true within 1.5 s, wash branch active, speed at the end " + hoSpeedEnd.ToString("F3") + " m/s; hold still true at +" + (wsHoldSeconds - 0.5f) + " s, false at +" + (wsHoldSeconds + 1f) + " s; walked " + hoPath.ToString("F2") + " m after (player moved 12 m away so the proximity pause does not hold the dog)")));
 
-            // ---- W-break (経路の上の腰の点 → _EndContact → 胸の点。Collider が違っても、接触が切れていれば間はつながらない) ----
+            // ---- W-break (経路の上の腰の点 → _EndContact → 胸の点。Collider が違っても、接触が切れていれば間はつながらない)。
+            //      見るのは区間が切れることで道具の半径ではないので、2 回の接触は小さい半径 BrRad (_LocalContact の radiusMeters) で描く
+            //      (2026-10-02: spongeRadius 0.11 の縁 r (1 + edgeNoise) = 0.143 m では 0.28 m の経路に両方から離れた点が残らない) ----
             s = WsCase("W-break", 30);
+            const float BrRad = 0.06f;
             WsAnchor brA = default, brB = default; float brKeep = 0f; var brMid = new List<WsAnchor>(); Color[] br0 = null; var brTa = new WsTrace(); var brTb = new WsTrace();
             s.Add(WsDo(() =>
             {
                 WsPlaceShiba(); WsPlayerNear(1.3f);
-                // 間隔を稼ぐため経路の両端 (u 0 / 1)。間の点は両端から r + 0.04 m、足りなければ r + 0.01 m より遠い点
+                // 間隔を稼ぐため経路の両端 (u 0 / 1)。間の点は両端から 縁 + 0.04 m、足りなければ 縁 + 0.01 m より遠い点 (縁 = BrRad x (1 + edgeNoise))
                 var ha = WsPathHit(0f); var hb = WsPathHit(1f);
                 if (wsColPart[ha.ci] != 0) throw new WsSkip("the ray at the path start hit part " + wsColPart[ha.ci] + ", not the hip");
                 float d = (ha.p - hb.p).magnitude;
@@ -286,7 +327,7 @@ namespace KominkaHillside.Editor
                 brA = WsAnchorOf(ha); brB = WsAnchorOf(hb);
                 foreach (float margin in new[] { 0.04f, 0.01f })
                 {
-                    brMid.Clear(); brKeep = wsSpongeR + margin;
+                    brMid.Clear(); brKeep = BrRad * (1f + wsEdgeNoise) + margin;
                     for (int k = 1; k < 20; k++)
                     {
                         var h = WsPath(k / 20f);
@@ -295,14 +336,14 @@ namespace KominkaHillside.Editor
                     }
                     if (brMid.Count > 0) break;
                 }
-                if (brMid.Count == 0) throw new WsSkip("no path point lies more than r + 0.01 m from both contacts (" + d.ToString("F3") + " m apart, r " + wsSpongeR + " m)");
+                if (brMid.Count == 0) throw new WsSkip("no path point lies more than the rim + 0.01 m (" + (BrRad * (1f + wsEdgeNoise) + 0.01f).ToString("F3") + " m) from both contacts (" + d.ToString("F3") + " m apart, r " + BrRad + " m, edgeNoise " + wsEdgeNoise + ")");
                 wsWash.SendCustomEvent("_DebugClear");
             }));
             s.Add(WsWait(1.2));
             s.Add(WsDo(() => { br0 = WsMask(); }));
-            s.Add(WsDrive(0.5f, 1, u => WsAt(brA), WsSponge, -1f, brTa));
+            s.Add(WsDrive(0.5f, 1, u => WsAt(brA), WsSponge, BrRad, brTa));
             s.Add(WsDo(() => WsEnd(WsSponge)));
-            s.Add(WsDrive(0.5f, 1, u => WsAt(brB), WsSponge, -1f, brTb));
+            s.Add(WsDrive(0.5f, 1, u => WsAt(brB), WsSponge, BrRad, brTb));
             s.Add(WsDo(() => WsEnd(WsSponge)));
             s.Add(WsWait(0.5));
             s.Add(WsDo(() =>
@@ -321,7 +362,7 @@ namespace KominkaHillside.Editor
                 }
                 if (n == 0) throw new WsSkip("no between point is more than " + brKeep.ToString("F2") + " m from both contacts on the mesh");
                 WsExpect(worst < 0.01f, "the path between the two contacts did not change (max |dG|,|dB| " + worst.ToString("F4") + ": " + string.Join(" ", vals) + ")");
-                WsNote("A part " + brTa.part[0] + " (" + wsCols[brTa.ci[0]].name + "), B part " + brTb.part[0] + " (" + wsCols[brTb.ci[0]].name + "), " + ((a - b).magnitude * wsMts).ToString("F3") + " m apart on the mesh (path ends u 0 / 1), _EndContact between (same frame), between points kept beyond " + brKeep.ToString("F2") + " m (r + " + (brKeep - wsSpongeR).ToString("F2") + ") of both; A dG " + ga.ToString("F3") + ", B dG " + gb.ToString("F3") + "; between " + string.Join(" ", vals) + " (max " + worst.ToString("F4") + ")");
+                WsNote("A part " + brTa.part[0] + " (" + wsCols[brTa.ci[0]].name + "), B part " + brTb.part[0] + " (" + wsCols[brTb.ci[0]].name + "), " + ((a - b).magnitude * wsMts).ToString("F3") + " m apart on the mesh (path ends u 0 / 1), _EndContact between (same frame), sponge r " + BrRad + " m (rim x (1 + edgeNoise " + wsEdgeNoise + ") = " + (BrRad * (1f + wsEdgeNoise)).ToString("F3") + " m), between points kept beyond " + brKeep.ToString("F3") + " m (rim + " + (brKeep - BrRad * (1f + wsEdgeNoise)).ToString("F2") + ") of both; A dG " + ga.ToString("F3") + ", B dG " + gb.ToString("F3") + "; between " + string.Join(" ", vals) + " (max " + worst.ToString("F4") + ")");
             }));
 
             // ---- W-leg (前足 1 本のすね: 足は増え、反対の前足と胴へ貫通しない) ----
@@ -363,6 +404,223 @@ namespace KominkaHillside.Editor
                 WsExpect(nOpp > 0 && opp < 0.02f, "the other front leg (part 4) did not gain foam (max dG " + opp.ToString("F3") + " over " + nOpp + " texels; nearest " + (oppNear * wsMts).ToString("F3") + " m in the bind pose)");
                 WsExpect(torsoFar < 0.02f, "the torso beyond r + 0.02 m did not gain foam (max dG " + torsoFar.ToString("F3") + " over " + nTorso + " texels)");
                 WsNote("shin collider " + wsCols[lgA.ci].name + " 1 s: own dG " + own.ToString("F3") + "; other front leg max dG " + opp.ToString("F3") + " (nearest texel " + (oppNear * wsMts).ToString("F3") + " m in the bind pose, r " + wsSpongeR + " m); torso beyond r + 0.02 m max dG " + torsoFar.ToString("F3") + ", torso overall max dG " + torsoAll.ToString("F3") + " (nearest torso texel " + (torsoNear * wsMts).ToString("F3") + " m; the chest is a neighbour part, so a torso texel within r may legitimately grow)");
+            }));
+
+            // ---- W-shoulder (2026-10-02 の原因の回帰: 肩 (前足のうち首・腰の Collider に最も近いテクセル) の泡は、肩を狙って首の
+            //      Collider に当たった水でも流れる。以前は部位の許可 (首の隣は胸・頭だけ) で前足のテクセルが変わらなかった。
+            //      流れる処理は切る: 首を流すと隣の肩の泡も流れるので、許可の有無を区別できなくなる) ----
+            s = WsCase("W-shoulder", 40);
+            WsAnchor shLeg = default, shNeck = default; Color[] sh1 = null; var shTS = new WsTrace(); var shTW = new WsTrace(); float shGap = 0f;
+            s.Add(WsDo(() =>
+            {
+                WsPlaceShiba(); WsPlayerNear(1.3f);
+                int leg = -1;
+                for (int i = 0; i < wsCols.Length; i++) if (WsUsable(i) && wsColPart[i] == 3 && (leg < 0 || wsCols[i].bounds.center.y > wsCols[leg].bounds.center.y)) leg = i;
+                if (leg < 0) throw new InvalidOperationException("no front-leg (part 3) collider");
+                bool fn; var neckC = WsPartCenter(2, out fn);
+                if (!fn) throw new InvalidOperationException("no neck (part 2) collider");
+                var pLeg = wsCols[leg].ClosestPoint(neckC);   // the upper leg's surface toward the neck = the shoulder
+                int neck = -1; var pNeck = Vector3.zero; float bd = float.MaxValue;
+                for (int i = 0; i < wsCols.Length; i++)
+                {
+                    if (!WsUsable(i) || wsColPart[i] != 2) continue;
+                    var q = wsCols[i].ClosestPoint(pLeg); float d = (q - pLeg).magnitude;
+                    if (d < bd) { bd = d; neck = i; pNeck = q; }
+                }
+                shGap = bd;
+                shLeg = WsAnchorOf(new WsHit { ci = leg, p = pLeg }); shNeck = WsAnchorOf(new WsHit { ci = neck, p = pNeck });
+                wsWash.SetProgramVariable<float>("runoffRate", 0f); wsRunoffOff = true;
+                wsWash.SendCustomEvent("_DebugClear");
+            }));
+            s.Add(WsWait(1.2));
+            s.Add(WsDrive(1.5f, 1, u => WsAt(shLeg), WsSponge, -1f, shTS));
+            s.Add(WsDo(() => WsEnd(WsSponge)));
+            s.Add(WsWait(0.5));
+            s.Add(WsDo(() => { sh1 = WsMask(); }));
+            s.Add(WsDrive(1f, 1, u => WsAt(shNeck), WsShower, -1f, shTW));
+            s.Add(WsDo(() => WsEnd(WsShower)));
+            s.Add(WsWait(0.5));
+            s.Add(WsDo(() =>
+            {
+                var sh2 = WsMask();
+                WsRunoffRestore();
+                WsExpect(shTW.part.Count > 0 && shTW.part[0] == 2, "the water hit the neck collider (part " + (shTW.part.Count > 0 ? shTW.part[0] : -1) + ")");
+                // the set: front-leg texels within the shower radius of the water's point that the sponge foamed (>= 0.2). Foam
+                // and wet are measured over the same set; an empty set on the reference dog is a FAIL (round 2: no SKIP)
+                Vector3 c = shTW.mesh[0]; float rIn = wsShowerR / wsMts;
+                int n = 0, lost = 0, wetted = 0; float sumG = 0f, sumB = 0f, maxB = 0f, nearest = float.MaxValue, dmin = float.MaxValue;
+                for (int k = 0; k < wsTexCount; k++)
+                {
+                    if (wsTexPart[k] != 3) continue;
+                    float d = (wsTexPos[k] - c).magnitude; nearest = Mathf.Min(nearest, d);
+                    int i = wsTexIdx[k];
+                    if (d > rIn || sh1[i].g < 0.2f) continue;
+                    n++; dmin = Mathf.Min(dmin, d);
+                    float dg = sh2[i].g - sh1[i].g, db = sh2[i].b - sh1[i].b; sumG += dg; sumB += db;
+                    if (dg < -0.05f) lost++;
+                    if (db > 0.01f) wetted++;
+                    maxB = Mathf.Max(maxB, db);
+                }
+                WsExpect(n > 0, "foamed front-leg (part 3) texels within the shower radius " + wsShowerR + " m of the neck contact (0; nearest part-3 texel " + (nearest * wsMts).ToString("F3") + " m; leg-neck collider surfaces " + shGap.ToString("F3") + " m apart)");
+                float mg = sumG / n, mb = sumB / n;
+                WsExpect(mg < -0.1f && lost >= Mathf.CeilToInt(0.5f * n), "the shoulder (front-leg texels within the shower radius of the neck contact) lost foam: mean dG " + mg.ToString("F3") + ", " + lost + "/" + n + " texels below -0.05 (with the old part gate they stay unchanged)");
+                // Secondary proof that the gate is open (round 3): wet uses the narrow weight w (foam removal the wide wOut), and these
+                // texels lie beyond ~0.5 r of the water point, so little wet reaches them; the old part gate gives exactly 0.
+                WsExpect(mb > 0.01f && wetted > 0, "the same shoulder texels got wet (mean dB " + mb.ToString("F3") + ", max " + maxB.ToString("F3") + ", " + wetted + "/" + n + " above +0.01; the old part gate gives exactly 0)");
+                WsNote("sponge 1.5 s on the upper front-leg collider " + wsCols[shLeg.ci].name + " toward the neck, shower 1 s on the neck collider " + wsCols[shNeck.ci].name + " (" + shGap.ToString("F3") + " m from the sponge point; runoff off for this case): front-leg texels within r " + wsShowerR + " m of the water " + n + " (nearest " + (dmin * wsMts).ToString("F3") + " m), mean dG " + mg.ToString("F3") + ", " + lost + " lost > 0.05; wet (secondary) mean dB " + mb.ToString("F3") + ", max " + maxB.ToString("F3") + ", " + wetted + "/" + n + " wetted > 0.01");
+            }));
+
+            // ---- W-runoff (流した所の中に残った小さな泡の島は、シャワーを止めた後に自然に流れる。遠い泡は変わらない。Owner のセルは
+            //      シャワーで流したセルの隣 1 周だけ減り、流れて減ったセルから先へは連鎖しない (round 2))
+            //      広いシャワーで濡れた泡の無い所を作る → 流れる処理が終わるのを待つ → 真ん中へ小さなスポンジ (島。平均 0.3 以上まで) →
+            //      離れた所を少しだけシャワー (流れる処理が再び始まる) → 0.4 s 後にセルの連鎖の検査を入れる (下) → 窓が終わるまで待つ。
+            //      前提が基準の犬 (柴) で満たせなければ FAIL (round 2: SKIP にしない) ----
+            s = WsCase("W-runoff", 60);
+            const float RuWide = 0.10f, RuDab = 0.025f, RuTap = 0.02f, RuIsland = 0.3f, RuDabCap = 3f;
+            WsAnchor ruS = default, ruT = default, ruC = default; float ruCM = 0f, ruTM = 0f;
+            var ruTS = new WsTrace(); var ruTC = new WsTrace(); var ruTT = new WsTrace();
+            Color[] ru1 = null; float[] ruF1 = null; int ruPass0 = 0, ruCell0 = 0, ruIsland = 0; float ruIslandG = 0f, ruRing = 0f, ruAvg1 = 0f;
+            Vector3 ruIsM = Vector3.zero; float ruDabT0 = -1f, ruDabLast = 0f, ruDabSec = 0f; double ruDabCheck = 0;
+            int ruIsCell = -1, ruCtlCell = -1; int[] ruChain = null; float[] ruChainF = null;
+            s.Add(WsDo(() =>
+            {
+                WsRunoffRestore();
+                WsPlaceShiba(); WsPlayerNear(1.3f);
+                var hs = WsPathHit(0.5f); ruS = WsAnchorOf(hs); var sm = WsToMesh(hs.ci, hs.p);
+                // the control: the surface point farthest from the island, beyond the wide shower's foam reach + one runoff step +
+                // margin (the control's patch is not wet >= 0.5, so the mask's erosion cannot chain into it)
+                ruC = WsFarthestFrom(new List<Vector3> { sm }, out ruCM);
+                float ctlNeed = WsRinseOuterM(RuWide) + 0.05f;
+                WsExpect(ruCM >= ctlNeed, "a far control: the farthest surface point is " + ruCM.ToString("F3") + " m from the island (>= " + ctlNeed.ToString("F3") + " m)");
+                var ch = WsAt(ruC); var cm = WsToMesh(ch.ci, ch.p);
+                // the tap: a path end beyond its own reach from the island and from the control (the farther from the island)
+                float tapNeed = WsRinseOuterM(RuTap) + RuDab * (1f + wsEdgeNoise) + 0.02f, tapCtl = WsRinseOuterM(RuTap) + 0.05f;
+                bool found = false; var ends = new List<string>();
+                foreach (float u in new[] { 0f, 1f })
+                {
+                    var h = WsPathHit(u); var hm = WsToMesh(h.ci, h.p);
+                    float dS = (hm - sm).magnitude * wsMts, dC = (hm - cm).magnitude * wsMts;
+                    ends.Add("u" + u + " " + dS.ToString("F3") + "/" + dC.ToString("F3"));
+                    if (dS < tapNeed || dC < tapCtl || (found && dS <= ruTM)) continue;
+                    ruT = WsAnchorOf(h); ruTM = dS; found = true;
+                }
+                WsExpect(found, "a path end " + tapNeed.ToString("F3") + " m from the island and " + tapCtl.ToString("F3") + " m from the control for the tap (island / control m: " + string.Join(", ", ends) + ")");
+                wsWash.SendCustomEvent("_DebugClear");
+            }));
+            s.Add(WsWait(1.2));
+            s.Add(WsDrive(1f, 1, u => WsAt(ruC), WsSponge, -1f, ruTC));       // the far control patch
+            s.Add(WsDo(() => WsEnd(WsSponge)));
+            s.Add(WsDrive(2f, 1, u => WsAt(ruS), WsShower, RuWide, ruTS));    // a wet, foam-free area around the island to be
+            s.Add(WsDo(() => WsEnd(WsShower)));
+            s.Add(WsWait(wsRunoffSeconds + 0.8));                              // its runoff is over (the island is not eroded while it is made)
+            // the island: sponge r RuDab at the same point until the island's mean foam >= RuIsland (checked every 0.15 s), at most RuDabCap s
+            s.Add(now =>
+            {
+                float t = Time.time;
+                if (ruDabT0 < 0f) { ruDabT0 = t; ruDabLast = t - Mathf.Max(Time.deltaTime, 1e-3f); }
+                float sec = t - ruDabLast; ruDabLast = t;
+                if (sec > 0f)
+                {
+                    var h = WsAt(ruS);
+                    WsContact(WsSponge, h.ci, h.p, sec, RuDab); ruDabSec += sec;
+                    if (ruDabSec <= sec) ruIsM = WsToMesh(h.ci, h.p);
+                }
+                bool cap = t - ruDabT0 > RuDabCap;
+                if (now >= ruDabCheck || cap)
+                {
+                    ruDabCheck = now + 0.15;
+                    int nIs; float g = WsIslandMean(WsMask(), ruIsM, RuDab, out nIs);
+                    if ((g >= RuIsland && nIs >= 5) || cap) { WsEnd(WsSponge); return true; }
+                }
+                return false;
+            });
+            s.Add(WsWait(0.3));
+            s.Add(WsDo(() =>
+            {
+                ru1 = WsMask(); ruF1 = (float[])Get<float[]>(wsWash, "_foam").Clone(); ruAvg1 = WsAvgFoam();
+                ruPass0 = Get<int>(wsWash, "_runoffPasses"); ruCell0 = Get<int>(wsWash, "_runoffCellPasses");
+                WsExpect(!Get<bool>(wsWash, "_runoffOn"), "the runoff of the wide shower had ended before the island was made");
+                ruIslandG = WsIslandMean(ru1, ruIsM, RuDab, out ruIsland);
+                WsExpect(ruIsland >= 5 && ruIslandG >= RuIsland, "the dab made a foam island (" + ruIsland + " texels >= 0.1, mean G " + ruIslandG.ToString("F3") + " >= " + RuIsland + " after " + ruDabSec.ToString("F2") + " s of sponge r " + RuDab + " m)");
+                // the ring: one runoff step around the island must be rinsed (wet >= 0.5, foam < 0.1)
+                float rIs = WsIslandR(RuDab), rRing = rIs + WsRunoffTravelM() / wsMts; int ring = 0, ringOk = 0;
+                for (int k = 0; k < wsTexCount; k++)
+                {
+                    int i = wsTexIdx[k]; float d = (wsTexPos[k] - ruIsM).magnitude;
+                    if (d > rIs && d <= rRing) { ring++; if (ru1[i].b >= 0.5f && ru1[i].g < 0.1f) ringOk++; }
+                }
+                ruRing = ring > 0 ? ringOk / (float)ring : 0f;
+                WsExpect(ruRing >= 0.5f, "the wide shower left the island bordered by rinsed texels (" + ringOk + "/" + ring + " of the ring wet >= 0.5 and foam < 0.1)");
+                // the cells: the island's cell and the control's cell (nearest valid cell centre)
+                var cc = Get<Vector3[]>(wsWash, "cellCenter"); var valid = Get<bool[]>(wsWash, "cellValid");
+                ruIsCell = WsNearestCell(cc, valid, ruIsM); ruCtlCell = WsNearestCell(cc, valid, ruTC.mesh[0]);
+                WsExpect(ruCtlCell >= 0, "the control has a valid cell");
+                WsExpect(ruIsCell >= 0 && ruF1[ruIsCell] > 0.1f, "the dab reached the island's cell (cell " + ruIsCell + ", foam " + (ruIsCell >= 0 ? ruF1[ruIsCell].ToString("F3") : "-") + ")");
+            }));
+            s.Add(WsDrive(0.2f, 1, u => WsAt(ruT), WsShower, RuTap, ruTT));   // a short shower elsewhere starts the runoff again
+            s.Add(WsDo(() => WsEnd(WsShower)));
+            s.Add(WsWait(0.4));   // the tap's echo is integrated (its cells are rinsed / showered now); about 1.2 s of the window is left
+            // The cells' chain check (finding 2): 4 valid cells in a grid row c0..c3, none of c1..c3 next to a showered cell and all
+            // away from the island's / control's cells. c0 = showered and rinsed (foam 0, wet 0.8); c1..c3 = foam 0.25, wet 0.8
+            // (as wet as a long sponge leaves them). The old rule (any rinsed cell counts) erodes c1 below 0.1 within the window
+            // and then c2; the rule now (only showered cells count) erodes c1 only. Written into the Owner's arrays (the same
+            // injection as W-quiet): the grid adjacency is in UV and cannot be laid out with strokes.
+            s.Add(WsDo(() =>
+            {
+                var valid = Get<bool[]>(wsWash, "cellValid"); var sh = (bool[])Get<bool[]>(wsWash, "_cellShowered").Clone();
+                ruChain = WsChainRow(valid, sh, new[] { ruIsCell, ruCtlCell });
+                WsExpect(ruChain != null, "4 valid cells in a grid row away from the showered cells and the island / control cells (for the chain check)");
+                var f = (float[])Get<float[]>(wsWash, "_foam").Clone(); var w = (float[])Get<float[]>(wsWash, "_wet").Clone();
+                f[ruChain[0]] = 0f; w[ruChain[0]] = 0.8f; sh[ruChain[0]] = true;
+                for (int j = 1; j < 4; j++) { f[ruChain[j]] = 0.25f; w[ruChain[j]] = 0.8f; }
+                ruChainF = new float[4]; for (int j = 0; j < 4; j++) ruChainF[j] = f[ruChain[j]];
+                // the reference for the "beyond one ring" check: the cells before the injection (with the injected values)
+                for (int j = 0; j < 4; j++) ruF1[ruChain[j]] = f[ruChain[j]];
+                wsWash.SetProgramVariable<float[]>("_foam", f); wsWash.SetProgramVariable<float[]>("_wet", w); wsWash.SetProgramVariable<bool[]>("_cellShowered", sh);
+                WsExpect(Get<bool>(wsWash, "_runoffOn"), "the tap's runoff window is running at the injection");
+            }));
+            s.Add(WsWait(wsRunoffSeconds + 0.3));
+            s.Add(WsDo(() =>
+            {
+                var ru2 = WsMask();
+                int n, low = 0; float mx = 0f, sg = 0f; float rIs = WsIslandR(RuDab);
+                n = 0;
+                for (int k = 0; k < wsTexCount; k++)
+                {
+                    int i = wsTexIdx[k];
+                    if ((wsTexPos[k] - ruIsM).magnitude > rIs || ru1[i].g < 0.1f) continue;
+                    n++; sg += ru2[i].g; mx = Mathf.Max(mx, ru2[i].g); if (ru2[i].g < 0.1f) low++;
+                }
+                float mean = n > 0 ? sg / n : 1f;
+                int passes = Get<int>(wsWash, "_runoffPasses") - ruPass0, cellPasses = Get<int>(wsWash, "_runoffCellPasses") - ruCell0;
+                WsExpect(passes > 0 && cellPasses > 0, "the runoff ran after the tap (" + passes + " mask passes, " + cellPasses + " cell passes)");
+                WsExpect(!Get<bool>(wsWash, "_runoffOn"), "the window has ended");
+                WsExpect(n > 0 && mean < 0.1f && low >= Mathf.CeilToInt(0.9f * n), "the island's foam fell below 0.1 without water on it: mean " + mean.ToString("F3") + ", " + low + "/" + n + " texels < 0.1, max " + mx.ToString("F3") + " (before: mean " + ruIslandG.ToString("F3") + ")");
+                float dm, ctl = WsLocal(ruTC.mesh[0], ruTC.part[0], ru1, ru2, 1, out dm), ctlBefore = WsLocal(ruTC.mesh[0], ruTC.part[0], null, ru1, 1, out dm);
+                WsExpect(ctlBefore > 0.2f && Mathf.Abs(ctl) <= 0.02f, "the far control foam is unchanged on the mask (" + ctlBefore.ToString("F3") + ", dG " + ctl.ToString("F3") + ")");
+                // the cells (Owner)
+                var f2 = Get<float[]>(wsWash, "_foam"); var sh = Get<bool[]>(wsWash, "_cellShowered"); var valid = Get<bool[]>(wsWash, "cellValid"); var cc = Get<Vector3[]>(wsWash, "cellCenter");
+                // (c) the island's cell lost foam (its showered neighbours from the wide shower)
+                float isB = ruF1[ruIsCell], isA = f2[ruIsCell];
+                WsExpect(isA < isB - 0.05f, "the island's cell " + ruIsCell + " lost foam by the runoff (" + isB.ToString("F3") + " -> " + isA.ToString("F3") + "; showered grid neighbours " + WsShoweredAround(sh, ruIsCell) + ")");
+                // (b) the control's cell is unchanged (unless the UV grid puts it next to a showered cell: then it may erode by the rule)
+                int ctlNb = WsShoweredAround(sh, ruCtlCell);
+                if (ctlNb == 0) WsExpect(Mathf.Abs(f2[ruCtlCell] - ruF1[ruCtlCell]) <= 1e-4f, "the control's cell " + ruCtlCell + " is unchanged (" + ruF1[ruCtlCell].ToString("F3") + " -> " + f2[ruCtlCell].ToString("F3") + ")");
+                // (a) the chain row: c1 eroded, c2 / c3 (one and two cells beyond the ring) unchanged
+                float c1 = f2[ruChain[1]], c2 = f2[ruChain[2]], c3 = f2[ruChain[3]];
+                WsExpect(c1 < ruChainF[1] - 0.05f, "chain row: c1 next to the showered c0 eroded (" + ruChainF[1].ToString("F3") + " -> " + c1.ToString("F3") + ")");
+                WsExpect(Mathf.Abs(c2 - ruChainF[2]) <= 1e-4f && Mathf.Abs(c3 - ruChainF[3]) <= 1e-4f, "chain row: c2 / c3 beyond the ring unchanged (" + ruChainF[2].ToString("F3") + " -> " + c2.ToString("F3") + ", " + ruChainF[3].ToString("F3") + " -> " + c3.ToString("F3") + "; the old rule chains through c1 once it is < 0.1)");
+                // (a) every valid cell more than one ring from all showered cells kept its foam (outside the tap's direct reach)
+                var tm = ruTT.mesh[0]; float tapReach = (RuTap * Mathf.Max(1f, wsRinseReach) + Get<float>(wsWash, "cellReach")) / wsMts;
+                int beyond = 0, bad = 0; var badList = new List<string>();
+                for (int c = 0; c < f2.Length && c < valid.Length && c < cc.Length; c++)
+                {
+                    if (!valid[c] || (cc[c] - tm).magnitude <= tapReach || WsShoweredAround(sh, c) > 0 || sh[c]) continue;
+                    beyond++;
+                    if (f2[c] < ruF1[c] - 1e-4f) { bad++; if (badList.Count < 6) badList.Add(c + ":" + ruF1[c].ToString("F2") + "->" + f2[c].ToString("F2")); }
+                }
+                WsExpect(bad == 0, "cells more than one ring from every showered cell kept their foam (" + bad + " of " + beyond + " lost: " + string.Join(" ", badList) + ")");
+                WsNote("wide shower " + RuWide + " m 2 s, then (after its runoff) a sponge dab r " + RuDab + " m " + ruDabSec.ToString("F2") + " s = island of " + ruIsland + " texels (mean G " + ruIslandG.ToString("F3") + ", ring rinsed " + ruRing.ToString("P0") + "); a " + RuTap + " m shower tap " + ruTM.ToString("F3") + " m away; after the window: island mean " + mean.ToString("F3") + ", " + low + "/" + n + " < 0.1, max " + mx.ToString("F3") + "; control (" + ruCM.ToString("F3") + " m away) mask dG " + ctl.ToString("F3") + ", cell " + ruCtlCell + " " + ruF1[ruCtlCell].ToString("F3") + " -> " + f2[ruCtlCell].ToString("F3") + (ctlNb > 0 ? " (next to " + ctlNb + " showered cells: not asserted)" : "") + "; island cell " + ruIsCell + " " + isB.ToString("F3") + " -> " + isA.ToString("F3") + "; chain row " + string.Join(",", ruChain) + " c1 " + ruChainF[1].ToString("F2") + "->" + c1.ToString("F3") + ", c2 " + c2.ToString("F3") + ", c3 " + c3.ToString("F3") + "; " + beyond + " cells beyond one ring unchanged; mask passes " + passes + ", cell passes " + cellPasses + ", avg foam " + ruAvg1.ToString("F3") + " -> " + WsAvgFoam().ToString("F3"));
             }));
 
             // ---- W-rate (同じ点を、毎フレームと 3 フレームに 1 回で。接触の合計はどちらも 0.6 s) ----
@@ -618,6 +876,7 @@ namespace KominkaHillside.Editor
         static void WsRecover()
         {
             for (int t = 0; t < 3; t++) { try { WsEnd(t); } catch (Exception) { } }
+            try { WsRunoffRestore(); } catch (Exception) { }   // W-shoulder turns the runoff off for itself
         }
 
         static void WsWrite()
@@ -723,6 +982,10 @@ namespace KominkaHillside.Editor
             if (wsCols.Length == 0 || wsBones.Length < wsCols.Length || wsColPart.Length < wsCols.Length || wsB2M.Length < wsCols.Length) throw new InvalidOperationException("wash collider arrays are not wired");
             wsMts = Get<float>(wsWash, "meshToWorldScale"); if (!(wsMts > 0f)) wsMts = 1f;
             wsSpongeR = Get<float>(wsWash, "spongeRadius"); wsShowerR = Get<float>(wsWash, "showerRadius"); wsHoldSeconds = Get<float>(wsWash, "holdSeconds");
+            wsRinseReach = Get<float>(wsWash, "rinseReach"); wsEdgeNoise = Get<float>(wsWash, "edgeNoise");
+            wsRunoffSeconds = Get<float>(wsWash, "runoffSeconds"); wsRunoffRate = Get<float>(wsWash, "runoffRate"); wsRunoffStep = Get<float>(wsWash, "runoffStep");
+            wsRunoffInterval = Get<float>(wsWash, "runoffInterval");
+            wsReport.resolved.Add("rinseReach " + wsRinseReach + ", edgeNoise " + wsEdgeNoise + ", runoff " + wsRunoffSeconds + " s x " + wsRunoffRate + " / s, step " + wsRunoffStep + " texels, spongeRadius " + wsSpongeR + " m, showerRadius " + wsShowerR + " m");
             object sh; wsShell = wsWash.TryGetProgramVariable("shellRenderer", out sh) ? sh as Renderer : null;
             if (wsShell == null) throw new InvalidOperationException("wash.shellRenderer is not wired");
             if (WsTorso().Count == 0) throw new InvalidOperationException("no torso (part 0 / 1) collider");
@@ -780,6 +1043,22 @@ namespace KominkaHillside.Editor
             }
             wsTexIdx = idx.ToArray(); wsTexPart = part.ToArray(); wsTexPos = pos.ToArray(); wsTexCount = wsTexIdx.Length;
             if (wsTexCount < 1000) throw new InvalidOperationException("position map has only " + wsTexCount + " valid texels");
+            // one texel in metres (the runoff's neighbour step): mesh distance between adjacent valid texels of the same part
+            // (right and up neighbours), 90th percentile, x meshToWorldScale
+            var at = new int[px.Length]; for (int i = 0; i < at.Length; i++) at[i] = -1;
+            for (int k = 0; k < wsTexCount; k++) at[wsTexIdx[k]] = k;
+            var dl = new List<float>();
+            for (int k = 0; k < wsTexCount; k++)
+            {
+                int i = wsTexIdx[k];
+                int jr = (i % w) < w - 1 ? at[i + 1] : -1, ju = i + w < at.Length ? at[i + w] : -1;
+                if (jr >= 0 && wsTexPart[jr] == wsTexPart[k]) dl.Add((wsTexPos[jr] - wsTexPos[k]).magnitude);
+                if (ju >= 0 && wsTexPart[ju] == wsTexPart[k]) dl.Add((wsTexPos[ju] - wsTexPos[k]).magnitude);
+            }
+            dl.Sort();
+            wsTexelM = dl.Count > 0 ? dl[Mathf.Min(dl.Count - 1, (int)(dl.Count * 0.9f))] * wsMts : 0.01f;
+            wsTexelHiM = dl.Count > 0 ? dl[Mathf.Min(dl.Count - 1, (int)(dl.Count * 0.99f))] * wsMts : 0.02f;
+            wsReport.resolved.Add("position map texel p90 " + wsTexelM.ToString("F4") + " m, p99 " + wsTexelHiM.ToString("F4") + " m (" + dl.Count + " adjacent pairs)");
             var mask = Get<RenderTexture>(wsWash, "maskA");
             if (mask == null || mask.width != w || mask.height != h) throw new InvalidOperationException("mask size " + (mask == null ? "null" : mask.width + "x" + mask.height) + " != position map " + w + "x" + h);
         }
@@ -1016,6 +1295,94 @@ namespace KominkaHillside.Editor
             return pts;
         }
         static Vector3 WsToMesh(int ci, Vector3 world) { return wsB2M[ci].MultiplyPoint3x4(wsBones[ci].InverseTransformPoint(world)); }
+
+        /// <summary>経路の u0..u1 を n 等分した点の Raycast の当たり (メッシュ座標)。外れは飛ばす。</summary>
+        static List<Vector3> WsPathMesh(float u0, float u1, int n)
+        {
+            var r = new List<Vector3>();
+            for (int k = 0; k <= n; k++) { var h = WsPath(Mathf.Lerp(u0, u1, k / (float)n)); if (h.ci >= 0) r.Add(WsToMesh(h.ci, h.p)); }
+            return r;
+        }
+        /// <summary>全身の表面の点 (WsCover) のうち、from の点から (メッシュ上で) 最も遠いもの。distM = その距離 (m)。遠くの対照の泡に使う。</summary>
+        static WsAnchor WsFarthestFrom(List<Vector3> from, out float distM)
+        {
+            if (from == null || from.Count == 0) throw new InvalidOperationException("no reference points for the far control");
+            var best = default(WsAnchor); float bd = -1f;
+            foreach (var a in WsCover(0.05f))
+            {
+                var h = WsAt(a); float d = WsMinDist(WsToMesh(h.ci, h.p), from);
+                if (d > bd) { bd = d; best = a; }
+            }
+            if (bd < 0f) throw new InvalidOperationException("no surface points");
+            distM = bd * wsMts; return best;
+        }
+        /// <summary>流れる処理が流した所から届く距離 (m): 近傍の距離 (整数のテクセル、実行時と同じ丸め) × 1.5 (斜め) × テクセルの大きさ (p90)。</summary>
+        static float WsRunoffTravelM() { return Mathf.Max(1, Mathf.RoundToInt(wsRunoffStep)) * 1.5f * wsTexelM; }
+        /// <summary>半径 radius (m) のシャワーが泡を変えうる距離 (m): 縁のノイズ込みの半径 × rinseReach (マスクの wOut の外側の縁) + 流れる距離。</summary>
+        static float WsRinseOuterM(float radius) { return radius * (1f + wsEdgeNoise) * Mathf.Max(1f, wsRinseReach) + WsRunoffTravelM(); }
+        /// <summary>W-runoff の島の半径 (メッシュ座標): スポンジの半径 × (1 + 縁のノイズ) + 1 テクセル。</summary>
+        static float WsIslandR(float dab) { return (dab * (1f + wsEdgeNoise) + wsTexelM) / wsMts; }
+        /// <summary>島 (c から WsIslandR 以内で泡 0.1 以上のテクセル) の泡の平均と数。</summary>
+        static float WsIslandMean(Color[] m, Vector3 c, float dab, out int n)
+        {
+            float r = WsIslandR(dab), sum = 0f; n = 0;
+            for (int k = 0; k < wsTexCount; k++)
+            {
+                int i = wsTexIdx[k];
+                if ((wsTexPos[k] - c).magnitude > r || m[i].g < 0.1f) continue;
+                n++; sum += m[i].g;
+            }
+            return n > 0 ? sum / n : 0f;
+        }
+        /// <summary>メッシュ座標の点に中心が最も近い有効なセル (無ければ -1)。</summary>
+        static int WsNearestCell(Vector3[] cc, bool[] valid, Vector3 m)
+        {
+            int best = -1; float bd = float.MaxValue;
+            for (int c = 0; c < cc.Length && c < valid.Length; c++) { if (!valid[c]) continue; float d = (cc[c] - m).sqrMagnitude; if (d < bd) { bd = d; best = c; } }
+            return best;
+        }
+        /// <summary>セル c (16×16、c = y × 16 + x) の 8 近傍のうち sh が立っている数。</summary>
+        static int WsShoweredAround(bool[] sh, int c)
+        {
+            if (c < 0) return 0;
+            int x = c & 15, y = c >> 4, n = 0;
+            for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++)
+            {
+                int xx = x + dx, yy = y + dy;
+                if ((dx == 0 && dy == 0) || xx < 0 || xx > 15 || yy < 0 || yy > 15) continue;
+                if (sh[(yy << 4) | xx]) n++;
+            }
+            return n;
+        }
+        static int WsCellDist(int a, int b) { return Mathf.Max(Mathf.Abs((a & 15) - (b & 15)), Mathf.Abs((a >> 4) - (b >> 4))); }
+        /// <summary>W-runoff の連鎖の検査の行: 格子の同じ行の有効なセル 4 個 c0..c3 (右向きか左向き)。c1..c3 は流したセル (sh) にも
+        /// その隣にもならず、4 個とも avoid のセルから 3 以上離れる。無ければ null。</summary>
+        static int[] WsChainRow(bool[] valid, bool[] sh, int[] avoid)
+        {
+            foreach (int dir in new[] { 1, -1 })
+                for (int y = 0; y < 16; y++)
+                    for (int x = 0; x < 16; x++)
+                    {
+                        if (x + 3 * dir < 0 || x + 3 * dir > 15) continue;
+                        var row = new int[4]; bool ok = true;
+                        for (int j = 0; j < 4 && ok; j++)
+                        {
+                            int c = (y << 4) | (x + j * dir); row[j] = c;
+                            if (c >= valid.Length || !valid[c]) ok = false;
+                            else if (j > 0 && (sh[c] || WsShoweredAround(sh, c) > 0)) ok = false;
+                            else foreach (int a in avoid) if (a >= 0 && WsCellDist(a, c) < 3) ok = false;
+                        }
+                        if (ok) return row;
+                    }
+            return null;
+        }
+
+        static void WsRunoffRestore()
+        {
+            if (!wsRunoffOff) return;
+            wsRunoffOff = false;
+            wsWash.SetProgramVariable<float>("runoffRate", wsRunoffRate);
+        }
 
         // ============================================================
         // マスクとセル

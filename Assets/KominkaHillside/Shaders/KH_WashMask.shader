@@ -3,6 +3,8 @@
 //   Pass 0 Brush   : capsule brush in bind-pose mesh space (position map RGB), weighted _Delta, clamped 0..1
 //   Pass 1 Restore : whole mask from the 16x16 _CellTex (late join / lost RenderTexture), dirt gets its pattern
 //   Pass 2 Decay   : subtract _Decay everywhere (drying)
+//   Pass 3 Runoff  : foam next to rinsed texels (wet >= 0.5, foam < 0.1; 8 neighbours at +-_RunoffStep texels) loses
+//                    _RunoffAmount x rinsed / 8; dirt follows the foam's ratio, wet unchanged (2026-10-02)
 // Every pass writes all channels with Blend Off (double buffer), so one channel may depend on another.
 //
 // Arrays are NOT in the Properties block (Unity cannot declare them there): set them with Material.SetFloatArray.
@@ -26,6 +28,9 @@ Shader "KominkaHillside/Wash Mask"
         _Delta ("Delta (dirt, foam, wet) already x seconds", Vector) = (0,0,0,0)
         _RinseFoamBoost ("Dirt removal x (1 + foam x this)", Float) = 2.2
         _FoamRinseGate ("Foam rinse gate (1 = dirt follows foam)", Range(0,1)) = 1
+        _RinseReach ("Foam removal outer edge (x noisy radius)", Float) = 1.2
+        _RunoffStep ("Runoff neighbour distance (texels)", Float) = 2
+        _RunoffAmount ("Runoff foam removed when all 8 neighbours are rinsed", Float) = 0
         _EdgeNoise ("Edge noise strength (fraction of radius)", Range(0,1)) = 0.35
         _EdgeNoiseScale ("Edge noise frequency (1 / mesh unit)", Float) = 30
         _FoamGrowEase ("Foam growth slows near full (0 = linear)", Range(0,0.95)) = 0.7
@@ -40,13 +45,15 @@ Shader "KominkaHillside/Wash Mask"
     #include "KH_WashCommon.cginc"
 
     sampler2D _MainTex;
+    float4 _MainTex_TexelSize;   // set by Blit (the mask's texel size)
     sampler2D _PosMap;
     float4 _PosMap_TexelSize;
     sampler2D _CellTex;
     float4 _BrushA, _BrushB;
     float _BrushRadius, _BrushSoft;
     float4 _Delta;
-    float _RinseFoamBoost, _FoamRinseGate;
+    float _RinseFoamBoost, _FoamRinseGate, _RinseReach;
+    float _RunoffStep, _RunoffAmount;
     float _EdgeNoise, _EdgeNoiseScale, _FoamGrowEase;
     float4 _Decay;
     float4 _DirtHeightFade, _DirtHeightWeight;
@@ -100,7 +107,8 @@ Shader "KominkaHillside/Wash Mask"
         float t = saturate(dot(p - _BrushA.xyz, ab) / max(dot(ab, ab), 1e-12));
         float d = length(p - (_BrushA.xyz + ab * t));
         float r = max(_BrushRadius, 1e-6);
-        if (d > r * (1.0 + _EdgeNoise) * 1.2 + 1e-6) return prev;     // cheap reject before the noise
+        float reach = max(_RinseReach, 1.0);                           // wOut's outer edge (x rr); the shower sets rinseReach
+        if (d > r * (1.0 + _EdgeNoise) * reach + 1e-6) return prev;   // cheap reject before the noise
 
         // Rim: two octaves, both directions (in and out), so the circle never shows.
         float3 q = p * _EdgeNoiseScale;
@@ -112,9 +120,10 @@ Shader "KominkaHillside/Wash Mask"
         // Clumps: the amount is uneven inside, so foam grows and melts in lumps rather than as a flat disc.
         float clump = KHWash_Contrast(KHWash_VNoise3(q * 3.1 + 41.7), 1.6);
         float clumpMul = 1.0 + (clump * 2.0 - 1.0) * 0.5 * saturate(_EdgeNoise * 2.0);
-        // Foam removal uses a wider, softer falloff (reaching ~20 % past the rim), so the foam left at the band edge
-        // thins out gradually and the shell draws it as small sparse bubbles instead of a cut-out edge.
-        float wOut = 1.0 - smoothstep(rr * (1.0 - min(1.0, max(_BrushSoft, 0.01) * 1.8)), rr * 1.2, d);
+        // Foam removal uses a wider, softer falloff (reaching (_RinseReach - 1) past the rim: 1.2 for the towel, rinseReach
+        // for the shower, 2026-10-02), so the foam left at the band edge thins out gradually and the shell draws it as small
+        // sparse bubbles instead of a cut-out edge, and a rinse takes the foam around the band along with it.
+        float wOut = 1.0 - smoothstep(rr * (1.0 - min(1.0, max(_BrushSoft, 0.01) * 1.8)), rr * reach, d);
         w *= clumpMul * allowSoft;
         wOut *= clumpMul * allowSoft;
 
@@ -161,6 +170,38 @@ Shader "KominkaHillside/Wash Mask"
         float4 prev = tex2D(_MainTex, i.uv);
         return float4(saturate(prev.rgb - _Decay.xyz), 1);
     }
+
+    // 1 when the texel at uv is inside the islands and rinsed (wet >= 0.5 and foam < 0.1). Offsets are whole texels, so
+    // the mask is read at a texel centre.
+    float RinsedAt(float2 uv)
+    {
+        if (KHWash_BoneIndex(ReadPos(uv).a) < 0) return 0.0;          // outside the UV islands: does not count
+        float4 m = tex2Dlod(_MainTex, float4(uv, 0, 0));
+        return (m.b >= 0.5 && m.g < 0.1) ? 1.0 : 0.0;
+    }
+
+    // Leftover foam next to a rinsed area flows away by itself (2026-10-02). Same rule as KH_DogWash.RunoffCells.
+    float4 FragRunoff(v2f_img i) : SV_Target
+    {
+        float4 prev = tex2D(_MainTex, i.uv);
+        if (prev.g <= 0.0) return prev;
+        if (KHWash_BoneIndex(ReadPos(i.uv).a) < 0) return prev;       // outside the UV islands: keep
+        float2 o = _MainTex_TexelSize.xy * max(_RunoffStep, 1.0);
+        float n = 0.0;
+        n += RinsedAt(i.uv + float2( o.x, 0));
+        n += RinsedAt(i.uv + float2(-o.x, 0));
+        n += RinsedAt(i.uv + float2(0,  o.y));
+        n += RinsedAt(i.uv + float2(0, -o.y));
+        n += RinsedAt(i.uv + float2( o.x,  o.y));
+        n += RinsedAt(i.uv + float2(-o.x,  o.y));
+        n += RinsedAt(i.uv + float2( o.x, -o.y));
+        n += RinsedAt(i.uv + float2(-o.x, -o.y));
+        if (n < 0.5) return prev;                                      // no rinsed neighbour: nothing changes (dirt too)
+        float foamNew = max(0.0, prev.g - _RunoffAmount * n / 8.0);
+        if (foamNew >= prev.g) return prev;                            // no foam change (amount 0): dirt must not move either
+        float dirtNew = min(prev.r, prev.r * foamNew / max(prev.g, 1e-4));   // the rinse gate's ratio, never more dirt
+        return float4(dirtNew, foamNew, prev.b, 1);
+    }
     ENDCG
 
     SubShader
@@ -195,6 +236,15 @@ Shader "KominkaHillside/Wash Mask"
             CGPROGRAM
             #pragma vertex vert_img
             #pragma fragment FragDecay
+            #pragma target 3.0
+            ENDCG
+        }
+        Pass
+        {
+            Name "RUNOFF"
+            CGPROGRAM
+            #pragma vertex vert_img
+            #pragma fragment FragRunoff
             #pragma target 3.0
             ENDCG
         }
