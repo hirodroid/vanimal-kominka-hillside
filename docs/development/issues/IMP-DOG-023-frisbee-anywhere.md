@@ -5,8 +5,8 @@ system: DOG
 status: review
 priority: Medium
 summary: フリスビーをどこでも (DES-DOG-005 段階 3)。M1 陸の地面基準ジャンプと到達判定、M2 川のディスクの浮き、M3 岸からのドボンと水中回収、M4 取り出しの門の置き換え
-next: AI 側の検証は M1〜M4 とも済み (ClientSim、2026-09-28)。残りはユーザーの PCVR 37〜48 (実機 09-28 夜はドボン 0 件で、岸からの跳び込み 40/41 が未確認)、VER-WLD-001 項目 12
-updated: 2026-09-29
+next: "AI 側の検証は M1〜M4 とも済み。残りは 2 人の実機 (設計書 #44〜#47、B31) と VER-WLD-001 項目 12。PCVR 1 人の 37〜43・48 (跳び込み 40/41 を含む。A78・A79・A113・A115・A116) は 10-02 ユーザー総合判断で確認済み"
+updated: 2026-10-02
 ---
 
 # IMP-DOG-023 フリスビーをどこでも (段階 3)
@@ -127,3 +127,5 @@ M4 でやったこと (2026-09-28):
 - [IMP-DOG-022](IMP-DOG-022-frisbee-takeout-area.md): 段階 1
 - [IMP-DOG-017](IMP-DOG-017-frisbee-intercept-solver.md) / [IMP-DOG-021](IMP-DOG-021-river-wide-fetch-and-recall.md): 置き換える計画器と、流用する川の回収
 - [ハーネス](../../testing/kh-frisbee-harness.md)
+
+2026-10-02 ユーザー確認: PCVR 1 人の項目は「基本全部見たから OK」(総合判断。項目別の結果の記録なし。[play-checklist-2026-10-02](../../testing/play-checklist-2026-10-02.md) の A 節)。残り: 2 人 (#44〜#47)、VER-WLD-001 項目 12。

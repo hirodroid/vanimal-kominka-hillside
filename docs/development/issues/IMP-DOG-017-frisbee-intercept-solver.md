@@ -2,11 +2,11 @@
 id: IMP-DOG-017
 type: IMP
 system: DOG
-status: review
+status: done
 priority: High
 decided: 2026-09-26
 summary: 小型犬 (Pome / Dachs / Corgi) と Shiba がフリスビーの下に回り込み、振り向いて跳ばずに取るのがほとんど。プランナーは軌道を知っているが、0.1 秒刻みの候補を決まった近づき方で合否判定し、落ちたら次の案へ回すため、跳べる時間帯が短い犬ほど立ち取りに落ちる。投げた瞬間に「どこで何秒後に跳ぶか・どの速さで走るか」を解く方式へ見直す
-next: PCVR 3 回目: 大型犬の走り (再生倍率 1.7 で足の滑りが気にならないか)、横曲がり 0.07 の曲がり具合、退役プリセットがメニューから消えているか
+updated: 2026-10-02
 ---
 
 # IMP-DOG-017 フリスビーの迎撃を「解く」方式へ見直す
@@ -189,3 +189,10 @@ Opus サブエージェント 2 本 (runtime / Editor+ハーネス) で並列実
 
 - [IMP-DOG-008](IMP-DOG-008-frisbee-variations.md) (近づき方の型を作った経緯)、[IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md) (犬種別の `maxRootRise`。Pome の下限を 0.30 から 0.45 に上げた理由も同じ症状)
 - ハーネス: [kh-frisbee-harness.md](../../testing/kh-frisbee-harness.md)
+
+## 完了記録
+
+- 完了日: 2026-10-02
+- 確かめ方: ClientSim ハーネス (Lab 26/26・Pome 26/26、Frisbee/5 Verify 0 失敗、Walking/5 Verify 483/483) は 2026-09-26 に済み。完了条件の PCVR と「PCVR 3 回目」(大型犬の走り・横曲がり 0.07・退役プリセットがメニューから消えること。A63〜A66・A68・A70) は 2026-10-02 のユーザーの PCVR 1 人の総合判断 (「基本全部見たから OK」。項目別の結果の記録なし。[play-checklist-2026-10-02](../../testing/play-checklist-2026-10-02.md)) による。
+- 想定と実際のずれ: 実機の PCVR は 3 回行い、2 回目までに大型犬の走りの小刻み・小型犬の beside の届かなさなどを手直しした (上の PCVR 1・2 回目)。
+

@@ -5,8 +5,8 @@ system: ENV
 status: wip
 priority: Medium
 summary: 約2.41kmの川沿い周回を実装し、2026-09-27に本番シーン (VRCDefaultWorldScene) へ採用済み。Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する
-next: 犬連れの実歩行時間、LODと遮蔽の実機表示、Quest 3・iPhone 15 Pro・16人の性能から最終距離/予算を確定する (ユーザーの実機。VER-WLD-001)
-updated: 2026-09-29
+next: "Quest 3・iPhone 15 Pro・16 人の性能から最終距離/予算を確定し、ユーザーが決める (VER-WLD-001)。PCVR の犬連れ実歩行・LOD と遮蔽の見え方は 10-02 ユーザー総合判断で確認済み (所要時間の数値の記録はない)"
+updated: 2026-10-02
 ---
 
 # DES-ENV-002 散歩コースの延長 (周回・川) とワールドの広さを決める
@@ -66,3 +66,5 @@ updated: 2026-09-29
 2026-09-27 全周地形へ展開：別シーンに600×720m・20枚のTerrainと小橋2基を構築。中心線は2,406.89m（設定2m/sで20.06分）。当初の1.81km案を延長した。旧道保護・足場・地形接合の静的検査は通過し、全周NavMeshの静的検査も通過。436点の周回経路と手元の6目的地も接続しEditor検査済み。犬の実移動・景観仕上げ・実機確認は残る。検査根拠は上記制作記録を参照。
 
 2026-09-27 本番へ採用：ユーザーが周回版を了承し、元の本番ファイル `VRCDefaultWorldScene` (ファイル名・GUID・公開先IDは維持) へ切り替えた。旧版は `Assets/Scenes/Archive/KH_HillsideBeforeRiverLoop.unity`。[切替記録](../../plans/des-env-002/production.md)。残りは実機での距離・予算の確定。
+
+2026-10-02 ユーザー確認: PCVR 1 人の項目は「基本全部見たから OK」(総合判断。項目別の結果の記録なし。[play-checklist-2026-10-02](../../testing/play-checklist-2026-10-02.md) の A 節)。残り: 実歩行の所要時間の数値の記録 (A135 は数値を聞いていない)、Quest 3・iPhone 15 Pro・16 人の性能、最終距離/予算の決定 (完了条件の見積り・ユーザー決定は未了)。

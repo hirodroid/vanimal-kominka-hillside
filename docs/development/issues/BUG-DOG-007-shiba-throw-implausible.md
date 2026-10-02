@@ -2,11 +2,10 @@
 id: BUG-DOG-007
 type: BUG
 system: DOG
-status: review
+status: done
 priority: Low
 summary: 実機 (2026-09-28 夜) で柴のディスクの投げが 22:53〜22:59 に 5 回 `implausible` で断られた。原因は 200 m の距離の上限で、柴は投げ手から約 430〜516 m 離れた場所に残っていた (周回コース 600×720 m では正当に起こる)。拒否理由を条件ごとに分けた。統括の決定で、Ready と投げの受理を犬から 40 m 以内に限り (`readyMaxDistance`、理由 `far`)、照準は × と「犬が遠くにいます」を出す。200 m の `implausible-far` は二重の安全として残す
-next: コンパイル・Course/27・92・93・試作の既定は済み (7178d1f)。実機で 40 m の外から持つ・投げると犬が動かず、照準に「犬が遠くにいます」が出ることを確かめる
-updated: 2026-09-29
+updated: 2026-10-02
 ---
 
 # BUG-DOG-007 柴のディスクの投げが implausible で 5 回断られた
@@ -74,3 +73,10 @@ updated: 2026-09-29
 
 - [BUG-DOG-003](BUG-DOG-003-frisbee-non-master-throw.md): 拒否理由の一覧 (`req reject reason=...`)
 - [IMP-DOG-023](IMP-DOG-023-frisbee-anywhere.md): どこでも遊べる化 (犬が遠くにいる状況が増える)
+
+## 完了記録
+
+- 完了日: 2026-10-02
+- 確かめ方: 修正 (7178d1f) 時に コンパイル・Course/27・92・93・試作の既定 26/26 の ClientSim 検証済み。実機の 40 m の外で持つ・投げる確認 (A77) は、2026-10-02 のユーザーの PCVR 1 人の総合判断 (「基本全部見たから OK」。項目別の結果の記録なし。[play-checklist-2026-10-02](../../testing/play-checklist-2026-10-02.md)) による。
+- 注意: 200 m の `implausible-far` は偽の通知だけで出る二重の安全で、実機では再現していない。想定と実際: 当初は 200 m の上限の不具合と見たが、実際は誰も連れて行かなかった柴が遠くに残っていたことが原因で、上限は変えず Ready と受理を 40 m 以内に限った。
+

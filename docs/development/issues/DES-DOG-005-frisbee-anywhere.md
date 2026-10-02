@@ -5,8 +5,8 @@ system: DOG
 status: review
 priority: Medium
 summary: フリスビーを広場以外 (奥広場・川辺・道) でも投げて取れるようにする。段階 1 は取り出しを投げられるエリアに限る、段階 2 は平らな場所を追加、段階 3 は地面の高さを基準にした滑空・キャッチでどこでも
-next: 段階 3 は IMP-DOG-023 M1〜M4 で実装・ClientSim 検証済み (2026-09-28)。残りはユーザーの PCVR 37〜48 と VER-WLD-001 項目 12。確かめたら done
-updated: 2026-09-29
+next: "段階 3 は IMP-DOG-023 M1〜M4 で実装・ClientSim 検証済み。残りは 2 人の実機 (設計書 #44 水中で運ぶ間の途中参加・#45 Owner 退出・#46 漂うディスクの途中参加・#47 ディスク Owner 退出) と VER-WLD-001 項目 12 (端末別)。PCVR 1 人の 37〜43・48 は 10-02 ユーザー総合判断で確認済み"
+updated: 2026-10-02
 ---
 
 # DES-DOG-005 フリスビーをどこでも投げられるようにする
@@ -58,3 +58,5 @@ updated: 2026-09-29
 - [DES-DOG-002](DES-DOG-002-toy-behaviour.md): おもちゃの挙動の決定 (遊び場は広場)
 - [IMP-DOG-005](IMP-DOG-005-frisbee-jump-catch.md) / [IMP-DOG-017](IMP-DOG-017-frisbee-intercept-solver.md) / [IMP-DOG-012](IMP-DOG-012-frisbee-six-dogs.md): 現在のキャッチと 6 匹展開
 - [IMP-DOG-020](IMP-DOG-020-river-wading-and-swim.md) 段階 7 / [IMP-DOG-021](IMP-DOG-021-river-wide-fetch-and-recall.md): 川の帯とディスクの岸戻し、川全体での回収
+
+2026-10-02 ユーザー確認: PCVR 1 人の項目は「基本全部見たから OK」(総合判断。項目別の結果の記録なし。[play-checklist-2026-10-02](../../testing/play-checklist-2026-10-02.md) の A 節)。残り: 2 人 (設計書 #44〜#47、B31)、VER-WLD-001 項目 12。

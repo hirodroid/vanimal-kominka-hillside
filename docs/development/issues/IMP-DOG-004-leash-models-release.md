@@ -5,7 +5,7 @@ system: DOG
 status: review
 priority: High
 summary: 首輪・リードの本制作。PCVR 1 人は合格。2 人・Quest/iOS・座位/木陰の確認待ち
-next: "PCVR 1 人は合格 (2026-09-20)。残り: 2 人・Quest/iOS・座位/木陰。持ち手の向きは BUG-DOG-002"
+next: "残り: 2 人 (相手から見た首輪とリード、B9)、Quest/iOS、ワールド内の比較画像の保存 (AI)。PCVR 1 人 (座位・木陰を含む A41) は 10-02 ユーザー総合判断で確認済み。持ち手の向きは BUG-DOG-002"
 ---
 
 # IMP-DOG-004 首輪・リードのモデルをBlenderで本制作する
@@ -29,3 +29,5 @@ Blender接続済み。6犬種の首輪と金具・持ち手・ロープの自作
 2026-09-20 ユーザー PCVR: 首輪・リードは「全然あれでいいレベル」。持ち手が左右どちらの手でも左向きに付く点だけ微調整対象 ([BUG-DOG-002](BUG-DOG-002-leash-handle-orientation.md))。2 人・Quest/iOS・座位/木陰は未確認のまま。
 
 2026-09-20: 首側Bone.003へ変更。6匹×8姿勢のEditor比較、首輪の前後静止像とロープ形状診断を保存。動作中のずれ、明所/木陰・座位のHMD表示、PCVR/Quest/iOSは制作票のチェックリストで確認する。
+
+2026-10-02 ユーザー確認: PCVR 1 人の項目は「基本全部見たから OK」(総合判断。項目別の結果の記録なし。[play-checklist-2026-10-02](../../testing/play-checklist-2026-10-02.md) の A 節)。残り: 2 人、Quest/iOS、比較画像の保存と首輪ずれの犬種別の切り分け記録 (AI)。

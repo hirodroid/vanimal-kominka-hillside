@@ -5,8 +5,8 @@ system: DOG
 status: review
 priority: High
 summary: 川のどこへ投げたボールでも犬が取りに行く (川全体で浮かせ、安全な岸から入って取る)。水中の犬のボール・ディスクも、口に無ければ手元へ呼べる
-next: ユーザーの PCVR (設計書末尾のチェックリスト 29〜36: 遠投の走りと入水、上陸の場所、大型犬が流路で取る見え方、サモエドの口の余裕、橋の近くの岸戻し)。2 人の実機で所有権の往復 (非 Owner の投げ、Owner 退出)
-updated: 2026-09-29
+next: "残り: 2 人の実機で所有権の往復 (非 Owner の投げ、Owner 退出)。PCVR 1 人 (A110〜A114、設計書チェックリスト 29〜36) は 10-02 ユーザー総合判断で確認済み"
+updated: 2026-10-02
 ---
 
 # IMP-DOG-021 川のどこでも回収と、水中の犬のおもちゃの呼び寄せ
@@ -139,3 +139,5 @@ Codex 独立レビュー (2026-09-28、高 1・中 5・低 1) の反映 (同日�
 - [IMP-DOG-020](IMP-DOG-020-river-wading-and-swim.md): 水遊び場・浮くボールの回収の本体
 - [DES-DOG-004](DES-DOG-004-river-play-and-floating-fetch.md): 設計の決定
 - [IMP-ENV-004](IMP-ENV-004-river-loop-course.md): 川・橋・NavMesh の河床除外
+
+2026-10-02 ユーザー確認: PCVR 1 人の項目は「基本全部見たから OK」(総合判断。項目別の結果の記録なし。[play-checklist-2026-10-02](../../testing/play-checklist-2026-10-02.md) の A 節)。残り: 2 人の実機 (所有権の往復)。

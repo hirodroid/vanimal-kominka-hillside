@@ -5,7 +5,7 @@ system: UI
 status: review
 priority: High
 summary: 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換え、設定面を作る。段階 0-a / 0-b / 3 は実装済み・Verify 全 PASS、0-b は 2026-09-24 PCVR OK。段階 3 (距離フェード・許可初期 ON・ようこそ等) の実機確認待ち。クレジット URL 3 件はユーザー記入待ち
-next: "段階 0-b は PCVR OK (2026-09-24)。残り: 退行・取り違えの確認、段階 3 の距離フェード (T-011)・ナイトモードのスライダー・許可トグル 2 種・状態表示の規律。クレジット URL 3 件はユーザー記入。Quest/iOS は VER-WLD-001"
+next: "残り: 許可トグル 2 種を権限者以外が操作できないこと (2 人)、距離フェードの Android/iOS の文言 (VER-WLD-001)、状態表示の規律の差分の記録、クレジット URL 3 件の記入 (ユーザー作業)。PCVR 1 人 (A123〜A129) は 10-02 ユーザー総合判断で確認済み"
 ---
 
 # IMP-UI-001 手元メニューを古民家の器 (KD_TreatPouch + ビルダー) に置き換え、設定面を作る
@@ -72,11 +72,11 @@ next: "段階 0-b は PCVR OK (2026-09-24)。残り: 退行・取り違えの確
 - [x] **段階 0-a**: コンパイル 0 件・Console エラー 0 (フィルタ無し)、パス置換一覧が [kominka-dog-system](../imports/kominka-dog-system.md) に表で残り、未採用機能の MenuItem が隔離されている (2026-09-23、`d87407f`)
 - [x] **段階 0-b の Verify** ([計画書の Verify 表](../../plans/2026-09-23-menu-rebuild.md)の「導入段階 0-b」分が全 PASS): `Sum(Widths) == 1064` かつ間隔込みで 1100 / 既定タブ `_tab == TabWalk` / Page_Walk の `WalkRow0..5` (起票時の仮名 `Dog{i}`) の 3 ボタンが `_WalkLeft{i}` `_WalkRight{i}` `_WalkOff{i}`、行き先 2 行 (`WalkRow6` / `WalkRow7`) が `_WalkPlaza` `_WalkGate` / `ToyRow{i}` の 2 ボタンが `_Toy{i}` `_Disc{i}` で `recall` (KH_ToyRecall) が非 null / Page_Acc Content の子順が `AccRow0..15`, `FxRow0..10` / 拠点板 3 枚の Interact 先が `_Toggle` / `KH_HandMenu` コンポーネント 0 個 / 同期変数 0 / ナイトモードの Slider が `KH_NightMode` / 欠字 0 / あそぶが集合のみ — **2026-09-23 PASS**: Menu/20 `VERIFY RESULT PASS`、21 pass 394 / fail 0、22 failures 0、23 failures 0、24 PASS、15a failures 0。コンパイル error CS 0、U# 82 本 0 エラー
 - [x] 段階表 (計画書 D-1) により「意図的な未導入 (null が正)」と「参照の欠落 (FAIL)」が区別され、Live 行の検査は skip が明示されている (棚・寝台も同様) — 2026-09-23、Menu/20 が段階表で PASS + 理由を出力し、ライブ行の onClick・棚・寝台・ポーズ面・ミニチュア・おやつの枠を SKIP と明示
-- [ ] 既存 3 機能に退行がない (`Walking/5 Verify` が従来どおり全 PASS)。**連打・タブ変更・閉じて再表示・拒否・4 秒超過**で結果表示が取り違わらない — 2026-09-23: `Walking/5 Verify` は TOTAL 208 / FAILED 0。取り違えの確認は ClientSim・実機とも**未** (計画書の PCVR チェックリスト §0)
+- [x] 既存 3 機能に退行がない (`Walking/5 Verify` が従来どおり全 PASS)。**連打・タブ変更・閉じて再表示・拒否・4 秒超過**で結果表示が取り違わらない — 2026-09-23: `Walking/5 Verify` は TOTAL 208 / FAILED 0。取り違えの確認は ClientSim・実機とも**未** (計画書の PCVR チェックリスト §0)
 - [x] **PCVR でユーザーが「現行 3 機能の見え方が古民家と同じ」ことを確認した** (段階 0-b のゲート。48 pt の可読性と、開閉が 0.6 秒 → 0.5 秒に変わった体感を含む) — **2026-09-24 ユーザー OK** (総合評価。項目別の記録は無し)
 - [x] **段階 3 の Verify**: 2026-09-24 PASS。Menu/14c Verify Distance Fade、16a Verify Dog Voice、22 Verify Localization (3 群・クレジット 7 行・インフォメーション 4 行。`CREDIT_URL_PENDING 3`)、11c Verify Welcome (フッタ 1060×60・本文は表示枠 276 の 2 倍以内)、15a、20、21 (404/0)。C# 0 / U# 82
 - [ ] 距離フェードが PC で反映され、保存して再入室で復元する。Android / iOS は入口が押せず文言だけ見える (T-011) — **実装済み・確認待ち**
-- [ ] ナイトモードが設定面のスライダーで連続的に効き、保存値が再入室で復元される (ヘッダーからの移設で退行しない) — **実装済み・確認待ち** (0-b の PCVR 総合評価は OK。段階 3 で配置を動かした後は未確認)
+- [x] ナイトモードが設定面のスライダーで連続的に効き、保存値が再入室で復元される (ヘッダーからの移設で退行しない) — **実装済み・確認待ち** (0-b の PCVR 総合評価は OK。段階 3 で配置を動かした後は未確認)
 - [ ] 許可トグル 2 種が初期 ON で、権限者以外は操作できない — **実装済み・確認待ち**
 - [ ] 状態表示の規律がモック (DES-UI-003 版 3) と一致し、差分を記録した — **実装済み・確認待ち** (差分の記録は PCVR の後)
 - [ ] **Quest / iOS の合格判定は [VER-WLD-001](VER-WLD-001-quest-ios-devices.md)** (計画書の段階 4)
@@ -89,3 +89,5 @@ next: "段階 0-b は PCVR OK (2026-09-24)。残り: 退行・取り違えの確
 - [world-ui-spec](../../world-ui-spec.md): 画面・入力・状態・Unity 部品の正本。T-011 (距離フェード) はここ
 - [kominka-dog-system](../imports/kominka-dog-system.md): ビルダー移植の元 SHA・範囲・差分の記録先
 - [IMP-PRG-001](IMP-PRG-001-ledger-shopkeeper-points.md): 残高・未受取の案内の値を供給する
+
+2026-10-02 ユーザー確認: PCVR 1 人の項目は「基本全部見たから OK」(総合判断。項目別の結果の記録なし。[play-checklist-2026-10-02](../../testing/play-checklist-2026-10-02.md) の A 節)。残り: 2 人 (許可トグル)、Android/iOS、差分の記録、クレジット URL。
