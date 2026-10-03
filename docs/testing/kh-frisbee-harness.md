@@ -25,7 +25,7 @@
 
 ```bash
 node scripts/kh-frisbee-harness.cjs list      # 投げの表・netorder のケース表と、保証しないもの
-node scripts/kh-frisbee-harness.cjs start     # Unity のメニューを叩くだけ
+bash scripts/kh-harness-run.sh proto default --shots=flat --reason ".." --consult ".."   # 起動はこの入口から (直接の start は GATE_REFUSED)
 node scripts/kh-frisbee-harness.cjs status    # latest.json の要約 (PASS なら終了コード 0)
 node scripts/kh-frisbee-harness.cjs stop      # 停止フラグ + メニューの停止
 ```
@@ -42,7 +42,7 @@ node scripts/kh-frisbee-harness.cjs stop      # 停止フラグ + メニュー�
 絞り込みと時間の上書き:
 
 ```bash
-node scripts/kh-frisbee-harness.cjs start --variants=0,4 --shots=flat,low --budget=300
+bash scripts/kh-harness-run.sh proto default --variants=0,4 --shots=flat,low --budget=300
 ```
 
 `--variants` / `--shots` / `--budget` / `--mode` / `--repeats` / `--breed` は `Logs/kh-frisbee-harness/options.json` に書かれ、
@@ -64,14 +64,16 @@ bash scripts/kh-harness-run.sh segment gate-wrap-choice-3-dogs-6     # 周回の
 bash scripts/kh-harness-run.sh lap forward --reason "長時間追従で蓄積する位置ずれの再現" --consult ".." --confirmed "ユーザーの確定指示" # 必要なときだけ、約20分
 ```
 
-- **回す前の門 (2026-10-03 ユーザー指定、`scripts/kh-harness-gate.cjs`)**: Play を起動する入口 (`proto` / `walk` / `segment` / `lap` / `photo`) は `--reason "<この Play でしか判別できないこと>"` と `--consult "<回す前の AI 相談 (Codex) の結論: 今回すべきか・どの群か>"` が無ければ Unity に触れる前に exit 64 (`GATE_REFUSED`)。式・Edit プローブ・静的検査で決まるなら回さない。同じ差分で結論が出ていれば同じ文を使う。この文書の以降の例は 2 つを省いて書いている。
-- **群の全体と連続一周はユーザーの確定指示がある時だけ**: `Course/42`・`Course/82`・`Course/88`・`Course/100`・`Course/126`、`--shots` / `--variants` の絞り込みが無い `proto default`、`lap` は、さらに `--confirmed "<ユーザーの確定指示>"` が要る。コミット・Issue 完了・マイルストーンは確定ではない。普段の開発は最低限の群・ケースだけにし、しっかり回す回帰はユーザーが回すと決めた時にまとめて回す (寝る前など)。「全体」のメニューを足したら門の一覧 (`wideWalkMenus`) へ足す。Play を起動するハーネスのメニューは `menu` からは回せない (停止・復旧は可)。
-- **台帳**: 門を通った実行は開始 (入口・引数・目的・相談の結論・確定指示) と終了 (終了コード・秒) を `Logs/kh-harness-run/ledger.jsonl` に 1 行ずつ残す。どの目的に何分使ったかはここで数える。
+- **回す前の門 (2026-10-03 ユーザー指定、`scripts/kh-harness-gate.cjs`)**: Play を起動する入口 (`proto` / `walk` / `segment` / `lap` / `photo`) は `--reason "<この Play でしか判別できないこと>"` と `--consult "<回す前の AI 相談 (Codex) の結論: 今回すべきか・どの群か>"` が無ければ Unity に触れる前に exit 64 (`GATE_REFUSED`)。式・Edit プローブ・静的検査で決まるなら回さない。同じ版・同じ範囲で結論が出ていれば同じ文を使い、範囲を広げる・新しい失敗が出た・前提が変わった時に相談し直す。`node scripts/kh-frisbee-harness.cjs start` の直接実行も拒否する。この文書の以降の例は 2 つを省いて書いている。
+- **群の全体と連続一周は、ユーザーが「回す」と指示した時だけ**: `Course/42`・`Course/82`・`Course/88`・`Course/94b`・`Course/100`・`Course/126`、`--shots` / `--variants` の絞り込みが無い `proto` (netorder・sixdogs は常に全体)、`lap` は、さらに `--confirmed "<ユーザーが回すと指示した言葉>"` が要る。コミット・Issue 完了・マイルストーン・仕様の確定は回す指示ではない。群を分けて順に回して全体と同じ量にするのも同じ扱い (ユーザーの指示が要る)。普段の開発は最低限の群・ケースだけにし、しっかり回す回帰は[夜のまとめ回帰](#夜のまとめ回帰-night2026-10-03)で回す。「全体」のメニューを足したら門の一覧 (`wideWalkMenus`) へ足す。絞り込みの名前の打ち間違い・重複は拒否する (Unity 側は一致が無いと全体へ戻るため)。
+- **台帳**: 門を通った実行は開始 (入口・引数・目的・相談の結論・ユーザーの指示) と終了 (終了コード・秒) を `Logs/kh-harness-run/ledger.jsonl` に 1 行ずつ残す。どの目的に何分使ったかはここで数える (秒はスクリプトの待ち時間。TIMEOUT の後に残った Play は含まない)。
+- **門が防げないこと**: `--consult` と `--confirmed` は文字列で、内容は検査しない (省略できない・記録に残る、まで)。`scripts/unity-api.sh` で直接メニューや C# を呼べば門を通らない。ハーネスの起動は必ずこのスクリプトから行う。計測のメニュー (`Course/1`・`11`・`31`・`39`) は門の対象外。
+- **停止**: `bash scripts/kh-harness-run.sh stop <walk|proto|photo>`。Play 中でも通す (`menu` は Edit モードを要求するので、停止のメニューは `menu` からは届かない)。`menu` は名前に `Harness` / `ClientSim` を含む Play の自動検査を拒否する。
 - **実行前の照合**: `unity-api.sh check` (接続先) と `isPlaying` / `isCompiling` がともに False。違えば何もせず exit 3。
 - **終わりの判定**: 新しい runId が出て、status が `RUNNING` 以外になり、Play を抜けるまで待つ。walk は Finish の証拠 (`endedUtc`) まで待つ (`EVIDENCE_ERROR` は除く)。前の runId の結果は使わない。walk でメニューを叩いて 60 s 以内に新しい run が出なければ `NO_NEW_RUN`。
 - **結果**: 1 行で返す (runId・status・ケース数・落ちたケースと理由)。proto は要求した mode と report の mode が違えば `MODE_MISMATCH` で FAIL。
 - **終了コード**: 0 = 対応するPASS状態、または歩行の `SEGMENTS_OBSERVED` / `LAP_OBSERVED`。予定ケースの完了と、シーン不変・設定とPlayerDataの復旧・終了証拠・実行時エラーなしも必要。`WATER_PASS_PARTIAL` の未実施は引き続き未実施。`MEASURED`・その他のOBSERVEDなど未対応の状態は1 / 1 = 失敗・未完了 / 2 = 待ち切れ・メニュー未実行・新しい run が出ない / 3 = 実行前の照合失敗 / 64 = 使い方の誤り。終了コード0を機能全体・一周・端末の合格に読み替えず、reportのstatusと対象を見る。
-- **連鎖**: 複数の run を続けるときは `set -e` で並べ、目的のケースが落ちたら後続の回帰を回さない。
+- **連鎖**: 開発中に複数の run を続けるときは `set -e` で並べ、目的のケースが落ちたら後続の回帰を回さない。ユーザーが起動する夜のまとめ回帰だけは、落ちても次の群へ進む (下の節)。
 - **実行中はコード・シーン・アセット・options.json を書き換えない** (別セッション・サブエージェントも)。Play 中の再コンパイルはフレームを止め (最初の計画が 0.2 s 遅れて別の取り方になる)、途中状態が混ざると run が壊れる。書くなら先に stop して、終了・復旧を確かめてから。
 - Unity を操作するのは 1 人 (統括)。サブエージェントにこのスクリプトを回させない。
 - **VRChat クライアントを同じ PC で動かしているとき** (実測 2026-09-29): UdonSharp のログ監視がクライアントの output_log の Udon 例外 (他のワールドのものを含む) を Editor のコンソールへ Error で流す。先頭が「Runtime error detected, but the client has not been launched with」の行はこの Play の結果ではないので、ハーネスは失敗に数えず `clientLogErrors` に件数を出す (本シーン・試作の両方)。0 でない run は、クライアントの負荷でフレームが伸びている可能性も合わせて疑う。周回 (53 / 54) の不連続な移動の上限は、観測の間隔と `Time.deltaTime` の長い方から決める。
@@ -98,6 +100,25 @@ node scripts/kh-plan-probe.cjs course --all     # 94b の狙いごとの行 (情
 - **継続 (2026-09-28)**: 最初の計画は捕りの証拠ではない (ラブ 1 投目は t=0.12 で chase を採用し、t=0.54・4.46 m/s で drop=ground / B:banned)。`_ProbePlan(..., cont)` は採用した計画を保持したまま、次の入力 (tNow・dogPos・speed・dogFwd) で Plan をもう一度回し、KeepPlan の vTake / fit / crouchStart / t0 / slid / 再検査、KeepPlan が落とした理由 (再 Solve に上書きされる前の `_jgWhy`・drop=・banned) と、その tick の結果を返す。Course/95 の 94b ドボン系は、狙いごとに入力 6 通り (tick1 = 初回 + 0.4 s の予定経路、tick2 = しゃがみ直前に C0 の予定位置 / 前方 +0.57 m / 遅れ -0.3 m / 横 ±0.3 m、負例 = T0 を 0.3 m 過ぎた位置・速度差 > 3.5 m/s) を回す。合格は **すべての tick で** 同じ `_plan`・`_mode`・`_catchT`、`_fxT0` の水平差 ≤ 1e-3 m (固定 T0 が無い計画は C0 + f·vTake·crouch で ≤ 0.05 m)、`_landWater`、kept、`_bannedModes` のビット増なし、drop= 空、tick2 のしゃがみ開始 (`FixedCrouchBegin` を写しで呼ぶ) が通り、続く離陸の門 (`FixedCrouchEnd` で `_groundY = T0.y` → `JumpGround` / `AirLanding`) が水への着地 (`_alWater`) を返すこと。ドボンは投げる位置が Playable (`p0Playable`、ReqCatch の CanPlay) でなければ OK にしない。落ちた tick は行に出る。slid (C0 − `_jumpRayAt`) は条件にしない。負例は tick で落ちるかしゃがみで `refused=` になれば合格 (救済しない)。T0 を水側へ 1 m 動かした点が踏み切りとして拒否されることも確かめる。出力に `crouchV / dv / aheadRemain / lateral / endErr / airCap` と `_fxOn / _fxT0 (前後) / _fxAhead / _fxLat / _fxCrouchV / _fxDv / _fxEndErr / C0`、地面の検査を呼んだか (`groundChecked`) を並べる。陸の既知成功例 (試作 Lab の v0 の跳躍、94 の F5d-roll) は suite `landctl` として判断の署名を `Temp/frisbee-plan-probe-landctl-baseline.json` と比べる (変更前のコードで `--save-baseline` を付けて作る。無ければ情報行)。臨時のケースは `continue:[{tNow, dogPos, speed, dogFwd?}]` を受け付け、`node scripts/kh-plan-probe.cjs adhoc --cases=<file>` (Frisbee/11、開いているシーンでケースだけ) で流す。区間の間の Motion 側の取り消し (slot / gate / liftoff の踏み切り判定) と実際の加速は再現しない
 - Play の入口にも組み込み済み: `Frisbee/7 Harness` (terrain / default) と `Course/94`・`94b` は Play へ入る前に同じケースを流し、`PROBE_MISMATCH` を警告と report の trace に出す (止めはしない)。`Frisbee/5 Verify` は試作シーン単独のとき末尾に `WARN PROBE_MISMATCH` / `INFO PLAN_PROBE_OK` を足す (失敗数には数えない)
 - **見ないもの (Play の役目)**: 最初の計画と、与えた位置・時刻・速さでの継続 tick (KeepPlan / KeepFixedT0、しゃがみ開始、離陸の門 = FixedCrouchEnd → JumpGround / AirLanding) までは見る。Motion の slot / gate の取り消し、犬の実際の動き・加速・旋回・フレーム時刻と到着時刻、所有権・同期・Owner の移譲、Animator とクリップ、CanPlay の生きた状態 (リード・Fetch・おやつ・休憩・waterPose)。本シーンの犬は Play では置いてから 3 s ほど待つ (その間に動く) が、プローブは置いた位置のまま。PROBE_MISMATCH が出ないことは Play の合格ではない。出たら Play の前に配置か期待を直す
+
+## 夜のまとめ回帰 (`night`、2026-10-03)
+
+しっかり回す回帰はここで回す。**ユーザーが「回す」と決めた時だけ** (寝る前など)。AI からは始めない。開発中の確認には使わない。
+
+```bash
+bash scripts/kh-harness-run.sh night --list                                  # 回す群の一覧 (Unity に触れない)
+bash scripts/kh-harness-run.sh night --confirmed "寝る前に全部"              # 全部
+bash scripts/kh-harness-run.sh night --confirmed ".." --only wash,toy        # 群を選ぶ (wash = wash-a〜g)
+bash scripts/kh-harness-run.sh night --confirmed ".." --skip lap,proto --max-hours 5
+```
+
+- **流れ**: 最初にコンパイルを確かめ (通らなければ何も回さない)、`scripts/kh-harness-night.cjs` の一覧を上から 1 群ずつ `kh-harness-run.sh` で回す。全体の入口 (`Course/100`・`126`・`88`) は群ごとの結果を読むために `100a〜g`・`126a / b`・`88a / b` へ分けて回す。部分集合の入口 (`45`・`83`・`94c`・`100g1`) は入れていない。連続一周は最後。
+- **落ちても次へ進む**。止めるのは 3 つだけ: シーン・設定・PlayerData の復旧を確認できない / 3 群続けて Unity で開始・終了できない / 時間の上限 (`--max-hours`、既定 8)。止めた後の群は「未実行」と理由を表に残す。
+- **待ち切れ (exit 2)** の後は `stop` を頼んで 120 s 待つ。**Unity が待機状態でない (exit 3)** は 120 s 待って 2 回までやり直す。自動の修正・無制限の再試行はしない。
+- **結果**: `Logs/kh-harness-night/latest.md` (1 群終わるごとに更新。途中で止まっても表は残る) と `Logs/kh-harness-night/<開始時刻>/summary.md`。列は 群 / 結果 / status / ケース数 / 分 / run / 落ちたケースと理由。
+- **結果の読み方**: `OK` = CLI が合格と判定 / `観測完了` = 落ちたケースも実行時エラーも無く完了したが、CLI が合否を出さない状態 (`TRAVEL_OBSERVED`・`TOY_ROW_PASS` など。合格ではない。status と report を読む) / `NG` = 落ちたケース・実行時エラー・未対応の状態 / `未完了` = 待ち切れ・開始できず / `未実行` = 前提が欠けた・中断した。
+- **前提**: Unity が Edit モードで、開いているシーンが未変更。VRChat クライアントや重い処理を同じ PC で動かさない (上の実測)。PC がスリープすると止まるので、電源設定はユーザーが確かめる。`photo` は `Photo/1`・`Photo/4` が済んでいないと開始できず「未完了」になる。
+- **未実測**: この入口は偽の Unity で順序・中断・表を確かめただけで、実際の一晩はまだ回していない (2026-10-03)。所要は過去の群ごとの最長時間の合計から 4 時間前後の見込み。最初の一晩の表で、時間と `観測完了` の読み方を見直す。
 
 ## 変更に応じた実行範囲
 
@@ -139,15 +160,15 @@ CLIの入力拒否・結果照合は `node --test scripts/kh-walk-cli.test.cjs` 
 |---|---|
 | 文書・通常コメントだけ | ハーネス不要。検査用コメントや期待表を変えた場合はその影響も確認 |
 | 特定プリセットの調整 | 対象プリセットの再現投げ＋境界条件と、通常プリセットの関連投げ。ひねりならv4のflat/lob/farとv0の関連投げ等、実際の差分から選ぶ |
-| 全プリセット共通の移動・捕獲・復帰処理 | 調整途中は再現ケースで確認し、まとまった変更の確定前は既定モード全体。保留・取消・世代管理も変えるならnetorderを追加 |
+| 全プリセット共通の移動・捕獲・復帰処理 | 調整途中は再現ケースで確認し、ユーザーが回すと指示した時に既定モード全体。保留・取消・世代管理も変えるならnetorderを追加 |
 | 通知とheldの順序・保留・取消 | netorder＋既定モードの影響する通常投げ。実通信の到着順やOwner移譲は別途実機へ引き継ぐ |
 | フリスビー機能の確定・公開前 | 既定モード全体とnetorder、該当する本シーン・実機確認。対象版の既存結果は関連コード・依存・条件が同じ場合に再利用可 |
 
 全体の選択条件はCLIから明示し、実行後のreportで予定ケースを照合する。メニュー直実行は前回optionsが残るので全体実行の保証にならない。
 
 ```bash
-node scripts/kh-frisbee-harness.cjs start --mode=default --variants=0,3,4,5 --shots=flat,mid,lob,low,far,side,beside,chase
-node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=2
+bash scripts/kh-harness-run.sh proto default --variants=0,3,4,5 --shots=flat,mid,lob,low,far,side,beside,chase
+bash scripts/kh-harness-run.sh proto netorder --repeats=2
 ```
 
 1 行目は 4 プリセット x 6 投げ = 24 投げ + 位置取りの 2 投げ (`--variants` に関係なく各 1 回) = 26 投げ。
@@ -306,8 +327,8 @@ node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=2
 ## ネット順序モード (`--mode=netorder`, BUG-DOG-003)
 
 ```bash
-node scripts/kh-frisbee-harness.cjs start --mode=netorder            # 5 ケース x 2 周 = 10 投げ
-node scripts/kh-frisbee-harness.cjs start --mode=netorder --repeats=3
+bash scripts/kh-harness-run.sh proto netorder            # 5 ケース x 2 周 = 10 投げ
+bash scripts/kh-harness-run.sh proto netorder --repeats=3
 node scripts/kh-frisbee-harness.cjs status                           # netCase / netOk / req の行
 ```
 
@@ -432,7 +453,7 @@ netorder の保持者は `debugHeldOverride > 0` のとき常に**円盤の Owne
 他のレーンは同じ配置 (犬の立ち位置・投げ台・recall・プリセットの cube・壁) を平行移動し、名前に `_<Breed>` が付く。
 
 ```bash
-node scripts/kh-frisbee-harness.cjs start --breed=Corgi --variants=0,4 --shots=flat,low
+bash scripts/kh-harness-run.sh proto default --breed=Corgi --variants=0,4 --shots=flat,low
 ```
 
 - キーは `Corgi` / `Pome` / `Lab` / `Dachs` / `Shiba` / `Samoyed`。1 回の実行で 1 犬種。省略すると Lab。
@@ -443,7 +464,7 @@ node scripts/kh-frisbee-harness.cjs start --breed=Corgi --variants=0,4 --shots=f
 ## 6 匹同時の負荷 (`--mode=sixdogs`, IMP-DOG-012)
 
 ```bash
-node scripts/kh-frisbee-harness.cjs start --mode=sixdogs --repeats=2
+bash scripts/kh-harness-run.sh proto sixdogs --repeats=2
 ```
 
 - **投げは v0 / flat に固定** (`--variants` / `--shots` は効かない。`--breed` を付けるとエラー。全レーンを投げる)。
@@ -479,8 +500,8 @@ Unity を Edit モードにしたまま `git checkout -- ProjectSettings/Quality
 ## 地形のレーン (`--mode=terrain`, DES-DOG-005 M1)
 
 ```bash
-node scripts/kh-frisbee-harness.cjs start --mode=terrain                       # 10 ケース x 1 投げ
-node scripts/kh-frisbee-harness.cjs start --mode=terrain --shots=T-cliff,T-rock  # ケース名で絞る
+bash scripts/kh-harness-run.sh proto terrain                       # 10 ケース x 1 投げ
+bash scripts/kh-harness-run.sh proto terrain --shots=T-cliff,T-rock  # ケース名で絞る
 ```
 
 - 試作シーンの **Terrain レーン** (`Frisbee/4 Build Scene` が作る。犬種のレーンと別の Lab 1 匹、名前は `_Terrain`) で、

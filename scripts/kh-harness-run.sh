@@ -5,7 +5,7 @@
 # Play を起動する入口 (proto / walk / segment / lap / photo) は次の 2 つが無ければ走らない (2026-10-03 ユーザー指定):
 #   --reason  "<この Play でしか判別できないこと>"
 #   --consult "<回す前の AI 相談 (Codex) の結論: 今回すべきか・どの群か>"
-# 群の全体・長い群 (Course/42・82・88・100・126、絞り込みなしの proto default) と lap は、さらに --confirmed "<ユーザーの確定指示>" が要る。
+# 群の全体・長い群 (Course/42・82・88・94b・100・126、絞り込みなしの proto、netorder / sixdogs) と lap は、さらに --confirmed "<ユーザーが回すと指示した言葉>" が要る。
 #
 #   bash scripts/kh-harness-run.sh proto <mode> [harness の追加引数] --reason ".." --consult ".."   # 試作シーン (kh-frisbee-harness.cjs)。例: proto terrain --shots=T-up04
 #   bash scripts/kh-harness-run.sh walk  "<Course メニュー名>" --reason ".." --consult ".."          # 本シーン (Logs/kh-course-walk)。例: walk "Course/94b - Walk Harness Frisbee Anywhere (M3 water)"
@@ -13,6 +13,8 @@
 #   bash scripts/kh-harness-run.sh lap forward --reason "確認する仮説" --consult ".." --confirmed ".." # 約20分の連続一周。通常改修では使わない
 #   bash scripts/kh-harness-run.sh menu  "<メニュー名>"                 # Edit モードの静的検査 (Course/89・93、Frisbee/5 など)。Editor.log の増分から要約行だけ返す
 #   bash scripts/kh-harness-run.sh compile                              # unity-compile.sh --udon (照合失敗は 1 回だけ待って再試行)
+#   bash scripts/kh-harness-run.sh stop <walk|proto|photo>              # 走っているハーネスへ停止を頼む (Play 中でも通す)
+#   bash scripts/kh-harness-run.sh night --confirmed "<ユーザーの指示>" [--only wash,toy] [--skip lap] [--max-hours 8]   # 夜のまとめ回帰 (kh-harness-night.cjs)。--list で一覧
 #   bash scripts/kh-harness-run.sh photo --reason ".." --consult ".."   # IMP-WLD-005 Photo/3 (自動写真、約 1 分。Photo/1・4 の後)
 #
 # 終了コード: 0 = PASS または歩行の SEGMENTS_OBSERVED / LAP_OBSERVED (範囲はreportどおり) / 1 = 失敗・未完了 / 2 = 待ち切れ・新しい run が出ない
@@ -27,7 +29,7 @@
 #   途中の状態が混ざるとコンパイルエラーで run が壊れる。編集が要るなら先に stop する。
 set -u
 cd "$(dirname "$0")/.."
-API="bash scripts/unity-api.sh"
+API="${KH_UNITY_API:-bash scripts/unity-api.sh}"   # KH_UNITY_API はテストの差し替え用 (kh-harness-gate.test.cjs)
 EDITOR_LOG="${EDITOR_LOG:-${LOCALAPPDATA:-$HOME/AppData/Local}/Unity/Editor/Editor.log}"
 
 # C# を 1 本評価する。$1 は JSON 文字列の中身としてそのまま埋め込む (ダブルクォートは \" で書く)。stderr (WARN) は捨てる
@@ -81,8 +83,12 @@ case "$cmd" in
   menu)
     [ -n "${1:-}" ] || { echo "usage: menu <name>"; exit 64; }
     case "$1" in Course/53\ -*|Course/54\ -*) echo 'Use lap <forward|reverse> --reason "..." (continuous ~20 minute regression).'; exit 64;; esac
-    # Play を起動するハーネスを menu から回すと門を通らない。停止・復旧のメニューは通す
-    case "$1" in *Stop*|*Restore*) ;; *Harness*) echo 'GATE_REFUSED: Play を起動するハーネスは walk / proto / photo で回す (--reason と --consult が必要)。'; exit 64;; esac
+    # Play を起動する自動検査を menu から回すと門を通らない。停止は stop (Play 中は下の guard が menu を通さない)
+    case "$1" in
+      "Course/46 - Restore Walk Harness PlayerData") ;;
+      *Stop*) echo 'Use stop <walk|proto|photo> (menu is refused while Unity is in Play).'; exit 64;;
+      *Harness*|*ClientSim*) echo 'GATE_REFUSED: Play を起動する自動検査は menu では回さない。ハーネスは walk / proto / photo (--reason と --consult が必要)。'; exit 64;;
+    esac
     guard
     pos=$(log_size)
     ok=$(run_menu "$1")
@@ -92,11 +98,24 @@ case "$cmd" in
     lines=$(tail -c +"$((pos + 1))" "$EDITOR_LOG" 2>/dev/null | grep -E "_OK|_FAIL|_PASS|RESULT|TOTAL|BLOCKED|error CS|Exception" | head -5)
     echo "${lines:-menu NO_SUMMARY_LINE ($1): 結果ファイル (Temp/...) を直接読む}"
     case "$lines" in *_FAIL*|*BLOCKED*|*"error CS"*|*Exception*) exit 1;; "") exit 2;; *) exit 0;; esac;;
+  stop)
+    # 停止は Play 中に使うので guard (Edit モードの確認) を通さない。接続先だけ照合する。走っていなければ何も起きない
+    $API check >/dev/null 2>&1 || { echo "GUARD_FAIL: unity-api check (接続先の照合に失敗)"; exit 3; }
+    case "${1:-}" in
+      walk) ok=$(run_menu "Course/41 - Stop Walk Harness");;
+      photo) ok=$(run_menu "Photo/3b - Stop Harness");;
+      proto) node scripts/kh-frisbee-harness.cjs stop >/dev/null 2>&1 && ok=True || ok=False;;
+      *) echo "usage: stop <walk|proto|photo>"; exit 64;;
+    esac
+    echo "stop $1 requested=$ok playing=$(is_playing)"
+    [ "$ok" = "True" ] || exit 2;;
+  night)
+    exec node scripts/kh-harness-night.cjs "$@";;
   proto)
     guard
     mode=${1:-default}; shift || true
     prev=$(node -e 'try{console.log(require("./Logs/kh-frisbee-harness/latest.json").runId)}catch(e){console.log("")}')
-    if ! start_out=$(node scripts/kh-frisbee-harness.cjs start --mode="$mode" "$@" 2>&1); then
+    if ! start_out=$(KH_HARNESS_GATE="$gate_id" node scripts/kh-frisbee-harness.cjs start --mode="$mode" "$@" 2>&1); then
       echo "proto START_FAILED: $(printf '%s' "$start_out" | tail -3 | tr '\n' ' ')"; exit 2
     fi
     done_=0
@@ -116,8 +135,9 @@ case "$cmd" in
     ok=$($API execute "$request" | result_of)
     [ "$ok" = "True" ] || { echo "walk NOT_EXECUTED ($1): ExecuteMenuItem=$ok"; exit 2; }
     # latest.json は開始時に RUNNING で書かれ、End で最終 status、Play を抜けた後の Finish で証拠 (endedUtc 等) が足される
+    # 待ちの上限はハーネス側の締切の最長 (洗浄の全体 7200 s) より長くする。短いと Play が残ったまま TIMEOUT を返す
     done_=0; t=0
-    while [ $t -lt 2500 ]; do
+    while [ $t -lt 7500 ]; do
       sleep 10; t=$((t+10))
       s=$(node -e 'try{const j=require("./Logs/kh-course-walk/latest.json");console.log(j.runId+" "+j.status+" "+(j.endedUtc?"ended":"open"))}catch(e){console.log("none")}')
       case "$s" in none|"$prev "*)
@@ -127,7 +147,7 @@ case "$cmd" in
       [ "$(is_playing)" = "False" ] || continue
       done_=1; break
     done
-    [ "$done_" = 1 ] || { echo "walk TIMEOUT: no finished run after 2500 s (latest: $s)"; exit 2; }
+    [ "$done_" = 1 ] || { echo "walk TIMEOUT: no finished run after 7500 s (latest: $s)"; exit 2; }
     node scripts/kh-walk-cli.cjs result "$cmd" "$@";;
   photo)
     # IMP-WLD-005 Photo/3 - Harness (自動写真の小さいケース群、約 1 分)。結果は Logs/kh-photo-harness/latest.json
@@ -148,5 +168,5 @@ case "$cmd" in
     done
     [ "$done_" = 1 ] || { echo "photo TIMEOUT: no finished run after 400 s (latest: $s)"; exit 2; }
     node -e 'const j=require("./Logs/kh-photo-harness/latest.json");const bad=(j.cases||[]).filter(c=>c.status!=="PASS").map(c=>c.name+": "+(c.reason||c.status)).join(" | ");console.log("photo",j.runId,j.status,"cases",(j.cases||[]).length,"sceneUnchanged",j.sceneFileUnchanged,"playerDataRestored",j.playerDataRestored,"errors",(j.errors||[]).length,bad?"FAILS="+bad:"");process.exit(j.status==="PASS"&&j.sceneFileUnchanged&&j.playerDataRestored?0:1)';;
-  *) echo 'usage: kh-harness-run.sh compile | menu <name> | proto <mode> [args] | walk <menu> | segment <case> | lap <forward|reverse> | photo   (Play entries need --reason "..." --consult "..."; whole groups and lap also --confirmed "...")'; exit 64;;
+  *) echo 'usage: kh-harness-run.sh compile | menu <name> | proto <mode> [args] | walk <menu> | segment <case> | lap <forward|reverse> | photo | stop <walk|proto|photo> | night --confirmed "..."   (Play entries need --reason "..." --consult "..."; whole groups and lap also --confirmed "...")'; exit 64;;
 esac

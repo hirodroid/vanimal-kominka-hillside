@@ -157,11 +157,24 @@ function unityMenu(item) {
 }
 
 function arg(name) {
-  const hit = process.argv.slice(3).find(a => a.startsWith('--' + name + '='));
-  return hit ? hit.slice(name.length + 3) : '';
+  const hits = process.argv.slice(3).filter(a => a.startsWith('--' + name + '='));
+  // 2 回書くと最初の値だけが効き、後ろの絞り込みが無視されて全体が走る (2026-10-03 レビュー)
+  if (hits.length > 1) throw new Error('--' + name + ' は 1 回だけ指定する');
+  return hits.length ? hits[0].slice(name.length + 3) : '';
 }
 
 function start() {
+  // 回す前の門 (kh-harness-gate.cjs) を通った実行だけを受ける。直接の start は目的・相談の結論が残らない (2026-10-03 ユーザー指定)
+  if (!process.env.KH_HARNESS_GATE)
+    throw new Error('GATE_REFUSED: start は bash scripts/kh-harness-run.sh proto <mode> [args] --reason ".." --consult ".." から起動する');
+  // Unity 側は一致する名前が 1 つも無いと全体へ戻る。打ち間違いで全体を回さない
+  if ((arg('mode') || 'default') === 'default') {
+    const list = v => v.split(',').map(s => s.trim()).filter(Boolean);
+    const badShots = list(arg('shots')).filter(s => !SHOTS.some(x => x.name === s));
+    const badVariants = list(arg('variants')).filter(s => !VARIANTS.some(x => String(x.v) === s));
+    if (badShots.length) throw new Error('unknown shot(s) ' + badShots.join(',') + ' (shots: ' + SHOTS.map(s => s.name).join(', ') + ')');
+    if (badVariants.length) throw new Error('unknown variant(s) ' + badVariants.join(',') + ' (variants: ' + VARIANTS.map(x => x.v).join(', ') + ')');
+  }
   if (fs.existsSync(`${base}/journal.json`))
     throw new Error(`A previous run did not finish (${base}/journal.json). Run "stop" first, then check Unity is in Edit mode.`);
   fs.mkdirSync(base, { recursive: true });
