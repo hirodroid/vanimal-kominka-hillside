@@ -5,7 +5,7 @@
 # Play を起動する入口 (proto / walk / segment / lap / photo) は次の 2 つが無ければ走らない (2026-10-03 ユーザー指定):
 #   --reason  "<この Play でしか判別できないこと>"
 #   --consult "<回す前の AI 相談 (Codex) の結論: 今回すべきか・どの群か>"
-# 群の全体 (Course/42・100・126、絞り込みなしの proto default) と lap は、さらに --confirmed "<ユーザーの確定指示>" が要る。
+# 群の全体・長い群 (Course/42・82・88・100・126、絞り込みなしの proto default) と lap は、さらに --confirmed "<ユーザーの確定指示>" が要る。
 #
 #   bash scripts/kh-harness-run.sh proto <mode> [harness の追加引数] --reason ".." --consult ".."   # 試作シーン (kh-frisbee-harness.cjs)。例: proto terrain --shots=T-up04
 #   bash scripts/kh-harness-run.sh walk  "<Course メニュー名>" --reason ".." --consult ".."          # 本シーン (Logs/kh-course-walk)。例: walk "Course/94b - Walk Harness Frisbee Anywhere (M3 water)"

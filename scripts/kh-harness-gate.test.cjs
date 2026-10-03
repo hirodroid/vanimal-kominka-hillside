@@ -23,6 +23,7 @@ test('blank, missing, duplicated and multi-line values are refused', () => {
 test('whole-group menus, the full default table and laps need the user confirmation', () => {
   for (const [kind, args] of [['walk', [washAll]], ['walk', ['Course/42 - Walk Harness Segments']],
     ['walk', ['Course/126 - Harness Toy Tab (throw style, catch-style permission, ball patterns)']],
+    ['walk', ['Course/82 - Walk Harness Travel (T1-T9, T11)']], ['walk', ['Course/88 - Walk Harness Water Fetch W3']],
     ['proto', []], ['proto', ['default']], ['proto', ['default', '--budget=300']], ['lap', ['forward']]]) {
     assert.throws(() => check(kind, [...args, ...ok]), /--confirmed/);
     assert.equal(check(kind, [...args, ...ok, '--confirmed', 'ユーザー: 洗浄を確定して']).wide, true);
@@ -30,7 +31,8 @@ test('whole-group menus, the full default table and laps need the user confirmat
 });
 test('selected groups and cases run without a confirmation', () => {
   for (const [kind, args] of [['walk', [washGroup]], ['walk', ['Course/126a - Harness Toy Tab throw style + catch-style permission (DES-UI-002)']],
-    ['walk', ['Course/45 - Walk Harness Gate Boundary']], ['segment', ['gate-wrap-choice-3-dogs-6']],
+    ['walk', ['Course/45 - Walk Harness Gate Boundary']], ['walk', ['Course/82b - Walk Harness Travel RC cases (T6b, T12, T9 new)']],
+    ['walk', ['Course/88a - Walk Harness Water Fetch W3 (IMP-DOG-020 cases)']], ['walk', ['Course/83 - Walk Harness Travel Quick (T1 one dog, T11)']], ['segment', ['gate-wrap-choice-3-dogs-6']],
     ['proto', ['default', '--variants=5', '--shots=flat,mid']], ['proto', ['terrain']], ['proto', ['netorder', '--repeats=2']], ['photo', []]])
     assert.equal(check(kind, [...args, ...ok]).wide, false);
 });

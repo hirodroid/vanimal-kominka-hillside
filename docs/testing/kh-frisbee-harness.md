@@ -65,7 +65,7 @@ bash scripts/kh-harness-run.sh lap forward --reason "長時間追従で蓄積す
 ```
 
 - **回す前の門 (2026-10-03 ユーザー指定、`scripts/kh-harness-gate.cjs`)**: Play を起動する入口 (`proto` / `walk` / `segment` / `lap` / `photo`) は `--reason "<この Play でしか判別できないこと>"` と `--consult "<回す前の AI 相談 (Codex) の結論: 今回すべきか・どの群か>"` が無ければ Unity に触れる前に exit 64 (`GATE_REFUSED`)。式・Edit プローブ・静的検査で決まるなら回さない。同じ差分で結論が出ていれば同じ文を使う。この文書の以降の例は 2 つを省いて書いている。
-- **群の全体と連続一周はユーザーの確定指示がある時だけ**: `Course/42`・`Course/100`・`Course/126`、`--shots` / `--variants` の絞り込みが無い `proto default`、`lap` は、さらに `--confirmed "<ユーザーの確定指示>"` が要る。コミット・Issue 完了・マイルストーンは確定ではない。「全体」のメニューを足したら門の一覧 (`wideWalkMenus`) へ足す。Play を起動するハーネスのメニューは `menu` からは回せない (停止・復旧は可)。
+- **群の全体と連続一周はユーザーの確定指示がある時だけ**: `Course/42`・`Course/82`・`Course/88`・`Course/100`・`Course/126`、`--shots` / `--variants` の絞り込みが無い `proto default`、`lap` は、さらに `--confirmed "<ユーザーの確定指示>"` が要る。コミット・Issue 完了・マイルストーンは確定ではない。普段の開発は最低限の群・ケースだけにし、しっかり回す回帰はユーザーが回すと決めた時にまとめて回す (寝る前など)。「全体」のメニューを足したら門の一覧 (`wideWalkMenus`) へ足す。Play を起動するハーネスのメニューは `menu` からは回せない (停止・復旧は可)。
 - **台帳**: 門を通った実行は開始 (入口・引数・目的・相談の結論・確定指示) と終了 (終了コード・秒) を `Logs/kh-harness-run/ledger.jsonl` に 1 行ずつ残す。どの目的に何分使ったかはここで数える。
 - **実行前の照合**: `unity-api.sh check` (接続先) と `isPlaying` / `isCompiling` がともに False。違えば何もせず exit 3。
 - **終わりの判定**: 新しい runId が出て、status が `RUNNING` 以外になり、Play を抜けるまで待つ。walk は Finish の証拠 (`endedUtc`) まで待つ (`EVIDENCE_ERROR` は除く)。前の runId の結果は使わない。walk でメニューを叩いて 60 s 以内に新しい run が出なければ `NO_NEW_RUN`。

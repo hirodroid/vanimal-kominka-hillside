@@ -4,8 +4,8 @@
 const fs = require('fs');
 const path = require('path');
 const playKinds = ['proto', 'walk', 'segment', 'lap', 'photo'];
-// 群の全体を回す入口 (部分の入口が別にあるもの)。「全体」のメニューを足したらここへ足す
-const wideWalkMenus = /^Course\/(?:42|100|126)\s*-/;
+// 群の全体・長い群を回す入口 (部分の入口が別にあるもの: 82 → 83 / 82b / 82c、88 → 88a / 88b)。「全体」のメニューを足したらここへ足す
+const wideWalkMenus = /^Course\/(?:42|82|88|100|126)\s*-/;
 const ledgerPath = 'Logs/kh-harness-run/ledger.jsonl';
 
 function parse(args) {
@@ -36,7 +36,7 @@ function check(kind, args) {
   if (!flags.consult) throw Error('--consult "<回す前の AI 相談 (Codex) の結論: 今回すべきか・どの群か>" が必要 (vrc-review 相談モード)。同じ差分で結論が出ていれば同じ文を使う');
   const wide = isWide(kind, rest);
   if (wide && !flags.confirmed)
-    throw Error('群の全体・連続一周は --confirmed "<ユーザーの確定指示>" が必要。コミット・Issue 完了・マイルストーンは確定ではない。通常は群・ケースを選ぶ (100a〜、126a / b、segment、proto の --shots / --variants)');
+    throw Error('群の全体・連続一周は --confirmed "<ユーザーの確定指示>" が必要。コミット・Issue 完了・マイルストーンは確定ではない。普段は最低限の群・ケースを選ぶ (100a〜、126a / b、83 / 82b / 82c、88a / 88b、segment、proto の --shots / --variants)');
   // lap は kh-walk-cli.cjs が目的を report.executionPurpose と照合するので、同じ文を渡す
   return { kind, rest: kind === 'lap' ? [...rest, '--reason', flags.reason] : rest, wide, ...flags };
 }
