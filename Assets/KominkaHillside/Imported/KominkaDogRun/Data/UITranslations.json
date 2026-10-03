@@ -3019,6 +3019,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "ボトルは Use、スポンジは Use を押したまま。最後はシャワーとタオル"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①リードの先を取る"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "持った手が、つなぐ手"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②首輪に近づける"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "緑になったら、そのまま"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③行き先をえらぶ"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "「さんぽ」の右の列で"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④はずす"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "自分の犬の首輪を押す"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "片手に3匹、両手で6匹まで。1匹ずつ、先を取ってつなぐ"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①犬のそばでメニュー"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "Tキー／画面のメニュー"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②「さんぽ」でつなぐ"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "犬の行の左・右のボタン"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④はずす"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "［はずす］か、首輪を押す"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "片手に3匹、両手で6匹まで。リードの先を首輪に近づけてもつなげます"
         }
       ]
     },
@@ -6038,6 +6102,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "Bottle: Use. Sponge: hold Use. Then shower and towel"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①Take a leash tip"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "That hand holds the dog"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②Bring it to the collar"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "Hold when it turns green"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③Pick where to go"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "Walk tab, right side"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④Unleash"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "Press your dog's collar"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "Up to 3 dogs per hand, 6 with both. Take the tip again for each dog"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①Menu near a dog"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "T key / Menu on screen"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②Leash in the Walk tab"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "Leash left / right"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④Unleash"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "Unleash or press collar"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "Up to 3 dogs per hand, 6 with both. Bringing a leash tip to a collar works too"
         }
       ]
     },
@@ -9057,6 +9185,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "Бутылка: Use, губка: держи Use. Потом душ и полотенце"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①Возьми карабин"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "Эта рука держит собаку"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②Поднеси к ошейнику"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "Стал зелёным — держи"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③Выбери, куда идти"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "Вкладка Walk, справа"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④Отстегнуть"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "Нажми на ошейник"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "До 3 собак в руке, 6 обеими. Для каждой бери карабин заново"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①Меню рядом с собакой"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "T / Menu на экране"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②Вкладка Walk"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "Leash left / right"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④Отстегнуть"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "Unleash или ошейник"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "До 3 собак в руке, 6 обеими. Можно и поднести карабин к ошейнику"
         }
       ]
     },
@@ -12076,6 +12268,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "Пляшка: Use, губка: тримай Use. Потім душ і рушник"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①Візьми карабін"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "Ця рука тримає собаку"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②Піднеси до нашийника"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "Став зеленим — тримай"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③Обери, куди йти"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "Вкладка Walk, праворуч"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④Відстебнути"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "Натисни на нашийник"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "До 3 собак в руці, 6 обома. Для кожної бери карабін знову"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①Меню біля собаки"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "T / Menu на екрані"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②Вкладка Walk"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "Leash left / right"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④Відстебнути"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "Unleash або нашийник"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "До 3 собак в руці, 6 обома. Можна й піднести карабін до нашийника"
         }
       ]
     },
@@ -15095,6 +15351,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "병은 Use, 스펀지는 Use를 누른 채로. 마지막은 샤워와 수건"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①리드 끝을 잡기"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "잡은 손에 연결돼요"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②목걸이에 가까이"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "초록색이 되면 그대로"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③갈 곳 고르기"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "Walk 탭의 오른쪽"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④풀기"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "내 개의 목걸이를 누르기"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "한 손에 3마리, 두 손으로 6마리까지. 한 마리씩 끝을 다시 잡기"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①개 옆에서 메뉴"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "T 키 / 화면의 Menu"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②Walk 탭에서 연결"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "Leash left / right"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④풀기"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "Unleash 또는 목걸이"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "한 손에 3마리, 두 손으로 6마리까지. 리드 끝을 목걸이에 대도 돼요"
         }
       ]
     },
@@ -18114,6 +18434,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "Flasche: Use, Schwamm: Use halten. Dann Dusche und Handtuch"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①Leinenende nehmen"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "Die Hand führt den Hund"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②Ans Halsband"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "Bei Grün kurz halten"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③Ziel wählen"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "Walk-Tab, rechts"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④Ableinen"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "Halsband drücken"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "Bis 3 Hunde pro Hand, 6 mit beiden. Für jeden Hund das Ende neu nehmen"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①Menü beim Hund"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "T / Menu am Bildschirm"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②Im Walk-Tab anleinen"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "Leash left / right"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④Ableinen"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "Unleash oder Halsband"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "Bis 3 Hunde pro Hand, 6 mit beiden. Das Leinenende ans Halsband geht auch"
         }
       ]
     },
@@ -21133,6 +21517,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "瓶子按 Use，海绵按住 Use。最后用淋浴和毛巾"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①拿起牵引绳的扣"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "拿着的手就是牵的手"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②靠近项圈"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "变绿后保持不动"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③选择去哪里"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "Walk 页的右侧"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④解开"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "按自己狗狗的项圈"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "一只手最多3只，两只手6只。每只狗都要重新拿扣"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①在狗狗旁打开菜单"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "T 键 / 屏幕上的 Menu"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②在 Walk 页牵上"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "Leash left / right"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④解开"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "Unleash 或按项圈"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "一只手最多3只，两只手6只。把扣靠近项圈也能牵上"
         }
       ]
     },
@@ -24152,6 +24600,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "Bote: Use. Esponja: mantén Use. Al final, ducha y toalla"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①Toma la punta"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "Esa mano lleva al perro"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②Acércala al collar"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "En verde, mantenla"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③Elige adónde ir"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "Pestaña Walk, derecha"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④Soltar"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "Pulsa el collar"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "Hasta 3 perros por mano, 6 con las dos. Toma la punta de nuevo para cada uno"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①Menú junto al perro"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "T / Menu en pantalla"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②Conecta en Walk"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "Leash left / right"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④Soltar"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "Unleash o el collar"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "Hasta 3 perros por mano, 6 con las dos. También puedes acercar la punta al collar"
         }
       ]
     },
@@ -27171,6 +27683,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "Flacon : Use. Éponge : garde Use. Puis douche et serviette"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①Prends le mousqueton"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "Cette main = la laisse"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②Approche du collier"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "Au vert, ne bouge plus"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③Choisis où aller"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "Onglet Walk, à droite"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④Détacher"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "Appuie sur le collier"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "Jusqu'à 3 chiens par main, 6 avec les deux. Reprends le mousqueton pour chaque chien"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①Menu près du chien"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "T / Menu à l’écran"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②Attache dans Walk"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "Leash left / right"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④Détacher"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "Unleash ou le collier"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "Jusqu'à 3 chiens par main, 6 avec les deux. Approcher le mousqueton du collier marche aussi"
         }
       ]
     },
@@ -30190,6 +30766,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "Frasco: Use. Esponja: segure Use. Depois, chuveiro e toalha"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①Pegue a ponta da guia"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "Essa mão leva o cão"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②Leve até a coleira"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "No verde, segure"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③Escolha o destino"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "Aba Walk, à direita"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④Soltar"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "Toque na coleira"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "Até 3 cães por mão, 6 com as duas. Pegue a ponta de novo para cada cão"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①Menu perto do cão"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "Tecla T / Menu na tela"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②Prenda na aba Walk"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "Leash left / right"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④Soltar"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "Unleash ou a coleira"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "Até 3 cães por mão, 6 com as duas. Levar a ponta à coleira também funciona"
         }
       ]
     },
@@ -33209,6 +33849,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "Flacone: Use. Spugna: tieni Use. Poi doccia e asciugamano"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①Prendi il moschettone"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "La mano tiene il cane"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②Avvicina al collare"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "Sul verde, fermati"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③Scegli dove andare"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "Scheda Walk, a destra"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④Sgancia"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "Premi il collare"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "Fino a 3 cani per mano, 6 con due. Riprendi il moschettone per ogni cane"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①Menu vicino al cane"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "T / Menu sullo schermo"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②Aggancia in Walk"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "Leash left / right"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④Sgancia"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "Unleash o il collare"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "Fino a 3 cani per mano, 6 con due. Anche avvicinare il moschettone al collare funziona"
         }
       ]
     },
@@ -36228,6 +36932,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "Butelka: Use, gąbka: trzymaj Use. Na koniec prysznic i ręcznik"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①Weź końcówkę smyczy"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "Ta ręka trzyma psa"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②Przyłóż do obroży"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "Gdy zielona, trzymaj"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③Wybierz, dokąd iść"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "Karta Walk, po prawej"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④Odepnij"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "Naciśnij obrożę"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "Do 3 psów na rękę, 6 obiema. Po każdego psa weź końcówkę od nowa"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①Menu przy psie"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "T / Menu na ekranie"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②Przypnij w Walk"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "Leash left / right"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④Odepnij"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "Unleash albo obroża"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "Do 3 psów na rękę, 6 obiema. Można też przyłożyć końcówkę do obroży"
         }
       ]
     },
@@ -39251,6 +40019,70 @@
         {
           "key": "wash.guide.help.flat",
           "text": "瓶子按 Use，海綿按住 Use。最後用淋浴和毛巾"
+        },
+        {
+          "key": "walk.guide.vr.step1",
+          "text": "①拿起牽繩的扣"
+        },
+        {
+          "key": "walk.guide.vr.sub1",
+          "text": "拿着的手就是牽的手"
+        },
+        {
+          "key": "walk.guide.vr.step2",
+          "text": "②靠近項圈"
+        },
+        {
+          "key": "walk.guide.vr.sub2",
+          "text": "變綠後保持不動"
+        },
+        {
+          "key": "walk.guide.step3",
+          "text": "③選擇去哪裏"
+        },
+        {
+          "key": "walk.guide.sub3",
+          "text": "Walk 頁的右側"
+        },
+        {
+          "key": "walk.guide.vr.step4",
+          "text": "④解開"
+        },
+        {
+          "key": "walk.guide.vr.sub4",
+          "text": "按自己狗狗的項圈"
+        },
+        {
+          "key": "walk.guide.vr.help",
+          "text": "一隻手最多3隻，兩隻手6隻。每隻狗都要重新拿扣"
+        },
+        {
+          "key": "walk.guide.flat.step1",
+          "text": "①在狗狗旁打開選單"
+        },
+        {
+          "key": "walk.guide.flat.sub1",
+          "text": "T 鍵 / 螢幕上的 Menu"
+        },
+        {
+          "key": "walk.guide.flat.step2",
+          "text": "②在 Walk 頁牽上"
+        },
+        {
+          "key": "walk.guide.flat.sub2",
+          "text": "Leash left / right"
+        },
+        {
+          "key": "walk.guide.flat.step4",
+          "text": "④解開"
+        },
+        {
+          "key": "walk.guide.flat.sub4",
+          "text": "Unleash 或按項圈"
+        },
+        {
+          "key": "walk.guide.flat.help",
+          "text": "一隻手最多3隻，兩隻手6隻。把扣靠近項圈也能牽上"
         }
       ]
     }

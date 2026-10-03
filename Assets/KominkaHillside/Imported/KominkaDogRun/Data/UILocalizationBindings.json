@@ -929,6 +929,276 @@
       "root": "KH_GuideBoards",
       "path": "Kominka/Canvas/Paper/Body",
       "key": "guide.kominka.body"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Vr/Step1",
+      "key": "walk.guide.vr.step1"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Vr/Sub1",
+      "key": "walk.guide.vr.sub1"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Vr/Step2",
+      "key": "walk.guide.vr.step2"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Vr/Sub2",
+      "key": "walk.guide.vr.sub2"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Vr/Step3",
+      "key": "walk.guide.step3"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Vr/Sub3",
+      "key": "walk.guide.sub3"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Vr/Step4",
+      "key": "walk.guide.vr.step4"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Vr/Sub4",
+      "key": "walk.guide.vr.sub4"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Vr/Help",
+      "key": "walk.guide.vr.help"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Flat/Step1",
+      "key": "walk.guide.flat.step1"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Flat/Sub1",
+      "key": "walk.guide.flat.sub1"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Flat/Step2",
+      "key": "walk.guide.flat.step2"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Flat/Sub2",
+      "key": "walk.guide.flat.sub2"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Flat/Step3",
+      "key": "walk.guide.step3"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Flat/Sub3",
+      "key": "walk.guide.sub3"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Flat/Step4",
+      "key": "walk.guide.flat.step4"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Flat/Sub4",
+      "key": "walk.guide.flat.sub4"
+    },
+    {
+      "root": "KH_LeashRack",
+      "path": "WalkGuide/Canvas/Flat/Help",
+      "key": "walk.guide.flat.help"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Vr/Step1",
+      "key": "walk.guide.vr.step1"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Vr/Sub1",
+      "key": "walk.guide.vr.sub1"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Vr/Step2",
+      "key": "walk.guide.vr.step2"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Vr/Sub2",
+      "key": "walk.guide.vr.sub2"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Vr/Step3",
+      "key": "walk.guide.step3"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Vr/Sub3",
+      "key": "walk.guide.sub3"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Vr/Step4",
+      "key": "walk.guide.vr.step4"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Vr/Sub4",
+      "key": "walk.guide.vr.sub4"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Vr/Help",
+      "key": "walk.guide.vr.help"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Flat/Step1",
+      "key": "walk.guide.flat.step1"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Flat/Sub1",
+      "key": "walk.guide.flat.sub1"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Flat/Step2",
+      "key": "walk.guide.flat.step2"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Flat/Sub2",
+      "key": "walk.guide.flat.sub2"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Flat/Step3",
+      "key": "walk.guide.step3"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Flat/Sub3",
+      "key": "walk.guide.sub3"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Flat/Step4",
+      "key": "walk.guide.flat.step4"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Flat/Sub4",
+      "key": "walk.guide.flat.sub4"
+    },
+    {
+      "root": "KH_Station_Viewpoint",
+      "path": "WalkGuide/Canvas/Flat/Help",
+      "key": "walk.guide.flat.help"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Vr/Step1",
+      "key": "walk.guide.vr.step1"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Vr/Sub1",
+      "key": "walk.guide.vr.sub1"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Vr/Step2",
+      "key": "walk.guide.vr.step2"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Vr/Sub2",
+      "key": "walk.guide.vr.sub2"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Vr/Step3",
+      "key": "walk.guide.step3"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Vr/Sub3",
+      "key": "walk.guide.sub3"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Vr/Step4",
+      "key": "walk.guide.vr.step4"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Vr/Sub4",
+      "key": "walk.guide.vr.sub4"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Vr/Help",
+      "key": "walk.guide.vr.help"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Flat/Step1",
+      "key": "walk.guide.flat.step1"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Flat/Sub1",
+      "key": "walk.guide.flat.sub1"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Flat/Step2",
+      "key": "walk.guide.flat.step2"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Flat/Sub2",
+      "key": "walk.guide.flat.sub2"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Flat/Step3",
+      "key": "walk.guide.step3"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Flat/Sub3",
+      "key": "walk.guide.sub3"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Flat/Step4",
+      "key": "walk.guide.flat.step4"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Flat/Sub4",
+      "key": "walk.guide.flat.sub4"
+    },
+    {
+      "root": "KH_Station_Plaza",
+      "path": "WalkGuide/Canvas/Flat/Help",
+      "key": "walk.guide.flat.help"
     }
   ],
   "interactions": [

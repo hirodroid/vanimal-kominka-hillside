@@ -13,16 +13,22 @@ using VRC.Udon.Common.Interfaces;
 namespace KominkaHillside.Editor
 {
     /// <summary>
-    /// IMP-WLD-005 Photo/3 - Harness: 自動写真の小さいケース群 (ClientSim、1 クライアント、約 1 分。歩行・洗浄のハーネスは回さない)。
-    ///   H0-ready          入室 → 設定の復元 → 実行時の RT が端末の寸法 (Editor = PC 1280x720) で作られ、撮影の見回りが有効、カメラは無効
-    ///   H1-capture        きっかけ (フリスビーを取った: KD_PhotoDirector._OnFrisbeeCatch) → 次の枠 (0) へ 1 枚。色が入っている (真っ黒・一色でない)。
+    /// IMP-WLD-005 Photo/3 - Harness: 自動写真の小さいケース群 (ClientSim、1 クライアント、約 1〜2 分。歩行・洗浄のハーネスは回さない)。
+    /// IMP-WLD-007 W1 で 24 枠・出来事 3 カテゴリ (散歩 0..11 / 撫で 12..17 / 遊び 18..23)・8 枚ずつのページになった。
+    ///   H0-ready          入室 → 設定の復元 → 実行時の RT 24 枚が端末の寸法 (Editor = PC 1280x720) で作られ、撮影の見回りが有効、カメラは無効
+    ///   H1-capture        きっかけ (フリスビーを取った: KD_PhotoDirector._OnFrisbeeCatch) → 遊びの最初の枠 (18) へ 1 枚。色が入っている (真っ黒・一色でない)。
     ///                     ボードの左上と縮小表示がその RT を出す。撮り終えたらカメラは無効
-    ///   H2-wrap           さらに 8 回 → 9 枚目でいちばん古い枠 (0) が置き換わり、新しい順に並ぶ (0, 7, 6, … 1)
+    ///   H2-wrap           さらに 6 回 → 遊びの 7 枚目で遊びのいちばん古い枠 (18) が置き換わり、新しい順に並ぶ (18, 23, 22, 21, 20, 19)。散歩・撫での枠は使わない
+    ///   H6-category       散歩の枠へ 13 回 (散歩のきっかけは W2 なので、実行時だけ _hillsideGroupOverride = 0 にして撮る) → 散歩の中だけで上書き (0 が 2 回目)、
+    ///                     遊びの 6 枚は残る (合計 18 枚 = 3 ページ)
     ///   H3-off            設定の [写真: ON/OFF] (KH_PhotoAlbum._ToggleCapture) で OFF → 見回りが止まり、きっかけが来ても撮らない、写真は残る、保存値 0。
     ///                     もう一度押して ON → 保存値 1、RT は作り直さない (同じ寸法)
     ///   H4-menu           手元メニューの [写真] (KD_TreatPouch._PhotoOpen) → 写真の面がボードと同じ RT を出す、「新しい」の印、
-    ///                     押すと大きく、[?] の説明、[もどる] で元のタブへ
+    ///                     ページ送り (9 枚以上のとき: ▶ で次の 8 枚・「2/3」・◀ で戻る)、押すと大きく、[?] の説明、[もどる] で元のタブへ。
+    ///                     ボードの ▶ で次の 8 枚、戻す時間 (実行時だけ 1 s) で 1 ページ目へ
     ///   H5-no-camera-left 最後にカメラが無効で、撮りかけの枠が残っていない
+    /// **一部だけ回す**: Temp/kh-photo/harness-cases.txt に "H1,H6" のように書いてから Photo/3 (読んだら消す。無ければ全部)。
+    /// H0 と H5 は必ず回る。H2・H3・H4・H6 は写真が要るので H1 を足す。回したケースは report.casesRun に残る。
     /// 疑似入力 (Udon のイベントを直接送る) なので、実際のフリスビーの跳び・ボタンの光線・VRChat カメラの吸着・端末差 (Quest の一瞬の引っかかり、
     /// iOS のタップ表示) は見ない。PlayerData は実行前に退避し、終わったら戻す。シーンは保存しない (前後のハッシュを比べる)。
     /// </summary>
@@ -30,11 +36,31 @@ namespace KominkaHillside.Editor
     public static class KH_PhotoHarnessEditor
     {
         const string Key = "KH.PhotoHarness", Dir = "Logs/kh-photo-harness", Journal = Dir + "/journal.json";
+        public const string CasesFile = "Temp/kh-photo/harness-cases.txt";
+        /// <summary>回す順。H6 (散歩の枠) は H3 より前 (OFF の検査に写真が要る・H4 のページ送りに 9 枚以上が要る)。</summary>
+        public static readonly string[] AllCases = { "H0-ready", "H1-capture", "H2-wrap", "H6-category", "H3-off", "H4-menu", "H5-no-camera-left" };
+
+        /// <summary>"H1,H6" → 回すケース (前方一致。H0・H5 は必ず、写真が要るケースには H1 を足す)。空なら全部。知らない名前は例外 (Play に入らない)。</summary>
+        public static List<string> Selected(string request)
+        {
+            if (string.IsNullOrWhiteSpace(request)) return AllCases.ToList();
+            var want = new HashSet<string> { "H0-ready", "H5-no-camera-left" };
+            foreach (var raw in request.Split(new[] { ',', ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var hit = AllCases.Where(c => c == raw || c.StartsWith(raw + "-", StringComparison.Ordinal)).ToArray();
+                if (hit.Length != 1) throw new InvalidOperationException("unknown photo harness case '" + raw + "' (known: " + string.Join(", ", AllCases) + ")");
+                want.Add(hit[0]);
+            }
+            if (want.Any(c => c.StartsWith("H2") || c.StartsWith("H3") || c.StartsWith("H4") || c.StartsWith("H6"))) want.Add("H1-capture");
+            return AllCases.Where(want.Contains).ToList();
+        }
 
         [Serializable] public class Case { public string name, status = "PENDING", reason; public List<string> notes = new List<string>(); }
         [Serializable] public class Report
         {
             public string runId, status = "RUNNING", reason, utc, endedUtc, scene, hashBefore, hashAfter, buildTarget, playerDataBackup;
+            public string casesRequested = "";            // IMP-WLD-007: Temp/kh-photo/harness-cases.txt ("" = all)
+            public List<string> casesRun = new List<string>();
             public bool sceneFileUnchanged, playerDataRestored, settingsRestored, originalBackground;
             public double deadline;
             public List<Case> cases = new List<Case>();
@@ -74,6 +100,9 @@ namespace KominkaHillside.Editor
             report = new Report { runId = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"), utc = DateTime.UtcNow.ToString("o"), scene = KH_CourseGroundEditor.ScenePath, originalBackground = Application.runInBackground,
                 buildTarget = EditorUserBuildSettings.activeBuildTarget.ToString() };
             report.hashBefore = Hash(report.scene);
+            if (File.Exists(CasesFile)) { report.casesRequested = File.ReadAllText(CasesFile).Trim(); File.Delete(CasesFile); }
+            report.casesRun = Selected(report.casesRequested);
+            Debug.Log("[KH Photo Harness] cases: " + string.Join(", ", report.casesRun) + (report.casesRequested.Length > 0 ? " (requested '" + report.casesRequested + "')" : " (all)"));
             report.deadline = EditorApplication.timeSinceStartup + 240;
             BackupPlayerData();
             Application.runInBackground = true;
@@ -152,7 +181,7 @@ namespace KominkaHillside.Editor
             var sys = SceneManager.GetActiveScene().GetRootGameObjects().First(g => g.name == KH_PhotoGalleryEditor.SystemName);
             cam = sys.transform.Find("PhotoCamera").GetComponent<Camera>();
             var board = SceneManager.GetActiveScene().GetRootGameObjects().First(g => g.name == KH_PhotoGalleryEditor.BoardRootName);
-            boardPhotos = Enumerable.Range(0, 8).Select(k => board.transform.Find("Photos/Photo" + k).GetComponent<MeshRenderer>()).ToArray();
+            boardPhotos = Enumerable.Range(0, KH_PhotoAlbum.PageSize).Select(k => board.transform.Find("Photos/Photo" + k).GetComponent<MeshRenderer>()).ToArray();
             // _OnFrisbeeCatch(int dog): U# renames a method with parameters (__N__OnFrisbeeCatch, __N_dog__param)
             var prog = uDirector.programSource.SerializedProgramAsset.RetrieveProgram();
             for (int n = 0; n <= 200 && frisbeeEntry == null; n++) if (prog.EntryPoints.TryGetAddressFromSymbol("__" + n + "__OnFrisbeeCatch", out _)) frisbeeEntry = "__" + n + "__OnFrisbeeCatch";
@@ -197,29 +226,58 @@ namespace KominkaHillside.Editor
             finally { RenderTexture.active = prev; UnityEngine.Object.DestroyImmediate(tex); }
         }
 
-        static void CheckBoardOrder(int expectCount)
+        /// <summary>ボードの今のページ (page) の 8 枚が、並び (新しい順) の page × 8 + k を出しているか。expectCount &lt; 0 なら枚数は見ない。</summary>
+        static void CheckBoardOrder(int expectCount, int page = 0)
         {
             var order = Order(); var slots = Slots();
             int count = Get<int>(uAlbum, "_count");
-            Expect(count == expectCount, "album holds " + expectCount + " photos (actual " + count + ")");
-            if (count != expectCount) return;
-            for (int k = 0; k < 8; k++)
+            if (expectCount >= 0)
             {
-                bool show = k < expectCount;
-                Expect(boardPhotos[k].gameObject.activeSelf == show, "board position " + k + (show ? " shown" : " hidden"));
+                Expect(count == expectCount, "album holds " + expectCount + " photos (actual " + count + ")");
+                if (count != expectCount) return;
+            }
+            for (int k = 0; k < PageSize; k++)
+            {
+                int p = page * PageSize + k;
+                bool show = p < count;
+                Expect(boardPhotos[k].gameObject.activeSelf == show, "board page " + (page + 1) + " position " + k + (show ? " shown" : " hidden"));
                 if (!show) continue;
-                Expect(boardPhotos[k].sharedMaterial.mainTexture == slots[order[k]], "board position " + k + " shows slot " + order[k]);
+                Expect(boardPhotos[k].sharedMaterial.mainTexture == slots[order[p]], "board page " + (page + 1) + " position " + k + " shows slot " + order[p]);
                 var tap = boardPhotos[k].GetComponent<UdonBehaviour>();
-                Expect(tap != null && Get<int>(tap, "slotIndex") == order[k], "board position " + k + " tap opens slot " + order[k]);
+                Expect(tap != null && Get<int>(tap, "slotIndex") == order[p], "board page " + (page + 1) + " position " + k + " tap opens slot " + order[p]);
             }
         }
+
+        /// <summary>メニューの縮小表示が、並びの page × 8 + k を出しているか。</summary>
+        static void CheckMenuPage(int page)
+        {
+            var order = Order(); var slots = Slots();
+            int count = Get<int>(uAlbum, "_count");
+            var thumbs = Get<UnityEngine.UI.RawImage[]>(uAlbum, "menuThumbs"); var buttons = Get<GameObject[]>(uAlbum, "menuThumbButtons");
+            bool ok = true;
+            for (int k = 0; k < PageSize; k++)
+            {
+                int p = page * PageSize + k;
+                bool show = p < count;
+                if (buttons[k].activeSelf != show) ok = false;
+                if (show && thumbs[k].texture != slots[order[p]]) ok = false;
+            }
+            Expect(ok, "menu page " + (page + 1) + " shows positions " + (page * PageSize) + ".." + Math.Min(count, (page + 1) * PageSize) + " of " + count + ", newest first, the rest hidden");
+        }
+
+        const int PageSize = KH_PhotoAlbum.PageSize;
+        static int GroupFirst(int group) { int s = 0; for (int g = 0; g < group; g++) s += KH_PhotoGalleryEditor.GroupSizes[g]; return s; }
+        static bool On(string name) { return report.casesRun.Contains(name); }
 
         // ================================================================ cases
 
         static void MakeSteps()
         {
             steps = new List<Step>();
-            foreach (var name in new[] { "H0-ready", "H1-capture", "H2-wrap", "H3-off", "H4-menu", "H5-no-camera-left" }) report.cases.Add(new Case { name = name });
+            if (report.casesRun == null || report.casesRun.Count == 0) report.casesRun = AllCases.ToList();
+            foreach (var name in report.casesRun) report.cases.Add(new Case { name = name });
+            int playFirst = GroupFirst(KominkaDogRun.KD_PhotoDirector.HillsideGroupPlay), walkFirst = GroupFirst(KominkaDogRun.KD_PhotoDirector.HillsideGroupWalk);
+            int playSize = KH_PhotoGalleryEditor.GroupSizes[KominkaDogRun.KD_PhotoDirector.HillsideGroupPlay], walkSize = KH_PhotoGalleryEditor.GroupSizes[KominkaDogRun.KD_PhotoDirector.HillsideGroupWalk];
             bool mobile = report.buildTarget == "Android" || report.buildTarget == "iOS";
             int wantW = mobile ? KH_PhotoGalleryEditor.MobileWidth : KH_PhotoGalleryEditor.PcWidth, wantH = mobile ? KH_PhotoGalleryEditor.MobileHeight : KH_PhotoGalleryEditor.PcHeight;
 
@@ -249,7 +307,10 @@ namespace KominkaHillside.Editor
                     var asset = AssetDatabase.LoadAssetAtPath<RenderTexture>(KH_PhotoGalleryEditor.SlotRTPath(i));
                     if (slots[i] == null || slots[i] == asset || slots[i].width != wantW || slots[i].height != wantH || slots[i].depth != 0) runtime = false;
                 }
-                Expect(slots.Length == 8 && runtime, "8 runtime slots " + wantW + "x" + wantH + " depth 0 (build target " + report.buildTarget + "), not the templates");
+                Expect(slots.Length == KH_PhotoAlbum.Slots && runtime, KH_PhotoAlbum.Slots + " runtime slots " + wantW + "x" + wantH + " depth 0 (build target " + report.buildTarget + "), not the templates");
+                Expect(Get<int[]>(uGallery, "slotGroups").SequenceEqual(KH_PhotoGalleryEditor.SlotGroups()) && Get<bool>(uDirector, "hillsideEventGroups"), "3 event categories (walk / pet / play) and the director picks them");
+                object bp; uAlbum.TryGetProgramVariable("boardPager", out bp); var pagerGo = bp as GameObject;
+                Expect(pagerGo != null && !pagerGo.activeSelf, "board pager present (Photo/4 after IMP-WLD-007) and hidden (no photo yet)");
                 var capRt = Get<RenderTexture>(uCapture, "captureTexture");
                 Expect(capRt != null && capRt.width == wantW && capRt.height == wantH && capRt.depth >= 16 && cam.targetTexture == capRt, "runtime capture RT " + wantW + "x" + wantH + " with depth, the camera's target");
                 Expect(!cam.enabled, "photo camera disabled while idle");
@@ -259,49 +320,108 @@ namespace KominkaHillside.Editor
                 Note("PlayerData " + KominkaDogRun.KD_PhotoSettings.SaveKey + " = " + SavedMode());
             }));
 
-            // ---- H1 ----
-            steps.Add(Do("H1-capture", () =>
+            // ---- H1 (a frisbee catch is a "play" event: the first play slot) ----
+            if (On("H1-capture"))
             {
-                uDirector.SetProgramVariable("frisbeeShotCooldown", 0f);   // runtime only (the scene keeps 20 s)
-                capturesBefore = Captures();
-                Trigger(0);
-                Note("frisbee catch notice for dog 0 (Corgi), cooldown 0 at runtime");
-            }));
-            steps.Add(Until("H1-capture", () => Captures() == capturesBefore + 1, 3, "no capture after the frisbee catch notice"));
-            steps.Add(Until("H1-capture", () => !cam.enabled, 1, "the photo camera stayed enabled after the capture"));
-            steps.Add(Do("H1-capture", () =>
-            {
-                var order = Order(); var slots = Slots();
-                Expect(order[0] == 0, "the first photo went into slot 0 (the next slot)");
-                Expect(Get<RenderTexture>(uCapture, "_lastSlot") == slots[0], "capture reports slot 0 as the last one copied");
-                string px = PixelCheck(slots[0]);
-                Expect(px.StartsWith("OK"), "slot 0 holds a picture (" + px + ")");
-                CheckBoardOrder(1);
-                var thumbs = Get<UnityEngine.UI.RawImage[]>(uAlbum, "menuThumbs");
-                Expect(thumbs[0].texture == slots[0], "menu thumbnail 0 is the same RenderTexture as the board");
-                Expect(Get<int[]>(uGallery, "_nextInGroup")[0] == 1, "the gallery moved on to slot 1");
-            }));
-
-            // ---- H2 ----
-            for (int i = 1; i <= 8; i++)
-            {
-                int dog = i % 6;
-                steps.Add(Do("H2-wrap", () => { capturesBefore = Captures(); Trigger(dog); }));
-                steps.Add(Until("H2-wrap", () => Captures() == capturesBefore + 1, 3, "capture " + (i + 1) + " did not happen"));
-                steps.Add(Until("H2-wrap", () => !cam.enabled, 1, "camera stayed enabled after capture " + (i + 1)));
+                steps.Add(Do("H1-capture", () =>
+                {
+                    uDirector.SetProgramVariable("frisbeeShotCooldown", 0f);   // runtime only (the scene keeps 20 s)
+                    capturesBefore = Captures();
+                    Trigger(0);
+                    Note("frisbee catch notice for dog 0 (Corgi), cooldown 0 at runtime");
+                }));
+                steps.Add(Until("H1-capture", () => Captures() == capturesBefore + 1, 3, "no capture after the frisbee catch notice"));
+                steps.Add(Until("H1-capture", () => !cam.enabled, 1, "the photo camera stayed enabled after the capture"));
+                steps.Add(Do("H1-capture", () =>
+                {
+                    var order = Order(); var slots = Slots();
+                    Expect(order[0] == playFirst, "the first photo went into the first play slot " + playFirst + " (actual " + order[0] + ")");
+                    Expect(Get<RenderTexture>(uCapture, "_lastSlot") == slots[playFirst], "capture reports slot " + playFirst + " as the last one copied");
+                    string px = PixelCheck(slots[playFirst]);
+                    Expect(px.StartsWith("OK"), "slot " + playFirst + " holds a picture (" + px + ")");
+                    CheckBoardOrder(1);
+                    var thumbs = Get<UnityEngine.UI.RawImage[]>(uAlbum, "menuThumbs");
+                    Expect(thumbs[0].texture == slots[playFirst], "menu thumbnail 0 is the same RenderTexture as the board");
+                    var next = Get<int[]>(uGallery, "_nextInGroup");
+                    Expect(next[KominkaDogRun.KD_PhotoDirector.HillsideGroupPlay] == 1 && next[KominkaDogRun.KD_PhotoDirector.HillsideGroupWalk] == 0 && next[KominkaDogRun.KD_PhotoDirector.HillsideGroupPet] == 0,
+                        "only the play category moved on (next " + string.Join(",", next) + ")");
+                }));
             }
-            steps.Add(Do("H2-wrap", () =>
+
+            // ---- H2: the play category wraps inside itself ----
+            if (On("H2-wrap"))
             {
-                var order = Order();
-                Expect(order.SequenceEqual(new[] { 0, 7, 6, 5, 4, 3, 2, 1 }), "after 9 captures the oldest slot (0) was replaced and the board reads newest first: [" + string.Join(",", order) + "]");
-                Expect(Get<int[]>(uGallery, "_nextInGroup")[0] == 1, "the gallery wraps (next slot 1)");
-                CheckBoardOrder(8);
-                Expect(Captures() == 9, "9 captures in total");
-                var slots = Slots(); bool same = runtimeSlots != null && slots.Length == runtimeSlots.Length; for (int i = 0; same && i < slots.Length; i++) if (slots[i] != runtimeSlots[i]) same = false;
-                Expect(same, "captures reuse the same 8 runtime textures (no allocation per capture)");
-            }));
+                for (int i = 1; i <= playSize; i++)
+                {
+                    int dog = i % 6, n = i + 1;
+                    steps.Add(Do("H2-wrap", () => { capturesBefore = Captures(); Trigger(dog); }));
+                    steps.Add(Until("H2-wrap", () => Captures() == capturesBefore + 1, 3, "capture " + n + " did not happen"));
+                    steps.Add(Until("H2-wrap", () => !cam.enabled, 1, "camera stayed enabled after capture " + n));
+                }
+                steps.Add(Do("H2-wrap", () =>
+                {
+                    var order = Order();
+                    var want = new List<int> { playFirst }; for (int s = playFirst + playSize - 1; s > playFirst; s--) want.Add(s);   // 18, 23, 22, 21, 20, 19
+                    int count = Get<int>(uAlbum, "_count");
+                    Expect(count == playSize && order.Take(count).SequenceEqual(want), "after " + (playSize + 1) + " play captures the oldest play slot (" + playFirst + ") was replaced, newest first: [" + string.Join(",", order.Take(count)) + "] want [" + string.Join(",", want) + "]");
+                    Expect(order.Take(count).All(s => s >= playFirst && s < playFirst + playSize), "no walk / pet slot was used by play events");
+                    Expect(Get<int[]>(uGallery, "_nextInGroup")[KominkaDogRun.KD_PhotoDirector.HillsideGroupPlay] == 1, "the play category wraps (next = its 2nd slot)");
+                    CheckBoardOrder(playSize);
+                    var slots = Slots(); bool same = runtimeSlots != null && slots.Length == runtimeSlots.Length; for (int i = 0; same && i < slots.Length; i++) if (slots[i] != runtimeSlots[i]) same = false;
+                    Expect(same, "captures reuse the same runtime textures (no allocation per capture)");
+                }));
+            }
+
+            // ---- H6: the walk category (W2 has no walk trigger yet: the runtime override sends frisbee shots there) ----
+            if (On("H6-category"))
+            {
+                int[] before = null; int countBefore = 0;
+                steps.Add(Do("H6-category", () =>
+                {
+                    countBefore = Get<int>(uAlbum, "_count"); before = Order().Take(countBefore).ToArray();
+                    uDirector.SetProgramVariable("_hillsideGroupOverride", KominkaDogRun.KD_PhotoDirector.HillsideGroupWalk);
+                    Note("runtime only: _hillsideGroupOverride = walk; " + countBefore + " photos before");
+                }));
+                for (int i = 0; i <= walkSize; i++)
+                {
+                    int dog = i % 6, n = i + 1;
+                    steps.Add(Do("H6-category", () => { capturesBefore = Captures(); Trigger(dog); }));
+                    steps.Add(Until("H6-category", () => Captures() == capturesBefore + 1, 3, "walk capture " + n + " did not happen"));
+                    steps.Add(Until("H6-category", () => !cam.enabled, 1, "camera stayed enabled after walk capture " + n));
+                }
+                steps.Add(Do("H6-category", () =>
+                {
+                    uDirector.SetProgramVariable("_hillsideGroupOverride", -1);
+                    var order = Order(); int count = Get<int>(uAlbum, "_count");
+                    var want = new List<int> { walkFirst }; for (int s = walkFirst + walkSize - 1; s > walkFirst; s--) want.Add(s);   // 0, 11, 10, … 1
+                    want.AddRange(before);                                                                                            // the play photos keep their order behind
+                    Expect(count == walkSize + countBefore && order.Take(count).SequenceEqual(want), (walkSize + 1) + " walk captures: walk wraps inside itself (" + walkFirst + " twice), the earlier photos stay: ["
+                        + string.Join(",", order.Take(count)) + "] want [" + string.Join(",", want) + "]");
+                    Expect(Get<int[]>(uGallery, "_nextInGroup")[KominkaDogRun.KD_PhotoDirector.HillsideGroupWalk] == 1, "the walk category wraps (next = its 2nd slot)");
+                    CheckBoardOrder(count);
+                    object pagerObj; uAlbum.TryGetProgramVariable("boardPager", out pagerObj);
+                    Expect(pagerObj is GameObject pg && pg.activeSelf == (count > PageSize), "board pager shown iff more than " + PageSize + " photos (" + count + ")");
+                }));
+            }
 
             // ---- H3 ----
+            if (On("H3-off")) AddOffSteps();
+            if (On("H4-menu")) AddMenuSteps();
+
+            // ---- H5 ----
+            steps.Add(Do("H5-no-camera-left", () =>
+            {
+                Expect(!cam.enabled, "the photo camera is disabled at the end");
+                // _pendingSlot is null once a capture finishes; Get<T> treats a null value as missing (null is not T), so read it directly.
+                // A symbol that is absent from the heap and a null value both mean "nothing pending".
+                object pending; uCapture.TryGetProgramVariable("_pendingSlot", out pending);
+                Expect(!(pending is RenderTexture), "no capture left half-done (_pendingSlot " + (pending == null ? "null" : pending.ToString()) + ")");
+                Note("cases run: " + string.Join(", ", report.casesRun) + "; captures " + Captures() + ", runtime errors " + report.errors.Count);
+            }));
+        }
+
+        static void AddOffSteps()
+        {
             steps.Add(Do("H3-off", () => uAlbum.SendCustomEvent("_ToggleCapture")));
             steps.Add(Until("H3-off", () => SettingsReady() && Get<int>(uSettings, "_mode") == 0, 5, "the settings row did not switch OFF"));
             steps.Add(Do("H3-off", () =>
@@ -333,8 +453,10 @@ namespace KominkaHillside.Editor
                 var slots = Slots(); bool same = runtimeSlots != null && slots.Length == runtimeSlots.Length; for (int i = 0; same && i < slots.Length; i++) if (slots[i] != runtimeSlots[i]) same = false;
                 Expect(same, "ON again kept the same textures (photos kept, nothing re-created)");
             }));
+        }
 
-            // ---- H4 ----
+        static void AddMenuSteps()
+        {
             steps.Add(Do("H4-menu", () =>
             {
                 tabBefore = Get<int>(uPouch, "_tab");
@@ -351,18 +473,43 @@ namespace KominkaHillside.Editor
                 int cnt = Get<int>(uAlbum, "_count");
                 Expect(cnt > 0, "photos exist to show in the menu (" + cnt + ")");
                 bool same = cnt > 0;
-                for (int k = 0; k < cnt; k++) if (order[k] < 0 || order[k] >= slots.Length || thumbs[k].texture != slots[order[k]] || thumbs[k].texture != boardPhotos[k].sharedMaterial.mainTexture || !buttons[k].activeInHierarchy) same = false;
-                Expect(same, "the 8 thumbnails show the same RenderTextures as the board, newest first");
+                for (int k = 0; k < Math.Min(cnt, PageSize); k++) if (order[k] < 0 || order[k] >= slots.Length || thumbs[k].texture != slots[order[k]] || thumbs[k].texture != boardPhotos[k].sharedMaterial.mainTexture || !buttons[k].activeInHierarchy) same = false;
+                Expect(same, "page 1 thumbnails show the same RenderTextures as the board, newest first");
+                Expect(Get<int>(uAlbum, "_menuPage") == 0, "the page opens on page 1");
                 Expect(Get<GameObject>(uAlbum, "menuNewMark").activeInHierarchy, "the 'new' mark is on the newest photo (taken while the page was closed)");
+                var pager = Get<GameObject>(uAlbum, "menuPager");
+                Expect(pager.activeInHierarchy == (cnt > PageSize), "menu pager shown iff more than " + PageSize + " photos (" + cnt + ")");
                 var title = Get<TMPro.TextMeshProUGUI>(uPouch, "sectionTitleLabel");
                 Note("section title: '" + (title != null ? title.text : "") + "'");
-                uAlbum.SendCustomEvent("_MenuPick3");
+                if (cnt > PageSize)
+                {
+                    int pages = (cnt + PageSize - 1) / PageSize;
+                    uAlbum.SendCustomEvent("_MenuPageNext");
+                    Expect(Get<int>(uAlbum, "_menuPage") == 1, "▶ -> page 2");
+                    CheckMenuPage(1);
+                    var label = Get<TMPro.TMP_Text>(uAlbum, "menuPageLabel");
+                    Expect(label != null && label.text == "2/" + pages, "menu label '2/" + pages + "' ('" + (label != null ? label.text : "") + "')");
+                    Expect(!Get<GameObject>(uAlbum, "menuNewMark").activeInHierarchy, "the 'new' mark is only on page 1");
+                    uAlbum.SendCustomEvent("_MenuPick1");
+                    Expect(Get<GameObject>(uAlbum, "menuLargeRoot").activeInHierarchy && Get<UnityEngine.UI.RawImage>(uAlbum, "menuLarge").texture == slots[order[PageSize + 1]], "page 2 thumbnail 2 opens slot " + order[PageSize + 1]);
+                    uAlbum.SendCustomEvent("_MenuPagePrev");
+                    Expect(Get<int>(uAlbum, "_menuPage") == 0 && !Get<GameObject>(uAlbum, "menuLargeRoot").activeSelf, "◀ -> page 1 (the large view closes)");
+                    uAlbum.SendCustomEvent("_MenuPagePrev");
+                    Expect(Get<int>(uAlbum, "_menuPage") == pages - 1, "◀ on page 1 wraps to the last page " + pages);
+                    CheckMenuPage(pages - 1);
+                    uAlbum.SendCustomEvent("_MenuPageNext");
+                    Expect(Get<int>(uAlbum, "_menuPage") == 0, "▶ on the last page wraps to page 1");
+                    CheckMenuPage(0);
+                }
+                else Note("menu pager not tested: " + cnt + " photos (one page; H6 makes 3 pages)");
+                uAlbum.SendCustomEvent("_MenuPick" + Math.Min(3, Math.Max(0, cnt - 1)));
             }));
             steps.Add(Do("H4-menu", () =>
             {
                 var order = Order(); var slots = Slots();
-                bool has4 = Get<int>(uAlbum, "_count") > 3 && order[3] >= 0 && order[3] < slots.Length;
-                Expect(has4 && Get<GameObject>(uAlbum, "menuLargeRoot").activeInHierarchy && Get<UnityEngine.UI.RawImage>(uAlbum, "menuLarge").texture == slots[order[3]], "thumbnail 4 opens large with slot " + order[3] + (has4 ? "" : " (no 4th photo)"));
+                int pick = Math.Min(3, Math.Max(0, Get<int>(uAlbum, "_count") - 1));
+                bool has = Get<int>(uAlbum, "_count") > 0 && order[pick] >= 0 && order[pick] < slots.Length;
+                Expect(has && Get<GameObject>(uAlbum, "menuLargeRoot").activeInHierarchy && Get<UnityEngine.UI.RawImage>(uAlbum, "menuLarge").texture == slots[order[pick]], "thumbnail " + (pick + 1) + " opens large with slot " + order[pick] + (has ? "" : " (no photo)"));
                 uAlbum.SendCustomEvent("_MenuLargeClose");
                 Expect(!Get<GameObject>(uAlbum, "menuLargeRoot").activeSelf, "large view closes");
                 uAlbum.SendCustomEvent("_MenuHelpOpen");
@@ -378,15 +525,24 @@ namespace KominkaHillside.Editor
                 uPouch.SendCustomEvent("_Close");
             }));
 
-            // ---- H5 ----
-            steps.Add(Do("H5-no-camera-left", () =>
+            // ---- board pager (IMP-WLD-007 W1): ▶ shows the next 8, and the board returns to page 1 by itself ----
+            steps.Add(Do("H4-menu", () =>
             {
-                Expect(!cam.enabled, "the photo camera is disabled at the end");
-                // _pendingSlot is null once a capture finishes; Get<T> treats a null value as missing (null is not T), so read it directly.
-                // A symbol that is absent from the heap and a null value both mean "nothing pending".
-                object pending; uCapture.TryGetProgramVariable("_pendingSlot", out pending);
-                Expect(!(pending is RenderTexture), "no capture left half-done (_pendingSlot " + (pending == null ? "null" : pending.ToString()) + ")");
-                Note("captures " + Captures() + ", runtime errors " + report.errors.Count);
+                int cnt = Get<int>(uAlbum, "_count");
+                if (cnt <= PageSize) { Note("board pager not tested: " + cnt + " photos (one page; H6 makes 3 pages)"); return; }
+                uAlbum.SetProgramVariable("boardPageResetSeconds", 1f);   // runtime only (the scene keeps 60 s)
+                uAlbum.SendCustomEvent("_BoardPageNext");
+                Expect(Get<int>(uAlbum, "_boardPage") == 1, "board ▶ -> page 2");
+                CheckBoardOrder(-1, 1);
+                var label = Get<TMPro.TMP_Text>(uAlbum, "boardPageLabel");
+                int pages = (cnt + PageSize - 1) / PageSize;
+                Expect(label != null && label.text == "2/" + pages, "board label '2/" + pages + "' ('" + (label != null ? label.text : "") + "')");
+            }));
+            steps.Add(Until("H4-menu", () => Get<int>(uAlbum, "_count") <= PageSize || Get<int>(uAlbum, "_boardPage") == 0, 4, "the board did not return to page 1 after boardPageResetSeconds"));
+            steps.Add(Do("H4-menu", () =>
+            {
+                if (Get<int>(uAlbum, "_count") > PageSize) CheckBoardOrder(-1, 0);
+                uAlbum.SetProgramVariable("boardPageResetSeconds", 60f);
             }));
         }
 

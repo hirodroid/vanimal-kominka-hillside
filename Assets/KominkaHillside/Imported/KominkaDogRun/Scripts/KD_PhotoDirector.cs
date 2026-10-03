@@ -263,6 +263,16 @@ namespace KominkaDogRun
         int _frisbeeDog = -1;
         int _frisbeeRetries;
 
+        // 3) 裏山改変 (IMP-WLD-007 W1): **枠は「出来事」の 3 つ (散歩 12 / 撫で 6 / 遊び 6)。** 古民家の構図カテゴリ (GroupDogEye = GroupChase など
+        //    同じ番号を共有する) では撫での犬目線とかけっこを分けられないので、hillsideEventGroups が true の間は Shoot が出来事で決め直す:
+        //    撫でのバースト = 撫で、それ以外 (受け渡し・かけっこ・じゃれ合い・フリスビー・集合) = 遊び。散歩 (W2) は _hillsideGroupOverride で渡す。
+        //    番号は KD_GalleryController.slotGroups の値 (Photo/1 が 12/6/6 で書く)。古民家の構成 (false) は何も変わらない
+        public const int HillsideGroupWalk = 0, HillsideGroupPet = 1, HillsideGroupPlay = 2, HillsideGroupCount = 3;
+        [Header("裏山: 出来事の枠 (IMP-WLD-007)")]
+        [Tooltip("true: 枠のカテゴリを出来事 (散歩 / 撫で / 遊び) で決める。Photo/1 が書く")]
+        public bool hillsideEventGroups;
+        int _hillsideGroupOverride = -1;   // >= 0 の間、Shoot はこの出来事の枠へ撮る (撫でのバーストが 1 枚ごとに立てて戻す)
+
         // 裏山改変 (IMP-WLD-005): 無効にされている間 (KH_PhotoAlbum が OFF・見る場所なしで止めた / 配線不足で自分で止めた) も止める。
         // 受け渡し・集合写真・フリスビーの通知は Update を通らずに来るので、ここで弾かないと見えない写真を撮る
         private bool CapturePaused() { return !enabled || (photoCapture != null && photoCapture.settings != null && !photoCapture.settings.CaptureAllowed); }
@@ -650,7 +660,9 @@ namespace KominkaDogRun
                 return;
             }
 
+            _hillsideGroupOverride = HillsideGroupPet;   // 裏山改変 (IMP-WLD-007): 撫での構図はどれも撫での枠へ
             bool ok = ShootPetShot(_burstDog, (_burstOffset + _burstStep) % PetShotCount);
+            _hillsideGroupOverride = -1;
             if (!ok && _burstRetries < 5)
             {
                 // 直前の撮影の 1 フレームと重なった等。少し待って同じ構図を撮り直す
@@ -1047,6 +1059,8 @@ namespace KominkaDogRun
                 return bedroom._TryCapture();
             }
 
+            // 裏山改変 (IMP-WLD-007): 出来事の枠 (散歩 / 撫で / 遊び) に決め直す
+            if (hillsideEventGroups) group = _hillsideGroupOverride >= 0 ? _hillsideGroupOverride : HillsideGroupPlay;
             // 出来事のカテゴリごとの枠から取る — 同じ絵で埋まらないように
             RenderTexture rt = gallery._AcquireNextSlot(group);
             if (rt == null) return false;

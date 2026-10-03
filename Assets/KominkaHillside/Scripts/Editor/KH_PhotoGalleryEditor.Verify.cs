@@ -80,17 +80,25 @@ namespace KominkaHillside.Editor
                 slots[i] = AssetDatabase.LoadAssetAtPath<RenderTexture>(SlotRTPath(i));
                 var t = slots[i];
                 Check(t != null && t.width == TemplateWidth && t.height == TemplateHeight && t.depth == 0 && t.antiAliasing == 1 && !t.useMipMap, "slot RT template " + i + " " + TemplateWidth + "x" + TemplateHeight + " depth 0");
-                var m = AssetDatabase.LoadAssetAtPath<Material>(PrintMatPath(i));
-                Check(m != null && m.shader != null && m.shader.name == PrintShaderName && m.mainTexture == t && Mathf.Approximately(m.GetFloat("_AttachDistance"), AttachDistance)
-                    && Mathf.Approximately(m.GetFloat("_AttachMargin"), AttachAimMargin) && (!m.HasProperty("_DebugProbe") || m.GetFloat("_DebugProbe") < 0.5f),
-                    "material " + i + " KD_PhotoPrint, slot " + i + ", attach " + AttachDistance + " / margin " + AttachAimMargin + ", debug probe off");
+                // the memory computation assumes 4 bytes per colour pixel: read it back from the real asset format
+                Check(t != null && Mathf.Approximately(FormatBytes(t.format), ColorBytes), "slot RT template " + i + " format " + (t != null ? t.format.ToString() : "?") + " = " + ColorBytes + " bytes/px (the memory limit assumes it)");
             }
+            Check(cap != null && Mathf.Approximately(FormatBytes(cap.format), ColorBytes), "capture RT colour format " + (cap != null ? cap.format.ToString() : "?") + " = " + ColorBytes + " bytes/px (+ depth counted as " + DepthBytesWorst + ")");
+            for (int i = 0; i < PageSize; i++)
+            {
+                var m = AssetDatabase.LoadAssetAtPath<Material>(PrintMatPath(i));
+                Check(m != null && m.shader != null && m.shader.name == PrintShaderName && m.mainTexture == slots[i] && Mathf.Approximately(m.GetFloat("_AttachDistance"), AttachDistance)
+                    && Mathf.Approximately(m.GetFloat("_AttachMargin"), AttachAimMargin) && (!m.HasProperty("_DebugProbe") || m.GetFloat("_DebugProbe") < 0.5f),
+                    "board material " + i + " KD_PhotoPrint, slot " + i + " until a capture, attach " + AttachDistance + " / margin " + AttachAimMargin + ", debug probe off");
+            }
+            Note("board materials: " + PageSize + " (one per board position; the album rebinds them to the shown page's RT)");
+            Check(GroupSizes.Sum() == SlotCount && GroupSizes.Length == KD_PhotoDirector.HillsideGroupCount, "categories " + string.Join(" / ", GroupNames.Select((n, g) => n + " " + GroupSizes[g])) + " = " + SlotCount + " slots, " + KD_PhotoDirector.HillsideGroupCount + " event groups");
             Check(AttachAimMargin * 2f < (PhotoPitchX - PhotoMm.x) * Mm && AttachAimMargin * 2f < (PhotoRow0Y - PhotoRow1Y - PhotoMm.y) * Mm, "aim margin < half the gap between photos (no two photos snap at once)");
 
             // ---------------------------------------------------------------- memory per platform (computed; measured on Quest / Android build later)
             r.pcMiB = BudgetMiB(PcWidth, PcHeight); r.mobileMiB = BudgetMiB(MobileWidth, MobileHeight);
-            Check(r.pcMiB <= PcBudgetMiB, "PC memory " + r.pcMiB.ToString("F1") + " MiB <= " + PcBudgetMiB + " (8 x " + PcWidth + "x" + PcHeight + " RGBA8 + capture colour + depth D32S8 worst case)");
-            Check(r.mobileMiB <= MobileBudgetMiB, "Quest / iOS memory " + r.mobileMiB.ToString("F1") + " MiB <= " + MobileBudgetMiB + " (8 x " + MobileWidth + "x" + MobileHeight + ")");
+            Check(r.pcMiB <= PcBudgetMiB, "PC memory " + r.pcMiB.ToString("F1") + " MiB <= " + PcBudgetMiB + " (" + SlotCount + " x " + PcWidth + "x" + PcHeight + " RGBA8 + capture colour + depth D32S8 worst case)");
+            Check(r.mobileMiB <= MobileBudgetMiB, "Quest / iOS memory " + r.mobileMiB.ToString("F1") + " MiB <= " + MobileBudgetMiB + " (" + SlotCount + " x " + MobileWidth + "x" + MobileHeight + ")");
             Note("templates (" + TemplateWidth + "x" + TemplateHeight + ") are released by KD_PhotoSettings after the runtime copies exist and are never drawn before that (the photos are hidden until a capture)");
 
             // ---------------------------------------------------------------- camera
@@ -129,9 +137,11 @@ namespace KominkaHillside.Editor
             Check(s.capture.photoCamera == cam && s.capture.captureTexture == cap && s.capture.settings == s.settings && s.capture.capturedListener == s.album, "capture: camera / RT / settings / listener = album");
             Heap(cU, "capturedListener", aU, Check, Warn); Heap(cU, "captureTexture", cap, Check, Warn); Heap(cU, "photoCamera", cam, Check, Warn);
 
-            Check(s.gallery.slotTextures != null && s.gallery.slotTextures.SequenceEqual(slots) && (s.gallery.boards == null || s.gallery.boards.Length == 0) && s.gallery.slotGroupCount == 1 && (s.gallery.slotGroups == null || s.gallery.slotGroups.Length == 0),
-                "gallery: 8 slot templates in order, boards null (the album owns the board), 1 category");
-            Heap(gU, "slotTextures", slots, Check, Warn); Heap(gU, "slotGroupCount", 1, Check, Warn);
+            var groups = SlotGroups();
+            Check(s.gallery.slotTextures != null && s.gallery.slotTextures.SequenceEqual(slots) && (s.gallery.boards == null || s.gallery.boards.Length == 0)
+                && s.gallery.slotGroupCount == GroupSizes.Length && s.gallery.slotGroups != null && s.gallery.slotGroups.SequenceEqual(groups),
+                "gallery: " + SlotCount + " slot templates in order, boards null (the album owns the board), " + GroupSizes.Length + " categories [" + string.Join(",", groups) + "]");
+            Heap(gU, "slotTextures", slots, Check, Warn); Heap(gU, "slotGroupCount", GroupSizes.Length, Check, Warn); Heap(gU, "slotGroups", groups.Cast<object>().ToArray(), Check, Warn);
 
             var d = s.director;
             Check(d.photoCapture == s.capture && d.photoCamera == cam && d.gallery == s.gallery && d.bedroom == null, "director: capture / camera / gallery, no bedroom");
@@ -140,6 +150,8 @@ namespace KominkaHillside.Editor
                 && d.wanderControllers != null && d.wanderControllers.SequenceEqual(c.wander), "director: 6 dogs in roster order (" + string.Join(", ", Keys) + ") for roots / heads / fetch / pet / wander");
             Check(d.cameraBlockMask == CameraBlockMask && Mathf.Approximately(d.tickInterval, 0.1f) && d.frisbeeShotEnabled && Mathf.Approximately(d.frisbeeShotDelay, 0.1f) && Mathf.Approximately(d.frisbeeShotCooldown, 20f),
                 "director: block mask Default+Environment, tick 0.1 s, frisbee 0.1 s / 20 s");
+            Check(d.hillsideEventGroups, "director: event groups on (pet burst -> pet, other events -> play; IMP-WLD-007)");
+            Heap(dU, "hillsideEventGroups", true, Check, Warn);
             Heap(dU, "tickInterval", 0.1f, Check, Warn); Heap(dU, "frisbeeShotCooldown", 20f, Check, Warn); Heap(dU, "gallery", gU, Check, Warn);
             Heap(dU, "wanderControllers", c.wander.Select(w => (object)B(w)).ToArray(), Check, Warn);
 
@@ -183,13 +195,28 @@ namespace KominkaHillside.Editor
                 Check(OnClick(page.transform.Find("Help"), aU, "_MenuHelpOpen"), "page [?] -> album _MenuHelpOpen");
                 Check(OnClick(page.transform.Find("SettingsButton"), pU, "_PhotoToSettings"), "page [settings] -> _PhotoToSettings");
                 Check(OnClick(page.transform.Find("Large/Close"), aU, "_MenuLargeClose") && OnClick(page.transform.Find("HelpPanel/Close"), aU, "_MenuHelpClose"), "large / help close buttons");
-                for (int k = 0; k < SlotCount; k++)
+                for (int k = 0; k < PageSize; k++)
                 {
                     var t = page.transform.Find("Thumb" + k);
                     var raw = t != null ? t.Find("Photo")?.GetComponent<RawImage>() : null;
-                    Check(t != null && OnClick(t, aU, "_MenuPick" + k) && raw != null && al.menuThumbs != null && al.menuThumbs.Length == SlotCount && al.menuThumbs[k] == raw && al.menuThumbButtons[k] == t.gameObject,
-                        "thumbnail " + k + " -> _MenuPick" + k + ", wired to the album");
+                    Check(t != null && OnClick(t, aU, "_MenuPick" + k) && raw != null && al.menuThumbs != null && al.menuThumbs.Length == PageSize && al.menuThumbs[k] == raw && al.menuThumbButtons[k] == t.gameObject,
+                        "thumbnail " + k + " -> _MenuPick" + k + " (position " + k + " of the shown page), wired to the album");
                 }
+                Check(page.transform.Find("Thumb" + PageSize) == null, "no stale thumbnail beyond " + PageSize + " on the page");
+                // ---- IMP-WLD-007 W1: pager ◀ 1/3 ▶ ----
+                var pager = page.transform.Find("Pager");
+                Check(pager != null && !pager.gameObject.activeSelf && al.menuPager == pager.gameObject && al.menuPageLabel != null && al.menuPageLabel.transform.parent == pager
+                    && OnClick(pager.Find("Prev"), aU, "_MenuPagePrev") && OnClick(pager.Find("Next"), aU, "_MenuPageNext"),
+                    "menu pager: hidden until 9 photos, ◀ -> _MenuPagePrev, ▶ -> _MenuPageNext, label wired");
+                if (pager != null)
+                {
+                    var pr = RectOf((RectTransform)pager); var sr = RectOf((RectTransform)page.transform.Find("SettingsButton"));
+                    bool clear = !pr.Overlaps(sr);
+                    for (int k = 0; k < PageSize && clear; k++) { var tt = page.transform.Find("Thumb" + k) as RectTransform; if (tt != null && pr.Overlaps(RectOf(tt))) clear = false; }
+                    Check(clear && pr.xMax <= KD_TreatSetupEditor.PanelWidth * 0.5f, "menu pager " + pr + " overlaps neither the thumbnails nor [settings], inside the panel");
+                    Check(pager.gameObject.layer == page.layer, "menu pager on the page's layer " + page.layer + " (not photographed)");
+                }
+                Heap(aU, "menuPager", pager != null ? pager.gameObject : null, Check, Warn);
                 Check(al.menuPage == page && al.menuLargeRoot != null && al.menuLarge != null && al.menuHelpRoot != null && al.menuState != null && al.menuNewMark != null, "album: page / large / help / state / new mark");
                 var large = page.transform.Find("Large"); var help = page.transform.Find("HelpPanel");
                 Check(large != null && help != null && large.GetSiblingIndex() > page.transform.Find("Thumb7").GetSiblingIndex() && help.GetSiblingIndex() > page.transform.Find("Thumb7").GetSiblingIndex(), "large view and help draw over the thumbnails");
@@ -207,6 +234,8 @@ namespace KominkaHillside.Editor
                 if (KD_LocalizationEditor.Bundled(lang)) foreach (var key in NeededKeys) glyphs.Append(System.Text.RegularExpressions.Regex.Replace(KD_LocalizationEditor.Text(c.catalog, lang.code, key), "<[^<>]+>", ""));
             string missing = KD_ShopSetupEditor.MissingGlyphs(glyphs.ToString());
             Check(missing.Length == 0, "shared font has every glyph of the photo texts (ja / en)" + (missing.Length > 0 ? ": missing " + missing + " (run Course/27)" : ""));
+            string pagerMissing = KD_ShopSetupEditor.MissingGlyphs(PagerGlyphs);
+            Check(pagerMissing.Length == 0, "shared font has the pager glyphs " + PagerGlyphs + (pagerMissing.Length > 0 ? ": missing " + pagerMissing + " (run Photo/1, which adds them)" : ""));
 
             // ---------------------------------------------------------------- optional surfaces
             var board = SceneRoot(c.scene, BoardRootName, out int boards);
@@ -256,7 +285,7 @@ namespace KominkaHillside.Editor
                 "board canvas: world space, read-only (no raycaster / UI shape)");
             var photos = board.Find("Photos");
             Check(photos != null && Mathf.Approximately(photos.lossyScale.x, photos.lossyScale.y) && Mathf.Approximately(photos.lossyScale.y, photos.lossyScale.z), "photos' parent has a uniform scale (the snap shader's aim test)");
-            for (int k = 0; k < SlotCount; k++)
+            for (int k = 0; k < PageSize; k++)
             {
                 var q = photos != null ? photos.Find("Photo" + k) : null;
                 var tap = q != null ? q.GetComponent<KD_PhotoBoard>() : null;
@@ -266,7 +295,24 @@ namespace KominkaHillside.Editor
                     && q.gameObject.layer == 0 && (cam == null || (cam.cullingMask & 1) != 0),
                     "board photo " + k + ": hidden until a capture, KD_PhotoBoard -> viewer, material " + k + ", trigger collider");
                 if (tap != null) Check(B(tap) != null && B(tap).SyncMethod == Networking.SyncType.None, "board photo " + k + " backing, sync None");
-                Check(al.boardPhotos != null && al.boardPhotos.Length == SlotCount && al.boardPhotos[k] == mr && al.boardTaps[k] == tap, "album board slot " + k + " wired (position " + k + " = " + (k < 4 ? "top" : "bottom") + " row)");
+                Check(al.boardPhotos != null && al.boardPhotos.Length == PageSize && al.boardPhotos[k] == mr && al.boardTaps[k] == tap, "album board position " + k + " wired (" + (k < 4 ? "top" : "bottom") + " row of the shown page)");
+            }
+            // ---- IMP-WLD-007 W1: the board pager (its own pressable canvas; the photo canvas stays read-only) ----
+            var pager = board.Find(BoardPagerName);
+            var pc = pager != null ? pager.GetComponent<Canvas>() : null;
+            var pbox = pager != null ? pager.GetComponent<BoxCollider>() : null;
+            Check(pager != null && pc != null && pc.renderMode == RenderMode.WorldSpace && pager.gameObject.layer == 0 && pager.GetComponent<GraphicRaycaster>() != null
+                && pager.GetComponent<VRC.SDK3.Components.VRCUiShape>() != null && pbox != null && pbox.isTrigger,
+                "board pager: World Space Canvas on Default + GraphicRaycaster + VRCUiShape + trigger BoxCollider" + (pager == null ? " (missing: run Photo/4 again)" : ""));
+            if (pager != null)
+            {
+                Check(!pager.gameObject.activeSelf && al.boardPager == pager.gameObject && al.boardPageLabel != null && al.boardPageLabel.transform.parent == pager, "board pager hidden until 9 photos, wired to the album");
+                Check(OnClick(pager.Find("Prev"), B(s.album), "_BoardPagePrev") && OnClick(pager.Find("Next"), B(s.album), "_BoardPageNext"), "board ◀ -> _BoardPagePrev, ▶ -> _BoardPageNext");
+                Check(pager.GetComponentsInChildren<Transform>(true).All(x => x.gameObject.layer == 0), "board pager parts all on Default");
+                // inside the canvas strip under the bottom row, in front of the paper
+                float bottomCell = PhotoRow1Y - PhotoMm.y * 0.5f - CellBorderMm, top = BoardPagerY + BoardPagerMm.y * 0.5f, bottom = BoardPagerY - BoardPagerMm.y * 0.5f;
+                Check(top <= bottomCell && bottom >= -BoardCanvasMm.y * 0.5f, "board pager (" + bottom + ".." + top + " mm) between the bottom row (" + bottomCell + ") and the canvas edge (" + (-BoardCanvasMm.y * 0.5f) + ")");
+                Check(Mathf.Approximately(s.album.boardPageResetSeconds, 60f), "board returns to page 1 after 60 s (" + s.album.boardPageResetSeconds + ")");
             }
             Check(al.boardCaption != null && al.boardState != null, "album draws the board caption and state");
             var broken = Rules(c, board.position, board.eulerAngles.y, board);

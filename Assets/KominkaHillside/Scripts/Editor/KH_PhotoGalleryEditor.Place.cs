@@ -52,6 +52,11 @@ namespace KominkaHillside.Editor
         const float PhotoPitchX = 520f, PhotoRow0Y = 50f, PhotoRow1Y = -265f, CellBorderMm = 12f, PhotoFrontZ = -0.006f;
         public static Vector2 CellPos(int k) { int col = k % 4, row = k / 4; return new Vector2((col - 1.5f) * PhotoPitchX, row == 0 ? PhotoRow0Y : PhotoRow1Y); }
         const float CaptionMax = 44f, CaptionMin = 24f, StateMax = 44f, StateMin = 24f;
+        // IMP-WLD-007 W1: the board pager ◀ 1/3 ▶ — its own pressable Canvas (Default + GraphicRaycaster + VRCUiShape + trigger BoxCollider, vrc-world-ui §2)
+        // in the strip under the bottom row (the cells end at -412 mm, the canvas at -520 mm). The read-only Canvas stays read-only
+        public const string BoardPagerName = "Pager";
+        public static readonly Vector2 BoardPagerMm = new Vector2(700f, 84f), BoardPagerButtonMm = new Vector2(170f, 76f), BoardPagerLabelMm = new Vector2(240f, 76f);
+        public const float BoardPagerY = -462f, BoardPagerButtonX = 255f, BoardPagerZ = -0.004f;
 
         static readonly Color Washi = new Color(0.94f, 0.91f, 0.83f);
         static readonly Color Sumi = new Color(0.17f, 0.13f, 0.10f);
@@ -166,13 +171,13 @@ namespace KominkaHillside.Editor
         {
             var al = s.album;
             var board = SceneRoot(c.scene, BoardRootName, out _);
-            var photos = new Renderer[SlotCount]; var taps = new KD_PhotoBoard[SlotCount]; var tapUdons = new UdonBehaviour[SlotCount];
+            var photos = new Renderer[PageSize]; var taps = new KD_PhotoBoard[PageSize]; var tapUdons = new UdonBehaviour[PageSize];
             bool boardOk = false;
             if (board != null)
             {
                 boardOk = true;
                 var photosT = board.transform.Find("Photos");
-                for (int k = 0; k < SlotCount; k++)
+                for (int k = 0; k < PageSize; k++)
                 {
                     var q = photosT != null ? photosT.Find("Photo" + k) : null;
                     if (q == null) { boardOk = false; break; }
@@ -184,6 +189,10 @@ namespace KominkaHillside.Editor
             al.boardPhotos = boardOk ? photos : null; al.boardTaps = boardOk ? taps : null; al.boardTapUdons = boardOk ? tapUdons : null;
             al.boardCaption = boardOk ? board.transform.Find("Canvas/HeaderPlate/Caption")?.GetComponent<TextMeshProUGUI>() : null;
             al.boardState = boardOk ? board.transform.Find("Canvas/Paper/State")?.GetComponent<TextMeshProUGUI>() : null;
+            var pagerT = boardOk ? board.transform.Find(BoardPagerName) : null;   // IMP-WLD-007 W1 (a board from before W1 has none until Photo/4 runs again)
+            al.boardPager = pagerT != null ? pagerT.gameObject : null;
+            al.boardPageLabel = pagerT != null ? pagerT.Find("Label")?.GetComponent<TextMeshProUGUI>() : null;
+            if (boardOk && pagerT == null) log.Add("WARN the board has no pager (built before IMP-WLD-007): run Photo/4 again to add ◀ ▶");
             var button = c.pouch.panelRoot.transform.Find(KD_HandMenuScrollEditor.PhotoHeaderButtonName);
             al.headerLabel = button != null ? LabelOf(button.gameObject) : null;
             var toggle = c.pouch.settingsHome.transform.Find(KD_MenuFinishEditor.PhotoToggleName);
@@ -192,7 +201,7 @@ namespace KominkaHillside.Editor
             al.settingsToggleLabel = toggle != null ? LabelOf(toggle.gameObject) : null;
             al.surfacesPlaced = boardOk || button != null;
             EditorUtility.SetDirty(al);
-            if (board != null && !boardOk) log.Add("WARN " + BoardRootName + " is incomplete (Photos/Photo0..7 with KD_PhotoBoard): not wired; run Photo/4 again");
+            if (board != null && !boardOk) log.Add("WARN " + BoardRootName + " is incomplete (Photos/Photo0.." + (PageSize - 1) + " with KD_PhotoBoard): not wired; run Photo/4 again");
             log.Add("surfaces: board " + (boardOk ? "wired" : "none") + ", header button " + (button != null ? "yes" : "none") + ", settings row " + (toggle != null ? "yes" : "none") + " -> surfacesPlaced " + al.surfacesPlaced);
         }
 
@@ -264,13 +273,13 @@ namespace KominkaHillside.Editor
             var caption = BoardText(plate.transform, "Caption", Vector2.zero, CaptionSize, CaptionMax, CaptionMin, SignInk, T("gallery.caption"), c.font);
             var paper = Img(crt, "Paper", PaperPos, PaperSize, Washi);
             var state = BoardText(paper.transform, "State", StatePos - PaperPos, StateSize, StateMax, StateMin, Sumi, T("photo.empty"), c.font);
-            for (int k = 0; k < SlotCount; k++)
+            for (int k = 0; k < PageSize; k++)
                 Img(paper.transform, "Cell" + k, CellPos(k) - PaperPos, PhotoMm + Vector2.one * (CellBorderMm * 2f), CellColor);
 
-            // ---- the 8 photos: Quads with the KD_PhotoPrint material (the VRChat camera snap), trigger collider + KD_PhotoBoard (phones: tap to view) ----
+            // ---- the 8 photos of the shown page: Quads with the KD_PhotoPrint material (the VRChat camera snap), trigger collider + KD_PhotoBoard (phones: tap to view) ----
             var photosT = Child(root, "Photos");
             photosT.localPosition = Vector3.zero; photosT.localRotation = Quaternion.identity; photosT.localScale = Vector3.one;   // uniform: the shader's aim test needs no shear
-            for (int k = 0; k < SlotCount; k++)
+            for (int k = 0; k < PageSize; k++)
             {
                 var q = photosT.Find("Photo" + k);
                 GameObject go;
@@ -292,8 +301,44 @@ namespace KominkaHillside.Editor
                 go.SetActive(false);   // shown by KH_PhotoAlbum when the slot holds a photo
                 EditorUtility.SetDirty(go);
             }
+            BuildBoardPager(c, s, root, log);
             log.Add("board built: canvas " + BoardCanvasMm + " mm, photos " + PhotoMm + " mm (gap " + (PhotoPitchX - PhotoMm.x) + " mm), frame " + RoofLength.ToString("F2") + " m wide, canvas centre " + BoardCanvasCenterY.ToString("F2") + " m");
             caption.text = T("gallery.caption"); state.text = T("photo.empty");
+        }
+
+        /// <summary>IMP-WLD-007 W1: ボードの ◀ 1/3 ▶。押せる Canvas を別に持つ (読むだけの Canvas に Raycaster を付けない)。
+        /// 9 枚以上のときだけ KH_PhotoAlbum が出す (最初は隠す)。文言のキーは使わない。</summary>
+        static void BuildBoardPager(Ctx c, Sys s, Transform root, List<string> log)
+        {
+            var albumUdon = UdonSharpEditorUtility.GetBackingUdonBehaviour(s.album);
+            var t = root.Find(BoardPagerName);
+            GameObject go;
+            if (t == null) { go = new GameObject(BoardPagerName, typeof(RectTransform)); go.transform.SetParent(root, false); } else go = t.gameObject;
+            go.layer = 0;   // "UI" does not take the pointer (vrc-world-ui §2)
+            var canvas = Comp<Canvas>(go);
+            canvas.renderMode = RenderMode.WorldSpace; canvas.overrideSorting = false;
+            canvas.additionalShaderChannels = AdditionalCanvasShaderChannels.TexCoord1 | AdditionalCanvasShaderChannels.Normal | AdditionalCanvasShaderChannels.Tangent;
+            foreach (var cs in go.GetComponents<CanvasScaler>()) UnityEngine.Object.DestroyImmediate(cs);
+            Comp<GraphicRaycaster>(go);
+            Comp<VRC.SDK3.Components.VRCUiShape>(go);
+            var box = Comp<BoxCollider>(go); box.isTrigger = true; box.center = Vector3.zero; box.size = new Vector3(BoardPagerMm.x, BoardPagerMm.y, 2f);   // never blocks a player
+            var rt = (RectTransform)go.transform;
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f); rt.sizeDelta = BoardPagerMm;
+            rt.localPosition = new Vector3(0f, BoardCanvasCenterY + BoardPagerY * Mm, BoardPagerZ); rt.localRotation = Quaternion.identity; rt.localScale = Vector3.one * Mm;
+            GameObject Button(string name, float x, string text, string evt)
+            {
+                var b = Btn(go.transform, name, new Vector2(x, 0f), BoardPagerButtonMm, text, c, albumUdon, evt, log);
+                var l = LabelOf(b); if (l != null) { l.fontSizeMax = 56f; l.fontSize = 56f; l.fontSizeMin = 28f; EditorUtility.SetDirty(l); }
+                foreach (var tr in b.GetComponentsInChildren<Transform>(true)) tr.gameObject.layer = 0;
+                return b;
+            }
+            Button("Prev", -BoardPagerButtonX, "◀", "_BoardPagePrev");
+            Button("Next", BoardPagerButtonX, "▶", "_BoardPageNext");
+            var label = BoardText(go.transform, "Label", Vector2.zero, BoardPagerLabelMm, 52f, 28f, Sumi, "1/3", c.font);
+            var bg = Img(go.transform, "Plate", Vector2.zero, BoardPagerMm, Washi); bg.transform.SetAsFirstSibling();   // the paper colour behind the buttons
+            go.SetActive(false);
+            EditorUtility.SetDirty(go);
+            log.Add("board pager: " + BoardPagerMm + " mm at canvas y " + BoardPagerY + " mm (z " + BoardPagerZ + "), ◀ -> _BoardPagePrev, ▶ -> _BoardPageNext, back to page 1 after " + s.album.boardPageResetSeconds + " s");
         }
 
         static Transform Child(Transform parent, string name)

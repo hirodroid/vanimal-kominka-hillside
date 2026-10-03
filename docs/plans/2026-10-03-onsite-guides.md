@@ -346,6 +346,60 @@ void Start()   // ローカル。同期なし。1 回だけ
 | Q4 | 看板 A にボールの紙を足すか | **足す** (740 mm の 1 枚)。足さないなら、フリスビーの紙を 3 枚分の幅にして注意カットを大きくする |
 | Q5 | 入口の帯の表は南 (スポーン側) でよいか | **南**。北 (犬の待機の輪の側) にすると、先を取ってから振り返らないと読めない |
 
+## 9. 実装 (散歩の帯、2026-10-03、as-built)
+
+**コードと文言のみ。Unity は未実行** (コンパイル・Guide/10〜14・Play は統括とユーザー)。Unity 外の Roslyn で Assembly-CSharp / -Editor ともエラー 0。絵は Unity 外で描いて見た (下)。
+
+| ファイル | 中身 |
+|---|---|
+| `Scripts/Editor/KH_WalkGuideEditor.Art.cs` (新) | `Guide/10 - Draw Walk Guide Art`、`KH_WalkGuideArt` (ART CORE、版 `WalkArtVersion` 1)、取り込み設定 (洗い場と同じ値) |
+| `Scripts/Editor/KH_WalkGuideEditor.cs` (新) | `Guide/11 - Build Walk Guide Strips` (3 台の `WalkGuide`、札の配線、`AddGlyphs` → `Configure` → `Bind`、保存、続けて検査) |
+| `Scripts/Editor/KH_WalkGuideEditor.Verify.cs` (新) | `Guide/12 - Verify Walk Guide Strips` (`WALK_GUIDE_OK` / `WALK_GUIDE_FAIL`、`Temp/kh-walk-guide/verify.json`) |
+| `Scripts/Editor/KH_WalkGuideEditor.Capture.cs` (新) | `Guide/14 - Capture Walk Guide Strips` (`Temp/kh-walk-guide/shots/`) |
+| `Scripts/KH_MenuOpener.cs` | `vrOnly` / `flatOnly` (GameObject[])、`Start` → `_ApplyDevice()` (ローカル、同期なし、null 可) |
+| `UITranslations.json` / `UILocalizationBindings.json` | 16 キー × 13 言語 (AI 訳・未校正)、束縛 54 件 (3 台 × Vr / Flat × 9。③ のキーは両方で共有) |
+
+計画からの変更:
+
+- 印の色は朱ではなく **洗い場の帯と同じこはく色** (`Motion` 1/0.82/0.35)。暗い帯の上で朱は沈むため。絵は 7 区画 (区画 7 は空)
+- 保存シーンでは **Vr を表示・Flat を非表示**。`KH_MenuOpener.Start` が端末で入れ替える (KD_Language は非表示のラベルにも書く)。Guide/14 の Flat の撮影は Canvas の隠し複製で撮る
+- ③の補助文は「「さんぽ」の右の列で」(「なければ広場」は入りきらないので外した)。②の補助文はコードに合わせて「緑になったら、そのまま」(先が空いた犬の首輪 0.22 m 以内で緑になり、0.25 s 置くとつながる。`KH_LeashClip.cs:112-121`)
+
+寸法 (台の座標は台に対して。台を手で動かしても付いて行く):
+
+| 部品 | 値 |
+|---|---|
+| `WalkGuide` | 台の (0, 0, 0.055) = 横木の中心の面。入口・見晴らしは yaw 0 (表 = 台の −Z)、広場は yaw 180 (表 = 台の +Z) |
+| 柱 `GuidePostL/R` | 0.04 × 0.665 × 0.04 m、x ±0.43、y 0.125〜0.79 (横木の上に立つ)、`KH_RackWood`、Collider なし、層 14 |
+| 背板 `GuideBack` | 0.82 × 0.28 × 0.018 m、y 0.49〜0.77 |
+| Canvas | 800 × 260 px × 0.001 = 0.80 × 0.26 m、y 0.63 (下端 0.50 = 地面 + 1.30 m、上端 + 1.56 m)、背板の面から 2 mm 前 (z −0.011) |
+| 中身 | 洗い場の帯と同じ数値: コマ x −300 / −100 / 100 / 300、段 178 × 40 (22 → 14 pt) y +106、絵 170 × 120 y +24、補助 178 × 30 (17 → 14) y −56、矢印 x −200 / 0 / 200、下の行 760 × 28 (17 → 14) y −110 |
+
+台ごと (シーン YAML の値からの推定。実値は Guide/11 の `build.json`):
+
+| 台 | 台の位置 / yaw | 帯の中心 (世界) | 表の向き (yaw) | 読む人の来る所 |
+|---|---|---|---|---|
+| 入口 `KH_LeashRack` | (45.00, 2.71, 43.00) / 0 | ≈ (45.00, 3.34, 43.04)、地面 + 1.43 | 180 (南) | スポーン (47.64, 40.08) |
+| 見晴らし `KH_Station_Viewpoint` | (83.32, 19.80, 108.28) / 45 | ≈ (83.35, 20.43, 108.31) | 225 (南西) | 見晴らしの場所 |
+| 広場 `KH_Station_Plaza` | (82.19, 19.80, 123.67) / −73.7 | ≈ (82.13, 20.43, 123.69) | 286.3 (広場の中心の側) | 広場の中心 (72, 127) |
+
+文言 (ja / en。他の 11 言語は `UITranslations.json`。メニューのボタン名は、他言語のメニューの表示どおり英語で引く):
+
+| キー | ja | en |
+|---|---|---|
+| `walk.guide.vr.step1` / `.vr.sub1` | ①リードの先を取る / 持った手が、つなぐ手 | ①Take a leash tip / That hand holds the dog |
+| `walk.guide.vr.step2` / `.vr.sub2` | ②首輪に近づける / 緑になったら、そのまま | ②Bring it to the collar / Hold when it turns green |
+| `walk.guide.step3` / `.sub3` (共通) | ③行き先をえらぶ / 「さんぽ」の右の列で | ③Pick where to go / Walk tab, right side |
+| `walk.guide.vr.step4` / `.vr.sub4` | ④はずす / 自分の犬の首輪を押す | ④Unleash / Press your dog's collar |
+| `walk.guide.vr.help` | 片手に3匹、両手で6匹まで。1匹ずつ、先を取ってつなぐ | Up to 3 dogs per hand, 6 with both. Take the tip again for each dog |
+| `walk.guide.flat.step1` / `.flat.sub1` | ①犬のそばでメニュー / Tキー／画面のメニュー | ①Menu near a dog / T key / Menu on screen |
+| `walk.guide.flat.step2` / `.flat.sub2` | ②「さんぽ」でつなぐ / 犬の行の左・右のボタン | ②Leash in the Walk tab / Leash left / right |
+| `walk.guide.flat.step4` / `.flat.sub4` | ④はずす / ［はずす］か、首輪を押す | ④Unleash / Unleash or press collar |
+| `walk.guide.flat.help` | 片手に3匹、両手で6匹まで。リードの先を首輪に近づけてもつなげます | Up to 3 dogs per hand, 6 with both. Bringing a leash tip to a collar works too |
+
+絵 (Unity 外で描いた見本、`scratchpad/guideart/walk_v1_vr.png` / `walk_v1_flat.png`、コミットしない): VR ① 横木に掛かった輪と、下から輪をつかむ手 / ② 犬の首の拡大、赤い首輪の金具に緑の輪を持った手が寄る / ③ 2 列のメニュー、右列のタイル 1 枚に印と指 / ④ 指さす手の点線が光る首輪へ、外れた輪が落ちる。Flat ① メニューの板と犬、犬の周りの点線の輪 / ② 3 行の中の行の 2 ボタンに印とポインター / ④ 点灯した行の幅広ボタンに印とポインター。
+
 ## 記録
 
+- 2026-10-03: 散歩の帯を実装 (§9。コードと文言のみ、Unity 未実行)
 - 2026-10-03: 作成 (AI の推奨案。コード・シーン・文言・画像は未変更。Unity は未実行)

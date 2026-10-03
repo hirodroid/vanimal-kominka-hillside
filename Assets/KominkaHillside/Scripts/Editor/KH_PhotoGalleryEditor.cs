@@ -26,7 +26,7 @@ namespace KominkaHillside.Editor
     ///
     /// 実行順 (統括が直列に。サブエージェントは実行しない):
     ///   Photo/0 - Create Program Asset   KH_PhotoAlbum.asset を作る → U# をコンパイル (unity-compile.sh --udon)
-    ///   Photo/1 - Build Photo and Gallery  中核 (撮影カメラ・枠 8 枚・犬の受け口・メニューの写真の面)。**見える物は置かない・撮らない**
+    ///   Photo/1 - Build Photo and Gallery  中核 (撮影カメラ・枠 24 枚 (IMP-WLD-007 W1。散歩 12 / 撫で 6 / 遊び 6)・犬の受け口・メニューの写真の面とページ送り)。**見える物は置かない・撮らない**
     ///   Photo/4 - Place Board, Menu Button and Settings Row (optional)  門の看板 A の隣のボード、ヘッダの [写真]、設定の [写真: ON/OFF]。ここで撮り始める
     ///   Photo/2 - Verify                   読むだけ (Photo/1 の後、Photo/4 の後の両方で通る)
     ///   Photo/3 - Harness                  ClientSim の小さいケース群 (Photo/4 の後)
@@ -56,17 +56,43 @@ namespace KominkaHillside.Editor
         const string PrintShaderName = "KominkaDogRun/KD_PhotoPrint", ViewerShaderName = "KominkaDogRun/KD_PhotoViewer";
 
         // ---------------------------------------------------------------- 枚数・解像度・メモリ (設計 §4.3)
-        public const int SlotCount = KH_PhotoAlbum.Slots;   // 8
+        public const int SlotCount = KH_PhotoAlbum.Slots;   // 24 (IMP-WLD-007 W1。前は 8)
+        /// <summary>ボードの Quad・材質とメニューの縮小表示の数 (1 ページ)。</summary>
+        public const int PageSize = KH_PhotoAlbum.PageSize;   // 8
+        /// <summary>出来事ごとの枠の数 (KD_PhotoDirector.HillsideGroupWalk / Pet / Play の順)。合計 = SlotCount。docs/plans/2026-10-03-photo-expansion.md §4.2 (試作値)</summary>
+        public static readonly int[] GroupSizes = { 12, 6, 6 };
+        public static readonly string[] GroupNames = { "walk", "pet", "play" };
+        /// <summary>スロット番号ごとのカテゴリ (KD_GalleryController.slotGroups)。0..11 散歩、12..17 撫で、18..23 遊び。</summary>
+        public static int[] SlotGroups()
+        {
+            var map = new int[SlotCount]; int i = 0;
+            for (int g = 0; g < GroupSizes.Length; g++) for (int n = 0; n < GroupSizes[g]; n++) map[i++] = g;
+            return map;
+        }
         /// <summary>RT アセット (雛形) の寸法。実行時は KD_PhotoSettings が端末の寸法で 1 組だけ作り直し、雛形は描かれないまま解放される。</summary>
         public const int TemplateWidth = 640, TemplateHeight = 360;
         public const int PcWidth = 1280, PcHeight = 720, MobileWidth = 640, MobileHeight = 360;
         const int CaptureDepthBits = 24;
-        /// <summary>計算値の上限 (MiB)。撮影用 RT の深度は最悪の D32_SFloat_S8 (8 byte/px。前作 2026-08-14 の PC 実測) で数える。</summary>
-        public const float PcBudgetMiB = 48f, MobileBudgetMiB = 12f;
+        /// <summary>1 画素の量 (byte)。枠と撮影用の色は ARGB32 (RGBA8) = 4、撮影用の深度は最悪の D32_SFloat_S8 = 8 (前作 2026-08-14 の PC 実測)。</summary>
+        public const float ColorBytes = 4f, DepthBytesWorst = 8f;
+        /// <summary>計算値の上限 (MiB)。IMP-WLD-007 W1: 24 枚で PC 約 94.9 / Quest・iOS 約 23.7 (前は 8 枚で 48 / 12)。</summary>
+        public const float PcBudgetMiB = 100f, MobileBudgetMiB = 28f;
         public static float BudgetMiB(int w, int h)
         {
             float px = w * (float)h;
-            return (SlotCount * px * 4f + px * (4f + 8f)) / (1024f * 1024f);
+            return (SlotCount * px * ColorBytes + px * (ColorBytes + DepthBytesWorst)) / (1024f * 1024f);
+        }
+        /// <summary>雛形の RT アセットの書式から 1 画素の色の量を出す (Verify が BudgetMiB の前提と照合する)。</summary>
+        public static float FormatBytes(RenderTextureFormat f)
+        {
+            switch (f)
+            {
+                case RenderTextureFormat.ARGB32: case RenderTextureFormat.BGRA32: case RenderTextureFormat.Default: return 4f;
+                case RenderTextureFormat.ARGBHalf: case RenderTextureFormat.DefaultHDR: return 8f;
+                case RenderTextureFormat.ARGBFloat: return 16f;
+                case RenderTextureFormat.RGB565: case RenderTextureFormat.ARGB4444: return 2f;
+                default: return -1f;
+            }
         }
 
         // ---------------------------------------------------------------- 板の吸着 (前作 KD_PhotoSetupEditor と同じ値。隙間 40 mm の半分より小さい余白)
@@ -97,6 +123,10 @@ namespace KominkaHillside.Editor
         public static readonly Vector2 NewMarkSize = new Vector2(100f, 30f);
         public static readonly Vector2 PageSettingsPos = new Vector2(0f, -205f), PageSettingsSize = new Vector2(280f, 50f);
         public static readonly Vector2 LargePhotoPos = new Vector2(0f, -30f), LargePhotoSize = new Vector2(760f, 427.5f), LargeBackdropSize = new Vector2(1110f, 470f);
+        /// <summary>IMP-WLD-007 W1: 面のページ送り ◀ 1/3 ▶ (縮小表示の下、右寄せ。[設定へ] (中央 280 幅) と重ならない)。</summary>
+        public static readonly Vector2 PagerPos = new Vector2(360f, -205f), PagerButtonSize = new Vector2(100f, 50f), PagerLabelSize = new Vector2(120f, 50f);
+        public const float PagerButtonOffset = 120f;
+        public const string PagerGlyphs = "◀▶/0123456789";
         public static readonly Vector2 HelpBodyPos = new Vector2(0f, -40f), HelpBodySize = new Vector2(1020f, 370f), HelpTitlePos = new Vector2(-170f, 170f);
 
         // ---------------------------------------------------------------- ヘッダの [写真] (Photo/4)
@@ -265,7 +295,8 @@ namespace KominkaHillside.Editor
 
         // ---------------------------------------------------------------- assets
 
-        class Assets { public RenderTexture capture; public RenderTexture[] slots = new RenderTexture[SlotCount]; public Material[] prints = new Material[SlotCount]; public Material viewerBack, viewerPhoto; }
+        /// <summary>枠の RT は 24 枚、ボードの材質は 8 枚 (ボードの位置ごと。実行時は KH_PhotoAlbum が表示中のページの RT を張り直す)。</summary>
+        class Assets { public RenderTexture capture; public RenderTexture[] slots = new RenderTexture[SlotCount]; public Material[] prints = new Material[PageSize]; public Material viewerBack, viewerPhoto; }
 
         static Assets EnsureAssets(List<string> log)
         {
@@ -274,9 +305,9 @@ namespace KominkaHillside.Editor
             var viewer = Shader.Find(ViewerShaderName); if (viewer == null) throw new InvalidOperationException("shader " + ViewerShaderName + " not found");
             EnsureFolder(TexDir); EnsureFolder(MatDir);
             a.capture = EnsureRT(CaptureRTPath, CaptureDepthBits, log);
-            for (int i = 0; i < SlotCount; i++)
+            for (int i = 0; i < SlotCount; i++) a.slots[i] = EnsureRT(SlotRTPath(i), 0, log);
+            for (int i = 0; i < PageSize; i++)
             {
-                a.slots[i] = EnsureRT(SlotRTPath(i), 0, log);
                 var m = EnsureMat(PrintMatPath(i), print, log);
                 m.mainTexture = a.slots[i];
                 m.SetFloat("_AttachDistance", AttachDistance); m.SetFloat("_AttachMargin", AttachAimMargin);
@@ -418,8 +449,9 @@ namespace KominkaHillside.Editor
 
             s.gallery.slotTextures = (RenderTexture[])a.slots.Clone();
             s.gallery.boards = null;                // the album owns the board (newest first), the gallery only hands out slots
-            s.gallery.slotGroupCount = 1;           // one category: the oldest photo is replaced (設計 §4.1)
-            s.gallery.slotGroups = null;
+            // IMP-WLD-007 W1: 3 event categories (walk 12 / pet 6 / play 6); the oldest photo of the same category is replaced
+            s.gallery.slotGroupCount = GroupSizes.Length;
+            s.gallery.slotGroups = SlotGroups();
 
             var d = s.director;
             d.photoCapture = s.capture; d.photoCamera = cam; d.gallery = s.gallery; d.bedroom = null;
@@ -429,6 +461,7 @@ namespace KominkaHillside.Editor
             d.chaseShotEnabled = true; d.playShotEnabled = true;
             d.tickInterval = 0.1f;
             d.frisbeeShotEnabled = true; d.frisbeeShotDelay = 0.1f; d.frisbeeShotCooldown = 20f;
+            d.hillsideEventGroups = true;           // IMP-WLD-007: the category is the event (pet burst = pet, everything else = play; walk = W2)
 
             var st = s.settings;
             st.capture = s.capture; st.slots = (RenderTexture[])a.slots.Clone(); st.boards = null; st.galleries = new[] { s.gallery }; st.viewer = s.viewer; st.language = c.language;
@@ -446,7 +479,8 @@ namespace KominkaHillside.Editor
             al.directorUdon = UdonSharpEditorUtility.GetBackingUdonBehaviour(s.director);
             al.viewerUdon = vUdon;
             al.onColor = c.pouch.equipOnColor; al.offColor = c.pouch.tabOffColor;
-            log.Add("system: 8 slots (template " + TemplateWidth + "x" + TemplateHeight + "; runtime PC " + PcWidth + "x" + PcHeight + " / Android・iOS " + MobileWidth + "x" + MobileHeight + "), 1 category, 2K off, director tick 0.1 s, frisbee 0.1 s / 20 s");
+            log.Add("system: " + SlotCount + " slots (template " + TemplateWidth + "x" + TemplateHeight + "; runtime PC " + PcWidth + "x" + PcHeight + " / Android・iOS " + MobileWidth + "x" + MobileHeight + "), categories "
+                + string.Join(" / ", GroupNames.Select((n, g) => n + " " + GroupSizes[g])) + ", 2K off, director tick 0.1 s, frisbee 0.1 s / 20 s, event groups on");
             log.Add("memory (computed): PC " + BudgetMiB(PcWidth, PcHeight).ToString("F1") + " MiB / Quest・iOS " + BudgetMiB(MobileWidth, MobileHeight).ToString("F1") + " MiB");
             return s;
         }
@@ -499,7 +533,7 @@ namespace KominkaHillside.Editor
             foreach (var lang in c.catalog.languages)
                 if (KD_LocalizationEditor.Bundled(lang))
                     foreach (var key in NeededKeys) glyphs.Append(System.Text.RegularExpressions.Regex.Replace(KD_LocalizationEditor.Text(c.catalog, lang.code, key), "<[^<>]+>", ""));
-            glyphs.Append("…: ONOFF");
+            glyphs.Append("…: ONOFF").Append(PagerGlyphs);   // IMP-WLD-007: the pager ◀ 1/3 ▶ (menu and board)
             string missing = KD_ShopSetupEditor.MissingGlyphs(glyphs.ToString());
             if (missing.Length > 0) { KD_ShopSetupEditor.AddGlyphs(missing, sb); log.Add("glyphs added: " + missing); }
             log.Add("language tables refreshed (Configure; bindings untouched)");
@@ -516,8 +550,8 @@ namespace KominkaHillside.Editor
             var state = Label(page.transform, "State", PageStatePos, PageStateSize, T("photo.empty"), c.font, 22f, 14f, TextAlignmentOptions.MidlineLeft, false);
             var help = Btn(page.transform, "Help", PageHelpPos, PageHelpSize, T("photo.help.mark"), c, albumUdon, "_MenuHelpOpen", log);
             var back = Btn(page.transform, "Back", PageBackPos, PageBackSize, T("gift.back"), c, c.pouchUdon, "_PhotoBack", log);
-            var thumbs = new RawImage[SlotCount]; var thumbButtons = new GameObject[SlotCount];
-            for (int k = 0; k < SlotCount; k++)
+            var thumbs = new RawImage[PageSize]; var thumbButtons = new GameObject[PageSize];
+            for (int k = 0; k < PageSize; k++)
             {
                 var b = PlainButton(page.transform, "Thumb" + k, ThumbPos(k), ThumbSize + Vector2.one * (ThumbBorder * 2f), ThumbFrameColor, albumUdon, "_MenuPick" + k, log);
                 var raw = RawChild(b.transform, "Photo", Vector2.zero, ThumbSize);
@@ -532,6 +566,14 @@ namespace KominkaHillside.Editor
             mark.transform.SetAsLastSibling(); mark.SetActive(false);
             var toSettings = Btn(page.transform, "SettingsButton", PageSettingsPos, PageSettingsSize, T("KD_TreatPouch.WordSettings"), c, c.pouchUdon, "_PhotoToSettings", log);
             toSettings.SetActive(false);
+
+            // ---- ページ送り ◀ 1/3 ▶ (IMP-WLD-007 W1。9 枚以上のときだけ KH_PhotoAlbum が出す。文言のキーは使わない) ----
+            var pager = KD_ShopSetupEditor.EnsureUiChild(page.transform, "Pager", PagerPos, new Vector2(PagerButtonOffset * 2f + PagerButtonSize.x, PagerButtonSize.y));
+            var pagerImg = pager.GetComponent<Image>(); if (pagerImg != null) UnityEngine.Object.DestroyImmediate(pagerImg);
+            Btn(pager.transform, "Prev", new Vector2(-PagerButtonOffset, 0f), PagerButtonSize, "◀", c, albumUdon, "_MenuPagePrev", log);
+            Btn(pager.transform, "Next", new Vector2(PagerButtonOffset, 0f), PagerButtonSize, "▶", c, albumUdon, "_MenuPageNext", log);
+            var pageLabel = Label(pager.transform, "Label", Vector2.zero, PagerLabelSize, "1/3", c.font, 24f, 16f, TextAlignmentOptions.Center, false);
+            pager.SetActive(false);
 
             // ---- 大きく (縮小表示を押す)。背板は面全体の押せる面を塞ぐ (裏の縮小表示へ通さない) ----
             var large = KD_ShopSetupEditor.EnsureUiChild(page.transform, "Large", Vector2.zero, new Vector2(KD_TreatSetupEditor.PanelWidth, KD_TreatSetupEditor.PanelHeight));
@@ -566,7 +608,8 @@ namespace KominkaHillside.Editor
             al.menuBackLabel = LabelOf(back); al.menuHelpMarkLabel = LabelOf(help);
             al.menuHelpRoot = helpRoot; al.menuHelpTitle = helpTitle; al.menuHelpBody = helpBody; al.menuHelpCloseLabel = LabelOf(helpClose);
             al.menuLargeRoot = large; al.menuLarge = largeRaw; al.menuLargeCloseLabel = LabelOf(largeClose);
-            log.Add("menu page: Page_Settings/" + PageName + " (registered in extraSettingsPages, hidden): 4 x 2 thumbnails " + ThumbSize.x + "x" + ThumbSize.y + ", large " + LargePhotoSize.x + "x" + LargePhotoSize.y + ", [?] help, [back] -> _PhotoBack. Layer " + LayerMask.LayerToName(page.layer) + " (excluded from photos)");
+            al.menuPager = pager; al.menuPageLabel = pageLabel;
+            log.Add("menu page: Page_Settings/" + PageName + " (registered in extraSettingsPages, hidden): 4 x 2 thumbnails per page (" + SlotCount + " photos, pager at " + PagerPos + "), " + ThumbSize.x + "x" + ThumbSize.y + ", large " + LargePhotoSize.x + "x" + LargePhotoSize.y + ", [?] help, [back] -> _PhotoBack. Layer " + LayerMask.LayerToName(page.layer) + " (excluded from photos)");
         }
 
         /// <summary>Unity の偽 null (エディタの GetComponent) に ?? を使わない。</summary>

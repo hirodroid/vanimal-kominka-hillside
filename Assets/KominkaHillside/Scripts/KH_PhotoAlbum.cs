@@ -11,8 +11,8 @@ namespace KominkaHillside
     /// <summary>
     /// IMP-WLD-005 (小さい版): 自動写真の「並べ方と見せ方」。docs/plans/2026-10-03-auto-photo-gallery.md §4。
     ///
-    /// 撮るのは古民家から移した仕組みのまま (KD_PhotoDirector → KD_PhotoCapture → KD_GalleryController の 8 枠、1 カテゴリ)。
-    /// このスクリプトは、撮れた 8 枚を **新しい順に左上から** ボード (門の看板 A の隣) と手元メニューの写真の面に並べ、
+    /// 撮るのは古民家から移した仕組みのまま (KD_PhotoDirector → KD_PhotoCapture → KD_GalleryController)。IMP-WLD-007 W1 で 24 枠・出来事 3 カテゴリ
+    /// (散歩 12 / 撫で 6 / 遊び 6) になった。このスクリプトは、撮れた写真を **新しい順に左上から**、8 枚ずつのページで ボード (門の看板 A の隣) と手元メニューの写真の面に並べ、
     /// 状態の文 (まだ無い / OFF / 読み込み中) と設定の [写真: ON / OFF] を描く。両方とも **同じ RenderTexture** を表示する (メモリは増えない)。
     ///
     /// - すべてローカル (同期変数 0、Ownership なし)。写真は各自の端末の中だけで、退室で消える
@@ -26,7 +26,10 @@ namespace KominkaHillside
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_PhotoAlbum : UdonSharpBehaviour
     {
-        public const int Slots = 8;
+        // IMP-WLD-007 W1 (docs/plans/2026-10-03-photo-expansion.md §0・§4): 24 枚 (散歩 12 / 撫で 6 / 遊び 6。カテゴリの中で古い順に上書きするのは
+        // KD_GalleryController.slotGroups)。見せるのはカテゴリを分けずに新しい順で、8 枚ずつのページ。ボードの Quad とメニューの縮小表示は 8 つのまま
+        public const int Slots = 24;
+        public const int PageSize = 8;
 
         [Header("写真の仕組み (Photo/1 が配線)")]
         public KD_GalleryController gallery;
@@ -69,6 +72,16 @@ namespace KominkaHillside
         public TMP_Text menuLargeCloseLabel;
         public TMP_Text headerLabel;
 
+        [Header("ページ (IMP-WLD-007 W1。◀ ▶ と「1/3」。写真が 9 枚以上のときだけ出す)")]
+        [Tooltip("メニューの写真の面の ◀ 1/3 ▶ (Photo/1)")]
+        public GameObject menuPager;
+        public TMP_Text menuPageLabel;
+        [Tooltip("ボードの ◀ 1/3 ▶ (Photo/4。押せる Canvas)")]
+        public GameObject boardPager;
+        public TMP_Text boardPageLabel;
+        [Tooltip("ボードのページを最後に送ってからこの秒数で 1 ページ目へ戻す (次に来た人が最新を見られるように)")]
+        public float boardPageResetSeconds = 60f;
+
         [Header("設定の行 (Photo/4)")]
         public Button settingsToggleButton;
         public Image settingsToggleImage;
@@ -83,6 +96,9 @@ namespace KominkaHillside
         private bool _unseen;         // 面を閉じている間に撮れた
         private bool _markShown;      // 面を開いている間、左上に「新しい」を出す
         private int _largeSlot = -1;
+        private int _menuPage;        // 0 = いちばん新しい 8 枚。ハーネスが読む
+        private int _boardPage;
+        private float _boardPageAt;   // ボードのページを最後に送った時刻 (戻す遅延イベントの照合)
 
         private string L(string key) { return language != null ? language._Text(key) : key; }
 
@@ -148,6 +164,7 @@ namespace KominkaHillside
             _markShown = _unseen;
             _unseen = false;
             _largeSlot = -1;
+            _menuPage = 0;   // 開いたときはいつも新しい 8 枚から
             if (menuLargeRoot != null) menuLargeRoot.SetActive(false);
             if (menuHelpRoot != null) menuHelpRoot.SetActive(false);
             Rebind();
@@ -155,14 +172,30 @@ namespace KominkaHillside
         }
 
         // ---- 面のボタン (onClick → SendCustomEvent。引数のある呼び出しを使わない) ----
-        public void _MenuPick0() { ShowLarge(0); }
-        public void _MenuPick1() { ShowLarge(1); }
-        public void _MenuPick2() { ShowLarge(2); }
-        public void _MenuPick3() { ShowLarge(3); }
-        public void _MenuPick4() { ShowLarge(4); }
-        public void _MenuPick5() { ShowLarge(5); }
-        public void _MenuPick6() { ShowLarge(6); }
-        public void _MenuPick7() { ShowLarge(7); }
+        // 番号は「今のページの中の位置」(0 = 左上)
+        public void _MenuPick0() { ShowLarge(_menuPage * PageSize + 0); }
+        public void _MenuPick1() { ShowLarge(_menuPage * PageSize + 1); }
+        public void _MenuPick2() { ShowLarge(_menuPage * PageSize + 2); }
+        public void _MenuPick3() { ShowLarge(_menuPage * PageSize + 3); }
+        public void _MenuPick4() { ShowLarge(_menuPage * PageSize + 4); }
+        public void _MenuPick5() { ShowLarge(_menuPage * PageSize + 5); }
+        public void _MenuPick6() { ShowLarge(_menuPage * PageSize + 6); }
+        public void _MenuPick7() { ShowLarge(_menuPage * PageSize + 7); }
+
+        // ---- ページ (IMP-WLD-007 W1)。端で折り返す (最後の次は 1 ページ目)。ローカル専用 ----
+        public void _MenuPagePrev() { _menuPage = Wrap(_menuPage - 1); _MenuLargeClose(); Rebind(); DrawLabels(); }
+        public void _MenuPageNext() { _menuPage = Wrap(_menuPage + 1); _MenuLargeClose(); Rebind(); DrawLabels(); }
+        public void _BoardPagePrev() { TurnBoard(-1); }
+        public void _BoardPageNext() { TurnBoard(1); }
+
+        /// <summary>ボードのページを送ってから boardPageResetSeconds 経った (遅延イベント)。その間にまた送っていれば、後の方の遅延が戻す。ローカル専用。</summary>
+        public void _BoardPageTimeout()
+        {
+            if (_boardPage == 0) return;
+            if (Time.time - _boardPageAt < boardPageResetSeconds - 0.05f) return;
+            _boardPage = 0;
+            Rebind();
+        }
 
         public void _MenuLargeClose()
         {
@@ -220,6 +253,25 @@ namespace KominkaHillside
 
         private bool MenuVisible() { return menuPage != null && menuPage.activeInHierarchy; }
 
+        private int PageCount() { return _count <= PageSize ? 1 : (_count + PageSize - 1) / PageSize; }
+
+        private int Wrap(int page)
+        {
+            int n = PageCount();
+            if (page < 0) return n - 1;
+            if (page >= n) return 0;
+            return page;
+        }
+
+        private void TurnBoard(int step)
+        {
+            Init();
+            _boardPage = Wrap(_boardPage + step);
+            _boardPageAt = Time.time;
+            Rebind();
+            if (_boardPage != 0 && boardPageResetSeconds > 0f) SendCustomEventDelayedSeconds(nameof(_BoardPageTimeout), boardPageResetSeconds);
+        }
+
         /// <summary>撮ってよいときだけ撮影の見回り (KD_PhotoDirector) を動かす。毎回書く (値が同じでも害は無い。読み取りを使わない)。</summary>
         private void ApplyGate()
         {
@@ -227,27 +279,50 @@ namespace KominkaHillside
             if (directorUdon != null) directorUdon.enabled = allowed;
         }
 
-        /// <summary>位置 k → スロット の対応で、ボードの Quad とメニューの縮小表示へ同じ RT を張る。</summary>
+        /// <summary>並びの位置 (0 = いちばん新しい) の写真の RT。無ければ null。</summary>
+        private RenderTexture AtPosition(int position, RenderTexture[] tex)
+        {
+            int slot = position >= 0 && position < _count ? _order[position] : -1;
+            return slot >= 0 && tex != null && slot < tex.Length ? tex[slot] : null;
+        }
+
+        /// <summary>ページの中の位置 k → 並びの位置 (ページ × 8 + k) → スロット の対応で、ボードの Quad とメニューの縮小表示へ同じ RT を張る。
+        /// ボードとメニューはページを別々に持つ (ボードは誰かが送ったまま、メニューは開くたびに 1 ページ目)。</summary>
         private void Rebind()
         {
+            Init();
+            int pages = PageCount();
+            if (_menuPage >= pages) _menuPage = pages - 1;
+            if (_boardPage >= pages) _boardPage = pages - 1;
             RenderTexture[] tex = gallery != null ? gallery.slotTextures : null;
-            for (int k = 0; k < Slots; k++)
+            for (int k = 0; k < PageSize; k++)
             {
-                int slot = k < _count ? _order[k] : -1;
-                RenderTexture t = slot >= 0 && tex != null && slot < tex.Length ? tex[slot] : null;
-                bool show = t != null;
+                // ---- ボード ----
+                int bp = _boardPage * PageSize + k;
+                RenderTexture bt = AtPosition(bp, tex);
+                bool bshow = bt != null;
                 if (boardPhotos != null && k < boardPhotos.Length && boardPhotos[k] != null)
                 {
                     GameObject go = boardPhotos[k].gameObject;
-                    if (show) boardPhotos[k].material.mainTexture = t;
-                    if (go.activeSelf != show) go.SetActive(show);
+                    if (bshow) boardPhotos[k].material.mainTexture = bt;
+                    if (go.activeSelf != bshow) go.SetActive(bshow);
                 }
-                if (show && boardTaps != null && k < boardTaps.Length && boardTaps[k] != null) boardTaps[k].slotIndex = slot;
-                if (menuThumbs != null && k < menuThumbs.Length && menuThumbs[k] != null) menuThumbs[k].texture = t;
-                if (menuThumbButtons != null && k < menuThumbButtons.Length && menuThumbButtons[k] != null && menuThumbButtons[k].activeSelf != show)
-                    menuThumbButtons[k].SetActive(show);
+                if (bshow && boardTaps != null && k < boardTaps.Length && boardTaps[k] != null) boardTaps[k].slotIndex = _order[bp];
+                // ---- メニュー ----
+                RenderTexture mt = AtPosition(_menuPage * PageSize + k, tex);
+                bool mshow = mt != null;
+                if (menuThumbs != null && k < menuThumbs.Length && menuThumbs[k] != null) menuThumbs[k].texture = mt;
+                if (menuThumbButtons != null && k < menuThumbButtons.Length && menuThumbButtons[k] != null && menuThumbButtons[k].activeSelf != mshow)
+                    menuThumbButtons[k].SetActive(mshow);
             }
             if (_largeSlot >= 0 && menuLarge != null && tex != null && _largeSlot < tex.Length) menuLarge.texture = tex[_largeSlot];
+            // ---- ページ送り (2 ページ以上のときだけ) ----
+            bool many = pages > 1;
+            if (menuPager != null && menuPager.activeSelf != many) menuPager.SetActive(many);
+            if (boardPager != null && boardPager.activeSelf != many) boardPager.SetActive(many);
+            string total = "/" + pages.ToString();
+            if (menuPageLabel != null) menuPageLabel.text = (_menuPage + 1).ToString() + total;
+            if (boardPageLabel != null) boardPageLabel.text = (_boardPage + 1).ToString() + total;
         }
 
         private string StateKey()
@@ -291,7 +366,7 @@ namespace KominkaHillside
             if (menuHelpCloseLabel != null) menuHelpCloseLabel.text = L("photo.help.close");
             if (menuLargeCloseLabel != null) menuLargeCloseLabel.text = L("photo.help.close");
             if (menuNewLabel != null) menuNewLabel.text = L("photo.new");
-            bool mark = _markShown && _count > 0;
+            bool mark = _markShown && _count > 0 && _menuPage == 0;   // 「新しい」は 1 ページ目の左上だけ
             if (menuNewMark != null && menuNewMark.activeSelf != mark) menuNewMark.SetActive(mark);
         }
     }
