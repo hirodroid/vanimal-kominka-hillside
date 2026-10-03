@@ -96,6 +96,15 @@ namespace KominkaDogRun.Editor
             if (need.Length == 0)
             {
                 log.AppendLine("font: 追加する字は無い (全部入っている)");
+                // 2026-10-03 実測: 足す字が無いと下の Static 戻しを通らず、RestoreFontSource が差した m_SourceFontFile (実行時の TTF 参照)
+                // が残ってビルドに TTF が入る (TMP 3.0.6 の atlasPopulationMode setter は Static で m_SourceFontFile を null にする)。ここでも Static を書き直す
+                if (font.atlasPopulationMode == TMPro.AtlasPopulationMode.Static && font.sourceFontFile != null)
+                {
+                    font.atlasPopulationMode = TMPro.AtlasPopulationMode.Static;
+                    EditorUtility.SetDirty(font);
+                    AssetDatabase.SaveAssets();
+                    log.AppendLine("font: 実行時の TTF 参照 (m_SourceFontFile) を外した (Static)");
+                }
                 return;
             }
 

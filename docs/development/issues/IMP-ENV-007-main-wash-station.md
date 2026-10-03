@@ -5,8 +5,8 @@ system: ENV
 status: review
 priority: High
 summary: 門の外の主洗い場の整備 (洗い台、道具の棚と戻し先、蛇口・ホース・桶、犬を呼ぶ方法)
-next: "残り: ユーザー作業の札の日本語記入 (後で: 2026-10-03) (KH_WashStation/SignText とリセット札)、AI 側の確認 (Verify・差分・保存結果・production.md)。PCVR 1 人 (A18〜A21) は 10-02 ユーザー総合判断で確認済み"
-updated: 2026-10-02
+next: "札は「あらいば」/ RESET で決定済み (2026-10-03)。残り: AI 側の確認 (差分・保存結果・production.md)。PCVR 1 人 (A18〜A21) は 10-02 ユーザー総合判断で確認済み"
+updated: 2026-10-03
 ---
 
 # IMP-ENV-007 主洗い場の整備 (門の外)
@@ -63,3 +63,5 @@ AI 側で確かめる。
 2026-10-02 ユーザー確認: PCVR 1 人の項目は「基本全部見たから OK」(総合判断。項目別の結果の記録なし。[play-checklist-2026-10-02](../../testing/play-checklist-2026-10-02.md) の A 節)。残り: 札の日本語記入 (ユーザー作業)、AI 側の確認項目。
 
 2026-10-03 ユーザー: 「あなたの作業: クレジット URL 3 件の記入、洗い場の棚の札・リセット札の日本語化。→ 後で。」洗い場の棚の札 (KH_WashStation/SignText) とリセット札の日本語記入は、ユーザーが後で行う。
+
+決定: 2026-10-03 ユーザー回答「４．あらいば ５．RESET で OK」。棚の札は `KH_DogWashSetupEditor.Station.cs` の `SignText = "あらいば"` (ビルダーが書く。旧仮文字 `WASH` だけ上書きし、Inspector で別の文字を入れた札は保つ)。リセット札は `RESET` / Interaction Text `Reset tools` のまま。Wash/11 → Wash/12 `VERIFY_OK (4646)`: 主洗い場 + 道中 3 か所の札が「あらいば」で、字形は共有フォントにある。StationVerify は「仮文字 `WASH` のままでない」を必須検査にした。

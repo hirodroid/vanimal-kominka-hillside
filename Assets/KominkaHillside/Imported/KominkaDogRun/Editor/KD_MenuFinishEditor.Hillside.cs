@@ -59,13 +59,12 @@ namespace KominkaDogRun.Editor
         /// <summary>行の正本 (契約書 段階 3: 犬モデル / 舞台 2 件 / 空 / おじいさん / フォント + OFL の表示)。動画プレイヤー (VizVid) の行は裏山に無い。
         /// key が null の行は翻訳しない固定表記 (ライセンス表示)。**url が空の行は「URL 未確認」**: 入力欄を作らず、Verify 22 が CREDIT_URL_PENDING として数える
         /// (購入元の URL は人が購入履歴で確かめてここへ書く。推測で埋めない)。</summary>
+        /// 2026-10-03 ユーザー決定: Allsky と polyperfect は Unity Asset Store 購入でクレジット不要 (行を外した)。LMArt の URL はユーザー記入。
         public static readonly (string key, string ja, string url)[] HillsideCredits =
         {
             ("credit.dogs", "犬モデル\nTORINOSUKEの家", "https://torinosuke05.booth.pm/items"),
-            ("credit.environment.kit", "舞台モデル\nLMArt Stylized Environment Kit", ""),
+            ("credit.environment.kit", "舞台モデル\nLMArt Stylized Environment Kit", "https://littlemarsh.booth.pm/items/5987530"),
             ("credit.environment", "舞台モデル\nモサンゴ屋「庭付き古民家」", "https://booth.pm/ja/items/6364620"),
-            ("credit.sky", "空\nAllsky", ""),
-            ("credit.keeper", "おじいさん\npolyperfect Low Poly Animated People", ""),
             ("credit.font", "フォント\nNoto Serif JP", "https://fonts.google.com/noto/specimen/Noto+Serif+JP"),
             (null, "SIL Open Font License 1.1\nCopyright 2012 Google Inc. All Rights Reserved.", "https://openfontlicense.org"),
         };
@@ -164,6 +163,14 @@ namespace KominkaDogRun.Editor
                 field.pointSize = 20;
                 TopAnchor((RectTransform)field.transform);
                 glyphs.Append(row.url);
+            }
+            // 表から外した行 (Allsky / polyperfect 2026-10-03) の残骸を消す。Verify 22 は Name/Url{Length} が無いことを見る
+            for (int i = HillsideCredits.Length; i < HillsideCredits.Length + 8; i++)
+            {
+                var staleName = content.transform.Find("Name" + i);
+                var staleUrl = content.transform.Find("Url" + i);
+                if (staleName != null) { Object.DestroyImmediate(staleName.gameObject); log.AppendLine("credit: removed stale row Name" + i); }
+                if (staleUrl != null) { Object.DestroyImmediate(staleUrl.gameObject); log.AppendLine("credit: removed stale row Url" + i); }
             }
             scroll.content = rect; scroll.verticalNormalizedPosition = 1f;
             Back(page.transform, pouch, font, log);
@@ -320,7 +327,7 @@ namespace KominkaDogRun.Editor
                 check(rows != null && rows.Find("Name" + HillsideCredits.Length) == null && rows.Find("Url" + HillsideCredits.Length) == null, "no extra credit rows (no VizVid)");
                 foreach (var t in page.GetComponentsInChildren<TMP_Text>(true))
                     check(t.text.IndexOf("VizVid", StringComparison.OrdinalIgnoreCase) < 0, "no video player credit: " + t.name);
-                log.AppendLine("CREDIT_URL_PENDING " + pending + " (LMArt / Allsky / polyperfect: 購入元の URL を人が確かめて KD_MenuFinishEditor.HillsideCredits に記入)");
+                log.AppendLine("CREDIT_URL_PENDING " + pending + " (購入元の URL を人が確かめて KD_MenuFinishEditor.HillsideCredits に記入)");
                 var back = page.transform.Find("BackSettings")?.GetComponent<Button>();
                 check(back != null && OnClick(back, pouchUdon, "_OpenSettings"), "credit page back -> _OpenSettings");
             }

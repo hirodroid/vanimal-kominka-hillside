@@ -738,16 +738,6 @@
     {
       "root": "KD_TreatPouchPanel",
       "path": "Page_Settings/CreditPage/ScrollView/Viewport/CreditRows/Name3",
-      "key": "credit.sky"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
-      "path": "Page_Settings/CreditPage/ScrollView/Viewport/CreditRows/Name4",
-      "key": "credit.keeper"
-    },
-    {
-      "root": "KD_TreatPouchPanel",
-      "path": "Page_Settings/CreditPage/ScrollView/Viewport/CreditRows/Name5",
       "key": "credit.font"
     },
     {

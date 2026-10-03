@@ -239,7 +239,7 @@ namespace KominkaHillside.Editor
                 List<char> missing;
                 bool all = font.HasCharacters(tmp.text, out missing);
                 req(all, label + ": every sign character is in the shared font (missing: " + (missing != null ? string.Join(" ", missing.Select(ch => "U+" + ((int)ch).ToString("X4"))) : "") + "; KD_NotoSerif is Static: add glyphs with its AddGlyphs entry)");
-                if (tmp.text == SignText) r.notes.Add(label + ": the sign still reads the ASCII placeholder '" + SignText + "' (the Japanese is typed in the Inspector, then Wash/12 checks its glyphs)");
+                req(tmp.text != SignPlaceholder, label + ": the sign no longer reads the ASCII placeholder '" + SignPlaceholder + "' (Wash/11 writes '" + SignText + "')");
                 var lp = st.InverseTransformPoint(tt.position);
                 req(lp.z < SignZ - SignSize.z * 0.5f && Quaternion.Angle(tt.localRotation, Quaternion.identity) < 0.1f, label + ": the sign text is on the board's front face and faces the front (-Z)");
             }

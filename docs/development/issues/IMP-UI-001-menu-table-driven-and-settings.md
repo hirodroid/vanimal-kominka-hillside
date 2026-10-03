@@ -4,8 +4,8 @@ type: IMP
 system: UI
 status: review
 priority: High
-summary: 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換え、設定面を作る。段階 0-a / 0-b / 3 は実装済み・Verify 全 PASS、0-b は 2026-09-24 PCVR OK。段階 3 (距離フェード・許可初期 ON・ようこそ等) の実機確認待ち。クレジット URL 3 件はユーザー記入待ち
-next: "残り: 許可トグル 2 種を権限者以外が操作できないこと (2 人)、距離フェードの Android/iOS の文言 (VER-WLD-001)、状態表示の規律の差分の記録、クレジット URL 3 件の記入 (ユーザー作業。後で: 2026-10-03)。PCVR 1 人 (A123〜A129) は 10-02 ユーザー総合判断で確認済み"
+summary: 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換え、設定面を作る。段階 0-a / 0-b / 3 は実装済み・Verify 全 PASS、0-b は 2026-09-24 PCVR OK。段階 3 (距離フェード・許可初期 ON・ようこそ等) の実機確認待ち。クレジットは 5 行で確定 (2026-10-03)
+next: "残り: 許可トグル 2 種を権限者以外が操作できないこと (2 人)、距離フェードの Android/iOS の文言 (VER-WLD-001)、状態表示の規律の差分の記録。クレジット (LMArt URL 記入、Allsky / polyperfect は不要) は 2026-10-03 に決定・反映済み。PCVR 1 人 (A123〜A129) は 10-02 ユーザー総合判断で確認済み"
 ---
 
 # IMP-UI-001 手元メニューを古民家の器 (KD_TreatPouch + ビルダー) に置き換え、設定面を作る
@@ -93,3 +93,5 @@ next: "残り: 許可トグル 2 種を権限者以外が操作できないこ�
 2026-10-02 ユーザー確認: PCVR 1 人の項目は「基本全部見たから OK」(総合判断。項目別の結果の記録なし。[play-checklist-2026-10-02](../../testing/play-checklist-2026-10-02.md) の A 節)。残り: 2 人 (許可トグル)、Android/iOS、差分の記録、クレジット URL。
 
 2026-10-03 ユーザー: 「あなたの作業: クレジット URL 3 件の記入、洗い場の棚の札・リセット札の日本語化。→ 後で。」クレジット URL 3 件 (LMArt / Allsky / polyperfect) はユーザーが後で記入する。
+
+決定: 2026-10-03 ユーザー回答「１．https://littlemarsh.booth.pm/items/5987530 ２，３は Unity Asset Store で不要。クレジット不要」。`HillsideCredits` は 5 行 (犬モデル / LMArt (URL 記入) / モサンゴ屋 / Noto Serif JP / OFL 表示)。Allsky・polyperfect の行は外し、`UILocalizationBindings.json` の `credit.sky` / `credit.keeper` の束縛も外した (翻訳キーは `UITranslations.json` に残るが未使用)。`BuildCreditPage` は表より後ろの `Name{i}` / `Url{i}` を消す。Menu/11 → Menu/22 `RESULT PASS failures=0`、`CREDIT_URL_PENDING 0`。残りの「あなたの作業」は無し (洗い場の札は [IMP-ENV-007](IMP-ENV-007-main-wash-station.md))。

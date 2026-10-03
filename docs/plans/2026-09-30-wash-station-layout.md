@@ -82,7 +82,7 @@
 
 ## 5. ユーザーに頼むこと
 
-- 札の文字: 今は ASCII の仮 `WASH` (リセットボタンは Interaction Text `Reset tools`・札 `RESET`)。`KH_WashStation/SignText` の TextMeshPro へ Inspector で日本語 (例「いぬのおてあれ」) を入れる。Build は空でない文字を上書きしない。`KD_NotoSerif SDF` は Static なので、無い字は Wash/12 がコードポイントで挙げる (フォントの AddGlyphs で足す)
+- 札の文字: 「あらいば」(決定: 2026-10-03 ユーザー。リセットボタンは Interaction Text `Reset tools`・札 `RESET` のまま)。`KH_DogWashSetupEditor.Station.cs` の `SignText` が正本で、Build は空の札と旧仮文字 `WASH` だけ上書きする (Inspector で別の文字を入れた札は保つ)。`KD_NotoSerif SDF` は Static なので、無い字は Wash/12 がコードポイントで挙げる (フォントの AddGlyphs で足す)。Wash/12 は仮文字 `WASH` のままの札を FAIL にする
 - 位置の微調整: `KH_WashStation` を手で動かしてよい (回転は y だけ)。動かしたら Wash/11 → Wash/12
 - Play / PCVR: スポーンから見えるか、初見で道具を取って洗い始められるか、両側へ回れるか、おやつの前の通路 (余白の東端から 0.6 m) が詰まらないか、道具の戻し先とリセットボタンが分かるか (押して戻るか)
 

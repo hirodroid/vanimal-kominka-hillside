@@ -54,7 +54,8 @@ namespace KominkaHillside.Editor
         const float SideMargin = 1.0f;                                                  // free standing room on each side (±X) of the duckboard
         static readonly Vector3 SignSize = new Vector3(0.34f, 0.12f, 0.02f);
         const float SignZ = 0.19f;                                                      // at the back of the shelf top, facing the front (-Z)
-        const string SignText = "WASH";                                                 // ASCII placeholder; the Japanese is typed in the Inspector (layout doc §5)
+        const string SignText = "あらいば";                                             // 2026-10-03 user: 「あらいば」 (glyphs are checked by Wash/12)
+        const string SignPlaceholder = "WASH";                                          // the former ASCII placeholder, overwritten by the builder
         const string HomesName = "Homes", TableName = "WashTable", TubName = "Tub", SignName = "Sign", SignTextName = "SignText";
         // 2026-09-30 (user): no automatic return; the reset button sends the tools home. 0 = never returns by itself.
         const float ReturnSeconds = 0f, HomeTolerance = 0.05f;
@@ -1227,8 +1228,8 @@ namespace KominkaHillside.Editor
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath);
             if (font == null) throw new InvalidOperationException("Shared UI font missing: " + KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath);
             tmp.font = font;
-            // The words are the user's once written (the Japanese is typed in the Inspector): only an empty label gets the placeholder.
-            if (fresh || string.IsNullOrEmpty(tmp.text)) tmp.text = SignText;
+            // 2026-10-03 (user): the sign reads 「あらいば」. The old ASCII placeholder is replaced; any other words typed in the Inspector are kept.
+            if (fresh || string.IsNullOrEmpty(tmp.text) || tmp.text == SignPlaceholder) tmp.text = SignText;
             tmp.alignment = TextAlignmentOptions.Center; tmp.enableWordWrapping = false;
             tmp.enableAutoSizing = true; tmp.fontSizeMin = 0.2f; tmp.fontSizeMax = 0.9f;
             tmp.color = SignInk;
