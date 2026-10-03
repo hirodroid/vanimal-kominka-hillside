@@ -17,6 +17,7 @@
 #   bash scripts/kh-harness-run.sh stop <walk|proto|photo|measure>      # 走っているハーネス・計測へ停止を頼む (Play 中でも通す)
 #   bash scripts/kh-harness-run.sh night --confirmed "<ユーザーの指示>" [--only wash,toy] [--skip lap] [--max-hours 8]   # 夜のまとめ回帰 (kh-harness-night.cjs)。--list で一覧
 #   bash scripts/kh-harness-run.sh photo [--cases=H1,H6w] --reason ".." --consult ".."   # IMP-WLD-005 Photo/3 (自動写真、約 1〜2 分。Photo/1・4 の後。--cases で一部だけ)
+#   bash scripts/kh-harness-run.sh video [--cases=V1,V3] --reason ".." --consult ".."   # IMP-WLD-008 Video/3 (動画カメラ W1、約 1 分。Video/1 の後。V0 は必ず回る)
 #
 # 終了コード: 0 = PASS または歩行の SEGMENTS_OBSERVED / LAP_OBSERVED (範囲はreportどおり) / 1 = 失敗・未完了 / 2 = 待ち切れ・新しい run が出ない
 #            3 = 実行前の照合失敗 (接続先違い、Play 中、コンパイル中。何もしない) / 64 = 使い方の誤り
@@ -66,7 +67,7 @@ log_size() { [ -f "$EDITOR_LOG" ] && wc -c < "$EDITOR_LOG" | tr -d ' ' || echo 0
 cmd=${1:-}; shift || true
 # Play を起動する入口は、目的と相談の結論が無ければ Unity に触れる前に止める (kh-harness-gate.cjs、2026-10-03)。
 # 通ったら --reason / --consult / --confirmed を引数から外し、開始と終了 (終了コード・秒) を Logs/kh-harness-run/ledger.jsonl へ残す
-case "$cmd" in proto|walk|segment|lap|photo|measure)
+case "$cmd" in proto|walk|segment|lap|photo|video|measure)
   gate_out=$(node scripts/kh-harness-gate.cjs begin "$cmd" "$@") || exit 64
   mapfile -t gate_lines <<<"$gate_out"
   gate_id=${gate_lines[0]}
@@ -105,9 +106,10 @@ case "$cmd" in
     case "${1:-}" in
       walk) ok=$(run_menu "Course/41 - Stop Walk Harness");;
       photo) ok=$(run_menu "Photo/3b - Stop Harness");;
+      video) ok=$(run_menu "Video/3b - Stop Harness");;
       measure) ok=$(run_menu "Course/2 - Stop Measurement");;
       proto) node scripts/kh-frisbee-harness.cjs stop >/dev/null 2>&1 && ok=True || ok=False;;
-      *) echo "usage: stop <walk|proto|photo|measure>"; exit 64;;
+      *) echo "usage: stop <walk|proto|photo|video|measure>"; exit 64;;
     esac
     echo "stop $1 requested=$ok playing=$(is_playing)"
     [ "$ok" = "True" ] || exit 2;;
@@ -196,5 +198,29 @@ case "$cmd" in
     done
     [ "$done_" = 1 ] || { echo "photo TIMEOUT: no finished run after 400 s (latest: $s)"; exit 2; }
     node -e 'const j=require("./Logs/kh-photo-harness/latest.json");const bad=(j.cases||[]).filter(c=>c.status!=="PASS").map(c=>c.name+": "+(c.reason||c.status)).join(" | ");console.log("photo",j.runId,j.status,"cases",(j.cases||[]).length,"sceneUnchanged",j.sceneFileUnchanged,"playerDataRestored",j.playerDataRestored,"errors",(j.errors||[]).length,bad?"FAILS="+bad:"");process.exit(j.status==="PASS"&&j.sceneFileUnchanged&&j.playerDataRestored?0:1)';;
-  *) echo 'usage: kh-harness-run.sh compile | menu <name> | proto <mode> [args] | walk <menu> | segment <case> | lap <forward|reverse> | photo | stop <walk|proto|photo> | night --confirmed "..."   (Play entries need --reason "..." --consult "..."; whole groups and lap also --confirmed "...")'; exit 64;;
+  video)
+    # IMP-WLD-008 Video/3 - Harness (動画カメラ W1、約 1 分)。結果は Logs/kh-video-harness/latest.json。--cases=V1,V3 で一部だけ (V0 は必ず回る)
+    cases=""
+    for a in "$@"; do case "$a" in --cases=*) cases=${a#--cases=};; *) echo "video: unknown argument '$a' (only --cases=V1,V2,...)"; exit 64;; esac; done
+    case "$cases" in *[!A-Za-z0-9,-]*) echo "video: --cases takes names like V1,V2 (got '$cases')"; exit 64;; esac
+    guard
+    mkdir -p Temp/kh-video; rm -f Temp/kh-video/harness-cases.txt
+    [ -n "$cases" ] && printf '%s' "$cases" > Temp/kh-video/harness-cases.txt
+    prev=$(node -e 'try{console.log(require("./Logs/kh-video-harness/latest.json").runId)}catch(e){console.log("")}')
+    ok=$(run_menu "Video/3 - Harness")
+    [ "$ok" = "True" ] || { echo "video NOT_EXECUTED: ExecuteMenuItem=$ok"; exit 2; }
+    done_=0; t=0
+    while [ $t -lt 300 ]; do
+      sleep 10; t=$((t+10))
+      s=$(node -e 'try{const j=require("./Logs/kh-video-harness/latest.json");console.log(j.runId+" "+j.status+" "+(j.endedUtc?"ended":"open"))}catch(e){console.log("none")}')
+      case "$s" in none|"$prev "*)
+        [ $t -ge 60 ] && { echo "video NO_NEW_RUN after 60 s (VIDEO_HARNESS_BLOCKED in Editor.log? Video/1 and a PC build target are required; latest: $s)"; exit 2; }
+        continue;; esac
+      case "$s" in *" RUNNING "*|*" open") continue;; esac
+      [ "$(is_playing)" = "False" ] || continue
+      done_=1; break
+    done
+    [ "$done_" = 1 ] || { echo "video TIMEOUT: no finished run after 300 s (latest: $s)"; exit 2; }
+    node -e 'const j=require("./Logs/kh-video-harness/latest.json");const bad=(j.cases||[]).filter(c=>c.status!=="PASS").map(c=>c.name+": "+(c.reason||c.status)).join(" | ");console.log("video",j.runId,j.status,"cases",(j.cases||[]).length,"sceneUnchanged",j.sceneFileUnchanged,"errors",(j.errors||[]).length,bad?"FAILS="+bad:"");process.exit(j.status==="PASS"&&j.sceneFileUnchanged?0:1)';;
+  *) echo 'usage: kh-harness-run.sh compile | menu <name> | proto <mode> [args] | walk <menu> | segment <case> | lap <forward|reverse> | photo | video | stop <walk|proto|photo|video> | night --confirmed "..."   (Play entries need --reason "..." --consult "..."; whole groups and lap also --confirmed "...")'; exit 64;;
 esac

@@ -3,7 +3,7 @@
 // 群の全体・連続一周は、ユーザーが「回す」と明示的に指示した時だけ通す (コミット・Issue 完了・仕様の確定は回す指示ではない)。
 const fs = require('fs');
 const path = require('path');
-const playKinds = ['proto', 'walk', 'segment', 'lap', 'photo', 'measure'];
+const playKinds = ['proto', 'walk', 'segment', 'lap', 'photo', 'video', 'measure'];
 // 計測も Play に入るので相談を必須にする (2026-10-03 ユーザー指定)。KH_CourseBenchmarkEditor のメニュー
 const measureMenus = /^Course\/(?:1|11|31|39) - Measure /;
 // 群の全体・長い群を回す入口 (部分の入口が別にあるもの: 82 → 83 / 82b / 82c、88 → 88a / 88b、94b → 94c)。「全体」のメニューを足したらここへ足す
