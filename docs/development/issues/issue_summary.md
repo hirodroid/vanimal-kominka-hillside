@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-95 件 — 対応中 7 / 確認待ち 53 / 未着手 12 / 保留 3 / 完了 20
+95 件 — 対応中 6 / 確認待ち 54 / 未着手 12 / 保留 3 / 完了 20
 
 ## 実行キュー
 
@@ -14,7 +14,6 @@
 | [IMP-DOG-003](IMP-DOG-003-walking-polish.md) | High | 自由な散歩の試作は PCVR で「かなり良かった」。残り: 犬同士の遊び、Desktop/Touch、複数人。看板の本制作・分かりやすさは DES-UI-004 へ分離 | wip | 残り: 2 人 (行き先の個別指定・途中参加・退出、B11・B12・B17)、Desktop/Touch、犬種別首輪適合と採用値の整合の記録。PCVR 1 人の散歩 (A45〜A51) は 10-02 ユーザー総合判断で確認済み |
 | [IMP-DOG-024](IMP-DOG-024-walk-and-wash-experience.md) | High | Animal Wash以上のASMR的な洗浄の気持ちよさを最優先に、散歩帰りのお手入れと複数洗い場を作る大型Issue | wip | 10-02 のすすぎ改善 (f9ed660、IMP-DOG-025) は PCVR 総合判断に含まれない (ユーザー回答 2026-10-02、未 Play) ので、10-02 要望 (肩・関節の残り泡、周囲もさっと流れる) と A1〜A7 は未確認。洗い場の呼び出し (IMP-DOG-035) は 10-02 の追加要望 (おわりで犬がすぐ台から出る、呼ばれていない犬は洗い場へ寄らない) を実装済みで review (出ていく動きの見え方は未 Play)。子 Issue は 025・026・027・030・035・ENV-007・008・011 が review、028 が wip (AI 側の音の容量・出所の記録)、037・VER-DOG-002 が todo。残りは 2 人協力・Desktop/Touch・Quest 3/iOS・負荷と容量の測定・先行 Animal Wash との比較記録 (VER-DOG-002)。洗浄の PCVR 1 人 (A8〜A31・A58・A133) は 10-02 ユーザー総合判断で確認済み |
 | [IMP-DOG-028](IMP-DOG-028-wash-sound-and-reactions.md) | High | 洗浄の音と犬の反応の仕上げ (音素材の制作と記録、個人音量、タオル、ブルブル、満足の合図) | wip | 残り: 隣の洗浄音を重ねた聞き取り・相手の画面での反応 (2 人、B4・B5)、先行 Animal Wash との比較の記録 (VER-DOG-002)、音の合計容量・出所の記録とハーネスの確認 (AI)、試聴後の音素材の作り直しの要否。PCVR 1 人 (A9・A13・A14・A133) は 10-02 ユーザー総合判断で確認済み |
-| [IMP-DOG-039](IMP-DOG-039-hand-wash-with-shampoo-bottle.md) | High | シャンプーのボトルで泡をつけ、空いた手でわしゃわしゃ洗う「手洗い」を洗浄の主役として実装する (スポンジは残す。Desktop / スマホは第一段階ではスポンジ経路) | wip | ユーザーの PCVR / Quest で手洗いを試す (チェックリスト A0-28〜32・B67・B68・C22・D28・E26)。AI 側の残り: Codex 指摘の修正後の 100f・100g (17 ケース) の回し直し (修正後は 100a・100b・100c まで PASS、ユーザー指示で途中停止) |
 | [DES-ENV-002](DES-ENV-002-longer-course.md) | Medium | 約2.41kmの川沿い周回を実装し、2026-09-27に本番シーン (VRCDefaultWorldScene) へ採用済み。Quest 3・iPhone 15 Proの実歩行と16人性能で最終距離/予算を判断する | wip | Quest 3・iPhone 15 Pro・16 人の性能から最終距離/予算を確定し、ユーザーが決める (VER-WLD-001)。PCVR の犬連れ実歩行・LOD と遮蔽の見え方は 10-02 ユーザー総合判断で確認済み (所要時間の数値の記録はない) |
 | [BUG-DOG-003](BUG-DOG-003-frisbee-non-master-throw.md) | High | 非マスターの投球で犬が追わない。原因はコード上の経路で確認 (投球通知が Pickup の解放同期より先に届き、古い保持状態で即取消)。犬 Owner 側の 1 秒保留と (送信者, 世代, 発生時刻) 照合で修正、ClientSim netorder 10/10。2 人 PCVR の再検証待ち | review | 実装と ClientSim netorder 10/10 は済み。2 人の実機で、非マスターの取得 → 待機移動 → 投球 → 追走・キャッチ・持ち帰りが両者から見えること、マスターの投球が引き続き成立すること、交互に持って投げても所有権の切替後に反応が止まらないことを確認 (B18・B19)。NG なら wip へ戻す |
 | [BUG-DOG-009](BUG-DOG-009-frisbee-style-receiver-check.md) | High | `KH_FrisbeeCatch.ReqVariant` (NetworkCallable) が送り手を確かめず、トレーナーでない人がネットワークイベントを送れば 6 匹の取り方を変えられた。受け手 (犬の Owner) で集合と同じ規則 (`KD_GroupActivities` → `KH_TrainerPass._OwnedBy`) を確かめるようにした (未コンパイル・未実行) | review | 実機 2 人: トレーナーでない Owner の端末へ、トレーナーの押下が届いて切り替わるか、トレーナーでない人の偽装要求が実通信で弾かれるか (B60・B63)。ClientSim の模擬は済み |
@@ -30,6 +29,7 @@
 | [IMP-DOG-030](IMP-DOG-030-wash-six-dogs.md) | High | 洗浄を 6 匹へ展開する (位置マップ・部位・体格・毛色・動く部位) | review | 10-02 のすすぎ改善 (f9ed660) は含まない (ユーザー回答 2026-10-02、未 Play): 6 匹の肩・関節の残り泡 (44) は未確認。残りは Verify・ハーネス (AI)、本シーンの負荷の実測。6 匹の PCVR 1 人 (A29〜A31) は 10-02 ユーザー総合判断で確認済み |
 | [IMP-DOG-035](IMP-DOG-035-wash-call-dog-to-station.md) | High | 洗い場のボードで犬を選んで呼ぶと、その犬が洗い場へ来て立ち、洗い終わるまで留まる | review | ユーザーの Play / PCVR で、おわりの後の出ていき方 (小走り・向き)、主洗い場の近くの犬のうろつき、リードを外してから洗い始めるまでの猶予 20 秒、範囲の外側 1.5 m で休まないことを確認。2 人で、犬の Owner と洗い場の Owner が別のときの解放と台を下りる見え方を確認 |
 | [IMP-DOG-037](IMP-DOG-037-wash-call-availability-and-range.md) | High | 洗い場で呼べる犬・呼べない犬と理由を分かりやすく表示し、呼び出し対象をその洗い場の近くのエリアにいる犬へ制限する | review | ユーザーの Play / PCVR で、ボードの表示 (呼べる / 向かっている / 理由) と距離の上限 25 m (川辺 28 m) の体感を確認。2 人で、他人の散歩中・洗浄中の表示と、途中参加・Owner 交代で表示が一致することを確認 |
+| [IMP-DOG-039](IMP-DOG-039-hand-wash-with-shampoo-bottle.md) | High | シャンプーのボトルで泡をつけ、空いた手でわしゃわしゃ洗う「手洗い」を洗浄の主役として実装する (スポンジは残す。Desktop / スマホは第一段階ではスポンジ経路) | review | ユーザーの体感は 10-03 に良好 (図解・手の当たり・広がり)。残り: 図解の作り直し (IMP-UI-003: 好きな所に泡 → ボトルを離す → 両手 → 足す)、2 人 (B67・B68)・Desktop・Quest・iOS (C22・D28・E26)、Codex 指摘の修正後の 100f・100g の回し直し (ユーザーが回帰を指示した時) |
 | [IMP-ENV-007](IMP-ENV-007-main-wash-station.md) | High | 門の外の主洗い場の整備 (洗い台、道具の棚と戻し先、蛇口・ホース・桶、犬を呼ぶ方法) | review | 札は「あらいば」/ RESET で決定済み (2026-10-03)。残り: AI 側の確認 (差分・保存結果・production.md)。PCVR 1 人 (A18〜A21) は 10-02 ユーザー総合判断で確認済み |
 | [IMP-ENV-010](IMP-ENV-010-quest-performance.md) | High | 軽量化は2026-10-02ユーザー判断で一旦完了。地形の光り・軽量化後の動作と複数人確認・公開前の計測プローブ撤去を残件として管理する | review | 残り: Android/iOS の地形差し替えログと Quest 3 の地形の光り、036 の未確認分のうち他の人の紐・途中参加 (B14) とライブ開始、既知の断続失敗の現行版での確認。計測プローブは 10-03 に撤去済み。端末別の性能記録は VER-WLD-001 |
 | [IMP-ENV-011](IMP-ENV-011-wash-height-adjust.md) | High | 洗い場の台の高さ (犬を上げる) と、自分用の見えない床の高さ (自分が浮く) を調整できるようにする | review | 残り: 自分の床の上げ下げが他の人から不自然でないこと (2 人、B7)、Desktop・スマホ、Verify・ClientSim (AI)。PCVR 1 人 (A24〜A26) は 10-02 ユーザー総合判断で確認済み |
