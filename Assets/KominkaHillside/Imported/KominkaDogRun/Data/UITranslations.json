@@ -2801,28 +2801,68 @@
           "text": "手元メニュー　VR: 右スティックを下に長押し ／ Desktop: T キー ／ スマホ: 画面の［メニュー］ ／ リード台の札を押しても開きます"
         },
         {
-          "key": "guide.walk.title",
-          "text": "お散歩"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "リードで犬とつながって、裏山を歩こう。\n<color=#B5432A>1</color> 入口のリード台で、リードを手に取る\n<color=#B5432A>2</color> リードの先を犬の首輪に近づける\n<color=#B5432A>3</color> 行き先を手元メニュー「さんぽ」で選ぶ\n片手に3匹、両手で6匹までつなげます。\nはずす: 自分がつないだ犬の首輪を押す\nメニューでも: 「さんぽ」の犬の行で［左につなぐ］［右につなぐ］［はずす］(近くの犬だけ)\nDesktop・スマホはメニューが手軽です"
+          "key": "guide.pointer",
+          "text": "お散歩はリード台で、洗うのは洗い場で、道は地図の看板で"
         },
         {
           "key": "guide.frisbee.title",
           "text": "フリスビー"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "ディスクは犬ごとに1枚。広場にも置いてあります。\n<color=#B5432A>1</color> 手元メニュー「おもちゃ」で犬を選び［ディスク］→ 目の前に置かれる\n<color=#B5432A>2</color> 持つと、飛ぶ道すじが見える\n<color=#B5432A>3</color> Use で投げる (VR はトリガー) → その犬が跳んでキャッチ\nリードでつないだ犬は取りに行きません。はずしてから。\n狙いに × が出る所へは、犬が行けません。\n川ではディスクが浮き、犬が飛びこんで取ってきます。"
+          "key": "guide.frisbee.cap1",
+          "text": "「おもちゃ」で犬の［ディスク］"
         },
         {
-          "key": "guide.wash.title",
-          "text": "洗う"
+          "key": "guide.frisbee.cap2",
+          "text": "目の前にディスクが置かれる"
         },
         {
-          "key": "guide.wash.body",
-          "text": "散歩で汚れた犬を、きれいにしてあげよう。\n<color=#B5432A>1</color> 洗い場の板で犬の名前を押す → すのこに来る\n<color=#B5432A>2</color> ボトルで泡をつけて、手でわしゃわしゃ\n<color=#B5432A>3</color> シャワーは Use で出す・止める。泡を流そう\n<color=#B5432A>4</color> タオルでふいて仕上げ\n順番は自由。2人でいっしょにも洗えます。\n台と自分の高さ: 板の［上へ］［下へ］　終わり: ［おわり］\nスポンジ・タオル: Desktop・スマホは Use を押したまま\n道具は棚の［RESET］で元へ。道中にも洗い場が3か所。"
+          "key": "guide.frisbee.cap3",
+          "text": "持つと線が出る。Use で投げる"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "その犬が跳んでキャッチ"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "× が出る所へは、犬が行けません"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "［まっすぐ］［曲げる］で飛び方を選ぶ。曲げると右へカーブ"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "ディスクは犬ごとに1枚。広場にも置いてあります。\n強さ: VR は右スティック上下、Desktop はマウスホイール。\nリードでつないだ犬は取りに行きません。はずしてから。\n川ではディスクが浮き、犬が飛びこんで取ってきます。"
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "ボール"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "「おもちゃ」で犬の［ボール］"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "投げると、その犬が取ってくる"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "ボールかディスク、犬ごとに1つ出せます\nリードでつないだ犬は取りに行きません"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "投げ方"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "まっすぐ"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "曲げる"
         },
         {
           "key": "guide.shop.title",
@@ -5884,28 +5924,68 @@
           "text": "Hand menu  VR: hold the right stick down / Desktop: press T / Phone: tap Menu on screen / or press the plate on the leash rack"
         },
         {
-          "key": "guide.walk.title",
-          "text": "Walk"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "Leash up a dog and walk the hillside.\n<color=#B5432A>1</color> Take a leash from the leash rack at the gate\n<color=#B5432A>2</color> Bring its tip close to a dog's collar\n<color=#B5432A>3</color> Pick where to go in the hand menu: Walk\nUp to 3 dogs per hand, 6 in all.\nUnleash: press the collar of a dog you are walking\nOr in the menu: on the dog's row in Walk, [Leash left] [Leash right] [Unleash] (nearby dogs only)\nOn Desktop and phones the menu is easier"
+          "key": "guide.pointer",
+          "text": "Walks: see the leash racks. Washing: the wash stations. Trails: the map board"
         },
         {
           "key": "guide.frisbee.title",
           "text": "Frisbee"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "Each dog has its own disc. Some wait at the Plaza too.\n<color=#B5432A>1</color> Hand menu Toys: pick a dog, then [Disc] - it lands in front of you\n<color=#B5432A>2</color> Hold it to see its flight path\n<color=#B5432A>3</color> Use to throw (trigger in VR) - that dog leaps to catch it\nLeashed dogs won't fetch. Unleash them first.\nIf the aim shows ×, the dog can't go there.\nIn the river the disc floats and the dog jumps in for it."
+          "key": "guide.frisbee.cap1",
+          "text": "Toys: the dog's [Disc]"
         },
         {
-          "key": "guide.wash.title",
-          "text": "Wash"
+          "key": "guide.frisbee.cap2",
+          "text": "The disc lands in front of you"
         },
         {
-          "key": "guide.wash.body",
-          "text": "Muddy from the walk? Give your dog a wash.\n<color=#B5432A>1</color> Press the dog's name on the wash station board - it steps onto the slatted stand\n<color=#B5432A>2</color> Squirt the bottle, rub in by hand (or sponge)\n<color=#B5432A>3</color> Shower: Use turns the water on and off. Rinse the suds away\n<color=#B5432A>4</color> Dry off with the towel\nAny order. Two people can wash together.\nStand / your height: [Raise stand] [Lower stand] [Raise me] [Lower me] on the board. Done: [Done]\nSponge and towel on Desktop/phone: hold Use\n[RESET] on the shelf puts the tools back. 3 more stations along the trail."
+          "key": "guide.frisbee.cap3",
+          "text": "Hold it to see the path. Use throws"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "That dog leaps to catch it"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "Where × shows, the dog can't go"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "[Straight] or [Curve] picks the flight. Curve bends right"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "Each dog has its own disc. Some wait at the Plaza too.\nPower: VR right stick up/down, Desktop mouse wheel.\nLeashed dogs won't fetch. Unleash them first.\nIn the river the disc floats and the dog jumps in for it."
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "Ball"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "Toys: the dog's [Ball]"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "Throw it and that dog brings it back"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "One toy out per dog: ball or disc\nLeashed dogs won't fetch"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "Throw"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "Straight"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "Curve"
         },
         {
           "key": "guide.shop.title",
@@ -8967,28 +9047,68 @@
           "text": "Меню  VR: удерживай правый стик вниз / ПК: нажми T / Телефон: «Меню» на экране / или нажми табличку на стойке с поводками"
         },
         {
-          "key": "guide.walk.title",
-          "text": "Прогулка"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "Пристегни собаку и гуляй по склону.\n<color=#B5432A>1</color> Возьми поводок со стойки у ворот\n<color=#B5432A>2</color> Поднеси его конец к ошейнику собаки\n<color=#B5432A>3</color> Выбери, куда идти, в меню: Walk\nДо 3 собак в одной руке, всего 6.\nОтстегнуть: нажми на ошейник своей собаки\nИли в меню: в строке собаки в Walk — [Leash left] [Leash right] [Unleash] (только рядом)\nНа ПК и телефоне удобнее через меню"
+          "key": "guide.pointer",
+          "text": "Прогулки — у стоек с поводками, мытьё — у мест для мытья, дорога — на щите с картой"
         },
         {
           "key": "guide.frisbee.title",
           "text": "Фрисби"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "У каждой собаки свой диск. Несколько лежат на Plaza.\n<color=#B5432A>1</color> Меню «Игрушки»: выбери собаку, затем [Disc] — он появится перед тобой\n<color=#B5432A>2</color> Возьми его — увидишь траекторию полёта\n<color=#B5432A>3</color> Use — бросок (в VR курок). Эта собака прыгнет и поймает\nСобака на поводке не побежит за диском. Сначала отстегни.\nЕсли на прицеле ×, собака туда не пройдёт.\nВ реке диск плавает, и собака прыгает за ним."
+          "key": "guide.frisbee.cap1",
+          "text": "«Игрушки»: [Disc] у собаки"
         },
         {
-          "key": "guide.wash.title",
-          "text": "Мытьё"
+          "key": "guide.frisbee.cap2",
+          "text": "Диск появится перед тобой"
         },
         {
-          "key": "guide.wash.body",
-          "text": "Собака испачкалась на прогулке? Помой её.\n<color=#B5432A>1</color> Нажми имя собаки на табло мойки — она встанет на решётку\n<color=#B5432A>2</color> Пена из бутылки — взбей рукой/губкой\n<color=#B5432A>3</color> Душ: Use включает и выключает воду. Смой пену\n<color=#B5432A>4</color> Вытри полотенцем\nПорядок любой. Можно мыть вдвоём.\nВысота подставки и своя: [Подставка выше] [Подставка ниже] [Меня выше] [Меня ниже] на табло. Конец: [Готово]\nГубка и полотенце на ПК/телефоне: держи Use\n[RESET] на полке возвращает инструменты. Ещё 3 мойки по пути."
+          "key": "guide.frisbee.cap3",
+          "text": "Возьми — видна траектория. Use — бросок"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "Эта собака прыгнет и поймает"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "Где ×, туда собака не пройдёт"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "[Прямо] или [С изгибом] — выбор полёта. С изгибом — вправо"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "У каждой собаки свой диск. Несколько лежат на Plaza.\nСила: в VR правый стик вверх/вниз, на Desktop колесо мыши.\nСобака на поводке не побежит за диском. Сначала отстегни.\nВ реке диск плавает, и собака прыгает за ним."
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "Мяч"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "«Игрушки»: [Ball] у собаки"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "Брось — эта собака принесёт"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "У собаки одна игрушка: мяч или диск\nСобака на поводке не побежит"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "Бросок"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "Прямо"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "С изгибом"
         },
         {
           "key": "guide.shop.title",
@@ -12050,28 +12170,68 @@
           "text": "Меню  VR: утримуй правий стік донизу / ПК: натисни T / Телефон: «Меню» на екрані / або натисни табличку на стійці з повідцями"
         },
         {
-          "key": "guide.walk.title",
-          "text": "Прогулянка"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "Пристебни собаку й гуляй схилом.\n<color=#B5432A>1</color> Візьми повідець зі стійки біля воріт\n<color=#B5432A>2</color> Піднеси його кінець до нашийника собаки\n<color=#B5432A>3</color> Обери, куди йти, у меню: Walk\nДо 3 собак в одній руці, усього 6.\nВідстебнути: натисни на нашийник своєї собаки\nАбо в меню: у рядку собаки в Walk — [Leash left] [Leash right] [Unleash] (лише поруч)\nНа ПК і телефоні зручніше через меню"
+          "key": "guide.pointer",
+          "text": "Прогулянки — біля стійок з повідцями, миття — біля місць для миття, дорога — на щиті з мапою"
         },
         {
           "key": "guide.frisbee.title",
           "text": "Фризбі"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "У кожної собаки свій диск. Кілька лежать на Plaza.\n<color=#B5432A>1</color> Меню «Іграшки»: обери собаку, потім [Disc] — він з'явиться перед тобою\n<color=#B5432A>2</color> Візьми його — побачиш траєкторію польоту\n<color=#B5432A>3</color> Use — кидок (у VR курок). Ця собака стрибне й упіймає\nСобака на повідці не побіжить по диск. Спершу відстебни.\nЯкщо на прицілі ×, собака туди не пройде.\nУ річці диск плаває, і собака стрибає по нього."
+          "key": "guide.frisbee.cap1",
+          "text": "«Іграшки»: [Disc] у собаки"
         },
         {
-          "key": "guide.wash.title",
-          "text": "Миття"
+          "key": "guide.frisbee.cap2",
+          "text": "Диск з'явиться перед тобою"
         },
         {
-          "key": "guide.wash.body",
-          "text": "Собака забруднилася на прогулянці? Помий її.\n<color=#B5432A>1</color> Натисни ім'я собаки на табло мийки — вона стане на решітку\n<color=#B5432A>2</color> Піна з пляшки — збий рукою/губкою\n<color=#B5432A>3</color> Душ: Use вмикає й вимикає воду. Змий піну\n<color=#B5432A>4</color> Витри рушником\nПорядок будь-який. Можна мити удвох.\nВисота підставки й своя: [Підставка вище] [Підставка нижче] [Мене вище] [Мене нижче] на табло. Кінець: [Готово]\nГубка й рушник на ПК/телефоні: тримай Use\n[RESET] на полиці повертає інструменти. Ще 3 мийки дорогою."
+          "key": "guide.frisbee.cap3",
+          "text": "Візьми — видно траєкторію. Use — кидок"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "Ця собака стрибне й упіймає"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "Де ×, туди собака не пройде"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "[Прямо] або [З вигином] — вибір польоту. З вигином — праворуч"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "У кожної собаки свій диск. Кілька лежать на Plaza.\nСила: у VR правий стік угору/вниз, на Desktop коліщатко миші.\nСобака на повідці не побіжить по диск. Спершу відстебни.\nУ річці диск плаває, і собака стрибає по нього."
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "М'яч"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "«Іграшки»: [Ball] у собаки"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "Кинь — ця собака принесе"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "У собаки одна іграшка: м'яч або диск\nСобака на повідці не побіжить"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "Кидок"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "Прямо"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "З вигином"
         },
         {
           "key": "guide.shop.title",
@@ -15133,28 +15293,68 @@
           "text": "손 메뉴  VR: 오른쪽 스틱을 아래로 길게 ／ Desktop: T 키 ／ 스마트폰: 화면의 [메뉴] ／ 리드 걸이의 팻말을 눌러도 열립니다"
         },
         {
-          "key": "guide.walk.title",
-          "text": "산책"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "리드로 강아지와 이어져 뒷산을 걸어요.\n<color=#B5432A>1</color> 입구의 리드 걸이에서 리드를 집기\n<color=#B5432A>2</color> 리드 끝을 강아지 목줄에 가까이 대기\n<color=#B5432A>3</color> 손 메뉴 Walk에서 갈 곳을 고르기\n한 손에 3마리, 두 손으로 6마리까지.\n풀기: 내가 연결한 강아지의 목줄을 누르기\n메뉴로도: Walk의 강아지 줄에서 [Leash left] [Leash right] [Unleash] (가까운 강아지만)\nDesktop·스마트폰은 메뉴가 편해요"
+          "key": "guide.pointer",
+          "text": "산책은 리드 거치대에서, 씻기는 세척장에서, 길은 지도 안내판에서"
         },
         {
           "key": "guide.frisbee.title",
           "text": "프리스비"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "디스크는 강아지마다 1장. Plaza에도 놓여 있어요.\n<color=#B5432A>1</color> 손 메뉴 장난감에서 강아지를 고르고 [Disc] → 눈앞에 놓여요\n<color=#B5432A>2</color> 들면 날아갈 길이 보여요\n<color=#B5432A>3</color> Use로 던지기 (VR은 트리거) → 그 강아지가 뛰어올라 캐치\n리드에 연결된 강아지는 가지러 가지 않아요. 먼저 풀어 주세요.\n조준에 ×가 뜨는 곳에는 강아지가 갈 수 없어요.\n강에서는 디스크가 떠서 강아지가 뛰어들어 가져와요."
+          "key": "guide.frisbee.cap1",
+          "text": "장난감에서 강아지의 [Disc]"
         },
         {
-          "key": "guide.wash.title",
-          "text": "씻기기"
+          "key": "guide.frisbee.cap2",
+          "text": "눈앞에 디스크가 놓여요"
         },
         {
-          "key": "guide.wash.body",
-          "text": "산책하다 더러워진 강아지를 깨끗하게 해 줘요.\n<color=#B5432A>1</color> 세척장 판에서 강아지 이름을 누르기 → 발판 위로 와요\n<color=#B5432A>2</color> 병으로 거품, 손으로 문질문질(스펀지도)\n<color=#B5432A>3</color> 샤워는 Use로 켜고 끄기. 거품을 헹궈요\n<color=#B5432A>4</color> 수건으로 닦아 마무리\n순서는 자유. 둘이 함께 씻길 수도 있어요.\n받침대·내 높이: 판의 [받침대 위로] [받침대 아래로] [나 위로] [나 아래로]  끝: [끝]\n스펀지·수건은 Desktop·스마트폰에서 Use를 누른 채로\n선반의 [RESET]으로 도구가 제자리로. 길 중간에도 세척장 3곳."
+          "key": "guide.frisbee.cap3",
+          "text": "들면 선이 보여요. Use로 던지기"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "그 강아지가 뛰어올라 캐치"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "×가 뜨는 곳에는 강아지가 갈 수 없어요"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "[똑바로]·[휘게]로 비행을 골라요. 휘게는 오른쪽으로 휘어요"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "디스크는 강아지마다 1장. Plaza에도 놓여 있어요.\n세기: VR은 오른쪽 스틱 위아래, Desktop은 마우스 휠.\n리드에 연결된 강아지는 가지러 가지 않아요. 먼저 풀어 주세요.\n강에서는 디스크가 떠서 강아지가 뛰어들어 가져와요."
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "공"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "장난감에서 강아지의 [Ball]"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "던지면 그 강아지가 가져와요"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "강아지마다 공이나 디스크 중 하나\n리드에 연결된 강아지는 가지러 가지 않아요"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "던지기"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "똑바로"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "휘게"
         },
         {
           "key": "guide.shop.title",
@@ -18216,28 +18416,68 @@
           "text": "Handmenü  VR: rechten Stick nach unten halten / Desktop: Taste T / Handy: [Menü] auf dem Bildschirm / oder das Schild am Leinenständer drücken"
         },
         {
-          "key": "guide.walk.title",
-          "text": "Spaziergang"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "Leine einen Hund an und spaziere über den Hügel.\n<color=#B5432A>1</color> Nimm eine Leine vom Leinenständer am Tor\n<color=#B5432A>2</color> Halte ihr Ende nah an das Halsband eines Hundes\n<color=#B5432A>3</color> Wähle das Ziel im Handmenü: Walk\nBis zu 3 Hunde pro Hand, 6 insgesamt.\nLösen: Halsband deines Hundes drücken\nOder im Menü: in der Zeile des Hundes unter Walk [Leash left] [Leash right] [Unleash] (nur Hunde in der Nähe)\nAm Desktop und Handy geht es per Menü leichter"
+          "key": "guide.pointer",
+          "text": "Spaziergang: an den Leinenständern. Waschen: an den Waschplätzen. Wege: auf der Kartentafel"
         },
         {
           "key": "guide.frisbee.title",
           "text": "Frisbee"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "Jeder Hund hat seine eigene Scheibe. Einige liegen auf der Plaza.\n<color=#B5432A>1</color> Handmenü Spielzeug: Hund wählen, dann [Disc] - sie landet vor dir\n<color=#B5432A>2</color> Halte sie, um die Flugbahn zu sehen\n<color=#B5432A>3</color> Mit Use werfen (in VR der Trigger) - dieser Hund springt und fängt\nAngeleinte Hunde holen nicht. Erst lösen.\nZeigt das Zielen ×, kommt der Hund dort nicht hin.\nIm Fluss schwimmt die Scheibe, und der Hund springt hinterher."
+          "key": "guide.frisbee.cap1",
+          "text": "Spielzeug: [Disc] beim Hund"
         },
         {
-          "key": "guide.wash.title",
-          "text": "Waschen"
+          "key": "guide.frisbee.cap2",
+          "text": "Die Scheibe landet vor dir"
         },
         {
-          "key": "guide.wash.body",
-          "text": "Schmutzig vom Spaziergang? Mach deinen Hund sauber.\n<color=#B5432A>1</color> Namen des Hundes auf der Tafel am Waschplatz drücken - er stellt sich auf den Rost\n<color=#B5432A>2</color> Flasche drauf, per Hand/Schwamm einrubbeln\n<color=#B5432A>3</color> Dusche: Use schaltet das Wasser an und aus. Schaum abspülen\n<color=#B5432A>4</color> Mit dem Handtuch trocknen\nReihenfolge egal. Zu zweit waschen geht auch.\nHöhe von Podest und dir: [Podest hoch] [Podest runter] [Mich hoch] [Mich runter] auf der Tafel. Fertig: [Fertig]\nSchwamm und Handtuch an Desktop/Handy: Use gedrückt halten\n[RESET] am Regal legt die Sachen zurück. 3 weitere Waschplätze unterwegs."
+          "key": "guide.frisbee.cap3",
+          "text": "Halten zeigt die Bahn. Use wirft"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "Dieser Hund springt und fängt"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "Wo × erscheint, kommt der Hund nicht hin"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "[Gerade] oder [Kurve] wählt den Flug. Kurve biegt nach rechts"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "Jeder Hund hat seine eigene Scheibe. Einige liegen auf der Plaza.\nStärke: in VR rechter Stick hoch/runter, am Desktop Mausrad.\nAngeleinte Hunde holen nicht. Erst lösen.\nIm Fluss schwimmt die Scheibe, und der Hund springt hinterher."
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "Ball"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "Spielzeug: [Ball] beim Hund"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "Wirf ihn, dieser Hund bringt ihn zurück"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "Pro Hund ein Spielzeug: Ball oder Scheibe\nAngeleinte Hunde holen nicht"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "Wurf"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "Gerade"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "Kurve"
         },
         {
           "key": "guide.shop.title",
@@ -21299,28 +21539,68 @@
           "text": "手边菜单  VR: 长按右摇杆向下 / Desktop: T 键 / 手机: 画面上的 [菜单] / 按牵绳架上的牌子也能打开"
         },
         {
-          "key": "guide.walk.title",
-          "text": "散步"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "用牵绳牵上狗狗，在后山散步吧。\n<color=#B5432A>1</color> 在入口的牵绳架拿起牵绳\n<color=#B5432A>2</color> 把牵绳末端靠近狗狗的项圈\n<color=#B5432A>3</color> 在手边菜单 Walk 里选择目的地\n一只手最多 3 只，两只手最多 6 只。\n解开: 按一下你牵着的狗狗的项圈\n也可用菜单: Walk 里该狗狗那一行的 [Leash left] [Leash right] [Unleash] (仅限附近的狗狗)\nDesktop・手机用菜单更方便"
+          "key": "guide.pointer",
+          "text": "散步看牵绳架，洗澡看洗澡处，路线看地图告示牌"
         },
         {
           "key": "guide.frisbee.title",
           "text": "飞盘"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "每只狗狗都有自己的飞盘。Plaza 也放着几个。\n<color=#B5432A>1</color> 手边菜单「玩具」选狗狗，再按 [Disc] → 放在你面前\n<color=#B5432A>2</color> 拿起来就能看到飞行路线\n<color=#B5432A>3</color> 用 Use 投出 (VR 是扳机) → 那只狗狗会跳起来接住\n牵着的狗狗不会去捡。先解开牵绳。\n瞄准处出现 × 的地方，狗狗去不了。\n在河里飞盘会浮起来，狗狗会跳进水里叼回来。"
+          "key": "guide.frisbee.cap1",
+          "text": "「玩具」里按狗狗的 [Disc]"
         },
         {
-          "key": "guide.wash.title",
-          "text": "洗澡"
+          "key": "guide.frisbee.cap2",
+          "text": "飞盘放在你面前"
         },
         {
-          "key": "guide.wash.body",
-          "text": "散步弄脏了？帮狗狗洗干净吧。\n<color=#B5432A>1</color> 在洗澡台的板子上按狗狗的名字 → 它会站到踏板上\n<color=#B5432A>2</color> 用瓶子挤泡，再用手搓（海绵也行）\n<color=#B5432A>3</color> 淋浴: 用 Use 开关水。把泡泡冲掉\n<color=#B5432A>4</color> 用毛巾擦干收尾\n顺序随意。两个人也能一起洗。\n台子和自己的高度: 板上的 [台子升高] [台子降低] [自己升高] [自己降低]　结束: [结束]\n海绵・毛巾在 Desktop・手机上: 按住 Use\n架子上的 [RESET] 让工具归位。沿途还有 3 处洗澡台。"
+          "key": "guide.frisbee.cap3",
+          "text": "拿起会出现路线。按 Use 投出"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "那只狗狗跳起来接住"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "出现 × 的地方，狗狗去不了"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "用 [直线]·[弧线] 选择飞法。弧线向右弯"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "每只狗狗都有自己的飞盘。Plaza 也放着几个。\n力度：VR 用右摇杆上下，Desktop 用鼠标滚轮。\n牵着的狗狗不会去捡。先解开牵绳。\n在河里飞盘会浮起来，狗狗会跳进水里叼回来。"
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "球"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "「玩具」里按狗狗的 [Ball]"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "扔出去，那只狗狗会叼回来"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "每只狗狗一次只能放出球或飞盘之一\n牵着的狗狗不会去捡"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "投法"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "直线"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "弧线"
         },
         {
           "key": "guide.shop.title",
@@ -24382,28 +24662,68 @@
           "text": "Menú de mano  VR: mantén el stick derecho hacia abajo / Desktop: pulsa T / Móvil: toca Menú en la pantalla / o pulsa el cartel del soporte de correas"
         },
         {
-          "key": "guide.walk.title",
-          "text": "Paseo"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "Ponle la correa a un perro y pasea por la colina.\n<color=#B5432A>1</color> Toma una correa del soporte junto a la puerta\n<color=#B5432A>2</color> Acerca su punta al collar de un perro\n<color=#B5432A>3</color> Elige el destino en el menú: Walk\nHasta 3 perros por mano, 6 en total.\nSoltar: pulsa el collar de tu perro\nO en el menú: en la fila del perro en Walk, [Leash left] [Leash right] [Unleash] (solo perros cercanos)\nEn Desktop y móvil es más fácil con el menú"
+          "key": "guide.pointer",
+          "text": "Paseo: en los soportes de correas. Baño: en los lavaderos. Caminos: en el cartel del mapa"
         },
         {
           "key": "guide.frisbee.title",
           "text": "Frisbee"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "Cada perro tiene su propio disco. Hay algunos en la Plaza.\n<color=#B5432A>1</color> Menú Juguetes: elige un perro y luego [Disc] - aparece delante de ti\n<color=#B5432A>2</color> Al sostenerlo ves su trayectoria\n<color=#B5432A>3</color> Lánzalo con Use (gatillo en VR) - ese perro salta y lo atrapa\nLos perros con correa no van a buscarlo. Suéltalos antes.\nSi al apuntar sale ×, el perro no puede ir allí.\nEn el río el disco flota y el perro se lanza a por él."
+          "key": "guide.frisbee.cap1",
+          "text": "Juguetes: [Disc] del perro"
         },
         {
-          "key": "guide.wash.title",
-          "text": "Baño"
+          "key": "guide.frisbee.cap2",
+          "text": "El disco aparece delante de ti"
         },
         {
-          "key": "guide.wash.body",
-          "text": "¿Se ensució en el paseo? Dale un baño.\n<color=#B5432A>1</color> Pulsa el nombre del perro en el tablero del lavadero - sube a la tarima\n<color=#B5432A>2</color> Espuma del bote y frota con la mano (o esponja)\n<color=#B5432A>3</color> Ducha: Use abre y cierra el agua. Aclara la espuma\n<color=#B5432A>4</color> Sécalo con la toalla\nEn el orden que quieras. También entre dos.\nAltura de la base y la tuya: [Subir base] [Bajar base] [Subirme] [Bajarme] en el tablero. Terminar: [Terminar]\nEsponja y toalla en Desktop/móvil: mantén Use\n[RESET] en el estante devuelve las cosas. 3 lavaderos más en el camino."
+          "key": "guide.frisbee.cap3",
+          "text": "Al sostenerlo ves la línea. Use lanza"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "Ese perro salta y lo atrapa"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "Donde sale ×, el perro no puede ir"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "[Recto] o [Con curva] elige el vuelo. Con curva gira a la derecha"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "Cada perro tiene su propio disco. Hay algunos en la Plaza.\nFuerza: en VR stick derecho arriba/abajo, en Desktop la rueda del ratón.\nLos perros con correa no van a buscarlo. Suéltalos antes.\nEn el río el disco flota y el perro se lanza a por él."
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "Pelota"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "Juguetes: [Ball] del perro"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "Lánzala y ese perro la trae"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "Un juguete por perro: pelota o disco\nLos perros con correa no van a buscarla"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "Lanzamiento"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "Recto"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "Con curva"
         },
         {
           "key": "guide.shop.title",
@@ -27465,28 +27785,68 @@
           "text": "Menu personnel  VR : stick droit maintenu vers le bas / Desktop : touche T / Téléphone : Menu à l'écran / ou appuie sur la plaque du porte-laisses"
         },
         {
-          "key": "guide.walk.title",
-          "text": "Promenade"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "Mets une laisse à un chien et promène-toi sur la colline.\n<color=#B5432A>1</color> Prends une laisse au porte-laisses près du portail\n<color=#B5432A>2</color> Approche son bout du collier d'un chien\n<color=#B5432A>3</color> Choisis la destination dans le menu : Walk\nJusqu'à 3 chiens par main, 6 en tout.\nDétacher : appuie sur le collier de ton chien\nOu dans le menu : sur la ligne du chien dans Walk, [Leash left] [Leash right] [Unleash] (chiens proches seulement)\nSur Desktop et téléphone, le menu est plus simple"
+          "key": "guide.pointer",
+          "text": "Promenade : aux porte-laisses. Toilette : aux postes de lavage. Chemins : au panneau de la carte"
         },
         {
           "key": "guide.frisbee.title",
           "text": "Frisbee"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "Chaque chien a son disque. Il y en a aussi sur la Plaza.\n<color=#B5432A>1</color> Menu Jouets : choisis un chien puis [Disc] - il se pose devant toi\n<color=#B5432A>2</color> Tiens-le pour voir sa trajectoire\n<color=#B5432A>3</color> Lance avec Use (gâchette en VR) - ce chien saute pour l'attraper\nUn chien en laisse ne va pas le chercher. Détache-le d'abord.\nSi la visée affiche ×, le chien ne peut pas y aller.\nDans la rivière le disque flotte et le chien plonge le chercher."
+          "key": "guide.frisbee.cap1",
+          "text": "Jouets : [Disc] du chien"
         },
         {
-          "key": "guide.wash.title",
-          "text": "Bain"
+          "key": "guide.frisbee.cap2",
+          "text": "Le disque se pose devant toi"
         },
         {
-          "key": "guide.wash.body",
-          "text": "Sali par la promenade ? Lave ton chien.\n<color=#B5432A>1</color> Appuie sur le nom du chien sur le panneau du lavoir - il monte sur le caillebotis\n<color=#B5432A>2</color> Mousse au flacon, frotte à la main/l'éponge\n<color=#B5432A>3</color> Douche : Use ouvre et ferme l'eau. Rince la mousse\n<color=#B5432A>4</color> Sèche avec la serviette\nDans l'ordre que tu veux. À deux aussi.\nHauteur du socle et la tienne : [Socle plus haut] [Socle plus bas] [Moi plus haut] [Moi plus bas] sur le panneau. Fin : [Terminé]\nÉponge et serviette sur Desktop/téléphone : garde Use enfoncé\n[RESET] sur l'étagère range les outils. 3 autres lavoirs en chemin."
+          "key": "guide.frisbee.cap3",
+          "text": "Tiens-le : la ligne apparaît. Use lance"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "Ce chien saute pour l'attraper"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "Là où × s'affiche, le chien ne peut pas aller"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "[Droit] ou [Courbe] choisit le vol. Courbe tourne à droite"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "Chaque chien a son disque. Il y en a aussi sur la Plaza.\nForce : en VR stick droit haut/bas, sur Desktop molette de la souris.\nUn chien en laisse ne va pas le chercher. Détache-le d'abord.\nDans la rivière le disque flotte et le chien plonge le chercher."
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "Balle"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "Jouets : [Ball] du chien"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "Lance-la, ce chien la rapporte"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "Un jouet par chien : balle ou disque\nUn chien en laisse ne va pas la chercher"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "Lancer"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "Droit"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "Courbe"
         },
         {
           "key": "guide.shop.title",
@@ -30548,28 +30908,68 @@
           "text": "Menu de mão  VR: segure o analógico direito para baixo / Desktop: tecle T / Celular: toque em Menu na tela / ou aperte a plaquinha do suporte de guias"
         },
         {
-          "key": "guide.walk.title",
-          "text": "Passeio"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "Coloque a guia num cachorro e passeie pela colina.\n<color=#B5432A>1</color> Pegue uma guia no suporte perto do portão\n<color=#B5432A>2</color> Aproxime a ponta da coleira de um cachorro\n<color=#B5432A>3</color> Escolha o destino no menu: Walk\nAté 3 cachorros por mão, 6 no total.\nSoltar: aperte a coleira do seu cachorro\nOu no menu: na linha do cachorro em Walk, [Leash left] [Leash right] [Unleash] (só cachorros por perto)\nNo Desktop e no celular o menu é mais fácil"
+          "key": "guide.pointer",
+          "text": "Passeio: nos suportes de guia. Banho: nas estações de banho. Caminhos: na placa do mapa"
         },
         {
           "key": "guide.frisbee.title",
           "text": "Frisbee"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "Cada cachorro tem seu próprio disco. Alguns ficam na Plaza.\n<color=#B5432A>1</color> Menu Brinquedos: escolha um cachorro e depois [Disc] - ele aparece na sua frente\n<color=#B5432A>2</color> Segure para ver a trajetória\n<color=#B5432A>3</color> Jogue com Use (gatilho no VR) - esse cachorro pula e pega\nCachorro na guia não vai buscar. Solte antes.\nSe a mira mostrar ×, o cachorro não consegue ir lá.\nNo rio o disco flutua e o cachorro pula para buscar."
+          "key": "guide.frisbee.cap1",
+          "text": "Brinquedos: [Disc] do cachorro"
         },
         {
-          "key": "guide.wash.title",
-          "text": "Banho"
+          "key": "guide.frisbee.cap2",
+          "text": "O disco aparece na sua frente"
         },
         {
-          "key": "guide.wash.body",
-          "text": "Sujou no passeio? Dê um banho no seu cachorro.\n<color=#B5432A>1</color> Aperte o nome do cachorro no painel do lavadouro - ele sobe no estrado\n<color=#B5432A>2</color> Espuma do frasco e esfregue com a mão (ou esponja)\n<color=#B5432A>3</color> Chuveiro: Use liga e desliga a água. Enxágue a espuma\n<color=#B5432A>4</color> Seque com a toalha\nNa ordem que quiser. Dá para lavar a dois.\nAltura da base e a sua: [Subir base] [Descer base] [Subir eu] [Descer eu] no painel. Fim: [Concluir]\nEsponja e toalha no Desktop/celular: segure Use\n[RESET] na prateleira guarda as coisas. Mais 3 lavadouros no caminho."
+          "key": "guide.frisbee.cap3",
+          "text": "Segure para ver a linha. Use joga"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "Esse cachorro pula e pega"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "Onde aparece ×, o cachorro não consegue ir"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "[Reto] ou [Curva] escolhe o voo. Curva vira à direita"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "Cada cachorro tem seu próprio disco. Alguns ficam na Plaza.\nForça: no VR analógico direito para cima/baixo, no Desktop a roda do mouse.\nCachorro na guia não vai buscar. Solte antes.\nNo rio o disco flutua e o cachorro pula para buscar."
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "Bola"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "Brinquedos: [Ball] do cachorro"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "Jogue e esse cachorro traz de volta"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "Um brinquedo por cachorro: bola ou disco\nCachorro na guia não vai buscar"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "Arremesso"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "Reto"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "Curva"
         },
         {
           "key": "guide.shop.title",
@@ -33631,28 +34031,68 @@
           "text": "Menu a mano  VR: tieni la levetta destra verso il basso / Desktop: premi T / Telefono: tocca Menu sullo schermo / o premi la targhetta del portaguinzagli"
         },
         {
-          "key": "guide.walk.title",
-          "text": "Passeggiata"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "Metti il guinzaglio a un cane e passeggia sulla collina.\n<color=#B5432A>1</color> Prendi un guinzaglio dal portaguinzagli al cancello\n<color=#B5432A>2</color> Avvicina la punta al collare di un cane\n<color=#B5432A>3</color> Scegli la meta nel menu: Walk\nFino a 3 cani per mano, 6 in tutto.\nSganciare: premi il collare del tuo cane\nOppure nel menu: nella riga del cane in Walk, [Leash left] [Leash right] [Unleash] (solo cani vicini)\nSu Desktop e telefono è più facile dal menu"
+          "key": "guide.pointer",
+          "text": "Passeggiata: ai portaguinzagli. Lavaggio: alle postazioni di lavaggio. Sentieri: al cartello della mappa"
         },
         {
           "key": "guide.frisbee.title",
           "text": "Frisbee"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "Ogni cane ha il suo disco. Alcuni sono anche nella Plaza.\n<color=#B5432A>1</color> Menu Giochi: scegli un cane, poi [Disc] - appare davanti a te\n<color=#B5432A>2</color> Tenendolo vedi la traiettoria\n<color=#B5432A>3</color> Lancia con Use (grilletto in VR) - quel cane salta e lo prende\nI cani al guinzaglio non vanno a prenderlo. Sganciali prima.\nSe il mirino mostra ×, il cane non può andarci.\nNel fiume il disco galleggia e il cane si tuffa a prenderlo."
+          "key": "guide.frisbee.cap1",
+          "text": "Giochi: [Disc] del cane"
         },
         {
-          "key": "guide.wash.title",
-          "text": "Bagno"
+          "key": "guide.frisbee.cap2",
+          "text": "Il disco appare davanti a te"
         },
         {
-          "key": "guide.wash.body",
-          "text": "Sporco dalla passeggiata? Fai il bagno al tuo cane.\n<color=#B5432A>1</color> Premi il nome del cane sul pannello del lavatoio - sale sulla pedana\n<color=#B5432A>2</color> Schiuma dal flacone, strofina a mano (o spugna)\n<color=#B5432A>3</color> Doccia: Use apre e chiude l'acqua. Sciacqua la schiuma\n<color=#B5432A>4</color> Asciuga con l'asciugamano\nIn qualsiasi ordine. Anche in due.\nAltezza della pedana e la tua: [Alza pedana] [Abbassa pedana] [Alzami] [Abbassami] sul pannello. Fine: [Fine]\nSpugna e asciugamano su Desktop/telefono: tieni premuto Use\n[RESET] sulla mensola rimette a posto gli attrezzi. Altri 3 lavatoi lungo il percorso."
+          "key": "guide.frisbee.cap3",
+          "text": "Tienilo: appare la linea. Use lancia"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "Quel cane salta e lo prende"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "Dove appare ×, il cane non può andare"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "[Dritto] o [Curva] sceglie il volo. Curva piega a destra"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "Ogni cane ha il suo disco. Alcuni sono anche nella Plaza.\nForza: in VR levetta destra su/giù, su Desktop rotella del mouse.\nI cani al guinzaglio non vanno a prenderlo. Sganciali prima.\nNel fiume il disco galleggia e il cane si tuffa a prenderlo."
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "Palla"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "Giochi: [Ball] del cane"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "Lanciala e quel cane la riporta"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "Un gioco per cane: palla o disco\nI cani al guinzaglio non vanno a prenderla"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "Lancio"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "Dritto"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "Curva"
         },
         {
           "key": "guide.shop.title",
@@ -36714,28 +37154,68 @@
           "text": "Menu podręczne  VR: przytrzymaj prawą gałkę w dół / Desktop: naciśnij T / Telefon: dotknij Menu na ekranie / albo naciśnij tabliczkę na stojaku na smycze"
         },
         {
-          "key": "guide.walk.title",
-          "text": "Spacer"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "Przypnij psa na smycz i spaceruj po wzgórzu.\n<color=#B5432A>1</color> Weź smycz ze stojaka przy bramie\n<color=#B5432A>2</color> Zbliż jej koniec do obroży psa\n<color=#B5432A>3</color> Wybierz cel w menu: Walk\nDo 3 psów w jednej ręce, razem 6.\nOdpinanie: naciśnij obrożę swojego psa\nAlbo w menu: w wierszu psa w Walk [Leash left] [Leash right] [Unleash] (tylko psy w pobliżu)\nNa Desktopie i telefonie łatwiej przez menu"
+          "key": "guide.pointer",
+          "text": "Spacer: przy stojakach na smycze. Mycie: przy myjniach. Trasy: na tablicy z mapą"
         },
         {
           "key": "guide.frisbee.title",
           "text": "Frisbee"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "Każdy pies ma swój dysk. Kilka leży też na Plaza.\n<color=#B5432A>1</color> Menu Zabawki: wybierz psa, potem [Disc] - pojawi się przed tobą\n<color=#B5432A>2</color> Trzymając go, widzisz tor lotu\n<color=#B5432A>3</color> Rzuć przyciskiem Use (spust w VR) - ten pies skoczy i złapie\nPies na smyczy nie pobiegnie po dysk. Najpierw go odepnij.\nJeśli celownik pokazuje ×, pies tam nie dojdzie.\nW rzece dysk pływa, a pies wskakuje po niego."
+          "key": "guide.frisbee.cap1",
+          "text": "Zabawki: [Disc] przy psie"
         },
         {
-          "key": "guide.wash.title",
-          "text": "Kąpiel"
+          "key": "guide.frisbee.cap2",
+          "text": "Dysk pojawi się przed tobą"
         },
         {
-          "key": "guide.wash.body",
-          "text": "Pobrudził się na spacerze? Wykąp swojego psa.\n<color=#B5432A>1</color> Naciśnij imię psa na tablicy myjni - wejdzie na podest\n<color=#B5432A>2</color> Piana z butelki, szoruj ręką/gąbką\n<color=#B5432A>3</color> Prysznic: Use włącza i wyłącza wodę. Spłucz pianę\n<color=#B5432A>4</color> Wytrzyj ręcznikiem\nW dowolnej kolejności. Można też we dwoje.\nWysokość podestu i twoja: [Podest wyżej] [Podest niżej] [Mnie wyżej] [Mnie niżej] na tablicy. Koniec: [Koniec]\nGąbka i ręcznik na Desktopie/telefonie: przytrzymaj Use\n[RESET] na półce odkłada przybory. Jeszcze 3 myjnie po drodze."
+          "key": "guide.frisbee.cap3",
+          "text": "Trzymaj, by widzieć tor. Use rzuca"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "Ten pies skoczy i złapie"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "Tam, gdzie jest ×, pies nie dojdzie"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "[Prosto] lub [Z podkrętką] wybiera lot. Podkrętka skręca w prawo"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "Każdy pies ma swój dysk. Kilka leży też na Plaza.\nSiła: w VR prawa gałka góra/dół, na Desktop kółko myszy.\nPies na smyczy nie pobiegnie po dysk. Najpierw go odepnij.\nW rzece dysk pływa, a pies wskakuje po niego."
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "Piłka"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "Zabawki: [Ball] przy psie"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "Rzuć, a ten pies ją przyniesie"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "Jedna zabawka na psa: piłka albo dysk\nPies na smyczy nie pobiegnie"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "Rzut"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "Prosto"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "Z podkrętką"
         },
         {
           "key": "guide.shop.title",
@@ -39801,28 +40281,68 @@
           "text": "手邊選單  VR: 長按右搖桿向下 / Desktop: T 鍵 / 手機: 畫面上的 [選單] / 按牽繩架上的牌子也能打開"
         },
         {
-          "key": "guide.walk.title",
-          "text": "散步"
-        },
-        {
-          "key": "guide.walk.body",
-          "text": "用牽繩牽上狗狗，在後山散步吧。\n<color=#B5432A>1</color> 在入口的牽繩架拿起牽繩\n<color=#B5432A>2</color> 把牽繩末端靠近狗狗的項圈\n<color=#B5432A>3</color> 在手邊選單 Walk 裡選擇目的地\n一隻手最多 3 隻，兩隻手最多 6 隻。\n解開: 按一下你牽著的狗狗的項圈\n也可用選單: Walk 裡該狗狗那一行的 [Leash left] [Leash right] [Unleash] (只限附近的狗狗)\nDesktop・手機用選單更方便"
+          "key": "guide.pointer",
+          "text": "散步看牽繩架，洗澡看洗澡處，路線看地圖告示牌"
         },
         {
           "key": "guide.frisbee.title",
           "text": "飛盤"
         },
         {
-          "key": "guide.frisbee.body",
-          "text": "每隻狗狗都有自己的飛盤。Plaza 也放著幾個。\n<color=#B5432A>1</color> 手邊選單「玩具」選狗狗，再按 [Disc] → 放在你面前\n<color=#B5432A>2</color> 拿起來就能看到飛行路線\n<color=#B5432A>3</color> 用 Use 擲出 (VR 是扳機) → 那隻狗狗會跳起來接住\n牽著的狗狗不會去撿。先解開牽繩。\n瞄準處出現 × 的地方，狗狗去不了。\n在河裡飛盤會浮起來，狗狗會跳進水裡叼回來。"
+          "key": "guide.frisbee.cap1",
+          "text": "「玩具」裡按狗狗的 [Disc]"
         },
         {
-          "key": "guide.wash.title",
-          "text": "洗澡"
+          "key": "guide.frisbee.cap2",
+          "text": "飛盤放在你面前"
         },
         {
-          "key": "guide.wash.body",
-          "text": "散步弄髒了？幫狗狗洗乾淨吧。\n<color=#B5432A>1</color> 在洗澡台的板子上按狗狗的名字 → 牠會站到踏板上\n<color=#B5432A>2</color> 用瓶子擠泡，再用手搓（海綿也行）\n<color=#B5432A>3</color> 淋浴: 用 Use 開關水。把泡泡沖掉\n<color=#B5432A>4</color> 用毛巾擦乾收尾\n順序隨意。兩個人也能一起洗。\n台子和自己的高度: 板上的 [台子升高] [台子降低] [自己升高] [自己降低]　結束: [結束]\n海綿・毛巾在 Desktop・手機上: 按住 Use\n架子上的 [RESET] 讓工具歸位。沿途還有 3 處洗澡台。"
+          "key": "guide.frisbee.cap3",
+          "text": "拿起會出現路線。按 Use 擲出"
+        },
+        {
+          "key": "guide.frisbee.cap4",
+          "text": "那隻狗狗跳起來接住"
+        },
+        {
+          "key": "guide.frisbee.note1",
+          "text": "出現 × 的地方，狗狗去不了"
+        },
+        {
+          "key": "guide.frisbee.note2",
+          "text": "用 [直線]·[弧線] 選擇飛法。弧線向右彎"
+        },
+        {
+          "key": "guide.frisbee.more",
+          "text": "每隻狗狗都有自己的飛盤。Plaza 也放著幾個。\n力度：VR 用右搖桿上下，Desktop 用滑鼠滾輪。\n牽著的狗狗不會去撿。先解開牽繩。\n在河裡飛盤會浮起來，狗狗會跳進水裡叼回來。"
+        },
+        {
+          "key": "guide.ball.title",
+          "text": "球"
+        },
+        {
+          "key": "guide.ball.cap1",
+          "text": "「玩具」裡按狗狗的 [Ball]"
+        },
+        {
+          "key": "guide.ball.cap2",
+          "text": "擲出去，那隻狗狗會叼回來"
+        },
+        {
+          "key": "guide.ball.more",
+          "text": "每隻狗狗一次只能放出球或飛盤之一\n牽著的狗狗不會去撿"
+        },
+        {
+          "key": "guide.cut.throw.label",
+          "text": "投法"
+        },
+        {
+          "key": "guide.cut.throw.straight",
+          "text": "直線"
+        },
+        {
+          "key": "guide.cut.throw.curve",
+          "text": "弧線"
         },
         {
           "key": "guide.shop.title",

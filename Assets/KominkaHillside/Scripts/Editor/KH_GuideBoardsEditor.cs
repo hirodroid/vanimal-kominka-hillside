@@ -19,8 +19,12 @@ namespace KominkaHillside.Editor
     ///
     /// Guide/1 Build Guide Boards: production scene in idle Edit mode (clean), everything looked up before anything changes, the
     /// scene copied to Temp/kh-guide-boards/before-guide-boards-*.unity, then under the scene root KH_GuideBoards:
-    ///   Asobikata = the roofed notice board "あそびかた" (4 papers: walk / frisbee / wash / points and trainer + a strip "how to open
-    ///               the hand menu"), east of the spawn beside the shopkeeper, facing the spawn;
+    ///   Asobikata = the roofed notice board "あそびかた", east of the spawn beside the shopkeeper, facing the spawn. Since IMP-UI-002
+    ///               wave 2 (docs/plans/2026-10-03-onsite-guides.md §3): a two-line strip (how to open the hand menu / walk, wash and map
+    ///               are explained at the leash racks, the wash stations and the map board) and 3 papers: frisbee (two papers wide, the
+    ///               step cuts F1-F4 with number badges and captions, the note cuts N1 / N2), ball (B1 / B2), points and trainer
+    ///               (unchanged). The cuts are Guide/13's atlas (KH_PlayGuideCuts.png) read through its manifest; every word over them
+    ///               is a TMP label bound to the menu's own keys (.Cuts.cs). Guide/1 refuses without the atlas / manifest;
     ///   Map       = the trail-head map board (the hand map's texture KH_TravelMap.png, the 6 spots, the wash stations, "you are
     ///               here"), west of the trail start, facing the spawn / the trail;
     ///   Kominka   = IMP-WLD-006: the 古民家ドッグラン board beside the gate. Interact (KH_PortalBoard, local only) shows the scene's one
@@ -86,18 +90,17 @@ namespace KominkaHillside.Editor
         const float ReadDistance = 1.8f, EyeStanding = 1.6f, EyeSeated = 1.15f;
 
         // ---------------------------------------------------------------- Asobikata layout (canvas units = mm, centre origin; 3240 x 1440)
+        // 2026-10-03 IMP-UI-002 wave 2 (docs/plans/2026-10-03-onsite-guides.md §3): the strip has two lines (+48 mm, its top edge kept),
+        // the papers are 1060 -> 1010 mm (bottom edge kept), so the canvas and the board stay the same size. The papers and the cut
+        // slots are in KH_GuideBoardsEditor.Cuts.cs.
         static readonly Vector2 AsobHeaderPos = new Vector2(0f, 625f), AsobHeaderPlate = new Vector2(3080f, 170f), AsobHeaderText = new Vector2(3000f, 160f);
-        static readonly Vector2 StripPos = new Vector2(0f, 470f), StripSize = new Vector2(3080f, 90f), StripTextSize = new Vector2(3020f, 80f);
-        static readonly Vector2 PaperSize = new Vector2(740f, 1060f);
-        const float PaperY = -170f;
-        static readonly float[] PaperX = { -1155f, -385f, 385f, 1155f };
-        static readonly string[] PaperNames = { "Paper_Walk", "Paper_Frisbee", "Paper_Wash", "Paper_Shop" };
-        static readonly string[] PaperKeys = { "walk", "frisbee", "wash", "shop" };
-        // 2026-10-03 (coordinator, from the captures): the bodies filled only ~55-60 % of the papers. Body max per paper so the ja text fills
-        // ~85-90 % (estimated from the font's advances and line height; the longer languages shrink toward BodyMin), line spacing +12.
-        static readonly Vector2 TitlePos = new Vector2(0f, 465f), TitleSize = new Vector2(680f, 100f), BodyPos = new Vector2(0f, -55f), BodySize = new Vector2(680f, 920f);
-        static readonly float[] BodyMaxPerPaper = { 38f, 40f, 34f, 32f };   // walk / frisbee / wash / shop (was 31 for all)
-        const float HeaderMax = 130f, HeaderMin = 80f, StripMax = 36f, StripMin = 22f, TitleMax = 72f, TitleMin = 44f, BodyMin = 22f, BodyLineSpacing = 12f;
+        static readonly Vector2 StripPos = new Vector2(0f, 446f), StripSize = new Vector2(3080f, 138f);
+        static readonly Vector2 StripLine1Pos = new Vector2(0f, 32f), StripLine1Size = new Vector2(3020f, 62f);
+        static readonly Vector2 StripLine2Pos = new Vector2(0f, -34f), StripLine2Size = new Vector2(3020f, 56f);
+        // the points / trainer paper keeps its title / body positions; only its body box is 50 mm shorter (paper 1060 -> 1010)
+        static readonly Vector2 TitlePos = new Vector2(0f, 440f), BodyPos = new Vector2(0f, -55f), BodySize = new Vector2(680f, 870f);
+        const float TitleH = 100f, ShopBodyMax = 32f;
+        const float HeaderMax = 130f, HeaderMin = 80f, StripMax = 36f, StripMin = 22f, PointerMax = 34f, PointerMin = 22f, TitleMax = 72f, TitleMin = 44f, BodyMin = 22f, BodyLineSpacing = 12f;
 
         // ---------------------------------------------------------------- Map layout (canvas 1300 x 1200; the paper's children in paper-local mm)
         // 2026-10-03: the lower third was empty -> the paper is 110 mm shorter, the map 760 -> 820, the place list 38 -> 44 mm.
@@ -128,16 +131,17 @@ namespace KominkaHillside.Editor
 
         // ---------------------------------------------------------------- bound labels (UILocalizationBindings.json, root KH_GuideBoards)
         class LabelSpec { public string path, key; public LabelSpec(string p, string k) { path = p; key = k; } }
-        static readonly LabelSpec[] Labels =
+        /// <summary>The fixed labels. The cut captions and the callouts come from the cut manifest (CutLabels, .Cuts.cs);
+        /// Ctx.labels is the whole list the scene and UILocalizationBindings.json must agree on.</summary>
+        static readonly LabelSpec[] StaticLabels =
         {
             new LabelSpec("Asobikata/Canvas/Header", "guide.board.title"),
             new LabelSpec("Asobikata/Canvas/MenuStrip/Text", "guide.menu"),
-            new LabelSpec("Asobikata/Canvas/Paper_Walk/Title", "guide.walk.title"),
-            new LabelSpec("Asobikata/Canvas/Paper_Walk/Body", "guide.walk.body"),
+            new LabelSpec("Asobikata/Canvas/MenuStrip/Pointer", "guide.pointer"),
             new LabelSpec("Asobikata/Canvas/Paper_Frisbee/Title", "guide.frisbee.title"),
-            new LabelSpec("Asobikata/Canvas/Paper_Frisbee/Body", "guide.frisbee.body"),
-            new LabelSpec("Asobikata/Canvas/Paper_Wash/Title", "guide.wash.title"),
-            new LabelSpec("Asobikata/Canvas/Paper_Wash/Body", "guide.wash.body"),
+            new LabelSpec("Asobikata/Canvas/Paper_Frisbee/More", "guide.frisbee.more"),
+            new LabelSpec("Asobikata/Canvas/Paper_Ball/Title", "guide.ball.title"),
+            new LabelSpec("Asobikata/Canvas/Paper_Ball/More", "guide.ball.more"),
             new LabelSpec("Asobikata/Canvas/Paper_Shop/Title", "guide.shop.title"),
             new LabelSpec("Asobikata/Canvas/Paper_Shop/Body", "guide.shop.body"),
             new LabelSpec("Map/Canvas/Header", "guide.map.title"),
@@ -163,6 +167,9 @@ namespace KominkaHillside.Editor
             public Transform root;                 // null before the first build
             public List<Transform> washStations = new List<Transform>();
             public VRC.SDK3.Components.VRCPortalMarker portal; public string portalRoomId;   // IMP-WLD-006: the one world portal of the scene
+            // IMP-UI-002 wave 2: Guide/13's cut atlas + manifest (board A's frisbee / ball papers), the rounded backing sprite
+            public KH_PlayGuideCaptureEditor.Manifest cuts; public Texture2D cutAtlas; public Sprite round;
+            public List<LabelSpec> labels = new List<LabelSpec>();   // StaticLabels + the cut captions / callouts
         }
 
         static Ctx Resolve(bool forBuild)
@@ -178,21 +185,29 @@ namespace KominkaHillside.Editor
             var shared = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KD_ShopSetupEditor.SharedFontPath);
             if (shared != c.font) throw new InvalidOperationException("the menu font is not " + KD_ShopSetupEditor.SharedFontPath + "; nothing changed");
             c.catalog = KD_LocalizationEditor.Load();
+            // IMP-UI-002 wave 2: board A's cuts come from Guide/13 (atlas + manifest); without them nothing is built
+            c.cuts = LoadCuts(out c.cutAtlas);
+            var cutProblems = CutsProblems(c.cuts, c.cutAtlas);
+            if (cutProblems.Count > 0) throw new InvalidOperationException("the play guide cuts are not usable (" + string.Join("; ", cutProblems.Take(6)) + "): run Guide/13 - Capture Play Guide Cuts first; nothing changed");
+            c.round = KD_UiSpriteEditor.LoadRound();
+            if (c.round == null) throw new InvalidOperationException(KD_UiSpriteEditor.RoundSpritePath + " missing (the menu's rounded sprite, baked by the menu builders); nothing changed");
+            c.labels = StaticLabels.Concat(CutLabels(c.cuts)).ToList();
             var missingTexts = new List<string>();
             foreach (var lang in c.catalog.languages)
-                foreach (var l in Labels)
+                foreach (var l in c.labels)
                 {
                     var e = lang.texts.FirstOrDefault(x => x.key == l.key);
                     if (e == null || string.IsNullOrWhiteSpace(e.text)) missingTexts.Add(lang.code + ":" + l.key);
                 }
-            if (missingTexts.Count > 0) throw new InvalidOperationException("guide texts missing in " + KD_MenuFinishEditor.CatalogPath + ": " + string.Join(", ", missingTexts.Take(12)) + "; nothing changed");
+            if (missingTexts.Count > 0) throw new InvalidOperationException("guide texts missing in " + KD_MenuFinishEditor.CatalogPath + " (a callout key of the cut manifest that is not in this catalog needs a mirror in CalloutMirrors): " + string.Join(", ", missingTexts.Take(12)) + "; nothing changed");
             var manifest = JsonUtility.FromJson<KD_LocalizationEditor.Manifest>(File.ReadAllText(KD_LocalizationEditor.BindingsPath));
-            foreach (var l in Labels)
+            foreach (var l in c.labels)
                 if (!manifest.labels.Any(b => b.root == RootName && b.path == l.path && b.key == l.key))
-                    throw new InvalidOperationException("binding missing in " + KD_LocalizationEditor.BindingsPath + ": " + RootName + "/" + l.path + " = " + l.key + "; nothing changed");
+                    throw new InvalidOperationException("binding missing in " + KD_LocalizationEditor.BindingsPath + ": " + RootName + "/" + l.path + " = " + l.key
+                        + " (the cut manifest's captions / callouts must match the bindings; re-captured with other callouts? update the bindings); nothing changed");
             if (!(manifest.interactions ?? new KD_LocalizationEditor.Binding[0]).Any(b => b.root == RootName && b.path == InteractPath && b.key == InteractKey))
                 throw new InvalidOperationException("interaction binding missing in " + KD_LocalizationEditor.BindingsPath + ": " + RootName + "/" + InteractPath + " = " + InteractKey + "; nothing changed");
-            var foreign = manifest.labels.Where(b => b.root == RootName && !Labels.Any(l => l.path == b.path)).Select(b => b.path).ToArray();
+            var foreign = manifest.labels.Where(b => b.root == RootName && !c.labels.Any(l => l.path == b.path)).Select(b => b.path).ToArray();
             if (foreign.Length > 0) throw new InvalidOperationException("bindings under " + RootName + " that this builder does not make: " + string.Join(", ", foreign) + "; nothing changed");
             if (forBuild)
             {
@@ -312,7 +327,7 @@ namespace KominkaHillside.Editor
                 }
 
                 var log = new StringBuilder();
-                KD_ShopSetupEditor.AddGlyphs(GlyphText(c.catalog), log);
+                KD_ShopSetupEditor.AddGlyphs(GlyphText(c), log);
                 // the language tables (keys / texts of every language) first, then the label bindings: the same pair as Menu Finish (RebindIfPresent)
                 KD_LocalizationEditor.Configure(c.language, c.catalog, log);
                 KD_LocalizationEditor.Bind(c.language, c.catalog, log);
@@ -362,14 +377,14 @@ namespace KominkaHillside.Editor
             if (go.scene != scene) UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, scene);
         }
 
-        /// <summary>The ja / en (glyphs = self) texts of the guide keys, without rich-text tags, plus the map's digits.</summary>
-        static string GlyphText(KD_LocalizationEditor.Catalog catalog)
+        /// <summary>The ja / en (glyphs = self) texts of the bound keys, without rich-text tags, plus the digits (map numbers, step badges).</summary>
+        static string GlyphText(Ctx c)
         {
             var s = new StringBuilder("0123456789");
-            foreach (var lang in catalog.languages)
+            foreach (var lang in c.catalog.languages)
             {
                 if (!KD_LocalizationEditor.Bundled(lang)) continue;
-                foreach (var l in Labels) s.Append(Visible(KD_LocalizationEditor.Text(catalog, lang.code, l.key)));
+                foreach (var l in c.labels) s.Append(Visible(KD_LocalizationEditor.Text(c.catalog, lang.code, l.key)));
             }
             return s.ToString();
         }
@@ -675,14 +690,21 @@ namespace KominkaHillside.Editor
         {
             Img(canvas, "HeaderPlate", AsobHeaderPos, AsobHeaderPlate, HeaderPlateColor, null, keep);
             Txt(canvas, "Header", AsobHeaderPos, AsobHeaderText, HeaderMax, HeaderMin, TextAlignmentOptions.Center, SignInk, false, c, keep);
+            // two lines: how to open the hand menu (as before) / where the walk, wash and map explanations are (IMP-UI-002)
             var strip = Img(canvas, "MenuStrip", StripPos, StripSize, StripWashi, null, keep);
-            Txt(strip.transform, "Text", Vector2.zero, StripTextSize, StripMax, StripMin, TextAlignmentOptions.Center, Sumi, false, c, keep);
-            for (int i = 0; i < PaperNames.Length; i++)
+            Txt(strip.transform, "Text", StripLine1Pos, StripLine1Size, StripMax, StripMin, TextAlignmentOptions.Center, Sumi, false, c, keep);
+            Txt(strip.transform, "Pointer", StripLine2Pos, StripLine2Size, PointerMax, PointerMin, TextAlignmentOptions.Center, Sumi, false, c, keep);
+            foreach (var spec in Papers)
             {
-                var paper = Img(canvas, PaperNames[i], new Vector2(PaperX[i], PaperY), PaperSize, Washi, null, keep);
-                Txt(paper.transform, "Title", TitlePos, TitleSize, TitleMax, TitleMin, TextAlignmentOptions.Center, PaperKeys[i] == "shop" ? Vermilion : Sumi, false, c, keep);
-                var body = Txt(paper.transform, "Body", BodyPos, BodySize, BodyMaxPerPaper[i], BodyMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
-                body.lineSpacing = BodyLineSpacing; EditorUtility.SetDirty(body);
+                var paper = Img(canvas, spec.name, new Vector2(spec.x, PaperY), new Vector2(spec.width, PaperH), Washi, null, keep);
+                Txt(paper.transform, "Title", TitlePos, new Vector2(spec.width - 60f, TitleH), TitleMax, TitleMin, TextAlignmentOptions.Center, spec == PShop ? Vermilion : Sumi, false, c, keep);
+                if (spec == PShop)
+                {
+                    // DES-UI-005: unchanged content (only 50 mm shorter)
+                    var body = Txt(paper.transform, "Body", BodyPos, BodySize, ShopBodyMax, BodyMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
+                    body.lineSpacing = BodyLineSpacing; EditorUtility.SetDirty(body);
+                }
+                else BuildCutPaper(paper.rectTransform, spec, c, keep);
             }
         }
 

@@ -20,7 +20,8 @@ namespace KominkaHillside.Editor
     ///                     ボードの左上と縮小表示がその RT を出す。撮り終えたらカメラは無効
     ///   H2-wrap           さらに 6 回 → 遊びの 7 枚目で遊びのいちばん古い枠 (18) が置き換わり、新しい順に並ぶ (18, 23, 22, 21, 20, 19)。散歩・撫での枠は使わない
     ///   H6-category       散歩の枠へ 13 回 (散歩のきっかけは W2 なので、実行時だけ _hillsideGroupOverride = 0 にして撮る) → 散歩の中だけで上書き (0 が 2 回目)、
-    ///                     遊びの 6 枚は残る (合計 18 枚 = 3 ページ)
+    ///                     それまでの写真は残る (H1 + H2 の後なら 18 枚 = 3 ページ、H2 を回さなければ H1 の 1 枚 + 12 = 13 枚 = 2 ページ。
+    ///                     H4 のページ数の期待は実際の枚数から計算する)
     ///   H3-off            設定の [写真: ON/OFF] (KH_PhotoAlbum._ToggleCapture) で OFF → 見回りが止まり、きっかけが来ても撮らない、写真は残る、保存値 0。
     ///                     もう一度押して ON → 保存値 1、RT は作り直さない (同じ寸法)
     ///   H4-menu           手元メニューの [写真] (KD_TreatPouch._PhotoOpen) → 写真の面がボードと同じ RT を出す、「新しい」の印、
@@ -442,6 +443,35 @@ namespace KominkaHillside.Editor
         const int WalkDog = 0;   // Corgi
         static int shotsBefore;
         static double waitFrom;
+        static float fadeEndTime;   // H7: Time.time of the first frame the fade is idle again
+        static float eventMark;     // Time.time at the start of a capture window (DescribeCaptures)
+
+        static string SlotCategory(int s)
+        {
+            for (int g = KominkaDogRun.KD_PhotoDirector.HillsideGroupCount - 1; g >= 0; g--) if (s >= GroupFirst(g)) return KH_PhotoGalleryEditor.GroupNames[g];
+            return "?";
+        }
+
+        /// <summary>このウィンドウで増えた写真の枠とカテゴリ (並びの新しい方から)、と t0 以後に時刻を残した出来事 (どの撮影か)。
+        /// 受け渡し・集合写真は時刻を残さないので、どれにも当たらなければそれ。</summary>
+        static string DescribeCaptures(int since, float t0)
+        {
+            int n = Captures() - since; var order = Order(); var parts = new List<string>();
+            for (int k = 0; k < n && k < order.Length; k++) parts.Add("slot " + order[k] + " (" + SlotCategory(order[k]) + ")");
+            var events = new List<string>();
+            void Ev(UdonBehaviour u, string field, string name)
+            {
+                object o;
+                if (u != null && u.TryGetProgramVariable(field, out o) && o is float f && f >= t0) events.Add(name + " at " + f.ToString("F2"));
+            }
+            Ev(uDirector, "_lastChaseShot", "chase (a dog started running: KD_DogWanderController.Shared.cs:424 / fetch chase)");
+            Ev(uDirector, "_lastPlayShot", "dogs playing");
+            Ev(uDirector, "_lastFrisbeeShot", "frisbee catch");
+            Ev(uDirector, "_lastPetShot", "pet burst");
+            Ev(uWatcher, "_lastWalkShotAt", "walk");
+            return n + " new [" + string.Join(", ", parts) + "]; events since Time.time " + t0.ToString("F2") + ": "
+                + (events.Count == 0 ? "none with a time (a fetch drop or a group photo)" : string.Join(", ", events));
+        }
         static bool leashedByHarness;
 
         /// <summary>犬 0 を自分につなぐ / 外す。KH_LeashManager.walkers / hands を実行時だけ書く (Owner の自分の書き込み。歩行のハーネスと同じ手。
@@ -505,22 +535,28 @@ namespace KominkaHillside.Editor
             // ---- H6w: the time + distance trigger -> one walk photo, the dog's-eye by definition ----
             if (On("H6w-walk-trigger"))
             {
-                steps.Add(Do("H6w-walk-trigger", () => { capturesBefore = Captures(); shotsBefore = Get<int>(uWatcher, "_shots"); uWatcher.SetProgramVariable("_fadeUntil", 0f); PokeTimeTrigger(); }));
-                steps.Add(Until("H6w-walk-trigger", () => Captures() == capturesBefore + 1, 4, "no walk photo after the time + distance trigger (see the notes for the watcher's skip)"));
-                steps.Add(Until("H6w-walk-trigger", () => !cam.enabled, 1, "camera stayed enabled after the walk photo"));
+                // Counted by the watcher (_shots), not by all captures: the leashed dog's run edges (KD_DogWanderController.Shared.cs:424 ->
+                // _OnDogChase) and the other dogs' play edges take their own "play" photos at any time (run 20261003-102254, H7)
+                steps.Add(Do("H6w-walk-trigger", () => { capturesBefore = Captures(); shotsBefore = Get<int>(uWatcher, "_shots"); eventMark = Time.time; uWatcher.SetProgramVariable("_fadeUntil", 0f); PokeTimeTrigger(); }));
+                steps.Add(Until("H6w-walk-trigger", () => Get<int>(uWatcher, "_shots") > shotsBefore, 4, "no walk photo after the time + distance trigger (see the notes for the watcher's skip)"));
+                steps.Add(Until("H6w-walk-trigger", () => Captures() >= capturesBefore + 1 && !cam.enabled, 1, "the walk photo did not finish (camera still enabled)"));
                 steps.Add(Do("H6w-walk-trigger", () =>
                 {
                     object skip; uWatcher.TryGetProgramVariable("_lastSkip", out skip);
                     Note("watcher last skip '" + skip + "', director reason '" + WalkReason() + "'");
                     Expect(Get<int>(uWatcher, "_shots") == shotsBefore + 1, "the watcher counted one walk photo");
+                    int extra = Captures() - capturesBefore - 1;
+                    if (extra != 0) Note("other captures in this window: " + DescribeCaptures(capturesBefore, eventMark));
                     var order = Order();
-                    Expect(order[0] >= walkFirst && order[0] < walkFirst + walkSize, "the walk photo went into a walk slot (" + order[0] + ")");
+                    int newest = Math.Max(1, Captures() - capturesBefore);
+                    Expect(order.Take(newest).Any(s => s >= walkFirst && s < walkFirst + walkSize), "the walk photo went into a walk slot (newest " + string.Join(",", order.Take(newest)) + ")");
                     int kind = Get<int>(uDirector, "_walkLastKind");
                     if (kind == KominkaDogRun.KD_PhotoDirector.WalkShotDogEye)
                     {
                         Vector3 pos = Get<Vector3>(uDirector, "_walkLastPos"), dir = Get<Vector3>(uDirector, "_walkLastDir"), head = Get<Vector3>(uDirector, "_walkLastHead"), rf = Get<Vector3>(uDirector, "_walkLastRootFwd");
-                        Expect(Vector3.Distance(cam.transform.position, pos) < 0.001f && Vector3.Angle(cam.transform.forward, dir) < 0.5f, "the camera is where the director put it");
-                        Expect(Mathf.Approximately(cam.fieldOfView, KH_PhotoGalleryEditor.DogEyeFov), "dog's-eye FOV " + cam.fieldOfView);
+                        if (extra == 0) Expect(Vector3.Distance(cam.transform.position, pos) < 0.001f && Vector3.Angle(cam.transform.forward, dir) < 0.5f, "the camera is where the director put it");
+                        else Note("the camera moved on to another photo afterwards: the pose is judged from the director's record only");
+                        if (extra == 0) Expect(Mathf.Approximately(cam.fieldOfView, KH_PhotoGalleryEditor.DogEyeFov), "dog's-eye FOV " + cam.fieldOfView);
                         rf.y = 0f; rf.Normalize();
                         Vector3 off = pos - head; float along = Vector3.Dot(off, rf);
                         Vector3 side = off - rf * along - Vector3.up * off.y;
@@ -548,27 +584,45 @@ namespace KominkaHillside.Editor
                 steps.Add(Do("H7-fade-gate", () =>
                 {
                     if (uFade == null) { Fail("KH_TravelFade is not in the scene (Course/84): the fade gate cannot be tested"); return; }
-                    capturesBefore = Captures(); PokeTimeTrigger();
+                    // the poke and _Begin are one editor callback: no Udon tick runs between them, so every watcher tick after the poke sees the fade
+                    capturesBefore = Captures(); shotsBefore = Get<int>(uWatcher, "_shots"); eventMark = Time.time; PokeTimeTrigger();
                     uFade.SendCustomEvent("_Begin");
-                    waitFrom = EditorApplication.timeSinceStartup;
+                    waitFrom = EditorApplication.timeSinceStartup;   // only for the plain waits below; the judgement uses Time.time (the product's clock)
                 }));
                 steps.Add(Until("H7-fade-gate", () => EditorApplication.timeSinceStartup - waitFrom > 1.5, 3, "wait"));
                 steps.Add(Do("H7-fade-gate", () =>
                 {
                     object skip; uWatcher.TryGetProgramVariable("_lastSkip", out skip);
-                    Expect(Captures() == capturesBefore, "no walk photo during the fade (" + Captures() + " vs " + capturesBefore + ")");
+                    // A walk photo = the watcher's count (_shots) or a new capture in a walk slot. The dogs' own event photos (chase / play /
+                    // drop: category "play") are not walk photos and the fade does not gate them (design §0: the gate is for walk photos)
+                    int during = Captures() - capturesBefore;
+                    bool walkSlot = during > 0 && Order().Take(during).Any(s => s >= GroupFirst(KominkaDogRun.KD_PhotoDirector.HillsideGroupWalk) && s < GroupFirst(KominkaDogRun.KD_PhotoDirector.HillsideGroupWalk) + KH_PhotoGalleryEditor.GroupSizes[KominkaDogRun.KD_PhotoDirector.HillsideGroupWalk]);
+                    Expect(Get<int>(uWatcher, "_shots") == shotsBefore && !walkSlot, "no walk photo during the fade (watcher " + (Get<int>(uWatcher, "_shots") - shotsBefore) + ", new walk-slot captures " + (walkSlot ? "yes" : "none") + ")");
+                    Note("captures during the fade: " + (during == 0 ? "none" : DescribeCaptures(capturesBefore, eventMark)));
                     Expect((skip as string) == "fade", "the watcher says it waits for the fade ('" + skip + "')");
+                    capturesBefore = Captures(); eventMark = Time.time;   // the next window starts here
                     uFade.SendCustomEvent("_Release");
                 }));
-                steps.Add(Until("H7-fade-gate", () => Get<int>(uFade, "_state") == 0, 3, "the fade did not finish after _Release"));
-                steps.Add(Do("H7-fade-gate", () => waitFrom = EditorApplication.timeSinceStartup));
-                steps.Add(Until("H7-fade-gate", () => EditorApplication.timeSinceStartup - waitFrom > 1.5, 3, "wait"));
-                steps.Add(Do("H7-fade-gate", () => Expect(Captures() == capturesBefore, "no walk photo in the first 1.5 s after the fade")));
-                steps.Add(Until("H7-fade-gate", () => Captures() == capturesBefore + 1, 4, "no walk photo after the 2 s grace"));
+                // The fade's end and the shot are both judged on Time.time (the clock KH_PhotoWalkWatcher uses), not on the Editor clock:
+                // the end is sampled on the first frame the fade is idle again (Until is polled every frame), and the shot time is the
+                // watcher's own record (_lastWalkShotAt = Time.time when _WalkShoot started the capture). A frame hitch cannot move either.
+                steps.Add(Until("H7-fade-gate", () =>
+                {
+                    if (Get<int>(uFade, "_state") != 0) return false;
+                    fadeEndTime = Time.time;
+                    return true;
+                }, 3, "the fade did not finish after _Release"));
+                steps.Add(Until("H7-fade-gate", () => Get<int>(uWatcher, "_shots") > shotsBefore, 5, "no walk photo within 5 s after the fade ended (the 2 s grace should have passed)"));
+                steps.Add(Until("H7-fade-gate", () => Captures() >= capturesBefore + 1, 1, "the watcher counted a walk photo but no capture finished"));
                 steps.Add(Do("H7-fade-gate", () =>
                 {
-                    double after = EditorApplication.timeSinceStartup - waitFrom;
-                    Expect(after >= 1.9, "the first walk photo came " + after.ToString("F2") + " s after the fade ended (>= 2 s grace)");
+                    float shotAt = Get<float>(uWatcher, "_lastWalkShotAt");
+                    float after = shotAt - fadeEndTime;
+                    int n = Captures() - capturesBefore;
+                    Expect(Get<int>(uWatcher, "_shots") == shotsBefore + 1, "exactly one walk photo across the fade and its grace (watcher " + (Get<int>(uWatcher, "_shots") - shotsBefore) + ")");
+                    if (n != 1) Note("captures after the fade (the walk photo + the dogs' own events): " + DescribeCaptures(capturesBefore, eventMark));
+                    Expect(after >= 1.9f, "the walk photo was taken " + after.ToString("F2") + " s (Time.time) after the fade ended: none before the 2 s grace, the first one at >= 1.9 s");
+                    Note("fade ended at Time.time " + fadeEndTime.ToString("F2") + ", shot at " + shotAt.ToString("F2") + " (the watcher sees the end on its next 0.5 s tick, so 2.0..2.6 s is normal)");
                 }));
                 steps.Add(Until("H7-fade-gate", () => !cam.enabled, 1, "camera stayed enabled"));
             }
@@ -600,7 +654,7 @@ namespace KominkaHillside.Editor
                     int kind = Get<int>(uDirector, "_walkLastKind");
                     Expect(kind == KominkaDogRun.KD_PhotoDirector.WalkShotSelfie, "selfie first with the dog behind the player -> a selfie (kind " + kind + ", " + WalkReason() + ")");
                 }));
-                steps.Add(Until("H8-selfie", () => Captures() == capturesBefore + 1 || current.status == "FAIL", 3, "the selfie was not captured"));
+                steps.Add(Until("H8-selfie", () => Captures() >= capturesBefore + 1 || current.status == "FAIL", 3, "the selfie was not captured"));
                 steps.Add(Until("H8-selfie", () => !cam.enabled, 1, "camera stayed enabled"));
                 steps.Add(Do("H8-selfie", () => { if (Get<int>(uDirector, "_walkLastKind") == KominkaDogRun.KD_PhotoDirector.WalkShotSelfie) CheckSelfie(WalkDog); }));
                 steps.Add(Do("H8-selfie", () =>
@@ -708,7 +762,7 @@ namespace KominkaHillside.Editor
                     Expect(Get<int>(uAlbum, "_menuPage") == 0, "▶ on the last page wraps to page 1");
                     CheckMenuPage(0);
                 }
-                else Note("menu pager not tested: " + cnt + " photos (one page; H6 makes 3 pages)");
+                else Note("menu pager not tested: " + cnt + " photos (one page; H6 adds 12 walk photos -> 2 pages or more)");
                 uAlbum.SendCustomEvent("_MenuPick" + Math.Min(3, Math.Max(0, cnt - 1)));
             }));
             steps.Add(Do("H4-menu", () =>
@@ -736,8 +790,9 @@ namespace KominkaHillside.Editor
             steps.Add(Do("H4-menu", () =>
             {
                 int cnt = Get<int>(uAlbum, "_count");
-                if (cnt <= PageSize) { Note("board pager not tested: " + cnt + " photos (one page; H6 makes 3 pages)"); return; }
+                if (cnt <= PageSize) { Note("board pager not tested: " + cnt + " photos (one page; H6 adds 12 walk photos -> 2 pages or more)"); return; }
                 uAlbum.SetProgramVariable("boardPageResetSeconds", 1f);   // runtime only (the scene keeps 60 s)
+                Note("the board's return to page 1 is shortened from 60 s to 1 s at runtime only (the scene value stays 60 s; Photo/2 checks it)");
                 uAlbum.SendCustomEvent("_BoardPageNext");
                 Expect(Get<int>(uAlbum, "_boardPage") == 1, "board ▶ -> page 2");
                 CheckBoardOrder(-1, 1);

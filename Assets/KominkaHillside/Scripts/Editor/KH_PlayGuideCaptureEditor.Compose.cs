@@ -16,6 +16,9 @@ namespace KominkaHillside.Editor
         // ---------------------------------------------------------------- style (plan §3.3)
         public static readonly Color Vermilion = new Color(0xB5 / 255f, 0x43 / 255f, 0x2A / 255f, 1f);   // the boards' accent #B5432A
         static readonly Color White = Color.white;
+        // board-scale pass (a 512 px cut is printed 320-380 mm wide): the vermilion strokes get a thin DARK edge instead of the
+        // white one, so they stay fully vermilion instead of blending to pink. #2A1A12 at 80 %.
+        static readonly Color EdgeDark = new Color(0x2A / 255f, 0x1A / 255f, 0x12 / 255f, 0.8f);
         static readonly Color ShadowCol = new Color(0f, 0f, 0f, 0.38f);
         static readonly Color LeaderUnder = new Color(0f, 0f, 0f, 0.45f);
         static readonly Color HandFill = new Color(1f, 1f, 1f, 0.16f);
@@ -23,10 +26,16 @@ namespace KominkaHillside.Editor
         public static readonly Color PaleSky = new Color(0xCF / 255f, 0xE3 / 255f, 0xF0 / 255f, 1f);         // #CFE3F0 (plan §4.1 step 3)
         static readonly Color MenuBackdrop = new Color(0.16f, 0.15f, 0.14f, 1f);                             // letterbox around the menu panel
         // widths in px of a 512 x 384 cut (plan §3.3: frame 6 px, arrow 8 px, inset border 4 px, white edging 2 px)
-        const float FrameWidth = 6f, Edge = 2f, FrameRadius = 10f, FramePad = 6f;
-        const float ArrowWidth = 8f, ArrowHeadLength = 26f, ArrowHeadHalf = 15f;
-        const float InsetBorder = 4f, LeaderWidth = 3f;
-        const float DashOn = 18f, DashOff = 12f;
+        // widths in px of a 512 x 384 cut. Board-scale pass: strokes 12 px (was 6, read pink at 340 mm), dark edge 1.75 px,
+        // arrow heads scaled with the shaft, inset border 5 px white between dark hairlines.
+        const float FrameWidth = 12f, Edge = 1.75f, FrameRadius = 12f;
+        /// <summary>Gap between the framed target and the frame's inner (dark) edge: the frame grows OUTWARD and never covers the
+        /// target's face. The menu cuts keep this area undimmed.</summary>
+        const float FramePad = 1f + Edge;
+        const float ArrowWidth = 12f, ArrowHeadLength = 38f, ArrowHeadHalf = 22f;
+        const float InsetBorder = 5f, LeaderWidth = 3f;
+        const float DashOn = 24f, DashOff = 14f;
+        const float HandLine = 5f;
 
         // ================================================================ image
         public sealed class Img
@@ -228,10 +237,11 @@ namespace KominkaHillside.Editor
         /// <summary>Rounded frame around a target rectangle: white edging under a vermilion stroke. Returns the outer rectangle.</summary>
         static Rect DrawFrame(Img img, Rect target, List<MarkPx> marks, string note)
         {
-            var r = Grow(target, FramePad);
+            // centre line: target + gap + dark edge + half the stroke, so the whole mark lies outside the target
+            var r = Grow(target, FramePad + Edge + FrameWidth * 0.5f);
             Func<Vector2, float> ring = p => Mathf.Abs(SdRoundRect(p, r, FrameRadius));
-            img.Paint(Grow(r, 8f), p => ring(p) - (FrameWidth * 0.5f + Edge), White);
-            img.Paint(Grow(r, 8f), p => ring(p) - FrameWidth * 0.5f, Vermilion);
+            img.Paint(Grow(r, FrameWidth), p => ring(p) - (FrameWidth * 0.5f + Edge), EdgeDark);
+            img.Paint(Grow(r, FrameWidth), p => ring(p) - FrameWidth * 0.5f, Vermilion);
             var outer = Grow(r, FrameWidth * 0.5f + Edge);
             marks.Add(new MarkPx { kind = "frame", rect = outer, note = note });
             return outer;
@@ -243,10 +253,11 @@ namespace KominkaHillside.Editor
             var c = target.center;
             // an ellipse through the padded rectangle's corners (x/a)^2 + (y/b)^2 = 1 with the aspect kept: scale by sqrt(2)
             var rad = new Vector2(target.width * 0.5f + pad, target.height * 0.5f + pad) * 1.18f;
-            rad.x = Mathf.Max(rad.x, 18f); rad.y = Mathf.Max(rad.y, 18f);
+            rad += Vector2.one * (Edge + FrameWidth * 0.5f);   // the inner edge stays where the old ring was: outward growth only
+            rad.x = Mathf.Max(rad.x, 24f); rad.y = Mathf.Max(rad.y, 24f);
             var box = new Rect(c.x - rad.x, c.y - rad.y, rad.x * 2f, rad.y * 2f);
-            img.Paint(Grow(box, 10f), p => Mathf.Abs(SdEllipse(p, c, rad)) - (FrameWidth * 0.5f + Edge), White);
-            img.Paint(Grow(box, 10f), p => Mathf.Abs(SdEllipse(p, c, rad)) - FrameWidth * 0.5f, Vermilion);
+            img.Paint(Grow(box, FrameWidth), p => Mathf.Abs(SdEllipse(p, c, rad)) - (FrameWidth * 0.5f + Edge), EdgeDark);
+            img.Paint(Grow(box, FrameWidth), p => Mathf.Abs(SdEllipse(p, c, rad)) - FrameWidth * 0.5f, Vermilion);
             var outer = Grow(box, FrameWidth * 0.5f + Edge);
             marks.Add(new MarkPx { kind = "ring", rect = outer, note = note });
             return outer;
@@ -261,9 +272,9 @@ namespace KominkaHillside.Editor
             var neck = to - u * ArrowHeadLength;
             var shaftEnd = to - u * (ArrowHeadLength * 0.6f);
             Vector2 h0 = to, h1 = neck + n * ArrowHeadHalf, h2 = neck - n * ArrowHeadHalf;
-            var box = Grow(BoundsOf(from, to, h1, h2), 8f);
-            img.Paint(box, p => SdSegment(p, from, shaftEnd) - (ArrowWidth * 0.5f + Edge), White);
-            img.Paint(box, p => SdTriangle(p, h0, h1, h2) - Edge, White);
+            var box = Grow(BoundsOf(from, to, h1, h2), ArrowWidth * 0.5f + Edge + 2f);
+            img.Paint(box, p => SdSegment(p, from, shaftEnd) - (ArrowWidth * 0.5f + Edge), EdgeDark);
+            img.Paint(box, p => SdTriangle(p, h0, h1, h2) - Edge, EdgeDark);
             img.Paint(box, p => SdSegment(p, from, shaftEnd) - ArrowWidth * 0.5f, Vermilion);
             img.Paint(box, p => SdTriangle(p, h0, h1, h2), Vermilion);
             marks.Add(new MarkPx { kind = "arrow", rect = box, note = note });
@@ -279,7 +290,7 @@ namespace KominkaHillside.Editor
             var u = (tip - before).normalized; var nrm = new Vector2(-u.y, u.x);
             var neck = tip - u * ArrowHeadLength;
             var dashes = new List<KeyValuePair<Vector2, Vector2>>();
-            float walked = 0f; bool on = true; float left = DashOn;
+            bool on = true; float left = DashOn;
             for (int i = 1; i < pts.Count; i++)
             {
                 var a = pts[i - 1]; var b = i == pts.Count - 1 ? neck : pts[i];
@@ -289,16 +300,16 @@ namespace KominkaHillside.Editor
                 {
                     float step = Mathf.Min(left, seg - t);
                     if (on) dashes.Add(new KeyValuePair<Vector2, Vector2>(a + dir * t, a + dir * (t + step)));
-                    t += step; left -= step; walked += step;
+                    t += step; left -= step;
                     if (left <= 1e-4f) { on = !on; left = on ? DashOn : DashOff; }
                 }
             }
             var all = new List<Vector2>(pts); all.Add(neck + nrm * ArrowHeadHalf); all.Add(neck - nrm * ArrowHeadHalf);
-            var box = Grow(BoundsOf(all.ToArray()), 10f);
+            var box = Grow(BoundsOf(all.ToArray()), ArrowWidth * 0.5f + Edge + 2f);
             Vector2 h1 = neck + nrm * ArrowHeadHalf, h2 = neck - nrm * ArrowHeadHalf;
-            foreach (var s in dashes) { var a = s.Key; var b = s.Value; img.Paint(Grow(BoundsOf(a, b), 8f), p => SdSegment(p, a, b) - (ArrowWidth * 0.5f + Edge), White); }
-            img.Paint(box, p => SdTriangle(p, tip, h1, h2) - Edge, White);
-            foreach (var s in dashes) { var a = s.Key; var b = s.Value; img.Paint(Grow(BoundsOf(a, b), 8f), p => SdSegment(p, a, b) - ArrowWidth * 0.5f, Vermilion); }
+            foreach (var s in dashes) { var a = s.Key; var b = s.Value; img.Paint(Grow(BoundsOf(a, b), ArrowWidth), p => SdSegment(p, a, b) - (ArrowWidth * 0.5f + Edge), EdgeDark); }
+            img.Paint(box, p => SdTriangle(p, tip, h1, h2) - Edge, EdgeDark);
+            foreach (var s in dashes) { var a = s.Key; var b = s.Value; img.Paint(Grow(BoundsOf(a, b), ArrowWidth), p => SdSegment(p, a, b) - ArrowWidth * 0.5f, Vermilion); }
             img.Paint(box, p => SdTriangle(p, tip, h1, h2), Vermilion);
             marks.Add(new MarkPx { kind = "dashed-arrow", rect = box, note = note });
         }
@@ -326,8 +337,9 @@ namespace KominkaHillside.Editor
             img.Blit(content, Mathf.RoundToInt(dstRect.x), Mathf.RoundToInt(dstRect.y));
             // border (on the inset's edge, drawn half outside so the content stays whole)
             var border = Grow(dstRect, InsetBorder * 0.5f);
-            img.Paint(Grow(border, 6f), p => Mathf.Abs(SdRoundRect(p, border, 3f)) - InsetBorder * 0.5f, White);
-            marks.Add(new MarkPx { kind = "inset", rect = Grow(border, InsetBorder * 0.5f), note = note });
+            img.Paint(Grow(border, InsetBorder + Edge + 2f), p => Mathf.Abs(SdRoundRect(p, border, 3f)) - (InsetBorder * 0.5f + Edge), EdgeDark);
+            img.Paint(Grow(border, InsetBorder + Edge + 2f), p => Mathf.Abs(SdRoundRect(p, border, 3f)) - InsetBorder * 0.5f, White);
+            marks.Add(new MarkPx { kind = "inset", rect = Grow(border, InsetBorder * 0.5f + Edge), note = note });
         }
 
         static Vector2 Nearest(Rect r, Vector2 toward)
@@ -358,8 +370,8 @@ namespace KominkaHillside.Editor
             };
             var box = Grow(new Rect(P(-0.8f, -1.6f), new Vector2(1.5f, 1.8f) * s), 8f);
             img.Paint(box, sd, HandFill);
-            img.Paint(box, p => Mathf.Abs(sd(p)) - 3.5f, HandUnder);
-            img.Paint(box, p => Mathf.Abs(sd(p)) - 2f, White);
+            img.Paint(box, p => Mathf.Abs(sd(p)) - (HandLine * 0.5f + Edge), HandUnder);
+            img.Paint(box, p => Mathf.Abs(sd(p)) - HandLine * 0.5f, White);
             marks.Add(new MarkPx { kind = "hand", rect = box, note = note });
         }
 
@@ -367,7 +379,7 @@ namespace KominkaHillside.Editor
         static void DrawBadge(Img img, Vector2 c, float r, int n, List<MarkPx> marks)
         {
             var box = Grow(new Rect(c.x - r, c.y - r, 2f * r, 2f * r), 4f);
-            img.Paint(box, p => (p - c).magnitude - (r + Edge), White);
+            img.Paint(box, p => (p - c).magnitude - (r + Edge), EdgeDark);
             img.Paint(box, p => (p - c).magnitude - r, Vermilion);
             float u = r * 0.42f, sw = r * 0.13f;
             Vector2 Q(float x, float y) { return c + new Vector2(x, y) * u; }

@@ -852,13 +852,8 @@
     },
     {
       "root": "KH_GuideBoards",
-      "path": "Asobikata/Canvas/Paper_Walk/Title",
-      "key": "guide.walk.title"
-    },
-    {
-      "root": "KH_GuideBoards",
-      "path": "Asobikata/Canvas/Paper_Walk/Body",
-      "key": "guide.walk.body"
+      "path": "Asobikata/Canvas/MenuStrip/Pointer",
+      "key": "guide.pointer"
     },
     {
       "root": "KH_GuideBoards",
@@ -867,18 +862,113 @@
     },
     {
       "root": "KH_GuideBoards",
-      "path": "Asobikata/Canvas/Paper_Frisbee/Body",
-      "key": "guide.frisbee.body"
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cap_F1",
+      "key": "guide.frisbee.cap1"
     },
     {
       "root": "KH_GuideBoards",
-      "path": "Asobikata/Canvas/Paper_Wash/Title",
-      "key": "guide.wash.title"
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cut_F1/Call0",
+      "key": "KD_TreatPouch.WordTabToy"
     },
     {
       "root": "KH_GuideBoards",
-      "path": "Asobikata/Canvas/Paper_Wash/Body",
-      "key": "guide.wash.body"
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cut_F1/Call1",
+      "key": "dog.labrador"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cut_F1/Call2",
+      "key": "KD_TreatPouch.WordToyBall"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cut_F1/Call3",
+      "key": "KD_TreatPouch.WordToyDisc"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cap_F2",
+      "key": "guide.frisbee.cap2"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cap_F3",
+      "key": "guide.frisbee.cap3"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cap_F4",
+      "key": "guide.frisbee.cap4"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cap_N1",
+      "key": "guide.frisbee.note1"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cap_N2",
+      "key": "guide.frisbee.note2"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cut_N2/Call0",
+      "key": "guide.cut.throw.label"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cut_N2/Call1",
+      "key": "guide.cut.throw.straight"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/Cut_N2/Call2",
+      "key": "guide.cut.throw.curve"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Frisbee/More",
+      "key": "guide.frisbee.more"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Ball/Title",
+      "key": "guide.ball.title"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Ball/Cap_B1",
+      "key": "guide.ball.cap1"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Ball/Cut_B1/Call0",
+      "key": "KD_TreatPouch.WordTabToy"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Ball/Cut_B1/Call1",
+      "key": "dog.labrador"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Ball/Cut_B1/Call2",
+      "key": "KD_TreatPouch.WordToyBall"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Ball/Cut_B1/Call3",
+      "key": "KD_TreatPouch.WordToyDisc"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Ball/Cap_B2",
+      "key": "guide.ball.cap2"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Asobikata/Canvas/Paper_Ball/More",
+      "key": "guide.ball.more"
     },
     {
       "root": "KH_GuideBoards",

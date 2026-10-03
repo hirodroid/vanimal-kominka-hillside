@@ -37,11 +37,16 @@ namespace KominkaHillside.Editor
                 Shot(dir, b.name + "_oblique35_2.0m", Eye(t, new Vector3(-s, 0f, -k), EyeStanding), target, lines);
                 if (b == Asob)
                 {
-                    // the leftmost / rightmost paper up close (the body text's smallest size)
-                    var left = t.TransformPoint(new Vector3(PaperX[0] * Mm, b.canvasBottom + (b.canvasMm.y * 0.5f + PaperY) * Mm, 0f));
-                    var right = t.TransformPoint(new Vector3(PaperX[3] * Mm, b.canvasBottom + (b.canvasMm.y * 0.5f + PaperY) * Mm, 0f));
-                    Shot(dir, b.name + "_paper_walk_1.2m", Eye(t, new Vector3(PaperX[0] * Mm, 0f, -1.2f), EyeStanding), left, lines);
-                    Shot(dir, b.name + "_paper_shop_1.2m", Eye(t, new Vector3(PaperX[3] * Mm, 0f, -1.2f), EyeStanding), right, lines);
+                    // each paper up close (IMP-UI-002 wave 2: frisbee is two papers wide -> 1.5 m so the whole paper is in the frame)
+                    foreach (var p in Papers)
+                    {
+                        float dist = p.width > 1000f ? 1.5f : 1.2f;
+                        var centre = t.TransformPoint(new Vector3(p.x * Mm, b.canvasBottom + (b.canvasMm.y * 0.5f + PaperY) * Mm, 0f));
+                        Shot(dir, b.name + "_" + p.name.ToLowerInvariant() + "_" + dist.ToString("F1") + "m", Eye(t, new Vector3(p.x * Mm, 0f, -dist), EyeStanding), centre, lines);
+                    }
+                    // the step cuts at their closest reading distance (callouts and badges)
+                    var steps = t.TransformPoint(new Vector3(PFrisbee.x * Mm, b.canvasBottom + (b.canvasMm.y * 0.5f + PaperY + StepY) * Mm, 0f));
+                    Shot(dir, b.name + "_frisbee_steps_0.9m", Eye(t, new Vector3(PFrisbee.x * Mm, 0f, -0.9f), EyeStanding), steps, lines);
                 }
                 if (a.spawn != null) Shot(dir, b.name + "_from_spawn", a.spawn.position + Vector3.up * EyeStanding, target, lines);
             }

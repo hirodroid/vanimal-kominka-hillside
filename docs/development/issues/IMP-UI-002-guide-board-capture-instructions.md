@@ -66,3 +66,16 @@ updated: 2026-10-03
 - メニュー: `Tools/KominkaHillside/Guide/10 - Draw Walk Guide Art` / `11 - Build Walk Guide Strips` / `12 - Verify Walk Guide Strips` / `14 - Capture Walk Guide Strips`。ファイル・寸法・文言は [計画 §9](../../plans/2026-10-03-onsite-guides.md)。
 - 確認済み: Unity 外の Roslyn で Assembly-CSharp / -Editor ともエラー 0、絵を Unity 外で描いて目視 (7 区画)。未確認: U# コンパイル、Guide/10〜12・14 の実行、シーンへの反映、PCVR / Desktop / Quest / iOS での見え方と端末の入れ替わり。
 - 残り: 統括が Unity で構築・検査・撮影 → ユーザーが現地で確認。看板 A の作り直しと撮影の仕組みは別の作業。
+
+## 2026-10-03 実装 (看板 A の組み替え)
+
+- 作ったもの (コードと文言のみ。**Unity は未実行**): 看板 A「あそびかた」を 3 紙 (フリスビー 1510 mm 幅・ボール・ポイントとトレーナー) へ。お散歩・洗うの紙と旧 5 キー (`guide.walk.*`・`guide.wash.*`・`guide.frisbee.body`) を外し、帯の 2 行目「お散歩はリード台で、洗うのは洗い場で、道は地図の看板で」を足した。フリスビーは Guide/13 のカット F1〜F4 (番号の丸 ①〜④ と字幕) と注意 N1・N2、ボールは B1・B2。カットの上の語 (おもちゃ・犬の名前・ボール・ディスク・投げ方・まっすぐ・曲げる) はメニューと同じキーに束縛した TMP で、画像に字は無い。紙は 1060 → 1010 mm、Canvas・板の大きさと位置は同じ。ポイントとトレーナーの中身は変えていない。新しい文言 16 キー × 13 言語 (AI 訳・未校正)。
+- Guide/1 は Guide/13 のアトラスと目録が無いと何も変えずに止まる。Guide/2 に目録・カット・吹き出し・重なり・紙の下の空白 (> 60 mm で WARN) などの検査を足した。寸法・文言・検査の一覧は [計画 §10](../../plans/2026-10-03-onsite-guides.md)。
+- 確認済み: Unity 外の Roslyn で Assembly-CSharp / -Editor ともエラー 0、翻訳表と束縛の整合 (Node)。未確認: Guide/1〜3 の実行、シーンへの反映、吹き出しの文字 (15〜20 mm) が 1.8 m で読めるか、13 言語の収まり、PCVR / Desktop / Quest / iOS での見え方。
+- 残り: 統括が Unity で構築・検査・撮影 → ユーザーが現地で確認。ポイントとトレーナーの紙の下の空白 (WARN の見込み) は DES-UI-005 の範囲で相談。
+
+2026-10-03 統括の確認 (Unity、Edit モードだけ。Play は不要と判断):
+
+- 撮影 Guide/13: 4 回目 (`PlayGuideCutsVersion` 4) で PLAY_GUIDE_CUTS_OK、8 カット、禁止物 (看板・洗い場・リード台・NPC) の写り込み 0、シーンは汚れない。途中の直し: 1 回目は「行けない所」が入口の NPC と看板を写し線も灰色に見えない・ボールの犬が矢印に隠れる・手の絵が切れる → 視点の探索と禁止物の除外、被写体が画面内にあることの検査、狙いの線は材質が空を映すので色だけの複製で描く ([BUG-ENV-001](BUG-ENV-001-mirror-default-materials.md))。N1 は実際の判定 (`_Reachable`) で「犬の道が川を横切る」投げ方を採用 (経路の点 302 付近)。看板の大きさでは枠が薄く見えたので線を 12 px・暗い縁へ。
+- 看板 Guide/1 → Guide/2: GUIDE_BOARDS_OK (653 項目、WARN 3: 地面の高低差 0.66 m (既存)、ポイントとトレーナーの紙の下の余白 92 mm (範囲外)、es の「投げ方」の推定あふれ)。Guide/3 で 1.5 m・3 m の撮影を確認。Menu/22 PASS、Guide/12 (散歩の帯) 267 OK。
+- 未確認: ユーザーの現地確認 (帯と看板の読みやすさ・高さ・向き、昼夜、Desktop / Quest / iOS)。13 言語は AI 訳で未校正。

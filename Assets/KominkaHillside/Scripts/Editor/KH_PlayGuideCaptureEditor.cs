@@ -34,7 +34,7 @@ namespace KominkaHillside.Editor
         public const string F4OverridePath = GuideFolder + "/Source~/F4.png";
         public const string OutDir = "Temp/kh-play-guide";
         /// <summary>Bump when the marks' look or the cut layout changes (the manifest carries it).</summary>
-        public const int PlayGuideCutsVersion = 3;   // 2: searched viewpoints, dimmed menu, unlit aim states; 3: F2 framing, N1 by the game verdict
+        public const int PlayGuideCutsVersion = 4;   // 2: searched viewpoints, dimmed menu, unlit aim states; 3: F2 framing, N1 by the game verdict; 4: board-scale marks (12 px strokes, dark edge)
         public const string ManifestFormat = "KH_PlayGuideCuts/1";
         /// <summary>Plan §3.2 / §3.3: the step numbers are UI on the board (a Ø56 circle + TMP digit at each cut's top-left), not
         /// pixels. Flip to bake a vermilion badge with a stroke digit into F1-F4 / B1-B2 instead (the manifest says which).</summary>

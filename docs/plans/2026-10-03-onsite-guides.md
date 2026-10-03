@@ -399,7 +399,70 @@ void Start()   // ローカル。同期なし。1 回だけ
 
 絵 (Unity 外で描いた見本、`scratchpad/guideart/walk_v1_vr.png` / `walk_v1_flat.png`、コミットしない): VR ① 横木に掛かった輪と、下から輪をつかむ手 / ② 犬の首の拡大、赤い首輪の金具に緑の輪を持った手が寄る / ③ 2 列のメニュー、右列のタイル 1 枚に印と指 / ④ 指さす手の点線が光る首輪へ、外れた輪が落ちる。Flat ① メニューの板と犬、犬の周りの点線の輪 / ② 3 行の中の行の 2 ボタンに印とポインター / ④ 点灯した行の幅広ボタンに印とポインター。
 
+## 10. 実装 (看板 A の組み替え、2026-10-03、as-built)
+
+**コードと文言のみ。Unity は未実行** (コンパイル・Guide/1〜3・Play は統括とユーザー)。Unity 外の Roslyn で Assembly-CSharp / -Editor ともエラー 0。撮影の仕組み (Guide/13、`KH_PlayGuideCaptureEditor*.cs`) は §4 の担当のもので、ここでは目録を読むだけ。
+
+| ファイル | 中身 |
+|---|---|
+| `Scripts/Editor/KH_GuideBoardsEditor.cs` | 帯 2 行 (`MenuStrip/Text` + `MenuStrip/Pointer`)、紙 3 枚、固定の束縛 `StaticLabels`。`Resolve` が目録を読み、無い・版違い・アトラスと目録の sha256 不一致なら「Guide/13 を先に」で止まる (何も変えない) |
+| `Scripts/Editor/KH_GuideBoardsEditor.Cuts.cs` (新) | 紙・カットの枠の寸法、目録の読み込み (`LoadCuts` / `CutsProblems`)、カットの組み立て (`BuildCutPaper`)、Guide/2 の追加検査 (`CheckCuts` / `CheckAsobLayout`) |
+| `Scripts/Editor/KH_GuideBoardsEditor.Verify.cs` | 上の検査の呼び出し、字幕の 30 mm 下限 (WARN)、`More` の埋まり率、洗い場 3 か所の照合を削除 (洗うの紙が無い) |
+| `Scripts/Editor/KH_GuideBoardsEditor.Capture.cs` | 近景を紙ごとに (`Asobikata_paper_frisbee_1.5m` / `_paper_ball_1.2m` / `_paper_shop_1.2m`) + 手順カットの 0.9 m (`Asobikata_frisbee_steps_0.9m`)。旧 `_paper_walk_1.2m` は無くなった |
+| `UITranslations.json` | 新 16 キー × 13 言語 (AI 訳・未校正)、旧 5 キーを削除 |
+| `UILocalizationBindings.json` | 看板 A の束縛 10 → 28 件 (旧 4 件を削除) |
+
+紙 (Canvas 3240 × 1440 mm と板・屋根は変えない):
+
+| 部品 | 値 (mm) |
+|---|---|
+| 帯 | 3080 × 138、中心 y 446 (上端 515 は従来どおり)。1 行目 3020 × 62 (36 → 22)、2 行目 3020 × 56 (34 → 22) |
+| 紙 | 高さ 1010、中心 y −195 (下端 −700 は従来どおり)。フリスビー 1510 幅 x −770、ボール 740 幅 x 385、ポイントとトレーナー 740 幅 x 1155 |
+| 題 | 紙の上端から 65 下が中心、高さ 100、幅 = 紙 − 60 (72 → 44) |
+| 手順カット F1〜F4 | 340 × 255 (4:3)、x −555 / −185 / 185 / 555、y 247.5。下に字幕 350 × 110 (38 → 24、上揃え) |
+| 注意カット N1・N2 | 320 × 240、y −132、x −570 / 170。字幕は右に 386 × 240 (38 → 24、左揃え・縦中央) |
+| フリスビーの補足 `More` | 1460 × 217、y −376.5 (34 → 22、4 行、行間 +12) |
+| ボール B1・B2 | 380 × 285、y 232.5 / −148.5。字幕 680 × 80 (38 → 24)、補足 680 × 105 (34 → 22、2 行) |
+| ポイントとトレーナーの本文 | 680 × 920 → 680 × 870 (32 → 22)。文言・位置は同じ |
+| カットの縁 | 墨色 4 mm (`Edge_*`、写真の下) |
+| 番号 | 白い輪 4 mm + 朱の丸 Ø48 (目録の半径 × 幅より大きい方) + 白の数字 (太字、丸の 70 %)。位置は目録の `badgeX/Y` (カットの左上の空き 76 px の中) を、輪まで含めてカットの内側 4 mm に収まるよう寄せる (2026-10-03 の Guide/2 で目録の位置のままだと 6 枚ではみ出した。手順カットでは角から ≈ 32 mm) |
+
+見積もり (ja、Noto Serif JP の行高 1.437 em): フリスビーの紙は 補足の下端まで ≈ 980 / 1010 mm (下の空白 ≈ 30 mm)、ボールの紙 ≈ 15 mm。ポイントとトレーナーの紙は本文が変わらないので、下の空白が 60 mm を超えて新しい WARN が出る見込み (DES-UI-005 の範囲。本文の量の相談)。
+
+吹き出し (目録の `callouts`):
+
+- 位置と大きさは目録のまま (カットの見える範囲の 0〜1)。**ボタン** (`role` button) はボタンの面に書く (朱の枠の内側に収まる。ボタン自体が暗い地)。**それ以外** (タブ・犬の名前・「投げ方」) は暗い角丸の地 (`KD_UiRound`、SurfacePanel 0.88) を敷き、枠の線に触れる分は枠から離れる側を削る (N2 の「投げ方」は [まっすぐ] の枠の外縁に 2.5 px 掛かっていたので右端を削る。F1 の犬の名前も [ディスク] の枠に 0.3 px 掛かるので下端を削る)。文字は 9 mm まで縮む (最大は箱の高さ × 0.68 ≈ 15〜20 mm)
+- 束縛のキーはメニューのラベルのキー (`KD_TreatPouch.WordTabToy` / `WordToyBall` / `WordToyDisc` / `dog.labrador`)。**投げ方の 3 語 (`course.toy.throw.*`) はコースの翻訳表にあり、`UILocalizationBindings.json` の束縛は基本の翻訳表のキーしか解決しない** (`KD_LocalizationEditor.Bind` / `Text`) ので、写し `guide.cut.throw.label` / `.straight` / `.curve` を基本の表に置いた。Guide/2 が 13 言語ともコースの文言と同じかを FAIL で見る
+- 束縛の経路は `Asobikata/Canvas/Paper_Frisbee/Cut_F1/Call0` など (目録の並び順)。目録を撮り直して吹き出しの数・順が変わったら、Guide/1 が「束縛が足りない」で止まる → 束縛を直す
+
+文言 (ja / en。他の 11 言語は `UITranslations.json`):
+
+| キー | ja | en |
+|---|---|---|
+| `guide.pointer` | お散歩はリード台で、洗うのは洗い場で、道は地図の看板で | Walks: see the leash racks. Washing: the wash stations. Trails: the map board |
+| `guide.frisbee.cap1` | 「おもちゃ」で犬の［ディスク］ | Toys: the dog's [Disc] |
+| `guide.frisbee.cap2` | 目の前にディスクが置かれる | The disc lands in front of you |
+| `guide.frisbee.cap3` | 持つと線が出る。Use で投げる | Hold it to see the path. Use throws |
+| `guide.frisbee.cap4` | その犬が跳んでキャッチ | That dog leaps to catch it |
+| `guide.frisbee.note1` | × が出る所へは、犬が行けません | Where × shows, the dog can't go |
+| `guide.frisbee.note2` | ［まっすぐ］［曲げる］で飛び方を選ぶ。曲げると右へカーブ | [Straight] or [Curve] picks the flight. Curve bends right |
+| `guide.frisbee.more` | ディスクは犬ごとに1枚。広場にも置いてあります。/ 強さ: VR は右スティック上下、Desktop はマウスホイール。/ リードでつないだ犬は取りに行きません。はずしてから。/ 川ではディスクが浮き、犬が飛びこんで取ってきます。 | Each dog has its own disc. Some wait at the Plaza too. / Power: VR right stick up/down, Desktop mouse wheel. / Leashed dogs won't fetch. Unleash them first. / In the river the disc floats and the dog jumps in for it. |
+| `guide.ball.title` | ボール | Ball |
+| `guide.ball.cap1` | 「おもちゃ」で犬の［ボール］ | Toys: the dog's [Ball] |
+| `guide.ball.cap2` | 投げると、その犬が取ってくる | Throw it and that dog brings it back |
+| `guide.ball.more` | ボールかディスク、犬ごとに1つ出せます / リードでつないだ犬は取りに行きません | One toy out per dog: ball or disc / Leashed dogs won't fetch |
+| `guide.cut.throw.label` / `.straight` / `.curve` | 投げ方 / まっすぐ / 曲げる (コースの表の写し) | Throw / Straight / Curve |
+
+コードで確かめたこと: 曲げるは課金でなく全員が選べるローカルの値で、曲がる向きは右だけ (`KD_TreatPouch.ToyTop.cs:7-12`)。リードでつないだ犬はディスク (`KH_FrisbeeCatch.cs:1262`) もボール (`KD_DogFetchController.cs:815`) も取りに行かない。ディスクは初め広場に置かれる (`KH_ToyRecall.cs:22-24`)。強さの入力は VR 右スティックと Desktop ホイールだけ (`KH_Frisbee.cs:48`・`:323-330`) なのでスマホは書かない。字幕 cap1 は計画の「メニュー「おもちゃ」…」から「メニュー」を落とした (15 字で 38 mm の 2 行に入る。帯 1 行目が手元メニューの開き方)。
+
+2026-10-03 統括の Guide/1〜3 の後: 撮影で印が淡い朱 (桃色) に見えた件は看板の描画ではない。Guide/3 の画素を測ると、写真の平均 (128,106,83) は元のカット (127,106,82) と同じ、紙は `Washi` (240,232,212) そのまま、輪の線の芯は #B5432A (181,67,42) そのまま。原因は印の太さ: 512 px のカットを 340 mm に貼るので、朱の線 6 px は 4 mm、両側の白い縁 2 px と混ざり、1.5 m では画面で 2〜3 px の朱が白に挟まれて桃色に見える (撮影の見本は等倍なので濃く見える)。直すなら撮影側 (Guide/13 の線を太く・白い縁を細く) で、看板の作りは変えない。es の `guide.cut.throw.label` (Lanzamiento) の溢れの推定 WARN は、写しをコースの文言と同じに保つ決まりなので看板側では縮めない (コースの表の es を変えるなら別の担当)。
+
+消したキー: `guide.walk.title` / `guide.walk.body` / `guide.wash.title` / `guide.wash.body` / `guide.frisbee.body` (Assets・docs/testing・scripts に他の参照なし)。
+
+Guide/2 に足した検査: 目録の形式・版・sha256、アトラスの取り込み設定 (§4.4)、カット 8 枚の `uvRect` = 目録・位置・伸び (1.5 % 以内)、番号の丸の位置と数字、吹き出しがカットの中・枠の線に掛からない・拡大窓の中・地の有無、字幕の有無、紙 3 枚・帯・見出しが重ならず Canvas の中、紙の中の部品が重ならず紙の中、**紙の下の空白 > 60 mm で WARN** (ja の文字の実際の下端で測る)、字幕 ja が 30 mm 未満に縮んだら WARN、旧 2 枚の紙と旧 5 キーの束縛・翻訳が残っていない、写しの 3 キーがコースの文言と 13 言語で同じ。文字の収まり (ja / en は FAIL、11 言語は WARN の推定) は新しいラベル全部に掛かる。
+
 ## 記録
 
+- 2026-10-03: 看板 A を組み替え (§10。コードと文言のみ、Unity 未実行)
 - 2026-10-03: 散歩の帯を実装 (§9。コードと文言のみ、Unity 未実行)
 - 2026-10-03: 作成 (AI の推奨案。コード・シーン・文言・画像は未変更。Unity は未実行)

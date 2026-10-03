@@ -45,7 +45,9 @@ namespace KominkaHillside.Editor
             public List<string> fit = new List<string>();
             public string budget;
             public string limitations = "Static checks of the saved scene: placement against the terrain, the colliders and the scene's anchors; the words "
-                + "against the catalogs and the scene's wash-board labels; text fit measured with the bundled font (the 11 client-glyph languages are "
+                + "against the catalogs and the scene's wash-board labels; board A's cuts against Guide/13's manifest (uvRect, badges, callout places "
+                + "clear of the drawn frames, the atlas importer), the papers' layout (no overlap, empty space under the content estimated from the ja "
+                + "text at its fitted size); text fit measured with the bundled font (the 11 client-glyph languages are "
                 + "drawn by VRChat's own fallback fonts, so their fit is a WARN estimate only). Not judged here: readability in a headset (Guide/3 "
                 + "captures + PCVR / Quest / iOS), night mode, how people actually walk around the boards, where dropped portals land.";
         }
@@ -143,6 +145,8 @@ namespace KominkaHillside.Editor
                 var broken = KominkaRules(c, kt.position, kt.rotation);
                 req(broken.Count == 0, "Kominka placement rules (wash working area, boards A / B, gate opening, spawn, loop, fixtures)" + (broken.Count > 0 ? ": " + string.Join("; ", broken) : ""));
             }
+            CheckCuts(c, req, warn, v);
+            CheckAsobLayout(c, req, warn, v);
             CheckLabels(c, req, v);
             CheckWords(c, req, warn, v);
             CheckGlyphs(c, req);
@@ -446,7 +450,7 @@ namespace KominkaHillside.Editor
             req(backing, "KD_Language backing has fixedKeys / fixedLabels");
             var bk = bkObj as string[]; var bl = blObj as Array;
             string ja = c.catalog.fallbackLanguage;
-            foreach (var l in Labels)
+            foreach (var l in c.labels)
             {
                 var tr = c.root.Find(l.path);
                 var tmp = tr != null ? tr.GetComponent<TextMeshProUGUI>() : null;
@@ -479,9 +483,10 @@ namespace KominkaHillside.Editor
             }
             var sceneWords = new List<string>();
             foreach (var st in c.washStations) if (st != null) foreach (var t in st.GetComponentsInChildren<TMP_Text>(true)) if (!string.IsNullOrEmpty(t.text)) sceneWords.Add(t.text);
-            foreach (var l in Labels)
+            foreach (var l in c.labels)
             {
                 if (l.key.StartsWith("guide.kominka.")) continue;   // names the other world, not a menu
+                if (IsCalloutPath(l.path)) continue;                // the menu's own words (checked against the menu's keys in CheckCuts)
                 string text = Visible(KD_LocalizationEditor.Text(c.catalog, ja, l.key));
                 foreach (Match m in Regex.Matches(text, "「([^」]+)」"))
                     req(known.Contains(m.Groups[1].Value), l.key + ": 「" + m.Groups[1].Value + "」 is a menu label (catalog text)");
@@ -509,9 +514,7 @@ namespace KominkaHillside.Editor
             var keepers = UnityEngine.Object.FindObjectsOfType<KD_ShopKeeper>(true);
             var ledger = keepers.Length == 1 ? keepers[0].ledger : null;
             req(ledger != null && ledger.keeperPoints == 200, "the shopkeeper gives 200 pt once (KD_ProgressLedger.keeperPoints " + (ledger != null ? ledger.keeperPoints.ToString() : "?") + "; guide.shop.body says 200)");
-            var stations = c.scene.GetRootGameObjects().FirstOrDefault(g => g.name == "KH_WashStations");
-            int along = stations != null ? stations.transform.childCount : 0;
-            req(along == 3, "3 wash stations along the course (KH_WashStations: " + along + "; guide.wash.body says 3)");
+            // (IMP-UI-002 wave 2: the wash paper and its "3 stations along the trail" are gone from board A)
             var passes = UnityEngine.Object.FindObjectsOfType<KH_TrainerPass>(true);
             warn(passes.Length == 1 && passes[0]._Configured(), "KH_TrainerPass has a product and a listing (the board sends people to [購入画面をひらく])");
         }
@@ -519,7 +522,7 @@ namespace KominkaHillside.Editor
         static void CheckGlyphs(Ctx c, Action<bool, string> req)
         {
             var missing = new HashSet<char>();
-            foreach (var ch in GlyphText(c.catalog))
+            foreach (var ch in GlyphText(c))
                 if (KD_LocalizationEditor.Drawn(ch) && ch != ' ' && !KD_LocalizationEditor.HasGlyph(c.font, ch)) missing.Add(ch);
             req(missing.Count == 0, "every ja / en character of the boards is in " + c.font.name + (missing.Count > 0 ? " (missing: " + string.Join(" ", missing.Select(ch => ch + " U+" + ((int)ch).ToString("X4"))) + "; Guide/1 adds them)" : ""));
         }
@@ -533,20 +536,32 @@ namespace KominkaHillside.Editor
             {
                 var sample = go.AddComponent<TextMeshProUGUI>();
                 string jaCode = c.catalog.fallbackLanguage;
-                foreach (var l in Labels)
+                foreach (var l in c.labels)
                 {
                     var tr = c.root.Find(l.path);
                     var tmp = tr != null ? tr.GetComponent<TextMeshProUGUI>() : null;
                     if (tmp == null) continue;
                     int worstSelf = 0, worstClient = 0; var over = new List<string>();
                     sample.lineSpacing = tmp.lineSpacing;   // MeasureLabelFit copies size / wrap / margin, not the line spacing
-                    if (l.path.EndsWith("/Body"))
+                    if (l.path.EndsWith("/Body") || l.path.EndsWith("/More"))
                     {
-                        // 2026-10-03: how much of its box the ja body fills at full size (target ~85-90 %)
+                        // 2026-10-03: how much of its box the ja body / closing note fills at full size (target ~85-90 %)
                         int rj = KD_LocalizationEditor.MeasureLabelFit(sample, tmp, KD_LocalizationEditor.Text(c.catalog, jaCode, l.key), out Vector2 pj);
                         float fill = pj.y / Mathf.Max(1f, tmp.rectTransform.rect.height);
                         v.notes.Add(l.path + ": ja fills " + (fill * 100f).ToString("F0") + " % of its box at " + (rj == 0 ? tmp.fontSizeMax.ToString("F0") + " mm" : "the shrunk size"));
                         warn(rj == 0 && fill >= 0.7f, l.path + " ja at full size fills >= 70 % of its box (" + (fill * 100f).ToString("F0") + " %, fit " + rj + ")");
+                    }
+                    if (l.path.Contains("/Cap_"))
+                    {
+                        // plan §3.5: a caption that autosize shrinks below 30 mm in ja is too small for 1.8 m
+                        float s = FittedSize(sample, tmp, KD_LocalizationEditor.Text(c.catalog, jaCode, l.key));
+                        v.notes.Add(l.path + ": ja caption at " + (s < 0f ? "overflow" : s.ToString("F0") + " mm"));
+                        warn(s >= CapWarnMm, l.path + " ja caption stays >= " + CapWarnMm + " mm (" + (s < 0f ? "overflows" : s.ToString("F0") + " mm") + ")");
+                    }
+                    if (IsCalloutPath(l.path))
+                    {
+                        float s = FittedSize(sample, tmp, KD_LocalizationEditor.Text(c.catalog, jaCode, l.key));
+                        v.notes.Add(l.path + " (" + l.key + "): ja callout at " + (s < 0f ? "overflow" : s.ToString("F1") + " mm") + " in a " + tmp.rectTransform.rect.size.ToString("F0") + " mm box");
                     }
                     foreach (var lang in c.catalog.languages)
                     {
@@ -589,7 +604,7 @@ namespace KominkaHillside.Editor
                 parts.Add(cv.transform.parent.name + ": " + graphics.Length + " graphics in " + groups.Count + " material/texture groups (≈ batches when nothing interleaves), " + tmps.Length + " labels, " + cc + " ja characters");
             }
             return "frame: " + mrs.Length + " cube renderers, " + tris + " triangles, one material (" + WoodMatPath + "), Batching Static (≈ 1 draw call + shadow when visible); "
-                + string.Join("; ", parts) + "; text quads ≈ " + (chars * 2) + " triangles; new textures 0 (map = " + KH_CourseTravelMapEditor.TexturePath + ", already in the hand menu; the dot uses KD_UiCircle); "
+                + string.Join("; ", parts) + "; text quads ≈ " + (chars * 2) + " triangles; textures: board A's cut atlas " + KH_PlayGuideCaptureEditor.AtlasPath + " (2048 x 768, ~1.02 MB PC DXT1 / ~0.93 MB Android+iOS ASTC 6x6 with mips, plan §5), the map = " + KH_CourseTravelMapEditor.TexturePath + " (already in the hand menu), KD_UiCircle / KD_UiRound (shared); "
                 + "font: the shared 2048² atlas (no new texture memory), glyphs added only for missing ja / en characters; Udon 0, colliders 0, network objects 0";
         }
     }
