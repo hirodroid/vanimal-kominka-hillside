@@ -134,7 +134,23 @@ namespace KominkaHillside.Editor
         public static Vector2 ThumbPos(int k) { int col = k % 4, row = k / 4; return new Vector2((col - 1.5f) * ThumbPitchX, row == 0 ? ThumbRow0Y : ThumbRow1Y); }
         public static readonly Vector2 NewMarkSize = new Vector2(100f, 30f);
         public static readonly Vector2 PageSettingsPos = new Vector2(0f, -205f), PageSettingsSize = new Vector2(280f, 50f);
-        public static readonly Vector2 LargePhotoPos = new Vector2(0f, -30f), LargePhotoSize = new Vector2(760f, 427.5f), LargeBackdropSize = new Vector2(1110f, 470f);
+        // IMP-WLD-007 W3: 760 x 427.5 at (0,-30) overlapped [とじる] (450,170 220x44) by 40 x 35 px at its top-right corner; the snap quad draws in front of
+        // the UI and would hide that corner. 720 x 405 at (0,-58): top 144.5 < the button's bottom 148. The backdrop grows to 490 to keep the photo inside it
+        public static readonly Vector2 LargePhotoPos = new Vector2(0f, -58f), LargePhotoSize = new Vector2(720f, 405f), LargeBackdropSize = new Vector2(1110f, 490f);
+
+        // ---------------------------------------------------------------- the menu snap (IMP-WLD-007 W3, design §7)
+        // One Quad with the unchanged KD_PhotoPrint shader over the enlarged photo (the thumbnails do not snap). Trial values.
+        public const float MenuAttachDistance = 0.6f, MenuAttachMargin = 0.02f;
+        /// <summary>The snap quad's distance in front of the enlarged RawImage (m). The quad writes depth, so the UI behind it does not draw over it.</summary>
+        public const float MenuSnapFront = 0.002f;
+        /// <summary>**The snap quad's layer: 17 Walkthrough = the hand menu's own layer, which our photo camera excludes (PhotoLayers).**
+        /// OPEN (user check, IMP-WLD-007): does the VRChat camera render layer 17 at all? If a VRChat camera photo of the open hand menu
+        /// does not show the menu, change this to a layer the VRChat camera draws but our photo camera still skips — 4 Water is in MustExcludeLayers
+        /// (0 Default would put the quad into our own auto photos when the menu is in view). The snap only works on a layer the VRChat camera draws.
+        /// One constant: Photo/1 writes it, Photo/2 checks it (and that our photo camera excludes it).</summary>
+        public const int MenuSnapLayer = 17;
+        public const string MenuSnapName = "SnapPhoto";
+        const string MenuSnapMatPath = MatDir + "/M_KH_PhotoPrintMenu.mat";
         /// <summary>IMP-WLD-007 W1: 面のページ送り ◀ 1/3 ▶ (縮小表示の下、右寄せ。[設定へ] (中央 280 幅) と重ならない)。</summary>
         public static readonly Vector2 PagerPos = new Vector2(360f, -205f), PagerButtonSize = new Vector2(100f, 50f), PagerLabelSize = new Vector2(120f, 50f);
         public const float PagerButtonOffset = 120f;
@@ -656,6 +672,7 @@ namespace KominkaHillside.Editor
             var backdrop = KD_ShopSetupEditor.EnsureUiChild(large.transform, "Backdrop", new Vector2(0f, -20f), LargeBackdropSize);
             var bdImg = Comp<Image>(backdrop); bdImg.color = new Color(0.08f, 0.07f, 0.06f, 0.96f); bdImg.raycastTarget = true; KD_UiSpriteEditor.ApplyFlatSkin(bdImg);
             var largeRaw = RawChild(large.transform, "Photo", LargePhotoPos, LargePhotoSize);
+            var snap = BuildMenuSnap(large.transform, log);   // IMP-WLD-007 W3: the VRChat camera snap on the enlarged photo only
             var largeClose = Btn(large.transform, "Close", PageBackPos, PageBackSize, T("photo.help.close"), c, albumUdon, "_MenuLargeClose", log);
             large.transform.SetAsLastSibling(); large.SetActive(false);
 
@@ -684,6 +701,7 @@ namespace KominkaHillside.Editor
             al.menuBackLabel = LabelOf(back); al.menuHelpMarkLabel = LabelOf(help);
             al.menuHelpRoot = helpRoot; al.menuHelpTitle = helpTitle; al.menuHelpBody = helpBody; al.menuHelpCloseLabel = LabelOf(helpClose);
             al.menuLargeRoot = large; al.menuLarge = largeRaw; al.menuLargeCloseLabel = LabelOf(largeClose);
+            al.menuSnapPhoto = snap;
             al.menuPager = pager; al.menuPageLabel = pageLabel;
             log.Add("menu page: Page_Settings/" + PageName + " (registered in extraSettingsPages, hidden): 4 x 2 thumbnails per page (" + SlotCount + " photos, pager at " + PagerPos + "), " + ThumbSize.x + "x" + ThumbSize.y + ", large " + LargePhotoSize.x + "x" + LargePhotoSize.y + ", [?] help, [back] -> _PhotoBack. Layer " + LayerMask.LayerToName(page.layer) + " (excluded from photos)");
         }
@@ -714,6 +732,37 @@ namespace KominkaHillside.Editor
             for (int i = btn.onClick.GetPersistentEventCount() - 1; i >= 0; i--) UnityEventTools.RemovePersistentListener(btn.onClick, i);
             UnityEventTools.AddStringPersistentListener(btn.onClick, new UnityEngine.Events.UnityAction<string>(target.SendCustomEvent), evt);
             return go;
+        }
+
+        /// <summary>IMP-WLD-007 W3: 大きく出した写真の手前 2 mm に Quad 1 枚 (KD_PhotoPrint、吸着 0.6 m / 余白 0.02 m)。RawImage はそのまま残す
+        /// (Quad の下に同じ写真。スマホで吸着を切っても見え方は同じ)。Collider なし、影なし、レイヤーは MenuSnapLayer。
+        /// Quad の頂点 ±0.5 にキャンバスの px を掛けて写真と同じ大きさにする (親の RectTransform の座標は px)。</summary>
+        static MeshRenderer BuildMenuSnap(Transform large, List<string> log)
+        {
+            var print = Shader.Find(PrintShaderName); if (print == null) throw new InvalidOperationException("shader " + PrintShaderName + " not found");
+            var m = EnsureMat(MenuSnapMatPath, print, log);
+            m.mainTexture = null;
+            m.SetFloat("_AttachDistance", MenuAttachDistance); m.SetFloat("_AttachMargin", MenuAttachMargin);
+            if (m.HasProperty("_DebugProbe")) m.SetFloat("_DebugProbe", 0f);
+            if (m.HasProperty("_HideFromEyes")) m.SetFloat("_HideFromEyes", 0f);
+            EditorUtility.SetDirty(m);
+            var t = large.Find(MenuSnapName);
+            GameObject go;
+            if (t == null) { go = GameObject.CreatePrimitive(PrimitiveType.Quad); go.name = MenuSnapName; go.transform.SetParent(large, false); log.Add("created " + MenuSnapName); } else go = t.gameObject;
+            foreach (var col in go.GetComponents<Collider>()) UnityEngine.Object.DestroyImmediate(col);
+            go.layer = MenuSnapLayer;
+            float pxToM = Mathf.Abs(large.lossyScale.x) > 1e-6f ? Mathf.Abs(large.lossyScale.x) : 0.001f;
+            go.transform.localPosition = new Vector3(LargePhotoPos.x, LargePhotoPos.y, -MenuSnapFront / pxToM);   // canvas front = -Z
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale = new Vector3(LargePhotoSize.x, LargePhotoSize.y, 1f);
+            var mr = go.GetComponent<MeshRenderer>();
+            mr.sharedMaterial = m;
+            mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.receiveShadows = false;
+            mr.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off; mr.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            EditorUtility.SetDirty(go);
+            log.Add("menu snap: " + MenuSnapName + " " + LargePhotoSize + " px at " + LargePhotoPos + ", " + MenuSnapFront * 1000f + " mm in front, layer " + MenuSnapLayer + " (" + LayerMask.LayerToName(MenuSnapLayer)
+                + "), attach " + MenuAttachDistance + " m / margin " + MenuAttachMargin + " m");
+            return mr;
         }
 
         static RawImage RawChild(Transform parent, string name, Vector2 pos, Vector2 size)

@@ -69,6 +69,8 @@ namespace KominkaHillside
         public TMP_Text menuHelpCloseLabel;
         public GameObject menuLargeRoot;
         public RawImage menuLarge;
+        [Tooltip("IMP-WLD-007 W3: 大きく出した写真の手前の Quad (KD_PhotoPrint)。VRChat カメラを近づけると全画面。縮小表示には付けない")]
+        public Renderer menuSnapPhoto;
         public TMP_Text menuLargeCloseLabel;
         public TMP_Text headerLabel;
 
@@ -121,6 +123,8 @@ namespace KominkaHillside
             if (mobile && Utilities.IsValid(lp) && !lp.IsUserInVR() && boardPhotos != null)
                 for (int k = 0; k < boardPhotos.Length; k++)
                     if (boardPhotos[k] != null) boardPhotos[k].material.SetFloat("_AttachDistance", 0f);   // 共有の材質ではなく複製を書く
+            // IMP-WLD-007 W3: メニューの大きい写真も同じ規則 (スマホの VR でないときは吸着しない。画面のスクリーンショットで持ち帰る)
+            if (mobile && Utilities.IsValid(lp) && !lp.IsUserInVR() && menuSnapPhoto != null) menuSnapPhoto.material.SetFloat("_AttachDistance", 0f);
             if (menuLargeRoot != null) menuLargeRoot.SetActive(false);
             if (menuHelpRoot != null) menuHelpRoot.SetActive(false);
             ApplyGate();
@@ -233,6 +237,7 @@ namespace KominkaHillside
             if (menuHelpRoot != null) menuHelpRoot.SetActive(false);
             _largeSlot = slot;
             menuLarge.texture = tex[slot];
+            if (menuSnapPhoto != null) menuSnapPhoto.material.mainTexture = tex[slot];   // the snap quad shows the same RT (複製の材質)
             menuLargeRoot.SetActive(true);
             DrawLabels();
         }
@@ -315,7 +320,11 @@ namespace KominkaHillside
                 if (menuThumbButtons != null && k < menuThumbButtons.Length && menuThumbButtons[k] != null && menuThumbButtons[k].activeSelf != mshow)
                     menuThumbButtons[k].SetActive(mshow);
             }
-            if (_largeSlot >= 0 && menuLarge != null && tex != null && _largeSlot < tex.Length) menuLarge.texture = tex[_largeSlot];
+            if (_largeSlot >= 0 && menuLarge != null && tex != null && _largeSlot < tex.Length)
+            {
+                menuLarge.texture = tex[_largeSlot];
+                if (menuSnapPhoto != null) menuSnapPhoto.material.mainTexture = tex[_largeSlot];
+            }
             // ---- ページ送り (2 ページ以上のときだけ) ----
             bool many = pages > 1;
             if (menuPager != null && menuPager.activeSelf != many) menuPager.SetActive(many);

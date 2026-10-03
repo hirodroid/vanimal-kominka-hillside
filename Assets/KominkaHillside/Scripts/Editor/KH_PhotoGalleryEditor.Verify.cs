@@ -219,6 +219,7 @@ namespace KominkaHillside.Editor
                     Check(pager.gameObject.layer == page.layer, "menu pager on the page's layer " + page.layer + " (not photographed)");
                 }
                 Heap(aU, "menuPager", pager != null ? pager.gameObject : null, Check, Warn);
+                VerifyMenuSnap(c, s, page.transform, cam, Check, Warn, Note);
                 Check(al.menuPage == page && al.menuLargeRoot != null && al.menuLarge != null && al.menuHelpRoot != null && al.menuState != null && al.menuNewMark != null, "album: page / large / help / state / new mark");
                 var large = page.transform.Find("Large"); var help = page.transform.Find("HelpPanel");
                 Check(large != null && help != null && large.GetSiblingIndex() > page.transform.Find("Thumb7").GetSiblingIndex() && help.GetSiblingIndex() > page.transform.Find("Thumb7").GetSiblingIndex(), "large view and help draw over the thumbnails");
@@ -274,6 +275,48 @@ namespace KominkaHillside.Editor
                 MeasureOne(c, al.menuHelpBody, "photo.help.body", "", "menu help body", Check, Note);
                 MeasureOne(c, al.menuNewLabel, "photo.new", "", "menu new mark", Check, Note);
             }
+        }
+
+        /// <summary>IMP-WLD-007 W3: 大きく出した写真の吸着 (Quad 1 枚)。材質の値、大きさと位置、[とじる] と重ならない、レイヤー (撮影カメラは写さない)、
+        /// 手元メニューのスケールが一様 (シェーダーの狙いの判定は親にせん断が無いことが前提)、album の配線。VRChat カメラが 17 を描くかはユーザーの確認。</summary>
+        static void VerifyMenuSnap(Ctx c, Sys s, Transform page, Camera cam, Action<bool, string> Check, Action<string> Warn, Action<string> Note)
+        {
+            var large = page.Find("Large");
+            var photo = large != null ? large.Find("Photo") as RectTransform : null;
+            var close = large != null ? large.Find("Close") as RectTransform : null;
+            var q = large != null ? large.Find(MenuSnapName) : null;
+            var mr = q != null ? q.GetComponent<MeshRenderer>() : null;
+            var m = mr != null ? mr.sharedMaterial : null;
+            Check(photo != null && Vector2.Distance(photo.anchoredPosition, LargePhotoPos) < 0.5f && Vector2.Distance(photo.sizeDelta, LargePhotoSize) < 0.5f,
+                "enlarged photo " + LargePhotoSize + " at " + LargePhotoPos);
+            Check(photo != null && close != null && !RectOf(photo).Overlaps(RectOf(close)), "enlarged photo " + (photo != null ? RectOf(photo).ToString() : "?") + " does not overlap [とじる] " + (close != null ? RectOf(close).ToString() : "?"));
+            var bd = large != null ? large.Find("Backdrop") as RectTransform : null;
+            if (photo != null && bd != null) { var pr = RectOf(photo); var br = RectOf(bd); Check(br.Contains(pr.min) && br.Contains(pr.max), "the enlarged photo sits on its backdrop"); }
+            Check(q != null && mr != null && q.GetComponents<Collider>().Length == 0 && mr.shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.Off, MenuSnapName + " under Large: MeshRenderer, no collider, no shadow");
+            if (q == null || mr == null) return;
+            Check(q.GetComponent<MeshFilter>() != null && q.GetComponent<MeshFilter>().sharedMesh != null && q.GetComponent<MeshFilter>().sharedMesh.name == "Quad", "snap uses Unity's Quad (vertices at +-0.5, the shader's assumption)");
+            Check(m != null && m.shader != null && m.shader.name == PrintShaderName && AssetDatabase.GetAssetPath(m) == MenuSnapMatPath
+                && Mathf.Approximately(m.GetFloat("_AttachDistance"), MenuAttachDistance) && Mathf.Approximately(m.GetFloat("_AttachMargin"), MenuAttachMargin)
+                && (!m.HasProperty("_DebugProbe") || m.GetFloat("_DebugProbe") < 0.5f) && (!m.HasProperty("_HideFromEyes") || m.GetFloat("_HideFromEyes") < 0.5f),
+                "snap material " + MenuSnapMatPath + ": KD_PhotoPrint, attach " + MenuAttachDistance + " m, margin " + MenuAttachMargin + " m, debug probe off");
+            float pxToM = Mathf.Abs(large.lossyScale.x);
+            Check(Vector2.Distance(new Vector2(q.localPosition.x, q.localPosition.y), LargePhotoPos) < 0.5f && Mathf.Abs(q.localScale.x - LargePhotoSize.x) < 0.5f && Mathf.Abs(q.localScale.y - LargePhotoSize.y) < 0.5f
+                && q.localRotation == Quaternion.identity && pxToM > 0f && Mathf.Abs(-q.localPosition.z * pxToM - MenuSnapFront) < 0.0005f,
+                "snap quad covers the enlarged photo exactly, " + (pxToM > 0f ? (-q.localPosition.z * pxToM * 1000f).ToString("F1") : "?") + " mm in front of it");
+            Check(q.gameObject.layer == MenuSnapLayer, "snap quad on layer " + MenuSnapLayer + " (" + LayerMask.LayerToName(MenuSnapLayer) + "; the builder constant MenuSnapLayer)");
+            Check(cam == null || (cam.cullingMask & (1 << q.gameObject.layer)) == 0, "our photo camera does not render the snap quad's layer");
+            // the shader takes the photo's axes from the object matrix and needs them orthogonal (no shear from a non-uniform, rotated parent)
+            var mtx = q.localToWorldMatrix;
+            Vector3 ax = ((Vector3)mtx.GetColumn(0)).normalized, ay = ((Vector3)mtx.GetColumn(1)).normalized, az = ((Vector3)mtx.GetColumn(2)).normalized;
+            float shear = Mathf.Max(Mathf.Abs(Vector3.Dot(ax, ay)), Mathf.Max(Mathf.Abs(Vector3.Dot(ax, az)), Mathf.Abs(Vector3.Dot(ay, az))));
+            Check(shear < 0.001f, "the snap quad's world axes are orthogonal (max |cos| " + shear.ToString("F5") + "): the hand menu above it adds no shear");
+            var pl = large.lossyScale;
+            Check(Mathf.Abs(pl.x - pl.y) <= 0.001f * Mathf.Max(Mathf.Abs(pl.x), 1e-6f), "the hand menu's scale is uniform in its plane at the enlarged photo (lossy " + pl.ToString("F5") + ")");
+            Note("KD_TreatPouch scales the menu by eye height at runtime with one number (_scale): it stays uniform");
+            Check(s.album.menuSnapPhoto == mr, "album.menuSnapPhoto = the snap quad (ShowLarge binds the photo, phones not in VR turn the snap off)");
+            Heap(B(s.album), "menuSnapPhoto", mr, Check, Warn);
+            Check(!RectOf(close).Overlaps(new Rect(LargePhotoPos - LargePhotoSize * 0.5f, LargePhotoSize)), "the snap quad does not hide [とじる]");
+            Note("OPEN (user): does the VRChat camera render layer " + MenuSnapLayer + "? If not, change MenuSnapLayer (KH_PhotoGalleryEditor.cs) and run Photo/1");
         }
 
         /// <summary>IMP-WLD-007 W2: 散歩の見回りの配線 (proxy + backing)、写真の場所 (NavMesh・地面)、試作値の表、つなぎ外しの知らせ。</summary>

@@ -396,3 +396,18 @@
   - 半径はどれも 4 m。どれも、すでに名前が付いていて人が立ち止まる場所。橋と川は Course/80 が NavMesh と水の検査を通した着地点。
 - **自撮り風の向き**: カメラは顔の前から振り返るので、写るのは自分の後ろか横にいる犬。前を歩く犬は写らないので、そのときは犬目線に落ちる。§5.2 の幾何どおりの性質。
 - **後回し**: 説明文 (W4)、メニューの吸着 (W3)、実機での構図の確認。
+
+## 13. 実装メモ W3・W4 (2026-10-03)
+
+**未コンパイル (Unity では未確認。オフラインの Roslyn 検査だけ通過)・未実行。**
+
+| ファイル | 変更 |
+|---|---|
+| `KH_PhotoGalleryEditor.cs` | 大きい写真を 720×405 (0,−58) に、背板を 1110×490 に。`BuildMenuSnap`: `Large/SnapPhoto` (Quad、Collider なし、影なし、写真の 2 mm 手前、`M_KH_PhotoPrintMenu`、吸着 0.6 m・余白 0.02 m)。レイヤーは定数 `MenuSnapLayer` = 17 (下の確認で変える) |
+| `KH_PhotoAlbum.cs` | `menuSnapPhoto`。`ShowLarge`・`Rebind` が同じ RT を張る (材質の複製)。`Start` で、VR でないスマホは `_AttachDistance` を 0 にする (ボードと同じ) |
+| `.Verify.cs` | `VerifyMenuSnap`: 大きさと位置、[とじる] と重ならない、背板の中、Quad のメッシュ、材質の値、2 mm 手前、レイヤーと撮影カメラの除外、軸が直交すること (せん断なし)、手元メニューの平面のスケールが一様、album の配線 (proxy + backing) |
+| `UITranslations.json` | `photo.help.body` を 13 言語で書き直した (それ以外は変えていない) |
+| `docs/game-design.md` §7・`docs/world-ui-spec.md` | 写真の行だけ |
+
+- 確認の残り: VRChat カメラがレイヤー 17 を描くか (Issue の確認の行)、Desktop で吸着の距離が届くか、iPhone で黒くならないこと。
+- Play は要らない。配置と値は Photo/2 が見る。吸着は本物の VRChat カメラでしか判定できない (ClientSim に VRChat の写真カメラは無い)。

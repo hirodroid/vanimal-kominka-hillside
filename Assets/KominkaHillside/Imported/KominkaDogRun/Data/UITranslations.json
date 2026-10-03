@@ -1794,7 +1794,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "ボールを持ってきたとき、犬を撫でているとき、走っているとき、犬同士がじゃれ合っているとき、フリスビーを跳んで取ったとき、集合写真のときに、自動で撮影しています。\n\n写真はずっと撮り続けるのではなく、時間を空けて撮影されます。並ぶのは8枚までで、新しい写真が左上に入り、いちばん古いものから入れ替わります。\n\nここに並ぶ写真は、あなた専用です。他の人には別の写真が見えています。\n\n写真は退室すると消えます。残したい写真は、PC・Questでは門の写真ボードの写真にVRChatカメラを近づけて撮影、スマホではボードの写真をタップしてスクリーンショットで持ち帰れます。\n\n自動撮影は、手元メニューの［設定］にある［写真: ON / OFF］で切り替えられます。"
+          "text": "犬と遊んだり散歩したりすると、自動で写真を撮ります（シャッターはありません）。ボールを持ってきたとき、撫でているとき、走ったり犬同士でじゃれ合ったりしたとき、フリスビーを跳んで取ったとき、集合写真のときに撮ります。\n\nリードでつないで歩くと、立ち寄った場所や見晴らしの場所、しばらく歩いたときにも、犬の目線で見た景色や、自撮りのような写真を撮ります。\n\n写真は24枚まで残ります（散歩12・撫で6・遊び6）。いっぱいになると、同じ種類のいちばん古い写真から入れ替わります。新しい写真が左上に並び、◀ ▶ でページをめくれます。\n\n写真はあなたの端末の中だけにあり、他の人には別の写真が見えています。退室すると消えます。\n\n残したい写真は、PC・Questでは門の写真ボードの写真か、ここで大きく出した写真にVRChatカメラを近づけると、画面いっぱいに写して撮れます。スマホでは、写真を大きく表示して（ここで押す・ボードの写真をタップ）スクリーンショットで持ち帰れます。\n\n自動撮影は、［設定］の［写真: ON / OFF］で切り替えられます。"
         },
         {
           "key": "photo.help.close",
@@ -4917,7 +4917,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Photos are taken automatically when a dog brings back a ball, while you pet a dog, when dogs run or play together, when a dog jumps to catch a frisbee, and at group photo time.\n\nPhotos are taken at intervals, rather than continuously. Up to 8 photos are kept: the newest appears at the top left and replaces the oldest.\n\nThis album is just for you. Other people see different photos.\n\nPhotos disappear when you leave. To keep one on PC or Quest, bring your VRChat camera close to a photo on the photo board by the gate and take a picture. On a phone, tap a photo on the board and take a screenshot.\n\nYou can turn automatic photos ON or OFF with [Photos: ON / OFF] in the menu's Settings."
+          "text": "Photos are taken automatically while you play and walk with the dogs (there is no shutter): when a dog brings back a ball, while you pet a dog, when dogs run or play together, when a dog jumps to catch a frisbee, and at group photo time.\n\nOn a leash walk, photos are also taken at stopovers, at viewpoints and every so often: the view through the dog's eyes, or a selfie-style shot.\n\nUp to 24 photos are kept (walk 12, petting 6, play 6). When one kind is full, its oldest photo is replaced. The newest appears at the top left; turn pages with ◀ ▶.\n\nPhotos stay on your own device; other people see different photos. They disappear when you leave.\n\nTo keep one on PC or Quest, bring your VRChat camera close to a photo on the board by the gate, or to a photo enlarged here: it fills the frame. On a phone, show the photo large (press it here, or tap it on the board) and take a screenshot.\n\nTurn automatic photos ON or OFF with [Photos: ON / OFF] in Settings."
         },
         {
           "key": "photo.help.close",
@@ -8040,7 +8040,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Фото снимаются сами, когда собака приносит мяч, пока вы её гладите, когда собаки бегают или играют вместе, когда собака ловит фрисби в прыжке, а также во время группового фото.\n\nСнимки делаются с промежутками, а не непрерывно. Хранится до 8 фото: новое появляется слева вверху и заменяет самое старое.\n\nЭтот альбом только ваш. Другие люди видят другие фото.\n\nПосле выхода фото исчезают. Чтобы сохранить снимок на ПК или Quest, поднесите камеру VRChat к фото на фотодоске у ворот и сфотографируйте. На телефоне коснитесь фото на доске и сделайте скриншот.\n\nАвтосъёмку можно включить или выключить кнопкой [Фото: ON / OFF] в «Настройках» меню."
+          "text": "Фото снимаются сами, пока вы играете и гуляете с собаками (кнопки затвора нет): когда собака приносит мяч, пока вы её гладите, когда собаки бегают или играют вместе, когда собака ловит фрисби в прыжке, а также во время группового фото.\n\nНа прогулке с поводком фото снимаются и на остановках, у смотровых мест и время от времени: вид глазами собаки или снимок в стиле селфи.\n\nХранится до 24 фото (прогулка 12, поглаживание 6, игры 6). Когда вид заполнен, заменяется его самое старое фото. Новое появляется слева вверху; страницы листаются кнопками ◀ ▶.\n\nФото хранятся только на вашем устройстве; другие люди видят другие фото. После выхода они исчезают.\n\nЧтобы сохранить снимок на ПК или Quest, поднесите камеру VRChat к фото на доске у ворот или к фото, открытому здесь крупно: оно заполнит кадр. На телефоне откройте фото крупно (нажмите здесь или коснитесь на доске) и сделайте скриншот.\n\nАвтосъёмку можно включить или выключить кнопкой [Фото: ON / OFF] в «Настройках»."
         },
         {
           "key": "photo.help.close",
@@ -11163,7 +11163,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Фото знімаються самі, коли собака приносить м'яч, поки ви її гладите, коли собаки бігають або граються разом, коли собака ловить фрисбі в стрибку, а також під час групового фото.\n\nЗнімки робляться з проміжками, а не безперервно. Зберігається до 8 фото: нове з'являється ліворуч угорі й замінює найстаріше.\n\nЦей альбом лише ваш. Інші люди бачать інші фото.\n\nПісля виходу фото зникають. Щоб зберегти знімок на ПК або Quest, піднесіть камеру VRChat до фото на фотодошці біля воріт і сфотографуйте. На телефоні торкніться фото на дошці та зробіть знімок екрана.\n\nАвтозйомку можна вмикати й вимикати кнопкою [Фото: ON / OFF] у «Параметрах» меню."
+          "text": "Фото знімаються самі, поки ви граєтеся й гуляєте із собаками (кнопки затвора немає): коли собака приносить м'яч, поки ви її гладите, коли собаки бігають або граються разом, коли собака ловить фрисбі в стрибку, а також під час групового фото.\n\nНа прогулянці з повідцем фото знімаються й на зупинках, біля оглядових місць і час від часу: вигляд очима собаки або знімок у стилі селфі.\n\nЗберігається до 24 фото (прогулянка 12, погладжування 6, ігри 6). Коли вид заповнено, замінюється його найстаріше фото. Нове з'являється ліворуч угорі; сторінки гортаються кнопками ◀ ▶.\n\nФото зберігаються лише на вашому пристрої; інші люди бачать інші фото. Після виходу вони зникають.\n\nЩоб зберегти знімок на ПК або Quest, піднесіть камеру VRChat до фото на дошці біля воріт або до фото, відкритого тут великим: воно заповнить кадр. На телефоні відкрийте фото великим (натисніть тут або торкніться на дошці) і зробіть знімок екрана.\n\nАвтозйомку можна вмикати й вимикати кнопкою [Фото: ON / OFF] у «Параметрах»."
         },
         {
           "key": "photo.help.close",
@@ -14286,7 +14286,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "공을 물어 왔을 때, 강아지를 쓰다듬을 때, 강아지가 달리거나 함께 놀 때, 프리스비를 점프해서 잡았을 때, 단체 사진 시간에 자동으로 촬영합니다.\n\n사진은 계속 찍는 것이 아니라 시간 간격을 두고 촬영됩니다. 사진은 8장까지 남으며, 새 사진이 왼쪽 위에 놓이고 가장 오래된 사진부터 교체됩니다.\n\n여기에 놓이는 사진은 나만 볼 수 있습니다. 다른 사람에게는 다른 사진이 보입니다.\n\n사진은 나가면 사라집니다. 남기고 싶은 사진은 PC·Quest에서는 문 옆 사진판의 사진에 VRChat 카메라를 가까이 대고 촬영하고, 스마트폰에서는 사진판의 사진을 탭한 뒤 스크린샷으로 가져갈 수 있습니다.\n\n자동 촬영은 메뉴의 [설정]에 있는 [사진: ON / OFF]로 바꿀 수 있습니다."
+          "text": "강아지와 놀거나 산책하면 자동으로 사진을 찍습니다(셔터는 없습니다). 공을 물어 왔을 때, 쓰다듬을 때, 강아지가 달리거나 함께 놀 때, 프리스비를 점프해서 잡았을 때, 단체 사진 시간에 찍습니다.\n\n목줄로 산책하면 들른 곳이나 전망 좋은 곳, 한동안 걸었을 때에도 강아지 눈높이에서 본 풍경이나 셀카 같은 사진을 찍습니다.\n\n사진은 24장까지 남습니다(산책 12・쓰다듬기 6・놀이 6). 가득 차면 같은 종류에서 가장 오래된 사진부터 교체됩니다. 새 사진이 왼쪽 위에 놓이고 ◀ ▶로 페이지를 넘길 수 있습니다.\n\n사진은 내 기기 안에만 있으며, 다른 사람에게는 다른 사진이 보입니다. 나가면 사라집니다.\n\n남기고 싶은 사진은 PC・Quest에서는 문 옆 사진판의 사진이나 여기서 크게 띄운 사진에 VRChat 카메라를 가까이 대면 화면 가득 담아 찍을 수 있습니다. 스마트폰에서는 사진을 크게 띄워(여기서 누르거나 사진판의 사진을 탭) 스크린샷으로 가져가세요.\n\n자동 촬영은 [설정]의 [사진: ON / OFF]로 바꿀 수 있습니다."
         },
         {
           "key": "photo.help.close",
@@ -17409,7 +17409,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Fotos entstehen automatisch, wenn ein Hund einen Ball zurückbringt, während du einen Hund streichelst, wenn Hunde rennen oder miteinander spielen, wenn ein Hund eine Frisbee im Sprung fängt, und beim Gruppenfoto.\n\nFotografiert wird in Abständen, nicht ununterbrochen. Es bleiben bis zu 8 Fotos: Das neueste erscheint oben links und ersetzt das älteste.\n\nDieses Album ist nur für dich. Andere sehen andere Fotos.\n\nDie Fotos verschwinden, wenn du gehst. Auf PC und Quest nimmst du eines mit, indem du deine VRChat-Kamera nah an ein Foto auf der Fototafel am Tor hältst und ein Foto machst. Am Handy tippst du ein Foto auf der Tafel an und machst einen Screenshot.\n\nDie automatischen Fotos schaltest du in den Einstellungen des Menüs mit [Fotos: ON / OFF] ein oder aus."
+          "text": "Beim Spielen und Spazierengehen mit den Hunden entstehen Fotos automatisch (es gibt keinen Auslöser): wenn ein Hund einen Ball zurückbringt, während du einen Hund streichelst, wenn Hunde rennen oder miteinander spielen, wenn ein Hund eine Frisbee im Sprung fängt, und beim Gruppenfoto.\n\nBeim Spaziergang an der Leine entstehen auch an Haltepunkten, an Aussichtsstellen und ab und zu Fotos: der Blick mit den Augen des Hundes oder ein Bild im Selfie-Stil.\n\nEs bleiben bis zu 24 Fotos (Spaziergang 12, Streicheln 6, Spiel 6). Ist eine Art voll, wird ihr ältestes Foto ersetzt. Das neueste erscheint oben links; mit ◀ ▶ blätterst du.\n\nDie Fotos bleiben nur auf deinem Gerät; andere sehen andere Fotos. Sie verschwinden, wenn du gehst.\n\nAuf PC und Quest hältst du deine VRChat-Kamera nah an ein Foto auf der Tafel am Tor oder an ein hier groß geöffnetes Foto: Es füllt dann das Bild. Am Handy öffnest du das Foto groß (hier antippen oder auf der Tafel) und machst einen Screenshot.\n\nDie automatischen Fotos schaltest du in den Einstellungen mit [Fotos: ON / OFF] ein oder aus."
         },
         {
           "key": "photo.help.close",
@@ -20532,7 +20532,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "狗狗叼球回来、你抚摸狗狗、狗狗奔跑或一起嬉戏、狗狗跳起来接住飞盘，以及合影的时候，都会自动拍照。\n\n照片不是一直连拍，而是隔一段时间拍一张。最多保留 8 张，最新的照片排在左上角，并替换掉最旧的一张。\n\n这里排列的照片只属于你。别人看到的是另外的照片。\n\n退出世界后照片就会消失。想留下的照片，在 PC 和 Quest 上可以把 VRChat 相机凑近大门旁照片板上的照片拍摄，在手机上点击照片板上的照片再截图带回去。\n\n自动拍照可以在菜单“设置”里的［照片: ON / OFF］切换。"
+          "text": "和狗狗玩耍、散步时会自动拍照（没有快门）。狗狗叼球回来、你抚摸狗狗、狗狗奔跑或一起嬉戏、狗狗跳起来接住飞盘，以及合影的时候都会拍。\n\n牵着狗绳散步时，在狗狗停留的地方、视野好的地方，以及走了一段时间后，也会拍下狗狗视角的风景，或像自拍一样的照片。\n\n最多保留 24 张（散步 12・抚摸 6・玩耍 6）。某一类满了以后，会替换该类最旧的一张。最新的照片排在左上角，可以用 ◀ ▶ 翻页。\n\n照片只保存在你自己的设备里，别人看到的是另外的照片。退出世界后就会消失。\n\n想留下的照片，在 PC 和 Quest 上把 VRChat 相机凑近大门旁照片板上的照片，或在这里放大的照片，就能拍下铺满画面的一张。在手机上请把照片放大（在这里按下，或点击照片板上的照片）再截图带回去。\n\n自动拍照可以在“设置”里的［照片: ON / OFF］切换。"
         },
         {
           "key": "photo.help.close",
@@ -23655,7 +23655,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Las fotos se hacen solas cuando un perro te trae la pelota, mientras lo acaricias, cuando los perros corren o juegan juntos, cuando un perro atrapa un frisbi de un salto y en la foto de grupo.\n\nNo se fotografía sin parar: se hacen fotos cada cierto tiempo. Se guardan hasta 8 fotos: la más nueva aparece arriba a la izquierda y sustituye a la más antigua.\n\nEste álbum es solo tuyo. Las demás personas ven otras fotos.\n\nLas fotos desaparecen al salir. Para quedarte con una en PC o Quest, acerca tu cámara de VRChat a una foto del tablero de fotos junto a la puerta y sácale una foto. En el móvil, toca una foto del tablero y haz una captura de pantalla.\n\nPuedes activar o desactivar las fotos automáticas con [Fotos: ON / OFF] en los Ajustes del menú."
+          "text": "Las fotos se hacen solas mientras juegas y paseas con los perros (no hay disparador): cuando un perro te trae la pelota, mientras lo acaricias, cuando los perros corren o juegan juntos, cuando un perro atrapa un frisbi de un salto y en la foto de grupo.\n\nEn el paseo con correa también se hacen fotos en las paradas, en los miradores y de vez en cuando: la vista con los ojos del perro o una foto tipo selfi.\n\nSe guardan hasta 24 fotos (paseo 12, caricias 6, juego 6). Cuando un tipo se llena, se sustituye su foto más antigua. La más nueva aparece arriba a la izquierda; pasa de página con ◀ ▶.\n\nLas fotos quedan solo en tu dispositivo; las demás personas ven otras fotos. Desaparecen al salir.\n\nPara quedarte con una en PC o Quest, acerca tu cámara de VRChat a una foto del tablero junto a la puerta o a una foto ampliada aquí: llenará el encuadre. En el móvil, muestra la foto en grande (púlsala aquí o tócala en el tablero) y haz una captura de pantalla.\n\nActiva o desactiva las fotos automáticas con [Fotos: ON / OFF] en los Ajustes."
         },
         {
           "key": "photo.help.close",
@@ -26778,7 +26778,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Les photos sont prises automatiquement quand un chien rapporte une balle, quand tu caresses un chien, quand les chiens courent ou jouent ensemble, quand un chien attrape un frisbee en sautant, et pendant la photo de groupe.\n\nLes photos sont prises de temps en temps, pas en continu. Jusqu'à 8 photos sont gardées : la plus récente apparaît en haut à gauche et remplace la plus ancienne.\n\nCet album n'appartient qu'à toi. Les autres voient d'autres photos.\n\nLes photos disparaissent quand tu pars. Pour en garder une sur PC ou Quest, approche ta caméra VRChat d'une photo du tableau photo près du portail et prends-la en photo. Sur téléphone, touche une photo du tableau et fais une capture d'écran.\n\nTu peux activer ou couper les photos automatiques avec [Photos: ON / OFF] dans les Réglages du menu."
+          "text": "Les photos sont prises automatiquement quand tu joues et te promènes avec les chiens (il n'y a pas de déclencheur) : quand un chien rapporte une balle, quand tu caresses un chien, quand les chiens courent ou jouent ensemble, quand un chien attrape un frisbee en sautant, et pendant la photo de groupe.\n\nPendant une promenade en laisse, des photos sont aussi prises aux haltes, aux points de vue et de temps en temps : la vue à travers les yeux du chien, ou une photo façon selfie.\n\nJusqu'à 24 photos sont gardées (promenade 12, caresses 6, jeu 6). Quand un type est plein, sa photo la plus ancienne est remplacée. La plus récente apparaît en haut à gauche ; change de page avec ◀ ▶.\n\nLes photos restent sur ton appareil uniquement ; les autres voient d'autres photos. Elles disparaissent quand tu pars.\n\nPour en garder une sur PC ou Quest, approche ta caméra VRChat d'une photo du tableau près du portail, ou d'une photo agrandie ici : elle remplit le cadre. Sur téléphone, affiche la photo en grand (appuie dessus ici ou touche-la sur le tableau) et fais une capture d'écran.\n\nActive ou coupe les photos automatiques avec [Photos: ON / OFF] dans les Réglages."
         },
         {
           "key": "photo.help.close",
@@ -29901,7 +29901,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "As fotos saem sozinhas quando um cachorro traz a bola, enquanto você faz carinho, quando os cachorros correm ou brincam juntos, quando um cachorro pega o frisbee num salto e na foto em grupo.\n\nA câmera não fica tirando foto o tempo todo: as fotos saem de tempos em tempos. Ficam até 8 fotos: a mais nova aparece no canto superior esquerdo e substitui a mais antiga.\n\nEste álbum é só seu. As outras pessoas veem outras fotos.\n\nAs fotos somem quando você sai. Para ficar com uma no PC ou no Quest, aproxime a câmera do VRChat de uma foto do painel de fotos perto do portão e fotografe. No celular, toque numa foto do painel e faça uma captura de tela.\n\nVocê pode ligar ou desligar as fotos automáticas em [Fotos: ON / OFF] nos Ajustes do menu."
+          "text": "As fotos saem sozinhas enquanto você brinca e passeia com os cachorros (não há botão de disparo): quando um cachorro traz a bola, enquanto você faz carinho, quando os cachorros correm ou brincam juntos, quando um cachorro pega o frisbee num salto e na foto em grupo.\n\nNo passeio com guia, também saem fotos nas paradas, nos mirantes e de vez em quando: a vista pelos olhos do cachorro ou uma foto estilo selfie.\n\nFicam até 24 fotos (passeio 12, carinho 6, brincadeira 6). Quando um tipo enche, a foto mais antiga dele é substituída. A mais nova aparece no canto superior esquerdo; troque de página com ◀ ▶.\n\nAs fotos ficam só no seu aparelho; as outras pessoas veem outras fotos. Elas somem quando você sai.\n\nPara ficar com uma no PC ou no Quest, aproxime a câmera do VRChat de uma foto do painel perto do portão ou de uma foto ampliada aqui: ela preenche o quadro. No celular, mostre a foto grande (toque nela aqui ou no painel) e faça uma captura de tela.\n\nLigue ou desligue as fotos automáticas em [Fotos: ON / OFF] nos Ajustes."
         },
         {
           "key": "photo.help.close",
@@ -33024,7 +33024,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Le foto si scattano da sole quando un cane riporta la palla, mentre lo accarezzi, quando i cani corrono o giocano insieme, quando un cane afferra un frisbee al volo e durante la foto di gruppo.\n\nNon si fotografa di continuo: gli scatti avvengono a intervalli. Si tengono fino a 8 foto: la più recente compare in alto a sinistra e sostituisce la più vecchia.\n\nQuesto album è solo tuo. Le altre persone vedono foto diverse.\n\nLe foto spariscono quando esci. Per tenerne una su PC o Quest, avvicina la fotocamera di VRChat a una foto della bacheca vicino al cancello e scatta. Su telefono, tocca una foto della bacheca e fai uno screenshot.\n\nPuoi attivare o disattivare le foto automatiche con [Foto: ON / OFF] nelle Impostazioni del menu."
+          "text": "Le foto si scattano da sole mentre giochi e passeggi con i cani (non c'è un pulsante di scatto): quando un cane riporta la palla, mentre lo accarezzi, quando i cani corrono o giocano insieme, quando un cane afferra un frisbee al volo e durante la foto di gruppo.\n\nDurante la passeggiata al guinzaglio si scattano foto anche alle soste, nei punti panoramici e ogni tanto: la vista con gli occhi del cane o uno scatto stile selfie.\n\nSi tengono fino a 24 foto (passeggiata 12, coccole 6, gioco 6). Quando un tipo è pieno, si sostituisce la sua foto più vecchia. La più recente compare in alto a sinistra; cambia pagina con ◀ ▶.\n\nLe foto restano solo sul tuo dispositivo; le altre persone vedono foto diverse. Spariscono quando esci.\n\nPer tenerne una su PC o Quest, avvicina la fotocamera di VRChat a una foto della bacheca vicino al cancello o a una foto ingrandita qui: riempie l'inquadratura. Su telefono, mostra la foto in grande (premila qui o toccala sulla bacheca) e fai uno screenshot.\n\nAttiva o disattiva le foto automatiche con [Foto: ON / OFF] nelle Impostazioni."
         },
         {
           "key": "photo.help.close",
@@ -36147,7 +36147,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Zdjęcia robią się same: gdy pies przynosi piłkę, gdy go głaszczesz, gdy psy biegają lub bawią się razem, gdy pies złapie frisbee w skoku oraz podczas zdjęcia grupowego.\n\nZdjęcia powstają co jakiś czas, a nie bez przerwy. Zostaje do 8 zdjęć: najnowsze pojawia się w lewym górnym rogu i zastępuje najstarsze.\n\nTen album jest tylko twój. Inni widzą inne zdjęcia.\n\nZdjęcia znikają po wyjściu ze świata. Żeby zachować któreś na PC lub Quest, podsuń aparat VRChat blisko zdjęcia na tablicy przy bramie i zrób zdjęcie. Na telefonie dotknij zdjęcia na tablicy i zrób zrzut ekranu.\n\nAutomatyczne zdjęcia włączysz lub wyłączysz przyciskiem [Zdjęcia: ON / OFF] w Ustawieniach menu."
+          "text": "Zdjęcia robią się same, gdy bawisz się i spacerujesz z psami (nie ma spustu): gdy pies przynosi piłkę, gdy go głaszczesz, gdy psy biegają lub bawią się razem, gdy pies złapie frisbee w skoku oraz podczas zdjęcia grupowego.\n\nNa spacerze na smyczy zdjęcia powstają też na postojach, w punktach widokowych i co jakiś czas: widok oczami psa albo ujęcie w stylu selfie.\n\nZostaje do 24 zdjęć (spacer 12, głaskanie 6, zabawa 6). Gdy dany rodzaj się zapełni, zastępowane jest jego najstarsze zdjęcie. Najnowsze pojawia się w lewym górnym rogu; strony zmieniasz przyciskami ◀ ▶.\n\nZdjęcia są tylko na twoim urządzeniu; inni widzą inne zdjęcia. Znikają po wyjściu.\n\nŻeby zachować któreś na PC lub Quest, podsuń aparat VRChat blisko zdjęcia na tablicy przy bramie albo zdjęcia powiększonego tutaj: wypełni cały kadr. Na telefonie pokaż zdjęcie w dużym rozmiarze (naciśnij je tutaj lub dotknij na tablicy) i zrób zrzut ekranu.\n\nAutomatyczne zdjęcia włączysz lub wyłączysz przyciskiem [Zdjęcia: ON / OFF] w Ustawieniach."
         },
         {
           "key": "photo.help.close",
@@ -39274,7 +39274,7 @@
         },
         {
           "key": "photo.help.body",
-          "text": "狗狗叼球回來、你撫摸狗狗、狗狗奔跑或一起嬉戲、狗狗跳起來接住飛盤，以及合照的時候，都會自動拍照。\n\n相片不是一直連拍，而是隔一段時間拍一張。最多保留 8 張，最新的相片排在左上角，並取代最舊的一張。\n\n這裡排列的相片只屬於你。別人看到的是另外的相片。\n\n退出世界後相片就會消失。想留下的相片，在 PC 和 Quest 上可以把 VRChat 相機湊近大門旁相片板上的相片拍攝，在手機上點一下相片板上的相片再截圖帶回去。\n\n自動拍照可以在選單「設定」裡的［相片: ON / OFF］切換。"
+          "text": "和狗狗玩耍、散步時會自動拍照（沒有快門）。狗狗叼球回來、你撫摸狗狗、狗狗奔跑或一起嬉戲、狗狗跳起來接住飛盤，以及合照的時候都會拍。\n\n拖著狗繩散步時，在狗狗停留的地方、景色好的地方，以及走了一段時間後，也會拍下狗狗視角的風景，或像自拍一樣的相片。\n\n最多保留 24 張（散步 12・撫摸 6・玩耍 6）。某一類滿了以後，會取代該類最舊的一張。最新的相片排在左上角，可以用 ◀ ▶ 翻頁。\n\n相片只保存在你自己的裝置裡，別人看到的是另外的相片。退出世界後就會消失。\n\n想留下的相片，在 PC 和 Quest 上把 VRChat 相機湊近大門旁相片板上的相片，或在這裡放大的相片，就能拍下鋪滿畫面的一張。在手機上請把相片放大（在這裡按下，或點一下相片板上的相片）再截圖帶回去。\n\n自動拍照可以在「設定」裡的［相片: ON / OFF］切換。"
         },
         {
           "key": "photo.help.close",
