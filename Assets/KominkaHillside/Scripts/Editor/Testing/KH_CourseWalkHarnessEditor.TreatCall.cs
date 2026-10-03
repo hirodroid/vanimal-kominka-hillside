@@ -414,12 +414,20 @@ namespace KominkaHillside.Editor
                 CmExpect(TcProductLastCalled() == c.dog, "the master now remembers dog " + c.dog + " as called last (" + TcLastCallDump() + ")");
                 CmNote("dog " + c.dog + " claimed; called-last before " + last + (skip ? " (skipped)" : "") + ", after " + TcProductLastCalled());
             }));
+            // The claim is seen on the harness tick the master wrote it; the dog switches to LeashTreat on its next decision (every 5
+            // frames, <= 0.2 s). A dog that already stands within 1.3 m (TC8: just re-leashed at my feet) used to pass the distance test
+            // on that same tick and read the walk mode (run 20261003-004529). So: the mode first (within 1 s), then the approach
+            double claimAt = 0;
+            s.Add(CmDo(() => claimAt = EditorApplication.timeSinceStartup));
+            s.Add(CmUntil(() => { TcSample(c); return TcMode(c.dog) == TcLeashTreat; }, 1.0,
+                () => "dog " + c.dog + " did not switch to LeashTreat after the claim (mode " + TcMode(c.dog) + ", " + TvFlat(roots[c.dog].position, TcHand(c.dog)).ToString("F2") + " m from the leash hand)"));
             s.Add(CmUntil(() =>
             {
                 TcSample(c);
+                CmExpect(TcMode(c.dog) == TcLeashTreat, "leashMode LeashTreat while called (" + TcMode(c.dog) + ")");
                 return TvFlat(roots[c.dog].position, Networking.LocalPlayer.GetPosition()) <= 1.3f;
             }, 10, () => "dog " + c.dog + " did not come to me (" + TvFlat(roots[c.dog].position, Networking.LocalPlayer.GetPosition()).ToString("F2") + " m, mode " + TcMode(c.dog) + ")"));
-            s.Add(CmDo(() => CmExpect(TcMode(c.dog) == TcLeashTreat, "leashMode LeashTreat while called (" + TcMode(c.dog) + ")")));
+            s.Add(CmDo(() => CmNote("dog " + c.dog + " in LeashTreat and at my feet " + (EditorApplication.timeSinceStartup - claimAt).ToString("F2") + " s after the claim")));
             if (!give) return;
             s.Add(CmWait(0.3));
             s.Add(CmDo(() => CmBody(c.slot).SendCustomEvent("_onPickupUseDown")));
