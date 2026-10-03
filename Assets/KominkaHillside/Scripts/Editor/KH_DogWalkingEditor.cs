@@ -201,6 +201,13 @@ namespace KominkaHillside.Editor
         }
         static float Ground(float x,float z)
         {
+            // 2026-10-03: the loop course split the ground into tiles (KH_CourseTerrain_*), so FindObjectOfType<Terrain> returned a far tile
+            // and every height check (discs, stations) read a wrong number. Take the topmost TerrainCollider under (x, z) (what the player
+            // stands on where tiles and the prototype KH_Terrain overlap); sample the one terrain only when no collider answers.
+            var hits=Physics.RaycastAll(new Vector3(x,500f,z),Vector3.down,1000f,~0,QueryTriggerInteraction.Ignore);
+            float best=float.NegativeInfinity;
+            foreach(var h in hits)if(h.collider is TerrainCollider&&h.point.y>best)best=h.point.y;
+            if(!float.IsNegativeInfinity(best))return best;
             var terrain=UnityEngine.Object.FindObjectOfType<Terrain>();
             return terrain.SampleHeight(new Vector3(x,0,z))+terrain.transform.position.y;
         }
@@ -522,7 +529,18 @@ namespace KominkaHillside.Editor
                 }
             }
             var walkRoute=root.GetComponentInChildren<KH_WalkRoute>(true);Check(walkRoute!=null&&m.route==walkRoute,"walk route wired to manager");
-            if(walkRoute!=null)
+            // 2026-10-03: the production route is the river loop (436 nodes, linkA == n, no n x n nextHop table, 6 destinations). Its shape,
+            // links and destinations are Course/22 / Course/26's; the prototype's open gate->plaza checks below only apply to that route.
+            bool loopRoute=walkRoute!=null&&walkRoute.nextHop!=null&&walkRoute.nextHop.Length==0&&walkRoute.linkA!=null&&walkRoute.linkA.Length==walkRoute.count;
+            if(loopRoute)
+            {
+                int n=walkRoute.count;Check(n>=8&&walkRoute.nodes!=null&&walkRoute.nodes.Length==n&&walkRoute.linkB!=null&&walkRoute.linkB.Length==n&&walkRoute.arriveRadius.Length==n,"loop route arrays sized n="+n+" (links "+walkRoute.linkA.Length+")");
+                log.AppendLine("NOTE loop route (river loop): shape, NavMesh links and the 6 destinations are verified by Course/22 Verify Full Course Route and Course/26 Verify Course Destinations; the prototype gate->plaza checks are skipped");
+                var rb=UdonSharpEditorUtility.GetBackingUdonBehaviour(walkRoute);object rv;var rn=rb.publicVariables.TryGetVariableValue("nodes",out rv)?rv as Array:null;
+                Check(rn!=null&&rn.Length==n&&(rn.GetValue(0) as Transform)==walkRoute.nodes[0],"route backing nodes entries="+(rn==null?0:rn.Length));
+                var mb=UdonSharpEditorUtility.GetBackingUdonBehaviour(m);object mr;Check(mb.publicVariables.TryGetVariableValue("route",out mr)&&(mr as UnityEngine.Object)==UdonSharpEditorUtility.GetBackingUdonBehaviour(walkRoute),"manager backing route reference");
+            }
+            else if(walkRoute!=null)
             {
                 int n=walkRoute.count;Check(n>=8&&walkRoute.nodes!=null&&walkRoute.nodes.Length==n&&walkRoute.nextHop.Length==n*n&&walkRoute.routeCost.Length==n*n&&walkRoute.arriveRadius.Length==n,"route arrays sized n="+n);
                 Check(walkRoute.destinationNodes!=null&&walkRoute.destinationNodes.Length==2&&walkRoute.destinationNodes[0]==0&&walkRoute.destinationNodes[1]==n-1,"route destinations gate=0 plaza=last");
@@ -723,11 +741,13 @@ namespace KominkaHillside.Editor
                 Check(h.tugInterval>h.pulseInterval&&h.tugDuration>h.pulseDuration,"the tug is slower and longer than the pulse");
                 Check(h.minAmplitude>0f&&h.minAmplitude<1f&&h.frequency>0f&&h.frequency<=1f,"amplitude floor "+h.minAmplitude.ToString("F2")+" in (0,1), frequency "+h.frequency.ToString("F2")+" in (0,1]");
                 Check(h.stillSpeed>0f&&h.awaySpeed>0f&&h.teleportJump>=1f,"standing "+h.stillSpeed.ToString("F2")+" m/s, leaving "+h.awaySpeed.ToString("F2")+" m/s, teleport guard "+h.teleportJump.ToString("F2")+" m >= 1");
-                // The walk must never buzz from two places at once: only this script may call the haptic API.
+                // The walk must never buzz from two places at once: only this script may call the haptic API for the leash.
+                // KH_WashTool.cs (IMP-DOG-024 wash tools, 2026-10-03) buzzes the hand holding a sponge / shower - a different held thing, never
+                // on the leash hand at the same time (a hand holds one pickup).
                 var callers=Directory.GetFiles("Assets/KominkaHillside","*.cs",SearchOption.AllDirectories)
                     .Where(p=>!p.Replace('\\','/').Contains("/Editor/")&&File.ReadAllText(p).Contains("PlayHaptic"+"EventInHand"))
                     .Select(Path.GetFileName).OrderBy(x=>x).ToArray();
-                Check(callers.Length==1&&callers[0]=="KH_LeashHaptics.cs","PlayHapticEventInHand called from KH_LeashHaptics.cs only ("+string.Join(", ",callers)+")");
+                Check(callers.SequenceEqual(new[]{"KH_LeashHaptics.cs","KH_WashTool.cs"}),"PlayHapticEventInHand called from KH_LeashHaptics.cs (leash) and KH_WashTool.cs (wash tools) only ("+string.Join(", ",callers)+")");
             }
             bool slotsOk=m.stationSlots!=null&&m.stationSlots.Length==6&&m.stationSlots.All(x=>x!=null)&&m.stationSlots.Distinct().Count()==6&&m.slotHand.All(h=>h==0||h==1)
                 &&m.stationOf.All(s=>s>=0&&s<3)&&Enumerable.Range(0,3).All(s=>Enumerable.Range(0,2).All(h=>Enumerable.Range(0,6).Count(k=>m.stationOf[k]==s&&m.slotHand[k]==h)==1))
