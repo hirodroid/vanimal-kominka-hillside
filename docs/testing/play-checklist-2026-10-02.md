@@ -2,7 +2,7 @@
 
 review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play / PCVR / 2 人 / 端末の確認を、セッション単位に 1 本へまとめたもの。Issue ごとではなく、コースを歩く順に並べた。結果は **○ / × / 気づいた点** を結果欄へ書く。終わったら AI が各 Issue へ転記する (Issue 側の項目番号は「元」の列の括弧)。
 
-- 作成時点のコミット: `f9ed660 (IMP-DOG-025 すすぎ改善)`。2026-10-03 に、その後の追加分 (`ea4baf4`・`2c9c794`・`8f7ed6e`) を A-0 と B54〜B57・C13〜C15・D20〜D22・E18〜E20 へ足した (既存の項目は変えていない)。さらに同日、未コンパイル・未検証の実装 (門の古民家ドッグランの板とポータル・全地点ワープ・洗い場ボードの可否表示と呼べる範囲・フリスビーの取り方の連打・おじいさんの案内文) の確認を A0-14〜A0-20・B58〜B61・C16〜C18・D23〜D25・E21〜E23 へ足した。これらは Unity でコンパイル・Build・ClientSim を通したあとに行う (まだ通っていない)
+- 作成時点のコミット: `f9ed660 (IMP-DOG-025 すすぎ改善)`。2026-10-03 に、その後の追加分 (`ea4baf4`・`2c9c794`・`8f7ed6e`) を A-0 と B54〜B57・C13〜C15・D20〜D22・E18〜E20 へ足した (既存の項目は変えていない)。さらに同日、未コンパイル・未検証の実装 (門の古民家ドッグランの板とポータル・全地点ワープ・洗い場ボードの可否表示と呼べる範囲・フリスビーの取り方の連打・おじいさんの案内文) の確認を A0-14〜A0-20・B58〜B61・C16〜C18・D23〜D25・E21〜E23 へ足した。これらは Unity でコンパイル・Build・ClientSim を通したあとに行う (`8faf572` で通った。次)。**2026-10-03 の `8faf572`** で本番シーンへ入った 11 件 (ワープ全地点・洗い場の呼べる表示と範囲・門の案内ボードとポータル・さんぽタブ 2 列・おやつで接続犬を呼ぶ・フリスビーの曲げと取り方・ボールの柄・自動写真・場所を決めて呼ぶ (手の高さ)・看板の文字サイズ・おじいさんの文言) は、Unity でコンパイル・Build・ClientSim (1 人) を通した。その確認に A0-21〜A0-27・B62〜B66・C19〜C21・D26〜D27・E24〜E25 を足し、A89 に撤回を注記した。Play・2 人・端末は未実施
 - 公開目標 (開発完了 2026-10-03〜04、公開 2026-10-10〜11) は [開発全体像](../development/overview.md)。確認済みの項目 (日付つき) は載せていない。
 - 合否は AI が決めない。1 人の総合評価を、項目別・端末別の合格に読み替えない。疑似入力 (ClientSim) の結果は、ここの合格にならない。
 - 順序は A (PCVR 1 人) → B (PCVR 2 人以上) → C (Desktop) → D (Quest 3) → E (iOS)。A の 1 周を終えてから B 以降へ進むと、同じ場所を何度も往復しない。
@@ -14,7 +14,7 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 - 犬の初期の汚れは 0 (本番値)。汚れを流す確認は、散歩のあと (A-5) に洗い場へ戻って行う。
 - 項目の元になった詳細チェック表: [川の設計書](../plans/2026-09-27-river-play-and-floating-fetch.md) (川 #1〜#36)、[フリスビーどこでも](../plans/2026-09-28-frisbee-anywhere.md) (川設計書 続き #37〜#48)、[地図の設計書](../plans/2026-09-27-map-and-travel.md) (地図設計書 #1〜#9、呼ぶ F.7 #10〜#15)、[メニュー計画](../plans/2026-09-23-menu-rebuild.md)、[散歩計画](../plans/2026-09-20-free-walk.md)、[集合計画](../plans/2026-09-20-menu-gather-stations.md)、[洗い場の呼び出しと高さ](../plans/2026-10-01-wash-call-and-height.md)、[6 匹フリスビー](../plans/2026-09-24-frisbee-six-dogs.md)。
 
-## A. PCVR 1 人 (158 項目)
+## A. PCVR 1 人 (165 項目)
 
 > **2026-10-02 ユーザー確認 (総合判断)**: 「PCVR 1 人 138 — これはもう基本全部見たからOKだよ」。A-2〜A-10 は、この総合判断により確認済みとして扱う (項目別の結果の記録はない。下の結果欄は埋めない)。**A-1 (すすぎ改善、`f9ed660`) は今日の実装のため、この発言に含まれない (ユーザー回答 2026-10-02、未 Play)。未確認のまま残す。** この判断を 2 人・Desktop・Quest 3・iOS (B〜E) の合格に読み替えない。
 
@@ -32,6 +32,13 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | A0-18 | 洗い場から呼べる範囲 (主 25 m・川辺 28 m・奥広場 25 m・展望のベンチ 25 m) が自然か。4 か所で範囲の内・境目・外の犬を呼び、外の犬には「遠すぎます」が出て犬が来ないか。川辺の洗い場から、古民家側の犬を呼べないか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
 | A0-19 | トレーナーで、手元メニューの [あそぶ] の「フリスビーの取り方」を、返事が届く前に (1.5 秒以内に) 続けて 2 回押す。通常 → 並走 → ひねり と 2 つ進むか (同じ番号を 2 回頼み直さないか)。トレーナーでない状態では変えられないか。1 人では修正前でも進むので、本命は B60。 | [BUG-DOG-008](../development/issues/BUG-DOG-008-frisbee-style-double-press.md)<br>[BUG-DOG-009](../development/issues/BUG-DOG-009-frisbee-style-receiver-check.md) | |
 | A0-20 | おじいさんに話しかけ [さんぽ] の案内文を読む。行き先が 6 つで、手元メニューの呼び名と合っているか。枠に収まるか (英語・ドイツ語など長い言語も)。 | [BUG-UI-001](../development/issues/BUG-UI-001-shopkeeper-walk-info-destinations.md) | |
+| A0-21 | 手元メニューの [さんぽ] が 2 列でスクロール無しか。左の [左につなぐ] [右につなぐ] (128×52) をレーザーで狙えるか。つないだ犬の行が [はずす] だけに変わり、行の地が点灯するか。**左右を素早く 2 度押したときに、つないだ直後に意図せず外れないか** (Owner の確定は数百 ms かかる)。行き先 6 タイルの 1 回押しと「いまの行き先」、[地図と移動] を押した後の 4 秒の結果、保留中に [地図と移動] が半幅になり [申し込み 1 件] が並ぶこと。木陰・夜の可読性。 | [DES-UI-006](../development/issues/DES-UI-006-walk-menu-html-layout.md) | |
+| A0-22 | おやつを手に出すと、自分の接続犬の最寄り 1 匹が寄ってくるか (他人の犬・未接続の犬は来ない)。食べたあと止まって待ち (8 秒、撫でている間は最大 20 秒)、次のおやつでは別の接続犬が来るか。6 m ほど先へ投げたとき、リード長の 1.25 倍で止まって見つめるか。接続犬が全員来られない状態 (遊び中・洗い場・移動の切符) で出そうとすると、理由が出て在庫が減らないか。手が頭と首輪に届く距離か (撫でる・首輪の Interact)。 | [IMP-DOG-006](../development/issues/IMP-DOG-006-leashed-treat-approach.md) | |
+| A0-23 | おもちゃタブ上段の [まっすぐ] [曲げる] で、照準の線と実際のフリスビーの飛び方が一致するか。選んでいる方が点灯し下線が出るか。曲げた投げを犬が取る見た目に違和感がないか。[あそぶ] の「フリスビーの取り方」の副文が「全部の犬: ○○」と出るか (A0-19 の続き)。 | [DES-UI-002](../development/issues/DES-UI-002-frisbee-settings.md) | |
+| A0-24 | おもちゃタブ上段の右半分「ボールの柄」で ◀ ▶ で選べ、持っていない柄は共通の確認カードで買えるか (価格は古民家と同じ。基本は無料)。6 匹 (犬種ごと) で柄ごとの大きさ・くわえた向き・犬色の見え方が自然か。文字が枠に収まるか。 | [DES-DOG-002](../development/issues/DES-DOG-002-toy-behaviour.md) | |
+| A0-25 | 自動写真: 撫でる・ボールを持ってくる・フリスビーを取る・集合などで写真が撮れ、門の看板 A の隣のボードと、ヘッダーの [写真] の副画面に新しい順で出るか (8 枚、いちばん古い写真が置き換わるか)。ボードの位置・文字の大きさが読めるか。設定の [写真: ON / OFF] で撮影が止まり、戻るか。撮影の一瞬の引っかかりがないか。ボードに VRChat カメラを近づけて撮れるか。 | [IMP-WLD-005](../development/issues/IMP-WLD-005-auto-photo-and-gallery.md) | |
+| A0-26 | 場所を決めて呼ぶ: VR でマーカーが手の高さに追従し、膝・胸の上に置くと犬がそこへ浮いて寝るか。斜面でも確定でき、赤い印や「平らな場所が必要です」が出ないか。呼び終わった (起こした) 犬が地面へ戻るか。高く置いて寝ている犬に別の犬が重なっても、置いた高さから落ちないか。(A89 の読み替え) | [IMP-DOG-032](../development/issues/IMP-DOG-032-call-placement-free-height.md) | |
+| A0-27 | 上流の橋の入口の急な角 (周回の正方向) をリードの犬を連れて通る。犬が角の先で止まり、飼い主が角を回る間に手元へ走って戻る動きが見えるか (見えたら、何匹・どの向き・どの速さで)。下流の橋の角でも起きるか。1 匹と 6 匹で。 | [IMP-DOG-038](../development/issues/IMP-DOG-038-leash-wait-at-bridge-corner.md) (ClientSim の Course/83d で既知。直し方は未選択) | |
 |---|---|---|---|
 | A0-1 | スポーンから入口の看板 A「あそびかた」に気づくか。お散歩 / フリスビー / 洗う / ポイントとトレーナーの 4 枚が読む順に分かり、文字の大きさ・距離が足りるか。昼とナイトモード、立位と座位で読めるか。下半分の余白・本文の小ささが気になるかも書く。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md)<br>[DES-UI-005](../development/issues/DES-UI-005-trainer-and-paid-items-purchase-flow.md) (4 枚目) | |
 | A0-2 | 登り口の看板 B「裏山の地図」が手元の地図と合った絵で、現在地・洗い場・ワープの仕方が分かるか。看板の柱が通行や犬の邪魔にならず、すり抜けた時の違和感がないか。入口の計測プローブの箱が看板の近くに見える (公開前に撤去する開発用) ことは気にしなくてよい。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
@@ -164,7 +171,7 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | A86 | 撫でエフェクト: 行がかざり一覧の最初の階層にだけ出て、買う → つけるが効くか。入り直すと自分の選択が戻るか。 | [IMP-DOG-015](../development/issues/IMP-DOG-015-accessories-and-petfx-port.md) | |
 | A87 | 呼ぶ・ポーズ: 6 匹で、犬 → ポーズ → 場所の流れが平地で成立するか (予約・配置・到着・終了)。4 動作 (へそ天・あご乗せ・お手・伸び+あくび) は買うまで価格が出て、買うと使えるか。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | |
 | A88 | リード中の犬の行は暗く「リード中。さんぽで外してから」が出て、外すと呼べるか。呼ばれて待機中の犬はさんぽでつなげず (理由が出る)、集合中の犬も呼べないか。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) (T-010) | |
-| A89 | 斜面で赤いマーカーと「この姿勢には平らな場所が必要です」が出て確定できず、平地では成立するか。地面法線 0.9 前後に置いた犬が沈まず浮かないか (0.9 を採用してよいか)。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | 決定: 2026-10-03 (ユーザー) 法線 0.9 を採用。斜面で赤マーカーが出る・平地で成立する確認は未 (IMP-DOG-032 で古民家どおりに戻すと判定が外れる点は要確認) |
+| A89 | 斜面で赤いマーカーと「この姿勢には平らな場所が必要です」が出て確定できず、平地では成立するか。地面法線 0.9 前後に置いた犬が沈まず浮かないか (0.9 を採用してよいか)。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) | 決定: 2026-10-03 (ユーザー) 法線 0.9 を採用。**撤回: 法線 0.9 は 032 により撤回。斜面・手の高さに置けることを見る** (同日のユーザー回答「推奨で」。この行の「赤マーカー・確定不可」は期待しない。確認は A0-26) |
 | A90 | NavMesh が途切れる場所へ呼んでも、犬が直進でたどり着き固まらないか。場所決めのマーカーの光線が小物に当たって変な高さに出ないか。 | [IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) (メニュー計画 段階 2) | |
 
 ### A-7 奥広場・川
@@ -235,7 +242,7 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | A137 | 曲がり角・橋・写真を撮る視点・両眼で、景色が不意に消えないか (LOD・遮蔽)。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md)<br>[DES-ENV-002](../development/issues/DES-ENV-002-longer-course.md) | |
 | A138 | 1 匹・3 匹・6 匹で、橋・両岸・正逆周回・途中開始・帰還が成立し、反対岸の経路へ誤接続しないか。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md) | |
 
-## B. PCVR 2 人以上 (61 項目)
+## B. PCVR 2 人以上 (66 項目)
 
 ユーザー (マスター) と相手 1 人 (必要な項目は 3〜4 人)。相手は別アカウントで、Build & Test をし直した同じ版に入る。役割は「A = マスター、B = 非 Owner」。
 
@@ -329,13 +336,18 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | B59 | 洗い場のボードの表示と受理が 2 人で一致するか。相手が連れている犬は「ほかの人と散歩中」と出て押しても来ないか。ボードを見たあとで相手が先にリードを付けた・呼んだ場合に、押した側へ理由が返るか。相手が洗っている犬は少し待ってから来るか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
 | B60 | 犬の Owner ではない側の端末のトレーナーが、「フリスビーの取り方」を 1.5 秒以内に 2 回押す。0 → 3 → 4 と 2 つ進むか。トレーナーでない人が押しても全員の犬の取り方が変わらないか。 | [BUG-DOG-008](../development/issues/BUG-DOG-008-frisbee-style-double-press.md)<br>[BUG-DOG-009](../development/issues/BUG-DOG-009-frisbee-style-receiver-check.md) | |
 | B61 | 2 人が別々に地図から同じ地点 (例: 広場) へワープして、着地点が重ならず、犬も並べるか。ワープ先の洗い場・看板・ポータルの近くに着かないか。 | [IMP-WLD-004](../development/issues/IMP-WLD-004-warp-all-five-points.md) | |
+| B62 | 2 人が同時におやつを出す。それぞれ自分の接続犬だけが来て、相手の犬は来ないか。待つ間にマスターが替わる・途中参加が入ったとき、待ちが消えるか。呼んだ順の記録が消えて次の 1 回だけ最寄りに戻っても不自然でないか。 | [IMP-DOG-006](../development/issues/IMP-DOG-006-leashed-treat-approach.md) | |
+| B63 | 2 人で、他人の [曲げる] で自分の投げが曲がらないか (曲げは投げた人の投げだけ)。トレーナーが取り方を変えたとき、他人の画面の「全部の犬」の副文が追従するか。トレーナーでない人の取り方の変更 (偽装を含む) が実通信で弾かれるか。 | [DES-UI-002](../development/issues/DES-UI-002-frisbee-settings.md)<br>[BUG-DOG-009](../development/issues/BUG-DOG-009-frisbee-style-receiver-check.md) | |
+| B64 | ボールの柄: 片方が柄を買って選ぶと、相手の画面でもボールの柄が変わるか。途中参加の人が同じ柄を見るか (Owner の所有が届くまでは基本ボール)。柄を選んだ人の退室、2 人がほぼ同時に違う柄を選んだときの最後の 1 つへのそろい方。 | [DES-DOG-002](../development/issues/DES-DOG-002-toy-behaviour.md) | |
+| B65 | 自動写真: 集合写真が各自の端末で撮れるか。フリスビーのキャッチが他人の端末でも撮れるか (同期された state のエッジが届くか)。写真は各自の端末だけにあり、相手に共有されないか。 | [IMP-WLD-005](../development/issues/IMP-WLD-005-auto-photo-and-gallery.md) | |
+| B66 | 場所を決めて呼ぶ: 片方がマーカーを手の高さに置いて犬を呼んだとき、相手の画面でも犬が同じ高さに浮いて寝るか。起こしたあと両画面で犬が地面へ戻るか。 | [IMP-DOG-032](../development/issues/IMP-DOG-032-call-placement-free-height.md) | |
 |---|---|---|---|
 | B54 | 他人が散歩中の犬の首輪に、自分側で「外す」が出ないか。自分が散歩中の犬には出るか。リードの持ち主交代・退出・途中参加のあとも切り替わりが追従するか。 | [IMP-DOG-031](../development/issues/IMP-DOG-031-collar-release-interact-only-own-walk.md) | |
 | B55 | オートナイトモード: 2 人が同じ暗さで進むか。途中参加の人が 3 秒ほどで現在の暗さへ合流するか。最初の人が抜けても夜が昼へ巻き戻らないか。オートの人とマニュアルの人が混ざっても互いに影響しないか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md) | |
 | B56 | 2 人で川沿いにいても、せせらぎが各自の位置で自然に聞こえ (相手の位置に引きずられず)、重なって大きくならないか。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
 | B57 | 犬の Owner と洗い場の Owner が別の人のとき、「おわり」で犬が台から出ていく動きと、台が下りる見え方が両者の画面で同じか。呼ばれていない他人の犬が主洗い場に寄らないか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) | |
 
-## C. Desktop (18 項目)
+## C. Desktop (21 項目)
 
 Desktop (PC 画面、マウスとキーボード) で 1 人。座位・低い視点が関わる項目もここで見る。
 
@@ -372,12 +384,15 @@ Desktop (PC 画面、マウスとキーボード) で 1 人。座位・低い視
 | C16 | 門の西の板「古民家ドッグラン」をクリックでポータルを出し・しまえるか (遠くから押せる距離か)。文字が読めるか。 | [IMP-WLD-006](../development/issues/IMP-WLD-006-farmhouse-portal-board.md) | |
 | C17 | 手元メニューの地図で、1〜5 の地点をクリックで選んでワープできるか。一覧の文字が収まり、6 の下流の橋は選べないか。 | [IMP-WLD-004](../development/issues/IMP-WLD-004-warp-all-five-points.md) | |
 | C18 | 洗い場のボードで、犬ごとの「呼べます」と理由の文字が読めるか。呼べない犬をクリックすると理由が出るか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
+| C19 | さんぽタブが 2 列でスクロール無しか。左右の [左につなぐ] [右につなぐ]・[はずす]・行き先 6 タイル (2 列 × 3 段) をクリックで押せ、文字が収まるか。 | [DES-UI-006](../development/issues/DES-UI-006-walk-menu-html-layout.md) | |
+| C20 | 場所を決めて呼ぶのマーカーが頭の前の距離にそのまま出て、斜面でも確定でき、赤い印が出ないか。 | [IMP-DOG-032](../development/issues/IMP-DOG-032-call-placement-free-height.md) | |
+| C21 | ヘッダーの [写真] からギャラリーを開け、設定の [写真: ON / OFF] が押せるか。門の看板 A の隣の写真ボードをクリックで拡大できるか。 | [IMP-WLD-005](../development/issues/IMP-WLD-005-auto-photo-and-gallery.md) | |
 |---|---|---|---|
 | C13 | 散歩していない犬を撫でる・洗うとき、首輪の「外す」に操作を取られないか。散歩中の犬では首輪から外せるか。 | [IMP-DOG-031](../development/issues/IMP-DOG-031-collar-release-interact-only-own-walk.md) | |
 | C14 | 設定のナイトモードの [オート][マニュアル] とスライダーをマウスで操作でき、文字が収まるか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md) | |
 | C15 | 入口の看板 A・B の文字が、Desktop の画面で読める距離と大きさか (立位・座位の低い視点、昼とナイトモード)。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
 
-## D. Quest 3 単体 (25 項目)
+## D. Quest 3 単体 (27 項目)
 
 Quest 3 単体で、PCVR と同じコースを 1 周する。結果欄には OS・VRChat の版・画質・アバター表示設定・発熱の状態も添える。fps は VRChat のデバッグ表示で読む。
 
@@ -431,12 +446,14 @@ Quest 3 単体で、PCVR と同じコースを 1 周する。結果欄には OS�
 | D23 | 門の西の板「古民家ドッグラン」を押してポータルが出し・しまえるか。文字が Quest 3 で読めるか。 | [IMP-WLD-006](../development/issues/IMP-WLD-006-farmhouse-portal-board.md) | |
 | D24 | 地図の 1〜5 の地点をコントローラーで選んでワープできるか。ワープ後に fps が極端に落ちないか。 | [IMP-WLD-004](../development/issues/IMP-WLD-004-warp-all-five-points.md) | |
 | D25 | 洗い場のボードの犬ごとの状態の文字が Quest 3 で読めるか。呼べない犬を押すと理由が出るか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
+| D26 | 自動写真: 撮影の一瞬の引っかかり (fps・発熱) が気にならないか。ヘッダーの [写真] とボード (640×360) が Quest 3 で読めるか。VRChat カメラを寄せた全画面化が動くか。 | [IMP-WLD-005](../development/issues/IMP-WLD-005-auto-photo-and-gallery.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
+| D27 | さんぽタブの 2 列 (左右の 128×52・行き先タイル) がコントローラーで狙えるか。おもちゃタブ上段の [まっすぐ] [曲げる] とボールの柄が読めて押せるか。 | [DES-UI-006](../development/issues/DES-UI-006-walk-menu-html-layout.md)<br>[DES-UI-002](../development/issues/DES-UI-002-frisbee-settings.md)<br>[DES-DOG-002](../development/issues/DES-DOG-002-toy-behaviour.md) | |
 |---|---|---|---|
 | D20 | オートナイトモード: 暗くなる様子と暗さ 0.8 の見やすさが PCVR と同程度か。設定の [オート][マニュアル] が押せ、文字が収まるか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
 | D21 | 川のせせらぎが聞こえ、音量・継ぎ目が問題ないか。入れたことで fps・発熱が変わらないか (Android の容量は AI が測る)。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
 | D22 | 入口の看板 A・B の文字が Quest 3 の解像度で読めるか (圧縮でにじまないか)。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
 
-## E. iOS (iPhone 15 Pro) (23 項目)
+## E. iOS (iPhone 15 Pro) (25 項目)
 
 iPhone 15 Pro で、Touch 操作を中心に確認する。結果欄には iOS・VRChat の版・画質・発熱の状態も添える。
 
@@ -483,6 +500,8 @@ iPhone 15 Pro で、Touch 操作を中心に確認する。結果欄には iOS�
 | E21 | 門の西の板「古民家ドッグラン」をタップしてポータルが出し・しまえるか。文字が iPhone の画面で読めるか。 | [IMP-WLD-006](../development/issues/IMP-WLD-006-farmhouse-portal-board.md) | |
 | E22 | 地図の 1〜5 の地点をタップで選んでワープできるか。一覧の文字が収まるか。 | [IMP-WLD-004](../development/issues/IMP-WLD-004-warp-all-five-points.md) | |
 | E23 | 洗い場のボードの犬ごとの状態の文字が読め、呼べない犬をタップすると理由が出るか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
+| E24 | さんぽタブの 2 列 (スクロール無し) と行き先 6 タイル (2 列 × 3 段) をタップで押せるか。スクロールのドラッグが無くなったことで誤操作がないか。文字が収まるか。 | [DES-UI-006](../development/issues/DES-UI-006-walk-menu-html-layout.md) | |
+| E25 | 自動写真: ヘッダーの [写真] とボードをタップで開け、全画面化が切れていて (BUG-CAM-003) 画面端の [メニュー] が隠れないか。写真が 640×360 で撮れるか。 | [IMP-WLD-005](../development/issues/IMP-WLD-005-auto-photo-and-gallery.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
 |---|---|---|---|
 | E18 | 設定のナイトモードの [オート][マニュアル] とスライダーをタッチで押せ、文字が収まるか。暗くなる様子と見やすさが PCVR と同程度か。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
 | E19 | 川のせせらぎが iOS でも聞こえ、音量・継ぎ目が問題ないか。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |

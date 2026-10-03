@@ -5,7 +5,7 @@ system: DOG
 status: review
 priority: Medium
 summary: あそぶタブの「フリスビーの取り方」を返事が届く前に押し直すと、2 つ先へ進まず同じ番号を頼み直していた。`f7cb379` で `_frisbeeAsked = next; _frisbeeAskedUntil = ...;` が直前の行のコメントへ入り込み、実行されていなかった。行を戻した (未コンパイル・未実行)
-next: コンパイル (unity-compile.sh --udon) のあと、トレーナーとして 1.5 秒以内に 2 回押して 0→3→4 と進むことを確かめる (非 Owner の端末で。Owner の端末では同期を待たずに即時に変わるので、修正前でも進む)
+next: "2 人以上の実機 (または非 Owner の端末) で、トレーナーが「フリスビーの取り方」を 1.5 秒以内に 2 回押して 0 → 3 → 4 と進むか (A0-19・B60)。Owner の端末では修正前でも進む"
 updated: 2026-10-03
 ---
 
@@ -52,3 +52,11 @@ int next = KominkaHillside.KH_FrisbeeCatch.NextVariant(FrisbeeCurrent(first));  
 
 - `bash scripts/unity-compile.sh --udon` が通る。
 - 2 人以上の実機 (または非 Owner の端末) で、トレーナーが「フリスビーの取り方」を 1.5 秒以内に 2 回押すと 2 つ進む (0→3→4)。
+
+## 2026-10-03 (`8faf572`) 本番シーンへ
+
+- コンパイル完了 (C# / U# エラー 0)。メニュー側は巡回を NextMenuVariant にしたうえで、連打の分岐 (F2) は本修正のまま。Menu/23 通過、ClientSim の Course/126 11/11 (取り方の権限 TT3 / TT4 を含む)。
+- ClientSim は 1 クライアントで Owner = 自分なので、同期の遅れが起きず連打の分岐は通らない。完了条件の「非 Owner 端末で 2 回押して 2 つ進む」は未実施。
+- 残り (ユーザー): A0-19 と、本命の B60 (Owner ではない側のトレーナー)。
+
+検証は ClientSim 1 人 (疑似を含む)。実通信・PCVR・2 人・端末の合格ではない。

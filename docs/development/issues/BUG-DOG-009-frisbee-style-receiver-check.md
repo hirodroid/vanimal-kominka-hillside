@@ -5,7 +5,7 @@ system: DOG
 status: review
 priority: High
 summary: "`KH_FrisbeeCatch.ReqVariant` (NetworkCallable) が送り手を確かめず、トレーナーでない人がネットワークイベントを送れば 6 匹の取り方を変えられた。受け手 (犬の Owner) で集合と同じ規則 (`KD_GroupActivities` → `KH_TrainerPass._OwnedBy`) を確かめるようにした (未コンパイル・未実行)"
-next: コンパイル (unity-compile.sh --udon) と Walking/5 Verify のあと、ClientSim で「トレーナーでない自分の _RequestVariant は断られ、_owners に自分を入れると通る」を確かめる。送り手を偽る経路は実機 2 人で
+next: "実機 2 人: トレーナーでない Owner の端末へ、トレーナーの押下が届いて切り替わるか、トレーナーでない人の偽装要求が実通信で弾かれるか (B60・B63)。ClientSim の模擬は済み"
 updated: 2026-10-03
 ---
 
@@ -47,3 +47,11 @@ updated: 2026-10-03
 - ClientSim (本番シーン、模擬): 自分がトレーナーでない状態で犬の `_RequestVariant(3)` → 拒否のログ、`variant` 不変。`KH_TrainerPass` の `_owners` / `_ownerCount` に自分を入れて同じ呼び出し → `variant` が 3 (Idle のとき) か `pendingVariant` が 3。
 - 試作シーンの切替キューブ (フリスビーハーネスの EnsureVariant) が今どおり番号を切り替える。
 - 実機 2 人: トレーナーでない Owner の端末へ、トレーナーの押下が届いて切り替わる。
+
+## 2026-10-03 (`8faf572`) 本番シーンへ
+
+- コンパイル完了 (C# / U# エラー 0)。受け手 (犬の Owner) が KD_GroupActivities → KH_TrainerPass._OwnedBy で送り手を確かめる VariantCallerAllowed が、本番の 6 匹とも activities 配線済みで効く (Course/123 が確認)。さらに DES-UI-002 の実装で、世界では ReqVariant(5) をトレーナーからでも拒否する。
+- ClientSim: Course/126 11/11 (TT3 / TT4 のトレーナー判定は KH_TrainerPass の所有者表のヒープ模擬。ClientSim の Store は所有を返さない前提)。Walking/5 の失敗 22 件は旧コース前提の既存のもの。
+- 残り (ユーザー): 2 人の実通信で、トレーナーでない人の送信が弾かれること。B60・B63。
+
+検証は ClientSim 1 人 (疑似を含む)。実通信・PCVR・2 人・端末の合格ではない。
