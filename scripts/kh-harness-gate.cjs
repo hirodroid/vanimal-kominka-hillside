@@ -3,7 +3,9 @@
 // 群の全体・連続一周は、ユーザーが「回す」と明示的に指示した時だけ通す (コミット・Issue 完了・仕様の確定は回す指示ではない)。
 const fs = require('fs');
 const path = require('path');
-const playKinds = ['proto', 'walk', 'segment', 'lap', 'photo'];
+const playKinds = ['proto', 'walk', 'segment', 'lap', 'photo', 'measure'];
+// 計測も Play に入るので相談を必須にする (2026-10-03 ユーザー指定)。KH_CourseBenchmarkEditor のメニュー
+const measureMenus = /^Course\/(?:1|11|31|39) - Measure /;
 // 群の全体・長い群を回す入口 (部分の入口が別にあるもの: 82 → 83 / 82b / 82c、88 → 88a / 88b、94b → 94c)。「全体」のメニューを足したらここへ足す
 const wideWalkMenus = /^Course\/(?:42|82|88|94b|100|126)\s*-/;
 const ledgerPath = process.env.KH_HARNESS_LEDGER || 'Logs/kh-harness-run/ledger.jsonl';
@@ -37,6 +39,7 @@ function check(kind, args) {
   if (!flags.consult) throw Error('--consult "<回す前の AI 相談 (Codex) の結論: 今回すべきか・どの群か>" が必要 (vrc-review 相談モード)。同じ差分で結論が出ていれば同じ文を使う');
   for (const name of ['shots', 'variants', 'mode'])
     if (rest.filter(a => a.startsWith('--' + name + '=')).length > (name === 'mode' ? 0 : 1)) throw Error('--' + name + (name === 'mode' ? ' は書かない (proto <mode> で指定する)' : ' は 1 回だけ指定する'));
+  if (kind === 'measure' && (rest.length !== 1 || !measureMenus.test(rest[0]))) throw Error('measure "<Course/1 | 11 | 31 | 39 - Measure ...>" (計測のメニュー名を 1 つ)');
   const wide = isWide(kind, rest);
   if (wide && !flags.confirmed)
     throw Error('群の全体・連続一周は --confirmed "<ユーザーが回すと指示した言葉>" が必要。コミット・Issue 完了・マイルストーン・仕様の確定は回す指示ではない。普段は最低限の群・ケースを選ぶ (100a〜、126a / b、83 / 82b / 82c、88a / 88b、94c、segment、proto default / terrain の --shots / --variants)');

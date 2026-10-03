@@ -13,7 +13,8 @@
 #   bash scripts/kh-harness-run.sh lap forward --reason "確認する仮説" --consult ".." --confirmed ".." # 約20分の連続一周。通常改修では使わない
 #   bash scripts/kh-harness-run.sh menu  "<メニュー名>"                 # Edit モードの静的検査 (Course/89・93、Frisbee/5 など)。Editor.log の増分から要約行だけ返す
 #   bash scripts/kh-harness-run.sh compile                              # unity-compile.sh --udon (照合失敗は 1 回だけ待って再試行)
-#   bash scripts/kh-harness-run.sh stop <walk|proto|photo>              # 走っているハーネスへ停止を頼む (Play 中でも通す)
+#   bash scripts/kh-harness-run.sh measure "Course/1 - Measure Current Scene" --reason ".." --consult ".."   # 計測 (Course/1・11・31・39)。結果は Logs/kh-course-benchmark/latest.json
+#   bash scripts/kh-harness-run.sh stop <walk|proto|photo|measure>      # 走っているハーネス・計測へ停止を頼む (Play 中でも通す)
 #   bash scripts/kh-harness-run.sh night --confirmed "<ユーザーの指示>" [--only wash,toy] [--skip lap] [--max-hours 8]   # 夜のまとめ回帰 (kh-harness-night.cjs)。--list で一覧
 #   bash scripts/kh-harness-run.sh photo --reason ".." --consult ".."   # IMP-WLD-005 Photo/3 (自動写真、約 1 分。Photo/1・4 の後)
 #
@@ -65,7 +66,7 @@ log_size() { [ -f "$EDITOR_LOG" ] && wc -c < "$EDITOR_LOG" | tr -d ' ' || echo 0
 cmd=${1:-}; shift || true
 # Play を起動する入口は、目的と相談の結論が無ければ Unity に触れる前に止める (kh-harness-gate.cjs、2026-10-03)。
 # 通ったら --reason / --consult / --confirmed を引数から外し、開始と終了 (終了コード・秒) を Logs/kh-harness-run/ledger.jsonl へ残す
-case "$cmd" in proto|walk|segment|lap|photo)
+case "$cmd" in proto|walk|segment|lap|photo|measure)
   gate_out=$(node scripts/kh-harness-gate.cjs begin "$cmd" "$@") || exit 64
   mapfile -t gate_lines <<<"$gate_out"
   gate_id=${gate_lines[0]}
@@ -87,7 +88,7 @@ case "$cmd" in
     case "$1" in
       "Course/46 - Restore Walk Harness PlayerData") ;;
       *Stop*) echo 'Use stop <walk|proto|photo> (menu is refused while Unity is in Play).'; exit 64;;
-      *Harness*|*ClientSim*) echo 'GATE_REFUSED: Play を起動する自動検査は menu では回さない。ハーネスは walk / proto / photo (--reason と --consult が必要)。'; exit 64;;
+      *Harness*|*ClientSim*|*Measure*) echo 'GATE_REFUSED: Play を起動する自動検査・計測は menu では回さない。walk / proto / photo / measure (--reason と --consult が必要)。'; exit 64;;
     esac
     guard
     pos=$(log_size)
@@ -104,8 +105,9 @@ case "$cmd" in
     case "${1:-}" in
       walk) ok=$(run_menu "Course/41 - Stop Walk Harness");;
       photo) ok=$(run_menu "Photo/3b - Stop Harness");;
+      measure) ok=$(run_menu "Course/2 - Stop Measurement");;
       proto) node scripts/kh-frisbee-harness.cjs stop >/dev/null 2>&1 && ok=True || ok=False;;
-      *) echo "usage: stop <walk|proto|photo>"; exit 64;;
+      *) echo "usage: stop <walk|proto|photo|measure>"; exit 64;;
     esac
     echo "stop $1 requested=$ok playing=$(is_playing)"
     [ "$ok" = "True" ] || exit 2;;
@@ -149,6 +151,26 @@ case "$cmd" in
     done
     [ "$done_" = 1 ] || { echo "walk TIMEOUT: no finished run after 7500 s (latest: $s)"; exit 2; }
     node scripts/kh-walk-cli.cjs result "$cmd" "$@";;
+  measure)
+    # 計測 (Course/1・11・31・39)。latest.json は終了時にだけ書かれるので、新しい runId が出るまで待つ。
+    # メニューが前提 (シーン・未保存) で断ると Play に入らない → 30 s 後に Play でなければ NO_NEW_RUN
+    guard
+    prev=$(node -e 'try{console.log(require("./Logs/kh-course-benchmark/latest.json").runId)}catch(e){console.log("")}')
+    ok=$(run_menu "$1")
+    [ "$ok" = "True" ] || { echo "measure NOT_EXECUTED ($1): ExecuteMenuItem=$ok"; exit 2; }
+    done_=0; t=0
+    while [ $t -lt 1200 ]; do
+      sleep 10; t=$((t+10))
+      s=$(node -e 'try{const j=require("./Logs/kh-course-benchmark/latest.json");console.log(j.runId+" "+j.status)}catch(e){console.log("none")}')
+      playing=$(is_playing)
+      case "$s" in none|"$prev "*)
+        [ $t -ge 30 ] && [ "$playing" = "False" ] && { echo "measure NO_NEW_RUN (menu refused? wrong scene / unsaved scene; latest: $s)"; exit 2; }
+        continue;; esac
+      [ "$playing" = "False" ] || continue
+      done_=1; break
+    done
+    [ "$done_" = 1 ] || { echo "measure TIMEOUT: no finished run after 1200 s (latest: $s)"; exit 2; }
+    node -e 'const j=require("./Logs/kh-course-benchmark/latest.json");console.log("measure",j.runId,j.status,"samples",(j.samples||[]).length,"restored",j.restored,"sceneDirtyAfter",j.sceneDirtyAfter,j.reason||"");process.exit(j.status==="MEASURED"?0:1)';;
   photo)
     # IMP-WLD-005 Photo/3 - Harness (自動写真の小さいケース群、約 1 分)。結果は Logs/kh-photo-harness/latest.json
     guard

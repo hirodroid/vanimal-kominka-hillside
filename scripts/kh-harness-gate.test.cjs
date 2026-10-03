@@ -43,6 +43,15 @@ test('selected groups and cases run without the user instruction', () => {
     ['proto', ['default', '--variants=5', '--shots=flat,mid']], ['proto', ['terrain', '--shots=T-up04']], ['photo', []]])
     assert.equal(check(kind, [...args, ...ok]).wide, false);
 });
+test('measurement menus enter Play too, so they need the purpose and the consult, and only those menus pass', () => {
+  for (const menu of ['Course/1 - Measure Current Scene', 'Course/11 - Measure River Scenery Contribution',
+    'Course/31 - Measure Course Scenery Contribution', 'Course/39 - Measure Course Occlusion Contribution']) {
+    assert.throws(() => check('measure', [menu]), /--reason/);
+    assert.equal(check('measure', [menu, ...ok]).wide, false);
+  }
+  for (const bad of [[], ['Course/2 - Stop Measurement'], [washGroup], ['Course/1 - Measure Current Scene', 'extra']])
+    assert.throws(() => check('measure', [...bad, ...ok]), /measure/);
+});
 test('lap hands the same purpose to the walk CLI', () => {
   const g = check('lap', ['reverse', ...ok, '--confirmed', 'ユーザー: 公開前に回して']);
   assert.deepEqual(g.rest, ['reverse', '--reason', ok[1]]);
@@ -76,6 +85,7 @@ test('kh-harness-run.sh never reaches Unity on a refusal, and records the run on
     { encoding: 'utf8', env: { ...process.env, KH_UNITY_API: 'bash ' + stub, KH_HARNESS_LEDGER: ledger } });
   const called = () => fs.existsSync(calls) ? fs.readFileSync(calls, 'utf8').trim().split('\n') : [];
   for (const args of [['walk', washGroup], ['segment', 'bridge-190-choice-2-dogs-6', '--reason', 'x'], ['walk', washAll, ...ok], ['photo'],
+    ['measure', 'Course/1 - Measure Current Scene'], ['measure', 'Course/100a - Harness Wash base', ...ok], ['menu', 'Course/1 - Measure Current Scene'],
     ['menu', washAll], ['menu', 'Testing/Live Buy Probe (ClientSim)'], ['menu', 'Photo/3 - Harness'], ['menu', 'Course/41 - Stop Walk Harness']])
     assert.equal(sh(...args).status, 64, args.join(' '));
   assert.deepEqual(called(), []); assert.equal(fs.existsSync(ledger), false);

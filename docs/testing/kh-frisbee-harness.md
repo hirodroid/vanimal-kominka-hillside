@@ -67,8 +67,8 @@ bash scripts/kh-harness-run.sh lap forward --reason "長時間追従で蓄積す
 - **回す前の門 (2026-10-03 ユーザー指定、`scripts/kh-harness-gate.cjs`)**: Play を起動する入口 (`proto` / `walk` / `segment` / `lap` / `photo`) は `--reason "<この Play でしか判別できないこと>"` と `--consult "<回す前の AI 相談 (Codex) の結論: 今回すべきか・どの群か>"` が無ければ Unity に触れる前に exit 64 (`GATE_REFUSED`)。式・Edit プローブ・静的検査で決まるなら回さない。同じ版・同じ範囲で結論が出ていれば同じ文を使い、範囲を広げる・新しい失敗が出た・前提が変わった時に相談し直す。`node scripts/kh-frisbee-harness.cjs start` の直接実行も拒否する。この文書の以降の例は 2 つを省いて書いている。
 - **群の全体と連続一周は、ユーザーが「回す」と指示した時だけ**: `Course/42`・`Course/82`・`Course/88`・`Course/94b`・`Course/100`・`Course/126`、`--shots` / `--variants` の絞り込みが無い `proto` (netorder・sixdogs は常に全体)、`lap` は、さらに `--confirmed "<ユーザーが回すと指示した言葉>"` が要る。コミット・Issue 完了・マイルストーン・仕様の確定は回す指示ではない。群を分けて順に回して全体と同じ量にするのも同じ扱い (ユーザーの指示が要る)。普段の開発は最低限の群・ケースだけにし、しっかり回す回帰は[夜のまとめ回帰](#夜のまとめ回帰-night2026-10-03)で回す。「全体」のメニューを足したら門の一覧 (`wideWalkMenus`) へ足す。絞り込みの名前の打ち間違い・重複は拒否する (Unity 側は一致が無いと全体へ戻るため)。
 - **台帳**: 門を通った実行は開始 (入口・引数・目的・相談の結論・ユーザーの指示) と終了 (終了コード・秒) を `Logs/kh-harness-run/ledger.jsonl` に 1 行ずつ残す。どの目的に何分使ったかはここで数える (秒はスクリプトの待ち時間。TIMEOUT の後に残った Play は含まない)。
-- **門が防げないこと**: `--consult` と `--confirmed` は文字列で、内容は検査しない (省略できない・記録に残る、まで)。`scripts/unity-api.sh` で直接メニューや C# を呼べば門を通らない。ハーネスの起動は必ずこのスクリプトから行う。計測のメニュー (`Course/1`・`11`・`31`・`39`) は門の対象外。
-- **停止**: `bash scripts/kh-harness-run.sh stop <walk|proto|photo>`。Play 中でも通す (`menu` は Edit モードを要求するので、停止のメニューは `menu` からは届かない)。`menu` は名前に `Harness` / `ClientSim` を含む Play の自動検査を拒否する。
+- **門が防げないこと**: `--consult` と `--confirmed` は文字列で、内容は検査しない (省略できない・記録に残る、まで)。`scripts/unity-api.sh` で直接メニューや C# を呼べば門を通らない。ハーネスの起動は必ずこのスクリプトから行う。計測 (`Course/1`・`11`・`31`・`39`) も Play に入るので、`measure "<メニュー名>"` で同じ門を通す (2026-10-03 ユーザー指定: 相談必須。結果は `Logs/kh-course-benchmark/latest.json`)。
+- **停止**: `bash scripts/kh-harness-run.sh stop <walk|proto|photo|measure>`。Play 中でも通す (`menu` は Edit モードを要求するので、停止のメニューは `menu` からは届かない)。`menu` は名前に `Harness` / `ClientSim` / `Measure` を含む Play の自動検査・計測を拒否する。
 - **実行前の照合**: `unity-api.sh check` (接続先) と `isPlaying` / `isCompiling` がともに False。違えば何もせず exit 3。
 - **終わりの判定**: 新しい runId が出て、status が `RUNNING` 以外になり、Play を抜けるまで待つ。walk は Finish の証拠 (`endedUtc`) まで待つ (`EVIDENCE_ERROR` は除く)。前の runId の結果は使わない。walk でメニューを叩いて 60 s 以内に新しい run が出なければ `NO_NEW_RUN`。
 - **結果**: 1 行で返す (runId・status・ケース数・落ちたケースと理由)。proto は要求した mode と report の mode が違えば `MODE_MISMATCH` で FAIL。
@@ -117,6 +117,7 @@ bash scripts/kh-harness-run.sh night --confirmed ".." --skip lap,proto --max-hou
 - **待ち切れ (exit 2)** の後は `stop` を頼んで 120 s 待つ。**Unity が待機状態でない (exit 3)** は 120 s 待って 2 回までやり直す。自動の修正・無制限の再試行はしない。
 - **結果**: `Logs/kh-harness-night/latest.md` (1 群終わるごとに更新。途中で止まっても表は残る) と `Logs/kh-harness-night/<開始時刻>/summary.md`。列は 群 / 結果 / status / ケース数 / 分 / run / 落ちたケースと理由。
 - **結果の読み方**: `OK` = CLI が合格と判定 / `観測完了` = 落ちたケースも実行時エラーも無く完了したが、CLI が合否を出さない状態 (`TRAVEL_OBSERVED`・`TOY_ROW_PASS` など。合格ではない。status と report を読む) / `NG` = 落ちたケース・実行時エラー・未対応の状態 / `未完了` = 待ち切れ・開始できず / `未実行` = 前提が欠けた・中断した。
+- **起動する場所**: Git Bash から。PowerShell から起動する時は Git の bash を明示する (`& "C:\Program Files\Git\bin\bash.exe" scripts/kh-harness-run.sh night --confirmed "寝る前に全部"`。Windows の `bash` は WSL を指し、Unity へ繋がらない)。
 - **前提**: Unity が Edit モードで、開いているシーンが未変更。VRChat クライアントや重い処理を同じ PC で動かさない (上の実測)。PC がスリープすると止まるので、電源設定はユーザーが確かめる。`photo` は `Photo/1`・`Photo/4` が済んでいないと開始できず「未完了」になる。
 - **未実測**: この入口は偽の Unity で順序・中断・表を確かめただけで、実際の一晩はまだ回していない (2026-10-03)。所要は過去の群ごとの最長時間の合計から 4 時間前後の見込み。最初の一晩の表で、時間と `観測完了` の読み方を見直す。
 
