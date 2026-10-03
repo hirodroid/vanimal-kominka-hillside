@@ -1,0 +1,443 @@
+{
+    "format": "KH_PlayGuideCuts/1",
+    "drawVersion": 3,
+    "atlas": "Assets/KominkaHillside/Textures/Guide/KH_PlayGuideCuts.png",
+    "atlasWidth": 2048,
+    "atlasHeight": 768,
+    "cutWidth": 512,
+    "cutHeight": 384,
+    "uvInsetPx": 2.0,
+    "atlasSha256": "aefff648b1927a9ccfb217d63d417bc6acbfab96cbed56c1c85c45a9c9c42095",
+    "capturedUtc": "2026-10-03T10:22:12.4367853Z",
+    "coordinates": "uv*: RawImage.uvRect of the cut (0..1 of the atlas, origin bottom-left). Every other x/y/w/h: 0..1 of the cut's visible (uv) area, origin bottom-left, x/y = centre (use as RectTransform anchorMin = anchorMax, size = w/h x the RawImage size).",
+    "cuts": [
+        {
+            "id": "F1",
+            "group": "frisbee",
+            "step": 1,
+            "captionKey": "guide.frisbee.cap1",
+            "source": "edit-menu",
+            "uvX": 0.0009769999887794257,
+            "uvY": 0.5026040077209473,
+            "uvW": 0.24804699420928956,
+            "uvH": 0.49479201436042788,
+            "badgeX": 0.07090000063180924,
+            "badgeY": 0.9053000211715698,
+            "badgeR": 0.05119999870657921,
+            "badgeBaked": false,
+            "callouts": [
+                {
+                    "key": "KD_TreatPouch.WordTabToy",
+                    "keySource": "KD_Language.fixedLabels",
+                    "role": "tab",
+                    "x": 0.649399995803833,
+                    "y": 0.8398000001907349,
+                    "w": 0.2362000048160553,
+                    "h": 0.08950000256299973,
+                    "framed": true,
+                    "inInset": false
+                },
+                {
+                    "key": "dog.labrador",
+                    "keySource": "KD_TreatPouch.toyNameKeys",
+                    "role": "dogName",
+                    "x": 0.6797000169754028,
+                    "y": 0.2476000040769577,
+                    "w": 0.5011000037193298,
+                    "h": 0.10199999809265137,
+                    "framed": false,
+                    "inInset": true
+                },
+                {
+                    "key": "KD_TreatPouch.WordToyBall",
+                    "keySource": "KD_Language.fixedLabels",
+                    "role": "button",
+                    "x": 0.573199987411499,
+                    "y": 0.10599999874830246,
+                    "w": 0.2287999987602234,
+                    "h": 0.11330000311136246,
+                    "framed": false,
+                    "inInset": true
+                },
+                {
+                    "key": "KD_TreatPouch.WordToyDisc",
+                    "keySource": "KD_Language.fixedLabels",
+                    "role": "button",
+                    "x": 0.8402000069618225,
+                    "y": 0.10599999874830246,
+                    "w": 0.2287999987602234,
+                    "h": 0.11330000311136246,
+                    "framed": true,
+                    "inInset": true
+                }
+            ],
+            "marks": [
+                {
+                    "kind": "frame",
+                    "x": 0.649399995803833,
+                    "y": 0.7283999919891357,
+                    "w": 0.17589999735355378,
+                    "h": 0.11230000108480454,
+                    "note": "tab おもちゃ"
+                },
+                {
+                    "kind": "frame",
+                    "x": 0.41600000858306887,
+                    "y": 0.385699987411499,
+                    "w": 0.149399995803833,
+                    "h": 0.10989999771118164,
+                    "note": "[ディスク] of ToyRow2"
+                },
+                {
+                    "kind": "inset",
+                    "x": 0.7067000269889832,
+                    "y": 0.16580000519752503,
+                    "w": 0.570900022983551,
+                    "h": 0.31049999594688418,
+                    "note": "ToyRow2 buttons x2.4"
+                },
+                {
+                    "kind": "frame",
+                    "x": 0.8402000069618225,
+                    "y": 0.10599999874830246,
+                    "w": 0.29760000109672549,
+                    "h": 0.18250000476837159,
+                    "note": "the same button in the inset"
+                }
+            ]
+        },
+        {
+            "id": "F2",
+            "group": "frisbee",
+            "step": 2,
+            "captionKey": "guide.frisbee.cap2",
+            "source": "edit-world",
+            "uvX": 0.2509770095348358,
+            "uvY": 0.5026040077209473,
+            "uvW": 0.24804699420928956,
+            "uvH": 0.49479201436042788,
+            "badgeX": 0.07090000063180924,
+            "badgeY": 0.9053000211715698,
+            "badgeR": 0.05119999870657921,
+            "badgeBaked": false,
+            "callouts": [],
+            "marks": [
+                {
+                    "kind": "ring",
+                    "x": 0.5034999847412109,
+                    "y": 0.36149999499320986,
+                    "w": 0.3174999952316284,
+                    "h": 0.37049999833106997,
+                    "note": "the disc in front of you"
+                },
+                {
+                    "kind": "arrow",
+                    "x": 0.29980000853538515,
+                    "y": 0.5727999806404114,
+                    "w": 0.19550000131130219,
+                    "h": 0.21220000088214875,
+                    "note": "points at the disc"
+                }
+            ]
+        },
+        {
+            "id": "F3",
+            "group": "frisbee",
+            "step": 3,
+            "captionKey": "guide.frisbee.cap3",
+            "source": "edit-world",
+            "uvX": 0.5009769797325134,
+            "uvY": 0.5026040077209473,
+            "uvW": 0.24804699420928956,
+            "uvH": 0.49479201436042788,
+            "badgeX": 0.07090000063180924,
+            "badgeY": 0.9053000211715698,
+            "badgeR": 0.05119999870657921,
+            "badgeBaked": false,
+            "callouts": [],
+            "marks": [
+                {
+                    "kind": "hand",
+                    "x": 0.5619999766349793,
+                    "y": 0.1632000058889389,
+                    "w": 0.21969999372959138,
+                    "h": 0.3440999984741211,
+                    "note": "hand holding the disc"
+                },
+                {
+                    "kind": "ring",
+                    "x": 0.5031999945640564,
+                    "y": 0.5268999934196472,
+                    "w": 0.11270000040531159,
+                    "h": 0.12110000103712082,
+                    "note": "the landing marker"
+                },
+                {
+                    "kind": "arrow",
+                    "x": 0.38999998569488528,
+                    "y": 0.670199990272522,
+                    "w": 0.17919999361038209,
+                    "h": 0.22920000553131104,
+                    "note": "points at the landing marker"
+                }
+            ]
+        },
+        {
+            "id": "F4",
+            "group": "frisbee",
+            "step": 4,
+            "captionKey": "guide.frisbee.cap4",
+            "source": "edit-world",
+            "uvX": 0.7509769797325134,
+            "uvY": 0.5026040077209473,
+            "uvW": 0.24804699420928956,
+            "uvH": 0.49479201436042788,
+            "badgeX": 0.07090000063180924,
+            "badgeY": 0.9053000211715698,
+            "badgeR": 0.05119999870657921,
+            "badgeBaked": false,
+            "callouts": [],
+            "marks": [
+                {
+                    "kind": "ring",
+                    "x": 0.4812999963760376,
+                    "y": 0.46779999136924746,
+                    "w": 0.44279998540878298,
+                    "h": 0.6229000091552734,
+                    "note": "the dog catching the disc"
+                }
+            ]
+        },
+        {
+            "id": "N1",
+            "group": "frisbee",
+            "step": 0,
+            "captionKey": "guide.frisbee.note1",
+            "source": "edit-world",
+            "uvX": 0.0009769999887794257,
+            "uvY": 0.002604000037536025,
+            "uvW": 0.24804699420928956,
+            "uvH": 0.49479201436042788,
+            "badgeX": 0.07090000063180924,
+            "badgeY": 0.9053000211715698,
+            "badgeR": 0.05119999870657921,
+            "badgeBaked": false,
+            "callouts": [],
+            "marks": [
+                {
+                    "kind": "hand",
+                    "x": 0.559499979019165,
+                    "y": 0.1395999938249588,
+                    "w": 0.1923999935388565,
+                    "h": 0.3001999855041504,
+                    "note": "hand holding the disc"
+                },
+                {
+                    "kind": "ring",
+                    "x": 0.5027999877929688,
+                    "y": 0.5526000261306763,
+                    "w": 0.13979999721050263,
+                    "h": 0.12110000103712082,
+                    "note": "the x marker (the dog cannot go there)"
+                }
+            ]
+        },
+        {
+            "id": "N2",
+            "group": "frisbee",
+            "step": 0,
+            "captionKey": "guide.frisbee.note2",
+            "source": "edit-menu",
+            "uvX": 0.2509770095348358,
+            "uvY": 0.002604000037536025,
+            "uvW": 0.24804699420928956,
+            "uvH": 0.49479201436042788,
+            "badgeX": 0.07090000063180924,
+            "badgeY": 0.9053000211715698,
+            "badgeR": 0.05119999870657921,
+            "badgeBaked": false,
+            "callouts": [
+                {
+                    "key": "course.toy.throw.label",
+                    "keySource": "KD_TreatPouch.ToyTop.cs RedrawToyTopRow",
+                    "role": "label",
+                    "x": 0.12839999794960023,
+                    "y": 0.5940999984741211,
+                    "w": 0.1818999946117401,
+                    "h": 0.10610000044107437,
+                    "framed": false,
+                    "inInset": false
+                },
+                {
+                    "key": "course.toy.throw.straight",
+                    "keySource": "KD_TreatPouch.ToyTop.cs RedrawToyTopRow",
+                    "role": "button",
+                    "x": 0.40119999647140505,
+                    "y": 0.5940999984741211,
+                    "w": 0.29100000858306887,
+                    "h": 0.09730000048875809,
+                    "framed": true,
+                    "inInset": false
+                },
+                {
+                    "key": "course.toy.throw.curve",
+                    "keySource": "KD_TreatPouch.ToyTop.cs RedrawToyTopRow",
+                    "role": "button",
+                    "x": 0.7484999895095825,
+                    "y": 0.5940999984741211,
+                    "w": 0.29100000858306887,
+                    "h": 0.09730000048875809,
+                    "framed": true,
+                    "inInset": false
+                }
+            ],
+            "marks": [
+                {
+                    "kind": "frame",
+                    "x": 0.40119999647140505,
+                    "y": 0.5940999984741211,
+                    "w": 0.37400001287460329,
+                    "h": 0.164000004529953,
+                    "note": "[まっすぐ]"
+                },
+                {
+                    "kind": "frame",
+                    "x": 0.7484999895095825,
+                    "y": 0.5940999984741211,
+                    "w": 0.37400001287460329,
+                    "h": 0.164000004529953,
+                    "note": "[曲げる]"
+                }
+            ]
+        },
+        {
+            "id": "B1",
+            "group": "ball",
+            "step": 1,
+            "captionKey": "guide.ball.cap1",
+            "source": "edit-menu",
+            "uvX": 0.5009769797325134,
+            "uvY": 0.002604000037536025,
+            "uvW": 0.24804699420928956,
+            "uvH": 0.49479201436042788,
+            "badgeX": 0.07090000063180924,
+            "badgeY": 0.9053000211715698,
+            "badgeR": 0.05119999870657921,
+            "badgeBaked": false,
+            "callouts": [
+                {
+                    "key": "KD_TreatPouch.WordTabToy",
+                    "keySource": "KD_Language.fixedLabels",
+                    "role": "tab",
+                    "x": 0.649399995803833,
+                    "y": 0.8398000001907349,
+                    "w": 0.2362000048160553,
+                    "h": 0.08950000256299973,
+                    "framed": true,
+                    "inInset": false
+                },
+                {
+                    "key": "dog.labrador",
+                    "keySource": "KD_TreatPouch.toyNameKeys",
+                    "role": "dogName",
+                    "x": 0.666700005531311,
+                    "y": 0.2572999894618988,
+                    "w": 0.5224000215530396,
+                    "h": 0.1062999963760376,
+                    "framed": false,
+                    "inInset": true
+                },
+                {
+                    "key": "KD_TreatPouch.WordToyBall",
+                    "keySource": "KD_Language.fixedLabels",
+                    "role": "button",
+                    "x": 0.5557000041007996,
+                    "y": 0.1096000000834465,
+                    "w": 0.2386000007390976,
+                    "h": 0.11810000240802765,
+                    "framed": true,
+                    "inInset": true
+                },
+                {
+                    "key": "KD_TreatPouch.WordToyDisc",
+                    "keySource": "KD_Language.fixedLabels",
+                    "role": "button",
+                    "x": 0.8339999914169312,
+                    "y": 0.1096000000834465,
+                    "w": 0.2386000007390976,
+                    "h": 0.11810000240802765,
+                    "framed": false,
+                    "inInset": true
+                }
+            ],
+            "marks": [
+                {
+                    "kind": "frame",
+                    "x": 0.649399995803833,
+                    "y": 0.7283999919891357,
+                    "w": 0.17589999735355378,
+                    "h": 0.11230000108480454,
+                    "note": "tab おもちゃ"
+                },
+                {
+                    "kind": "frame",
+                    "x": 0.3046000003814697,
+                    "y": 0.385699987411499,
+                    "w": 0.149399995803833,
+                    "h": 0.10989999771118164,
+                    "note": "[ボール] of ToyRow2"
+                },
+                {
+                    "kind": "inset",
+                    "x": 0.6948999762535095,
+                    "y": 0.17239999771118165,
+                    "w": 0.5945000052452087,
+                    "h": 0.3237000107765198,
+                    "note": "ToyRow2 buttons x2.5"
+                },
+                {
+                    "kind": "frame",
+                    "x": 0.5557000041007996,
+                    "y": 0.1096000000834465,
+                    "w": 0.3084000051021576,
+                    "h": 0.18780000507831574,
+                    "note": "the same button in the inset"
+                }
+            ]
+        },
+        {
+            "id": "B2",
+            "group": "ball",
+            "step": 2,
+            "captionKey": "guide.ball.cap2",
+            "source": "edit-world",
+            "uvX": 0.7509769797325134,
+            "uvY": 0.002604000037536025,
+            "uvW": 0.24804699420928956,
+            "uvH": 0.49479201436042788,
+            "badgeX": 0.07090000063180924,
+            "badgeY": 0.9053000211715698,
+            "badgeR": 0.05119999870657921,
+            "badgeBaked": false,
+            "callouts": [],
+            "marks": [
+                {
+                    "kind": "ring",
+                    "x": 0.5009999871253967,
+                    "y": 0.2117999941110611,
+                    "w": 0.16899999976158143,
+                    "h": 0.2433999925851822,
+                    "note": "the ball in front of you"
+                },
+                {
+                    "kind": "dashed-arrow",
+                    "x": 0.361299991607666,
+                    "y": 0.5216000080108643,
+                    "w": 0.23420000076293946,
+                    "h": 0.43939998745918276,
+                    "note": "the throw toward the dog"
+                }
+            ]
+        }
+    ]
+}
