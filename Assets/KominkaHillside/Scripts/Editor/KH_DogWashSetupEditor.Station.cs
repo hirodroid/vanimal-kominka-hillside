@@ -714,9 +714,10 @@ namespace KominkaHillside.Editor
             "wash.state.callable", "wash.state.coming", "wash.state.here", "wash.state.calling", "wash.state.leashedOther", "wash.state.otherStation",
             "wash.state.tooFar", "wash.state.fetch", "wash.state.frisbee", "wash.state.gathering", "wash.state.sleepCall", "wash.state.washedOther",
             "wash.button.end", "wash.button.standUp", "wash.button.standDown", "wash.button.meUp", "wash.button.meDown",
-            // IMP-DOG-039 the picture guide above the board (W 24..33, docs/plans/2026-10-03-hand-wash.md §7.5; written by _ApplyGuide)
+            // IMP-DOG-039 / IMP-UI-003 the picture guide above the board (W 24..37, docs/plans/2026-10-03-hand-wash.md §13.11; written by _ApplyGuide)
             "wash.guide.step1", "wash.guide.step1.sub", "wash.guide.step2", "wash.guide.step2.sub", "wash.guide.step2.flat", "wash.guide.step2.flat.sub",
-            "wash.guide.step3", "wash.guide.step3.sub", "wash.guide.help", "wash.guide.help.flat",
+            "wash.guide.step3", "wash.guide.step3.sub", "wash.guide.step3.flat", "wash.guide.step3.flat.sub", "wash.guide.step4", "wash.guide.step4.sub",
+            "wash.guide.help", "wash.guide.help.flat",
         };
 
         /// <summary>IMP-DOG-037: each station's call range (m, horizontal from the anchor), by station index (main, then

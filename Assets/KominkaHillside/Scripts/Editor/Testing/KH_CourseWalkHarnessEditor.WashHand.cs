@@ -838,11 +838,11 @@ namespace KominkaHillside.Editor
             s.Add(WsDo(() =>
             {
                 gdNotes.Add(HwCheckGuide("en", false));
-                // every one of the 10 guide words differs between ja and en
+                // every one of the 14 guide words differs between ja and en (IMP-UI-003)
                 var codes = Get<string[]>(hwLang, "languageCodes"); int ja = Array.IndexOf(codes, "ja"), en = Array.IndexOf(codes, "en");
                 var same = new List<string>();
                 for (int w = KH_WashStationBoard.WGuideStep1; w <= KH_WashStationBoard.WGuideHelpFlat; w++) if (HwWord(w, ja) == HwWord(w, en)) same.Add(w + ":" + HwWord(w, en));
-                WsExpect(same.Count == 0, "the 10 guide words differ between ja and en (same: " + string.Join(", ", same) + ")");
+                WsExpect(same.Count == 0, "the 14 guide words differ between ja and en (same: " + string.Join(", ", same) + ")");
                 hwBoard.SetProgramVariable<bool>("debugVr", true); hwBoard.SendCustomEvent("_ApplyGuide");
                 gdNotes.Add(HwCheckGuide("en", true));
                 hwBoard.SetProgramVariable<bool>("debugVr", false); hwBoard.SendCustomEvent("_ApplyGuide");
@@ -1045,9 +1045,9 @@ namespace KominkaHillside.Editor
             hwGuide = hwStation.Find(HwGuideName);
             if (hwGuide == null) throw new InvalidOperationException(HwStationName + "/" + HwGuideName + " missing (IMP-DOG-039 picture guide: run Wash/11)");
             var labels = WsArr<TMPro.TextMeshProUGUI>(hwBoard, "guideLabels");
-            if (labels.Length != 7 || labels.Any(l => l == null || !l.transform.IsChildOf(hwGuide))) throw new InvalidOperationException("the board's guideLabels are not the 7 labels under " + HwGuideName + " (" + labels.Length + "; run Wash/11)");
+            if (labels.Length != 9 || labels.Any(l => l == null || !l.transform.IsChildOf(hwGuide))) throw new InvalidOperationException("the board's guideLabels are not the 9 labels under " + HwGuideName + " (" + labels.Length + "; run Wash/11)");
             var pics = WsArr<UnityEngine.UI.RawImage>(hwBoard, "guidePics");
-            if (pics.Length != 3 || pics[1] == null || !pics[1].transform.IsChildOf(hwGuide)) throw new InvalidOperationException("the board's guidePics are not the 3 pictures under " + HwGuideName + " (" + pics.Length + "; run Wash/11)");
+            if (pics.Length != 4 || pics[1] == null || pics[2] == null || !pics[1].transform.IsChildOf(hwGuide) || !pics[2].transform.IsChildOf(hwGuide)) throw new InvalidOperationException("the board's guidePics are not the 4 pictures under " + HwGuideName + " (" + pics.Length + "; run Wash/11)");
             var keys = Get<string[]>(hwBoard, "wordKeys"); var words = Get<string[]>(hwBoard, "words");
             if (keys.Length != KH_WashStationBoard.WordCount || words.Length != KH_WashStationBoard.WordCount) throw new InvalidOperationException("the board has " + keys.Length + " word keys / " + words.Length + " words, not " + KH_WashStationBoard.WordCount + " (run Wash/11)");
             hwLang = WsRef(hwBoard, "language") as UdonBehaviour;
@@ -1453,22 +1453,34 @@ namespace KominkaHillside.Editor
             return f >= 0 ? texts[f * keys.Length + idx] : key;
         }
 
-        /// <summary>The 7 guide labels read the words of that language and device, and picture ② shows that device's cell.</summary>
+        /// <summary>The 9 guide labels read the words of that language and device, and pictures ② ③ show that device's cells
+        /// (IMP-UI-003: guideUvVr2 / guideUvFlat2, guideUvVr3 / guideUvFlat3).</summary>
         static string HwCheckGuide(string code, bool vr)
         {
             var codes = Get<string[]>(hwLang, "languageCodes"); int li = Array.IndexOf(codes, code);
             WsExpect(Get<string[]>(hwLang, "languageCodes")[Get<int>(hwLang, "_languageIndex")] == code, "the language is " + code);
-            int[] want = vr
-                ? new[] { KH_WashStationBoard.WGuideStep1, KH_WashStationBoard.WGuideStep1Sub, KH_WashStationBoard.WGuideStep2, KH_WashStationBoard.WGuideStep2Sub, KH_WashStationBoard.WGuideStep3, KH_WashStationBoard.WGuideStep3Sub, KH_WashStationBoard.WGuideHelp }
-                : new[] { KH_WashStationBoard.WGuideStep1, KH_WashStationBoard.WGuideStep1Sub, KH_WashStationBoard.WGuideStep2Flat, KH_WashStationBoard.WGuideStep2FlatSub, KH_WashStationBoard.WGuideStep3, KH_WashStationBoard.WGuideStep3Sub, KH_WashStationBoard.WGuideHelpFlat };
+            int[] want =
+            {
+                KH_WashStationBoard.WGuideStep1, KH_WashStationBoard.WGuideStep1Sub,
+                vr ? KH_WashStationBoard.WGuideStep2 : KH_WashStationBoard.WGuideStep2Flat, vr ? KH_WashStationBoard.WGuideStep2Sub : KH_WashStationBoard.WGuideStep2FlatSub,
+                vr ? KH_WashStationBoard.WGuideStep3 : KH_WashStationBoard.WGuideStep3Flat, vr ? KH_WashStationBoard.WGuideStep3Sub : KH_WashStationBoard.WGuideStep3FlatSub,
+                KH_WashStationBoard.WGuideStep4, KH_WashStationBoard.WGuideStep4Sub,
+                vr ? KH_WashStationBoard.WGuideHelp : KH_WashStationBoard.WGuideHelpFlat,
+            };
             var labels = WsArr<TMPro.TextMeshProUGUI>(hwBoard, "guideLabels");
             var bad = new List<string>();
-            for (int i = 0; i < 7; i++) { string w = HwWord(want[i], li), got = labels[i].text; if (got != w) bad.Add(labels[i].name + " '" + got + "' != '" + w + "'"); }
+            for (int i = 0; i < want.Length; i++) { string w = HwWord(want[i], li), got = labels[i].text; if (got != w) bad.Add(labels[i].name + " '" + got + "' != '" + w + "'"); }
             WsExpect(bad.Count == 0, code + (vr ? " VR" : " Desktop") + ": every guide label reads its word (" + string.Join("; ", bad) + ")");
             var pics = WsArr<UnityEngine.UI.RawImage>(hwBoard, "guidePics");
-            Rect uv = pics[1].uvRect, wantUv = Get<Rect>(hwBoard, vr ? "guideUvVr" : "guideUvFlat");
-            WsExpect(Vector4.Distance(new Vector4(uv.x, uv.y, uv.width, uv.height), new Vector4(wantUv.x, wantUv.y, wantUv.width, wantUv.height)) < 1e-4f, code + (vr ? " VR" : " Desktop") + ": picture 2 shows " + (vr ? "guideUvVr" : "guideUvFlat") + " " + wantUv + " (" + uv + ")");
-            return code + (vr ? " VR" : " Desktop") + ": ② '" + labels[2].text + "' / '" + labels[3].text + "', help '" + labels[6].text + "', uv " + uv;
+            var uvs = new List<string>();
+            foreach (var pv in new[] { new KeyValuePair<int, string>(1, vr ? "guideUvVr2" : "guideUvFlat2"), new KeyValuePair<int, string>(2, vr ? "guideUvVr3" : "guideUvFlat3") })
+            {
+                Rect uv = pics[pv.Key].uvRect, wantUv = Get<Rect>(hwBoard, pv.Value);
+                WsExpect(Vector4.Distance(new Vector4(uv.x, uv.y, uv.width, uv.height), new Vector4(wantUv.x, wantUv.y, wantUv.width, wantUv.height)) < 1e-4f,
+                    code + (vr ? " VR" : " Desktop") + ": picture " + (pv.Key + 1) + " shows " + pv.Value + " " + wantUv + " (" + uv + ")");
+                uvs.Add(uv.ToString());
+            }
+            return code + (vr ? " VR" : " Desktop") + ": ② '" + labels[2].text + "' / '" + labels[3].text + "', ③ '" + labels[4].text + "' / '" + labels[5].text + "', help '" + labels[8].text + "', uv " + string.Join(" ", uvs);
         }
     }
 }

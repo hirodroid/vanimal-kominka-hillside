@@ -10,22 +10,27 @@ using VRC.SDK3.Components;
 
 namespace KominkaHillside.Editor
 {
-    // IMP-DOG-039 builder (docs/plans/2026-10-03-hand-wash.md §7): the 3-step picture guide above each station's board.
+    // IMP-DOG-039 builder (docs/plans/2026-10-03-hand-wash.md §7), made 4 steps by IMP-UI-003 (§13.11): the picture guide above
+    // each station's board.
     // - `Guide`: a World Space Canvas, a SIBLING of `Board` under the station root (the board builder deletes the board's unknown
-    //   children), 600 x 260 px at 1 px = 1 mm, on the board's face, its bottom GuideGap above the board's top. Read only: no
-    //   GraphicRaycaster / VRCUiShape / Collider, every graphic raycastTarget false. Rebuilt by every Wash/11.
-    // - Children: Bg, Step1..3 / Pic1..3 (RawImage cells of one texture) / Sub1..3, Arrow1..2 ("▶"), Help. Wired into the
-    //   station's KH_WashStationBoard (guideLabels, guidePics, guideUvVr / guideUvFlat), which swaps step ② per device.
-    // - The picture: KH_WashGuide.png (1024 x 256, 4 cells of 256²) drawn here from signed-distance shapes (AI-made by code, no
-    //   external image). GuideArtVersion names the drawing; the PNG is rewritten only when its bytes change. Wash/19 redraws it alone.
+    //   children), 800 x 260 px at 1 px = 1 mm (0.80 x 0.26 m, centred over the 0.60 m board), on the board's face, its bottom
+    //   GuideGap above the board's top. Read only: no GraphicRaycaster / VRCUiShape / Collider, every graphic raycastTarget false.
+    //   Rebuilt by every Wash/11.
+    // - Children: Bg, Step1..4 / Pic1..4 (RawImage cells of one texture) / Sub1..4, Arrow1..3 ("▶"), Help. Wired into the
+    //   station's KH_WashStationBoard (guideLabels, guidePics, guideUvVr2 / guideUvFlat2 / guideUvVr3 / guideUvFlat3), which swaps
+    //   steps ② ③ per device.
+    // - The picture: KH_WashGuide.png (1024 x 512, a 4 x 2 grid of 256² cells) drawn here from signed-distance shapes (AI-made by
+    //   code, no external image). GuideArtVersion names the drawing; the PNG is rewritten only when its bytes change. Wash/19
+    //   redraws it alone.
     public static partial class KH_DogWashSetupEditor
     {
         const string GuideName = "Guide";
         public const string GuideTexturePath = "Assets/KominkaHillside/Textures/Wash/KH_WashGuide.png";
-        /// <summary>The drawing's version (KH_WashGuideArt). Bump it when the drawing changes (the build report records it).</summary>
-        public const int GuideArtVersion = 1;
-        static readonly Vector2 GuidePixels = new Vector2(600f, 260f);
-        const float GuideScale = 0.001f;   // 1 px = 1 mm: 0.60 x 0.26 m
+        /// <summary>The drawing's version (KH_WashGuideArt). Bump it when the drawing changes (the build report records it).
+        /// v1 IMP-DOG-039 (3 steps, 1024 x 256); v2 IMP-UI-003 (4 steps, 1024 x 512).</summary>
+        public const int GuideArtVersion = 2;
+        static readonly Vector2 GuidePixels = new Vector2(800f, 260f);
+        const float GuideScale = 0.001f;   // 1 px = 1 mm: 0.80 x 0.26 m
         /// <summary>Gap between the board's top edge and the guide's bottom edge (m): bottom 1.38 m, top 1.64 m above the station origin.</summary>
         const float GuideGap = 0.02f;
         /// <summary>Station local: the board's face (same x / z as BoardLocal), the bottom GuideGap above the board's top.</summary>
@@ -37,23 +42,43 @@ namespace KominkaHillside.Editor
                 return new Vector3(BoardLocal.x, boardTop + GuideGap + GuidePixels.y * GuideScale * 0.5f, BoardLocal.z);
             }
         }
-        // ---- layout (px from the canvas centre; §7.2) ----
-        static readonly float[] GuidePanelX = { -200f, 0f, 200f };
+        // ---- layout (px from the canvas centre; §13.11) ----
+        static readonly float[] GuidePanelX = { -300f, -100f, 100f, 300f };
         const float GuideStepY = 106f, GuidePicY = 24f, GuideSubY = -56f, GuideArrowY = 24f;
-        static readonly Vector2 GuideStepSize = new Vector2(180f, 40f), GuidePicSize = new Vector2(170f, 120f), GuideSubSize = new Vector2(180f, 30f);
-        static readonly float[] GuideArrowX = { -100f, 100f };
+        static readonly Vector2 GuideStepSize = new Vector2(178f, 40f), GuidePicSize = new Vector2(170f, 120f), GuideSubSize = new Vector2(178f, 30f);   // 178: 22 mm between neighbouring step labels (at 190 the long ③ and ④ ran together, 2026-10-03 shot)
+        static readonly float[] GuideArrowX = { -200f, 0f, 200f };
         static readonly Vector2 GuideArrowSize = new Vector2(24f, 24f);
-        static readonly Vector2 GuideHelpPos = new Vector2(0f, -110f), GuideHelpSize = new Vector2(560f, 28f);
+        static readonly Vector2 GuideHelpPos = new Vector2(0f, -110f), GuideHelpSize = new Vector2(760f, 28f);
         const float GuideStepPt = 22f, GuideSubPt = 17f, GuideHelpPt = 17f, GuideArrowPt = 20f;   // autosize down to MinPt (14)
         const string GuideArrowText = "▶";
         static readonly Color GuideInkStep = Color.white;
-        // ---- the texture's cells (KH_WashGuideArt): 0 bottle, 1 hand (VR ②), 2 shower, 3 sponge (Desktop / phone ②) ----
-        static readonly Rect GuideUvBottle = new Rect(0f, 0f, 0.25f, 1f), GuideUvHand = new Rect(0.25f, 0f, 0.25f, 1f),
-            GuideUvShower = new Rect(0.5f, 0f, 0.25f, 1f), GuideUvSponge = new Rect(0.75f, 0f, 0.25f, 1f);
-        /// <summary>guideLabels order on the board: Step1, Sub1, Step2, Sub2, Step3, Sub3, Help.</summary>
-        static readonly string[] GuideLabelNames = { "Step1", "Sub1", "Step2", "Sub2", "Step3", "Sub3", "Help" };
-        static readonly string[] GuidePicNames = { "Pic1", "Pic2", "Pic3" };
-        static readonly string[] GuideArrowNames = { "Arrow1", "Arrow2" };
+        // ---- the texture's cells (KH_WashGuideArt): a 4 x 2 grid of 256²; Unity's UV origin is the bottom-left, so the top row
+        // (row 0: A..D) is v 0.5..1 and the bottom row (row 1: E..H) is v 0..0.5 ----
+        // A ① bottle + foam anywhere, B ② let go of the bottle (VR), C ③ both hands (VR), D ④ add more;
+        // E ② hold the sponge (Desktop / phone), F ③ scrub with the sponge (Desktop / phone); G, H empty.
+        static readonly Rect GuideUvFoam = new Rect(0f, 0.5f, 0.25f, 0.5f), GuideUvRelease = new Rect(0.25f, 0.5f, 0.25f, 0.5f),
+            GuideUvBothHands = new Rect(0.5f, 0.5f, 0.25f, 0.5f), GuideUvAddMore = new Rect(0.75f, 0.5f, 0.25f, 0.5f),
+            GuideUvHoldSponge = new Rect(0f, 0f, 0.25f, 0.5f), GuideUvSponge = new Rect(0.25f, 0f, 0.25f, 0.5f);
+        /// <summary>The pictures as built (② ③ start as the VR cells; the board switches them per device).</summary>
+        static readonly Rect[] GuidePicUvBuilt = { GuideUvFoam, GuideUvRelease, GuideUvBothHands, GuideUvAddMore };
+        /// <summary>guideLabels order on the board: Step1, Sub1, Step2, Sub2, Step3, Sub3, Step4, Sub4, Help.</summary>
+        static readonly string[] GuideLabelNames = { "Step1", "Sub1", "Step2", "Sub2", "Step3", "Sub3", "Step4", "Sub4", "Help" };
+        static readonly string[] GuidePicNames = { "Pic1", "Pic2", "Pic3", "Pic4" };
+        static readonly string[] GuideArrowNames = { "Arrow1", "Arrow2", "Arrow3" };
+        /// <summary>The steps' panels (= GuidePanelX.Length = GuidePicNames.Length); the Help label is guideLabels[2 * GuideSteps].</summary>
+        const int GuideSteps = 4;
+        /// <summary>The words the 9 labels show on each device (guideLabels order), as KH_WashStationBoard._ApplyGuide writes them.</summary>
+        static int[] GuideLabelWords(bool vr)
+        {
+            return new[]
+            {
+                KH_WashStationBoard.WGuideStep1, KH_WashStationBoard.WGuideStep1Sub,
+                vr ? KH_WashStationBoard.WGuideStep2 : KH_WashStationBoard.WGuideStep2Flat, vr ? KH_WashStationBoard.WGuideStep2Sub : KH_WashStationBoard.WGuideStep2FlatSub,
+                vr ? KH_WashStationBoard.WGuideStep3 : KH_WashStationBoard.WGuideStep3Flat, vr ? KH_WashStationBoard.WGuideStep3Sub : KH_WashStationBoard.WGuideStep3FlatSub,
+                KH_WashStationBoard.WGuideStep4, KH_WashStationBoard.WGuideStep4Sub,
+                vr ? KH_WashStationBoard.WGuideHelp : KH_WashStationBoard.WGuideHelpFlat,
+            };
+        }
 
         /// <summary>The guide of one station: the Canvas, its children (code-owned, rewritten every run) and the board's guide fields.
         /// The labels start as the ja VR texts (the board rewrites them per language and device at run time).</summary>
@@ -88,32 +113,25 @@ namespace KominkaHillside.Editor
             EditorUtility.SetDirty(bgImg);
 
             var w = board.words;
-            string[] texts =
-            {
-                w[KH_WashStationBoard.WGuideStep1], w[KH_WashStationBoard.WGuideStep1Sub],
-                w[KH_WashStationBoard.WGuideStep2], w[KH_WashStationBoard.WGuideStep2Sub],
-                w[KH_WashStationBoard.WGuideStep3], w[KH_WashStationBoard.WGuideStep3Sub],
-                w[KH_WashStationBoard.WGuideHelp],
-            };
+            var texts = GuideLabelWords(true).Select(i => w[i]).ToArray();   // the ja VR words (the board rewrites them per language and device)
             var labels = new TextMeshProUGUI[GuideLabelNames.Length];
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < GuideSteps; i++)
             {
                 float x = GuidePanelX[i];
                 labels[2 * i] = EnsureBoardLabel(go.transform, GuideLabelNames[2 * i], new Vector2(x, GuideStepY), GuideStepSize, font, GuideStepPt, GuideInkStep, texts[2 * i]);
                 labels[2 * i + 1] = EnsureBoardLabel(go.transform, GuideLabelNames[2 * i + 1], new Vector2(x, GuideSubY), GuideSubSize, font, GuideSubPt, BoardInkRule, texts[2 * i + 1]);
             }
-            labels[6] = EnsureBoardLabel(go.transform, GuideLabelNames[6], GuideHelpPos, GuideHelpSize, font, GuideHelpPt, BoardInkDim, texts[6]);
+            labels[2 * GuideSteps] = EnsureBoardLabel(go.transform, GuideLabelNames[2 * GuideSteps], GuideHelpPos, GuideHelpSize, font, GuideHelpPt, BoardInkDim, texts[2 * GuideSteps]);
             for (int i = 0; i < GuideArrowNames.Length; i++)
                 EnsureBoardLabel(go.transform, GuideArrowNames[i], new Vector2(GuideArrowX[i], GuideArrowY), GuideArrowSize, font, GuideArrowPt, BoardInkDim, GuideArrowText);
 
-            var uv = new[] { GuideUvBottle, GuideUvHand, GuideUvShower };   // ② starts as the VR cell (the board switches it per device)
             var pics = new RawImage[GuidePicNames.Length];
             for (int i = 0; i < pics.Length; i++)
             {
                 var pg = KD_ShopSetupEditor.EnsureUiChild(go.transform, GuidePicNames[i], new Vector2(GuidePanelX[i], GuidePicY), GuidePicSize);
                 foreach (var img in pg.GetComponents<Image>()) UnityEngine.Object.DestroyImmediate(img);
                 var raw = pg.GetComponent<RawImage>(); if (raw == null) raw = pg.AddComponent<RawImage>();
-                raw.texture = tex; raw.uvRect = uv[i]; raw.color = Color.white; raw.raycastTarget = false;
+                raw.texture = tex; raw.uvRect = GuidePicUvBuilt[i]; raw.color = Color.white; raw.raycastTarget = false;
                 EditorUtility.SetDirty(raw);
                 pics[i] = raw;
             }
@@ -124,8 +142,10 @@ namespace KominkaHillside.Editor
 
             board.guideLabels = labels;
             board.guidePics = pics;
-            board.guideUvVr = GuideUvHand;
-            board.guideUvFlat = GuideUvSponge;
+            board.guideUvVr2 = GuideUvRelease;
+            board.guideUvFlat2 = GuideUvHoldSponge;
+            board.guideUvVr3 = GuideUvBothHands;
+            board.guideUvFlat3 = GuideUvSponge;
             board.debugVr = false;   // harness only
             EditorUtility.SetDirty(board);
             r.guides.Add(st.name + "/" + GuideName + " local " + GuideLocal.ToString("F3") + ", " + GuidePixels.x + " x " + GuidePixels.y + " px at " + GuideScale + " m/px, labels " + labels.Length + ", pictures " + pics.Length);
@@ -210,14 +230,16 @@ namespace KominkaHillside.Editor
     }
 
     // ---- ART CORE BEGIN (plain C#: no UnityEngine, so the drawing can be rendered and looked at outside Unity) ----
-    /// <summary>IMP-DOG-039 §7.4: the guide picture, drawn from signed distances. 1024 x 256 RGBA (straight alpha, row 0 = bottom),
-    /// 4 cells of 256²: 0 the bottle squeezing foam onto a dog's back, 1 an empty hand rubbing the dog's side (back-and-forth arrow,
-    /// foam growing around the fingers), 2 the shower rinsing (water lines, foam running off, sparkles), 3 the sponge (Desktop / phone ②).
+    /// <summary>IMP-DOG-039 §7.4 / IMP-UI-003 §13.11: the guide picture, drawn from signed distances. 1024 x 512 RGBA (straight
+    /// alpha, row 0 = bottom), a 4 x 2 grid of 256² cells. Cell index = row * 4 + column, row 0 = the TOP row (texels 256..511):
+    /// 0 A the bottle squirting, foam on the head, the back and the hip (① "anywhere"); 1 B an open hand letting go of the bottle
+    /// (VR ②); 2 C two hands, left and right, rubbing the foamy dog (VR ③); 3 D the bottle again with "+" and a return arrow (④);
+    /// 4 E a hand holding the sponge (Desktop / phone ②); 5 F the sponge rubbing the dog (Desktop / phone ③); 6, 7 empty.
     /// Each cell is drawn in display units W x H = the Pic RawImage (170 x 120 px), so the square cell is not squashed on the board.
-    /// Line art white, foam bluish white, water light blue; the tools keep the colours of the real ones on the shelf.</summary>
+    /// Line art white, foam bluish white, motion marks amber; the tools keep the colours of the real ones on the shelf.</summary>
     internal static class KH_WashGuideArt
     {
-        public const int CellPx = 256, Cells = 4, Width = CellPx * Cells, Height = CellPx;
+        public const int CellPx = 256, Columns = 4, Rows = 2, Width = CellPx * Columns, Height = CellPx * Rows;
         public const float W = 170f, H = 120f;   // a cell in display units (1 unit = 1 mm on the board)
         const float Aa = 0.55f;                  // anti-alias half width (one texel is 0.66 x 0.47 units)
         const float EdgeFade = 4f;               // everything fades out this close to a cell's edge (no bleeding between cells in the mips)
@@ -339,7 +361,8 @@ namespace KominkaHillside.Editor
 
             void Paint(Sdf f, Rgba c, float stroke)
             {
-                int x0 = cell * CellPx;
+                int x0 = (cell % Columns) * CellPx;
+                int y0 = (Rows - 1 - cell / Columns) * CellPx;   // row 0 of the grid is the top of the texture
                 for (int j = 0; j < CellPx; j++)
                 {
                     float y = (j + 0.5f) / CellPx * H;
@@ -352,7 +375,7 @@ namespace KominkaHillside.Editor
                         if (stroke >= 0f) d = Math.Abs(d) - stroke;
                         float cover = 1f - Smoothstep(-Aa, Aa, d);
                         if (cover <= 0f) continue;
-                        Blend((j * Width + x0 + i) * 4, c, cover * Smoothstep(0f, EdgeFade, edge));
+                        Blend(((y0 + j) * Width + x0 + i) * 4, c, cover * Smoothstep(0f, EdgeFade, edge));
                     }
                 }
             }
@@ -478,7 +501,7 @@ namespace KominkaHillside.Editor
         /// <summary>An open hand (mitten with the thumb apart and three finger creases) with its forearm and a sleeve. Local: palm
         /// centre at the origin, the fingers toward +y, the thumb toward thumbSide (+1 = +x). Placed with the fingertips at `tips`,
         /// the fingers pointing along `fingerDeg` (degrees, counter-clockwise from +x), scaled by s.</summary>
-        static void Hand(Canvas c, V tips, float fingerDeg, float s, float thumbSide)
+        static void Hand(Canvas c, V tips, float fingerDeg, float s, float thumbSide, Action held = null)
         {
             float deg = fingerDeg - 90f;                       // local +y -> fingerDeg
             V origin = tips - (new V(0f, 25f) * s).Rot(deg);
@@ -493,15 +516,76 @@ namespace KominkaHillside.Editor
             };
             Sdf thumb = p => SdCapsule(L(p), new V(8f, -2f), new V(17.5f, 9.5f), 3.8f) * s;   // apart from the fingers
             Sdf sleeve = p => { V q = L(p); return SdRoundBox(q, new V(0f, -58f), 10.5f, 24f, 3f) * s; };
-            c.FillStroke(thumb, Skin, 1.0f, Line);             // under the palm: its own outline shows the gap to the fingers
+            if (held == null) c.FillStroke(thumb, Skin, 1.0f, Line);   // under the palm: its own outline shows the gap to the fingers
             c.FillStroke(palmAndFingers, Skin, 1.0f, Line);
-            c.Fill(p => SdCapsule(L(p), new V(7f, -3f), new V(9.5f, 0.5f), 3.2f) * s, Skin);   // the thumb's root joins the palm (no line there)
+            if (held == null) c.Fill(p => SdCapsule(L(p), new V(7f, -3f), new V(9.5f, 0.5f), 3.2f) * s, Skin);   // the thumb's root joins the palm (no line there)
             for (int k = -1; k <= 1; k++)                      // finger creases
             {
                 float x = k * 4.8f;
                 c.Stroke(p => SdCapsule(L(p), new V(x, 15.5f), new V(x, 23.5f), 0f) * s, 0.5f, SkinCrease);
             }
             c.FillStroke(sleeve, Sleeve, 1.0f, Line);
+            if (held != null) { held(); c.FillStroke(thumb, Skin, 1.0f, Line); }   // gripping: the object over the palm, the thumb over it
+        }
+
+        /// <summary>An open hand letting go: the palm toward the viewer, four fingers spread apart and the thumb out, with its forearm
+        /// and sleeve. Local as Hand: palm centre at the origin, fingers toward +y (the middle fingertip at y 27), the thumb toward
+        /// thumbSide. Placed with the palm centre at `palm`, the fingers pointing along fingerDeg, scaled by s.</summary>
+        static void OpenHand(Canvas c, V palm, float fingerDeg, float s, float thumbSide)
+        {
+            float deg = fingerDeg - 90f;
+            Func<V, V> L = p => { V q = (p - palm).Rot(-deg) / s; q.x *= thumbSide; return q; };
+            // index (next to the thumb) .. little finger, each a capsule from its knuckle; spread like a fan
+            float[] f = { 5.6f, 7f, 9.6f, 24f, 2.7f,   1.8f, 8.5f, 2.4f, 27f, 2.8f,   -2.2f, 8f, -4.6f, 25f, 2.7f,   -6f, 6f, -10.8f, 20.5f, 2.4f };
+            Sdf hand = p =>
+            {
+                V q = L(p);
+                float d = SdRoundBox(q, new V(0f, 0f), 9.8f, 9.5f, 4.6f);                 // palm
+                for (int k = 0; k < f.Length; k += 5) d = Smin(d, SdCapsule(q, new V(f[k], f[k + 1]), new V(f[k + 2], f[k + 3]), f[k + 4]), 0.8f);
+                d = Smin(d, SdCapsule(q, new V(0f, -6f), new V(0f, -60f), 7.2f), 2f);   // wrist and forearm
+                return d * s;
+            };
+            Sdf thumb = p => SdCapsule(L(p), new V(8f, -3f), new V(19f, 6f), 3.6f) * s;
+            Sdf sleeve = p => { V q = L(p); return SdRoundBox(q, new V(0f, -58f), 10.5f, 24f, 3f) * s; };
+            c.FillStroke(thumb, Skin, 1.0f, Line);
+            c.FillStroke(hand, Skin, 1.0f, Line);
+            c.Fill(p => SdCapsule(L(p), new V(7f, -4f), new V(10f, -1f), 3.1f) * s, Skin);   // the thumb's root joins the palm
+            c.FillStroke(sleeve, Sleeve, 1.0f, Line);
+        }
+
+        /// <summary>Short motion ticks: n strokes fanned around the direction `deg`, from radius r0 to r1 around `at`.</summary>
+        static void Ticks(Canvas c, V at, float deg, float spread, int n, float r0, float r1, Rgba col)
+        {
+            for (int k = 0; k < n; k++)
+            {
+                float a = n == 1 ? deg : deg - spread * 0.5f + spread * k / (n - 1);
+                V d = V.Dir(a), p0 = at + d * r0, p1 = at + d * r1;
+                c.Fill(p => SdCapsule(p, p0, p1, 1.25f), col);
+            }
+        }
+
+        /// <summary>A plus sign.</summary>
+        static void Plus(Canvas c, V at, float size, float halfWidth, Rgba col)
+        {
+            c.Fill(p => Math.Min(SdCapsule(p, at - new V(size, 0f), at + new V(size, 0f), halfWidth), SdCapsule(p, at - new V(0f, size), at + new V(0f, size), halfWidth)), col);
+        }
+
+        /// <summary>A circular arrow ("again"): an arc around `at` of radius r from a0 to a1 degrees (counter-clockwise), the head at a1.</summary>
+        static void ArcArrow(Canvas c, V at, float r, float a0, float a1, Rgba col)
+        {
+            const int segs = 18; const float shaft = 1.35f, head = 6f, half = 4.4f;
+            var pts = new V[segs + 1];
+            float end = a1 - head / r * 57.3f * 0.7f;          // the shaft stops under the head
+            for (int k = 0; k <= segs; k++) pts[k] = at + V.Dir(a0 + (end - a0) * k / segs) * r;
+            V tip = at + V.Dir(a1) * r, tangent = V.Dir(a1 + 90f), radial = V.Dir(a1);
+            V b = tip - tangent * head;
+            Sdf f = p =>
+            {
+                float d = 1e9f;
+                for (int k = 0; k < segs; k++) d = Math.Min(d, SdCapsule(p, pts[k], pts[k + 1], shaft));
+                return Math.Min(d, SdTriangle(p, tip, b + radial * half, b - radial * half) - 0.4f);
+            };
+            c.Fill(f, col);
         }
 
         static void Sponge(Canvas c, V at, float deg, float s)
@@ -534,81 +618,96 @@ namespace KominkaHillside.Editor
             }
         }
 
-        // ---------------------------------------------------------------- the four cells
+        // ---------------------------------------------------------------- the cells
 
-        /// <summary>0: ① the bottle, spout down toward the dog's back, a few drops in the air and a heap of foam on the back.</summary>
-        static void CellBottle(Canvas c)
+        /// <summary>The bottle squirting down onto the dog's back (drops in the air), the spout's aim `target`.</summary>
+        static void Squirt(Canvas c, V target, float deg, float s)
         {
-            c.Cell(0);
-            V dog = new V(58f, 40f); const float s = 0.9f;
-            Dog(c, dog, s);
-            V target = new V(56f, 58f);
-            FoamHeap(c, 49f, 57f, 5.5f, 56f, 59.5f, 6.5f, 63.5f, 57f, 5f, 55f, 53.5f, 4f);
-            Bubbles(c, 45f, 65f, 1.4f, 64f, 66f, 1.1f);
-            const float deg = 160f;                            // the bottle upside down, the spout toward the lower left
             V spoutDir = V.Dir(60f + deg);
-            V tip = target - spoutDir * 21f;
+            V tip = target - spoutDir * 21f * s / 0.9f;
             for (int k = 1; k <= 3; k++)
             {
-                V drop = tip + spoutDir * (4.5f * k + 1f);
-                float r = 1.4f + 0.25f * k;
+                V drop = tip + spoutDir * (4.5f * k + 1f) * s / 0.9f;
+                float r = (1.4f + 0.25f * k) * s / 0.9f;
                 c.FillStroke(p => SdCircle(p, drop, r), Foam, 0.4f, FoamEdge);
             }
-            Bottle(c, tip, deg, 0.9f);
+            Bottle(c, tip, deg, s);
         }
 
-        /// <summary>1: ② an empty hand on the dog's side, rubbing (back-and-forth arrow), foam growing around the fingers.</summary>
-        static void CellHand(Canvas c)
+        /// <summary>A: ① the bottle squirting onto the back, and foam already on the head and the hip too (not only the back).</summary>
+        static void CellFoamAnywhere(Canvas c)
+        {
+            c.Cell(0);
+            V dog = new V(56f, 38f); const float s = 0.9f;
+            Dog(c, dog, s);
+            FoamHeap(c, 26.5f, 45f, 4.6f, 32f, 49f, 5f, 35.5f, 43.5f, 3.6f);          // hip
+            FoamHeap(c, 85.5f, 62.5f, 4.4f, 90.5f, 66.5f, 4.2f, 84f, 57.5f, 3.2f);   // head (behind the ear)
+            FoamHeap(c, 52f, 53f, 5f, 59f, 55.5f, 5.6f, 65.5f, 53f, 4.4f);          // back (the squirt lands here)
+            Bubbles(c, 22f, 56f, 1.3f, 98f, 76f, 1.2f, 70f, 62f, 1.1f);
+            Squirt(c, new V(59f, 60f), 160f, 0.9f);
+        }
+
+        /// <summary>B: ② (VR) an open hand with spread fingers above, the bottle let go beside it (upright, staying there),
+        /// motion ticks between them; the foamy dog below on the right.</summary>
+        static void CellRelease(Canvas c)
         {
             c.Cell(1);
-            V dog = new V(60f, 40f); const float s = 0.9f;
+            V dog = new V(108f, 31f); const float s = 0.66f;
             Dog(c, dog, s);
-            // the foam already spread: bigger near the fingers, smaller where it reaches out (it grows outward)
-            FoamHeap(c, 58f, 45f, 6f, 66f, 41f, 6.5f, 74f, 44f, 5f, 50f, 42.5f, 4.3f, 43.5f, 44f, 3.2f, 80f, 40f, 3f);
-            Bubbles(c, 54f, 54f, 1.6f, 47f, 51f, 1.2f, 79f, 50f, 1.3f, 70f, 55f, 1.0f);
-            Hand(c, new V(64f, 41f), -66f, 1f, -1f);           // from the upper left, fingers down-right onto the side, thumb up
-            FoamHeap(c, 61f, 40f, 2.6f, 67.5f, 38.5f, 2.3f);   // lather over the fingertips
-            DoubleArrow(c, new V(73f, 69f), new V(92f, 69f), Motion);
+            FoamHeap(c, 98f, 41.5f, 3.8f, 104f, 43f, 4.2f, 110f, 41.5f, 3.4f, 87f, 39f, 3f);
+            OpenHand(c, new V(44f, 74f), 80f, 1.0f, 1f);     // the arm from the lower left, fingers up, thumb toward the bottle
+            Bottle(c, new V(94f, 104f), 8f, 0.9f);           // released: upright, a little to the right of the open hand
+            Ticks(c, new V(92.5f, 82.5f), 180f, 64f, 3, 13.5f, 19.5f, Motion);   // "let go" ticks between the thumb and the bottle
         }
 
-        /// <summary>2: ③ the shower: water lines onto the back, the foam running off under the belly, sparkles.</summary>
-        static void CellShower(Canvas c)
+        /// <summary>C: ③ (VR) two hands, the left one from the upper left and the right one from the upper right, rubbing the dog's
+        /// body all over with foam; back-and-forth arrows.</summary>
+        static void CellBothHands(Canvas c)
         {
             c.Cell(2);
-            V dog = new V(58f, 40f); const float s = 0.9f;
+            V dog = new V(72f, 34f); const float s = 0.84f;
             Dog(c, dog, s);
-            const float faceDeg = -78f;
-            V headAt = new V(52f, 100f);
-            // water first (under the head), from the face to the back
-            {
-                V fc = headAt + (new V(0f, -4.5f) * 0.95f).Rot(faceDeg + 90f);
-                V fd = V.Dir(faceDeg), fa = V.Dir(faceDeg + 90f);
-                for (int k = -2; k <= 2; k++)
-                {
-                    V a = fc + fa * (k * 4.2f), d = (fd + fa * (k * 0.07f)) / (fd + fa * (k * 0.07f)).Len;
-                    for (int seg = 0; seg < 5; seg++)
-                    {
-                        V s0 = a + d * (3f + seg * 8.5f), s1 = s0 + d * 5.5f;
-                        c.Fill(p => SdCapsule(p, s0, s1, 1.05f), Water);
-                    }
-                }
-            }
-            Shower(c, headAt, faceDeg, 0.95f);
-            // the foam sliding down and dripping off the belly
-            FoamHeap(c, 38f, 30f, 3f, 52f, 27.5f, 3.6f, 66f, 28.5f, 2.6f);
-            foreach (var x in new[] { 42f, 55f, 68f })
-            {
-                V top = new V(x, 21f);
-                c.Fill(p => Math.Min(SdCircle(p, top + new V(0f, -2.2f), 2f), SdTriangle(p, top + new V(-1.9f, -1.6f), top + new V(1.9f, -1.6f), top + new V(0f, 2.2f))), Water);
-            }
-            Sparkle(c, new V(82f, 64f), 5f);
-            Sparkle(c, new V(30f, 66f), 3.6f);
+            FoamHeap(c, 50f, 42f, 4.6f, 57f, 45f, 5.2f, 64f, 42f, 4.6f, 76f, 43f, 4.8f, 83f, 41f, 4.6f, 70f, 38.5f, 3.8f, 44f, 39f, 3.4f, 89f, 38f, 3.2f);
+            Bubbles(c, 40f, 50f, 1.3f, 68f, 53f, 1.2f, 96f, 48f, 1.2f);
+            Hand(c, new V(57f, 42f), -62f, 0.82f, -1f);      // left hand: from the upper left, onto the hip / back
+            Hand(c, new V(83f, 41f), -112f, 0.82f, 1f);      // right hand: from the upper right, onto the shoulder
+            FoamHeap(c, 54.5f, 41f, 2.3f, 59.5f, 40f, 2.1f, 81f, 40f, 2.2f, 86f, 40.5f, 2.1f);   // lather over the fingertips
+            DoubleArrow(c, new V(14f, 58f), new V(34f, 58f), Motion);
+            DoubleArrow(c, new V(136f, 58f), new V(156f, 58f), Motion);
         }
 
-        /// <summary>3: ② on Desktop / phone: the sponge on the dog's side, the back-and-forth arrow and foam.</summary>
-        static void CellSponge(Canvas c)
+        /// <summary>D: ④ the bottle again, a thin foam left on the back, a "+" and a return arrow ("again from ①").</summary>
+        static void CellAddMore(Canvas c)
         {
             c.Cell(3);
+            V dog = new V(56f, 38f); const float s = 0.9f;
+            Dog(c, dog, s);
+            FoamHeap(c, 52f, 52.5f, 3.6f, 59f, 54f, 4.2f, 66f, 52.5f, 3.2f);          // a little foam left
+            Squirt(c, new V(59f, 58f), 160f, 0.9f);
+            ArcArrow(c, new V(130f, 86f), 15f, 200f, 470f, Motion);                     // "again"
+            Plus(c, new V(130f, 86f), 6.5f, 1.9f, Motion);                               // "+ more"
+        }
+
+        /// <summary>E: ② (Desktop / phone) a hand holding the sponge up: the fingers behind it, the thumb across its front; motion
+        /// ticks above ("picked up").</summary>
+        static void CellHoldSponge(Canvas c)
+        {
+            c.Cell(4);
+            const float s = 1.1f, fingerDeg = 78f;
+            V tips = new V(88f, 82f);
+            // the sponge over the fingers: centred at the hand's local (0, 15)
+            V palm = tips - (new V(0f, 25f) * s).Rot(fingerDeg - 90f);
+            V at = palm + (new V(0f, 15f) * s).Rot(fingerDeg - 90f);
+            Hand(c, tips, fingerDeg, s, -1f, () => Sponge(c, at, fingerDeg - 90f, 1.55f));
+            Ticks(c, at, 90f, 0f, 1, 25f, 32f, Motion);
+            Ticks(c, at, 122f, 0f, 1, 29f, 36f, Motion);
+            Ticks(c, at, 58f, 0f, 1, 29f, 36f, Motion);
+        }
+
+        /// <summary>F: ③ (Desktop / phone) the sponge on the dog's side, the back-and-forth arrow and foam (the v1 drawing).</summary>
+        static void CellSponge(Canvas c)
+        {
+            c.Cell(5);
             V dog = new V(60f, 40f); const float s = 0.9f;
             Dog(c, dog, s);
             FoamHeap(c, 49f, 41f, 5f, 57f, 36f, 4.5f, 73f, 37f, 5.5f, 80f, 42f, 3.6f, 43f, 44f, 3f);
@@ -623,11 +722,13 @@ namespace KominkaHillside.Editor
         public static float[] Render()
         {
             var c = new Canvas();
-            CellBottle(c);
-            CellHand(c);
-            CellShower(c);
+            CellFoamAnywhere(c);
+            CellRelease(c);
+            CellBothHands(c);
+            CellAddMore(c);
+            CellHoldSponge(c);
             CellSponge(c);
-            return c.px;
+            return c.px;   // cells 6, 7 stay empty (transparent)
         }
 
         /// <summary>RGBA32 bytes (row 0 = bottom). Fully transparent texels are written as 0 (stable bytes).</summary>

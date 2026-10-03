@@ -2970,39 +2970,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "ボトルから背中へ"
+          "text": "すきな所に"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②手でわしゃわしゃ"
+          "text": "②ボトルをはなす"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "泡を手でひろげる"
+          "text": "両手をあける"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②スポンジでごしごし"
+          "text": "②スポンジを持つ"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "Use を押したまま"
+          "text": "棚から取る"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③シャワーで流す"
+          "text": "③両手でわしゃわしゃ"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "さーっと、きれいに"
+          "text": "泡をひろげる"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③スポンジでごしごし"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "Use を押したまま"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④たりなければ泡を足す"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "また①から"
         },
         {
           "key": "wash.guide.help",
-          "text": "片手でも、スポンジでも洗えます"
+          "text": "泡だらけになったら、シャワーで流してタオルでふく"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "ボトルは Use、スポンジは Use を押したまま"
+          "text": "ボトルは Use、スポンジは Use を押したまま。最後はシャワーとタオル"
         }
       ]
     },
@@ -5973,39 +5989,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "Bottle onto the back"
+          "text": "Anywhere you like"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②Rub in by hand"
+          "text": "②Let go of the bottle"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "Spread suds by hand"
+          "text": "Free both hands"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②Scrub with sponge"
+          "text": "②Take the sponge"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "Hold Use"
+          "text": "From the shelf"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③Rinse with shower"
+          "text": "③Rub with both hands"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "Swoosh, all clean"
+          "text": "Spread the suds"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③Scrub with sponge"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "Hold Use"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④More suds if needed"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "Back to ①"
         },
         {
           "key": "wash.guide.help",
-          "text": "Wash with one hand, or with the sponge"
+          "text": "All sudsy? Rinse with the shower, dry with the towel"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "Bottle: Use. Sponge: hold Use"
+          "text": "Bottle: Use. Sponge: hold Use. Then shower and towel"
         }
       ]
     },
@@ -8976,39 +9008,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "Из бутылки на спину"
+          "text": "Куда угодно"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②Вспень руками"
+          "text": "②Отпусти бутылку"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "Разнеси пену рукой"
+          "text": "Освободи руки"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②Потри губкой"
+          "text": "②Возьми губку"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "Держи Use"
+          "text": "С полки"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③Смой душем"
+          "text": "③Мой обеими руками"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "Чисто-начисто"
+          "text": "Разнеси пену"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③Потри губкой"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "Держи Use"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④Мало пены? Добавь"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "Снова с ①"
         },
         {
           "key": "wash.guide.help",
-          "text": "Можно одной рукой или губкой"
+          "text": "Вся в пене? Смой душем и вытри полотенцем"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "Бутылка: Use, губка: держи Use"
+          "text": "Бутылка: Use, губка: держи Use. Потом душ и полотенце"
         }
       ]
     },
@@ -11979,39 +12027,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "З пляшки на спину"
+          "text": "Куди завгодно"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②Спінь руками"
+          "text": "②Відпусти пляшку"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "Розподіли піну рукою"
+          "text": "Звільни руки"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②Потри губкою"
+          "text": "②Візьми губку"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "Тримай Use"
+          "text": "З полиці"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③Змий душем"
+          "text": "③Мий обома руками"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "Чисто-чисто"
+          "text": "Розподіли піну"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③Потри губкою"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "Тримай Use"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④Мало піни? Додай"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "Знову з ①"
         },
         {
           "key": "wash.guide.help",
-          "text": "Можна однією рукою або губкою"
+          "text": "Уся в піні? Змий душем і витри рушником"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "Пляшка: Use, губка: тримай Use"
+          "text": "Пляшка: Use, губка: тримай Use. Потім душ і рушник"
         }
       ]
     },
@@ -14982,39 +15046,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "병에서 등으로"
+          "text": "원하는 곳에"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②손으로 문질문질"
+          "text": "②병을 놓기"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "거품을 손으로 펴기"
+          "text": "두 손을 비우기"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②스펀지로 박박"
+          "text": "②스펀지 들기"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "Use를 누른 채로"
+          "text": "선반에서 집기"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③샤워로 헹구기"
+          "text": "③두 손으로 문질문질"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "쏴아, 깨끗하게"
+          "text": "거품을 펴기"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③스펀지로 박박"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "Use를 누른 채로"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④모자라면 거품 더하기"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "다시 ①부터"
         },
         {
           "key": "wash.guide.help",
-          "text": "한 손으로도, 스펀지로도 씻을 수 있어요"
+          "text": "거품투성이가 되면 샤워로 헹구고 수건으로 닦기"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "병은 Use, 스펀지는 Use를 누른 채로"
+          "text": "병은 Use, 스펀지는 Use를 누른 채로. 마지막은 샤워와 수건"
         }
       ]
     },
@@ -17985,39 +18065,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "Flasche auf den Rücken"
+          "text": "Wo du magst"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②Mit Händen rubbeln"
+          "text": "②Flasche loslassen"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "Schaum verteilen"
+          "text": "Beide Hände frei"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②Mit Schwamm reiben"
+          "text": "②Schwamm nehmen"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "Use gedrückt halten"
+          "text": "Vom Regal"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③Abduschen"
+          "text": "③Beidhändig rubbeln"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "Schön sauber"
+          "text": "Schaum verteilen"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③Mit Schwamm reiben"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "Use gedrückt halten"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④Nachschäumen"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "Bei Bedarf, ab ①"
         },
         {
           "key": "wash.guide.help",
-          "text": "Geht mit einer Hand oder dem Schwamm"
+          "text": "Voller Schaum? Abduschen und abtrocknen"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "Flasche: Use, Schwamm: Use halten"
+          "text": "Flasche: Use, Schwamm: Use halten. Dann Dusche und Handtuch"
         }
       ]
     },
@@ -20988,39 +21084,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "用瓶子挤到背上"
+          "text": "哪里都可以"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②用手搓搓"
+          "text": "②放开瓶子"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "用手把泡沫抹开"
+          "text": "空出双手"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②用海绵搓搓"
+          "text": "②拿起海绵"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "按住 Use"
+          "text": "从架子上拿"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③用淋浴冲洗"
+          "text": "③双手搓搓"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "哗啦一下，干干净净"
+          "text": "把泡沫抹开"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③用海绵搓搓"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "按住 Use"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④不够就再加泡沫"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "再从①开始"
         },
         {
           "key": "wash.guide.help",
-          "text": "单手或海绵也能洗"
+          "text": "满身泡沫后，用淋浴冲洗，再用毛巾擦干"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "瓶子按 Use，海绵按住 Use"
+          "text": "瓶子按 Use，海绵按住 Use。最后用淋浴和毛巾"
         }
       ]
     },
@@ -23991,39 +24103,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "Del bote al lomo"
+          "text": "Donde quieras"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②Frota con la mano"
+          "text": "②Suelta el bote"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "Extiende la espuma"
+          "text": "Manos libres"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②Frota con esponja"
+          "text": "②Toma la esponja"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "Mantén Use"
+          "text": "Del estante"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③Aclara con la ducha"
+          "text": "③Frota con las manos"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "¡Y bien limpio!"
+          "text": "Extiende la espuma"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③Frota con esponja"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "Mantén Use"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④¿Falta? Añade más"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "Vuelve al ①"
         },
         {
           "key": "wash.guide.help",
-          "text": "Lava con una mano o con la esponja"
+          "text": "¿Todo espuma? Aclara con la ducha y seca con la toalla"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "Bote: Use. Esponja: mantén Use"
+          "text": "Bote: Use. Esponja: mantén Use. Al final, ducha y toalla"
         }
       ]
     },
@@ -26994,39 +27122,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "Du flacon sur le dos"
+          "text": "Où tu veux"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②Frotte à la main"
+          "text": "②Lâche le flacon"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "Étale la mousse"
+          "text": "Libère tes mains"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②Frotte à l'éponge"
+          "text": "②Prends l'éponge"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "Garde Use enfoncé"
+          "text": "Sur l'étagère"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③Rince à la douche"
+          "text": "③Frotte à deux mains"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "Et hop, tout propre"
+          "text": "Étale la mousse"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③Frotte à l'éponge"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "Garde Use enfoncé"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④Pas assez ? Rajoute"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "Retour au ①"
         },
         {
           "key": "wash.guide.help",
-          "text": "D'une main ou à l'éponge, ça marche"
+          "text": "Plein de mousse ? Rince à la douche, sèche à la serviette"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "Flacon : Use. Éponge : garde Use"
+          "text": "Flacon : Use. Éponge : garde Use. Puis douche et serviette"
         }
       ]
     },
@@ -29997,39 +30141,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "Do frasco nas costas"
+          "text": "Onde quiser"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②Esfregue com a mão"
+          "text": "②Solte o frasco"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "Espalhe a espuma"
+          "text": "Mãos livres"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②Esfregue com esponja"
+          "text": "②Pegue a esponja"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "Segure Use"
+          "text": "Na prateleira"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③Enxágue no chuveiro"
+          "text": "③Lave com as mãos"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "Pronto, bem limpinho"
+          "text": "Espalhe a espuma"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③Esfregue com esponja"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "Segure Use"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④Faltou? Ponha mais"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "Volte ao ①"
         },
         {
           "key": "wash.guide.help",
-          "text": "Dá com uma mão ou com a esponja"
+          "text": "Cheio de espuma? Enxágue no chuveiro e seque com a toalha"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "Frasco: Use. Esponja: segure Use"
+          "text": "Frasco: Use. Esponja: segure Use. Depois, chuveiro e toalha"
         }
       ]
     },
@@ -33000,39 +33160,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "Dal flacone sul dorso"
+          "text": "Dove vuoi"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②Strofina a mano"
+          "text": "②Lascia il flacone"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "Stendi la schiuma"
+          "text": "Mani libere"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②Strofina con spugna"
+          "text": "②Prendi la spugna"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "Tieni premuto Use"
+          "text": "Dallo scaffale"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③Sciacqua con doccia"
+          "text": "③Strofina a due mani"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "Tutto pulito"
+          "text": "Stendi la schiuma"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③Strofina con spugna"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "Tieni premuto Use"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④Se manca, aggiungi"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "Di nuovo da ①"
         },
         {
           "key": "wash.guide.help",
-          "text": "Va bene una mano o la spugna"
+          "text": "Tutto schiuma? Sciacqua con la doccia e asciuga"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "Flacone: Use. Spugna: tieni Use"
+          "text": "Flacone: Use. Spugna: tieni Use. Poi doccia e asciugamano"
         }
       ]
     },
@@ -36003,39 +36179,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "Z butelki na grzbiet"
+          "text": "Gdzie chcesz"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②Szoruj dłonią"
+          "text": "②Puść butelkę"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "Rozprowadź pianę"
+          "text": "Uwolnij obie ręce"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②Szoruj gąbką"
+          "text": "②Weź gąbkę"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "Przytrzymaj Use"
+          "text": "Z półki"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③Spłucz prysznicem"
+          "text": "③Myj obiema rękami"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "I czyściutko"
+          "text": "Rozprowadź pianę"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③Szoruj gąbką"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "Przytrzymaj Use"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④Mało? Dodaj piany"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "Znowu od ①"
         },
         {
           "key": "wash.guide.help",
-          "text": "Jedną ręką albo gąbką też umyjesz"
+          "text": "Cały w pianie? Spłucz prysznicem, wytrzyj ręcznikiem"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "Butelka: Use, gąbka: trzymaj Use"
+          "text": "Butelka: Use, gąbka: trzymaj Use. Na koniec prysznic i ręcznik"
         }
       ]
     },
@@ -39010,39 +39202,55 @@
         },
         {
           "key": "wash.guide.step1.sub",
-          "text": "用瓶子擠到背上"
+          "text": "哪裡都可以"
         },
         {
           "key": "wash.guide.step2",
-          "text": "②用手搓搓"
+          "text": "②放開瓶子"
         },
         {
           "key": "wash.guide.step2.sub",
-          "text": "用手把泡沫抹開"
+          "text": "空出雙手"
         },
         {
           "key": "wash.guide.step2.flat",
-          "text": "②用海綿搓搓"
+          "text": "②拿起海綿"
         },
         {
           "key": "wash.guide.step2.flat.sub",
-          "text": "按住 Use"
+          "text": "從架上拿"
         },
         {
           "key": "wash.guide.step3",
-          "text": "③用淋浴沖洗"
+          "text": "③雙手搓搓"
         },
         {
           "key": "wash.guide.step3.sub",
-          "text": "嘩啦一下，乾乾淨淨"
+          "text": "把泡沫抹開"
+        },
+        {
+          "key": "wash.guide.step3.flat",
+          "text": "③用海綿搓搓"
+        },
+        {
+          "key": "wash.guide.step3.flat.sub",
+          "text": "按住 Use"
+        },
+        {
+          "key": "wash.guide.step4",
+          "text": "④不夠就再加泡沫"
+        },
+        {
+          "key": "wash.guide.step4.sub",
+          "text": "再從①開始"
         },
         {
           "key": "wash.guide.help",
-          "text": "單手或海綿也能洗"
+          "text": "滿身泡沫後，用淋浴沖洗，再用毛巾抹乾"
         },
         {
           "key": "wash.guide.help.flat",
-          "text": "瓶子按 Use，海綿按住 Use"
+          "text": "瓶子按 Use，海綿按住 Use。最後用淋浴和毛巾"
         }
       ]
     }

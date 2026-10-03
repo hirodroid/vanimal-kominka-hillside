@@ -18,10 +18,11 @@ namespace KominkaHillside
     // still goes to the Owner, whose refusal names the same reason). Every word comes from KD_Language (13 languages, the
     // keys wash.*, dog names shared with the hand menu); without it the builder's Japanese stays.
     //
-    // IMP-DOG-039 (docs/plans/2026-10-03-hand-wash.md §7): the 3-step picture guide above the board (a sibling `Guide`, read
-    // only) takes its words from here too (W 24..33). Step ② and the bottom line depend on the device: VR shows the hand
-    // (picture cell guideUvVr), Desktop / phone the sponge (guideUvFlat). Written at Start and on each language load; the
-    // guide may be missing (older scene) - every field is skipped when null.
+    // IMP-DOG-039 / IMP-UI-003 (docs/plans/2026-10-03-hand-wash.md §7, §13.11): the 4-step picture guide above the board (a
+    // sibling `Guide`, read only) takes its words from here too (W 24..37). Steps ② ③ and the bottom line depend on the device:
+    // VR shows "let go of the bottle" / "both hands" (picture cells guideUvVr2 / guideUvVr3), Desktop / phone "take the sponge" /
+    // "scrub with the sponge" (guideUvFlat2 / guideUvFlat3). Written at Start and on each language load; the guide may be
+    // missing (older scene) - every field is skipped when null.
     //
     // Cost: the refresh runs every refreshSeconds only while the local player is within showMeters of the board (otherwise one
     // distance check per farCheckSeconds); a label is written only when its text or look changed.
@@ -58,14 +59,18 @@ namespace KominkaHillside
         public float farCheckSeconds = 1f;
         [Tooltip("押した犬を「呼んでいます」と出す上限 (秒)。受理・拒否・おわりで先に消える")]
         public float myPickSeconds = 8f;
-        [Tooltip("図解のラベル: Step1・Sub1・Step2・Sub2・Step3・Sub3・Help (この順、7)。null なら図解なし")]
+        [Tooltip("図解のラベル: Step1・Sub1・Step2・Sub2・Step3・Sub3・Step4・Sub4・Help (この順、9)。null なら図解なし")]
         public TextMeshProUGUI[] guideLabels;
-        [Tooltip("図解の絵 ①②③ (3)。② の uvRect を端末で替える")]
+        [Tooltip("図解の絵 ①②③④ (4)。②③ の uvRect を端末で替える")]
         public RawImage[] guidePics;
-        [Tooltip("② の絵の区画 (VR: 手)")]
-        public Rect guideUvVr = new Rect(0.25f, 0f, 0.25f, 1f);
-        [Tooltip("② の絵の区画 (Desktop / スマホ: スポンジ)")]
-        public Rect guideUvFlat = new Rect(0.75f, 0f, 0.25f, 1f);
+        [Tooltip("② の絵の区画 (VR: ボトルをはなす)")]
+        public Rect guideUvVr2 = new Rect(0.25f, 0.5f, 0.25f, 0.5f);
+        [Tooltip("② の絵の区画 (Desktop / スマホ: スポンジを持つ)")]
+        public Rect guideUvFlat2 = new Rect(0f, 0f, 0.25f, 0.5f);
+        [Tooltip("③ の絵の区画 (VR: 両手で洗う)")]
+        public Rect guideUvVr3 = new Rect(0.5f, 0.5f, 0.25f, 0.5f);
+        [Tooltip("③ の絵の区画 (Desktop / スマホ: スポンジでこする)")]
+        public Rect guideUvFlat3 = new Rect(0.25f, 0f, 0.25f, 0.5f);
         [Tooltip("ハーネス専用: true で図解を VR の表示にする (_ApplyGuide で反映)。通常は false")]
         public bool debugVr;
 
@@ -75,8 +80,9 @@ namespace KominkaHillside
             WStTooFar = 13, WStFetch = 14, WStFrisbee = 15, WStGathering = 16, WStSleepCall = 17, WStWashedOther = 18;
         public const int WEnd = 19, WStandUp = 20, WStandDown = 21, WMeUp = 22, WMeDown = 23;
         public const int WGuideStep1 = 24, WGuideStep1Sub = 25, WGuideStep2 = 26, WGuideStep2Sub = 27, WGuideStep2Flat = 28,
-            WGuideStep2FlatSub = 29, WGuideStep3 = 30, WGuideStep3Sub = 31, WGuideHelp = 32, WGuideHelpFlat = 33;
-        public const int WordCount = 34;
+            WGuideStep2FlatSub = 29, WGuideStep3 = 30, WGuideStep3Sub = 31, WGuideStep3Flat = 32, WGuideStep3FlatSub = 33,
+            WGuideStep4 = 34, WGuideStep4Sub = 35, WGuideHelp = 36, WGuideHelpFlat = 37;
+        public const int WordCount = 38;
         // Looks of a dog button
         public const int LookCallable = 0, LookHere = 1, LookUnavailable = 2;
 
@@ -166,8 +172,9 @@ namespace KominkaHillside
             _ApplyGuide();
         }
 
-        /// <summary>IMP-DOG-039: writes the picture guide's labels and picture ②'s cell for this device (VR: the hand, otherwise
-        /// the sponge; debugVr forces VR for the harness). Local only; the harness flips debugVr and calls this again.</summary>
+        /// <summary>IMP-DOG-039 / IMP-UI-003: writes the picture guide's labels and pictures ② ③'s cells for this device (VR: let go
+        /// of the bottle / both hands, otherwise take the sponge / scrub with it; debugVr forces VR for the harness). Local only; the
+        /// harness flips debugVr and calls this again.</summary>
         public void _ApplyGuide()
         {
             bool vr = debugVr;
@@ -180,10 +187,14 @@ namespace KominkaHillside
             SetGuideLabel(1, WGuideStep1Sub);
             SetGuideLabel(2, vr ? WGuideStep2 : WGuideStep2Flat);
             SetGuideLabel(3, vr ? WGuideStep2Sub : WGuideStep2FlatSub);
-            SetGuideLabel(4, WGuideStep3);
-            SetGuideLabel(5, WGuideStep3Sub);
-            SetGuideLabel(6, vr ? WGuideHelp : WGuideHelpFlat);
-            if (guidePics != null && guidePics.Length > 1 && guidePics[1] != null) guidePics[1].uvRect = vr ? guideUvVr : guideUvFlat;
+            SetGuideLabel(4, vr ? WGuideStep3 : WGuideStep3Flat);
+            SetGuideLabel(5, vr ? WGuideStep3Sub : WGuideStep3FlatSub);
+            SetGuideLabel(6, WGuideStep4);
+            SetGuideLabel(7, WGuideStep4Sub);
+            SetGuideLabel(8, vr ? WGuideHelp : WGuideHelpFlat);
+            if (guidePics == null) return;
+            if (guidePics.Length > 1 && guidePics[1] != null) guidePics[1].uvRect = vr ? guideUvVr2 : guideUvFlat2;
+            if (guidePics.Length > 2 && guidePics[2] != null) guidePics[2].uvRect = vr ? guideUvVr3 : guideUvFlat3;
         }
 
         void SetGuideLabel(int slot, int word)

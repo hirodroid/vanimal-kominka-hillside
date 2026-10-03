@@ -556,16 +556,13 @@ namespace KominkaHillside.Editor
 
             // ---- IMP-DOG-039: the picture guide's words (the same keys / KD_Language / glyph checks above cover them: they are in
             // BoardWordKeys and BoardGlyphText). Here: the arrow glyph and the fit of each text in its Guide label (Guide.cs layout),
-            // both device variants of step ② and the help line. ja / en FAIL, the client-font languages WARN (same method) ----
+            // both device variants of steps ② ③ and the help line (IMP-UI-003: all 14 words, each in the box it is shown in: the
+            // labels' slots of GuideLabelWords for VR and for Desktop). ja / en FAIL, the client-font languages WARN (same method) ----
             req(KD_LocalizationEditor.HasGlyph(font, GuideArrowText[0]), "guide text: the arrow '" + GuideArrowText + "' U+" + ((int)GuideArrowText[0]).ToString("X4") + " is in the shared font (Wash/11 adds it through BoardGlyphText)");
-            var guideFit = new[]
-            {
-                new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep1, GuideStepSize.x), new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep2, GuideStepSize.x),
-                new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep2Flat, GuideStepSize.x), new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep3, GuideStepSize.x),
-                new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep1Sub, GuideSubSize.x), new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep2Sub, GuideSubSize.x),
-                new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep2FlatSub, GuideSubSize.x), new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep3Sub, GuideSubSize.x),
-                new KeyValuePair<int, float>(KH_WashStationBoard.WGuideHelp, GuideHelpSize.x), new KeyValuePair<int, float>(KH_WashStationBoard.WGuideHelpFlat, GuideHelpSize.x),
-            };
+            Func<int, float> slotWidth = slot => slot == 2 * GuideSteps ? GuideHelpSize.x : slot % 2 == 0 ? GuideStepSize.x : GuideSubSize.x;
+            var guideFit = new[] { true, false }.SelectMany(vr => GuideLabelWords(vr).Select((word, slot) => new KeyValuePair<int, float>(word, slotWidth(slot))))
+                .GroupBy(kv => kv.Key).Select(gr => gr.First()).ToArray();
+            req(guideFit.Length == 14, "guide text: the fit covers the 14 guide words of both devices (" + guideFit.Length + ")");
             var gFails = new List<string>(); var gWarns = new List<string>(); float gWorst = 0f; string gWorstWhat = "";
             foreach (var lang in c.languages)
             {
@@ -1172,19 +1169,33 @@ namespace KominkaHillside.Editor
 
         static void CheckGuides(VerifyReport r, Action<bool, string> req, UnityEngine.SceneManagement.Scene scene)
         {
-            // ---- the words: W 24..33 are the 10 wash.guide.* keys (their 13 languages, KD_Language, glyphs and fit: CheckBoardText) ----
+            // ---- the words: W 24..37 are the 14 wash.guide.* keys (their 13 languages, KD_Language, glyphs and fit: CheckBoardText) ----
             var guideW = new[] { KH_WashStationBoard.WGuideStep1, KH_WashStationBoard.WGuideStep1Sub, KH_WashStationBoard.WGuideStep2, KH_WashStationBoard.WGuideStep2Sub,
                 KH_WashStationBoard.WGuideStep2Flat, KH_WashStationBoard.WGuideStep2FlatSub, KH_WashStationBoard.WGuideStep3, KH_WashStationBoard.WGuideStep3Sub,
+                KH_WashStationBoard.WGuideStep3Flat, KH_WashStationBoard.WGuideStep3FlatSub, KH_WashStationBoard.WGuideStep4, KH_WashStationBoard.WGuideStep4Sub,
                 KH_WashStationBoard.WGuideHelp, KH_WashStationBoard.WGuideHelpFlat };
             int guideKeys = BoardWordKeys.Count(k => k.StartsWith("wash.guide."));
-            req(guideW.Distinct().Count() == guideW.Length && guideW.All(i => i >= 0 && i < BoardWordKeys.Length && BoardWordKeys[i].StartsWith("wash.guide.")) && guideKeys == guideW.Length,
-                "guide: BoardWordKeys holds the " + guideW.Length + " wash.guide.* keys at the board's WGuide* indices (" + guideKeys + " wash.guide.* keys)");
+            req(guideW.Length == 14 && guideW.Distinct().Count() == guideW.Length && guideW.All(i => i >= 0 && i < BoardWordKeys.Length && BoardWordKeys[i].StartsWith("wash.guide.")) && guideKeys == guideW.Length
+                && BoardWordKeys.Length == KH_WashStationBoard.WordCount,
+                "guide: BoardWordKeys (" + BoardWordKeys.Length + " = WordCount " + KH_WashStationBoard.WordCount + ") holds the " + guideW.Length + " wash.guide.* keys at the board's WGuide* indices (" + guideKeys + " wash.guide.* keys)");
+            // the layout tables agree (4 panels: labels 2 per panel + Help, one picture per panel, an arrow between neighbours)
+            req(GuidePanelX.Length == GuideSteps && GuidePicNames.Length == GuideSteps && GuideLabelNames.Length == 2 * GuideSteps + 1 && GuideArrowNames.Length == GuideSteps - 1
+                && GuideArrowX.Length == GuideSteps - 1 && GuidePicUvBuilt.Length == GuideSteps && GuideLabelWords(true).Length == GuideLabelNames.Length,
+                "guide: " + GuideSteps + " panels, " + GuideLabelNames.Length + " labels, " + GuidePicNames.Length + " pictures, " + GuideArrowNames.Length + " arrows (Guide.cs tables agree)");
+            // the cells: inside the texture, each one 256² cell of the 4 x 2 grid, the six used cells distinct
+            var cells = new[] { GuideUvFoam, GuideUvRelease, GuideUvBothHands, GuideUvAddMore, GuideUvHoldSponge, GuideUvSponge };
+            Func<Rect, bool> isCell = u => Mathf.Abs(u.width - (float)KH_WashGuideArt.CellPx / KH_WashGuideArt.Width) < 1e-5f && Mathf.Abs(u.height - (float)KH_WashGuideArt.CellPx / KH_WashGuideArt.Height) < 1e-5f
+                && u.xMin >= -1e-5f && u.xMax <= 1f + 1e-5f && u.yMin >= -1e-5f && u.yMax <= 1f + 1e-5f
+                && Mathf.Abs(u.x * KH_WashGuideArt.Columns - Mathf.Round(u.x * KH_WashGuideArt.Columns)) < 1e-4f && Mathf.Abs(u.y * KH_WashGuideArt.Rows - Mathf.Round(u.y * KH_WashGuideArt.Rows)) < 1e-4f;
+            req(cells.All(isCell) && cells.Select(u => u.x + "," + u.y).Distinct().Count() == cells.Length,
+                "guide: the 6 uvRects are distinct 256² cells of the " + KH_WashGuideArt.Width + " x " + KH_WashGuideArt.Height + " grid (" + string.Join(" ", cells.Select(u => u.ToString())) + ")");
 
             // ---- the texture and its import settings ----
             var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(GuideTexturePath);
             var ti = AssetImporter.GetAtPath(GuideTexturePath) as TextureImporter;
             req(tex != null && ti != null, "guide: texture " + GuideTexturePath + " imported");
-            if (tex != null) req(tex.width == KH_WashGuideArt.Width && tex.height == KH_WashGuideArt.Height, "guide: texture " + tex.width + " x " + tex.height + " = " + KH_WashGuideArt.Width + " x " + KH_WashGuideArt.Height);
+            if (tex != null) req(tex.width == KH_WashGuideArt.Width && tex.height == KH_WashGuideArt.Height && KH_WashGuideArt.Width == 1024 && KH_WashGuideArt.Height == 512,
+                "guide: texture " + tex.width + " x " + tex.height + " = " + KH_WashGuideArt.Width + " x " + KH_WashGuideArt.Height + " (1024 x 512, IMP-UI-003)");
             if (ti != null)
             {
                 req(ti.textureType == TextureImporterType.Default && ti.sRGBTexture && ti.alphaIsTransparency && !ti.isReadable && ti.mipmapEnabled && ti.wrapMode == TextureWrapMode.Clamp
@@ -1232,23 +1243,23 @@ namespace KominkaHillside.Editor
                 req(rays == 0 && shapes == 0 && cols == 0, label + ": no GraphicRaycaster / VRCUiShape / Collider (read only; " + rays + " / " + shapes + " / " + cols + ")");
                 var hot = g.GetComponentsInChildren<UnityEngine.UI.Graphic>(true).Where(x => x.raycastTarget).Select(x => x.name).ToArray();
                 req(hot.Length == 0, label + ": every Graphic raycastTarget false (" + string.Join(", ", hot) + ")");
-                // children: Bg, the 7 labels, the 3 pictures, the 2 arrows, nothing else
+                // children: Bg, the 9 labels, the 4 pictures, the 3 arrows, nothing else
                 var known = new[] { "Bg" }.Concat(GuideLabelNames).Concat(GuidePicNames).Concat(GuideArrowNames).ToArray();
                 var kids = g.Cast<Transform>().Select(x => x.name).ToArray();
                 req(kids.Length == known.Length && known.All(n => kids.Count(k => k == n) == 1), label + ": children " + string.Join(", ", known) + " (" + string.Join(", ", kids) + ")");
                 var bgI = g.Find("Bg") != null ? g.Find("Bg").GetComponent<UnityEngine.UI.Image>() : null;
                 req(bgI != null && g.Find("Bg").GetSiblingIndex() == 0, label + ": Bg Image drawn first");
 
-                // layout (Guide.cs §7.2): positions and sizes, inside the canvas, no two parts overlap
+                // layout (Guide.cs; plan §13.11): positions and sizes, inside the canvas, no two parts overlap
                 var layout = new List<KeyValuePair<string, Rect>>();
                 Func<Vector2, Vector2, Rect> R = (p, s) => Rect.MinMaxRect(p.x - s.x * 0.5f, p.y - s.y * 0.5f, p.x + s.x * 0.5f, p.y + s.y * 0.5f);
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i < GuideSteps; i++)
                 {
                     layout.Add(new KeyValuePair<string, Rect>(GuideLabelNames[2 * i], R(new Vector2(GuidePanelX[i], GuideStepY), GuideStepSize)));
                     layout.Add(new KeyValuePair<string, Rect>(GuideLabelNames[2 * i + 1], R(new Vector2(GuidePanelX[i], GuideSubY), GuideSubSize)));
                     layout.Add(new KeyValuePair<string, Rect>(GuidePicNames[i], R(new Vector2(GuidePanelX[i], GuidePicY), GuidePicSize)));
                 }
-                layout.Add(new KeyValuePair<string, Rect>(GuideLabelNames[6], R(GuideHelpPos, GuideHelpSize)));
+                layout.Add(new KeyValuePair<string, Rect>(GuideLabelNames[2 * GuideSteps], R(GuideHelpPos, GuideHelpSize)));
                 for (int i = 0; i < GuideArrowNames.Length; i++) layout.Add(new KeyValuePair<string, Rect>(GuideArrowNames[i], R(new Vector2(GuideArrowX[i], GuideArrowY), GuideArrowSize)));
                 var misplaced = new List<string>(); var placed = new List<KeyValuePair<string, Rect>>();
                 foreach (var kv in layout)
@@ -1267,11 +1278,10 @@ namespace KominkaHillside.Editor
                 req(outside.Length == 0 && overlaps.Count == 0, label + ": every part inside the canvas, none overlapping (outside: " + string.Join(", ", outside) + "; overlaps: " + string.Join(", ", overlaps) + ")");
 
                 // the texts: shared font, autosize down to MinPt, one line; the labels start as the ja VR words, the arrows read GuideArrowText
-                var labelW = new[] { KH_WashStationBoard.WGuideStep1, KH_WashStationBoard.WGuideStep1Sub, KH_WashStationBoard.WGuideStep2, KH_WashStationBoard.WGuideStep2Sub,
-                    KH_WashStationBoard.WGuideStep3, KH_WashStationBoard.WGuideStep3Sub, KH_WashStationBoard.WGuideHelp };
+                var labelW = GuideLabelWords(true);
                 var tmps = GuideLabelNames.Concat(GuideArrowNames).Select(n => g.Find(n) != null ? g.Find(n).GetComponent<TextMeshProUGUI>() : null).ToArray();
                 req(tmps.All(x => x != null && font != null && x.font == font && x.enableAutoSizing && Mathf.Abs(x.fontSizeMin - MinPt) < 1e-4f && !x.enableWordWrapping),
-                    label + ": the 7 labels and 2 arrows are TextMeshProUGUI with " + KD_ShopSetupEditor.SharedFontPath + ", autosize down to " + MinPt + " pt, one line");
+                    label + ": the " + GuideLabelNames.Length + " labels and " + GuideArrowNames.Length + " arrows are TextMeshProUGUI with " + KD_ShopSetupEditor.SharedFontPath + ", autosize down to " + MinPt + " pt, one line");
                 if (board != null && board.words != null && board.words.Length == BoardWordKeys.Length)
                 {
                     var wrong = Enumerable.Range(0, GuideLabelNames.Length).Where(i => tmps[i] == null || tmps[i].text != board.words[labelW[i]]).Select(i => GuideLabelNames[i]).ToArray();
@@ -1280,11 +1290,11 @@ namespace KominkaHillside.Editor
                 var arrows = tmps.Skip(GuideLabelNames.Length).ToArray();
                 req(arrows.All(x => x != null && x.text == GuideArrowText), label + ": " + string.Join(" / ", GuideArrowNames) + " read '" + GuideArrowText + "'");
 
-                // the pictures: RawImage cells of the guide texture (② starts as the VR cell; the board switches it per device)
+                // the pictures: RawImage cells of the guide texture (② ③ start as the VR cells; the board switches them per device)
                 var raws = GuidePicNames.Select(n => g.Find(n) != null ? g.Find(n).GetComponent<UnityEngine.UI.RawImage>() : null).ToArray();
-                var wantUv = new[] { GuideUvBottle, GuideUvHand, GuideUvShower };
-                req(raws.All(x => x != null) && tex != null && raws.All(x => x.texture == tex) && Enumerable.Range(0, 3).All(i => SameRect(raws[i].uvRect, wantUv[i])),
-                    label + ": " + string.Join(" / ", GuidePicNames) + " RawImage on " + GuideTexturePath + ", uvRect bottle / hand / shower cells (" + string.Join(" ", raws.Select(x => x != null ? x.uvRect.ToString() : "none")) + ")");
+                var wantUv = GuidePicUvBuilt;
+                req(raws.All(x => x != null) && tex != null && raws.All(x => x.texture == tex) && Enumerable.Range(0, GuideSteps).All(i => SameRect(raws[i].uvRect, wantUv[i])),
+                    label + ": " + string.Join(" / ", GuidePicNames) + " RawImage on " + GuideTexturePath + ", uvRect foam / release / both hands / add more cells (" + string.Join(" ", raws.Select(x => x != null ? x.uvRect.ToString() : "none")) + ")");
 
                 // the board's wiring
                 if (board == null) { req(false, label + ": " + BoardName + " KH_WashStationBoard (guide wiring)"); continue; }
@@ -1292,14 +1302,18 @@ namespace KominkaHillside.Editor
                     label + ": board.guideLabels = " + GuideName + "/" + string.Join(", ", GuideLabelNames) + " (" + (board.guideLabels != null ? board.guideLabels.Length : 0) + ")");
                 req(board.guidePics != null && board.guidePics.Length == GuidePicNames.Length && Enumerable.Range(0, GuidePicNames.Length).All(i => board.guidePics[i] != null && board.guidePics[i] == raws[i]),
                     label + ": board.guidePics = " + GuideName + "/" + string.Join(", ", GuidePicNames) + " (" + (board.guidePics != null ? board.guidePics.Length : 0) + ")");
-                req(SameRect(board.guideUvVr, GuideUvHand) && SameRect(board.guideUvFlat, GuideUvSponge), label + ": board.guideUvVr = the hand cell " + GuideUvHand + ", guideUvFlat = the sponge cell " + GuideUvSponge
-                    + " (" + board.guideUvVr + " / " + board.guideUvFlat + ")");
+                req(SameRect(board.guideUvVr2, GuideUvRelease) && SameRect(board.guideUvFlat2, GuideUvHoldSponge) && SameRect(board.guideUvVr3, GuideUvBothHands) && SameRect(board.guideUvFlat3, GuideUvSponge),
+                    label + ": board.guideUvVr2 = the release cell " + GuideUvRelease + ", guideUvFlat2 = the hold-sponge cell " + GuideUvHoldSponge
+                    + ", guideUvVr3 = the both-hands cell " + GuideUvBothHands + ", guideUvFlat3 = the sponge cell " + GuideUvSponge
+                    + " (" + board.guideUvVr2 + " / " + board.guideUvFlat2 + " / " + board.guideUvVr3 + " / " + board.guideUvFlat3 + ")");
                 req(!board.debugVr, label + ": board.debugVr false (harness only)");
                 var bb = UdonSharpEditorUtility.GetBackingUdonBehaviour(board);
                 Backing(req, bb, label + ": board", "guideLabels", board.guideLabels);
                 Backing(req, bb, label + ": board", "guidePics", board.guidePics);
-                Backing(req, bb, label + ": board", "guideUvVr", GuideUvHand);
-                Backing(req, bb, label + ": board", "guideUvFlat", GuideUvSponge);
+                Backing(req, bb, label + ": board", "guideUvVr2", GuideUvRelease);
+                Backing(req, bb, label + ": board", "guideUvFlat2", GuideUvHoldSponge);
+                Backing(req, bb, label + ": board", "guideUvVr3", GuideUvBothHands);
+                Backing(req, bb, label + ": board", "guideUvFlat3", GuideUvSponge);
                 Backing(req, bb, label + ": board", "debugVr", false);
                 r.guides.Add(KD_SceneObjects.PathOf(g.gameObject) + " local " + g.localPosition.ToString("F3") + ", labels " + (board.guideLabels != null ? board.guideLabels.Length : 0)
                     + ", pictures " + (board.guidePics != null ? board.guidePics.Length : 0));

@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-95 件 — 対応中 6 / 確認待ち 54 / 未着手 12 / 保留 3 / 完了 20
+95 件 — 対応中 6 / 確認待ち 55 / 未着手 11 / 保留 3 / 完了 20
 
 ## 実行キュー
 
@@ -35,6 +35,7 @@
 | [IMP-ENV-011](IMP-ENV-011-wash-height-adjust.md) | High | 洗い場の台の高さ (犬を上げる) と、自分用の見えない床の高さ (自分が浮く) を調整できるようにする | review | 残り: 自分の床の上げ下げが他の人から不自然でないこと (2 人、B7)、Desktop・スマホ、Verify・ClientSim (AI)。PCVR 1 人 (A24〜A26) は 10-02 ユーザー総合判断で確認済み |
 | [IMP-PRG-001](IMP-PRG-001-ledger-shopkeeper-points.md) | High | 台帳・おじいさん (門)・支度用ポイント (初回 200pt 一回・滞在 1分1pt)・購入と CE 判定。2026-09-24 実装済み・Verify 全 PASS (e4f5906、名前空間 KH_Commerce_v1)。T-007 / T-008・復元の実機確認待ち | review | 残り: 購入の保存と CE の所持判定 (Store。実課金はユーザー判断)、Quest/iOS (VER-WLD-001)。PCVR 1 人 (A32〜A38) は 10-02 ユーザー総合判断で確認済み |
 | [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md) | High | 手元メニューを古民家の器 (KD_TreatPouch + Editor ビルダー移植) に置き換え、設定面を作る。段階 0-a / 0-b / 3 は実装済み・Verify 全 PASS、0-b は 2026-09-24 PCVR OK。段階 3 (距離フェード・許可初期 ON・ようこそ等) の実機確認待ち。クレジットは 5 行で確定 (2026-10-03) | review | 残り: 許可トグル 2 種を権限者以外が操作できないこと (2 人)、距離フェードの Android/iOS の文言 (VER-WLD-001)、状態表示の規律の差分の記録。クレジット (LMArt URL 記入、Allsky / polyperfect は不要) は 2026-10-03 に決定・反映済み。PCVR 1 人 (A123〜A129) は 10-02 ユーザー総合判断で確認済み |
+| [IMP-UI-003](IMP-UI-003-wash-guide-bottle-release-both-hands.md) | High | 洗い場の説明を、犬に泡をつける・ボトルを離す・両手で洗う・足りなければ泡を足す流れに直す | review | ユーザーが現地で 4 コマ (①泡をつける ②ボトルをはなす ③両手でわしゃわしゃ ④たりなければ泡を足す) の伝わり方を確認。実写にするか (今は好評だった線画のまま) は IMP-UI-002 の撮影と合わせて判断 |
 | [IMP-WLD-006](IMP-WLD-006-farmhouse-portal-board.md) | High | 門にあるポータルを古民家ドッグランの案内ボードにし、Interact すると隣にポータルが出るようにする (古民家は触らない) | review | ユーザー確認 (実クライアントでしか分からない): 板「古民家ドッグラン」を Interact してポータルが出て、名前・サムネイルが付き、入ると古民家へ移動できるか (A0-14・A0-15)。2 人で押した人にだけ見え、途中参加者に出ていないか (B58)。Desktop・Quest・iOS で板が押せるか (C16・D23・E21)。だめなら設計書 §12-3 の代案 (保存シーンでは有効にして Start の 1 フレーム後に隠す) |
 | [BUG-DOG-002](BUG-DOG-002-leash-handle-orientation.md) | Medium | リードの輪と紐の接続部が横向き。肘→手の延長上・手の前側へ向くよう左右とも調整する (9/23 要望具体化)。2026-09-29 に輪の面を指の付け根の線と前腕の軸から決める形へ作り直し (57bcf2e、Production 3 PASS)、PCVR の見た目待ち | review | 残り: 2 人目から見て左右が同じ向きか (B9)、Desktop から VR 保持者を見る・Desktop/Touch で自分が持つ見た目、Quest 単体 (VER-WLD-001)。PCVR 1 人は 10-02 ユーザー総合判断で確認済み。握りに不満が出たら HandleGripOffset / HandleRollDegrees |
 | [BUG-DOG-006](BUG-DOG-006-steal-held-pickup.md) | Medium | 実機 (2026-09-28 夜、7 人) で VRChat の「Attempted to steal ownership of a held pickup.」が 15 件 (22:57:07 に 2 件、22:57:21 に 13 件)。ログとコードでは、その時刻にこちらの端末のフリスビー側が SetOwner を呼んだ経路は見つからない (3 匹とも Ready・持ち直し直後で、SetOwner する状態遷移が無い)。同じ文言は他ワールドのログ 60 本にも出る。犬のディスクの SetOwner を AskDisc 1 か所にまとめて持たれている間は呼ばないようにし、全ての SetOwner を送り元の Owner 付きでログに出す | review | コンパイルと ClientSim の回帰は済み (7178d1f)。次の複数人実機でエラーの時刻に `setowner` の行がこちらに出ているかを見る (出ていなければ他の端末の要求)。相手のログも同じ時刻に同じ行があるかを比べる |
@@ -71,7 +72,6 @@
 | [BUG-UI-001](BUG-UI-001-shopkeeper-walk-info-destinations.md) | Low | おじいさん (KD_ShopKeeper) の「さんぽ」の案内文が、行き先を「広場」と「古民家側の入口」の 2 つだけと言っている (実際は 6 目的地) | review | ユーザー確認: おじいさんの [さんぽ] の案内文が 6 つの行き先で、手元メニューの呼び名と合い、11 言語でも枠に収まるか (A0-20) |
 | [BUG-DOG-004](BUG-DOG-004-destination-per-player.md) | High | 体験会 (2026-09-26、15 人) で「行き先が犬ごとに決まっていて、プレイヤーごとのローカル選択になっていない」と報告。コードは自分の選択を自分の接続犬に写す設計なので、何がどう見えたかを 2 人で再現して切り分ける | todo | 2 人で別の行き先を選び、自分の犬だけが従うか・メニューの点灯が自分の選択を示すかを確認。NG なら Manager Owner 側の ReqDestination / ReqAttach の経路を疑う |
 | [IMP-UI-002](IMP-UI-002-guide-board-capture-instructions.md) | High | 散歩・洗浄の説明は設備の上へ移し、看板はフリスビーなどの遊びを案内する。実際のワールド写真とメニューのキャプチャーで操作を伝える | todo | 散歩設備の上の説明と遊びの看板の配置・撮影カットを整理する。洗い方の修正は IMP-UI-003。散歩メニューの最終画像は DES-UI-006 の実装後に撮影し、既存の余白・本文の小ささも紙面の作り直しで解く |
-| [IMP-UI-003](IMP-UI-003-wash-guide-bottle-release-both-hands.md) | High | 洗い場の説明を、犬に泡をつける・ボトルを離す・両手で洗う・足りなければ泡を足す流れに直す | todo | 洗い場の説明文と図を確認し、背中限定・ボトルを持ったまま片手で洗うと受け取れる表現を修正する。実際のワールドの写真で手順を示す |
 | [VER-DOG-002](VER-DOG-002-wash-experience-and-devices.md) | High | 洗浄の体験の評価 (ASMR、先行作との比較、2 人、入力機器) と対象端末の実機確認を、各段の到達条件として行う | todo | 先行 Animal Wash との比較の記録 (上回った点・残る違和感の文言は聞いていない)、2 人協力 (B2)、Desktop/Touch、Quest 単体・iOS の実機。PCVR 1 人の洗い心地 (A17 を含む) は 10-02 ユーザー総合判断で確認済み (比較の記録はなし)。10-02 のすすぎ改善 (f9ed660) を含むかは確認中 |
 | [BUG-DOG-005](BUG-DOG-005-ios-disc-colors.md) | Medium | 体験会 (2026-09-26) で iOS 参加者から「フリスビーの色が全部同じ」。ディスクは Standard Lite + _Color で犬別 6 色。iOS 実機で再現し、材質・ビルドのどこで色が落ちるかを特定する | todo | iOS 実機で 6 枚の色を見る。同じなら iOS ビルドの材質 (Standard Lite の _Color、持ち中の Transparent/Diffuse) と Android ビルドとの差を疑う |
 | [DES-LIV-001](DES-LIV-001-hillside-live.md) | Medium | 古民家の有料ライブ購入者の利用と、裏山ライブの開催・再生・競合・復帰を設計する。演目企画は DES-LIV-002 | todo | 意図的に最後に作る (2026-10-03 ユーザー: 「ライブは最後に作るので保留。」)。初期公開には残す。status は hold にせず todo のまま (hold は再検討トリガー待ちの意味で、ここは範囲内で順序が最後なだけ)。未回答 (最後の着手時に聞く): 初期公開に含める演目 (a: 配線済みの裏山専用 1 曲 hillside-dusk だけ / b: 既存購入者の Candy Step・ハロウィンの再生まで)。それまで購入権の確認・観覧場所・開催権限・犬の扱いの設計も着手しない。調査と配線計画は 09-26 の計画書 |
