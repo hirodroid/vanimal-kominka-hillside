@@ -2,11 +2,11 @@
 id: DES-WLD-002
 type: DES
 system: WLD
-status: todo
+status: done
 priority: Medium
 summary: BGM003の導入・個人音量設定はIMP-WLD-003へ。環境音・場所別構成と残る音の方針を整理する
-next: BGM採用決定とIMP-WLD-003を前提に、環境音・場所別構成の残件をgame-designへ整理する
-updated: 2026-09-29
+next: 方針は game-design §4「音」に記録済み。聞こえ方・容量の実測は IMP-WLD-003 / IMP-ENV-006 / IMP-DOG-028、ライブ側は DES-LIV-001 で扱う
+updated: 2026-10-03
 ---
 
 # DES-WLD-002 裏山の音 (BGM・環境音) を設計する
@@ -30,6 +30,17 @@ updated: 2026-09-29
 
 ## 完了条件
 
-- [ ] BGM/環境音の採用方針と場所ごとの構成が game-design に書かれている
-- [ ] 音源の出所・権利・容量の見積もりがある
-- [ ] ライブとの切替と同期要否が決まり、実装 Issue がある
+- [x] BGM/環境音の採用方針と場所ごとの構成が game-design に書かれている
+- [x] 音源の出所・権利・容量の見積もりがある (実測は各実装 Issue。game-design の音の表に未実測と明記)
+- [x] ライブとの切替と同期要否が決まり、実装 Issue がある (BGM は IMP-WLD-003 でライブ連動を配線済み。ライブ側の実装は 2026-10-03 のユーザー決定で最後に作るため DES-LIV-001 / 002 が持つ)
+
+## 2026-10-03 完了の記録
+
+音の方針を [game-design §4「音 (BGM・環境音・効果音)」](../../game-design.md) に書いた。この Issue の仕事 (方針の整理) は終わりとして閉じる。
+
+- BGM: [IMP-WLD-003](IMP-WLD-003-bgm-and-volume-settings.md) (003 を本人の ON/OFF・音量で。基準音量 0.35 を 2026-10-03 に採用)。
+- 川の環境音: [IMP-ENV-006](IMP-ENV-006-river-ambience.md) (20 音源、権利は [制作票](../../plans/2026-10-02-river-ambience-production.md) に記録、公開保留は 2026-10-03 に解除)。
+- 水遊び: [制作票](../../plans/2026-09-27-water-se-production.md)。洗う音: [IMP-DOG-028](IMP-DOG-028-wash-sound-and-reactions.md)、[制作票](../../plans/2026-09-30-wash-se-production.md)。犬の声の音量: [IMP-UI-001](IMP-UI-001-menu-table-driven-and-settings.md)。
+- ライブ: 2026-10-03 のユーザー決定で最後に作る。ライブ中の音は [DES-LIV-001](DES-LIV-001-hillside-live.md) / [DES-LIV-002](DES-LIV-002-live-lineup-and-parade.md) で決める。
+- 同期: 環境音・BGM はローカルで同期しない (IMP-ENV-006 は Udon・同期なし、BGM は SyncMode None)。
+- 残る実測 (Android/iOS の圧縮後サイズ、実際の聞こえ方・ループの継ぎ目) は各実装 Issue と VER-WLD-001 が持つ。方針を止める条件ではない。

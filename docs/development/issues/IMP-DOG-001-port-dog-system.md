@@ -2,8 +2,10 @@
 id: IMP-DOG-001
 type: IMP
 system: DOG
-status: wip
+status: done
 priority: High
+next: 移植は完了。以後の犬の変更は各 Issue (IMP-DOG-002 以降) で個別管理する。2 人同期の確認は DES-DOG-001 / VER-WLD-001
+updated: 2026-10-03
 summary: 古民家ドッグランの犬ギミックを移植する (タグ `export/kominka-hillside-v1` + 移植記録)
 ---
 
@@ -35,12 +37,18 @@ summary: 古民家ドッグランの犬ギミックを移植する (タグ `expo
 ## 完了条件
 
 - [x] 古民家側にタグがあり、移植記録に SHA (完全長) が書かれている
-- [ ] 6 匹が置かれ、撫で・採用するおもちゃが動く (2 人で同期確認: ユーザー)
+- [ ] 6 匹が置かれ、撫で・採用するおもちゃが動く (2 人で同期確認: ユーザー) → 6 匹・撫で・おもちゃは配置済みで PCVR 1 人は確認済み。2 人の同期は未確認で、DES-DOG-001 / VER-WLD-001 の確認に引き継ぐ
 - [x] 省いた機能と理由が移植記録にある
-- [ ] `game-design.md` §4 の屋外休憩・既存の飾り・トレーナー機能など移植対象の未決定を更新した
+- [x] `game-design.md` §4 の屋外休憩・既存の飾り・トレーナー機能など移植対象の未決定を更新した
 
 ## 参照
 
 - 企画原本 §3, §7, §8: `../../reference/VAnimal_KominkaHillside_Concept.md`
 - OurUsualPark の移植 (前例。撫で判定・ゾーン別リアクションのみ): `C:/work/unity/vcc/VAnimal_OurUsualPark/docs/development/dog-system-porting.md`
 - `vrc-networking` / `vrc-scene-edit-safety` (NetworkIDs の残骸)
+
+## 2026-10-03 完了の記録
+
+古民家ドッグランの犬ギミックの移植は完了した。固定タグ `export/kominka-hillside-v1` (SHA は移植記録に完全長) からコピーし、省いた機能と理由、後日の修正取り込み、Editor ビルダーの移植 (メニュー再構築の段階 0-a) まで [移植記録](../imports/kominka-dog-system.md) に残してある。コピー先は `Assets/KominkaHillside/Imported/KominkaDogRun/` (`KD_` 名のまま)。リード・集合・洗浄など以後の犬の機能はすべてこの移植を土台に別 Issue で作った (IMP-DOG-002 以降)。`game-design.md` §4 の屋外休憩・トレーナー機能などの未決定は同節の「既存の遊びと未決定事項」へ更新済み。
+
+未チェックの「2 人で同期確認」は、この Issue の移植作業の完了を止める条件ではなく、実機の 2 人確認として [DES-DOG-001](DES-DOG-001-leash-walking.md) と [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) に残っている (2026-10-02 のユーザー総合判断で PCVR 1 人は確認済み)。
