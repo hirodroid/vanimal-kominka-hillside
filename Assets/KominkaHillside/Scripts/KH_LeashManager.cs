@@ -26,6 +26,8 @@ namespace KominkaHillside
         public KominkaDogRun.KD_SleepBoard sleepBoard;
         // Stopover spots along the trail. Wired by Build; the dogs only consult it while walking.
         public KH_WalkStopovers stopovers;
+        // IMP-WLD-007 W2: told (local event, never synced) whenever this client's own-dog set may have changed. Wired by Photo/1; null = none.
+        public UdonSharpBehaviour photoWalk;
         // Leash stations: one slot per tool side. stationSlots[i] belongs to station stationOf[i], side slotHand[i].
         public Transform[] stationSlots;
         public int[] slotHand;
@@ -336,6 +338,7 @@ namespace KominkaHillside
             int mask = 0;
             for (int i = 0; i < walkers.Length; i++) if (walkers[i] >= 0 && walkers[i] == me) mask |= 1 << i;
             if (mask == _riMask) return;
+            if (photoWalk != null) photoWalk.SendCustomEvent("_OnLeashChanged");   // IMP-WLD-007 W2: the local walk-photo watcher (re)counts its own dogs
             bool all = true;
             for (int i = 0; i < walkers.Length; i++)
             {

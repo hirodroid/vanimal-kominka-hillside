@@ -89,6 +89,9 @@ namespace KominkaDogRun
         private bool _poseTrailActive;      // 道端の嗅ぐポーズを今出しているか (しきい値のヒステリシス)
         private bool _poseSpotActive;       // 立ち寄り場所のポーズを今出しているか
         private int _poseSpotIndex = -1;    // その場所 (保持のしきい値はこの場所で測る)
+        /// <summary>裏山改変 (IMP-WLD-007 W2): 立ち寄り場所のポーズ中ならその場所の番号、でなければ -1。全クライアントが位置から出す値なので、
+        /// 自分の端末の写真のきっかけ (KH_PhotoWalkWatcher) に使える。読み取りのみ。</summary>
+        public int PoseSpotIndex { get { return _poseSpotActive ? _poseSpotIndex : -1; } } // net: callable-ok: read-only
         private float _alignUntil;          // 着いたあと向きを整える締切 (0 = まだ着いていない)
         private int _pauseMode = -1;        // 今の滞在の種類 (LeashDetour / LeashStopover)
         private bool _pauseEndedThisFrame;  // このフレーム EndPause を通ったか (割り込み検出の二重発火よけ)

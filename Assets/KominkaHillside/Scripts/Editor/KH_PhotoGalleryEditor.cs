@@ -47,6 +47,18 @@ namespace KominkaHillside.Editor
         const string CameraName = "PhotoCamera", ViewerName = "KD_PhotoViewer";
 
         public const string AlbumProgramPath = "Assets/KominkaHillside/Scripts/KH_PhotoAlbum";
+        public const string WatcherProgramPath = "Assets/KominkaHillside/Scripts/KH_PhotoWalkWatcher";
+
+        // ---------------------------------------------------------------- 散歩の写真 (IMP-WLD-007 W2。設計 §0・§6。試作値 = Photo/1 が書き、Photo/2 が照合する)
+        public const float DogEyeFov = 70f, DogEyePitch = 3f, DogEyeAheadScale = 0.25f, DogEyeAheadMin = 0.08f, DogEyeAheadMax = 0.2f, DogEyeLift = 0.04f,
+            DogEyeClearAhead = 2.5f, DogEyeGroundProbe = 1f, DogEyeGroundBelow = 1.5f;
+        public const float SelfieFov = 60f, SelfieReach = 0.9f, SelfieLift = 0.15f, SelfieLookToDogs = 0.35f, SelfieInner = 0.8f, SelfieDogMax = 6f;
+        public const float WalkTick = 0.5f, WalkStopoverDelay = 1f, WalkTimeInterval = 90f, WalkDistanceInterval = 40f, WalkMinGap = 20f, WalkFadeGrace = 2f,
+            WalkSpotRepeat = 300f, WalkJumpMeters = 5f, WalkSpotHeight = 6f, WalkSpotRadius = 4f;
+        /// <summary>写真の場所 (初めは 3 か所)。viewpoint = 見晴らしのベンチ (KH_Places/KH_Viewpoint、古民家を背に)、
+        /// bridgeUp / river = 地図の 4 上流の橋・5 川辺 (Course/80 が KH_LeashManager.spotPositions に書いた着地点)。</summary>
+        public static readonly string[] WalkSpotNames = { "viewpoint", "bridgeUp", "river" };
+        const string ViewpointPath = "KH_World/KH_Places/KH_Viewpoint", FarKominkaPath = "KH_World/KH_Places/KH_FarKominka";
         const string TexDir = "Assets/KominkaHillside/Textures/Photo";
         const string MatDir = "Assets/KominkaHillside/Materials/Photo";
         public const string CaptureRTPath = TexDir + "/KH_PhotoCaptureRT.renderTexture";
@@ -226,7 +238,8 @@ namespace KominkaHillside.Editor
 
         static string ProgramMissing()
         {
-            if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(AlbumProgramPath + ".asset") == null) return AlbumProgramPath + ".asset missing: run Photo/0, compile U# (unity-compile.sh --udon), then this menu";
+            foreach (var path in OwnPrograms)
+                if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(path + ".asset") == null) return path + ".asset missing: run Photo/0, compile U# (unity-compile.sh --udon), then this menu";
             foreach (var n in new[] { "KD_PhotoCapture", "KD_PhotoDirector", "KD_GalleryController", "KD_PhotoSettings", "KD_PhotoViewer", "KD_PhotoBoard" })
                 if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>("Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/" + n + ".asset") == null) return n + ".asset missing (the copied photo scripts need their program assets)";
             return null;
@@ -234,17 +247,25 @@ namespace KominkaHillside.Editor
 
         // ================================================================ Photo/0
 
+        /// <summary>このメニューが Program Asset を作る自作の U# (IMP-WLD-007 W2 で散歩の見回りを足した)。</summary>
+        public static readonly string[] OwnPrograms = { AlbumProgramPath, WatcherProgramPath };
+
         [MenuItem(Menu + "0 - Create Program Asset")]
         public static void CreateProgramAsset()
         {
-            if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(AlbumProgramPath + ".asset") != null) { Debug.Log("[KH Photo] PHOTO_PROGRAM_OK already exists: " + AlbumProgramPath + ".asset"); return; }
-            var script = AssetDatabase.LoadAssetAtPath<MonoScript>(AlbumProgramPath + ".cs");
-            if (script == null) { Debug.LogError("[KH Photo] PHOTO_PROGRAM_FAIL " + AlbumProgramPath + ".cs not imported yet (refresh first)"); return; }
-            var asset = ScriptableObject.CreateInstance<UdonSharpProgramAsset>();
-            asset.sourceCsScript = script;
-            AssetDatabase.CreateAsset(asset, AlbumProgramPath + ".asset");
+            var created = new List<string>(); var existing = new List<string>();
+            foreach (var path in OwnPrograms)
+            {
+                if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(path + ".asset") != null) { existing.Add(path + ".asset"); continue; }
+                var script = AssetDatabase.LoadAssetAtPath<MonoScript>(path + ".cs");
+                if (script == null) { Debug.LogError("[KH Photo] PHOTO_PROGRAM_FAIL " + path + ".cs not imported yet (refresh first)"); return; }
+                var asset = ScriptableObject.CreateInstance<UdonSharpProgramAsset>();
+                asset.sourceCsScript = script;
+                AssetDatabase.CreateAsset(asset, path + ".asset");
+                created.Add(path + ".asset");
+            }
             AssetDatabase.SaveAssets();
-            Debug.Log("[KH Photo] PHOTO_PROGRAM_OK created " + AlbumProgramPath + ".asset. Compile U# (unity-compile.sh --udon) before Photo/1.");
+            Debug.Log("[KH Photo] PHOTO_PROGRAM_OK created [" + string.Join(", ", created) + "], already [" + string.Join(", ", existing) + "]." + (created.Count > 0 ? " Compile U# (unity-compile.sh --udon) before Photo/1." : ""));
         }
 
         // ================================================================ Photo/1
@@ -269,10 +290,13 @@ namespace KominkaHillside.Editor
             File.Copy(KH_CourseGroundEditor.ScenePath, r.backup, true);
             try
             {
+                var spots = ResolveWalkSpots(c.pouch.manager);   // IMP-WLD-007 W2: before any change (throws = nothing changed)
                 var assets = EnsureAssets(r.log);
                 var sys = BuildSystem(c, assets, r.log);
+                BuildWalk(c, sys, spots, r.log);
                 BuildMenuPage(c, sys, r.log);
                 WireHooks(c, sys.director, r.log);
+                if (c.pouch.manager != null) { c.pouch.manager.photoWalk = sys.walk; EditorUtility.SetDirty(c.pouch.manager); r.log.Add("KH_LeashManager.photoWalk -> " + nameof(KH_PhotoWalkWatcher) + " (local own-dog notice)"); }
                 // Photo/4 の部品が既にあれば配線し直す (Photo/1 の再実行で外さない)
                 RewireSurfaces(c, sys, r.log);
                 RefreshLanguage(c, r.log);
@@ -365,6 +389,33 @@ namespace KominkaHillside.Editor
             public GameObject root; public Camera camera;
             public KD_PhotoCapture capture; public KD_PhotoDirector director; public KD_GalleryController gallery; public KD_PhotoSettings settings;
             public KD_PhotoViewer viewer; public KH_PhotoAlbum album;
+            public KH_PhotoWalkWatcher walk;   // IMP-WLD-007 W2
+        }
+
+        /// <summary>写真の場所 (名前・位置・背景)。Photo/1 が変更の前に解決する (見つからなければ何も変えない)。</summary>
+        public class WalkSpots { public string[] names; public Vector3[] positions; public float[] radii; public bool[] hasBackdrop; public Vector3[] backdrops; public List<string> log = new List<string>(); }
+
+        public static WalkSpots ResolveWalkSpots(KH_LeashManager manager)
+        {
+            int n = WalkSpotNames.Length;
+            var s = new WalkSpots { names = (string[])WalkSpotNames.Clone(), positions = new Vector3[n], radii = new float[n], hasBackdrop = new bool[n], backdrops = new Vector3[n] };
+            var vp = GameObject.Find(ViewpointPath);
+            if (vp == null) throw new InvalidOperationException(ViewpointPath + " not found (the viewpoint bench place); nothing changed");
+            var kominka = GameObject.Find(FarKominkaPath);
+            if (kominka == null) throw new InvalidOperationException(FarKominkaPath + " not found (the farmhouse backdrop); nothing changed");
+            if (manager == null || manager.spotIds == null || manager.spotPositions == null || manager.spotIds.Length != manager.spotPositions.Length)
+                throw new InvalidOperationException("KH_LeashManager.spotIds / spotPositions missing (Course/80 writes them); nothing changed");
+            Vector3 Travel(string id)
+            {
+                int i = Array.IndexOf(manager.spotIds, id);
+                if (i < 0) throw new InvalidOperationException("travel spot " + id + " not in KH_LeashManager.spotIds; nothing changed");
+                return manager.spotPositions[i];
+            }
+            s.positions[0] = vp.transform.position; s.hasBackdrop[0] = true; s.backdrops[0] = kominka.transform.position;
+            s.positions[1] = Travel("spot.bridgeUp");
+            s.positions[2] = Travel("spot.river");
+            for (int i = 0; i < n; i++) { s.radii[i] = WalkSpotRadius; s.log.Add("walk photo spot " + s.names[i] + " at " + V(s.positions[i]) + " r " + WalkSpotRadius + (s.hasBackdrop[i] ? " backdrop KH_FarKominka " + V(s.backdrops[i]) : "")); }
+            return s;
         }
 
         static T EnsureUsc<T>(GameObject go, List<string> log) where T : UdonSharpBehaviour
@@ -386,7 +437,7 @@ namespace KominkaHillside.Editor
             if (root == null) return null;
             var s = new Sys { root = root };
             s.capture = root.GetComponent<KD_PhotoCapture>(); s.director = root.GetComponent<KD_PhotoDirector>(); s.gallery = root.GetComponent<KD_GalleryController>();
-            s.settings = root.GetComponent<KD_PhotoSettings>(); s.album = root.GetComponent<KH_PhotoAlbum>();
+            s.settings = root.GetComponent<KD_PhotoSettings>(); s.album = root.GetComponent<KH_PhotoAlbum>(); s.walk = root.GetComponent<KH_PhotoWalkWatcher>();
             var camT = root.transform.Find(CameraName); s.camera = camT != null ? camT.GetComponent<Camera>() : null;
             var vT = root.transform.Find(ViewerName); s.viewer = vT != null ? vT.GetComponent<KD_PhotoViewer>() : null;
             return s;
@@ -485,6 +536,28 @@ namespace KominkaHillside.Editor
             return s;
         }
 
+        /// <summary>IMP-WLD-007 W2: 散歩の見回り (KH_PhotoWalkWatcher、KH_PhotoSystem の上) と、撮影の試作値。</summary>
+        static void BuildWalk(Ctx c, Sys s, WalkSpots spots, List<string> log)
+        {
+            s.walk = EnsureUsc<KH_PhotoWalkWatcher>(s.root, log);
+            var w = s.walk;
+            w.director = s.director; w.settings = s.settings; w.album = s.album; w.manager = c.pouch.manager;
+            w.wanderControllers = (KD_DogWanderController[])c.wander.Clone();
+            w.sleepPlacement = c.pouch.sleepPlacement;
+            if (w.sleepPlacement == null) log.Add("WARN KD_TreatPouch.sleepPlacement missing: walk photos do not pause while placing a sleeping spot");
+            w.spotNames = spots.names; w.spotPositions = spots.positions; w.spotRadii = spots.radii; w.spotHasBackdrop = spots.hasBackdrop; w.spotBackdrops = spots.backdrops;
+            w.tickSeconds = WalkTick; w.stopoverDelay = WalkStopoverDelay; w.timeInterval = WalkTimeInterval; w.distanceInterval = WalkDistanceInterval; w.minGap = WalkMinGap;
+            w.fadeGrace = WalkFadeGrace; w.spotRepeat = WalkSpotRepeat; w.jumpMeters = WalkJumpMeters; w.spotHeight = WalkSpotHeight;
+            var d = s.director;
+            d.walkDogEyeFov = DogEyeFov; d.walkDogEyePitch = DogEyePitch; d.walkDogEyeAheadScale = DogEyeAheadScale; d.walkDogEyeAheadMin = DogEyeAheadMin; d.walkDogEyeAheadMax = DogEyeAheadMax;
+            d.walkDogEyeLift = DogEyeLift; d.walkDogEyeClearAhead = DogEyeClearAhead; d.walkDogEyeGroundProbe = DogEyeGroundProbe; d.walkDogEyeGroundBelow = DogEyeGroundBelow;
+            d.walkSelfieFov = SelfieFov; d.walkSelfieReach = SelfieReach; d.walkSelfieLift = SelfieLift; d.walkSelfieLookToDogs = SelfieLookToDogs; d.walkSelfieInner = SelfieInner; d.walkSelfieDogMax = SelfieDogMax;
+            EditorUtility.SetDirty(w); EditorUtility.SetDirty(d);
+            log.AddRange(spots.log);
+            log.Add("walk watcher: tick " + WalkTick + " s, stopover +" + WalkStopoverDelay + " s, every " + WalkTimeInterval + " s and " + WalkDistanceInterval + " m, gap " + WalkMinGap + " s, fade +" + WalkFadeGrace
+                + " s; dog's-eye FOV " + DogEyeFov + " pitch +" + DogEyePitch + "°, selfie " + SelfieReach + " m / +" + SelfieLift + " m FOV " + SelfieFov);
+        }
+
         static void SceneManagerMove(GameObject go, UnityEngine.SceneManagement.Scene scene)
         {
             if (go.scene != scene) UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, scene);
@@ -511,13 +584,16 @@ namespace KominkaHillside.Editor
                 c.wander[i].photoDirector = null; EditorUtility.SetDirty(c.wander[i]); UdonSharpEditorUtility.CopyProxyToUdon(c.wander[i]);
             }
             if (c.activities != null) { c.activities.photos = null; EditorUtility.SetDirty(c.activities); UdonSharpEditorUtility.CopyProxyToUdon(c.activities); }
-            log.Add("hooks cleared (null = no photos, the pre-photo state)");
+            if (c.pouch.manager != null) { c.pouch.manager.photoWalk = null; EditorUtility.SetDirty(c.pouch.manager); UdonSharpEditorUtility.CopyProxyToUdon(c.pouch.manager); }   // IMP-WLD-007 W2
+            log.Add("hooks cleared (null = no photos, the pre-photo state; also KH_LeashManager.photoWalk)");
         }
 
         static void CopyAll(Ctx c, Sys s)
         {
             foreach (UdonSharpBehaviour b in new UdonSharpBehaviour[] { s.capture, s.gallery, s.director, s.settings, s.viewer, s.album, c.pouch, c.language })
             { UdonSharpEditorUtility.CopyProxyToUdon(b); EditorUtility.SetDirty(b); }
+            if (s.walk != null) { UdonSharpEditorUtility.CopyProxyToUdon(s.walk); EditorUtility.SetDirty(s.walk); }
+            if (c.pouch.manager != null) { UdonSharpEditorUtility.CopyProxyToUdon(c.pouch.manager); EditorUtility.SetDirty(c.pouch.manager); }
             for (int i = 0; i < Keys.Length; i++) { UdonSharpEditorUtility.CopyProxyToUdon(c.fetch[i]); UdonSharpEditorUtility.CopyProxyToUdon(c.wander[i]); }
             if (c.activities != null) UdonSharpEditorUtility.CopyProxyToUdon(c.activities);
             var board = SceneRoot(c.scene, BoardRootName, out _);

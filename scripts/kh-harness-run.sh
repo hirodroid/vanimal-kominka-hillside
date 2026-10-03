@@ -16,7 +16,7 @@
 #   bash scripts/kh-harness-run.sh measure "Course/1 - Measure Current Scene" --reason ".." --consult ".."   # 計測 (Course/1・11・31・39)。結果は Logs/kh-course-benchmark/latest.json
 #   bash scripts/kh-harness-run.sh stop <walk|proto|photo|measure>      # 走っているハーネス・計測へ停止を頼む (Play 中でも通す)
 #   bash scripts/kh-harness-run.sh night --confirmed "<ユーザーの指示>" [--only wash,toy] [--skip lap] [--max-hours 8]   # 夜のまとめ回帰 (kh-harness-night.cjs)。--list で一覧
-#   bash scripts/kh-harness-run.sh photo --reason ".." --consult ".."   # IMP-WLD-005 Photo/3 (自動写真、約 1 分。Photo/1・4 の後)
+#   bash scripts/kh-harness-run.sh photo [--cases=H1,H6w] --reason ".." --consult ".."   # IMP-WLD-005 Photo/3 (自動写真、約 1〜2 分。Photo/1・4 の後。--cases で一部だけ)
 #
 # 終了コード: 0 = PASS または歩行の SEGMENTS_OBSERVED / LAP_OBSERVED (範囲はreportどおり) / 1 = 失敗・未完了 / 2 = 待ち切れ・新しい run が出ない
 #            3 = 実行前の照合失敗 (接続先違い、Play 中、コンパイル中。何もしない) / 64 = 使い方の誤り
@@ -173,7 +173,13 @@ case "$cmd" in
     node -e 'const j=require("./Logs/kh-course-benchmark/latest.json");console.log("measure",j.runId,j.status,"samples",(j.samples||[]).length,"restored",j.restored,"sceneDirtyAfter",j.sceneDirtyAfter,j.reason||"");process.exit(j.status==="MEASURED"?0:1)';;
   photo)
     # IMP-WLD-005 Photo/3 - Harness (自動写真の小さいケース群、約 1 分)。結果は Logs/kh-photo-harness/latest.json
+    # IMP-WLD-007: --cases=H6w,H7,H8 で一部だけ (Temp/kh-photo/harness-cases.txt に書き、ハーネスが読んで消す。H0・H5 は必ず回る)
+    cases=""
+    for a in "$@"; do case "$a" in --cases=*) cases=${a#--cases=};; *) echo "photo: unknown argument '$a' (only --cases=H1,H6w,...)"; exit 64;; esac; done
+    case "$cases" in *[!A-Za-z0-9,-]*) echo "photo: --cases takes names like H1,H6w,H7 (got '$cases')"; exit 64;; esac
     guard
+    mkdir -p Temp/kh-photo; rm -f Temp/kh-photo/harness-cases.txt
+    [ -n "$cases" ] && printf '%s' "$cases" > Temp/kh-photo/harness-cases.txt
     prev=$(node -e 'try{console.log(require("./Logs/kh-photo-harness/latest.json").runId)}catch(e){console.log("")}')
     ok=$(run_menu "Photo/3 - Harness")
     [ "$ok" = "True" ] || { echo "photo NOT_EXECUTED: ExecuteMenuItem=$ok"; exit 2; }

@@ -49,7 +49,7 @@ namespace KominkaDogRun
     /// (PlayerLocal だと自分が被写体のとき顔が欠ける — KanjiFind IMP-SC-003 §3.5 実測)。
     /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class KD_PhotoDirector : UdonSharpBehaviour
+    public partial class KD_PhotoDirector : UdonSharpBehaviour   // 裏山改変 (IMP-WLD-007 W2): partial (散歩の写真は KD_PhotoDirector.HillsideWalk.cs)
     {
         [Header("配線 (Tools/KominkaDogRun/Photo System が設定する)")]
         public KD_PhotoCapture photoCapture;
@@ -959,7 +959,7 @@ namespace KominkaDogRun
             // 8m のままだと追いかけっこの引きが枠に収まらず既定値へ落ちていた
             if (!(size > 0.05f) || !(size < 14f)) size = 0.6f;
             fill = Mathf.Clamp(fill * (1f + Random.Range(-fillJitter, fillJitter)), 0.06f, 0.95f);
-            float fov = Mathf.Clamp(photoCamera.fieldOfView, 10f, 120f);
+            float fov = Mathf.Clamp(_baseFov > 0f ? _baseFov : photoCamera.fieldOfView, 10f, 120f);   // 裏山改変 (IMP-WLD-007 W2): 直前の散歩の写真の FOV で測らない
             float halfFov = fov * 0.5f * Mathf.Deg2Rad;
             float d = (size / fill) * 0.5f / Mathf.Tan(halfFov);
             // 上限は世界の広さで決まる (上の maxFrameDistance のコメント)。
@@ -1067,6 +1067,9 @@ namespace KominkaDogRun
 
             Vector3 dir = lookAt - pos;
             if (dir.sqrMagnitude < 0.0001f) dir = Vector3.forward;
+            // 裏山改変 (IMP-WLD-007 W2): 散歩の写真だけ FOV を変える (_shotFov)。ほかの撮影は最初に見た FOV (50) へ毎回戻す
+            if (_baseFov <= 0f) _baseFov = photoCamera.fieldOfView;
+            photoCamera.fieldOfView = _shotFov > 0f ? _shotFov : _baseFov;
             Transform ct = photoCamera.transform;
             ct.position = pos;
             ct.rotation = Quaternion.LookRotation(dir.normalized, Vector3.up);

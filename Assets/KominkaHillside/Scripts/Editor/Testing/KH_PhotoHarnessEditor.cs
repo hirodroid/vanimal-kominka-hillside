@@ -27,6 +27,12 @@ namespace KominkaHillside.Editor
     ///                     ページ送り (9 枚以上のとき: ▶ で次の 8 枚・「2/3」・◀ で戻る)、押すと大きく、[?] の説明、[もどる] で元のタブへ。
     ///                     ボードの ▶ で次の 8 枚、戻す時間 (実行時だけ 1 s) で 1 ページ目へ
     ///   H5-no-camera-left 最後にカメラが無効で、撮りかけの枠が残っていない
+    /// IMP-WLD-007 W2 (散歩の写真。ここだけ Corgi (犬 0) を自分につなぐ = KH_LeashManager.walkers を実行時だけ書く。終わったら外す):
+    ///   H6w-walk-trigger  見回り (KH_PhotoWalkWatcher) の「時間と距離」をしきい値の直前にして 1 枚 → 散歩の枠 (0..11) に入る。犬目線なら、カメラが頭アンカーの前
+    ///                     (前出し 0.08〜0.20 m、上 0.04 m) にあり、向きが「ルートの前方を水平にして 3° 上」から 2° 以内 (撮った瞬間の値で照合)
+    ///   H7-fade-gate      移動の暗転 (KH_TravelFade._Begin) の間と、明けてから 2 s は撮らない。その後は撮る
+    ///   H8-selfie         自撮り風を直接頼む: 犬を背にして立つ → 頭から水平 0.9 m・0.15 m 上、犬が画面の内側 80 % (Camera.WorldToViewportPoint)。
+    ///                     6 m より遠い犬だけを「自分の犬」として頼む → 自撮り風は撮らない (犬目線へ落ちるか、撮らない)
     /// **一部だけ回す**: Temp/kh-photo/harness-cases.txt に "H1,H6" のように書いてから Photo/3 (読んだら消す。無ければ全部)。
     /// H0 と H5 は必ず回る。H2・H3・H4・H6 は写真が要るので H1 を足す。回したケースは report.casesRun に残る。
     /// 疑似入力 (Udon のイベントを直接送る) なので、実際のフリスビーの跳び・ボタンの光線・VRChat カメラの吸着・端末差 (Quest の一瞬の引っかかり、
@@ -38,7 +44,7 @@ namespace KominkaHillside.Editor
         const string Key = "KH.PhotoHarness", Dir = "Logs/kh-photo-harness", Journal = Dir + "/journal.json";
         public const string CasesFile = "Temp/kh-photo/harness-cases.txt";
         /// <summary>回す順。H6 (散歩の枠) は H3 より前 (OFF の検査に写真が要る・H4 のページ送りに 9 枚以上が要る)。</summary>
-        public static readonly string[] AllCases = { "H0-ready", "H1-capture", "H2-wrap", "H6-category", "H3-off", "H4-menu", "H5-no-camera-left" };
+        public static readonly string[] AllCases = { "H0-ready", "H1-capture", "H2-wrap", "H6-category", "H6w-walk-trigger", "H7-fade-gate", "H8-selfie", "H3-off", "H4-menu", "H5-no-camera-left" };
 
         /// <summary>"H1,H6" → 回すケース (前方一致。H0・H5 は必ず、写真が要るケースには H1 を足す)。空なら全部。知らない名前は例外 (Play に入らない)。</summary>
         public static List<string> Selected(string request)
@@ -51,7 +57,8 @@ namespace KominkaHillside.Editor
                 if (hit.Length != 1) throw new InvalidOperationException("unknown photo harness case '" + raw + "' (known: " + string.Join(", ", AllCases) + ")");
                 want.Add(hit[0]);
             }
-            if (want.Any(c => c.StartsWith("H2") || c.StartsWith("H3") || c.StartsWith("H4") || c.StartsWith("H6"))) want.Add("H1-capture");
+            // the walk cases (H6w / H7 / H8) need no earlier photo
+            if (want.Any(c => c == "H2-wrap" || c == "H3-off" || c == "H4-menu" || c == "H6-category")) want.Add("H1-capture");
             return AllCases.Where(want.Contains).ToList();
         }
 
@@ -165,7 +172,7 @@ namespace KominkaHillside.Editor
 
         // ================================================================ runtime handles
 
-        static UdonBehaviour uAlbum, uSettings, uCapture, uGallery, uDirector, uPouch;
+        static UdonBehaviour uAlbum, uSettings, uCapture, uGallery, uDirector, uPouch, uWatcher, uManager, uFade;
         static Camera cam;
         static MeshRenderer[] boardPhotos;
         static RenderTexture[] runtimeSlots;
@@ -175,9 +182,16 @@ namespace KominkaHillside.Editor
 
         static void Resolve()
         {
+            if (report.casesRun == null || report.casesRun.Count == 0) report.casesRun = AllCases.ToList();
             var all = UnityEngine.Object.FindObjectsOfType<UdonBehaviour>();
             UdonBehaviour One(string program) { var m = all.Where(u => u.programSource != null && u.programSource.name == program).ToArray(); if (m.Length != 1) throw new InvalidOperationException(program + " x" + m.Length); return m[0]; }
             uAlbum = One("KH_PhotoAlbum"); uSettings = One("KD_PhotoSettings"); uCapture = One("KD_PhotoCapture"); uGallery = One("KD_GalleryController"); uDirector = One("KD_PhotoDirector"); uPouch = One("KD_TreatPouch");
+            if (report.casesRun.Any(n => n == "H6w-walk-trigger" || n == "H7-fade-gate" || n == "H8-selfie"))
+            {
+                uWatcher = One("KH_PhotoWalkWatcher"); uManager = One("KH_LeashManager");
+                var fades = all.Where(u => u.programSource != null && u.programSource.name == "KH_TravelFade").ToArray();
+                uFade = fades.Length == 1 ? fades[0] : null;   // H7 reports a missing fade itself
+            }
             var sys = SceneManager.GetActiveScene().GetRootGameObjects().First(g => g.name == KH_PhotoGalleryEditor.SystemName);
             cam = sys.transform.Find("PhotoCamera").GetComponent<Camera>();
             var board = SceneManager.GetActiveScene().GetRootGameObjects().First(g => g.name == KH_PhotoGalleryEditor.BoardRootName);
@@ -404,6 +418,9 @@ namespace KominkaHillside.Editor
                 }));
             }
 
+            // ---- H6w / H7 / H8: walk photos (IMP-WLD-007 W2) ----
+            AddWalkSteps(walkFirst, walkSize);
+
             // ---- H3 ----
             if (On("H3-off")) AddOffSteps();
             if (On("H4-menu")) AddMenuSteps();
@@ -418,6 +435,196 @@ namespace KominkaHillside.Editor
                 Expect(!(pending is RenderTexture), "no capture left half-done (_pendingSlot " + (pending == null ? "null" : pending.ToString()) + ")");
                 Note("cases run: " + string.Join(", ", report.casesRun) + "; captures " + Captures() + ", runtime errors " + report.errors.Count);
             }));
+        }
+
+        // ================================================================ walk photos (IMP-WLD-007 W2)
+
+        const int WalkDog = 0;   // Corgi
+        static int shotsBefore;
+        static double waitFrom;
+        static bool leashedByHarness;
+
+        /// <summary>犬 0 を自分につなぐ / 外す。KH_LeashManager.walkers / hands を実行時だけ書く (Owner の自分の書き込み。歩行のハーネスと同じ手。
+        /// 0.5 s の見回りが ReleaseInteracts → KH_PhotoWalkWatcher._OnLeashChanged を呼ぶ = 実際の知らせの経路を通る)。</summary>
+        static void Leash(bool on)
+        {
+            var walkers = (int[])Get<int[]>(uManager, "walkers").Clone(); var hands = (int[])Get<int[]>(uManager, "hands").Clone();
+            walkers[WalkDog] = on ? Networking.LocalPlayer.playerId : -1; hands[WalkDog] = 1;
+            uManager.SetProgramVariable("walkers", walkers); uManager.SetProgramVariable("hands", hands);
+            leashedByHarness = on;
+        }
+
+        /// <summary>「時間と距離」のしきい値を越えた状態にする (歩いた距離と時刻を書く。暗転の名残も消す)。</summary>
+        static void PokeTimeTrigger()
+        {
+            uWatcher.SetProgramVariable("_walked", 1000f);
+            uWatcher.SetProgramVariable("_timeRefAt", -1000f);
+            uWatcher.SetProgramVariable("_lastWalkShotAt", -1000f);
+            uWatcher.SetProgramVariable("_timeToggle", false);   // the next time trigger starts with the dog's-eye
+        }
+
+        static Vector3 DogSubjectNow(int dog)
+        {
+            var roots = Get<Transform[]>(uDirector, "dogRoots"); var heads = Get<Transform[]>(uDirector, "dogHeadAnchors");
+            Vector3 r = roots[dog].position, h = heads[dog] != null ? heads[dog].position : r + Vector3.up * 0.3f;
+            return Vector3.Lerp(r, h, 0.75f);
+        }
+
+        static string WalkReason() { object o; uDirector.TryGetProgramVariable("_walkLastReason", out o); return o as string ?? ""; }
+
+        /// <summary>自撮り風の 1 枚が定義どおりか: 頭から水平 0.9 m・0.15 m 上、FOV 60、自分の犬 (dog) が 6 m 以内で画面の内側 80 % (ビューポート 0.1〜0.9)。</summary>
+        static void CheckSelfie(int dog)
+        {
+            var head = Networking.LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+            var off = cam.transform.position - head; float horiz = new Vector2(off.x, off.z).magnitude;
+            Expect(Math.Abs(horiz - KH_PhotoGalleryEditor.SelfieReach) < 0.06f && Math.Abs(off.y - KH_PhotoGalleryEditor.SelfieLift) < 0.06f,
+                "selfie camera " + horiz.ToString("F2") + " m from the head, " + off.y.ToString("F2") + " m up (want " + KH_PhotoGalleryEditor.SelfieReach + " / " + KH_PhotoGalleryEditor.SelfieLift + ")");
+            Expect(Mathf.Approximately(cam.fieldOfView, KH_PhotoGalleryEditor.SelfieFov), "selfie FOV " + cam.fieldOfView);
+            var subject = DogSubjectNow(dog);
+            var vp = cam.WorldToViewportPoint(subject);
+            float dist = Vector3.Distance(cam.transform.position, subject);
+            const float slack = 0.05f;   // the leashed dog keeps moving for a few frames after the shot
+            Expect(vp.z > 0f && dist <= KH_PhotoGalleryEditor.SelfieDogMax + 0.5f && vp.x >= 0.1f - slack && vp.x <= 0.9f + slack && vp.y >= 0.1f - slack && vp.y <= 0.9f + slack,
+                "own dog " + dog + " inside the inner 80% of the frame (viewport " + vp.x.ToString("F2") + ", " + vp.y.ToString("F2") + ", " + dist.ToString("F1") + " m)");
+        }
+
+        static void AddWalkSteps(int walkFirst, int walkSize)
+        {
+            var walkCases = new[] { "H6w-walk-trigger", "H7-fade-gate", "H8-selfie" }.Where(On).ToArray();
+            if (walkCases.Length == 0) return;
+            string first = walkCases[0], last = walkCases[walkCases.Length - 1];
+            steps.Add(Do(first, () =>
+            {
+                var walkers = Get<int[]>(uManager, "walkers");
+                Expect(walkers[WalkDog] < 0, "dog " + WalkDog + " is free before the walk cases (walkers " + walkers[WalkDog] + ")");
+                Leash(true);
+                Note("runtime only: dog " + WalkDog + " leashed to the local player (right hand)");
+            }));
+            steps.Add(Until(first, () => Get<int>(uWatcher, "_mask") == (1 << WalkDog) && Get<bool>(uWatcher, "_ticking"), 3, "the walk watcher did not see the leashed dog (KH_LeashManager.ReleaseInteracts -> _OnLeashChanged)"));
+
+            // ---- H6w: the time + distance trigger -> one walk photo, the dog's-eye by definition ----
+            if (On("H6w-walk-trigger"))
+            {
+                steps.Add(Do("H6w-walk-trigger", () => { capturesBefore = Captures(); shotsBefore = Get<int>(uWatcher, "_shots"); uWatcher.SetProgramVariable("_fadeUntil", 0f); PokeTimeTrigger(); }));
+                steps.Add(Until("H6w-walk-trigger", () => Captures() == capturesBefore + 1, 4, "no walk photo after the time + distance trigger (see the notes for the watcher's skip)"));
+                steps.Add(Until("H6w-walk-trigger", () => !cam.enabled, 1, "camera stayed enabled after the walk photo"));
+                steps.Add(Do("H6w-walk-trigger", () =>
+                {
+                    object skip; uWatcher.TryGetProgramVariable("_lastSkip", out skip);
+                    Note("watcher last skip '" + skip + "', director reason '" + WalkReason() + "'");
+                    Expect(Get<int>(uWatcher, "_shots") == shotsBefore + 1, "the watcher counted one walk photo");
+                    var order = Order();
+                    Expect(order[0] >= walkFirst && order[0] < walkFirst + walkSize, "the walk photo went into a walk slot (" + order[0] + ")");
+                    int kind = Get<int>(uDirector, "_walkLastKind");
+                    if (kind == KominkaDogRun.KD_PhotoDirector.WalkShotDogEye)
+                    {
+                        Vector3 pos = Get<Vector3>(uDirector, "_walkLastPos"), dir = Get<Vector3>(uDirector, "_walkLastDir"), head = Get<Vector3>(uDirector, "_walkLastHead"), rf = Get<Vector3>(uDirector, "_walkLastRootFwd");
+                        Expect(Vector3.Distance(cam.transform.position, pos) < 0.001f && Vector3.Angle(cam.transform.forward, dir) < 0.5f, "the camera is where the director put it");
+                        Expect(Mathf.Approximately(cam.fieldOfView, KH_PhotoGalleryEditor.DogEyeFov), "dog's-eye FOV " + cam.fieldOfView);
+                        rf.y = 0f; rf.Normalize();
+                        Vector3 off = pos - head; float along = Vector3.Dot(off, rf);
+                        Vector3 side = off - rf * along - Vector3.up * off.y;
+                        Expect(along >= KH_PhotoGalleryEditor.DogEyeAheadMin - 0.005f && along <= KH_PhotoGalleryEditor.DogEyeAheadMax + 0.005f && Math.Abs(off.y - KH_PhotoGalleryEditor.DogEyeLift) < 0.005f && side.magnitude < 0.01f,
+                            "camera in front of the muzzle: " + along.ToString("F3") + " m ahead of the head anchor along the dog's forward, " + off.y.ToString("F3") + " m up, " + side.magnitude.ToString("F3") + " m aside");
+                        float r = KH_PhotoGalleryEditor.DogEyePitch * Mathf.Deg2Rad;
+                        Vector3 want = rf * Mathf.Cos(r) + Vector3.up * Mathf.Sin(r);
+                        Expect(Vector3.Angle(dir, want) < 2f, "looking where the dog faces: " + Vector3.Angle(dir, want).ToString("F2") + "° from its flattened forward tilted up " + KH_PhotoGalleryEditor.DogEyePitch + "°");
+                        int dog = Get<int>(uDirector, "_walkLastDog");
+                        var heads = Get<Transform[]>(uDirector, "dogHeadAnchors");
+                        Expect(dog == WalkDog && heads[dog] != null && Vector3.Distance(heads[dog].position, head) < 2f, "the dog's-eye is the leashed dog's (" + dog + ")");
+                    }
+                    else if (kind == KominkaDogRun.KD_PhotoDirector.WalkShotSelfie)
+                    {
+                        Note("the dog's-eye was skipped here (" + WalkReason() + "): the fallback selfie is checked instead");
+                        CheckSelfie(WalkDog);
+                    }
+                    else Fail("the director reports no walk shot (" + WalkReason() + ")");
+                }));
+            }
+
+            // ---- H7: no walk photo during the travel fade and for 2 s after it ----
+            if (On("H7-fade-gate"))
+            {
+                steps.Add(Do("H7-fade-gate", () =>
+                {
+                    if (uFade == null) { Fail("KH_TravelFade is not in the scene (Course/84): the fade gate cannot be tested"); return; }
+                    capturesBefore = Captures(); PokeTimeTrigger();
+                    uFade.SendCustomEvent("_Begin");
+                    waitFrom = EditorApplication.timeSinceStartup;
+                }));
+                steps.Add(Until("H7-fade-gate", () => EditorApplication.timeSinceStartup - waitFrom > 1.5, 3, "wait"));
+                steps.Add(Do("H7-fade-gate", () =>
+                {
+                    object skip; uWatcher.TryGetProgramVariable("_lastSkip", out skip);
+                    Expect(Captures() == capturesBefore, "no walk photo during the fade (" + Captures() + " vs " + capturesBefore + ")");
+                    Expect((skip as string) == "fade", "the watcher says it waits for the fade ('" + skip + "')");
+                    uFade.SendCustomEvent("_Release");
+                }));
+                steps.Add(Until("H7-fade-gate", () => Get<int>(uFade, "_state") == 0, 3, "the fade did not finish after _Release"));
+                steps.Add(Do("H7-fade-gate", () => waitFrom = EditorApplication.timeSinceStartup));
+                steps.Add(Until("H7-fade-gate", () => EditorApplication.timeSinceStartup - waitFrom > 1.5, 3, "wait"));
+                steps.Add(Do("H7-fade-gate", () => Expect(Captures() == capturesBefore, "no walk photo in the first 1.5 s after the fade")));
+                steps.Add(Until("H7-fade-gate", () => Captures() == capturesBefore + 1, 4, "no walk photo after the 2 s grace"));
+                steps.Add(Do("H7-fade-gate", () =>
+                {
+                    double after = EditorApplication.timeSinceStartup - waitFrom;
+                    Expect(after >= 1.9, "the first walk photo came " + after.ToString("F2") + " s after the fade ended (>= 2 s grace)");
+                }));
+                steps.Add(Until("H7-fade-gate", () => !cam.enabled, 1, "camera stayed enabled"));
+            }
+
+            // ---- H8: the selfie-like shot, and its refusal when no own dog can be in the frame ----
+            if (On("H8-selfie"))
+            {
+                steps.Add(Do("H8-selfie", () =>
+                {
+                    // stand 2 m from the dog with the back to it: the dog is behind the player, where an arm's-length selfie sees it
+                    var lp = Networking.LocalPlayer;
+                    Vector3 dogPos = Get<Transform[]>(uDirector, "dogRoots")[WalkDog].position;
+                    Vector3 away = lp.GetPosition() - dogPos; away.y = 0f;
+                    if (away.sqrMagnitude < 0.01f) away = Vector3.forward;
+                    away.Normalize();
+                    Vector3 target = dogPos + away * 2f;
+                    if (UnityEngine.AI.NavMesh.SamplePosition(target, out UnityEngine.AI.NavMeshHit hit, 2f, UnityEngine.AI.NavMesh.AllAreas)) target = hit.position;
+                    lp.TeleportTo(target, Quaternion.LookRotation(away, Vector3.up));
+                    waitFrom = EditorApplication.timeSinceStartup;
+                    Note("teleported 2 m from dog " + WalkDog + ", facing away from it");
+                }));
+                steps.Add(Until("H8-selfie", () => EditorApplication.timeSinceStartup - waitFrom > 0.6, 2, "wait"));
+                steps.Add(Do("H8-selfie", () =>
+                {
+                    capturesBefore = Captures();
+                    uDirector.SetProgramVariable("walkDog", -1); uDirector.SetProgramVariable("walkOwnMask", 1 << WalkDog);
+                    uDirector.SetProgramVariable("walkDogEyeFirst", false); uDirector.SetProgramVariable("walkUseLook", false); uDirector.SetProgramVariable("walkUseBackdrop", false);
+                    uDirector.SendCustomEvent("_WalkShoot");
+                    int kind = Get<int>(uDirector, "_walkLastKind");
+                    Expect(kind == KominkaDogRun.KD_PhotoDirector.WalkShotSelfie, "selfie first with the dog behind the player -> a selfie (kind " + kind + ", " + WalkReason() + ")");
+                }));
+                steps.Add(Until("H8-selfie", () => Captures() == capturesBefore + 1 || current.status == "FAIL", 3, "the selfie was not captured"));
+                steps.Add(Until("H8-selfie", () => !cam.enabled, 1, "camera stayed enabled"));
+                steps.Add(Do("H8-selfie", () => { if (Get<int>(uDirector, "_walkLastKind") == KominkaDogRun.KD_PhotoDirector.WalkShotSelfie) CheckSelfie(WalkDog); }));
+                steps.Add(Do("H8-selfie", () =>
+                {
+                    // a far dog as the only "own" dog: no angle can hold it within 6 m -> no selfie (the dog's-eye of that dog, or nothing)
+                    var roots = Get<Transform[]>(uDirector, "dogRoots");
+                    var head = Networking.LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+                    int far = -1; float best = KH_PhotoGalleryEditor.SelfieDogMax + 2f;
+                    for (int i = 0; i < roots.Length; i++) { if (i == WalkDog || roots[i] == null) continue; float d = Vector3.Distance(roots[i].position, head); if (d > best) { best = d; far = i; } }
+                    if (far < 0) { Note("no dog farther than " + (KH_PhotoGalleryEditor.SelfieDogMax + 2f) + " m: the refusal is not tested this run"); return; }
+                    capturesBefore = Captures();
+                    uDirector.SetProgramVariable("walkDog", -1); uDirector.SetProgramVariable("walkOwnMask", 1 << far); uDirector.SetProgramVariable("walkDogEyeFirst", false);
+                    uDirector.SendCustomEvent("_WalkShoot");
+                    int kind = Get<int>(uDirector, "_walkLastKind"); string why = WalkReason();
+                    Expect(kind != KominkaDogRun.KD_PhotoDirector.WalkShotSelfie && why.Contains("selfie: no own dog in view"), "dog " + far + " at " + best.ToString("F1") + " m: no selfie of an empty frame (kind " + kind + ", '" + why + "')");
+                    Note(kind == KominkaDogRun.KD_PhotoDirector.WalkShotDogEye ? "fell back to the dog's-eye of dog " + far : "took nothing (" + why + ")");
+                }));
+                steps.Add(Until("H8-selfie", () => !cam.enabled, 2, "camera stayed enabled"));
+            }
+
+            // ---- unleash and see the watcher stop ----
+            // under H0 (always run and normally PASS) so that a failed walk case does not skip the unleash and leave the dog on the leash for H3 / H4
+            steps.Add(Do("H0-ready", () => { if (leashedByHarness) Leash(false); }));
+            steps.Add(Until(last, () => !Get<bool>(uWatcher, "_ticking"), 3, "the walk watcher kept running with no dog on the leash"));
         }
 
         static void AddOffSteps()

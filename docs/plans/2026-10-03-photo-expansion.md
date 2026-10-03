@@ -373,3 +373,26 @@
 - 文言のキーは足していない (W4)。ページ送りは記号と数字だけ。
 - 実行の順 (統括): `unity-compile.sh` → `unity-compile.sh --udon` → `Photo/1` (RT 16 枚を新しく作る・保存) → `Photo/4` (今のボードにページ送りを足す。位置は守る) → `Photo/2` → (相談の後で) `Photo/3`。`Photo/4` の前の `Photo/2` では「board pager missing」が FAIL で出る (想定どおり)。
 
+
+## 12. 実装メモ W2 (2026-10-03)
+
+**未コンパイル (Unity では未確認。オフラインの Roslyn 検査だけ通過)・未実行。** §0 の定義で実装した。
+
+| ファイル | 変更 |
+|---|---|
+| `KH_PhotoWalkWatcher.cs` (新規) | 自分の犬がつながっている間だけ、0.5 s ごとの遅延イベントで見回る。きっかけは 3 つ: 立ち寄りのポーズに入ってから 1 s、写真の場所に入った、90 s かつ 40 m。散歩の写真どうしは 20 s あける。止める条件: 暗転の間と、明けてから 2 s (5 m 以上の飛びも同じ)、寝る場所を選んでいる間、洗い場・水の中、撮影 OFF。写真の場所の表は watcher が持つ (別のスクリプト `KH_PhotoSpots` は作らなかった。そのほうが簡単なので) |
+| `KD_PhotoDirector.HillsideWalk.cs` (新規の partial) | `_WalkShoot()` (依頼の `walk*` を読む)。犬目線と自撮り風を撮り、だめならもう一方を試す。枠は散歩。ハーネス用に `_walkLast*` を残す |
+| `KD_PhotoDirector.cs` (裏山改変) | `partial` にした。`Shoot` が毎回 FOV を書く (散歩の写真は 70 / 60、ほかは 50)。`FrameDistance` は普段の FOV で測る |
+| `KD_DogWanderController.HillsideLeash.cs` (裏山改変) | 読み口 `PoseSpotIndex` |
+| `KH_LeashManager.cs` | `photoWalk` (ローカルの参照)。`ReleaseInteracts` で自分の犬の組が変わったとき `_OnLeashChanged` を送る (1 行)。同期・NetworkCallable は増やしていない |
+| `KH_PhotoGalleryEditor*` | Photo/0 が watcher の Program Asset も作る。Photo/1 は watcher の配線、写真の場所、試作値、`manager.photoWalk` を書く。Photo/2 は配線 (proxy + backing)、場所 (NavMesh 2 m・地面・重なり)、試作値の表を照合する。Photo/9 は `photoWalk` を外す |
+| `KH_PhotoHarnessEditor.cs` | H6w (時間と距離のきっかけ → 散歩の枠・犬目線の幾何)、H7 (暗転の間と明けて 2 s)、H8 (自撮り風の幾何と、遠い犬だけのときに撮らないこと) を足した |
+| `scripts/kh-harness-run.sh` | `photo --cases=H6w,H7,H8` (ケースの表を書いてから Photo/3) |
+
+- **写真の場所**:
+  - `viewpoint`: `KH_Places/KH_Viewpoint` (80, 19.0, 108)。見晴らしのベンチ。古民家 `KH_FarKominka` (55.3, 1.9, 29.8) を背にする。
+  - `bridgeUp`: 地図 4 の上流の橋の着地点 (403.5, 21.3, 502.3)。
+  - `river`: 地図 5 の川辺の着地点 (499.3, 9.7, 279.3)。
+  - 半径はどれも 4 m。どれも、すでに名前が付いていて人が立ち止まる場所。橋と川は Course/80 が NavMesh と水の検査を通した着地点。
+- **自撮り風の向き**: カメラは顔の前から振り返るので、写るのは自分の後ろか横にいる犬。前を歩く犬は写らないので、そのときは犬目線に落ちる。§5.2 の幾何どおりの性質。
+- **後回し**: 説明文 (W4)、メニューの吸着 (W3)、実機での構図の確認。

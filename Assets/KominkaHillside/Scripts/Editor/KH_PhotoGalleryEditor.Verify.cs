@@ -172,6 +172,8 @@ namespace KominkaHillside.Editor
             Check(al.gallery == s.gallery && al.settings == s.settings && al.capture == s.capture && al.directorUdon == dU && al.language == c.language && al.viewerUdon == vU, "album: gallery / settings / capture / director backing / language / viewer backing");
             Heap(aU, "directorUdon", dU, Check, Warn); Heap(aU, "gallery", gU, Check, Warn);
 
+            VerifyWalk(c, s, Check, Warn, Note);
+
             // ---------------------------------------------------------------- dog hooks
             for (int i = 0; i < Keys.Length; i++)
             {
@@ -272,6 +274,61 @@ namespace KominkaHillside.Editor
                 MeasureOne(c, al.menuHelpBody, "photo.help.body", "", "menu help body", Check, Note);
                 MeasureOne(c, al.menuNewLabel, "photo.new", "", "menu new mark", Check, Note);
             }
+        }
+
+        /// <summary>IMP-WLD-007 W2: 散歩の見回りの配線 (proxy + backing)、写真の場所 (NavMesh・地面)、試作値の表、つなぎ外しの知らせ。</summary>
+        static void VerifyWalk(Ctx c, Sys s, Action<bool, string> Check, Action<string> Warn, Action<string> Note)
+        {
+            foreach (var path in OwnPrograms) Check(AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(path + ".asset") != null, "program asset " + path + ".asset (Photo/0)");
+            var w = s.walk; var wU = B(w);
+            Check(w != null && wU != null && wU.SyncMethod == Networking.SyncType.None, "KH_PhotoWalkWatcher on " + SystemName + ", backing present, sync None (Photo/1)");
+            if (w == null || wU == null) return;
+            var m = c.pouch.manager; var mU = B(m);
+            Check(w.director == s.director && w.settings == s.settings && w.album == s.album && w.manager == m && w.sleepPlacement == c.pouch.sleepPlacement
+                && w.wanderControllers != null && w.wanderControllers.SequenceEqual(c.wander), "walk watcher: director / settings / album / leash manager / sleep placement / 6 wander controllers in roster order");
+            Heap(wU, "director", B(s.director), Check, Warn); Heap(wU, "album", B(s.album), Check, Warn); Heap(wU, "manager", mU, Check, Warn);
+            Heap(wU, "wanderControllers", c.wander.Select(x => (object)B(x)).ToArray(), Check, Warn);
+            Check(m != null && m.photoWalk == w, "KH_LeashManager.photoWalk -> the walk watcher (local own-dog notice)");
+            if (mU != null) Heap(mU, "photoWalk", wU, Check, Warn);
+            // ---- tuning table ----
+            Check(Mathf.Approximately(w.tickSeconds, WalkTick) && Mathf.Approximately(w.stopoverDelay, WalkStopoverDelay) && Mathf.Approximately(w.timeInterval, WalkTimeInterval)
+                && Mathf.Approximately(w.distanceInterval, WalkDistanceInterval) && Mathf.Approximately(w.minGap, WalkMinGap) && Mathf.Approximately(w.fadeGrace, WalkFadeGrace)
+                && Mathf.Approximately(w.spotRepeat, WalkSpotRepeat) && Mathf.Approximately(w.jumpMeters, WalkJumpMeters) && Mathf.Approximately(w.spotHeight, WalkSpotHeight),
+                "walk watcher tuning: tick " + WalkTick + " s, stopover +" + WalkStopoverDelay + " s, " + WalkTimeInterval + " s and " + WalkDistanceInterval + " m, gap " + WalkMinGap + " s, fade +" + WalkFadeGrace + " s, spot every " + WalkSpotRepeat + " s, jump " + WalkJumpMeters + " m");
+            Heap(wU, "timeInterval", WalkTimeInterval, Check, Warn); Heap(wU, "minGap", WalkMinGap, Check, Warn);
+            var d = s.director;
+            Check(Mathf.Approximately(d.walkDogEyeFov, DogEyeFov) && Mathf.Approximately(d.walkDogEyePitch, DogEyePitch) && Mathf.Approximately(d.walkDogEyeAheadScale, DogEyeAheadScale)
+                && Mathf.Approximately(d.walkDogEyeAheadMin, DogEyeAheadMin) && Mathf.Approximately(d.walkDogEyeAheadMax, DogEyeAheadMax) && Mathf.Approximately(d.walkDogEyeLift, DogEyeLift)
+                && Mathf.Approximately(d.walkDogEyeClearAhead, DogEyeClearAhead) && Mathf.Approximately(d.walkDogEyeGroundProbe, DogEyeGroundProbe) && Mathf.Approximately(d.walkDogEyeGroundBelow, DogEyeGroundBelow),
+                "dog's-eye: FOV " + DogEyeFov + ", +" + DogEyePitch + "°, ahead clamp(size x " + DogEyeAheadScale + ", " + DogEyeAheadMin + ", " + DogEyeAheadMax + ") +" + DogEyeLift + " up, clear " + DogEyeClearAhead + " m, ground " + DogEyeGroundBelow + " m at " + DogEyeGroundProbe + " m");
+            Check(Mathf.Approximately(d.walkSelfieFov, SelfieFov) && Mathf.Approximately(d.walkSelfieReach, SelfieReach) && Mathf.Approximately(d.walkSelfieLift, SelfieLift)
+                && Mathf.Approximately(d.walkSelfieLookToDogs, SelfieLookToDogs) && Mathf.Approximately(d.walkSelfieInner, SelfieInner) && Mathf.Approximately(d.walkSelfieDogMax, SelfieDogMax),
+                "selfie: " + SelfieReach + " m, +" + SelfieLift + " m, FOV " + SelfieFov + ", look " + SelfieLookToDogs + " toward the dogs, inner " + SelfieInner + ", dogs within " + SelfieDogMax + " m");
+            var dU = B(d);
+            Heap(dU, "walkDogEyeFov", DogEyeFov, Check, Warn); Heap(dU, "walkSelfieReach", SelfieReach, Check, Warn);
+            Check(Mathf.Approximately(s.camera != null ? s.camera.fieldOfView : 0f, 50f), "the scene camera stays at FOV 50 (walk shots set 70 / 60 per shot and every other shot resets to 50)");
+            // ---- spots ----
+            WalkSpots want = null;
+            try { want = ResolveWalkSpots(m); } catch (Exception e) { Check(false, "walk spots resolvable: " + e.Message); }
+            int n = WalkSpotNames.Length;
+            Check(w.spotNames != null && w.spotNames.Length == n && w.spotPositions != null && w.spotPositions.Length == n && w.spotRadii != null && w.spotRadii.Length == n
+                && w.spotHasBackdrop != null && w.spotHasBackdrop.Length == n && w.spotBackdrops != null && w.spotBackdrops.Length == n, n + " walk photo spots, arrays aligned");
+            if (w.spotPositions == null || w.spotPositions.Length != n || w.spotNames == null || w.spotNames.Length != n) return;
+            Check(w.spotHasBackdrop.Any(x => x), "at least one spot has the farmhouse backdrop");
+            for (int k = 0; k < n; k++)
+            {
+                var p = w.spotPositions[k];
+                if (want != null) Check(w.spotNames[k] == want.names[k] && Vector3.Distance(p, want.positions[k]) < 0.05f && w.spotHasBackdrop[k] == want.hasBackdrop[k]
+                    && (!want.hasBackdrop[k] || Vector3.Distance(w.spotBackdrops[k], want.backdrops[k]) < 0.05f) && Mathf.Approximately(w.spotRadii[k], WalkSpotRadius),
+                    "spot " + w.spotNames[k] + " = the scene's place " + V(p) + " r " + WalkSpotRadius + " (run Photo/1 if the place moved)");
+                bool nav = UnityEngine.AI.NavMesh.SamplePosition(p, out UnityEngine.AI.NavMeshHit hit, 2f, UnityEngine.AI.NavMesh.AllAreas);
+                Check(nav, "spot " + w.spotNames[k] + " is on the NavMesh within 2 m" + (nav ? " (" + Vector3.Distance(p, hit.position).ToString("F2") + " m)" : ""));
+                bool ground = Physics.Raycast(p + Vector3.up * 3f, Vector3.down, out RaycastHit gh, 6f, ~0, QueryTriggerInteraction.Ignore);
+                Check(ground, "spot " + w.spotNames[k] + " has ground within 3 m" + (ground ? " (" + (p.y - gh.point.y).ToString("F2") + " m above " + gh.collider.name + ")" : ""));
+                for (int j = 0; j < k; j++)
+                    Check(Vector3.Distance(p, w.spotPositions[j]) > 2f * WalkSpotRadius, "spots " + w.spotNames[j] + " / " + w.spotNames[k] + " do not overlap");
+            }
+            Note("walk triggers are local (no synced variable): stopover pose start (KD_DogWanderController.PoseSpotIndex), spot arrival, time + distance; category walk (" + GroupSizes[0] + " slots)");
         }
 
         static void VerifyBoard(Ctx c, Sys s, Transform board, Camera cam, Action<bool, string> Check, Action<string> Warn, Action<string> Note)
