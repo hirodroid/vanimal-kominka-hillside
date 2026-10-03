@@ -318,12 +318,13 @@ namespace KominkaDogRun
                 // A client that has just taken the dog over did not make the decision that is in progress
                 // and has no history behind it, so it starts the walk from scratch (Codex D1).
                 if (!_wasDogOwner || holderId != _holderTracked)
-                { _holderTracked = holderId; _routeNext = -1; _routeChoice = -1; _routeResume = -1; ResetHolderSpeed(); ResetPauseAndPoseState(); LeashTreatReset(); }
+                { if (holderId != _holderTracked) LeashTreatReset();   // IMP-DOG-006: a new holder; an Owner change keeps the treat wait (every client runs it)
+                  _holderTracked = holderId; _routeNext = -1; _routeChoice = -1; _routeResume = -1; ResetHolderSpeed(); ResetPauseAndPoseState(); }
                 TrackHolderSpeed(holderPos);   // IMP-DOG-036 S1: once per decision, over the time since the previous one (Dt)
             }
             // **手放した側も畳む** (Codex D)。ローカルの滞在状態が残ったままだと、この画面では
             // その犬がいつまでも「立ち寄り中」に見え、同じ人の他の犬が場所を取れなくなる
-            else if (_wasDogOwner) { ResetPauseAndPoseState(); LeashTreatReset(); }   // IMP-DOG-006: the wait is the Owner's
+            else if (_wasDogOwner) ResetPauseAndPoseState();
             _wasDogOwner = _dogOwner;
             Vector3 toHand = handPos - dogRoot.position; toHand.y = 0f;
             float handDist = toHand.magnitude;

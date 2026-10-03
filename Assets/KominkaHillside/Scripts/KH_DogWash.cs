@@ -33,6 +33,8 @@ namespace KominkaHillside
     // Ownership: this object follows the dog root's Owner (checked every 2 s, one request per 6 s, only after the dog
     // root has been ours for two checks, so a transfer in flight or two clients briefly both owning the root do not
     // fight). Strokes never take ownership, so two people can wash the same dog.
+    // The wash hold (synced washMs / washSeen, and since IMP-DOG-037 washBy = the playerId of the stroke that set it) is what
+    // the gates and the wash station's call rule read; all three are written together by the Owner.
     //
     // ---- Operations and their results (design §1-2; IMP-DOG-026). The mask (FragBrush) and the cells (ApplyCell)
     // use the same formulas; only the weight differs: mask w = the shader's soft capsule falloff x clumps x part gate
@@ -300,6 +302,11 @@ namespace KominkaHillside
         // there was a stroke at all, so 0 is not a magic "never".
         [UdonSynced] private int washMs;
         [UdonSynced] private bool washSeen;
+        // IMP-DOG-037 (review of 8faf572): the playerId of the stroke that set washMs (-1 = none). Written by the Owner in the same
+        // place as washMs, so every client - a late joiner and a new Owner too - knows who holds the dog with the same synced
+        // hold. Read by KH_WashStationCall._Availability ("being washed by someone else") through _WashHolderId. 4 bytes.
+        // (_lastWasherId stays the local "last stroke seen here", for the gaze; it is not synced and is not restored.)
+        [UdonSynced] private int washBy = -1;
         [UdonSynced] private int cleanSerial;
         // Server milliseconds of the last clean edge (cleanSerial++): the dirt grace (IMP-DOG-029) carries over an Owner
         // change. Meaningful only when cleanSerial > 0.
@@ -1024,6 +1031,7 @@ namespace KominkaHillside
             {
                 washMs = Networking.GetServerTimeInMilliseconds();   // net: owner-only
                 washSeen = true;                                      // net: owner-only
+                washBy = caller.playerId;                             // net: owner-only. IMP-DOG-037: who holds it, with the hold
             }
         }
 
@@ -1184,6 +1192,10 @@ namespace KominkaHillside
 
         // The player of the last stroke seen here (own or received); -1 before any or after that player left.
         public int _WasherPlayerId() { return _lastWasherId; }
+
+        /// <summary>IMP-DOG-037: the player whose stroke set the current wash hold (synced washBy; -1 when none). Pair it with
+        /// _WashHold(): both come from the same synced state, so every client and every Owner give the same answer.</summary>
+        public int _WashHolderId() { return washSeen ? washBy : -1; }
 
         // Seconds (Time.time) since that player's last stroke seen here: the own strokes as they are drawn, the others'
         // as their NetStroke is accepted. 1e9 when there is no record (never, or evicted from the sender table).

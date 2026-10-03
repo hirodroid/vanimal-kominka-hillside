@@ -388,6 +388,9 @@ namespace KominkaDogRun
                     UnityEngine.AI.NavMeshHit hit;
                     if (!UnityEngine.AI.NavMesh.SamplePosition(cand, out hit, sample, UnityEngine.AI.NavMesh.AllAreas)) { _dbgLtNav++; continue; }
                     Vector3 p = hit.position;
+                    // 2026-10-03 review: the NavMesh correction can move the point up to 1.5 / 2.5 m, and SleepStep walks straight when
+                    // there is no complete path - so the corrected point's line is checked against the shelf as well
+                    if (ShelfBlocks(k, from, p)) { _dbgLtShelf++; continue; }
                     if (!KeepOutClear(p, LeaveTargetClear)) { _dbgLtClose++; continue; }
                     if (riverData != null && riverData._InBand(p, KominkaHillside.KH_RiverData.BandMargin)) { _dbgLtRiver++; continue; }
                     if (!hasFirst) { hasFirst = true; first = p; firstRing = ring; }
@@ -630,11 +633,15 @@ namespace KominkaDogRun
             if (_restPhase != RestPhaseNone) EndRest();
         }
 
-        /// <summary>UpdateRest: the rest neither starts nor goes on inside a keep-out (it lies where the dog stands). Round 7: nor within
+        /// <summary>The one test for every voluntary lie-down of a free dog (2026-10-03 review: UpdateRest's start and its lying phase,
+        /// and UpdateWander's idle lie-down outside the wander window - the only other free lie / sit writer; the post-Fetch calm,
+        /// the paused stop and the greeting only stand / look, and the sits / lie-downs of the leash, the stopovers, the sleep call,
+        /// the gathering, the Candy performance and the wash reaction belong to a player's request or the leash, which the keep-out
+        /// exempts). Was KeepOutHere. The rest neither starts nor goes on inside a keep-out (it lies where the dog stands). Round 7: nor within
         /// stationRestMargin (1.5 m) outside its rim - the walk out ends 0.5 m outside, and a dog that ran before (Fetch, the brisk
         /// walk out, a call from afar) would otherwise lie down right at the exit, beside the 5 x 5 m floor. The rest just waits until
         /// the dog's wander has taken it further (nothing pushes it; it stands meanwhile).</summary>
-        bool KeepOutHere()
+        bool KeepOutRestBlocked()
         {
             return washCalls != null && washCalls.Length > 0 && dogRoot != null && !KeepOutClear(dogRoot.position, stationRestMargin > 0f ? stationRestMargin : 0f);
         }

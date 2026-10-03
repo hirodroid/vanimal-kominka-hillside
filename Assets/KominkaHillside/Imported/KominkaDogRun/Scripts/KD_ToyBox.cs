@@ -180,8 +180,11 @@ namespace KominkaDogRun
 
         public override void OnOwnershipTransferred(VRCPlayerApi player)
         {
-            if (!Utilities.IsValid(player) || !player.isLocal) return;
-            if (!_hasPending) { _reconcileLeft = RevalidateTries; _ReconcileAsNewOwner(); return; }   // 裏山改変: 自動で移ってきた (前の Owner が抜けた)
+            if (!Utilities.IsValid(player)) return;
+            // 裏山改変 (独立レビュー 2026-10-03 中 1): Owner が替わったら**全員が**今の Owner に対して確かめ直す。新 Owner だけが動くと、
+            // 新 Owner が書き直さなかった場合に既にいる人は有料の柄のまま・途中参加は基本ボール、と画面が割れる。同じ入力 (同期値と今の Owner) から同じ結果へ
+            if (!player.isLocal) { if (!_hasPending) { _revalidateLeft = RevalidateTries; ApplySynced(); } return; }
+            if (!_hasPending) { _reconcileLeft = RevalidateTries; _revalidateLeft = RevalidateTries; ApplySynced(); _ReconcileAsNewOwner(); return; }   // 裏山改変: 自動で移ってきた (前の Owner が抜けた)
             _hasPending = false;
             Publish(_pendingProduct);
         }
@@ -253,6 +256,26 @@ namespace KominkaDogRun
         public override void OnPlayerRestored(VRCPlayerApi player)
         {
             if (!Utilities.IsValid(player) || _hasPending || _syncedProduct == Unset) return;
+            VRCPlayerApi owner = Networking.GetOwner(gameObject);
+            if (!Utilities.IsValid(owner) || owner.playerId != player.playerId) return;
+            ApplySynced();
+        }
+
+        /// <summary>裏山改変 (独立レビュー 2026-10-03 中 1): 誰かが抜けた。Owner の移り先はこの直後に決まることがあるので、1 秒後に今の Owner で確かめ直す
+        /// (OnOwnershipTransferred でも確かめる。両方走っても結果は同じ)。</summary>
+        public override void OnPlayerLeft(VRCPlayerApi player)
+        {
+            if (_hasPending || _syncedProduct == Unset) return;
+            _revalidateLeft = RevalidateTries;
+            SendCustomEventDelayedSeconds(nameof(_Revalidate), 1f);
+        }
+
+        /// <summary>裏山改変 (独立レビュー 2026-10-03 中 2): 今の Owner の PlayerData が更新された (復元の後の購入が、柄の同期より遅れて届いた等)。
+        /// 有料の柄を出せずに基本ボールにしている間だけ確かめ直す (見直しの 2 秒 × 15 回が過ぎていても出る)。
+        /// infos の中身 (キー名) は読まない: Udon で公開されているかを確かめていない API に頼らず、「今の Owner の分か」と「保留中か」で絞る。</summary>
+        public override void OnPlayerDataUpdated(VRCPlayerApi player, VRC.SDK3.Persistence.PlayerData.Info[] infos)
+        {
+            if (!Utilities.IsValid(player) || _hasPending || _syncedProduct == Unset || _applied == _syncedProduct) return;
             VRCPlayerApi owner = Networking.GetOwner(gameObject);
             if (!Utilities.IsValid(owner) || owner.playerId != player.playerId) return;
             ApplySynced();

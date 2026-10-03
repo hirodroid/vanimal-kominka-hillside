@@ -24,7 +24,7 @@ namespace KominkaHillside.Editor
     ///   RefuseOtherStation で断る。
     /// C-avail-leash-other: ClientSim の遠隔プレイヤー (人形、Udon なし) の id を walkers[柴] に書く (リード管理の保守は実在する
     ///   プレイヤーを外さない) と「ほかの人と散歩中」、直接の ReqCall は RefuseLeashedByOther。SKIP しない。
-    /// C-avail-washed-other (入力は模擬): 柴の洗い保持 (washMs / washSeen / _lastWasherId) を人形の id のストロークとしてヒープへ書く
+    /// C-avail-washed-other (入力は模擬): 柴の洗い保持 (同期値 washMs / washSeen / washBy) を人形の id のストロークとしてヒープへ書く
     ///   (ClientSim は他人の NetStroke を送れない) と「ほかの人が洗っています」、呼ぶと待ち、保持 (3 s) が切れたら来る。
     /// C-avail-range の拒否の後は、2 s のあいだ毎 tick「留められない・犬の側が洗い場を取らない・跳ばない」を見る (自由な犬が
     ///   歩き回るのは可。run 20261002-223745 は 26.5 → 22.5 m の徘徊を「入って来た」と誤判定していた)。
@@ -280,7 +280,7 @@ namespace KominkaHillside.Editor
             // ---- C-avail-washed-other (the Shiba's wash hold written as a remote player's stroke) ----
             // Run 20261002-223745 SKIPped: the stand-in washer -77 is not a player id (_Availability needs washer >= 0). ClientSim cannot
             // send a NetStroke from a remote player (the puppet has no Udon), so the hold the board reads (KH_DogWash washMs / washSeen,
-            // _lastWasherId) is written in the heap with the puppet's real id - simulated input, real rule and real board.
+            // washBy, the synced holder since the review of 8faf572) is written in the heap with the puppet's real id - simulated input, real rule and real board.
             s = WsCase("C-avail-washed-other", 80);
             double woAt = 0;
             WcSetup(s);
@@ -289,7 +289,7 @@ namespace KominkaHillside.Editor
             s.Add(WsDo(() =>
             {
                 if (wsWash == null) throw new InvalidOperationException("the Shiba has no KH_DogWash");
-                wsWash.SetProgramVariable("_lastWasherId", waPuppet.playerId);
+                wsWash.SetProgramVariable("washBy", waPuppet.playerId);
                 wsWash.SetProgramVariable("_released", false);
                 wsWash.SetProgramVariable("washSeen", true);
                 wsWash.SetProgramVariable("washMs", Networking.GetServerTimeInMilliseconds());
@@ -297,7 +297,7 @@ namespace KominkaHillside.Editor
                 waBoard.SetProgramVariable("_nextAt", 0f);
             }));
             s.Add(WsUntil(() => WaState(waBoard, wsDog) == KH_WashStationCall.AvWashedByOther, 1.5,
-                () => "the board did not show the Shiba as washed by someone else (state " + WaState(waBoard, wsDog) + ", washer " + Get<int>(wsWash, "_lastWasherId") + ")"));
+                () => "the board did not show the Shiba as washed by someone else (state " + WaState(waBoard, wsDog) + ", washer " + Get<int>(wsWash, "washBy") + ")"));
             s.Add(WsDo(() =>
             {
                 WaExpectShown(waBoard, wsDog, KH_WashStationBoard.WStWashedOther, KH_WashStationBoard.LookUnavailable, "the Shiba washed by someone else");
@@ -311,7 +311,7 @@ namespace KominkaHillside.Editor
             {
                 WsNote("washed by remote player " + waPuppet.playerId + " (hold written in the heap): '" + WaWord(waBoard, KH_WashStationBoard.WStWashedOther) + "' -> ReqCall waited, held "
                     + (UnityEditor.EditorApplication.timeSinceStartup - woAt).ToString("F1") + " s later (the hold's end)");
-                wsWash.SetProgramVariable("_lastWasherId", -1);
+                wsWash.SetProgramVariable("washBy", -1);
                 WaRemovePuppet();
                 wcStation.SendCustomNetworkEvent(NetworkEventTarget.Owner, "ReqRelease");
             }));
@@ -384,7 +384,7 @@ namespace KominkaHillside.Editor
             if (!Utilities.IsValid(waPuppet)) { waPuppet = null; return; }
             int id = waPuppet.playerId;
             if (manager != null && wsDog >= 0 && Get<int[]>(manager, "walkers")[wsDog] == id) WaSetWalker(wsDog, -1);
-            if (wsWash != null && Get<int>(wsWash, "_lastWasherId") == id) wsWash.SetProgramVariable("_lastWasherId", -1);
+            if (wsWash != null && Get<int>(wsWash, "washBy") == id) wsWash.SetProgramVariable("washBy", -1);
             WaRemovePuppet();
         }
 

@@ -184,11 +184,13 @@ namespace KominkaHillside
             if (w.activities != null && w.activities.Mode == 1 && w.activities._IsParticipant(dog)) return AvGathering;
             if (w.sleepBoard != null && w.sleepBoard.LiveSleeperOf(dog) >= 0) return AvSleepCall;
             // Somebody else is washing it with a tool right now (the synced hold, KH_DogWash.holdSeconds after their last stroke).
-            // The caller's own strokes and the caller's own leashed dog never count.
+            // The caller's own strokes and the caller's own leashed dog never count. The washer is the synced holder of that hold
+            // (KH_DogWash.washBy, written with washMs), never the local "last stroke seen here" (review of 8faf572: a late joiner
+            // and a new Owner did not have it, so the board and the acceptance could disagree).
             KH_DogWash wash = washes != null && dog < washes.Length ? washes[dog] : null;
             if (wash != null && !leashed && wash._WashHold())
             {
-                int washer = wash._WasherPlayerId();
+                int washer = wash._WashHolderId();
                 if (washer >= 0 && washer != pid) return AvWashedByOther;
             }
             return AvCallable;

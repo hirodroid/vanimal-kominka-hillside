@@ -27,17 +27,19 @@ namespace KominkaHillside.Editor
     ///   TC6-none-can-come     1 匹だけつなぎ、その犬に移動の切符 (模擬) → [出す] は DogsBusy・理由文は「つないでいる犬は、いま来られません」・在庫そのまま
     ///                         (未接続の犬が居ても回さない)。切符を消すと出せて、その犬が掴む。[しまう]
     ///   TC7-others-never      人形 (他人) が 3 匹つなぐ (模擬)。人形のそばで出す → 掴むのは未接続の犬だけ。[しまう]
+    ///   TC8-walk-off          待つ間に持ち主が 2 m 動く (模擬: テレポート) → 待ちが終わる (理由 2)。位置だけで決まる = どの画面でも同じ (レビュー 2026-10-03)
+    ///   (TC4 はリードの手からの距離で測る: 犬そのものがリード長 × 1.25 を越えない。TC6 は撫でられている 1 匹だけの接続犬でも出させない)
     /// ハーネス対象外 (PCVR / 2 人): 本物の手で撫でる・首輪の Interact に手が届くか・待つ秒数の体感・おやつを見せたときの距離感、
     /// 2 人が同時に出す (それぞれ自分の接続犬だけ)・途中参加・Owner の交代で待ちが消えること、Fetch / フリスビー / 洗い場の円の中で外したときとの重なり。</summary>
     public static partial class KH_CourseWalkHarnessEditor
     {
-        [MenuItem("Tools/KominkaHillside/Course/97c - Walk Harness Treat Call on the Leash (TC0-TC7, fresh profile)")]
+        [MenuItem("Tools/KominkaHillside/Course/97c - Walk Harness Treat Call on the Leash (TC0-TC8, fresh profile)")]
         public static void TreatCallHarness() { BeginCommerce(CmSetTreatCall); }
 
         const int TcLeashTreat = 9, TcLeashTreatWait = 10;   // KD_DogWanderController.HillsideTreatCall.cs
         const int TcTicketReq = 987654;                       // a travel request id no pouch ever makes (TC6)
 
-        class TcCall { public int dog = -1, slot = -1, outMs, stockE1; public double waitAt = -1; public float maxReach; }
+        class TcCall { public int dog = -1, slot = -1, outMs, stockE1, lastBefore = -1; public double waitAt = -1; public float maxReach, maxHand; }
 
         static void MakeTreatCallCases()
         {
@@ -46,7 +48,6 @@ namespace KominkaHillside.Editor
             cmReport.notCovered.Add("Overlap with a ball Fetch / the disc (the leash yields the root above the treat call), and a release inside a wash station's circle (the 20 s grace) -> Play");
             int biscuit = -1;
             float leash = 3f;
-            tcLastCalled = -1;
 
             // ---- TC0 ----
             var s = CmCase("TC0-setup", true, 90);
@@ -170,7 +171,7 @@ namespace KominkaHillside.Editor
                 far = CmGround(me.GetPosition() + fwd.normalized * 6f);
                 body.transform.position = far + Vector3.up * 0.05f;
                 var rb = body.GetComponent<Rigidbody>(); if (rb != null) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
-                c4.maxReach = 0;
+                c4.maxReach = 0; c4.maxHand = 0;
                 CmNote("simulated: the given treat moved to " + TvFlat(far, me.GetPosition()).ToString("F1") + " m in front of me (a throw)");
             }));
             s.Add(CmWait(1));
@@ -184,14 +185,15 @@ namespace KominkaHillside.Editor
             }, 8, () => "6 s out of reach"));
             s.Add(CmDo(() =>
             {
-                CmExpect(c4.maxReach <= leash * 1.25f + 0.6f, "dog stopped at the leash reach (max " + c4.maxReach.ToString("F2") + " m from me, reach " + (leash * 1.25f).ToString("F2") + ")");
+                // review 2026-10-03: the dog itself, measured from the leash hand (not only its target). 0.15 m = one decision's legs at a stand
+                CmExpect(c4.maxHand <= leash * 1.25f + 0.15f, "dog stayed inside the leash reach from the leash hand (max " + c4.maxHand.ToString("F2") + " m, reach " + (leash * 1.25f).ToString("F2") + ")");
                 CmExpect(Get<int>(wander[c4.dog], "_ltClamped") > clamped0, "the treat step was clamped (_ltClamped)");
                 CmExpect(CmClaimer(c4.slot, c4.outMs) == c4.dog, "the claim is kept while it looks at the treat");
                 pouch.SendCustomEvent("_PutAway");
             }));
             s.Add(CmUntil(() => CmState() == KD_TreatBox.DispIdle, 4, () => "put away"));
             s.Add(CmUntil(() => TcMode(c4.dog) != TcLeashTreat && !TcWaiting(c4.dog), 2, () => "dog " + c4.dog + " back on the walk without waiting"));
-            s.Add(CmDo(() => CmNote("treat 6 m away: dog " + c4.dog + " stayed within " + c4.maxReach.ToString("F2") + " m of me (reach " + (leash * 1.25f).ToString("F2") + "), never ate; [しまう] -> walk")));
+            s.Add(CmDo(() => CmNote("treat 6 m away: dog " + c4.dog + " stayed within " + c4.maxHand.ToString("F2") + " m of the leash hand (reach " + (leash * 1.25f).ToString("F2") + "), never ate; [しまう] -> walk")));
 
             // ---- TC5 ----
             s = CmCase("TC5-last-released", false, 60);
@@ -240,7 +242,22 @@ namespace KominkaHillside.Editor
             s.Add(CmDo(() => { slot6 = Get<int>(pouch, "_slotIndex"); out6 = CmOutMs(slot6); }));
             s.Add(CmUntil(() => CmClaimer(slot6, out6) == 0, 6, () => "dog 0 did not claim (claimer " + CmClaimer(slot6, out6) + ")"));
             s.Add(CmDo(() => { pouch.SendCustomEvent("_PutAway"); CmNote("simulated: travel ticket (phase Ready, req " + TcTicketReq + ") on my only leashed dog -> refused with 'your leashed dogs cannot come', stock kept; cleared -> dog 0 claims; put away"); }));
-            s.Add(CmUntil(() => CmState() == KD_TreatBox.DispIdle, 4, () => "put away"));
+            s.Add(CmUntil(() => CmState() == KD_TreatBox.DispIdle && Enumerable.Range(0, 3).All(i => CmGiver(i) != CmMe() && !Get<bool>(cmSlots[i], "_returning")), 6, () => "put away"));
+            // review 2026-10-03: my only leashed dog is being petted -> the menu refuses like the assignment would (same DogCanTake)
+            UdonBehaviour fetch6 = null;
+            int e6b = 0;
+            s.Add(CmDo(() => { fetch6 = Get<UdonBehaviour>(wander[0], "fetchController"); fetch6.SetProgramVariable("_localPetActive", true); }));
+            s.Add(CmUntil(() => Get<int>(fetch6, "petState") >= 0, 3, () => "pet state not raised (dog 0 " + TvFlat(roots[0].position, Networking.LocalPlayer.GetPosition()).ToString("F2") + " m from me)"));
+            s.Add(CmDo(() =>
+            {
+                e6b = CmStockE(CmBiscuit);
+                pouch.SendCustomEvent("_Row" + biscuit);
+                CmExpect(CmReason() == KD_TreatBox.GateDogsBusy && CmState() == KD_TreatBox.DispIdle && CmStockE(CmBiscuit) == e6b,
+                    "my only leashed dog is being petted: DogsBusy (" + CmReason() + "), nothing taken");
+                fetch6.SetProgramVariable("_localPetActive", false);
+                CmNote("simulated: petting my only leashed dog (_localPetActive) -> refused, stock kept (the menu and the assignment read the same DogCanTake)");
+            }));
+            s.Add(CmUntil(() => Get<int>(fetch6, "petState") < 0, 4, () => "pet state not lowered"));
             s.Add(CmDo(CmDetachAll));
             s.Add(CmUntil(CmNoneMine, 6, () => "detach"));
 
@@ -279,7 +296,32 @@ namespace KominkaHillside.Editor
                 CmNote("dogs 0-2 on the puppet's leash 1.5 m away were never assigned; unleashed dog " + c7 + " claimed it; put away");
             }));
             s.Add(CmUntil(() => CmState() == KD_TreatBox.DispIdle && Get<int[]>(manager, "walkers").All(w => w < 0), 4, () => "put away / puppet leashes cleared"));
-            s.Add(CmDo(() => { CmRemovePuppets(); CmFreezeStay(false); }));
+            s.Add(CmDo(() => CmRemovePuppets()));
+
+            // ---- TC8 ----
+            s = CmCase("TC8-walk-off", true, 90);
+            var c8 = new TcCall();
+            TcReady(s);
+            TcCallSteps(s, c8, () => biscuit, () => leash, -1);
+            s.Add(CmWait(1));
+            s.Add(CmDo(() =>
+            {
+                CmExpect(TcWaiting(c8.dog), "still waiting 1 s in");
+                var me = Networking.LocalPlayer;
+                Vector3 side = me.GetRotation() * Vector3.right; side.y = 0;
+                var p = CmGround(me.GetPosition() + side.normalized * 2f, 1.5f);
+                CmTeleport(p, me.GetRotation() * Vector3.forward);
+                CmNote("simulated: the holder moved 2 m sideways (teleport) during the wait; the dog stays inside the leash reach");
+            }));
+            s.Add(CmUntil(() => !TcWaiting(c8.dog), 2, () => "the wait did not end when the holder moved on"));
+            s.Add(CmDo(() =>
+            {
+                CmExpect(Get<int>(wander[c8.dog], "_ltWaitEndReason") == 2, "ended because the holder moved (reason " + Get<int>(wander[c8.dog], "_ltWaitEndReason") + ")");
+                CmNote("dog " + c8.dog + ": wait ended by the holder's displacement (positions only: the same rule on every client)");
+            }));
+            s.Add(CmUntil(() => TcMode(c8.dog) != TcLeashTreatWait, 2, () => "back on the walk"));
+            s.Add(CmDo(() => { CmDetachAll(); CmFreezeStay(false); }));
+            s.Add(CmUntil(CmNoneMine, 6, () => "detach"));
         }
 
         /// <summary>Detach everything, stand at the gate and leash dogs 0, 1 (left) and 2 (right) through the menu, then let them walk a little.</summary>
@@ -300,7 +342,19 @@ namespace KominkaHillside.Editor
             s.Add(CmWait(3));
         }
 
-        static int tcLastCalled = -1;   // mirror of the master's "called last" memory (my leashed dog that claimed most recently)
+        /// <summary>The master's memory (KD_TreatBox._lastCallGiver / _lastCallSeq, master-local heap): the dog I called last, as
+        /// BuildAllowWith finds it (all dogs, highest seq with giver = me). -1 = none.</summary>
+        static int TcProductLastCalled()
+        {
+            var g = Get<int[]>(cmBox, "_lastCallGiver"); var q = Get<int[]>(cmBox, "_lastCallSeq");
+            int me = CmMe(), best = -1, bestSeq = 0;
+            for (int d = 0; d < g.Length; d++) if (g[d] == me && (best < 0 || q[d] > bestSeq)) { best = d; bestSeq = q[d]; }
+            return best;
+        }
+        static string TcLastCallDump()
+        {
+            return "giver [" + string.Join(",", Get<int[]>(cmBox, "_lastCallGiver")) + "] seq [" + string.Join(",", Get<int[]>(cmBox, "_lastCallSeq")) + "]";
+        }
 
         /// <summary>Each case starts from: no treat of mine out (a failed case's put-away may still be returning), no wait running,
         /// dogs 0-2 on my leash (a failed case's recovery detaches everything). Re-leashes only the dogs that are missing.</summary>
@@ -337,7 +391,9 @@ namespace KominkaHillside.Editor
         /// <paramref name="notDog"/> &gt;= 0 ならその犬が掴んだら失敗。最寄りは掴んだ瞬間のおやつからの距離で (動いている分 0.5 m の余裕)。</summary>
         static void TcCallSteps(List<Func<double, bool>> s, TcCall c, Func<int> row, Func<float> leash, int notDog, bool give = true)
         {
-            s.Add(CmDo(() => { pouch.SendCustomEvent("_Row" + row()); }));
+            // the master's "called last" memory just before this treat (any earlier case or step may have updated it: a claim by one of
+            // my leashed dogs outside these steps counts too, e.g. TC6's dog 0) - read from the heap, not tracked by the harness
+            s.Add(CmDo(() => { c.lastBefore = TcProductLastCalled(); pouch.SendCustomEvent("_Row" + row()); }));
             s.Add(CmUntil(() => CmState() == KD_TreatBox.DispOut, 4, () => "not out (state " + CmState() + ", reason " + CmReason() + ")"));
             s.Add(CmDo(() => { c.slot = Get<int>(pouch, "_slotIndex"); c.outMs = CmOutMs(c.slot); c.stockE1 = CmStockE(CmBiscuit); c.maxReach = 0; }));
             s.Add(CmUntil(() => (c.dog = CmClaimer(c.slot, c.outMs)) >= 0, 6, () => "no dog claimed the treat in my hand (dogSlot " + string.Join(",", Get<int[]>(cmBox, "dogSlot")) + ")"));
@@ -350,11 +406,13 @@ namespace KominkaHillside.Editor
                 float mine = TvFlat(roots[c.dog].position, bp);
                 // the rule (BuildAllowWith): my leashed dogs; the dog I called last is skipped while another of them can come
                 var cand = Enumerable.Range(0, 6).Where(d => CmMine(d) && d != notDog).ToList();
-                bool skip = tcLastCalled >= 0 && cand.Contains(tcLastCalled) && cand.Count >= 2;
-                if (skip) { cand.Remove(tcLastCalled); CmExpect(c.dog != tcLastCalled, "not dog " + tcLastCalled + " (called last) again"); }
+                int last = c.lastBefore;
+                bool skip = last >= 0 && cand.Contains(last) && cand.Count >= 2;
+                if (skip) { cand.Remove(last); CmExpect(c.dog != last, "not dog " + last + " (the master's called-last before this treat: " + TcLastCallDump() + ") again"); }
                 float best = cand.Min(d => TvFlat(roots[d].position, bp));
-                CmExpect(mine <= best + 0.5f, "the nearest of my leashed dogs" + (skip ? " except dog " + tcLastCalled + " (called last)" : "") + " (" + mine.ToString("F2") + " m, nearest " + best.ToString("F2") + " m)");
-                tcLastCalled = c.dog;
+                CmExpect(mine <= best + 0.5f, "the nearest of my leashed dogs" + (skip ? " except dog " + last + " (called last)" : "") + " (" + mine.ToString("F2") + " m, nearest " + best.ToString("F2") + " m; memory " + TcLastCallDump() + ")");
+                CmExpect(TcProductLastCalled() == c.dog, "the master now remembers dog " + c.dog + " as called last (" + TcLastCallDump() + ")");
+                CmNote("dog " + c.dog + " claimed; called-last before " + last + (skip ? " (skipped)" : "") + ", after " + TcProductLastCalled());
             }));
             s.Add(CmUntil(() =>
             {
@@ -385,6 +443,17 @@ namespace KominkaHillside.Editor
             if (c.dog < 0) return;
             float r = TvFlat(roots[c.dog].position, Networking.LocalPlayer.GetPosition());
             if (r > c.maxReach) c.maxReach = r;
+            float h = TvFlat(roots[c.dog].position, TcHand(c.dog));
+            if (h > c.maxHand) c.maxHand = h;
+        }
+
+        /// <summary>The leash hand as KH_LeashManager._HandPosition computes it for a desktop player (ClientSim): beside and in front of
+        /// the body (x = -0.23 left / +0.23 right, z = 0.32), horizontal only.</summary>
+        static Vector3 TcHand(int dog)
+        {
+            var me = Networking.LocalPlayer;
+            int hand = Get<int[]>(manager, "hands")[dog];
+            return me.GetPosition() + me.GetRotation() * new Vector3(hand == 0 ? -0.23f : 0.23f, 0f, 0.32f);
         }
 
         /// <summary>Puts dog d on the NavMesh <paramref name="ahead"/> m in front of me (a root write = the walk harnesses' placement injection).</summary>

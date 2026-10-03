@@ -1611,7 +1611,9 @@ namespace KominkaDogRun
                     if (_speed > stopSpeedThreshold) _idleLieSince = -1f;
                     else if (_idleLieSince < 0f) _idleLieSince = Time.time;
                     // 足が止まってから伏せる (BUG-DOG-001。休憩と同じ間を使う)
-                    if (_idleLieSince >= 0f && Time.time - _idleLieSince >= restSettleTime)
+                    // 裏山改変 (2026-10-03 review): 洗い場の円と縁の外 stationRestMargin の中では伏せない (休憩と同じ判定
+                    // KeepOutRestBlocked、HillsideStationLeave.cs)。立ったまま待ち、徘徊で離れてから伏せる
+                    if (_idleLieSince >= 0f && Time.time - _idleLieSince >= restSettleTime && !KeepOutRestBlocked())
                         _wantLieDown = true;
                 }
                 if (debugInstrument)

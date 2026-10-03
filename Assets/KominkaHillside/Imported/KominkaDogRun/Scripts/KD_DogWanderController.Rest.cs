@@ -50,7 +50,7 @@ namespace KominkaDogRun
                 if (_playingPrev) return false;
                 // 裏山改変 (2026-10-02 ユーザー要望「台の上には休憩し始めたりもしない」): 洗い場の立入りの円の中では休憩に入らない
                 // (伏せるのはその場なので、場所の候補はこの 1 点。円の外へ出る歩きは UpdateStationLeave、HillsideStationLeave.cs)
-                if (KeepOutHere()) return false;
+                if (KeepOutRestBlocked()) return false;
 
                 _restCount++;
                 _restStillSince = -1f;
@@ -163,7 +163,7 @@ namespace KominkaDogRun
             // ---- ③ 伏せて休む ----
             if (Time.time >= _restUntil) { EndRest(); return false; }
             // 裏山改変 (2026-10-02): 押されるなどで洗い場の円の中へ入ったら伏せ続けない (次の選び直しで円の外へ歩く)
-            if (KeepOutHere()) { EndRest(); return false; }
+            if (KeepOutRestBlocked()) { EndRest(); return false; }
 
             // 休憩中の足: 減速し切るまでは普通に歩いて止まる
             // (**位置を自分で書かない** — Coast が加減速・接地・Animator を全部持っている)

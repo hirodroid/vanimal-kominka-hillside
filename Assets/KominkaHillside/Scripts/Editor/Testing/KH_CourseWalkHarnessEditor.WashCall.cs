@@ -129,6 +129,7 @@ namespace KominkaHillside.Editor
             s = WsCase("C-release", 125);
             s.Add(WsDo(() => wsFailDump = WcDump));   // round 5: a failure note carries the heap dump
             float rlLift = 0f, rlLimit = 0f, rlMaxDrop = 0f, rlMaxExcess = -1f, rlMaxGap = 0f, rlPrevT = 0f, rlMoveAt = -1f, rlOutAt = -1f; double rlAt = 0; Vector3 rlPrev = Vector3.zero, rlStart = Vector3.zero;
+            bool rlShelfChecked = false;
             bool rlRest = false; string rlWhy = "";
             WcSetup(s);
             WcCallAndArrive(s, wsDog, 60);
@@ -165,6 +166,8 @@ namespace KominkaHillside.Editor
                 if (t > 1.0f && rlMoveAt < 0f && !Get<bool>(wsWander, "_leaveActive") && !Get<bool>(wsWander, "_leaveLowering"))
                     throw new InvalidOperationException("no walk out started within 1 s of the release (selected " + Get<int>(wsWander, "_selectedBehavior") + ", washActive " + Get<bool>(wsWander, "_washActive") + ")");
                 if (rlMoveAt < 0f && Flat(p - rlStart) >= 0.1f) rlMoveAt = t;
+                // 2026-10-03 review: the walk-out point (after the NavMesh correction) does not lead past the shelf
+                if (!rlShelfChecked && Get<bool>(wsWander, "_leaveActive") && !Get<bool>(wsWander, "_leaveLowering")) { rlShelfChecked = true; WcExpectShelfLine(p, Get<Vector3>(wsWander, "_leaveTarget")); }
                 if (!inside && rlOutAt < 0f) rlOutAt = t;
                 if (rlOutAt >= 0f) return true;
                 if (t > rlLimit) throw new TimeoutException("the Shiba was still inside the keep-out (" + Flat(p - wcAnchor.position).ToString("F2") + " / " + WcKeepOut() + " m) " + rlLimit.ToString("F1") + " s after the release (moved at " + rlMoveAt.ToString("F2") + " s)");
@@ -334,6 +337,31 @@ namespace KominkaHillside.Editor
                 WsNote("dump: " + WcDump());
             }));
 
+            // ---- C-keepout-idle-lie (2026-10-03 review: 徘徊の窓の外の「足が止まったら伏せる」(idleLieDown) も円と縁の外 1.5 m の中では
+            //      伏せない。円の中は出ていく歩きの休止中 (2 回失敗の後) を模擬。模擬: 窓を閉じる (wanderDurationMin/Max 0)・休憩を止める・
+            //      休止の時刻・立ち寄り 0 をヒープへ。対照: 縁から 3.5 m 外では伏せる (この道が生きていることの証拠)) ----
+            s = WsCase("C-keepout-idle-lie", 120);
+            s.Add(WsDo(() => wsFailDump = WcDump));
+            float ilSettle = 1f;
+            WcRequireMain(s);
+            WcSetup(s);
+            s.Add(WsDo(() =>
+            {
+                WcSaveWander();
+                wsWander.SetProgramVariable("idleLieDown", true);
+                wsWander.SetProgramVariable("wanderDurationMin", 0f);
+                wsWander.SetProgramVariable("wanderDurationMax", 0f);   // the window never opens: the idle lie-down path every decision
+                wsWander.SetProgramVariable("_restReadyAt", 1e9f);       // the rest FSM stays out (it has its own check, C-keepout-free)
+                wsWander.SetProgramVariable("dropByChance", 0f);         // no drop-by walk toward me
+                WcInvalidateWander();
+                ilSettle = Get<float>(wsWander, "restSettleTime");
+                WcPlayerFarFrom(wcAnchor.position, 16f);
+            }));
+            WcIdleLiePhase(s, "inside the circle, walk-out paused", () => 2.0f, true, false, () => ilSettle);
+            WcIdleLiePhase(s, "in the no-rest margin", () => WcKeepOut() + 0.8f, false, false, () => ilSettle);
+            WcIdleLiePhase(s, "control beyond the margin", () => WcKeepOut() + Get<float>(wsWander, "stationRestMargin") + 2.0f, false, true, () => ilSettle);
+            s.Add(WsDo(() => { WsNote("dump: " + WcDump()); WcRestoreWander(); }));
+
             // ---- C-keepout-wander (round 3, review 1 の回帰: 家を主洗い場の中心から 4.6 m (実際の犬の家と同じ距離) に置き、柴を円の反対側に
             //      置く。休憩なし・徘徊の窓を常に開け・目標点を 2 s ごとにして 60 s。円をまたぐ目標点・円の中への行き来が無いこと。模擬: 家・
             //      予定の値・休憩の時刻はハーネスが実行時のヒープ / Transform へ書く (WcCleanup が戻す)) ----
@@ -501,7 +529,13 @@ namespace KominkaHillside.Editor
                 WsExpect(Get<int>(wsWander, "_graceFrames") > klGrace0, "the grace branch held the dog (frames " + (Get<int>(wsWander, "_graceFrames") - klGrace0) + ")");
                 WsNote("dump at grace - 2 s: " + WcDump());
             }));
-            s.Add(WsUntilF(() => Flat(wsRoot.position - wcAnchor.position) >= WcKeepOut(), () => KlGrace + 1.5f + WcLeaveLimit(0f, true),
+            bool klShelfChecked = false;
+            s.Add(WsUntilF(() =>
+            {
+                // 2026-10-03 review: the walk-out point (after the NavMesh correction) does not lead past the shelf (the dog stands beside it)
+                if (!klShelfChecked && Get<bool>(wsWander, "_leaveActive")) { klShelfChecked = true; WcExpectShelfLine(wsRoot.position, Get<Vector3>(wsWander, "_leaveTarget")); }
+                return Flat(wsRoot.position - wcAnchor.position) >= WcKeepOut();
+            }, () => KlGrace + 1.5f + WcLeaveLimit(0f, true),
                 () => "unleashed inside the keep-out, the Shiba did not walk out after the grace (" + Flat(wsRoot.position - wcAnchor.position).ToString("F2") + " m)"));
             s.Add(WsDo(() =>
             {
@@ -553,6 +587,58 @@ namespace KominkaHillside.Editor
             }));
         }
 
+        /// <summary>2026-10-03 review: one phase of C-keepout-idle-lie. The Shiba placed `dist` m in front of the duckboard (away from the
+        /// shelf), standing; `pause` = the walk-out's cool-down set (simulated: as after two failed walk-outs). For restSettleTime + 3 s
+        /// it must not lie down (expectLie false), or must lie down by then (expectLie true, the control). Frames while playing are not
+        /// judged (counted).</summary>
+        static void WcIdleLiePhase(List<Func<double, bool>> s, string label, Func<float> dist, bool pause, bool expectLie, Func<float> settle)
+        {
+            double t0 = 0; bool lay = false; int playTicks = 0, dec0 = 0; float placed = 0f;
+            s.Add(WsDo(() =>
+            {
+                Vector3 front = WsFlat(wcAnchor.position - wcStation.transform.position);
+                Vector3 at = CmGround(wcAnchor.position + front * dist(), 1.5f);
+                placed = Flat(at - wcAnchor.position);
+                wsWander.SetProgramVariable("_keepOutRestUntil", pause ? Time.time + 60f : 0f);
+                wsRoot.SetPositionAndRotation(at, Quaternion.LookRotation(front));
+                var sync = wsRoot.GetComponent<VRC.SDK3.Components.VRCObjectSync>(); if (sync != null) sync.FlagDiscontinuity();
+                wsWander.SetProgramVariable("_behaviorSelectionValid", false);
+                t0 = -1; lay = false; playTicks = 0; dec0 = Get<int>(wsWander, "_decisionCount");
+            }));
+            s.Add(now =>
+            {
+                if (t0 < 0) t0 = now;
+                if (Get<int>(wsWander, "_decisionCount") <= dec0) return false;   // the heap still holds the pose from before the placement
+                if (Get<bool>(wsWander, "_playing")) { playTicks++; return now - t0 >= settle() + 3.0; }
+                bool lie = Get<bool>(wsWander, "_wasLieDown");
+                float d = Flat(wsRoot.position - wcAnchor.position), noRest = WcKeepOut() + Get<float>(wsWander, "stationRestMargin");
+                if (lie) lay = true;
+                if (!expectLie && lie && d < noRest)
+                    throw new InvalidOperationException(label + ": lay down " + d.ToString("F2") + " m from the centre (no rest within " + noRest.ToString("F1") + " m) at +" + (now - t0).ToString("F1") + " s");
+                if (expectLie && lay) return true;
+                return now - t0 >= settle() + 3.0;
+            });
+            s.Add(WsDo(() =>
+            {
+                if (expectLie) WsExpect(lay, label + ": control - the idle lie-down did not happen " + placed.ToString("F1") + " m from the centre within restSettleTime + 3 s (the path under test is not live)");
+                WsNote(label + ": placed " + placed.ToString("F2") + " m from the centre" + (pause ? " (walk-out paused)" : "") + ", " + (lay ? "lay down" : "stayed standing") + (playTicks > 0 ? ", play ticks " + playTicks : "") + "; walk-outs " + Get<int>(wsWander, "_keepOutExits"));
+            }));
+        }
+
+        /// <summary>2026-10-03 review: the walk-out's straight line from -> to keeps clear of the shelf by the product's rule (ShelfBlocks:
+        /// not closer than 0.8 m to the shelf's centre AND closer than the start, less 0.05 m).</summary>
+        static void WcExpectShelfLine(Vector3 from, Vector3 to)
+        {
+            Vector3 sc = wcStation.transform.position;
+            float abx = to.x - from.x, abz = to.z - from.z, apx = sc.x - from.x, apz = sc.z - from.z;
+            float len2 = abx * abx + abz * abz;
+            float t = len2 > 1e-6f ? Mathf.Clamp01((apx * abx + apz * abz) / len2) : 0f;
+            float dx = apx - abx * t, dz = apz - abz * t;
+            float near = Mathf.Sqrt(dx * dx + dz * dz), start = Flat(sc - from);
+            WsExpect(!(near < 0.8f && near < start - 0.05f), "the walk-out line " + from.ToString("F1") + " -> " + to.ToString("F1") + " passes the shelf (" + near.ToString("F2") + " m from its centre, start " + start.ToString("F2") + " m)");
+            WsNote("walk-out line clear of the shelf: closest " + near.ToString("F2") + " m (start " + start.ToString("F2") + " m), target " + to.ToString("F1"));
+        }
+
         /// <summary>Round 3: these cases need the main station (part of this scene): its absence is a FAIL, not a SKIP.</summary>
         static void WcRequireMain(List<Func<double, bool>> s)
         {
@@ -598,13 +684,15 @@ namespace KominkaHillside.Editor
         // Round 3: the wander values C-keepout-wander writes (simulated), put back by WcCleanup (every WcSetup) and at its end
         static bool wcWanderSaved;
         static Vector3 wcHome0, wcReleased0;
-        static float wcWaypoint0, wcWanderMin0, wcWanderMax0;
+        static float wcWaypoint0, wcWanderMin0, wcWanderMax0, wcDropBy0;
+        static bool wcIdleLie0;
         static void WcSaveWander()
         {
             if (wcWanderSaved) return;
             wcHome0 = (WsRef(wsWander, "areaCenter") as Transform).position;
             wcReleased0 = WcReleasedHome();
             wcWaypoint0 = Get<float>(wsWander, "waypointPeriod"); wcWanderMin0 = Get<float>(wsWander, "wanderDurationMin"); wcWanderMax0 = Get<float>(wsWander, "wanderDurationMax");
+            wcIdleLie0 = Get<bool>(wsWander, "idleLieDown"); wcDropBy0 = Get<float>(wsWander, "dropByChance");
             wcWanderSaved = true;
         }
         static void WcRestoreWander()
@@ -616,6 +704,9 @@ namespace KominkaHillside.Editor
             wsWander.SetProgramVariable("wanderDurationMin", wcWanderMin0);
             wsWander.SetProgramVariable("wanderDurationMax", wcWanderMax0);
             wsWander.SetProgramVariable("_restReadyAt", 0f);
+            wsWander.SetProgramVariable("idleLieDown", wcIdleLie0);
+            wsWander.SetProgramVariable("dropByChance", wcDropBy0);
+            wsWander.SetProgramVariable("_keepOutRestUntil", 0f);
             WcInvalidateWander();
             wcWanderSaved = false;
         }

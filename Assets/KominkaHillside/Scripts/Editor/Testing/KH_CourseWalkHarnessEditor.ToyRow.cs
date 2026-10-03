@@ -33,6 +33,9 @@ namespace KominkaHillside.Editor
     ///   BP4-use-owned       ◀ (基本) → 中央 → カード無しで基本へ。▶ → テニスへ戻る (支払いなし)
     ///   BP5-forged          (模擬: 受け手の検査) 同期値を直接書いて OnDeserialization: 持っていない有料 (手毬) / 表に無いキー / CE のぬいぐるみ / 壊れた文字列 → 基本ボール・例外なし。持っているテニス → テニス
     ///   BP6-saved           所有 (Own.toy.tennis_ball) と Spent が PlayerData に入っている
+    ///   BP7-owner-to-non-owner (模擬) KD_ToyBox の Owner を柄を持たない人形へ → この端末も確かめ直して基本ボール。Owner を戻すとテニス
+    ///   BP8-late-owner-data    (模擬) 有料の柄が所有データより先に届き、見直しの回数を使い切った後で所有データが届く → OnPlayerDataUpdated で出る
+    ///   (BP1〜BP8 はそれぞれ前提を自分で整える。前のケースが落ちても巻き込まない)
     /// ハーネス対象外 (2 人 / PCVR / 実機): 他人の画面の見え方・途中参加 (同期値の初回受信と、Owner の PlayerData が後から届く見直し)・Owner の退室と
     /// 新 Owner の書き直し、本物の投げ (手・照準・強さ)、曲がって飛ぶ見た目と犬の取り方の自然さ、ボタンの押し心地、端末のフォント。</summary>
     public static partial class KH_CourseWalkHarnessEditor
@@ -366,6 +369,84 @@ namespace KominkaHillside.Editor
                 return VRC.SDK3.Persistence.PlayerData.TryGetBool(Networking.LocalPlayer, ns + ".Own.toy.tennis_ball", out owned) && owned;
             }, 3, () => "Own.toy.tennis_ball not in PlayerData"));
             s.Add(TrDo(() => TrNote("PlayerData: Own.toy.tennis_ball true (re-entry restore is the ledger's, Course/96b)")));
+
+            // ---- BP7 (独立レビュー 2026-10-03 中 1) ----
+            // 模擬: Udon の無い人形 (遠隔プレイヤー、柄を持っていない) へ KD_ToyBox の Owner を移す。人形は書き直さないので、
+            // 「新 Owner が書き直さなかった」場合そのもの。この (Owner でなくなった) クライアントも OnOwnershipTransferred で確かめ直し、基本ボールへそろうこと。
+            s = TrCase("BP7-owner-to-non-owner", true, 60);
+            TrAddOwnTennisSteps(s);
+            VRCPlayerApi puppet = null;
+            s.Add(TrDo(() =>
+            {
+                var box = TrToyBox();
+                if (Get<string>(box, "_syncedProduct") != "toy.tennis_ball") { box.SetProgramVariable("_syncedProduct", "toy.tennis_ball"); box.SendCustomEvent("_onDeserialization"); }
+                TrExpect(Get<string>(box, "_applied") == "toy.tennis_ball", "precondition: tennis shown");
+                VRC.SDK3.ClientSim.ClientSimMain.SpawnRemotePlayer("KH_ToyNeighbor");
+            }));
+            s.Add(TrUntil(() =>
+            {
+                var all = new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()]; VRCPlayerApi.GetPlayers(all);
+                puppet = all.FirstOrDefault(p => p != null && !p.isLocal); return puppet != null;
+            }, 5, () => "remote puppet did not spawn"));
+            s.Add(TrDo(() => Networking.SetOwner(puppet, TrToyBox().gameObject)));
+            s.Add(TrUntil(() => { var o = Networking.GetOwner(TrToyBox().gameObject); return o != null && !o.isLocal; }, 3, () => "toy box Owner did not move to the puppet"));
+            s.Add(TrUntil(() => Get<string>(TrToyBox(), "_applied") == "toy.basic_ball" && TrOnlyPattern(0), 3, () => "after the Owner moved to a non-owner this client still shows " + Get<string>(TrToyBox(), "_applied")));
+            s.Add(TrDo(() =>
+            {
+                TrExpect(Get<string>(TrToyBox(), "_syncedProduct") == "toy.tennis_ball", "the synced value itself was not rewritten (the puppet has no Udon) — the fallback comes from re-validation");
+                Networking.SetOwner(Networking.LocalPlayer, TrToyBox().gameObject);
+            }));
+            s.Add(TrUntil(() => Networking.IsOwner(TrToyBox().gameObject) && Get<string>(TrToyBox(), "_applied") == "toy.tennis_ball" && TrOnlyPattern(1), 3, () => "Owner back to me did not show tennis again (" + Get<string>(TrToyBox(), "_applied") + ")"));
+            s.Add(TrDo(() =>
+            {
+                TrNote("simulated: Owner -> Udon-less puppet that owns nothing: this client re-validated on OnOwnershipTransferred and fell back to basic (synced value unchanged); Owner back to me -> tennis");
+                // 人形の片付けは検査の外 (run 20261003-004156: ClientSim の RemovePlayer が NullReference を投げて、合格した検査がケースごと FAIL になった)。
+                // 失敗しても記録だけ残して先へ進む。残った人形は柄の検査に影響しない (Owner は自分へ戻してある)
+                try { if (puppet != null && Utilities.IsValid(puppet) && puppet.gameObject != null) VRC.SDK3.ClientSim.ClientSimMain.RemovePlayer(puppet); }
+                catch (Exception e) { TrNote("cleanup only: ClientSim RemovePlayer threw " + e.GetType().Name + ": " + e.Message + " at " + TvWhere(e) + " (the puppet stays; not part of the check)"); }
+            }));
+
+            // ---- BP8 (独立レビュー 2026-10-03 中 2) ----
+            // 模擬: 有料の柄 (手毬) の同期が、Owner の所有データより先に届き、見直しの回数も使い切った後で所有データが届く。
+            // 所有データの到着 = 台帳のヒープ _owned / _ownValid を立ててから PlayerData にその Own キーを書く (OnPlayerDataUpdated を起こす)。
+            s = TrCase("BP8-late-owner-data", true, 40);
+            TrAddOwnTennisSteps(s);
+            s.Add(TrDo(() =>
+            {
+                var box = TrToyBox();
+                TrExpect(Networking.IsOwner(box.gameObject) && !TrOwned("toy.temari_claude"), "precondition: I am the Owner and do not own temari");
+                box.SetProgramVariable("_syncedProduct", "toy.temari_claude");
+                box.SendCustomEvent("_onDeserialization");
+                TrExpect(Get<string>(box, "_applied") == "toy.basic_ball", "temari withheld while ownership is unknown");
+                box.SetProgramVariable("_revalidateLeft", 0);   // 見直しの窓を使い切った状態
+            }));
+            s.Add(TrWait(2.5));   // 予約済みの見直しが 1 回走って終わるまで (まだ持っていないので基本ボールのまま)
+            s.Add(TrDo(() =>
+            {
+                TrExpect(Get<string>(TrToyBox(), "_applied") == "toy.basic_ball" && !Get<bool>(TrToyBox(), "_revalidateScheduled"), "retry window over, still basic, nothing scheduled");
+                int i = TrLedgerIndex("toy.temari_claude");
+                var owned = Get<bool[]>(trLedger, "_owned"); var valid = Get<bool[]>(trLedger, "_ownValid");
+                owned[i] = true; valid[i] = true;
+                trLedger.SetProgramVariable("_owned", owned); trLedger.SetProgramVariable("_ownValid", valid);
+                VRC.SDK3.Persistence.PlayerData.SetBool(Get<string>(trLedger, "storageNamespace") + ".Own.toy.temari_claude", true);
+            }));
+            s.Add(TrUntil(() => Get<string>(TrToyBox(), "_applied") == "toy.temari_claude" && TrOnlyPattern(5), 3, () => "late ownership data did not bring temari back (" + Get<string>(TrToyBox(), "_applied") + ")"));
+            s.Add(TrDo(() =>
+            {
+                // 片付け: 手毬の所有を戻し、テニスへ
+                int i = TrLedgerIndex("toy.temari_claude");
+                var owned = Get<bool[]>(trLedger, "_owned"); owned[i] = false; trLedger.SetProgramVariable("_owned", owned);
+                VRC.SDK3.Persistence.PlayerData.SetBool(Get<string>(trLedger, "storageNamespace") + ".Own.toy.temari_claude", false);
+                var box = TrToyBox(); box.SetProgramVariable("_syncedProduct", "toy.tennis_ball"); box.SendCustomEvent("_onDeserialization");
+                TrNote("simulated: temari synced before the Owner's ownership, retry window exhausted -> basic; ledger heap + PlayerData Own key written -> OnPlayerDataUpdated -> temari shown; ownership and pattern restored afterwards");
+            }));
+        }
+
+        static int TrLedgerIndex(string key)
+        {
+            var products = ((Array)Get<object>(trLedger, "products")).Cast<object>().Select(x => x as UdonBehaviour).ToArray();
+            for (int i = 0; i < products.Length; i++) if (products[i] != null && Get<string>(products[i], "productKey") == key) return i;
+            throw new InvalidOperationException("Product not in the ledger: " + key);
         }
 
         // ---- 柄のケースの前提 (各ケースが自分で整える) ----
@@ -441,6 +522,7 @@ namespace KominkaHillside.Editor
                 Current.status = "FAIL"; Current.endedAt = now; Current.reason = "step " + trStep + ": " + e.GetType().Name + ": " + e.Message;
                 trReport.cases[caseIndex].status = "FAIL";
                 trReport.cases[caseIndex].notes.Add("FAIL at step " + trStep + ": " + e.Message);
+                trReport.cases[caseIndex].notes.Add("at: " + TvWhere(e));
                 TrRecover();
             }
             trStep = 0;

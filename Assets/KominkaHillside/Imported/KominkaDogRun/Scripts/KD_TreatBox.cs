@@ -419,6 +419,20 @@ namespace KominkaDogRun
             // 同じおやつが 2 回食べられ、回収は放置タイムアウト (60s) に化けていた。
             // 食べ時間は eatDuration (約 2.6s) で有界なので保持しても詰まらない
             if (dogEatMs[d] != 0 && ClaimStillOut(d)) return true;
+            // 食べ終わって返事をしている最中 (**マスターのローカル時計**。
+            // 読むのはマスターだけで、結果は dogSlot として配るので割れない)
+            if (_thanksHoldUntil != null && Time.time < _thanksHoldUntil[d]) return false;
+            // IMP-DOG-006 (review 2026-10-03): ここから下は手元メニューの予測 (AllDogsEngaged の接続犬) と同じ関数
+            return DogCanTake(d);
+        }
+
+        /// <summary>IMP-DOG-006 (review 2026-10-03): 犬 d がいまおやつを受けられるか — **割当 (<see cref="EligibleDog"/>) と、押す人の
+        /// 予測 (<see cref="AllDogsEngaged"/> の自分の接続犬) が同じこの関数を読む** (撫でられている接続犬 1 匹だけのとき、
+        /// 予測が通って在庫が減り、割当が配らない、を作らない)。読むのは全クライアントが持つ値だけ (同期値と、同期値から全員が導く旗)。
+        /// マスターのローカル時計 (返事の保持) と食べている途中の保持は EligibleDog 側に残す。</summary>
+        private bool DogCanTake(int d)
+        {
+            if (_packRoots == null || _packWander == null || _packFetch == null || d < 0 || d >= _packRoots.Length) return false;
             // 催しに拘束されている犬には配らない (破壊的監査 v4 FUNC-07/BUG-01)。Live の観客 / 集合 / かけっこの追走 /
             // じゃれの 2 匹 / Candy 演目とその着地・退場。徘徊層の優先順ではどれも おやつ (1.4) より上なので、
             // 配っても一歩も来ず、枠は放置 60 秒で回収され在庫だけ減っていた。**`f.IsIdle` では弾けない** (dogState は Idle のまま)。
@@ -430,9 +444,6 @@ namespace KominkaDogRun
             // (KD_DogWanderController.HillsideTreatCall.cs)。誰の枠を受けてよいかは BuildAllowWith が枠ごとに決める。
             // 接続中でも来られない状態 (洗い場に呼ばれている・移動の切符・水の中) だけはここで外す (HillsideLeashTreatBlocked)
             if (HillsideDogBusy(_packWander[d])) return false;
-            // 食べ終わって返事をしている最中 (**マスターのローカル時計**。
-            // 読むのはマスターだけで、結果は dogSlot として配るので割れない)
-            if (_thanksHoldUntil != null && Time.time < _thanksHoldUntil[d]) return false;
             Transform root = _packRoots[d];
             if (root == null || !root.gameObject.activeInHierarchy) return false;
             KD_DogFetchController f = _packFetch[d];
@@ -627,8 +638,10 @@ namespace KominkaDogRun
                 if (w != null && me >= 0 && WalkerOf(d) == me)
                 {
                     mine++;
-                    KD_DogFetchController f = _packFetch != null && d < _packFetch.Length ? _packFetch[d] : null;
-                    if (!w.ShowEngaged && HillsideCauseOf(w, me) == HillsideBusyNone && (f == null || f.IsIdle)) mineReady++;
+                    // review 2026-10-03: the same test as the assignment (EligibleDog -> DogCanTake): petted, nudging, sleep-called,
+                    // Fetch / disc, ShowEngaged, wash station / travel ticket / wet. Only the master-local thanks hold (2.6 s) is not
+                    // predicted: the assignment then waits for it instead of refusing
+                    if (DogCanTake(d)) mineReady++;
                     continue;
                 }
                 if (w == null || !(w.ShowEngaged || HillsideCauseOf(w, me) != HillsideBusyNone)) anyFree = true;   // 裏山改変: 割当 (EligibleDog) と同じ除外を予測にも

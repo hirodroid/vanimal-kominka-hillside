@@ -19,7 +19,8 @@
 | 書く人 | `KD_ToyBox` の Owner だけ。選んだ人は `SetOwner` してから書く (移譲を待つ間は自分の画面だけ先に出し、5 秒で畳む。古民家のまま) |
 | 途中参加 | `OnDeserialization` で同期値を受け取る。未設定 ("") ならシーンの初期状態 (基本ボール) のまま |
 | 受け手の検査 (裏山で追加) | 見た目を作る前に全クライアントが同じ規則で確かめ、通らなければ無料の基本ボール (`productKeys[0]`) を出す。① 表に無いキー・壊れた文字列は添字にしない (`IndexOfProduct` が −1 → 基本ボール) ② 無料品はそのまま ③ CE は扱わない ④ 有料品は今の Owner が `KD_ShopItem.OwnedBy` (台帳の PlayerData の `Own.*`。他人の分も読める) を満たすときだけ |
-| Owner の PlayerData がまだ届いていない | 基本ボールにしておき、`OnPlayerRestored` (その Owner の分) と 2 秒ごとの見直し (最大 15 回) で出し直す |
+| Owner の PlayerData がまだ届いていない・後から変わる | 基本ボールにしておき、`OnPlayerRestored` (その Owner の分)・2 秒ごとの見直し (最大 15 回)・`OnPlayerDataUpdated` (今の Owner の分で、有料の柄を保留している間だけ。見直しの回数を使い切った後でも出る) で出し直す (独立レビュー 2026-10-03 中 2) |
+| Owner が替わった | **全員が** `OnOwnershipTransferred` と `OnPlayerLeft` (1 秒後) で今の Owner に対して確かめ直す。新 Owner が書き直さなくても、全員が同じ入力 (同期値と今の Owner) から同じ見た目にそろう (独立レビュー 2026-10-03 中 1)。選んだ人が Owner を取る間の一瞬、他の人には基本ボールが見えることがある |
 | Owner の退室 | 自動で移った新 Owner は、その柄を持っていなければ基本ボールへ書き直す (受け手もすでに基本ボールを出しているので値をそろえるだけ)。自分の台帳がまだ読めていなければ 2 秒ごとに待つ |
 | 帯域 | 選んだときだけ (文字列 1 本) |
 
@@ -81,7 +82,7 @@
 4. `Menu/19b Assign Network IDs` → シーンを保存 (新しい同期オブジェクト)
 5. `Course/27 - Add Course UI Glyphs`
 6. `Course/125 - Verify Ball Patterns` → `BALL_PATTERNS_OK`。あわせて `Menu/4a Verify Shop`・`Menu/21 Verify Scroll Layout`・`Walking/5 Verify` (同期オブジェクトの NetworkID)
-7. ハーネス: `bash scripts/kh-harness-run.sh walk "Course/126b - Harness Toy Tab ball patterns (DES-DOG-002)"` → `TOY_ROW_PASS` (126a と続けるなら `Course/126` で両方)
+7. ハーネス (BP0〜BP8。BP7 = Owner を柄を持たない人形へ、BP8 = 所有データの遅着、どちらも模擬): `bash scripts/kh-harness-run.sh walk "Course/126b - Harness Toy Tab ball patterns (DES-DOG-002)"` → `TOY_ROW_PASS` (126a と続けるなら `Course/126` で両方)
 
 ## 6. ハーネスでは見ないもの
 
