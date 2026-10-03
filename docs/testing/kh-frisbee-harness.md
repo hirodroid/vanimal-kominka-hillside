@@ -57,13 +57,16 @@ Unity 側が起動時に 1 度だけ読む。Unity のメニュー
 ```bash
 bash scripts/kh-harness-run.sh compile                               # unity-compile.sh --udon。C#・U# のエラー 0 で exit 0
 bash scripts/kh-harness-run.sh menu  "Course/89 - Wire and Check Frisbee River Band"   # Edit モードの検査。Editor.log の増分から要約行 (_OK / _FAIL / _PASS 等) を返す
-bash scripts/kh-harness-run.sh proto terrain --shots=T-up04          # 試作シーン。kh-frisbee-harness.cjs start の引数をそのまま渡す
+bash scripts/kh-harness-run.sh proto terrain --shots=T-up04 --reason "T-up04 の離陸の再判定" --consult "Codex: T-up04 だけ"   # 試作シーン。kh-frisbee-harness.cjs start の引数をそのまま渡す
 bash scripts/kh-harness-run.sh walk  "Course/94b - Walk Harness Frisbee Anywhere (M3 water)"   # 本シーン。Tools/KominkaHillside/ 以下のメニュー名
 bash scripts/kh-harness-run.sh segment bridge-190-choice-2-dogs-6    # 通常の歩行改修: 対象の橋を6匹で1ケース
 bash scripts/kh-harness-run.sh segment gate-wrap-choice-3-dogs-6     # 周回の継ぎ目を逆方向で1ケース
-bash scripts/kh-harness-run.sh lap forward --reason "長時間追従で蓄積する位置ずれの再現" # 必要なときだけ、約20分
+bash scripts/kh-harness-run.sh lap forward --reason "長時間追従で蓄積する位置ずれの再現" --consult ".." --confirmed "ユーザーの確定指示" # 必要なときだけ、約20分
 ```
 
+- **回す前の門 (2026-10-03 ユーザー指定、`scripts/kh-harness-gate.cjs`)**: Play を起動する入口 (`proto` / `walk` / `segment` / `lap` / `photo`) は `--reason "<この Play でしか判別できないこと>"` と `--consult "<回す前の AI 相談 (Codex) の結論: 今回すべきか・どの群か>"` が無ければ Unity に触れる前に exit 64 (`GATE_REFUSED`)。式・Edit プローブ・静的検査で決まるなら回さない。同じ差分で結論が出ていれば同じ文を使う。この文書の以降の例は 2 つを省いて書いている。
+- **群の全体と連続一周はユーザーの確定指示がある時だけ**: `Course/42`・`Course/100`・`Course/126`、`--shots` / `--variants` の絞り込みが無い `proto default`、`lap` は、さらに `--confirmed "<ユーザーの確定指示>"` が要る。コミット・Issue 完了・マイルストーンは確定ではない。「全体」のメニューを足したら門の一覧 (`wideWalkMenus`) へ足す。Play を起動するハーネスのメニューは `menu` からは回せない (停止・復旧は可)。
+- **台帳**: 門を通った実行は開始 (入口・引数・目的・相談の結論・確定指示) と終了 (終了コード・秒) を `Logs/kh-harness-run/ledger.jsonl` に 1 行ずつ残す。どの目的に何分使ったかはここで数える。
 - **実行前の照合**: `unity-api.sh check` (接続先) と `isPlaying` / `isCompiling` がともに False。違えば何もせず exit 3。
 - **終わりの判定**: 新しい runId が出て、status が `RUNNING` 以外になり、Play を抜けるまで待つ。walk は Finish の証拠 (`endedUtc`) まで待つ (`EVIDENCE_ERROR` は除く)。前の runId の結果は使わない。walk でメニューを叩いて 60 s 以内に新しい run が出なければ `NO_NEW_RUN`。
 - **結果**: 1 行で返す (runId・status・ケース数・落ちたケースと理由)。proto は要求した mode と report の mode が違えば `MODE_MISMATCH` で FAIL。
@@ -128,7 +131,7 @@ CLIの入力拒否・結果照合は `node --test scripts/kh-walk-cli.test.cjs` 
 
 ### フリスビー等の部分実行
 
-**部分実行 → 対象ケースが通ってから、確定前に回帰を 1 回。** 修正のたびに全体を回さない。目的のケースが落ちたら回帰へ進まず、入力・計画・離陸のどこで予測とずれたかを先に調べる (Play の前に Edit モードで決まることは詰める: `vrc-verification` §7)。
+**部分実行 → 回帰は、ユーザーが確定を明示的に指示した時に 1 回 (2026-10-03。コミット・Issue 完了では回さない)。** 修正のたびに全体を回さない。目的のケースが落ちたら回帰へ進まず、入力・計画・離陸のどこで予測とずれたかを先に調べる (Play の前に Edit モードで決まることは詰める: `vrc-verification` §7)。
 
 調整中は再現ケースと影響する周辺ケースを選ぶ。選んだ条件と理由、結果、今回走らせない範囲を既存の作業記録へ短く残す。部分PASSを全体PASSにしない。
 
@@ -564,11 +567,11 @@ node scripts/kh-frisbee-harness.cjs start --mode=terrain --shots=T-cliff,T-rock 
 
 ## 本シーンの犬を洗う (Course/100, IMP-DOG-025)
 
-`Tools/KominkaHillside/Course/100 - Harness Wash (all groups)`。**全体 (55 ケース、45〜70 分。2026-10-02 に W-shoulder・W-runoff を `100a` へ追加) は確定前に 1 回だけ回し、普段は変更に関係する群だけを回す** (2026-09-30 ユーザー指定、全プロジェクト共通の方針): `100a` 基本 (泡・すすぎ・停止・清潔・拒否、約 8 分)、`100b` 行動の切替 + 反応 (約 10 分)、`100c` 同期 (約 8 分)、`100d` 汚れ + 主洗い場 (約 12 分)、`100e` 6 匹 + 道中の洗い場 (実測 1 分 43 秒)、`100f` 呼ぶ + 高さ ([下の節](#洗い場の呼び出しと高さ-course100f))、`100g` 手洗い (ボトル + 素手、[下の節](#手洗い-ボトルと素手-course100g-imp-dog-039))。全体は同日の実測で 53 ケース約 60 分。部分実行の wash.json には notCovered に `Partial run` の行が付く。フリスビーではないが、本シーンの歩行ハーネスの 1 モードとして同じ枠で走らせる (journal・全体の締切 1500 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。台本は `KH_CourseWalkHarnessEditor.Wash.cs`。前提は `Wash/11` (組み立て) が済み、柴の `KD_DogWanderController.wash` が配線されていること (IMP-DOG-030 以降は他の 5 匹も配線済みで、W-dogs-wired / W-dogs-foam / W-dogs-others が見る)。
+`Tools/KominkaHillside/Course/100 - Harness Wash (all groups)`。**全体 (55 ケース、45〜70 分。2026-10-02 に W-shoulder・W-runoff を `100a` へ追加) はユーザーが確定を指示した時に 1 回だけ回し、普段は変更に関係する群だけを回す** (2026-09-30・2026-10-03 ユーザー指定、全プロジェクト共通の方針): `100a` 基本 (泡・すすぎ・停止・清潔・拒否、約 8 分)、`100b` 行動の切替 + 反応 (約 10 分)、`100c` 同期 (約 8 分)、`100d` 汚れ + 主洗い場 (約 12 分)、`100e` 6 匹 + 道中の洗い場 (実測 1 分 43 秒)、`100f` 呼ぶ + 高さ ([下の節](#洗い場の呼び出しと高さ-course100f))、`100g` 手洗い (ボトル + 素手、[下の節](#手洗い-ボトルと素手-course100g-imp-dog-039))。全体は同日の実測で 53 ケース約 60 分。部分実行の wash.json には notCovered に `Partial run` の行が付く。フリスビーではないが、本シーンの歩行ハーネスの 1 モードとして同じ枠で走らせる (journal・全体の締切 1500 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。台本は `KH_CourseWalkHarnessEditor.Wash.cs`。前提は `Wash/11` (組み立て) が済み、柴の `KD_DogWanderController.wash` が配線されていること (IMP-DOG-030 以降は他の 5 匹も配線済みで、W-dogs-wired / W-dogs-foam / W-dogs-others が見る)。
 
 ```bash
 bash scripts/kh-harness-run.sh walk "Course/100e - Harness Wash dogs + course stations"   # 群だけ
-bash scripts/kh-harness-run.sh walk "Course/100 - Harness Wash (all groups)"              # 確定前に 1 回
+bash scripts/kh-harness-run.sh walk "Course/100 - Harness Wash (all groups)" --confirmed "ユーザーの確定指示"   # ユーザーが確定を指示した時に 1 回
 ```
 
 - **疑似の入力**: 道具 (`KH_WashTool`) の当たり判定を通さず、道具が毎フレーム呼ぶ入口 `KH_DogWash._LocalContact` へ、表面の点 (ワールド座標) と実際の経過時間を渡す。横腹の経路 (W-foam・W-rinse・W-break など) は**ワールド空間**で作る: 腰の Collider の中心から胸を通って首の付け根 (胸と首の中点) までの線の各点へ、体の右 0.6 m から体の中へ Raycast (道具の `washLayer`、Trigger も当てる) し、最も手前の柴の部位 Collider とその点を使う (道具と同じ。部位をまたぐと実行時が区間を切る。当たらないフレームは `_EndContact` して数える)。1 点のケース (W-leg・W-clean) は Collider の `ClosestPoint`。接触の終わりは `_EndContact`、状態は `_DebugSetDirt` / `_DebugClear` で作る。範囲外の引数は `SendCustomNetworkEvent(All, "NetStroke", ...)` で送る。各ケースは最初に状態を作り直し、接触のケースは柴を門の道の横へ置いてから始める (歩行ハーネスの置き方と同じ注入)
