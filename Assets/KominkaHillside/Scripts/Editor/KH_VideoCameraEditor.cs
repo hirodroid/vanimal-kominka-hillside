@@ -41,6 +41,14 @@ namespace KominkaHillside.Editor
         public const string CameraName = "VideoCamera", MonitorName = "Monitor", PanelName = "Panel", ScreenName = "Screen", SnapName = "RecordSnap";
         public const string EntryOpenName = "VideoOpen", EntryRecallName = "VideoRecall", EntryCloseName = "VideoClose";
         public const string ProgramPath = "Assets/KominkaHillside/Scripts/KH_VideoCamera";
+        /// <summary>W1 手直し 3: the OnPostRender forwarder on the camera's GameObject.</summary>
+        public const string HookProgramPath = "Assets/KominkaHillside/Scripts/KH_VideoCameraHook";
+        public static readonly string[] Programs = { ProgramPath, HookProgramPath };
+        public const string BackName = "Back";
+        const string BackMatPath = "Assets/KominkaHillside/Materials/Video/M_KH_VideoMonitorBack.mat", BackShaderName = "Unlit/Color";
+        /// <summary>The back plate: a little larger than the canvas, just behind it (+Z = away from the viewer), facing away from the viewer.</summary>
+        public static readonly Vector2 BackM = new Vector2(0.86f, 0.76f);
+        public const float BackBehindM = 0.004f;
         const string MatDir = "Assets/KominkaHillside/Materials/Video", MeshDir = "Assets/KominkaHillside/Data/Video";
         public const string ScreenMatPath = MatDir + "/M_KH_VideoScreen.mat", SnapMatPath = MatDir + "/M_KH_VideoRecordSnap.mat";
         public const string SnapMeshPath = MeshDir + "/KH_VideoRecordSnapQuad.asset";
@@ -170,14 +178,25 @@ namespace KominkaHillside.Editor
         [MenuItem(Menu + "0 - Create Program Asset")]
         public static void CreateProgramAsset()
         {
-            if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(ProgramPath + ".asset") != null) { Debug.Log("[KH Video] VIDEO_PROGRAM_OK already " + ProgramPath + ".asset"); return; }
-            var script = AssetDatabase.LoadAssetAtPath<MonoScript>(ProgramPath + ".cs");
-            if (script == null) { Debug.LogError("[KH Video] VIDEO_PROGRAM_FAIL " + ProgramPath + ".cs not imported yet (refresh first)"); return; }
-            var asset = ScriptableObject.CreateInstance<UdonSharpProgramAsset>();
-            asset.sourceCsScript = script;
-            AssetDatabase.CreateAsset(asset, ProgramPath + ".asset");
+            var created = new List<string>(); var existing = new List<string>();
+            foreach (var path in Programs)
+            {
+                if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(path + ".asset") != null) { existing.Add(path + ".asset"); continue; }
+                var script = AssetDatabase.LoadAssetAtPath<MonoScript>(path + ".cs");
+                if (script == null) { Debug.LogError("[KH Video] VIDEO_PROGRAM_FAIL " + path + ".cs not imported yet (refresh first)"); return; }
+                var asset = ScriptableObject.CreateInstance<UdonSharpProgramAsset>();
+                asset.sourceCsScript = script;
+                AssetDatabase.CreateAsset(asset, path + ".asset");
+                created.Add(path + ".asset");
+            }
             AssetDatabase.SaveAssets();
-            Debug.Log("[KH Video] VIDEO_PROGRAM_OK created " + ProgramPath + ".asset. Compile U# (unity-compile.sh --udon) before Video/1.");
+            Debug.Log("[KH Video] VIDEO_PROGRAM_OK created [" + string.Join(", ", created) + "], already [" + string.Join(", ", existing) + "]." + (created.Count > 0 ? " Compile U# (unity-compile.sh --udon) before Video/1." : ""));
+        }
+
+        static string ProgramMissing()
+        {
+            foreach (var path in Programs) if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(path + ".asset") == null) return path + ".asset";
+            return null;
         }
 
         // ================================================================ Video/1
@@ -188,8 +207,9 @@ namespace KominkaHillside.Editor
         public static void Build()
         {
             KH_CourseGroundEditor.Idle(KH_CourseGroundEditor.ScenePath);
-            if (AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(ProgramPath + ".asset") == null)
-            { Debug.LogError("[KH Video] VIDEO_BUILD_FAIL " + ProgramPath + ".asset missing: run Video/0, compile U#, then Video/1; nothing changed"); return; }
+            string missingProgram = ProgramMissing();
+            if (missingProgram != null)
+            { Debug.LogError("[KH Video] VIDEO_BUILD_FAIL " + missingProgram + " missing: run Video/0, compile U#, then Video/1; nothing changed"); return; }
             var r = new BuildReport { utc = DateTime.UtcNow.ToString("o"), scene = KH_CourseGroundEditor.ScenePath, menu = "Video/1" };
             var c = Resolve();
             r.log.AddRange(c.notes);
@@ -209,11 +229,15 @@ namespace KominkaHillside.Editor
                 if (root == null) { root = new GameObject(SystemName); EditorSceneManager.MoveGameObjectToScene(root, c.scene); r.log.Add("created " + SystemName); }
                 root.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity); root.transform.localScale = Vector3.one;
                 root.layer = 0; root.SetActive(true);
-                var video = EnsureUsc(root, r.log);
+                var video = EnsureUsc<KH_VideoCamera>(root, r.log);
                 var videoUdon = UdonSharpEditorUtility.GetBackingUdonBehaviour(video);
                 video.enabled = true;   // Start must run (it hides everything and disables the behaviour itself)
 
                 var cam = BuildCamera(root.transform, r.log);
+                var hook = EnsureUsc<KH_VideoCameraHook>(cam.gameObject, r.log);
+                hook.enabled = true; hook.rig = video;
+                UdonSharpEditorUtility.CopyProxyToUdon(hook); EditorUtility.SetDirty(hook);
+                r.log.Add("hook: KH_VideoCameraHook on " + cam.name + " (OnPostRender → _OnCamRendered), sync None");
                 var snap = BuildSnap(root.transform, mesh, snapMat, r.log);
                 var ui = BuildMonitor(root.transform, screenMat, c, videoUdon, r.log);
                 var entry = BuildEntry(c, videoUdon, r.log);
@@ -247,13 +271,13 @@ namespace KominkaHillside.Editor
             Debug.Log("[KH Video] VIDEO_BUILD_OK video camera built (" + r.log.Count + " log lines in " + OutDir + "/build.json). Next: Video/2, then Video/3 (harness, after the pre-run consult).");
         }
 
-        static KH_VideoCamera EnsureUsc(GameObject go, List<string> log)
+        static T EnsureUsc<T>(GameObject go, List<string> log) where T : UdonSharpBehaviour
         {
-            var comp = go.GetComponent<KH_VideoCamera>();
-            if (comp == null) { comp = go.AddUdonSharpComponent<KH_VideoCamera>(); log.Add("added KH_VideoCamera on " + go.name); }
+            var comp = go.GetComponent<T>();
+            if (comp == null) { comp = go.AddUdonSharpComponent<T>(); log.Add("added " + typeof(T).Name + " on " + go.name); }
             var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(comp);
-            if (backing == null) throw new InvalidOperationException("KH_VideoCamera backing missing (compile U# and run again)");
-            if (backing.SyncMethod != Networking.SyncType.None) { backing.SyncMethod = Networking.SyncType.None; EditorUtility.SetDirty(backing); log.Add("KH_VideoCamera sync -> None"); }
+            if (backing == null) throw new InvalidOperationException(typeof(T).Name + " backing missing (compile U# and run again)");
+            if (backing.SyncMethod != Networking.SyncType.None) { backing.SyncMethod = Networking.SyncType.None; EditorUtility.SetDirty(backing); log.Add(typeof(T).Name + " sync -> None"); }
             return comp;
         }
 
@@ -448,6 +472,7 @@ namespace KominkaHillside.Editor
             Label(go.transform, "SnapNote", NotePos, NoteSize, KH_VideoCamera.WordSnapNote, c.font, 17f, 12f, TextAlignmentOptions.MidlineLeft, true);
             u.state = Label(go.transform, "State", StatePos, StateSize, KH_VideoCamera.WordFilming, c.font, 20f, 12f, TextAlignmentOptions.MidlineLeft, false);
             foreach (var tr in mon.GetComponentsInChildren<Transform>(true)) tr.gameObject.layer = MonitorLayer;
+            BuildBack(mon, log);
             mon.gameObject.SetActive(false);
             EditorUtility.SetDirty(mon.gameObject);
             log.Add("monitor: layer " + MonitorLayer + ", screen " + ScreenM + " m, canvas " + CanvasPx + " px at " + Px + " m/px, × / 犬追従 / じぶん / ◀ name ▶ / " + KH_VideoCamera.WordSnap + ", hidden");
@@ -496,6 +521,29 @@ namespace KominkaHillside.Editor
             t.enableAutoSizing = true; t.fontSizeMax = max; t.fontSizeMin = min; t.fontSize = max; t.richText = false;
             EditorUtility.SetDirty(t);
             return t;
+        }
+
+        /// <summary>W1 手直し 3: the monitor seen from behind showed the world-space UI mirrored (UI graphics draw both faces). An opaque plate in the
+        /// frame colour, just behind the canvas and facing away from the viewer, hides it. It is culled from the front (Unlit/Color culls back faces),
+        /// so the front view does not change. Layer 17 like the rest of the monitor, no collider, no shadows.</summary>
+        static void BuildBack(Transform mon, List<string> log)
+        {
+            var mat = EnsureMat(BackMatPath, BackShaderName, log);
+            mat.color = FrameColor; EditorUtility.SetDirty(mat);
+            var t = mon.Find(BackName);
+            GameObject go;
+            if (t == null) { go = GameObject.CreatePrimitive(PrimitiveType.Quad); go.name = BackName; go.transform.SetParent(mon, false); } else go = t.gameObject;
+            foreach (var col in go.GetComponents<Collider>()) UnityEngine.Object.DestroyImmediate(col);
+            go.layer = MonitorLayer;
+            go.transform.localPosition = new Vector3(0f, 0f, BackBehindM);
+            go.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);   // the Quad's visible face (-Z) now points +Z: away from the viewer
+            go.transform.localScale = new Vector3(BackM.x, BackM.y, 1f);
+            var mr = go.GetComponent<MeshRenderer>();
+            mr.sharedMaterial = mat;
+            mr.shadowCastingMode = ShadowCastingMode.Off; mr.receiveShadows = false;
+            mr.lightProbeUsage = LightProbeUsage.Off; mr.reflectionProbeUsage = ReflectionProbeUsage.Off;
+            EditorUtility.SetDirty(go);
+            log.Add("monitor back plate " + BackM + " m, " + BackBehindM * 1000f + " mm behind, facing away (" + BackMatPath + ")");
         }
 
         // ================================================================ Video/9

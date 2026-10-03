@@ -38,7 +38,7 @@ namespace KominkaHillside.Editor
         static void VerifyInto(Action<bool, string> Check, Action<string> Warn)
         {
             var scene = EditorSceneManager.GetActiveScene();
-            Check(AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(ProgramPath + ".asset") != null, "program asset " + ProgramPath + ".asset");
+            foreach (var p in Programs) Check(AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(p + ".asset") != null, "program asset " + p + ".asset");
             var root = SceneRoot(scene, SystemName, out int n);
             Check(n == 1 && root != null, SystemName + " x" + n + " at the scene root");
             if (root == null) return;
@@ -67,6 +67,11 @@ namespace KominkaHillside.Editor
                 Check(!cam.allowHDR && !cam.allowMSAA && cam.stereoTargetEye == StereoTargetEyeMask.None, "HDR / MSAA off, no stereo");
                 Check(Mathf.Approximately(cam.nearClipPlane, CamNear) && Mathf.Approximately(cam.farClipPlane, CamFar), "near " + cam.nearClipPlane + " far " + cam.farClipPlane);
                 Check(cam.GetComponent<AudioListener>() == null, "no AudioListener on the video camera");
+                var hooks = cam.GetComponents<KH_VideoCameraHook>();
+                Check(hooks.Length == 1 && hooks[0].rig == v && hooks[0].enabled, "KH_VideoCameraHook once on the camera object, wired to the rig, enabled (OnPostRender is sent to scripts on the camera's GameObject)");
+                var hb = hooks.Length == 1 ? UdonSharpEditorUtility.GetBackingUdonBehaviour(hooks[0]) : null;
+                Check(hb != null && hb.SyncMethod == Networking.SyncType.None && hb.enabled, "hook backing: sync None, enabled");
+                Check(UnityEngine.Object.FindObjectsOfType<KH_VideoCameraHook>(true).Length == 1, "one KH_VideoCameraHook in the scene");
             }
             // ---- RecordSnap: the layer / mask pair (Codex review: not a fixed "layer 0") ----
             var snap = v.snapRenderer;
@@ -118,6 +123,16 @@ namespace KominkaHillside.Editor
                 var box = panel != null ? panel.GetComponent<BoxCollider>() : null;
                 Check(box != null && box.isTrigger, "panel collider is a trigger (never blocks a player)");
                 Check(v.monitorRoot.GetComponentsInChildren<Collider>(true).All(x => x.isTrigger), "no solid collider on the monitor");
+                var back = v.monitorRoot.transform.Find(BackName);
+                var backR = back != null ? back.GetComponent<MeshRenderer>() : null;
+                Check(back != null && backR != null && backR.sharedMaterial != null && backR.sharedMaterial.shader != null && backR.sharedMaterial.shader.name == BackShaderName,
+                    "back plate " + BackName + " (" + BackShaderName + ") behind the panel");
+                if (back != null)
+                {
+                    Check(back.localPosition.z > 0.001f && Vector3.Dot(back.forward, v.monitorRoot.transform.forward) < -0.99f, "back plate sits behind the canvas and faces away from the viewer (visible from behind only)");
+                    Check(back.localScale.x >= CanvasPx.x * Px && back.localScale.y >= CanvasPx.y * Px, "back plate " + back.localScale.x + " x " + back.localScale.y + " m covers the canvas " + CanvasPx.x * Px + " x " + CanvasPx.y * Px + " m");
+                    Check(back.GetComponent<Collider>() == null, "back plate has no collider");
+                }
             }
             Check(v.screenRenderer != null && v.screenRenderer.sharedMaterial != null && AssetDatabase.GetAssetPath(v.screenRenderer.sharedMaterial) == ScreenMatPath
                 && v.screenRenderer.sharedMaterial.shader.name == ScreenShaderName && v.screenRenderer.sharedMaterial.mainTexture == null, "screen: " + ScreenMatPath + " (Unlit/Texture, no texture in the asset)");
@@ -173,11 +188,15 @@ namespace KominkaHillside.Editor
             // ---- source rules (all partial files) ----
             var files = Directory.GetFiles("Assets/KominkaHillside/Scripts", "KH_VideoCamera*.cs").Where(f => !f.EndsWith(".meta")).ToArray();
             Check(files.Length >= 3, "partial files found: " + string.Join(", ", files.Select(Path.GetFileName)));
-            // rendering: the component never gets enabled; one explicit Camera.Render() per tick (W1 harness run 20261003-113800: an enabled
-            // camera drew ~1.6 renders per enabled frame in the Editor)
+            // rendering (W1 手直し 3): normal camera phase. No manual Render() (it drew the local avatar before VRChat placed it, real PCVR client
+            // 2026-10-04); the camera is enabled in exactly one place (EnableForTick) and disabled by the OnPostRender callback, close and the safety net
             string allSrc = string.Concat(files.Select(File.ReadAllText));
-            Check(!Regex.IsMatch(allSrc, @"cam\.enabled\s*=\s*true"), "the video camera component is never enabled (no 'cam.enabled = true')");
-            Check(Regex.Matches(allSrc, @"cam\.Render\(\)").Count == 1, "exactly one Camera.Render() call site (RenderOnce)");
+            Check(!Regex.IsMatch(allSrc, @"\.Render\(\)"), "no manual Camera.Render() call");
+            Check(Regex.Matches(allSrc, @"cam\.enabled\s*=\s*true").Count == 1 && Regex.IsMatch(allSrc, @"void EnableForTick\(\)\s*\{\s*cam\.enabled\s*=\s*true"), "the camera is enabled in one place only (EnableForTick)");
+            Check(Regex.IsMatch(allSrc, @"public void _OnCamRendered\(\)[\s\S]{0,120}cam\.enabled\s*=\s*false"), "_OnCamRendered disables the camera");
+            string hookSrc = File.Exists(HookProgramPath + ".cs") ? File.ReadAllText(HookProgramPath + ".cs") : "";
+            Check(Regex.IsMatch(hookSrc, @"void OnPostRender\(\)[\s\S]{0,80}_OnCamRendered\(\)") && !hookSrc.Contains("[UdonSynced]") && !hookSrc.Contains("SendCustomNetworkEvent"),
+                "KH_VideoCameraHook: OnPostRender → rig._OnCamRendered, no sync, no network");
             foreach (var f in files)
             {
                 string src = File.ReadAllText(f), name = Path.GetFileName(f);

@@ -14,13 +14,13 @@ namespace KominkaHillside
     /// only the selected mode's pose function runs (KH_VideoCamera.Modes.cs). The RT exists only while the monitor is open:
     /// created in _Open, released and destroyed in _Close (no leak on repeated open / close).
     ///
-    /// - Rendering: the camera component is ALWAYS disabled; at each renderFps tick PostLateUpdate sets the pose and calls Camera.Render()
-    ///   (exposed: UnityEngineCamera.__Render__SystemVoid) - exactly one render per tick. W1's first harness run showed that "enable for one frame"
-    ///   (the prequel's KD_DogPovCamera pattern) drew ~1.6 renders per enabled frame in the Editor (49 real / 31 enabled at 90 fps): an enabled
-    ///   camera is also drawn by renders outside the player loop (Editor Game-view repaints), so its count depends on who else renders.
-    ///   PostLateUpdate runs in LateUpdate (PostLateUpdater, execution order 31000) after IK: the pose is this frame's; skinned meshes show the
-    ///   previous frame's deformation (UpdateAllSkinnedMeshes runs after LateUpdate; one frame, 11 ms at 90 fps).
-    ///   The pose is computed only on render ticks; the occlusion rays run at 1 / occlusionInterval.
+    /// - Rendering (W1 手直し 3): the camera renders in the NORMAL camera phase, like KD_PhotoCapture (enabled, then drawn by Unity with the
+    ///   other cameras), because a manual Camera.Render call inside PostLateUpdate (LateUpdate, order 31000) drew the LOCAL avatar before VRChat's
+    ///   final placement of it (a real PCVR client with an OVR Advanced Settings playspace offset: the avatar floated ~1 m up in the video only).
+    ///   Exactly one render per tick: the tick enables the camera (EnableForTick, the only place that enables it); KH_VideoCameraHook on the
+    ///   camera's GameObject receives Unity's OnPostRender (Udon event _onPostRender) and calls _OnCamRendered, which disables it at once.
+    ///   Safety net: if no callback arrived, the next PostLateUpdate disables it (_missedCallbacks counts that).
+    ///   _ticks counts ticks, _renders counts real renders (callbacks). The pose is computed only on ticks; occlusion rays at 1 / occlusionInterval.
     /// - The monitor stays where it was opened until × (user decision); [モニターを呼ぶ] places it in front of the head again.
     /// - RecordSnap: a quad with the unchanged KD_PhotoPrint shader (attach 100000 m, no aim check, hidden from eyes) and a mesh whose
     ///   bounds cover the world, so every VRChat camera pass (_VRChatCameraMode > 0.5: photo / video / stream AND screenshots) shows the
@@ -111,7 +111,8 @@ namespace KominkaHillside
         private int _dog;
         private RenderTexture _rt;
         private float _nextRender, _lastRenderAt, _interval;
-        private int _renders, _cuts, _opens, _closes;
+        private int _renders, _ticks, _missedCallbacks, _cuts, _opens, _closes;
+        private bool _camOn;   // enabled by the tick, waiting for its OnPostRender
         // valid poses obtained for the CURRENT subject in the CURRENT session (reset on open, mode change and dog change).
         // Nothing is drawn and the picture stays detached until this is > 0, so a reopen never shows an earlier session's framing
         private int _subjectPoses;
@@ -175,7 +176,7 @@ namespace KominkaHillside
             }
             _rt = rt;
             cam.targetTexture = _rt;
-            cam.enabled = false;
+            cam.enabled = false; _camOn = false;
             _open = true; _opens++;
             NewSubject();   // the picture stays detached (black) until this session has a valid pose
             _snapOn = snapOnOpen;
@@ -206,6 +207,7 @@ namespace KominkaHillside
             if (!_open && _rt == null) return;
             _open = false; _closes++;
             if (cam != null) cam.enabled = false;
+            _camOn = false;
             if (snapRenderer != null) snapRenderer.gameObject.SetActive(false);
             if (monitorRoot != null) monitorRoot.SetActive(false);
             ReleaseRt();   // the screen and the RecordSnap materials lose the texture before the RT is destroyed (no old picture stays visible)
@@ -237,6 +239,9 @@ namespace KominkaHillside
         public override void PostLateUpdate()
         {
             if (!_open) { enabled = false; return; }
+            // safety net: the tick's render normally disables the camera from OnPostRender; if that callback never came, disable it here
+            // (the original "enable for one frame" timing: the camera then stays enabled until here, so extra draws inside that window are NOT ruled out - _missedCallbacks tells when this path ran)
+            if (_camOn) { cam.enabled = false; _camOn = false; _missedCallbacks++; }
             float now = Time.time;
             if (now >= _nextPhotoCamCheck) { _nextPhotoCamCheck = now + 0.5f; ReadPhotoCamera(); }
             if (now < _nextRender) return;
@@ -259,23 +264,35 @@ namespace KominkaHillside
                 // a lost DOG keeps this session's last framing for this subject a little; then the picture is detached (black).
                 // Without a valid pose for this subject in this session nothing is drawn at all. W4: a lost / revoked PERMISSION must not
                 // take this path (stop at once, drop the cached pose, no hold; design §13)
-                if (_subjectPoses > 0 && now - _lostSince < lostHoldSeconds) RenderOnce();
+                if (_subjectPoses > 0 && now - _lostSince < lostHoldSeconds) EnableForTick();
                 else ShowPicture(false);
                 return;
             }
             if (_lostSince >= 0f) { _lostSince = -1f; _cutNext = true; }
             SetState(StateFilming);
             ApplyPose(dt, now);
-            RenderOnce(); _subjectPoses++;
-            ShowPicture(true);   // attached right after the first render of this subject
+            EnableForTick(); _subjectPoses++;   // the picture is attached by _OnCamRendered after this subject's first real render
         }
 
-        /// <summary>Exactly one render into the RT (the camera component stays disabled). _renders counts these ticks.</summary>
-        void RenderOnce()
+        /// <summary>The only place that enables the camera: Unity draws it in this frame's normal camera phase (after VRChat placed the local
+        /// avatar), then KH_VideoCameraHook.OnPostRender → _OnCamRendered disables it.</summary>
+        void EnableForTick()
         {
-            if (cam.enabled) cam.enabled = false;   // never left enabled: an enabled camera is drawn again by any other render path
-            cam.Render();
+            cam.enabled = true;
+            _camOn = true;
+            _ticks++;
+        }
+
+        /// <summary>KH_VideoCameraHook (on the camera's GameObject) forwards Unity's OnPostRender for THIS camera. Disables the camera so it
+        /// renders exactly once per tick (no extra render from any other render path). A render that was not asked for is not counted.
+        /// Local only (_ prefix).</summary>
+        public void _OnCamRendered()
+        {
+            if (!_camOn) return;
+            cam.enabled = false;
+            _camOn = false;
             _renders++;
+            if (_subjectPoses > 0) ShowPicture(true);   // the RT now holds this subject's picture
         }
 
         // ================================================================ shared post-processing (design §4.1)
@@ -476,6 +493,7 @@ namespace KominkaHillside
         {
             // the behaviour is disabled on purpose while closed; a disabled camera never renders. Nothing else to undo here
             if (cam != null) cam.enabled = false;
+            _camOn = false;
         }
     }
 }

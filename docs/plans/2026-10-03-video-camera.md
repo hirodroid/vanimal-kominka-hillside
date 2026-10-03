@@ -8,7 +8,7 @@
 |---|---|---|
 | 1 | **描画用の Camera 1 台・ライブ RT 1 枚** を持つ `KH_VideoCamera` を、シーンに 1 組だけ置く (ローカル。同期なし)。撮り方は「モード番号 + モードごとの姿勢の関数」。選んだモードの関数だけを呼ぶ | Issue の確定方針「1 台・1 組を使い回し、選択中の撮り方だけ動かす」 |
 | 2 | RT は **1280×720・RGBA8 (sRGB)・深度 24・MSAA なし**。開いたときに作り、× で `Release` + `Destroy`。メモリ 約 7.0 MiB (最悪 10.5 MiB) | 写真の PC 解像度と同じ (KH_PhotoGalleryEditor.cs:84)。閉じている間はメモリも 0 にする |
-| 3 | 描く頻度は **30 fps**。**(W1 で変更: Camera は常に無効のまま、拍ごとに `Camera.Render()` を 1 回呼ぶ。W1 の手直し 2 を参照。下の「1 フレームだけ有効」は当初案)** 前作 `KD_DogPovCamera` と同じ「1 フレームだけ有効にする」方式。姿勢の計算も描く回だけ | 前作の実績 (KD_DogPovCamera.cs:69・83)。`Camera.Render()` に賭けない (前作 DES-CAM-001:85) |
+| 3 | 描く頻度は **30 fps**。**(W1 の最終形: 拍で Camera を有効にし、その Camera の `OnPostRender` で無効にする。拍ごとにちょうど 1 回、普通のカメラの段階で描く。W1 の手直し 2・3 を参照)** 前作 `KD_DogPovCamera` と同じ「1 フレームだけ有効にする」方式。姿勢の計算も描く回だけ | 前作の実績 (KD_DogPovCamera.cs:69・83)。`Camera.Render()` に賭けない (前作 DES-CAM-001:85) |
 | 4 | **歩いても VRChat カメラに映し続ける方法は「録画モード」の吸着板 1 枚**。既存の `KD_PhotoPrint` を **変えずに**、吸着距離 100000 m・エイム判定なし・目では見えない、の材質で使う。板のメッシュは境界 (bounds) を大きくした専用の Quad にして、どこを向いても視錐台で間引かれないようにする | シェーダーは「写真カメラの描画のときだけ全画面」を既に持つ (KD_PhotoPrint.shader:100-203)。距離の条件を外せば、どこからでも全画面になる。Udon から VRChat カメラの位置を取る必要がない |
 | 5 | モニター (目で見る画面) は **出した場所に固定**、吸着はさせない (ただの Unlit 表示)。録画用の全画面は 4 の板が受け持つ | モニターを動画カメラから外すレイヤーに置ける (再帰の描画を防ぐ)。吸着の経路を 1 本にする |
 | 6 | 他人を「追う・見る」撮り方は、**その人の端末が同期する許可の表** (受付箱 `KH_TravelMailbox` に足す) に「撮る人の id と撮影の回の番号」があるときだけ動く。許可の判定は UI ではなく、**他人の位置を読む唯一の関数** (`TryPersonPose`) の中で毎回行う | Issue「画面のボタンだけで許可を判定せず、追従・出力の開始条件でも検査する」 |
@@ -601,7 +601,7 @@ bool TryPersonPose(int pid):
 
 | ファイル | 中身 |
 |---|---|
-| `Scripts/KH_VideoCamera.cs` (新規) | 本体 (sync None、同期変数・ネットワークの口なし)。開閉 (`_Open` = 開く / 開いていれば呼び戻す、`_Recall`、`_Close`)、PostLateUpdate の 30 fps の拍ごとに `Camera.Render()` を 1 回 (Camera の部品は常に無効。W1 の手直し 2)、共通の後処理 (遮り 10 Hz・床・犬からの押し出し・6 m のカット・指数のなめらかさ・Roll 0)、パネルの表示、`VRCCameraSettings.PhotoCamera.Active` の 2 Hz の読み出し (状態の行だけ)。Start は Android / iOS で何も出さず、どの端末でも最後に自分を無効にする (閉じている間は毎フレームの処理 0) |
+| `Scripts/KH_VideoCamera.cs` (新規) | 本体 (sync None、同期変数・ネットワークの口なし)。開閉 (`_Open` = 開く / 開いていれば呼び戻す、`_Recall`、`_Close`)、PostLateUpdate の 30 fps の拍で Camera を有効にし、`KH_VideoCameraHook.OnPostRender` → `_OnCamRendered` で無効にする (拍ごとに 1 回、普通のカメラの段階。W1 の手直し 3)、共通の後処理 (遮り 10 Hz・床・犬からの押し出し・6 m のカット・指数のなめらかさ・Roll 0)、パネルの表示、`VRCCameraSettings.PhotoCamera.Active` の 2 Hz の読み出し (状態の行だけ)。Start は Android / iOS で何も出さず、どの端末でも最後に自分を無効にする (閉じている間は毎フレームの処理 0) |
 | `Scripts/KH_VideoCamera.Modes.cs` (新規) | モードの切替 (switch 1 つ)・進む向き (速度をならす。遅いときは前の向きを保つ。急な曲がりで位置の時定数を 1.0 s)・犬追従・じぶん。**なめらかさの遅れの先取り** (`Lead`: 目標を速度 × 時定数だけ前へ。設計 §4.1 に無かった。3 m/s の犬で 1.8 m 遅れるため) |
 | `Scripts/KH_VideoCamera.Subjects.cs` (新規) | プレイヤーを読む唯一のファイル。W1 は自分だけ (`SelfHead`)。犬の幾何は `KD_PhotoDirector` の式の写し (§2.4 の「写す」を選んだ。写真のファイルは触っていない)。W4 の `TryPersonPose` はここに足す |
 | `Scripts/Editor/KH_VideoCameraEditor.cs` (新規) | `Video/0` Program Asset、`Video/1` 組み立て (カメラ・モニター・パネル・RecordSnap・メッシュ・材質・写真の面の入口 3 つ・試作値の表・字形)、`Video/9` 取り外し |
@@ -705,6 +705,37 @@ bool TryPersonPose(int pid):
 - **ハーネス**:
   - V1 は「実際の描画 = 拍の数 ±1」「Camera の部品は無効のまま」を見る。V2 は描画が増えたときだけ調べる。
   - 失敗したときの表示: 終わったケースは PASS、始まっていないケースだけ SKIPPED (前の run の V0 の SKIPPED は表示の誤り)。
+
+### W1 の手直し 3 (2026-10-04、PCVR 実機でのユーザー確認を受けて)
+
+- **実機の結果**:
+  - **吸着は成立した。** 録画の板 (レイヤー 4・renderQueue 5001) で、VRChat カメラに動画が画面いっぱいに出た。
+  - **不具合**: ユーザーは OVR Advanced Settings の遊び場のずらし (playspace offset) で地面に座っている。普段の見え方・VRChat カメラ・自動写真では、アバターは地面に座って見える。ところが動画 (じぶん) だけ、自分のアバターが約 1 m 浮き、空中であぐらをかいていた。犬と移動は正しかった。
+- **原因の読み**:
+  - 手直し 2 で、PostLateUpdate (LateUpdate の中、実行順 31000) から `Camera.Render` を呼ぶ形にした。この時点では、VRChat がそのフレームの自分のアバターの最終の位置 (遊び場のずらしの補正を含む) をまだ置いていない。だから補正の前の位置で描かれた。
+  - 自動写真のカメラ (`KD_PhotoCapture`: 有効にして、次のフレームで無効) は、普通のカメラの段階で描くので正しい。
+  - 他の人のアバターは、ずれても 1 フレームの遅れだけの見込み (未確認)。
+- **新しい形**: 普通のカメラの段階で描き、拍ごとにちょうど 1 回にする。
+  - 拍で `EnableForTick` が Camera を有効にする (有効にするのはここだけ)。
+  - Unity は、そのフレームの描画で他のカメラと一緒に描く。
+  - Camera の GameObject にある `KH_VideoCameraHook` (sync None) が、Unity の `OnPostRender` を受けて `rig._OnCamRendered()` を呼ぶ。そこで、すぐに無効にする。
+  - Udon での裏づけ:
+    - `UdonBehaviour.OnPostRender` → `RunEvent("_onPostRender")` (Runtime/Udon/UdonBehaviour.cs:841)。
+    - U# は `VRC.Udon.Graph.dll` の `Event_OnPostRender` で名前を対応づける (CompilerUdonInterface.cs:94-107)。
+    - 描画のイベントとして注入される (UdonSharpEditorManager.cs:236)。
+  - Unity は `OnPostRender` を、そのカメラの GameObject にある有効なスクリプトにだけ送る。だから補助は Camera の物に置き、常に有効にする。
+  - **安全網**: 呼び戻しが来なかったら、次の PostLateUpdate で無効にし、`_missedCallbacks` を数える。当初の「1 フレームだけ有効」と同じ時刻なので、拍あたり最大 1 回の描画は保たれる。
+  - 手直し 2 の余分な描画 (有効な間にプレイヤーループの外の描画が入る) は、描画の直後に無効にするので起きない。
+  - `_ticks` は拍の数、`_renders` は呼び戻しの数 (実際の描画)。画面と RecordSnap に RT を張るのは、その対象の最初の実際の描画の後。
+- **Verify**: 手動の `Render()` が無いこと。`cam.enabled = true` は `EnableForTick` の 1 か所だけ。`_OnCamRendered` が無効にすること。補助がカメラの物に 1 つあり、配線・sync None・有効であること。補助のソースが `OnPostRender` → `_OnCamRendered` で、同期とネットワークが無いこと。
+- **モニターの裏**: 後ろから見ると、パネルの文字が裏返って見えた (ワールドの UI は両面に描かれる)。キャンバスの 4 mm 後ろに、枠の色の板 (`Back`、0.86 × 0.76 m、Unlit/Color、後ろ向き) を置いた。前からは裏面なので描かれず、見え方は変わらない。Verify は位置・向き・大きさを見る。
+- **ハーネス V1**:
+  - 実際の描画 (`Camera.onPostRender`) = 拍 ±1。
+  - 補助の呼び戻し = 拍 ±1。
+  - 呼び戻しの取りこぼし 0。
+  - フレームとフレームの間 (EditorApplication.update) で Camera が有効になっていた回数 0。
+  - 閉じた後は無効。
+- **ユーザーの再確認 (PCVR)**: OVR Advanced Settings の遊び場のずらしで地面に座り、撮影カメラを [じぶん] にする。動画の中の自分のアバターが、普段の見え方と同じ地面の位置に座っていること (浮かない)。立って歩いたときも、足が地面に付いていること。モニターを後ろから見ると、文字が見えず、無地の板であること。
 
 ## 13. Codex 設計レビュー (2026-10-03) を受けた修正 — この節が §5 (と §1.3・§2.2・§4.1・§9.3 の該当行) より優先
 

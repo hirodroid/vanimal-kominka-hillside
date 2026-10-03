@@ -131,6 +131,9 @@ namespace KominkaHillside.Editor
             if (EditorApplication.timeSinceStartup > report.deadline) { End("TIMEOUT", "global watchdog (240 s)"); return; }
             if (!EditorApplication.isPlaying || EditorApplication.isPaused) return;
             if (lastFrame == Time.frameCount) return; lastFrame = Time.frameCount;
+            // between frames (EditorApplication.update is outside the player loop) the camera must be disabled: the tick enables it in
+            // PostLateUpdate and its own OnPostRender disables it within the same frame
+            if (cam != null && cam.enabled) enabledBetweenFrames++;
             try
             {
                 if (steps == null)
@@ -255,7 +258,11 @@ namespace KominkaHillside.Editor
         /// <summary>Renders that really happened (Camera.onPostRender for the rig's camera).</summary>
         static int Renders() { return realRenders; }
         /// <summary>The rig's own count of frames it enabled the camera (for comparison only).</summary>
-        static int Enabled() { return Get<int>("_renders"); }
+        static int Enabled() { return Get<int>("_ticks"); }
+        /// <summary>Renders the rig saw through KH_VideoCameraHook.OnPostRender (its own count).</summary>
+        static int Callbacks() { return Get<int>("_renders"); }
+        static int Missed() { return Get<int>("_missedCallbacks"); }
+        static int enabledBetweenFrames, enabledSeenMark, callbacksMark, missedMark;
         static int Cuts() { return Get<int>("_cuts"); }
         static GameObject Entry(string key) { return GetRaw(key) as GameObject; }
 
@@ -349,7 +356,7 @@ namespace KominkaHillside.Editor
                     steps.Add(Do("V1-lifecycle", () => CheckOpen(tag)));
                     if (cycle == 0)
                     {
-                        steps.Add(Do("V1-lifecycle", () => { rendersMark = Renders(); enabledMark = Enabled(); distinctMark = distinctRenderFrames; twoMark = framesWithTwo; framesMark = Time.frameCount; timeMark = Time.realtimeSinceStartup; }));
+                        steps.Add(Do("V1-lifecycle", () => { rendersMark = Renders(); enabledMark = Enabled(); callbacksMark = Callbacks(); missedMark = Missed(); enabledSeenMark = enabledBetweenFrames; distinctMark = distinctRenderFrames; twoMark = framesWithTwo; framesMark = Time.frameCount; timeMark = Time.realtimeSinceStartup; }));
                         steps.Add(Until("V1-lifecycle", () => Time.realtimeSinceStartup - timeMark >= 1.0f, 3, "timer"));
                         steps.Add(Do("V1-lifecycle", () =>
                         {
@@ -357,9 +364,12 @@ namespace KominkaHillside.Editor
                             float rate = (Renders() - rendersMark) / secs, fps = (Time.frameCount - framesMark) / secs;
                             int real = Renders() - rendersMark, enabled = Enabled() - enabledMark;
                             Note("renders " + real + " on " + (distinctRenderFrames - distinctMark) + " distinct frames (" + (framesWithTwo - twoMark) + " extra renders inside an already-rendered frame), ticks " + enabled);
-                            Expect(!cam.enabled, "the camera component stays disabled (explicit Camera.Render per tick)");
+                            int callbacks = Callbacks() - callbacksMark, missed = Missed() - missedMark, seen = enabledBetweenFrames - enabledSeenMark;
+                            Expect(missed == 0, "every tick's render reached OnPostRender (missed callbacks " + missed + ")");
+                            Expect(callbacks >= enabled - 1 && callbacks <= enabled + 1, "hook callbacks = ticks ±1 (callbacks " + callbacks + ", ticks " + enabled + ")");
+                            Expect(seen == 0, "the camera is disabled between frames (seen enabled " + seen + " times outside the player loop)");
                             Expect(rate <= 32f && rate >= Mathf.Min(26f, fps * 0.85f), "real render rate (onPostRender) " + rate.ToString("F1") + "/s at " + fps.ToString("F0") + " fps (≤ 32, ≥ min(26, 0.85 × fps))");
-                            Expect(real >= enabled - 1 && real <= enabled + 1, "exactly one real render per tick (real " + real + ", ticks " + enabled + ")");
+                            Expect(real >= enabled - 1 && real <= enabled + 1, "exactly one real render per tick in the normal camera phase (real " + real + ", ticks " + enabled + ")");
                         }));
                     }
                     steps.Add(Do("V1-lifecycle", () => { Close(); framesMark = Time.frameCount; }));
@@ -371,6 +381,7 @@ namespace KominkaHillside.Editor
                         steps.Add(Do("V1-lifecycle", () =>
                         {
                             Expect(Renders() == rendersMark, "no render while closed (0.5 s)");
+                            Expect(!cam.enabled, "camera disabled after the last close");
                             Expect(Get<int>("_opens") - opensBefore == Cycles && Get<int>("_closes") - closesBefore == Cycles, Cycles + " opens and closes counted");
                             Expect(ourRts.Count == Cycles && ourRts.All(t => !t), "every one of the " + ourRts.Count + " RTs made by _Open was destroyed");
                             Expect(StrayVideoRts() == 0, "no stray 1280x720 depth RT alive after " + Cycles + " cycles (" + StrayVideoRts() + ")");
