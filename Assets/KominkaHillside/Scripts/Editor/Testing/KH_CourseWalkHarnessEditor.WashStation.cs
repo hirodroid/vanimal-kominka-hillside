@@ -21,7 +21,8 @@ namespace KominkaHillside.Editor
     /// 対象外: 実際の Pickup・Interact の光線、他の人が Owner / 持ち主の道具 (SetOwner の往復)、同時の Pickup、途中参加者の見え方。</summary>
     public static partial class KH_CourseWalkHarnessEditor
     {
-        static readonly string[] WtNames = { "KH_WashSponge_0", "KH_WashSponge_1", "KH_WashShower_0", "KH_WashShower_1", "KH_WashTowel_0", "KH_WashTowel_1" };
+        // IMP-DOG-039: + the shampoo bottle (tool 4, one per station). Index 6 = the bottle; the cases' fixed indices (0..5) are unchanged
+        static readonly string[] WtNames = { "KH_WashSponge_0", "KH_WashSponge_1", "KH_WashShower_0", "KH_WashShower_1", "KH_WashTowel_0", "KH_WashTowel_1", "KH_WashBottle_0" };
         const string WtStationName = "KH_WashStation", WtResetName = "ResetButton";
         const float WtAwayMeters = 2f, WtAtHome = 0.06f;
         /// <summary>W-tool-stay の置いておく秒数 (短縮してよい。既定 30 s)。</summary>
@@ -99,7 +100,7 @@ namespace KominkaHillside.Editor
                 WsExpect(!Get<bool>(WsRef(u, "state") as UdonBehaviour, "spraying"), "the reset wrote spraying = false");
                 WsExpect(ps == null || !ps.isEmitting, "the spray particles stopped emitting");
                 WsExpect(au == null || !au.isPlaying, "the spray loop stopped");
-                WsNote("reset: 5 tools not held went home (home rotation), the held sponge stayed " + WtAwayMeters + " m away, the spraying shower stopped (state, particles, loop)");
+                WsNote("reset: " + (WtNames.Length - 1) + " tools not held (the bottle included) went home (home rotation), the held sponge stayed " + WtAwayMeters + " m away, the spraying shower stopped (state, particles, loop)");
             }));
             s.Add(WsDo(() => { WtOverride(0); WtHomeAll(); }));
 
@@ -165,7 +166,7 @@ namespace KominkaHillside.Editor
             for (int i = 0; i < WtNames.Length; i++)
             {
                 wtT[i] = wtStation.Find(WtNames[i]);
-                if (wtT[i] == null) throw new InvalidOperationException(WtStationName + "/" + WtNames[i] + " missing");
+                if (wtT[i] == null) throw new InvalidOperationException(WtStationName + "/" + WtNames[i] + " missing (run Wash/11)");
                 wtU[i] = wtT[i].GetComponent<UdonBehaviour>();
                 if (wtU[i] == null) throw new InvalidOperationException(WtNames[i] + " has no UdonBehaviour (KH_WashTool)");
                 wtHome[i] = WsRef(wtU[i], "home") as Transform;

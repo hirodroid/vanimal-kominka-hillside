@@ -743,11 +743,12 @@ namespace KominkaHillside.Editor
                 Check(h.stillSpeed>0f&&h.awaySpeed>0f&&h.teleportJump>=1f,"standing "+h.stillSpeed.ToString("F2")+" m/s, leaving "+h.awaySpeed.ToString("F2")+" m/s, teleport guard "+h.teleportJump.ToString("F2")+" m >= 1");
                 // The walk must never buzz from two places at once: only this script may call the haptic API for the leash.
                 // KH_WashTool.cs (IMP-DOG-024 wash tools, 2026-10-03) buzzes the hand holding a sponge / shower - a different held thing, never
-                // on the leash hand at the same time (a hand holds one pickup).
+                // on the leash hand at the same time (a hand holds one pickup). KH_HandWash.cs (IMP-DOG-039 bare-hand lather) buzzes only
+                // an EMPTY hand touching foam (a hand holding the leash or a tool is not free), so it never shares a hand with the other two.
                 var callers=Directory.GetFiles("Assets/KominkaHillside","*.cs",SearchOption.AllDirectories)
                     .Where(p=>!p.Replace('\\','/').Contains("/Editor/")&&File.ReadAllText(p).Contains("PlayHaptic"+"EventInHand"))
-                    .Select(Path.GetFileName).OrderBy(x=>x).ToArray();
-                Check(callers.SequenceEqual(new[]{"KH_LeashHaptics.cs","KH_WashTool.cs"}),"PlayHapticEventInHand called from KH_LeashHaptics.cs (leash) and KH_WashTool.cs (wash tools) only ("+string.Join(", ",callers)+")");
+                    .Select(Path.GetFileName).OrderBy(x=>x,StringComparer.Ordinal).ToArray();
+                Check(callers.SequenceEqual(new[]{"KH_HandWash.cs","KH_LeashHaptics.cs","KH_WashTool.cs"}),"PlayHapticEventInHand called from KH_HandWash.cs (empty hands on foam), KH_LeashHaptics.cs (leash) and KH_WashTool.cs (wash tools) only ("+string.Join(", ",callers)+")");
             }
             bool slotsOk=m.stationSlots!=null&&m.stationSlots.Length==6&&m.stationSlots.All(x=>x!=null)&&m.stationSlots.Distinct().Count()==6&&m.slotHand.All(h=>h==0||h==1)
                 &&m.stationOf.All(s=>s>=0&&s<3)&&Enumerable.Range(0,3).All(s=>Enumerable.Range(0,2).All(h=>Enumerable.Range(0,6).Count(k=>m.stationOf[k]==s&&m.slotHand[k]==h)==1))

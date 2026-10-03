@@ -564,7 +564,7 @@ node scripts/kh-frisbee-harness.cjs start --mode=terrain --shots=T-cliff,T-rock 
 
 ## 本シーンの犬を洗う (Course/100, IMP-DOG-025)
 
-`Tools/KominkaHillside/Course/100 - Harness Wash (all groups)`。**全体 (55 ケース、45〜70 分。2026-10-02 に W-shoulder・W-runoff を `100a` へ追加) は確定前に 1 回だけ回し、普段は変更に関係する群だけを回す** (2026-09-30 ユーザー指定、全プロジェクト共通の方針): `100a` 基本 (泡・すすぎ・停止・清潔・拒否、約 8 分)、`100b` 行動の切替 + 反応 (約 10 分)、`100c` 同期 (約 8 分)、`100d` 汚れ + 主洗い場 (約 12 分)、`100e` 6 匹 + 道中の洗い場 (実測 1 分 43 秒)、`100f` 呼ぶ + 高さ ([下の節](#洗い場の呼び出しと高さ-course100f))。全体は同日の実測で 53 ケース約 60 分。部分実行の wash.json には notCovered に `Partial run` の行が付く。フリスビーではないが、本シーンの歩行ハーネスの 1 モードとして同じ枠で走らせる (journal・全体の締切 1500 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。台本は `KH_CourseWalkHarnessEditor.Wash.cs`。前提は `Wash/11` (組み立て) が済み、柴の `KD_DogWanderController.wash` が配線されていること (IMP-DOG-030 以降は他の 5 匹も配線済みで、W-dogs-wired / W-dogs-foam / W-dogs-others が見る)。
+`Tools/KominkaHillside/Course/100 - Harness Wash (all groups)`。**全体 (55 ケース、45〜70 分。2026-10-02 に W-shoulder・W-runoff を `100a` へ追加) は確定前に 1 回だけ回し、普段は変更に関係する群だけを回す** (2026-09-30 ユーザー指定、全プロジェクト共通の方針): `100a` 基本 (泡・すすぎ・停止・清潔・拒否、約 8 分)、`100b` 行動の切替 + 反応 (約 10 分)、`100c` 同期 (約 8 分)、`100d` 汚れ + 主洗い場 (約 12 分)、`100e` 6 匹 + 道中の洗い場 (実測 1 分 43 秒)、`100f` 呼ぶ + 高さ ([下の節](#洗い場の呼び出しと高さ-course100f))、`100g` 手洗い (ボトル + 素手、[下の節](#手洗い-ボトルと素手-course100g-imp-dog-039))。全体は同日の実測で 53 ケース約 60 分。部分実行の wash.json には notCovered に `Partial run` の行が付く。フリスビーではないが、本シーンの歩行ハーネスの 1 モードとして同じ枠で走らせる (journal・全体の締切 1500 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。台本は `KH_CourseWalkHarnessEditor.Wash.cs`。前提は `Wash/11` (組み立て) が済み、柴の `KD_DogWanderController.wash` が配線されていること (IMP-DOG-030 以降は他の 5 匹も配線済みで、W-dogs-wired / W-dogs-foam / W-dogs-others が見る)。
 
 ```bash
 bash scripts/kh-harness-run.sh walk "Course/100e - Harness Wash dogs + course stations"   # 群だけ
@@ -644,6 +644,44 @@ bash scripts/kh-harness-run.sh walk "Course/100f - Harness Wash call + height"
 
 - 失敗したケースが残した人形・そのリード・その洗い保持は、次のケースの `WcSetup` (`WcCleanup` → `WaCleanupStandIns`) が片付ける
 - 見ていないもの: 本物の他人のストローク (NetStroke) で洗われている犬の表示、2 人の実際の画面 (表示の後に他人が先にリードを付けた・呼んだ時)、言語を切り替えた後の文字と枠、読みやすさ、範囲の値が自然か (4 か所の内・境目・外の歩いた感じ)。Play / PCVR / 2 人で見る
+
+### 手洗い: ボトルと素手 (Course/100g, IMP-DOG-039)
+
+`Tools/KominkaHillside/Course/100g - Harness Wash hand + bottle` (群 `hand`、台本 `KH_CourseWalkHarnessEditor.WashHand.cs`)。設計は [手洗い](../plans/2026-10-03-hand-wash.md) §8.3 (§13.8 が優先)。前提は `Wash/10` (`KH_HandWash` の Program Asset) と `Wash/11` の後: 主洗い場に `KH_WashBottle_0` (`tool` 4、子 `Nozzle` が `nozzle`)、`KH_WashStation/HandWash` (`KH_HandWash`、`washes` に柴・`calls` に主洗い場)、柴の `KH_DogWash.washCalls` と `tools` (ボトル入り)、`KH_WashStation/Guide` (ボードの `guideLabels` 7・`guidePics` 3、`wordKeys` 34)。どれかが無ければ各ケースが **FAIL** (「run Wash/11」)。SKIP にしない。
+
+```bash
+bash scripts/kh-harness-run.sh walk "Course/100g - Harness Wash hand + bottle"
+bash scripts/kh-harness-run.sh walk "Course/100g1 - Harness Wash hand: bottle only"   # H-bottle だけ (群 hand-bottle、約 2 分)
+```
+
+- 診断の記録 (2026-10-03、run 20261003-075811 でボトルの泡がセルには入りマスクに出なかった件): H-bottle はボトルの前に対照として、同じ点へスポンジを 1 回 (`_LocalContact(0, ci, 点, 0.25, -1)` + 同じフレームで `_EndContact(0)`、`_DebugClear` の後の止まった・きれいな犬) 入れ、ボトルと同じ予定で `TRACE sponge-control` / `TRACE bottle` の行を記録する (round 2: 全文は FAIL の時の `dump at the failure`、PASS の notes は時点ごとの短い要約 1 行 = `_cur` の hit6/max と `_restoreCount`)。時点は 当てたフレーム・+1 / +2 フレーム・+0.1 / +0.3 / +0.8 s。各行: `maskA` と `maskB` を別々に読んだ当たった点の G (近い 6 テクセルの平均 `hit6` と最も近い 1 テクセル `hit1`) と全体の最大 G、ヒープの `_cur` と殻の `_Mask` がどちらか (`WsMask` は呼ぶたびに `_cur` を読むので Swap に追従する)、ヒープの `_restoreCount`・`_restorePending`・`_replaying`・`_replayPending`・`_pdCount`・`_blitCount`・`_dryFinished`・`_shellOn`・`_anyFoamOrWet`・`_cellsEmpty`・`_lastWetActivity`・`_lastActivity`・`epoch`・`_busyUntil` と `Time.time`。合否の判定は変えていない
+
+- **疑似入力 (notes に毎回書く)**: 素手は `KH_HandWash` のハーネス専用フィールド (`debugHands` 1・`debugLeft` / `debugRight`・`debugLeftFree` / `debugRightFree`・`debugVr` true) をヒープへ毎 tick 書く。手の位置は柴の部位 Collider の表面の点 (上からの Raycast、H-hand-samepart は右からの横腹の経路) + 法線方向へ 0.3 × `handContactRadius`。`KH_HandWash` のループ (`_HandIdle` / `_HandFrame`) と `_HandContact` は本番の経路のまま。ボトルは `KH_WashTool._DebugSquirt(origin, direction)` (Use の後と同じ SphereCast・1 回分) を背中の上 0.4 × `bottleReach` から下向きに呼ぶ。すすぎ・スポンジは既存の `_LocalContact`。こする速さは 0.3 m/s (`handMinSpeed` の 2 倍以上・`handMaxSpeed` の半分以下であることを確かめる)
+- 犬は柴を主洗い場へ呼んで留める (`100f` の `WcSetup` + `WcCallAndArrive`)。各ケースの最初に「留められ着いている」を見て、違えば呼び直す。自分は台の横 1.5 m (`nearMeters` の内)。手のケースは `KH_HandWash.frameLoop` が立つまで待つ (VR でない間の見直しが 5 s なので最大 7 s)
+- しきい値はシーンの値から作る (`handRadius`・`handFoamMin`・`handStartFoam`・`bottleRadius`・`bottleFoamRate`・`cellReach`・`handMaxSegment`・`handVerifyRadius`・`handReachMeters`・`handContactRadius`・`nearMeters`・`bottleSquirtSeconds`・`bottleReach`。`wash.json` の `resolved` に `100g tuning` の行)
+- 各ケースは終わりと失敗時 (`WsRecover` → `HwRecover`) に、疑似の手を止め (`debugHands` 0・`debugVr` false)、書いたヒープ (`maxBlitsPerFrame`・言語の番号・`_lastWasherId`・`riverBlocksEdge`・ボードの `debugVr`) を戻す。接触は `_EndContact` (道具 0・1・2・4) と `_EndHand` (0・1) で閉じる
+
+| ケース | 内容 | 合格 |
+|---|---|---|
+| H-bottle | `_DebugClear` → 保持が切れるのを待つ → 対照のスポンジ 1 回 (同じ点) → `_DebugClear` → 背中へボトル 1 回。両方を診断の予定で記録 (全文は FAIL の dump、PASS は 1 行の要約) | Owner のセルの泡が増える、マスクの当たった点の泡 ≥ min(0.5, 0.7 × `bottleFoamRate` × `bottleSquirtSeconds`)、保持 (`_WashHold`) が立つ、`_seq` がちょうど +1。届いたことはボトルの経路 3 の履歴 (`_hTime[3]` = そのフレーム、`_hMesh[3]` が狙った点から 0.1 m 以内) で見る |
+| H-hand-nofoam | きれいな背中 (±0.15 m) を左手で 2 s | 接触 20 回以上 (対照)、`handStrokesIssued` +0、`_seq` +0、セル・マスクが変わらない、保持が立たない |
+| H-hand-lather | ボトル 1 回 → 塊と外 10 cm (±(`bottleRadius` + 0.10) m) を 4 s 往復 | 泡立てた、こすった帯 (`handRadius` 以内のテクセル) の泡の平均が +0.02 以上、泡 ≥ `handFoamMin` のセルが増える、塊の届く範囲 (`bottleRadius` + `cellReach`) の外で新しく泡が付いたセルが 1 つ以上 |
+| H-hand-rest | ボトル → その点に手を置いたまま 2 s | 接触 20 回以上、泡立て 0、泡が増えたセル 0、マスクの泡の増え < 0.01 |
+| H-hand-rinsed | ボトル → シャワー (0.11 m) 1.5 s → 流れる処理の後 → 流した中心を ±0.03 m で 2 s | 前提: 流れた (< `handStartFoam`)。中心のセル・手の届く範囲 (`handRadius` + `cellReach`) のセル・マスクの中心が `handStartFoam` 未満のまま。送り手の泡立て数と Owner の inert 数を notes に |
+| H-hand-two | 頭 (部位 7) と腰 (部位 0) にボトル → 左手で頭 ±0.03・右手で腰 ±0.04 を同時に 2 s → 右手だけ離す → 左手だけ 1 s | 頭と腰のセルが +0.02 以上、両方のこすった線から (0.04 + `handRadius` + `cellReach` + 0.02) m より遠いセルは増えない、間の背中のマスクも増えない (十分遠い時だけ判定)。右を離して 0.4 s 後に `_hValid[5]`・`_segOpen[5]` が false、`_hValid[4]` は true、左だけで泡立てが続く |
+| H-hand-samepart | 横腹の経路で最も長く続く部位の両端 (0.08 m 以上離れる) を左右の手で ±0.02 m。先に軽くスポンジで間にも泡 (門が開いている = つながれば中点に描かれる)。`maxBlitsPerFrame` を 1 s だけ 0 (ヒープ、描画待ちが溜まる) | 待っている手の描画 (`_pdTool` 5) のどれも一方の手の点から他方の点へ渡らない・`handMaxSegment` を超えない、両方の手の描画が同時に待っていた時がある、戻した後に待ちが空になる。中点のマスクは両端から十分遠く泡がある時だけ dG < 0.01 を判定 |
+| H-hand-holding | ボトル → 両手 `debug*Free` false でこする 1.5 s | `_HandContact` が 0 回・泡立て 0・セルが増えない。対照: 左手を空けると接触する |
+| H-hand-inert | `_DebugClear` (泡なし) → `NetStroke(5, ...)` を自分から直接 (`SendCustomNetworkEvent(All)`、長さ 0 のカプセル)。前に `_lastWasherId` -1・`riverBlocksEdge` true を書く (模擬、戻す)。`_seq` はその番号の先へ進める | `handStrokesInert` ちょうど +1・`handStrokesRejected` +0、セル・マスク・`washMs` / `washSeen` / `washBy`・`_lastWasherId`・`riverBlocksEdge`・清潔の合図 (`_CleanSerial`・`cleanArmed`) が変わらない、`_StrokeAgeOf(自分)` が戻らない、送り主の順番 (`_sndSeq`) と `appliedSeqs` はその seq へ進む |
+| H-hand-local-inert (round 2) | 本番のローカル経路 (疑似の手)。(A) `_DebugClear` (自分の泡の輪も空) の後、手の下のセルを `handFoamMin` − 0.01 にして (Owner の `_foam` へ書く、模擬) 2 s こする。(B) 送信の枠を止め (ヒープ `_nextSend`、模擬 = 自分のボトルのエコーがまだ来ない) ボトル 1 回 → 輪だけが許す状態で 1.5 s こする → 枠を戻す。`_lastWasherId` は前に -1 を書いて戻す | (A) 泡立て 0、`_lastWasherId` そのまま、`_StrokeAgeOf(自分)` が新しくならない、保持なし。(B) 前提: 輪に入っている・セルはまだ `handFoamMin` 未満。泡立ては出る (> 0) が `_lastWasherId`・`_localStrokeAt` は変わらない、止めている間 `_seq` +0 |
+| H-hand-still-on-moving (round 2) | ボトルの点に両手をワールドで固定し、その部位 Collider の Transform (骨の子。骨はアニメーター、ルートは洗い場が動かすので触らない) を犬の前後へ ±2 cm・2 Hz で 2 s 動かす (戻す)。Collider が骨そのものなら SKIP (理由付き)。対照: 動く手 0.3 m/s 1.5 s | 接触 20 回以上・泡立て 0 (速さは追跡した手の位置で測る)。対照は泡立て > 0 |
+| H-queue-protect (round 2) | ボトル (送って積まれた後) → 送信の枠を止め (ヒープ `_nextSend`、模擬) → 前足へシャワー 1 区間 (先頭に入る) → 両手でこすり、送信の列が満杯のまま 1.5 s → 枠を戻す | 満杯の間ずっとシャワーの項目が列に残る (手の項目が落ちる側)、戻す時に先頭がシャワー、0.3 s 後に送られて残っていない |
+| H-hand-saturated | ボトル + スポンジ 1 s → 保持が切れる → 点の周りのセルを泡 1 (上限) にする (Owner の `_foam` へ書く、模擬) → ±0.05 m を `holdSeconds` + 2 s | 1 s 以内に保持が立ち、こする間一度も切れない、`washMs` が進み続ける、inert 0 (泡の増えではなく「泡に触れたか」で決まる) |
+| H-hand-order | (A) ボトル → 手 1.5 s → シャワー 0.15 m 1.5 s、(B) ボトル → シャワー → 手 | (A) 手が泡立てた (中心のセルかマスクが +0.02)・流すと `handStartFoam` 未満。(B) 流した後の手で中心のセルもマスクも戻らない (< `handStartFoam`、前より増えない) |
+| H-hand-reject | **Owner の検査の単体** (`_DebugHandPlausible`、実際の他人の CallingPlayer は通らない): 背中の 0.05 m のカプセル、頭は 0.6 m 上。種類 6 の `NetStroke` も送る。最後に `ReqRelease` | VR + 手 0.6 × `handVerifyRadius` → 受理、手 2 × `handVerifyRadius` → 拒否、VR でない → 拒否、解放した犬 → 拒否。種類 6 はセル・マスク・手の数・順番を変えない。柴は解放したまま次へ |
+| H-hand-idle | 留めた柴の背中を両手でこすり続けたまま: 自分を `nearMeters` + 1.5 m 離す → 戻る → `debugVr` false → true → `ReqRelease` | 対照 (近い・VR・留めている) はループが動き接触がある。遠い・VR でない・留めていないは、1.5 s 以内に `frameLoop` false、その後 1.5 s `_HandContact` 0 回 |
+| H-guide | 言語の番号を ja → en (`KD_Language._languageIndex` へ書く。PlayerData に保存しない、戻す)、ボードの `debugVr` を切り替えて `_ApplyGuide` | 7 つのラベルが、その言語・端末の言葉 (KD_Language の表から計算した値、無ければビルダーの日本語) と一致、図解の 10 語は ja と en で全部違う、② の `uvRect` が VR では `guideUvVr`・Desktop では `guideUvFlat`。ClientSim は Desktop なので Desktop 側は端末そのもの、VR 側は `debugVr` |
+
+- **見ていないもの**: 本物の追跡された手・`GetPickupInHand` (空いた手の判定)・アバターの手の大きさと手のひらの位置・IK の遅れ・手の振動・Quest のハンドトラッキング。撫でと泡立ての同時 (H-hand-pet は §13.8 で外した。疑似の手は撫でコントローラへ届かない)。他人の手のストロークの受理 / 拒否 (Owner の `HandOwnerOk` が送り主の実際の手を 0.5 m で見る、非 Owner の同期済みの検査、Owner が拒否して他の端末だけが描いた見た目の差)、途中参加・Owner 交代での手のストローク。ボトルの Pickup・Use の押しっぱなし (`bottleRepeatSeconds`)・本物の手からの狙い・粒の見え方。図解の絵の読みやすさ・11 言語の枠と字形 (Wash/12 とユーザー)。いずれも Play / PCVR (2 人) / Quest で見る。結果は「単体の判定」か「1 人の端末の通し」で、実通信・実機の合格にしない
 
 ## 本シーンの首輪の「外す」Interact (Course/83b, IMP-DOG-031)
 

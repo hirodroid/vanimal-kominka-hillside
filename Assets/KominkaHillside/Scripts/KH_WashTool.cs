@@ -6,8 +6,13 @@ using VRC.Udon.Common.Enums;
 
 namespace KominkaHillside
 {
-    // IMP-DOG-025: a wash tool (0 sponge / 1 shower / 2 towel) on the same GameObject as VRC_Pickup + VRCObjectSync.
-    // Contract: docs/plans/2026-09-30-dog-wash-prototype.md §6.
+    // IMP-DOG-025: a wash tool (0 sponge / 1 shower / 2 towel / 4 bottle) on the same GameObject as VRC_Pickup + VRCObjectSync.
+    // Contract: docs/plans/2026-09-30-dog-wash-prototype.md §6; the bottle: docs/plans/2026-10-03-hand-wash.md §2 (IMP-DOG-039).
+    //
+    // Bottle (tool 4): Use down puts one dose at once (Squirt), and again every bottleRepeatSeconds while Use is held. Each dose
+    // is one _LocalContact of bottleSquirtSeconds followed at once by _EndContact (a dot: never a line to the previous dose),
+    // a one-shot haptic and a few particles from the nozzle (the holder's screen only; everyone sees the foam on the dog).
+    // It never opens the sponge's continuous contact, so the per-frame contact bookkeeping below stays empty for it.
     //
     // Only the holder tests contact (Raycast / overlap) and hands this frame's contact point to the dog's KH_DogWash
     // (_LocalContact; the dog keeps the history in mesh space). KH_DogWash draws it, sends it, and plays the contact
@@ -63,6 +68,20 @@ namespace KominkaHillside
         [Tooltip("シャワーの ON/OFF: 前の切り替えからこの秒数以内の Use は無視 (連打の誤操作)")]
         public float toggleGuardSeconds = 0.15f;
 
+        [Header("ボトル (tool 4 だけ。ビルダーの BottleTuning が書く)")]
+        [Tooltip("VR: 注ぎ口 (nozzle) から前へ届く距離 (m)")]
+        public float bottleReach = 0.6f;
+        [Tooltip("VR: 狙いの SphereCast の半径 (m)")]
+        public float bottleAimRadius = 0.02f;
+        [Tooltip("1 回分の泡の秒数 (KH_DogWash の Stroke の上限 0.25 s)")]
+        public float bottleSquirtSeconds = 0.25f;
+        [Tooltip("Use を押したままの繰り返し間隔 (s)")]
+        public float bottleRepeatSeconds = 0.4f;
+        public float bottleHapticDuration = 0.06f;
+        public float bottleHapticAmplitude = 0.35f;
+        [Tooltip("注ぎ口の粒 (任意)。1 回ごとに Emit(8)。持ち主の画面だけ")]
+        public ParticleSystem squirtParticles;
+
         [Header("置き場へ戻る (IMP-ENV-007。ビルダーが書く)")]
         [Tooltip("棚の定位置 (KH_WashStation/Homes または KH_WashStations/{名前}/Homes の子。棚と一緒に動く)")]
         public Transform home;
@@ -86,6 +105,7 @@ namespace KominkaHillside
         private float _lastToggleAt = -100f;
         private bool _sprayShown;
         private float _lastHaptic;
+        private float _nextSquirt;         // bottle: when the held Use puts the next dose
 
         private Collider[] _mapCol;
         private int[] _mapKey;             // dog * 256 + collider index
@@ -265,11 +285,23 @@ namespace KominkaHillside
                 return;
             }
             _useHeld = true;
+            if (tool == KH_DogWash.ToolBottle)
+            {
+                // One dose now; BusyFrame repeats it every bottleRepeatSeconds while Use stays held (VR and Desktop alike).
+                _nextSquirt = Time.time + bottleRepeatSeconds;
+                Squirt();
+            }
         }
 
         public override void OnPickupUseUp()
         {
             if (tool == KH_DogWash.ToolShower) return;   // the toggle ignores the release
+            if (tool == KH_DogWash.ToolBottle)
+            {
+                _useHeld = false;                         // stop repeating; every dose already closed its contact
+                EndAllContacts();
+                return;
+            }
             _useHeld = false;
             // The VR sponge keeps working without Use; the Desktop sponge / towel stops touching here.
             if (!IsLocalVR()) EndAllContacts();
@@ -469,7 +501,18 @@ namespace KominkaHillside
             ReturnTick();
             if (tool == KH_DogWash.ToolShower) SprayChecks();
 
-            if (!_held || nozzle == null || washes == null || _strokeFrame == null) return;
+            if (!_held || washes == null || _strokeFrame == null) return;
+            if (tool == KH_DogWash.ToolBottle)
+            {
+                // Doses only (no per-frame contact, no continuous haptic). The first one came from OnPickupUseDown.
+                if (_useHeld && Time.time >= _nextSquirt)
+                {
+                    _nextSquirt = Time.time + bottleRepeatSeconds;
+                    Squirt();
+                }
+                return;
+            }
+            if (nozzle == null) return;
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp)) return;
             bool vr = lp.IsUserInVR();
@@ -521,7 +564,7 @@ namespace KominkaHillside
                 if (_strokeFrame[d] == frame) continue;
                 _strokeFrame[d] = frame;
                 float rad = Mathf.Clamp(sprayRadiusNear + (sprayRadiusAt1m - sprayRadiusNear) * hit.distance, sprayRadiusNear, 0.2f);
-                Stroke(d, key % 256, hit.point, rad);
+                Stroke(d, key % 256, hit.point, Time.deltaTime, rad);
                 any = true;
             }
             return any;
@@ -555,7 +598,7 @@ namespace KominkaHillside
                     if (_ovDist[j] < _ovDist[best]) best = j;
                 }
                 _strokeFrame[d] = frame;
-                Stroke(d, _ovKey[best] % 256, _ovPoint[best], -1f);
+                Stroke(d, _ovKey[best] % 256, _ovPoint[best], Time.deltaTime, -1f);
                 any = true;
             }
             return any;
@@ -573,16 +616,94 @@ namespace KominkaHillside
             int frame = Time.frameCount;
             if (_strokeFrame[d] == frame) return false;
             _strokeFrame[d] = frame;
-            Stroke(d, key % 256, hit.point, -1f);
+            Stroke(d, key % 256, hit.point, Time.deltaTime, -1f);
             return true;
         }
 
-        void Stroke(int d, int ci, Vector3 point, float radius)
+        // seconds: this contact's dwell (the continuous tools pass Time.deltaTime; the bottle passes one dose).
+        void Stroke(int d, int ci, Vector3 point, float seconds, float radius)
         {
             KH_DogWash w = washes[d];
             if (w == null) return;
             _touching[d] = true;
-            w._LocalContact(tool, ci, point, Time.deltaTime, radius);
+            w._LocalContact(tool, ci, point, seconds, radius);
+        }
+
+        // ---- bottle (tool 4) ----
+
+        // One dose from the holder: VR aims from the nozzle (a thin SphereCast, bottleReach), Desktop / Touch from the view centre
+        // (the same ray as ContactGaze, desktopReach). Particles and the one-shot haptic come with every dose, hit or miss.
+        void Squirt()
+        {
+            if (washes == null || _touching == null) return;
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) return;
+            if (squirtParticles != null) squirtParticles.Emit(8);
+            if (lp.IsUserInVR())
+            {
+                Transform n = nozzle != null ? nozzle : transform;
+                SquirtAt(n.position, n.forward, bottleReach, bottleAimRadius);
+                BottleHaptic(lp);
+            }
+            else
+            {
+                VRCPlayerApi.TrackingData head = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+                SquirtAt(head.position, head.rotation * Vector3.forward, desktopReach, 0f);
+            }
+        }
+
+        // The first mapped part along the aim gets one dose, closed at once. radius > 0 = SphereCast; a SphereCast does not report
+        // a collider the sphere already overlaps at its start (the nozzle pressed into the coat), so that case takes the nearest
+        // overlapping part at the start instead.
+        bool SquirtAt(Vector3 origin, Vector3 dir, float reach, float radius)
+        {
+            if (dir.sqrMagnitude < 1e-8f) return false;
+            dir = dir.normalized;
+            RaycastHit hit;
+            Collider col = null;
+            Vector3 point = origin;
+            bool got;
+            if (radius > 0f) got = Physics.SphereCast(origin, radius, dir, out hit, reach, washLayer, QueryTriggerInteraction.Collide);
+            else got = Physics.Raycast(origin, dir, out hit, reach, washLayer, QueryTriggerInteraction.Collide);
+            if (got) { col = hit.collider; point = hit.point; }
+            else if (radius > 0f)
+            {
+                int n = Physics.OverlapSphereNonAlloc(origin, radius, _overlap, washLayer, QueryTriggerInteraction.Collide);
+                if (n > _overlap.Length) n = _overlap.Length;
+                float best = float.MaxValue;
+                for (int i = 0; i < n; i++)
+                {
+                    if (Lookup(_overlap[i]) < 0) continue;
+                    Vector3 cp = _overlap[i].ClosestPoint(origin);
+                    float dd = (cp - origin).sqrMagnitude;
+                    if (dd < best) { best = dd; col = _overlap[i]; point = cp; }
+                }
+            }
+            int key = Lookup(col);
+            if (key < 0) return false;
+            int d = key / 256;
+            if (washes[d] == null) return false;
+            Stroke(d, key % 256, point, bottleSquirtSeconds, -1f);
+            EndContact(d);                         // a dot: the next dose never joins this one
+            return true;
+        }
+
+        void BottleHaptic(VRCPlayerApi lp)
+        {
+            if (_pickup == null) return;
+            VRC_Pickup.PickupHand hand = _pickup.currentHand;
+            if (hand == VRC_Pickup.PickupHand.None) return;
+            lp.PlayHapticEventInHand(hand, bottleHapticDuration, bottleHapticAmplitude, hapticFrequency);
+        }
+
+        /// <summary>Harness only (Course/100g H-bottle): one dose along (origin, direction) with the VR aim (SphereCast of
+        /// bottleAimRadius, bottleReach), as a Use press would put it, without the pickup. Particles too, no haptic.
+        /// Local; nothing in the world calls it.</summary>
+        public void _DebugSquirt(Vector3 origin, Vector3 direction)
+        {
+            if (tool != KH_DogWash.ToolBottle || washes == null || _touching == null) return;
+            if (squirtParticles != null) squirtParticles.Emit(8);
+            SquirtAt(origin, direction, bottleReach, bottleAimRadius);
         }
 
         void Haptic(VRCPlayerApi lp)

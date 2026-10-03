@@ -32,6 +32,12 @@ namespace KominkaHillside.Editor
             public List<ColliderCheck> colliders = new List<ColliderCheck>();
             public List<PartCheck> parts = new List<PartCheck>();
             public List<DogSummary> dogs = new List<DogSummary>();
+            // IMP-DOG-039 (StationVerify.cs CheckHandWashAll): the counts the coordinator reads (bottles 4, handWash 1, guides 4)
+            // and one line per bottle (home, footprint, nearest tool) / per guide; handWash = its path and wiring
+            public int bottleCount, handWashCount, guideCount;
+            public List<string> bottles = new List<string>();
+            public string handWash = "";
+            public List<string> guides = new List<string>();
             public List<string> notCovered = new List<string>(NotCovered);
         }
         [Serializable] class ColliderCheck

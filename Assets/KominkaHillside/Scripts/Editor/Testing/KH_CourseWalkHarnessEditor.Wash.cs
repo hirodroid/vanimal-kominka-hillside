@@ -48,13 +48,17 @@ namespace KominkaHillside.Editor
         public static void WashHarnessDogs() { WashHarnessGroups(new[] { "stations", "dogs" }); }
         [MenuItem("Tools/KominkaHillside/Course/100f - Harness Wash call + height")]
         public static void WashHarnessCall() { WashHarnessGroups(new[] { "call", "height" }); }
+        [MenuItem("Tools/KominkaHillside/Course/100g - Harness Wash hand + bottle")]
+        public static void WashHarnessHand() { WashHarnessGroups(new[] { "hand" }); }   // IMP-DOG-039 (WashHand.cs)
+        [MenuItem("Tools/KominkaHillside/Course/100g1 - Harness Wash hand: bottle only")]
+        public static void WashHarnessHandBottle() { WashHarnessGroups(new[] { "hand-bottle" }); }   // H-bottle alone (diagnosis loop)
 
         static void WashHarnessGroups(string[] groups)
         {
             Begin(false);
             report.washOnly = true;
             report.washGroups = groups == null ? "" : string.Join(",", groups); // read back in MakeWashCases after the domain reload
-            report.deadline = EditorApplication.timeSinceStartup + 5400; // Wash 1500 + WashBehavior ~260 + WashReact ~200 + WashSync ~400 + WashStation ~130 + WashDirt ~620 + WashDogs ~210
+            report.deadline = EditorApplication.timeSinceStartup + 7200; // Wash 1500 + WashBehavior ~260 + WashReact ~200 + WashSync ~400 + WashStation ~130 + WashDirt ~620 + WashDogs ~210 (5400) + WashHand ~600 + margin
             report.limitations = "Single local ClientSim; the local player is instance master and every Owner (the wash object, the dog root, the tools). "
                 + "Contacts are injected at KH_DogWash._LocalContact / _EndContact (the entry KH_WashTool calls every frame) with collider surface points; "
                 + "the tool's pickup, raycasts, VR sphere and Desktop gaze are not exercised. NetStroke only takes the local echo path. "
@@ -798,6 +802,7 @@ namespace KominkaHillside.Editor
             if (WsGroup("stations")) MakeWashStationsCases(); // IMP-ENV-008 (WashStations.cs): course stations, tools wired to all dogs, grace near them
             if (WsGroup("call")) MakeWashCallCases();     // IMP-DOG-035 (WashCall.cs): call a dog to the station, stay, gates, release, swap
             if (WsGroup("height")) MakeWashHeightCases(); // IMP-ENV-011 (WashHeight.cs): lift, personal floor, board handlers
+            if (WsGroup("hand") || WsGroup("hand-bottle")) MakeWashHandCases();    // IMP-DOG-039 (WashHand.cs): the bottle, the bare hands (simulated), the picture guide. Before "dogs" (it re-binds wsWash)
             if (WsGroup("dogs")) MakeWashDogsCases();     // IMP-DOG-030 (WashDogs.cs): all six wired, Dachs foam, the others unchanged. Last: re-binds wsWash to the Dachs
 
             WsWrite();
@@ -876,7 +881,10 @@ namespace KominkaHillside.Editor
 
         static void WsRecover()
         {
-            for (int t = 0; t < 3; t++) { try { WsEnd(t); } catch (Exception) { } }
+            // IMP-DOG-039: every held-tool kind (sponge, shower, towel, bottle = channels 0..3) and both bare hands (channels 4, 5)
+            foreach (int t in new[] { KH_DogWash.ToolSponge, KH_DogWash.ToolShower, KH_DogWash.ToolTowel, KH_DogWash.ToolBottle }) { try { WsEnd(t); } catch (Exception) { } }
+            for (int h = 0; h < 2; h++) { try { WsCall("_EndHand", "hand", h); } catch (Exception) { } }   // an older program has no _EndHand
+            try { HwRecover(); } catch (Exception) { }         // 100g: the simulated hands off, its heap writes put back
             try { WsRunoffRestore(); } catch (Exception) { }   // W-shoulder turns the runoff off for itself
         }
 
@@ -1157,8 +1165,16 @@ namespace KominkaHillside.Editor
             // 最初の 1 回: 呼び出しが届いたか (接触の履歴 = この Collider、この点のメッシュ座標)
             var hv = Get<bool[]>(wsWash, "_hValid"); var hc = Get<int[]>(wsWash, "_hCollider"); var hm = Get<Vector3[]>(wsWash, "_hMesh");
             var want = WsToMesh(ci, p);
-            WsExpect(hv[tool] && hc[tool] == ci && (hm[tool] - want).magnitude < 1e-4f, "_LocalContact reached KH_DogWash (history valid " + hv[tool] + ", collider " + hc[tool] + "/" + ci + ", mesh " + hm[tool].ToString("F4") + " vs " + want.ToString("F4") + ")");
+            // IMP-DOG-039: the history is per channel (sponge 0, shower 1, towel 2, bottle 3, hands 4 / 5), not per kind
+            int ch = WsChannel(tool);
+            WsExpect(ch >= 0 && ch < hv.Length && hv[ch] && hc[ch] == ci && (hm[ch] - want).magnitude < 1e-4f, "_LocalContact reached KH_DogWash (tool " + tool + " channel " + ch + ": history valid " + (ch >= 0 && ch < hv.Length && hv[ch]) + ", collider " + (ch >= 0 && ch < hc.Length ? hc[ch] : -9) + "/" + ci + ", mesh " + (ch >= 0 && ch < hm.Length ? hm[ch].ToString("F4") : "-") + " vs " + want.ToString("F4") + ")");
             wsProbed = true;
+        }
+        /// <summary>A held tool's channel in KH_DogWash (ToolChannel): 0, 1, 2 the same, the bottle (4) 3; -1 for anything else.</summary>
+        static int WsChannel(int tool)
+        {
+            if (tool == KH_DogWash.ToolSponge || tool == KH_DogWash.ToolShower || tool == KH_DogWash.ToolTowel) return tool;
+            return tool == KH_DogWash.ToolBottle ? 3 : -1;
         }
         static bool WsHold() { return WsRet<bool>("_WashHold"); }
         static int WsSerial() { return WsRet<int>("_CleanSerial"); }

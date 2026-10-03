@@ -54,4 +54,5 @@ Material:
     - _Delta: {r: 0, g: 0, b: 0, a: 0}
     - _DirtHeightFade: {r: 0, g: 0, b: 0, a: 0}
     - _DirtHeightWeight: {r: 0.35, g: 0.05, b: 0, a: 0}
+    - _LatherGate: {r: 0.12, g: 2, b: 0, a: 0.015}
   m_BuildTextureStacks: []

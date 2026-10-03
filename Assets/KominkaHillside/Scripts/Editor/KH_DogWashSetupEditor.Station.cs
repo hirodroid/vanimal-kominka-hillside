@@ -80,8 +80,48 @@ namespace KominkaHillside.Editor
             new ToolSpec("KH_WashShower_1", KH_DogWash.ToolShower, new Vector3(-0.02f, ShelfHeight + 0.081f, 0f), Vector3.zero),
             new ToolSpec("KH_WashTowel_0", KH_DogWash.ToolTowel, new Vector3(0.22f, ShelfHeight + 0.011f, 0f), new Vector3(0f, 90f, 0f)),
             new ToolSpec("KH_WashTowel_1", KH_DogWash.ToolTowel, new Vector3(0.46f, ShelfHeight + 0.011f, 0f), new Vector3(0f, 90f, 0f)),
+            // IMP-DOG-039 (docs/plans/2026-10-03-hand-wash.md §2.1): one shampoo bottle at the front-left of the top (easy to take), in
+            // front of the gap between the sponges. Not in front of the sign (|x| <= 0.17: it hid 「あらいば」, 2026-10-03 render).
+            // Foot box x -0.47..-0.41, z -0.15..-0.09: 5 cm in front of both sponges (z -0.04..0.04), 19 cm from shower _0, 24 cm
+            // from the sign's span, 13 cm / 7.5 cm inside the top's left / front edges. The spout leans toward -X (BottleYaw).
+            new ToolSpec(BottlePrefix + "0", KH_DogWash.ToolBottle, new Vector3(-0.44f, ShelfHeight + BottleRestY, -0.12f), new Vector3(0f, BottleYaw, 0f)),
         };
-        static readonly string[] ToolLabels = { "Sponge", "Shower", "Towel" };
+        /// <summary>VRCPickup.InteractionText by tool id (KH_DogWash.Tool*: 0 sponge, 1 shower, 2 towel, 3 = ToolDirt (not a tool), 4 bottle).
+        /// ASCII placeholders like the others (the 13-language tool words are out of scope, design §2.1).</summary>
+        static readonly string[] ToolLabels = { "Sponge", "Shower", "Towel", "", "Shampoo" };
+        /// <summary>VRCPickup.UseText by tool id (written only over a placeholder: ToolUsePlaceholders).</summary>
+        static readonly string[] ToolUseTexts = { "Wash", "Shower on/off", "Wash", "", "Foam" };
+        static readonly string[] ToolUsePlaceholders = { "Use", "Spray", "Wash", "Shower on/off", "Foam" };
+        /// <summary>The name prefixes of every kind of station tool (stale-tool cleanup in BuildStationParts).</summary>
+        static readonly string[] ToolPrefixes = { "KH_WashSponge_", "KH_WashShower_", "KH_WashTowel_", BottlePrefix };
+
+        // ---- IMP-DOG-039: the shampoo bottle (§2.1), built from primitives (no imported art; Art.cs leaves it alone) ----
+        const string BottlePrefix = "KH_WashBottle_";
+        const string ShampooMat = "KH_WashTool_Shampoo";                         // under ToolMatDir, like the other tool materials
+        static readonly Color ShampooPink = new Color(0.98f, 0.78f, 0.84f);      // pale pink
+        const string ShampooCapMat = "KH_WashTool_ShampooCap";                   // the cap and the spout
+        static readonly Color ShampooCapWhite = new Color(0.96f, 0.96f, 0.95f);
+        /// <summary>The bottle's materials are matte plastic. VRChat/Mobile/Standard Lite defaults to _Metallic 1 / _Glossiness 1,
+        /// which mirrors the sky: the first build rendered the whole bottle saturated blue (2026-10-03). Wash/11 rewrites these on
+        /// the existing assets every run.</summary>
+        const float BottleMetallic = 0f, BottleGlossiness = 0.35f;
+        /// <summary>Root height above the shelf top: the body's foot (0.085 below the root) sits on the top.</summary>
+        const float BottleRestY = 0.085f;
+        /// <summary>Resting yaw: the spout (bottle local +Z) points along the shelf (-X), so its tilt reads in profile from the front.</summary>
+        const float BottleYaw = -90f;
+        const float BottleBodyDiameter = 0.06f, BottleBodyHeight = 0.15f, BottleCapDiameter = 0.03f, BottleCapHeight = 0.02f;
+        const float BottleSpoutDiameter = 0.012f, BottleSpoutLength = 0.03f, BottleSpoutTilt = 30f;   // tilted forward (+Z)
+        const string BottleSquirtName = "Squirt";
+        /// <summary>KH_WashTool's bottle fields (tool 4 only; design §8.1). Wash/11 writes them on every bottle, Wash/12 compares proxy and backing.</summary>
+        static readonly (string field, float value)[] BottleTuning =
+        {
+            ("bottleReach", 0.6f),
+            ("bottleAimRadius", 0.02f),
+            ("bottleSquirtSeconds", 0.25f),
+            ("bottleRepeatSeconds", 0.4f),
+            ("bottleHapticDuration", 0.06f),
+            ("bottleHapticAmplitude", 0.35f),
+        };
 
         static List<KH_WashTool> BuildStation(SceneCtx c, Shared shared, Audio audio, BuildReport r)
         {
@@ -115,7 +155,8 @@ namespace KominkaHillside.Editor
             // IMP-DOG-037: the board's words come from the catalog (13 languages) through KD_Language (KD_TreatPouch.language)
             var catalog = BoardCatalog();
             var language = BoardLanguage(r);
-            foreach (var st in stations) BuildStationControls(st, StationIndexOf(st), catalog, language, r);
+            var guideTex = EnsureGuideTexture(r);   // IMP-DOG-039: the guide's picture (Guide.cs), before any station wires it
+            foreach (var st in stations) BuildStationControls(st, StationIndexOf(st), catalog, language, guideTex, r);
             ApplyBoardLanguage(catalog, language, r);
             SetFloorPassthrough(r);
             foreach (var st in stations) SetStandLayers(st, r);   // last: BuildStand / Prim put the parts back on Default
@@ -143,11 +184,15 @@ namespace KominkaHillside.Editor
                 home.gameObject.layer = 0;
                 home.localPosition = spec.slot; home.localRotation = Quaternion.Euler(spec.euler); home.localScale = Vector3.one;
                 foreach (var comp in home.GetComponents<Component>()) if (!(comp is Transform)) UnityEngine.Object.DestroyImmediate(comp);   // a bare marker
-                tools.Add(BuildTool(st, spec, shared, audio, home, towelMat));
+                var built = BuildTool(st, spec, shared, audio, home, towelMat);
+                tools.Add(built);
+                if (spec.tool == KH_DogWash.ToolBottle)
+                    r.bottles.Add(st.name + "/" + spec.name + " home " + spec.slot.ToString("F3") + " yaw " + spec.euler.y + ", nozzle " + built.nozzle.localPosition.ToString("F3")
+                        + ", squirt " + (built.squirtParticles != null ? "yes" : "MISSING") + ", tuning " + string.Join(" ", BottleTuning.Select(b => b.field + "=" + b.value)));
             }
             // stale tools of an earlier layout
             foreach (Transform t in st.Cast<Transform>().ToArray())
-                if ((t.name.StartsWith("KH_WashSponge_") || t.name.StartsWith("KH_WashShower_") || t.name.StartsWith("KH_WashTowel_")) && !specs.Any(s => s.name == t.name))
+                if (ToolPrefixes.Any(p => t.name.StartsWith(p)) && !specs.Any(s => s.name == t.name))
                 { r.log.Add("removed stale tool " + st.name + "/" + t.name); UnityEngine.Object.DestroyImmediate(t.gameObject); }
             BuildReset(st, tools, shared.shelf, r);
             return tools;
@@ -195,6 +240,9 @@ namespace KominkaHillside.Editor
                 new ToolSpec("KH_WashSponge_" + key + "_0", KH_DogWash.ToolSponge, new Vector3(-0.40f, ShelfHeight + 0.031f, 0f), Vector3.zero),
                 new ToolSpec("KH_WashShower_" + key + "_0", KH_DogWash.ToolShower, new Vector3(-0.12f, ShelfHeight + 0.081f, 0f), Vector3.zero),
                 new ToolSpec("KH_WashTowel_" + key + "_0", KH_DogWash.ToolTowel, new Vector3(0.22f, ShelfHeight + 0.011f, 0f), new Vector3(0f, 90f, 0f)),
+                // IMP-DOG-039 §2.1: one bottle at the front, between the sponge and the shower, clear of the sign (|x| <= 0.17).
+                // Foot box x -0.29..-0.23, z -0.15..-0.09: 5 cm from the sponge (x -0.46..-0.34), 6 cm from the sign's span
+                new ToolSpec(BottlePrefix + key + "_0", KH_DogWash.ToolBottle, new Vector3(-0.26f, ShelfHeight + BottleRestY, -0.12f), new Vector3(0f, BottleYaw, 0f)),
             };
         }
 
@@ -666,6 +714,9 @@ namespace KominkaHillside.Editor
             "wash.state.callable", "wash.state.coming", "wash.state.here", "wash.state.calling", "wash.state.leashedOther", "wash.state.otherStation",
             "wash.state.tooFar", "wash.state.fetch", "wash.state.frisbee", "wash.state.gathering", "wash.state.sleepCall", "wash.state.washedOther",
             "wash.button.end", "wash.button.standUp", "wash.button.standDown", "wash.button.meUp", "wash.button.meDown",
+            // IMP-DOG-039 the picture guide above the board (W 24..33, docs/plans/2026-10-03-hand-wash.md §7.5; written by _ApplyGuide)
+            "wash.guide.step1", "wash.guide.step1.sub", "wash.guide.step2", "wash.guide.step2.sub", "wash.guide.step2.flat", "wash.guide.step2.flat.sub",
+            "wash.guide.step3", "wash.guide.step3.sub", "wash.guide.help", "wash.guide.help.flat",
         };
 
         /// <summary>IMP-DOG-037: each station's call range (m, horizontal from the anchor), by station index (main, then
@@ -781,7 +832,7 @@ namespace KominkaHillside.Editor
             r.log.Add("VRCSceneDescriptor.interactThruLayers " + before + " -> " + p.intValue + " (layer " + FloorLayer + ": my floor lets the interact ray through)");
         }
 
-        static void BuildStationControls(Transform st, int index, KD_LocalizationEditor.Catalog catalog, KD_Language language, BuildReport r)
+        static void BuildStationControls(Transform st, int index, KD_LocalizationEditor.Catalog catalog, KD_Language language, Texture2D guideTex, BuildReport r)
         {
             RequireStationProgram(CallProgram); RequireStationProgram(FloorProgram); RequireStationProgram(BoardProgram);
             if (index < 0) throw new InvalidOperationException(st.name + " has no station index");
@@ -848,9 +899,59 @@ namespace KominkaHillside.Editor
 
             // ---- the board ----
             var board = BuildBoard(st, call, pf, catalog, language, r);
+            // ---- IMP-DOG-039: the picture guide above the board (a sibling Canvas; wired into the board before the copy) ----
+            BuildGuide(st, board, guideTex, r);
 
             Copy(call); Copy(pf); Copy(board);
             r.log.Add(st.name + ": Call (index " + index + ", standYaw " + Mathf.Repeat(st.eulerAngles.y + StandYawOffset, 360f).ToString("F1") + ", callRange " + CallRangeOf(index) + " m), " + FloorName + " (base " + baseY.ToString("F3") + "), " + BoardName + " wired");
+        }
+
+        // ================================================================ IMP-DOG-039: KH_HandWash (bare-hand lather, design §3)
+
+        const string HandWashName = "HandWash";
+        /// <summary>KH_HandWash's tuning (design §8.1). Wash/11 writes it, Wash/12 compares proxy and backing.</summary>
+        static readonly (string field, float value)[] HandWashTuning =
+        {
+            ("handContactRadius", 0.07f),
+            ("sampleInterval", 0.0333f),
+            ("nearMeters", 2.5f),
+            ("idleInterval", 0.5f),
+            ("hapticInterval", 0.1f),
+            ("hapticDuration", 0.03f),
+            ("hapticAmplitude", 0.15f),
+            ("hapticFrequency", 120f),
+        };
+
+        /// <summary>One KH_HandWash (sync None) at KH_WashStation/HandWash: calls = every station's Call (main first), washes = the
+        /// six KH_DogWash by dogIndex, washLayer = layer 2, the tuning table, and the harness inputs / read-outs at their off values.
+        /// Not copied here (the main Build copies it with the dogs).</summary>
+        static KH_HandWash BuildHandWash(UnityEngine.SceneManagement.Scene scene, KH_WashStationCall[] calls, BuildReport r)
+        {
+            var main = scene.GetRootGameObjects().FirstOrDefault(g => g.name == StationName);
+            if (main == null) throw new InvalidOperationException(StationName + " missing at the scene root (BuildStation runs first)");
+            var t = Child(main.transform, HandWashName);
+            t.gameObject.layer = 0;
+            t.localPosition = Vector3.zero; t.localRotation = Quaternion.identity; t.localScale = Vector3.one;
+            foreach (var comp in t.GetComponents<Component>())
+                if (!(comp is Transform) && !(comp is KH_HandWash) && !(comp is VRC.Udon.UdonBehaviour)) UnityEngine.Object.DestroyImmediate(comp);
+            var hand = AddUdon<KH_HandWash>(t.gameObject, Networking.SyncType.None);
+            KD_DogWanderController[] wanders; KH_DogWash[] washes;
+            DogsByIndex(out wanders, out washes);
+            if (washes.Any(w => w == null)) r.log.Add("WARN " + HandWashName + ".washes has a missing dog (index " + string.Join(", ", Enumerable.Range(0, washes.Length).Where(i => washes[i] == null)) + "); Wash/12 fails on it");
+            hand.calls = (KH_WashStationCall[])calls.Clone();
+            hand.washes = washes;
+            hand.washLayer = 1 << WashLayer;
+            // harness only: off (Course/100g turns them on in the heap, never in the saved scene)
+            hand.debugHands = 0; hand.debugLeft = Vector3.zero; hand.debugRight = Vector3.zero;
+            hand.debugLeftFree = false; hand.debugRightFree = false; hand.debugVr = false;
+            hand.frameLoop = false; hand.contactCalls = 0;
+            EditorUtility.SetDirty(hand);
+            WriteFloats(hand, HandWashTuning);
+            var others = UnityEngine.Object.FindObjectsOfType<KH_HandWash>(true).Where(x => x != hand).Select(x => KominkaDogRun.Editor.KD_SceneObjects.PathOf(x.gameObject)).ToArray();
+            if (others.Length > 0) r.log.Add("WARN other KH_HandWash in the scene (left as is; Wash/12 expects one): " + string.Join(", ", others));
+            r.handWash = StationName + "/" + HandWashName + " calls " + calls.Length + ", washes " + washes.Count(w => w != null) + " / " + washes.Length + ", washLayer " + (1 << WashLayer);
+            r.log.Add(StationName + "/" + HandWashName + ": KH_HandWash calls " + calls.Length + " (" + string.Join(", ", calls.Select(c => c.transform.parent != null ? c.transform.parent.name : "?")) + "), washes " + washes.Length + " by dogIndex, layer " + WashLayer);
+            return hand;
         }
 
         /// <summary>IMP-DOG-037: the KD_Language the boards read their words from (KD_TreatPouch.language, as the guide boards).
@@ -883,7 +984,7 @@ namespace KominkaHillside.Editor
         /// numbers the board writes (placeholders removed).</summary>
         static string BoardGlyphText(KD_LocalizationEditor.Catalog catalog)
         {
-            var s = new System.Text.StringBuilder("0123456789.m -");
+            var s = new System.Text.StringBuilder("0123456789.m -" + GuideArrowText);   // + the guide's arrow (IMP-DOG-039)
             foreach (var lang in catalog.languages)
             {
                 if (!KD_LocalizationEditor.Bundled(lang)) continue;
@@ -1051,15 +1152,22 @@ namespace KominkaHillside.Editor
             root.localPosition = spec.slot; root.localRotation = Quaternion.Euler(spec.euler); root.localScale = Vector3.one;   // code-owned resting slot
 
             // ---- the one collider on the tool root (Pickup) ----
+            bool capsule = spec.tool == KH_DogWash.ToolShower || spec.tool == KH_DogWash.ToolBottle;
             foreach (var col in root.GetComponents<Collider>())
             {
-                bool want = spec.tool == KH_DogWash.ToolShower ? col is CapsuleCollider : col is BoxCollider;
+                bool want = capsule ? col is CapsuleCollider : col is BoxCollider;
                 if (!want) UnityEngine.Object.DestroyImmediate(col);
             }
             var nozzle = Child(root, "Nozzle");
             nozzle.gameObject.layer = PickupLayer;
             Transform sprayT = null;
-            if (spec.tool == KH_DogWash.ToolShower)
+            ParticleSystem squirt = null;
+            if (spec.tool != KH_DogWash.ToolBottle) { var oldSquirt = nozzle.Find(BottleSquirtName); if (oldSquirt != null) UnityEngine.Object.DestroyImmediate(oldSquirt.gameObject); }
+            if (spec.tool == KH_DogWash.ToolBottle)
+            {
+                squirt = BuildBottleBody(root, nozzle, shared);   // body, nozzle, the capsule and the particles
+            }
+            else if (spec.tool == KH_DogWash.ToolShower)
             {
                 var cap = root.GetComponent<CapsuleCollider>(); if (cap == null) cap = root.gameObject.AddComponent<CapsuleCollider>();
                 cap.isTrigger = false; cap.direction = 1; cap.radius = 0.028f; cap.height = 0.20f; cap.center = new Vector3(0f, 0.01f, 0f);
@@ -1106,9 +1214,10 @@ namespace KominkaHillside.Editor
             pickup.orientation = VRC_Pickup.PickupOrientation.Any;
             pickup.proximity = 0.3f; pickup.pickupable = true; pickup.allowManipulationWhenEquipped = false;
             pickup.InteractionText = ToolLabels[spec.tool];
-            // The shower toggles (2026-09-30). ASCII placeholders; the Japanese is typed in the Inspector (kept once changed).
-            string useText = spec.tool == KH_DogWash.ToolShower ? "Shower on/off" : "Wash";
-            if (string.IsNullOrEmpty(pickup.UseText) || pickup.UseText == "Use" || pickup.UseText == "Spray" || pickup.UseText == "Wash" || pickup.UseText == "Shower on/off") pickup.UseText = useText;
+            // The shower toggles (2026-09-30), the bottle foams (IMP-DOG-039). ASCII placeholders; the Japanese is typed in the
+            // Inspector (kept once changed: only an empty text or one of the placeholders is overwritten).
+            string useText = ToolUseTexts[spec.tool];
+            if (string.IsNullOrEmpty(pickup.UseText) || ToolUsePlaceholders.Contains(pickup.UseText)) pickup.UseText = useText;
             if (root.GetComponent<VRCObjectSync>() == null) root.gameObject.AddComponent<VRCObjectSync>();
             EditorUtility.SetDirty(rb); EditorUtility.SetDirty(pickup);
 
@@ -1139,9 +1248,125 @@ namespace KominkaHillside.Editor
                 var src = nozzle.GetComponent<AudioSource>(); if (src != null) UnityEngine.Object.DestroyImmediate(src);
                 tool.sprayAudio = null;
             }
+            tool.squirtParticles = squirt;          // the bottle's Squirt (null on the other tools)
             EditorUtility.SetDirty(tool);
+            // IMP-DOG-039: the bottle's tuning (design §8.1, BottleTuning); the other tools keep the code defaults (unused there)
+            if (spec.tool == KH_DogWash.ToolBottle) WriteFloats(tool, BottleTuning);
             ApplyToolArt(root, spec.tool);
             return tool;
+        }
+
+        /// <summary>Writes a (field, value) tuning table on a proxy through SerializedObject (the builder copies it to Udon later).</summary>
+        static void WriteFloats(UnityEngine.Object o, (string field, float value)[] table)
+        {
+            var so = new SerializedObject(o);
+            foreach (var t in table) Prop(so, t.field).floatValue = t.value;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(o);
+        }
+
+        /// <summary>IMP-DOG-039 §2.1: the bottle's look from primitives (bottle local; the root sits BottleRestY above the shelf top):
+        /// body cylinder φ0.06 x 0.15 (pale pink), a squashed sphere for the shoulder, a white cap φ0.03 x 0.02, and the spout φ0.012 x 0.03
+        /// tilted BottleSpoutTilt toward +Z. Nozzle at the spout's tip, forward = the spout's direction. One CapsuleCollider on the root
+        /// (the primitives' own colliders are removed by Prim). The Squirt particles hang under the nozzle.</summary>
+        static ParticleSystem BuildBottleBody(Transform root, Transform nozzle, Shared shared)
+        {
+            var pink = BottleMaterial(ShampooMat, ShampooPink);
+            var white = BottleMaterial(ShampooCapMat, ShampooCapWhite);   // its own near-white (no other tool's material)
+            float foot = -BottleRestY;
+            float bodyTop = foot + BottleBodyHeight;
+
+            var body = Prim(root, "Body", PrimitiveType.Cylinder, false);   // the cylinder primitive is 2 units tall: y scale = half height
+            body.transform.localPosition = new Vector3(0f, foot + BottleBodyHeight * 0.5f, 0f);
+            body.transform.localRotation = Quaternion.identity;
+            body.transform.localScale = new Vector3(BottleBodyDiameter, BottleBodyHeight * 0.5f, BottleBodyDiameter);
+            SetLook(body, pink);
+
+            const float shoulderHeight = 0.03f;
+            var shoulder = Prim(root, "Shoulder", PrimitiveType.Sphere, false);
+            shoulder.transform.localPosition = new Vector3(0f, bodyTop, 0f);
+            shoulder.transform.localRotation = Quaternion.identity;
+            shoulder.transform.localScale = new Vector3(BottleBodyDiameter, shoulderHeight, BottleBodyDiameter);
+            SetLook(shoulder, pink);
+
+            float capBase = bodyTop + shoulderHeight * 0.5f - 0.005f;   // slightly sunk into the shoulder
+            var cap = Prim(root, "Cap", PrimitiveType.Cylinder, false);
+            cap.transform.localPosition = new Vector3(0f, capBase + BottleCapHeight * 0.5f, 0f);
+            cap.transform.localRotation = Quaternion.identity;
+            cap.transform.localScale = new Vector3(BottleCapDiameter, BottleCapHeight * 0.5f, BottleCapDiameter);
+            SetLook(cap, white);
+
+            var tilt = Quaternion.Euler(BottleSpoutTilt, 0f, 0f);            // up -> (0, cos, sin): leans toward +Z
+            Vector3 dir = tilt * Vector3.up;
+            Vector3 spoutBase = new Vector3(0f, capBase + BottleCapHeight - 0.003f, 0f);
+            var spout = Prim(root, "Spout", PrimitiveType.Cylinder, false);
+            spout.transform.localPosition = spoutBase + dir * (BottleSpoutLength * 0.5f);
+            spout.transform.localRotation = tilt;
+            spout.transform.localScale = new Vector3(BottleSpoutDiameter, BottleSpoutLength * 0.5f, BottleSpoutDiameter);
+            SetLook(spout, white);
+            foreach (var g in new[] { body, shoulder, cap, spout }) g.layer = PickupLayer;
+
+            nozzle.localPosition = spoutBase + dir * BottleSpoutLength;
+            nozzle.localRotation = Quaternion.LookRotation(dir, Vector3.back);   // forward = the spout
+            nozzle.localScale = Vector3.one;
+            var oldSpray = nozzle.Find("Spray"); if (oldSpray != null) UnityEngine.Object.DestroyImmediate(oldSpray.gameObject);
+
+            // the pickup collider: one capsule from the foot to the spout's tip
+            float topY = nozzle.localPosition.y + BottleSpoutDiameter * 0.5f;
+            var capCol = root.GetComponent<CapsuleCollider>(); if (capCol == null) capCol = root.gameObject.AddComponent<CapsuleCollider>();
+            capCol.isTrigger = false; capCol.direction = 1;
+            capCol.radius = BottleBodyDiameter * 0.5f;
+            capCol.height = topY - foot;
+            capCol.center = new Vector3(0f, (topY + foot) * 0.5f, 0f);
+            EditorUtility.SetDirty(capCol);
+
+            var sq = Child(nozzle, BottleSquirtName);
+            sq.gameObject.layer = PickupLayer;
+            sq.localPosition = Vector3.zero; sq.localRotation = Quaternion.identity; sq.localScale = Vector3.one;
+            return SquirtParticles(sq.gameObject, shared.foam);
+        }
+
+        /// <summary>A bottle material (ToolMaterial: the same shader, folder and colour) made matte: no albedo texture, _Metallic 0,
+        /// low gloss. Applied to an existing asset too (idempotent repair).</summary>
+        static Material BottleMaterial(string name, Color color)
+        {
+            var m = ToolMaterial(name, color);
+            m.mainTexture = null;
+            if (m.HasProperty("_Color")) m.SetColor("_Color", color);
+            if (m.HasProperty("_Metallic")) m.SetFloat("_Metallic", BottleMetallic);
+            if (m.HasProperty("_Glossiness")) m.SetFloat("_Glossiness", BottleGlossiness);
+            m.enableInstancing = true;
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        /// <summary>IMP-DOG-039 §2.5: the bottle's squirt: a few foam blobs along the nozzle's forward (cone), World, no Play On Awake,
+        /// emission off (KH_WashTool.Squirt calls Emit(8); the holder's screen only).</summary>
+        static ParticleSystem SquirtParticles(GameObject go, Material mat)
+        {
+            var ps = go.GetComponent<ParticleSystem>(); if (ps == null) ps = go.AddComponent<ParticleSystem>();
+            var main = ps.main;
+            main.playOnAwake = false; main.loop = false;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.45f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(1.0f, 1.8f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.008f, 0.018f);
+            main.gravityModifier = 0.6f;
+            main.maxParticles = 48;
+            var em = ps.emission; em.enabled = false;
+            var sh = ps.shape; sh.enabled = true; sh.shapeType = ParticleSystemShapeType.Cone; sh.angle = 6f; sh.radius = 0.003f;
+            sh.rotation = Vector3.zero; sh.position = Vector3.zero;
+            var colMod = ps.collision; colMod.enabled = false;
+            var col = ps.colorOverLifetime; col.enabled = true;
+            var g = new Gradient();
+            g.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(.95f, 0f), new GradientAlphaKey(.8f, .6f), new GradientAlphaKey(0f, 1f) });
+            col.color = g;
+            var rend = go.GetComponent<ParticleSystemRenderer>();
+            rend.sharedMaterial = mat; rend.renderMode = ParticleSystemRenderMode.Billboard;
+            rend.shadowCastingMode = ShadowCastingMode.Off; rend.receiveShadows = false;
+            EditorUtility.SetDirty(ps); EditorUtility.SetDirty(rend);
+            return ps;
         }
 
         // ================================================================ IMP-ENV-007: the stand, the duckboard, the tub, the sign

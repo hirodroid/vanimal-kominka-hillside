@@ -2822,7 +2822,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "散歩で汚れた犬を、きれいにしてあげよう。\n<color=#B5432A>1</color> 洗い場の板で犬の名前を押す → すのこに来る\n<color=#B5432A>2</color> スポンジでこすって、泡をもこもこに\n<color=#B5432A>3</color> シャワーは Use で出す・止める。泡を流そう\n<color=#B5432A>4</color> タオルでふいて仕上げ\n順番は自由。2人でいっしょにも洗えます。\n台と自分の高さ: 板の［上へ］［下へ］　終わり: ［おわり］\nスポンジ・タオル: Desktop・スマホは Use を押したまま\n道具は棚の［RESET］で元へ。道中にも洗い場が3か所。"
+          "text": "散歩で汚れた犬を、きれいにしてあげよう。\n<color=#B5432A>1</color> 洗い場の板で犬の名前を押す → すのこに来る\n<color=#B5432A>2</color> ボトルで泡をつけて、手でわしゃわしゃ\n<color=#B5432A>3</color> シャワーは Use で出す・止める。泡を流そう\n<color=#B5432A>4</color> タオルでふいて仕上げ\n順番は自由。2人でいっしょにも洗えます。\n台と自分の高さ: 板の［上へ］［下へ］　終わり: ［おわり］\nスポンジ・タオル: Desktop・スマホは Use を押したまま\n道具は棚の［RESET］で元へ。道中にも洗い場が3か所。"
         },
         {
           "key": "guide.shop.title",
@@ -2963,6 +2963,46 @@
         {
           "key": "wash.button.meDown",
           "text": "自分 下へ"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①泡をつける"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "ボトルから背中へ"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②手でわしゃわしゃ"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "泡を手でひろげる"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②スポンジでごしごし"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "Use を押したまま"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③シャワーで流す"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "さーっと、きれいに"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "片手でも、スポンジでも洗えます"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "ボトルは Use、スポンジは Use を押したまま"
         }
       ]
     },
@@ -5785,7 +5825,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Muddy from the walk? Give your dog a wash.\n<color=#B5432A>1</color> Press the dog's name on the wash station board - it steps onto the slatted stand\n<color=#B5432A>2</color> Scrub with the sponge to build up suds\n<color=#B5432A>3</color> Shower: Use turns the water on and off. Rinse the suds away\n<color=#B5432A>4</color> Dry off with the towel\nAny order. Two people can wash together.\nStand / your height: [Raise stand] [Lower stand] [Raise me] [Lower me] on the board. Done: [Done]\nSponge and towel on Desktop/phone: hold Use\n[RESET] on the shelf puts the tools back. 3 more stations along the trail."
+          "text": "Muddy from the walk? Give your dog a wash.\n<color=#B5432A>1</color> Press the dog's name on the wash station board - it steps onto the slatted stand\n<color=#B5432A>2</color> Squirt the bottle, rub in by hand (or sponge)\n<color=#B5432A>3</color> Shower: Use turns the water on and off. Rinse the suds away\n<color=#B5432A>4</color> Dry off with the towel\nAny order. Two people can wash together.\nStand / your height: [Raise stand] [Lower stand] [Raise me] [Lower me] on the board. Done: [Done]\nSponge and towel on Desktop/phone: hold Use\n[RESET] on the shelf puts the tools back. 3 more stations along the trail."
         },
         {
           "key": "guide.shop.title",
@@ -5926,6 +5966,46 @@
         {
           "key": "wash.button.meDown",
           "text": "Lower me"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①Add suds"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "Bottle onto the back"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②Rub in by hand"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "Spread suds by hand"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②Scrub with sponge"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "Hold Use"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③Rinse with shower"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "Swoosh, all clean"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "Wash with one hand, or with the sponge"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "Bottle: Use. Sponge: hold Use"
         }
       ]
     },
@@ -8748,7 +8828,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Собака испачкалась на прогулке? Помой её.\n<color=#B5432A>1</color> Нажми имя собаки на табло мойки — она встанет на решётку\n<color=#B5432A>2</color> Потри губкой — будет пышная пена\n<color=#B5432A>3</color> Душ: Use включает и выключает воду. Смой пену\n<color=#B5432A>4</color> Вытри полотенцем\nПорядок любой. Можно мыть вдвоём.\nВысота подставки и своя: [Подставка выше] [Подставка ниже] [Меня выше] [Меня ниже] на табло. Конец: [Готово]\nГубка и полотенце на ПК/телефоне: держи Use\n[RESET] на полке возвращает инструменты. Ещё 3 мойки по пути."
+          "text": "Собака испачкалась на прогулке? Помой её.\n<color=#B5432A>1</color> Нажми имя собаки на табло мойки — она встанет на решётку\n<color=#B5432A>2</color> Пена из бутылки — взбей рукой/губкой\n<color=#B5432A>3</color> Душ: Use включает и выключает воду. Смой пену\n<color=#B5432A>4</color> Вытри полотенцем\nПорядок любой. Можно мыть вдвоём.\nВысота подставки и своя: [Подставка выше] [Подставка ниже] [Меня выше] [Меня ниже] на табло. Конец: [Готово]\nГубка и полотенце на ПК/телефоне: держи Use\n[RESET] на полке возвращает инструменты. Ещё 3 мойки по пути."
         },
         {
           "key": "guide.shop.title",
@@ -8889,6 +8969,46 @@
         {
           "key": "wash.button.meDown",
           "text": "Меня ниже"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①Нанеси пену"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "Из бутылки на спину"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②Вспень руками"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "Разнеси пену рукой"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②Потри губкой"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "Держи Use"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③Смой душем"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "Чисто-начисто"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "Можно одной рукой или губкой"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "Бутылка: Use, губка: держи Use"
         }
       ]
     },
@@ -11711,7 +11831,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Собака забруднилася на прогулянці? Помий її.\n<color=#B5432A>1</color> Натисни ім'я собаки на табло мийки — вона стане на решітку\n<color=#B5432A>2</color> Потри губкою — буде пишна піна\n<color=#B5432A>3</color> Душ: Use вмикає й вимикає воду. Змий піну\n<color=#B5432A>4</color> Витри рушником\nПорядок будь-який. Можна мити удвох.\nВисота підставки й своя: [Підставка вище] [Підставка нижче] [Мене вище] [Мене нижче] на табло. Кінець: [Готово]\nГубка й рушник на ПК/телефоні: тримай Use\n[RESET] на полиці повертає інструменти. Ще 3 мийки дорогою."
+          "text": "Собака забруднилася на прогулянці? Помий її.\n<color=#B5432A>1</color> Натисни ім'я собаки на табло мийки — вона стане на решітку\n<color=#B5432A>2</color> Піна з пляшки — збий рукою/губкою\n<color=#B5432A>3</color> Душ: Use вмикає й вимикає воду. Змий піну\n<color=#B5432A>4</color> Витри рушником\nПорядок будь-який. Можна мити удвох.\nВисота підставки й своя: [Підставка вище] [Підставка нижче] [Мене вище] [Мене нижче] на табло. Кінець: [Готово]\nГубка й рушник на ПК/телефоні: тримай Use\n[RESET] на полиці повертає інструменти. Ще 3 мийки дорогою."
         },
         {
           "key": "guide.shop.title",
@@ -11852,6 +11972,46 @@
         {
           "key": "wash.button.meDown",
           "text": "Мене нижче"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①Нанеси піну"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "З пляшки на спину"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②Спінь руками"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "Розподіли піну рукою"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②Потри губкою"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "Тримай Use"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③Змий душем"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "Чисто-чисто"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "Можна однією рукою або губкою"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "Пляшка: Use, губка: тримай Use"
         }
       ]
     },
@@ -14674,7 +14834,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "산책하다 더러워진 강아지를 깨끗하게 해 줘요.\n<color=#B5432A>1</color> 세척장 판에서 강아지 이름을 누르기 → 발판 위로 와요\n<color=#B5432A>2</color> 스펀지로 문질러 거품을 몽글몽글\n<color=#B5432A>3</color> 샤워는 Use로 켜고 끄기. 거품을 헹궈요\n<color=#B5432A>4</color> 수건으로 닦아 마무리\n순서는 자유. 둘이 함께 씻길 수도 있어요.\n받침대·내 높이: 판의 [받침대 위로] [받침대 아래로] [나 위로] [나 아래로]  끝: [끝]\n스펀지·수건은 Desktop·스마트폰에서 Use를 누른 채로\n선반의 [RESET]으로 도구가 제자리로. 길 중간에도 세척장 3곳."
+          "text": "산책하다 더러워진 강아지를 깨끗하게 해 줘요.\n<color=#B5432A>1</color> 세척장 판에서 강아지 이름을 누르기 → 발판 위로 와요\n<color=#B5432A>2</color> 병으로 거품, 손으로 문질문질(스펀지도)\n<color=#B5432A>3</color> 샤워는 Use로 켜고 끄기. 거품을 헹궈요\n<color=#B5432A>4</color> 수건으로 닦아 마무리\n순서는 자유. 둘이 함께 씻길 수도 있어요.\n받침대·내 높이: 판의 [받침대 위로] [받침대 아래로] [나 위로] [나 아래로]  끝: [끝]\n스펀지·수건은 Desktop·스마트폰에서 Use를 누른 채로\n선반의 [RESET]으로 도구가 제자리로. 길 중간에도 세척장 3곳."
         },
         {
           "key": "guide.shop.title",
@@ -14815,6 +14975,46 @@
         {
           "key": "wash.button.meDown",
           "text": "나 아래로"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①거품 묻히기"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "병에서 등으로"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②손으로 문질문질"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "거품을 손으로 펴기"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②스펀지로 박박"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "Use를 누른 채로"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③샤워로 헹구기"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "쏴아, 깨끗하게"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "한 손으로도, 스펀지로도 씻을 수 있어요"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "병은 Use, 스펀지는 Use를 누른 채로"
         }
       ]
     },
@@ -17637,7 +17837,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Schmutzig vom Spaziergang? Mach deinen Hund sauber.\n<color=#B5432A>1</color> Namen des Hundes auf der Tafel am Waschplatz drücken - er stellt sich auf den Rost\n<color=#B5432A>2</color> Mit dem Schwamm schrubben, bis es schäumt\n<color=#B5432A>3</color> Dusche: Use schaltet das Wasser an und aus. Schaum abspülen\n<color=#B5432A>4</color> Mit dem Handtuch trocknen\nReihenfolge egal. Zu zweit waschen geht auch.\nHöhe von Podest und dir: [Podest hoch] [Podest runter] [Mich hoch] [Mich runter] auf der Tafel. Fertig: [Fertig]\nSchwamm und Handtuch an Desktop/Handy: Use gedrückt halten\n[RESET] am Regal legt die Sachen zurück. 3 weitere Waschplätze unterwegs."
+          "text": "Schmutzig vom Spaziergang? Mach deinen Hund sauber.\n<color=#B5432A>1</color> Namen des Hundes auf der Tafel am Waschplatz drücken - er stellt sich auf den Rost\n<color=#B5432A>2</color> Flasche drauf, per Hand/Schwamm einrubbeln\n<color=#B5432A>3</color> Dusche: Use schaltet das Wasser an und aus. Schaum abspülen\n<color=#B5432A>4</color> Mit dem Handtuch trocknen\nReihenfolge egal. Zu zweit waschen geht auch.\nHöhe von Podest und dir: [Podest hoch] [Podest runter] [Mich hoch] [Mich runter] auf der Tafel. Fertig: [Fertig]\nSchwamm und Handtuch an Desktop/Handy: Use gedrückt halten\n[RESET] am Regal legt die Sachen zurück. 3 weitere Waschplätze unterwegs."
         },
         {
           "key": "guide.shop.title",
@@ -17778,6 +17978,46 @@
         {
           "key": "wash.button.meDown",
           "text": "Mich runter"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①Einschäumen"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "Flasche auf den Rücken"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②Mit Händen rubbeln"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "Schaum verteilen"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②Mit Schwamm reiben"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "Use gedrückt halten"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③Abduschen"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "Schön sauber"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "Geht mit einer Hand oder dem Schwamm"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "Flasche: Use, Schwamm: Use halten"
         }
       ]
     },
@@ -20600,7 +20840,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "散步弄脏了？帮狗狗洗干净吧。\n<color=#B5432A>1</color> 在洗澡台的板子上按狗狗的名字 → 它会站到踏板上\n<color=#B5432A>2</color> 用海绵搓出满满的泡泡\n<color=#B5432A>3</color> 淋浴: 用 Use 开关水。把泡泡冲掉\n<color=#B5432A>4</color> 用毛巾擦干收尾\n顺序随意。两个人也能一起洗。\n台子和自己的高度: 板上的 [台子升高] [台子降低] [自己升高] [自己降低]　结束: [结束]\n海绵・毛巾在 Desktop・手机上: 按住 Use\n架子上的 [RESET] 让工具归位。沿途还有 3 处洗澡台。"
+          "text": "散步弄脏了？帮狗狗洗干净吧。\n<color=#B5432A>1</color> 在洗澡台的板子上按狗狗的名字 → 它会站到踏板上\n<color=#B5432A>2</color> 用瓶子挤泡，再用手搓（海绵也行）\n<color=#B5432A>3</color> 淋浴: 用 Use 开关水。把泡泡冲掉\n<color=#B5432A>4</color> 用毛巾擦干收尾\n顺序随意。两个人也能一起洗。\n台子和自己的高度: 板上的 [台子升高] [台子降低] [自己升高] [自己降低]　结束: [结束]\n海绵・毛巾在 Desktop・手机上: 按住 Use\n架子上的 [RESET] 让工具归位。沿途还有 3 处洗澡台。"
         },
         {
           "key": "guide.shop.title",
@@ -20741,6 +20981,46 @@
         {
           "key": "wash.button.meDown",
           "text": "自己降低"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①抹上泡沫"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "用瓶子挤到背上"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②用手搓搓"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "用手把泡沫抹开"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②用海绵搓搓"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "按住 Use"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③用淋浴冲洗"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "哗啦一下，干干净净"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "单手或海绵也能洗"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "瓶子按 Use，海绵按住 Use"
         }
       ]
     },
@@ -23563,7 +23843,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "¿Se ensució en el paseo? Dale un baño.\n<color=#B5432A>1</color> Pulsa el nombre del perro en el tablero del lavadero - sube a la tarima\n<color=#B5432A>2</color> Frota con la esponja para hacer mucha espuma\n<color=#B5432A>3</color> Ducha: Use abre y cierra el agua. Aclara la espuma\n<color=#B5432A>4</color> Sécalo con la toalla\nEn el orden que quieras. También entre dos.\nAltura de la base y la tuya: [Subir base] [Bajar base] [Subirme] [Bajarme] en el tablero. Terminar: [Terminar]\nEsponja y toalla en Desktop/móvil: mantén Use\n[RESET] en el estante devuelve las cosas. 3 lavaderos más en el camino."
+          "text": "¿Se ensució en el paseo? Dale un baño.\n<color=#B5432A>1</color> Pulsa el nombre del perro en el tablero del lavadero - sube a la tarima\n<color=#B5432A>2</color> Espuma del bote y frota con la mano (o esponja)\n<color=#B5432A>3</color> Ducha: Use abre y cierra el agua. Aclara la espuma\n<color=#B5432A>4</color> Sécalo con la toalla\nEn el orden que quieras. También entre dos.\nAltura de la base y la tuya: [Subir base] [Bajar base] [Subirme] [Bajarme] en el tablero. Terminar: [Terminar]\nEsponja y toalla en Desktop/móvil: mantén Use\n[RESET] en el estante devuelve las cosas. 3 lavaderos más en el camino."
         },
         {
           "key": "guide.shop.title",
@@ -23704,6 +23984,46 @@
         {
           "key": "wash.button.meDown",
           "text": "Bajarme"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①Pon espuma"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "Del bote al lomo"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②Frota con la mano"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "Extiende la espuma"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②Frota con esponja"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "Mantén Use"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③Aclara con la ducha"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "¡Y bien limpio!"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "Lava con una mano o con la esponja"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "Bote: Use. Esponja: mantén Use"
         }
       ]
     },
@@ -26526,7 +26846,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Sali par la promenade ? Lave ton chien.\n<color=#B5432A>1</color> Appuie sur le nom du chien sur le panneau du lavoir - il monte sur le caillebotis\n<color=#B5432A>2</color> Frotte avec l'éponge pour faire mousser\n<color=#B5432A>3</color> Douche : Use ouvre et ferme l'eau. Rince la mousse\n<color=#B5432A>4</color> Sèche avec la serviette\nDans l'ordre que tu veux. À deux aussi.\nHauteur du socle et la tienne : [Socle plus haut] [Socle plus bas] [Moi plus haut] [Moi plus bas] sur le panneau. Fin : [Terminé]\nÉponge et serviette sur Desktop/téléphone : garde Use enfoncé\n[RESET] sur l'étagère range les outils. 3 autres lavoirs en chemin."
+          "text": "Sali par la promenade ? Lave ton chien.\n<color=#B5432A>1</color> Appuie sur le nom du chien sur le panneau du lavoir - il monte sur le caillebotis\n<color=#B5432A>2</color> Mousse au flacon, frotte à la main/l'éponge\n<color=#B5432A>3</color> Douche : Use ouvre et ferme l'eau. Rince la mousse\n<color=#B5432A>4</color> Sèche avec la serviette\nDans l'ordre que tu veux. À deux aussi.\nHauteur du socle et la tienne : [Socle plus haut] [Socle plus bas] [Moi plus haut] [Moi plus bas] sur le panneau. Fin : [Terminé]\nÉponge et serviette sur Desktop/téléphone : garde Use enfoncé\n[RESET] sur l'étagère range les outils. 3 autres lavoirs en chemin."
         },
         {
           "key": "guide.shop.title",
@@ -26667,6 +26987,46 @@
         {
           "key": "wash.button.meDown",
           "text": "Moi plus bas"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①Mets la mousse"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "Du flacon sur le dos"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②Frotte à la main"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "Étale la mousse"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②Frotte à l'éponge"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "Garde Use enfoncé"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③Rince à la douche"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "Et hop, tout propre"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "D'une main ou à l'éponge, ça marche"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "Flacon : Use. Éponge : garde Use"
         }
       ]
     },
@@ -29489,7 +29849,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Sujou no passeio? Dê um banho no seu cachorro.\n<color=#B5432A>1</color> Aperte o nome do cachorro no painel do lavadouro - ele sobe no estrado\n<color=#B5432A>2</color> Esfregue com a esponja até fazer muita espuma\n<color=#B5432A>3</color> Chuveiro: Use liga e desliga a água. Enxágue a espuma\n<color=#B5432A>4</color> Seque com a toalha\nNa ordem que quiser. Dá para lavar a dois.\nAltura da base e a sua: [Subir base] [Descer base] [Subir eu] [Descer eu] no painel. Fim: [Concluir]\nEsponja e toalha no Desktop/celular: segure Use\n[RESET] na prateleira guarda as coisas. Mais 3 lavadouros no caminho."
+          "text": "Sujou no passeio? Dê um banho no seu cachorro.\n<color=#B5432A>1</color> Aperte o nome do cachorro no painel do lavadouro - ele sobe no estrado\n<color=#B5432A>2</color> Espuma do frasco e esfregue com a mão (ou esponja)\n<color=#B5432A>3</color> Chuveiro: Use liga e desliga a água. Enxágue a espuma\n<color=#B5432A>4</color> Seque com a toalha\nNa ordem que quiser. Dá para lavar a dois.\nAltura da base e a sua: [Subir base] [Descer base] [Subir eu] [Descer eu] no painel. Fim: [Concluir]\nEsponja e toalha no Desktop/celular: segure Use\n[RESET] na prateleira guarda as coisas. Mais 3 lavadouros no caminho."
         },
         {
           "key": "guide.shop.title",
@@ -29630,6 +29990,46 @@
         {
           "key": "wash.button.meDown",
           "text": "Descer eu"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①Passe espuma"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "Do frasco nas costas"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②Esfregue com a mão"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "Espalhe a espuma"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②Esfregue com esponja"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "Segure Use"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③Enxágue no chuveiro"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "Pronto, bem limpinho"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "Dá com uma mão ou com a esponja"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "Frasco: Use. Esponja: segure Use"
         }
       ]
     },
@@ -32452,7 +32852,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Sporco dalla passeggiata? Fai il bagno al tuo cane.\n<color=#B5432A>1</color> Premi il nome del cane sul pannello del lavatoio - sale sulla pedana\n<color=#B5432A>2</color> Strofina con la spugna per fare tanta schiuma\n<color=#B5432A>3</color> Doccia: Use apre e chiude l'acqua. Sciacqua la schiuma\n<color=#B5432A>4</color> Asciuga con l'asciugamano\nIn qualsiasi ordine. Anche in due.\nAltezza della pedana e la tua: [Alza pedana] [Abbassa pedana] [Alzami] [Abbassami] sul pannello. Fine: [Fine]\nSpugna e asciugamano su Desktop/telefono: tieni premuto Use\n[RESET] sulla mensola rimette a posto gli attrezzi. Altri 3 lavatoi lungo il percorso."
+          "text": "Sporco dalla passeggiata? Fai il bagno al tuo cane.\n<color=#B5432A>1</color> Premi il nome del cane sul pannello del lavatoio - sale sulla pedana\n<color=#B5432A>2</color> Schiuma dal flacone, strofina a mano (o spugna)\n<color=#B5432A>3</color> Doccia: Use apre e chiude l'acqua. Sciacqua la schiuma\n<color=#B5432A>4</color> Asciuga con l'asciugamano\nIn qualsiasi ordine. Anche in due.\nAltezza della pedana e la tua: [Alza pedana] [Abbassa pedana] [Alzami] [Abbassami] sul pannello. Fine: [Fine]\nSpugna e asciugamano su Desktop/telefono: tieni premuto Use\n[RESET] sulla mensola rimette a posto gli attrezzi. Altri 3 lavatoi lungo il percorso."
         },
         {
           "key": "guide.shop.title",
@@ -32593,6 +32993,46 @@
         {
           "key": "wash.button.meDown",
           "text": "Abbassami"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①Metti la schiuma"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "Dal flacone sul dorso"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②Strofina a mano"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "Stendi la schiuma"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②Strofina con spugna"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "Tieni premuto Use"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③Sciacqua con doccia"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "Tutto pulito"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "Va bene una mano o la spugna"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "Flacone: Use. Spugna: tieni Use"
         }
       ]
     },
@@ -35415,7 +35855,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Pobrudził się na spacerze? Wykąp swojego psa.\n<color=#B5432A>1</color> Naciśnij imię psa na tablicy myjni - wejdzie na podest\n<color=#B5432A>2</color> Szoruj gąbką, aż będzie dużo piany\n<color=#B5432A>3</color> Prysznic: Use włącza i wyłącza wodę. Spłucz pianę\n<color=#B5432A>4</color> Wytrzyj ręcznikiem\nW dowolnej kolejności. Można też we dwoje.\nWysokość podestu i twoja: [Podest wyżej] [Podest niżej] [Mnie wyżej] [Mnie niżej] na tablicy. Koniec: [Koniec]\nGąbka i ręcznik na Desktopie/telefonie: przytrzymaj Use\n[RESET] na półce odkłada przybory. Jeszcze 3 myjnie po drodze."
+          "text": "Pobrudził się na spacerze? Wykąp swojego psa.\n<color=#B5432A>1</color> Naciśnij imię psa na tablicy myjni - wejdzie na podest\n<color=#B5432A>2</color> Piana z butelki, szoruj ręką/gąbką\n<color=#B5432A>3</color> Prysznic: Use włącza i wyłącza wodę. Spłucz pianę\n<color=#B5432A>4</color> Wytrzyj ręcznikiem\nW dowolnej kolejności. Można też we dwoje.\nWysokość podestu i twoja: [Podest wyżej] [Podest niżej] [Mnie wyżej] [Mnie niżej] na tablicy. Koniec: [Koniec]\nGąbka i ręcznik na Desktopie/telefonie: przytrzymaj Use\n[RESET] na półce odkłada przybory. Jeszcze 3 myjnie po drodze."
         },
         {
           "key": "guide.shop.title",
@@ -35556,6 +35996,46 @@
         {
           "key": "wash.button.meDown",
           "text": "Mnie niżej"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①Nałóż pianę"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "Z butelki na grzbiet"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②Szoruj dłonią"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "Rozprowadź pianę"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②Szoruj gąbką"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "Przytrzymaj Use"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③Spłucz prysznicem"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "I czyściutko"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "Jedną ręką albo gąbką też umyjesz"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "Butelka: Use, gąbka: trzymaj Use"
         }
       ]
     },
@@ -38382,7 +38862,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "散步弄髒了？幫狗狗洗乾淨吧。\n<color=#B5432A>1</color> 在洗澡台的板子上按狗狗的名字 → 牠會站到踏板上\n<color=#B5432A>2</color> 用海綿搓出滿滿的泡泡\n<color=#B5432A>3</color> 淋浴: 用 Use 開關水。把泡泡沖掉\n<color=#B5432A>4</color> 用毛巾擦乾收尾\n順序隨意。兩個人也能一起洗。\n台子和自己的高度: 板上的 [台子升高] [台子降低] [自己升高] [自己降低]　結束: [結束]\n海綿・毛巾在 Desktop・手機上: 按住 Use\n架子上的 [RESET] 讓工具歸位。沿途還有 3 處洗澡台。"
+          "text": "散步弄髒了？幫狗狗洗乾淨吧。\n<color=#B5432A>1</color> 在洗澡台的板子上按狗狗的名字 → 牠會站到踏板上\n<color=#B5432A>2</color> 用瓶子擠泡，再用手搓（海綿也行）\n<color=#B5432A>3</color> 淋浴: 用 Use 開關水。把泡泡沖掉\n<color=#B5432A>4</color> 用毛巾擦乾收尾\n順序隨意。兩個人也能一起洗。\n台子和自己的高度: 板上的 [台子升高] [台子降低] [自己升高] [自己降低]　結束: [結束]\n海綿・毛巾在 Desktop・手機上: 按住 Use\n架子上的 [RESET] 讓工具歸位。沿途還有 3 處洗澡台。"
         },
         {
           "key": "guide.shop.title",
@@ -38523,6 +39003,46 @@
         {
           "key": "wash.button.meDown",
           "text": "自己降低"
+        },
+        {
+          "key": "wash.guide.step1",
+          "text": "①抹上泡沫"
+        },
+        {
+          "key": "wash.guide.step1.sub",
+          "text": "用瓶子擠到背上"
+        },
+        {
+          "key": "wash.guide.step2",
+          "text": "②用手搓搓"
+        },
+        {
+          "key": "wash.guide.step2.sub",
+          "text": "用手把泡沫抹開"
+        },
+        {
+          "key": "wash.guide.step2.flat",
+          "text": "②用海綿搓搓"
+        },
+        {
+          "key": "wash.guide.step2.flat.sub",
+          "text": "按住 Use"
+        },
+        {
+          "key": "wash.guide.step3",
+          "text": "③用淋浴沖洗"
+        },
+        {
+          "key": "wash.guide.step3.sub",
+          "text": "嘩啦一下，乾乾淨淨"
+        },
+        {
+          "key": "wash.guide.help",
+          "text": "單手或海綿也能洗"
+        },
+        {
+          "key": "wash.guide.help.flat",
+          "text": "瓶子按 Use，海綿按住 Use"
         }
       ]
     }

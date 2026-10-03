@@ -57,6 +57,23 @@ namespace KominkaHillside.Editor
             ("runoffRate", 3f),
             ("runoffStep", 2f),
             ("runoffCellGain", 1f),   // 4 → 1 (2026-10-02 round 2): セルはシャワーで流したセルの隣 1 周だけ (連鎖なし)。4 だとマスクより先に清潔になりうる
+            // IMP-DOG-039 手洗い (docs/plans/2026-10-03-hand-wash.md §8.1、§13 が優先。試作値で Play で決め直す):
+            //   ボトル 1 回分の泡の塊と、素手の泡立て (泡のある所だけ)・送り手の速さ・受信の手の距離 (Owner だけ)・自分の泡の輪の期限。
+            //   handCellSpreadReach は §13.3 で廃止、handMaxSegment (受信のカプセルの長さの上限) は §13.1 で追加
+            ("bottleRadius", 0.10f),   // 2026-10-03 measured (100g1 trace): the part colliders stand ~0.057 m off the coat on the back, so 0.06 painted nothing on the mask; the sponge reaches with 0.11
+            ("bottleFoamRate", 2.8f),
+            ("handRadius", 0.10f),     // same stand-off: a hand resting on the collider surface must still reach the coat
+            ("handFoamRate", 1.2f),
+            ("handFoamMin", 0.12f),
+            ("handSpreadStep", 2f),
+            ("handSpreadReach", 0.015f),
+            ("handStartFoam", 0.1f),
+            ("handMinSpeed", 0.05f),
+            ("handMaxSpeed", 3f),
+            ("handVerifyRadius", 0.5f),
+            ("handReachMeters", 2f),
+            ("ownFoamSeconds", 3f),
+            ("handMaxSegment", 0.35f),
         };
 
         static void WriteDirtTuning(KH_DogWash wash, DogTarget target)

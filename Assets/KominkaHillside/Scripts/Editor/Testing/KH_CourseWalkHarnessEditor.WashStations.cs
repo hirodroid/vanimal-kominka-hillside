@@ -25,7 +25,7 @@ namespace KominkaHillside.Editor
     public static partial class KH_CourseWalkHarnessEditor
     {
         static readonly string[] WssKeys = { "River", "Upper", "Hillside" };
-        static readonly string[] WssKinds = { "Sponge", "Shower", "Towel" };
+        static readonly string[] WssKinds = { "Sponge", "Shower", "Towel", "Bottle" };   // IMP-DOG-039: + KH_WashBottle_{key}_0 (tool 4)
         const string WssRootName = "KH_WashStations";
 
         class WssStation { public string key; public Transform root; public Transform[] t, home; public UdonBehaviour[] u; public UdonBehaviour reset; }
@@ -186,7 +186,7 @@ namespace KominkaHillside.Editor
                 {
                     string name = "KH_Wash" + WssKinds[i] + "_" + key + "_0";
                     w.t[i] = st.Find(name);
-                    if (w.t[i] == null) throw new InvalidOperationException(st.name + "/" + name + " missing");
+                    if (w.t[i] == null) throw new InvalidOperationException(st.name + "/" + name + " missing (run Wash/11)");
                     w.u[i] = w.t[i].GetComponent<UdonBehaviour>();
                     if (w.u[i] == null) throw new InvalidOperationException(name + " has no UdonBehaviour (KH_WashTool)");
                     w.home[i] = WsRef(w.u[i], "home") as Transform;

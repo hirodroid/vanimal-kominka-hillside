@@ -14,7 +14,7 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 - 犬の初期の汚れは 0 (本番値)。汚れを流す確認は、散歩のあと (A-5) に洗い場へ戻って行う。
 - 項目の元になった詳細チェック表: [川の設計書](../plans/2026-09-27-river-play-and-floating-fetch.md) (川 #1〜#36)、[フリスビーどこでも](../plans/2026-09-28-frisbee-anywhere.md) (川設計書 続き #37〜#48)、[地図の設計書](../plans/2026-09-27-map-and-travel.md) (地図設計書 #1〜#9、呼ぶ F.7 #10〜#15)、[メニュー計画](../plans/2026-09-23-menu-rebuild.md)、[散歩計画](../plans/2026-09-20-free-walk.md)、[集合計画](../plans/2026-09-20-menu-gather-stations.md)、[洗い場の呼び出しと高さ](../plans/2026-10-01-wash-call-and-height.md)、[6 匹フリスビー](../plans/2026-09-24-frisbee-six-dogs.md)。
 
-## A. PCVR 1 人 (165 項目)
+## A. PCVR 1 人 (170 項目)
 
 > **2026-10-02 ユーザー確認 (総合判断)**: 「PCVR 1 人 138 — これはもう基本全部見たからOKだよ」。A-2〜A-10 は、この総合判断により確認済みとして扱う (項目別の結果の記録はない。下の結果欄は埋めない)。**A-1 (すすぎ改善、`f9ed660`) は今日の実装のため、この発言に含まれない (ユーザー回答 2026-10-02、未 Play)。未確認のまま残す。** この判断を 2 人・Desktop・Quest 3・iOS (B〜E) の合格に読み替えない。
 
@@ -39,6 +39,11 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | A0-25 | 自動写真: 撫でる・ボールを持ってくる・フリスビーを取る・集合などで写真が撮れ、門の看板 A の隣のボードと、ヘッダーの [写真] の副画面に新しい順で出るか (8 枚、いちばん古い写真が置き換わるか)。ボードの位置・文字の大きさが読めるか。設定の [写真: ON / OFF] で撮影が止まり、戻るか。撮影の一瞬の引っかかりがないか。ボードに VRChat カメラを近づけて撮れるか。 | [IMP-WLD-005](../development/issues/IMP-WLD-005-auto-photo-and-gallery.md) | |
 | A0-26 | 場所を決めて呼ぶ: VR でマーカーが手の高さに追従し、膝・胸の上に置くと犬がそこへ浮いて寝るか。斜面でも確定でき、赤い印や「平らな場所が必要です」が出ないか。呼び終わった (起こした) 犬が地面へ戻るか。高く置いて寝ている犬に別の犬が重なっても、置いた高さから落ちないか。(A89 の読み替え) | [IMP-DOG-032](../development/issues/IMP-DOG-032-call-placement-free-height.md) | |
 | A0-27 | 上流の橋の入口の急な角 (周回の正方向) をリードの犬を連れて通る。犬が角の先で止まり、飼い主が角を回る間に手元へ走って戻る動きが見えるか (見えたら、何匹・どの向き・どの速さで)。下流の橋の角でも起きるか。1 匹と 6 匹で。 | [IMP-DOG-038](../development/issues/IMP-DOG-038-leash-wait-at-bridge-corner.md) (ClientSim の Course/83d で既知。直し方は未選択) | |
+| A0-28 | 手洗いの図解: 主洗い場のボードの上の 3 コマ (①泡をつける ②手でわしゃわしゃ ③シャワーで流す) だけを見て、説明されずに「最初にボトルを持つ」「次に空いた手で犬に触る」が分かるか。絵の手・泡・ボトルが読めるか、高さ (上端 1.64 m) は見上げすぎないか。 | [IMP-DOG-039](../development/issues/IMP-DOG-039-hand-wash-with-shampoo-bottle.md) | |
+| A0-29 | ボトル: 棚の左手前のピンクのボトルを持ち、口を犬へ向けて Use を 1 回 → 当たった所に泡のかたまりがすぐ見えるか。押したままで 0.4 秒ごとに足されるか。口の向き・届く距離 (0.6 m)・泡の大きさ・手ごたえ (振動・音・粒) は自然か。 | [IMP-DOG-039](../development/issues/IMP-DOG-039-hand-wash-with-shampoo-bottle.md) | |
+| A0-30 | 手で泡立て: ボトルの泡を、空いた手 (道具を持っていない手) でこすると泡が増えて周りへ広がるか。片手で成立するか、両手 (ボトルを棚へ置く) でも洗えるか。広がる速さ・手の当たり判定 (手を毛に入れた時 / 少し浮かせた時)・振動は気持ちよいか。スポンジと比べて「自分の手で世話している」感じがあるか。 | [IMP-DOG-039](../development/issues/IMP-DOG-039-hand-wash-with-shampoo-bottle.md) | |
+| A0-31 | 混ざらないこと: 泡の無い所を触っても泡が出ない (頭は今までどおり撫でになる)、泡の上で手を止めているだけでは増えない、シャワーで流した所は触っても泡が戻らない (泡の縁からは少し入る)、道具を持った手では泡立たない。頭の泡をこすると泡立ちと撫での反応が両方出てよいか (既定は両方)。 | [IMP-DOG-039](../development/issues/IMP-DOG-039-hand-wash-with-shampoo-bottle.md) | |
+| A0-32 | 道中の 3 か所の洗い場にもボトルと図解があり、同じように洗えるか。ボトルを落とす・[RESET] で棚へ戻るか。洗い場に留めていない犬 (散歩中・道中) には素手が効かないこと (道具は今までどおり効く)。 | [IMP-DOG-039](../development/issues/IMP-DOG-039-hand-wash-with-shampoo-bottle.md) | |
 |---|---|---|---|
 | A0-1 | スポーンから入口の看板 A「あそびかた」に気づくか。お散歩 / フリスビー / 洗う / ポイントとトレーナーの 4 枚が読む順に分かり、文字の大きさ・距離が足りるか。昼とナイトモード、立位と座位で読めるか。下半分の余白・本文の小ささが気になるかも書く。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md)<br>[DES-UI-005](../development/issues/DES-UI-005-trainer-and-paid-items-purchase-flow.md) (4 枚目) | |
 | A0-2 | 登り口の看板 B「裏山の地図」が手元の地図と合った絵で、現在地・洗い場・ワープの仕方が分かるか。看板の柱が通行や犬の邪魔にならず、すり抜けた時の違和感がないか。入口の計測プローブの箱が看板の近くに見える (公開前に撤去する開発用) ことは気にしなくてよい。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
@@ -242,7 +247,7 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | A137 | 曲がり角・橋・写真を撮る視点・両眼で、景色が不意に消えないか (LOD・遮蔽)。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md)<br>[DES-ENV-002](../development/issues/DES-ENV-002-longer-course.md) | |
 | A138 | 1 匹・3 匹・6 匹で、橋・両岸・正逆周回・途中開始・帰還が成立し、反対岸の経路へ誤接続しないか。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md) | |
 
-## B. PCVR 2 人以上 (66 項目)
+## B. PCVR 2 人以上 (68 項目)
 
 ユーザー (マスター) と相手 1 人 (必要な項目は 3〜4 人)。相手は別アカウントで、Build & Test をし直した同じ版に入る。役割は「A = マスター、B = 非 Owner」。
 
@@ -341,13 +346,15 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | B64 | ボールの柄: 片方が柄を買って選ぶと、相手の画面でもボールの柄が変わるか。途中参加の人が同じ柄を見るか (Owner の所有が届くまでは基本ボール)。柄を選んだ人の退室、2 人がほぼ同時に違う柄を選んだときの最後の 1 つへのそろい方。 | [DES-DOG-002](../development/issues/DES-DOG-002-toy-behaviour.md) | |
 | B65 | 自動写真: 集合写真が各自の端末で撮れるか。フリスビーのキャッチが他人の端末でも撮れるか (同期された state のエッジが届くか)。写真は各自の端末だけにあり、相手に共有されないか。 | [IMP-WLD-005](../development/issues/IMP-WLD-005-auto-photo-and-gallery.md) | |
 | B66 | 場所を決めて呼ぶ: 片方がマーカーを手の高さに置いて犬を呼んだとき、相手の画面でも犬が同じ高さに浮いて寝るか。起こしたあと両画面で犬が地面へ戻るか。 | [IMP-DOG-032](../development/issues/IMP-DOG-032-call-placement-free-height.md) | |
+| B67 | 手洗いの 2 人: A がボトルで泡をつけ、B が素手で広げる (逆も)。相手の画面でも泡が増えて見えるか、遅れ・食い違い (自分の画面だけ泡が濃い) がどの程度か。片方がシャワーですすいだ所を、もう片方が手でこすっても泡が戻らないか。B (非 Owner) の手洗いで犬が洗い場に留まり続け、B が離れると解放されるか。 | [IMP-DOG-039](../development/issues/IMP-DOG-039-hand-wash-with-shampoo-bottle.md) | |
+| B68 | 手洗いの途中参加と Owner 交代: 手洗い中に 3 人目が入室して泡が同じに見えるか。犬の Owner が退出して交代したあと、泡が大きく減ったり増えたりしないか (交代の瞬間の他人の泡立て 1 秒未満ぶんは落ちうる)。 | [IMP-DOG-039](../development/issues/IMP-DOG-039-hand-wash-with-shampoo-bottle.md) | |
 |---|---|---|---|
 | B54 | 他人が散歩中の犬の首輪に、自分側で「外す」が出ないか。自分が散歩中の犬には出るか。リードの持ち主交代・退出・途中参加のあとも切り替わりが追従するか。 | [IMP-DOG-031](../development/issues/IMP-DOG-031-collar-release-interact-only-own-walk.md) | |
 | B55 | オートナイトモード: 2 人が同じ暗さで進むか。途中参加の人が 3 秒ほどで現在の暗さへ合流するか。最初の人が抜けても夜が昼へ巻き戻らないか。オートの人とマニュアルの人が混ざっても互いに影響しないか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md) | |
 | B56 | 2 人で川沿いにいても、せせらぎが各自の位置で自然に聞こえ (相手の位置に引きずられず)、重なって大きくならないか。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
 | B57 | 犬の Owner と洗い場の Owner が別の人のとき、「おわり」で犬が台から出ていく動きと、台が下りる見え方が両者の画面で同じか。呼ばれていない他人の犬が主洗い場に寄らないか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) | |
 
-## C. Desktop (21 項目)
+## C. Desktop (22 項目)
 
 Desktop (PC 画面、マウスとキーボード) で 1 人。座位・低い視点が関わる項目もここで見る。
 
@@ -387,12 +394,13 @@ Desktop (PC 画面、マウスとキーボード) で 1 人。座位・低い視
 | C19 | さんぽタブが 2 列でスクロール無しか。左右の [左につなぐ] [右につなぐ]・[はずす]・行き先 6 タイル (2 列 × 3 段) をクリックで押せ、文字が収まるか。 | [DES-UI-006](../development/issues/DES-UI-006-walk-menu-html-layout.md) | |
 | C20 | 場所を決めて呼ぶのマーカーが頭の前の距離にそのまま出て、斜面でも確定でき、赤い印が出ないか。 | [IMP-DOG-032](../development/issues/IMP-DOG-032-call-placement-free-height.md) | |
 | C21 | ヘッダーの [写真] からギャラリーを開け、設定の [写真: ON / OFF] が押せるか。門の看板 A の隣の写真ボードをクリックで拡大できるか。 | [IMP-WLD-005](../development/issues/IMP-WLD-005-auto-photo-and-gallery.md) | |
+| C22 | Desktop の手洗い: 図解の②が「スポンジでごしごし」の絵と文になっているか。ボトルは持って Use で視線の先 (2 m まで) に泡がつくか。スポンジで広げられるか (素手の泡立ては Desktop には無い)。 | [IMP-DOG-039](../development/issues/IMP-DOG-039-hand-wash-with-shampoo-bottle.md) | |
 |---|---|---|---|
 | C13 | 散歩していない犬を撫でる・洗うとき、首輪の「外す」に操作を取られないか。散歩中の犬では首輪から外せるか。 | [IMP-DOG-031](../development/issues/IMP-DOG-031-collar-release-interact-only-own-walk.md) | |
 | C14 | 設定のナイトモードの [オート][マニュアル] とスライダーをマウスで操作でき、文字が収まるか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md) | |
 | C15 | 入口の看板 A・B の文字が、Desktop の画面で読める距離と大きさか (立位・座位の低い視点、昼とナイトモード)。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
 
-## D. Quest 3 単体 (27 項目)
+## D. Quest 3 単体 (28 項目)
 
 Quest 3 単体で、PCVR と同じコースを 1 周する。結果欄には OS・VRChat の版・画質・アバター表示設定・発熱の状態も添える。fps は VRChat のデバッグ表示で読む。
 
@@ -448,12 +456,13 @@ Quest 3 単体で、PCVR と同じコースを 1 周する。結果欄には OS�
 | D25 | 洗い場のボードの犬ごとの状態の文字が Quest 3 で読めるか。呼べない犬を押すと理由が出るか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
 | D26 | 自動写真: 撮影の一瞬の引っかかり (fps・発熱) が気にならないか。ヘッダーの [写真] とボード (640×360) が Quest 3 で読めるか。VRChat カメラを寄せた全画面化が動くか。 | [IMP-WLD-005](../development/issues/IMP-WLD-005-auto-photo-and-gallery.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
 | D27 | さんぽタブの 2 列 (左右の 128×52・行き先タイル) がコントローラーで狙えるか。おもちゃタブ上段の [まっすぐ] [曲げる] とボールの柄が読めて押せるか。 | [DES-UI-006](../development/issues/DES-UI-006-walk-menu-html-layout.md)<br>[DES-UI-002](../development/issues/DES-UI-002-frisbee-settings.md)<br>[DES-DOG-002](../development/issues/DES-DOG-002-toy-behaviour.md) | |
+| D28 | Quest の手洗い: コントローラー / ハンドトラッキングの手で泡立てられるか。洗い場で「手洗い無し / 片手 / 両手」の fps の差 (平常 50・混雑 40 を下げないか)。図解の絵と文字が読めるか。 | [IMP-DOG-039](../development/issues/IMP-DOG-039-hand-wash-with-shampoo-bottle.md) | |
 |---|---|---|---|
 | D20 | オートナイトモード: 暗くなる様子と暗さ 0.8 の見やすさが PCVR と同程度か。設定の [オート][マニュアル] が押せ、文字が収まるか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
 | D21 | 川のせせらぎが聞こえ、音量・継ぎ目が問題ないか。入れたことで fps・発熱が変わらないか (Android の容量は AI が測る)。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
 | D22 | 入口の看板 A・B の文字が Quest 3 の解像度で読めるか (圧縮でにじまないか)。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
 
-## E. iOS (iPhone 15 Pro) (25 項目)
+## E. iOS (iPhone 15 Pro) (26 項目)
 
 iPhone 15 Pro で、Touch 操作を中心に確認する。結果欄には iOS・VRChat の版・画質・発熱の状態も添える。
 
@@ -502,6 +511,7 @@ iPhone 15 Pro で、Touch 操作を中心に確認する。結果欄には iOS�
 | E23 | 洗い場のボードの犬ごとの状態の文字が読め、呼べない犬をタップすると理由が出るか。 | [IMP-DOG-037](../development/issues/IMP-DOG-037-wash-call-availability-and-range.md) | |
 | E24 | さんぽタブの 2 列 (スクロール無し) と行き先 6 タイル (2 列 × 3 段) をタップで押せるか。スクロールのドラッグが無くなったことで誤操作がないか。文字が収まるか。 | [DES-UI-006](../development/issues/DES-UI-006-walk-menu-html-layout.md) | |
 | E25 | 自動写真: ヘッダーの [写真] とボードをタップで開け、全画面化が切れていて (BUG-CAM-003) 画面端の [メニュー] が隠れないか。写真が 640×360 で撮れるか。 | [IMP-WLD-005](../development/issues/IMP-WLD-005-auto-photo-and-gallery.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
+| E26 | スマホの手洗い: 図解の②がスポンジ版か。ボトルは持って Use で泡がつくか、スポンジで広げられるか。図解が画面で読めるか。 | [IMP-DOG-039](../development/issues/IMP-DOG-039-hand-wash-with-shampoo-bottle.md) | |
 |---|---|---|---|
 | E18 | 設定のナイトモードの [オート][マニュアル] とスライダーをタッチで押せ、文字が収まるか。暗くなる様子と見やすさが PCVR と同程度か。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
 | E19 | 川のせせらぎが iOS でも聞こえ、音量・継ぎ目が問題ないか。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |

@@ -18,6 +18,11 @@ namespace KominkaHillside
     // still goes to the Owner, whose refusal names the same reason). Every word comes from KD_Language (13 languages, the
     // keys wash.*, dog names shared with the hand menu); without it the builder's Japanese stays.
     //
+    // IMP-DOG-039 (docs/plans/2026-10-03-hand-wash.md §7): the 3-step picture guide above the board (a sibling `Guide`, read
+    // only) takes its words from here too (W 24..33). Step ② and the bottom line depend on the device: VR shows the hand
+    // (picture cell guideUvVr), Desktop / phone the sponge (guideUvFlat). Written at Start and on each language load; the
+    // guide may be missing (older scene) - every field is skipped when null.
+    //
     // Cost: the refresh runs every refreshSeconds only while the local player is within showMeters of the board (otherwise one
     // distance check per farCheckSeconds); a label is written only when its text or look changed.
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -53,13 +58,25 @@ namespace KominkaHillside
         public float farCheckSeconds = 1f;
         [Tooltip("押した犬を「呼んでいます」と出す上限 (秒)。受理・拒否・おわりで先に消える")]
         public float myPickSeconds = 8f;
+        [Tooltip("図解のラベル: Step1・Sub1・Step2・Sub2・Step3・Sub3・Help (この順、7)。null なら図解なし")]
+        public TextMeshProUGUI[] guideLabels;
+        [Tooltip("図解の絵 ①②③ (3)。② の uvRect を端末で替える")]
+        public RawImage[] guidePics;
+        [Tooltip("② の絵の区画 (VR: 手)")]
+        public Rect guideUvVr = new Rect(0.25f, 0f, 0.25f, 1f);
+        [Tooltip("② の絵の区画 (Desktop / スマホ: スポンジ)")]
+        public Rect guideUvFlat = new Rect(0.75f, 0f, 0.25f, 1f);
+        [Tooltip("ハーネス専用: true で図解を VR の表示にする (_ApplyGuide で反映)。通常は false")]
+        public bool debugVr;
 
         // Word indices (wordKeys / words; the builder writes both in this order)
         public const int WPick = 0, WRule = 1, WCalling = 2, WHere = 3, WNameReason = 4, WBusy = 5, WHeights = 6;
         public const int WStCallable = 7, WStComing = 8, WStHere = 9, WStCalling = 10, WStLeashedOther = 11, WStOtherStation = 12,
             WStTooFar = 13, WStFetch = 14, WStFrisbee = 15, WStGathering = 16, WStSleepCall = 17, WStWashedOther = 18;
         public const int WEnd = 19, WStandUp = 20, WStandDown = 21, WMeUp = 22, WMeDown = 23;
-        public const int WordCount = 24;
+        public const int WGuideStep1 = 24, WGuideStep1Sub = 25, WGuideStep2 = 26, WGuideStep2Sub = 27, WGuideStep2Flat = 28,
+            WGuideStep2FlatSub = 29, WGuideStep3 = 30, WGuideStep3Sub = 31, WGuideHelp = 32, WGuideHelpFlat = 33;
+        public const int WordCount = 34;
         // Looks of a dog button
         public const int LookCallable = 0, LookHere = 1, LookUnavailable = 2;
 
@@ -101,6 +118,7 @@ namespace KominkaHillside
             int n = dogButtons != null ? dogButtons.Length : 0;
             _dogState = new int[n]; _dogLook = new int[n]; _dogWord = new int[n];
             for (int i = 0; i < n; i++) { _dogState[i] = -1; _dogLook[i] = -1; _dogWord[i] = -1; }
+            _ApplyGuide();   // the builder's Japanese until the first LoadWords
         }
 
         // ================= words =================
@@ -145,6 +163,34 @@ namespace KominkaHillside
             for (int i = 0; _dogWord != null && i < _dogWord.Length; i++) { _dogWord[i] = -1; _dogLook[i] = -1; }
             _shownRange = -1f; _shownHeights = ""; _shown = "";
             _wordsDirty = false;
+            _ApplyGuide();
+        }
+
+        /// <summary>IMP-DOG-039: writes the picture guide's labels and picture ②'s cell for this device (VR: the hand, otherwise
+        /// the sponge; debugVr forces VR for the harness). Local only; the harness flips debugVr and calls this again.</summary>
+        public void _ApplyGuide()
+        {
+            bool vr = debugVr;
+            if (!vr)
+            {
+                VRCPlayerApi lp = Networking.LocalPlayer;
+                vr = Utilities.IsValid(lp) && lp.IsUserInVR();
+            }
+            SetGuideLabel(0, WGuideStep1);
+            SetGuideLabel(1, WGuideStep1Sub);
+            SetGuideLabel(2, vr ? WGuideStep2 : WGuideStep2Flat);
+            SetGuideLabel(3, vr ? WGuideStep2Sub : WGuideStep2FlatSub);
+            SetGuideLabel(4, WGuideStep3);
+            SetGuideLabel(5, WGuideStep3Sub);
+            SetGuideLabel(6, vr ? WGuideHelp : WGuideHelpFlat);
+            if (guidePics != null && guidePics.Length > 1 && guidePics[1] != null) guidePics[1].uvRect = vr ? guideUvVr : guideUvFlat;
+        }
+
+        void SetGuideLabel(int slot, int word)
+        {
+            if (guideLabels == null || slot >= guideLabels.Length || guideLabels[slot] == null) return;
+            string t = W(word);
+            if (!string.IsNullOrEmpty(t)) guideLabels[slot].text = t;   // no word yet (the builder has not written it): keep the label
         }
 
         // ================= press =================

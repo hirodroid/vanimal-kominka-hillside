@@ -34,7 +34,7 @@ namespace KominkaHillside.Editor
         const string BuildReportPath = "Temp/KH_DogWashSetupBuild.json";
         const string VerifyReportPath = "Temp/KH_DogWashSetupVerify.json";
         const string BackupDir = "Temp/imp-dog-025";
-        static readonly string[] Programs = { "KH_DogWash", "KH_WashTool", "KH_WashToolState" };
+        static readonly string[] Programs = { "KH_DogWash", "KH_WashTool", "KH_WashToolState", "KH_HandWash" };
 
         /// <summary>組み立てる犬 (IMP-DOG-030: 6 匹)。bodyMaterials = 胴体 (karada) の sharedMaterials の名前 (Verify が「変えていない」を確かめる。Wash/1 Survey の値)。
         /// heightM = バインドポーズの高さ (m、Wash/1 の bindAabbSizeMeters.z = メッシュの z の幅 × meshToWorldScale。Wash/12 が json と 3% 以内で照合)。
@@ -163,6 +163,9 @@ namespace KominkaHillside.Editor
             "犬ごとの殻の押し出し (_BaseOffset) は毛の長さの表の定数 (材質から比例させていない) — 18 で犬を選び 16 の画像と PCVR で見る。端末別の押し出しは未対応",
             "6 匹の殻が同時に有効なときの描画負荷 (initialDirt 0.6 では全部の犬の殻が最初から有効) と、スプレーの Trigger モジュールが全部の犬の部位 Collider を持つ負荷 — 実機で測る",
             "IMP-DOG-037 ボードの文字の読みやすさと 11 言語 (VRChat の内蔵フォントで描く言語) の実際の幅 (Wash/12 は推定)、呼べる範囲の値が自然か — Play / 実機で見る",
+            "IMP-DOG-039 素手の泡立て (本物の手の追跡・空いた手の判定 GetPickupInHand・手の大きさ・Quest のハンドトラッキング・IK の遅れ)、Owner だけの手の距離の検査と 2 人の見え方 — ClientSim は疑似の手、2 人の PCVR / Quest で見る",
+            "IMP-DOG-039 ボトルの口と粒の見え方、Use で狙った所に泡が付くか (VR は口から、Desktop / スマホは視線) — Play で見る",
+            "IMP-DOG-039 図解 (Guide) の絵が初見で読めるか (特に「空いた手で触る」)、高さ 1.38〜1.64 m の見上げ (座位・低い視点)、昼夜の見え方、13 言語の枠 (ja / en 以外は推定) — 撮影と実機で見る",
         };
 
         // ================================================================ 10
@@ -198,6 +201,11 @@ namespace KominkaHillside.Editor
         {
             public string utc, scene, status, backup, layer = LayerRationale;
             public Vector3 stationPosition; public bool stationKept;
+            // IMP-DOG-039: the bottles, KH_HandWash, the guide picture (its generator version and whether this run rewrote the PNG)
+            public List<string> bottles = new List<string>();
+            public string handWash;
+            public string guideTexture; public int guideArtVersion; public bool guideTextureWritten;
+            public List<string> guides = new List<string>();
             public List<DogBuild> dogs = new List<DogBuild>();
             public List<string> log = new List<string>();
         }
@@ -248,11 +256,18 @@ namespace KominkaHillside.Editor
                 }
                 foreach (var w in washes) { w.tools = tools.ToArray(); EditorUtility.SetDirty(w); }
 
+                // ---- IMP-DOG-039: the dogs' washCalls (a hand stroke from another player needs a held, arrived dog) and KH_HandWash ----
+                var calls = AllStationCalls(ctx.dogsRoot.gameObject.scene).ToArray();
+                foreach (var w in washes) { w.washCalls = (KH_WashStationCall[])calls.Clone(); EditorUtility.SetDirty(w); }
+                r.log.Add("washCalls (" + calls.Length + ", main first) written on " + washes.Count + " KH_DogWash");
+                var handWash = BuildHandWash(ctx.dogsRoot.gameObject.scene, calls, r);
+
                 // ---- KD_DogWanderController.wash (only the built dogs; the others null) ----
                 WireWanders(ctx, washes, r);
 
                 // ---- proxy -> Udon (all proxies wired first, then copied; vrc-udonsharp §4) ----
                 foreach (var w in washes) Copy(w);
+                Copy(handWash);
                 foreach (var t in tools) { Copy(t); if (t.state != null) Copy(t.state); }
                 foreach (var w in ctx.wanders) Copy(w);
 

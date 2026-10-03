@@ -116,6 +116,23 @@ namespace KominkaHillside
     // (one sequence per object, continued by each Owner). Every client logs the accepted events; a Restore makes the mask
     // equal to the cells (= up to dirtSeq) and draws again only the logged events newer than dirtSeq; a received event is
     // drawn only when newer than what the mask holds. A new Owner integrates the logged events its cells lack.
+    //
+    // ---- Hand wash (IMP-DOG-039, docs/plans/2026-10-03-hand-wash.md; §13 overrides §3-§5). Two more kinds on the same
+    // NetStroke (no new synced variable, no new event, the same wire format):
+    //   bottle (4) : a KH_WashTool. One dose = _LocalContact(4, .., bottleSquirtSeconds) + _EndContact(4): a dot of foam only
+    //                (bottleFoamRate, no wet). Received like every tool (HoldsTool).
+    //   hand   (5) : _HandContact from KH_HandWash (the local VR player's free hands at a station's dog). Foam only (handFoamRate),
+    //                and only where foam already is - the LATHER GATE, applied by whoever integrates it from what it holds:
+    //                mask : _LatherGate in the Brush pass, gate = smoothstep(handFoamMin, +0.1, max foam of the texel and its
+    //                       4 neighbours at handSpreadStep texels within handSpreadReach in 3D)
+    //                cells: one gate per stroke from the max foam (before the update) of the cells it reaches (ApplyToCells)
+    //                touchedFoam (that max >= handFoamMin) is what makes it a wash: an untouched hand stroke moves only the
+    //                order (AcceptSender / SetApplied) - no hold, no washer, no effects, no edge, no dirt-count reset.
+    //                Received: every client checks VR, the capsule length (handMaxSegment) and the station (washCalls);
+    //                the Owner alone checks the sender's hands / head (each client sees another avatar differently).
+    // Channels: the sender's history, open segments and send queue are per channel (sponge, shower, towel, bottle, left hand,
+    // right hand); everything that is drawn, logged, recorded or sent carries the kind (ChannelTool). Receivers do not know
+    // left from right, so hand draws are never merged while waiting.
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class KH_DogWash : UdonSharpBehaviour
     {
@@ -123,7 +140,18 @@ namespace KominkaHillside
         public const int ToolShower = 1;
         public const int ToolTowel = 2;
         public const int ToolDirt = 3;       // NetStroke only: the Owner's dirt change (IMP-DOG-029), never a held tool
+        public const int ToolBottle = 4;     // IMP-DOG-039: the shampoo bottle (a KH_WashTool): one dose of foam, a dot
+        public const int ToolHand = 5;       // IMP-DOG-039: the bare hands (KH_HandWash -> _HandContact), never a held tool
         public const int PartCount = 9;
+        // IMP-DOG-039 (hand-wash design §13.4): the sender's local strokes run on channels, not kinds. Contact history, open
+        // segments and the send queue are per channel; the draws, the logs, the records and the wire carry the kind.
+        //   channel 0 sponge, 1 shower, 2 towel, 3 bottle, 4 left hand, 5 right hand  ->  kind 0, 1, 2, 4, 5, 5 (ChannelTool)
+        // ToolDirt (3) is a kind, not a channel: channel 3 is the bottle.
+        const int ChannelCount = 6;
+        const int ChBottle = 3;
+        const int ChHandL = 4;               // + hand (0 = left, 1 = right)
+        const int FoamKeyEffects = ChannelCount;   // FoamNear's cache slot for ContactEffects / received strokes
+        const int OwnFoamMax = 16;           // the own-foam ring (§3.4 / §13.5)
         const int CellCount = 256;
         const int AllowSlots = 16;   // _AllowPart / _PartFoamLimit length in the shaders
         const int BoneSlots = 64;    // _BoneToPart length in the shaders
@@ -233,6 +261,44 @@ namespace KominkaHillside
         public float audioFadeSpeed = 6f;
         public float splashPerSecond = 60f;
         public float foamPuffPerSecond = 20f;
+
+        [Header("Hand wash (IMP-DOG-039, docs/plans/2026-10-03-hand-wash.md。Wash/11 が WashTuning を書く)")]
+        [Tooltip("ボトル 1 回分の泡の半径 (m)")]
+        public float bottleRadius = 0.10f;
+        [Tooltip("ボトルの泡 / s (1 回 = bottleSquirtSeconds 0.25 s)。濡れは足さない")]
+        public float bottleFoamRate = 2.8f;
+        [Tooltip("素手の泡立ての半径 (m)")]
+        public float handRadius = 0.10f;
+        [Tooltip("素手の泡 / s (泡立ての門を通った所だけ)")]
+        public float handFoamRate = 1.2f;
+        [Tooltip("泡立ての門: この泡より下の所には素手で泡が増えない (マスクとセル)。門 = smoothstep(min, min + 0.1, 泡)")]
+        public float handFoamMin = 0.12f;
+        [Tooltip("マスクの門で隣を見る距離 (テクセル)")]
+        public float handSpreadStep = 2f;
+        [Tooltip("マスクの門で数える隣の 3D の上限 (m)。これより遠い隣 (UV の島の境の向こう) は数えない")]
+        public float handSpreadReach = 0.015f;
+        [Tooltip("送り手: 近いセルの泡がこれ以上なら泡立てを送る (自分の最近の泡の輪でも可)")]
+        public float handStartFoam = 0.1f;
+        [Tooltip("送り手: 手のワールドの速さがこれ未満 (置いた手) は泡立てない (m/s)")]
+        public float handMinSpeed = 0.05f;
+        [Tooltip("送り手: 手のワールドの速さがこれ超 (追跡の飛び) は泡立てない (m/s)")]
+        public float handMaxSpeed = 3f;
+        [Tooltip("Owner の受信検査: カプセルの両端が送り主のどちらかの手からこの距離以内 (m)")]
+        public float handVerifyRadius = 0.5f;
+        [Tooltip("Owner の受信検査: カプセルの両端が送り主の頭からこの距離以内 (m)")]
+        public float handReachMeters = 2f;
+        [Tooltip("送り手: 自分のボトル・スポンジの泡をこの秒数だけ覚え、受け取ったセルの代わりに泡立ての判定に使う")]
+        public float ownFoamSeconds = 3f;
+        [Tooltip("全員の受信検査: 素手のカプセルの長さの上限 (m)。送り手はこの手前で区間を切る")]
+        public float handMaxSegment = 0.35f;
+        [Tooltip("全洗い場 (Wash/11 が配線)。素手のストロークはこの犬がどれかに留められ着いている時だけ受ける。null / 空なら他人の素手は受けない (自分の手は描く)")]
+        public KH_WashStationCall[] washCalls;
+        [Tooltip("読み取り専用 (ハーネス): この端末で送った泡立てのストローク数")]
+        public int handStrokesIssued;
+        [Tooltip("読み取り専用 (ハーネス、Owner): 受けたが泡に触れていなかった素手のストローク数 (保持・演出を動かさない)")]
+        public int handStrokesInert;
+        [Tooltip("読み取り専用 (ハーネス): 素手の検査で落とした受信ストローク数")]
+        public int handStrokesRejected;
 
         [Header("Runoff (2026-10-02: 流した所の隣に残った泡は自然に流れる。Wash/11 が WashTuning を書く)")]
         [Tooltip("最後のシャワーのストロークからこの秒数、流れる処理を続ける。0 以下で無効")]
@@ -352,6 +418,8 @@ namespace KominkaHillside
         private bool _cellsOk;
         private float[] _allow = new float[AllowSlots];
         private int _allowFor = -2;
+        private bool _latherOn;          // IMP-DOG-039: _LatherGate as last written (z = 1); written only when it changes
+        private Vector4 _latherVec;
         private float _foamGrowEase = 0.7f;   // read from the mask material in Start (the shader's value is the truth)
 
         private bool _gotFirst;          // this client holds a state (seeded it as Owner, or received it)
@@ -456,6 +524,7 @@ namespace KominkaHillside
         private bool[] _relValid = new bool[SenderSlots];
         private int[] _relSeq = new int[SenderSlots];
         private int _acceptSlot = -1;     // AcceptSender's slot of the last accepted stroke
+        private float _acceptPrevLast;    // that slot's _sndLast before AcceptSender moved it (an inert hand stroke puts it back)
         const float ReleaseGrace = 0.6f;
 
         // Harness read-outs: Restore passes run / replay entries drawn / strokes re-integrated at a handover.
@@ -491,24 +560,35 @@ namespace KominkaHillside
         private int _runoffPasses;
         private int _runoffCellPasses;
 
-        // Contact history per tool (mesh space, converted at the frame of contact).
-        private bool[] _hValid = new bool[3];
-        private int[] _hCollider = new int[3];
-        private Vector3[] _hMesh = new Vector3[3];
-        private float[] _hTime = new float[3];
+        // Contact history per channel (mesh space, converted at the frame of contact). IMP-DOG-039: channels, not kinds.
+        private bool[] _hValid = new bool[ChannelCount];
+        private int[] _hCollider = new int[ChannelCount];
+        private Vector3[] _hMesh = new Vector3[ChannelCount];
+        private float[] _hTime = new float[ChannelCount];
+        // IMP-DOG-039 §13.5: per hand, the last world contact point and its time (the hand's world speed)
+        private bool[] _hwValid = new bool[2];
+        private Vector3[] _hwPos = new Vector3[2];
+        private float[] _hwTime = new float[2];
+        // IMP-DOG-039 §13.5: the own-foam ring - the local player's own bottle / sponge foam (part, mesh point, radius in mesh
+        // units, Time.time). Never fed or extended by hand strokes; expires after ownFoamSeconds; the own shower clears entries.
+        private int[] _ofPart = new int[OwnFoamMax];
+        private Vector3[] _ofPos = new Vector3[OwnFoamMax];
+        private float[] _ofRad = new float[OwnFoamMax];
+        private float[] _ofAt = new float[OwnFoamMax];
+        private int _ofNext;
 
-        // Outgoing segments: one open slot per tool, closed into a small queue, sent at most 8 Hz.
-        private bool[] _segOpen = new bool[3];
-        private int[] _segPart = new int[3];
-        private Vector3[] _segFrom = new Vector3[3];
-        private Vector3[] _segTo = new Vector3[3];
-        private float[] _segSec = new float[3];
-        private float[] _segRad = new float[3];
-        private float[] _segPath = new float[3];
-        private float[] _segStart = new float[3];
-        private float[] _segLast = new float[3];
-        private bool[] _segCarry = new bool[3];
-        private int[] _qTool = new int[QueueMax];
+        // Outgoing segments: one open slot per channel, closed into a small queue, sent at most 8 Hz.
+        private bool[] _segOpen = new bool[ChannelCount];
+        private int[] _segPart = new int[ChannelCount];
+        private Vector3[] _segFrom = new Vector3[ChannelCount];
+        private Vector3[] _segTo = new Vector3[ChannelCount];
+        private float[] _segSec = new float[ChannelCount];
+        private float[] _segRad = new float[ChannelCount];
+        private float[] _segPath = new float[ChannelCount];
+        private float[] _segStart = new float[ChannelCount];
+        private float[] _segLast = new float[ChannelCount];
+        private bool[] _segCarry = new bool[ChannelCount];
+        private int[] _qCh = new int[QueueMax];     // the channel (ChannelTool gives the kind when it is sent / logged)
         private int[] _qPart = new int[QueueMax];
         private int[] _qFrom = new int[QueueMax];
         private int[] _qTo = new int[QueueMax];
@@ -536,11 +616,14 @@ namespace KominkaHillside
         private float _foamTarget;
         private float _showerUntil;
         private float _scrubUntil;
+        private float _foamOnlyUntil;    // IMP-DOG-039: the foam loop alone (bottle dose, lathering hand), never mixed with the shower's
         private float _splashAcc;
         private float _puffAcc;
-        private int _foamNearPart = -1;
-        private float _foamNearAt = -100f;
-        private float _foamNearValue;
+        // FoamNear's 0.1 s cache, per key (IMP-DOG-039 §13.5: the two hands touching one part at two places must not share it):
+        // keys 0..ChannelCount-1 = the local channels, FoamKeyEffects = the effects / received strokes.
+        private int[] _fnPart = new int[ChannelCount + 1];
+        private float[] _fnAt = new float[ChannelCount + 1];
+        private float[] _fnValue = new float[ChannelCount + 1];
 
         // ---- Getting dirty (IMP-DOG-029) ----
         const float DirtUnit = 0.002f;        // one step of a sent dirt change (7 bit signed: +-0.126 per event)
@@ -630,6 +713,7 @@ namespace KominkaHillside
         private int _idRinseReach;
         private int _idRunoffStep;
         private int _idRunoffAmount;
+        private int _idLatherGate;
 
         void Start()
         {
@@ -654,9 +738,12 @@ namespace KominkaHillside
             _idRinseReach = VRCShader.PropertyToID("_RinseReach");
             _idRunoffStep = VRCShader.PropertyToID("_RunoffStep");
             _idRunoffAmount = VRCShader.PropertyToID("_RunoffAmount");
+            _idLatherGate = VRCShader.PropertyToID("_LatherGate");
 
             if (meshToWorldScale <= 0f) meshToWorldScale = 1f;
             for (int i = 0; i < SenderSlots; i++) { _sndId[i] = -1; _sndLast[i] = -1e9f; }
+            for (int i = 0; i < OwnFoamMax; i++) _ofAt[i] = -1e9f;      // IMP-DOG-039: an empty ring (Time.time starts near 0)
+            for (int i = 0; i <= ChannelCount; i++) { _fnPart[i] = -1; _fnAt[i] = -100f; }
             EnsureArrays();
             BuildIndex();
 
@@ -677,6 +764,8 @@ namespace KominkaHillside
                 if (cellTex != null) _maskMat.SetTexture(_idCellTex, cellTex);
                 _maskMat.SetFloatArray(_idBoneToPart, b2p);
                 _maskMat.SetFloatArray(_idAllowPart, _allow);
+                _maskMat.SetVector(_idLatherGate, Vector4.zero);   // IMP-DOG-039: off until a hand stroke (whatever the asset holds)
+                _latherOn = false;
                 _foamGrowEase = Mathf.Clamp(_maskMat.GetFloat(_idFoamGrowEase), 0f, 0.95f);
             }
             if (_shellMat != null)
@@ -889,30 +978,173 @@ namespace KominkaHillside
 
         // ================= Entry points =================
 
+        // The kinds a wash stroke may carry (NetStroke, logs, records). ToolDirt (3) is not one: it has its own path.
+        bool WashKind(int tool)
+        {
+            return tool == ToolSponge || tool == ToolShower || tool == ToolTowel || tool == ToolBottle || tool == ToolHand;
+        }
+
+        // A held tool's channel (0, 1, 2 -> the same; the bottle -> 3); -1 for anything else (the hands have a channel per
+        // hand, ChHandL + hand, and never come through the tool entries).
+        int ToolChannel(int tool)
+        {
+            if (tool == ToolSponge || tool == ToolShower || tool == ToolTowel) return tool;
+            if (tool == ToolBottle) return ChBottle;
+            return -1;
+        }
+
+        // channel 0, 1, 2, 3, 4, 5 -> kind 0, 1, 2, 4, 5, 5 (design §13.4).
+        int ChannelTool(int ch)
+        {
+            if (ch < ChBottle) return ch;
+            if (ch == ChBottle) return ToolBottle;
+            return ToolHand;
+        }
+
         // Preferred entry (KH_WashTool): this frame's contact point only. It is converted to mesh space now, and the
         // capsule runs from this tool's previous mesh point (same collider, within SegmentGap) to it. Two tools of the
-        // same kind in one player's two hands share this history (a limitation of the prototype).
+        // same kind in one player's two hands share this history (a limitation of the prototype; the bare hands do not,
+        // they have a channel each).
         public void _LocalContact(int tool, int colliderIndex, Vector3 worldPoint, float seconds, float radiusMeters)
         {
-            if (!_ready || tool < ToolSponge || tool > ToolTowel || !ColliderUsable(colliderIndex)) return;
+            int ch = ToolChannel(tool);
+            if (!_ready || ch < 0 || !ColliderUsable(colliderIndex)) return;
             Vector3 m = partBones[colliderIndex].InverseTransformPoint(worldPoint);
             m = boneToMesh[colliderIndex].MultiplyPoint3x4(m);
             float now = Time.time;
-            Vector3 from = (_hValid[tool] && _hCollider[tool] == colliderIndex && now - _hTime[tool] <= SegmentGap) ? _hMesh[tool] : m;
-            _hValid[tool] = true;
-            _hCollider[tool] = colliderIndex;
-            _hMesh[tool] = m;
-            _hTime[tool] = now;
-            Stroke(tool, colliderIndex, from, m, worldPoint, seconds, radiusMeters);
+            Vector3 from = (_hValid[ch] && _hCollider[ch] == colliderIndex && now - _hTime[ch] <= SegmentGap) ? _hMesh[ch] : m;
+            _hValid[ch] = true;
+            _hCollider[ch] = colliderIndex;
+            _hMesh[ch] = m;
+            _hTime[ch] = now;
+            Stroke(tool, ch, colliderIndex, from, m, worldPoint, seconds, radiusMeters, true);
         }
 
         // The tool lost contact / Use was released: end this tool's capsule and its outgoing segment now, so the next
         // contact does not join two points across the gap.
         public void _EndContact(int tool)
         {
-            if (tool < ToolSponge || tool > ToolTowel) return;
-            _hValid[tool] = false;
-            if (_ready) CloseSegment(tool, false);
+            int ch = ToolChannel(tool);
+            if (ch < 0) return;
+            _hValid[ch] = false;
+            if (_ready) CloseSegment(ch, false);
+        }
+
+        // IMP-DOG-039 (design §3.3 / §13.5): one bare hand's contact this sample (KH_HandWash, the local VR player's free hand;
+        // hand 0 = left, 1 = right). The point goes to mesh space at once and the hand's own channel (ChHandL + hand) keeps the
+        // history, so the two hands never share a capsule. A lather stroke is issued only when
+        //   - the hand moves: the TRACKED hand's world speed (handWorld) since this hand's previous sample (within SegmentGap)
+        //     is within handMinSpeed..handMaxSpeed (a hand held still in the world on a moving leg is not rubbing; a tracking jump
+        //     is not either). worldPoint (the coat point under the hand) is only where it paints, and
+        //   - foam is there as far as this client knows: the nearest cell's foam >= max(handStartFoam, handFoamMin) (this
+        //     channel's FoamNear cache; the max makes the sender's cell test never looser than the Owner's gate, Codex review
+        //     of the implementation, 4), or the own-foam ring (the own bottle / sponge foam of the last ownFoamSeconds, before the
+        //     cells arrive).
+        // Otherwise only the history moves and nothing is drawn or sent. True = a lather stroke was issued (the caller's haptic).
+        // The mask (_LatherGate) and the Owner's cells gate the foam again by what they hold, so this judgement only decides
+        // whether to send and to give feedback; a wrong or forged one cannot grow foam where there is none.
+        // A stroke allowed by the ring alone (the cells this client holds do not show foam yet) is drawn, sent and gives the light
+        // effects, but does not count as washing here: no _lastWasherId, _localStrokeAt (_StrokeAgeOf) or last-stroke time.
+        // Whether it was a wash is the Owner's call (touchedFoam -> the synced hold).
+        public bool _HandContact(int hand, int colliderIndex, Vector3 worldPoint, Vector3 handWorld, float seconds)
+        {
+            if (!_ready || hand < 0 || hand > 1 || !ColliderUsable(colliderIndex)) return false;
+            int ch = ChHandL + hand;
+            float now = Time.time;
+            Vector3 m = boneToMesh[colliderIndex].MultiplyPoint3x4(partBones[colliderIndex].InverseTransformPoint(worldPoint));
+            Vector3 from = (_hValid[ch] && _hCollider[ch] == colliderIndex && now - _hTime[ch] <= SegmentGap) ? _hMesh[ch] : m;
+            _hValid[ch] = true;
+            _hCollider[ch] = colliderIndex;
+            _hMesh[ch] = m;
+            _hTime[ch] = now;
+            float dt = now - _hwTime[hand];
+            bool moving = false;
+            if (_hwValid[hand] && dt <= SegmentGap && dt > 1e-4f)
+            {
+                float speed = (handWorld - _hwPos[hand]).magnitude / dt;
+                moving = speed >= handMinSpeed && speed <= handMaxSpeed;
+            }
+            _hwValid[hand] = true;
+            _hwPos[hand] = handWorld;
+            _hwTime[hand] = now;
+            if (!moving) return false;
+            int part = partOfCollider[colliderIndex];
+            bool cellsFoam = FoamNear(ch, part, m) >= Mathf.Max(handStartFoam, handFoamMin);
+            if (!cellsFoam && !OwnFoamNear(part, m)) return false;
+            // One step longer than a receiver accepts (a hitch): start over here instead of drawing / sending the long capsule
+            if ((m - from).magnitude * meshToWorldScale > handMaxSegment * 0.9f)
+            {
+                from = m;
+                CloseSegment(ch, false);
+            }
+            Stroke(ToolHand, ch, colliderIndex, from, m, worldPoint, seconds, -1f, cellsFoam);
+            handStrokesIssued++;
+            return true;
+        }
+
+        // IMP-DOG-039: the hand stopped touching (KH_HandWash calls it once when the contact closes): end its capsule and its
+        // outgoing segment now. The other hand's channel is untouched.
+        public void _EndHand(int hand)
+        {
+            if (hand < 0 || hand > 1) return;
+            int ch = ChHandL + hand;
+            _hValid[ch] = false;
+            _hwValid[hand] = false;
+            if (_ready) CloseSegment(ch, false);
+        }
+
+        // The own-foam ring (§13.5): a recent own bottle / sponge stroke (same part or a neighbour of it) within its radius plus
+        // the hand's radius of the mesh point.
+        bool OwnFoamNear(int part, Vector3 meshPoint)
+        {
+            float now = Time.time;
+            float handR = handRadius / meshToWorldScale;
+            int nb = partNeighbors != null && part >= 0 && part < partNeighbors.Length ? partNeighbors[part] : 0;
+            for (int i = 0; i < OwnFoamMax; i++)
+            {
+                if (now - _ofAt[i] > ownFoamSeconds) continue;
+                int q = _ofPart[i];
+                if (q != part && (q < 0 || q >= PartCount || ((nb >> q) & 1) == 0)) continue;
+                float r = _ofRad[i] + handR;
+                if ((_ofPos[i] - meshPoint).sqrMagnitude <= r * r) return true;
+            }
+            return false;
+        }
+
+        // The own bottle / sponge stroke ends at meshPoint: refresh an entry it falls into (same part, within half its radius),
+        // else take the oldest slot. Hand strokes never come here.
+        void AddOwnFoam(int part, Vector3 meshPoint, float radMesh)
+        {
+            float now = Time.time;
+            for (int i = 0; i < OwnFoamMax; i++)
+            {
+                if (now - _ofAt[i] > ownFoamSeconds || _ofPart[i] != part) continue;
+                float h = 0.5f * _ofRad[i];
+                if ((_ofPos[i] - meshPoint).sqrMagnitude > h * h) continue;
+                _ofPos[i] = meshPoint;
+                _ofRad[i] = Mathf.Max(_ofRad[i], radMesh);
+                _ofAt[i] = now;
+                return;
+            }
+            int k = _ofNext;
+            _ofNext = (_ofNext + 1) % OwnFoamMax;
+            _ofPart[k] = part;
+            _ofPos[k] = meshPoint;
+            _ofRad[k] = radMesh;
+            _ofAt[k] = now;
+        }
+
+        // The own shower reaches meshPoint: the ring entries it rinses are gone (another player's shower is caught up by the
+        // ownFoamSeconds expiry and the synced cells). No part test: the shower has no part gate.
+        void ClearOwnFoam(Vector3 meshPoint, float radMesh)
+        {
+            float reach = radMesh * Mathf.Max(1f, rinseReach);
+            for (int i = 0; i < OwnFoamMax; i++)
+            {
+                if (_ofAt[i] < -1e8f) continue;
+                float r = reach + _ofRad[i];
+                if ((_ofPos[i] - meshPoint).sqrMagnitude <= r * r) _ofAt[i] = -1e9f;
+            }
         }
 
         // Contract entry (§6). Both ends are converted with the CURRENT bone pose, so a worldFrom from an earlier
@@ -925,19 +1157,24 @@ namespace KominkaHillside
         // Same as _LocalStroke with an explicit radius in metres. radius <= 0 = the tool's default.
         public void _LocalStrokeR(int tool, int colliderIndex, Vector3 worldFrom, Vector3 worldTo, float seconds, float radiusMeters)
         {
-            if (!_ready || tool < ToolSponge || tool > ToolTowel || !ColliderUsable(colliderIndex)) return;
+            int ch = ToolChannel(tool);
+            if (!_ready || ch < 0 || !ColliderUsable(colliderIndex)) return;
             Transform bone = partBones[colliderIndex];
             Matrix4x4 mat = boneToMesh[colliderIndex];
             Vector3 a = mat.MultiplyPoint3x4(bone.InverseTransformPoint(worldFrom));
             Vector3 b = mat.MultiplyPoint3x4(bone.InverseTransformPoint(worldTo));
-            _hValid[tool] = true;
-            _hCollider[tool] = colliderIndex;
-            _hMesh[tool] = b;
-            _hTime[tool] = Time.time;
-            Stroke(tool, colliderIndex, a, b, worldTo, seconds, radiusMeters);
+            _hValid[ch] = true;
+            _hCollider[ch] = colliderIndex;
+            _hMesh[ch] = b;
+            _hTime[ch] = Time.time;
+            Stroke(tool, ch, colliderIndex, a, b, worldTo, seconds, radiusMeters, true);
         }
 
-        void Stroke(int tool, int colliderIndex, Vector3 a, Vector3 b, Vector3 worldTo, float seconds, float radiusMeters)
+        // tool = the kind (drawn, effects); ch = the sender's channel (the outgoing segment). counts = this stroke is washing as
+        // far as this client knows (every tool stroke; a hand stroke only when the cells it holds show foam, _HandContact): only
+        // then do the washer (_lastWasherId), _localStrokeAt (_StrokeAgeOf) and the last-stroke time move. The draw, the send,
+        // the effects, the shell and _busyUntil (B1e: Update per-frame for the open segment and the audio fade) always happen.
+        void Stroke(int tool, int ch, int colliderIndex, Vector3 a, Vector3 b, Vector3 worldTo, float seconds, float radiusMeters, bool counts)
         {
             if (!(seconds > 0f)) return;
             seconds = Mathf.Min(seconds, 0.25f);   // a long hitch must not become one huge dab
@@ -946,13 +1183,19 @@ namespace KominkaHillside
             int part = partOfCollider[colliderIndex];
 
             QueueOrDraw(tool, part, a, b, rad, seconds);
-            AddToSegment(tool, part, a, b, rad, seconds);
+            AddToSegment(ch, part, a, b, rad, seconds);
+            // IMP-DOG-039 §13.5: the own-foam ring - fed by the own bottle and sponge only, cleared by the own shower
+            if (tool == ToolBottle || tool == ToolSponge) AddOwnFoam(part, b, rad / meshToWorldScale);
+            else if (tool == ToolShower) ClearOwnFoam(b, rad / meshToWorldScale);
 
-            VRCPlayerApi lp = Networking.LocalPlayer;
-            if (Utilities.IsValid(lp)) _lastWasherId = lp.playerId;
-            _localStrokeAt = Time.time;
-            _lastStrokePart = part;
-            _lastStrokeTime = Time.time;
+            if (counts)
+            {
+                VRCPlayerApi lp = Networking.LocalPlayer;
+                if (Utilities.IsValid(lp)) _lastWasherId = lp.playerId;
+                _localStrokeAt = Time.time;
+                _lastStrokePart = part;
+                _lastStrokeTime = Time.time;
+            }
             _lastActivity = Time.time;
             _lastWetActivity = _lastActivity;          // IMP-DOG-034 B1c
             _busyUntil = _lastActivity + BusyHold;     // IMP-DOG-034 B1e: per-frame while washing (segments, audio)
@@ -969,7 +1212,7 @@ namespace KominkaHillside
         {
             if (!_ready) return;
             if (tool == ToolDirt) { ReceiveDirt(part, from, to, amount, seq, strokeEpoch); return; }
-            if (tool < ToolSponge || tool > ToolTowel || part < 0 || part >= PartCount) return;
+            if (!WashKind(tool) || part < 0 || part >= PartCount) return;
             if (from < 0 || from > PackMax || to < 0 || to > PackMax) return;
             if (amount < 0 || (amount >> 20) != 0) return;
             int ms = amount & 0xFFF;
@@ -987,37 +1230,94 @@ namespace KominkaHillside
             if (strokeEpoch != 0 && strokeEpoch != epoch) return;
 
             if (dogRoot != null && Vector3.Distance(caller.GetPosition(), dogRoot.position) > maxWasherDistance) return;
-            // The own echo comes from this client's own _LocalContact (only the local holder calls it): trusted.
-            if (!caller.isLocal && !HoldsTool(caller.playerId, tool)) return;
+            bool hand = tool == ToolHand;
+            Vector3 a = Unpack(part, from);
+            Vector3 b = Unpack(part, to);
+            // The own echo comes from this client's own _LocalContact / _HandContact (only the local player calls them): trusted.
+            // IMP-DOG-039 §13.1: a bare-hand stroke has no tool to hold; every client checks what is the same everywhere (the
+            // sender is in VR, the capsule is short, this dog is held and arrived at an active station: synced). The bottle and
+            // the other tools keep the hold check (HoldsTool: a KH_WashTool with tool == ToolBottle).
+            if (!caller.isLocal)
+            {
+                if (hand)
+                {
+                    if (!HandSyncedOk(caller.IsUserInVR(), (b - a).magnitude * meshToWorldScale)) { handStrokesRejected++; return; }
+                }
+                else if (!HoldsTool(caller.playerId, tool)) return;
+            }
             float sec = ms * 0.001f;
             if (!AcceptSender(caller.playerId, seq, sec)) return;
             int slot = _acceptSlot;
+            bool owner = Networking.IsOwner(gameObject);
+            // IMP-DOG-039 §13.1: the hands' / head's distance differs per client (a remote player's tracking is this client's
+            // view of the avatar), so only the Owner judges it (plus the dog's own station hold). Order and budget above are
+            // already spent on every client alike. A stroke the Owner drops was drawn elsewhere: a finite, visual-only extra
+            // of foam where foam already shows (the mask gate); cells, hold and the clean edge are not touched.
+            if (hand && owner && !caller.isLocal && !HandOwnerOk(caller, part, a, b))
+            {
+                handStrokesRejected++;
+                if (slot >= 0) _sndLast[slot] = _acceptPrevLast;   // no wash seen from it (_StrokeAgeOf)
+                return;
+            }
 
             float rad = rmm * 0.001f;
-            Vector3 a = Unpack(part, from);
-            Vector3 b = Unpack(part, to);
-            _lastWasherId = caller.playerId;
-            _busyUntil = Time.time + BusyHold;   // IMP-DOG-034 B1e: an accepted stroke brings Update back to per-frame
+            // IMP-DOG-039 §13.2 + Codex review of the implementation (1, 4): what a hand stroke may move here.
+            //   touched = it counts as WASHING on this client: the washer (_lastWasherId), the sender's stroke age (_sndLast ->
+            //             _StrokeAgeOf: the station's auto-release, the leash stop, the reactions) and (Owner) the hold.
+            //             Owner: its cells before the update touch foam (the value ApplyToCells gates with), after its own checks.
+            //             Non-Owner: only the OWN echo, when the cells it holds show foam. Another player's hand stroke is never
+            //             washing on a non-Owner: this client cannot check the hands / head, so it only draws it and plays the
+            //             effects; whether it was a wash reaches everyone through the Owner's synced hold (washMs / washBy, which
+            //             _StrokeAgeOf also reads).
+            //   fx      = the local visuals (effects, shell, last-stroke part / time): the Owner as touched, a non-Owner when the
+            //             nearest received cell shows foam.
+            bool touched = true;
+            bool fx = true;
+            if (hand)
+            {
+                if (owner) touched = HandSourceFoam(part, a, b, rad) >= handFoamMin;
+                else touched = caller.isLocal && FoamNear(FoamKeyEffects, part, b) >= handFoamMin;
+                fx = owner ? touched : FoamNear(FoamKeyEffects, part, b) >= handFoamMin;
+                if (!touched && slot >= 0) _sndLast[slot] = _acceptPrevLast;
+            }
+            if (touched) _lastWasherId = caller.playerId;
+            if (touched || fx) _busyUntil = Time.time + BusyHold;   // IMP-DOG-034 B1e: an accepted stroke brings Update back to per-frame
             // Every client (the own echo too: the Owner's cells take the shower at the echo, so their runoff follows it)
             if (tool == ToolShower) MarkRunoff();
 
             if (!caller.isLocal)
             {
+                // The mask is drawn either way: for a hand its gate (_LatherGate) decides from what this mask holds.
                 QueueOrDraw(tool, part, a, b, rad, sec);
-                _lastStrokePart = part;
-                _lastStrokeTime = Time.time;
-                _lastActivity = Time.time;
-                _lastWetActivity = _lastActivity;   // IMP-DOG-034 B1c
-                ContactEffects(tool, part, MeshToWorld(part, b), b, sec);
-                ShowShell(true);
+                if (fx)
+                {
+                    _lastStrokePart = part;
+                    _lastStrokeTime = Time.time;
+                    _lastActivity = Time.time;
+                    _lastWetActivity = _lastActivity;   // IMP-DOG-034 B1c
+                    ContactEffects(tool, part, MeshToWorld(part, b), b, sec);
+                    ShowShell(true);
+                }
             }
 
-            Record(caller.playerId, seq, epoch, tool, part, a, b, rad, sec);
+            // Codex review of the implementation (2): a non-Owner does not record another player's hand stroke (it could not run
+            // the Owner's checks, and the Owner may have refused it), so Reintegrate never applies one. Consequence: at an Owner
+            // change, up to one sync interval of other players' lather that the old Owner accepted but had not synced yet is
+            // missing from the new Owner's cells (the masks keep it; it is foam on foam). The own hand strokes are recorded (the
+            // local input is trusted, as for the tools).
+            if (!hand || owner || caller.isLocal) Record(caller.playerId, seq, epoch, tool, part, a, b, rad, sec);
             // Only the Owner integrates (a non-Owner's own sums would be overwritten by an older receive anyway; it
             // keeps the record instead and re-integrates when it becomes the Owner).
-            if (!Networking.IsOwner(gameObject)) return;
+            if (!owner) return;
             ApplyToCells(tool, part, a, b, rad, sec);
             SetApplied(caller.playerId, seq);
+            if (!touched)
+            {
+                // §13.2: the order is recorded (SetApplied, AcceptSender); nothing else - no hold, no washer, no edge, no reset of
+                // the dirt counts, no sync of its own (appliedSeqs go out with the next one).
+                handStrokesInert++;
+                return;
+            }
             riverBlocksEdge = false;   // net: owner-only. Washed by a tool: the clean edge may fire again (IMP-DOG-029)
             // (review 3, 2-1) a wash started: what was counted before it is not applied after it.
             _walkAcc = 0f;
@@ -1115,9 +1415,14 @@ namespace KominkaHillside
             for (int i = 0; i < _rcCount; i++)
             {
                 if (_rcEpoch[i] != epoch || !NotApplied(_rcSender[i], _rcSeq[i])) continue;
-                ApplyToCells(_rcTool[i], _rcPart[i], _rcA[i], _rcB[i], _rcRad[i], _rcSec[i]);
+                // IMP-DOG-039 §13.2: a hand stroke that touches no foam in these cells (now, in this order) only moves the order.
+                // A recorded hand stroke of another player (recorded only while this client was the Owner and had checked it)
+                // also passes the every-client checks again on the current state (HandRecordOk); one that fails only moves the order.
+                bool touched = false;
+                if (_rcTool[i] != ToolHand || HandRecordOk(_rcSender[i], _rcA[i], _rcB[i]))
+                    touched = ApplyToCells(_rcTool[i], _rcPart[i], _rcA[i], _rcB[i], _rcRad[i], _rcSec[i]);
                 SetApplied(_rcSender[i], _rcSeq[i]);
-                riverBlocksEdge = false;
+                if (touched) riverBlocksEdge = false;
                 _reintCount++;
             }
         }
@@ -1156,6 +1461,78 @@ namespace KominkaHillside
             return false;
         }
 
+        // ---- IMP-DOG-039 §13.1: bare-hand strokes from others ----
+        // Every client (the same answer everywhere: synced or sent values only): the sender is in VR, the capsule is no longer
+        // than handMaxSegment, and this dog is held and arrived at an active station (washCalls; none wired = never).
+        bool HandSyncedOk(bool senderVr, float segMeters)
+        {
+            if (!senderVr || !(segMeters <= handMaxSegment)) return false;
+            return HeldAtStation();
+        }
+
+        bool HeldAtStation()
+        {
+            if (washCalls == null || dogIndex < 0) return false;
+            for (int i = 0; i < washCalls.Length; i++)
+            {
+                KH_WashStationCall c = washCalls[i];
+                if (c != null && c.gameObject.activeInHierarchy && c._HeldDog() == dogIndex && c._Arrived()) return true;
+            }
+            return false;
+        }
+
+        // Reintegrate (a new Owner): a recorded hand stroke is applied only when its sender is this client (trusted local input)
+        // or, for another player, the every-client checks hold on the current state: the sender is still here and in VR, the
+        // capsule is short, the dog is held and arrived at an active station, and the dog's own station hold.
+        bool HandRecordOk(int sender, Vector3 meshA, Vector3 meshB)
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (Utilities.IsValid(lp) && lp.playerId == sender) return true;
+            VRCPlayerApi p = VRCPlayerApi.GetPlayerById(sender);
+            if (!Utilities.IsValid(p)) return false;
+            return HandSyncedOk(p.IsUserInVR(), (meshB - meshA).magnitude * meshToWorldScale) && DogStationHold();
+        }
+
+        // Owner only: the dog's own station hold as well (KD_DogWanderController.StationLocked: on the stand of the station
+        // holding it now), so a stale heldDog alone does not pass. voiceDog is this dog's controller (the builder wires it);
+        // null = refused (Codex review of the implementation, 3: an unwired dog takes no hand strokes from others).
+        bool DogStationHold()
+        {
+            return voiceDog != null && voiceDog.StationLocked;
+        }
+
+        // Owner only: both capsule ends within handVerifyRadius of one of the sender's hands (each end may be near either hand)
+        // and within handReachMeters of the sender's head, plus the dog's station hold.
+        bool HandOwnerOk(VRCPlayerApi caller, int part, Vector3 meshA, Vector3 meshB)
+        {
+            Vector3 wa = MeshToWorld(part, meshA);
+            Vector3 wb = MeshToWorld(part, meshB);
+            Vector3 hl = caller.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand).position;
+            Vector3 hr = caller.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand).position;
+            Vector3 head = caller.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+            return HandNear(hl, hr, head, wa, wb) && DogStationHold();
+        }
+
+        bool HandNear(Vector3 handL, Vector3 handR, Vector3 head, Vector3 worldA, Vector3 worldB)
+        {
+            float v2 = handVerifyRadius * handVerifyRadius;
+            float h2 = handReachMeters * handReachMeters;
+            if (!((worldA - handL).sqrMagnitude <= v2 || (worldA - handR).sqrMagnitude <= v2)) return false;
+            if (!((worldB - handL).sqrMagnitude <= v2 || (worldB - handR).sqrMagnitude <= v2)) return false;
+            return (worldA - head).sqrMagnitude <= h2 && (worldB - head).sqrMagnitude <= h2;
+        }
+
+        /// <summary>Harness only (Course/100g H-hand-reject; ClientSim has no other CallingPlayer): the full check a bare-hand
+        /// stroke from another player gets on the Owner - the every-client part (VR, segment length, held and arrived at an active
+        /// station) and the Owner's part (both ends near a hand and the head, the dog's station hold) - for the given values.
+        /// Pure: reads the arguments and the station state, changes nothing (no counters). Local.</summary>
+        public bool _DebugHandPlausible(bool senderVr, Vector3 handL, Vector3 handR, Vector3 head, int part, Vector3 worldA, Vector3 worldB)
+        {
+            if (!_ready || part < 0 || part >= PartCount) return false;
+            if (!HandSyncedOk(senderVr, (worldB - worldA).magnitude)) return false;
+            return HandNear(handL, handR, head, worldA, worldB) && DogStationHold();
+        }
+
         // Per sender: seq must move forward (a replay or a reorder is dropped), and the contact time is limited to
         // BudgetRate seconds per second (the attribute rate limit bounds the call count, not what each call claims).
         bool AcceptSender(int playerId, int seq, float sec)
@@ -1185,13 +1562,40 @@ namespace KominkaHillside
             if (tokens < sec) { _sndTokens[slot] = tokens; return false; }
             _sndTokens[slot] = tokens - sec;
             _sndSeq[slot] = seq;
+            _acceptPrevLast = _sndLast[slot];
             _sndLast[slot] = now;
             _acceptSlot = slot;
             return true;
         }
 
         // The player of the last stroke seen here (own or received); -1 before any or after that player left.
-        public int _WasherPlayerId() { return _lastWasherId; }
+        // IMP-DOG-039 (Codex review of the implementation, 1): a non-Owner no longer takes another player's hand stroke as a
+        // washer (it cannot check it); that washing reaches it through the Owner's synced hold. So when the synced holder
+        // (washBy) washed clearly more recently than the local washer (synced age + SyncedWasherMargin < the local one's age),
+        // the holder is the washer. With the tools both name the same strokes (the margin keeps two washers from flickering).
+        public int _WasherPlayerId()
+        {
+            if (!washSeen || washBy < 0 || washBy == _lastWasherId) return _lastWasherId;
+            float synced = SyncedAgeOf(washBy);
+            if (synced > 1e8f) return _lastWasherId;
+            if (_lastWasherId < 0 || synced + SyncedWasherMargin < _StrokeAgeOf(_lastWasherId)) return washBy;
+            return _lastWasherId;
+        }
+        const float SyncedWasherMargin = 1f;
+
+        // IMP-DOG-039: seconds since the stroke that set the synced hold, when playerId is its holder (washBy); 1e9 otherwise,
+        // or when that hold was ended by _ReleaseHold. Authoritative: washMs / washSeen / washBy are written only by the Owner
+        // of this object, and only for a stroke that passed every check there (a hand stroke: the Owner's hand / head / station
+        // checks and touchedFoam). Server milliseconds, int subtraction (the _WashHold convention); a small negative age (the
+        // Owner's clock a moment ahead) counts as 0.
+        float SyncedAgeOf(int playerId)
+        {
+            if (!washSeen || washBy != playerId || playerId < 0) return 1e9f;
+            if (_released && washMs - _releaseMs <= 0) return 1e9f;
+            int ageMs = Networking.GetServerTimeInMilliseconds() - washMs;
+            if (ageMs < -1000) return 1e9f;
+            return Mathf.Max(0, ageMs) * 0.001f;
+        }
 
         /// <summary>IMP-DOG-037: the player whose stroke set the current wash hold (synced washBy; -1 when none). Pair it with
         /// _WashHold(): both come from the same synced state, so every client and every Owner give the same answer.</summary>
@@ -1199,12 +1603,19 @@ namespace KominkaHillside
 
         // Seconds (Time.time) since that player's last stroke seen here: the own strokes as they are drawn, the others'
         // as their NetStroke is accepted. 1e9 when there is no record (never, or evicted from the sender table).
+        // IMP-DOG-039 (Codex review of the implementation, 1): which values count -
+        //   local  : _localStrokeAt (own strokes that are washing as far as this client knows) and _sndLast (strokes accepted
+        //            here; another player's hand stroke counts only on the Owner, after its checks and touchedFoam - a
+        //            non-Owner restores _sndLast for it),
+        //   synced : the Owner's hold (SyncedAgeOf: washMs when washBy == playerId), the authoritative record of a wash.
+        // The smaller wins, so a non-Owner (e.g. the wash station's Owner deciding the auto-release) still sees another player's
+        // real hand washing, one sync later, and never an unverified one.
         public float _StrokeAgeOf(int playerId)
         {
             float now = Time.time;
-            float age = 1e9f;
+            float age = SyncedAgeOf(playerId);
             VRCPlayerApi lp = Networking.LocalPlayer;
-            if (Utilities.IsValid(lp) && lp.playerId == playerId && _localStrokeAt > -1e8f) age = now - _localStrokeAt;
+            if (Utilities.IsValid(lp) && lp.playerId == playerId && _localStrokeAt > -1e8f) age = Mathf.Min(age, now - _localStrokeAt);
             for (int i = 0; i < SenderSlots; i++)
             {
                 if (_sndId[i] != playerId || _sndLast[i] < -1e8f) continue;
@@ -1234,7 +1645,8 @@ namespace KominkaHillside
         // The last washer's head (the dog looks there); the dog's own position when nobody is known.
         public Vector3 _WasherPosition()
         {
-            VRCPlayerApi p = _lastWasherId >= 0 ? VRCPlayerApi.GetPlayerById(_lastWasherId) : null;
+            int id = _WasherPlayerId();   // IMP-DOG-039: the synced holder when it washed clearly later than the local washer
+            VRCPlayerApi p = id >= 0 ? VRCPlayerApi.GetPlayerById(id) : null;
             if (Utilities.IsValid(p)) return p.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
             return dogRoot != null ? dogRoot.position : transform.position;
         }
@@ -1344,7 +1756,11 @@ namespace KominkaHillside
         {
             _pdCount = 0;
             _qCount = 0;
-            for (int t = 0; t < 3; t++) { _segOpen[t] = false; _segCarry[t] = false; _hValid[t] = false; }
+            for (int t = 0; t < ChannelCount; t++) { _segOpen[t] = false; _segCarry[t] = false; _hValid[t] = false; }
+            // IMP-DOG-039: the hands' speed history and the own-foam ring belong to the old state
+            _hwValid[0] = false;
+            _hwValid[1] = false;
+            for (int i = 0; i < OwnFoamMax; i++) _ofAt[i] = -1e9f;
             // Dirt (IMP-DOG-029): the waiting draws, the unsent event and the Owner's carry / counts belong to the old state.
             DropDirtDraws();
             _dlCount = 0;
@@ -1598,11 +2014,15 @@ namespace KominkaHillside
             DrainPending();
             // While a repaint is due the draw waits: the Restore would wipe it (it runs first in the next Update).
             if (_pdCount == 0 && !_restorePending && !_replaying && !_replayPending && CanBlit()) { DrawBrush(tool, part, a, b, rad, sec); return; }
+            // IMP-DOG-039 §13.4: a hand's draws are never merged. A received hand stroke has no left / right, so two of the same
+            // part may be the two hands far apart; merging would draw one capsule across the body between them. The bottle's
+            // doses are dots (KH_WashTool closes each one) and are not merged into a line either.
+            bool canMerge = tool != ToolHand && tool != ToolBottle;
             int k = _pdCount - 1;
-            if (k >= 0 && _pdTool[k] == tool && _pdPart[k] == part) { MergePending(k, b, rad, sec); return; }
+            if (canMerge && k >= 0 && _pdTool[k] == tool && _pdPart[k] == part) { MergePending(k, b, rad, sec); return; }
             if (_pdCount >= PendMax)
             {
-                for (int i = PendMax - 1; i >= 0; i--)
+                for (int i = PendMax - 1; i >= 0 && canMerge; i--)
                 {
                     if (_pdTool[i] == tool && _pdPart[i] == part) { MergePending(i, b, rad, sec); return; }
                 }
@@ -1676,8 +2096,29 @@ namespace KominkaHillside
             // The shower has no part gate (2026-10-02): water aimed at the shoulder hits the neck / hip collider there, and
             // the shoulder texels of the leg are not that part's neighbours. The sponge / towel keep the neighbour gate.
             SetAllow(shower ? AllowAllKey : part);
+            SetLather(tool == ToolHand);
             VRCGraphics.Blit(_cur, _next, _maskMat, PassBrush);
             Swap();
+        }
+
+        // IMP-DOG-039 §3.4: the Brush pass's lather gate - on for the bare hand only (x = handFoamMin, y = handSpreadStep texels,
+        // z = 1, w = handSpreadReach in mesh units), z = 0 for every other Brush (the tools, the dirt draw: unchanged output).
+        // Written only when it changes (like _allowFor).
+        void SetLather(bool on)
+        {
+            if (!on)
+            {
+                if (!_latherOn) return;
+                _latherOn = false;
+                _maskMat.SetVector(_idLatherGate, Vector4.zero);
+                return;
+            }
+            Vector4 v = new Vector4(handFoamMin, Mathf.Max(1f, (float)Mathf.RoundToInt(handSpreadStep)), 1f,
+                Mathf.Max(0f, handSpreadReach) / Mathf.Max(1e-4f, meshToWorldScale));
+            if (_latherOn && v.x == _latherVec.x && v.y == _latherVec.y && v.w == _latherVec.w) return;
+            _latherOn = true;
+            _latherVec = v;
+            _maskMat.SetVector(_idLatherGate, v);
         }
 
         // key = a part (that part + its partNeighbors) or AllowAllKey (every part). Cached per key (_allowFor).
@@ -1772,10 +2213,11 @@ namespace KominkaHillside
                 n++;
             }
             _lgCount = n;
+            // IMP-DOG-039: the queue and the open segments are per channel; the log holds the kind (ChannelTool, once, here)
             for (int i = 0; i < _qCount; i++)
-                AddLog(_qTool[i], _qPart[i], Unpack(_qPart[i], _qFrom[i]), Unpack(_qPart[i], _qTo[i]), _qRmm[i] * 0.001f, _qMs[i] * 0.001f, -1);
-            for (int t = 0; t < 3; t++)
-                if (_segOpen[t]) AddLog(t, _segPart[t], _segFrom[t], _segTo[t], _segRad[t], _segSec[t], -1);
+                AddLog(ChannelTool(_qCh[i]), _qPart[i], Unpack(_qPart[i], _qFrom[i]), Unpack(_qPart[i], _qTo[i]), _qRmm[i] * 0.001f, _qMs[i] * 0.001f, -1);
+            for (int t = 0; t < ChannelCount; t++)
+                if (_segOpen[t]) AddLog(ChannelTool(t), _segPart[t], _segFrom[t], _segTo[t], _segRad[t], _segSec[t], -1);
             _replayPending = _lgCount > 0;
             _replaying = false;
         }
@@ -2046,6 +2488,8 @@ namespace KominkaHillside
         {
             if (tool == ToolShower) return showerRadius;
             if (tool == ToolTowel) return towelRadius;
+            if (tool == ToolBottle) return bottleRadius;   // IMP-DOG-039
+            if (tool == ToolHand) return handRadius;
             return spongeRadius;
         }
 
@@ -2061,6 +2505,10 @@ namespace KominkaHillside
         {
             if (tool == ToolShower) return new Vector4(showerDirtRate * sec, showerFoamRate * sec, showerWetRate * sec, 0f);
             if (tool == ToolTowel) return new Vector4(towelDirtRate * sec, towelFoamRate * sec, towelWetRate * sec, 0f);
+            // IMP-DOG-039: shampoo and lathering add foam only (no water, no dirt change); the hand's foam is gated by the
+            // foam already there (the mask's _LatherGate, the cells' gate in ApplyToCells)
+            if (tool == ToolBottle) return new Vector4(0f, bottleFoamRate * sec, 0f, 0f);
+            if (tool == ToolHand) return new Vector4(0f, handFoamRate * sec, 0f, 0f);
             return new Vector4(0f, spongeFoamRate * sec, spongeWetRate * sec, 0f);
         }
 
@@ -2071,9 +2519,21 @@ namespace KominkaHillside
         // (r x rinseReach + cellReach) like wOut on the mask, so the truth never keeps foam the mask has lost. In that outer
         // ring only the foam changes (and the dirt under it through the gate, as the mask's ring does); dirt and wet keep the
         // (r + cellReach) reach of w.
-        void ApplyToCells(int tool, int part, Vector3 a, Vector3 b, float radMeters, float sec)
+        // IMP-DOG-039 §13.3, the bare hand: ONE gate value per stroke, from the foam BEFORE the update of the cells this stroke
+        // reaches (the same set as below: the hit part and its neighbours, within r + cellReach of the capsule) -
+        // src = their maximum, gate = smoothstep(handFoamMin, handFoamMin + 0.1, src), the same gate on every one of them (no
+        // order dependence, no neighbour search). Returns false (and changes nothing) when it touched no foam
+        // (src < handFoamMin, §13.2); true for every other stroke.
+        bool ApplyToCells(int tool, int part, Vector3 a, Vector3 b, float radMeters, float sec)
         {
-            if (!_cellsOk) return;
+            if (!_cellsOk) return tool != ToolHand;   // no cells: a hand touches no foam (HandSourceFoam is 0 as well)
+            float handGate = 1f;
+            if (tool == ToolHand)
+            {
+                float src = HandSourceFoam(part, a, b, radMeters);
+                if (!(src >= handFoamMin)) return false;
+                handGate = SmoothStep01(handFoamMin, handFoamMin + 0.1f, src);
+            }
             EnsureArrays();   // _cellShowered
             _cellsDirty = true;   // IMP-DOG-034 B1a (the callers set _syncDue)
             bool shower = tool == ToolShower;
@@ -2082,7 +2542,7 @@ namespace KominkaHillside
             float reach2 = reach * reach;
             float outer = shower ? Mathf.Max(reach, (radMeters * Mathf.Max(1f, rinseReach) + cellReach) / meshToWorldScale) : reach;
             float outer2 = outer * outer;
-            Vector4 delta = ToolDelta(tool, Dwell(sec, a, b, rMesh) * cellGain);
+            Vector4 delta = ToolDelta(tool, Dwell(sec, a, b, rMesh) * cellGain * handGate);
             Vector4 foamOnly = new Vector4(0f, delta.y, 0f, 0f);
             float gateParam = shower ? Mathf.Clamp01(foamRinseGate) : 0f;
             bool rinsing = delta.x < 0f && delta.y < 0f;   // the shader's `rinsing` reads the uniform _Delta, not the weighted one
@@ -2110,6 +2570,34 @@ namespace KominkaHillside
                     else ApplyCell(c, foamOnly, gateParam, rinsing);
                 }
             }
+            return true;
+        }
+
+        // IMP-DOG-039 §13.3: the largest foam among the cells a hand stroke reaches (the hit part and its partNeighbors, cell
+        // centre within radMeters + cellReach of the capsule a -> b), as they are now. Read only.
+        float HandSourceFoam(int part, Vector3 a, Vector3 b, float radMeters)
+        {
+            if (!_cellsOk || part < 0 || part >= PartCount) return 0f;
+            float reach = (radMeters + cellReach) / meshToWorldScale;
+            float reach2 = reach * reach;
+            int mask = partNeighbors != null && part < partNeighbors.Length ? partNeighbors[part] : 0;
+            Vector3 ab = b - a;
+            float l2 = ab.sqrMagnitude;
+            float src = 0f;
+            for (int q = 0; q < PartCount; q++)
+            {
+                if (q != part && ((mask >> q) & 1) == 0) continue;
+                int end = _partCellStart[q + 1];
+                for (int k = _partCellStart[q]; k < end; k++)
+                {
+                    int c = _partCells[k];
+                    if (!(_foam[c] > src)) continue;
+                    Vector3 p = cellCenter[c];
+                    float t = l2 > 1e-12f ? Mathf.Clamp01(Vector3.Dot(p - a, ab) / l2) : 0f;
+                    if ((p - (a + ab * t)).sqrMagnitude <= reach2) src = _foam[c];
+                }
+            }
+            return src;
         }
 
         // Same reaction as KH_WashMask.shader FragBrush (w = 1): foam growth eases near full, dirt removal is boosted
@@ -2722,6 +3210,7 @@ namespace KominkaHillside
             _maskMat.SetVector(_idDirtHeightFade, new Vector4(_groundZ, _groundZ + full * inv, _groundZ + mid * inv, _groundZ + top * inv));
             _maskMat.SetVector(_idDirtHeightWeight, new Vector4(dirtMidWeight, dirtTopWeight, 1f, 0f));
             SetAllowOnly(part);
+            SetLather(false);   // IMP-DOG-039: the dirt draw is a Brush pass too; a hand's gate must not hold it back
             VRCGraphics.Blit(_cur, _next, _maskMat, PassBrush);
             Swap();
         }
@@ -2737,6 +3226,7 @@ namespace KominkaHillside
 
         // ================= Outgoing =================
 
+        // tool = the sender's CHANNEL here (IMP-DOG-039: every index below is a channel; the kind is ChannelTool(channel)).
         void AddToSegment(int tool, int part, Vector3 a, Vector3 b, float rad, float sec)
         {
             float now = Time.time;
@@ -2748,6 +3238,9 @@ namespace KominkaHillside
                 float chord = (b - _segFrom[tool]).magnitude;
                 float slack = 2f * rad / meshToWorldScale;
                 if (_segPath[tool] + (b - a).magnitude > chord * 1.3f + slack) CloseSegment(tool, true);
+                // IMP-DOG-039 §13.1: a hand capsule longer than handMaxSegment is dropped by every receiver: cut before it
+                // (90 %, for the 10-bit packing), the next one continues from here.
+                else if (tool >= ChHandL && chord * meshToWorldScale > handMaxSegment * 0.9f) CloseSegment(tool, true);
             }
             if (!_segOpen[tool])
             {
@@ -2770,9 +3263,11 @@ namespace KominkaHillside
             _segLast[tool] = now;
         }
 
-        // Into the send queue. A full queue does not drop: the newest queued segment of the same tool and part takes
+        // Into the send queue. A full queue does not drop: the newest queued segment of the same channel and part takes
         // this one (its end moves here and the times add up); only when there is none are the two oldest entries of
-        // the same kind merged, and only as the last resort the oldest is dropped (it is already drawn locally).
+        // the same channel merged, and only as the last resort the oldest is dropped (it is already drawn locally).
+        // IMP-DOG-039: t is the channel. A hand channel is never merged (the merged capsule could pass handMaxSegment and be
+        // dropped by every receiver), nor the bottle's (its doses are dots); see the full-queue rule for them below.
         void CloseSegment(int t, bool carry)
         {
             if (!_segOpen[t]) return;
@@ -2784,22 +3279,37 @@ namespace KominkaHillside
             int packedTo = Pack(part, _segTo[t]);
             if (_qCount >= QueueMax)
             {
-                for (int i = QueueMax - 1; i >= 0; i--)
+                if (t >= ChBottle)
                 {
-                    if (_qTool[i] != t || _qPart[i] != part) continue;
-                    _qTo[i] = packedTo;
-                    _qMs[i] = Mathf.Min(MaxAmountMs, _qMs[i] + ms);
-                    _qRmm[i] = Mathf.Max(_qRmm[i], rmm);
-                    return;
+                    // IMP-DOG-039 (Codex review of the implementation, 6): a bottle / hand entry never evicts a tool 0-2 entry (a
+                    // shower segment lost here is rinsed on this mask but never in the Owner's cells). It takes the place of the
+                    // oldest hand entry, else the oldest bottle entry; with neither, the new entry is dropped (drawn locally).
+                    int victim = -1;
+                    for (int i = 0; i < _qCount && victim < 0; i++) if (_qCh[i] >= ChHandL) victim = i;
+                    for (int i = 0; i < _qCount && victim < 0; i++) if (_qCh[i] == ChBottle) victim = i;
+                    if (victim < 0) return;
+                    for (int i = victim + 1; i < _qCount; i++) CopyQueue(i, i - 1);
+                    _qCount--;
                 }
-                if (!MergeOldestPair())
+                else
                 {
-                    for (int i = 1; i < QueueMax; i++) CopyQueue(i, i - 1);
-                    _qCount = QueueMax - 1;
+                    for (int i = QueueMax - 1; i >= 0; i--)
+                    {
+                        if (_qCh[i] != t || _qPart[i] != part) continue;
+                        _qTo[i] = packedTo;
+                        _qMs[i] = Mathf.Min(MaxAmountMs, _qMs[i] + ms);
+                        _qRmm[i] = Mathf.Max(_qRmm[i], rmm);
+                        return;
+                    }
+                    if (!MergeOldestPair())
+                    {
+                        for (int i = 1; i < QueueMax; i++) CopyQueue(i, i - 1);
+                        _qCount = QueueMax - 1;
+                    }
                 }
             }
             int k = _qCount;
-            _qTool[k] = t;
+            _qCh[k] = t;
             _qPart[k] = part;
             _qFrom[k] = Pack(part, _segFrom[t]);
             _qTo[k] = packedTo;
@@ -2808,12 +3318,12 @@ namespace KominkaHillside
             _qCount++;
         }
 
-        // Frees one queue slot by merging the first adjacent pair of the same tool and part.
+        // Frees one queue slot by merging the first adjacent pair of the same channel and part (never the bottle's or a hand's).
         bool MergeOldestPair()
         {
             for (int i = 0; i + 1 < _qCount; i++)
             {
-                if (_qTool[i] != _qTool[i + 1] || _qPart[i] != _qPart[i + 1]) continue;
+                if (_qCh[i] >= ChBottle || _qCh[i] != _qCh[i + 1] || _qPart[i] != _qPart[i + 1]) continue;
                 _qTo[i] = _qTo[i + 1];
                 _qMs[i] = Mathf.Min(MaxAmountMs, _qMs[i] + _qMs[i + 1]);
                 _qRmm[i] = Mathf.Max(_qRmm[i], _qRmm[i + 1]);
@@ -2826,7 +3336,7 @@ namespace KominkaHillside
 
         void CopyQueue(int from, int to)
         {
-            _qTool[to] = _qTool[from];
+            _qCh[to] = _qCh[from];
             _qPart[to] = _qPart[from];
             _qFrom[to] = _qFrom[from];
             _qTo[to] = _qTo[from];
@@ -2836,7 +3346,7 @@ namespace KominkaHillside
 
         void UpdateSend(float now)
         {
-            for (int t = 0; t < 3; t++)
+            for (int t = 0; t < ChannelCount; t++)   // IMP-DOG-039: channels
             {
                 if (!_segOpen[t]) continue;
                 if (now - _segLast[t] > SegmentGap) CloseSegment(t, false);
@@ -2855,7 +3365,7 @@ namespace KominkaHillside
             if (_qCount == 0)
             {
                 int oldest = -1;
-                for (int t = 0; t < 3; t++)
+                for (int t = 0; t < ChannelCount; t++)
                 {
                     if (!_segOpen[t] || now - _segStart[t] < SendInterval) continue;
                     if (oldest < 0 || _segStart[t] < _segStart[oldest]) oldest = t;
@@ -2864,8 +3374,9 @@ namespace KominkaHillside
             }
             if (_qCount == 0) return;
             int amount = _qMs[0] | (_qRmm[0] << 12);
-            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(NetStroke), _qTool[0], _qPart[0], _qFrom[0], _qTo[0], amount, _seq, epoch);
-            if (!_gotFirst) LogSent(_qTool[0], _qPart[0], _qFrom[0], _qTo[0], _qMs[0], _qRmm[0], _seq);
+            int kind = ChannelTool(_qCh[0]);   // IMP-DOG-039: the wire and the log carry the kind (left / right are not sent)
+            SendCustomNetworkEvent(NetworkEventTarget.All, nameof(NetStroke), kind, _qPart[0], _qFrom[0], _qTo[0], amount, _seq, epoch);
+            if (!_gotFirst) LogSent(kind, _qPart[0], _qFrom[0], _qTo[0], _qMs[0], _qRmm[0], _seq);
             _seq = (_seq + 1) & 0x3FFFFFFF;
             for (int i = 1; i < _qCount; i++) CopyQueue(i, i - 1);
             _qCount--;
@@ -2917,32 +3428,43 @@ namespace KominkaHillside
             return partBones[best].TransformPoint(_meshToBone[best].MultiplyPoint3x4(meshPoint));
         }
 
-        // Foam of the nearest cell of the part (cached 0.1 s: this runs every frame while washing).
-        float FoamNear(int part, Vector3 meshPoint)
+        // Foam of the nearest cell of the part (cached 0.1 s per key: this runs every frame while washing). key = a local
+        // channel (the hands judge with their own) or FoamKeyEffects (the effects and the received strokes).
+        float FoamNear(int key, int part, Vector3 meshPoint)
         {
             float now = Time.time;
-            if (part == _foamNearPart && now - _foamNearAt < 0.1f) return _foamNearValue;
-            _foamNearPart = part;
-            _foamNearAt = now;
-            _foamNearValue = 0f;
-            if (!_cellsOk) return 0f;
-            float bestD = -1f;
-            int end = _partCellStart[part + 1];
-            for (int k = _partCellStart[part]; k < end; k++)
+            if (part == _fnPart[key] && now - _fnAt[key] < 0.1f) return _fnValue[key];
+            _fnPart[key] = part;
+            _fnAt[key] = now;
+            float value = 0f;
+            if (_cellsOk && part >= 0 && part < PartCount)
             {
-                int c = _partCells[k];
-                float d = (cellCenter[c] - meshPoint).sqrMagnitude;
-                if (bestD < 0f || d < bestD) { bestD = d; _foamNearValue = _foam[c]; }
+                float bestD = -1f;
+                int end = _partCellStart[part + 1];
+                for (int k = _partCellStart[part]; k < end; k++)
+                {
+                    int c = _partCells[k];
+                    float d = (cellCenter[c] - meshPoint).sqrMagnitude;
+                    if (bestD < 0f || d < bestD) { bestD = d; value = _foam[c]; }
+                }
             }
-            return _foamNearValue;
+            _fnValue[key] = value;
+            return value;
         }
 
         // Physical cause only (splash, foam bits, contact loops), at the stroke itself - own and received alike.
         void ContactEffects(int tool, int part, Vector3 world, Vector3 meshPoint, float sec)
         {
             float now = Time.time;
-            float foamHere = FoamNear(part, meshPoint);
-            if (tool == ToolShower)
+            float foamHere = FoamNear(FoamKeyEffects, part, meshPoint);
+            if (tool == ToolBottle || tool == ToolHand)
+            {
+                // IMP-DOG-039 §2.5: the foam loop alone (its own deadline, not the shower's fur / foam mix): the bottle for one
+                // dose, a lathering hand while it keeps lathering. Puffs below.
+                _foamOnlyUntil = now + (tool == ToolBottle ? Mathf.Max(0.25f, sec) : 0.2f);
+                if (contactFoam != null) contactFoam.transform.position = world;
+            }
+            else if (tool == ToolShower)
             {
                 _splashAcc += sec * splashPerSecond;
                 int n = Mathf.FloorToInt(_splashAcc);
@@ -2963,7 +3485,15 @@ namespace KominkaHillside
                 _scrubUntil = now + 0.2f;
                 if (scrub != null) scrub.transform.position = world;
             }
-            if (tool == ToolSponge || (tool == ToolShower && foamHere > 0.2f))
+            if (tool == ToolBottle)
+            {
+                if (foamPuff != null)
+                {
+                    foamPuff.transform.position = world;
+                    foamPuff.Emit(6);   // one dose = a small puff (§2.5)
+                }
+            }
+            else if (tool == ToolSponge || tool == ToolHand || (tool == ToolShower && foamHere > 0.2f))
             {
                 _puffAcc += sec * foamPuffPerSecond;
                 int n = Mathf.FloorToInt(_puffAcc);
@@ -2988,11 +3518,12 @@ namespace KominkaHillside
         void UpdateAudio(float now)
         {
             // IMP-DOG-034 B1e: silent and no contact = every level is 0 and stays 0 (the return below, without the reads)
-            if (!_audioOn && now >= _showerUntil && now >= _scrubUntil) return;
+            if (!_audioOn && now >= _showerUntil && now >= _scrubUntil && now >= _foamOnlyUntil) return;
             float step = audioFadeSpeed * Time.deltaTime;
             bool shower = now < _showerUntil;
             _furVol = Mathf.MoveTowards(_furVol, shower ? _furTarget : 0f, step);
-            _foamVol = Mathf.MoveTowards(_foamVol, shower ? _foamTarget : 0f, step);
+            // IMP-DOG-039: the shower's mix while it runs; otherwise the bottle / hand foam loop at contactVolume
+            _foamVol = Mathf.MoveTowards(_foamVol, shower ? _foamTarget : (now < _foamOnlyUntil ? contactVolume : 0f), step);
             _scrubVol = Mathf.MoveTowards(_scrubVol, now < _scrubUntil ? scrubVolume : 0f, step);
             if (_furVol <= 0f && _foamVol <= 0f && _scrubVol <= 0f && !_audioOn) return;   // silent: no cross-behaviour read
             float gain = voiceDog != null ? Mathf.Clamp01(voiceDog.localVoiceGain) : 1f;

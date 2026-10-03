@@ -183,6 +183,12 @@ namespace KominkaHillside.Editor
 
         static void ApplyToolArt(Transform root,int kind)
         {
+            // IMP-DOG-039: the shampoo bottle has no imported model (the 5 FBX have none); it keeps its primitive look.
+            if(kind==KH_DogWash.ToolBottle)
+            {
+                var stale=root.Find("ImportedVisual");if(stale!=null)UnityEngine.Object.DestroyImmediate(stale.gameObject);
+                return;
+            }
             if(!ArtReady)return;
             string asset=kind==KH_DogWash.ToolShower?"Shower":kind==KH_DogWash.ToolSponge?"Sponge":"Towel";
             var art=ArtModel(root,"ImportedVisual",asset);
@@ -246,6 +252,12 @@ namespace KominkaHillside.Editor
                     need(!st.Find(name).GetComponent<MeshRenderer>().enabled,st.name+" old "+name+" hidden");
                 foreach(var tool in st.GetComponentsInChildren<KH_WashTool>(true))
                 {
+                    if(tool.tool==KH_DogWash.ToolBottle)
+                    {
+                        // IMP-DOG-039: primitives only (no imported model, not counted in the 23)
+                        need(tool.transform.Find("ImportedVisual")==null && tool.transform.Find("Body")!=null && tool.transform.Find("Body").GetComponent<MeshRenderer>().enabled,tool.name+" bottle keeps its primitive look (no imported visual)");
+                        continue;
+                    }
                     var art=tool.transform.Find("ImportedVisual");need(art!=null,tool.name+" imported visual");if(art==null)continue;
                     need(art.GetComponentsInChildren<Collider>(true).Length==0,tool.name+" no extra pickup colliders");
                     if(tool.tool==KH_DogWash.ToolShower)

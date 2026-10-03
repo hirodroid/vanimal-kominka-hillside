@@ -1,6 +1,7 @@
 // Wash mask (RGBA = dirt, foam, wet, 1) written with VRCGraphics.Blit(prev, next, material, pass). Never drawn on a
 // dog. Contract: docs/plans/2026-09-30-dog-wash-prototype.md §4 (names, passes, spaces).
 //   Pass 0 Brush   : capsule brush in bind-pose mesh space (position map RGB), weighted _Delta, clamped 0..1
+//                    (the bare hand, IMP-DOG-039: _LatherGate.z = 1 gates the foam growth by the foam already there)
 //   Pass 1 Restore : whole mask from the 16x16 _CellTex (late join / lost RenderTexture), dirt gets its pattern
 //   Pass 2 Decay   : subtract _Decay everywhere (drying)
 //   Pass 3 Runoff  : foam next to rinsed texels (wet >= 0.5, foam < 0.1; 8 neighbours at +-_RunoffStep texels) loses
@@ -38,6 +39,7 @@ Shader "KominkaHillside/Wash Mask"
         _Decay ("Decay (dirt, foam, wet) to subtract", Vector) = (0,0,0,0)
         _DirtHeightFade ("Dirt height fade (ground z, full z, mid z, top z; mesh units)", Vector) = (0,0,0,0)
         _DirtHeightWeight ("Dirt height weight (mid weight, top weight, enabled, -)", Vector) = (0.35,0.05,0,0)
+        _LatherGate ("Lather gate (min foam, neighbour step texels, enabled, 3D neighbour limit mesh units)", Vector) = (0.12,2,0,0.015)
     }
 
     CGINCLUDE
@@ -57,6 +59,9 @@ Shader "KominkaHillside/Wash Mask"
     float _EdgeNoise, _EdgeNoiseScale, _FoamGrowEase;
     float4 _Decay;
     float4 _DirtHeightFade, _DirtHeightWeight;
+    // IMP-DOG-039 (docs/plans/2026-10-03-hand-wash.md §3.4): the bare hand's lather gate. z > 0.5 = on (KH_DogWash.DrawBrush sets
+    // it for the hand only; every other stroke, the dirt draw and the default leave z = 0 and the Brush pass is unchanged).
+    float4 _LatherGate;
 
     // IMP-DOG-029 (decision 2026-09-30): dirt builds from the feet up. The same curve as KH_DogWash.DirtHeightWeight on
     // the bind-pose mesh z (Z-up): 1 up to full, 1 -> mid weight up to mid, -> top weight up to top, then flat.
@@ -82,6 +87,16 @@ Shader "KominkaHillside/Wash Mask"
         if (bone < 0) return 0.0;
         int part = clamp((int)(_BoneToPart[bone] + 0.5), 0, 15);
         return _AllowPart[part] > 0.5 ? 1.0 : 0.0;
+    }
+
+    // IMP-DOG-039: the foam of the neighbour texel at uv for the lather gate; 0 outside the islands or when its mesh point is
+    // farther than _LatherGate.w from p (the neighbour across a UV seam / island border is another place on the body).
+    float LatherNeighbour(float2 uv, float3 p)
+    {
+        float4 q = ReadPos(uv);
+        if (KHWash_BoneIndex(q.a) < 0) return 0.0;
+        if (length(q.rgb - p) > _LatherGate.w) return 0.0;
+        return tex2Dlod(_MainTex, float4(uv, 0, 0)).g;
     }
 
     float4 FragBrush(v2f_img i) : SV_Target
@@ -132,6 +147,20 @@ Shader "KominkaHillside/Wash Mask"
         // Foam: growth slows as it fills (scrubbing the same place keeps building; one pass never tops out).
         float dF = _Delta.y * (_Delta.y < 0 ? wOut : w);
         float ease = dF > 0 ? (1.0 - _FoamGrowEase * foam) : 1.0;
+        // IMP-DOG-039 lather gate (the bare hand only): foam grows only where foam is already visible - this texel or one
+        // _LatherGate.y texels up / down / left / right (the previous mask; no chain inside one pass). Off (z = 0) = this
+        // block is skipped and dF is exactly what it was before.
+        UNITY_BRANCH
+        if (_LatherGate.z > 0.5)
+        {
+            float2 lo = _MainTex_TexelSize.xy * max(_LatherGate.y, 1.0);
+            float src = foam;
+            src = max(src, LatherNeighbour(i.uv + float2(lo.x, 0), p));
+            src = max(src, LatherNeighbour(i.uv - float2(lo.x, 0), p));
+            src = max(src, LatherNeighbour(i.uv + float2(0, lo.y), p));
+            src = max(src, LatherNeighbour(i.uv - float2(0, lo.y), p));
+            dF *= smoothstep(_LatherGate.x, _LatherGate.x + 0.1, src);
+        }
         float foamNew = saturate(foam + dF * ease);
 
         // Dirt: removal is faster under foam (_RinseFoamBoost).

@@ -44,6 +44,7 @@ namespace KominkaHillside.Editor
             catch (Exception e) { req(false, "course stations: check stopped: " + e.GetType().Name + ": " + e.Message); }
             try { CheckStationControlsAll(r, req, scene); }
             catch (Exception e) { req(false, "controls: check stopped: " + e.GetType().Name + ": " + e.Message); }
+            CheckHandWashAll(r, req, scene);   // IMP-DOG-039: bottles, the dogs' washCalls, KH_HandWash, the picture guide
         }
 
         static void CheckStationLayoutInner(VerifyReport r, Action<bool, string> req, UnityEngine.SceneManagement.Scene scene)
@@ -552,6 +553,35 @@ namespace KominkaHillside.Editor
             req(fails.Count == 0, "board text: ja / en fit their labels at " + MinPt + " pt (over: " + string.Join("; ", fails) + ")");
             if (warns.Count > 0) r.notes.Add("WARN board text: estimated over the label at " + MinPt + " pt in the client-font languages (check on a device): " + string.Join("; ", warns));
             r.notes.Add("board text: the widest text at " + MinPt + " pt is " + worstWhat + " (" + (worst * 100f).ToString("F0") + "% of its label)");
+
+            // ---- IMP-DOG-039: the picture guide's words (the same keys / KD_Language / glyph checks above cover them: they are in
+            // BoardWordKeys and BoardGlyphText). Here: the arrow glyph and the fit of each text in its Guide label (Guide.cs layout),
+            // both device variants of step ② and the help line. ja / en FAIL, the client-font languages WARN (same method) ----
+            req(KD_LocalizationEditor.HasGlyph(font, GuideArrowText[0]), "guide text: the arrow '" + GuideArrowText + "' U+" + ((int)GuideArrowText[0]).ToString("X4") + " is in the shared font (Wash/11 adds it through BoardGlyphText)");
+            var guideFit = new[]
+            {
+                new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep1, GuideStepSize.x), new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep2, GuideStepSize.x),
+                new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep2Flat, GuideStepSize.x), new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep3, GuideStepSize.x),
+                new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep1Sub, GuideSubSize.x), new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep2Sub, GuideSubSize.x),
+                new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep2FlatSub, GuideSubSize.x), new KeyValuePair<int, float>(KH_WashStationBoard.WGuideStep3Sub, GuideSubSize.x),
+                new KeyValuePair<int, float>(KH_WashStationBoard.WGuideHelp, GuideHelpSize.x), new KeyValuePair<int, float>(KH_WashStationBoard.WGuideHelpFlat, GuideHelpSize.x),
+            };
+            var gFails = new List<string>(); var gWarns = new List<string>(); float gWorst = 0f; string gWorstWhat = "";
+            foreach (var lang in c.languages)
+            {
+                bool baked = KD_LocalizationEditor.Bundled(lang);
+                foreach (var kv in guideFit)
+                {
+                    string key = BoardWordKeys[kv.Key], text = T(lang.code, key);
+                    float w = BoardEstWidth(font, text, MinPt), room = kv.Value - 4f;
+                    if (w / room > gWorst) { gWorst = w / room; gWorstWhat = lang.code + " " + key + " '" + text + "' " + w.ToString("F0") + " / " + room.ToString("F0") + " px"; }
+                    if (w <= room) continue;
+                    (baked ? gFails : gWarns).Add(lang.code + " " + key + " '" + text + "' " + w.ToString("F0") + " > " + room.ToString("F0") + " px");
+                }
+            }
+            req(gFails.Count == 0, "guide text: ja / en fit the guide's labels at " + MinPt + " pt (steps " + GuideStepSize.x + " px, subs " + GuideSubSize.x + " px, help " + GuideHelpSize.x + " px; over: " + string.Join("; ", gFails) + ")");
+            if (gWarns.Count > 0) r.notes.Add("WARN guide text: estimated over the label at " + MinPt + " pt in the client-font languages (check on a device): " + string.Join("; ", gWarns));
+            r.notes.Add("guide text: the widest text at " + MinPt + " pt is " + gWorstWhat + " (" + (gWorst * 100f).ToString("F0") + "% of its label)");
         }
 
         static KeyValuePair<string, KeyValuePair<string, float>> BoardFit(string what, string text, float width)
@@ -819,6 +849,463 @@ namespace KominkaHillside.Editor
                 }
                 req(ok, label + ": Dog_" + i + " name and state lines inside the button, the name above the state");
             }
+        }
+
+        // ================================================================ IMP-DOG-039: hand washing (docs/plans/2026-10-03-hand-wash.md §8.2, §13)
+
+        /// <summary>The bottle on every station, the dogs' washCalls, the one KH_HandWash and the picture guide above every board.
+        /// What the general tool / station checks already cover for the bottle (it is in ToolSpecs / CourseToolSpecs): home, slot and
+        /// rest at home, returnSeconds, debugHeldOverride (proxy + backing), Pickup / ObjectSync / Rigidbody / one solid collider,
+        /// State wired both ways, tool id, nozzle child, washes, no spray, the reset board's tools and every dog's tools.</summary>
+        static void CheckHandWashAll(VerifyReport r, Action<bool, string> req, UnityEngine.SceneManagement.Scene scene)
+        {
+            try { CheckBottles(r, req, scene); }
+            catch (Exception e) { req(false, "bottle: check stopped: " + e.GetType().Name + ": " + e.Message); }
+            try { CheckDogHandWiring(r, req, scene); }
+            catch (Exception e) { req(false, "dog hand wash: check stopped: " + e.GetType().Name + ": " + e.Message); }
+            try { CheckHandWashObject(r, req, scene); }
+            catch (Exception e) { req(false, "hand wash: check stopped: " + e.GetType().Name + ": " + e.Message); }
+            try { CheckGuides(r, req, scene); }
+            catch (Exception e) { req(false, "guide: check stopped: " + e.GetType().Name + ": " + e.Message); }
+        }
+
+        /// <summary>The builder's tool table of a station (main: ToolSpecs; course: its CourseStations row), null if unknown.</summary>
+        static ToolSpec[] SpecsOfStation(Transform st)
+        {
+            if (st.name == StationName && st.parent == null) return ToolSpecs;
+            return CourseStations.Where(s => s.key == st.name).Select(s => s.tools).FirstOrDefault();
+        }
+
+        /// <summary>Every public float field of type that pick selects is in the table, and every table entry is a public float field
+        /// (a field left out of the table keeps its code default, which never reaches the scene: vrc-udonsharp §4).</summary>
+        static void TuningCovers(Action<bool, string> req, Type type, Func<string, bool> pick, (string field, float value)[] table, string tableName)
+        {
+            var fields = type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                .Where(f => f.FieldType == typeof(float) && pick(f.Name)).Select(f => f.Name).ToArray();
+            var missing = fields.Where(f => !table.Any(t => t.field == f)).ToArray();
+            var unknown = table.Where(t => { var f = type.GetField(t.field); return f == null || f.FieldType != typeof(float); }).Select(t => t.field).ToArray();
+            req(fields.Length > 0 && missing.Length == 0 && unknown.Length == 0, tableName + " covers " + type.Name + "'s " + fields.Length + " tuning fields (not in the table: " + string.Join(", ", missing)
+                + "; not a public float of " + type.Name + ": " + string.Join(", ", unknown) + ")");
+        }
+
+        /// <summary>Proxy and backing of o hold the table's values.</summary>
+        static void TuningMatches(Action<bool, string> req, UdonSharp.UdonSharpBehaviour o, (string field, float value)[] table, string who)
+        {
+            var b = UdonSharpEditorUtility.GetBackingUdonBehaviour(o);
+            foreach (var t in table)
+            {
+                var fi = o.GetType().GetField(t.field);
+                float pv = fi != null && fi.FieldType == typeof(float) ? (float)fi.GetValue(o) : float.NaN;
+                req(Mathf.Abs(pv - t.value) < 1e-5f, who + "." + t.field + " " + pv + " = table " + t.value + " (run Wash/11 after changing the table)");
+                Backing(req, b, who, t.field, t.value);
+            }
+        }
+
+        /// <summary>A tool's footprint at its HOME pose in station-local space (the enabled mesh renderers and the root's colliders,
+        /// mapped from the tool's current pose onto its home): the horizontal x / z rectangle and the lowest / highest y. False when
+        /// there is no home or nothing to measure.</summary>
+        static bool HomeFootprint(Transform st, KH_WashTool tool, out Rect xz, out float minY, out float maxY)
+        {
+            xz = new Rect(); minY = maxY = 0f;
+            if (tool == null || tool.home == null) return false;
+            var toHome = tool.home.localToWorldMatrix * tool.transform.worldToLocalMatrix;   // the tool's current pose -> its home pose
+            var stInv = st.worldToLocalMatrix;
+            Vector3 mn = Vector3.positiveInfinity, mx = Vector3.negativeInfinity; bool any = false;
+            Action<Bounds, Matrix4x4> add = (b, l2w) =>
+            {
+                for (int i = 0; i < 8; i++)
+                {
+                    var c = b.center + Vector3.Scale(b.extents, new Vector3((i & 1) == 0 ? -1f : 1f, (i & 2) == 0 ? -1f : 1f, (i & 4) == 0 ? -1f : 1f));
+                    var p = stInv.MultiplyPoint3x4(toHome.MultiplyPoint3x4(l2w.MultiplyPoint3x4(c)));
+                    mn = Vector3.Min(mn, p); mx = Vector3.Max(mx, p); any = true;
+                }
+            };
+            foreach (var rd in tool.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                if (!rd.enabled || !rd.gameObject.activeInHierarchy) continue;
+                var mf = rd.GetComponent<MeshFilter>();
+                if (mf != null && mf.sharedMesh != null) add(mf.sharedMesh.bounds, rd.transform.localToWorldMatrix);
+            }
+            foreach (var col in tool.GetComponents<Collider>())
+            {
+                if (col is BoxCollider bx) add(new Bounds(bx.center, bx.size), tool.transform.localToWorldMatrix);
+                else if (col is CapsuleCollider cp)
+                {
+                    var s = new Vector3(cp.radius * 2f, cp.radius * 2f, cp.radius * 2f);
+                    s[cp.direction] = Mathf.Max(cp.height, cp.radius * 2f);
+                    add(new Bounds(cp.center, s), tool.transform.localToWorldMatrix);
+                }
+            }
+            if (!any) return false;
+            xz = Rect.MinMaxRect(mn.x, mn.z, mx.x, mx.z); minY = mn.y; maxY = mx.y;
+            return true;
+        }
+
+        /// <summary>The horizontal gap between two rectangles (0 when they touch or overlap).</summary>
+        static float RectGap(Rect a, Rect b)
+        {
+            float dx = Mathf.Max(0f, Mathf.Max(a.xMin - b.xMax, b.xMin - a.xMax)), dz = Mathf.Max(0f, Mathf.Max(a.yMin - b.yMax, b.yMin - a.yMax));
+            return Mathf.Sqrt(dx * dx + dz * dz);
+        }
+
+        const float BottleClearance = 0.02f;
+
+        static void CheckBottles(VerifyReport r, Action<bool, string> req, UnityEngine.SceneManagement.Scene scene)
+        {
+            TuningCovers(req, typeof(KH_WashTool), n => n.StartsWith("bottle"), BottleTuning, "bottle: BottleTuning");
+            req(ToolLabels.Length > KH_DogWash.ToolBottle && !string.IsNullOrEmpty(ToolLabels[KH_DogWash.ToolBottle]), "bottle: ToolLabels has the bottle's pickup text (tool id " + KH_DogWash.ToolBottle + ")");
+            var stations = AllStationTransforms(scene);
+            req(stations.Count == 1 + CourseStations.Length, "bottle: " + (1 + CourseStations.Length) + " wash stations present (" + stations.Count + ")");
+            KD_DogWanderController[] wanders; KH_DogWash[] washes;
+            DogsByIndex(out wanders, out washes);
+            string shampooPath = ToolMatDir + "/" + ShampooMat + ".mat";
+            var shampoo = AssetDatabase.LoadAssetAtPath<Material>(shampooPath);
+            req(shampoo != null, "bottle: material " + shampooPath);
+            var foam = AssetDatabase.LoadAssetAtPath<Material>(FoamMatPath);
+            int count = 0;
+            foreach (var st in stations)
+            {
+                string label = "bottle: " + st.name;
+                var specs = SpecsOfStation(st);
+                if (specs == null) { req(false, label + ": a station of the builder's table"); continue; }
+                bool main = st.name == StationName && st.parent == null;
+                string wantName = BottlePrefix + (main ? "" : st.name + "_") + "0";
+                var bs = specs.Where(s => s.tool == KH_DogWash.ToolBottle).ToArray();
+                req(bs.Length == 1 && bs[0].name == wantName, label + ": the tool table has one bottle " + wantName + " (" + string.Join(", ", bs.Select(s => s.name)) + ")");
+                var inScene = st.Cast<Transform>().Where(x => x.name.StartsWith(BottlePrefix)).Select(x => x.name).ToArray();
+                req(inScene.Length == 1 && inScene[0] == wantName, label + ": one " + BottlePrefix + "* under the station (" + string.Join(", ", inScene) + ")");
+
+                // the station's other tools: no squirt (proxy and backing)
+                foreach (var spec in specs.Where(s => s.tool != KH_DogWash.ToolBottle))
+                {
+                    var ot = st.Find(spec.name); var other = ot != null ? ot.GetComponent<KH_WashTool>() : null;
+                    if (other == null) continue;   // reported by the tool checks
+                    req(other.squirtParticles == null, label + ": " + spec.name + " squirtParticles null (not a bottle)");
+                    Backing(req, UdonSharpEditorUtility.GetBackingUdonBehaviour(other), label + ": " + spec.name, "squirtParticles", null);
+                }
+
+                var rb = st.Find(ResetName);
+                var reset = rb != null ? rb.GetComponent<KH_WashStationReset>() : null;
+                foreach (var spec in bs)
+                {
+                    string who = label + "/" + spec.name;
+                    var t = st.Find(spec.name);
+                    var tool = t != null ? t.GetComponent<KH_WashTool>() : null;
+                    req(tool != null && tool.tool == KH_DogWash.ToolBottle, who + " KH_WashTool with tool == " + KH_DogWash.ToolBottle + " (ToolBottle)");
+                    if (tool == null) continue;
+                    count++;
+                    var tb = UdonSharpEditorUtility.GetBackingUdonBehaviour(tool);
+                    var pickup = t.GetComponent<VRCPickup>();
+                    req(pickup != null && pickup.InteractionText == ToolLabels[KH_DogWash.ToolBottle], who + " VRCPickup InteractionText '" + (pickup != null ? pickup.InteractionText : "none") + "' = '" + ToolLabels[KH_DogWash.ToolBottle] + "'");
+                    // the pickup collider: one capsule, upright, the body's radius, its foot on the shelf top (the root sits BottleRestY above it)
+                    var cols = t.GetComponents<Collider>();
+                    var cap = cols.Length == 1 ? cols[0] as CapsuleCollider : null;
+                    req(cap != null && !cap.isTrigger && cap.direction == 1 && Mathf.Abs(cap.radius - BottleBodyDiameter * 0.5f) < 1e-4f && Mathf.Abs(cap.center.y - cap.height * 0.5f + BottleRestY) < 1e-3f,
+                        who + " one solid upright CapsuleCollider, radius " + (BottleBodyDiameter * 0.5f) + ", foot " + BottleRestY + " below the root (" + (cap != null ? "r " + cap.radius.ToString("F3") + " foot " + (cap.center.y - cap.height * 0.5f).ToString("F3") : cols.Length + " colliders") + ")");
+                    // the look: primitives, no imported visual (Art.cs leaves the bottle alone; Wash/32 counts 23 models without it)
+                    req(t.Find("ImportedVisual") == null, who + " has no ImportedVisual (primitive look; not one of Wash/32's 23 models)");
+                    var partsOk = new List<string>();
+                    foreach (var n in new[] { "Body", "Shoulder", "Cap", "Spout" })
+                    {
+                        var p = t.Find(n); var mr = p != null ? p.GetComponent<MeshRenderer>() : null;
+                        if (mr == null || !mr.enabled || p.GetComponent<Collider>() != null || p.gameObject.layer != PickupLayer) partsOk.Add(n);
+                    }
+                    req(partsOk.Count == 0, who + " Body / Shoulder / Cap / Spout: enabled renderers, no colliders, layer Pickup (wrong: " + string.Join(", ", partsOk) + ")");
+                    var body = t.Find("Body"); var bodyR = body != null ? body.GetComponent<MeshRenderer>() : null;
+                    req(bodyR != null && shampoo != null && bodyR.sharedMaterial == shampoo, who + " Body uses " + shampooPath);
+                    // the nozzle: the spout's tip, forward = the spout (tilted BottleSpoutTilt toward the bottle's +Z)
+                    var nozzle = t.Find("Nozzle");
+                    var spout = t.Find("Spout");
+                    req(nozzle != null && tool.nozzle == nozzle, who + ".nozzle = " + spec.name + "/Nozzle");
+                    if (nozzle != null && spout != null)
+                    {
+                        Vector3 dir = Quaternion.Euler(BottleSpoutTilt, 0f, 0f) * Vector3.up;
+                        Vector3 tip = spout.localPosition + spout.localRotation * Vector3.up * spout.localScale.y;   // the cylinder primitive is 2 units tall
+                        float ang = Vector3.Angle(nozzle.localRotation * Vector3.forward, dir);
+                        req((nozzle.localPosition - tip).magnitude < 1e-3f && ang < 0.5f, who + " Nozzle at the spout's tip, forward along the spout (" + (nozzle.localPosition - tip).magnitude.ToString("F4") + " m, " + ang.ToString("F2") + " deg)");
+                    }
+                    else req(false, who + " Nozzle and Spout children");
+                    // the squirt particles
+                    var sq = nozzle != null ? nozzle.Find(BottleSquirtName) : null;
+                    var ps = sq != null ? sq.GetComponent<ParticleSystem>() : null;
+                    req(ps != null && tool.squirtParticles == ps, who + ".squirtParticles = Nozzle/" + BottleSquirtName + " (" + (tool.squirtParticles != null ? KD_SceneObjects.PathOf(tool.squirtParticles.gameObject) : "null") + ")");
+                    if (ps != null)
+                    {
+                        var m = ps.main; var pr = ps.GetComponent<ParticleSystemRenderer>();
+                        req(m.simulationSpace == ParticleSystemSimulationSpace.World && !m.playOnAwake && !ps.emission.enabled && m.maxParticles > 0,
+                            who + " squirt: World, playOnAwake false, emission off (Emit only), maxParticles " + m.maxParticles);
+                        req(pr != null && foam != null && pr.sharedMaterial == foam, who + " squirt renderer uses " + FoamMatPath);
+                    }
+                    Backing(req, tb, who, "squirtParticles", tool.squirtParticles);
+                    TuningMatches(req, tool, BottleTuning, who);
+                    // reset and the dogs (also inside the general sequence checks; named here so a missing bottle reads as one)
+                    req(reset != null && reset.tools != null && reset.tools.Contains(tool), who + " is in " + st.name + "/" + ResetName + ".tools");
+                    var lacking = washes.Where(w => w == null || w.tools == null || !w.tools.Contains(tool)).Select(w => w != null ? w.name : "missing dog").ToArray();
+                    req(lacking.Length == 0, who + " is in all " + washes.Length + " dogs' KH_DogWash.tools (lacking: " + string.Join(", ", lacking) + ")");
+
+                    // the footprint at the home pose: on the shelf top, inside it, BottleClearance from every other tool of the station
+                    Rect bxz; float bMin, bMax;
+                    if (!HomeFootprint(st, tool, out bxz, out bMin, out bMax)) { req(false, who + " footprint measurable (home + renderers / collider)"); continue; }
+                    req(bMin >= ShelfHeight - 1e-3f && bMin <= ShelfHeight + 0.005f, who + " stands on the shelf top: lowest point " + bMin.ToString("F4") + " m (top " + ShelfHeight + ")");
+                    req(bxz.xMin >= -ShelfWidth * 0.5f && bxz.xMax <= ShelfWidth * 0.5f && bxz.yMin >= -ShelfDepth * 0.5f && bxz.yMax <= ShelfDepth * 0.5f,
+                        who + " footprint inside the shelf top (x " + bxz.xMin.ToString("F3") + ".." + bxz.xMax.ToString("F3") + ", z " + bxz.yMin.ToString("F3") + ".." + bxz.yMax.ToString("F3") + ")");
+                    float nearest = float.PositiveInfinity; string nearestName = "-";
+                    foreach (var spec2 in specs.Where(s => s.name != spec.name))
+                    {
+                        var ot = st.Find(spec2.name); var other = ot != null ? ot.GetComponent<KH_WashTool>() : null;
+                        Rect oxz; float oMin, oMax;
+                        if (other == null || !HomeFootprint(st, other, out oxz, out oMin, out oMax)) { req(false, who + ": " + spec2.name + " footprint measurable"); continue; }
+                        float gap = RectGap(bxz, oxz);
+                        if (gap < nearest) { nearest = gap; nearestName = spec2.name; }
+                        req(gap >= BottleClearance - 1e-4f, who + " " + (gap * 100f).ToString("F1") + " cm from " + spec2.name + " at their homes (>= " + (BottleClearance * 100f) + " cm; station-local x / z boxes of the renderers and colliders)");
+                    }
+                    r.bottles.Add(KD_SceneObjects.PathOf(t.gameObject) + " home " + st.InverseTransformPoint(tool.home != null ? tool.home.position : t.position).ToString("F3")
+                        + ", footprint x " + bxz.xMin.ToString("F3") + ".." + bxz.xMax.ToString("F3") + " z " + bxz.yMin.ToString("F3") + ".." + bxz.yMax.ToString("F3")
+                        + ", nearest " + nearestName + " " + (nearest * 100f).ToString("F1") + " cm, squirt " + (ps != null ? "yes" : "no"));
+                }
+            }
+            req(count == 1 + CourseStations.Length, "bottle: " + (1 + CourseStations.Length) + " bottles, one per station (" + count + ")");
+            int sceneBottles = UnityEngine.Object.FindObjectsOfType<KH_WashTool>(true).Count(x => x.tool == KH_DogWash.ToolBottle);
+            req(sceneBottles == count, "bottle: every KH_WashTool with tool " + KH_DogWash.ToolBottle + " in the scene is a station's bottle (" + sceneBottles + " / " + count + ")");
+            r.bottleCount = count;
+        }
+
+        /// <summary>The dogs' side of hand washing: washCalls = every station's Call, main first (a received hand stroke needs a held,
+        /// arrived dog), and the hand / bottle fields in WashTuning (their proxy + backing values are compared in CheckDog with the rest
+        /// of the table).</summary>
+        static void CheckDogHandWiring(VerifyReport r, Action<bool, string> req, UnityEngine.SceneManagement.Scene scene)
+        {
+            TuningCovers(req, typeof(KH_DogWash), n => n.StartsWith("bottle") || n.StartsWith("hand") || n.StartsWith("ownFoam"), WashTuning, "dog hand wash: WashTuning");
+            var calls = AllStationCalls(scene).ToArray();
+            req(calls.Length == 1 + CourseStations.Length && calls[0] != null && calls[0].transform.parent != null && StationIndexOf(calls[0].transform.parent) == 0,
+                "dog hand wash: " + (1 + CourseStations.Length) + " station Calls, the main station's first (" + string.Join(", ", calls.Select(c => c.transform.parent != null ? c.transform.parent.name : c.name)) + ")");
+            KD_DogWanderController[] wanders; KH_DogWash[] washes;
+            DogsByIndex(out wanders, out washes);
+            for (int i = 0; i < washes.Length; i++)
+            {
+                var w = washes[i];
+                if (w == null) { req(false, "dog hand wash: KH_DogWash dogIndex " + i + " found"); continue; }
+                req(w.washCalls != null && w.washCalls.Length == calls.Length && w.washCalls.Zip(calls, (a, b) => a == b).All(x => x),
+                    "dog hand wash: " + w.name + ".washCalls = the " + calls.Length + " stations' Call, main first (" + (w.washCalls != null ? w.washCalls.Length : 0) + ")");
+                Backing(req, UdonSharpEditorUtility.GetBackingUdonBehaviour(w), "dog hand wash: " + w.name, "washCalls", calls);
+                // Codex diff review 2026-10-03: the Owner-side station hold check (DogStationHold) rejects hand strokes when voiceDog is
+                // null. The builder (Dog.cs WireWanders) writes voiceDog = the KD_DogWanderController with the same dogIndex.
+                var own = wanders[i];
+                req(own != null && w.voiceDog == own && own.dogIndex == w.dogIndex,
+                    "dog hand wash: " + w.name + " voiceDog = its own KD_DogWanderController (dogIndex " + i + ": " + (own != null ? own.name : "missing") + "; wired "
+                    + (w.voiceDog != null ? w.voiceDog.name + " dogIndex " + w.voiceDog.dogIndex : "null") + ") (the Owner-side station hold check needs it)");
+                Backing(req, UdonSharpEditorUtility.GetBackingUdonBehaviour(w), "dog hand wash: " + w.name, "voiceDog", own);
+            }
+            r.notes.Add("dog hand wash: WashTuning's " + WashTuning.Length + " entries (incl. the hand / bottle ones) are compared proxy + backing per dog in the dog checks ('KH_DogWash.<field> = table')");
+        }
+
+        static void CheckHandWashObject(VerifyReport r, Action<bool, string> req, UnityEngine.SceneManagement.Scene scene)
+        {
+            const string L = "hand wash: ";
+            TuningCovers(req, typeof(KH_HandWash), n => true, HandWashTuning, L + "HandWashTuning");
+            string asset = ScriptsDir + "/KH_HandWash.asset";
+            var program = AssetDatabase.LoadAssetAtPath<UdonSharp.UdonSharpProgramAsset>(asset);
+            req(program != null, L + "program asset " + asset);
+            var all = UnityEngine.Object.FindObjectsOfType<KH_HandWash>(true);
+            r.handWashCount = all.Length;
+            var mainGo = scene.GetRootGameObjects().FirstOrDefault(g => g.name == StationName);
+            var t = mainGo != null ? mainGo.transform.Find(HandWashName) : null;
+            var hand = t != null ? t.GetComponent<KH_HandWash>() : null;
+            req(all.Length == 1 && hand != null && all[0] == hand, L + "exactly one KH_HandWash, at " + StationName + "/" + HandWashName + " (" + string.Join(", ", all.Select(x => KD_SceneObjects.PathOf(x.gameObject))) + ")");
+            if (hand == null) { r.handWash = "missing"; return; }
+            var hb = UdonSharpEditorUtility.GetBackingUdonBehaviour(hand);
+            req(hb != null && hb.SyncMethod == Networking.SyncType.None, L + "backing sync None (local input; the strokes go through the dogs)");
+            req(hb != null && program != null && hb.programSource == program, L + "backing program = " + asset);
+            req(t.gameObject.activeInHierarchy && hb != null && hb.enabled, L + StationName + "/" + HandWashName + " active and enabled (its idle loop starts in Start / OnEnable)");
+            var calls = AllStationCalls(scene).ToArray();
+            req(calls.Length == 1 + CourseStations.Length && hand.calls != null && hand.calls.Length == calls.Length && hand.calls.Zip(calls, (a, b) => a == b).All(x => x),
+                L + "calls = the " + calls.Length + " stations' Call, main first (" + (hand.calls != null ? hand.calls.Length : 0) + ")");
+            KD_DogWanderController[] wanders; KH_DogWash[] washes;
+            DogsByIndex(out wanders, out washes);
+            req(washes.All(w => w != null) && hand.washes != null && hand.washes.Length == washes.Length && hand.washes.Zip(washes, (a, b) => a == b).All(x => x),
+                L + "washes = the " + washes.Length + " KH_DogWash by dogIndex (" + (hand.washes != null ? hand.washes.Length : 0) + ")");
+            req(hand.washLayer.value == 1 << WashLayer, L + "washLayer = layer " + WashLayer + " only (" + hand.washLayer.value + ")");
+            req(hand.debugHands == 0 && hand.debugLeft == Vector3.zero && hand.debugRight == Vector3.zero && !hand.debugLeftFree && !hand.debugRightFree && !hand.debugVr,
+                L + "harness inputs off (debugHands " + hand.debugHands + ", debugVr " + hand.debugVr + ", debugLeft/Right zero, debug*Free false)");
+            req(!hand.frameLoop && hand.contactCalls == 0, L + "harness read-outs at rest in the saved scene (frameLoop false, contactCalls 0)");
+            TuningMatches(req, hand, HandWashTuning, L + "KH_HandWash");
+            Backing(req, hb, L + "KH_HandWash", "calls", calls);
+            Backing(req, hb, L + "KH_HandWash", "washes", washes);
+            Backing(req, hb, L + "KH_HandWash", "washLayer", hand.washLayer);
+            Backing(req, hb, L + "KH_HandWash", "debugHands", 0);
+            Backing(req, hb, L + "KH_HandWash", "debugLeft", Vector3.zero);
+            Backing(req, hb, L + "KH_HandWash", "debugRight", Vector3.zero);
+            Backing(req, hb, L + "KH_HandWash", "debugLeftFree", false);
+            Backing(req, hb, L + "KH_HandWash", "debugRightFree", false);
+            Backing(req, hb, L + "KH_HandWash", "debugVr", false);
+            Backing(req, hb, L + "KH_HandWash", "frameLoop", false);
+            Backing(req, hb, L + "KH_HandWash", "contactCalls", 0);
+            r.handWash = KD_SceneObjects.PathOf(t.gameObject) + " calls " + (hand.calls != null ? hand.calls.Length : 0) + ", washes " + (hand.washes != null ? hand.washes.Count(x => x != null) : 0)
+                + ", washLayer " + hand.washLayer.value + ", sync " + (hb != null ? hb.SyncMethod.ToString() : "-");
+        }
+
+        static bool SameRect(Rect a, Rect b) { return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) + Mathf.Abs(a.width - b.width) + Mathf.Abs(a.height - b.height) < 1e-5f; }
+
+        /// <summary>A RectTransform's corners in station-local space: (min y, max y, mean z).</summary>
+        static Vector3 RectSpanInStation(Transform st, RectTransform t)
+        {
+            var w = new Vector3[4]; t.GetWorldCorners(w);
+            var l = w.Select(p => st.InverseTransformPoint(p)).ToArray();
+            return new Vector3(l.Min(p => p.y), l.Max(p => p.y), l.Average(p => p.z));
+        }
+
+        /// <summary>The guide picture as Wash/11 would write it now (the same drawing and encoding as EnsureGuideTexture).</summary>
+        static byte[] GuidePngNow()
+        {
+            var rgba = KH_WashGuideArt.RenderBytes();
+            var tex = new Texture2D(KH_WashGuideArt.Width, KH_WashGuideArt.Height, TextureFormat.RGBA32, false, false);
+            try
+            {
+                var px = new Color32[KH_WashGuideArt.Width * KH_WashGuideArt.Height];
+                for (int i = 0; i < px.Length; i++) px[i] = new Color32(rgba[4 * i], rgba[4 * i + 1], rgba[4 * i + 2], rgba[4 * i + 3]);
+                tex.SetPixels32(px);
+                tex.Apply(false, false);
+                return tex.EncodeToPNG();
+            }
+            finally { UnityEngine.Object.DestroyImmediate(tex); }
+        }
+
+        static void CheckGuides(VerifyReport r, Action<bool, string> req, UnityEngine.SceneManagement.Scene scene)
+        {
+            // ---- the words: W 24..33 are the 10 wash.guide.* keys (their 13 languages, KD_Language, glyphs and fit: CheckBoardText) ----
+            var guideW = new[] { KH_WashStationBoard.WGuideStep1, KH_WashStationBoard.WGuideStep1Sub, KH_WashStationBoard.WGuideStep2, KH_WashStationBoard.WGuideStep2Sub,
+                KH_WashStationBoard.WGuideStep2Flat, KH_WashStationBoard.WGuideStep2FlatSub, KH_WashStationBoard.WGuideStep3, KH_WashStationBoard.WGuideStep3Sub,
+                KH_WashStationBoard.WGuideHelp, KH_WashStationBoard.WGuideHelpFlat };
+            int guideKeys = BoardWordKeys.Count(k => k.StartsWith("wash.guide."));
+            req(guideW.Distinct().Count() == guideW.Length && guideW.All(i => i >= 0 && i < BoardWordKeys.Length && BoardWordKeys[i].StartsWith("wash.guide.")) && guideKeys == guideW.Length,
+                "guide: BoardWordKeys holds the " + guideW.Length + " wash.guide.* keys at the board's WGuide* indices (" + guideKeys + " wash.guide.* keys)");
+
+            // ---- the texture and its import settings ----
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(GuideTexturePath);
+            var ti = AssetImporter.GetAtPath(GuideTexturePath) as TextureImporter;
+            req(tex != null && ti != null, "guide: texture " + GuideTexturePath + " imported");
+            if (tex != null) req(tex.width == KH_WashGuideArt.Width && tex.height == KH_WashGuideArt.Height, "guide: texture " + tex.width + " x " + tex.height + " = " + KH_WashGuideArt.Width + " x " + KH_WashGuideArt.Height);
+            if (ti != null)
+            {
+                req(ti.textureType == TextureImporterType.Default && ti.sRGBTexture && ti.alphaIsTransparency && !ti.isReadable && ti.mipmapEnabled && ti.wrapMode == TextureWrapMode.Clamp
+                    && ti.filterMode == FilterMode.Bilinear && ti.npotScale == TextureImporterNPOTScale.None && ti.maxTextureSize == GuideMaxSize,
+                    "guide: import Default, sRGB, alpha is transparency, Read/Write off, mipmaps on, clamp, bilinear, no NPOT scale, max " + GuideMaxSize
+                    + " (readable " + ti.isReadable + ", mips " + ti.mipmapEnabled + ", max " + ti.maxTextureSize + ")");
+                foreach (var pf in new[] { new KeyValuePair<string, TextureImporterFormat>("Standalone", TextureImporterFormat.DXT5), new KeyValuePair<string, TextureImporterFormat>("Android", TextureImporterFormat.ASTC_6x6), new KeyValuePair<string, TextureImporterFormat>("iPhone", TextureImporterFormat.ASTC_6x6) })
+                {
+                    var ps = ti.GetPlatformTextureSettings(pf.Key);
+                    req(ps.overridden && ps.format == pf.Value && ps.maxTextureSize <= GuideMaxSize, "guide: import " + pf.Key + " override " + pf.Value + ", max <= " + GuideMaxSize + " (" + (ps.overridden ? ps.format + " " + ps.maxTextureSize : "not overridden") + ")");
+                }
+            }
+            try
+            {
+                bool same = File.Exists(GuideTexturePath) && File.ReadAllBytes(GuideTexturePath).SequenceEqual(GuidePngNow());
+                req(same, "guide: " + GuideTexturePath + " = the current drawing (KH_WashGuideArt v" + GuideArtVersion + "; run Wash/19 or Wash/11 to rewrite it)");
+            }
+            catch (Exception e) { req(false, "guide: the drawing renders for the comparison (" + e.GetType().Name + ": " + e.Message + ")"); }
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KD_ShopSetupEditor.SharedFontPath);
+
+            // ---- every station ----
+            var stations = AllStationTransforms(scene);
+            int built = 0;
+            foreach (var st in stations)
+            {
+                string label = "guide: " + st.name;
+                var g = st.Find(GuideName) as RectTransform;
+                var bt = st.Find(BoardName) as RectTransform;
+                var board = bt != null ? bt.GetComponent<KH_WashStationBoard>() : null;
+                req(g != null && bt != null && g.parent == st && bt.parent == st, label + "/" + GuideName + " a sibling of " + BoardName + " (the board's builder deletes the board's unknown children)");
+                if (g == null) continue;
+                built++;
+                var canvas = g.GetComponent<Canvas>();
+                req(canvas != null && canvas.renderMode == RenderMode.WorldSpace && g.gameObject.layer == 0 && g.gameObject.activeInHierarchy, label + ": World Space Canvas on Default, active");
+                req((g.sizeDelta - GuidePixels).sqrMagnitude < 1e-4f && Near(g.localScale, Vector3.one * GuideScale) && Near(g.localPosition, GuideLocal) && Quaternion.Angle(g.localRotation, Quaternion.identity) < 0.01f,
+                    label + ": " + GuidePixels.x + " x " + GuidePixels.y + " px at " + GuideScale + " m/px, local " + GuideLocal.ToString("F3") + ", facing the front (" + g.sizeDelta + ", " + g.localPosition.ToString("F3") + ")");
+                if (bt != null)
+                {
+                    var gs = RectSpanInStation(st, g); var bs = RectSpanInStation(st, bt);
+                    req(gs.x >= bs.y + 0.01f - 1e-4f, label + ": the guide's bottom " + gs.x.ToString("F3") + " m >= the board's top " + bs.y.ToString("F3") + " + 0.01 (top " + gs.y.ToString("F3") + " m)");
+                    req(Mathf.Abs(gs.z - bs.z) < 1e-3f && Mathf.Abs(g.localPosition.x - bt.localPosition.x) < 1e-3f, label + ": on the board's face, centred over it (z " + gs.z.ToString("F3") + " / " + bs.z.ToString("F3") + ")");
+                }
+                // read only
+                int rays = g.GetComponentsInChildren<UnityEngine.UI.GraphicRaycaster>(true).Length, shapes = g.GetComponentsInChildren<VRCUiShape>(true).Length, cols = g.GetComponentsInChildren<Collider>(true).Length;
+                req(rays == 0 && shapes == 0 && cols == 0, label + ": no GraphicRaycaster / VRCUiShape / Collider (read only; " + rays + " / " + shapes + " / " + cols + ")");
+                var hot = g.GetComponentsInChildren<UnityEngine.UI.Graphic>(true).Where(x => x.raycastTarget).Select(x => x.name).ToArray();
+                req(hot.Length == 0, label + ": every Graphic raycastTarget false (" + string.Join(", ", hot) + ")");
+                // children: Bg, the 7 labels, the 3 pictures, the 2 arrows, nothing else
+                var known = new[] { "Bg" }.Concat(GuideLabelNames).Concat(GuidePicNames).Concat(GuideArrowNames).ToArray();
+                var kids = g.Cast<Transform>().Select(x => x.name).ToArray();
+                req(kids.Length == known.Length && known.All(n => kids.Count(k => k == n) == 1), label + ": children " + string.Join(", ", known) + " (" + string.Join(", ", kids) + ")");
+                var bgI = g.Find("Bg") != null ? g.Find("Bg").GetComponent<UnityEngine.UI.Image>() : null;
+                req(bgI != null && g.Find("Bg").GetSiblingIndex() == 0, label + ": Bg Image drawn first");
+
+                // layout (Guide.cs §7.2): positions and sizes, inside the canvas, no two parts overlap
+                var layout = new List<KeyValuePair<string, Rect>>();
+                Func<Vector2, Vector2, Rect> R = (p, s) => Rect.MinMaxRect(p.x - s.x * 0.5f, p.y - s.y * 0.5f, p.x + s.x * 0.5f, p.y + s.y * 0.5f);
+                for (int i = 0; i < 3; i++)
+                {
+                    layout.Add(new KeyValuePair<string, Rect>(GuideLabelNames[2 * i], R(new Vector2(GuidePanelX[i], GuideStepY), GuideStepSize)));
+                    layout.Add(new KeyValuePair<string, Rect>(GuideLabelNames[2 * i + 1], R(new Vector2(GuidePanelX[i], GuideSubY), GuideSubSize)));
+                    layout.Add(new KeyValuePair<string, Rect>(GuidePicNames[i], R(new Vector2(GuidePanelX[i], GuidePicY), GuidePicSize)));
+                }
+                layout.Add(new KeyValuePair<string, Rect>(GuideLabelNames[6], R(GuideHelpPos, GuideHelpSize)));
+                for (int i = 0; i < GuideArrowNames.Length; i++) layout.Add(new KeyValuePair<string, Rect>(GuideArrowNames[i], R(new Vector2(GuideArrowX[i], GuideArrowY), GuideArrowSize)));
+                var misplaced = new List<string>(); var placed = new List<KeyValuePair<string, Rect>>();
+                foreach (var kv in layout)
+                {
+                    var x = g.Find(kv.Key) as RectTransform;
+                    if (x == null) { misplaced.Add(kv.Key + " missing"); continue; }
+                    var got = PartRect(x);
+                    if (Mathf.Abs(got.xMin - kv.Value.xMin) + Mathf.Abs(got.yMin - kv.Value.yMin) + Mathf.Abs(got.width - kv.Value.width) + Mathf.Abs(got.height - kv.Value.height) > 0.01f) misplaced.Add(kv.Key + " " + got + " (want " + kv.Value + ")");
+                    placed.Add(new KeyValuePair<string, Rect>(kv.Key, got));
+                }
+                req(misplaced.Count == 0, label + ": the " + layout.Count + " parts at the builder's layout (" + string.Join("; ", misplaced) + ")");
+                var inside = Rect.MinMaxRect(-GuidePixels.x * 0.5f, -GuidePixels.y * 0.5f, GuidePixels.x * 0.5f, GuidePixels.y * 0.5f);
+                var outside = placed.Where(p => p.Value.xMin < inside.xMin - 0.01f || p.Value.xMax > inside.xMax + 0.01f || p.Value.yMin < inside.yMin - 0.01f || p.Value.yMax > inside.yMax + 0.01f).Select(p => p.Key).ToArray();
+                var overlaps = new List<string>();
+                for (int i = 0; i < placed.Count; i++) for (int j = i + 1; j < placed.Count; j++) if (placed[i].Value.Overlaps(placed[j].Value)) overlaps.Add(placed[i].Key + "/" + placed[j].Key);
+                req(outside.Length == 0 && overlaps.Count == 0, label + ": every part inside the canvas, none overlapping (outside: " + string.Join(", ", outside) + "; overlaps: " + string.Join(", ", overlaps) + ")");
+
+                // the texts: shared font, autosize down to MinPt, one line; the labels start as the ja VR words, the arrows read GuideArrowText
+                var labelW = new[] { KH_WashStationBoard.WGuideStep1, KH_WashStationBoard.WGuideStep1Sub, KH_WashStationBoard.WGuideStep2, KH_WashStationBoard.WGuideStep2Sub,
+                    KH_WashStationBoard.WGuideStep3, KH_WashStationBoard.WGuideStep3Sub, KH_WashStationBoard.WGuideHelp };
+                var tmps = GuideLabelNames.Concat(GuideArrowNames).Select(n => g.Find(n) != null ? g.Find(n).GetComponent<TextMeshProUGUI>() : null).ToArray();
+                req(tmps.All(x => x != null && font != null && x.font == font && x.enableAutoSizing && Mathf.Abs(x.fontSizeMin - MinPt) < 1e-4f && !x.enableWordWrapping),
+                    label + ": the 7 labels and 2 arrows are TextMeshProUGUI with " + KD_ShopSetupEditor.SharedFontPath + ", autosize down to " + MinPt + " pt, one line");
+                if (board != null && board.words != null && board.words.Length == BoardWordKeys.Length)
+                {
+                    var wrong = Enumerable.Range(0, GuideLabelNames.Length).Where(i => tmps[i] == null || tmps[i].text != board.words[labelW[i]]).Select(i => GuideLabelNames[i]).ToArray();
+                    req(wrong.Length == 0, label + ": the labels read the board's ja VR words in the saved scene (wrong: " + string.Join(", ", wrong) + ")");
+                }
+                var arrows = tmps.Skip(GuideLabelNames.Length).ToArray();
+                req(arrows.All(x => x != null && x.text == GuideArrowText), label + ": " + string.Join(" / ", GuideArrowNames) + " read '" + GuideArrowText + "'");
+
+                // the pictures: RawImage cells of the guide texture (② starts as the VR cell; the board switches it per device)
+                var raws = GuidePicNames.Select(n => g.Find(n) != null ? g.Find(n).GetComponent<UnityEngine.UI.RawImage>() : null).ToArray();
+                var wantUv = new[] { GuideUvBottle, GuideUvHand, GuideUvShower };
+                req(raws.All(x => x != null) && tex != null && raws.All(x => x.texture == tex) && Enumerable.Range(0, 3).All(i => SameRect(raws[i].uvRect, wantUv[i])),
+                    label + ": " + string.Join(" / ", GuidePicNames) + " RawImage on " + GuideTexturePath + ", uvRect bottle / hand / shower cells (" + string.Join(" ", raws.Select(x => x != null ? x.uvRect.ToString() : "none")) + ")");
+
+                // the board's wiring
+                if (board == null) { req(false, label + ": " + BoardName + " KH_WashStationBoard (guide wiring)"); continue; }
+                req(board.guideLabels != null && board.guideLabels.Length == GuideLabelNames.Length && Enumerable.Range(0, GuideLabelNames.Length).All(i => board.guideLabels[i] != null && board.guideLabels[i] == tmps[i]),
+                    label + ": board.guideLabels = " + GuideName + "/" + string.Join(", ", GuideLabelNames) + " (" + (board.guideLabels != null ? board.guideLabels.Length : 0) + ")");
+                req(board.guidePics != null && board.guidePics.Length == GuidePicNames.Length && Enumerable.Range(0, GuidePicNames.Length).All(i => board.guidePics[i] != null && board.guidePics[i] == raws[i]),
+                    label + ": board.guidePics = " + GuideName + "/" + string.Join(", ", GuidePicNames) + " (" + (board.guidePics != null ? board.guidePics.Length : 0) + ")");
+                req(SameRect(board.guideUvVr, GuideUvHand) && SameRect(board.guideUvFlat, GuideUvSponge), label + ": board.guideUvVr = the hand cell " + GuideUvHand + ", guideUvFlat = the sponge cell " + GuideUvSponge
+                    + " (" + board.guideUvVr + " / " + board.guideUvFlat + ")");
+                req(!board.debugVr, label + ": board.debugVr false (harness only)");
+                var bb = UdonSharpEditorUtility.GetBackingUdonBehaviour(board);
+                Backing(req, bb, label + ": board", "guideLabels", board.guideLabels);
+                Backing(req, bb, label + ": board", "guidePics", board.guidePics);
+                Backing(req, bb, label + ": board", "guideUvVr", GuideUvHand);
+                Backing(req, bb, label + ": board", "guideUvFlat", GuideUvSponge);
+                Backing(req, bb, label + ": board", "debugVr", false);
+                r.guides.Add(KD_SceneObjects.PathOf(g.gameObject) + " local " + g.localPosition.ToString("F3") + ", labels " + (board.guideLabels != null ? board.guideLabels.Length : 0)
+                    + ", pictures " + (board.guidePics != null ? board.guidePics.Length : 0));
+            }
+            req(built == 1 + CourseStations.Length, "guide: " + (1 + CourseStations.Length) + " stations have a " + GuideName + " (" + built + ")");
+            r.guideCount = built;
         }
 
         /// <summary>A UI part's rectangle in its parent's units (anchored at the centre, as EnsureUiChild makes them).</summary>
