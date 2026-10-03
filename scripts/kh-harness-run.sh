@@ -221,6 +221,6 @@ case "$cmd" in
       done_=1; break
     done
     [ "$done_" = 1 ] || { echo "video TIMEOUT: no finished run after 300 s (latest: $s)"; exit 2; }
-    node -e 'const j=require("./Logs/kh-video-harness/latest.json");const bad=(j.cases||[]).filter(c=>c.status!=="PASS").map(c=>c.name+": "+(c.reason||c.status)).join(" | ");console.log("video",j.runId,j.status,"cases",(j.cases||[]).length,"sceneUnchanged",j.sceneFileUnchanged,"errors",(j.errors||[]).length,bad?"FAILS="+bad:"");process.exit(j.status==="PASS"&&j.sceneFileUnchanged?0:1)';;
+    node -e 'const j=require("./Logs/kh-video-harness/latest.json");const bad=(j.cases||[]).filter(c=>c.status!=="PASS").map(c=>c.name+": "+(c.reason||c.status)).join(" | ");console.log("video",j.runId,j.status,"cases",(j.cases||[]).length,"sceneUnchanged",j.sceneFileUnchanged,"errors",(j.errors||[]).length,bad?"FAILS="+bad:"",(j.unproven||[]).length?"NOT_PROVEN="+j.unproven.join(" ; "):"");process.exit(j.status==="PASS"&&j.sceneFileUnchanged?0:1)';;
   *) echo 'usage: kh-harness-run.sh compile | menu <name> | proto <mode> [args] | walk <menu> | segment <case> | lap <forward|reverse> | photo | video | stop <walk|proto|photo|video> | night --confirmed "..."   (Play entries need --reason "..." --consult "..."; whole groups and lap also --confirmed "...")'; exit 64;;
 esac

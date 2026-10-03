@@ -85,8 +85,13 @@ namespace KominkaHillside.Editor
                     Check(cam == null || (cam.cullingMask & (1 << RecordSnapLayer)) == 0, "the video camera does not draw the RecordSnap layer");
                     var pc = UnityEngine.Object.FindObjectsOfType<KD_PhotoCapture>(true).Select(p => p.photoCamera).Where(x => x != null).ToArray();
                     Check(pc.All(x => (x.cullingMask & (1 << RecordSnapLayer)) == 0), "the auto photo camera does not draw the RecordSnap layer (" + pc.Length + " cameras)");
-                    int others = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Renderer>(true)).Count(x => x.gameObject.layer == RecordSnapLayer && x != snap);
-                    if (others > 0) Warn(others + " other renderers on layer " + RecordSnapLayer + " (they vanish from the video and the auto photos)");
+                    var others = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Renderer>(true)).Where(x => x.gameObject.layer == RecordSnapLayer && x != snap).ToArray();
+                    // the photo menu's snap quad (KH_PhotoGalleryEditor.MenuSnapName) moved to the same layer on 2026-10-04 on purpose (the layer the
+                    // VRChat camera is proven to draw): hidden from our own cameras is what it needs too
+                    var expected = others.Where(x => x.name == KH_PhotoGalleryEditor.MenuSnapName).ToArray();
+                    var unexpected = others.Except(expected).ToArray();
+                    if (expected.Length > 0) Check(true, "layer " + RecordSnapLayer + " also holds the photo menu snap (" + KH_PhotoGalleryEditor.MenuSnapName + ", expected: hidden from our cameras)");
+                    if (unexpected.Length > 0) Warn(unexpected.Length + " other renderers on layer " + RecordSnapLayer + " (they vanish from the video and the auto photos): " + string.Join(", ", unexpected.Take(5).Select(x => x.name)));
                 }
                 else Warn("RecordSnapLayer is 0 (Default): our own cameras draw it; only _VRChatCameraMode == 0 in their pass keeps it out (unverified)");
                 var mf = snap.GetComponent<MeshFilter>();
@@ -156,9 +161,20 @@ namespace KominkaHillside.Editor
             }
             Transform P(string path) { return v.monitorRoot != null ? v.monitorRoot.transform.Find(PanelName + "/" + path) : null; }
             GameObject G(Transform t) { return t != null ? t.gameObject : null; }
-            Wired(G(P("Close")), "_Close", "panel ×"); Wired(G(P("ModeDog")), "_ModeDog", "panel 犬追従"); Wired(G(P("ModeSelf")), "_ModeSelf", "panel じぶん");
+            Wired(G(P("Close")), "_Close", "panel ×");
+            // W2/W3: every mode button sends its own _ModeN, shows its label and is at least 120 × 50 px (a VR laser / a Desktop click)
+            for (int m = 0; m < KH_VideoCamera.ModeCount; m++)
+            {
+                var mb = P(ModeButtonName(m));
+                Wired(G(mb), ModeEvent(m), "panel mode " + m + " " + KH_VideoCamera.ModeWord(m));
+                var lbl = mb != null ? LabelOf(mb.gameObject) : null;
+                var rt = mb as RectTransform;
+                Check(lbl != null && lbl.text == KH_VideoCamera.ModeWord(m) && rt != null && rt.sizeDelta.x >= 120f && rt.sizeDelta.y >= 50f, "mode " + m + " label '" + (lbl != null ? lbl.text : "") + "', size " + (rt != null ? rt.sizeDelta.ToString() : "-"));
+                Check(v.modeImages != null && v.modeImages.Length == KH_VideoCamera.ModeCount && mb != null && v.modeImages[m] == mb.GetComponent<Image>(), "modeImages[" + m + "] is that button");
+            }
+            Check(P("ModeDog") == null && P("ModeSelf") == null, "the W1 buttons ModeDog / ModeSelf are gone");
             Wired(G(P("DogPicker/Prev")), "_DogPrev", "panel ◀"); Wired(G(P("DogPicker/Next")), "_DogNext", "panel ▶"); Wired(G(P("Snap")), "_ToggleSnap", "panel snap toggle");
-            Check(v.stateLabel != null && v.snapLabel != null && v.dogLabel != null && v.modeDogImage != null && v.modeSelfImage != null && v.snapImage != null && v.dogPicker != null, "panel labels / images wired");
+            Check(v.stateLabel != null && v.snapLabel != null && v.dogLabel != null && v.snapImage != null && v.dogPicker != null, "panel labels / images wired");
             // ---- entry ----
             var pouch = UnityEngine.Object.FindObjectsOfType<KD_TreatPouch>(true).FirstOrDefault();
             var page = pouch != null ? pouch.photoPage : null;
@@ -180,6 +196,49 @@ namespace KominkaHillside.Editor
             Check(v.language != null, "language wired");
             if (v.manager == null) Warn("manager not wired"); if (v.fade == null) Warn("fade not wired");
             foreach (var kv in TuningMatches(v)) Check(kv.Value, "tuning " + kv.Key);
+            // the backing heap (what runs) agrees with the proxy for the W2/W3 rows that it already holds (an empty heap before the first save is not a failure; vrc-udonsharp §4)
+            int heapMissing = 0;
+            foreach (var kv in ModeTuning())
+            {
+                if (backing == null || !backing.publicVariables.TryGetVariableValue(kv.Key, out object hv)) { heapMissing++; continue; }
+                Check(hv is float f && Mathf.Abs(f - kv.Value) < 1e-4f, "backing " + kv.Key + " " + hv + " (want " + kv.Value + ")");
+            }
+            if (heapMissing > 0) Warn(heapMissing + " W2/W3 tuning rows not in the backing heap yet (saved / built scenes carry them; rerun Video/2 after a reload)");
+            // ---- W2 / W3 references and data ----
+            int nd = KH_PhotoGalleryEditor.Keys.Length;
+            Check(v.catchers != null && v.catchers.Length == nd && v.discs != null && v.discs.Length == nd && v.fetches != null && v.fetches.Length == nd
+                && v.wanders != null && v.wanders.Length == nd && v.washes != null && v.washes.Length == nd, "per-dog arrays (catchers, discs, fetches, wanders, washes) have " + nd + " entries");
+            // every array is guarded before indexing (a short / null array is a FAIL line, never an exception)
+            T At<T>(T[] a, int i) where T : class { return a != null && i >= 0 && i < a.Length ? a[i] : null; }
+            for (int i = 0; i < nd; i++)
+            {
+                var cat = At(v.catchers, i); var disc = At(v.discs, i); var fe = At(v.fetches, i); var wa = At(v.wanders, i); var ws = At(v.washes, i);
+                Check(cat != null && cat.dogIndex == i && disc != null && disc == cat.frisbee, "dog " + i + ": catcher dogIndex " + i + " and its disc");
+                Check(fe != null && wa != null && ws != null && ws.dogIndex == i, "dog " + i + ": fetch / wander / wash wired");
+            }
+            var calls = WashCalls();
+            Check(v.washCalls != null && v.washCalls.Length == calls.Length && calls.Select((x, k) => At(v.washCalls, k) == x).All(b => b), "washCalls = the " + calls.Length + " wash stations in hierarchy order");
+            int ns = v.spotPositions != null ? v.spotPositions.Length : 0;
+            Check(ns > 0 && v.spotNames != null && v.spotNames.Length == ns && v.spotLooks != null && v.spotLooks.Length == ns && v.spotFovs != null && v.spotFovs.Length == ns
+                && v.spotStations != null && v.spotStations.Length == ns, ns + " spots with names / looks / FOVs / stations of the same length");
+            for (int k = 0; k < ns && v.spotLooks != null && v.spotLooks.Length == ns && v.spotPositions != null; k++)
+            {
+                bool ok = PointUsable(v.spotPositions[k], v.spotLooks[k], out string why);
+                Check(ok, "spot " + (v.spotNames != null && k < v.spotNames.Length ? v.spotNames[k] : k.ToString()) + " at " + v.spotPositions[k].ToString("F1") + ": above ground, sees its look point" + (ok ? "" : " (" + why + ")"));
+                int st = v.spotStations != null && k < v.spotStations.Length ? v.spotStations[k] : -2;
+                Check(st == -1 || (v.washCalls != null && st >= 0 && st < v.washCalls.Length), "spot " + k + " station index " + st + " is the river (-1) or a wash station");
+            }
+            if (calls.Length > 0) Check(v.spotStations != null && v.spotStations.Any(x => x >= 0), "at least one wash-station spot");
+            if (v.waterSpot != null) Check(v.spotStations != null && v.spotStations.Any(x => x == -1), "at least one river spot");
+            else Warn("no KH_WaterSpot: no river spot");
+            int np = v.passPositions != null ? v.passPositions.Length : 0;
+            if (np == 0) Warn("no pass-by points (通り過ぎ falls back to the じぶん framing)");
+            for (int k = 0; k < np; k++)
+            {
+                bool ok = !Physics.CheckSphere(v.passPositions[k], 0.25f, KH_PhotoGalleryEditor.CameraBlockMask, QueryTriggerInteraction.Ignore)
+                    && Physics.Raycast(v.passPositions[k], Vector3.down, SpotGroundMax, KH_PhotoGalleryEditor.CameraBlockMask, QueryTriggerInteraction.Ignore);
+                Check(ok, "pass point " + k + " at " + v.passPositions[k].ToString("F1") + " is free and above ground");
+            }
             float mib = RenderWidth * RenderHeight * (4f + 4f) / (1024f * 1024f);
             Check(mib <= 11f, "RT memory while open " + mib.ToString("F1") + " MiB (colour RGBA8 + depth D24S8; 0 when closed)");
             string glyphs = KD_ShopSetupEditor.MissingGlyphs(AllWords());
@@ -200,7 +259,7 @@ namespace KominkaHillside.Editor
             foreach (var f in files)
             {
                 string src = File.ReadAllText(f), name = Path.GetFileName(f);
-                Check(!src.Contains("[UdonSynced]") && !src.Contains("NetworkCallable") && !src.Contains("SendCustomNetworkEvent") && !src.Contains("RequestSerialization"), name + ": no synced variable / network entry (W1)");
+                Check(!src.Contains("[UdonSynced]") && !src.Contains("NetworkCallable") && !src.Contains("SendCustomNetworkEvent") && !src.Contains("RequestSerialization"), name + ": no synced variable / network entry (W1-W3)");
                 Check(!src.Contains("GetPlayerById") && !src.Contains("GetPlayers("), name + ": never looks up another player (W4 adds TryPersonPose in Subjects.cs only)");
                 bool readsPlayer = Regex.IsMatch(src, @"\.(GetTrackingData|GetPosition|GetRotation|GetBonePosition)\(");
                 if (!name.EndsWith(".Subjects.cs")) Check(!readsPlayer, name + ": reads no player pose (only KH_VideoCamera.Subjects.cs does)");

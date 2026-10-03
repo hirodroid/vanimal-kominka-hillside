@@ -35,6 +35,27 @@ namespace KominkaHillside
             return true;
         }
 
+        /// <summary>The local player's id (-1 before the player is valid). Compared with synced ids (the petter, the thrower, the washer, the
+        /// caller of a wash station) to know whether a framing may use MY pose; another player's pose is never read.</summary>
+        int SelfId()
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            return Utilities.IsValid(lp) ? lp.playerId : -1;
+        }
+
+        private Vector3 _selfHand;
+
+        /// <summary>The local player's hand nearer to `point` (into _selfHand). False when the local player is not valid.</summary>
+        bool SelfHandNear(Vector3 point)
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) return false;
+            Vector3 l = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.LeftHand).position;
+            Vector3 r = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.RightHand).position;
+            _selfHand = (l - point).sqrMagnitude <= (r - point).sqrMagnitude ? l : r;
+            return true;
+        }
+
         bool DogValid(int i)
         {
             return dogRoots != null && i >= 0 && i < dogRoots.Length && dogRoots[i] != null && dogRoots[i].gameObject.activeInHierarchy;

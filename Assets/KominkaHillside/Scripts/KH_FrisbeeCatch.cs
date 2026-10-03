@@ -577,6 +577,16 @@ namespace KominkaHillside
         private float _dropPetHold; private bool _dropPetLogged;
 
         public int State { get { return state; } }
+        // IMP-WLD-008 W3 (read-only): who threw the current flight (synced; -1 when idle). The video camera's おかえり compares it with the local id only.
+        public int ThrowerId { get { return throwerId; } }
+        // IMP-WLD-008 (read-only, local; nothing synced changes): the catch plan this dog committed to for the current throw. Only the dog's
+        // Owner plans (ReqCatch runs there), so PlanReadable is false on every other client. The video camera's キャッチ待ち reads it.
+        public bool PlanReadable { get { return _localPlanValid && _plan != PlanNone && IsDogOwner(); } }
+        public float PlanCatchT { get { return _catchT; } }
+        public Vector3 PlanCatchRoot { get { return _catchRoot; } }
+        public Vector3 PlanP0 { get { return _p0; } }
+        public Vector3 PlanV0 { get { return _v0; } }
+        public float PlanCurve { get { return _curve; } }
         public int Variant { get { return variant; } }
         public int PendingVariant { get { return pendingVariant; } }
         // Sideways lift for the next throw. Wave 2: KH_Frisbee._Launch reads it and sends it with ReqCatch, so a

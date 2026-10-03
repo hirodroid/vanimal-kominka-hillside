@@ -113,6 +113,13 @@ namespace KominkaHillside
         private bool _waterRefused;   // this flight went under the surface where it does not float (checked once per flight)
 
         public bool IsFlying { get { return _flying; } }
+        // IMP-WLD-008 W3 (read-only, local; nothing synced changes): the launch facts of the current flight, meaningful only on the client that
+        // launched it (FlightLocal). The video camera's landing-wait mode predicts the landing with _PositionAt from these, like the aim line.
+        public bool FlightLocal { get { return _flying && Networking.IsOwner(gameObject); } }
+        public Vector3 FlightP0 { get { return _p0; } }
+        public Vector3 FlightV0 { get { return _v0; } }
+        public double FlightT0 { get { return _t0; } }
+        public float FlightCurveNow { get { return _curve; } }
         public bool IsHeldNow { get { return _pickup != null && _pickup.IsHeld; } }
         // Holder (synced Owner while held). Read by the dog to take its stand-off position.
         public VRCPlayerApi HolderPlayer

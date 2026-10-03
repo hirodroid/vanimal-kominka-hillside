@@ -148,7 +148,9 @@ namespace KominkaHillside.Editor
         /// does not show the menu, change this to a layer the VRChat camera draws but our photo camera still skips — 4 Water is in MustExcludeLayers
         /// (0 Default would put the quad into our own auto photos when the menu is in view). The snap only works on a layer the VRChat camera draws.
         /// One constant: Photo/1 writes it, Photo/2 checks it (and that our photo camera excludes it).</summary>
-        public const int MenuSnapLayer = 17;
+        /// 2026-10-04 (user, real client): the menu snap did not work on layer 17. The video camera's RecordSnap quad on layer 4 is
+        /// confirmed to reach the VRChat camera (IMP-WLD-008), so the menu snap uses 4 as well.
+        public const int MenuSnapLayer = 4;
         public const string MenuSnapName = "SnapPhoto";
         const string MenuSnapMatPath = MatDir + "/M_KH_PhotoPrintMenu.mat";
         /// <summary>IMP-WLD-007 W1: 面のページ送り ◀ 1/3 ▶ (縮小表示の下、右寄せ。[設定へ] (中央 280 幅) と重ならない)。</summary>
