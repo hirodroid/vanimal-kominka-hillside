@@ -325,7 +325,12 @@ namespace KominkaHillside.Editor
                         // bridgeTolerant (83d だけ): 既知の橋の角の Return (IMP-DOG-038) だけを記録にし、合否に数えない。条件は 3 つとも:
                         // (a) 直前の標本で犬が角のノード (上流の橋 = spot.bridgeUp のノード + 3) で Wait (m1)・速さ 0、(b) 飼い主が橋の区域 + 4 m、
                         // (c) 着いてから 5 s 以上。ワープ無しの T13-bridge-control-landing が同じ形で再現する (run 20261002-233009)。ほかの Return は FAIL
-                        if (bridgeTolerant && TvKnownBridgeCornerReturn(ret, after)) bridgeNotes.Add("KNOWN_BRIDGE_CORNER_RETURN (IMP-DOG-038) " + where);
+                        // IMP-DOG-038 の修正後は KnownBridgeCornerReturnAllowed = false: 同じ形でも FAIL に数え、形が一致したことは理由に残す
+                        if (bridgeTolerant && TvKnownBridgeCornerReturn(ret, after))
+                        {
+                            if (KnownBridgeCornerReturnAllowed) bridgeNotes.Add("KNOWN_BRIDGE_CORNER_RETURN (IMP-DOG-038) " + where);
+                            else fails.Add("KNOWN_BRIDGE_CORNER_RETURN (IMP-DOG-038, now FAIL) " + where);
+                        }
                         else fails.Add(where);
                     }
                     if (tvReverse[i] != 0) fails.Add("dog" + i + " reversed on the loop after arrival (reverse steps " + tvReverse[i] + ")");
@@ -397,6 +402,8 @@ namespace KominkaHillside.Editor
 
         /// <summary>IMP-DOG-038 の既知の Return か: 着いてから 5 s 以上・飼い主が橋の区域 + 4 m・直前の標本 (最後の 3 件) のどれかで
         /// 犬が上流の橋の角のノード (spot.bridgeUp のノード + 3。正方向で 238 → 241) にいて Wait (m1)・速さ 0。</summary>
+        // IMP-DOG-038 (2026-10-03): 直したので既知の戻りも FAIL。修正を戻して比べるときだけ true にする (const にしないのは到達不能の警告よけ)
+        static readonly bool KnownBridgeCornerReturnAllowed = false;
         static bool TvKnownBridgeCornerReturn(TvReturnMark ret, float after)
         {
             if (after < 5f || !TvNearBridge(ret.holder, 4f) || string.IsNullOrEmpty(ret.trail)) return false;

@@ -58,6 +58,7 @@ namespace KominkaDogRun
         // SampleHolder below is a different question (has the holder stood still long enough to rest/invite?)
         // and stays as it was. This one picks which of the four speed tiers the dog walks at.
         private float _holderSpeed;         // EMA of the holder's horizontal body speed (m/s)
+        private Vector3 _holderVel;         // IMP-DOG-038: EMA of the same body motion as a vector (m/s, y = 0): which way they walk
         private Vector3 _holderPrevPos;
         private bool _holderPrevValid;
         private int _holderTier;            // 0 still / 1 walking / 2 running (hysteresis)
@@ -73,6 +74,9 @@ namespace KominkaDogRun
         const float HolderMoveEnter = 0.7f, HolderMoveExit = 0.4f; // 「歩き出した」/「止まった」
         const float LeadHoldGain = 2f;           // lead-hold: リード端までの余裕 1 m あたりの上乗せ (m/s / m)
         const float LeadHoldMax = 1.1f;          // lead-hold を続けるリード長の倍率の上限 (復帰の 1.25 倍の内側)
+        // IMP-DOG-038: 歩く人の進む向きから犬がこれ以上外れたら (cos 75°)「横〜後ろ」。角の先で待つ犬から人が離れていく形
+        const float AsideCos = 0.26f;
+        const float AsideSlack = 0.4f;           // 横〜後ろで待つ犬は waitAt + これを越えたら waitAt まで歩み寄る (復帰の 1.25 倍より十分内側)
         const float TurnSlowDeg = 60f;           // 体がこれだけ向き違うなら歩きまで落とす (横滑り対策)
         const float TurnEaseDeg = 30f;           // 中間は走りで頭打ち
 
@@ -614,9 +618,26 @@ namespace KominkaDogRun
             // Only a standing holder makes the dog stop and wait. While they walk or run the dog keeps
             // leading and trims its pace by the slack it has left (lead-hold) — stopping in front of a
             // running holder is what used to hand them the 1.25x leash end and start a return loop.
-            bool leadHold = ahead && HolderMoving() && handDist >= leash * 0.45f && handDist <= leash * LeadHoldMax;
+            // IMP-DOG-038: ahead of the hand on the trail, but off to the side of (or behind) the way the holder is walking - the dog
+            // that cut a sharp corner (the upstream bridge, 240 -> 241) while they still walk down to it. Standing there, the holder
+            // walks away from it and the leash reaches 1.25x. So no lead-hold out toward the node, and past waitAt + AsideSlack the
+            // dog steps back to waitAt at the holder's pace; it leads again once they turn toward it. Return's 1.25x is unchanged.
+            bool aside = false;
+            if (ahead && HolderMoving())
+            {
+                Vector3 toDog = dogRoot.position - holderPos; toDog.y = 0f;
+                aside = Vector3.Dot(_holderVel, toDog) < AsideCos * _holderVel.magnitude * toDog.magnitude;
+            }
+            bool leadHold = ahead && HolderMoving() && !aside && handDist >= leash * 0.45f && handDist <= leash * LeadHoldMax;
             if (ahead && handDist >= waitAt && !leadHold)
             {
+                if (aside && handDist > waitAt + AsideSlack)
+                {
+                    leashMode = LeashWalk;
+                    LeashGo(handPos - toHand / handDist * waitAt,
+                        Mathf.Clamp(_holderSpeed + LeadHoldGain * (handDist - waitAt), walkSpeed, hillsideLeashes.dashSpeed), 0.3f);
+                    return true;
+                }
                 leashMode = LeashWait;
                 Coast();
                 if (_speed <= stopSpeedThreshold) FaceTowards(holderPos);
@@ -845,7 +866,7 @@ namespace KominkaDogRun
 
         private void ResetHolderSpeed()
         {
-            _holderPrevValid = false; _holderSpeed = 0f; _holderTier = 0;
+            _holderPrevValid = false; _holderSpeed = 0f; _holderTier = 0; _holderVel = Vector3.zero;
         }
 
         /// <summary>Owner only, every frame. Teleports, respawns and station warps arrive as one huge step,
@@ -857,13 +878,16 @@ namespace KominkaDogRun
             if (dt <= 0.0001f) return;
             holderPos.y = 0f;
             if (!_holderPrevValid) { _holderPrevPos = holderPos; _holderPrevValid = true; return; }
-            float delta = Vector3.Distance(holderPos, _holderPrevPos);
+            Vector3 step = holderPos - _holderPrevPos;
+            float delta = step.magnitude;
             _holderPrevPos = holderPos;
             // IMP-DOG-036 S1: a jump is a speed, not a distance - the sample interval is now a decision interval (up to 0.25 s),
             // over which a running holder covers more than 1 m. The old 1 m stays the floor, so a per-frame decision (decisionEvery
             // 1, or any interval under 0.1 s) judges exactly as before; a 0.2 s interval allows 2 m (a 7 m/s holder moves 1.4 m)
             if (delta > Mathf.Max(HolderJumpMeters, HolderJumpSpeed * dt)) return;
-            _holderSpeed = Mathf.Lerp(_holderSpeed, delta / dt, Mathf.Min(1f, dt / HolderSpeedTau));
+            float k = Mathf.Min(1f, dt / HolderSpeedTau);
+            _holderSpeed = Mathf.Lerp(_holderSpeed, delta / dt, k);
+            _holderVel = Vector3.Lerp(_holderVel, step / dt, k);   // IMP-DOG-038: the body's travel direction, not the facing
 
             // Hysteresis both ways: a pace hovering on a threshold must not flip the dog's speed every frame.
             int tier = _holderTier;
