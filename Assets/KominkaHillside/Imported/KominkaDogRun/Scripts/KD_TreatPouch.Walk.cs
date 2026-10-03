@@ -10,8 +10,9 @@ namespace KominkaDogRun
     /// KH_HandMenu (段階 0-b で退役) の AttachGate / Attach / Detach / ChooseDestination / GateText / Pending / PollPending を
     /// **挙動と文言を変えずに**移した。共有状態は KH_LeashManager が正本で、板は要求を出して結果を読み戻すだけ (同期変数 0 本)。
     ///
-    /// 行: WalkRow0..5 = 犬 (KD_DogDefs.All の順)、WalkRow6 = 広場、WalkRow7 = 古民家側の入口。
+    /// 行: WalkRow0..5 = 犬 (KD_DogDefs.All の順)、WalkRow6 = 広場、WalkRow7 = 古民家側の入口 (コースは WalkRow8..11 も。Course/25)。
     /// 要求の結果は板の下端 (Feedback) の 1 行に出す (4 秒。応答が無ければ 4 秒で「結果を確認できませんでした」)。
+    /// DES-UI-006 (Course/120 の 2 列) では、同じ文を押した犬の行 / 右列のまとめにも 4 秒出す。
     /// 要求は 1 本だけ持つ — 新しい要求は前の要求を置き換えるので、連打・タブ変更・閉じて再表示でも
     /// 別の要求の結果を取り違えて表示しない。ポーリングは Redraw の外 (Update → PollSharedRequests) で毎フレーム回る。</summary>
     public partial class KD_TreatPouch
@@ -35,6 +36,24 @@ namespace KominkaDogRun
         public int[] walkDestinationIds;
         public string[] walkDestinationKeys;
 
+        // ---- DES-UI-006 (2026-10-03 ユーザー決定): スクロールの無い 2 列。Course/120 が既存の行をその場で並べ直して配線する。
+        // walkSummaryLabel が null なら旧 1 列 (状態の行 + [ここへ] + 下端のまとめ) のまま描く (試作シーン・旧版シーン)。
+        [Header("さんぽタブの 2 列 (DES-UI-006。Course/120 が配線する)")]
+        [Tooltip("右列の見出し「つないでいる犬の行き先」")]
+        public TextMeshProUGUI walkDestHeading;
+        [Tooltip("右列のまとめ「N 匹：行き先」(下端から移した)。行き先の要求の途中・結果もここに 4 秒出す")]
+        public TextMeshProUGUI walkSummaryLabel;
+        [Tooltip("犬の行 (WalkRow0..5) の地。自分の犬の行だけ点灯色")]
+        public UnityEngine.UI.Image[] walkRowImages;
+        [Tooltip("[地図と移動] の RectTransform。申し込みが保留中のときだけ半分の幅にして [申し込み 1 件] と並べる")]
+        public RectTransform walkOpenRect;
+        public Color walkRowColor = new Color(0.184f, 0.161f, 0.145f);
+        public Color walkRowMineColor = new Color(0.184f, 0.290f, 0.220f);
+        /// <summary>[地図と移動] の位置と幅 (Canvas 単位。Course/120・84・85 も同じ値を使う)。保留中は左半分。</summary>
+        public const float WalkOpenX = 280f, WalkOpenWidth = 540f, WalkOpenPendingX = 143f, WalkOpenPendingWidth = 266f;
+        /// <summary>押した場所の近くの結果 (4 秒): 0..5 = 犬の行の状態、6 = 右列のまとめ。</summary>
+        public const int WalkNoteSummary = 6;
+
         /// <summary>KH_LeashManager の行き先の値 (destinations[] / _ChooseDestination)。</summary>
         public const int WalkDestGate = 0;
         public const int WalkDestPlaza = 1;
@@ -43,6 +62,10 @@ namespace KominkaDogRun
         private int _walkPendingKind;   // 0 none, 1 attach, 2 detach, 3 destination
         private int _walkPendingDog, _walkPendingHand, _walkPendingDest;
         private float _walkPendingAt;
+        // DES-UI-006: 押した行に出す 1 本 (下端の 1 行 = HillsideNote と同じ文言・同じ 4 秒。新しい操作は前を置き換える)
+        private int _walkNoteTarget = -1;
+        private string _walkNoteKey = "", _walkNoteArg = "";
+        private float _walkNoteUntil;
 
         public void _WalkLeft0() { WalkAttach(0, 0); }
         public void _WalkLeft1() { WalkAttach(1, 0); }
@@ -89,19 +112,25 @@ namespace KominkaDogRun
         private void WalkAttach(int dog, int hand)
         {
             int gate = WalkAttachGate(dog, hand);
-            if (gate != 0) { if (gate == WalkGateWater) WaterAsk(dog); HillsideNote(TabWalk, WalkGateKey(gate, hand), ""); Redraw(); return; }
+            if (gate != 0)
+            {
+                if (gate == WalkGateWater) WaterAsk(dog);
+                string refusal = WalkGateKey(gate, hand);
+                HillsideNote(TabWalk, refusal, ""); WalkRowNote(dog, refusal, ""); Redraw(); return;
+            }
             manager._RequestAttach(dog, hand);
             WalkPending(1, dog, hand, -1);
-            HillsideNote(TabWalk, hand == 0 ? "KD_TreatPouch.WordWalkAttachingLeft" : "KD_TreatPouch.WordWalkAttachingRight", "");
+            string attaching = hand == 0 ? "KD_TreatPouch.WordWalkAttachingLeft" : "KD_TreatPouch.WordWalkAttachingRight";
+            HillsideNote(TabWalk, attaching, ""); WalkRowNote(dog, attaching, "");
             Redraw();
         }
 
         private void WalkDetach(int dog)
         {
-            if (manager == null || !manager._IsMine(dog)) { HillsideNote(TabWalk, "KD_TreatPouch.WordWalkDetachMineOnly", ""); Redraw(); return; }
+            if (manager == null || !manager._IsMine(dog)) { HillsideNote(TabWalk, "KD_TreatPouch.WordWalkDetachMineOnly", ""); WalkRowNote(dog, "KD_TreatPouch.WordWalkDetachMineOnly", ""); Redraw(); return; }
             manager._RequestDetach(dog);
             WalkPending(2, dog, -1, -1);
-            HillsideNote(TabWalk, "KD_TreatPouch.WordWalkDetaching", "");
+            HillsideNote(TabWalk, "KD_TreatPouch.WordWalkDetaching", ""); WalkRowNote(dog, "KD_TreatPouch.WordWalkDetaching", "");
             Redraw();
         }
 
@@ -111,9 +140,28 @@ namespace KominkaDogRun
             manager._ChooseDestination(destination);
             int mine = 0;
             for (int i = 0; i < manager.walkers.Length; i++) if (manager._IsMine(i)) mine++;
-            if (mine == 0) HillsideNote(TabWalk, "KD_TreatPouch.WordWalkDestRemembered", "");
-            else { WalkPending(3, -1, -1, destination); HillsideNote(TabWalk, "KD_TreatPouch.WordWalkDestTelling", mine.ToString()); }
+            if (mine == 0) { HillsideNote(TabWalk, "KD_TreatPouch.WordWalkDestRemembered", ""); WalkRowNote(WalkNoteSummary, "KD_TreatPouch.WordWalkDestRemembered", ""); }
+            else
+            {
+                WalkPending(3, -1, -1, destination);
+                HillsideNote(TabWalk, "KD_TreatPouch.WordWalkDestTelling", mine.ToString());
+                WalkRowNote(WalkNoteSummary, "KD_TreatPouch.WordWalkDestTelling", mine.ToString());
+            }
             Redraw();
+        }
+
+        /// <summary>DES-UI-006: 押した場所の近く (犬の行の状態 / 右列のまとめ) に 4 秒出す。下端の 1 行 (HillsideNote) は呼び出し側がそのまま出す。</summary>
+        private void WalkRowNote(int target, string key, string arg)
+        {
+            if (target < 0 || target > WalkNoteSummary) return;
+            _walkNoteTarget = target; _walkNoteKey = key; _walkNoteArg = arg; _walkNoteUntil = Time.time + 4f;
+        }
+
+        /// <summary>その場所に生きている結果の文。無ければ空。</summary>
+        private string WalkRowNoteText(int target)
+        {
+            if (_walkNoteTarget != target || Time.time >= _walkNoteUntil || _walkNoteKey == null || _walkNoteKey.Length == 0) return "";
+            return L(_walkNoteKey).Replace("{0}", _walkNoteArg);
         }
 
         private string WalkGateKey(int gate, int hand)
@@ -138,6 +186,12 @@ namespace KominkaDogRun
         /// **Redraw の外で毎フレーム呼ぶ** (PollSharedRequests から) — 板を閉じている間も時間切れまで進む。</summary>
         private void PollWalkPending()
         {
+            // DES-UI-006: 行の結果が 4 秒で切れたら 1 回だけ描き直す (下端の 1 行も同じ時刻に切れる)
+            if (_walkNoteTarget >= 0 && Time.time >= _walkNoteUntil)
+            {
+                _walkNoteTarget = -1;
+                if (_tab == TabWalk && !_settingsOpen) Redraw();
+            }
             if (_walkPendingKind == 0) return;
             if (manager == null) { _walkPendingKind = 0; return; }
             bool done = false;
@@ -163,17 +217,23 @@ namespace KominkaDogRun
             }
             if (!done && Time.time - _walkPendingAt > 4f) { done = true; key = "KD_TreatPouch.WordWalkUnknown"; }
             if (!done) return;
+            int noteTarget = _walkPendingKind == 3 ? WalkNoteSummary : _walkPendingDog;
             _walkPendingKind = 0;
             HillsideNote(TabWalk, key, "");
+            WalkRowNote(noteTarget, key, "");
             Redraw();
         }
 
         /// <summary>さんぽタブ。犬 6 行 (状態 + [左につなぐ][右につなぐ][はずす]) と行き先 2 行 ([ここへ])、下端に行き先のまとめ。
-        /// つなげない行のボタンは暗くするが押せる — 押すと理由が下端に出る (KH_HandMenu と同じ)。[はずす] はつないでいる行だけ出す。</summary>
+        /// つなげない行のボタンは暗くするが押せる — 押すと理由が下端に出る (KH_HandMenu と同じ)。[はずす] はつないでいる行だけ出す。
+        /// DES-UI-006 の 2 列 (walkSummaryLabel が配線済み): 左列 = 犬 6 行。自分の犬の行は地を点灯色にして [はずす] だけ、
+        /// ほかの行は [左につなぐ][右につなぐ] だけ。右列 = 見出し・まとめ・行き先 6 タイル (名前がボタン。選択中は点灯 + 「いまの行き先」)。
+        /// 結果は押した犬の行の状態 / まとめの行に 4 秒出し、下端の 1 行にも同じ文を出す (まとめは下端から右列へ移した)。</summary>
         private void RedrawWalk()
         {
             if (manager == null) { HillsideFooter(L("KD_TreatPouch.WordWalkGateUnavailable")); return; }
             VRCPlayerApi lp = Networking.LocalPlayer;
+            bool twoColumn = walkSummaryLabel != null;
             int mine = 0, plaza = 0, gate = 0, firstDestination = -1;
             bool mixedDestinations = false;
             for (int i = 0; i < 6; i++)
@@ -204,16 +264,24 @@ namespace KominkaDogRun
                         : L("KD_TreatPouch.WordWalkStateNear");
                 }
                 if (walkLabels != null && i < walkLabels.Length && walkLabels[i] != null) walkLabels[i].text = HillsideDogName(i);
-                if (walkStateLabels != null && i < walkStateLabels.Length && walkStateLabels[i] != null) walkStateLabels[i].text = state;
+                // DES-UI-006: 押した行の処理中・結果・断った理由は、その行の状態に 4 秒 (2 列のときだけ)
+                string rowNote = twoColumn ? WalkRowNoteText(i) : "";
+                if (walkStateLabels != null && i < walkStateLabels.Length && walkStateLabels[i] != null) walkStateLabels[i].text = rowNote.Length > 0 ? rowNote : state;
                 bool canLeft = WalkAttachGate(i, 0) == 0, canRight = WalkAttachGate(i, 1) == 0;
                 WalkTint(walkLeftImages, i, canLeft ? equipOnColor : recallOffColor);
                 WalkTint(walkRightImages, i, canRight ? equipOnColor : recallOffColor);
                 WalkTint(walkOffImages, i, hillsideNeutralColor);
-                if (walkOffButtons != null && i < walkOffButtons.Length && walkOffButtons[i] != null
-                    && walkOffButtons[i].gameObject.activeSelf != isMine) walkOffButtons[i].gameObject.SetActive(isMine);
+                WalkShow(walkOffButtons, i, isMine);
+                if (twoColumn)
+                {
+                    // 自分の犬の行は [はずす] だけ (左右は押しても「もうつないでいます」になるだけなので出さない)
+                    WalkShow(walkLeftButtons, i, !isMine);
+                    WalkShow(walkRightButtons, i, !isMine);
+                    WalkTint(walkRowImages, i, isMine ? walkRowMineColor : walkRowColor);
+                }
             }
 
-            // 行き先 2 行 (6 = 広場、7 = 古民家側の入口)。選んでいる方を状態ラベルと点灯色で示す
+            // 行き先 (6 = 広場、7 = 古民家側の入口、コースは 8..11 も)。選んでいる方を点灯色で示す
             int choice = manager._MyChoice();
             bool extended = walkDestinationIds != null && walkDestinationIds.Length > 0;
             int destinationCount = extended ? walkDestinationIds.Length : 2;
@@ -222,6 +290,16 @@ namespace KominkaDogRun
                 int row = 6 + k;
                 int dest = extended ? walkDestinationIds[k] : (k == 0 ? WalkDestPlaza : WalkDestGate);
                 bool chosen = choice == dest;
+                if (twoColumn)
+                {
+                    // タイル = 名前そのものがボタン。行き先がまざっているときはどのタイルも点灯しない
+                    chosen = chosen && !(mine > 1 && mixedDestinations);
+                    string tile = WalkDestinationName(dest);
+                    if (chosen) tile = tile + "\n<size=73%>" + L("KD_TreatPouch.WordWalkStateDestChosen") + "</size>";
+                    if (walkLabels != null && row < walkLabels.Length && walkLabels[row] != null) walkLabels[row].text = tile;
+                    WalkTint(walkHereImages, k, chosen ? openOnColor : hillsideNeutralColor);
+                    continue;
+                }
                 if (walkLabels != null && row < walkLabels.Length && walkLabels[row] != null)
                     walkLabels[row].text = WalkDestinationName(dest);
                 if (walkStateLabels != null && row < walkStateLabels.Length && walkStateLabels[row] != null)
@@ -238,8 +316,23 @@ namespace KominkaDogRun
                 : L("course.walk.summary").Replace("{0}", mine.ToString()).Replace("{1}", WalkDestinationName(firstDestination));
             else if (plaza > 0 && gate > 0) summary = L("KD_TreatPouch.WordWalkSummaryMixed").Replace("{0}", plaza.ToString()).Replace("{1}", gate.ToString());
             else summary = L(plaza > 0 ? "KD_TreatPouch.WordWalkSummaryPlaza" : "KD_TreatPouch.WordWalkSummaryGate").Replace("{0}", mine.ToString());
-            RedrawTravel();   // IMP-WLD-001: 上段の地点ワープ (KD_TreatPouch.Travel.cs)
+            RedrawTravel();   // IMP-WLD-001: [地図と移動] と「申し込み 1 件」(KD_TreatPouch.Travel.cs)
+            if (twoColumn)
+            {
+                // DES-UI-006: まとめは右列 (常に見える)。行き先の要求の途中・結果はまとめの行に 4 秒。下端は通知だけ
+                if (walkDestHeading != null) walkDestHeading.text = L("KD_TreatPouch.WordWalkStateDest");
+                string summaryNote = WalkRowNoteText(WalkNoteSummary);
+                walkSummaryLabel.text = summaryNote.Length > 0 ? summaryNote : summary;
+                HillsideFooter(HillsideNoteOr(TabWalk, ""));
+                return;
+            }
             HillsideFooter(HillsideNoteOr(TabWalk, summary));
+        }
+
+        private void WalkShow(UnityEngine.UI.Button[] buttons, int i, bool on)
+        {
+            if (buttons == null || i < 0 || i >= buttons.Length || buttons[i] == null) return;
+            if (buttons[i].gameObject.activeSelf != on) buttons[i].gameObject.SetActive(on);
         }
 
         private string WalkDestinationName(int destination)

@@ -247,6 +247,15 @@ namespace KominkaHillside
             for (int k = 0; k < VariantCount; k++) { v = (v + 1) % VariantCount; if (v < 0) v = 0; if (!IsRetiredVariant(v)) return v; }
             return VariantNormal;
         }
+        // DES-UI-002 (user decision 2026-10-03): the world menu's catch style ("フリスビーの取り方", trainers only) cycles
+        // Normal -> beside (3) -> twist (4) -> Normal. The curve (5) left that cycle: the curve is now the thrower's own local choice
+        // (KH_ToyRecall.ThrowCurve, KH_Frisbee.LaunchCurve). NextVariant above stays the prototype cube's cycle (it still needs 5).
+        public static int NextMenuVariant(int cur)
+        {
+            if (cur == VariantNormal || IsRetiredVariant(cur)) return VariantRunInBeside;
+            if (cur == VariantRunInBeside) return VariantTwist;
+            return VariantNormal;
+        }
         // Run-in (v1..3). Round 2: the planner no longer differs per preset (every catch is an intercept), so all
         // that is left of the run-in is WHERE the dog waits for the throw - the run in from there is the effect.
         public const float RunInReadySlack = 2.5f;
@@ -617,8 +626,8 @@ namespace KominkaHillside
         bool IsDogOwner() { return Networking.IsOwner(dogRoot.gameObject); }
 
         // ---- Prototype variant (IMP-DOG-008) ----
-        // Local entry: the hand menu's dev button and the prototype Interact cube call this. Anyone may ask; only
-        // the Owner writes. net: owner-writes-synced
+        // Local entry: KD_ActivitiesMenu (trainers) and the prototype Interact cube call this. Anyone may ask; the
+        // Owner re-checks the trainer entitlement (BUG-DOG-009) and only the Owner writes. net: owner-writes-synced
         public void _RequestVariant(int v)
         {
             if (v < 0 || v >= VariantCount) return;
@@ -627,7 +636,7 @@ namespace KominkaHillside
             else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqVariant), v);
         }
 
-        // net: network-callable; arguments are checked (anyone may send). Engaged = the dog is mid-sequence, so the
+        // net: network-callable; the sender must be a trainer (VariantCallerAllowed) and the arguments are checked. Engaged = the dog is mid-sequence, so the
         // change waits for Idle instead of moving the goalposts under a running plan.
         [NetworkCallable(maxEventsPerSecond: 5)]
         public void ReqVariant(int v)
@@ -635,8 +644,13 @@ namespace KominkaHillside
             // Both Owners, because the decision is the dog's and the synced numbers live on this object
             // (an ownership split would write `variant` on a client nobody reads it from; Codex D review).
             if (!IsDogOwner() || !Networking.IsOwner(gameObject)) return;
+            if (!VariantCallerAllowed()) return;   // BUG-DOG-009: trainers only, judged here, not just by the menu
             if (v < 0 || v >= VariantCount) return;
             if (IsRetiredVariant(v)) { Debug.Log("[KH_FrisbeeCatch] variant " + v + " retired"); return; }   // 2026-09-26
+            // DES-UI-002 (2026-10-03): in the world (activities wired) the curve is the thrower's own local choice, so the shared
+            // preset never becomes 5 there - not even from a trainer's forged event (every throw would bend for everyone).
+            // The prototype scene (activities == null) keeps 5 for its cube and the harness's curve group.
+            if (v == VariantCurve && activities != null) { Debug.Log("[KH_FrisbeeCatch] variant request refused: 5 (curve) is the thrower's own choice in the world"); return; }
             if (v == variant)
             {
                 // Asking for what is already running is the way back out of a queued switch (Codex review).
@@ -651,6 +665,22 @@ namespace KominkaHillside
                 return;
             }
             SetVariant(v);
+        }
+
+        // BUG-DOG-009: the catch style is a trainer perk, and ReqVariant is network-callable, so the receiver re-checks
+        // it with gather's rule (KD_GroupActivities -> KH_TrainerPass._OwnedBy; a pass not yet loaded counts as "no").
+        // No Owner / Master exemption, like gather's start. The sender is the authenticated CallingPlayer on a network
+        // call and the local player on a direct call (the Owner's own press; _RequestVariant is called from UI /
+        // Interact, never from inside a network handler, so InNetworkCall is not inherited - see ReqCatch).
+        // activities == null only in the prototype scene (no trainer system; Walking/5 Verify requires it in the world).
+        bool VariantCallerAllowed()
+        {
+            if (activities == null) return true;
+            VRCPlayerApi caller = NetworkCalling.InNetworkCall ? NetworkCalling.CallingPlayer : Networking.LocalPlayer;
+            if (!Utilities.IsValid(caller)) { Debug.Log("[KH_FrisbeeCatch] variant request refused: no valid sender"); return false; }
+            if (activities._OwnsFormationFor(caller)) return true;
+            Debug.Log("[KH_FrisbeeCatch] variant request refused: player " + caller.playerId + " is not a trainer (or the pass is not loaded)");
+            return false;
         }
 
         // The only writer of `variant` (review: no double write). Ready re-takes its spot because the geometry moved.
@@ -1029,6 +1059,7 @@ namespace KominkaHillside
             // returning to Idle, stop writing and tell Wander its cached outputs are stale.
             if (_lastApplied != state)
             {
+                if (state == StateJumpCarry && wander != null && wander.photoDirector != null) wander.photoDirector._OnFrisbeeCatch(dogIndex);   // IMP-WLD-005 photo hook: a jump catch (every client, from the synced state edge) -> the local photo director (null until Photo/1 wires it)
                 if (state == StateIdle)
                 {
                     // Hand the Animator back clean: no locomotion flags, playback speed 1 (review D2).

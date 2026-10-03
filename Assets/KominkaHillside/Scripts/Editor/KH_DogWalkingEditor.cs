@@ -257,7 +257,8 @@ namespace KominkaHillside.Editor
             var oldAct=root.transform.Find("KH_Activities");if(oldAct!=null)UnityEngine.Object.DestroyImmediate(oldAct.gameObject);
             var act=Add<KD_GroupActivities>(manager.gameObject,true);
             var sceneLive=SceneLive(out var sceneLiveSpot);
-            act.live=sceneLive;act.photos=null;act.formationItem=null;act.playItem=null;act.pack=pack;act.hillsideLeashes=manager;act.hillsidePass=pass;
+            // IMP-WLD-005: act.photos is owned by Tools/KominkaHillside/Photo/1 (kept here; null until the photo system is built)
+            act.live=sceneLive;act.formationItem=null;act.playItem=null;act.pack=pack;act.hillsideLeashes=manager;act.hillsidePass=pass;
             act.minGroundNormal=.5f;act.maxSlotHeightDelta=0f;act.groundMask=(1<<0)|(1<<11);act.balls=new KD_BallController[6];
             manager.activities=act;
             // IMP-DOG-007: local-only haptics beside the manager. Build owns the thresholds the same way it owns
@@ -295,7 +296,7 @@ namespace KominkaHillside.Editor
                 w.fetchController=f;w.petController=p;p.fetchController=f;p.wanderController=w;
                 f.pack=pack;w.pack=pack;
                 // Omitted room/stage/services stay null in this world.
-                f.sleepBoard=sleepBoard;f.liveSystem=sceneLive;w.liveSystem=sceneLive;w.liveSpot=sceneLiveSpot;f.activities=act;f.photoDirector=null;w.activities=act;
+                f.sleepBoard=sleepBoard;f.liveSystem=sceneLive;w.liveSystem=sceneLive;w.liveSpot=sceneLiveSpot;f.activities=act;w.activities=act;   // IMP-WLD-005: f/w.photoDirector are owned by Photo/1 (kept)
                 if(sleepBoard!=null)w.sleepBoard=sleepBoard;
                 act.balls[i]=b;recall.balls[i]=b;recall.fetchers[i]=f;
                 p.companionSlot=sleepBoard!=null?sleepBoard.SlotOf(i):null;   // IMP-DOG-016: chin rest reads the dog's own slot (Menu/6j wires it too)

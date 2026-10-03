@@ -62,6 +62,7 @@ namespace KominkaHillside.Editor
             public bool travelOnly; // IMP-WLD-001 travel (KH_CourseWalkHarnessEditor.Travel.cs)
             public bool travelRc;   // Course/82b: 破壊監査 RC の新規ケースだけ (同じファイル)
             public bool travelCall; // IMP-WLD-002 Course/82c: 呼ぶ (KH_CourseWalkHarnessEditor.Call.cs)
+            public bool travelSpots; // IMP-WLD-004 Course/83d: ワープできる全地点へ地図のセルから (KH_CourseWalkHarnessEditor.TravelSpots.cs、travel の台本で回す)
             public bool collarOnly; // IMP-DOG-031 Course/83b: 首輪の「外す」Interact の有効／無効 (KH_CourseWalkHarnessEditor.Collar.cs、travel の台本で回す)
             public bool nightOnly;  // IMP-ENV-005 Course/83c: オート／マニュアルのナイトモード (KH_CourseWalkHarnessEditor.Night.cs、travel の台本で回す)
             public bool waterOnly; // IMP-DOG-020 W0/W4/W6 (KH_CourseWalkHarnessEditor.Water.cs)
@@ -72,6 +73,8 @@ namespace KominkaHillside.Editor
             public int commerceSet;       // 0 = ledger (96), 1 = ledger re-entry (96b), 2 = treats (97)
             public string commerceSource; // 96b: the PlayerData snapshot of the 96 run that was installed before Play
             public bool washOnly;         // IMP-DOG-025 Course/100 (KH_CourseWalkHarnessEditor.Wash.cs)
+            public bool toyRowOnly;       // DES-UI-002 / DES-DOG-002 Course/126 おもちゃタブの上段 (KH_CourseWalkHarnessEditor.ToyRow.cs)
+            public string toyRowGroups;   // Course/126a = "throw" / 126b = "pattern" / 126 = both (Play で静的変数が消えるのでここに持つ)
             public string washGroups;     // Course/100a-e: comma-separated groups to run (empty = all). Persisted here because Play mode reloads the domain and clears statics
             public int lapChoice;
             public string selectedWalkCase,executionPurpose;
@@ -194,6 +197,7 @@ namespace KominkaHillside.Editor
                     MakeCases();Next();return;
                 }
                 if(report.errors.Count>0)throw new InvalidOperationException("Runtime error: "+report.errors[0]);
+                if(report.toyRowOnly){ToyRowTick(now);return;}
                 if(report.commerceOnly){CommerceTick(now);return;}
                 if(report.washOnly){WashTick(now);return;}
                 if(report.riverOnly){RiverTick(now);return;}
@@ -271,6 +275,7 @@ namespace KominkaHillside.Editor
         }
         static void MakeCases()
         {
+            if(report.toyRowOnly){MakeToyRowCases();return;}
             if(report.commerceOnly){MakeCommerceCases();return;}
             if(report.washOnly){MakeWashCases();return;}
             if(report.riverOnly){MakeRiverCases();return;}

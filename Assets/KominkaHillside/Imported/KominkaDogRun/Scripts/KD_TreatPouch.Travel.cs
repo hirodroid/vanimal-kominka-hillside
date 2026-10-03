@@ -10,7 +10,7 @@ namespace KominkaDogRun
     /// さんぽタブ上段の [地図と移動] (TravelMapOpen) が副画面 (Page_Settings/TravelMapPage。ポイントの面と同じ extraSettingsPages の開き方) を開く。
     /// 副画面: 左に地図 (周回路・川・橋・6 地点の目印を焼いたテクスチャ + 自分の位置と向き 10 Hz + 選んだ相手・地点の輪)、
     /// 右に [地点] / [人] の切替。
-    /// - 地点: 1 列 × 2 行の一覧 (ワープできる 2 地点)。選ぶ → [ここへワープ]。
+    /// - 地点: 2 列 × 3 段の一覧 (セル k = 地点 k。ワープできる地点のセルだけ出す。IMP-WLD-004)。選ぶ → [ここへワープ]。
     /// - 人 (段階 3): 在室の人を開いた時点の距離順で並べ、**開いている間は並べ替えない** (playerId で持つ。入室は末尾、退出は消す)。
     ///   選ぶ → [合流をたのむ] (返事待ちの間は [取り消す])。相手の受付箱が無ければ「準備中」、受け付けを OFF にしている人は暗くする。
     ///   上段に「合流の申し込みを受ける: ON/OFF」(自分の受付箱の accepting)。
@@ -36,7 +36,7 @@ namespace KominkaDogRun
         public TextMeshProUGUI travelLegendLabel;
         [Tooltip("地図の正方形が覆う世界 (x, z の中心と一辺 m)。テクスチャと同じ値を Course/84 が書く")]
         public float travelMapCenterX = 300f, travelMapCenterZ = 360f, travelMapSpan = 720f;
-        [Tooltip("地点の一覧の 2 行 (0 = 奥の広場、1 = 川辺)")]
+        [Tooltip("地点の一覧の 6 セル (2 列 × 3 段。セル k = 地点 k = 地図の番号 k+1)。ワープできない地点のセルは隠す (IMP-WLD-004)")]
         public UnityEngine.UI.Button[] travelButtons;
         public UnityEngine.UI.Image[] travelImages;
         public TextMeshProUGUI[] travelLabels;
@@ -64,9 +64,11 @@ namespace KominkaDogRun
         public UnityEngine.UI.Image travelAskImage, travelCallImage;
         public TextMeshProUGUI travelAskLabel, travelCallLabel;
 
-        // KH_LeashManager.SpotUpper / SpotRiver と、その呼び名 (行き先の行と同じキー)。地図の番号 (1〜6 = 地点の並び + 1)
-        private int[] _travelSpots = { 2, 4 };
-        private string[] _travelNameKeys = { "course.walk.upper", "course.walk.river" };
+        // 一覧のセル k が持つ地点 (KH_LeashManager.SpotGate..SpotBridgeDown) と、その呼び名。地図の番号 (1〜6 = 地点の並び + 1)。
+        // IMP-WLD-004 (2026-10-03): 2 行 (奥の広場・川辺) から 6 セルへ。セル k = 地点 k。ワープできるかは manager.spotWarpEnabled が決める。
+        // 呼び名は KH_TravelNotice._spotKeys・案内板 B の凡例と同じキー (新しい翻訳なし)
+        private int[] _travelSpots = { 0, 1, 2, 3, 4, 5 };
+        private string[] _travelNameKeys = { "KD_TreatPouch.WordWalkGate", "KD_TreatPouch.WordWalkPlaza", "course.walk.upper", "course.travel.join.spot.bridgeUp", "course.walk.river", "course.travel.join.spot.bridgeDown" };
         private int _travelSeenSerial;
         private float _travelNextLabels;
         private int _travelPick = -1;        // 地点の一覧で選んでいる行 (-1 = なし)
@@ -112,6 +114,10 @@ namespace KominkaDogRun
 
         public void _TravelPick0() { TravelPick(0); }
         public void _TravelPick1() { TravelPick(1); }
+        public void _TravelPick2() { TravelPick(2); }
+        public void _TravelPick3() { TravelPick(3); }
+        public void _TravelPick4() { TravelPick(4); }
+        public void _TravelPick5() { TravelPick(5); }
 
         public void _JoinPick0() { JoinPick(0); }
         public void _JoinPick1() { JoinPick(1); }
@@ -181,9 +187,9 @@ namespace KominkaDogRun
             if (travelNotice != null) travelNotice._Reshow();
         }
 
-        // 段階 1 からの入口 (選んで即ワープ)。ClientSim ハーネス (Course/82・83) が使う
-        public void _TravelUpper() { _travelPick = 0; TravelPress(0); }
-        public void _TravelRiver() { _travelPick = 1; TravelPress(1); }
+        // 段階 1 からの入口 (選んで即ワープ)。ClientSim ハーネス (Course/82・83) が使う。IMP-WLD-004 でセル = 地点の並びになった
+        public void _TravelUpper() { _travelPick = KominkaHillside.KH_LeashManager.SpotUpper; TravelPress(KominkaHillside.KH_LeashManager.SpotUpper); }
+        public void _TravelRiver() { _travelPick = KominkaHillside.KH_LeashManager.SpotRiver; TravelPress(KominkaHillside.KH_LeashManager.SpotRiver); }
 
         /// <summary>地点ワープ・合流の移動を取り消せるか (RC-06)。地点ワープの確認待ち・暗転中、合流の返事待ち・測定待ち・切符待ち・暗転中。
         /// 本人が移動した後 (犬待ち) は含めない。実行ボタンの表示と押したときの処理の両方がこれを使う。</summary>
@@ -468,6 +474,16 @@ namespace KominkaDogRun
             KominkaHillside.KH_TravelMailbox box = TravelMyBox();
             bool pending = box != null && box._IncomingFrom() >= 0;
             if (travelJoinPendingButton != null && travelJoinPendingButton.activeSelf != pending) travelJoinPendingButton.SetActive(pending);
+            // DES-UI-006: 2 列の右下。保留中は [地図と移動] を左半分にして、右半分に [申し込み 1 件] を出す (KD_TreatPouch.Walk.cs の定数)
+            if (walkOpenRect != null)
+            {
+                float openWidth = pending ? WalkOpenPendingWidth : WalkOpenWidth;
+                if (Mathf.Abs(walkOpenRect.sizeDelta.x - openWidth) > 0.5f)
+                {
+                    walkOpenRect.sizeDelta = new Vector2(openWidth, walkOpenRect.sizeDelta.y);
+                    walkOpenRect.anchoredPosition = new Vector2(pending ? WalkOpenPendingX : WalkOpenX, walkOpenRect.anchoredPosition.y);
+                }
+            }
             if (pending && travelJoinPendingLabel != null) travelJoinPendingLabel.text = L(box._IncomingKind() == KominkaHillside.KH_TravelMailbox.KindCall ? "course.travel.call.pending" : "course.travel.join.pending");
         }
 
@@ -498,7 +514,7 @@ namespace KominkaDogRun
             float left = manager._TravelCooldownLeft();
             bool busy = waiting >= 0 || manager._TravelAwaitingDogs();
             Vector3 me = Utilities.IsValid(lp) ? lp.GetPosition() : Vector3.zero;
-            // ---- 地点の 2 行 ----
+            // ---- 地点のセル (2 列 × 3 段。IMP-WLD-004)。2 段: 1 行目 = 番号と呼び名、2 行目 = 距離 ----
             for (int k = 0; k < _travelSpots.Length; k++)
             {
                 int spot = _travelSpots[k];
@@ -507,7 +523,7 @@ namespace KominkaDogRun
                     travelButtons[k].gameObject.SetActive(on);
                 if (!manager._TravelWarpable(spot)) { if (_travelPick == k) _travelPick = -1; continue; }
                 if (!on) continue;
-                string text = (spot + 1).ToString() + "  " + L(_travelNameKeys[k]) + "    " + TravelDistanceText(manager.spotPositions[spot], me);
+                string text = (spot + 1).ToString() + "  " + L(_travelNameKeys[k]) + "\n" + TravelDistanceText(manager.spotPositions[spot], me);
                 if (travelLabels != null && k < travelLabels.Length && travelLabels[k] != null && travelLabels[k].text != text) travelLabels[k].text = text;
                 WalkTint(travelImages, k, waiting == spot ? openOnColor : (_travelPick == k ? equipOnColor : hillsideNeutralColor));
             }

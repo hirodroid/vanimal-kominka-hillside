@@ -89,10 +89,19 @@ namespace KominkaHillside
         const float RiverSettleSeconds = 1.25f; // 5 looks: the teleport and the first ground contact can wake it
         const int RiverBankTries = 6;           // bank candidates at +2, +3.5 ... +9.5 m beyond the band edge
         const float RiverSlopeAccept = -0.10f;  // RiverBankSpot: steepest accepted fall toward the water (normal · outward)
-        const float RiverSlopeTie = 0.01f;
-        const float RiverBankShiftZ = 3f;       // RiverBankSpot also tries the same distances 3 m up and down the river      // a farther candidate must beat the nearer one by this much
+        const float RiverSlopeTie = 0.01f;      // a farther candidate must beat the nearer one by this much
+        const float RiverBankShiftZ = 3f;       // RiverBankSpot also tries the same distances 3 m up and down the river
         private float _riverSpotScore;
         const float RiverRepeatWindow = 20f;    // returned again within this = it came back; third time = park
+
+        // DES-UI-002 (user decision 2026-10-03): how the LOCAL player throws a disc - false = straight, true = curve (right only for the
+        // initial release). Local only (this behaviour is SyncMode None): not synced, not saved (a re-entry starts straight). The six
+        // KH_Frisbee read it in _Launch / the aim preview on the thrower's own client and send the resulting curve with ReqCatch, so
+        // the dog Owner plans with the very value the disc flies with and nobody else's throws change. Written by the menu's top row
+        // (KD_TreatPouch._ThrowStraight / _ThrowCurve).
+        private bool _throwCurve;
+        public bool ThrowCurve { get { return _throwCurve; } }   // net: callable-ok: read-only
+        public void _SetThrowCurve(bool on) { _throwCurve = on; }
 
         public int _LastResult() { return _lastResult; }
         public int _LastRow() { return _lastRow; }

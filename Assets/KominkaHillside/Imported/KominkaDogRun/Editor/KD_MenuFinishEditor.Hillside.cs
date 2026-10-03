@@ -32,6 +32,10 @@ namespace KominkaDogRun.Editor
         public static readonly Vector2 HillsideEntrySize = new Vector2(340f, 60f);
         public static readonly Vector2 HillsideVolumeEntryPos = new Vector2(-180f, HillsideEntryRowY);
         public static readonly Vector2 HillsideFadeEntryPos = new Vector2(180f, HillsideEntryRowY);
+        // IMP-WLD-005: 写真の ON / OFF (1 つのボタンが現在値を出す。呼ぶ・ライブの許可ボタンと同じ型)。入口の行の右端 (360〜550)。
+        // 置くのは Tools/KominkaHillside/Photo/4 (任意)。置いたときだけ Verify 22 の群「自分」に数える
+        public const string PhotoToggleName = "PhotoCaptureToggle";
+        public static readonly Vector2 HillsidePhotoTogglePos = new Vector2(455f, HillsideEntryRowY), HillsidePhotoToggleSize = new Vector2(190f, 60f);
         public static readonly Vector2 HillsideCreditEntryPos = new Vector2(-180f, HillsideReadRowY);
         public static readonly Vector2 HillsideInformationEntryPos = new Vector2(180f, HillsideReadRowY);
         public static readonly Vector2 HillsideAccessNotePos = new Vector2(190f, HillsideGroupRoomY);
@@ -237,7 +241,10 @@ namespace KominkaDogRun.Editor
             string[][] members =
             {
                 // IMP-ENV-005: 注記はモードで差し替え。構築時はオート (初回のモード) の注記 NightModeAutoNote が表示、NightModeNote (マニュアル) は非表示
-                new[] { "VolumeSettingsButton", "DistanceFadeSettingsButton", "NightModeLabel", "NightMode", "NightModeValue", NightAutoNoteName, NightAutoButtonName, NightManualButtonName, "Language", "PreviousLanguage", "NextLanguage" },
+                // IMP-WLD-005: [写真: ON / OFF] は Photo/4 が置いたときだけ群「自分」に入る (任意。Photo/5 で外せる)
+                home.Find(PhotoToggleName) != null
+                    ? new[] { "VolumeSettingsButton", "DistanceFadeSettingsButton", PhotoToggleName, "NightModeLabel", "NightMode", "NightModeValue", NightAutoNoteName, NightAutoButtonName, NightManualButtonName, "Language", "PreviousLanguage", "NextLanguage" }
+                    : new[] { "VolumeSettingsButton", "DistanceFadeSettingsButton", "NightModeLabel", "NightMode", "NightModeValue", NightAutoNoteName, NightAutoButtonName, NightManualButtonName, "Language", "PreviousLanguage", "NextLanguage" },
                 new[] { "CallAccess", "LiveAccess" },
                 new[] { CreditButtonName, "InformationButton" },
             };
@@ -271,7 +278,7 @@ namespace KominkaDogRun.Editor
             CheckEntry(home, "DistanceFadeSettingsButton", pouchUdon, "_OpenDistanceFadeSettings", language, "KD_DistanceFadeSettings.EntryButton", check);
             CheckEntry(home, CreditButtonName, settingsUdon, "_OpenCredits", language, "ui.extra.022", check);
             CheckEntry(home, "InformationButton", settingsUdon, "_OpenInformation", language, "information.title", check);
-            check(home.Find("PhotoSettingsButton") == null && pouch.settingsPage.transform.Find("PhotoSettings") == null && settings.photoSettingsPage == null, "photo settings entry and page are not built (裏山: 写真なし)");
+            check(home.Find("PhotoSettingsButton") == null && pouch.settingsPage.transform.Find("PhotoSettings") == null && settings.photoSettingsPage == null, "prequel photo settings entry and page are not built (裏山: 写真の ON/OFF は Photo/4 の " + PhotoToggleName + ")");
 
             // ---- 距離フェード (PC のみ。押せるかは KD_DistanceFadeSettings.Start が端末で決める — Android / iOS は interactable=false、文言は全端末)
             var fade = pouch.distanceFadeSettings;

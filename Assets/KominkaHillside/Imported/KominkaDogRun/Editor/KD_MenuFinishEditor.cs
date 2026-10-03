@@ -613,7 +613,7 @@ namespace KominkaDogRun.Editor
             Check(pouch.refreshSeconds==KD_ShopItem.ConfirmRefreshSeconds,"menu confirmation refresh 0.5s");
             foreach(var shelf in language.shelves)Check(shelf.refreshSeconds==KD_ShopItem.ConfirmRefreshSeconds,"shelf confirmation refresh 0.5s: "+shelf.name);
             // 裏山改変: 写真ギャラリーは裏山に無い
-            log.AppendLine("SKIP gallery TMP labels (裏山では対象外: 写真は未採用)");
+            log.AppendLine("SKIP gallery TMP labels (裏山では対象外: 前作のギャラリーの文字は無い。写真 IMP-WLD-005 は KH_PhotoSystem で、Tools/KominkaHillside/Photo/2 が検査する)");
             Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(language).SyncMethod==VRC.SDKBase.Networking.SyncType.None,"language sync None");
             Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(settings).SyncMethod==VRC.SDKBase.Networking.SyncType.None,"settings sync None");
             Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(access).SyncMethod==VRC.SDKBase.Networking.SyncType.Manual,"hosting permission sync Manual");

@@ -150,3 +150,53 @@
   - 中の部分は 2 つある。おもちゃタブの上段を本番シーンの部品へ足すこと (配置メニュー 1 本) と、文言 13 言語。
   - F1・F2 の修正は小さく、公開前に入れるべき。
 - **公開日との関係**: 質問の 1・2 に答えが出れば、10-06 ごろまでに実装・Verify を終えられる見込み。答えが出なくても、F1・F2 だけは先に直せる (設計判断が要らない)。
+
+## 8. 実装 (2026-10-03、ユーザー決定「推奨で」の後)
+
+決定: 2026-10-03 (ユーザー) §5 の質問 1〜3 は推奨どおり。曲げは投げる人のローカルの選択 (右だけ)、取り方 (通常 / 並走 / ひねり) はトレーナー特典で全部の犬に効く、待つ場所は並走に含める、跳ぶ形と代わりの取り方は自動、試作シーンの切替キューブはハーネス用に残す。
+
+状態: コードと文書を書いた段階 (未コンパイル・Unity 未実行・未コミット)。Unity のコンパイル・メニュー・ハーネス・Play は統括が行う。
+
+### 8.1 変えたもの
+
+| ファイル | 中身 |
+|---|---|
+| `Scripts/KH_ToyRecall.cs` | 投げ方のローカル値 `_throwCurve` (同期しない・保存しない)、`ThrowCurve` / `_SetThrowCurve` |
+| `Scripts/KH_Frisbee.cs` | `throwStyle` (KH_ToyRecall) を足し、`LaunchCurve()` で「投げる人の選択 → 無ければプリセット」の順に読む。`_Launch` と照準の線が同じ値を使う。犬へは今の `ReqCatch` の第 6 引数で届く (同期変数は増えない) |
+| `Scripts/KH_FrisbeeCatch.cs` | メニュー用の巡回 `NextMenuVariant` (0 → 3 → 4 → 0)。**世界 (activities 配線あり) では `ReqVariant(5)` をトレーナーからでも拒否する** (設計案は「メニューから頼まない」までだった。偽装した要求で全員の投げが曲がるのを防ぐため受け手でも閉じた)。受け手のトレーナー確認は BUG-DOG-009 の `VariantCallerAllowed` がそのまま覆う (本番は 6 匹とも activities 配線済み、Course/123 が確かめる)。試作シーン (activities null) は 5 を受けたまま |
+| `Imported/.../KD_ActivitiesMenu.cs` | 巡回を `NextMenuVariant` に。副文を 6 匹全部から作る (F3): そろっていれば「全部の犬: {0}」、予約だけなら「帰ってから: {0}」、ずれていれば「全部の犬: 切替中」。引退した 1 / 2 は「通常」と表示。F2 (連打) は BUG-DOG-008 の修正のまま |
+| `Imported/.../KD_TreatPouch.ToyTop.cs` (新規 partial) | 上段の左半分 [まっすぐ] [曲げる] (`_ThrowStraight` / `_ThrowCurve`)。選んでいる方を equipOnColor で点灯し下線を出す (interactable では表さない) |
+| `Imported/.../KD_TreatPouch.Toy.cs` | `RedrawHillsideToy` の先頭で上段を描く (1 行) |
+| `Scripts/Editor/KH_ToyTopRowEditor.cs` (新規) | `Course/122 - Build Toy Tab Throw Style Row` (部品・配線・おもちゃのスクロール上端 186 → 140・6 枚の円盤の throwStyle・コースの翻訳表、実行前にシーンを Temp へ写して保存) と `Course/123 - Verify Toy Tab Throw Style Row` |
+| `Scripts/Editor/Testing/KH_CourseWalkHarnessEditor.ToyRow.cs` (新規) と同 `.cs` 本体 (分岐 2 行・欄 2 つ) | `Course/126a` (TT0〜TT4) |
+| `Data/Environment/Course/CourseUITranslations.json` | 5 キー × 13 言語 (下) |
+
+設計案との違い:
+- 上段の帯の高さは 52 → **48** (帯の下端 140 = スクロールの上端 140。52 だと 2 px 重なる)。ボタンは 200 × 48。
+- 文言は基本の表 (`UITranslations.json`) を触らず、コースの表 (extension) に足した。`activities.hillside.frisbeeNow` の文面は変えず、副文は新しいキー `course.frisbee.allDogs` を使う (基本の表を入れ直すメニューを本番で回さずに済むため)。
+- 足したキー: `course.toy.throw.label` 投げ方 / `course.toy.throw.straight` まっすぐ / `course.toy.throw.curve` 曲げる / `course.frisbee.allDogs` 全部の犬: {0} / `course.frisbee.mixed` 全部の犬: 切替中。
+
+### 8.2 上段の寸法 (おもちゃタブ、板の内寸 x -550..550)
+
+| 部品 | 中心 x | 幅 | x の範囲 | 文字 |
+|---|---:|---:|---|---|
+| 投げ方 (ラベル) | -490 | 110 | -545..-435 | 22pt (自動縮小 14 まで) |
+| [まっすぐ] | -325 | 200 | -425..-225 | 20pt (自動縮小 14 まで) |
+| [曲げる] | -115 | 200 | -215..-15 | 同上 |
+| (右半分) ボールの柄 | — | — | 10..522 | [ボールの柄の計画](2026-10-03-ball-patterns.md) |
+
+縦はどれも y 164 ± 24 (140..188)。タブの下端 (201) との間は 13 px。おもちゃの 6 行は 2 列 × 3 段 = 112 × 3 + 12 × 2 + 16 = 376 ≤ 390 (140 − (−250))。
+
+### 8.3 回すもの (統括)
+
+1. コンパイル (`bash scripts/unity-compile.sh --udon`)。新しい U# スクリプトは無い (Program Asset の作成は不要)。
+2. `Course/122 - Build Toy Tab Throw Style Row` (保存まで行う)
+3. `Course/27 - Add Course UI Glyphs`
+4. `Course/123 - Verify Toy Tab Throw Style Row` → `TOY_THROW_ROW_OK`。あわせて `Menu/23 Verify Activities`・`Menu/21 Verify Scroll Layout`・`Walking/5 Verify`
+5. ハーネス: 試作シーンの曲げの群 `bash scripts/kh-harness-run.sh proto default --variants=5 --shots=flat,mid,lob,low,far,side` (試作は throwStyle が null なのでプリセット 5 の曲げがそのまま通ることを見る) と、本シーン `bash scripts/kh-harness-run.sh walk "Course/126a - Harness Toy Tab throw style + catch-style permission (DES-UI-002)"` → `TOY_ROW_PASS`
+
+### 8.4 ハーネスでは見ないもの
+
+- 2 人: 曲げは投げた人の投げだけに効くこと (他人の [曲げる] で自分の投げが曲がらない)、トレーナーが取り方を変えたときの他人の画面の表示、トレーナーでない人の偽装要求が実通信で弾かれること。
+- PCVR: 本物の照準で [曲げる] の線と飛び方が一致すること、曲がる投げを犬が取る見た目、ボタンの押し心地。
+- TT3 / TT4 のトレーナー判定はヒープ (KH_TrainerPass の所有者表) の模擬。ClientSim の Store は所有を返さない前提。

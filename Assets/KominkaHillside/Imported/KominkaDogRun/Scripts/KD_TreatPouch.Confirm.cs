@@ -99,6 +99,8 @@ namespace KominkaDogRun
             if (kind == ConfirmCall) { if (callPose != null) callPose._BuyAction(); return; }
             // 裏山改変 (IMP-DOG-014): おやつの [買う] (KD_TreatPouch.Treat.cs)
             if (kind == ConfirmTreat) { _TreatConfirmBuy(); return; }
+            // 裏山改変 (DES-DOG-002): ボールの柄の [購入] (KD_TreatPouch.ToyTop.cs)
+            if (kind == ConfirmToyPattern) { _PatternConfirmBuy(); return; }
             HideConfirmAll();
         }
 
@@ -113,6 +115,8 @@ namespace KominkaDogRun
             if (kind == ConfirmCall) { if (callPose != null) callPose._CancelPurchase(); return; }
             // 裏山改変 (IMP-DOG-014): おやつの [買う] の [やめる] / 暗幕 (KD_TreatPouch.Treat.cs)
             if (kind == ConfirmTreat) { _TreatConfirmNo(); return; }
+            // 裏山改変 (DES-DOG-002): ボールの柄の [やめる] / 暗幕 (KD_TreatPouch.ToyTop.cs)
+            if (kind == ConfirmToyPattern) { _PatternConfirmNo(); return; }
             HideConfirmAll();
         }
 

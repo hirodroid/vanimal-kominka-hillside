@@ -25,6 +25,8 @@ namespace KominkaDogRun.Editor
         const float TabPoints = 22;
         // 2026-09-17: 上段の余白 (ユーザー指摘「ヘッダ・帯・タブが詰まっている」)。上余白 14 / ヘッダ 44 / 隙間 7 / 帯 30 / 隙間 8 / タブ 46 / 一覧まで 15
         const float HeaderY = 314, HeaderHeight = 44, TabY = 224, TabHeight = 46;
+        /// <summary>IMP-WLD-005: ヘッダの [写真] の名前 (KH_PhotoGalleryEditor が置く)。LayoutFrame はこれがあるときだけ見出しを縮める。</summary>
+        public const string PhotoHeaderButtonName = "PhotoButton";
         internal const float ContentTop = 186, ContentTopWithRow = 140, TopRowY = 164;
         // 裏山改変: Prefixes[2] = "WalkRow" (古民家 "FxRow")。かざり (5) だけ AccRow + FxRow の 2 種 (撫でFX の合流 D-2)
         static readonly string[] Prefixes = { "Row", "ToyRow", "WalkRow", "SleepRow", "LiveRow", "AccRow" };
@@ -222,7 +224,11 @@ namespace KominkaDogRun.Editor
             ((RectTransform)panel).sizeDelta=size;
             Place(panel.Find("Bg"),Vector2.zero,size);
             // P10 (2026-09-16): ヘッダ 310 → 318、タブ 248 → 238 にして間に帯 (Y=278.5、28px) を入れる
-            Text(panel,"SectionTitle",new Vector2(-335,HeaderY),new Vector2(430,HeaderHeight),24);
+            // IMP-WLD-005: ヘッダの [写真] (Photo/4 が置く。任意) があるときだけ見出しを 430 → 400 (-550〜-150) に縮めて、見出しと残高の間 (x -65、120×44) を空ける。
+            // 無ければ従来どおり (Photo/5 で外すと元へ戻る)。値の正本は KH_PhotoGalleryEditor (HeaderButton* / TitleWithButton*)
+            var photoButton=panel.Find(PhotoHeaderButtonName);
+            if(photoButton!=null){Text(panel,"SectionTitle",new Vector2(-350,HeaderY),new Vector2(400,HeaderHeight),24);Action(panel,PhotoHeaderButtonName,-65,HeaderY,120);}
+            else Text(panel,"SectionTitle",new Vector2(-335,HeaderY),new Vector2(430,HeaderHeight),24);
             // 2026-09-17: 文字の箱 232 / 枠 284 → 左右 26px の余白 (数字が枠線に触れていた)
             Text(panel,"Balance",new Vector2(150,HeaderY),new Vector2(232,HeaderHeight),22);
             { var points=panel.Find(KD_GiftCodeSetupEditor.PointsButtonName); if(points!=null)Place(points,new Vector2(150,HeaderY),new Vector2(284,HeaderHeight+6)); }
@@ -437,6 +443,17 @@ namespace KominkaDogRun.Editor
             for(int id=0;id<6;id++)
             {
                 var s=p.tabScrolls[id];
+                // 裏山改変 (DES-UI-006): さんぽはスクロールの無い 2 列 (Course/120)。行は同じ Content に残るが、スクロール・格子は止めてある。
+                // 配置・配線・押せる面・押し先 (行き先 6 つを含む) は Course/121 と同じ検査に任せる (収まりは Course/121 が 13 言語で測る)
+                if(id==KD_TreatPouch.TabWalk && KominkaHillside.Editor.KH_WalkTabLayoutEditor.IsApplied(p))
+                {
+                    var walkErrors=new System.Collections.Generic.List<string>();
+                    KominkaHillside.Editor.KH_WalkTabLayoutEditor.Validate(p,walkErrors,null,null,null);
+                    foreach(var w in walkErrors)log.AppendLine("  "+w);
+                    Check(walkErrors.Count==0,"walk tab two-column layout (DES-UI-006, same checks as Course/121): "+walkErrors.Count+" findings");
+                    Check(p.tabPages[id].activeSelf,"initial active page "+id+" (裏山: さんぽ)");
+                    continue;
+                }
                 Check(s!=null && s.vertical && !s.horizontal && s.content!=null && s.viewport!=null,"scroll wiring "+id);
                 Check(s.viewport.GetComponent<RectMask2D>()!=null && s.viewport.GetComponent<Image>().raycastTarget,"mask and drag surface "+id);
                 Check(s.verticalScrollbar!=null && s.verticalScrollbarVisibility==ScrollRect.ScrollbarVisibility.Permanent,"permanent scrollbar "+id);

@@ -77,6 +77,9 @@ namespace KominkaDogRun
             return formationItem != null && formationItem.OwnedBy(caller);
         }
         public bool _LocalOwnsFormation() { VRCPlayerApi lp = Networking.LocalPlayer; return Utilities.IsValid(lp) && OwnsFormation(lp); }
+        // The same trainer rule as gather's receiver check, for another authority's receiver (BUG-DOG-009:
+        // KH_FrisbeeCatch.ReqVariant). Pass an authenticated player (CallingPlayer, or the local player on a direct call).
+        public bool _OwnsFormationFor(VRCPlayerApi player) { return Utilities.IsValid(player) && OwnsFormation(player); } // net: callable-ok: read-only entitlement of the given player
 
         public void _Request(int op, int a, int b)
         {

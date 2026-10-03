@@ -166,6 +166,63 @@ namespace KominkaDogRun.Editor
                 Vector3 grounded = (Vector3)Call(w, "GroundAfterPlacedSleep", high);
                 Check(grounded.y < high.y - 4 && Mathf.Abs(grounded.x-high.x) < .01f && Mathf.Abs(grounded.z-high.z) < .01f,
                     "high sleeping position returns to scene floor beyond ordinary 4m ray");
+
+                // ---- 裏山改変: IMP-DOG-032 (古民家どおり置いた高さへ浮く・押し出されない) ----
+                // 裏山の配線 (hillsideLeashes) があっても、収まる途中に接地しない。実シーンの地面の 1.2 m 上 (膝・胸の高さ) に置き、
+                // 犬はその真下 (地面) から真上へだけ浮く = 水平の残りが 0 でも収まり中 (3D で測る)
+                w.hillsideLeashes = real.hillsideLeashes; w.groundRayOffset = real.groundRayOffset; w.groundRayDistance = real.groundRayDistance;
+                w.placedSleepLiftSpeed = .5f; w.placedSleepLiftRadius = .4f;
+                Check(w.hillsideLeashes != null, "fixture carries the Hillside wiring (hillsideLeashes) like the scene dogs");
+                // 地面の点: 犬 (実シーンの 6 匹) の体に当たらない所を 2 m おきに探す
+                Vector3 floor = Vector3.zero; bool floorOk = false;
+                for (int k = 0; k < 8 && !floorOk; k++)
+                {
+                    Vector3 probe = real.dogRoot.position + Quaternion.Euler(0, k * 45f, 0) * Vector3.forward * (2f + k);
+                    RaycastHit hit;
+                    if (!Physics.Raycast(probe + Vector3.up * 100, Vector3.down, out hit, Mathf.Infinity, real.groundLayerMask, QueryTriggerInteraction.Ignore)) continue;
+                    bool onDog = false;
+                    foreach (var d in KD_DogDefs.All) { var dg = KD_SceneObjects.Find(d.DogName); if (dg != null && hit.transform.IsChildOf(dg.transform)) onDog = true; }
+                    if (!onDog) { floor = hit.point; floorOk = true; }
+                }
+                Check(floorOk, "found open ground near " + real.name + " for the elevated-spot fixture");
+                Vector3 lap = floor + Vector3.up * 1.2f;
+                Set(s, "spot", lap); Set(s, "spotYaw", 30f); Set(s, "hasSpot", true);
+                go.transform.SetPositionAndRotation(floor, Quaternion.Euler(0, 30, 0));
+                Set(w, "_dogOwner", true); Set(w, "_sleepFrozen", false); Set(w, "_placedSleepActive", true);
+                Set(w, "_inTick", true); Set(w, "_dt", .1f);   // Dt() = 0.1 s: one 0.05 m step of the lift
+                Call(w, "UpdatePlacedSleep", s);
+                float risen = go.transform.position.y - floor.y;
+                Check(risen > .04f && risen < .06f, "lift above the ground is not snapped back (rose " + risen.ToString("F3") + " m in 0.1 s, IMP-DOG-016 change 3 removed)");
+                Check((bool)w.GetType().GetField("_placedSettling", Private).GetValue(w), "a vertical-only lift still counts as settling (busy every frame until it arrives)");
+                Check(w.PlacedSleepHeld, "PlacedSleepHeld while settling onto the placed spot (push-apart exempt)");
+                Set(w, "_dt", 100f);
+                Call(w, "UpdatePlacedSleep", s);
+                Check(go.transform.position == lap, "dog sleeps at the placed height (" + go.transform.position.y.ToString("F2") + " = ground + 1.2)");
+                Check(!(bool)w.GetType().GetField("_placedSettling", Private).GetValue(w), "arrived: settling ends");
+
+                // 隣の犬が重なっても押し出されない (KD_DogPack は接地スナップするので、押されると地面へ落ちる)
+                var otherGo = new GameObject("Neighbour"); SceneManager.MoveGameObjectToScene(otherGo, scene);
+                otherGo.transform.position = lap + Vector3.right * .05f;
+                var packGo = new GameObject("Pack"); SceneManager.MoveGameObjectToScene(packGo, scene);
+                var pack = packGo.AddComponent<KD_DogPack>();
+                pack.dogRoots = new[] { go.transform, otherGo.transform }; pack.dogRadius = new[] { .3f, .3f };
+                pack.dogWander = new[] { w, null }; pack.dogFetch = new KD_DogFetchController[2]; pack.groundLayerMask = real.groundLayerMask;
+                w.hillsideLeashes = null;   // the pack borrows the leash manager from here; its roster is not this fixture's (no warning, no exemption)
+                Call(pack, "Start");
+                string packNote = "";
+                try { Call(pack, "LateUpdate"); }
+                catch (TargetInvocationException e) { packNote = " (the free neighbour's Networking.IsOwner is not available in Edit mode: " + e.InnerException?.GetType().Name + ")"; }
+                bool scanned = ((bool[])pack.GetType().GetField("_prevValid", Private).GetValue(pack))[0];
+                if (!scanned) log.AppendLine("SKIP push-apart: Time.deltaTime is 0 in Edit mode, the pack did not scan");
+                else Check(go.transform.position == lap, "an overlapping neighbour does not push / ground-snap the placed dog" + packNote);
+
+                // 起きる: 呼び出しが終わったら (LiveSleeperOf < 0) 地面へ戻り、押し出しの対象へ戻る
+                var board = go.AddComponent<KD_SleepBoard>(); board.slots = new KD_SleepSlot[0];
+                w.sleepBoard = board; w.dogIndex = 0;
+                Set(w, "_inTick", false);
+                Call(w, "UpdateSleep");
+                Check(Mathf.Abs(go.transform.position.y - floor.y) < .01f, "wake: back on the ground (" + (go.transform.position.y - floor.y).ToString("F3") + " m)");
+                Check(!w.PlacedSleepHeld, "wake: push-apart applies again");
             }
             finally { EditorSceneManager.ClosePreviewScene(scene); }
             log.AppendLine("RESULT failures=" + failures); File.WriteAllText("Temp/sleep-placement-movement.txt", log.ToString());

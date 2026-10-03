@@ -413,7 +413,8 @@ namespace KominkaDogRun.Editor
                     v.Check(wander.sleepBoard != null && wander.sleepBoard == board, def.WanderSystemName + ".sleepBoard == " + KD_DogDefs.SleepBoardName + " (犬はここから占有者を読む)");
                     // 裏山改変: 変更 3。地形追従の足 (SleepStep → GatherStep) は hillsideLeashes が居るときだけ効く
                     v.Check(wander.hillsideLeashes != null && wander.hillsideLeashes == manager, def.WanderSystemName + ".hillsideLeashes == KH_LeashManager (呼ばれた犬の移動が散歩と同じ地形追従)");
-                    v.Check((wander.groundLayerMask.value & KD_SleepSlot.HillsideGroundMask) == KD_SleepSlot.HillsideGroundMask,
+                    // IMP-DOG-032: 置き場所の判定 (KD_SleepSlot.HillsideGroundMask) は外した。犬の足の接地 (SleepStep・起きたときの接地) が見る層だけ残す
+                    v.Check((wander.groundLayerMask.value & GroundLayers) == GroundLayers,
                         def.WanderSystemName + ".groundLayerMask が地面の層 (0 / 11) を含む (actual " + wander.groundLayerMask.value + ")");
                 }
                 var fetchGo = KD_SceneObjects.Find(def.FetchSystemName, out found);
@@ -445,50 +446,28 @@ namespace KominkaDogRun.Editor
 
             // ---- 文言 (裏山のキー。keys-016.json → UITranslations は司令塔が統合) ----
             var catalog = KD_LocalizationEditor.Load();
-            foreach (var key in new[] { "KD_TreatPouch.WordSleepLeashed", "KD_TreatPouch.WordSleepFrisbee", "KD_TreatPouch.WordSleepNeedFlat", "KD_TreatPouch.WordWalkStateCalled", "KD_TreatPouch.WordWalkGateCalled" })
+            // IMP-DOG-032: WordSleepNeedFlat (「この姿勢には平らな場所が必要です」) は使わなくなった (表には残るが検査しない)
+            foreach (var key in new[] { "KD_TreatPouch.WordSleepLeashed", "KD_TreatPouch.WordSleepFrisbee", "KD_TreatPouch.WordWalkStateCalled", "KD_TreatPouch.WordWalkGateCalled" })
             {
                 string ja = null;
                 try { ja = KD_LocalizationEditor.Text(catalog, "ja", key); } catch (System.InvalidOperationException) { }
                 v.Check(!string.IsNullOrEmpty(ja), "文言キー " + key + " が UITranslations にある (ja=" + (ja ?? "無し") + ")");
             }
 
-            // ---- 斜面判定 (変更 2) の定数と、代表地点の実測 ----
-            float deg = Mathf.Acos(Mathf.Clamp01(KD_SleepSlot.HillsideMinGroundNormal)) * Mathf.Rad2Deg;
-            v.Info("   斜面判定: HillsideMinGroundNormal=" + KD_SleepSlot.HillsideMinGroundNormal.ToString("F2") + " (約 " + deg.ToString("F1") + "°まで)"
-                + " / 地面の層 mask=" + KD_SleepSlot.HillsideGroundMask + " (0 / 11) / probe=" + KD_SleepSlot.HillsideGroundProbe + " m / 高さの許容=" + KD_SleepSlot.HillsideGroundTolerance + " m");
-            var group = manager == null ? null : manager.activities;
-            if (group != null) v.Info("   参考: 集合の配置判定 KD_GroupActivities.minGroundNormal=" + group.minGroundNormal.ToString("F2") + " (呼ぶの方を厳しくする。IMP-DOG-016)");
-            v.Check(KD_SleepSlot.HillsideMinGroundNormal > 0.5f && KD_SleepSlot.HillsideMinGroundNormal < 1f, "法線の下限が (0.5, 1) の範囲 (仮値 0.9)");
-            if (dogs != null)
-            {
-                foreach (var name in new[] { "KH_LeashRack", "KH_Station_Viewpoint", "KH_Station_Plaza" })
-                {
-                    var t = dogs.transform.Find(name);
-                    if (t == null) { v.Note(name + " が無い (実測を飛ばす)"); continue; }
-                    int total, ok;
-                    SampleGround(t.position, 3f, out total, out ok);
-                    v.Info("   実測 " + name + " 半径 3 m: 置ける " + ok + " / " + total + " 点 (0.5 m 格子)");
-                    v.Check(total > 0 && ok * 10 >= total * 9, name + " のまわり (半径 3 m) の 9 割以上に置ける (拠点で呼べないことが無い)");
-                }
-            }
+            // ---- IMP-DOG-032: 場所決めは古民家どおり (斜面判定・接地なし) ----
+            // IMP-DOG-016 変更 2 (法線 0.9 の判定・赤い印) と変更 3 の収まる途中の接地は 2026-10-03 のユーザー決定で外した。
+            // 置き場所の受理は NaN / Inf だけ (KD_SleepSlot.ValidPlacement)、犬は置いた高さへ浮く (UpdatePlacedSleep)、
+            // 置いて寝ている犬は押し出されない (KD_DogPack が PlacedSleepHeld を見る)。机上の確認は Imported-Unused/Sleep Placement/4 - Check Movement
+            v.Check(typeof(KD_SleepSlot).GetMethod("_PlacementGroundOk") == null
+                && typeof(KD_SleepSlot).GetField("HillsideMinGroundNormal") == null, "KD_SleepSlot に斜面判定 (IMP-DOG-016 変更 2) が残っていない (IMP-DOG-032)");
+            var validPlacement = typeof(KD_SleepSlot).GetMethod("ValidPlacement", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            v.Check(validPlacement != null && validPlacement.GetParameters().Length == 2, "KD_SleepSlot.ValidPlacement が古民家どおり (position, yaw) の 2 引数 = NaN / Inf だけ (IMP-DOG-032)");
+            v.Check(typeof(KD_DogWanderController).GetProperty("PlacedSleepHeld") != null, "KD_DogWanderController.PlacedSleepHeld がある (置いて寝ている犬を押し出しから外す。IMP-DOG-032)");
         }
 
-        /// <summary>半径 <paramref name="radius"/> の 0.5 m 格子で、法線が下限以上の点を数える (Verify の実測。定数は KD_SleepSlot の 1 か所)。</summary>
-        internal static void SampleGround(Vector3 center, float radius, out int total, out int ok)
-        {
-            total = 0; ok = 0;
-            int n = Mathf.CeilToInt(radius / 0.5f);
-            for (int x = -n; x <= n; x++)
-                for (int z = -n; z <= n; z++)
-                {
-                    if (x * x + z * z > n * n) continue;
-                    Vector3 p = center + new Vector3(x * 0.5f, 0f, z * 0.5f);
-                    RaycastHit hit;
-                    if (!Physics.Raycast(p + Vector3.up * 10f, Vector3.down, out hit, 30f, KD_SleepSlot.HillsideGroundMask, QueryTriggerInteraction.Ignore)) continue;
-                    total++;
-                    if (hit.normal.y >= KD_SleepSlot.HillsideMinGroundNormal) ok++;
-                }
-        }
+        /// <summary>犬の足の接地が見る地面の層 (0 Default / 11 Environment)。犬の徘徊 (groundLayerMask) と KD_GroupActivities.groundMask と同じ。
+        /// IMP-DOG-032 で KD_SleepSlot.HillsideGroundMask (置き場所の判定用) を外したので、Verify の期待値だけここに置く。</summary>
+        const int GroundLayers = (1 << 0) | (1 << 11);
 
         // ---- helpers (他の Setup Editor と同型) ----
 

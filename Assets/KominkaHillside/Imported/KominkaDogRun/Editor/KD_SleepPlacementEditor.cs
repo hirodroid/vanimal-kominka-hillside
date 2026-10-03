@@ -42,8 +42,9 @@ namespace KominkaDogRun.Editor
 
         /// <summary>裏山改変: IMP-DOG-016。Menu/6i。KH_Dogs/KD_SleepPlacement (場所決め) を作る / 作り直す。
         /// 前提: Menu/6 Setup Sleep (KH_Dogs/KD_SleepBoard) と Menu/7 (手元メニューの呼ぶタブ SleepRow0..5)。
-        /// 古民家から変えた点: 器は KH_Dogs 直下 / マーカーに赤い印 (invalidMarks) / language の配線 /
-        /// BuildUI から Scroll.Build を呼ばない (Menu/7 が最後に呼ぶ)。**シーンは保存しない。**</summary>
+        /// 古民家から変えた点: 器は KH_Dogs 直下 / language の配線 / BuildUI から Scroll.Build を呼ばない (Menu/7 が最後に呼ぶ)。
+        /// IMP-DOG-032: マーカーは古民家どおり手 / 頭の前にそのまま置く (接地・斜面判定なし)。IMP-DOG-016 変更 2 の赤い印
+        /// (markerDogs[i]/Invalid) は作らず、残っていれば消す (backing の invalidMarks も外す)。**シーンは保存しない。**</summary>
         [MenuItem("Tools/KominkaHillside/Menu/6i Setup Sleep Placement")]
         public static void Setup()
         {
@@ -88,9 +89,17 @@ namespace KominkaDogRun.Editor
             }
             EditorUtility.SetDirty(placement); EditorUtility.SetDirty(pouch);
             UdonSharpEditorUtility.CopyProxyToUdon(placement); UdonSharpEditorUtility.CopyProxyToUdon(pouch);
+            // IMP-DOG-032: IMP-DOG-016 変更 2 の配線の残り (フィールドは消した) を backing から外す
+            var placementBacking = UdonSharpEditorUtility.GetBackingUdonBehaviour(placement);
+            if (placementBacking.publicVariables.TryGetVariableType(StaleInvalidMarks, out _))
+            {
+                placementBacking.publicVariables.RemoveVariable(StaleInvalidMarks);
+                EditorUtility.SetDirty(placementBacking);
+                log.AppendLine("IMP-DOG-032: backing の " + StaleInvalidMarks + " を外した");
+            }
             EditorSceneManager.MarkSceneDirty(go.scene);
             AssetDatabase.SaveAssets();
-            log.AppendLine("裏山: 斜面判定 HillsideMinGroundNormal=" + KD_SleepSlot.HillsideMinGroundNormal + " (KD_SleepSlot の定数 1 か所) / 赤い印 " + (placement.invalidMarks == null ? 0 : placement.invalidMarks.Length) + " 個");
+            log.AppendLine("裏山: IMP-DOG-032 マーカーは古民家どおり手 / 頭の前にそのまま (接地・斜面判定・赤い印なし)");
             log.AppendLine("**シーンは保存していない。** 次: Menu/6j Setup Call Poses → Menu/6b Verify Sleep System");
             KD_VerifyLog.Write(KD_Hillside.LogDir + "setup-sleep-placement.txt", log);
         }
@@ -263,7 +272,6 @@ namespace KominkaDogRun.Editor
             Directory.CreateDirectory(MeshDir); AssetDatabase.Refresh();
             var root = Child(placement.transform, "Marker"); placement.marker = root.transform;
             placement.markerDogs = new GameObject[KD_DogDefs.All.Length];
-            var invalid = new GameObject[KD_DogDefs.All.Length];   // 裏山改変: 赤い印
             for (int i = 0; i < KD_DogDefs.All.Length; i++)
             {
                 var def = KD_DogDefs.All[i];
@@ -337,30 +345,17 @@ namespace KominkaDogRun.Editor
                 var renderer = go.GetComponent<MeshRenderer>(); if (renderer == null) renderer = go.AddComponent<MeshRenderer>();
                 renderer.sharedMaterial = mat; renderer.shadowCastingMode = ShadowCastingMode.Off; renderer.receiveShadows = false;
                 placement.markerDogs[i] = go; go.SetActive(i == 0);
-                // 裏山改変: IMP-DOG-016 変更 2。平らでない / 地面が無い場所の赤い印。同じ輪郭を少し大きく・少し上に重ねる
-                var bad = Child(go.transform, "Invalid"); bad.layer = 2;
-                bad.transform.localPosition = new Vector3(0f, .004f, 0f); bad.transform.localRotation = Quaternion.identity; bad.transform.localScale = Vector3.one * 1.08f;
-                var badFilter = bad.GetComponent<MeshFilter>(); if (badFilter == null) badFilter = bad.AddComponent<MeshFilter>(); badFilter.sharedMesh = mesh;
-                var badRenderer = bad.GetComponent<MeshRenderer>(); if (badRenderer == null) badRenderer = bad.AddComponent<MeshRenderer>();
-                badRenderer.sharedMaterial = InvalidMaterial(); badRenderer.shadowCastingMode = ShadowCastingMode.Off; badRenderer.receiveShadows = false;
-                bad.SetActive(false);
-                invalid[i] = bad;
+                // IMP-DOG-032: IMP-DOG-016 変更 2 の赤い印 (子 "Invalid") は作らない。前の Setup の残りは消す
+                var stale = go.transform.Find(StaleInvalidChild);
+                if (stale != null) { UnityEngine.Object.DestroyImmediate(stale.gameObject); log.AppendLine(def.key + ": 赤い印 " + StaleInvalidChild + " を消した (IMP-DOG-032)"); }
                 log.AppendLine(def.key + " head=" + head.ToString("F3") + " ratio=" + ratio + " triangles=" + triangles.Count/3);
             }
-            placement.invalidMarks = invalid;   // 裏山改変: 赤い印
             root.SetActive(false);
         }
 
-        /// <summary>裏山改変: 赤い印の材質 (Unlit/Color。犬ごとの色の印と同じシェーダ)。</summary>
-        public static readonly Color InvalidColor = new Color(0.86f, 0.16f, 0.12f);
-        static Material InvalidMaterial()
-        {
-            var path = MeshDir + "/Invalid.mat";
-            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (mat == null) { mat = new Material(Shader.Find("Unlit/Color")); AssetDatabase.CreateAsset(mat, path); }
-            mat.color = InvalidColor; EditorUtility.SetDirty(mat);
-            return mat;
-        }
+        /// <summary>IMP-DOG-032: IMP-DOG-016 変更 2 の名残 (犬の印の子の赤い印と、KD_SleepPlacement.invalidMarks の backing 変数)。
+        /// Setup が消し、Verify が残っていないことを見る。材質 Models/SleepPlacement/Invalid.mat はどこからも参照されなくなる。</summary>
+        internal const string StaleInvalidChild = "Invalid", StaleInvalidMarks = "invalidMarks";
 
         /// <summary>裏山改変: 単独の検査は Menu/6b (KD_SleepSetupEditor.Verify) にまとめた。ここは古民家の 3 - Verify の中身 + 裏山の追加。</summary>
         internal static void VerifyInto(KD_VerifyLog v)
@@ -383,24 +378,15 @@ namespace KominkaDogRun.Editor
             {
                 // ---- 裏山改変: IMP-DOG-016 ----
                 Check(go.transform.parent != null && go.transform.parent.name == KD_Hillside.DogsRootName && go.transform.parent.parent == null, "KD_SleepPlacement が KH_Dogs 直下");
-                Check(p.language != null && p.language == p.pouch.language, "language 配線 (ヒント・平らな場所が必要の文言)");
-                Check(p.invalidMarks != null && p.invalidMarks.Length == 6, "赤い印 6 個 (invalidMarks)");
-                for (int i = 0; p.invalidMarks != null && i < p.invalidMarks.Length && i < 6; i++)
-                {
-                    var bad = p.invalidMarks[i];
-                    var r = bad == null ? null : bad.GetComponent<MeshRenderer>();
-                    Check(bad != null && p.markerDogs != null && i < p.markerDogs.Length && bad.transform.parent == p.markerDogs[i].transform && !bad.activeSelf
-                        && r != null && r.sharedMaterial != null && r.sharedMaterial.color.r > .6f && r.sharedMaterial.color.g < .4f, "赤い印 " + i + " (犬の印の子・初期非表示・赤)");
-                }
-                object wiredMarks;
-                Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(p).publicVariables.TryGetVariableValue("invalidMarks", out wiredMarks)
-                    && wiredMarks is GameObject[] && ((GameObject[])wiredMarks).Length == 6, "backing invalidMarks");
-                string flat = null;
-                try { flat = KD_LocalizationEditor.Text(KD_LocalizationEditor.Load(), "ja", KD_SleepPlacement.NeedFlatKey); } catch (InvalidOperationException) { }
-                Check(!string.IsNullOrEmpty(flat), "文言 " + KD_SleepPlacement.NeedFlatKey + " (ja=" + (flat ?? "無し") + ")");
-                if (!string.IsNullOrEmpty(flat)) Check(KD_ShopSetupEditor.MissingGlyphs(flat).Length == 0, "平らな場所が必要の字が焼けている");
-                v.Info("   斜面判定 HillsideMinGroundNormal=" + KD_SleepSlot.HillsideMinGroundNormal.ToString("F2") + " mask=" + KD_SleepSlot.HillsideGroundMask
-                    + " probe=" + KD_SleepSlot.HillsideGroundProbe + " tolerance=" + KD_SleepSlot.HillsideGroundTolerance + " searchDepth=" + KD_SleepPlacement.GroundSearchDepth);
+                Check(p.language != null && p.language == p.pouch.language, "language 配線 (ヒントの文言)");
+                // IMP-DOG-032: 赤い印 (IMP-DOG-016 変更 2) が残っていない。残っていれば Menu/6i が消す
+                int staleMarks = 0;
+                for (int i = 0; p.markerDogs != null && i < p.markerDogs.Length; i++)
+                    if (p.markerDogs[i] != null && p.markerDogs[i].transform.Find(StaleInvalidChild) != null) staleMarks++;
+                Check(staleMarks == 0, "赤い印 (犬の印の子 " + StaleInvalidChild + ") が残っていない (IMP-DOG-032。actual " + staleMarks + "。残っていれば Menu/6i)");
+                Check(!UdonSharpEditorUtility.GetBackingUdonBehaviour(p).publicVariables.TryGetVariableType(StaleInvalidMarks, out _),
+                    "backing に " + StaleInvalidMarks + " が残っていない (IMP-DOG-032。残っていれば Menu/6i)");
+                v.Info("   IMP-DOG-032: マーカーは古民家どおり手の前 0.15 m (VR) / 頭の前 0.5〜3 m (Desktop・Touch) にそのまま置く。接地・斜面判定・赤い印なし。向きは水平の yaw だけ");
                 Check(UdonSharpEditorUtility.GetBackingUdonBehaviour(p).SyncMethod == VRC.SDKBase.Networking.SyncType.None, "local only");
                 Check(p.marker != null && !p.marker.gameObject.activeSelf, "marker hidden initially");
                 Check(p.screenCanvas != null && !p.screenCanvas.activeSelf, "screen hidden initially");

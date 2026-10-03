@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-91 件 — 対応中 21 / 確認待ち 39 / 未着手 12 / 保留 3 / 完了 16
+92 件 — 対応中 21 / 確認待ち 39 / 未着手 13 / 保留 3 / 完了 16
 
 ## 実行キュー
 
@@ -77,6 +77,7 @@
 | [DES-LIV-002](DES-LIV-002-live-lineup-and-parade.md) | Medium | ハロウィン・Candy Step・ライブパックの裏山向け演目を企画する。散歩道を犬たちがパレードする専用ライブ 1 本を含め、枠・本数・構成を整理 | todo | 意図的に最後に作る (2026-10-03 ユーザー: 「ライブは最後に作るので保留。」)。初期公開には残す。status は todo のまま (hold は再検討トリガー待ちの意味で、ここは範囲内で順序が最後なだけ)。未回答 (最後の着手時に聞く): 初期公開の演目の範囲と本数 (DES-LIV-001 と同じ質問)、散歩道のパレードを「ライブパックの追加 1 本」と同じ演目にするか別枠にするか。回答まで制作 Issue を分けない |
 | [DES-WLD-002](DES-WLD-002-sound.md) | Medium | BGM003の導入・個人音量設定はIMP-WLD-003へ。環境音・場所別構成と残る音の方針を整理する | todo | BGM採用決定とIMP-WLD-003を前提に、環境音・場所別構成の残件をgame-designへ整理する |
 | [IMP-DOG-032](IMP-DOG-032-call-placement-free-height.md) | Medium | 場所を決めて呼ぶのマーカーを古民家どおり手の高さに追従させる (地面への吸着と斜面で置けない判定を外す) | todo | KD_SleepPlacement / KD_SleepSlot / KD_DogWanderController.Sleep の IMP-DOG-016 変更 2・3 の該当部分を古民家へ戻し、Editor の Verify を追従させる |
+| [IMP-DOG-038](IMP-DOG-038-leash-wait-at-bridge-corner.md) | Medium | 上流の橋の入口の急な角 (ノード 240→241、約 106°) で、リードの犬が角の先で Wait に入り、飼い主が角を回り込む間にリードの距離が Return の閾値 3.75 m を越えて手元へ走って戻る | todo | 直し方を 3 案から選ぶ (飼い主が角を過ぎたら次のノードへ回り込む / 飼い主の向きで後ろになるノードでは Wait しない / 急な角の近くだけ Return の閾値を上げる)。Play で実際に戻って見えるか、下流の橋の角でも起きるかを確かめる |
 | [IMP-ENV-001](IMP-ENV-001-hillside-polish.md) | Medium | 負荷の初回測定後、道・木陰・見晴らし・休憩場所を磨く | todo |  |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo |  |
 | [IMP-DOG-033](IMP-DOG-033-call-placement-tilt.md) | Low | 場所を決めて呼ぶで、手の傾きに合わせて犬を傾けて置けるようにする (斜面で抱っこしている感じに置く) | todo | IMP-DOG-032 (古民家どおりに戻す) の後に、同期・犬の姿勢・Desktop/Touch の扱いを設計する |

@@ -143,10 +143,15 @@ namespace KominkaHillside.Editor
 
                 // ---- さんぽタブ上段: [地図と移動] は左、「申し込み 1 件」は右 ----
                 var walk = p.tabPages[KD_TreatPouch.TabWalk].transform;
-                var openRt = (RectTransform)p.travelOpenButton.transform; openRt.anchoredPosition = new Vector2(-272f, KH_CourseTravelEditor.TopRowY);
-                var pending = KD_ShopSetupEditor.EnsureButton(walk, PendingName, new Vector2(272f, KH_CourseTravelEditor.TopRowY), new Vector2(530f, 40f),
+                // DES-UI-006: 2 列 (Course/120) を流した後なら、右列の下 ([地図と移動] 540×72 / 保留中は右半分に「申し込み 1 件」266×72) に置き直す (上段へ戻さない)
+                bool walkTwoColumn = KH_WalkTabLayoutEditor.IsApplied(p);
+                if (!walkTwoColumn) { var openRt = (RectTransform)p.travelOpenButton.transform; openRt.anchoredPosition = new Vector2(-272f, KH_CourseTravelEditor.TopRowY); }
+                var pending = KD_ShopSetupEditor.EnsureButton(walk, PendingName,
+                    walkTwoColumn ? KH_WalkTabLayoutEditor.PendingPos : new Vector2(272f, KH_CourseTravelEditor.TopRowY),
+                    walkTwoColumn ? KH_WalkTabLayoutEditor.PendingSize : new Vector2(530f, 40f),
                     new Color(.62f, .38f, .18f), font, Ja("course.travel.join.pending"), pouchBacking, "_TravelShowNotice", log);
                 var pendingLabel = pending.transform.Find("Label").GetComponent<TextMeshProUGUI>(); pendingLabel.fontSize = 20f;
+                if (walkTwoColumn) KH_WalkTabLayoutEditor.PlaceTravelButtons(p.travelOpenButton, pending);
                 pending.SetActive(false);
 
                 // ---- 副画面: 切替・受け付け・人の一覧 ----

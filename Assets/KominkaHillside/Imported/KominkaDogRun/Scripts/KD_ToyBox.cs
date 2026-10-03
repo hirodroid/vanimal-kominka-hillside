@@ -95,6 +95,31 @@ namespace KominkaDogRun
         /// にしておく。</summary>
         [UdonSynced] private string _syncedProduct = Unset;
 
+        // ============================================================
+        // 裏山改変 (DES-DOG-002、2026-10-03 ユーザー決定「推奨で」): 6 匹のボール全部に効く柄 1 つ。
+        // 選ぶ・買うのは手元メニューのおもちゃタブの上段 (KD_TreatPouch.ToyTop.cs)。棚は無い。
+        //
+        // **受け手で確かめる** (vrc-networking §2・§6): 同期値は Owner なら誰でも書ける (棚を通らない改造クライアント・
+        // SetOwner してからの直書き)。見た目を作る前に、どのクライアントでも同じ規則で確かめ、通らなければ無料の
+        // 基本ボール (productKeys[0]) を出す。
+        //   1. 器を持たない値 (表に無いキー・壊れた文字列) → 基本ボール。**添字にしない** (IndexOfProduct が -1)
+        //   2. 無料品 → そのまま
+        //   3. 有料品 → 今の Owner (= 値を書ける唯一の人) が KD_ShopItem.OwnedBy (台帳の PlayerData。他人の分も読める) を満たすときだけ
+        //      Owner の PlayerData がまだ届いていない (途中参加の直後) ときも基本ボールにして、OnPlayerRestored と 2 秒ごとの見直し (最大 15 回) で出し直す
+        // 同期変数は今までどおり string 1 本 (書いた人を別に同期しない: 書けるのは Owner だけなので、確かめる相手は Owner で足りる)。
+        // Owner が抜けて自動で移った新 Owner は、その柄を持っていなければ基本ボールへ書き直す (受け手も同じ判定で基本ボールを出しているので、値をそろえるだけ)。
+        // ============================================================
+
+        [Header("裏山: 受け手の検査 (DES-DOG-002、Course/124 が入れる)")]
+        [Tooltip("productKeys と同じ添字の商品 (KD_ShopItem)。有料の柄は書いた人の所有を OwnedBy で確かめる。[0] は無料の基本ボール (倒れ先)")]
+        public KD_ShopItem[] productItems;
+
+        /// <summary>Owner の PlayerData が届いていないときの見直しの残り回数と予約 (2 秒ごと)。</summary>
+        private const float RevalidateSeconds = 2f;
+        private const int RevalidateTries = 15;
+        private int _revalidateLeft = RevalidateTries;
+        private bool _revalidateScheduled;
+
         // 適用済みの値。二重適用と無駄な SetActive を避ける
         private string _applied = Unset;
 
@@ -110,7 +135,7 @@ namespace KominkaDogRun
         {
             // **-1 のうちは何も適用しない。** シーンの初期状態がそのまま正しい。
             // Late Joiner は OnDeserialization で正しい値を受け取る
-            if (_syncedProduct != Unset) Apply(_syncedProduct);
+            ApplySynced();
             _RefreshPickupText();
         }
 
@@ -155,10 +180,30 @@ namespace KominkaDogRun
 
         public override void OnOwnershipTransferred(VRCPlayerApi player)
         {
-            if (player == null || !player.isLocal) return;
-            if (!_hasPending) return;
+            if (!Utilities.IsValid(player) || !player.isLocal) return;
+            if (!_hasPending) { _reconcileLeft = RevalidateTries; _ReconcileAsNewOwner(); return; }   // 裏山改変: 自動で移ってきた (前の Owner が抜けた)
             _hasPending = false;
             Publish(_pendingProduct);
+        }
+
+        private int _reconcileLeft;
+
+        /// <summary>裏山改変: 自分の選択ではなく Owner が回ってきたとき (前の Owner の退室)。今の有料の柄を自分が持っていなければ
+        /// 基本ボールへ書き直す (受け手はもう基本ボールを出しているので、値をそろえるだけ)。持っていれば何も書かない。
+        /// 自分の台帳がまだ読めていなければ 2 秒後にもう一度 (最大 RevalidateTries 回。読めないまま書くと持っている柄を消してしまう)。
+        /// ローカル専用なので `_` 始まり。</summary>
+        public void _ReconcileAsNewOwner()
+        {
+            if (_hasPending || _syncedProduct == Unset || !Networking.IsOwner(gameObject)) return;
+            KD_ShopItem item = ItemOf(IndexOfProduct(_syncedProduct));
+            if (item != null && item.IsFree()) return;
+            if (item != null && !item.IsCE() && (item.ledger == null || !item.ledger.Loaded()))
+            {
+                if (_reconcileLeft > 0) { _reconcileLeft--; SendCustomEventDelayedSeconds(nameof(_ReconcileAsNewOwner), RevalidateSeconds); }
+                return;
+            }
+            if (item != null && !item.IsCE() && item.Owned()) { _revalidateLeft = RevalidateTries; ApplySynced(); return; }
+            Publish(FallbackProduct());
         }
 
         /// <summary>Ownership が来ないまま時間が過ぎたとき、楽観適用を畳む。
@@ -171,7 +216,9 @@ namespace KominkaDogRun
             if (!_hasPending) return;
             _hasPending = false;
             // 要求は通らなかった。**世界の値へ戻す** (嘘の見た目を残さない)
-            Apply(_syncedProduct);
+            _applied = Unset;   // 裏山改変: 楽観適用した品を「適用済み」のままにしない (世界の値が基本ボールでも必ず描き直す)
+            if (_syncedProduct == Unset) Apply(FallbackProduct());   // 誰も選んでいない世界 = シーンの初期状態 (基本ボール)
+            else ApplySynced();
         }
 
         /// <summary>同期変数へ書いてから、**その値で**見た目を作る。
@@ -184,7 +231,8 @@ namespace KominkaDogRun
         {
             _syncedProduct = product;
             RequestSerialization();
-            Apply(_syncedProduct);
+            _revalidateLeft = RevalidateTries;
+            ApplySynced();   // 裏山改変: 自分の画面も受け手と同じ検査を通す (描画経路を分けない)
         }
 
         // ============================================================
@@ -197,8 +245,81 @@ namespace KominkaDogRun
             // 見た目が一瞬戻る (しかも Publish は下で必ず追いつく)。
             // 待ちが解けない場合は _PendingTimeout が畳む
             if (_hasPending) return;
-            Apply(_syncedProduct);
+            _revalidateLeft = RevalidateTries;
+            ApplySynced();
         }
+
+        /// <summary>裏山改変: 誰かの PlayerData が届いた。今の Owner の分なら確かめ直す (途中参加の直後の「まだ読めない」の解消)。</summary>
+        public override void OnPlayerRestored(VRCPlayerApi player)
+        {
+            if (!Utilities.IsValid(player) || _hasPending || _syncedProduct == Unset) return;
+            VRCPlayerApi owner = Networking.GetOwner(gameObject);
+            if (!Utilities.IsValid(owner) || owner.playerId != player.playerId) return;
+            ApplySynced();
+        }
+
+        /// <summary>裏山改変: 所有が確かめられなかった有料の柄の見直し (2 秒ごと、最大 RevalidateTries 回)。ローカル専用なので `_` 始まり。</summary>
+        public void _Revalidate()
+        {
+            _revalidateScheduled = false;
+            if (_hasPending) return;
+            ApplySynced();
+        }
+
+        private void ScheduleRevalidate()
+        {
+            if (_revalidateScheduled || _revalidateLeft <= 0) return;
+            _revalidateScheduled = true;
+            _revalidateLeft--;
+            SendCustomEventDelayedSeconds(nameof(_Revalidate), RevalidateSeconds);
+        }
+
+        /// <summary>裏山改変: 同期値から見た目を作る唯一の入口。未設定 (誰も選んでいない) はシーンの初期状態のまま。</summary>
+        private void ApplySynced()
+        {
+            if (_syncedProduct == Unset) return;
+            Apply(ValidatedProduct());
+        }
+
+        /// <summary>裏山改変: 出してよい柄。だめなら無料の倒れ先 (productKeys[0])。上の「受け手で確かめる」の 1〜3。</summary>
+        private string ValidatedProduct()
+        {
+            int index = IndexOfProduct(_syncedProduct);
+            KD_ShopItem item = ItemOf(index);
+            if (item == null) { _dbgRejectCount++; return FallbackProduct(); }   // 器の無い値・商品の無い行: 添字にしない
+            if (item.IsFree()) return _syncedProduct;
+            if (item.IsCE()) { _dbgRejectCount++; return FallbackProduct(); }   // 初期公開は CE の柄を扱わない (ぬいぐるみ 3 点は載せていない)
+            VRCPlayerApi owner = Networking.GetOwner(gameObject);
+            if (!Utilities.IsValid(owner)) { _dbgRejectCount++; ScheduleRevalidate(); return FallbackProduct(); }
+            if (item.OwnedBy(owner)) return _syncedProduct;
+            // 持っていない、またはその人の PlayerData がまだこのクライアントに届いていない: 基本ボールにして見直しを予約
+            _dbgRejectCount++;
+            ScheduleRevalidate();
+            return FallbackProduct();
+        }
+
+        private string FallbackProduct()
+        {
+            return productKeys != null && productKeys.Length > 0 && productKeys[0] != null ? productKeys[0] : Unset;
+        }
+
+        private KD_ShopItem ItemOf(int index)
+        {
+            if (index < 0 || productItems == null || index >= productItems.Length) return null;
+            return productItems[index];
+        }
+
+        /// <summary>裏山改変: 手元メニューの柄の行が読む「その柄を自分が使えるか」(無料 / 自分の所有)。読み取りのみ。</summary>
+        // net: callable-ok: 読み取りのみ
+        public KD_ShopItem ItemOfProduct(string product) { return ItemOf(IndexOfProduct(product)); }
+
+        /// <summary>裏山改変: 柄の数 (手元メニューの ◀ ▶ の巡回)。</summary>
+        // net: callable-ok: 読み取りのみ
+        public int ProductCount() { return productKeys == null ? 0 : productKeys.Length; }
+
+        /// <summary>裏山改変: i 番目の柄の恒久 ID (範囲外は Unset)。</summary>
+        // net: callable-ok: 読み取りのみ
+        public string ProductAt(int i) { return productKeys != null && i >= 0 && i < productKeys.Length ? productKeys[i] : Unset; }
 
         /// <summary>兄弟のうち 1 つだけを active にする。
         ///

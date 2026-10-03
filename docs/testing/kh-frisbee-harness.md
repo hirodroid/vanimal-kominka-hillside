@@ -613,7 +613,7 @@ bash scripts/kh-harness-run.sh walk "Course/100f - Harness Wash call + height"
 | C-swap (追加) | 柴を留めて別の犬を呼ぶ | 外れた柴が `_leaveActive` になり、出る限度 (台 0) 以内に円の外。呼んだ犬は来て立つ (従来) |
 | C-gather (追加) | 台の上で集合 | 従来の合格に加えて、洗い場から出ていく歩きを始めない (集合が連れていく) |
 | C-keepout-free (新。round 7: 休憩・伏せ・座りは「その時に円の中」かつ「置いてから犬が 1 回以上判断した」標本だけで判定、時刻は最初の標本から) | 前のケースの出ていく歩きが残っていないこと (対照) を見てから、自由な柴を円の中 (すのこの前 1.5 m) へ置く。休憩がすぐ入る状態 (`_breathRunAccum` 100・`_restReadyAt` 0、ヒープへの書き込み = 模擬)。人は 14 m 離れる | 1.5 s 以内に出ていく歩き (B: `_keepOutExits` が増える)、出る限度 + 1.5 s 以内に円の外、円の中で休憩・伏せ・座りが無い、その後 6 s 円へ戻らない (外で休むのは可) |
-| C-keepout-wander (新、round 3、模擬) | 柴の家を主洗い場の中心から 4.6 m (門の向き。実際の犬の家と同じ距離) に置き、柴を円の反対側 (4.8 m) に置く。休憩なし (`_restReadyAt` 大)、徘徊の窓を常に開け (`wanderDurationMin/Max` = `cyclePeriod`)、`waypointPeriod` 2 s。人は 16 m 離れる。60 s。ヒープ・Transform への書き込みは `WcCleanup` が戻す | じゃれ合い中を除いて一度も円に入らない、ホップ 10 回以上、家の側へ回り込めた、円から出す歩き (B) が一度も要らなかった。notes に回り道・立ち止まったホップの数 |
+| C-keepout-wander (新、round 3、模擬) | 柴の家を主洗い場の中心から 4.6 m (門の向き。実際の犬の家と同じ距離) に置き (round 8: 家の正本はリード管理の同期値 `releasedHomes[dog]` で、Owner が 0.5 s ごとに `areaCenter` へ写し直すので、両方へ書いて戻す。4 s 以内に `areaCenter` がその家のままで、製品の実際の家 `_dbgHome` = ずらした家が期待どおりであることを前提として確かめ、違えば dump 付きで FAIL)、柴を円の反対側 (4.8 m) に置く。休憩なし (`_restReadyAt` 大)、徘徊の窓を常に開け (`wanderDurationMin/Max` = `cyclePeriod`)、`waypointPeriod` 2 s。人は 16 m 離れる。60 s。ヒープ・Transform への書き込みは `WcCleanup` が戻す | じゃれ合い中を除いて一度も円に入らない、ホップ 10 回以上、家の側へ回り込めた、円から出す歩き (B) が一度も要らなかった。notes に回り道・立ち止まったホップの数 |
 | C-keepout-probe (新、模擬) | 柴の家 (`areaCenter`) を 4 か所の洗い場それぞれの台の中心・横 2 m・横 r m へ動かし (実行時の Transform、すぐ戻す)、`_DebugKeepOutProbe` で 200 ホップずつ: 徘徊の `WanderTarget` と、じゃれ合いの `WanderAnchorAt` / `FleeHopTargetByHop` | 4 か所すべて調べた、生の目標点が円に入る例がある (対照)、じゃれ合いの部分が動いた (標本 > 0)、絞った後の目標点とじゃれ合いの点は 1 つも円に入らない。休む場所はその場なので C-keepout-free が見る |
 | C-keepout-leash (新) | 柴を門の横へ置き直してリードを付け (人は柴の横の NavMesh の点、無ければその点そのまま)、台の横へ連れて行く。8 s 後、猶予 (`stationUnleashGrace`) をヒープで 6 s に縮めて (模擬) 外す | 円の中で 8 s、リードのまま `_leaveActive` が立たず円の中に居る (押し出されない)。外した後 4 s (猶予 − 2 s) まで円の中で出ていかず休まない (猶予の枝 `_graceFrames` が回る)、猶予の後に小走り (`_leaveBrisk`) で、猶予 + 1.5 s + 出る限度以内に円の外 (猶予より前には出ない) |
 | C-keepout-unleash-wash (新) | 同じく連れて来て、猶予 6 s (模擬) で外し、1.5 s 後からスポンジで横腹を 10 s | 洗っている間は一度も出ていかない (猶予を過ぎても)、最後に洗い保持中。最後のストロークから「保持 + 猶予 (最後に洗った時から) + 出る限度」以内に円の外、猶予 − 0.5 s より前には出ない |
@@ -626,6 +626,23 @@ bash scripts/kh-harness-run.sh walk "Course/100f - Harness Wash call + height"
 - round 4: C-water-call は最初の水遊びをすぐ始まるようにする (ヒープ) ので、終わりに「10 分は自分から水遊びを始めない」(`_waterFirstUsed` true・`_waterNextRoll` +600 s、模擬) を書く。共通の準備 (`WcFree`) は水遊びが残っていない (`waterState` 0) ことも待ち、残っていれば FAIL (run 20261002-135252 では、川の洗い場の後に始まった水遊びの「入口へ向かう」が主洗い場まで持ち越され、C-keepout-free / -wander が BehaviorWater 12 で落ちた)。C-keepout-leash は外した後 0.5 s 待ってから休んでいないことを見る (犬が外れた端を見るのは次の判断)
 - `100d` の W-dirt-station と `100e` の W-stations-grace は、泥の地点を洗い場の円の中へ動かして柴を置くので、そのケースの間だけ柴の円を切る (ヒープの `_koRadius` を 0 に = 模擬、`WdRestore` で戻す)。見ているのは汚れの止まり方
 - **見ていないもの**: 2 人 (犬の Owner と洗い場の Owner が違う時の解放の伝わり方と台の下り方)、Owner の画面の人をよける判定 (ClientSim の人は 1 人)、6 匹が自由に過ごす長時間の様子 (家が洗い場のそばの犬が円へ入らないか) と、じゃれ合いが円をまたぐ見え方。これらは Play と PCVR
+
+#### 呼べる犬の表示と範囲 (IMP-DOG-037、2026-10-03 追加、群 call の末尾)
+
+台本 `KH_CourseWalkHarnessEditor.WashCallAvail.cs`。設計は [洗い場の呼び出しと高さ](../plans/2026-10-01-wash-call-and-height.md) §7。主洗い場のボード (`KH_WashStationBoard`、`call` = 洗い場 0) のヒープ `_dogState` (= `KH_WashStationCall._Availability`)・`_dogWord`・2 行目の TMP の文字・ボタンの `Image.color` と、Owner の `refusedReason` を見る。ボードは自分が 12 m 以内の時だけ更新するので、自分は主洗い場の横に立つ (川辺のケースは川辺の洗い場の横)。前提は Wash/11 の後 (`callRange`、ボードの新しい配線、`KD_Language` の `wash.*`)。C-swap・C-pending-cancel は、2 匹目の犬をどこに居ても呼べるよう、呼ぶ前に門のそば (柴の置き場の 2 m 先) へ置くようにした (`WcBringNear`)。
+
+| ケース | 内容 | 合格 |
+|---|---|---|
+| C-avail-near | 門の柴 (約 7 m)。ボードの `_Dog` で呼ぶ | 「呼べます」+ 緑、範囲の行に `callRange` の数字。押すと受理、歩く間「向かっています」、着いたら「ここにいます」+ 青。`_End` で解放 |
+| C-avail-mine | 柴に自分でリードを付け、主洗い場の横へ連れて行く | 自分の犬は「呼べます」+ 緑 |
+| C-avail-range (家の固定は模擬) | 柴を範囲の内側 (`callRange` − 2〜−0.5 m) と外側 (+1.5〜+3 m) へ置く。家 (徘徊の中心) をそこへ固定 (`WcSetHome`、`WcCleanup` が戻す)。最後に 40〜50 m 先 | 内側は「呼べます」で直接の `ReqCall` を受理。外側は「遠すぎます」+ 暗、ボードの `_Dog` を押したその場で `_refuseText` に理由 (ネットワークを待たない)、Owner も `RefuseTooFar`。拒否の後 2 s のあいだ毎 tick、留められない・犬の側が洗い場を取らない (`_stationIdx` < 0)・1 tick に 4 m 以上跳ばない (自由な犬が歩き回るのは可。run 20261002-223745 は 26.5 → 22.5 m の徘徊を終わりの距離で「入って来た」と誤判定した)。45 m 先への直接の `ReqCall` も `RefuseTooFar` で、同じ 2 s の見張りと、2 s 後も 35 m より遠い (30 m の「近くへ現れる」テレポートを通らない) |
+| C-avail-busy (集合は模擬) | Fetch を始める (`_OnBallThrown`) → 終わるのを待って門へ置き直す → 集合をヒープへ書く | Fetch 中は「ボールで遊び中」(ボールへ走って範囲の外へ出た時は SKIP)。集合中は「集合しています」、押すと `_myPick` (呼んでいます)、Owner は待ち (`_pendingDog`)、5 s で `RefuseBusy`、状態行に「集合しています」 |
+| C-avail-other-station | 柴を主洗い場に留めてから川辺の洗い場の横へ行く | 川辺のボードが「ほかの洗い場にいます」、川辺への `ReqCall` は `RefuseOtherStation`、主洗い場が留めたまま |
+| C-avail-leash-other | ClientSim の遠隔プレイヤー (人形、Udon なし。`ClientSimMain.SpawnRemotePlayer`) を柴の横に置き、`walkers[柴]` をその id にして直接 `ReqCall` (負の id はリードと見なされず、実在しない id はリード管理の保守が外すため、run 20261002-223745 では表示されなかった) | ボードが「ほかの人と散歩中」+ 暗、`RefuseLeashedByOther`、留めない。対照: 最後まで walker は人形のまま。SKIP しない。終わりに walker を -1 に戻して人形を消す |
+| C-avail-washed-other (入力は模擬) | 人形を出し、柴の `KH_DogWash` に人形の id のストロークの保持を書く (`washMs` = 今、`washSeen`、`_lastWasherId` = 人形の id。ClientSim は他人の NetStroke を送れないため。負の id は「他人」と見なされず run 20261002-223745 は SKIP した)。対照: `_WashHold` が立つ | 「ほかの人が洗っています」、`ReqCall` は待ち (`_pendingDog`)、保持 (3 s) が切れたら受理 |
+
+- 失敗したケースが残した人形・そのリード・その洗い保持は、次のケースの `WcSetup` (`WcCleanup` → `WaCleanupStandIns`) が片付ける
+- 見ていないもの: 本物の他人のストローク (NetStroke) で洗われている犬の表示、2 人の実際の画面 (表示の後に他人が先にリードを付けた・呼んだ時)、言語を切り替えた後の文字と枠、読みやすさ、範囲の値が自然か (4 か所の内・境目・外の歩いた感じ)。Play / PCVR / 2 人で見る
 
 ## 本シーンの首輪の「外す」Interact (Course/83b, IMP-DOG-031)
 

@@ -23,6 +23,17 @@ namespace KominkaDogRun
         // Each board contributes High, Standard, OFF in this order; all share one preference.
         public Button[] boardButtons;
         public TMP_Text[] boardStateLabels;
+        // ---- 裏山改変 (IMP-WLD-005、小さい版。docs/plans/2026-10-03-auto-photo-gallery.md §4.3) ----
+        // 2K の段階を外す (false で HighAvailable() が常に false = 選べず、保存値 2 も標準へ落ちる)。古民家は true のまま
+        [Tooltip("2K (2560x1440) を出すか。裏山は false (Photo/1 が書く)")]
+        public bool highEnabled = true;
+        // 標準の解像度。Android / iOS ビルド (Quest を含む) だけ mobileWidth / mobileHeight を使う (0 なら PC と同じ)。
+        // 実行時に端末ごとの RT を 1 組だけ作る (KD_PhotoSettings の既存の方式。2 組をビルドへ入れない)
+        public int standardWidth = 1280, standardHeight = 720;
+        public int mobileWidth = 0, mobileHeight = 0;
+        // 状態が変わるたび (復元・切替・作り直しの完了・失敗・言語) に _OnPhotoStateChanged を送る先 (裏山: KH_PhotoAlbum)。null なら送らない
+        [Tooltip("状態の変化を知らせる先 (裏山: KH_PhotoAlbum)。Photo/1 が配線")]
+        public UdonSharpBehaviour stateListener;
         private bool _restored, _busy, _failed;
         private int _mode = 2; // 0=OFF, 1=720p, 2=1440p. Stable persistence values.
         private int _cursor, _width, _height;
@@ -36,11 +47,26 @@ namespace KominkaDogRun
         // net: callable-ok: read-only platform capability
         public bool HighAvailable()
         {
-            bool available = true;
+            bool available = highEnabled;   // 裏山改変: 2K を外す
 #if UNITY_ANDROID || UNITY_IOS
             available = false;
 #endif
             return available;
+        }
+        // ---- 裏山改変 (IMP-WLD-005): 設定の行と写真の面が読む口 (読み取りのみ) ----
+        // net: callable-ok: read-only local preference (0 = OFF, 1 = standard, 2 = 2K)
+        public int CurrentMode { get { return _mode; } }
+        // net: callable-ok: read-only (restored and not resizing)
+        public bool Ready { get { return _restored && !_busy; } }
+        // net: callable-ok: read-only
+        public bool Failed { get { return _failed; } }
+        private bool MobileBuild()
+        {
+            bool mobile = false;
+#if UNITY_ANDROID || UNITY_IOS
+            mobile = true;
+#endif
+            return mobile;
         }
         private void Start() { Refresh(); }
         public override void OnPlayerRestored(VRCPlayerApi player)
@@ -67,6 +93,9 @@ namespace KominkaDogRun
         {
             if (_mode == 0) { Refresh(); return; } // Existing photographs remain viewable.
             _width = _mode == 2 ? 2560 : 1280; _height = _mode == 2 ? 1440 : 720;
+            // 裏山改変 (IMP-WLD-005): 標準は端末で分ける (PC 1280x720 / Quest・iOS 640x360)
+            if (_mode == 1 && standardWidth > 0 && standardHeight > 0) { _width = standardWidth; _height = standardHeight; }
+            if (_mode == 1 && MobileBuild() && mobileWidth > 0 && mobileHeight > 0) { _width = mobileWidth; _height = mobileHeight; }
             if (_runtimeSlots == null && slots != null) _runtimeSlots = new RenderTexture[slots.Length];
             _cursor = 0; _busy = true;
             Refresh(); SendCustomEventDelayedFrames("_ResizeNext", 1);
@@ -74,22 +103,26 @@ namespace KominkaDogRun
         public void _ResizeNext()
         {
             if (!_busy) return;
+            // 裏山改変 (IMP-WLD-005): boards は任意 (null / 空 = 板の材質は張り替えない。裏山は KH_PhotoAlbum が撮るたびに張り直す)。
+            // **空配列も「無し」として扱う** — Unity はシーン保存で null の配列を空配列にして焼くので、null だけを見ると
+            // 長さ 0 != 8 で Fail() し、撮影が永久に止まる (2026-10-03 ハーネス H0 で実測)
+            bool hasBoards = boards != null && boards.Length > 0;
             if (capture == null || capture.photoCamera == null || capture.captureTexture == null || slots == null
-                || boards == null || boards.Length != slots.Length || galleries == null || viewer == null
+                || (hasBoards && boards.Length != slots.Length) || galleries == null || viewer == null
                 || viewer.slotTextures == null || viewer.slotTextures.Length != slots.Length) { Fail(); return; }
             // Let an already exposed frame finish before touching its source or destination.
             if (capture.photoCamera.enabled) { SendCustomEventDelayedFrames("_ResizeNext", 1); return; }
             if (_cursor < slots.Length)
             {
                 RenderTexture rt = slots[_cursor];
-                bool used = boards != null && _cursor < boards.Length && boards[_cursor] != null && boards[_cursor].activeSelf;
+                bool used = hasBoards && _cursor < boards.Length && boards[_cursor] != null && boards[_cursor].activeSelf;
                 if (rt == null) { Fail(); return; }
                 // Asset references survive Editor Play. Never resize those objects: all consumers
                 // must share a runtime copy before the first capture, including initially hidden boards.
                 if (_runtimeSlots[_cursor] == null)
                 {
-                    Renderer boardRenderer = boards[_cursor] != null ? boards[_cursor].GetComponent<Renderer>() : null;
-                    if (boardRenderer == null) { Fail(); return; }
+                    Renderer boardRenderer = hasBoards && boards[_cursor] != null ? boards[_cursor].GetComponent<Renderer>() : null;
+                    if (boardRenderer == null && hasBoards) { Fail(); return; }
                     RenderTexture runtime = CreateRuntimeTexture(rt);
                     if (runtime == null) { Fail(); return; }
                     bool bound = false;
@@ -105,7 +138,7 @@ namespace KominkaDogRun
                     _runtimeSlots[_cursor] = runtime;
                     RenderTexture[] viewing = viewer.slotTextures;
                     viewing[_cursor] = runtime; viewer.slotTextures = viewing;
-                    boardRenderer.material.mainTexture = runtime;
+                    if (boardRenderer != null) boardRenderer.material.mainTexture = runtime;
                     slots[_cursor] = runtime;
                     // Loaded RT assets can already own GPU storage. Once every consumer is rebound,
                     // release that unused storage without changing any serialized template settings.
@@ -212,6 +245,8 @@ namespace KominkaDogRun
                     if (button.targetGraphic != null) button.targetGraphic.gameObject.SetActive(visible);
                     button.interactable = ready && (_failed || _mode != mode);
                 }
+            // 裏山改変 (IMP-WLD-005): 表示と撮影の可否は受け手 (KH_PhotoAlbum) が描き直す
+            if (stateListener != null) stateListener.SendCustomEvent("_OnPhotoStateChanged");
         }
     }
 }

@@ -16,6 +16,9 @@ namespace KominkaHillside
     public class KH_Frisbee : UdonSharpBehaviour
     {
         public KH_FrisbeeCatch catcher;
+        [Tooltip("DES-UI-002: the thrower's own throw style (KH_ToyRecall.ThrowCurve, local, not synced). null = the catcher's preset only " +
+            "(prototype scene: the KH_FrisbeeVariant cube and preset 5 keep driving the curve). Course/122 wires the world's six discs")]
+        public KH_ToyRecall throwStyle;
         [Tooltip("IMP-DOG-020 段階 7: 川の帯に落ちたら岸へ戻す。null = 判定なし (試作シーン)。Course/89 が配線する")]
         public KH_RiverData riverData;
         public KH_WaterSpot waterSpot;
@@ -206,7 +209,8 @@ namespace KominkaHillside
             if (speed > maxSpeed) v0 = v0 * (maxSpeed / speed);
             // The curve is read once, here: a flight already in the air keeps the bend it was launched with even
             // if the preset is switched mid-flight (the dog is told the same number with ReqCatch).
-            _curve = catcher != null ? catcher.FlightCurve : 0f;
+            // DES-UI-002: the thrower's own choice first (this runs on the thrower's client), else the preset.
+            _curve = LaunchCurve();
             _p0 = p0; _v0 = v0; _t0 = Networking.GetServerTimeInSeconds(); _spin = 0f; _flying = true; _gen++; _waterRefused = false;
             _sync.SetKinematic(true);
             transform.position = p0;
@@ -220,6 +224,15 @@ namespace KominkaHillside
                 else catcher.SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(KH_FrisbeeCatch.ReqCatch), _gen, p0, v0, _t0, thrower, _curve);
             }
             return true;
+        }
+
+        // DES-UI-002 (user decision 2026-10-03): the curve of the next throw from THIS client. The local player's own choice
+        // (KH_ToyRecall.ThrowCurve, right curve only) wins; otherwise the catcher's preset (FlightCurve: CurveDefault only for preset 5,
+        // which the world's menu never requests - the prototype cube and its harness still use it). Read on the thrower's client only.
+        float LaunchCurve()
+        {
+            if (throwStyle != null && throwStyle.ThrowCurve) return KH_FrisbeeCatch.CurveDefault;
+            return catcher != null ? catcher.FlightCurve : 0f;
         }
 
         // The dog Owner took the disc at the mouth. It is the disc Owner by then (SetOwner in the catcher).
@@ -385,7 +398,7 @@ namespace KominkaHillside
             Vector3 v0 = AimDirection() * AimSpeedNow();
             // Live, not latched: the line bends the moment the curving preset is selected (the flight latches
             // its own value in _Launch).
-            float curve = catcher != null ? catcher.FlightCurve : 0f;
+            float curve = LaunchCurve();   // DES-UI-002: the same rule as _Launch, so the line shows the flight the release will make
             int n = aimPoints < 2 ? 2 : aimPoints;
             aimLine.positionCount = n;
             Vector3 prev = p0; Vector3 end = p0; int count = 0;

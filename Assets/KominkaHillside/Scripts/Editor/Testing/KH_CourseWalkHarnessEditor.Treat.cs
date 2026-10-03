@@ -22,8 +22,10 @@ namespace KominkaHillside.Editor
     ///                        あげる (_onPickupUseDown → _onPickupUseUp) → 犬が枠を掴み・食べ始め・約 2.6 s で食べ終わって枠が空き・お礼 (出した人を見る)。在庫は二重に減らない
     ///   TR7-put-away         ジャーキーを [出す] → [しまう] → 枠が空き実体が定位置へ戻る。在庫は戻らない
     ///   TR8-slots-full       (模擬 T-009) 人形 3 人が枠 3 つを予約中 → [出す] は「いま出せません」(SlotsFull)・在庫そのまま。1 枠空く → 出せる → しまう
-    ///   TR9-all-dogs-busy    (T-009 後半) 6 匹ともリードにつなぐ → [出す] は DogsBusy・在庫そのまま
-    ///   TR10-dog0..5         犬 d 以外の 5 匹をつないで (= d だけが受けられる) 骨型をあげる → d が食べてお礼。6 匹すべて
+    ///   TR9-all-dogs-busy    (T-009 後半、模擬) 6 匹とも人形 (他人) のリード → [出す] は DogsBusy・在庫そのまま
+    ///   TR10-dog0..5         (模擬) 犬 d 以外の 5 匹を人形のリードへ (= d だけが受けられる) 骨型をあげる → d が食べてお礼。6 匹すべて
+    ///   (IMP-DOG-006 2026-10-03: 自分の接続犬はおやつに来るようになったので、TR9 / TR10 の「来ない犬」は他人の接続犬で作る。
+    ///    自分の接続犬を呼ぶ手順は Course/97c — KH_CourseWalkHarnessEditor.TreatCall.cs)
     ///   TR11-saved           在庫・Spent がファイルに保存されている (再入室の復元は Course/96b が台帳として見る)
     /// ハーネス対象外 (PCVR / 実機): 4 人が本当に同時に出す枠の取り合い (実通信・Owner 移譲・ReserveSettle)、本物の手の掴み・VR の Use の手の振り分け、
     /// 食べ・お礼のアニメと FX の見え方、途中参加。</summary>
@@ -206,52 +208,43 @@ namespace KominkaHillside.Editor
             s.Add(CmUntil(() => Enumerable.Range(0, 3).All(i => CmGiver(i) < 0), 3, () => "slots not free after the simulation"));
 
             // ---- TR9 ----
-            s = CmCase("TR9-all-dogs-busy", false, 60);
+            // IMP-DOG-006 (2026-10-03): my own leashed dogs now come to my treat, so "every dog busy" is made with another player's leashes
+            // (a puppet; walkers written on the heap = simulated). Their dogs never come to my treat (no stealing) -> DogsBusy (leash)
+            s = CmCase("TR9-all-dogs-busy", true, 60);
             int e9 = 0;
-            s.Add(CmDo(CmToGate));
+            s.Add(CmDo(() => { CmDetachAll(); CmToGate(); if (cmPuppets.Count == 0) CmSpawnPuppets(1); }));
+            s.Add(CmUntil(() => CmNoneMine() && CmCollectPuppets(1), 6, () => "detach / puppet join"));
+            s.Add(CmDo(() => CmLeashToPuppet(new[] { 0, 1, 2, 3, 4, 5 })));
             s.Add(CmWait(1));
-            for (int d = 0; d < 6; d++)
-            {
-                int dog = d;
-                s.Add(CmDo(() => CmAttach(dog, dog < 3 ? 0 : 1)));
-                s.Add(CmWait(0.5));
-            }
-            s.Add(CmUntil(() => Enumerable.Range(0, 6).All(CmMine), 6, () => "not all 6 dogs leashed (walkers " + string.Join(",", Get<int[]>(manager, "walkers")) + ")"));
-            s.Add(CmWait(0.5));
             s.Add(CmDo(() =>
             {
                 e9 = CmStockE(CmBiscuit);
                 pouch.SendCustomEvent("_Row" + biscuit);
-                CmExpect(CmReason() == KD_TreatBox.GateDogsBusy && CmState() == KD_TreatBox.DispIdle && CmStockE(CmBiscuit) == e9, "all dogs leashed: reason DogsBusy (" + CmReason() + "), nothing taken");
-                CmDetachAll();
+                CmExpect(CmReason() == KD_TreatBox.GateDogsBusy && CmState() == KD_TreatBox.DispIdle && CmStockE(CmBiscuit) == e9, "all dogs on another player's leash: reason DogsBusy (" + CmReason() + "), nothing taken");
+                CmClearPuppetLeashes();
             }));
-            s.Add(CmUntil(CmNoneMine, 6, () => "detach all"));
-            s.Add(CmDo(() => CmNote("6 dogs on the leash -> [出す] refused DogsBusy (leash), no stock loss; all detached")));
+            s.Add(CmUntil(() => Get<int[]>(manager, "walkers").All(w => w < 0), 3, () => "puppet leashes cleared"));
+            s.Add(CmDo(() => CmNote("simulated: walkers[0..5] = puppet " + cmPuppets[0].playerId + " -> [出す] refused DogsBusy (another player's leashes), no stock loss; cleared")));
 
             // ---- TR10 ----
             for (int d = 0; d < 6; d++)
             {
                 int dog = d;
-                s = CmCase("TR10-dog" + dog, false, 90);
+                s = CmCase("TR10-dog" + dog, true, 90);
                 var g = new CmGive { dog = dog, product = CmBiscuit };
-                s.Add(CmDo(CmDetachAll));
-                s.Add(CmUntil(CmNoneMine, 6, () => "detach before the round"));
+                s.Add(CmDo(() => { CmDetachAll(); CmClearPuppetLeashes(); if (cmPuppets.Count == 0) CmSpawnPuppets(1); }));
+                s.Add(CmUntil(() => CmNoneMine() && CmCollectPuppets(1), 6, () => "detach / puppet before the round"));
                 s.Add(CmDo(() => CmNearDog(dog)));
                 s.Add(CmWait(0.5));
-                int onHand = 0;
-                for (int o = 0; o < 6; o++)
+                s.Add(CmDo(() =>
                 {
-                    if (o == dog) continue;
-                    int other = o, h = onHand < 3 ? 0 : 1; onHand++;
-                    s.Add(CmDo(() => CmAttach(other, h)));
-                    s.Add(CmWait(0.5));
-                }
-                s.Add(CmUntil(() => Enumerable.Range(0, 6).All(i => i == dog ? !CmMine(i) : CmMine(i)), 6, () => "the 5 other dogs not leashed"));
-                s.Add(CmDo(() => CmNote("the other 5 dogs placed at the feet and leashed through the menu (placement just before attach = the walk harnesses' only injection); leashed dogs are not eligible (HillsideDogBusy), so dog " + dog + " is the only candidate")));
+                    CmLeashToPuppet(Enumerable.Range(0, 6).Where(i => i != dog).ToArray());
+                    CmNote("simulated: the other 5 dogs on a puppet's leash (walkers heap write). Another player's leashed dogs never take my treat (IMP-DOG-006), so dog " + dog + " is the only candidate");
+                }));
                 s.Add(CmWait(1));
                 CmGiveSteps(s, g, () => biscuit, true);
-                s.Add(CmDo(CmDetachAll));
-                s.Add(CmUntil(CmNoneMine, 6, () => "detach after the round"));
+                s.Add(CmDo(() => { CmClearPuppetLeashes(); if (dog == 5) CmRemovePuppets(); }));
+                s.Add(CmUntil(() => Get<int[]>(manager, "walkers").All(w => w < 0), 3, () => "puppet leashes cleared after the round"));
             }
 
             // ---- TR11 ----

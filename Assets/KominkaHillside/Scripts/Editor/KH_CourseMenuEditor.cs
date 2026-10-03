@@ -54,6 +54,7 @@ namespace KominkaHillside.Editor
             if(keys.Any(k=>language.keys.Contains(k)))throw new InvalidOperationException("Course catalog cannot override base keys");
             return c;
         }
+        // DES-UI-006: Course/120 の 2 列でも行は同じ Content に残る (Grid / Fitter は無効にして残す) ので、この検査はそのまま通る
         static RectTransform Content(KD_TreatPouch p)
         {
             var scroll=p.tabScrolls[KD_TreatPouch.TabWalk];
@@ -155,6 +156,8 @@ namespace KominkaHillside.Editor
         static string[] MeasureLabels(KD_TreatPouch p,List<string> errors)
         {
             var lines=new List<string>();
+            // DES-UI-006: 2 列 (Course/120) では行き先はタイル、まとめは右列。測り方は Course/121 と同じ (13 言語)
+            if(KH_WalkTabLayoutEditor.IsApplied(p)){KH_WalkTabLayoutEditor.Measure(p,errors,lines,null);return lines.ToArray();}
             var go=new GameObject("CourseMenuMeasure",typeof(RectTransform));go.hideFlags=HideFlags.HideAndDontSave;
             try
             {
@@ -212,6 +215,8 @@ namespace KominkaHillside.Editor
             CheckArray(backing,"walkDestinationIds",p.walkDestinationIds,errors);CheckArray(backing,"walkDestinationKeys",p.walkDestinationKeys,errors);
             var lb=UdonSharpEditorUtility.GetBackingUdonBehaviour(lang);
             CheckArray(lb,"extensionKeys",lang.extensionKeys,errors);CheckArray(lb,"extensionTexts",lang.extensionTexts,errors);
+            // DES-UI-006: 2 列の配置・配線・押せる面 (収まりは Course/26・121 が測る)。ビルド前の検査 (KH_CourseMenuBuildGuard) もここを通る
+            if(KH_WalkTabLayoutEditor.IsApplied(p))KH_WalkTabLayoutEditor.Validate(p,errors,null,null,null);
         }
         static void CheckArray(VRC.Udon.UdonBehaviour b,string field,Array expected,List<string> errors)
         {

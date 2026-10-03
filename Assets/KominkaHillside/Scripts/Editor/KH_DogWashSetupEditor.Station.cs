@@ -111,7 +111,11 @@ namespace KominkaHillside.Editor
             tools.AddRange(BuildCourseStations(scene, stations, wood, shared, audio, r));
             WireStationList(stations, r);
             // ---- IMP-ENV-011 / IMP-DOG-035: Call, PersonalFloor and the board on every station (the dogs' washCalls: WireWanders) ----
-            foreach (var st in stations) BuildStationControls(st, StationIndexOf(st), r);
+            // IMP-DOG-037: the board's words come from the catalog (13 languages) through KD_Language (KD_TreatPouch.language)
+            var catalog = BoardCatalog();
+            var language = BoardLanguage(r);
+            foreach (var st in stations) BuildStationControls(st, StationIndexOf(st), catalog, language, r);
+            ApplyBoardLanguage(catalog, language, r);
             SetFloorPassthrough(r);
             foreach (var st in stations) SetStandLayers(st, r);   // last: BuildStand / Prim put the parts back on Default
             return tools;
@@ -635,29 +639,63 @@ namespace KominkaHillside.Editor
         // (a hole made a raised player fall beside the stand). The interact ray passes it (layer 22 in interactThruLayers).
         static readonly Vector2 FloorHoleMin = Vector2.zero, FloorHoleMax = Vector2.zero;
         // ---- the board: a World Space Canvas standing at the back of the shelf top, above the sign, facing the front (-Z) ----
-        static readonly Vector2 BoardPixels = new Vector2(600f, 360f);
-        const float BoardScale = 0.001f;   // 1 px = 1 mm: 0.60 x 0.36 m
-        static readonly Vector3 BoardLocal = new Vector3(0f, ShelfHeight + 0.14f + 0.18f, ShelfDepth * 0.5f + 0.012f);   // bottom 0.94 m (above the sign), top 1.30 m
-        static readonly string[] DogNamesJa = { "コーギー", "ポメ", "ラブ", "ダックス", "柴", "サモエド" };   // dogIndex order (KD_DogDefs)
-        const string WordPick = "犬をえらんでよぶ", WordCalling = "を呼んでいます", WordHere = "がいます", WordBusy = "いまは来られません", WordLeashed = "ほかの人が散歩中です", WordStand = "台", WordMe = "自分";
-        const string WordEnd = "おわり", WordStandUp = "台 上へ", WordStandDown = "台 下へ", WordMeUp = "自分 上へ", WordMeDown = "自分 下へ";
+        // IMP-DOG-037 (plan §7): 0.42 m tall (was 0.36) for the two-line dog buttons, the range rule and the height line; the bottom
+        // stays at 0.94 m (above the sign), the top is 1.36 m.
+        static readonly Vector2 BoardPixels = new Vector2(600f, 420f);
+        const float BoardScale = 0.001f;   // 1 px = 1 mm: 0.60 x 0.42 m
+        static readonly Vector3 BoardLocal = new Vector3(0f, ShelfHeight + 0.14f + 0.21f, ShelfDepth * 0.5f + 0.012f);   // bottom 0.94 m, top 1.36 m
+        // Rows (px from the board's centre; the board spans x -300..300, y -210..210)
+        static readonly Vector2 StatusPos = new Vector2(0f, 180f), StatusSize = new Vector2(560f, 36f);
+        static readonly Vector2 RulePos = new Vector2(0f, 150f), RuleSize = new Vector2(560f, 24f);
+        static readonly Vector2 HeightsPos = new Vector2(0f, -178f), HeightsSize = new Vector2(560f, 30f);
+        static readonly Vector2 DogButtonSize = new Vector2(182f, 70f);
+        static readonly Vector2 DogNamePos = new Vector2(0f, 14f), DogNameSize = new Vector2(166f, 34f);
+        static readonly Vector2 DogStatePos = new Vector2(0f, -18f), DogStateSize = new Vector2(170f, 26f);
+        const float StatusPt = 22f, RulePt = 18f, HeightsPt = 18f, DogNamePt = 22f, DogStatePt = 17f, ButtonPt = 22f, MinPt = 14f;
+        const string StatusName = "Status", RuleName = "Rule", HeightsName = "Heights", DogStateName = "State";
+        static readonly Color BoardInkDim = new Color(0.78f, 0.75f, 0.70f), BoardInkState = new Color(0.92f, 0.92f, 0.88f), BoardInkRule = new Color(0.86f, 0.83f, 0.76f);
+
+        /// <summary>The dog names: the hand menu's keys (KD_TreatPouch.toyNameKeys, dogIndex order: KD_DogDefs).</summary>
+        static readonly string[] BoardDogNameKeys = { "ui.extra.010", "dog.pomeranian", "dog.labrador", "ui.extra.012", "ui.extra.008", "ui.extra.009" };
+        /// <summary>The board's words in KH_WashStationBoard.W* order (UITranslations.json, 13 languages). The Japanese written
+        /// into the board (and its labels in the saved scene) is the catalog's ja text, so the two never differ.</summary>
+        static readonly string[] BoardWordKeys =
+        {
+            "wash.board.pick", "wash.board.rule", "wash.board.calling", "wash.board.here", "wash.board.nameReason", "wash.board.busy", "wash.board.heights",
+            "wash.state.callable", "wash.state.coming", "wash.state.here", "wash.state.calling", "wash.state.leashedOther", "wash.state.otherStation",
+            "wash.state.tooFar", "wash.state.fetch", "wash.state.frisbee", "wash.state.gathering", "wash.state.sleepCall", "wash.state.washedOther",
+            "wash.button.end", "wash.button.standUp", "wash.button.standDown", "wash.button.meUp", "wash.button.meDown",
+        };
+
+        /// <summary>IMP-DOG-037: each station's call range (m, horizontal from the anchor), by station index (main, then
+        /// CourseStations: River, Upper, Hillside). Plan §7.2 has the reasons. Wash/12 checks keepOutRadius + 1 < range <
+        /// the dog side's StationFar, no two stations' ranges overlap, and the River range covers the water-play entry.</summary>
+        static readonly float[] CallRanges = { 25f, 28f, 25f, 25f };
+        static float CallRangeOf(int index) { return index >= 0 && index < CallRanges.Length ? CallRanges[index] : CallRanges[0]; }
+
         class BoardButton
         {
-            public string name, label, evt; public Vector2 pos, size; public int kind;   // kind 0 dog / 1 end / 2 stand / 3 me
-            public BoardButton(string name, string label, string evt, Vector2 pos, Vector2 size, int kind) { this.name = name; this.label = label; this.evt = evt; this.pos = pos; this.size = size; this.kind = kind; }
+            public string name, key, evt; public Vector2 pos, size; public int kind;   // kind 0 dog / 1 end / 2 stand / 3 me
+            public BoardButton(string name, string key, string evt, Vector2 pos, Vector2 size, int kind) { this.name = name; this.key = key; this.evt = evt; this.pos = pos; this.size = size; this.kind = kind; }
         }
         static BoardButton[] BoardButtons()
         {
             var list = new List<BoardButton>();
-            for (int i = 0; i < DogNamesJa.Length; i++)
-                list.Add(new BoardButton("Dog_" + i, DogNamesJa[i], "_Dog" + i, new Vector2(-190f + 190f * (i % 3), i < 3 ? 78f : 18f), new Vector2(178f, 52f), 0));
-            list.Add(new BoardButton("StandUp", WordStandUp, "_LiftUp", new Vector2(-210f, -48f), new Vector2(118f, 52f), 2));
-            list.Add(new BoardButton("StandDown", WordStandDown, "_LiftDown", new Vector2(-86f, -48f), new Vector2(118f, 52f), 2));
-            list.Add(new BoardButton("MeUp", WordMeUp, "_MeUp", new Vector2(64f, -48f), new Vector2(138f, 52f), 3));
-            list.Add(new BoardButton("MeDown", WordMeDown, "_MeDown", new Vector2(208f, -48f), new Vector2(138f, 52f), 3));
-            list.Add(new BoardButton("End", WordEnd, "_End", new Vector2(0f, -116f), new Vector2(260f, 52f), 1));
+            for (int i = 0; i < BoardDogNameKeys.Length; i++)
+                list.Add(new BoardButton("Dog_" + i, BoardDogNameKeys[i], "_Dog" + i, new Vector2(-190f + 190f * (i % 3), i < 3 ? 98f : 20f), DogButtonSize, 0));
+            // the fixed buttons in KH_WashStationBoard.buttonLabels order (WEnd, WStandUp, WStandDown, WMeUp, WMeDown)
+            list.Add(new BoardButton("End", BoardWordKeys[KH_WashStationBoard.WEnd], "_End", new Vector2(0f, -118f), new Vector2(260f, 50f), 1));
+            list.Add(new BoardButton("StandUp", BoardWordKeys[KH_WashStationBoard.WStandUp], "_LiftUp", new Vector2(-219f, -54f), new Vector2(136f, 50f), 2));
+            list.Add(new BoardButton("StandDown", BoardWordKeys[KH_WashStationBoard.WStandDown], "_LiftDown", new Vector2(-73f, -54f), new Vector2(136f, 50f), 2));
+            list.Add(new BoardButton("MeUp", BoardWordKeys[KH_WashStationBoard.WMeUp], "_MeUp", new Vector2(73f, -54f), new Vector2(136f, 50f), 3));
+            list.Add(new BoardButton("MeDown", BoardWordKeys[KH_WashStationBoard.WMeDown], "_MeDown", new Vector2(219f, -54f), new Vector2(136f, 50f), 3));
             return list.ToArray();
         }
+
+        /// <summary>The localization catalog (UITranslations.json) and a key's text in one language (the fallback language's
+        /// text when that one is empty). Throws on an unknown key (the keys are added to the catalog with this change).</summary>
+        static KD_LocalizationEditor.Catalog BoardCatalog() { return KD_LocalizationEditor.Load(); }
+        static string BoardText(KD_LocalizationEditor.Catalog c, string code, string key) { return KD_LocalizationEditor.Text(c, code, key); }
 
         /// <summary>The duckboard (under Lift since IMP-ENV-011; directly under the station before it).</summary>
         static Transform FindTable(Transform st)
@@ -742,7 +780,7 @@ namespace KominkaHillside.Editor
             r.log.Add("VRCSceneDescriptor.interactThruLayers " + before + " -> " + p.intValue + " (layer " + FloorLayer + ": my floor lets the interact ray through)");
         }
 
-        static void BuildStationControls(Transform st, int index, BuildReport r)
+        static void BuildStationControls(Transform st, int index, KD_LocalizationEditor.Catalog catalog, KD_Language language, BuildReport r)
         {
             RequireStationProgram(CallProgram); RequireStationProgram(FloorProgram); RequireStationProgram(BoardProgram);
             if (index < 0) throw new InvalidOperationException(st.name + " has no station index");
@@ -770,6 +808,7 @@ namespace KominkaHillside.Editor
             Prop(so, "idleReleaseSeconds").floatValue = CallIdleReleaseSeconds;
             Prop(so, "callerFarMeters").floatValue = CallCallerFarMeters;
             Prop(so, "keepOutRadius").floatValue = CallKeepOutRadius;
+            Prop(so, "callRange").floatValue = CallRangeOf(index);   // IMP-DOG-037
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(call);
 
@@ -807,14 +846,70 @@ namespace KominkaHillside.Editor
             EditorUtility.SetDirty(pf);
 
             // ---- the board ----
-            var board = BuildBoard(st, call, pf, r);
+            var board = BuildBoard(st, call, pf, catalog, language, r);
 
             Copy(call); Copy(pf); Copy(board);
-            r.log.Add(st.name + ": Call (index " + index + ", standYaw " + Mathf.Repeat(st.eulerAngles.y + StandYawOffset, 360f).ToString("F1") + "), " + FloorName + " (base " + baseY.ToString("F3") + "), " + BoardName + " wired");
+            r.log.Add(st.name + ": Call (index " + index + ", standYaw " + Mathf.Repeat(st.eulerAngles.y + StandYawOffset, 360f).ToString("F1") + ", callRange " + CallRangeOf(index) + " m), " + FloorName + " (base " + baseY.ToString("F3") + "), " + BoardName + " wired");
         }
 
-        static KH_WashStationBoard BuildBoard(Transform st, KH_WashStationCall call, KH_WashPersonalFloor pf, BuildReport r)
+        /// <summary>IMP-DOG-037: the KD_Language the boards read their words from (KD_TreatPouch.language, as the guide boards).
+        /// Missing: a WARN and null (the boards keep the builder's Japanese; Wash/12 fails on it).</summary>
+        static KD_Language BoardLanguage(BuildReport r)
         {
+            var pouches = UnityEngine.Object.FindObjectsOfType<KD_TreatPouch>(true);
+            if (pouches.Length == 1 && pouches[0].language != null) return pouches[0].language;
+            r.log.Add("WARN the boards' KD_Language not found (KD_TreatPouch x" + pouches.Length + (pouches.Length == 1 ? ", language not wired (Menu/11)" : "") + "): the boards stay Japanese; Wash/12 fails on it");
+            return null;
+        }
+
+        /// <summary>IMP-DOG-037: the board's ja / en glyphs into the shared font (its only entry, AddGlyphs), then KD_Language's
+        /// tables from the catalog (Configure, as the other builders that add keys do; the label bindings are not touched) and
+        /// the proxy copied to the backing.</summary>
+        static void ApplyBoardLanguage(KD_LocalizationEditor.Catalog catalog, KD_Language language, BuildReport r)
+        {
+            var log = new System.Text.StringBuilder();
+            KD_ShopSetupEditor.AddGlyphs(BoardGlyphText(catalog), log);
+            if (language != null)
+            {
+                KD_LocalizationEditor.Configure(language, catalog, log);
+                EditorUtility.SetDirty(language);
+                UdonSharpEditorUtility.CopyProxyToUdon(language);
+            }
+            foreach (var line in log.ToString().Split('\n')) if (line.Trim().Length > 0) r.log.Add("board language: " + line.Trim());
+        }
+
+        /// <summary>Every character the boards draw in a language whose glyphs are baked (ja, en): the words, the dog names, the
+        /// numbers the board writes (placeholders removed).</summary>
+        static string BoardGlyphText(KD_LocalizationEditor.Catalog catalog)
+        {
+            var s = new System.Text.StringBuilder("0123456789.m -");
+            foreach (var lang in catalog.languages)
+            {
+                if (!KD_LocalizationEditor.Bundled(lang)) continue;
+                foreach (var k in BoardWordKeys.Concat(BoardDogNameKeys)) s.Append(System.Text.RegularExpressions.Regex.Replace(BoardText(catalog, lang.code, k), @"\{\d+\}", ""));
+            }
+            return s.ToString();
+        }
+
+        /// <summary>A text on the board: one line, autosize from pt down to MinPt (14, the hand menu's floor for Quest / phones).</summary>
+        static TextMeshProUGUI EnsureBoardLabel(Transform parent, string name, Vector2 pos, Vector2 size, TMP_FontAsset font, float pt, Color ink, string text)
+        {
+            var g = KominkaDogRun.Editor.KD_ShopSetupEditor.EnsureUiChild(parent, name, pos, size);
+            var t = g.GetComponent<TextMeshProUGUI>(); if (t == null) t = g.AddComponent<TextMeshProUGUI>();
+            t.font = font; t.fontSize = pt; t.enableAutoSizing = true; t.fontSizeMax = pt; t.fontSizeMin = MinPt;
+            t.alignment = TextAlignmentOptions.Center; t.color = ink;
+            t.raycastTarget = false; t.enableWordWrapping = false; t.overflowMode = TextOverflowModes.Overflow;
+            t.text = text;
+            EditorUtility.SetDirty(t);
+            return t;
+        }
+
+        static KH_WashStationBoard BuildBoard(Transform st, KH_WashStationCall call, KH_WashPersonalFloor pf, KD_LocalizationEditor.Catalog catalog, KD_Language language, BuildReport r)
+        {
+            string ja = catalog.fallbackLanguage;
+            var words = BoardWordKeys.Select(k => BoardText(catalog, ja, k)).ToArray();
+            var names = BoardDogNameKeys.Select(k => BoardText(catalog, ja, k)).ToArray();
+            int index = StationIndexOf(st);
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath);
             if (font == null) throw new InvalidOperationException("Shared UI font missing: " + KominkaDogRun.Editor.KD_ShopSetupEditor.SharedFontPath);
             var t = st.Find(BoardName);
@@ -841,28 +936,66 @@ namespace KominkaHillside.Editor
             bgImg.color = KominkaDogRun.Editor.KD_UiSpriteEditor.SurfacePanel;
             bgImg.raycastTarget = false;
 
-            var statusGo = KominkaDogRun.Editor.KD_ShopSetupEditor.EnsureUiChild(go.transform, "Status", new Vector2(0f, 140f), new Vector2(560f, 64f));
-            var status = statusGo.GetComponent<TextMeshProUGUI>(); if (status == null) status = statusGo.AddComponent<TextMeshProUGUI>();
-            status.font = font; status.fontSize = 22f; status.alignment = TextAlignmentOptions.Center; status.color = Color.white;
-            status.raycastTarget = false; status.enableWordWrapping = false; status.overflowMode = TextOverflowModes.Overflow;
-            status.text = WordPick + "\n" + WordStand + " 0.0m   " + WordMe + " 0.0m";
-            EditorUtility.SetDirty(status);
+            // ---- the three lines: what is happening (status), the range rule, the heights (the saved scene shows the Japanese) ----
+            var status = EnsureBoardLabel(go.transform, StatusName, StatusPos, StatusSize, font, StatusPt, Color.white, words[KH_WashStationBoard.WPick]);
+            var rule = EnsureBoardLabel(go.transform, RuleName, RulePos, RuleSize, font, RulePt, BoardInkRule, words[KH_WashStationBoard.WRule].Replace("{0}", Mathf.RoundToInt(CallRangeOf(index)).ToString()));
+            var heights = EnsureBoardLabel(go.transform, HeightsName, HeightsPos, HeightsSize, font, HeightsPt, BoardInkRule, words[KH_WashStationBoard.WHeights].Replace("{0}", "0.0").Replace("{1}", "0.0"));
 
             var b = AddUdon<KH_WashStationBoard>(go, Networking.SyncType.None);
-            b.call = call; b.personalFloor = pf; b.statusText = status;
-            b.dogNames = (string[])DogNamesJa.Clone();
-            b.wordPick = WordPick; b.wordCalling = WordCalling; b.wordHere = WordHere; b.wordBusy = WordBusy; b.wordLeashed = WordLeashed; b.wordStand = WordStand; b.wordMe = WordMe;
-            EditorUtility.SetDirty(b);
             var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(b);
+            // IMP-DOG-037: the fields the board no longer has can stay in the backing's variable table after the script reload
+            // (as KD_PhotoSetupEditor.RemoveLegacyGalleryReferences does for the gallery's)
+            bool removedOld = false;
+            foreach (var old in new[] { "wordPick", "wordCalling", "wordHere", "wordBusy", "wordLeashed", "wordStand", "wordMe" })
+                if (backing.publicVariables.RemoveVariable(old)) removedOld = true;
+            if (removedOld) { EditorUtility.SetDirty(backing); r.log.Add(st.name + "/" + BoardName + ": removed the old word variables from the backing"); }
             var log = new System.Text.StringBuilder();
             var specs = BoardButtons();
+            var dogImages = new UnityEngine.UI.Image[BoardDogNameKeys.Length];
+            var dogNameLabels = new TextMeshProUGUI[BoardDogNameKeys.Length];
+            var dogStateLabels = new TextMeshProUGUI[BoardDogNameKeys.Length];
+            var fixedLabels = new List<TextMeshProUGUI>();
+            int dogI = 0;
             foreach (var s in specs)
             {
                 var color = s.kind == 0 ? KominkaDogRun.Editor.KD_UiSpriteEditor.ActionPrimary : s.kind == 1 ? KominkaDogRun.Editor.KD_UiSpriteEditor.ActionClose : KominkaDogRun.Editor.KD_UiSpriteEditor.ActionNeutral;
-                KominkaDogRun.Editor.KD_ShopSetupEditor.EnsureButton(go.transform, s.name, s.pos, s.size, color, font, s.label, backing, s.evt, log);
+                string label = s.kind == 0 ? names[dogI] : BoardText(catalog, ja, s.key);
+                var bgo = KominkaDogRun.Editor.KD_ShopSetupEditor.EnsureButton(go.transform, s.name, s.pos, s.size, color, font, label, backing, s.evt, log);
+                var lab = bgo.transform.Find("Label").GetComponent<TextMeshProUGUI>();
+                if (s.kind == 0)
+                {
+                    // two lines: the name (top) and what the dog is doing / why it cannot come (bottom). IMP-DOG-037
+                    var lr = (RectTransform)lab.transform; lr.anchoredPosition = DogNamePos; lr.sizeDelta = DogNameSize;
+                    lab.fontSize = DogNamePt; lab.enableAutoSizing = true; lab.fontSizeMax = DogNamePt; lab.fontSizeMin = MinPt; lab.color = Color.white;
+                    EditorUtility.SetDirty(lab);
+                    dogImages[dogI] = bgo.GetComponent<UnityEngine.UI.Image>();
+                    dogNameLabels[dogI] = lab;
+                    dogStateLabels[dogI] = EnsureBoardLabel(bgo.transform, DogStateName, DogStatePos, DogStateSize, font, DogStatePt, BoardInkState, words[KH_WashStationBoard.WStCallable]);
+                    dogI++;
+                }
+                else
+                {
+                    lab.fontSize = ButtonPt; lab.enableAutoSizing = true; lab.fontSizeMax = ButtonPt; lab.fontSizeMin = MinPt;
+                    EditorUtility.SetDirty(lab);
+                    var stray = bgo.transform.Find(DogStateName); if (stray != null) UnityEngine.Object.DestroyImmediate(stray.gameObject);
+                    fixedLabels.Add(lab);
+                }
             }
             foreach (Transform c in go.transform.Cast<Transform>().ToArray())
-                if (c.name != "Bg" && c.name != "Status" && !specs.Any(s => s.name == c.name)) { r.log.Add("removed stale " + st.name + "/" + BoardName + "/" + c.name); UnityEngine.Object.DestroyImmediate(c.gameObject); }
+                if (c.name != "Bg" && c.name != StatusName && c.name != RuleName && c.name != HeightsName && !specs.Any(s => s.name == c.name))
+                { r.log.Add("removed stale " + st.name + "/" + BoardName + "/" + c.name); UnityEngine.Object.DestroyImmediate(c.gameObject); }
+
+            b.call = call; b.personalFloor = pf; b.language = language;
+            b.statusText = status; b.ruleText = rule; b.heightText = heights;
+            b.dogButtons = dogImages; b.dogNameLabels = dogNameLabels; b.dogStateLabels = dogStateLabels; b.buttonLabels = fixedLabels.ToArray();
+            b.dogNameKeys = (string[])BoardDogNameKeys.Clone(); b.dogNames = names;
+            b.wordKeys = (string[])BoardWordKeys.Clone(); b.words = words;
+            b.colorCallable = KominkaDogRun.Editor.KD_UiSpriteEditor.ActionPrimary;
+            b.colorHere = KominkaDogRun.Editor.KD_UiSpriteEditor.ActionEquip;
+            b.colorUnavailable = KominkaDogRun.Editor.KD_UiSpriteEditor.TabOff;
+            b.inkName = Color.white; b.inkNameDim = BoardInkDim; b.inkState = BoardInkState;
+            b.inkReason = KominkaDogRun.Editor.KD_UiSpriteEditor.AccentGold;
+            EditorUtility.SetDirty(b);
             if (log.Length > 0) r.log.Add(st.name + "/" + BoardName + ": " + log.ToString().Trim().Replace("\n", " | "));
             return b;
         }

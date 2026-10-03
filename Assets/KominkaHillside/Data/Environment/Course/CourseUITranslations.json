@@ -415,6 +415,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "相手からの申し込みに先に答えてください"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "投げ方"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "まっすぐ"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "曲げる"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "全部の犬: {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "全部の犬: 切替中"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "ボールの柄"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "6 匹のボールが全部この柄になります。みんなにも見えます"
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "6 匹のボールを「{0}」にしました"
         }
       ]
     },
@@ -830,6 +862,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "Answer their request first"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "Throw"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "Straight"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "Curve"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "All dogs: {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "All dogs: switching"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "Ball design"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "All six dogs' balls change to this design. Everyone sees it."
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "All six balls are now: {0}"
         }
       ]
     },
@@ -1245,6 +1309,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "Сначала ответьте им"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "Бросок"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "Прямо"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "С изгибом"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "Все собаки: {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "Все собаки: переключение"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "Узор мяча"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "Мячи всех шести собак станут такими. Это видят все."
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "Теперь все шесть мячей: {0}"
         }
       ]
     },
@@ -1660,6 +1756,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "Спершу дайте відповідь"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "Кидок"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "Прямо"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "З вигином"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "Усі собаки: {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "Усі собаки: перемикання"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "Візерунок м'яча"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "М'ячі всіх шести собак стануть такими. Це бачать усі."
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "Тепер усі шість м'ячів: {0}"
         }
       ]
     },
@@ -2075,6 +2203,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "상대의 요청에 먼저 답해 주세요"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "던지기"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "똑바로"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "휘게"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "모든 개: {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "모든 개: 전환 중"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "공 무늬"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "여섯 마리의 공이 모두 이 무늬로 바뀝니다. 모두에게 보입니다."
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "여섯 마리의 공을 「{0}」(으)로 바꿨습니다"
         }
       ]
     },
@@ -2490,6 +2650,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "Beantworte zuerst die Anfrage"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "Wurf"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "Gerade"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "Kurve"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "Alle Hunde: {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "Alle Hunde: wird umgestellt"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "Ballmuster"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "Die Bälle aller sechs Hunde bekommen dieses Muster. Alle sehen es."
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "Alle sechs Bälle sind jetzt: {0}"
         }
       ]
     },
@@ -2905,6 +3097,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "请先回复对方的请求"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "投法"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "直线"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "弧线"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "所有狗狗: {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "所有狗狗: 切换中"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "球的样式"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "6 只狗狗的球都会变成这个样式，所有人都看得到。"
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "6 只狗狗的球已换成「{0}」"
         }
       ]
     },
@@ -3320,6 +3544,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "Responde primero"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "Lanzamiento"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "Recto"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "Con curva"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "Todos los perros: {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "Todos los perros: cambiando"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "Diseño de pelota"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "Las pelotas de los seis perros tendrán este diseño. Todos lo verán."
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "Las seis pelotas ahora son: {0}"
         }
       ]
     },
@@ -3735,6 +3991,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "Réponds d’abord"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "Lancer"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "Droit"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "Courbe"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "Tous les chiens : {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "Tous les chiens : en changement"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "Motif de balle"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "Les balles des six chiens prennent ce motif. Tout le monde le voit."
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "Les six balles sont maintenant : {0}"
         }
       ]
     },
@@ -4150,6 +4438,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "Responda primeiro"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "Arremesso"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "Reto"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "Curva"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "Todos os cães: {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "Todos os cães: mudando"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "Estampa da bola"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "As bolas dos seis cães ficam com esta estampa. Todos veem."
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "As seis bolas agora são: {0}"
         }
       ]
     },
@@ -4565,6 +4885,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "Rispondi prima"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "Lancio"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "Dritto"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "Curva"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "Tutti i cani: {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "Tutti i cani: in cambio"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "Motivo palla"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "Le palle dei sei cani avranno questo motivo. Lo vedono tutti."
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "Ora tutte e sei le palle sono: {0}"
         }
       ]
     },
@@ -4980,6 +5332,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "Najpierw odpowiedz"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "Rzut"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "Prosto"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "Z podkrętką"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "Wszystkie psy: {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "Wszystkie psy: zmiana"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "Wzór piłki"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "Piłki wszystkich sześciu psów dostaną ten wzór. Widzą to wszyscy."
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "Wszystkie sześć piłek to teraz: {0}"
         }
       ]
     },
@@ -5399,6 +5783,38 @@
         {
           "key": "course.travel.call.answerfirst",
           "text": "請先回覆對方的請求"
+        },
+        {
+          "key": "course.toy.throw.label",
+          "text": "投法"
+        },
+        {
+          "key": "course.toy.throw.straight",
+          "text": "直線"
+        },
+        {
+          "key": "course.toy.throw.curve",
+          "text": "弧線"
+        },
+        {
+          "key": "course.frisbee.allDogs",
+          "text": "所有狗狗: {0}"
+        },
+        {
+          "key": "course.frisbee.mixed",
+          "text": "所有狗狗: 切換中"
+        },
+        {
+          "key": "course.toy.pattern.label",
+          "text": "球的款式"
+        },
+        {
+          "key": "course.toy.pattern.body",
+          "text": "6 隻狗狗的球都會變成這個款式，所有人都看得到。"
+        },
+        {
+          "key": "course.toy.pattern.changed",
+          "text": "6 隻狗狗的球已換成「{0}」"
         }
       ]
     }

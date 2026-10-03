@@ -1794,11 +1794,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "ボールを持ってきたときや、犬を撫でているとき、かけっこやじゃれ合いなどを自動で撮影しています。寝室では、一緒にくつろいでいる姿も撮影します。\n\n写真はずっと撮り続けるのではなく、時間を空けて撮影され、種類ごとに古いものから入れ替わります。\n\nここに並ぶ写真は、あなた専用です。他の人には別の写真が見えています。\n\n写真は退室すると消えます。残したい写真は、PC・QuestではVRChatカメラを近づけて撮影、スマホでは写真をタップしてスクリーンショットで持ち帰れます。\n\n自動撮影は、写真ボードの「解像度設定」からOFFにできます。"
+          "text": "ボールを持ってきたとき、犬を撫でているとき、走っているとき、犬同士がじゃれ合っているとき、フリスビーを跳んで取ったとき、集合写真のときに、自動で撮影しています。\n\n写真はずっと撮り続けるのではなく、時間を空けて撮影されます。並ぶのは8枚までで、新しい写真が左上に入り、いちばん古いものから入れ替わります。\n\nここに並ぶ写真は、あなた専用です。他の人には別の写真が見えています。\n\n写真は退室すると消えます。残したい写真は、PC・Questでは門の写真ボードの写真にVRChatカメラを近づけて撮影、スマホではボードの写真をタップしてスクリーンショットで持ち帰れます。\n\n自動撮影は、手元メニューの［設定］にある［写真: ON / OFF］で切り替えられます。"
         },
         {
           "key": "photo.help.close",
           "text": "閉じる"
+        },
+        {
+          "key": "photo.menu",
+          "text": "写真"
+        },
+        {
+          "key": "photo.empty",
+          "text": "犬と遊ぶと自動で撮れます"
+        },
+        {
+          "key": "photo.new",
+          "text": "新しい"
         },
         {
           "key": "photo.settings.title",
@@ -2678,7 +2690,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "手元メニューの「さんぽ」で\n犬をリードにつなげるよ。\n犬の行で「左につなぐ」か\n「右につなぐ」を押しな。\n近くにいる犬だけだ。\n片手に3匹、両手で6匹まで\nつなげる。\n\n行き先は「広場」か\n「古民家側の入口」だ。\nつないだ犬は、寄り道を\nしながら行き先へ歩く。\n\n外すときは「はずす」だ。\nつないだ本人だけが外せる。\n\nポイントがなくても、さんぽと\nボール遊びはいつでもできる。"
+          "text": "手元メニューの「さんぽ」で\n犬をリードにつなげるよ。\n犬の行で「左につなぐ」か\n「右につなぐ」を押しな。\n近くにいる犬だけだ。\n片手に3匹、両手で6匹まで\nつなげる。\n\n行き先は6つから選べる。\n「広場」「奥の広場」「川辺」\nと、ぐるっと回る周回が2つ、\nそれに「古民家側の入口」だ。\nつないだ犬は、寄り道を\nしながら行き先へ歩く。\n\n外すときは「はずす」だ。\nつないだ本人だけが外せる。\n\nポイントがなくても、さんぽと\nボール遊びはいつでもできる。"
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -2754,7 +2766,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "リード中の犬は来られません。さんぽで外してから"
+          "text": "ほかの人がつないでいる犬は来られません"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "つないでいる犬は、いま来られません。少し待ってから"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -2839,6 +2855,114 @@
         {
           "key": "guide.map.north",
           "text": "↑北"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "古民家ドッグラン"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "門の向こうに見える古民家が「古民家ドッグラン」。\n同じ6匹の犬たちがいる、このワールドの前作です。\n<color=#B5432A>この看板を押すと、となりにポータルが出ます。</color>\nVR: 手を向けてトリガー ／ Desktop: クリック ／ スマホ: タップ\nもう一度押すとしまいます。1分たつと自動でしまいます。\nポイントと持ち物は、ワールドごとに別です。\nばにまるトレーナーは、どちらで入っても両方で使えます。"
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "ポータルを出す・しまう"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "犬をえらんでよぶ"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "洗い場から {0} m 以内の犬を呼べます"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "{0}を呼んでいます"
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0}がいます"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0}：{1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "いまは来られません"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "台 {0} m   自分 {1} m"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "呼べます"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "向かっています"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "ここにいます"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "呼んでいます"
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "ほかの人と散歩中"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "ほかの洗い場にいます"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "遠すぎます"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "ボールで遊び中"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "フリスビーで遊び中"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "集合しています"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "呼ばれて休んでいます"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "ほかの人が洗っています"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "おわり"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "台 上へ"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "台 下へ"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "自分 上へ"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "自分 下へ"
         }
       ]
     },
@@ -4633,11 +4757,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Photos are taken automatically when a dog brings back a ball, while you pet a dog, and during races or play between dogs. In the bedroom, they also capture you relaxing together.\n\nPhotos are taken at intervals, rather than continuously. New photos replace the oldest ones in each category.\n\nThis album is just for you. Other people see different photos on their boards.\n\nPhotos disappear when you leave. To keep one on PC or Quest, bring your VRChat camera close to it and take a picture. On a phone, tap the photo and take a screenshot.\n\nYou can turn automatic photography OFF using Resolution settings beside the photo board."
+          "text": "Photos are taken automatically when a dog brings back a ball, while you pet a dog, when dogs run or play together, when a dog jumps to catch a frisbee, and at group photo time.\n\nPhotos are taken at intervals, rather than continuously. Up to 8 photos are kept: the newest appears at the top left and replaces the oldest.\n\nThis album is just for you. Other people see different photos.\n\nPhotos disappear when you leave. To keep one on PC or Quest, bring your VRChat camera close to a photo on the photo board by the gate and take a picture. On a phone, tap a photo on the board and take a screenshot.\n\nYou can turn automatic photos ON or OFF with [Photos: ON / OFF] in the menu's Settings."
         },
         {
           "key": "photo.help.close",
           "text": "Close"
+        },
+        {
+          "key": "photo.menu",
+          "text": "Photos"
+        },
+        {
+          "key": "photo.empty",
+          "text": "Play with the dogs and photos are taken automatically"
+        },
+        {
+          "key": "photo.new",
+          "text": "New"
         },
         {
           "key": "photo.settings.title",
@@ -5517,7 +5653,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose the destination: Plaza or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -5593,7 +5729,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "Leashed dogs can't come. Unleash them in Walk first"
+          "text": "Dogs on someone else's leash can't come"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "Your leashed dogs can't come right now. Try again shortly"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -5645,7 +5785,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Muddy from the walk? Give your dog a wash.\n<color=#B5432A>1</color> Press the dog's name on the wash station board - it steps onto the slatted stand\n<color=#B5432A>2</color> Scrub with the sponge to build up suds\n<color=#B5432A>3</color> Shower: Use turns the water on and off. Rinse the suds away\n<color=#B5432A>4</color> Dry off with the towel\nAny order. Two people can wash together.\nStand / your height: [上へ] [下へ] on the board. Done: [おわり]\nSponge and towel on Desktop/phone: hold Use\n[RESET] on the shelf puts the tools back. 3 more stations along the trail."
+          "text": "Muddy from the walk? Give your dog a wash.\n<color=#B5432A>1</color> Press the dog's name on the wash station board - it steps onto the slatted stand\n<color=#B5432A>2</color> Scrub with the sponge to build up suds\n<color=#B5432A>3</color> Shower: Use turns the water on and off. Rinse the suds away\n<color=#B5432A>4</color> Dry off with the towel\nAny order. Two people can wash together.\nStand / your height: [Raise stand] [Lower stand] [Raise me] [Lower me] on the board. Done: [Done]\nSponge and towel on Desktop/phone: hold Use\n[RESET] on the shelf puts the tools back. 3 more stations along the trail."
         },
         {
           "key": "guide.shop.title",
@@ -5678,6 +5818,114 @@
         {
           "key": "guide.map.north",
           "text": "↑N"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "Kominka Dog Run"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "The farmhouse beyond the gate is Kominka Dog Run, the earlier world with the same six dogs.\n<color=#B5432A>Press this board and a portal appears beside it.</color>\nVR: point and pull the trigger / Desktop: click / Phone: tap\nPress again to put it away. It also goes away after 1 minute.\nPoints and items are separate in each world.\nThe VAnimal Trainer works in both, wherever you joined."
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "Show / hide the portal"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "Pick a dog to call"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "Dogs within {0} m of this station can be called"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "Calling {0}..."
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0} is here"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0}: {1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "Can't come right now"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "Stand {0} m   Me {1} m"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "Can call"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "On the way"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "Here"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "Calling..."
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "Walking with someone"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "At another station"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "Too far away"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "Playing ball"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "Playing frisbee"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "Gathering"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "Resting with someone"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "Someone is washing it"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "Done"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "Raise stand"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "Lower stand"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "Raise me"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "Lower me"
         }
       ]
     },
@@ -7472,11 +7720,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Фото снимаются сами, когда собака приносит мяч, пока вы её гладите, а также во время забегов и игр между собаками. В спальне снимается и то, как вы отдыхаете вместе.\n\nСнимки делаются с промежутками, а не непрерывно. Новые фото заменяют самые старые в каждой категории.\n\nЭтот альбом только ваш. Другие люди видят на своих досках другие фото.\n\nПосле выхода фото исчезают. Чтобы сохранить снимок на ПК или Quest, поднесите к нему камеру VRChat и сфотографируйте. На телефоне коснитесь фото и сделайте скриншот.\n\nАвтоматическую съёмку можно выключить в «Настройках качества» рядом с фотодоской."
+          "text": "Фото снимаются сами, когда собака приносит мяч, пока вы её гладите, когда собаки бегают или играют вместе, когда собака ловит фрисби в прыжке, а также во время группового фото.\n\nСнимки делаются с промежутками, а не непрерывно. Хранится до 8 фото: новое появляется слева вверху и заменяет самое старое.\n\nЭтот альбом только ваш. Другие люди видят другие фото.\n\nПосле выхода фото исчезают. Чтобы сохранить снимок на ПК или Quest, поднесите камеру VRChat к фото на фотодоске у ворот и сфотографируйте. На телефоне коснитесь фото на доске и сделайте скриншот.\n\nАвтосъёмку можно включить или выключить кнопкой [Фото: ON / OFF] в «Настройках» меню."
         },
         {
           "key": "photo.help.close",
           "text": "Закрыть"
+        },
+        {
+          "key": "photo.menu",
+          "text": "Фото"
+        },
+        {
+          "key": "photo.empty",
+          "text": "Играйте с собаками — фото снимутся сами"
+        },
+        {
+          "key": "photo.new",
+          "text": "Новое"
         },
         {
           "key": "photo.settings.title",
@@ -8356,7 +8616,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose the destination: Plaza or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -8432,7 +8692,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "Leashed dogs can't come. Unleash them in Walk first"
+          "text": "Dogs on someone else's leash can't come"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "Your leashed dogs can't come right now. Try again shortly"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -8484,7 +8748,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Собака испачкалась на прогулке? Помой её.\n<color=#B5432A>1</color> Нажми имя собаки на табло мойки — она встанет на решётку\n<color=#B5432A>2</color> Потри губкой — будет пышная пена\n<color=#B5432A>3</color> Душ: Use включает и выключает воду. Смой пену\n<color=#B5432A>4</color> Вытри полотенцем\nПорядок любой. Можно мыть вдвоём.\nВысота подставки и своя: [上へ] [下へ] на табло. Конец: [おわり]\nГубка и полотенце на ПК/телефоне: держи Use\n[RESET] на полке возвращает инструменты. Ещё 3 мойки по пути."
+          "text": "Собака испачкалась на прогулке? Помой её.\n<color=#B5432A>1</color> Нажми имя собаки на табло мойки — она встанет на решётку\n<color=#B5432A>2</color> Потри губкой — будет пышная пена\n<color=#B5432A>3</color> Душ: Use включает и выключает воду. Смой пену\n<color=#B5432A>4</color> Вытри полотенцем\nПорядок любой. Можно мыть вдвоём.\nВысота подставки и своя: [Подставка выше] [Подставка ниже] [Меня выше] [Меня ниже] на табло. Конец: [Готово]\nГубка и полотенце на ПК/телефоне: держи Use\n[RESET] на полке возвращает инструменты. Ещё 3 мойки по пути."
         },
         {
           "key": "guide.shop.title",
@@ -8517,6 +8781,114 @@
         {
           "key": "guide.map.north",
           "text": "↑С"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "Kominka Dog Run"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "Фермерский дом за воротами — это Kominka Dog Run, предыдущий мир с теми же шестью собаками.\n<color=#B5432A>Нажми на эту доску — рядом появится портал.</color>\nVR: наведи и нажми курок / ПК: щёлкни / Телефон: коснись\nНажми ещё раз, чтобы убрать. Через 1 минуту он исчезнет сам.\nОчки и предметы в каждом мире свои.\nVAnimal Trainer работает в обоих мирах, где бы ты его ни оформил."
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "Показать / убрать портал"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "Выберите собаку, чтобы позвать"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "Можно позвать собак в пределах {0} м"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "Зовём: {0}..."
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0} здесь"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0}: {1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "Сейчас не может подойти"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "Подставка {0} м   Я {1} м"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "Можно позвать"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "Идёт сюда"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "Здесь"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "Зовём..."
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "Гуляет с другим"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "На другой мойке"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "Слишком далеко"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "Играет с мячом"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "Играет с фрисби"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "На сборе"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "Отдыхает с кем-то"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "Его моет другой"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "Готово"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "Подставка выше"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "Подставка ниже"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "Меня выше"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "Меня ниже"
         }
       ]
     },
@@ -10311,11 +10683,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Фото знімаються самі, коли собака приносить м'яч, поки ви її гладите, а також під час перегонів та ігор між собаками. У спальні знімається й те, як ви відпочиваєте разом.\n\nЗнімки робляться з проміжками, а не безперервно. Нові фото замінюють найстаріші в кожній категорії.\n\nЦей альбом лише ваш. Інші люди бачать на своїх дошках інші фото.\n\nПісля виходу фото зникають. Щоб зберегти знімок на ПК або Quest, піднесіть до нього камеру VRChat і сфотографуйте. На телефоні торкніться фото та зробіть знімок екрана.\n\nАвтоматичну зйомку можна вимкнути в «Налаштуваннях якості» поруч із фотодошкою."
+          "text": "Фото знімаються самі, коли собака приносить м'яч, поки ви її гладите, коли собаки бігають або граються разом, коли собака ловить фрисбі в стрибку, а також під час групового фото.\n\nЗнімки робляться з проміжками, а не безперервно. Зберігається до 8 фото: нове з'являється ліворуч угорі й замінює найстаріше.\n\nЦей альбом лише ваш. Інші люди бачать інші фото.\n\nПісля виходу фото зникають. Щоб зберегти знімок на ПК або Quest, піднесіть камеру VRChat до фото на фотодошці біля воріт і сфотографуйте. На телефоні торкніться фото на дошці та зробіть знімок екрана.\n\nАвтозйомку можна вмикати й вимикати кнопкою [Фото: ON / OFF] у «Параметрах» меню."
         },
         {
           "key": "photo.help.close",
           "text": "Закрити"
+        },
+        {
+          "key": "photo.menu",
+          "text": "Фото"
+        },
+        {
+          "key": "photo.empty",
+          "text": "Грайтеся з собаками — фото знімуться самі"
+        },
+        {
+          "key": "photo.new",
+          "text": "Нове"
         },
         {
           "key": "photo.settings.title",
@@ -11195,7 +11579,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose the destination: Plaza or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -11271,7 +11655,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "Leashed dogs can't come. Unleash them in Walk first"
+          "text": "Dogs on someone else's leash can't come"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "Your leashed dogs can't come right now. Try again shortly"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -11315,7 +11703,7 @@
         },
         {
           "key": "guide.frisbee.body",
-          "text": "У кожної собаки свій диск. Кілька лежать на Plaza.\n<color=#B5432A>1</color> Меню «Іграшки»: обери собаку, потім [Disc] — він з’явиться перед тобою\n<color=#B5432A>2</color> Візьми його — побачиш траєкторію польоту\n<color=#B5432A>3</color> Use — кидок (у VR курок). Ця собака стрибне й упіймає\nСобака на повідці не побіжить по диск. Спершу відстебни.\nЯкщо на прицілі ×, собака туди не пройде.\nУ річці диск плаває, і собака стрибає по нього."
+          "text": "У кожної собаки свій диск. Кілька лежать на Plaza.\n<color=#B5432A>1</color> Меню «Іграшки»: обери собаку, потім [Disc] — він з'явиться перед тобою\n<color=#B5432A>2</color> Візьми його — побачиш траєкторію польоту\n<color=#B5432A>3</color> Use — кидок (у VR курок). Ця собака стрибне й упіймає\nСобака на повідці не побіжить по диск. Спершу відстебни.\nЯкщо на прицілі ×, собака туди не пройде.\nУ річці диск плаває, і собака стрибає по нього."
         },
         {
           "key": "guide.wash.title",
@@ -11323,7 +11711,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Собака забруднилася на прогулянці? Помий її.\n<color=#B5432A>1</color> Натисни ім’я собаки на табло мийки — вона стане на решітку\n<color=#B5432A>2</color> Потри губкою — буде пишна піна\n<color=#B5432A>3</color> Душ: Use вмикає й вимикає воду. Змий піну\n<color=#B5432A>4</color> Витри рушником\nПорядок будь-який. Можна мити удвох.\nВисота підставки й своя: [上へ] [下へ] на табло. Кінець: [おわり]\nГубка й рушник на ПК/телефоні: тримай Use\n[RESET] на полиці повертає інструменти. Ще 3 мийки дорогою."
+          "text": "Собака забруднилася на прогулянці? Помий її.\n<color=#B5432A>1</color> Натисни ім'я собаки на табло мийки — вона стане на решітку\n<color=#B5432A>2</color> Потри губкою — буде пишна піна\n<color=#B5432A>3</color> Душ: Use вмикає й вимикає воду. Змий піну\n<color=#B5432A>4</color> Витри рушником\nПорядок будь-який. Можна мити удвох.\nВисота підставки й своя: [Підставка вище] [Підставка нижче] [Мене вище] [Мене нижче] на табло. Кінець: [Готово]\nГубка й рушник на ПК/телефоні: тримай Use\n[RESET] на полиці повертає інструменти. Ще 3 мийки дорогою."
         },
         {
           "key": "guide.shop.title",
@@ -11331,7 +11719,7 @@
         },
         {
           "key": "guide.shop.body",
-          "text": "Прогулянка, погладжування, м’ячі, фризбі й миття — безкоштовно для всіх.\n<color=#B5432A>Бали</color>\nПоговори з дідусем біля воріт — 200 pt (один раз). Тут 1 pt за хвилину.\nОбмінюй у вкладках «Вбрання», «Покликати», «Ласощі» на прикраси, ефекти, пози й ласощі.\n<color=#B5432A>VAnimal Trainer</color> (на строк, Credits)\nЗбери собак для спільного фото — радіють усі. Оформив на фермі? Працює й тут.\nОформити: меню «Ігри» → [Відкрити магазин]\nКористуватися: в «Ігри» обери шикування → [Зібрати тут]\n<color=#B5432A>Вбрання за Credits</color>\nДеякі набори у «Вбрання» — у магазині VRChat (можна в подарунок)."
+          "text": "Прогулянка, погладжування, м'ячі, фризбі й миття — безкоштовно для всіх.\n<color=#B5432A>Бали</color>\nПоговори з дідусем біля воріт — 200 pt (один раз). Тут 1 pt за хвилину.\nОбмінюй у вкладках «Вбрання», «Покликати», «Ласощі» на прикраси, ефекти, пози й ласощі.\n<color=#B5432A>VAnimal Trainer</color> (на строк, Credits)\nЗбери собак для спільного фото — радіють усі. Оформив на фермі? Працює й тут.\nОформити: меню «Ігри» → [Відкрити магазин]\nКористуватися: в «Ігри» обери шикування → [Зібрати тут]\n<color=#B5432A>Вбрання за Credits</color>\nДеякі набори у «Вбрання» — у магазині VRChat (можна в подарунок)."
         },
         {
           "key": "guide.map.title",
@@ -11356,6 +11744,114 @@
         {
           "key": "guide.map.north",
           "text": "↑Пн"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "Kominka Dog Run"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "Фермерський дім за воротами — це Kominka Dog Run, попередній світ із тими ж шістьма собаками.\n<color=#B5432A>Натисни на цю дошку — поруч з'явиться портал.</color>\nVR: наведи й натисни курок / ПК: клацни / Телефон: торкнись\nНатисни ще раз, щоб прибрати. За 1 хвилину він зникне сам.\nБали й предмети в кожному світі свої.\nVAnimal Trainer діє в обох світах, де б ти його не оформив."
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "Показати / прибрати портал"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "Виберіть собаку, щоб покликати"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "Можна покликати собак у межах {0} м"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "Кличемо: {0}..."
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0} тут"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0}: {1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "Зараз не може підійти"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "Підставка {0} м   Я {1} м"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "Можна покликати"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "Іде сюди"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "Тут"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "Кличемо..."
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "Гуляє з іншим"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "На іншій мийці"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "Надто далеко"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "Грається з м'ячем"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "Грається з фризбі"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "На збиранні"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "Відпочиває з кимось"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "Його миє інший"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "Готово"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "Підставка вище"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "Підставка нижче"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "Мене вище"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "Мене нижче"
         }
       ]
     },
@@ -13150,11 +13646,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "공을 물어 왔을 때, 강아지를 쓰다듬을 때, 달리기나 강아지끼리 노는 모습 등을 자동으로 촬영합니다. 침실에서는 함께 쉬고 있는 모습도 촬영합니다.\n\n사진은 계속 찍는 것이 아니라 시간 간격을 두고 촬영되며, 종류마다 오래된 것부터 교체됩니다.\n\n여기에 놓이는 사진은 나만 볼 수 있습니다. 다른 사람에게는 다른 사진이 보입니다.\n\n사진은 나가면 사라집니다. 남기고 싶은 사진은 PC·Quest에서는 VRChat 카메라를 가까이 대고 촬영하고, 스마트폰에서는 사진을 탭한 뒤 스크린샷으로 가져갈 수 있습니다.\n\n자동 촬영은 사진판 옆의 [해상도 설정]에서 OFF로 바꿀 수 있습니다."
+          "text": "공을 물어 왔을 때, 강아지를 쓰다듬을 때, 강아지가 달리거나 함께 놀 때, 프리스비를 점프해서 잡았을 때, 단체 사진 시간에 자동으로 촬영합니다.\n\n사진은 계속 찍는 것이 아니라 시간 간격을 두고 촬영됩니다. 사진은 8장까지 남으며, 새 사진이 왼쪽 위에 놓이고 가장 오래된 사진부터 교체됩니다.\n\n여기에 놓이는 사진은 나만 볼 수 있습니다. 다른 사람에게는 다른 사진이 보입니다.\n\n사진은 나가면 사라집니다. 남기고 싶은 사진은 PC·Quest에서는 문 옆 사진판의 사진에 VRChat 카메라를 가까이 대고 촬영하고, 스마트폰에서는 사진판의 사진을 탭한 뒤 스크린샷으로 가져갈 수 있습니다.\n\n자동 촬영은 메뉴의 [설정]에 있는 [사진: ON / OFF]로 바꿀 수 있습니다."
         },
         {
           "key": "photo.help.close",
           "text": "닫기"
+        },
+        {
+          "key": "photo.menu",
+          "text": "사진"
+        },
+        {
+          "key": "photo.empty",
+          "text": "강아지와 놀면 자동으로 사진이 찍힙니다"
+        },
+        {
+          "key": "photo.new",
+          "text": "새 사진"
         },
         {
           "key": "photo.settings.title",
@@ -14034,7 +14542,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose the destination: Plaza or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -14110,7 +14618,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "Leashed dogs can't come. Unleash them in Walk first"
+          "text": "Dogs on someone else's leash can't come"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "Your leashed dogs can't come right now. Try again shortly"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -14162,7 +14674,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "산책하다 더러워진 강아지를 깨끗하게 해 줘요.\n<color=#B5432A>1</color> 세척장 판에서 강아지 이름을 누르기 → 발판 위로 와요\n<color=#B5432A>2</color> 스펀지로 문질러 거품을 몽글몽글\n<color=#B5432A>3</color> 샤워는 Use로 켜고 끄기. 거품을 헹궈요\n<color=#B5432A>4</color> 수건으로 닦아 마무리\n순서는 자유. 둘이 함께 씻길 수도 있어요.\n발판·내 높이: 판의 [上へ] [下へ]  끝: [おわり]\n스펀지·수건은 Desktop·스마트폰에서 Use를 누른 채로\n선반의 [RESET]으로 도구가 제자리로. 길 중간에도 세척장 3곳."
+          "text": "산책하다 더러워진 강아지를 깨끗하게 해 줘요.\n<color=#B5432A>1</color> 세척장 판에서 강아지 이름을 누르기 → 발판 위로 와요\n<color=#B5432A>2</color> 스펀지로 문질러 거품을 몽글몽글\n<color=#B5432A>3</color> 샤워는 Use로 켜고 끄기. 거품을 헹궈요\n<color=#B5432A>4</color> 수건으로 닦아 마무리\n순서는 자유. 둘이 함께 씻길 수도 있어요.\n받침대·내 높이: 판의 [받침대 위로] [받침대 아래로] [나 위로] [나 아래로]  끝: [끝]\n스펀지·수건은 Desktop·스마트폰에서 Use를 누른 채로\n선반의 [RESET]으로 도구가 제자리로. 길 중간에도 세척장 3곳."
         },
         {
           "key": "guide.shop.title",
@@ -14195,6 +14707,114 @@
         {
           "key": "guide.map.north",
           "text": "↑북"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "Kominka Dog Run"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "문 너머로 보이는 고민가가 Kominka Dog Run. 같은 6마리 강아지가 있는 이 월드의 전작이에요.\n<color=#B5432A>이 판을 누르면 옆에 포털이 나와요.</color>\nVR: 가리키고 트리거 ／ Desktop: 클릭 ／ 스마트폰: 탭\n한 번 더 누르면 사라져요. 1분이 지나면 자동으로 사라져요.\n포인트와 소지품은 월드마다 따로예요.\nVAnimal Trainer는 어느 쪽에서 가입해도 양쪽에서 쓸 수 있어요."
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "포털 열기 / 닫기"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "부를 강아지를 고르세요"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "이곳에서 {0}m 이내의 강아지를 부를 수 있어요"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "{0} 부르는 중"
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0} 여기 있어요"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0}: {1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "지금은 올 수 없어요"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "받침대 {0}m   나 {1}m"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "부를 수 있어요"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "오는 중"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "여기 있어요"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "부르는 중"
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "다른 사람과 산책 중"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "다른 세척장에 있어요"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "너무 멀어요"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "공놀이 중"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "프리스비 놀이 중"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "집합 중"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "다른 사람 곁에서 쉬는 중"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "다른 사람이 씻기는 중"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "끝"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "받침대 위로"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "받침대 아래로"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "나 위로"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "나 아래로"
         }
       ]
     },
@@ -15989,11 +16609,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Fotos entstehen automatisch, wenn ein Hund einen Ball zurückbringt, während du einen Hund streichelst und bei Wettrennen oder beim Spiel der Hunde untereinander. Im Schlafzimmer wird auch festgehalten, wie ihr zusammen entspannt.\n\nFotografiert wird in Abständen, nicht ununterbrochen. Neue Fotos ersetzen in jeder Kategorie die ältesten.\n\nDieses Album ist nur für dich. Andere sehen auf ihren Tafeln andere Fotos.\n\nDie Fotos verschwinden, wenn du gehst. Auf PC und Quest nimmst du eines mit, indem du deine VRChat-Kamera nah heranhältst und ein Foto machst. Am Handy tippst du das Foto an und machst einen Screenshot.\n\nDie automatische Fotografie kannst du neben der Fototafel unter Auflösung auf OFF stellen."
+          "text": "Fotos entstehen automatisch, wenn ein Hund einen Ball zurückbringt, während du einen Hund streichelst, wenn Hunde rennen oder miteinander spielen, wenn ein Hund eine Frisbee im Sprung fängt, und beim Gruppenfoto.\n\nFotografiert wird in Abständen, nicht ununterbrochen. Es bleiben bis zu 8 Fotos: Das neueste erscheint oben links und ersetzt das älteste.\n\nDieses Album ist nur für dich. Andere sehen andere Fotos.\n\nDie Fotos verschwinden, wenn du gehst. Auf PC und Quest nimmst du eines mit, indem du deine VRChat-Kamera nah an ein Foto auf der Fototafel am Tor hältst und ein Foto machst. Am Handy tippst du ein Foto auf der Tafel an und machst einen Screenshot.\n\nDie automatischen Fotos schaltest du in den Einstellungen des Menüs mit [Fotos: ON / OFF] ein oder aus."
         },
         {
           "key": "photo.help.close",
           "text": "Schließen"
+        },
+        {
+          "key": "photo.menu",
+          "text": "Fotos"
+        },
+        {
+          "key": "photo.empty",
+          "text": "Spiel mit den Hunden – die Fotos entstehen von selbst"
+        },
+        {
+          "key": "photo.new",
+          "text": "Neu"
         },
         {
           "key": "photo.settings.title",
@@ -16873,7 +17505,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose the destination: Plaza or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -16949,7 +17581,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "Leashed dogs can't come. Unleash them in Walk first"
+          "text": "Dogs on someone else's leash can't come"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "Your leashed dogs can't come right now. Try again shortly"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -17001,7 +17637,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Schmutzig vom Spaziergang? Mach deinen Hund sauber.\n<color=#B5432A>1</color> Namen des Hundes auf der Tafel am Waschplatz drücken - er stellt sich auf den Rost\n<color=#B5432A>2</color> Mit dem Schwamm schrubben, bis es schäumt\n<color=#B5432A>3</color> Dusche: Use schaltet das Wasser an und aus. Schaum abspülen\n<color=#B5432A>4</color> Mit dem Handtuch trocknen\nReihenfolge egal. Zu zweit waschen geht auch.\nHöhe von Rost und dir: [上へ] [下へ] auf der Tafel. Fertig: [おわり]\nSchwamm und Handtuch an Desktop/Handy: Use gedrückt halten\n[RESET] am Regal legt die Sachen zurück. 3 weitere Waschplätze unterwegs."
+          "text": "Schmutzig vom Spaziergang? Mach deinen Hund sauber.\n<color=#B5432A>1</color> Namen des Hundes auf der Tafel am Waschplatz drücken - er stellt sich auf den Rost\n<color=#B5432A>2</color> Mit dem Schwamm schrubben, bis es schäumt\n<color=#B5432A>3</color> Dusche: Use schaltet das Wasser an und aus. Schaum abspülen\n<color=#B5432A>4</color> Mit dem Handtuch trocknen\nReihenfolge egal. Zu zweit waschen geht auch.\nHöhe von Podest und dir: [Podest hoch] [Podest runter] [Mich hoch] [Mich runter] auf der Tafel. Fertig: [Fertig]\nSchwamm und Handtuch an Desktop/Handy: Use gedrückt halten\n[RESET] am Regal legt die Sachen zurück. 3 weitere Waschplätze unterwegs."
         },
         {
           "key": "guide.shop.title",
@@ -17034,6 +17670,114 @@
         {
           "key": "guide.map.north",
           "text": "↑N"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "Kominka Dog Run"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "Das Bauernhaus hinter dem Tor ist Kominka Dog Run, die frühere Welt mit denselben sechs Hunden.\n<color=#B5432A>Drück diese Tafel, dann erscheint daneben ein Portal.</color>\nVR: zeigen und Trigger / Desktop: klicken / Handy: tippen\nNochmal drücken blendet es aus. Nach 1 Minute verschwindet es von selbst.\nPunkte und Sachen gelten je Welt getrennt.\nDer VAnimal Trainer gilt in beiden Welten, egal wo du gebucht hast."
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "Portal zeigen / ausblenden"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "Wähle einen Hund zum Rufen"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "Hunde im Umkreis von {0} m können kommen"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "{0} wird gerufen..."
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0} ist hier"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0}: {1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "Kann gerade nicht kommen"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "Podest {0} m   Ich {1} m"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "Rufbar"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "Unterwegs"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "Hier"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "Wird gerufen"
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "Mit jemandem unterwegs"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "An einem anderen Waschplatz"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "Zu weit weg"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "Spielt mit dem Ball"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "Spielt Frisbee"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "Beim Sammeln"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "Ruht bei jemandem"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "Wird von jemandem gewaschen"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "Fertig"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "Podest hoch"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "Podest runter"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "Mich hoch"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "Mich runter"
         }
       ]
     },
@@ -18508,7 +19252,7 @@
         },
         {
           "key": "settings.night.autoNote",
-          "text": "随时间入夜，所有人相同（拖动即切换为手动）"
+          "text": "随时间入夜，所有人相同 (拖动即切换为手动)"
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.6",
@@ -18828,11 +19572,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "狗狗叼球回来、你抚摸狗狗，以及赛跑和嬉戏的时候，都会自动拍照。在卧室里，也会拍下你们一起放松的样子。\n\n照片不是一直连拍，而是隔一段时间拍一张，每个类别里从最旧的开始替换。\n\n这里排列的照片只属于你。别人在自己的板上看到的是另外的照片。\n\n退出世界后照片就会消失。想留下的照片，在 PC 和 Quest 上可以把 VRChat 相机凑近拍摄，在手机上点击照片再截图带回去。\n\n自动拍照可以在照片板旁边的“分辨率设置”里关掉。"
+          "text": "狗狗叼球回来、你抚摸狗狗、狗狗奔跑或一起嬉戏、狗狗跳起来接住飞盘，以及合影的时候，都会自动拍照。\n\n照片不是一直连拍，而是隔一段时间拍一张。最多保留 8 张，最新的照片排在左上角，并替换掉最旧的一张。\n\n这里排列的照片只属于你。别人看到的是另外的照片。\n\n退出世界后照片就会消失。想留下的照片，在 PC 和 Quest 上可以把 VRChat 相机凑近大门旁照片板上的照片拍摄，在手机上点击照片板上的照片再截图带回去。\n\n自动拍照可以在菜单“设置”里的［照片: ON / OFF］切换。"
         },
         {
           "key": "photo.help.close",
           "text": "关闭"
+        },
+        {
+          "key": "photo.menu",
+          "text": "照片"
+        },
+        {
+          "key": "photo.empty",
+          "text": "和狗狗一起玩就会自动拍照"
+        },
+        {
+          "key": "photo.new",
+          "text": "最新"
         },
         {
           "key": "photo.settings.title",
@@ -19712,7 +20468,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose the destination: Plaza or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -19788,7 +20544,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "Leashed dogs can't come. Unleash them in Walk first"
+          "text": "Dogs on someone else's leash can't come"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "Your leashed dogs can't come right now. Try again shortly"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -19816,7 +20576,7 @@
         },
         {
           "key": "guide.menu",
-          "text": "手边菜单  VR: 长按右摇杆向下 ／ Desktop: T 键 ／ 手机: 画面上的 [菜单] ／ 按牵绳架上的牌子也能打开"
+          "text": "手边菜单  VR: 长按右摇杆向下 / Desktop: T 键 / 手机: 画面上的 [菜单] / 按牵绳架上的牌子也能打开"
         },
         {
           "key": "guide.walk.title",
@@ -19840,11 +20600,11 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "散步弄脏了？帮狗狗洗干净吧。\n<color=#B5432A>1</color> 在洗澡台的板子上按狗狗的名字 → 它会站到踏板上\n<color=#B5432A>2</color> 用海绵搓出满满的泡泡\n<color=#B5432A>3</color> 淋浴: 用 Use 开关水。把泡泡冲掉\n<color=#B5432A>4</color> 用毛巾擦干收尾\n顺序随意。两个人也能一起洗。\n踏板和自己的高度: 板上的 [上へ] [下へ]　结束: [おわり]\n海绵・毛巾在 Desktop・手机上: 按住 Use\n架子上的 [RESET] 让工具归位。沿途还有 3 处洗澡台。"
+          "text": "散步弄脏了？帮狗狗洗干净吧。\n<color=#B5432A>1</color> 在洗澡台的板子上按狗狗的名字 → 它会站到踏板上\n<color=#B5432A>2</color> 用海绵搓出满满的泡泡\n<color=#B5432A>3</color> 淋浴: 用 Use 开关水。把泡泡冲掉\n<color=#B5432A>4</color> 用毛巾擦干收尾\n顺序随意。两个人也能一起洗。\n台子和自己的高度: 板上的 [台子升高] [台子降低] [自己升高] [自己降低]　结束: [结束]\n海绵・毛巾在 Desktop・手机上: 按住 Use\n架子上的 [RESET] 让工具归位。沿途还有 3 处洗澡台。"
         },
         {
           "key": "guide.shop.title",
-          "text": "积分与训练师"
+          "text": "积分与训练员"
         },
         {
           "key": "guide.shop.body",
@@ -19873,6 +20633,114 @@
         {
           "key": "guide.map.north",
           "text": "↑北"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "Kominka Dog Run"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "门那边看到的古民家就是 Kominka Dog Run，有同样 6 只狗狗的前作世界。\n<color=#B5432A>按一下这块牌子，旁边会出现传送门。</color>\nVR: 指向后扣扳机 / Desktop: 点击 / 手机: 轻触\n再按一次就收起。1 分钟后也会自动收起。\n积分和物品在每个世界是分开的。\nVAnimal Trainer 不论在哪边加入，两边都能用。"
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "显示 / 收起传送门"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "选择要呼唤的狗狗"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "可呼唤 {0} 米内的狗狗"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "正在呼唤{0}…"
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0}在这里"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0}：{1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "现在过不来"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "台子 {0} 米   自己 {1} 米"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "可以呼唤"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "正在过来"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "在这里"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "呼唤中"
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "正在和别人散步"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "在别的洗澡台"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "太远了"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "正在玩球"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "正在玩飞盘"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "正在集合"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "正在陪人休息"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "别人正在洗"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "结束"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "台子升高"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "台子降低"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "自己升高"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "自己降低"
         }
       ]
     },
@@ -21667,11 +22535,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Las fotos se hacen solas cuando un perro te trae la pelota, mientras lo acaricias y durante las carreras o los juegos entre perros. En el dormitorio también se capturan los ratos tranquilos juntos.\n\nNo se fotografía sin parar: se hacen fotos cada cierto tiempo, y las nuevas sustituyen a las más antiguas de cada categoría.\n\nEste álbum es solo tuyo. Las demás personas ven otras fotos en sus tableros.\n\nLas fotos desaparecen al salir. Para quedarte con una en PC o Quest, acerca tu cámara de VRChat y sácale una foto. En el móvil, toca la foto y haz una captura de pantalla.\n\nPuedes desactivar las fotos automáticas en los Ajustes de resolución, junto al tablero de fotos."
+          "text": "Las fotos se hacen solas cuando un perro te trae la pelota, mientras lo acaricias, cuando los perros corren o juegan juntos, cuando un perro atrapa un frisbi de un salto y en la foto de grupo.\n\nNo se fotografía sin parar: se hacen fotos cada cierto tiempo. Se guardan hasta 8 fotos: la más nueva aparece arriba a la izquierda y sustituye a la más antigua.\n\nEste álbum es solo tuyo. Las demás personas ven otras fotos.\n\nLas fotos desaparecen al salir. Para quedarte con una en PC o Quest, acerca tu cámara de VRChat a una foto del tablero de fotos junto a la puerta y sácale una foto. En el móvil, toca una foto del tablero y haz una captura de pantalla.\n\nPuedes activar o desactivar las fotos automáticas con [Fotos: ON / OFF] en los Ajustes del menú."
         },
         {
           "key": "photo.help.close",
           "text": "Cerrar"
+        },
+        {
+          "key": "photo.menu",
+          "text": "Fotos"
+        },
+        {
+          "key": "photo.empty",
+          "text": "Juega con los perros y las fotos se harán solas"
+        },
+        {
+          "key": "photo.new",
+          "text": "Nueva"
         },
         {
           "key": "photo.settings.title",
@@ -22551,7 +23431,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose the destination: Plaza or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -22627,7 +23507,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "Leashed dogs can't come. Unleash them in Walk first"
+          "text": "Dogs on someone else's leash can't come"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "Your leashed dogs can't come right now. Try again shortly"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -22679,7 +23563,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "¿Se ensució en el paseo? Dale un baño.\n<color=#B5432A>1</color> Pulsa el nombre del perro en el tablero del lavadero - sube a la tarima\n<color=#B5432A>2</color> Frota con la esponja para hacer mucha espuma\n<color=#B5432A>3</color> Ducha: Use abre y cierra el agua. Aclara la espuma\n<color=#B5432A>4</color> Sécalo con la toalla\nEn el orden que quieras. También entre dos.\nAltura de la tarima y la tuya: [上へ] [下へ] en el tablero. Terminar: [おわり]\nEsponja y toalla en Desktop/móvil: mantén Use\n[RESET] en el estante devuelve las cosas. 3 lavaderos más en el camino."
+          "text": "¿Se ensució en el paseo? Dale un baño.\n<color=#B5432A>1</color> Pulsa el nombre del perro en el tablero del lavadero - sube a la tarima\n<color=#B5432A>2</color> Frota con la esponja para hacer mucha espuma\n<color=#B5432A>3</color> Ducha: Use abre y cierra el agua. Aclara la espuma\n<color=#B5432A>4</color> Sécalo con la toalla\nEn el orden que quieras. También entre dos.\nAltura de la base y la tuya: [Subir base] [Bajar base] [Subirme] [Bajarme] en el tablero. Terminar: [Terminar]\nEsponja y toalla en Desktop/móvil: mantén Use\n[RESET] en el estante devuelve las cosas. 3 lavaderos más en el camino."
         },
         {
           "key": "guide.shop.title",
@@ -22712,6 +23596,114 @@
         {
           "key": "guide.map.north",
           "text": "↑N"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "Kominka Dog Run"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "La casa de campo tras la puerta es Kominka Dog Run, el mundo anterior con los mismos seis perros.\n<color=#B5432A>Pulsa este tablero y aparecerá un portal a su lado.</color>\nVR: apunta y aprieta el gatillo / Desktop: clic / Móvil: toca\nPulsa otra vez para quitarlo. También se quita solo al minuto.\nLos puntos y objetos son distintos en cada mundo.\nEl VAnimal Trainer sirve en ambos, te unas donde te unas."
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "Mostrar / quitar el portal"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "Elige un perro para llamarlo"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "Puedes llamar a perros a menos de {0} m"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "Llamando a {0}..."
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0} está aquí"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0}: {1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "Ahora no puede venir"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "Base {0} m   Yo {1} m"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "Disponible"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "En camino"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "Aquí"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "Llamando"
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "Paseando con otra persona"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "En otro lavadero"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "Demasiado lejos"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "Jugando con la pelota"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "Jugando al frisbee"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "Reuniéndose"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "Descansando con alguien"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "Otra persona lo baña"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "Terminar"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "Subir base"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "Bajar base"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "Subirme"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "Bajarme"
         }
       ]
     },
@@ -24506,11 +25498,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Les photos sont prises automatiquement quand un chien rapporte une balle, quand tu caresses un chien, et pendant les courses ou les jeux entre chiens. Dans la chambre, elles saisissent aussi tes moments de détente avec un chien.\n\nLes photos sont prises de temps en temps, pas en continu. Les nouvelles remplacent les plus anciennes, catégorie par catégorie.\n\nCet album n'appartient qu'à toi. Les autres voient d'autres photos sur leur tableau.\n\nLes photos disparaissent quand tu pars. Pour en garder une sur PC ou Quest, approche ta caméra VRChat et prends-la en photo. Sur téléphone, touche la photo et fais une capture d'écran.\n\nTu peux couper la prise de vue automatique (OFF) depuis les Réglages de résolution, à côté du tableau photo."
+          "text": "Les photos sont prises automatiquement quand un chien rapporte une balle, quand tu caresses un chien, quand les chiens courent ou jouent ensemble, quand un chien attrape un frisbee en sautant, et pendant la photo de groupe.\n\nLes photos sont prises de temps en temps, pas en continu. Jusqu'à 8 photos sont gardées : la plus récente apparaît en haut à gauche et remplace la plus ancienne.\n\nCet album n'appartient qu'à toi. Les autres voient d'autres photos.\n\nLes photos disparaissent quand tu pars. Pour en garder une sur PC ou Quest, approche ta caméra VRChat d'une photo du tableau photo près du portail et prends-la en photo. Sur téléphone, touche une photo du tableau et fais une capture d'écran.\n\nTu peux activer ou couper les photos automatiques avec [Photos: ON / OFF] dans les Réglages du menu."
         },
         {
           "key": "photo.help.close",
           "text": "Fermer"
+        },
+        {
+          "key": "photo.menu",
+          "text": "Photos"
+        },
+        {
+          "key": "photo.empty",
+          "text": "Joue avec les chiens, les photos se prennent toutes seules"
+        },
+        {
+          "key": "photo.new",
+          "text": "Nouvelle"
         },
         {
           "key": "photo.settings.title",
@@ -25390,7 +26394,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose the destination: Plaza or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -25466,7 +26470,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "Leashed dogs can't come. Unleash them in Walk first"
+          "text": "Dogs on someone else's leash can't come"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "Your leashed dogs can't come right now. Try again shortly"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -25494,7 +26502,7 @@
         },
         {
           "key": "guide.menu",
-          "text": "Menu de poche  VR : stick droit maintenu vers le bas / Desktop : touche T / Téléphone : Menu à l'écran / ou appuie sur la plaque du porte-laisses"
+          "text": "Menu personnel  VR : stick droit maintenu vers le bas / Desktop : touche T / Téléphone : Menu à l'écran / ou appuie sur la plaque du porte-laisses"
         },
         {
           "key": "guide.walk.title",
@@ -25518,7 +26526,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Sali par la promenade ? Lave ton chien.\n<color=#B5432A>1</color> Appuie sur le nom du chien sur le panneau du lavoir - il monte sur le caillebotis\n<color=#B5432A>2</color> Frotte avec l'éponge pour faire mousser\n<color=#B5432A>3</color> Douche : Use ouvre et ferme l'eau. Rince la mousse\n<color=#B5432A>4</color> Sèche avec la serviette\nDans l'ordre que tu veux. À deux aussi.\nHauteur du caillebotis et la tienne : [上へ] [下へ] sur le panneau. Fin : [おわり]\nÉponge et serviette sur Desktop/téléphone : garde Use enfoncé\n[RESET] sur l'étagère range les outils. 3 autres lavoirs en chemin."
+          "text": "Sali par la promenade ? Lave ton chien.\n<color=#B5432A>1</color> Appuie sur le nom du chien sur le panneau du lavoir - il monte sur le caillebotis\n<color=#B5432A>2</color> Frotte avec l'éponge pour faire mousser\n<color=#B5432A>3</color> Douche : Use ouvre et ferme l'eau. Rince la mousse\n<color=#B5432A>4</color> Sèche avec la serviette\nDans l'ordre que tu veux. À deux aussi.\nHauteur du socle et la tienne : [Socle plus haut] [Socle plus bas] [Moi plus haut] [Moi plus bas] sur le panneau. Fin : [Terminé]\nÉponge et serviette sur Desktop/téléphone : garde Use enfoncé\n[RESET] sur l'étagère range les outils. 3 autres lavoirs en chemin."
         },
         {
           "key": "guide.shop.title",
@@ -25551,6 +26559,114 @@
         {
           "key": "guide.map.north",
           "text": "↑N"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "Kominka Dog Run"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "La ferme derrière le portail, c'est Kominka Dog Run, le monde précédent avec les mêmes six chiens.\n<color=#B5432A>Appuie sur ce panneau et un portail apparaît à côté.</color>\nVR : vise et gâchette / Desktop : clic / Téléphone : touche\nAppuie encore pour le ranger. Il disparaît aussi au bout d'1 minute.\nLes points et objets sont séparés dans chaque monde.\nLe VAnimal Trainer marche dans les deux, où que tu te sois inscrit."
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "Afficher / ranger le portail"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "Choisis un chien à appeler"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "Chiens appelables à moins de {0} m"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "Appel de {0}..."
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0} est là"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0} : {1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "Ne peut pas venir pour l'instant"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "Socle {0} m   Moi {1} m"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "Disponible"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "En route"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "Ici"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "Appel en cours"
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "En balade avec quelqu’un"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "À un autre lavoir"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "Trop loin"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "Joue à la balle"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "Joue au frisbee"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "En rassemblement"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "Se repose avec quelqu’un"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "Quelqu’un le lave"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "Terminé"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "Socle plus haut"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "Socle plus bas"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "Moi plus haut"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "Moi plus bas"
         }
       ]
     },
@@ -27345,11 +28461,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "As fotos saem sozinhas quando um cachorro traz a bola, enquanto você faz carinho e durante as corridas ou as brincadeiras entre eles. No quarto, também são capturados os momentos de sossego juntos.\n\nA câmera não fica tirando foto o tempo todo: as fotos saem de tempos em tempos, e as novas substituem as mais antigas de cada tipo.\n\nEste álbum é só seu. As outras pessoas veem outras fotos nos painéis delas.\n\nAs fotos somem quando você sai. Para ficar com uma no PC ou no Quest, aproxime a câmera do VRChat e fotografe. No celular, toque na foto e faça uma captura de tela.\n\nVocê pode desligar as fotos automáticas em Ajustes de resolução, ao lado do painel de fotos."
+          "text": "As fotos saem sozinhas quando um cachorro traz a bola, enquanto você faz carinho, quando os cachorros correm ou brincam juntos, quando um cachorro pega o frisbee num salto e na foto em grupo.\n\nA câmera não fica tirando foto o tempo todo: as fotos saem de tempos em tempos. Ficam até 8 fotos: a mais nova aparece no canto superior esquerdo e substitui a mais antiga.\n\nEste álbum é só seu. As outras pessoas veem outras fotos.\n\nAs fotos somem quando você sai. Para ficar com uma no PC ou no Quest, aproxime a câmera do VRChat de uma foto do painel de fotos perto do portão e fotografe. No celular, toque numa foto do painel e faça uma captura de tela.\n\nVocê pode ligar ou desligar as fotos automáticas em [Fotos: ON / OFF] nos Ajustes do menu."
         },
         {
           "key": "photo.help.close",
           "text": "Fechar"
+        },
+        {
+          "key": "photo.menu",
+          "text": "Fotos"
+        },
+        {
+          "key": "photo.empty",
+          "text": "Brinque com os cachorros e as fotos saem sozinhas"
+        },
+        {
+          "key": "photo.new",
+          "text": "Nova"
         },
         {
           "key": "photo.settings.title",
@@ -28229,7 +29357,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose the destination: Plaza or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -28305,7 +29433,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "Leashed dogs can't come. Unleash them in Walk first"
+          "text": "Dogs on someone else's leash can't come"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "Your leashed dogs can't come right now. Try again shortly"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -28357,7 +29489,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Sujou no passeio? Dê um banho no seu cachorro.\n<color=#B5432A>1</color> Aperte o nome do cachorro no painel do lavadouro - ele sobe no estrado\n<color=#B5432A>2</color> Esfregue com a esponja até fazer muita espuma\n<color=#B5432A>3</color> Chuveiro: Use liga e desliga a água. Enxágue a espuma\n<color=#B5432A>4</color> Seque com a toalha\nNa ordem que quiser. Dá para lavar a dois.\nAltura do estrado e a sua: [上へ] [下へ] no painel. Fim: [おわり]\nEsponja e toalha no Desktop/celular: segure Use\n[RESET] na prateleira guarda as coisas. Mais 3 lavadouros no caminho."
+          "text": "Sujou no passeio? Dê um banho no seu cachorro.\n<color=#B5432A>1</color> Aperte o nome do cachorro no painel do lavadouro - ele sobe no estrado\n<color=#B5432A>2</color> Esfregue com a esponja até fazer muita espuma\n<color=#B5432A>3</color> Chuveiro: Use liga e desliga a água. Enxágue a espuma\n<color=#B5432A>4</color> Seque com a toalha\nNa ordem que quiser. Dá para lavar a dois.\nAltura da base e a sua: [Subir base] [Descer base] [Subir eu] [Descer eu] no painel. Fim: [Concluir]\nEsponja e toalha no Desktop/celular: segure Use\n[RESET] na prateleira guarda as coisas. Mais 3 lavadouros no caminho."
         },
         {
           "key": "guide.shop.title",
@@ -28390,6 +29522,114 @@
         {
           "key": "guide.map.north",
           "text": "↑N"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "Kominka Dog Run"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "A casa de fazenda além do portão é o Kominka Dog Run, o mundo anterior com os mesmos seis cachorros.\n<color=#B5432A>Aperte esta placa e um portal aparece ao lado.</color>\nVR: aponte e puxe o gatilho / Desktop: clique / Celular: toque\nAperte de novo para guardar. Ele também some depois de 1 minuto.\nPontos e itens são separados em cada mundo.\nO VAnimal Trainer vale nos dois, onde quer que você tenha entrado."
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "Mostrar / guardar o portal"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "Escolha um cachorro para chamar"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "Dá para chamar cães a até {0} m"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "Chamando {0}..."
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0} está aqui"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0}: {1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "Não pode vir agora"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "Base {0} m   Eu {1} m"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "Disponível"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "A caminho"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "Aqui"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "Chamando"
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "Passeando com outra pessoa"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "Em outro lavadouro"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "Longe demais"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "Brincando de bola"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "Brincando de frisbee"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "Reunindo-se"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "Descansando com alguém"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "Outra pessoa dá banho"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "Concluir"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "Subir base"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "Descer base"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "Subir eu"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "Descer eu"
         }
       ]
     },
@@ -30184,11 +31424,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Le foto si scattano da sole quando un cane riporta la palla, mentre lo accarezzi e durante le corse o i giochi tra cani. In camera vengono immortalati anche i momenti di relax insieme.\n\nNon si fotografa di continuo: gli scatti avvengono a intervalli e le foto nuove sostituiscono le più vecchie di ogni categoria.\n\nQuesto album è solo tuo. Le altre persone vedono foto diverse sulle loro bacheche.\n\nLe foto spariscono quando esci. Per tenerne una su PC o Quest, avvicina la fotocamera di VRChat e scatta. Su telefono, tocca la foto e fai uno screenshot.\n\nPuoi disattivare le foto automatiche dalle Impostazioni risoluzione, accanto alla bacheca delle foto."
+          "text": "Le foto si scattano da sole quando un cane riporta la palla, mentre lo accarezzi, quando i cani corrono o giocano insieme, quando un cane afferra un frisbee al volo e durante la foto di gruppo.\n\nNon si fotografa di continuo: gli scatti avvengono a intervalli. Si tengono fino a 8 foto: la più recente compare in alto a sinistra e sostituisce la più vecchia.\n\nQuesto album è solo tuo. Le altre persone vedono foto diverse.\n\nLe foto spariscono quando esci. Per tenerne una su PC o Quest, avvicina la fotocamera di VRChat a una foto della bacheca vicino al cancello e scatta. Su telefono, tocca una foto della bacheca e fai uno screenshot.\n\nPuoi attivare o disattivare le foto automatiche con [Foto: ON / OFF] nelle Impostazioni del menu."
         },
         {
           "key": "photo.help.close",
           "text": "Chiudi"
+        },
+        {
+          "key": "photo.menu",
+          "text": "Foto"
+        },
+        {
+          "key": "photo.empty",
+          "text": "Gioca con i cani e le foto si scattano da sole"
+        },
+        {
+          "key": "photo.new",
+          "text": "Nuova"
         },
         {
           "key": "photo.settings.title",
@@ -31068,7 +32320,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose the destination: Plaza or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -31144,7 +32396,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "Leashed dogs can't come. Unleash them in Walk first"
+          "text": "Dogs on someone else's leash can't come"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "Your leashed dogs can't come right now. Try again shortly"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -31196,7 +32452,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Sporco dalla passeggiata? Fai il bagno al tuo cane.\n<color=#B5432A>1</color> Premi il nome del cane sul pannello del lavatoio - sale sulla pedana\n<color=#B5432A>2</color> Strofina con la spugna per fare tanta schiuma\n<color=#B5432A>3</color> Doccia: Use apre e chiude l'acqua. Sciacqua la schiuma\n<color=#B5432A>4</color> Asciuga con l'asciugamano\nIn qualsiasi ordine. Anche in due.\nAltezza della pedana e tua: [上へ] [下へ] sul pannello. Fine: [おわり]\nSpugna e asciugamano su Desktop/telefono: tieni premuto Use\n[RESET] sulla mensola rimette a posto gli attrezzi. Altri 3 lavatoi lungo il percorso."
+          "text": "Sporco dalla passeggiata? Fai il bagno al tuo cane.\n<color=#B5432A>1</color> Premi il nome del cane sul pannello del lavatoio - sale sulla pedana\n<color=#B5432A>2</color> Strofina con la spugna per fare tanta schiuma\n<color=#B5432A>3</color> Doccia: Use apre e chiude l'acqua. Sciacqua la schiuma\n<color=#B5432A>4</color> Asciuga con l'asciugamano\nIn qualsiasi ordine. Anche in due.\nAltezza della pedana e la tua: [Alza pedana] [Abbassa pedana] [Alzami] [Abbassami] sul pannello. Fine: [Fine]\nSpugna e asciugamano su Desktop/telefono: tieni premuto Use\n[RESET] sulla mensola rimette a posto gli attrezzi. Altri 3 lavatoi lungo il percorso."
         },
         {
           "key": "guide.shop.title",
@@ -31229,6 +32485,114 @@
         {
           "key": "guide.map.north",
           "text": "↑N"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "Kominka Dog Run"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "La casa di campagna oltre il cancello è Kominka Dog Run, il mondo precedente con gli stessi sei cani.\n<color=#B5432A>Premi questo pannello e accanto appare un portale.</color>\nVR: punta e premi il grilletto / Desktop: clic / Telefono: tocca\nPremi di nuovo per toglierlo. Sparisce anche da solo dopo 1 minuto.\nPunti e oggetti sono separati in ogni mondo.\nIl VAnimal Trainer vale in entrambi, ovunque ti sia iscritto."
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "Mostra / togli il portale"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "Scegli un cane da chiamare"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "Puoi chiamare i cani entro {0} m"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "Sto chiamando {0}..."
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0} è qui"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0}: {1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "Ora non può venire"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "Pedana {0} m   Io {1} m"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "Disponibile"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "In arrivo"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "Qui"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "In chiamata"
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "A spasso con qualcuno"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "In un altro lavatoio"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "Troppo lontano"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "Gioca con la palla"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "Gioca col frisbee"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "In raduno"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "Riposa con qualcuno"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "Qualcuno lo lava"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "Fine"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "Alza pedana"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "Abbassa pedana"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "Alzami"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "Abbassami"
         }
       ]
     },
@@ -33023,11 +34387,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "Zdjęcia robią się same: gdy pies przynosi piłkę, gdy go głaszczesz oraz podczas wyścigów i zabaw psów ze sobą. W sypialni zapisze się też wasz wspólny odpoczynek.\n\nZdjęcia powstają co jakiś czas, a nie bez przerwy. Nowe zastępują najstarsze w danej kategorii.\n\nTen album jest tylko twój. Inni widzą na swoich tablicach inne zdjęcia.\n\nZdjęcia znikają po wyjściu ze świata. Żeby zachować któreś na PC lub Quest, podsuń blisko aparat VRChat i zrób zdjęcie. Na telefonie dotknij zdjęcia i zrób zrzut ekranu.\n\nAutomatyczne robienie zdjęć wyłączysz w Ustawieniach rozdzielczości obok tablicy ze zdjęciami."
+          "text": "Zdjęcia robią się same: gdy pies przynosi piłkę, gdy go głaszczesz, gdy psy biegają lub bawią się razem, gdy pies złapie frisbee w skoku oraz podczas zdjęcia grupowego.\n\nZdjęcia powstają co jakiś czas, a nie bez przerwy. Zostaje do 8 zdjęć: najnowsze pojawia się w lewym górnym rogu i zastępuje najstarsze.\n\nTen album jest tylko twój. Inni widzą inne zdjęcia.\n\nZdjęcia znikają po wyjściu ze świata. Żeby zachować któreś na PC lub Quest, podsuń aparat VRChat blisko zdjęcia na tablicy przy bramie i zrób zdjęcie. Na telefonie dotknij zdjęcia na tablicy i zrób zrzut ekranu.\n\nAutomatyczne zdjęcia włączysz lub wyłączysz przyciskiem [Zdjęcia: ON / OFF] w Ustawieniach menu."
         },
         {
           "key": "photo.help.close",
           "text": "Zamknij"
+        },
+        {
+          "key": "photo.menu",
+          "text": "Zdjęcia"
+        },
+        {
+          "key": "photo.empty",
+          "text": "Baw się z psami, a zdjęcia zrobią się same"
+        },
+        {
+          "key": "photo.new",
+          "text": "Nowe"
         },
         {
           "key": "photo.settings.title",
@@ -33907,7 +35283,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose the destination: Plaza or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -33983,7 +35359,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "Leashed dogs can't come. Unleash them in Walk first"
+          "text": "Dogs on someone else's leash can't come"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "Your leashed dogs can't come right now. Try again shortly"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -34035,7 +35415,7 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "Pobrudził się na spacerze? Wykąp swojego psa.\n<color=#B5432A>1</color> Naciśnij imię psa na tablicy myjni - wejdzie na podest\n<color=#B5432A>2</color> Szoruj gąbką, aż będzie dużo piany\n<color=#B5432A>3</color> Prysznic: Use włącza i wyłącza wodę. Spłucz pianę\n<color=#B5432A>4</color> Wytrzyj ręcznikiem\nW dowolnej kolejności. Można też we dwoje.\nWysokość podestu i twoja: [上へ] [下へ] na tablicy. Koniec: [おわり]\nGąbka i ręcznik na Desktopie/telefonie: przytrzymaj Use\n[RESET] na półce odkłada przybory. Jeszcze 3 myjnie po drodze."
+          "text": "Pobrudził się na spacerze? Wykąp swojego psa.\n<color=#B5432A>1</color> Naciśnij imię psa na tablicy myjni - wejdzie na podest\n<color=#B5432A>2</color> Szoruj gąbką, aż będzie dużo piany\n<color=#B5432A>3</color> Prysznic: Use włącza i wyłącza wodę. Spłucz pianę\n<color=#B5432A>4</color> Wytrzyj ręcznikiem\nW dowolnej kolejności. Można też we dwoje.\nWysokość podestu i twoja: [Podest wyżej] [Podest niżej] [Mnie wyżej] [Mnie niżej] na tablicy. Koniec: [Koniec]\nGąbka i ręcznik na Desktopie/telefonie: przytrzymaj Use\n[RESET] na półce odkłada przybory. Jeszcze 3 myjnie po drodze."
         },
         {
           "key": "guide.shop.title",
@@ -34068,6 +35448,114 @@
         {
           "key": "guide.map.north",
           "text": "↑N"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "Kominka Dog Run"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "Wiejski dom za bramą to Kominka Dog Run, poprzedni świat z tymi samymi sześcioma psami.\n<color=#B5432A>Naciśnij tę tablicę, a obok pojawi się portal.</color>\nVR: wskaż i naciśnij spust / Desktop: kliknij / Telefon: dotknij\nNaciśnij ponownie, aby go schować. Po 1 minucie zniknie sam.\nPunkty i przedmioty są osobne w każdym świecie.\nVAnimal Trainer działa w obu światach, niezależnie od tego, gdzie dołączyłeś."
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "Pokaż / schowaj portal"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "Wybierz psa do zawołania"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "Można wołać psy w promieniu {0} m"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "Wołam: {0}..."
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0} jest tutaj"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0}: {1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "Teraz nie może przyjść"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "Podest {0} m   Ja {1} m"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "Można zawołać"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "W drodze"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "Tutaj"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "Wołanie..."
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "Na spacerze z kimś"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "Na innej myjni"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "Za daleko"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "Bawi się piłką"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "Bawi się frisbee"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "Na zbiórce"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "Odpoczywa z kimś"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "Ktoś go myje"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "Koniec"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "Podest wyżej"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "Podest niżej"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "Mnie wyżej"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "Mnie niżej"
         }
       ]
     },
@@ -35546,7 +37034,7 @@
         },
         {
           "key": "settings.night.autoNote",
-          "text": "隨時間入夜，所有人相同（拖動即切換為手動）"
+          "text": "隨時間入夜，所有人相同 (拖動即切換為手動)"
         },
         {
           "key": "KD_TreatPouch.liveTitleKeys.6",
@@ -35866,11 +37354,23 @@
         },
         {
           "key": "photo.help.body",
-          "text": "狗狗叼球回來、你撫摸狗狗，以及賽跑和嬉戲的時候，都會自動拍照。在臥室裡，也會拍下你們一起放鬆的樣子。\n\n相片不是一直連拍，而是隔一段時間拍一張，每個類別裡從最舊的開始替換。\n\n這裡排列的相片只屬於你。別人在自己的板上看到的是另外的相片。\n\n退出世界後相片就會消失。想留下的相片，在 PC 和 Quest 上可以把 VRChat 相機湊近拍攝，在手機上點一下相片再截圖帶回去。\n\n自動拍照可以在相片板旁邊的「解析度設定」裡關掉。"
+          "text": "狗狗叼球回來、你撫摸狗狗、狗狗奔跑或一起嬉戲、狗狗跳起來接住飛盤，以及合照的時候，都會自動拍照。\n\n相片不是一直連拍，而是隔一段時間拍一張。最多保留 8 張，最新的相片排在左上角，並取代最舊的一張。\n\n這裡排列的相片只屬於你。別人看到的是另外的相片。\n\n退出世界後相片就會消失。想留下的相片，在 PC 和 Quest 上可以把 VRChat 相機湊近大門旁相片板上的相片拍攝，在手機上點一下相片板上的相片再截圖帶回去。\n\n自動拍照可以在選單「設定」裡的［相片: ON / OFF］切換。"
         },
         {
           "key": "photo.help.close",
           "text": "關閉"
+        },
+        {
+          "key": "photo.menu",
+          "text": "相片"
+        },
+        {
+          "key": "photo.empty",
+          "text": "和狗狗一起玩就會自動拍照"
+        },
+        {
+          "key": "photo.new",
+          "text": "最新"
         },
         {
           "key": "photo.settings.title",
@@ -36750,7 +38250,7 @@
         },
         {
           "key": "KD_ShopKeeper.InfoWalk",
-          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose the destination: Plaza or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
+          "text": "Use Walk in your personal menu to put dogs on a leash. On a dog's row, press Leash left or Leash right. Only dogs near you can be attached. You can walk up to 3 dogs per hand, 6 with both hands.\n\nChoose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate. Leashed dogs head there, stopping along the way.\n\nPress Unleash to let a dog go. Only the person who attached it can release it.\n\nEven without points, you can always walk and play ball."
         },
         {
           "key": "KD_TreatPouch.WordPointsKeeper",
@@ -36826,7 +38326,11 @@
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyLeash",
-          "text": "Leashed dogs can't come. Unleash them in Walk first"
+          "text": "Dogs on someone else's leash can't come"
+        },
+        {
+          "key": "KD_TreatPouch.WordTreatBusyOwnLeash",
+          "text": "Your leashed dogs can't come right now. Try again shortly"
         },
         {
           "key": "KD_TreatPouch.WordTreatBusyGather",
@@ -36854,7 +38358,7 @@
         },
         {
           "key": "guide.menu",
-          "text": "手邊選單  VR: 長按右搖桿向下 ／ Desktop: T 鍵 ／ 手機: 畫面上的 [選單] ／ 按牽繩架上的牌子也能打開"
+          "text": "手邊選單  VR: 長按右搖桿向下 / Desktop: T 鍵 / 手機: 畫面上的 [選單] / 按牽繩架上的牌子也能打開"
         },
         {
           "key": "guide.walk.title",
@@ -36878,11 +38382,11 @@
         },
         {
           "key": "guide.wash.body",
-          "text": "散步弄髒了？幫狗狗洗乾淨吧。\n<color=#B5432A>1</color> 在洗澡台的板子上按狗狗的名字 → 牠會站到踏板上\n<color=#B5432A>2</color> 用海綿搓出滿滿的泡泡\n<color=#B5432A>3</color> 淋浴: 用 Use 開關水。把泡泡沖掉\n<color=#B5432A>4</color> 用毛巾擦乾收尾\n順序隨意。兩個人也能一起洗。\n踏板和自己的高度: 板上的 [上へ] [下へ]　結束: [おわり]\n海綿・毛巾在 Desktop・手機上: 按住 Use\n架子上的 [RESET] 讓工具歸位。沿途還有 3 處洗澡台。"
+          "text": "散步弄髒了？幫狗狗洗乾淨吧。\n<color=#B5432A>1</color> 在洗澡台的板子上按狗狗的名字 → 牠會站到踏板上\n<color=#B5432A>2</color> 用海綿搓出滿滿的泡泡\n<color=#B5432A>3</color> 淋浴: 用 Use 開關水。把泡泡沖掉\n<color=#B5432A>4</color> 用毛巾擦乾收尾\n順序隨意。兩個人也能一起洗。\n台子和自己的高度: 板上的 [台子升高] [台子降低] [自己升高] [自己降低]　結束: [結束]\n海綿・毛巾在 Desktop・手機上: 按住 Use\n架子上的 [RESET] 讓工具歸位。沿途還有 3 處洗澡台。"
         },
         {
           "key": "guide.shop.title",
-          "text": "積分與訓練師"
+          "text": "積分與訓練員"
         },
         {
           "key": "guide.shop.body",
@@ -36911,6 +38415,114 @@
         {
           "key": "guide.map.north",
           "text": "↑北"
+        },
+        {
+          "key": "guide.kominka.title",
+          "text": "Kominka Dog Run"
+        },
+        {
+          "key": "guide.kominka.body",
+          "text": "門那邊看到的古民家就是 Kominka Dog Run，有同樣 6 隻狗狗的前作世界。\n<color=#B5432A>按一下這塊牌子，旁邊會出現傳送門。</color>\nVR: 指向後扣扳機 / Desktop: 點擊 / 手機: 輕觸\n再按一次就收起。1 分鐘後也會自動收起。\n積分和物品在每個世界是分開的。\nVAnimal Trainer 不論在哪邊加入，兩邊都能用。"
+        },
+        {
+          "key": "guide.kominka.interact",
+          "text": "顯示 / 收起傳送門"
+        },
+        {
+          "key": "wash.board.pick",
+          "text": "選擇要呼喚的狗狗"
+        },
+        {
+          "key": "wash.board.rule",
+          "text": "可呼喚 {0} 米內的狗狗"
+        },
+        {
+          "key": "wash.board.calling",
+          "text": "正在呼喚{0}…"
+        },
+        {
+          "key": "wash.board.here",
+          "text": "{0}在這裡"
+        },
+        {
+          "key": "wash.board.nameReason",
+          "text": "{0}：{1}"
+        },
+        {
+          "key": "wash.board.busy",
+          "text": "現在過不來"
+        },
+        {
+          "key": "wash.board.heights",
+          "text": "台子 {0} 米   自己 {1} 米"
+        },
+        {
+          "key": "wash.state.callable",
+          "text": "可以呼喚"
+        },
+        {
+          "key": "wash.state.coming",
+          "text": "正在過來"
+        },
+        {
+          "key": "wash.state.here",
+          "text": "在這裡"
+        },
+        {
+          "key": "wash.state.calling",
+          "text": "呼喚中"
+        },
+        {
+          "key": "wash.state.leashedOther",
+          "text": "正在和別人散步"
+        },
+        {
+          "key": "wash.state.otherStation",
+          "text": "在別的洗澡台"
+        },
+        {
+          "key": "wash.state.tooFar",
+          "text": "太遠了"
+        },
+        {
+          "key": "wash.state.fetch",
+          "text": "正在玩球"
+        },
+        {
+          "key": "wash.state.frisbee",
+          "text": "正在玩飛盤"
+        },
+        {
+          "key": "wash.state.gathering",
+          "text": "正在集合"
+        },
+        {
+          "key": "wash.state.sleepCall",
+          "text": "正在陪人休息"
+        },
+        {
+          "key": "wash.state.washedOther",
+          "text": "別人正在洗"
+        },
+        {
+          "key": "wash.button.end",
+          "text": "結束"
+        },
+        {
+          "key": "wash.button.standUp",
+          "text": "台子升高"
+        },
+        {
+          "key": "wash.button.standDown",
+          "text": "台子降低"
+        },
+        {
+          "key": "wash.button.meUp",
+          "text": "自己升高"
+        },
+        {
+          "key": "wash.button.meDown",
+          "text": "自己降低"
         }
       ]
     }

@@ -516,7 +516,17 @@ namespace KominkaDogRun.Editor
 
             // ---- 犬側 (6 匹) と、裏山の除外の足場 ----
             v.Check(typeof(KD_TreatBox).GetMethod("HillsideDogBusy", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic) != null,
-                "KD_TreatBox.HillsideDogBusy がある (リード接続中・集合中・フリスビー中を EligibleDog / AllDogsEngaged から除外。IMP-DOG-006 の足場)");
+                "KD_TreatBox.HillsideDogBusy がある (集合中・フリスビー中・接続中でも来られない状態を EligibleDog から除外)");
+            // IMP-DOG-006 (2026-10-03): 接続中の犬をおやつで 1 匹ずつ呼ぶ口 (割当の許可・犬側の分岐・自分の接続犬が来られない理由)
+            v.Check(typeof(KD_TreatBox).GetMethod("BuildAllowWith") != null && typeof(KD_TreatBox).GetMethod("ResolveClaimsAllowWith") != null
+                && typeof(KD_DogWanderController).GetProperty("HillsideLeashTreatBlocked") != null
+                && typeof(KD_DogWanderController).GetMethod("UpdateLeashTreat", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic) != null,
+                "IMP-DOG-006 の口 (KD_TreatBox.BuildAllowWith / ResolveClaimsAllowWith、KD_DogWanderController.HillsideLeashTreatBlocked / UpdateLeashTreat)");
+            {
+                string own = null;
+                try { own = KD_LocalizationEditor.Text(KD_LocalizationEditor.Load(), "ja", "KD_TreatPouch.WordTreatBusyOwnLeash"); } catch (System.InvalidOperationException) { }
+                v.Check(!string.IsNullOrEmpty(own), "文言キー KD_TreatPouch.WordTreatBusyOwnLeash が UITranslations.json にある (自分の接続犬が来られないとき。ja: " + own + ")");
+            }
             v.Check(typeof(KD_TreatBox).GetMethod("HillsideAllBusyCause") != null && typeof(KD_TreatPouch).GetMethod("HillsideDogsBusyText", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic) != null,
                 "全頭が来られない理由を分ける口 (KD_TreatBox.HillsideAllBusyCause → KD_TreatPouch.HillsideDogsBusyText: リード中 / 集合中 / フリスビー中 / 終わり待ち)");
             for (int d = 0; d < KD_DogDefs.All.Length; d++)
@@ -597,6 +607,7 @@ namespace KominkaDogRun.Editor
                 v.AddFail(SelfTestGive(box, log));
                 v.AddFail(SelfTestDispense(box, log));
                 v.AddFail(SelfTestClaims(box, log));
+                v.AddFail(SelfTestLeashCall(box, log));   // IMP-DOG-006: 接続中の犬をおやつで呼ぶ割当 (KD_TreatSetupEditor.SelfTestLeash.cs)
             }
 
             // ---- 食後エフェクト ----

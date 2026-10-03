@@ -176,3 +176,57 @@
 ## 7. 記録
 
 - 2026-10-03: 設計案とモックを作成。現行の構成はコード (`KD_TreatPouch.Walk.cs` / `.Travel.cs` / `KD_HandMenuScrollEditor.cs` / `KH_CourseMenuEditor.cs` / `KH_CourseTravelMapEditor.cs` / `KH_CourseTravelJoinEditor.cs`) から棚卸しした。過去のモックからは推測していない。ユーザー確認は未。
+- 2026-10-03: ユーザー決定で推奨案 (§3) を採用。実装は §8 (未コンパイル・Unity 未実行・Play 未確認)。
+
+## 8. 実装メモ (2026-10-03、未コンパイル・未実行)
+
+### 8.1 設計からの変更点
+
+- **行は `Page_Walk/Scroll/Viewport/Content` の中に残す。** §4 の「`WalkDogs` / `WalkDest` へ移す」はやめた。文言の配線 (`UILocalizationBindings.json`) が `Page_Walk/Scroll/Viewport/Content/WalkRow{n}/...` の経路で 22 本のラベル (左右・はずす・広場・古民家側の入口・[ここへ]) を引いており、親を変えると `KD_LocalizationEditor.ValidateScene` と Bind を呼ぶ全ビルダーが止まるため。代わりにスクロールを止めた固定の枠にする: `ScrollRect`・`GridLayoutGroup`・`ContentSizeFitter` を無効 (外さない)、スクロールバーを非表示、枠を y 190〜−258・幅 1100 に広げ、行を絶対位置に置く。`tabScrolls[2]` の参照と共有の翻訳表は変えない。
+- **タイルは既存の [ここへ] (`Here`) を行いっぱい (266×72) に広げたもの。** 名前 (`Label`) をその上に重ね (`Here` を兄弟の先頭へ)、`Here/Label` (「ここへ」) と状態の行 (`Reason`) は隠す。選択中の「いまの行き先」は名前の 2 行目に `<size=73%>` で出す (16pt 相当。オートサイズで一緒に縮む)。「●」は字形が増えるので付けない。
+- **犬の行の地** は行の GameObject に `Image` を 1 枚足した (押せない。flat)。普段 `#2F2925`、自分の犬は `#2F4A38`。
+- 上下に隣り合う犬のボタンの隙間は 24 (行の間 8 + 行の中の上下の余白 8 × 2)。§3.4 の「16」は数え違い。
+- 長い理由・結果 (例: 「呼ばれて待機中です。呼ぶタブで自由にしてから」、it/de の水遊び中) は、行の状態 (260 幅・15pt まで) に入らない言語では … で切れる。全文は下端の 1 行に同時に出る (同じ 4 秒)。Course/121 は記録だけにする (`info` の `ellipsis`)。
+
+### 8.2 ファイル
+
+| ファイル | 中身 |
+|---|---|
+| `Scripts/Editor/KH_WalkTabLayoutEditor.cs` (新規) | `Course/120 - Walk Tab Layout` (その場で並べ直す。保存前に配置・配線・押せる面・13 言語の収まりを検査し、通らなければ保存しない。退避は `Temp/des-ui-006/before-walk-tab-layout.unity`)、`Course/121 - Verify Walk Tab Layout` (保存済みを読み直して同じ検査、`Temp/des-ui-006/walk-tab-verify.json`)。`PlaceTravelButtons` を Course/84・85 と共有 |
+| `KD_TreatPouch.Walk.cs` | 新フィールド `walkDestHeading` / `walkSummaryLabel` / `walkRowImages` / `walkOpenRect` / `walkRowColor` / `walkRowMineColor` (同期しない)。`RedrawWalk`: 自分の犬の行は [はずす] だけ・地を点灯、タイルの点灯と「いまの行き先」(行き先がまざっていれば点灯なし)、まとめを右列へ、押した行 / まとめに 4 秒の結果。`walkSummaryLabel` が null なら旧 1 列のまま描く |
+| `KD_TreatPouch.Travel.cs` (`RedrawTravel`) | 保留中だけ `walkOpenRect` を 266 幅 (x 143) に、普段は 540 幅 (x 280) に |
+| `KH_CourseTravelMapEditor.cs` (Course/84) / `KH_CourseTravelJoinEditor.cs` (Course/85) | 2 列を見つけたら [地図と移動] / [申し込み 1 件] を右列の下へ置き直し、スクロールの上端を触らない。84 の検査も分岐 |
+| `KH_CourseTravelEditor.cs` (Course/81) | 「walk scroll top = 140」を、2 列なら「枠の上端 = 190」に |
+| `KH_CourseMenuEditor.cs` (Course/26・ビルド前の検査) | 2 列なら構造を `KH_WalkTabLayoutEditor.Validate` で、収まりを 13 言語で測る |
+| `KD_HandMenuScrollEditor.cs` (Menu/21) | 2 列ならさんぽタブのスクロール検査の代わりに Course/121 と同じ検査 |
+| `KD_TreatSetupEditor.Verify.cs` (Menu/20) | さんぽの行数を行き先の数から数える (12 行)。3 つ目以降の行き先の押し先は Course/26 に任せる |
+
+### 8.3 押せる面 (Canvas 単位、板の中心が原点)
+
+| 部品 | 大きさ | 中心 |
+|---|---|---|
+| [左につなぐ] ×6 | 128×52 | x −214、y 156 / 80 / 4 / −72 / −148 / −224 |
+| [右につなぐ] ×6 | 128×52 | x −78、同上 |
+| [はずす] ×6 (左右と同じ場所。自分の犬の行だけ) | 264×52 | x −146、同上 |
+| 行き先のタイル ×6 | 266×72 | x 143 / 417、y 64 / −16 / −96 |
+| [地図と移動] | 540×72 (保留中 266×72) | (280, −184) (保留中 (143, −184)) |
+| [申し込み 1 件] (保留中だけ) | 266×72 | (417, −184) |
+
+隙間: 左右 8、犬の行の上下 24、タイル 8 (横・縦)、タイルと [地図と移動] 16。
+
+### 8.4 実行順 (統括)
+
+1. コンパイル (`bash scripts/unity-compile.sh --udon`)
+2. `Course/120 - Walk Tab Layout` (保存する)
+3. 再読込して `Course/121 - Verify Walk Tab Layout`
+4. `Course/26`・`Course/81`・`Menu/20`・`Menu/21`・`Menu/24` (`Menu/22` の「hand menu does not block players」と同じ検査)
+5. 文言・字形は新規なし。`Course/27` は不要 (流しても変化しない)
+
+Course/84・85 を後から流しても、2 列を見つけたら同じ位置へ置き直す (上段へ戻さない)。Course/121 を流し直して確かめる。
+
+### 8.5 Play でしか分からないこと (ユーザー)
+
+- PCVR のレーザー: 左右 128×52 が狙えるか、タイルの 1 回押し、自分の犬の行の見分け、押した行に結果が出るか
+- 左右を押した直後、つながった瞬間に同じ場所が [はずす] に変わる。素早い 2 度押しで外れないか (Owner の確定は数百 ms かかる)
+- Desktop のマウス・Touch のタップ (スクロールのドラッグが無くなったことを含む)、木陰と夜の可読性、13 言語の実表示
+- 保留中に [地図と移動] が半分の幅になり [申し込み 1 件] が並ぶこと

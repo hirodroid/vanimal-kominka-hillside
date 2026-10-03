@@ -24,6 +24,7 @@ namespace KominkaHillside.Editor
     /// 2. 暗転の板 KH_TravelFade (KH_NightMode と同じ全画面 quad + KH_TravelFade.mat、queue 5001) を置き、Manager の travelFade に配線する。
     ///    KH_TravelFade の Program Asset が無ければ作ってコンパイルを始め、**シーンは変えずに止まる** (もう一度 84 を流す)。
     /// 3. さんぽタブ上段の段階 1 の 2 ボタンを [地図と移動] 1 つに置き換え、副画面 Page_Settings/TravelMapPage を作る。
+    ///    地点の一覧は 6 セル (2 列 × 3 段、セル k = 地点 k。ワープできない地点のセルは隠す。IMP-WLD-004 2026-10-03)。
     /// 4. 翻訳表 (course.travel.map.* を含む) を KD_Language の extension に入れ直す。
     /// 検査は Course/81 (KH_CourseTravelEditor.Verify) が <see cref="Validate"/> を呼んで行う。</summary>
     public static class KH_CourseTravelMapEditor
@@ -42,9 +43,22 @@ namespace KominkaHillside.Editor
         public const int FadeSortingOrder = 32767;
         static readonly Vector2 MapPos = new Vector2(-350f, -55f);
         static readonly string[] OldButtons = { "TravelUpper", "TravelRiver" };
-        static readonly string[] RowEvents = { "_TravelPick0", "_TravelPick1" };
-        static readonly int[] RowSpots = { KH_LeashManager.SpotUpper, KH_LeashManager.SpotRiver };
-        static readonly string[] RowNameKeys = { "course.walk.upper", "course.walk.river" };
+        // IMP-WLD-004 (2026-10-03): 一覧は 6 セル (2 列 × 3 段)。セル k = 地点 k = 地図の番号 k+1 (KD_TreatPouch._travelSpots と同じ並び)。
+        // ワープできない地点のセルは保存時も実行時も隠す。呼び名は KD_TreatPouch._travelNameKeys・KH_TravelNotice._spotKeys と同じキー
+        public const int RowCount = KH_LeashManager.SpotCount;
+        static readonly string[] RowEvents = { "_TravelPick0", "_TravelPick1", "_TravelPick2", "_TravelPick3", "_TravelPick4", "_TravelPick5" };
+        static readonly int[] RowSpots = { KH_LeashManager.SpotGate, KH_LeashManager.SpotPlaza, KH_LeashManager.SpotUpper, KH_LeashManager.SpotBridgeUp, KH_LeashManager.SpotRiver, KH_LeashManager.SpotBridgeDown };
+        static readonly string[] RowNameKeys = { "KD_TreatPouch.WordWalkGate", "KD_TreatPouch.WordWalkPlaza", "course.walk.upper", "course.travel.join.spot.bridgeUp", "course.walk.river", "course.travel.join.spot.bridgeDown" };
+        // セルの格子: 右の列 (中心 x 155、幅 590) の Y140〜−36 (人の一覧と同じ帯。上は切替 [地点]/[人] の下端 142、下はフッターの上端 −46)。
+        // 2 列 (291 + 間隔 8 + 291) × 3 段 (高さ 56、間隔 4)。文字は人の一覧の行と同じ 18pt・2 段 (1 行目 = 番号と呼び名、2 行目 = 距離)
+        public static readonly Vector2 RowSize = new Vector2(291f, 56f);
+        public const float RowTop = 140f, RowPitchY = 60f, RowColumnGap = 8f, ListCenterX = 155f;
+        public static Vector2 RowPos(int k)
+        {
+            int col = k % 2, line = k / 2;
+            float x = ListCenterX + (col == 0 ? -1f : 1f) * (RowSize.x + RowColumnGap) * 0.5f;
+            return new Vector2(x, RowTop - RowSize.y * 0.5f - line * RowPitchY);
+        }
 
         [Serializable] class BuildReport
         {
@@ -119,10 +133,15 @@ namespace KominkaHillside.Editor
                 // ---- 3. さんぽタブ上段と副画面 ----
                 var walk = p.tabPages[KD_TreatPouch.TabWalk].transform;
                 foreach (var name in OldButtons) { var old = walk.Find(name); if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject); }
-                var open = KD_ShopSetupEditor.EnsureButton(walk, OpenName, new Vector2(-272f, KH_CourseTravelEditor.TopRowY), new Vector2(530f, 40f),
+                // DES-UI-006: 2 列 (Course/120) を流した後なら、[地図と移動] は右列の下 (540×72) に置き直し、スクロールの上端は触らない (上段へ戻さない)
+                bool walkTwoColumn = KH_WalkTabLayoutEditor.IsApplied(p);
+                var open = KD_ShopSetupEditor.EnsureButton(walk, OpenName,
+                    walkTwoColumn ? KH_WalkTabLayoutEditor.OpenPos(false) : new Vector2(-272f, KH_CourseTravelEditor.TopRowY),
+                    walkTwoColumn ? KH_WalkTabLayoutEditor.OpenSize(false) : new Vector2(530f, 40f),
                     KD_UiSpriteEditor.ActionNeutral, font, Ja("course.travel.map.open"), pouchBacking, "_TravelOpenMap", log);
                 var openLabel = Label(open, 20f);
-                KH_CourseTravelEditor.LowerScroll(p);
+                if (walkTwoColumn) KH_WalkTabLayoutEditor.PlaceTravelButtons(open, p.travelJoinPendingButton);
+                else KH_CourseTravelEditor.LowerScroll(p);
 
                 var page = KD_ShopSetupEditor.EnsureUiChild(p.settingsPage.transform, PageName, Vector2.zero, new Vector2(KD_TreatSetupEditor.PanelWidth, KD_TreatSetupEditor.PanelHeight));
                 var heading = MakeText(page.transform, "Heading", new Vector2(-150f, 164f), new Vector2(560f, 36f), 24f, TextAlignmentOptions.Left, font, Ja("course.travel.map.title"));
@@ -143,13 +162,16 @@ namespace KominkaHillside.Editor
                 var player = KD_ShopSetupEditor.EnsureUiChild(page.transform, "Player", MapPos, new Vector2(20f, 20f));
                 Img(player.transform, "Dot", Vector2.zero, new Vector2(16f, 16f), new Color(.15f, .45f, .95f), circle);
                 Img(player.transform, "Nose", new Vector2(0f, 11f), new Vector2(5f, 12f), Color.white, null);
-                var rows = new Button[2]; var rowImages = new Image[2]; var rowLabels = new TextMeshProUGUI[2];
-                for (int k = 0; k < 2; k++)
+                // IMP-WLD-004: 2 行 (590×84) → 6 セル (2 列 × 3 段)。既存の Row0 / Row1 は位置・大きさ・イベントごと張り直す (EnsureButton は冪等)
+                var rows = new Button[RowCount]; var rowImages = new Image[RowCount]; var rowLabels = new TextMeshProUGUI[RowCount];
+                for (int k = 0; k < RowCount; k++)
                 {
-                    var row = KD_ShopSetupEditor.EnsureButton(page.transform, "Row" + k, new Vector2(155f, 98f - k * 92f), new Vector2(590f, 84f),
-                        KD_UiSpriteEditor.ActionNeutral, font, (RowSpots[k] + 1) + "  " + Ja(RowNameKeys[k]), pouchBacking, RowEvents[k], log);
+                    var row = KD_ShopSetupEditor.EnsureButton(page.transform, "Row" + k, RowPos(k), RowSize,
+                        KD_UiSpriteEditor.ActionNeutral, font, RowText(p.language, "ja", k, "120"), pouchBacking, RowEvents[k], log);
                     rows[k] = row.GetComponent<Button>(); rowImages[k] = row.GetComponent<Image>();
-                    rowLabels[k] = Label(row, 24f); rowLabels[k].alignment = TextAlignmentOptions.Left;
+                    rowLabels[k] = Label(row, 18f); rowLabels[k].alignment = TextAlignmentOptions.Left;
+                    rowLabels[k].overflowMode = TextOverflowModes.Ellipsis; rowLabels[k].lineSpacing = -10f; EditorUtility.SetDirty(rowLabels[k]);
+                    row.SetActive(m.spotWarpEnabled != null && RowSpots[k] < m.spotWarpEnabled.Length && m.spotWarpEnabled[RowSpots[k]]);
                 }
                 // W2 U10: ワープ先 / 犬の数 / 散歩先のまま の 3 行 (一覧の下 -46 〜 実行ボタンの上 -150)
                 var footer = MakeText(page.transform, "Footer", new Vector2(155f, -98f), new Vector2(590f, 104f), 18f, TextAlignmentOptions.Left, font, Ja("course.travel.map.pick"));
@@ -350,7 +372,11 @@ namespace KominkaHillside.Editor
             {
                 CheckEvent(e, p.travelOpenButton, pb, "_TravelOpenMap");
                 var rt = (RectTransform)p.travelOpenButton.transform;
-                Req(e, rt.anchoredPosition.y - rt.sizeDelta.y / 2 >= KH_CourseTravelEditor.ContentTopWithRow, "open button above the walk scroll");
+                // DES-UI-006: 2 列なら右列の下 (位置・大きさの詳細は Course/121)。それ以外は上段 (スクロールの上)
+                if (KH_WalkTabLayoutEditor.IsApplied(p))
+                    Req(e, Vector2.Distance(rt.anchoredPosition, KH_WalkTabLayoutEditor.OpenPos(false)) < 0.5f && Vector2.Distance(rt.sizeDelta, KH_WalkTabLayoutEditor.OpenSize(false)) < 0.5f, "open button at the bottom of the walk tab's right column (DES-UI-006, Course/120)");
+                else
+                    Req(e, rt.anchoredPosition.y - rt.sizeDelta.y / 2 >= KH_CourseTravelEditor.ContentTopWithRow, "open button above the walk scroll");
             }
             Req(e, p.travelMapPage != null && p.travelMapPage.transform.parent == p.settingsPage.transform && p.extraSettingsPages != null && p.extraSettingsPages.Contains(p.travelMapPage) && !p.travelMapPage.activeSelf, "map page registered in extraSettingsPages, inactive at start");
             // W2 M6: backing の extraSettingsPages にも入っていること
@@ -362,12 +388,21 @@ namespace KominkaHillside.Editor
             Req(e, p.travelMapRect != null && p.travelMapRect.parent == page && p.travelMapRect.GetComponent<RawImage>() != null && p.travelMapRect.GetComponent<RawImage>().texture == tex, "map RawImage uses the map texture");
             Req(e, p.travelMapPlayer != null && p.travelMapPlayer.parent == page && p.travelMapSelection != null && p.travelMapSelection.parent == page, "player and selection are siblings of the map");
             Req(e, Mathf.Approximately(p.travelMapCenterX, CenterX) && Mathf.Approximately(p.travelMapCenterZ, CenterZ) && Mathf.Approximately(p.travelMapSpan, Span), "map world square");
-            Req(e, p.travelButtons != null && p.travelButtons.Length == 2 && p.travelImages != null && p.travelImages.Length == 2 && p.travelLabels != null && p.travelLabels.Length == 2, "two list rows");
+            Req(e, p.travelButtons != null && p.travelButtons.Length == RowCount && p.travelImages != null && p.travelImages.Length == RowCount && p.travelLabels != null && p.travelLabels.Length == RowCount, RowCount + " list cells (IMP-WLD-004; rerun Course/84)");
             if (e.Count > 0) return;
-            for (int k = 0; k < 2; k++)
+            for (int k = 0; k < RowCount; k++)
             {
-                Req(e, p.travelButtons[k] != null && p.travelButtons[k].transform.parent == page && m.spotWarpEnabled[RowSpots[k]], "row " + k + " for a warpable spot");
-                if (p.travelButtons[k] != null) CheckEvent(e, p.travelButtons[k].gameObject, pb, RowEvents[k]);
+                var b = p.travelButtons[k];
+                Req(e, b != null && b.transform.parent == page && b.name == "Row" + k && p.travelImages[k] == b.GetComponent<Image>() && p.travelLabels[k] != null && p.travelLabels[k].transform.parent == b.transform, "cell " + k + " (spot " + SpotName(m, RowSpots[k]) + ") wired");
+                if (b == null) continue;
+                CheckEvent(e, b.gameObject, pb, RowEvents[k]);
+                var rt = (RectTransform)b.transform;
+                Req(e, Vector2.Distance(rt.anchoredPosition, RowPos(k)) < 0.5f && Vector2.Distance(rt.sizeDelta, RowSize) < 0.5f, "cell " + k + " at the 2 x 3 grid position " + RowPos(k));
+                // 帯の中 (上 = 切替の下端 142 より下、下 = フッターの上端 -46 より上)
+                Req(e, rt.anchoredPosition.y + rt.sizeDelta.y / 2 <= RowTop + 0.5f && rt.anchoredPosition.y - rt.sizeDelta.y / 2 >= -46f - 0.5f, "cell " + k + " inside the list band (Y" + RowTop + " .. -46)");
+                bool warp = m.spotWarpEnabled != null && RowSpots[k] < m.spotWarpEnabled.Length && m.spotWarpEnabled[RowSpots[k]];
+                Req(e, b.gameObject.activeSelf == warp, "cell " + k + " shown only when its spot is warpable (saved active=" + b.gameObject.activeSelf + ", warp=" + warp + ")");
+                foreach (var g in b.GetComponentsInChildren<Graphic>(true)) if (g.transform != b.transform && g.raycastTarget) e.Add("FAIL decoration blocks raycast: " + b.name + "/" + g.name);
             }
             var goButton = page.Find("Go"); var backButton = page.Find("Back");
             Req(e, goButton != null && p.travelGoImage == goButton.GetComponent<Image>() && p.travelGoLabel != null, "Go button wired");
@@ -379,7 +414,7 @@ namespace KominkaHillside.Editor
             foreach (var field in new[] { "travelButtons", "travelImages", "travelLabels" })
             {
                 object arr;
-                if (pb == null || !pb.publicVariables.TryGetVariableValue(field, out arr) || !(arr is Array a) || a.Length != 2) e.Add("FAIL backing " + field);
+                if (pb == null || !pb.publicVariables.TryGetVariableValue(field, out arr) || !(arr is Array a) || a.Length != RowCount) e.Add("FAIL backing " + field + " length " + RowCount);
             }
             foreach (var field in new[] { "travelMapPage", "travelMapRect", "travelMapPlayer", "travelOpenButton", "travelGoLabel", "travelStatusLabel" })
                 if (pb == null || !pb.publicVariables.TryGetVariableValue(field, out object v2) || v2 == null) e.Add("FAIL backing " + field);
@@ -398,11 +433,10 @@ namespace KominkaHillside.Editor
                     string T(string key) { return lang._TextForLanguage(key, code); }
                     string longest = new[] { "KD_TreatPouch.WordWalkPlaza", "KD_TreatPouch.WordWalkGate", "course.walk.forward", "course.walk.reverse", "course.walk.upper", "course.walk.river" }.Select(T).OrderByDescending(s => s.Length).First();
                     Fit(sample, p.travelOpenLabel, T("course.travel.map.open"), code + " open", e, report);
+                    Fit(sample, p.travelFooterLabel, T("course.travel.map.target").Replace("{0}", T("KD_TreatPouch.WordWalkGate")), code + " footer target gate", e, report);
                     Fit(sample, p.travelMapHeading, T("course.travel.map.title"), code + " heading", e, report);
                     Fit(sample, p.travelBackLabel, T("course.travel.map.back"), code + " back", e, report);
                     Fit(sample, p.travelBackLabel, T("course.travel.map.backwalk"), code + " backwalk", e, report);
-                    for (int k = 0; k < 2; k++)
-                        Fit(sample, p.travelLabels[k], (RowSpots[k] + 1) + "  " + T(RowNameKeys[k]) + "    " + T("course.travel.map.distance").Replace("{0}", "999"), code + " row " + k, e, report);
                     Fit(sample, p.travelFooterLabel, T("course.travel.map.target").Replace("{0}", T("course.walk.upper")) + "\n" + T("course.travel.map.dogs").Replace("{0}", "6") + "\n" + T("course.travel.map.walkdest").Replace("{0}", longest), code + " footer 3 lines", e, report);
                     Fit(sample, p.travelFooterLabel, T("course.travel.map.alone"), code + " footer alone", e, report);
                     Fit(sample, p.travelFooterLabel, T("course.travel.map.pick"), code + " footer pick", e, report);
@@ -411,8 +445,24 @@ namespace KominkaHillside.Editor
                     foreach (var key in new[] { "course.travel.preparing", "course.travel.dogs", "course.travel.arrived", "course.travel.stop.noanswer", "course.travel.stop.changed", "course.travel.stop.blocked", "course.travel.busy", "course.travel.cooling", "course.travel.ball", "course.travel.crowded", "course.travel.here", "course.travel.canceled", "course.travel.map.moving", "course.travel.map.pick" })
                         Fit(sample, p.travelStatusLabel, T(key).Replace("{0}", T("course.walk.upper")), code + " status " + key, e, report);
                 }
+                // IMP-WLD-004: 一覧の 6 セルと、地点名の入る状態の行 (着きました・犬を待っています) を 13 言語全部で (距離は 3 桁)
+                foreach (string code in lang.languageCodes)
+                {
+                    string T(string key) { return lang._TextForLanguage(key, code); }
+                    for (int k = 0; k < RowCount; k++)
+                    {
+                        Fit(sample, p.travelLabels[k], RowText(lang, code, k, "999"), code + " cell " + k, e, report);
+                        foreach (var key in new[] { "course.travel.arrived", "course.travel.dogs" })
+                            Fit(sample, p.travelStatusLabel, T(key).Replace("{0}", T(RowNameKeys[k])), code + " status " + key + " " + k, e, report);
+                    }
+                }
             }
             finally { UnityEngine.Object.DestroyImmediate(go); }
+        }
+
+        static string SpotName(KH_LeashManager m, int spot)
+        {
+            return m.spotIds != null && spot >= 0 && spot < m.spotIds.Length ? m.spotIds[spot] : spot.ToString();
         }
 
         static void Fit(TextMeshProUGUI sample, TMP_Text target, string text, string name, List<string> e, KH_CourseTravelEditor.Report report)
@@ -432,6 +482,13 @@ namespace KominkaHillside.Editor
         }
 
         static void Req(List<string> e, bool ok, string what) { if (!ok) e.Add("FAIL " + what); }
+
+        /// <summary>一覧のセル k の文言 (実行時の KD_TreatPouch.TravelMapRedraw と同じ形: 「番号  呼び名」改行「ここから N m」)。
+        /// 呼び名の 2 つ (古民家側の入口・広場) は基本の翻訳表のキーなので、KD_Language の両方の表から引く。</summary>
+        public static string RowText(KD_Language lang, string code, int k, string meters)
+        {
+            return (RowSpots[k] + 1) + "  " + lang._TextForLanguage(RowNameKeys[k], code) + "\n" + lang._TextForLanguage("course.travel.map.distance", code).Replace("{0}", meters);
+        }
 
         // ---- UI の部品 ----
         static string Ja(string key)

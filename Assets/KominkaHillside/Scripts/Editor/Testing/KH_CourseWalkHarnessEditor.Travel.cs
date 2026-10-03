@@ -26,13 +26,14 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Course/82b - Walk Harness Travel RC cases (T6b, T12, T9 new)")]
         public static void TravelRc() { BeginTravel(false, true); }
 
-        static void BeginTravel(bool full, bool rc = false, bool call = false)
+        static void BeginTravel(bool full, bool rc = false, bool call = false, bool spots = false)
         {
             Begin(full);
             report.travelOnly = true;
             report.travelRc = rc;
             report.travelCall = call;   // IMP-WLD-002 Course/82c (KH_CourseWalkHarnessEditor.Call.cs)
-            report.deadline = EditorApplication.timeSinceStartup + (full ? 2700 : rc ? 1200 : call ? 1800 : 600);   // 破壊監査 RC-01/02/06/07 のケースで 6 本増えた
+            report.travelSpots = spots; // IMP-WLD-004 Course/83d (KH_CourseWalkHarnessEditor.TravelSpots.cs)
+            report.deadline = EditorApplication.timeSinceStartup + (full ? 2700 : rc ? 1200 : call ? 1800 : spots ? 1200 : 600);   // 破壊監査 RC-01/02/06/07 のケースで 6 本増えた
             report.limitations = "Single local ClientSim: the local player is requester, Manager Owner and every dog Owner (the same-Owner contract of design B.4). "
                 + "Owner handover (T5/T6), late answers (T3), non-Owner/forged requests (T8) and departure (T9) are SIMULATED through debug hooks on KH_LeashManager and runtime heap writes; see each case's notes. "
                 + "CallingPlayer is always local. No real network order, VRCObjectSync latency, late joiner, fade (stage 2) or join (stage 3). Holder walks by short TeleportTo steps.";
@@ -107,13 +108,15 @@ namespace KominkaHillside.Editor
             tvStep = 0; tvCaseAt = -1; tvPrev = null; tvObsValid = false; tvBox = null; tvPuppetWalk = false; tvJumpNotes.Clear(); tvTrackMask = 0; tvRemote = null; tvWalkLast = 0;
             tvFade = UnityEngine.Object.FindObjectsOfType<VRC.Udon.UdonBehaviour>().FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_TravelFade");
             if (tvFade == null && !report.collarOnly && !report.nightOnly) throw new InvalidOperationException("KH_TravelFade not in the scene (run Course/84)");
-            tvLogs.Clear(); tvScripts = new List<List<Func<double, bool>>>(); tvReport = new TravelReport { runId = report.runId };
+            tvLogs.Clear(); tvReturnMarks.Clear(); tvScripts = new List<List<Func<double, bool>>>(); tvReport = new TravelReport { runId = report.runId };
             if (report.collarOnly) { MakeCollarCases(); return; }   // IMP-DOG-031 Course/83b (KH_CourseWalkHarnessEditor.Collar.cs): no warp, no spots
             if (report.nightOnly) { MakeNightCases(); return; }     // IMP-ENV-005 Course/83c (KH_CourseWalkHarnessEditor.Night.cs): no warp, no spots, no dogs
             var spots = Get<Vector3[]>(manager, "spotPositions");
             var warp = Get<bool[]>(manager, "spotWarpEnabled");
-            if (spots == null || spots.Length != 6 || warp == null || warp.Count(w => w) != 2 || !warp[KH_LeashManager.SpotUpper] || !warp[KH_LeashManager.SpotRiver])
+            // IMP-WLD-004: ワープできる地点は 2 から 5 に増えた。T1 などの既存ケースは奥の広場と川辺を使うので、その 2 つがワープできることだけを求める
+            if (spots == null || spots.Length != 6 || warp == null || warp.Length != 6 || !warp[KH_LeashManager.SpotUpper] || !warp[KH_LeashManager.SpotRiver])
                 throw new InvalidOperationException("Travel spots not built (run Course/80 and 81 first)");
+            if (report.travelSpots) { MakeSpotCases(spots, warp); return; }   // IMP-WLD-004 Course/83d (KH_CourseWalkHarnessEditor.TravelSpots.cs)
             var configs = report.travelRc || report.travelCall
                 ? new[] { (report.travelCall ? "C-setup-dogs-3-L3" : "RC-setup-dogs-3-L3", new[] { 0, 1, 2 }, new[] { 0, 0, 0 }) }
                 : report.full
@@ -130,7 +133,7 @@ namespace KominkaHillside.Editor
                 if (report.travelCall) { s.Add(TvDo(() => TvNote("Course/82c setup: dogs 0-2 on the left hand, one move to the upper plaza"))); continue; }
                 TvMove(s, "_TravelRiver", KH_LeashManager.SpotRiver, mask, true);
                 TvMove(s, "_TravelUpper", KH_LeashManager.SpotUpper, mask, true);
-                s.Add(TvDo(() => TvNote("non-warp spots: spotWarpEnabled has only upper/river; the menu has only _TravelUpper/_TravelRiver. Their common checks 1-4 are certified statically by Course/81.")));
+                s.Add(TvDo(() => TvNote("T1 uses upper/river (_TravelUpper/_TravelRiver). The other warpable spots (IMP-WLD-004) are moved to by Course/83d through the map cells; every spot's common checks 1-4, keep-out and 6-dog room are certified statically by Course/81.")));
             }
             if (report.travelRc)
             {
@@ -262,11 +265,12 @@ namespace KominkaHillside.Editor
         }
 
         /// <summary>1 回の移動と、§B.4 の契約の判定 (Owner が同じ人)。walk なら着いた後 28 秒、道を正方向へ歩く。</summary>
-        static void TvMove(List<Func<double, bool>> s, string evt, int spot, int mask, bool walk)
+        static void TvMove(List<Func<double, bool>> s, string evt, int spot, int mask, bool walk, bool viaMap = false, Action arrivedCheck = null, bool bridgeTolerant = false)
         {
             var c = new TvCtx();
             s.Add(TvCooldown());
-            s.Add(TvDo(() => TvPress(c, evt)));
+            // viaMap (IMP-WLD-004 Course/83d): 地図の副画面を開き、[地点] → セル (evt = _TravelPick{k}) → [ここへワープ] の本物の順で押す
+            s.Add(TvDo(() => { if (viaMap) TvPressMap(c, evt); else TvPress(c, evt); }));
             s.Add(TvUntil(() => TvFlat(Networking.LocalPlayer.GetPosition(), TvSpot(spot)) < 6f, 12, "player did not arrive at spot " + spot));
             s.Add(TvDo(() => c.arrived = TvNow()));
             s.Add(TvUntil(() => TvAllNear(mask, TvNear), 2, "not every dog within 3.75 m of the hand 2 s after arrival"));
@@ -302,20 +306,121 @@ namespace KominkaHillside.Editor
                 TvNote(evt + " req=" + r + " arrived in " + (c.arrived - c.press).ToString("F1") + "s; phase 1->2; one position change per dog; all dogs near the hand <=2s");
                 TvTrack(mask);
             }));
+            if (arrivedCheck != null) s.Add(TvDo(arrivedCheck));   // IMP-WLD-004: 着いた直後 (歩き出す前) の追加の検査
             if (!walk) return;
             s.Add(TvWalk(28));
             s.Add(TvDo(() =>
             {
+                // 2026-10-03 (IMP-WLD-004 83d の FAIL 調査): 全部の条件を数えてから 1 つの理由で落とす (以前は Return で先に落ち、逆走が分からなかった)。
+                // Return は「いつ (着いてから何秒)・飼い主がどこ」を添える (TravelLog が控える)
+                var fails = new List<string>(); var bridgeNotes = new List<string>();
                 for (int i = 0; i < 6; i++)
                 {
                     if ((mask & (1 << i)) == 0) continue;
-                    if (TvCountLogs(c.logFrom, "[KH_Leash] dog" + i + " Return") != 0) throw new InvalidOperationException("dog" + i + " entered Return within 30 s after arrival");
-                    if (tvReverse[i] != 0) throw new InvalidOperationException("dog" + i + " reversed on the loop after arrival (reverse steps " + tvReverse[i] + ")");
-                    if (tvDisc[i] != 1) throw new InvalidOperationException("dog" + i + " jumped again after arrival: " + string.Join(" | ", tvJumpNotes));
+                    foreach (var ret in TvReturnsSince(c.logFrom, i))
+                    {
+                        float after = (float)(ret.at - c.arrived);
+                        string where = "dog" + i + " Return " + after.ToString("F1") + " s after arrival, holder " + ret.holder.ToString("F1") + " (" + ret.text + ")"
+                            + (TvNearBridge(ret.holder, 4f) ? " [bridge corner]" : "") + " last 4 s: " + ret.trail;
+                        // bridgeTolerant (83d だけ): 既知の橋の角の Return (IMP-DOG-038) だけを記録にし、合否に数えない。条件は 3 つとも:
+                        // (a) 直前の標本で犬が角のノード (上流の橋 = spot.bridgeUp のノード + 3) で Wait (m1)・速さ 0、(b) 飼い主が橋の区域 + 4 m、
+                        // (c) 着いてから 5 s 以上。ワープ無しの T13-bridge-control-landing が同じ形で再現する (run 20261002-233009)。ほかの Return は FAIL
+                        if (bridgeTolerant && TvKnownBridgeCornerReturn(ret, after)) bridgeNotes.Add("KNOWN_BRIDGE_CORNER_RETURN (IMP-DOG-038) " + where);
+                        else fails.Add(where);
+                    }
+                    if (tvReverse[i] != 0) fails.Add("dog" + i + " reversed on the loop after arrival (reverse steps " + tvReverse[i] + ")");
+                    if (tvDisc[i] != 1) fails.Add("dog" + i + " jumped again after arrival: " + string.Join(" | ", tvJumpNotes));
                 }
-                TvNote("30 s after arrival: Return 0, reverse 0, forward steps " + string.Join("/", Enumerable.Range(0, 6).Where(i => (mask & (1 << i)) != 0).Select(i => tvForward[i])));
+                foreach (var n in bridgeNotes) TvNote(n);
+                if (fails.Count > 0) throw new InvalidOperationException("within 30 s after arrival: " + string.Join(" ; ", fails));
+                TvNote("30 s after arrival: Return " + (bridgeNotes.Count == 0 ? "0" : "0 other than the known bridge corner (" + bridgeNotes.Count + " noted, IMP-DOG-038)") + ", reverse 0, forward steps " + string.Join("/", Enumerable.Range(0, 6).Where(i => (mask & (1 << i)) != 0).Select(i => tvForward[i])));
                 tvTrackMask = 0;
             }));
+        }
+
+        // ---- 2026-10-03: Return の時刻と飼い主の位置 (TravelLog が控える。tvLogs の添字で対応) ----
+        struct TvReturnMark { public int log; public double at; public Vector3 holder; public string text, trail; }
+        static readonly List<TvReturnMark> tvReturnMarks = new List<TvReturnMark>();
+        // 犬ごとの直前 4 秒 (0.2 s ごと 20 件) の標本: 経過秒・飼い主・犬・水平距離・飼い主の向きで見た前後 / 左右・leashMode・_routeNext・_speed
+        static readonly List<string>[] tvDogTrail = { new List<string>(), new List<string>(), new List<string>(), new List<string>(), new List<string>(), new List<string>() };
+        static readonly double[] tvDogTrailAt = new double[6];
+        static double tvTrailOrigin;
+
+        static void TvSampleDog(int i, double now)
+        {
+            if (now - tvDogTrailAt[i] < 0.2) return;
+            tvDogTrailAt[i] = now;
+            var lp = Networking.LocalPlayer; if (!Utilities.IsValid(lp)) return;
+            Vector3 h = lp.GetPosition(), d = roots[i].position;
+            Vector3 fwd = lp.GetRotation() * Vector3.forward; fwd.y = 0f; fwd.Normalize();
+            Vector3 rel = d - h; rel.y = 0f;
+            float along = Vector3.Dot(rel, fwd), lateral = Vector3.Dot(rel, Vector3.Cross(Vector3.up, fwd));
+            string mode = "?", next = "?", speed = "?";
+            try { mode = Get<int>(wander[i], "leashMode").ToString(); next = Get<int>(wander[i], "_routeNext").ToString(); speed = Get<float>(wander[i], "_speed").ToString("F2"); } catch (Exception) { }
+            var list = tvDogTrail[i];
+            list.Add("t" + (now - tvTrailOrigin).ToString("F1") + " h(" + h.x.ToString("F1") + "," + h.z.ToString("F1") + ") d(" + d.x.ToString("F1") + "," + d.z.ToString("F1") + ") r" + rel.magnitude.ToString("F2")
+                + " fwd" + along.ToString("F1") + " lat" + lateral.ToString("F1") + " m" + mode + " n" + next + " v" + speed);
+            if (list.Count > 300) list.RemoveAt(0);
+            tvDogTrailHolder[i].Add(h);
+            if (tvDogTrailHolder[i].Count > 300) tvDogTrailHolder[i].RemoveAt(0);
+        }
+        static readonly List<Vector3>[] tvDogTrailHolder = { new List<Vector3>(), new List<Vector3>(), new List<Vector3>(), new List<Vector3>(), new List<Vector3>(), new List<Vector3>() };
+
+        /// <summary>直前 n 件の標本 (Return の行に添える)。</summary>
+        static string TvTrailTail(int dog, int n)
+        {
+            var list = tvDogTrail[dog];
+            return string.Join(" | ", list.Skip(Math.Max(0, list.Count - n)));
+        }
+
+        /// <summary>飼い主が point から radius m 以内にいた間の標本 (橋の角の比較用。Return が無くても残す)。</summary>
+        static void TvNoteTrailNear(string tag, int dog, Vector3 point, float radius)
+        {
+            var hs = tvDogTrailHolder[dog]; var list = tvDogTrail[dog];
+            var picked = new List<string>();
+            for (int k = 0; k < hs.Count && k < list.Count; k++) if (TvFlat(hs[k], point) <= radius) picked.Add(list[k]);
+            TvNote(tag + " dog" + dog + " while the holder was within " + radius + " m of " + point.ToString("F1") + ": " + (picked.Count == 0 ? "(no samples)" : string.Join(" | ", picked)));
+        }
+
+        /// <summary>標本の起点を今にし、全部の犬の標本を消す (TvTrack と同時に呼ぶ)。</summary>
+        static void TvTrailReset()
+        {
+            tvTrailOrigin = TvNow();
+            for (int i = 0; i < 6; i++) { tvDogTrail[i].Clear(); tvDogTrailHolder[i].Clear(); tvDogTrailAt[i] = 0; }
+        }
+
+        static List<TvReturnMark> TvReturnsSince(int logFrom, int dog)
+        {
+            string key = "[KH_Leash] dog" + dog + " Return";
+            return tvReturnMarks.Where(r => r.log >= logFrom && r.text.StartsWith(key)).ToList();
+        }
+
+        /// <summary>IMP-DOG-038 の既知の Return か: 着いてから 5 s 以上・飼い主が橋の区域 + 4 m・直前の標本 (最後の 3 件) のどれかで
+        /// 犬が上流の橋の角のノード (spot.bridgeUp のノード + 3。正方向で 238 → 241) にいて Wait (m1)・速さ 0。</summary>
+        static bool TvKnownBridgeCornerReturn(TvReturnMark ret, float after)
+        {
+            if (after < 5f || !TvNearBridge(ret.holder, 4f) || string.IsNullOrEmpty(ret.trail)) return false;
+            var nodesSaved = Get<int[]>(manager, "spotNodes");
+            if (nodesSaved == null || nodesSaved.Length <= KH_LeashManager.SpotBridgeUp || nodesSaved[KH_LeashManager.SpotBridgeUp] < 0) return false;
+            int corner = (nodesSaved[KH_LeashManager.SpotBridgeUp] + 3) % nodes.Length;
+            var samples = ret.trail.Split(new[] { " | " }, StringSplitOptions.None);
+            for (int k = Math.Max(0, samples.Length - 3); k < samples.Length; k++)
+            {
+                var mm = Regex.Match(samples[k], @" m(-?\d+) n(-?\d+) v(-?[\d.]+)");
+                if (!mm.Success) continue;
+                if (mm.Groups[1].Value == "1" && int.Parse(mm.Groups[2].Value) == corner && float.Parse(mm.Groups[3].Value, System.Globalization.CultureInfo.InvariantCulture) <= 0.05f) return true;
+            }
+            return false;
+        }
+
+        /// <summary>保存した橋の区域 (川の中心から x±18 m・橋から z±8 m) に margin m を足した範囲か。</summary>
+        static bool TvNearBridge(Vector3 p, float margin)
+        {
+            var zs = Get<float[]>(manager, "travelBridgeZs"); var xs = Get<float[]>(manager, "travelBridgeXs");
+            if (zs == null || xs == null) return false;
+            for (int b = 0; b < zs.Length && b < xs.Length; b++)
+                if (Mathf.Abs(p.z - zs[b]) <= KH_LeashManager.TravelBridgeHalfZ + margin && Mathf.Abs(p.x - xs[b]) <= KH_LeashManager.TravelBridgeHalfX + margin) return true;
+            return false;
         }
 
         static void TvT2(int mask)
@@ -1154,7 +1259,7 @@ namespace KominkaHillside.Editor
                 WriteTravel(); Save();
                 tvStep = 0;
                 if (caseIndex + 1 == report.cases.Count)
-                    End(report.collarOnly ? "COLLAR_INTERACT_OBSERVED" : report.nightOnly ? "NIGHT_MODE_OBSERVED" : report.travelCall ? (tvCallFailed ? "TRAVEL_CALL_FAIL" : "TRAVEL_CALL_PASS") : report.travelRc ? "TRAVEL_RC_OBSERVED" : report.full ? "TRAVEL_OBSERVED" : "TRAVEL_QUICK_OBSERVED",
+                    End(report.collarOnly ? "COLLAR_INTERACT_OBSERVED" : report.nightOnly ? "NIGHT_MODE_OBSERVED" : report.travelSpots ? "TRAVEL_SPOTS_OBSERVED" : report.travelCall ? (tvCallFailed ? "TRAVEL_CALL_FAIL" : "TRAVEL_CALL_PASS") : report.travelRc ? "TRAVEL_RC_OBSERVED" : report.full ? "TRAVEL_OBSERVED" : "TRAVEL_QUICK_OBSERVED",
                         report.collarOnly ? CollarReason() : report.nightOnly ? NightReason()
                         : (report.travelCall ? TvCountLine() + ". " : "") + "Local ClientSim travel cases passed (same-Owner contract; handover/late/forged/leave are simulated). Not network, device or PCVR acceptance.");
                 else Next();
@@ -1243,6 +1348,7 @@ namespace KominkaHillside.Editor
                 tvPrev[i] = p;
                 if (req[i] != 0) tvSeenReqs.Add(req[i]);
                 if ((tvTrackMask & (1 << i)) == 0) continue;
+                TvSampleDog(i, now);   // 2026-10-03: Return の直前 4 秒の犬と飼い主 (TravelLog が Return の行に添える)
                 int next = Get<int>(wander[i], "_routeNext");
                 if (next >= 0 && tvPrevNext[i] >= 0 && next != tvPrevNext[i])
                 {
@@ -1266,12 +1372,22 @@ namespace KominkaHillside.Editor
         static void TvTrack(int mask)
         {
             tvTrackMask = mask; tvPrevNext = Enumerable.Repeat(-1, 6).ToArray(); tvForward = new int[6]; tvReverse = new int[6];
+            TvTrailReset();
         }
 
         static void TravelLog(string condition, string stack, LogType type)
         {
             if (report == null || !report.travelOnly || !EditorApplication.isPlaying) return;
             if (condition.StartsWith("[KH_Leash]") || condition.StartsWith("[KH_Join]")) tvLogs.Add(condition);   // [KH_Join] は 82c の順序の検査 (IMP-WLD-002)
+            // 2026-10-03: Return は時刻と飼い主の位置も控える (TvMove の 30 秒の検査が「どこで」を出すため)
+            if (condition.StartsWith("[KH_Leash] dog") && condition.Contains(" Return handDist"))
+            {
+                var lp = Networking.LocalPlayer;
+                string trail = "";
+                var m = Regex.Match(condition, @"\] dog(\d) Return");
+                if (m.Success) { int di = int.Parse(m.Groups[1].Value); if (di >= 0 && di < 6) trail = TvTrailTail(di, 20); }
+                tvReturnMarks.Add(new TvReturnMark { log = tvLogs.Count - 1, at = TvNow(), holder = Utilities.IsValid(lp) ? lp.GetPosition() : Vector3.zero, text = condition, trail = trail });
+            }
         }
 
         static void WriteTravel()
@@ -1325,6 +1441,19 @@ namespace KominkaHillside.Editor
             c.applies = wander.Select(w => Get<int>(w, "_travelApplies")).ToArray();
             TvReset();
             pouch.SendCustomEvent(evt);
+        }
+
+        /// <summary>IMP-WLD-004: 地図の副画面から押す。TvPress と同じ控え (押す前の切符・適用回数・serial) を取ってから
+        /// [地図と移動] → [地点] → セル (pickEvt) → [ここへワープ] を同じ Tick で送る。</summary>
+        static void TvPressMap(TvCtx c, string pickEvt)
+        {
+            c.press = TvNow(); c.serial = Get<int>(manager, "travelResultSerial"); c.logFrom = tvLogs.Count; c.pos = Networking.LocalPlayer.GetPosition();
+            c.old = (int[])Get<int[]>(manager, "travelReq").Clone();
+            c.applies = wander.Select(w => Get<int>(w, "_travelApplies")).ToArray();
+            TvReset();
+            pouch.SendCustomEvent("_TravelOpenMap"); pouch.SendCustomEvent("_TravelModeSpots");
+            pouch.SendCustomEvent(pickEvt);
+            pouch.SendCustomEvent("_TravelGo");
         }
 
         static void TvSet(string name, int value) { manager.SetProgramVariable(name, value); }

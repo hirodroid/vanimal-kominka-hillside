@@ -224,6 +224,17 @@ namespace KominkaDogRun
         /// <summary>犬 d が次の枠を受け持てる時刻。**返事が終わるまで再任命しない。**</summary>
         private float[] _thanksHoldUntil;
 
+        // ---- IMP-DOG-006 (2026-10-03): 接続中の犬をおやつで 1 匹ずつ呼ぶ。マスターのローカル (同期しない) ----
+        // 割当の規則は純関数 BuildAllowWith (犬 × 枠の許可) と ResolveClaimsAllowWith。ここはその入力の作業配列と、
+        // 「同じ人の接続犬を続けて呼ばない」ための呼んだ順の記録 (読むのはマスター 1 人で、結果は dogSlot として配る)
+        private int[] _walkerOf;       // 犬 d をつないでいる playerId (-1 = 未接続)。KH_LeashManager.walkers の写し
+        private int[] _slotGiver;      // 枠 i を出した playerId (-1 = 無し)
+        private int[] _allow;          // 犬 d × 枠 i の許可 (Allow*)。添字 d * slotCount + i
+        private int[] _lastCallGiver;  // 犬 d を最後に接続犬として呼んだ人 (-1 = 無し)
+        private int[] _lastCallSeq;    // その呼び出しの通し番号 (大きいほど新しい)
+        private int _callSeq;
+        private KominkaHillside.KH_LeashManager _leashes;
+
         private void Start()
         {
             if (eatDuration <= 0.01f) eatDuration = DefaultEatDuration;
@@ -269,6 +280,16 @@ namespace KominkaDogRun
             _slotPrevPos = new Vector3[_slotCount];
             _slotSettled = new bool[_slotCount];
             _thanksHoldUntil = new float[_dogCount];
+
+            // IMP-DOG-006: 接続の写しと呼んだ順の記録。リードの管理は犬の徘徊層が持つ参照を 1 つ借りる (全頭同じ KH_LeashManager)
+            _walkerOf = NewFilled(_dogCount, -1);
+            _slotGiver = NewFilled(_slotCount, -1);
+            _allow = new int[_dogCount * _slotCount];
+            _lastCallGiver = NewFilled(_dogCount, -1);
+            _lastCallSeq = NewFilled(_dogCount, 0);
+            _leashes = null;
+            for (int d = 0; d < _dogCount && _leashes == null; d++)
+                if (_packWander[d] != null) _leashes = _packWander[d].hillsideLeashes;
             for (int i = 0; i < _slotCount; i++)
                 if (slots[i] != null) _slotPrevPos[i] = slots[i].BodyPosition();
         }
@@ -307,6 +328,7 @@ namespace KominkaDogRun
                 KD_TreatSlot s = slots[i];
                 _slotState[i] = s == null ? SlotFree : s.State();
                 _slotOutMs[i] = s == null ? 0 : s.OutMs();
+                _slotGiver[i] = s == null ? -1 : s.GiverId();   // IMP-DOG-006: 出した人 (割当の許可が読む)
 
                 // 実体が落ち着いたか (**食べ始めの前提**)。位置は状態の正本ではないので、
                 // ここで見るのは「転がっている最中か」だけ
@@ -331,15 +353,27 @@ namespace KominkaDogRun
 
                 _dogEligible[d] = EligibleDog(d) ? 1 : 0;
                 for (int i = 0; i < _slotCount; i++) _distMm[d * _slotCount + i] = DistMmOf(d, i);
+                _walkerOf[d] = WalkerOf(d);   // IMP-DOG-006 (synced walkers の写し)
             }
 
-            ResolveClaimsWith(dogSlot, dogSlotOutMs, _slotState, _slotOutMs,
-                _dogEligible, _distMm, _dogCount, _slotCount, _outSlot, _outOutMs);
+            // IMP-DOG-006: 誰の枠へどの犬を出してよいか (他人の接続犬は外す / 出した人に接続犬が居ればその中から / 続けて同じ犬を呼ばない)
+            BuildAllowWith(_walkerOf, _slotGiver, _slotState, _dogEligible, _lastCallGiver, _lastCallSeq,
+                _dogCount, _slotCount, _allow);
+            ResolveClaimsAllowWith(dogSlot, dogSlotOutMs, _slotState, _slotOutMs,
+                _dogEligible, _distMm, _allow, _dogCount, _slotCount, _outSlot, _outOutMs);
 
             bool changed = false;
             for (int d = 0; d < _dogCount; d++)
             {
                 if (_outSlot[d] == dogSlot[d] && _outOutMs[d] == dogSlotOutMs[d]) continue;
+                // IMP-DOG-006: 出した本人の接続犬へ新しく配った = その人の「呼んだ」1 回。次は別の接続犬を優先する
+                int ns = _outSlot[d];
+                if (ns >= 0 && ns < _slotCount && _walkerOf[d] >= 0 && _walkerOf[d] == _slotGiver[ns])
+                {
+                    _callSeq++;
+                    _lastCallGiver[d] = _slotGiver[ns];
+                    _lastCallSeq[d] = _callSeq;
+                }
                 dogSlot[d] = _outSlot[d];
                 dogSlotOutMs[d] = _outOutMs[d];
                 // **掴む対象が変わったら食べ始めも捨てる。** 残すと、次に掴んだ
@@ -390,8 +424,11 @@ namespace KominkaDogRun
             // 配っても一歩も来ず、枠は放置 60 秒で回収され在庫だけ減っていた。**`f.IsIdle` では弾けない** (dogState は Idle のまま)。
             // 拘束されていない犬 (撫でられて観客から外れた犬、かけっこの勝者決定後の犬) は従来どおり候補に残す
             if (_packWander[d] != null && _packWander[d].ShowEngaged) return false;
-            // 裏山改変 (IMP-DOG-014): リード接続中・集合中・フリスビー中の犬には配らない (HillsideDogBusy)。
-            // どれも徘徊層がおやつより優先するので、配っても来ずに枠が放置 60 秒で回収され在庫だけ減る (上の ShowEngaged と同じ理由)
+            // 裏山改変 (IMP-DOG-014): 集合中・フリスビー中の犬には配らない (HillsideDogBusy)。
+            // どれも徘徊層がおやつより優先するので、配っても来ずに枠が放置 60 秒で回収され在庫だけ減る (上の ShowEngaged と同じ理由)。
+            // IMP-DOG-006 (2026-10-03): リード接続中はもう除外しない。接続犬は散歩の途中でおやつへ寄れる
+            // (KD_DogWanderController.HillsideTreatCall.cs)。誰の枠を受けてよいかは BuildAllowWith が枠ごとに決める。
+            // 接続中でも来られない状態 (洗い場に呼ばれている・移動の切符・水の中) だけはここで外す (HillsideLeashTreatBlocked)
             if (HillsideDogBusy(_packWander[d])) return false;
             // 食べ終わって返事をしている最中 (**マスターのローカル時計**。
             // 読むのはマスターだけで、結果は dogSlot として配るので割れない)
@@ -563,51 +600,73 @@ namespace KominkaDogRun
             return n;
         }
 
-        /// <summary>有効な犬が全員 催しに拘束されているか (<see cref="GateDogsBusy"/> の材料。破壊的監査 v4 FUNC-07/BUG-01)。
+        /// <summary>出しても来られる犬が居ないか (<see cref="GateDogsBusy"/> の材料。破壊的監査 v4 FUNC-07/BUG-01)。
         /// **押す本人のクライアントで読む予測**であり、割当 (マスターの <see cref="EligibleDog"/>) の保証ではない —
         /// 拘束の判定 (`ShowEngaged`) は Live / 集合の同期値から導くが、`UpdateLive` はローカルの撫で (`IsPetting`) も読み、
         /// 行動の再選択には最大 0.1 秒の差がある。門番が通ってもマスター側で全犬が不適格 (撫で中・寝ている・観客) なら
         /// 従来どおり在庫は減り放置 60 秒で回収される (Codex レビュー 2026-09-19。消費を割当の受理まで遅らせる変更は別件)。
-        /// 犬が 1 匹も有効でなければ false (従来どおり門番は他の理由に任せる)。</summary>
+        /// 犬が 1 匹も有効でなければ false (従来どおり門番は他の理由に任せる)。
+        ///
+        /// IMP-DOG-006 (2026-10-03 ユーザー決定 2): **押す人が犬をつないでいれば、その接続犬だけが候補** (割当の
+        /// <see cref="BuildAllowWith"/> と同じ規則)。接続犬が居るのに 1 匹も来られない (フリスビー / Fetch 中・洗い場に呼ばれている・
+        /// 移動の切符・水の中) なら出させずに理由を出す (在庫は減らない)。未接続の犬へは回さない。
+        /// 接続犬が 0 匹なら従来どおり全頭を見る。そのとき**他人の接続犬は来られない**側に数える (横取りしない)。</summary>
         // net: callable-ok: 読み取りのみ
         public bool AllDogsEngaged()
         {
             if (_packRoots == null || _packWander == null) return false;
-            int active = 0;
+            int me = LocalPlayerId();
+            int active = 0, mine = 0, mineReady = 0;
+            bool anyFree = false;
             for (int d = 0; d < _packRoots.Length; d++)
             {
                 Transform root = _packRoots[d];
                 if (root == null || !root.gameObject.activeInHierarchy) continue;
                 active++;
                 KD_DogWanderController w = d < _packWander.Length ? _packWander[d] : null;
-                if (w == null || !(w.ShowEngaged || HillsideDogBusy(w))) return false;   // 裏山改変: 割当 (EligibleDog) と同じ除外を予測にも
+                if (w != null && me >= 0 && WalkerOf(d) == me)
+                {
+                    mine++;
+                    KD_DogFetchController f = _packFetch != null && d < _packFetch.Length ? _packFetch[d] : null;
+                    if (!w.ShowEngaged && HillsideCauseOf(w, me) == HillsideBusyNone && (f == null || f.IsIdle)) mineReady++;
+                    continue;
+                }
+                if (w == null || !(w.ShowEngaged || HillsideCauseOf(w, me) != HillsideBusyNone)) anyFree = true;   // 裏山改変: 割当 (EligibleDog) と同じ除外を予測にも
             }
-            return active > 0;
+            if (mine > 0) return mineReady == 0;   // IMP-DOG-006: 自分の接続犬の中に来られる犬が居るか
+            return active > 0 && !anyFree;
         }
 
-        /// <summary>裏山改変 (IMP-DOG-014): 裏山の状態で おやつを受けられない犬。**割当 (<see cref="EligibleDog"/>) と
-        /// 予測 (<see cref="AllDogsEngaged"/>) の両方がここを読む** — 条件を 2 か所に書き写さない。
+        /// <summary>裏山改変 (IMP-DOG-014): 裏山の状態で おやつを受けられない犬 (割当 = マスターの見方)。**割当 (<see cref="EligibleDog"/>) と
+        /// 予測 (<see cref="AllDogsEngaged"/>) の両方が <see cref="HillsideCauseOf"/> を読む** — 条件を 2 か所に書き写さない。
         ///
         /// | 状態 | 読む先 | 理由 |
         /// |---|---|---|
-        /// | リード接続中 | KH_LeashManager._IsLeashed (walkers は同期) | 散歩の足は徘徊層がおやつより優先して持つ |
-        /// | 集合中 | KH_LeashManager._IsGathering (KD_GroupActivities の同期値) | 同上 (ShowEngaged と重なるが裏山の口でも見る) |
         /// | フリスビー中 (Ready を含む) | KH_FrisbeeCatch.IsIdle でない | root と Animator をフリスビーが持つ (徘徊層の FrisbeeActive と同じ判定) |
+        /// | リード接続中 (IMP-DOG-006 で変更) | KH_LeashManager.walkers (同期) と犬の HillsideLeashTreatBlocked | 割当では接続そのものは除外しない (誰の枠かは BuildAllowWith)。予測では他人の接続犬 = 来られない |
+        /// | 集合中 | KH_LeashManager._IsGathering (KD_GroupActivities の同期値) | 徘徊層がおやつより優先する (ShowEngaged と重なるが裏山の口でも見る) |
         ///
-        /// **足場:** 接続犬を 1 匹ずつ呼ぶ変更は IMP-DOG-006 で、ここのリード接続の行を置き換える。
         /// 参照は犬ごとの徘徊層が既に持つもの (hillsideLeashes / frisbeeCatch / dogIndex) を読むだけで、同期変数は増やさない。</summary>
-        private bool HillsideDogBusy(KD_DogWanderController w) { return HillsideCauseOf(w) != HillsideBusyNone; }
+        private bool HillsideDogBusy(KD_DogWanderController w) { return HillsideCauseOf(w, ViewerMaster) != HillsideBusyNone; }
 
         /// <summary>裏山改変 (IMP-DOG-014): 全頭が来られないときの主因 (手元メニューの理由文を分けるため)。</summary>
         public const int HillsideBusyNone = 0;
+        /// <summary>IMP-DOG-006 以降: **他人がつないでいる**犬 (押す人に接続犬が居ないとき)。</summary>
         public const int HillsideBusyLeash = 1;
         public const int HillsideBusyGather = 2;
         public const int HillsideBusyFrisbee = 3;
         /// <summary>催し (ライブ・集合の同期値・かけっこ等の ShowEngaged) だけ、または裏山の理由が特定できない = 活動の終わりを待つ。</summary>
         public const int HillsideBusyOther = 4;
+        /// <summary>IMP-DOG-006 (2026-10-03 ユーザー決定 2): **自分の接続犬が居るのに 1 匹も来られない** (出させずに理由を出す)。</summary>
+        public const int HillsideBusyOwnLeash = 5;
 
-        /// <summary>犬 1 匹の裏山の忙しさ (<see cref="HillsideDogBusy"/> の中身)。順は フリスビー > リード > 集合。</summary>
-        private int HillsideCauseOf(KD_DogWanderController w)
+        /// <summary>IMP-DOG-006: <see cref="HillsideCauseOf"/> の見方。マスターの割当 (誰の枠かは別に決める) = これ。0 以上は押す人の playerId。</summary>
+        const int ViewerMaster = -3;
+
+        /// <summary>犬 1 匹の裏山の忙しさ。順は フリスビー > リード > 集合。
+        /// <paramref name="viewer"/> = <see cref="ViewerMaster"/> (割当): 接続中なら「接続中でも来られない状態」だけを忙しいとする。
+        /// viewer = 押す人の playerId (予測): 他人の接続犬は <see cref="HillsideBusyLeash"/>、自分の接続犬で来られなければ <see cref="HillsideBusyOwnLeash"/>。</summary>
+        private int HillsideCauseOf(KD_DogWanderController w, int viewer)
         {
             if (w == null) return HillsideBusyNone;
             if (w.frisbeeCatch != null && !w.frisbeeCatch.IsIdle) return HillsideBusyFrisbee;
@@ -615,26 +674,34 @@ namespace KominkaDogRun
             if (leashes == null) return HillsideBusyNone;
             int i = w.dogIndex;
             if (i < 0) return HillsideBusyNone;
-            if (leashes._IsLeashed(i)) return HillsideBusyLeash;   // IMP-DOG-006: ここを「呼ばれた 1 匹だけ受ける」へ置き換える
+            if (leashes._IsLeashed(i))
+            {
+                // IMP-DOG-006: 接続犬も呼べる。来られないのは洗い場・移動の切符・水の中だけ (犬側の HillsideLeashTreatBlocked)
+                if (viewer == ViewerMaster) return w.HillsideLeashTreatBlocked ? HillsideBusyLeash : HillsideBusyNone;
+                if (leashes.walkers[i] != viewer) return HillsideBusyLeash;
+                return w.HillsideLeashTreatBlocked ? HillsideBusyOwnLeash : HillsideBusyNone;
+            }
             if (leashes._IsGathering(i)) return HillsideBusyGather;
             return HillsideBusyNone;
         }
 
         /// <summary>裏山改変 (IMP-DOG-014): 全頭が来られない (<see cref="AllDogsEngaged"/> が true) ときの主因 <c>HillsideBusy*</c>。
-        /// 来られる犬が居れば <see cref="HillsideBusyNone"/>。主因 = 裏山の理由で忙しい犬がいちばん多い理由 (同数は リード > 集合 > フリスビー。
-        /// リードは本人が外せるので先に案内する)。裏山の理由の犬が 1 匹も居なければ <see cref="HillsideBusyOther"/>。
-        /// 押す人のローカルの予測 (AllDogsEngaged と同じ性質)。</summary>
+        /// 来られる犬が居れば <see cref="HillsideBusyNone"/>。IMP-DOG-006: 押す人に接続犬が居れば <see cref="HillsideBusyOwnLeash"/>。
+        /// それ以外は 裏山の理由で忙しい犬がいちばん多い理由 (同数は リード > 集合 > フリスビー)。裏山の理由の犬が 1 匹も居なければ
+        /// <see cref="HillsideBusyOther"/>。押す人のローカルの予測 (AllDogsEngaged と同じ性質)。</summary>
         // net: callable-ok: 読み取りのみ
         public int HillsideAllBusyCause()
         {
             if (!AllDogsEngaged()) return HillsideBusyNone;
+            int me = LocalPlayerId();
             int leash = 0, gather = 0, frisbee = 0;
             for (int d = 0; d < _packRoots.Length; d++)
             {
                 Transform root = _packRoots[d];
                 if (root == null || !root.gameObject.activeInHierarchy) continue;
+                if (me >= 0 && WalkerOf(d) == me) return HillsideBusyOwnLeash;   // AllDogsEngaged が自分の接続犬だけで決めた
                 KD_DogWanderController w = d < _packWander.Length ? _packWander[d] : null;
-                int c = HillsideCauseOf(w);
+                int c = HillsideCauseOf(w, me);
                 if (c == HillsideBusyLeash) leash++;
                 else if (c == HillsideBusyGather) gather++;
                 else if (c == HillsideBusyFrisbee) frisbee++;
@@ -643,6 +710,23 @@ namespace KominkaDogRun
             if (leash >= gather && leash >= frisbee) return HillsideBusyLeash;
             if (gather >= frisbee) return HillsideBusyGather;
             return HillsideBusyFrisbee;
+        }
+
+        /// <summary>IMP-DOG-006: 犬 d をつないでいる playerId (-1 = 未接続 / 配線無し)。KH_LeashManager.walkers (同期) の読み取り。</summary>
+        private int WalkerOf(int d)
+        {
+            KominkaHillside.KH_LeashManager leashes = _leashes;
+            if (leashes == null && _packWander != null && d >= 0 && d < _packWander.Length && _packWander[d] != null)
+                leashes = _packWander[d].hillsideLeashes;
+            if (leashes == null || leashes.walkers == null || d < 0 || d >= leashes.walkers.Length) return -1;
+            return leashes.walkers[d];
+        }
+
+        /// <summary>このクライアントの playerId (-2 = まだ居ない。walkers の -1 と区別する)。</summary>
+        private int LocalPlayerId()
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            return Utilities.IsValid(lp) ? lp.playerId : -2;
         }
 
         /// <summary>最初の空き枠の番号。無ければ -1。</summary>
@@ -842,6 +926,87 @@ namespace KominkaDogRun
             int dogCount, int slotCount,
             int[] outSlot, int[] outOutMs)
         {
+            // 許可の表なし = 全組が AllowNew (IMP-DOG-006 より前と同じ答え。古民家の自己テストはこの口を当てる)
+            ResolveClaimsAllowWith(prevSlot, prevOutMs, slotState, slotOutMs, dogEligible, distMm, null,
+                dogCount, slotCount, outSlot, outOutMs);
+        }
+
+        // ============================================================
+        // IMP-DOG-006 (2026-10-03 ユーザー決定): 接続中の犬をおやつで 1 匹ずつ呼ぶ — 割当の許可
+        // ============================================================
+
+        /// <summary>犬 d は枠 i を掴めない (他人がつないでいる犬)。**パス 1 でも Claim を外す。**</summary>
+        public const int AllowNone = 0;
+        /// <summary>今の Claim は保ってよいが、新しくは配らない (出した人に接続犬が居るときの未接続犬 / 続けて呼ばない犬)。</summary>
+        public const int AllowKeep = 1;
+        /// <summary>新しく配ってよい。</summary>
+        public const int AllowNew = 2;
+
+        /// <summary>
+        /// **誰の枠へどの犬を出してよいか** を犬 × 枠の表 <paramref name="allow"/> (添字 <c>d * slotCount + i</c>) に書く。純関数。
+        ///
+        /// 枠 i を出した人を g とする (<paramref name="slotGiver"/>)。
+        /// <code>
+        /// 犬 d を g 以外がつないでいる                  → AllowNone  (横取りしない。Claim も外す)
+        /// 犬 d を g がつないでいる                      → AllowNew   (ただし下の「続けて呼ばない」)
+        /// 犬 d は未接続、g に接続犬が 1 匹以上居る      → AllowKeep  (接続犬だけが候補。途中で外された犬は Claim を保つ)
+        /// 犬 d は未接続、g に接続犬が居ない            → AllowNew   (従来どおり最寄りの犬)
+        /// </code>
+        /// **続けて呼ばない:** g が最後に呼んだ犬 (<paramref name="lastCallGiver"/> == g の中で <paramref name="lastCallSeq"/> 最大。
+        /// 全頭から探し、その犬がいま g の接続犬でなければ誰も飛ばさない) は、g の接続犬で受けられる犬 (<paramref name="dogEligible"/>) がほかにも居るときだけ AllowKeep に下げる
+        /// (「次のおやつで次の 1 匹」。1 匹しか来られなければ同じ犬が続けて来てよい)。
+        /// 最寄りの選択そのものは <see cref="ResolveClaimsAllowWith"/> のパス 2 (距離・同距離は犬番号の小さい方) が行う。
+        /// </summary>
+        // net: callable-ok: 純関数 — 引数だけを見て書き換えるのは渡された出力配列だけ
+        public void BuildAllowWith(int[] walker, int[] slotGiver, int[] slotState, int[] dogEligible,
+            int[] lastCallGiver, int[] lastCallSeq, int dogCount, int slotCount, int[] allow)
+        {
+            if (allow == null || walker == null || slotGiver == null) return;
+            if (dogCount > walker.Length) dogCount = walker.Length;
+            if (slotCount > slotGiver.Length) slotCount = slotGiver.Length;
+            if (dogCount * slotCount > allow.Length) return;
+            for (int i = 0; i < slotCount; i++)
+            {
+                int g = slotGiver[i];
+                int leashed = 0, ready = 0, lastDog = -1, lastSeq = 0;
+                for (int d = 0; d < dogCount; d++)
+                {
+                    // g の「最後に呼んだ犬」は全頭から探す (今は外れている犬でもよい)。外された犬が最後なら、誰も飛ばさない —
+                    // 2 つ前に呼んだ接続犬まで飛ばすと「最寄り」から離れる (Course/97c TC3 で確認)
+                    int lg = lastCallGiver == null || d >= lastCallGiver.Length ? -1 : lastCallGiver[d];
+                    int ls = lastCallSeq == null || d >= lastCallSeq.Length ? 0 : lastCallSeq[d];
+                    if (g >= 0 && lg == g && (lastDog < 0 || ls > lastSeq)) { lastDog = d; lastSeq = ls; }
+                    if (g < 0 || walker[d] != g) continue;
+                    leashed++;
+                    if (Eligible(dogEligible, d)) ready++;
+                }
+                if (lastDog >= 0 && walker[lastDog] != g) lastDog = -1;
+                for (int d = 0; d < dogCount; d++)
+                {
+                    int w = walker[d];
+                    int a;
+                    if (w >= 0 && w != g) a = AllowNone;
+                    else if (w >= 0) a = (d == lastDog && ready >= 2 && Eligible(dogEligible, d)) ? AllowKeep : AllowNew;
+                    else a = leashed > 0 ? AllowKeep : AllowNew;
+                    allow[d * slotCount + i] = a;
+                }
+            }
+        }
+
+        /// <summary>
+        /// <see cref="ResolveClaimsWith"/> に許可の表を足したもの (IMP-DOG-006)。<paramref name="allow"/> が null なら全組 AllowNew で、
+        /// 答えは許可なしの版と同じ。許可があるとき:
+        /// パス 1 は AllowKeep 以上の組だけ Claim を保つ (他人の接続犬になった犬は外れる)、
+        /// パス 2 は AllowNew の組だけを候補にし、**距離が測れない組 (int.MaxValue) は選ばない**。
+        /// </summary>
+        // net: callable-ok: 純関数 — 引数だけを見て書き換えるのは渡された出力配列だけ
+        public void ResolveClaimsAllowWith(
+            int[] prevSlot, int[] prevOutMs,
+            int[] slotState, int[] slotOutMs,
+            int[] dogEligible, int[] distMm, int[] allow,
+            int dogCount, int slotCount,
+            int[] outSlot, int[] outOutMs)
+        {
             if (outSlot == null || outOutMs == null) return;
             if (dogCount > outSlot.Length) dogCount = outSlot.Length;
             if (dogCount > outOutMs.Length) dogCount = outOutMs.Length;
@@ -872,6 +1037,7 @@ namespace KominkaDogRun
                 if (slotState[s] != SlotOut) continue;               // 食べられた / 消えた / 未確定
                 int gen = prevOutMs == null || d >= prevOutMs.Length ? 0 : prevOutMs[d];
                 if (gen != slotOutMs[s]) continue;                   // 枠が再利用された = 別のおやつ
+                if (AllowOf(allow, d, s, slotCount) < AllowKeep) continue;   // IMP-DOG-006: 他人がつないだ犬は Claim を外す
                 // **壊れた入力で 2 匹が同じ枠を掴んでいたら、犬番号の小さい方が勝つ** —
                 // どちらかに決まりさえすれば単射は保てる (破損からの決定的な復旧)
                 if (taken[s]) continue;
@@ -909,7 +1075,9 @@ namespace KominkaDogRun
                 {
                     if (!Eligible(dogEligible, d)) continue;
                     if (outSlot[d] >= 0) continue;                   // もう持っている
+                    if (AllowOf(allow, d, bestSlot, slotCount) < AllowNew) continue;   // IMP-DOG-006
                     int dist = DistOf(distMm, d, bestSlot, slotCount);
+                    if (allow != null && dist == int.MaxValue) continue;              // IMP-DOG-006: 測れない組は選ばない
                     if (bestDog < 0 || dist < bestDist)
                     {
                         bestDog = d;
@@ -942,6 +1110,15 @@ namespace KominkaDogRun
         /// </summary>
         // net: callable-ok: 純関数
         public bool EarlierMs(int a, int b) { return (a - b) < 0; }
+
+        /// <summary>IMP-DOG-006: 犬 d × 枠 i の許可。表が無ければ AllowNew (許可なしの版と同じ答え)。</summary>
+        private int AllowOf(int[] allow, int d, int slot, int slotCount)
+        {
+            if (allow == null) return AllowNew;
+            int idx = d * slotCount + slot;
+            if (idx < 0 || idx >= allow.Length) return AllowNone;
+            return allow[idx];
+        }
 
         private bool Eligible(int[] dogEligible, int d)
         {

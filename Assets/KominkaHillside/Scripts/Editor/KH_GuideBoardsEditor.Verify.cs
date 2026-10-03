@@ -26,6 +26,11 @@ namespace KominkaHillside.Editor
         const float WashFloorHalf = 2.5f;
         const float EntranceRadius = 18f;       // the board's centre from the spawn
         const float GateSideMin = 1.5f;         // in front of the gate line (spawn forward) by at least this
+        const float GateSideMinKominka = 0.5f;  // the 古民家ドッグラン board stands beside the gate on purpose (IMP-WLD-006)
+        const float PortalSpawnClear = 4.0f;    // the portal from the spawn (IMP-ENV-003: a portal right behind the spawn was walked into)
+        /// <summary>The world id of the portal to 古民家ドッグラン, copied from the scene on 2026-10-03 for this check only. The builder never
+        /// writes roomId; a different value here means someone changed the portal by hand (or a second portal took its place).</summary>
+        const string ExpectedRoomId = "wrld_b03ddfbb-8bbb-47b2-8ac3-75f4b5964600";
         const float FarmhouseSectorMin = 45f;   // degrees between spawn->board and spawn->farmhouse / gate (the turn-around view)
         const float SlopeWarn = 0.6f, SlopeFail = 1.2f;   // terrain height range over the footprint + readers' area (m)
         const float ObstacleTop = 2.8f;
@@ -111,10 +116,16 @@ namespace KominkaHillside.Editor
 
             // ---- read-only: nothing to collide with, nothing to run, nothing to point at ----
             Func<Component[], string> names = list => string.Join(", ", list.Select(x => KD_SceneObjects.PathOf(x.gameObject)).Take(6));
+            // IMP-WLD-006: the only colliders are the board's Interact trigger and the portal marker's own trigger; both are triggers
+            var interactT = c.root.Find(InteractPath);
+            var portalT = c.portal != null ? c.portal.transform : null;
             var cols = c.root.GetComponentsInChildren<Collider>(true);
-            req(cols.Length == 0, "no Collider under " + RootName + (cols.Length > 0 ? " (" + names(cols) + ")" : " (players, dogs, discs and the interact ray pass)"));
+            var solid = cols.Where(x => !x.isTrigger).ToArray();
+            var stray = cols.Where(x => x.transform != interactT && (portalT == null || !x.transform.IsChildOf(portalT))).ToArray();
+            req(solid.Length == 0, "no solid Collider under " + RootName + (solid.Length > 0 ? " (" + names(solid) + ")" : " (players, dogs, discs pass)"));
+            req(stray.Length == 0, "colliders only on " + InteractPath + " and the portal marker" + (stray.Length > 0 ? " (" + names(stray) + ")" : ""));
             var udons = c.root.GetComponentsInChildren<VRC.Udon.UdonBehaviour>(true);
-            req(udons.Length == 0, "no UdonBehaviour under " + RootName + (udons.Length > 0 ? " (" + names(udons) + ")" : ""));
+            req(udons.Length == 1 && interactT != null && udons[0].transform == interactT, "one UdonBehaviour under " + RootName + ", on " + InteractPath + " (" + names(udons) + ")");
             var bodies = c.root.GetComponentsInChildren<Rigidbody>(true);
             req(bodies.Length == 0, "no Rigidbody under " + RootName);
             var rays = c.root.GetComponentsInChildren<GraphicRaycaster>(true);
@@ -125,6 +136,13 @@ namespace KominkaHillside.Editor
 
             var a = FindAnchors(c);
             foreach (var b in Boards) CheckBoard(b, c, a, req, warn, v);
+            CheckPortal(c, a, req, warn, v);
+            var kt = c.root.Find(Kominka.name);
+            if (kt != null)
+            {
+                var broken = KominkaRules(c, kt.position, kt.rotation);
+                req(broken.Count == 0, "Kominka placement rules (wash working area, boards A / B, gate opening, spawn, loop, fixtures)" + (broken.Count > 0 ? ": " + string.Join("; ", broken) : ""));
+            }
             CheckLabels(c, req, v);
             CheckWords(c, req, warn, v);
             CheckGlyphs(c, req);
@@ -242,7 +260,8 @@ namespace KominkaHillside.Editor
                 if (a.gate != null)
                 {
                     float side = foot.Min(p => Vector3.Dot(Flat3(p - a.gate.position), fwd));
-                    req(side >= GateSideMin, tag + "outside the gate, " + side.ToString("F2") + " m in front of the gate line (>= " + GateSideMin + ")");
+                    float min = b == Kominka ? GateSideMinKominka : GateSideMin;
+                    req(side >= min, tag + "outside the gate, " + side.ToString("F2") + " m in front of the gate line (>= " + min + ")");
                     float d = Mathf.Abs(Mathf.DeltaAngle(bearingBoard, Bearing(a.spawn.position, a.gate.position)));
                     req(d >= FarmhouseSectorMin, tag + "not in the turn-around view to the gate (" + d.ToString("F0") + " deg apart, >= " + FarmhouseSectorMin + ")");
                 }
@@ -269,7 +288,7 @@ namespace KominkaHillside.Editor
                 float out1 = foot.Min(p => OutsideSquare(p, a.washFloor.position, a.washMain.rotation, WashFloorHalf));
                 bool readOverlap = read.Any(p => OutsideSquare(p, a.washFloor.position, a.washMain.rotation, WashFloorHalf) <= 0f);
                 req(out1 >= WashFloorClear, tag + "outside the main wash station's floor by " + out1.ToString("F2") + " m (>= " + WashFloorClear + ")");
-                req(!readOverlap, tag + "the readers' area is not on the main wash station's floor");
+                if (b != Kominka) req(!readOverlap, tag + "the readers' area is not on the main wash station's floor");
             }
             else warn(false, tag + "KH_WashStation/PersonalFloor not found (wash station clearance not checked)");
 
@@ -356,6 +375,66 @@ namespace KominkaHillside.Editor
         static float Bearing(Vector3 from, Vector3 to) { return Mathf.Atan2(to.x - from.x, to.z - from.z) * Mathf.Rad2Deg; }
         static Vector3 Flat3(Vector3 v) { v.y = 0f; return v; }
 
+        // ================================================================ IMP-WLD-006: the portal to 古民家ドッグラン
+
+        static void CheckPortal(Ctx c, Anch a, Action<bool, string> req, Action<bool, string> warn, VerifyReport v)
+        {
+            var board = c.root.Find(Kominka.name);
+            if (board == null) return;   // CheckBoard already failed
+            req(c.portal != null && c.portalRoomId == ExpectedRoomId, "exactly one VRCPortalMarker, world id unchanged (" + (c.portalRoomId ?? "none") + ")");
+            if (c.portal == null) return;
+            var anchor = board.Find(PortalAnchorName);
+            req(anchor != null && c.portal.transform.parent == anchor, "the portal marker is managed: " + KD_SceneObjects.PathOf(c.portal.gameObject) + " under " + Kominka.name + "/" + PortalAnchorName);
+            if (anchor == null) return;
+            req(!anchor.gameObject.activeSelf && c.portal.gameObject.activeSelf, PortalAnchorName + " inactive in the saved scene (hidden for everyone at load, late joiners too), the marker itself active");
+            req(c.portal.transform.localPosition == Vector3.zero && c.portal.transform.localRotation == Quaternion.identity, "the marker sits at the anchor (local pose zero)");
+            var it = c.root.Find(InteractPath);
+            var pb = it != null ? it.GetComponent<KH_PortalBoard>() : null;
+            req(pb != null, InteractPath + " has KH_PortalBoard");
+            if (pb != null)
+            {
+                req(pb.portal == anchor.gameObject && Mathf.Approximately(pb.showSeconds, PortalShowSeconds), "KH_PortalBoard.portal = the anchor, showSeconds " + pb.showSeconds + " (proxy)");
+                var bk = UdonSharpEditorUtility.GetBackingUdonBehaviour(pb);
+                req(bk != null && bk.SyncMethod == VRC.SDKBase.Networking.SyncType.None, "KH_PortalBoard sync None (local only, no network objects)");
+                object pv = null;
+                req(bk != null && bk.publicVariables.TryGetVariableValue("portal", out pv) && ReferenceEquals(pv, anchor.gameObject), "KH_PortalBoard.portal = the anchor (backing)");
+                req(bk != null && bk.proximity >= 2f, "Interact reach " + (bk != null ? bk.proximity.ToString("F1") : "?") + " m (>= 2)");
+                int ii = c.language.interactTargets != null ? Array.IndexOf(c.language.interactTargets, bk) : -1;
+                req(ii >= 0 && c.language.interactKeys[ii] == InteractKey, "the Interact text is bound to " + InteractKey);
+                var box = it.GetComponent<BoxCollider>();
+                req(box != null && box.isTrigger && it.gameObject.layer == 0 && box.size.x >= BackW(Kominka) - 0.01f && box.size.y >= BackH(Kominka) - 0.01f,
+                    "the Interact target is a trigger over the whole board face on Default (the wash board's convention)");
+            }
+            // where the portal appears
+            var p = anchor.position;
+            float g = Ground(p);
+            req(Mathf.Abs(p.y - g) <= 0.05f, "the portal stands on the terrain (" + (p.y - g).ToString("+0.00;-0.00") + " m)");
+            if (a.spawn != null)
+            {
+                float d = Flat(p - a.spawn.position);
+                req(d >= PortalSpawnClear, "the portal " + d.ToString("F2") + " m from the spawn (>= " + PortalSpawnClear + "; IMP-ENV-003)");
+                float bp = Bearing(a.spawn.position, p);
+                if (a.kominka != null) req(Mathf.Abs(Mathf.DeltaAngle(bp, Bearing(a.spawn.position, a.kominka.position))) >= FarmhouseSectorMin, "the portal is not in the turn-around view to the farmhouse");
+                if (a.gate != null) req(Mathf.Abs(Mathf.DeltaAngle(bp, Bearing(a.spawn.position, a.gate.position))) >= FarmhouseSectorMin, "the portal is not in front of the gate from the spawn");
+                v.notes.Add("portal at " + V(p) + ", " + d.ToString("F1") + " m from the spawn at bearing " + bp.ToString("F0") + " deg, facing yaw " + anchor.eulerAngles.y.ToString("F0"));
+            }
+            if (a.washFloor != null && a.washMain != null)
+                req(OutsideSquare(p, a.washFloor.position, a.washMain.rotation, WashFloorHalf) >= 1.0f, "the portal is >= 1 m outside the main wash station's floor");
+            if (a.route != null && a.route.Length > 1)
+            {
+                int n = a.route.Length, segs = a.closed ? n : n - 1; float best = float.PositiveInfinity;
+                for (int i = 0; i < segs; i++) best = Mathf.Min(best, SegDist(p, a.route[i], a.route[(i + 1) % n]));
+                req(best >= 2.5f, "the portal " + best.ToString("F2") + " m from the loop's centre line (>= 2.5)");
+            }
+            Physics.SyncTransforms();
+            var hits = Physics.OverlapBox(p + Vector3.up * 1.05f, new Vector3(0.5f, 0.95f, 0.5f), anchor.rotation, ~0, QueryTriggerInteraction.Ignore)
+                .Where(x => !(x is TerrainCollider) && !x.transform.IsChildOf(c.root) && !Physics.GetIgnoreLayerCollision(x.gameObject.layer, 10))
+                .Select(x => KD_SceneObjects.PathOf(x.gameObject)).Distinct().ToList();
+            req(hits.Count == 0, "nothing solid where the portal appears (1 x 2 x 1 m)" + (hits.Count > 0 ? " (" + string.Join(", ", hits.Take(5)) + ")" : ""));
+            var old = ScenePath(c.scene, "Portal");
+            if (old != null) v.notes.Add("the portal's former parent 'Portal' " + V(old.position) + " is left in the scene with " + old.childCount + " children (IMP-ENV-003: remove or keep is the user's call)");
+        }
+
         // ================================================================ labels and their bindings
 
         static void CheckLabels(Ctx c, Action<bool, string> req, VerifyReport v)
@@ -402,6 +481,7 @@ namespace KominkaHillside.Editor
             foreach (var st in c.washStations) if (st != null) foreach (var t in st.GetComponentsInChildren<TMP_Text>(true)) if (!string.IsNullOrEmpty(t.text)) sceneWords.Add(t.text);
             foreach (var l in Labels)
             {
+                if (l.key.StartsWith("guide.kominka.")) continue;   // names the other world, not a menu
                 string text = Visible(KD_LocalizationEditor.Text(c.catalog, ja, l.key));
                 foreach (Match m in Regex.Matches(text, "「([^」]+)」"))
                     req(known.Contains(m.Groups[1].Value), l.key + ": 「" + m.Groups[1].Value + "」 is a menu label (catalog text)");
@@ -452,12 +532,22 @@ namespace KominkaHillside.Editor
             try
             {
                 var sample = go.AddComponent<TextMeshProUGUI>();
+                string jaCode = c.catalog.fallbackLanguage;
                 foreach (var l in Labels)
                 {
                     var tr = c.root.Find(l.path);
                     var tmp = tr != null ? tr.GetComponent<TextMeshProUGUI>() : null;
                     if (tmp == null) continue;
                     int worstSelf = 0, worstClient = 0; var over = new List<string>();
+                    sample.lineSpacing = tmp.lineSpacing;   // MeasureLabelFit copies size / wrap / margin, not the line spacing
+                    if (l.path.EndsWith("/Body"))
+                    {
+                        // 2026-10-03: how much of its box the ja body fills at full size (target ~85-90 %)
+                        int rj = KD_LocalizationEditor.MeasureLabelFit(sample, tmp, KD_LocalizationEditor.Text(c.catalog, jaCode, l.key), out Vector2 pj);
+                        float fill = pj.y / Mathf.Max(1f, tmp.rectTransform.rect.height);
+                        v.notes.Add(l.path + ": ja fills " + (fill * 100f).ToString("F0") + " % of its box at " + (rj == 0 ? tmp.fontSizeMax.ToString("F0") + " mm" : "the shrunk size"));
+                        warn(rj == 0 && fill >= 0.7f, l.path + " ja at full size fills >= 70 % of its box (" + (fill * 100f).ToString("F0") + " %, fit " + rj + ")");
+                    }
                     foreach (var lang in c.catalog.languages)
                     {
                         string text = KD_LocalizationEditor.Text(c.catalog, lang.code, l.key);

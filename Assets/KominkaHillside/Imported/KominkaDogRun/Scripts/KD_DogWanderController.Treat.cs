@@ -82,8 +82,7 @@ namespace KominkaDogRun
                 if (petController != null)
                 {
                     VRCPlayerApi.TrackingData thanksHead = p.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
-                    petController._SetGaze(thanksHead.position, 0f);
-                    petController._SetUrge(1f);
+                    TreatGaze(thanksHead.position, 1f);   // IMP-DOG-006: held until the next decision on the leash (HillsideTreatCall.cs)
                 }
                 return true;
             }
@@ -114,7 +113,7 @@ namespace KominkaDogRun
                 float hDist = flat.magnitude;
                 // 体格ぶん広く取る (0 フォールバックも UpdateNudge と同じ)
                 float radius = _selfRadius > 0.001f ? _selfRadius : 0.2f;
-                float standoff = nudgeStandoff + radius;
+                float standoff = TreatStandoff() + radius;   // IMP-DOG-006: closer on the leash (the hand reaches the head and the collar)
 
                 Vector3 dir = flat;
                 float advance = 0f;
@@ -134,14 +133,10 @@ namespace KominkaDogRun
                 }
                 else
                 {
-                    StepToward(dogPos + dir * advance, 0f, walkSpeed);
+                    TreatStep(dogPos + dir * advance, 0f, walkSpeed);   // IMP-DOG-006: on the leash, clamped to the leash reach (HillsideTreatCall.cs)
                 }
-                if (petController != null)
-                {
-                    // 見つめるのは持ち主の顔ではなく**おやつそのもの** (食い意地が読める)
-                    petController._SetGaze(slot.BodyPosition(), 0f);
-                    petController._SetUrge(nearHolder ? 1f : 0.6f);
-                }
+                // 見つめるのは持ち主の顔ではなく**おやつそのもの** (食い意地が読める)
+                TreatGaze(slot.BodyPosition(), nearHolder ? 1f : 0.6f);
                 return true;
             }
 
@@ -165,7 +160,7 @@ namespace KominkaDogRun
                 if (_speed <= stopSpeedThreshold) _eatPose = true;
                 Coast();
                 if (dist > 0.0001f && !_treatEating && !_eatPose) FaceTowards(treatPos);
-                if (petController != null) petController._SetUrge(1f);
+                TreatUrge(1f);
                 return true;
             }
 
@@ -179,19 +174,12 @@ namespace KominkaDogRun
                 // 壁の向こうに落ちた: 行けるところまで来た。見つめて待つ
                 // (食べ始められないまま KD_TreatSlot の abandonTimeout が枠を回収するのが出口)
                 Coast();
-                if (petController != null)
-                {
-                    petController._SetGaze(treatPos, 0f);
-                    petController._SetUrge(0.6f);
-                }
+                TreatGaze(treatPos, 0.6f);
                 return true;
             }
-            StepToward(dogPos + dirT * advanceT, 0f, dist > runDistance ? runSpeed : walkSpeed);
-            if (petController != null)
-            {
-                petController._SetGaze(treatPos, 0f);
-                petController._SetUrge(0.8f);
-            }
+            // IMP-DOG-006: on the leash the step stops at the leash reach and the dog looks at the treat from there (decision 5)
+            TreatStep(dogPos + dirT * advanceT, 0f, dist > runDistance ? runSpeed : walkSpeed);
+            TreatGaze(treatPos, 0.8f);
             return true;
         }
 

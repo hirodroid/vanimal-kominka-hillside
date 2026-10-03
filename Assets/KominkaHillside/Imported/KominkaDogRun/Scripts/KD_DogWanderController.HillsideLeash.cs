@@ -272,7 +272,8 @@ namespace KominkaDogRun
                 // never exceeds runSpeed, and Fetch may take over before the next wander frame (Codex D1).
                 if (_wasLeashed) { _wasLeashed = false; _speed = 0f; _nextLeashPath = 0f; _routeNext = -1;
                     ResetPauseAndPoseState(); leashMode = LeashFree; ResetHolderSpeed(); ReleaseAnimatorSpeed();
-                    KeepOutUnleashed(); }   // 2026-10-02 round 2: unleashed inside a wash station's circle -> a grace before it walks out (HillsideStationLeave.cs)
+                    KeepOutUnleashed();   // 2026-10-02 round 2: unleashed inside a wash station's circle -> a grace before it walks out (HillsideStationLeave.cs)
+                    LeashTreatReset(); }  // IMP-DOG-006: a treat call's wait does not outlive the leash (HillsideTreatCall.cs)
                 return false;
             }
             int walkerId = wlNow ? _wlHolder : hillsideLeashes.walkers[dogIndex];   // IMP-DOG-034 C1-1e
@@ -283,6 +284,7 @@ namespace KominkaDogRun
                 _holderMovedAt = Time.time; _nextHolderSample = 0f; _holderOffTrail = false; _arrived = false; leashMode = LeashWalk;
                 ResetHolderSpeed(); _holderTracked = walkerId; _leashYielded = false;
                 ResetPauseAndPoseState();
+                LeashTreatReset();   // IMP-DOG-006 (HillsideTreatCall.cs)
             }
             _wasLeashed = true;
             // Fetch cancels on its own owner tick. Never write the root concurrently with it.
@@ -316,12 +318,12 @@ namespace KominkaDogRun
                 // A client that has just taken the dog over did not make the decision that is in progress
                 // and has no history behind it, so it starts the walk from scratch (Codex D1).
                 if (!_wasDogOwner || holderId != _holderTracked)
-                { _holderTracked = holderId; _routeNext = -1; _routeChoice = -1; _routeResume = -1; ResetHolderSpeed(); ResetPauseAndPoseState(); }
+                { _holderTracked = holderId; _routeNext = -1; _routeChoice = -1; _routeResume = -1; ResetHolderSpeed(); ResetPauseAndPoseState(); LeashTreatReset(); }
                 TrackHolderSpeed(holderPos);   // IMP-DOG-036 S1: once per decision, over the time since the previous one (Dt)
             }
             // **手放した側も畳む** (Codex D)。ローカルの滞在状態が残ったままだと、この画面では
             // その犬がいつまでも「立ち寄り中」に見え、同じ人の他の犬が場所を取れなくなる
-            else if (_wasDogOwner) ResetPauseAndPoseState();
+            else if (_wasDogOwner) { ResetPauseAndPoseState(); LeashTreatReset(); }   // IMP-DOG-006: the wait is the Owner's
             _wasDogOwner = _dogOwner;
             Vector3 toHand = handPos - dogRoot.position; toHand.y = 0f;
             float handDist = toHand.magnitude;
@@ -365,6 +367,9 @@ namespace KominkaDogRun
             // client, before LeashPose and the non-Owner return), the leash follow stops until the release. False when not held
             // (or held for someone else, which the station never keeps), and then everything below runs as before.
             if (UpdateWashStation(true)) return true;
+            // IMP-DOG-006: my own leashed dog called with my treat (show / walk to it / eat / thanks, then the wait). Every client,
+            // after the held station (it wins) and before the wash stop, LeashPose, travel and Return (HillsideTreatCall.cs)
+            if (UpdateLeashTreat(holder, walkerId, handPos, handDist, leash)) return true;
             bool washStop = WashLeashStop(holder, handDist, leash);
             LeashPose(holder, toHand, handDist, handPos, route, settling, washStop);
             if (!_dogOwner) { ApplyMoveAnim(); return true; }

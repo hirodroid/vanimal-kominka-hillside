@@ -378,6 +378,8 @@ namespace KominkaHillside.Editor
             KD_DogWanderController[] wanders; KH_DogWash[] washes;
             DogsByIndex(out wanders, out washes);
             foreach (var st in stations) CheckStationControls(r, req, st, StationIndexOf(st), "controls: " + st.name, wanders, washes);
+            CheckCallRanges(r, req, scene);   // IMP-DOG-037
+            CheckBoardText(r, req, scene);    // IMP-DOG-037: words in 13 languages, glyphs, fit, KD_Language
 
             // ---- every dog knows every station's Call (main first) ----
             var calls = AllStationCalls(scene).ToArray();
@@ -410,6 +412,172 @@ namespace KominkaHillside.Editor
                 req(gm != null && (gm.intValue & (1 << FloorLayer)) == 0, "controls: " + w.name + ".groundLayerMask leaves out the floor layer " + FloorLayer + " (" + (gm != null ? gm.intValue.ToString() : "none") + ")");
             }
             CheckFloorLayer(r, req, scene);
+        }
+
+        /// <summary>IMP-DOG-037 (plan §7.2): the call ranges between stations. keepOutRadius + 1 m < callRange < the dog side's
+        /// StationFar (an accepted call never needs the far-call teleport, so a far dog cannot be pulled in through it), no two
+        /// stations' ranges overlap (a dog in range of this station is never held by another one in range), the River range covers
+        /// the water-play entry + 3 m (the user's decision: a dog playing in the water nearby can be called). Notes: what lies
+        /// inside each range (the hand-placed spots of the placement rules, the course start, the gate's waiting ring).</summary>
+        static void CheckCallRanges(VerifyReport r, Action<bool, string> req, UnityEngine.SceneManagement.Scene scene)
+        {
+            req(CallRanges.Length == 1 + CourseStations.Length, "range: CallRanges has one value per station (" + CallRanges.Length + " / " + (1 + CourseStations.Length) + ")");
+            float far = StationFarOfDogs();
+            req(!float.IsNaN(far) && far > 0f, "range: KD_DogWanderController.StationFar readable (" + far + " m)");
+            var calls = AllStationCalls(scene);
+            foreach (var c in calls)
+            {
+                string n = "range: " + (c.transform.parent != null ? c.transform.parent.name : c.name);
+                req(c.callRange > c.keepOutRadius + 1f, n + ": callRange " + c.callRange + " > keepOutRadius " + c.keepOutRadius + " + 1 (a dog just outside the circle can be called)");
+                if (!float.IsNaN(far)) req(c.callRange < far, n + ": callRange " + c.callRange + " < StationFar " + far + " (an accepted call never takes the far-call teleport)");
+            }
+            for (int i = 0; i < calls.Count; i++)
+                for (int j = i + 1; j < calls.Count; j++)
+                {
+                    float d = FlatDist(calls[i]._AnchorPosition(), calls[j]._AnchorPosition());
+                    req(d > calls[i].callRange + calls[j].callRange, "range: " + calls[i].transform.parent.name + " / " + calls[j].transform.parent.name + " do not overlap (anchors " + d.ToString("F1") + " m > " + (calls[i].callRange + calls[j].callRange) + ")");
+                }
+            // the River station covers the water-play entry
+            int riverIndex = 1 + Array.FindIndex(CourseStations, s => s.key == "River");
+            var river = calls.FirstOrDefault(c => c.stationIndex == riverIndex);
+            var spot = UnityEngine.Object.FindObjectsOfType<KH_WaterSpot>(true).FirstOrDefault();
+            if (river != null && spot != null && spot.entry != Vector3.zero)
+            {
+                float de = FlatDist(river._AnchorPosition(), spot.entry);
+                req(de + 3f <= river.callRange, "range: River covers the water-play entry (" + de.ToString("F1") + " m from the anchor + 3 <= " + river.callRange + ")");
+            }
+            else req(false, "range: the River station and the water spot's entry found (" + (river != null) + " / " + (spot != null) + ")");
+            // notes: what is inside each range (for the user's review of the numbers)
+            string missing;
+            var cc = ResolveCourse(scene, out missing);
+            var marks = new List<KeyValuePair<string, Vector3>>();
+            if (cc != null)
+            {
+                foreach (var h in cc.hands) marks.Add(new KeyValuePair<string, Vector3>(h.name, h.pos));
+                if (cc.path != null && cc.path.Length > 0) marks.Add(new KeyValuePair<string, Vector3>("course start (route node 0)", cc.path[0]));
+            }
+            marks.Add(new KeyValuePair<string, Vector3>("the gate's waiting ring", new Vector3(DogWaitRing.center.x, 0f, DogWaitRing.center.y)));
+            foreach (var c in calls)
+            {
+                var a = c._AnchorPosition();
+                var near = marks.Select(m => new KeyValuePair<string, float>(m.Key, FlatDist(a, m.Value))).Where(m => m.Value <= c.callRange + 15f).OrderBy(m => m.Value)
+                    .Select(m => m.Key + " " + m.Value.ToString("F1") + " m" + (m.Value <= c.callRange ? "" : " (outside)"));
+                r.notes.Add("range: " + c.transform.parent.name + " callRange " + c.callRange + " m from the anchor " + a.ToString("F1") + ": " + string.Join(", ", near));
+            }
+        }
+
+        /// <summary>The dog side's StationFar (a private const of KD_DogWanderController.HillsideWash.cs), NaN if not found.</summary>
+        static float StationFarOfDogs()
+        {
+            var f = typeof(KD_DogWanderController).GetField("StationFar", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (f == null || !f.IsLiteral) return float.NaN;
+            var v = f.GetRawConstantValue();
+            return v is float x ? x : float.NaN;
+        }
+
+        /// <summary>IMP-DOG-037: the board's words. Every key in the catalog for all 13 languages (no language left untranslated:
+        /// the public build guard refuses those) with the same placeholders; KD_Language's tables hold them (proxy and backing);
+        /// the ja / en characters in the shared font; and each text fits its label at the autosize floor (MinPt). The fit uses the
+        /// shared font's advances for ja / en (FAIL when over), an estimate for the 11 languages VRChat draws with its own font
+        /// (1 em for CJK / Hangul, 0.62 em otherwise; a WARN note when over: the client font's widths are unknown here).
+        /// The boards are built from one layout, so the fit is measured once; the rule line per station (its number).</summary>
+        static void CheckBoardText(VerifyReport r, Action<bool, string> req, UnityEngine.SceneManagement.Scene scene)
+        {
+            KD_LocalizationEditor.Catalog c;
+            try { c = BoardCatalog(); } catch (Exception e) { req(false, "board text: the catalog loads (" + e.Message + ")"); return; }
+            var keys = BoardWordKeys.Concat(BoardDogNameKeys).ToArray();
+            var gaps = new List<string>();
+            foreach (var lang in c.languages)
+                foreach (var k in keys)
+                {
+                    var e = Array.Find(lang.texts, t => t.key == k);
+                    if (e == null || string.IsNullOrWhiteSpace(e.text)) gaps.Add(lang.code + ":" + k);
+                }
+            req(gaps.Count == 0, "board text: the " + keys.Length + " keys have a text in all " + c.languages.Length + " languages (missing: " + string.Join(", ", gaps.Take(20)) + (gaps.Count > 20 ? ", ..." : "") + ")");
+
+            // KD_Language holds them (Wash/11 runs Configure)
+            var pouches = UnityEngine.Object.FindObjectsOfType<KD_TreatPouch>(true);
+            var language = pouches.Length == 1 ? pouches[0].language : null;
+            if (language == null) req(false, "board text: KD_TreatPouch.language found");
+            else
+            {
+                var lacking = keys.Where(k => language.keys == null || !language.keys.Contains(k)).ToArray();
+                req(lacking.Length == 0 && language.texts != null && language.languageCodes != null && language.texts.Length == language.keys.Length * language.languageCodes.Length,
+                    "board text: KD_Language.keys hold the board's keys (lacking: " + string.Join(", ", lacking) + "; run Wash/11, which runs Configure)");
+                object v; var lb = UdonSharpEditorUtility.GetBackingUdonBehaviour(language);
+                bool backed = lb != null && lb.publicVariables.TryGetVariableValue("keys", out v) && v is string[] bk && keys.All(k => bk.Contains(k));
+                req(backed, "board text: KD_Language backing keys hold the board's keys");
+            }
+
+            // glyphs (ja / en: baked into the shared font)
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KD_ShopSetupEditor.SharedFontPath);
+            if (font == null) { req(false, "board text: the shared font " + KD_ShopSetupEditor.SharedFontPath); return; }
+            var lackGlyph = new HashSet<char>();
+            foreach (var ch in BoardGlyphText(c)) if (KD_LocalizationEditor.Drawn(ch) && !KD_LocalizationEditor.HasGlyph(font, ch)) lackGlyph.Add(ch);
+            req(lackGlyph.Count == 0, "board text: every ja / en board character is in the shared font (missing: " + string.Join(" ", lackGlyph.Select(ch => ch + " U+" + ((int)ch).ToString("X4"))) + "; Wash/11 adds them through AddGlyphs)");
+            var texts = AllStationTransforms(scene).Select(st => st.Find(BoardName)).Where(x => x != null).SelectMany(x => x.GetComponentsInChildren<TMP_Text>(true)).ToArray();
+            req(texts.Length > 0 && texts.All(x => x.font == font), "board text: every board text uses " + KD_ShopSetupEditor.SharedFontPath + " (" + texts.Length + ")");
+
+            // fit at the autosize floor, per language
+            Func<string, string, string> T = (code, key) => BoardText(c, code, key);
+            float nameW = DogNameSize.x, stateW = DogStateSize.x, statusW = StatusSize.x, ruleW = RuleSize.x, heightsW = HeightsSize.x;
+            var specs = BoardButtons();
+            var fails = new List<string>(); var warns = new List<string>(); float worst = 0f; string worstWhat = "";
+            foreach (var lang in c.languages)
+            {
+                bool baked = KD_LocalizationEditor.Bundled(lang);
+                var names = BoardDogNameKeys.Select(k => T(lang.code, k)).ToArray();
+                string longName = names.OrderByDescending(n => BoardEstWidth(font, n, MinPt)).First();
+                var checks = new List<KeyValuePair<string, KeyValuePair<string, float>>>();   // what, (text, width)
+                foreach (var n in names) checks.Add(BoardFit("dog name", n, nameW));
+                for (int i = KH_WashStationBoard.WStCallable; i <= KH_WashStationBoard.WStWashedOther; i++) checks.Add(BoardFit(BoardWordKeys[i], T(lang.code, BoardWordKeys[i]), stateW));
+                foreach (var s in specs) if (s.kind != 0) checks.Add(BoardFit(s.key, T(lang.code, s.key), s.size.x - 24f));
+                checks.Add(BoardFit("pick", T(lang.code, BoardWordKeys[KH_WashStationBoard.WPick]), statusW));
+                checks.Add(BoardFit("calling", T(lang.code, BoardWordKeys[KH_WashStationBoard.WCalling]).Replace("{0}", longName), statusW));
+                checks.Add(BoardFit("here", T(lang.code, BoardWordKeys[KH_WashStationBoard.WHere]).Replace("{0}", longName), statusW));
+                string longReason = Enumerable.Range(KH_WashStationBoard.WStLeashedOther, KH_WashStationBoard.WStWashedOther - KH_WashStationBoard.WStLeashedOther + 1)
+                    .Select(i => T(lang.code, BoardWordKeys[i])).Concat(new[] { T(lang.code, BoardWordKeys[KH_WashStationBoard.WBusy]) })
+                    .OrderByDescending(x => BoardEstWidth(font, x, MinPt)).First();
+                checks.Add(BoardFit("refusal", T(lang.code, BoardWordKeys[KH_WashStationBoard.WNameReason]).Replace("{0}", longName).Replace("{1}", longReason), statusW));
+                checks.Add(BoardFit("rule", T(lang.code, BoardWordKeys[KH_WashStationBoard.WRule]).Replace("{0}", Mathf.RoundToInt(CallRanges.Max()).ToString()), ruleW));
+                checks.Add(BoardFit("heights", T(lang.code, BoardWordKeys[KH_WashStationBoard.WHeights]).Replace("{0}", "0.9").Replace("{1}", "1.2"), heightsW));
+                foreach (var kv in checks)
+                {
+                    float w = BoardEstWidth(font, kv.Value.Key, MinPt), room = kv.Value.Value - 4f;
+                    if (w / room > worst) { worst = w / room; worstWhat = lang.code + " " + kv.Key + " '" + kv.Value.Key + "' " + w.ToString("F0") + " / " + room.ToString("F0") + " px"; }
+                    if (w <= room) continue;
+                    (baked ? fails : warns).Add(lang.code + " " + kv.Key + " '" + kv.Value.Key + "' " + w.ToString("F0") + " > " + room.ToString("F0") + " px");
+                }
+            }
+            req(fails.Count == 0, "board text: ja / en fit their labels at " + MinPt + " pt (over: " + string.Join("; ", fails) + ")");
+            if (warns.Count > 0) r.notes.Add("WARN board text: estimated over the label at " + MinPt + " pt in the client-font languages (check on a device): " + string.Join("; ", warns));
+            r.notes.Add("board text: the widest text at " + MinPt + " pt is " + worstWhat + " (" + (worst * 100f).ToString("F0") + "% of its label)");
+        }
+
+        static KeyValuePair<string, KeyValuePair<string, float>> BoardFit(string what, string text, float width)
+        {
+            return new KeyValuePair<string, KeyValuePair<string, float>>(what, new KeyValuePair<string, float>(text, width));
+        }
+
+        /// <summary>A one-line text's width (px) at pt: the shared font's advances for the characters it has, else 1 em for CJK /
+        /// Hangul / full-width and 0.62 em for the rest (VRChat's client font draws those; an estimate).</summary>
+        static float BoardEstWidth(TMP_FontAsset font, string s, float pt)
+        {
+            float w = 0f, scale = pt / Mathf.Max(1f, font.faceInfo.pointSize);
+            foreach (char ch in s)
+            {
+                if (!KD_LocalizationEditor.Drawn(ch)) continue;
+                TMP_Character tc;
+                if (font.characterLookupTable != null && font.characterLookupTable.TryGetValue((uint)ch, out tc) && tc != null && tc.glyph != null)
+                    w += tc.glyph.metrics.horizontalAdvance * scale * tc.scale;
+                else w += pt * (BoardWide(ch) ? 1.0f : 0.62f);
+            }
+            return w;
+        }
+
+        static bool BoardWide(char ch)
+        {
+            return (ch >= 0x1100 && ch <= 0x115F) || (ch >= 0x2E80 && ch <= 0xA4CF) || (ch >= 0xAC00 && ch <= 0xD7A3) || (ch >= 0xF900 && ch <= 0xFAFF) || (ch >= 0xFF00 && ch <= 0xFF60);
         }
 
         /// <summary>Codex review 8 / coordinator 2026-10-01: my floor's user layer 22. The interact ray passes it, the players stand
@@ -508,6 +676,14 @@ namespace KominkaHillside.Editor
                     req(Mathf.Abs(p.floatValue - kv.Value) < 1e-4f, label + ": Call." + kv.Key + " " + p.floatValue + " = " + kv.Value);
                     Backing(req, cb, label + ": Call", kv.Key, kv.Value);
                 }
+                // IMP-DOG-037: the station's call range (the invariants between stations: CheckCallRanges)
+                var pr = P("callRange");
+                if (pr != null)
+                {
+                    float want = CallRangeOf(index);
+                    req(Mathf.Abs(pr.floatValue - want) < 1e-4f, label + ": Call.callRange " + pr.floatValue + " = " + want + " m (IMP-DOG-037)");
+                    Backing(req, cb, label + ": Call", "callRange", want);
+                }
             }
 
             // ---- my floor ----
@@ -549,17 +725,61 @@ namespace KominkaHillside.Editor
             req(canvas != null && canvas.renderMode == RenderMode.WorldSpace && bt.gameObject.layer == 0 && bt.GetComponent<VRCUiShape>() != null && bt.GetComponent<UnityEngine.UI.GraphicRaycaster>() != null
                 && box != null && box.isTrigger, label + ": board = World Space Canvas on Default + GraphicRaycaster + VRCUiShape + trigger BoxCollider");
             req(Near(bt.localPosition, BoardLocal) && Quaternion.Angle(bt.localRotation, Quaternion.identity) < 0.01f, label + ": board at the back of the shelf top, facing the front (" + bt.localPosition.ToString("F3") + ")");
-            req(board.call == call && board.personalFloor == pf && board.statusText != null && board.statusText.transform.IsChildOf(bt), label + ": board.call / personalFloor / statusText wired");
-            req(board.dogNames != null && board.dogNames.SequenceEqual(DogNamesJa), label + ": board.dogNames = " + string.Join(" / ", DogNamesJa));
-            req(board.wordPick == WordPick && board.wordCalling == WordCalling && board.wordHere == WordHere && board.wordBusy == WordBusy && board.wordLeashed == WordLeashed && board.wordStand == WordStand && board.wordMe == WordMe,
-                label + ": board words = the builder's (" + WordPick + " / " + WordCalling + " / " + WordHere + " / " + WordBusy + " / " + WordLeashed + ")");
-            Backing(req, bb, label + ": board", "call", board.call);
-            Backing(req, bb, label + ": board", "personalFloor", board.personalFloor);
-            Backing(req, bb, label + ": board", "statusText", board.statusText);
-            Backing(req, bb, label + ": board", "dogNames", board.dogNames);
+            // ---- IMP-DOG-037: the board's wiring (the words themselves: CheckBoardText) ----
+            KD_LocalizationEditor.Catalog catalog = null;
+            try { catalog = BoardCatalog(); } catch (Exception e) { req(false, label + ": the localization catalog loads (" + e.Message + ")"); }
+            var pouches = UnityEngine.Object.FindObjectsOfType<KD_TreatPouch>(true);
+            var lang = pouches.Length == 1 ? pouches[0].language : null;
+            req(board.call == call && board.personalFloor == pf, label + ": board.call / personalFloor wired");
+            req(lang != null && board.language == lang, label + ": board.language = KD_TreatPouch.language (" + (board.language != null ? board.language.name : "null") + ")");
+            Func<TMP_Text, string, bool> under = (x, n) => x != null && x.transform.parent == bt && x.name == n;
+            req(under(board.statusText, StatusName) && under(board.ruleText, RuleName) && under(board.heightText, HeightsName),
+                label + ": board.statusText / ruleText / heightText = " + BoardName + "/" + StatusName + ", " + RuleName + ", " + HeightsName);
+            int nd = BoardDogNameKeys.Length;
+            bool dogsOk = board.dogButtons != null && board.dogButtons.Length == nd && board.dogNameLabels != null && board.dogNameLabels.Length == nd && board.dogStateLabels != null && board.dogStateLabels.Length == nd;
+            for (int i = 0; dogsOk && i < nd; i++)
+            {
+                var dt = bt.Find("Dog_" + i);
+                dogsOk = dt != null && board.dogButtons[i] == dt.GetComponent<UnityEngine.UI.Image>() && board.dogButtons[i] != null
+                    && board.dogNameLabels[i] != null && board.dogNameLabels[i].transform.parent == dt && board.dogNameLabels[i].name == "Label"
+                    && board.dogStateLabels[i] != null && board.dogStateLabels[i].transform.parent == dt && board.dogStateLabels[i].name == DogStateName;
+            }
+            req(dogsOk, label + ": board.dogButtons / dogNameLabels / dogStateLabels = Dog_0..5 (Image, Label, " + DogStateName + ")");
+            var fixedNames = new[] { "End", "StandUp", "StandDown", "MeUp", "MeDown" };
+            bool fixedOk = board.buttonLabels != null && board.buttonLabels.Length == fixedNames.Length;
+            for (int i = 0; fixedOk && i < fixedNames.Length; i++)
+                fixedOk = board.buttonLabels[i] != null && board.buttonLabels[i].transform.parent != null && board.buttonLabels[i].transform.parent.name == fixedNames[i] && board.buttonLabels[i].transform.parent.parent == bt;
+            req(fixedOk, label + ": board.buttonLabels = " + string.Join(", ", fixedNames) + " (the W" + "End.. order)");
+            req(board.wordKeys != null && board.wordKeys.SequenceEqual(BoardWordKeys) && BoardWordKeys.Length == KH_WashStationBoard.WordCount, label + ": board.wordKeys = the " + KH_WashStationBoard.WordCount + " wash.* keys in W* order");
+            req(board.dogNameKeys != null && board.dogNameKeys.SequenceEqual(BoardDogNameKeys), label + ": board.dogNameKeys = the hand menu's dog name keys (" + string.Join(", ", BoardDogNameKeys) + ")");
+            string[] jaWords = null, jaNames = null;
+            if (catalog != null)
+            {
+                try
+                {
+                    jaWords = BoardWordKeys.Select(k => BoardText(catalog, catalog.fallbackLanguage, k)).ToArray();
+                    jaNames = BoardDogNameKeys.Select(k => BoardText(catalog, catalog.fallbackLanguage, k)).ToArray();
+                }
+                catch (Exception e) { req(false, label + ": every board key is in the catalog (" + e.Message + ")"); }
+            }
+            if (jaWords != null)
+            {
+                req(board.words != null && board.words.SequenceEqual(jaWords), label + ": board.words = the catalog's " + catalog.fallbackLanguage + " (" + (board.words != null ? board.words.Length : 0) + ")");
+                req(board.dogNames != null && board.dogNames.SequenceEqual(jaNames), label + ": board.dogNames = " + string.Join(" / ", jaNames));
+            }
+            Func<Color, Color, bool> same = (a, c) => Mathf.Abs(a.r - c.r) + Mathf.Abs(a.g - c.g) + Mathf.Abs(a.b - c.b) + Mathf.Abs(a.a - c.a) < 1e-3f;
+            req(same(board.colorCallable, KD_UiSpriteEditor.ActionPrimary) && same(board.colorHere, KD_UiSpriteEditor.ActionEquip) && same(board.colorUnavailable, KD_UiSpriteEditor.TabOff)
+                && same(board.inkReason, KD_UiSpriteEditor.AccentGold) && same(board.inkNameDim, BoardInkDim) && same(board.inkState, BoardInkState),
+                label + ": the three looks = ActionPrimary (callable) / ActionEquip (at this station) / TabOff (not now) + the reason in AccentGold");
+            foreach (var f in new[] { "call", "personalFloor", "language", "statusText", "ruleText", "heightText", "dogButtons", "dogNameLabels", "dogStateLabels", "buttonLabels", "dogNameKeys", "dogNames", "wordKeys", "words" })
+            {
+                object v = typeof(KH_WashStationBoard).GetField(f).GetValue(board);
+                Backing(req, bb, label + ": board", f, v);
+            }
             var specs = BoardButtons();
             var buttons = bt.GetComponentsInChildren<UnityEngine.UI.Button>(true);
             req(buttons.Length == specs.Length, label + ": " + specs.Length + " buttons (6 dogs, end, stand up/down, me up/down) (" + buttons.Length + ")");
+            int di = 0;
             foreach (var s in specs)
             {
                 var b = bt.Find(s.name);
@@ -569,23 +789,43 @@ namespace KominkaHillside.Editor
                 bool ok = btn.onClick.GetPersistentEventCount() == 1 && btn.onClick.GetPersistentTarget(0) == bb && btn.onClick.GetPersistentMethodName(0) == "SendCustomEvent"
                     && calls != null && calls.arraySize == 1 && calls.GetArrayElementAtIndex(0).FindPropertyRelative("m_Arguments.m_StringArgument").stringValue == s.evt;
                 req(ok, label + ": button " + s.name + " -> board " + s.evt + " (one listener)");
-                var lab = b.GetComponentInChildren<TextMeshProUGUI>(true);
-                req(lab != null && lab.text == s.label, label + ": button " + s.name + " reads '" + s.label + "' (" + (lab != null ? lab.text : "none") + ")");
+                var labT = b.Find("Label");
+                var lab = labT != null ? labT.GetComponent<TextMeshProUGUI>() : null;
+                string want = jaWords == null ? null : s.kind == 0 ? jaNames[di] : BoardText(catalog, catalog.fallbackLanguage, s.key);
+                if (want != null) req(lab != null && lab.text == want, label + ": button " + s.name + " reads '" + want + "' in the saved scene (" + (lab != null ? lab.text : "none") + ")");
+                if (s.kind == 0) di++;
             }
 
-            // ---- glyphs: every text on the board, and the words the board writes at run time ----
-            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KD_ShopSetupEditor.SharedFontPath);
-            var texts = bt.GetComponentsInChildren<TMP_Text>(true);
-            req(font != null && texts.All(x => x.font == font), label + ": every board text uses " + KD_ShopSetupEditor.SharedFontPath);
-            if (font != null)
+            // ---- layout: every part inside the board, the buttons and the three lines do not overlap ----
+            var parts = new List<KeyValuePair<string, Rect>>();
+            foreach (var n in new[] { StatusName, RuleName, HeightsName }) { var x = bt.Find(n) as RectTransform; if (x != null) parts.Add(new KeyValuePair<string, Rect>(n, PartRect(x))); }
+            foreach (var s in specs) { var x = bt.Find(s.name) as RectTransform; if (x != null) parts.Add(new KeyValuePair<string, Rect>(s.name, PartRect(x))); }
+            var inside = Rect.MinMaxRect(-BoardPixels.x * 0.5f, -BoardPixels.y * 0.5f, BoardPixels.x * 0.5f, BoardPixels.y * 0.5f);
+            var outside = parts.Where(p => p.Value.xMin < inside.xMin - 0.01f || p.Value.xMax > inside.xMax + 0.01f || p.Value.yMin < inside.yMin - 0.01f || p.Value.yMax > inside.yMax + 0.01f).Select(p => p.Key).ToArray();
+            req(parts.Count == specs.Length + 3 && outside.Length == 0, label + ": all " + (specs.Length + 3) + " parts inside the " + BoardPixels.x + " x " + BoardPixels.y + " board (" + parts.Count + " found; outside: " + string.Join(", ", outside) + ")");
+            var overlaps = new List<string>();
+            for (int i = 0; i < parts.Count; i++) for (int j = i + 1; j < parts.Count; j++) if (parts[i].Value.Overlaps(parts[j].Value)) overlaps.Add(parts[i].Key + "/" + parts[j].Key);
+            req(overlaps.Count == 0, label + ": no two parts overlap (" + string.Join(", ", overlaps) + ")");
+            for (int i = 0; i < nd; i++)
             {
-                string all = string.Concat(texts.Select(x => x.text)) + string.Concat(DogNamesJa) + WordPick + WordCalling + WordHere + WordBusy + WordLeashed + WordStand + WordMe + "0123456789.m ";
-                var need = new string(all.Where(ch => !char.IsControl(ch)).Distinct().ToArray());
-                List<char> missing;
-                bool okAll = font.HasCharacters(need, out missing);
-                req(okAll, label + ": every board character is in the shared font (missing: " + (missing != null && missing.Count > 0 ? string.Join(" ", missing.Distinct().Select(ch => ch + " U+" + ((int)ch).ToString("X4"))) : "none")
-                    + "; KD_NotoSerif is Static: add them with its AddGlyphs entry)");
+                var dt = bt.Find("Dog_" + i) as RectTransform;
+                var nl = dt != null ? dt.Find("Label") as RectTransform : null; var sl = dt != null ? dt.Find(DogStateName) as RectTransform : null;
+                bool ok = dt != null && nl != null && sl != null;
+                if (ok)
+                {
+                    var own = Rect.MinMaxRect(-dt.sizeDelta.x * 0.5f - 0.01f, -dt.sizeDelta.y * 0.5f - 0.01f, dt.sizeDelta.x * 0.5f + 0.01f, dt.sizeDelta.y * 0.5f + 0.01f);
+                    Rect a = PartRect(nl), c = PartRect(sl);
+                    ok = !a.Overlaps(c) && a.yMin >= c.yMax - 0.01f && own.Contains(a.min) && own.Contains(a.max) && own.Contains(c.min) && own.Contains(c.max);
+                }
+                req(ok, label + ": Dog_" + i + " name and state lines inside the button, the name above the state");
             }
+        }
+
+        /// <summary>A UI part's rectangle in its parent's units (anchored at the centre, as EnsureUiChild makes them).</summary>
+        static Rect PartRect(RectTransform t)
+        {
+            var c = t.anchoredPosition; var s = t.sizeDelta;
+            return Rect.MinMaxRect(c.x - s.x * 0.5f, c.y - s.y * 0.5f, c.x + s.x * 0.5f, c.y + s.y * 0.5f);
         }
 
         static bool Near(Vector3 a, Vector3 b) { return (a - b).sqrMagnitude < 1e-6f; }

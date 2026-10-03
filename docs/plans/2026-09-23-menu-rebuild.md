@@ -95,7 +95,7 @@
 | さんぽ Walk2 (新規) | `KD_TreatPouch.Walk.cs` (新規。KH_HandMenu の AttachGate / Pending / GateText を移す) | `KH_LeashManager` (接続/解除/行き先)、犬 6 行 + 行き先 2 行 | 段階 0 |
 | おやつ Treat0 | `.Treat` **裏山改変** (古民家の板にはおやつの購入が無く棚で買う。裏山は行に [買う] を生成し、確認カードに kind Treat を追加、`catalog._RequestBuy(key)`、キャンセル、残高と在庫上限 20 の再確認、購入後の行の再描画) | KD_TreatBox / Slot / Controller / Fx、購入は catalog | IMP-DOG-014 (台帳の口は IMP-PRG-001) |
 | かざり Acc5 (+撫でFX) | `.Acc` + `.PetFx` | KD_AccessoryBox / KD_PetFxBox / KD_PlayerFxTag、ミニチュア | IMP-DOG-015 |
-| 呼ぶ Sleep3 | `.Sleep` + KD_CallPose + KD_SleepPlacement | KD_SleepBoard / KD_SleepSlot、リード除外は KH_LeashManager、斜面は ValidPlacement 裏山改変 | IMP-DOG-016 |
+| 呼ぶ Sleep3 | `.Sleep` + KD_CallPose + KD_SleepPlacement | KD_SleepBoard / KD_SleepSlot、リード除外は KH_LeashManager、斜面は ValidPlacement 裏山改変 (2026-10-03 IMP-DOG-032 で外し、古民家どおり NaN / Inf だけに戻した) | IMP-DOG-016 |
 | おもちゃ Toy1 | `.Toy` (裏山改変: 行に [ボール][ディスク]) | `KH_ToyRecall` (KD_ToyBox / KD_BallController は使わない) | 段階 0 |
 | あそぶ Play6 | `KD_ActivitiesMenu` (裏山改変: 集合のみ、隊形 6・マーカー。**2026-09-24 追加: トレーナー群の行「フリスビーの取り方」で 6 プリセットを順送り** = 旧 [試作] の移設、DES-UI-002) | `KD_GroupActivities` 裏山改変 / `KH_TrainerPass` / `KH_FrisbeeCatch._RequestVariant` | 段階 0 (フリスビー行は 0-b 後) |
 | ライブ Live4 | `.Live` (裏山改変: live が null なら「準備中」1 行) | KD_LiveSystem は置かない (DES-LIV-001 後) | 段階 0 (準備中) |
@@ -152,7 +152,7 @@
 | Shop Keeper/2 Setup, 3 Verify | **Menu/4d Setup Shop Keeper** / **4e Verify Shop Keeper** (`KD_ShopKeeperSetupEditor.Hillside.cs`。`KH_Dogs/KD_ShopKeeper` + 子 man_farm、ナビ 5 項目)。古民家版の入口 `Menu/Imported-Unused/Shop Keeper/2・3` も同じ 5 項目で組む | 1 |
 | 5 Treat System/1 Create Program Assets | Menu/5 Create Pouch Programs | 0-b |
 | 6 Sleep System/1 Create Programs, 2 Setup, 3 Verify | **Menu/6a Create Sleep Programs** / **6 Setup Sleep** / **6b Verify Sleep System** (`KD_SleepSetupEditor.cs` 裏山改変。6 は `KH_Dogs/KD_SleepBoard` + `KD_SleepSlot` ×6、6 匹の wander / fetch、`KD_LiveAccess`、`pouch.sleepBoard`、`KH_LeashManager.sleepBoard` を配線) | 2 (IMP-DOG-016) |
-| (Sleep Placement/1 Setup) | **Menu/6i Setup Sleep Placement** (`KD_SleepPlacementEditor.cs`。`KH_Dogs/KD_SleepPlacement`、赤マーク `Models/SleepPlacement/Invalid.mat`) | 2 (IMP-DOG-016) |
+| (Sleep Placement/1 Setup) | **Menu/6i Setup Sleep Placement** (`KD_SleepPlacementEditor.cs`。`KH_Dogs/KD_SleepPlacement`。赤マーク `Models/SleepPlacement/Invalid.mat` は IMP-DOG-032 で廃止し、6i が残りを消す) | 2 (IMP-DOG-016) |
 | (Call Pose/1 Setup) | **Menu/6j Setup Call Poses** (`KD_CallPoseEditor.cs`。`KH_Dogs/KD_CallPose`、6 匹 × 7 ポーズを `Models/DogPreviews` へ焼く。重い) | 2 (IMP-DOG-016) |
 | Treat System/2 Setup (おやつの器) | **Menu/6c Setup Treats** / **6d Verify Treats** (新規 `KD_TreatSetupEditor.Treats.cs`。`KD_TreatHome_0..2` / `KD_Treat_0..2` / `KD_TreatSlot_0..2` / `KD_TreatBox` / `KD_TreatFx` を `KH_Dogs` 直下に)。古民家の Setup は `Imported-Unused/Treat System/2 (Kominka)` のまま | 2 (IMP-DOG-014) |
 | Accessories/2 Setup, 3 Verify | **Menu/6e Setup Accessories** / **6f Verify Accessories** (新規 `KD_AccessorySetupEditor.Hillside.cs`。24 品 × 6 匹の見た目ノード、`KH_Dogs/KD_AccessorySystem` (Manual)、首輪干渉表) | 2 (IMP-DOG-015) |
@@ -461,11 +461,11 @@ Menu/20 で新たに見るもの: ledger / catalog が `KH_Dogs` 直下、`KD_Sh
   - ミニチュア: 犬の体は古民家の焼き済みと 12 姿勢すべて一致した (最大ずれ 0.022 mm)。違いは首輪 (Band) の分だけなので、Menu/18 で首輪込みに焼き直した (司令塔の決定。2026-09-24 にユーザー OK で確定、049b173)。
 - 呼ぶ・ポーズ・場所決め (016):
   - `KD_SleepBoard`: `hillsideLeashes` と読むだけの API (`_IsCalled` / `_IsLeashedDog` / `_IsGatheringDog` / `_IsWalkBusy`)。
-  - `KD_SleepSlot`: 斜面の定数を 1 か所に置いた (`HillsideMinGroundNormal = 0.9`、layer 0 / 11、probe 0.5 m、高さの許容 0.1 m)。`_PlacementGroundOk` は真下へのレイキャストで高さと法線を見る。`ValidPlacement` は「場所を選んで呼ぶ」の確定にだけ効く。予約・確定・`_BeginSelection` はリード中・集合中の犬を拒否する。Watch: 呼ぶとリードが同時に同じ犬に乗ったら、リードが勝って呼ぶを解放する。
-  - `KD_SleepPlacement`: マーカーを地面へ落とす。無効な場所は赤マーク + 「この姿勢には平らな場所が必要です」。ボタン / Desktop のクリック / VR の長押しの 3 経路とも確定できない (`invalidMarks`)。
+  - `KD_SleepSlot`: 斜面の定数を 1 か所に置いた (`HillsideMinGroundNormal = 0.9`、layer 0 / 11、probe 0.5 m、高さの許容 0.1 m)。`_PlacementGroundOk` は真下へのレイキャストで高さと法線を見る。`ValidPlacement` は「場所を選んで呼ぶ」の確定にだけ効く。予約・確定・`_BeginSelection` はリード中・集合中の犬を拒否する。Watch: 呼ぶとリードが同時に同じ犬に乗ったら、リードが勝って呼ぶを解放する。**2026-10-03 IMP-DOG-032 で斜面の定数・`_PlacementGroundOk` を外し、`ValidPlacement` は古民家どおり NaN / Inf だけ** (リード・集合の拒否と Watch は残す)。
+  - `KD_SleepPlacement`: マーカーを地面へ落とす。無効な場所は赤マーク + 「この姿勢には平らな場所が必要です」。ボタン / Desktop のクリック / VR の長押しの 3 経路とも確定できない (`invalidMarks`)。**2026-10-03 IMP-DOG-032 で古民家どおりに戻した** (手の前 0.15 m / 頭の前の距離にそのまま置く。赤マーク・文言・確定の抑止なし)。
   - `KD_CallPose`: リード中・集合中は開かない。開いている間にリードが付いたら操作を止め、理由を出す。
   - `KD_TreatPouch.Sleep.cs`: 行の状態に `SleepLeashed` (`WordSleepLeashed`) / `SleepGathering` (`WordWalkStateGathering`) を足した。
-  - `KD_DogWanderController.Sleep.cs`: `SleepStep` は集合と同じ `GatherStep` (NavMesh + 接地) で向かう。失敗したら旧 `StepToward`。最後の据わりも接地させる。
+  - `KD_DogWanderController.Sleep.cs`: `SleepStep` は集合と同じ `GatherStep` (NavMesh + 接地) で向かう。失敗したら旧 `StepToward`。最後の据わりも接地させる。**2026-10-03 IMP-DOG-032 で最後の据わりの接地を外した** (古民家どおり置いた高さへ浮く)。置いて寝ている犬は `KD_DogPack` の押し出しから外す (`PlacedSleepHeld`)。近づく足 (`SleepStep`) は残す。
   - Editor: `KD_SleepSetupEditor` (6a / 6 / 6b を裏山向けに)、`KD_SleepPlacementEditor` (6i)、`KD_CallPoseEditor` (6j。シーンのバックアップ保存をやめた。7 状態がそろった animator は作り直さない。焼くときは `KH_*` (首輪) を隠す。`KD_ShopItem_Action_*` の 4 行だけ配線する)。
 - 統合 (共通ファイル): `KD_TreatPouch.Confirm` / `.Redraw` / `.Hillside` / `.Toy` / `.Walk`、`KD_TreatSetupEditor.Hillside` / `.Verify`、`KD_HandMenuScrollEditor`、`KH_LeashManager` (`sleepBoard`。呼ばれた犬への `ReqAttach` を拒否)、`KH_DogWalkingEditor` (Walking/3 が sleepBoard / companionSlot を null に戻し、Walking/5 が FAIL する問題を直した)、Bindings 18 行の復元。
   - 矛盾の裁き: Menu/7 の段階 2 は 6 参照 (box / accessories / petFxBox / sleepBoard / sleepPlacement / callPose) を `HillsideFindStage2` の 1 か所で探し、欠けていれば pouch に触れる前に止める。配線は box → かざり・撫でFX → 呼ぶ の 1 ブロック (016 の「board は BuildPouchPanel の前」を守る)。Verify 20 の SKIP 3 行は 1 つの if/else にした。群見出し `FxHead0/1` を入れた。`KD_Hillside.Stage = 2`。`RedrawFx()` (66 行) は削除して `RedrawFxRows` に一本化した。
@@ -486,7 +486,7 @@ Menu/20 で新たに見るもの: ledger / catalog が `KH_Dogs` 直下、`KD_Sh
 
 Lab と Dachs は首輪が低く大きいことが原因。案 C 決定前の実測 (2026-09-24) の時点では、8 件を取り下げずに残し、取り下げはユーザー判断としていた。→ **2026-09-24 ユーザー決定 (案 C)**: 首元品はなくさず、首輪飾りへの作り替えもしない。当たる組み合わせだけ対処する。(b) 前 + 下 で解消する 5 件 (Lab: 宝石付き首飾り 前 8 + 下 16mm / ひまわり首飾り 前 2 + 下 26 / 花コサージュ 前 22 + 下 12 / 肉球メダリオン 前 6 + 下 30、Dachs: 肉球メダリオン 前 0 + 下 28) は Menu/6e が自動適用 (値は KD_AccessoryFits.Kominka.json の hillsideB*)。物理的に無理な 3 件 (Lab のバンダナ、Dachs のバンダナ、Dachs のひまわり首飾り) は除外表 KD_AccessorySetupEditor.HillsideCollarExcluded → KD_AccessoryBox.blockedDogs/blockedProducts に配線し、犬選択の行を暗くして「この犬には付けられません (首輪と重なる)」(WordAccNotForDog)、Owner も拒否。夏セットの Dachs はセットごと拒否せず ひまわり首飾りだけ飛ばす。既定品バンダナは「既定 = 何も付けない」で問題なし。Verify 6f: 5 件「解消 (b)」・3 件「除外」・解消しない品 0、25 / 20 / 22 / 21 / Walking/5 PASS、保存済み。試着・ポーズのミニチュアは首輪込みで確定 (ユーザー OK)。(案 C 決定前の実測時点では (b) の値は計算だけで未適用だった。)
 
-**斜面の法線 (016 の実測)**
+**斜面の法線 (016 の実測)** — 2026-10-03 IMP-DOG-032 で判定ごと外した (ユーザー決定)。下の表は記録として残す。
 
 `HillsideMinGroundNormal = 0.9` (約 25.8°。仮値)。集合 (0.5) より厳しくするのは、伏せる姿勢は体を地面に付けるため。
 
@@ -685,8 +685,10 @@ Lab と Dachs は首輪が低く大きいことが原因。案 C 決定前の実
   - [ ] **60 秒ルールと残留 (2 人)**: 相手が着けた犬の同じ枠は 60 秒待たされ、理由が出る。着けた人が退室しても飾りは残る。
 - 呼ぶ・ポーズ・場所決め:
   - [ ] **T-010**: リード中の犬の行は暗く「リード中。さんぽで外してから」が出る。外すと呼べる。呼ばれて待機中の犬はさんぽでつなげない (理由が出る)。集合中の犬も呼べない。
-  - [ ] 斜面ではマーカーが赤くなり「この姿勢には平らな場所が必要です」が出て、ボタン・Desktop のクリック・VR の長押しのどれでも確定できない。文言が見える位置 (VR は手元、Desktop は頭の前) で読める。平らな場所では成立する。
-  - [ ] 判定の限界付近 (法線 0.9 前後) に置いた犬が地面に沈まず、浮かない。
+  - ~~斜面ではマーカーが赤くなり確定できない / 法線 0.9 前後で沈まない~~ (2026-10-03 IMP-DOG-032 で斜面判定を外したので廃止。下の 3 行に置き換え)
+  - [ ] (IMP-DOG-032) VR でマーカーが手の高さに追従し、膝・胸の上に置くと犬がそこへ浮いて寝る。Desktop / Touch は頭の前の距離にそのまま出る。
+  - [ ] (IMP-DOG-032) 斜面でも確定でき、赤い印や「平らな場所が必要です」が出ない。
+  - [ ] (IMP-DOG-032) 呼び終わった (起こした) 犬が地面へ戻る。高く置いて寝ている犬に別の犬が重なっても、置いた高さから落ちない。
   - [ ] **2 人**: 同じ犬を同時に選ぶと先着だけが予約できる。呼んでいる犬に別の人がリードを付けると、リードが勝って呼ぶが解ける。
   - [ ] NavMesh が途切れる場所へ呼んでも、犬が直進でたどり着き、固まらない。
   - [ ] 場所決めのマーカーのレイがラック・看板などの小物に当たって、変な高さに出ない。
@@ -700,7 +702,7 @@ Lab と Dachs は首輪が低く大きいことが原因。案 C 決定前の実
 | 飾りが首輪に埋まる・浮く | `KD_AccessoryFits.Kominka.json` と 6e のずらし量 (Menu/6f の干渉表) |
 | 撫でFX が犬に出ない・他人に出ない | `catalog.consumers` の `KD_PetFxBox` (Menu/4 を流し直すと消えないか)、`KD_PlayerFxTag`、Menu/6h |
 | 呼ぶの行がずっと暗い | `KD_SleepBoard.hillsideLeashes` と `_IsWalkBusy`、`KH_LeashManager.sleepBoard` (Menu/6b、Walking/5) |
-| 平らな場所でも赤くなる / 斜面でも確定できる | `KD_SleepSlot.HillsideMinGroundNormal` (0.9) と layer 0 / 11、probe 0.5 m |
+| 置いた犬が地面へ落ちる・沈む (IMP-DOG-032 以降) | `KD_DogWanderController.UpdatePlacedSleep` (接地しない) と `KD_DogPack` の押し出しの除外 (`PlacedSleepHeld`)、Menu/6b |
 | ポーズ面の文字が言語切替で変わらない | Bindings の 18 行 (ポーズ面・場所決め) と Bind の順序 (上の「Bind の循環依存」) |
 
 ### 4. 段階 3 (設定面の残り・ようこそ。2026-09-24 追加)
@@ -736,7 +738,7 @@ Lab と Dachs は首輪が低く大きいことが原因。案 C 決定前の実
 
 **開発側の決定 (2026-09-24 追加、段階 2・3)**
 
-5. **呼ぶの斜面判定は法線 0.9 (約 25.8°) を仮に採る**。散歩道・ラック・広場・見晴らしの実測点はすべて合格した (実装記録の表)。PCVR で限界付近の見え方を見てから確定する。
+5. **呼ぶの斜面判定は法線 0.9 (約 25.8°) を仮に採る**。散歩道・ラック・広場・見晴らしの実測点はすべて合格した (実装記録の表)。PCVR で限界付近の見え方を見てから確定する。→ **2026-10-03 撤回**: ユーザー決定で IMP-DOG-032 (古民家どおり手の高さに追従、置けない場所を作らない) が勝ち、法線の判定は外した。
 6. **集合中の犬も呼ぶの対象から外す**。呼ぶとリードが同じ犬に同時に乗ったときは**リードが勝つ**。
 7. **犬の声が鳴るようになる**。これまでシーンでは無音だった。音量設定 (犬の声だけ) を配線したので、古民家と同じく 50% で鳴る。
 

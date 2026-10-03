@@ -40,7 +40,16 @@ namespace KominkaDogRun
         // 持ち帰り台 (printRoot) は 2026-08-11 に廃止 — 板から直接持ち帰れるため不要。
         // 未撮影の板はギャラリー側 (KD_GalleryController) が非表示にしている
 
+        // 裏山改変 (IMP-WLD-005): 撮れたことを並べ直し役 (KH_PhotoAlbum) へ知らせる。型は U# 一般にして、
+        // KH_PhotoAlbum の Program Asset が無い段階でもこのファイルがコンパイルできるようにする。null なら知らせない (古民家と同じ)
+        [Tooltip("撮れた直後に _OnPhotoCaptured を送る先 (裏山: KH_PhotoAlbum)。Photo/1 が配線")]
+        public UdonSharpBehaviour capturedListener;
+
         RenderTexture _pendingSlot;
+        RenderTexture _lastSlot;
+
+        /// <summary>裏山改変 (IMP-WLD-005): 最後に色を写し終えたスロット (撮れた写真の RT)。KH_PhotoAlbum が並び替えに読む。</summary>
+        public RenderTexture LastSlot { get { return _lastSlot; } }
 
         /// <summary>今すぐ撮れるか。**スロットを確保する前に**これを見ること —
         /// 逆にすると、撮れないのにスロットだけ消費されて
@@ -79,9 +88,16 @@ namespace KominkaDogRun
         public void _FinishCapture()
         {
             if (photoCamera != null) photoCamera.enabled = false;
+            bool copied = false;
             if (_pendingSlot != null && captureTexture != null)
+            {
                 VRCGraphics.Blit(captureTexture, _pendingSlot);
+                _lastSlot = _pendingSlot;
+                copied = true;
+            }
             _pendingSlot = null;
+            // 裏山改変 (IMP-WLD-005): 色が入ってから知らせる (並び替えた先で前の写真が 1 フレーム出ない)
+            if (copied && capturedListener != null) capturedListener.SendCustomEvent("_OnPhotoCaptured");
         }
     }
 }

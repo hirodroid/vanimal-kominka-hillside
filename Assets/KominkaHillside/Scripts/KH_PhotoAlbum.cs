@@ -1,0 +1,298 @@
+using KominkaDogRun;
+using TMPro;
+using UdonSharp;
+using UnityEngine;
+using UnityEngine.UI;
+using VRC.SDKBase;
+using VRC.Udon;
+
+namespace KominkaHillside
+{
+    /// <summary>
+    /// IMP-WLD-005 (小さい版): 自動写真の「並べ方と見せ方」。docs/plans/2026-10-03-auto-photo-gallery.md §4。
+    ///
+    /// 撮るのは古民家から移した仕組みのまま (KD_PhotoDirector → KD_PhotoCapture → KD_GalleryController の 8 枠、1 カテゴリ)。
+    /// このスクリプトは、撮れた 8 枚を **新しい順に左上から** ボード (門の看板 A の隣) と手元メニューの写真の面に並べ、
+    /// 状態の文 (まだ無い / OFF / 読み込み中) と設定の [写真: ON / OFF] を描く。両方とも **同じ RenderTexture** を表示する (メモリは増えない)。
+    ///
+    /// - すべてローカル (同期変数 0、Ownership なし)。写真は各自の端末の中だけで、退室で消える
+    /// - **Update を持たない。** 動くのは 撮れた (KD_PhotoCapture._FinishCapture) / 状態が変わった (KD_PhotoSettings.Refresh。
+    ///   言語の切替は KD_PhotoSettings の 4 Hz の見回りが拾う) / メニューの操作 のときだけ
+    /// - 撮影を止めている間 (設定 OFF・読み込み前・ボードとボタンを置いていない) は KD_PhotoDirector の UdonBehaviour ごと無効にする
+    ///   (毎フレームの見回りを止める。IMP-DOG-034 / 036 の方針)
+    /// - BUG-CAM-003: iOS では VRChat カメラを寄せた全画面化が黒くなるので、スマホ (VR でない Android / iOS) では板の吸着を切る
+    ///   (古民家の KD_GalleryController.Start と同じ。板が裏山ではこのスクリプトの持ち物になったので、ここへ移した)
+    /// </summary>
+    [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
+    public class KH_PhotoAlbum : UdonSharpBehaviour
+    {
+        public const int Slots = 8;
+
+        [Header("写真の仕組み (Photo/1 が配線)")]
+        public KD_GalleryController gallery;
+        public KD_PhotoSettings settings;
+        public KD_PhotoCapture capture;
+        [Tooltip("KD_PhotoDirector の backing UdonBehaviour。撮ってよいときだけ有効")]
+        public UdonBehaviour directorUdon;
+        public KD_Language language;
+        [Tooltip("ボード・メニューのボタン・設定の行を置いたか (Photo/4 が true、Photo/5 が false)。false の間は撮らない (見る場所が無い)")]
+        public bool surfacesPlaced;
+
+        [Header("ボード (Photo/4、任意)")]
+        [Tooltip("写真の Quad (KD_PhotoPrint)。並びは位置 = 0 が左上 (いちばん新しい)、左→右、上→下")]
+        public Renderer[] boardPhotos;
+        public KD_PhotoBoard[] boardTaps;
+        [Tooltip("boardTaps の backing (Interact の文言を言語に合わせる)")]
+        public UdonBehaviour[] boardTapUdons;
+        public TMP_Text boardCaption;
+        public TMP_Text boardState;
+        [Tooltip("KD_PhotoViewer の backing (閉じる Interact の文言)")]
+        public UdonBehaviour viewerUdon;
+
+        [Header("手元メニューの写真の面 (Photo/1) とヘッダのボタン (Photo/4)")]
+        public GameObject menuPage;
+        public RawImage[] menuThumbs;
+        public GameObject[] menuThumbButtons;
+        public GameObject menuNewMark;
+        public TMP_Text menuNewLabel;
+        public TMP_Text menuState;
+        public GameObject menuSettingsButton;
+        public TMP_Text menuSettingsLabel;
+        public TMP_Text menuBackLabel;
+        public TMP_Text menuHelpMarkLabel;
+        public GameObject menuHelpRoot;
+        public TMP_Text menuHelpTitle;
+        public TMP_Text menuHelpBody;
+        public TMP_Text menuHelpCloseLabel;
+        public GameObject menuLargeRoot;
+        public RawImage menuLarge;
+        public TMP_Text menuLargeCloseLabel;
+        public TMP_Text headerLabel;
+
+        [Header("設定の行 (Photo/4)")]
+        public Button settingsToggleButton;
+        public Image settingsToggleImage;
+        public TMP_Text settingsToggleLabel;
+        public Color onColor = new Color(0.30f, 0.42f, 0.52f);
+        public Color offColor = new Color(0.20f, 0.18f, 0.16f);
+
+        // 位置 k に出すスロット番号 (k = 0 がいちばん新しい)。_count 枚ぶん有効。ハーネスが読む
+        private int[] _order;
+        private int _count;
+        private int _captures;        // 撮れた回数 (ハーネスが読む)
+        private bool _unseen;         // 面を閉じている間に撮れた
+        private bool _markShown;      // 面を開いている間、左上に「新しい」を出す
+        private int _largeSlot = -1;
+
+        private string L(string key) { return language != null ? language._Text(key) : key; }
+
+        private void Init()
+        {
+            if (_order != null) return;
+            _order = new int[Slots];
+            for (int i = 0; i < Slots; i++) _order[i] = -1;
+        }
+
+        private void Start()
+        {
+            Init();
+            // BUG-CAM-003: define で決めるのはフラグだけ (本体は全プラットフォームでコンパイルさせる。KD_GalleryController と同じ理由)
+            bool mobile = false;
+#if UNITY_ANDROID || UNITY_IOS
+            mobile = true;
+#endif
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (mobile && Utilities.IsValid(lp) && !lp.IsUserInVR() && boardPhotos != null)
+                for (int k = 0; k < boardPhotos.Length; k++)
+                    if (boardPhotos[k] != null) boardPhotos[k].material.SetFloat("_AttachDistance", 0f);   // 共有の材質ではなく複製を書く
+            if (menuLargeRoot != null) menuLargeRoot.SetActive(false);
+            if (menuHelpRoot != null) menuHelpRoot.SetActive(false);
+            ApplyGate();
+            Rebind();
+            DrawLabels();
+        }
+
+        // ================================================================ 受け口 (他の Behaviour から)
+
+        /// <summary>KD_PhotoCapture が 1 枚確定させた直後 (色を写した後)。その枠をいちばん前へ。ローカル専用。</summary>
+        public void _OnPhotoCaptured()
+        {
+            Init();
+            if (gallery == null || capture == null) return;
+            RenderTexture last = capture.LastSlot;
+            RenderTexture[] tex = gallery.slotTextures;
+            if (last == null || tex == null) return;
+            int slot = -1;
+            for (int i = 0; i < tex.Length; i++) if (tex[i] == last) { slot = i; break; }
+            if (slot < 0) return;
+            MoveToFront(slot);
+            _captures++;
+            if (MenuVisible()) _markShown = true; else _unseen = true;
+            Rebind();
+            DrawLabels();
+        }
+
+        /// <summary>KD_PhotoSettings の状態が変わった (復元・ON/OFF・作り直しの完了・失敗・言語)。ローカル専用。</summary>
+        public void _OnPhotoStateChanged()
+        {
+            Init();
+            ApplyGate();
+            Rebind();      // 実行時の RT へ差し替わった直後もここを通る
+            DrawLabels();
+        }
+
+        /// <summary>手元メニューの写真の面を開いた (KD_TreatPouch._PhotoOpen)。ローカル専用。</summary>
+        public void _RedrawMenu()
+        {
+            Init();
+            _markShown = _unseen;
+            _unseen = false;
+            _largeSlot = -1;
+            if (menuLargeRoot != null) menuLargeRoot.SetActive(false);
+            if (menuHelpRoot != null) menuHelpRoot.SetActive(false);
+            Rebind();
+            DrawLabels();
+        }
+
+        // ---- 面のボタン (onClick → SendCustomEvent。引数のある呼び出しを使わない) ----
+        public void _MenuPick0() { ShowLarge(0); }
+        public void _MenuPick1() { ShowLarge(1); }
+        public void _MenuPick2() { ShowLarge(2); }
+        public void _MenuPick3() { ShowLarge(3); }
+        public void _MenuPick4() { ShowLarge(4); }
+        public void _MenuPick5() { ShowLarge(5); }
+        public void _MenuPick6() { ShowLarge(6); }
+        public void _MenuPick7() { ShowLarge(7); }
+
+        public void _MenuLargeClose()
+        {
+            _largeSlot = -1;
+            if (menuLargeRoot != null) menuLargeRoot.SetActive(false);
+        }
+
+        public void _MenuHelpOpen()
+        {
+            if (menuHelpRoot == null) return;
+            _MenuLargeClose();
+            menuHelpRoot.SetActive(true);
+            DrawLabels();
+        }
+
+        public void _MenuHelpClose() { if (menuHelpRoot != null) menuHelpRoot.SetActive(false); }
+
+        /// <summary>設定の [写真: ON / OFF]。OFF は新しい撮影だけを止める (撮った写真は見られる。KD_PhotoSettings の既存の意味)。</summary>
+        public void _ToggleCapture()
+        {
+            if (settings == null || !settings.Ready) return;
+            if (settings.CurrentMode == 0) settings._Standard();
+            else settings._Off();
+        }
+
+        // ================================================================ 中身
+
+        private void ShowLarge(int position)
+        {
+            Init();
+            if (position < 0 || position >= _count || menuLargeRoot == null || menuLarge == null || gallery == null) return;
+            int slot = _order[position];
+            RenderTexture[] tex = gallery.slotTextures;
+            if (slot < 0 || tex == null || slot >= tex.Length || tex[slot] == null) return;
+            if (menuHelpRoot != null) menuHelpRoot.SetActive(false);
+            _largeSlot = slot;
+            menuLarge.texture = tex[slot];
+            menuLargeRoot.SetActive(true);
+            DrawLabels();
+        }
+
+        private void MoveToFront(int slot)
+        {
+            int at = -1;
+            for (int k = 0; k < _count; k++) if (_order[k] == slot) { at = k; break; }
+            if (at < 0)
+            {
+                // 新しい枠: 後ろへずらして先頭へ (8 枚そろうまで)
+                at = _count < Slots ? _count : Slots - 1;
+                if (_count < Slots) _count++;
+            }
+            for (int k = at; k > 0; k--) _order[k] = _order[k - 1];
+            _order[0] = slot;
+        }
+
+        private bool MenuVisible() { return menuPage != null && menuPage.activeInHierarchy; }
+
+        /// <summary>撮ってよいときだけ撮影の見回り (KD_PhotoDirector) を動かす。毎回書く (値が同じでも害は無い。読み取りを使わない)。</summary>
+        private void ApplyGate()
+        {
+            bool allowed = surfacesPlaced && settings != null && settings.CaptureAllowed;
+            if (directorUdon != null) directorUdon.enabled = allowed;
+        }
+
+        /// <summary>位置 k → スロット の対応で、ボードの Quad とメニューの縮小表示へ同じ RT を張る。</summary>
+        private void Rebind()
+        {
+            RenderTexture[] tex = gallery != null ? gallery.slotTextures : null;
+            for (int k = 0; k < Slots; k++)
+            {
+                int slot = k < _count ? _order[k] : -1;
+                RenderTexture t = slot >= 0 && tex != null && slot < tex.Length ? tex[slot] : null;
+                bool show = t != null;
+                if (boardPhotos != null && k < boardPhotos.Length && boardPhotos[k] != null)
+                {
+                    GameObject go = boardPhotos[k].gameObject;
+                    if (show) boardPhotos[k].material.mainTexture = t;
+                    if (go.activeSelf != show) go.SetActive(show);
+                }
+                if (show && boardTaps != null && k < boardTaps.Length && boardTaps[k] != null) boardTaps[k].slotIndex = slot;
+                if (menuThumbs != null && k < menuThumbs.Length && menuThumbs[k] != null) menuThumbs[k].texture = t;
+                if (menuThumbButtons != null && k < menuThumbButtons.Length && menuThumbButtons[k] != null && menuThumbButtons[k].activeSelf != show)
+                    menuThumbButtons[k].SetActive(show);
+            }
+            if (_largeSlot >= 0 && menuLarge != null && tex != null && _largeSlot < tex.Length) menuLarge.texture = tex[_largeSlot];
+        }
+
+        private string StateKey()
+        {
+            if (settings == null) return "";
+            if (!settings.Ready) return "photo.settings.loading";
+            if (settings.Failed) return "photo.settings.failed";
+            if (settings.CurrentMode == 0) return "photo.settings.off";
+            if (_count == 0) return "photo.empty";
+            return "";
+        }
+
+        private void DrawLabels()
+        {
+            string key = StateKey();
+            string state = key.Length == 0 ? "" : L(key);
+            bool off = settings != null && settings.Ready && settings.CurrentMode == 0;
+            // ---- ボード ----
+            if (boardCaption != null) boardCaption.text = L("gallery.caption");
+            if (boardState != null) boardState.text = state;
+            string tap = L("KD_PhotoBoard.InteractWord");
+            if (boardTapUdons != null)
+                for (int k = 0; k < boardTapUdons.Length; k++)
+                    if (boardTapUdons[k] != null) boardTapUdons[k].InteractionText = tap;
+            if (viewerUdon != null) viewerUdon.InteractionText = L("KD_PhotoViewer.InteractWord");
+            // ---- ヘッダのボタン・設定の行 ----
+            string title = L("photo.menu");
+            if (headerLabel != null) headerLabel.text = title;
+            if (settingsToggleLabel != null)
+                settingsToggleLabel.text = title + ": " + (settings == null || !settings.Ready ? "…" : off ? "OFF" : "ON");
+            if (settingsToggleImage != null) settingsToggleImage.color = off ? offColor : onColor;
+            if (settingsToggleButton != null) settingsToggleButton.interactable = settings != null && settings.Ready;
+            // ---- メニューの面 ----
+            if (menuState != null) menuState.text = state;
+            if (menuSettingsButton != null && menuSettingsButton.activeSelf != off) menuSettingsButton.SetActive(off);
+            if (menuSettingsLabel != null) menuSettingsLabel.text = L("KD_TreatPouch.WordSettings");
+            if (menuBackLabel != null) menuBackLabel.text = L("gift.back");
+            if (menuHelpMarkLabel != null) menuHelpMarkLabel.text = L("photo.help.mark");
+            if (menuHelpTitle != null) menuHelpTitle.text = L("photo.help.title");
+            if (menuHelpBody != null) menuHelpBody.text = L("photo.help.body");
+            if (menuHelpCloseLabel != null) menuHelpCloseLabel.text = L("photo.help.close");
+            if (menuLargeCloseLabel != null) menuLargeCloseLabel.text = L("photo.help.close");
+            if (menuNewLabel != null) menuNewLabel.text = L("photo.new");
+            bool mark = _markShown && _count > 0;
+            if (menuNewMark != null && menuNewMark.activeSelf != mark) menuNewMark.SetActive(mark);
+        }
+    }
+}

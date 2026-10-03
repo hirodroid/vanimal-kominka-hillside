@@ -929,6 +929,16 @@
       "root": "KH_GuideBoards",
       "path": "Map/Canvas/Paper/North",
       "key": "guide.map.north"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Kominka/Canvas/Header",
+      "key": "guide.kominka.title"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Kominka/Canvas/Paper/Body",
+      "key": "guide.kominka.body"
     }
   ],
   "interactions": [
@@ -936,6 +946,11 @@
       "root": "KD_ShopKeeper",
       "path": "",
       "key": "KD_ShopKeeper.InteractWord"
+    },
+    {
+      "root": "KH_GuideBoards",
+      "path": "Kominka/Interact",
+      "key": "guide.kominka.interact"
     }
   ],
   "names": [

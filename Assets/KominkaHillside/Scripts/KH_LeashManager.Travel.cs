@@ -44,8 +44,12 @@ namespace KominkaHillside
         public string[] spotIds;
         public Vector3[] spotPositions;
         public float[] spotYaws;
-        public bool[] spotWarpEnabled;   // 初期公開は upper と river だけ true (決定 2026-09-27)
+        public bool[] spotWarpEnabled;   // 2026-09-27 は upper と river だけ。IMP-WLD-004 (2026-10-03) で地図の番号 1〜5 (gate〜river) に広げた
         public int[] spotNodes;          // 解決したノード (代わりの点の「前後のノード」に使う)
+        // IMP-WLD-004: 地点ワープの着地点を置かない円 (洗い場の犬よけの円・個人の床、案内板・ポータル)。Course/80 が書く。
+        // 半径は「その物の半径 + 接続犬の並び (最大約 2 m + NavMesh の寄せ 1 m)」。y は使わない。合流の着地点 (_TravelFindJoinLanding) には掛けない
+        public Vector3[] travelKeepOutCenters;
+        public float[] travelKeepOutRadii;
         // 川の中心線 (KH_CourseGroundEditor.RiverAt を z 方向に riverStep m ごとに標本化) と橋の区域。共通の検査 4 に使う
         public float[] travelRiverXs;
         public float travelRiverZ0;
@@ -502,27 +506,44 @@ namespace KominkaHillside
         private bool TravelFindLanding(int spot, int playerId)
         {
             Vector3 c = spotPositions[spot];
-            if (_TravelLandingOk(c)) return true;
+            if (TravelSpotLandingOk(c)) return true;
             float start = playerId * 137.5f; // Sin/Cos take any angle (no float % needed in Udon)
             for (int k = 0; k < 6; k++)
             {
                 float a = (start + k * 60f) * Mathf.Deg2Rad;
-                if (_TravelLandingOk(c + new Vector3(Mathf.Sin(a) * 1.5f, 0f, Mathf.Cos(a) * 1.5f))) return true;
+                if (TravelSpotLandingOk(c + new Vector3(Mathf.Sin(a) * 1.5f, 0f, Mathf.Cos(a) * 1.5f))) return true;
             }
             for (int k = 0; k < 12; k++)
             {
                 float a = (start + k * 30f) * Mathf.Deg2Rad;
-                if (_TravelLandingOk(c + new Vector3(Mathf.Sin(a) * 3f, 0f, Mathf.Cos(a) * 3f))) return true;
+                if (TravelSpotLandingOk(c + new Vector3(Mathf.Sin(a) * 3f, 0f, Mathf.Cos(a) * 3f))) return true;
             }
             if (route != null && route.count > 0 && spotNodes != null && spot < spotNodes.Length && spotNodes[spot] >= 0)
             {
                 int node = spotNodes[spot];
                 for (int d = 1; d <= 5; d++)
                 {
-                    if (_TravelLandingOk(route._Position((node + d) % route.count))) return true;
-                    if (_TravelLandingOk(route._Position((node - d + route.count) % route.count))) return true;
+                    if (TravelSpotLandingOk(route._Position((node + d) % route.count))) return true;
+                    if (TravelSpotLandingOk(route._Position((node - d + route.count) % route.count))) return true;
                 }
             }
+            return false;
+        }
+
+        /// <summary>地点ワープの候補 1 点 (IMP-WLD-004): 着地点を置かない円の外 → 共通の検査 5 つ。Editor の Course/80・81 も同じ順・同じ値で検査する。</summary>
+        private bool TravelSpotLandingOk(Vector3 p)
+        {
+            if (TravelInKeepOut(p)) return false;
+            return _TravelLandingOk(p);
+        }
+
+        /// <summary>p (水平) が着地点を置かない円のどれかの中か。データが無ければ false (Course/81 とビルドの門番が無いことを止める)。</summary>
+        private bool TravelInKeepOut(Vector3 p)
+        {
+            if (travelKeepOutCenters == null || travelKeepOutRadii == null) return false;
+            int n = Mathf.Min(travelKeepOutCenters.Length, travelKeepOutRadii.Length);
+            for (int i = 0; i < n; i++)
+                if (TravelFlat(p, travelKeepOutCenters[i]) < travelKeepOutRadii[i]) return true;
             return false;
         }
 

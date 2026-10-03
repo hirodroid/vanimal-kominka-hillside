@@ -378,7 +378,10 @@ namespace KominkaDogRun
                 // IMP-DOG-034 W-4: the dog's wander controller read once for the three checks below (was 3 array reads + null checks;
                 // _wanderLen == dogWander.Length, static wiring checked in Start, as the onStand line already used)
                 KD_DogWanderController w = i < _wanderLen ? dogWander[i] : null;
-                bool onStand = w != null && w.StationLocked;
+                // IMP-DOG-032: a dog called to a chosen spot and settling / asleep there (PlacedSleepHeld) is held the same way: it may
+                // lie at hand height (a lap, a chest) or on a slope, and the snap below would drop it to the ground. (The prequel pushed
+                // and snapped it too; there the spots were floors, so it rarely showed.)
+                bool onStand = w != null && (w.StationLocked || w.PlacedSleepHeld);
                 if (!onStand && Networking.IsOwner(t.gameObject))
                 {
                     bool floating = w != null && w._WaterFloating();

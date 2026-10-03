@@ -1432,8 +1432,10 @@ namespace KominkaDogRun.Editor
             // ---- さんぽの行 / 行き先 ----
             var walkScroll = pouch.tabScrolls != null && pouch.tabScrolls.Length > KD_TreatPouch.TabWalk ? pouch.tabScrolls[KD_TreatPouch.TabWalk] : null;
             var walkContent = walkScroll == null ? null : walkScroll.content;
-            v.Check(walkContent != null && walkContent.childCount == WalkRowCount, "さんぽの行が " + WalkRowCount + " 行 (犬 6 + 行き先 2) で Scroll の Content に居る");
-            for (int i = 0; i < WalkRowCount && walkContent != null; i++)
+            // 裏山改変 (Course/25・DES-UI-006): コースの本番シーンは行き先 6 つ (行 12)。行き先 3 つ目以降の押し先と 2 列の配置は Course/26・121 が見る
+            int walkRows = pouch.walkDestinationIds != null && pouch.walkDestinationIds.Length > 0 ? WalkDogRows + pouch.walkDestinationIds.Length : WalkRowCount;
+            v.Check(walkContent != null && walkContent.childCount == walkRows, "さんぽの行が " + walkRows + " 行 (犬 6 + 行き先 " + (walkRows - WalkDogRows) + ") で Scroll の Content に居る");
+            for (int i = 0; i < walkRows && walkContent != null; i++)
             {
                 var row = walkContent.Find(WalkRowPrefix + i);
                 if (!v.Check(row != null, WalkRowPrefix + i + " がある")) continue;
@@ -1447,7 +1449,7 @@ namespace KominkaDogRun.Editor
                             && typeof(KD_TreatPouch).GetMethod(want) != null, "さんぽ " + KD_DogDefs.All[i].displayName + " [" + b + "] -> " + want + " (1 本・pouch 宛・口が実在)");
                     }
                 }
-                else
+                else if (i < WalkDogRows + 2)
                 {
                     string want = i == WalkDogRows ? "_WalkPlaza" : "_WalkGate";
                     var btn = row.Find("Here")?.GetComponent<UnityEngine.UI.Button>(); Object t;
@@ -1455,12 +1457,12 @@ namespace KominkaDogRun.Editor
                         && typeof(KD_TreatPouch).GetMethod(want) != null, "さんぽの行き先 " + WalkRowPrefix + i + " [ここへ] -> " + want);
                 }
             }
-            v.Check(pouch.walkLabels != null && pouch.walkLabels.Length == WalkRowCount && pouch.walkStateLabels != null && pouch.walkStateLabels.Length == WalkRowCount
-                && System.Array.TrueForAll(pouch.walkLabels, x => x != null) && System.Array.TrueForAll(pouch.walkStateLabels, x => x != null), "walkLabels / walkStateLabels が 8 本とも配線");
+            v.Check(pouch.walkLabels != null && pouch.walkLabels.Length == walkRows && pouch.walkStateLabels != null && pouch.walkStateLabels.Length == walkRows
+                && System.Array.TrueForAll(pouch.walkLabels, x => x != null) && System.Array.TrueForAll(pouch.walkStateLabels, x => x != null), "walkLabels / walkStateLabels が " + walkRows + " 本とも配線");
             v.Check(AllSet(pouch.walkLeftButtons, WalkDogRows) && AllSet(pouch.walkRightButtons, WalkDogRows) && AllSet(pouch.walkOffButtons, WalkDogRows)
                 && AllSet(pouch.walkLeftImages, WalkDogRows) && AllSet(pouch.walkRightImages, WalkDogRows) && AllSet(pouch.walkOffImages, WalkDogRows),
                 "walkLeft/Right/Off の Button と Image が 6 本ずつ配線");
-            v.Check(AllSet(pouch.walkHereButtons, 2) && AllSet(pouch.walkHereImages, 2), "walkHereButtons / walkHereImages が 2 本ずつ配線");
+            v.Check(AllSet(pouch.walkHereButtons, walkRows - WalkDogRows) && AllSet(pouch.walkHereImages, walkRows - WalkDogRows), "walkHereButtons / walkHereImages が " + (walkRows - WalkDogRows) + " 本ずつ配線");
 
             // ---- おもちゃの行 ([ボール] [ディスク] → KH_ToyRecall) ----
             int dogsN = KD_DogDefs.All.Length;
@@ -1549,10 +1551,9 @@ namespace KominkaDogRun.Editor
             log.AppendLine("  SKIP 棚 (KD_ShopShelf) の配線・棚の効果音・棚の商品の Collider (裏山では対象外: 棚は置かない。商品は menuOnly で KH_Dogs/KD_ShopCatalog の子。購入はメニュー)");
             if (stage >= 2)
             {
-                // 段階 2 (IMP-DOG-016): 参照は上の段階表の検査。ここは斜面判定の定数を出すだけ
-                log.AppendLine("  NOTE 斜面判定 (場所決め): KD_SleepSlot.HillsideMinGroundNormal=" + KD_SleepSlot.HillsideMinGroundNormal.ToString("F2")
-                    + " (約 " + (Mathf.Acos(KD_SleepSlot.HillsideMinGroundNormal) * Mathf.Rad2Deg).ToString("F1") + "°) mask=" + KD_SleepSlot.HillsideGroundMask
-                    + "。詳細 (実測・赤い印・ポーズ面・追加動作) は Menu/6b Verify Sleep System");
+                // 段階 2 (IMP-DOG-016): 参照は上の段階表の検査。IMP-DOG-032 で場所決めの斜面判定は外した (古民家どおり)
+                log.AppendLine("  NOTE 場所決め: 古民家どおり手 / 頭の前にそのまま置く (斜面判定・接地なし、IMP-DOG-032)。"
+                    + "詳細 (赤い印の残り・押し出しの除外・ポーズ面・追加動作) は Menu/6b Verify Sleep System");
                 // 段階 2 (IMP-DOG-015 / D-7): 試着のミニチュア (Menu/18 Build Dog Previews)。詳しい検査は Menu/25 Verify Dog Previews
                 int prodN = pouch.accessories != null && pouch.accessories.productIds != null ? pouch.accessories.productIds.Length : 0;
                 v.Check(AllSet(pouch.accPreviewDogs, dogsN) && pouch.accPreviewItems != null && pouch.accPreviewItems.Length == prodN * dogsN && prodN > 0

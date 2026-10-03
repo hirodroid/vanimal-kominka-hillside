@@ -441,6 +441,8 @@ namespace KominkaDogRun
         private string HillsideDogsBusyText()
         {
             int cause = box == null ? KD_TreatBox.HillsideBusyOther : box.HillsideAllBusyCause();
+            // IMP-DOG-006: 自分の接続犬が居るのに 1 匹も来られない (2026-10-03 ユーザー決定 2。未接続の犬へは回さない)
+            if (cause == KD_TreatBox.HillsideBusyOwnLeash) return L("KD_TreatPouch.WordTreatBusyOwnLeash");
             if (cause == KD_TreatBox.HillsideBusyLeash) return L("KD_TreatPouch.WordTreatBusyLeash");
             if (cause == KD_TreatBox.HillsideBusyGather) return L("KD_TreatPouch.WordTreatBusyGather");
             if (cause == KD_TreatBox.HillsideBusyFrisbee) return L("KD_TreatPouch.WordTreatBusyFrisbee");

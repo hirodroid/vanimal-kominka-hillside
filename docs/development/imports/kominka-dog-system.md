@@ -24,6 +24,7 @@
 - 元の作業ツリーにあった未コミットのシーン・Program Asset・音量設定は取り込まない。trackedファイルは `git show <SHA>:<path>` から採取した。
 - `KH_DogPortSource.unity` は移植用の中間シーン。本番は `Assets/Scenes/VRCDefaultWorldScene.unity`。犬を`KH_Dogs`に置き、Terrain再生成の`KH_World`の外で保持する。
 - 室内、睡眠部屋、ショップ、進行・保存、ライブ、写真、トレーナーの各サービスはシーンへ配置しない。散歩に必要な機能を先に検証するため。型依存のコードや元モデル内の非表示の飾りは残るが、選択UI・保存・解放を実装済みとは扱わない。
+  - 写真 (自動写真とギャラリー) は、この時点では「段階外 (後で取り込む)」だった。不採用の決定ではない。2026-10-03 のユーザー決定で初期公開に入れ、[IMP-WLD-005](../issues/IMP-WLD-005-auto-photo-and-gallery.md) の小さい版 (8 枚・1 カテゴリ、ボード 1 枚、手元メニューの写真の面) として配線した。古民家の `KD_PhotoSetupEditor` (Imported-Unused) は使わず、`Tools/KominkaHillside/Photo/` (`KH_PhotoGalleryEditor`) が組む。移した写真のスクリプトの裏山改変 (`KD_PhotoCapture` の撮れた通知、`KD_PhotoSettings` の 2K 外し・端末別の解像度・板の任意化・状態の通知、`KD_PhotoDirector` の見回りの間引き・フリスビーのきっかけ、`KD_TreatPouch.Photo.cs`) は [設計の実装メモ](../../plans/2026-10-03-auto-photo-gallery.md#9-実装メモ-2026-10-03) にある。寝室 (`KD_BedroomPhotoDirector`)・写真フレーム (`KD_PhotoFrame`)・写真の情報面 (`KD_PhotoHelp`) は段階外のまま
 - `KD_MenuSettings` のSleepKit参照を`KH_WITH_SLEEPKIT`で分離。既定では参照しない。夜・部屋用サービスは未配置。ナイトモードは 2026-09-21 に新規 `KH_NightMode` が担う (IMP-ENV-002。`KD_LiveNight` / `KD_MenuSettings` は使わず、覆いシェーダーは `KD_NightOverlay.shader` を `Assets/KominkaHillside/Shaders/KH_NightOverlay.shader` へコピーしてミラー抑制を足した派生物)。`KH_WITH_SLEEPKIT` 分岐の整理はライブ移植時。
 - WanderにHillsideLeash partialを追加。犬のOwnerだけがNavMesh経路と既存の加減速・地面追従を使って動かす。位置同期は元のVRCObjectSyncを継続。
 - Fetchは接続中の開始を拒否。接続状態が遅れて届いた競合は既存GiveUpを通してボールを解放する。Idleに戻る際に全クライアントでWanderのアニメ出力を失効し、次の更新で再適用。
@@ -89,7 +90,7 @@ Unityメニュー `Tools/KominkaHillside/Walking/` の順序は、1 Create Progr
 
 - 段階 1: `Scripts/KD_ProgressManager.asset`
 - 段階 2: `Animations/KD_PickupPose.anim`、`Materials/M_KD_Ball.mat`、`Models/Accessories/BlenderOptimized/Crown/KD_Crown_Optimized.fbx`、`Prefabs/KD_Ball.prefab`、`Scripts/KD_BallResetButton.asset`、`Textures/KD_HeartParticle.png`
-- 段階外 (未採用の機能。35 種): 猫、写真、ギャラリー、クレジット板、寝室のブランケット、ポスター、夜空、プレビューシーン、Android プローブ、`KD_TreatSystem` (古民家でも廃止済み) など
+- 段階外 (移植時に取り込まなかった機能。35 種): 猫、写真、ギャラリー (2026-10-03 に IMP-WLD-005 で採用。前作の資産は使わず `Assets/KominkaHillside/Textures/Photo`・`Materials/Photo` に作り直す)、クレジット板、寝室のブランケット、ポスター、夜空、プレビューシーン、Android プローブ、`KD_TreatSystem` (古民家でも廃止済み) など
 
 <details><summary>156 種の全置換表</summary>
 
@@ -531,7 +532,7 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 | 置き場 | 件数 | 中身 | 使う Issue |
 |---|---|---|---|
 | `Models/Treat/` | 26 | おやつ 4 種 (BoneCookie / PawCookie / StarCookie / Jerky) の FBX とテクスチャ、籠 (`woven+basket+3d+model/tripo_convert_…`) | 014 |
-| `Models/SleepPlacement/` | 12 | 犬 6 匹の場所決めマーカー (asset + mat)。赤マーク `Invalid.mat` を含む | 016 |
+| `Models/SleepPlacement/` | 12 | 犬 6 匹の場所決めマーカー (asset + mat)。赤マーク `Invalid.mat` を含む (IMP-DOG-032 で未使用) | 016 |
 | `Models/Accessories/` | +58 (計 70) | 飾りの FBX・材質・テクスチャ (BlenderOptimized / Everyday / ThemeSets) | 015 |
 | `Models/DogPreviews/` | 159 | 古民家の焼き済みミニチュア。裏山は Menu/18・6j で首輪込みに焼き直した | 015 / 016 |
 | `Prefabs/PetFx/` | 10 | 撫でFX の prefab (同梱 5 種 × 2 層) | 015 |
@@ -577,13 +578,14 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 | `Scripts/KD_TreatPouch.Acc.cs` | `RedrawAcc` の末尾で、カタログ階層のときだけ `RedrawFxRows`。確認カード kind Fx、戻るは `_AccBack`。CE セットの [ギフト] は `HillsideAccGiftEnabled = false` | 同上。ギフトは裏山で未決定 | 015 |
 | `Editor/KD_AccessorySetupEditor.cs` / `KD_AccessorySetsEditor.cs` / `KD_BundledPetFxEditor.cs` / `KD_DogPreviewEditor.cs` | partial 化 (裏山の差分は `.Hillside.cs`)。Verify 25 に「飾りのメッシュは 1 つを共有」の検査 | 裏山のシーン構成 | 015 |
 | `Scripts/KD_SleepBoard.cs` | `hillsideLeashes`、読むだけの API `_IsCalled` / `_IsLeashedDog` / `_IsGatheringDog` / `_IsWalkBusy` | リード・集合との排他 (IMP-DOG-016 変更 1) | 016 |
-| `Scripts/KD_SleepSlot.cs` | `HillsideMinGroundNormal = 0.9`、layer 0 / 11、probe 0.5 m、高さの許容 0.1 m。`_PlacementGroundOk` (真下へのレイキャスト)。`ValidPlacement` は「場所を選んで呼ぶ」の確定だけ。予約・確定・`_BeginSelection` はリード中・集合中を拒否。Watch: 同時ならリードが勝つ | 古民家の `ValidPlacement` は NaN / Inf だけを見る (変更 2) | 016 |
-| `Scripts/KD_SleepPlacement.cs` | マーカーを地面へ落とす。無効は赤マーク + 文言。3 経路とも確定不可 (`invalidMarks`) | 同上 | 016 |
+| `Scripts/KD_SleepSlot.cs` | `HillsideMinGroundNormal = 0.9`、layer 0 / 11、probe 0.5 m、高さの許容 0.1 m。`_PlacementGroundOk` (真下へのレイキャスト)。`ValidPlacement` は「場所を選んで呼ぶ」の確定だけ。予約・確定・`_BeginSelection` はリード中・集合中を拒否。Watch: 同時ならリードが勝つ | 古民家の `ValidPlacement` は NaN / Inf だけを見る (変更 2)。**IMP-DOG-032 (2026-10-03) で斜面の定数・`_PlacementGroundOk` を外し古民家どおりに戻した** (リード・集合の拒否と Watch は残る) | 016 / 032 |
+| `Scripts/KD_SleepPlacement.cs` | ~~マーカーを地面へ落とす。無効は赤マーク + 文言。3 経路とも確定不可 (`invalidMarks`)~~ → **IMP-DOG-032 で古民家と同一に戻した** (差分なし) | 同上 | 016 / 032 |
+| `Scripts/KD_DogPack.cs` | 押し出しは `PlacedSleepHeld` の犬を押さない (洗い場の台の `StationLocked` と同じ扱い) | 古民家は置いて寝ている犬も押して接地させる。古民家の置き場所は床なので目立たなかったが、手の高さに置けると落ちる | 032 |
 | `Scripts/KD_CallPose.cs` | リード中・集合中は開かない。開いている間にリードが付いたら操作不可 + 理由 | 変更 1 | 016 |
 | `Scripts/KD_TreatPouch.Sleep.cs` | 行の状態 `SleepLeashed` / `SleepGathering` | 変更 1 | 016 |
-| `Scripts/KD_DogWanderController.Sleep.cs` | `SleepStep` = `GatherStep` (NavMesh + 接地)。失敗したら旧 `StepToward`。最後の据わりも接地 | 古民家は接地スナップが無い (変更 3) | 016 |
+| `Scripts/KD_DogWanderController.Sleep.cs` | `SleepStep` = `GatherStep` (NavMesh + 接地)。失敗したら旧 `StepToward`。~~最後の据わりも接地~~ (IMP-DOG-032 で外した。古民家どおり置いた高さへ浮く)。`PlacedSleepHeld` (置いた点へ収まる途中・寝ている間) を足した | 古民家は接地スナップが無い (変更 3)。近づく足だけ地形追従を残す | 016 / 032 |
 | `Editor/KD_SleepSetupEditor.cs` | 6a / 6 / 6b を裏山向けに。`KH_Dogs/KD_SleepBoard` + `KD_SleepSlot` ×6、6 匹の wander / fetch、`KD_LiveAccess`、`pouch.sleepBoard`、`KH_LeashManager.sleepBoard` | 裏山のシーン構成 | 016 |
-| `Editor/KD_SleepPlacementEditor.cs` | Menu/6i。`KH_Dogs/KD_SleepPlacement`、赤マーク `Models/SleepPlacement/Invalid.mat` | 同上 | 016 |
+| `Editor/KD_SleepPlacementEditor.cs` | Menu/6i。`KH_Dogs/KD_SleepPlacement`。IMP-DOG-032 で赤マークを作らず、残っていれば消す (Verify は残りが無いことを見る) | 同上 | 016 / 032 |
 | `Editor/KD_CallPoseEditor.cs` | Menu/6j。`KH_Dogs/KD_CallPose`。シーンのバックアップ保存をやめた。7 状態がそろった animator は作り直さない。焼くとき `KH_*` (首輪) を隠す。`KD_ShopItem_Action_*` の 4 行だけ配線 | 同上 | 016 |
 | `Scripts/KD_TreatPouch.Confirm.cs` / `.Redraw.cs` / `.Hillside.cs` / `.Toy.cs` / `.Walk.cs` | kind Treat の振り分け、`RedrawTreat` の末尾で裏山の描画、準備中の分岐を段階 2 で外す、おもちゃの対象から寝ている犬を外す (古民家の `∧ !sleeping`)、さんぽの理由 (呼ばれて待機中)。`RedrawFx()` (66 行) を削除 | 3 本の patch の統合 | 統 |
 | `Editor/KD_TreatSetupEditor.Hillside.cs` | `KD_Hillside.Stage = 2`。`HillsideFindStage2` が 6 参照 (box / accessories / petFxBox / sleepBoard / sleepPlacement / callPose) を探し、欠ければ pouch に触れる前に止める。配線は box → かざり・撫でFX → 呼ぶ の 1 ブロック。[買う] と群見出し `FxHead0/1` を作る | 段階表 D-1 を 2 へ | 統 |
@@ -645,3 +647,10 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 | `Menu/16 Setup Volume` / `16a Verify Dog Voice` | 裏山版 (`KD_DogVoiceSettingsEditor.Hillside.cs`)。古民家版は `Menu/Imported-Unused/Volume/…` へ |
 | `Menu/11 Setup Localization` / `22 Verify Localization` | 設定面の残り (入口 4 つ・音量頁・距離フェード・クレジット・インフォメーション・群見出し) をまとめて作り、裏山の値で検査する (入口の名前は不変) |
 | `Menu/11b Build Welcome` / `11c Verify Welcome` | 全文の検査を追加 (入口の名前は不変) |
+
+## 2026-10-03 おじいさんの「さんぽ」の行き先 (BUG-UI-001)
+
+| ファイル | 裏山の変更 | 理由 |
+|---|---|---|
+| `Scripts/KD_ShopKeeper.cs` | `InfoWalk` の行き先 2 行「行き先は「広場」か / 「古民家側の入口」だ。」を 4 行「行き先は6つから選べる。/「広場」「奥の広場」「川辺」/ と、ぐるっと回る周回が2つ、/ それに「古民家側の入口」だ。」へ (1 行 14 字以内) | 周回コース (2026-09-27) 以降の手元メニューの 6 目的地に合わせる |
+| `Data/UITranslations.json` | `KD_ShopKeeper.InfoWalk` の ja を上の const と同じ文へ。他 12 言語 (英文のまま) の「Choose the destination: Plaza or Farmhouse-side gate.」を「Choose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate.」へ | 表示の正本は文言表 (const は ja の写し。Shop Keeper の Verify が一致を見る) |

@@ -22,6 +22,7 @@ namespace KominkaHillside.Editor
     ///
     /// Course/80 は本番シーンの局所編集だけを行う (経路 436 点・目的地 12 行 / 6 目的地には触らない。禁止された再生成メニューも呼ばない):
     /// - 周回路のノードから意味付き地点 6 つを引き直し、Manager の spotPositions / spotYaws / spotWarpEnabled / spotNodes / spotIds に書く
+    ///   (IMP-WLD-004: 洗い場・案内板・ポータルの「着地点を置かない円」の外で、接続犬 6 匹の置き場所が通るノードを採り、円を travelKeepOut* に書く)
     /// - 共通の検査 4 に使う川の中心線 (2 m ごと) と橋の区域を Manager に書く
     /// - Manager の切符の同期配列 7 本を長さ 6 の初期値で書く (宣言時の初期化と同じ値。proxy と backing をそろえる)
     /// - さんぽタブ (Page_Walk) の上段に [奥の広場へワープ] [川辺へワープ] を作り、スクロールの上端を 186 → 140 に下げる
@@ -31,8 +32,15 @@ namespace KominkaHillside.Editor
     {
         const string OutDir = "Temp/imp-wld-001";
         public static readonly string[] SpotIds = { "spot.gate", "spot.plaza", "spot.upper", "spot.bridgeUp", "spot.river", "spot.bridgeDown" };
-        // 初期公開でワープできるのは奥広場と川辺だけ (決定 2026-09-27)。足すときはここを変えて Course/80 → 81 を流す
-        public static readonly bool[] WarpEnabled = { false, false, true, false, true, false };
+        // 2026-09-27 の初期実装は奥広場と川辺だけ。IMP-WLD-004 (ユーザー指定 2026-10-02「1〜5 のポイント全部」、初期公開に入れる 2026-10-03):
+        // 地図の番号 1〜5 = 古民家側の入口・広場・奥の広場・上流の橋・川辺。6 (下流の橋) は対象外のまま (追加は別判断)。
+        // 変えるときはここを変えて Course/80 → 84 → 81 を流す (地図の ●/○ は 84 が描き直す)
+        public static readonly bool[] WarpEnabled = { true, true, true, true, true, false };
+        // IMP-WLD-004: 着地点を置かない円の余白 = 接続犬の並び (TravelPlacement: 横 0.75 + 0.45 × 2 = 1.65 m・前 0.5 + 0.35 × 2 = 1.2 m で約 2.0 m)
+        // + 置き場所の NavMesh への寄せ (最大 1 m)。洗い場の犬よけ 4 m・個人の床 5 × 5 m・案内板とポータルの外形にこれを足した半径を実行時に避ける
+        public const float KeepOutDogPad = 3f;
+        const float BoardMargin = 0.5f, PortalRadius = 1.0f, DogRiverClear = 5f;
+        const string GuideBoardsRoot = "KH_GuideBoards", PortalAnchorName = "PortalAnchor";   // KH_GuideBoardsEditor の名前 (別作業のファイルなので文字列で持つ)
         // 着いたときの向き: true = 遠景の古民家の方向、false = 道の正方向 (ノード k → k+1)。
         // 設計書 §D.1: 古民家向きは既存広場だけ。奥広場を含むほかは道の正方向
         public static readonly bool[] FaceKominka = { false, true, false, false, false, false };
@@ -50,6 +58,16 @@ namespace KominkaHillside.Editor
             public Vector3 position;
             public float yaw, riverDistance;
             public bool warpEnabled, basePassed;
+            public string nearestKeepOut = "";       // IMP-WLD-004: いちばん近い「着地点を置かない円」と、その縁までの距離 (負なら中)
+            public float nearestKeepOutClearance;
+            public int dogRoom;                      // 6 匹の置き場所 (TravelPlacement と同じ式) のうち NavMesh・高さ・川・円の外を通った数
+        }
+        /// <summary>IMP-WLD-004: 地点ワープの着地点を置かない円。core = 物の半径、radius = core + KeepOutDogPad (実行時が比べる値)。</summary>
+        [Serializable] public class KeepOut
+        {
+            public string name;
+            public Vector3 center;
+            public float core, radius;
         }
         [Serializable] public class Report
         {
@@ -57,6 +75,7 @@ namespace KominkaHillside.Editor
             public int errors;
             public List<string> findings = new List<string>();
             public List<SpotResult> spots = new List<SpotResult>();
+            public List<KeepOut> keepOuts = new List<KeepOut>();
             public List<string> labelFit = new List<string>();
             public long mapPngBytes, mapGpuBytesPC, mapGpuBytesMobile, mapEditorMemoryBytes;   // 段階 2: 地図テクスチャの容量 (GPU は形式からの計算値)
             public string mapFormats;
@@ -79,7 +98,9 @@ namespace KominkaHillside.Editor
             var catalog = CourseCatalog(p.language);
             var report = new Report { utc = DateTime.UtcNow.ToString("o"), scene = p.gameObject.scene.path, mode = "build" };
             var water = GeneratedWater();
-            var spots = Resolve(route, water, report);
+            var keep = GatherKeepOuts();
+            report.keepOuts = keep;
+            var spots = Resolve(route, water, keep, report);
             foreach (var s in spots) if (s.warpEnabled && s.node < 0) throw new InvalidOperationException("Warp spot failed common checks 1-4: " + s.id + " " + s.why);
             var managerBacking = UdonSharpEditorUtility.GetBackingUdonBehaviour(m);
             var pouchBacking = UdonSharpEditorUtility.GetBackingUdonBehaviour(p);
@@ -95,6 +116,8 @@ namespace KominkaHillside.Editor
                 SetFloats(so, "spotYaws", spots.Select(s => s.yaw).ToArray());
                 SetBools(so, "spotWarpEnabled", spots.Select(s => s.warpEnabled).ToArray());
                 SetInts(so, "spotNodes", spots.Select(s => s.node).ToArray());
+                SetVectors(so, "travelKeepOutCenters", keep.Select(k => k.center).ToArray());   // IMP-WLD-004
+                SetFloats(so, "travelKeepOutRadii", keep.Select(k => k.radius).ToArray());
                 SetFloats(so, "travelRiverXs", water.xs);
                 so.FindProperty("travelRiverZ0").floatValue = RiverZ0;
                 so.FindProperty("travelRiverStep").floatValue = RiverStep;
@@ -126,7 +149,7 @@ namespace KominkaHillside.Editor
             }
             report.status = "BUILT";
             File.WriteAllText(OutDir + "/travel-build.json", JsonUtility.ToJson(report, true));
-            Debug.Log("[KH Travel] Built spots=" + string.Join(",", spots.Select(s => s.id + ":" + s.node)) + ". Run Course/84 (map and fade), Course/27 (glyphs) and then Course/81 Verify.");
+            Debug.Log("[KH Travel] Built spots=" + string.Join(",", spots.Select(s => s.id + ":" + s.node + (s.warpEnabled ? "(warp)" : ""))) + " keepOuts=" + keep.Count + ". Run Course/84 (map and fade), Course/27 (glyphs) and then Course/81 Verify.");
         }
 
         /// <summary>コースの翻訳表 (CourseUITranslations.json) を KD_Language の extension に入れ直す (Course/25 と同じ式)。Course/80・84 が使う。</summary>
@@ -156,7 +179,7 @@ namespace KominkaHillside.Editor
         // 地点の解決と共通の検査 1〜4 (実行時の KH_LeashManager._TravelLandingOk と同じ数値)
         // ============================================================
 
-        static List<SpotResult> Resolve(KH_WalkRoute route, Water river, Report report)
+        static List<SpotResult> Resolve(KH_WalkRoute route, Water river, List<KeepOut> keep, Report report)
         {
             if (route == null || !route.closedLoop || route.nodePositions == null || route.nodePositions.Length != 436 || route.destinationNodes == null || route.destinationNodes.Length != 6)
                 throw new InvalidOperationException("Closed 436-node route with 6 destinations required (production.md)");
@@ -169,25 +192,145 @@ namespace KominkaHillside.Editor
             for (int s = 0; s < 6; s++)
             {
                 var r = new SpotResult { id = SpotIds[s], baseNode = baseNodes[s], warpEnabled = WarpEnabled[s] };
-                // 基準のノードが通らなければ前後 ±1〜5 のノードから通るものを採る (橋・水際から離れる側を優先はしない。近い順)
+                if (FaceKominka[s] && kominka == null) report.findings.Add("KH_FarKominka not found; " + r.id + " faces the trail instead");
+                // 基準のノードが通らなければ前後 ±1〜5 のノードから通るものを採る (橋・水際から離れる側を優先はしない。近い順)。
+                // IMP-WLD-004: 共通の検査 1〜4 に加えて、着地点を置かない円 (洗い場・案内板・ポータル + 犬の並び) の外であること、
+                // 接続犬 6 匹の置き場所 (実行時の TravelPlacement と同じ式) が全部通ること
                 foreach (int d in new[] { 0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5 })
                 {
                     int node = (baseNodes[s] + d + n.Length) % n.Length;
-                    if (!Landing(n[node], river, out Vector3 foot, out string why)) { if (d == 0) r.why = why; continue; }
-                    r.node = node; r.position = foot; r.basePassed = d == 0; break;
+                    if (!LandingSpot(n[node], river, keep, out Vector3 foot, out string why)) { if (d == 0) r.why = why; continue; }
+                    float yaw = SpotYaw(n, node, FaceKominka[s] ? kominka : null);
+                    int room = DogRoom(foot, yaw, river, keep, out string roomWhy);
+                    if (room < 6) { if (d == 0) r.why = "6 dogs room " + room + "/6 (" + roomWhy + ")"; continue; }
+                    r.node = node; r.position = foot; r.basePassed = d == 0; r.yaw = yaw; r.dogRoom = room; break;
                 }
-                if (r.node < 0) { r.position = n[baseNodes[s]]; r.node = -1; report.findings.Add("Spot " + r.id + " has no passing node near " + baseNodes[s] + " (" + r.why + ")"); }
-                int k = r.node >= 0 ? r.node : baseNodes[s];
-                Vector3 dir = n[(k + 1) % n.Length] - n[k];
-                if (FaceKominka[s] && kominka != null) dir = kominka.transform.position - n[k];
-                else if (FaceKominka[s]) report.findings.Add("KH_FarKominka not found; " + r.id + " faces the trail instead");
-                dir.y = 0f;
-                r.yaw = dir.sqrMagnitude > 1e-6f ? Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg : 0f;
+                if (r.node < 0)
+                {
+                    r.position = n[baseNodes[s]]; r.node = -1; r.yaw = SpotYaw(n, baseNodes[s], FaceKominka[s] ? kominka : null);
+                    report.findings.Add("Spot " + r.id + " has no passing node near " + baseNodes[s] + " (" + r.why + ")");
+                }
                 r.riverDistance = RiverDistance(r.position, river);
+                NearestKeepOut(r.position, keep, out r.nearestKeepOut, out r.nearestKeepOutClearance);
                 list.Add(r);
             }
             report.spots = list;
             return list;
+        }
+
+        /// <summary>着いたときの向き: 古民家向きなら遠景の古民家の方向、それ以外は道の正方向 (ノード k → k+1)。</summary>
+        static float SpotYaw(Vector3[] n, int k, GameObject kominka)
+        {
+            Vector3 dir = kominka != null ? kominka.transform.position - n[k] : n[(k + 1) % n.Length] - n[k];
+            dir.y = 0f;
+            return dir.sqrMagnitude > 1e-6f ? Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg : 0f;
+        }
+
+        // ============================================================
+        // IMP-WLD-004: 着地点を置かない円と、6 匹の置き場所
+        // ============================================================
+
+        /// <summary>シーンから「地点ワープの着地点を置かない円」を集める (Course/80 が Manager に書き、81 が保存値と照合する)。
+        /// - 洗い場の犬よけの円: KH_WashStationCall の anchor (無ければ自分) を中心に keepOutRadius
+        /// - 洗い場の個人の床: KH_WashPersonalFloor の位置を中心に outerHalf の対角の半分 (5 × 5 m なら 3.54 m)
+        /// - 案内板: KH_GuideBoards の直下の板ごとに、有効な Renderer の外接の水平半径 + 0.5 m (板は Collider を持たないので頭上の検査で弾けない)
+        /// - ポータル: KH_GuideBoards 内の PortalAnchor と、シーンの VRCPortalMarker に 1.0 + 0.5 m
+        /// 半径 (実行時が比べる値) = 上の値 + KeepOutDogPad。並びは中心の x, z の順 (保存値との照合を順序に依らせない)。</summary>
+        public static List<KeepOut> GatherKeepOuts()
+        {
+            var list = new List<KeepOut>();
+            foreach (var call in UnityEngine.Object.FindObjectsOfType<KH_WashStationCall>(true))
+            {
+                var at = call.anchor != null ? call.anchor.position : call.transform.position;
+                list.Add(new KeepOut { name = "wash keep-out " + PathOf(call.transform), center = at, core = Mathf.Max(0f, call.keepOutRadius) });
+            }
+            foreach (var floor in UnityEngine.Object.FindObjectsOfType<KH_WashPersonalFloor>(true))
+                list.Add(new KeepOut { name = "wash floor " + PathOf(floor.transform), center = floor.transform.position, core = floor.outerHalf.magnitude });
+            var scene = KH_CourseTravelEditor.FindPouch().gameObject.scene;
+            var boards = scene.GetRootGameObjects().FirstOrDefault(g => g.name == GuideBoardsRoot);
+            if (boards != null)
+            {
+                foreach (Transform b in boards.transform)
+                {
+                    var rs = b.GetComponentsInChildren<Renderer>(false).Where(x => x.enabled).ToArray();
+                    if (rs.Length == 0) { list.Add(new KeepOut { name = "board " + PathOf(b) + " (no renderer)", center = b.position, core = 1f + BoardMargin }); continue; }
+                    var bounds = rs[0].bounds; foreach (var x in rs) bounds.Encapsulate(x.bounds);
+                    float half = new Vector2(bounds.extents.x, bounds.extents.z).magnitude;
+                    list.Add(new KeepOut { name = "board " + PathOf(b), center = bounds.center, core = half + BoardMargin });
+                }
+                foreach (var t in boards.GetComponentsInChildren<Transform>(true))
+                    if (t.name == PortalAnchorName) list.Add(new KeepOut { name = "portal " + PathOf(t), center = t.position, core = PortalRadius + BoardMargin });
+            }
+            foreach (var portal in UnityEngine.Object.FindObjectsOfType<VRC.SDK3.Components.VRCPortalMarker>(true))
+                list.Add(new KeepOut { name = "portal marker " + PathOf(portal.transform), center = portal.transform.position, core = PortalRadius + BoardMargin });
+            foreach (var k in list) { k.center.y = 0f; k.radius = k.core + KeepOutDogPad; }
+            return list.OrderBy(k => Mathf.Round(k.center.x * 100f)).ThenBy(k => Mathf.Round(k.center.z * 100f)).ThenBy(k => k.radius).ToList();
+        }
+
+        static string PathOf(Transform t) { return t.parent == null ? t.name : PathOf(t.parent) + "/" + t.name; }
+
+        /// <summary>実行時の TravelInKeepOut と同じ式 (水平距離 &lt; 半径)。</summary>
+        public static bool InKeepOut(Vector3 p, List<KeepOut> keep, bool core, out string which)
+        {
+            which = "";
+            foreach (var k in keep)
+            {
+                var d = p - k.center; d.y = 0f;
+                if (d.magnitude < (core ? k.core : k.radius)) { which = k.name; return true; }
+            }
+            return false;
+        }
+
+        static void NearestKeepOut(Vector3 p, List<KeepOut> keep, out string name, out float clearance)
+        {
+            name = ""; clearance = float.MaxValue;
+            foreach (var k in keep)
+            {
+                var d = p - k.center; d.y = 0f;
+                float c = d.magnitude - k.radius;
+                if (c < clearance) { clearance = c; name = k.name; }
+            }
+            if (keep.Count == 0) clearance = 0f;
+        }
+
+        /// <summary>地点ワープの候補 1 点 (実行時の TravelSpotLandingOk と同じ順): 円の外 → 共通の検査 1〜4。</summary>
+        public static bool LandingSpot(Vector3 p, Water w, List<KeepOut> keep, out Vector3 foot, out string why)
+        {
+            foot = p;
+            if (InKeepOut(p, keep, false, out string which)) { why = "keep-out " + which; return false; }
+            return Landing(p, w, out foot, out why);
+        }
+
+        /// <summary>接続犬 6 匹 (左 3・右 3) の置き場所を、実行時の KH_LeashManager.TravelPlacement と同じ式で作り、
+        /// NavMesh 1 m・高さの差 0.6 m 以内 (全体か半分の位置。どちらもだめなら飼い主の足元に重なる = 失敗)、
+        /// 川の中心線から 5 m 以上・橋の区域の外、洗い場・案内板・ポータルの円 (余白なし) の外、を数える。</summary>
+        public static int DogRoom(Vector3 center, float yaw, Water w, List<KeepOut> keep, out string why)
+        {
+            why = ""; int ok = 0;
+            var rot = Quaternion.Euler(0f, yaw, 0f);
+            for (int hand = 0; hand < 2; hand++)
+                for (int slot = 0; slot < 3; slot++)
+                {
+                    float side = hand == 0 ? -1f : 1f;
+                    var offset = new Vector3(side * (0.75f + slot * 0.45f), 0f, 0.5f + slot * 0.35f);
+                    var want = center + rot * offset;
+                    string tag = (hand == 0 ? "L" : "R") + slot;
+                    Vector3 at;
+                    if (NavMesh.SamplePosition(want, out NavMeshHit hit, 1f, NavMesh.AllAreas) && Mathf.Abs(hit.position.y - center.y) <= 0.6f) at = hit.position;
+                    else if (NavMesh.SamplePosition(Vector3.Lerp(center, want, 0.5f), out hit, 1f, NavMesh.AllAreas) && Mathf.Abs(hit.position.y - center.y) <= 0.6f) at = hit.position;
+                    else { why += tag + " no navmesh; "; continue; }
+                    if (RiverDistance(at, w) < DogRiverClear) { why += tag + " river; "; continue; }
+                    if (w.bridgeZs != null && w.bridgeXs != null)
+                    {
+                        bool onBridge = false;
+                        for (int i = 0; i < w.bridgeZs.Length && i < w.bridgeXs.Length; i++)
+                            if (Mathf.Abs(at.z - w.bridgeZs[i]) <= KH_LeashManager.TravelBridgeHalfZ && Mathf.Abs(at.x - w.bridgeXs[i]) <= KH_LeashManager.TravelBridgeHalfX) onBridge = true;
+                        if (onBridge) { why += tag + " bridge; "; continue; }
+                    }
+                    if (InKeepOut(at, keep, true, out string which)) { why += tag + " in " + which + "; "; continue; }
+                    ok++;
+                }
+            return ok;
         }
 
         static int Nearest(Vector3[] n, Vector3 p)
@@ -290,8 +433,18 @@ namespace KominkaHillside.Editor
                 if (backing != null && backing.publicVariables.TryGetVariableValue(name, out object v) && v is int iv && iv != 0) e.Add("debug " + name + " nonzero in backing");
             // 地点
             Require(e, m.spotIds != null && m.spotIds.SequenceEqual(SpotIds), "spotIds");
-            Require(e, m.spotWarpEnabled != null && m.spotWarpEnabled.SequenceEqual(WarpEnabled), "spotWarpEnabled = upper and river only");
+            Require(e, m.spotWarpEnabled != null && m.spotWarpEnabled.SequenceEqual(WarpEnabled), "spotWarpEnabled = " + string.Join(",", SpotIds.Where((id, i) => WarpEnabled[i])) + " (IMP-WLD-004: map numbers 1-5)");
             Require(e, m.spotPositions != null && m.spotPositions.Length == 6 && m.spotYaws != null && m.spotYaws.Length == 6 && m.spotNodes != null && m.spotNodes.Length == 6, "spot arrays length 6");
+            // IMP-WLD-004: 着地点を置かない円。保存値 (proxy と backing) = 今のシーンから集めた値 (洗い場・案内板・ポータルを動かしたら Course/80 を流し直す)
+            var keep = GatherKeepOuts();
+            report.keepOuts = keep;
+            Require(e, keep.Count > 0, "keep-out circles found (wash stations / guide boards)");
+            Require(e, m.travelKeepOutCenters != null && m.travelKeepOutRadii != null && m.travelKeepOutCenters.Length == keep.Count && m.travelKeepOutRadii.Length == keep.Count
+                && Enumerable.Range(0, keep.Count).All(i => Vector3.Distance(m.travelKeepOutCenters[i], keep[i].center) < 0.05f && Mathf.Abs(m.travelKeepOutRadii[i] - keep[i].radius) < 0.01f),
+                "travelKeepOutCenters / Radii match the scene (" + keep.Count + " circles; rerun Course/80 after moving a wash station, board or portal)");
+            CheckFloats(e, backing, "travelKeepOutRadii", m.travelKeepOutRadii, keep.Select(k => k.radius).ToArray());
+            if (backing == null || !backing.publicVariables.TryGetVariableValue("travelKeepOutCenters", out object kc) || !(kc is Vector3[] kca) || kca.Length != keep.Count
+                || Enumerable.Range(0, keep.Count).Any(i => Vector3.Distance(kca[i], keep[i].center) >= 0.05f)) e.Add("FAIL backing travelKeepOutCenters missing or differs (rerun Course/80)");
             // 川と橋: 保存値の全要素を生成式と照合する (proxy と backing)。以降の着地点の検査は保存値で行う (レビュー M4)
             var gen = GeneratedWater(); var river = SavedWater(m);
             Require(e, Mathf.Approximately(river.z0, gen.z0) && Mathf.Approximately(river.step, gen.step), "river z0/step");
@@ -299,15 +452,18 @@ namespace KominkaHillside.Editor
             CheckFloats(e, backing, "travelBridgeZs", river.bridgeZs, gen.bridgeZs);
             CheckFloats(e, backing, "travelBridgeXs", river.bridgeXs, gen.bridgeXs);
             if (e.Count > 0) return;
-            // 保存値の再解決と共通の検査 1〜4 (全 6 地点)
-            var fresh = Resolve(m.route, river, new Report());
+            // 保存値の再解決と共通の検査 1〜4 + 円の外 + 6 匹の置き場所 (全 6 地点)
+            var fresh = Resolve(m.route, river, keep, new Report());
             var n = m.route.nodePositions;
             for (int s = 0; s < 6; s++)
             {
                 var r = new SpotResult { id = SpotIds[s], node = m.spotNodes[s], position = m.spotPositions[s], yaw = m.spotYaws[s], warpEnabled = m.spotWarpEnabled[s] };
-                r.basePassed = Landing(m.spotPositions[s], river, out _, out r.why);
+                r.basePassed = LandingSpot(m.spotPositions[s], river, keep, out _, out r.why);
                 r.riverDistance = RiverDistance(m.spotPositions[s], river);
-                if (!r.basePassed) e.Add("Spot " + r.id + " fails common checks: " + r.why);
+                NearestKeepOut(m.spotPositions[s], keep, out r.nearestKeepOut, out r.nearestKeepOutClearance);
+                r.dogRoom = DogRoom(m.spotPositions[s], m.spotYaws[s], river, keep, out string roomWhy);
+                if (!r.basePassed) e.Add("Spot " + r.id + " fails common checks / keep-out: " + r.why);
+                if (r.warpEnabled && r.dogRoom < 6) e.Add("Spot " + r.id + " has room for " + r.dogRoom + "/6 leashed dogs (" + roomWhy + ")");
                 if (fresh[s].node != m.spotNodes[s] || Vector3.Distance(fresh[s].position, m.spotPositions[s]) > 0.05f || Mathf.Abs(Mathf.DeltaAngle(fresh[s].yaw, m.spotYaws[s])) > 0.5f)
                     e.Add("Spot " + r.id + " stale: route changed? saved node " + m.spotNodes[s] + " fresh " + fresh[s].node + " (rerun Course/80)");
                 // 実行時と同じ候補の並び (基準 → 1.5 m × 6 → 3 m × 12 → ノード ±1〜5)。開始角は playerId 1 の場合
@@ -316,13 +472,17 @@ namespace KominkaHillside.Editor
                 for (int k = 0; k < 6; k++) { float a = (start + k * 60f) * Mathf.Deg2Rad; cand.Add(c + new Vector3(Mathf.Sin(a) * 1.5f, 0, Mathf.Cos(a) * 1.5f)); }
                 for (int k = 0; k < 12; k++) { float a = (start + k * 30f) * Mathf.Deg2Rad; cand.Add(c + new Vector3(Mathf.Sin(a) * 3f, 0, Mathf.Cos(a) * 3f)); }
                 if (r.node >= 0) for (int d = 1; d <= 5; d++) { cand.Add(n[(r.node + d) % n.Length]); cand.Add(n[(r.node - d + n.Length) % n.Length]); }
-                r.candidatesTotal = cand.Count; r.candidatesPassed = cand.Count(q => Landing(q, river, out _, out _));
+                r.candidatesTotal = cand.Count; r.candidatesPassed = cand.Count(q => LandingSpot(q, river, keep, out _, out _));
                 if (r.warpEnabled && r.candidatesPassed < 3) e.Add("Spot " + r.id + " has only " + r.candidatesPassed + " passing alternatives");
                 report.spots.Add(r);
             }
             // 上段・副画面・暗転・地図テクスチャ (段階 2)
             var scroll = (RectTransform)p.tabScrolls[KD_TreatPouch.TabWalk].transform;
-            Require(e, Mathf.Abs(scroll.anchoredPosition.y + scroll.sizeDelta.y / 2 - ContentTopWithRow) < 0.5f, "walk scroll top = 140 (below the map row)");
+            // DES-UI-006: 2 列 (Course/120) では上段の帯が無く、枠の上端は 190 (配置の詳細は Course/121)
+            if (KH_WalkTabLayoutEditor.IsApplied(p))
+                Require(e, Mathf.Abs(scroll.anchoredPosition.y + scroll.sizeDelta.y / 2 - KH_WalkTabLayoutEditor.AreaTop) < 0.5f, "walk frame top = " + KH_WalkTabLayoutEditor.AreaTop + " (two-column walk tab, no map row above)");
+            else
+                Require(e, Mathf.Abs(scroll.anchoredPosition.y + scroll.sizeDelta.y / 2 - ContentTopWithRow) < 0.5f, "walk scroll top = 140 (below the map row)");
             KH_CourseTravelMapEditor.Validate(p, e, report);
             KH_CourseTravelJoinEditor.Validate(p, e, report);   // 段階 3: 受付箱・通知板・人の一覧
             KH_CourseTravelNameFontEditor.Validate(p, e, report);   // 段階 4: 表示名の補助フォント
@@ -456,7 +616,8 @@ namespace KominkaHillside.Editor
                 if (m.route == null || !m.route.closedLoop) continue;
                 bool debugOff = m.debugDropTravel == 0 && m.debugDropTravelDone == 0 && m.debugSkipTravelTeleport == 0 && m.debugForgeTravelMask == 0 && m.debugDelayTravel == 0f && m.debugDelayTravelMoved == 0f && m.debugDropTravelMoved == 0
                     && UnityEngine.Object.FindObjectsOfType<KH_TravelMailbox>(true).All(b => b.debugJoinLoopback == 0 && b.debugAnswerCode == 0 && b.debugIncomingFrom == 0 && b.debugIncomingKind == 0 && b.debugIncomingSeq == 0 && b.debugCrossInvert == 0);   // IMP-WLD-002 の試験用の入口も
-                bool data = m.spotPositions != null && m.spotPositions.Length == 6 && m.spotWarpEnabled != null && m.spotWarpEnabled.Length == 6 && m.travelRiverXs != null && m.travelRiverXs.Length > 0;
+                bool data = m.spotPositions != null && m.spotPositions.Length == 6 && m.spotWarpEnabled != null && m.spotWarpEnabled.Length == 6 && m.travelRiverXs != null && m.travelRiverXs.Length > 0
+                    && m.travelKeepOutCenters != null && m.travelKeepOutRadii != null && m.travelKeepOutCenters.Length > 0 && m.travelKeepOutCenters.Length == m.travelKeepOutRadii.Length;   // IMP-WLD-004
                 if (!debugOff || !data)
                 {
                     Debug.LogError("[KH Travel] Build blocked: " + (!debugOff ? "debug travel hooks must be 0. " : "") + (!data ? "travel spots missing - run Course/80 and Course/81." : ""));

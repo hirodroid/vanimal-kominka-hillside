@@ -22,7 +22,10 @@ namespace KominkaHillside.Editor
     ///   Asobikata = the roofed notice board "あそびかた" (4 papers: walk / frisbee / wash / points and trainer + a strip "how to open
     ///               the hand menu"), east of the spawn beside the shopkeeper, facing the spawn;
     ///   Map       = the trail-head map board (the hand map's texture KH_TravelMap.png, the 6 spots, the wash stations, "you are
-    ///               here"), west of the trail start, facing the spawn / the trail.
+    ///               here"), west of the trail start, facing the spawn / the trail;
+    ///   Kominka   = IMP-WLD-006: the 古民家ドッグラン board beside the gate. Interact (KH_PortalBoard, local only) shows the scene's one
+    ///               VRCPortalMarker, taken over (moved under Kominka/PortalAnchor, never re-typed) and hidden in the saved scene.
+    ///               Guide/0 creates KH_PortalBoard's Program Asset (once, before the first Guide/1).
     /// Each board is a wooden frame (cubes, KH_RiverWood, no collider, Batching Static) + one read-only World Space Canvas (no
     /// raycaster, no VRCUiShape, no collider, no Udon). The words are the base catalog's guide.* keys (UITranslations.json, 13
     /// languages) bound through UILocalizationBindings.json; the build adds the ja / en glyphs through KD_ShopSetupEditor.AddGlyphs and
@@ -56,8 +59,11 @@ namespace KominkaHillside.Editor
         }
         /// <summary>Root yaw: the root's +Z points away from the readers (they look along +Z; the Canvas's front is -Z), like the wash station.</summary>
         static readonly Board Asob = new Board { name = "Asobikata", createXZ = new Vector2(53.0f, 44.5f), createYaw = 65f, canvasMm = new Vector2(3240f, 1440f), canvasBottom = 0.80f };
-        static readonly Board MapBoard = new Board { name = "Map", createXZ = new Vector2(39.2f, 46.6f), createYaw = 330f, canvasMm = new Vector2(1300f, 1300f), canvasBottom = 0.75f };
-        static readonly Board[] Boards = { Asob, MapBoard };
+        static readonly Board MapBoard = new Board { name = "Map", createXZ = new Vector2(39.2f, 46.6f), createYaw = 330f, canvasMm = new Vector2(1300f, 1200f), canvasBottom = 0.80f };
+        /// <summary>IMP-WLD-006: the 古民家ドッグラン board at the gate (west of the opening, 1 m out from the wall line, facing out = -26 deg like the
+        /// spawn). Readers face the wall; the portal appears on their right (root +X), against the wall.</summary>
+        static readonly Board Kominka = new Board { name = "Kominka", createXZ = new Vector2(44.52f, 36.90f), createYaw = 154f, canvasMm = new Vector2(1300f, 1100f), canvasBottom = 0.80f };
+        static readonly Board[] Boards = { Asob, MapBoard, Kominka };
 
         const float Mm = 0.001f;
         const float PostSize = 0.10f, BackDepth = 0.04f, BackZ = 0.03f, PostSink = 0.25f;
@@ -87,24 +93,38 @@ namespace KominkaHillside.Editor
         static readonly float[] PaperX = { -1155f, -385f, 385f, 1155f };
         static readonly string[] PaperNames = { "Paper_Walk", "Paper_Frisbee", "Paper_Wash", "Paper_Shop" };
         static readonly string[] PaperKeys = { "walk", "frisbee", "wash", "shop" };
-        static readonly Vector2 TitlePos = new Vector2(0f, 470f), TitleSize = new Vector2(680f, 90f), BodyPos = new Vector2(0f, -50f), BodySize = new Vector2(680f, 900f);
-        const float HeaderMax = 130f, HeaderMin = 80f, StripMax = 36f, StripMin = 22f, TitleMax = 60f, TitleMin = 40f, BodyMax = 31f, BodyMin = 22f;
+        // 2026-10-03 (coordinator, from the captures): the bodies filled only ~55-60 % of the papers. Body max per paper so the ja text fills
+        // ~85-90 % (estimated from the font's advances and line height; the longer languages shrink toward BodyMin), line spacing +12.
+        static readonly Vector2 TitlePos = new Vector2(0f, 465f), TitleSize = new Vector2(680f, 100f), BodyPos = new Vector2(0f, -55f), BodySize = new Vector2(680f, 920f);
+        static readonly float[] BodyMaxPerPaper = { 38f, 40f, 34f, 32f };   // walk / frisbee / wash / shop (was 31 for all)
+        const float HeaderMax = 130f, HeaderMin = 80f, StripMax = 36f, StripMin = 22f, TitleMax = 72f, TitleMin = 44f, BodyMin = 22f, BodyLineSpacing = 12f;
 
-        // ---------------------------------------------------------------- Map layout (canvas 1300 x 1300; the paper's children in paper-local mm)
-        static readonly Vector2 MapHeaderPos = new Vector2(0f, 575f), MapHeaderPlate = new Vector2(1240f, 130f), MapHeaderText = new Vector2(1200f, 120f);
-        static readonly Vector2 MapPaperPos = new Vector2(0f, -75f), MapPaperSize = new Vector2(1240f, 1120f);
-        const float MapPx = 760f;
-        static readonly Vector2 MapCenter = new Vector2(-220f, 160f);
-        static readonly Vector2 NorthPos = new Vector2(110f, 505f), NorthSize = new Vector2(110f, 50f);
-        static readonly Vector2 NumOffset = new Vector2(28f, 24f), NumSize = new Vector2(40f, 40f);
-        const float NumFont = 34f;
-        static readonly Vector2 HereSize = new Vector2(24f, 24f), HereLabelPos = new Vector2(100f, -28f), HereLabelSize = new Vector2(170f, 40f);
-        static readonly Vector2 WashMarkSize = new Vector2(16f, 16f);
+        // ---------------------------------------------------------------- Map layout (canvas 1300 x 1200; the paper's children in paper-local mm)
+        // 2026-10-03: the lower third was empty -> the paper is 110 mm shorter, the map 760 -> 820, the place list 38 -> 44 mm.
+        static readonly Vector2 MapHeaderPos = new Vector2(0f, 525f), MapHeaderPlate = new Vector2(1240f, 130f), MapHeaderText = new Vector2(1200f, 120f);
+        static readonly Vector2 MapPaperPos = new Vector2(0f, -50f), MapPaperSize = new Vector2(1240f, 1010f);
+        const float MapPx = 820f;
+        static readonly Vector2 MapCenter = new Vector2(-190f, 70f);
+        static readonly Vector2 NorthPos = new Vector2(165f, 445f), NorthSize = new Vector2(100f, 50f);
+        static readonly Vector2 NumOffset = new Vector2(30f, 26f), NumSize = new Vector2(44f, 44f);
+        const float NumFont = 38f;
+        static readonly Vector2 HereSize = new Vector2(26f, 26f), HereLabelPos = new Vector2(105f, -30f), HereLabelSize = new Vector2(190f, 44f);
+        static readonly Vector2 WashMarkSize = new Vector2(18f, 18f);
         const float WashMarkSkipMeters = 25f;   // the main station is beside the board: "you are here" covers it
-        static readonly Vector2 LegendPos = new Vector2(390f, 270f), LegendSize = new Vector2(420f, 540f);
-        static readonly Vector2 KeyPos = new Vector2(390f, -120f), KeySize = new Vector2(420f, 220f);
-        static readonly Vector2 NotePos = new Vector2(0f, -400f), NoteSize = new Vector2(1180f, 300f);
-        const float MapTitleMax = 96f, MapTitleMin = 60f, NorthMax = 34f, NorthMin = 24f, HereMax = 28f, HereMin = 18f, LegendMax = 38f, LegendMin = 24f, KeyMax = 30f, KeyMin = 20f, NoteMax = 34f, NoteMin = 22f;
+        static readonly Vector2 LegendPos = new Vector2(425f, 260f), LegendSize = new Vector2(370f, 440f);
+        static readonly Vector2 KeyPos = new Vector2(425f, -150f), KeySize = new Vector2(370f, 300f);
+        static readonly Vector2 NotePos = new Vector2(0f, -425f), NoteSize = new Vector2(1180f, 150f);
+        const float MapTitleMax = 96f, MapTitleMin = 60f, NorthMax = 38f, NorthMin = 24f, HereMax = 32f, HereMin = 20f, LegendMax = 44f, LegendMin = 26f, KeyMax = 38f, KeyMin = 22f, NoteMax = 38f, NoteMin = 24f, LegendLineSpacing = 10f;
+
+        // ---------------------------------------------------------------- Kominka layout (canvas 1300 x 1100), IMP-WLD-006
+        static readonly Vector2 KomHeaderPos = new Vector2(0f, 465f), KomHeaderPlate = new Vector2(1240f, 130f), KomHeaderText = new Vector2(1200f, 120f);
+        static readonly Vector2 KomPaperPos = new Vector2(0f, -80f), KomPaperSize = new Vector2(1240f, 920f), KomBodySize = new Vector2(1160f, 860f);
+        const float KomBodyMax = 48f, KomBodyMin = 26f, KomLineSpacing = 14f;
+        const string InteractName = "Interact", PortalAnchorName = "PortalAnchor";
+        /// <summary>Portal anchor in board-local: on the readers' right (+X = west-south-west), on the board's line, facing the readers.</summary>
+        const float PortalSideX = 1.75f, PortalYaw = 180f;
+        const float PortalShowSeconds = 60f, InteractProximity = 2.5f;
+        public const string PortalProgramPath = "Assets/KominkaHillside/Scripts/KH_PortalBoard";
 
         // ---------------------------------------------------------------- bound labels (UILocalizationBindings.json, root KH_GuideBoards)
         class LabelSpec { public string path, key; public LabelSpec(string p, string k) { path = p; key = k; } }
@@ -126,7 +146,10 @@ namespace KominkaHillside.Editor
             new LabelSpec("Map/Canvas/Paper/Note", "guide.map.note"),
             new LabelSpec("Map/Canvas/Paper/Here/Label", "guide.map.here"),
             new LabelSpec("Map/Canvas/Paper/North", "guide.map.north"),
+            new LabelSpec("Kominka/Canvas/Header", "guide.kominka.title"),
+            new LabelSpec("Kominka/Canvas/Paper/Body", "guide.kominka.body"),
         };
+        const string InteractPath = "Kominka/Interact", InteractKey = "guide.kominka.interact";
 
         // ================================================================ context (looked up before anything changes)
 
@@ -139,6 +162,7 @@ namespace KominkaHillside.Editor
             public KH_LeashManager manager;
             public Transform root;                 // null before the first build
             public List<Transform> washStations = new List<Transform>();
+            public VRC.SDK3.Components.VRCPortalMarker portal; public string portalRoomId;   // IMP-WLD-006: the one world portal of the scene
         }
 
         static Ctx Resolve(bool forBuild)
@@ -166,6 +190,8 @@ namespace KominkaHillside.Editor
             foreach (var l in Labels)
                 if (!manifest.labels.Any(b => b.root == RootName && b.path == l.path && b.key == l.key))
                     throw new InvalidOperationException("binding missing in " + KD_LocalizationEditor.BindingsPath + ": " + RootName + "/" + l.path + " = " + l.key + "; nothing changed");
+            if (!(manifest.interactions ?? new KD_LocalizationEditor.Binding[0]).Any(b => b.root == RootName && b.path == InteractPath && b.key == InteractKey))
+                throw new InvalidOperationException("interaction binding missing in " + KD_LocalizationEditor.BindingsPath + ": " + RootName + "/" + InteractPath + " = " + InteractKey + "; nothing changed");
             var foreign = manifest.labels.Where(b => b.root == RootName && !Labels.Any(l => l.path == b.path)).Select(b => b.path).ToArray();
             if (foreign.Length > 0) throw new InvalidOperationException("bindings under " + RootName + " that this builder does not make: " + string.Join(", ", foreign) + "; nothing changed");
             if (forBuild)
@@ -206,6 +232,19 @@ namespace KominkaHillside.Editor
                     int n = c.root.Cast<Transform>().Count(t => t.name == b.name);
                     if (n > 1) throw new InvalidOperationException(n + " children named " + b.name + " under " + RootName + " (keep one); nothing changed");
                 }
+            // ---- IMP-WLD-006: the existing world portal is taken over, never created or retyped ----
+            var markers = UnityEngine.Object.FindObjectsOfType<VRC.SDK3.Components.VRCPortalMarker>(true);
+            if (markers.Length != 1) throw new InvalidOperationException(markers.Length + " VRCPortalMarker in the scene (expected exactly the one portal to Kominka Dog Run); nothing changed");
+            c.portal = markers[0];
+            var roomProp = new SerializedObject(c.portal).FindProperty("roomId");
+            c.portalRoomId = roomProp != null ? roomProp.stringValue : null;
+            if (string.IsNullOrEmpty(c.portalRoomId) || !c.portalRoomId.StartsWith("wrld_"))
+                throw new InvalidOperationException("the portal " + KD_SceneObjects.PathOf(c.portal.gameObject) + " has no world id (roomId '" + c.portalRoomId + "'); nothing changed");
+            var pgo = c.portal.gameObject;
+            if (PrefabUtility.IsPartOfPrefabInstance(pgo) && !PrefabUtility.IsOutermostPrefabInstanceRoot(pgo))
+                throw new InvalidOperationException("the portal marker is inside another prefab instance (" + KD_SceneObjects.PathOf(pgo) + "): it cannot be re-parented; nothing changed");
+            if (forBuild && AssetDatabase.LoadAssetAtPath<UdonSharp.UdonSharpProgramAsset>(PortalProgramPath + ".asset") == null)
+                throw new InvalidOperationException(PortalProgramPath + ".asset missing: run Guide/0, compile U# (unity-compile.sh --udon), then Guide/1; nothing changed");
             var main = c.scene.GetRootGameObjects().FirstOrDefault(g => g.name == "KH_WashStation");
             if (main != null) c.washStations.Add(main.transform);
             var course = c.scene.GetRootGameObjects().FirstOrDefault(g => g.name == "KH_WashStations");
@@ -219,6 +258,7 @@ namespace KominkaHillside.Editor
         {
             public string utc, scene, status, backup;
             public List<string> boards = new List<string>();
+            public string kominkaPlacement;
             public List<string> log = new List<string>();
         }
 
@@ -228,6 +268,8 @@ namespace KominkaHillside.Editor
             KH_CourseGroundEditor.Idle(KH_CourseGroundEditor.ScenePath);
             var c = Resolve(true);
             var r = new BuildReport { utc = DateTime.UtcNow.ToString("o"), scene = KH_CourseGroundEditor.ScenePath };
+            // IMP-WLD-006: the Kominka board's clear pose is searched with physics before anything changes (throws = nothing changed)
+            var kominkaPose = FindKominkaPose(c, out r.kominkaPlacement);
             Directory.CreateDirectory(OutDir);
             r.backup = OutDir + "/before-guide-boards-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + ".unity";
             File.Copy(KH_CourseGroundEditor.ScenePath, r.backup, false);
@@ -251,10 +293,20 @@ namespace KominkaHillside.Editor
                 foreach (var b in Boards)
                 {
                     var bt = EnsureBoard(root, b, r);
+                    if (b == Kominka && kominkaPose.HasValue)
+                    {
+                        bt.position = new Vector3(kominkaPose.Value.x, 0f, kominkaPose.Value.z);
+                        bt.rotation = Quaternion.Euler(0f, kominkaPose.Value.y, 0f);
+                        float gy = float.NegativeInfinity;
+                        foreach (var sp in SeatSamples(b)) gy = Mathf.Max(gy, Ground(bt.TransformPoint(sp)));
+                        bt.position = new Vector3(bt.position.x, gy, bt.position.z);
+                        r.log.Add(b.name + " re-placed: " + r.kominkaPlacement);
+                    }
                     BuildStructure(bt, b, c, keep);
                     var canvas = EnsureCanvas(bt, b, keep);
                     if (b == Asob) BuildAsobikataCanvas(canvas, c, keep);
-                    else BuildMapCanvas(canvas, bt, c, keep);
+                    else if (b == MapBoard) BuildMapCanvas(canvas, bt, c, keep);
+                    else { BuildKominkaCanvas(canvas, c, keep); BuildPortal(bt, b, c, keep, r); }
                     RemoveStale(bt, keep, r);
                     r.boards.Add(b.name + " at " + V(bt.position) + " yaw " + bt.eulerAngles.y.ToString("F1"));
                 }
@@ -290,6 +342,21 @@ namespace KominkaHillside.Editor
             Debug.Log("[KH Guide Boards] BUILT and GUIDE_BOARDS_OK (" + v.lines.Count + " checks, " + v.warned + " WARN) -> " + BuildReportPath + " / " + VerifyReportPath);
         }
 
+        [MenuItem(Menu + "0 - Create Portal Board Program")]
+        public static void CreateProgram()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) throw new InvalidOperationException("[KH Guide Boards] Edit mode only (not compiling)");
+            if (AssetDatabase.LoadAssetAtPath<UdonSharp.UdonSharpProgramAsset>(PortalProgramPath + ".asset") != null) { Debug.Log("[KH Guide Boards] " + PortalProgramPath + ".asset exists; nothing changed"); return; }
+            var script = AssetDatabase.LoadAssetAtPath<MonoScript>(PortalProgramPath + ".cs");
+            if (script == null) throw new InvalidOperationException(PortalProgramPath + ".cs not imported yet; refresh first");
+            var asset = ScriptableObject.CreateInstance<UdonSharp.UdonSharpProgramAsset>();
+            asset.sourceCsScript = script;
+            AssetDatabase.CreateAsset(asset, PortalProgramPath + ".asset");
+            AssetDatabase.SaveAssets();
+            UdonSharp.UdonSharpProgramAsset.CompileAllCsPrograms(true);
+            Debug.Log("[KH Guide Boards] created " + PortalProgramPath + ".asset. Compile U# (scripts/unity-compile.sh --udon), then Guide/1.");
+        }
+
         static void SceneManagerMove(GameObject go, UnityEngine.SceneManagement.Scene scene)
         {
             if (go.scene != scene) UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, scene);
@@ -308,6 +375,189 @@ namespace KominkaHillside.Editor
         }
 
         static string Visible(string text) { return System.Text.RegularExpressions.Regex.Replace(text ?? "", "<[^<>]+>", ""); }
+
+        // ================================================================ IMP-WLD-006: a clear pose for the Kominka board
+
+        const float KomStep = 0.1f, KomMaxOut = 3.0f;
+        /// <summary>The main wash station's working area in station-local metres (shelf 1.2 x 0.45 at z 0, duckboard 1.3 x 0.7 at z -1.2,
+        /// 1 m free each side of the duckboard: KH_DogWashSetupEditor.Station.cs).</summary>
+        const float WorkHalfX = 1.65f, WorkMinZ = -1.55f, WorkMaxZ = 0.225f;
+        /// <summary>Room a player needs in front of the portal to step in (board-local -Z) and beside it (x).</summary>
+        const float PortalFrontRoom = 0.8f, PortalSideRoom = 0.3f;
+
+        /// <summary>The board volume and, separately, the portal volume (1 x 2 x 1 m + room to step in) in board-local x / z.</summary>
+        static Rect PortalRect(float side) { float x = side * PortalSideX; return Rect.MinMaxRect(x - 0.5f - PortalSideRoom, BackZ - 0.5f - PortalFrontRoom, x + 0.5f + PortalSideRoom, BackZ + 0.5f); }
+
+        /// <summary>+1 / -1: the portal goes on the board's side away from the gate opening (board-local +X or -X).</summary>
+        static float PortalSide(Ctx c, Vector3 pos, Quaternion rot)
+        {
+            var gate = ScenePath(c.scene, "KH_World/KH_Places/KH_GateBlock");
+            if (gate == null) return 1f;
+            float d = Vector3.Dot(Flat3(pos - gate.position), rot * Vector3.right);
+            return d >= 0f ? 1f : -1f;
+        }
+
+        /// <summary>Start points for the Kominka board, tried in order (first that passes wins). Measured from the gate (KH_GateBlock):
+        /// along = metres along the wall (gate +X; negative = west), out = metres in front of the gate line (spawn side). The board stays
+        /// parallel to the wall (yaw = gate yaw + 180) and steps further out from there with physics. 2026-10-03 offline estimate in
+        /// docs/plans/2026-10-02-guide-boards.md §12-2.</summary>
+        static readonly Vector2[] KominkaStarts = { new Vector2(-4.2f, 1.0f), new Vector2(4.2f, 1.0f), new Vector2(-5.2f, 1.0f) };
+        static readonly string[] KominkaStartNames = { "gate-west 4.2 m", "gate-east 4.2 m", "gate-west 5.2 m" };
+
+        /// <summary>Null = keep the board where it is (it exists and both volumes are clear). Otherwise the x / yaw / z (as Vector3(x, yaw, z))
+        /// to put it at: from the current position (or the design point) stepped out along the board's front normal (toward the readers,
+        /// away from the wall), KomStep at a time up to KomMaxOut, until the board's volume and the portal's volume hit no solid collider
+        /// players bump into (the actual colliders: the wall is inside the purchased farmhouse prefab, so it is not guessed). The other
+        /// placement rules are checked at the found point. Nothing found or a rule broken: an exception before any change.</summary>
+        static Vector3? FindKominkaPose(Ctx c, out string how)
+        {
+            var log = new List<string>();
+            var existing = c.root != null ? c.root.Find(Kominka.name) : null;
+            if (existing != null)
+            {
+                // the user's position is kept only if it passes everything at its own place (no stepping)
+                string why;
+                var keep = TryKominka(c, existing.position, existing.eulerAngles.y, 0f, out why);
+                if (keep.HasValue) { how = "kept at " + V(existing.position) + " yaw " + existing.eulerAngles.y.ToString("F1") + " (clear, all rules pass)"; return null; }
+                log.Add("current " + V(existing.position) + ": " + why);
+            }
+            var gate = ScenePath(c.scene, "KH_World/KH_Places/KH_GateBlock");
+            for (int k = 0; k < KominkaStarts.Length; k++)
+            {
+                Vector3 start; float yaw;
+                if (gate != null)
+                {
+                    var right = gate.right; right.y = 0f; right.Normalize();
+                    var outward = gate.forward; outward.y = 0f; outward.Normalize();
+                    var spawn = ScenePath(c.scene, "KH_World/KH_Places/KH_Entrance");
+                    if (spawn != null && Vector3.Dot(spawn.position - gate.position, outward) < 0f) outward = -outward;   // "out" = the spawn's side
+                    start = gate.position + right * KominkaStarts[k].x + outward * KominkaStarts[k].y;
+                    yaw = Mathf.Atan2(-outward.x, -outward.z) * Mathf.Rad2Deg;   // root +Z into the wall: the readers face the wall
+                }
+                else { start = new Vector3(Kominka.createXZ.x, 0f, Kominka.createXZ.y); yaw = Kominka.createYaw; }
+                string why;
+                var got = TryKominka(c, start, yaw, KomMaxOut, out why);
+                if (got.HasValue) { how = KominkaStartNames[k] + ": " + why + (log.Count > 0 ? " | rejected before: " + string.Join(" | ", log) : ""); return got; }
+                log.Add(KominkaStartNames[k] + " " + V(start) + ": " + why);
+            }
+            throw new InvalidOperationException("Kominka board: no start point passes: " + string.Join(" | ", log) + "; nothing changed");
+        }
+
+        /// <summary>From a start point, step out along the front normal (0.1 m up to maxOut) to the first point where the board volume
+        /// and the portal volume are clear of solid colliders, then check the rules there. Returns Vector3(x, yaw, z) or null (why says why).</summary>
+        static Vector3? TryKominka(Ctx c, Vector3 start, float yaw, float maxOut, out string why)
+        {
+            var rot = Quaternion.Euler(0f, yaw, 0f);
+            Vector3 front = rot * Vector3.back;   // the readers' side (the Canvas faces -Z)
+            var tried = new List<string>();
+            for (float d = 0f; d <= maxOut + 1e-4f; d += KomStep)
+            {
+                var pos = start + front * d; pos.y = 0f;
+                float gy = float.NegativeInfinity;
+                foreach (var sp in SeatSamples(Kominka)) gy = Mathf.Max(gy, Ground(pos + rot * sp));
+                pos.y = gy;
+                float side = PortalSide(c, pos, rot);
+                var hb = SolidIn(c, pos, rot, Footprint(Kominka), gy + 0.05f, gy + 2.8f);
+                var portalGround = Ground(pos + rot * new Vector3(side * PortalSideX, 0f, BackZ));
+                var hp = SolidIn(c, pos, rot, PortalRect(side), portalGround + 0.05f, portalGround + 2.1f);
+                if (hb.Count > 0 || hp.Count > 0)
+                {
+                    if (tried.Count < 3) tried.Add(d.ToString("F1") + " m blocked by " + string.Join(", ", hb.Concat(hp).Distinct().Take(2)));
+                    continue;
+                }
+                var broken = KominkaRules(c, pos, rot);
+                if (broken.Count > 0) { why = "first clear point " + d.ToString("F1") + " m out " + V(pos) + " breaks " + string.Join("; ", broken); return null; }
+                why = "stepped " + d.ToString("F1") + " m out from " + V(start) + " to " + V(pos) + " yaw " + yaw.ToString("F1") + "; portal at "
+                    + V(pos + rot * new Vector3(side * PortalSideX, 0f, BackZ)) + (tried.Count > 0 ? " (" + string.Join("; ", tried) + ")" : "");
+                return new Vector3(pos.x, yaw, pos.z);
+            }
+            why = "no clear point within " + maxOut + " m (" + string.Join("; ", tried) + ")";
+            return null;
+        }
+
+        static List<string> SolidIn(Ctx c, Vector3 pos, Quaternion rot, Rect r, float bottom, float top)
+        {
+            Physics.SyncTransforms();
+            var centre = pos + rot * new Vector3(r.center.x, 0f, r.center.y); centre.y = (bottom + top) * 0.5f;
+            return Physics.OverlapBox(centre, new Vector3(r.width * 0.5f, (top - bottom) * 0.5f, r.height * 0.5f), rot, ~0, QueryTriggerInteraction.Ignore)
+                .Where(x => !(x is TerrainCollider) && (c.root == null || !x.transform.IsChildOf(c.root)) && !Physics.GetIgnoreLayerCollision(x.gameObject.layer, 10))
+                .Select(x => KD_SceneObjects.PathOf(x.gameObject)).Distinct().ToList();
+        }
+
+        /// <summary>The Guide/2 rules that a step toward the spawn could break (Guide/2 checks all of them again after the build).</summary>
+        static List<string> KominkaRules(Ctx c, Vector3 pos, Quaternion rot)
+        {
+            var bad = new List<string>();
+            var a = FindAnchors(c);
+            var foot = new List<Vector3>();
+            var fr = Footprint(Kominka);
+            for (int i = 0; i <= 8; i++) for (int j = 0; j <= 2; j++) foot.Add(pos + rot * new Vector3(fr.xMin + fr.width * i / 8f, 0f, fr.yMin + fr.height * j / 2f));
+            var portal = pos + rot * new Vector3(PortalSide(c, pos, rot) * PortalSideX, 0f, BackZ);
+            var readers = new List<Vector3>();
+            var rr = ReaderArea(Kominka);
+            for (int i = 0; i <= 6; i++) for (int j = 0; j <= 4; j++) readers.Add(pos + rot * new Vector3(rr.xMin + rr.width * i / 6f, 0f, rr.yMin + rr.height * j / 4f));
+            if (a.spawn != null)
+            {
+                float ds = foot.Min(q => Flat(q - a.spawn.position)), dp = Flat(portal - a.spawn.position);
+                if (ds < SpawnClear) bad.Add("board " + ds.ToString("F2") + " m from the spawn (< " + SpawnClear + ")");
+                if (dp < PortalSpawnClear) bad.Add("portal " + dp.ToString("F2") + " m from the spawn (< " + PortalSpawnClear + ")");
+                float bb = Bearing(a.spawn.position, pos);
+                foreach (var t in new[] { a.gate, a.kominka })
+                    if (t != null && Mathf.Abs(Mathf.DeltaAngle(bb, Bearing(a.spawn.position, t.position))) < FarmhouseSectorMin) bad.Add("in the turn-around view to " + t.name);
+                if (a.gate != null)
+                {
+                    Vector3 fwd = a.spawn.forward; fwd.y = 0f; fwd.Normalize();
+                    float side = foot.Min(q => Vector3.Dot(Flat3(q - a.gate.position), fwd));
+                    if (side < GateSideMinKominka) bad.Add("only " + side.ToString("F2") + " m in front of the gate line");
+                    // the gate opening (KH_GateBlock is 4.5 m wide): keep the footprint (roof overhang included) 0.5 m clear of its ends along the wall
+                    var gr = a.gate.right; gr.y = 0f; gr.Normalize();
+                    float along = foot.Min(q => Mathf.Abs(Vector3.Dot(Flat3(q - a.gate.position), gr)));
+                    if (along < 2.25f + 0.5f) bad.Add("within 0.5 m of the gate opening (" + along.ToString("F2") + " m from its centre along the wall)");
+                }
+            }
+            if (a.route != null && a.route.Length > 1)
+            {
+                int n = a.route.Length, segs = a.closed ? n : n - 1; float rb = float.PositiveInfinity, rp = float.PositiveInfinity;
+                for (int i = 0; i < segs; i++)
+                {
+                    foreach (var q in foot) rb = Mathf.Min(rb, SegDist(q, a.route[i], a.route[(i + 1) % n]));
+                    rp = Mathf.Min(rp, SegDist(portal, a.route[i], a.route[(i + 1) % n]));
+                }
+                if (rb < RouteClear) bad.Add("board " + rb.ToString("F2") + " m from the loop line");
+                if (rp < 2.5f) bad.Add("portal " + rp.ToString("F2") + " m from the loop line");
+            }
+            if (a.washFloor != null && a.washMain != null)
+            {
+                if (foot.Min(q => OutsideSquare(q, a.washFloor.position, a.washMain.rotation, WashFloorHalf)) < WashFloorClear) bad.Add("board on / near the wash floor");
+                if (OutsideSquare(portal, a.washFloor.position, a.washMain.rotation, WashFloorHalf) < 1.0f) bad.Add("portal on / near the wash floor");
+                // Relaxed for this board (2026-10-03): its readers may stand on the edge of the 5 x 5 m personal floor (an invisible floor that
+                // only rises for the washer who raises it), but not within 1 m of the working area (shelf + duckboard + 1 m each side) and not
+                // within 4 m of the station (the dogs' keep-out around a station).
+                var inv = Quaternion.Inverse(Quaternion.Euler(0f, a.washMain.eulerAngles.y, 0f));
+                bool work = readers.Concat(new[] { portal }).Any(q => { var l = inv * (q - a.washMain.position); return Mathf.Abs(l.x) < WorkHalfX + 1f && l.z > WorkMinZ - 1f && l.z < WorkMaxZ + 1f; });
+                if (work) bad.Add("readers / portal within 1 m of the wash station's working area");
+                float centre = Flat(pos + rot * new Vector3(0f, 0f, rr.center.y) - a.washMain.position);
+                if (centre < 4f) bad.Add("readers " + centre.ToString("F1") + " m from the wash station (< 4)");
+            }
+            // boards A / B have no colliders, so physics does not see them
+            foreach (var other in new[] { Asob, MapBoard })
+            {
+                var ot = c.root != null ? c.root.Find(other.name) : null;
+                if (ot == null) continue;
+                var of = Footprint(other);
+                float best = float.PositiveInfinity;
+                foreach (var q in foot.Concat(new[] { portal }).Concat(readers))
+                {
+                    var l = ot.InverseTransformPoint(q);
+                    float dx = Mathf.Max(Mathf.Max(of.xMin - l.x, l.x - of.xMax), 0f), dz = Mathf.Max(Mathf.Max(of.yMin - l.z, l.z - of.yMax), 0f);
+                    best = Mathf.Min(best, Mathf.Sqrt(dx * dx + dz * dz));
+                }
+                if (best < 1.5f) bad.Add("board / portal / readers " + best.ToString("F2") + " m from board " + other.name + " (< 1.5)");
+            }
+            foreach (var t in new[] { a.rack, a.keeper, a.welcome }.Concat(a.treats))
+                if (t != null && foot.Concat(new[] { portal }).Min(q => Flat(q - t.position)) < FixtureClear) bad.Add("within " + FixtureClear + " m of " + t.name);
+            return bad;
+        }
 
         // ================================================================ board, structure
 
@@ -431,7 +681,8 @@ namespace KominkaHillside.Editor
             {
                 var paper = Img(canvas, PaperNames[i], new Vector2(PaperX[i], PaperY), PaperSize, Washi, null, keep);
                 Txt(paper.transform, "Title", TitlePos, TitleSize, TitleMax, TitleMin, TextAlignmentOptions.Center, PaperKeys[i] == "shop" ? Vermilion : Sumi, false, c, keep);
-                Txt(paper.transform, "Body", BodyPos, BodySize, BodyMax, BodyMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
+                var body = Txt(paper.transform, "Body", BodyPos, BodySize, BodyMaxPerPaper[i], BodyMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
+                body.lineSpacing = BodyLineSpacing; EditorUtility.SetDirty(body);
             }
         }
 
@@ -467,11 +718,60 @@ namespace KominkaHillside.Editor
             var here = Img(paper, "Here", MapLocal(board.position), HereSize, Vermilion, c.circle, keep);
             Txt(here.transform, "Label", HereLabelPos, HereLabelSize, HereMax, HereMin, TextAlignmentOptions.Left, Vermilion, false, c, keep);
             Txt(paper, "North", NorthPos, NorthSize, NorthMax, NorthMin, TextAlignmentOptions.Center, Sumi, false, c, keep);
-            Txt(paper, "Legend", LegendPos, LegendSize, LegendMax, LegendMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
+            var legend = Txt(paper, "Legend", LegendPos, LegendSize, LegendMax, LegendMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
+            legend.lineSpacing = LegendLineSpacing; EditorUtility.SetDirty(legend);
             Txt(paper, "Key", KeyPos, KeySize, KeyMax, KeyMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
             Txt(paper, "Note", NotePos, NoteSize, NoteMax, NoteMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
             // draw order: map, wash squares, numbers, here, then the rest
             mapGo.transform.SetSiblingIndex(0);
+        }
+
+        static void BuildKominkaCanvas(RectTransform canvas, Ctx c, HashSet<Transform> keep)
+        {
+            Img(canvas, "HeaderPlate", KomHeaderPos, KomHeaderPlate, HeaderPlateColor, null, keep);
+            Txt(canvas, "Header", KomHeaderPos, KomHeaderText, MapTitleMax, MapTitleMin, TextAlignmentOptions.Center, SignInk, false, c, keep);
+            var paper = Img(canvas, "Paper", KomPaperPos, KomPaperSize, Washi, null, keep);
+            var body = Txt(paper.transform, "Body", Vector2.zero, KomBodySize, KomBodyMax, KomBodyMin, TextAlignmentOptions.TopLeft, Sumi, true, c, keep);
+            body.lineSpacing = KomLineSpacing; EditorUtility.SetDirty(body);
+        }
+
+        /// <summary>IMP-WLD-006: the Interact target (a trigger over the board's face, Default layer like the wash board's UI shape:
+        /// players walk through it, the dogs' ground rays and every QueryTriggerInteraction.Ignore query skip it) with KH_PortalBoard,
+        /// and the scene's one VRCPortalMarker moved under PortalAnchor (inactive in the saved scene). The marker's own values (world id,
+        /// presentation) are never written; only its parent and local pose change.</summary>
+        static void BuildPortal(Transform board, Board b, Ctx c, HashSet<Transform> keep, BuildReport r)
+        {
+            var it = Child(board, InteractName, keep);
+            it.localPosition = Vector3.zero; it.localRotation = Quaternion.identity; it.localScale = Vector3.one;
+            foreach (var col in it.GetComponents<Collider>()) if (!(col is BoxCollider)) UnityEngine.Object.DestroyImmediate(col);
+            var box = it.GetComponent<BoxCollider>(); if (box == null) box = it.gameObject.AddComponent<BoxCollider>();
+            box.isTrigger = true; box.center = new Vector3(0f, CanvasCenterY(b), -0.03f); box.size = new Vector3(BackW(b), BackH(b), 0.06f);
+            EditorUtility.SetDirty(box);
+
+            var anchor = Child(board, PortalAnchorName, keep);
+            float side = PortalSide(c, board.position, board.rotation);
+            var spot = board.TransformPoint(new Vector3(side * PortalSideX, 0f, BackZ));
+            anchor.localPosition = new Vector3(side * PortalSideX, Ground(spot) - board.position.y, BackZ);
+            anchor.localRotation = Quaternion.Euler(0f, PortalYaw, 0f); anchor.localScale = Vector3.one;
+            var mt = c.portal.transform;
+            if (mt.parent != anchor)
+            {
+                r.log.Add("took over the portal " + KD_SceneObjects.PathOf(mt.gameObject) + " (world " + c.portalRoomId + ") from " + V(mt.position) + " yaw " + mt.eulerAngles.y.ToString("F1") + "; its old parent is left as is");
+                mt.SetParent(anchor, false);
+            }
+            mt.localPosition = Vector3.zero; mt.localRotation = Quaternion.identity; mt.localScale = Vector3.one;
+            if (!mt.gameObject.activeSelf) mt.gameObject.SetActive(true);
+            anchor.gameObject.SetActive(false);   // hidden for everyone at load; KH_PortalBoard shows it per player
+            foreach (var t in mt.GetComponentsInChildren<Transform>(true)) keep.Add(t);
+
+            var pb = it.GetComponent<KH_PortalBoard>();
+            if (pb == null) { pb = it.gameObject.AddUdonSharpComponent<KH_PortalBoard>(); r.log.Add("added KH_PortalBoard"); }
+            var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(pb);
+            if (backing == null) throw new InvalidOperationException("KH_PortalBoard backing missing (compile U# after Guide/0, then Guide/1 again; reopen the scene without saving)");
+            if (backing.SyncMethod != VRC.SDKBase.Networking.SyncType.None) { backing.SyncMethod = VRC.SDKBase.Networking.SyncType.None; EditorUtility.SetDirty(backing); }
+            backing.proximity = InteractProximity; EditorUtility.SetDirty(backing);
+            pb.portal = anchor.gameObject; pb.showSeconds = PortalShowSeconds;
+            UdonSharpEditorUtility.CopyProxyToUdon(pb); EditorUtility.SetDirty(pb);
         }
 
         /// <summary>Paper-local position of a world point on the board's map (KH_CourseTravelMapEditor's square, north up).</summary>
@@ -510,6 +810,7 @@ namespace KominkaHillside.Editor
             t.overflowMode = TextOverflowModes.Overflow;   // never Truncate / Ellipsis (vrc-world-ui §10.1: a box too short for one line draws nothing)
             t.richText = true;
             t.margin = Vector4.zero;
+            t.lineSpacing = 0f;   // the callers set it where it differs
             t.raycastTarget = false;
             if (string.IsNullOrEmpty(t.text)) t.text = name;   // Bind writes the ja text right after
             EditorUtility.SetDirty(t);
@@ -522,7 +823,7 @@ namespace KominkaHillside.Editor
         static void RemoveStale(Transform board, HashSet<Transform> keep, BuildReport r)
         {
             foreach (Transform t in board)
-                if (t.name != StructureName && t.name != CanvasName) r.log.Add("WARN " + board.name + "/" + t.name + " is not made by this builder: left as is");
+                if (t.name != StructureName && t.name != CanvasName && !(board.name == Kominka.name && (t.name == InteractName || t.name == PortalAnchorName))) r.log.Add("WARN " + board.name + "/" + t.name + " is not made by this builder: left as is");
             foreach (var name in new[] { StructureName, CanvasName })
             {
                 var top = board.Find(name);

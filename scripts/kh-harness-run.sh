@@ -8,6 +8,7 @@
 #   bash scripts/kh-harness-run.sh lap forward --reason "確認する仮説"    # 約20分の連続一周。通常改修では使わない
 #   bash scripts/kh-harness-run.sh menu  "<メニュー名>"                 # Edit モードの静的検査 (Course/89・93、Frisbee/5 など)。Editor.log の増分から要約行だけ返す
 #   bash scripts/kh-harness-run.sh compile                              # unity-compile.sh --udon (照合失敗は 1 回だけ待って再試行)
+#   bash scripts/kh-harness-run.sh photo                                # IMP-WLD-005 Photo/3 (自動写真、約 1 分。Photo/1・4 の後)
 #
 # 終了コード: 0 = PASS または歩行の SEGMENTS_OBSERVED / LAP_OBSERVED (範囲はreportどおり) / 1 = 失敗・未完了 / 2 = 待ち切れ・新しい run が出ない
 #            3 = 実行前の照合失敗 (接続先違い、Play 中、コンパイル中。何もしない) / 64 = 使い方の誤り
@@ -112,5 +113,24 @@ case "$cmd" in
     done
     [ "$done_" = 1 ] || { echo "walk TIMEOUT: no finished run after 2500 s (latest: $s)"; exit 2; }
     node scripts/kh-walk-cli.cjs result "$cmd" "$@";;
-  *) echo 'usage: kh-harness-run.sh compile | menu <name> | proto <mode> [args] | walk <menu> | segment <case> | lap <forward|reverse> --reason "..."'; exit 64;;
+  photo)
+    # IMP-WLD-005 Photo/3 - Harness (自動写真の小さいケース群、約 1 分)。結果は Logs/kh-photo-harness/latest.json
+    guard
+    prev=$(node -e 'try{console.log(require("./Logs/kh-photo-harness/latest.json").runId)}catch(e){console.log("")}')
+    ok=$(run_menu "Photo/3 - Harness")
+    [ "$ok" = "True" ] || { echo "photo NOT_EXECUTED: ExecuteMenuItem=$ok"; exit 2; }
+    done_=0; t=0
+    while [ $t -lt 400 ]; do
+      sleep 10; t=$((t+10))
+      s=$(node -e 'try{const j=require("./Logs/kh-photo-harness/latest.json");console.log(j.runId+" "+j.status+" "+(j.endedUtc?"ended":"open"))}catch(e){console.log("none")}')
+      case "$s" in none|"$prev "*)
+        [ $t -ge 60 ] && { echo "photo NO_NEW_RUN after 60 s (PHOTO_HARNESS_BLOCKED in Editor.log? Photo/1 and Photo/4 are required; latest: $s)"; exit 2; }
+        continue;; esac
+      case "$s" in *" RUNNING "*|*" open") continue;; esac
+      [ "$(is_playing)" = "False" ] || continue
+      done_=1; break
+    done
+    [ "$done_" = 1 ] || { echo "photo TIMEOUT: no finished run after 400 s (latest: $s)"; exit 2; }
+    node -e 'const j=require("./Logs/kh-photo-harness/latest.json");const bad=(j.cases||[]).filter(c=>c.status!=="PASS").map(c=>c.name+": "+(c.reason||c.status)).join(" | ");console.log("photo",j.runId,j.status,"cases",(j.cases||[]).length,"sceneUnchanged",j.sceneFileUnchanged,"playerDataRestored",j.playerDataRestored,"errors",(j.errors||[]).length,bad?"FAILS="+bad:"");process.exit(j.status==="PASS"&&j.sceneFileUnchanged&&j.playerDataRestored?0:1)';;
+  *) echo 'usage: kh-harness-run.sh compile | menu <name> | proto <mode> [args] | walk <menu> | segment <case> | lap <forward|reverse> --reason "..." | photo'; exit 64;;
 esac

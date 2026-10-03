@@ -208,12 +208,18 @@ namespace KominkaDogRun.Editor
                 KD_VerifyLog.Write(HillsideShopSetupLog, log);
                 return;
             }
-            // 裏山には ToyBox が無い。手元メニューはカタログを直接読む
+            // 裏山の ToyBox (ボールの柄、DES-DOG-002) は Course/124 が作る。手元メニューはカタログを直接読む
             // 裏山改変 (IMP-DOG-015 提案): 段階 2 の撫でFX の消費側 (KH_Dogs/KD_PetFxBox) があれば通知先に残す (Menu/6g が足す。流し直しで消さない)
             var petFxT = dogs.Find(KD_DogDefs.PetFxBoxName);
             var petFx = petFxT == null ? null : petFxT.GetComponent<KD_PetFxBox>();
-            catalog.consumers = petFx != null ? new UdonSharpBehaviour[] { petFx } : new UdonSharpBehaviour[0];
-            catalog.consumerEvents = petFx != null ? new[] { "_OnShopSelectionChanged" } : new string[0];
+            // 裏山改変 (DES-DOG-002): ボールの柄の消費側 (KH_Dogs/KD_ToyBox、Course/124 が足す) があれば通知先に残す (流し直しで消さない)
+            var toyBoxT = dogs.Find(KD_DogDefs.ToyBoxName);
+            var toyBox = toyBoxT == null ? null : toyBoxT.GetComponent<KD_ToyBox>();
+            var keep = new System.Collections.Generic.List<UdonSharpBehaviour>();
+            if (petFx != null) keep.Add(petFx);
+            if (toyBox != null) keep.Add(toyBox);
+            catalog.consumers = keep.ToArray();
+            catalog.consumerEvents = keep.Select(x => "_OnShopSelectionChanged").ToArray();
             ok &= TryCopy(catalog, log);
             log.AppendLine("wired catalog.items = ledger.products = " + catalog.items.Length + " 件 / categories "
                 + string.Join(",", catalog.categoryKeys) + " / consumers " + catalog.consumers.Length);
@@ -438,7 +444,7 @@ namespace KominkaDogRun.Editor
             int shelves = KD_ProductsEditor.SceneComponents<KD_ShopShelf>().Length;
             v.Check(shelves == 0, "KD_ShopShelf がシーンに無い (actual " + shelves + ") — 裏山に棚は無い。購入は手元メニュー");
             log.AppendLine("  SKIP 棚の面ラベル・確認パネル・効果音・陳列メッシュ・重なり・棚のグリフ — 裏山では対象外 (棚が無い)");
-            log.AppendLine("  SKIP KD_ToyBox の器 (おもちゃの見た目の切り替え) — 裏山では対象外 (IMP-DOG 系の後続で扱う)");
+            log.AppendLine("  SKIP KD_ToyBox の器 (ボールの柄、DES-DOG-002) — Course/125 Verify Ball Patterns が見る");
             log.AppendLine("  SKIP おやつ陳列マテリアル — 裏山では対象外 (棚が無い。おやつの実体は IMP-DOG-014)");
             log.AppendLine("  SKIP 手元メニューの行との対応 (KD_ProductsEditor.HasMenuEntry) — 段階 1 ではおやつ・かざり等は準備中。Menu/20 Verify Pouch が見る");
 

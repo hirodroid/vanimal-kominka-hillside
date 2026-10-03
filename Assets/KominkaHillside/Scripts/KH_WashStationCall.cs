@@ -24,7 +24,15 @@ namespace KominkaHillside
     /// (KD_DogWanderController.HillsideStationLeave.cs). Nothing new is synced here.
     ///
     /// Busy dogs (Fetch / the disc / in the water / a gathering participant / called to sleep): the call waits callWaitSeconds for
-    /// the dog to be free, then is refused (refuseSerial / refusedDog / refusedReason for the board's 「いまは来られない」).</summary>
+    /// the dog to be free, then is refused (refuseSerial / refusedDog / refusedReason for the board's 「いまは来られない」).
+    ///
+    /// IMP-DOG-037 (docs/plans/2026-10-01-wash-call-and-height.md §7): one rule, _Availability(dog, player), decides both what the
+    /// board shows for each dog and what the Owner accepts - the same function on the same synced inputs (the leash walkers, every
+    /// station's heldDog, the Fetch / disc / gathering / sleep-call states, the wash hold, the dog root synced by VRCObjectSync).
+    /// Refused at once: leashed by someone else, held by another station, farther than callRange (horizontal, from the anchor).
+    /// Waited for (callWaitSeconds, then refused as busy): Fetch, the disc, a gathering, the sleep call, washed by someone else.
+    /// callRange stays below the dog side's StationFar (30 m, Wash/12), so an accepted call never needs the "appear near the
+    /// station" teleport and a far dog cannot be pulled in through it. Nothing new is synced.</summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class KH_WashStationCall : UdonSharpBehaviour
     {
@@ -52,8 +60,18 @@ namespace KominkaHillside
         // 4 m covers the duckboard, the shelf (1.2 m behind) and the 5 x 5 m personal floor (corners 3.54 m) with 0.46 m to spare.
         // Read once by each dog (static: the anchor moves on y only). Written by Wash/11, checked by Wash/12. 0 = no keep-out.
         public float keepOutRadius = 4f;
+        // IMP-DOG-037: only dogs within this horizontal distance of the anchor can be called (m). Per station, written by Wash/11
+        // (KH_DogWashSetupEditor.CallRanges), checked by Wash/12 (keepOutRadius < callRange < the dog side's StationFar, no two
+        // stations' ranges overlap). 0 or less = no limit (the behaviour before IMP-DOG-037).
+        public float callRange = 25f;
 
-        public const int RefuseBusy = 1, RefuseLeashedByOther = 2, RefuseInvalid = 3;
+        // Refusal reasons (synced refusedReason) and, with the Av* values, what _Availability returns. One list for both, so the
+        // board and the Owner name the same reason.
+        public const int RefuseBusy = 1, RefuseLeashedByOther = 2, RefuseInvalid = 3, RefuseTooFar = 4, RefuseOtherStation = 5;
+        public const int AvCallable = 0;
+        // busy: the call waits callWaitSeconds (AvFetch .. AvWashedByOther; a refusal after the wait is RefuseBusy)
+        public const int AvFetch = 6, AvFrisbee = 7, AvGathering = 8, AvSleepCall = 9, AvWashedByOther = 10;
+        public const int AvHeldHere = 11;   // this station holds it (on its way or on the stand)
 
         [UdonSynced] private int heldDog = -1;
         [UdonSynced] private int callerId = -1;
@@ -135,6 +153,56 @@ namespace KominkaHillside
                 if (o == null || o == this || !o.gameObject.activeInHierarchy || o._HeldDog() != dog) continue;
                 int d = o._HeldMs() - heldMs;
                 if (d > 0 || (d == 0 && o.stationIndex < stationIndex)) return true;
+            }
+            return false;
+        }
+
+        /// <summary>IMP-DOG-037: can player `pid` call `dog` to this station now, and if not, why. The board reads it for every dog
+        /// (local player) and the Owner arbitrates with it (the caller), so the two never disagree on the rule; they can differ
+        /// only by what each client has received so far (the Owner's answer is the one that counts, and a refusal names it).
+        /// Order (the first match wins): unwired > leashed by someone else > held here > held by another station > too far >
+        /// Fetch > the disc > gathering > the sleep call > washed by someone else > callable. Leashed is checked before "held
+        /// here" as Arbitrate always did (Codex 1: a re-call cannot bypass it). Every input is synced or the synced dog root.</summary>
+        public int _Availability(int dog, int pid)
+        {
+            if (!DogValid(dog)) return RefuseInvalid;
+            KominkaDogRun.KD_DogWanderController w = dogs[dog];
+            KH_LeashManager m = w.hillsideLeashes;
+            bool leashed = m != null && m._IsLeashed(dog);
+            if (leashed && m.walkers[dog] != pid) return RefuseLeashedByOther;
+            if (dog == heldDog) return AvHeldHere;
+            if (HeldElsewhere(dog)) return RefuseOtherStation;
+            if (callRange > 0f)
+            {
+                Vector3 d = w.dogRoot.position - _AnchorPosition();
+                d.y = 0f;
+                if (d.sqrMagnitude > callRange * callRange) return RefuseTooFar;
+            }
+            KominkaDogRun.KD_DogFetchController f = w.fetchController;
+            if (f != null && !f.IsIdle) return AvFetch;
+            if (w.frisbeeCatch != null && !w.frisbeeCatch.IsIdle) return AvFrisbee;
+            if (w.activities != null && w.activities.Mode == 1 && w.activities._IsParticipant(dog)) return AvGathering;
+            if (w.sleepBoard != null && w.sleepBoard.LiveSleeperOf(dog) >= 0) return AvSleepCall;
+            // Somebody else is washing it with a tool right now (the synced hold, KH_DogWash.holdSeconds after their last stroke).
+            // The caller's own strokes and the caller's own leashed dog never count.
+            KH_DogWash wash = washes != null && dog < washes.Length ? washes[dog] : null;
+            if (wash != null && !leashed && wash._WashHold())
+            {
+                int washer = wash._WasherPlayerId();
+                if (washer >= 0 && washer != pid) return AvWashedByOther;
+            }
+            return AvCallable;
+        }
+
+        /// <summary>Another active station holds `dog` (its synced heldDog).</summary>
+        bool HeldElsewhere(int dog)
+        {
+            KH_WashStationCall[] all = dogs[dog].washCalls;
+            if (all == null) return false;
+            for (int i = 0; i < all.Length; i++)
+            {
+                KH_WashStationCall o = all[i];
+                if (o != null && o != this && o.gameObject.activeInHierarchy && o._HeldDog() == dog) return true;
             }
             return false;
         }
@@ -252,39 +320,29 @@ namespace KominkaHillside
             return dogs != null && dog >= 0 && dog < dogs.Length && dogs[dog] != null && dogs[dog].dogRoot != null;
         }
 
-        /// <summary>Owner: the rules of §3 for a call of `dog` by player `pid`.</summary>
+        /// <summary>Owner: the rules of §3 / §7 for a call of `dog` by player `pid` (_Availability).</summary>
         void Arbitrate(int dog, int pid)
         {
-            if (!DogValid(dog)) { Refuse(dog, RefuseInvalid); return; }
+            int a = _Availability(dog, pid);
+            if (a == RefuseInvalid) { Refuse(dog, RefuseInvalid); return; }
             // Codex 6: a new choice cancels an older wait (only the latest selection is processed)
             _pendingDog = -1;
-            // Somebody else's leashed dog cannot be called (never bind another player's dog); the caller's own leashed dog can.
-            // Codex 1: checked before the "already held" return, so a re-call cannot bypass it
-            KH_LeashManager m = dogs[dog].hillsideLeashes;
-            if (m != null && m._IsLeashed(dog) && m.walkers[dog] != pid) { Refuse(dog, RefuseLeashedByOther); return; }
+            // Somebody else's leashed dog cannot be called (never bind another player's dog; the caller's own leashed dog can),
+            // nor a dog another station holds, nor one farther than callRange (IMP-DOG-037: refused here, before anything moves -
+            // the dog side's far-call teleport is never reached for it)
+            if (a == RefuseLeashedByOther || a == RefuseOtherStation || a == RefuseTooFar) { Refuse(dog, a); return; }
             // Calling the held dog again: it stays, and the caller does not change (Codex 1: the caller's leave / distance rules
             // keep following the player who called it)
-            if (dog == heldDog) return;
-            if (DogBusy(dog))
+            if (a == AvHeldHere) return;
+            // Fetch / the disc (their water retrieves included) / a gathering participant / called to sleep / washed by someone
+            // else: comes once that is over. 2026-10-01 user decision: the water play itself is not busy - the call is accepted and
+            // the dog walks out by the play's own exit (KD_DogWanderController.WaterRequester), then comes.
+            if (a >= AvFetch && a <= AvWashedByOther)
             {
                 _pendingDog = dog; _pendingCaller = pid; _pendingUntil = Time.time + Mathf.Max(0.5f, callWaitSeconds);
                 return;
             }
             Accept(dog, pid);
-        }
-
-        /// <summary>Fetch / the disc (their water retrieves included: Fetch is not Idle, the disc not Idle) / a gathering participant /
-        /// called to sleep: comes once that is over. 2026-10-01 user decision: the water play itself is not busy - the call is
-        /// accepted and the dog walks out by the play's own exit (KD_DogWanderController.WaterRequester), then comes.</summary>
-        bool DogBusy(int dog)
-        {
-            KominkaDogRun.KD_DogWanderController w = dogs[dog];
-            KominkaDogRun.KD_DogFetchController f = w.fetchController;
-            if (f != null && !f.IsIdle) return true;
-            if (w.frisbeeCatch != null && !w.frisbeeCatch.IsIdle) return true;
-            if (w.activities != null && w.activities.Mode == 1 && w.activities._IsParticipant(dog)) return true;
-            if (w.sleepBoard != null && w.sleepBoard.LiveSleeperOf(dog) >= 0) return true;
-            return false;
         }
 
         void Accept(int dog, int pid)
@@ -338,18 +396,21 @@ namespace KominkaHillside
 
         void OwnerTick()
         {
-            // The pending call: comes as soon as the dog is free, refused after callWaitSeconds
+            // The pending call: comes as soon as the dog is free, refused after callWaitSeconds. IMP-DOG-037: the whole rule again at
+            // that moment (a dog that finished its Fetch out of range, leashed meanwhile, or taken by another station is refused
+            // with that reason, never pulled in)
             if (_pendingDog >= 0)
             {
                 int d = _pendingDog;
                 if (!Utilities.IsValid(VRCPlayerApi.GetPlayerById(_pendingCaller))) _pendingDog = -1;
-                else if (!DogBusy(d))
+                else
                 {
-                    KH_LeashManager m = dogs[d].hillsideLeashes;
-                    if (m != null && m._IsLeashed(d) && m.walkers[d] != _pendingCaller) { _pendingDog = -1; Refuse(d, RefuseLeashedByOther); }
-                    else Accept(d, _pendingCaller);
+                    int a = _Availability(d, _pendingCaller);
+                    if (a == AvCallable) Accept(d, _pendingCaller);
+                    else if (a >= AvFetch && a <= AvWashedByOther) { if (Time.time > _pendingUntil) { _pendingDog = -1; Refuse(d, RefuseBusy); } }
+                    else if (a == AvHeldHere) _pendingDog = -1;
+                    else { _pendingDog = -1; Refuse(d, a); }
                 }
-                else if (Time.time > _pendingUntil) { _pendingDog = -1; Refuse(d, RefuseBusy); }
             }
             if (heldDog < 0) return;
             if (Time.time < _nextCheck) return;

@@ -283,6 +283,7 @@ namespace KominkaDogRun
         /// <summary>おもちゃタブ (Redraw の TabToy 分岐から。上の「裏山改変:」の一部)。行 = 犬、[ボール] は toyButton*、[ディスク] は disc*。</summary>
         private void RedrawHillsideToy()
         {
+            RedrawToyTopRow();   // 裏山改変: 上段 (投げ方 DES-UI-002 / ボールの柄 DES-DOG-002)。KD_TreatPouch.ToyTop.cs
             int n = toyLabels == null ? 0 : toyLabels.Length;
             for (int i = 0; i < n; i++)
             {

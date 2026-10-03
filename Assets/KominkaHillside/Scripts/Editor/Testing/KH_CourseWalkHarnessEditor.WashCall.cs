@@ -189,7 +189,8 @@ namespace KominkaHillside.Editor
             WcSetup(s);
             s.Add(WsDo(() => { if (Get<int[]>(manager, "walkers")[other] >= 0) pouch.SendCustomEvent("_WalkOff" + other); }));
             WcCallAndArrive(s, wsDog, 60);
-            s.Add(WsDo(() => wcStation.SendCustomNetworkEvent(NetworkEventTarget.Owner, "ReqCall", other)));
+            // IMP-DOG-037: only dogs within callRange can be called; the other dog may be anywhere, so it is put by the gate first
+            s.Add(WsDo(() => { WcBringNear(other); wcStation.SendCustomNetworkEvent(NetworkEventTarget.Owner, "ReqCall", other); }));
             s.Add(WsUntil(() => Get<int>(wcStation, "heldDog") == other, 6, () => "dog " + other + " not held (heldDog " + Get<int>(wcStation, "heldDog") + "; busy dogs wait up to 5 s)"));
             s.Add(WsUntil(() => !Get<bool>(wsWander, "_stationLocked") && Get<int>(wsWander, "_stationIdx") < 0, 1.5, () => "the Shiba was not let go"));
             // 2026-10-02: replaced by another call = the Shiba's wash is over: it walks out of the keep-out (lift 0: no ride down)
@@ -267,6 +268,7 @@ namespace KominkaHillside.Editor
             MakeWashCallReviewCases(other);
             MakeWashCallWaterCase();
             MakeWashKeepOutCases();   // 2026-10-02: free dogs keep out of the stations; a leashed one is not pushed
+            MakeWashCallAvailCases(); // IMP-DOG-037 (WashCallAvail.cs): what the board shows per dog, the call range, the refusals
         }
 
         /// <summary>2026-10-02 user request 「洗い場には他の犬は勝手に近寄ってこない、台の上で休憩し始めたりもしない」
@@ -338,7 +340,7 @@ namespace KominkaHillside.Editor
             s = WsCase("C-keepout-wander", 110);
             s.Add(WsDo(() => wsFailDump = WcDump));   // round 5: a failure note carries the heap dump
             double kwT0 = 0; float kwMin = 1e9f, kwHomeMin = 1e9f; int kwHops = 0, kwPrevHop = int.MinValue, kwPlayTicks = 0, kwDet0 = 0, kwStand0 = 0, kwExit0 = 0;
-            Vector3 kwHome = Vector3.zero; bool kwDumped = false;
+            Vector3 kwHome = Vector3.zero, kwEff = Vector3.zero; bool kwDumped = false, kwPre = false;
             WcRequireMain(s);
             WcSetup(s);
             s.Add(WsDo(() =>
@@ -355,8 +357,12 @@ namespace KominkaHillside.Editor
                 }
                 if (!ok) throw new InvalidOperationException("no ground on the far side of the main station for the start");
                 WcSaveWander();
-                var home = WsRef(wsWander, "areaCenter") as Transform;
-                home.position = kwHome;
+                // Round 8 (full run 20261002-144815: the Shiba wandered round a home 31 m away): the roaming home is the leash manager's
+                // synced releasedHomes[dog], re-applied to the areaCenter Transform by its Owner every 0.5 s (ApplyHomes), so a write to
+                // the Transform alone is undone within 0.5 s. In 100f alone that home happened to be the gate (near the station), so the
+                // case passed by chance. Write both; the precondition below checks the product's effective home
+                WcSetHome(kwHome);
+                kwEff = WcEffectiveHome(kwHome);
                 float cyc = Get<float>(wsWander, "cyclePeriod");
                 wsWander.SetProgramVariable("waypointPeriod", 2f);
                 wsWander.SetProgramVariable("wanderDurationMin", cyc);
@@ -374,6 +380,15 @@ namespace KominkaHillside.Editor
                 Vector3 p = wsRoot.position;
                 float d = Flat(p - wcAnchor.position);
                 if (!kwDumped && now - kwT0 > 0.3) { kwDumped = true; WsNote("dump +0.3 s after the placement: " + WcDump() + " (placed at " + Flat(p - wcAnchor.position).ToString("F2") + " m)"); }   // round 5
+                // Round 8 precondition: within 4 s (two hops) the areaCenter is still the case's home (ApplyHomes did not undo it) and the
+                // product's effective home (_dbgHome = KeepOutHome of it, written when a waypoint is computed) is the expected shifted one
+                if (!kwPre)
+                {
+                    var hc = WsRef(wsWander, "areaCenter") as Transform;
+                    float tDiff = hc != null ? Flat(hc.position - kwHome) : 1e9f, eDiff = Flat(Get<Vector3>(wsWander, "_dbgHome") - kwEff);
+                    if (tDiff < 0.05f && eDiff < 0.15f) { kwPre = true; WsNote("precondition at +" + (now - kwT0).ToString("F1") + " s: home " + kwHome.ToString("F1") + ", effective (shifted) home " + kwEff.ToString("F1") + " (" + Flat(kwEff - wcAnchor.position).ToString("F1") + " m from the centre)"); }
+                    else if (now - kwT0 > 4.0) throw new InvalidOperationException("precondition: the case's home did not take effect (areaCenter " + tDiff.ToString("F2") + " m off the case's home, effective home " + eDiff.ToString("F2") + " m off the expected " + kwEff.ToString("F1") + "; releasedHomes[dog] " + WcReleasedHome().ToString("F1") + ")");
+                }
                 if (Get<bool>(wsWander, "_playing")) kwPlayTicks++;   // a chase may cross a circle (exempt); counted, not judged
                 else
                 {
@@ -582,20 +597,21 @@ namespace KominkaHillside.Editor
 
         // Round 3: the wander values C-keepout-wander writes (simulated), put back by WcCleanup (every WcSetup) and at its end
         static bool wcWanderSaved;
-        static Vector3 wcHome0;
+        static Vector3 wcHome0, wcReleased0;
         static float wcWaypoint0, wcWanderMin0, wcWanderMax0;
         static void WcSaveWander()
         {
             if (wcWanderSaved) return;
             wcHome0 = (WsRef(wsWander, "areaCenter") as Transform).position;
+            wcReleased0 = WcReleasedHome();
             wcWaypoint0 = Get<float>(wsWander, "waypointPeriod"); wcWanderMin0 = Get<float>(wsWander, "wanderDurationMin"); wcWanderMax0 = Get<float>(wsWander, "wanderDurationMax");
             wcWanderSaved = true;
         }
         static void WcRestoreWander()
         {
             if (!wcWanderSaved || wsWander == null) return;
-            var home = WsRef(wsWander, "areaCenter") as Transform;
-            if (home != null) home.position = wcHome0;
+            WcSetHome(wcHome0);   // round 8: the Transform and the leash manager's releasedHomes[dog]
+            WcSetReleased(wcReleased0);
             wsWander.SetProgramVariable("waypointPeriod", wcWaypoint0);
             wsWander.SetProgramVariable("wanderDurationMin", wcWanderMin0);
             wsWander.SetProgramVariable("wanderDurationMax", wcWanderMax0);
@@ -603,6 +619,44 @@ namespace KominkaHillside.Editor
             WcInvalidateWander();
             wcWanderSaved = false;
         }
+        /// <summary>Round 8: the Shiba's roaming home where the product keeps it - the leash manager's synced releasedHomes[dog] (its Owner
+        /// copies it onto the areaCenter Transform every 0.5 s, ApplyHomes) - and the Transform itself. ClientSim: I am that Owner.</summary>
+        static void WcSetHome(Vector3 p)
+        {
+            WcSetReleased(p);
+            var home = WsRef(wsWander, "areaCenter") as Transform;
+            if (home != null) home.position = p;
+        }
+        static Vector3 WcReleasedHome() { var a = Get<Vector3[]>(manager, "releasedHomes"); return a != null && wsDog >= 0 && wsDog < a.Length ? a[wsDog] : Vector3.zero; }
+        static void WcSetReleased(Vector3 p)
+        {
+            var a = Get<Vector3[]>(manager, "releasedHomes");
+            if (a == null || wsDog < 0 || wsDog >= a.Length) throw new InvalidOperationException("the leash manager's releasedHomes is not readable");
+            a = (Vector3[])a.Clone(); a[wsDog] = p;
+            manager.SetProgramVariable("releasedHomes", a);
+        }
+
+        /// <summary>Round 8: KD_DogWanderController.KeepOutHome as the harness sees it: a home closer to a station's anchor than
+        /// keepOutRadius + areaRadius + 0.3 (KeepOutPad) moves straight away from it to that distance.</summary>
+        static Vector3 WcEffectiveHome(Vector3 home)
+        {
+            float disc = Get<float>(wsWander, "areaRadius");
+            var calls = WsRef(wsWander, "washCalls") as Array;
+            if (calls == null) return home;
+            for (int k = 0; k < calls.Length; k++)
+            {
+                var u = calls.GetValue(k) as UdonBehaviour; if (u == null) continue;
+                var an = WsRef(u, "anchor") as Transform; if (an == null) continue;
+                float r = Get<float>(u, "keepOutRadius"); if (r <= 0f) continue;
+                float need = r + disc + 0.3f;
+                Vector3 d = home - an.position; d.y = 0f;
+                if (d.magnitude >= need) continue;
+                Vector3 dir = d.magnitude > 0.01f ? d.normalized : WsFlat(an.position - u.transform.position);
+                home = new Vector3(an.position.x + dir.x * need, home.y, an.position.z + dir.z * need);
+            }
+            return home;
+        }
+
         /// <summary>The wander's caches (the schedule, the filtered waypoint, the per-hop pass) recompute on the next decision.</summary>
         static void WcInvalidateWander()
         {
@@ -777,7 +831,8 @@ namespace KominkaHillside.Editor
                 if (Get<int[]>(manager, "walkers")[other] >= 0) pouch.SendCustomEvent("_WalkOff" + other);
             }));
             WcCallAndArrive(s, wsDog, 60);
-            s.Add(WsDo(() => pcFetchB.SendCustomEvent("_OnBallThrown")));
+            // IMP-DOG-037: within callRange when the Fetch starts (the call is sent on its first frame), so the wait is a busy wait
+            s.Add(WsDo(() => { WcBringNear(other); pcFetchB.SendCustomEvent("_OnBallThrown"); }));
             s.Add(WsUntil(() => Get<int>(pcFetchB, "dogState") != 0, 2, () => "control: dog " + other + " did not start a Fetch"));
             s.Add(WsDo(() => wcStation.SendCustomNetworkEvent(NetworkEventTarget.Owner, "ReqCall", other)));
             s.Add(WsWait(0.4));
@@ -1013,6 +1068,7 @@ namespace KominkaHillside.Editor
         {
             WcRestoreGrace();   // round 2
             WcRestoreWander();  // round 3 (C-keepout-wander)
+            WaCleanupStandIns();   // IMP-DOG-037 (WashCallAvail.cs): a remote player / its leash / its wash hold left by a failed case
             if (!wcGatherSet || wcActivities == null) return;
             wcActivities.SetProgramVariable("mode", 0);
             wcActivities.SetProgramVariable("participants", 0);

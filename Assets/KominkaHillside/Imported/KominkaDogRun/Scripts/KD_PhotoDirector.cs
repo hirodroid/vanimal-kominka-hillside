@@ -240,7 +240,32 @@ namespace KominkaDogRun
         const int ChaseVariantCount = 3;
         const int PlayVariantCount = 3;
 
-        private bool CapturePaused() { return photoCapture != null && photoCapture.settings != null && !photoCapture.settings.CaptureAllowed; }
+        // ================================================================ 裏山改変 (IMP-WLD-005)
+        // 1) **毎フレームの見回りを間引く** (IMP-DOG-034 / 036 の方針: 常時動くものを増やさない)。
+        //    予約の判定と撫での積算は tickInterval ごと (既定 0.1 s = 10 Hz)。撫での積算は実時間の差を足すので 3 秒の閾値は変わらない。
+        //    受け渡し 0.4 s・走り 0.6 s・じゃれ合い 2.5 s の待ちは最大 tickInterval 遅れる (撮り頃の猶予 1.5 s の内)。
+        //    撮影を止めている間 (OFF・ボード未設置) は KH_PhotoAlbum がこの Behaviour ごと無効にする (Update も来ない)
+        [Header("裏山: 見回りの間隔")]
+        [Tooltip("予約の判定と撫での積算の間隔 (秒)。0 以下なら毎フレーム (古民家と同じ)")]
+        public float tickInterval = 0.1f;
+        float _nextTick;
+        float _lastTick = -1f;
+
+        // 2) **フリスビーを取った瞬間** (新しいきっかけ 1 つ。設計 §4.1)。KH_FrisbeeCatch の同期された state が
+        //    「跳んで取った」(StateJumpCarry) に入ったエッジで、各自の端末から _OnFrisbeeCatch が来る。少し待って犬の横から 1 枚
+        [Header("裏山: フリスビーを取った瞬間")]
+        public bool frisbeeShotEnabled = true;
+        [Tooltip("取った瞬間からの遅れ (秒)")]
+        public float frisbeeShotDelay = 0.1f;
+        [Tooltip("連写しない間隔 (秒)。全犬共通")]
+        public float frisbeeShotCooldown = 20f;
+        float _lastFrisbeeShot = -1000f;
+        int _frisbeeDog = -1;
+        int _frisbeeRetries;
+
+        // 裏山改変 (IMP-WLD-005): 無効にされている間 (KH_PhotoAlbum が OFF・見る場所なしで止めた / 配線不足で自分で止めた) も止める。
+        // 受け渡し・集合写真・フリスビーの通知は Update を通らずに来るので、ここで弾かないと見えない写真を撮る
+        private bool CapturePaused() { return !enabled || (photoCapture != null && photoCapture.settings != null && !photoCapture.settings.CaptureAllowed); }
 
         void Start()
         {
@@ -330,18 +355,92 @@ namespace KominkaDogRun
             _playTime[dog] = Time.time + playShotDelay;
         }
 
-        void Update()
+        // ================================================================ 裏山改変 (IMP-WLD-005)
+
+        /// <summary>予約と撫での積算を全部畳む (撮影を止めたとき)。配列が未確保 (Start 前) でも安全。</summary>
+        void ClearPending()
         {
-            if (CapturePaused())
+            _burstStep = -1;
+            _frisbeeDog = -1;
+            if (_dropPending == null || _chasePending == null || _playPending == null || _petAccum == null) return;
+            for (int i = 0; i < _n; i++)
             {
-                _burstStep = -1;
-                for (int i = 0; i < _n; i++)
-                {
-                    _dropPending[i] = false; _chasePending[i] = false; _playPending[i] = false; _petAccum[i] = 0f;
-                }
+                _dropPending[i] = false; _chasePending[i] = false; _playPending[i] = false; _petAccum[i] = 0f;
+            }
+        }
+
+        /// <summary>KH_PhotoAlbum が撮影を止めるとこの Behaviour を無効にする。途中の撫でバーストや予約を残さない
+        /// (無効の間は遅延イベントの続きが来ないことがあるので、再開したとき _burstStep が 0..3 のまま固まらないようにする)。</summary>
+        void OnDisable()
+        {
+            ClearPending();
+            _lastTick = -1f;
+        }
+
+        /// <summary>フリスビーを跳んで取った (KH_FrisbeeCatch が全クライアントで、同期された state のエッジから呼ぶ)。
+        /// 少し待ってから犬の横から 1 枚。間隔は全犬共通。<paramref name="dog"/> は名簿の番号 (KH_FrisbeeCatch.dogIndex)。</summary>
+        public void _OnFrisbeeCatch(int dog)
+        {
+            if (CapturePaused()) return;
+            if (!frisbeeShotEnabled || !ValidDog(dog) || SleepingDog(dog)) return;
+            if (Time.time - _lastFrisbeeShot < frisbeeShotCooldown) return;
+            if (_frisbeeDog >= 0) return;   // 先着を上書きしない (待ちは 0.1 s なので次の取りは間隔が弾く)
+            _frisbeeDog = dog;
+            _frisbeeRetries = 0;
+            if (frisbeeShotDelay > 0f) SendCustomEventDelayedSeconds(nameof(_FrisbeeShot), frisbeeShotDelay);
+            else _FrisbeeShot();
+        }
+
+        /// <summary>フリスビーの 1 枚 (遅延イベント)。直前の撮影の 1 フレームと重なったら 2 フレームおきに 3 回まで撮り直す。</summary>
+        public void _FrisbeeShot()
+        {
+            int dog = _frisbeeDog;
+            if (dog < 0) return;
+            if (CapturePaused() || !ValidDog(dog)) { _frisbeeDog = -1; return; }
+            if (!ShootFrisbee(dog))
+            {
+                if (_frisbeeRetries < 3) { _frisbeeRetries++; SendCustomEventDelayedFrames(nameof(_FrisbeeShot), 2); return; }
+                _frisbeeDog = -1;
                 return;
             }
+            _frisbeeDog = -1;
+            _lastFrisbeeShot = Time.time;
+            MarkShot(dog);
+        }
+
+        /// <summary>犬の真横から (投げた人がいる側を選ぶ)。ディスクは口の中なので被写体は犬の胴。標準の寄り。</summary>
+        bool ShootFrisbee(int dog)
+        {
+            Transform root = dogRoots[dog];
+            if (root == null) return false;
+            Vector3 body = DogSubject(dog);
+            Vector3 side = root.right;
+            side.y = 0f;
+            side = side.sqrMagnitude < 0.0001f ? Vector3.right : side.normalized;
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (Utilities.IsValid(lp))
+            {
+                Vector3 toMe = lp.GetPosition() - root.position;
+                toMe.y = 0f;
+                if (Vector3.Dot(toMe, side) < 0f) side = -side;   // 自分の側から (自分の端末のアルバムなので)
+            }
+            return ShootFramed(root, body, Jitter(side + Vector3.up * 0.18f), DogSize(dog) * 1.2f, fillNormal, GroupChase);
+        }
+
+        void Update()
+        {
+            // 裏山改変 (IMP-WLD-005): tickInterval ごとに見る。撫での積算は前回からの実時間 (tickDt) を足す
             float now = Time.time;
+            if (tickInterval > 0f && now < _nextTick) return;
+            _nextTick = now + tickInterval;
+            float tickDt = _lastTick < 0f ? Time.deltaTime : now - _lastTick;
+            _lastTick = now;
+            if (tickDt > 0.5f) tickDt = 0.5f;   // 無効にしていた間の時間を撫でとして数えない
+            if (CapturePaused())
+            {
+                ClearPending();
+                return;
+            }
 
             // ---- 予約の裁定 (IMP-CAM-002 の公平性) ----
             // カメラは 1 フレームに 1 枚しか撮れないので、撮り頃の予約が複数あるときは
@@ -382,7 +481,7 @@ namespace KominkaDogRun
                 // IMP-DOG-019 Phase 5: 寝ている犬は候補から外す。
                 // **ここで積算ごと止めるのが要点** — 撮る直前だけで弾くと、
                 // 寝ている間に溜まった 3 秒が起きた瞬間にバーストへ化ける
-                if (pc != null && pc.IsPetting && !SleepingDog(i)) _petAccum[i] += Time.deltaTime;
+                if (pc != null && pc.IsPetting && !SleepingDog(i)) _petAccum[i] += tickDt;   // 裏山改変: 間引いた分の実時間
                 else _petAccum[i] = 0f;
             }
 
@@ -930,6 +1029,7 @@ namespace KominkaDogRun
         public void _GroupPhoto(Vector3 center, float yaw)
         {
             if (photoCapture == null || gallery == null || photoCamera == null) return;
+            if (CapturePaused()) return;   // 裏山改変 (IMP-WLD-005): OFF・見る場所なしでは集合写真も撮らない
             Vector3 subject = center + Vector3.up * .6f;
             Vector3 from = Quaternion.Euler(0, yaw, 0) * new Vector3(0, 2.2f, 6.5f);
             Shoot(ClearCameraPos(subject, center + from, 5f), subject, GroupWide);

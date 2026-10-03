@@ -167,3 +167,72 @@
 1. **小さい版 (8 枚・ボード 1 枚・メニューの副画面・きっかけは前作 + フリスビー) で初期公開してよいか。** 推奨: はい。散歩の景色の写真は公開後にする。
 2. **手元メニューの入口はヘッダーの [写真] ボタンでよいか。** 推奨: はい。ヘッダーは「古民家と同じ配置」の約束から外れるので、確認したい。代わりの場所は設定面の中 (前作の写真設定の場所) だが、見つけにくい。
 3. **ボードは門の看板 A の隣でよいか。** 推奨: はい。広場の縁に置く案もある。
+
+## 9. 実装メモ (2026-10-03)
+
+2026-10-03 のユーザー決定 (小さい版を採用) を受けて実装した。**未コンパイル (Unity 未接続。オフラインの C# 検査だけ通過)・未実行・未検証。** 実行と検査の順は §9.6。
+
+### 9.1 作ったもの
+
+| 種類 | ファイル | 中身 |
+|---|---|---|
+| 組み立て (新規) | `Assets/KominkaHillside/Scripts/Editor/KH_PhotoGalleryEditor.cs` / `.Place.cs` / `.Verify.cs` | `Tools/KominkaHillside/Photo/0` (Program Asset)・`1 - Build Photo and Gallery`・`2 - Verify`・`4 - Place Board, Menu Button and Settings Row (optional)`・`5 - Remove …`・`9 - Remove Photo System` |
+| ハーネス (新規) | `Assets/KominkaHillside/Scripts/Editor/Testing/KH_PhotoHarnessEditor.cs` | `Photo/3 - Harness` (`3b - Stop Harness`)。結果は `Logs/kh-photo-harness/latest.json` |
+| 実行 (新規) | `Assets/KominkaHillside/Scripts/KH_PhotoAlbum.cs` | 並べ方と見せ方 (新しい順・ボードとメニューに同じ RT・状態の文・設定の ON/OFF・撮影の見回りの有効/無効)。Update なし |
+| 実行 (新規) | `Imported/KominkaDogRun/Scripts/KD_TreatPouch.Photo.cs` | `_PhotoOpen` / `_PhotoBack` / `_PhotoToSettings` |
+| 移した写真の裏山改変 | `KD_PhotoCapture.cs` | 撮れた直後 (Blit の後) に `capturedListener` へ `_OnPhotoCaptured`、`LastSlot` |
+| 〃 | `KD_PhotoSettings.cs` | `highEnabled` (2K を外す)、`standardWidth/Height` と `mobileWidth/Height` (端末別に実行時の RT を 1 組だけ作る)、`boards` を任意に、`stateListener` へ `_OnPhotoStateChanged`、読み口 `CurrentMode` / `Ready` / `Failed` |
+| 〃 | `KD_PhotoDirector.cs` | 見回りを `tickInterval` (0.1 s) に間引く (撫での積算は実時間)、`OnDisable` で予約を畳む、フリスビーのきっかけ `_OnFrisbeeCatch` (0.1 s 後に犬の横から、20 s 間隔) |
+| フリスビーの口 | `KH_FrisbeeCatch.cs` の `ApplyState` に 1 行 | 同期された state が `StateJumpCarry` (跳んで取った) に入ったエッジで、全クライアントが `wander.photoDirector._OnFrisbeeCatch(dogIndex)`。新しいフィールドは足していない (徘徊の既存の受け口を読む) |
+| 既存の組み立ての手直し | `KH_DogWalkingEditor.cs` | Walking/3 が `act.photos` / `f.photoDirector` を null に戻さない (Photo/1 の持ち物) |
+| 〃 | `KD_HandMenuScrollEditor.LayoutFrame` | `PhotoButton` があるときだけ見出しを 430 → 400 (-550〜-150)、ボタンを (-65, 314) 120×44 |
+| 〃 | `KD_MenuFinishEditor.Hillside.cs` | `PhotoToggleName` と位置、Verify 22 は置いたときだけ群「自分」に数える |
+| 文言 | `UITranslations.json` | 新しいキー `photo.menu` / `photo.empty` / `photo.new` (13 言語)、`photo.help.body` を裏山向けに書き直し (13 言語)。`UILocalizationBindings.json` は変えていない |
+
+### 9.2 設計からの差 (実装で決めたこと)
+
+- **新しいキーは 3 つ。** §4.2 の 2 つ (`photo.empty`・`photo.new`) に加え、ヘッダの [写真]・面の見出し・設定の行の語として `photo.menu` (写真 / Photos …) を足した。既存に「写真」1 語のキーが無かった (`KD_ShopKeeper.WordPhotos` は「写真のこと」)
+- **設定の行は 1 つのボタン [写真: ON / OFF]** (呼ぶ・ライブの許可ボタンと同じ「現在値を出すボタン」)。場所は入口の行の右端 (455, 128) 190×60。`photo.settings.standard` は「標準 1280×720」で Quest・iOS の 640×360 と食い違うので使わない。OFF の表示は `photo.settings.off`
+- **見える物は任意の段 (Photo/4) に分けた。** Photo/1 だけの構成では何も見えず、`KH_PhotoAlbum.surfacesPlaced` が false なので撮らない (撮影の見回りも無効)。10-07 の切り戻しは Photo/5 (ボード・ボタン・設定の行を外す。撮影も止まる)。中核ごと外すなら Photo/9 (犬の受け口を null へ戻す)
+- **文言は束縛表 (`UILocalizationBindings.json`) に登録しない。** 任意の段の部品を登録すると、置かない構成で Menu/11 の Bind と Guide/1 の解決が落ちる。表示中の文は `KH_PhotoAlbum` が書き、言語の切替は `KD_PhotoSettings` の既存の 4 Hz の見回りが `_OnPhotoStateChanged` で知らせる
+- **名前は `KH_PhotoSystem`** (前作の `KD_PhotoSystem` にすると、`KD_LocalizationEditor.ValidateScene` などが前作のギャラリーの文字を検査しに来る)
+- **ボードの置き場所:** 看板 A の右端の先に、A と直角に立てる (L 字。A を読む人が右を向くとボードが正面。読む場所を共有)。A の右端は門の線から約 2.1 m しかなく、看板の規則「門の線から 1.5 m」はこの形では取れない (オフラインの試算で約 1.06 m) ので、**写真ボードだけ 1.0 m に緩め**、塀の実物は Collider の検査で見る。候補 (L 字右 12・左 9・一直線 4) を順に試し、全部だめなら理由を出して何も変えない。既にあるボードの位置・向きは守る (人が動かしてよい)
+- **cullingMask (裏山のレイヤーで作り直し):** 写すのは 0 Default / 8 Interactive / 9 Player / 11 Environment / 13 Pickup / 14 PickupNoEnvironment / 18 MirrorReflection (自分の全身。10 PlayerLocal は顔が欠けるので使わない)。手元メニューは 17 Walkthrough (KD_TreatPouchPanel・起動ボタン) と 2、案内の吹き出しは 5、洗い場の自分の床は 22 にあり、写さない。**17 には洗い場の棚・台・リフトもあるので、写真の背景に棚が写らない** (小さい版は洗い場を撮らない)。看板・洗い場の板・おじいさんの売り場は 0 にあり、世界の物として写る
+- 古民家の `KD_GalleryController.Start` の「スマホでは吸着を切る」(BUG-CAM-003) は、ボードを `KH_PhotoAlbum` が持つので同じ処理をそちらへ置いた (`gallery.boards = null`)
+- 見出しの 400 幅に全タブの見出しが入るかは Photo/2 が ja / en で測る (`TITLE_OVERFLOW` は WARN。入らなければ §4.2 どおりボタンを 100 幅に)
+
+### 9.3 メモリと撮影 1 回の負荷 (計算値。実測は Quest / Android ビルドで)
+
+| 端末 | 枠 8 枚 (RGBA8、深度なし) | 撮影用 RT (色 + 深度。深度は最悪の D32S8 = 8 byte/px で数える) | 合計 |
+|---|---|---|---|
+| PC (1280×720) | 28.1 MiB | 3.5 + 7.0 MiB | **約 38.7 MiB** (Verify の上限 48) |
+| Quest / iOS (640×360) | 7.0 MiB | 0.9 + 1.8 MiB | **約 9.7 MiB** (上限 12。深度が D24S8 なら約 8.8) |
+
+- RT アセット (雛形、640×360) は描かれる前に `KD_PhotoSettings` が実行時の 1 組へ差し替えて解放する (写真は撮れるまで隠れているので、雛形が確保されることはない)
+- **撮影 1 回 = 撮影カメラが 1 フレームだけ 1 回描く** (片目分・上記の解像度・far 60・UI とメニューを外した cullingMask・MSAA と HDR なし) + `VRCGraphics.Blit` 1 回。常時描く RT カメラの相場 (約 0.9 ms・描画コール約 3 倍、`vrc-performance`) の 1 フレーム分が一瞬だけ乗る。影は品質設定どおり (カメラごとに切る手段は Udon に無い)。Quest での一瞬の引っかかりは実機で見る
+- **頻度の上限:** 受け渡し 1 回に 1 枚 / 撫では 30 s に 1 回の 4 枚連続 (3 フレームおき) / 走り 45 s / じゃれ合い 25 s / フリスビー 20 s / 集合写真は集合ごとに 1 枚。カメラは 1 フレームに 1 回しか撮れない (`CanCapture`)。撮影 OFF・読み込み前・ボードとボタンが無い間は見回り (`KD_PhotoDirector`) ごと無効
+- 常時動くもの: `KD_PhotoDirector` の Update (10 Hz に間引き、OFF なら無効)、`KD_PhotoSettings` の Update (言語を 4 Hz で見る既存の処理。毎フレームは時刻の比較 1 回)、`KD_PhotoViewer` の PostLateUpdate (開いていなければ即 return)。`KH_PhotoAlbum` は Update なし
+
+### 9.4 UdonSharp の危ない所 (コンパイルと実機で確かめる)
+
+- Camera → RenderTexture: 有効にしたフレームに 1 回描かせ、次のフレームで無効 + `VRCGraphics.Blit` (前作で公開・運用済み)。**SDK 3.10.5 での U# コンパイルは未確認**
+- 実行時の `new RenderTexture(w, h, depth, format, readWrite)` / `Create` / `Release` / `Destroy` (`KD_PhotoSettings`。前作どおり)。Wrapper の綴りは確認済み (ctor・Create・Release・`RawImage.texture`・`Material.mainTexture`・`Behaviour.enabled`)。ノード定義での確認 (`vrc-udonsharp` §1.5) は未実施
+- `UdonBehaviour.enabled` を `KH_PhotoAlbum.directorUdon` (KD_PhotoDirector の backing) へ毎回書く (読み取りはしない)。`KD_PhotoDirector` は自分の `enabled` を読んで、無効の間は通知 (受け渡し・集合写真・フリスビー) でも撮らない (`CapturePaused`)
+- `UdonBehaviour.InteractionText` を板 8 枚とビューアへ書く (KD_Language と同じ API)
+- U# の型をまたぐ参照は一般型 (`UdonSharpBehaviour`) で持つ (`KD_PhotoCapture.capturedListener`・`KD_PhotoSettings.stateListener`・`KD_TreatPouch.photoAlbum`)。`KH_PhotoAlbum` の Program Asset が無い間もほかの U# がコンパイルできるように
+
+- **2026-10-03 ハーネス初回 (run 20261002-232223) の FAIL の原因:** `KD_PhotoSettings.boards` を null で配線しても、シーン保存で Unity が空配列 `[]` にして焼き、実行時は「長さ 0 != 8」で `Fail()` → `CaptureAllowed` が永久に false → 撮影の見回りが有効にならず 1 枚も撮れなかった。null と空配列を同じ「無し」として扱うよう直した (再コンパイルのみ。配線は変えていない)。ハーネスは `_failed` を最初に見て、写真が無いときは添字を引かずに理由を出すようにした
+
+### 9.5 Play / 実機でしか分からないこと
+
+- 写真の構図・明るさ (夜・木陰)、フリスビーの横からの構図、ボードの見え方と文字の大きさ (PC / PCVR / Quest)、看板 A との並び (ユーザーが見て直す)
+- VRChat カメラを寄せた全画面化 (PC / Quest VR)、iOS で全画面化を切っていること (BUG-CAM-003)、スマホのタップ表示と画面端の [メニュー] が隠れること
+- 撮影の一瞬の引っかかり (Quest 3)、実際のメモリ (Quest / Android ビルド)、11 のクライアント言語の字形と枠
+- 2 人以上で: 集合写真が各自の端末で撮れること、フリスビーの取りが他人の端末でも撮れること (同期された state のエッジが届くか)
+
+### 9.6 実行の順 (統括)
+
+1. `bash scripts/unity-compile.sh` (C#) → `Tools/KominkaHillside/Photo/0 - Create Program Asset` → `bash scripts/unity-compile.sh --udon`
+2. `Photo/1 - Build Photo and Gallery` (保存まで行う。前のシーンは `Temp/kh-photo/before-photo-build.unity`) → `Course/27 - Add Course UI Glyphs` → `Photo/2 - Verify`
+3. (任意の段) `Photo/4 - Place Board, Menu Button and Settings Row (optional)` → `Photo/2 - Verify` → `Menu/22 Verify Localization` (Verify 22 の設定面の検査) → `Guide/2` (看板の置き場所の検査に写真ボードが当たらないこと)
+4. `Photo/3 - Harness` (約 1 分。`bash scripts/kh-harness-run.sh photo`)
