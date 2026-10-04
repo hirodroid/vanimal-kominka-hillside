@@ -77,7 +77,7 @@ namespace KominkaHillside.Editor
         {
             Directory.CreateDirectory(Data);
             string path = Data + "/" + name + ".mat"; var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (m == null) { m = new Material(Shader.Find("VRChat/Mobile/Standard Lite")); m.color = color; AssetDatabase.CreateAsset(m, path); }
+            if (m == null) { m = new Material(Shader.Find("VRChat/Mobile/Standard Lite")); m.color = color; KH_MatteMaterialsEditor.Matte(m); AssetDatabase.CreateAsset(m, path); }
             return m;
         }
 
@@ -506,7 +506,7 @@ namespace KominkaHillside.Editor
         {
             Directory.CreateDirectory(Data);
             string path = FaceMaterialPathFor(key); var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (m == null) { m = new Material(Shader.Find("VRChat/Mobile/Standard Lite")); m.color = Color.white; AssetDatabase.CreateAsset(m, path); }
+            if (m == null) { m = new Material(Shader.Find("VRChat/Mobile/Standard Lite")); m.color = Color.white; KH_MatteMaterialsEditor.Matte(m); AssetDatabase.CreateAsset(m, path); }
             var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(KH_DogFaceCaptureEditor.TexturePathFor(key));
             if (tex == null) Debug.LogWarning("[KH Frisbee] " + KH_DogFaceCaptureEditor.TexturePathFor(key) + " missing: run Tools/KominkaHillside/Frisbee/6 Capture Dog Faces, then Build again (" + path + " has no texture)");
             if (m.mainTexture != tex || m.color != Color.white) { m.mainTexture = tex; m.color = Color.white; EditorUtility.SetDirty(m); }

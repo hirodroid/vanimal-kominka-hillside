@@ -191,7 +191,7 @@ namespace KominkaHillside.Editor
         static Material Mat(string name, Color color)
         {
             string path=Data+"/"+name+".mat";var m=AssetDatabase.LoadAssetAtPath<Material>(path);
-            if(m==null){m=new Material(Shader.Find("VRChat/Mobile/Standard Lite"));m.color=color;AssetDatabase.CreateAsset(m,path);}
+            if(m==null){m=new Material(Shader.Find("VRChat/Mobile/Standard Lite"));m.color=color;KH_MatteMaterialsEditor.Matte(m);AssetDatabase.CreateAsset(m,path);}
             return m;
         }
         static Transform Child(Transform parent,string name)

@@ -326,7 +326,8 @@ namespace KominkaHillside.Editor
             var shader = Shader.Find("VRChat/Mobile/Standard Lite");
             if (shader == null) shader = Shader.Find("Standard");
             var m = EnsureMaterial(ToolMatDir + "/" + name + ".mat", shader);
-            m.color = color; EditorUtility.SetDirty(m);
+            m.color = color;
+            KH_MatteMaterialsEditor.Matte(m);   // BUG-ENV-001: the shader default is a full metal (black on Quest / iOS)
             return m;
         }
 

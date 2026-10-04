@@ -64,10 +64,10 @@ Material:
     - _BumpScale: 1
     - _DetailNormalMapScale: 1
     - _EnableGeometricSpecularAA: 1
-    - _Glossiness: 1
+    - _Glossiness: 0.3
     - _GlossyReflections: 0
     - _LightmapType: 0
-    - _Metallic: 1
+    - _Metallic: 0
     - _OcclusionStrength: 1
     - _SpecularAAScreenSpaceVariance: 0.1
     - _SpecularAAThreshold: 0.2
