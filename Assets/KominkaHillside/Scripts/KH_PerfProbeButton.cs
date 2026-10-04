@@ -23,6 +23,10 @@ namespace KominkaHillside
                 case 4: probe._Toggle4(); break;
                 case 5: probe._Toggle5(); break;
                 case 6: probe._Toggle6(); break;
+                case 7: probe._Toggle7(); break;
+                case 8: probe._Toggle8(); break;
+                case 9: probe._Toggle9(); break;
+                case 10: probe._Toggle10(); break;
             }
         }
     }

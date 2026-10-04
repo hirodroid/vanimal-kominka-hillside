@@ -23,8 +23,11 @@ namespace KominkaHillside
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_PerfProbe : UdonSharpBehaviour
     {
-        public const int GroupCount = 7;
+        public const int GroupCount = 11;
         public const int GroupTerrain = 0, GroupScenery = 1, GroupLeaves = 2, GroupEntrance = 3, GroupDogs = 4, GroupRiver = 5, GroupDogUdon = 6;
+        // VER-ENV-002 (2026-10-04): the scenery added on 10-04 (KH_RoadsideAutumn + KH_RiverVerge) split by kind, and the finished
+        // props (KH_PropFinish, Unity Standard). These renderers are in no other group (Leaves / Scenery are the older content only).
+        public const int GroupNewGrass = 7, GroupNewBoards = 8, GroupNewOther = 9, GroupProps = 10;
 
         // Scene references: left null here (the builder allocates and wires them; see vrc-udonsharp §4 on array defaults).
         public Behaviour[] terrains;          // every Terrain (as Behaviour)
@@ -33,6 +36,10 @@ namespace KominkaHillside
         public Renderer[] leaves;
         public Renderer[] dogs;
         public Renderer[] river;
+        public Renderer[] newGrass;
+        public Renderer[] newBoards;
+        public Renderer[] newOther;
+        public Renderer[] props;
         public UdonBehaviour[] dogUdon;
         public TextMeshPro[] labels;
         public string[] names;
@@ -40,7 +47,7 @@ namespace KominkaHillside
         private bool[] _off;
         // enabled state of every element captured when its group goes OFF, restored on ON. Scans include components that
         // are disabled on purpose (wash shells, hidden tools); forcing them all to true would change the baseline.
-        private bool[] _savedScenery, _savedLeaves, _savedDogs, _savedRiver, _savedDogUdon;
+        private bool[] _savedScenery, _savedLeaves, _savedDogs, _savedRiver, _savedDogUdon, _savedNewGrass, _savedNewBoards, _savedNewOther, _savedProps;
 
         public void _Toggle0() { Toggle(0); }
         public void _Toggle1() { Toggle(1); }
@@ -49,6 +56,10 @@ namespace KominkaHillside
         public void _Toggle4() { Toggle(4); }
         public void _Toggle5() { Toggle(5); }
         public void _Toggle6() { Toggle(6); }
+        public void _Toggle7() { Toggle(7); }
+        public void _Toggle8() { Toggle(8); }
+        public void _Toggle9() { Toggle(9); }
+        public void _Toggle10() { Toggle(10); }
 
         private void Toggle(int group)
         {
@@ -67,6 +78,10 @@ namespace KominkaHillside
                 case GroupDogs: _savedDogs = SetRenderers(dogs, on, _savedDogs); break;
                 case GroupRiver: _savedRiver = SetRenderers(river, on, _savedRiver); break;
                 case GroupDogUdon: _savedDogUdon = SetUdon(dogUdon, on, _savedDogUdon); break;
+                case GroupNewGrass: _savedNewGrass = SetRenderers(newGrass, on, _savedNewGrass); break;
+                case GroupNewBoards: _savedNewBoards = SetRenderers(newBoards, on, _savedNewBoards); break;
+                case GroupNewOther: _savedNewOther = SetRenderers(newOther, on, _savedNewOther); break;
+                case GroupProps: _savedProps = SetRenderers(props, on, _savedProps); break;
             }
             UpdateLabel(group);
         }
