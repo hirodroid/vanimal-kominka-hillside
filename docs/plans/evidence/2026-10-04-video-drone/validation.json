@@ -1,0 +1,181 @@
+{
+  "triangles": 692,
+  "vertices": 348,
+  "meshCount": 1,
+  "materialCount": 1,
+  "dimensionsBlenderM": [
+    0.3199999928474426,
+    0.2500000074505806,
+    0.09999999403953552
+  ],
+  "degenerateUVTriangles": 0,
+  "degenerateGeometryTriangles": 0,
+  "duplicateFaces": 0,
+  "nonManifoldEdges": 0,
+  "inconsistentWindingEdges": 0,
+  "signedVolumeM3": 0.0014360709109522774,
+  "nonAdjacentTriangleIntersections": 0,
+  "uvBounds": [
+    0.05000000074505806,
+    0.05000000074505806,
+    0.9500000476837158,
+    0.9500000476837158
+  ],
+  "vertexColorLayers": [
+    "Color"
+  ],
+  "fbxStoredVertexCoordinatesMatchAxisConversion": true,
+  "measuredOpticalFaceCenterBlenderM": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "blenderVersion": "5.2.2 LTS",
+  "executionDate": "2026-10-04",
+  "dimensionsUnityM": {
+    "widthX": 0.3199999928474426,
+    "heightY": 0.09999999403953552,
+    "depthZ": 0.2500000074505806
+  },
+  "originBlenderM": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "lensOpticalFaceCenterBlenderM": [
+    0,
+    0,
+    0
+  ],
+  "originUnityM": [
+    0,
+    0,
+    0
+  ],
+  "lensOpticalFaceCenterUnityM": [
+    0,
+    0,
+    0
+  ],
+  "frontAxisBlender": "-Y",
+  "upAxisBlender": "+Z",
+  "frontAxisUnity": "+Z",
+  "upAxisUnity": "+Y",
+  "exportAxes": {
+    "forward": "-Z",
+    "up": "Y",
+    "bakeSpaceTransform": true,
+    "unitScaleMeters": 1
+  },
+  "transforms": {
+    "location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "rotationEuler": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "colorSpace": "LINEAR",
+  "paletteLinearRGBA": {
+    "body": [
+      0.72,
+      0.67,
+      0.55,
+      1
+    ],
+    "frame": [
+      0.075,
+      0.084,
+      0.08,
+      1
+    ],
+    "rotor": [
+      0.24,
+      0.26,
+      0.25,
+      1
+    ],
+    "orange": [
+      0.53,
+      0.225,
+      0.075,
+      1
+    ],
+    "lens": [
+      0.008,
+      0.013,
+      0.016,
+      1
+    ]
+  },
+  "fbxRoundtrip": {
+    "triangles": 692,
+    "vertices": 348,
+    "meshCount": 1,
+    "materialCount": 1,
+    "dimensionsBlenderM": [
+      0.3199999928474426,
+      0.2500000037252903,
+      0.10000000335276127
+    ],
+    "degenerateUVTriangles": 0,
+    "degenerateGeometryTriangles": 0,
+    "duplicateFaces": 0,
+    "nonManifoldEdges": 0,
+    "inconsistentWindingEdges": 0,
+    "signedVolumeM3": 0.0014360709109522772,
+    "nonAdjacentTriangleIntersections": 0,
+    "uvBounds": [
+      0.05000000074505806,
+      0.05000000074505806,
+      0.9500000476837158,
+      0.9500000476837158
+    ],
+    "vertexColorLayers": [
+      "Color"
+    ]
+  },
+  "fbxRoundtripColorsMatch": true,
+  "unityIntegration": "NOT PERFORMED",
+  "visibilityAt3mInWorld": "NOT VERIFIED",
+  "sourceRecipe": "scripts/art/video-drone.py",
+  "preview": {
+    "resolution": [
+      600,
+      600
+    ],
+    "views": {
+      "front": [
+        0,
+        -0.7,
+        0.21
+      ],
+      "top": [
+        0,
+        0.069,
+        0.8
+      ],
+      "side": [
+        0.75,
+        0.069,
+        0.13
+      ]
+    },
+    "target": [
+      0.0,
+      0.0689999982714653,
+      0.017999999225139618
+    ],
+    "projection": "ORTHO",
+    "note": "Front and side slightly elevated; not an in-world distance test."
+  }
+}
