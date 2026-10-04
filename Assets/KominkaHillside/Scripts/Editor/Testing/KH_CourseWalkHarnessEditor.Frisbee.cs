@@ -25,7 +25,8 @@ namespace KominkaHillside.Editor
     //   F5c-grab    the disc floating from F5a: OnPickup (Udon event _onPickup, then _onDrop; no real hand) -> gravity on at once and
     //               the float flag cleared; nobody holds it, so the next look (<= 0.6 s) floats it again (the RC-09 reconcile).
     //   F5c-recall  the player on the plaza (the stage-1 take-out gate), menu "call the disc" (_Disc0): the disc by the player
-    //               (<= 2.5 m) within 4 s with gravity on, and still with gravity 2 s later.
+    //               (<= 2.5 m) within 4 s. IMP-DOG-040 (2026-10-04): it hovers there (gravity off, the disc's _hover set, not floating)
+    //               and 2 s later is still hovering where it was put (<= 0.05 m), never sent to the bank. (Was: gravity on, on the ground.)
     //   F5b-spot    thrown into the water-play spot 2 m above its downstream end: floats and stops at the end (+- 0.5 m, KH_WaterSpot
     //               ._DownstreamZ), still for 5 s, never sent to the bank. The dog may be in its own water play (not checked here).
     //   F5d-roll    (Codex M2 review 5) thrown short onto the bank 35 m below the spot (out of its 25 m entry radius); once the dog
@@ -58,7 +59,7 @@ namespace KominkaHillside.Editor
             public double startedAt = -1, launchedAt = -1, landedT = -1, bankT = -1, decidedT = -1;
             public bool launched, floated, standIn, gravityAfterPickup, flagClearedAfterPickup, refloated, recalledNear, gravityStill;
             public int frames, dogBandFrames, dogSpotChaseFrames, bankLogs, waterLogs, floatLogs, cannotPlayLogs, catcherEnd = -1;
-            public Vector3 injectAt, dogAt;
+            public Vector3 injectAt, dogAt, hoverAt;   // hoverAt: F5c-recall, where the called disc hovered (IMP-DOG-040)
             public double injectedT = -1;
             public bool retrieveSeen, carriedAfterInject;
             public int gateIdx = -1, gatePass, gateFail, gateSkip;   // F15-gate
@@ -431,11 +432,15 @@ namespace KominkaHillside.Editor
                 if (c.launchedAt < 0) { pouch.SendCustomEvent("_Disc" + FbDog); c.launchedAt = t; c.log.Add("menu _Disc" + FbDog + " at " + t.ToString("F2") + "s"); return; }
                 var pl = Networking.LocalPlayer.GetPosition(); var d = dp - pl; d.y = 0f;
                 var rb = FbRb();
-                if (!c.recalledNear && d.magnitude <= 2.5f && rb != null && rb.useGravity) { c.recalledNear = true; c.decidedT = t; }
-                if (!c.recalledNear) { if (t - c.launchedAt > 4) FbFinish(c, now, false, "not brought by the player with gravity within 4 s: distance=" + d.magnitude.ToString("F2") + " gravity=" + (rb != null && rb.useGravity)); return; }
+                // IMP-DOG-040: brought = hovering by the player (gravity off, not kinematic, the disc's _hover), not on the ground
+                bool hoverNow = rb != null && !rb.useGravity && !rb.isKinematic && Get<bool>(fbDisc, "_hover");
+                if (!c.recalledNear && d.magnitude <= 2.5f && hoverNow) { c.recalledNear = true; c.decidedT = t; c.hoverAt = dp; }
+                if (!c.recalledNear) { if (t - c.launchedAt > 4) FbFinish(c, now, false, "not brought by the player hovering within 4 s: distance=" + d.magnitude.ToString("F2") + " gravity=" + (rb != null && rb.useGravity) + " hover=" + Get<bool>(fbDisc, "_hover")); return; }
                 if (t - c.decidedT < 2) return;
-                c.gravityStill = rb != null && rb.useGravity && !Get<bool>(fbDisc, "_floating");
-                FbFinish(c, now, c.gravityStill && c.bankLogs == 0, "near=" + c.recalledNear + " at " + (c.decidedT - c.launchedAt).ToString("F2") + "s gravity2s=" + c.gravityStill + " bankLogs=" + c.bankLogs);
+                float moved = Vector3.Distance(dp, c.hoverAt);
+                c.gravityStill = hoverNow && !Get<bool>(fbDisc, "_floating") && moved <= .05f;   // IMP-DOG-040: "still hovering in place" (field name kept)
+                FbFinish(c, now, c.gravityStill && c.bankLogs == 0, "near=" + c.recalledNear + " at " + (c.decidedT - c.launchedAt).ToString("F2") + "s hover2s=" + c.gravityStill
+                    + " moved=" + moved.ToString("F3") + " height=" + (dp.y - Networking.LocalPlayer.GetPosition().y).ToString("F2") + " bankLogs=" + c.bankLogs);
                 return;
             }
             bool flying = Get<bool>(fbDisc, "_flying");

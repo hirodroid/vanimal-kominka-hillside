@@ -96,7 +96,7 @@ namespace KominkaHillside.Editor
             s.Add(CmDo(() =>
             {
                 CmExpect(CmPoints() == 0 && CmSpent() == 0 && CmEarned() == 0, "still 0 pt / spent 0 / earned 0 after every basic action");
-                CmNote("0 pt: attach and detach dog 0 (menu _WalkLeft0 / _WalkOff0, notes attached / detached), ball and disc of dog 0 called to the feet (_Toy0 / _Disc0, gate Ok, placed), a biscuit out and put away (initial stock). No pt demand on these paths");
+                CmNote("0 pt: attach and detach dog 0 (menu _WalkLeft0 / _WalkOff0, notes attached / detached), ball and disc of dog 0 called into reach (_Toy0 / _Disc0, gate Ok, placed hovering, IMP-DOG-040), a biscuit out and put away (initial stock). No pt demand on these paths");
                 CmNote("not here: petting, gathering (trainer CE), real throws -> PCVR (see notCovered)");
             }));
 
@@ -224,7 +224,7 @@ namespace KominkaHillside.Editor
             }));
         }
 
-        /// <summary>ボール / ディスクを手元メニューで呼び、足元に置かれたことを見る (T-008)。</summary>
+        /// <summary>ボール / ディスクを手元メニューで呼び、手の届く高さに浮いたことを見る (T-008。IMP-DOG-040 で足元 → 胸の前)。</summary>
         static void CmToyRecallSteps(List<Func<double, bool>> s, int dog, int kind)
         {
             string evt = (kind == KH_ToyRecall.KindBall ? "_Toy" : "_Disc") + dog, what = kind == KH_ToyRecall.KindBall ? "ball" : "disc";
@@ -242,6 +242,10 @@ namespace KominkaHillside.Editor
                 var t = CmToyTransform(dog, kind);
                 float d = TvFlat(t.position, Networking.LocalPlayer.GetPosition());
                 CmExpect(d <= 3.5f, what + " by the player (" + d.ToString("F2") + " m)");
+                // IMP-DOG-040: in reach in front of the chest, not on the ground: gravity off and above the feet (ClientSim = Desktop values)
+                var rb = t.GetComponent<Rigidbody>();
+                float up = t.position.y - Networking.LocalPlayer.GetPosition().y;
+                CmExpect(rb != null && !rb.useGravity && !rb.isKinematic && up >= .6f, what + " hovers in reach (gravity " + (rb != null && rb.useGravity) + ", " + up.ToString("F2") + " m above the feet)");
             }));
         }
 

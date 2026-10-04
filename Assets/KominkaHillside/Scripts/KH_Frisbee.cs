@@ -111,8 +111,15 @@ namespace KominkaHillside
         // physics - gravity off, velocity - reach everyone and late joiners through VRCObjectSync, nothing new is synced).
         private bool _floating;       // this Owner floated it (local history; the gravity itself is reconciled on every look)
         private bool _waterRefused;   // this flight went under the surface where it does not float (checked once per flight)
+        // IMP-DOG-040: the menu (KH_ToyRecall.Place) holds it in front of the caller with gravity off. Local to the caller (its
+        // Owner); CheckRiver leaves it alone meanwhile. Cleared by a pickup, a launch, a catch / release, a recall, losing the
+        // ownership, the gravity coming back, or KH_ToyRecall (taken / timeout).
+        private bool _hover;
 
         public bool IsFlying { get { return _flying; } }
+        public bool IsHovering { get { return _hover; } }   // net: callable-ok: read-only
+        // IMP-DOG-040: local only ('_': not callable over the network). Only the Owner can start it.
+        public void _SetHover(bool on) { _hover = on && Networking.IsOwner(gameObject); }
         // IMP-WLD-008 W3 (read-only, local; nothing synced changes): the launch facts of the current flight, meaningful only on the client that
         // launched it (FlightLocal). The video camera's landing-wait mode predicts the landing with _PositionAt from these, like the aim line.
         public bool FlightLocal { get { return _flying && Networking.IsOwner(gameObject); } }
@@ -218,7 +225,7 @@ namespace KominkaHillside
             // if the preset is switched mid-flight (the dog is told the same number with ReqCatch).
             // DES-UI-002: the thrower's own choice first (this runs on the thrower's client), else the preset.
             _curve = LaunchCurve();
-            _p0 = p0; _v0 = v0; _t0 = Networking.GetServerTimeInSeconds(); _spin = 0f; _flying = true; _gen++; _waterRefused = false;
+            _p0 = p0; _v0 = v0; _t0 = Networking.GetServerTimeInSeconds(); _spin = 0f; _flying = true; _gen++; _waterRefused = false; _hover = false;
             _sync.SetKinematic(true);
             transform.position = p0;
             VRCPlayerApi lp = Networking.LocalPlayer;
@@ -245,7 +252,7 @@ namespace KominkaHillside
         // The dog Owner took the disc at the mouth. It is the disc Owner by then (SetOwner in the catcher).
         public void _Caught()
         {
-            _flying = false;
+            _flying = false; _hover = false;
             if (_sync != null) _sync.SetKinematic(true);
             if (_rb != null && !_rb.isKinematic) { _rb.velocity = Vector3.zero; _rb.angularVelocity = Vector3.zero; }
             // D-2: in the mouth = normal physics once let go. Only the disc's Owner writes it (Codex M2 review 2: ClaimDisc does not
@@ -256,7 +263,7 @@ namespace KominkaHillside
         // Released from the mouth (Owner of the disc).
         public void _Release(Vector3 velocity)
         {
-            _flying = false;
+            _flying = false; _hover = false;
             if (_sync != null) _sync.SetKinematic(false);
             // D-2 (the ball's RC-09, KD_DogFetchController.ReleaseBall): gravity follows where it is let go, at once - on land it
             // falls, in floating water it floats (CheckRiver holds it from its next look). M2 never releases in the water (M3 does).
@@ -270,7 +277,7 @@ namespace KominkaHillside
         {
             if (!Networking.IsOwner(gameObject)) return;
             bool wasFlying = _flying;
-            _flying = false;
+            _flying = false; _hover = false;   // IMP-DOG-040: KH_ToyRecall.Place sets it again after this
             if (_sync != null) _sync.SetKinematic(false);
             StopFloat();   // D-2: the menu recall / the park lands it with gravity at once (KH_ToyRecall.Place / Park)
             if (_rb != null && !_rb.isKinematic) { _rb.velocity = Vector3.zero; _rb.angularVelocity = Vector3.zero; }
@@ -280,7 +287,7 @@ namespace KominkaHillside
         public override void OnOwnershipTransferred(VRCPlayerApi player)
         {
             // Only the Owner steps the flight; a transfer mid-air (grab, catch, launcher) ends it here.
-            if (!Networking.IsOwner(gameObject)) { _flying = false; return; }
+            if (!Networking.IsOwner(gameObject)) { _flying = false; _hover = false; return; }
             // DES-DOG-005 M2 (Codex M2 review 2): the dog's claim arrived after _Caught ran as a non-Owner - the gravity it could not
             // write is written now (a disc in a mouth has gravity; it floats again only after the release, by position).
             if (catcher != null && catcher.IsCarrying && !_flying) { _floating = false; if (_sync != null) _sync.SetGravity(true); }
@@ -291,7 +298,7 @@ namespace KominkaHillside
 
         public override void OnPickup()
         {
-            _charging = false; _hasPendingThrow = false; _heldLocal = true; _lookAxis = 0f;
+            _charging = false; _hasPendingThrow = false; _heldLocal = true; _lookAxis = 0f; _hover = false;
             if (discRenderer != null && discHeldMaterial != null) discRenderer.sharedMaterial = discHeldMaterial; // local: the holder sees through it
             SetFacesVisible(false); // local: the opaque face prints would block the see-through disc
             bool wasFlying = _flying;
@@ -628,6 +635,9 @@ namespace KominkaHillside
             if (riverData == null || Time.time < _nextRiverAt) return;
             _nextRiverAt = (Mathf.Floor((Time.time - _riverPhase) / RiverCheckInterval) + 1f) * RiverCheckInterval + _riverPhase;   // IMP-DOG-034 B6
             if (!Networking.IsOwner(gameObject) || IsHeldNow || (catcher != null && catcher.IsCarrying)) return;
+            // IMP-DOG-040: held in front of the caller by the menu - not floated, given its gravity back or sent to the bank (it may
+            // hang over the band). Once the gravity is back (a pickup shorter than a look) or it is kinematic, the rules below apply.
+            if (_hover) { if (GravityOff()) return; _hover = false; }
             // D-2 放した後の復旧 (the ball's RC-17 / UnfreezeIfFree): not flying (Update only calls this then), not held, not carried,
             // yet kinematic - a dog that lost it while carrying gives up without touching its physics. Looked at again next time.
             if (_rb != null && _rb.isKinematic)

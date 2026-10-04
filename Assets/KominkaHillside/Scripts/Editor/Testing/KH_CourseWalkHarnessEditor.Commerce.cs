@@ -29,6 +29,7 @@ namespace KominkaHillside.Editor
     public static partial class KH_CourseWalkHarnessEditor
     {
         const int CmSetLedger = 0, CmSetLedgerReentry = 1, CmSetTreat = 2, CmSetTreatCall = 3;   // 3: IMP-DOG-006 Course/97c (TreatCall.cs)
+        const int CmSetToyHover = 4;   // IMP-DOG-040 Course/97d (ToyHover.cs)
         const string CmLastLedgerPath = Dir + "/ledger-last.json";
         const string CmBiscuit = "treat.bone_biscuit", CmPawCookie = "treat.paw_cookie", CmJerky = "treat.jerky", CmFxPawCookie = "petfx.paw_cookie";
 
@@ -79,7 +80,7 @@ namespace KominkaHillside.Editor
             report.commerceOnly = true;
             report.commerceSet = set;
             report.commerceSource = source;
-            report.deadline = EditorApplication.timeSinceStartup + (set == CmSetLedger ? 1200 : set == CmSetLedgerReentry ? 600 : set == CmSetTreatCall ? 1500 : 1800);
+            report.deadline = EditorApplication.timeSinceStartup + (set == CmSetLedger ? 1200 : set == CmSetLedgerReentry ? 600 : set == CmSetTreatCall ? 1500 : set == CmSetToyHover ? 600 : 1800);
             report.limitations = "Single local ClientSim; the local player is instance master and every Owner. Menu and NPC operations go through the real Udon events "
                 + "(no physical UI click, ray or proximity). PlayerData is ClientSim's local file: 'saved' = written to ClientSimStorage, 're-entry' (96b) = a new Play reading that file; "
                 + "not VRChat's server persistence or OnPlayerRestored timing. Heap writes (stay-accrual freeze, restore delay, slots held by puppets) are SIMULATED and listed in each case's notes. "
@@ -120,7 +121,7 @@ namespace KominkaHillside.Editor
             Application.logMessageReceived -= CmLog; Application.logMessageReceived += CmLog;
             cmScripts = new List<List<Func<double, bool>>>(); cmLimits = new List<double>();
             cmStep = 0; cmCaseAt = -1; cmFailed = false; cmLoadedForced = false; cmPuppets.Clear();
-            cmReport = new CmReport { runId = report.runId, harness = report.commerceSet == CmSetLedger ? "ledger (Course/96)" : report.commerceSet == CmSetLedgerReentry ? "ledger re-entry (Course/96b)" : report.commerceSet == CmSetTreatCall ? "treat call on the leash (Course/97c)" : "treats (Course/97)", source = report.commerceSource };
+            cmReport = new CmReport { runId = report.runId, harness = report.commerceSet == CmSetLedger ? "ledger (Course/96)" : report.commerceSet == CmSetLedgerReentry ? "ledger re-entry (Course/96b)" : report.commerceSet == CmSetTreatCall ? "treat call on the leash (Course/97c)" : report.commerceSet == CmSetToyHover ? "toy recall hover (Course/97d)" : "treats (Course/97)", source = report.commerceSource };
             var all = UnityEngine.Object.FindObjectsOfType<UdonBehaviour>(true);
             cmLedger = CmOne(all, "KD_ProgressLedger");
             cmKeeper = CmOne(all, "KD_ShopKeeper");
@@ -135,6 +136,7 @@ namespace KominkaHillside.Editor
             if (report.commerceSet == CmSetLedger) MakeLedgerCases();
             else if (report.commerceSet == CmSetLedgerReentry) MakeLedgerReentryCases();
             else if (report.commerceSet == CmSetTreatCall) MakeTreatCallCases();
+            else if (report.commerceSet == CmSetToyHover) MakeToyHoverCases();
             else MakeTreatCases();
             CmWrite();
         }
@@ -179,7 +181,7 @@ namespace KominkaHillside.Editor
             cmStep = 0;
             CmWrite(); Save();
             if (caseIndex + 1 < report.cases.Count) { Next(); return; }
-            string head = report.commerceSet == CmSetLedger ? "LEDGER" : report.commerceSet == CmSetLedgerReentry ? "LEDGER_REENTRY" : report.commerceSet == CmSetTreatCall ? "TREAT_CALL" : "TREAT";
+            string head = report.commerceSet == CmSetLedger ? "LEDGER" : report.commerceSet == CmSetLedgerReentry ? "LEDGER_REENTRY" : report.commerceSet == CmSetTreatCall ? "TREAT_CALL" : report.commerceSet == CmSetToyHover ? "TOY_HOVER" : "TREAT";
             End(head + (cmFailed ? "_FAIL" : "_PASS"), cmFailed ? "One or more cases failed; see commerce.json" : "Local ClientSim commerce cases passed. Not network, server persistence, device or PCVR acceptance.");
         }
 

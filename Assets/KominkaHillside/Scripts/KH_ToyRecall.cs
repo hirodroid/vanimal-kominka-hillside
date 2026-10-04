@@ -9,7 +9,8 @@ namespace KominkaHillside
     // "Call the ball to me", ported from KominkaDogRun KD_TreatPouch.Toy (IMP-FET-011): one ball at a time,
     // never taken from a hand, from a dog chasing it on land (Fetch 1-3) or from a mouth (4 / 7 / 8, a Drop before the release);
     // IMP-DOG-021 (DES-DOG-004 E-4): a dog after it in the water (6) or a Drop that has let it go gives it up. No bulk reset (game-design §4).
-    // The ball is placed in front of the head on the ground found by a downward ray, since the hillside slopes.
+    // IMP-DOG-040 (2026-10-04 user decision, plan A): the called toy hovers in front of the caller's chest (gravity off, still) until it
+    // is taken; after hoverSeconds untaken it is put on the ground straight below and put to sleep (no roll on the slope).
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_ToyRecall : UdonSharpBehaviour
     {
@@ -29,8 +30,29 @@ namespace KominkaHillside
         const float MovedTolerance = 0.1f;  // the other toy moved more than this since the ask = someone else is using it
         public const int KindBall = 0, KindDisc = 1;
         public LayerMask groundMask = (1 << 0) | (1 << 11);
-        public float recallDistance = 1.2f;
+        public float recallDistance = 1.2f;   // IMP-DOG-040: no longer read (the toy hovers, see hover*); kept so the scene value stays
         public float recallCooldown = 2f;
+        // ---- IMP-DOG-040: the called toy hovers in reach (prototype values, tuned in Play) ----
+        // From the head: horizontally ahead (head yaw) and down, times the avatar scale (eye height / 1.6, clamped 0.5 .. 2, as before).
+        // VR = the chest in front of the body; Desktop / phone (not VR) = a little below the view, farther out so it is on screen.
+        public float hoverForwardVR = 0.45f;
+        public float hoverDownVR = 0.35f;
+        public float hoverForwardFlat = 0.8f;
+        public float hoverDownFlat = 0.2f;
+        public float hoverSeconds = 20f;   // untaken this long = put on the ground below and put to sleep
+        // The hover is the caller's local state (no synced variable). Only VRCObjectSync carries it to the others (position and the
+        // gravity flag). If the caller leaves or the ownership moves, the new Owner's river look gives the gravity back and it falls.
+        const float HoverCheckInterval = 0.25f;
+        const float HoverGap = 0.05f;            // kept from a wall / the ground in front of the head
+        const float HoverSettleSeconds = 1.25f;  // after the timeout landing: keep it asleep this long (as RiverSettleSeconds)
+        private float[] _ballHoverUntil;         // > 0 = hovering until this Time.time (this client is its Owner)
+        private float[] _discHoverUntil;
+        private float[] _ballLandSettle;         // > 0 = landed by the timeout, re-slept until this Time.time
+        private float[] _discLandSettle;
+        private Rigidbody[] _discRb;
+        private VRCObjectSync[] _discSync;
+        private bool _hoverAny;
+        private float _nextHoverAt;
         public const int Ok = 0, Held = 1, DogBusy = 2, Cooldown = 3, Unwired = 4, Pending = 5;
         // IMP-DOG-020: the dog is wading; called again after it lands (DES-DOG-004 B-1). IMP-DOG-021 (E-4): only while the ball is
         // in its mouth in the water (Fetch 7 / 8); a ball the dog is not holding is called even when the dog is in the water.
@@ -271,6 +293,7 @@ namespace KominkaHillside
         {
             if (Time.time >= _nextExclusiveAt) { _nextExclusiveAt = NextOnGrid(0f, ExclusiveInterval); ApplyExclusive(); }
             if (riverData != null && Time.time >= _nextRiverAt) { _nextRiverAt = NextOnGrid(RiverCheckInterval * 0.5f, RiverCheckInterval); CheckRiverBalls(); }
+            if (_hoverAny && Time.time >= _nextHoverAt) { _nextHoverAt = Time.time + HoverCheckInterval; CheckHover(); }   // IMP-DOG-040
             if (_pendingRow < 0) return;
             int row = _pendingRow; int kind = _pendingKind;
             if (_stage == 2) { StepPark(row, kind); return; }
@@ -385,9 +408,7 @@ namespace KominkaHillside
                 _floating = new bool[balls.Length];
                 _riverRepeat = new int[balls.Length];
                 for (int k = 0; k < _riverSince.Length; k++) { _riverSince[k] = -1f; _riverLastReturn[k] = -1000f; }
-                _ballRb = new Rigidbody[balls.Length]; _ballSync = new VRCObjectSync[balls.Length];
-                for (int k = 0; k < balls.Length; k++)
-                    if (balls[k] != null) { GameObject bgo = balls[k].gameObject; _ballRb[k] = bgo.GetComponent<Rigidbody>(); _ballSync[k] = bgo.GetComponent<VRCObjectSync>(); }
+                EnsureToyCache();   // IMP-DOG-040: the ball Rigidbody / VRCObjectSync cache is shared with the hover
             }
             for (int i = 0; i < balls.Length; i++)
             {
@@ -405,6 +426,9 @@ namespace KominkaHillside
                 if (b.IsHeldNow || carried) _riverSettleUntil[i] = 0f;   // a dog merely chasing does not touch it
                 if (b.IsHeldNow && _floating[i] && Networking.IsOwner(go)) StopFloat(i, go);   // picked up: normal physics
                 if (!Networking.IsOwner(go) || b.IsHeldNow || carried) { _riverSince[i] = -1f; continue; }
+                // IMP-DOG-040: a ball the menu holds in front of the player is not floated, given its gravity back or sent to the bank
+                // (it may hang over the band or the water-play spot). CheckHover owns it until it is taken or lands.
+                if (BallHovering(i)) { _riverSince[i] = -1f; continue; }
                 // Codex review 2026-09-28 高 (RC-17 / RC-09): a dog that lost the ball while carrying gives up without touching its
                 // physics (only the Owner may write them), so the ball's Owner - this client - unfreezes a kinematic ball that no
                 // dog has in its mouth (a race ball is its winner's). Then the rules below float it or give its gravity back.
@@ -585,39 +609,190 @@ namespace KominkaHillside
             if (sync != null) sync.FlagDiscontinuity();
             Rigidbody rb = go.GetComponent<Rigidbody>();
             if (rb != null && !rb.isKinematic) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
+            // IMP-DOG-040: a hovering toy parked by stage 2 (the same dog's other toy was called) gets its gravity back here
+            // (the disc's _Recall above already did; the ball would otherwise wait for the next river look)
+            if (kind == KindBall && BallHovering(row) && sync != null) sync.SetGravity(true);
+            ClearHover(row, kind);
         }
 
+        // IMP-DOG-040: the toy is put in front of the caller's chest and hovers there (gravity off, still) until it is taken. Not
+        // kinematic: the idle Fetch's "release a kinematic ball" safety net must not see it. Owner only (Update checked).
         private void Place(int row, int kind)
         {
             VRCPlayerApi lp = Networking.LocalPlayer;
             GameObject go = ToyObject(row, kind);
+            EnsureToyCache();
             // A disc may still be flying: end the flight and tell the dog (review D3) before moving it.
             if (kind == KindDisc) discs[row]._Recall();
             // Unfreeze before moving: a kinematic ball left by an interrupted Return would hang in the air.
             VRCObjectSync sync = go.GetComponent<VRCObjectSync>();
             if (sync != null) sync.SetKinematic(false);
-            // IMP-DOG-021 (E-4): a ball called out of the water was floating with gravity off; it lands by the player at once
-            // instead of hanging until the next river look (0.25 s)
-            if (kind == KindBall)
+            // IMP-DOG-021 (E-4): a ball called out of the water is no longer floating (the river look leaves a hovering ball alone)
+            if (kind == KindBall && _floating != null && row < _floating.Length) _floating[row] = false;
+            if (sync != null) sync.SetGravity(false);
+            float radius = kind == KindDisc ? discs[row].radius : go.transform.localScale.x * 0.5f;
+            go.transform.position = HoverSpot(lp, radius);
+            if (kind == KindDisc) go.transform.rotation = Quaternion.Euler(0f, go.transform.eulerAngles.y, 0f);   // level, easy to grab
+            if (sync != null) sync.FlagDiscontinuity();   // a teleport: the others do not see it slide up from where it was
+            Rigidbody rb = go.GetComponent<Rigidbody>();
+            if (rb != null && !rb.isKinematic) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
+            if (kind == KindDisc)
             {
-                if (sync != null) sync.SetGravity(true);
-                if (_floating != null && row < _floating.Length) _floating[row] = false;
+                discs[row]._SetHover(true);   // its own river look leaves it alone too
+                _discHoverUntil[row] = Time.time + hoverSeconds; _discLandSettle[row] = 0f;
             }
+            else
+            {
+                _ballHoverUntil[row] = Time.time + hoverSeconds; _ballLandSettle[row] = 0f;
+                if (_riverSettleUntil != null && row < _riverSettleUntil.Length) _riverSettleUntil[row] = 0f;
+            }
+            _hoverAny = true;
+            if (kind == KindDisc) _discRecallAt[row] = Time.time; else _recallAt[row] = Time.time;
+            _writtenAt = Time.time;
+        }
+
+        // ---- IMP-DOG-040: the hover ----
+
+        // Rigidbody / VRCObjectSync of every toy and the hover arrays, read once (the components never change; a missing one is null).
+        void EnsureToyCache()
+        {
+            int nb = balls == null ? 0 : balls.Length, nd = discs == null ? 0 : discs.Length;
+            if (_ballRb == null || _ballRb.Length != nb)
+            {
+                _ballRb = new Rigidbody[nb]; _ballSync = new VRCObjectSync[nb];
+                for (int k = 0; k < nb; k++)
+                    if (balls[k] != null) { GameObject bgo = balls[k].gameObject; _ballRb[k] = bgo.GetComponent<Rigidbody>(); _ballSync[k] = bgo.GetComponent<VRCObjectSync>(); }
+            }
+            if (_discRb == null || _discRb.Length != nd)
+            {
+                _discRb = new Rigidbody[nd]; _discSync = new VRCObjectSync[nd];
+                for (int k = 0; k < nd; k++)
+                    if (discs[k] != null) { GameObject dgo = discs[k].gameObject; _discRb[k] = dgo.GetComponent<Rigidbody>(); _discSync[k] = dgo.GetComponent<VRCObjectSync>(); }
+            }
+            if (_ballHoverUntil == null || _ballHoverUntil.Length != nb) { _ballHoverUntil = new float[nb]; _ballLandSettle = new float[nb]; }
+            if (_discHoverUntil == null || _discHoverUntil.Length != nd) { _discHoverUntil = new float[nd]; _discLandSettle = new float[nd]; }
+        }
+
+        bool BallHovering(int i) { return _ballHoverUntil != null && i >= 0 && i < _ballHoverUntil.Length && _ballHoverUntil[i] > 0f; }
+
+        void ClearHover(int row, int kind)
+        {
+            if (kind == KindDisc)
+            {
+                if (_discHoverUntil != null && row >= 0 && row < _discHoverUntil.Length) { _discHoverUntil[row] = 0f; _discLandSettle[row] = 0f; }
+                if (discs != null && row >= 0 && row < discs.Length && discs[row] != null) discs[row]._SetHover(false);
+            }
+            else if (_ballHoverUntil != null && row >= 0 && row < _ballHoverUntil.Length) { _ballHoverUntil[row] = 0f; _ballLandSettle[row] = 0f; }
+        }
+
+        // From the head: ahead (head yaw, level) and down, scaled by the avatar. A wall or the ground between the head and that point
+        // stops it short (one ray, groundMask, triggers ignored: the menu boards' trigger colliders do not count); then it is kept
+        // above the ground straight below it.
+        Vector3 HoverSpot(VRCPlayerApi lp, float radius)
+        {
             VRCPlayerApi.TrackingData head = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+            Vector3 eye = head.position;
             Vector3 fwd = head.rotation * Vector3.forward; fwd.y = 0f;
             if (fwd.sqrMagnitude < 0.0001f) { fwd = lp.GetRotation() * Vector3.forward; fwd.y = 0f; }
             if (fwd.sqrMagnitude < 0.0001f) fwd = Vector3.forward;
             fwd.Normalize();
             float scale = Mathf.Clamp(lp.GetAvatarEyeHeightAsMeters() / 1.6f, 0.5f, 2f);
-            Vector3 spot = lp.GetPosition() + fwd * (recallDistance * scale);
-            float radius = go.transform.localScale.x * 0.5f;
+            bool vr = lp.IsUserInVR();
+            float ahead = (vr ? hoverForwardVR : hoverForwardFlat) * scale;
+            float down = (vr ? hoverDownVR : hoverDownFlat) * scale;
+            Vector3 want = eye + fwd * ahead + Vector3.down * down;
+            Vector3 d = want - eye;
+            float len = d.magnitude;
             RaycastHit hit;
-            float y = Physics.Raycast(spot + Vector3.up * 1.5f, Vector3.down, out hit, 4f, groundMask, QueryTriggerInteraction.Ignore) ? hit.point.y : lp.GetPosition().y;
-            go.transform.position = new Vector3(spot.x, y + radius + 0.05f, spot.z);
-            Rigidbody rb = go.GetComponent<Rigidbody>();
-            if (rb != null && !rb.isKinematic) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
-            if (kind == KindDisc) _discRecallAt[row] = Time.time; else _recallAt[row] = Time.time;
-            _writtenAt = Time.time;
+            if (len > 0.001f)
+            {
+                Vector3 dir = d / len;
+                if (Physics.Raycast(eye, dir, out hit, len + radius + HoverGap, groundMask, QueryTriggerInteraction.Ignore))
+                    want = eye + dir * Mathf.Max(0f, hit.distance - radius - HoverGap);
+            }
+            // Never under the ground: look down from the eye height above the point (the slope ahead may rise to it)
+            Vector3 top = new Vector3(want.x, Mathf.Max(eye.y, want.y), want.z);
+            if (Physics.Raycast(top, Vector3.down, out hit, top.y - want.y + radius + 1f, groundMask, QueryTriggerInteraction.Ignore))
+            {
+                float minY = hit.point.y + radius + HoverGap;
+                if (want.y < minY) want.y = minY;
+            }
+            return want;
+        }
+
+        // Every HoverCheckInterval while any toy hovers or settles. The hover ends without writing anything when this client is no
+        // longer the Owner (someone took it: the new Owner's own looks decide) or a hand / a dog / a flight has it; a pickup also
+        // shows as the gravity back on (OnPickup), even one shorter than a look. Untaken for hoverSeconds: put on the ground below.
+        void CheckHover()
+        {
+            EnsureToyCache();
+            bool any = false;
+            for (int i = 0; i < _ballHoverUntil.Length; i++)
+            {
+                if (_ballHoverUntil[i] <= 0f && _ballLandSettle[i] <= 0f) continue;
+                KominkaDogRun.KD_BallController b = balls[i];
+                Rigidbody rb = _ballRb[i];
+                if (b == null || rb == null || !Networking.IsOwner(b.gameObject) || b.IsHeldNow || rb.isKinematic) { ClearHover(i, KindBall); continue; }
+                bool hovering = _ballHoverUntil[i] > 0f;
+                if (fetchers != null && i < fetchers.Length && fetchers[i] != null && !fetchers[i].IsIdle)
+                {
+                    // a dog is after it (a throw): ours, not held, not kinematic - normal physics (the river look floats it if it is in water)
+                    if (hovering && !rb.useGravity && _ballSync[i] != null) _ballSync[i].SetGravity(true);
+                    ClearHover(i, KindBall); continue;
+                }
+                if (StepHover(i, KindBall, b.gameObject, rb, _ballSync[i], b.gameObject.transform.localScale.x * 0.5f + 0.005f)) any = true;
+            }
+            for (int i = 0; i < _discHoverUntil.Length; i++)
+            {
+                if (_discHoverUntil[i] <= 0f && _discLandSettle[i] <= 0f) continue;
+                KH_Frisbee d = discs[i];
+                Rigidbody rb = _discRb[i];
+                bool engaged = discCatchers != null && i < discCatchers.Length && discCatchers[i] != null && discCatchers[i].IsEngaged;
+                if (d == null || rb == null || !Networking.IsOwner(d.gameObject) || d.IsHeldNow || d.IsFlying || engaged || rb.isKinematic) { ClearHover(i, KindDisc); continue; }
+                if (_discHoverUntil[i] > 0f && !d.IsHovering) { ClearHover(i, KindDisc); continue; }   // the disc ended it itself (pickup / recall / catch)
+                if (StepHover(i, KindDisc, d.gameObject, rb, _discSync[i], 0.02f)) any = true;   // 0.02: a landing disc's lift (KH_Frisbee.EndFlight)
+            }
+            _hoverAny = any;
+        }
+
+        // One look at a toy that is still ours and free. true = keep looking.
+        bool StepHover(int i, int kind, GameObject go, Rigidbody rb, VRCObjectSync sync, float lift)
+        {
+            float until = kind == KindDisc ? _discHoverUntil[i] : _ballHoverUntil[i];
+            if (until > 0f)
+            {
+                if (rb.useGravity) { ClearHover(i, kind); return false; }   // a pickup gave it back (KD_BallController / KH_Frisbee.OnPickup)
+                if (Time.time < until)
+                {
+                    rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero;   // a bump (a dog, another toy) does not send it drifting
+                    return true;
+                }
+                LandToy(go, rb, sync, lift, kind == KindDisc);
+                if (kind == KindDisc) { _discHoverUntil[i] = 0f; _discLandSettle[i] = Time.time + HoverSettleSeconds; discs[i]._SetHover(false); }
+                else { _ballHoverUntil[i] = 0f; _ballLandSettle[i] = Time.time + HoverSettleSeconds; }
+                Debug.Log("[KH_ToyRecall] hover timeout " + (kind == KindDisc ? "disc=" : "ball=") + i + " landed at " + RiverV3(go.transform.position));
+                return true;
+            }
+            float settle = kind == KindDisc ? _discLandSettle[i] : _ballLandSettle[i];
+            if (Time.time >= settle) { ClearHover(i, kind); return false; }
+            // the teleport and the first contact can wake it (as ReturnFromRiver's settle pass)
+            rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; rb.Sleep();
+            return true;
+        }
+
+        // The ground straight below (+ lift), gravity back, still and asleep: a sleeping body is not woken by gravity alone, so it
+        // does not roll down the slope (SettleBall's rule). No ground found below: gravity back where it is.
+        void LandToy(GameObject go, Rigidbody rb, VRCObjectSync sync, float lift, bool level)
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(go.transform.position + Vector3.up * 0.1f, Vector3.down, out hit, 6f, groundMask, QueryTriggerInteraction.Ignore))
+            {
+                go.transform.position = hit.point + Vector3.up * lift;
+                if (level) go.transform.rotation = Quaternion.Euler(0f, go.transform.eulerAngles.y, 0f);
+                if (sync != null) sync.FlagDiscontinuity();
+            }
+            if (sync != null) sync.SetGravity(true);
+            rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; rb.Sleep();
         }
     }
 }
