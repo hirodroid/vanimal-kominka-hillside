@@ -42,8 +42,8 @@ namespace KominkaHillside.Editor
         static readonly Vector2 PeoplePos = new Vector2(155f, 52f);
         static readonly Vector2 BoardSize = new Vector2(760f, 380f);
         static readonly string[] NoticeEvents = { "_Yes", "_No", "_Pause", "_Block", "_Go", "_NotNow" };
-        // ネットワークから呼べる入口 (§F.3)。名前と引数の型をこの 4 つに固定する
-        static readonly string[] NetworkEntries = { "ReqJoin(int seq)", "ReqCall(int seq)", "AnsJoin(int seq, int code)", "CancelJoin(int seq)" };
+        // ネットワークから呼べる入口 (§F.3)。名前と引数の型をこの 7 つに固定する (IMP-WLD-008 W4: 撮影の ReqFilm / EndFilm / FilmRevoked は KH_TravelMailbox.Film.cs)
+        static readonly string[] NetworkEntries = { "ReqJoin(int seq)", "ReqCall(int seq)", "AnsJoin(int seq, int code)", "CancelJoin(int seq)", "ReqFilm(int seq)", "EndFilm(int seq)", "FilmRevoked(int seq)" };
 
         [Serializable] class BuildReport { public string utc, scene, status, reason; public bool programAssetsCreated; public int droppedNetworkIds; }
 
@@ -241,7 +241,7 @@ namespace KominkaHillside.Editor
             var bb = UdonSharpEditorUtility.GetBackingUdonBehaviour(box); var nb = UdonSharpEditorUtility.GetBackingUdonBehaviour(notice);
             Req(e, box.GetComponent<VRCPlayerObject>() != null && box.gameObject.activeInHierarchy, "mailbox template has VRCPlayerObject and is active");
             Req(e, bb != null && bb.SyncMethod == Networking.SyncType.Manual, "mailbox sync=Manual");
-            Req(e, box.accepting && box.debugJoinLoopback == 0 && box.debugAnswerCode == 0 && box.debugIncomingFrom == 0 && box.debugIncomingKind == 0 && box.debugIncomingSeq == 0 && box.debugCrossInvert == 0, "mailbox defaults: accepting ON, every debug hook 0");
+            Req(e, box.accepting && box.filmAccepting && box.debugJoinLoopback == 0 && box.debugAnswerCode == 0 && box.debugIncomingFrom == 0 && box.debugIncomingKind == 0 && box.debugIncomingSeq == 0 && box.debugCrossInvert == 0, "mailbox defaults: accepting ON, film accepting ON, every debug hook 0");
             CheckNetworkEntries(e);
             Req(e, box.manager == m && box.notice == notice, "mailbox wired (proxy)");
             if (bb != null)
@@ -396,17 +396,32 @@ namespace KominkaHillside.Editor
             finally { UnityEngine.Object.DestroyImmediate(go); }
         }
 
-        /// <summary>受付箱のネットワーク入口は 4 つだけで、名前と引数の型が決めたとおり (§F.3。属性の有無だけでは足りない)。</summary>
+        /// <summary>受付箱のネットワーク入口は 7 つだけで、名前と引数の型が決めたとおり (§F.3。属性の有無だけでは足りない)。
+        /// 動画カメラ §13.9: partial のファイル (KH_TravelMailbox*.cs) を全部読む。どの口も本文の最初で IsOwner を見ること、
+        /// 送り主を NetworkCalling.CallingPlayer から取ること、引数なしの public メソッド (旧形式のネットワークイベント) が `_` 始まりであることも見る。</summary>
         static void CheckNetworkEntries(List<string> e)
         {
-            var lines = File.ReadAllLines(MailboxProgram + ".cs");
             var found = new List<string>();
-            for (int i = 0; i < lines.Length; i++)
+            var files = Directory.GetFiles(Path.GetDirectoryName(MailboxProgram + ".cs"), "KH_TravelMailbox*.cs").Where(f => !f.EndsWith(".meta")).ToArray();
+            if (files.Length < 2) e.Add("FAIL mailbox partial files: " + string.Join(", ", files.Select(Path.GetFileName)) + " (expected KH_TravelMailbox.cs + .Film.cs)");
+            foreach (var file in files)
             {
-                if (!lines[i].Contains("[NetworkCallable")) continue;
-                var m = System.Text.RegularExpressions.Regex.Match(i + 1 < lines.Length ? lines[i + 1] : "", @"public\s+void\s+(\w+)\s*\(([^)]*)\)");
-                if (!m.Success) { e.Add("FAIL [NetworkCallable] not followed by a public void method at KH_TravelMailbox.cs:" + (i + 2)); continue; }
-                found.Add(m.Groups[1].Value + "(" + System.Text.RegularExpressions.Regex.Replace(m.Groups[2].Value.Trim(), @"\s+", " ") + ")");
+                var lines = File.ReadAllLines(file);
+                string fname = Path.GetFileName(file);
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    var pub = System.Text.RegularExpressions.Regex.Match(lines[i], @"^\s*public\s+(?:override\s+)?void\s+(\w+)\s*\(\s*\)");
+                    if (pub.Success && !pub.Groups[1].Value.StartsWith("_") && pub.Groups[1].Value != "OnPlayerLeft" && pub.Groups[1].Value != "OnPlayerRestored")
+                        e.Add("FAIL public parameterless method " + pub.Groups[1].Value + " at " + fname + ":" + (i + 1) + " is callable over the network (use the _ prefix)");
+                    if (!lines[i].Contains("[NetworkCallable")) continue;
+                    var m = System.Text.RegularExpressions.Regex.Match(i + 1 < lines.Length ? lines[i + 1] : "", @"public\s+void\s+(\w+)\s*\(([^)]*)\)");
+                    if (!m.Success) { e.Add("FAIL [NetworkCallable] not followed by a public void method at " + fname + ":" + (i + 2)); continue; }
+                    found.Add(m.Groups[1].Value + "(" + System.Text.RegularExpressions.Regex.Replace(m.Groups[2].Value.Trim(), @"\s+", " ") + ")");
+                    // 本文の最初の 2 行: IsOwner と CallingPlayer
+                    string body = string.Join(" ", lines.Skip(i + 2).Take(4));
+                    if (!body.Contains("if (!Networking.IsOwner(gameObject)) return;")) e.Add("FAIL " + m.Groups[1].Value + " does not check IsOwner first (" + fname + ":" + (i + 2) + ")");
+                    if (!body.Contains("NetworkCalling.CallingPlayer")) e.Add("FAIL " + m.Groups[1].Value + " does not take the sender from NetworkCalling.CallingPlayer (" + fname + ":" + (i + 2) + ")");
+                }
             }
             var expected = new HashSet<string>(NetworkEntries);
             if (found.Count != expected.Count || !found.All(expected.Contains)) e.Add("FAIL mailbox network entries = " + string.Join(", ", found) + " (expected " + string.Join(", ", NetworkEntries) + ")");

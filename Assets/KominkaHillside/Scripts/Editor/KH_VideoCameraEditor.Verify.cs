@@ -259,16 +259,46 @@ namespace KominkaHillside.Editor
             foreach (var f in files)
             {
                 string src = File.ReadAllText(f), name = Path.GetFileName(f);
-                Check(!src.Contains("[UdonSynced]") && !src.Contains("NetworkCallable") && !src.Contains("SendCustomNetworkEvent") && !src.Contains("RequestSerialization"), name + ": no synced variable / network entry (W1-W3)");
-                Check(!src.Contains("GetPlayerById") && !src.Contains("GetPlayers("), name + ": never looks up another player (W4 adds TryPersonPose in Subjects.cs only)");
+                Check(!src.Contains("[UdonSynced]") && !src.Contains("NetworkCallable") && !src.Contains("SendCustomNetworkEvent") && !src.Contains("RequestSerialization"), name + ": no synced variable / network entry (the permission's network lives in KH_TravelMailbox)");
+                // W4: players are looked up only by Subjects.cs (TryPersonPose) and People.cs (the picker list: names / ids, never a pose)
+                bool lookup = src.Contains("GetPlayerById") || src.Contains("GetPlayers(") || src.Contains("GetPlayerObjects(");
+                if (!name.EndsWith(".Subjects.cs") && !name.EndsWith(".People.cs")) Check(!lookup, name + ": never looks up another player (only Subjects.cs / People.cs)");
+                if (name.EndsWith(".Subjects.cs")) Check(!src.Contains("GetPlayers(") && !src.Contains("GetPlayerObjects("), name + ": no player list / player objects (TryPersonPose takes one id; my mailbox is found in People.cs)");
                 bool readsPlayer = Regex.IsMatch(src, @"\.(GetTrackingData|GetPosition|GetRotation|GetBonePosition)\(");
                 if (!name.EndsWith(".Subjects.cs")) Check(!readsPlayer, name + ": reads no player pose (only KH_VideoCamera.Subjects.cs does)");
+                else CheckPersonGate(src, name, Check);
                 foreach (Match mm in Regex.Matches(src, @"public\s+(?:override\s+)?void\s+(\w+)\s*\("))
                 {
                     string m = mm.Groups[1].Value;
                     Check(m.StartsWith("_") || m == "PostLateUpdate", name + ": public method " + m + " is local-only (_ prefix)");
                 }
             }
+            // W4 (design §13.3): the person framing goes through TryPersonPose, and the camera re-checks the session right before it is enabled
+            Check(Regex.IsMatch(allSrc, @"bool PersonFollow\(float dt\)\s*\{\s*if \(!TryPersonPose\(_person\)\)"), "PersonFollow reads the person only through TryPersonPose");
+            Check(Regex.IsMatch(allSrc, @"_personLive && !PersonStillUsable\(\)\) \{ PersonDrop\(\); return; \}\s*EnableForTick\(\);"), "the permission is re-checked right before EnableForTick (§13.3)");
+            Check(Regex.IsMatch(allSrc, @"bool PersonStillUsable\(\)[\s\S]{0,160}_FilmGate\(_person\)"), "the re-check uses the mailbox's film gate");
+        }
+
+        /// <summary>Subjects.cs: a pose read on any player other than the local one (`lp.`) happens only inside TryPersonPose, after the mailbox's
+        /// _FilmGate check (design §5.5: the single entry for another player).</summary>
+        static void CheckPersonGate(string src, string name, Action<bool, string> Check)
+        {
+            var head = Regex.Match(src, @"bool TryPersonPose\(int pid\)\s*\{");
+            Check(head.Success, name + ": TryPersonPose(int pid) exists");
+            if (!head.Success) return;
+            int bodyStart = head.Index + head.Length, depth = 1, bodyEnd = bodyStart;
+            for (; bodyEnd < src.Length && depth > 0; bodyEnd++) { if (src[bodyEnd] == '{') depth++; else if (src[bodyEnd] == '}') depth--; }
+            int gate = src.IndexOf("!box._FilmGate(pid)", bodyStart, Math.Max(0, bodyEnd - bodyStart), StringComparison.Ordinal);
+            Check(gate > 0, name + ": TryPersonPose checks my mailbox's _FilmGate(pid)");
+            int bad = 0;
+            foreach (Match m in Regex.Matches(src, @"(\w+)\.(GetTrackingData|GetPosition|GetRotation|GetBonePosition)\("))
+            {
+                string who = m.Groups[1].Value;
+                if (who == "lp") continue;   // the local player
+                bool inside = m.Index > bodyStart && m.Index < bodyEnd && gate > 0 && m.Index > gate;
+                if (!inside) { bad++; Check(false, name + ": pose read on '" + who + "' outside TryPersonPose's gated part (offset " + m.Index + ")"); }
+            }
+            if (bad == 0) Check(true, name + ": another player's pose is read only after TryPersonPose's gate");
         }
     }
 }

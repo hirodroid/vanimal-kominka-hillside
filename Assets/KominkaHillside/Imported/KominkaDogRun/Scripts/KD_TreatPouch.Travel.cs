@@ -184,6 +184,9 @@ namespace KominkaDogRun
         /// <summary>さんぽタブ上段の「申し込み 1 件」。通知板を目の前へ出し直す。ローカル専用。</summary>
         public void _TravelShowNotice()
         {
+            // IMP-WLD-008 W4: 保留が無く撮影を許した人がいるときは、同じボタンが [撮影を許可中] になり「撮影を許した人」の画面を開く (KD_TreatPouch.Film.cs)
+            KominkaHillside.KH_TravelMailbox box = TravelMyBox();
+            if ((box == null || box._IncomingFrom() < 0) && FilmGrantsShown(box)) { FilmGrantsOpen(); return; }
             if (travelNotice != null) travelNotice._Reshow();
         }
 
@@ -454,6 +457,7 @@ namespace KominkaDogRun
                 else HillsideNote(TabWalk, "course.travel.join.waiting", Mathf.CeilToInt(box._WaitLeft()).ToString());
             }
             if (panelRoot == null || !panelRoot.activeSelf) return;
+            if (FilmGrantsOpenNow()) { FilmGrantsRedraw(); return; }   // IMP-WLD-008 W4: 「撮影を許した人」(開いている間だけ 10 Hz)
             if (TravelMapOpen())
             {
                 if (_travelMode == 1 && Time.time >= _joinNextRefresh) { _joinNextRefresh = Time.time + 1f; JoinRefreshMembers(); }
@@ -472,7 +476,10 @@ namespace KominkaDogRun
         {
             if (travelOpenLabel != null) travelOpenLabel.text = L("course.travel.map.open");
             KominkaHillside.KH_TravelMailbox box = TravelMyBox();
-            bool pending = box != null && box._IncomingFrom() >= 0;
+            bool incoming = box != null && box._IncomingFrom() >= 0;
+            // IMP-WLD-008 W4: 保留が無くても、撮影を許した人がいれば同じ右半分に [撮影を許可中 (n)] を出す (保留が先。保留は 20 秒で終わる)
+            bool filmRows = !incoming && FilmGrantsShown(box);
+            bool pending = incoming || filmRows;
             if (travelJoinPendingButton != null && travelJoinPendingButton.activeSelf != pending) travelJoinPendingButton.SetActive(pending);
             // DES-UI-006: 2 列の右下。保留中は [地図と移動] を左半分にして、右半分に [申し込み 1 件] を出す (KD_TreatPouch.Walk.cs の定数)
             if (walkOpenRect != null)
@@ -484,7 +491,9 @@ namespace KominkaDogRun
                     walkOpenRect.anchoredPosition = new Vector2(pending ? WalkOpenPendingX : WalkOpenX, walkOpenRect.anchoredPosition.y);
                 }
             }
-            if (pending && travelJoinPendingLabel != null) travelJoinPendingLabel.text = L(box._IncomingKind() == KominkaHillside.KH_TravelMailbox.KindCall ? "course.travel.call.pending" : "course.travel.join.pending");
+            if (incoming && travelJoinPendingLabel != null) travelJoinPendingLabel.text = box._IncomingKind() == KominkaHillside.KH_TravelMailbox.KindFilm ? WordFilmPending
+                : L(box._IncomingKind() == KominkaHillside.KH_TravelMailbox.KindCall ? "course.travel.call.pending" : "course.travel.join.pending");
+            else if (filmRows && travelJoinPendingLabel != null) travelJoinPendingLabel.text = WordFilmGrantsButton.Replace("{0}", box._FilmRowCount().ToString());
         }
 
         /// <summary>副画面。開いている間は 10 Hz で呼ばれる (自分の位置と向きもここで動かす)。</summary>
@@ -508,6 +517,7 @@ namespace KominkaDogRun
             if (travelAcceptButton != null && travelAcceptButton.activeSelf != people) travelAcceptButton.SetActive(people);
             if (people && travelAcceptLabel != null)
                 travelAcceptLabel.text = L(box != null && !box.accepting ? "course.travel.join.accept.off" : "course.travel.join.accept.on");
+            FilmAcceptRedraw(box, people);   // IMP-WLD-008 W4: 合流の切り替えの隣に「撮影の申し込みを受ける」(§14.5)
             if (travelPeopleRoot != null && travelPeopleRoot.activeSelf != people) travelPeopleRoot.SetActive(people);
 
             int waiting = manager._TravelWaitingSpot();

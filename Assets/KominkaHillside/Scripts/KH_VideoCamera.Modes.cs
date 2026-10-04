@@ -26,7 +26,7 @@ namespace KominkaHillside
             switch (_mode)
             {
                 case ModeDogFollow: return DogFollow(dt);
-                case ModeSelfFollow: return SelfFollow(dt);
+                case ModeSelfFollow: return _person < 0 ? SelfFollow(dt) : PersonFollow(dt);   // W4: another person only through TryPersonPose (People.cs)
                 case ModeDogEye: return DogEye(dt);
                 case ModeDrone: return Drone(dt);
                 case ModeSpot: return Spot(dt);

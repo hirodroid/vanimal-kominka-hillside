@@ -37,13 +37,14 @@ namespace KominkaHillside.Editor
     /// **Subset**: write "V1,V3" to Temp/kh-video/harness-cases.txt before Video/3 (read and deleted; V0 always runs). Results Logs/kh-video-harness/latest.json.
     /// Simulated input (Udon events sent directly). Not judged here: VRChat camera snap (ClientSim never sets _VRChatCameraMode nor creates the
     /// photo camera), the look of the picture, the face in the picture (ClientSim's mirror copy differs), cost, recording.
+    ///   V6-permit     (W4) other-person filming permission, simulated (KH_VideoHarnessEditor.Permit.cs). Run it alone (--cases=V6, about 90 s).
     /// </summary>
     [InitializeOnLoad]
-    public static class KH_VideoHarnessEditor
+    public static partial class KH_VideoHarnessEditor
     {
         const string Key = "KH.VideoHarness", Dir = "Logs/kh-video-harness", Journal = Dir + "/journal.json";
         public const string CasesFile = "Temp/kh-video/harness-cases.txt";
-        public static readonly string[] AllCases = { "V0-ready", "V1-lifecycle", "V2-pose-dog", "V3-pose-self", "V4-walk-modes", "V5-play-modes" };
+        public static readonly string[] AllCases = { "V0-ready", "V1-lifecycle", "V2-pose-dog", "V3-pose-self", "V4-walk-modes", "V5-play-modes", "V6-permit" };
         const int Cycles = 10;
 
         public static List<string> Selected(string request)
@@ -228,6 +229,7 @@ namespace KominkaHillside.Editor
             savedRoots = null; savedHeads = null;
             if (fakeDog != null) { UnityEngine.Object.Destroy(fakeDog); fakeDog = null; }
             try { V5ReleaseStation(); } catch (Exception e) { report.errors.Add("cleanup V5: " + e.Message); }
+            try { V6Cleanup(); } catch (Exception e) { report.errors.Add("cleanup V6: " + e.Message); }
             Camera.onPostRender -= OnPostRender;
         }
 
@@ -651,6 +653,7 @@ namespace KominkaHillside.Editor
                     Note("not proven by this case: a real stroke and a real wash call (simulated heap state), another player's throw (the remote landing estimate), the catch event at a real catch with キャッチ待ち still selected");
                 }));
             }
+            if (On("V6-permit")) MakeV6Steps();
         }
 
         // ---- V5 handles ----

@@ -5,13 +5,14 @@ using VRC.SDKBase;
 namespace KominkaHillside
 {
     /// <summary>
-    /// IMP-WLD-008: what the modes look at. **The only file of the video camera that reads a player.**
+    /// IMP-WLD-008: what the modes look at. **The only file of the video camera that reads a player's pose.**
     ///
-    /// - W1 reads the LOCAL player only (SelfHead). No other player is ever read: Video/2 checks that no KH_VideoCamera*.cs calls
-    ///   the player-lookup APIs (by id / the player list), and that GetTrackingData / GetPosition / GetRotation appear only here.
-    /// - W4 adds TryPersonPose(playerId) here as the single entry for another player, with the permission gate of design §5.5
-    ///   (current film session target, the subject's mailbox, its owner, the synced grant table). A mode that wants another person
-    ///   calls that and nothing else. It does not exist in W1.
+    /// - SelfHead / SelfHandNear read the LOCAL player. Video/2 checks that GetTrackingData / GetPosition / GetRotation appear only in this file
+    ///   and, here, on another player only inside TryPersonPose after its permission gate.
+    /// - W4: TryPersonPose(playerId) is the single entry for another player (design §5.5 / §13). The gate is my mailbox's _FilmGate: the film
+    ///   session is in use for that player, the subject's mailbox is owned by the subject, and its synced grant table holds (me, the session's seq).
+    ///   It runs on every render tick; nothing is remembered between ticks (a revoked grant stops the next tick). The monitor preview goes through it too.
+    ///   KH_VideoCamera.People.cs looks players up only for the picker list (names, ids), never their pose.
     /// - The dog geometry is the photo director's (KD_PhotoDirector.DogHead / DogSubject / DogSize / FrameDistance, KD_PhotoDirector.cs:918-969),
     ///   copied here (those are private there; design §2.4 allows the copy and asks to record it).
     /// </summary>
@@ -41,6 +42,35 @@ namespace KominkaHillside
         {
             VRCPlayerApi lp = Networking.LocalPlayer;
             return Utilities.IsValid(lp) ? lp.playerId : -1;
+        }
+
+        // the person being followed (TryPersonPose writes them; cleared when the permission ends)
+        private Vector3 _personHead, _personFwd, _personFeet;
+        private int _personReads;   // harness read-out: how many times another player's pose was read
+
+        /// <summary>The ONLY way to read another player's pose (design §5.5). The local player needs no permission. Another player: my mailbox's
+        /// film gate must pass on this very tick (session in use for pid, the subject's box owned by pid, (me, seq) in its synced grant table);
+        /// otherwise nothing is read and false comes back (the caller falls back to a framing without the person).</summary>
+        bool TryPersonPose(int pid)
+        {
+            VRCPlayerApi p = VRCPlayerApi.GetPlayerById(pid);
+            if (!Utilities.IsValid(p)) return false;
+            if (p.isLocal)
+            {
+                if (!SelfHead()) return false;
+                _personHead = _selfHead; _personFwd = _selfFwd; _personFeet = _selfFeet;
+                return true;
+            }
+            KH_TravelMailbox box = PersonMyBox();
+            if (box == null || !box._FilmGate(pid)) return false;
+            _personReads++;
+            VRCPlayerApi.TrackingData td = p.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+            _personHead = td.position;
+            _personFwd = td.rotation * Vector3.forward;
+            _personFeet = p.GetPosition();
+            Vector3 flat = new Vector3(_personFwd.x, 0f, _personFwd.z);
+            if (flat.sqrMagnitude < 0.01f) _personFwd = p.GetRotation() * Vector3.forward;
+            return true;
         }
 
         private Vector3 _selfHand;

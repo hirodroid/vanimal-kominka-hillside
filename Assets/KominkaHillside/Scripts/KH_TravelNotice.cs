@@ -13,6 +13,8 @@ namespace KominkaHillside
     /// 20 秒の時間切れ・申し込みの取り消し・相手の退出では受付箱が <see cref="_Hide"/> を呼ぶ。手元メニューの「申し込み 1 件」から
     /// <see cref="_Reshow"/> でもう一度出せる。
     /// IMP-WLD-002 (設計書 §F.2): 呼ぶのときは題「(名前) さんが呼んでいます」、場所の行に自分の犬の数、ボタンは別の実体 [行く] (Button4) / [今は行かない] (Button5)。
+    /// IMP-WLD-008 W4 (動画カメラ §7.4・§13.6): 撮影の種類は 3 つめの組 [いいよ] [いまはだめ] (Button6 / Button7 → _FilmYes / _FilmNo)、見出しは撮影の依頼、
+    /// 場所の行は「映像は相手の画面だけ」。[いいよ] の後の 4 秒は保留とは別の状態 (_afterUntil) で「許可しました」と止め方を出す (ボタンなし)。
     /// 見せるのは今の種類の 2 つだけ。押下は描いた世代と一緒に受付箱へ渡し、受付箱が世代・種類・0.5 秒で照合する。[行く] を始められなかった理由は理由の行に出す。名前のラベルは表示名の補助フォント KH_DisplayName SDF (Static。JIS 第 1 水準まで焼いたもの + Latin fallback。§A.6、Course/86) を使う。</summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_TravelNotice : UdonSharpBehaviour
@@ -26,7 +28,18 @@ namespace KominkaHillside
         public GameObject[] joinButtons;         // [いいよ] [いまはだめ] (Button0 / Button1)
         public GameObject[] callButtons;         // [行く] [今は行かない] (Button4 / Button5)
         public TextMeshProUGUI goLabel, notNowLabel, reasonLabel;
+        [Header("撮影の許可 (IMP-WLD-008 W4。Video/4 が配線する)")]
+        public GameObject[] filmButtons;         // [いいよ] [いまはだめ] (Button6 / Button7。撮影の種類だけ出す)
+        public TextMeshProUGUI filmYesLabel, filmNoLabel;
+        [Tooltip("どの種類でも出す [しばらく受けない] [この人は退室まで受けない] (Button2 / Button3)。いいよの後の 4 秒の表示では隠す")]
+        public GameObject[] commonButtons;
         public AudioSource chime;                // 任意 (null なら鳴らさない)
+
+        // 撮影の形の文言 (ja。13 言語は W5 で翻訳表へ移す。[いいよ] [いまはだめ] は合流の翻訳済みのキーを使う)
+        public const string WordFilmTitle = "{0} さんが撮影カメラであなたを撮りたいそうです";
+        public const string WordFilmPlace = "映像は撮る人の画面だけに出ます";   // 場所の行は共通フォント (表示名の補助フォントではない) なので名前を入れない
+        public const string WordFilmGranted = "{0} さんに撮影を許可しました";
+        public const string WordFilmGrantedNote = "さんぽタブの [撮影を許可中] からいつでもやめてもらえます";
         public float distance = 1.1f, lowerDegrees = 15f, replaceMeters = 3f;
 
         // 地点の呼び名 (KH_LeashManager の地点の並び)
@@ -37,6 +50,7 @@ namespace KominkaHillside
         private float _nextRefresh;
         private float _chimedAt = -1000f;
         private int _shownGen = -1, _shownKind = -1;   // 描いた世代と種類 (押下と一緒に受付箱へ渡す)
+        private float _afterUntil;   // 撮影の [いいよ] の後の 4 秒の表示 (保留は消えているので、保留とは別の状態。§13.6)
 
         void Start()
         {
@@ -48,6 +62,7 @@ namespace KominkaHillside
         {
             _box = box;
             _showing = true;
+            _afterUntil = 0f; _shownKind = -1;   // いいよの後の表示の途中なら、ボタンの組を出し直す
             // 音は 1 回。続けて届いても 5 秒は鳴らし直さない (W3 レビュー 15)
             if (chime != null && Time.time - _chimedAt > 5f) { _chimedAt = Time.time; chime.Play(); }
             Place();
@@ -59,6 +74,25 @@ namespace KominkaHillside
             _showing = false;
             if (board != null && board.activeSelf) board.SetActive(false);
         }
+
+        /// <summary>撮影の [いいよ] の後、4 秒だけ「(F) さんに撮影を許可しました」と止め方を出す。ボタンは出さない。「撮影中」はここでは言わない
+        /// (相手の申告がそろうまで出さない。§13.7)。ローカル専用 (受付箱から)。</summary>
+        public void _ShowFilmGranted(int fromId)
+        {
+            VRCPlayerApi p = VRCPlayerApi.GetPlayerById(fromId);
+            string name = Utilities.IsValid(p) ? p.displayName : "?";
+            _showing = true; _afterUntil = Time.time + 4f;
+            SetActive(joinButtons, false); SetActive(callButtons, false); SetActive(filmButtons, false); SetActive(commonButtons, false);
+            _shownKind = -1; _shownGen = -1;
+            if (titleLabel != null) titleLabel.text = WordFilmGranted.Replace("{0}", name);
+            if (placeLabel != null) placeLabel.text = WordFilmGrantedNote;
+            if (countLabel != null) countLabel.text = "";
+            if (reasonLabel != null) reasonLabel.text = "";
+            Place();
+        }
+
+        public void _FilmYes() { if (_box != null) _box._AnswerFilmYesGen(_shownGen); }
+        public void _FilmNo() { if (_box != null) _box._AnswerFilmNoGen(_shownGen); }
 
         /// <summary>手元メニューの「申し込み 1 件」から。保留が残っていれば目の前へ出し直す。ローカル専用。</summary>
         public void _Reshow()
@@ -81,13 +115,15 @@ namespace KominkaHillside
         void Update()
         {
             if (!_showing) return;
-            if (_box == null || _box._IncomingFrom() < 0) { _Hide(); return; }
+            bool after = Time.time < _afterUntil;
+            if (!after && (_box == null || _box._IncomingFrom() < 0)) { _Hide(); return; }
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (Utilities.IsValid(lp))
             {
                 Vector3 d = lp.GetPosition() - _placedFrom; d.y = 0f;
                 if (d.magnitude > replaceMeters) Place();
             }
+            if (after) return;   // いいよの後の表示は書き換えない
             if (Time.time < _nextRefresh) return;
             _nextRefresh = Time.time + 0.25f;
             Refresh();
@@ -118,11 +154,25 @@ namespace KominkaHillside
             string name = Utilities.IsValid(p) ? p.displayName : "?";
             int kind = _box._IncomingKind();
             bool call = kind == KH_TravelMailbox.KindCall;
+            bool film = kind == KH_TravelMailbox.KindFilm;
             if (kind != _shownKind || _box._IncomingGen() != _shownGen)
             {
-                // 種類が変わったらボタンの実体を切り替える (古い種類のボタンは押せなくなる)
-                SetActive(joinButtons, !call); SetActive(callButtons, call);
+                // 種類が変わったらボタンの実体を切り替える (古い種類のボタンは押せなくなる)。撮影は 3 つめの組 (Button6 / Button7)
+                SetActive(joinButtons, !call && !film); SetActive(callButtons, call); SetActive(filmButtons, film); SetActive(commonButtons, true);
                 _shownKind = kind; _shownGen = _box._IncomingGen();
+            }
+            if (film)
+            {
+                // 撮影の形 (§7.4): 見出しは撮影の依頼、場所の行の代わりに「映像は相手の画面だけ」。相手の場所は出さない
+                if (titleLabel != null) titleLabel.text = WordFilmTitle.Replace("{0}", name);
+                if (placeLabel != null) placeLabel.text = WordFilmPlace;
+                if (filmYesLabel != null) filmYesLabel.text = T("course.travel.join.notice.yes");
+                if (filmNoLabel != null) filmNoLabel.text = T("course.travel.join.notice.no");
+                if (reasonLabel != null) reasonLabel.text = "";
+                if (countLabel != null) countLabel.text = Mathf.CeilToInt(_box._IncomingLeft()).ToString();
+                if (pauseLabel != null) pauseLabel.text = T("course.travel.join.notice.pause");
+                if (blockLabel != null) blockLabel.text = T("course.travel.join.notice.block2");
+                return;
             }
             if (titleLabel != null) titleLabel.text = T(call ? "course.travel.call.notice.title" : "course.travel.join.notice.title").Replace("{0}", name);
             string place = Utilities.IsValid(p) ? T("course.travel.join.near").Replace("{0}", _NearestSpotName(p.GetPosition())) : "";

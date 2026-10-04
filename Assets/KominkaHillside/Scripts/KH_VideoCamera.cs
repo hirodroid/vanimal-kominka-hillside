@@ -28,9 +28,10 @@ namespace KominkaHillside
     ///   from this camera and the auto photo camera. Its renderQueue (5001) draws above the photo viewer / frames, the night overlay and the fade.
     /// - PC only: on Android / iOS builds Start hides everything and disables this behaviour; the entry buttons start hidden in the scene
     ///   and only a PC client shows [撮影カメラ]. The scene is the same for every build target.
-    /// - Other players: never read (W1-W3). The only future entry for another player is TryPersonPose (W4, design §5.5 / §13); it does not
-    ///   exist yet. The local player is read only in KH_VideoCamera.Subjects.cs. Where a mode would need another person (the petting hand of
-    ///   someone else, a thrower who is not me, a washer who is not me) it falls back to a framing of the dog alone.
+    /// - Other players: read only through TryPersonPose (W4, design §5.5 / §13, KH_VideoCamera.Subjects.cs), and only by じぶん mode when another
+    ///   person was chosen and that person's synced grant table allows it (KH_VideoCamera.People.cs: picker, §14.3 confirmation, fallback).
+    ///   Poses are read only in KH_VideoCamera.Subjects.cs. Where another mode would need another person (the petting hand of someone else,
+    ///   a thrower who is not me, a washer who is not me) it still falls back to a framing of the dog alone.
     ///
     /// Every public method is local-only (`_` prefix, vrc-networking). Panel texts are Japanese constants (13 languages in W5).
     /// </summary>
@@ -278,6 +279,9 @@ namespace KominkaHillside
             cam.targetTexture = _rt;
             cam.enabled = false; _camOn = false;
             _open = true; _opens++;
+            _person = -1; _personLive = false; PersonUiClose();   // W4: じぶん starts with me; an earlier film session is never resumed
+            KH_TravelMailbox myBox = PersonMyBox();
+            _filmSeenSerial = myBox != null ? myBox.filmResultSerial : -1;
             NewSubject();   // the picture stays detached (black) until this session has a valid pose
             _snapOn = snapOnOpen;
             if (_dog < 0 || dogRoots == null || _dog >= dogRoots.Length) _dog = 0;
@@ -306,6 +310,7 @@ namespace KominkaHillside
         public void _Close()
         {
             if (!_open && _rt == null) return;
+            PersonCloseAll();   // W4: × ends the film session (pending / in use) before anything else; a reopen needs a new request (§5.4)
             _open = false; _closes++;
             if (cam != null) cam.enabled = false;
             _camOn = false;
@@ -345,6 +350,7 @@ namespace KominkaHillside
             if (dog >= 0 && dogRoots != null && dog < dogRoots.Length) _dog = dog;
             if (spot >= 0 && spotPositions != null && spot < spotPositions.Length) _spot = spot;
             _mode = mode;
+            PersonUiClose(); _personLive = false;   // W4: a shot change closes the person list / confirmation (never sends anything)
             NewSubject();
             DrawPanel();
         }
@@ -377,7 +383,7 @@ namespace KominkaHillside
             // (the original "enable for one frame" timing: the camera then stays enabled until here, so extra draws inside that window are NOT ruled out - _missedCallbacks tells when this path ran)
             if (_camOn) { cam.enabled = false; _camOn = false; _missedCallbacks++; }
             float now = Time.time;
-            if (now >= _nextPhotoCamCheck) { _nextPhotoCamCheck = now + 0.5f; ReadPhotoCamera(); }
+            if (now >= _nextPhotoCamCheck) { _nextPhotoCamCheck = now + 0.5f; ReadPhotoCamera(); PersonTick(now); }
             if (now < _nextRender) return;
             _nextRender += _interval;
             if (_nextRender < now) _nextRender = now + _interval;
@@ -405,6 +411,8 @@ namespace KominkaHillside
             if (_lostSince >= 0f) { _lostSince = -1f; _cutNext = true; }
             SetState(StateFilming);
             ApplyPose(dt, now);
+            // W4 §13.3: the check that the person may be drawn, again right before the camera is enabled (separate from the pose read)
+            if (_mode == ModeSelfFollow && _personLive && !PersonStillUsable()) { PersonDrop(); return; }
             EnableForTick(); _subjectPoses++;   // the picture is attached by _OnCamRendered after this subject's first real render
         }
 
@@ -507,6 +515,7 @@ namespace KominkaHillside
         {
             if (!_open || mode < 0 || mode >= ModeCount || mode == _mode) { DrawPanel(); return; }
             _mode = mode;
+            PersonUiClose(); _personLive = false;   // W4 §14.3: another mode closes the confirmation (nothing sent); the session ends after 60 s away
             NewSubject();
             AutoSubject();
             DrawPanel();
@@ -649,6 +658,7 @@ namespace KominkaHillside
             if (dogLabel != null) dogLabel.text = pk == 2 ? SpotName(_spot) : DogName(_dog);
             if (snapLabel != null) snapLabel.text = WordSnap + ": " + (_snapOn ? WordOn : WordOff);
             if (snapImage != null) snapImage.color = _snapOn ? modeOnColor : modeOffColor;
+            DrawPerson();   // W4: the person picker (じぶん mode), the list and the confirmation
             _shownState = -99;
             DrawState();
         }

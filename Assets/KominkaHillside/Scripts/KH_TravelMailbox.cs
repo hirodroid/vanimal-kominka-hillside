@@ -28,9 +28,12 @@ namespace KominkaHillside
     /// 相手を動かす機能は無い。フレンド判定は使わない。
     /// 破壊監査 2026-09-28 RC-07: 「この人からは受けない」と「同じ相手へ 30 秒」の履歴は、同じ人の枠 → 空き枠 → 退室した人の枠
     /// (30 秒の方は期限切れの枠も) の順に使い、それでも無ければ配列を 16 枠ずつ伸ばす。退室した人の枠は OnPlayerLeft でも空ける。
-    /// RC-06: 取消できるかは _JoinCancelable() 1 か所で決め、手元メニューの表示と押したときの処理の両方がそれを使う。</summary>
+    /// RC-06: 取消できるかは _JoinCancelable() 1 か所で決め、手元メニューの表示と押したときの処理の両方がそれを使う。
+    /// IMP-WLD-008 W4 (動画カメラの設計書 §5・§13・§14): 3 つめの種類 KindFilm (撮影の許可)。申し込み・照合・seq・保留 1 件・通知の間隔・休止・ブロック・
+    /// 交差は合流と同じ処理を通る。許可そのものは KH_TravelMailbox.Film.cs の同期された表 (filmGrantIds / filmGrantSeqs) に持ち、返事のイベントは表示用。
+    /// 撮影の種類は合流の取り消し (_JoinCancelable / _WaitingFor)・結果 (joinResult*) に出さない (撮影は filmResult*)。</summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-    public class KH_TravelMailbox : UdonSharpBehaviour
+    public partial class KH_TravelMailbox : UdonSharpBehaviour
     {
         [UdonSynced] public bool accepting = true;
 
@@ -49,7 +52,7 @@ namespace KominkaHillside
         [HideInInspector] public int debugReplyCount, debugLastReplySeq, debugLastReplyCode = -1;
 
         public const string SaveKey = "KH_TravelJoin.accepting";
-        public const int KindJoin = 0, KindCall = 1;
+        public const int KindJoin = 0, KindCall = 1, KindFilm = 2;
         public const int CodeNo = 0, CodeYes = 1, CodeBusy = 2, CodePaused = 3, CodePreparing = 4, CodeCallFailed = 5;
         // 申し込む側・呼ばれた側の結果 (手元メニューが文言に変える)
         public const int JoinWaiting = 10, JoinNotReady = 11, JoinMeasuring = 12, JoinLeft = 13, JoinCanceled = 14, JoinNoSafe = 15,
@@ -104,7 +107,8 @@ namespace KominkaHillside
         public int _Request(int targetId, int kind)
         {
             if (!Networking.IsOwner(gameObject)) return JoinNotReady;
-            if (kind != KindJoin && kind != KindCall) return JoinBusyMe;
+            if (kind != KindJoin && kind != KindCall && kind != KindFilm) return JoinBusyMe;
+            if (kind == KindFilm && _filmPhase != FilmNone) return JoinBusyMe;   // 撮影の回は 1 つ。対象を変えるときはカメラが先に _FilmEnd する (§13.3)
             if (_outTo >= 0 || _acceptFor >= 0 || _movingWith >= 0 || _goFrom >= 0 || _goPressed) return JoinBusyMe;
             if (manager != null && (manager._TravelWaiting() || manager._TravelFading())) return JoinBusyMe;
             VRCPlayerApi target = VRCPlayerApi.GetPlayerById(targetId);
@@ -115,15 +119,17 @@ namespace KominkaHillside
             {
                 KH_TravelMailbox box = _FindBox(target);
                 if (box == null) return JoinNotReady;
-                if (!box.accepting) return JoinNotAccepting;
+                if (kind == KindFilm ? !box.filmAccepting : !box.accepting) return JoinNotAccepting;   // 撮影は撮影の受け付け (合流とは別の切り替え)
                 _outSeq++;
-                box.SendCustomNetworkEvent(NetworkEventTarget.Owner, kind == KindCall ? nameof(ReqCall) : nameof(ReqJoin), _outSeq);
+                box.SendCustomNetworkEvent(NetworkEventTarget.Owner, kind == KindCall ? nameof(ReqCall) : kind == KindFilm ? nameof(ReqFilm) : nameof(ReqJoin), _outSeq);
+                if (kind == KindFilm) _filmBox = box;
             }
-            else _outSeq++;
+            else { _outSeq++; if (kind == KindFilm) _filmBox = _FindBox(target); }
             _outTo = targetId; _outKind = kind; _outPhase = 0; _outAt = Time.time;
             if (kind == KindJoin) StartSampling(target);
+            if (kind == KindFilm) FilmBegin(targetId, _outSeq);
             Debug.Log("[KH_Join] request to player " + targetId + " seq=" + _outSeq + " kind=" + kind + (debugJoinLoopback > 0 ? " (loopback)" : ""));
-            Post(JoinWaiting, targetId);
+            PostKind(kind == KindFilm, JoinWaiting, targetId);
             return JoinWaiting;
         }
 
@@ -131,7 +137,7 @@ namespace KominkaHillside
         /// 合流の承認後 (切符待ち・暗転中) なら移動を取りやめる。ローカル専用。</summary>
         public void _CancelJoinRequest()
         {
-            if (_outTo >= 0)
+            if (_outTo >= 0 && _outKind != KindFilm)   // 撮影の申し込みはここでは取り消さない (撮影カメラの [取り消す] → _FilmEnd。§13.6)
             {
                 SendCancelTo(_outTo);
                 Debug.Log("[KH_Join] cancel to player " + _outTo + " seq=" + _outSeq + " kind=" + _outKind);
@@ -148,7 +154,8 @@ namespace KominkaHillside
             }
         }
 
-        public int _WaitingFor() { return _outTo; }
+        /// <summary>合流・呼ぶの返事待ちの相手 (無ければ -1)。撮影の申し込みは含めない (撮影は _FilmTarget / _FilmPhase。§13.6)。</summary>
+        public int _WaitingFor() { return _outKind == KindFilm ? -1 : _outTo; }
         /// <summary>送った申し込みの種類 (KindJoin / KindCall)。返事待ちでなければ KindJoin。</summary>
         public int _OutKind() { return _outTo >= 0 ? _outKind : KindJoin; }
         /// <summary>0 返事待ち / 1 呼ぶの到着待ち。</summary>
@@ -157,7 +164,7 @@ namespace KominkaHillside
         /// 手元メニューは表示 ([取り消す]) と押したとき (_CancelJoinRequest へ回す) の両方でこれを使う。</summary>
         public bool _JoinCancelable()
         {
-            if (_outTo >= 0 || _acceptFor >= 0) return true;
+            if ((_outTo >= 0 && _outKind != KindFilm) || _acceptFor >= 0) return true;   // 撮影の返事待ちは合流の [取り消す] にしない (§13.6)
             return _movingWith >= 0 && manager != null && manager._TravelCancelable();
         }
         /// <summary>取消の表示に出す残り秒数 (返事待ち = 返事の期限、測定待ち = 測定の上限、切符待ち = 確認の期限、暗転中 = 0)。</summary>
@@ -196,6 +203,7 @@ namespace KominkaHillside
             int to = _outTo;
             Debug.Log("[KH_Join] answer from player " + to + " seq=" + _outSeq + " kind=" + _outKind + " phase=" + _outPhase + " code=" + code);
             if (_outKind == KindCall) { HandleCallAnswer(code); return; }
+            if (_outKind == KindFilm) { HandleFilmAnswer(code); return; }   // 撮影: 表示と回の状態だけ (許可は相手の表。KH_TravelMailbox.Film.cs)
             // 合流: 返事待ちの間に始めた相手の速さの測定は、承認のときだけ続ける (_sampleId は残す)
             _outTo = -1; _outPhase = 0; _outKind = KindJoin;
             if (code != CodeYes)
@@ -230,6 +238,7 @@ namespace KominkaHillside
 
         private void ResetOut()
         {
+            if (_outKind == KindFilm && _filmPhase == FilmPending) FilmClear();   // 撮影の返事待ちは保留枠と一緒に終わる (ended。同じ seq は開かない)
             _outTo = -1; _outPhase = 0; _outKind = KindJoin; _sampleId = -1;
         }
 
@@ -288,7 +297,7 @@ namespace KominkaHillside
         private void Receive(VRCPlayerApi caller, int seq, int kind)
         {
             if (!Utilities.IsValid(caller) || caller.isLocal) return;
-            if (kind != KindJoin && kind != KindCall) return;
+            if (kind != KindJoin && kind != KindCall && kind != KindFilm) return;
             int from = caller.playerId;
             if (seq <= SeenSeq(from)) { Debug.Log("[KH_Join] request from player " + from + " seq=" + seq + " kind=" + kind + " dropped (seen)"); return; }
             MarkSeen(from, seq);
@@ -300,6 +309,16 @@ namespace KominkaHillside
                     _inSeq = seq;
                     return;
                 }
+                // 撮影が絡む差し替えは、新しい種類の受付と枠を確かめる (§13.6: 合流の保留中に、撮影を受けていない相手へ撮影が来たら断る)。
+                // 断るときは古い保留も閉じる (送り主は保留を 1 つしか持たないので、古い seq はもう使われない)
+                int swap = FilmSwapCode(from, kind);
+                if (swap >= 0)
+                {
+                    Debug.Log("[KH_Join] request from player " + from + " seq=" + seq + " kind=" + kind + " replaces kind " + _inKind + " but auto code=" + swap);
+                    Reply(caller, seq, swap);
+                    ClearIncoming();
+                    return;
+                }
                 // 種類の差し替え: 古い操作対象を無効にし、新しい世代から受ける
                 _inSeq = seq; _inKind = kind; _inAt = Time.time; NewGen(); _goPressed = false; _goFail = GoFailNone;
                 if (kind == KindCall) StartCallSampling(caller); else _cId = -1;
@@ -308,9 +327,10 @@ namespace KominkaHillside
                 return;
             }
             int code = -1;
-            if (!accepting || Time.time < _pauseUntil) code = CodePaused;
+            if ((kind == KindFilm ? !filmAccepting : !accepting) || Time.time < _pauseUntil) code = CodePaused;   // 受付の切り替えは種類ごと、休止は共通 (§13.6)
             else if (Blocked(from)) code = CodeNo;
             else if (ConfirmedWith(from)) code = CodeBusy;
+            else if (kind == KindFilm && !FilmHasRoom(from)) code = CodeBusy;   // 許可の表 4 枠が他の人で埋まっている (§5.2・§13.5)
             else if (_inFrom >= 0) code = CodeBusy;
             else if (Time.time - _closedAt < NoticeGap) code = CodeBusy;
             else if (_outTo == from)
@@ -342,10 +362,11 @@ namespace KominkaHillside
         private void YieldOutgoing()
         {
             int to = _outTo;
+            bool film = _outKind == KindFilm;
             SendCancelTo(to);
             Debug.Log("[KH_Join] crossing with player " + to + ": my request seq=" + _outSeq + " yields");
             ResetOut();
-            Post(CrossYield, to);
+            PostKind(film, CrossYield, to);
         }
 
         [NetworkCallable(maxEventsPerSecond: 2)]
@@ -360,6 +381,7 @@ namespace KominkaHillside
             if (!Utilities.IsValid(caller) || caller.isLocal) return;
             int from = caller.playerId;
             if (seq > SeenSeq(from)) MarkSeen(from, seq);   // この seq の要求が後から届いても復活させない
+            FilmDropRow(from, seq);   // 撮影: 返事待ちのうちに取り消した申し込みに [いいよ] が行き違っていたら、その行 (送り主の行・同じ seq だけ) を消す
             if (from == _inFrom && seq == _inSeq)
             {
                 Debug.Log("[KH_Join] request from player " + _inFrom + " withdrawn (seq " + seq + ")" + (_goPressed ? " while measuring after [go]" : ""));
@@ -461,7 +483,12 @@ namespace KominkaHillside
             if (started != KH_LeashManager.TravelStarted) { _goFail = started; Debug.Log("[KH_Join] go: could not start (travel=" + started + ")"); return; }
             int from = _inFrom, seq = _inSeq;
             // 自分の申し込み (別の相手への返事待ち) は、移動を始めたここで取り消す
-            if (_outTo >= 0) { SendCancelTo(_outTo); Debug.Log("[KH_Join] go: my request to player " + _outTo + " withdrawn"); ResetOut(); }
+            if (_outTo >= 0)
+            {
+                int outTo = _outTo; bool outFilm = _outKind == KindFilm;
+                SendCancelTo(_outTo); Debug.Log("[KH_Join] go: my request to player " + _outTo + " withdrawn"); ResetOut();
+                if (outFilm) PostFilm(JoinCanceled, outTo);   // 撮影の返事待ちも取り消した (撮影カメラの表示用)
+            }
             joinReason = reason;
             _goFrom = from; _goSeq = seq; _goSerial = before;
             _inFrom = -1; _closedAt = Time.time; _cId = -1;
@@ -601,6 +628,7 @@ namespace KominkaHillside
         {
             if (!Utilities.IsValid(player) || !player.isLocal || !Networking.IsOwner(gameObject)) return;
             _restored = true;
+            FilmRestored(player);   // 撮影の受け付け (別のキー KH_TravelJoin.filmAccepting)。合流の分は下で今までどおり
             if (_chosen) { PlayerData.SetBool(SaveKey, accepting); return; }
             bool saved = true;
             if (PlayerData.TryGetBool(player, SaveKey, out saved) && saved != accepting) { accepting = saved; RequestSerialization(); }
@@ -614,7 +642,8 @@ namespace KominkaHillside
         {
             if (!Networking.IsOwner(gameObject) || !Utilities.IsValid(player)) return;
             int id = player.playerId;
-            if (id == _outTo) { ResetOut(); Post(JoinLeft, id); }
+            if (id == _outTo) { bool film = _outKind == KindFilm; ResetOut(); PostKind(film, JoinLeft, id); }
+            FilmPlayerLeft(id);   // 撮影: その人の許可の行 (被写体の側)・その人との撮影の回 (撮る人の側) をはっきり消す (§13.5)
             if (id == _acceptFor) { _acceptFor = -1; _sampleId = -1; Post(JoinLeft, id); }
             if (id == _movingWith) TargetLeftWhileMoving();
             if (id == _inFrom) ClearIncoming();
@@ -642,8 +671,9 @@ namespace KominkaHillside
 
         void Update()
         {
-            if (_outTo < 0 && _inFrom < 0 && _sampleId < 0 && _acceptFor < 0 && _movingWith < 0 && _goFrom < 0 && _cId < 0) return;
+            if (_outTo < 0 && _inFrom < 0 && _sampleId < 0 && _acceptFor < 0 && _movingWith < 0 && _goFrom < 0 && _cId < 0 && _filmPhase == FilmNone && _filmRows == 0) return;
             if (!Networking.IsOwner(gameObject)) return;
+            FilmUpdate();   // 撮影の回 (4 Hz) と許可の表の掃除 (10 秒ごと)。撮影に関わっていなければ上の行で戻る
             // 相手の速さ (0.5 秒ごとの位置の差)。§D.3 の「歩いている」の判定に使う
             if (_sampleId >= 0 && Time.time - _tPrevAt >= SampleEvery)
             {
@@ -679,7 +709,7 @@ namespace KominkaHillside
             if (_goFrom >= 0) CheckGo();
             if (_outTo >= 0)
             {
-                if (!Utilities.IsValid(VRCPlayerApi.GetPlayerById(_outTo))) { int to = _outTo; ResetOut(); Post(JoinLeft, to); }
+                if (!Utilities.IsValid(VRCPlayerApi.GetPlayerById(_outTo))) { int to = _outTo; bool film = _outKind == KindFilm; ResetOut(); PostKind(film, JoinLeft, to); }
                 else if (_outKind == KindJoin && Time.time - _outAt > AnswerSeconds + 2f)
                 {
                     // 合流の時間切れは断りと同じ扱い (code 0)。相手側の保留も取り消しておく
@@ -696,6 +726,15 @@ namespace KominkaHillside
                     int to = _outTo; int phase = _outPhase; ResetOut();
                     Debug.Log("[KH_Join] call to player " + to + " unconfirmed (phase " + phase + ")");
                     Post(CallUnknown, to);
+                }
+                else if (_outKind == KindFilm && Time.time - _outAt > AnswerSeconds + 2f)
+                {
+                    // 撮影の時間切れ (22 s。§13.2): 断りと同じ扱い (同じ相手へ 30 秒)。相手側の保留も取り消す。回は ResetOut が終える
+                    SendCancelTo(_outTo);
+                    int to = _outTo; ResetOut();
+                    Deny(to);
+                    Debug.Log("[KH_Join] film request to player " + to + " timed out");
+                    PostFilm(CodeNo, to);
                 }
             }
             if (_inFrom >= 0)
@@ -739,6 +778,12 @@ namespace KominkaHillside
         private void Post(int code, int target)
         {
             joinResultCode = code; joinResultTarget = target; joinResultSerial++;
+        }
+
+        /// <summary>結果を種類で分ける (§13.6): 撮影は filmResult* (撮影カメラが読む)、合流・呼ぶは joinResult* (手元メニューが読む)。</summary>
+        private void PostKind(bool film, int code, int target)
+        {
+            if (film) PostFilm(code, target); else Post(code, target);
         }
 
         /// <summary>その人の受付箱。入室直後はまだ作られていないことがある (null = 準備中)。呼ぶのは入退室・未取得のときだけにする。</summary>
