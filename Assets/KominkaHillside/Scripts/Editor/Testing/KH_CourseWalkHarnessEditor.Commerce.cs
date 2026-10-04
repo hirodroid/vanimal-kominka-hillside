@@ -80,7 +80,7 @@ namespace KominkaHillside.Editor
             report.commerceOnly = true;
             report.commerceSet = set;
             report.commerceSource = source;
-            report.deadline = EditorApplication.timeSinceStartup + (set == CmSetLedger ? 1200 : set == CmSetLedgerReentry ? 600 : set == CmSetTreatCall ? 1500 : set == CmSetToyHover ? 600 : 1800);
+            report.deadline = EditorApplication.timeSinceStartup + (set == CmSetLedger ? 1200 : set == CmSetLedgerReentry ? 600 : set == CmSetTreatCall ? 1500 : set == CmSetToyHover ? 1000 : 1800);
             report.limitations = "Single local ClientSim; the local player is instance master and every Owner. Menu and NPC operations go through the real Udon events "
                 + "(no physical UI click, ray or proximity). PlayerData is ClientSim's local file: 'saved' = written to ClientSimStorage, 're-entry' (96b) = a new Play reading that file; "
                 + "not VRChat's server persistence or OnPlayerRestored timing. Heap writes (stay-accrual freeze, restore delay, slots held by puppets) are SIMULATED and listed in each case's notes. "

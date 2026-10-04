@@ -8,7 +8,7 @@ namespace KominkaDogRun
     /// <summary>KD_TreatPouch の裏山差分: 撮影の許可の被写体の側 (IMP-WLD-008 W4。動画カメラの設計書 §13.8・§14.1・§14.5)。全端末で出る (Quest・スマホも被写体になれる)。
     ///
     /// - 地図と移動の副画面の上段 ([人] のとき)、合流の切り替えの隣に「撮影の申し込みを受ける: ON/OFF」(自分の受付箱の filmAccepting。保存は受付箱)。
-    /// - さんぽタブの右下 (「申し込み 1 件」と同じボタン): 保留が無く、撮影を許した人がいるときは [撮影を許可中 (n)]。押すと「撮影を許した人」の画面
+    /// - さんぽタブの右下: 撮影を許した人がいるときは専用のボタン [撮影を許可中 (n)] (保留中でも出す。そのときは [地図と移動] [申し込み 1 件] と 3 つ並び)。押すと「撮影を許した人」の画面
     ///   (Page_Settings/FilmGrantsPage。extraSettingsPages に登録) を開く。行は最大 4 (開始を確かめていない行も出す)、行ごとに [やめてもらう]。
     /// - 「撮影中」は相手の申告がそろった行だけ (相手の画面からの申告で、実際に描いているかは分からない。§13.1)。
     /// 同期変数 0 本 (状態は受付箱)。部品は Tools/KominkaHillside/Video/4 が作って配線する。文言は ja の定数 (13 言語は W5)。</summary>
@@ -22,6 +22,22 @@ namespace KominkaDogRun
         public TextMeshProUGUI[] filmGrantLabels;            // 4 行 (表示名 + 状態)
         public GameObject[] filmStopButtons;                 // 4 行の [やめてもらう]
         public TextMeshProUGUI[] filmStopLabels;
+        [Tooltip("さんぽタブ右列の下の [撮影を許可中 (n)] (Page_Walk/FilmGrants)。保留中でも出す (Codex review 2)")]
+        public GameObject filmGrantsButton;
+        public TextMeshProUGUI filmGrantsButtonLabel;
+
+        // さんぽタブ右列の下 (x 10〜550、DES-UI-006): 1 つなら [地図と移動] 266 + 右 266 (x 417)、2 つなら 174 × 3 (間 9)
+        public const float FilmPendingX = 417f, FilmThirdWidth = 174f, FilmThirdX0 = 97f, FilmThirdX1 = 280f, FilmThirdX2 = 463f;
+
+        /// <summary>さんぽタブの [撮影を許可中 (n)]。保留中でも押せる。ローカル専用。</summary>
+        public void _FilmGrantsOpen() { FilmGrantsOpen(); }
+
+        void FilmPlace(RectTransform r, float x, float width)
+        {
+            if (r == null) return;
+            if (Mathf.Abs(r.sizeDelta.x - width) > 0.5f) r.sizeDelta = new Vector2(width, r.sizeDelta.y);
+            if (Mathf.Abs(r.anchoredPosition.x - x) > 0.5f) r.anchoredPosition = new Vector2(x, r.anchoredPosition.y);
+        }
 
         public const string WordFilmAcceptOn = "撮影の申し込みを受ける: ON";
         public const string WordFilmAcceptOff = "撮影の申し込みを受ける: OFF";
@@ -62,7 +78,7 @@ namespace KominkaDogRun
         /// <summary>撮影を許した人がいるか (さんぽタブのボタンを [撮影を許可中] にするか)。画面の部品が無ければ出さない。</summary>
         bool FilmGrantsShown(KominkaHillside.KH_TravelMailbox box)
         {
-            return filmGrantsPage != null && box != null && box._FilmRowCount() > 0;
+            return filmGrantsPage != null && filmGrantsButton != null && box != null && box._FilmRowCount() > 0;
         }
 
         void FilmGrantsOpen()

@@ -98,7 +98,7 @@ namespace KominkaHillside
             {
                 if (objs[i] == null) continue;
                 KH_TravelMailbox b = objs[i].GetComponent<KH_TravelMailbox>();
-                if (b != null) { _myBox = b; return b; }
+                if (b != null) { _myBox = b; b._FilmSetListener(this); return b; }   // the mailbox tells _OnFilmEnded the moment a session ends
             }
             return null;
         }
@@ -148,6 +148,13 @@ namespace KominkaHillside
             _personLive = false;
             _personHead = Vector3.zero; _personFwd = Vector3.zero; _personFeet = Vector3.zero;
             NewSubject();
+        }
+
+        /// <summary>My mailbox ended the film session (revoked, the table gone, timed out, the subject left, or _FilmEnd). Detach the person's
+        /// picture at once, whatever the render tick or the fade is doing (Codex review 1). Local only; called by KH_TravelMailbox.FilmClear.</summary>
+        public void _OnFilmEnded()
+        {
+            if (_personLive) PersonDrop();
         }
 
         /// <summary>The re-check right before enabling the camera (§13.3): still in use for that person (no pose read here).</summary>

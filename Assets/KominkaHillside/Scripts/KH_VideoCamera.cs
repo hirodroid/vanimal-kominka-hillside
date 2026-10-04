@@ -384,6 +384,9 @@ namespace KominkaHillside
             if (_camOn) { cam.enabled = false; _camOn = false; _missedCallbacks++; }
             float now = Time.time;
             if (now >= _nextPhotoCamCheck) { _nextPhotoCamCheck = now + 0.5f; ReadPhotoCamera(); PersonTick(now); }
+            // W4 (Codex review 1): while another person's picture is up, check the permission EVERY frame, before the wait for the next render
+            // tick and before the fade's return, and detach the picture at once when it is gone (one field test when no person is shown)
+            if (_personLive && !PersonStillUsable()) PersonDrop();
             if (now < _nextRender) return;
             _nextRender += _interval;
             if (_nextRender < now) _nextRender = now + _interval;

@@ -27,6 +27,10 @@ namespace KominkaHillside.Editor
     ///                     清潔の合図で洗い上がりの 1 枚 = 洗うの枠に 3 枚 → 同じ節目をもう一度起こしても撮らない → スポンジで洗い直すと数え直す →
     ///                     洗われている犬 (洗いの保持) は撫で続けても撫でのバーストが出ない、保持を解くと 2 枚のバーストが撫での枠へ →
     ///                     撫で・遊び・散歩を各枠 1 周以上撮っても、洗うの枠の 3 枚 (RT の中身) は残る
+    ///   H10-wash-real     写真のしきい値は変えずに、毎フレーム実際のストロークを当てて洗う (ラブ = A、ダックス = B。2〜3 分):
+    ///                     泡の前のシャワーではすすぎを撮らない → 泡の平均がしきい値の手前では撮らず、越えたら 1 枚 → すすぎ → 実際の清潔の合図で洗い上がり →
+    ///                     B は別に数える (清潔の合図が構えない設定にして、ブルブルの経路で洗い上がり) → 間隔 (実行時だけ 3 s) の後は数え直す →
+    ///                     撫でのバーストの 1 枚目の後に洗いが始まると残りを撮らない。2 人の分け (見ているだけ・それぞれ撮る) は実機へ
     ///   H3-off            設定の [写真: ON/OFF] (KH_PhotoAlbum._ToggleCapture) で OFF → 見回りが止まり、きっかけが来ても撮らない、写真は残る、保存値 0。
     ///                     もう一度押して ON → 保存値 1、RT は作り直さない (同じ寸法)
     ///   H4-menu           手元メニューの [写真] (KD_TreatPouch._PhotoOpen) → 写真の面がボードと同じ RT を出す、縮小表示の吸着の板 (IMP-WLD-009: 同じ RT、大きい表示・説明の間は隠れる)、
@@ -51,7 +55,7 @@ namespace KominkaHillside.Editor
         public const string CasesFile = "Temp/kh-photo/harness-cases.txt";
         /// <summary>回す順。H6 (散歩の枠) は H3 より前 (OFF の検査に写真が要る・H4 のページ送りに 9 枚以上が要る)。</summary>
         /// IMP-WLD-011: H9 (洗い) は H2 の後 (H2 は H1 の 1 枚だけがある前提で並びを見る) で、H3 / H4 の前 (写真の枚数は実際の数から計算される)。
-        public static readonly string[] AllCases = { "H0-ready", "H1-capture", "H2-wrap", "H6-category", "H9-wash", "H6w-walk-trigger", "H7-fade-gate", "H8-selfie", "H3-off", "H4-menu", "H5-no-camera-left" };
+        public static readonly string[] AllCases = { "H0-ready", "H1-capture", "H2-wrap", "H6-category", "H9-wash", "H10-wash-real", "H6w-walk-trigger", "H7-fade-gate", "H8-selfie", "H3-off", "H4-menu", "H5-no-camera-left" };
 
         /// <summary>"H1,H6" → 回すケース (前方一致。H0・H5 は必ず、写真が要るケースには H1 を足す)。空なら全部。知らない名前は例外 (Play に入らない)。</summary>
         public static List<string> Selected(string request)
@@ -117,7 +121,8 @@ namespace KominkaHillside.Editor
             if (File.Exists(CasesFile)) { report.casesRequested = File.ReadAllText(CasesFile).Trim(); File.Delete(CasesFile); }
             report.casesRun = Selected(report.casesRequested);
             Debug.Log("[KH Photo Harness] cases: " + string.Join(", ", report.casesRun) + (report.casesRequested.Length > 0 ? " (requested '" + report.casesRequested + "')" : " (all)"));
-            report.deadline = EditorApplication.timeSinceStartup + 240;
+            // IMP-WLD-011: H10 washes two dogs with real strokes (about 2 to 3 min on its own)
+            report.deadline = EditorApplication.timeSinceStartup + 240 + (report.casesRun.Contains("H10-wash-real") ? 300 : 0);
             BackupPlayerData();
             Application.runInBackground = true;
             Save(); ending = false; step = -1; steps = null;
@@ -199,7 +204,8 @@ namespace KominkaHillside.Editor
                 var fades = all.Where(u => u.programSource != null && u.programSource.name == "KH_TravelFade").ToArray();
                 uFade = fades.Length == 1 ? fades[0] : null;   // H7 reports a missing fade itself
             }
-            if (report.casesRun.Contains("H9-wash")) ResolveWash(all);
+            if (report.casesRun.Contains("H9-wash") || report.casesRun.Contains("H10-wash-real")) ResolveWash(all);
+            if (report.casesRun.Contains("H10-wash-real")) ResolveRealWash(all);
             var sys = SceneManager.GetActiveScene().GetRootGameObjects().First(g => g.name == KH_PhotoGalleryEditor.SystemName);
             cam = sys.transform.Find("PhotoCamera").GetComponent<Camera>();
             var board = SceneManager.GetActiveScene().GetRootGameObjects().First(g => g.name == KH_PhotoGalleryEditor.BoardRootName);
@@ -448,6 +454,7 @@ namespace KominkaHillside.Editor
 
             // ---- H9: wash photos (IMP-WLD-011) ----
             if (On("H9-wash")) AddWashSteps();
+            if (On("H10-wash-real")) AddRealWashSteps();
 
             // ---- H6w / H7 / H8: walk photos (IMP-WLD-007 W2) ----
             AddWalkSteps(walkFirst, walkSize);
@@ -765,13 +772,15 @@ namespace KominkaHillside.Editor
         }
 
         /// <summary>Every candidate symbol of the parameter gets the value (U# writes its own arguments on every call, so the others are harmless).</summary>
-        static void WashSet(string name, object v)
+        static void WashSet(string name, object v) { WashSetOn(uWash, name, v); }
+        /// <summary>The same on any dog's KH_DogWash (one program asset for the six dogs = the same symbols). H10 drives two dogs.</summary>
+        static void WashSetOn(UdonBehaviour w, string name, object v)
         {
             foreach (var sym in washParams[name])
             {
-                if (v is int i) uWash.SetProgramVariable<int>(sym, i);
-                else if (v is float f) uWash.SetProgramVariable<float>(sym, f);
-                else if (v is Vector3 x) uWash.SetProgramVariable<Vector3>(sym, x);
+                if (v is int i) w.SetProgramVariable<int>(sym, i);
+                else if (v is float f) w.SetProgramVariable<float>(sym, f);
+                else if (v is Vector3 x) w.SetProgramVariable<Vector3>(sym, x);
             }
         }
 
@@ -945,6 +954,229 @@ namespace KominkaHillside.Editor
             }));
             // under H0 (always run) so that a failed H9 does not leave the dog petted / held for H3 / H4
             steps.Add(Do("H0-ready", WashRestore));
+        }
+
+        // ================================================================ H10: real wash milestones (IMP-WLD-011, Codex review 2026-10-04)
+        // H9 checks the wiring with the photo thresholds at 0 and a hand-made clean edge. H10 keeps every photo threshold as built and drives
+        // real strokes frame by frame (one _LocalContact per frame with Time.deltaTime, as KH_WashTool does; 0.35 s per surface point, then the
+        // next point of the dog's part colliders), so the cells change through the Owner's own echo and EvaluateState / the clean edge / the
+        // wet shake fire by themselves. Runtime changes (all noted, all restored under H0): dog B's armFoamCellFraction (the wash's own arm
+        // threshold, so its wash never arms and "done" must come from the shake path), dog A's washShotSessionGap 60 -> 3 s (no way to skip
+        // 60 s of game time), and for the burst interruption the synced wash hold written directly (a real stroke reaches the hold only
+        // through the echo, 0.1-0.5 s later than the burst's 3-frame step).
+
+        const int WashDogB = 3;   // Dachs
+        static UdonBehaviour uWashB;
+        class WashPt { public Collider c; public int ci; public Vector3 local; }
+        static List<WashPt> washPtsA, washPtsB;
+        static UdonBehaviour drvW; static List<WashPt> drvPts; static int drvIdx, drvTool; static float drvOn, drvContact;
+        static bool realTouched, burstHoldSet;
+        static float armFrac0B, gap0A, hold0A;
+        static int realShots0, cleanA0, cleanB0, shakeB0;
+
+        static void ResolveRealWash(UdonBehaviour[] all)
+        {
+            uWashB = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_DogWash" && u.TryGetProgramVariable("dogIndex", out object di) && di is int x && x == WashDogB);
+            if (uWashB == null) throw new InvalidOperationException("H10: no KH_DogWash with dogIndex " + WashDogB + " (Wash/11)");
+            washPtsA = WashPoints(uWash); washPtsB = WashPoints(uWashB);
+            if (washPtsA.Count < 6 || washPtsB.Count < 6) throw new InvalidOperationException("H10: too few surface points on the part colliders (" + washPtsA.Count + " / " + washPtsB.Count + ")");
+        }
+
+        /// <summary>Surface points of every usable part collider, seen from the 6 axes of the dog (closest point; 5 cm apart at least), kept in the collider's space.</summary>
+        static List<WashPt> WashPoints(UdonBehaviour w)
+        {
+            var r = new List<WashPt>();
+            object o;
+            var cols = w.TryGetProgramVariable("partColliders", out o) ? o as Array : null;
+            var parts = w.TryGetProgramVariable("partOfCollider", out o) ? o as int[] : null;
+            var root = Get<Transform>(w, "dogRoot");
+            if (cols == null || parts == null || root == null) return r;
+            var world = new List<Vector3>();
+            for (int i = 0; i < cols.Length && i < parts.Length; i++)
+            {
+                if (!(cols.GetValue(i) is Collider c) || c == null || parts[i] < 0) continue;
+                if (c is MeshCollider mc && !mc.convex) continue;
+                var b = c.bounds; float reach = b.extents.magnitude + 0.3f;
+                foreach (var d in new[] { root.right, -root.right, root.up, root.forward, -root.forward, -root.up })
+                {
+                    Vector3 p = c.ClosestPoint(b.center + d * reach);
+                    if (world.Any(q => (q - p).sqrMagnitude < 0.0025f)) continue;
+                    world.Add(p);
+                    r.Add(new WashPt { c = c, ci = i, local = c.transform.InverseTransformPoint(p) });
+                }
+            }
+            return r;
+        }
+
+        static void NearDog(UdonBehaviour w)
+        {
+            var root = Get<Transform>(w, "dogRoot");
+            Vector3 side = root.right; side.y = 0f; if (side.sqrMagnitude < 0.01f) side = Vector3.right; side.Normalize();
+            Vector3 p = root.position + side * 1.2f;
+            if (UnityEngine.AI.NavMesh.SamplePosition(p, out UnityEngine.AI.NavMeshHit hit, 2f, UnityEngine.AI.NavMesh.AllAreas)) p = hit.position;
+            Networking.LocalPlayer.TeleportTo(p, Quaternion.LookRotation(-side, Vector3.up));
+        }
+
+        static void DriveStart(UdonBehaviour w, List<WashPt> pts, int tool) { drvW = w; drvPts = pts; drvIdx = 0; drvTool = tool; drvOn = 0f; drvContact = 0f; }
+        /// <summary>One frame of washing: one _LocalContact of this frame's dt at the current point; every 0.35 s _EndContact and the next point.
+        /// The player is moved back beside the dog when it is more than 5 m away (strokes from farther than 8 m are not taken by the Owner).</summary>
+        static void DriveFrame()
+        {
+            var root = Get<Transform>(drvW, "dogRoot");
+            if ((Networking.LocalPlayer.GetPosition() - root.position).sqrMagnitude > 25f) NearDog(drvW);
+            float dt = Mathf.Clamp(Time.deltaTime, 0.005f, 0.05f);
+            var p = drvPts[drvIdx];
+            WashSetOn(drvW, "tool", drvTool); WashSetOn(drvW, "colliderIndex", p.ci); WashSetOn(drvW, "worldPoint", p.c.transform.TransformPoint(p.local));
+            WashSetOn(drvW, "seconds", dt); WashSetOn(drvW, "radiusMeters", -1f);
+            drvW.SendCustomEvent(washContactEntry);
+            drvContact += dt; drvOn += dt;
+            if (drvOn >= 0.35f) { drvOn = 0f; DriveStop(); drvIdx = (drvIdx + 1) % drvPts.Count; }
+        }
+        static void DriveStop() { WashSetOn(drvW, "tool", drvTool); drvW.SendCustomEvent(washEndEntry); }
+        static float Foam(UdonBehaviour w) { return Get<float>(w, "_avgFoam"); }
+        static int TakenOf(UdonBehaviour w) { return Get<int>(w, "_photoTaken"); }
+        static int Kind() { return Get<int>(uDirector, "_washLastKind"); }
+        static int LastDog() { return Get<int>(uDirector, "_washLastDog"); }
+
+        static void RealWashRestore()
+        {
+            if (!realTouched) return;
+            uWashB.SetProgramVariable("armFoamCellFraction", armFrac0B);
+            uWash.SetProgramVariable("washShotSessionGap", gap0A); uWash.SetProgramVariable("holdSeconds", hold0A);
+            uWashPet.SetProgramVariable("_petting", false); uWashPet.SetProgramVariable("_suppressed", petSuppressedBefore);
+            realTouched = false;
+        }
+
+        static void AddRealWashSteps()
+        {
+            const string C = "H10-wash-real";
+            int petG = KominkaDogRun.KD_PhotoDirector.HillsideGroupPet, petSize = KH_PhotoGalleryEditor.GroupSizes[petG];
+            int foamK = KominkaDogRun.KD_PhotoDirector.WashShotFoam, rinseK = KominkaDogRun.KD_PhotoDirector.WashShotRinse, doneK = KominkaDogRun.KD_PhotoDirector.WashShotDone;
+            float foamT = 0f;
+            steps.Add(Do(C, () =>
+            {
+                armFrac0B = Get<float>(uWashB, "armFoamCellFraction"); gap0A = Get<float>(uWash, "washShotSessionGap"); hold0A = Get<float>(uWash, "holdSeconds");
+                petSuppressedBefore = Get<bool>(uWashPet, "_suppressed");
+                realTouched = true;
+                foamT = Get<float>(uWash, "washShotFoamAvg");
+                Note("thresholds as built: foam " + foamT + ", rinse " + Get<float>(uWash, "washShotRinseSeconds") + " s while foam >= " + Get<float>(uWash, "washShotRinseFoam") + ", gap " + gap0A + " s; dog A " + WashDog + " (" + washPtsA.Count + " points), dog B " + WashDogB + " (" + washPtsB.Count + " points)");
+                Note("not built in a single ClientSim player -> 2 players on real clients: a client that only watches takes nothing; two washers each take their own photos");
+                uWash.SendCustomEvent("_DebugClear"); uWashB.SendCustomEvent("_DebugClear");   // Owner: dirt / foam / wet 0, not armed
+                uWash.SetProgramVariable("_photoActive", false); uWashB.SetProgramVariable("_photoActive", false);
+                realShots0 = WashShots();
+                NearDog(uWash);
+                waitFrom = EditorApplication.timeSinceStartup;
+            }));
+            steps.Add(Until(C, () => EditorApplication.timeSinceStartup - waitFrom > 1.0, 2, "wait"));
+            // ---- 1) shower before any foam: no rinse photo (the seconds count only while the dog's foam >= washShotRinseFoam) ----
+            steps.Add(Do(C, () => DriveStart(uWash, washPtsA, KH_DogWash.ToolShower)));
+            steps.Add(Until(C, () => { DriveFrame(); return drvContact >= 3f; }, 10, "3 s of shower contact did not finish"));
+            steps.Add(Do(C, () => { DriveStop(); waitFrom = EditorApplication.timeSinceStartup; }));
+            steps.Add(Until(C, () => EditorApplication.timeSinceStartup - waitFrom > 1.5, 3, "wait"));   // a wet shake may come 0.8 s after the stroke end
+            steps.Add(Do(C, () =>
+            {
+                Expect(Get<bool>(uWash, "_photoActive") && TakenOf(uWash) == 0 && Get<float>(uWash, "_photoShowerSec") == 0f && WashShots() == realShots0,
+                    "3 s of shower on a dog with no foam (avg " + Foam(uWash).ToString("F3") + "): session on, no rinse seconds counted, no photo (also none from a wet shake)");
+                DriveStart(uWash, washPtsA, KH_DogWash.ToolSponge);
+            }));
+            // ---- 2) sponge to just below the foam threshold: no photo ----
+            steps.Add(Until(C, () => { DriveFrame(); return Foam(uWash) >= foamT * 0.45f; }, 40, "the sponge did not raise the average foam to half the threshold in 40 s"));
+            steps.Add(Do(C, () => { DriveStop(); waitFrom = EditorApplication.timeSinceStartup; }));
+            steps.Add(Until(C, () => EditorApplication.timeSinceStartup - waitFrom > 1.5, 3, "wait"));
+            steps.Add(Do(C, () =>
+            {
+                float f = Foam(uWash);
+                Expect(f < foamT && (TakenOf(uWash) & 1) == 0 && WashShots() == realShots0, "average foam " + f.ToString("F3") + " < " + foamT + ": no foam photo");
+                DriveStart(uWash, washPtsA, KH_DogWash.ToolSponge);
+            }));
+            // ---- 3) more sponge: the foam photo once the average reaches the threshold ----
+            steps.Add(Until(C, () => { if (WashShots() > realShots0) return true; DriveFrame(); return false; }, 40, "no foam photo within 40 s of sponging (the average did not reach the threshold, or the evaluation did not ask)"));
+            steps.Add(Do(C, () =>
+            {
+                float f = Foam(uWash);
+                Expect(Kind() == foamK && LastDog() == WashDog && (TakenOf(uWash) & 1) != 0 && f >= foamT, "the foam photo of dog " + WashDog + " at average foam " + f.ToString("F3") + " >= " + foamT);
+                Note("dog A armed for the clean edge: " + Get<bool>(uWash, "cleanArmed"));
+                DriveStart(uWash, washPtsA, KH_DogWash.ToolShower);
+            }));
+            steps.Add(Until(C, () => !cam.enabled, 1, "camera stayed enabled"));
+            // ---- 4) shower: the rinse photo after washShotRinseSeconds of contact with foam on the dog ----
+            steps.Add(Until(C, () => { if ((TakenOf(uWash) & 2) != 0) return true; DriveFrame(); return false; }, 20, "no rinse photo within 20 s of showering a foamed dog"));
+            steps.Add(Do(C, () =>
+            {
+                Expect(Kind() == rinseK && Get<float>(uWash, "_photoShowerSec") >= Get<float>(uWash, "washShotRinseSeconds") - 0.06f, "the rinse photo after " + Get<float>(uWash, "_photoShowerSec").ToString("F2") + " s of counted shower (" + drvContact.ToString("F2") + " s in all)");
+                cleanA0 = Get<int>(uWash, "cleanSerial");
+            }));
+            // ---- 5) keep rinsing: the Owner's own EvaluateState fires the clean edge -> the done photo ----
+            steps.Add(Until(C, () => { if (Get<int>(uWash, "cleanSerial") != cleanA0 || (TakenOf(uWash) & 4) != 0) return true; DriveFrame(); return false; }, 90, "no clean edge / done photo within 90 s of rinsing the whole dog"));
+            steps.Add(Do(C, DriveStop));
+            steps.Add(Until(C, () => WashShots() >= realShots0 + 3 && !cam.enabled, 3, "no done photo after the clean edge"));
+            steps.Add(Do(C, () =>
+            {
+                Expect(Get<int>(uWash, "cleanSerial") != cleanA0 && Kind() == doneK && LastDog() == WashDog && TakenOf(uWash) == 7,
+                    "the done photo of dog " + WashDog + " came from the real clean edge (cleanSerial " + cleanA0 + " -> " + Get<int>(uWash, "cleanSerial") + ", avg foam " + Foam(uWash).ToString("F3") + ")");
+                // ---- 6) another dog counts on its own; its wash never arms, so "done" must come from the wet shake ----
+                uWashB.SetProgramVariable("armFoamCellFraction", 1f);
+                Note("runtime only: dog B armFoamCellFraction " + armFrac0B + " -> 1 (the wash's arm threshold; never armed = the shake path)");
+                cleanB0 = Get<int>(uWashB, "cleanSerial"); shakeB0 = Get<int>(uWashB, "shakeSerial");
+                NearDog(uWashB);
+                DriveStart(uWashB, washPtsB, KH_DogWash.ToolSponge);
+            }));
+            steps.Add(Until(C, () => { if (WashShots() >= realShots0 + 4) return true; DriveFrame(); return false; }, 40, "dog B: no foam photo within 40 s of sponging"));
+            steps.Add(Do(C, () =>
+            {
+                Expect(Kind() == foamK && LastDog() == WashDogB && TakenOf(uWashB) == 1 && TakenOf(uWash) == 7, "dog B has its own wash: its foam photo, dog A's milestones untouched");
+                DriveStart(uWashB, washPtsB, KH_DogWash.ToolShower);
+            }));
+            steps.Add(Until(C, () => { if ((TakenOf(uWashB) & 2) != 0) return true; DriveFrame(); return false; }, 20, "dog B: no rinse photo within 20 s"));
+            steps.Add(Until(C, () => { DriveFrame(); return Foam(uWashB) < 0.08f; }, 90, "dog B: the average foam did not fall below 0.08 in 90 s of rinsing"));
+            steps.Add(Do(C, DriveStop));
+            // the wet shake: 0.8 s after the last stroke (foam <= 0.15, wet >= 0.03), the Owner's _RequestShake -> _PhotoEdges
+            steps.Add(Until(C, () => (TakenOf(uWashB) & 4) != 0 && WashShots() >= realShots0 + 6 && !cam.enabled, 5, "dog B: no done photo from the wet shake within 5 s of the last stroke"));
+            steps.Add(Do(C, () =>
+            {
+                Expect(Get<int>(uWashB, "cleanSerial") == cleanB0 && Get<int>(uWashB, "shakeSerial") != shakeB0 && !Get<bool>(uWashB, "cleanArmed") && Kind() == doneK && LastDog() == WashDogB,
+                    "dog B's done photo came from the shake path (no clean edge, shakeSerial " + shakeB0 + " -> " + Get<int>(uWashB, "shakeSerial") + ")");
+                // ---- 7) the session gap: shortened to 3 s at runtime ----
+                uWash.SetProgramVariable("washShotSessionGap", 3f);
+                Note("runtime only: dog A washShotSessionGap " + gap0A + " -> 3 s (game time cannot be skipped)");
+                waitFrom = EditorApplication.timeSinceStartup;
+            }));
+            steps.Add(Until(C, () => EditorApplication.timeSinceStartup - waitFrom > 3.5, 5, "wait"));
+            steps.Add(Do(C, () =>
+            {
+                Expect(TakenOf(uWash) == 7, "dog A still holds its finished wash before the next stroke");
+                WashStroke(KH_DogWash.ToolShower, 1);   // a shower alone after "done" restarts only after the gap
+                Expect(Get<bool>(uWash, "_photoActive") && TakenOf(uWash) == 0, "after the gap a stroke starts a new wash (milestones counted again)");
+                uWash.SetProgramVariable("washShotSessionGap", gap0A);
+                waitFrom = EditorApplication.timeSinceStartup;
+            }));
+            // ---- 8) a pet burst that has started stops when the wash starts ----
+            steps.Add(Until(C, () => EditorApplication.timeSinceStartup - waitFrom > 4.0, 5, "wait"));   // the hold of the last stroke (3 s) is over
+            steps.Add(Do(C, () =>
+            {
+                uWashPet.SetProgramVariable("_suppressed", true); uWashPet.SetProgramVariable("_petting", true);
+                uDirector.SetProgramVariable("_lastPetShot", -1000f);
+                petNext0 = NextIn(petG); burstHoldSet = false;
+                Note("runtime only: dog " + WashDog + " petted (pet controller _suppressed + _petting); after the burst's first photo the synced wash hold is written (washMs = now, holdSeconds 30)");
+            }));
+            steps.Add(Until(C, () =>
+            {
+                int bs = Get<int>(uDirector, "_burstStep");
+                if (!burstHoldSet && bs == 1)
+                {
+                    uWash.SetProgramVariable("holdSeconds", 30f); uWash.SetProgramVariable("washSeen", true);
+                    uWash.SetProgramVariable("washBy", Networking.LocalPlayer.playerId); uWash.SetProgramVariable("washMs", Networking.GetServerTimeInMilliseconds());
+                    burstHoldSet = true;
+                }
+                return burstHoldSet && bs < 0 && !cam.enabled;
+            }, 8, "the pet burst did not start, or did not stop after its first photo when the wash began"));
+            steps.Add(Do(C, () =>
+            {
+                Expect((NextIn(petG) - petNext0 + petSize) % petSize == 1, "the burst stopped after its first photo when the wash began (pet next " + petNext0 + " -> " + NextIn(petG) + ")");
+                uWashPet.SetProgramVariable("_petting", false); uWashPet.SetProgramVariable("_suppressed", petSuppressedBefore);
+                uWash.SendCustomEvent("_ReleaseHold"); uWash.SetProgramVariable("holdSeconds", hold0A);
+            }));
+            steps.Add(Do("H0-ready", RealWashRestore));
         }
 
         static void AddOffSteps()

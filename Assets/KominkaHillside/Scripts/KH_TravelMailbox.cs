@@ -186,9 +186,21 @@ namespace KominkaHillside
         public void AnsJoin(int seq, int code) // net: callable-ok: sender must be the pending target and seq the pending one
         {
             if (!Networking.IsOwner(gameObject)) return;
-            VRCPlayerApi caller = NetworkCalling.CallingPlayer;
+            ReceiveAnswer(NetworkCalling.CallingPlayer, seq, code);
+        }
+
+        /// <summary>The answer check (sender = the pending target, seq = the pending seq). AnsJoin and the harness hook share it.</summary>
+        private void ReceiveAnswer(VRCPlayerApi caller, int seq, int code)
+        {
             if (!Utilities.IsValid(caller) || caller.playerId != _outTo || seq != _outSeq) return;
             HandleAnswer(code);
+        }
+
+        /// <summary>ハーネス専用: 人形 debugIncomingFrom からの AnsJoin(debugIncomingSeq, debugAnswerCode) を、送り主と seq の照合ごと通す。ローカル専用。</summary>
+        public void _DebugAnswerFromNow()
+        {
+            if (debugJoinLoopback <= 0 || !Networking.IsOwner(gameObject)) return;
+            ReceiveAnswer(VRCPlayerApi.GetPlayerById(debugIncomingFrom), debugIncomingSeq, debugAnswerCode);
         }
 
         /// <summary>ハーネス専用: 人形の答えを模す (debugJoinLoopback > 0 のときだけ)。ローカル専用。</summary>

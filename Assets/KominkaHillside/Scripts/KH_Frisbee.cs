@@ -115,9 +115,11 @@ namespace KominkaHillside
         // Owner); CheckRiver leaves it alone meanwhile. Cleared by a pickup, a launch, a catch / release, a recall, losing the
         // ownership, the gravity coming back, or KH_ToyRecall (taken / timeout).
         private bool _hover;
+        private int _pickupGen;   // IMP-DOG-040: local pickups (OnPickup) - KH_ToyRecall compares it to see a grab that ended between its looks
 
         public bool IsFlying { get { return _flying; } }
         public bool IsHovering { get { return _hover; } }   // net: callable-ok: read-only
+        public int PickupGen { get { return _pickupGen; } }   // net: callable-ok: read-only
         // IMP-DOG-040: local only ('_': not callable over the network). Only the Owner can start it.
         public void _SetHover(bool on) { _hover = on && Networking.IsOwner(gameObject); }
         // IMP-WLD-008 W3 (read-only, local; nothing synced changes): the launch facts of the current flight, meaningful only on the client that
@@ -298,7 +300,7 @@ namespace KominkaHillside
 
         public override void OnPickup()
         {
-            _charging = false; _hasPendingThrow = false; _heldLocal = true; _lookAxis = 0f; _hover = false;
+            _charging = false; _hasPendingThrow = false; _heldLocal = true; _lookAxis = 0f; _hover = false; _pickupGen++;
             if (discRenderer != null && discHeldMaterial != null) discRenderer.sharedMaterial = discHeldMaterial; // local: the holder sees through it
             SetFacesVisible(false); // local: the opaque face prints would block the see-through disc
             bool wasFlying = _flying;

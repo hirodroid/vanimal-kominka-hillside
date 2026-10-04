@@ -190,8 +190,14 @@ namespace KominkaDogRun
             _rb.angularVelocity = Vector3.zero;
         }
 
+        // 裏山改変 (IMP-DOG-040): ローカルのつかみの回数。KH_ToyRecall が浮かせ・着地の見回りで比べ、見回りの間に終わった
+        // つかみ (持って放した) を見逃さない。同期しない (OnPickup は掴んだ本人の端末だけ)
+        private int _pickupGen;
+        public int PickupGen { get { return _pickupGen; } }   // net: callable-ok: read-only
+
         public override void OnPickup()
         {
+            _pickupGen++;   // 裏山改変 (IMP-DOG-040)
             _charging = false;
             _hasPendingThrow = false;
             _weakDropPending = false; // 持ち直した = 弱い放しではない (IMP-FET-015)

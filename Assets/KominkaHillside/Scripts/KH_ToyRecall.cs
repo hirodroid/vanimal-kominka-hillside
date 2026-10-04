@@ -51,6 +51,14 @@ namespace KominkaHillside
         private float[] _discLandSettle;
         private Rigidbody[] _discRb;
         private VRCObjectSync[] _discSync;
+        // Codex review 2026-10-04 (1): the dog was already busy with this toy when it was called (the gate lets a ball the dog chases
+        // in the water, a Drop that has let it go and a disc the dog swims after be called). That old play does not end the hover;
+        // only a play seen to start after the dog was back at rest does. (3): the toy's local pickup count at the call / landing, so a
+        // grab-and-release between two looks ends the hover / settle too (the gravity alone cannot show it once it is back on).
+        private bool[] _ballBusyAtCall;
+        private bool[] _discBusyAtCall;
+        private int[] _ballGen;
+        private int[] _discGen;
         private bool _hoverAny;
         private float _nextHoverAt;
         public const int Ok = 0, Held = 1, DogBusy = 2, Cooldown = 3, Unwired = 4, Pending = 5;
@@ -640,10 +648,12 @@ namespace KominkaHillside
             {
                 discs[row]._SetHover(true);   // its own river look leaves it alone too
                 _discHoverUntil[row] = Time.time + hoverSeconds; _discLandSettle[row] = 0f;
+                _discBusyAtCall[row] = DiscDogBusy(row); _discGen[row] = discs[row].PickupGen;
             }
             else
             {
                 _ballHoverUntil[row] = Time.time + hoverSeconds; _ballLandSettle[row] = 0f;
+                _ballBusyAtCall[row] = BallDogBusy(row); _ballGen[row] = balls[row].PickupGen;
                 if (_riverSettleUntil != null && row < _riverSettleUntil.Length) _riverSettleUntil[row] = 0f;
             }
             _hoverAny = true;
@@ -669,8 +679,10 @@ namespace KominkaHillside
                 for (int k = 0; k < nd; k++)
                     if (discs[k] != null) { GameObject dgo = discs[k].gameObject; _discRb[k] = dgo.GetComponent<Rigidbody>(); _discSync[k] = dgo.GetComponent<VRCObjectSync>(); }
             }
-            if (_ballHoverUntil == null || _ballHoverUntil.Length != nb) { _ballHoverUntil = new float[nb]; _ballLandSettle = new float[nb]; }
-            if (_discHoverUntil == null || _discHoverUntil.Length != nd) { _discHoverUntil = new float[nd]; _discLandSettle = new float[nd]; }
+            if (_ballHoverUntil == null || _ballHoverUntil.Length != nb)
+            { _ballHoverUntil = new float[nb]; _ballLandSettle = new float[nb]; _ballBusyAtCall = new bool[nb]; _ballGen = new int[nb]; }
+            if (_discHoverUntil == null || _discHoverUntil.Length != nd)
+            { _discHoverUntil = new float[nd]; _discLandSettle = new float[nd]; _discBusyAtCall = new bool[nd]; _discGen = new int[nd]; }
         }
 
         bool BallHovering(int i) { return _ballHoverUntil != null && i >= 0 && i < _ballHoverUntil.Length && _ballHoverUntil[i] > 0f; }
@@ -704,11 +716,14 @@ namespace KominkaHillside
             Vector3 d = want - eye;
             float len = d.magnitude;
             RaycastHit hit;
+            // Codex review 2026-10-04 (4): a sphere of the toy's size (+ HoverGap), not the centre line, so a wall met at a shallow
+            // angle or a post beside the line also stops it short (a ray left the toy half inside them, and the physics pushed it out)
+            float r = radius + HoverGap;
             if (len > 0.001f)
             {
                 Vector3 dir = d / len;
-                if (Physics.Raycast(eye, dir, out hit, len + radius + HoverGap, groundMask, QueryTriggerInteraction.Ignore))
-                    want = eye + dir * Mathf.Max(0f, hit.distance - radius - HoverGap);
+                if (Physics.SphereCast(eye, r, dir, out hit, len, groundMask, QueryTriggerInteraction.Ignore))
+                    want = eye + dir * Mathf.Max(0f, hit.distance - 0.01f);
             }
             // Never under the ground: look down from the eye height above the point (the slope ahead may rise to it)
             Vector3 top = new Vector3(want.x, Mathf.Max(eye.y, want.y), want.z);
@@ -716,6 +731,17 @@ namespace KominkaHillside
             {
                 float minY = hit.point.y + radius + HoverGap;
                 if (want.y < minY) want.y = minY;
+            }
+            // The final point (after the lift) must not overlap anything: else step back toward the head (the head itself last)
+            if (Physics.CheckSphere(want, radius, groundMask, QueryTriggerInteraction.Ignore))
+            {
+                Vector3 from = want;
+                want = eye;
+                for (int k = 1; k <= 4; k++)
+                {
+                    Vector3 p = Vector3.Lerp(from, eye, k * 0.25f);
+                    if (!Physics.CheckSphere(p, radius, groundMask, QueryTriggerInteraction.Ignore)) { want = p; break; }
+                }
             }
             return want;
         }
@@ -733,13 +759,22 @@ namespace KominkaHillside
                 KominkaDogRun.KD_BallController b = balls[i];
                 Rigidbody rb = _ballRb[i];
                 if (b == null || rb == null || !Networking.IsOwner(b.gameObject) || b.IsHeldNow || rb.isKinematic) { ClearHover(i, KindBall); continue; }
-                bool hovering = _ballHoverUntil[i] > 0f;
-                if (fetchers != null && i < fetchers.Length && fetchers[i] != null && !fetchers[i].IsIdle)
+                // Codex (3): picked up and let go between two looks - the hand's throw / drop is normal physics, never zeroed here
+                if (b.PickupGen != _ballGen[i]) { ClearHover(i, KindBall); continue; }
+                // Codex (1): a dog that has it in its mouth owns it now - left to the dog, nothing written
+                KominkaDogRun.KD_DogFetchController f = (fetchers != null && i < fetchers.Length) ? fetchers[i] : null;
+                if (f != null && f._BallInMouth()) { ClearHover(i, KindBall); continue; }
+                bool busy = BallDogBusy(i);
+                if (!busy) _ballBusyAtCall[i] = false;   // the play that was going on at the call is over
+                else if (!_ballBusyAtCall[i])
                 {
-                    // a dog is after it (a throw): ours, not held, not kinematic - normal physics (the river look floats it if it is in water)
-                    if (hovering && !rb.useGravity && _ballSync[i] != null) _ballSync[i].SetGravity(true);
+                    // a new play started after the call (a throw): ours, not held, not kinematic - normal physics (the river look
+                    // floats it if it is in water)
+                    if (_ballHoverUntil[i] > 0f && !rb.useGravity && _ballSync[i] != null) { _ballSync[i].SetGravity(true); WakeFall(rb); }
                     ClearHover(i, KindBall); continue;
                 }
+                // busy since before the call (the dog chasing it in the water, a Drop that has let it go): the dog loses its target,
+                // the toy stays where the player can take it
                 if (StepHover(i, KindBall, b.gameObject, rb, _ballSync[i], b.gameObject.transform.localScale.x * 0.5f + 0.005f)) any = true;
             }
             for (int i = 0; i < _discHoverUntil.Length; i++)
@@ -747,12 +782,29 @@ namespace KominkaHillside
                 if (_discHoverUntil[i] <= 0f && _discLandSettle[i] <= 0f) continue;
                 KH_Frisbee d = discs[i];
                 Rigidbody rb = _discRb[i];
-                bool engaged = discCatchers != null && i < discCatchers.Length && discCatchers[i] != null && discCatchers[i].IsEngaged;
-                if (d == null || rb == null || !Networking.IsOwner(d.gameObject) || d.IsHeldNow || d.IsFlying || engaged || rb.isKinematic) { ClearHover(i, KindDisc); continue; }
+                if (d == null || rb == null || !Networking.IsOwner(d.gameObject) || d.IsHeldNow || d.IsFlying || rb.isKinematic) { ClearHover(i, KindDisc); continue; }
+                if (d.PickupGen != _discGen[i]) { ClearHover(i, KindDisc); continue; }   // Codex (3)
                 if (_discHoverUntil[i] > 0f && !d.IsHovering) { ClearHover(i, KindDisc); continue; }   // the disc ended it itself (pickup / recall / catch)
+                KH_FrisbeeCatch c = (discCatchers != null && i < discCatchers.Length) ? discCatchers[i] : null;
+                if (c != null && (c.IsCarrying || c.State == KH_FrisbeeCatch.StateWaterCarry || c.State == KH_FrisbeeCatch.StateWaterExit)) { ClearHover(i, KindDisc); continue; }   // in the mouth: the dog's
+                bool busy = DiscDogBusy(i);
+                if (!busy) _discBusyAtCall[i] = false;
+                else if (!_discBusyAtCall[i]) { ClearHover(i, KindDisc); continue; }   // a new play after the call (a launch already cleared it)
                 if (StepHover(i, KindDisc, d.gameObject, rb, _discSync[i], 0.02f)) any = true;   // 0.02: a landing disc's lift (KH_Frisbee.EndFlight)
             }
             _hoverAny = any;
+        }
+
+        // The dog's play with this ball / disc as this client sees it (the gate's own words: Fetch not Idle / catcher engaged)
+        bool BallDogBusy(int i) { return fetchers != null && i >= 0 && i < fetchers.Length && fetchers[i] != null && !fetchers[i].IsIdle; }
+        bool DiscDogBusy(int i) { return discCatchers != null && i >= 0 && i < discCatchers.Length && discCatchers[i] != null && discCatchers[i].IsEngaged; }
+
+        // Gravity back on a body that may have gone to sleep while it hovered still: a sleeping body is not woken by gravity alone,
+        // and assigning a velocity wakes it (Rigidbody.WakeUp is not relied on)
+        void WakeFall(Rigidbody rb)
+        {
+            if (rb == null || rb.isKinematic) return;
+            rb.velocity = Vector3.down * 0.05f;
         }
 
         // One look at a toy that is still ours and free. true = keep looking.
@@ -767,11 +819,13 @@ namespace KominkaHillside
                     rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero;   // a bump (a dog, another toy) does not send it drifting
                     return true;
                 }
-                LandToy(go, rb, sync, lift, kind == KindDisc);
-                if (kind == KindDisc) { _discHoverUntil[i] = 0f; _discLandSettle[i] = Time.time + HoverSettleSeconds; discs[i]._SetHover(false); }
-                else { _ballHoverUntil[i] = 0f; _ballLandSettle[i] = Time.time + HoverSettleSeconds; }
-                Debug.Log("[KH_ToyRecall] hover timeout " + (kind == KindDisc ? "disc=" : "ball=") + i + " landed at " + RiverV3(go.transform.position));
-                return true;
+                bool landed = LandToy(go, rb, sync, lift, kind == KindDisc);
+                // Codex (2): no ground within reach below = no settle (a sleeping body would stay in the air): it just falls
+                float settleUntil = landed ? Time.time + HoverSettleSeconds : 0f;
+                if (kind == KindDisc) { _discHoverUntil[i] = 0f; _discLandSettle[i] = settleUntil; discs[i]._SetHover(false); }
+                else { _ballHoverUntil[i] = 0f; _ballLandSettle[i] = settleUntil; }
+                Debug.Log("[KH_ToyRecall] hover timeout " + (kind == KindDisc ? "disc=" : "ball=") + i + (landed ? " landed at " : " no ground below, falls from ") + RiverV3(go.transform.position));
+                return landed;
             }
             float settle = kind == KindDisc ? _discLandSettle[i] : _ballLandSettle[i];
             if (Time.time >= settle) { ClearHover(i, kind); return false; }
@@ -781,18 +835,23 @@ namespace KominkaHillside
         }
 
         // The ground straight below (+ lift), gravity back, still and asleep: a sleeping body is not woken by gravity alone, so it
-        // does not roll down the slope (SettleBall's rule). No ground found below: gravity back where it is.
-        void LandToy(GameObject go, Rigidbody rb, VRCObjectSync sync, float lift, bool level)
+        // does not roll down the slope (SettleBall's rule). true = landed. No ground found below (a cliff edge, a tall avatar): gravity
+        // back and awake, so it falls normally (Codex review 2026-10-04 (2): it used to be put to sleep in the air).
+        bool LandToy(GameObject go, Rigidbody rb, VRCObjectSync sync, float lift, bool level)
         {
             RaycastHit hit;
-            if (Physics.Raycast(go.transform.position + Vector3.up * 0.1f, Vector3.down, out hit, 6f, groundMask, QueryTriggerInteraction.Ignore))
+            bool ground = Physics.Raycast(go.transform.position + Vector3.up * 0.1f, Vector3.down, out hit, 6f, groundMask, QueryTriggerInteraction.Ignore);
+            if (ground)
             {
                 go.transform.position = hit.point + Vector3.up * lift;
                 if (level) go.transform.rotation = Quaternion.Euler(0f, go.transform.eulerAngles.y, 0f);
                 if (sync != null) sync.FlagDiscontinuity();
             }
             if (sync != null) sync.SetGravity(true);
-            rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; rb.Sleep();
+            rb.angularVelocity = Vector3.zero;
+            if (ground) { rb.velocity = Vector3.zero; rb.Sleep(); }
+            else WakeFall(rb);
+            return ground;
         }
     }
 }

@@ -184,9 +184,7 @@ namespace KominkaDogRun
         /// <summary>さんぽタブ上段の「申し込み 1 件」。通知板を目の前へ出し直す。ローカル専用。</summary>
         public void _TravelShowNotice()
         {
-            // IMP-WLD-008 W4: 保留が無く撮影を許した人がいるときは、同じボタンが [撮影を許可中] になり「撮影を許した人」の画面を開く (KD_TreatPouch.Film.cs)
-            KominkaHillside.KH_TravelMailbox box = TravelMyBox();
-            if ((box == null || box._IncomingFrom() < 0) && FilmGrantsShown(box)) { FilmGrantsOpen(); return; }
+            // 「撮影を許した人」は別のボタン [撮影を許可中] (_FilmGrantsOpen) から開く (Codex review 2)
             if (travelNotice != null) travelNotice._Reshow();
         }
 
@@ -477,23 +475,26 @@ namespace KominkaDogRun
             if (travelOpenLabel != null) travelOpenLabel.text = L("course.travel.map.open");
             KominkaHillside.KH_TravelMailbox box = TravelMyBox();
             bool incoming = box != null && box._IncomingFrom() >= 0;
-            // IMP-WLD-008 W4: 保留が無くても、撮影を許した人がいれば同じ右半分に [撮影を許可中 (n)] を出す (保留が先。保留は 20 秒で終わる)
-            bool filmRows = !incoming && FilmGrantsShown(box);
-            bool pending = incoming || filmRows;
-            if (travelJoinPendingButton != null && travelJoinPendingButton.activeSelf != pending) travelJoinPendingButton.SetActive(pending);
+            // IMP-WLD-008 W4 (Codex review 2): [撮影を許可中 (n)] is its own button, shown whenever someone may film me, also while a request is
+            // pending (then the bottom row has three: [地図と移動] [申し込み 1 件] [撮影を許可中])
+            bool filmRows = FilmGrantsShown(box);
+            if (travelJoinPendingButton != null && travelJoinPendingButton.activeSelf != incoming) travelJoinPendingButton.SetActive(incoming);
+            if (filmGrantsButton != null && filmGrantsButton.activeSelf != filmRows) filmGrantsButton.SetActive(filmRows);
             // DES-UI-006: 2 列の右下。保留中は [地図と移動] を左半分にして、右半分に [申し込み 1 件] を出す (KD_TreatPouch.Walk.cs の定数)
             if (walkOpenRect != null)
             {
-                float openWidth = pending ? WalkOpenPendingWidth : WalkOpenWidth;
-                if (Mathf.Abs(walkOpenRect.sizeDelta.x - openWidth) > 0.5f)
-                {
-                    walkOpenRect.sizeDelta = new Vector2(openWidth, walkOpenRect.sizeDelta.y);
-                    walkOpenRect.anchoredPosition = new Vector2(pending ? WalkOpenPendingX : WalkOpenX, walkOpenRect.anchoredPosition.y);
-                }
+                int shown = (incoming ? 1 : 0) + (filmRows ? 1 : 0);
+                float openWidth = shown == 2 ? FilmThirdWidth : shown == 1 ? WalkOpenPendingWidth : WalkOpenWidth;
+                float openX = shown == 2 ? FilmThirdX0 : shown == 1 ? WalkOpenPendingX : WalkOpenX;
+                FilmPlace(walkOpenRect, openX, openWidth);
+                if (incoming && travelJoinPendingButton != null)
+                    FilmPlace((RectTransform)travelJoinPendingButton.transform, filmRows ? FilmThirdX1 : FilmPendingX, filmRows ? FilmThirdWidth : WalkOpenPendingWidth);
+                if (filmRows)
+                    FilmPlace((RectTransform)filmGrantsButton.transform, incoming ? FilmThirdX2 : FilmPendingX, incoming ? FilmThirdWidth : WalkOpenPendingWidth);
             }
             if (incoming && travelJoinPendingLabel != null) travelJoinPendingLabel.text = box._IncomingKind() == KominkaHillside.KH_TravelMailbox.KindFilm ? WordFilmPending
                 : L(box._IncomingKind() == KominkaHillside.KH_TravelMailbox.KindCall ? "course.travel.call.pending" : "course.travel.join.pending");
-            else if (filmRows && travelJoinPendingLabel != null) travelJoinPendingLabel.text = WordFilmGrantsButton.Replace("{0}", box._FilmRowCount().ToString());
+            if (filmRows && filmGrantsButtonLabel != null) filmGrantsButtonLabel.text = WordFilmGrantsButton.Replace("{0}", box._FilmRowCount().ToString());
         }
 
         /// <summary>副画面。開いている間は 10 Hz で呼ばれる (自分の位置と向きもここで動かす)。</summary>

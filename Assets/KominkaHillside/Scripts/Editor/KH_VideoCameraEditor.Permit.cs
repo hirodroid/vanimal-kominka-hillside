@@ -33,7 +33,7 @@ namespace KominkaHillside.Editor
     public static partial class KH_VideoCameraEditor
     {
         public const string PersonButtonName = "PersonButton", PersonCancelName = "PersonCancel", PersonListName = "PersonList", PersonConfirmName = "PersonConfirm";
-        public const string FilmAcceptName = "FilmAcceptToggle", FilmGrantsPageName = "FilmGrantsPage";
+        public const string FilmAcceptName = "FilmAcceptToggle", FilmGrantsPageName = "FilmGrantsPage", FilmGrantsButtonName = "FilmGrants";
         public static readonly Vector2 PersonButtonPos = new Vector2(-100f, -244f), PersonButtonSize = new Vector2(440f, 56f);
         public static readonly Vector2 PersonCancelPos = new Vector2(240f, -244f), PersonCancelSize = new Vector2(200f, 56f);
         public static readonly Vector2 OverlayPos = new Vector2(0f, -215f), OverlaySize = new Vector2(820f, 290f);
@@ -236,6 +236,18 @@ namespace KominkaHillside.Editor
             var accept = KD_ShopSetupEditor.EnsureButton(p.travelMapPage.transform, FilmAcceptName, FilmAcceptPos, FilmAcceptSize, KD_UiSpriteEditor.ActionNeutral, c.font, KD_TreatPouch.WordFilmAcceptOn, pb, nameof(KD_TreatPouch._FilmToggleAccept), sb);
             var acceptLabel = LabelOf(accept); acceptLabel.fontSize = 20f; acceptLabel.enableAutoSizing = true; acceptLabel.fontSizeMin = 12f; acceptLabel.fontSizeMax = 20f; EditorUtility.SetDirty(acceptLabel);
             accept.SetActive(false);
+            // ---- Page_Walk: [撮影を許可中 (n)], its own button (Codex review 2: reachable while a request is pending). Saved at the pending slot
+            // (266x72), hidden; RedrawTravel makes the row three 174-wide buttons when both are up. The label stretches with the button ----
+            if (!KH_WalkTabLayoutEditor.IsApplied(p)) throw new InvalidOperationException("the two-column walk tab (Course/120) is required for " + FilmGrantsButtonName);
+            var walk = p.tabPages[KD_TreatPouch.TabWalk].transform;
+            var grantsBtn = KD_ShopSetupEditor.EnsureButton(walk, FilmGrantsButtonName, KH_WalkTabLayoutEditor.PendingPos, KH_WalkTabLayoutEditor.PendingSize, new Color(.30f, .42f, .52f), c.font,
+                KD_TreatPouch.WordFilmGrantsButton.Replace("{0}", "1"), pb, nameof(KD_TreatPouch._FilmGrantsOpen), sb);
+            var gl = LabelOf(grantsBtn);
+            var glr = gl.rectTransform; glr.anchorMin = Vector2.zero; glr.anchorMax = Vector2.one; glr.pivot = new Vector2(.5f, .5f); glr.anchoredPosition = Vector2.zero; glr.sizeDelta = new Vector2(-16f, -4f);
+            gl.enableAutoSizing = true; gl.fontSizeMax = 22f; gl.fontSize = 22f; gl.fontSizeMin = 12f; gl.enableWordWrapping = true; EditorUtility.SetDirty(gl);
+            if (p.travelJoinPendingButton != null && p.travelJoinPendingButton.transform.parent == walk) grantsBtn.transform.SetSiblingIndex(p.travelJoinPendingButton.transform.GetSiblingIndex() + 1);
+            grantsBtn.SetActive(false);
+            p.filmGrantsButton = grantsBtn; p.filmGrantsButtonLabel = gl;
             // ---- Page_Settings/FilmGrantsPage ----
             var page = KD_ShopSetupEditor.EnsureUiChild(p.settingsPage.transform, FilmGrantsPageName, Vector2.zero, new Vector2(KD_TreatSetupEditor.PanelWidth, KD_TreatSetupEditor.PanelHeight));
             var back = KD_ShopSetupEditor.EnsureButton(page.transform, "Back", new Vector2(450f, 164f), new Vector2(220f, 44f), KD_UiSpriteEditor.ActionNeutral, c.font, "もどる", pb, nameof(KD_TreatPouch._FilmGrantsBack), sb);
@@ -395,7 +407,7 @@ namespace KominkaHillside.Editor
                     if (pouch != null)
                     {
                         FitCheck(pouch.filmAcceptLabel, KD_TreatPouch.WordFilmAcceptOff, "map page film toggle");
-                        FitCheck(pouch.travelJoinPendingLabel, KD_TreatPouch.WordFilmGrantsButton.Replace("{0}", "4"), "walk tab [撮影を許可中]");
+                        FitCheck(pouch.filmGrantsButtonLabel, KD_TreatPouch.WordFilmGrantsButton.Replace("{0}", "4"), "walk tab [撮影を許可中] (266 wide; the 174-wide three-button row is checked by the harness V6 case 21)");
                         FitCheck(pouch.filmGrantsNote, KD_TreatPouch.WordFilmGrantsNote, "grants page note");
                         if (pouch.filmGrantLabels != null && pouch.filmGrantLabels.Length > 0) FitCheck(pouch.filmGrantLabels[0], "VRChatUser12345\n" + KD_TreatPouch.WordFilmRowWaiting, "grants row");
                     }
@@ -449,9 +461,19 @@ namespace KominkaHillside.Editor
                             && p.filmGrantLabels != null && p.filmGrantLabels.Length == KH_TravelMailbox.FilmSlots && p.filmGrantLabels[k] != null && p.filmGrantLabels[k].name == "Row" + k, "grants row " + k + " wired");
                     }
                 }
-                foreach (var field in new[] { "filmAcceptButton", "filmGrantsPage", "filmGrantLabels", "filmStopButtons", "extraSettingsPages" })
+                foreach (var field in new[] { "filmAcceptButton", "filmGrantsPage", "filmGrantLabels", "filmStopButtons", "extraSettingsPages", "filmGrantsButton", "filmGrantsButtonLabel" })
                     Check(pb != null && pb.publicVariables.TryGetVariableValue(field, out object fv) && fv != null, "pouch backing " + field);
-                if (p.travelJoinPendingButton != null) CheckEvt(Check, p.travelJoinPendingButton, pb, "_TravelShowNotice", "walk tab pending / [撮影を許可中] (one button, two meanings)");
+                if (p.travelJoinPendingButton != null) CheckEvt(Check, p.travelJoinPendingButton, pb, "_TravelShowNotice", "walk tab [申し込み 1 件] (the notice only)");
+                var walkPage = p.tabPages != null && p.tabPages.Length > KD_TreatPouch.TabWalk ? p.tabPages[KD_TreatPouch.TabWalk] : null;
+                Check(p.filmGrantsButton != null && walkPage != null && p.filmGrantsButton.transform.parent == walkPage.transform && !p.filmGrantsButton.activeSelf && p.filmGrantsButton.name == FilmGrantsButtonName, "walk tab [撮影を許可中] is its own button under Page_Walk, hidden at start (reachable while a request is pending)");
+                if (p.filmGrantsButton != null)
+                {
+                    CheckEvt(Check, p.filmGrantsButton, pb, "_FilmGrantsOpen", "walk tab [撮影を許可中]");
+                    var gr = (RectTransform)p.filmGrantsButton.transform; var gl = p.filmGrantsButtonLabel;
+                    Check(Vector2.Distance(gr.anchoredPosition, KH_WalkTabLayoutEditor.PendingPos) < 0.5f && Vector2.Distance(gr.sizeDelta, KH_WalkTabLayoutEditor.PendingSize) < 0.5f, "[撮影を許可中] saved at the pending slot " + KH_WalkTabLayoutEditor.PendingPos);
+                    Check(gl != null && gl.transform.parent == gr && gl.rectTransform.anchorMin == Vector2.zero && gl.rectTransform.anchorMax == Vector2.one && gl.enableAutoSizing, "[撮影を許可中] label stretches with the button (174 / 266 at runtime) and auto-sizes");
+                    Check(Mathf.Abs(KD_TreatPouch.FilmThirdX0 - KD_TreatPouch.FilmThirdWidth / 2f - 10f) < 0.5f && Mathf.Abs(KD_TreatPouch.FilmThirdX2 + KD_TreatPouch.FilmThirdWidth / 2f - 550f) < 0.5f && Mathf.Abs(KD_TreatPouch.FilmPendingX - KH_WalkTabLayoutEditor.PendingPos.x) < 0.5f, "three-button row fills the right column (x 10..550) and the pending slot constant matches the layout");
+                }
             }
             // ---- source rules (the permission's logic) ----
             string film = File.Exists("Assets/KominkaHillside/Scripts/KH_TravelMailbox.Film.cs") ? File.ReadAllText("Assets/KominkaHillside/Scripts/KH_TravelMailbox.Film.cs") : "";
@@ -464,6 +486,9 @@ namespace KominkaHillside.Editor
             Check(Regex.IsMatch(main, @"_JoinCancelable\(\)[\s\S]{0,160}_outKind != KindFilm") && Regex.IsMatch(main, @"_WaitingFor\(\) \{ return _outKind == KindFilm \? -1 : _outTo; \}"), "the join cancel / waiting display never treats a film request as a join (§13.6)");
             Check(Regex.IsMatch(main, @"kind == KindFilm \? !filmAccepting : !accepting"), "a film request is refused by filmAccepting (not the join toggle)");
             Check(film.Contains("[UdonSynced] public int[] filmGrantIds = new int[] { -1, -1, -1, -1 };") && film.Contains("[UdonSynced] public int[] filmGrantSeqs = new int[] { 0, 0, 0, 0 };"), "synced arrays initialised at declaration (length 4)");
+            string camSrc = File.ReadAllText("Assets/KominkaHillside/Scripts/KH_VideoCamera.cs");
+            Check(Regex.IsMatch(camSrc, @"if \(_personLive && !PersonStillUsable\(\)\) PersonDrop\(\);\s*if \(now < _nextRender\) return;"), "the person picture is checked every frame before the render-tick wait and the fade return (Codex review 1)");
+            Check(Regex.IsMatch(film, @"void FilmClear\(\)[\s\S]{0,500}_filmListener\.SendCustomEvent\(""_OnFilmEnded""\)"), "every session end tells the camera (_OnFilmEnded)");
         }
     }
 }

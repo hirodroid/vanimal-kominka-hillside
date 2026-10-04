@@ -22,6 +22,11 @@ namespace KominkaHillside.Editor
     /// replies 1 (the notice shows the film buttons, then the 4 s after-line); the grants page says 撮影中 once the puppet's declaration matches; [やめてもらう]
     /// clears the row and sends FilmRevoked; EndFilm with another seq keeps the row, with the row's seq removes it; an unstarted row survives 5 s and is
     /// swept between 20 and 30 s.
+    /// Codex review 3 (2026-10-04): answers go through the real sender / seq check (_DebugAnswerFromNow). 19-21: the picture is off the monitor and the
+    /// RecordSnap the frame after the grant ends - between render ticks, during the (simulated) fade, and in the same call when the mailbox ends the
+    /// session. 22: another id / another seq / a box not owned by the subject - no pose read. 23: while pending, an old-seq yes and a third player's
+    /// yes / revoke change nothing. 24: CancelJoin before / after [いいよ] leaves no row. 25: [撮影を許可中] opens the page and [やめてもらう] works
+    /// while another request is pending (three 174-wide buttons fit). 26: two film requests at once, film ⇄ join replacement. 27: crossing.
     /// Not proven here: real event order / latency, Quest and phone input, the 60 s away rule (too long), PlayerData persistence of filmAccepting.
     /// </summary>
     public static partial class KH_VideoHarnessEditor
@@ -63,7 +68,13 @@ namespace KominkaHillside.Editor
         static int OutSeq() { return V6<int>(v6Box, "_outSeq"); }
         static int Reads() { return Get<int>("_personReads"); }
         static void Table(UdonBehaviour box, int id, int seq) { box.SetProgramVariable("filmGrantIds", new[] { id, -1, -1, -1 }); box.SetProgramVariable("filmGrantSeqs", new[] { seq, 0, 0, 0 }); }
-        static void Answer(int code) { v6Box.SetProgramVariable("debugAnswerCode", code); v6Box.SendCustomEvent("_DebugAnswerNow"); }
+        /// <summary>The puppet's answer to the last asked seq, through the real AnsJoin check (sender == pending target, seq == pending seq).</summary>
+        static void Answer(int code) { AnswerFrom(v6Remote.playerId, v6SeqA, code); }
+        static void AnswerFrom(int from, int seq, int code)
+        {
+            v6Box.SetProgramVariable("debugAnswerCode", code); v6Box.SetProgramVariable("debugIncomingFrom", from); v6Box.SetProgramVariable("debugIncomingSeq", seq);
+            v6Box.SendCustomEvent("_DebugAnswerFromNow");
+        }
         static void Incoming(int from, int kind, int seq)
         {
             v6Box.SetProgramVariable("_closedAt", -1000f);   // the 20 s gap after the last notice (simulated: shortened between steps)
@@ -234,6 +245,8 @@ namespace KominkaHillside.Editor
                 Expect(V6<int>(v6Box, "filmResultCode") == KH_TravelMailbox.FilmNoTable && V6<int>(v6Box, "debugFilmSentCount") == v6Sent + 1 && V6<int>(v6Box, "debugFilmSentKind") == 0, "9: reported 'could not confirm', EndFilm sent");
             }));
 
+            AddFilmerExtras();   // Codex review 3 (a)(b)(c): KH_VideoHarnessEditor.Permit.cs, below
+
             // ---- 10. the puppet leaves while in use ----
             AddAsk("10");
             AddInUse("10");
@@ -298,7 +311,7 @@ namespace KominkaHillside.Editor
                 Expect(board.activeSelf && !act("Button6") && !act("Button2") && V6<float>(v6Notice, "_afterUntil") > Time.time, "15: the 4 s after-line is up without buttons");
                 // ---- 16. the grants page: 撮影中 once the puppet declares; [やめてもらう] ----
                 v6RBox.SetProgramVariable("filmTargetId", v6Me); v6RBox.SetProgramVariable("filmSeq", 103);
-                v6Pouch.SendCustomEvent("_TravelShowNotice");   // no pending request + a row: opens 撮影を許した人
+                v6Pouch.SendCustomEvent("_FilmGrantsOpen");   // the walk tab's [撮影を許可中] opens 撮影を許した人
                 v6Pouch.TryGetProgramVariable("filmGrantLabels", out object lo);
                 var row0 = lo is Array la && la.Length > 0 ? la.GetValue(0) as TMP_Text : null;
                 Expect(row0 != null && row0.gameObject.activeSelf && row0.text.Contains(KominkaDogRun.KD_TreatPouch.WordFilmRowActive), "16: the row says 撮影中 (" + (row0 != null ? row0.text.Replace("\n", " / ") : "-") + ")");
@@ -320,12 +333,16 @@ namespace KominkaHillside.Editor
                 Expect(V6<int[]>(v6Box, "filmGrantIds")[0] == v6Remote.playerId, "17: EndFilm with another seq keeps the row");
                 Ended(v6Remote.playerId, 104);
                 Expect(V6<int[]>(v6Box, "filmGrantIds")[0] == -1, "17: EndFilm with the row's seq removes it");
+            }));
+            AddSubjectExtras();   // Codex review 3 (d)(e)(f): KH_VideoHarnessEditor.Permit.cs, below
+            steps.Add(Do(C6, () =>
+            {
                 // ---- 18. an unstarted row: kept at 5 s, swept by 30 s ----
-                Incoming(v6Remote.playerId, KH_TravelMailbox.KindFilm, 105);
+                Incoming(v6Remote.playerId, KH_TravelMailbox.KindFilm, 120);   // above every seq this puppet sent in 13-17 and 24-26
                 v6Mark = Time.realtimeSinceStartup;
             }));
             steps.Add(Until(C6, () => Time.realtimeSinceStartup - v6Mark > 0.6f, 2, "timer"));
-            steps.Add(Do(C6, () => { v6Notice.SendCustomEvent("_FilmYes"); v6Mark = Time.realtimeSinceStartup; Expect(V6<int[]>(v6Box, "filmGrantIds")[0] == v6Remote.playerId, "18: row (puppet, 105) written"); }));
+            steps.Add(Do(C6, () => { v6Notice.SendCustomEvent("_FilmYes"); v6Mark = Time.realtimeSinceStartup; Expect(V6<int[]>(v6Box, "filmGrantIds")[0] == v6Remote.playerId, "18: row (puppet, 120) written"); }));
             steps.Add(Until(C6, () => Time.realtimeSinceStartup - v6Mark > 5f, 6, "timer"));
             steps.Add(Do(C6, () => Expect(V6<int[]>(v6Box, "filmGrantIds")[0] == v6Remote.playerId, "18: a just-written row is not swept (5 s)")));
             steps.Add(Until(C6, () => V6<int[]>(v6Box, "filmGrantIds")[0] == -1, 36, "18: the unstarted row was not swept within 36 s"));
@@ -338,6 +355,231 @@ namespace KominkaHillside.Editor
             }));
         }
 
+        // ================================================================ Codex review 3 (2026-10-04)
+
+        static VRCPlayerApi v6Other;
+        static UdonBehaviour v6OBox, v6Fade;
+        static int v6Frame, v6OSeq;
+
+        static VRCPlayerApi V6FindOther(int exclude)
+        {
+            var all = new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()]; VRCPlayerApi.GetPlayers(all);
+            return all.FirstOrDefault(p => p != null && !p.isLocal && p.playerId != exclude);
+        }
+
+        /// <summary>A second puppet next to v6Remote (a third party / a second requester).</summary>
+        static void AddSpawnOther(string name)
+        {
+            steps.Add(Do(C6, () => { v6Other = null; v6OBox = null; v6OSeq = 0; ClientSimMain.SpawnRemotePlayer(name); }));
+            steps.Add(Until(C6, () => (v6Other = V6FindOther(v6Remote != null && Utilities.IsValid(v6Remote) ? v6Remote.playerId : -1)) != null && (v6OBox = V6BoxOf(v6Other)) != null, 6,
+                "second ClientSim puppet '" + name + "' or its mailbox did not appear"));
+        }
+
+        static bool PictureOff()
+        {
+            var snapR = snap.GetComponent<Renderer>();
+            return !Get<bool>("_pictureShown") && (screen.sharedMaterial == null || screen.sharedMaterial.mainTexture == null) && (snapR.sharedMaterial == null || snapR.sharedMaterial.mainTexture == null);
+        }
+
+        /// <summary>In use with the puppet AND its picture attached to the monitor and the RecordSnap.</summary>
+        static void AddLive(string tag)
+        {
+            AddAsk(tag);
+            AddInUse(tag);
+            steps.Add(Until(C6, () => Get<bool>("_pictureShown"), 3, tag + ": the puppet's picture was never attached"));
+        }
+
+        /// <summary>(a) the picture goes the frame after the permission ends, also while waiting for the next render tick and during the fade;
+        /// the mailbox's end of a session detaches it in the same call. (b) another owner / another id / another seq in the table: no pose read.
+        /// (c) while a new request is pending, an old-seq answer and a third party's answer / revoke change nothing.</summary>
+        static void AddFilmerExtras()
+        {
+            // ---- 19 (a). revoked while waiting for the next render tick ----
+            AddLive("19");
+            steps.Add(Do(C6, () =>
+            {
+                uVideo.SetProgramVariable("_nextRender", Time.time + 5f);   // the camera is now between ticks for 5 s
+                Table(v6RBox, -1, 0); v6Reads = Reads(); v6Frame = Time.frameCount;
+            }));
+            steps.Add(Until(C6, () => Time.frameCount > v6Frame, 2, "frame"));
+            steps.Add(Do(C6, () =>
+            {
+                Expect(PictureOff() && !Get<bool>("_personLive"), "19: the frame after the grant row went (between render ticks), the picture is off the monitor and the RecordSnap");
+                Expect(Reads() == v6Reads, "19: no pose read after the row went");
+                uVideo.SetProgramVariable("_nextRender", Time.time);
+            }));
+            steps.Add(Until(C6, () => Phase() == KH_TravelMailbox.FilmNone, 2, "19: the mailbox did not end the session after the row went"));
+            // ---- 20 (a). revoked during the travel fade ----
+            AddLive("20");
+            steps.Add(Do(C6, () =>
+            {
+                v6Fade = UnityEngine.Object.FindObjectsOfType<UdonBehaviour>(true).FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_TravelFade");
+                if (v6Fade == null) { Note("20: no KH_TravelFade in the scene; the fade part is skipped"); Table(v6RBox, -1, 0); v6Frame = Time.frameCount; return; }
+                HoldFade();   // simulated: black (the camera's fade branch returns before drawing)
+                Note("simulated: KH_TravelFade._state = 2 written every frame of case 20");
+                v6Frame = Time.frameCount;
+            }));
+            steps.Add(Until(C6, () => { HoldFade(); return Time.frameCount > v6Frame + 5; }, 2, "frame"));
+            steps.Add(Do(C6, () =>
+            {
+                if (v6Fade != null) Expect(Get<int>("_state") == KH_VideoCamera.StateFade, "20: the camera is in its fade branch");
+                Table(v6RBox, -1, 0); v6Reads = Reads(); v6Frame = Time.frameCount;
+            }));
+            steps.Add(Until(C6, () => { HoldFade(); return Time.frameCount > v6Frame; }, 2, "frame"));
+            steps.Add(Do(C6, () =>
+            {
+                Expect(PictureOff() && !Get<bool>("_personLive") && Reads() == v6Reads, "20: during the fade, the frame after the row went, the picture is off and nothing was read");
+                if (v6Fade != null) { v6Fade.SetProgramVariable("_state", 0); v6Fade.SetProgramVariable("_alpha", 0f); }
+            }));
+            steps.Add(Until(C6, () => Phase() == KH_TravelMailbox.FilmNone, 2, "20: the mailbox did not end the session after the row went"));
+            // ---- 21 (a). the mailbox ends the session: detached in the same call (_OnFilmEnded), even between ticks ----
+            AddLive("21");
+            steps.Add(Do(C6, () =>
+            {
+                uVideo.SetProgramVariable("_nextRender", Time.time + 5f);
+                Revoked(v6Remote.playerId, v6SeqA);   // the table is still intact: only the event ends it
+                Expect(Phase() == KH_TravelMailbox.FilmNone && PictureOff() && !Get<bool>("_personLive"), "21: FilmRevoked → FilmClear → _OnFilmEnded detached the picture in the same call");
+                uVideo.SetProgramVariable("_nextRender", Time.time);
+                Table(v6RBox, -1, 0);
+            }));
+            // ---- 22 (b). the table names someone else / another seq; the box is not owned by the subject ----
+            foreach (var variant in new[] { "other id", "other seq", "other owner" })
+            {
+                string v = variant;
+                AddLive("22 " + v);
+                steps.Add(Do(C6, () =>
+                {
+                    v6Reads = Reads();
+                    if (v == "other id") Table(v6RBox, v6Me + 1000, v6SeqA);
+                    else if (v == "other seq") Table(v6RBox, v6Me, v6SeqA + 7);
+                    else { Table(v6Box, v6Me, v6SeqA); v6Box.SetProgramVariable("_filmBox", v6Box); }   // a table with (me, seq) but in a box owned by me, not the subject
+                    v6Mark = Time.realtimeSinceStartup;
+                }));
+                steps.Add(Until(C6, () => Time.realtimeSinceStartup - v6Mark > 0.5f, 2, "timer"));
+                steps.Add(Do(C6, () =>
+                {
+                    Expect(Reads() == v6Reads && !Get<bool>("_personLive") && Phase() == KH_TravelMailbox.FilmNone, "22: " + v + ": no pose read, the session ended");
+                    Table(v6RBox, -1, 0); Table(v6Box, -1, 0);
+                }));
+            }
+            // ---- 23 (c). pending: an old-seq answer, a third party's answer / revoke ----
+            AddSpawnOther("KH_FilmThird");
+            AddAsk("23");
+            steps.Add(Do(C6, () =>
+            {
+                AnswerFrom(v6Remote.playerId, v6SeqA - 1, KH_TravelMailbox.CodeYes);
+                Expect(Phase() == KH_TravelMailbox.FilmPending && V6<int>(v6Box, "_outTo") == v6Remote.playerId, "23: a yes with an older seq is ignored");
+                AnswerFrom(v6Other.playerId, v6SeqA, KH_TravelMailbox.CodeYes);
+                Expect(Phase() == KH_TravelMailbox.FilmPending, "23: a yes from a third player with the right seq is ignored");
+                Revoked(v6Other.playerId, v6SeqA);
+                Expect(Phase() == KH_TravelMailbox.FilmPending, "23: a revoke from a third player is ignored");
+                Note("23: the sender identity itself (NetworkCalling.CallingPlayer) is only exercised by real networking: two clients");
+                uVideo.SendCustomEvent("_PersonCancel");
+                Expect(Phase() == KH_TravelMailbox.FilmNone, "23: [取り消す] ended it");
+                ClientSimMain.RemovePlayer(v6Other); v6Other = null; v6OBox = null;
+            }));
+            steps.Add(Until(C6, () => V6FindOther(v6Remote.playerId) == null, 3, "the third puppet did not leave"));
+        }
+
+        /// <summary>(d) CancelJoin vs [いいよ] in both orders; (e) the grants page from the walk tab while another request is pending;
+        /// (f) two film requests at once, kind replacement and crossing (one client + puppets; real order is for two clients).</summary>
+        static void AddSubjectExtras()
+        {
+            // ---- 24 (d). cancel then yes / yes then cancel ----
+            steps.Add(Do(C6, () =>
+            {
+                Incoming(v6Remote.playerId, KH_TravelMailbox.KindFilm, 110);
+                v6Box.SendCustomEvent("_DebugIncomingCancelNow");   // CancelJoin(110) first
+                v6Mark = Time.realtimeSinceStartup;
+            }));
+            steps.Add(Until(C6, () => Time.realtimeSinceStartup - v6Mark > 0.6f, 2, "timer"));
+            steps.Add(Do(C6, () =>
+            {
+                v6Notice.SendCustomEvent("_FilmYes");
+                Expect(V6<int>(v6Box, "_inFrom") == -1 && V6<int[]>(v6Box, "filmGrantIds").All(x => x == -1), "24: cancel before [いいよ]: no pending, no row");
+                Incoming(v6Remote.playerId, KH_TravelMailbox.KindFilm, 111);
+                v6Mark = Time.realtimeSinceStartup;
+            }));
+            steps.Add(Until(C6, () => Time.realtimeSinceStartup - v6Mark > 0.6f, 2, "timer"));
+            steps.Add(Do(C6, () =>
+            {
+                v6Notice.SendCustomEvent("_FilmYes");
+                Expect(V6<int[]>(v6Box, "filmGrantIds")[0] == v6Remote.playerId, "24: [いいよ] wrote the row");
+                v6Box.SetProgramVariable("debugIncomingSeq", 111); v6Box.SendCustomEvent("_DebugIncomingCancelNow");   // CancelJoin(111) crossing the yes
+                Expect(V6<int[]>(v6Box, "filmGrantIds").All(x => x == -1), "24: cancel after [いいよ]: the row is removed");
+            }));
+            // ---- 25 (e). a row + another pending request: [撮影を許可中] still opens the page and [やめてもらう] works ----
+            AddSpawnOther("KH_FilmSecond");
+            steps.Add(Do(C6, () => { Incoming(v6Remote.playerId, KH_TravelMailbox.KindFilm, 112); v6Mark = Time.realtimeSinceStartup; }));
+            steps.Add(Until(C6, () => Time.realtimeSinceStartup - v6Mark > 0.6f, 2, "timer"));
+            steps.Add(Do(C6, () =>
+            {
+                v6Notice.SendCustomEvent("_FilmYes");
+                Incoming(v6Other.playerId, KH_TravelMailbox.KindJoin, ++v6OSeq);
+                Expect(V6<int>(v6Box, "_inFrom") == v6Other.playerId && V6<int[]>(v6Box, "filmGrantIds")[0] == v6Remote.playerId, "25: a row for the puppet and a pending join from the second puppet");
+                v6Pouch.SendCustomEvent("_FilmGrantsBack");   // the walk tab (RedrawTravel lays out the bottom row)
+            }));
+            steps.Add(Until(C6, () => V6Active(v6Pouch, "filmGrantsButton") && V6Active(v6Pouch, "travelJoinPendingButton"), 3,
+                "25: the walk tab does not show both [申し込み 1 件] and [撮影を許可中] (the menu may need to be open for RedrawTravel)"));
+            steps.Add(Do(C6, () =>
+            {
+                var g = (RectTransform)V6<GameObject>(v6Pouch, "filmGrantsButton").transform; var pend = (RectTransform)V6<GameObject>(v6Pouch, "travelJoinPendingButton").transform;
+                Expect(Mathf.Abs(g.sizeDelta.x - KominkaDogRun.KD_TreatPouch.FilmThirdWidth) < 0.5f && Mathf.Abs(pend.sizeDelta.x - KominkaDogRun.KD_TreatPouch.FilmThirdWidth) < 0.5f, "25: the bottom row is three 174-wide buttons");
+                foreach (var t in new[] { g, pend }) { var l = t.GetComponentInChildren<TMP_Text>(); if (l != null) { l.ForceMeshUpdate(); Expect(!l.isTextOverflowing, "25: '" + l.text + "' fits at 174"); } }
+                v6Pouch.SendCustomEvent("_FilmGrantsOpen");
+                v6Pouch.TryGetProgramVariable("filmGrantsPage", out object gp);
+                Expect(gp is GameObject go && go.activeInHierarchy, "25: 撮影を許した人 opened while the join request is still pending");
+                v6Pouch.SendCustomEvent("_FilmStop0");
+                Expect(V6<int[]>(v6Box, "filmGrantIds").All(x => x == -1) && V6<int>(v6Box, "_inFrom") == v6Other.playerId, "25: [やめてもらう] worked; the pending join is untouched");
+                v6Box.SetProgramVariable("debugIncomingFrom", v6Other.playerId); v6Box.SetProgramVariable("debugIncomingSeq", v6OSeq); v6Box.SendCustomEvent("_DebugIncomingCancelNow");
+                // ---- 26 (f). two film requests at once: the second is busy (one pending) ----
+                Incoming(v6Remote.playerId, KH_TravelMailbox.KindFilm, 113);
+                Incoming(v6Other.playerId, KH_TravelMailbox.KindFilm, ++v6OSeq);
+                Expect(V6<int>(v6Box, "_inFrom") == v6Remote.playerId && V6<int>(v6Box, "debugLastReplyCode") == KH_TravelMailbox.CodeBusy, "26: a second film request while one is pending gets code 2");
+                // kind replacement by the same sender: film → join is taken (join accepting ON)
+                Incoming(v6Remote.playerId, KH_TravelMailbox.KindJoin, 114);
+                Expect(V6<int>(v6Box, "_inFrom") == v6Remote.playerId && V6<int>(v6Box, "_inKind") == KH_TravelMailbox.KindJoin, "26: film → join replacement from the same sender");
+                // join → film while film accepting is OFF: refused (code 3) and the old pending closes
+                v6Box.SendCustomEvent("_ToggleFilmAccepting");
+                Incoming(v6Remote.playerId, KH_TravelMailbox.KindFilm, 115);
+                Expect(V6<int>(v6Box, "debugLastReplyCode") == KH_TravelMailbox.CodePaused && V6<int>(v6Box, "_inFrom") == -1, "26: join → film replacement refused while film accepting is OFF");
+                v6Box.SendCustomEvent("_ToggleFilmAccepting");
+                Expect(V6<bool>(v6Box, "filmAccepting"), "26: film accepting ON again");
+                // ---- 27 (f). crossing: my film request to the second puppet meets its join to me ----
+                Open(); uVideo.SendCustomEvent("_Mode" + KH_VideoCamera.ModeSelfFollow);
+                var keep = v6Remote; var keepBox = v6RBox; v6Remote = v6Other; v6RBox = v6OBox; v6Other = keep; v6OBox = keepBox;   // ask the second puppet (the first is in its 30 s wait)
+            }));
+            AddAsk("27");
+            steps.Add(Do(C6, () =>
+            {
+                Incoming(v6Remote.playerId, KH_TravelMailbox.KindJoin, ++v6OSeq);   // the second puppet's join crosses my film request
+                bool iWin = v6Me < v6Remote.playerId;
+                if (iWin) Expect(Phase() == KH_TravelMailbox.FilmPending && V6<int>(v6Box, "debugLastReplyCode") == KH_TravelMailbox.CodeBusy, "27: crossing, smaller id (me) wins: my film request stays, the join gets code 2");
+                else Expect(Phase() == KH_TravelMailbox.FilmNone && V6<int>(v6Box, "filmResultCode") == KH_TravelMailbox.CrossYield, "27: crossing, I yield: my film request ended (CrossYield)");
+                if (iWin)
+                {
+                    v6Box.SetProgramVariable("debugCrossInvert", 1);
+                    Incoming(v6Remote.playerId, KH_TravelMailbox.KindJoin, ++v6OSeq);
+                    Expect(Phase() == KH_TravelMailbox.FilmNone && V6<int>(v6Box, "filmResultCode") == KH_TravelMailbox.CrossYield && V6<int>(v6Box, "_inFrom") == v6Remote.playerId,
+                        "27: crossing inverted: my film request yields (ended, CrossYield) and the join is pending");
+                    v6Box.SetProgramVariable("debugCrossInvert", 0);
+                }
+                v6Box.SetProgramVariable("debugIncomingFrom", v6Remote.playerId); v6Box.SetProgramVariable("debugIncomingSeq", v6OSeq); v6Box.SendCustomEvent("_DebugIncomingCancelNow");
+                Close();
+                var keep = v6Remote; v6Remote = v6Other; v6RBox = v6OBox;   // back to the first puppet for case 18
+                ClientSimMain.RemovePlayer(keep); v6Other = null; v6OBox = null;
+                Note("not made here (two real clients): simultaneous requests arriving over the network, a real CancelJoin / AnsJoin race, crossing with real CallingPlayer");
+            }));
+        }
+
+        /// <summary>Simulated black of the travel fade (state 2, and the black time kept fresh so its 3 s release never runs).</summary>
+        static void HoldFade() { if (v6Fade == null) return; v6Fade.SetProgramVariable("_state", 2); v6Fade.SetProgramVariable("_blackAt", Time.time); }
+
+        static bool V6Active(UdonBehaviour u, string field)
+        {
+            return u != null && u.TryGetProgramVariable(field, out object o) && o is GameObject g && g != null && g.activeSelf;
+        }
+
         /// <summary>Puts my mailbox back (hooks 0, film ON, empty table), closes the notice / grants page, removes the puppets. Safe to call twice.</summary>
         static void V6Cleanup()
         {
@@ -345,11 +587,13 @@ namespace KominkaHillside.Editor
             v6Active = false;
             if (v6Box != null)
             {
-                foreach (var hook in new[] { "debugJoinLoopback", "debugAnswerCode", "debugIncomingFrom", "debugIncomingKind", "debugIncomingSeq" }) v6Box.SetProgramVariable(hook, 0);
+                foreach (var hook in new[] { "debugJoinLoopback", "debugAnswerCode", "debugIncomingFrom", "debugIncomingKind", "debugIncomingSeq", "debugCrossInvert" }) v6Box.SetProgramVariable(hook, 0);
+                v6Box.SetProgramVariable("_filmBox", null);
                 v6Box.SetProgramVariable("filmAccepting", true);
                 Table(v6Box, -1, 0);
                 v6Box.SetProgramVariable("_filmRows", 0);
             }
+            if (v6Fade != null) { v6Fade.SetProgramVariable("_state", 0); v6Fade.SetProgramVariable("_alpha", 0f); }
             if (v6Notice != null) v6Notice.SendCustomEvent("_Hide");
             if (v6Pouch != null) v6Pouch.SendCustomEvent("_FilmGrantsBack");
             var all = new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()]; VRCPlayerApi.GetPlayers(all);

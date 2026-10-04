@@ -30,7 +30,7 @@ namespace KominkaHillside.Editor
     /// 呼んだ人が抜けたら落ちること (Owner の交代)、Quest・スマホ。</summary>
     public static partial class KH_CourseWalkHarnessEditor
     {
-        [MenuItem("Tools/KominkaHillside/Course/97d - Walk Harness Toy Recall Hover (HV1-HV4, fresh profile)")]
+        [MenuItem("Tools/KominkaHillside/Course/97d - Walk Harness Toy Recall Hover (HV1-HV8, fresh profile)")]
         public static void ToyHoverHarness() { BeginCommerce(CmSetToyHover); }
 
         class HvToy { public int dog, kind; public Vector3 at; public float radius; public string what; }
@@ -201,6 +201,193 @@ namespace KominkaHillside.Editor
                 CmExpect(t.position.y < y0 - .3f, "disc 0 fell (" + (y0 - t.position.y).ToString("F2") + " m)");
                 CmNote("ball 5 and disc 0: the pickup ends the hover (ToyRecall's mark cleared within one look), they fall with gravity");
             }));
+
+            MakeToyHoverReviewCases();
+        }
+
+        // ============================================================
+        // Codex review 2026-10-04: HV5 (1) / HV6 (2) / HV7 (3) / HV8 (4)
+        // ============================================================
+        //   HV5-water-chase-call  犬 1 のボールを川に浮かせて投げ (_OnBallThrown、Owner = 自分)、犬が水中で追っている (Fetch 6) 間に呼ぶ →
+        //                         呼べて浮く。犬が追い続けている / 諦める間も 3 s 浮いたまま (呼ぶ前からの動作で浮かせを解かない)
+        //   HV6-no-ground         浮いているボールを地面の 8 m 上へ動かし (模擬)、時間切れを早める (模擬: _ballHoverUntil) → 「no ground below」、
+        //                         眠らず落ちる (1.5 s で 1 m 以上)、着地の settle なし
+        //   HV7-grab-after-land   時間切れで地面に下りた直後 (settle 中)、見回りの間隔より短いつかみ (_onPickup) と放しの速度 (模擬: 速度の書き込み)
+        //                         → 0.5 s 後も動いている (settle が速度を消さない)、settle が解ける
+        //   HV8-wall-post         コースの近くで探した壁に 0.5 m・55° で近づいて呼ぶ / 細い物 (幹・柱) の横を中心線がかすめる向きで呼ぶ →
+        //                         おもちゃが何にも重ならず、2 s 後も 0.02 m 以内
+        static void MakeToyHoverReviewCases()
+        {
+            cmReport.notCovered.Add("HV5: the dog's Owner on another client (its chase state reaching the caller late) -> 2 clients on a real instance");
+
+            // ---- HV5 ----
+            var s = CmCase("HV5-water-chase-call", true, 90);
+            var h5 = new HvToy { dog = 1, kind = KH_ToyRecall.KindBall };
+            UdonBehaviour f5 = null; Vector3 site5 = Vector3.zero, water5 = Vector3.zero;
+            s.Add(CmUntil(() => Get<int>(cmRecall, "_pendingRow") < 0, 6, () => "a previous call still pending"));
+            s.Add(CmDo(() =>
+            {
+                if (!HvRiverSite(out site5, out water5)) throw new InvalidOperationException("No bank site (as HV3)");
+                CmTeleport(site5, water5 - site5);
+                f5 = Get<UdonBehaviour>(wander[h5.dog], "fetchController");
+                CmExpect(Get<int>(f5, "dogState") == 0, "dog 1 Fetch idle before the case");
+                holder = site5; PlaceDog(h5.dog, Networking.LocalPlayer.GetRotation());
+                var t = HvT(h5); var sync = t.GetComponent<VRC.SDK3.Components.VRCObjectSync>(); var rb = t.GetComponent<Rigidbody>();
+                if (sync != null) sync.SetKinematic(false);
+                float z = water5.z, hw = KH_CourseGroundEditor.HalfWidth(z); var r = KH_CourseGroundEditor.RiverAt(z);
+                float side = site5.x >= r.x ? 1f : -1f;
+                t.position = new Vector3(r.x + side * hw * .4f, r.y + .05f, z); if (sync != null) sync.FlagDiscontinuity();
+                if (rb != null && !rb.isKinematic) { rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero; }
+                CmNote("simulated: ball 1 put in the river at " + t.position.ToString("F2") + " (near half of the water), dog 1 placed by me on the bank " + site5.ToString("F2"));
+            }));
+            s.Add(CmUntil(() => { var rb = HvT(h5).GetComponent<Rigidbody>(); return rb != null && !rb.useGravity && !rb.isKinematic; }, 3, () => "ball 1 does not float here (KH_RiverData._FloatsAt)"));
+            s.Add(CmDo(() => { f5.SendCustomEvent("_OnBallThrown"); CmNote("simulated: the throw is _OnBallThrown on dog 1's Fetch (Owner = me)"); }));
+            s.Add(CmUntil(() => Get<int>(f5, "dogState") == KominkaDogRun.KD_DogFetchController.StateWaterChase, 25, () => "dog 1 never chased the ball in the water (Fetch " + Get<int>(f5, "dogState") + ")"));
+            HvCallSteps(s, h5, false);
+            s.Add(CmDo(() => CmNote("called while dog 1 was in Fetch " + KominkaDogRun.KD_DogFetchController.StateWaterChase + " (now " + Get<int>(f5, "dogState") + ")")));
+            s.Add(CmWait(3));
+            s.Add(CmDo(() =>
+            {
+                HvExpectStill(h5, .02f);
+                CmNote("3 s later ball 1 still hovers (the dog's chase from before the call does not end it; dog Fetch " + Get<int>(f5, "dogState") + ")");
+            }));
+
+            // ---- HV6 ----
+            s = CmCase("HV6-no-ground", true, 60);
+            var h6 = new HvToy { dog = 4, kind = KH_ToyRecall.KindBall };
+            float y6 = 0f;
+            s.Add(CmDo(CmToGate));
+            s.Add(CmWait(1));
+            HvCallSteps(s, h6, true);
+            s.Add(CmDo(() =>
+            {
+                var t = HvT(h6); var sync = t.GetComponent<VRC.SDK3.Components.VRCObjectSync>();
+                var p = t.position + Vector3.up * 8f;
+                CmExpect(!Physics.Raycast(p + Vector3.up * .1f, Vector3.down, 6.2f, (1 << 0) | (1 << 11), QueryTriggerInteraction.Ignore), "nothing within 6 m below the raised point " + p.ToString("F2"));
+                t.position = p; if (sync != null) sync.FlagDiscontinuity();
+                h6.at = p; y6 = p.y;
+                HvSetUntil(h6, Time.time + .3f);
+                CmNote("simulated: the hovering ball 4 moved 8 m up (no ground within the 6 m look) and its hover time cut to 0.3 s");
+            }));
+            s.Add(CmUntil(() => !HvHovering(h6), 2, () => "ball 4 hover did not end"));
+            s.Add(CmWait(1.5));
+            s.Add(CmDo(() =>
+            {
+                var t = HvT(h6); var rb = t.GetComponent<Rigidbody>();
+                CmExpect(hvLogs.Any(l => l.StartsWith("[KH_ToyRecall] hover timeout ball=4 no ground below")), "the no-ground timeout logged");
+                CmExpect(rb != null && rb.useGravity, "ball 4 gravity back");
+                CmExpect(y6 - t.position.y >= 1f, "ball 4 fell (" + (y6 - t.position.y).ToString("F2") + " m in 1.5 s), not asleep in the air");
+                CmExpect(Get<float[]>(cmRecall, "_ballLandSettle")[h6.dog] <= 0f, "no landing settle started");
+            }));
+
+            // ---- HV7 ----
+            s = CmCase("HV7-grab-after-land", true, 60);
+            var h7 = new HvToy { dog = 2, kind = KH_ToyRecall.KindBall };
+            Vector3 p7 = Vector3.zero;
+            s.Add(CmDo(CmToGate));
+            s.Add(CmWait(1));
+            HvCallSteps(s, h7, true);
+            s.Add(CmDo(() => { HvSetUntil(h7, Time.time + .3f); CmNote("simulated: ball 2 hover time cut to 0.3 s"); }));
+            s.Add(CmUntil(() => !HvHovering(h7) && Get<float[]>(cmRecall, "_ballLandSettle")[h7.dog] > Time.time + .5f, 2, () => "ball 2 did not land and settle"));
+            s.Add(CmDo(() =>
+            {
+                CmRefs(cmRecall, "balls")[h7.dog].SendCustomEvent("_onPickup");   // gravity is already on: only the pickup count shows it
+                var rb = HvT(h7).GetComponent<Rigidbody>();
+                rb.velocity = new Vector3(0f, 2.5f, 0f) + Networking.LocalPlayer.GetRotation() * Vector3.forward * 2f;
+                p7 = HvT(h7).position;
+                CmNote("simulated: a grab shorter than one look on the landed ball 2 (_onPickup) and the release velocity written (no _onDrop, so no Fetch)");
+            }));
+            s.Add(CmWait(.5));
+            s.Add(CmDo(() =>
+            {
+                float moved = Vector3.Distance(HvT(h7).position, p7);
+                CmExpect(moved >= .5f, "ball 2 kept the release velocity (" + moved.ToString("F2") + " m in 0.5 s)");
+                CmExpect(Get<float[]>(cmRecall, "_ballLandSettle")[h7.dog] <= 0f, "the landing settle ended at the pickup");
+            }));
+
+            // ---- HV8 ----
+            s = CmCase("HV8-wall-post", true, 60);
+            var h8w = new HvToy { dog = 5, kind = KH_ToyRecall.KindBall };
+            var h8p = new HvToy { dog = 0, kind = KH_ToyRecall.KindBall };
+            s.Add(CmDo(() =>
+            {
+                Vector3 stand, face; string what;
+                if (!HvFindObstacle(false, out stand, out face, out what)) throw new InvalidOperationException("No wall (>= 2 m wide, upright, at chest height) near the course nodes");
+                CmTeleport(stand, face);
+                CmNote("wall: " + what + ", standing " + stand.ToString("F2") + ", facing 55 deg off its normal");
+            }));
+            s.Add(CmWait(1));
+            HvCallSteps(s, h8w, false);
+            s.Add(CmDo(() => HvExpectClear(h8w)));
+            s.Add(CmWait(2));
+            s.Add(CmDo(() => { HvExpectStill(h8w, .02f); HvExpectClear(h8w); }));
+            s.Add(CmDo(() =>
+            {
+                Vector3 stand, face; string what;
+                if (!HvFindObstacle(true, out stand, out face, out what)) throw new InvalidOperationException("No post / trunk (<= 1.2 m wide, upright, at chest height) near the course nodes");
+                CmTeleport(stand, face);
+                CmNote("post: " + what + ", standing " + stand.ToString("F2") + ", the centre line passing 0.03 m beside it");
+            }));
+            s.Add(CmWait(1));
+            HvCallSteps(s, h8p, false);
+            s.Add(CmDo(() => HvExpectClear(h8p)));
+            s.Add(CmWait(2));
+            s.Add(CmDo(() => { HvExpectStill(h8p, .02f); HvExpectClear(h8p); CmNote("wall and post: the toy overlaps nothing and stays put 2 s"); }));
+        }
+
+        /// <summary>Simulated: the hover's end time of this toy (KH_ToyRecall heap; a copy of the array is written back).</summary>
+        static void HvSetUntil(HvToy h, float until)
+        {
+            string key = h.kind == KH_ToyRecall.KindBall ? "_ballHoverUntil" : "_discHoverUntil";
+            var a = (float[])Get<float[]>(cmRecall, key).Clone(); a[h.dog] = until; cmRecall.SetProgramVariable(key, a);
+        }
+
+        static void HvExpectClear(HvToy h)
+        {
+            var t = HvT(h);
+            CmExpect(!Physics.CheckSphere(t.position, h.radius * .98f, (1 << 0) | (1 << 11), QueryTriggerInteraction.Ignore), h.what + " overlaps nothing at " + t.position.ToString("F2"));
+        }
+
+        /// <summary>A wall (post = false: >= 2 m wide) or a post / trunk (post = true: <= 1.2 m wide), not the Terrain, upright at chest
+        /// height (1.35 m) within 4 m of a course node. Wall: stand 0.65 m from it, facing 50 deg off its normal (the shallow approach).
+        /// Post: stand so that the line ahead passes 0.03 m beside it at 0.6 m.</summary>
+        static bool HvFindObstacle(bool post, out Vector3 stand, out Vector3 face, out string what)
+        {
+            stand = face = Vector3.zero; what = null;
+            if (nodes == null) return false;
+            const float chest = 1.35f;
+            foreach (var n in nodes)
+                for (int k = 0; k < 16; k++)
+                {
+                    float a = k * 22.5f * Mathf.Deg2Rad;
+                    var dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                    RaycastHit hit; NavMeshHit nav;
+                    if (!Physics.Raycast(n + Vector3.up * chest, dir, out hit, 4f, (1 << 0) | (1 << 11), QueryTriggerInteraction.Ignore)) continue;
+                    if (hit.collider is TerrainCollider || Mathf.Abs(hit.normal.y) > .3f) continue;
+                    var b = hit.collider.bounds; float wide = Mathf.Max(b.size.x, b.size.z);
+                    if (post ? wide > 1.2f : wide < 2f) continue;
+                    var nrm = new Vector3(hit.normal.x, 0f, hit.normal.z).normalized;
+                    Vector3 s, f;
+                    if (!post)
+                    {
+                        // 0.5 m off, 55 deg: the planned centre (0.8 m ahead on Desktop) ends ~0.04 m from the wall = inside the toy
+                        s = hit.point + nrm * .5f;
+                        f = Quaternion.Euler(0f, 55f, 0f) * -nrm;
+                    }
+                    else
+                    {
+                        f = -nrm; var right = Vector3.Cross(Vector3.up, f);
+                        var c = new Vector3(b.center.x, hit.point.y, b.center.z);
+                        float rT = Mathf.Max(b.extents.x, b.extents.z);
+                        s = c - f * (.6f + rT) - right * (rT + .03f);
+                    }
+                    if (!NavMesh.SamplePosition(new Vector3(s.x, n.y, s.z), out nav, 1.5f, NavMesh.AllAreas)) continue;
+                    var flatErr = nav.position - s; flatErr.y = 0f;
+                    if (flatErr.magnitude > .25f) continue;
+                    stand = nav.position; face = f; what = hit.collider.name + " (" + hit.collider.GetType().Name + ", " + wide.ToString("F2") + " m wide)";
+                    return true;
+                }
+            return false;
         }
 
         static void HvLog(string condition, string stack, LogType type)

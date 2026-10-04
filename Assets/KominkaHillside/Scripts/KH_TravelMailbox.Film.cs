@@ -133,7 +133,15 @@ namespace KominkaHillside
         {
             _filmPhase = FilmNone; _filmTarget = -1; _filmBox = null;
             if (filmTargetId >= 0 && Networking.IsOwner(gameObject)) { filmTargetId = -1; RequestSerialization(); }
+            // every end of a session passes here (revoke, table gone, transit timeout, leave, _FilmEnd, a pending reset): the camera detaches
+            // the person's picture now, not at its next render tick (Codex review 1)
+            if (_filmListener != null) _filmListener.SendCustomEvent("_OnFilmEnded");
         }
+
+        private UdonSharpBehaviour _filmListener;
+
+        /// <summary>The video camera registers itself (local only; never a network target).</summary>
+        public void _FilmSetListener(UdonSharpBehaviour listener) { _filmListener = listener; }
 
         /// <summary>撮影の返事 (AnsJoin が送り主・seq を照合した後)。code 1 は grant-in-transit (表が届くまで撮らない)。それ以外は ended。</summary>
         private void HandleFilmAnswer(int code)
