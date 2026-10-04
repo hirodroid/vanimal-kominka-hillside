@@ -14,7 +14,7 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 - 犬の初期の汚れは 0 (本番値)。汚れを流す確認は、散歩のあと (A-5) に洗い場へ戻って行う。
 - 項目の元になった詳細チェック表: [川の設計書](../plans/2026-09-27-river-play-and-floating-fetch.md) (川 #1〜#36)、[フリスビーどこでも](../plans/2026-09-28-frisbee-anywhere.md) (川設計書 続き #37〜#48)、[地図の設計書](../plans/2026-09-27-map-and-travel.md) (地図設計書 #1〜#9、呼ぶ F.7 #10〜#15)、[メニュー計画](../plans/2026-09-23-menu-rebuild.md)、[散歩計画](../plans/2026-09-20-free-walk.md)、[集合計画](../plans/2026-09-20-menu-gather-stations.md)、[洗い場の呼び出しと高さ](../plans/2026-10-01-wash-call-and-height.md)、[6 匹フリスビー](../plans/2026-09-24-frisbee-six-dogs.md)。
 
-## A. PCVR 1 人 (181 項目)
+## A. PCVR 1 人 (188 項目)
 
 > **2026-10-02 ユーザー確認 (総合判断)**: 「PCVR 1 人 138 — これはもう基本全部見たからOKだよ」。A-2〜A-10 は、この総合判断により確認済みとして扱う (項目別の結果の記録はない。下の結果欄は埋めない)。**A-1 (すすぎ改善、`f9ed660`) は今日の実装のため、この発言に含まれない (ユーザー回答 2026-10-02、未 Play)。未確認のまま残す。** この判断を 2 人・Desktop・Quest 3・iOS (B〜E) の合格に読み替えない。
 
@@ -258,7 +258,21 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | A137 | 曲がり角・橋・写真を撮る視点・両眼で、景色が不意に消えないか (LOD・遮蔽)。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md)<br>[DES-ENV-002](../development/issues/DES-ENV-002-longer-course.md) | |
 | A138 | 1 匹・3 匹・6 匹で、橋・両岸・正逆周回・途中開始・帰還が成立し、反対岸の経路へ誤接続しないか。 | [IMP-ENV-004](../development/issues/IMP-ENV-004-river-loop-course.md) | |
 
-## B. PCVR 2 人以上 (68 項目)
+### A-11 2026-10-04 の追加分 (仕上げ: おもちゃ・フリスビーの色・ギャラリー・洗いの写真)
+
+> 2026-10-04 に実装し、Edit モードの検査と ClientSim 1 人のハーネスまで済んだ分。実機では未確認。値はどれも試作値なので、「近い / 遠い / 高い / 早い」などをそのまま書いてよい。
+
+| # | 見ること | Issue | 結果 |
+|---|---|---|---|
+| A0-44 | おもちゃ: 手元メニューでボール・フリスビーを呼ぶと胸の前に浮いて出て、かがまずに取れるか (位置は 前 0.45 m・下 0.35 m。近い / 遠い / 高い / 低い)。平地・登り坂・下り坂・川辺で落ちない・転がらないか。浮いているおもちゃに犬が反応しないか。 | [IMP-DOG-040](../development/issues/IMP-DOG-040-toy-recall-hover-in-reach.md) | |
+| A0-45 | おもちゃ: 20 秒取らずにいると真下へ下り、坂でも転がらないか。続けて 2 つ呼ぶと重ならず横に並ぶか。壁際・木の前・門の角で呼んでも壁の向こうに出ないか。同じ犬のもう片方を呼ぶと、浮いている方がしまわれるか。 | [IMP-DOG-040](../development/issues/IMP-DOG-040-toy-recall-hover-in-reach.md) | |
+| A0-46 | フリスビーの 6 色 (赤・桃・黄・青・橙・白) と顔が、PC でも青みの無い色で見えるか。この見た目でよいか (10-04 に材質を直して PC の見た目も変わった)。狙いの線の水色と、行けない時の灰色が見分けられるか。 | [BUG-ENV-001](../development/issues/BUG-ENV-001-mirror-default-materials.md) | |
+| A0-47 | 写真の一覧: 手元メニューの写真の面で、一覧のまま VRChat カメラを向けた 1 枚だけが全画面になるか。隣の写真へ誤って吸着しないか (境目付近を狙う)。0.3 m で届くか・狙いやすいか。大きい表示・説明を開いている間は後ろの縮小表示に吸着しないか。2・3 ページ目でも吸着するか。縮小表示を押すと今までどおり大きく出るか。 | [IMP-WLD-009](../development/issues/IMP-WLD-009-menu-gallery-snap-from-thumbnails.md) | |
+| A0-48 | 写真の面を開いても、開いている間に撮れても、「新しい」の札が出ないか。 | [IMP-WLD-010](../development/issues/IMP-WLD-010-menu-gallery-remove-new-mark.md) | |
+| A0-49 | 洗いの写真: 1 匹を洗い終えた後、泡・すすぎ・洗い上がりの 3 枚がギャラリーに残っているか。構図 (肩越し・俯瞰・正面) に犬と自分が入り、カメラが板や壁に埋まっていないか。台を上げた時に、写真の中で犬が浮いて見えないか。洗った後に撫でる・遊ぶ・散歩しても、洗いの写真が消えないか。 | [IMP-WLD-011](../development/issues/IMP-WLD-011-wash-photos-kept.md) | |
+| A0-50 | 写真の枠: 散歩 10・撫で 4・遊び 4・洗う 6 の入れ替わりの早さでよいか。撫でたときの連続撮影が 2 枚でよいか (前は 4 枚)。洗っている間に撫での写真が撮られていないか。 | [IMP-WLD-011](../development/issues/IMP-WLD-011-wash-photos-kept.md) | |
+
+## B. PCVR 2 人以上 (74 項目)
 
 ユーザー (マスター) と相手 1 人 (必要な項目は 3〜4 人)。相手は別アカウントで、Build & Test をし直した同じ版に入る。役割は「A = マスター、B = 非 Owner」。
 
@@ -365,7 +379,18 @@ review (確認待ち) と wip (ユーザー確認が残る) の Issue の Play /
 | B56 | 2 人で川沿いにいても、せせらぎが各自の位置で自然に聞こえ (相手の位置に引きずられず)、重なって大きくならないか。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
 | B57 | 犬の Owner と洗い場の Owner が別の人のとき、「おわり」で犬が台から出ていく動きと、台が下りる見え方が両者の画面で同じか。呼ばれていない他人の犬が主洗い場に寄らないか。 | [IMP-DOG-035](../development/issues/IMP-DOG-035-wash-call-dog-to-station.md) | |
 
-## C. Desktop (22 項目)
+### B-8 2026-10-04 の追加分 (おもちゃ・洗いの写真・他の人を撮る許可)
+
+| # | 見ること | Issue | 結果 |
+|---|---|---|---|
+| B69 | おもちゃ: 呼んだおもちゃが相手の画面でも同じ所に浮いて見えるか。途中参加の人にも同じか。呼んだ人が抜けたら地面へ落ちるか (宙に残らない)。浮いているおもちゃを相手が取れるか。犬の持ち主と球の持ち主が別の人のとき、犬が水中で追っている球を呼んでも、取る前に落ちないか。 | [IMP-DOG-040](../development/issues/IMP-DOG-040-toy-recall-hover-in-reach.md) | |
+| B70 | 洗いの写真: 洗っている人の端末でだけ撮れ、見ているだけの人の端末では撮れないか。2 人で 1 匹を洗うと、それぞれの端末で撮れるか。 | [IMP-WLD-011](../development/issues/IMP-WLD-011-wash-photos-kept.md) | |
+| B71 | 他の人を撮る (撮る人 = PC): モニターの人の一覧で相手を押すと「(相手) さんに撮影の許可を依頼しますか?」が出るか。[やめる] で相手に何も届かないか。[依頼する] で相手の目の前に撮影の通知が出るか。[いいよ] の前はモニターに相手の追従が出ず (犬が映る)、[いいよ] の後に相手を追って撮れるか。相手のさんぽタブに [撮影を許可中] が出て、開くと「撮影中」になるか。 | [IMP-WLD-008](../development/issues/IMP-WLD-008-dog-follow-video-camera.md) | |
+| B72 | 他の人を撮る: 相手の [やめてもらう] で、すぐ犬の構図へ戻り、相手の映像がモニターと録画の板に残らないか (ワープの暗転中も)。[いまはだめ]・20 秒の時間切れ・× で閉じる・退室のそれぞれで止まるか。別の申し込みが保留中でも、[撮影を許可中] から止められるか。 | [IMP-WLD-008](../development/issues/IMP-WLD-008-dog-follow-video-camera.md) | |
+| B73 | 他の人を撮る: 2 人から同時に申し込まれたとき、撮影と合流・呼ぶが行き違ったときに、どちらかが残って固まらないか。「撮影の申し込みを受ける」を OFF にすると断られ、入り直しても OFF のままか。通知の「この人は退室まで受けない」が、その人からの次の申し込みを止め、文言が枠に収まっているか。 | [IMP-WLD-008](../development/issues/IMP-WLD-008-dog-follow-video-camera.md) | |
+| B74 | 合流・呼ぶが今までどおり動くか (申し込み・[いいよ]・ワープ・取り消し・時間切れ)。撮影の許可を足したことで変わっていないか。 | [IMP-WLD-008](../development/issues/IMP-WLD-008-dog-follow-video-camera.md) | |
+
+## C. Desktop (24 項目)
 
 Desktop (PC 画面、マウスとキーボード) で 1 人。座位・低い視点が関わる項目もここで見る。
 
@@ -411,7 +436,14 @@ Desktop (PC 画面、マウスとキーボード) で 1 人。座位・低い視
 | C14 | 設定のナイトモードの [オート][マニュアル] とスライダーをマウスで操作でき、文字が収まるか。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md) | |
 | C15 | 入口の看板 A・B の文字が、Desktop の画面で読める距離と大きさか (立位・座位の低い視点、昼とナイトモード)。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
 
-## D. Quest 3 単体 (28 項目)
+### C-5 2026-10-04 の追加分
+
+| # | 見ること | Issue | 結果 |
+|---|---|---|---|
+| C23 | おもちゃ: 呼ぶと画面の中の取れる位置 (前 0.8 m・少し下) に浮いて出て、そのまま取れるか。 | [IMP-DOG-040](../development/issues/IMP-DOG-040-toy-recall-hover-in-reach.md) | |
+| C24 | 写真の一覧の吸着が Desktop のカメラで 0.3 m に届くか。撮影カメラの人の一覧・確認・[取り消す] がマウスで押せるか。 | [IMP-WLD-009](../development/issues/IMP-WLD-009-menu-gallery-snap-from-thumbnails.md)・[IMP-WLD-008](../development/issues/IMP-WLD-008-dog-follow-video-camera.md) | |
+
+## D. Quest 3 単体 (33 項目)
 
 Quest 3 単体で、PCVR と同じコースを 1 周する。結果欄には OS・VRChat の版・画質・アバター表示設定・発熱の状態も添える。fps は VRChat のデバッグ表示で読む。
 
@@ -473,7 +505,17 @@ Quest 3 単体で、PCVR と同じコースを 1 周する。結果欄には OS�
 | D21 | 川のせせらぎが聞こえ、音量・継ぎ目が問題ないか。入れたことで fps・発熱が変わらないか (Android の容量は AI が測る)。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
 | D22 | 入口の看板 A・B の文字が Quest 3 の解像度で読めるか (圧縮でにじまないか)。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
 
-## E. iOS (iPhone 15 Pro) (26 項目)
+### D-7 2026-10-04 の追加分
+
+| # | 見ること | Issue | 結果 |
+|---|---|---|---|
+| D29 | フリスビーの 6 色と顔が見えるか (10-04 の報告は真っ黒)。狙いの線の色が出るか。首輪とリード本体 (別の材質で、10-04 は変えていない) が黒くないか。 | [BUG-ENV-001](../development/issues/BUG-ENV-001-mirror-default-materials.md) | |
+| D30 | おもちゃ: 呼ぶと胸の前に浮いて、取れるか。 | [IMP-DOG-040](../development/issues/IMP-DOG-040-toy-recall-hover-in-reach.md) | |
+| D31 | 写真の一覧のまま、VRChat カメラを向けた 1 枚が全画面になるか。 | [IMP-WLD-009](../development/issues/IMP-WLD-009-menu-gallery-snap-from-thumbnails.md) | |
+| D32 | 撮られる側として: 撮影の通知に [いいよ] [いまはだめ] で答えられ、[撮影を許可中] から [やめてもらう] が押せるか。文言は日本語のまま出る (13 言語は未対応)。 | [IMP-WLD-008](../development/issues/IMP-WLD-008-dog-follow-video-camera.md) | |
+| D33 | 負荷の計測: スポーン右横の計測用のボタンで、NewGrass / NewBoards / NewOther / Props / DogUdon を 1 つずつ OFF にして、川沿いほかで fps を読む (手順と記入の表は Issue)。 | [VER-ENV-002](../development/issues/VER-ENV-002-scenery-performance.md) | |
+
+## E. iOS (iPhone 15 Pro) (30 項目)
 
 iPhone 15 Pro で、Touch 操作を中心に確認する。結果欄には iOS・VRChat の版・画質・発熱の状態も添える。
 
@@ -527,6 +569,15 @@ iPhone 15 Pro で、Touch 操作を中心に確認する。結果欄には iOS�
 | E18 | 設定のナイトモードの [オート][マニュアル] とスライダーをタッチで押せ、文字が収まるか。暗くなる様子と見やすさが PCVR と同程度か。 | [IMP-ENV-005](../development/issues/IMP-ENV-005-auto-night-mode.md)<br>[VER-WLD-001](../development/issues/VER-WLD-001-quest-ios-devices.md) | |
 | E19 | 川のせせらぎが iOS でも聞こえ、音量・継ぎ目が問題ないか。 | [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md) | |
 | E20 | 入口の看板 A・B の文字が iPhone の画面で読めるか。 | [DES-UI-004](../development/issues/DES-UI-004-walk-destinations-and-boards.md) | |
+
+### E-6 2026-10-04 の追加分
+
+| # | 見ること | Issue | 結果 |
+|---|---|---|---|
+| E27 | フリスビーの 6 色と顔が見えるか (9/26 の体験会では「色が全部同じ」)。 | [BUG-ENV-001](../development/issues/BUG-ENV-001-mirror-default-materials.md) | |
+| E28 | おもちゃ: 呼ぶと画面の中に浮いて出て、タップで取れるか。 | [IMP-DOG-040](../development/issues/IMP-DOG-040-toy-recall-hover-in-reach.md) | |
+| E29 | 写真の一覧・大きい表示のどちらでも吸着せず、黒くならないか。 | [IMP-WLD-009](../development/issues/IMP-WLD-009-menu-gallery-snap-from-thumbnails.md) | |
+| E30 | 撮られる側として: 撮影の通知と [やめてもらう] がタップで押せるか。 | [IMP-WLD-008](../development/issues/IMP-WLD-008-dog-follow-video-camera.md) | |
 
 ## 具体的な確認に落とせなかった項目
 

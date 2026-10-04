@@ -411,3 +411,9 @@
 
 - 確認の残り: VRChat カメラがレイヤー 17 を描くか (Issue の確認の行)、Desktop で吸着の距離が届くか、iPhone で黒くならないこと。
 - Play は要らない。配置と値は Photo/2 が見る。吸着は本物の VRChat カメラでしか判定できない (ClientSim に VRChat の写真カメラは無い)。
+
+## 2026-10-04 の変更 (この節が上の配分・吸着・印の記述に勝つ)
+
+- **枠の配分**: 散歩 12 / 撫で 6 / 遊び 6 → **散歩 10 (0〜9) / 撫で 4 (10〜13) / 遊び 4 (14〜17) / 洗う 6 (18〜23)**。洗いの節目の撮影と、撫でのバースト 2 枚 ([IMP-WLD-011](../development/issues/IMP-WLD-011-wash-photos-kept.md))
+- **メニューの吸着**: 大きく出した 1 枚だけ → 縮小表示 8 枚にも付ける (0.3 m・余白 0.005 m、[IMP-WLD-009](../development/issues/IMP-WLD-009-menu-gallery-snap-from-thumbnails.md))。§7 の表の「c. 縮小表示 8 枚それぞれに Quad = 採らない」はユーザーの要望で採用に変わった
+- **「新しい」の印**: 撤去 ([IMP-WLD-010](../development/issues/IMP-WLD-010-menu-gallery-remove-new-mark.md))
