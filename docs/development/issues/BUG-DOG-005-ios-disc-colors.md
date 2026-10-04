@@ -4,9 +4,9 @@ type: BUG
 system: DOG
 status: todo
 priority: Medium
-summary: 体験会 (2026-09-26) で iOS 参加者から「フリスビーの色が全部同じ」。ディスクは Standard Lite + _Color で犬別 6 色。iOS 実機で再現し、材質・ビルドのどこで色が落ちるかを特定する
-next: iOS 実機で 6 枚の色を見る。同じなら iOS ビルドの材質 (Standard Lite の _Color、持ち中の Transparent/Diffuse) と Android ビルドとの差を疑う
-updated: 2026-09-26
+summary: 体験会 (2026-09-26) で iOS 参加者から「フリスビーの色が全部同じ」。10-04 に Quest で真っ黒とユーザーが確認 (iOS も同じらしい)。原因の見立ては材質の金属 1 で、修正は BUG-ENV-001 で行う
+next: BUG-ENV-001 でディスクと顔の材質を金属 0 へ直した後、Quest と iOS で 6 色と顔が見分けられるかを確認する
+updated: 2026-10-04
 ---
 
 # BUG-DOG-005 iOS でフリスビーの色が全部同じに見える
@@ -32,3 +32,7 @@ updated: 2026-09-26
 - [ ] 色以外の識別 ([IMP-DOG-018](IMP-DOG-018-frisbee-dog-face.md) の犬の顔) が入るまでの暫定策が要るかを決めた
 
 端末側の確認は [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) の項目 4 に集約する。
+
+## 記録
+
+2026-10-04: ユーザーが Quest で「フリスビーが真っ黒。iOS も同じっぽい」と報告。「全部同じ」は全部が黒かった可能性が高い。材質は `_Metallic 1`・`_Glossiness 1` で、色が映り込みだけで決まる ([BUG-ENV-001](BUG-ENV-001-mirror-default-materials.md) の 10-04 の節)。修正はそちらで行い、この Issue は Quest・iOS での見え方の確認まで残す。

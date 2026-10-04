@@ -86,6 +86,8 @@ Unity の橋の問題 (別プロジェクトのエディタが同じ橋へ接続
 
 **2026-10-04 景観作業の更新**: ユーザーが他作業・性能調整の終了を報告し、IMP-ENV-001/009 の景観改善を依頼。Quest 3 は通常40〜50 FPS、高負荷箇所でも30 FPSとの報告。以下の10-03時点の順序に優先し、景観改善へ着手する。詳細な負荷調査・改善は景観改善後の [VER-ENV-002](issues/VER-ENV-002-scenery-performance.md) へ分離する。モバイルへの配慮は制作時から継続し、報告されたFPSを未確認条件の合格に読み替えない。
 
+**2026-10-04 仕上げの起票 (見た目の調整後のユーザー報告)**: 景観・小物の調整後、Quest 3 が 20〜40 fps で安定しない → [VER-ENV-002](issues/VER-ENV-002-scenery-performance.md) を High にして着手 (毎フレーム処理の棚卸しと、群ごとの計測)。Quest でフリスビーが真っ黒 → [BUG-ENV-001](issues/BUG-ENV-001-mirror-default-materials.md) (材質の金属 1 が原因の見立て。シェーダーは変えない)。新規: 呼び出したおもちゃを手の届く高さに浮かせる [IMP-DOG-040](issues/IMP-DOG-040-toy-recall-hover-in-reach.md)、メニューの写真を一覧のまま吸着 [IMP-WLD-009](issues/IMP-WLD-009-menu-gallery-snap-from-thumbnails.md)、「新しい」の印を外す [IMP-WLD-010](issues/IMP-WLD-010-menu-gallery-remove-new-mark.md)、洗っている最中の写真を残す [IMP-WLD-011](issues/IMP-WLD-011-wash-photos-kept.md)。どれも起票だけで未実装。IMP-DOG-040 (胸の前に浮かせ、20 秒で地面へ)、IMP-WLD-011 (24 枚のまま 散歩 10 / 撫で 4 / 遊び 4 / 洗う 6)、BUG-ENV-001 (首輪・リードの先・狙いの線も同じ回で直す) は同日ユーザーが案を了承。同日の続き: 性能の静的な棚卸しでは毎フレームの Udon は 10-03 からほぼ増えておらず、描画が増えていた (Renderer 787 → 1,187、[記録](../plans/2026-10-04-performance-inventory.md))。計測用のボタンをスポーンの右横へ置き直した (公開前に撤去)。BUG-ENV-001 は材質 40 個を金属 0 へ直して review (Quest・iOS の確認待ち)。
+
 | 順 | 次に進めること | 残条件・担当 |
 |---|---|---|
 | 性能の後始末 | 軽量化の IMP-DOG-034 / 036 は完了 (10-02 ユーザー判断)。残りは確認と片付け | 未確認項目のPlay／複数人確認、地形の見た目、計測プローブは 10-03 に撤去済み ([IMP-ENV-010](issues/IMP-ENV-010-quest-performance.md))。再び重く感じたら036の保留項目から再検討 |

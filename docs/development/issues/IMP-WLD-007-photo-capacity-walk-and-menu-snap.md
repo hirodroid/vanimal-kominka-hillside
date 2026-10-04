@@ -74,4 +74,6 @@ updated: 2026-10-03
   - [ ] PCVR・Desktop で、大きく出した写真に VRChat カメラを近づけると全画面になること。Desktop で 0.6 m に届かなければ、距離を見直す。
   - [ ] iPhone で、メニューの大きい写真に吸着しない (黒くならない) こと。
 
+2026-10-04 ユーザーの追加要望 (見た目の調整後): メニューの写真は「一度大きく表示させないと吸着できない」と報告 (大きい 1 枚の吸着は効いている。端末は未記録)。一覧のまま吸着したい → [IMP-WLD-009](IMP-WLD-009-menu-gallery-snap-from-thumbnails.md)。「新しい」の印は不要 → [IMP-WLD-010](IMP-WLD-010-menu-gallery-remove-new-mark.md)。洗っている最中の写真が上書きされて残らない → [IMP-WLD-011](IMP-WLD-011-wash-photos-kept.md)。
+
 2026-10-03 波 3・4 の統括の確認: U# コンパイル エラー 0、Photo/1 → Photo/2 PASS (fails 0 / warns 0: 拡大写真 720 × 405 が [とじる] に重ならない、吸着の板が写真の 2 mm 手前でレイヤー 17、説明文が枠に収まる)、Menu/22 PASS。Play は回していない (吸着は本物の VRChat カメラでしか確かめられない)。
