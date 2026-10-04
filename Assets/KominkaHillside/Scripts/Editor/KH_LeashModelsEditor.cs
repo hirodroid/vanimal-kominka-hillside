@@ -82,10 +82,11 @@ namespace KominkaHillside.Editor
 
         public static void MakeRack(Transform rack,Material wood)
         {
-            if(rack.Find("Crossbar")!=null)return;
+            if(rack.Find("Crossbar")!=null){KH_PropFinishEditor.FinishRack(rack);return;}
             Cube(rack,"Crossbar",new Vector3(0,.095f,.055f),new Vector3(1.2f,.06f,.07f),wood);
             Cube(rack,"LeftPost",new Vector3(-.56f,-.37f,.055f),new Vector3(.06f,.92f,.06f),wood);
             Cube(rack,"RightPost",new Vector3(.56f,-.37f,.055f),new Vector3(.06f,.92f,.06f),wood);
+            KH_PropFinishEditor.FinishRack(rack);
         }
         static void Cube(Transform parent,string name,Vector3 position,Vector3 scale,Material material)
         {

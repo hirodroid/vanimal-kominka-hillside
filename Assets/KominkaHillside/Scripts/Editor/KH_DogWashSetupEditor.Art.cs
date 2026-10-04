@@ -183,10 +183,11 @@ namespace KominkaHillside.Editor
 
         static void ApplyToolArt(Transform root,int kind)
         {
-            // IMP-DOG-039: the shampoo bottle has no imported model (the 5 FBX have none); it keeps its primitive look.
+            // Prop finish adds a visual only; the original nozzle/pickup/collider remain authoritative.
             if(kind==KH_DogWash.ToolBottle)
             {
                 var stale=root.Find("ImportedVisual");if(stale!=null)UnityEngine.Object.DestroyImmediate(stale.gameObject);
+                KH_PropFinishEditor.FinishBottle(root);
                 return;
             }
             if(!ArtReady)return;
@@ -225,6 +226,7 @@ namespace KominkaHillside.Editor
             var pb=ArtBounds(platform,table);
             platform.localScale=new Vector3(TableSize.x/pb.size.x,TableSize.y/pb.size.y,TableSize.z/pb.size.z);
             for(int i=0;i<TableSlats;i++)HideArtPrimitive(table,"Slat_"+i);
+            KH_PropFinishEditor.FinishShelf(station);
         }
 
         [MenuItem(Menu + "32 - Verify Imported Tool Art")]
@@ -254,8 +256,8 @@ namespace KominkaHillside.Editor
                 {
                     if(tool.tool==KH_DogWash.ToolBottle)
                     {
-                        // IMP-DOG-039: primitives only (no imported model, not counted in the 23)
-                        need(tool.transform.Find("ImportedVisual")==null && tool.transform.Find("Body")!=null && tool.transform.Find("Body").GetComponent<MeshRenderer>().enabled,tool.name+" bottle keeps its primitive look (no imported visual)");
+                        bool finished=KH_PropFinishEditor.Ready;
+                        need(tool.transform.Find("ImportedVisual")==null && tool.transform.Find("Body")!=null && tool.transform.Find("Body").GetComponent<MeshRenderer>().enabled!=finished && (!finished || tool.transform.Find("FinishedVisual")!=null),tool.name+" bottle visual matches installed prop finish");
                         continue;
                     }
                     var art=tool.transform.Find("ImportedVisual");need(art!=null,tool.name+" imported visual");if(art==null)continue;
@@ -281,7 +283,8 @@ namespace KominkaHillside.Editor
                 {
                     if(!AssetDatabase.GetAssetPath(mf.sharedMesh).StartsWith(ArtPath))continue;
                     models++;triangles+=(int)mf.sharedMesh.GetIndexCount(0)/3;
-                    var renderer=mf.GetComponent<MeshRenderer>();need(renderer.enabled && renderer.sharedMaterials.Length==1 && renderer.sharedMaterial==mat,mf.transform.parent.name+" one shared material");
+                    var renderer=mf.GetComponent<MeshRenderer>();bool replaced=mf.transform.parent.name=="ImportedShelf"&&KH_PropFinishEditor.Ready;
+                    need(renderer.enabled!=replaced && renderer.sharedMaterials.Length==1 && renderer.sharedMaterial==mat,mf.transform.parent.name+" legacy material and expected visibility");
                 }
             }
             need(models==23,"23 models (15 tools + 8 fixtures): "+models);

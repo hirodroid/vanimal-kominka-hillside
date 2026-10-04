@@ -1,0 +1,57 @@
+[
+  {
+    "name": "KH_RiverStone_0",
+    "triangles": 50,
+    "vertices": 27,
+    "dimensions": [
+      1.9330670833587646,
+      1.4457838535308838,
+      0.7767640352249146
+    ],
+    "degenerateUVTriangles": 0
+  },
+  {
+    "name": "KH_RiverStone_1",
+    "triangles": 50,
+    "vertices": 27,
+    "dimensions": [
+      1.8333160877227783,
+      1.2424519062042236,
+      0.7773832082748413
+    ],
+    "degenerateUVTriangles": 0
+  },
+  {
+    "name": "KH_RiverStone_2",
+    "triangles": 50,
+    "vertices": 27,
+    "dimensions": [
+      1.948434829711914,
+      1.3144159317016602,
+      0.7681792974472046
+    ],
+    "degenerateUVTriangles": 0
+  },
+  {
+    "name": "KH_RiverGrass_0",
+    "triangles": 39,
+    "vertices": 65,
+    "dimensions": [
+      0.4634968638420105,
+      0.5620182752609253,
+      0.4086778163909912
+    ],
+    "degenerateUVTriangles": 0
+  },
+  {
+    "name": "KH_RiverGrass_1",
+    "triangles": 39,
+    "vertices": 65,
+    "dimensions": [
+      0.6501256227493286,
+      0.534324586391449,
+      0.5755991339683533
+    ],
+    "degenerateUVTriangles": 0
+  }
+]

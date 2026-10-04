@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>小物の仕上げ比較 — 古民家の裏山</title>
+<style>
+:root{font-family:system-ui,"Yu Gothic",sans-serif;color:#f0ece2;background:#202821}*{box-sizing:border-box}body{margin:0}main{max-width:1580px;margin:auto;padding:30px 28px}a{color:#d4c397}h1{font-size:clamp(24px,3vw,38px);margin:8px 0 16px;letter-spacing:.05em}.eyebrow{color:#b5c2ab;font-size:12px;letter-spacing:.2em}p{line-height:1.8;color:#c6cec1;max-width:950px}nav{display:flex;gap:8px;flex-wrap:wrap;margin:24px 0 18px}button{background:#303c31;border:1px solid #586650;color:#e5e8df;border-radius:30px;padding:10px 19px;font:inherit;cursor:pointer}button[aria-pressed=true]{background:#ddc897;color:#272e25;border-color:#ddc897}button:focus-visible,input:focus-visible{outline:3px solid #f7e9c3;outline-offset:3px}.panel{background:#151b16;border:1px solid #47533f;border-radius:14px;padding:18px}.bar{display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:13px}.bar strong{font-size:18px}.bar span{font-size:13px;color:#bac5b3}.compare{position:relative;aspect-ratio:1.4;overflow:hidden;border-radius:6px;background:#2f342c}.compare img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.compare .after{clip-path:inset(0 0 0 var(--split,50%))}.divider{position:absolute;top:0;bottom:0;left:var(--split,50%);width:2px;background:#f8efcf;pointer-events:none}.tag{position:absolute;top:14px;padding:7px 14px;background:#1a211bdd;border-radius:20px;font-size:12px;pointer-events:none}.left{left:14px}.right{right:14px;background:#dfc895;color:#20291f}input{width:100%;accent-color:#d5bb80;margin:18px 0 6px}label{font-size:13px;color:#c2ccbb}.detail{min-height:50px;margin:18px 0 0;color:#e7e5d9}.foot{font-size:12px;color:#a0ad98;margin-top:24px;line-height:1.8}.links{display:flex;gap:22px;font-size:13px;margin-top:20px}@media(min-width:1100px){.panel{max-width:1250px;margin:auto}}@media(max-width:600px){main{padding:20px 12px}.panel{padding:10px}button{padding:8px 13px}.tag{top:8px;padding:5px 10px}}
+</style>
+<main><div class="eyebrow">KOMINKA HILLSIDE · PROP STUDY · 2026.10.04</div>
+<h1>手に届く距離の、小物を整える。</h1>
+<p>木の角と接合、金具の厚み、ボトルの丸み。Blenderで形状を整え、木目とノーマルマップで表面を仕上げました。同じカメラ位置から撮った本番シーンの変更前・変更後を比較できます。</p>
+<nav aria-label="比較する小物" id="tabs"></nav>
+<section class="panel"><div class="bar"><strong id="title"></strong><span id="stat"></span><button id="full" style="margin-left:auto">画像を大きく見る</button></div>
+<div class="compare" id="compare"><img id="before" alt="変更前"><img id="after" class="after" alt="変更後"><div class="divider"></div><span class="tag left">変更前</span><span class="tag right">変更後</span></div>
+<label for="slider">境界を動かして比較 <input id="slider" type="range" min="0" max="100" value="50" aria-label="変更前後の境界"></label>
+<p class="detail" id="detail" aria-live="polite"></p></section>
+<div class="foot">Editor実景 / 1400 × 1000 / FOV 48° / 固定カメラ。写真の空欄は撮影前の既存表示です。<br>掴む位置・Collider・噴射位置・写真表示の配線を保つ表示モデルの変更です。VR実機の見え方・Quest/iOSの負荷は未確認。性能の詳しい確認は景観作業の後に行います。</div>
+<div class="links"><a href="../2026-10-04-river-verge/index.html">川沿いの景観比較</a><a href="../2026-10-04-roadside/index.html">道沿いの景観比較</a></div>
+</main>
+<script>
+const views=[['shelf','棚','2,216 triangles / 台','板の面取り、長手に沿う木目、脚と横桟の接合、固定金具を整えています。天板の高さと道具の置き位置は共通です。'],['tools','棚の上','同じ道具配置','ボトルと棚の質感を、シャワー・スポンジ・タオルと並べて確認できます。'],['rack','リード掛け','932 triangles + 案内枠 324','木製の支柱と横木に面取りと木目を加え、リードの帰還位置に掛け金具を設けました。'],['rack-detail','掛け金具','近距離の確認','金具と木材の質感を分けています。接続や操作の位置は既存のままです。'],['board','写真ボード','1,920 triangles','細い木枠と面取り、屋根の板分け、固定金具を追加。写真と操作UIの表示領域を残しています。'],['board-detail','木枠と屋根','近距離の確認','屋根の板の継ぎ目、枠の角、柱の接合を確認できます。'],['bottle','ボトル','1,184 triangles / 本','肩からキャップへつながる輪郭と注ぎ口を作り、オリジナルの肉球ラベルを入れました。噴射口は既存のNozzleに合わせています。']];
+const $=id=>document.getElementById(id);let current=0;
+function select(i){current=i;const [id,title,stat,detail]=views[i];$('before').src=id+'-before.png';$('after').src=id+'-after.png';$('before').alt=title+'の変更前';$('after').alt=title+'の変更後';$('title').textContent=title;$('stat').textContent=stat;$('detail').textContent=detail;document.querySelectorAll('#tabs button').forEach((b,n)=>b.setAttribute('aria-pressed',n===i));}
+views.forEach((v,i)=>{const b=document.createElement('button');b.textContent=v[1];b.onclick=()=>select(i);$('tabs').append(b)});
+$('slider').addEventListener('input',e=>$('compare').style.setProperty('--split',e.target.value+'%'));
+$('full').onclick=()=>{if($('compare').requestFullscreen)$('compare').requestFullscreen();else window.open(views[current][0]+'-after.png','_blank','noopener')};select(0);
+</script></html>

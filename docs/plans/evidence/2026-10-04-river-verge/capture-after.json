@@ -1,0 +1,484 @@
+{
+    "utc": "2026-10-03T21:50:49.2360301Z",
+    "scene": "Assets/Scenes/VRCDefaultWorldScene.unity",
+    "views": [
+        {
+            "name": "curve-280",
+            "file": "curve-280-adult-after.png",
+            "position": {
+                "x": 456.8087463378906,
+                "y": 14.731008529663086,
+                "z": 347.436767578125
+            },
+            "euler": {
+                "x": 1.6270287036895753,
+                "y": 137.87356567382813,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "curve-280",
+            "file": "curve-280-adult-after-night.png",
+            "position": {
+                "x": 456.8087463378906,
+                "y": 14.731008529663086,
+                "z": 347.436767578125
+            },
+            "euler": {
+                "x": 1.6270287036895753,
+                "y": 137.87356567382813,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "curve-280",
+            "file": "curve-280-low-after.png",
+            "position": {
+                "x": 456.8087463378906,
+                "y": 13.511008262634278,
+                "z": 347.436767578125
+            },
+            "euler": {
+                "x": 1.6270287036895753,
+                "y": 137.87356567382813,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "curve-280",
+            "file": "curve-280-low-after-night.png",
+            "position": {
+                "x": 456.8087463378906,
+                "y": 13.511008262634278,
+                "z": 347.436767578125
+            },
+            "euler": {
+                "x": 1.6270287036895753,
+                "y": 137.87356567382813,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "curve-287",
+            "file": "curve-287-adult-after.png",
+            "position": {
+                "x": 480.53289794921877,
+                "y": 13.251856803894043,
+                "z": 317.622802734375
+            },
+            "euler": {
+                "x": 1.948283314704895,
+                "y": 143.13014221191407,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "curve-287",
+            "file": "curve-287-adult-after-night.png",
+            "position": {
+                "x": 480.53289794921877,
+                "y": 13.251856803894043,
+                "z": 317.622802734375
+            },
+            "euler": {
+                "x": 1.948283314704895,
+                "y": 143.13014221191407,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "curve-287",
+            "file": "curve-287-low-after.png",
+            "position": {
+                "x": 480.53289794921877,
+                "y": 12.031856536865235,
+                "z": 317.622802734375
+            },
+            "euler": {
+                "x": 1.948283314704895,
+                "y": 143.13014221191407,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "curve-287",
+            "file": "curve-287-low-after-night.png",
+            "position": {
+                "x": 480.53289794921877,
+                "y": 12.031856536865235,
+                "z": 317.622802734375
+            },
+            "euler": {
+                "x": 1.948283314704895,
+                "y": 143.13014221191407,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "curve-292",
+            "file": "curve-292-adult-after.png",
+            "position": {
+                "x": 500.2038269042969,
+                "y": 11.942174911499024,
+                "z": 291.3948974609375
+            },
+            "euler": {
+                "x": 2.0536932945251467,
+                "y": 171.83718872070313,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "curve-292",
+            "file": "curve-292-adult-after-night.png",
+            "position": {
+                "x": 500.2038269042969,
+                "y": 11.942174911499024,
+                "z": 291.3948974609375
+            },
+            "euler": {
+                "x": 2.0536932945251467,
+                "y": 171.83718872070313,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "curve-292",
+            "file": "curve-292-low-after.png",
+            "position": {
+                "x": 500.2038269042969,
+                "y": 10.722174644470215,
+                "z": 291.3948974609375
+            },
+            "euler": {
+                "x": 2.0536932945251467,
+                "y": 171.83718872070313,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "curve-292",
+            "file": "curve-292-low-after-night.png",
+            "position": {
+                "x": 500.2038269042969,
+                "y": 10.722174644470215,
+                "z": 291.3948974609375
+            },
+            "euler": {
+                "x": 2.0536932945251467,
+                "y": 171.83718872070313,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "river-rest",
+            "file": "river-rest-adult-after.png",
+            "position": {
+                "x": 512.662353515625,
+                "y": 12.326387405395508,
+                "z": 288.53363037109377
+            },
+            "euler": {
+                "x": 24.716493606567384,
+                "y": 205.19406127929688,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "river-rest",
+            "file": "river-rest-adult-after-night.png",
+            "position": {
+                "x": 512.662353515625,
+                "y": 12.326387405395508,
+                "z": 288.53363037109377
+            },
+            "euler": {
+                "x": 24.716493606567384,
+                "y": 205.19406127929688,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "river-rest",
+            "file": "river-rest-low-after.png",
+            "position": {
+                "x": 512.662353515625,
+                "y": 11.1063871383667,
+                "z": 288.53363037109377
+            },
+            "euler": {
+                "x": 8.412327766418457,
+                "y": 205.19406127929688,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "river-rest",
+            "file": "river-rest-low-after-night.png",
+            "position": {
+                "x": 512.662353515625,
+                "y": 11.1063871383667,
+                "z": 288.53363037109377
+            },
+            "euler": {
+                "x": 8.412327766418457,
+                "y": 205.19406127929688,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "water-access",
+            "file": "water-access-adult-after.png",
+            "position": {
+                "x": 490.0,
+                "y": 12.619544982910157,
+                "z": 305.0
+            },
+            "euler": {
+                "x": 13.131743431091309,
+                "y": 270.0,
+                "z": 4.3834955931743027e-7
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "water-access",
+            "file": "water-access-adult-after-night.png",
+            "position": {
+                "x": 490.0,
+                "y": 12.619544982910157,
+                "z": 305.0
+            },
+            "euler": {
+                "x": 13.131743431091309,
+                "y": 270.0,
+                "z": 4.3834955931743027e-7
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "water-access",
+            "file": "water-access-low-after.png",
+            "position": {
+                "x": 490.0,
+                "y": 11.399544715881348,
+                "z": 305.0
+            },
+            "euler": {
+                "x": 6.861317157745361,
+                "y": 270.0,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "water-access",
+            "file": "water-access-low-after-night.png",
+            "position": {
+                "x": 490.0,
+                "y": 11.399544715881348,
+                "z": 305.0
+            },
+            "euler": {
+                "x": 6.861317157745361,
+                "y": 270.0,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "rest-view",
+            "file": "rest-view-adult-after.png",
+            "position": {
+                "x": 510.09368896484377,
+                "y": 11.793514251708985,
+                "z": 284.577392578125
+            },
+            "euler": {
+                "x": 4.087555885314941,
+                "y": 270.96484375,
+                "z": 2.1398771821168339e-7
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "rest-view",
+            "file": "rest-view-adult-after-night.png",
+            "position": {
+                "x": 510.09368896484377,
+                "y": 11.793514251708985,
+                "z": 284.577392578125
+            },
+            "euler": {
+                "x": 4.087555885314941,
+                "y": 270.96484375,
+                "z": 2.1398771821168339e-7
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "rest-view",
+            "file": "rest-view-low-after.png",
+            "position": {
+                "x": 510.09368896484377,
+                "y": 10.573513984680176,
+                "z": 284.577392578125
+            },
+            "euler": {
+                "x": 1.3090764284133912,
+                "y": 270.96484375,
+                "z": -5.3374783703930009e-8
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "rest-view",
+            "file": "rest-view-low-after-night.png",
+            "position": {
+                "x": 510.09368896484377,
+                "y": 10.573513984680176,
+                "z": 284.577392578125
+            },
+            "euler": {
+                "x": 1.3090764284133912,
+                "y": 270.96484375,
+                "z": -5.3374783703930009e-8
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "tree-and-bench",
+            "file": "tree-and-bench-adult-after.png",
+            "position": {
+                "x": 496.0,
+                "y": 11.204936027526856,
+                "z": 276.0
+            },
+            "euler": {
+                "x": 352.04425048828127,
+                "y": 53.130104064941409,
+                "z": -4.3103540292577238e-7
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "tree-and-bench",
+            "file": "tree-and-bench-adult-after-night.png",
+            "position": {
+                "x": 496.0,
+                "y": 11.204936027526856,
+                "z": 276.0
+            },
+            "euler": {
+                "x": 352.04425048828127,
+                "y": 53.130104064941409,
+                "z": -4.3103540292577238e-7
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "tree-and-bench",
+            "file": "tree-and-bench-low-after.png",
+            "position": {
+                "x": 496.0,
+                "y": 9.984935760498047,
+                "z": 276.0
+            },
+            "euler": {
+                "x": 348.6485900878906,
+                "y": 53.130104064941409,
+                "z": -4.3540399019548206e-7
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "tree-and-bench",
+            "file": "tree-and-bench-low-after-night.png",
+            "position": {
+                "x": 496.0,
+                "y": 9.984935760498047,
+                "z": 276.0
+            },
+            "euler": {
+                "x": 348.6485900878906,
+                "y": 53.130104064941409,
+                "z": -4.3540399019548206e-7
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        }
+    ],
+    "dirtyAfter": false,
+    "limitations": "Editor mono 960x600, FOV60, near0.1/far2200. Before and after are separate actual captures at identical fixed views. Night uses cloned existing overlay/sky at darkness0.8; no Udon, stereo or device verification."
+}

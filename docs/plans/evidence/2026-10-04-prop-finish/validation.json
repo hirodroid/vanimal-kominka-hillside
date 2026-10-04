@@ -1,0 +1,757 @@
+{
+  "date": "2026-10-04",
+  "implementation": "root",
+  "independentReview": "scenery_consult",
+  "geometry": [
+    {
+      "name": "Shelf",
+      "triangles": 2216,
+      "vertices": 1152,
+      "dimensionsBlender": [
+        1.2000000476837158,
+        0.44999998807907104,
+        0.8725000023841858
+      ],
+      "degenerateUVTriangles": 0
+    },
+    {
+      "name": "Rack",
+      "triangles": 932,
+      "vertices": 496,
+      "dimensionsBlender": [
+        1.2000000476837158,
+        0.12946410477161407,
+        0.9550000429153442
+      ],
+      "degenerateUVTriangles": 0
+    },
+    {
+      "name": "RackGuide",
+      "triangles": 324,
+      "vertices": 168,
+      "dimensionsBlender": [
+        0.8999999761581421,
+        0.03999999910593033,
+        0.6650000214576721
+      ],
+      "degenerateUVTriangles": 0
+    },
+    {
+      "name": "PhotoFrame",
+      "triangles": 1920,
+      "vertices": 1000,
+      "dimensionsBlender": [
+        2.7799999713897705,
+        0.5897991061210632,
+        2.5020341873168945
+      ],
+      "degenerateUVTriangles": 0
+    },
+    {
+      "name": "Bottle",
+      "triangles": 1184,
+      "vertices": 600,
+      "dimensionsBlender": [
+        0.060600001364946365,
+        0.060600001364946365,
+        0.20548075437545776
+      ],
+      "degenerateUVTriangles": 0
+    }
+  ],
+  "fbxRoundtrip": [
+    {
+      "name": "Shelf",
+      "triangles": 2216,
+      "uvTrianglesDegenerate": 0,
+      "finiteVertices": true,
+      "normalLengths": [
+        0.9999998956918662,
+        1.0000001172870656
+      ]
+    },
+    {
+      "name": "Rack",
+      "triangles": 932,
+      "uvTrianglesDegenerate": 0,
+      "finiteVertices": true,
+      "normalLengths": [
+        0.9999999105930288,
+        1.0000000971194776
+      ]
+    },
+    {
+      "name": "RackGuide",
+      "triangles": 324,
+      "uvTrianglesDegenerate": 0,
+      "finiteVertices": true,
+      "normalLengths": [
+        0.9999999147112212,
+        1.0000000873405914
+      ]
+    },
+    {
+      "name": "PhotoFrame",
+      "triangles": 1920,
+      "uvTrianglesDegenerate": 0,
+      "finiteVertices": true,
+      "normalLengths": [
+        0.9999998882412848,
+        1.0000001043121407
+      ]
+    },
+    {
+      "name": "Bottle",
+      "triangles": 1184,
+      "uvTrianglesDegenerate": 0,
+      "finiteVertices": true,
+      "normalLengths": [
+        0.9999998882412848,
+        1.0000000940635756
+      ],
+      "labelCentreEdgePositionsBlender": [
+        [
+          0.029717793688178062,
+          0.005911233834922314,
+          -0.05400000140070915
+        ],
+        [
+          0.029717793688178062,
+          0.005911239888519049,
+          0.027000000700354576
+        ],
+        [
+          0.030299998819828033,
+          -2.7524313939153444e-9,
+          -0.05400000140070915
+        ],
+        [
+          0.029717793688178062,
+          0.005911233834922314,
+          -0.05400000140070915
+        ],
+        [
+          0.030299998819828033,
+          3.362898182146523e-9,
+          0.027000000700354576
+        ],
+        [
+          0.029717793688178062,
+          -0.005911239422857761,
+          -0.05400000140070915
+        ],
+        [
+          0.030299998819828033,
+          -2.7524313939153444e-9,
+          -0.05400000140070915
+        ],
+        [
+          0.029717793688178062,
+          -0.005911233369261026,
+          0.027000000700354576
+        ],
+        [
+          0.029717793688178062,
+          -0.005911239422857761,
+          -0.05400000140070915
+        ],
+        [
+          0.029717793688178062,
+          0.005911239888519049,
+          0.027000000700354576
+        ],
+        [
+          0.029717793688178062,
+          0.005911233834922314,
+          -0.05400000140070915
+        ],
+        [
+          0.029717793688178062,
+          0.005911239888519049,
+          0.027000000700354576
+        ]
+      ]
+    }
+  ],
+  "scenePreservation": {
+    "before": 20351,
+    "after": 20411,
+    "added": 60,
+    "missing": [],
+    "changed": [
+      {
+        "id": "7118258",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "43007188",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 1907775860}"
+        ]
+      },
+      {
+        "id": "71572212",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "72636708",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "82950567",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 1405187861}"
+        ]
+      },
+      {
+        "id": "159111202",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "216844565",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "236968120",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "249125767",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "352001475",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "408500952",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 209507987}"
+        ]
+      },
+      {
+        "id": "453275446",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 1290529037}"
+        ]
+      },
+      {
+        "id": "459286596",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 601447012}"
+        ]
+      },
+      {
+        "id": "518960522",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "526665197",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 2042072296}"
+        ]
+      },
+      {
+        "id": "545492623",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 1724656204}"
+        ]
+      },
+      {
+        "id": "559448415",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "582965757",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "649779168",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "666260007",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "683471158",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 1652981671}"
+        ]
+      },
+      {
+        "id": "704184596",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "726222076",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 660398451}"
+        ]
+      },
+      {
+        "id": "783227559",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "791815580",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "807918055",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "859153472",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "929498085",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "985047320",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "991156897",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1035553416",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1044856839",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1073255815",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1096305585",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1106952479",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 462735762}"
+        ]
+      },
+      {
+        "id": "1176639450",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1207796002",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1214822826",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1219364325",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1304246529",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 2006688477}"
+        ]
+      },
+      {
+        "id": "1360363031",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1381804415",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 765090322}"
+        ]
+      },
+      {
+        "id": "1387739108",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1483629676",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1527129657",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1616192006",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1669940552",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1683217009",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1725909402",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 285200863}"
+        ]
+      },
+      {
+        "id": "1744252709",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1778896999",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1796588049",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 1696571197}"
+        ]
+      },
+      {
+        "id": "1797848809",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1835511709",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1938425027",
+        "type": "Transform:",
+        "removed": [],
+        "added": [
+          "  - {fileID: 48976801}"
+        ]
+      },
+      {
+        "id": "1941109330",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1975141196",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "1984542489",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      },
+      {
+        "id": "2099093249",
+        "type": "MeshRenderer:",
+        "removed": [
+          "  m_Enabled: 1"
+        ],
+        "added": [
+          "  m_Enabled: 0"
+        ]
+      }
+    ]
+  },
+  "componentPreservation": "Existing non-render, non-transform components compared via EditorJsonUtility: 968 unchanged.\n",
+  "propVerification": "PASS shared material with normal map\r\nPASS 15 visual models (4 shelves, 4 bottles, 3 racks, 3 guides, 1 board): 15\r\nPASS Structure shared material\r\nPASS Structure no added collider\r\nPASS Structure tangents\r\nBOUNDS KH_PhotoBoard/Structure/FinishedVisual Center: (0.00000, 0.98148, 0.03000), Extents: (1.39000, 1.25102, 0.29490)\r\nPASS WalkGuide shared material\r\nPASS WalkGuide no added collider\r\nPASS WalkGuide tangents\r\nBOUNDS KH_Dogs/KH_Station_Plaza/WalkGuide/FinishedVisual Center: (0.00000, 0.45750, 0.00001), Extents: (0.45000, 0.33250, 0.02000)\r\nPASS KH_Station_Plaza shared material\r\nPASS KH_Station_Plaza no added collider\r\nPASS KH_Station_Plaza tangents\r\nBOUNDS KH_Dogs/KH_Station_Plaza/FinishedVisual Center: (-0.00001, -0.35250, 0.02527), Extents: (0.60000, 0.47750, 0.06473)\r\nPASS WalkGuide shared material\r\nPASS WalkGuide no added collider\r\nPASS WalkGuide tangents\r\nBOUNDS KH_Dogs/KH_Station_Viewpoint/WalkGuide/FinishedVisual Center: (0.00000, 0.45750, 0.00001), Extents: (0.45000, 0.33250, 0.02000)\r\nPASS KH_Station_Viewpoint shared material\r\nPASS KH_Station_Viewpoint no added collider\r\nPASS KH_Station_Viewpoint tangents\r\nBOUNDS KH_Dogs/KH_Station_Viewpoint/FinishedVisual Center: (0.00000, -0.35250, 0.02526), Extents: (0.60000, 0.47750, 0.06473)\r\nPASS WalkGuide shared material\r\nPASS WalkGuide no added collider\r\nPASS WalkGuide tangents\r\nBOUNDS KH_Dogs/KH_LeashRack/WalkGuide/FinishedVisual Center: (0.00000, 0.45750, 0.00000), Extents: (0.45000, 0.33250, 0.02000)\r\nPASS KH_LeashRack shared material\r\nPASS KH_LeashRack no added collider\r\nPASS KH_LeashRack tangents\r\nBOUNDS KH_Dogs/KH_LeashRack/FinishedVisual Center: (0.00000, -0.35250, 0.02527), Extents: (0.60000, 0.47750, 0.06473)\r\nPASS KH_WashBottle_Upper_0 shared material\r\nPASS KH_WashBottle_Upper_0 no added collider\r\nPASS KH_WashBottle_Upper_0 tangents\r\nBOUNDS KH_WashStations/Upper/KH_WashBottle_Upper_0/FinishedVisual Center: (0.00001, 0.01774, 0.00004), Extents: (0.03030, 0.10274, 0.03030)\r\nPASS bottle footprint and bottom\r\nPASS bottle existing nozzle matches model outlet\r\nPASS KH_WashBottle_Hillside_0 shared material\r\nPASS KH_WashBottle_Hillside_0 no added collider\r\nPASS KH_WashBottle_Hillside_0 tangents\r\nBOUNDS KH_WashStations/Hillside/KH_WashBottle_Hillside_0/FinishedVisual Center: (0.00000, 0.01774, -0.00001), Extents: (0.03030, 0.10274, 0.03030)\r\nPASS bottle footprint and bottom\r\nPASS bottle existing nozzle matches model outlet\r\nPASS KH_WashBottle_0 shared material\r\nPASS KH_WashBottle_0 no added collider\r\nPASS KH_WashBottle_0 tangents\r\nBOUNDS KH_WashStation/KH_WashBottle_0/FinishedVisual Center: (0.00000, 0.01774, 0.00000), Extents: (0.03030, 0.10274, 0.03030)\r\nPASS bottle footprint and bottom\r\nPASS bottle existing nozzle matches model outlet\r\nPASS KH_WashBottle_River_0 shared material\r\nPASS KH_WashBottle_River_0 no added collider\r\nPASS KH_WashBottle_River_0 tangents\r\nBOUNDS KH_WashStations/River/KH_WashBottle_River_0/FinishedVisual Center: (-0.00001, 0.01774, 0.00001), Extents: (0.03030, 0.10274, 0.03030)\r\nPASS bottle footprint and bottom\r\nPASS bottle existing nozzle matches model outlet\r\nPASS Hillside shared material\r\nPASS Hillside no added collider\r\nPASS Hillside tangents\r\nBOUNDS KH_WashStations/Hillside/FinishedVisual Center: (0.00000, 0.43625, 0.00000), Extents: (0.60000, 0.43625, 0.22500)\r\nPASS shelf footprint and feet\r\nPASS Upper shared material\r\nPASS Upper no added collider\r\nPASS Upper tangents\r\nBOUNDS KH_WashStations/Upper/FinishedVisual Center: (-0.00001, 0.43625, 0.00000), Extents: (0.60000, 0.43625, 0.22500)\r\nPASS shelf footprint and feet\r\nPASS KH_WashStation shared material\r\nPASS KH_WashStation no added collider\r\nPASS KH_WashStation tangents\r\nBOUNDS KH_WashStation/FinishedVisual Center: (0.00000, 0.43625, 0.00000), Extents: (0.60000, 0.43625, 0.22500)\r\nPASS shelf footprint and feet\r\nPASS River shared material\r\nPASS River no added collider\r\nPASS River tangents\r\nBOUNDS KH_WashStations/River/FinishedVisual Center: (-0.00001, 0.43625, -0.00004), Extents: (0.60000, 0.43625, 0.22500)\r\nPASS shelf footprint and feet\r\nPASS Props_BaseColor mipmaps, no CPU copy\r\nPASS Props_BaseColor color space\r\nPASS Props_BaseColor Android ASTC1024\r\nPASS Props_BaseColor iPhone ASTC1024\r\nPASS Props_Normal mipmaps, no CPU copy\r\nPASS Props_Normal color space\r\nPASS normal map importer\r\nPASS Props_Normal Android ASTC1024\r\nPASS Props_Normal iPhone ASTC1024\r\nPASS Props_MetallicSmoothness mipmaps, no CPU copy\r\nPASS Props_MetallicSmoothness color space\r\nPASS Props_MetallicSmoothness Android ASTC1024\r\nPASS Props_MetallicSmoothness iPhone ASTC1024\r\nERRORS 0\r\n",
+  "washArt": "PASS four wash stations\r\nPASS shared opaque textured material\r\nPASS KH_WashStation shelf/platform present\r\nPASS KH_WashStation shelf footprint (1.20, 0.87, 0.45)\r\nPASS KH_WashStation platform matches solid walkable collider (1.30, 0.03, 0.70)\r\nPASS KH_WashStation shelf surface aligns with tools/collider\r\nPASS KH_WashStation old Shelf hidden\r\nPASS KH_WashStation old ShelfLeg_0 hidden\r\nPASS KH_WashStation old ShelfLeg_1 hidden\r\nPASS KH_WashStation old ShelfLeg_2 hidden\r\nPASS KH_WashStation old ShelfLeg_3 hidden\r\nPASS KH_WashSponge_0 imported visual\r\nPASS KH_WashSponge_0 no extra pickup colliders\r\nPASS KH_WashSponge_0 mesh fits pickup collider\r\nPASS KH_WashSponge_0 primitive art hidden\r\nPASS KH_WashSponge_0 above shelf (minY=0.8010)\r\nPASS KH_WashSponge_1 imported visual\r\nPASS KH_WashSponge_1 no extra pickup colliders\r\nPASS KH_WashSponge_1 mesh fits pickup collider\r\nPASS KH_WashSponge_1 primitive art hidden\r\nPASS KH_WashSponge_1 above shelf (minY=0.8010)\r\nPASS KH_WashShower_0 imported visual\r\nPASS KH_WashShower_0 no extra pickup colliders\r\nPASS KH_WashShower_0 nozzle position/direction match spray\r\nPASS KH_WashShower_0 capsule fitted to imported shower: center=(0.00, 0.02, 0.00) height=0.20351 radius=0.03563\r\nPASS KH_WashShower_0 primitive art hidden\r\nPASS KH_WashShower_0 above shelf (minY=0.8031)\r\nPASS KH_WashShower_1 imported visual\r\nPASS KH_WashShower_1 no extra pickup colliders\r\nPASS KH_WashShower_1 nozzle position/direction match spray\r\nPASS KH_WashShower_1 capsule fitted to imported shower: center=(0.00, 0.02, 0.00) height=0.20351 radius=0.03563\r\nPASS KH_WashShower_1 primitive art hidden\r\nPASS KH_WashShower_1 above shelf (minY=0.8031)\r\nPASS KH_WashTowel_0 imported visual\r\nPASS KH_WashTowel_0 no extra pickup colliders\r\nPASS KH_WashTowel_0 mesh fits pickup collider\r\nPASS KH_WashTowel_0 primitive art hidden\r\nPASS KH_WashTowel_0 above shelf (minY=0.8010)\r\nPASS KH_WashTowel_1 imported visual\r\nPASS KH_WashTowel_1 no extra pickup colliders\r\nPASS KH_WashTowel_1 mesh fits pickup collider\r\nPASS KH_WashTowel_1 primitive art hidden\r\nPASS KH_WashTowel_1 above shelf (minY=0.8010)\r\nPASS KH_WashBottle_0 bottle visual matches installed prop finish\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedShelf legacy material and expected visibility\r\nPASS ImportedPlatform legacy material and expected visibility\r\nPASS River shelf/platform present\r\nPASS River shelf footprint (1.20, 0.87, 0.45)\r\nPASS River platform matches solid walkable collider (1.30, 0.03, 0.70)\r\nPASS River shelf surface aligns with tools/collider\r\nPASS River old Shelf hidden\r\nPASS River old ShelfLeg_0 hidden\r\nPASS River old ShelfLeg_1 hidden\r\nPASS River old ShelfLeg_2 hidden\r\nPASS River old ShelfLeg_3 hidden\r\nPASS KH_WashSponge_River_0 imported visual\r\nPASS KH_WashSponge_River_0 no extra pickup colliders\r\nPASS KH_WashSponge_River_0 mesh fits pickup collider\r\nPASS KH_WashSponge_River_0 primitive art hidden\r\nPASS KH_WashSponge_River_0 above shelf (minY=0.8010)\r\nPASS KH_WashShower_River_0 imported visual\r\nPASS KH_WashShower_River_0 no extra pickup colliders\r\nPASS KH_WashShower_River_0 nozzle position/direction match spray\r\nPASS KH_WashShower_River_0 capsule fitted to imported shower: center=(0.00, 0.02, 0.00) height=0.20351 radius=0.03563\r\nPASS KH_WashShower_River_0 primitive art hidden\r\nPASS KH_WashShower_River_0 above shelf (minY=0.8031)\r\nPASS KH_WashTowel_River_0 imported visual\r\nPASS KH_WashTowel_River_0 no extra pickup colliders\r\nPASS KH_WashTowel_River_0 mesh fits pickup collider\r\nPASS KH_WashTowel_River_0 primitive art hidden\r\nPASS KH_WashTowel_River_0 above shelf (minY=0.8010)\r\nPASS KH_WashBottle_River_0 bottle visual matches installed prop finish\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedShelf legacy material and expected visibility\r\nPASS ImportedPlatform legacy material and expected visibility\r\nPASS Upper shelf/platform present\r\nPASS Upper shelf footprint (1.20, 0.87, 0.45)\r\nPASS Upper platform matches solid walkable collider (1.30, 0.03, 0.70)\r\nPASS Upper shelf surface aligns with tools/collider\r\nPASS Upper old Shelf hidden\r\nPASS Upper old ShelfLeg_0 hidden\r\nPASS Upper old ShelfLeg_1 hidden\r\nPASS Upper old ShelfLeg_2 hidden\r\nPASS Upper old ShelfLeg_3 hidden\r\nPASS KH_WashSponge_Upper_0 imported visual\r\nPASS KH_WashSponge_Upper_0 no extra pickup colliders\r\nPASS KH_WashSponge_Upper_0 mesh fits pickup collider\r\nPASS KH_WashSponge_Upper_0 primitive art hidden\r\nPASS KH_WashSponge_Upper_0 above shelf (minY=0.8010)\r\nPASS KH_WashShower_Upper_0 imported visual\r\nPASS KH_WashShower_Upper_0 no extra pickup colliders\r\nPASS KH_WashShower_Upper_0 nozzle position/direction match spray\r\nPASS KH_WashShower_Upper_0 capsule fitted to imported shower: center=(0.00, 0.02, 0.00) height=0.20351 radius=0.03563\r\nPASS KH_WashShower_Upper_0 primitive art hidden\r\nPASS KH_WashShower_Upper_0 above shelf (minY=0.8031)\r\nPASS KH_WashTowel_Upper_0 imported visual\r\nPASS KH_WashTowel_Upper_0 no extra pickup colliders\r\nPASS KH_WashTowel_Upper_0 mesh fits pickup collider\r\nPASS KH_WashTowel_Upper_0 primitive art hidden\r\nPASS KH_WashTowel_Upper_0 above shelf (minY=0.8010)\r\nPASS KH_WashBottle_Upper_0 bottle visual matches installed prop finish\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedShelf legacy material and expected visibility\r\nPASS ImportedPlatform legacy material and expected visibility\r\nPASS Hillside shelf/platform present\r\nPASS Hillside shelf footprint (1.20, 0.87, 0.45)\r\nPASS Hillside platform matches solid walkable collider (1.30, 0.03, 0.70)\r\nPASS Hillside shelf surface aligns with tools/collider\r\nPASS Hillside old Shelf hidden\r\nPASS Hillside old ShelfLeg_0 hidden\r\nPASS Hillside old ShelfLeg_1 hidden\r\nPASS Hillside old ShelfLeg_2 hidden\r\nPASS Hillside old ShelfLeg_3 hidden\r\nPASS KH_WashSponge_Hillside_0 imported visual\r\nPASS KH_WashSponge_Hillside_0 no extra pickup colliders\r\nPASS KH_WashSponge_Hillside_0 mesh fits pickup collider\r\nPASS KH_WashSponge_Hillside_0 primitive art hidden\r\nPASS KH_WashSponge_Hillside_0 above shelf (minY=0.8010)\r\nPASS KH_WashShower_Hillside_0 imported visual\r\nPASS KH_WashShower_Hillside_0 no extra pickup colliders\r\nPASS KH_WashShower_Hillside_0 nozzle position/direction match spray\r\nPASS KH_WashShower_Hillside_0 capsule fitted to imported shower: center=(0.00, 0.02, 0.00) height=0.20351 radius=0.03563\r\nPASS KH_WashShower_Hillside_0 primitive art hidden\r\nPASS KH_WashShower_Hillside_0 above shelf (minY=0.8031)\r\nPASS KH_WashTowel_Hillside_0 imported visual\r\nPASS KH_WashTowel_Hillside_0 no extra pickup colliders\r\nPASS KH_WashTowel_Hillside_0 mesh fits pickup collider\r\nPASS KH_WashTowel_Hillside_0 primitive art hidden\r\nPASS KH_WashTowel_Hillside_0 above shelf (minY=0.8010)\r\nPASS KH_WashBottle_Hillside_0 bottle visual matches installed prop finish\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedVisual legacy material and expected visibility\r\nPASS ImportedShelf legacy material and expected visibility\r\nPASS ImportedPlatform legacy material and expected visibility\r\nPASS 23 models (15 tools + 8 fixtures): 23\r\nPASS WashTools_BaseColor.png no CPU read/write copy\r\nPASS WashTools_BaseColor.png Android bounded ASTC\r\nPASS WashTools_BaseColor.png iPhone bounded ASTC\r\nPASS WashTools_MetallicSmoothness.png no CPU read/write copy\r\nPASS WashTools_MetallicSmoothness.png Android bounded ASTC\r\nPASS WashTools_MetallicSmoothness.png iPhone bounded ASTC\r\nTRIANGLES 25040 MODELS 23 FAILURES 0\r\n",
+  "washSetup": {
+    "passed": true,
+    "checks": 5316
+  },
+  "photo": {
+    "fails": 0,
+    "warns": 0
+  },
+  "limitations": "Editor fixed-view captures and serialized-state checks only. No Play, device, network or performance verification.",
+  "independentReviewResult": "Two legacy renderer checks fixed; final limited review has no additional required changes."
+}

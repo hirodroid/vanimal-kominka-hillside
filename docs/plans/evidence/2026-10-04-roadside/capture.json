@@ -1,0 +1,926 @@
+{
+    "utc": "2026-10-03T20:44:38.8342507Z",
+    "scene": "Assets/Scenes/VRCDefaultWorldScene.unity",
+    "views": [
+        {
+            "name": "route-160",
+            "file": "route-160-adult-before.png",
+            "position": {
+                "x": 206.47097778320313,
+                "y": 41.618778228759769,
+                "z": 593.2725830078125
+            },
+            "euler": {
+                "x": 359.5591125488281,
+                "y": 34.18877029418945,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "route-160",
+            "file": "route-160-adult-after.png",
+            "position": {
+                "x": 206.47097778320313,
+                "y": 41.618778228759769,
+                "z": 593.2725830078125
+            },
+            "euler": {
+                "x": 359.5591125488281,
+                "y": 34.18877029418945,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "route-160",
+            "file": "route-160-adult-night.png",
+            "position": {
+                "x": 206.47097778320313,
+                "y": 41.618778228759769,
+                "z": 593.2725830078125
+            },
+            "euler": {
+                "x": 359.5591125488281,
+                "y": 34.18877029418945,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "route-160",
+            "file": "route-160-low-before.png",
+            "position": {
+                "x": 206.47097778320313,
+                "y": 40.398780822753909,
+                "z": 593.2725830078125
+            },
+            "euler": {
+                "x": 359.5591125488281,
+                "y": 34.18877029418945,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "route-160",
+            "file": "route-160-low-after.png",
+            "position": {
+                "x": 206.47097778320313,
+                "y": 40.398780822753909,
+                "z": 593.2725830078125
+            },
+            "euler": {
+                "x": 359.5591125488281,
+                "y": 34.18877029418945,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "route-160",
+            "file": "route-160-low-night.png",
+            "position": {
+                "x": 206.47097778320313,
+                "y": 40.398780822753909,
+                "z": 593.2725830078125
+            },
+            "euler": {
+                "x": 359.5591125488281,
+                "y": 34.18877029418945,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "route-200",
+            "file": "route-200-adult-before.png",
+            "position": {
+                "x": 379.2914733886719,
+                "y": 36.398494720458987,
+                "z": 619.7350463867188
+            },
+            "euler": {
+                "x": 2.8148157596588136,
+                "y": 141.42617797851563,
+                "z": 5.342530329244255e-8
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "route-200",
+            "file": "route-200-adult-after.png",
+            "position": {
+                "x": 379.2914733886719,
+                "y": 36.398494720458987,
+                "z": 619.7350463867188
+            },
+            "euler": {
+                "x": 2.8148157596588136,
+                "y": 141.42617797851563,
+                "z": 5.342530329244255e-8
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "route-200",
+            "file": "route-200-adult-night.png",
+            "position": {
+                "x": 379.2914733886719,
+                "y": 36.398494720458987,
+                "z": 619.7350463867188
+            },
+            "euler": {
+                "x": 2.8148157596588136,
+                "y": 141.42617797851563,
+                "z": 5.342530329244255e-8
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "route-200",
+            "file": "route-200-low-before.png",
+            "position": {
+                "x": 379.2914733886719,
+                "y": 35.178497314453128,
+                "z": 619.7350463867188
+            },
+            "euler": {
+                "x": 2.8148157596588136,
+                "y": 141.42617797851563,
+                "z": 5.342530329244255e-8
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "route-200",
+            "file": "route-200-low-after.png",
+            "position": {
+                "x": 379.2914733886719,
+                "y": 35.178497314453128,
+                "z": 619.7350463867188
+            },
+            "euler": {
+                "x": 2.8148157596588136,
+                "y": 141.42617797851563,
+                "z": 5.342530329244255e-8
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "route-200",
+            "file": "route-200-low-night.png",
+            "position": {
+                "x": 379.2914733886719,
+                "y": 35.178497314453128,
+                "z": 619.7350463867188
+            },
+            "euler": {
+                "x": 2.8148157596588136,
+                "y": 141.42617797851563,
+                "z": 5.342530329244255e-8
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "route-280",
+            "file": "route-280-adult-before.png",
+            "position": {
+                "x": 456.8087463378906,
+                "y": 14.731008529663086,
+                "z": 347.436767578125
+            },
+            "euler": {
+                "x": 1.6270287036895753,
+                "y": 137.87356567382813,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "route-280",
+            "file": "route-280-adult-after.png",
+            "position": {
+                "x": 456.8087463378906,
+                "y": 14.731008529663086,
+                "z": 347.436767578125
+            },
+            "euler": {
+                "x": 1.6270287036895753,
+                "y": 137.87356567382813,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "route-280",
+            "file": "route-280-adult-night.png",
+            "position": {
+                "x": 456.8087463378906,
+                "y": 14.731008529663086,
+                "z": 347.436767578125
+            },
+            "euler": {
+                "x": 1.6270287036895753,
+                "y": 137.87356567382813,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "route-280",
+            "file": "route-280-low-before.png",
+            "position": {
+                "x": 456.8087463378906,
+                "y": 13.511008262634278,
+                "z": 347.436767578125
+            },
+            "euler": {
+                "x": 1.6270287036895753,
+                "y": 137.87356567382813,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "route-280",
+            "file": "route-280-low-after.png",
+            "position": {
+                "x": 456.8087463378906,
+                "y": 13.511008262634278,
+                "z": 347.436767578125
+            },
+            "euler": {
+                "x": 1.6270287036895753,
+                "y": 137.87356567382813,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "route-280",
+            "file": "route-280-low-night.png",
+            "position": {
+                "x": 456.8087463378906,
+                "y": 13.511008262634278,
+                "z": 347.436767578125
+            },
+            "euler": {
+                "x": 1.6270287036895753,
+                "y": 137.87356567382813,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "route-360",
+            "file": "route-360-adult-before.png",
+            "position": {
+                "x": 266.68682861328127,
+                "y": 5.67377233505249,
+                "z": 225.79421997070313
+            },
+            "euler": {
+                "x": 0.04056181758642197,
+                "y": 208.810791015625,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "route-360",
+            "file": "route-360-adult-after.png",
+            "position": {
+                "x": 266.68682861328127,
+                "y": 5.67377233505249,
+                "z": 225.79421997070313
+            },
+            "euler": {
+                "x": 0.04056181758642197,
+                "y": 208.810791015625,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "route-360",
+            "file": "route-360-adult-night.png",
+            "position": {
+                "x": 266.68682861328127,
+                "y": 5.67377233505249,
+                "z": 225.79421997070313
+            },
+            "euler": {
+                "x": 0.04056181758642197,
+                "y": 208.810791015625,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "route-360",
+            "file": "route-360-low-before.png",
+            "position": {
+                "x": 266.68682861328127,
+                "y": 4.45377254486084,
+                "z": 225.79421997070313
+            },
+            "euler": {
+                "x": 0.04056181758642197,
+                "y": 208.810791015625,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "route-360",
+            "file": "route-360-low-after.png",
+            "position": {
+                "x": 266.68682861328127,
+                "y": 4.45377254486084,
+                "z": 225.79421997070313
+            },
+            "euler": {
+                "x": 0.04056181758642197,
+                "y": 208.810791015625,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "route-360",
+            "file": "route-360-low-night.png",
+            "position": {
+                "x": 266.68682861328127,
+                "y": 4.45377254486084,
+                "z": 225.79421997070313
+            },
+            "euler": {
+                "x": 0.04056181758642197,
+                "y": 208.810791015625,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "route-400",
+            "file": "route-400-adult-before.png",
+            "position": {
+                "x": 183.09385681152345,
+                "y": 4.091126441955566,
+                "z": 64.04692840576172
+            },
+            "euler": {
+                "x": 0.016866957768797876,
+                "y": 243.43495178222657,
+                "z": -8.337632251276261e-10
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "route-400",
+            "file": "route-400-adult-after.png",
+            "position": {
+                "x": 183.09385681152345,
+                "y": 4.091126441955566,
+                "z": 64.04692840576172
+            },
+            "euler": {
+                "x": 0.016866957768797876,
+                "y": 243.43495178222657,
+                "z": -8.337632251276261e-10
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "route-400",
+            "file": "route-400-adult-night.png",
+            "position": {
+                "x": 183.09385681152345,
+                "y": 4.091126441955566,
+                "z": 64.04692840576172
+            },
+            "euler": {
+                "x": 0.016866957768797876,
+                "y": 243.43495178222657,
+                "z": -8.337632251276261e-10
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "route-400",
+            "file": "route-400-low-before.png",
+            "position": {
+                "x": 183.09385681152345,
+                "y": 2.871126413345337,
+                "z": 64.04692840576172
+            },
+            "euler": {
+                "x": 0.016866957768797876,
+                "y": 243.43495178222657,
+                "z": -8.337632251276261e-10
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "route-400",
+            "file": "route-400-low-after.png",
+            "position": {
+                "x": 183.09385681152345,
+                "y": 2.871126413345337,
+                "z": 64.04692840576172
+            },
+            "euler": {
+                "x": 0.016866957768797876,
+                "y": 243.43495178222657,
+                "z": -8.337632251276261e-10
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "route-400",
+            "file": "route-400-low-night.png",
+            "position": {
+                "x": 183.09385681152345,
+                "y": 2.871126413345337,
+                "z": 64.04692840576172
+            },
+            "euler": {
+                "x": 0.016866957768797876,
+                "y": 243.43495178222657,
+                "z": -8.337632251276261e-10
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "viewpoint",
+            "file": "viewpoint-adult-before.png",
+            "position": {
+                "x": 83.0,
+                "y": 20.62140464782715,
+                "z": 114.0
+            },
+            "euler": {
+                "x": 14.266857147216797,
+                "y": 216.86990356445313,
+                "z": 4.404716094086325e-7
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "viewpoint",
+            "file": "viewpoint-adult-after.png",
+            "position": {
+                "x": 83.0,
+                "y": 20.62140464782715,
+                "z": 114.0
+            },
+            "euler": {
+                "x": 14.266857147216797,
+                "y": 216.86990356445313,
+                "z": 4.404716094086325e-7
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "viewpoint",
+            "file": "viewpoint-adult-night.png",
+            "position": {
+                "x": 83.0,
+                "y": 20.62140464782715,
+                "z": 114.0
+            },
+            "euler": {
+                "x": 14.266857147216797,
+                "y": 216.86990356445313,
+                "z": 4.404716094086325e-7
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "viewpoint",
+            "file": "viewpoint-low-before.png",
+            "position": {
+                "x": 83.0,
+                "y": 19.401403427124025,
+                "z": 114.0
+            },
+            "euler": {
+                "x": 0.5890148282051086,
+                "y": 216.86988830566407,
+                "z": -1.334091770388568e-8
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "viewpoint",
+            "file": "viewpoint-low-after.png",
+            "position": {
+                "x": 83.0,
+                "y": 19.401403427124025,
+                "z": 114.0
+            },
+            "euler": {
+                "x": 0.5890148282051086,
+                "y": 216.86988830566407,
+                "z": -1.334091770388568e-8
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "viewpoint",
+            "file": "viewpoint-low-night.png",
+            "position": {
+                "x": 83.0,
+                "y": 19.401403427124025,
+                "z": 114.0
+            },
+            "euler": {
+                "x": 0.5890148282051086,
+                "y": 216.86988830566407,
+                "z": -1.334091770388568e-8
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "plaza-rest",
+            "file": "plaza-rest-adult-before.png",
+            "position": {
+                "x": 208.33493041992188,
+                "y": 41.618778228759769,
+                "z": 613.8480834960938
+            },
+            "euler": {
+                "x": 18.80765724182129,
+                "y": 170.19436645507813,
+                "z": 2.254828075365367e-7
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "plaza-rest",
+            "file": "plaza-rest-adult-after.png",
+            "position": {
+                "x": 208.33493041992188,
+                "y": 41.618778228759769,
+                "z": 613.8480834960938
+            },
+            "euler": {
+                "x": 18.80765724182129,
+                "y": 170.19436645507813,
+                "z": 2.254828075365367e-7
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "plaza-rest",
+            "file": "plaza-rest-adult-night.png",
+            "position": {
+                "x": 208.33493041992188,
+                "y": 41.618778228759769,
+                "z": 613.8480834960938
+            },
+            "euler": {
+                "x": 18.80765724182129,
+                "y": 170.19436645507813,
+                "z": 2.254828075365367e-7
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "plaza-rest",
+            "file": "plaza-rest-low-before.png",
+            "position": {
+                "x": 208.33493041992188,
+                "y": 40.398780822753909,
+                "z": 613.8480834960938
+            },
+            "euler": {
+                "x": 1.6134928464889527,
+                "y": 170.19436645507813,
+                "z": 1.3345504257245011e-8
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "plaza-rest",
+            "file": "plaza-rest-low-after.png",
+            "position": {
+                "x": 208.33493041992188,
+                "y": 40.398780822753909,
+                "z": 613.8480834960938
+            },
+            "euler": {
+                "x": 1.6134928464889527,
+                "y": 170.19436645507813,
+                "z": 1.3345504257245011e-8
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "plaza-rest",
+            "file": "plaza-rest-low-night.png",
+            "position": {
+                "x": 208.33493041992188,
+                "y": 40.398780822753909,
+                "z": 613.8480834960938
+            },
+            "euler": {
+                "x": 1.6134928464889527,
+                "y": 170.19436645507813,
+                "z": 1.3345504257245011e-8
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "river-rest",
+            "file": "river-rest-adult-before.png",
+            "position": {
+                "x": 512.662353515625,
+                "y": 12.326387405395508,
+                "z": 288.53363037109377
+            },
+            "euler": {
+                "x": 24.716493606567384,
+                "y": 205.19406127929688,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "river-rest",
+            "file": "river-rest-adult-after.png",
+            "position": {
+                "x": 512.662353515625,
+                "y": 12.326387405395508,
+                "z": 288.53363037109377
+            },
+            "euler": {
+                "x": 24.716493606567384,
+                "y": 205.19406127929688,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "river-rest",
+            "file": "river-rest-adult-night.png",
+            "position": {
+                "x": 512.662353515625,
+                "y": 12.326387405395508,
+                "z": 288.53363037109377
+            },
+            "euler": {
+                "x": 24.716493606567384,
+                "y": 205.19406127929688,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "river-rest",
+            "file": "river-rest-low-before.png",
+            "position": {
+                "x": 512.662353515625,
+                "y": 11.1063871383667,
+                "z": 288.53363037109377
+            },
+            "euler": {
+                "x": 8.412327766418457,
+                "y": 205.19406127929688,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "river-rest",
+            "file": "river-rest-low-after.png",
+            "position": {
+                "x": 512.662353515625,
+                "y": 11.1063871383667,
+                "z": 288.53363037109377
+            },
+            "euler": {
+                "x": 8.412327766418457,
+                "y": 205.19406127929688,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "river-rest",
+            "file": "river-rest-low-night.png",
+            "position": {
+                "x": 512.662353515625,
+                "y": 11.1063871383667,
+                "z": 288.53363037109377
+            },
+            "euler": {
+                "x": 8.412327766418457,
+                "y": 205.19406127929688,
+                "z": 0.0
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "farmhouse-view",
+            "file": "farmhouse-view-adult-before.png",
+            "position": {
+                "x": 80.0,
+                "y": 20.62140464782715,
+                "z": 108.0
+            },
+            "euler": {
+                "x": 10.953269004821778,
+                "y": 207.758544921875,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "farmhouse-view",
+            "file": "farmhouse-view-adult-after.png",
+            "position": {
+                "x": 80.0,
+                "y": 20.62140464782715,
+                "z": 108.0
+            },
+            "euler": {
+                "x": 10.953269004821778,
+                "y": 207.758544921875,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "farmhouse-view",
+            "file": "farmhouse-view-adult-night.png",
+            "position": {
+                "x": 80.0,
+                "y": 20.62140464782715,
+                "z": 108.0
+            },
+            "euler": {
+                "x": 10.953269004821778,
+                "y": 207.758544921875,
+                "z": 0.0
+            },
+            "eyeHeight": 1.6200000047683716,
+            "darkness": 0.800000011920929,
+            "additions": true
+        },
+        {
+            "name": "farmhouse-view",
+            "file": "farmhouse-view-low-before.png",
+            "position": {
+                "x": 80.0,
+                "y": 19.401403427124025,
+                "z": 108.0
+            },
+            "euler": {
+                "x": 10.166714668273926,
+                "y": 207.758544921875,
+                "z": -4.3369658442315997e-7
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": false
+        },
+        {
+            "name": "farmhouse-view",
+            "file": "farmhouse-view-low-after.png",
+            "position": {
+                "x": 80.0,
+                "y": 19.401403427124025,
+                "z": 108.0
+            },
+            "euler": {
+                "x": 10.166714668273926,
+                "y": 207.758544921875,
+                "z": -4.3369658442315997e-7
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.0,
+            "additions": true
+        },
+        {
+            "name": "farmhouse-view",
+            "file": "farmhouse-view-low-night.png",
+            "position": {
+                "x": 80.0,
+                "y": 19.401403427124025,
+                "z": 108.0
+            },
+            "euler": {
+                "x": 10.166714668273926,
+                "y": 207.758544921875,
+                "z": -4.3369658442315997e-7
+            },
+            "eyeHeight": 0.4000000059604645,
+            "darkness": 0.800000011920929,
+            "additions": true
+        }
+    ],
+    "dirtyAfter": false,
+    "limitations": "Editor mono 960x600, FOV60, near0.1/far2200. Before hides only this task's additions and restores prototype bench renderer. Night uses cloned existing overlay/sky at darkness0.8; no Udon, stereo or device verification."
+}

@@ -379,7 +379,10 @@ namespace KominkaHillside.Editor
             var al = s.album;
             Check(board.GetComponentsInChildren<Collider>(true).All(x => x.isTrigger), "board: only trigger colliders (nobody bumps into it; Guide/2's solid check is not affected)");
             var st = board.Find("Structure");
-            Check(st != null && st.GetComponentsInChildren<Collider>(true).Length == 0 && st.GetComponentsInChildren<MeshRenderer>(true).Length == 6, "board frame: 6 wood parts, no collider");
+            var frameRenderers=st==null?new MeshRenderer[0]:st.GetComponentsInChildren<MeshRenderer>(true);
+            bool finishedFrame=KH_PropFinishEditor.Ready;
+            Check(st != null && st.GetComponentsInChildren<Collider>(true).Length == 0 && frameRenderers.Length == (finishedFrame?7:6)
+                && frameRenderers.All(r=>r.enabled==(!finishedFrame || r.name=="FinishedVisual")), "board frame: expected wood visuals, no collider");
             var canvas = board.Find("Canvas");
             Check(canvas != null && canvas.GetComponent<GraphicRaycaster>() == null && canvas.GetComponent<VRC.SDK3.Components.VRCUiShape>() == null && canvas.GetComponent<Canvas>() != null && canvas.GetComponent<Canvas>().renderMode == RenderMode.WorldSpace,
                 "board canvas: world space, read-only (no raycaster / UI shape)");

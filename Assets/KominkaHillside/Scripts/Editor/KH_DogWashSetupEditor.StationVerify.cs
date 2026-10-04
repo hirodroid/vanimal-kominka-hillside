@@ -999,15 +999,18 @@ namespace KominkaHillside.Editor
                     var cap = cols.Length == 1 ? cols[0] as CapsuleCollider : null;
                     req(cap != null && !cap.isTrigger && cap.direction == 1 && Mathf.Abs(cap.radius - BottleBodyDiameter * 0.5f) < 1e-4f && Mathf.Abs(cap.center.y - cap.height * 0.5f + BottleRestY) < 1e-3f,
                         who + " one solid upright CapsuleCollider, radius " + (BottleBodyDiameter * 0.5f) + ", foot " + BottleRestY + " below the root (" + (cap != null ? "r " + cap.radius.ToString("F3") + " foot " + (cap.center.y - cap.height * 0.5f).ToString("F3") : cols.Length + " colliders") + ")");
-                    // the look: primitives, no imported visual (Art.cs leaves the bottle alone; Wash/32 counts 23 models without it)
-                    req(t.Find("ImportedVisual") == null, who + " has no ImportedVisual (primitive look; not one of Wash/32's 23 models)");
+                    // The original primitives retain dimensional contracts; PropFinish supplies the display.
+                    bool finished=KH_PropFinishEditor.Ready;
+                    req(t.Find("ImportedVisual") == null, who + " has no legacy ImportedVisual (not one of Wash/32's 23 models)");
+                    var visual=t.Find("FinishedVisual");
+                    req(!finished || (visual!=null && visual.GetComponent<MeshRenderer>()!=null && visual.GetComponent<MeshRenderer>().enabled && visual.GetComponentsInChildren<Collider>(true).Length==0 && visual.gameObject.layer==PickupLayer),who+" prop finish visual without added collider");
                     var partsOk = new List<string>();
                     foreach (var n in new[] { "Body", "Shoulder", "Cap", "Spout" })
                     {
                         var p = t.Find(n); var mr = p != null ? p.GetComponent<MeshRenderer>() : null;
-                        if (mr == null || !mr.enabled || p.GetComponent<Collider>() != null || p.gameObject.layer != PickupLayer) partsOk.Add(n);
+                        if (mr == null || mr.enabled == finished || p.GetComponent<Collider>() != null || p.gameObject.layer != PickupLayer) partsOk.Add(n);
                     }
-                    req(partsOk.Count == 0, who + " Body / Shoulder / Cap / Spout: enabled renderers, no colliders, layer Pickup (wrong: " + string.Join(", ", partsOk) + ")");
+                    req(partsOk.Count == 0, who + " Body / Shoulder / Cap / Spout: expected visibility, no colliders, layer Pickup (wrong: " + string.Join(", ", partsOk) + ")");
                     var body = t.Find("Body"); var bodyR = body != null ? body.GetComponent<MeshRenderer>() : null;
                     req(bodyR != null && shampoo != null && bodyR.sharedMaterial == shampoo, who + " Body uses " + shampooPath);
                     // the nozzle: the spout's tip, forward = the spout (tilted BottleSpoutTilt toward the bottle's +Z)

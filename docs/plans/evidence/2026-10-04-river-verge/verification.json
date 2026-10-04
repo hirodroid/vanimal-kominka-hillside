@@ -1,0 +1,217 @@
+{
+    "utc": "2026-10-03T21:50:45.8385468Z",
+    "sceneHash": "5D5303B2BDB9EB85AC501675E8979B8EC20AB98B2296941313B9010170E309F2",
+    "tiles": [
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_2_3.asset",
+            "heightHash": "839B4A9912F5B475C14309AF4CCFB93C2FA6AF03B030509D3EE4AA0E3B499287",
+            "origin": {
+                "x": 240.0,
+                "y": 0.0,
+                "z": 540.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_0_0.asset",
+            "heightHash": "2E9561D5512ABCD3EEDCF0F5035B13C1EA3684F0754C8968BC3EFA6B60E68A0F",
+            "origin": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_4_0.asset",
+            "heightHash": "D5CEC2F1BC2EDA0C7DC572E1732B74665A4BBE75790A80A10A3A1983777F53BD",
+            "origin": {
+                "x": 480.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_4_2.asset",
+            "heightHash": "07F8F4CCB2527D8F7FBBE7086178D9F96C620B857A64D33F9D4A95DBBC501017",
+            "origin": {
+                "x": 480.0,
+                "y": 0.0,
+                "z": 360.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_0_2.asset",
+            "heightHash": "1E01E403FE75F0BB31552D9ADAE430B3906750B70241F89852DE728ECE48063B",
+            "origin": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 360.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_3_0.asset",
+            "heightHash": "A9869D4F6A7DCDEE4401372AF156E81421661E9E5B80B066AFBFD25B803AA2B6",
+            "origin": {
+                "x": 360.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_0_1.asset",
+            "heightHash": "C53F51F33595E59945C0AE624571A560E7D425092D99270B21CE69ECF23C0F88",
+            "origin": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 180.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_3_2.asset",
+            "heightHash": "1A65095E553D8F56DDAA392BCCF2D22B60DC4113E05C515EF86C4B5A7611FE9F",
+            "origin": {
+                "x": 360.0,
+                "y": 0.0,
+                "z": 360.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_1_3.asset",
+            "heightHash": "34BC76E4E91A7D3A891D955A74265161B44671B4C77F5C8E7D2B9F0B65241DA2",
+            "origin": {
+                "x": 120.0,
+                "y": 0.0,
+                "z": 540.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_1_2.asset",
+            "heightHash": "569392C61701E2642A3293C52DFA9F322A37640A4972DE7DBF746F763E965160",
+            "origin": {
+                "x": 120.0,
+                "y": 0.0,
+                "z": 360.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_2_0.asset",
+            "heightHash": "E32AE23538CEA615DE32A9F07EB413090C293C451BA565529D6231FB1B31728D",
+            "origin": {
+                "x": 240.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_3_1.asset",
+            "heightHash": "9110C28332EC150D9344AA580F9437A47AB25ADF275805525C84061EAE8E4883",
+            "origin": {
+                "x": 360.0,
+                "y": 0.0,
+                "z": 180.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_2_2.asset",
+            "heightHash": "7FB7024B14D1E319C76FCC97C56E68D3B483B8E209CF38447350A474BD917B08",
+            "origin": {
+                "x": 240.0,
+                "y": 0.0,
+                "z": 360.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_4_1.asset",
+            "heightHash": "87BE282F148BF020C8B0CFE4E1103EDAA4BED500A34C86010EDD706A28596E99",
+            "origin": {
+                "x": 480.0,
+                "y": 0.0,
+                "z": 180.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_3_3.asset",
+            "heightHash": "264569F0DBBB5338EFE1D45E9B14535C35DB8FCB7A0AFC545BD6FB1628C2BF3E",
+            "origin": {
+                "x": 360.0,
+                "y": 0.0,
+                "z": 540.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_2_1.asset",
+            "heightHash": "FA412C2B01091F37ED6531FF5B9D33C7A0EBED454ED21C8C5F6EA84623B5F8A3",
+            "origin": {
+                "x": 240.0,
+                "y": 0.0,
+                "z": 180.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_0_3.asset",
+            "heightHash": "176693E9FA77E0C803AFE61DB7421AF94476402913D77A93562410379474A294",
+            "origin": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 540.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_1_1.asset",
+            "heightHash": "1320A68E31CB582FE6ADD4091F8EFBA0DB553DD860A046BEBCB7C9E4934A3D10",
+            "origin": {
+                "x": 120.0,
+                "y": 0.0,
+                "z": 180.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_1_0.asset",
+            "heightHash": "1B0B3CE356FC00476574BED8E5546CBE23791A81B5820EF17EAD4E3F7ADB9B0B",
+            "origin": {
+                "x": 120.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "resolution": 256
+        },
+        {
+            "path": "Assets/KominkaHillside/Data/Environment/Course/KH_CourseTerrain_4_3.asset",
+            "heightHash": "94527494F14EB6ED33493242D38322E3D647E566D2A39FC5E62471E40655F2AA",
+            "origin": {
+                "x": 480.0,
+                "y": 0.0,
+                "z": 540.0
+            },
+            "resolution": 256
+        }
+    ],
+    "errors": [],
+    "paintedPixels": 47370,
+    "changedOutside": 0,
+    "trees": 4,
+    "shrubs": 25,
+    "stones": 19,
+    "grassChunks": 26,
+    "renderers": 111,
+    "triangles": 198743,
+    "obstacleSamples": 9975,
+    "accessPaths": 3
+}

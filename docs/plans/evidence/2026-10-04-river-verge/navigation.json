@@ -1,0 +1,16 @@
+{
+    "status": "NAV_GEOMETRY_OK",
+    "utc": "2026-10-03T21:50:47.9726096Z",
+    "scene": "Assets/Scenes/VRCDefaultWorldScene.unity",
+    "errors": 0,
+    "vertices": 10925,
+    "triangles": 4841,
+    "routeSamples": 562,
+    "completedSegments": 561,
+    "bedSamples": 117,
+    "bridgePaths": 6,
+    "longestLocalDetour": 1.8034186363220215,
+    "maximumSnapDistance": 0.20200252532958985,
+    "findings": [],
+    "limitations": "Static navigation geometry only. Dog route graph/loop intention, leashes, animation, runtime cost and devices remain unverified."
+}

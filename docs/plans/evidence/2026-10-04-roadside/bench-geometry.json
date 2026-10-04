@@ -1,0 +1,11 @@
+{
+  "triangles": 528,
+  "vertices": 288,
+  "dimensions": [
+    1.600000023841858,
+    0.5,
+    0.44999998807907104
+  ],
+  "degenerateUVTriangles": 0,
+  "sourceRecipe": "scripts/art/roadside-bench.py"
+}

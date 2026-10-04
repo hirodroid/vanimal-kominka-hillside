@@ -281,7 +281,8 @@ namespace KominkaHillside.Editor
             cgo.transform.Find(FlatName).gameObject.SetActive(false);
 
             Prune(cgo.transform, new[] { BgName, VrName, FlatName }.Concat(ArrowNames), st.name + "/" + StripName + "/" + CanvasName, r);
-            Prune(strip, new[] { PostLName, PostRName, BackName, CanvasName }, st.name + "/" + StripName, r);
+            Prune(strip, new[] { PostLName, PostRName, BackName, CanvasName, "FinishedVisual" }, st.name + "/" + StripName, r);
+            KH_PropFinishEditor.FinishRackGuide(strip);
             foreach (var g in cgo.GetComponentsInChildren<Graphic>(true)) if (g.raycastTarget) { g.raycastTarget = false; EditorUtility.SetDirty(g); }
             return strip;
         }

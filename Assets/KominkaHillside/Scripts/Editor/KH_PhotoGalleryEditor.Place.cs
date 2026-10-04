@@ -254,6 +254,7 @@ namespace KominkaHillside.Editor
             var front = Quaternion.Euler(-RoofSlope, 0f, 0f); var back = Quaternion.Euler(RoofSlope, 0f, 0f);
             WoodPart(st, "RoofFront", new Vector3(0f, RidgeY + lift, BackZ) + front * new Vector3(0f, 0f, -half), front, new Vector3(RoofLength, RoofThick, RoofPlankDepth), wood);
             WoodPart(st, "RoofBack", new Vector3(0f, RidgeY + lift, BackZ) + back * new Vector3(0f, 0f, half), back, new Vector3(RoofLength, RoofThick, RoofPlankDepth), wood);
+            KH_PropFinishEditor.FinishPhotoFrame(root);
 
             // ---- read-only canvas (vrc-world-ui §2: no raycaster / VRCUiShape / collider) ----
             var ct = root.Find("Canvas");

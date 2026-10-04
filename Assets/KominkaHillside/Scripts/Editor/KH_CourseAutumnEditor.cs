@@ -68,6 +68,8 @@ namespace KominkaHillside.Editor
                 float leaf=Mathf.Clamp01(.08f+broad*.53f+path*.30f+plaza*.13f);
                 map[z,x,0]=(1-sand)*(1-rock)*(1-leaf);map[z,x,1]=(1-sand)*(1-rock)*leaf;map[z,x,2]=sand;map[z,x,3]=(1-sand)*rock;
             }
+            if(GameObject.Find("KH_RiverVerge")!=null&&UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path==KH_CourseGroundEditor.ScenePath)
+                KH_RoadsideSceneryEditor.PaintValley(td,tx*KH_CourseGroundEditor.TileX,tz*KH_CourseGroundEditor.TileZ,map);
             td.SetAlphamaps(0,0,map);EditorUtility.SetDirty(td);
         }
         [MenuItem("Tools/KominkaHillside/Course/68 - Apply Autumn Ground and Blender Bridge")]
