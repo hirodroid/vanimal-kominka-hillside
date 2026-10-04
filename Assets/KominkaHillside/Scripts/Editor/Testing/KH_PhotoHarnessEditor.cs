@@ -23,7 +23,7 @@ namespace KominkaHillside.Editor
     ///   H6-category       散歩の枠へ 11 回 (散歩のきっかけは W2 なので、実行時だけ _hillsideGroupOverride = 0 にして撮る) → 散歩の中だけで上書き (0 が 2 回目)、
     ///                     それまでの写真は残る (H4 のページ数の期待は実際の枚数から計算する)
     /// IMP-WLD-011 (洗いの写真。ラブ = 犬 2 の KH_DogWash へ _LocalContact を直接送る。泡・すすぎのしきい値は実行時だけ 0 にして節目の配線を見る):
-    ///   H9-wash           洗っていない端末 (自分のストロークなし) では清潔の合図が来ても撮らない → 自分のスポンジで泡の 1 枚、シャワー 2 s ですすぎの 1 枚、
+    ///   H9-wash           洗っていない端末 (自分のストロークなし) では清潔の合図が来ても撮らない → 自分のスポンジで泡の 1 枚、シャワーですすぎの 1 枚 (泡の 1 枚から 2 s あくまでは撮らない)、
     ///                     清潔の合図で洗い上がりの 1 枚 = 洗うの枠に 3 枚 → 同じ節目をもう一度起こしても撮らない → スポンジで洗い直すと数え直す →
     ///                     洗われている犬 (洗いの保持) は撫で続けても撫でのバーストが出ない、保持を解くと 2 枚のバーストが撫での枠へ →
     ///                     撫で・遊び・散歩を各枠 1 周以上撮っても、洗うの枠の 3 枚 (RT の中身) は残る
@@ -872,10 +872,14 @@ namespace KominkaHillside.Editor
                 Expect(Get<int>(uDirector, "_washLastKind") == KominkaDogRun.KD_PhotoDirector.WashShotFoam && Get<int>(uDirector, "_washLastDog") == WashDog && (Taken() & 1) != 0,
                     "the foam photo of dog " + WashDog + " (" + WashWhy() + ")");
                 Expect(NextIn(washG) == (washNext0 + 1) % washSize, "the foam photo went into the wash category (next " + NextIn(washG) + ")");
-                // ---- 3) own shower, 10 x 0.25 s of contact -> the rinse photo at 2.0 s ----
-                WashStroke(KH_DogWash.ToolShower, 10);
+                // ---- 3) own shower right after the foam photo: past washShotRinseContact, but within washShotMinGap -> not yet ----
+                WashStroke(KH_DogWash.ToolShower, 4);
+                Expect((Taken() & 2) == 0 && WashShots() == washShotsBefore + 1, "1 s of shower within " + Get<float>(uWash, "washShotMinGap") + " s of the foam photo: no rinse photo yet (" + WashWhy() + ")");
+                waitFrom = EditorApplication.timeSinceStartup;
             }));
-            steps.Add(Until(C, () => WashShots() >= washShotsBefore + 2 && !cam.enabled, 3, "no rinse photo after 2.5 s of own shower contact"));
+            steps.Add(Until(C, () => EditorApplication.timeSinceStartup - waitFrom > Get<float>(uWash, "washShotMinGap") + 0.2f, 5, "wait"));
+            steps.Add(Do(C, () => WashStroke(KH_DogWash.ToolShower, 1)));   // after the gap: the next own shower stroke takes it
+            steps.Add(Until(C, () => WashShots() >= washShotsBefore + 2 && !cam.enabled, 3, "no rinse photo from the first shower stroke after the gap"));
             steps.Add(Do(C, () =>
             {
                 Expect(Get<int>(uDirector, "_washLastKind") == KominkaDogRun.KD_PhotoDirector.WashShotRinse && (Taken() & 2) != 0, "the rinse photo (" + WashWhy() + ")");
@@ -1059,7 +1063,7 @@ namespace KominkaHillside.Editor
                 petSuppressedBefore = Get<bool>(uWashPet, "_suppressed");
                 realTouched = true;
                 foamT = Get<float>(uWash, "washShotFoamAvg");
-                Note("thresholds as built: foam " + foamT + ", rinse " + Get<float>(uWash, "washShotRinseSeconds") + " s while foam >= " + Get<float>(uWash, "washShotRinseFoam") + ", gap " + gap0A + " s; dog A " + WashDog + " (" + washPtsA.Count + " points), dog B " + WashDogB + " (" + washPtsB.Count + " points)");
+                Note("thresholds as built: foam " + foamT + ", rinse " + Get<float>(uWash, "washShotRinseContact") + " s of shower once the wash had foam >= " + Get<float>(uWash, "washShotRinseFoam") + ", " + Get<float>(uWash, "washShotMinGap") + " s after the foam photo" + ", gap " + gap0A + " s; dog A " + WashDog + " (" + washPtsA.Count + " points), dog B " + WashDogB + " (" + washPtsB.Count + " points)");
                 Note("not built in a single ClientSim player -> 2 players on real clients: a client that only watches takes nothing; two washers each take their own photos");
                 uWash.SendCustomEvent("_DebugClear"); uWashB.SendCustomEvent("_DebugClear");   // Owner: dirt / foam / wet 0, not armed
                 uWash.SetProgramVariable("_photoActive", false); uWashB.SetProgramVariable("_photoActive", false);
@@ -1096,14 +1100,23 @@ namespace KominkaHillside.Editor
                 float f = Foam(uWash);
                 Expect(Kind() == foamK && LastDog() == WashDog && (TakenOf(uWash) & 1) != 0 && f >= foamT, "the foam photo of dog " + WashDog + " at average foam " + f.ToString("F3") + " >= " + foamT);
                 Note("dog A armed for the clean edge: " + Get<bool>(uWash, "cleanArmed"));
-                DriveStart(uWash, washPtsA, KH_DogWash.ToolShower);
+                cleanA0 = Get<int>(uWash, "cleanSerial");
+                // run 20261004-070358: showering at once rinsed the dog clean in 1.98 s, inside washShotMinGap (2 s) after the foam photo, so
+                // the clean edge came before the rinse photo was allowed. A player puts the sponge down and picks up the shower first:
+                // 2.5 s with no stroke here (foam 0.15+ = no wet shake, the hold lasts 3 s)
+                Note("2.5 s pause between the foam photo and the shower (switching from the sponge to the shower; the product values 0.6 s / 2 s unchanged)");
+                waitFrom = EditorApplication.timeSinceStartup;
             }));
             steps.Add(Until(C, () => !cam.enabled, 1, "camera stayed enabled"));
-            // ---- 4) shower: the rinse photo after washShotRinseSeconds of contact with foam on the dog ----
-            steps.Add(Until(C, () => { if ((TakenOf(uWash) & 2) != 0) return true; DriveFrame(); return false; }, 20, "no rinse photo within 20 s of showering a foamed dog"));
+            steps.Add(Until(C, () => EditorApplication.timeSinceStartup - waitFrom > 2.5, 4, "wait"));
+            steps.Add(Do(C, () => DriveStart(uWash, washPtsA, KH_DogWash.ToolShower)));
+            // ---- 4) shower: the rinse photo after washShotRinseContact of contact on the foamed dog, washShotMinGap after the foam photo ----
+            // (about 2 s: the gap after the foam photo is the longer of the two; it must come before the clean edge / done photo)
+            steps.Add(Until(C, () => { if ((TakenOf(uWash) & 6) != 0) return true; DriveFrame(); return false; }, 8, "no rinse photo within 8 s of showering a foamed dog"));
             steps.Add(Do(C, () =>
             {
-                Expect(Kind() == rinseK && Get<float>(uWash, "_photoShowerSec") >= Get<float>(uWash, "washShotRinseSeconds") - 0.06f, "the rinse photo after " + Get<float>(uWash, "_photoShowerSec").ToString("F2") + " s of counted shower (" + drvContact.ToString("F2") + " s in all)");
+                Expect(Kind() == rinseK && (TakenOf(uWash) & 4) == 0 && Get<float>(uWash, "_photoShowerSec") >= Get<float>(uWash, "washShotRinseContact") - 0.06f && cleanA0 == Get<int>(uWash, "cleanSerial"),
+                    "the rinse photo before the clean edge, after " + Get<float>(uWash, "_photoShowerSec").ToString("F2") + " s of counted shower (" + drvContact.ToString("F2") + " s in all), avg foam now " + Foam(uWash).ToString("F3") + " (peak " + Get<float>(uWash, "_photoPeakFoam").ToString("F3") + ")");
                 cleanA0 = Get<int>(uWash, "cleanSerial");
             }));
             // ---- 5) keep rinsing: the Owner's own EvaluateState fires the clean edge -> the done photo ----

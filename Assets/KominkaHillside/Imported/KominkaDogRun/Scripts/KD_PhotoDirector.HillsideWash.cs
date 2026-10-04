@@ -129,8 +129,12 @@ namespace KominkaDogRun
             RenderTexture[] s = gallery != null ? gallery.slotTextures : null;
             if (s != null) for (int i = 0; i < s.Length; i++) if (s[i] == rt) { slot = i; break; }
             string g = group == HillsideGroupWalk ? "walk" : (group == HillsideGroupPet ? "pet" : (group == HillsideGroupPlay ? "play" : (group == HillsideGroupWash ? "wash" : "?")));
-            Debug.Log("[KD_PhotoDirector] PHOTO " + (_logKind.Length > 0 ? _logKind : "other") + " group=" + g + " slot=" + slot + " dog=" + _logDog
-                + (captured ? "" : " (capture refused)"));
+            // The kind's own category (walk-* / pet / wash-* / everything else = play). A different group means _hillsideGroupOverride was set
+            // from outside (the photo harness's H6 / H9 send frisbee shots into the walk / pet slots): marked, so the log does not look stale
+            string k = _logKind;
+            int natural = k.StartsWith("walk") ? HillsideGroupWalk : (k == "pet" ? HillsideGroupPet : (k.StartsWith("wash") ? HillsideGroupWash : HillsideGroupPlay));
+            Debug.Log("[KD_PhotoDirector] PHOTO " + (k.Length > 0 ? k : "other") + " group=" + g + " slot=" + slot + " dog=" + _logDog
+                + (k.Length > 0 && natural != group ? " (group override)" : "") + (captured ? "" : " (capture refused)"));
         }
     }
 }

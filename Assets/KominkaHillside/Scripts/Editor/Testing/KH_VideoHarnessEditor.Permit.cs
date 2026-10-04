@@ -143,7 +143,7 @@ namespace KominkaHillside.Editor
                 v6Notice = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_TravelNotice");
                 v6Pouch = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KD_TreatPouch");
                 v6Me = Networking.LocalPlayer.playerId;
-                v6Active = true;
+                v6Active = true; v6Deferred.Clear();
                 v6Box.SetProgramVariable("debugJoinLoopback", 1);
                 Note("simulated: debugJoinLoopback = 1 (nothing sent), answers / revokes injected, the puppet's grant table written into its PlayerObject mailbox");
                 Open(); uVideo.SendCustomEvent("_Mode" + KH_VideoCamera.ModeSelfFollow);
@@ -352,6 +352,7 @@ namespace KominkaHillside.Editor
                 Expect(t >= 19.5f, "18: swept after " + t.ToString("F1") + " s (rule: 20 s without the filmer's declaration, checked every 10 s)");
                 Note("not proven by V6: real two-client order / latency, Quest and phone touch, the 60 s away rule, filmAccepting persistence (PlayerData)");
                 V6Cleanup();
+                if (v6Deferred.Count > 0) Fail("deferred: " + string.Join(" | ", v6Deferred));
             }));
         }
 
@@ -517,20 +518,32 @@ namespace KominkaHillside.Editor
                 v6Notice.SendCustomEvent("_FilmYes");
                 Incoming(v6Other.playerId, KH_TravelMailbox.KindJoin, ++v6OSeq);
                 Expect(V6<int>(v6Box, "_inFrom") == v6Other.playerId && V6<int[]>(v6Box, "filmGrantIds")[0] == v6Remote.playerId, "25: a row for the puppet and a pending join from the second puppet");
-                v6Pouch.SendCustomEvent("_FilmGrantsBack");   // the walk tab (RedrawTravel lays out the bottom row)
+                // the hand menu draws only while it is open (the product skips redraws while closed): open it and show the walk tab, the same way
+                // the other harnesses do (KH_CourseWalkHarnessEditor.ToyRow.cs TrMenu: _Toggle if panelRoot is hidden, _WelcomeMenu, then the tab)
+                v6Pouch.TryGetProgramVariable("panelRoot", out object pr);
+                if (!(pr is GameObject prg) || !prg.activeSelf) v6Pouch.SendCustomEvent("_Toggle");
+                if (v6Pouch.TryGetProgramVariable("_welcome", out object wl) && wl is bool w && w) v6Pouch.SendCustomEvent("_WelcomeMenu");
+                v6Pouch.SendCustomEvent("_Tab2");   // さんぽ: Redraw → RedrawWalk → RedrawTravel lays out the bottom row
+                v6Mark = Time.realtimeSinceStartup;
             }));
-            steps.Add(Until(C6, () => V6Active(v6Pouch, "filmGrantsButton") && V6Active(v6Pouch, "travelJoinPendingButton"), 3,
-                "25: the walk tab does not show both [申し込み 1 件] and [撮影を許可中] (the menu may need to be open for RedrawTravel)"));
+            // case 25's checks are soft: a miss is recorded and failed at the end of V6, so 26 / 27 still run in the same run
+            steps.Add(Until(C6, () => (V6Active(v6Pouch, "filmGrantsButton") && V6Active(v6Pouch, "travelJoinPendingButton")) || Time.realtimeSinceStartup - v6Mark > 3f, 5, "timer"));
             steps.Add(Do(C6, () =>
             {
-                var g = (RectTransform)V6<GameObject>(v6Pouch, "filmGrantsButton").transform; var pend = (RectTransform)V6<GameObject>(v6Pouch, "travelJoinPendingButton").transform;
-                Expect(Mathf.Abs(g.sizeDelta.x - KominkaDogRun.KD_TreatPouch.FilmThirdWidth) < 0.5f && Mathf.Abs(pend.sizeDelta.x - KominkaDogRun.KD_TreatPouch.FilmThirdWidth) < 0.5f, "25: the bottom row is three 174-wide buttons");
-                foreach (var t in new[] { g, pend }) { var l = t.GetComponentInChildren<TMP_Text>(); if (l != null) { l.ForceMeshUpdate(); Expect(!l.isTextOverflowing, "25: '" + l.text + "' fits at 174"); } }
+                bool both = V6Active(v6Pouch, "filmGrantsButton") && V6Active(v6Pouch, "travelJoinPendingButton");
+                Soft(both, "25: with the menu open on the walk tab, both [申し込み 1 件] and [撮影を許可中] are shown");
+                if (both)
+                {
+                    var g = (RectTransform)V6<GameObject>(v6Pouch, "filmGrantsButton").transform; var pend = (RectTransform)V6<GameObject>(v6Pouch, "travelJoinPendingButton").transform;
+                    Soft(Mathf.Abs(g.sizeDelta.x - KominkaDogRun.KD_TreatPouch.FilmThirdWidth) < 0.5f && Mathf.Abs(pend.sizeDelta.x - KominkaDogRun.KD_TreatPouch.FilmThirdWidth) < 0.5f, "25: the bottom row is three 174-wide buttons");
+                    foreach (var t in new[] { g, pend }) { var l = t.GetComponentInChildren<TMP_Text>(); if (l != null) { l.ForceMeshUpdate(); Soft(!l.isTextOverflowing, "25: '" + l.text + "' fits at 174"); } }
+                }
                 v6Pouch.SendCustomEvent("_FilmGrantsOpen");
                 v6Pouch.TryGetProgramVariable("filmGrantsPage", out object gp);
-                Expect(gp is GameObject go && go.activeInHierarchy, "25: 撮影を許した人 opened while the join request is still pending");
+                Soft(gp is GameObject go && go.activeInHierarchy, "25: 撮影を許した人 opened while the join request is still pending");
                 v6Pouch.SendCustomEvent("_FilmStop0");
-                Expect(V6<int[]>(v6Box, "filmGrantIds").All(x => x == -1) && V6<int>(v6Box, "_inFrom") == v6Other.playerId, "25: [やめてもらう] worked; the pending join is untouched");
+                Soft(V6<int[]>(v6Box, "filmGrantIds").All(x => x == -1) && V6<int>(v6Box, "_inFrom") == v6Other.playerId, "25: [やめてもらう] worked; the pending join is untouched");
+                Table(v6Box, -1, 0); v6Box.SetProgramVariable("_filmRows", 0);   // 26 / 27 start from an empty table even if 25 missed
                 v6Box.SetProgramVariable("debugIncomingFrom", v6Other.playerId); v6Box.SetProgramVariable("debugIncomingSeq", v6OSeq); v6Box.SendCustomEvent("_DebugIncomingCancelNow");
                 // ---- 26 (f). two film requests at once: the second is busy (one pending) ----
                 Incoming(v6Remote.playerId, KH_TravelMailbox.KindFilm, 113);
@@ -574,6 +587,16 @@ namespace KominkaHillside.Editor
 
         /// <summary>Simulated black of the travel fade (state 2, and the black time kept fresh so its 3 s release never runs).</summary>
         static void HoldFade() { if (v6Fade == null) return; v6Fade.SetProgramVariable("_state", 2); v6Fade.SetProgramVariable("_blackAt", Time.time); }
+
+        static readonly System.Collections.Generic.List<string> v6Deferred = new System.Collections.Generic.List<string>();
+
+        /// <summary>A check that does not stop the run: recorded now, failed at the end of V6 (case 25 only).</summary>
+        static void Soft(bool ok, string what)
+        {
+            if (ok) { Note("ok " + what); return; }
+            Note("FAIL (deferred to the end of V6) " + what);
+            v6Deferred.Add(what);
+        }
 
         static bool V6Active(UdonBehaviour u, string field)
         {

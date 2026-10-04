@@ -59,6 +59,11 @@ namespace KominkaHillside
         private bool[] _discBusyAtCall;
         private int[] _ballGen;
         private int[] _discGen;
+        // Where the toy was put (the hover is held there: a small drift is written back on every look, HoverHoldTol .. HoverHoldMax)
+        private Vector3[] _ballHoverAt;
+        private Vector3[] _discHoverAt;
+        const float HoverHoldTol = 0.005f;   // closer than this: left alone (no position write, nothing extra to sync)
+        const float HoverHoldMax = 0.3f;     // pushed farther than this (a dog walked into it): it stays where it went
         private bool _hoverAny;
         private float _nextHoverAt;
         public const int Ok = 0, Held = 1, DogBusy = 2, Cooldown = 3, Unwired = 4, Pending = 5;
@@ -639,7 +644,8 @@ namespace KominkaHillside
             if (kind == KindBall && _floating != null && row < _floating.Length) _floating[row] = false;
             if (sync != null) sync.SetGravity(false);
             float radius = kind == KindDisc ? discs[row].radius : go.transform.localScale.x * 0.5f;
-            go.transform.position = HoverSpot(lp, radius);
+            Vector3 at = HoverSpot(lp, radius, go);
+            go.transform.position = at;
             if (kind == KindDisc) go.transform.rotation = Quaternion.Euler(0f, go.transform.eulerAngles.y, 0f);   // level, easy to grab
             if (sync != null) sync.FlagDiscontinuity();   // a teleport: the others do not see it slide up from where it was
             Rigidbody rb = go.GetComponent<Rigidbody>();
@@ -648,12 +654,12 @@ namespace KominkaHillside
             {
                 discs[row]._SetHover(true);   // its own river look leaves it alone too
                 _discHoverUntil[row] = Time.time + hoverSeconds; _discLandSettle[row] = 0f;
-                _discBusyAtCall[row] = DiscDogBusy(row); _discGen[row] = discs[row].PickupGen;
+                _discBusyAtCall[row] = DiscDogBusy(row); _discGen[row] = discs[row].PickupGen; _discHoverAt[row] = at;
             }
             else
             {
                 _ballHoverUntil[row] = Time.time + hoverSeconds; _ballLandSettle[row] = 0f;
-                _ballBusyAtCall[row] = BallDogBusy(row); _ballGen[row] = balls[row].PickupGen;
+                _ballBusyAtCall[row] = BallDogBusy(row); _ballGen[row] = balls[row].PickupGen; _ballHoverAt[row] = at;
                 if (_riverSettleUntil != null && row < _riverSettleUntil.Length) _riverSettleUntil[row] = 0f;
             }
             _hoverAny = true;
@@ -680,9 +686,9 @@ namespace KominkaHillside
                     if (discs[k] != null) { GameObject dgo = discs[k].gameObject; _discRb[k] = dgo.GetComponent<Rigidbody>(); _discSync[k] = dgo.GetComponent<VRCObjectSync>(); }
             }
             if (_ballHoverUntil == null || _ballHoverUntil.Length != nb)
-            { _ballHoverUntil = new float[nb]; _ballLandSettle = new float[nb]; _ballBusyAtCall = new bool[nb]; _ballGen = new int[nb]; }
+            { _ballHoverUntil = new float[nb]; _ballLandSettle = new float[nb]; _ballBusyAtCall = new bool[nb]; _ballGen = new int[nb]; _ballHoverAt = new Vector3[nb]; }
             if (_discHoverUntil == null || _discHoverUntil.Length != nd)
-            { _discHoverUntil = new float[nd]; _discLandSettle = new float[nd]; _discBusyAtCall = new bool[nd]; _discGen = new int[nd]; }
+            { _discHoverUntil = new float[nd]; _discLandSettle = new float[nd]; _discBusyAtCall = new bool[nd]; _discGen = new int[nd]; _discHoverAt = new Vector3[nd]; }
         }
 
         bool BallHovering(int i) { return _ballHoverUntil != null && i >= 0 && i < _ballHoverUntil.Length && _ballHoverUntil[i] > 0f; }
@@ -700,7 +706,10 @@ namespace KominkaHillside
         // From the head: ahead (head yaw, level) and down, scaled by the avatar. A wall or the ground between the head and that point
         // stops it short (one ray, groundMask, triggers ignored: the menu boards' trigger colliders do not count); then it is kept
         // above the ground straight below it.
-        Vector3 HoverSpot(VRCPlayerApi lp, float radius)
+        // Run 20261004-070719 (Course/97d HV1 / HV2 / HV3): two toys called one after the other went to the very same point, overlapped
+        // (layer 13 collides with itself), pushed each other apart in the air and, after the timeout, rolled off each other on the
+        // ground. A toy already near the point moves the new one sideways (AwayFromToys).
+        Vector3 HoverSpot(VRCPlayerApi lp, float radius, GameObject self)
         {
             VRCPlayerApi.TrackingData head = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
             Vector3 eye = head.position;
@@ -732,6 +741,7 @@ namespace KominkaHillside
                 float minY = hit.point.y + radius + HoverGap;
                 if (want.y < minY) want.y = minY;
             }
+            want = AwayFromToys(want, fwd, radius, self);
             // The final point (after the lift) must not overlap anything: else step back toward the head (the head itself last)
             if (Physics.CheckSphere(want, radius, groundMask, QueryTriggerInteraction.Ignore))
             {
@@ -744,6 +754,48 @@ namespace KominkaHillside
                 }
             }
             return want;
+        }
+
+        const float MaxToyRadius = 0.12f;   // the largest toy (the disc, KH_Frisbee.radius); spacing = own radius + this + HoverGap
+
+        // The point itself if no other toy (ball or disc, any dog) is close enough to touch a toy there; else the first of
+        // +-1, +-2 steps to the side (head yaw right / left) that is free of toys and of the walls / ground (groundMask). None free: the point.
+        Vector3 AwayFromToys(Vector3 want, Vector3 fwd, float radius, GameObject self)
+        {
+            Vector3 right = Vector3.Cross(Vector3.up, fwd);
+            float step = radius + MaxToyRadius + HoverGap;
+            for (int k = 0; k < 5; k++)
+            {
+                float side = k == 0 ? 0f : ((k + 1) / 2) * step * (k % 2 == 1 ? 1f : -1f);
+                Vector3 p = want + right * side;
+                if (ToyNear(p, radius, self)) continue;
+                if (k > 0 && Physics.CheckSphere(p, radius, groundMask, QueryTriggerInteraction.Ignore)) continue;
+                return p;
+            }
+            return want;
+        }
+
+        bool ToyNear(Vector3 p, float radius, GameObject self)
+        {
+            if (balls != null)
+                for (int k = 0; k < balls.Length; k++)
+                {
+                    if (balls[k] == null) continue;
+                    GameObject o = balls[k].gameObject;
+                    if (o == self) continue;
+                    float rr = radius + o.transform.localScale.x * 0.5f + HoverGap;
+                    if ((o.transform.position - p).sqrMagnitude < rr * rr) return true;
+                }
+            if (discs != null)
+                for (int k = 0; k < discs.Length; k++)
+                {
+                    if (discs[k] == null) continue;
+                    GameObject o = discs[k].gameObject;
+                    if (o == self) continue;
+                    float rr = radius + discs[k].radius + HoverGap;
+                    if ((o.transform.position - p).sqrMagnitude < rr * rr) return true;
+                }
+            return false;
         }
 
         // Every HoverCheckInterval while any toy hovers or settles. The hover ends without writing anything when this client is no
@@ -817,6 +869,12 @@ namespace KominkaHillside
                 if (Time.time < until)
                 {
                     rb.velocity = Vector3.zero; rb.angularVelocity = Vector3.zero;   // a bump (a dog, another toy) does not send it drifting
+                    // Held at the point it was put (run 20261004-070719: 2-3 cm in 2 s): any velocity left between two looks (the
+                    // placement frame, a touch) is undone by writing the point back; a big push moves the hold point instead
+                    Vector3 at = kind == KindDisc ? _discHoverAt[i] : _ballHoverAt[i];
+                    float m = Vector3.Distance(go.transform.position, at);
+                    if (m > HoverHoldMax) { if (kind == KindDisc) _discHoverAt[i] = go.transform.position; else _ballHoverAt[i] = go.transform.position; }
+                    else if (m > HoverHoldTol) go.transform.position = at;
                     return true;
                 }
                 bool landed = LandToy(go, rb, sync, lift, kind == KindDisc);

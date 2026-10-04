@@ -12,8 +12,11 @@ namespace KominkaHillside
     // the "done" photo, or any own stroke after washShotSessionGap without one, starts a new wash (another dog has its own KH_DogWash).
     // Milestones, each at most once per session (photoTaken bits):
     //   foam  : avg foam over the valid cells >= washShotFoamAvg (checked at every EvaluateState), own stroke within washShotRecent
-    //   rinse : the own shower has run washShotRinseSeconds of contact while the dog's avg foam >= washShotRinseFoam (there is foam to
-    //           rinse; wetting a dog before soaping does not count), checked in the own shower stroke
+    //   rinse : the own shower has run washShotRinseContact of contact since this wash had foam (the session's peak avg foam >=
+    //           washShotRinseFoam; wetting a dog before soaping does not count), at least washShotMinGap after this wash's previous
+    //           photo, checked in the own shower stroke. 2026-10-04 (H10 run 20261004-065720): the first rule (2 s of contact while the
+    //           CURRENT avg foam >= 0.05) never fired - the shower rinses so fast that the average fell below 0.05 before 2 s were
+    //           counted, and the wash went foam -> done. The peak keeps "there was foam to rinse" without racing the rinse itself.
     //   done  : the clean edge (synced cleanSerial: the Owner's EvaluateState / a non-Owner's OnDeserialization), or - when the wash
     //           never armed the clean edge (cleanArmed false: too little foam / dirt) - the shake edge (shakeSerial) after a foam or
     //           rinse photo with avg foam < cleanFoamThreshold; own stroke within washShotRecent
@@ -25,10 +28,14 @@ namespace KominkaHillside
         [Header("Photos (IMP-WLD-011, prototype values)")]
         [Tooltip("泡の写真: 有効セルの泡の平均がこれ以上 (WashShakeFoamMax 0.15 = 犬が「泡を流した」とみなす境と同じ値)")]
         public float washShotFoamAvg = 0.15f;
-        [Tooltip("すすぎの写真: 自分のシャワーがこの秒数 (接触の合計) 当たったら")]
-        public float washShotRinseSeconds = 2f;
-        [Tooltip("すすぎの秒数は、犬の泡の平均がこれ以上の間だけ数える (泡を付ける前の濡らしでは撮らない)")]
+        // 2026-10-04: washShotRinseSeconds (2 s, counted only while the current avg foam >= 0.05) is replaced by washShotRinseContact
+        // (a new name, so a value the scene may have saved for the old field is not carried over)
+        [Tooltip("すすぎの写真: 泡の付いた犬に自分のシャワーがこの秒数 (接触の合計) 当たったら (泡が流れている途中)")]
+        public float washShotRinseContact = 0.6f;
+        [Tooltip("すすぎの秒数は、この洗いの泡の平均の最大がこれ以上になってから数える (泡を付ける前の濡らしでは撮らない)")]
         public float washShotRinseFoam = 0.05f;
+        [Tooltip("すすぎの写真は、この洗いの前の写真 (泡) からこの秒数あける (同じ瞬間の 2 枚にしない)")]
+        public float washShotMinGap = 2f;
         [Tooltip("泡・洗い上がりの写真は、自分の最後のストロークからこの秒数以内だけ (洗っている人が犬のそばにいる)")]
         public float washShotRecent = 10f;
         [Tooltip("自分のストロークがこの秒数無ければ、次のストロークから別の洗い (数え直し)")]
@@ -41,6 +48,8 @@ namespace KominkaHillside
         private int _photoTaken;             // PhotoFoam | PhotoRinse | PhotoDone of this session
         private float _photoLastLocal = -1e9f;
         private float _photoShowerSec;
+        private float _photoPeakFoam;        // the highest avg foam seen in this session (EvaluateState / own strokes)
+        private float _photoLastShotAt = -1e9f;
         private float _photoNextTry;
         private int _photoCleanSeen;
         private int _photoShakeSeen;
@@ -57,14 +66,18 @@ namespace KominkaHillside
                 _photoActive = true;
                 _photoTaken = 0;
                 _photoShowerSec = 0f;
+                _photoPeakFoam = _avgFoam;       // foam someone already put on counts as foam to rinse
+                _photoLastShotAt = -1e9f;
                 _photoNextTry = 0f;
                 _photoCleanSeen = cleanSerial;   // an edge from before this wash is not this wash's "done"
                 _photoShakeSeen = shakeSerial;
             }
             _photoLastLocal = now;
+            if (_avgFoam > _photoPeakFoam) _photoPeakFoam = _avgFoam;
             if (tool != ToolShower || (_photoTaken & (PhotoRinse | PhotoDone)) != 0) return;
-            if (_avgFoam >= washShotRinseFoam) _photoShowerSec += sec;
-            if (_photoShowerSec >= washShotRinseSeconds && now >= _photoNextTry) PhotoAsk(PhotoRinse, KominkaDogRun.KD_PhotoDirector.WashShotRinse);
+            if (_photoPeakFoam >= washShotRinseFoam) _photoShowerSec += sec;
+            if (_photoShowerSec >= washShotRinseContact && now - _photoLastShotAt >= washShotMinGap && now >= _photoNextTry)
+                PhotoAsk(PhotoRinse, KominkaDogRun.KD_PhotoDirector.WashShotRinse);
         }
 
         /// <summary>Every client: EvaluateState (every evaluation), OnDeserialization (non-Owner) and _RequestShake (Owner). Records the
@@ -78,6 +91,7 @@ namespace KominkaHillside
             if (!_photoActive) return;
             float now = Time.time;
             if (now - _photoLastLocal > washShotSessionGap) { _photoActive = false; return; }
+            if (_avgFoam > _photoPeakFoam) _photoPeakFoam = _avgFoam;   // the rinse's "there was foam" (every evaluation)
             if (now - _photoLastLocal > washShotRecent) return;
             if ((_photoTaken & PhotoFoam) == 0 && (_photoTaken & PhotoDone) == 0 && _avgFoam >= washShotFoamAvg && now >= _photoNextTry)
                 PhotoAsk(PhotoFoam, KominkaDogRun.KD_PhotoDirector.WashShotFoam);
@@ -93,7 +107,7 @@ namespace KominkaHillside
             d.washDog = dogIndex;
             d.washMilestone = milestone;
             bool ok = d._WashShoot();
-            if (ok) _photoAsked++;
+            if (ok) { _photoAsked++; _photoLastShotAt = Time.time; }
             if (ok || bit == PhotoDone)
             {
                 // "done" is one edge: taken whether or not the director could shoot it (the next wash counts again)

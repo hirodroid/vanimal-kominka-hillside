@@ -33,7 +33,7 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Course/97d - Walk Harness Toy Recall Hover (HV1-HV8, fresh profile)")]
         public static void ToyHoverHarness() { BeginCommerce(CmSetToyHover); }
 
-        class HvToy { public int dog, kind; public Vector3 at; public float radius; public string what; }
+        class HvToy { public int dog, kind; public Vector3 at, p0, p05; public float radius, prevUntil, t05; public string what; }
         static readonly List<string> hvLogs = new List<string>();
         static bool hvLogHooked;
 
@@ -56,8 +56,10 @@ namespace KominkaHillside.Editor
             s.Add(CmWait(2));
             s.Add(CmDo(() =>
             {
-                HvExpectStill(h1Ball, .02f); HvExpectStill(h1Disc, .02f);
-                CmNote("2 s after the call: ball 0 and disc 1 still hovering in place (gravity off, not kinematic, speed ~0)");
+                HvExpectHeld(h1Ball); HvExpectHeld(h1Disc);
+                float gap = Vector3.Distance(HvT(h1Ball).position, HvT(h1Disc).position), touch = h1Ball.radius + h1Disc.radius;
+                CmExpect(gap >= touch, "ball 0 and disc 1 apart (" + gap.ToString("F3") + " m, touching below " + touch.ToString("F3") + "): the second one is not put into the first");
+                CmNote("2 s after the call: ball 0 and disc 1 still hovering in place (gravity off, not kinematic, speed ~0), " + gap.ToString("F2") + " m apart");
             }));
 
             // ---- HV2 ----
@@ -133,6 +135,9 @@ namespace KominkaHillside.Editor
                     t.position = h3Ball.at + new Vector3(0f, 0f, .4f); if (sync != null) sync.FlagDiscontinuity();
                     CmTeleport(bankSite, water - bankSite);
                 }
+                // the disc's press is not HvCallSteps: the held point is counted from here (>= 1 s after the placement; a simulated
+                // move of > 0.3 m becomes KH_ToyRecall's new hold point)
+                h3Disc.p0 = h3Disc.p05 = t.position; h3Disc.t05 = Time.time;
                 h3Disc.at = t.position; h3Disc.radius = Get<float>(CmRefs(cmRecall, "discs")[h3Disc.dog], "radius"); h3Disc.what = "disc 4";
                 CmExpect(RiverInBand(h3Disc.at), "disc 4 over the river band (" + h3Disc.at.ToString("F2") + ")");
                 HvExpectHover(h3Disc);
@@ -140,14 +145,14 @@ namespace KominkaHillside.Editor
             s.Add(CmWait(1.5));
             s.Add(CmDo(() =>
             {
-                HvExpectStill(h3Disc, .02f);
+                HvExpectHeld(h3Disc);
                 CmExpect(!hvLogs.Any(l => l.Contains("moved to the bank") && l.Contains(" disc=" + HvT(h3Disc).name)), "disc 4 not sent to the bank");
                 CmExpect(!Get<bool>(CmRefs(cmRecall, "discs")[h3Disc.dog], "_floating"), "disc 4 not floating");
             }));
             s.Add(CmWait(9.5));   // the ball: > 10 s since its call (a stranded ball in the band goes back after 10 s)
             s.Add(CmDo(() =>
             {
-                HvExpectStill(h3Ball, .02f);
+                HvExpectHeld(h3Ball);
                 var fl = Get<bool[]>(cmRecall, "_floating");
                 CmExpect(fl == null || fl.Length <= h3Ball.dog || !fl[h3Ball.dog], "ball 3 not floating");
                 CmExpect(!hvLogs.Any(l => l.StartsWith("[KH_ToyRecall] river-return ball=" + h3Ball.dog + " ")), "ball 3 not sent back to the bank (river-return log)");
@@ -248,7 +253,7 @@ namespace KominkaHillside.Editor
             s.Add(CmWait(3));
             s.Add(CmDo(() =>
             {
-                HvExpectStill(h5, .02f);
+                HvExpectHeld(h5);
                 CmNote("3 s later ball 1 still hovers (the dog's chase from before the call does not end it; dog Fetch " + Get<int>(f5, "dogState") + ")");
             }));
 
@@ -312,7 +317,7 @@ namespace KominkaHillside.Editor
             s.Add(CmDo(() =>
             {
                 Vector3 stand, face; string what;
-                if (!HvFindObstacle(false, out stand, out face, out what)) throw new InvalidOperationException("No wall (>= 2 m wide, upright, at chest height) near the course nodes");
+                if (!HvFindObstacle(false, out stand, out face, out what)) throw new InvalidOperationException("KH_Places/KH_GateBlock (BoxCollider) missing, or no face with NavMesh 0.5 m off it");
                 CmTeleport(stand, face);
                 CmNote("wall: " + what + ", standing " + stand.ToString("F2") + ", facing 55 deg off its normal");
             }));
@@ -320,19 +325,32 @@ namespace KominkaHillside.Editor
             HvCallSteps(s, h8w, false);
             s.Add(CmDo(() => HvExpectClear(h8w)));
             s.Add(CmWait(2));
-            s.Add(CmDo(() => { HvExpectStill(h8w, .02f); HvExpectClear(h8w); }));
+            s.Add(CmDo(() => { HvExpectHeld(h8w); HvExpectClear(h8w); }));
+            s.Add(CmDo(() => CmNote("wall part: ball 5 overlaps nothing and is held 2 s")));
+            // Run 20261004-071555: no corner stand point had NavMesh. The corner part now also accepts plain ground below (a teleport
+            // needs no NavMesh); if no corner can be stood at, it is NOT run and is written as not made (notes + notCovered, the user's
+            // Play), and HV8 is decided by the wall part alone.
+            bool cornerSkip = false;
             s.Add(CmDo(() =>
             {
                 Vector3 stand, face; string what;
-                if (!HvFindObstacle(true, out stand, out face, out what)) throw new InvalidOperationException("No post / trunk (<= 1.2 m wide, upright, at chest height) near the course nodes");
+                if (!HvFindObstacle(true, out stand, out face, out what))
+                {
+                    cornerSkip = true;
+                    CmNote("NOT MADE: the corner (post) part - no corner of KH_GateBlock with NavMesh or ground to stand at the grazing point (4 corners x both faces tried). Left to the user's Play: call a toy with the line passing just beside a post / a wall end");
+                    cmReport.notCovered.Add("HV8 corner part (a toy called with the line grazing a post / a wall end): no stand point at KH_GateBlock's corners in ClientSim -> user's Play");
+                    return;
+                }
                 CmTeleport(stand, face);
                 CmNote("post: " + what + ", standing " + stand.ToString("F2") + ", the centre line passing 0.03 m beside it");
             }));
-            s.Add(CmWait(1));
-            HvCallSteps(s, h8p, false);
-            s.Add(CmDo(() => HvExpectClear(h8p)));
-            s.Add(CmWait(2));
-            s.Add(CmDo(() => { HvExpectStill(h8p, .02f); HvExpectClear(h8p); CmNote("wall and post: the toy overlaps nothing and stays put 2 s"); }));
+            var corner = new List<Func<double, bool>>();
+            corner.Add(CmWait(1));
+            HvCallSteps(corner, h8p, false);
+            corner.Add(CmDo(() => HvExpectClear(h8p)));
+            corner.Add(CmWait(2));
+            corner.Add(CmDo(() => { HvExpectHeld(h8p); HvExpectClear(h8p); CmNote("corner part: ball 0 overlaps nothing and is held 2 s"); }));
+            foreach (var step in corner) { var st = step; s.Add(now => cornerSkip || st(now)); }
         }
 
         /// <summary>Simulated: the hover's end time of this toy (KH_ToyRecall heap; a copy of the array is written back).</summary>
@@ -348,43 +366,71 @@ namespace KominkaHillside.Editor
             CmExpect(!Physics.CheckSphere(t.position, h.radius * .98f, (1 << 0) | (1 << 11), QueryTriggerInteraction.Ignore), h.what + " overlaps nothing at " + t.position.ToString("F2"));
         }
 
-        /// <summary>A wall (post = false: >= 2 m wide) or a post / trunk (post = true: <= 1.2 m wide), not the Terrain, upright at chest
-        /// height (1.35 m) within 4 m of a course node. Wall: stand 0.65 m from it, facing 50 deg off its normal (the shallow approach).
-        /// Post: stand so that the line ahead passes 0.03 m beside it at 0.6 m.</summary>
+        /// <summary>Run 20261004-070719: the automatic search found no post near the course (14 m around the spawn only the
+        /// hollow outer wall of the kominka and KH_Places/KH_GateBlock are solid at chest height). Both cases now use the box
+        /// KH_GateBlock (BoxCollider, layer 11), its corners and faces from its own transform (rotation honoured).
+        ///   wall (post = false): stand 0.5 m off the middle of a face, facing 55 deg off its inward normal (the shallow approach: the
+        ///                        planned centre ends ~0.04 m from the face = inside the toy).
+        ///   post (post = true):  the box corner (the end of a wall) grazed: the line ahead goes diagonally past the corner 0.03 m
+        ///                        outside it, the planned centre just at the corner (the head 0.45 m clear of the face).
+        /// Tries every corner / face until the standing point has NavMesh within 0.25 m. None = false (the case fails).</summary>
         static bool HvFindObstacle(bool post, out Vector3 stand, out Vector3 face, out string what)
         {
             stand = face = Vector3.zero; what = null;
-            if (nodes == null) return false;
-            const float chest = 1.35f;
-            foreach (var n in nodes)
-                for (int k = 0; k < 16; k++)
+            var go = GameObject.Find("KH_Places/KH_GateBlock");
+            var bc = go == null ? null : go.GetComponent<BoxCollider>();
+            if (bc == null) return false;
+            var tr = bc.transform;
+            Vector3 c = bc.center, hs = bc.size * .5f;
+            var corners = new Vector3[4];
+            for (int k = 0; k < 4; k++)
+            {
+                var w = tr.TransformPoint(new Vector3(c.x + (k == 1 || k == 2 ? hs.x : -hs.x), c.y, c.z + (k >= 2 ? hs.z : -hs.z)));
+                corners[k] = new Vector3(w.x, 0f, w.z);
+            }
+            var lp = Networking.LocalPlayer;
+            float scale = Mathf.Clamp(lp.GetAvatarEyeHeightAsMeters() / 1.6f, .5f, 2f);
+            float ahead = Get<float>(cmRecall, lp.IsUserInVR() ? "hoverForwardVR" : "hoverForwardFlat") * scale;
+            // pass 0: NavMesh within 0.25 m (the walkable outside of the gate first); pass 1 (run 20261004-071555: no corner had it):
+            // plain ground straight below (groundMask ray, not the box itself, flat enough to stand) - TeleportTo needs no NavMesh
+            for (int pass = 0; pass < 2; pass++)
+            for (int k = 0; k < 4; k++)
+                for (int swap = 0; swap < 2; swap++)
                 {
-                    float a = k * 22.5f * Mathf.Deg2Rad;
-                    var dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
-                    RaycastHit hit; NavMeshHit nav;
-                    if (!Physics.Raycast(n + Vector3.up * chest, dir, out hit, 4f, (1 << 0) | (1 << 11), QueryTriggerInteraction.Ignore)) continue;
-                    if (hit.collider is TerrainCollider || Mathf.Abs(hit.normal.y) > .3f) continue;
-                    var b = hit.collider.bounds; float wide = Mathf.Max(b.size.x, b.size.z);
-                    if (post ? wide > 1.2f : wide < 2f) continue;
-                    var nrm = new Vector3(hit.normal.x, 0f, hit.normal.z).normalized;
+                    Vector3 K = corners[k], A = corners[(k + (swap == 0 ? 1 : 3)) % 4], B = corners[(k + (swap == 0 ? 3 : 1)) % 4];
+                    Vector3 a = (A - K).normalized, b = (B - K).normalized;   // along face A (the box is on the +b side of it), along face B
+                    float la = Vector3.Distance(A, K);
                     Vector3 s, f;
                     if (!post)
                     {
-                        // 0.5 m off, 55 deg: the planned centre (0.8 m ahead on Desktop) ends ~0.04 m from the wall = inside the toy
-                        s = hit.point + nrm * .5f;
-                        f = Quaternion.Euler(0f, 55f, 0f) * -nrm;
+                        var mid = K + a * (la * .5f);
+                        s = mid - b * .5f;
+                        f = (b * Mathf.Cos(55f * Mathf.Deg2Rad) + a * Mathf.Sin(55f * Mathf.Deg2Rad)).normalized;
                     }
                     else
                     {
-                        f = -nrm; var right = Vector3.Cross(Vector3.up, f);
-                        var c = new Vector3(b.center.x, hit.point.y, b.center.z);
-                        float rT = Mathf.Max(b.extents.x, b.extents.z);
-                        s = c - f * (.6f + rT) - right * (rT + .03f);
+                        f = (b - a).normalized;
+                        s = K - b * .03f - f * ahead;
                     }
-                    if (!NavMesh.SamplePosition(new Vector3(s.x, n.y, s.z), out nav, 1.5f, NavMesh.AllAreas)) continue;
-                    var flatErr = nav.position - s; flatErr.y = 0f;
-                    if (flatErr.magnitude > .25f) continue;
-                    stand = nav.position; face = f; what = hit.collider.name + " (" + hit.collider.GetType().Name + ", " + wide.ToString("F2") + " m wide)";
+                    Vector3 at;
+                    if (pass == 0)
+                    {
+                        NavMeshHit nav;
+                        if (!NavMesh.SamplePosition(new Vector3(s.x, tr.position.y, s.z), out nav, 3f, NavMesh.AllAreas)) continue;
+                        var flatErr = nav.position - s; flatErr.y = 0f;
+                        if (flatErr.magnitude > .25f) continue;
+                        at = nav.position;
+                    }
+                    else
+                    {
+                        RaycastHit g;
+                        if (!Physics.Raycast(new Vector3(s.x, tr.position.y + 3f, s.z), Vector3.down, out g, 10f, (1 << 0) | (1 << 11), QueryTriggerInteraction.Ignore)) continue;
+                        if (g.collider == bc || g.normal.y < .8f) continue;
+                        at = g.point;
+                    }
+                    stand = at; face = f;
+                    what = "KH_GateBlock " + (post ? "corner " + K.ToString("F2") : "face from " + K.ToString("F2") + " to " + A.ToString("F2")) + " (ahead " + ahead.ToString("F2") + " m, "
+                        + (pass == 0 ? "NavMesh" : "ground only, no NavMesh") + ")";
                     return true;
                 }
             return false;
@@ -425,7 +471,14 @@ namespace KominkaHillside.Editor
         static void HvCallSteps(List<Func<double, bool>> s, HvToy h, bool expectPoint)
         {
             s.Add(CmUntil(() => Get<int>(cmRecall, "_pendingRow") < 0, 6, () => "a previous call still pending"));
+            s.Add(CmDo(() => h.prevUntil = HvUntil(h)));
             s.Add(now => HvPress(h));
+            // run 20261004-070719: the placement frame itself (the hover's end time renewed), then 0.5 s later - the early movement
+            // (placement settling) and the late movement (HvExpectHeld: drifting while it hovers) are told apart
+            s.Add(CmUntil(() => HvUntil(h) > h.prevUntil, 6, () => HvName(h) + ": hover not started"));
+            s.Add(CmDo(() => h.p0 = HvT(h).position));
+            s.Add(CmWait(.5));
+            s.Add(CmDo(() => { h.p05 = HvT(h).position; h.t05 = Time.time; }));
             s.Add(CmUntil(() => HvPlaced(h), 6, () => HvName(h) + ": not placed (result " + Get<int>(cmRecall, "_lastResult") + ")"));
             s.Add(CmDo(() =>
             {
@@ -444,12 +497,37 @@ namespace KominkaHillside.Editor
                     bool vr = lp.IsUserInVR();
                     float ahead = Get<float>(cmRecall, vr ? "hoverForwardVR" : "hoverForwardFlat") * scale, down = Get<float>(cmRecall, vr ? "hoverDownVR" : "hoverDownFlat") * scale;
                     var want = head.position + fwd * ahead + Vector3.down * down;
-                    float err = Vector3.Distance(want, h.at);
-                    CmExpect(err <= .15f, h.what + " at the planned point (head + " + ahead.ToString("F2") + " ahead, " + down.ToString("F2") + " down; error " + err.ToString("F3") + " m)");
+                    // a toy already there moves the new one to the side (KH_ToyRecall.AwayFromToys: +-1 / +-2 steps along the head's right)
+                    var right = Vector3.Cross(Vector3.up, fwd);
+                    float side = Vector3.Dot(h.at - want, right);
+                    float err = Vector3.Distance(want + right * side, h.at);
+                    float step = h.radius + .12f + .05f;
+                    CmExpect(err <= .15f && Mathf.Abs(side) <= 2f * step + .02f, h.what + " at the planned point (head + " + ahead.ToString("F2") + " ahead, " + down.ToString("F2") + " down; error " + err.ToString("F3") + " m, sideways " + side.ToString("F2") + " m)");
+                    if (Mathf.Abs(side) > .02f) CmNote(h.what + " moved " + side.ToString("F2") + " m sideways (another toy at the planned point)");
                 }
                 CmExpect(up >= .6f && flat <= 1.6f, h.what + " in reach (" + up.ToString("F2") + " m above the feet, " + flat.ToString("F2") + " m ahead)");
                 CmNote(h.what + " hovers at " + h.at.ToString("F2") + ": " + up.ToString("F2") + " m above the feet, " + flat.ToString("F2") + " m ahead");
             }));
+        }
+
+        static float HvUntil(HvToy h)
+        {
+            object o;
+            if (!cmRecall.TryGetProgramVariable(h.kind == KH_ToyRecall.KindBall ? "_ballHoverUntil" : "_discHoverUntil", out o) || !(o is float[] a)) return -1f;
+            return h.dog < a.Length ? a[h.dog] : -1f;
+        }
+
+        /// <summary>Hovering and held where it was put. Early = placement frame -> +0.5 s (noted only), late = +0.5 s -> now (judged:
+        /// <= HvLateTol). Run 20261004-070719 moved 2-3 cm in 2 s; late movement means it drifts out of the hand.</summary>
+        const float HvLateTol = .01f;
+        static void HvExpectHeld(HvToy h)
+        {
+            var t = HvT(h); var rb = t.GetComponent<Rigidbody>();
+            float early = Vector3.Distance(h.p05, h.p0), late = Vector3.Distance(t.position, h.p05), span = Time.time - h.t05;
+            CmNote(h.what + " movement: 0-0.5 s " + early.ToString("F3") + " m, 0.5-" + (span + .5f).ToString("F1") + " s " + late.ToString("F3") + " m");
+            CmExpect(late <= HvLateTol, h.what + " held in place after the first 0.5 s (" + late.ToString("F3") + " m in " + span.ToString("F1") + " s, limit " + HvLateTol + ")");
+            CmExpect(rb == null || rb.isKinematic || rb.velocity.magnitude < .05f, h.what + " at rest (speed " + (rb == null ? 0f : rb.velocity.magnitude).ToString("F3") + ")");
+            HvExpectHover(h);
         }
 
         static bool HvHovering(HvToy h)
