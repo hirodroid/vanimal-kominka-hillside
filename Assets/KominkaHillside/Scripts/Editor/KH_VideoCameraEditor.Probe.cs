@@ -101,9 +101,7 @@ namespace KominkaHillside.Editor
             // ---- 5 / 6 フリスビー ----
             if (discProxy != null) { r.rows.Add(DiscFlight(discProxy)); r.rows.Add(CatchFlight(discProxy)); r.rows.Add(LandingFlight(discProxy)); }
             else r.lines.Add("info disc rows skipped: no KH_Frisbee in the open scene (they use its _PositionAt)");
-            // ---- 7 おかえり, 8 ふれあい, 9 手元, 10 一周, 11 通り過ぎ ----
-            r.rows.Add(WelcomeRun(true)); r.rows.Add(WelcomeRun(false));
-            r.rows.Add(FureaiStand(true)); r.rows.Add(FureaiStand(false));
+            // ---- 7 手元, 8 一周, 9 通り過ぎ (§15.5: おかえり / ふれあい removed) ----
             r.rows.Add(WashStand());
             r.rows.Add(OrbitStand());
             r.rows.Add(PassWalk());
@@ -222,7 +220,7 @@ namespace KominkaHillside.Editor
                 look = KH_VideoCamera.DroneLook(ft, h, DroneAhead) + KH_VideoCamera.LeadOffset(vel, LookTau),
                 fov = DroneFov, tau = DroneTau, distTo = ft, mustSee = new[] { ft, ft + Head(1.6f) },
             };
-            return Sim("3 ドローン: me walking " + speed + " m/s", 120, f =>
+            return Sim("3 見下ろす: me walking " + speed + " m/s", 120, f =>
             {
                 Vector3 step = Vector3.forward * speed * ProbeDt; feet += step; vel = Filter(vel, step);
                 if (vel.magnitude >= StillSpeed) h = vel.normalized;
@@ -318,41 +316,13 @@ namespace KominkaHillside.Editor
             return row;
         }
 
-        /// <summary>おかえり: the dog (head 0.4 m) brings the disc back from 15 m at 3 m/s; mine = I threw it (low in front of me), else ahead of the dog.</summary>
-        static ProbeRow WelcomeRun(bool mine)
-        {
-            Vector3 me = Vector3.zero, dog = new Vector3(0f, 0f, 15f), vel = Vector3.zero, h = Vector3.back;
-            Pose At(Vector3 dg)
-            {
-                Vector3 body = dg + Head(0.3f), head = dg + Head(0.4f);
-                Vector3 want = mine ? KH_VideoCamera.WelcomePos(me, body, WelcomeDist, WelcomeHeight) : KH_VideoCamera.WelcomeAheadPos(body, h, WelcomeAhead, WelcomeHeight) + KH_VideoCamera.LeadOffset(vel, PosTau);
-                return new Pose { want = want, look = head, fov = WelcomeFov, distTo = head, mustSee = new[] { head }, sample = (dg - me).magnitude > WelcomeDist + 0.6f };
-            }
-            return Sim("7 おかえり: " + (mine ? "I threw it" : "someone else threw it"), 120, f =>
-            {
-                Vector3 step = Vector3.back * 3f * ProbeDt; if ((dog - me).magnitude > 0.8f) dog += step; vel = Filter(vel, step);
-                if (vel.magnitude >= StillSpeed) h = vel.normalized;
-                return At(dog);
-            }, mine ? 0.4f : 2.2f, mine ? 14f : 3.6f, mine ? (Func<Vector3>)null : () => At(dog + Vector3.right * 20f).want, 0.3f);   // mine: the camera stays by me, a dog jump is no cut
-        }
-
-        /// <summary>ふれあい: a standing dog (head 0.4 m) petted by my hand on its right (mine) / by nobody.</summary>
-        static ProbeRow FureaiStand(bool mine)
-        {
-            Vector3 head = new Vector3(0f, 0.4f, 0.25f), hand = head + new Vector3(0.12f, 0.06f, 0f);
-            Vector3 away = mine ? head - hand : Vector3.left;
-            Pose At(Vector3 hd) => new Pose { want = KH_VideoCamera.FureaiPos(hd, away, FureaiSideDeg, FureaiDist, FureaiLift), look = mine ? (hd + hand + (hd - head)) * 0.5f : hd,
-                fov = FureaiFov, distTo = hd, mustSee = mine ? new[] { hd, hand + (hd - head) } : new[] { hd } };
-            return Sim("8 ふれあい: " + (mine ? "my hand on the head" : "nobody petting"), 45, f => At(head), 0.45f, 0.7f, () => At(head + Vector3.right * 20f).want, 0f);
-        }
-
         /// <summary>手元: the stroked part on the dog's back (0.35 m up), me washing from its left.</summary>
         static ProbeRow WashStand()
         {
             Vector3 part = new Vector3(0f, 0.35f, 0f), me = new Vector3(-0.7f, 1.6f, 0f);
             Pose At(Vector3 pt) => new Pose { want = KH_VideoCamera.WashPos(pt, me + (pt - part), WashDist, WashUp), look = pt, fov = WashFov, lookTau = WashLookTau, distTo = pt,
                 mustSee = new[] { pt, pt + new Vector3(-0.15f, 0.1f, 0f) } };
-            var row = Sim("9 手元: the back, me on the left", 45, f => At(part), 0.55f, 0.75f, () => At(part + Vector3.forward * 20f).want, 0f);
+            var row = Sim("7 手元: the back, me on the left", 45, f => At(part), 0.55f, 0.75f, () => At(part + Vector3.forward * 20f).want, 0f);
             row.note = "my hand 0.15 m beside the part is inside";
             return row;
         }
@@ -363,7 +333,7 @@ namespace KominkaHillside.Editor
             Vector3 feet = Vector3.zero, dog = new Vector3(0f, 0f, 1f);
             Vector3 centre = (feet + dog) * 0.5f;
             float angle = 90f;
-            return Sim("10 一周: me and one dog, 20 s", 600, f =>
+            return Sim("8 一周: me and one dog, 20 s", 600, f =>
             {
                 angle += OrbitDegPerSec * ProbeDt;
                 return new Pose { want = KH_VideoCamera.OrbitPos(centre, angle, OrbitRadius, OrbitHeight), look = centre + Vector3.up * OrbitLookUp, fov = OrbitFov, tau = OrbitTau,
@@ -377,7 +347,7 @@ namespace KominkaHillside.Editor
         {
             Vector3 cam = new Vector3(PassSide, PassHeight, 0f), me = new Vector3(0f, 0.4f, -30f);
             Vector3 look = me;
-            return Sim("11 通り過ぎ: walking past a point " + PassSide + " m beside the path", 1100, f =>
+            return Sim("9 通り過ぎ: walking past a point " + PassSide + " m beside the path", 1100, f =>
             {
                 me += Vector3.forward * 1.4f * ProbeDt;
                 bool near = (me - cam).magnitude <= PassNear;

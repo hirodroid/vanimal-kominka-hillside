@@ -31,12 +31,13 @@ namespace KominkaHillside.Editor
     ///                 the camera within a sane distance of its subject (犬目線 3 m of the dog's head, ドローン 4-14 m of me, 一周 2.5-5 m of me, 通り過ぎ
     ///                 ≤ 30 m of me), 定点 exactly at its data position (a fixed point, after the cut)
     ///   V5-play-modes (W3) one REAL throw (the disc's own _CheckThrow → _Launch → ReqCatch) with キャッチ待ち selected: the catch plan or the
-    ///                 landing fallback places the camera (which one is noted); ディスク during the flight; おかえり while the dog carries it back
-    ///                 (ThrowerId == me); ふれあい; 手元 on dog 0 held at a wash station (simulated heap state, real reads) - nearest-station path then
+    ///                 landing fallback places the camera (which one is noted); ディスク during the flight; (おかえり / ふれあい removed in §15.5)
+    ///                 手元 on dog 0 held at a wash station (simulated heap state, real reads) - nearest-station path then
     ///                 my-station path. Reads that a run did not reach go to report.unproven (and the reason line), never to a silent PASS.
     /// **Subset**: write "V1,V3" to Temp/kh-video/harness-cases.txt before Video/3 (read and deleted; V0 always runs). Results Logs/kh-video-harness/latest.json.
     /// Simulated input (Udon events sent directly). Not judged here: VRChat camera snap (ClientSim never sets _VRChatCameraMode nor creates the
     /// photo camera), the look of the picture, the face in the picture (ClientSim's mirror copy differs), cost, recording.
+    ///   V7-controls-drone (§15.5) the camera controls and the camera drone (KH_VideoHarnessEditor.Controls.cs). Run alone (--cases=V7).
     ///   V6-permit     (W4) other-person filming permission, simulated (KH_VideoHarnessEditor.Permit.cs). Run it alone (--cases=V6, about 90 s).
     /// </summary>
     [InitializeOnLoad]
@@ -44,7 +45,7 @@ namespace KominkaHillside.Editor
     {
         const string Key = "KH.VideoHarness", Dir = "Logs/kh-video-harness", Journal = Dir + "/journal.json";
         public const string CasesFile = "Temp/kh-video/harness-cases.txt";
-        public static readonly string[] AllCases = { "V0-ready", "V1-lifecycle", "V2-pose-dog", "V3-pose-self", "V4-walk-modes", "V5-play-modes", "V6-permit" };
+        public static readonly string[] AllCases = { "V0-ready", "V1-lifecycle", "V2-pose-dog", "V3-pose-self", "V4-walk-modes", "V5-play-modes", "V6-permit", "V7-controls-drone" };
         const int Cycles = 10;
 
         public static List<string> Selected(string request)
@@ -325,9 +326,8 @@ namespace KominkaHillside.Editor
                 var sp = Get<Vector3[]>("spotPositions"); int k = Get<int>("_spot");
                 Expect(sp != null && k >= 0 && k < sp.Length && (c - sp[k]).magnitude < 0.05f, tag + "at its data position " + (sp != null && k >= 0 && k < sp.Length ? sp[k].ToString("F1") : "-"));
             }
-            if (m == KH_VideoCamera.ModeDisc || m == KH_VideoCamera.ModeCatchWait || m == KH_VideoCamera.ModeWelcome)
+            if (m == KH_VideoCamera.ModeDisc || m == KH_VideoCamera.ModeCatchWait)
                 Expect((c - dogHead).magnitude <= 6f, tag + "no flight: the dog framing, within 6 m of the dog (" + (c - dogHead).magnitude.ToString("F2") + ")");
-            if (m == KH_VideoCamera.ModeFureai) Expect((c - dogHead).magnitude <= 1.5f, tag + "beside the dog's head (" + (c - dogHead).magnitude.ToString("F2") + ")");
         }
 
         static void Open() { uVideo.SendCustomEvent("_Open"); }
@@ -585,30 +585,10 @@ namespace KominkaHillside.Editor
                     if (Get<bool>("_discFlying")) Note("ディスク: saw the flight (State / IsCarrying / disc velocity read)");
                     else report.unproven.Add("ディスク in flight (the flight had ended before the mode switch)");
                     Expect(Roll() < 0.01f, "ディスク roll 0");
-                    uVideo.SendCustomEvent("_Mode" + KH_VideoCamera.ModeWelcome);
+                    // §15.5: おかえり / ふれあい were removed; 手元 follows
                     timeMark = Time.realtimeSinceStartup;
                 }));
-                // ---- 3. おかえり while the dog brings it back (KH_FrisbeeCatch.ThrowerId vs my id) ----
-                steps.Add(Until("V5-play-modes", () => V5Carrying() || Time.realtimeSinceStartup - timeMark > 20f, 22, "timer"));
-                steps.Add(Do("V5-play-modes", () =>
-                {
-                    if (V5Carrying())
-                    {
-                        rendersMark = Renders();
-                        v5Welcome = true;
-                    }
-                    else { v5Welcome = false; report.unproven.Add("おかえり / ThrowerId (the dog did not carry the disc back within 20 s)"); }
-                }));
-                steps.Add(Until("V5-play-modes", () => !v5Welcome || Renders() >= rendersMark + 5, 4, "おかえり: no renders while carrying"));
-                steps.Add(Do("V5-play-modes", () =>
-                {
-                    if (v5Welcome) Expect(Get<bool>("_welcomeMine"), "おかえり: ThrowerId == my id (I threw it), so the framing is the one in front of me");
-                    uVideo.SendCustomEvent("_Mode" + KH_VideoCamera.ModeFureai); rendersMark = Renders();
-                }));
-                // ---- 4. ふれあい (PetActive / PetPlayerId / IsTreatBusy / _ShakeSerial; nobody pets here) ----
-                steps.Add(Until("V5-play-modes", () => Renders() >= rendersMark + 5, 4, "ふれあい: no 5 real renders in 4 s"));
-                steps.Add(Do("V5-play-modes", () => CheckMode(KH_VideoCamera.ModeFureai)));
-                // ---- 5. 手元 with a held, arrived dog at a wash station (SIMULATED state: the station's heap heldDog / arrived / callerId and the
+                // ---- 3. 手元 with a held, arrived dog at a wash station (SIMULATED state: the station's heap heldDog / arrived / callerId and the
                 // dog wash's _lastStrokePart are written every frame; the reads are real: _Arrived / _HeldDog / _CallerId / _AnchorPosition /
                 // _LastStrokePart / partBones / _WasherPlayerId). Phase A: caller = nobody, I stand by the stand (the nearest-station path reads
                 // _AnchorPosition); phase B: caller = me ----
@@ -654,13 +634,14 @@ namespace KominkaHillside.Editor
                 }));
             }
             if (On("V6-permit")) MakeV6Steps();
+            if (On("V7-controls-drone")) MakeV7Steps();
         }
 
         // ---- V5 handles ----
         static UdonBehaviour v5Disc, v5Catcher, v5Station, v5Wash;
         static Vector3 v5Dir, v5DogFrom;
         static int v5LandPred, v5Caller = -1, v5SavedHeld = -1, v5SavedCaller = -1;
-        static bool v5Welcome, v5SavedArrived, v5StationSaved;
+        static bool v5SavedArrived, v5StationSaved;
 
         static TT V5Get<TT>(UdonBehaviour u, string key)
         {

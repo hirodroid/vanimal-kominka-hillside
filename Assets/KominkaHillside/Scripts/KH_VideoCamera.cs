@@ -39,10 +39,13 @@ namespace KominkaHillside
     public partial class KH_VideoCamera : UdonSharpBehaviour
     {
         // ---- modes (design §4.2; the panel order) ----
+        // §15.5 (2026-10-04 user): おかえり and ふれあい removed, 12 → 10. Renumbered without gaps: the numbers live only in code and in the
+        // panel's button names / events (Mode0..ModeN-1 → _Mode0..), which Video/1 rewrites (and removes the old Mode10 / Mode11)
         public const int ModeDogFollow = 0, ModeSelfFollow = 1, ModeDogEye = 2, ModeDrone = 3, ModeSpot = 4, ModeDisc = 5,
-            ModeCatchWait = 6, ModeWelcome = 7, ModeFureai = 8, ModeWash = 9, ModeOrbit = 10, ModePassBy = 11;
-        public const int ModeCount = 12;
-        // ---- the shot signal for a later sequencer (the user's "patterns", 2026-10-04): ShotSerial goes up on each event, ShotKind says which ----
+            ModeCatchWait = 6, ModeWash = 7, ModeOrbit = 8, ModePassBy = 9;
+        public const int ModeCount = 10;
+        // ---- the shot signal for a later sequencer (the user's "patterns", 2026-10-04): ShotSerial goes up on each event, ShotKind says which.
+        // ShotReturned was raised by おかえり (removed in §15.5); kept as a value so a later sequencer's numbers do not move ----
         public const int ShotNone = 0, ShotLost = 1, ShotCatch = 2, ShotReturned = 3, ShotPassed = 4;
         // ---- state line ----
         public const int StateNone = -1, StateFilming = 0, StateLost = 1, StateFade = 2, StateRtFailed = 3, StateUnsupported = 4;
@@ -54,12 +57,10 @@ namespace KominkaHillside
         public const string WordModeDog = "犬追従";
         public const string WordModeSelf = "じぶん";
         public const string WordModeDogEye = "犬目線";
-        public const string WordModeDrone = "ドローン";
+        public const string WordModeDrone = "見下ろす";   // §15.5: renamed (the marker model is the "drone")
         public const string WordModeSpot = "定点";
         public const string WordModeDisc = "ディスク";
         public const string WordModeCatchWait = "キャッチ待ち";   // 2026-10-04 user: wait at the CATCH point, not the landing point
-        public const string WordModeWelcome = "おかえり";
-        public const string WordModeFureai = "ふれあい";
         public const string WordModeWash = "手元";
         public const string WordModeOrbit = "一周";
         public const string WordModePassBy = "通り過ぎ";
@@ -88,8 +89,6 @@ namespace KominkaHillside
                 case ModeSpot: return WordModeSpot;
                 case ModeDisc: return WordModeDisc;
                 case ModeCatchWait: return WordModeCatchWait;
-                case ModeWelcome: return WordModeWelcome;
-                case ModeFureai: return WordModeFureai;
                 case ModeWash: return WordModeWash;
                 case ModeOrbit: return WordModeOrbit;
                 case ModePassBy: return WordModePassBy;
@@ -101,8 +100,15 @@ namespace KominkaHillside
         public static int PickerKind(int m)
         {
             if (m == ModeSpot) return 2;
-            if (m == ModeDogFollow || m == ModeDogEye || m == ModeDisc || m == ModeCatchWait || m == ModeWelcome || m == ModeFureai) return 1;
+            if (m == ModeDogFollow || m == ModeDogEye || m == ModeDisc || m == ModeCatchWait) return 1;
             return 0;
+        }
+
+        /// <summary>§15.5: the modes whose camera position is "direction / distance / height from the subject", where [近く][遠く][↑][↓][←][→]
+        /// work. 定点・通り過ぎ (data positions), ディスク・キャッチ待ち (their own placement rules) are not. 縦回転 works in every mode.</summary>
+        public static bool CtlMovable(int m)
+        {
+            return m == ModeDogFollow || m == ModeSelfFollow || m == ModeDogEye || m == ModeDrone || m == ModeOrbit || m == ModeWash;
         }
 
         [Header("配線 (Video/1 が書く)")]
@@ -165,7 +171,7 @@ namespace KominkaHillside
         [Header("犬目線 (§4.4: 犬のそばの低い位置から自分を見上げる。自分が遠いときは犬の前の景色)")]
         public float dogEyeFov = 60f, dogEyeSideDeg = 50f, dogEyeBack = 0.35f, dogEyeLift = 0.05f, dogEyeUserMax = 6f, dogEyeTau = 0.3f;
         public float dogEyeSceneFov = 70f, dogEyeAhead = 0.15f, dogEyeSceneLift = 0.04f, dogEyePitch = 3f;
-        [Header("ドローン俯瞰 (§4.2 #4、自分を追う)")]
+        [Header("見下ろす (旧ドローン俯瞰。§4.2 #4、自分を追う)")]
         public float droneFov = 60f, droneBack = 6f, droneHeight = 7f, droneAhead = 2f, droneTau = 1.2f, droneGroundMin = 4f;
         [Header("定点 (§4.5)")]
         public float spotLookTau = 0.35f, spotDogPull = 0.3f;
@@ -175,10 +181,6 @@ namespace KominkaHillside
         [Tooltip("キャッチ待ち: 犬が投げた時点で決めたキャッチの予定 (犬の Owner の端末だけが持つ) の横、キャッチの高さ。無いときは着地の予測へ")]
         public float catchFov = 55f, catchSide = 6f, catchUp = 0.3f, catchLookBack = 2f, catchPlanWait = 0.6f, catchReplanMove = 1f;
         public float landFov = 55f, landSide = 5f, landBeyond = 3f, landUp = 1.2f, landNear = 8f, landMoveMax = 5f, landStep = 0.08f, landMaxT = 8f, landRemoteSample = 0.25f, landRepredict = 0.5f;
-        [Header("おかえり (§4.2 #8)")]
-        public float welcomeFov = 55f, welcomeDist = 1.6f, welcomeHeight = 0.45f, welcomeAhead = 3f;
-        [Header("ふれあい (§4.10)")]
-        public float fureaiFov = 45f, fureaiDist = 0.55f, fureaiSideDeg = 60f, fureaiLift = 0.05f, fureaiShakeSeconds = 3f, fureaiShakeDist = 1.2f;
         [Header("洗浄の手元 (§4.10)")]
         public float washFov = 45f, washDist = 0.6f, washUp = 0.25f, washLookTau = 0.4f;
         [Header("ゆっくり一周 (§4.9)")]
@@ -280,6 +282,7 @@ namespace KominkaHillside
             cam.enabled = false; _camOn = false;
             _open = true; _opens++;
             _person = -1; _personLive = false; PersonUiClose();   // W4: じぶん starts with me; an earlier film session is never resumed
+            CtlEnsure(); CtlResetAll(); _droneShow = droneShowDefault; _droneSending = false; _droneNextSend = 0f;   // §15.5: controls and the drone start from the defaults
             KH_TravelMailbox myBox = PersonMyBox();
             _filmSeenSerial = myBox != null ? myBox.filmResultSerial : -1;
             NewSubject();   // the picture stays detached (black) until this session has a valid pose
@@ -311,6 +314,7 @@ namespace KominkaHillside
         {
             if (!_open && _rt == null) return;
             PersonCloseAll();   // W4: × ends the film session (pending / in use) before anything else; a reopen needs a new request (§5.4)
+            DroneOff();   // §15.5: the drone leaves my screen and nothing more is sent
             _open = false; _closes++;
             if (cam != null) cam.enabled = false;
             _camOn = false;
@@ -417,6 +421,7 @@ namespace KominkaHillside
             // W4 §13.3: the check that the person may be drawn, again right before the camera is enabled (separate from the pose read)
             if (_mode == ModeSelfFollow && _personLive && !PersonStillUsable()) { PersonDrop(); return; }
             EnableForTick(); _subjectPoses++;   // the picture is attached by _OnCamRendered after this subject's first real render
+            DroneTick(now);   // §15.5: the drone at this tick's camera pose (and the 5 Hz send while filming another person)
         }
 
         /// <summary>The only place that enables the camera: Unity draws it in this frame's normal camera phase (after VRChat placed the local
@@ -466,7 +471,7 @@ namespace KominkaHillside
             if (cut) { _cutNext = false; _cuts++; }
             Transform ct = cam.transform;
             ct.position = _camPos;
-            ct.rotation = LookRoll0(_camPos, _look);   // roll 0
+            ct.rotation = ApplyTilt(LookRoll0(_camPos, _look), dt, cut);   // roll 0, then the user's tilt (§15.5 縦回転)
             cam.fieldOfView = Mathf.Clamp(_fov, 20f, 100f);
         }
 
@@ -662,6 +667,7 @@ namespace KominkaHillside
             if (snapLabel != null) snapLabel.text = WordSnap + ": " + (_snapOn ? WordOn : WordOff);
             if (snapImage != null) snapImage.color = _snapOn ? modeOnColor : modeOffColor;
             DrawPerson();   // W4: the person picker (じぶん mode), the list and the confirmation
+            DrawControls();   // §15.5: the control row (dimmed where they do not apply) and the drone toggle
             _shownState = -99;
             DrawState();
         }

@@ -43,7 +43,9 @@ namespace KominkaHillside.Editor
         public const string ProgramPath = "Assets/KominkaHillside/Scripts/KH_VideoCamera";
         /// <summary>W1 手直し 3: the OnPostRender forwarder on the camera's GameObject.</summary>
         public const string HookProgramPath = "Assets/KominkaHillside/Scripts/KH_VideoCameraHook";
-        public static readonly string[] Programs = { ProgramPath, HookProgramPath };
+        /// <summary>§15.5: the camera position marker sync (a child of the mailbox PlayerObject; Video/6).</summary>
+        public const string DroneProgramPath = "Assets/KominkaHillside/Scripts/KH_FilmDrone";
+        public static readonly string[] Programs = { ProgramPath, HookProgramPath, DroneProgramPath };
         public const string BackName = "Back";
         const string BackMatPath = "Assets/KominkaHillside/Materials/Video/M_KH_VideoMonitorBack.mat", BackShaderName = "Unlit/Color";
         /// <summary>The back plate: a little larger than the canvas, just behind it (+Z = away from the viewer), facing away from the viewer.</summary>
@@ -73,8 +75,6 @@ namespace KominkaHillside.Editor
         // キャッチ待ち (2026-10-04 user: the catch point; the probe: disc + jumping dog + catch point inside the inner 80 %)
         public const float CatchFov = 55f, CatchSide = 6f, CatchUp = 0.3f, CatchLookBack = 2f, CatchPlanWait = 0.6f, CatchReplanMove = 1f;
         public const float LandFov = 55f, LandSide = 5f, LandBeyond = 3f, LandUp = 1.2f, LandNear = 8f, LandMoveMax = 5f, LandStep = 0.12f, LandMaxT = 8f, LandRemoteSample = 0.25f, LandRepredict = 0.5f;
-        public const float WelcomeFov = 55f, WelcomeDist = 1.6f, WelcomeHeight = 0.45f, WelcomeAhead = 3f;
-        public const float FureaiFov = 45f, FureaiDist = 0.55f, FureaiSideDeg = 60f, FureaiLift = 0.05f, FureaiShakeSeconds = 3f, FureaiShakeDist = 1.2f;
         public const float WashFov = 45f, WashDist = 0.6f, WashUp = 0.25f, WashLookTau = 0.4f;
         public const float OrbitFov = 50f, OrbitRadius = 3.5f, OrbitHeight = 1.4f, OrbitDegPerSec = 6f, OrbitCenterTau = 2f, OrbitLookUp = 0.6f, OrbitTau = 0.3f;
         public const float PassFov = 50f, PassLookUp = 0.5f, PassNear = 25f, PassFar = 120f, PassRecede = 15f, PassAfter = 8f, PassGiveUp = 60f, PassTooFar = 150f;
@@ -82,6 +82,12 @@ namespace KominkaHillside.Editor
         public const float SpotWashDist = 2.6f, SpotWashHeight = 1.5f, SpotWashFov = 55f, SpotRiverDist = 6f, SpotRiverHeight = 1.8f, SpotRiverLowDist = 4f, SpotRiverLowHeight = 0.6f, SpotRiverFov = 55f;
         public const float PassSide = 3f, PassSideFar = 4.5f, PassHeight = 1.4f, SpotGroundMax = 4f;
         public const float MonitorDistance = 1.3f, MonitorDrop = 0.25f;
+        // §15.5 the user's camera controls (trial values; Video/1 writes them): depth × 0.6..2.5 (× 1.25 a press), height −0.6..+3.0 m (0.3 m),
+        // around the subject 20° a press, tilt −30..+30° (5°, also limited to fov / 2 − 3° so the subject stays in the frame), never closer than CtlMinDist
+        public const float CtlDistMin = 0.6f, CtlDistMax = 2.5f, CtlDistStep = 1.25f, CtlUpMin = -0.6f, CtlUpMax = 3f, CtlUpStep = 0.3f, CtlYawStep = 20f;
+        public const float CtlPitchMin = -30f, CtlPitchMax = 30f, CtlPitchStep = 5f, CtlMinDist = 0.4f, CtlPitchTau = 0.25f;
+        // §15.5 the camera drone (the marker): 5 Hz while filming another person, hidden near my head / near the subject's head
+        public const float DroneSendHz = 5f, DroneHideNearMe = 0.3f;
         public const bool SnapOnOpen = true;
 
         // ================================================================ layers and the RecordSnap (design §3.2-3.3, revised after the Codex review)
@@ -107,18 +113,27 @@ namespace KominkaHillside.Editor
         public const float Px = 0.001f;
         public static readonly Vector2 CanvasPx = new Vector2(840f, 880f);
         public static readonly Vector2 ScreenM = new Vector2(0.80f, 0.45f);
-        // W2/W3: 12 mode buttons (2 rows × 6, 128 × 56 px = 12.8 × 5.6 cm: a VR laser / a Desktop click), the picker row, the snap row
+        // §15.5: 10 mode buttons (2 rows × 5, 156 × 56 px), the picker row, the control row (9 × 84 px), the snap + drone row, note, state
         public const float ScreenCenterPxY = 157f, ScreenFrontM = 0.003f;
         public static readonly Vector2 TitlePos = new Vector2(-180f, 412f), TitleSize = new Vector2(440f, 44f);
         public static readonly Vector2 ClosePos = new Vector2(380f, 412f), CloseSize = new Vector2(64f, 50f);
-        public static readonly Vector2 ModeSize = new Vector2(128f, 56f);
-        public const float ModePitchX = 136f, ModeRow0Y = -112f, ModeRow1Y = -176f;
-        public static Vector2 ModePos(int m) { int col = m % 6, row = m / 6; return new Vector2((col - 2.5f) * ModePitchX, row == 0 ? ModeRow0Y : ModeRow1Y); }
-        public static readonly Vector2 PickerPos = new Vector2(0f, -244f), PickerSize = new Vector2(420f, 56f), PickerButtonSize = new Vector2(80f, 56f), PickerLabelSize = new Vector2(250f, 56f);
+        public static readonly Vector2 ModeSize = new Vector2(156f, 56f);
+        public const float ModePitchX = 164f, ModeRow0Y = -100f, ModeRow1Y = -160f;
+        public const int ModeColumns = 5;
+        public static Vector2 ModePos(int m) { int col = m % ModeColumns, row = m / ModeColumns; return new Vector2((col - (ModeColumns - 1) * 0.5f) * ModePitchX, row == 0 ? ModeRow0Y : ModeRow1Y); }
+        public static readonly Vector2 PickerPos = new Vector2(0f, -222f), PickerSize = new Vector2(420f, 56f), PickerButtonSize = new Vector2(80f, 56f), PickerLabelSize = new Vector2(250f, 56f);
         public const float PickerButtonX = 170f;
-        public static readonly Vector2 SnapPos = new Vector2(0f, -310f), SnapSize = new Vector2(560f, 56f);
-        public static readonly Vector2 NotePos = new Vector2(0f, -360f), NoteSize = new Vector2(800f, 40f);
-        public static readonly Vector2 StatePos = new Vector2(0f, -404f), StateSize = new Vector2(800f, 36f);
+        public static readonly Vector2 SnapPos = new Vector2(-205f, -336f), SnapSize = new Vector2(400f, 48f);
+        public static readonly Vector2 DroneTogglePos = new Vector2(205f, -336f), DroneToggleSize = new Vector2(400f, 48f);
+        public static readonly Vector2 NotePos = new Vector2(0f, -381f), NoteSize = new Vector2(800f, 30f);
+        public static readonly Vector2 StatePos = new Vector2(0f, -418f), StateSize = new Vector2(800f, 32f);
+        // the control row: [近く][遠く][↑][↓][←][→][向き▲][向き▼][戻す], 84 × 52 px, pitch 92 (x −368..368, inside ±420)
+        public const float CtlRowY = -280f, CtlPitchX = 92f;
+        public static readonly Vector2 CtlSize = new Vector2(84f, 52f);
+        public static Vector2 CtlPos(int i) { return new Vector2((i - 4) * CtlPitchX, CtlRowY); }
+        public static string CtlName(int i) { return "Ctl" + i; }
+        public static readonly string[] CtlEvents = { "_CtlNear", "_CtlFar", "_CtlUp", "_CtlDown", "_CtlLeft", "_CtlRight", "_CtlTiltUp", "_CtlTiltDown", "_CtlReset" };
+        public const string DroneToggleName = "DroneToggle";
         // entry buttons on the photo page (Page_Settings/PhotoPage, 1140 x 700): bottom-left, clear of [設定へ] (0,-205) 280 wide and the pager (360,-205)
         public static readonly Vector2 EntryOpenPos = new Vector2(-400f, -205f), EntryOpenSize = new Vector2(260f, 50f);
         public static readonly Vector2 EntryRecallPos = new Vector2(-450f, -205f), EntryRecallSize = new Vector2(170f, 50f);
@@ -135,7 +150,7 @@ namespace KominkaHillside.Editor
                 KH_VideoCamera.WordSnap, KH_VideoCamera.WordOn, KH_VideoCamera.WordOff, KH_VideoCamera.WordFilming, KH_VideoCamera.WordLost, KH_VideoCamera.WordFade,
                 KH_VideoCamera.WordRtFailed, KH_VideoCamera.WordSnapNote, KH_VideoCamera.WordPhotoCamOn, KH_VideoCamera.WordPhotoCamOff, "×◀▶: #0123456789",
                 string.Concat(Enumerable.Range(0, KH_VideoCamera.ModeCount).Select(KH_VideoCamera.ModeWord)), KH_VideoCamera.WordNoWash, KH_VideoCamera.WordNoSpot,
-                SpotWordWash, SpotWordRiver, SpotWordRiverLow, "()");
+                SpotWordWash, SpotWordRiver, SpotWordRiverLow, "()", string.Concat(KH_VideoCamera.CtlWords()), KH_VideoCamera.WordDrone, KH_VideoCamera.WordShow, KH_VideoCamera.WordHide);
         }
 
         // ================================================================ context
@@ -270,6 +285,7 @@ namespace KominkaHillside.Editor
                 video.entryOpen = entry[0]; video.entryRecall = entry[1]; video.entryClose = entry[2];
                 video.stateLabel = ui.state; video.snapLabel = ui.snapLabel; video.dogLabel = ui.dogLabel;
                 video.modeImages = ui.modeImages; video.snapImage = ui.snapImage; video.dogPicker = ui.picker;
+                video.ctlImages = ui.ctlImages; video.droneImage = ui.droneImage; video.droneLabel = ui.droneLabel;
                 video.language = c.language; video.manager = c.manager; video.fade = c.fade;
                 video.dogRoots = (Transform[])c.dogs.Clone(); video.dogHeads = (Transform[])c.heads.Clone(); video.dogNameKeys = (string[])c.nameKeys.Clone();
                 WirePlay(video, c, r.log);
@@ -336,10 +352,11 @@ namespace KominkaHillside.Editor
             A("catchFov", CatchFov); A("catchSide", CatchSide); A("catchUp", CatchUp); A("catchLookBack", CatchLookBack); A("catchPlanWait", CatchPlanWait); A("catchReplanMove", CatchReplanMove);
             A("landFov", LandFov); A("landSide", LandSide); A("landBeyond", LandBeyond); A("landUp", LandUp); A("landNear", LandNear); A("landMoveMax", LandMoveMax); A("landStep", LandStep); A("landMaxT", LandMaxT);
             A("landRemoteSample", LandRemoteSample); A("landRepredict", LandRepredict);
-            A("welcomeFov", WelcomeFov); A("welcomeDist", WelcomeDist); A("welcomeHeight", WelcomeHeight); A("welcomeAhead", WelcomeAhead);
-            A("fureaiFov", FureaiFov); A("fureaiDist", FureaiDist); A("fureaiSideDeg", FureaiSideDeg); A("fureaiLift", FureaiLift); A("fureaiShakeSeconds", FureaiShakeSeconds); A("fureaiShakeDist", FureaiShakeDist);
             A("washFov", WashFov); A("washDist", WashDist); A("washUp", WashUp); A("washLookTau", WashLookTau);
             A("orbitFov", OrbitFov); A("orbitRadius", OrbitRadius); A("orbitHeight", OrbitHeight); A("orbitDegPerSec", OrbitDegPerSec); A("orbitCenterTau", OrbitCenterTau); A("orbitLookUp", OrbitLookUp); A("orbitTau", OrbitTau);
+            A("ctlDistMin", CtlDistMin); A("ctlDistMax", CtlDistMax); A("ctlDistStep", CtlDistStep); A("ctlUpMin", CtlUpMin); A("ctlUpMax", CtlUpMax); A("ctlUpStep", CtlUpStep); A("ctlYawStep", CtlYawStep);
+            A("ctlPitchMin", CtlPitchMin); A("ctlPitchMax", CtlPitchMax); A("ctlPitchStep", CtlPitchStep); A("ctlMinDist", CtlMinDist); A("ctlPitchTau", CtlPitchTau);
+            A("droneSendHz", DroneSendHz); A("droneHideNearMe", DroneHideNearMe);
             A("passFov", PassFov); A("passLookUp", PassLookUp); A("passNear", PassNear); A("passFar", PassFar); A("passRecede", PassRecede); A("passAfter", PassAfter); A("passGiveUp", PassGiveUp); A("passTooFar", PassTooFar);
             return t;
         }
@@ -463,7 +480,7 @@ namespace KominkaHillside.Editor
             return mr;
         }
 
-        class Ui { public GameObject monitor, picker; public MeshRenderer screen; public TextMeshProUGUI state, snapLabel, dogLabel; public Image[] modeImages; public Image snapImage; }
+        class Ui { public GameObject monitor, picker; public MeshRenderer screen; public TextMeshProUGUI state, snapLabel, dogLabel, droneLabel; public Image[] modeImages, ctlImages; public Image snapImage, droneImage; }
 
         public static string ModeButtonName(int m) { return "Mode" + m; }
         public static string ModeEvent(int m) { return "_Mode" + m; }
@@ -515,9 +532,24 @@ namespace KominkaHillside.Editor
             Label(go.transform, "Title", TitlePos, TitleSize, KH_VideoCamera.WordTitle, c.font, 28f, 18f, TextAlignmentOptions.MidlineLeft, false).color = KD_UiSpriteEditor.AccentGold;
             Btn(go.transform, "Close", ClosePos, CloseSize, "×", c.font, target, nameof(KH_VideoCamera._Close), log);
             foreach (var old in new[] { "ModeDog", "ModeSelf" }) { var o = go.transform.Find(old); if (o != null) { UnityEngine.Object.DestroyImmediate(o.gameObject); log.Add("removed the W1 button " + old); } }
+            // §15.5: 12 → 10 modes. The buttons past ModeCount (the old Mode10 / Mode11) are removed; the rest are rewritten in place
+            for (int m = KH_VideoCamera.ModeCount; m < 16; m++) { var o = go.transform.Find(ModeButtonName(m)); if (o != null) { UnityEngine.Object.DestroyImmediate(o.gameObject); log.Add("removed the old button " + ModeButtonName(m)); } }
             u.modeImages = new Image[KH_VideoCamera.ModeCount];
             for (int m = 0; m < KH_VideoCamera.ModeCount; m++)
                 u.modeImages[m] = Btn(go.transform, ModeButtonName(m), ModePos(m), ModeSize, KH_VideoCamera.ModeWord(m), c.font, target, ModeEvent(m), log).GetComponent<Image>();
+            // §15.5: the camera controls (one row) and the drone toggle (beside the snap toggle)
+            string[] ctlWords = KH_VideoCamera.CtlWords();
+            u.ctlImages = new Image[ctlWords.Length];
+            for (int i = 0; i < ctlWords.Length; i++)
+            {
+                var cb = Btn(go.transform, CtlName(i), CtlPos(i), CtlSize, ctlWords[i], c.font, target, CtlEvents[i], log);
+                var cl = LabelOf(cb); if (cl != null) { cl.fontSizeMax = 24f; cl.fontSize = 24f; cl.fontSizeMin = 12f; EditorUtility.SetDirty(cl); }
+                u.ctlImages[i] = cb.GetComponent<Image>();
+            }
+            var droneBtn = Btn(go.transform, DroneToggleName, DroneTogglePos, DroneToggleSize, KH_VideoCamera.WordDrone + ": " + KH_VideoCamera.WordShow, c.font, target, nameof(KH_VideoCamera._ToggleDrone), log);
+            u.droneImage = droneBtn.GetComponent<Image>(); u.droneLabel = LabelOf(droneBtn);
+            // the W4 overlays (Video/4) must stay above the new buttons (drawn last, they also take the pointer first)
+            foreach (var ov in new[] { PersonListName, PersonConfirmName }) { var o = go.transform.Find(ov); if (o != null) o.SetAsLastSibling(); }
             var picker = KD_ShopSetupEditor.EnsureUiChild(go.transform, "DogPicker", PickerPos, PickerSize);
             foreach (var g in picker.GetComponents<Graphic>()) UnityEngine.Object.DestroyImmediate(g);
             Btn(picker.transform, "Prev", new Vector2(-PickerButtonX, 0f), PickerButtonSize, "◀", c.font, target, nameof(KH_VideoCamera._DogPrev), log);

@@ -136,6 +136,39 @@ namespace KominkaHillside
             // every end of a session passes here (revoke, table gone, transit timeout, leave, _FilmEnd, a pending reset): the camera detaches
             // the person's picture now, not at its next render tick (Codex review 1)
             if (_filmListener != null) _filmListener.SendCustomEvent("_OnFilmEnded");
+            // §15.5: the drone's pose is no longer for anyone (the subject's screen hides it on shown = false, and also on the declaration going away)
+            KH_FilmDrone d = _Drone();
+            if (d != null) d._StopSend();
+        }
+
+        [Header("§15.5 ドローン (この箱の子 FilmDrone。Video/6 が配線する)")]
+        public KH_FilmDrone drone;
+        public const float DroneNearSubject = 1f;   // the subject's screen hides the drone when the camera is closer than this to the subject's head
+
+        /// <summary>This player's camera drone (the wired child; found once among the children otherwise). Local only.</summary>
+        public KH_FilmDrone _Drone()
+        {
+            if (Utilities.IsValid(drone)) return drone;
+            drone = GetComponentInChildren<KH_FilmDrone>();
+            return drone;
+        }
+
+        /// <summary>S side, every frame while I have grant rows: each filmer's drone is shown on MY screen only while the row is "撮影中" (the row (F, seq)
+        /// and F's declaration (me, seq)), F sends it for me and that seq, and the camera is at least DroneNearSubject from my head.</summary>
+        void FilmDroneUpdate()
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) return;
+            Vector3 head = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+            int me = lp.playerId;
+            for (int k = 0; k < FilmSlots; k++)
+            {
+                if (filmGrantIds[k] < 0 || !Utilities.IsValid(_rowBoxes[k])) continue;
+                KH_FilmDrone d = _rowBoxes[k]._Drone();
+                if (d == null) continue;
+                bool on = _FilmRowActive(k) && d.shown && d.forTarget == me && d.forSeq == filmGrantSeqs[k] && (d.camPos - head).magnitude >= DroneNearSubject;
+                if (on) d._PlaceRemote(Time.deltaTime); else d._Hide();
+            }
         }
 
         private UdonSharpBehaviour _filmListener;
@@ -361,6 +394,8 @@ namespace KominkaHillside
 
         void ClearRow(int k)
         {
+            // §15.5: that filmer's drone leaves my screen with the row (revoke, EndFilm, sweep, leave)
+            if (Utilities.IsValid(_rowBoxes[k])) { KH_FilmDrone d = _rowBoxes[k]._Drone(); if (d != null) d._Hide(); }
             filmGrantIds[k] = -1; filmGrantSeqs[k] = 0;
             _rowBoxes[k] = null; _rowStarted[k] = false; _rowMismatchSince[k] = -1f; _rowAt[k] = 0f;
         }
@@ -409,6 +444,7 @@ namespace KominkaHillside
                 if (Time.time >= _filmNextCheck) { _filmNextCheck = Time.time + FilmCheckEvery; FilmCheck(); }
             }
             if (_filmRows > 0 && Time.time >= _filmNextSweep) { _filmNextSweep = Time.time + FilmSweepEvery; FilmSweep(); }
+            if (_filmRows > 0) FilmDroneUpdate();   // §15.5: only while someone may film me
         }
 
         /// <summary>退室: S の側はその人の行を消す。F の側はその人との回 (transit / in-use) を終える (pending は保留枠の処理が終える)。</summary>

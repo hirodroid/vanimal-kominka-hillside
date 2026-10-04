@@ -31,7 +31,8 @@ namespace KominkaHillside.Editor
     /// </summary>
     public static partial class KH_VideoHarnessEditor
     {
-        const string C6 = "V6-permit";
+        // the case name the shared helpers (AddSpawn / AddAsk / AddInUse) tag their steps with; V7 borrows them (KH_VideoHarnessEditor.Controls.cs)
+        static string C6 = "V6-permit";
         static UdonBehaviour v6Box, v6RBox, v6Notice, v6Pouch;
         static VRCPlayerApi v6Remote;
         static int v6Me, v6Seq0, v6SeqA, v6SeqB, v6Serial, v6Reads, v6Sent, v6JoinSerial;

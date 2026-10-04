@@ -4,7 +4,7 @@ using UnityEngine;
 namespace KominkaHillside
 {
     /// <summary>
-    /// IMP-WLD-008 W3: the play / wash modes — フリスビー追従, 落下地点の待機, おかえり, ふれあいアップ, 洗浄の手元アップ (design §4.6-4.7, §4.10).
+    /// IMP-WLD-008 W3: the play / wash modes — フリスビー追従, 落下地点の待機, 洗浄の手元アップ (design §4.6-4.7, §4.10). おかえり / ふれあい were removed (§15.5).
     /// The disc is the selected dog's disc (one disc per dog). Synced facts are read as ids / states only (the thrower, the petter, the
     /// washer, the wash station's caller) and compared with my id; another player's pose is never read. When the person in a framing is not
     /// me, the mode frames the dog alone.
@@ -25,11 +25,6 @@ namespace KominkaHillside
         private int _catchReplans;
         private float _catchWaitUntil;
         private Vector3 _catchPoint, _catchRootSeen, _catchCam, _catchLookPt;
-        private bool _wasCarrying;          // おかえり: carrying last tick (the "returned" shot event)
-        private bool _welcomeMine;          // read-out: the last おかえり framing was "I threw it" (ThrowerId == me)
-        // ふれあい: the wash's "shake" serial (washed dog shakes → a front close-up)
-        private int _shakeSeen = -1;
-        private float _shakeUntil = -1f;
         private int _washDog = -1;          // read-out
 
         KH_Frisbee DiscOf(int dog)
@@ -206,65 +201,6 @@ namespace KominkaHillside
                 if (q.y < p0.y - 60f) break;
             }
             return prev;
-        }
-
-        /// <summary>おかえり (§4.2 #8): while the dog brings the disc back. If I threw it, low in front of me toward the dog; otherwise ahead of
-        /// the dog looking back at it (the thrower is not me, so no person is framed). Otherwise the 犬追従 framing.</summary>
-        bool Welcome(float dt)
-        {
-            if (!DogValid(_dog)) return false;
-            KH_FrisbeeCatch c = CatcherOf(_dog);
-            bool carrying = c != null && c.IsCarrying;
-            if (_wasCarrying && !carrying) RaiseShot(ShotReturned);
-            _wasCarrying = carrying;
-            if (!carrying) return DogFollowOf(_dog, dt);
-            Transform root = dogRoots[_dog];
-            Vector3 body = DogSubject(_dog), head = DogHead(_dog);
-            Vector3 h = Heading(root.position, root.forward, dt);
-            _welcomeMine = c.ThrowerId >= 0 && c.ThrowerId == SelfId();
-            if (_welcomeMine && SelfHead()) _wantPos = WelcomePos(_selfFeet, body, welcomeDist, welcomeHeight);
-            else _wantPos = WelcomeAheadPos(body, h, welcomeAhead, welcomeHeight) + LeadOffset(_hVel, posTau);
-            _wantLook = head;
-            _wantFov = welcomeFov;
-            _subject = head; _subjectSize = 0.3f;
-            return true;
-        }
-
-        /// <summary>ふれあいアップ (§4.10): beside the selected dog's head, away from MY petting hand (halfway between the hand and the head is the
-        /// look point); when someone else pets it or nobody does, beside the head from the dog's facing (the head only). Eating a treat: the
-        /// mouth. The washed dog shook: a front close-up for fureaiShakeSeconds.</summary>
-        bool Fureai(float dt, float now)
-        {
-            if (!DogValid(_dog)) return false;
-            Transform root = dogRoots[_dog];
-            Vector3 head = DogHead(_dog);
-            Vector3 fwd = root.forward; fwd.y = 0f;
-            fwd = fwd.sqrMagnitude > 0.0001f ? fwd.normalized : Vector3.forward;
-            KH_DogWash w = washes != null && _dog < washes.Length ? washes[_dog] : null;
-            if (w != null)
-            {
-                int serial = w._ShakeSerial();
-                if (_shakeSeen < 0) _shakeSeen = serial;
-                else if (serial != _shakeSeen) { _shakeSeen = serial; _shakeUntil = now + fureaiShakeSeconds; }
-            }
-            _wantFov = fureaiFov;
-            _subject = head; _subjectSize = 0.3f;
-            if (now < _shakeUntil)
-            {
-                _wantPos = head + fwd * fureaiShakeDist + Vector3.up * 0.1f;
-                _wantLook = head;
-                return true;
-            }
-            KominkaDogRun.KD_DogFetchController f = fetches != null && _dog < fetches.Length ? fetches[_dog] : null;
-            bool mine = f != null && f.PetActive && f.PetPlayerId == SelfId();
-            Vector3 away = -root.right;
-            Vector3 look = head;
-            if (mine && SelfHandNear(head)) { away = head - _selfHand; look = (head + _selfHand) * 0.5f; }
-            KominkaDogRun.KD_DogWanderController wd = wanders != null && _dog < wanders.Length ? wanders[_dog] : null;
-            if (wd != null && wd.IsTreatBusy) look = head + fwd * 0.1f;
-            _wantPos = FureaiPos(head, away, fureaiSideDeg, fureaiDist, fureaiLift);
-            _wantLook = look;
-            return true;
         }
 
         /// <summary>The world point of a wash PART (0..KH_DogWash.PartCount-1, what _LastStrokePart returns): the mean of the bones of every collider

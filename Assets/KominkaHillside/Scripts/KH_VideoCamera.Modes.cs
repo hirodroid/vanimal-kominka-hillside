@@ -21,6 +21,13 @@ namespace KominkaHillside
 
         bool ModeTarget(float dt, float now)
         {
+            bool ok = ModePose(dt, now);
+            if (ok) ApplyControls();   // §15.5: the user's 近く / 遠く / ↑ / ↓ / ← / → on top of the mode's own pose (KH_VideoCamera.Controls.cs)
+            return ok;
+        }
+
+        bool ModePose(float dt, float now)
+        {
             // per-mode options: the defaults, then the mode overrides what it needs
             _wantTau = posTau; _wantLookTau = lookTau; _wantGroundMin = groundLift; _wantFixed = false; _lostWord = 0;
             switch (_mode)
@@ -32,8 +39,6 @@ namespace KominkaHillside
                 case ModeSpot: return Spot(dt);
                 case ModeDisc: return DiscFollow(dt);
                 case ModeCatchWait: return CatchWait(dt, now);
-                case ModeWelcome: return Welcome(dt);
-                case ModeFureai: return Fureai(dt, now);
                 case ModeWash: return Wash(dt);
                 case ModeOrbit: return Orbit(dt);
                 case ModePassBy: return PassBy(dt, now);
@@ -46,23 +51,15 @@ namespace KominkaHillside
         {
             _discHave = false; _discVel = Vector3.zero;
             _landHave = false; _landWasFlying = false; _landSampling = false; _landMoved = false;
-            _catchPlaced = false; _catchReplans = 0; _catchSignalled = false; _catchWasFlying = false; _wasCarrying = false;
+            _catchPlaced = false; _catchReplans = 0; _catchSignalled = false; _catchWasFlying = false;
             _orbitHave = false;
             _passIdx = -1; _passLast = -1;   // the pass history must not survive a reopen / mode re-entry
-            _shakeSeen = -1; _shakeUntil = -1f;
         }
 
         /// <summary>On open / mode change: pick the subject the mode is about when it is obvious (the spot nearest to me, the dog I am petting).</summary>
         void AutoSubject()
         {
             if (_mode == ModeSpot) _spot = NearestSpot();
-            if (_mode == ModeFureai)
-            {
-                int me = SelfId();
-                if (fetches != null)
-                    for (int i = 0; i < fetches.Length; i++)
-                        if (fetches[i] != null && fetches[i].PetActive && fetches[i].PetPlayerId == me && DogValid(i)) { _dog = i; break; }
-            }
         }
 
         void ResetHeading()
@@ -256,25 +253,6 @@ namespace KominkaHillside
 
         /// <summary>落下待ち look: L (+0.5 m); once the disc is within near, halfway between the disc and L.</summary>
         public static Vector3 LandingWaitLook(Vector3 landing, Vector3 disc, bool discNear) { Vector3 l = landing + Vector3.up * 0.5f; return discNear ? (l + disc) * 0.5f : l; }
-
-        /// <summary>おかえり: dist metres from the receiver toward the returning dog, low (height above the receiver's feet).</summary>
-        public static Vector3 WelcomePos(Vector3 receiverFeet, Vector3 dogPos, float dist, float height)
-        {
-            Vector3 d = dogPos - receiverFeet; d.y = 0f;
-            d = d.sqrMagnitude > 0.0001f ? d.normalized : Vector3.forward;
-            return receiverFeet + d * dist + Vector3.up * height;
-        }
-
-        /// <summary>おかえり without me as the receiver: ahead of the returning dog, looking back at it.</summary>
-        public static Vector3 WelcomeAheadPos(Vector3 dogBody, Vector3 heading, float ahead, float height) { return dogBody + heading * ahead + Vector3.up * height; }
-
-        /// <summary>ふれあい: beside the dog's head, sideDeg off the direction away from the petter (or the dog's facing), dist out, lift up.</summary>
-        public static Vector3 FureaiPos(Vector3 dogHead, Vector3 awayFromPetter, float sideDeg, float dist, float lift)
-        {
-            Vector3 a = new Vector3(awayFromPetter.x, 0f, awayFromPetter.z);
-            a = a.sqrMagnitude > 0.0001f ? a.normalized : Vector3.forward;
-            return dogHead + (Quaternion.AngleAxis(sideDeg, Vector3.up) * a) * dist + Vector3.up * lift;
-        }
 
         /// <summary>洗浄の手元: on the far side of the stroked part from the washer, dist out and up high.</summary>
         public static Vector3 WashPos(Vector3 part, Vector3 washer, float dist, float up)

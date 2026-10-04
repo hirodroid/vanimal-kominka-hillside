@@ -34,8 +34,8 @@ namespace KominkaHillside.Editor
     {
         public const string PersonButtonName = "PersonButton", PersonCancelName = "PersonCancel", PersonListName = "PersonList", PersonConfirmName = "PersonConfirm";
         public const string FilmAcceptName = "FilmAcceptToggle", FilmGrantsPageName = "FilmGrantsPage", FilmGrantsButtonName = "FilmGrants";
-        public static readonly Vector2 PersonButtonPos = new Vector2(-100f, -244f), PersonButtonSize = new Vector2(440f, 56f);
-        public static readonly Vector2 PersonCancelPos = new Vector2(240f, -244f), PersonCancelSize = new Vector2(200f, 56f);
+        public static readonly Vector2 PersonButtonPos = new Vector2(-100f, -222f), PersonButtonSize = new Vector2(440f, 56f);
+        public static readonly Vector2 PersonCancelPos = new Vector2(240f, -222f), PersonCancelSize = new Vector2(200f, 56f);
         public static readonly Vector2 OverlayPos = new Vector2(0f, -215f), OverlaySize = new Vector2(820f, 290f);
         public static readonly Vector2 CellSize = new Vector2(396f, 48f);
         public static Vector2 CellPos(int c) { return new Vector2(c % 2 == 0 ? -202f : 202f, 70f - (c / 2) * 52f); }
