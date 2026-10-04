@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 using VRC.SDKBase;
+using VRC.SDK3.ClientSim;
 using VRC.Udon;
 
 namespace KominkaHillside.Editor
@@ -25,8 +26,8 @@ namespace KominkaHillside.Editor
     {
         const string C7 = "V7-controls-drone";
         static UdonBehaviour v7MyDrone, v7PDrone;
-        static Vector3 v7Off;
-        static int v7Sends;
+        static Vector3 v7Off, v7From, v7To;
+        static int v7Sends, v7Frame;
 
         static UdonBehaviour DroneOf(UdonBehaviour box)
         {
@@ -178,9 +179,73 @@ namespace KominkaHillside.Editor
             {
                 Expect(V6<bool>(v7MyDrone, "shown"), "6: shown again → sent again");
                 uVideo.SendCustomEvent("_PersonCancel");
-                Expect(!V6<bool>(v7MyDrone, "shown"), "6: the session ended → shown false");
+                Expect(!V6<bool>(v7MyDrone, "shown"), "6: [取り消す] (session ended) → shown false");
                 Table(v6RBox, -1, 0);
+            }));
+            // ---- 6b (Codex review 1). the table goes first, before the mailbox's next FilmCheck, between render ticks: the send stops that frame ----
+            AddAsk("6b"); AddInUse("6b");
+            AddTick(8);
+            steps.Add(Do(C7, () =>
+            {
+                Expect(Get<bool>("_droneSending") && V6<bool>(v7MyDrone, "shown"), "6b: sending while in use");
+                v6Box.SetProgramVariable("_filmNextCheck", Time.time + 30f);   // simulated: the mailbox has not run its FilmCheck yet (phase still in use)
+                uVideo.SetProgramVariable("_nextRender", Time.time + 5f);       // simulated: between render ticks
+                Table(v6RBox, -1, 0);
+                v7Sends = Get<int>("_droneSends"); v7Frame = Time.frameCount;
+            }));
+            steps.Add(Until(C7, () => Time.frameCount > v7Frame, 2, "frame"));
+            steps.Add(Do(C7, () =>
+            {
+                Expect(Phase() == KH_TravelMailbox.FilmInUse, "6b: the session is still 'in use' in the mailbox (FilmCheck held back)");
+                Expect(!Get<bool>("_droneSending") && !V6<bool>(v7MyDrone, "shown") && Get<int>("_droneSends") == v7Sends, "6b: the frame after the grant row went, the send stopped (shown false), nothing more sent");
+                v6Box.SetProgramVariable("_filmNextCheck", 0f); uVideo.SetProgramVariable("_nextRender", Time.time);
+            }));
+            steps.Add(Until(C7, () => Phase() == KH_TravelMailbox.FilmNone, 2, "6b: the session did not end"));
+            // ---- 6c. other ends: × closes, choosing myself (a target change), the puppet leaving: shown false and no more sends ----
+            AddAsk("6c ×"); AddInUse("6c ×"); AddTick(8);
+            steps.Add(Do(C7, () =>
+            {
+                Expect(V6<bool>(v7MyDrone, "shown"), "6c ×: sending");
                 Close();
+                Expect(!V6<bool>(v7MyDrone, "shown") && !DroneVisible(v7MyDrone), "6c ×: closing the monitor stops the send and hides my drone");
+                Table(v6RBox, -1, 0); Open(); uVideo.SendCustomEvent("_Mode" + KH_VideoCamera.ModeSelfFollow);
+            }));
+            AddAsk("6c self"); AddInUse("6c self"); AddTick(8);
+            steps.Add(Do(C7, () =>
+            {
+                Expect(V6<bool>(v7MyDrone, "shown"), "6c self: sending");
+                uVideo.SendCustomEvent("_PersonList"); uVideo.SendCustomEvent("_PersonPick0");   // cell 0 = me: a target change
+                Expect(!V6<bool>(v7MyDrone, "shown") && Phase() == KH_TravelMailbox.FilmNone, "6c self: choosing myself ends the session and stops the send");
+                Table(v6RBox, -1, 0);
+            }));
+            AddAsk("6c leave"); AddInUse("6c leave"); AddTick(8);
+            steps.Add(Do(C7, () =>
+            {
+                Expect(V6<bool>(v7MyDrone, "shown"), "6c leave: sending");
+                ClientSimMain.RemovePlayer(v6Remote);
+            }));
+            steps.Add(Until(C7, () => !V6<bool>(v7MyDrone, "shown") && Phase() == KH_TravelMailbox.FilmNone, 3, "6c leave: the send did not stop after the puppet left"));
+            steps.Add(Do(C7, () =>
+            {
+                Note("6c: a transit timeout never sends (sending needs 'in use'); real two-client delivery of shown = false is for two clients");
+                // ---- 6d (Codex review 3). height + distance near the subject: the minimum distance holds on the final position ----
+                int m = KH_VideoCamera.ModeSelfFollow;
+                Press("_CtlNear", 10); Press("_CtlDown", 10);
+                uVideo.SetProgramVariable("ctlMinDist", 5f);   // simulated: a minimum far beyond the framing, so the clamp must act
+            }));
+            AddTick(2);
+            steps.Add(Do(C7, () =>
+            {
+                float d = WantOff().magnitude;
+                Expect(Mathf.Abs(d - 5f) < 0.02f, "6d: ×0.6 and −0.6 m with a 5 m minimum: the final wanted camera is 5 m from the subject (" + d.ToString("F3") + ")");
+                uVideo.SetProgramVariable("ctlMinDist", KH_VideoCameraEditor.CtlMinDist);
+                uVideo.SendCustomEvent("_CtlReset");
+                Note("6d: the zero-offset escape (straight up) is not reachable from the panel; covered by the source check (Video/7)");
+                Close();
+            }));
+            AddSpawn("KH_DroneTarget2");
+            steps.Add(Do(C7, () =>
+            {
                 // ---- 7. me as the subject ----
                 v7PDrone = DroneOf(v6RBox);
                 if (v7PDrone == null) { Fail("7: no KH_FilmDrone under the puppet's mailbox"); return; }
@@ -201,7 +266,31 @@ namespace KominkaHillside.Editor
                 timeMark = Time.realtimeSinceStartup;
             }));
             steps.Add(Until(C7, () => DroneVisible(v7PDrone), 2, "7: the filmer's drone did not appear on the subject's screen"));
-            steps.Add(Until(C7, () => (v7PDrone.transform.position - V6<Vector3>(v7PDrone, "camPos")).magnitude < 0.05f, 2, "7: the drone did not ease to the received pose"));
+            steps.Add(Until(C7, () => (v7PDrone.transform.position - V6<Vector3>(v7PDrone, "camPos")).magnitude < 0.05f, 2, "7: the drone did not reach the received pose"));
+            // ---- 7a (Codex review 4). an update while shown eases through intermediate positions (not the first-show snap) ----
+            steps.Add(Do(C7, () =>
+            {
+                var head = Networking.LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+                v7From = v7PDrone.transform.position;
+                v7To = head.position + (head.rotation * Vector3.right) * 4f + Vector3.up * 1f;   // a valid pose ~4 m away from the shown one
+                v7PDrone.SetProgramVariable("camPos", v7To);
+                v7Frame = Time.frameCount;
+            }));
+            steps.Add(Until(C7, () => Time.frameCount > v7Frame, 2, "frame"));
+            steps.Add(Do(C7, () =>
+            {
+                Vector3 p = v7PDrone.transform.position;
+                float total = (v7To - v7From).magnitude, left = (v7To - p).magnitude;
+                Expect(DroneVisible(v7PDrone) && left > 0.05f && left < total - 0.01f, "7a: one frame after the update the drone is between the old and new pose (" + left.ToString("F2") + " of " + total.ToString("F2") + " m left)");
+            }));
+            steps.Add(Until(C7, () => (v7PDrone.transform.position - v7To).magnitude < 0.05f, 3, "7a: the drone did not converge to the new pose"));
+            // ---- 7b (Codex review 4). declaration and table right, but the drone's own target / seq wrong: not shown ----
+            steps.Add(Do(C7, () => { v7PDrone.SetProgramVariable("forTarget", v6Me + 1000); v7Frame = Time.frameCount; }));
+            steps.Add(Until(C7, () => Time.frameCount > v7Frame + 1, 2, "frame"));
+            steps.Add(Do(C7, () => { Expect(!DroneVisible(v7PDrone), "7b: a drone pose for another target is not shown"); v7PDrone.SetProgramVariable("forTarget", v6Me); v7PDrone.SetProgramVariable("forSeq", 199); v7Frame = Time.frameCount; }));
+            steps.Add(Until(C7, () => Time.frameCount > v7Frame + 1, 2, "frame"));
+            steps.Add(Do(C7, () => { Expect(!DroneVisible(v7PDrone), "7b: a drone pose for an old seq is not shown"); v7PDrone.SetProgramVariable("forSeq", 200); }));
+            steps.Add(Until(C7, () => DroneVisible(v7PDrone), 2, "7b: the matching target / seq did not bring it back"));
             steps.Add(Do(C7, () =>
             {
                 var head = Networking.LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
@@ -213,8 +302,10 @@ namespace KominkaHillside.Editor
                 var head = Networking.LocalPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
                 v7PDrone.SetProgramVariable("camPos", head.position + Vector3.forward * 3f);
                 v7PDrone.SetProgramVariable("shown", false);
+                v7Frame = Time.frameCount;
             }));
-            AddTick(3);
+            // the monitor is closed here: wait for frames, not render ticks (Codex review 2; the subject side runs without the camera)
+            steps.Add(Until(C7, () => Time.frameCount > v7Frame + 2, 2, "frame"));
             steps.Add(Do(C7, () => { Expect(!DroneVisible(v7PDrone), "7: shown = false hides it"); v7PDrone.SetProgramVariable("shown", true); }));
             steps.Add(Until(C7, () => DroneVisible(v7PDrone), 2, "7: shown again did not bring it back"));
             steps.Add(Do(C7, () => { v6RBox.SetProgramVariable("filmSeq", 199); }));   // the filmer's declaration no longer matches the row

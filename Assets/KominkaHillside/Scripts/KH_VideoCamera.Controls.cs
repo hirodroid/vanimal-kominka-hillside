@@ -117,9 +117,14 @@ namespace KominkaHillside
             Vector3 off = _wantPos - _subject;
             off = Quaternion.AngleAxis(yaw, Vector3.up) * off;
             off *= mult;
+            off += Vector3.up * up;   // the height first: the minimum distance below is on the FINAL position (Codex review 3)
             float len = off.magnitude;
-            if (len < ctlMinDist && len > 0.0001f) off *= ctlMinDist / len;   // never inside the subject (the subject stays in the frame)
-            _wantPos = _subject + off + Vector3.up * up;
+            if (len < ctlMinDist)
+            {
+                // never inside the subject (the subject stays in the frame). A zero offset escapes upward (above the subject, never into the ground)
+                off = len > 0.0001f ? off * (ctlMinDist / len) : Vector3.up * ctlMinDist;
+            }
+            _wantPos = _subject + off;
         }
 
         /// <summary>The tilt on top of the look rotation (ApplyPose). Smoothed; limited so the look point stays inside the frame.</summary>
@@ -161,7 +166,7 @@ namespace KominkaHillside
             bool nearMe = SelfHead() && (ct.position - _selfHead).magnitude < droneHideNearMe;
             if (nearMe) d._Hide(); else d._PlaceLocal(ct.position, ct.rotation);
             KH_TravelMailbox box = PersonMyBox();
-            bool send = box != null && box._FilmPhase() == KH_TravelMailbox.FilmInUse;
+            bool send = DroneMaySend(box);
             if (send)
             {
                 if (now >= _droneNextSend)
@@ -172,6 +177,25 @@ namespace KominkaHillside
                 }
             }
             else if (_droneSending) { d._StopSend(); _droneSending = false; }
+        }
+
+        /// <summary>The pose may go out only while the drone is shown and the permission GATE holds right now (in use AND the subject's synced table still
+        /// has (me, seq) in a box the subject owns) - not merely the session phase, which lags the table by up to one FilmCheck (Codex review 1).</summary>
+        bool DroneMaySend(KH_TravelMailbox box)
+        {
+            return _droneShow && box != null && box._FilmPhase() == KH_TravelMailbox.FilmInUse && box._FilmGate(box._FilmTarget());
+        }
+
+        /// <summary>Every frame while sending (PostLateUpdate, before the render-tick wait and the fade return): stop at once when the gate fails.
+        /// One field test when not sending.</summary>
+        void DroneSendCheck()
+        {
+            if (!_droneSending) return;
+            KH_TravelMailbox box = PersonMyBox();
+            if (DroneMaySend(box)) return;
+            KH_FilmDrone d = MyDrone();
+            if (d != null) d._StopSend();
+            _droneSending = false;
         }
 
         /// <summary>The drone off my screen and not sent (hidden by the toggle, or the monitor closed).</summary>

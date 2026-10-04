@@ -487,7 +487,7 @@ namespace KominkaHillside.Editor
             Check(Regex.IsMatch(main, @"kind == KindFilm \? !filmAccepting : !accepting"), "a film request is refused by filmAccepting (not the join toggle)");
             Check(film.Contains("[UdonSynced] public int[] filmGrantIds = new int[] { -1, -1, -1, -1 };") && film.Contains("[UdonSynced] public int[] filmGrantSeqs = new int[] { 0, 0, 0, 0 };"), "synced arrays initialised at declaration (length 4)");
             string camSrc = File.ReadAllText("Assets/KominkaHillside/Scripts/KH_VideoCamera.cs");
-            Check(Regex.IsMatch(camSrc, @"if \(_personLive && !PersonStillUsable\(\)\) PersonDrop\(\);\s*if \(now < _nextRender\) return;"), "the person picture is checked every frame before the render-tick wait and the fade return (Codex review 1)");
+            Check(Regex.IsMatch(camSrc, @"if \(_personLive && !PersonStillUsable\(\)\) PersonDrop\(\);\s*DroneSendCheck\(\);[^\n]*\n\s*if \(now < _nextRender\) return;"), "the person picture is checked every frame before the render-tick wait and the fade return (Codex review 1)");
             Check(Regex.IsMatch(film, @"void FilmClear\(\)[\s\S]{0,500}_filmListener\.SendCustomEvent\(""_OnFilmEnded""\)"), "every session end tells the camera (_OnFilmEnded)");
         }
     }

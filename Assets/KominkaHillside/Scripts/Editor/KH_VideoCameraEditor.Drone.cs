@@ -213,7 +213,10 @@ namespace KominkaHillside.Editor
             string cam = File.ReadAllText(ProgramPath + ".cs"), modes = File.ReadAllText(ProgramPath + ".Modes.cs"), ctl = File.ReadAllText(ProgramPath + ".Controls.cs");
             Check(Regex.IsMatch(modes, @"bool ok = ModePose\(dt, now\);\s*if \(ok\) ApplyControls\(\);"), "the controls act on the mode's wanted pose before the shared occlusion / floor / push-out");
             Check(Regex.IsMatch(cam, @"EnableForTick\(\); _subjectPoses\+\+;[^\n]*\n\s*DroneTick\(now\);"), "the drone follows the camera on every render tick");
-            Check(Regex.IsMatch(ctl, @"bool send = box != null && box\._FilmPhase\(\) == KH_TravelMailbox\.FilmInUse;"), "the drone pose is sent only while a film session with another person is in use");
+            Check(Regex.IsMatch(ctl, @"bool send = DroneMaySend\(box\);") && Regex.IsMatch(ctl, @"bool DroneMaySend\(KH_TravelMailbox box\)[\s\S]{0,200}FilmInUse && box\._FilmGate\(box\._FilmTarget\(\)\)"),
+                "the drone pose is sent only while the permission gate holds (in use AND the subject's table)");
+            Check(Regex.IsMatch(cam, @"PersonDrop\(\);\s*DroneSendCheck\(\);[^\n]*\n\s*if \(now < _nextRender\) return;"), "the send is re-checked every frame before the render-tick wait and the fade return");
+            Check(Regex.IsMatch(ctl, @"off \+= Vector3\.up \* up;[\s\S]{0,200}if \(len < ctlMinDist\)"), "the minimum distance applies to the final position (after the height)");
             Check(Regex.IsMatch(ctl, @"void DroneTick\(float now\)\s*\{\s*if \(!_droneShow\) return;"), "nothing is placed or sent while the drone is hidden");
             Check(!ctl.Contains("GetPlayerById") && !Regex.IsMatch(ctl, @"\.(GetTrackingData|GetPosition|GetRotation)\("), "the controls read no player (only the mode's pose, which went through TryPersonPose)");
         }

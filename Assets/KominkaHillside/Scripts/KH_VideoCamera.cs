@@ -391,6 +391,7 @@ namespace KominkaHillside
             // W4 (Codex review 1): while another person's picture is up, check the permission EVERY frame, before the wait for the next render
             // tick and before the fade's return, and detach the picture at once when it is gone (one field test when no person is shown)
             if (_personLive && !PersonStillUsable()) PersonDrop();
+            DroneSendCheck();   // §15.5 (Codex review 1): the drone's pose stops going out the frame the gate fails, also between ticks / in the fade
             if (now < _nextRender) return;
             _nextRender += _interval;
             if (_nextRender < now) _nextRender = now + _interval;
