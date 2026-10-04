@@ -133,8 +133,12 @@ namespace KominkaHillside
     // Channels: the sender's history, open segments and send queue are per channel (sponge, shower, towel, bottle, left hand,
     // right hand); everything that is drawn, logged, recorded or sent carries the kind (ChannelTool). Receivers do not know
     // left from right, so hand draws are never merged while waiting.
+    //
+    // ---- Photos (IMP-WLD-011): the wash milestones for the local washer's own album (KH_DogWash.Photo.cs; local, nothing synced). Hooks
+    // only at the existing change points: Stroke (own counted strokes), EvaluateState (every client), OnDeserialization (non-Owner) and
+    // _RequestShake (Owner). The idle Update path is not touched.
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
-    public class KH_DogWash : UdonSharpBehaviour
+    public partial class KH_DogWash : UdonSharpBehaviour
     {
         public const int ToolSponge = 0;
         public const int ToolShower = 1;
@@ -1195,6 +1199,7 @@ namespace KominkaHillside
                 _localStrokeAt = Time.time;
                 _lastStrokePart = part;
                 _lastStrokeTime = Time.time;
+                PhotoStroke(tool, seconds);   // IMP-WLD-011: this client washes this dog (the wash session, the rinse milestone)
             }
             _lastActivity = Time.time;
             _lastWetActivity = _lastActivity;          // IMP-DOG-034 B1c
@@ -1673,6 +1678,7 @@ namespace KominkaHillside
             _syncDue = true;
             _nextSync = Mathf.Min(_nextSync, Time.time);
             Wake();   // IMP-DOG-034 B1e
+            _PhotoEdges();   // IMP-WLD-011: the Owner's shake edge (the others see it in OnDeserialization)
         }
 
         public int _ShakeSerial() { return shakeSerial; }
@@ -1993,6 +1999,7 @@ namespace KominkaHillside
             _gotFirst = true;
             _appliedEpoch = epoch;
             if (_ready && repaint) EvaluateState();
+            else if (_ready) _PhotoEdges();   // IMP-WLD-011: the clean / shake edges as they arrive (EvaluateState already calls it)
             // Before Start: Start sees _gotFirst, keeps these values and repaints from them (the log is still empty).
         }
 
@@ -2632,7 +2639,14 @@ namespace KominkaHillside
         // cells, the shell switch, and (Owner) the clean edge with hysteresis. One pass over _validCells does the averages,
         // the quiet set, the fresh count and, while armed, MarkArm + ArmAverage (IMP-DOG-034 B1a; same results: every
         // loop already skipped the cells outside _validCells, and arm bits are only ever set on those cells).
+        // IMP-WLD-011: every evaluation ends with the photo milestones (the averages and, on the Owner, the clean edge just updated).
         void EvaluateState()
+        {
+            EvaluateStateCells();
+            _PhotoEdges();
+        }
+
+        void EvaluateStateCells()
         {
             if (_dirt == null || _validCells == null) return;
             float now = Time.time;

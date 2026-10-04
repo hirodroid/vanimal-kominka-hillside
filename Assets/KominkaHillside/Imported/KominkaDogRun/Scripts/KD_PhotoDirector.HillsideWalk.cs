@@ -139,6 +139,7 @@ namespace KominkaDogRun
             Vector3 rf = root.forward; rf.y = 0f;
             _walkLastHead = head;
             _walkLastRootFwd = rf.sqrMagnitude > 0.0001f ? rf.normalized : flat;
+            _logKind = "walk-dogeye"; _logDog = dog;   // IMP-WLD-011: 撮影の記録
             return ShootWalk(pos, pos + dir * 10f, walkDogEyeFov);
         }
 
@@ -192,6 +193,7 @@ namespace KominkaDogRun
                 Vector3 hc = cam - head;
                 if (Physics.Raycast(head, hc.normalized, hc.magnitude, cameraBlockMask, QueryTriggerInteraction.Ignore)) continue;   // the arm would be inside a wall / slope
                 _walkLastHead = head;
+                _logKind = "walk-selfie"; _logDog = -1;   // IMP-WLD-011: 撮影の記録
                 return ShootWalk(cam, look, walkSelfieFov);
             }
             _walkLastReason += "selfie: no own dog in view from 5 angles; ";

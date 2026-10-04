@@ -26,7 +26,7 @@ namespace KominkaHillside.Editor
     ///
     /// 実行順 (統括が直列に。サブエージェントは実行しない):
     ///   Photo/0 - Create Program Asset   KH_PhotoAlbum.asset を作る → U# をコンパイル (unity-compile.sh --udon)
-    ///   Photo/1 - Build Photo and Gallery  中核 (撮影カメラ・枠 24 枚 (IMP-WLD-007 W1。散歩 12 / 撫で 6 / 遊び 6)・犬の受け口・メニューの写真の面とページ送り)。**見える物は置かない・撮らない**
+    ///   Photo/1 - Build Photo and Gallery  中核 (撮影カメラ・枠 24 枚 (IMP-WLD-007 W1 / IMP-WLD-011。散歩 10 / 撫で 4 / 遊び 4 / 洗う 6)・犬の受け口・メニューの写真の面とページ送り)。**見える物は置かない・撮らない**
     ///   Photo/4 - Place Board, Menu Button and Settings Row (optional)  門の看板 A の隣のボード、ヘッダの [写真]、設定の [写真: ON/OFF]。ここで撮り始める
     ///   Photo/2 - Verify                   読むだけ (Photo/1 の後、Photo/4 の後の両方で通る)
     ///   Photo/3 - Harness                  ClientSim の小さいケース群 (Photo/4 の後)
@@ -71,10 +71,15 @@ namespace KominkaHillside.Editor
         public const int SlotCount = KH_PhotoAlbum.Slots;   // 24 (IMP-WLD-007 W1。前は 8)
         /// <summary>ボードの Quad・材質とメニューの縮小表示の数 (1 ページ)。</summary>
         public const int PageSize = KH_PhotoAlbum.PageSize;   // 8
-        /// <summary>出来事ごとの枠の数 (KD_PhotoDirector.HillsideGroupWalk / Pet / Play の順)。合計 = SlotCount。docs/plans/2026-10-03-photo-expansion.md §4.2 (試作値)</summary>
-        public static readonly int[] GroupSizes = { 12, 6, 6 };
-        public static readonly string[] GroupNames = { "walk", "pet", "play" };
-        /// <summary>スロット番号ごとのカテゴリ (KD_GalleryController.slotGroups)。0..11 散歩、12..17 撫で、18..23 遊び。</summary>
+        /// <summary>出来事ごとの枠の数 (KD_PhotoDirector.HillsideGroupWalk / Pet / Play / Wash の順)。合計 = SlotCount。docs/plans/2026-10-03-photo-expansion.md §4.2。
+        /// IMP-WLD-011 (2026-10-04 ユーザー決定): 12 / 6 / 6 → 散歩 10 / 撫で 4 / 遊び 4 / 洗う 6 (合計 24 のまま。メモリの計算値は変わらない)</summary>
+        public static readonly int[] GroupSizes = { 10, 4, 4, 6 };
+        public static readonly string[] GroupNames = { "walk", "pet", "play", "wash" };
+        /// <summary>IMP-WLD-011: 撫でのバーストの枚数 (撫での枠が 4 枚なので 4 → 2。AI の既定、ユーザー未確認)。KD_PhotoDirector.petBurstLength へ書く</summary>
+        public const int PetBurstLength = 2;
+        /// <summary>IMP-WLD-011: 洗い上がりの 1 枚を合図から何秒後に撮るか (ブルブル 1.2 s の途中)。KD_PhotoDirector.washShotDoneDelay へ書く</summary>
+        public const float WashDoneDelay = 0.5f;
+        /// <summary>スロット番号ごとのカテゴリ (KD_GalleryController.slotGroups)。0..9 散歩、10..13 撫で、14..17 遊び、18..23 洗う。</summary>
         public static int[] SlotGroups()
         {
             var map = new int[SlotCount]; int i = 0;
@@ -132,14 +137,18 @@ namespace KominkaHillside.Editor
         public static readonly Vector2 ThumbSize = new Vector2(240f, 135f);
         const float ThumbPitchX = 252f, ThumbRow0Y = 66f, ThumbRow1Y = -81f, ThumbBorder = 4f;
         public static Vector2 ThumbPos(int k) { int col = k % 4, row = k / 4; return new Vector2((col - 1.5f) * ThumbPitchX, row == 0 ? ThumbRow0Y : ThumbRow1Y); }
-        public static readonly Vector2 NewMarkSize = new Vector2(100f, 30f);
+        /// <summary>縮小表示の写真どうしの隙間 (px)。横 = ピッチ − 幅、縦 = 段の差 − 高さ。吸着の余白はこの半分より小さくする (Photo/2)。</summary>
+        public static float ThumbGapX => ThumbPitchX - ThumbSize.x;
+        public static float ThumbGapY => ThumbRow0Y - ThumbRow1Y - ThumbSize.y;
+        /// <summary>IMP-WLD-010 (2026-10-04): 「新しい」の印は廃止。Photo/1 が残っている子をこの名前で消し、Photo/2 が無いことを見る。</summary>
+        public const string RetiredNewMarkName = "NewMark";
         public static readonly Vector2 PageSettingsPos = new Vector2(0f, -205f), PageSettingsSize = new Vector2(280f, 50f);
         // IMP-WLD-007 W3: 760 x 427.5 at (0,-30) overlapped [とじる] (450,170 220x44) by 40 x 35 px at its top-right corner; the snap quad draws in front of
         // the UI and would hide that corner. 720 x 405 at (0,-58): top 144.5 < the button's bottom 148. The backdrop grows to 490 to keep the photo inside it
         public static readonly Vector2 LargePhotoPos = new Vector2(0f, -58f), LargePhotoSize = new Vector2(720f, 405f), LargeBackdropSize = new Vector2(1110f, 490f);
 
         // ---------------------------------------------------------------- the menu snap (IMP-WLD-007 W3, design §7)
-        // One Quad with the unchanged KD_PhotoPrint shader over the enlarged photo (the thumbnails do not snap). Trial values.
+        // One Quad with the unchanged KD_PhotoPrint shader over the enlarged photo (the thumbnails got their own quads in IMP-WLD-009, below). Trial values.
         public const float MenuAttachDistance = 0.6f, MenuAttachMargin = 0.02f;
         /// <summary>The snap quad's distance in front of the enlarged RawImage (m). The quad writes depth, so the UI behind it does not draw over it.</summary>
         public const float MenuSnapFront = 0.002f;
@@ -153,6 +162,15 @@ namespace KominkaHillside.Editor
         public const int MenuSnapLayer = 4;
         public const string MenuSnapName = "SnapPhoto";
         const string MenuSnapMatPath = MatDir + "/M_KH_PhotoPrintMenu.mat";
+
+        // ---------------------------------------------------------------- the thumbnails' snap (IMP-WLD-009, 2026-10-04)
+        // One Quad per thumbnail (8), same build as SnapPhoto (KD_PhotoPrint, no collider, no shadow, MenuSnapLayer), 2 mm in front of each RawImage.
+        // Trial values. All 8 lie in one plane, so the shader's aim test (the sight line's hit point inside photo + margin) lets one photo snap at a time
+        // as long as 2 x margin < the gap between photos: the gap is 12 px = 12 mm at the menu's 0.001 m/px, so the requested trial margin 0.01 m
+        // (20 mm > 12 mm) would let two neighbours snap at once; 0.005 m keeps 2 mm clear. Photo/2 checks it with the scene's real scale.
+        public const float MenuThumbAttachDistance = 0.3f, MenuThumbAttachMargin = 0.005f;
+        /// <summary>The thumbnails' own materials (not the board's M_KH_PhotoPrint0..7: the board and the menu page independently).</summary>
+        public static string MenuThumbMatPath(int k) { return MatDir + "/M_KH_PhotoPrintMenuThumb" + k + ".mat"; }
         /// <summary>IMP-WLD-007 W1: 面のページ送り ◀ 1/3 ▶ (縮小表示の下、右寄せ。[設定へ] (中央 280 幅) と重ならない)。</summary>
         public static readonly Vector2 PagerPos = new Vector2(360f, -205f), PagerButtonSize = new Vector2(100f, 50f), PagerLabelSize = new Vector2(120f, 50f);
         public const float PagerButtonOffset = 120f;
@@ -224,10 +242,11 @@ namespace KominkaHillside.Editor
             return c;
         }
 
-        /// <summary>このメニューが要る文言 (13 言語とも本文がある)。新しいキーは photo.empty / photo.new / photo.menu の 3 つ。</summary>
+        /// <summary>このメニューが要る文言 (13 言語とも本文がある)。新しいキーは photo.empty / photo.menu。
+        /// photo.new は IMP-WLD-010 (2026-10-04) で印ごと使わなくなった (文言表にはキーが残っている。表示には出ない)。</summary>
         public static readonly string[] NeededKeys =
         {
-            "photo.menu", "photo.empty", "photo.new", "photo.settings.off", "photo.settings.loading", "photo.settings.failed",
+            "photo.menu", "photo.empty", "photo.settings.off", "photo.settings.loading", "photo.settings.failed",
             "photo.help.mark", "photo.help.title", "photo.help.body", "photo.help.close", "gallery.caption",
             "KD_PhotoBoard.InteractWord", "KD_PhotoViewer.InteractWord", "KD_TreatPouch.WordSettings", "gift.back",
         };
@@ -518,7 +537,7 @@ namespace KominkaHillside.Editor
 
             s.gallery.slotTextures = (RenderTexture[])a.slots.Clone();
             s.gallery.boards = null;                // the album owns the board (newest first), the gallery only hands out slots
-            // IMP-WLD-007 W1: 3 event categories (walk 12 / pet 6 / play 6); the oldest photo of the same category is replaced
+            // IMP-WLD-007 W1 / IMP-WLD-011: 4 event categories (walk 10 / pet 4 / play 4 / wash 6); the oldest photo of the same category is replaced
             s.gallery.slotGroupCount = GroupSizes.Length;
             s.gallery.slotGroups = SlotGroups();
 
@@ -531,6 +550,13 @@ namespace KominkaHillside.Editor
             d.tickInterval = 0.1f;
             d.frisbeeShotEnabled = true; d.frisbeeShotDelay = 0.1f; d.frisbeeShotCooldown = 20f;
             d.hillsideEventGroups = true;           // IMP-WLD-007: the category is the event (pet burst = pet, everything else = play; walk = W2)
+            // IMP-WLD-011: the wash photos (the wash category, KH_DogWash's milestones through wander.photoDirector) and the shorter pet burst
+            d.petBurstLength = PetBurstLength;
+            d.washShotEnabled = true; d.washShotDoneDelay = WashDoneDelay;
+            d.washFade = c.pouch.manager != null ? c.pouch.manager.travelFade : null;
+            d.washSleepPlacement = c.pouch.sleepPlacement;
+            if (d.washFade == null) log.Add("WARN KH_LeashManager.travelFade missing: wash photos do not pause during the travel fade");
+            if (d.washSleepPlacement == null) log.Add("WARN KD_TreatPouch.sleepPlacement missing: wash photos do not pause while placing a sleeping spot");
 
             var st = s.settings;
             st.capture = s.capture; st.slots = (RenderTexture[])a.slots.Clone(); st.boards = null; st.galleries = new[] { s.gallery }; st.viewer = s.viewer; st.language = c.language;
@@ -549,7 +575,7 @@ namespace KominkaHillside.Editor
             al.viewerUdon = vUdon;
             al.onColor = c.pouch.equipOnColor; al.offColor = c.pouch.tabOffColor;
             log.Add("system: " + SlotCount + " slots (template " + TemplateWidth + "x" + TemplateHeight + "; runtime PC " + PcWidth + "x" + PcHeight + " / Android・iOS " + MobileWidth + "x" + MobileHeight + "), categories "
-                + string.Join(" / ", GroupNames.Select((n, g) => n + " " + GroupSizes[g])) + ", 2K off, director tick 0.1 s, frisbee 0.1 s / 20 s, event groups on");
+                + string.Join(" / ", GroupNames.Select((n, g) => n + " " + GroupSizes[g])) + ", 2K off, director tick 0.1 s, frisbee 0.1 s / 20 s, event groups on, pet burst " + PetBurstLength + ", wash done +" + WashDoneDelay + " s");
             log.Add("memory (computed): PC " + BudgetMiB(PcWidth, PcHeight).ToString("F1") + " MiB / Quest・iOS " + BudgetMiB(MobileWidth, MobileHeight).ToString("F1") + " MiB");
             return s;
         }
@@ -591,7 +617,20 @@ namespace KominkaHillside.Editor
                 c.wander[i].photoDirector = director; EditorUtility.SetDirty(c.wander[i]);
             }
             if (c.activities != null) { c.activities.photos = director; EditorUtility.SetDirty(c.activities); }
-            log.Add("hooks: fetch.photoDirector x6, wander.photoDirector x6 (the frisbee hook reads it), KD_GroupActivities.photos" + (c.activities != null ? "" : " (missing)"));
+            log.Add("hooks: fetch.photoDirector x6, wander.photoDirector x6 (the frisbee and wash hooks read it), KD_GroupActivities.photos" + (c.activities != null ? "" : " (missing)"));
+            // IMP-WLD-011: the wash photos go KH_DogWash.voiceDog (Wash/11 wires it to the dog's own wander) -> wander.photoDirector. Not written here
+            var washes = WashesByDog(c);
+            int ok = Enumerable.Range(0, Keys.Length).Count(i => washes[i] != null && washes[i].voiceDog == c.wander[i]);
+            log.Add("wash photo path: " + ok + " / " + Keys.Length + " KH_DogWash.voiceDog = the dog's own KD_DogWanderController" + (ok < Keys.Length ? " (WARN: the others take no wash photos; run Wash/11)" : ""));
+        }
+
+        /// <summary>IMP-WLD-011: the scene's KH_DogWash by dogIndex (null where none or more than one).</summary>
+        static KH_DogWash[] WashesByDog(Ctx c)
+        {
+            var r = new KH_DogWash[Keys.Length];
+            var all = UnityEngine.Object.FindObjectsOfType<KH_DogWash>(true).Where(w => w.gameObject.scene == c.scene).ToArray();
+            for (int i = 0; i < Keys.Length; i++) { var m = all.Where(w => w.dogIndex == i).ToArray(); r[i] = m.Length == 1 ? m[0] : null; }
+            return r;
         }
 
         static void UnwireHooks(Ctx c, List<string> log)
@@ -644,20 +683,17 @@ namespace KominkaHillside.Editor
             var state = Label(page.transform, "State", PageStatePos, PageStateSize, T("photo.empty"), c.font, 22f, 14f, TextAlignmentOptions.MidlineLeft, false);
             var help = Btn(page.transform, "Help", PageHelpPos, PageHelpSize, T("photo.help.mark"), c, albumUdon, "_MenuHelpOpen", log);
             var back = Btn(page.transform, "Back", PageBackPos, PageBackSize, T("gift.back"), c, c.pouchUdon, "_PhotoBack", log);
-            var thumbs = new RawImage[PageSize]; var thumbButtons = new GameObject[PageSize];
+            var thumbs = new RawImage[PageSize]; var thumbButtons = new GameObject[PageSize]; var thumbSnaps = new MeshRenderer[PageSize];
             for (int k = 0; k < PageSize; k++)
             {
                 var b = PlainButton(page.transform, "Thumb" + k, ThumbPos(k), ThumbSize + Vector2.one * (ThumbBorder * 2f), ThumbFrameColor, albumUdon, "_MenuPick" + k, log);
                 var raw = RawChild(b.transform, "Photo", Vector2.zero, ThumbSize);
+                thumbSnaps[k] = BuildThumbSnap(b.transform, k, log);   // IMP-WLD-009: snap from the list (hidden until the album binds a photo)
                 thumbs[k] = raw; thumbButtons[k] = b; b.SetActive(false);
             }
-            // 「新しい」は左上 (位置 0) の縮小表示の左上の角。縮小表示より後の兄弟 = 上に描く
-            var t0 = ThumbPos(0);
-            var mark = KD_ShopSetupEditor.EnsureUiChild(page.transform, "NewMark", new Vector2(t0.x - ThumbSize.x * 0.5f + NewMarkSize.x * 0.5f - 6f, t0.y + ThumbSize.y * 0.5f - NewMarkSize.y * 0.5f + 8f), NewMarkSize);
-            var markImg = Comp<Image>(mark); markImg.color = KD_UiSpriteEditor.AccentGold; markImg.raycastTarget = false; KD_UiSpriteEditor.ApplyRoundSkin(markImg, KD_UiSpriteEditor.LoadRound());
-            var markLabel = Label(mark.transform, "Label", Vector2.zero, NewMarkSize - new Vector2(8f, 2f), T("photo.new"), c.font, 18f, 12f, TextAlignmentOptions.Center, false);
-            markLabel.color = new Color(0.17f, 0.13f, 0.10f);
-            mark.transform.SetAsLastSibling(); mark.SetActive(false);
+            // IMP-WLD-010 (2026-10-04): the 'new' mark is retired. EnsureUiChild never removes children, so delete the one an earlier Photo/1 made
+            var oldMark = page.transform.Find(RetiredNewMarkName);
+            if (oldMark != null) { UnityEngine.Object.DestroyImmediate(oldMark.gameObject); log.Add("removed " + PageName + "/" + RetiredNewMarkName + " (IMP-WLD-010)"); }
             var toSettings = Btn(page.transform, "SettingsButton", PageSettingsPos, PageSettingsSize, T("KD_TreatPouch.WordSettings"), c, c.pouchUdon, "_PhotoToSettings", log);
             toSettings.SetActive(false);
 
@@ -674,7 +710,7 @@ namespace KominkaHillside.Editor
             var backdrop = KD_ShopSetupEditor.EnsureUiChild(large.transform, "Backdrop", new Vector2(0f, -20f), LargeBackdropSize);
             var bdImg = Comp<Image>(backdrop); bdImg.color = new Color(0.08f, 0.07f, 0.06f, 0.96f); bdImg.raycastTarget = true; KD_UiSpriteEditor.ApplyFlatSkin(bdImg);
             var largeRaw = RawChild(large.transform, "Photo", LargePhotoPos, LargePhotoSize);
-            var snap = BuildMenuSnap(large.transform, log);   // IMP-WLD-007 W3: the VRChat camera snap on the enlarged photo only
+            var snap = BuildMenuSnap(large.transform, log);   // IMP-WLD-007 W3: the VRChat camera snap on the enlarged photo (kept with IMP-WLD-009's thumbnail snaps)
             var largeClose = Btn(large.transform, "Close", PageBackPos, PageBackSize, T("photo.help.close"), c, albumUdon, "_MenuLargeClose", log);
             large.transform.SetAsLastSibling(); large.SetActive(false);
 
@@ -698,14 +734,16 @@ namespace KominkaHillside.Editor
 
             var al = s.album;
             al.menuPage = page; al.menuThumbs = thumbs; al.menuThumbButtons = thumbButtons;
-            al.menuNewMark = mark; al.menuNewLabel = markLabel; al.menuState = state;
+            al.menuThumbSnaps = thumbSnaps.Cast<Renderer>().ToArray();
+            al.menuState = state;
             al.menuSettingsButton = toSettings; al.menuSettingsLabel = LabelOf(toSettings);
             al.menuBackLabel = LabelOf(back); al.menuHelpMarkLabel = LabelOf(help);
             al.menuHelpRoot = helpRoot; al.menuHelpTitle = helpTitle; al.menuHelpBody = helpBody; al.menuHelpCloseLabel = LabelOf(helpClose);
             al.menuLargeRoot = large; al.menuLarge = largeRaw; al.menuLargeCloseLabel = LabelOf(largeClose);
             al.menuSnapPhoto = snap;
             al.menuPager = pager; al.menuPageLabel = pageLabel;
-            log.Add("menu page: Page_Settings/" + PageName + " (registered in extraSettingsPages, hidden): 4 x 2 thumbnails per page (" + SlotCount + " photos, pager at " + PagerPos + "), " + ThumbSize.x + "x" + ThumbSize.y + ", large " + LargePhotoSize.x + "x" + LargePhotoSize.y + ", [?] help, [back] -> _PhotoBack. Layer " + LayerMask.LayerToName(page.layer) + " (excluded from photos)");
+            log.Add("menu page: Page_Settings/" + PageName + " (registered in extraSettingsPages, hidden): 4 x 2 thumbnails per page (" + SlotCount + " photos, pager at " + PagerPos + "), " + ThumbSize.x + "x" + ThumbSize.y
+                + " each with a snap quad (attach " + MenuThumbAttachDistance + " m / margin " + MenuThumbAttachMargin + " m), large " + LargePhotoSize.x + "x" + LargePhotoSize.y + ", [?] help, [back] -> _PhotoBack. Layer " + LayerMask.LayerToName(page.layer) + " (excluded from photos)");
         }
 
         /// <summary>Unity の偽 null (エディタの GetComponent) に ?? を使わない。</summary>
@@ -748,22 +786,46 @@ namespace KominkaHillside.Editor
             if (m.HasProperty("_DebugProbe")) m.SetFloat("_DebugProbe", 0f);
             if (m.HasProperty("_HideFromEyes")) m.SetFloat("_HideFromEyes", 0f);
             EditorUtility.SetDirty(m);
-            var t = large.Find(MenuSnapName);
+            var mr = EnsureSnapQuad(large, LargePhotoPos, LargePhotoSize, m, log);
+            log.Add("menu snap: " + MenuSnapName + " " + LargePhotoSize + " px at " + LargePhotoPos + ", " + MenuSnapFront * 1000f + " mm in front, layer " + MenuSnapLayer + " (" + LayerMask.LayerToName(MenuSnapLayer)
+                + "), attach " + MenuAttachDistance + " m / margin " + MenuAttachMargin + " m");
+            return mr;
+        }
+
+        /// <summary>IMP-WLD-009: 縮小表示 k の手前 2 mm に Quad (KD_PhotoPrint、材質は M_KH_PhotoPrintMenuThumb{k}、吸着 0.3 m / 余白 0.005 m)。親は Thumb{k} のボタン
+        /// (ボタンが隠れると一緒に隠れる)。Collider なし (UI の当たり判定を塞がない)、影なし、レイヤーは MenuSnapLayer。最初は隠す (KH_PhotoAlbum が写真を張って出す)。</summary>
+        static MeshRenderer BuildThumbSnap(Transform thumb, int k, List<string> log)
+        {
+            var print = Shader.Find(PrintShaderName); if (print == null) throw new InvalidOperationException("shader " + PrintShaderName + " not found");
+            var m = EnsureMat(MenuThumbMatPath(k), print, log);
+            m.mainTexture = null;
+            m.SetFloat("_AttachDistance", MenuThumbAttachDistance); m.SetFloat("_AttachMargin", MenuThumbAttachMargin);
+            if (m.HasProperty("_DebugProbe")) m.SetFloat("_DebugProbe", 0f);
+            if (m.HasProperty("_HideFromEyes")) m.SetFloat("_HideFromEyes", 0f);
+            EditorUtility.SetDirty(m);
+            var mr = EnsureSnapQuad(thumb, Vector2.zero, ThumbSize, m, log);
+            mr.gameObject.SetActive(false);
+            return mr;
+        }
+
+        /// <summary>吸着の Quad 1 枚 (SnapPhoto) を parent の下に作るか直す。Quad の頂点 ±0.5 にキャンバスの px を掛けて写真と同じ大きさにし、
+        /// 写真の MenuSnapFront (2 mm) 手前に置く (親の RectTransform の座標は px、キャンバスの手前 = −Z)。</summary>
+        static MeshRenderer EnsureSnapQuad(Transform parent, Vector2 pos, Vector2 size, Material m, List<string> log)
+        {
+            var t = parent.Find(MenuSnapName);
             GameObject go;
-            if (t == null) { go = GameObject.CreatePrimitive(PrimitiveType.Quad); go.name = MenuSnapName; go.transform.SetParent(large, false); log.Add("created " + MenuSnapName); } else go = t.gameObject;
+            if (t == null) { go = GameObject.CreatePrimitive(PrimitiveType.Quad); go.name = MenuSnapName; go.transform.SetParent(parent, false); log.Add("created " + parent.name + "/" + MenuSnapName); } else go = t.gameObject;
             foreach (var col in go.GetComponents<Collider>()) UnityEngine.Object.DestroyImmediate(col);
             go.layer = MenuSnapLayer;
-            float pxToM = Mathf.Abs(large.lossyScale.x) > 1e-6f ? Mathf.Abs(large.lossyScale.x) : 0.001f;
-            go.transform.localPosition = new Vector3(LargePhotoPos.x, LargePhotoPos.y, -MenuSnapFront / pxToM);   // canvas front = -Z
+            float pxToM = Mathf.Abs(parent.lossyScale.x) > 1e-6f ? Mathf.Abs(parent.lossyScale.x) : 0.001f;
+            go.transform.localPosition = new Vector3(pos.x, pos.y, -MenuSnapFront / pxToM);
             go.transform.localRotation = Quaternion.identity;
-            go.transform.localScale = new Vector3(LargePhotoSize.x, LargePhotoSize.y, 1f);
+            go.transform.localScale = new Vector3(size.x, size.y, 1f);
             var mr = go.GetComponent<MeshRenderer>();
             mr.sharedMaterial = m;
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; mr.receiveShadows = false;
             mr.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off; mr.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
             EditorUtility.SetDirty(go);
-            log.Add("menu snap: " + MenuSnapName + " " + LargePhotoSize + " px at " + LargePhotoPos + ", " + MenuSnapFront * 1000f + " mm in front, layer " + MenuSnapLayer + " (" + LayerMask.LayerToName(MenuSnapLayer)
-                + "), attach " + MenuAttachDistance + " m / margin " + MenuAttachMargin + " m");
             return mr;
         }
 

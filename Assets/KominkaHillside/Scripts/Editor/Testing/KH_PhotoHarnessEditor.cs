@@ -14,17 +14,22 @@ namespace KominkaHillside.Editor
 {
     /// <summary>
     /// IMP-WLD-005 Photo/3 - Harness: 自動写真の小さいケース群 (ClientSim、1 クライアント、約 1〜2 分。歩行・洗浄のハーネスは回さない)。
-    /// IMP-WLD-007 W1 で 24 枠・出来事 3 カテゴリ (散歩 0..11 / 撫で 12..17 / 遊び 18..23)・8 枚ずつのページになった。
+    /// IMP-WLD-007 W1 で 24 枠・8 枚ずつのページになった。IMP-WLD-011 で出来事 4 カテゴリ (散歩 0..9 / 撫で 10..13 / 遊び 14..17 / 洗う 18..23)。
+    /// 枠の番号は KH_PhotoGalleryEditor.GroupSizes から計算する (下の番号は今の配分での例)。
     ///   H0-ready          入室 → 設定の復元 → 実行時の RT 24 枚が端末の寸法 (Editor = PC 1280x720) で作られ、撮影の見回りが有効、カメラは無効
-    ///   H1-capture        きっかけ (フリスビーを取った: KD_PhotoDirector._OnFrisbeeCatch) → 遊びの最初の枠 (18) へ 1 枚。色が入っている (真っ黒・一色でない)。
+    ///   H1-capture        きっかけ (フリスビーを取った: KD_PhotoDirector._OnFrisbeeCatch) → 遊びの最初の枠 (14) へ 1 枚。色が入っている (真っ黒・一色でない)。
     ///                     ボードの左上と縮小表示がその RT を出す。撮り終えたらカメラは無効
-    ///   H2-wrap           さらに 6 回 → 遊びの 7 枚目で遊びのいちばん古い枠 (18) が置き換わり、新しい順に並ぶ (18, 23, 22, 21, 20, 19)。散歩・撫での枠は使わない
-    ///   H6-category       散歩の枠へ 13 回 (散歩のきっかけは W2 なので、実行時だけ _hillsideGroupOverride = 0 にして撮る) → 散歩の中だけで上書き (0 が 2 回目)、
-    ///                     それまでの写真は残る (H1 + H2 の後なら 18 枚 = 3 ページ、H2 を回さなければ H1 の 1 枚 + 12 = 13 枚 = 2 ページ。
-    ///                     H4 のページ数の期待は実際の枚数から計算する)
+    ///   H2-wrap           さらに 4 回 → 遊びの 5 枚目で遊びのいちばん古い枠 (14) が置き換わり、新しい順に並ぶ (14, 17, 16, 15)。散歩・撫で・洗うの枠は使わない
+    ///   H6-category       散歩の枠へ 11 回 (散歩のきっかけは W2 なので、実行時だけ _hillsideGroupOverride = 0 にして撮る) → 散歩の中だけで上書き (0 が 2 回目)、
+    ///                     それまでの写真は残る (H4 のページ数の期待は実際の枚数から計算する)
+    /// IMP-WLD-011 (洗いの写真。ラブ = 犬 2 の KH_DogWash へ _LocalContact を直接送る。泡・すすぎのしきい値は実行時だけ 0 にして節目の配線を見る):
+    ///   H9-wash           洗っていない端末 (自分のストロークなし) では清潔の合図が来ても撮らない → 自分のスポンジで泡の 1 枚、シャワー 2 s ですすぎの 1 枚、
+    ///                     清潔の合図で洗い上がりの 1 枚 = 洗うの枠に 3 枚 → 同じ節目をもう一度起こしても撮らない → スポンジで洗い直すと数え直す →
+    ///                     洗われている犬 (洗いの保持) は撫で続けても撫でのバーストが出ない、保持を解くと 2 枚のバーストが撫での枠へ →
+    ///                     撫で・遊び・散歩を各枠 1 周以上撮っても、洗うの枠の 3 枚 (RT の中身) は残る
     ///   H3-off            設定の [写真: ON/OFF] (KH_PhotoAlbum._ToggleCapture) で OFF → 見回りが止まり、きっかけが来ても撮らない、写真は残る、保存値 0。
     ///                     もう一度押して ON → 保存値 1、RT は作り直さない (同じ寸法)
-    ///   H4-menu           手元メニューの [写真] (KD_TreatPouch._PhotoOpen) → 写真の面がボードと同じ RT を出す、「新しい」の印、
+    ///   H4-menu           手元メニューの [写真] (KD_TreatPouch._PhotoOpen) → 写真の面がボードと同じ RT を出す、縮小表示の吸着の板 (IMP-WLD-009: 同じ RT、大きい表示・説明の間は隠れる)、
     ///                     ページ送り (9 枚以上のとき: ▶ で次の 8 枚・「2/3」・◀ で戻る)、押すと大きく、[?] の説明、[もどる] で元のタブへ。
     ///                     ボードの ▶ で次の 8 枚、戻す時間 (実行時だけ 1 s) で 1 ページ目へ
     ///   H5-no-camera-left 最後にカメラが無効で、撮りかけの枠が残っていない
@@ -45,7 +50,8 @@ namespace KominkaHillside.Editor
         const string Key = "KH.PhotoHarness", Dir = "Logs/kh-photo-harness", Journal = Dir + "/journal.json";
         public const string CasesFile = "Temp/kh-photo/harness-cases.txt";
         /// <summary>回す順。H6 (散歩の枠) は H3 より前 (OFF の検査に写真が要る・H4 のページ送りに 9 枚以上が要る)。</summary>
-        public static readonly string[] AllCases = { "H0-ready", "H1-capture", "H2-wrap", "H6-category", "H6w-walk-trigger", "H7-fade-gate", "H8-selfie", "H3-off", "H4-menu", "H5-no-camera-left" };
+        /// IMP-WLD-011: H9 (洗い) は H2 の後 (H2 は H1 の 1 枚だけがある前提で並びを見る) で、H3 / H4 の前 (写真の枚数は実際の数から計算される)。
+        public static readonly string[] AllCases = { "H0-ready", "H1-capture", "H2-wrap", "H6-category", "H9-wash", "H6w-walk-trigger", "H7-fade-gate", "H8-selfie", "H3-off", "H4-menu", "H5-no-camera-left" };
 
         /// <summary>"H1,H6" → 回すケース (前方一致。H0・H5 は必ず、写真が要るケースには H1 を足す)。空なら全部。知らない名前は例外 (Play に入らない)。</summary>
         public static List<string> Selected(string request)
@@ -58,7 +64,7 @@ namespace KominkaHillside.Editor
                 if (hit.Length != 1) throw new InvalidOperationException("unknown photo harness case '" + raw + "' (known: " + string.Join(", ", AllCases) + ")");
                 want.Add(hit[0]);
             }
-            // the walk cases (H6w / H7 / H8) need no earlier photo
+            // the walk cases (H6w / H7 / H8) and the wash case (H9) need no earlier photo
             if (want.Any(c => c == "H2-wrap" || c == "H3-off" || c == "H4-menu" || c == "H6-category")) want.Add("H1-capture");
             return AllCases.Where(want.Contains).ToList();
         }
@@ -193,6 +199,7 @@ namespace KominkaHillside.Editor
                 var fades = all.Where(u => u.programSource != null && u.programSource.name == "KH_TravelFade").ToArray();
                 uFade = fades.Length == 1 ? fades[0] : null;   // H7 reports a missing fade itself
             }
+            if (report.casesRun.Contains("H9-wash")) ResolveWash(all);
             var sys = SceneManager.GetActiveScene().GetRootGameObjects().First(g => g.name == KH_PhotoGalleryEditor.SystemName);
             cam = sys.transform.Find("PhotoCamera").GetComponent<Camera>();
             var board = SceneManager.GetActiveScene().GetRootGameObjects().First(g => g.name == KH_PhotoGalleryEditor.BoardRootName);
@@ -278,6 +285,25 @@ namespace KominkaHillside.Editor
                 if (show && thumbs[k].texture != slots[order[p]]) ok = false;
             }
             Expect(ok, "menu page " + (page + 1) + " shows positions " + (page * PageSize) + ".." + Math.Min(count, (page + 1) * PageSize) + " of " + count + ", newest first, the rest hidden");
+            CheckThumbSnaps(page, true, "menu page " + (page + 1));
+        }
+
+        /// <summary>IMP-WLD-009: 縮小表示の吸着の板。shown = 一覧が見えている (大きい表示・説明が閉じている) とき、写真のある位置だけ出て、縮小表示と同じ RT を持つ。
+        /// shown = false のときは 8 枚とも隠れている。吸着そのもの (VRChat カメラ) は ClientSim では見ない。</summary>
+        static void CheckThumbSnaps(int page, bool shown, string when)
+        {
+            var order = Order(); var slots = Slots();
+            int count = Get<int>(uAlbum, "_count");
+            var snaps = Get<Renderer[]>(uAlbum, "menuThumbSnaps");
+            bool ok = snaps != null && snaps.Length == PageSize;
+            for (int k = 0; ok && k < PageSize; k++)
+            {
+                int p = page * PageSize + k;
+                bool want = shown && p < count;
+                if (snaps[k] == null || snaps[k].gameObject.activeSelf != want) ok = false;
+                else if (want && snaps[k].sharedMaterial.mainTexture != slots[order[p]]) ok = false;
+            }
+            Expect(ok, when + ": thumbnail snaps " + (shown ? "shown under the photos (same RT as the thumbnail), hidden where there is none" : "all hidden (large view / help open)"));
         }
 
         const int PageSize = KH_PhotoAlbum.PageSize;
@@ -323,7 +349,8 @@ namespace KominkaHillside.Editor
                     if (slots[i] == null || slots[i] == asset || slots[i].width != wantW || slots[i].height != wantH || slots[i].depth != 0) runtime = false;
                 }
                 Expect(slots.Length == KH_PhotoAlbum.Slots && runtime, KH_PhotoAlbum.Slots + " runtime slots " + wantW + "x" + wantH + " depth 0 (build target " + report.buildTarget + "), not the templates");
-                Expect(Get<int[]>(uGallery, "slotGroups").SequenceEqual(KH_PhotoGalleryEditor.SlotGroups()) && Get<bool>(uDirector, "hillsideEventGroups"), "3 event categories (walk / pet / play) and the director picks them");
+                Expect(Get<int[]>(uGallery, "slotGroups").SequenceEqual(KH_PhotoGalleryEditor.SlotGroups()) && Get<bool>(uDirector, "hillsideEventGroups"),
+                    KominkaDogRun.KD_PhotoDirector.HillsideGroupCount + " event categories (" + string.Join(" / ", KH_PhotoGalleryEditor.GroupNames.Select((n, g) => n + " " + KH_PhotoGalleryEditor.GroupSizes[g])) + ") and the director picks them");
                 object bp; uAlbum.TryGetProgramVariable("boardPager", out bp); var pagerGo = bp as GameObject;
                 Expect(pagerGo != null && !pagerGo.activeSelf, "board pager present (Photo/4 after IMP-WLD-007) and hidden (no photo yet)");
                 var capRt = Get<RenderTexture>(uCapture, "captureTexture");
@@ -376,10 +403,10 @@ namespace KominkaHillside.Editor
                 steps.Add(Do("H2-wrap", () =>
                 {
                     var order = Order();
-                    var want = new List<int> { playFirst }; for (int s = playFirst + playSize - 1; s > playFirst; s--) want.Add(s);   // 18, 23, 22, 21, 20, 19
+                    var want = new List<int> { playFirst }; for (int s = playFirst + playSize - 1; s > playFirst; s--) want.Add(s);   // 14, 17, 16, 15 (IMP-WLD-011 layout)
                     int count = Get<int>(uAlbum, "_count");
                     Expect(count == playSize && order.Take(count).SequenceEqual(want), "after " + (playSize + 1) + " play captures the oldest play slot (" + playFirst + ") was replaced, newest first: [" + string.Join(",", order.Take(count)) + "] want [" + string.Join(",", want) + "]");
-                    Expect(order.Take(count).All(s => s >= playFirst && s < playFirst + playSize), "no walk / pet slot was used by play events");
+                    Expect(order.Take(count).All(s => s >= playFirst && s < playFirst + playSize), "no walk / pet / wash slot was used by play events");
                     Expect(Get<int[]>(uGallery, "_nextInGroup")[KominkaDogRun.KD_PhotoDirector.HillsideGroupPlay] == 1, "the play category wraps (next = its 2nd slot)");
                     CheckBoardOrder(playSize);
                     var slots = Slots(); bool same = runtimeSlots != null && slots.Length == runtimeSlots.Length; for (int i = 0; same && i < slots.Length; i++) if (slots[i] != runtimeSlots[i]) same = false;
@@ -408,7 +435,7 @@ namespace KominkaHillside.Editor
                 {
                     uDirector.SetProgramVariable("_hillsideGroupOverride", -1);
                     var order = Order(); int count = Get<int>(uAlbum, "_count");
-                    var want = new List<int> { walkFirst }; for (int s = walkFirst + walkSize - 1; s > walkFirst; s--) want.Add(s);   // 0, 11, 10, … 1
+                    var want = new List<int> { walkFirst }; for (int s = walkFirst + walkSize - 1; s > walkFirst; s--) want.Add(s);   // 0, 9, 8, … 1 (IMP-WLD-011 layout)
                     want.AddRange(before);                                                                                            // the play photos keep their order behind
                     Expect(count == walkSize + countBefore && order.Take(count).SequenceEqual(want), (walkSize + 1) + " walk captures: walk wraps inside itself (" + walkFirst + " twice), the earlier photos stay: ["
                         + string.Join(",", order.Take(count)) + "] want [" + string.Join(",", want) + "]");
@@ -418,6 +445,9 @@ namespace KominkaHillside.Editor
                     Expect(pagerObj is GameObject pg && pg.activeSelf == (count > PageSize), "board pager shown iff more than " + PageSize + " photos (" + count + ")");
                 }));
             }
+
+            // ---- H9: wash photos (IMP-WLD-011) ----
+            if (On("H9-wash")) AddWashSteps();
 
             // ---- H6w / H7 / H8: walk photos (IMP-WLD-007 W2) ----
             AddWalkSteps(walkFirst, walkSize);
@@ -681,6 +711,242 @@ namespace KominkaHillside.Editor
             steps.Add(Until(last, () => !Get<bool>(uWatcher, "_ticking"), 3, "the walk watcher kept running with no dog on the leash"));
         }
 
+        // ================================================================ wash photos (IMP-WLD-011)
+
+        const int WashDog = 2;   // Lab (the walk cases use dog 0)
+        static UdonBehaviour uWash, uWashPet;
+        static string washContactEntry, washEndEntry;
+        static readonly Dictionary<string, string[]> washParams = new Dictionary<string, string[]>();
+        static int washCi = -1;
+        static Collider washCol;
+        static int washShotsBefore, washAskedBefore, washNext0, petNext0;
+        static bool petSuppressedBefore, washTouched;
+        static float washFoamAvg0, washRinseFoam0, washHold0;
+        static int[] washSlots;
+        static string[] washPrints;
+
+        /// <summary>The Lab's KH_DogWash and pet controller, and the U#-renamed _LocalContact / _EndContact with their parameter symbols
+        /// (the same lookup as the wash harness, KH_CourseWalkHarnessEditor.Wash.cs WsResolve).</summary>
+        static void ResolveWash(UdonBehaviour[] all)
+        {
+            uWash = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_DogWash" && u.TryGetProgramVariable("dogIndex", out object di) && di is int x && x == WashDog);
+            if (uWash == null) throw new InvalidOperationException("H9: no KH_DogWash with dogIndex " + WashDog + " (Wash/11)");
+            string petName = "KD_PetSystem_" + KH_PhotoGalleryEditor.Keys[WashDog];
+            uWashPet = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KD_DogPetController" && u.gameObject.name == petName);
+            if (uWashPet == null) throw new InvalidOperationException("H9: no KD_DogPetController on " + petName);
+            var prog = uWash.programSource.SerializedProgramAsset.RetrieveProgram();
+            washContactEntry = WashMangled(prog.EntryPoints, "_LocalContact");
+            washEndEntry = WashMangled(prog.EntryPoints, "_EndContact");
+            washParams.Clear();
+            foreach (var p in new[] { "tool", "colliderIndex", "worldPoint", "seconds", "radiusMeters" })
+            {
+                var syms = new List<string>();
+                for (int n = 0; n <= 200; n++) if (prog.SymbolTable.TryGetAddressFromSymbol("__" + n + "_" + p + "__param", out _)) syms.Add("__" + n + "_" + p + "__param");
+                if (syms.Count == 0) throw new InvalidOperationException("H9: KH_DogWash has no parameter symbol for " + p);
+                washParams[p] = syms.ToArray();
+            }
+            object o;
+            var cols = uWash.TryGetProgramVariable("partColliders", out o) ? o as Array : null;
+            var parts = uWash.TryGetProgramVariable("partOfCollider", out o) ? o as int[] : null;
+            washCi = -1; washCol = null;
+            if (cols != null && parts != null)
+                for (int i = 0; i < cols.Length && i < parts.Length && washCi < 0; i++)
+                    if (cols.GetValue(i) is Collider c && c != null && parts[i] >= 0) { washCi = i; washCol = c; }
+            if (washCi < 0) throw new InvalidOperationException("H9: KH_DogWash (dog " + WashDog + ") has no usable part collider");
+        }
+
+        static string WashMangled(IUdonSymbolTable t, string method)
+        {
+            if (t.TryGetAddressFromSymbol(method, out _)) return method;
+            var m = new List<string>();
+            for (int n = 0; n <= 200; n++) if (t.TryGetAddressFromSymbol("__" + n + "_" + method, out _)) m.Add("__" + n + "_" + method);
+            if (m.Count != 1) throw new InvalidOperationException("H9: KH_DogWash entry " + method + ": " + m.Count + " matches (" + string.Join(",", m) + ")");
+            return m[0];
+        }
+
+        /// <summary>Every candidate symbol of the parameter gets the value (U# writes its own arguments on every call, so the others are harmless).</summary>
+        static void WashSet(string name, object v)
+        {
+            foreach (var sym in washParams[name])
+            {
+                if (v is int i) uWash.SetProgramVariable<int>(sym, i);
+                else if (v is float f) uWash.SetProgramVariable<float>(sym, f);
+                else if (v is Vector3 x) uWash.SetProgramVariable<Vector3>(sym, x);
+            }
+        }
+
+        /// <summary>times x _LocalContact(tool, 0.25 s) on one part collider's surface (the entry KH_WashTool calls every frame), then _EndContact.
+        /// Each call is one counted own stroke (KH_DogWash.Stroke -> PhotoStroke).</summary>
+        static void WashStroke(int tool, int times)
+        {
+            for (int k = 0; k < times; k++)
+            {
+                bool closest = !(washCol is MeshCollider mc) || mc.convex;
+                Vector3 p = closest ? washCol.ClosestPoint(washCol.bounds.center + Vector3.up) : washCol.bounds.center;
+                WashSet("tool", tool); WashSet("colliderIndex", washCi); WashSet("worldPoint", p); WashSet("seconds", 0.25f); WashSet("radiusMeters", -1f);
+                uWash.SendCustomEvent(washContactEntry);
+            }
+            WashSet("tool", tool);
+            uWash.SendCustomEvent(washEndEntry);
+        }
+
+        static int WashShots() { return Get<int>(uDirector, "_washShots"); }
+        static int NextIn(int group) { return Get<int[]>(uGallery, "_nextInGroup")[group]; }
+        static int Taken() { return Get<int>(uWash, "_photoTaken"); }
+        static string WashWhy()
+        {
+            object a, b; uDirector.TryGetProgramVariable("_washLastReason", out a); uWash.TryGetProgramVariable("_photoLastReason", out b);
+            return "director '" + a + "', wash '" + b + "', taken " + Taken();
+        }
+        static void WashEdge() { uWash.SetProgramVariable("cleanSerial", Get<int>(uWash, "cleanSerial") + 1); uWash.SendCustomEvent("_PhotoEdges"); }
+
+        /// <summary>A sampled hash of an RT (does the slot still hold the same picture).</summary>
+        static string Fingerprint(RenderTexture rt)
+        {
+            var prev = RenderTexture.active;
+            var tex = new Texture2D(rt.width, rt.height, TextureFormat.RGBA32, false);
+            try
+            {
+                RenderTexture.active = rt; tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0); tex.Apply();
+                var px = tex.GetPixels32(); long h = 17;
+                for (int i = 0; i < px.Length; i += 61) h = unchecked(h * 31 + px[i].r * 65536 + px[i].g * 256 + px[i].b);
+                return h.ToString("X");
+            }
+            finally { RenderTexture.active = prev; UnityEngine.Object.DestroyImmediate(tex); }
+        }
+
+        /// <summary>Puts back what H9 changed at runtime (under H0, so a failed H9 does not leave a petted, held dog for H3 / H4).</summary>
+        static void WashRestore()
+        {
+            if (!washTouched) return;
+            uWashPet.SetProgramVariable("_petting", false); uWashPet.SetProgramVariable("_suppressed", petSuppressedBefore);
+            uWash.SetProgramVariable("washShotFoamAvg", washFoamAvg0); uWash.SetProgramVariable("washShotRinseFoam", washRinseFoam0); uWash.SetProgramVariable("holdSeconds", washHold0);
+            uDirector.SetProgramVariable("_hillsideGroupOverride", -1);
+            washTouched = false;
+        }
+
+        static void AddWashSteps()
+        {
+            const string C = "H9-wash";
+            int washG = KominkaDogRun.KD_PhotoDirector.HillsideGroupWash, petG = KominkaDogRun.KD_PhotoDirector.HillsideGroupPet;
+            int washFirst = GroupFirst(washG), washSize = KH_PhotoGalleryEditor.GroupSizes[washG], petSize = KH_PhotoGalleryEditor.GroupSizes[petG];
+            int burst = KH_PhotoGalleryEditor.PetBurstLength;
+
+            // ---- 1) a client with no own stroke on the dog (= watching someone else wash): the clean edge takes nothing ----
+            steps.Add(Do(C, () =>
+            {
+                uDirector.SetProgramVariable("frisbeeShotCooldown", 0f);   // runtime only (the scene keeps 20 s)
+                Expect(Get<int>(uDirector, "petBurstLength") == burst, "pet burst length " + burst + " at runtime (Photo/1; actual " + Get<int>(uDirector, "petBurstLength") + ")");
+                washFoamAvg0 = Get<float>(uWash, "washShotFoamAvg"); washRinseFoam0 = Get<float>(uWash, "washShotRinseFoam"); washHold0 = Get<float>(uWash, "holdSeconds");
+                petSuppressedBefore = Get<bool>(uWashPet, "_suppressed");
+                washTouched = true;
+                uWash.SetProgramVariable("_photoActive", false);
+                washShotsBefore = WashShots(); washAskedBefore = Get<int>(uWash, "_photoAsked"); washNext0 = NextIn(washG);
+                WashEdge();
+                waitFrom = EditorApplication.timeSinceStartup;
+                Note("dog " + WashDog + " (" + KH_PhotoGalleryEditor.Keys[WashDog] + "), part collider " + washCi + " (" + washCol.name + "); wash category next " + washNext0 + "; thresholds foam " + washFoamAvg0 + " / rinse foam " + washRinseFoam0);
+            }));
+            steps.Add(Until(C, () => EditorApplication.timeSinceStartup - waitFrom > 1.0, 2, "wait"));
+            steps.Add(Do(C, () =>
+            {
+                Expect(WashShots() == washShotsBefore && Get<int>(uWash, "_photoAsked") == washAskedBefore && NextIn(washG) == washNext0,
+                    "no own stroke: a clean edge takes no wash photo (" + WashWhy() + ")");
+                // ---- 2) own sponge -> the foam photo. Thresholds 0 at runtime: this checks the milestone path, not the foam amount ----
+                uWash.SetProgramVariable("washShotFoamAvg", 0f); uWash.SetProgramVariable("washShotRinseFoam", 0f);
+                WashStroke(KH_DogWash.ToolSponge, 4);
+                Expect(Get<bool>(uWash, "_photoActive") && Taken() == 0, "own sponge strokes started this client's wash session (" + WashWhy() + ")");
+            }));
+            // the foam check runs at the next KH_DogWash.EvaluateState (0.5 s after a cell change, 4 s at the latest)
+            steps.Add(Until(C, () => WashShots() >= washShotsBefore + 1 && !cam.enabled, 6, "no foam photo within 6 s of the own sponge strokes (director _washShots did not move)"));
+            steps.Add(Do(C, () =>
+            {
+                Expect(Get<int>(uDirector, "_washLastKind") == KominkaDogRun.KD_PhotoDirector.WashShotFoam && Get<int>(uDirector, "_washLastDog") == WashDog && (Taken() & 1) != 0,
+                    "the foam photo of dog " + WashDog + " (" + WashWhy() + ")");
+                Expect(NextIn(washG) == (washNext0 + 1) % washSize, "the foam photo went into the wash category (next " + NextIn(washG) + ")");
+                // ---- 3) own shower, 10 x 0.25 s of contact -> the rinse photo at 2.0 s ----
+                WashStroke(KH_DogWash.ToolShower, 10);
+            }));
+            steps.Add(Until(C, () => WashShots() >= washShotsBefore + 2 && !cam.enabled, 3, "no rinse photo after 2.5 s of own shower contact"));
+            steps.Add(Do(C, () =>
+            {
+                Expect(Get<int>(uDirector, "_washLastKind") == KominkaDogRun.KD_PhotoDirector.WashShotRinse && (Taken() & 2) != 0, "the rinse photo (" + WashWhy() + ")");
+                // ---- 4) the clean edge -> the done photo (washShotDoneDelay later) ----
+                WashEdge();
+            }));
+            steps.Add(Until(C, () => WashShots() >= washShotsBefore + 3 && !cam.enabled, 3, "no done photo after the clean edge"));
+            steps.Add(Do(C, () =>
+            {
+                Expect(Get<int>(uDirector, "_washLastKind") == KominkaDogRun.KD_PhotoDirector.WashShotDone && Taken() == 7, "the done photo; all three milestones taken (" + WashWhy() + ")");
+                var order = Order(); var slots = Slots(); int count = Get<int>(uAlbum, "_count");
+                washSlots = Enumerable.Range(0, 3).Select(k => washFirst + (washNext0 + k) % washSize).ToArray();
+                Expect(NextIn(washG) == (washNext0 + 3) % washSize && washSlots.All(s => order.Take(count).Contains(s)), "3 wash photos in the wash slots " + string.Join(",", washSlots) + ", shown in the album");
+                foreach (var s in washSlots) { string px = PixelCheck(slots[s]); Expect(px.StartsWith("OK"), "wash slot " + s + " holds a picture (" + px + ")"); }
+                washPrints = washSlots.Select(s => Fingerprint(slots[s])).ToArray();
+                // ---- 5) the same milestones again in the same wash: nothing ----
+                washShotsBefore = WashShots(); washAskedBefore = Get<int>(uWash, "_photoAsked");
+                WashStroke(KH_DogWash.ToolShower, 10);
+                WashEdge();
+                waitFrom = EditorApplication.timeSinceStartup;
+            }));
+            steps.Add(Until(C, () => EditorApplication.timeSinceStartup - waitFrom > 1.5, 3, "wait"));
+            steps.Add(Do(C, () =>
+            {
+                Expect(WashShots() == washShotsBefore && Get<int>(uWash, "_photoAsked") == washAskedBefore && NextIn(washG) == (washNext0 + 3) % washSize,
+                    "the same wash: more shower and another clean edge take no second photo (" + WashWhy() + ")");
+                // ---- 6) a sponge after the done photo = a new wash. The scene's thresholds back first, so this one dab takes nothing ----
+                uWash.SetProgramVariable("washShotFoamAvg", washFoamAvg0); uWash.SetProgramVariable("washShotRinseFoam", washRinseFoam0);
+                WashStroke(KH_DogWash.ToolSponge, 1);
+                Expect(Get<bool>(uWash, "_photoActive") && Taken() == 0, "a sponge after the done photo starts a new wash: the milestones count again (" + WashWhy() + ")");
+                // ---- 7) a washed dog that is petted: no pet burst ----
+                uWashPet.SetProgramVariable("_suppressed", true); uWashPet.SetProgramVariable("_petting", true);   // IsPetting stays true (the sampling is off)
+                uWash.SetProgramVariable("holdSeconds", 30f); uWash.SetProgramVariable("washSeen", true);
+                uWash.SetProgramVariable("washBy", Networking.LocalPlayer.playerId); uWash.SetProgramVariable("washMs", Networking.GetServerTimeInMilliseconds());
+                uDirector.SetProgramVariable("_lastPetShot", -1000f);
+                petNext0 = NextIn(petG);
+                waitFrom = EditorApplication.timeSinceStartup;
+                Note("runtime only: dog " + WashDog + " held as washed (washMs = now, holdSeconds 30) and petted (pet controller _suppressed + _petting)");
+            }));
+            steps.Add(Until(C, () => EditorApplication.timeSinceStartup - waitFrom > 4.5, 6, "wait"));
+            steps.Add(Do(C, () =>
+            {
+                var acc = Get<float[]>(uDirector, "_petAccum");
+                Expect(Get<float>(uDirector, "_lastPetShot") < -999f && NextIn(petG) == petNext0 && acc[WashDog] == 0f,
+                    "4.5 s of petting a washed dog: no pet burst (accum " + acc[WashDog].ToString("F2") + ", pet next " + NextIn(petG) + " / " + petNext0 + ")");
+                uWash.SendCustomEvent("_ReleaseHold");
+                uWash.SetProgramVariable("holdSeconds", washHold0);
+            }));
+            steps.Add(Until(C, () => Get<float>(uDirector, "_lastPetShot") > -999f, 6, "no pet burst within 6 s after the wash hold ended (the dog is still petted)"));
+            steps.Add(Until(C, () => (NextIn(petG) - petNext0 + petSize) % petSize == burst % petSize && Get<int>(uDirector, "_burstStep") < 0 && !cam.enabled, 3,
+                "the pet burst after the wash did not end with " + burst + " photos in the pet category"));
+            steps.Add(Do(C, () =>
+            {
+                uWashPet.SetProgramVariable("_petting", false); uWashPet.SetProgramVariable("_suppressed", petSuppressedBefore);
+                Note("after the hold: one pet burst of " + burst + " photos into the pet category");
+            }));
+            // ---- 8) pet / play / walk each one full round and one more after the wash: the wash photos stay ----
+            foreach (int g in new[] { petG, KominkaDogRun.KD_PhotoDirector.HillsideGroupPlay, KominkaDogRun.KD_PhotoDirector.HillsideGroupWalk })
+            {
+                int size = KH_PhotoGalleryEditor.GroupSizes[g], group = g;
+                for (int i = 0; i <= size; i++)
+                {
+                    int dog = (i + 1) % 6;
+                    steps.Add(Do(C, () => { capturesBefore = Captures(); uDirector.SetProgramVariable("_hillsideGroupOverride", group); Trigger(dog); }));
+                    steps.Add(Until(C, () => Captures() >= capturesBefore + 1 && !cam.enabled, 3, KH_PhotoGalleryEditor.GroupNames[group] + " capture after the wash did not happen"));
+                }
+            }
+            steps.Add(Do(C, () =>
+            {
+                uDirector.SetProgramVariable("_hillsideGroupOverride", -1);
+                var slots = Slots(); var order = Order(); int count = Get<int>(uAlbum, "_count");
+                var prints = washSlots.Select(s => Fingerprint(slots[s])).ToArray();
+                Expect(NextIn(washG) == (washNext0 + 3) % washSize, "the wash category did not move while pet / play / walk took their photos");
+                Expect(prints.SequenceEqual(washPrints) && washSlots.All(s => order.Take(count).Contains(s)),
+                    "after a full round of pet / play / walk photos the 3 wash photos (slots " + string.Join(",", washSlots) + ") are unchanged and still in the album");
+            }));
+            // under H0 (always run) so that a failed H9 does not leave the dog petted / held for H3 / H4
+            steps.Add(Do("H0-ready", WashRestore));
+        }
+
         static void AddOffSteps()
         {
             steps.Add(Do("H3-off", () => uAlbum.SendCustomEvent("_ToggleCapture")));
@@ -737,7 +1003,7 @@ namespace KominkaHillside.Editor
                 for (int k = 0; k < Math.Min(cnt, PageSize); k++) if (order[k] < 0 || order[k] >= slots.Length || thumbs[k].texture != slots[order[k]] || thumbs[k].texture != boardPhotos[k].sharedMaterial.mainTexture || !buttons[k].activeInHierarchy) same = false;
                 Expect(same, "page 1 thumbnails show the same RenderTextures as the board, newest first");
                 Expect(Get<int>(uAlbum, "_menuPage") == 0, "the page opens on page 1");
-                Expect(Get<GameObject>(uAlbum, "menuNewMark").activeInHierarchy, "the 'new' mark is on the newest photo (taken while the page was closed)");
+                CheckThumbSnaps(0, true, "page 1 on open");
                 var pager = Get<GameObject>(uAlbum, "menuPager");
                 Expect(pager.activeInHierarchy == (cnt > PageSize), "menu pager shown iff more than " + PageSize + " photos (" + cnt + ")");
                 var title = Get<TMPro.TextMeshProUGUI>(uPouch, "sectionTitleLabel");
@@ -750,9 +1016,9 @@ namespace KominkaHillside.Editor
                     CheckMenuPage(1);
                     var label = Get<TMPro.TMP_Text>(uAlbum, "menuPageLabel");
                     Expect(label != null && label.text == "2/" + pages, "menu label '2/" + pages + "' ('" + (label != null ? label.text : "") + "')");
-                    Expect(!Get<GameObject>(uAlbum, "menuNewMark").activeInHierarchy, "the 'new' mark is only on page 1");
                     uAlbum.SendCustomEvent("_MenuPick1");
                     Expect(Get<GameObject>(uAlbum, "menuLargeRoot").activeInHierarchy && Get<UnityEngine.UI.RawImage>(uAlbum, "menuLarge").texture == slots[order[PageSize + 1]], "page 2 thumbnail 2 opens slot " + order[PageSize + 1]);
+                    CheckThumbSnaps(1, false, "page 2 with the large view open");
                     uAlbum.SendCustomEvent("_MenuPagePrev");
                     Expect(Get<int>(uAlbum, "_menuPage") == 0 && !Get<GameObject>(uAlbum, "menuLargeRoot").activeSelf, "◀ -> page 1 (the large view closes)");
                     uAlbum.SendCustomEvent("_MenuPagePrev");
@@ -762,7 +1028,7 @@ namespace KominkaHillside.Editor
                     Expect(Get<int>(uAlbum, "_menuPage") == 0, "▶ on the last page wraps to page 1");
                     CheckMenuPage(0);
                 }
-                else Note("menu pager not tested: " + cnt + " photos (one page; H6 adds 12 walk photos -> 2 pages or more)");
+                else Note("menu pager not tested: " + cnt + " photos (one page; H6 / H9 add photos -> 2 pages or more)");
                 uAlbum.SendCustomEvent("_MenuPick" + Math.Min(3, Math.Max(0, cnt - 1)));
             }));
             steps.Add(Do("H4-menu", () =>
@@ -771,12 +1037,16 @@ namespace KominkaHillside.Editor
                 int pick = Math.Min(3, Math.Max(0, Get<int>(uAlbum, "_count") - 1));
                 bool has = Get<int>(uAlbum, "_count") > 0 && order[pick] >= 0 && order[pick] < slots.Length;
                 Expect(has && Get<GameObject>(uAlbum, "menuLargeRoot").activeInHierarchy && Get<UnityEngine.UI.RawImage>(uAlbum, "menuLarge").texture == slots[order[pick]], "thumbnail " + (pick + 1) + " opens large with slot " + order[pick] + (has ? "" : " (no photo)"));
+                CheckThumbSnaps(0, false, "page 1 with the large view open");
                 uAlbum.SendCustomEvent("_MenuLargeClose");
                 Expect(!Get<GameObject>(uAlbum, "menuLargeRoot").activeSelf, "large view closes");
+                CheckThumbSnaps(0, true, "page 1 after the large view closed");
                 uAlbum.SendCustomEvent("_MenuHelpOpen");
                 var body = Get<TMPro.TMP_Text>(uAlbum, "menuHelpBody");
                 Expect(Get<GameObject>(uAlbum, "menuHelpRoot").activeInHierarchy && body != null && body.text.Length > 20, "[?] shows how photos work");
+                CheckThumbSnaps(0, false, "page 1 with the help open");
                 uAlbum.SendCustomEvent("_MenuHelpClose");
+                CheckThumbSnaps(0, true, "page 1 after the help closed");
                 uPouch.SendCustomEvent("_PhotoBack");
             }));
             steps.Add(Until("H4-menu", () => !Get<GameObject>(uAlbum, "menuPage").activeInHierarchy, 2, "[もどる] did not leave the photo page"));
@@ -790,7 +1060,7 @@ namespace KominkaHillside.Editor
             steps.Add(Do("H4-menu", () =>
             {
                 int cnt = Get<int>(uAlbum, "_count");
-                if (cnt <= PageSize) { Note("board pager not tested: " + cnt + " photos (one page; H6 adds 12 walk photos -> 2 pages or more)"); return; }
+                if (cnt <= PageSize) { Note("board pager not tested: " + cnt + " photos (one page; H6 / H9 add photos -> 2 pages or more)"); return; }
                 uAlbum.SetProgramVariable("boardPageResetSeconds", 1f);   // runtime only (the scene keeps 60 s)
                 Note("the board's return to page 1 is shortened from 60 s to 1 s at runtime only (the scene value stays 60 s; Photo/2 checks it)");
                 uAlbum.SendCustomEvent("_BoardPageNext");

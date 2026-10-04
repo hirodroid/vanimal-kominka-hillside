@@ -1629,7 +1629,8 @@ namespace KominkaDogRun.Editor
                     if (n == "KD_DogPovCamera") pov++;
                     if (n == "KD_PhotoDirector") photo++;
                 }
-                v.Check(pov == 0 && photo == 0, "あそぶは集合のみ: 犬目線カメラ (KD_DogPovCamera " + pov + ")・写真 (KD_PhotoDirector " + photo + ") がシーンに無い");
+                // 裏山改変 (2026-10-04): 自動写真は IMP-WLD-005 で採用済み (KD_PhotoDirector は 1 個。配線は Photo/2 が見る)。犬目線カメラは対象外のまま
+                v.Check(pov == 0 && photo <= 1, "あそぶは集合のみ: 犬目線カメラ (KD_DogPovCamera " + pov + ") がシーンに無く、写真 (KD_PhotoDirector " + photo + ") は 1 個まで (IMP-WLD-005 の自動写真)");
                 v.Check(pouch.activitiesMenu != null, "あそぶ: pouch.activitiesMenu 配線 (面の中身・集合のみの詳細は Menu/23 Verify Activities が数える)");
             }
 

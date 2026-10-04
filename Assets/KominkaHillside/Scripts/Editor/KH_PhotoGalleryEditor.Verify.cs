@@ -154,6 +154,19 @@ namespace KominkaHillside.Editor
             Heap(dU, "hillsideEventGroups", true, Check, Warn);
             Heap(dU, "tickInterval", 0.1f, Check, Warn); Heap(dU, "frisbeeShotCooldown", 20f, Check, Warn); Heap(dU, "gallery", gU, Check, Warn);
             Heap(dU, "wanderControllers", c.wander.Select(w => (object)B(w)).ToArray(), Check, Warn);
+            // ---- IMP-WLD-011: the wash category, its photos and the shorter pet burst ----
+            Check(KD_PhotoDirector.HillsideGroupWash == 3 && GroupNames[KD_PhotoDirector.HillsideGroupWash] == "wash" && GroupSizes[KD_PhotoDirector.HillsideGroupWash] == 6
+                && GroupSizes[KD_PhotoDirector.HillsideGroupWalk] == 10 && GroupSizes[KD_PhotoDirector.HillsideGroupPet] == 4 && GroupSizes[KD_PhotoDirector.HillsideGroupPlay] == 4,
+                "IMP-WLD-011 layout: walk 10 / pet 4 / play 4 / wash 6 (slots " + string.Join(",", groups.Select((g, i) => g == KD_PhotoDirector.HillsideGroupWash ? i.ToString() : null).Where(x => x != null)) + " = wash)");
+            Check(d.petBurstLength == PetBurstLength, "director: pet burst " + PetBurstLength + " photos (actual " + d.petBurstLength + "; the pet category holds " + GroupSizes[KD_PhotoDirector.HillsideGroupPet] + ")");
+            Heap(dU, "petBurstLength", PetBurstLength, Check, Warn);
+            var fade = c.pouch.manager != null ? c.pouch.manager.travelFade : null;
+            Check(d.washShotEnabled && Mathf.Approximately(d.washShotDoneDelay, WashDoneDelay) && d.washFade == fade && d.washSleepPlacement == c.pouch.sleepPlacement,
+                "director: wash photos on, done +" + WashDoneDelay + " s, fade = KH_LeashManager.travelFade (" + (fade != null ? fade.name : "missing") + "), sleep placement = the pouch's (" + (c.pouch.sleepPlacement != null ? c.pouch.sleepPlacement.name : "missing") + ")");
+            if (fade == null) Warn("no KH_TravelFade: wash photos are not paused during the travel fade");
+            Heap(dU, "washShotEnabled", true, Check, Warn); Heap(dU, "washShotDoneDelay", WashDoneDelay, Check, Warn);
+            if (fade != null) Heap(dU, "washFade", B(fade), Check, Warn);
+            if (c.pouch.sleepPlacement != null) Heap(dU, "washSleepPlacement", B(c.pouch.sleepPlacement), Check, Warn);
 
             var st = s.settings;
             Check(!st.highEnabled && st.standardWidth == PcWidth && st.standardHeight == PcHeight && st.mobileWidth == MobileWidth && st.mobileHeight == MobileHeight,
@@ -180,6 +193,15 @@ namespace KominkaHillside.Editor
                 Check(c.fetch[i].photoDirector == d && c.wander[i].photoDirector == d, "dog " + i + " " + Keys[i] + ": fetch / wander -> director");
                 Heap(B(c.fetch[i]), "photoDirector", dU, Check, Warn); Heap(B(c.wander[i]), "photoDirector", dU, Check, Warn);
                 Check(c.frisbee[i].wander == c.wander[i] && c.frisbee[i].dogIndex == i, "dog " + i + " frisbee hook path: KH_FrisbeeCatch.wander.photoDirector (dogIndex " + i + ")");
+            }
+            // IMP-WLD-011: the wash photo path KH_DogWash.voiceDog.photoDirector (voiceDog is written by Wash/11, the director by Photo/1)
+            var washes = WashesByDog(c);
+            for (int i = 0; i < Keys.Length; i++)
+            {
+                var wsh = washes[i];
+                Check(wsh != null && wsh.voiceDog == c.wander[i], "dog " + i + " " + Keys[i] + " wash photo path: one KH_DogWash (dogIndex " + i + ") whose voiceDog is its own KD_DogWanderController"
+                    + (wsh == null ? " (no KH_DogWash: run Wash/11)" : wsh.voiceDog != c.wander[i] ? " (voiceDog " + (wsh.voiceDog != null ? wsh.voiceDog.name : "null") + ": run Wash/11)" : ""));
+                if (wsh != null) Heap(B(wsh), "voiceDog", B(c.wander[i]), Check, Warn);
             }
             if (c.activities != null) { Check(c.activities.photos == d, "KD_GroupActivities.photos -> director (trainer group photo)"); Heap(B(c.activities), "photos", dU, Check, Warn); }
             else Warn("KD_GroupActivities not found: no group photo");
@@ -220,7 +242,9 @@ namespace KominkaHillside.Editor
                 }
                 Heap(aU, "menuPager", pager != null ? pager.gameObject : null, Check, Warn);
                 VerifyMenuSnap(c, s, page.transform, cam, Check, Warn, Note);
-                Check(al.menuPage == page && al.menuLargeRoot != null && al.menuLarge != null && al.menuHelpRoot != null && al.menuState != null && al.menuNewMark != null, "album: page / large / help / state / new mark");
+                VerifyThumbSnaps(s, page.transform, cam, Check, Warn, Note);
+                Check(al.menuPage == page && al.menuLargeRoot != null && al.menuLarge != null && al.menuHelpRoot != null && al.menuState != null, "album: page / large / help / state");
+                Check(page.transform.Find(RetiredNewMarkName) == null, "no " + RetiredNewMarkName + " on the page (the 'new' mark is retired, IMP-WLD-010; Photo/1 removes an old one)");
                 var large = page.transform.Find("Large"); var help = page.transform.Find("HelpPanel");
                 Check(large != null && help != null && large.GetSiblingIndex() > page.transform.Find("Thumb7").GetSiblingIndex() && help.GetSiblingIndex() > page.transform.Find("Thumb7").GetSiblingIndex(), "large view and help draw over the thumbnails");
             }
@@ -273,7 +297,6 @@ namespace KominkaHillside.Editor
             {
                 foreach (var key in new[] { "photo.empty", "photo.settings.off", "photo.settings.loading", "photo.settings.failed" }) MeasureOne(c, al.menuState, key, "", "menu state " + key, Check, Note);
                 MeasureOne(c, al.menuHelpBody, "photo.help.body", "", "menu help body", Check, Note);
-                MeasureOne(c, al.menuNewLabel, "photo.new", "", "menu new mark", Check, Note);
             }
         }
 
@@ -317,6 +340,74 @@ namespace KominkaHillside.Editor
             Heap(B(s.album), "menuSnapPhoto", mr, Check, Warn);
             Check(!RectOf(close).Overlaps(new Rect(LargePhotoPos - LargePhotoSize * 0.5f, LargePhotoSize)), "the snap quad does not hide [とじる]");
             Note("OPEN (user): does the VRChat camera render layer " + MenuSnapLayer + "? If not, change MenuSnapLayer (KH_PhotoGalleryEditor.cs) and run Photo/1");
+        }
+
+        /// <summary>IMP-WLD-009: 縮小表示 8 枚の吸着の板。位置・大きさ (縮小表示の写真ちょうど、2 mm 手前)、レイヤー、材質の値 (メニュー専用の 8 つ)、Collider なし、
+        /// 8 枚が同じ平面 (シェーダーの排他の前提)、余白 × 2 < 写真の隙間 (隣が同時に吸着しない)、せん断なし・一様なスケール、ページ送りなどのボタンと重ならない、album の配線。</summary>
+        static void VerifyThumbSnaps(Sys s, Transform page, Camera cam, Action<bool, string> Check, Action<string> Warn, Action<string> Note)
+        {
+            var al = s.album;
+            float pxToM = Mathf.Abs(page.lossyScale.x);
+            var quads = new Transform[PageSize]; var renderers = new Renderer[PageSize];
+            var boardMats = Enumerable.Range(0, PageSize).Select(i => AssetDatabase.LoadAssetAtPath<Material>(PrintMatPath(i))).Where(x => x != null).ToArray();
+            for (int k = 0; k < PageSize; k++)
+            {
+                var thumb = page.Find("Thumb" + k) as RectTransform;
+                var q = thumb != null ? thumb.Find(MenuSnapName) : null;
+                var mr = q != null ? q.GetComponent<MeshRenderer>() : null;
+                var mf = q != null ? q.GetComponent<MeshFilter>() : null;
+                quads[k] = q; renderers[k] = mr;
+                string what = "thumbnail " + k + " snap";
+                Check(q != null && mr != null && mf != null && mf.sharedMesh != null && mf.sharedMesh.name == "Quad" && q.GetComponents<Collider>().Length == 0
+                    && mr.shadowCastingMode == UnityEngine.Rendering.ShadowCastingMode.Off && !mr.receiveShadows,
+                    what + ": Thumb" + k + "/" + MenuSnapName + ", Unity Quad, no collider (the button's raycast stays free), no shadow" + (q == null ? " (missing: run Photo/1)" : ""));
+                if (q == null || mr == null) continue;
+                Check(!q.gameObject.activeSelf, what + " hidden in the scene (the album shows it under a photo)");
+                var m = mr.sharedMaterial;
+                Check(m != null && m.shader != null && m.shader.name == PrintShaderName && AssetDatabase.GetAssetPath(m) == MenuThumbMatPath(k) && !boardMats.Contains(m)
+                    && Mathf.Approximately(m.GetFloat("_AttachDistance"), MenuThumbAttachDistance) && Mathf.Approximately(m.GetFloat("_AttachMargin"), MenuThumbAttachMargin)
+                    && (!m.HasProperty("_DebugProbe") || m.GetFloat("_DebugProbe") < 0.5f) && (!m.HasProperty("_HideFromEyes") || m.GetFloat("_HideFromEyes") < 0.5f),
+                    what + " material " + MenuThumbMatPath(k) + " (not a board material): KD_PhotoPrint, attach " + MenuThumbAttachDistance + " m, margin " + MenuThumbAttachMargin + " m, debug probe off");
+                Check(Vector2.Distance(new Vector2(q.localPosition.x, q.localPosition.y), Vector2.zero) < 0.5f && Mathf.Abs(q.localScale.x - ThumbSize.x) < 0.5f && Mathf.Abs(q.localScale.y - ThumbSize.y) < 0.5f
+                    && q.localRotation == Quaternion.identity && pxToM > 0f && Mathf.Abs(-q.localPosition.z * pxToM - MenuSnapFront) < 0.0005f,
+                    what + " covers the thumbnail photo " + ThumbSize + " exactly, " + (pxToM > 0f ? (-q.localPosition.z * pxToM * 1000f).ToString("F1") : "?") + " mm in front of it");
+                var photo = thumb.Find("Photo") as RectTransform;
+                Check(photo != null && Vector2.Distance(photo.anchoredPosition, Vector2.zero) < 0.5f && Vector2.Distance(photo.sizeDelta, ThumbSize) < 0.5f
+                    && thumb.sizeDelta.x >= ThumbSize.x && thumb.sizeDelta.y >= ThumbSize.y, what + ": the photo under it is " + ThumbSize + " at the button's centre, inside the frame");
+                Check(q.gameObject.layer == MenuSnapLayer, what + " on layer " + MenuSnapLayer + " (" + LayerMask.LayerToName(MenuSnapLayer) + ", MenuSnapLayer)");
+                Check(cam == null || (cam.cullingMask & (1 << q.gameObject.layer)) == 0, what + ": our photo camera does not render its layer");
+                var mtx = q.localToWorldMatrix;
+                Vector3 ax = ((Vector3)mtx.GetColumn(0)).normalized, ay = ((Vector3)mtx.GetColumn(1)).normalized, az = ((Vector3)mtx.GetColumn(2)).normalized;
+                float shear = Mathf.Max(Mathf.Abs(Vector3.Dot(ax, ay)), Mathf.Max(Mathf.Abs(Vector3.Dot(ax, az)), Mathf.Abs(Vector3.Dot(ay, az))));
+                var pl = thumb.lossyScale;
+                Check(shear < 0.001f && Mathf.Abs(pl.x - pl.y) <= 0.001f * Mathf.Max(Mathf.Abs(pl.x), 1e-6f), what + ": world axes orthogonal (max |cos| " + shear.ToString("F5") + "), the menu's scale uniform in its plane (lossy " + pl.ToString("F5") + ")");
+                // ---- the quad's rect in page px must leave the controls next to the list alone (the quad writes depth and would hide them) ----
+                var qr = new Rect(thumb.anchoredPosition - ThumbSize * 0.5f, ThumbSize);
+                var blocked = new List<string>();
+                foreach (var name in new[] { "Pager", "SettingsButton", "Back", "Help", "State" })
+                {
+                    var other = page.Find(name) as RectTransform;
+                    if (other != null && qr.Overlaps(RectOf(other))) blocked.Add(name + " " + RectOf(other));
+                }
+                Check(blocked.Count == 0, what + " " + qr + " overlaps none of pager / [settings] / [back] / [?] / state" + (blocked.Count > 0 ? ": " + string.Join(", ", blocked) : ""));
+            }
+            // ---- one plane, and the aim margin keeps neighbours apart ----
+            var present = quads.Where(x => x != null).ToArray();
+            if (present.Length == PageSize)
+            {
+                Vector3 n = quads[0].forward; float off = 0f;
+                for (int k = 1; k < PageSize; k++) off = Mathf.Max(off, Mathf.Abs(Vector3.Dot(quads[k].position - quads[0].position, n)));
+                Check(off < 0.0001f, "the 8 thumbnail snaps lie in one plane (max offset " + (off * 1000f).ToString("F3") + " mm): the shader's hit point lands in one photo at most");
+            }
+            float gapX = ThumbGapX * pxToM, gapY = ThumbGapY * pxToM;
+            Check(pxToM > 0f && MenuThumbAttachMargin * 2f < gapX && MenuThumbAttachMargin * 2f < gapY,
+                "thumbnail aim margin " + (MenuThumbAttachMargin * 1000f).ToString("F1") + " mm x 2 < the gap between photos (" + (gapX * 1000f).ToString("F1") + " x " + (gapY * 1000f).ToString("F1") + " mm): no two neighbours snap at once");
+            Check(MenuThumbAttachMargin >= 0f, "thumbnail aim test on (margin >= 0; negative would snap every photo within reach)");
+            // ---- the album ----
+            Check(al.menuThumbSnaps != null && al.menuThumbSnaps.Length == PageSize && Enumerable.Range(0, PageSize).All(k => al.menuThumbSnaps[k] == renderers[k] && renderers[k] != null),
+                "album.menuThumbSnaps = the 8 snaps in position order (Rebind binds the shown page, the large view / help hide them, phones not in VR turn them off)");
+            Heap(B(al), "menuThumbSnaps", renderers.Cast<object>().ToArray(), Check, Warn);
+            Note("thumbnail snaps: attach " + MenuThumbAttachDistance + " m (enlarged photo " + MenuAttachDistance + " m, board " + AttachDistance + " m); the real reach and aim are a user check with the VRChat camera (PCVR / Desktop / Quest)");
         }
 
         /// <summary>IMP-WLD-007 W2: 散歩の見回りの配線 (proxy + backing)、写真の場所 (NavMesh・地面)、試作値の表、つなぎ外しの知らせ。</summary>

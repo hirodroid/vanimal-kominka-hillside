@@ -56,8 +56,8 @@ namespace KominkaHillside
         public GameObject menuPage;
         public RawImage[] menuThumbs;
         public GameObject[] menuThumbButtons;
-        public GameObject menuNewMark;
-        public TMP_Text menuNewLabel;
+        [Tooltip("IMP-WLD-009: 縮小表示 8 枚それぞれの手前の Quad (KD_PhotoPrint)。一覧のまま VRChat カメラを近づけた 1 枚が全画面。写真の無い位置と、大きい表示・説明を開いている間は隠す")]
+        public Renderer[] menuThumbSnaps;
         public TMP_Text menuState;
         public GameObject menuSettingsButton;
         public TMP_Text menuSettingsLabel;
@@ -69,7 +69,7 @@ namespace KominkaHillside
         public TMP_Text menuHelpCloseLabel;
         public GameObject menuLargeRoot;
         public RawImage menuLarge;
-        [Tooltip("IMP-WLD-007 W3: 大きく出した写真の手前の Quad (KD_PhotoPrint)。VRChat カメラを近づけると全画面。縮小表示には付けない")]
+        [Tooltip("IMP-WLD-007 W3: 大きく出した写真の手前の Quad (KD_PhotoPrint)。VRChat カメラを近づけると全画面。縮小表示の板は menuThumbSnaps (IMP-WLD-009)")]
         public Renderer menuSnapPhoto;
         public TMP_Text menuLargeCloseLabel;
         public TMP_Text headerLabel;
@@ -95,8 +95,6 @@ namespace KominkaHillside
         private int[] _order;
         private int _count;
         private int _captures;        // 撮れた回数 (ハーネスが読む)
-        private bool _unseen;         // 面を閉じている間に撮れた
-        private bool _markShown;      // 面を開いている間、左上に「新しい」を出す
         private int _largeSlot = -1;
         private int _menuPage;        // 0 = いちばん新しい 8 枚。ハーネスが読む
         private int _boardPage;
@@ -125,6 +123,10 @@ namespace KominkaHillside
                     if (boardPhotos[k] != null) boardPhotos[k].material.SetFloat("_AttachDistance", 0f);   // 共有の材質ではなく複製を書く
             // IMP-WLD-007 W3: メニューの大きい写真も同じ規則 (スマホの VR でないときは吸着しない。画面のスクリーンショットで持ち帰る)
             if (mobile && Utilities.IsValid(lp) && !lp.IsUserInVR() && menuSnapPhoto != null) menuSnapPhoto.material.SetFloat("_AttachDistance", 0f);
+            // IMP-WLD-009: 縮小表示 8 枚の板も同じ規則
+            if (mobile && Utilities.IsValid(lp) && !lp.IsUserInVR() && menuThumbSnaps != null)
+                for (int k = 0; k < menuThumbSnaps.Length; k++)
+                    if (menuThumbSnaps[k] != null) menuThumbSnaps[k].material.SetFloat("_AttachDistance", 0f);
             if (menuLargeRoot != null) menuLargeRoot.SetActive(false);
             if (menuHelpRoot != null) menuHelpRoot.SetActive(false);
             ApplyGate();
@@ -147,7 +149,6 @@ namespace KominkaHillside
             if (slot < 0) return;
             MoveToFront(slot);
             _captures++;
-            if (MenuVisible()) _markShown = true; else _unseen = true;
             Rebind();
             DrawLabels();
         }
@@ -165,8 +166,6 @@ namespace KominkaHillside
         public void _RedrawMenu()
         {
             Init();
-            _markShown = _unseen;
-            _unseen = false;
             _largeSlot = -1;
             _menuPage = 0;   // 開いたときはいつも新しい 8 枚から
             if (menuLargeRoot != null) menuLargeRoot.SetActive(false);
@@ -205,6 +204,7 @@ namespace KominkaHillside
         {
             _largeSlot = -1;
             if (menuLargeRoot != null) menuLargeRoot.SetActive(false);
+            BindThumbSnaps();
         }
 
         public void _MenuHelpOpen()
@@ -212,10 +212,15 @@ namespace KominkaHillside
             if (menuHelpRoot == null) return;
             _MenuLargeClose();
             menuHelpRoot.SetActive(true);
+            BindThumbSnaps();
             DrawLabels();
         }
 
-        public void _MenuHelpClose() { if (menuHelpRoot != null) menuHelpRoot.SetActive(false); }
+        public void _MenuHelpClose()
+        {
+            if (menuHelpRoot != null) menuHelpRoot.SetActive(false);
+            BindThumbSnaps();
+        }
 
         /// <summary>設定の [写真: ON / OFF]。OFF は新しい撮影だけを止める (撮った写真は見られる。KD_PhotoSettings の既存の意味)。</summary>
         public void _ToggleCapture()
@@ -239,6 +244,7 @@ namespace KominkaHillside
             menuLarge.texture = tex[slot];
             if (menuSnapPhoto != null) menuSnapPhoto.material.mainTexture = tex[slot];   // the snap quad shows the same RT (複製の材質)
             menuLargeRoot.SetActive(true);
+            BindThumbSnaps();   // IMP-WLD-009: the thumbnails' snap quads hide behind the enlarged photo
             DrawLabels();
         }
 
@@ -255,8 +261,6 @@ namespace KominkaHillside
             for (int k = at; k > 0; k--) _order[k] = _order[k - 1];
             _order[0] = slot;
         }
-
-        private bool MenuVisible() { return menuPage != null && menuPage.activeInHierarchy; }
 
         private int PageCount() { return _count <= PageSize ? 1 : (_count + PageSize - 1) / PageSize; }
 
@@ -325,6 +329,7 @@ namespace KominkaHillside
                 menuLarge.texture = tex[_largeSlot];
                 if (menuSnapPhoto != null) menuSnapPhoto.material.mainTexture = tex[_largeSlot];
             }
+            BindThumbSnaps();
             // ---- ページ送り (2 ページ以上のときだけ) ----
             bool many = pages > 1;
             if (menuPager != null && menuPager.activeSelf != many) menuPager.SetActive(many);
@@ -332,6 +337,26 @@ namespace KominkaHillside
             string total = "/" + pages.ToString();
             if (menuPageLabel != null) menuPageLabel.text = (_menuPage + 1).ToString() + total;
             if (boardPageLabel != null) boardPageLabel.text = (_boardPage + 1).ToString() + total;
+        }
+
+        /// <summary>IMP-WLD-009: 縮小表示 8 枚の手前の吸着の板へ、表示中のページの同じ RT を張る (材質の複製)。写真の無い位置は隠す。
+        /// 大きい表示・説明を開いている間は 8 枚とも隠す (板は深度を書くので前の UI を塞ぎ、後ろで吸着もしてしまう)。閉じたら戻す。</summary>
+        private void BindThumbSnaps()
+        {
+            if (menuThumbSnaps == null) return;
+            Init();
+            RenderTexture[] tex = gallery != null ? gallery.slotTextures : null;
+            bool covered = (menuLargeRoot != null && menuLargeRoot.activeSelf) || (menuHelpRoot != null && menuHelpRoot.activeSelf);
+            for (int k = 0; k < PageSize && k < menuThumbSnaps.Length; k++)
+            {
+                Renderer r = menuThumbSnaps[k];
+                if (r == null) continue;
+                RenderTexture t = AtPosition(_menuPage * PageSize + k, tex);
+                bool show = t != null && !covered;
+                if (t != null) r.material.mainTexture = t;
+                GameObject go = r.gameObject;
+                if (go.activeSelf != show) go.SetActive(show);
+            }
         }
 
         private string StateKey()
@@ -374,9 +399,6 @@ namespace KominkaHillside
             if (menuHelpBody != null) menuHelpBody.text = L("photo.help.body");
             if (menuHelpCloseLabel != null) menuHelpCloseLabel.text = L("photo.help.close");
             if (menuLargeCloseLabel != null) menuLargeCloseLabel.text = L("photo.help.close");
-            if (menuNewLabel != null) menuNewLabel.text = L("photo.new");
-            bool mark = _markShown && _count > 0 && _menuPage == 0;   // 「新しい」は 1 ページ目の左上だけ
-            if (menuNewMark != null && menuNewMark.activeSelf != mark) menuNewMark.SetActive(mark);
         }
     }
 }

@@ -17,7 +17,7 @@ namespace KominkaHillside
     ///   3. 時間と距離: 前の散歩の写真から timeInterval 秒 かつ 歩いた距離 distanceInterval m → 犬目線と自撮り風を交互に
     /// - 散歩の写真どうしは minGap 秒あける。撮らないとき: 移動の暗転中と明けて fadeGrace 秒 (5 m 以上の飛びも同じ扱い)、寝る場所を選んでいる間、
     ///   自分の犬が洗い場・水の中、撮影 OFF・ボード無し
-    /// - 写真は KD_PhotoDirector._WalkShoot が撮る (散歩の枠 12 枚)。すべてローカル (同期変数 0)
+    /// - 写真は KD_PhotoDirector._WalkShoot が撮る (散歩の枠 10 枚。IMP-WLD-011 で 12 → 10)。すべてローカル (同期変数 0)
     /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_PhotoWalkWatcher : UdonSharpBehaviour

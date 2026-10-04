@@ -49,7 +49,7 @@ namespace KominkaDogRun
     /// (PlayerLocal だと自分が被写体のとき顔が欠ける — KanjiFind IMP-SC-003 §3.5 実測)。
     /// </summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public partial class KD_PhotoDirector : UdonSharpBehaviour   // 裏山改変 (IMP-WLD-007 W2): partial (散歩の写真は KD_PhotoDirector.HillsideWalk.cs)
+    public partial class KD_PhotoDirector : UdonSharpBehaviour   // 裏山改変 (IMP-WLD-007 W2): partial (散歩の写真は KD_PhotoDirector.HillsideWalk.cs、IMP-WLD-011 洗いの写真は .HillsideWash.cs)
     {
         [Header("配線 (Tools/KominkaDogRun/Photo System が設定する)")]
         public KD_PhotoCapture photoCapture;
@@ -85,11 +85,15 @@ namespace KominkaDogRun
         [Tooltip("受け渡しの俯瞰でカメラを持ち上げる強さ (被写体からの持ち上げ)")]
         public float dropDroneHeight = 1.6f;
 
-        [Header("撫でバースト (毎回 4 枚。構図は 9 種のプールから回す)")]
+        [Header("撫でバースト (毎回 petBurstLength 枚。構図は 9 種のプールから回す)")]
         [Tooltip("撫でがこの秒数続いたらバースト開始")]
         public float petShotAfterSec = 3f;
-        [Tooltip("バーストの間隔 (秒)。1 回で 4 スロット使う")]
+        [Tooltip("バーストの間隔 (秒)。1 回で petBurstLength スロット使う")]
         public float petShotCooldown = 30f;
+        // 裏山改変 (IMP-WLD-011): 旧 const PetBurstLen = 4。裏山は撫での枠が 4 枚になったので Photo/1 が 2 を書く (AI の既定。ユーザー未確認)。
+        // 古民家の構成 (Photo/1 を通らない) は既定の 4 のまま。9 と互いに素の値 (1, 2, 4, 5, 7, 8) ならバーストを重ねると全構図を巡る
+        [Tooltip("撫でバースト 1 回の枚数 (1..9)。古民家 4 / 裏山 2 (Photo/1)")]
+        public int petBurstLength = 4;
         [Tooltip("ドローンの高さ (被写体からの持ち上げ)")]
         public float petDroneHeight = 1.8f;
 
@@ -135,7 +139,8 @@ namespace KominkaDogRun
 
         // 撫での構図プール (IMP-CAM-002 で 7 → 9)
         const int PetShotCount = 9;
-        const int PetBurstLen = 4;
+        // 裏山改変 (IMP-WLD-011): バーストの枚数は petBurstLength (範囲へ丸める)
+        int PetBurstLen() { return petBurstLength < 1 ? 1 : (petBurstLength > PetShotCount ? PetShotCount : petBurstLength); }
         const int ShotDogEye = 0;      // 犬視点・至近 (被写体はプレイヤー)
         const int ShotCloseUp = 1;     // 寄り (顔だけ)
         const int ShotFront = 2;       // 正面 (撫でている顔と犬)
@@ -228,7 +233,7 @@ namespace KominkaDogRun
         float _lastPetShot;
         float _lastChaseShot;
         float _lastPlayShot;
-        int _burstStep = -1; // 撫でバーストの進行 (-1 = 停止中)。0..3 = バースト内の何枚目か
+        int _burstStep = -1; // 撫でバーストの進行 (-1 = 停止中)。0..PetBurstLen()-1 = バースト内の何枚目か
         int _burstRetries;
         int _burstOffset;    // バーストごとに構図プールの開始位置をずらす
         int _burstDog = -1;  // **バーストの被写体。開始時に捕まえて離さない** (下記)
@@ -266,12 +271,17 @@ namespace KominkaDogRun
         // 3) 裏山改変 (IMP-WLD-007 W1): **枠は「出来事」の 3 つ (散歩 12 / 撫で 6 / 遊び 6)。** 古民家の構図カテゴリ (GroupDogEye = GroupChase など
         //    同じ番号を共有する) では撫での犬目線とかけっこを分けられないので、hillsideEventGroups が true の間は Shoot が出来事で決め直す:
         //    撫でのバースト = 撫で、それ以外 (受け渡し・かけっこ・じゃれ合い・フリスビー・集合) = 遊び。散歩 (W2) は _hillsideGroupOverride で渡す。
-        //    番号は KD_GalleryController.slotGroups の値 (Photo/1 が 12/6/6 で書く)。古民家の構成 (false) は何も変わらない
-        public const int HillsideGroupWalk = 0, HillsideGroupPet = 1, HillsideGroupPlay = 2, HillsideGroupCount = 3;
+        //    番号は KD_GalleryController.slotGroups の値 (Photo/1 が書く)。古民家の構成 (false) は何も変わらない
+        //    裏山改変 (IMP-WLD-011, 2026-10-04 ユーザー決定): 「洗う」を足して 4 つ (散歩 10 / 撫で 4 / 遊び 4 / 洗う 6、合計 24 のまま)。
+        //    洗うの枠は洗いの節目の撮影 (_WashShoot、KD_PhotoDirector.HillsideWash.cs) だけが使う
+        public const int HillsideGroupWalk = 0, HillsideGroupPet = 1, HillsideGroupPlay = 2, HillsideGroupWash = 3, HillsideGroupCount = 4;
         [Header("裏山: 出来事の枠 (IMP-WLD-007)")]
-        [Tooltip("true: 枠のカテゴリを出来事 (散歩 / 撫で / 遊び) で決める。Photo/1 が書く")]
+        [Tooltip("true: 枠のカテゴリを出来事 (散歩 / 撫で / 遊び / 洗う) で決める。Photo/1 が書く")]
         public bool hillsideEventGroups;
         int _hillsideGroupOverride = -1;   // >= 0 の間、Shoot はこの出来事の枠へ撮る (撫でのバーストが 1 枚ごとに立てて戻す)
+        // 裏山改変 (IMP-WLD-011): 撮影の記録 (Shoot が 1 枚につき 1 行ログへ出す。種類・枠・犬)。各入口が Shoot の直前に書き、Shoot が出したら戻す
+        string _logKind = "";
+        int _logDog = -1;
 
         // 裏山改変 (IMP-WLD-005): 無効にされている間 (KH_PhotoAlbum が OFF・見る場所なしで止めた / 配線不足で自分で止めた) も止める。
         // 受け渡し・集合写真・フリスビーの通知は Update を通らずに来るので、ここで弾かないと見えない写真を撮る
@@ -372,6 +382,7 @@ namespace KominkaDogRun
         {
             _burstStep = -1;
             _frisbeeDog = -1;
+            _washPendDog = -1;   // 裏山改変 (IMP-WLD-011): 待っている洗いの 1 枚も捨てる
             if (_dropPending == null || _chasePending == null || _playPending == null || _petAccum == null) return;
             for (int i = 0; i < _n; i++)
             {
@@ -407,6 +418,7 @@ namespace KominkaDogRun
             int dog = _frisbeeDog;
             if (dog < 0) return;
             if (CapturePaused() || !ValidDog(dog)) { _frisbeeDog = -1; return; }
+            _logKind = "frisbee"; _logDog = dog;   // 裏山改変 (IMP-WLD-011): 撮影の記録
             if (!ShootFrisbee(dog))
             {
                 if (_frisbeeRetries < 3) { _frisbeeRetries++; SendCustomEventDelayedFrames(nameof(_FrisbeeShot), 2); return; }
@@ -491,7 +503,9 @@ namespace KominkaDogRun
                 // IMP-DOG-019 Phase 5: 寝ている犬は候補から外す。
                 // **ここで積算ごと止めるのが要点** — 撮る直前だけで弾くと、
                 // 寝ている間に溜まった 3 秒が起きた瞬間にバーストへ化ける
-                if (pc != null && pc.IsPetting && !SleepingDog(i)) _petAccum[i] += tickDt;   // 裏山改変: 間引いた分の実時間
+                // 裏山改変 (IMP-WLD-011): 洗われている / 洗い場に呼ばれている犬も積算しない (撫でのバーストを洗いの節目の撮影に置き換える。
+                // 寝ている犬と同じく積算ごと止めるので、洗い終わった瞬間に洗い中の 3 秒がバーストへ化けない)。IsPetting の後に置く (撫でていない犬では読まない)
+                if (pc != null && pc.IsPetting && !SleepingDog(i) && !WashingDog(i)) _petAccum[i] += tickDt;   // 裏山改変: 間引いた分の実時間
                 else _petAccum[i] = 0f;
             }
 
@@ -517,9 +531,9 @@ namespace KominkaDogRun
                     // 4 枚撮るので、毎回引き直すと**途中で別の犬へ手を移した瞬間に
                     // 構図が半分ずつ別の犬**になる (1 枚のアルバムとして破綻する)
                     _burstDog = pick;
-                    MarkShot(pick); // 開始時点で公平性へ計上する (4 枚ぶんの権利を取っている)
-                    // 前回の続きから撮る。4 と 9 は互いに素なのでバーストを重ねると全構図を巡る
-                    _burstOffset = (_burstOffset + PetBurstLen) % PetShotCount;
+                    MarkShot(pick); // 開始時点で公平性へ計上する (バーストぶんの権利を取っている)
+                    // 前回の続きから撮る。枚数 (4 / 裏山 2) と 9 は互いに素なのでバーストを重ねると全構図を巡る
+                    _burstOffset = (_burstOffset + PetBurstLen()) % PetShotCount;
                     _BurstStep();
                 }
             }
@@ -552,6 +566,9 @@ namespace KominkaDogRun
         /// 固定の 1 匹で判定すると「ダックスの走りをコーギーの状態で判定する」になる。</summary>
         void TakePending(int dog, int kind, float now)
         {
+            // 裏山改変 (IMP-WLD-011): 撮影の記録 (じゃれ合いは相手も写るが、記録は予約の犬)
+            _logKind = kind == KindDrop ? "drop" : (kind == KindPlay ? "dogs-play" : "chase");
+            _logDog = dog;
             if (kind == KindDrop)
             {
                 _dropPending[dog] = false;
@@ -654,13 +671,15 @@ namespace KominkaDogRun
         public void _BurstStep()
         {
             if (CapturePaused()) { _burstStep = -1; return; }
-            if (_burstStep < 0 || _burstStep >= PetBurstLen || !ValidDog(_burstDog))
+            // 裏山改変 (IMP-WLD-011): バーストの途中で洗いが始まったら残りを撮らない
+            if (_burstStep < 0 || _burstStep >= PetBurstLen() || !ValidDog(_burstDog) || WashingDog(_burstDog))
             {
                 _burstStep = -1;
                 return;
             }
 
             _hillsideGroupOverride = HillsideGroupPet;   // 裏山改変 (IMP-WLD-007): 撫での構図はどれも撫での枠へ
+            _logKind = "pet"; _logDog = _burstDog;       // 裏山改変 (IMP-WLD-011): 撮影の記録
             bool ok = ShootPetShot(_burstDog, (_burstOffset + _burstStep) % PetShotCount);
             _hillsideGroupOverride = -1;
             if (!ok && _burstRetries < 5)
@@ -673,7 +692,7 @@ namespace KominkaDogRun
 
             _burstRetries = 0;
             _burstStep++;
-            if (_burstStep >= PetBurstLen) { _burstStep = -1; return; }
+            if (_burstStep >= PetBurstLen()) { _burstStep = -1; return; }
             SendCustomEventDelayedFrames("_BurstStep", 3);
         }
 
@@ -1044,6 +1063,7 @@ namespace KominkaDogRun
             if (CapturePaused()) return;   // 裏山改変 (IMP-WLD-005): OFF・見る場所なしでは集合写真も撮らない
             Vector3 subject = center + Vector3.up * .6f;
             Vector3 from = Quaternion.Euler(0, yaw, 0) * new Vector3(0, 2.2f, 6.5f);
+            _logKind = "group"; _logDog = -1;   // 裏山改変 (IMP-WLD-011): 撮影の記録
             Shoot(ClearCameraPos(subject, center + from, 5f), subject, GroupWide);
         }
 
@@ -1075,7 +1095,11 @@ namespace KominkaDogRun
             ct.rotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
 
             // 描き先は撮影用 RT 1 枚で、確定後にスロットへ色だけ写る (IMP-GAL-003)
-            return photoCapture._CaptureTo(rt);
+            bool captured = photoCapture._CaptureTo(rt);
+            // 裏山改変 (IMP-WLD-011): 1 枚につき 1 行 (種類・枠・スロット・犬)。実機のログで「何がどの枠へ撮れたか」を見る。古民家の構成は出さない
+            if (hillsideEventGroups) LogShot(group, rt, captured);
+            _logKind = ""; _logDog = -1;
+            return captured;
         }
     }
 }
