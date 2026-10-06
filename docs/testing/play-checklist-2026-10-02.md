@@ -517,7 +517,7 @@ Quest 3 単体で、PCVR と同じコースを 1 周する。結果欄には OS�
 | D30 | おもちゃ: 呼ぶと胸の前に浮いて、取れるか。 | [IMP-DOG-040](../development/issues/IMP-DOG-040-toy-recall-hover-in-reach.md) | |
 | D31 | 写真の一覧のまま、VRChat カメラを向けた 1 枚が全画面になるか。 | [IMP-WLD-009](../development/issues/IMP-WLD-009-menu-gallery-snap-from-thumbnails.md) | |
 | D32 | 撮られる側として: 撮影の通知に [いいよ] [いまはだめ] で答えられ、[撮影を許可中] から [やめてもらう] が押せるか。文言は日本語のまま出る (13 言語は未対応)。撮られている間、ドローンが見えるか。 | [IMP-WLD-008](../development/issues/IMP-WLD-008-dog-follow-video-camera.md) | |
-| D33 | 負荷の計測: スポーン右横の計測用のボタンで、NewGrass / NewBoards / NewOther / Props / DogUdon を 1 つずつ OFF にして、川沿いほかで fps を読む (手順と記入の表は Issue)。 | [VER-ENV-002](../development/issues/VER-ENV-002-scenery-performance.md) | |
+| D33 | 負荷の計測 (計測用のボタンは 2026-10-06 に撤去。読むときは Mobile/20 で置き直す): スポーン右横の計測用のボタンで、NewGrass / NewBoards / NewOther / Props / DogUdon を 1 つずつ OFF にして、川沿いほかで fps を読む (手順と記入の表は Issue)。 | [VER-ENV-002](../development/issues/VER-ENV-002-scenery-performance.md) | |
 
 ## E. iOS (iPhone 15 Pro) (30 項目)
 
