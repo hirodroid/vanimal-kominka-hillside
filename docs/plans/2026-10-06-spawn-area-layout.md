@@ -86,8 +86,28 @@
 2. Unity で根を動かす: `KH_WashStation` (子ごと)、`KH_Dogs/KD_ShopKeeper`、`KH_GuideBoards/Asobikata`。看板は Guide/1 の再実行で x / z / yaw が保たれる (作成時だけ設計位置を使う。`KH_GuideBoardsEditor.Asob.createXZ` と [看板の設計 §3-1](2026-10-02-guide-boards.md) の座標は合わせて更新する)。洗い場は Wash のビルダーが根の位置を変えないことを実行前に確認する。
 3. スポーンの向きを変える場合: `KH_Entrance` の yaw と、それを参照して置く `KD_WelcomeSpot` (ようこそ板、yaw 334) と写真ボードの置き方 (`KH_PhotoGalleryEditor.Place` がスポーンの前方を使う) を見直す。
 4. 検査: Guide/2 (看板の置き場所の条件)、Wash/12 (洗い場)、Course/81 TRAVEL_OK、Photo/2。そのあと保存・コミット。
-5. この文書の撮り方でもう一度 10 枚撮って、前後を並べて見る (一時スクリプトは git 履歴 `91b3fe3` の次のコミットの差分から復元できる)。
+5. この文書の撮り方でもう一度 10 枚撮って、前後を並べて見る (撮影は `Tools/KominkaHillside/Guide/15 - Survey Entrance`。出力は `Temp/spawn-survey/<utc>/`)。
 
-## 6. 記録
+## 6. 実施 (2026-10-06、ユーザー「推奨案で。スポーンの向きも変更で」)
 
-- 2026-10-06: 調査と案を作成。実際の移動は未着手。計測ボタンと `KH_PerfProbe` は同日に撤去済み ([VER-ENV-002](../development/issues/VER-ENV-002-scenery-performance.md))。
+一時 Editor スクリプト (削除済み) で根を動かし、地面の高さは「物を一時的に無効にしてレイキャスト → 元の地面からの高さを保つ」で据えた。
+
+| もの | 動かした先 | 案との違い |
+|---|---|---|
+| 主洗い場 (子ごと) | (39.60, 1.83, 39.60)・22° | 案どおり。Wash/11 で据え直し・`Call.standYaw` を更新 |
+| おじいさん | (49.90, 1.60, 42.80)・235° | 案の (50.2, 42.3) から 0.6 m 北西へ。写真ボードの置き場所の条件 (Photo/2: 設備から 2 m 以上) に 1.64 m で掛かったため |
+| 看板 A | (53.00, 2.02, 44.50)・55° | **位置はそのまま、向きだけ 10° スポーンへ**。案の (52.3, 44.0) は写真ボードから 0.25 m (< 0.3) で Photo/2 に掛かったため |
+| ようこそ板 `KD_WelcomeSpot` | (47.39, 2.97, 41.86)・352° | スポーンの前 1.8 m (向きに追従) |
+| スポーン `KH_Entrance` | 向き 334° → 352° (位置はそのまま) | 案どおり |
+
+検査: Wash/11 → Wash/12 VERIFY_OK (5316)、Course/80 → 84 → 27 → Course/81 TRAVEL_OK (旅の着地の立入禁止円 13 を更新)、Guide/1 → Guide/2 GUIDE_BOARDS_OK (653、WARN 3 は従来どおり: A の地形の起伏 0.60 m、Paper_Shop の余白、es の文字)、Photo/2 PASS。Guide の「門の線」の判定はスポーンの向きを基準にしていたので、門 `KH_GateBlock` の向きを基準にするよう直した (`KH_GuideBoardsEditor.cs` / `.Verify.cs`。スポーンが 352° を向いても門の案内板の判定が変わらない)。看板 A の設計位置の定数 `Asob.createYaw` を 55 に更新。撮影ツールは `Guide/15 - Survey Entrance` として恒久化 (`KH_EntranceSurveyEditor.cs`)。
+
+動かしたあとの 10 枚: [evidence/2026-10-06-spawn-layout/after/](evidence/2026-10-06-spawn-layout/after/)。地図: `layout-after.svg` / `layout-after-wide.svg`。
+
+![動かしたあと](evidence/2026-10-06-spawn-layout/layout-after.svg)
+
+見え方 (スポーンから 352°): 中央に犬 6 匹と登り道、左にリード台と説明板、その奥に看板 B が隠れずに見える。右端におじいさんと看板 A。おじいさんは A の 11° 左前に立つので、A を見る角度では彼が板の左を少し隠す (ring-01)。塀ぎわの洗い場は平地に乗った。**Play・VR での見え方は未確認** (チェックリスト A0-53)。
+
+## 7. 記録
+
+- 2026-10-06: 調査と案を作成。同日ユーザーが推奨案とスポーンの向きの変更を採用し、§6 のとおり実施。Play は未。計測ボタンと `KH_PerfProbe` は同日に撤去済み ([VER-ENV-002](../development/issues/VER-ENV-002-scenery-performance.md))。

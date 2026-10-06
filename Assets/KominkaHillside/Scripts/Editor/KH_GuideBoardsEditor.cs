@@ -62,7 +62,7 @@ namespace KominkaHillside.Editor
             public string name; public Vector2 createXZ; public float createYaw; public Vector2 canvasMm; public float canvasBottom;
         }
         /// <summary>Root yaw: the root's +Z points away from the readers (they look along +Z; the Canvas's front is -Z), like the wash station.</summary>
-        static readonly Board Asob = new Board { name = "Asobikata", createXZ = new Vector2(53.0f, 44.5f), createYaw = 65f, canvasMm = new Vector2(3240f, 1440f), canvasBottom = 0.80f };
+        static readonly Board Asob = new Board { name = "Asobikata", createXZ = new Vector2(53.0f, 44.5f), createYaw = 55f, canvasMm = new Vector2(3240f, 1440f), canvasBottom = 0.80f };   // yaw 65 -> 55 on 2026-10-06 (faces the spawn; docs/plans/2026-10-06-spawn-area-layout.md)
         static readonly Board MapBoard = new Board { name = "Map", createXZ = new Vector2(39.2f, 46.6f), createYaw = 330f, canvasMm = new Vector2(1300f, 1200f), canvasBottom = 0.80f };
         /// <summary>IMP-WLD-006: the 古民家ドッグラン board at the gate (west of the opening, 1 m out from the wall line, facing out = -26 deg like the
         /// spawn). Readers face the wall; the portal appears on their right (root +X), against the wall.</summary>
@@ -521,7 +521,8 @@ namespace KominkaHillside.Editor
                     if (t != null && Mathf.Abs(Mathf.DeltaAngle(bb, Bearing(a.spawn.position, t.position))) < FarmhouseSectorMin) bad.Add("in the turn-around view to " + t.name);
                 if (a.gate != null)
                 {
-                    Vector3 fwd = a.spawn.forward; fwd.y = 0f; fwd.Normalize();
+                    // the gate line follows the gate itself (KH_GateBlock faces out along the wall's normal), not the spawn's look direction (352 deg since 2026-10-06)
+                    Vector3 fwd = a.gate.forward; fwd.y = 0f; fwd.Normalize();
                     float side = foot.Min(q => Vector3.Dot(Flat3(q - a.gate.position), fwd));
                     if (side < GateSideMinKominka) bad.Add("only " + side.ToString("F2") + " m in front of the gate line");
                     // the gate opening (KH_GateBlock is 4.5 m wide): keep the footprint (roof overhang included) 0.5 m clear of its ends along the wall

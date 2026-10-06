@@ -25,7 +25,7 @@ namespace KominkaHillside.Editor
         const float WashFloorClear = 0.5f;      // outside the main wash station's 5 x 5 m floor (KH_WashStation/PersonalFloor)
         const float WashFloorHalf = 2.5f;
         const float EntranceRadius = 18f;       // the board's centre from the spawn
-        const float GateSideMin = 1.5f;         // in front of the gate line (spawn forward) by at least this
+        const float GateSideMin = 1.5f;         // in front of the gate line (the gate's forward; was the spawn's until 2026-10-06, when the spawn turned to 352 deg) by at least this
         const float GateSideMinKominka = 0.5f;  // the 古民家ドッグラン board stands beside the gate on purpose (IMP-WLD-006)
         const float PortalSpawnClear = 4.0f;    // the portal from the spawn (IMP-ENV-003: a portal right behind the spawn was walked into)
         /// <summary>The world id of the portal to 古民家ドッグラン, copied from the scene on 2026-10-03 for this check only. The builder never
@@ -259,10 +259,12 @@ namespace KominkaHillside.Editor
                 req(r >= ReaderSpawnClear, tag + "readers' area from the spawn " + r.ToString("F2") + " m (>= " + ReaderSpawnClear + ")");
                 float centre = Flat(t.position - a.spawn.position);
                 req(centre <= EntranceRadius, tag + "within the entrance (" + centre.ToString("F1") + " m from the spawn, <= " + EntranceRadius + ")");
-                Vector3 fwd = a.spawn.forward; fwd.y = 0f; fwd.Normalize();
+                Vector3 spawnFwd = a.spawn.forward; spawnFwd.y = 0f; spawnFwd.Normalize();
                 float bearingBoard = Bearing(a.spawn.position, t.position);
                 if (a.gate != null)
                 {
+                    // the gate line follows the gate itself (KH_GateBlock faces out along the wall's normal); the spawn may look elsewhere
+                    Vector3 fwd = a.gate.forward; fwd.y = 0f; fwd.Normalize();
                     float side = foot.Min(p => Vector3.Dot(Flat3(p - a.gate.position), fwd));
                     float min = b == Kominka ? GateSideMinKominka : GateSideMin;
                     req(side >= min, tag + "outside the gate, " + side.ToString("F2") + " m in front of the gate line (>= " + min + ")");
@@ -276,7 +278,7 @@ namespace KominkaHillside.Editor
                 }
                 Vector3 front = -t.forward; front.y = 0f;
                 float facing = Vector3.Angle(front, Flat3(a.spawn.position - t.position));
-                v.notes.Add(b.name + ": " + centre.ToString("F1") + " m from the spawn at bearing " + bearingBoard.ToString("F0") + " deg (" + Mathf.DeltaAngle(Mathf.Atan2(fwd.x, fwd.z) * Mathf.Rad2Deg, bearingBoard).ToString("+0;-0")
+                v.notes.Add(b.name + ": " + centre.ToString("F1") + " m from the spawn at bearing " + bearingBoard.ToString("F0") + " deg (" + Mathf.DeltaAngle(Mathf.Atan2(spawnFwd.x, spawnFwd.z) * Mathf.Rad2Deg, bearingBoard).ToString("+0;-0")
                     + " deg from the spawn's facing); its front is " + facing.ToString("F0") + " deg off the direction to the spawn");
             }
             else req(false, tag + "KH_Entrance missing");
