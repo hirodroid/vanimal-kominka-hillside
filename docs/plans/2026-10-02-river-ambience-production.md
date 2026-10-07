@@ -1,7 +1,7 @@
 # 川のせせらぎ音の制作票・素材記録 (IMP-ENV-006)
 
 2026-10-02。Issue は [IMP-ENV-006](../development/issues/IMP-ENV-006-river-ambience.md)。素材記録の型は [source-rights-record](../../.claude/skills/vrc-asset-production/references/source-rights-record.md)、手順は [source-rights](../../.claude/skills/vrc-asset-production/references/source-rights.md)。
-状態: **コードと Editor ビルダー・検査まで (Unity 未実行)。** 利用条件は公式規約の調査済み (2026-10-03、§1)。公開保留の解除は参照音声の有無などユーザー回答待ち。音の聞こえ・ループの継ぎ目・端末は未確認。
+状態: **Unity 配置・構成検査済み (2026-10-07、§9)。** 公開保留は2026-10-03の回答で解除済み (§1)。音の聞こえ・ループの継ぎ目・端末は未確認。
 
 ## 1. 素材記録
 
@@ -177,3 +177,33 @@
 4. 容量は [ビルドサイズ実測](2026-09-24-build-size-audit.md) の手順で取り込み前後を比べる。Play: 川沿いを歩き、距離・つながり・重なり・川から離れた静けさ・ボイスと犬の声との音量バランス・ループの継ぎ目を耳で確認する。
 
 `Temp/imp-env-006/before-river-ambience.unity` が実行前のシーンの控え。更新手順は [周回版の運用記録](des-env-002/production.md) の表に 1 行 (川のせせらぎ音) を足した。
+
+## 9. 全音源の空間音設定見直し (2026-10-07)
+
+ユーザー依頼で、本番シーンの非アクティブを含む AudioSource 70個を点検。川20個と犬の声12個には VRCSpatialAudioSource があり、残り38個には無かった。川音の不足コンポーネントが原因とは確認されていない。Unity側の Spatialize がオフの音源、犬4匹の吠えの Unity距離1.5〜18m / VRC距離2〜5mの不一致も確認した。
+
+`KH_AudioSpatialEditor` の `Audio/1 - Apply Spatial Settings` → `Audio/2 - Verify Spatial Settings` → シーン保存で修正。各生成元のEditorも同じ設定処理を呼ぶ。既存VRCのGain/Near/Far、クリップ・音量・ピッチ・ループ・自動再生・Udon配線は維持。新規VRCはGain 0、2DはSpatialize/EnableSpatializationオフ、3Dはオン、Dopplerは0。購入アセットは未編集。
+
+| 音源 | 個数 | 減衰と設定の所有者 |
+|---|---:|---|
+| 川 | 20 | 既存VRC Near4 / Far48m、音量0.8を維持。Unity側の距離とSpatializeを整合 |
+| 犬の吠え / 呼吸 | 6 / 6 | 既存VRCの2〜5m / 1〜3.5mを保持。Unity側も同じ距離 |
+| 水遊び | 6 | 既存Custom (1〜20m、20mで0) のキーを完全保持し、VRCでAudioSource曲線を使用 |
+| 洗う音 / シャワー | 18 / 5 | 0.5〜8m。8mで0となるCustomに変更し、VRCで同じ曲線を使用 |
+| おやつ演出 | 4 | 1〜12m。12mで0となるCustomに変更し、VRCで同じ曲線を使用 |
+| 店主 | 1 | 既存Linear 1.5〜12mを維持、VRCで同じ曲線を使用 |
+| BGM・ライブ・ポーチUI・合流通知 | 4 | 既存2D再生を維持、VRC設定を明示 |
+
+Logarithmicから変更した27音源は、近距離まで1、その先を `near/d × (far-d)/(far-near)`、far以遠を0とする線形補間のCustom。UnityのLogarithmicはmaxDistanceでも無音にならないため、範囲外へ残る音を除く。中距離も小さくなる変更で、洗い4mは旧Logarithmicの約53%、おやつ6mは約55%が式の目安 (実装は離散キー補間)。聴感の採用確認は未実施。
+
+検証 (root実装、別プロセスによる独立相談・レビュー):
+
+- C#コンパイルの新規エラー0、新規Editor型のロード確認済み。Udonコード/配線変更なし。
+- 全体構成検査: total=70 / checked=70 / unmanaged=0 / errors=0。再適用は追加0個、保存したシーンのSHA256が1回目と一致。
+- 川の既存Course/111検査: 20音源・経路1217点・川沿い検査対象293点・川から離れた887点を検査し、範囲内の音源は最大5個。配置・取り込み設定はOK。距離モデルであり実際の聴取結果ではない。
+- 保存前後の独立YAML検査: AudioSourceの許可項目、VRC38個の追加とGameObjectのコンポーネント参照だけを変更。水6音源のCustom曲線、音声参照・再生条件・基準音量は保持。Unity保存時の環境反射色の自動更新は今回の差分から除外。
+- 再現資料: `Temp/audio-audit/verify.txt`、`saved-diff.json`、`sources.tsv`、`before.unity`、`Temp/imp-env-006/river-ambience-verify.json` (Tempは非追跡)。
+
+Play/アップロードは未実施。実機では、川沿いの音のつながり・48m外の静けさ・8秒ループの継ぎ目、洗い場8m/水遊び20m/店主・おやつ12mの減衰、犬の声5m/呼吸3.5m、BGM/UI/ライブの2D維持を確認する。洗い場は近距離でのASMRの聞こえと会話の両立も確認する。PCVR・Quest単体・iOSの聴感は別々に記録し、構成検査を聴感合格と扱わない。川の固定音量・BGMやライブに連動しない方針は変更していない。
+
+最終確認 (2026-10-07 15:24 JST): ユーザーのリロード後、Unity APIの応答が復旧。本番シーン・Editモード・dirty=Falseを確認し、後片付け後のC#コンパイル検査はエラー0。一時監査Editorの型がアセンブリから消えたことも確認。再読み込み後の全音源検査は70/70・エラー0、川音のCourse/111は20音源・最大5個・エラー0。保存YAML検査もPASS (VRC38個追加、水6曲線保持、非音響変更なし)。再読み込み待ちの留保は解消した。実機での聴感とPlayは上記のとおり未確認。全体git diff --checkの警告はUnity生成YAMLの空欄末尾空白 (開始前からのUdon資産差分を含む) で、今回のEditor/文書の限定diff --checkと文書リンク検査は通過。

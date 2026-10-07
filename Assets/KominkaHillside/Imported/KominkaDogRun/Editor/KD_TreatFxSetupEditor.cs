@@ -292,6 +292,7 @@ namespace KominkaDogRun.Editor
                 au.minDistance = 1f;
                 au.maxDistance = 12f;
                 au.volume = 0.7f;
+                global::KominkaHillside.Editor.KH_AudioSpatialEditor.Configure(au);
 
                 systems[i] = ps;
                 audios[i] = au;

@@ -149,6 +149,7 @@ namespace KominkaHillside.Editor
                     var spatial = t.GetComponent<VRCSpatialAudioSource>(); if (spatial == null) spatial = t.gameObject.AddComponent<VRCSpatialAudioSource>();
                     spatial.EnableSpatialization = true; spatial.UseAudioSourceVolumeCurve = false;
                     spatial.Gain = Gain; spatial.Near = Near; spatial.Far = Far; spatial.VolumetricRadius = VolumetricRadius;
+                    KH_AudioSpatialEditor.Configure(source);
                     EditorUtility.SetDirty(spatial);
                     EditorUtility.SetDirty(t.gameObject);
                 }
@@ -284,7 +285,7 @@ namespace KominkaHillside.Editor
                 if (s != null)
                 {
                     Req(e, s.loop && s.playOnAwake && !s.mute, n + " loop + PlayOnAwake, not muted");
-                    Req(e, s.spatialBlend == 1f && s.dopplerLevel == 0f, n + " 3D (spatialBlend 1, no doppler)");
+                    Req(e, s.spatialBlend == 1f && s.spatialize && s.dopplerLevel == 0f, n + " 3D (spatialBlend 1, spatialize, no doppler)");
                     Req(e, Mathf.Approximately(s.volume, BaseVolume) && s.priority == Priority, n + " volume " + s.volume + " / priority " + s.priority);
                     Req(e, Mathf.Abs(s.pitch - plan[i].pitch) < 1e-4f, n + " pitch " + s.pitch + " = " + plan[i].pitch);
                     Req(e, s.outputAudioMixerGroup == null, n + " no mixer group");

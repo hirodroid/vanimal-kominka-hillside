@@ -921,6 +921,7 @@ namespace KominkaDogRun.Editor
             audio.loop = false;
             audio.spatialBlend = 0f;
             audio.volume = 0.2f;
+            global::KominkaHillside.Editor.KH_AudioSpatialEditor.Configure(audio);
             pouch.uiAudio = audio;
             var soundShelf = items != null && items.Length > 0 && items[0] != null ? items[0].shelf : null;
             if (soundShelf != null)

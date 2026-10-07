@@ -627,13 +627,14 @@ namespace KominkaHillside.Editor
             return ps;
         }
 
-        /// <summary>3D、ループ、playOnAwake なし、距離の減衰 0.5〜8 m (制作票の案、Logarithmic)。</summary>
+        /// <summary>3D、ループ、playOnAwake なし。0.5〜8 m の有限カーブ + VRC 空間音。</summary>
         static AudioSource LoopSource(GameObject go, AudioClip clip, float volume)
         {
             var s = go.GetComponent<AudioSource>(); if (s == null) s = go.AddComponent<AudioSource>();
             s.clip = clip; s.loop = true; s.playOnAwake = false; s.volume = volume; s.mute = false;
             s.spatialBlend = 1f; s.rolloffMode = AudioRolloffMode.Logarithmic; s.minDistance = AudioMinDistance; s.maxDistance = AudioMaxDistance;
             s.dopplerLevel = 0f; s.priority = 128;
+            KH_AudioSpatialEditor.Configure(s);
             EditorUtility.SetDirty(s);
             return s;
         }

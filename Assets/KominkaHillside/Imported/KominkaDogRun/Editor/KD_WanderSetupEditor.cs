@@ -676,6 +676,7 @@ namespace KominkaDogRun.Editor
                 log.AppendLine($"   reused VRCSpatialAudioSource (Gain {spatial.Gain} / Near {spatial.Near} / Far {spatial.Far})");
             }
 
+            global::KominkaHillside.Editor.KH_AudioSpatialEditor.Configure(src);
             if (!created) return src;
 
             // ---- ここから下は新規作成時の出発点。Play で触ってよい ----
@@ -750,6 +751,7 @@ namespace KominkaDogRun.Editor
                 log.AppendLine($"   reused VRCSpatialAudioSource (Gain {spatial.Gain} / Near {spatial.Near} / Far {spatial.Far})");
             }
 
+            global::KominkaHillside.Editor.KH_AudioSpatialEditor.Configure(src);
             if (!created) return src;
 
             src.rolloffMode = AudioRolloffMode.Linear;

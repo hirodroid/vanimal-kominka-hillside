@@ -103,6 +103,7 @@ namespace KominkaHillside.Editor
                 // 通知音 (§A.4「音 1 回」。W3 レビュー 15): 手元メニューの成功音を流用。2D、1 回だけ鳴らす
                 var chime = noticeRoot.GetComponent<AudioSource>(); if (chime == null) chime = noticeRoot.AddComponent<AudioSource>();
                 chime.clip = p.uiSuccessClip; chime.playOnAwake = false; chime.loop = false; chime.spatialBlend = 0f; chime.volume = 0.6f;
+                KH_AudioSpatialEditor.Configure(chime);
                 notice.chime = chime;
                 notice.titleLabel = MakeText(board.transform, "Title", new Vector2(-30f, 130f), new Vector2(660f, 50f), 26f, font, Ja("course.travel.join.notice.title").Replace("{0}", "VRChatUser"));
                 notice.countLabel = MakeText(board.transform, "Count", new Vector2(330f, 130f), new Vector2(60f, 44f), 26f, font, "20");

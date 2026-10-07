@@ -115,6 +115,7 @@ namespace KominkaHillside.Editor
                 source.enabled = true;
                 source.clip = clip; source.playOnAwake = true; source.loop = true; source.mute = false;
                 source.spatialBlend = 0f; source.spatialize = false; source.dopplerLevel = 0f; source.bypassReverbZones = true;
+                KH_AudioSpatialEditor.Configure(source);
                 source.priority = 128;
                 // 音量の正本は KD_BgmPlayer.baseVolume (AudioSource.volume は実行時に毎フレーム作り直される)
                 source.volume = BaseVolume;

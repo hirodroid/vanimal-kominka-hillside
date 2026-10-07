@@ -65,6 +65,7 @@ namespace KominkaHillside.Editor
                 src.spatialBlend = 1f; src.minDistance = MinDistance; src.maxDistance = MaxDistance; src.dopplerLevel = 0f;
                 // Codex W6 D-低: Logarithmic は maxDistance で音が切れない (20 m でも 1/20 残る)。終端 0 のカスタム曲線にする
                 src.rolloffMode = AudioRolloffMode.Custom; src.SetCustomCurve(AudioSourceCurveType.CustomRolloff, Rolloff());
+                KH_AudioSpatialEditor.Configure(src);
                 EditorUtility.SetDirty(src); r.sources++;
                 var so = new SerializedObject(wanders[i]);
                 var a = so.FindProperty("waterAudio"); var c = so.FindProperty("waterStepClip");
@@ -148,6 +149,7 @@ namespace KominkaHillside.Editor
             for (int i = 0; i < wanders.Length; i++)
             {
                 var src = fx.Find("WaterAudio" + i)?.GetComponent<AudioSource>();
+                if (KH_AudioSpatialEditor.Problem(src) != null) r.findings.Add("audio spatial " + i + ": " + KH_AudioSpatialEditor.Problem(src));
                 if (src == null || src.playOnAwake || src.spatialBlend < 0.99f || src.rolloffMode != AudioRolloffMode.Custom || Mathf.Abs(src.maxDistance - MaxDistance) > 0.01f) r.findings.Add("audio source " + i);
                 else
                 {

@@ -654,3 +654,7 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 |---|---|---|
 | `Scripts/KD_ShopKeeper.cs` | `InfoWalk` の行き先 2 行「行き先は「広場」か / 「古民家側の入口」だ。」を 4 行「行き先は6つから選べる。/「広場」「奥の広場」「川辺」/ と、ぐるっと回る周回が2つ、/ それに「古民家側の入口」だ。」へ (1 行 14 字以内) | 周回コース (2026-09-27) 以降の手元メニューの 6 目的地に合わせる |
 | `Data/UITranslations.json` | `KD_ShopKeeper.InfoWalk` の ja を上の const と同じ文へ。他 12 言語 (英文のまま) の「Choose the destination: Plaza or Farmhouse-side gate.」を「Choose from 6 destinations: Plaza, Upper clearing, Riverbank, two loop walks, or Farmhouse-side gate.」へ | 表示の正本は文言表 (const は ja の写し。Shop Keeper の Verify が一致を見る) |
+
+### 2026-10-07 空間音設定の補正
+
+移植側の `KD_WanderSetupEditor`、`KD_ShopKeeperSetupEditor`、`KD_TreatFxSetupEditor`、`KD_TreatSetupEditor.Pouch`、`KD_LiveSetupEditor.Hillside` に裏山の `KH_AudioSpatialEditor.Configure` 呼び出しを追加。犬の既存VRC距離を保持し、生成時にもUnity側と整合する。店主・おやつ演出は有限距離の3D、ポーチ操作音・ライブは既存2Dを維持。購入元の素材・プレハブ・古民家ドッグランの作業ツリーは変更していない。設定値と検証範囲は[川音制作票 §9](../../plans/2026-10-02-river-ambience-production.md#9-全音源の空間音設定見直し-2026-10-07)。

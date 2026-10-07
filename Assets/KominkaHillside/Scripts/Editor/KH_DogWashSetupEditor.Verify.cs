@@ -618,6 +618,7 @@ namespace KominkaHillside.Editor
 
         static void CheckLoop(Action<bool, string> req, string what, AudioSource s, string clip)
         {
+            req(KH_AudioSpatialEditor.Problem(s) == null, what + ": VRC spatial settings / finite falloff");
             req(s != null && s.clip != null && s.clip.name == clip && s.loop && !s.playOnAwake && s.volume == 0f && s.spatialBlend >= 0.99f
                 && s.minDistance >= 0.49f && s.maxDistance <= 10.01f && s.maxDistance > s.minDistance,
                 what + ": " + clip + ", loop, 3D, no playOnAwake, volume 0, " + AudioMinDistance + "-" + AudioMaxDistance + " m");

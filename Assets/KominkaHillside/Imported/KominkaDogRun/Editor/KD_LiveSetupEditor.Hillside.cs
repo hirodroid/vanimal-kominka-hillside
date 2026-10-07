@@ -313,6 +313,8 @@ namespace KominkaDogRun.Editor
                     log.AppendLine("   " + stageGo.name + " -> inactive (台帳が再生中だけ ON にする)");
                 }
                 float duration = PlaybackDuration(shows[i].slug, director);
+                foreach (var audio in stageGo.GetComponentsInChildren<AudioSource>(true))
+                    global::KominkaHillside.Editor.KH_AudioSpatialEditor.Configure(audio);
                 log.AppendLine("   [" + i + "] " + stageGo.name + " duration=" + duration.ToString("F2") + "s darkness=" + shows[i].darkness.ToString("F2")
                     + " product=" + shows[i].productKey + " ramp=" + HillsideRampSecondsOf(shows[i].slug).ToString("F1") + "s");
 

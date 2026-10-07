@@ -1206,6 +1206,7 @@ namespace KominkaDogRun.Editor
             a.maxDistance = 12f;
             a.rolloffMode = AudioRolloffMode.Linear;
             a.volume = 0.6f;
+            global::KominkaHillside.Editor.KH_AudioSpatialEditor.Configure(a);
             return a;
         }
 
