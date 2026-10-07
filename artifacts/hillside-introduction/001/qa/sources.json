@@ -1,0 +1,20 @@
+{
+  "reference": "C:/work/unity/vcc/KominkaDogRun/artifacts/kominka-introduction/004",
+  "assets": {
+    "cover.png": "docs/development/evidence/2026-09-20-leash-production/Shiba-front.png",
+    "leash.png": "docs/plans/evidence/2026-10-04-prop-finish/rack-after.png",
+    "discs.png": "docs/plans/evidence/2026-10-04-matte-materials/after-discs.png",
+    "river.png": "docs/plans/evidence/2026-10-04-river-verge/water-access-adult-after.png",
+    "wash.png": "docs/plans/evidence/2026-10-04-prop-finish/tools-after.png",
+    "view.png": "docs/plans/evidence/2026-10-04-roadside/farmhouse-view-adult-after.png",
+    "rest.png": "docs/plans/evidence/2026-10-04-roadside/river-rest-adult-after.png",
+    "night.png": "docs/plans/evidence/2026-10-04-roadside/viewpoint-adult-night.png",
+    "map.png": "Assets/KominkaHillside/Textures/Map/KH_TravelMap.png"
+  },
+  "content": [
+    "docs/core-concept.md",
+    "docs/game-design.md",
+    "docs/development/overview.md"
+  ],
+  "date": "2026-10-04"
+}
