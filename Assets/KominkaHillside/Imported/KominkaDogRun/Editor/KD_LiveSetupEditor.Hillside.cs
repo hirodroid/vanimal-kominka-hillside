@@ -96,6 +96,23 @@ namespace KominkaDogRun.Editor
             return null;
         }
 
+        // 2026-10-07 audit RC-13: ライブの再生長 (KD_LiveSystem.stageDurations) = Timeline 内の AudioTrack (ミュートを除く) の最後のクリップの終わり
+        // (clip.start + clip.duration)。粒の余韻が曲より長い作品で、曲の後に無音の暗転・BGM 消音・犬の拘束が残らないようにする (古民家の slug 列挙の一般形)。
+        // AudioTrack が無い作品は従来どおり PlaybackDuration (古民家 3 曲は音源長、それ以外は Timeline の末尾)。26a と 26b が同じものを使う。
+        static float HillsidePlaybackDuration(string slug, PlayableDirector director)
+        {
+            var timeline = director != null ? director.playableAsset as UnityEngine.Timeline.TimelineAsset : null;
+            double end = -1;
+            if (timeline != null)
+                foreach (var track in timeline.GetOutputTracks())
+                {
+                    if (!(track is UnityEngine.Timeline.AudioTrack) || track.mutedInHierarchy) continue;   // Codex review: 親グループのミュートも含める
+                    foreach (var clip in track.GetClips())
+                        if (clip.end > end) end = clip.end;
+                }
+            return end > 0 ? (float)end : PlaybackDuration(slug, director);
+        }
+
         static float[] HillsideRampSeconds()
         {
             var shows = KD_DogDefs.LiveShows;
@@ -312,7 +329,8 @@ namespace KominkaDogRun.Editor
                     stageGo.SetActive(false);
                     log.AppendLine("   " + stageGo.name + " -> inactive (台帳が再生中だけ ON にする)");
                 }
-                float duration = PlaybackDuration(shows[i].slug, director);
+                // 2026-10-07 audit RC-13: 再生長は Timeline の末尾ではなく AudioTrack の最後のクリップの終わり (曲 124 s / 月の演出 135.9 s)
+                float duration = HillsidePlaybackDuration(shows[i].slug, director);
                 foreach (var audio in stageGo.GetComponentsInChildren<AudioSource>(true))
                     global::KominkaHillside.Editor.KH_AudioSpatialEditor.Configure(audio);
                 log.AppendLine("   [" + i + "] " + stageGo.name + " duration=" + duration.ToString("F2") + "s darkness=" + shows[i].darkness.ToString("F2")
@@ -678,7 +696,8 @@ namespace KominkaDogRun.Editor
                     string tag = "[" + i + " " + shows[i].slug + "] ";
                     v.Check(directors[i] != null && live.stageDirectors[i] == directors[i] && stageGos[i] != null && live.stageRoots[i] == stageGos[i],
                         tag + "stageDirectors / stageRoots がこのステージ (添字 = liveId)");
-                    float want = directors[i] != null ? PlaybackDuration(shows[i].slug, directors[i]) : -1f;
+                    // 2026-10-07 audit RC-13: 26a と同じ計算 (AudioTrack の最後のクリップの終わり)
+                    float want = directors[i] != null ? HillsidePlaybackDuration(shows[i].slug, directors[i]) : -1f;
                     v.Check(directors[i] != null && Mathf.Abs(live.stageDurations[i] - want) < 0.01f,
                         tag + "stageDurations == 再生長 " + want.ToString("F2") + "s (actual " + live.stageDurations[i].ToString("F2") + ")");
                     v.Check(Mathf.Abs(live.stageDarkness[i] - wantDark[i]) < 0.001f, tag + "stageDarkness == " + wantDark[i] + " (actual " + live.stageDarkness[i] + ")");

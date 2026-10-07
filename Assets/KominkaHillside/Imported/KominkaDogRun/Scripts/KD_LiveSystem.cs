@@ -352,6 +352,10 @@ namespace KominkaDogRun
             // DogPerformanceOf(liveId) != null (null for liveId < 0, so candyPreparing alone cannot start anything), want stays -1
             // and equals _playingId. Same result without the two IsOwner calls.
             if (liveId < 0 && _playingId < 0) return;
+            // 2026-10-07 audit RC-13: 60 秒待機まで明けたら Owner が台帳を空 (-1) に戻す (上の休眠の早期 return を効かせる)。この時点で
+            // SecondsUntilAvailable は既に 0 なので待機の判定は変わらない。準備中 (Elapsed = -1e9) と犬の復帰中は戻さない
+            if (liveId >= 0 && !candyPreparing && !DogRecovering && Elapsed >= NightInSeconds + DurationOf(liveId) + CooldownSeconds
+                && Networking.IsOwner(gameObject)) { liveId = -1; RequestSerialization(); }
             UpdateCandyAuthority();
             UpdateMountAuthority();
             var dogPerformance = DogPerformanceOf(liveId);

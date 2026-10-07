@@ -33,7 +33,8 @@ namespace KominkaDogRun
                 int player = dogBook.PendingPlayer(dogIndex, Rand01(tick, 91), cyclePeriod);
                 // 裏山改変 (2026-10-02 ユーザー要望「洗い場には他の犬は勝手に近寄ってこない」): 洗い場の円の中に居る人へは
                 // 迎えに行かない (2 s 後にまた引く。人が円を出たら迎える)。HillsideStationLeave.cs
-                if (player >= 0) { if (!KeepOutPlayer(player)) fetchController._BeginGreeting(player); }
+                // 2026-10-07 audit RC-5: 遠い人・川の対岸の人へは迎えに行かない (Owner だけが決め、開始は Fetch の同期で配られる。2 s 後にまた引く)
+                if (player >= 0) { if (!KeepOutPlayer(player) && !GreetTooFar(player)) fetchController._BeginGreeting(player); }
                 else TryDropBy();
                 active = fetchController.GreetingActive;
             }
@@ -123,7 +124,17 @@ namespace KominkaDogRun
             if (Rand01(cycleIdx, 92) >= dropByChance) return;
             int player = dogBook.DropByPlayer(dogIndex, Rand01(cycleIdx, 93), dropByDogInterval, dropByPlayerInterval, dropByAfterGreeting);
             // 裏山改変 (2026-10-02): 洗い場の円の中に居る人へは立ち寄らない (この周期の抽選は使い切り)
-            if (player >= 0 && !KeepOutPlayer(player)) fetchController._BeginDropBy(player);
+            if (player >= 0 && !KeepOutPlayer(player) && !GreetTooFar(player)) fetchController._BeginDropBy(player);   // 2026-10-07 audit RC-5: 遠い人へは立ち寄らない
+        }
+        /// <summary>2026-10-07 audit RC-5: その人が犬から水平に PlayMaxDistance (じゃれ合いと同じ上限) より遠い、または川の対岸。
+        /// 呼ぶのは Owner の開始判定だけ (実位置は Owner の観測で足りる。結果は Fetch の同期で配られる)。</summary>
+        bool GreetTooFar(int playerId)
+        {
+            VRCPlayerApi p = VRCPlayerApi.GetPlayerById(playerId);
+            if (!Utilities.IsValid(p)) return false;
+            Vector3 at = p.GetPosition(), dog = dogRoot.position;
+            if (Horizontal(at, dog) > PlayMaxDistance()) return true;
+            return riverData != null && riverData._OtherBank(dog, at);
         }
         void FinishInterruptedGreeting()
         {

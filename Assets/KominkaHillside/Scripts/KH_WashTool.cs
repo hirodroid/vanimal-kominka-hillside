@@ -200,7 +200,9 @@ namespace KominkaHillside
             return Utilities.IsValid(o) && o.playerId == playerId;
         }
 
-        const float HoldGrace = 1.5f;
+        // 2026-10-07 audit RC-7 (a): public so KH_DogWash defers a stroke that arrives before the holder / Owner change for the
+        // same time (the stroke before both was dropped here; KH_DogWash re-asks _IsHeldBy within this)
+        public const float HoldGrace = 1.5f;
         private int _holderId = -1;
         private int _prevHolderId = -1;
         private float _prevHolderUntil = -100f;

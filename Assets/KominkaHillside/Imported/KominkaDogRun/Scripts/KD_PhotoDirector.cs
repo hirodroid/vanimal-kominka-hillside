@@ -1070,6 +1070,8 @@ namespace KominkaDogRun
         bool Shoot(Vector3 pos, Vector3 lookAt, int group)
         {
             if (!photoCapture.CanCapture) return false; // 前の撮影の 1 フレーム中 (再入)
+            // 2026-10-07 audit RC-9: 移動の暗転中 (板はレイヤー 0 で写真カメラにも写る) はどの経路でも撮らない。枠を取る前に弾く (黒い 1 枚で遊びの枠をつぶさない)
+            if (washFade != null && washFade._Busy()) { _logKind = ""; _logDog = -1; return false; }
 
             // 寝室の出来事は屋外用の距離計算を使わず、別の4枚へ残す。
             if (bedroom != null && bedroom.room != null && bedroom.room.GainAt(lookAt) <= 0f)

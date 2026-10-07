@@ -680,6 +680,31 @@ namespace KominkaHillside
         private int _prevOwnerId = -1;
         private float _prevOwnerUntil = -1f;
         const float PrevOwnerGrace = 5f;
+        // 2026-10-07 audit RC-7 (b): the cells' dirtSeq right after this client took over (OnOwnershipTransferred, after
+        // ReintegrateDirt). A previous Owner's event newer than this, arriving within PrevOwnerGrace, goes into the cells.
+        private int _dirtTakeoverSeq;
+        // 2026-10-07 audit RC-7 (a): another player's tool strokes that arrived before this client saw that player hold a tool of
+        // that kind (a pick-up / hand-over: the stroke can beat both the Pickup's holder and the ownership). Kept up to
+        // KH_WashTool.HoldGrace and taken, in arrival order, as soon as HoldsTool says yes; older or overflowing ones are dropped.
+        const int DeferMax = 8;
+        private int _dfCount;
+        private int[] _dfSender = new int[DeferMax];
+        private int[] _dfTool = new int[DeferMax];
+        private int[] _dfPart = new int[DeferMax];
+        private int[] _dfFrom = new int[DeferMax];
+        private int[] _dfTo = new int[DeferMax];
+        private int[] _dfMs = new int[DeferMax];
+        private int[] _dfRmm = new int[DeferMax];
+        private int[] _dfSeq = new int[DeferMax];
+        private int[] _dfEpoch = new int[DeferMax];
+        private float[] _dfAt = new float[DeferMax];
+        private int _strokesDeferred, _strokesDeferRetried;   // harness read-outs (deferred / re-run from the queue; a re-run may still be refused)
+        // 2026-10-07 audit RC-7 (b), Codex review A-2: at a takeover the new Owner's numbering jumps ahead of what the cells held, so
+        // its first events do not share a number with a previous Owner's event still in flight (PrevOwnerGrace; a few at most) -
+        // a third client keeps the first of two equal numbers and would have mixed them up. SeqNewer is a window, so a gap is free.
+        // Limit (Codex review 2): a second transfer before the first new Owner's seq reached the next one starts from the same
+        // base and can reuse the gap; collision-free numbering would need the sender / Owner generation in the event id (Tier 3).
+        const int TakeoverSeqGap = 16;
         const int DirtDrawsPerFrame = 2;  // whole-part Brushes per dog per frame (six dogs at once stay bounded)
         // Every client: dirt / wet changes waiting to be drawn (the Owner's own, or received), one Brush per part
         private float[] _dirtDrawPend = new float[PartCount];
@@ -1226,7 +1251,14 @@ namespace KominkaHillside
             if (seq < 0 || strokeEpoch < 0) return;
             VRCPlayerApi caller = NetworkCalling.CallingPlayer;
             if (!Utilities.IsValid(caller)) return;
+            // 2026-10-07 audit RC-7 (a): deferred strokes first (AcceptSender takes a sender's seqs in order only)
+            DrainDeferred();
+            ReceiveStroke(caller, tool, part, from, to, ms, rmm, seq, strokeEpoch, false);
+        }
 
+        // 2026-10-07 audit RC-7 (a): the body of NetStroke after the argument checks, also run for a deferred stroke (queued).
+        void ReceiveStroke(VRCPlayerApi caller, int tool, int part, int from, int to, int ms, int rmm, int seq, int strokeEpoch, bool queued)
+        {
             // Epoch first, before the sender's sequence and budget are touched: a stale stroke must not use up the
             // budget of the fresh ones behind it. The epoch only identifies the version: a stroke is taken when it
             // matches this client's epoch, or is 0 (the sender held no state yet: a joiner). Anything else is
@@ -1244,11 +1276,20 @@ namespace KominkaHillside
             // the other tools keep the hold check (HoldsTool: a KH_WashTool with tool == ToolBottle).
             if (!caller.isLocal)
             {
+                // 2026-10-07 audit RC-7 (a), Codex review A-1: a sender with a stroke still deferred keeps its order - every later
+                // stroke of that sender (any tool, the bare hand too) waits behind it, or AcceptSender's per-sender seq would take
+                // the later one and then refuse the deferred one as old (the sender's _seq is shared by both hands / all tools)
+                if (!queued && SenderDeferred(caller.playerId)) { DeferStroke(caller.playerId, tool, part, from, to, ms, rmm, seq, strokeEpoch); return; }
                 if (hand)
                 {
                     if (!HandSyncedOk(caller.IsUserInVR(), (b - a).magnitude * meshToWorldScale)) { handStrokesRejected++; return; }
                 }
-                else if (!HoldsTool(caller.playerId, tool)) return;
+                else if (!HoldsTool(caller.playerId, tool))
+                {
+                    // 2026-10-07 audit RC-7 (a): not dropped at once - kept until the holder / Owner change arrives (FUNC-03/BUG-07)
+                    if (!queued) DeferStroke(caller.playerId, tool, part, from, to, ms, rmm, seq, strokeEpoch);
+                    return;
+                }
             }
             float sec = ms * 0.001f;
             if (!AcceptSender(caller.playerId, seq, sec)) return;
@@ -1538,6 +1579,67 @@ namespace KominkaHillside
             return HandNear(handL, handR, head, worldA, worldB) && DogStationHold();
         }
 
+        // 2026-10-07 audit RC-7 (a): keep a stroke whose sender is not yet seen holding the tool (full: the oldest goes).
+        void DeferStroke(int sender, int tool, int part, int from, int to, int ms, int rmm, int seq, int strokeEpoch)
+        {
+            if (_dfCount >= DeferMax)
+            {
+                for (int i = 1; i < DeferMax; i++) CopyDeferred(i, i - 1);
+                _dfCount = DeferMax - 1;
+            }
+            int k = _dfCount;
+            _dfSender[k] = sender; _dfTool[k] = tool; _dfPart[k] = part; _dfFrom[k] = from; _dfTo[k] = to;
+            _dfMs[k] = ms; _dfRmm[k] = rmm; _dfSeq[k] = seq; _dfEpoch[k] = strokeEpoch; _dfAt[k] = Time.time;
+            _dfCount++;
+            _strokesDeferred++;
+        }
+
+        void CopyDeferred(int from, int to)
+        {
+            _dfSender[to] = _dfSender[from]; _dfTool[to] = _dfTool[from]; _dfPart[to] = _dfPart[from]; _dfFrom[to] = _dfFrom[from];
+            _dfTo[to] = _dfTo[from]; _dfMs[to] = _dfMs[from]; _dfRmm[to] = _dfRmm[from]; _dfSeq[to] = _dfSeq[from];
+            _dfEpoch[to] = _dfEpoch[from]; _dfAt[to] = _dfAt[from];
+        }
+
+        // 2026-10-07 audit RC-7 (a): a deferred stroke whose sender now holds that kind of tool (a bare-hand stroke: at once) runs
+        // the full receive (epoch, distance, hand check, sequence and budget again); one older than KH_WashTool.HoldGrace, or whose
+        // sender left, goes. Per sender the order is kept (Codex review A-1): while an earlier stroke of the same sender is still
+        // kept, the later ones of that sender wait behind it. Every client (NetStroke before a new stroke, Update while any is
+        // kept), so every mask and the Owner's cells take it. The receive may still refuse it (seq / budget / epoch).
+        void DrainDeferred()
+        {
+            if (_dfCount == 0) return;
+            float now = Time.time;
+            int n = _dfCount;
+            int keep = 0;
+            for (int i = 0; i < n; i++)
+            {
+                bool gone = now - _dfAt[i] > KH_WashTool.HoldGrace;
+                VRCPlayerApi p = null;
+                if (!gone) p = VRCPlayerApi.GetPlayerById(_dfSender[i]);
+                if (!gone && !Utilities.IsValid(p)) gone = true;
+                bool blocked = false;   // an earlier stroke of the same sender is still kept: this one waits behind it
+                if (!gone) for (int j = 0; j < keep; j++) if (_dfSender[j] == _dfSender[i]) { blocked = true; break; }
+                if (!gone && !blocked && (_dfTool[i] == ToolHand || HoldsTool(_dfSender[i], _dfTool[i])))
+                {
+                    _strokesDeferRetried++;
+                    ReceiveStroke(p, _dfTool[i], _dfPart[i], _dfFrom[i], _dfTo[i], _dfMs[i], _dfRmm[i], _dfSeq[i], _dfEpoch[i], true);
+                    gone = true;
+                }
+                if (gone) continue;
+                if (keep != i) CopyDeferred(i, keep);
+                keep++;
+            }
+            _dfCount = keep;
+        }
+
+        // 2026-10-07 audit RC-7 (a): does `sender` have a stroke kept in the deferred queue?
+        bool SenderDeferred(int sender)
+        {
+            for (int i = 0; i < _dfCount; i++) if (_dfSender[i] == sender) return true;
+            return false;
+        }
+
         // Per sender: seq must move forward (a replay or a reorder is dropped), and the contact time is limited to
         // BudgetRate seconds per second (the attribute rate limit bounds the call count, not what each call claims).
         bool AcceptSender(int playerId, int seq, float sec)
@@ -1795,7 +1897,8 @@ namespace KominkaHillside
             // An open segment always comes with a stroke within SegmentGap (< BusyHold), so _segOpen needs no check.
             if (now < _idleNext && now >= _busyUntil && _pdCount == 0 && _qCount == 0 && !_anyDirtDraw && !_restorePending
                 && !_replaying && !_replayPending && !_dirtOutPending && !_audioOn && !_syncDue   // _syncDue: a send waiting for its time goes out on time
-                && !_runoffOn) return;   // the runoff runs on its own runoffInterval schedule (it outlasts BusyHold)
+                && !_runoffOn   // the runoff runs on its own runoffInterval schedule (it outlasts BusyHold)
+                && _dfCount == 0) return;   // 2026-10-07 audit RC-7 (a): deferred strokes are re-asked every frame
             if (now >= _idleNext) _idleNext = NextGrid(now, IdleInterval, _phase);
 
             // Lost RenderTexture (device reset, app resume) or a long real-time gap: repaint from the cells.
@@ -1821,6 +1924,7 @@ namespace KominkaHillside
                     else StopReplay();
                 }
             }
+            DrainDeferred();   // 2026-10-07 audit RC-7 (a): before the draws, so a stroke taken now is drawn this frame
             ReplayStep();
             DrainPending();
             DrainDirt();
@@ -1920,6 +2024,8 @@ namespace KominkaHillside
             EnsureArrays();
             Reintegrate();
             ReintegrateDirt();
+            _dirtTakeoverSeq = dirtSeq;   // 2026-10-07 audit RC-7 (b): what the cells hold at the takeover
+            dirtSeq = (dirtSeq + TakeoverSeqGap) & 0x3FFFFFFF;   // net: owner-only. Codex review A-2: our numbers start past the previous Owner's in-flight ones
             SeedShoweredFromCells();   // round 2: the runoff's showered cells, and a window in progress continues here
             for (int i = 0; i < AppliedSlots; i++) _apAt[i] = Time.time;
             if (!_gotFirst)
@@ -3079,7 +3185,23 @@ namespace KominkaHillside
             _dirtLastSeq = seq;
             LogDirt(seq, strokeEpoch, from, to, amount);
             if (!_gotFirst) return;
-            if (SeqNewer(seq, _dirtMaskSeq)) QueueDirtFields(from, to, amount & 1023, (amount >> 10) & 1023);
+            // 2026-10-07 audit RC-7 (b): this client is the new Owner and the event is the previous Owner's, in flight across the
+            // change (PrevOwnerGrace). OnOwnershipTransferred re-integrated only what had arrived by then, so this one went to the
+            // log and the mask but never into the cells / dirtSeq (codex-03/BUG-02). Taken when newer than what the cells held at
+            // the takeover (_dirtTakeoverSeq), not than dirtSeq: our own numbering starts TakeoverSeqGap past it (OnOwnershipTransferred),
+            // so a previous Owner's number in flight lies between the two and never equals one of ours. dirtSeq only moves up here
+            // (max with what was received); a third client that took our event first still refuses the previous Owner's older
+            // number - its cells converge with the next cell sync (the mask is not repainted by it: RC-7's ordering, Tier 3).
+            bool takeover = Networking.IsOwner(gameObject) && _cellsOk && _partCells != null && SeqNewer(seq, _dirtTakeoverSeq);
+            if (takeover || SeqNewer(seq, _dirtMaskSeq)) QueueDirtFields(from, to, amount & 1023, (amount >> 10) & 1023);
+            if (takeover)
+            {
+                ApplyDirtEvent(from, to, amount);
+                if (SeqNewer(seq, dirtSeq)) dirtSeq = seq;   // net: owner-only
+                if (SeqNewer(seq, _dirtMaskSeq)) _dirtMaskSeq = seq;
+                _syncDue = true;
+                Wake();
+            }
         }
 
         void LogDirt(int seq, int ep, int from, int to, int amount)
@@ -3107,19 +3229,26 @@ namespace KominkaHillside
             for (int i = 0; i < _dlCount; i++)
             {
                 if (_dlEpoch[i] != epoch || !SeqNewer(_dlSeq[i], dirtSeq)) continue;
-                float wl = (_dlAmount[i] & 1023) * DirtWetUnit;
-                float wb = ((_dlAmount[i] >> 10) & 1023) * DirtWetUnit;
-                for (int k = 0; k < 4; k++)
-                {
-                    int pa = 3 + k;
-                    int pb = k < 3 ? k : 8;
-                    AddPartCells(pa, (((_dlFrom[i] >> (7 * k)) & 127) - 64) * DirtUnit, wl);
-                    AddPartCells(pb, (((_dlTo[i] >> (7 * k)) & 127) - 64) * DirtUnit, pb <= 1 ? wb : 0f);
-                }
+                ApplyDirtEvent(_dlFrom[i], _dlTo[i], _dlAmount[i]);   // 2026-10-07 audit RC-7 (b): shared with ReceiveDirt
                 dirtSeq = _dlSeq[i];   // net: owner-only
                 _syncDue = true;
             }
             _dirtMaskSeq = dirtSeq;
+        }
+
+        // One dirt event into the cells: the part averages it carries (uniform over the part). 2026-10-07 audit RC-7 (b): moved out
+        // of ReintegrateDirt unchanged, so the takeover path in ReceiveDirt applies an event the same way.
+        void ApplyDirtEvent(int from, int to, int amount)
+        {
+            float wl = (amount & 1023) * DirtWetUnit;
+            float wb = ((amount >> 10) & 1023) * DirtWetUnit;
+            for (int k = 0; k < 4; k++)
+            {
+                int pa = 3 + k;
+                int pb = k < 3 ? k : 8;
+                AddPartCells(pa, (((from >> (7 * k)) & 127) - 64) * DirtUnit, wl);
+                AddPartCells(pb, (((to >> (7 * k)) & 127) - 64) * DirtUnit, pb <= 1 ? wb : 0f);
+            }
         }
 
         void AddPartCells(int part, float dD, float dW)

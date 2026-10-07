@@ -279,11 +279,37 @@ namespace KominkaDogRun
         {
             Transform tr = _packRoots[idx];
             if (tr == null || !tr.gameObject.activeInHierarchy) return DbgOtherGone;
+            // 2026-10-07 audit RC-5: ホームどうしが遠い・川の対岸なら組まない (入力は同期されたホームと静的な川のデータだけ = 全端末で同じ。距離は対称なので両方の犬が同時に降りる)
+            if (PlayHomesApart(idx)) return DbgOtherFar;
             KD_DogFetchController f = _packFetch[idx];
             if (f == null || !f.IsIdle) return DbgOtherFetch;
+            // 2026-10-07 audit RC-5: 水の中 (同期の waterPose) の相手は追わない
+            if (f.WaterPose != 0) return DbgOtherBusy;
             KD_DogWanderController w = _packWander[idx];
             if (w == null || w.IsPausedForPlayer) return DbgOtherPaused;
+            // 2026-10-07 audit RC-5: リード中 (切符はリード中に限る) と洗い場の保持は IsPausedForPlayer に立たないので同期値から読む
+            // (WashHeldSynced: ローカルの台の降下中は含めない。IsPausedForPlayer と同じく、伝播の遅れの間だけ端末差が出うる)
+            if (w.WashHeldSynced) return DbgOtherBusy;
+            if (hillsideLeashes != null && hillsideLeashes._IsLeashed(idx)) return DbgOtherBusy;
             return 0;
+        }
+
+        // 2026-10-07 audit RC-5: じゃれ合い・あいさつの距離の上限 (水平 m)。2.4 m/s で約 10 s = 本体の最短 18 s の半分強で着く。0 以下は既定へ戻す
+        [SerializeField] private float playMaxHomeDistance = 25f;
+        public const int DbgOtherFar = 20;   // 2026-10-07 audit RC-5: 相手のホームが遠い / 川の対岸
+        public const int DbgOtherBusy = 21;  // 2026-10-07 audit RC-5: 相手がリード中・洗い場・水の中
+
+        float PlayMaxDistance() { return playMaxHomeDistance > 0f ? playMaxHomeDistance : 25f; }
+
+        /// <summary>2026-10-07 audit RC-5: 自分のホームと相手のホームが上限より遠い、または川の対岸。
+        /// ホームは KH_LeashManager の同期値 releasedHomes から全端末で同じ位置へ置かれる Transform。</summary>
+        bool PlayHomesApart(int idx)
+        {
+            if (areaCenter == null || _packAreaCenter == null || idx >= _packAreaCenter.Length || _packAreaCenter[idx] == null) return false;
+            Vector3 mine = areaCenter.position, other = _packAreaCenter[idx].position;
+            float lim = PlayMaxDistance();
+            if (Horizontal(mine, other) > lim) return true;
+            return riverData != null && riverData._OtherBank(mine, other);
         }
 
     }

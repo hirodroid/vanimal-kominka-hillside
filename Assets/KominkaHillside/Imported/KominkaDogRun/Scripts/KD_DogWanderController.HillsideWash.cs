@@ -134,6 +134,9 @@ namespace KominkaDogRun
         /// 2026-10-02: and while a released dog rides the stand down (HillsideStationLeave.cs, at most liftMax / liftSpeed + 1 s), so no
         /// Fetch / disc / new leash moves the root off a raised stand.
         public bool WashHeld { get { return (wash != null && wash._WashHold()) || HeldStation() != null || _leaveLowering; } } // net: callable-ok: read-only
+        /// <summary>2026-10-07 audit RC-5 (Codex review): WashHeld without the local ride-down (_leaveLowering) - the synced wash hold and
+        /// the synced station hold only, for a judgement every client must make the same way (the play pairing reads the partner's).</summary>
+        public bool WashHeldSynced { get { return (wash != null && wash._WashHold()) || HeldStation() != null; } } // net: callable-ok: read-only
 
         // ================= IMP-DOG-035: called to a wash station (docs/plans/2026-10-01-wash-call-and-height.md §3 / §4) =================
         //
@@ -386,7 +389,17 @@ namespace KominkaDogRun
             if (now && !_washErrandPrev)
             {
                 if (wash != null && wash._WashHold()) wash._ReleaseHold();
-                if (_stationIdx >= 0 && washCalls[_stationIdx] != null) washCalls[_stationIdx]._ReleaseDog(dogIndex);
+            }
+            // 2026-10-07 audit RC-1 (b): the station hold is let go on the level, not only the edge - a hold accepted after the edge
+            // (a call that reached the station Owner while the travel ticket was already out) came back when the ticket ended and
+            // pulled the dog to the station (UpdateWashStation: dist > StationFar teleport), for up to idleReleaseSeconds.
+            // _ReleaseDog is idempotent (Owner only; dog != heldDog returns, so after the first release it is a no-op) and a
+            // non-Owner's call does nothing, so calling it every tick while the errand lasts and a hold is still seen is safe.
+            // The wash hold (_ReleaseHold) stays on the edge: a stroke made during the errand may hold again (design §1-5), and
+            // releasing it every tick would re-sync washMs per stroke.
+            if (now && _stationIdx >= 0 && washCalls[_stationIdx] != null)
+            {
+                washCalls[_stationIdx]._ReleaseDog(dogIndex);
                 _heldStationMemoFrame = -1;   // IMP-DOG-034 C1-1a: the station Owner's _ReleaseDog clears heldDog right here
             }
             _washErrandPrev = now;

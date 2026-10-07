@@ -850,6 +850,8 @@ namespace KominkaDogRun
         void WaterEnd(string reason)
         {
             if (waterState != WaterOff) Debug.Log("[KD_DogWanderController] water end dog=" + dogIndex + " reason=" + reason);
+            // 2026-10-07 audit RC-15: 次の再入水抽選は遊びの終わりから 45 s 後 (初回の遊びも数える)。先の値 (ハーネスの +600 s 固定) は Max で残す
+            if (waterState != WaterOff) _waterNextRoll = Mathf.Max(_waterNextRoll, Time.time + WaterRollInterval);
             waterState = WaterOff; _waterHasTarget = false; _waterLookUntil = 0f; _waterExitRiver = false;
         }
 

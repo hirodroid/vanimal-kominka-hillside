@@ -16,7 +16,8 @@ namespace KominkaHillside
     /// Nobody takes ownership of anything here.
     ///
     /// Release (Owner): 「おわり」 (ReqRelease, anyone), another dog called, the dog's own gathering / sleep call / travel ticket (the dog
-    /// calls _ReleaseDog on its accept edge, on every client; only the Owner's call acts), the caller leaving, the dog leashed by
+    /// calls _ReleaseDog on its accept edge - 2026-10-07 audit RC-1: and every tick while the errand lasts - on every client; only
+    /// the Owner's call acts), the caller leaving, the dog leashed by
     /// someone other than the caller, and idleReleaseSeconds since the last stroke (or the call) while the caller is farther than
     /// callerFarMeters from the anchor. The stand goes back to 0 whenever no dog is held.
     /// 2026-10-02: on that release edge the dog side (every client, from the synced heldDog) drops the wash hold and walks out past
@@ -30,6 +31,8 @@ namespace KominkaHillside
     /// board shows for each dog and what the Owner accepts - the same function on the same synced inputs (the leash walkers, every
     /// station's heldDog, the Fetch / disc / gathering / sleep-call states, the wash hold, the dog root synced by VRCObjectSync).
     /// Refused at once: leashed by someone else, held by another station, farther than callRange (horizontal, from the anchor).
+    /// 2026-10-07 audit RC-1: also the caller's own travel ticket (RefuseTraveling); RC-8 (a): another dog on this station washed
+    /// by someone else is waited for like the called dog's own (AvWashedByOther).
     /// Waited for (callWaitSeconds, then refused as busy): Fetch, the disc, a gathering, the sleep call, washed by someone else.
     /// callRange stays below the dog side's StationFar (30 m, Wash/12), so an accepted call never needs the "appear near the
     /// station" teleport and a far dog cannot be pulled in through it. Nothing new is synced.</summary>
@@ -72,6 +75,9 @@ namespace KominkaHillside
         // busy: the call waits callWaitSeconds (AvFetch .. AvWashedByOther; a refusal after the wait is RefuseBusy)
         public const int AvFetch = 6, AvFrisbee = 7, AvGathering = 8, AvSleepCall = 9, AvWashedByOther = 10;
         public const int AvHeldHere = 11;   // this station holds it (on its way or on the stand)
+        // 2026-10-07 audit RC-1: the caller's own travel ticket is out (refused at once; the board has no word for it yet)
+        public const int RefuseTraveling = 12;
+        const int TravelTicketLifeMs = 15000;   // = KD_DogWanderController.HillsideTravel.cs TravelTicketLifeMs (the dog side's rule)
 
         [UdonSynced] private int heldDog = -1;
         [UdonSynced] private int callerId = -1;
@@ -160,8 +166,9 @@ namespace KominkaHillside
         /// <summary>IMP-DOG-037: can player `pid` call `dog` to this station now, and if not, why. The board reads it for every dog
         /// (local player) and the Owner arbitrates with it (the caller), so the two never disagree on the rule; they can differ
         /// only by what each client has received so far (the Owner's answer is the one that counts, and a refusal names it).
-        /// Order (the first match wins): unwired > leashed by someone else > held here > held by another station > too far >
-        /// Fetch > the disc > gathering > the sleep call > washed by someone else > callable. Leashed is checked before "held
+        /// Order (the first match wins): unwired > leashed by someone else > held here > held by another station > the caller's
+        /// travel ticket (2026-10-07 audit RC-1) > too far > Fetch > the disc > gathering > the sleep call > washed by someone
+        /// else > another dog on this station washed by someone else (2026-10-07 audit RC-8 (a)) > callable. Leashed is checked before "held
         /// here" as Arbitrate always did (Codex 1: a re-call cannot bypass it). Every input is synced or the synced dog root.</summary>
         public int _Availability(int dog, int pid)
         {
@@ -172,6 +179,8 @@ namespace KominkaHillside
             if (leashed && m.walkers[dog] != pid) return RefuseLeashedByOther;
             if (dog == heldDog) return AvHeldHere;
             if (HeldElsewhere(dog)) return RefuseOtherStation;
+            // 2026-10-07 audit RC-1: the caller is on the way somewhere else (FUNC-03/BUG-06, codex-03/BUG-05, FUNC-07/BUG-01)
+            if (CallerTraveling(m, pid)) return RefuseTraveling;
             if (callRange > 0f)
             {
                 Vector3 d = w.dogRoot.position - _AnchorPosition();
@@ -193,7 +202,48 @@ namespace KominkaHillside
                 int washer = wash._WashHolderId();
                 if (washer >= 0 && washer != pid) return AvWashedByOther;
             }
+            // 2026-10-07 audit RC-8 (a): another dog on this station is being washed by somebody else (FUNC-03/BUG-01) - calling
+            // this one would let that dog go under the washer's hands (Accept: one dog per station). Waited for as the dog's own
+            // "washed by someone else" (same reason and wait; the hold runs out holdSeconds after their last stroke). The held
+            // dog leashed by the caller is the caller's to swap, as for `dog` above.
+            if (StationWashedByOther(pid)) return AvWashedByOther;
             return AvCallable;
+        }
+
+        /// <summary>2026-10-07 audit RC-8 (a): this station holds another dog whose synced wash hold belongs to someone other than
+        /// `pid`. Synced inputs only (heldDog, the wash hold / its holder, the leash walkers).</summary>
+        bool StationWashedByOther(int pid)
+        {
+            int h = heldDog;
+            if (h < 0 || washes == null || h >= washes.Length || washes[h] == null || !DogValid(h)) return false;
+            KH_LeashManager hm = dogs[h].hillsideLeashes;
+            if (hm != null && hm._IsLeashed(h) && hm.walkers[h] == pid) return false;
+            KH_DogWash hw = washes[h];
+            if (!hw._WashHold()) return false;
+            int washer = hw._WashHolderId();
+            return washer >= 0 && washer != pid;
+        }
+
+        /// <summary>2026-10-07 audit RC-1: player `pid` holds a travel ticket now - the same rule as the dog side's
+        /// TravelPendingRead (Phase 1 ready or 4 moved, the ticket's holder still walks that dog, within the ticket's life), over
+        /// all dogs. Reads the manager's synced arrays only (KH_LeashManager has no per-player read).</summary>
+        bool CallerTraveling(KH_LeashManager m, int pid)
+        {
+            if (m == null || pid < 0 || m.travelPhase == null || m.travelHolder == null || m.travelAtMs == null || m.walkers == null) return false;
+            int n = m.travelPhase.Length;
+            if (m.travelHolder.Length < n) n = m.travelHolder.Length;
+            if (m.travelAtMs.Length < n) n = m.travelAtMs.Length;
+            if (m.walkers.Length < n) n = m.walkers.Length;
+            int now = Networking.GetServerTimeInMilliseconds();
+            for (int i = 0; i < n; i++)
+            {
+                int ph = m.travelPhase[i];
+                if (ph != KH_LeashManager.TravelPhaseReady && ph != KH_LeashManager.TravelPhaseMoved) continue;
+                if (m.travelHolder[i] != pid || m.walkers[i] != pid) continue;
+                int age = now - m.travelAtMs[i];
+                if (age >= -2000 && age <= TravelTicketLifeMs) return true;
+            }
+            return false;
         }
 
         /// <summary>Another active station holds `dog` (its synced heldDog).</summary>
@@ -332,7 +382,8 @@ namespace KominkaHillside
             // Somebody else's leashed dog cannot be called (never bind another player's dog; the caller's own leashed dog can),
             // nor a dog another station holds, nor one farther than callRange (IMP-DOG-037: refused here, before anything moves -
             // the dog side's far-call teleport is never reached for it)
-            if (a == RefuseLeashedByOther || a == RefuseOtherStation || a == RefuseTooFar) { Refuse(dog, a); return; }
+            // 2026-10-07 audit RC-1: and not while the caller's own travel ticket is out (refused at once, nothing is held)
+            if (a == RefuseLeashedByOther || a == RefuseOtherStation || a == RefuseTooFar || a == RefuseTraveling) { Refuse(dog, a); return; }
             // Calling the held dog again: it stays, and the caller does not change (Codex 1: the caller's leave / distance rules
             // keep following the player who called it)
             if (a == AvHeldHere) return;

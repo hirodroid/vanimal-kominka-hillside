@@ -336,7 +336,7 @@ namespace KominkaDogRun
             if (reservedId >= 0 && !ReservationLive()) ClearReservation();
             if (sleeperId >= 0 && LiveSleeperId < 0) { PublishRelease(); return; }
             // 裏山改変: 「呼ばれている」と「リード / 集合 / フリスビー」が両方立ったら、さんぽ側が勝つ (呼び出しと予約を畳む)。
-            // 徘徊層がさんぽ側を優先するので、残すと犬が来ないまま枠が居座る (場所指定は到着待ちにタイムアウトが無い)
+            // 徘徊層がさんぽ側を優先するので、残すと犬が来ないまま枠が居座る (場所指定の到着待ちの時間切れは arriveTimeout × 2 と長い。2026-10-07 audit RC-2)
             if (board != null && board._IsWalkBusy(dogIndex))
             {
                 if (LiveSleeperId >= 0) { PublishRelease(); return; }
@@ -348,7 +348,13 @@ namespace KominkaDogRun
             if (!Utilities.IsValid(player) || dog == null) return;
             float d = HorizontalDistance(player.GetPosition(), dog.position);
             if (hasSpot && !arrived)
-            { if (Vector3.Distance(dog.position, spot) <= .08f) { arrived = true; RequestSerialization(); } return; }
+            {
+                if (Vector3.Distance(dog.position, spot) <= .08f) { arrived = true; RequestSerialization(); return; }
+                // 2026-10-07 audit RC-2: 届かない場所指定 (川の帯など) で枠が居座らないよう時間切れを掛ける。接近に加え持ち上げ・向き合わせがあるので場所なしの 2 倍。
+                // 真上まで着いて収まり中・寝ている犬 (PlacedSleepHeld: 枠の Owner の端末が観測した配置状態。裁定は Watch を回す枠の Owner だけ) は解かない
+                if (Networking.GetServerTimeInMilliseconds() - calledMs > (int)(arriveTimeout * 2000f) && !PlacedHeld()) PublishRelease();
+                return;
+            }
             if (!arrived)
             {
                 if (d <= arriveRadius) { arrived = true; RequestSerialization(); return; }
@@ -356,6 +362,12 @@ namespace KominkaDogRun
                 return;
             }
             if (d > releaseDistance) PublishRelease();
+        }
+        // 2026-10-07 audit RC-2: 場所指定の時間切れから、置いた点の真上まで着いた犬を外す (配線が無ければ外さない = 時間切れが効く)
+        private bool PlacedHeld()
+        {
+            return pack != null && pack.dogWander != null && dogIndex >= 0 && dogIndex < pack.dogWander.Length
+                && pack.dogWander[dogIndex] != null && pack.dogWander[dogIndex].PlacedSleepHeld;
         }
         private float HorizontalDistance(Vector3 a, Vector3 b) { float dx = a.x - b.x, dz = a.z - b.z; return Mathf.Sqrt(dx * dx + dz * dz); }
         private void ClearReservation() { reservedId = -1; reservedToken = 0; reservedMs = 0; RequestSerialization(); }

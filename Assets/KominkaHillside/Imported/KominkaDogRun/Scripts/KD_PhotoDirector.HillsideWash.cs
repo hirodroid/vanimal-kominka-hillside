@@ -27,7 +27,8 @@ namespace KominkaDogRun
         public bool washShotEnabled = true;
         [Tooltip("洗い上がり (清潔の合図 / ブルブル) から撮るまでの秒数。ブルブル (1.2 s) の途中を狙う")]
         public float washShotDoneDelay = 0.5f;
-        [Tooltip("移動の暗転 (KH_LeashManager.travelFade)。暗転中は撮らない。null なら見ない")]
+        // 2026-10-07 audit RC-9: 洗いだけでなく Shoot (全経路の共通の入口) もこれを見る。名前はシーン値を保つため変えない
+        [Tooltip("移動の暗転 (KH_LeashManager.travelFade)。暗転中はどの写真も撮らない (Shoot が見る)。null なら見ない")]
         public KominkaHillside.KH_TravelFade washFade;
         [Tooltip("寝る場所の指定 (KD_TreatPouch.sleepPlacement)。指定中は撮らない。null なら見ない")]
         public KD_SleepPlacement washSleepPlacement;
