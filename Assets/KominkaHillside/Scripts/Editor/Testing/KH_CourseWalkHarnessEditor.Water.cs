@@ -35,6 +35,17 @@ namespace KominkaHillside.Editor
     //                   same entry the menu uses without the pose chooser; the chooser's _Apply only re-poses a dog that is
     //                   already called, run 20260927-054541) -> the play is dropped
     //                   (waterState 0) and the dog is out (waterPose 0) <= 10 s. NOT_EXERCISED when the call is refused.
+    //   W-reroll-clock  (破壊監査 2026-10-07 RC-15, 78 after W0-24m and alone in 78r) the only case whose re-entry roll clock is
+    //                   NOT held at +600 s: at the placement _waterNextRoll is set to 0 (a fresh behaviour's value) with the first-play
+    //                   flag cleared, so the first play of the stay starts as in W0. Once wet (1.5 s) the stay is shortened
+    //                   (_waterUntil = 0, the W6 stand-in for the 20-40 s stay) and the play runs its own way out: stay-over exit ->
+    //                   shake -> WaterEnd("landed"). The log line "water end dog=2 reason=" gives t_end (Time.time of that frame).
+    //                   Pass: the clock before the end was in the past (< the action's game time: nothing held it), reason=landed,
+    //                   t_end + 45 - 0.1 <= _waterNextRoll <= t_end + 45 + 0.001 read the next tick (WaterRollInterval 45 from the
+    //                   end; the tight upper bound tells WaterEnd's write from a later roll's now + 45 and shows no +600 leaked in),
+    //                   _waterFirstUsed still true, no new play (waterState 0) for
+    //                   3 s of game time after the end, exit <= 1.5 s, landed <= 10 s, the per-frame rules. The 45 s are not waited.
+    //                   After the case the clock is held at +600 s again (the other cases' precondition).
     // Actions start only once the dog is really in the water: waterPose 1 held for 1.5 s (run 20260927-053222 acted 2 s after
     // waterState 2, while the dog was still crossing the dry 2.4 m between the entry and the band, so every case saw a dry dog).
     // Every frame, for every case: the dog root inside the river band but outside the spot (formula band), feet deeper than
@@ -163,6 +174,11 @@ namespace KominkaHillside.Editor
             public bool riverCarryLogged, riverEnteredLogged, driftStill, returnLogged;
             [NonSerialized] public float driftLastZ, driftStillSince = -1f;
             public Vector3 ballAt;
+            // 破壊監査 2026-10-07 RC-15 (W-reroll-clock): the re-entry roll clock (_waterNextRoll, Time.time) at the action, the game time
+            // of the action and of the "water end" log line, its reason, the clock read the tick after the end, and what followed
+            public float rerollBefore = -1f, rerollActGame = -1f, rerollEndGame = -1f, rerollAfter = -1f;
+            public string rerollEndReason;
+            public bool rerollRead, rerollFirstUsedAfter, rerollReentered;
             public List<WhDogStat> stats = new List<WhDogStat>();
         }
         [Serializable] public class WhDogStat
@@ -265,7 +281,16 @@ namespace KominkaHillside.Editor
         {
             Begin(false);
             // EnterPlaymode takes effect after this frame, so the mode flag reaches the journal before the domain reload.
-            report.waterOnly = true; report.deadline = EditorApplication.timeSinceStartup + 1000; Save();   // 14 cases (IMP-DOG-021: W4-toy-chase)
+            report.waterOnly = true; report.deadline = EditorApplication.timeSinceStartup + 1060; Save();   // 15 cases (IMP-DOG-021: W4-toy-chase; audit 2026-10-07: W-reroll-clock, about 30 s)
+        }
+
+        // 破壊監査 2026-10-07 RC-15: the new case alone, in the same run frame (the 78 setup and judgement, nothing else).
+        // Budget: Play entry + phase 0 (<= 45 s back on land) + wet (<= 30 s) + the case (cap 25 s).
+        [MenuItem("Tools/KominkaHillside/Course/78r - Walk Harness Water W-reroll-clock (RC-15)")]
+        public static void WaterRerollHarness()
+        {
+            Begin(false);
+            report.waterOnly = true; report.waterPlaySet = 1; report.deadline = EditorApplication.timeSinceStartup + 300; Save();
         }
 
         static void MakeWaterCases()
@@ -283,7 +308,8 @@ namespace KominkaHillside.Editor
             whExitsBackup = (Vector3[])Get<Vector3[]>(whSpot, "exits").Clone();
             wh = new WhReport { runId = report.runId };
             wh.limitations += " Jump rule (all modes, decision 2026-09-27): a step between two observations counts when it is longer than 0.2 m AND faster than 3.5 m/s over the game time between them; a stage-3 recovery teleport between them splits the step (before / after judged alone). Detection limit: Unity caps one frame's deltaTime at 0.333 s, so one long editor frame can hide a jump of up to 1.17 m; in a normal frame (16 ms) anything over 0.2 m counts (J-selftest injects 0.8 m). Fetch mode: S1 (a non-Owner's throw) and two people asking at once need two clients; S4 / S4b wipe the local float history in the heap instead of a real Owner change."
-                + " Audit 2026-09-28 stand-ins (one client, never a network or ownership test): R17-* delay / refuse the ball ownership as the dog sees it (_debugClaimDelay / _debugClaimRefuse on the Fetch) and stand in for a person's pickup with _debugBallHeld (the Fetch's own held checks only); R09-regrab / R09-owner-ABA write what a pickup shorter than one 0.25 s look leaves (gravity on, the local float flag still set) instead of a real pickup or Owner change; W4-leash-stale holds the synced pose at 0 (_debugPoseHold) while the dog is wet; W4-leash-late writes an accepted connection into the arbiter's synced heap (standing in for any entry that got through, the hand clip included: a clip needs a held pickup, which ClientSim cannot make); W4-throw-regrab turns the floating ball's gravity on just before the throw. Two clients are required for S1 / S3 / S5a and for a real delayed / refused ownership transfer.";
+                + " Audit 2026-09-28 stand-ins (one client, never a network or ownership test): R17-* delay / refuse the ball ownership as the dog sees it (_debugClaimDelay / _debugClaimRefuse on the Fetch) and stand in for a person's pickup with _debugBallHeld (the Fetch's own held checks only); R09-regrab / R09-owner-ABA write what a pickup shorter than one 0.25 s look leaves (gravity on, the local float flag still set) instead of a real pickup or Owner change; W4-leash-stale holds the synced pose at 0 (_debugPoseHold) while the dog is wet; W4-leash-late writes an accepted connection into the arbiter's synced heap (standing in for any entry that got through, the hand clip included: a clip needs a held pickup, which ClientSim cannot make); W4-throw-regrab turns the floating ball's gravity on just before the throw. Two clients are required for S1 / S3 / S5a and for a real delayed / refused ownership transfer."
+                + " Audit 2026-10-07 RC-15: W-reroll-clock is the only case with the re-entry roll clock not held at +600 s (0 at the placement); the stay is shortened (_waterUntil = 0) and the clock is read after the landing, the 45 s are not waited and the 30 % roll itself is not exercised; the Owner's local clock only (not synced, a new Owner starts at 0).";
             if (report.waterFetch)
             {
                 whRiver = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_RiverData");
@@ -310,7 +336,8 @@ namespace KominkaHillside.Editor
                 report.cases.Add(new Case { name = "W2", count = 6 }); wh.cases.Add(new WhCase { name = "W2", dog = -1 });
             }
             else
-                foreach (var name in new[] { "W0", "W0-24m", "W4-leash", "W4-gather", "W4-toy", "W4-toy-chase", "W4-throw", "W4-throw-regrab", "W4-leash-stale", "W4-leash-late",
+                foreach (var name in report.waterPlaySet == 1 ? new[] { "W-reroll-clock" }
+                    : new[] { "W0", "W0-24m", "W-reroll-clock", "W4-leash", "W4-gather", "W4-toy", "W4-toy-chase", "W4-throw", "W4-throw-regrab", "W4-leash-stale", "W4-leash-late",
                     "W6-owner", "W6-exit-blocked", "W6-all-blocked", "W4-call" })
                 { report.cases.Add(new Case { name = name, count = 1 }); wh.cases.Add(new WhCase { name = name }); }
             whPhase = 0; whStep = 0; whNext = 0;
@@ -351,6 +378,12 @@ namespace KominkaHillside.Editor
             if (!condition.StartsWith("[KD_DogWanderController] water ")) return;
             if (WC.name != "W2" && !condition.Contains("dog=" + WhDog + " ") && !condition.EndsWith("dog=" + WhDog)) return;
             var c = WC; if (c.log.Count < 40) c.log.Add(condition);
+            // RC-15 (W-reroll-clock): WaterEnd logs first and writes the clock right after, in the same frame, so Time.time here is its now
+            if (c.name == "W-reroll-clock" && whPhase == 3 && c.rerollEndGame < 0f && condition.StartsWith("[KD_DogWanderController] water end dog=" + WhDog + " "))
+            {
+                c.rerollEndGame = Time.time; int at0 = condition.IndexOf("reason=");
+                c.rerollEndReason = at0 >= 0 ? condition.Substring(at0 + 7) : "?";
+            }
             if (condition.Contains("stage=2")) c.recoverStage = Math.Max(c.recoverStage, 2);
             if (condition.Contains("stage=3")) c.recoverStage = 3;
             int at = condition.IndexOf("dog="), n;
@@ -457,6 +490,8 @@ namespace KominkaHillside.Editor
                         c.pathToEntry = WhPathLength(d.position, entry);
                         wander[WhDog].SetProgramVariable("_waterFirstDue", 0f);
                         wander[WhDog].SetProgramVariable("_waterFirstUsed", false);
+                        // RC-15: this case alone runs with the clock not held (0 = a fresh behaviour's value; the first play does not read it)
+                        if (c.name == "W-reroll-clock") wander[WhDog].SetProgramVariable("_waterNextRoll", 0f);
                         c.released = now - cc.startedAt; whWetSince = -1; whNextTrace = now; whLastPose = 0; c.placedGame = Time.time;
                         if (c.name == "W0") WhThinReset(WhDog);   // IMP-DOG-036 S3
                         whPhase = 2; whPhaseAt = now; whLastState = WhState(); return;
@@ -584,6 +619,11 @@ namespace KominkaHillside.Editor
                     c.stage = 0; break;
                 }
                 case "W6-owner": wander[WhDog].SetProgramVariable("waterState", 0); break;
+                case "W-reroll-clock":
+                    // RC-15: the clock as the first play left it, then the stay shortened (the stay-over exit, shake and "landed" run as usual)
+                    c.rerollBefore = Get<float>(wander[WhDog], "_waterNextRoll"); c.rerollActGame = Time.time;
+                    wander[WhDog].SetProgramVariable("_waterUntil", 0f);
+                    break;
                 case "W6-exit-blocked":
                 case "W6-all-blocked":
                 {
@@ -826,6 +866,32 @@ namespace KominkaHillside.Editor
                     WhFinish(c, now, okL, (late ? "vetoLogged=" + c.vetoLogged + " released=" + c.releasedAt.ToString("F2") : "refusedWithStalePose=" + c.refused + " vetoLogged=" + c.vetoLogged)
                         + " exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2") + " acceptedAfter=" + acceptedAfter + WhSummary(c)); return;
                 }
+                case "W-reroll-clock":
+                {
+                    if (c.rerollEndGame < 0f) break;   // until "water end" (the cap below fails the case)
+                    if (!c.rerollRead)
+                    {
+                        // the tick after the log line: WaterEnd's write is done (nothing else writes the clock before it is due)
+                        c.rerollRead = true; c.rerollAfter = Get<float>(wander[WhDog], "_waterNextRoll");
+                        c.rerollFirstUsedAfter = Get<bool>(wander[WhDog], "_waterFirstUsed");
+                        return;
+                    }
+                    if (s != 0) c.rerollReentered = true;   // a new play after the landing (the roll that RC-15 pushes 45 s out)
+                    if (Time.time - c.rerollEndGame < 3f) return;
+                    // Lower bound: the contract (45 s from the end, 0.1 s slack). Upper bound + 0.001: WaterEnd computes Time.time + 45 in the
+                    // frame of the log line (the same float as here), while the old code's first roll after the landing writes its own
+                    // later now + 45 (>= one frame later) - so a roll that slipped in before this read cannot pass, and no +600 leaked in.
+                    float want = c.rerollEndGame + 45f;
+                    bool clockOk = c.rerollAfter >= want - .1f && c.rerollAfter <= want + .001f;
+                    bool ok = c.rerollBefore < c.rerollActGame && c.rerollEndReason == "landed" && clockOk && c.rerollFirstUsedAfter && !c.rerollReentered
+                        && c.exitStarted >= 0 && c.exitStarted <= 1.5 && c.landed >= 0 && c.landed <= 10 && WhClean(c);
+                    wander[WhDog].SetProgramVariable("_waterNextRoll", Time.time + 600f);   // the harness hold again (the other cases' precondition)
+                    WhFinish(c, now, ok, "clockBefore=" + c.rerollBefore.ToString("F2") + " (action at game " + c.rerollActGame.ToString("F2") + ", must be earlier: not held)"
+                        + " end=" + c.rerollEndGame.ToString("F2") + " reason=" + c.rerollEndReason + " clockAfter=" + c.rerollAfter.ToString("F2")
+                        + " (want end+45 = " + want.ToString("F3") + ", -0.1 / +0.001, delta " + (c.rerollAfter - c.rerollEndGame).ToString("F4") + " s)"
+                        + " firstUsedAfter=" + c.rerollFirstUsedAfter + " reentered3s=" + c.rerollReentered
+                        + " exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2") + WhSummary(c)); return;
+                }
                 case "W6-owner":
                     if (c.landed >= 0 && t - c.landed > 1)
                     {
@@ -863,7 +929,8 @@ namespace KominkaHillside.Editor
             if (t > cap)
             {
                 if (c.name.StartsWith("W6")) whSpot.SetProgramVariable("exits", (Vector3[])whExitsBackup.Clone());
-                WhFinish(c, now, false, "timeout " + cap + " s; exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2") + " state=" + s + WhSummary(c));
+                if (c.name == "W-reroll-clock") wander[WhDog].SetProgramVariable("_waterNextRoll", Time.time + 600f);
+                WhFinish(c, now, false, "timeout " + cap + " s;" + (c.name == "W-reroll-clock" ? " waterEnd=" + c.rerollEndGame.ToString("F2") + " reason=" + c.rerollEndReason + ";" : "") + " exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2") + " state=" + s + WhSummary(c));
             }
         }
 

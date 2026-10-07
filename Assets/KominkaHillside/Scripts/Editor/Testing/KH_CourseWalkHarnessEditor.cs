@@ -65,10 +65,12 @@ namespace KominkaHillside.Editor
             public bool travelSpots; // IMP-WLD-004 Course/83d: ワープできる全地点へ地図のセルから (KH_CourseWalkHarnessEditor.TravelSpots.cs、travel の台本で回す)
             public bool collarOnly; // IMP-DOG-031 Course/83b: 首輪の「外す」Interact の有効／無効 (KH_CourseWalkHarnessEditor.Collar.cs、travel の台本で回す)
             public bool nightOnly;  // IMP-ENV-005 Course/83c: オート／マニュアルのナイトモード (KH_CourseWalkHarnessEditor.Night.cs、travel の台本で回す)
+            public bool liveOnly;   // 破壊監査 2026-10-07 RC-13 Course/128: ライブの曲長と liveId の戻り (KH_CourseWalkHarnessEditor.Live.cs、travel の台本で回す)
             public bool waterOnly; // IMP-DOG-020 W0/W4/W6 (KH_CourseWalkHarnessEditor.Water.cs)
             public bool waterSwim; // IMP-DOG-020 step 4 W1 x6 / W2 (same file, Course/79)
             public bool waterFetch; // IMP-DOG-020 step 6 W3 / S4 / S5b (same file, Course/88)
             public int waterFetchSet; // IMP-DOG-021: 0 = every Course/88 case, 1 = the IMP-DOG-020 cases only (88a), 2 = the IMP-DOG-021 cases only (88b)
+            public int waterPlaySet;  // 破壊監査 2026-10-07 RC-15: 0 = every Course/78 case, 1 = W-reroll-clock only (78r)
             public bool commerceOnly;     // IMP-PRG-001 / IMP-DOG-014 Course/96・96b・97 (KH_CourseWalkHarnessEditor.Commerce.cs)
             public int commerceSet;       // 0 = ledger (96), 1 = ledger re-entry (96b), 2 = treats (97)
             public string commerceSource; // 96b: the PlayerData snapshot of the 96 run that was installed before Play

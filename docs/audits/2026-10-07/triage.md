@@ -269,3 +269,18 @@ RC-3 (奪われた側の終了通知と hold-lost の Idle 復帰)、RC-4 (a) (�
 - ハーネスの結論: **対象ケースと正常対照だけを回し、洗い場・水・写真の群全体の回帰は今回は回さない**。回していない群は今回版では未検証として残す。優先: `C-wash-travel-race` (切符の立ち上がり後に保持を注入 → 継続 tick で解放、切符終了後に復活しない。`C-avail-traveling` はその準備段階に統合) / `C-avail-station-washed-other` (呼ぶ犬と保持中の犬を別にする) / `C-placed-river-timeout` + `C-placed-reach` (期限は 60 s 超の次の Watch) / `W-reroll-clock` (固定注入なし) / `H7b-fade-play-gate` (暗転後の有効通知で撮れることまで一組) / `LV-end-zero` + `LV-liveid-reset` (127 s で曲終了、187 s で `liveId = -1`。`SecondsUntilAvailable` は曲終了時に約 60)。`PlayHomesApart`・`W-fixed-kept` は Edit モードの確認で足り、`P-far-home` の Play は削除可。
 - 実通信 (2 人) へ: RC-7 (a) 手渡し直後のストローク (Owner のセルへの反映まで)、RC-7 (b) 移譲をまたぐ旧イベント・重複適用・再移譲、犬と洗い場の Owner が別の状態での切符中の保持解放と別犬の呼び出し、途中参加の復元。第三者の配送逆転は 3 人が要るので未実施なら Tier 3 の静的評価のまま。
 - 対象ケースは未実装 (ハーネスへの追加が要る: 洗い場 30〜60 分 + 他)。回すかどうかと順序はユーザーの判断。
+
+### 8.2 ハーネスの対象ケース (2026-10-07、ユーザー指示「対象ケース追加して回してください」)
+
+ケースは Opus 3 本が追加 (洗い場 + 場所指定 / 水 + Edit 検査 / 写真 + ライブ)、統括が回した。群全体の回帰は回していない。
+
+| 入口 | run | 結果 |
+|---|---|---|
+| `Course/127 - Audit Phase A Edit Checks` (Edit) | — | `AUDIT_EDIT_OK checks=55 failed=0` (RC-5: 6 匹の `playMaxHomeDistance` 25、`PlayHomesApart` の境界 20/25/25.01/30 m と対岸、初期ホーム 30 組はすべて false。RC-15: `WaterRollInterval` 45、`WaterEnd` の Max、固定の残存) |
+| `Course/100h` (洗い場 + 場所指定) | 20261007-101756 | `WASH_PASS` 5/5: `C-avail-traveling` (Phase 1/4 で拒否 12、消せば受理) / `C-wash-travel-race` (切符中に注入した保持が 1 フレームで解放、切符終了後 1.5 s 戻らず最大移動 0.95 m。対照: 切符なしなら保持が 1 s 残り洗い場の分岐 90 フレーム) / `C-avail-station-washed-other` (別の犬は 10 で待ち、保持が切れて 0.01 s 後に交代。対照: 自分が洗っていれば即受理) / `C-placed-river-timeout` (川面 (295.6, 20.0) を指定、岸で 3.96 m 手前に停止、60.25 s で解放、直後にリードが通る) / `C-placed-reach` (届く点は 5.0 s で到着、90 s 過去に書いても解けない。持ち上げ中の Watch 4 回で解けない)。前 2 回 (100304 / 101050) は RC の判定はすべて通り、後始末の「おわり」が受付の 6 m 判定 (移動と同じフレーム) で無視されて FAIL → 位置確認後に 1.1 s ごとに再送へ直した |
+| `Course/78r` (水) | 20261007-100053 | `WATER_PASS` 1/1: `W-reroll-clock` 上陸 24.80 s → `_waterNextRoll` 69.80 (Δ 45.0000 s)、再入水なし |
+| `photo --cases=H7b` | 20261007-100140 | `PASS` 3 ケース (H0 / H7b / H5): 暗転中のキャッチ通知と受け渡しの予約は受け付けられるが撮影 0・並び不変、明けた後に 2 枚 |
+| `Course/128` (ライブ) | 20261007-101356 | `LIVE_PASS` 2/2: t=126.5 再生中・残り 60.5、t=127.1 で `IsPlaying` false・`_playingId` -1・director Paused・root 無効、t=187.1 で `liveId` -1・`CanStart`。`hostId` は戻らない (製品の仕様) |
+
+起動の揺らぎ: `kh-harness-run.sh walk` の `ExecuteMenuItem` (base64 復号の eval) が 7 回中 4 回空応答 (Editor.log に `error CS0433: System.Text.Encoding / System.Convert is defined multiple times`)。20〜30 s 置いて再試行すれば通る。共有 Skill `vrc-synaptic-unity` に記録 (vrc-world-agent `eb44901`)。恒久策 (復号を Editor 側の静的メソッドへ) は別件候補。
+ハーネスの限界 (各 wash.json の notCovered): 切符・保持・他人の洗浄は 1 端末のヒープ書き込みの模擬。犬 / 洗い場 / 枠の Owner が別端末の場合、実際のワープ (暗転と Phase 1→4→2)、`RefuseTraveling` のボードの文言 (未追加)、30 m のテレポート経路そのもの、RC-7 (a)(b) は 2 人の実通信へ (チェックリスト B-9)。

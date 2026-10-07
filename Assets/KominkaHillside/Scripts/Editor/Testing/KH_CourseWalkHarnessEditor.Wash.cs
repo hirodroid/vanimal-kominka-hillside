@@ -52,6 +52,8 @@ namespace KominkaHillside.Editor
         public static void WashHarnessHand() { WashHarnessGroups(new[] { "hand" }); }   // IMP-DOG-039 (WashHand.cs)
         [MenuItem("Tools/KominkaHillside/Course/100g1 - Harness Wash hand: bottle only")]
         public static void WashHarnessHandBottle() { WashHarnessGroups(new[] { "hand-bottle" }); }   // H-bottle alone (diagnosis loop)
+        [MenuItem("Tools/KominkaHillside/Course/100h - Harness Wash audit Phase A (travel x station, station washed by other, placed call timeout)")]
+        public static void WashHarnessAuditA() { WashHarnessGroups(new[] { "audit-a" }); }   // the 5 cases of WashAuditA.cs alone (they also run in 100f)
 
         static void WashHarnessGroups(string[] groups)
         {
@@ -801,6 +803,7 @@ namespace KominkaHillside.Editor
             if (WsGroup("dirt")) MakeWashDirtCases();     // IMP-DOG-029 (WashDirt.cs): walk / zone / grace / station / river
             if (WsGroup("stations")) MakeWashStationsCases(); // IMP-ENV-008 (WashStations.cs): course stations, tools wired to all dogs, grace near them
             if (WsGroup("call")) MakeWashCallCases();     // IMP-DOG-035 (WashCall.cs): call a dog to the station, stay, gates, release, swap
+            if (WsGroup("call") || WsGroup("audit-a")) MakeWashAuditACases();   // audit 2026-10-07 Phase A (WashAuditA.cs): RC-1 travel ticket x station, RC-8 (a), RC-2 placed call timeout
             if (WsGroup("height")) MakeWashHeightCases(); // IMP-ENV-011 (WashHeight.cs): lift, personal floor, board handlers
             if (WsGroup("hand") || WsGroup("hand-bottle")) MakeWashHandCases();    // IMP-DOG-039 (WashHand.cs): the bottle, the bare hands (simulated), the picture guide. Before "dogs" (it re-binds wsWash)
             if (WsGroup("dogs")) MakeWashDogsCases();     // IMP-DOG-030 (WashDogs.cs): all six wired, Dachs foam, the others unchanged. Last: re-binds wsWash to the Dachs

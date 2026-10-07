@@ -41,6 +41,11 @@ namespace KominkaHillside.Editor
     ///   H6w-walk-trigger  見回り (KH_PhotoWalkWatcher) の「時間と距離」をしきい値の直前にして 1 枚 → 散歩の枠 (0..11) に入る。犬目線なら、カメラが頭アンカーの前
     ///                     (前出し 0.08〜0.20 m、上 0.04 m) にあり、向きが「ルートの前方を水平にして 3° 上」から 2° 以内 (撮った瞬間の値で照合)
     ///   H7-fade-gate      移動の暗転 (KH_TravelFade._Begin) の間と、明けてから 2 s は撮らない。その後は撮る
+    ///   H7b-fade-play-gate (2026-10-07 破壊監査 RC-9) 暗転 (KH_TravelFade._Begin) と同じ Editor コールバックで、遊びの経路 2 つを送る: フリスビーのキャッチ通知
+    ///                     (_OnFrisbeeCatch → 0.1 s 後の _FrisbeeShot、2 フレームおき 3 回の撮り直し) と受け渡しの予約 (_OnDogDrop → 0.4 s 後の TakePending)。
+    ///                     暗転のまま両方の予約が消化されるまで待ち、写真の数・並び・遊びの枠の次の番号 (_nextInGroup) が変わらない、ログに PHOTO の行が無い、
+    ///                     フリスビーの間隔 (_lastFrisbeeShot) を消費しない。対照: 明けて (_state 0) から同じ 2 つを送ると、frisbee と drop の PHOTO が 1 行ずつ出る。
+    ///                     受け渡しの相手 (_dropPlayerId) は実行時だけ自分にする (fetch の注目が無い犬では ShootDropScene が撮らないため)。散歩の経路は H7
     ///   H8-selfie         自撮り風を直接頼む: 犬を背にして立つ → 頭から水平 0.9 m・0.15 m 上、犬が画面の内側 80 % (Camera.WorldToViewportPoint)。
     ///                     6 m より遠い犬だけを「自分の犬」として頼む → 自撮り風は撮らない (犬目線へ落ちるか、撮らない)
     /// **一部だけ回す**: Temp/kh-photo/harness-cases.txt に "H1,H6" のように書いてから Photo/3 (読んだら消す。無ければ全部)。
@@ -55,7 +60,7 @@ namespace KominkaHillside.Editor
         public const string CasesFile = "Temp/kh-photo/harness-cases.txt";
         /// <summary>回す順。H6 (散歩の枠) は H3 より前 (OFF の検査に写真が要る・H4 のページ送りに 9 枚以上が要る)。</summary>
         /// IMP-WLD-011: H9 (洗い) は H2 の後 (H2 は H1 の 1 枚だけがある前提で並びを見る) で、H3 / H4 の前 (写真の枚数は実際の数から計算される)。
-        public static readonly string[] AllCases = { "H0-ready", "H1-capture", "H2-wrap", "H6-category", "H9-wash", "H10-wash-real", "H6w-walk-trigger", "H7-fade-gate", "H8-selfie", "H3-off", "H4-menu", "H5-no-camera-left" };
+        public static readonly string[] AllCases = { "H0-ready", "H1-capture", "H2-wrap", "H6-category", "H9-wash", "H10-wash-real", "H6w-walk-trigger", "H7-fade-gate", "H8-selfie", "H7b-fade-play-gate", "H3-off", "H4-menu", "H5-no-camera-left" };
 
         /// <summary>"H1,H6" → 回すケース (前方一致。H0・H5 は必ず、写真が要るケースには H1 を足す)。空なら全部。知らない名前は例外 (Play に入らない)。</summary>
         public static List<string> Selected(string request)
@@ -145,6 +150,7 @@ namespace KominkaHillside.Editor
         {
             if (report == null || !SessionState.GetBool(Key, false) || !EditorApplication.isPlaying) return;
             if (condition != null && condition.Contains("Runtime error detected, but the client has not been launched with")) return;   // a VRChat client on the same PC (see the walk harness)
+            if (photoLinesOn && condition != null && condition.Contains("[KD_PhotoDirector] PHOTO") && photoLines.Count < 50) photoLines.Add(condition);   // H7b: KD_PhotoDirector.LogShot (one line per Shoot that passed the gates)
             if ((type == LogType.Exception || type == LogType.Error || type == LogType.Assert) && report.errors.Count < 20) report.errors.Add(condition);
         }
 
@@ -204,6 +210,7 @@ namespace KominkaHillside.Editor
                 var fades = all.Where(u => u.programSource != null && u.programSource.name == "KH_TravelFade").ToArray();
                 uFade = fades.Length == 1 ? fades[0] : null;   // H7 reports a missing fade itself
             }
+            if (report.casesRun.Contains("H7b-fade-play-gate")) ResolveFadePlay(all);
             if (report.casesRun.Contains("H9-wash") || report.casesRun.Contains("H10-wash-real")) ResolveWash(all);
             if (report.casesRun.Contains("H10-wash-real")) ResolveRealWash(all);
             var sys = SceneManager.GetActiveScene().GetRootGameObjects().First(g => g.name == KH_PhotoGalleryEditor.SystemName);
@@ -458,6 +465,9 @@ namespace KominkaHillside.Editor
 
             // ---- H6w / H7 / H8: walk photos (IMP-WLD-007 W2) ----
             AddWalkSteps(walkFirst, walkSize);
+
+            // ---- H7b (audit RC-9): play-event photos during the travel fade. After AddWalkSteps (which unleashes dog 0 under H0) ----
+            if (On("H7b-fade-play-gate")) AddFadePlaySteps();
 
             // ---- H3 ----
             if (On("H3-off")) AddOffSteps();
@@ -716,6 +726,127 @@ namespace KominkaHillside.Editor
             // under H0 (always run and normally PASS) so that a failed walk case does not skip the unleash and leave the dog on the leash for H3 / H4
             steps.Add(Do("H0-ready", () => { if (leashedByHarness) Leash(false); }));
             steps.Add(Until(last, () => !Get<bool>(uWatcher, "_ticking"), 3, "the walk watcher kept running with no dog on the leash"));
+        }
+
+        // ================================================================ play-event photos during the travel fade (2026-10-07 audit RC-9)
+
+        const int FadePlayDog = 0;   // Corgi (free again: AddWalkSteps unleashed it under H0)
+        static string dropEntry;
+        static string[] dogParams;
+        static bool photoLinesOn;
+        static readonly List<string> photoLines = new List<string>();
+        static int fpCount, fpDropPid = int.MinValue;
+        static int[] fpOrder, fpNext;
+        static float fpLastFrisbee;
+
+        /// <summary>H7b: the fade, and KD_PhotoDirector._OnDogDrop with every U# parameter symbol named dog. U# gives each method its own
+        /// <c>__N_dog__param</c> (CompilationContext.GetUniqueID), so the case writes all of them before a call (each U# call writes its own
+        /// parameter first, so the extra writes break nothing). The older <see cref="Trigger"/> writes only the first one it finds.</summary>
+        static void ResolveFadePlay(UdonBehaviour[] all)
+        {
+            if (uFade == null)
+            {
+                var fades = all.Where(u => u.programSource != null && u.programSource.name == "KH_TravelFade").ToArray();
+                uFade = fades.Length == 1 ? fades[0] : null;   // H7b reports a missing fade itself
+            }
+            var prog = uDirector.programSource.SerializedProgramAsset.RetrieveProgram();
+            var names = new List<string>();
+            for (int n = 0; n <= 200; n++) if (prog.SymbolTable.TryGetAddressFromSymbol("__" + n + "_dog__param", out _)) names.Add("__" + n + "_dog__param");
+            dogParams = names.ToArray();
+            dropEntry = null;
+            for (int n = 0; n <= 200 && dropEntry == null; n++) if (prog.EntryPoints.TryGetAddressFromSymbol("__" + n + "__OnDogDrop", out _)) dropEntry = "__" + n + "__OnDogDrop";
+            if (dropEntry == null && prog.EntryPoints.TryGetAddressFromSymbol("_OnDogDrop", out _)) dropEntry = "_OnDogDrop";
+            if (dropEntry == null || dogParams.Length == 0) throw new InvalidOperationException("KD_PhotoDirector._OnDogDrop entry / dog parameters not found (" + dropEntry + " / " + dogParams.Length + ")");
+        }
+
+        static void SendDog(string entry, int dog) { foreach (var p in dogParams) uDirector.SetProgramVariable(p, dog); uDirector.SendCustomEvent(entry); }
+        static bool FadeIdle() { return Get<int>(uFade, "_state") == 0; }
+        static bool DropPending(int dog) { return Get<bool[]>(uDirector, "_dropPending")[dog]; }
+        static int FrisbeeWaiting() { return Get<int>(uDirector, "_frisbeeDog"); }
+
+        /// <summary>The frisbee catch notice and the fetch drop reservation for <paramref name="dog"/>, with the drop's counterpart set to the
+        /// local player (runtime only: _OnDogDrop copies the fetch attention, -1 for an idle dog, and ShootDropScene needs a valid player).
+        /// Both must be accepted by their entry checks, or the gate is not what stops them.</summary>
+        static void SendPlayEvents(int dog, string when)
+        {
+            SendDog(frisbeeEntry, dog);
+            Expect(FrisbeeWaiting() == dog, when + ": the frisbee catch notice was accepted (_frisbeeDog " + FrisbeeWaiting() + "; refused before the gate = sleeping dog, cooldown or capture off)");
+            SendDog(dropEntry, dog);
+            var pids = (int[])Get<int[]>(uDirector, "_dropPlayerId").Clone();
+            if (fpDropPid == int.MinValue) fpDropPid = pids[dog];
+            pids[dog] = Networking.LocalPlayer.playerId;
+            uDirector.SetProgramVariable("_dropPlayerId", pids);
+            Expect(DropPending(dog), when + ": the fetch drop reservation was accepted (_dropPending[" + dog + "])");
+        }
+
+        static void AddFadePlaySteps()
+        {
+            const string C = "H7b-fade-play-gate";
+            int playGroup = KominkaDogRun.KD_PhotoDirector.HillsideGroupPlay;
+            steps.Add(Do(C, () =>
+            {
+                if (uFade == null) { Fail("KH_TravelFade is not in the scene (Course/84): the fade gate cannot be tested"); return; }
+                if (!FadeIdle()) { Fail("the travel fade was not idle before the case (_state " + Get<int>(uFade, "_state") + ")"); return; }
+                capturesBefore = Captures(); fpCount = Get<int>(uAlbum, "_count");
+                fpOrder = Order().Take(fpCount).ToArray(); fpNext = (int[])Get<int[]>(uGallery, "_nextInGroup").Clone();
+                fpLastFrisbee = Get<float>(uDirector, "_lastFrisbeeShot");
+                uDirector.SetProgramVariable("_lastFrisbeeShot", -1000f);   // runtime only: an earlier case's frisbee photo must not refuse the notice by the 20 s interval
+                photoLines.Clear(); photoLinesOn = true;
+                // _Begin and both notices are one editor callback: no Udon tick runs between them, so every shot attempt sees the fade busy
+                uFade.SendCustomEvent("_Begin");
+                Expect(!FadeIdle(), "_Begin started the fade (_state " + Get<int>(uFade, "_state") + ")");
+                SendPlayEvents(FadePlayDog, "during the fade");
+                eventMark = Time.time;
+                Note("fade begun, frisbee catch + fetch drop sent for dog " + FadePlayDog + " in the same callback; _lastFrisbeeShot " + fpLastFrisbee.ToString("F2") + " -> -1000 (runtime)");
+            }));
+            // the frisbee shot runs at +0.1 s and retries 3 times every 2 frames; the drop ripens at +0.4 s (taken at the next 0.1 s tick).
+            // Both are consumed long before the fade's own 3 s black timeout (black at +0.2 s)
+            steps.Add(Until(C, () => FrisbeeWaiting() < 0 && !DropPending(FadePlayDog), 2.5, "the frisbee shot / drop reservation was not consumed during the fade"));
+            steps.Add(Do(C, () =>
+            {
+                Expect(!FadeIdle(), "the fade was still on when both were consumed (_state " + Get<int>(uFade, "_state") + ", _alpha " + Get<float>(uFade, "_alpha").ToString("F2") + ")");
+                int during = Captures() - capturesBefore;
+                Expect(during == 0, "no capture during the fade (" + (during == 0 ? "none" : DescribeCaptures(capturesBefore, eventMark)) + ")");
+                int count = Get<int>(uAlbum, "_count");
+                Expect(count == fpCount && Order().Take(count).SequenceEqual(fpOrder), "the album order is unchanged (" + count + " photos, [" + string.Join(",", Order().Take(count)) + "] was [" + string.Join(",", fpOrder) + "])");
+                var next = Get<int[]>(uGallery, "_nextInGroup");
+                Expect(next.SequenceEqual(fpNext), "no slot was taken (_nextInGroup " + string.Join(",", next) + " was " + string.Join(",", fpNext) + "; play = group " + playGroup + ")");
+                Expect(photoLines.Count == 0, "no PHOTO log line during the fade (" + (photoLines.Count == 0 ? "none" : string.Join(" / ", photoLines)) + ")");
+                Expect(Get<float>(uDirector, "_lastFrisbeeShot") == -1000f, "the refused frisbee shot did not spend the frisbee interval (_lastFrisbeeShot " + Get<float>(uDirector, "_lastFrisbeeShot").ToString("F2") + ")");
+                uFade.SendCustomEvent("_Release");
+            }));
+            steps.Add(Until(C, FadeIdle, 3, "the fade did not finish after _Release"));
+            // control: the same two notices with the fade idle each take a photo
+            steps.Add(Do(C, () =>
+            {
+                capturesBefore = Captures(); photoLines.Clear(); eventMark = Time.time;
+                SendPlayEvents(FadePlayDog, "after the fade");
+            }));
+            steps.Add(Until(C, () => FrisbeeWaiting() < 0 && !DropPending(FadePlayDog), 2.5, "control: the frisbee shot / drop reservation was not consumed after the fade"));
+            steps.Add(Until(C, () => !cam.enabled, 1, "control: camera stayed enabled"));
+            steps.Add(Do(C, () =>
+            {
+                bool frisbee = photoLines.Any(l => l.Contains("PHOTO frisbee ") && !l.Contains("(capture refused)"));
+                bool drop = photoLines.Any(l => l.Contains("PHOTO drop ") && !l.Contains("(capture refused)"));
+                string lines = photoLines.Count == 0 ? "none" : string.Join(" / ", photoLines);
+                Expect(frisbee, "control: the frisbee catch took a photo once the fade ended (PHOTO lines: " + lines + ")");
+                Expect(drop, "control: the fetch drop took a photo once the fade ended (PHOTO lines: " + lines + ")");
+                Expect(Get<float>(uDirector, "_lastFrisbeeShot") > -1000f, "control: the frisbee photo set _lastFrisbeeShot");
+                Expect(Captures() >= capturesBefore + 2, "control: at least 2 captures (" + DescribeCaptures(capturesBefore, eventMark) + ")");
+                Note("control PHOTO lines: " + lines + ". _lastFrisbeeShot is left at the control photo's time (the product's own write)");
+            }));
+            // restore under H0 (always run): a failed H7b skips its own remaining steps, and H3 / H4 need an idle fade
+            steps.Add(Do("H0-ready", () =>
+            {
+                photoLinesOn = false;
+                if (uFade != null && !FadeIdle()) uFade.SendCustomEvent("_Release");
+                if (fpDropPid != int.MinValue)
+                {
+                    var pids = (int[])Get<int[]>(uDirector, "_dropPlayerId").Clone(); pids[FadePlayDog] = fpDropPid;
+                    uDirector.SetProgramVariable("_dropPlayerId", pids); fpDropPid = int.MinValue;
+                }
+            }));
+            steps.Add(Until("H0-ready", () => uFade == null || FadeIdle(), 4, "H7b restore: the travel fade did not return to idle"));
         }
 
         // ================================================================ wash photos (IMP-WLD-011)

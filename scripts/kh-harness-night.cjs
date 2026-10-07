@@ -24,6 +24,7 @@ const suites = [
   walk('travel-spots', '83d - Walk Harness Travel All Spots (IMP-WLD-004)'),
   walk('collar', '83b - Walk Harness Collar Interact (IMP-DOG-031)'),
   walk('nightmode', '83c - Walk Harness Night Mode Auto Manual (IMP-ENV-005)'),
+  walk('live', '128 - Walk Harness Live Duration and liveId (audit RC-13)'),   // 2026-10-07 破壊監査 Phase A (RC-13)
   walk('frisbee-m2', '94 - Walk Harness Frisbee Anywhere (M2 float)'),
   walk('frisbee-m3', '94b - Walk Harness Frisbee Anywhere (M3 water)'),
   walk('ledger', '96 - Walk Harness Ledger (L0-L6, fresh profile)'),

@@ -1160,6 +1160,7 @@ namespace KominkaHillside.Editor
             WcRestoreGrace();   // round 2
             WcRestoreWander();  // round 3 (C-keepout-wander)
             WaCleanupStandIns();   // IMP-DOG-037 (WashCallAvail.cs): a remote player / its leash / its wash hold left by a failed case
+            PaCleanup();           // audit 2026-10-07 Phase A (WashAuditA.cs): the simulated ticket, washes, arriveTimeout, my placed call
             if (!wcGatherSet || wcActivities == null) return;
             wcActivities.SetProgramVariable("mode", 0);
             wcActivities.SetProgramVariable("participants", 0);

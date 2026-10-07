@@ -890,3 +890,17 @@ Console エラー 0、`sceneFileUnchanged=true`、`overrideRestored` OK)。
 入口は固定のメニュー 1 つ、終了も固定 (どんな終わり方でも Edit モードへ戻る)、
 シーンを保存しない、保存シーンにコンポーネントを足さない、結果はファイル、
 `START_REQUEST_ACCEPTED` は PASS ではない。
+
+## 破壊監査 Phase A の対象ケース (2026-10-07)
+
+2026-10-07 の破壊監査 ([triage](../audits/2026-10-07/triage.md) §8) の Tier 1 修正を、群全体を回さずに確かめる入口。Codex の相談 (同日 2 回目) の結論「対象ケースと正常対照だけ、群全体の回帰は回さない」に従う。
+
+| 入口 | 中身 | 台本 |
+|---|---|---|
+| `menu "Course/127 - Audit Phase A Edit Checks"` (Edit) | RC-5: 6 匹の `playMaxHomeDistance` = 25、`PlayHomesApart` の境界 (20 / 25 / 25.01 / 30 m、川の対岸、初期ホーム 6 匹の 30 組はすべて false)。RC-15: `WaterRollInterval` 45、`WaterEnd` の `Mathf.Max`、ハーネスの +600 s 固定が残ること。`AUDIT_EDIT_OK checks=N failed=M`、詳細 `Temp/audit-2026-10-07/phase-a-edit.json` | `KH_AuditPhaseAEditor.cs` |
+| `walk "Course/100h - Harness Wash audit Phase A (travel x station, station washed by other, placed call timeout)"` | 群 `audit-a` (`100f` と `100` にも含まれる): `C-avail-traveling` (切符 Phase 1/4 で拒否 12)、`C-wash-travel-race` (切符中に注入した保持がレベル解放され、切符を消しても戻らない。対照: 切符なしなら残る)、`C-avail-station-washed-other` (他人が洗っている犬のいる洗い場で別の犬 → 10 で待ち、保持が切れたら交代)、`C-placed-river-timeout` (川面の場所指定 → 60 s で解けてリードが通る)、`C-placed-reach` (届く点は解けない)。約 4〜5 分。`WASH_PASS` / `wash.json` | `KH_CourseWalkHarnessEditor.WashAuditA.cs` |
+| `walk "Course/78r - Walk Harness Water W-reroll-clock (RC-15)"` | `W-reroll-clock` だけ (`78` にも含まれる): 固定を外して初回の水遊びを上陸まで通し、`_waterNextRoll` が `t_end + 45` (±0.001 / −0.1) になること。`WATER_PASS` | `KH_CourseWalkHarnessEditor.Water.cs` |
+| `photo --cases=H7b` | `H7b-fade-play-gate`: 暗転中のキャッチ通知と受け渡しの予約で写真・並びが変わらず PHOTO 行 0。対照: 明けた後は 2 枚撮れる。`photo` の全体にも入る | `KH_PhotoHarnessEditor.cs` |
+| `walk "Course/128 - Walk Harness Live Duration and liveId (audit RC-13)"` | `LV-end-zero` (t = 126.5 で再生中、127.1 で終了・残り約 60)、`LV-liveid-reset` (186 で残り約 1、187.1 で `liveId = -1`・`CanStart`)。開催は Owner としてヒープへ模擬、`startMs` を進める。`LIVE_PASS`。夜の一覧 `live` | `KH_CourseWalkHarnessEditor.Live.cs` |
+
+RC-7 (a)(b) (手渡し直後のストローク、Owner 交代の猶予中の汚れ) は ClientSim では配送順を作れないので、2 人の実通信 (チェックリスト B-9) で見る。

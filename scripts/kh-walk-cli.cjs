@@ -35,7 +35,7 @@ function result(j, kind, args) {
   if (kind === 'walk' && j.lapChoice !== 0) issues.push('unexpected continuous lap');
   // OBSERVED is successful execution of its stated local checks, never full feature/device acceptance.
   const observed = j.status === 'SEGMENTS_OBSERVED' ? 'SEGMENT_OBSERVED' : j.status === 'LAP_OBSERVED' ? 'LAP_OBSERVED' : null;
-  const pass = /^(?:PASS|(?:WASH|WATER|SWIM|FETCH|W5|FRISBEE_M2|FRISBEE_M3|TRAVEL_CALL|TREAT|LEDGER|LEDGER_REENTRY)_PASS|WATER_PASS_PARTIAL)$/.test(j.status);
+  const pass = /^(?:PASS|(?:WASH|WATER|SWIM|FETCH|W5|FRISBEE_M2|FRISBEE_M3|TRAVEL_CALL|TREAT|LEDGER|LEDGER_REENTRY|LIVE)_PASS|WATER_PASS_PARTIAL)$/.test(j.status);
   if (kind === 'segment' && j.status !== 'SEGMENTS_OBSERVED') issues.push('segment did not complete');
   if (kind === 'lap' && j.status !== 'LAP_OBSERVED') issues.push('lap did not complete');
   const failures = cases.filter(c => c.status !== (observed || 'PASS') && !(pass && c.status === 'SKIP') && !(j.status === 'WATER_PASS_PARTIAL' && c.status === 'NOT_EXERCISED'));
