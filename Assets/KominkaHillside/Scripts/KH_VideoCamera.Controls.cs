@@ -11,14 +11,17 @@ namespace KominkaHillside
     /// Controls (local, never synced, never saved; per mode, back to the defaults when the monitor closes):
     /// - [近く] [遠く]: the distance from the subject × ctlDistStep a press, ctlDistMin..ctlDistMax of the mode's own distance; never closer than ctlMinDist
     /// - [↑] [↓]: the camera height + ctlUpStep a press, ctlUpMin..ctlUpMax m
-    /// - [←] [→]: around the subject's vertical axis, ctlYawStep a press (wraps at ±180°)
+    /// - [←] [→]: around the subject's vertical axis, ctlYawStep a press (wraps at ±180°). §16: in 一周 they are the speed instead (÷ / × orbitSpeedStep,
+    ///   orbitDegMin..orbitDegMax deg/s; [戻す] and every open give orbitDegPerSec again)
     /// - [向き▲] [向き▼]: tilt the camera itself (its position stays), ctlPitchStep a press, ctlPitchMin..ctlPitchMax and never beyond fov / 2 − 3°
     ///   so the look point stays inside the frame. Works in every mode.
     /// - [戻す]: this mode's values back to the defaults.
-    /// Distance / height / around work only where the mode places the camera "direction / distance / height from the subject" (CtlMovable):
-    /// 犬追従・じぶん / 人・犬目線・見下ろす・一周・手元. 定点・通り過ぎ・ディスク・キャッチ待ち keep their own placement; those buttons are dimmed.
-    /// They are applied to the mode's wanted pose (ModeTarget → ApplyControls) BEFORE the shared post-processing, so the occlusion clip, the
-    /// floor and the dog push-out still apply. Another person's pose is the one TryPersonPose returned (the gate is unchanged).
+    /// Which buttons a mode takes is CtlKind (KH_VideoCamera.cs): CtlKindAll = the camera is "direction / distance / height from the subject"
+    /// (犬追従・じぶん / 人・背中ごし・犬目線) and ApplyControls moves that offset; CtlKindDistUp = the mode itself multiplies its distances by
+    /// CtlDist() and adds CtlUp() to its height (みち: [←][→] dimmed; 一周: [←][→] = speed); CtlKindNone = 定点・通り過ぎ・ディスク・キャッチ待ち
+    /// keep their own placement and those buttons are dimmed. Both are applied to the mode's wanted pose (ModeTarget) BEFORE the shared
+    /// post-processing, so the occlusion clip, the floor and the dog push-out still apply. Another person's pose is the one TryPersonPose
+    /// returned (the gate is unchanged).
     ///
     /// The drone (shown by default, [ドローン: 見せる / 見せない], not saved): my own mailbox's KH_FilmDrone. While the monitor is open and it is
     /// shown, it sits at the camera's pose on every render tick (my screen: the local pose, never the synced one). Layer 17 (the monitor's), which
@@ -30,12 +33,20 @@ namespace KominkaHillside
         public const string WordCtlNear = "近く", WordCtlFar = "遠く", WordCtlUp = "↑", WordCtlDown = "↓", WordCtlLeft = "←", WordCtlRight = "→";
         public const string WordCtlTiltUp = "向き▲", WordCtlTiltDown = "向き▼", WordCtlReset = "戻す";
         public const string WordDrone = "ドローン", WordShow = "見せる", WordHide = "見せない";
+        // W5: the translation keys (the Word* above are the Japanese defaults). The arrows are the same in every language (no key)
+        public const string KeyDrone = "video.drone", KeyShow = "video.drone.show", KeyHide = "video.drone.hide";
         public const int CtlNear = 0, CtlFar = 1, CtlUpIdx = 2, CtlDownIdx = 3, CtlLeftIdx = 4, CtlRightIdx = 5, CtlTiltUpIdx = 6, CtlTiltDownIdx = 7, CtlResetIdx = 8;
 
         /// <summary>The control row's labels in button order (the builder writes them; the glyphs are baked from them).</summary>
         public static string[] CtlWords()
         {
             return new string[] { WordCtlNear, WordCtlFar, WordCtlUp, WordCtlDown, WordCtlLeft, WordCtlRight, WordCtlTiltUp, WordCtlTiltDown, WordCtlReset };
+        }
+
+        /// <summary>W5: the translation keys of the control row in button order ("" = an arrow, the same in every language).</summary>
+        public static string[] CtlKeys()
+        {
+            return new string[] { "video.ctl.near", "video.ctl.far", "", "", "", "", "video.ctl.tiltup", "video.ctl.tiltdown", "video.ctl.reset" };
         }
 
         [Header("§15.5 カメラの操作 (試作値。Video/1 が書く)")]
@@ -49,7 +60,7 @@ namespace KominkaHillside
         public Image droneImage;
         public TMP_Text droneLabel;
 
-        // per mode (ModeCount); defaults: distance × 1, height + 0, around + 0, tilt 0
+        // per mode (ModeCountAll: the 10 buttons + the pattern-only おかえり, §17); defaults: distance × 1, height + 0, around + 0, tilt 0
         private float[] _cvDist, _cvUp, _cvYaw, _cvPitch;
         private float _tiltNow;
         private bool _droneShow = true, _droneSending;
@@ -58,17 +69,22 @@ namespace KominkaHillside
 
         void CtlEnsure()
         {
-            if (_cvDist != null && _cvDist.Length == ModeCount) return;
-            _cvDist = new float[ModeCount]; _cvUp = new float[ModeCount]; _cvYaw = new float[ModeCount]; _cvPitch = new float[ModeCount];
+            if (_cvDist != null && _cvDist.Length == ModeCountAll) return;
+            _cvDist = new float[ModeCountAll]; _cvUp = new float[ModeCountAll]; _cvYaw = new float[ModeCountAll]; _cvPitch = new float[ModeCountAll];
             CtlResetAll();
         }
 
         void CtlResetAll()
         {
-            if (_cvDist == null || _cvDist.Length != ModeCount) { CtlEnsure(); return; }
-            for (int m = 0; m < ModeCount; m++) { _cvDist[m] = 1f; _cvUp[m] = 0f; _cvYaw[m] = 0f; _cvPitch[m] = 0f; }
+            if (_cvDist == null || _cvDist.Length != ModeCountAll) { CtlEnsure(); return; }
+            for (int m = 0; m < ModeCountAll; m++) { _cvDist[m] = 1f; _cvUp[m] = 0f; _cvYaw[m] = 0f; _cvPitch[m] = 0f; }
             _tiltNow = 0f;
+            _orbitSpeed = orbitDegPerSec;   // §16: 一周's speed starts at the default on every open
         }
+
+        /// <summary>§16: this mode's [近く][遠く] multiplier and [↑][↓] height (the CtlKindDistUp modes apply them to their own distances / height).</summary>
+        float CtlDist() { return _cvDist != null && _mode >= 0 && _mode < _cvDist.Length ? _cvDist[_mode] : 1f; }
+        float CtlUp() { return _cvUp != null && _mode >= 0 && _mode < _cvUp.Length ? _cvUp[_mode] : 0f; }
 
         // ---- the buttons (onClick → SendCustomEvent; local only) ----
         public void _CtlNear() { CtlStep(CtlNear); }
@@ -86,18 +102,28 @@ namespace KominkaHillside
             if (!_open) return;
             CtlEnsure();
             int m = _mode;
+            int kind = CtlKind(m);
             if (which == CtlTiltUpIdx) _cvPitch[m] = Mathf.Clamp(_cvPitch[m] + ctlPitchStep, ctlPitchMin, ctlPitchMax);
             else if (which == CtlTiltDownIdx) _cvPitch[m] = Mathf.Clamp(_cvPitch[m] - ctlPitchStep, ctlPitchMin, ctlPitchMax);
-            else if (which == CtlResetIdx) { _cvDist[m] = 1f; _cvUp[m] = 0f; _cvYaw[m] = 0f; _cvPitch[m] = 0f; }
-            else if (CtlMovable(m))
+            else if (which == CtlResetIdx) { _cvDist[m] = 1f; _cvUp[m] = 0f; _cvYaw[m] = 0f; _cvPitch[m] = 0f; if (m == ModeOrbit) _orbitSpeed = orbitDegPerSec; }
+            else if (kind != CtlKindNone)
             {
                 if (which == CtlNear) _cvDist[m] = Mathf.Clamp(_cvDist[m] / ctlDistStep, ctlDistMin, ctlDistMax);
                 else if (which == CtlFar) _cvDist[m] = Mathf.Clamp(_cvDist[m] * ctlDistStep, ctlDistMin, ctlDistMax);
                 else if (which == CtlUpIdx) _cvUp[m] = Mathf.Clamp(_cvUp[m] + ctlUpStep, ctlUpMin, ctlUpMax);
                 else if (which == CtlDownIdx) _cvUp[m] = Mathf.Clamp(_cvUp[m] - ctlUpStep, ctlUpMin, ctlUpMax);
-                else if (which == CtlLeftIdx) _cvYaw[m] = WrapDeg(_cvYaw[m] - ctlYawStep);
-                else if (which == CtlRightIdx) _cvYaw[m] = WrapDeg(_cvYaw[m] + ctlYawStep);
+                else if (kind == CtlKindAll && which == CtlLeftIdx) _cvYaw[m] = WrapDeg(_cvYaw[m] - ctlYawStep);
+                else if (kind == CtlKindAll && which == CtlRightIdx) _cvYaw[m] = WrapDeg(_cvYaw[m] + ctlYawStep);
+                // §16: in 一周 [←] = slower, [→] = faster
+                else if (m == ModeOrbit && which == CtlLeftIdx) _orbitSpeed = Mathf.Clamp(_orbitSpeed / Mathf.Max(orbitSpeedStep, 1.01f), orbitDegMin, orbitDegMax);
+                else if (m == ModeOrbit && which == CtlRightIdx) _orbitSpeed = Mathf.Clamp(_orbitSpeed * Mathf.Max(orbitSpeedStep, 1.01f), orbitDegMin, orbitDegMax);
             }
+            // Codex review of §16 (2026-10-08): 待って寄る keeps its placed point and 追いこし / 寄って引く their offset, so a distance / height change
+            // reached them only at the next move. [近く][遠く][↑][↓][戻す] in みち start the current move again from its cut (placed anew with the new
+            // values). 後ずさり / 横ならび read CtlDist / CtlUp every tick and need nothing
+            if (m == ModePath && which != CtlTiltUpIdx && which != CtlTiltDownIdx && which != CtlLeftIdx && which != CtlRightIdx
+                && (_pathMove == PathWaitApproach || _pathMove == PathOvertake || _pathMove == PathPullAway))
+            { _pathHave = false; _cutNext = true; }
             DrawControls();
         }
 
@@ -108,10 +134,11 @@ namespace KominkaHillside
             return a;
         }
 
-        /// <summary>Distance / height / around on the mode's wanted position, around the subject (the occlusion / floor / push-out run after this).</summary>
+        /// <summary>Distance / height / around on the mode's wanted position, around the subject (the occlusion / floor / push-out run after this).
+        /// Only the CtlKindAll modes; the CtlKindDistUp modes already used CtlDist() / CtlUp() in their own pose.</summary>
         void ApplyControls()
         {
-            if (!CtlMovable(_mode) || _cvDist == null) return;
+            if (CtlKind(_mode) != CtlKindAll || _cvDist == null) return;
             float mult = _cvDist[_mode], up = _cvUp[_mode], yaw = _cvYaw[_mode];
             if (mult == 1f && up == 0f && yaw == 0f) return;
             Vector3 off = _wantPos - _subject;
@@ -130,7 +157,7 @@ namespace KominkaHillside
         /// <summary>The tilt on top of the look rotation (ApplyPose). Smoothed; limited so the look point stays inside the frame.</summary>
         Quaternion ApplyTilt(Quaternion rot, float dt, bool cut)
         {
-            float want = _cvPitch != null ? _cvPitch[_mode] : 0f;
+            float want = _cvPitch != null && _mode >= 0 && _mode < _cvPitch.Length ? _cvPitch[_mode] : 0f;
             float limit = Mathf.Max(0f, Mathf.Min(Mathf.Max(Mathf.Abs(ctlPitchMin), Mathf.Abs(ctlPitchMax)), _fov * 0.5f - 3f));
             want = Mathf.Clamp(want, -limit, limit);
             _tiltNow = cut ? want : Mathf.Lerp(_tiltNow, want, BlendFactor(dt, ctlPitchTau));
@@ -208,15 +235,16 @@ namespace KominkaHillside
 
         void DrawControls()
         {
-            bool movable = CtlMovable(_mode);
+            int kind = CtlKind(_mode);
+            bool sides = kind == CtlKindAll || _mode == ModeOrbit;   // §16: [←][→] = around (CtlKindAll) or 一周's speed; dimmed in みち
             if (ctlImages != null)
                 for (int i = 0; i < ctlImages.Length; i++)
                 {
                     if (ctlImages[i] == null) continue;
-                    bool on = i >= CtlTiltUpIdx || movable;   // tilt and reset work in every mode
+                    bool on = i >= CtlTiltUpIdx || (i == CtlLeftIdx || i == CtlRightIdx ? sides : kind != CtlKindNone);   // tilt and reset work in every mode
                     ctlImages[i].color = on ? modeOffColor : modeDimColor;
                 }
-            if (droneLabel != null) droneLabel.text = WordDrone + ": " + (_droneShow ? WordShow : WordHide);
+            if (droneLabel != null) droneLabel.text = Tx(KeyDrone, WordDrone) + ": " + (_droneShow ? Tx(KeyShow, WordShow) : Tx(KeyHide, WordHide));
             if (droneImage != null) droneImage.color = _droneShow ? modeOnColor : modeOffColor;
         }
 

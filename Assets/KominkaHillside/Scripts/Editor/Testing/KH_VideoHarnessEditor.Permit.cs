@@ -315,7 +315,7 @@ namespace KominkaHillside.Editor
                 v6Pouch.SendCustomEvent("_FilmGrantsOpen");   // the walk tab's [撮影を許可中] opens 撮影を許した人
                 v6Pouch.TryGetProgramVariable("filmGrantLabels", out object lo);
                 var row0 = lo is Array la && la.Length > 0 ? la.GetValue(0) as TMP_Text : null;
-                Expect(row0 != null && row0.gameObject.activeSelf && row0.text.Contains(KominkaDogRun.KD_TreatPouch.WordFilmRowActive), "16: the row says 撮影中 (" + (row0 != null ? row0.text.Replace("\n", " / ") : "-") + ")");
+                Expect(row0 != null && row0.gameObject.activeSelf && AnyLang(KominkaDogRun.KD_TreatPouch.KeyFilmRowActive).Any(s => row0.text.Contains(s)), "16: the row says 撮影中 (" + (row0 != null ? row0.text.Replace("\n", " / ") : "-") + ")");
                 v6Sent = V6<int>(v6Box, "debugFilmSentCount");
                 v6Pouch.SendCustomEvent("_FilmStop0");
                 Expect(V6<int[]>(v6Box, "filmGrantIds").All(x => x == -1), "16: [やめてもらう] cleared the row");

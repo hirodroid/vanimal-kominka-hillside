@@ -135,24 +135,25 @@ namespace KominkaHillside.Editor
             Check(v != null, "KH_VideoCamera (Video/1)");
             if (v == null) return;
             var vb = UdonSharpEditorUtility.GetBackingUdonBehaviour(v);
-            // ---- 10 modes ----
-            Check(KH_VideoCamera.ModeCount == 10 && KH_VideoCamera.ModeWord(KH_VideoCamera.ModeDrone) == "見下ろす", "10 modes; 「ドローン」 is now 「見下ろす」");
+            // ---- 10 modes (§16: 手元 / 見下ろす out, 背中ごし / みち in; the list itself is checked by Video/2) ----
+            Check(KH_VideoCamera.ModeCount == 10 && KH_VideoCamera.ModeWord(KH_VideoCamera.ModeTps) == "背中ごし" && KH_VideoCamera.ModeWord(KH_VideoCamera.ModePath) == "みち", "10 modes with 背中ごし and みち");
             var words = Enumerable.Range(0, KH_VideoCamera.ModeCount).Select(KH_VideoCamera.ModeWord).ToArray();
-            Check(!words.Contains("おかえり") && !words.Contains("ふれあい") && words.Distinct().Count() == words.Length && !words.Contains("?"), "おかえり / ふれあい are gone; every mode has its own label");
+            Check(!words.Contains("おかえり") && !words.Contains("ふれあい") && !words.Contains("手元") && !words.Contains("見下ろす") && words.Distinct().Count() == words.Length && !words.Contains("?"),
+                "おかえり / ふれあい / 手元 / 見下ろす are gone; every mode has its own label");
             var panel = v.monitorRoot != null ? v.monitorRoot.transform.Find(PanelName) : null;
             Check(panel != null, "monitor panel");
             if (panel == null) return;
             for (int m = KH_VideoCamera.ModeCount; m < 16; m++) Check(panel.Find(ModeButtonName(m)) == null, "no stale button " + ModeButtonName(m));
             Check(v.modeImages != null && v.modeImages.Length == KH_VideoCamera.ModeCount, "modeImages has " + KH_VideoCamera.ModeCount);
             // ---- the control row and the drone toggle ----
-            string[] cw = KH_VideoCamera.CtlWords();
+            string[] cw = KH_VideoCamera.CtlWords(), ckeys = KH_VideoCamera.CtlKeys();
             Check(cw.Length == CtlEvents.Length && v.ctlImages != null && v.ctlImages.Length == cw.Length, "control row: " + cw.Length + " buttons, ctlImages wired");
             for (int i = 0; i < cw.Length; i++)
             {
                 var t = panel.Find(CtlName(i));
                 CheckEvt(Check, t != null ? t.gameObject : null, vb, CtlEvents[i], "control " + cw[i]);
                 var rt = t as RectTransform; var lbl = t != null ? LabelOf(t.gameObject) : null;
-                Check(rt != null && rt.sizeDelta.x >= 80f && rt.sizeDelta.y >= 48f && lbl != null && lbl.text == cw[i] && v.ctlImages != null && i < v.ctlImages.Length && v.ctlImages[i] == t.GetComponent<Image>(),
+                Check(rt != null && rt.sizeDelta.x >= 80f && rt.sizeDelta.y >= 48f && lbl != null && lbl.text == (ckeys[i].Length > 0 ? Ja(ckeys[i]) : cw[i]) && v.ctlImages != null && i < v.ctlImages.Length && v.ctlImages[i] == t.GetComponent<Image>(),
                     "control " + i + " '" + cw[i] + "' ≥ 80 × 48 px, label, image wired");
             }
             var dt = panel.Find(DroneToggleName);
@@ -217,6 +218,9 @@ namespace KominkaHillside.Editor
                 "the drone pose is sent only while the permission gate holds (in use AND the subject's table)");
             Check(Regex.IsMatch(cam, @"PersonDrop\(\);\s*DroneSendCheck\(\);[^\n]*\n\s*if \(now < _nextRender\) return;"), "the send is re-checked every frame before the render-tick wait and the fade return");
             Check(Regex.IsMatch(ctl, @"off \+= Vector3\.up \* up;[\s\S]{0,200}if \(len < ctlMinDist\)"), "the minimum distance applies to the final position (after the height)");
+            Check(Regex.IsMatch(ctl, @"void ApplyControls\(\)[\s\S]{0,200}if \(CtlKind\(_mode\) != CtlKindAll"), "§16 the shared offset controls act only on the CtlKindAll modes (みち / 一周 use CtlDist / CtlUp themselves)");
+            Check(Regex.IsMatch(ctl, @"m == ModeOrbit && which == CtlLeftIdx\) _orbitSpeed = Mathf\.Clamp\(") && Regex.IsMatch(ctl, @"m == ModeOrbit && which == CtlRightIdx\) _orbitSpeed = Mathf\.Clamp\("),
+                "§16 in 一周 [←][→] change the speed (clamped)");
             Check(Regex.IsMatch(ctl, @"void DroneTick\(float now\)\s*\{\s*if \(!_droneShow\) return;"), "nothing is placed or sent while the drone is hidden");
             Check(!ctl.Contains("GetPlayerById") && !Regex.IsMatch(ctl, @"\.(GetTrackingData|GetPosition|GetRotation)\("), "the controls read no player (only the mode's pose, which went through TryPersonPose)");
         }

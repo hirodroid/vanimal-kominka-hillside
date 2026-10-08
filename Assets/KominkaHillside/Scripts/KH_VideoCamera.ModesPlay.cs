@@ -4,10 +4,9 @@ using UnityEngine;
 namespace KominkaHillside
 {
     /// <summary>
-    /// IMP-WLD-008 W3: the play / wash modes — フリスビー追従, 落下地点の待機, 洗浄の手元アップ (design §4.6-4.7, §4.10). おかえり / ふれあい were removed (§15.5).
-    /// The disc is the selected dog's disc (one disc per dog). Synced facts are read as ids / states only (the thrower, the petter, the
-    /// washer, the wash station's caller) and compared with my id; another player's pose is never read. When the person in a framing is not
-    /// me, the mode frames the dog alone.
+    /// IMP-WLD-008 W3: the play modes — フリスビー追従, 落下地点の待機 (キャッチ待ち) (design §4.6-4.7). おかえり / ふれあい were removed as buttons
+    /// (§15.5), 洗浄の手元 in §16 (IMP-WLD-012). §17: おかえり is back as an INTERNAL mode of the patterns only (ModeWelcome, no button).
+    /// The disc is the selected dog's disc (one disc per dog). Synced facts are read as states only; another player's pose is never read.
     /// </summary>
     public partial class KH_VideoCamera
     {
@@ -25,7 +24,8 @@ namespace KominkaHillside
         private int _catchReplans;
         private float _catchWaitUntil;
         private Vector3 _catchPoint, _catchRootSeen, _catchCam, _catchLookPt;
-        private int _washDog = -1;          // read-out
+        // §17 おかえり (internal)
+        private bool _welcomeMine;          // read-out: the last tick framed the dog bringing MY throw back from my side
 
         KH_Frisbee DiscOf(int dog)
         {
@@ -184,6 +184,29 @@ namespace KominkaHillside
             _cutNext = true;
         }
 
+        /// <summary>§17 おかえり (internal, patterns only; design §17): while the dog carries back the disc that I threw (ThrowerId == my id, the
+        /// synced thrower compared with my id only), the camera stands on my side: from my feet toward the dog WelcomePos (welcomeDist, at most half
+        /// the way, welcomeSide to the right), welcomeHeight up, looking at the dog's head; the dog comes toward the camera. Not carrying, or another player's throw (that
+        /// player is never read): the 犬追従 framing of the dog.</summary>
+        bool Welcome(float dt)
+        {
+            if (!DogValid(_dog)) return false;
+            KH_FrisbeeCatch c = CatcherOf(_dog);
+            bool carrying = c != null && c.IsCarrying;
+            int me = SelfId();
+            _welcomeMine = carrying && me >= 0 && c.ThrowerId == me && SelfHead();
+            if (!_welcomeMine) return DogFollowOf(_dog, dt);
+            Transform root = dogRoots[_dog];
+            Vector3 body = DogSubject(_dog), head = DogHead(_dog);
+            Heading(root.position, root.forward, dt);   // keeps the dog's heading warm for the fallback framing
+            _wantPos = WelcomePos(_selfFeet, body, welcomeDist, welcomeSide, welcomeHeight);
+            _wantLook = head;
+            _wantFov = welcomeFov;
+            _wantLookTau = welcomeLookTau;   // the dog arrives at 3 m/s close to the lens: a 0.25 s look lag lost its body (Video/2b)
+            _subject = head; _subjectSize = 0.3f;
+            return true;
+        }
+
         /// <summary>Steps the disc's own closed-form flight (KH_Frisbee._PositionAt) every landStep s up to landMaxT, stopping at the first hit
         /// on blockMask (the aim line's rule). About landMaxT / landStep calls, once per throw (plus at most one re-placement).</summary>
         Vector3 PredictLanding(KH_Frisbee disc, Vector3 p0, Vector3 v0, float curve)
@@ -201,61 +224,6 @@ namespace KominkaHillside
                 if (q.y < p0.y - 60f) break;
             }
             return prev;
-        }
-
-        /// <summary>The world point of a wash PART (0..KH_DogWash.PartCount-1, what _LastStrokePart returns): the mean of the bones of every collider
-        /// mapped to that part. KH_DogWash.partBones is indexed by COLLIDER (parallel to partColliders / partOfCollider, KH_DogWash.cs:194-196;
-        /// the stroke stores partOfCollider[colliderIndex], :1183 / :1196), so partBones[part] was the wrong bone (W3 harness V5, 2026-10-04).
-        /// No stroke yet (-1) or no collider of that part: the fallback (the dog's body).</summary>
-        Vector3 PartPoint(KH_DogWash w, int part, Vector3 fallback)
-        {
-            if (part < 0) return fallback;
-            Transform[] bones = w.partBones;
-            int[] map = w.partOfCollider;
-            if (bones == null || map == null) return fallback;
-            Vector3 sum = Vector3.zero;
-            int n = 0;
-            int len = Mathf.Min(bones.Length, map.Length);
-            for (int i = 0; i < len; i++)
-                if (map[i] == part && bones[i] != null) { sum += bones[i].position; n++; }
-            return n > 0 ? sum / n : fallback;
-        }
-
-        /// <summary>洗浄の手元アップ (§4.10): the dog held and arrived at the wash station I called (else the arrived station nearest to me within
-        /// 6 m); the camera is on the far side of the last stroked part from the washer — me if I am the washer, otherwise the dog's left side
-        /// is assumed (the washer is not read). No washing dog: lost ("洗っている犬がいません").</summary>
-        bool Wash(float dt)
-        {
-            int me = SelfId();
-            int dog = -1;
-            if (washCalls != null)
-            {
-                for (int k = 0; k < washCalls.Length && dog < 0; k++)
-                    if (washCalls[k] != null && washCalls[k]._Arrived() && washCalls[k]._CallerId() == me) dog = washCalls[k]._HeldDog();
-                if (dog < 0 && SelfHead())
-                {
-                    float best = 36f;
-                    for (int k = 0; k < washCalls.Length; k++)
-                    {
-                        if (washCalls[k] == null || !washCalls[k]._Arrived()) continue;
-                        float d = (washCalls[k]._AnchorPosition() - _selfHead).sqrMagnitude;
-                        if (d < best) { best = d; dog = washCalls[k]._HeldDog(); }
-                    }
-                }
-            }
-            _washDog = dog;
-            if (!DogValid(dog)) { _lostWord = 1; return false; }
-            KH_DogWash w = washes != null && dog < washes.Length ? washes[dog] : null;
-            Vector3 body = DogSubject(dog);
-            Vector3 part = w != null ? PartPoint(w, w._LastStrokePart(), body) : body;
-            Vector3 washer = body - dogRoots[dog].right;
-            if (w != null && w._WasherPlayerId() == me && SelfHead()) washer = _selfHead;
-            _wantPos = WashPos(part, washer, washDist, washUp);
-            _wantLook = part;
-            _wantFov = washFov;
-            _wantLookTau = washLookTau;
-            _subject = part; _subjectSize = 0.3f;
-            return true;
         }
     }
 }

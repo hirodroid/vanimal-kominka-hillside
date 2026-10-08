@@ -35,11 +35,13 @@ namespace KominkaHillside
         public GameObject[] commonButtons;
         public AudioSource chime;                // 任意 (null なら鳴らさない)
 
-        // 撮影の形の文言 (ja。13 言語は W5 で翻訳表へ移す。[いいよ] [いまはだめ] は合流の翻訳済みのキーを使う)
+        // 撮影の形の文言。W5 (2026-10-08): 表示は UITranslations.json の film.* (13 言語) を TJa(key, ja) で引く。下の ja は表に無いときの既定
+        // (Video/2・Video/5 が表の ja と一致を照合する)。[いいよ] [いまはだめ] は合流の翻訳済みのキーを使う
         public const string WordFilmTitle = "{0} さんが撮影カメラであなたを撮りたいそうです";
         public const string WordFilmPlace = "映像は撮る人の画面だけに出ます";   // 場所の行は共通フォント (表示名の補助フォントではない) なので名前を入れない
         public const string WordFilmGranted = "{0} さんに撮影を許可しました";
         public const string WordFilmGrantedNote = "さんぽタブの [撮影を許可中] からいつでもやめてもらえます";
+        public const string KeyFilmTitle = "film.notice", KeyFilmPlace = "film.notice.place", KeyFilmGranted = "film.granted", KeyFilmGrantedNote = "film.granted.note";
         public float distance = 1.1f, lowerDegrees = 15f, replaceMeters = 3f;
 
         // 地点の呼び名 (KH_LeashManager の地点の並び)
@@ -84,8 +86,8 @@ namespace KominkaHillside
             _showing = true; _afterUntil = Time.time + 4f;
             SetActive(joinButtons, false); SetActive(callButtons, false); SetActive(filmButtons, false); SetActive(commonButtons, false);
             _shownKind = -1; _shownGen = -1;
-            if (titleLabel != null) titleLabel.text = WordFilmGranted.Replace("{0}", name);
-            if (placeLabel != null) placeLabel.text = WordFilmGrantedNote;
+            if (titleLabel != null) titleLabel.text = TJa(KeyFilmGranted, WordFilmGranted).Replace("{0}", name);
+            if (placeLabel != null) placeLabel.text = TJa(KeyFilmGrantedNote, WordFilmGrantedNote);
             if (countLabel != null) countLabel.text = "";
             if (reasonLabel != null) reasonLabel.text = "";
             Place();
@@ -164,8 +166,8 @@ namespace KominkaHillside
             if (film)
             {
                 // 撮影の形 (§7.4): 見出しは撮影の依頼、場所の行の代わりに「映像は相手の画面だけ」。相手の場所は出さない
-                if (titleLabel != null) titleLabel.text = WordFilmTitle.Replace("{0}", name);
-                if (placeLabel != null) placeLabel.text = WordFilmPlace;
+                if (titleLabel != null) titleLabel.text = TJa(KeyFilmTitle, WordFilmTitle).Replace("{0}", name);
+                if (placeLabel != null) placeLabel.text = TJa(KeyFilmPlace, WordFilmPlace);
                 if (filmYesLabel != null) filmYesLabel.text = T("course.travel.join.notice.yes");
                 if (filmNoLabel != null) filmNoLabel.text = T("course.travel.join.notice.no");
                 if (reasonLabel != null) reasonLabel.text = "";
@@ -225,5 +227,13 @@ namespace KominkaHillside
         }
 
         private string T(string key) { return language != null ? language._Text(key) : key; }
+
+        /// <summary>W5: the film texts. ja when there is no language object or the table has no such key yet.</summary>
+        private string TJa(string key, string ja)
+        {
+            if (language == null) return ja;
+            string s = language._Text(key);
+            return s == null || s.Length == 0 || s == key ? ja : s;
+        }
     }
 }

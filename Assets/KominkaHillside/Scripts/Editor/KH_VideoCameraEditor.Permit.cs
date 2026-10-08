@@ -56,9 +56,9 @@ namespace KominkaHillside.Editor
                 KH_VideoCamera.WordNotAccepting, KH_VideoCamera.WordNotReady, KH_VideoCamera.WordAgain, KH_VideoCamera.WordBusyMe, KH_VideoCamera.WordAnswerFirst, KH_VideoCamera.WordLeft,
                 KH_VideoCamera.WordRevoked, KH_VideoCamera.WordNoTable, KH_VideoCamera.WordCrossYield, KH_VideoCamera.WordModeSelf, KH_VideoCamera.WordFilming,
                 KH_TravelNotice.WordFilmTitle, KH_TravelNotice.WordFilmPlace, KH_TravelNotice.WordFilmGranted, KH_TravelNotice.WordFilmGrantedNote,
-                KD_TreatPouch.WordFilmAcceptOn, KD_TreatPouch.WordFilmAcceptOff, KD_TreatPouch.WordFilmPending, KD_TreatPouch.WordFilmGrantsButton, KD_TreatPouch.WordFilmGrantsTitle,
+                KD_TreatPouch.WordFilmAcceptOn, KD_TreatPouch.WordFilmAcceptOff, KD_TreatPouch.JaFilmPending, KD_TreatPouch.JaFilmGrantsButton, KD_TreatPouch.WordFilmGrantsTitle,
                 KD_TreatPouch.WordFilmGrantsNote, KD_TreatPouch.WordFilmRowActive, KD_TreatPouch.WordFilmRowWaiting, KD_TreatPouch.WordFilmStop, KD_TreatPouch.WordFilmNone,
-                "◀▶/0123456789()?-[]「」");
+                "◀▶/0123456789()?-[]「」", BundledW5Text());   // W5: + the ja / en texts of every video.* / film.* key
         }
 
         /// <summary>Fixed texts drawn with the display-name font (labels that also carry a player's name).</summary>
@@ -68,7 +68,8 @@ namespace KominkaHillside.Editor
                 KH_VideoCamera.WordChecking, KH_VideoCamera.WordFilmingPerson, KH_VideoCamera.WordNoPermit, KH_VideoCamera.WordDeclined, KH_VideoCamera.WordPaused, KH_VideoCamera.WordBusy,
                 KH_VideoCamera.WordNotAccepting, KH_VideoCamera.WordNotReady, KH_VideoCamera.WordAgain, KH_VideoCamera.WordBusyMe, KH_VideoCamera.WordAnswerFirst, KH_VideoCamera.WordLeft,
                 KH_VideoCamera.WordRevoked, KH_VideoCamera.WordNoTable, KH_VideoCamera.WordCrossYield, KH_VideoCamera.WordWaiting, KH_VideoCamera.WordFilming,
-                KH_TravelNotice.WordFilmTitle, KH_TravelNotice.WordFilmGranted, KD_TreatPouch.WordFilmRowActive, KD_TreatPouch.WordFilmRowWaiting, "0123456789()-");
+                KH_TravelNotice.WordFilmTitle, KH_TravelNotice.WordFilmGranted, KD_TreatPouch.WordFilmRowActive, KD_TreatPouch.WordFilmRowWaiting, "0123456789()-",
+                BundledW5Text(NameFontKeys));   // W5: + their ja / en texts
         }
 
         static TMP_FontAsset NameFont() { return AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KH_CourseTravelNameFontEditor.FontPath); }
@@ -141,22 +142,22 @@ namespace KominkaHillside.Editor
             var panel = video.monitorRoot.transform.Find(PanelName);
             if (panel == null) throw new InvalidOperationException("monitor panel missing (run Video/1)");
             // ---- the picker row (じぶん mode): [人: name] and [取り消す] ----
-            var person = Btn(panel, PersonButtonName, PersonButtonPos, PersonButtonSize, KH_VideoCamera.WordPerson + KH_VideoCamera.WordModeSelf, c.font, backing, nameof(KH_VideoCamera._PersonList), log);
+            var person = Btn(panel, PersonButtonName, PersonButtonPos, PersonButtonSize, Ja(KH_VideoCamera.KeyPerson).Replace("{0}", Ja(KH_VideoCamera.ModeKey(KH_VideoCamera.ModeSelfFollow))), c.font, backing, nameof(KH_VideoCamera._PersonList), log);
             var personLabel = LabelOf(person);
             UseNameFont(personLabel, nameFont); Fit(personLabel, 22f, 12f, true); personLabel.alignment = TextAlignmentOptions.Center; personLabel.lineSpacing = -8f;
             person.SetActive(false);
-            var cancel = Btn(panel, PersonCancelName, PersonCancelPos, PersonCancelSize, KH_VideoCamera.WordCancel, c.font, backing, nameof(KH_VideoCamera._PersonCancel), log);
+            var cancel = Btn(panel, PersonCancelName, PersonCancelPos, PersonCancelSize, Ja(KH_VideoCamera.KeyCancel), c.font, backing, nameof(KH_VideoCamera._PersonCancel), log);
             cancel.SetActive(false);
             // ---- the list overlay (covers the mode buttons; blocks rays to them) ----
             var list = KD_ShopSetupEditor.EnsureUiChild(panel, PersonListName, OverlayPos, OverlaySize);
             var lbg = list.GetComponent<Image>(); if (lbg == null) lbg = list.AddComponent<Image>();
             lbg.color = OverlayColor; lbg.raycastTarget = true; KD_UiSpriteEditor.ApplyFlatSkin(lbg);
-            var title = Label(list.transform, "Title", new Vector2(-230f, 117f), new Vector2(340f, 40f), KH_VideoCamera.WordPersonTitle, c.font, 24f, 14f, TextAlignmentOptions.MidlineLeft, false);
+            var title = Label(list.transform, "Title", new Vector2(-230f, 117f), new Vector2(340f, 40f), Ja(KH_VideoCamera.KeyPersonTitle), c.font, 24f, 14f, TextAlignmentOptions.MidlineLeft, false);
             title.color = KD_UiSpriteEditor.AccentGold;
             Btn(list.transform, "Prev", new Vector2(90f, 117f), new Vector2(70f, 44f), "◀", c.font, backing, nameof(KH_VideoCamera._PersonPagePrev), log);
             var page = Label(list.transform, "Page", new Vector2(165f, 117f), new Vector2(70f, 40f), "1/1", c.font, 20f, 12f, TextAlignmentOptions.Center, false);
             Btn(list.transform, "Next", new Vector2(240f, 117f), new Vector2(70f, 44f), "▶", c.font, backing, nameof(KH_VideoCamera._PersonPageNext), log);
-            Btn(list.transform, "Close", new Vector2(345f, 117f), new Vector2(110f, 44f), KH_VideoCamera.WordPersonClose, c.font, backing, nameof(KH_VideoCamera._PersonListClose), log);
+            Btn(list.transform, "Close", new Vector2(345f, 117f), new Vector2(110f, 44f), Ja(KH_VideoCamera.KeyPersonClose), c.font, backing, nameof(KH_VideoCamera._PersonListClose), log);
             var cellLabels = new TextMeshProUGUI[KH_VideoCamera.PeoplePerPage]; var cellImages = new Image[KH_VideoCamera.PeoplePerPage];
             for (int i = 0; i < KH_VideoCamera.PeoplePerPage; i++)
             {
@@ -174,11 +175,11 @@ namespace KominkaHillside.Editor
             var conf = KD_ShopSetupEditor.EnsureUiChild(panel, PersonConfirmName, OverlayPos, OverlaySize);
             var cbg = conf.GetComponent<Image>(); if (cbg == null) cbg = conf.AddComponent<Image>();
             cbg.color = OverlayColor; cbg.raycastTarget = true; KD_UiSpriteEditor.ApplyFlatSkin(cbg);
-            var q = Label(conf.transform, "Question", new Vector2(0f, 80f), new Vector2(780f, 70f), KH_VideoCamera.WordAskConfirm.Replace("{0}", "VRChatUser12"), c.font, 26f, 14f, TextAlignmentOptions.Center, true);
-            var note = Label(conf.transform, "Note", new Vector2(0f, 25f), new Vector2(780f, 36f), KH_VideoCamera.WordAskNote.Replace("{0}", "VRChatUser12"), c.font, 20f, 12f, TextAlignmentOptions.Center, false);
+            var q = Label(conf.transform, "Question", new Vector2(0f, 80f), new Vector2(780f, 70f), Ja(KH_VideoCamera.KeyAskConfirm).Replace("{0}", "VRChatUser12"), c.font, 26f, 14f, TextAlignmentOptions.Center, true);
+            var note = Label(conf.transform, "Note", new Vector2(0f, 25f), new Vector2(780f, 36f), Ja(KH_VideoCamera.KeyAskNote).Replace("{0}", "VRChatUser12"), c.font, 20f, 12f, TextAlignmentOptions.Center, false);
             UseNameFont(q, nameFont); UseNameFont(note, nameFont);
-            Btn(conf.transform, "Yes", new Vector2(-180f, -60f), new Vector2(300f, 70f), KH_VideoCamera.WordAskYes, c.font, backing, nameof(KH_VideoCamera._PersonAskYes), log);
-            Btn(conf.transform, "No", new Vector2(180f, -60f), new Vector2(300f, 70f), KH_VideoCamera.WordAskNo, c.font, backing, nameof(KH_VideoCamera._PersonAskNo), log);
+            Btn(conf.transform, "Yes", new Vector2(-180f, -60f), new Vector2(300f, 70f), Ja(KH_VideoCamera.KeyAskYes), c.font, backing, nameof(KH_VideoCamera._PersonAskYes), log);
+            Btn(conf.transform, "No", new Vector2(180f, -60f), new Vector2(300f, 70f), Ja(KH_VideoCamera.KeyAskNo), c.font, backing, nameof(KH_VideoCamera._PersonAskNo), log);
             conf.transform.SetAsLastSibling();
             conf.SetActive(false);
             foreach (var tr in video.monitorRoot.GetComponentsInChildren<Transform>(true)) tr.gameObject.layer = MonitorLayer;
@@ -187,6 +188,7 @@ namespace KominkaHillside.Editor
             video.personListRoot = list; video.personListTitle = title; video.personListReason = reason; video.personPageLabel = page;
             video.personCellLabels = cellLabels; video.personCellImages = cellImages;
             video.personConfirmRoot = conf; video.personConfirmLabel = q; video.personConfirmNote = note;
+            WireTexts(video, log);   // W5: [とじる] [依頼する] [やめる] join the labels the runtime rewrites in the player's language
             UdonSharpEditorUtility.CopyProxyToUdon(video); EditorUtility.SetDirty(video);
             log.Add("monitor: person picker " + PersonButtonPos + " / cancel / list (" + KH_VideoCamera.PeoplePerPage + " cells) / confirmation, layer " + MonitorLayer + ", names in " + (nameFont != null ? nameFont.name : "the shared font"));
         }
@@ -233,7 +235,7 @@ namespace KominkaHillside.Editor
             if (pb == null) throw new InvalidOperationException("KD_TreatPouch backing missing");
             var sb = new StringBuilder();
             // ---- the map page: 「撮影の申し込みを受ける」 next to the join toggle ([人] only; shown at runtime) ----
-            var accept = KD_ShopSetupEditor.EnsureButton(p.travelMapPage.transform, FilmAcceptName, FilmAcceptPos, FilmAcceptSize, KD_UiSpriteEditor.ActionNeutral, c.font, KD_TreatPouch.WordFilmAcceptOn, pb, nameof(KD_TreatPouch._FilmToggleAccept), sb);
+            var accept = KD_ShopSetupEditor.EnsureButton(p.travelMapPage.transform, FilmAcceptName, FilmAcceptPos, FilmAcceptSize, KD_UiSpriteEditor.ActionNeutral, c.font, Ja(KD_TreatPouch.KeyFilmAcceptOn), pb, nameof(KD_TreatPouch._FilmToggleAccept), sb);
             var acceptLabel = LabelOf(accept); acceptLabel.fontSize = 20f; acceptLabel.enableAutoSizing = true; acceptLabel.fontSizeMin = 12f; acceptLabel.fontSizeMax = 20f; EditorUtility.SetDirty(acceptLabel);
             accept.SetActive(false);
             // ---- Page_Walk: [撮影を許可中 (n)], its own button (Codex review 2: reachable while a request is pending). Saved at the pending slot
@@ -241,7 +243,7 @@ namespace KominkaHillside.Editor
             if (!KH_WalkTabLayoutEditor.IsApplied(p)) throw new InvalidOperationException("the two-column walk tab (Course/120) is required for " + FilmGrantsButtonName);
             var walk = p.tabPages[KD_TreatPouch.TabWalk].transform;
             var grantsBtn = KD_ShopSetupEditor.EnsureButton(walk, FilmGrantsButtonName, KH_WalkTabLayoutEditor.PendingPos, KH_WalkTabLayoutEditor.PendingSize, new Color(.30f, .42f, .52f), c.font,
-                KD_TreatPouch.WordFilmGrantsButton.Replace("{0}", "1"), pb, nameof(KD_TreatPouch._FilmGrantsOpen), sb);
+                Ja(KD_TreatPouch.KeyFilmGrantsButton).Replace("{0}", "1"), pb, nameof(KD_TreatPouch._FilmGrantsOpen), sb);
             var gl = LabelOf(grantsBtn);
             var glr = gl.rectTransform; glr.anchorMin = Vector2.zero; glr.anchorMax = Vector2.one; glr.pivot = new Vector2(.5f, .5f); glr.anchoredPosition = Vector2.zero; glr.sizeDelta = new Vector2(-16f, -4f);
             gl.enableAutoSizing = true; gl.fontSizeMax = 22f; gl.fontSize = 22f; gl.fontSizeMin = 12f; gl.enableWordWrapping = true; EditorUtility.SetDirty(gl);
@@ -252,19 +254,19 @@ namespace KominkaHillside.Editor
             var page = KD_ShopSetupEditor.EnsureUiChild(p.settingsPage.transform, FilmGrantsPageName, Vector2.zero, new Vector2(KD_TreatSetupEditor.PanelWidth, KD_TreatSetupEditor.PanelHeight));
             var back = KD_ShopSetupEditor.EnsureButton(page.transform, "Back", new Vector2(450f, 164f), new Vector2(220f, 44f), KD_UiSpriteEditor.ActionNeutral, c.font, "もどる", pb, nameof(KD_TreatPouch._FilmGrantsBack), sb);
             var backLabel = LabelOf(back); backLabel.fontSize = 20f; EditorUtility.SetDirty(backLabel);
-            var note = Label(page.transform, "Note", new Vector2(-110f, 164f), new Vector2(640f, 48f), KD_TreatPouch.WordFilmGrantsNote, c.font, 18f, 12f, TextAlignmentOptions.MidlineLeft, true);
+            var note = Label(page.transform, "Note", new Vector2(-110f, 164f), new Vector2(640f, 48f), Ja(KD_TreatPouch.KeyFilmGrantsNote), c.font, 18f, 12f, TextAlignmentOptions.MidlineLeft, true);
             var labels = new TextMeshProUGUI[KH_TravelMailbox.FilmSlots]; var stops = new GameObject[KH_TravelMailbox.FilmSlots]; var stopLabels = new TextMeshProUGUI[KH_TravelMailbox.FilmSlots];
             for (int k = 0; k < KH_TravelMailbox.FilmSlots; k++)
             {
-                labels[k] = Label(page.transform, "Row" + k, GrantRowPos(k), GrantRowSize, "VRChatUser12345\n" + KD_TreatPouch.WordFilmRowWaiting, c.font, 22f, 14f, TextAlignmentOptions.MidlineLeft, true);
+                labels[k] = Label(page.transform, "Row" + k, GrantRowPos(k), GrantRowSize, "VRChatUser12345\n" + Ja(KD_TreatPouch.KeyFilmRowWaiting), c.font, 22f, 14f, TextAlignmentOptions.MidlineLeft, true);
                 labels[k].lineSpacing = -8f;
                 UseNameFont(labels[k], nameFont);
                 labels[k].gameObject.SetActive(false);
-                stops[k] = KD_ShopSetupEditor.EnsureButton(page.transform, "Stop" + k, GrantStopPos(k), GrantStopSize, KD_UiSpriteEditor.ActionNeutral, c.font, KD_TreatPouch.WordFilmStop, pb, "_FilmStop" + k, sb);
+                stops[k] = KD_ShopSetupEditor.EnsureButton(page.transform, "Stop" + k, GrantStopPos(k), GrantStopSize, KD_UiSpriteEditor.ActionNeutral, c.font, Ja(KD_TreatPouch.KeyFilmStop), pb, "_FilmStop" + k, sb);
                 stopLabels[k] = LabelOf(stops[k]); stopLabels[k].fontSize = 24f; stopLabels[k].enableAutoSizing = true; stopLabels[k].fontSizeMin = 14f; stopLabels[k].fontSizeMax = 24f; EditorUtility.SetDirty(stopLabels[k]);
                 stops[k].SetActive(false);
             }
-            var empty = Label(page.transform, "Empty", new Vector2(0f, 0f), new Vector2(800f, 40f), KD_TreatPouch.WordFilmNone, c.font, 22f, 14f, TextAlignmentOptions.Center, false);
+            var empty = Label(page.transform, "Empty", new Vector2(0f, 0f), new Vector2(800f, 40f), Ja(KD_TreatPouch.KeyFilmNone), c.font, 22f, 14f, TextAlignmentOptions.Center, false);
             page.SetActive(false);
             if (sb.Length > 0) log.Add(sb.ToString().Trim());
             var pages = new List<GameObject>();
@@ -388,28 +390,40 @@ namespace KominkaHillside.Editor
                 try
                 {
                     var sample = go.AddComponent<TextMeshProUGUI>();
+                    // W5: every glyphs=self language (ja / en) of the catalog. ja keeps failing as before; another language is a WARN
+                    // (the client-glyph languages are drawn by VRChat's own font and are checked on a device)
+                    _w5Catalog = null;
+                    var cat = Cat();
+                    string lc = "ja";
                     void FitCheck(TMP_Text t, string text, string what)
                     {
                         if (t == null) { Check(false, "label missing: " + what); return; }
                         int res = KD_LocalizationEditor.MeasureLabelFit(sample, t, text, out Vector2 pref);
-                        fit.Add(what + " preferred=" + pref + " rect=" + t.rectTransform.rect.size + " fit=" + res);
-                        Check(res != 2, "fits: " + what);
+                        fit.Add(lc + " " + what + " preferred=" + pref + " rect=" + t.rectTransform.rect.size + " fit=" + res);
+                        if (lc == "ja" || res != 2) Check(res != 2, "fits (" + lc + "): " + what); else Warn("does not fit (" + lc + "): " + what + " preferred=" + pref + " rect=" + t.rectTransform.rect.size);
                     }
-                    FitCheck(notice.titleLabel, KH_TravelNotice.WordFilmTitle.Replace("{0}", "VRChatUser12345"), "notice film title");
-                    FitCheck(notice.placeLabel, KH_TravelNotice.WordFilmPlace, "notice film place");
-                    FitCheck(notice.titleLabel, KH_TravelNotice.WordFilmGranted.Replace("{0}", "VRChatUser12345"), "notice granted title");
-                    FitCheck(notice.placeLabel, KH_TravelNotice.WordFilmGrantedNote, "notice granted note");
-                    FitCheck(v.personLabel, KH_VideoCamera.WordPerson + "VRChatUser12345\n" + KH_VideoCamera.WordNoPermit.Replace("{0}", "VRChatUser12345"), "picker no-permit line");
-                    FitCheck(v.personConfirmLabel, KH_VideoCamera.WordAskConfirm.Replace("{0}", "VRChatUser12345"), "confirmation question");
-                    FitCheck(v.personConfirmNote, KH_VideoCamera.WordAskNote.Replace("{0}", "VRChatUser12345"), "confirmation note");
-                    if (v.personCellLabels != null && v.personCellLabels.Length > 0) FitCheck(v.personCellLabels[0], "VRChatUser12345\n" + KH_VideoCamera.WordAnswerFirst, "list cell (longest reason)");
+                    string T(string key) { return KD_LocalizationEditor.Text(cat, lc, key); }
+                    const string Name = "VRChatUser12345";
                     var pouch = UnityEngine.Object.FindObjectsOfType<KD_TreatPouch>(true).FirstOrDefault();
-                    if (pouch != null)
+                    foreach (var lang in cat.languages)
                     {
-                        FitCheck(pouch.filmAcceptLabel, KD_TreatPouch.WordFilmAcceptOff, "map page film toggle");
-                        FitCheck(pouch.filmGrantsButtonLabel, KD_TreatPouch.WordFilmGrantsButton.Replace("{0}", "4"), "walk tab [撮影を許可中] (266 wide; the 174-wide three-button row is checked by the harness V6 case 21)");
-                        FitCheck(pouch.filmGrantsNote, KD_TreatPouch.WordFilmGrantsNote, "grants page note");
-                        if (pouch.filmGrantLabels != null && pouch.filmGrantLabels.Length > 0) FitCheck(pouch.filmGrantLabels[0], "VRChatUser12345\n" + KD_TreatPouch.WordFilmRowWaiting, "grants row");
+                        if (!KD_LocalizationEditor.Bundled(lang)) continue;
+                        lc = lang.code;
+                        FitCheck(notice.titleLabel, T(KH_TravelNotice.KeyFilmTitle).Replace("{0}", Name), "notice film title");
+                        FitCheck(notice.placeLabel, T(KH_TravelNotice.KeyFilmPlace), "notice film place");
+                        FitCheck(notice.titleLabel, T(KH_TravelNotice.KeyFilmGranted).Replace("{0}", Name), "notice granted title");
+                        FitCheck(notice.placeLabel, T(KH_TravelNotice.KeyFilmGrantedNote), "notice granted note");
+                        FitCheck(v.personLabel, T(KH_VideoCamera.KeyPerson).Replace("{0}", Name) + "\n" + T(KH_VideoCamera.KeyNoPermit).Replace("{0}", Name), "picker no-permit line");
+                        FitCheck(v.personConfirmLabel, T(KH_VideoCamera.KeyAskConfirm).Replace("{0}", Name), "confirmation question");
+                        FitCheck(v.personConfirmNote, T(KH_VideoCamera.KeyAskNote).Replace("{0}", Name), "confirmation note");
+                        if (v.personCellLabels != null && v.personCellLabels.Length > 0) FitCheck(v.personCellLabels[0], Name + "\n" + T(KH_VideoCamera.KeyAnswerFirst), "list cell (longest reason)");
+                        if (pouch != null)
+                        {
+                            FitCheck(pouch.filmAcceptLabel, T(KD_TreatPouch.KeyFilmAcceptOff), "map page film toggle");
+                            FitCheck(pouch.filmGrantsButtonLabel, T(KD_TreatPouch.KeyFilmGrantsButton).Replace("{0}", "4"), "walk tab [撮影を許可中] (266 wide; the 174-wide three-button row is checked by the harness V6 case 21)");
+                            FitCheck(pouch.filmGrantsNote, T(KD_TreatPouch.KeyFilmGrantsNote), "grants page note");
+                            if (pouch.filmGrantLabels != null && pouch.filmGrantLabels.Length > 0) FitCheck(pouch.filmGrantLabels[0], Name + "\n" + T(KD_TreatPouch.KeyFilmRowWaiting), "grants row");
+                        }
                     }
                 }
                 finally { UnityEngine.Object.DestroyImmediate(go); }

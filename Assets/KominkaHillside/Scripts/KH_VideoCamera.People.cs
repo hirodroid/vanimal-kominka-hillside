@@ -23,13 +23,14 @@ namespace KominkaHillside
     ///   dog framing starts with a cut (no 3 s hold: that is for a lost dog only, §13.3). The same happens right before enabling the camera
     ///   if the session is no longer in use (the re-check before drawing).
     /// - Ending the session: × / しまう, choosing another person or myself, [取り消す] / [やめる] on the picker, or 60 s in another mode (§5.4).
-    /// - おまかせ (W5) does not exist yet. When it comes, it may use only a person whose session is already in use and never opens the
-    ///   confirmation or sends a request by itself (§14.3).
-    /// Texts are Japanese constants (13 languages in W5). Names use the display-name font (Video/4 wires it).
+    /// - §17 patterns (おまかせ included, KH_VideoCamera.Patterns.cs) never film another person: their じぶん is me, the [人: …] button is hidden
+    ///   while one runs, and a session left open times out after 60 s like in any other mode. They never open the confirmation or send a request.
+    /// Texts (W5): Tx(Key*, Word*) = UITranslations.json video.* in the player's language; the Word* constants are the Japanese defaults.
+    /// Names use the display-name font (Video/4 wires it).
     /// </summary>
     public partial class KH_VideoCamera
     {
-        public const string WordPerson = "人: ";
+        public const string WordPerson = "人: {0}";   // W5: a format ({0} = じぶん or the name)
         public const string WordPersonTitle = "撮る人を選ぶ";
         public const string WordPersonClose = "とじる";
         public const string WordAskConfirm = "{0} さんに撮影の許可を依頼しますか?";
@@ -55,6 +56,14 @@ namespace KominkaHillside
         public const string WordRevoked = "{0} さんが撮影の許可を取り消しました";
         public const string WordNoTable = "許可を確かめられませんでした";
         public const string WordCrossYield = "相手からの申し込みを先に表示します";
+        // W5: the translation keys of the Word* above (13 languages in UITranslations.json)
+        public const string KeyPerson = "video.person", KeyPersonTitle = "video.person.title", KeyPersonClose = "video.person.close", KeyAskConfirm = "video.ask.confirm";
+        public const string KeyAskNote = "video.ask.note", KeyAskYes = "video.ask.yes", KeyAskNo = "video.ask.no", KeyCancel = "video.person.cancel";
+        public const string KeyStopPerson = "video.person.stop", KeyWaitPermit = "video.wait.permit", KeyChecking = "video.checking", KeyWaiting = "video.waiting";
+        public const string KeyFilmingPerson = "video.filming.person", KeyNoPermit = "video.no.permit", KeyDeclined = "video.declined", KeyPaused = "video.paused";
+        public const string KeyBusy = "video.busy", KeyNotAccepting = "video.notaccepting", KeyNotReady = "video.notready", KeyAgain = "video.again";
+        public const string KeyBusyMe = "video.busyme", KeyAnswerFirst = "video.answerfirst", KeyLeft = "video.left", KeyRevoked = "video.revoked";
+        public const string KeyNoTable = "video.notable", KeyCrossYield = "video.crossyield";
 
         [Header("人を撮る (W4。Video/4 が作って配線する)")]
         public GameObject personButton, personCancel;
@@ -179,6 +188,7 @@ namespace KominkaHillside
         public void _PersonList()
         {
             if (!_open) return;
+            if (_patRun) { PatternStop(); DrawPanel(); }   // §17: [人: …] stops the pattern (the button is hidden meanwhile; a safety net)
             PersonSnapshot();
             _peoplePage = 0; _listOpen = true; _confirmId = -1; _listReason = "";
             DrawPerson();
@@ -204,7 +214,7 @@ namespace KominkaHillside
             int id = _confirmId;
             KH_TravelMailbox box = PersonMyBox();
             VRCPlayerApi p = VRCPlayerApi.GetPlayerById(id);
-            if (box == null || !Utilities.IsValid(p) || p.isLocal) { _confirmId = -1; PersonNote(WordLeft); DrawPerson(); return; }
+            if (box == null || !Utilities.IsValid(p) || p.isLocal) { _confirmId = -1; PersonNote(Tx(KeyLeft, WordLeft)); DrawPerson(); return; }
             KH_TravelMailbox theirs = box._FindBox(p);   // look again at the press (a leave in between)
             int can = box._FilmCanAsk(id, theirs);
             if (can != KH_TravelMailbox.JoinWaiting) { _confirmId = -1; _listOpen = true; _listReason = AskText(can, id); DrawPerson(); return; }
@@ -249,7 +259,7 @@ namespace KominkaHillside
             if (idx < 0 || idx >= _peopleCount) return;
             int id = _peopleIds[idx];
             VRCPlayerApi p = VRCPlayerApi.GetPlayerById(id);
-            if (!Utilities.IsValid(p)) { _listReason = WordLeft; DrawPerson(); return; }
+            if (!Utilities.IsValid(p)) { _listReason = Tx(KeyLeft, WordLeft); DrawPerson(); return; }
             KH_TravelMailbox box = PersonMyBox();
             if (p.isLocal)
             {
@@ -261,7 +271,7 @@ namespace KominkaHillside
                 return;
             }
             if (box != null && box._FilmTarget() == id) { _listOpen = false; DrawPerson(); return; }   // already asked / filming that person
-            if (box == null) { _listReason = WordNotReady; DrawPerson(); return; }
+            if (box == null) { _listReason = Tx(KeyNotReady, WordNotReady); DrawPerson(); return; }
             if (!Utilities.IsValid(_peopleBoxes[idx])) _peopleBoxes[idx] = box._FindBox(p);
             int can = box._FilmCanAsk(id, _peopleBoxes[idx]);
             if (can != KH_TravelMailbox.JoinWaiting) { _listReason = AskText(can, id); DrawPerson(); return; }   // never open the confirmation to refuse later
@@ -302,15 +312,15 @@ namespace KominkaHillside
         void PersonTick(float now)
         {
             KH_TravelMailbox box = PersonMyBox();
-            if (_confirmId >= 0 && !Utilities.IsValid(VRCPlayerApi.GetPlayerById(_confirmId))) { _confirmId = -1; PersonNote(WordLeft); }
+            if (_confirmId >= 0 && !Utilities.IsValid(VRCPlayerApi.GetPlayerById(_confirmId))) { _confirmId = -1; PersonNote(Tx(KeyLeft, WordLeft)); }
             if (box != null && box.filmResultSerial != _filmSeenSerial)
             {
                 _filmSeenSerial = box.filmResultSerial;
                 PersonResult(box.filmResultCode, box.filmResultTarget);
             }
-            if (_person >= 0 && !Utilities.IsValid(VRCPlayerApi.GetPlayerById(_person))) { PersonSet(-1); PersonNote(WordLeft); }
+            if (_person >= 0 && !Utilities.IsValid(VRCPlayerApi.GetPlayerById(_person))) { PersonSet(-1); PersonNote(Tx(KeyLeft, WordLeft)); }
             int phase = box != null ? box._FilmPhase() : KH_TravelMailbox.FilmNone;
-            if (_mode != ModeSelfFollow && phase != KH_TravelMailbox.FilmNone)
+            if ((_mode != ModeSelfFollow || _patRun) && phase != KH_TravelMailbox.FilmNone)   // §17: a pattern never films the person: the session times out as in another mode
             {
                 if (_awaySince < 0f) _awaySince = now;
                 else if (now - _awaySince > AwayEndSeconds) { box._FilmEnd(); PersonSet(-1); _awaySince = -1f; }
@@ -331,13 +341,13 @@ namespace KominkaHillside
         void PersonResult(int code, int target)
         {
             string name = PersonName(target);
-            if (code == KH_TravelMailbox.CodeNo) PersonNote(WordDeclined);
-            else if (code == KH_TravelMailbox.CodeBusy) PersonNote(WordBusy);
-            else if (code == KH_TravelMailbox.CodePaused) PersonNote(WordPaused);
-            else if (code == KH_TravelMailbox.FilmRevokedBy) PersonNote(WordRevoked.Replace("{0}", name));
-            else if (code == KH_TravelMailbox.FilmNoTable) PersonNote(WordNoTable);
-            else if (code == KH_TravelMailbox.CrossYield) PersonNote(WordCrossYield);
-            else if (code == KH_TravelMailbox.JoinLeft) { PersonNote(WordLeft); if (target == _person) PersonSet(-1); }
+            if (code == KH_TravelMailbox.CodeNo) PersonNote(Tx(KeyDeclined, WordDeclined));
+            else if (code == KH_TravelMailbox.CodeBusy) PersonNote(Tx(KeyBusy, WordBusy));
+            else if (code == KH_TravelMailbox.CodePaused) PersonNote(Tx(KeyPaused, WordPaused));
+            else if (code == KH_TravelMailbox.FilmRevokedBy) PersonNote(Tx(KeyRevoked, WordRevoked).Replace("{0}", name));
+            else if (code == KH_TravelMailbox.FilmNoTable) PersonNote(Tx(KeyNoTable, WordNoTable));
+            else if (code == KH_TravelMailbox.CrossYield) PersonNote(Tx(KeyCrossYield, WordCrossYield));
+            else if (code == KH_TravelMailbox.JoinLeft) { PersonNote(Tx(KeyLeft, WordLeft)); if (target == _person) PersonSet(-1); }
         }
 
         void PersonNote(string s) { _personNote = s; _personNoteUntil = Time.time + NoteSeconds; }
@@ -351,17 +361,17 @@ namespace KominkaHillside
         /// <summary>Why a person cannot be asked now (the list and the press).</summary>
         string AskText(int code, int id)
         {
-            if (code == KH_TravelMailbox.JoinNotAccepting) return WordNotAccepting;
-            if (code == KH_TravelMailbox.JoinNotReady) return WordNotReady;
+            if (code == KH_TravelMailbox.JoinNotAccepting) return Tx(KeyNotAccepting, WordNotAccepting);
+            if (code == KH_TravelMailbox.JoinNotReady) return Tx(KeyNotReady, WordNotReady);
             if (code == KH_TravelMailbox.JoinAgain)
             {
                 KH_TravelMailbox box = PersonMyBox();
-                return WordAgain.Replace("{0}", box != null ? Mathf.CeilToInt(box._FilmAgainLeft(id)).ToString() : "30");
+                return Tx(KeyAgain, WordAgain).Replace("{0}", box != null ? Mathf.CeilToInt(box._FilmAgainLeft(id)).ToString() : "30");
             }
-            if (code == KH_TravelMailbox.JoinBusyMe) return WordBusyMe;
-            if (code == KH_TravelMailbox.AnswerFirst) return WordAnswerFirst;
-            if (code == KH_TravelMailbox.JoinLeft) return WordLeft;
-            return WordBusyMe;
+            if (code == KH_TravelMailbox.JoinBusyMe) return Tx(KeyBusyMe, WordBusyMe);
+            if (code == KH_TravelMailbox.AnswerFirst) return Tx(KeyAnswerFirst, WordAnswerFirst);
+            if (code == KH_TravelMailbox.JoinLeft) return Tx(KeyLeft, WordLeft);
+            return Tx(KeyBusyMe, WordBusyMe);
         }
 
         /// <summary>Close the list / confirmation (another mode, a shot change). Nothing is sent.</summary>
@@ -387,32 +397,32 @@ namespace KominkaHillside
 
         void DrawPerson()
         {
-            bool pick = _open && _mode == ModeSelfFollow;
+            bool pick = _open && _mode == ModeSelfFollow && !_patRun;   // §17: hidden while a pattern runs (its じぶん is always me)
             if (personButton != null && personButton.activeSelf != pick) personButton.SetActive(pick);
             KH_TravelMailbox box = PersonMyBox();
             int phase = box != null ? box._FilmPhase() : KH_TravelMailbox.FilmNone;
             bool cancel = pick && _person >= 0 && phase != KH_TravelMailbox.FilmNone && box._FilmTarget() == _person;
             if (personCancel != null && personCancel.activeSelf != cancel) personCancel.SetActive(cancel);
-            if (cancel && personCancelLabel != null) personCancelLabel.text = phase == KH_TravelMailbox.FilmInUse ? WordStopPerson : WordCancel;
+            if (cancel && personCancelLabel != null) personCancelLabel.text = phase == KH_TravelMailbox.FilmInUse ? Tx(KeyStopPerson, WordStopPerson) : Tx(KeyCancel, WordCancel);
             if (pick && personLabel != null)
             {
-                string who = _person < 0 ? WordModeSelf : PersonName(_person);
+                string who = _person < 0 ? ModeText(ModeSelfFollow) : PersonName(_person);
                 string line;
                 if (Time.time < _personNoteUntil && _personNote.Length > 0) line = _personNote;
                 else if (_person < 0) line = "";
                 else if (phase == KH_TravelMailbox.FilmPending && box._FilmTarget() == _person)
-                    line = WordWaitPermit.Replace("{0}", who).Replace("{1}", Mathf.CeilToInt(box._FilmWaitLeft()).ToString());
-                else if (phase == KH_TravelMailbox.FilmTransit && box._FilmTarget() == _person) line = WordChecking.Replace("{0}", who);
-                else if (_personLive) line = WordFilmingPerson.Replace("{0}", who);
-                else line = WordNoPermit.Replace("{0}", who);
-                personLabel.text = WordPerson + who + (line.Length > 0 ? "\n" + line : "");
+                    line = Tx(KeyWaitPermit, WordWaitPermit).Replace("{0}", who).Replace("{1}", Mathf.CeilToInt(box._FilmWaitLeft()).ToString());
+                else if (phase == KH_TravelMailbox.FilmTransit && box._FilmTarget() == _person) line = Tx(KeyChecking, WordChecking).Replace("{0}", who);
+                else if (_personLive) line = Tx(KeyFilmingPerson, WordFilmingPerson).Replace("{0}", who);
+                else line = Tx(KeyNoPermit, WordNoPermit).Replace("{0}", who);
+                personLabel.text = Tx(KeyPerson, WordPerson).Replace("{0}", who) + (line.Length > 0 ? "\n" + line : "");
             }
             // the list
             bool list = _open && _listOpen;
             if (personListRoot != null && personListRoot.activeSelf != list) personListRoot.SetActive(list);
             if (list)
             {
-                if (personListTitle != null) personListTitle.text = WordPersonTitle;
+                if (personListTitle != null) personListTitle.text = Tx(KeyPersonTitle, WordPersonTitle);
                 if (personListReason != null) personListReason.text = _listReason;
                 int pages = Mathf.Max(1, (_peopleCount + PeoplePerPage - 1) / PeoplePerPage);
                 if (personPageLabel != null) personPageLabel.text = (_peoplePage + 1).ToString() + "/" + pages.ToString();
@@ -426,13 +436,13 @@ namespace KominkaHillside
                     int id = _peopleIds[idx];
                     VRCPlayerApi p = VRCPlayerApi.GetPlayerById(id);
                     string text; bool ok = true;
-                    if (!Utilities.IsValid(p)) { text = "-\n" + WordLeft; ok = false; }
-                    else if (p.isLocal) text = WordModeSelf;
+                    if (!Utilities.IsValid(p)) { text = "-\n" + Tx(KeyLeft, WordLeft); ok = false; }
+                    else if (p.isLocal) text = ModeText(ModeSelfFollow);
                     else
                     {
                         text = p.displayName;
                         int can = box != null ? box._FilmCanAsk(id, _peopleBoxes[idx]) : KH_TravelMailbox.JoinNotReady;
-                        if (box != null && box._FilmTarget() == id) text += "\n" + (phase == KH_TravelMailbox.FilmInUse ? WordFilming : WordWaiting);
+                        if (box != null && box._FilmTarget() == id) text += "\n" + (phase == KH_TravelMailbox.FilmInUse ? Tx(KeyFilming, WordFilming) : Tx(KeyWaiting, WordWaiting));
                         else if (can != KH_TravelMailbox.JoinWaiting) { text += "\n" + AskText(can, id); ok = false; }
                     }
                     if (personCellLabels[c].text != text) personCellLabels[c].text = text;
@@ -445,8 +455,8 @@ namespace KominkaHillside
             if (confirm)
             {
                 string who = PersonName(_confirmId);
-                if (personConfirmLabel != null) personConfirmLabel.text = WordAskConfirm.Replace("{0}", who);
-                if (personConfirmNote != null) personConfirmNote.text = WordAskNote.Replace("{0}", who);
+                if (personConfirmLabel != null) personConfirmLabel.text = Tx(KeyAskConfirm, WordAskConfirm).Replace("{0}", who);
+                if (personConfirmNote != null) personConfirmNote.text = Tx(KeyAskNote, WordAskNote).Replace("{0}", who);
             }
         }
     }

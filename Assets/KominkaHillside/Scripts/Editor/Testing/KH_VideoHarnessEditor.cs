@@ -27,25 +27,30 @@ namespace KominkaHillside.Editor
     ///                 looks at the chest (no own dog), roll 0; a 15 m teleport of the player produces a cut
     /// Renders are counted with Camera.onPostRender for the rig's camera (not the rig's own _renders). The first failure stops the run after
     /// cleanup (close, restore dog 0 / _dog / _mode, destroy the harness dog); cases already finished are PASS, cases not started are SKIPPED.
-    ///   V4-walk-modes (W2) 犬目線 / ドローン / 定点 / 一周 / 通り過ぎ, each selected with its _ModeN: within 4 s at least 5 real renders, roll 0,
-    ///                 the camera within a sane distance of its subject (犬目線 3 m of the dog's head, ドローン 4-14 m of me, 一周 2.5-5 m of me, 通り過ぎ
-    ///                 ≤ 30 m of me), 定点 exactly at its data position (a fixed point, after the cut)
+    ///   V4-walk-modes (W2, §16) 背中ごし / 犬目線 / 定点 / 一周 / 通り過ぎ, each selected with its _ModeN: within 4 s at least 5 real renders, roll 0,
+    ///                 the camera within a sane distance of its subject (背中ごし at TpsPos of my head and body facing and behind me, 犬目線 3 m of the
+    ///                 dog's head, 一周 2.5-5 m of me, 通り過ぎ ≤ passFar + 5 m of me), 定点 exactly at its data position (a fixed point, after the cut).
+    ///                 Then 一周's ways (§16): ▶ = 近づく / 離れる, the circle's progress jumped to 350° (SIMULATED), ShotOrbitEnd at the end radius
+    ///                 (OrbitRadiusAt) and the camera at that radius from the centre; [→] / [←] / [戻す] change the speed within its limits
     ///   V5-play-modes (W3) one REAL throw (the disc's own _CheckThrow → _Launch → ReqCatch) with キャッチ待ち selected: the catch plan or the
-    ///                 landing fallback places the camera (which one is noted); ディスク during the flight; (おかえり / ふれあい removed in §15.5)
-    ///                 手元 on dog 0 held at a wash station (simulated heap state, real reads) - nearest-station path then
-    ///                 my-station path. Reads that a run did not reach go to report.unproven (and the reason line), never to a silent PASS.
+    ///                 landing fallback places the camera (which one is noted); ディスク during the flight; (おかえり / ふれあい removed in §15.5,
+    ///                 手元 in §16). §16 みち on the walking route (teleported onto a trail node): on the trail, the direction is the trail's; each of
+    ///                 the 5 moves at its formula (PathPos), 待って寄る glides after I come within pathApproachAt (a teleport) and ends with
+    ///                 ShotMoveDone; 追いこし / 寄って引く are jumped near their end (SIMULATED _pathOff) and end with ShotMoveDone (pathHold 1 s for
+    ///                 the run). Reads that a run did not reach go to report.unproven (and the reason line), never to a silent PASS.
     /// **Subset**: write "V1,V3" to Temp/kh-video/harness-cases.txt before Video/3 (read and deleted; V0 always runs). Results Logs/kh-video-harness/latest.json.
     /// Simulated input (Udon events sent directly). Not judged here: VRChat camera snap (ClientSim never sets _VRChatCameraMode nor creates the
     /// photo camera), the look of the picture, the face in the picture (ClientSim's mirror copy differs), cost, recording.
     ///   V7-controls-drone (§15.5) the camera controls and the camera drone (KH_VideoHarnessEditor.Controls.cs). Run alone (--cases=V7).
     ///   V6-permit     (W4) other-person filming permission, simulated (KH_VideoHarnessEditor.Permit.cs). Run it alone (--cases=V6, about 90 s).
+    ///   V8-patterns   (§17) the pattern player and board, おかえり, おまかせ with two real throws (KH_VideoHarnessEditor.Patterns.cs). Run it alone (--cases=V8).
     /// </summary>
     [InitializeOnLoad]
     public static partial class KH_VideoHarnessEditor
     {
         const string Key = "KH.VideoHarness", Dir = "Logs/kh-video-harness", Journal = Dir + "/journal.json";
         public const string CasesFile = "Temp/kh-video/harness-cases.txt";
-        public static readonly string[] AllCases = { "V0-ready", "V1-lifecycle", "V2-pose-dog", "V3-pose-self", "V4-walk-modes", "V5-play-modes", "V6-permit", "V7-controls-drone" };
+        public static readonly string[] AllCases = { "V0-ready", "V1-lifecycle", "V2-pose-dog", "V3-pose-self", "V4-walk-modes", "V5-play-modes", "V6-permit", "V7-controls-drone", "V8-patterns" };
         const int Cycles = 10;
 
         public static List<string> Selected(string request)
@@ -229,7 +234,7 @@ namespace KominkaHillside.Editor
             catch (Exception e) { report.errors.Add("cleanup: " + e.Message); }
             savedRoots = null; savedHeads = null;
             if (fakeDog != null) { UnityEngine.Object.Destroy(fakeDog); fakeDog = null; }
-            try { V5ReleaseStation(); } catch (Exception e) { report.errors.Add("cleanup V5: " + e.Message); }
+            try { if (uVideo != null) uVideo.SetProgramVariable("pathHold", KH_VideoCameraEditor.PathHold); } catch (Exception e) { report.errors.Add("cleanup V5: " + e.Message); }
             try { V6Cleanup(); } catch (Exception e) { report.errors.Add("cleanup V6: " + e.Message); }
             Camera.onPostRender -= OnPostRender;
         }
@@ -317,7 +322,22 @@ namespace KominkaHillside.Editor
             int dog = Get<int>("_dog");
             Vector3 dogHead = heads != null && dog >= 0 && dog < heads.Length && heads[dog] != null ? heads[dog].position : roots[dog].position;
             if (m == KH_VideoCamera.ModeDogEye) Expect((c - dogHead).magnitude <= 3f, tag + "within 3 m of the dog's head (" + (c - dogHead).magnitude.ToString("F2") + ")");
-            if (m == KH_VideoCamera.ModeDrone) { float d = (c - me).magnitude; Expect(d >= 4f && d <= 14f, tag + "4-14 m from me (" + d.ToString("F1") + ")"); }
+            if (m == KH_VideoCamera.ModeTps)
+            {
+                // §16: behind my head against my body facing (GetRotation), over the right shoulder; standing, so no feed-forward
+                var td = lp.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
+                Vector3 f = lp.GetRotation() * Vector3.forward; f.y = 0f; f = f.sqrMagnitude > 0.0001f ? f.normalized : Vector3.forward;
+                Vector3 want = KH_VideoCamera.TpsPos(td.position, f, KH_VideoCameraEditor.TpsBack, KH_VideoCameraEditor.TpsShoulder, KH_VideoCameraEditor.TpsLift);
+                bool clipped = Get<float>("_clipDist") < 1e5f;
+                float err = (c - want).magnitude;
+                if (clipped) Note(tag + "clipped by terrain: position check relaxed (error " + err.ToString("F2") + " m)");
+                else Expect(err < 0.35f, tag + "at TpsPos(head, body facing, " + KH_VideoCameraEditor.TpsBack + ", " + KH_VideoCameraEditor.TpsShoulder + ", " + KH_VideoCameraEditor.TpsLift + ") (error " + err.ToString("F2") + " m)");
+                Vector3 toCam = c - td.position; toCam.y = 0f;
+                Expect(Vector3.Dot(toCam.normalized, f) < -0.5f, tag + "behind me");
+                Vector3 lookWant = KH_VideoCamera.TpsLook(td.position, f, KH_VideoCameraEditor.TpsLookAhead, KH_VideoCameraEditor.TpsLookDrop);
+                Expect((Get<Vector3>("_look") - lookWant).magnitude < 0.2f, tag + "looks " + KH_VideoCameraEditor.TpsLookAhead + " m ahead of my head (error " + (Get<Vector3>("_look") - lookWant).magnitude.ToString("F2") + " m)");
+                Expect(Vector3.Dot(Get<Vector3>("_tpsFwd"), f) > 0.99f, tag + "the smoothed facing has reached my body facing (standing)");
+            }
             if (m == KH_VideoCamera.ModeOrbit) { float d = (c - me).magnitude; Expect(d >= 2.5f && d <= 5f, tag + "2.5-5 m from me (" + d.ToString("F1") + ")"); }
             // the product waits at a pass point up to passFar (120 m) ahead, or uses the じぶん framing (≈ 2-3.5 m) when none is ahead
             if (m == KH_VideoCamera.ModePassBy) { float d = (c - me).magnitude; Expect(d <= KH_VideoCameraEditor.PassFar + 5f, tag + "within passFar + 5 m of me (" + d.ToString("F1") + ")"); }
@@ -531,13 +551,14 @@ namespace KominkaHillside.Editor
             if (On("V4-walk-modes"))
             {
                 steps.Add(Do("V4-walk-modes", () => { Open(); uVideo.SetProgramVariable("_dog", 0); }));
-                foreach (int mode in new[] { KH_VideoCamera.ModeDogEye, KH_VideoCamera.ModeDrone, KH_VideoCamera.ModeSpot, KH_VideoCamera.ModeOrbit, KH_VideoCamera.ModePassBy })
+                foreach (int mode in new[] { KH_VideoCamera.ModeTps, KH_VideoCamera.ModeDogEye, KH_VideoCamera.ModeSpot, KH_VideoCamera.ModeOrbit, KH_VideoCamera.ModePassBy })
                 {
                     int m = mode;
                     steps.Add(Do("V4-walk-modes", () => { uVideo.SendCustomEvent("_Mode" + m); rendersMark = Renders(); }));
                     steps.Add(Until("V4-walk-modes", () => Renders() >= rendersMark + 5, 4, "mode " + m + " " + KH_VideoCamera.ModeWord(m) + ": no 5 real renders in 4 s"));
                     steps.Add(Do("V4-walk-modes", () => CheckMode(m)));
                 }
+                AddOrbitWaySteps();
                 steps.Add(Do("V4-walk-modes", () => Close()));
             }
             if (On("V5-play-modes"))
@@ -585,63 +606,20 @@ namespace KominkaHillside.Editor
                     if (Get<bool>("_discFlying")) Note("ディスク: saw the flight (State / IsCarrying / disc velocity read)");
                     else report.unproven.Add("ディスク in flight (the flight had ended before the mode switch)");
                     Expect(Roll() < 0.01f, "ディスク roll 0");
-                    // §15.5: おかえり / ふれあい were removed; 手元 follows
-                    timeMark = Time.realtimeSinceStartup;
+                    // §15.5: おかえり / ふれあい were removed; §16: 手元 was removed, みち follows
+                    Note("not proven by this case: another player's throw (the remote landing estimate), the catch event at a real catch with キャッチ待ち still selected");
                 }));
-                // ---- 3. 手元 with a held, arrived dog at a wash station (SIMULATED state: the station's heap heldDog / arrived / callerId and the
-                // dog wash's _lastStrokePart are written every frame; the reads are real: _Arrived / _HeldDog / _CallerId / _AnchorPosition /
-                // _LastStrokePart / partBones / _WasherPlayerId). Phase A: caller = nobody, I stand by the stand (the nearest-station path reads
-                // _AnchorPosition); phase B: caller = me ----
-                steps.Add(Do("V5-play-modes", () =>
-                {
-                    var anchor = V5Get<Transform>(v5Station, "anchor");
-                    Vector3 a = anchor != null ? anchor.position : v5Station.transform.position;
-                    Networking.LocalPlayer.TeleportTo(a + Vector3.back * 1.5f, Quaternion.identity);
-                    v5Caller = -1;
-                    uVideo.SendCustomEvent("_Mode" + KH_VideoCamera.ModeWash); rendersMark = Renders(); timeMark = Time.realtimeSinceStartup;
-                }));
-                steps.Add(Until("V5-play-modes", () => { V5HoldStation(); return Time.realtimeSinceStartup - timeMark > 1.2f && Renders() >= rendersMark + 5; }, 5, "手元 (nearest station): no renders"));
-                steps.Add(Do("V5-play-modes", () =>
-                {
-                    Expect(Get<int>("_washDog") == 0 && Get<int>("_state") == KH_VideoCamera.StateFilming, "手元 found dog 0 at the nearest arrived station (_Arrived / _HeldDog / _AnchorPosition)");
-                    v5Caller = Networking.LocalPlayer.playerId; rendersMark = Renders(); timeMark = Time.realtimeSinceStartup;
-                    v5DogFrom = Get<Transform[]>("dogRoots")[0].position;
-                }));
-                steps.Add(Until("V5-play-modes", () => { V5HoldStation(); return Time.realtimeSinceStartup - timeMark > 1.2f && Renders() >= rendersMark + 5; }, 5, "手元 (my station): no renders"));
-                steps.Add(Do("V5-play-modes", () =>
-                {
-                    Expect(Get<int>("_washDog") == 0, "手元 found dog 0 at the station I called (_CallerId)");
-                    // the part point the way the product must compute it: partBones is indexed by COLLIDER, _LastStrokePart is a PART id
-                    // (KH_DogWash.cs:194-196, :1183 / :1196); run 20261003-184456 measured from partBones[0] (a collider's bone) and failed at 2.82 m
-                    var bones = V5Get<Transform[]>(v5Wash, "partBones"); var map = V5Get<int[]>(v5Wash, "partOfCollider");
-                    Vector3 sum = Vector3.zero; int n = 0;
-                    for (int i = 0; bones != null && map != null && i < Mathf.Min(bones.Length, map.Length); i++) if (map[i] == 0 && bones[i] != null) { sum += bones[i].position; n++; }
-                    Vector3 part = n > 0 ? sum / n : Get<Transform[]>("dogRoots")[0].position;
-                    Vector3 subj = Get<Vector3>("_subject"), want = Get<Vector3>("_wantPos"), c = cam.transform.position;
-                    Vector3 dogNow = Get<Transform[]>("dogRoots")[0].position;
-                    float dogSpeed = (dogNow - v5DogFrom).magnitude / Mathf.Max(0.1f, Time.realtimeSinceStartup - timeMark);
-                    bool clipped = Get<float>("_clipDist") < 1e5f;
-                    Note("手元 terms: part 0 = mean of " + n + " collider bones; subject-part " + (subj - part).magnitude.ToString("F3") + " m, want-subject " + (want - subj).magnitude.ToString("F2")
-                        + " m, camera-want " + (c - want).magnitude.ToString("F2") + " m (dy " + (c.y - want.y).ToString("F2") + "), clipped " + clipped + ", dog moved " + dogSpeed.ToString("F2") + " m/s during the window");
-                    Expect((subj - part).magnitude < 0.02f, "手元: the framed part is part 0 (part id → its collider bones)");
-                    float wd = (want - subj).magnitude;
-                    Expect(wd > 0.55f && wd < 0.75f, "手元: the wanted camera is washDist / washUp from the part (" + wd.ToString("F2") + " m)");
-                    if (dogSpeed < 0.2f) Expect((c - want).magnitude < 0.35f || clipped, "手元: the camera reached its pose (dog still)");
-                    else Note("手元: the dog was moving (walking to the simulated station) - a smoothing lag of up to speed × posTau is expected, not asserted");
-                    V5ReleaseStation();
-                    Close();
-                    Note("not proven by this case: a real stroke and a real wash call (simulated heap state), another player's throw (the remote landing estimate), the catch event at a real catch with キャッチ待ち still selected");
-                }));
+                AddPathSteps();
             }
             if (On("V6-permit")) MakeV6Steps();
             if (On("V7-controls-drone")) MakeV7Steps();
+            if (On("V8-patterns")) MakeV8Steps();
         }
 
         // ---- V5 handles ----
-        static UdonBehaviour v5Disc, v5Catcher, v5Station, v5Wash;
-        static Vector3 v5Dir, v5DogFrom;
-        static int v5LandPred, v5Caller = -1, v5SavedHeld = -1, v5SavedCaller = -1;
-        static bool v5SavedArrived, v5StationSaved;
+        static UdonBehaviour v5Disc, v5Catcher;
+        static Vector3 v5Dir;
+        static int v5LandPred;
 
         static TT V5Get<TT>(UdonBehaviour u, string key)
         {
@@ -655,10 +633,8 @@ namespace KominkaHillside.Editor
             v5Catcher = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_FrisbeeCatch" && V5Get<int>(u, "dogIndex") == 0);
             v5Disc = v5Catcher != null ? V5Get<UdonBehaviour>(v5Catcher, "frisbee") : null;
             if (v5Disc == null && v5Catcher != null && v5Catcher.TryGetProgramVariable("frisbee", out object fo) && fo is Component fc) v5Disc = fc.GetComponent<UdonBehaviour>();
-            v5Station = all.Where(u => u.programSource != null && u.programSource.name == "KH_WashStationCall").OrderBy(u => u.transform.GetSiblingIndex()).FirstOrDefault();
-            v5Wash = all.FirstOrDefault(u => u.programSource != null && u.programSource.name == "KH_DogWash" && V5Get<int>(u, "dogIndex") == 0);
-            if (v5Catcher == null || v5Disc == null || v5Station == null || v5Wash == null)
-                throw new InvalidOperationException("V5 handles: catcher " + (v5Catcher != null) + ", disc " + (v5Disc != null) + ", station " + (v5Station != null) + ", wash " + (v5Wash != null));
+            if (v5Catcher == null || v5Disc == null)
+                throw new InvalidOperationException("V5 handles: catcher " + (v5Catcher != null) + ", disc " + (v5Disc != null));
         }
 
         static bool V5DogAtRest() { int st = V5Get<int>(v5Catcher, "state"); return st == KH_FrisbeeCatch.StateIdle || st == KH_FrisbeeCatch.StateReady; }
@@ -670,25 +646,6 @@ namespace KominkaHillside.Editor
                 || st == KH_FrisbeeCatch.StateWaterCarry || st == KH_FrisbeeCatch.StateWaterExit;
         }
 
-        /// <summary>Writes the simulated "dog 0 held and arrived, called by v5Caller, last stroke on part 0" every frame (the station's own logic may
-        /// rewrite it). The originals are saved once and put back by V5ReleaseStation / Cleanup.</summary>
-        static void V5HoldStation()
-        {
-            if (!v5StationSaved)
-            {
-                v5StationSaved = true;
-                v5SavedHeld = V5Get<int>(v5Station, "heldDog"); v5SavedArrived = V5Get<bool>(v5Station, "arrived"); v5SavedCaller = V5Get<int>(v5Station, "callerId");
-            }
-            v5Station.SetProgramVariable("heldDog", 0); v5Station.SetProgramVariable("arrived", true); v5Station.SetProgramVariable("callerId", v5Caller);
-            v5Wash.SetProgramVariable("_lastStrokePart", 0);
-        }
-
-        static void V5ReleaseStation()
-        {
-            if (!v5StationSaved || v5Station == null) return;
-            v5Station.SetProgramVariable("heldDog", v5SavedHeld); v5Station.SetProgramVariable("arrived", v5SavedArrived); v5Station.SetProgramVariable("callerId", v5SavedCaller);
-            v5StationSaved = false;
-        }
 
         // ================================================================ evidence
 

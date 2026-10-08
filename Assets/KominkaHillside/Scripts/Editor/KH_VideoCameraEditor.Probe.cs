@@ -13,7 +13,10 @@ namespace KominkaHillside.Editor
     /// SmoothStep / LookRoll0) with the builder's tuning table (the values Video/1 writes), on synthetic subjects stepped at 30 fps.
     /// The frisbee rows fly a synthetic disc with KH_Frisbee._PositionAt of a disc in the open scene (the flight's own formula).
     /// Mirrored here (not shared), each one or a few lines: the travel-velocity filter (KH_VideoCamera.Heading), the cut rule (distance > cutDistance),
-    /// the landing loop of KH_VideoCamera.PredictLanding (here against a flat ground y = 0 instead of the scene colliders).
+    /// the landing loop of KH_VideoCamera.PredictLanding (here against a flat ground y = 0 instead of the scene colliders), §16: the phase
+    /// machine of みち (KH_VideoCamera.PathMove, on a straight walk without a trail; the anchor's ground ray is the flat ground) and the orbit's
+    /// progress (KH_VideoCamera.Orbit). A cut the runtime makes on purpose (Pose.cut, a new みち move) is a cut here too, not a step;
+    /// planned cuts must equal the row's cutsWant and cuts caused only by the distance rule must be 0 (Codex review 2026-10-08).
     /// NOT modelled: terrain / wall clipping, the floor lift, the dog push-out, the turn time constant, frame-time jitter, the mode-selection logic
     /// of 通り過ぎ (only its framing from a fixed point), the photo camera. Results: Temp/kh-video/probe.json and one VIDEO_PROBE line.
     /// </summary>
@@ -23,6 +26,10 @@ namespace KominkaHillside.Editor
         {
             public string scenario; public int frames; public float distMin, distMax, worstFrame, rollMax, stepMax, wantMin, wantMax, stepLimit = 0.5f;
             public int outOfFrame; public bool cutOnJump, jumpApplies = true, informative; public string note;
+            // §16: cuts inside the run, みち moves finished (want ≥ movesWant). Codex review (2026-10-08): a cut the mode asked for (Pose.cut) is
+            // planCuts and must equal cutsWant (0 unless the row says so: みち = one per finished move); a cut only because the wanted point ran
+            // more than cutDistance away from the camera is distCuts and must be 0 (it was hidden from stepMax before, so a sudden jump passed)
+            public int cuts, planCuts, distCuts, cutsWant, movesWant = -1, movesDone;
         }
         [Serializable] class ProbeReport { public string utc, status; public float frameDistanceSmall, frameDistanceMid, frameDistanceLarge; public List<ProbeRow> rows = new List<ProbeRow>(); public List<string> lines = new List<string>(); }
 
@@ -30,7 +37,7 @@ namespace KominkaHillside.Editor
 
         /// <summary>One frame of a mode: the wanted camera point and look point, the FOV, the time constants, what must be inside the inner 80 %,
         /// and the point the distance is measured to.</summary>
-        class Pose { public Vector3 want, look, distTo; public float fov, tau = PosTau, lookTau = LookTau; public Vector3[] mustSee = new Vector3[0]; public bool sample = true; }
+        class Pose { public Vector3 want, look, distTo; public float fov, tau = PosTau, lookTau = LookTau; public Vector3[] mustSee = new Vector3[0]; public bool sample = true, cut; }
 
         /// <summary>Steps a mode for `frames` frames (pose(f) gives the wanted pose of frame f), smoothing / cutting like ApplyPose, and measures.
         /// jump(f) (optional) gives the wanted point after the subject jumped; the row records whether that is a cut.</summary>
@@ -41,11 +48,12 @@ namespace KominkaHillside.Editor
             for (int f = 0; f < frames; f++)
             {
                 var p = pose(f);
-                bool cut = first || (p.want - cam).magnitude > CutDistance;   // mirror of the cut rule in ApplyPose
+                bool cut = first || p.cut || (p.want - cam).magnitude > CutDistance;   // mirror of the cut rule in ApplyPose (_cutNext or the distance)
+                if (cut && !first) { row.cuts++; if (p.cut) row.planCuts++; else row.distCuts++; }
                 Vector3 next = KH_VideoCamera.SmoothStep(cam, p.want, cut, ProbeDt, p.tau);
                 look = KH_VideoCamera.SmoothStep(look, p.look, cut, ProbeDt, p.lookTau);
                 fov = cut ? p.fov : Mathf.Lerp(fov, p.fov, KH_VideoCamera.BlendFactor(ProbeDt, FovTau));
-                if (!first) row.stepMax = Mathf.Max(row.stepMax, (next - cam).magnitude);
+                if (!first && !cut) row.stepMax = Mathf.Max(row.stepMax, (next - cam).magnitude);
                 cam = next; first = false;
                 if (f * ProbeDt < skipSeconds || !p.sample) continue;
                 Quaternion rot = KH_VideoCamera.LookRoll0(cam, look);
@@ -92,29 +100,43 @@ namespace KominkaHillside.Editor
             r.rows.Add(SelfStand(new Vector3(-0.8f, 0.3f, 0.5f), "own dog at the feet left"));
             r.rows.Add(SelfStand(new Vector3(0.3f, 0.3f, 2.0f), "own dog 2 m ahead"));
             r.rows.Add(SelfWalk(1.4f));
-            // ---- 2 犬目線 ----
+            // ---- 2 背中ごし (§16) ----
+            r.rows.Add(TpsStand()); r.rows.Add(TpsWalk(1.4f)); r.rows.Add(TpsTurn(180f)); r.rows.Add(TpsTurn(90f));
+            // ---- 3 犬目線 ----
             r.rows.Add(DogEyeWalk(true)); r.rows.Add(DogEyeWalk(false));
-            // ---- 3 ドローン ----
-            r.rows.Add(DroneWalk(1.4f));
             // ---- 4 定点 ----
             r.rows.Add(SpotWash());
             // ---- 5 / 6 フリスビー ----
             if (discProxy != null) { r.rows.Add(DiscFlight(discProxy)); r.rows.Add(CatchFlight(discProxy)); r.rows.Add(LandingFlight(discProxy)); }
             else r.lines.Add("info disc rows skipped: no KH_Frisbee in the open scene (they use its _PositionAt)");
-            // ---- 7 手元, 8 一周, 9 通り過ぎ (§15.5: おかえり / ふれあい removed) ----
-            r.rows.Add(WashStand());
+            // ---- 7 一周 (§16: 一定 / 近づく / 離れる at 6 and 24 °/s), 8 通り過ぎ (§15.5: おかえり / ふれあい removed, §16: 手元 / 見下ろす removed) ----
             r.rows.Add(OrbitStand());
+            foreach (int way in new[] { KH_VideoCamera.OrbitCloser, KH_VideoCamera.OrbitFarther })
+            { r.rows.Add(OrbitWay(way, OrbitDegPerSec, 70f)); r.rows.Add(OrbitWay(way, OrbitDegMax, 20f)); }
             r.rows.Add(PassWalk());
+            // ---- 10 おかえり (§17, internal: the patterns only) ----
+            r.rows.Add(WelcomeReturn());
+            // ---- 9 みち (§16): every move on a straight 1.4 m/s walk, then 待って寄る / 追いこし standing ----
+            r.rows.Add(PathWalk(KH_VideoCamera.PathWaitApproach, 15f, 1.4f, 2f, 12.5f, 1));
+            r.rows.Add(PathWalk(KH_VideoCamera.PathBackAway, 10f, 1.4f, 2f, 2.8f, -1));
+            r.rows.Add(PathWalk(KH_VideoCamera.PathBeside, 10f, 1.4f, 2.6f, 3.1f, -1));
+            r.rows.Add(PathWalk(KH_VideoCamera.PathOvertake, 13f, 1.4f, 1.3f, 8.6f, 1));
+            r.rows.Add(PathWalk(KH_VideoCamera.PathPullAway, 18f, 1.4f, 2f, 12.5f, 1));
+            r.rows.Add(PathWalk(KH_VideoCamera.PathWaitApproach, 15f, 0f, 11.5f, 12.5f, -1));
+            r.rows.Add(PathWalk(KH_VideoCamera.PathOvertake, 13f, 0f, 1.3f, 8.6f, 1));
 
             bool ok = true;
             foreach (var row in r.rows)
             {
                 bool distOk = row.distMin >= row.wantMin && row.distMax <= row.wantMax;
-                bool rowOk = distOk && row.rollMax < 0.01f && row.outOfFrame == 0 && (!row.jumpApplies || row.cutOnJump) && row.stepMax <= row.stepLimit;
+                bool rowOk = distOk && row.rollMax < 0.01f && row.outOfFrame == 0 && (!row.jumpApplies || row.cutOnJump) && row.stepMax <= row.stepLimit
+                    && (row.movesWant < 0 || row.movesDone >= row.movesWant)
+                    && row.distCuts == 0 && row.planCuts == row.cutsWant;
                 if (!rowOk && !row.informative) ok = false;
                 r.lines.Add((row.informative ? "info " : rowOk ? "ok   " : "FAIL ") + row.scenario + ": distance " + row.distMin.ToString("F2") + "-" + row.distMax.ToString("F2")
                     + " m (want " + row.wantMin + "-" + row.wantMax + "), out of inner 80% " + row.outOfFrame + "/" + row.frames + " (worst |ndc| " + row.worstFrame.ToString("F2") + "), roll "
                     + row.rollMax.ToString("F4") + ", max step " + row.stepMax.ToString("F2") + " m, cut on jump " + (row.jumpApplies ? row.cutOnJump.ToString() : "n/a")
+                    + ", cuts: planned " + row.planCuts + " (want " + row.cutsWant + "), by distance " + row.distCuts + " (want 0)" + (row.movesWant >= 0 ? ", moves " + row.movesDone + " (want ≥ " + row.movesWant + ")" : "")
                     + (string.IsNullOrEmpty(row.note) ? "" : " — " + row.note));
             }
             r.status = ok ? "PASS" : "FAIL";
@@ -203,7 +225,7 @@ namespace KominkaHillside.Editor
                 return new Pose { want = pos + KH_VideoCamera.LeadOffset(vel, DogEyeTau), look = KH_VideoCamera.DogEyeSceneLook(pos, h, DogEyePitch) + KH_VideoCamera.LeadOffset(vel, LookTau),
                     fov = DogEyeSceneFov, tau = DogEyeTau, distTo = head, mustSee = new[] { ahead } };
             }
-            return Sim("2 犬目線: " + (user ? "looking up at me beside the dog" : "I am far: the scenery ahead"), 90, f =>
+            return Sim("3 犬目線: " + (user ? "looking up at me beside the dog" : "I am far: the scenery ahead"), 90, f =>
             {
                 Vector3 step = Vector3.forward * 1f * ProbeDt; root += step; vel = Filter(vel, step);
                 if (vel.magnitude >= StillSpeed) h = vel.normalized;
@@ -211,21 +233,43 @@ namespace KominkaHillside.Editor
             }, user ? 1.2f : 0f, user ? 2.4f : 0.5f, () => At(root + Vector3.right * 20f).want);
         }
 
-        static ProbeRow DroneWalk(float speed)
+        /// <summary>§16 背中ごし standing (body facing +Z): the camera 2.25 m from the head; then a 15 m teleport.</summary>
+        static ProbeRow TpsStand()
         {
-            Vector3 feet = Vector3.zero, vel = Vector3.zero, h = Vector3.forward;
-            Pose At(Vector3 ft) => new Pose
+            Vector3 head = new Vector3(0f, 1.6f, 0f), fwd = Vector3.forward;
+            Pose At(Vector3 hd) => new Pose { want = KH_VideoCamera.TpsPos(hd, fwd, TpsBack, TpsShoulder, TpsLift), look = KH_VideoCamera.TpsLook(hd, fwd, TpsLookAhead, TpsLookDrop),
+                fov = TpsFov, distTo = hd, mustSee = new[] { hd } };
+            var row = Sim("2 背中ごし: standing", 60, f => At(head), 2.2f, 2.3f, () => At(head + fwd * 15f).want, 0f);
+            row.note = "the head sits a little left of and below the centre (the shoulder offset is small)";
+            return row;
+        }
+
+        /// <summary>§16 背中ごし walking +Z at `speed` with the feed-forward (the filtered velocity): the distance grows a little while speeding up.</summary>
+        static ProbeRow TpsWalk(float speed)
+        {
+            Vector3 feet = Vector3.zero, vel = Vector3.zero, fwd = Vector3.forward;
+            return Sim("2 背中ごし: walking " + speed + " m/s", 120, f =>
             {
-                want = KH_VideoCamera.DronePos(ft, h, DroneBack, DroneHeight) + KH_VideoCamera.LeadOffset(vel, DroneTau),
-                look = KH_VideoCamera.DroneLook(ft, h, DroneAhead) + KH_VideoCamera.LeadOffset(vel, LookTau),
-                fov = DroneFov, tau = DroneTau, distTo = ft, mustSee = new[] { ft, ft + Head(1.6f) },
-            };
-            return Sim("3 見下ろす: me walking " + speed + " m/s", 120, f =>
+                Vector3 step = fwd * speed * ProbeDt; feet += step; vel = Filter(vel, step);
+                Vector3 head = feet + Head(1.6f);
+                return new Pose { want = KH_VideoCamera.TpsPos(head, fwd, TpsBack, TpsShoulder, TpsLift) + KH_VideoCamera.LeadOffset(vel, PosTau),
+                    look = KH_VideoCamera.TpsLook(head, fwd, TpsLookAhead, TpsLookDrop) + KH_VideoCamera.LeadOffset(vel, LookTau), fov = TpsFov, distTo = head, mustSee = new[] { head } };
+            }, 2.0f, 2.6f, null, 1.0f);
+        }
+
+        /// <summary>§16 背中ごし: standing, the body turns `deg` at once at 0.5 s; the facing eases with TpsYawTau (KH_VideoCamera.YawStep). The head
+        /// stays in the frame and the camera swings round without a jump.</summary>
+        static ProbeRow TpsTurn(float deg)
+        {
+            Vector3 head = new Vector3(0f, 1.6f, 0f);
+            float yaw = 0f;
+            return Sim("2 背中ごし: turning " + deg + "° in place", 120, f =>
             {
-                Vector3 step = Vector3.forward * speed * ProbeDt; feet += step; vel = Filter(vel, step);
-                if (vel.magnitude >= StillSpeed) h = vel.normalized;
-                return At(feet);
-            }, 8f, 10.5f, () => At(feet + Vector3.right * 20f).want, 1.5f);
+                yaw = KH_VideoCamera.YawStep(yaw, f * ProbeDt >= 0.5f ? deg : 0f, ProbeDt, TpsYawTau);
+                Vector3 fwd = KH_VideoCamera.YawDir(yaw);
+                return new Pose { want = KH_VideoCamera.TpsPos(head, fwd, TpsBack, TpsShoulder, TpsLift), look = KH_VideoCamera.TpsLook(head, fwd, TpsLookAhead, TpsLookDrop),
+                    fov = TpsFov, distTo = head, mustSee = new[] { head } };
+            }, 1.5f, 2.3f, null, 0f);
         }
 
         /// <summary>定点 (wash): the camera SpotWashDist out and SpotWashHeight up from the stand, looking at the stand +0.4 m, leaning SpotDogPull
@@ -316,29 +360,128 @@ namespace KominkaHillside.Editor
             return row;
         }
 
-        /// <summary>手元: the stroked part on the dog's back (0.35 m up), me washing from its left.</summary>
-        static ProbeRow WashStand()
-        {
-            Vector3 part = new Vector3(0f, 0.35f, 0f), me = new Vector3(-0.7f, 1.6f, 0f);
-            Pose At(Vector3 pt) => new Pose { want = KH_VideoCamera.WashPos(pt, me + (pt - part), WashDist, WashUp), look = pt, fov = WashFov, lookTau = WashLookTau, distTo = pt,
-                mustSee = new[] { pt, pt + new Vector3(-0.15f, 0.1f, 0f) } };
-            var row = Sim("7 手元: the back, me on the left", 45, f => At(part), 0.55f, 0.75f, () => At(part + Vector3.forward * 20f).want, 0f);
-            row.note = "my hand 0.15 m beside the part is inside";
-            return row;
-        }
-
         /// <summary>一周: me standing with one own dog 1 m ahead; 20 s of the orbit.</summary>
         static ProbeRow OrbitStand()
         {
             Vector3 feet = Vector3.zero, dog = new Vector3(0f, 0f, 1f);
             Vector3 centre = (feet + dog) * 0.5f;
             float angle = 90f;
-            return Sim("8 一周: me and one dog, 20 s", 600, f =>
+            return Sim("7 一周 一定: me and one dog, 20 s", 600, f =>
             {
                 angle += OrbitDegPerSec * ProbeDt;
                 return new Pose { want = KH_VideoCamera.OrbitPos(centre, angle, OrbitRadius, OrbitHeight), look = centre + Vector3.up * OrbitLookUp, fov = OrbitFov, tau = OrbitTau,
                     distTo = centre, mustSee = new[] { feet + Head(1.6f), feet, dog + Head(0.3f) } };
             }, 3.4f, 4.0f, null, 0.5f);
+        }
+
+        /// <summary>§16 一周 近づく / 離れる at `speed` °/s for `seconds`: the radius (KH_VideoCamera.OrbitRadiusAt) goes from OrbitRadius to its end over
+        /// the first circle, then stays; the look height (OrbitLookHeight) rises for 近づく. Must see: 離れる my head, feet and the dog;
+        /// 近づく my head and chest (the feet / dog leave the frame below about 2.8 / 2.4 m: a close-up of the upper body).</summary>
+        static ProbeRow OrbitWay(int way, float speed, float seconds)
+        {
+            Vector3 feet = Vector3.zero, dog = new Vector3(0f, 0f, 1f);
+            Vector3 centre = (feet + dog) * 0.5f;
+            float angle = 90f, travel = 0f, rMin = 1e9f, rMax = 0f;
+            bool closer = way == KH_VideoCamera.OrbitCloser;
+            var row = Sim("7 一周 " + KH_VideoCamera.OrbitKindWord(way) + ": " + speed + "°/s, " + seconds + " s", Mathf.RoundToInt(seconds / ProbeDt), f =>
+            {
+                float step = speed * ProbeDt;
+                angle += step; travel = Mathf.Min(travel + step, 720f);
+                float rad = KH_VideoCamera.OrbitRadiusAt(OrbitRadius, way, travel / 360f, OrbitNearK, OrbitFarK, OrbitRadiusMin, OrbitRadiusMax);
+                rMin = Mathf.Min(rMin, rad); rMax = Mathf.Max(rMax, rad);
+                return new Pose { want = KH_VideoCamera.OrbitPos(centre, angle, rad, OrbitHeight), look = centre + Vector3.up * KH_VideoCamera.OrbitLookHeight(OrbitLookUp, OrbitHeight, way, travel / 360f),
+                    fov = OrbitFov, tau = OrbitTau, distTo = centre, mustSee = closer ? new[] { feet + Head(1.6f), feet + Head(1.25f) } : new[] { feet + Head(1.6f), feet, dog + Head(0.3f) } };
+            }, closer ? 1.9f : 3.4f, closer ? 3.9f : 9.1f, null, 0.5f);
+            row.note = "radius " + rMin.ToString("F2") + "-" + rMax.ToString("F2") + " m" + (speed > OrbitDegPerSec ? " (a circle in " + (360f / speed).ToString("F0") + " s)" : "");
+            return row;
+        }
+
+        /// <summary>§16 みち: me walking +Z at `speed` (flat, no trail, so PathDir = +Z) for `seconds` with one move; the phase machine mirrors
+        /// KH_VideoCamera.PathMove (the ground ray of 待って寄る finds the flat ground). Must see: my head. A finished move counts; walking rows want ≥ 1.</summary>
+        static ProbeRow PathWalk(int move, float seconds, float speed, float wantMin, float wantMax, int movesWant)
+        {
+            Vector3 feet = Vector3.zero, vel = Vector3.zero, dir = Vector3.forward;
+            bool have = false; int phase = 0, done = 0; float phaseAt = 0f, off = 0f;
+            Vector3 anchor = Vector3.zero, pcam = Vector3.zero;
+            float far = PathAheadFar, near = PathAheadNear, h = PathHeight;
+            var row = Sim("9 みち " + KH_VideoCamera.PathMoveWord(move) + ": " + (speed > 0f ? "walking " + speed + " m/s" : "standing") + ", " + seconds + " s", Mathf.RoundToInt(seconds / ProbeDt), f =>
+            {
+                float now = f * ProbeDt;
+                Vector3 step = dir * speed * ProbeDt; feet += step; vel = Filter(vel, step);
+                Vector3 head = feet + Head(1.6f), lead = KH_VideoCamera.LeadOffset(vel, PosTau);
+                Vector3 want = Vector3.zero; float tau = PosTau; bool cut = false;
+                if (!have)
+                {
+                    have = true; phase = 0; phaseAt = now;
+                    if (move == KH_VideoCamera.PathWaitApproach) anchor = KH_VideoCamera.PathPos(feet, dir, far, 0f, h);
+                    else if (move == KH_VideoCamera.PathOvertake) off = -PathBehind;
+                    else if (move == KH_VideoCamera.PathPullAway) off = near;
+                }
+                if (move == KH_VideoCamera.PathWaitApproach)
+                {
+                    if (phase == 0)
+                    {
+                        Vector3 to = anchor - feet; to.y = 0f;
+                        float d = to.magnitude;
+                        if (Vector3.Dot(to, dir) < 0f || d > far * 2f) { anchor = KH_VideoCamera.PathPos(feet, dir, far, 0f, h); cut = true; }
+                        else if (d <= PathApproachAt) { phase = 1; phaseAt = now; pcam = anchor; }
+                        want = anchor;
+                    }
+                    if (phase == 1)
+                    {
+                        Vector3 target = KH_VideoCamera.PathPos(feet, dir, near, 0f, h) + KH_VideoCamera.LeadOffset(vel, PathGlideTau);
+                        pcam = KH_VideoCamera.SmoothStep(pcam, target, false, ProbeDt, PathGlideTau);
+                        want = pcam; tau = 0.05f;
+                        if (now - phaseAt >= PathHold + 3f * PathGlideTau) { done++; anchor = KH_VideoCamera.PathPos(feet, dir, far, 0f, h); phase = 0; cut = true; want = anchor; tau = PosTau; }
+                    }
+                }
+                else if (move == KH_VideoCamera.PathBackAway) want = KH_VideoCamera.PathPos(feet, dir, near, 0f, h) + lead;
+                else if (move == KH_VideoCamera.PathBeside) want = KH_VideoCamera.PathPos(feet, dir, 0f, PathBeside, h) + lead;
+                else if (move == KH_VideoCamera.PathOvertake)
+                {
+                    float end = far * 2f / 3f;
+                    if (phase == 0) { off += PathPassSpeed * ProbeDt; if (off >= end) { off = end; phase = 1; phaseAt = now; } }
+                    else if (now - phaseAt >= PathHold) { done++; off = -PathBehind; phase = 0; cut = true; }
+                    want = KH_VideoCamera.PathPos(feet, dir, off, PathPassSide, h) + lead;
+                }
+                else
+                {
+                    if (phase == 0)
+                    {
+                        off += PathRecedeSpeed * ProbeDt;
+                        want = KH_VideoCamera.PathPos(feet, dir, Mathf.Min(off, far), 0f, h) + lead;
+                        if (off >= far) { off = far; phase = 1; phaseAt = now; anchor = want; }
+                    }
+                    else
+                    {
+                        want = anchor;
+                        if (now - phaseAt >= PathHold) { done++; off = near; phase = 0; cut = true; want = KH_VideoCamera.PathPos(feet, dir, near, 0f, h) + lead; }
+                    }
+                }
+                Vector3 look = KH_VideoCamera.SelfFollowLook(head, head, 0, SelfLookToDogs, SelfChestDrop) + KH_VideoCamera.LeadOffset(vel, LookTau);
+                return new Pose { want = want, look = look, fov = PathFov, tau = tau, distTo = head, mustSee = new[] { head }, cut = cut };
+            }, wantMin, wantMax, null, 0.6f);
+            row.movesWant = movesWant; row.movesDone = done;
+            row.cutsWant = done;   // straight walk, flat ground: the only planned cut is the one at the end of each finished move (no re-placement)
+            return row;
+        }
+
+        /// <summary>§17 おかえり: I stand at the origin facing +Z; the dog brings the disc back from 15 m at 3 m/s and stops returnStopDistance 0.9 m in front of
+        /// me (the Drop). The camera: KH_VideoCamera.WelcomePos (welcomeDist toward the dog, at most half the way, welcomeSide to the right, welcomeHeight up), looking at the dog's
+        /// head. Must see: the dog's head and body all the way in (the dog comes toward the camera).</summary>
+        static ProbeRow WelcomeReturn()
+        {
+            Vector3 feet = Vector3.zero, dog = new Vector3(0.3f, 0f, 15f);
+            var row = Sim("10 おかえり (internal): the dog returns from 15 m at 3 m/s and stops 0.9 m in front of me", 180, f =>
+            {
+                Vector3 stop = new Vector3(0.1f, 0f, 0.9f);
+                dog = Vector3.MoveTowards(dog, stop, 3f * ProbeDt);
+                Vector3 toMe = feet - dog; toMe.y = 0f;
+                Vector3 body = dog + Vector3.up * 0.3f, head = dog + Vector3.up * 0.45f + toMe.normalized * 0.25f;
+                return new Pose { want = KH_VideoCamera.WelcomePos(feet, body, WelcomeDist, WelcomeSide, WelcomeHeight), look = head, fov = WelcomeFov, lookTau = WelcomeLookTau, distTo = head, mustSee = new[] { head, body } };
+            }, 0.6f, 12.5f, null, 0.3f);
+            row.note = "the camera stays " + WelcomeDist + " m out (" + WelcomeSide + " m to the side) until the dog is closer than " + (WelcomeDist * 2f) + " m, then half the way";
+            return row;
         }
 
         /// <summary>通り過ぎ: a fixed point PassSide m beside the path, PassHeight up; I walk along the path past it at 1.4 m/s from 30 m before
@@ -347,7 +490,7 @@ namespace KominkaHillside.Editor
         {
             Vector3 cam = new Vector3(PassSide, PassHeight, 0f), me = new Vector3(0f, 0.4f, -30f);
             Vector3 look = me;
-            return Sim("9 通り過ぎ: walking past a point " + PassSide + " m beside the path", 1100, f =>
+            return Sim("8 通り過ぎ: walking past a point " + PassSide + " m beside the path", 1100, f =>
             {
                 me += Vector3.forward * 1.4f * ProbeDt;
                 bool near = (me - cam).magnitude <= PassNear;

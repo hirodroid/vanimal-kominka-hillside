@@ -31,7 +31,8 @@ namespace KominkaHillside.Editor
     ///
     /// Same scene for every build target: nothing is stripped. KH_VideoCamera.Start hides everything on Android / iOS (#if) and the entry
     /// buttons are saved hidden (a PC client's Start shows [撮影カメラ]). No other object references the system, so no target has a missing reference.
-    /// Texts: Japanese constants in W1 (KH_VideoCamera.Word*). W5 moves them to UITranslations.json (13 languages); no half-translated keys now.
+    /// Texts (W5, 2026-10-08): UITranslations.json video.* / film.* in 13 languages (KH_VideoCameraEditor.Lang.cs). The builders write the catalog's ja
+    /// (Ja(key)); the runtime rewrites the static labels in the player's language. The Word* constants are only the Japanese defaults.
     /// </summary>
     public static partial class KH_VideoCameraEditor
     {
@@ -69,14 +70,18 @@ namespace KominkaHillside.Editor
         // W2 / W3 modes (design §4; trial values)
         public const float DogEyeFov = 60f, DogEyeSideDeg = 50f, DogEyeBack = 0.35f, DogEyeLift = 0.05f, DogEyeUserMax = 6f, DogEyeTau = 0.3f;
         public const float DogEyeSceneFov = 70f, DogEyeAhead = 0.15f, DogEyeSceneLift = 0.04f, DogEyePitch = 3f;
-        public const float DroneFov = 60f, DroneBack = 6f, DroneHeight = 7f, DroneAhead = 2f, DroneTau = 1.2f, DroneGroundMin = 4f;
+        // §16 (IMP-WLD-012, AI reading, user not asked yet): 背中ごし and みち. 見下ろす / 手元 and their rows are gone
+        public const float TpsFov = 60f, TpsBack = 2.2f, TpsShoulder = 0.35f, TpsLift = 0.3f, TpsLookAhead = 4f, TpsLookDrop = -0.2f, TpsYawTau = 0.8f;
+        public const float PathTrailMax = 4f, PathHeight = 1.3f, PathFov = 55f, PathAheadFar = 12f, PathApproachAt = 7f, PathAheadNear = 2.5f, PathGlideTau = 0.8f, PathHold = 4f;
+        public const float PathBeside = 2.8f, PathBehind = 3f, PathPassSide = 1.5f, PathPassSpeed = 1.5f, PathRecedeSpeed = 0.8f;
         public const float SpotLookTau = 0.35f, SpotDogPull = 0.3f;
         public const float DiscFov = 60f, DiscSideK = 1f, DiscSideMin = 3f, DiscSideMax = 12f, DiscUp = 0.8f, DiscTau = 0.3f, DiscLookTau = 0.1f, DiscFlySpeed = 2f, DiscApartMax = 15f, DiscVelTau = 0.3f;
         // キャッチ待ち (2026-10-04 user: the catch point; the probe: disc + jumping dog + catch point inside the inner 80 %)
         public const float CatchFov = 55f, CatchSide = 6f, CatchUp = 0.3f, CatchLookBack = 2f, CatchPlanWait = 0.6f, CatchReplanMove = 1f;
         public const float LandFov = 55f, LandSide = 5f, LandBeyond = 3f, LandUp = 1.2f, LandNear = 8f, LandMoveMax = 5f, LandStep = 0.12f, LandMaxT = 8f, LandRemoteSample = 0.25f, LandRepredict = 0.5f;
-        public const float WashFov = 45f, WashDist = 0.6f, WashUp = 0.25f, WashLookTau = 0.4f;
         public const float OrbitFov = 50f, OrbitRadius = 3.5f, OrbitHeight = 1.4f, OrbitDegPerSec = 6f, OrbitCenterTau = 2f, OrbitLookUp = 0.6f, OrbitTau = 0.3f;
+        // §16 一周: 近づく / 離れる over the first circle, the speed by [←][→]
+        public const float OrbitNearK = 0.4f, OrbitFarK = 2.5f, OrbitRadiusMin = 1.5f, OrbitRadiusMax = 10f, OrbitSpeedStep = 1.5f, OrbitDegMin = 2f, OrbitDegMax = 24f;
         public const float PassFov = 50f, PassLookUp = 0.5f, PassNear = 25f, PassFar = 120f, PassRecede = 15f, PassAfter = 8f, PassGiveUp = 60f, PassTooFar = 150f;
         // spot / pass-point data (Video/1 resolves them from the scene; Video/2 checks ground and line of sight)
         public const float SpotWashDist = 2.6f, SpotWashHeight = 1.5f, SpotWashFov = 55f, SpotRiverDist = 6f, SpotRiverHeight = 1.8f, SpotRiverLowDist = 4f, SpotRiverLowHeight = 0.6f, SpotRiverFov = 55f;
@@ -149,8 +154,10 @@ namespace KominkaHillside.Editor
             return string.Concat(KH_VideoCamera.WordTitle, KH_VideoCamera.WordRecall, KH_VideoCamera.WordPutAway, KH_VideoCamera.WordModeDog, KH_VideoCamera.WordModeSelf,
                 KH_VideoCamera.WordSnap, KH_VideoCamera.WordOn, KH_VideoCamera.WordOff, KH_VideoCamera.WordFilming, KH_VideoCamera.WordLost, KH_VideoCamera.WordFade,
                 KH_VideoCamera.WordRtFailed, KH_VideoCamera.WordSnapNote, KH_VideoCamera.WordPhotoCamOn, KH_VideoCamera.WordPhotoCamOff, "×◀▶: #0123456789",
-                string.Concat(Enumerable.Range(0, KH_VideoCamera.ModeCount).Select(KH_VideoCamera.ModeWord)), KH_VideoCamera.WordNoWash, KH_VideoCamera.WordNoSpot,
-                SpotWordWash, SpotWordRiver, SpotWordRiverLow, "()", string.Concat(KH_VideoCamera.CtlWords()), KH_VideoCamera.WordDrone, KH_VideoCamera.WordShow, KH_VideoCamera.WordHide);
+                string.Concat(Enumerable.Range(0, KH_VideoCamera.ModeCount).Select(KH_VideoCamera.ModeWord)), KH_VideoCamera.WordNoSpot,
+                SpotWordWash, SpotWordRiver, SpotWordRiverLow, "()", string.Concat(KH_VideoCamera.CtlWords()), KH_VideoCamera.WordDrone, KH_VideoCamera.WordShow, KH_VideoCamera.WordHide,
+                string.Concat(Enumerable.Range(0, KH_VideoCamera.PathMoveCount).Select(KH_VideoCamera.PathMoveWord)),
+                string.Concat(Enumerable.Range(0, KH_VideoCamera.OrbitKindCount).Select(KH_VideoCamera.OrbitKindWord)), PatternWords());   // §17 the pattern board
         }
 
         // ================================================================ context
@@ -196,6 +203,7 @@ namespace KominkaHillside.Editor
             }
             var toy = c.pouch.toyNameKeys;
             c.nameKeys = toy != null && toy.Length == 6 && toy.All(k => !string.IsNullOrEmpty(k)) ? (string[])toy.Clone() : (string[])DogNameDefaultKeys.Clone();
+            W5Preflight();   // W5: every video.* / film.* text in all 13 languages, or nothing changes
             return c;
         }
 
@@ -286,18 +294,22 @@ namespace KominkaHillside.Editor
                 video.stateLabel = ui.state; video.snapLabel = ui.snapLabel; video.dogLabel = ui.dogLabel;
                 video.modeImages = ui.modeImages; video.snapImage = ui.snapImage; video.dogPicker = ui.picker;
                 video.ctlImages = ui.ctlImages; video.droneImage = ui.droneImage; video.droneLabel = ui.droneLabel;
+                video.patternImages = ui.patternImages; video.patternLines = ui.patternLines; video.patternLabel = ui.patternLabel;   // §17
                 video.language = c.language; video.manager = c.manager; video.fade = c.fade;
                 video.dogRoots = (Transform[])c.dogs.Clone(); video.dogHeads = (Transform[])c.heads.Clone(); video.dogNameKeys = (string[])c.nameKeys.Clone();
                 WirePlay(video, c, r.log);
+                video.route = RouteFor(c, r.log);   // §16 みち
                 var data = BuildData(c, r.log);
                 video.spotNames = data.spotNames; video.spotPositions = data.spotPositions; video.spotLooks = data.spotLooks; video.spotFovs = data.spotFovs; video.spotStations = data.spotStations;
-                video.passPositions = data.passPositions;
+                video.passPositions = data.passPositions; video.spotKeys = data.spotKeys;   // W5: the spot names' keys
+                WireTexts(video, r.log);   // W5: the static labels the runtime rewrites in the player's language
+                W5RefreshLanguage(c, video, r.log);   // W5: KD_Language's tables from the catalog, the photo page hook
                 WriteTuning(video);
                 UdonSharpEditorUtility.CopyProxyToUdon(video); EditorUtility.SetDirty(video);
                 r.log.Add("wired: dogs " + string.Join(",", c.dogs.Select(d => d.name)) + ", name keys " + string.Join(",", c.nameKeys) + ", fade " + (c.fade != null) + ", manager " + (c.manager != null));
 
                 var sb = new StringBuilder();
-                string missing = KD_ShopSetupEditor.MissingGlyphs(AllWords());
+                string missing = KD_ShopSetupEditor.MissingGlyphs(AllWords() + BundledW5Text());   // W5: + every ja / en text of video.* / film.*
                 if (missing.Length > 0) { KD_ShopSetupEditor.AddGlyphs(missing, sb); r.log.Add("glyphs added: " + missing + " " + sb.ToString().Trim()); }
                 EditorSceneManager.MarkSceneDirty(c.scene);
                 if (!EditorSceneManager.SaveScene(c.scene)) throw new IOException("scene save failed");
@@ -346,17 +358,21 @@ namespace KominkaHillside.Editor
             A("selfDistanceWithDog", SelfDistanceWithDog);
             A("dogEyeFov", DogEyeFov); A("dogEyeSideDeg", DogEyeSideDeg); A("dogEyeBack", DogEyeBack); A("dogEyeLift", DogEyeLift); A("dogEyeUserMax", DogEyeUserMax); A("dogEyeTau", DogEyeTau);
             A("dogEyeSceneFov", DogEyeSceneFov); A("dogEyeAhead", DogEyeAhead); A("dogEyeSceneLift", DogEyeSceneLift); A("dogEyePitch", DogEyePitch);
-            A("droneFov", DroneFov); A("droneBack", DroneBack); A("droneHeight", DroneHeight); A("droneAhead", DroneAhead); A("droneTau", DroneTau); A("droneGroundMin", DroneGroundMin);
+            A("tpsFov", TpsFov); A("tpsBack", TpsBack); A("tpsShoulder", TpsShoulder); A("tpsLift", TpsLift); A("tpsLookAhead", TpsLookAhead); A("tpsLookDrop", TpsLookDrop); A("tpsYawTau", TpsYawTau);
+            A("pathTrailMax", PathTrailMax); A("pathHeight", PathHeight); A("pathFov", PathFov); A("pathAheadFar", PathAheadFar); A("pathApproachAt", PathApproachAt); A("pathAheadNear", PathAheadNear);
+            A("pathGlideTau", PathGlideTau); A("pathHold", PathHold); A("pathBeside", PathBeside); A("pathBehind", PathBehind); A("pathPassSide", PathPassSide); A("pathPassSpeed", PathPassSpeed); A("pathRecedeSpeed", PathRecedeSpeed);
             A("spotLookTau", SpotLookTau); A("spotDogPull", SpotDogPull);
             A("discFov", DiscFov); A("discSideK", DiscSideK); A("discSideMin", DiscSideMin); A("discSideMax", DiscSideMax); A("discUp", DiscUp); A("discTau", DiscTau); A("discLookTau", DiscLookTau); A("discFlySpeed", DiscFlySpeed); A("discApartMax", DiscApartMax); A("discVelTau", DiscVelTau);
             A("catchFov", CatchFov); A("catchSide", CatchSide); A("catchUp", CatchUp); A("catchLookBack", CatchLookBack); A("catchPlanWait", CatchPlanWait); A("catchReplanMove", CatchReplanMove);
             A("landFov", LandFov); A("landSide", LandSide); A("landBeyond", LandBeyond); A("landUp", LandUp); A("landNear", LandNear); A("landMoveMax", LandMoveMax); A("landStep", LandStep); A("landMaxT", LandMaxT);
             A("landRemoteSample", LandRemoteSample); A("landRepredict", LandRepredict);
-            A("washFov", WashFov); A("washDist", WashDist); A("washUp", WashUp); A("washLookTau", WashLookTau);
             A("orbitFov", OrbitFov); A("orbitRadius", OrbitRadius); A("orbitHeight", OrbitHeight); A("orbitDegPerSec", OrbitDegPerSec); A("orbitCenterTau", OrbitCenterTau); A("orbitLookUp", OrbitLookUp); A("orbitTau", OrbitTau);
+            A("orbitNearK", OrbitNearK); A("orbitFarK", OrbitFarK); A("orbitRadiusMin", OrbitRadiusMin); A("orbitRadiusMax", OrbitRadiusMax); A("orbitSpeedStep", OrbitSpeedStep); A("orbitDegMin", OrbitDegMin); A("orbitDegMax", OrbitDegMax);
             A("ctlDistMin", CtlDistMin); A("ctlDistMax", CtlDistMax); A("ctlDistStep", CtlDistStep); A("ctlUpMin", CtlUpMin); A("ctlUpMax", CtlUpMax); A("ctlUpStep", CtlUpStep); A("ctlYawStep", CtlYawStep);
             A("ctlPitchMin", CtlPitchMin); A("ctlPitchMax", CtlPitchMax); A("ctlPitchStep", CtlPitchStep); A("ctlMinDist", CtlMinDist); A("ctlPitchTau", CtlPitchTau);
             A("droneSendHz", DroneSendHz); A("droneHideNearMe", DroneHideNearMe);
+            A("welcomeFov", WelcomeFov); A("welcomeDist", WelcomeDist); A("welcomeSide", WelcomeSide); A("welcomeHeight", WelcomeHeight); A("welcomeLookTau", WelcomeLookTau);   // §17 おかえり (internal)
+            A("patWashNear", PatWashNear); A("patWashSpotMax", PatWashSpotMax); A("patDogNear", PatDogNear);   // §17 おまかせ
             A("passFov", PassFov); A("passLookUp", PassLookUp); A("passNear", PassNear); A("passFar", PassFar); A("passRecede", PassRecede); A("passAfter", PassAfter); A("passGiveUp", PassGiveUp); A("passTooFar", PassTooFar);
             return t;
         }
@@ -480,7 +496,8 @@ namespace KominkaHillside.Editor
             return mr;
         }
 
-        class Ui { public GameObject monitor, picker; public MeshRenderer screen; public TextMeshProUGUI state, snapLabel, dogLabel, droneLabel; public Image[] modeImages, ctlImages; public Image snapImage, droneImage; }
+        class Ui { public GameObject monitor, picker; public MeshRenderer screen; public TextMeshProUGUI state, snapLabel, dogLabel, droneLabel; public Image[] modeImages, ctlImages; public Image snapImage, droneImage;
+            public Image[] patternImages; public GameObject[] patternLines; public TextMeshProUGUI patternLabel; }   // §17 the pattern board
 
         public static string ModeButtonName(int m) { return "Mode" + m; }
         public static string ModeEvent(int m) { return "_Mode" + m; }
@@ -529,24 +546,25 @@ namespace KominkaHillside.Editor
             fimg.color = FrameColor; fimg.raycastTarget = false; KD_UiSpriteEditor.ApplyFlatSkin(fimg);
             frame.transform.SetAsFirstSibling();
 
-            Label(go.transform, "Title", TitlePos, TitleSize, KH_VideoCamera.WordTitle, c.font, 28f, 18f, TextAlignmentOptions.MidlineLeft, false).color = KD_UiSpriteEditor.AccentGold;
+            Label(go.transform, "Title", TitlePos, TitleSize, Ja(KH_VideoCamera.KeyTitle), c.font, 28f, 18f, TextAlignmentOptions.MidlineLeft, false).color = KD_UiSpriteEditor.AccentGold;
             Btn(go.transform, "Close", ClosePos, CloseSize, "×", c.font, target, nameof(KH_VideoCamera._Close), log);
             foreach (var old in new[] { "ModeDog", "ModeSelf" }) { var o = go.transform.Find(old); if (o != null) { UnityEngine.Object.DestroyImmediate(o.gameObject); log.Add("removed the W1 button " + old); } }
-            // §15.5: 12 → 10 modes. The buttons past ModeCount (the old Mode10 / Mode11) are removed; the rest are rewritten in place
+            // §15.5: 12 → 10 modes; §16: still 10 (手元 / 見下ろす out, 背中ごし / みち in). The buttons past ModeCount are removed; the rest are
+            // rewritten in place (label and event by number)
             for (int m = KH_VideoCamera.ModeCount; m < 16; m++) { var o = go.transform.Find(ModeButtonName(m)); if (o != null) { UnityEngine.Object.DestroyImmediate(o.gameObject); log.Add("removed the old button " + ModeButtonName(m)); } }
             u.modeImages = new Image[KH_VideoCamera.ModeCount];
             for (int m = 0; m < KH_VideoCamera.ModeCount; m++)
-                u.modeImages[m] = Btn(go.transform, ModeButtonName(m), ModePos(m), ModeSize, KH_VideoCamera.ModeWord(m), c.font, target, ModeEvent(m), log).GetComponent<Image>();
+                u.modeImages[m] = Btn(go.transform, ModeButtonName(m), ModePos(m), ModeSize, Ja(KH_VideoCamera.ModeKey(m)), c.font, target, ModeEvent(m), log).GetComponent<Image>();
             // §15.5: the camera controls (one row) and the drone toggle (beside the snap toggle)
-            string[] ctlWords = KH_VideoCamera.CtlWords();
+            string[] ctlWords = KH_VideoCamera.CtlWords(), ctlKeys = KH_VideoCamera.CtlKeys();
             u.ctlImages = new Image[ctlWords.Length];
             for (int i = 0; i < ctlWords.Length; i++)
             {
-                var cb = Btn(go.transform, CtlName(i), CtlPos(i), CtlSize, ctlWords[i], c.font, target, CtlEvents[i], log);
+                var cb = Btn(go.transform, CtlName(i), CtlPos(i), CtlSize, ctlKeys[i].Length > 0 ? Ja(ctlKeys[i]) : ctlWords[i], c.font, target, CtlEvents[i], log);
                 var cl = LabelOf(cb); if (cl != null) { cl.fontSizeMax = 24f; cl.fontSize = 24f; cl.fontSizeMin = 12f; EditorUtility.SetDirty(cl); }
                 u.ctlImages[i] = cb.GetComponent<Image>();
             }
-            var droneBtn = Btn(go.transform, DroneToggleName, DroneTogglePos, DroneToggleSize, KH_VideoCamera.WordDrone + ": " + KH_VideoCamera.WordShow, c.font, target, nameof(KH_VideoCamera._ToggleDrone), log);
+            var droneBtn = Btn(go.transform, DroneToggleName, DroneTogglePos, DroneToggleSize, Ja(KH_VideoCamera.KeyDrone) + ": " + Ja(KH_VideoCamera.KeyShow), c.font, target, nameof(KH_VideoCamera._ToggleDrone), log);
             u.droneImage = droneBtn.GetComponent<Image>(); u.droneLabel = LabelOf(droneBtn);
             // the W4 overlays (Video/4) must stay above the new buttons (drawn last, they also take the pointer first)
             foreach (var ov in new[] { PersonListName, PersonConfirmName }) { var o = go.transform.Find(ov); if (o != null) o.SetAsLastSibling(); }
@@ -556,10 +574,11 @@ namespace KominkaHillside.Editor
             Btn(picker.transform, "Next", new Vector2(PickerButtonX, 0f), PickerButtonSize, "▶", c.font, target, nameof(KH_VideoCamera._DogNext), log);
             u.dogLabel = Label(picker.transform, "Name", Vector2.zero, PickerLabelSize, "-", c.font, 24f, 14f, TextAlignmentOptions.Center, false);
             u.picker = picker;
-            var snapBtn = Btn(go.transform, "Snap", SnapPos, SnapSize, KH_VideoCamera.WordSnap + ": " + KH_VideoCamera.WordOn, c.font, target, nameof(KH_VideoCamera._ToggleSnap), log);
+            var snapBtn = Btn(go.transform, "Snap", SnapPos, SnapSize, Ja(KH_VideoCamera.KeySnap) + ": " + Ja(KH_VideoCamera.KeyOn), c.font, target, nameof(KH_VideoCamera._ToggleSnap), log);
             u.snapImage = snapBtn.GetComponent<Image>(); u.snapLabel = LabelOf(snapBtn);
-            Label(go.transform, "SnapNote", NotePos, NoteSize, KH_VideoCamera.WordSnapNote, c.font, 17f, 12f, TextAlignmentOptions.MidlineLeft, true);
-            u.state = Label(go.transform, "State", StatePos, StateSize, KH_VideoCamera.WordFilming, c.font, 20f, 12f, TextAlignmentOptions.MidlineLeft, false);
+            Label(go.transform, "SnapNote", NotePos, NoteSize, Ja(KH_VideoCamera.KeySnapNote), c.font, 17f, 12f, TextAlignmentOptions.MidlineLeft, true);
+            u.state = Label(go.transform, "State", StatePos, StateSize, Ja(KH_VideoCamera.KeyFilming), c.font, 20f, 12f, TextAlignmentOptions.MidlineLeft, false);
+            BuildPatternBoard(mon, c, target, u, log);   // §17 (KH_VideoCameraEditor.Patterns.cs): the second canvas to the right
             foreach (var tr in mon.GetComponentsInChildren<Transform>(true)) tr.gameObject.layer = MonitorLayer;
             BuildBack(mon, log);
             mon.gameObject.SetActive(false);
@@ -573,9 +592,9 @@ namespace KominkaHillside.Editor
         static GameObject[] BuildEntry(Ctx c, UdonBehaviour target, List<string> log)
         {
             var page = c.photoPage.transform;
-            var open = Btn(page, EntryOpenName, EntryOpenPos, EntryOpenSize, KH_VideoCamera.WordTitle, c.font, target, nameof(KH_VideoCamera._Open), log);
-            var recall = Btn(page, EntryRecallName, EntryRecallPos, EntryRecallSize, KH_VideoCamera.WordRecall, c.font, target, nameof(KH_VideoCamera._Recall), log);
-            var close = Btn(page, EntryCloseName, EntryClosePos, EntryCloseSize, KH_VideoCamera.WordPutAway, c.font, target, nameof(KH_VideoCamera._Close), log);
+            var open = Btn(page, EntryOpenName, EntryOpenPos, EntryOpenSize, Ja(KH_VideoCamera.KeyTitle), c.font, target, nameof(KH_VideoCamera._Open), log);
+            var recall = Btn(page, EntryRecallName, EntryRecallPos, EntryRecallSize, Ja(KH_VideoCamera.KeyRecall), c.font, target, nameof(KH_VideoCamera._Recall), log);
+            var close = Btn(page, EntryCloseName, EntryClosePos, EntryCloseSize, Ja(KH_VideoCamera.KeyPutAway), c.font, target, nameof(KH_VideoCamera._Close), log);
             // Every run (also after Photo/1 rebuilt the page): the buttons are found or created by name (EnsureButton), then placed just before the
             // FIRST full-page overlay (Large / HelpPanel), so the overlays always cover them. Only a button that sits after it is moved
             // (a fixed index moved a button that was already before the overlay to AFTER it on a rerun, 2026-10-03).
@@ -649,6 +668,8 @@ namespace KominkaHillside.Editor
             File.Copy(KH_CourseGroundEditor.ScenePath, OutDir + "/before-video-remove.unity", true);
             var root = SceneRoot(scene, SystemName, out _);
             if (root != null) { UnityEngine.Object.DestroyImmediate(root); log.Add("removed " + SystemName); }
+            foreach (var p in UnityEngine.Object.FindObjectsOfType<KD_TreatPouch>(true))
+                { p.photoVideo = null; UdonSharpEditorUtility.CopyProxyToUdon(p); EditorUtility.SetDirty(p); log.Add("KD_TreatPouch.photoVideo cleared (W5)"); }
             foreach (var name in new[] { EntryOpenName, EntryRecallName, EntryCloseName })
             {
                 var go = KD_SceneObjects.Find(name, out int n);

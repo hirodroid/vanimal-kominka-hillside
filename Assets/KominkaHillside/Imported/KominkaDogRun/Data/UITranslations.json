@@ -3123,6 +3123,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "片手に3匹、両手で6匹まで。リードの先を首輪に近づけてもつなげます"
+        },
+        {
+          "key": "video.open",
+          "text": "撮影カメラ"
+        },
+        {
+          "key": "video.recall",
+          "text": "モニターを呼ぶ"
+        },
+        {
+          "key": "video.close",
+          "text": "しまう"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "犬追従"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "じぶん"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "背中ごし"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "犬目線"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "定点"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "ディスク"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "キャッチ待ち"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "一周"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "通り過ぎ"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "みち"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "おかえり"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "待って寄る"
+        },
+        {
+          "key": "video.path.back",
+          "text": "後ずさり"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "横ならび"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "追いこし"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "寄って引く"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "一定"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "近づく"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "離れる"
+        },
+        {
+          "key": "video.snap",
+          "text": "VRChatカメラに映す"
+        },
+        {
+          "key": "video.on",
+          "text": "ON"
+        },
+        {
+          "key": "video.off",
+          "text": "OFF"
+        },
+        {
+          "key": "video.filming",
+          "text": "撮影中"
+        },
+        {
+          "key": "video.lost",
+          "text": "{0}が見つかりません"
+        },
+        {
+          "key": "video.nospot",
+          "text": "定点がありません"
+        },
+        {
+          "key": "video.fade",
+          "text": "移動中…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "撮影カメラを用意できませんでした"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "ONの間は、VRChatカメラの写真・動画・配信とスクリーンショットがこの映像になります。ふつうに撮るときはOFFに"
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "VRChatカメラ: 映しています"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "VRChatカメラ: 出ていません"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "洗い場{0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "川"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "川 (低い)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "近く"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "遠く"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "向き▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "向き▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "戻す"
+        },
+        {
+          "key": "video.drone",
+          "text": "ドローン"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "見せる"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "見せない"
+        },
+        {
+          "key": "video.person",
+          "text": "人: {0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "撮る人を選ぶ"
+        },
+        {
+          "key": "video.person.close",
+          "text": "とじる"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "{0} さんに撮影の許可を依頼しますか?"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "{0} さんの画面に通知が出ます"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "依頼する"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "やめる"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "取り消す"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "撮るのをやめる"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "{0} さんの返事を待っています ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "{0} さんの許可を確かめています"
+        },
+        {
+          "key": "video.waiting",
+          "text": "返事を待っています"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "{0} さんを撮影中"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "{0} さんの許可がないので、犬だけを撮っています"
+        },
+        {
+          "key": "video.declined",
+          "text": "今は撮影できないようです"
+        },
+        {
+          "key": "video.paused",
+          "text": "今は撮影の申し込みを受けていないようです"
+        },
+        {
+          "key": "video.busy",
+          "text": "相手はいま別の申し込みに対応中です"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "撮影の申し込みを受けていません"
+        },
+        {
+          "key": "video.notready",
+          "text": "準備中"
+        },
+        {
+          "key": "video.again",
+          "text": "あと {0} 秒は申し込めません"
+        },
+        {
+          "key": "video.busyme",
+          "text": "返事を待っている申し込みがあります"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "相手からの申し込みに先に答えてください"
+        },
+        {
+          "key": "video.left",
+          "text": "相手が退室しました"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} さんが撮影の許可を取り消しました"
+        },
+        {
+          "key": "video.notable",
+          "text": "許可を確かめられませんでした"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "相手からの申し込みを先に表示します"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "パターン"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "とめる"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "パターンを選ぶと、撮り方が自動で切り替わります。撮り方のボタンを押すと止まります"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "撮れるカットを探しています"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "フリスビー"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "洗う"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "散歩"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "ふだん"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "フリスビー 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "フリスビー 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "散歩 Vlog 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "散歩 Vlog 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "犬とあそぶ"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "おまかせ"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "投げて、追って戻る。じぶん → キャッチ待ち → 戻る犬に犬追従"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "投げて、こっちから見る。じぶん → キャッチ待ち → おかえり (自分の側から)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "道を歩く。待って寄る → 背中ごし → 横ならび → 犬追従 → 追いこし"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "景色と一周。通り過ぎ → じぶん → 離れながら一周"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "犬目線 → 犬追従 → 近づきながら一周 → 寄って引く"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "フリスビー・洗う・散歩・ふだんを見分けて切り替える"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} さんが撮影カメラであなたを撮りたいそうです"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "映像は撮る人の画面だけに出ます"
+        },
+        {
+          "key": "film.granted",
+          "text": "{0} さんに撮影を許可しました"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "さんぽタブの [撮影を許可中] からいつでもやめてもらえます"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "撮影の申し込みを受ける: ON"
+        },
+        {
+          "key": "film.accept.off",
+          "text": "撮影の申し込みを受ける: OFF"
+        },
+        {
+          "key": "film.pending",
+          "text": "撮影の依頼 1 件"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "撮影を許可中 ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "撮影を許した人"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "「撮影中」は相手の画面からの申告です。[やめてもらう] でいつでも止められます"
+        },
+        {
+          "key": "film.row.active",
+          "text": "撮影中"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "まだ撮影は始まっていません"
+        },
+        {
+          "key": "film.stop",
+          "text": "やめてもらう"
+        },
+        {
+          "key": "film.none",
+          "text": "撮影を許した人はいません"
         }
       ]
     },
@@ -6246,6 +6662,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "Up to 3 dogs per hand, 6 with both. Bringing a leash tip to a collar works too"
+        },
+        {
+          "key": "video.open",
+          "text": "Video camera"
+        },
+        {
+          "key": "video.recall",
+          "text": "Bring monitor"
+        },
+        {
+          "key": "video.close",
+          "text": "Put away"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "Follow dog"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "Me"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "Over shoulder"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "Dog view"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "Fixed spot"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "Disc"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "Wait for catch"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "Orbit"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "Pass-by"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "Trail"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "Welcome back"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "Wait & close in"
+        },
+        {
+          "key": "video.path.back",
+          "text": "Walk backward"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "Side by side"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "Overtake"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "In, then out"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "Steady"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "Closing in"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "Pulling away"
+        },
+        {
+          "key": "video.snap",
+          "text": "Show on VRChat camera"
+        },
+        {
+          "key": "video.on",
+          "text": "ON"
+        },
+        {
+          "key": "video.off",
+          "text": "OFF"
+        },
+        {
+          "key": "video.filming",
+          "text": "Filming"
+        },
+        {
+          "key": "video.lost",
+          "text": "{0} not found"
+        },
+        {
+          "key": "video.nospot",
+          "text": "No fixed spot"
+        },
+        {
+          "key": "video.fade",
+          "text": "Moving…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "Could not prepare the video camera"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "While ON, VRChat camera photos, videos, streams and screenshots show this view. Turn it OFF for normal shots"
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "VRChat camera: open"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "VRChat camera: closed"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "Wash station {0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "River"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "River (low)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "Closer"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "Farther"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "Tilt▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "Tilt▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "Reset"
+        },
+        {
+          "key": "video.drone",
+          "text": "Drone"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "Show"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "Hide"
+        },
+        {
+          "key": "video.person",
+          "text": "Person: {0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "Choose who to film"
+        },
+        {
+          "key": "video.person.close",
+          "text": "Close"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "Ask {0} for permission to film?"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "A notice will appear on {0}'s screen"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "Ask"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "Cancel"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "Withdraw"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "Stop filming"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "Waiting for {0}'s answer ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "Checking {0}'s permission"
+        },
+        {
+          "key": "video.waiting",
+          "text": "Waiting for an answer"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "Filming {0}"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "No permission from {0}, so filming the dogs only"
+        },
+        {
+          "key": "video.declined",
+          "text": "Filming is not possible right now"
+        },
+        {
+          "key": "video.paused",
+          "text": "They are not taking filming requests right now"
+        },
+        {
+          "key": "video.busy",
+          "text": "They are answering another request"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "Not taking filming requests"
+        },
+        {
+          "key": "video.notready",
+          "text": "Getting ready"
+        },
+        {
+          "key": "video.again",
+          "text": "You can ask again in {0} s"
+        },
+        {
+          "key": "video.busyme",
+          "text": "You have a request waiting for an answer"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "Answer the request you received first"
+        },
+        {
+          "key": "video.left",
+          "text": "They left the instance"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} withdrew the filming permission"
+        },
+        {
+          "key": "video.notable",
+          "text": "Could not check the permission"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "Showing their request to you first"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "Patterns"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "Stop"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "Pick a pattern and the shots switch by themselves. A shot button stops it"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "Looking for a shot it can take"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "Frisbee"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "Washing"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "Walk"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "Everyday"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "Frisbee 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "Frisbee 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "Walk Vlog 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "Walk Vlog 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "Play with dogs"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "Auto"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "Throw, chase, come back. Me → Wait for catch → Follow dog on its way back"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "Throw, watch it come to you. Me → Wait for catch → Welcome back (from your side)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "Walk the trail. Wait & close in → Over shoulder → Side by side → Follow dog → Overtake"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "Scenery and an orbit. Pass-by → Me → Orbit, pulling away"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "Dog view → Follow dog → Orbit, closing in → In, then out"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "Tells Frisbee, Washing, Walk and Everyday apart and switches"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} would like to film you with the video camera"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "The video shows only on their screen"
+        },
+        {
+          "key": "film.granted",
+          "text": "You allowed {0} to film you"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "Stop it any time from [Filming allowed] in the Walk tab"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "Filming requests: ON"
+        },
+        {
+          "key": "film.accept.off",
+          "text": "Filming requests: OFF"
+        },
+        {
+          "key": "film.pending",
+          "text": "1 filming request"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "Filming allowed ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "People allowed to film you"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "\"Filming\" is reported by their screen. Stop it any time with [Ask to stop]"
+        },
+        {
+          "key": "film.row.active",
+          "text": "Filming"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "Filming has not started yet"
+        },
+        {
+          "key": "film.stop",
+          "text": "Ask to stop"
+        },
+        {
+          "key": "film.none",
+          "text": "You have not allowed anyone to film you"
         }
       ]
     },
@@ -9369,6 +10201,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "До 3 собак в руке, 6 обеими. Можно и поднести карабин к ошейнику"
+        },
+        {
+          "key": "video.open",
+          "text": "Видеокамера"
+        },
+        {
+          "key": "video.recall",
+          "text": "Позвать экран"
+        },
+        {
+          "key": "video.close",
+          "text": "Убрать"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "За собакой"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "Я"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "Из-за спины"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "Взгляд собаки"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "Точка съёмки"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "Диск"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "Ждать ловлю"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "Облёт"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "Мимо"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "Тропа"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "С возвращением"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "Ждать и подойти"
+        },
+        {
+          "key": "video.path.back",
+          "text": "Пятиться"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "Рядом"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "Обгон"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "Ближе и дальше"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "Ровно"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "Приближаясь"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "Удаляясь"
+        },
+        {
+          "key": "video.snap",
+          "text": "Показ в камере VRChat"
+        },
+        {
+          "key": "video.on",
+          "text": "ВКЛ"
+        },
+        {
+          "key": "video.off",
+          "text": "ВЫКЛ"
+        },
+        {
+          "key": "video.filming",
+          "text": "Съёмка"
+        },
+        {
+          "key": "video.lost",
+          "text": "{0}: не найдено"
+        },
+        {
+          "key": "video.nospot",
+          "text": "Нет точки съёмки"
+        },
+        {
+          "key": "video.fade",
+          "text": "Перемещение…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "Не удалось подготовить видеокамеру"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "При ВКЛ фото, видео, трансляции и скриншоты камеры VRChat показывают этот вид. Для обычной съёмки — ВЫКЛ"
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "Камера VRChat: открыта"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "Камера VRChat: закрыта"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "Мойка {0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "Река"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "Река (низко)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "Ближе"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "Дальше"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "Наклон▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "Наклон▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "Сброс"
+        },
+        {
+          "key": "video.drone",
+          "text": "Дрон"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "Показать"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "Скрыть"
+        },
+        {
+          "key": "video.person",
+          "text": "Человек: {0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "Кого снимать"
+        },
+        {
+          "key": "video.person.close",
+          "text": "Закрыть"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "Попросить у {0} разрешение на съёмку?"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "У {0} на экране появится уведомление"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "Попросить"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "Отмена"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "Отозвать"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "Прекратить съёмку"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "Ждём ответа {0} ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "Проверяем разрешение {0}"
+        },
+        {
+          "key": "video.waiting",
+          "text": "Ждём ответа"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "Снимаем {0}"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "Нет разрешения от {0}, снимаем только собак"
+        },
+        {
+          "key": "video.declined",
+          "text": "Сейчас снимать нельзя"
+        },
+        {
+          "key": "video.paused",
+          "text": "Сейчас запросы на съёмку не принимаются"
+        },
+        {
+          "key": "video.busy",
+          "text": "Игрок отвечает на другой запрос"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "Не принимает запросы на съёмку"
+        },
+        {
+          "key": "video.notready",
+          "text": "Готовится"
+        },
+        {
+          "key": "video.again",
+          "text": "Повторить можно через {0} с"
+        },
+        {
+          "key": "video.busyme",
+          "text": "У вас уже есть запрос без ответа"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "Сначала ответьте на полученный запрос"
+        },
+        {
+          "key": "video.left",
+          "text": "Игрок вышел"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} отозвал(а) разрешение на съёмку"
+        },
+        {
+          "key": "video.notable",
+          "text": "Не удалось проверить разрешение"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "Сначала показываем запрос к вам"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "Сценарии"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "Стоп"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "Выберите сценарий — ракурсы будут меняться сами. Кнопка ракурса его остановит"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "Ищем доступный ракурс"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "Фрисби"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "Мытьё"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "Прогулка"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "Обычно"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "Фрисби 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "Фрисби 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "Влог-прогулка 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "Влог-прогулка 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "Игра с собакой"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "Авто"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "Бросок, погоня, возврат. Я → Ждать ловлю → За собакой на обратном пути"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "Бросок, вид с вашей стороны. Я → Ждать ловлю → С возвращением (с вашей стороны)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "Идём по тропе. Ждать и подойти → Из-за спины → Рядом → За собакой → Обгон"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "Пейзаж и облёт. Мимо → Я → Облёт, удаляясь"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "Взгляд собаки → За собакой → Облёт, приближаясь → Ближе и дальше"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "Сам различает: фрисби, мытьё, прогулка, обычно — и переключает"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} хочет снять вас видеокамерой"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "Видео видно только на экране снимающего"
+        },
+        {
+          "key": "film.granted",
+          "text": "Вы разрешили {0} съёмку"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "Остановить можно в любой момент: вкладка Walk → [Съёмка разрешена]"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "Запросы на съёмку: ВКЛ"
+        },
+        {
+          "key": "film.accept.off",
+          "text": "Запросы на съёмку: ВЫКЛ"
+        },
+        {
+          "key": "film.pending",
+          "text": "Запрос на съёмку: 1"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "Съёмка разрешена ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "Кому разрешена съёмка"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "«Идёт съёмка» сообщает экран снимающего. [Попросить остановить] — в любой момент"
+        },
+        {
+          "key": "film.row.active",
+          "text": "Идёт съёмка"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "Съёмка ещё не началась"
+        },
+        {
+          "key": "film.stop",
+          "text": "Попросить остановить"
+        },
+        {
+          "key": "film.none",
+          "text": "Вы никому не разрешили съёмку"
         }
       ]
     },
@@ -12492,6 +13740,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "До 3 собак в руці, 6 обома. Можна й піднести карабін до нашийника"
+        },
+        {
+          "key": "video.open",
+          "text": "Відеокамера"
+        },
+        {
+          "key": "video.recall",
+          "text": "Покликати екран"
+        },
+        {
+          "key": "video.close",
+          "text": "Прибрати"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "За собакою"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "Я"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "З-за спини"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "Погляд собаки"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "Точка зйомки"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "Диск"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "Чекати ловлю"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "Обліт"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "Повз"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "Стежка"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "З поверненням"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "Чекати й підійти"
+        },
+        {
+          "key": "video.path.back",
+          "text": "Задкувати"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "Поруч"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "Обгін"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "Ближче й далі"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "Рівно"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "Наближаючись"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "Віддаляючись"
+        },
+        {
+          "key": "video.snap",
+          "text": "Показ у камері VRChat"
+        },
+        {
+          "key": "video.on",
+          "text": "УВІМК"
+        },
+        {
+          "key": "video.off",
+          "text": "ВИМК"
+        },
+        {
+          "key": "video.filming",
+          "text": "Зйомка"
+        },
+        {
+          "key": "video.lost",
+          "text": "{0}: не знайдено"
+        },
+        {
+          "key": "video.nospot",
+          "text": "Немає точки зйомки"
+        },
+        {
+          "key": "video.fade",
+          "text": "Переміщення…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "Не вдалося підготувати відеокамеру"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "При УВІМК фото, відео, трансляції та скриншоти камери VRChat показують цей вид. Для звичайної зйомки — ВИМК"
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "Камера VRChat: відкрита"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "Камера VRChat: закрита"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "Мийка {0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "Річка"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "Річка (низько)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "Ближче"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "Далі"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "Нахил▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "Нахил▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "Скинути"
+        },
+        {
+          "key": "video.drone",
+          "text": "Дрон"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "Показати"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "Сховати"
+        },
+        {
+          "key": "video.person",
+          "text": "Людина: {0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "Кого знімати"
+        },
+        {
+          "key": "video.person.close",
+          "text": "Закрити"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "Попросити в {0} дозвіл на зйомку?"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "У {0} на екрані з'явиться сповіщення"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "Попросити"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "Скасувати"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "Відкликати"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "Припинити зйомку"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "Чекаємо відповіді {0} ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "Перевіряємо дозвіл {0}"
+        },
+        {
+          "key": "video.waiting",
+          "text": "Чекаємо відповіді"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "Знімаємо {0}"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "Немає дозволу від {0}, знімаємо лише собак"
+        },
+        {
+          "key": "video.declined",
+          "text": "Зараз знімати не можна"
+        },
+        {
+          "key": "video.paused",
+          "text": "Зараз запити на зйомку не приймаються"
+        },
+        {
+          "key": "video.busy",
+          "text": "Гравець відповідає на інший запит"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "Не приймає запити на зйомку"
+        },
+        {
+          "key": "video.notready",
+          "text": "Готується"
+        },
+        {
+          "key": "video.again",
+          "text": "Повторити можна через {0} с"
+        },
+        {
+          "key": "video.busyme",
+          "text": "У вас уже є запит без відповіді"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "Спершу дайте відповідь на отриманий запит"
+        },
+        {
+          "key": "video.left",
+          "text": "Гравець вийшов"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} відкликав(ла) дозвіл на зйомку"
+        },
+        {
+          "key": "video.notable",
+          "text": "Не вдалося перевірити дозвіл"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "Спершу показуємо запит до вас"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "Сценарії"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "Стоп"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "Виберіть сценарій — ракурси змінюватимуться самі. Кнопка ракурсу його зупинить"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "Шукаємо доступний ракурс"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "Фризбі"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "Миття"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "Прогулянка"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "Звичайно"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "Фризбі 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "Фризбі 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "Влог-прогулянка 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "Влог-прогулянка 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "Гра з собакою"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "Авто"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "Кидок, погоня, повернення. Я → Чекати ловлю → За собакою на зворотному шляху"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "Кидок, вигляд з вашого боку. Я → Чекати ловлю → З поверненням (з вашого боку)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "Ідемо стежкою. Чекати й підійти → З-за спини → Поруч → За собакою → Обгін"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "Краєвид і обліт. Повз → Я → Обліт, віддаляючись"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "Погляд собаки → За собакою → Обліт, наближаючись → Ближче й далі"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "Сам розрізняє: фризбі, миття, прогулянка, звичайно — і перемикає"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} хоче зняти вас відеокамерою"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "Відео видно лише на екрані того, хто знімає"
+        },
+        {
+          "key": "film.granted",
+          "text": "Ви дозволили {0} зйомку"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "Зупинити можна будь-коли: вкладка Walk → [Зйомку дозволено]"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "Запити на зйомку: УВІМК"
+        },
+        {
+          "key": "film.accept.off",
+          "text": "Запити на зйомку: ВИМК"
+        },
+        {
+          "key": "film.pending",
+          "text": "Запит на зйомку: 1"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "Зйомку дозволено ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "Кому дозволено зйомку"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "«Йде зйомка» повідомляє екран того, хто знімає. [Попросити зупинити] — будь-коли"
+        },
+        {
+          "key": "film.row.active",
+          "text": "Йде зйомка"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "Зйомка ще не почалася"
+        },
+        {
+          "key": "film.stop",
+          "text": "Попросити зупинити"
+        },
+        {
+          "key": "film.none",
+          "text": "Ви нікому не дозволили зйомку"
         }
       ]
     },
@@ -15615,6 +17279,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "한 손에 3마리, 두 손으로 6마리까지. 리드 끝을 목걸이에 대도 돼요"
+        },
+        {
+          "key": "video.open",
+          "text": "촬영 카메라"
+        },
+        {
+          "key": "video.recall",
+          "text": "모니터 부르기"
+        },
+        {
+          "key": "video.close",
+          "text": "넣기"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "강아지 따라가기"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "나"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "어깨 너머"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "강아지 시점"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "고정 위치"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "디스크"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "캐치 대기"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "한 바퀴"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "지나가기"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "길"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "어서 와"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "기다렸다 다가가기"
+        },
+        {
+          "key": "video.path.back",
+          "text": "뒷걸음"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "나란히"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "추월"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "다가갔다 멀어지기"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "일정"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "다가가기"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "멀어지기"
+        },
+        {
+          "key": "video.snap",
+          "text": "VRChat 카메라에 표시"
+        },
+        {
+          "key": "video.on",
+          "text": "ON"
+        },
+        {
+          "key": "video.off",
+          "text": "OFF"
+        },
+        {
+          "key": "video.filming",
+          "text": "촬영 중"
+        },
+        {
+          "key": "video.lost",
+          "text": "{0}을(를) 찾을 수 없어요"
+        },
+        {
+          "key": "video.nospot",
+          "text": "고정 위치가 없어요"
+        },
+        {
+          "key": "video.fade",
+          "text": "이동 중…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "촬영 카메라를 준비하지 못했어요"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "ON인 동안 VRChat 카메라의 사진·동영상·방송과 스크린샷이 이 영상이 돼요. 평소처럼 찍을 때는 OFF로"
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "VRChat 카메라: 켜짐"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "VRChat 카메라: 꺼짐"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "세척장 {0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "강"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "강 (낮게)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "가까이"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "멀리"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "각도▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "각도▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "초기화"
+        },
+        {
+          "key": "video.drone",
+          "text": "드론"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "보이기"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "숨기기"
+        },
+        {
+          "key": "video.person",
+          "text": "사람: {0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "찍을 사람 선택"
+        },
+        {
+          "key": "video.person.close",
+          "text": "닫기"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "{0} 님에게 촬영 허락을 요청할까요?"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "{0} 님의 화면에 알림이 떠요"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "요청하기"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "그만두기"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "취소"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "촬영 그만두기"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "{0} 님의 대답을 기다리는 중 ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "{0} 님의 허락을 확인하는 중"
+        },
+        {
+          "key": "video.waiting",
+          "text": "대답을 기다리는 중"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "{0} 님을 촬영 중"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "{0} 님의 허락이 없어서 강아지만 찍고 있어요"
+        },
+        {
+          "key": "video.declined",
+          "text": "지금은 촬영할 수 없나 봐요"
+        },
+        {
+          "key": "video.paused",
+          "text": "지금은 촬영 요청을 받지 않는 것 같아요"
+        },
+        {
+          "key": "video.busy",
+          "text": "상대가 다른 요청에 응답하는 중이에요"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "촬영 요청을 받지 않아요"
+        },
+        {
+          "key": "video.notready",
+          "text": "준비 중"
+        },
+        {
+          "key": "video.again",
+          "text": "{0}초 뒤에 다시 요청할 수 있어요"
+        },
+        {
+          "key": "video.busyme",
+          "text": "대답을 기다리는 요청이 있어요"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "받은 요청에 먼저 대답해 주세요"
+        },
+        {
+          "key": "video.left",
+          "text": "상대가 나갔어요"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} 님이 촬영 허락을 취소했어요"
+        },
+        {
+          "key": "video.notable",
+          "text": "허락을 확인하지 못했어요"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "상대의 요청을 먼저 보여 줄게요"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "패턴"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "멈추기"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "패턴을 고르면 촬영 방식이 자동으로 바뀌어요. 촬영 방식 버튼을 누르면 멈춰요"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "찍을 수 있는 컷을 찾는 중"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "프리스비"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "씻기기"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "산책"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "평소"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "프리스비 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "프리스비 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "산책 Vlog 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "산책 Vlog 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "강아지랑 놀기"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "자동"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "던지고 쫓아갔다 돌아와요. 나 → 캐치 대기 → 돌아오는 강아지 따라가기"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "던지고 내 쪽에서 봐요. 나 → 캐치 대기 → 어서 와 (내 쪽에서)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "길을 걸어요. 기다렸다 다가가기 → 어깨 너머 → 나란히 → 강아지 따라가기 → 추월"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "풍경과 한 바퀴. 지나가기 → 나 → 멀어지며 한 바퀴"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "강아지 시점 → 강아지 따라가기 → 다가가며 한 바퀴 → 다가갔다 멀어지기"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "프리스비·씻기기·산책·평소를 구별해서 바꿔요"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} 님이 촬영 카메라로 당신을 찍고 싶대요"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "영상은 찍는 사람의 화면에만 나와요"
+        },
+        {
+          "key": "film.granted",
+          "text": "{0} 님에게 촬영을 허락했어요"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "Walk 탭의 [촬영 허락 중]에서 언제든 멈출 수 있어요"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "촬영 요청 받기: ON"
+        },
+        {
+          "key": "film.accept.off",
+          "text": "촬영 요청 받기: OFF"
+        },
+        {
+          "key": "film.pending",
+          "text": "촬영 요청 1건"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "촬영 허락 중 ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "촬영을 허락한 사람"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "\"촬영 중\"은 상대 화면이 알려 주는 상태예요. [그만해 달라고 하기]로 언제든 멈출 수 있어요"
+        },
+        {
+          "key": "film.row.active",
+          "text": "촬영 중"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "아직 촬영이 시작되지 않았어요"
+        },
+        {
+          "key": "film.stop",
+          "text": "그만해 달라고 하기"
+        },
+        {
+          "key": "film.none",
+          "text": "촬영을 허락한 사람이 없어요"
         }
       ]
     },
@@ -18738,6 +20818,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "Bis 3 Hunde pro Hand, 6 mit beiden. Das Leinenende ans Halsband geht auch"
+        },
+        {
+          "key": "video.open",
+          "text": "Videokamera"
+        },
+        {
+          "key": "video.recall",
+          "text": "Monitor holen"
+        },
+        {
+          "key": "video.close",
+          "text": "Wegräumen"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "Hund folgen"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "Ich"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "Über die Schulter"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "Hundeblick"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "Fester Punkt"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "Scheibe"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "Fang abwarten"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "Umkreisen"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "Vorbeigehen"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "Weg"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "Willkommen zurück"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "Warten und ran"
+        },
+        {
+          "key": "video.path.back",
+          "text": "Rückwärts"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "Nebenher"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "Überholen"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "Ran und weg"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "Gleichmäßig"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "Näher ran"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "Weiter weg"
+        },
+        {
+          "key": "video.snap",
+          "text": "In VRChat-Kamera zeigen"
+        },
+        {
+          "key": "video.on",
+          "text": "AN"
+        },
+        {
+          "key": "video.off",
+          "text": "AUS"
+        },
+        {
+          "key": "video.filming",
+          "text": "Aufnahme läuft"
+        },
+        {
+          "key": "video.lost",
+          "text": "{0} nicht gefunden"
+        },
+        {
+          "key": "video.nospot",
+          "text": "Kein fester Punkt"
+        },
+        {
+          "key": "video.fade",
+          "text": "Unterwegs…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "Videokamera konnte nicht vorbereitet werden"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "Bei AN zeigen Fotos, Videos, Streams und Screenshots der VRChat-Kamera dieses Bild. Für normale Aufnahmen AUS"
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "VRChat-Kamera: offen"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "VRChat-Kamera: zu"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "Waschplatz {0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "Fluss"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "Fluss (tief)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "Näher"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "Weiter"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "Neigung▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "Neigung▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "Reset"
+        },
+        {
+          "key": "video.drone",
+          "text": "Drohne"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "Zeigen"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "Verbergen"
+        },
+        {
+          "key": "video.person",
+          "text": "Person: {0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "Wen filmen?"
+        },
+        {
+          "key": "video.person.close",
+          "text": "Schließen"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "{0} um Erlaubnis zum Filmen bitten?"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "{0} bekommt eine Meldung auf dem Bildschirm"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "Anfragen"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "Abbrechen"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "Zurückziehen"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "Filmen beenden"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "Warte auf Antwort von {0} ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "Erlaubnis von {0} wird geprüft"
+        },
+        {
+          "key": "video.waiting",
+          "text": "Warte auf Antwort"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "{0} wird gefilmt"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "Keine Erlaubnis von {0}, nur die Hunde werden gefilmt"
+        },
+        {
+          "key": "video.declined",
+          "text": "Filmen ist gerade nicht möglich"
+        },
+        {
+          "key": "video.paused",
+          "text": "Filmanfragen sind gerade pausiert"
+        },
+        {
+          "key": "video.busy",
+          "text": "Die Person beantwortet gerade eine andere Anfrage"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "Nimmt keine Filmanfragen an"
+        },
+        {
+          "key": "video.notready",
+          "text": "Wird vorbereitet"
+        },
+        {
+          "key": "video.again",
+          "text": "Erneut fragen in {0} s"
+        },
+        {
+          "key": "video.busyme",
+          "text": "Du wartest schon auf eine Antwort"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "Beantworte zuerst die Anfrage an dich"
+        },
+        {
+          "key": "video.left",
+          "text": "Die Person ist gegangen"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} hat die Erlaubnis zum Filmen zurückgezogen"
+        },
+        {
+          "key": "video.notable",
+          "text": "Erlaubnis konnte nicht geprüft werden"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "Die Anfrage an dich wird zuerst gezeigt"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "Muster"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "Stopp"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "Wähle ein Muster, dann wechseln die Einstellungen von selbst. Eine Einstellungstaste stoppt es"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "Suche eine mögliche Einstellung"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "Frisbee"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "Waschen"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "Spaziergang"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "Alltag"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "Frisbee 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "Frisbee 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "Spaziergang-Vlog 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "Spaziergang-Vlog 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "Mit Hunden spielen"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "Automatisch"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "Werfen, jagen, zurück. Ich → Fang abwarten → Hund folgen auf dem Rückweg"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "Werfen, von dir aus sehen. Ich → Fang abwarten → Willkommen zurück (von deiner Seite)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "Den Weg gehen. Warten und ran → Über die Schulter → Nebenher → Hund folgen → Überholen"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "Landschaft und Kreis. Vorbeigehen → Ich → Umkreisen, weiter weg"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "Hundeblick → Hund folgen → Umkreisen, näher ran → Ran und weg"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "Erkennt Frisbee, Waschen, Spaziergang und Alltag und wechselt"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} möchte dich mit der Videokamera filmen"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "Das Video erscheint nur bei der filmenden Person"
+        },
+        {
+          "key": "film.granted",
+          "text": "Du hast {0} das Filmen erlaubt"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "Jederzeit beenden über [Filmen erlaubt] im Walk-Tab"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "Filmanfragen: AN"
+        },
+        {
+          "key": "film.accept.off",
+          "text": "Filmanfragen: AUS"
+        },
+        {
+          "key": "film.pending",
+          "text": "1 Filmanfrage"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "Filmen erlaubt ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "Wer dich filmen darf"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "„Filmt gerade\" meldet der Bildschirm der anderen Person. Mit [Beenden lassen] jederzeit stoppen"
+        },
+        {
+          "key": "film.row.active",
+          "text": "Filmt gerade"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "Das Filmen hat noch nicht begonnen"
+        },
+        {
+          "key": "film.stop",
+          "text": "Beenden lassen"
+        },
+        {
+          "key": "film.none",
+          "text": "Niemand darf dich filmen"
         }
       ]
     },
@@ -21861,6 +24357,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "一只手最多3只，两只手6只。把扣靠近项圈也能牵上"
+        },
+        {
+          "key": "video.open",
+          "text": "摄像机"
+        },
+        {
+          "key": "video.recall",
+          "text": "叫来屏幕"
+        },
+        {
+          "key": "video.close",
+          "text": "收起"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "跟随狗狗"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "我"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "背后视角"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "狗狗视角"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "定点"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "飞盘"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "等待接住"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "环绕"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "路过"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "沿路"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "欢迎回来"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "等待后靠近"
+        },
+        {
+          "key": "video.path.back",
+          "text": "倒退"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "并排"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "超越"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "推近再拉远"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "固定"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "靠近"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "远离"
+        },
+        {
+          "key": "video.snap",
+          "text": "显示到VRChat相机"
+        },
+        {
+          "key": "video.on",
+          "text": "开"
+        },
+        {
+          "key": "video.off",
+          "text": "关"
+        },
+        {
+          "key": "video.filming",
+          "text": "拍摄中"
+        },
+        {
+          "key": "video.lost",
+          "text": "找不到{0}"
+        },
+        {
+          "key": "video.nospot",
+          "text": "没有定点"
+        },
+        {
+          "key": "video.fade",
+          "text": "移动中…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "无法准备摄像机"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "开启时，VRChat相机的照片、视频、直播和截图都会变成这个画面。平时拍摄请关闭"
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "VRChat相机：已打开"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "VRChat相机：未打开"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "洗澡台{0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "河边"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "河边 (低)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "拉近"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "拉远"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "角度▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "角度▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "复位"
+        },
+        {
+          "key": "video.drone",
+          "text": "无人机"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "显示"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "隐藏"
+        },
+        {
+          "key": "video.person",
+          "text": "拍摄对象：{0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "选择拍摄对象"
+        },
+        {
+          "key": "video.person.close",
+          "text": "关闭"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "要请求 {0} 允许拍摄吗？"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "{0} 的画面上会出现通知"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "请求"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "取消"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "撤回"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "停止拍摄"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "正在等待 {0} 的回复 ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "正在确认 {0} 的许可"
+        },
+        {
+          "key": "video.waiting",
+          "text": "等待回复"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "正在拍摄 {0}"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "没有 {0} 的许可，只拍狗狗"
+        },
+        {
+          "key": "video.declined",
+          "text": "现在似乎不能拍摄"
+        },
+        {
+          "key": "video.paused",
+          "text": "对方现在似乎不接受拍摄请求"
+        },
+        {
+          "key": "video.busy",
+          "text": "对方正在处理别的请求"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "不接受拍摄请求"
+        },
+        {
+          "key": "video.notready",
+          "text": "准备中"
+        },
+        {
+          "key": "video.again",
+          "text": "{0} 秒后才能再次请求"
+        },
+        {
+          "key": "video.busyme",
+          "text": "你有一个请求正在等待回复"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "请先回复对方的请求"
+        },
+        {
+          "key": "video.left",
+          "text": "对方已离开"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} 撤回了拍摄许可"
+        },
+        {
+          "key": "video.notable",
+          "text": "无法确认许可"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "先显示对方的请求"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "拍摄方案"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "停止"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "选择方案后，拍摄方式会自动切换。按拍摄方式按钮即可停止"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "正在寻找可拍的镜头"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "飞盘"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "洗澡"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "散步"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "日常"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "飞盘 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "飞盘 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "散步 Vlog 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "散步 Vlog 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "和狗狗玩"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "自动"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "扔出、追赶、返回。我 → 等待接住 → 跟随返回的狗狗"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "扔出，从自己这边看。我 → 等待接住 → 欢迎回来 (从自己这边)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "沿路散步。等待后靠近 → 背后视角 → 并排 → 跟随狗狗 → 超越"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "风景与环绕。路过 → 我 → 远离着环绕"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "狗狗视角 → 跟随狗狗 → 靠近着环绕 → 推近再拉远"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "自动分辨飞盘、洗澡、散步、日常并切换"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} 想用摄像机拍你"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "画面只显示在拍摄者的屏幕上"
+        },
+        {
+          "key": "film.granted",
+          "text": "已允许 {0} 拍摄"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "随时可在 Walk 标签的 [允许拍摄中] 中停止"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "接受拍摄请求：开"
+        },
+        {
+          "key": "film.accept.off",
+          "text": "接受拍摄请求：关"
+        },
+        {
+          "key": "film.pending",
+          "text": "拍摄请求 1 件"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "允许拍摄中 ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "允许拍摄的人"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "“拍摄中”是对方画面报告的状态。可随时用 [请对方停止] 停止"
+        },
+        {
+          "key": "film.row.active",
+          "text": "拍摄中"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "尚未开始拍摄"
+        },
+        {
+          "key": "film.stop",
+          "text": "请对方停止"
+        },
+        {
+          "key": "film.none",
+          "text": "没有允许拍摄的人"
         }
       ]
     },
@@ -24984,6 +27896,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "Hasta 3 perros por mano, 6 con las dos. También puedes acercar la punta al collar"
+        },
+        {
+          "key": "video.open",
+          "text": "Cámara de vídeo"
+        },
+        {
+          "key": "video.recall",
+          "text": "Traer monitor"
+        },
+        {
+          "key": "video.close",
+          "text": "Guardar"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "Seguir perro"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "Yo"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "Sobre el hombro"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "Vista del perro"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "Punto fijo"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "Disco"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "Esperar atrapada"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "Órbita"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "Al pasar"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "Camino"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "Bienvenido"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "Esperar y acercar"
+        },
+        {
+          "key": "video.path.back",
+          "text": "Retroceder"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "Al lado"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "Adelantar"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "Acercar y alejar"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "Constante"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "Acercándose"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "Alejándose"
+        },
+        {
+          "key": "video.snap",
+          "text": "Mostrar en cámara VRChat"
+        },
+        {
+          "key": "video.on",
+          "text": "SÍ"
+        },
+        {
+          "key": "video.off",
+          "text": "NO"
+        },
+        {
+          "key": "video.filming",
+          "text": "Grabando"
+        },
+        {
+          "key": "video.lost",
+          "text": "No se encuentra: {0}"
+        },
+        {
+          "key": "video.nospot",
+          "text": "No hay punto fijo"
+        },
+        {
+          "key": "video.fade",
+          "text": "Moviendo…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "No se pudo preparar la cámara de vídeo"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "Con SÍ, fotos, vídeos, directos y capturas de la cámara VRChat muestran esta imagen. Para fotos normales, NO"
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "Cámara VRChat: abierta"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "Cámara VRChat: cerrada"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "Lavadero {0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "Río"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "Río (bajo)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "Cerca"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "Lejos"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "Ángulo▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "Ángulo▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "Restablecer"
+        },
+        {
+          "key": "video.drone",
+          "text": "Dron"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "Mostrar"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "Ocultar"
+        },
+        {
+          "key": "video.person",
+          "text": "Persona: {0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "Elige a quién grabar"
+        },
+        {
+          "key": "video.person.close",
+          "text": "Cerrar"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "¿Pedir a {0} permiso para grabar?"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "{0} verá un aviso en su pantalla"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "Pedir"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "Cancelar"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "Retirar"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "Dejar de grabar"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "Esperando la respuesta de {0} ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "Comprobando el permiso de {0}"
+        },
+        {
+          "key": "video.waiting",
+          "text": "Esperando respuesta"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "Grabando a {0}"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "Sin permiso de {0}: solo se graban los perros"
+        },
+        {
+          "key": "video.declined",
+          "text": "Ahora no se puede grabar"
+        },
+        {
+          "key": "video.paused",
+          "text": "Ahora no acepta solicitudes de grabación"
+        },
+        {
+          "key": "video.busy",
+          "text": "Está respondiendo otra solicitud"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "No acepta solicitudes de grabación"
+        },
+        {
+          "key": "video.notready",
+          "text": "Preparando"
+        },
+        {
+          "key": "video.again",
+          "text": "Podrás pedir de nuevo en {0} s"
+        },
+        {
+          "key": "video.busyme",
+          "text": "Tienes una solicitud esperando respuesta"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "Responde primero a la solicitud recibida"
+        },
+        {
+          "key": "video.left",
+          "text": "Se fue de la instancia"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} retiró el permiso de grabación"
+        },
+        {
+          "key": "video.notable",
+          "text": "No se pudo comprobar el permiso"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "Primero se muestra su solicitud"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "Patrones"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "Detener"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "Elige un patrón y los planos cambian solos. Un botón de plano lo detiene"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "Buscando un plano posible"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "Frisbee"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "Lavado"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "Paseo"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "Normal"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "Frisbee 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "Frisbee 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "Vlog de paseo 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "Vlog de paseo 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "Jugar con perros"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "Automático"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "Lanzar, perseguir, volver. Yo → Esperar atrapada → Seguir perro al volver"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "Lanzar y mirar desde ti. Yo → Esperar atrapada → Bienvenido (desde tu lado)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "Por el camino. Esperar y acercar → Sobre el hombro → Al lado → Seguir perro → Adelantar"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "Paisaje y órbita. Al pasar → Yo → Órbita alejándose"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "Vista del perro → Seguir perro → Órbita acercándose → Acercar y alejar"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "Distingue Frisbee, Lavado, Paseo y Normal y cambia"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} quiere grabarte con la cámara de vídeo"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "El vídeo solo se ve en la pantalla de quien graba"
+        },
+        {
+          "key": "film.granted",
+          "text": "Permitiste que {0} te grabe"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "Puedes pararlo cuando quieras en [Grabación permitida] de la pestaña Walk"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "Solicitudes de grabación: SÍ"
+        },
+        {
+          "key": "film.accept.off",
+          "text": "Solicitudes de grabación: NO"
+        },
+        {
+          "key": "film.pending",
+          "text": "1 solicitud de grabación"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "Grabación permitida ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "Quién puede grabarte"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "\"Grabando\" lo indica la pantalla de quien graba. Detenlo cuando quieras con [Pedir que pare]"
+        },
+        {
+          "key": "film.row.active",
+          "text": "Grabando"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "La grabación aún no empezó"
+        },
+        {
+          "key": "film.stop",
+          "text": "Pedir que pare"
+        },
+        {
+          "key": "film.none",
+          "text": "Nadie tiene permiso para grabarte"
         }
       ]
     },
@@ -28107,6 +31435,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "Jusqu'à 3 chiens par main, 6 avec les deux. Approcher le mousqueton du collier marche aussi"
+        },
+        {
+          "key": "video.open",
+          "text": "Caméra vidéo"
+        },
+        {
+          "key": "video.recall",
+          "text": "Rappeler écran"
+        },
+        {
+          "key": "video.close",
+          "text": "Ranger"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "Suivre chien"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "Moi"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "Vue de dos"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "Vue chien"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "Point fixe"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "Disque"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "Guetter la prise"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "Orbite"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "Au passage"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "Chemin"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "Bon retour"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "Attendre et approcher"
+        },
+        {
+          "key": "video.path.back",
+          "text": "Reculer"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "Côte à côte"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "Dépasser"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "Avancer puis reculer"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "Constant"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "En approchant"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "En s'éloignant"
+        },
+        {
+          "key": "video.snap",
+          "text": "Afficher dans caméra VRChat"
+        },
+        {
+          "key": "video.on",
+          "text": "OUI"
+        },
+        {
+          "key": "video.off",
+          "text": "NON"
+        },
+        {
+          "key": "video.filming",
+          "text": "En tournage"
+        },
+        {
+          "key": "video.lost",
+          "text": "{0} introuvable"
+        },
+        {
+          "key": "video.nospot",
+          "text": "Aucun point fixe"
+        },
+        {
+          "key": "video.fade",
+          "text": "Déplacement…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "Impossible de préparer la caméra vidéo"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "Sur OUI, photos, vidéos, streams et captures de la caméra VRChat montrent cette image. Photo normale : NON"
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "Caméra VRChat : ouverte"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "Caméra VRChat : fermée"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "Lavoir {0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "Rivière"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "Rivière (bas)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "Près"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "Loin"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "Angle▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "Angle▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "Réinit."
+        },
+        {
+          "key": "video.drone",
+          "text": "Drone"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "Afficher"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "Masquer"
+        },
+        {
+          "key": "video.person",
+          "text": "Personne : {0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "Qui filmer ?"
+        },
+        {
+          "key": "video.person.close",
+          "text": "Fermer"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "Demander à {0} la permission de filmer ?"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "{0} verra une notification à l'écran"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "Demander"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "Annuler"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "Retirer"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "Arrêter de filmer"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "En attente de la réponse de {0} ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "Vérification de l'accord de {0}"
+        },
+        {
+          "key": "video.waiting",
+          "text": "En attente de réponse"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "Tu filmes {0}"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "Pas d'accord de {0} : seuls les chiens sont filmés"
+        },
+        {
+          "key": "video.declined",
+          "text": "Impossible de filmer pour le moment"
+        },
+        {
+          "key": "video.paused",
+          "text": "Les demandes de tournage sont en pause"
+        },
+        {
+          "key": "video.busy",
+          "text": "Cette personne répond à une autre demande"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "N'accepte pas les demandes de tournage"
+        },
+        {
+          "key": "video.notready",
+          "text": "En préparation"
+        },
+        {
+          "key": "video.again",
+          "text": "Nouvelle demande possible dans {0} s"
+        },
+        {
+          "key": "video.busyme",
+          "text": "Une de tes demandes attend une réponse"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "Réponds d'abord à la demande reçue"
+        },
+        {
+          "key": "video.left",
+          "text": "Cette personne est partie"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} a retiré son accord de tournage"
+        },
+        {
+          "key": "video.notable",
+          "text": "Impossible de vérifier l'accord"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "Sa demande s'affiche d'abord"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "Séquences"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "Arrêter"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "Choisis une séquence : les plans changent seuls. Un bouton de plan l'arrête"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "Recherche d'un plan possible"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "Frisbee"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "Lavage"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "Promenade"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "Quotidien"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "Frisbee 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "Frisbee 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "Vlog balade 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "Vlog balade 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "Jouer avec les chiens"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "Auto"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "Lancer, poursuivre, revenir. Moi → Guetter la prise → Suivre chien au retour"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "Lancer, voir depuis toi. Moi → Guetter la prise → Bon retour (de ton côté)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "Sur le chemin. Attendre et approcher → Vue de dos → Côte à côte → Suivre chien → Dépasser"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "Paysage et orbite. Au passage → Moi → Orbite en s'éloignant"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "Vue chien → Suivre chien → Orbite en approchant → Avancer puis reculer"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "Reconnaît Frisbee, Lavage, Promenade et Quotidien, et change"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} voudrait te filmer avec la caméra vidéo"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "La vidéo ne s'affiche que chez qui filme"
+        },
+        {
+          "key": "film.granted",
+          "text": "Tu as autorisé {0} à te filmer"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "Arrête quand tu veux via [Tournage autorisé] dans l'onglet Walk"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "Demandes de tournage : OUI"
+        },
+        {
+          "key": "film.accept.off",
+          "text": "Demandes de tournage : NON"
+        },
+        {
+          "key": "film.pending",
+          "text": "1 demande de tournage"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "Tournage autorisé ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "Qui peut te filmer"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "« En tournage » vient de l'écran de l'autre. Arrête quand tu veux avec [Faire arrêter]"
+        },
+        {
+          "key": "film.row.active",
+          "text": "En tournage"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "Le tournage n'a pas encore commencé"
+        },
+        {
+          "key": "film.stop",
+          "text": "Faire arrêter"
+        },
+        {
+          "key": "film.none",
+          "text": "Personne n'est autorisé à te filmer"
         }
       ]
     },
@@ -31230,6 +34974,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "Até 3 cães por mão, 6 com as duas. Levar a ponta à coleira também funciona"
+        },
+        {
+          "key": "video.open",
+          "text": "Câmera de vídeo"
+        },
+        {
+          "key": "video.recall",
+          "text": "Trazer monitor"
+        },
+        {
+          "key": "video.close",
+          "text": "Guardar"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "Seguir cachorro"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "Eu"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "Sobre o ombro"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "Visão do cachorro"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "Ponto fixo"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "Disco"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "Esperar pegada"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "Órbita"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "De passagem"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "Caminho"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "Bem-vindo de volta"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "Esperar e aproximar"
+        },
+        {
+          "key": "video.path.back",
+          "text": "Recuar"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "Lado a lado"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "Ultrapassar"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "Aproximar e afastar"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "Constante"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "Aproximando"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "Afastando"
+        },
+        {
+          "key": "video.snap",
+          "text": "Mostrar na câmera VRChat"
+        },
+        {
+          "key": "video.on",
+          "text": "SIM"
+        },
+        {
+          "key": "video.off",
+          "text": "NÃO"
+        },
+        {
+          "key": "video.filming",
+          "text": "Gravando"
+        },
+        {
+          "key": "video.lost",
+          "text": "{0} não encontrado"
+        },
+        {
+          "key": "video.nospot",
+          "text": "Sem ponto fixo"
+        },
+        {
+          "key": "video.fade",
+          "text": "Movendo…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "Não foi possível preparar a câmera de vídeo"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "Em SIM, fotos, vídeos, transmissões e capturas da câmera VRChat mostram esta imagem. Para fotos normais, NÃO"
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "Câmera VRChat: aberta"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "Câmera VRChat: fechada"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "Lavadouro {0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "Rio"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "Rio (baixo)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "Perto"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "Longe"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "Ângulo▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "Ângulo▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "Redefinir"
+        },
+        {
+          "key": "video.drone",
+          "text": "Drone"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "Mostrar"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "Ocultar"
+        },
+        {
+          "key": "video.person",
+          "text": "Pessoa: {0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "Escolha quem gravar"
+        },
+        {
+          "key": "video.person.close",
+          "text": "Fechar"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "Pedir permissão a {0} para gravar?"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "{0} verá um aviso na tela"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "Pedir"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "Cancelar"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "Retirar"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "Parar de gravar"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "Esperando a resposta de {0} ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "Verificando a permissão de {0}"
+        },
+        {
+          "key": "video.waiting",
+          "text": "Esperando resposta"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "Gravando {0}"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "Sem permissão de {0}: gravando só os cachorros"
+        },
+        {
+          "key": "video.declined",
+          "text": "Não dá para gravar agora"
+        },
+        {
+          "key": "video.paused",
+          "text": "No momento não aceita pedidos de gravação"
+        },
+        {
+          "key": "video.busy",
+          "text": "Está respondendo outro pedido"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "Não aceita pedidos de gravação"
+        },
+        {
+          "key": "video.notready",
+          "text": "Preparando"
+        },
+        {
+          "key": "video.again",
+          "text": "Pode pedir de novo em {0} s"
+        },
+        {
+          "key": "video.busyme",
+          "text": "Você tem um pedido aguardando resposta"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "Responda primeiro ao pedido recebido"
+        },
+        {
+          "key": "video.left",
+          "text": "Saiu da instância"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} retirou a permissão de gravação"
+        },
+        {
+          "key": "video.notable",
+          "text": "Não foi possível verificar a permissão"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "Mostrando primeiro o pedido recebido"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "Padrões"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "Parar"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "Escolha um padrão e os planos mudam sozinhos. Um botão de plano o interrompe"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "Procurando um plano possível"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "Frisbee"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "Banho"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "Passeio"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "Dia a dia"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "Frisbee 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "Frisbee 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "Vlog de passeio 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "Vlog de passeio 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "Brincar com cachorros"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "Automático"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "Lançar, correr, voltar. Eu → Esperar pegada → Seguir cachorro na volta"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "Lançar e ver do seu lado. Eu → Esperar pegada → Bem-vindo de volta (do seu lado)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "Pelo caminho. Esperar e aproximar → Sobre o ombro → Lado a lado → Seguir cachorro → Ultrapassar"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "Paisagem e órbita. De passagem → Eu → Órbita se afastando"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "Visão do cachorro → Seguir cachorro → Órbita se aproximando → Aproximar e afastar"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "Reconhece Frisbee, Banho, Passeio e Dia a dia e alterna"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} quer gravar você com a câmera de vídeo"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "O vídeo aparece só na tela de quem grava"
+        },
+        {
+          "key": "film.granted",
+          "text": "Você permitiu que {0} grave você"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "Pare quando quiser em [Gravação permitida] na aba Walk"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "Pedidos de gravação: SIM"
+        },
+        {
+          "key": "film.accept.off",
+          "text": "Pedidos de gravação: NÃO"
+        },
+        {
+          "key": "film.pending",
+          "text": "1 pedido de gravação"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "Gravação permitida ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "Quem pode gravar você"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "\"Gravando\" é informado pela tela da outra pessoa. Pare quando quiser com [Pedir para parar]"
+        },
+        {
+          "key": "film.row.active",
+          "text": "Gravando"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "A gravação ainda não começou"
+        },
+        {
+          "key": "film.stop",
+          "text": "Pedir para parar"
+        },
+        {
+          "key": "film.none",
+          "text": "Ninguém tem permissão para gravar você"
         }
       ]
     },
@@ -34353,6 +38513,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "Fino a 3 cani per mano, 6 con due. Anche avvicinare il moschettone al collare funziona"
+        },
+        {
+          "key": "video.open",
+          "text": "Videocamera"
+        },
+        {
+          "key": "video.recall",
+          "text": "Richiama monitor"
+        },
+        {
+          "key": "video.close",
+          "text": "Riponi"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "Segui cane"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "Io"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "Sopra la spalla"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "Vista cane"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "Punto fisso"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "Disco"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "Attesa presa"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "Orbita"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "Al passaggio"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "Sentiero"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "Bentornato"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "Aspetta e avvicina"
+        },
+        {
+          "key": "video.path.back",
+          "text": "Indietreggia"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "Fianco a fianco"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "Sorpasso"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "Avvicina e allontana"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "Costante"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "Avvicinandosi"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "Allontanandosi"
+        },
+        {
+          "key": "video.snap",
+          "text": "Mostra nella fotocamera VRChat"
+        },
+        {
+          "key": "video.on",
+          "text": "SÌ"
+        },
+        {
+          "key": "video.off",
+          "text": "NO"
+        },
+        {
+          "key": "video.filming",
+          "text": "Ripresa in corso"
+        },
+        {
+          "key": "video.lost",
+          "text": "{0} non trovato"
+        },
+        {
+          "key": "video.nospot",
+          "text": "Nessun punto fisso"
+        },
+        {
+          "key": "video.fade",
+          "text": "Spostamento…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "Impossibile preparare la videocamera"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "Su SÌ, foto, video, dirette e screenshot della fotocamera VRChat mostrano questa immagine. Per foto normali, NO"
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "Fotocamera VRChat: aperta"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "Fotocamera VRChat: chiusa"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "Lavatoio {0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "Fiume"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "Fiume (basso)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "Vicino"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "Lontano"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "Angolo▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "Angolo▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "Ripristina"
+        },
+        {
+          "key": "video.drone",
+          "text": "Drone"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "Mostra"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "Nascondi"
+        },
+        {
+          "key": "video.person",
+          "text": "Persona: {0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "Scegli chi riprendere"
+        },
+        {
+          "key": "video.person.close",
+          "text": "Chiudi"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "Chiedere a {0} il permesso di riprendere?"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "{0} vedrà un avviso sullo schermo"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "Chiedi"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "Annulla"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "Ritira"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "Smetti di riprendere"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "In attesa della risposta di {0} ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "Verifica del permesso di {0}"
+        },
+        {
+          "key": "video.waiting",
+          "text": "In attesa di risposta"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "Riprendendo {0}"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "Nessun permesso da {0}: riprendo solo i cani"
+        },
+        {
+          "key": "video.declined",
+          "text": "Ora non si può riprendere"
+        },
+        {
+          "key": "video.paused",
+          "text": "Ora non accetta richieste di ripresa"
+        },
+        {
+          "key": "video.busy",
+          "text": "Sta rispondendo a un'altra richiesta"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "Non accetta richieste di ripresa"
+        },
+        {
+          "key": "video.notready",
+          "text": "In preparazione"
+        },
+        {
+          "key": "video.again",
+          "text": "Puoi richiedere tra {0} s"
+        },
+        {
+          "key": "video.busyme",
+          "text": "Hai una richiesta in attesa di risposta"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "Rispondi prima alla richiesta ricevuta"
+        },
+        {
+          "key": "video.left",
+          "text": "Ha lasciato l'istanza"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} ha ritirato il permesso di ripresa"
+        },
+        {
+          "key": "video.notable",
+          "text": "Impossibile verificare il permesso"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "Prima viene mostrata la sua richiesta"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "Sequenze"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "Ferma"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "Scegli una sequenza e le inquadrature cambiano da sole. Un pulsante di inquadratura la ferma"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "Cerco un'inquadratura possibile"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "Frisbee"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "Lavaggio"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "Passeggiata"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "Normale"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "Frisbee 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "Frisbee 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "Vlog passeggiata 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "Vlog passeggiata 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "Gioca con i cani"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "Automatico"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "Lancia, insegui, ritorna. Io → Attesa presa → Segui cane al ritorno"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "Lancia e guarda dal tuo lato. Io → Attesa presa → Bentornato (dal tuo lato)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "Lungo il sentiero. Aspetta e avvicina → Sopra la spalla → Fianco a fianco → Segui cane → Sorpasso"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "Paesaggio e orbita. Al passaggio → Io → Orbita allontanandosi"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "Vista cane → Segui cane → Orbita avvicinandosi → Avvicina e allontana"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "Riconosce Frisbee, Lavaggio, Passeggiata e Normale e cambia"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} vorrebbe riprenderti con la videocamera"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "Il video appare solo sullo schermo di chi riprende"
+        },
+        {
+          "key": "film.granted",
+          "text": "Hai permesso a {0} di riprenderti"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "Puoi fermarlo quando vuoi da [Ripresa permessa] nella scheda Walk"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "Richieste di ripresa: SÌ"
+        },
+        {
+          "key": "film.accept.off",
+          "text": "Richieste di ripresa: NO"
+        },
+        {
+          "key": "film.pending",
+          "text": "1 richiesta di ripresa"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "Ripresa permessa ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "Chi può riprenderti"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "\"In ripresa\" lo segnala lo schermo dell'altra persona. Fermalo quando vuoi con [Chiedi di smettere]"
+        },
+        {
+          "key": "film.row.active",
+          "text": "In ripresa"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "La ripresa non è ancora iniziata"
+        },
+        {
+          "key": "film.stop",
+          "text": "Chiedi di smettere"
+        },
+        {
+          "key": "film.none",
+          "text": "Nessuno ha il permesso di riprenderti"
         }
       ]
     },
@@ -37476,6 +42052,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "Do 3 psów na rękę, 6 obiema. Można też przyłożyć końcówkę do obroży"
+        },
+        {
+          "key": "video.open",
+          "text": "Kamera wideo"
+        },
+        {
+          "key": "video.recall",
+          "text": "Przywołaj ekran"
+        },
+        {
+          "key": "video.close",
+          "text": "Schowaj"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "Za psem"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "Ja"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "Zza pleców"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "Oczami psa"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "Stały punkt"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "Dysk"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "Czekaj na chwyt"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "Okrążanie"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "Mijanie"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "Ścieżka"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "Witaj z powrotem"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "Czekaj i podjedź"
+        },
+        {
+          "key": "video.path.back",
+          "text": "Cofanie"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "Obok"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "Wyprzedzanie"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "Bliżej i dalej"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "Stały"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "Zbliżanie"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "Oddalanie"
+        },
+        {
+          "key": "video.snap",
+          "text": "Pokaż w kamerze VRChat"
+        },
+        {
+          "key": "video.on",
+          "text": "WŁ."
+        },
+        {
+          "key": "video.off",
+          "text": "WYŁ."
+        },
+        {
+          "key": "video.filming",
+          "text": "Nagrywanie"
+        },
+        {
+          "key": "video.lost",
+          "text": "Nie znaleziono: {0}"
+        },
+        {
+          "key": "video.nospot",
+          "text": "Brak stałego punktu"
+        },
+        {
+          "key": "video.fade",
+          "text": "Przemieszczanie…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "Nie udało się przygotować kamery wideo"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "Przy WŁ. zdjęcia, filmy, transmisje i zrzuty kamery VRChat pokazują ten obraz. Do zwykłych zdjęć: WYŁ."
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "Kamera VRChat: otwarta"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "Kamera VRChat: zamknięta"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "Myjnia {0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "Rzeka"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "Rzeka (nisko)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "Bliżej"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "Dalej"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "Kąt▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "Kąt▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "Reset"
+        },
+        {
+          "key": "video.drone",
+          "text": "Dron"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "Pokaż"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "Ukryj"
+        },
+        {
+          "key": "video.person",
+          "text": "Osoba: {0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "Kogo nagrywać"
+        },
+        {
+          "key": "video.person.close",
+          "text": "Zamknij"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "Poprosić {0} o zgodę na nagrywanie?"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "{0} zobaczy powiadomienie na ekranie"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "Poproś"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "Anuluj"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "Wycofaj"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "Przestań nagrywać"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "Czekam na odpowiedź {0} ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "Sprawdzam zgodę {0}"
+        },
+        {
+          "key": "video.waiting",
+          "text": "Czekam na odpowiedź"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "Nagrywam {0}"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "Brak zgody {0}, nagrywam tylko psy"
+        },
+        {
+          "key": "video.declined",
+          "text": "Teraz nie można nagrywać"
+        },
+        {
+          "key": "video.paused",
+          "text": "Teraz nie przyjmuje próśb o nagrywanie"
+        },
+        {
+          "key": "video.busy",
+          "text": "Ta osoba odpowiada na inną prośbę"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "Nie przyjmuje próśb o nagrywanie"
+        },
+        {
+          "key": "video.notready",
+          "text": "Przygotowanie"
+        },
+        {
+          "key": "video.again",
+          "text": "Ponownie za {0} s"
+        },
+        {
+          "key": "video.busyme",
+          "text": "Masz prośbę czekającą na odpowiedź"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "Najpierw odpowiedz na otrzymaną prośbę"
+        },
+        {
+          "key": "video.left",
+          "text": "Ta osoba wyszła"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} wycofał(a) zgodę na nagrywanie"
+        },
+        {
+          "key": "video.notable",
+          "text": "Nie udało się sprawdzić zgody"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "Najpierw pokazuję prośbę do ciebie"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "Schematy"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "Zatrzymaj"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "Wybierz schemat, a ujęcia zmienią się same. Przycisk ujęcia go zatrzyma"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "Szukam możliwego ujęcia"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "Frisbee"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "Mycie"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "Spacer"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "Na co dzień"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "Frisbee 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "Frisbee 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "Vlog ze spaceru 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "Vlog ze spaceru 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "Zabawa z psem"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "Automatycznie"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "Rzut, pogoń, powrót. Ja → Czekaj na chwyt → Za psem w drodze powrotnej"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "Rzut, widok z twojej strony. Ja → Czekaj na chwyt → Witaj z powrotem (z twojej strony)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "Spacer ścieżką. Czekaj i podjedź → Zza pleców → Obok → Za psem → Wyprzedzanie"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "Krajobraz i okrążanie. Mijanie → Ja → Okrążanie z oddalaniem"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "Oczami psa → Za psem → Okrążanie ze zbliżaniem → Bliżej i dalej"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "Rozpoznaje frisbee, mycie, spacer i codzienność i przełącza"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} chce cię nagrać kamerą wideo"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "Obraz widzi tylko osoba nagrywająca"
+        },
+        {
+          "key": "film.granted",
+          "text": "Zezwolono {0} na nagrywanie"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "Zatrzymasz to w każdej chwili: karta Walk → [Nagrywanie dozwolone]"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "Prośby o nagrywanie: WŁ."
+        },
+        {
+          "key": "film.accept.off",
+          "text": "Prośby o nagrywanie: WYŁ."
+        },
+        {
+          "key": "film.pending",
+          "text": "Prośby o nagrywanie: 1"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "Nagrywanie dozwolone ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "Kto może cię nagrywać"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "„Nagrywa\" zgłasza ekran drugiej osoby. Zatrzymasz to w każdej chwili: [Poproś o przerwanie]"
+        },
+        {
+          "key": "film.row.active",
+          "text": "Nagrywa"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "Nagrywanie jeszcze się nie zaczęło"
+        },
+        {
+          "key": "film.stop",
+          "text": "Poproś o przerwanie"
+        },
+        {
+          "key": "film.none",
+          "text": "Nikt nie ma zgody na nagrywanie"
         }
       ]
     },
@@ -40603,6 +45595,422 @@
         {
           "key": "walk.guide.flat.help",
           "text": "一隻手最多3隻，兩隻手6隻。把扣靠近項圈也能牽上"
+        },
+        {
+          "key": "video.open",
+          "text": "攝影機"
+        },
+        {
+          "key": "video.recall",
+          "text": "叫來螢幕"
+        },
+        {
+          "key": "video.close",
+          "text": "收起"
+        },
+        {
+          "key": "video.mode.dog",
+          "text": "跟隨狗狗"
+        },
+        {
+          "key": "video.mode.self",
+          "text": "我"
+        },
+        {
+          "key": "video.mode.tps",
+          "text": "背後視角"
+        },
+        {
+          "key": "video.mode.dogeye",
+          "text": "狗狗視角"
+        },
+        {
+          "key": "video.mode.spot",
+          "text": "定點"
+        },
+        {
+          "key": "video.mode.disc",
+          "text": "飛盤"
+        },
+        {
+          "key": "video.mode.catch",
+          "text": "等待接住"
+        },
+        {
+          "key": "video.mode.orbit",
+          "text": "環繞"
+        },
+        {
+          "key": "video.mode.passby",
+          "text": "路過"
+        },
+        {
+          "key": "video.mode.path",
+          "text": "沿路"
+        },
+        {
+          "key": "video.mode.welcome",
+          "text": "歡迎回來"
+        },
+        {
+          "key": "video.path.wait",
+          "text": "等待後靠近"
+        },
+        {
+          "key": "video.path.back",
+          "text": "倒退"
+        },
+        {
+          "key": "video.path.beside",
+          "text": "並排"
+        },
+        {
+          "key": "video.path.overtake",
+          "text": "超越"
+        },
+        {
+          "key": "video.path.pull",
+          "text": "推近再拉遠"
+        },
+        {
+          "key": "video.orbit.steady",
+          "text": "固定"
+        },
+        {
+          "key": "video.orbit.closer",
+          "text": "靠近"
+        },
+        {
+          "key": "video.orbit.farther",
+          "text": "遠離"
+        },
+        {
+          "key": "video.snap",
+          "text": "顯示到VRChat相機"
+        },
+        {
+          "key": "video.on",
+          "text": "開"
+        },
+        {
+          "key": "video.off",
+          "text": "關"
+        },
+        {
+          "key": "video.filming",
+          "text": "拍攝中"
+        },
+        {
+          "key": "video.lost",
+          "text": "找不到{0}"
+        },
+        {
+          "key": "video.nospot",
+          "text": "沒有定點"
+        },
+        {
+          "key": "video.fade",
+          "text": "移動中…"
+        },
+        {
+          "key": "video.rtfailed",
+          "text": "無法準備攝影機"
+        },
+        {
+          "key": "video.snap.note",
+          "text": "開啟時，VRChat相機的相片、影片、直播和截圖都會變成這個畫面。平時拍攝請關閉"
+        },
+        {
+          "key": "video.photocam.on",
+          "text": "VRChat相機：已開啟"
+        },
+        {
+          "key": "video.photocam.off",
+          "text": "VRChat相機：未開啟"
+        },
+        {
+          "key": "video.spot.wash",
+          "text": "洗澡台{0}"
+        },
+        {
+          "key": "video.spot.river",
+          "text": "河邊"
+        },
+        {
+          "key": "video.spot.riverlow",
+          "text": "河邊 (低)"
+        },
+        {
+          "key": "video.ctl.near",
+          "text": "拉近"
+        },
+        {
+          "key": "video.ctl.far",
+          "text": "拉遠"
+        },
+        {
+          "key": "video.ctl.tiltup",
+          "text": "角度▲"
+        },
+        {
+          "key": "video.ctl.tiltdown",
+          "text": "角度▼"
+        },
+        {
+          "key": "video.ctl.reset",
+          "text": "復位"
+        },
+        {
+          "key": "video.drone",
+          "text": "無人機"
+        },
+        {
+          "key": "video.drone.show",
+          "text": "顯示"
+        },
+        {
+          "key": "video.drone.hide",
+          "text": "隱藏"
+        },
+        {
+          "key": "video.person",
+          "text": "拍攝對象：{0}"
+        },
+        {
+          "key": "video.person.title",
+          "text": "選擇拍攝對象"
+        },
+        {
+          "key": "video.person.close",
+          "text": "關閉"
+        },
+        {
+          "key": "video.ask.confirm",
+          "text": "要請求 {0} 允許拍攝嗎？"
+        },
+        {
+          "key": "video.ask.note",
+          "text": "{0} 的畫面上會出現通知"
+        },
+        {
+          "key": "video.ask.yes",
+          "text": "請求"
+        },
+        {
+          "key": "video.ask.no",
+          "text": "取消"
+        },
+        {
+          "key": "video.person.cancel",
+          "text": "撤回"
+        },
+        {
+          "key": "video.person.stop",
+          "text": "停止拍攝"
+        },
+        {
+          "key": "video.wait.permit",
+          "text": "正在等待 {0} 的回覆 ({1})"
+        },
+        {
+          "key": "video.checking",
+          "text": "正在確認 {0} 的許可"
+        },
+        {
+          "key": "video.waiting",
+          "text": "等待回覆"
+        },
+        {
+          "key": "video.filming.person",
+          "text": "正在拍攝 {0}"
+        },
+        {
+          "key": "video.no.permit",
+          "text": "沒有 {0} 的許可，只拍狗狗"
+        },
+        {
+          "key": "video.declined",
+          "text": "現在似乎不能拍攝"
+        },
+        {
+          "key": "video.paused",
+          "text": "對方現在似乎不接受拍攝請求"
+        },
+        {
+          "key": "video.busy",
+          "text": "對方正在處理別的請求"
+        },
+        {
+          "key": "video.notaccepting",
+          "text": "不接受拍攝請求"
+        },
+        {
+          "key": "video.notready",
+          "text": "準備中"
+        },
+        {
+          "key": "video.again",
+          "text": "{0} 秒後才能再次請求"
+        },
+        {
+          "key": "video.busyme",
+          "text": "你有一個請求正在等待回覆"
+        },
+        {
+          "key": "video.answerfirst",
+          "text": "請先回覆對方的請求"
+        },
+        {
+          "key": "video.left",
+          "text": "對方已離開"
+        },
+        {
+          "key": "video.revoked",
+          "text": "{0} 撤回了拍攝許可"
+        },
+        {
+          "key": "video.notable",
+          "text": "無法確認許可"
+        },
+        {
+          "key": "video.crossyield",
+          "text": "先顯示對方的請求"
+        },
+        {
+          "key": "video.pattern.title",
+          "text": "拍攝方案"
+        },
+        {
+          "key": "video.pattern.stop",
+          "text": "停止"
+        },
+        {
+          "key": "video.pattern.idle",
+          "text": "選擇方案後，拍攝方式會自動切換。按拍攝方式按鈕即可停止"
+        },
+        {
+          "key": "video.pattern.retry",
+          "text": "正在尋找可拍的鏡頭"
+        },
+        {
+          "key": "video.scene.frisbee",
+          "text": "飛盤"
+        },
+        {
+          "key": "video.scene.wash",
+          "text": "洗澡"
+        },
+        {
+          "key": "video.scene.walk",
+          "text": "散步"
+        },
+        {
+          "key": "video.scene.idle",
+          "text": "日常"
+        },
+        {
+          "key": "video.pattern.name0",
+          "text": "飛盤 1"
+        },
+        {
+          "key": "video.pattern.name1",
+          "text": "飛盤 2"
+        },
+        {
+          "key": "video.pattern.name2",
+          "text": "散步 Vlog 1"
+        },
+        {
+          "key": "video.pattern.name3",
+          "text": "散步 Vlog 2"
+        },
+        {
+          "key": "video.pattern.name4",
+          "text": "和狗狗玩"
+        },
+        {
+          "key": "video.pattern.name5",
+          "text": "自動"
+        },
+        {
+          "key": "video.pattern.note0",
+          "text": "擲出、追趕、返回。我 → 等待接住 → 跟隨返回的狗狗"
+        },
+        {
+          "key": "video.pattern.note1",
+          "text": "擲出，從自己這邊看。我 → 等待接住 → 歡迎回來 (從自己這邊)"
+        },
+        {
+          "key": "video.pattern.note2",
+          "text": "沿路散步。等待後靠近 → 背後視角 → 並排 → 跟隨狗狗 → 超越"
+        },
+        {
+          "key": "video.pattern.note3",
+          "text": "風景與環繞。路過 → 我 → 遠離著環繞"
+        },
+        {
+          "key": "video.pattern.note4",
+          "text": "狗狗視角 → 跟隨狗狗 → 靠近著環繞 → 推近再拉遠"
+        },
+        {
+          "key": "video.pattern.note5",
+          "text": "自動分辨飛盤、洗澡、散步、日常並切換"
+        },
+        {
+          "key": "film.notice",
+          "text": "{0} 想用攝影機拍你"
+        },
+        {
+          "key": "film.notice.place",
+          "text": "畫面只顯示在拍攝者的螢幕上"
+        },
+        {
+          "key": "film.granted",
+          "text": "已允許 {0} 拍攝"
+        },
+        {
+          "key": "film.granted.note",
+          "text": "隨時可在 Walk 分頁的 [允許拍攝中] 中停止"
+        },
+        {
+          "key": "film.accept.on",
+          "text": "接受拍攝請求：開"
+        },
+        {
+          "key": "film.accept.off",
+          "text": "接受拍攝請求：關"
+        },
+        {
+          "key": "film.pending",
+          "text": "拍攝請求 1 件"
+        },
+        {
+          "key": "film.grants.button",
+          "text": "允許拍攝中 ({0})"
+        },
+        {
+          "key": "film.grants.title",
+          "text": "允許拍攝的人"
+        },
+        {
+          "key": "film.grants.note",
+          "text": "「拍攝中」是對方畫面報告的狀態。可隨時用 [請對方停止] 停止"
+        },
+        {
+          "key": "film.row.active",
+          "text": "拍攝中"
+        },
+        {
+          "key": "film.row.waiting",
+          "text": "尚未開始拍攝"
+        },
+        {
+          "key": "film.stop",
+          "text": "請對方停止"
+        },
+        {
+          "key": "film.none",
+          "text": "沒有允許拍攝的人"
         }
       ]
     }

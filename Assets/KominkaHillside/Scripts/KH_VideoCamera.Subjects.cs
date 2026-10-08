@@ -18,10 +18,10 @@ namespace KominkaHillside
     /// </summary>
     public partial class KH_VideoCamera
     {
-        // the local player's head (SelfHead writes them)
-        private Vector3 _selfHead, _selfFwd, _selfFeet;
+        // the local player's head (SelfHead writes them). _selfBody: the body's facing (GetRotation), horizontal (§16 背中ごし)
+        private Vector3 _selfHead, _selfFwd, _selfFeet, _selfBody;
 
-        /// <summary>The local player's head position, facing (head rotation) and feet. False when the local player is not valid yet.</summary>
+        /// <summary>The local player's head position, facing (head rotation), feet and body facing. False when the local player is not valid yet.</summary>
         bool SelfHead()
         {
             VRCPlayerApi lp = Networking.LocalPlayer;
@@ -33,6 +33,9 @@ namespace KominkaHillside
             Vector3 body = lp.GetRotation() * Vector3.forward;
             Vector3 flat = new Vector3(_selfFwd.x, 0f, _selfFwd.z);
             if (flat.sqrMagnitude < 0.01f) _selfFwd = body;   // looking straight up / down: the body's facing
+            _selfBody = new Vector3(body.x, 0f, body.z);
+            _selfBody = _selfBody.sqrMagnitude > 0.0001f ? _selfBody.normalized : new Vector3(flat.x, 0f, flat.z).normalized;
+            if (_selfBody.sqrMagnitude < 0.0001f) _selfBody = Vector3.forward;
             return true;
         }
 
@@ -71,6 +74,13 @@ namespace KominkaHillside
             Vector3 flat = new Vector3(_personFwd.x, 0f, _personFwd.z);
             if (flat.sqrMagnitude < 0.01f) _personFwd = p.GetRotation() * Vector3.forward;
             return true;
+        }
+
+        /// <summary>§17: I hold this dog's disc (a held VRC_Pickup is owned by its holder, so "held and mine" = in my hand). No player is read.</summary>
+        bool SelfHoldsDisc(int dog)
+        {
+            KH_Frisbee d = discs != null && dog >= 0 && dog < discs.Length ? discs[dog] : null;
+            return d != null && d.IsHeldNow && Networking.IsOwner(d.gameObject);
         }
 
         private Vector3 _selfHand;

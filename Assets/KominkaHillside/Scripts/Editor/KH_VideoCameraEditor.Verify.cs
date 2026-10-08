@@ -38,6 +38,7 @@ namespace KominkaHillside.Editor
         static void VerifyInto(Action<bool, string> Check, Action<string> Warn)
         {
             var scene = EditorSceneManager.GetActiveScene();
+            _w5Catalog = null;   // W5: read UITranslations.json afresh (Ja / VerifyLanguage)
             foreach (var p in Programs) Check(AssetDatabase.LoadAssetAtPath<UdonSharpProgramAsset>(p + ".asset") != null, "program asset " + p + ".asset");
             var root = SceneRoot(scene, SystemName, out int n);
             Check(n == 1 && root != null, SystemName + " x" + n + " at the scene root");
@@ -169,7 +170,7 @@ namespace KominkaHillside.Editor
                 Wired(G(mb), ModeEvent(m), "panel mode " + m + " " + KH_VideoCamera.ModeWord(m));
                 var lbl = mb != null ? LabelOf(mb.gameObject) : null;
                 var rt = mb as RectTransform;
-                Check(lbl != null && lbl.text == KH_VideoCamera.ModeWord(m) && rt != null && rt.sizeDelta.x >= 120f && rt.sizeDelta.y >= 50f, "mode " + m + " label '" + (lbl != null ? lbl.text : "") + "', size " + (rt != null ? rt.sizeDelta.ToString() : "-"));
+                Check(lbl != null && lbl.text == Ja(KH_VideoCamera.ModeKey(m)) && rt != null && rt.sizeDelta.x >= 120f && rt.sizeDelta.y >= 50f, "mode " + m + " label '" + (lbl != null ? lbl.text : "") + "', size " + (rt != null ? rt.sizeDelta.ToString() : "-"));
                 Check(v.modeImages != null && v.modeImages.Length == KH_VideoCamera.ModeCount && mb != null && v.modeImages[m] == mb.GetComponent<Image>(), "modeImages[" + m + "] is that button");
             }
             Check(P("ModeDog") == null && P("ModeSelf") == null, "the W1 buttons ModeDog / ModeSelf are gone");
@@ -207,14 +208,14 @@ namespace KominkaHillside.Editor
             // ---- W2 / W3 references and data ----
             int nd = KH_PhotoGalleryEditor.Keys.Length;
             Check(v.catchers != null && v.catchers.Length == nd && v.discs != null && v.discs.Length == nd && v.fetches != null && v.fetches.Length == nd
-                && v.wanders != null && v.wanders.Length == nd && v.washes != null && v.washes.Length == nd, "per-dog arrays (catchers, discs, fetches, wanders, washes) have " + nd + " entries");
+                && v.wanders != null && v.wanders.Length == nd, "per-dog arrays (catchers, discs, fetches, wanders) have " + nd + " entries");
             // every array is guarded before indexing (a short / null array is a FAIL line, never an exception)
             T At<T>(T[] a, int i) where T : class { return a != null && i >= 0 && i < a.Length ? a[i] : null; }
             for (int i = 0; i < nd; i++)
             {
-                var cat = At(v.catchers, i); var disc = At(v.discs, i); var fe = At(v.fetches, i); var wa = At(v.wanders, i); var ws = At(v.washes, i);
+                var cat = At(v.catchers, i); var disc = At(v.discs, i); var fe = At(v.fetches, i); var wa = At(v.wanders, i);
                 Check(cat != null && cat.dogIndex == i && disc != null && disc == cat.frisbee, "dog " + i + ": catcher dogIndex " + i + " and its disc");
-                Check(fe != null && wa != null && ws != null && ws.dogIndex == i, "dog " + i + ": fetch / wander / wash wired");
+                Check(fe != null && wa != null, "dog " + i + ": fetch / wander wired");
             }
             var calls = WashCalls();
             Check(v.washCalls != null && v.washCalls.Length == calls.Length && calls.Select((x, k) => At(v.washCalls, k) == x).All(b => b), "washCalls = the " + calls.Length + " wash stations in hierarchy order");
@@ -239,9 +240,12 @@ namespace KominkaHillside.Editor
                     && Physics.Raycast(v.passPositions[k], Vector3.down, SpotGroundMax, KH_PhotoGalleryEditor.CameraBlockMask, QueryTriggerInteraction.Ignore);
                 Check(ok, "pass point " + k + " at " + v.passPositions[k].ToString("F1") + " is free and above ground");
             }
+            VerifyModes16(v, scene, Check, Warn);
+            VerifyPatterns(v, Check, Warn);   // §17 (KH_VideoCameraEditor.Patterns.cs)
+            VerifyLanguage(v, Check, Warn);   // W5 13 languages (KH_VideoCameraEditor.Lang.cs)
             float mib = RenderWidth * RenderHeight * (4f + 4f) / (1024f * 1024f);
             Check(mib <= 11f, "RT memory while open " + mib.ToString("F1") + " MiB (colour RGBA8 + depth D24S8; 0 when closed)");
-            string glyphs = KD_ShopSetupEditor.MissingGlyphs(AllWords());
+            string glyphs = KD_ShopSetupEditor.MissingGlyphs(AllWords() + BundledW5Text());
             Check(glyphs.Length == 0, "glyphs of the panel texts are in the font" + (glyphs.Length > 0 ? " (missing " + glyphs + ")" : ""));
 
             // ---- source rules (all partial files) ----
@@ -277,6 +281,49 @@ namespace KominkaHillside.Editor
             Check(Regex.IsMatch(allSrc, @"bool PersonFollow\(float dt\)\s*\{\s*if \(!TryPersonPose\(_person\)\)"), "PersonFollow reads the person only through TryPersonPose");
             Check(Regex.IsMatch(allSrc, @"_personLive && !PersonStillUsable\(\)\) \{ PersonDrop\(\); return; \}\s*EnableForTick\(\);"), "the permission is re-checked right before EnableForTick (§13.3)");
             Check(Regex.IsMatch(allSrc, @"bool PersonStillUsable\(\)[\s\S]{0,160}_FilmGate\(_person\)"), "the re-check uses the mailbox's film gate");
+        }
+
+        /// <summary>§16 (IMP-WLD-012): the 10 modes after 手元 / 見下ろす went out and 背中ごし / みち came in, the pickers of みち and 一周, the controls each
+        /// mode takes, the route of みち, and nothing of the removed two left (constants, labels, tuning fields, pose functions, scene arrays).</summary>
+        static void VerifyModes16(KH_VideoCamera v, UnityEngine.SceneManagement.Scene scene, Action<bool, string> Check, Action<string> Warn)
+        {
+            string[] want = { "犬追従", "じぶん", "背中ごし", "犬目線", "定点", "ディスク", "キャッチ待ち", "一周", "通り過ぎ", "みち" };
+            var words = Enumerable.Range(0, KH_VideoCamera.ModeCount).Select(KH_VideoCamera.ModeWord).ToArray();
+            Check(words.SequenceEqual(want), "§16 the 10 modes in panel order: " + string.Join(" / ", words));
+            Check(!words.Contains("手元") && !words.Contains("見下ろす"), "§16 手元 / 見下ろす are not modes any more");
+            var moves = Enumerable.Range(0, KH_VideoCamera.PathMoveCount).Select(KH_VideoCamera.PathMoveWord).ToArray();
+            Check(moves.SequenceEqual(new[] { "待って寄る", "後ずさり", "横ならび", "追いこし", "寄って引く" }), "§16 みち moves: " + string.Join(" / ", moves));
+            var kinds = Enumerable.Range(0, KH_VideoCamera.OrbitKindCount).Select(KH_VideoCamera.OrbitKindWord).ToArray();
+            Check(kinds.SequenceEqual(new[] { "一定", "近づく", "離れる" }), "§16 一周 ways: " + string.Join(" / ", kinds));
+            Check(KH_VideoCamera.PickerKind(KH_VideoCamera.ModePath) == 3 && KH_VideoCamera.PickerKind(KH_VideoCamera.ModeOrbit) == 4 && KH_VideoCamera.PickerKind(KH_VideoCamera.ModeTps) == 0,
+                "§16 pickers: みち = the move (3), 一周 = the way (4), 背中ごし none");
+            Check(KH_VideoCamera.CtlKind(KH_VideoCamera.ModeTps) == KH_VideoCamera.CtlKindAll && KH_VideoCamera.CtlKind(KH_VideoCamera.ModePath) == KH_VideoCamera.CtlKindDistUp
+                && KH_VideoCamera.CtlKind(KH_VideoCamera.ModeOrbit) == KH_VideoCamera.CtlKindDistUp && KH_VideoCamera.CtlKind(KH_VideoCamera.ModeSpot) == KH_VideoCamera.CtlKindNone
+                && KH_VideoCamera.CtlKind(KH_VideoCamera.ModePassBy) == KH_VideoCamera.CtlKindNone, "§16 controls: 背中ごし all, みち / 一周 their own distance and height, 定点 / 通り過ぎ none");
+            Check(KH_VideoCamera.ShotMoveDone == 5 && KH_VideoCamera.ShotOrbitEnd == 6, "§16 shot events ShotMoveDone 5 / ShotOrbitEnd 6");
+            // nothing of 手元 / 見下ろす is left in the behaviour (fields) or the sources (constants, labels, pose functions)
+            string[] goneFields = { "droneFov", "droneBack", "droneHeight", "droneAhead", "droneTau", "droneGroundMin", "washFov", "washDist", "washUp", "washLookTau", "washes" };
+            var left = goneFields.Where(f => typeof(KH_VideoCamera).GetField(f) != null).ToArray();
+            Check(left.Length == 0, "§16 the tuning / wiring fields of 手元 and 見下ろす are gone" + (left.Length > 0 ? " (left: " + string.Join(", ", left) + ")" : ""));
+            var files = Directory.GetFiles("Assets/KominkaHillside/Scripts", "KH_VideoCamera*.cs").Where(f => !f.EndsWith(".meta")).ToArray();
+            string src = string.Concat(files.Select(File.ReadAllText));
+            string[] goneSrc = { "ModeWash", "ModeDrone", "WordModeWash", "WordModeDrone", "WordNoWash", "bool Wash(", "bool Drone(", "WashPos(", "DronePos(", "DroneLook(", "PartPoint(", "\"手元\"", "\"見下ろす\"" };
+            var hits = goneSrc.Where(s => src.Contains(s)).ToArray();
+            Check(hits.Length == 0, "§16 no source of 手元 / 見下ろす is left in KH_VideoCamera*.cs" + (hits.Length > 0 ? " (found: " + string.Join(", ", hits) + ")" : ""));
+            Check(files.Any(f => f.EndsWith(".ModesPath.cs")), "§16 KH_VideoCamera.ModesPath.cs (背中ごし / みち) is there");
+            // the TPS body facing is read in Subjects.cs only (the general "reads no player pose" rule above covers the other files)
+            Check(Regex.IsMatch(src, @"_selfBody\s*=\s*new Vector3\(body\.x, 0f, body\.z\)"), "§16 背中ごし's body facing comes from SelfHead (lp.GetRotation, Subjects.cs)");
+            // the route of みち: the leash manager's route (or the only closed loop)
+            var pouch = UnityEngine.Object.FindObjectsOfType<KD_TreatPouch>(true).FirstOrDefault();
+            var mgrRoute = pouch != null && pouch.manager != null ? pouch.manager.route : null;
+            var loops = UnityEngine.Object.FindObjectsOfType<KH_WalkRoute>(true).Where(w => w.closedLoop).ToArray();
+            var expect = mgrRoute != null ? mgrRoute : (loops.Length == 1 ? loops[0] : null);
+            if (expect == null) Warn("§16 no walking route in the scene: みち uses the heading only");
+            else Check(v.route == expect, "§16 みち route = " + expect.name + " (" + (mgrRoute != null ? "KH_LeashManager.route" : "the only closed loop") + "), wired " + (v.route != null ? v.route.name : "null"));
+            var backing = UdonSharpEditorUtility.GetBackingUdonBehaviour(v);
+            if (backing != null && backing.publicVariables.TryGetVariableValue("route", out object rv))
+                Check(expect != null && (rv as UnityEngine.Object) == UdonSharpEditorUtility.GetBackingUdonBehaviour(expect), "§16 backing route is the route's UdonBehaviour");
+            else Warn("§16 'route' not in the backing heap yet (a saved / built scene carries it; rerun Video/2 after a reload)");
         }
 
         /// <summary>Subjects.cs: a pose read on any player other than the local one (`lp.`) happens only inside TryPersonPose, after the mailbox's

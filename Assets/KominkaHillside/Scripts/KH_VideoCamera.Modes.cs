@@ -10,7 +10,8 @@ namespace KominkaHillside
     /// the cut or the smoothing and the roll lock. A mode returns false when its subject is lost (the caller holds this session's last framing
     /// of this subject for lostHoldSeconds, then shows black).
     /// This file: the switch, the shared heading, 犬追従 / じぶん (W1) and every static pose formula (the runtime and the Edit-mode probe Video/2b
-    /// call the same functions). The walk modes are in KH_VideoCamera.ModesWalk.cs, the play / wash modes in KH_VideoCamera.ModesPlay.cs.
+    /// call the same functions). The walk modes are in KH_VideoCamera.ModesWalk.cs, the play modes in KH_VideoCamera.ModesPlay.cs, 背中ごし / みち
+    /// (§16) in KH_VideoCamera.ModesPath.cs.
     /// </summary>
     public partial class KH_VideoCamera
     {
@@ -33,15 +34,17 @@ namespace KominkaHillside
             switch (_mode)
             {
                 case ModeDogFollow: return DogFollow(dt);
-                case ModeSelfFollow: return _person < 0 ? SelfFollow(dt) : PersonFollow(dt);   // W4: another person only through TryPersonPose (People.cs)
+                // W4: another person only through TryPersonPose (People.cs). §17: a pattern's じぶん is always me (a pattern never reads another person)
+                case ModeSelfFollow: return _person < 0 || _patRun ? SelfFollow(dt) : PersonFollow(dt);
+                case ModeTps: return Tps(dt);   // §16: always me, also while another person is chosen for じぶん
                 case ModeDogEye: return DogEye(dt);
-                case ModeDrone: return Drone(dt);
                 case ModeSpot: return Spot(dt);
                 case ModeDisc: return DiscFollow(dt);
                 case ModeCatchWait: return CatchWait(dt, now);
-                case ModeWash: return Wash(dt);
                 case ModeOrbit: return Orbit(dt);
                 case ModePassBy: return PassBy(dt, now);
+                case ModePath: return PathMove(dt, now);   // §16: always me
+                case ModeWelcome: return Welcome(dt);   // §17: internal (patterns only), KH_VideoCamera.ModesPlay.cs
             }
             return false;
         }
@@ -52,7 +55,10 @@ namespace KominkaHillside
             _discHave = false; _discVel = Vector3.zero;
             _landHave = false; _landWasFlying = false; _landSampling = false; _landMoved = false;
             _catchPlaced = false; _catchReplans = 0; _catchSignalled = false; _catchWasFlying = false;
-            _orbitHave = false;
+            _welcomeMine = false;   // §17
+            _orbitHave = false; _orbitEnded = false;   // §16: a new orbit starts its radius and angle again
+            _tpsHave = false;
+            _pathHave = false; _pathTrailAt = 0f;
             _passIdx = -1; _passLast = -1;   // the pass history must not survive a reopen / mode re-entry
         }
 
@@ -196,10 +202,84 @@ namespace KominkaHillside
             return pos + (facing * Mathf.Cos(r) + Vector3.up * Mathf.Sin(r)) * 10f;
         }
 
-        /// <summary>ドローン: behind (against the travel direction) and above the followed point; looks a little ahead of it.</summary>
-        public static Vector3 DronePos(Vector3 point, Vector3 heading, float back, float height) { return point - heading * back + Vector3.up * height; }
+        /// <summary>§16: the horizontal unit direction of a yaw (degrees; 0 = +Z, 90 = +X, Unity's convention).</summary>
+        public static Vector3 YawDir(float yawDeg)
+        {
+            float r = yawDeg * Mathf.Deg2Rad;
+            return new Vector3(Mathf.Sin(r), 0f, Mathf.Cos(r));
+        }
 
-        public static Vector3 DroneLook(Vector3 point, Vector3 heading, float ahead) { return point + heading * ahead; }
+        /// <summary>§16: the yaw (degrees) of a horizontal direction (inverse of YawDir).</summary>
+        public static float DirYaw(Vector3 d) { return Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg; }
+
+        /// <summary>§16: one smoothing step of a yaw toward a target along the shorter way round (time constant tau), wrapped to -180..180.
+        /// A 180° turn takes the same time as a small one relative to its size (no swing through the vertical).</summary>
+        public static float YawStep(float current, float target, float dt, float tau)
+        {
+            float d = target - current;
+            while (d > 180f) d -= 360f;
+            while (d < -180f) d += 360f;
+            float y = current + d * BlendFactor(dt, tau);
+            while (y > 180f) y -= 360f;
+            while (y < -180f) y += 360f;
+            return y;
+        }
+
+        /// <summary>§16 背中ごし position: behind the head (against the smoothed body facing fwd) back metres, to the right shoulder metres, up lift.</summary>
+        public static Vector3 TpsPos(Vector3 head, Vector3 fwd, float back, float shoulder, float lift)
+        {
+            Vector3 right = new Vector3(fwd.z, 0f, -fwd.x);
+            return head - fwd * back + right * shoulder + Vector3.up * lift;
+        }
+
+        /// <summary>§16 背中ごし look point: ahead metres in front of the head, drop up (negative = down): over the shoulder, where I look.</summary>
+        public static Vector3 TpsLook(Vector3 head, Vector3 fwd, float ahead, float drop) { return head + fwd * ahead + Vector3.up * drop; }
+
+        /// <summary>§16 みち: the trail's direction turned to agree with my heading (the trail segment's sign is arbitrary).</summary>
+        public static Vector3 PathTrailDir(Vector3 trail, Vector3 heading)
+        {
+            Vector3 t = new Vector3(trail.x, 0f, trail.z);
+            t = t.sqrMagnitude > 0.0001f ? t.normalized : heading;
+            return Vector3.Dot(t, heading) < 0f ? -t : t;
+        }
+
+        /// <summary>§16 みち position: from my feet, along metres in the walking direction, side metres to its right, height above the feet.</summary>
+        public static Vector3 PathPos(Vector3 feet, Vector3 dir, float along, float side, float height)
+        {
+            Vector3 right = new Vector3(dir.z, 0f, -dir.x);
+            return feet + dir * along + right * side + Vector3.up * height;
+        }
+
+        /// <summary>§16 一周: the radius after `progress` (0..1 = the first full circle) of 一定 / 近づく / 離れる from the start radius r0.
+        /// 近づく ends at r0 × nearK (never below rMin, never above r0), 離れる at r0 × farK (never above rMax, never below r0); linear in the angle.</summary>
+        public static float OrbitRadiusAt(float r0, int kind, float progress, float nearK, float farK, float rMin, float rMax)
+        {
+            float end = r0;
+            if (kind == OrbitCloser) end = Mathf.Min(r0, Mathf.Max(r0 * nearK, rMin));
+            else if (kind == OrbitFarther) end = Mathf.Max(r0, Mathf.Min(r0 * farK, rMax));
+            return Mathf.Lerp(r0, end, Mathf.Clamp01(progress));
+        }
+
+        /// <summary>§16 一周: the look height above the centre. 近づく raises it from lookUp to the camera height over the first circle (a close
+        /// orbit looking at the middle of the body lost the head; Video/2b), the others keep lookUp.</summary>
+        public static float OrbitLookHeight(float lookUp, float height, int kind, float progress)
+        {
+            return kind == OrbitCloser ? Mathf.Lerp(lookUp, height, Mathf.Clamp01(progress)) : lookUp;
+        }
+
+        /// <summary>§17 おかえり (internal): from my feet toward the dog, dist out but never more than half the way to the dog, side metres to the right
+        /// of that line, height up; the look point is the dog's head (the caller). The 10-04 formula (W2・W3 実装メモ row 7: 1.6 m toward the dog,
+        /// 0.45 m high) plus two AI-reading changes from the Video/2b numbers: the dog stops returnStopDistance (0.9 m) in front of the thrower,
+        /// so 1.6 m out ended BEHIND the dog (half the way keeps it in front), and on the line itself the arriving dog ran into the camera
+        /// (side 0.8 m: it comes past beside the lens, the head 0.77 m away at the stop).</summary>
+        public static Vector3 WelcomePos(Vector3 receiverFeet, Vector3 dogPos, float dist, float side, float height)
+        {
+            Vector3 d = dogPos - receiverFeet; d.y = 0f;
+            float len = d.magnitude;
+            d = len > 0.0001f ? d / len : Vector3.forward;
+            Vector3 right = new Vector3(d.z, 0f, -d.x);
+            return receiverFeet + d * Mathf.Min(dist, len * 0.5f) + right * side + Vector3.up * height;
+        }
 
         /// <summary>ディスク追従: beside the disc and the chasing dog (to the right of the flight), as far out as they are apart (sideK × separation,
         /// clamped sideMin..sideMax), up above their midpoint; it moves with the disc. The disc's rotation is never used. (The design's "2.5 m
@@ -254,13 +334,6 @@ namespace KominkaHillside
         /// <summary>落下待ち look: L (+0.5 m); once the disc is within near, halfway between the disc and L.</summary>
         public static Vector3 LandingWaitLook(Vector3 landing, Vector3 disc, bool discNear) { Vector3 l = landing + Vector3.up * 0.5f; return discNear ? (l + disc) * 0.5f : l; }
 
-        /// <summary>洗浄の手元: on the far side of the stroked part from the washer, dist out and up high.</summary>
-        public static Vector3 WashPos(Vector3 part, Vector3 washer, float dist, float up)
-        {
-            Vector3 a = part - washer; a.y = 0f;
-            a = a.sqrMagnitude > 0.0001f ? a.normalized : Vector3.forward;
-            return part + a * dist + Vector3.up * up;
-        }
 
         /// <summary>ゆっくり一周: on the circle around the centre at angleDeg (0 = +X, counter-clockwise seen from above), radius, height.</summary>
         public static Vector3 OrbitPos(Vector3 centre, float angleDeg, float radius, float height)

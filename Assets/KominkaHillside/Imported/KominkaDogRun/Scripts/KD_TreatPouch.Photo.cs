@@ -15,6 +15,8 @@ namespace KominkaDogRun
         public GameObject photoPage;
         [Tooltip("KH_PhotoAlbum (_RedrawMenu を送る先)")]
         public UdonSharpBehaviour photoAlbum;
+        [Tooltip("IMP-WLD-008 W5: KH_VideoCamera (任意。Video/1 が配線)。面を開くたびに _RefreshLanguage を送り、面の [撮影カメラ] などを今の言語で書き直させる")]
+        public UdonSharpBehaviour photoVideo;
 
         /// <summary>面を開く前のタブ ([もどる] で戻す)。設定ホームから開いたときは設定ホームへ戻す。</summary>
         private int _photoReturnTab = -1;
@@ -31,6 +33,7 @@ namespace KominkaDogRun
             }
             _OpenExtraSettings(photoPage, "photo.menu");
             if (photoAlbum != null) photoAlbum.SendCustomEvent("_RedrawMenu");
+            if (photoVideo != null) photoVideo.SendCustomEvent("_RefreshLanguage");   // W5: the video camera's entry buttons in the current language
         }
 
         /// <summary>写真の面の [もどる]。開く前のタブ (または設定ホーム) へ。ローカル専用。</summary>

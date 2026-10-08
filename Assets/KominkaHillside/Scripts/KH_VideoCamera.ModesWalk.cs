@@ -4,7 +4,8 @@ using UnityEngine;
 namespace KominkaHillside
 {
     /// <summary>
-    /// IMP-WLD-008 W2: the walk modes — 犬目線, ドローン俯瞰, スポット定点, ゆっくり一周, 通り過ぎる散歩 (design §4.4-4.5, §4.8-4.9).
+    /// IMP-WLD-008 W2: the walk modes — 犬目線, スポット定点, ゆっくり一周, 通り過ぎる散歩 (design §4.4-4.5, §4.8-4.9; ドローン俯瞰 / 見下ろす was
+    /// removed in §16, IMP-WLD-012). 一周 has §16's ways to circle (一定 / 近づく / 離れる, the picker) and its speed ([←][→]).
     /// The formulas are the static functions in KH_VideoCamera.Modes.cs; this file reads the subjects and keeps the per-mode state.
     /// Only the local player is read (SelfHead / SelfId in Subjects.cs).
     ///
@@ -15,10 +16,12 @@ namespace KominkaHillside
     public partial class KH_VideoCamera
     {
         private bool _dogEyeUser;           // read-out: the last 犬目線 looked up at me
-        // ゆっくり一周
-        private bool _orbitHave;
+        // ゆっくり一周. _orbitTravel: degrees circled since this orbit started (the progress of 近づく / 離れる); _orbitRadiusNow: read-out
+        private bool _orbitHave, _orbitEnded;
         private Vector3 _orbitCentre;
-        private float _orbitAngle;
+        private float _orbitAngle, _orbitTravel, _orbitRadiusNow;
+        private int _orbitKind;           // §16 the picker: OrbitSteady / OrbitCloser / OrbitFarther. The choice is kept for the stay (also across × and a reopen, like the spot); the circle and the speed start again
+        private float _orbitSpeed = 6f;   // §16 deg/s: [←][→] in 一周; orbitDegPerSec again on open and on [戻す] (KH_VideoCamera.Controls.cs)
         // 通り過ぎる散歩
         private int _passIdx = -1, _passLast = -1;
         private float _passSince, _passMin, _passClosestAt;
@@ -47,20 +50,6 @@ namespace KominkaHillside
             }
             _wantTau = dogEyeTau;
             _subject = head; _subjectSize = 0.3f;
-            return true;
-        }
-
-        /// <summary>ドローン俯瞰 (§4.2 #4): behind and above me, looking a little ahead; never lower than droneGroundMin above the ground.</summary>
-        bool Drone(float dt)
-        {
-            if (!SelfHead()) return false;
-            Vector3 point = _selfFeet;
-            Vector3 h = Heading(point, _selfFwd, dt);
-            _wantPos = DronePos(point, h, droneBack, droneHeight) + LeadOffset(_hVel, droneTau);
-            _wantLook = DroneLook(point, h, droneAhead) + LeadOffset(_hVel, lookTau);
-            _wantFov = droneFov;
-            _wantTau = droneTau; _wantGroundMin = droneGroundMin;
-            _subject = point + Vector3.up; _subjectSize = 1f;
             return true;
         }
 
@@ -109,8 +98,13 @@ namespace KominkaHillside
             return best;
         }
 
-        /// <summary>ゆっくり一周 (§4.9): around me and my leashed dogs (centre smoothed orbitCenterTau), radius / height, orbitDegPerSec.
-        /// Starts in front of me. A blocked part of the circle is shortened by the shared occlusion clip (not skipped).</summary>
+        /// <summary>ゆっくり一周 (§4.9): around me and my leashed dogs (centre smoothed orbitCenterTau), height orbitHeight + [↑][↓], _orbitSpeed
+        /// deg/s ([←][→], §16). Starts in front of me. §16: the radius starts at R = orbitRadius × [近く][遠く] and, for 近づく / 離れる, goes
+        /// linearly over the first full circle to R × orbitNearK (≥ orbitRadiusMin) / R × orbitFarK (≤ orbitRadiusMax), then stays there;
+        /// ShotOrbitEnd once at that end. 近づく also raises the look point to the camera height on the way (Video/2b: at 1.5 m the head left the
+        /// frame looking at the middle of the body; the feet / dog leave it below about 2.8 / 2.4 m - a close-up of the upper body by design).
+        /// A new subject (mode entry, picker change, open) starts the radius and the angle again.
+        /// A blocked part of the circle is shortened by the shared occlusion clip (not skipped).</summary>
         bool Orbit(float dt)
         {
             if (!SelfHead()) return false;
@@ -119,15 +113,20 @@ namespace KominkaHillside
             c.y = _selfFeet.y;
             if (!_orbitHave)
             {
-                _orbitHave = true; _orbitCentre = c;
+                _orbitHave = true; _orbitCentre = c; _orbitTravel = 0f; _orbitEnded = false;
                 Vector3 f = new Vector3(_selfFwd.x, 0f, _selfFwd.z);
                 _orbitAngle = f.sqrMagnitude > 0.0001f ? Mathf.Atan2(f.z, f.x) * Mathf.Rad2Deg : 0f;
             }
             _orbitCentre = Vector3.Lerp(_orbitCentre, c, BlendFactor(dt, orbitCenterTau));
-            _orbitAngle += orbitDegPerSec * dt;
+            float step = _orbitSpeed * dt;
+            _orbitAngle += step;
             if (_orbitAngle > 360f) _orbitAngle -= 360f;
-            _wantPos = OrbitPos(_orbitCentre, _orbitAngle, orbitRadius, orbitHeight);
-            _wantLook = _orbitCentre + Vector3.up * orbitLookUp;
+            _orbitTravel = Mathf.Min(_orbitTravel + step, 720f);
+            float progress = _orbitTravel / 360f;
+            _orbitRadiusNow = OrbitRadiusAt(orbitRadius * CtlDist(), _orbitKind, progress, orbitNearK, orbitFarK, orbitRadiusMin, orbitRadiusMax);
+            if (_orbitKind != OrbitSteady && !_orbitEnded && progress >= 1f) { _orbitEnded = true; RaiseShot(ShotOrbitEnd); }
+            _wantPos = OrbitPos(_orbitCentre, _orbitAngle, _orbitRadiusNow, orbitHeight + CtlUp());
+            _wantLook = _orbitCentre + Vector3.up * OrbitLookHeight(orbitLookUp, orbitHeight, _orbitKind, progress);
             _wantFov = orbitFov;
             _wantTau = orbitTau;
             _subject = _orbitCentre + Vector3.up * 0.8f; _subjectSize = 1f;
