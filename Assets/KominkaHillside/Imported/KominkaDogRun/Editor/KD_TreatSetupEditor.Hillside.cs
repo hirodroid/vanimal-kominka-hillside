@@ -239,6 +239,11 @@ namespace KominkaDogRun.Editor
 
             // ---- 設計値 (**コードの既定値はシーンに効かない**ので毎回書く。古民家値 D-6) ----
             pouch.panelDistance = 0.95f;
+            // IMP-UI-004 案 B: 板を地面に埋めない (KD_TreatPouch の既定値と同じ)
+            pouch.panelGroundClearance = 0.10f;
+            pouch.panelBottomExtra = 0f;
+            pouch.panelTiltMax = 30f;
+            pouch.panelGroundMask = (1 << 0) | (1 << 11);
             pouch.recallDistance = 1.2f;
             pouch.recallCooldown = 2.5f;
             pouch.openStickSign = -1;

@@ -658,3 +658,9 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 ### 2026-10-07 空間音設定の補正
 
 移植側の `KD_WanderSetupEditor`、`KD_ShopKeeperSetupEditor`、`KD_TreatFxSetupEditor`、`KD_TreatSetupEditor.Pouch`、`KD_LiveSetupEditor.Hillside` に裏山の `KH_AudioSpatialEditor.Configure` 呼び出しを追加。犬の既存VRC距離を保持し、生成時にもUnity側と整合する。店主・おやつ演出は有限距離の3D、ポーチ操作音・ライブは既存2Dを維持。購入元の素材・プレハブ・古民家ドッグランの作業ツリーは変更していない。設定値と検証範囲は[川音制作票 §9](../../plans/2026-10-02-river-ambience-production.md#9-全音源の空間音設定見直し-2026-10-07)。
+
+## 2026-10-08 手元メニューを地面に埋めない (IMP-UI-004 案 B)
+
+| ファイル | 裏山の変更 | 理由 |
+|---|---|---|
+| `Scripts/KD_TreatPouch.cs` | `PlaceInFront` の末尾で、板の下端 (panelRoot の `RectTransform.rect` の下辺を `TransformPoint` で世界へ) が「地面 + `panelGroundClearance` (0.10 m)」より低ければその差だけ上げる。地面 = max(下端の点の真下へのレイ (頭 + 0.5 m から 6 m、`panelGroundMask` = Default + Environment、trigger 無視。頭より高い当たりはその 0.02 m 下から 1 本だけ撃ち直す), 足元)。上げたときだけ上端を頭の方へ `panelTiltMax` (30°) まで倒し、前へ出た下端で同じ判定をもう一度して足りない分だけ上げる。新フィールド `panelGroundClearance` / `panelBottomExtra` (0) / `panelTiltMax` / `panelGroundMask`、読み出し `LastLift()` (`_lastLift`)。`KD_TreatSetupEditor.Hillside.cs` / `.Pouch.cs` の設計値にも同じ既定を足した | 低い姿勢・小さいアバター・登り斜面で下のボタンが地面に埋まる ([IMP-UI-004](../issues/IMP-UI-004-hand-menu-buried-in-ground.md))。**裏山で先に直した。古民家ドッグランにも同じ計算があるが、古民家へは未反映** |

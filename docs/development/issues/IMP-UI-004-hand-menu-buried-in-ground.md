@@ -2,11 +2,11 @@
 id: IMP-UI-004
 type: IMP
 system: UI
-status: todo
+status: review
 priority: High
-summary: 手元メニューが地面に埋まり、下の方のボタンが見えない人が多い。埋まらない高さに必ず出すか、開いた後に動かせるようにする
-next: "ユーザーが方針を決める (案 B = 埋まらない高さへ自動で上げる、を先に入れるか。動かす操作 = 案 A も入れるか)。埋まった時の状況 (端末・姿勢・アバターの大きさ・場所・開いていた面) が分かれば追記する"
-updated: 2026-10-05
+summary: 手元メニューが地面に埋まり、下の方のボタンが見えない人が多い。案 B (据える時に板の下端を地面 + 0.10 m まで上げ、上げたときだけ頭の方へ最大 30° 倒す) をコードに入れた。Unity・実機は未確認
+next: "統括: Codex 指摘 2 件の反映後の C# / U# コンパイル (初版はコンパイル 0・proxy の既定値を確認済み)。その後ユーザーが実機で、低い姿勢・小さいアバター・登り斜面・屋根や枝の下で、板の下のボタンが見えて押せるかを VR / Desktop / スマホで確かめる。案 A は結果を見て判断"
+updated: 2026-10-08
 ---
 
 # IMP-UI-004 手元メニューが地面に埋まって下のボタンが見えない
@@ -80,3 +80,21 @@ updated: 2026-10-05
 ## 記録
 
 2026-10-05: 起票のみ。Unity に接続できないため、現状はコードの読み取りだけ。実装・シーンの確認・Play は未実施。
+
+2026-10-08: 案 B を実装 (統括の指示。コードと文書だけ。Unity の起動・コンパイル・シーン保存・Play・実機は未実施)。
+
+- `KD_TreatPouch.PlaceInFront` (開いた時・呼び戻し・移動の後の 3 か所が通る。庭の「ようこそ」は `welcomeSpot` 固定なので対象外) の末尾で、垂直に据えた板の下端を求め、「地面 + `panelGroundClearance`」より低ければその差だけ板を上げる。下げる方向には動かさない。レイは据える時の 1 回だけ
+  - 板の下端: panelRoot の `RectTransform.rect.yMin` を `TransformPoint` で世界へ移した y − `panelBottomExtra` (板の大きさ・scale を書き写さない)
+  - 地面: max(板の中心の真下へのレイの当たり, 足元 `lp.GetPosition().y`)。レイの始点は頭の高さ + 0.5 m、長さ 6 m、`panelGroundMask` = Default (0) + Environment (11)、trigger は無視 (フリスビー・犬・写真のレイと同じ流儀。板自身の layer 17・犬の 14・プレイヤーには当たらない)。**頭より高い当たりは地面とみなさない** (軒・枝・岩の上面で板が頭上へ逃げないように)。当たらなければ足元だけ
+  - 上げたときだけ、板の中心が頭より上なら、頭 → 板の仰角ぶん上端を頭の方へ倒す (`panelTiltMax` まで、内部の上限 80°)。上げていない・中心が目線より下なら今までどおり垂直。倒すと下端はさらに上がるので余白は減らない。据えた後は固定 (2026-09-03 の決定のまま)
+  - 持ち上げ量は `LastLift()` (変数名 `_lastLift`) で読める。ログは足していない
+- 既定値 (コードの既定値。`KD_TreatSetupEditor.Hillside.cs` / `.Pouch.cs` の設計値にも同じ値を足した。ただしどちらのビルダーも周回版シーンでは `RejectLegacyRebuild` で止まり、Menu/7 は実行禁止なので、シーンの値は新フィールドの既定値として入る): `panelGroundClearance` 0.10 m (身長で伸縮しない) / `panelBottomExtra` 0 / `panelTiltMax` 30° / `panelGroundMask` Default + Environment
+- 面の大きさ (`VRCDefaultWorldScene.unity` を読んだ): `KD_TreatPouchPanel` は 1140 × 700 px、pivot 中央、scale 0.001 = 1.14 × 0.70 m。子の RectTransform 916 個のうち、板の下辺 (−350 px) より下へ出るのはスクロールの中身 (`TravelMapPage/People/Viewport/Content`、Viewport でマスク) だけ。いちばん下の見える要素は `CloseHint` (下端 −342 px)。手元メニューの中のクレジットの面 (`Page_Settings/CreditPage`) も 700 px。**上の「クレジットの面は 840 × 1080 px」は別置きのクレジット板 (`KD_CreditBoard`、裏山には無い) の大きさで、手元メニューの面ではない。** 下へ伸びる面が無いので `panelBottomExtra` は 0、面の切り替え時の再判定は入れていない
+- 未確認: C# / U# のコンパイル (`RectTransform.rect`・`Physics.Raycast` の 6 引数・`Mathf.Atan2` は同じ repo の Udon で使っている形を踏襲。`Transform.TransformPoint` は Wrapper DLL に名前があることだけ確認)、シーンの新フィールドの値、ClientSim と実機の見え方 (見上げて読めるか、屋根・枝の下で持ち上げた時に上が隠れないか、倒した時に照準がずれないか)。持ち上げで頭より上に出るのは、下端を地面 + 0.10 m に置いても板の中心が目線を超える時 (頭が地面から約 0.45 m 未満)
+
+2026-10-08 (続き): 統括の Unity 検査と Codex 独立レビューの反映。
+
+- 統括の Unity 検査: C# / U# のコンパイル 0 エラー。シーンの proxy の既定値 (`panelGroundClearance` 0.1 / `panelBottomExtra` 0 / `panelTiltMax` 30 / `panelGroundMask` 2049 = Default + Environment) を確認。backing の UdonBehaviour への反映 (CopyProxyToUdon) と再保存は未実施で、ビルド / Play 時に U# が写す
+- Codex 指摘 2 件 (屋根の下の地面、傾けた下端の前進) を反映 (コードのみ。Unity・Play は未実施)
+  - 屋根の下の地面: 最初のレイが頭より高い面 (屋根・枝) に当たったら、その当たり点の 0.02 m 下から同じ長さでもう 1 本だけ撃ち直す (1 判定につき最大 2 本)。それでも取れない・頭より高ければ足元を使う。前の版は命中を捨てるだけで、屋根の下の前方の段差を見落としていた
+  - 傾けた下端の前進: 倒すと下端は前へ sin(30°) × 半高 ≈ 0.175 m 出るので、上の「余白は減らない」は平地だけの話だった。倒して据え直した後に、実際の下端の点の真下でもう一度同じ判定をして、足りない分だけ (傾きは変えずに) さらに上げる。`PanelGroundLift` のレイの x/z は板の中心でなく下端の点 (`rt.TransformPoint(0, rect.yMin, 0)`) で取るように直し、1 回目と 2 回目で同じ関数を使う。`LastLift()` は 2 回の合計

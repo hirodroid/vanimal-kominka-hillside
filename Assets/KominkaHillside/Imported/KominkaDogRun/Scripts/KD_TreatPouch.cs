@@ -792,6 +792,23 @@ namespace KominkaDogRun
         [Tooltip("据えるときの目線からの高さのずらし (m)。負 = 少し下")]
         public float panelHeightOffset = -0.05f;
 
+        // 裏山改変 (IMP-UI-004 案 B、2026-10-08): 板の下端が地面に埋まらない高さへ持ち上げる
+        [Tooltip("板の下端と地面の間に必ず空ける高さ (m)。**身長の比では伸縮しない**。" +
+                 "据えるときに下端がこれより地面に近ければ、その差だけ板を上げる (下げる方向には動かさない)")]
+        public float panelGroundClearance = DefaultPanelGroundClearance;
+
+        [Tooltip("板の下端より下へはみ出す要素がある面のための余白 (m、ワールド)。" +
+                 "2026-10-08 時点の板 (1140 × 700 px) は、どの面も板の矩形の内側に収まっているので 0")]
+        public float panelBottomExtra = 0f;
+
+        [Tooltip("持ち上げたときだけ、板の上端を頭の方へ倒す上限 (度)。見上げても読めるように。" +
+                 "**0 で無効** (持ち上げても垂直のまま)。持ち上げていないときは常に垂直")]
+        public float panelTiltMax = DefaultPanelTiltMax;
+
+        [Tooltip("地面として扱うレイヤー。**Default + Environment** (犬・フリスビー・写真の地面レイと同じ流儀。" +
+                 "板自身 (17 Walkthrough)・犬 (14)・プレイヤーには当たらない)。trigger は無視する")]
+        public LayerMask panelGroundMask = (1 << 0) | (1 << 11);
+
         [Header("Desktop: キーで表示")]
         [Tooltip("このキーで開く / 手元へ呼び戻す (既定 = T)。**Desktop の唯一の導線** — " +
                  "**Tab は使えない** — VRChat 2026.3.3 (2026-09 Open Beta) から Desktop の Tab 長押しが " +
@@ -844,6 +861,16 @@ namespace KominkaDogRun
         const int DefaultStickSign = -1;
         const float DefaultStickThreshold = 0.8f;
         const float DefaultOpenHold = 0.5f;
+        /// <summary>裏山改変 (IMP-UI-004): 板の下端と地面の間の余白 (m)。</summary>
+        const float DefaultPanelGroundClearance = 0.10f;
+        /// <summary>裏山改変 (IMP-UI-004): 持ち上げたときに頭へ倒す上限 (度)。</summary>
+        const float DefaultPanelTiltMax = 30f;
+        /// <summary>裏山改変 (IMP-UI-004): 地面のレイの始点を頭の高さからどれだけ上に置くか (m)。</summary>
+        const float PanelGroundRayUp = 0.5f;
+        /// <summary>裏山改変 (IMP-UI-004): 地面のレイの長さ (m)。</summary>
+        const float PanelGroundRayLength = 6f;
+        /// <summary>裏山改変 (IMP-UI-004): 頭より上に当たった時、撃ち直すレイの始点を当たり点からどれだけ下げるか (m)。</summary>
+        const float PanelGroundRetryGap = 0.02f;
 
         /// <summary>状態のポーリング間隔 (秒)。毎フレーム Ownership を問い合わせない。</summary>
         const float PollInterval = 0.2f;
@@ -882,6 +909,8 @@ namespace KominkaDogRun
 
         private int _eyeCooldown;
         private float _scale = 1f;
+        /// <summary>裏山改変 (IMP-UI-004): 最後に <see cref="PlaceInFront"/> が板を持ち上げた量 (m)。0 = 持ち上げていない。</summary>
+        private float _lastLift;
 
         /// <summary>いま開いているタブ (<c>Tab*</c>)。**同期も保存もしない。**
         /// 既定は左端の <see cref="TabAcc"/>。</summary>
@@ -1342,7 +1371,16 @@ namespace KominkaDogRun
         /// 向きは頭のヨーだけを使う (上下は捨てる) — **板は常に立っている**方が読める。
         /// 位置は板 (<see cref="panelRoot"/>) が目標へ来るように**逆算して root を置く** —
         /// 板は root の子で決め打ちのずらしを持っており、root をそのまま置くと
-        /// そのぶん斜め上へずれる。</summary>
+        /// そのぶん斜め上へずれる。
+        ///
+        /// **裏山改変 (IMP-UI-004 案 B、2026-10-08): 板の下端が地面に埋まらない高さへ上げる。**
+        /// 低い姿勢・小さいアバター・登り斜面で下のボタンが地面に埋まっていた。据える時にだけ
+        /// 下端の真下へレイを下ろし、下端が「地面 + <see cref="panelGroundClearance"/>」より低ければその差だけ上げる
+        /// (下げる方向には動かさない)。上げたときだけ、見上げて読めるよう上端を頭の方へ
+        /// <see cref="panelTiltMax"/> まで倒し、前へ出た下端でもう一度同じ判定をして足りない分だけ上げる。
+        /// 上げていないときは今までどおり垂直。レイは 1 判定につき最大 2 本 (屋根・枝の下の撃ち直し)、
+        /// 据える 1 回で最大 4 本。毎フレームは撃たない。
+        /// どちらも据えた後は固定 (追従しない。2026-09-03 の決定)。</summary>
         private void PlaceInFront(VRCPlayerApi lp)
         {
             if (panelRoot == null) return;
@@ -1371,7 +1409,86 @@ namespace KominkaDogRun
             // ずれたかぶん root を戻す — ずらしの値や scale を書き写さずに済む
             transform.position = want;
             transform.position += want - panelRoot.transform.position;
+
+            // 裏山改変 (IMP-UI-004): 下端が地面に埋まるなら、その差だけ上げる (据える時だけ。毎フレームは測らない)
+            float feetY = lp.GetPosition().y;
+            float lift = PanelGroundLift(head.position, feetY);
+            _lastLift = lift;
+            if (lift <= 0f) return;
+            want.y += lift;
+
+            // 上げたときだけ、上端を頭の方へ倒す。倒すと下端は (1 − cos) × 半高だけ上がるが、
+            // 同時に sin × 半高だけ前へ出る (30° で約 0.175 m)。登り斜面ではその先の地面が高いので、
+            // 倒して据え直した後にもう一度下端の真下を測って、足りない分だけさらに上げる (下の 2 回目)
+            Vector3 face = fwd;
+            float tiltMax = Mathf.Min(panelTiltMax, 80f);   // 90° 近くは LookRotation が上向きと平行になって崩れる
+            if (tiltMax > 0f)
+            {
+                Vector3 toPanel = want - head.position;   // 頭 → 板。上向き (y > 0) なら見上げている
+                float horiz = Mathf.Sqrt(toPanel.x * toPanel.x + toPanel.z * toPanel.z);
+                float pitch = Mathf.Clamp(Mathf.Atan2(toPanel.y, horiz) * Mathf.Rad2Deg, 0f, tiltMax);
+                if (pitch > 0f)
+                {
+                    float rad = pitch * Mathf.Deg2Rad;
+                    face = fwd * Mathf.Cos(rad) + Vector3.up * Mathf.Sin(rad);
+                }
+            }
+            transform.rotation = Quaternion.LookRotation(face, Vector3.up);
+            transform.position = want;
+            transform.position += want - panelRoot.transform.position;
+
+            // 2 回目: 倒して前へ出た下端の真下で同じ判定をする。傾きは変えずに、足りない分だけ上げる
+            float more = PanelGroundLift(head.position, feetY);
+            if (more <= 0f) return;
+            _lastLift = lift + more;
+            want.y += more;
+            transform.position = want;
+            transform.position += want - panelRoot.transform.position;
         }
+
+        /// <summary>裏山改変 (IMP-UI-004): いま据わっている板の下端を
+        /// 「地面 + <see cref="panelGroundClearance"/>」まで上げるのに要る量 (m)。上げなくてよければ 0。
+        ///
+        /// 板の下端は panelRoot の RectTransform.rect の下辺の中点を TransformPoint で世界へ移して取る
+        /// (板の大きさ・scale を書き写さない。傾けた板なら前へ出た位置がそのまま入る)。
+        /// 地面 = max(その下端の点の真下へ下ろしたレイの当たり点, 足元)。レイの始点は頭の高さ + 0.5 m、長さ 6 m、
+        /// <see cref="panelGroundMask"/> (Default + Environment) で trigger は無視する。
+        /// **頭より高い当たりは地面とみなさない** — 軒・枝・岩の上面に当たって板が頭上へ逃げるのを防ぐ。
+        /// その時は当たり点の 0.02 m 下から同じ長さでもう 1 本だけ撃ち直す (最大 2 本。屋根・枝の下の段差を拾う)。
+        /// それでも取れなければ足元だけを使う。</summary>
+        private float PanelGroundLift(Vector3 headPos, float feetY)
+        {
+            RectTransform rt = (RectTransform)panelRoot.transform;
+            Rect r = rt.rect;
+            Vector3 bottom = rt.TransformPoint(new Vector3(0f, r.yMin, 0f));
+            float bottomY = bottom.y - panelBottomExtra;
+
+            float ground = feetY;
+            RaycastHit hit;
+            Vector3 origin = new Vector3(bottom.x, headPos.y + PanelGroundRayUp, bottom.z);
+            if (Physics.Raycast(origin, Vector3.down, out hit, PanelGroundRayLength, panelGroundMask, QueryTriggerInteraction.Ignore))
+            {
+                float hy = hit.point.y;
+                if (hy > headPos.y)
+                {
+                    // 頭より上 (屋根・枝) に当たった。その少し下から 1 本だけ撃ち直す
+                    origin = new Vector3(bottom.x, hy - PanelGroundRetryGap, bottom.z);
+                    if (Physics.Raycast(origin, Vector3.down, out hit, PanelGroundRayLength, panelGroundMask, QueryTriggerInteraction.Ignore))
+                        hy = hit.point.y;
+                    else
+                        hy = feetY;
+                }
+                if (hy <= headPos.y && hy > ground) ground = hy;
+            }
+
+            float lift = ground + panelGroundClearance - bottomY;
+            return lift > 0f ? lift : 0f;
+        }
+
+        /// <summary>裏山改変 (IMP-UI-004): 最後に据えた時に板を持ち上げた量 (m)。0 = 持ち上げていない。ハーネスが読む
+        /// (変数名で読むなら <c>_lastLift</c>)。</summary>
+        // net: callable-ok: 読み取りのみ
+        public float LastLift() { return _lastLift; }
 
         // ============================================================
         // 入力 — **板は誰も動かさない。開くときに据えるだけ**

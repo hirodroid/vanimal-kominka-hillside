@@ -180,6 +180,11 @@ namespace KominkaDogRun.Editor
             // **既定値をコードで変えてもシーンには効かない** (シーン保存値が勝つ) ので、
             // 設計値は Setup が毎回明示的に書く (`vrc-udonsharp` §5 の注意と同じ)
             pouch.panelDistance = 0.95f;
+            // 裏山改変 (IMP-UI-004 案 B): 板を地面に埋めない (KD_TreatPouch の既定値と同じ)
+            pouch.panelGroundClearance = 0.10f;
+            pouch.panelBottomExtra = 0f;
+            pouch.panelTiltMax = 30f;
+            pouch.panelGroundMask = (1 << 0) | (1 << 11);
             pouch.recallDistance = 1.2f;
             pouch.recallCooldown = 2.5f;
             TryCopy(pouch, log);
