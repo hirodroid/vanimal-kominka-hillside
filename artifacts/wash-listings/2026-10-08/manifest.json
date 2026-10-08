@@ -1,0 +1,41 @@
+{
+  "created": "2026-10-08",
+  "source": "Unity visual prefabs wash-premium 0.3.0",
+  "cards": [
+    {
+      "file": "01-foam.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 131095,
+      "sha256": "91432577c93ab560b79f438212c18a0c7b571a9230e0283626e79dc81cead807"
+    },
+    {
+      "file": "02-water.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 143226,
+      "sha256": "94e8663a4cc62d98d20bcbdffda073573667fdcc1a16b87ed77035e39344c3ef"
+    },
+    {
+      "file": "03-finish.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 145473,
+      "sha256": "7ddaff8c4edd1ac41c8b08b81b6993a073bf1e0d7c93a9b805e154aff1f29e7c"
+    },
+    {
+      "file": "04-station.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 125312,
+      "sha256": "38963b831d503c9337057b1ae700ad32e6da9381236645d496b26b3cec3d4f97"
+    },
+    {
+      "file": "05-complete.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 141668,
+      "sha256": "3bb90014ea97c09339af1059524689d440607d20e6ec392ef18d7d4a5450c71b"
+    }
+  ]
+}

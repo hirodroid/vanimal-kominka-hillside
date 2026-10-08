@@ -1,0 +1,2 @@
+2026-10-08T10:33:32.2226385Z
+unique=584 glyphs=574 missing=0 labels=76 2048 square Alpha8; source runtime reference removed

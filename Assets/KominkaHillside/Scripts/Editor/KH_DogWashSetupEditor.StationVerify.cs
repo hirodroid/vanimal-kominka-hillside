@@ -155,6 +155,8 @@ namespace KominkaHillside.Editor
             if (reset != null)
             {
                 var want = specs.Select(s => { var t = st.Find(s.name); return t != null ? t.GetComponent<KH_WashTool>() : null; }).ToArray();
+                var premium = st.GetComponentInChildren<KH_WashSelection>(true);
+                if (premium != null && premium.slots != null) want = want.Concat(premium.slots).ToArray();
                 req(want.All(x => x != null) && reset.tools != null && reset.tools.Length == want.Length && reset.tools.Zip(want, (a, b) => a == b).All(x => x),
                     label + ": reset.tools = the " + want.Length + " tools of " + st.name + " (" + (reset.tools != null ? reset.tools.Length : 0) + ")");
                 var col = rb.GetComponent<Collider>();

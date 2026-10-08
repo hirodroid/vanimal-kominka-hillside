@@ -1,0 +1,436 @@
+2026-10-08T10:54:29.1366915Z
+PASS
+PASS four selectors
+PASS four stations own distinct pickups and visuals
+PASS 13 languages / 42 words
+PASS slots and models Hillside
+PASS Manual selector
+PASS saved backing model references
+PASS saved backing slot references (Component[])
+PASS selector is scene object
+PASS anchors FoamCannon
+PASS collider FoamCannon
+anchor FoamCannon nozzle=FoamCannon_NozzleAnchor grip=FoamCannon_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors DuckWaterGun
+PASS collider DuckWaterGun
+anchor DuckWaterGun nozzle=DuckWaterGun_NozzleAnchor grip=DuckWaterGun_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors FishWaterGun
+PASS collider FishWaterGun
+anchor FishWaterGun nozzle=FishWaterGun_NozzleAnchor grip=FishWaterGun_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors BambooWaterGun
+PASS collider BambooWaterGun
+anchor BambooWaterGun nozzle=BambooWaterGun_NozzleAnchor grip=BambooWaterGun_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors FlowerShower
+PASS collider FlowerShower
+anchor FlowerShower nozzle=FlowerShower_NozzleAnchor grip=FlowerShower_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors RainShower
+PASS collider RainShower
+anchor RainShower nozzle=RainShower_NozzleAnchor grip=RainShower_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors WateringCan
+PASS collider WateringCan
+anchor WateringCan nozzle=WateringCan_NozzleAnchor grip=WateringCan_GripAnchor forward=(0.000, -0.523, 0.853)
+PASS anchors Dryer
+PASS collider Dryer
+anchor Dryer nozzle=Dryer_NozzleAnchor grip=Dryer_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors PatternTowel
+PASS collider PatternTowel
+anchor PatternTowel nozzle=PatternTowel_ContactAnchor grip=PatternTowel_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors PawMitt
+PASS collider PawMitt
+anchor PawMitt nozzle=PawMitt_ContactAnchor grip=PawMitt_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors LargeSponge
+PASS collider LargeSponge
+anchor LargeSponge nozzle=LargeSponge_ContactAnchor grip=LargeSponge_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors GroomingBrush
+PASS collider GroomingBrush
+anchor GroomingBrush nozzle=GroomingBrush_ContactAnchor grip=GroomingBrush_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors Cologne
+PASS collider Cologne
+anchor Cologne nozzle=Cologne_NozzleAnchor grip=Cologne_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot0
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot1
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot2
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot3
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot4
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot5
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_Hillside_Slot6
+PASS Manual spray state
+PASS no debug override
+PASS localized board
+PASS canvas raycast surface
+PASS finite spatial audio AppearSound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio Click
+PASS 22 photos
+PASS button Set0
+PASS button Set1
+PASS button Set2
+PASS button Set3
+PASS button Set4
+PASS button Item0
+PASS button Item1
+PASS button Item2
+PASS button Item3
+PASS button Item4
+PASS button Item5
+PASS button Next
+PASS button Take
+PASS button Reset
+PASS slots and models KH_WashStation
+PASS Manual selector
+PASS saved backing model references
+PASS saved backing slot references (Component[])
+PASS selector is scene object
+PASS anchors FoamCannon
+PASS collider FoamCannon
+anchor FoamCannon nozzle=FoamCannon_NozzleAnchor grip=FoamCannon_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors DuckWaterGun
+PASS collider DuckWaterGun
+anchor DuckWaterGun nozzle=DuckWaterGun_NozzleAnchor grip=DuckWaterGun_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors FishWaterGun
+PASS collider FishWaterGun
+anchor FishWaterGun nozzle=FishWaterGun_NozzleAnchor grip=FishWaterGun_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors BambooWaterGun
+PASS collider BambooWaterGun
+anchor BambooWaterGun nozzle=BambooWaterGun_NozzleAnchor grip=BambooWaterGun_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors FlowerShower
+PASS collider FlowerShower
+anchor FlowerShower nozzle=FlowerShower_NozzleAnchor grip=FlowerShower_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors RainShower
+PASS collider RainShower
+anchor RainShower nozzle=RainShower_NozzleAnchor grip=RainShower_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors WateringCan
+PASS collider WateringCan
+anchor WateringCan nozzle=WateringCan_NozzleAnchor grip=WateringCan_GripAnchor forward=(0.000, -0.523, 0.853)
+PASS anchors Dryer
+PASS collider Dryer
+anchor Dryer nozzle=Dryer_NozzleAnchor grip=Dryer_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors PatternTowel
+PASS collider PatternTowel
+anchor PatternTowel nozzle=PatternTowel_ContactAnchor grip=PatternTowel_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors PawMitt
+PASS collider PawMitt
+anchor PawMitt nozzle=PawMitt_ContactAnchor grip=PawMitt_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors LargeSponge
+PASS collider LargeSponge
+anchor LargeSponge nozzle=LargeSponge_ContactAnchor grip=LargeSponge_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors GroomingBrush
+PASS collider GroomingBrush
+anchor GroomingBrush nozzle=GroomingBrush_ContactAnchor grip=GroomingBrush_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors Cologne
+PASS collider Cologne
+anchor Cologne nozzle=Cologne_NozzleAnchor grip=Cologne_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot0
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot1
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot2
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot3
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot4
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot5
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_KH_WashStation_Slot6
+PASS Manual spray state
+PASS no debug override
+PASS localized board
+PASS canvas raycast surface
+PASS finite spatial audio AppearSound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio Click
+PASS 22 photos
+PASS button Set0
+PASS button Set1
+PASS button Set2
+PASS button Set3
+PASS button Set4
+PASS button Item0
+PASS button Item1
+PASS button Item2
+PASS button Item3
+PASS button Item4
+PASS button Item5
+PASS button Next
+PASS button Take
+PASS button Reset
+PASS slots and models Upper
+PASS Manual selector
+PASS saved backing model references
+PASS saved backing slot references (Component[])
+PASS selector is scene object
+PASS anchors FoamCannon
+PASS collider FoamCannon
+anchor FoamCannon nozzle=FoamCannon_NozzleAnchor grip=FoamCannon_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors DuckWaterGun
+PASS collider DuckWaterGun
+anchor DuckWaterGun nozzle=DuckWaterGun_NozzleAnchor grip=DuckWaterGun_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors FishWaterGun
+PASS collider FishWaterGun
+anchor FishWaterGun nozzle=FishWaterGun_NozzleAnchor grip=FishWaterGun_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors BambooWaterGun
+PASS collider BambooWaterGun
+anchor BambooWaterGun nozzle=BambooWaterGun_NozzleAnchor grip=BambooWaterGun_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors FlowerShower
+PASS collider FlowerShower
+anchor FlowerShower nozzle=FlowerShower_NozzleAnchor grip=FlowerShower_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors RainShower
+PASS collider RainShower
+anchor RainShower nozzle=RainShower_NozzleAnchor grip=RainShower_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors WateringCan
+PASS collider WateringCan
+anchor WateringCan nozzle=WateringCan_NozzleAnchor grip=WateringCan_GripAnchor forward=(0.000, -0.523, 0.853)
+PASS anchors Dryer
+PASS collider Dryer
+anchor Dryer nozzle=Dryer_NozzleAnchor grip=Dryer_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors PatternTowel
+PASS collider PatternTowel
+anchor PatternTowel nozzle=PatternTowel_ContactAnchor grip=PatternTowel_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors PawMitt
+PASS collider PawMitt
+anchor PawMitt nozzle=PawMitt_ContactAnchor grip=PawMitt_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors LargeSponge
+PASS collider LargeSponge
+anchor LargeSponge nozzle=LargeSponge_ContactAnchor grip=LargeSponge_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors GroomingBrush
+PASS collider GroomingBrush
+anchor GroomingBrush nozzle=GroomingBrush_ContactAnchor grip=GroomingBrush_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors Cologne
+PASS collider Cologne
+anchor Cologne nozzle=Cologne_NozzleAnchor grip=Cologne_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot0
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot1
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot2
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot3
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot4
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot5
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_Upper_Slot6
+PASS Manual spray state
+PASS no debug override
+PASS localized board
+PASS canvas raycast surface
+PASS finite spatial audio AppearSound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio Click
+PASS 22 photos
+PASS button Set0
+PASS button Set1
+PASS button Set2
+PASS button Set3
+PASS button Set4
+PASS button Item0
+PASS button Item1
+PASS button Item2
+PASS button Item3
+PASS button Item4
+PASS button Item5
+PASS button Next
+PASS button Take
+PASS button Reset
+PASS slots and models River
+PASS Manual selector
+PASS saved backing model references
+PASS saved backing slot references (Component[])
+PASS selector is scene object
+PASS anchors FoamCannon
+PASS collider FoamCannon
+anchor FoamCannon nozzle=FoamCannon_NozzleAnchor grip=FoamCannon_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors DuckWaterGun
+PASS collider DuckWaterGun
+anchor DuckWaterGun nozzle=DuckWaterGun_NozzleAnchor grip=DuckWaterGun_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors FishWaterGun
+PASS collider FishWaterGun
+anchor FishWaterGun nozzle=FishWaterGun_NozzleAnchor grip=FishWaterGun_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors BambooWaterGun
+PASS collider BambooWaterGun
+anchor BambooWaterGun nozzle=BambooWaterGun_NozzleAnchor grip=BambooWaterGun_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors FlowerShower
+PASS collider FlowerShower
+anchor FlowerShower nozzle=FlowerShower_NozzleAnchor grip=FlowerShower_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors RainShower
+PASS collider RainShower
+anchor RainShower nozzle=RainShower_NozzleAnchor grip=RainShower_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors WateringCan
+PASS collider WateringCan
+anchor WateringCan nozzle=WateringCan_NozzleAnchor grip=WateringCan_GripAnchor forward=(0.000, -0.523, 0.853)
+PASS anchors Dryer
+PASS collider Dryer
+anchor Dryer nozzle=Dryer_NozzleAnchor grip=Dryer_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS anchors PatternTowel
+PASS collider PatternTowel
+anchor PatternTowel nozzle=PatternTowel_ContactAnchor grip=PatternTowel_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors PawMitt
+PASS collider PawMitt
+anchor PawMitt nozzle=PawMitt_ContactAnchor grip=PawMitt_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors LargeSponge
+PASS collider LargeSponge
+anchor LargeSponge nozzle=LargeSponge_ContactAnchor grip=LargeSponge_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors GroomingBrush
+PASS collider GroomingBrush
+anchor GroomingBrush nozzle=GroomingBrush_ContactAnchor grip=GroomingBrush_GripAnchor forward=(0.000, -1.000, 0.000)
+PASS anchors Cologne
+PASS collider Cologne
+anchor Cologne nozzle=Cologne_NozzleAnchor grip=Cologne_GripAnchor forward=(0.000, 0.000, 1.000)
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot0
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot1
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot2
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot3
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot4
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot5
+PASS Manual spray state
+PASS no debug override
+PASS network-capable pickup backing
+PASS dog wiring Premium_River_Slot6
+PASS Manual spray state
+PASS no debug override
+PASS localized board
+PASS canvas raycast surface
+PASS finite spatial audio AppearSound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio SpraySound
+PASS finite spatial audio Click
+PASS 22 photos
+PASS button Set0
+PASS button Set1
+PASS button Set2
+PASS button Set3
+PASS button Set4
+PASS button Item0
+PASS button Item1
+PASS button Item2
+PASS button Item3
+PASS button Item4
+PASS button Item5
+PASS button Next
+PASS button Take
+PASS button Reset
+PASS network-capable cosmetic backing
+PASS network-capable cosmetic backing
+PASS network-capable cosmetic backing
+PASS network-capable cosmetic backing
+PASS network-capable cosmetic backing
+PASS network-capable cosmetic backing
+PASS dryer delta wetness only (C# shared body)
+PASS apply FoamCannon
+PASS one enabled pickup / nozzle FoamCannon
+PASS apply DuckWaterGun
+PASS one enabled pickup / nozzle DuckWaterGun
+PASS apply FishWaterGun
+PASS one enabled pickup / nozzle FishWaterGun
+PASS apply BambooWaterGun
+PASS one enabled pickup / nozzle BambooWaterGun
+PASS apply FlowerShower
+PASS one enabled pickup / nozzle FlowerShower
+PASS apply RainShower
+PASS one enabled pickup / nozzle RainShower
+PASS apply WateringCan
+PASS one enabled pickup / nozzle WateringCan
+PASS apply Dryer
+PASS one enabled pickup / nozzle Dryer
+PASS apply PatternTowel
+PASS one enabled pickup / nozzle PatternTowel
+PASS apply PawMitt
+PASS one enabled pickup / nozzle PawMitt
+PASS apply LargeSponge
+PASS one enabled pickup / nozzle LargeSponge
+PASS apply GroomingBrush
+PASS one enabled pickup / nozzle GroomingBrush
+PASS apply Cologne
+PASS one enabled pickup / nozzle Cologne
+PASS apply HinokiBath
+PASS apply StoneBath
+PASS apply TileBath
+PASS apply FloatingDuck
+PASS rendered locale overflow=0 missing=0
+NOT_TESTED: real two-client ownership, Quest sound/rendering, pickup hand alignment

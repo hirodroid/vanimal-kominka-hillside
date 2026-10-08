@@ -55,6 +55,15 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Course/100h - Harness Wash audit Phase A (travel x station, station washed by other, placed call timeout)")]
         public static void WashHarnessAuditA() { WashHarnessGroups(new[] { "audit-a" }); }   // the 5 cases of WashAuditA.cs alone (they also run in 100f)
 
+        [MenuItem("Tools/KominkaHillside/Course/100p - Harness Wash premium selection")]
+        public static void WashHarnessPremium(){WashHarnessGroups(new[]{"premium"});}
+
+        [MenuItem("Tools/KominkaHillside/Course/100p1 - Harness Wash premium input")]
+        public static void WashHarnessPremiumInput(){WashHarnessGroups(new[]{"premium-input"});}
+        [MenuItem("Tools/KominkaHillside/Course/100p2 - Harness Wash premium remaining")]
+        public static void WashHarnessPremiumRemaining(){WashHarnessGroups(new[]{"premium-other"});}
+        [MenuItem("Tools/KominkaHillside/Course/100p3 - Harness Wash premium reset")]
+        public static void WashHarnessPremiumReset(){WashHarnessGroups(new[]{"premium-free"});}
         static void WashHarnessGroups(string[] groups)
         {
             Begin(false);
@@ -806,6 +815,7 @@ namespace KominkaHillside.Editor
             if (WsGroup("call") || WsGroup("audit-a")) MakeWashAuditACases();   // audit 2026-10-07 Phase A (WashAuditA.cs): RC-1 travel ticket x station, RC-8 (a), RC-2 placed call timeout
             if (WsGroup("height")) MakeWashHeightCases(); // IMP-ENV-011 (WashHeight.cs): lift, personal floor, board handlers
             if (WsGroup("hand") || WsGroup("hand-bottle")) MakeWashHandCases();    // IMP-DOG-039 (WashHand.cs): the bottle, the bare hands (simulated), the picture guide. Before "dogs" (it re-binds wsWash)
+            if ((WsGroup("premium") || WsGroup("premium-input") || WsGroup("premium-other") || WsGroup("premium-free")) && UnityEngine.Object.FindObjectsOfType<KH_WashSelection>(true).Length>0) MakeWashPremiumCases();
             if (WsGroup("dogs")) MakeWashDogsCases();     // IMP-DOG-030 (WashDogs.cs): all six wired, Dachs foam, the others unchanged. Last: re-binds wsWash to the Dachs
 
             WsWrite();
@@ -887,6 +897,7 @@ namespace KominkaHillside.Editor
             // IMP-DOG-039: every held-tool kind (sponge, shower, towel, bottle = channels 0..3) and both bare hands (channels 4, 5)
             foreach (int t in new[] { KH_DogWash.ToolSponge, KH_DogWash.ToolShower, KH_DogWash.ToolTowel, KH_DogWash.ToolBottle }) { try { WsEnd(t); } catch (Exception) { } }
             for (int h = 0; h < 2; h++) { try { WsCall("_EndHand", "hand", h); } catch (Exception) { } }   // an older program has no _EndHand
+            try { PremiumRecover(); } catch (Exception) { }
             try { HwRecover(); } catch (Exception) { }         // 100g: the simulated hands off, its heap writes put back
             try { WsRunoffRestore(); } catch (Exception) { }   // W-shoulder turns the runoff off for itself
         }

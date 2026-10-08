@@ -248,7 +248,7 @@ namespace KominkaHillside.Editor
 
         /// <summary>Tools of every station in the builder's order (main ToolSpecs, then CourseStations): how many
         /// KH_DogWash.tools must hold (Verify.cs line "tools: n / ToolSpecs.Length" should compare with this).</summary>
-        static int AllToolCount() { return ToolSpecs.Length + CourseStations.Sum(s => s.tools.Length); }
+        static int AllToolCount() { return ToolSpecs.Length + CourseStations.Sum(s => s.tools.Length) + UnityEngine.Object.FindObjectsOfType<KH_WashSelection>(true).Where(x => x.gameObject.scene.path == KH_CourseGroundEditor.ScenePath).Sum(x => x.slots != null ? x.slots.Length : 0); }
 
         /// <summary>The KH_WashTool of every station present in the scene, main first, in the builder's order (missing ones skipped).</summary>
         static List<KH_WashTool> AllStationTools(UnityEngine.SceneManagement.Scene scene)
@@ -259,6 +259,8 @@ namespace KominkaHillside.Editor
                 var specs = st.name == StationName && st.parent == null ? ToolSpecs : CourseStations.Where(s => s.key == st.name).Select(s => s.tools).FirstOrDefault();
                 if (specs == null) continue;
                 foreach (var spec in specs) { var t = st.Find(spec.name); var tool = t != null ? t.GetComponent<KH_WashTool>() : null; if (tool != null) list.Add(tool); }
+                var premium = st.GetComponentInChildren<KH_WashSelection>(true);
+                if (premium != null && premium.slots != null) list.AddRange(premium.slots.Where(t => t != null));
             }
             return list;
         }

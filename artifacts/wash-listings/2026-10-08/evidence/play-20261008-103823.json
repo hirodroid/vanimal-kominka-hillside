@@ -1,0 +1,52 @@
+{
+    "runId": "20261008-103823",
+    "harness": "wash (Course/100)",
+    "dogName": "KD_Dog_Shiba",
+    "maskSource": "",
+    "dog": 4,
+    "colliders": 25,
+    "validTexels": 46721,
+    "meshToWorldScale": 1.6151951551437379,
+    "resolved": [
+        "rinseReach 1.7, edgeNoise 0.3, runoff 1.5 s x 3 / s, step 2 texels, spongeRadius 0.11 m, showerRadius 0.07 m",
+        "washLayer mask 4",
+        "position map texel p90 0.0054 m, p99 0.0139 m (90726 adjacent pairs)",
+        "_LocalContact -> __0__LocalContact",
+        "_EndContact -> __0__EndContact",
+        "_DebugSetDirt -> __0__DebugSetDirt",
+        "_DebugClear -> _DebugClear",
+        "tool -> __0_tool__param,__1_tool__param,__2_tool__param,__3_tool__param,__4_tool__param,__5_tool__param,__6_tool__param,__7_tool__param,__8_tool__param,__9_tool__param,__10_tool__param,__11_tool__param,__12_tool__param,__13_tool__param,__14_tool__param,__15_tool__param,__16_tool__param,__17_tool__param,__18_tool__param,__19_tool__param,__20_tool__param,__21_tool__param,__22_tool__param",
+        "colliderIndex -> __0_colliderIndex__param,__1_colliderIndex__param,__2_colliderIndex__param,__3_colliderIndex__param,__4_colliderIndex__param",
+        "worldPoint -> __0_worldPoint__param,__1_worldPoint__param",
+        "seconds -> __0_seconds__param,__1_seconds__param,__2_seconds__param,__3_seconds__param,__4_seconds__param",
+        "radiusMeters -> __0_radiusMeters__param,__1_radiusMeters__param,__2_radiusMeters__param",
+        "value -> __0_value__param",
+        "_WashHold -> _WashHold / __0__WashHold__ret",
+        "_CleanSerial -> _CleanSerial / __0__CleanSerial__ret",
+        "_LastStrokePart -> _LastStrokePart / __0__LastStrokePart__ret",
+        "_AverageDirt -> _AverageDirt / __0__AverageDirt__ret",
+        "_AverageFoam -> _AverageFoam / __0__AverageFoam__ret"
+    ],
+    "cases": [
+        {
+            "name": "P-selection-pulse-toggle",
+            "status": "PASS",
+            "notes": [
+                "UI local owner request/ack; same-slot pulse-to-toggle; simulated pickup/Use/drop events",
+                "max frame dt 333 ms (stretched frames: rerun alone before reading a failure as a regression)"
+            ]
+        }
+    ],
+    "notCovered": [
+        "Real network: other clients drawing a received NetStroke, the 8 Hz send and the per-sender budget between clients, the Owner integrating someone else's strokes, two washers at once -> PCVR with 2 people",
+        "Late joiner / epoch repaint and Owner handover with real clients (W-latejoin / W-reset / W-handover call the events directly) -> PCVR",
+        "The tool: VRC_Pickup hold, shower centre + ring raycasts and radius by distance, VR sponge sphere, Desktop gaze + Use, haptics, spray particles / audio and KH_WashToolState sync. The harness calls _LocalContact with collider surface points instead",
+        "Visuals of the shell (foam layers, dirt pattern, wet darkening, face foam limit), splash / foam puff particles, contact audio -> Play / PCVR",
+        "The dog's head gaze and tilt, the body turn toward the washer (only _washActive, _WashHold and the horizontal speed are read)",
+        "Priority over washing by water / sleep call (design 1-5); the leashed stop with a stroke from someone other than the holder (ClientSim has one player)",
+        "Drying (foamDrySeconds / wetDrySeconds, 90-120 s) and the shell switching off after drying; RenderTexture loss recovery",
+        "Quest / iOS rendering of the mask and the shell",
+        "Partial run: groups premium-input only (the other groups were not run this time)",
+        "Premium: UI persistent listeners and local Owner request exercised. Pickup/Use events are injected; physical grip, two-client network, sound quality and Quest rendering remain NOT_TESTED."
+    ]
+}

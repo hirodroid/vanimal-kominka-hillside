@@ -223,6 +223,7 @@ namespace KominkaHillside.Editor
         public static void Build()
         {
             KH_CourseGroundEditor.Idle(KH_CourseGroundEditor.ScenePath);
+            if (UnityEngine.Object.FindObjectsOfType<KH_WashSelection>(true).Length > 0) throw new InvalidOperationException("Premium selection is installed. Wash/11 would replace tool authorization and reset wiring; use a targeted station update instead.");
             RequirePrograms();
             var ctx = ResolveScene();   // everything is looked up before anything changes (a failure here leaves the scene untouched)
             var r = new BuildReport { utc = DateTime.UtcNow.ToString("o"), scene = KH_CourseGroundEditor.ScenePath };

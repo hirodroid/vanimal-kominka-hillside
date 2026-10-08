@@ -3,6 +3,8 @@ using UnityEngine;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon.Common.Enums;
+using VRC.SDK3.UdonNetworkCalling;
+using VRC.Udon.Common.Interfaces;
 
 namespace KominkaHillside
 {
@@ -48,6 +50,15 @@ namespace KominkaHillside
         public ParticleSystem spray;
         public AudioSource sprayAudio;
         public KH_WashToolState state;
+        // Optional premium input; effect kind remains tool. Existing free tools keep these defaults.
+        public bool sprayInput;
+        public float pulseSeconds;
+        public int finishKind;
+        public KH_WashFinishFx[] finishTargets;
+        public KH_WashSelection selection;
+        private float _pulseUntil;
+        public bool selectionActive = true;
+        public bool _IsSprayer() { return tool == KH_DogWash.ToolShower || sprayInput; }
 
         [Header("Prototype values (Play で決め直す)")]
         public float sprayRange = 1.5f;
@@ -258,7 +269,7 @@ namespace KominkaHillside
             _useHeld = false;
             _sprayOn = false;                     // picked up: always starts off
             EndAllContacts();
-            if (tool == KH_DogWash.ToolShower && state != null && state.spraying) state._SetSpraying(false);
+            if (_IsSprayer() && state != null && state.spraying) state._SetSpraying(false);
             ApplySpray(Want());
             WakeFrames();   // IMP-DOG-036 S5: held = every frame
         }
@@ -269,18 +280,19 @@ namespace KominkaHillside
             _useHeld = false;
             _sprayOn = false;
             EndAllContacts();
-            if (tool == KH_DogWash.ToolShower && state != null) state._SetSpraying(false);
+            if (_IsSprayer() && state != null) state._SetSpraying(false);
             ApplySpray(Want());
         }
 
         public override void OnPickupUseDown()
         {
-            if (tool == KH_DogWash.ToolShower)
+            if (_IsSprayer())
             {
                 float now = Time.time;
                 if (now - _lastToggleAt < toggleGuardSeconds) return;   // a double tap: ignore the second flip
                 _lastToggleAt = now;
-                _sprayOn = !_sprayOn;
+                _sprayOn = pulseSeconds > 0f || !_sprayOn;
+                if (pulseSeconds > 0f) _pulseUntil = now + pulseSeconds;
                 if (state != null) state._SetSpraying(_sprayOn);
                 if (!_sprayOn) EndAllContacts();
                 ApplySpray(Want());
@@ -297,7 +309,7 @@ namespace KominkaHillside
 
         public override void OnPickupUseUp()
         {
-            if (tool == KH_DogWash.ToolShower) return;   // the toggle ignores the release
+            if (_IsSprayer()) return;   // the toggle ignores the release
             if (tool == KH_DogWash.ToolBottle)
             {
                 _useHeld = false;                         // stop repeating; every dose already closed its contact
@@ -317,7 +329,8 @@ namespace KominkaHillside
 
         bool Want()
         {
-            if (tool != KH_DogWash.ToolShower) return false;
+            if (!selectionActive) return false;
+            if (!_IsSprayer()) return false;
             if (_held) return _sprayOn;               // the holder's own truth, no round trip
             return state != null && state.spraying;
         }
@@ -379,7 +392,7 @@ namespace KominkaHillside
             _useHeld = false;
             _sprayOn = false;
             EndAllContacts();
-            if (tool == KH_DogWash.ToolShower && state != null) state._SetSpraying(false);
+            if (_IsSprayer() && state != null) state._SetSpraying(false);
             ApplySpray(false);
             transform.position = home.position;
             transform.rotation = home.rotation;
@@ -440,7 +453,7 @@ namespace KominkaHillside
         private bool _frameLoop;   // _ToolFrame is scheduled
         private bool _idleLoop;    // _ToolIdle is scheduled
 
-        bool Busy() { return _held || _sprayShown || _returnPending; }
+        bool Busy() { return selectionActive && (_held || _sprayShown || _returnPending); }
 
         void WakeFrames()
         {
@@ -493,18 +506,22 @@ namespace KominkaHillside
             _idleNext = now + IdleInterval;
             TrackHolder();
             ReturnTick();
-            if (tool == KH_DogWash.ToolShower) SprayChecks();   // a sponge / towel never sprays (only the shower sets it)
+            if (_IsSprayer()) SprayChecks();   // a sponge / towel never sprays (only the shower sets it)
         }
 
         // The old Update's busy branch.
         void BusyFrame()
         {
+            if (_held && pulseSeconds > 0f && _sprayOn && Time.time >= _pulseUntil)
+            {
+                _sprayOn = false; if (state != null) state._SetSpraying(false); EndAllContacts(); ApplySpray(false);
+            }
             TrackHolder();
             ReturnTick();
-            if (tool == KH_DogWash.ToolShower) SprayChecks();
+            if (_IsSprayer()) SprayChecks();
 
             if (!_held || washes == null || _strokeFrame == null) return;
-            if (tool == KH_DogWash.ToolBottle)
+            if (tool == KH_DogWash.ToolBottle && !sprayInput)
             {
                 // Doses only (no per-frame contact, no continuous haptic). The first one came from OnPickupUseDown.
                 if (_useHeld && Time.time >= _nextSquirt)
@@ -519,7 +536,7 @@ namespace KominkaHillside
             if (!Utilities.IsValid(lp)) return;
             bool vr = lp.IsUserInVR();
             bool any;
-            if (tool == KH_DogWash.ToolShower) any = _sprayOn && SprayRays();   // spray on while held (the toggle)
+            if (_IsSprayer()) any = _sprayOn && SprayRays();   // spray on while held (the toggle)
             else if (vr) any = ContactSphere();
             else any = _useHeld && ContactGaze(lp);
             if (any && vr) Haptic(lp);
@@ -625,6 +642,11 @@ namespace KominkaHillside
         // seconds: this contact's dwell (the continuous tools pass Time.deltaTime; the bottle passes one dose).
         void Stroke(int d, int ci, Vector3 point, float seconds, float radius)
         {
+            if (finishKind > 0)
+            {
+                if (finishTargets != null && d < finishTargets.Length && finishTargets[d] != null) finishTargets[d]._LocalFinish(finishKind, point);
+                return;
+            }
             KH_DogWash w = washes[d];
             if (w == null) return;
             _touching[d] = true;
@@ -698,12 +720,12 @@ namespace KominkaHillside
             lp.PlayHapticEventInHand(hand, bottleHapticDuration, bottleHapticAmplitude, hapticFrequency);
         }
 
-        /// <summary>Harness only (Course/100g H-bottle): one dose along (origin, direction) with the VR aim (SphereCast of
+        /// <summary>Harness only (Course/100g H-bottle / 100p cosmetic isolation): one dose along (origin, direction) with the VR aim (SphereCast of
         /// bottleAimRadius, bottleReach), as a Use press would put it, without the pickup. Particles too, no haptic.
         /// Local; nothing in the world calls it.</summary>
         public void _DebugSquirt(Vector3 origin, Vector3 direction)
         {
-            if (tool != KH_DogWash.ToolBottle || washes == null || _touching == null) return;
+            if ((tool != KH_DogWash.ToolBottle && finishKind <= 0) || washes == null || _touching == null) return;
             if (squirtParticles != null) squirtParticles.Emit(8);
             SquirtAt(origin, direction, bottleReach, bottleAimRadius);
         }
@@ -718,5 +740,20 @@ namespace KominkaHillside
             _lastHaptic = now;
             lp.PlayHapticEventInHand(hand, hapticDuration, hapticAmplitude, hapticFrequency);
         }
+        public void _SetSelected(bool value)
+        {
+            selectionActive = value;
+            if (value) return;
+            _useHeld = false; _sprayOn = false; EndAllContacts(); ApplySpray(false);
+            if (state != null && Networking.IsOwner(state.gameObject)) state._SetSpraying(false);
+        }
+        [NetworkCallable(maxEventsPerSecond: 4)]
+        public void ReqPremiumReturn()
+        {
+            VRCPlayerApi p = NetworkCalling.CallingPlayer;
+            if (!Networking.IsOwner(gameObject) || selection == null || !Utilities.IsValid(p) || !Networking.IsOwner(p, selection.gameObject) || _HeldNow()) return;
+            if (home != null) ReturnHome();
+        }
+
     }
 }

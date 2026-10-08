@@ -1,0 +1,128 @@
+{
+  "asset": "wash-premium",
+  "revision": "0.3.0",
+  "source": "C:/work/unity/vrc-asset-lab/assets/wash-premium",
+  "imported_on": "2026-10-08",
+  "files": [
+    {
+      "file": "BambooWaterGun.fbx",
+      "sha256": "7d7722f2dcc7fc8e79368fde0555279ddcdebb3bfd2838b6979d17a2df237db2",
+      "source_sha256": "7d7722f2dcc7fc8e79368fde0555279ddcdebb3bfd2838b6979d17a2df237db2"
+    },
+    {
+      "file": "Cologne.fbx",
+      "sha256": "61e95663f734b917f55dc6c13e10339941625aa4a997d6da31659f28e4f2f973",
+      "source_sha256": "61e95663f734b917f55dc6c13e10339941625aa4a997d6da31659f28e4f2f973"
+    },
+    {
+      "file": "Dryer.fbx",
+      "sha256": "302284f5be61f88894d6584c73601c553a4e82569a5956ed7d6756bfcbcbfd72",
+      "source_sha256": "302284f5be61f88894d6584c73601c553a4e82569a5956ed7d6756bfcbcbfd72"
+    },
+    {
+      "file": "DuckWaterGun.fbx",
+      "sha256": "2571b2ee3e6dade1c15d82d20fd9d7a1cf4edb4b704bf6c6c5d55e6b0d95b0b8",
+      "source_sha256": "2571b2ee3e6dade1c15d82d20fd9d7a1cf4edb4b704bf6c6c5d55e6b0d95b0b8"
+    },
+    {
+      "file": "FishWaterGun.fbx",
+      "sha256": "df9c6ec6e8d8f713805d5085fb04b3076c9fac131b41c7c752a549aa69650295",
+      "source_sha256": "df9c6ec6e8d8f713805d5085fb04b3076c9fac131b41c7c752a549aa69650295"
+    },
+    {
+      "file": "FloatingDuck.fbx",
+      "sha256": "1db13ea1e58ac15392d43666a9e9184d29eeaa62f7d0bfb152d158df55f4db6e",
+      "source_sha256": "1db13ea1e58ac15392d43666a9e9184d29eeaa62f7d0bfb152d158df55f4db6e"
+    },
+    {
+      "file": "FlowerShower.fbx",
+      "sha256": "b4de7f025d2f628c5d2c69d095c19f7d8b419a8fe7585940bccd90260821ab51",
+      "source_sha256": "b4de7f025d2f628c5d2c69d095c19f7d8b419a8fe7585940bccd90260821ab51"
+    },
+    {
+      "file": "FoamCannon.fbx",
+      "sha256": "894c124160011e3c4a2c56f0ab541e39be003383b6029a4a0f1d03a11b18a69f",
+      "source_sha256": "894c124160011e3c4a2c56f0ab541e39be003383b6029a4a0f1d03a11b18a69f"
+    },
+    {
+      "file": "GroomingBrush.fbx",
+      "sha256": "30b04f9a54b86949dcd943f4d6a43f8900b41a0aae0ea5e6371455cfe4fb8ed9",
+      "source_sha256": "30b04f9a54b86949dcd943f4d6a43f8900b41a0aae0ea5e6371455cfe4fb8ed9"
+    },
+    {
+      "file": "HinokiBath.fbx",
+      "sha256": "3125651f5b3f07bfa0d9ef25ee49a49d8addbe92b20695a703db887ef93c2b3f",
+      "source_sha256": "3125651f5b3f07bfa0d9ef25ee49a49d8addbe92b20695a703db887ef93c2b3f"
+    },
+    {
+      "file": "LargeSponge.fbx",
+      "sha256": "c2095f5247a3aff049b75a87d210f74b64524a2e1d2d60947c556c5cfc794f7b",
+      "source_sha256": "c2095f5247a3aff049b75a87d210f74b64524a2e1d2d60947c556c5cfc794f7b"
+    },
+    {
+      "file": "PatternTowel.fbx",
+      "sha256": "0de4f4f61d7a41b3d182285c20fc851740845c66bc27cd306d6a9ff8d832038b",
+      "source_sha256": "0de4f4f61d7a41b3d182285c20fc851740845c66bc27cd306d6a9ff8d832038b"
+    },
+    {
+      "file": "PawMitt.fbx",
+      "sha256": "a99498a09750fa04dac4515b1f27472193ccbdf0c3a62f3a5051f3406687dd15",
+      "source_sha256": "a99498a09750fa04dac4515b1f27472193ccbdf0c3a62f3a5051f3406687dd15"
+    },
+    {
+      "file": "PremiumFixture_BaseColor.png",
+      "sha256": "4c1d4b23b5a8c81e52aba101f3f19004b9c8436393d13965c87a6cc2391d88cb",
+      "source_sha256": "4c1d4b23b5a8c81e52aba101f3f19004b9c8436393d13965c87a6cc2391d88cb"
+    },
+    {
+      "file": "PremiumFixture_MetallicSmoothness.png",
+      "sha256": "3a5e8a938ce345f325e9f491002b4e9f5742110a35e275e27e09b3b9aa7ea073",
+      "source_sha256": "3a5e8a938ce345f325e9f491002b4e9f5742110a35e275e27e09b3b9aa7ea073"
+    },
+    {
+      "file": "PremiumFixture_Normal.png",
+      "sha256": "e44d293d33b2e7651d7098559b2e0a0b9b3495c10fded0a55b3a4e0628664dbc",
+      "source_sha256": "e44d293d33b2e7651d7098559b2e0a0b9b3495c10fded0a55b3a4e0628664dbc"
+    },
+    {
+      "file": "PremiumTools_BaseColor.png",
+      "sha256": "41f1f414f8cb324e86c60d6a544ffb0e01b4665125023e324b3ab23750b0bdf4",
+      "source_sha256": "41f1f414f8cb324e86c60d6a544ffb0e01b4665125023e324b3ab23750b0bdf4"
+    },
+    {
+      "file": "PremiumTools_MetallicSmoothness.png",
+      "sha256": "ee17689290e019805485faf5ee623866b045a28ede420f04c97430df262fc531",
+      "source_sha256": "ee17689290e019805485faf5ee623866b045a28ede420f04c97430df262fc531"
+    },
+    {
+      "file": "PremiumTools_Normal.png",
+      "sha256": "dd34f49a1eb165f4f1e656c31ee4ed02af38f91ca8d8e500750693131921ea5f",
+      "source_sha256": "dd34f49a1eb165f4f1e656c31ee4ed02af38f91ca8d8e500750693131921ea5f"
+    },
+    {
+      "file": "RainShower.fbx",
+      "sha256": "88ddd44b7ab4e1fdf52d6a7f90c94d3294d3708596ac4068d35f23ad5c9ba1b2",
+      "source_sha256": "88ddd44b7ab4e1fdf52d6a7f90c94d3294d3708596ac4068d35f23ad5c9ba1b2"
+    },
+    {
+      "file": "StoneBath.fbx",
+      "sha256": "82568a07c06d0e7b1023dfa04481e3db562b0de068683e6adaf3813ba58524b1",
+      "source_sha256": "82568a07c06d0e7b1023dfa04481e3db562b0de068683e6adaf3813ba58524b1"
+    },
+    {
+      "file": "TelescopicSupport.fbx",
+      "sha256": "d7c13d36945ad3407c5725e3ebc348ff085c6f316a98e460f8a33495f598946f",
+      "source_sha256": "d7c13d36945ad3407c5725e3ebc348ff085c6f316a98e460f8a33495f598946f"
+    },
+    {
+      "file": "TileBath.fbx",
+      "sha256": "316d2d57ae7615aff2fe4dc02264911e61aa4d062d62195d084164cd8eadc057",
+      "source_sha256": "316d2d57ae7615aff2fe4dc02264911e61aa4d062d62195d084164cd8eadc057"
+    },
+    {
+      "file": "WateringCan.fbx",
+      "sha256": "5b9a211acddd7ad7ecce684f747055da5c0649b513b8ded77c030506ef4a806a",
+      "source_sha256": "5b9a211acddd7ad7ecce684f747055da5c0649b513b8ded77c030506ef4a806a"
+    }
+  ]
+}

@@ -145,13 +145,15 @@ namespace KominkaHillside
         public const int ToolTowel = 2;
         public const int ToolDirt = 3;       // NetStroke only: the Owner's dirt change (IMP-DOG-029), never a held tool
         public const int ToolBottle = 4;     // IMP-DOG-039: the shampoo bottle (a KH_WashTool): one dose of foam, a dot
+        public const int ToolDryer = 6;      // premium air: reduces wetness only
         public const int ToolHand = 5;       // IMP-DOG-039: the bare hands (KH_HandWash -> _HandContact), never a held tool
         public const int PartCount = 9;
         // IMP-DOG-039 (hand-wash design §13.4): the sender's local strokes run on channels, not kinds. Contact history, open
         // segments and the send queue are per channel; the draws, the logs, the records and the wire carry the kind.
         //   channel 0 sponge, 1 shower, 2 towel, 3 bottle, 4 left hand, 5 right hand  ->  kind 0, 1, 2, 4, 5, 5 (ChannelTool)
         // ToolDirt (3) is a kind, not a channel: channel 3 is the bottle.
-        const int ChannelCount = 6;
+        const int ChannelCount = 7;
+        const int ChDryer = 6;
         const int ChBottle = 3;
         const int ChHandL = 4;               // + hand (0 = left, 1 = right)
         const int FoamKeyEffects = ChannelCount;   // FoamNear's cache slot for ContactEffects / received strokes
@@ -1010,7 +1012,7 @@ namespace KominkaHillside
         // The kinds a wash stroke may carry (NetStroke, logs, records). ToolDirt (3) is not one: it has its own path.
         bool WashKind(int tool)
         {
-            return tool == ToolSponge || tool == ToolShower || tool == ToolTowel || tool == ToolBottle || tool == ToolHand;
+            return tool == ToolSponge || tool == ToolShower || tool == ToolTowel || tool == ToolBottle || tool == ToolHand || tool == ToolDryer;
         }
 
         // A held tool's channel (0, 1, 2 -> the same; the bottle -> 3); -1 for anything else (the hands have a channel per
@@ -1019,6 +1021,7 @@ namespace KominkaHillside
         {
             if (tool == ToolSponge || tool == ToolShower || tool == ToolTowel) return tool;
             if (tool == ToolBottle) return ChBottle;
+            if (tool == ToolDryer) return ChDryer;
             return -1;
         }
 
@@ -1027,6 +1030,7 @@ namespace KominkaHillside
         {
             if (ch < ChBottle) return ch;
             if (ch == ChBottle) return ToolBottle;
+            if (ch == ChDryer) return ToolDryer;
             return ToolHand;
         }
 
@@ -2601,6 +2605,7 @@ namespace KominkaHillside
         {
             if (tool == ToolShower) return showerRadius;
             if (tool == ToolTowel) return towelRadius;
+            if (tool == ToolDryer) return .10f;
             if (tool == ToolBottle) return bottleRadius;   // IMP-DOG-039
             if (tool == ToolHand) return handRadius;
             return spongeRadius;
@@ -2610,12 +2615,13 @@ namespace KominkaHillside
         // limit follows their radius (spongeRadius 0.11 -> 0.121 m = 121 mm in NetStroke's check; the sender clamps to it too).
         float MaxToolRadius(int tool)
         {
-            if (tool == ToolShower) return 0.2f;
+            if (tool == ToolShower || tool == ToolDryer) return 0.2f;
             return Mathf.Clamp(ToolRadius(tool) * 1.1f, 0.02f, 0.25f);
         }
 
         Vector4 ToolDelta(int tool, float sec)
         {
+            if (tool == ToolDryer) return new Vector4(0f, 0f, -0.32f * sec, 0f);
             if (tool == ToolShower) return new Vector4(showerDirtRate * sec, showerFoamRate * sec, showerWetRate * sec, 0f);
             if (tool == ToolTowel) return new Vector4(towelDirtRate * sec, towelFoamRate * sec, towelWetRate * sec, 0f);
             // IMP-DOG-039: shampoo and lathering add foam only (no water, no dirt change); the hand's foam is gated by the
@@ -3383,7 +3389,7 @@ namespace KominkaHillside
                 if (_segPath[tool] + (b - a).magnitude > chord * 1.3f + slack) CloseSegment(tool, true);
                 // IMP-DOG-039 §13.1: a hand capsule longer than handMaxSegment is dropped by every receiver: cut before it
                 // (90 %, for the 10-bit packing), the next one continues from here.
-                else if (tool >= ChHandL && chord * meshToWorldScale > handMaxSegment * 0.9f) CloseSegment(tool, true);
+                else if (tool >= ChHandL && tool < ChDryer && chord * meshToWorldScale > handMaxSegment * 0.9f) CloseSegment(tool, true);
             }
             if (!_segOpen[tool])
             {
@@ -3598,6 +3604,7 @@ namespace KominkaHillside
         // Physical cause only (splash, foam bits, contact loops), at the stroke itself - own and received alike.
         void ContactEffects(int tool, int part, Vector3 world, Vector3 meshPoint, float sec)
         {
+            if (tool == ToolDryer) return; // air sound/particles live at the nozzle, not water/contact scrub
             float now = Time.time;
             float foamHere = FoamNear(FoamKeyEffects, part, meshPoint);
             if (tool == ToolBottle || tool == ToolHand)

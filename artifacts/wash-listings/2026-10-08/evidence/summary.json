@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-08",
+  "editVerification": "PASS",
+  "stationIsolation": "4 distinct selectors, 28 distinct pickups, 68 distinct visuals; saved backing references match",
+  "localPlay": [
+    {
+      "run": "20261008-103823",
+      "cases": 1,
+      "status": "PASS"
+    },
+    {
+      "run": "20261008-104240",
+      "passed": 2,
+      "failed": 1,
+      "failedReason": "reset test did not restore player near station; corrected case below"
+    },
+    {
+      "run": "20261008-104738",
+      "cases": 1,
+      "status": "PASS"
+    }
+  ],
+  "restoration": {
+    "sceneFileUnchanged": true,
+    "settingsRestored": true,
+    "playerDataRestored": true,
+    "dirtyAfterPlay": false
+  },
+  "metaMissing": 0,
+  "sourceDiffCheck": 0,
+  "notTested": [
+    "real two-client sync / late join / owner handover",
+    "Quest rendering and runtime performance",
+    "physical hand grip and subjective audio quality"
+  ],
+  "purchase": "deferred per user; all items available now"
+}
