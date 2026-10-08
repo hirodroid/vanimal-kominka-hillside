@@ -164293,6 +164293,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2100000, guid: 14799439a56d4ca4b8715bdcf046f229, type: 2}
     - target: {fileID: 5356436990166600469, guid: 4ef3e316ca92d014a81bc50464c87795, type: 3}
+      propertyPath: AutoHold
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5356436990166600469, guid: 4ef3e316ca92d014a81bc50464c87795, type: 3}
       propertyPath: InteractionText
       value: "\u57FA\u672C\u30DC\u30FC\u30EB (\u67F4\u72AC)"
       objectReference: {fileID: 0}
@@ -214895,6 +214899,10 @@ PrefabInstance:
       propertyPath: publicVariablesUnityEngineObjects.Array.data[0]
       value: 
       objectReference: {fileID: 873781262}
+    - target: {fileID: 2926751015108576054, guid: d29131902aa199749b22832411f9b4a7, type: 3}
+      propertyPath: AutoHold
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 2926751015108576054, guid: d29131902aa199749b22832411f9b4a7, type: 3}
       propertyPath: proximity
       value: 0.3
@@ -394426,7 +394434,7 @@ MonoBehaviour:
   - {fileID: 1673641832}
   - {fileID: 8300000, guid: 6a60e2ccece00a64f927ec382deb5bac, type: 3}
   - {fileID: 402190857}
-  - {fileID: 8300000, guid: 9400d40e8f391cf4eb5801c34a0cd5d0, type: 3}
+  - {fileID: 8300000, guid: bc201999cbae5c2409dc0675387df0ef, type: 3}
   - {fileID: 8300000, guid: 440811c598c82214486ac0343c32f7df, type: 3}
   - {fileID: 8300000, guid: 5cfefd8c43a8e2846b15a73fe219d8ca, type: 3}
   - {fileID: 1845968656}
@@ -394570,7 +394578,7 @@ MonoBehaviour:
   feintTiltDeg: 14
   barkPitchJitter: 0.07
   breathSource: {fileID: 402190857}
-  breathClip: {fileID: 8300000, guid: 9400d40e8f391cf4eb5801c34a0cd5d0, type: 3}
+  breathClip: {fileID: 8300000, guid: bc201999cbae5c2409dc0675387df0ef, type: 3}
   breathAlternateClip: {fileID: 8300000, guid: 5cfefd8c43a8e2846b15a73fe219d8ca, type: 3}
   breathRunSpeed: 1.6
   breathTriggerRunTime: 2.5
@@ -729400,7 +729408,7 @@ MonoBehaviour:
   feintTiltDeg: 14
   barkPitchJitter: 0.07
   breathSource: {fileID: 2065880237}
-  breathClip: {fileID: 8300000, guid: 9400d40e8f391cf4eb5801c34a0cd5d0, type: 3}
+  breathClip: {fileID: 8300000, guid: bc201999cbae5c2409dc0675387df0ef, type: 3}
   breathAlternateClip: {fileID: 8300000, guid: 5cfefd8c43a8e2846b15a73fe219d8ca, type: 3}
   breathRunSpeed: 1.6
   breathTriggerRunTime: 2.5
@@ -729528,7 +729536,7 @@ MonoBehaviour:
   - {fileID: 777473922}
   - {fileID: 8300000, guid: 6a60e2ccece00a64f927ec382deb5bac, type: 3}
   - {fileID: 2065880237}
-  - {fileID: 8300000, guid: 9400d40e8f391cf4eb5801c34a0cd5d0, type: 3}
+  - {fileID: 8300000, guid: bc201999cbae5c2409dc0675387df0ef, type: 3}
   - {fileID: 8300000, guid: 440811c598c82214486ac0343c32f7df, type: 3}
   - {fileID: 1283806778}
   - {fileID: 8300000, guid: 5cfefd8c43a8e2846b15a73fe219d8ca, type: 3}

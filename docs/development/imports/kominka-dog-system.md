@@ -638,6 +638,7 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 | `Data/UILocalizationBindings.json` | U1: 追加 27 (群見出し 3・CreditButton・距離フェード 14・クレジット 9)、削除 5 (音量頁の寝室・ライブの部品)、差替 1 (`VolumeScope` → `settings.volume.scope`)。U2: インフォメーション系 15 行を戻した | 部品の増減に合わせる。無い部品への束縛は Bind が例外で止まる | U1 / U2 |
 
 - **犬の声**: 6 匹の `KD_BarkSource` / `KD_BreathSource` はシーンで mute のまま焼かれていた。pouch の dogVoiceSources が 0 本だったので、実行時にも解除されず鳴っていなかった。16 の配線後は、古民家と同じく `KD_TreatPouch.Start` が 50% で解除する。`KD_PetSystem_*` の joyAudioSource は 6 匹とも null (古民家の構築も配っていない)。
+- **犬の息 (2026-10-08 ユーザー指定)**: 柴とコーギーの運動後の息 (`breathClip`) を `Firefly_audio_犬の呼吸_運動後_variation4` から `Firefly_audio_犬の遊んで疲れた時の呼吸_variation1` へ (Data/SE にあった未使用の素材。import を Force To Mono に変更)。`KD_DogDefs` の `breathClipGuid` (Corgi / Shiba) と、本シーンの `KD_WanderSystem_Corgi` / `_Shiba` の proxy と backing を一時 Editor スクリプトで書き換え、6 匹の breathClip が犬定義の GUID と一致・mono であることを確認して保存。交互に鳴る候補 (`breathAlternateClip` = 激しい運動の後の短く荒い息) と寝息は変えていない。古民家へは未反映。試聴は Play (走った後の息) が残り。
 
 ### MenuItem の変更
 

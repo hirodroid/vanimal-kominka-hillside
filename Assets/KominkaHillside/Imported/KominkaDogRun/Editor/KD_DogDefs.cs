@@ -783,7 +783,7 @@ namespace KominkaDogRun.Editor
             pickupProximity = 0.3f,                            // 中型 (IMP-FET-013)
             barkClipGuid = "6a60e2ccece00a64f927ec382deb5bac", // 中型犬 (体幹 0.204)
             // 運動後の息: `運動後_variation4` = 中央 1582Hz (3 本の真ん中)。中型犬の枠
-            breathClipGuid = "9400d40e8f391cf4eb5801c34a0cd5d0",
+            breathClipGuid = "bc201999cbae5c2409dc0675387df0ef", // 遊んで疲れた時の呼吸_variation1 — 柴と共有 (2026-10-08 ユーザー指定。前は 運動後_variation4)
             ballColor = new Color(0.85f, 0.20f, 0.15f),      // 赤 (芝生・畳の上で見つけやすい)
 
             // 触り心地 (2026-08-13 に実機調整済みのシーンから実測して転記。
@@ -1167,7 +1167,7 @@ namespace KominkaDogRun.Editor
             // 中型犬 = **コーギーと共有** (IMP-DOG-020 §5。音源が 4 本しか無い。調達したら差し替える。
             // Wander Verify の一意検査は KD_DogDefs.BarkSharePermitted でこの組だけ許す)
             barkClipGuid = "6a60e2ccece00a64f927ec382deb5bac",
-            breathClipGuid = "9400d40e8f391cf4eb5801c34a0cd5d0", // 運動後_variation4 (中) — コーギーと共有
+            breathClipGuid = "bc201999cbae5c2409dc0675387df0ef", // 遊んで疲れた時の呼吸_variation1 — コーギーと共有 (2026-10-08 ユーザー指定。前は 運動後_variation4)
             ballColor = new Color(0.95f, 0.95f, 0.90f),      // 白 (空いていた色。柴の赤茶に対して映える)
 
             // ---- 触り心地 ----
