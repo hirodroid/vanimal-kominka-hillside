@@ -664,3 +664,23 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 | ファイル | 裏山の変更 | 理由 |
 |---|---|---|
 | `Scripts/KD_TreatPouch.cs` | `PlaceInFront` の末尾で、板の下端 (panelRoot の `RectTransform.rect` の下辺を `TransformPoint` で世界へ) が「地面 + `panelGroundClearance` (0.10 m)」より低ければその差だけ上げる。地面 = max(下端の点の真下へのレイ (頭 + 0.5 m から 6 m、`panelGroundMask` = Default + Environment、trigger 無視。頭より高い当たりはその 0.02 m 下から 1 本だけ撃ち直す), 足元)。上げたときだけ上端を頭の方へ `panelTiltMax` (30°) まで倒し、前へ出た下端で同じ判定をもう一度して足りない分だけ上げる。新フィールド `panelGroundClearance` / `panelBottomExtra` (0) / `panelTiltMax` / `panelGroundMask`、読み出し `LastLift()` (`_lastLift`)。`KD_TreatSetupEditor.Hillside.cs` / `.Pouch.cs` の設計値にも同じ既定を足した | 低い姿勢・小さいアバター・登り斜面で下のボタンが地面に埋まる ([IMP-UI-004](../issues/IMP-UI-004-hand-menu-buried-in-ground.md))。**裏山で先に直した。古民家ドッグランにも同じ計算があるが、古民家へは未反映** |
+
+## 2026-10-08 犬紹介パネルと毛色 (DES-DOG-009)
+
+ユーザー指定 (2026-10-08): 古民家のおじいさんの近くの「犬を選んで呼び名・お気に入りを付ける板」を裏山へ先に入れ、その板で毛色 (インスタンスのマスターが選ぶ・全員共通) を選べるようにする。設計と根拠は [犬紹介パネルと毛色](../../plans/2026-10-08-dog-book-and-fur-color.md)。ソースは 0-a で移植済みだったが、本シーンには板も訪問タグも無かった (`KD_DogBook` grep 0)。Unity での構築・Verify・Play は未実施。
+
+| ファイル | 裏山の変更 | 理由 |
+|---|---|---|
+| `Scripts/KD_DogBook.cs` | `furColor` (`KominkaHillside.KH_FurColor`)・`furValue` / `furNote` / `furParts` / `furEditParts` と `RefreshFur` (0.5 s ごとの Refresh の末尾。表示の切り替えは変わった時だけ)、`_FurPrev` / `_FurNext`。`StatusKey` にリード (`dogbook.state.walk`)・水の中 (`.water`)・洗い場 (`.wash`) を Fetch の判定の直後に足した | 毛色の行 (DES-DOG-009)。状態は足さないとリード中・洗われ中の犬が「のんびり」と出る |
+| `Editor/KD_DogBookEditor.cs` | `partial` 化。Verify の入口で partial メソッド `ClassifyBoard` が裏山の板 (`KH_Dogs` 直下か見出しが `dogbook.title.hillside`) と判定したときだけ `VerifyPlacement` / 末尾の `VerifyHillside` を呼び、それ以外は元の「KD_Places の下」を検査する (KD_Places が無ければ例外でなく FAIL)。Codex レビュー (2026-10-08 中) で、古民家の Setup の板を裏山の検査で落とさない形にした | 裏山に KD_Places は無い (古民家の 1 行は `KD_SceneObjects.Find("KD_Places").transform` で例外になる) |
+| `Editor/KD_DogBookEditor.Hillside.cs` (新規) | `Tools/KominkaHillside/DogBook/0〜4`。板と訪問タグを `KH_Dogs` 直下へ先に作ってから古民家の Setup を呼ぶ (古民家の Setup は既存の器の親・位置を触らない)。初回だけおじいさんの左前・写真ボードの手前 (50.8, 地面 + 1.25, 41.5)・表をスポーンへ。見出しのキーを `dogbook.title.hillside` へ、詳細ページの下段に毛色の行。Verify の差し込み (置き場所・文言 13 言語・行の位置) | 裏山の入口 |
+| `Data/UITranslations.json` | 16 キー × 13 言語 (`dogbook.title.hillside`、`dogbook.state.walk` / `.water` / `.wash`、`furcolor.*` 12)。AI 作成・校正なし | 裏山の見出し・状態・毛色 |
+| `KD_DogWanderController.Greeting.cs` / `KD_DogFetchController.Greeting.cs` / `KD_PlayerDogTag.cs` | **変更なし**。お迎え・立ち寄りは裏山でも有効 (開始は自由な犬だけ。根拠は設計書 §4)。2026-10-02 の洗い場の円・2026-10-07 の遠い人・対岸の除外は既にこのファイルに入っている | 板の配線 (`dogBook`) で初めて動き出す |
+
+新規 (裏山): `Assets/KominkaHillside/Scripts/KH_FurColor.cs` (Manual 同期、Owner だけが書く、毛のスロットへの PropertyBlock)、`Assets/KominkaHillside/Scripts/Editor/KH_FurColorEditor.cs` (`DogBook/5 - Build Fur Colors` と Verify の毛色の部分)。保存キー `KD_DogBook_v1` は古民家と同じ名前のまま (PlayerData はワールドごとなので値は共有されない見込み。設計書 §2)。
+
+| メニュー | 変更 |
+|---|---|
+| `Tools/KominkaHillside/DogBook/0 - Create Program Assets` / `1 - Setup` / `2 - Layout Near Keeper (初期位置へ戻す)` / `3 - Verify` / `4 - Bake Portraits` / `5 - Build Fur Colors` | 新規 (裏山)。古民家の `Menu/Imported-Unused/Dog Book/0〜4` は残す (裏山では 1・2・3 が KD_Places / KD_Systems を前提にして使えない) |
+
+**古民家ドッグランへは未反映** (毛色は 10-06 の決定で両ワールドの対象だが、古民家側の実装は別の作業)。

@@ -1945,6 +1945,70 @@
           "text": "閉じる"
         },
         {
+          "key": "dogbook.title.hillside",
+          "text": "裏山の犬たち"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "いまは、散歩に出かけています"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "いまは、水遊びをしています"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "いまは、洗ってもらっています"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "毛色 (マスターだけが変えられます)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "毛色はインスタンスのマスターが決めます"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "この犬はほかの毛色がありません"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "もとの色"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "黒"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "白"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "クリーム"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "茶"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "赤"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "淡い赤"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "トライカラー"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "チョコ"
+        },
+        {
           "key": "confirm.buyTitle",
           "text": "{0}を {1} で購入しますか？"
         },
@@ -5482,6 +5546,70 @@
         {
           "key": "dogbook.help.close",
           "text": "Close"
+        },
+        {
+          "key": "dogbook.title.hillside",
+          "text": "Dogs of the hillside"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "Out on a walk"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "Playing in the water"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "Getting a wash"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "Fur color (only the master can change it)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "The instance master chooses the fur color"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "No other fur colors for this dog"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "Original"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Black"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "White"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "Cream"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "Brown"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "Red"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "Light red"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Tricolor"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "Chocolate"
         },
         {
           "key": "confirm.buyTitle",
@@ -9023,6 +9151,70 @@
           "text": "Закрыть"
         },
         {
+          "key": "dogbook.title.hillside",
+          "text": "Собаки с холма"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "Сейчас на прогулке"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "Плещется в воде"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "Сейчас её моют"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "Окрас (менять может только мастер)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "Окрас выбирает мастер инстанса"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "Для этой собаки других окрасов нет"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "Исходный"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Чёрный"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "Белый"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "Кремовый"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "Коричневый"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "Рыжий"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "Светло-рыжий"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Трёхцветный"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "Шоколадный"
+        },
+        {
           "key": "confirm.buyTitle",
           "text": "Купить {0} за {1}?"
         },
@@ -12560,6 +12752,70 @@
         {
           "key": "dogbook.help.close",
           "text": "Закрити"
+        },
+        {
+          "key": "dogbook.title.hillside",
+          "text": "Собаки з пагорба"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "Зараз на прогулянці"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "Хлюпається у воді"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "Зараз її миють"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "Забарвлення (змінювати може лише майстер)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "Забарвлення обирає майстер інстансу"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "Для цього собаки інших забарвлень немає"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "Початковий"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Чорний"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "Білий"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "Кремовий"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "Коричневий"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "Рудий"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "Світло-рудий"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Триколірний"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "Шоколадний"
         },
         {
           "key": "confirm.buyTitle",
@@ -16101,6 +16357,70 @@
           "text": "닫기"
         },
         {
+          "key": "dogbook.title.hillside",
+          "text": "뒷산의 강아지들"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "지금은 산책 중입니다"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "지금은 물놀이 중입니다"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "지금은 목욕 중입니다"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "털색 (마스터만 바꿀 수 있습니다)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "털색은 인스턴스 마스터가 정합니다"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "이 강아지는 다른 털색이 없습니다"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "원래 색"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "검정"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "흰색"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "크림색"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "갈색"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "레드"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "연한 레드"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "트라이컬러"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "초콜릿색"
+        },
+        {
           "key": "confirm.buyTitle",
           "text": "{0}을(를) {1}에 구매할까요?"
         },
@@ -19638,6 +19958,70 @@
         {
           "key": "dogbook.help.close",
           "text": "Schließen"
+        },
+        {
+          "key": "dogbook.title.hillside",
+          "text": "Die Hunde vom Hügel"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "Ist gerade spazieren"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "Planscht im Wasser"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "Wird gerade gewaschen"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "Fellfarbe (nur der Master kann sie ändern)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "Die Fellfarbe wählt der Master der Instanz"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "Für diesen Hund gibt es keine anderen Fellfarben"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "Original"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Schwarz"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "Weiß"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "Creme"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "Braun"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "Rot"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "Hellrot"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Dreifarbig"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "Schokolade"
         },
         {
           "key": "confirm.buyTitle",
@@ -23179,6 +23563,70 @@
           "text": "关闭"
         },
         {
+          "key": "dogbook.title.hillside",
+          "text": "后山的狗狗们"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "现在正在散步"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "现在正在玩水"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "现在正在洗澡"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "毛色 (只有 Master 可以更改)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "毛色由实例的 Master 决定"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "这只狗没有其他毛色"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "原色"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "黑色"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "白色"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "奶油色"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "棕色"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "红色"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "浅红色"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "三色"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "巧克力色"
+        },
+        {
           "key": "confirm.buyTitle",
           "text": "要用 {1} 购买 {0} 吗？"
         },
@@ -26716,6 +27164,70 @@
         {
           "key": "dogbook.help.close",
           "text": "Cerrar"
+        },
+        {
+          "key": "dogbook.title.hillside",
+          "text": "Los perros de la colina"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "Ahora está de paseo"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "Ahora juega en el agua"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "Ahora lo están bañando"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "Color del pelaje (solo el master puede cambiarlo)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "El master de la instancia elige el color del pelaje"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "Este perro no tiene otros colores"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "Original"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Negro"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "Blanco"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "Crema"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "Marrón"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "Rojo"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "Rojo claro"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Tricolor"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "Chocolate"
         },
         {
           "key": "confirm.buyTitle",
@@ -30257,6 +30769,70 @@
           "text": "Fermer"
         },
         {
+          "key": "dogbook.title.hillside",
+          "text": "Les chiens de la colline"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "En promenade"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "Joue dans l'eau"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "Se fait laver"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "Couleur du pelage (seul le master peut la changer)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "Le master de l'instance choisit la couleur du pelage"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "Pas d'autre couleur pour ce chien"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "D'origine"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Noir"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "Blanc"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "Crème"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "Marron"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "Roux"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "Roux clair"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Tricolore"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "Chocolat"
+        },
+        {
           "key": "confirm.buyTitle",
           "text": "Acheter {0} pour {1} ?"
         },
@@ -33794,6 +34370,70 @@
         {
           "key": "dogbook.help.close",
           "text": "Fechar"
+        },
+        {
+          "key": "dogbook.title.hillside",
+          "text": "Os cachorros da colina"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "Agora está passeando"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "Agora está brincando na água"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "Agora está tomando banho"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "Cor da pelagem (só o master pode mudar)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "O master da instância escolhe a cor da pelagem"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "Este cachorro não tem outras cores"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "Original"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Preto"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "Branco"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "Creme"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "Marrom"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "Vermelho"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "Vermelho claro"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Tricolor"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "Chocolate"
         },
         {
           "key": "confirm.buyTitle",
@@ -37335,6 +37975,70 @@
           "text": "Chiudi"
         },
         {
+          "key": "dogbook.title.hillside",
+          "text": "I cani della collina"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "Ora è a passeggio"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "Ora gioca nell'acqua"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "Ora si fa lavare"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "Colore del manto (solo il master può cambiarlo)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "Il master dell'istanza sceglie il colore del manto"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "Nessun altro colore per questo cane"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "Originale"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Nero"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "Bianco"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "Crema"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "Marrone"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "Rosso"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "Rosso chiaro"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Tricolore"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "Cioccolato"
+        },
+        {
           "key": "confirm.buyTitle",
           "text": "Comprare {0} per {1}?"
         },
@@ -40872,6 +41576,70 @@
         {
           "key": "dogbook.help.close",
           "text": "Zamknij"
+        },
+        {
+          "key": "dogbook.title.hillside",
+          "text": "Psy ze wzgórza"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "Jest na spacerze"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "Pluska się w wodzie"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "Jest właśnie myty"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "Kolor sierści (zmienić może tylko master)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "Kolor sierści wybiera master instancji"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "Ten pies nie ma innych kolorów sierści"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "Oryginalny"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Czarny"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "Biały"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "Kremowy"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "Brązowy"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "Rudy"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "Jasnorudy"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Trójkolorowy"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "Czekoladowy"
         },
         {
           "key": "confirm.buyTitle",
@@ -44415,6 +45183,70 @@
         {
           "key": "dogbook.help.close",
           "text": "關閉"
+        },
+        {
+          "key": "dogbook.title.hillside",
+          "text": "後山的狗狗們"
+        },
+        {
+          "key": "dogbook.state.walk",
+          "text": "現在正在散步"
+        },
+        {
+          "key": "dogbook.state.water",
+          "text": "現在正在玩水"
+        },
+        {
+          "key": "dogbook.state.wash",
+          "text": "現在正在洗澡"
+        },
+        {
+          "key": "furcolor.label",
+          "text": "毛色 (只有 Master 可以更改)"
+        },
+        {
+          "key": "furcolor.master.only",
+          "text": "毛色由實例的 Master 決定"
+        },
+        {
+          "key": "furcolor.none",
+          "text": "這隻狗沒有其他毛色"
+        },
+        {
+          "key": "furcolor.default",
+          "text": "原色"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "黑色"
+        },
+        {
+          "key": "furcolor.white",
+          "text": "白色"
+        },
+        {
+          "key": "furcolor.cream",
+          "text": "奶油色"
+        },
+        {
+          "key": "furcolor.brown",
+          "text": "啡色"
+        },
+        {
+          "key": "furcolor.red",
+          "text": "紅色"
+        },
+        {
+          "key": "furcolor.lightred",
+          "text": "淺紅色"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "三色"
+        },
+        {
+          "key": "furcolor.choco",
+          "text": "朱古力色"
         },
         {
           "key": "confirm.buyTitle",

@@ -26,6 +26,14 @@ namespace KominkaDogRun
         public TMP_Text[] staticLabels;
         public string[] staticKeys;
         public float hideDistance = 4f;
+        // 裏山改変 (DES-DOG-009 2026-10-08): インスタンス共通の毛色の行 (詳細ページの下段、[閉じる] の左)。
+        // 呼び名の [保存]・お気に入りとは別の段に置き、個人設定と同じボタンで確定しない。furColor が null なら行ごと隠す。
+        // 書けるのは KH_FurColor の Owner (= インスタンスのマスター) だけ。ほかの人には色名と「マスターが決めます」だけを出す
+        public KominkaHillside.KH_FurColor furColor;
+        public TMP_Text furValue, furNote;
+        public GameObject[] furParts;       // 行の全部品 (見た目と押す面)。furColor が無いときに隠す
+        public GameObject[] furEditParts;   // ◀ ▶ の見た目と押す面。Owner で色が 2 つ以上あるときだけ出す
+        private int _furEditShown = -1, _furPartsShown = -1;
         private string[] _names = new string[6];
         private int _favorite = -1, _selected;
         private bool _restored;
@@ -135,6 +143,9 @@ namespace KominkaDogRun
             _names[_selected] = CleanName(nickname.text); nickname.SetTextWithoutNotify(_names[_selected]);
             Save(); _messageKey = "dogbook.saved"; _messageUntil = Time.time + 4f; Refresh();
         }
+        // 裏山改変 (DES-DOG-009): 押した瞬間に全員へ反映 (確定ボタンは無い)。Owner でなければ KH_FurColor が何もしない
+        public void _FurPrev() { if (furColor != null) furColor._Step(_selected, -1); Refresh(); }
+        public void _FurNext() { if (furColor != null) furColor._Step(_selected, 1); Refresh(); }
         public void _ToggleFavorite()
         {
             if (!_restored) return;
@@ -259,6 +270,26 @@ namespace KominkaDogRun
             if (favoriteLabel != null) favoriteLabel.text = Text(_favorite == _selected ? "dogbook.favorite.remove" : "dogbook.favorite.add");
             if (message != null) message.text = Text(!_restored ? "dogbook.loading" : Time.time < _messageUntil ? _messageKey : "dogbook.private");
             if (status != null) status.text = Text(StatusKey(_selected));
+            RefreshFur();
+        }
+        // 裏山改変 (DES-DOG-009): 毛色の行。文字列は翻訳表の値をそのまま入れるだけ (連結しない)。表示の切り替えは変わった時だけ
+        void RefreshFur()
+        {
+            int parts = furColor != null ? 1 : 0;
+            if (parts != _furPartsShown)
+            {
+                _furPartsShown = parts; _furEditShown = -1;
+                for (int i = 0; furParts != null && i < furParts.Length; i++) if (furParts[i] != null) furParts[i].SetActive(parts == 1);
+            }
+            if (furColor == null) return;
+            int count = furColor.OptionCount(_selected);
+            bool owner = furColor._CanEdit();
+            int edit = owner && count > 1 ? 1 : 0;
+            if (furValue != null) furValue.text = Text(furColor.NameKey(_selected, furColor.ColorOf(_selected)));
+            if (furNote != null) furNote.text = Text(count <= 1 ? "furcolor.none" : owner ? "furcolor.label" : "furcolor.master.only");
+            if (edit == _furEditShown) return;
+            _furEditShown = edit;
+            for (int i = 0; furEditParts != null && i < furEditParts.Length; i++) if (furEditParts[i] != null) furEditParts[i].SetActive(edit == 1);
         }
         string StatusKey(int i)
         {
@@ -267,6 +298,10 @@ namespace KominkaDogRun
             if (w == null || f == null) return "dogbook.state.free";
             if (f.PetActive || (w.petController != null && w.petController.IsPetting)) return "dogbook.state.pet";
             if (!f.IsIdle) return "dogbook.state.fetch";
+            // 裏山改変 (DES-DOG-009): リード・水の中・洗い場は古民家に無い状態 (「のんびり」と出さない)
+            if (w.hillsideLeashes != null && w.hillsideLeashes._IsLeashed(i)) return "dogbook.state.walk";
+            if (f.WaterPose != 0) return "dogbook.state.water";
+            if (w.IsBeingWashed || w.WashHeldSynced) return "dogbook.state.wash";
             if (w.IsSleepCalled) return "dogbook.state.companion";
             if (w.IsLiveWatching) return "dogbook.state.live";
             if (w.IsResting || w.IsAsleep) return "dogbook.state.rest";

@@ -17,7 +17,7 @@ using Object = UnityEngine.Object;
 namespace KominkaDogRun.Editor
 {
     /// <summary>IMP-DOG-033. Setup preserves placement; Layout is explicit; Verify never repairs.</summary>
-    public static class KD_DogBookEditor
+    public static partial class KD_DogBookEditor   // 裏山改変 (DES-DOG-009): partial (KD_DogBookEditor.Hillside.cs = 裏山の入口 Tools/KominkaHillside/DogBook/0〜5)
     {
         public const string BoardName = "KD_DogBook", TagName = "KD_PlayerDogTag";
         const string TextureDir = "Assets/KominkaHillside/Imported/KominkaDogRun/Textures/DogBook";
@@ -235,7 +235,11 @@ namespace KominkaDogRun.Editor
             v.Check(b.pack!=null&&b.pack.dogWander.All(w=>w.dropByChance>0f&&w.dropByChance<=1f&&w.dropByDogInterval>=45f&&w.dropByPlayerInterval>=w.dropByDogInterval&&w.dropByAfterGreeting>=45f),"drop-by intervals: chance in (0,1], dog >= 45s, player >= dog, after greeting >= 45s");
             v.Check(b.nickname!=null&&!b.nickname.richText&&b.nickname.lineType==TMP_InputField.LineType.SingleLine,"literal single-line nickname input");
             v.Check(b.staticLabels.Length==b.staticKeys.Length,"localized static labels");
-            v.Check(b.transform.parent==KD_SceneObjects.Find("KD_Places").transform,"board under places");
+            // 裏山改変 (DES-DOG-009): 裏山の Setup で組んだ板 (KD_DogBookEditor.Hillside.cs が判定) だけ置き場所を partial で見る。
+            // それ以外 (古民家の Setup の板) は元の「KD_Places の下」のまま (KD_Places が無ければ FAIL。元は例外)
+            bool hillside=false; ClassifyBoard(b,ref hillside);
+            if(hillside) VerifyPlacement(v,b);
+            else { var places=KD_SceneObjects.Find("KD_Places"); v.Check(places!=null&&b.transform.parent==places.transform,"board under places"); }
             v.Check(Mathf.Abs(b.transform.lossyScale.x-.001f)<.00001f,"1050px = 1.05m width");
             var tags=KD_ProductsEditor.SceneComponents<KD_PlayerDogTag>();
             v.Check(tags.Length==1&&tags[0].GetComponent<VRCPlayerObject>()!=null&&tags[0].pack==b.pack,"one player-object template with pack");
@@ -273,8 +277,13 @@ namespace KominkaDogRun.Editor
             v.Check(b.CleanName("abcdefghijklmn")=="abcdefghijkl","nickname length limit");
             v.Check(b.CleanName("ぽん太Ａ1 ")=="ぽんA1","nickname drops kanji and folds full-width ASCII");
             v.Check(b.CleanName("ｱｲ😀🐶ヴォルフ")=="ヴォルフ","nickname drops half-width kana and emoji");
+            if(hillside) VerifyHillside(v,b);    // 裏山改変 (DES-DOG-009): 見出し・状態の文言・毛色の行と KH_FurColor (KD_DogBookEditor.Hillside.cs)
             v.Finish("Logs/dog-book-verify.txt");
         }
+        // 裏山改変 (DES-DOG-009): Verify の差し込み口。本体は KD_DogBookEditor.Hillside.cs (無ければ hillside=false で古民家の検査だけになる)
+        static partial void ClassifyBoard(KD_DogBook b, ref bool hillside);
+        static partial void VerifyPlacement(KD_VerifyLog v, KD_DogBook b);
+        static partial void VerifyHillside(KD_VerifyLog v, KD_DogBook b);
         static string PersistentArg(Button x)
         {
             var so=new SerializedObject(x);
