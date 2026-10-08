@@ -1973,16 +1973,32 @@
           "text": "この犬はほかの毛色がありません"
         },
         {
-          "key": "furcolor.default",
-          "text": "もとの色"
+          "key": "furcolor.tanWhite",
+          "text": "茶白"
         },
         {
-          "key": "furcolor.black",
-          "text": "黒"
+          "key": "furcolor.lightWhite",
+          "text": "うす茶白"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "こげ茶白"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "三色"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "白多め"
         },
         {
           "key": "furcolor.white",
           "text": "白"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "黒"
         },
         {
           "key": "furcolor.cream",
@@ -1993,20 +2009,20 @@
           "text": "茶"
         },
         {
+          "key": "furcolor.light",
+          "text": "うす茶"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "黒茶"
+        },
+        {
           "key": "furcolor.red",
-          "text": "赤"
+          "text": "赤茶"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "淡い赤"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "トライカラー"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "チョコ"
+          "key": "furcolor.dark",
+          "text": "こげ茶"
         },
         {
           "key": "confirm.buyTitle",
@@ -5576,16 +5592,32 @@
           "text": "No other fur colors for this dog"
         },
         {
-          "key": "furcolor.default",
-          "text": "Original"
+          "key": "furcolor.tanWhite",
+          "text": "Tan/white"
         },
         {
-          "key": "furcolor.black",
-          "text": "Black"
+          "key": "furcolor.lightWhite",
+          "text": "Light/white"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "Dark/white"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Tricolor"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "White mix"
         },
         {
           "key": "furcolor.white",
           "text": "White"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Black"
         },
         {
           "key": "furcolor.cream",
@@ -5596,20 +5628,20 @@
           "text": "Brown"
         },
         {
+          "key": "furcolor.light",
+          "text": "Light tan"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "Black/tan"
+        },
+        {
           "key": "furcolor.red",
           "text": "Red"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "Light red"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "Tricolor"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "Chocolate"
+          "key": "furcolor.dark",
+          "text": "Dark tan"
         },
         {
           "key": "confirm.buyTitle",
@@ -9179,16 +9211,32 @@
           "text": "Для этой собаки других окрасов нет"
         },
         {
-          "key": "furcolor.default",
-          "text": "Исходный"
+          "key": "furcolor.tanWhite",
+          "text": "Бурый/белый"
         },
         {
-          "key": "furcolor.black",
-          "text": "Чёрный"
+          "key": "furcolor.lightWhite",
+          "text": "Светлый/белый"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "Тёмный/белый"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Трёхцветный"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "Больше белого"
         },
         {
           "key": "furcolor.white",
           "text": "Белый"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Чёрный"
         },
         {
           "key": "furcolor.cream",
@@ -9199,20 +9247,20 @@
           "text": "Коричневый"
         },
         {
+          "key": "furcolor.light",
+          "text": "Светло-бурый"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "Чёрно-подпалый"
+        },
+        {
           "key": "furcolor.red",
           "text": "Рыжий"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "Светло-рыжий"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "Трёхцветный"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "Шоколадный"
+          "key": "furcolor.dark",
+          "text": "Тёмно-бурый"
         },
         {
           "key": "confirm.buyTitle",
@@ -12782,16 +12830,32 @@
           "text": "Для цього собаки інших забарвлень немає"
         },
         {
-          "key": "furcolor.default",
-          "text": "Початковий"
+          "key": "furcolor.tanWhite",
+          "text": "Бурий/білий"
         },
         {
-          "key": "furcolor.black",
-          "text": "Чорний"
+          "key": "furcolor.lightWhite",
+          "text": "Світлий/білий"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "Темний/білий"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Триколірний"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "Більше білого"
         },
         {
           "key": "furcolor.white",
           "text": "Білий"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Чорний"
         },
         {
           "key": "furcolor.cream",
@@ -12802,20 +12866,20 @@
           "text": "Коричневий"
         },
         {
+          "key": "furcolor.light",
+          "text": "Світло-бурий"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "Чорно-підпалий"
+        },
+        {
           "key": "furcolor.red",
           "text": "Рудий"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "Світло-рудий"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "Триколірний"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "Шоколадний"
+          "key": "furcolor.dark",
+          "text": "Темно-бурий"
         },
         {
           "key": "confirm.buyTitle",
@@ -16385,16 +16449,32 @@
           "text": "이 강아지는 다른 털색이 없습니다"
         },
         {
-          "key": "furcolor.default",
-          "text": "원래 색"
+          "key": "furcolor.tanWhite",
+          "text": "갈색·흰색"
         },
         {
-          "key": "furcolor.black",
-          "text": "검정"
+          "key": "furcolor.lightWhite",
+          "text": "연갈색·흰색"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "진갈색·흰색"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "삼색"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "흰색 위주"
         },
         {
           "key": "furcolor.white",
           "text": "흰색"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "검정"
         },
         {
           "key": "furcolor.cream",
@@ -16405,20 +16485,20 @@
           "text": "갈색"
         },
         {
+          "key": "furcolor.light",
+          "text": "연갈색"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "검정·갈색"
+        },
+        {
           "key": "furcolor.red",
-          "text": "레드"
+          "text": "적갈색"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "연한 레드"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "트라이컬러"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "초콜릿색"
+          "key": "furcolor.dark",
+          "text": "진갈색"
         },
         {
           "key": "confirm.buyTitle",
@@ -19988,16 +20068,32 @@
           "text": "Für diesen Hund gibt es keine anderen Fellfarben"
         },
         {
-          "key": "furcolor.default",
-          "text": "Original"
+          "key": "furcolor.tanWhite",
+          "text": "Braunweiß"
         },
         {
-          "key": "furcolor.black",
-          "text": "Schwarz"
+          "key": "furcolor.lightWhite",
+          "text": "Hellbraunweiß"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "Dunkelbraunweiß"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Dreifarbig"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "Viel Weiß"
         },
         {
           "key": "furcolor.white",
           "text": "Weiß"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Schwarz"
         },
         {
           "key": "furcolor.cream",
@@ -20008,20 +20104,20 @@
           "text": "Braun"
         },
         {
+          "key": "furcolor.light",
+          "text": "Hellbraun"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "Schwarzbraun"
+        },
+        {
           "key": "furcolor.red",
-          "text": "Rot"
+          "text": "Rotbraun"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "Hellrot"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "Dreifarbig"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "Schokolade"
+          "key": "furcolor.dark",
+          "text": "Dunkelbraun"
         },
         {
           "key": "confirm.buyTitle",
@@ -23591,16 +23687,32 @@
           "text": "这只狗没有其他毛色"
         },
         {
-          "key": "furcolor.default",
-          "text": "原色"
+          "key": "furcolor.tanWhite",
+          "text": "棕白"
         },
         {
-          "key": "furcolor.black",
-          "text": "黑色"
+          "key": "furcolor.lightWhite",
+          "text": "浅棕白"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "深棕白"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "三色"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "白色为主"
         },
         {
           "key": "furcolor.white",
           "text": "白色"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "黑色"
         },
         {
           "key": "furcolor.cream",
@@ -23611,20 +23723,20 @@
           "text": "棕色"
         },
         {
+          "key": "furcolor.light",
+          "text": "浅棕色"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "黑棕"
+        },
+        {
           "key": "furcolor.red",
-          "text": "红色"
+          "text": "赤棕色"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "浅红色"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "三色"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "巧克力色"
+          "key": "furcolor.dark",
+          "text": "深棕色"
         },
         {
           "key": "confirm.buyTitle",
@@ -27194,16 +27306,32 @@
           "text": "Este perro no tiene otros colores"
         },
         {
-          "key": "furcolor.default",
-          "text": "Original"
+          "key": "furcolor.tanWhite",
+          "text": "Marrón/blanco"
         },
         {
-          "key": "furcolor.black",
-          "text": "Negro"
+          "key": "furcolor.lightWhite",
+          "text": "Claro/blanco"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "Oscuro/blanco"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Tricolor"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "Más blanco"
         },
         {
           "key": "furcolor.white",
           "text": "Blanco"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Negro"
         },
         {
           "key": "furcolor.cream",
@@ -27214,20 +27342,20 @@
           "text": "Marrón"
         },
         {
+          "key": "furcolor.light",
+          "text": "Marrón claro"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "Negro/marrón"
+        },
+        {
           "key": "furcolor.red",
-          "text": "Rojo"
+          "text": "Rojizo"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "Rojo claro"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "Tricolor"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "Chocolate"
+          "key": "furcolor.dark",
+          "text": "Marrón oscuro"
         },
         {
           "key": "confirm.buyTitle",
@@ -30797,16 +30925,32 @@
           "text": "Pas d'autre couleur pour ce chien"
         },
         {
-          "key": "furcolor.default",
-          "text": "D'origine"
+          "key": "furcolor.tanWhite",
+          "text": "Brun et blanc"
         },
         {
-          "key": "furcolor.black",
-          "text": "Noir"
+          "key": "furcolor.lightWhite",
+          "text": "Clair et blanc"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "Foncé et blanc"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Tricolore"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "Surtout blanc"
         },
         {
           "key": "furcolor.white",
           "text": "Blanc"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Noir"
         },
         {
           "key": "furcolor.cream",
@@ -30814,23 +30958,23 @@
         },
         {
           "key": "furcolor.brown",
-          "text": "Marron"
+          "text": "Brun"
+        },
+        {
+          "key": "furcolor.light",
+          "text": "Brun clair"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "Noir et brun"
         },
         {
           "key": "furcolor.red",
           "text": "Roux"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "Roux clair"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "Tricolore"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "Chocolat"
+          "key": "furcolor.dark",
+          "text": "Brun foncé"
         },
         {
           "key": "confirm.buyTitle",
@@ -34400,16 +34544,32 @@
           "text": "Este cachorro não tem outras cores"
         },
         {
-          "key": "furcolor.default",
-          "text": "Original"
+          "key": "furcolor.tanWhite",
+          "text": "Marrom/branco"
         },
         {
-          "key": "furcolor.black",
-          "text": "Preto"
+          "key": "furcolor.lightWhite",
+          "text": "Claro/branco"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "Escuro/branco"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Tricolor"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "Mais branco"
         },
         {
           "key": "furcolor.white",
           "text": "Branco"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Preto"
         },
         {
           "key": "furcolor.cream",
@@ -34420,20 +34580,20 @@
           "text": "Marrom"
         },
         {
+          "key": "furcolor.light",
+          "text": "Marrom claro"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "Preto/marrom"
+        },
+        {
           "key": "furcolor.red",
-          "text": "Vermelho"
+          "text": "Avermelhado"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "Vermelho claro"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "Tricolor"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "Chocolate"
+          "key": "furcolor.dark",
+          "text": "Marrom escuro"
         },
         {
           "key": "confirm.buyTitle",
@@ -38003,16 +38163,32 @@
           "text": "Nessun altro colore per questo cane"
         },
         {
-          "key": "furcolor.default",
-          "text": "Originale"
+          "key": "furcolor.tanWhite",
+          "text": "Marrone/bianco"
         },
         {
-          "key": "furcolor.black",
-          "text": "Nero"
+          "key": "furcolor.lightWhite",
+          "text": "Chiaro/bianco"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "Scuro/bianco"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Tricolore"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "Molto bianco"
         },
         {
           "key": "furcolor.white",
           "text": "Bianco"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Nero"
         },
         {
           "key": "furcolor.cream",
@@ -38023,20 +38199,20 @@
           "text": "Marrone"
         },
         {
+          "key": "furcolor.light",
+          "text": "Marrone chiaro"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "Nero/marrone"
+        },
+        {
           "key": "furcolor.red",
-          "text": "Rosso"
+          "text": "Rossiccio"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "Rosso chiaro"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "Tricolore"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "Cioccolato"
+          "key": "furcolor.dark",
+          "text": "Marrone scuro"
         },
         {
           "key": "confirm.buyTitle",
@@ -41606,16 +41782,32 @@
           "text": "Ten pies nie ma innych kolorów sierści"
         },
         {
-          "key": "furcolor.default",
-          "text": "Oryginalny"
+          "key": "furcolor.tanWhite",
+          "text": "Brąz i biel"
         },
         {
-          "key": "furcolor.black",
-          "text": "Czarny"
+          "key": "furcolor.lightWhite",
+          "text": "Jasny i biały"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "Ciemny i biały"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "Trójkolorowy"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "Głównie biały"
         },
         {
           "key": "furcolor.white",
           "text": "Biały"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "Czarny"
         },
         {
           "key": "furcolor.cream",
@@ -41626,20 +41818,20 @@
           "text": "Brązowy"
         },
         {
+          "key": "furcolor.light",
+          "text": "Jasnobrązowy"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "Czarny/brązowy"
+        },
+        {
           "key": "furcolor.red",
           "text": "Rudy"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "Jasnorudy"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "Trójkolorowy"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "Czekoladowy"
+          "key": "furcolor.dark",
+          "text": "Ciemnobrązowy"
         },
         {
           "key": "confirm.buyTitle",
@@ -45213,16 +45405,32 @@
           "text": "這隻狗沒有其他毛色"
         },
         {
-          "key": "furcolor.default",
-          "text": "原色"
+          "key": "furcolor.tanWhite",
+          "text": "棕白"
         },
         {
-          "key": "furcolor.black",
-          "text": "黑色"
+          "key": "furcolor.lightWhite",
+          "text": "淺棕白"
+        },
+        {
+          "key": "furcolor.darkWhite",
+          "text": "深棕白"
+        },
+        {
+          "key": "furcolor.tricolor",
+          "text": "三色"
+        },
+        {
+          "key": "furcolor.mostWhite",
+          "text": "白色為主"
         },
         {
           "key": "furcolor.white",
           "text": "白色"
+        },
+        {
+          "key": "furcolor.black",
+          "text": "黑色"
         },
         {
           "key": "furcolor.cream",
@@ -45230,23 +45438,23 @@
         },
         {
           "key": "furcolor.brown",
-          "text": "啡色"
+          "text": "棕色"
+        },
+        {
+          "key": "furcolor.light",
+          "text": "淺棕色"
+        },
+        {
+          "key": "furcolor.blackTan",
+          "text": "黑棕"
         },
         {
           "key": "furcolor.red",
-          "text": "紅色"
+          "text": "赤棕色"
         },
         {
-          "key": "furcolor.lightred",
-          "text": "淺紅色"
-        },
-        {
-          "key": "furcolor.tricolor",
-          "text": "三色"
-        },
-        {
-          "key": "furcolor.choco",
-          "text": "朱古力色"
+          "key": "furcolor.dark",
+          "text": "深棕色"
         },
         {
           "key": "confirm.buyTitle",

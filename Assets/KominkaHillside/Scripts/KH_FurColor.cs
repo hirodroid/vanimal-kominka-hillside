@@ -27,14 +27,14 @@ namespace KominkaHillside
     //   data        written by Tools/KominkaHillside/DogBook/5 - Build Fur Colors (KH_FurColorEditor). Non-synced reference arrays are
     //               declared null (vrc-udonsharp §4: an initialized array of the same length can lose its backing override).
     //               textures / nameKeys: one block per dog [textureStart[d], textureStart[d] + textureCount[d]); the first entry of a
-    //               block is the original texture with the key "furcolor.default".
+    //               block is the original texture, named by the dog's own color key (e.g. Corgi "furcolor.tanWhite"; 2026-10-08
+    //               user decision: the color names follow A_Cove_to_Unwind). NameKey returns "" when the data is missing.
     //               targetRenderers / targetSlots / targetDogs: every fur slot of every dog whose original texture is that dog's
     //               body fur texture (the distance-fade slot's _MainTex). Eyes, mouth and the KD_Acc_ / KH_ parts are not targets.
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class KH_FurColor : UdonSharpBehaviour
     {
         public const int DogCount = 6;
-        public const string DefaultKey = "furcolor.default";
 
         [Header("DogBook/5 - Build Fur Colors writes these")]
         public Renderer[] targetRenderers;
@@ -110,7 +110,7 @@ namespace KominkaHillside
         public string NameKey(int dog, int index)
         {
             int at = Index(dog, index);
-            return at >= 0 && nameKeys != null && at < nameKeys.Length && !string.IsNullOrEmpty(nameKeys[at]) ? nameKeys[at] : DefaultKey;
+            return at >= 0 && nameKeys != null && at < nameKeys.Length && !string.IsNullOrEmpty(nameKeys[at]) ? nameKeys[at] : "";
         }
 
         /// <summary>The panel's ◀ ▶. Owner only; wraps around the dog's list.</summary>

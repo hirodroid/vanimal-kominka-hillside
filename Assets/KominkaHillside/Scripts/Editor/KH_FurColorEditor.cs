@@ -22,10 +22,11 @@ namespace KominkaHillside.Editor
     /// 1. 犬 6 匹 (KD_Dog_&lt;key&gt;) の Renderer から毛の材質スロット (lilToon の毛シェーダー: Uzumore 082bc8… / lts_fur_two 54bc8b…) を集め、
     ///    距離フェードの Uzumore スロットの _MainTex (= その犬の毛のベースカラー) と同じテクスチャのスロットだけを対象にする。
     ///    目・口・その他 (me / kuti / sonota) と、飾り KD_Acc_ / KD_CandyCostume_ / 裏山の部品 KH_ の下は対象外。
-    /// 2. 犬ごとの色の一覧 = [もとの色 (今の _MainTex)] + 下の表 <see cref="Table"/> で見つかったもの + 持ち込み置き場
-    ///    <see cref="DropInDir"/>/&lt;key&gt;/&lt;色&gt;.png (色 = <see cref="ColorKeys"/> の末尾。black.png → furcolor.black)。
-    ///    **見つからない行は WARN で一覧に出すだけ** (テクスチャの有無に依存しない)。同じテクスチャ・同じ色名は先の方を残す。
-    /// 3. 各テクスチャの平均色を 16×16 へ縮めて測り、ログに出す (色名は推定。ユーザーが目視で直す)。
+    /// 2. 犬ごとの色の一覧 = 下の表 <see cref="Table"/> の行の順 (2026-10-08 ユーザー決定: 名前と順は入江 A_Cove_to_Unwind の毛色の一覧に合わせる)。
+    ///    先頭 (index 0) は今の色 (今の _MainTex) で、名前も入江のもの (コーギーなら「茶白」)。ほかの行は持ち込み置き場 <see cref="DropInDir"/>/&lt;key&gt;/&lt;色&gt;.png
+    ///    (古民家のパックのテクスチャのコピー) か、この repo の購入パックの材質。**見つからない行は WARN** (Verify は表の全行が配線されていることを求める)。
+    ///    置き場にあって表に無いファイルも WARN (配線しない)。続けて色名の ja / en の字形を共通フォントへ足し、KD_Language の表を作り直す (Configure)。
+    /// 3. 各テクスチャの平均色を 16×16 へ縮めて測り、ログと Verify の NOTE に出す (色名は入江のもの。見た目と合うかはユーザーが Play で見る)。
     /// 購入アセット (Assets/TORINOSUKE) は**読むだけ** (インポート設定も触らない)。持ち込みのテクスチャは Assets/KominkaHillside/ 側へコピーして置く。
     /// </summary>
     public static class KH_FurColorEditor
@@ -41,8 +42,6 @@ namespace KominkaHillside.Editor
         /// <summary>毛のシェーダー (アセットの GUID)。Uzumore = 距離フェード付きの lilToon Fur 2 pass (lilcontainer)、lts_fur_two = lilToon 本体。</summary>
         public static readonly string[] FurShaderGuids = { "082bc8ee39ecb30459ed0dde7a7f341d", "54bc8b41278802d4a81b27fe402994e2" };
         public const string UzumoreShaderGuid = "082bc8ee39ecb30459ed0dde7a7f341d";
-        /// <summary>色名の翻訳キー (翻訳表の 13 言語に置く)。持ち込みのファイル名はこの末尾 (black / white / …)。</summary>
-        public static readonly string[] ColorKeys = { "furcolor.black", "furcolor.white", "furcolor.cream", "furcolor.brown", "furcolor.red", "furcolor.lightred", "furcolor.tricolor", "furcolor.choco" };
 
         /// <summary>犬種 → 購入パックのフォルダ (材質を探す範囲)。</summary>
         static readonly Dictionary<string, string> BreedFolder = new Dictionary<string, string>
@@ -50,39 +49,48 @@ namespace KominkaHillside.Editor
             { "Corgi", "コーギー" }, { "Pome", "もちぽめ" }, { "Lab", "ラブラドール" }, { "Dachs", "ダックスフンド" }, { "Shiba", "柴犬_remake" }, { "Samoyed", "サモエド" },
         };
 
-        /// <summary>候補の 1 行。material = 購入パックの材質名 (拡張子なし。その _MainTex を使う)、texture = 犬種フォルダからの相対パス (どちらか)。</summary>
+        /// <summary>候補の 1 行。material = 購入パックの材質名 (拡張子なし。その _MainTex を使う)、texture = <see cref="DropInDir"/> からの相対パス。
+        /// どちらも null の行は「今の色」(その犬の距離フェードのスロットの _MainTex) で、犬ごとの先頭 (index 0) に 1 行だけ置く。</summary>
         public struct Candidate
         {
             public string dog, material, texture, nameKey, note;
             public Candidate(string dog, string material, string texture, string nameKey, string note)
             { this.dog = dog; this.material = material; this.texture = texture; this.nameKey = nameKey; this.note = note; }
+            public bool Original { get { return string.IsNullOrEmpty(material) && string.IsNullOrEmpty(texture); } }
         }
 
         /// <summary>
-        /// 候補の表。出典は古民家 DES-DOG-012「購入パックに入っている毛色」の材質名 (2026-09-22) と、この repo の残りのテクスチャ (2026-10-08 の平均色で推定)。
-        /// **色名はすべて推定** (古民家の資料の言葉か平均色。実物の見た目はユーザーが確かめる)。この repo に無い材質は WARN で出るだけ。
+        /// 色の表 (2026-10-08 ユーザー決定: 色名は入江と合わせる / 足りない色は古民家のパックから持ってくる)。犬ごとの行の順 = 板の ◀ ▶ の順 (index 0 = 今の色)。
+        /// 名前と順は入江の毛色の一覧 (catalog) のとおり。テクスチャは古民家の購入パックの ke 2〜4 などを統括が FurColors/&lt;犬&gt;/&lt;色&gt;.png へコピーしたもの
+        /// (購入テクスチャの派生物。加工なし・インポート設定はパックのまま)。柴 1 とサモエド 1 だけはこの repo のパックの材質をそのまま使う。
         /// </summary>
         public static readonly Candidate[] Table =
         {
-            new Candidate("Corgi", "ke 1", null, "furcolor.tricolor", "DES-DOG-012 ke 1 (色は未確認。推定)"),
-            new Candidate("Corgi", "ke 2", null, "furcolor.black", "DES-DOG-012 ke 2 (色は未確認。推定)"),
-            new Candidate("Corgi", "ke 3", null, "furcolor.cream", "DES-DOG-012 ke 3 (色は未確認。推定)"),
-            new Candidate("Corgi", "ke 4", null, "furcolor.brown", "DES-DOG-012 ke 4 (色は未確認。推定)"),
-            new Candidate("Pome", "ke 2", null, "furcolor.black", "DES-DOG-012 ke 2 黒"),
-            new Candidate("Pome", "ke 3", null, "furcolor.cream", "DES-DOG-012 ke 3 クリーム"),
-            new Candidate("Pome", "ke 4", null, "furcolor.brown", "DES-DOG-012 ke 4 茶"),
-            new Candidate("Lab", "ke 2", null, "furcolor.white", "DES-DOG-012 ke 2 白"),
-            new Candidate("Lab", "ke 3", null, "furcolor.black", "DES-DOG-012 ke 3 黒"),
-            new Candidate("Dachs", "ke 2", null, "furcolor.red", "DES-DOG-012 ke 2 明るいレッド"),
-            new Candidate("Dachs", "ke 3", null, "furcolor.choco", "DES-DOG-012 ke 3 チョコ"),
-            // この repo にある: ke.mat → shiba/マテリアル_Base_color.png (平均 #bca485、今の ke 1 = Base_color 2 #cc927a より淡い)
-            new Candidate("Shiba", "ke", null, "furcolor.lightred", "DES-DOG-012 ke 淡い赤 / repo にあり (平均色で推定)"),
-            new Candidate("Shiba", "ke 2", null, "furcolor.black", "DES-DOG-012 ke 2 黒"),
-            new Candidate("Shiba", "ke 3", null, "furcolor.white", "DES-DOG-012 ke 3 白"),
-            // この repo にある: サモエド毛.mat → samoedo/DefaultMaterial.001_Base_Color 2.png (平均 #312b2b、今の毛 2 = Base_Color 1 の白黒反転の配置)。
-            // 古民家の資料は「毛 2 黒」だが、この repo では 毛 2 が今の白、毛 (2 なし) が黒
-            new Candidate("Samoyed", "サモエド毛", null, "furcolor.black", "DES-DOG-012 毛 2 黒 / repo では サモエド毛.mat が黒 (平均色で推定)"),
+            new Candidate("Corgi", null, null, "furcolor.tanWhite", "今の色 (コーギー/マテリアル_Base_color.png)"),
+            new Candidate("Corgi", null, "Corgi/lightWhite.png", "furcolor.lightWhite", "古民家 ke 1"),
+            new Candidate("Corgi", null, "Corgi/darkWhite.png", "furcolor.darkWhite", "古民家 ke 2"),
+            new Candidate("Corgi", null, "Corgi/tricolor.png", "furcolor.tricolor", "古民家 ke 3"),
+            new Candidate("Corgi", null, "Corgi/mostWhite.png", "furcolor.mostWhite", "古民家 ke 4"),
+            new Candidate("Pome", null, null, "furcolor.white", "今の色"),
+            new Candidate("Pome", null, "Pome/black.png", "furcolor.black", "古民家 ke 2"),
+            new Candidate("Pome", null, "Pome/cream.png", "furcolor.cream", "古民家 ke 3"),
+            new Candidate("Pome", null, "Pome/brown.png", "furcolor.brown", "古民家 ke 4"),
+            new Candidate("Lab", null, null, "furcolor.brown", "今の色 (入江は今のイエローを「茶」と呼ぶ)"),
+            new Candidate("Lab", null, "Lab/white.png", "furcolor.white", "古民家 ke 2"),
+            new Candidate("Lab", null, "Lab/black.png", "furcolor.black", "古民家 ke 3"),
+            new Candidate("Dachs", null, null, "furcolor.brown", "今の色"),
+            new Candidate("Dachs", null, "Dachs/light.png", "furcolor.light", "古民家 ke 2"),
+            new Candidate("Dachs", null, "Dachs/blackTan.png", "furcolor.blackTan", "古民家 ke 3"),
+            new Candidate("Shiba", null, null, "furcolor.red", "今の色 (マテリアル_Base_color 2.png)"),
+            new Candidate("Shiba", "ke", null, "furcolor.light", "この repo のパック 柴犬_remake/material/ke.mat (マテリアル_Base_color.png)"),
+            new Candidate("Shiba", null, "Shiba/dark.png", "furcolor.dark", "古民家 ke 2"),
+            new Candidate("Shiba", null, "Shiba/white.png", "furcolor.white", "古民家 ke 3"),
+            new Candidate("Samoyed", null, null, "furcolor.white", "今の色"),
+            new Candidate("Samoyed", "サモエド毛", null, "furcolor.black", "この repo のパック サモエド/mat/サモエド毛.mat (DefaultMaterial.001_Base_Color 2.png)"),
         };
+
+        /// <summary>色名の翻訳キー (翻訳表の 13 言語に置く)。<see cref="Table"/> が使うものだけ (入江 A_Cove_to_Unwind の coat.* と同じ名前・同じ訳)。</summary>
+        public static readonly string[] ColorKeys = Table.Select(c => c.nameKey).Distinct().ToArray();
 
         class Target { public Renderer renderer; public int slot; public Texture2D texture; public Material material; }
 
@@ -109,22 +117,33 @@ namespace KominkaHillside.Editor
                 foreach (var s in skipped) log.AppendLine("   skip   " + s);
 
                 start[d] = textures.Count;
-                textures.Add(baseTex); keys.Add(KH_FurColor.DefaultKey);
-                foreach (var option in Options(def.key, log, ref warn))
+                var rows = RowsOf(def.key);
+                if (rows.Length == 0 || !rows[0].Original) throw new InvalidOperationException(def.key + ": the table must start with the original color row (material = texture = null)");
+                textures.Add(baseTex); keys.Add(rows[0].nameKey);
+                log.AppendLine("   option 0 " + rows[0].nameKey + " (" + KD_LocalizationEditor.Text(catalog, "ja", rows[0].nameKey) + ") = the current texture");
+                for (int r = 1; r < rows.Length; r++)
                 {
-                    if (option.Key == null) continue;
-                    var tex = option.Key; var key = option.Value;
-                    int from = start[d];
+                    string from;
+                    var tex = Resolve(rows[r], out from);
+                    var key = rows[r].nameKey;
+                    if (tex == null) { log.AppendLine("   WARN missing " + key + " — " + from + " (" + rows[r].note + ")"); warn++; continue; }
                     bool sameTex = false, sameKey = false;
-                    for (int i = from; i < textures.Count; i++) { if (textures[i] == tex) sameTex = true; if (keys[i] == key) sameKey = true; }
+                    for (int i = start[d]; i < textures.Count; i++) { if (textures[i] == tex) sameTex = true; if (keys[i] == key) sameKey = true; }
                     if (sameTex) { log.AppendLine("   WARN option " + key + " " + Describe(tex) + " is already in the list (same texture) — skipped"); warn++; continue; }
-                    if (sameKey) { log.AppendLine("   WARN option " + key + " " + Describe(tex) + " duplicates a color name — skipped (rename the file / fix the table)"); warn++; continue; }
+                    if (sameKey) { log.AppendLine("   WARN option " + key + " " + Describe(tex) + " duplicates a color name — skipped (fix the table)"); warn++; continue; }
                     textures.Add(tex); keys.Add(key);
-                    log.AppendLine("   option " + (textures.Count - from - 1) + " " + key + " (" + KD_LocalizationEditor.Text(catalog, "ja", key) + ") " + Describe(tex));
+                    log.AppendLine("   option " + (textures.Count - start[d] - 1) + " " + key + " (" + KD_LocalizationEditor.Text(catalog, "ja", key) + ") from " + from + " " + Describe(tex) + " (" + rows[r].note + ")");
                 }
                 counts[d] = textures.Count - start[d];
+                foreach (var stray in UnlistedDropIns(def.key)) { log.AppendLine("   WARN drop-in " + stray + " is not in the table (not wired)"); warn++; }
                 if (counts[d] <= 1) log.AppendLine("   NOTE no other colors for " + def.key + " (行は「ほかの毛色がありません」になる)");
             }
+            // 色名の字形 (ja / en は共通フォントに焼く) と KD_Language の表 (新しいキーを実行時に引けるように)。DogBook/1 Setup と同じ 2 つ
+            var language = KD_ProductsEditor.SceneComponents<KD_Language>();
+            if (language.Length != 1) throw new InvalidOperationException("KD_Language must exist once (" + language.Length + ")");
+            KD_ShopSetupEditor.AddGlyphs(string.Concat(catalog.languages.Where(KD_LocalizationEditor.Bundled).SelectMany(l => l.texts.Where(t => t.key.StartsWith("furcolor.")).Select(t => t.text))), log);
+            KD_LocalizationEditor.Configure(language[0], catalog, log);
+            KD_ProductsEditor.Copy(language[0]);
 
             var system = EnsureSystem(log);
             system.targetRenderers = renderers.ToArray(); system.targetSlots = slots.ToArray(); system.targetDogs = dogsOf.ToArray();
@@ -208,35 +227,36 @@ namespace KominkaHillside.Editor
             return shader != null && AssetDatabase.TryGetGUIDAndLocalFileIdentifier(shader, out guid, out local) ? guid : "";
         }
 
-        /// <summary>表の行 (この犬の分) と持ち込み置き場を、見つかった順に (テクスチャ, 色名キー) で返す。見つからない表の行は WARN。</summary>
-        static IEnumerable<KeyValuePair<Texture2D, string>> Options(string dogKey, StringBuilder log, ref int warn)
+        /// <summary>表のうち、この犬の行 (並び = 板の順)。</summary>
+        public static Candidate[] RowsOf(string dogKey) { return Table.Where(x => x.dog == dogKey).ToArray(); }
+
+        /// <summary>表の 1 行のテクスチャ (今の色の行は null)。material = 購入パックの犬種フォルダの材質の _MainTex、texture = <see cref="DropInDir"/> からの相対パス。
+        /// from に探した場所を返す (見つからなくても)。</summary>
+        public static Texture2D Resolve(Candidate c, out string from)
         {
-            var result = new List<KeyValuePair<Texture2D, string>>();
-            string folder = PackRoot + BreedFolder[dogKey];
-            foreach (var c in Table.Where(x => x.dog == dogKey))
+            from = null;
+            if (c.Original) return null;
+            if (!string.IsNullOrEmpty(c.material))
             {
-                Texture2D tex = null; string from = null;
-                if (!string.IsNullOrEmpty(c.material))
-                {
-                    var mat = AssetDatabase.FindAssets("t:Material", new[] { folder }).Select(AssetDatabase.GUIDToAssetPath)
-                        .Where(p => Path.GetFileNameWithoutExtension(p) == c.material).Select(AssetDatabase.LoadAssetAtPath<Material>).FirstOrDefault();
-                    if (mat != null) { tex = mat.GetTexture("_MainTex") as Texture2D; from = AssetDatabase.GetAssetPath(mat); }
-                }
-                if (tex == null && !string.IsNullOrEmpty(c.texture)) { tex = AssetDatabase.LoadAssetAtPath<Texture2D>(folder + "/" + c.texture); from = folder + "/" + c.texture; }
-                if (tex == null) { log.AppendLine("   WARN missing " + c.nameKey + " — " + (c.material != null ? "material \"" + c.material + "\"" : "texture " + c.texture) + " not in " + folder + " (" + c.note + ")"); warn++; continue; }
-                log.AppendLine("   found  " + c.nameKey + " from " + from + " (" + c.note + ")");
-                result.Add(new KeyValuePair<Texture2D, string>(tex, c.nameKey));
+                string folder = PackRoot + BreedFolder[c.dog];
+                from = "material \"" + c.material + "\" in " + folder;
+                var mat = AssetDatabase.FindAssets("t:Material", new[] { folder }).Select(AssetDatabase.GUIDToAssetPath)
+                    .Where(p => Path.GetFileNameWithoutExtension(p) == c.material).Select(AssetDatabase.LoadAssetAtPath<Material>).FirstOrDefault();
+                if (mat == null) return null;
+                from = AssetDatabase.GetAssetPath(mat);
+                return mat.GetTexture("_MainTex") as Texture2D;
             }
+            from = DropInDir + "/" + c.texture;
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(from);
+        }
+
+        /// <summary>持ち込み置き場 &lt;DropInDir&gt;/&lt;犬&gt;/ にあって表に無いテクスチャ (配線しない。WARN で知らせる)。</summary>
+        static IEnumerable<string> UnlistedDropIns(string dogKey)
+        {
             string drop = DropInDir + "/" + dogKey;
-            if (AssetDatabase.IsValidFolder(drop))
-                foreach (var path in AssetDatabase.FindAssets("t:Texture2D", new[] { drop }).Select(AssetDatabase.GUIDToAssetPath).OrderBy(p => p, StringComparer.Ordinal))
-                {
-                    string key = "furcolor." + Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
-                    if (!ColorKeys.Contains(key)) { log.AppendLine("   WARN drop-in " + path + " — unknown color name (use one of: " + string.Join(", ", ColorKeys.Select(k => k.Substring(9))) + ")"); warn++; continue; }
-                    log.AppendLine("   found  " + key + " from drop-in " + path);
-                    result.Add(new KeyValuePair<Texture2D, string>(AssetDatabase.LoadAssetAtPath<Texture2D>(path), key));
-                }
-            return result;
+            if (!AssetDatabase.IsValidFolder(drop)) return new string[0];
+            var listed = new HashSet<string>(RowsOf(dogKey).Where(c => !string.IsNullOrEmpty(c.texture)).Select(c => DropInDir + "/" + c.texture));
+            return AssetDatabase.FindAssets("t:Texture2D", new[] { drop }).Select(AssetDatabase.GUIDToAssetPath).Where(p => !listed.Contains(p)).OrderBy(p => p, StringComparer.Ordinal).ToArray();
         }
 
         /// <summary>テクスチャのパス・大きさ・平均色 (16×16 へ縮めて測る推定。読み取り不可のテクスチャでも測れる)。</summary>
@@ -300,7 +320,9 @@ namespace KominkaHillside.Editor
                 int from = s.textureStart[d], count = s.textureCount[d];
                 bool block = count >= 1 && from >= 0 && from + count <= s.textures.Length && (d == 0 ? from == 0 : from == s.textureStart[d - 1] + s.textureCount[d - 1]);
                 if (!v.Check(block, defs[d].key + ": texture block [" + from + ", " + (from + count) + ") contiguous")) continue;
-                v.Check(s.nameKeys[from] == KH_FurColor.DefaultKey && s.textures[from] != null, defs[d].key + ": first entry is the original color (" + KH_FurColor.DefaultKey + ")");
+                var rows = RowsOf(defs[d].key);
+                v.Check(count == rows.Length, defs[d].key + ": " + count + " colors = the table's " + rows.Length + " rows (every row wired, no WARN)");
+                v.Check(rows.Length > 0 && rows[0].Original && s.nameKeys[from] == rows[0].nameKey && s.textures[from] != null, defs[d].key + ": first entry is the current color named " + (rows.Length > 0 ? rows[0].nameKey : "-"));
                 var mine = Enumerable.Range(0, n).Where(i => s.targetDogs[i] == d).ToArray();
                 v.Check(mine.Length >= 1, defs[d].key + ": " + mine.Length + " fur target slot(s)");
                 foreach (int i in mine)
@@ -322,12 +344,25 @@ namespace KominkaHillside.Editor
                 }
                 for (int k = from + 1; k < from + count; k++)
                 {
-                    v.Check(s.textures[k] != null && s.textures[k] != s.textures[from], defs[d].key + " option " + (k - from) + " " + s.nameKeys[k] + " is a different texture");
-                    v.Check(ColorKeys.Contains(s.nameKeys[k]), defs[d].key + " option " + (k - from) + " key " + s.nameKeys[k] + " is a known color name");
+                    int idx = k - from;
+                    v.Check(s.textures[k] != null && s.textures[k] != s.textures[from], defs[d].key + " option " + idx + " " + s.nameKeys[k] + " is a different texture");
+                    string where = "-";
+                    var want = idx < rows.Length ? Resolve(rows[idx], out where) : null;
+                    v.Check(idx < rows.Length && s.nameKeys[k] == rows[idx].nameKey && want != null && s.textures[k] == want,
+                        defs[d].key + " option " + idx + " = table row " + idx + " (" + (idx < rows.Length ? rows[idx].nameKey : "none") + " from " + where + ")");
+                    v.Note(defs[d].key + " option " + idx + " " + KD_LocalizationEditor.Text(catalog, "ja", s.nameKeys[k]) + ": " + Describe(s.textures[k]));
                 }
                 v.Note(defs[d].key + ": " + count + " color(s) — " + string.Join(" / ", Enumerable.Range(from, count).Select(k => KD_LocalizationEditor.Text(catalog, "ja", s.nameKeys[k]))));
             }
-            foreach (var key in ColorKeys.Concat(new[] { KH_FurColor.DefaultKey }).Distinct())
+            v.Check(s.textures.Length == Table.Length && Table.Length == 21, "21 colors in all (" + s.textures.Length + " wired, table " + Table.Length + "; Corgi 5 / Pome 4 / Lab 3 / Dachs 3 / Shiba 4 / Samoyed 2)");
+            v.Check(ColorKeys.Length == 13, "13 color names (" + ColorKeys.Length + ", the Cove's coat names)");
+            // 翻訳表の furcolor.* = 行の文言 (KD_DogBookEditor.FurUiKeys) + 色名だけ (使わない色名・もとの色 furcolor.default を残さない)
+            var expected = new HashSet<string>(ColorKeys.Concat(KD_DogBookEditor.FurUiKeys));
+            var stray = catalog.languages.SelectMany(l => l.texts).Select(t => t.key).Where(k => k.StartsWith("furcolor.") && !expected.Contains(k)).Distinct().ToArray();
+            v.Check(stray.Length == 0, "no unused furcolor.* keys in the catalog" + (stray.Length == 0 ? "" : " (" + string.Join(", ", stray) + ")"));
+            var lang0 = KD_ProductsEditor.SceneComponents<KD_Language>().FirstOrDefault();
+            v.Check(lang0 != null && lang0.keys != null && ColorKeys.All(k => lang0.keys.Contains(k)), "KD_Language has the color names (DogBook/5 or 1 ran Configure)");
+            foreach (var key in ColorKeys)
             {
                 var missing = catalog.languages.Where(l => !l.texts.Any(t => t.key == key && !string.IsNullOrEmpty(t.text))).Select(l => l.code).ToArray();
                 v.Check(missing.Length == 0, "text " + key + " in all languages" + (missing.Length == 0 ? "" : " (missing: " + string.Join(",", missing) + ")"));

@@ -681,6 +681,6 @@ Imported-Unused の系統別の本数: Accessories 6 / Android Toon Materials 4 
 
 | メニュー | 変更 |
 |---|---|
-| `Tools/KominkaHillside/DogBook/0 - Create Program Assets` / `1 - Setup` / `2 - Layout Near Keeper (初期位置へ戻す)` / `3 - Verify` / `4 - Bake Portraits` / `5 - Build Fur Colors` | 新規 (裏山)。古民家の `Menu/Imported-Unused/Dog Book/0〜4` は残す (裏山では 1・2・3 が KD_Places / KD_Systems を前提にして使えない) |
+| `Tools/KominkaHillside/DogBook/0 - Create Program Assets` / `1 - Setup` / `2 - Build Stand And Place` (第 2 波で `2 - Layout Near Keeper` から差し替え。看板 `KH_DogBookStand` を建てて板を載せる) / `3 - Verify` / `4 - Bake Portraits` / `5 - Build Fur Colors` | 新規 (裏山)。古民家の `Menu/Imported-Unused/Dog Book/0〜4` は残す (裏山では 1・2・3 が KD_Places / KD_Systems を前提にして使えない) |
 
 **古民家ドッグランへは未反映** (毛色は 10-06 の決定で両ワールドの対象だが、古民家側の実装は別の作業)。
