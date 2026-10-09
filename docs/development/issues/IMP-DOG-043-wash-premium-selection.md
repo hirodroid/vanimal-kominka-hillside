@@ -6,7 +6,7 @@ status: wip
 priority: Medium
 summary: 洗い場ごとに写真から追加道具と台を選択。購入判定なしの先行導入とリスティング画像5枚
 next: "Unity導入・局所4ケース確認済み。PCVR/Androidと2人同期を確認後、購入画面・商品IDを別工程で接続"
-updated: 2026-10-08
+updated: 2026-10-09
 ---
 
 # IMP-DOG-043 洗い場の写真選択と追加道具
@@ -51,6 +51,12 @@ KH_WashSelectionは各stationのPremiumTools、KH_WashSelectionBoardはPremiumSe
 2026-10-08: ユーザーが変更した KH_WashStations/Hillside の向き（Y=221.453°）を保存。既存station rootの位置・向きは人の調整を維持する。選択状態は4洗い場で独立している。
 
 ## 実機確認待ち
+
+### 2026-10-09 メディアフィックス版の一時非表示
+
+ユーザー依頼で、本番シーンの4洗い場（KH_WashStation / Hillside / Upper / River）の `PremiumTools`・`PremiumSelectionBoard`・`SelectionPosts` と、6匹の `PremiumFinish` を非アクティブ化。削除や配線変更はせず、計18オブジェクトの Active を戻せば再表示できる。台3種とアヒルは元から未選択・非アクティブのまま。無料台の共通支柱は残す。
+
+Editorで追加Pickup 28枠・追加モデル68個の非表示、無料道具19個と4洗い場の通常ボード／台の有効状態を確認。今回の一時Editor処理はC#コンパイルエラー0。Play・実機・ビルド／アップロードは未実施。以下の追加品の実機確認は、再表示後に行う。
 
 0. PCVR/QuestでUIレーザー、写真・字形、実際の握り・噴出口、粒子・音・負荷を確認（Editor画像/ClientSimでは確定しない）。
 1. 1人：4洗い場それぞれで写真選択→左トレーから持つ→使う→置く。別の洗い場の道具・台が変わらない。台3品と高さ0/中/最大の支柱接点。
