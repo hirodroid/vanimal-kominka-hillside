@@ -1,0 +1,20 @@
+{
+    "photos":  {
+                   "walk":  "C:/Users/simpl/Pictures/VRChat/2026-10/VRChat_2026-10-04_17-53-25.247_1920x1080.png",
+                   "frisbee":  "C:/Users/simpl/Pictures/VRChat/2026-10/VRChat_2026-10-04_18-00-19.704_1920x1080.png",
+                   "river":  "C:/Users/simpl/Pictures/VRChat/2026-10/VRChat_2026-10-04_17-55-48.065_1920x1080.png",
+                   "pet":  "C:/Users/simpl/Pictures/VRChat/2026-10/VRChat_2026-10-04_17-57-35.617_1920x1080.png",
+                   "wash":  "C:/Users/simpl/Pictures/VRChat/2026-10/VRChat_2026-10-04_18-02-01.866_1920x1080.png",
+                   "gallery":  "C:/Users/simpl/Pictures/VRChat/2026-10/VRChat_2026-10-04_18-03-31.744_1920x1080.png"
+               },
+    "reference":  "KominkaDogRun/artifacts/kominka-introduction/004 (design reference; not a build dependency)",
+    "notes":  "User supplied six gameplay photos. Original files copied without pixel edits. CSS crops preserve activity subjects.",
+    "retainedAssets":  {
+                           "map.png":  "Assets/KominkaHillside/Textures/Map/KH_TravelMap.png",
+                           "dog-corgi.png":  "KominkaDogRun/artifacts/kominka-introduction/004/assets/dog-corgi.png",
+                           "night.png":  "docs/plans/evidence/2026-10-04-roadside/viewpoint-adult-night.png",
+                           "dog-pome.png":  "KominkaDogRun/artifacts/kominka-introduction/004/assets/dog-pome.png",
+                           "view.png":  "docs/plans/evidence/2026-10-04-roadside/farmhouse-view-adult-after.png",
+                           "dog-dachs.png":  "KominkaDogRun/artifacts/kominka-introduction/004/assets/dog-dachs.png"
+                       }
+}
