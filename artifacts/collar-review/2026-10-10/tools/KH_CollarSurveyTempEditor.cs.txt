@@ -1,0 +1,250 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.Animations;
+
+namespace KominkaHillside.Editor
+{
+    // Temporary survey (2026-10-10): multi-view collar captures + band-to-skin distance metrics.
+    // Samples clips on disposable preview-scene clones, never on the live dogs and never enters Play.
+    // Derived from KH_LeashPoseStudyEditor. Delete after the survey.
+    public static class KH_CollarSurveyTempEditor
+    {
+        static IEnumerator<bool> job;
+        static double nextTick;
+        const string Output = "Temp/KH_CollarSurvey";
+
+        [MenuItem("Tools/KominkaHillside/Walking/Temp - Collar Survey")]
+        public static void Run()
+        {
+            if (job != null) throw new InvalidOperationException("Collar survey already running");
+            job = Work().GetEnumerator(); nextTick = 0; EditorApplication.update += Tick;
+        }
+        static void Tick()
+        {
+            if (EditorApplication.timeSinceStartup < nextTick) return;
+            nextTick = EditorApplication.timeSinceStartup + .05;
+            try { if (!job.MoveNext()) { job.Dispose(); job = null; EditorApplication.update -= Tick; File.WriteAllText(Output + "/DONE", DateTime.Now.ToString("s")); } }
+            catch (Exception e) { job.Dispose(); job = null; EditorApplication.update -= Tick; File.WriteAllText(Output + "/ERROR.txt", e.ToString()); Debug.LogException(e); }
+            EditorApplication.QueuePlayerLoopUpdate();
+        }
+
+        struct View { public string name; public Vector3 offset; public bool topDown; public float zoom; public View(string n, Vector3 o, bool t = false, float z = 1f) { name = n; offset = o; topDown = t; zoom = z; } }
+
+        static IEnumerable<bool> Work()
+        {
+            if (Application.isPlaying) throw new InvalidOperationException("Edit mode only");
+            var m = UnityEngine.Object.FindObjectOfType<KH_LeashManager>();
+            if (m == null) throw new InvalidOperationException("KH_LeashManager not found");
+            Directory.CreateDirectory(Output);
+            foreach (var f in Directory.GetFiles(Output)) File.Delete(f);
+            var report = new StringBuilder("Editor animation sampling on preview clones, not a Play/VR result.\n");
+            var json = new StringBuilder("[\n"); bool firstJson = true;
+            var restViews = new[] {
+                new View("front",     new Vector3(0, .25f, 1f)),
+                new View("left",      new Vector3(-1f, .15f, .05f)),
+                new View("right",     new Vector3(1f, .15f, .05f)),
+                new View("top",       new Vector3(0, 1f, .25f), true),
+                new View("chin",      new Vector3(0, -.55f, .85f)),
+                new View("backtop",   new Vector3(0, .85f, -.7f)),
+                new View("closeleft", new Vector3(-1f, .1f, .15f), false, .55f),
+                new View("closefront",new Vector3(0, .15f, 1f), false, .55f),
+            };
+            var poseViews = new[] {
+                new View("left",  new Vector3(-1f, .15f, .05f)),
+                new View("front", new Vector3(0, .25f, 1f)),
+                new View("top",   new Vector3(0, 1f, .25f), true),
+            };
+            string[] poses = { "rest", "aruku", "Sit", "huse" };
+            for (int di = 0; di < m.dogRoots.Length; di++)
+            {
+                var dog = m.dogRoots[di];
+                foreach (string pose in poses)
+                {
+                    var preview = EditorSceneManager.NewPreviewScene(); GameObject clone = null;
+                    try
+                    {
+                        clone = UnityEngine.Object.Instantiate(dog.gameObject); SceneManager.MoveGameObjectToScene(clone, preview);
+                        clone.name = dog.name;
+                        clone.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+                        var animator = clone.GetComponentInChildren<Animator>(); animator.enabled = true; animator.cullingMode = AnimatorCullingMode.AlwaysAnimate; animator.Rebind();
+                        var transforms = clone.GetComponentsInChildren<Transform>(true);
+                        var clips = animator.runtimeAnimatorController.animationClips.Distinct().ToArray();
+                        var collar = clone.GetComponentInChildren<KH_LeashCollar>(true);
+                        var skin = clone.GetComponentsInChildren<SkinnedMeshRenderer>(true).First(s => s.name == "karada");
+                        var neck = transforms.First(t => t.name == "Bone.003"); var head = transforms.First(t => t.name == "Bone.004");
+                        // Hide accessories so only the collar is judged.
+                        foreach (var t in transforms) if (t != null && (t.name.StartsWith("KD_Acc_") || t.name.StartsWith("KD_CandyCostume_") || t.name.StartsWith("KD_PumpkinCostume_"))) t.gameObject.SetActive(false);
+
+                        var lightGo = new GameObject("PreviewLight"); SceneManager.MoveGameObjectToScene(lightGo, preview); var light = lightGo.AddComponent<Light>(); light.type = LightType.Directional; light.intensity = 1.15f; light.transform.rotation = Quaternion.Euler(45, -30, 0);
+                        var fillGo = new GameObject("PreviewFill"); SceneManager.MoveGameObjectToScene(fillGo, preview); var fill = fillGo.AddComponent<Light>(); fill.type = LightType.Directional; fill.intensity = .45f; fill.transform.rotation = Quaternion.Euler(20, 150, 0);
+                        var cameraGo = new GameObject("PreviewCamera"); SceneManager.MoveGameObjectToScene(cameraGo, preview); var camera = cameraGo.AddComponent<Camera>(); camera.scene = preview; camera.nearClipPlane = .01f; camera.farClipPlane = 10; camera.fieldOfView = 40; camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = new Color(.19f, .21f, .23f);
+                        const int W = 720, H = 560;
+                        var rt = new RenderTexture(W, H, 24); camera.targetTexture = rt;
+                        try
+                        {
+                            var clip = pose == "rest" ? null : clips.FirstOrDefault(c => c.name.IndexOf(pose, StringComparison.OrdinalIgnoreCase) >= 0);
+                            if (pose == "huse" && clip == null) clip = clips.FirstOrDefault(c => c.name.Contains("LieDown"));
+                            if (pose != "rest" && clip == null) { report.AppendLine(dog.name + " " + pose + " NOT_SAMPLED missing clip"); continue; }
+                            float time = clip == null ? 0 : clip.length * (pose == "Sit" || pose == "huse" ? .95f : .35f);
+                            if (clip != null) clip.SampleAnimation(clone, time);
+                            animator.enabled = false;
+                            ApplyDogConstraints(clone);
+
+                            // ---- Metrics: band vertices vs body skin surface (karada) ----
+                            var band = collar.transform.Find("Band");
+                            var bandFilter = band != null ? band.GetComponent<MeshFilter>() : null;
+                            var bandRenderer = band != null ? band.GetComponent<Renderer>() : null;
+                            var skinBaked = new Mesh(); skin.BakeMesh(skinBaked, true);
+                            var sv = skinBaked.vertices; var sn = skinBaked.normals; var sm = skin.transform.localToWorldMatrix; var snm = sm.inverse.transpose;
+                            for (int i = 0; i < sv.Length; i++) { sv[i] = sm.MultiplyPoint3x4(sv[i]); sn[i] = snm.MultiplyVector(sn[i]).normalized; }
+                            UnityEngine.Object.DestroyImmediate(skinBaked);
+                            string metrics = "";
+                            string sectorsJson = "";
+                            if (bandFilter != null && bandFilter.sharedMesh != null)
+                            {
+                                var bm = bandFilter.sharedMesh; var bv = bm.vertices; var bwm = band.localToWorldMatrix;
+                                // Only vertices near the collar's own neck cross-section (exclude buckle/ring geometry far from the band plane).
+                                int n = bv.Length;
+                                var signed = new float[n]; var sector = new int[n]; var radial = new float[n];
+                                string[] sectorNames = { "top", "upper-left", "left", "lower-left", "bottom", "lower-right", "right", "upper-right" };
+                                var sectorSum = new double[8]; var sectorMin = new float[8]; var sectorMax = new float[8]; var sectorCount = new int[8]; var sectorBuried = new int[8]; var sectorFloat = new int[8];
+                                for (int s = 0; s < 8; s++) { sectorMin[s] = float.MaxValue; sectorMax[s] = float.MinValue; }
+                                for (int i = 0; i < n; i++)
+                                {
+                                    var wp = bwm.MultiplyPoint3x4(bv[i]);
+                                    float best = float.MaxValue; int bi = -1;
+                                    for (int j = 0; j < sv.Length; j++) { float d = (sv[j] - wp).sqrMagnitude; if (d < best) { best = d; bi = j; } }
+                                    float dist = Mathf.Sqrt(best);
+                                    float sgn = Vector3.Dot(wp - sv[bi], sn[bi]) < 0 ? -dist : dist;
+                                    signed[i] = sgn;
+                                    var lp = collar.transform.InverseTransformPoint(wp);
+                                    // collar local: +Y up (dorsal), +X dog's right? Use dog frame to name sides.
+                                    var dp = dog.InverseTransformDirection(wp - collar.transform.position);
+                                    float ang = Mathf.Atan2(dp.x, dp.y) * Mathf.Rad2Deg; if (ang < 0) ang += 360; // 0 = top, 90 = dog's right
+                                    int sec = Mathf.RoundToInt(ang / 45f) % 8; // 0 top, 2 right, 4 bottom, 6 left
+                                    // remap to names: index order above is top, upper-left, left, lower-left, bottom, lower-right, right, upper-right
+                                    int named = sec == 0 ? 0 : sec == 1 ? 7 : sec == 2 ? 6 : sec == 3 ? 5 : sec == 4 ? 4 : sec == 5 ? 3 : sec == 6 ? 2 : 1;
+                                    sector[i] = named; radial[i] = new Vector2(dp.x, dp.y).magnitude;
+                                    sectorSum[named] += sgn; sectorCount[named]++; if (sgn < sectorMin[named]) sectorMin[named] = sgn; if (sgn > sectorMax[named]) sectorMax[named] = sgn;
+                                    if (sgn < -.004f) sectorBuried[named]++; if (sgn > .012f) sectorFloat[named]++;
+                                }
+                                float minAll = signed.Min(), maxAll = signed.Max(); double meanAll = signed.Average();
+                                int buriedAll = signed.Count(x => x < -.004f), floatAll = signed.Count(x => x > .012f);
+                                metrics = " bandVerts=" + n + " signedMm[min/mean/max]=" + (minAll * 1000).ToString("F1") + "/" + (meanAll * 1000).ToString("F1") + "/" + (maxAll * 1000).ToString("F1")
+                                    + " buried(<-4mm)=" + buriedAll + " (" + (100f * buriedAll / n).ToString("F0") + "%) floating(>12mm)=" + floatAll + " (" + (100f * floatAll / n).ToString("F0") + "%)";
+                                var sb = new StringBuilder();
+                                for (int s = 0; s < 8; s++)
+                                {
+                                    if (sectorCount[s] == 0) continue;
+                                    sb.Append("    " + sectorNames[s].PadRight(12) + " n=" + sectorCount[s].ToString().PadLeft(4) + " mm[min/mean/max]=" + (sectorMin[s] * 1000).ToString("F1") + "/" + (sectorSum[s] / sectorCount[s] * 1000).ToString("F1") + "/" + (sectorMax[s] * 1000).ToString("F1") + " buried=" + sectorBuried[s] + " floating=" + sectorFloat[s] + "\n");
+                                    sectorsJson += (sectorsJson.Length > 0 ? "," : "") + "{\"sector\":\"" + sectorNames[s] + "\",\"n\":" + sectorCount[s] + ",\"minMm\":" + (sectorMin[s] * 1000).ToString("F1") + ",\"meanMm\":" + (sectorSum[s] / sectorCount[s] * 1000).ToString("F1") + ",\"maxMm\":" + (sectorMax[s] * 1000).ToString("F1") + ",\"buried\":" + sectorBuried[s] + ",\"floating\":" + sectorFloat[s] + "}";
+                                }
+                                metrics += "\n" + sb.ToString().TrimEnd('\n');
+                                if (!firstJson) json.Append(",\n"); firstJson = false;
+                                json.Append("{\"dog\":\"" + dog.name + "\",\"pose\":\"" + pose + "\",\"clip\":\"" + (clip == null ? "rest" : clip.name) + "\",\"bandMesh\":\"" + bm.name + "\",\"bandVerts\":" + n
+                                    + ",\"minMm\":" + (minAll * 1000).ToString("F1") + ",\"meanMm\":" + (meanAll * 1000).ToString("F1") + ",\"maxMm\":" + (maxAll * 1000).ToString("F1")
+                                    + ",\"buried\":" + buriedAll + ",\"floating\":" + floatAll
+                                    + ",\"collarLocalPos\":\"" + collar.transform.localPosition.ToString("F4") + "\",\"collarLocalEuler\":\"" + collar.transform.localEulerAngles.ToString("F2") + "\",\"collarLocalScale\":\"" + collar.transform.localScale.ToString("F4") + "\""
+                                    + ",\"collarPosDog\":\"" + dog.InverseTransformPoint(collar.transform.position).ToString("F4") + "\",\"neckToHeadLerp\":" + InverseLerpPoint(neck.position, head.position, collar.transform.position).ToString("F3")
+                                    + ",\"bandBoundsSize\":\"" + (bandRenderer != null ? bandRenderer.bounds.size.ToString("F4") : "") + "\",\"anchorLocalPos\":\"" + collar.anchor.localPosition.ToString("F4") + "\",\"sectors\":[" + sectorsJson + "]}");
+                            }
+                            else metrics = " NO_BAND";
+
+                            string furInfo = "";
+                            if (pose == "rest")
+                            {
+                                var mats = skin.sharedMaterials;
+                                furInfo = " skinSubMeshes=" + skin.sharedMesh.subMeshCount + " materials=" + string.Join("|", mats.Select(x => x == null ? "null" : x.name + "<" + x.shader.name + ">"));
+                                foreach (var mat in mats)
+                                {
+                                    if (mat == null) continue; var sh = mat.shader; int pc = ShaderUtil.GetPropertyCount(sh);
+                                    for (int p = 0; p < pc; p++)
+                                    {
+                                        var pn = ShaderUtil.GetPropertyName(sh, p); var pt = ShaderUtil.GetPropertyType(sh, p);
+                                        if ((pt == ShaderUtil.ShaderPropertyType.Float || pt == ShaderUtil.ShaderPropertyType.Range) && (pn.IndexOf("Fur", StringComparison.OrdinalIgnoreCase) >= 0 || pn.IndexOf("Length", StringComparison.OrdinalIgnoreCase) >= 0 || pn.IndexOf("Shell", StringComparison.OrdinalIgnoreCase) >= 0 || pn.IndexOf("Outline", StringComparison.OrdinalIgnoreCase) >= 0 && pn.IndexOf("Width", StringComparison.OrdinalIgnoreCase) >= 0))
+                                            furInfo += " " + mat.name + "." + pn + "=" + mat.GetFloat(pn).ToString("F4");
+                                        if (pt == ShaderUtil.ShaderPropertyType.Vector && pn.IndexOf("Fur", StringComparison.OrdinalIgnoreCase) >= 0)
+                                            furInfo += " " + mat.name + "." + pn + "=" + mat.GetVector(pn).ToString("F4");
+                                    }
+                                }
+                                furInfo += " collarParent=" + collar.transform.parent.name + " collarChildren=" + string.Join("|", Enumerable.Range(0, collar.transform.childCount).Select(ci => collar.transform.GetChild(ci).name + (collar.transform.GetChild(ci).gameObject.activeSelf ? "" : "(off)")));
+                                furInfo += " neckLossyScale=" + neck.lossyScale.ToString("F4") + " dogLossyScale=" + dog.lossyScale.ToString("F4");
+                            }
+                            report.AppendLine(dog.name + " " + pose + " clip=" + (clip == null ? "rest" : clip.name) + " t=" + time.ToString("F3") + metrics + furInfo);
+
+                            // ---- Freeze skins into static meshes so the capture matches fur extrusion scale ----
+                            var frozen = new List<GameObject>(); var bakedMeshes = new List<Mesh>(); var visibleSkins = clone.GetComponentsInChildren<SkinnedMeshRenderer>(true).Where(s => s.enabled && s.gameObject.activeInHierarchy).ToArray();
+                            foreach (var s in visibleSkins)
+                            {
+                                var baked = new Mesh(); s.BakeMesh(baked, true); bakedMeshes.Add(baked);
+                                var go = new GameObject("FrozenPose"); SceneManager.MoveGameObjectToScene(go, preview);
+                                var matrix = s.transform.localToWorldMatrix; var bv2 = baked.vertices; var bn2 = baked.normals; var bt2 = baked.tangents; var nm2 = matrix.inverse.transpose;
+                                for (int vi = 0; vi < bv2.Length; vi++) bv2[vi] = matrix.MultiplyPoint3x4(bv2[vi]);
+                                for (int vi = 0; vi < bn2.Length; vi++) bn2[vi] = nm2.MultiplyVector(bn2[vi]).normalized;
+                                for (int vi = 0; vi < bt2.Length; vi++) { var tv = matrix.MultiplyVector(new Vector3(bt2[vi].x, bt2[vi].y, bt2[vi].z)).normalized; bt2[vi] = new Vector4(tv.x, tv.y, tv.z, bt2[vi].w); }
+                                baked.vertices = bv2; baked.normals = bn2; baked.tangents = bt2; baked.RecalculateBounds();
+                                go.AddComponent<MeshFilter>().sharedMesh = baked; go.AddComponent<MeshRenderer>().sharedMaterials = s.sharedMaterials; frozen.Add(go); s.enabled = false;
+                            }
+
+                            // ---- Capture views ----
+                            var focus = bandRenderer != null ? bandRenderer.bounds.center : collar.transform.position;
+                            float ext = bandRenderer != null ? Mathf.Max(bandRenderer.bounds.extents.x, bandRenderer.bounds.extents.y, bandRenderer.bounds.extents.z) : .1f;
+                            float baseDist = ext * 3.6f + .06f;
+                            var fwd = dog.forward.normalized; var up = dog.up.normalized; var right = dog.right.normalized;
+                            var views = pose == "rest" ? restViews : poseViews;
+                            foreach (var v in views)
+                            {
+                                float d = baseDist * v.zoom;
+                                var dir = (right * v.offset.x + up * v.offset.y + fwd * v.offset.z).normalized;
+                                camera.transform.position = focus + dir * d;
+                                camera.transform.rotation = Quaternion.LookRotation(focus - camera.transform.position, v.topDown ? fwd : up);
+                                camera.Render(); var previous = RenderTexture.active; RenderTexture.active = rt; var texture = new Texture2D(W, H, TextureFormat.RGB24, false); texture.ReadPixels(new Rect(0, 0, W, H), 0, 0); texture.Apply(); RenderTexture.active = previous;
+                                File.WriteAllBytes(Output + "/" + dog.name.Replace("KD_Dog_", "") + "-" + pose + "-" + v.name + ".jpg", texture.EncodeToJPG(88)); UnityEngine.Object.DestroyImmediate(texture);
+                            }
+                            foreach (var s in visibleSkins) s.enabled = true; foreach (var go in frozen) UnityEngine.Object.DestroyImmediate(go); foreach (var mesh in bakedMeshes) UnityEngine.Object.DestroyImmediate(mesh);
+                            File.WriteAllText(Output + "/report.txt", report.ToString());
+                            yield return true;
+                        }
+                        finally { camera.targetTexture = null; rt.Release(); UnityEngine.Object.DestroyImmediate(rt); }
+                    }
+                    finally { EditorSceneManager.ClosePreviewScene(preview); }
+                }
+            }
+            json.Append("\n]\n");
+            File.WriteAllText(Output + "/report.txt", report.ToString());
+            File.WriteAllText(Output + "/metrics.json", json.ToString());
+        }
+
+        static float InverseLerpPoint(Vector3 a, Vector3 b, Vector3 p)
+        {
+            var ab = b - a; float len = ab.sqrMagnitude; if (len < 1e-9f) return 0; return Vector3.Dot(p - a, ab) / len;
+        }
+
+        // Imported dog-rig preview contract from KominkaDogRun/Editor/KD_DogPreviewEditor.ApplyConstraints (same as KH_LeashPoseStudyEditor).
+        static void ApplyDogConstraints(GameObject clone)
+        {
+            foreach (var t in clone.GetComponentsInChildren<Transform>(true))
+            {
+                var p = t.GetComponent<PositionConstraint>();
+                if (p != null && p.constraintActive && p.weight > .99f && p.sourceCount > 0 && p.GetSource(0).weight > .99f)
+                {
+                    if (p.sourceCount != 1 || p.translationAxis != (Axis.X | Axis.Y | Axis.Z)) throw new InvalidOperationException("Unsupported preview position constraint");
+                    t.position = p.GetSource(0).sourceTransform.position + (t.parent == null ? p.translationOffset : t.parent.TransformVector(p.translationOffset));
+                }
+                var r = t.GetComponent<RotationConstraint>();
+                if (r != null && r.constraintActive && r.weight > .99f && r.sourceCount > 0 && r.GetSource(0).weight > .99f)
+                {
+                    if (r.sourceCount != 1 || r.rotationAxis != (Axis.X | Axis.Y | Axis.Z)) throw new InvalidOperationException("Unsupported preview rotation constraint");
+                    t.rotation = r.GetSource(0).sourceTransform.rotation * Quaternion.Euler(r.rotationOffset);
+                }
+            }
+        }
+    }
+}

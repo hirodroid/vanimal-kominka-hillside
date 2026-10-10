@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>首輪の見直し</title>
+<style>
+:root{color-scheme:light;--green:#364e3c;--paper:#fffdf8;--line:#d8ddcf;--muted:#667060;--bg:#f2f2e9;--ink:#24372b;--accent:#b88a43;--bur:#a2432f;--burbg:#f6e3dc;--flo:#2f5f86;--flobg:#e1ecf4;--prop:#7a5a1c;--propbg:#f6ecd6;--prec:#2f5a3a;--precbg:#e0eadc}
+*{box-sizing:border-box}html{scroll-padding-top:64px}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 system-ui,"Yu Gothic",sans-serif;overflow-wrap:anywhere}
+button,input,textarea{font:inherit}button{cursor:pointer}
+button,.file-button{border:1px solid var(--line);border-radius:9px;padding:8px 14px;background:var(--paper);color:var(--green)}button:hover,.file-button:hover{background:#e7ecdf}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.primary{background:var(--green);color:#fff;border-color:var(--green)}.primary:hover{background:#253d2c}
+.file-button{display:inline-block;cursor:pointer;position:relative}.file-button input{position:absolute;width:1px;height:1px;opacity:0}.file-button:focus-within{outline:3px solid var(--accent)}
+header{padding:24px 4vw 16px;border-bottom:1px solid var(--line);background:var(--paper)}
+.brand{letter-spacing:.16em;font-size:12px;color:var(--muted)}h1{font-size:26px;margin:4px 0;line-height:1.35}
+p{margin:8px 0}.sub{font-size:14px;color:var(--muted)}
+.tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px}
+.save{font-size:13px;color:var(--muted);margin:8px 0 0}
+nav.jump{position:sticky;top:0;z-index:5;background:rgba(255,253,248,.96);border-bottom:1px solid var(--line);padding:8px 4vw;display:flex;gap:8px;flex-wrap:wrap}
+nav.jump a{color:var(--green);text-decoration:none;font-size:14px;padding:5px 11px;border:1px solid var(--line);border-radius:20px;background:var(--paper)}nav.jump a:hover{background:#e7ecdf}
+main{max-width:1180px;margin:auto;padding:22px 4vw 10px}
+section.part{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:28px;min-width:0}
+h2{font-size:24px;margin:0 0 12px;line-height:1.4}h3{font-size:19px;margin:28px 0 8px;padding-top:14px;border-top:1px solid var(--line)}h4{font-size:16px;margin:18px 0 6px}
+.notice{padding:12px 16px;background:#fbf1dc;border:1px solid #e3c98f;border-radius:10px;font-weight:650}
+.conclusion{padding:14px 18px;background:#edf1e6;border-radius:10px}
+.table-wrap{overflow-x:auto;margin:10px 0;max-width:100%}
+table{border-collapse:collapse;font-size:14px;min-width:100%}th,td{border-bottom:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}th{background:#f3f5ee;font-weight:650;white-space:nowrap}
+td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bur{color:var(--bur);background:var(--burbg)}.flo{color:var(--flo);background:var(--flobg)}
+.legend{font-size:13px;color:var(--muted)}.legend span{padding:1px 6px;border-radius:4px}
+.badge{display:inline-block;font-size:12px;padding:1px 7px;border-radius:10px;white-space:nowrap;margin-left:4px}
+.prec{background:var(--precbg);color:var(--prec)}.prop{background:var(--propbg);color:var(--prop)}.cur{background:#e9e9e2;color:#4e5548}
+.dog{border:1px solid var(--line);border-radius:14px;padding:16px;margin:16px 0;background:#fff}
+.dog h4{margin:0 0 4px;font-size:18px}
+.dog-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:18px;margin-top:10px}
+.poses{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.poses button{padding:5px 11px;font-size:14px}.poses button[aria-pressed=true]{background:var(--green);color:#fff;border-color:var(--green)}
+figure{margin:0}.main-img{width:100%;height:auto;aspect-ratio:720/560;object-fit:contain;background:#2e3236;border-radius:10px;display:block}
+figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+.img-missing{aspect-ratio:720/560;display:grid;place-content:center;background:#e8eee5;border-radius:10px;color:var(--muted);font-size:14px;padding:12px;text-align:center}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:6px;margin-top:8px}
+.thumbs button{padding:0;border:2px solid transparent;border-radius:8px;background:none;overflow:hidden;line-height:0}.thumbs button[aria-pressed=true]{border-color:var(--accent)}
+.thumbs img{width:100%;height:auto;aspect-ratio:720/560;object-fit:cover;display:block}
+.thumbs span{display:block;font-size:11px;line-height:1.3;padding:3px 2px;color:var(--muted);background:#f6f6f0}
+.placement{font-size:13px;color:var(--muted)}
+ul,ol{padding-left:1.4em;margin:6px 0}li{margin:3px 0}
+.fix dt{font-weight:700;margin-top:10px}.fix dd{margin:2px 0 0 1.2em}
+.review,.question{margin-top:18px;padding:14px 16px;border:1px dashed #b9c4b1;border-radius:12px;background:#fafbf6}
+.question{border-style:solid;background:#fffaf0;border-color:#e6d4ab}
+.review .label,.question .label{font-weight:700;margin-bottom:6px;display:block}
+.choices{display:flex;flex-wrap:wrap;gap:8px}.choice{display:flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid var(--line);border-radius:9px;cursor:pointer;background:#fff}
+.choice:has(input:checked){background:#e0eadc;border-color:var(--green)}input[type=radio]{accent-color:var(--green);width:18px;height:18px;margin:0}
+textarea{display:block;resize:vertical;min-height:80px;width:100%;border:1px solid #bfc8b9;border-radius:9px;padding:10px;background:#fff;color:var(--ink);margin:8px 0 0}
+.proposal{font-size:14px;margin:4px 0 8px}.proposal b{color:var(--prop)}
+.totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0}
+.totals div{background:#f3f5ee;border-radius:10px;padding:10px 14px}.totals b{display:block;font-size:22px;color:var(--green)}.totals small{color:var(--muted);font-size:13px}
+.sources{font-size:13px;color:var(--muted)}
+footer{max-width:1180px;margin:auto;padding:0 4vw 28px;color:var(--muted);font-size:12px}
+code{font-size:.9em;background:#eef0e8;padding:0 4px;border-radius:4px}
+[hidden]{display:none!important}
+@media(max-width:820px){.dog-grid{grid-template-columns:1fr}h1{font-size:22px}h2{font-size:20px}}
+@media(max-width:560px){header,nav.jump{padding-left:16px;padding-right:16px}main{padding:16px}section.part{padding:16px}.dog{padding:12px}.tools button,.file-button{font-size:13px;padding:8px 10px}table{font-size:13px}th,td{padding:5px 6px}}
+</style>
+<header>
+<div class="brand">VAnimal / 古民家の裏山 / COLLAR REVIEW 2026-10-10</div>
+<h1>首輪の見直し — 現状と直し方、柄違いとおそろいセットの提案</h1>
+<p class="sub">散歩用首輪のずれ (BUG-DOG-011) と、首輪・リードの柄違いを Point 商品にする案 (IMP-DOG-048) の確認シート。各項目の末尾で「了承 / 修正したい / 保留」とメモを残してください。</p>
+<div class="tools"><button class="primary" id="export" type="button">回答を保存 (JSON)</button><button id="markdown" type="button">読みやすい一覧を保存 (Markdown)</button><label class="file-button">回答を読み込む<input id="import" type="file" accept=".json,application/json"></label></div>
+<p class="save" id="saveStatus" role="status" aria-live="polite"></p>
+<p class="sub" id="progress"></p>
+<p class="sub">入力はこのブラウザーにも保存します (補助)。引き継ぎには「回答を保存」でダウンロードした JSON をチャットへ添付してください。ここでの回答は Unity や Issue へ自動では反映されません。</p>
+<noscript><p class="notice">JavaScript が無効なため、犬ごとの写真・数値と回答欄は表示されません。</p></noscript>
+</header>
+<nav class="jump" aria-label="ページ内の移動"><a href="#part1">1. いまの首輪</a><a href="#dogs">犬ごとの写真と数値</a><a href="#fixes">直し方</a><a href="#part2">2. 追加パッケージ案</a><a href="#decisions">要ユーザー判断</a><a href="#overall">全体メモ</a></nav>
+<main>
+
+<section class="part" id="part1">
+<h2>1. いまの首輪 — 現状と直し方</h2>
+<p class="notice">この写真と数値は Unity Editor でアニメーションの 1 コマを取り出した (サンプルした) もので、Play / VR / 実機の結果ではありません。連続した動き・PhysBone・距離による表示の切り替え・他の人からの見え方は含みません。</p>
+
+<h3 style="border-top:0;padding-top:0">(a) 結論</h3>
+<div class="conclusion">
+<p style="margin-top:0"><b>ずれは動きではなく置き方そのものから来ている。</b>重なっている問題は次の 4 つ。</p>
+<ol>
+<li><b>輪の中心が首の骨の軸にあり、首の断面の中心より上にあると推定される。</b>Fit は輪を首骨 (Bone.003→Bone.004) の 0.45 の位置に置く。上下の値の差から求めた推定のずれ ((上 − 下) / 2) は コーギー 48 / ポメラニアン 39 / ダックスフンド 32 / 柴 57 / サモエド 31mm で、3〜6cm。<b>ラブラドールを除く 5 犬種</b>で、上 (背中側) が 3〜4cm 浮き、下 (喉・胸側) が 2.4〜8cm 皮膚の内側に埋まる。ラブラドールは Fit で前 40mm・下 8mm へ補正してあり、静止で上 +15.8 / 下 +0.9mm と例外。</li>
+<li><b>輪の大きさが体格に合っていない。</b>帯の楕円半径は <code>scripts/art/leash-assets.cjs</code> の犬種別の値で決まり、柴は小型のポメラニアンと同じ大きさ (rx 0.09 / ry 0.08)。そのため柴は下側が最も深く沈む (静止で下 −81.7mm)。</li>
+<li><b>毛の厚い犬 (サモエド・ポメラニアン) は、毛が帯を突き抜けて見える。</b>帯の下側が毛の中に沈むため。</li>
+<li><b>正面からは帯が頭に隠れ、金具 (D リング) だけが見える。</b>金具そのものは帯の上端に接している (金具の高さ RingY − 帯の上下半径 = 6 犬種とも 0.025)。帯全体が高く後ろにあるためで、1 の結果。</li>
+</ol>
+</div>
+<p class="sub">姿勢による変化: 上側の浮きは 4 姿勢でほぼ同じ。下側 (bottom) は伏せ・座りで首の下が胸や前脚に近づくので動く。コーギーの伏せは −4.9mm、ラブラドールの伏せは +35.4mm、ラブラドールの座りは −12.3mm、サモエドの座りは −42.3mm (下の表を参照)。ダックスフンドは帯の面が他より約 7° 起きていて (euler X 278.6)、耳の直後に輪が掛かっているように見える。</p>
+<div class="table-wrap"><table id="summaryTable" aria-describedby="summaryCaption"></table></div>
+<p class="legend" id="summaryCaption">静止 (rest) 姿勢の扇形別の平均 (mm)。<span class="bur">赤 = −4mm より内側 (埋まり)</span> <span class="flo">青 = +12mm より外側</span>。「推定のずれ」は (上 − 下) / 2 で、輪の中心が首の中心より上にある量の目安 (推定)。埋まり・浮きの % は帯の全頂点に対する割合。浮きの % は +12mm を超える頂点を数えるので、毛の中に沈んでいる頂点も含む (短毛のラブラドールでも 66%)。見た目の浮きの量は扇形の平均で読む。</p>
+
+<h3 id="dogs">(b) 犬ごとの写真と数値</h3>
+<p class="sub">姿勢のボタンでその姿勢の写真に切り替わります。下の小さな写真を押すと大きな写真が入れ替わります。数値の表は 4 姿勢を並べ、表示中の姿勢を太字にしています。</p>
+<div id="dogCards"></div>
+<div class="review" data-review="current" data-title="1-(a)(b) 現状の見立てと犬ごとの観察"></div>
+
+<h3>(c) 計測の読み方</h3>
+<ul>
+<li>帯のメッシュ (590〜594 頂点) の各頂点から、犬の体 (<code>karada</code> を姿勢ごとに固めたもの) の最も近い頂点までの距離 (mm)。<b>負 = 体の基準面より内側 (埋まり)、正 = 外側 (浮き)。</b></li>
+<li>最も近い「頂点」までの距離なので、体の頂点が粗い所では、実際の面までの距離より大きめに出る。</li>
+<li>毛はシェーダー (lilToon Fur 2 pass の派生 "Uzumore") で基準面の外へ押し出して描いているため、見た目の毛の表面は基準面より数 cm 外にある。<b>小さい正の値は「毛の中に沈んでいる」状態</b>で、大きい正の値が見た目の浮き。負の値は皮膚より内側で、確実に埋まっている。</li>
+<li>目安の閾値: 埋まり &lt; −4mm、浮き &gt; +12mm。浮きの % は毛の中の頂点も数えるので、それだけで「浮いている」とは読まない。毛の押し出し量は犬種ごとに違い (例: サモエド 0.03×1.1、ラブラドール 0.01×2.5)、単位がメッシュ座標に依存するので mm へ直接は換算していない。</li>
+<li>扇形は犬の正面から見た首輪の位置。top = 背中側、bottom = 喉・胸側、left / right = 犬の左右。</li>
+<li>カードの「計測上の位置」は、撮影スクリプトが測った首骨→頭骨の間の比 (Fit の設定値ではない)。localScale は首骨の拡大を打ち消す値 (1 / 首骨の lossyScale) で、ワールドでの倍率は 6 犬種とも 1.0。</li>
+<li>撮影・計測は一時 Editor スクリプトでプレビュー用の犬の複製に対して行い、本物の犬・シーンは変更していない。</li>
+</ul>
+
+<h3 id="fixes">(d) 直し方 (提案、優先順)</h3>
+<dl class="fix">
+<dt>A. 輪の中心と大きさを首の断面から決める (Fit の改修)</dt><dd>帯の面に入る体の頂点を集めて首の断面の中心と楕円の半径 (左右・上下) を求め、輪の中心を骨ではなく断面の中心に、帯の楕円半径 (今は leash-assets.cjs の犬種別の固定値) を「断面の半径 + 毛の余白 (犬種ごとの定数)」に合わせる。ラブラドールだけ Fit で前・下へ補正してあって下側が埋まらないのが、この方向の裏付け。</dd>
+<dt>B. 帯の面を少し前下がりにする</dt><dd>実物の首輪は背中側が高く喉側が低い。骨の向きではなく断面の主軸 (または骨方向を 10〜20° 前傾) を使う。ダックスフンドの起き過ぎ (278.6°) もここで解消する。</dd>
+<dt>C. 毛の厚い犬 (サモエド / ポメラニアン / ダックスフンド) は「帯が毛を押さえている」見た目に</dt><dd>帯の内側に毛の余白を足して毛の表面に乗せる、サモエドの毛材質の <code>_FurTouchStrength</code> (今は 0、他犬種は 1.0) を派生材質で 1.0 にして貫通が減るか試す (要確認: この値が何を参照するかは未確認)、帯を広げて毛の束を隠す、のいずれか。購入アセットの元材質は触らない。</dd>
+<dt>D. (A の後に確かめる) 金具の高さ</dt><dd>金具は今も帯の上端に接している。正面で金具だけが見えるのは帯全体が高く後ろにあるためなので、A を当てた後に正面を撮り直し、まだ不自然な場合だけ RingY を調整する。動かすとリードの接続点が変わるので、縄の始点・リード台の掛け外しも合わせて確認する。</dd>
+<dt>E. 正面から「首輪をしている」と分かる位置に</dt><dd>帯の下端が胸の前に出る高さを目標にする (ラブラドールの静止・正面が見た目の手本)。</dd>
+<dt>F. 直した後の数値目標</dt><dd>下の (e) 検収条件のとおり。見た目の手本はラブラドールだが、数値の条件はラブラドールにも課す。</dd>
+</dl>
+<h4>直すときの注意</h4>
+<ul>
+<li>首輪の位置は Setup が上書きする (Walking/8 Refit Collars)。<b>手で動かさず、Fit のデータ (犬種補正・RingY) と帯の半径を直して Refit で再現できる形にする。</b></li>
+<li>首輪には接続を外すための Interact が付いている。位置を下げると、首・頭の当たり判定に Interact の光線が先に当たる問題を再確認する。</li>
+<li>首元の飾り (バンダナ・蝶ネクタイ・首飾りなど) と重なる。今回の撮影では飾りを外したので、直した後は飾りを同時に付けて干渉を見る。</li>
+</ul>
+<div class="review" data-review="fix" data-title="1-(d) 直し方 A〜F と注意点"></div>
+
+<h3>(e) 検収条件</h3>
+<ul>
+<li>6 犬種 × 静止・歩き・座り・伏せの 4 姿勢で: 上側の平均が毛の厚み相当以下、下側の平均が −5mm 以上、埋まり頂点 (&lt; −4mm) が 5% 以下。<b>ラブラドールにも課す</b> (現状のラブラドールは上 +15.8、埋まり 16%、座りの下 −12.3 で、3 条件とも満たさない)。</li>
+<li>上側の目安と犬種の分け方 (<code>KH_DogWashSetupEditor</code> の犬種別 coat 表から):
+<ul>
+<li>短毛 (+10mm 程度): ラブラドール・ダックスフンド ("short smooth coat")。ただしダックスフンドは材質の毛の押し出し (0.025×1.3) がラブラドール (0.01×2.5) より大きく、同じ表のコメントも撮影で浮き・沈みを見るとしている。</li>
+<li>長毛 (+25mm 程度): ポメラニアン・サモエド ("long fluffy coat" / "long white double coat")。</li>
+<li>中毛: 柴・コーギー ("medium double coat")。目安の値はまだ無い。短毛と長毛のどちらを当てるかは、直した後の撮影で決める (要判断。材質の押し出しは柴 0.01×1.0、コーギー 0.02×1.0)。</li>
+</ul></li>
+<li>毛が帯を突き抜けない。正面・あご下の視点で帯が見え、金具だけが見える状態にならない。</li>
+<li>今回と同じ多視点撮影を直した後に撮り直し、前後を並べて比べる。</li>
+<li>最後にユーザーが VR で確認する: 歩き・座り・伏せ・リード接続中・撫でている最中。</li>
+</ul>
+<div class="review" data-review="accept" data-title="1-(e) 検収条件"></div>
+</section>
+
+<section class="part" id="part2">
+<h2>2. 追加パッケージ案 — 首輪・リードの柄違いとおそろいセット</h2>
+<p class="sub">価格の正本は古民家の business-strategy。ここの価格は裏山向けの<b>提案</b>です。価格の横の印: <span class="badge prec">前例あり</span> = 既存の確定価格、<span class="badge prop">提案 (前例なし)</span> = 今回の提案で前例のない値、<span class="badge cur">現行</span> = 今と同じ。</p>
+
+<h3 style="border-top:0;padding-top:0">A. いまの価格体系</h3>
+<ul>
+<li>Point の刻み (古民家 business-strategy §5.2 / §5.2.1、確定 2026-09-16): おもちゃ 10/20/30/40/50、撫でFX 8/16/24/32/40、飾り単品 10〜40 (10pt 刻み)、飾りセット 60、追加動作・Live 各 30、おやつ 1〜5 (反復購入なので合計に入れない)。</li>
+<li>裏山の入手: おじいさんとの初回会話で 200pt を 1 回だけ。あとは滞在 1 分 = 1pt (20pt = 20 分、60pt = 1 時間)。価格は古民家と同じ。</li>
+<li>Point 対象の合計は文書上 650pt (飾り 260 + 撫でFX 120 + 追加動作 120 + おもちゃ 150)。後から足した裏山専用 Live「紅葉が星になる」30pt を含めた実額は 680pt (文書の 650 は未更新)。</li>
+<li>1 回買えば 6 犬種すべてで使える (犬種ごとに重複して課金しない)。Point の残高と所持品はワールドごとに分かれる。</li>
+</ul>
+<div class="table-wrap"><table>
+<caption class="sub" style="text-align:left">おしゃれ系の既存単価</caption>
+<thead><tr><th>品</th><th>部位</th><th class="num">pt</th></tr></thead>
+<tbody>
+<tr><td>バンダナ</td><td>胸・首元</td><td class="num">無料</td></tr>
+<tr><td>尻尾リボン</td><td>尻尾</td><td class="num">10 <span class="badge prec">前例あり</span></td></tr>
+<tr><td>蝶ネクタイ</td><td>胸・首元</td><td class="num">20 <span class="badge prec">前例あり</span></td></tr>
+<tr><td>キャップ / ぐるぐる眼鏡</td><td>頭 / 顔</td><td class="num">20 <span class="badge prec">前例あり</span></td></tr>
+<tr><td>麦わら帽子 / シルクハット / 星型パーティー眼鏡</td><td>頭 / 顔</td><td class="num">30 <span class="badge prec">前例あり</span></td></tr>
+<tr><td>リュック</td><td>体</td><td class="num">40 <span class="badge prec">前例あり</span></td></tr>
+<tr><td>花飾り 3 点セット (中身だけの購入は不可)</td><td>3 部位</td><td class="num">60 <span class="badge prec">前例あり</span><br><small>1 点あたり 20</small></td></tr>
+<tr><th>計 (単品 8 + セット 1)</th><td></td><th class="num">260</th></tr>
+</tbody></table></div>
+
+<h3>B. 首輪の柄違い — 推奨は Point 4 柄 + 無料 1</h3>
+<ul>
+<li>前例: おもちゃと撫でFX はどちらも「無料 1 + Point 5」。09-12 の飾り追加も 5 品をまとめて入れた。</li>
+<li>4 柄に抑える理由: リードを同じ柄でそろえると商品数が 2 倍 (首輪 4 + リード 4 = 8 品) になり、飾り単品 8 品と同じ規模になる。検収も 6 犬種 × 柄の数だけ増える。2〜3 柄では「おしゃれの中心」として弱く、8 柄以上はかざりタブの行と Android のテクスチャ量に見合わない。</li>
+<li><b>形は変えず、テクスチャだけ替える。</b>帯は 1 枚の共有テクスチャ (1024²) の中で犬ごとに 128px の横帯を使っているので、柄ごとに BaseColor を足すだけで済み、首元 7 品との干渉表 (IMP-DOG-015 の 42 組、案 C) をそのまま使える。</li>
+<li><b>柄は 6 犬種共通で、地の色に犬の識別色を残す。</b>ボールとディスクは色でどの犬のものかを示している (DES-DOG-002)。全頭同じ色にすると見分けがつかなくなる。</li>
+<li>無料の基本は今の犬別の色のまま。リードの接続点なので「首輪なし」は作らない。</li>
+<li><b>CE (Credits) にはしない。</b>首輪は Point の飾りと明記されていて (古民家 accessories §1)、Point と CE を色違いで分けない規則もある (同 §1・§6)。</li>
+</ul>
+<div class="table-wrap"><table>
+<thead><tr><th>候補</th><th>見た目</th><th>制作難度</th><th>案</th></tr></thead>
+<tbody>
+<tr><td>しま</td><td>識別色と生成りの 2 色ストライプ</td><td>2 色 (テクスチャのみ)</td><td>採用 20pt <span class="badge prop">提案 (前例なし)</span></td></tr>
+<tr><td>チェック</td><td>識別色系のギンガム</td><td>模様テクスチャ</td><td>採用 20pt <span class="badge prop">提案 (前例なし)</span></td></tr>
+<tr><td>もみじ</td><td>識別色の地に紅葉を散らす (秋の裏山)</td><td>模様テクスチャ</td><td>採用 20pt <span class="badge prop">提案 (前例なし)</span></td></tr>
+<tr><td>革と真鍮</td><td>茶色の革、金色の金具、ステッチは識別色</td><td>金具違い (金具の材質領域を足す)</td><td>採用 30pt <span class="badge prop">提案 (前例なし)</span></td></tr>
+<tr><td>市松 (和柄)</td><td>古民家に合う市松模様</td><td>模様テクスチャ</td><td>予備</td></tr>
+<tr><td>鈴付き</td><td>金具に鈴</td><td>形状を変える (42 組の干渉を測り直す)</td><td>初回は見送り</td></tr>
+</tbody></table></div>
+<p class="sub">首輪の柄の価格は前例のない提案。首元で同じ位置に付く蝶ネクタイ 20pt と花セットの 1 点 20 相当にそろえ、金具まで替える柄はシルクハット等と同じ 30pt にした。</p>
+<div class="review" data-review="collar" data-title="2-B 首輪の柄違い"></div>
+
+<h3>C. 追加リード</h3>
+<ul>
+<li>リードは本人の道具なので、飼い主側の装備として扱う (首輪は犬側)。縄は 188 三角形・12 本の骨、持ち手 640、スナップ 728 三角形で、首輪と同じ材質 1 つを共有している。</li>
+<li><b>推奨: 色・材質を替える案。</b>首輪と同じ 4 柄を、縄・持ち手の色とスナップの金具色で表す。1 対 1 で同じ柄、同じ値段 (20 / 20 / 20 / 30) <span class="badge prop">提案 (前例なし)</span>。</li>
+<li>見送り: 形状を替える案 (平たい布テープ、竹の持ち手など)。縄の端点の検査と、持ち手の向き (BUG-DOG-002) の作り直しが要る。</li>
+<li>遠くの紐や軽量表示は単色の線で描くので、遠くからは色だけになる。</li>
+</ul>
+<div class="review" data-review="leash" data-title="2-C 追加リード"></div>
+
+<h3>D. 首輪 + リードの「おそろいセット」</h3>
+<ul>
+<li>単品合計から <b>10pt 引く</b>: 20 + 20 → 30 (25% 引き)、30 + 30 → 50 (17% 引き) <span class="badge prop">提案 (前例なし)</span>。</li>
+<li>Point のセットに割引の前例はない (花セットは 1 点 20 相当)。前例は洗い場の全部入り (CE、2000 → 1500 で 25% 引き、DES-DOG-008) だけ。</li>
+<li>既存規則「セットの中身は単品で買えない」(accessories §5・§6) は二重に買うのを防ぐためのもので、リードを単品でも売るとこの規則とぶつかる。
+<ul><li><b>推奨:</b> 単品も売る。セットを買うと両方の単品を持った扱いにする。片方を持っている人にはセットの行を出さず、残りだけを単品価格で示す。二重払いは起きない。</li>
+<li><b>代案:</b> セットだけを売る。規則と完全に一致するが、リードだけ欲しい人は買えない。</li></ul></li>
+</ul>
+<div class="review" data-review="set" data-title="2-D おそろいセット"></div>
+
+<h3>E. 既存ルールとの干渉</h3>
+<h4>提案 (前例に沿う)</h4>
+<ul>
+<li>首輪の柄は飾りの 5 部位に入れず「首輪」の行として別に持つ。蝶ネクタイ・バンダナ・首飾りと同時に付けられる。干渉の対策 (案 C) と除外 3 件はそのまま使う。</li>
+<li>首輪は犬に付く共有の見た目なので、飾りと同じ 60 秒ルール (最後に変えた人は待たない、他の人は 60 秒待つ。変更者と待ち時間は犬全体で 1 つ) を当てる。</li>
+<li>途中参加の人への復元: 飾りと同じ同期の配列 (またはそれに準じる配列) で配る。着せた人が退室しても残し、新しいインスタンスは既定から始める (accessories §7.1)。</li>
+<li>リードの柄は撫でFX と同じ方式にする。本人の選択だけを配り、60 秒ルールは当てない。</li>
+<li>価格表示・購入は手元メニューの共通確認カードで行う。ミニチュアは首輪込みで焼いてあるので、柄を反映するか基本色のままにするかを決める (IMP-DOG-015)。</li>
+</ul>
+<div class="review" data-review="rules" data-title="2-E 既存ルールとの干渉 (提案部分)"></div>
+
+<h4 id="decisions">要ユーザー判断 (6 点)</h4>
+<p class="sub">それぞれ「提案どおり / 変更 / 保留」を選び、変更の内容や理由をメモに書いてください。</p>
+<div class="question" data-question="q1" data-title="1. 散歩中の犬の首輪を、つないでいる人以外も変えられるか" data-proposal="飾りと同じ扱いにして、追加の制限は付けない。"></div>
+<div class="question" data-question="q2" data-title="2. リードの柄を左右の手で別にできるか。リードの選択を PlayerData に保存するか" data-proposal="1 人 1 つ。PlayerData に保存するかは判断をお願いしたい (メモ欄へ)。"></div>
+<div class="question" data-question="q3" data-title="3. セットの数え方 (D の推奨か代案か) と、Point のセット割引を新しく認めるか" data-proposal="D の推奨 (単品も売り、セット購入で両方の単品を持った扱い。片方を持っている人には残りを単品価格で示す)。割引は単品合計から 10pt 引き。"></div>
+<div class="question" data-question="q4" data-title="4. 柄の数 (4 か 5) と、「革と真鍮」を 30pt にするか" data-proposal="4 柄 (しま・チェック・もみじ・革と真鍮) + 無料 1。市松は予備。革と真鍮は 30pt。"></div>
+<div class="question" data-question="q5" data-title="5. 古民家 business-strategy §14.1.1 の部位表では首輪が「胸・首元」の候補。裏山では別の行にする。正本に注記する場所を決める" data-proposal="首輪は飾りの 5 部位に入れず別の行として持つ。注記する場所 (古民家 business-strategy §14.1.1 か accessories か) は判断をお願いしたい。"></div>
+<div class="question" data-question="q6" data-title="6. 毛色は 10-06 に課金で解放しないと決めた (DES-DOG-009)。首輪は飾りなので Point にする、という線引きでよいか" data-proposal="首輪は Point の飾り (古民家 accessories §1)。CE にはしない。"></div>
+
+<h3>F. 推奨案のまとめ</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>商品名</th><th>種別</th><th class="num">pt</th><th>備考</th></tr></thead>
+<tbody>
+<tr><td>首輪・基本 (犬別の色)</td><td>首輪</td><td class="num">無料 <span class="badge cur">現行</span></td><td>既定</td></tr>
+<tr><td>首輪・しま / チェック / もみじ</td><td>首輪</td><td class="num">各 20 <span class="badge prop">提案 (前例なし)</span></td><td>テクスチャのみ。蝶ネクタイ 20 にそろえた</td></tr>
+<tr><td>首輪・革と真鍮</td><td>首輪</td><td class="num">30 <span class="badge prop">提案 (前例なし)</span></td><td>金具の色も替える。シルクハット等 30 にそろえた</td></tr>
+<tr><td>リード・基本</td><td>リード</td><td class="num">無料 <span class="badge cur">現行</span></td><td>現行</td></tr>
+<tr><td>リード・しま / チェック / もみじ</td><td>リード</td><td class="num">各 20 <span class="badge prop">提案 (前例なし)</span></td><td>縄・持ち手の色</td></tr>
+<tr><td>リード・革と真鍮</td><td>リード</td><td class="num">30 <span class="badge prop">提案 (前例なし)</span></td><td>金色のスナップ</td></tr>
+<tr><td>おそろいセット × 3 (しま / チェック / もみじ)</td><td>セット</td><td class="num">各 30 <span class="badge prop">提案 (前例なし)</span></td><td>単品 40 から 10 引き</td></tr>
+<tr><td>おそろいセット・革と真鍮</td><td>セット</td><td class="num">50 <span class="badge prop">提案 (前例なし)</span></td><td>単品 60 から 10 引き</td></tr>
+</tbody></table></div>
+<div class="totals">
+<div><small>全部そろえる最小額</small><b>140pt</b><small>セット 4 つ。単品で買うと 180pt。セットと単品の額は足し合わせない</small></div>
+<div><small>Point 対象の合計</small><b>650 → 790pt</b><small>+140 (約 +22%)。Live を含めた実額では 680 → 820</small></div>
+<div><small>初回の 200pt で</small><b>セット 1 つ (30)</b><small>買っても 170 残る</small></div>
+</div>
+<div class="review" data-review="summary" data-title="2-F 推奨案のまとめ (価格・合計)"></div>
+
+<h4>出典 (調査ブリーフ 2026-10-10 から)</h4>
+<ul class="sources">
+<li>古民家 <code>docs/business-strategy.md</code> §0 L29、§2、§3、§5.1、§5.2 L72-112、§5.2.1 L116-132、§5.3 L157、§9、§10.1、§14.1.1、§15</li>
+<li>古民家 <code>docs/development/design/accessories.md</code> §1、§2、§3、§5、§6、§7.1</li>
+<li>裏山 <code>docs/game-design.md</code> L62、L65、L66、L83-100 (首輪干渉の案 C)、L150、L164、§8 の変更記録</li>
+<li>裏山 Issue: IMP-DOG-015 (首元 7 品 × 首輪の 42 組)、IMP-DOG-004、DES-DOG-001 L24、DES-UI-005、IMP-DOG-043、DES-DOG-008 L40-60、DES-DOG-002 L21・L39、DES-DOG-009 L20-33、DES-LIV-002 L16</li>
+<li>裏山 <code>docs/world-ui-spec.md</code> L86、L114、L116、L158 / <code>docs/plans/2026-09-20-leash-asset-production.md</code> L24-28、L119-129 / <code>docs/AI_INDEX.md</code> 不変条件 1・3・5 (商品そのものを定めた条文はない)</li>
+<li>裏山 <code>KD_ProductDefinitions.cs</code>、<code>KD_AccessoryBox.cs</code> L65-107、<code>KD_PlayerFxTag.cs</code>、<code>KH_LeashCollar.cs</code>、<code>scripts/art/leash-assets.cjs</code></li>
+</ul>
+</section>
+
+<section class="part" id="overall">
+<h2>全体へのメモ</h2>
+<label class="sub" for="overallNotes">首輪全体・このシートへの要望、ほかに作りたい柄やセットなど</label>
+<textarea id="overallNotes" maxlength="20000" placeholder="例: もみじは秋だけにしたい。おそろいセットは犬と飼い主で色違いにしたい。"></textarea>
+</section>
+</main>
+<footer>写真と数値: 2026-10-10、一時 Editor スクリプト KH_CollarSurveyTempEditor による撮影 (720×560)。数値の元データは tools/metrics.json と tools/report.txt。再生成: node scripts/art/build-collar-review.cjs</footer>
+<script>
+'use strict';
+const DATA={"generatedFrom":"tools/metrics.json","dogs":[{"key":"Corgi","name":"コーギー","placement":"Fit: 首骨→頭骨の 0.45、犬別補正なし。帯の楕円半径 rx 0.09 / ry 0.075","observation":"左側面では上面は毛に乗っているが、下前方が胸毛の中へ消える。正面では帯が頭に隠れ、金具 (D リング) だけが見える。真上では帯の後ろ半分が浮いて首との間に隙間 (影) がある。伏せでも同じ。","poses":[{"pose":"rest","label":"静止 (rest)","clip":"rest","views":[{"view":"left","label":"左側面 (left)","file":"img/Corgi-rest-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Corgi-rest-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Corgi-rest-top.jpg"},{"view":"chin","label":"あご下 (chin)","file":"img/Corgi-rest-chin.jpg"},{"view":"backtop","label":"背中側の上 (backtop)","file":"img/Corgi-rest-backtop.jpg"},{"view":"closeleft","label":"左の近接 (closeleft)","file":"img/Corgi-rest-closeleft.jpg"},{"view":"closefront","label":"正面の近接 (closefront)","file":"img/Corgi-rest-closefront.jpg"},{"view":"right","label":"右側面 (right)","file":"img/Corgi-rest-right.jpg"}],"m":{"top":40.6,"bottom":-55.1,"left":14,"right":21.8,"buriedPct":18,"floatingPct":77,"offsetEst":48,"bandVerts":590,"lerp":0.45,"euler":"(270.09, 0.00, 0.00)","scale":"(0.7634, 0.7634, 0.7634)"}},{"pose":"aruku","label":"歩き (aruku)","clip":"aruku","views":[{"view":"left","label":"左側面 (left)","file":"img/Corgi-aruku-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Corgi-aruku-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Corgi-aruku-top.jpg"}],"m":{"top":40.6,"bottom":-54.9,"left":14,"right":21.8,"buriedPct":18,"floatingPct":77,"offsetEst":48,"bandVerts":590,"lerp":0.45,"euler":"(270.09, 0.00, 0.00)","scale":"(0.7634, 0.7634, 0.7634)"}},{"pose":"Sit","label":"座り (Sit)","clip":"KD_Sit_Corgi","views":[{"view":"left","label":"左側面 (left)","file":"img/Corgi-Sit-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Corgi-Sit-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Corgi-Sit-top.jpg"}],"m":{"top":37.3,"bottom":-55.6,"left":13.9,"right":21.7,"buriedPct":17,"floatingPct":76,"offsetEst":46,"bandVerts":590,"lerp":0.45,"euler":"(270.09, 0.00, 0.00)","scale":"(0.7634, 0.7634, 0.7634)"}},{"pose":"huse","label":"伏せ (huse)","clip":"huse","views":[{"view":"left","label":"左側面 (left)","file":"img/Corgi-huse-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Corgi-huse-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Corgi-huse-top.jpg"}],"m":{"top":37.8,"bottom":-4.9,"left":13.7,"right":21.9,"buriedPct":15,"floatingPct":78,"offsetEst":21,"bandVerts":590,"lerp":0.45,"euler":"(270.09, 0.00, 0.00)","scale":"(0.7634, 0.7634, 0.7634)"}}]},{"key":"Pome","name":"ポメラニアン","placement":"Fit: 0.45、犬別補正なし。帯の楕円半径 rx 0.09 / ry 0.08","observation":"真上では帯が首の毛の上に乗って見えるが、左側面では帯の下端から白い毛が束で突き抜ける。正面では帯が頭に隠れ、金具だけが見える。","poses":[{"pose":"rest","label":"静止 (rest)","clip":"rest","views":[{"view":"left","label":"左側面 (left)","file":"img/Pome-rest-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Pome-rest-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Pome-rest-top.jpg"},{"view":"chin","label":"あご下 (chin)","file":"img/Pome-rest-chin.jpg"},{"view":"backtop","label":"背中側の上 (backtop)","file":"img/Pome-rest-backtop.jpg"},{"view":"closeleft","label":"左の近接 (closeleft)","file":"img/Pome-rest-closeleft.jpg"},{"view":"closefront","label":"正面の近接 (closefront)","file":"img/Pome-rest-closefront.jpg"},{"view":"right","label":"右側面 (right)","file":"img/Pome-rest-right.jpg"}],"m":{"top":32.4,"bottom":-44.6,"left":4.7,"right":13.3,"buriedPct":22,"floatingPct":62,"offsetEst":39,"bandVerts":590,"lerp":0.45,"euler":"(270.89, 0.01, 359.99)","scale":"(1.0000, 1.0000, 1.0000)"}},{"pose":"aruku","label":"歩き (aruku)","clip":"aruku","views":[{"view":"left","label":"左側面 (left)","file":"img/Pome-aruku-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Pome-aruku-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Pome-aruku-top.jpg"}],"m":{"top":32.8,"bottom":-43.6,"left":4.4,"right":13.2,"buriedPct":22,"floatingPct":62,"offsetEst":38,"bandVerts":590,"lerp":0.45,"euler":"(270.89, 0.01, 359.99)","scale":"(1.0000, 1.0000, 1.0000)"}},{"pose":"Sit","label":"座り (Sit)","clip":"KD_Sit_Pome","views":[{"view":"left","label":"左側面 (left)","file":"img/Pome-Sit-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Pome-Sit-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Pome-Sit-top.jpg"}],"m":{"top":32.5,"bottom":-44.8,"left":1.9,"right":13.4,"buriedPct":22,"floatingPct":62,"offsetEst":39,"bandVerts":590,"lerp":0.45,"euler":"(270.89, 0.01, 359.99)","scale":"(1.0000, 1.0000, 1.0000)"}},{"pose":"huse","label":"伏せ (huse)","clip":"huse","views":[{"view":"left","label":"左側面 (left)","file":"img/Pome-huse-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Pome-huse-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Pome-huse-top.jpg"}],"m":{"top":35.6,"bottom":-39.3,"left":3.4,"right":13.8,"buriedPct":21,"floatingPct":67,"offsetEst":37,"bandVerts":590,"lerp":0.45,"euler":"(270.89, 0.01, 359.99)","scale":"(1.0000, 1.0000, 1.0000)"}}]},{"key":"Lab","name":"ラブラドール","placement":"計測上の位置 0.576 (Fit は 0.45 + 犬座標で前 40mm・下 8mm の補正)。localEuler (271.27, 180, 180) は (268.73, 0, 0) と同じ回転で、他犬種と同系統。帯の楕円半径 rx 0.1 / ry 0.125","observation":"短毛なので最も素直。帯は顎下にきちんと回る。正面で帯が胸の前に見える (見た目の手本)。ただし数値では上 +15.8mm・埋まり 16% で、座りでは下側が −12.3mm と少し沈む。","poses":[{"pose":"rest","label":"静止 (rest)","clip":"rest","views":[{"view":"left","label":"左側面 (left)","file":"img/Lab-rest-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Lab-rest-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Lab-rest-top.jpg"},{"view":"chin","label":"あご下 (chin)","file":"img/Lab-rest-chin.jpg"},{"view":"backtop","label":"背中側の上 (backtop)","file":"img/Lab-rest-backtop.jpg"},{"view":"closeleft","label":"左の近接 (closeleft)","file":"img/Lab-rest-closeleft.jpg"},{"view":"closefront","label":"正面の近接 (closefront)","file":"img/Lab-rest-closefront.jpg"},{"view":"right","label":"右側面 (right)","file":"img/Lab-rest-right.jpg"}],"m":{"top":15.8,"bottom":0.9,"left":13.4,"right":19.6,"buriedPct":16,"floatingPct":66,"offsetEst":7,"bandVerts":590,"lerp":0.576,"euler":"(271.27, 180.00, 180.00)","scale":"(0.8682, 0.8682, 0.8682)"}},{"pose":"aruku","label":"歩き (aruku)","clip":"aruku","views":[{"view":"left","label":"左側面 (left)","file":"img/Lab-aruku-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Lab-aruku-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Lab-aruku-top.jpg"}],"m":{"top":15.9,"bottom":0.2,"left":13.1,"right":19.8,"buriedPct":16,"floatingPct":66,"offsetEst":8,"bandVerts":590,"lerp":0.576,"euler":"(271.27, 180.00, 180.00)","scale":"(0.8682, 0.8682, 0.8682)"}},{"pose":"Sit","label":"座り (Sit)","clip":"KD_Sit_Lab","views":[{"view":"left","label":"左側面 (left)","file":"img/Lab-Sit-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Lab-Sit-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Lab-Sit-top.jpg"}],"m":{"top":15,"bottom":-12.3,"left":13,"right":19,"buriedPct":22,"floatingPct":56,"offsetEst":14,"bandVerts":590,"lerp":0.576,"euler":"(271.27, 180.00, 180.00)","scale":"(0.8682, 0.8682, 0.8682)"}},{"pose":"huse","label":"伏せ (huse)","clip":"huse","views":[{"view":"left","label":"左側面 (left)","file":"img/Lab-huse-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Lab-huse-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Lab-huse-top.jpg"}],"m":{"top":18.2,"bottom":35.4,"left":17,"right":22.2,"buriedPct":10,"floatingPct":75,"offsetEst":-9,"bandVerts":590,"lerp":0.576,"euler":"(271.27, 180.00, 180.00)","scale":"(0.8682, 0.8682, 0.8682)"}}]},{"key":"Dachs","name":"ダックスフンド","placement":"Fit: 0.45、犬別補正なし。localEuler X 278.6 (他は 268.7〜272.2)。帯の楕円半径 rx 0.07 / ry 0.065","observation":"耳のすぐ後ろ、首の付け根より高い位置に輪が掛かる。背中側の上から見ると、帯が首より左右にはみ出して見える。下側は胸毛に消える。","poses":[{"pose":"rest","label":"静止 (rest)","clip":"rest","views":[{"view":"left","label":"左側面 (left)","file":"img/Dachs-rest-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Dachs-rest-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Dachs-rest-top.jpg"},{"view":"chin","label":"あご下 (chin)","file":"img/Dachs-rest-chin.jpg"},{"view":"backtop","label":"背中側の上 (backtop)","file":"img/Dachs-rest-backtop.jpg"},{"view":"closeleft","label":"左の近接 (closeleft)","file":"img/Dachs-rest-closeleft.jpg"},{"view":"closefront","label":"正面の近接 (closefront)","file":"img/Dachs-rest-closefront.jpg"},{"view":"right","label":"右側面 (right)","file":"img/Dachs-rest-right.jpg"}],"m":{"top":39.9,"bottom":-23.8,"left":20.8,"right":24.2,"buriedPct":12,"floatingPct":82,"offsetEst":32,"bandVerts":590,"lerp":0.45,"euler":"(278.56, 0.01, 359.99)","scale":"(1.0000, 1.0000, 1.0000)"}},{"pose":"aruku","label":"歩き (aruku)","clip":"aruku 1","views":[{"view":"left","label":"左側面 (left)","file":"img/Dachs-aruku-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Dachs-aruku-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Dachs-aruku-top.jpg"}],"m":{"top":39.9,"bottom":-25.5,"left":21.1,"right":24.6,"buriedPct":12,"floatingPct":82,"offsetEst":33,"bandVerts":590,"lerp":0.45,"euler":"(278.56, 0.01, 359.99)","scale":"(1.0000, 1.0000, 1.0000)"}},{"pose":"Sit","label":"座り (Sit)","clip":"KD_Sit_Dachs","views":[{"view":"left","label":"左側面 (left)","file":"img/Dachs-Sit-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Dachs-Sit-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Dachs-Sit-top.jpg"}],"m":{"top":40.2,"bottom":-28.1,"left":20.1,"right":26.8,"buriedPct":11,"floatingPct":83,"offsetEst":34,"bandVerts":590,"lerp":0.45,"euler":"(278.56, 0.01, 359.99)","scale":"(1.0000, 1.0000, 1.0000)"}},{"pose":"huse","label":"伏せ (huse)","clip":"huse","views":[{"view":"left","label":"左側面 (left)","file":"img/Dachs-huse-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Dachs-huse-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Dachs-huse-top.jpg"}],"m":{"top":40.1,"bottom":-20.7,"left":19.8,"right":23.7,"buriedPct":11,"floatingPct":79,"offsetEst":30,"bandVerts":590,"lerp":0.45,"euler":"(278.56, 0.01, 359.99)","scale":"(1.0000, 1.0000, 1.0000)"}}]},{"key":"Shiba","name":"柴","placement":"計測上の位置 0.345 (Fit は 0.45 + 下 20mm の補正)。帯の楕円半径 rx 0.09 / ry 0.08 (ポメラニアンと同じ大きさ)","observation":"帯が体格に対して小さく、左側面から見ると下半分が首の中へ沈んで半円に見える (左の近接で下端が皮膚に食い込む)。正面では帯が全く見えない。","poses":[{"pose":"rest","label":"静止 (rest)","clip":"rest","views":[{"view":"left","label":"左側面 (left)","file":"img/Shiba-rest-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Shiba-rest-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Shiba-rest-top.jpg"},{"view":"chin","label":"あご下 (chin)","file":"img/Shiba-rest-chin.jpg"},{"view":"backtop","label":"背中側の上 (backtop)","file":"img/Shiba-rest-backtop.jpg"},{"view":"closeleft","label":"左の近接 (closeleft)","file":"img/Shiba-rest-closeleft.jpg"},{"view":"closefront","label":"正面の近接 (closefront)","file":"img/Shiba-rest-closefront.jpg"},{"view":"right","label":"右側面 (right)","file":"img/Shiba-rest-right.jpg"}],"m":{"top":33.2,"bottom":-81.7,"left":3.3,"right":11.9,"buriedPct":22,"floatingPct":63,"offsetEst":57,"bandVerts":590,"lerp":0.345,"euler":"(272.19, 0.00, 0.00)","scale":"(0.6191, 0.6191, 0.6191)"}},{"pose":"aruku","label":"歩き (aruku)","clip":"aruku","views":[{"view":"left","label":"左側面 (left)","file":"img/Shiba-aruku-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Shiba-aruku-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Shiba-aruku-top.jpg"}],"m":{"top":33.3,"bottom":-81.5,"left":3.5,"right":11.9,"buriedPct":22,"floatingPct":64,"offsetEst":57,"bandVerts":590,"lerp":0.345,"euler":"(272.19, 0.00, 0.00)","scale":"(0.6191, 0.6191, 0.6191)"}},{"pose":"Sit","label":"座り (Sit)","clip":"KD_Sit_Shiba","views":[{"view":"left","label":"左側面 (left)","file":"img/Shiba-Sit-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Shiba-Sit-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Shiba-Sit-top.jpg"}],"m":{"top":32.1,"bottom":-81.3,"left":1.4,"right":10.1,"buriedPct":23,"floatingPct":58,"offsetEst":57,"bandVerts":590,"lerp":0.345,"euler":"(272.19, 0.00, 0.00)","scale":"(0.6191, 0.6191, 0.6191)"}},{"pose":"huse","label":"伏せ (huse)","clip":"KD_LieDown_Shiba","views":[{"view":"left","label":"左側面 (left)","file":"img/Shiba-huse-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Shiba-huse-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Shiba-huse-top.jpg"}],"m":{"top":34.7,"bottom":-73.8,"left":1.1,"right":11.9,"buriedPct":23,"floatingPct":64,"offsetEst":54,"bandVerts":590,"lerp":0.345,"euler":"(272.19, 0.00, 0.00)","scale":"(0.6191, 0.6191, 0.6191)"}}]},{"key":"Samoyed","name":"サモエド","placement":"Fit: 0.45、犬別補正なし。帯の楕円半径 rx 0.16 / ry 0.16","observation":"上は毛の表面に乗るが、下前方は毛に沈み、毛が帯を突き抜けて「帯が途中で切れた」ように読める。真上では帯が毛に埋もれて細く見える。","poses":[{"pose":"rest","label":"静止 (rest)","clip":"rest","views":[{"view":"left","label":"左側面 (left)","file":"img/Samoyed-rest-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Samoyed-rest-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Samoyed-rest-top.jpg"},{"view":"chin","label":"あご下 (chin)","file":"img/Samoyed-rest-chin.jpg"},{"view":"backtop","label":"背中側の上 (backtop)","file":"img/Samoyed-rest-backtop.jpg"},{"view":"closeleft","label":"左の近接 (closeleft)","file":"img/Samoyed-rest-closeleft.jpg"},{"view":"closefront","label":"正面の近接 (closefront)","file":"img/Samoyed-rest-closefront.jpg"},{"view":"right","label":"右側面 (right)","file":"img/Samoyed-rest-right.jpg"}],"m":{"top":35.2,"bottom":-26.6,"left":19.3,"right":24.2,"buriedPct":13,"floatingPct":83,"offsetEst":31,"bandVerts":594,"lerp":0.45,"euler":"(271.63, 0.00, 0.00)","scale":"(0.7692, 0.7692, 0.7692)"}},{"pose":"aruku","label":"歩き (aruku)","clip":"aruku","views":[{"view":"left","label":"左側面 (left)","file":"img/Samoyed-aruku-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Samoyed-aruku-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Samoyed-aruku-top.jpg"}],"m":{"top":32.8,"bottom":-30.4,"left":18.9,"right":25.2,"buriedPct":15,"floatingPct":82,"offsetEst":32,"bandVerts":594,"lerp":0.45,"euler":"(271.63, 0.00, 0.00)","scale":"(0.7692, 0.7692, 0.7692)"}},{"pose":"Sit","label":"座り (Sit)","clip":"KD_Sit_Samoyed","views":[{"view":"left","label":"左側面 (left)","file":"img/Samoyed-Sit-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Samoyed-Sit-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Samoyed-Sit-top.jpg"}],"m":{"top":29.9,"bottom":-42.3,"left":15.6,"right":22.7,"buriedPct":19,"floatingPct":75,"offsetEst":36,"bandVerts":594,"lerp":0.45,"euler":"(271.63, 0.00, 0.00)","scale":"(0.7692, 0.7692, 0.7692)"}},{"pose":"huse","label":"伏せ (huse)","clip":"huse","views":[{"view":"left","label":"左側面 (left)","file":"img/Samoyed-huse-left.jpg"},{"view":"front","label":"正面 (front)","file":"img/Samoyed-huse-front.jpg"},{"view":"top","label":"真上 (top)","file":"img/Samoyed-huse-top.jpg"}],"m":{"top":31.9,"bottom":-24.2,"left":20.2,"right":24.3,"buriedPct":9,"floatingPct":87,"offsetEst":28,"bandVerts":594,"lerp":0.45,"euler":"(271.63, 0.00, 0.00)","scale":"(0.7692, 0.7692, 0.7692)"}}]}]};
+const KEY='vanimal-collar-review-20261010-v1';
+const SHEET='collar-review-2026-10-10';
+const REVIEW_LABELS={unreviewed:'未回答',ok:'了承',change:'修正したい',hold:'保留'};
+const Q_LABELS={unanswered:'未回答',proposal:'提案どおり',change:'変更',hold:'保留'};
+const $=id=>document.getElementById(id);
+const reviewEls=[...document.querySelectorAll('[data-review]')];
+const questionEls=[...document.querySelectorAll('[data-question]')];
+const REVIEWS=reviewEls.map(e=>({id:e.dataset.review,title:e.dataset.title}));
+const QUESTIONS=questionEls.map(e=>({id:e.dataset.question,title:e.dataset.title,proposal:e.dataset.proposal}));
+const MAX_NOTE=12000,MAX_OVERALL=20000;
+function el(tag,attrs,...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs||{})){if(k==='class')e.className=v;else if(k==='text')e.textContent=v;else e.setAttribute(k,v);}for(const c of kids)if(c!=null)e.append(c);return e;}
+function blank(){const s={version:1,sheet:SHEET,updatedAt:null,reviews:{},questions:{},dogs:{},overall:''};for(const r of REVIEWS)s.reviews[r.id]={decision:'unreviewed',notes:''};for(const q of QUESTIONS)s.questions[q.id]={choice:'unanswered',notes:''};for(const d of DATA.dogs)s.dogs[d.key]='';return s;}
+function isObj(v){return v&&typeof v==='object'&&!Array.isArray(v);}
+function validate(v){
+ const bad=m=>{throw Error(m);};
+ if(!isObj(v)||v.version!==1||v.sheet!==SHEET)bad('この確認シート用の回答JSONではありません。');
+ if(!isObj(v.reviews)||!isObj(v.questions)||!isObj(v.dogs)||typeof v.overall!=='string'||v.overall.length>MAX_OVERALL)bad('回答の形式が正しくありません。現在の入力は変更していません。');
+ const c=blank();
+ for(const r of REVIEWS){const x=v.reviews[r.id];if(!isObj(x)||!Object.hasOwn(REVIEW_LABELS,x.decision)||typeof x.notes!=='string'||x.notes.length>MAX_NOTE)bad('項目「'+r.title+'」の回答が正しくありません。現在の入力は変更していません。');c.reviews[r.id]={decision:x.decision,notes:x.notes};}
+ for(const q of QUESTIONS){const x=v.questions[q.id];if(!isObj(x)||!Object.hasOwn(Q_LABELS,x.choice)||typeof x.notes!=='string'||x.notes.length>MAX_NOTE)bad('判断「'+q.title+'」の回答が正しくありません。現在の入力は変更していません。');c.questions[q.id]={choice:x.choice,notes:x.notes};}
+ for(const d of DATA.dogs){const x=v.dogs[d.key];if(typeof x!=='string'||x.length>MAX_NOTE)bad(d.name+'のメモが正しくありません。現在の入力は変更していません。');c.dogs[d.key]=x;}
+ for(const k of Object.keys(v.reviews))if(!Object.hasOwn(c.reviews,k))bad('知らない項目が含まれています: '+k);
+ for(const k of Object.keys(v.questions))if(!Object.hasOwn(c.questions,k))bad('知らない判断が含まれています: '+k);
+ for(const k of Object.keys(v.dogs))if(!Object.hasOwn(c.dogs,k))bad('知らない犬が含まれています: '+k);
+ c.overall=v.overall;c.updatedAt=typeof v.updatedAt==='string'?v.updatedAt:null;return c;
+}
+function message(t){$('saveStatus').textContent=t;}
+let state=blank();
+try{const stored=localStorage.getItem(KEY);if(stored){state=validate(JSON.parse(stored));message('前回の入力を復元しました。');}else message('まだ回答はありません。');}catch(e){message('ブラウザー保存を利用できないか、前回の回答を読み込めませんでした。回答は「回答を保存 (JSON)」で保存してください。');}
+function save(){state.updatedAt=new Date().toISOString();updateProgress();try{localStorage.setItem(KEY,JSON.stringify(state));message('ブラウザーに保存済み · '+new Date().toLocaleTimeString('ja-JP'));return true;}catch(e){message('ブラウザーへの保存に失敗しました。「回答を保存 (JSON)」でダウンロードしてください。');return false;}}
+function updateProgress(){const r=REVIEWS.filter(x=>state.reviews[x.id].decision!=='unreviewed').length;const q=QUESTIONS.filter(x=>state.questions[x.id].choice!=='unanswered').length;$('progress').textContent=`回答済み: 項目 ${r} / ${REVIEWS.length}、要ユーザー判断 ${q} / ${QUESTIONS.length}`;}
+
+/* ---- numbers ---- */
+const fmt=n=>(n>0?'+':n<0?'−':'')+Math.abs(n).toFixed(1);
+function numCell(n){const td=el('td',{class:'num'+(n<-4?' bur':n>12?' flo':''),text:fmt(n)});return td;}
+function buildSummary(){
+ const t=$('summaryTable');
+ t.append(el('thead',{},el('tr',{},...['犬','上 (背中側)','下 (喉・胸側)','左','右','推定のずれ','埋まり','浮き','いまの置き方'].map((h,i)=>el('th',{class:i&&i<8?'num':'',text:h})))));
+ const tb=el('tbody');
+ for(const d of DATA.dogs){const p=d.poses.find(x=>x.pose==='rest');const tr=el('tr',{},el('td',{},el('a',{href:'#dog-'+d.key,text:d.name})),numCell(p.m.top),numCell(p.m.bottom),numCell(p.m.left),numCell(p.m.right),el('td',{class:'num',text:'約 '+p.m.offsetEst}),el('td',{class:'num',text:p.m.buriedPct+'%'}),el('td',{class:'num',text:p.m.floatingPct+'%'}),el('td',{class:'placement',text:d.placement}));tb.append(tr);}
+ t.append(tb);
+}
+
+/* ---- dog cards ---- */
+function dogCard(d){
+ const card=el('article',{class:'dog',id:'dog-'+d.key});
+ card.append(el('h4',{text:`${d.name} (${d.key})`}),el('p',{class:'placement',text:'いまの置き方: '+d.placement}));
+ const poseBar=el('div',{class:'poses',role:'group','aria-label':d.name+'の姿勢'});
+ const img=el('img',{class:'main-img',width:'720',height:'560',decoding:'async'});
+ const missing=el('div',{class:'img-missing',hidden:''});
+ const cap=el('figcaption');
+ const thumbs=el('div',{class:'thumbs',role:'group','aria-label':d.name+'の視点'});
+ const table=el('table');
+ let pose='rest',view='left';
+ img.addEventListener('error',()=>{img.hidden=true;missing.hidden=false;missing.textContent='画像を読み込めません: '+img.getAttribute('src');});
+ img.addEventListener('load',()=>{img.hidden=false;missing.hidden=true;});
+ function show(){
+  const p=d.poses.find(x=>x.pose===pose);const v=p.views.find(x=>x.view===view)||p.views[0];view=v.view;
+  const label=`${d.name}・${p.label}・${v.label}`;
+  img.hidden=false;missing.hidden=true;img.src=v.file;img.alt=label+'の首輪の写真';cap.textContent=label+'。クリップ '+p.clip+'。Editor のサンプル画像。';
+  for(const b of poseBar.children)b.setAttribute('aria-pressed',String(b.dataset.pose===pose));
+  thumbs.replaceChildren(...p.views.map(x=>{const b=el('button',{type:'button','aria-pressed':String(x.view===view),'aria-label':`${d.name}・${p.label}・${x.label}を大きく表示`},el('img',{src:x.file,alt:`${d.name}・${p.label}・${x.label}`,loading:'lazy',width:'720',height:'560'}),el('span',{text:x.label}));b.onclick=()=>{view=x.view;show();};return b;}));
+  for(const tr of table.tBodies[0].rows)tr.style.fontWeight=tr.dataset.pose===pose?'700':'400';
+ }
+ for(const p of d.poses){const b=el('button',{type:'button','data-pose':p.pose,text:p.label});b.onclick=()=>{pose=p.pose;view='left';show();};poseBar.append(b);}
+ table.append(el('thead',{},el('tr',{},...['姿勢','上','下','左','右','埋まり','浮き'].map((h,i)=>el('th',{class:i?'num':'',text:h})))));
+ const tb=el('tbody');for(const p of d.poses){const tr=el('tr',{'data-pose':p.pose},el('td',{text:p.label}),numCell(p.m.top),numCell(p.m.bottom),numCell(p.m.left),numCell(p.m.right),el('td',{class:'num',text:p.m.buriedPct+'%'}),el('td',{class:'num',text:p.m.floatingPct+'%'}));tb.append(tr);}table.append(tb);
+ const notes=el('textarea',{maxlength:String(MAX_NOTE),id:'dognote-'+d.key,placeholder:'この犬で気になるところ (任意)'});notes.value=state.dogs[d.key];notes.oninput=()=>{state.dogs[d.key]=notes.value;save();};
+ const left=el('div',{},el('figure',{},img,missing,cap),thumbs);
+ const m0=d.poses[0].m;
+ const right=el('div',{},el('div',{class:'table-wrap'},table),el('p',{class:'legend',text:`平均 (mm)。帯 ${m0.bandVerts} 頂点。計測上の位置 (首骨→頭骨の比) ${m0.lerp}、localEuler ${m0.euler}、localScale ${m0.scale} (首骨の拡大の打ち消し。ワールド倍率は 1.0)。`}),el('h4',{text:'観察メモ'}),el('p',{text:d.observation}),el('label',{class:'sub',for:'dognote-'+d.key,text:d.name+'へのメモ'}),notes);
+ card.append(poseBar,el('div',{class:'dog-grid'},left,right));
+ show();
+ return card;
+}
+
+/* ---- review / question controls ---- */
+function radios(name,labels,current,onPick,skip){const box=el('div',{class:'choices',role:'radiogroup'});for(const[val,label]of Object.entries(labels)){if(val===skip)continue;const input=el('input',{type:'radio',name,value:val});input.checked=val===current;input.onchange=()=>onPick(val);box.append(el('label',{class:'choice'},input,label));}return box;}
+function renderControls(){
+ for(const e of reviewEls){const id=e.dataset.review;const r=state.reviews[id];const ta=el('textarea',{maxlength:String(MAX_NOTE),id:'rv-notes-'+id,placeholder:'直したいところ・理由 (任意)'});ta.value=r.notes;ta.oninput=()=>{state.reviews[id].notes=ta.value;save();};
+  const reset=el('button',{type:'button',text:'未回答に戻す'});reset.onclick=()=>{state.reviews[id].decision='unreviewed';save();renderControls();};
+  e.replaceChildren(el('span',{class:'label',text:'この項目への回答: '+e.dataset.title}),radios('rv-'+id,REVIEW_LABELS,r.decision,v=>{state.reviews[id].decision=v;save();},'unreviewed'),el('label',{class:'sub',for:'rv-notes-'+id,text:'メモ'}),ta,el('p',{},reset));}
+ for(const e of questionEls){const id=e.dataset.question;const q=state.questions[id];const ta=el('textarea',{maxlength:String(MAX_NOTE),id:'q-notes-'+id,placeholder:'変更の内容・保留の理由など (任意)'});ta.value=q.notes;ta.oninput=()=>{state.questions[id].notes=ta.value;save();};
+  const reset=el('button',{type:'button',text:'未回答に戻す'});reset.onclick=()=>{state.questions[id].choice='unanswered';save();renderControls();};
+  const prop=el('p',{class:'proposal'},el('b',{text:'提案: '}),e.dataset.proposal);
+  e.replaceChildren(el('span',{class:'label',text:e.dataset.title}),prop,radios('q-'+id,Q_LABELS,q.choice,v=>{state.questions[id].choice=v;save();},'unanswered'),el('label',{class:'sub',for:'q-notes-'+id,text:'メモ'}),ta,el('p',{},reset));}
+ $('overallNotes').value=state.overall;updateProgress();
+}
+function renderDogs(){$('dogCards').replaceChildren(...DATA.dogs.map(dogCard));}
+$('overallNotes').oninput=()=>{state.overall=$('overallNotes').value;save();};
+
+/* ---- export / import ---- */
+function download(text,type,name){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+$('export').onclick=()=>{save();download(JSON.stringify(state,null,2),'application/json','vanimal-collar-review-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json');};
+function toMarkdown(){
+ let t='# VAnimal 首輪の見直し — 回答\n\n';if(state.updatedAt)t+=`更新: ${state.updatedAt}\n\n`;
+ t+='## 項目への回答\n\n';for(const r of REVIEWS){const x=state.reviews[r.id];t+=`### ${r.title}\n\n回答: ${REVIEW_LABELS[x.decision]}\n\nメモ:\n${x.notes||'(未記入)'}\n\n`;}
+ t+='## 要ユーザー判断\n\n';for(const q of QUESTIONS){const x=state.questions[q.id];t+=`### ${q.title}\n\n提案: ${q.proposal}\n\n回答: ${Q_LABELS[x.choice]}\n\nメモ:\n${x.notes||'(未記入)'}\n\n`;}
+ t+='## 犬ごとのメモ\n\n';for(const d of DATA.dogs)t+=`- ${d.name} (${d.key}): ${state.dogs[d.key]||'(未記入)'}\n`;
+ t+='\n## 全体へのメモ\n\n'+(state.overall||'(未記入)')+'\n';return t;
+}
+$('markdown').onclick=()=>{download(toMarkdown(),'text/markdown;charset=utf-8','vanimal-collar-review.md');};
+$('import').onchange=async ev=>{const file=ev.target.files[0];if(!file)return;try{if(file.size>1500000)throw Error('回答ファイルが大きすぎます。');const next=validate(JSON.parse(await file.text()));if(!confirm('現在の入力を、読み込む回答で置き換えます。よろしいですか？'))return;state=next;const saved=save();renderControls();renderDogs();if(saved)message('回答を読み込み、ブラウザーに保存しました。');}catch(e){alert('読み込めませんでした。'+e.message);}finally{ev.target.value='';}};
+
+buildSummary();renderDogs();renderControls();
+</script>
+</html>
