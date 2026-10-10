@@ -71,7 +71,7 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--green);font-size:14px}
 <header>
 <div class="brand">VAnimal / 古民家の裏山 / COLLAR REVIEW 2026-10-10</div>
 <h1>首輪の見直し — 現状と直し方、柄違いとおそろいセットの提案</h1>
-<p class="sub">散歩用首輪のずれ (BUG-DOG-011) と、首輪・リードの柄違いを Point 商品にする案 (IMP-DOG-048) の確認シート。各項目の末尾で「了承 / 修正したい / 保留」とメモを残してください。<b>2026-10-10 に首輪の置き方を直し、ユーザー決定 (案 1: ポメラニアン・サモエドは帯を毛に埋め、金具とリードで首輪を見せる) を反映した最終版を「3. 修正後 — 前後比較」に載せました。犬ごとの前後と、VR で見てほしい点を確認してください。</b></p>
+<p class="sub">散歩用首輪のずれ (BUG-DOG-011) と、首輪・リードの柄違いを Point 商品にする案 (IMP-DOG-048) の確認シート。各項目の末尾で「了承 / 修正したい / 保留」とメモを残してください。<b>2026-10-10 に首輪の置き方を直し、ユーザー決定 (案 1: ポメラニアン・サモエドは帯を毛に埋め、金具とリードで首輪を見せる) を反映し、短毛・中毛の 4 犬種の帯を首軸に直角にした最終版 (R12) を「3. 修正後 — 前後比較」に載せました。犬ごとの前後と、VR で見てほしい点を確認してください。</b></p>
 <div class="tools"><button class="primary" id="export" type="button">回答を保存 (JSON)</button><button id="markdown" type="button">読みやすい一覧を保存 (Markdown)</button><label class="file-button">回答を読み込む<input id="import" type="file" accept=".json,application/json"></label></div>
 <p class="save" id="saveStatus" role="status" aria-live="polite"></p>
 <p class="sub" id="progress"></p>
@@ -267,19 +267,21 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--green);font-size:14px}
 </section>
 
 <section class="part" id="part3">
-<h2>3. 修正後 (2026-10-10 最終、案 1) — 前後比較</h2>
+<h2>3. 修正後 (2026-10-10 最終 R12、案 1 + 首軸に直角) — 前後比較</h2>
 <p class="notice">修正後の写真と数値も 1 と同じく、Editor でアニメーションの 1 コマを取り出したもので、VR での見え方の確認ではありません。VR で見てほしい点は (h) にまとめました。</p>
 
 <h3 style="border-top:0;padding-top:0">(a) 何を変えたか</h3>
-<p class="after-obs"><b>ユーザー決定 (2026-10-10): 案 1「実物どおり」。</b>帯をすべて見せる置き方 (R4) を VR で見たユーザーから「首輪は全部見えるようになったが、サモエド・ポメは毛の外側に大きな輪が浮いていて明らかにおかしい。実物のふわふわ犬は首輪が毛に埋もれて見えないはず」。これを受けて、<b>ポメラニアン・サモエドは帯を毛の中 (皮膚の内側) に埋めて見せず、金具とリードで首輪の存在を見せる</b> (「リードで見せていく」)。短毛・中毛の 4 犬種 (コーギー・ラブラドール・ダックス・柴) は断面基準の配置を維持し、コーギー・柴は毛の余白を減らして毛に半分沈める。</p>
+<p class="after-obs"><b>ユーザー決定 (2026-10-10): 案 1「実物どおり」。</b>帯をすべて見せる置き方 (R4) を VR で見たユーザーから「首輪は全部見えるようになったが、サモエド・ポメは毛の外側に大きな輪が浮いていて明らかにおかしい。実物のふわふわ犬は首輪が毛に埋もれて見えないはず」。これを受けて、<b>ポメラニアン・サモエドは帯を毛の中 (皮膚の内側) に埋めて見せず、金具とリードで首輪の存在を見せる</b> (「リードで見せていく」)。短毛・中毛の 4 犬種 (コーギー・ラブラドール・ダックス・柴) は断面基準の配置を維持する (R9 ではコーギー・柴の毛の余白を減らして毛に半分沈めた。その後の変更は次の段落)。</p>
+<p class="after-obs"><b>ユーザー指摘 (2026-10-10、R9 を VR で確認): 「短毛・中毛の 4 犬種もだいぶ浮いている。回転させて首に対して直角にしてほしい。横から見た図でしっかり見て調整して」。</b>側面の近接写真で確かめると、帯の面が前に傾いていて (傾き 0.3)、背中側の上 (うなじ) と喉の前に隙間ができていた。これを受けて、見せる 4 犬種 (コーギー・ラブラドール・ダックス・柴) は<b>帯の面を首軸に直角 (傾き 0)</b> にし、断面の切り出しを薄くして (±20mm → ±12mm) 外接矩形の膨らみを減らし、毛の余白を 3〜4mm (コーギーは 12mm) にした ((b) の R10・R11)。ポメラニアン・サモエドの傾き (0.15 / 0.3) は、帯が体の中に隠れているので据え置いた。</p>
 <ul>
 <li>首輪を置く処理 (<code>KH_LeashProductionEditor.Fit</code>。Walking/8 Refit Collars が呼ぶ) を、<b>首骨の軸ではなく、体 (<code>karada</code>) の首の断面から、輪の中心・向き・楕円の大きさを決める方式</b>に変えた (1 の直し方 A・B)。</li>
-<li>決め方: 首骨→頭骨の 0.45 の位置に、首の向きに直交する面と世界の鉛直面の間で帯の面を取る (鉛直面へ寄せる割合が「傾き」)。その面の前後の薄い範囲に入る体の頂点から断面の中心と左右・上下の半径を求め、輪の中心を断面の中心へ移す。帯の楕円は「断面の半径 + 毛の余白」に合わせて左右 (X) と上下 (Y) を別々に拡大する。帯の幅 (Z) は 1 のままで、帯は太らない。</li>
+<li>決め方: 首骨→頭骨の 0.45 の位置に、首の向きに直交する面と世界の鉛直面の間で帯の面を取る (鉛直面へ寄せる割合が「傾き」。見せる 4 犬種は 0 = 首軸に直角の面)。その面の前後の薄い範囲 (±12mm) に入る体の頂点から断面の中心と左右・上下の半径を求め、輪の中心を断面の中心へ移す。帯の楕円は「断面の半径 + 毛の余白」に合わせて左右 (X) と上下 (Y) を別々に拡大する。帯の幅 (Z) は 1 のままで、帯は太らない。</li>
+<li>断面の切り出しを薄くした理由: 断面の大きさは切り出した頂点の外接矩形で取るので、切り出しが厚いと前後の太い所の頂点まで入って楕円が膨らむ (R9 まで ±20mm、R10 から ±12mm)。</li>
 <li>断面の頂点が少ないときは、修正前の置き方 (骨の軸 + ラブラドール・柴の手補正、倍率 1) に戻す。修正前の手補正はこの戻り先にだけ残し、通常の置き方からは削除した。</li>
 <li>首輪の「外す」Interact 用の当たり (SphereCollider) は首輪と一緒に拡大されるので、半径を倍率で割ってワールドでの半径 0.10 を保つようにした (独立レビューの指摘)。</li>
 <li>断面が取れず修正前の置き方へ戻したときは、Console に警告 (Debug.LogWarning) を出す (同上)。</li>
 <li>シーンを変えずに断面の値だけを書き出すドライランのメニュー (Walking/Production 8b Collar Fit Report) と、計算だけの関数 <code>Solve</code> を足した。</li>
-<li><b>毛に埋める犬種 (<code>BuriedInFur</code> = ポメラニアン・サモエド、案 1)</b>: 帯の倍率を左右・上下で同じ k = clamp(min(1, (断面の半幅 − <code>SideInset</code>) / rx), 0.75, 1) にして、金具を歪めない。帯の上端を皮膚の上面から <code>SinkDepth</code> 下に、横は皮膚の <code>SideInset</code> 内側に置き、帯全体を不透明な体の中に隠す。金具 (<code>ClipAnchor</code> の D リング。リードの接続点) は <code>RingLift</code> だけ持ち上げて毛の上に出し、首輪を外す Interact の当たりの中心も金具に合わせる。</li>
+<li><b>毛に埋める犬種 (<code>BuriedInFur</code> = ポメラニアン・サモエド、案 1)</b>: 帯の倍率を左右・上下で同じ k = clamp(min(1, (断面の半幅 − <code>SideInset</code>) / rx), 0.75, 1) にして、金具を歪めない。帯の上端を皮膚の上面から <code>SinkDepth</code> 下に、横は皮膚の <code>SideInset</code> 内側に置き、帯全体を不透明な体の中に隠す。金具はリードの接続点 (<code>ClipAnchor</code>) を <code>RingLift</code> だけ持ち上げ、そこに <code>ClipAnchor</code> 配下の手続き生成のリング (<code>AttachmentRing</code>、材質 <code>KH_ClipNeutral</code>) を有効にして乗せ、毛の上に出す (R12。帯メッシュの D リングは帯と一緒に毛の下に沈むため。Production 2 Apply もこの 2 犬種ではこのリングを無効にしない)。首輪を外す Interact の当たりの中心も金具に合わせる。</li>
 <li>体の中まで沈めた理由: 毛はアルファで抜いた層を重ねて描くので、皮膚の外にある物は層の隙間から透けて見える。帯を皮膚の上面や毛の中に置くと「毛が帯を突き抜ける」見え方が残った ((b) の R5・R6)。</li>
 </ul>
 <h4>適用した調整テーブル</h4>
@@ -295,16 +297,19 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--green);font-size:14px}
 <li><b>R5</b> (埋もれ犬種の帯の上端を皮膚の上面に。余白 0、倍率 1): 側面で帯が毛の層と混ざり、毛が突き抜けて見えた。</li>
 <li><b>R6</b> (帯を 1cm 沈める): まだ透ける。毛はアルファで抜いた層なので、皮膚の外にある物は隙間から見える。</li>
 <li><b>R7</b> (帯を皮膚の内側 = 不透明な体の中に入れ、金具を持ち上げる): ほぼ隠れるが、帯の端が覗いた。</li>
-<li><b>R8 / R9</b> (沈め幅と内側寄せを増やし、金具の持ち上げも増やす。最終値は (a) の表): 帯は完全に隠れ、金具だけが毛の上に出る (ポメラニアンははっきり、サモエドは毛が厚く金具がぎりぎり)。<b>採用</b>。このページの「修正後」はすべて R9。</li>
+<li><b>R8 / R9</b> (沈め幅と内側寄せを増やし、金具の持ち上げも増やす。最終値は (a) の表): 帯は完全に隠れ、金具だけが毛の上に出る (ポメラニアンははっきり、サモエドは毛が厚く金具がぎりぎり)。いったん採用 (R9)。ユーザーが VR で確認し、短毛・中毛の 4 犬種の浮きを指摘 → 帯の面を首軸に直角にする。</li>
+<li><b>R10</b> (見せる 4 犬種の傾きを 0 = 首軸に直角、断面の切り出し ±20mm → ±12mm、毛の余白 3〜4mm): ラブラドール・ダックス・柴は帯が首に沿い、首軸に直角になった。コーギーだけ、余白 4mm では帯が毛の層に食い込み、毛が帯の上に出た。</li>
+<li><b>R11</b> (コーギーの余白 4mm → 12mm): コーギーも毛の突き抜けが解消した。ただし断面を薄くしたことでサモエドの帯の基準が約 30mm 下がり、サモエドの金具が見えなくなった。</li>
+<li><b>R12</b> (毛に埋める 2 犬種の金具を出し直す。他は R11 のまま): 見えていた D リングは帯メッシュの一部で、帯と一緒に毛の下に沈んでいた。そこで <code>ClipAnchor</code> 配下の手続き生成のリング (<code>AttachmentRing</code>。Blender 製の首輪を入れてから無効だった) を Fit で有効にし、持ち上げた接続点に乗せて毛の上に出した。材質は <code>KH_ClipNeutral</code> (金色寄り)。ポメラニアンは金具が毛の上 2cm に浮いたので、沈めを 15 → /*FIT:SinkDepth:Pome*/mm、持ち上げを 55 → /*FIT:RingLift:Pome*/mm にした。サモエドはシェーダーの毛が体の皮膚から約 9cm 外まで描かれるので、持ち上げを 100 → /*FIT:RingLift:Samoyed*/mm にした。ポメラニアンは金具が毛の上に乗り、正面では頭の上に少し覗く。サモエドはうなじに金具が出る (この撮影の構図では背中側の上 (backtop) にだけ写る)。<b>採用 (最終)</b>。このページの「修正後」はすべて R12。</li>
 </ol>
-<p class="sub">R4 → R9 の間に、毛の余白をコーギー・柴で 10mm → 6mm (毛に半分沈める)、ポメラニアン 14mm・サモエド 12mm → 0 に変えた (R4 の値は BUG-DOG-011 の記録)。傾き・倍率の上限・探索半径 2.4 倍などは R4 のまま。</p>
+<p class="sub">R4 → R9 の間に、毛の余白をコーギー・柴で 10mm → 6mm (毛に半分沈める)、ポメラニアン 14mm・サモエド 12mm → 0 に変えた (R4 の値は BUG-DOG-011 の記録)。R9 → R12 では、見せる 4 犬種の傾きを 0.3 → 0、断面の切り出しを ±20mm → ±12mm、毛の余白をコーギー 6 → 12mm・ラブラドール 6 → 3mm・ダックス 8 → 3mm・柴 6 → 4mm、ポメラニアンの沈め 15 → /*FIT:SinkDepth:Pome*/mm・金具の持ち上げ 55 → /*FIT:RingLift:Pome*/mm、サモエドの金具の持ち上げ 100 → /*FIT:RingLift:Samoyed*/mm に変え、毛に埋める 2 犬種の金具を手続き生成のリングに替えた (R9 の値は BUG-DOG-011 の記録)。倍率の上限・探索半径 2.4 倍などは R4 のまま。</p>
 
 <h3>(c) 適用・検証・保存</h3>
 <ul>
-<li>最終 (R9) を Walking/8 Refit Collars で 6 犬種へ適用し、シーン (<code>Assets/Scenes/VRCDefaultWorldScene.unity</code>) を保存した。</li>
+<li>最終 (R12) を Walking/8 Refit Collars で 6 犬種へ適用し、シーン (<code>Assets/Scenes/VRCDefaultWorldScene.unity</code>) を保存した。</li>
 <li>検証: Walking/5 Verify は 491 PASS / 0 FAIL、Production 3 Verify は failed=0。</li>
-<li>R4 の時点で反映した独立レビューの指摘 (当たりの半径・フォールバックの警告) は、R9 にもそのまま含まれる。</li>
-<li>修正後の撮影: 1 と同じ 4 姿勢・同じ視点で 102 枚 (<code>after/img/</code>、ファイル名も 1 と同じ。R9 で差し替え)。数値は <code>after/tools/metrics.json</code>・<code>after/tools/report.txt</code>・<code>after/tools/fit-report.txt</code> (R9 で上書き)。撮影用の一時スクリプトは削除済み。R4 の写真・数値はこのフォルダに残っていない (R4 の静止の数値は BUG-DOG-011 の記録にある)。</li>
+<li>R4 の時点で反映した独立レビューの指摘 (当たりの半径・フォールバックの警告) は、R12 にもそのまま含まれる。</li>
+<li>修正後の撮影: 1 と同じ 4 姿勢・同じ視点で 102 枚 (<code>after/img/</code>、ファイル名も 1 と同じ。R12 で差し替え)。数値は <code>after/tools/metrics.json</code>・<code>after/tools/report.txt</code>・<code>after/tools/fit-report.txt</code> (R12 で上書き)。撮影用の一時スクリプトは削除済み。R4・R9 の写真・数値はこのフォルダに残っていない (R4・R9 の静止の数値は BUG-DOG-011 の記録にある)。</li>
 </ul>
 
 <h3 id="compare">(d) 前後の数値</h3>
@@ -316,17 +321,18 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--green);font-size:14px}
 <p class="legend" id="criteriaCaption">条件は BUG-DOG-011 の完了条件 (1 の (e)): 上側の平均が毛の厚み相当以下 (短毛 +10mm・長毛 +25mm 程度、中毛は目安未定)、下側の平均が −5mm 以上、埋まり頂点 (&lt; −4mm) が 5% 以下。最も近い「頂点」までの距離なので、体の頂点が粗い所では大きめに出る。数値の条件は短毛・中毛の 4 犬種にだけ当てる。毛に埋めるポメラニアン・サモエドは「帯が見えないこと・金具が毛の上に出ること」が条件で、写真と VR で確かめる。</p>
 
 <h3 id="afterDogs">(e) 犬ごとの前後比較</h3>
-<p class="sub">左が修正前、右が修正後 (最終、R9) で、同じ姿勢・同じ視点です。姿勢のボタンで切り替わり、下の小さな写真 (修正後) を押すと比べる視点が変わります。静止は左側面・正面・真上・あご下を先に並べ、「ほかの視点も表示」で残り 4 視点を出します。犬ごとに「了承 / 修正したい / 保留」とメモを残してください。</p>
+<p class="sub">左が修正前、右が修正後 (最終、R12) で、同じ姿勢・同じ視点です。姿勢のボタンで切り替わり、下の小さな写真 (修正後) を押すと比べる視点が変わります。静止は左側面・正面・真上・あご下を先に並べ、「ほかの視点も表示」で残り 4 視点を出します。犬ごとに「了承 / 修正したい / 保留」とメモを残してください。</p>
 <div id="afterCards"></div>
 
-<h3>(f) 断面のドライラン値 (R9)</h3>
+<h3>(f) 断面のドライラン値 (R12)</h3>
 <div class="table-wrap"><table id="fitReportTable" aria-describedby="fitReportCaption"></table></div>
-<p class="legend" id="fitReportCaption">Walking/Production 8b Collar Fit Report の出力 (<code>after/tools/fit-report.txt</code>)。R9 を適用した後に取り直した値。毛に埋める犬種は、中心の移動 y に帯の上端を沈めた分が入る。「適用中との差」は計算し直した位置と、いまシーンに置かれている首輪の位置の差 (mm)。中心の移動は輪の座標で、負 = 下 (喉側) へ移した量。</p>
+<p class="legend" id="fitReportCaption">Walking/Production 8b Collar Fit Report の出力 (<code>after/tools/fit-report.txt</code>)。R12 を適用した後に取り直した値。サモエドは断面を薄くしたことで、中心の位置が R9 から約 30mm 動いた (帯は体の中で見えない)。毛に埋める犬種は、中心の移動 y に帯の上端を沈めた分が入る。「適用中との差」は計算し直した位置と、いまシーンに置かれている首輪の位置の差 (mm)。中心の移動は輪の座標で、負 = 下 (喉側) へ移した量。</p>
 
 <h3>(g) 残る課題</h3>
 <ul id="remainList">
 <li><b>(解消) 長毛 2 犬種 (ポメラニアン・サモエド) で毛が帯を突き抜ける。</b>案 1 で帯を体の中に隠したので、帯そのものが見えなくなった。</li>
 <li id="remainSamoyed"></li>
+<li><b>毛に埋める 2 犬種の金具 (手続き生成のリング) の材質が金色 (<code>KH_ClipNeutral</code>) で、帯の金具 (灰色) と違う。</b>統一するか、真鍮として残すかは要判断。</li>
 <li><b>毛に埋める 2 犬種では、買った柄が首輪の帯では見えない。</b>ポメラニアン・サモエドでは、おそろいセット (IMP-DOG-048) の柄はリードと金具で見せる。</li>
 <li id="remainLab"></li>
 <li id="remainCriteria"></li>
@@ -338,13 +344,14 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--green);font-size:14px}
 
 <h3 id="vrcheck">(h) VR で見てほしい点</h3>
 <ol>
+<li><b>横から</b>: 横から見て、帯の面が首軸に直角で、うなじ (背中側の上)・喉の前に隙間がないか。短毛・中毛の 4 犬種 (R9 で指摘された点)。</li>
 <li><b>歩き</b>: 散歩で歩かせ続けたときに、首を振っても帯が首の付け根から外れず、浮き・埋まりがちらつかないか。</li>
 <li><b>座り</b>: 座らせたときに、帯の下側 (喉・胸側) が首や胸に沈み込まないか。特にラブラドール。</li>
 <li><b>伏せ</b>: 伏せたときに、帯の下側が前脚・胸に埋まって見えないか。特にコーギー。</li>
 <li><b>リード接続中</b>: リードをつないだまま歩いたとき、縄が金具から自然に出ているか。首輪を外す操作 (Interact) と付け外しが修正前と同じようにできるか。</li>
 <li><b>撫で中</b>: 首まわりや頭を撫でたときに、首輪が手の動きや毛の反応に対して不自然に見えないか (ポメラニアン・サモエドでは、毛が動いたときに帯が覗かないか)。</li>
 <li><b>飾り併用</b>: バンダナ・蝶ネクタイ・首飾りなど首元の飾りを同時に付けたときに、首輪と食い込み合わないか。</li>
-<li><b>サモエド・ポメラニアンの金具とリード</b>: 帯が見えず、金具 (D リング) が毛の上に出ているか (サモエドはぎりぎり)。リードをつないだときに、縄が毛の中から自然に出てくるように見えるか。首輪を外す操作 (Interact) が持ち上げた金具の位置で押せるか。</li>
+<li><b>サモエド・ポメラニアンの金具とリード</b>: 帯が見えず、金具 (リング) が毛の上に出ているか。サモエドの金具の高さ (皮膚の上 約 12cm、毛の上) が不自然でないか (撮影では背中側の上からだけ写った)。リードをつないだときに、縄が毛の中から自然に出てくるように見えるか。首輪を外す操作 (Interact) が持ち上げた金具の位置で押せるか。</li>
 </ol>
 </section>
 
@@ -354,7 +361,7 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--green);font-size:14px}
 <textarea id="overallNotes" maxlength="20000" placeholder="例: もみじは秋だけにしたい。おそろいセットは犬と飼い主で色違いにしたい。"></textarea>
 </section>
 </main>
-<footer>写真と数値: 2026-10-10、一時 Editor スクリプト KH_CollarSurveyTempEditor による撮影 (720×560)。数値の元データは tools/metrics.json と tools/report.txt。修正後 (最終 R9、同日) は after/img/ と after/tools/ (metrics.json・report.txt・fit-report.txt)、調整テーブルは KH_LeashProductionEditor.cs から読む。再生成: node scripts/art/build-collar-review.cjs</footer>
+<footer>写真と数値: 2026-10-10、一時 Editor スクリプト KH_CollarSurveyTempEditor による撮影 (720×560)。数値の元データは tools/metrics.json と tools/report.txt。修正後 (最終 R12、同日) は after/img/ と after/tools/ (metrics.json・report.txt・fit-report.txt)、調整テーブルは KH_LeashProductionEditor.cs から読む。再生成: node scripts/art/build-collar-review.cjs</footer>
 <script>
 'use strict';
 const DATA=/*COLLAR_DATA*/;
@@ -496,12 +503,12 @@ function buildRemain(){
  const beforeTops=shown.flatMap(d=>d.poses.map(p=>p.b.top));
  const targeted=shown.filter(d=>d.topTarget!=null),untargeted=shown.filter(d=>d.topTarget==null);
  const topNgText=targeted.map(d=>`${d.name} ${d.criteria.filter(c=>c.topOk===false).length} / ${d.criteria.length}`).join('、');
- const list=f=>all.filter(f).map(x=>x.d.name+'の'+poseShort(x.c)).join('、')||'なし';
- $('remainCriteria').replaceChildren(el('b',{text:'短毛・中毛の 4 犬種で、数値の完了条件はまだ満たしていない ((d) の照合表)。'}),`上側の平均は修正後も 4 姿勢で ${fmt(Math.min(...tops))}〜${fmt(Math.max(...tops))}mm (修正前 ${fmt(Math.min(...beforeTops))}〜${fmt(Math.max(...beforeTops))}mm)。目安を超える姿勢: ${topNgText} (${untargeted.map(d=>d.name).join('・')}は目安未定)。下 −5mm 未満: ${list(x=>!x.c.bottomOk)}。埋まり 5% 超: ${list(x=>!x.c.buriedOk)}。写真の所見 (帯が首の付け根に収まる) と上側の値が食い違っているので、上の目安と測り方 (最も近い頂点までの距離) を見直すかの判断も要る。`);
+ const list=f=>all.filter(f).map(x=>x.d.name+'の'+poseShort(x.c)).join('、')||'なし';const labRest=lab.poses.find(x=>x.pose==='rest');
+ $('remainCriteria').replaceChildren(el('b',{text:'短毛・中毛の 4 犬種で、数値の完了条件はまだ満たしていない ((d) の照合表)。'}),`上側の平均は修正後も 4 姿勢で ${fmt(Math.min(...tops))}〜${fmt(Math.max(...tops))}mm (修正前 ${fmt(Math.min(...beforeTops))}〜${fmt(Math.max(...beforeTops))}mm)。目安を超える姿勢: ${topNgText} (${untargeted.map(d=>d.name).join('・')}は目安未定)。下 −5mm 未満: ${list(x=>!x.c.bottomOk)}。埋まり 5% 超: ${list(x=>!x.c.buriedOk)}。${labRest.a.bottom<-5?`ラブラドールの静止の下 (${fmt(labRest.a.bottom)}mm) は、帯の面を首軸に直角にした結果、条件 (−5mm 以上) をぎりぎり外れる。写真では帯が喉に接していて、見た目の問題はない。`:''}写真の所見 (帯が首の付け根に収まる) と上側の値が食い違っているので、上の目安と測り方 (最も近い頂点までの距離) を見直すかの判断も要る。`);
  const sam=DATA.after.dogs.find(d=>d.key==='Samoyed');
- $('remainSamoyed').replaceChildren(el('b',{text:'サモエドの金具が毛からぎりぎりしか出ない。'}),`金具の持ち上げ ${sam.fit.ringLiftMm}mm で、背中側の上からは見えるが、左側面・正面ではほとんど見えない。リードをつないだときに縄が毛の中から出てくる見え方を VR で確かめる。`);
- const st=shown.reduce((a,d)=>d.fit.kY>a.fit.kY?d:a);
- $('remainStretch').replaceChildren(el('b',{text:'短毛・中毛の 4 犬種は左右・上下で別の倍率をかけているため、金具 (D リング・タブ・バックル) も縦に伸びる。'}),`上下の倍率は最大 ${st.fit.kY.toFixed(3)} (${st.name})。毛に埋める 2 犬種は倍率が一様なので伸びない。配置が了承されたら、Fit が求めた半径で帯のメッシュを作り直して倍率を 1 に戻す (scripts/art/leash-assets.cjs の radii と金具の高さ RingY を更新)。`);
+ $('remainSamoyed').replaceChildren(el('b',{text:'サモエドの金具の高さは VR で確かめる。'}),`毛が体の皮膚から約 9cm 外まで描かれるので、金具を ${sam.fit.ringLiftMm}mm 持ち上げた (皮膚の上 約 12cm、毛の上)。うなじに金具が出るが、この撮影の構図では背中側の上 (backtop) にだけ写り、左側面・正面では見えない。高さと、リードをつないだときに縄が毛の中から出てくる見え方を VR で確かめる。`);
+ const byKY=[...shown].sort((a,b)=>b.fit.kY-a.fit.kY);const st=byKY[0],st2=byKY[1];
+ $('remainStretch').replaceChildren(el('b',{text:'短毛・中毛の 4 犬種は左右・上下で別の倍率をかけているため、金具 (D リング・タブ・バックル) も縦に伸びる。'}),`上下の倍率は最大 ${st.fit.kY.toFixed(3)} (${st.name})、次いで ${st2.fit.kY.toFixed(3)} (${st2.name})。毛に埋める 2 犬種は倍率が一様なので伸びない。配置が了承されたら、Fit が求めた半径で帯のメッシュを作り直して倍率を 1 に戻す (scripts/art/leash-assets.cjs の radii と金具の高さ RingY を更新)。`);
 }
 
 /* ---- 3. after: dog cards ---- */
@@ -514,7 +521,7 @@ function renderAfterAnswer(box,d){
 function afterCard(d){
  const f=d.fit;const before=DATA.dogs.find(x=>x.key===d.key);
  const card=el('article',{class:'dog',id:'after-'+d.key});
- card.append(el('h4',{text:`${d.name} (${d.key})`}),el('p',{class:'placement',text:f.buried?`修正後の置き方: 毛に埋める (案 1)。首の断面から中心を決め、帯の上端を皮膚の上面の ${f.sinkMm}mm 下、横を皮膚の ${f.insetMm}mm 内側に置いて体の中に隠す。金具は ${f.ringLiftMm}mm 持ち上げて毛の上に出す。傾き ${f.tilt}。適用後の倍率 X / Y = ${f.kX.toFixed(3)} / ${f.kY.toFixed(3)} (一様、計算値)。`:`修正後の置き方: 首の断面から決定。毛の余白 ${f.furMarginMm}mm、傾き ${f.tilt}、倍率の上限 ${f.maxScale}。適用後の倍率 X / Y = ${f.kX.toFixed(3)} / ${f.kY.toFixed(3)} (計算値)。`}));
+ card.append(el('h4',{text:`${d.name} (${d.key})`}),el('p',{class:'placement',text:f.buried?`修正後の置き方: 毛に埋める (案 1)。首の断面から中心を決め、帯の上端を皮膚の上面の ${f.sinkMm}mm 下、横を皮膚の ${f.insetMm}mm 内側に置いて体の中に隠す。金具は ${f.ringLiftMm}mm 持ち上げて毛の上に出す。傾き ${f.tilt}。適用後の倍率 X / Y = ${f.kX.toFixed(3)} / ${f.kY.toFixed(3)} (一様、計算値)。`:`修正後の置き方: 首の断面から決定。毛の余白 ${f.furMarginMm}mm、傾き ${f.tilt}${f.tilt===0?' (首軸に直角)':''}、倍率の上限 ${f.maxScale}。適用後の倍率 X / Y = ${f.kX.toFixed(3)} / ${f.kY.toFixed(3)} (計算値)。`}));
  const poseBar=el('div',{class:'poses',role:'group','aria-label':d.name+'の姿勢 (前後比較)'});
  function side(tag,cls){const img=el('img',{class:'main-img',width:'720',height:'560',decoding:'async'});const missing=el('div',{class:'img-missing',hidden:''});
   img.addEventListener('error',()=>{img.hidden=true;missing.hidden=false;missing.textContent='画像を読み込めません: '+img.getAttribute('src');});
@@ -530,7 +537,7 @@ function afterCard(d){
   const v=visible.find(x=>x.view===view)||visible[0];view=v.view;
   const label=`${d.name}・${p.label}・${v.label}`;
   for(const[s,file,when]of[[bSide,v.before,'修正前'],[aSide,v.after,'修正後']]){s.img.hidden=false;s.missing.hidden=true;s.img.src=file;s.img.alt=`${label}の首輪の写真 (${when})`;}
-  cap.textContent=label+'。左が修正前、右が修正後 (最終、R9)。クリップ '+p.clip+'。Editor のサンプル画像。';
+  cap.textContent=label+'。左が修正前、右が修正後 (最終、R12)。クリップ '+p.clip+'。Editor のサンプル画像。';
   for(const b of poseBar.children)b.setAttribute('aria-pressed',String(b.dataset.pose===pose));
   thumbs.replaceChildren(...visible.map(x=>{const b=el('button',{type:'button','aria-pressed':String(x.view===view),'aria-label':`${d.name}・${p.label}・${x.label}を前後で比べる`},el('img',{src:x.after,alt:`${d.name}・${p.label}・${x.label} (修正後)`,loading:'lazy',width:'720',height:'560'}),el('span',{text:x.label}));b.onclick=()=>{view=x.view;show();};return b;}));
   const extra=p.views.length-4;moreBtn.hidden=extra<=0;moreBtn.textContent=more?'4 視点に戻す':`ほかの視点も表示 (${extra})`;moreBtn.setAttribute('aria-expanded',String(more));

@@ -1,7 +1,7 @@
 # per dog: key samples=<n> centerShift=(x,y mm) halfExtents=(x,y mm) targetRadii=(x,y mm) kXY=(x,y) delta=<mm from current> note=<text>
-Corgi samples=100 centerShift=(0.0,-53.5) halfExtents=(86.3,114.1) targetRadii=(92.3,120.1) kXY=(1.026,1.601) delta=0.0 note=ok
-Pome samples=121 centerShift=(0.0,-7.0) halfExtents=(90.9,109.4) targetRadii=(90.9,109.4) kXY=(0.788,0.788) delta=0.0 note=scale clamped from (1.010,1.368); buried-in-fur: scale 0.788, band top 15mm under skin top, ring lift 55mm; 
-Lab samples=57 centerShift=(0.0,-55.6) halfExtents=(98.7,158.9) targetRadii=(104.7,164.9) kXY=(1.047,1.320) delta=0.0 note=ok
-Dachs samples=67 centerShift=(0.0,-35.9) halfExtents=(54.2,88.6) targetRadii=(62.2,96.6) kXY=(0.889,1.486) delta=0.0 note=ok
-Shiba samples=88 centerShift=(0.0,-74.0) halfExtents=(101.1,128.9) targetRadii=(107.1,134.9) kXY=(1.190,1.686) delta=0.0 note=ok
-Samoyed samples=40 centerShift=(0.0,11.8) halfExtents=(149.8,185.0) targetRadii=(149.8,185.0) kXY=(0.750,0.750) delta=0.0 note=buried-in-fur: scale 0.750, band top 25mm under skin top, ring lift 100mm; 
+Corgi samples=55 centerShift=(0.0,-53.7) halfExtents=(83.4,104.8) targetRadii=(95.4,116.8) kXY=(1.060,1.558) delta=0.0 note=ok
+Pome samples=62 centerShift=(0.0,-22.0) halfExtents=(90.9,109.4) targetRadii=(90.9,109.4) kXY=(0.788,0.788) delta=0.0 note=scale clamped from (1.010,1.368); buried-in-fur: scale 0.788, band top 30mm under skin top, ring lift 36mm; 
+Lab samples=34 centerShift=(0.0,-42.0) halfExtents=(97.5,134.1) targetRadii=(100.5,137.1) kXY=(1.005,1.097) delta=0.0 note=ok
+Dachs samples=41 centerShift=(0.0,-30.7) halfExtents=(53.0,70.9) targetRadii=(56.0,73.9) kXY=(0.800,1.137) delta=0.0 note=ok
+Shiba samples=47 centerShift=(0.0,-72.9) halfExtents=(96.6,123.2) targetRadii=(100.6,127.2) kXY=(1.118,1.590) delta=0.0 note=ok
+Samoyed samples=25 centerShift=(0.0,-29.6) halfExtents=(149.8,164.3) targetRadii=(149.8,164.3) kXY=(0.750,0.750) delta=0.0 note=buried-in-fur: scale 0.750, band top 25mm under skin top, ring lift 240mm; 

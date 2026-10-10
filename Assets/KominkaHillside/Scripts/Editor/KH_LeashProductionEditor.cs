@@ -108,7 +108,7 @@ namespace KominkaHillside.Editor
         // Clearance added to the skin cross-section for fur (m). Provisional values to be tuned by shots: the material
         // fur push-out (_FurVector.w x _FurVectorScale) is Corgi .02 / Pome .02 / Lab .025 / Dachs .0325 / Shiba .01 /
         // Samoyed .033, and the visible fur is thinner than that.
-        static readonly float[] FurMargin={.006f,0f,.006f,.008f,.006f,0f};
+        static readonly float[] FurMargin={.012f,0f,.003f,.003f,.004f,0f};
         // Per-breed cap on the ellipse scale (X / Y separately).
         static readonly float[] MaxScaleByBreed={1.7f,1.35f,1.7f,1.6f,1.7f,1.25f};
         // 2026-10-10 user decision (BUG-DOG-011, option 1): on the long-coated dogs (Pome, Samoyed) a real collar sits on
@@ -116,23 +116,27 @@ namespace KominkaHillside.Editor
         // (no stretched hardware), its top edge is placed on the top of the skin section (buried in the fur, the bottom
         // ends up inside the body), and the attachment ring is lifted by RingLift so it emerges from the fur.
         static readonly bool[] BuriedInFur={false,true,false,false,false,true};
-        static readonly float[] RingLift={0f,.055f,0f,0f,0f,.100f};
+        // Lift is measured by shots: Samoyed's shader fur reaches ~9cm above the karada skin at the nape, Pome's ~2cm.
+        static readonly float[] RingLift={0f,.036f,0f,0f,0f,.240f};
         // The fur is alpha-cut shell layers, so anything between the skin and the outer shells shows through the gaps
         // (rounds 5-6: band on / just under the skin top still read as fur poking through a band). The buried band is
         // therefore placed fully INSIDE the opaque body: top edge SinkDepth under the skin top, sides SideInset inside the
         // skin section (uniform scale), and only the lifted attachment ring (and the leash) emerge from the fur.
-        static readonly float[] SinkDepth={0f,.015f,0f,0f,0f,.025f};
+        static readonly float[] SinkDepth={0f,.030f,0f,0f,0f,.025f};
         static readonly float[] SideInset={0f,.020f,0f,0f,0f,.030f};
         // 0 = ring plane perpendicular to the neck axis, 1 = vertical plane (axis flattened to horizontal). The blend
         // tips the throat side forward/down onto the chest (BUG-DOG-011 fix B).
-        static readonly float[] TiltBlend={.3f,.15f,.3f,.3f,.3f,.3f};
+        // 2026-10-10 user feedback on the side views: the tilted band leaned forward and left gaps at the nape and the
+        // throat on the four visible breeds, so they are now perpendicular to the neck axis (0). The buried breeds keep
+        // their value (the band is hidden; only the ring height matters).
+        static readonly float[] TiltBlend={0f,.15f,0f,0f,0f,.3f};
         // Slide of the section plane along the neck axis from the 45% point (m, + = toward the head).
         static readonly float[] AlongOffset={0f,0f,0f,0f,0f,0f};
         // Final nudge in collar local space (m; +X right, +Y dorsal (attachment-ring side), +Z head). The old hand corrections
         // (Lab forward 40mm / down 8mm, Shiba down 20mm) are expected to be unnecessary with the section fit;
         // confirm by shots before putting anything here.
         static readonly Vector3[] ExtraOffset={Vector3.zero,Vector3.zero,Vector3.zero,Vector3.zero,Vector3.zero,Vector3.zero};
-        const float SliceHalfThickness=.020f,SearchRadiusFactor=2.4f,MinScale=.75f,MaxScale=1.7f;const int MinSamples=20;
+        const float SliceHalfThickness=.012f,SearchRadiusFactor=2.4f,MinScale=.75f,MaxScale=1.7f;const int MinSamples=20;
 
         // Pure: reads the current Edit-mode pose of the dog and changes nothing.
         public static CollarFit Solve(Transform dog,int breed)
@@ -202,6 +206,15 @@ namespace KominkaHillside.Editor
             var s=neck.lossyScale;collar.localScale=new Vector3(fit.scaleXY.x/s.x,fit.scaleXY.y/s.y,1f/s.z);
             // The anchor is a child of the collar, so it scales with the band.
             anchor.localPosition=new Vector3(0,RingY[breed]+RingLift[breed],0);anchor.localRotation=Quaternion.identity;
+            // The visible D-ring of the Blender band is part of the band mesh and goes under the fur with it on the buried
+            // breeds, so for them the procedural AttachmentRing under ClipAnchor (disabled since the Blender import) is
+            // switched on: it rides the lifted anchor and is what emerges from the fur. Visible breeds are left untouched.
+            if(BuriedInFur[breed])
+            {
+                var ring=anchor.Find("AttachmentRing");
+                if(ring!=null){ring.gameObject.SetActive(true);var rr=ring.GetComponent<Renderer>();if(rr!=null)rr.enabled=true;}
+                else Debug.LogWarning("[KH Production] collar fit "+Keys[breed]+": AttachmentRing not found under ClipAnchor");
+            }
             // The Interact trigger (KH_DogWalkingEditor adds it with radius .10) lives on the scaled collar: keep its
             // world radius at .10 so the neck/head colliders and the ray priority stay as before (review 2026-10-10).
             var hit=collar.GetComponent<SphereCollider>();
@@ -243,8 +256,9 @@ namespace KominkaHillside.Editor
                 var collar=manager.collarAnchors[i].GetComponentInParent<KH_LeashCollar>();var t=collar.transform;
                 Fit(t,collar.anchor,manager.dogRoots[i],i);
                 Visual(t.Find("Band"),Mesh("KH_Collar_"+Keys[i]),Material);
+                // The Blender band carries its own ring; the procedural ring stays only on the buried breeds (see Fit).
                 foreach(string obsolete in new[]{"RingMount","ClipAnchor/AttachmentRing"})
-                {var old=t.Find(obsolete);if(old!=null)old.gameObject.SetActive(false);}
+                {if(obsolete.EndsWith("AttachmentRing")&&BuriedInFur[i])continue;var old=t.Find(obsolete);if(old!=null)old.gameObject.SetActive(false);}
                 collar.GetComponent<SphereCollider>().center=collar.anchor.localPosition;
                 var root=Child(manager.transform,"KH_ProductionLead_"+Keys[i]);root.SetPositionAndRotation(Vector3.zero,Quaternion.identity);root.localScale=Vector3.one;
                 var rope=root.GetComponent<SkinnedMeshRenderer>();if(rope==null)rope=root.gameObject.AddComponent<SkinnedMeshRenderer>();

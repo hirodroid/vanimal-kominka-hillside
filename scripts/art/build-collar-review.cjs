@@ -1,7 +1,7 @@
 // Rebuild the offline collar review sheet (artifacts/collar-review/2026-10-10/index.html).
 // Images are referenced relatively (before: img/, after: after/img/; not embedded).
-// Numbers come from tools/metrics.json (before) and after/tools/metrics.json (after, final R9 = option 1), the dry-run
-// section values from after/tools/fit-report.txt (R9), and the Fit tuning tables are read from KH_LeashProductionEditor.cs.
+// Numbers come from tools/metrics.json (before) and after/tools/metrics.json (after, final R12 = option 1 + band
+// perpendicular to the neck axis), the dry-run section values from after/tools/fit-report.txt (R12), and the Fit tuning tables are read from KH_LeashProductionEditor.cs.
 // Node standard modules only. Usage: node scripts/art/build-collar-review.cjs
 'use strict';
 const fs = require('node:fs');
@@ -73,7 +73,7 @@ const consts = {
 };
 tables.BandRadii.forEach((r, i) => { if (r[0] !== radii[i][0] || r[1] !== radii[i][1]) fail(`BandRadii[${breedOrder[i]}] ${r} differs from leash-assets.cjs radii ${radii[i]}`); });
 
-// ---- Dry-run section values (R9, re-run after the apply; delta = mm from the applied placement) ----
+// ---- Dry-run section values (R12, re-run after the apply; delta = mm from the applied placement) ----
 const fitReport = fs.readFileSync(path.join(out, 'after/tools/fit-report.txt'), 'utf8').split(/\r?\n/).filter(l => /^\w+ samples=/.test(l)).map(l => {
   const pair = k => { const m = l.match(new RegExp(`${k}=\\(([-\\d.]+),([-\\d.]+)\\)`)); if (!m) fail(`fit-report ${k} missing: ${l}`); return [Number(m[1]), Number(m[2])]; };
   return {
@@ -84,27 +84,27 @@ const fitReport = fs.readFileSync(path.join(out, 'after/tools/fit-report.txt'), 
 if (fitReport.map(r => r.key).join() !== breedOrder.join()) fail('fit-report.txt rows do not match the 6 breeds');
 
 // Observation text (before): the coordinator's analysis memo (2026-10-10) "犬ごとの見た目", corrected by the independent review.
-// afterObservation: image check of the final (R9) shots, 2026-10-10 (Pome / Samoyed: the coordinator's record; the
-// four other dogs: same as R4 plus the reduced margin, checked on after/img/).
+// afterObservation: image check of the final (R12) shots, 2026-10-10 (the coordinator's side-view record for R10-R12,
+// checked on after/img/).
 const dogs = [
   { key: 'Corgi', name: 'コーギー', placement: `Fit: 首骨→頭骨の 0.45、犬別補正なし。${radiiText('Corgi')}`,
     observation: '左側面では上面は毛に乗っているが、下前方が胸毛の中へ消える。正面では帯が頭に隠れ、金具 (D リング) だけが見える。真上では帯の後ろ半分が浮いて首との間に隙間 (影) がある。伏せでも同じ。',
-    afterObservation: '帯が首の付け根に収まり、正面・あご下からも帯が見える。毛の余白を減らしたので、帯の縁が毛に少し沈む (毛に半分沈んだ首輪)。' },
+    afterObservation: '帯の面が首軸に直角になり、首の付け根に沿う (横から見てうなじ・喉の前に隙間がない)。正面・あご下からも帯が見える。毛の余白を 12mm にしたので、毛が帯の上に突き抜けない (余白 4mm の R10 では突き抜けた)。' },
   { key: 'Pome', name: 'ポメラニアン', placement: `Fit: 0.45、犬別補正なし。${radiiText('Pome')}`,
     observation: '真上では帯が首の毛の上に乗って見えるが、左側面では帯の下端から白い毛が束で突き抜ける。正面では帯が頭に隠れ、金具だけが見える。',
-    afterObservation: '帯は毛の中 (体の内側) に隠れて見えない。背中側で金具 (D リング) だけが毛の上に出る (左側面ではっきり見え、正面では頭の後ろに縁が少し見える)。' },
+    afterObservation: '帯は毛の中 (体の内側) に隠れて見えない。金具 (手続き生成のリング、金色寄り) が毛の上に乗り、正面では頭の上に少し覗く。' },
   { key: 'Lab', name: 'ラブラドール', placement: `計測上の位置 0.576 (Fit は 0.45 + 犬座標で前 40mm・下 8mm の補正)。localEuler (271.27, 180, 180) は (268.73, 0, 0) と同じ回転で、他犬種と同系統。${radiiText('Lab')}`,
     observation: '短毛なので最も素直。帯は顎下にきちんと回る。正面で帯が胸の前に見える (見た目の手本)。ただし数値では上 +15.8mm・埋まり 16% で、座りでは下側が −12.3mm と少し沈む。',
-    afterObservation: '帯が首の付け根に収まり、正面・あご下からも帯が見える。座りでは下側が沈む (数値は右の表)。' },
+    afterObservation: '帯の面が首軸に直角になり、首に沿う (横から見てうなじ・喉の前に隙間がない)。正面・あご下からも帯が見える。座りでは下側が沈む (数値は右の表)。' },
   { key: 'Dachs', name: 'ダックスフンド', placement: `Fit: 0.45、犬別補正なし。localEuler X 278.6 (他は 268.7〜272.2)。${radiiText('Dachs')}`,
     observation: '耳のすぐ後ろ、首の付け根より高い位置に輪が掛かる。背中側の上から見ると、帯が首より左右にはみ出して見える。下側は胸毛に消える。',
-    afterObservation: '帯が首の付け根に収まり、正面・あご下からも帯が見える。' },
+    afterObservation: '帯の面が首軸に直角になり、首の付け根に沿う (横から見てうなじ・喉の前に隙間がない)。正面・あご下からも帯が見える。' },
   { key: 'Shiba', name: '柴', placement: `計測上の位置 0.345 (Fit は 0.45 + 下 20mm の補正)。${radiiText('Shiba')} (ポメラニアンと同じ大きさ)`,
     observation: '帯が体格に対して小さく、左側面から見ると下半分が首の中へ沈んで半円に見える (左の近接で下端が皮膚に食い込む)。正面では帯が全く見えない。',
-    afterObservation: '帯が首の付け根に収まり、正面・あご下からも帯が見える。断面の探索半径を広げて胸側まで拾えるようにしたことで、静止の下側が大きく改善した (数値は右の表)。毛の余白を減らしたので、帯の縁が毛に少し沈む。' },
+    afterObservation: '帯の面が首軸に直角になり、首の付け根に沿う (横から見てうなじ・喉の前に隙間がない)。正面・あご下からも帯が見える。断面の探索半径を広げて胸側まで拾えるようにしたことで、静止の下側が大きく改善した (数値は右の表)。' },
   { key: 'Samoyed', name: 'サモエド', placement: `Fit: 0.45、犬別補正なし。${radiiText('Samoyed')}`,
     observation: '上は毛の表面に乗るが、下前方は毛に沈み、毛が帯を突き抜けて「帯が途中で切れた」ように読める。真上では帯が毛に埋もれて細く見える。',
-    afterObservation: '帯は毛の中 (体の内側) に隠れて見えない。金具は背中側の上から見ると毛の上にわずかに出るが、毛が厚いので左側面・正面ではほとんど見えない (ぎりぎり)。' },
+    afterObservation: '帯は毛の中 (体の内側) に隠れて見えない。金具 (手続き生成のリング、金色寄り) はうなじに出るが、この撮影の構図では背中側の上 (backtop) にだけ写り、左側面・正面では見えない。' },
 ];
 
 const sectorMean = (entry, name) => {
@@ -195,5 +195,11 @@ const template = fs.readFileSync(path.join(__dirname, 'collar-review.template.ht
 if (!template.includes('/*COLLAR_DATA*/')) fail('template has no /*COLLAR_DATA*/ marker');
 // Escape "<" so the JSON can never close the <script> element.
 const json = JSON.stringify(payload).replace(/</g, '\\u003c');
-fs.writeFileSync(path.join(out, 'index.html'), template.replace('/*COLLAR_DATA*/', () => json));
+// /*FIT:<Table>:<Breed>*/ in the template = that Fit table value in mm (so the round text follows the .cs).
+let html = template.replace('/*COLLAR_DATA*/', () => json).replace(/\/\*FIT:(\w+):(\w+)\*\//g, (_, t, b) => {
+  if (!tables[t] || breedOrder.indexOf(b) < 0) fail(`unknown template token FIT:${t}:${b}`);
+  return String(Math.round(tables[t][breedOrder.indexOf(b)] * 1000));
+});
+if (/\/\*[A-Z0-9_]+\*\//.test(html.replace(/<script>[\s\S]*<\/script>/, ''))) fail('unfilled template token');
+fs.writeFileSync(path.join(out, 'index.html'), html);
 console.log(`Created collar review: ${path.relative(root, out)}/index.html — ${data.length} dogs, ${imageCount + afterImageCount} image refs (before ${imageCount} + after ${afterImageCount}, all exist)`);
