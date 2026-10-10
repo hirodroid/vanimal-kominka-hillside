@@ -79,3 +79,13 @@ Unity は触らず、git 履歴・docs・`Logs/kh-course-walk/` (Git 管理外�
 | production.md へ登録 | 成立 | [production.md](../../plans/des-env-002/production.md) の「犬を洗う」「洗浄道具の制作モデル」の行 (`Wash/` の行。範囲に書いた Course/NN の組ではないが、production.md の表が正本) |
 
 閉じるのに要るもの: **Wash/12 を 1 回** (シーンを書かない。開いているシーンが未保存だと何もせず止まる) → notes の傾き・空きを制作票 §2 へ写す。Build 2 回を記録として確かめるなら Wash/11 を 2 回 (シーンを書いて保存する。統括の判断)。ハーネスは要らない (W-tool-* / W-stations-* は 10-03 の全体で PASS。10-06 の移動の後は未実行)。
+
+### Wash/12 の再実行 (2026-10-11、統括)
+
+現在の作業シーン (未コミットの首輪 R12 と有料道具の再表示を含む。未保存の変更なし) で Wash/12 を実行: 5,366 項目中 **13 件 FAIL** (10-06 `b9fd85a` の VERIFY_OK 5316 以降に崩れた)。主洗い場に関係するもの:
+
+- `WashTable seated on the ground (local y -0.028, highest ground under it 0.185; top 0.03 m above it)` — 台が地面に乗っていない (原因は未調査)。
+- `Call.standYaw 112.0 = station yaw + 90` — 洗い場の向きを変えた後に Wash/11 を再実行していない (犬が棚と平行に立たない)。Wash/11 はシーンを保存するので、実行はシーンの差分を片付けてから。
+- 有料道具 (IMP-DOG-043、10-08 追加) に関係するもの: 固い Collider の Layer 17 の数に `PremiumTools/Premium_*_Slot0〜6` が入る (4 洗い場とも)、`Premium_KH_WashStation_Slot0 spray collision leaves out 22`、`KH_WashTool tool 4 = 8 / 4` (ボトル扱いの道具が洗い場あたり 2 つ)。検査が有料道具を知らないのか、配線の不足かは未判定。
+
+出力は `Temp/KH_DogWashSetupVerify.json` (git 管理外)。

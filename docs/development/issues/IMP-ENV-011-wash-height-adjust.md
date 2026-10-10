@@ -61,3 +61,5 @@ Unity は触らず、git 履歴・docs・`Logs/kh-course-walk/` (Git 管理外�
 | 洗い場の既存の検査が通ったまま | 成立 | 同じ全体 run で W-tool-stay / W-tool-reset / W-tool-toggle / W-stations-tools / W-stations-reset / W-stations-grace PASS。手動配置との距離は Wash/12 `VERIFY_OK (5316)` |
 
 注意: ClientSim は 10-03 の結果で、10-06 に主洗い場を (39.60, 1.83, 39.60) へ移した後 (`b9fd85a`) と、10-07 の洗い場の受付の変更 (`3e20683` RC-1・RC-8。群 100h の run 20261007-101756 は 5/5 PASS) の後には 100f を回していない。台と床の処理は位置に依らないので結果は変わらないと**推定** (未確認)。AI 側の完了条件は記録の上ではすべて成立 = 完了の候補 (状態は変えていない。残りはユーザーの 2 人・Desktop・スマホ)。
+
+2026-10-11 (統括): 上の「AI 側の確認状況」は 10-03〜10-06 の記録に基づく。同日に Wash/12 を再実行すると 13 件 FAIL (台の高さ・自分の床の項目ではなく、有料道具・洗い場の向き・主洗い場の台の接地。[IMP-ENV-007](IMP-ENV-007-main-wash-station.md) の同日の記録)。この Issue の項目は PASS のまま。
