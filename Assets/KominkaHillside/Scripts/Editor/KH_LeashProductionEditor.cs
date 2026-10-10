@@ -108,10 +108,21 @@ namespace KominkaHillside.Editor
         // Clearance added to the skin cross-section for fur (m). Provisional values to be tuned by shots: the material
         // fur push-out (_FurVector.w x _FurVectorScale) is Corgi .02 / Pome .02 / Lab .025 / Dachs .0325 / Shiba .01 /
         // Samoyed .033, and the visible fur is thinner than that.
-        static readonly float[] FurMargin={.010f,.014f,.006f,.008f,.010f,.012f};
-        // Per-breed cap on the ellipse scale. The fluffy small dogs (Pome, Samoyed) turn into a hoop around the whole
-        // fur silhouette when the band follows the skin section + margin, so they are capped to sit inside the fur.
+        static readonly float[] FurMargin={.006f,0f,.006f,.008f,.006f,0f};
+        // Per-breed cap on the ellipse scale (X / Y separately).
         static readonly float[] MaxScaleByBreed={1.7f,1.35f,1.7f,1.6f,1.7f,1.25f};
+        // 2026-10-10 user decision (BUG-DOG-011, option 1): on the long-coated dogs (Pome, Samoyed) a real collar sits on
+        // the skin under the ruff and is hidden; only the hardware and the leash show. For them the band keeps scale 1
+        // (no stretched hardware), its top edge is placed on the top of the skin section (buried in the fur, the bottom
+        // ends up inside the body), and the attachment ring is lifted by RingLift so it emerges from the fur.
+        static readonly bool[] BuriedInFur={false,true,false,false,false,true};
+        static readonly float[] RingLift={0f,.055f,0f,0f,0f,.100f};
+        // The fur is alpha-cut shell layers, so anything between the skin and the outer shells shows through the gaps
+        // (rounds 5-6: band on / just under the skin top still read as fur poking through a band). The buried band is
+        // therefore placed fully INSIDE the opaque body: top edge SinkDepth under the skin top, sides SideInset inside the
+        // skin section (uniform scale), and only the lifted attachment ring (and the leash) emerge from the fur.
+        static readonly float[] SinkDepth={0f,.015f,0f,0f,0f,.025f};
+        static readonly float[] SideInset={0f,.020f,0f,0f,0f,.030f};
         // 0 = ring plane perpendicular to the neck axis, 1 = vertical plane (axis flattened to horizontal). The blend
         // tips the throat side forward/down onto the chest (BUG-DOG-011 fix B).
         static readonly float[] TiltBlend={.3f,.15f,.3f,.3f,.3f,.3f};
@@ -168,6 +179,14 @@ namespace KominkaHillside.Editor
             float maxScale=Mathf.Min(MaxScale,MaxScaleByBreed[breed]);
             fit.scaleXY=new Vector2(Mathf.Clamp(rawX,MinScale,maxScale),Mathf.Clamp(rawY,MinScale,maxScale));
             if(!Mathf.Approximately(rawX,fit.scaleXY.x)||!Mathf.Approximately(rawY,fit.scaleXY.y))fit.note+="scale clamped from ("+rawX.ToString("F3")+","+rawY.ToString("F3")+"); ";
+            if(BuriedInFur[breed])
+            {
+                // Band top on the skin top; the rest of the band is under the fur / inside the body and never seen.
+                // Uniform scale (no stretched hardware), never wider than the skin section; band top SinkDepth below the skin top.
+                float k=Mathf.Clamp(Mathf.Min(1f,(hx-SideInset[breed])/BandRadii[breed].x),MinScale,1f);
+                fit.scaleXY=new Vector2(k,k);cy=cy+hy-SinkDepth[breed]-BandRadii[breed].y*k;
+                fit.note+="buried-in-fur: scale "+k.ToString("F3")+", band top "+(SinkDepth[breed]*1000).ToString("F0")+"mm under skin top, ring lift "+(RingLift[breed]*1000).ToString("F0")+"mm; ";
+            }
             fit.rotation=rotation;
             fit.position=p0+right*cx+up*cy+rotation*ExtraOffset[breed];
             fit.centerShift=new Vector3(cx,cy,0);fit.halfExtents=new Vector2(hx,hy);fit.targetRadii=target;
@@ -182,7 +201,7 @@ namespace KominkaHillside.Editor
             collar.SetPositionAndRotation(fit.position,fit.rotation);
             var s=neck.lossyScale;collar.localScale=new Vector3(fit.scaleXY.x/s.x,fit.scaleXY.y/s.y,1f/s.z);
             // The anchor is a child of the collar, so it scales with the band.
-            anchor.localPosition=new Vector3(0,RingY[breed],0);anchor.localRotation=Quaternion.identity;
+            anchor.localPosition=new Vector3(0,RingY[breed]+RingLift[breed],0);anchor.localRotation=Quaternion.identity;
             // The Interact trigger (KH_DogWalkingEditor adds it with radius .10) lives on the scaled collar: keep its
             // world radius at .10 so the neck/head colliders and the ray priority stay as before (review 2026-10-10).
             var hit=collar.GetComponent<SphereCollider>();

@@ -71,7 +71,7 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--green);font-size:14px}
 <header>
 <div class="brand">VAnimal / 古民家の裏山 / COLLAR REVIEW 2026-10-10</div>
 <h1>首輪の見直し — 現状と直し方、柄違いとおそろいセットの提案</h1>
-<p class="sub">散歩用首輪のずれ (BUG-DOG-011) と、首輪・リードの柄違いを Point 商品にする案 (IMP-DOG-048) の確認シート。各項目の末尾で「了承 / 修正したい / 保留」とメモを残してください。<b>2026-10-10 に首輪の置き方を直したので、「3. 修正後 — 前後比較」で犬ごとの前後と、VR で見てほしい点を確認してください。</b></p>
+<p class="sub">散歩用首輪のずれ (BUG-DOG-011) と、首輪・リードの柄違いを Point 商品にする案 (IMP-DOG-048) の確認シート。各項目の末尾で「了承 / 修正したい / 保留」とメモを残してください。<b>2026-10-10 に首輪の置き方を直し、ユーザー決定 (案 1: ポメラニアン・サモエドは帯を毛に埋め、金具とリードで首輪を見せる) を反映した最終版を「3. 修正後 — 前後比較」に載せました。犬ごとの前後と、VR で見てほしい点を確認してください。</b></p>
 <div class="tools"><button class="primary" id="export" type="button">回答を保存 (JSON)</button><button id="markdown" type="button">読みやすい一覧を保存 (Markdown)</button><label class="file-button">回答を読み込む<input id="import" type="file" accept=".json,application/json"></label></div>
 <p class="save" id="saveStatus" role="status" aria-live="polite"></p>
 <p class="sub" id="progress"></p>
@@ -267,10 +267,11 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--green);font-size:14px}
 </section>
 
 <section class="part" id="part3">
-<h2>3. 修正後 (2026-10-10 R4) — 前後比較</h2>
+<h2>3. 修正後 (2026-10-10 最終、案 1) — 前後比較</h2>
 <p class="notice">修正後の写真と数値も 1 と同じく、Editor でアニメーションの 1 コマを取り出したもので、VR での見え方の確認ではありません。VR で見てほしい点は (h) にまとめました。</p>
 
 <h3 style="border-top:0;padding-top:0">(a) 何を変えたか</h3>
+<p class="after-obs"><b>ユーザー決定 (2026-10-10): 案 1「実物どおり」。</b>帯をすべて見せる置き方 (R4) を VR で見たユーザーから「首輪は全部見えるようになったが、サモエド・ポメは毛の外側に大きな輪が浮いていて明らかにおかしい。実物のふわふわ犬は首輪が毛に埋もれて見えないはず」。これを受けて、<b>ポメラニアン・サモエドは帯を毛の中 (皮膚の内側) に埋めて見せず、金具とリードで首輪の存在を見せる</b> (「リードで見せていく」)。短毛・中毛の 4 犬種 (コーギー・ラブラドール・ダックス・柴) は断面基準の配置を維持し、コーギー・柴は毛の余白を減らして毛に半分沈める。</p>
 <ul>
 <li>首輪を置く処理 (<code>KH_LeashProductionEditor.Fit</code>。Walking/8 Refit Collars が呼ぶ) を、<b>首骨の軸ではなく、体 (<code>karada</code>) の首の断面から、輪の中心・向き・楕円の大きさを決める方式</b>に変えた (1 の直し方 A・B)。</li>
 <li>決め方: 首骨→頭骨の 0.45 の位置に、首の向きに直交する面と世界の鉛直面の間で帯の面を取る (鉛直面へ寄せる割合が「傾き」)。その面の前後の薄い範囲に入る体の頂点から断面の中心と左右・上下の半径を求め、輪の中心を断面の中心へ移す。帯の楕円は「断面の半径 + 毛の余白」に合わせて左右 (X) と上下 (Y) を別々に拡大する。帯の幅 (Z) は 1 のままで、帯は太らない。</li>
@@ -278,6 +279,8 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--green);font-size:14px}
 <li>首輪の「外す」Interact 用の当たり (SphereCollider) は首輪と一緒に拡大されるので、半径を倍率で割ってワールドでの半径 0.10 を保つようにした (独立レビューの指摘)。</li>
 <li>断面が取れず修正前の置き方へ戻したときは、Console に警告 (Debug.LogWarning) を出す (同上)。</li>
 <li>シーンを変えずに断面の値だけを書き出すドライランのメニュー (Walking/Production 8b Collar Fit Report) と、計算だけの関数 <code>Solve</code> を足した。</li>
+<li><b>毛に埋める犬種 (<code>BuriedInFur</code> = ポメラニアン・サモエド、案 1)</b>: 帯の倍率を左右・上下で同じ k = clamp(min(1, (断面の半幅 − <code>SideInset</code>) / rx), 0.75, 1) にして、金具を歪めない。帯の上端を皮膚の上面から <code>SinkDepth</code> 下に、横は皮膚の <code>SideInset</code> 内側に置き、帯全体を不透明な体の中に隠す。金具 (<code>ClipAnchor</code> の D リング。リードの接続点) は <code>RingLift</code> だけ持ち上げて毛の上に出し、首輪を外す Interact の当たりの中心も金具に合わせる。</li>
+<li>体の中まで沈めた理由: 毛はアルファで抜いた層を重ねて描くので、皮膚の外にある物は層の隙間から透けて見える。帯を皮膚の上面や毛の中に置くと「毛が帯を突き抜ける」見え方が残った ((b) の R5・R6)。</li>
 </ul>
 <h4>適用した調整テーブル</h4>
 <div class="table-wrap"><table id="fitTable" aria-describedby="fitCaption"></table></div>
@@ -288,51 +291,60 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--green);font-size:14px}
 <li><b>R1</b> (傾き 0.5、縦横同じ倍率で上限 1.4): 縦長になり、帯が太って見えた。</li>
 <li><b>R2</b> (傾き 0.3、X/Y 別の倍率、断面の探索半径を帯半径の 1.8 倍 → 2.4 倍にして柴の胸側まで拾う、ポメラニアンは余白 0.004・上限 1.2): ポメラニアンが毛に沈んで見えなくなった。</li>
 <li><b>R3</b> (ポメラニアンを余白 0.010・上限 1.3・傾き 0.15): 上側で毛が突き抜けた。</li>
-<li><b>R4</b> (ポメラニアンを余白 0.014・上限 1.35): <b>採用</b>。このページの「修正後」はすべて R4。</li>
+<li><b>R4</b> (ポメラニアンを余白 0.014・上限 1.35): いったん採用 (帯を全犬種で見せる)。ユーザーが VR で確認し、サモエド・ポメの「毛の外に浮いた大きな輪」を指摘 → <b>案 1 に決定</b>。</li>
+<li><b>R5</b> (埋もれ犬種の帯の上端を皮膚の上面に。余白 0、倍率 1): 側面で帯が毛の層と混ざり、毛が突き抜けて見えた。</li>
+<li><b>R6</b> (帯を 1cm 沈める): まだ透ける。毛はアルファで抜いた層なので、皮膚の外にある物は隙間から見える。</li>
+<li><b>R7</b> (帯を皮膚の内側 = 不透明な体の中に入れ、金具を持ち上げる): ほぼ隠れるが、帯の端が覗いた。</li>
+<li><b>R8 / R9</b> (沈め幅と内側寄せを増やし、金具の持ち上げも増やす。最終値は (a) の表): 帯は完全に隠れ、金具だけが毛の上に出る (ポメラニアンははっきり、サモエドは毛が厚く金具がぎりぎり)。<b>採用</b>。このページの「修正後」はすべて R9。</li>
 </ol>
+<p class="sub">R4 → R9 の間に、毛の余白をコーギー・柴で 10mm → 6mm (毛に半分沈める)、ポメラニアン 14mm・サモエド 12mm → 0 に変えた (R4 の値は BUG-DOG-011 の記録)。傾き・倍率の上限・探索半径 2.4 倍などは R4 のまま。</p>
 
 <h3>(c) 適用・検証・保存</h3>
 <ul>
-<li>Walking/8 Refit Collars で 6 犬種へ適用し、シーン (<code>Assets/Scenes/VRCDefaultWorldScene.unity</code>) を保存した。</li>
-<li>検証: Walking/5 Verify は 491 PASS / 0 FAIL、Production 3 Verify は 66 PASS / failed=0。</li>
-<li>独立レビューの反映 (当たりの半径・警告) の後に Refit をやり直し、Walking/5 Verify (491 / 0)・Production 3 Verify (failed=0)・シーン保存を再度済ませた。首輪の配置と写真は変わっていない。</li>
-<li>修正後の撮影: 1 と同じ 4 姿勢・同じ視点で 102 枚 (<code>after/img/</code>、ファイル名も 1 と同じ)。数値は <code>after/tools/metrics.json</code>・<code>after/tools/report.txt</code>。撮影用の一時スクリプトは再利用後に削除した。</li>
+<li>最終 (R9) を Walking/8 Refit Collars で 6 犬種へ適用し、シーン (<code>Assets/Scenes/VRCDefaultWorldScene.unity</code>) を保存した。</li>
+<li>検証: Walking/5 Verify は 491 PASS / 0 FAIL、Production 3 Verify は failed=0。</li>
+<li>R4 の時点で反映した独立レビューの指摘 (当たりの半径・フォールバックの警告) は、R9 にもそのまま含まれる。</li>
+<li>修正後の撮影: 1 と同じ 4 姿勢・同じ視点で 102 枚 (<code>after/img/</code>、ファイル名も 1 と同じ。R9 で差し替え)。数値は <code>after/tools/metrics.json</code>・<code>after/tools/report.txt</code>・<code>after/tools/fit-report.txt</code> (R9 で上書き)。撮影用の一時スクリプトは削除済み。R4 の写真・数値はこのフォルダに残っていない (R4 の静止の数値は BUG-DOG-011 の記録にある)。</li>
 </ul>
 
 <h3 id="compare">(d) 前後の数値</h3>
 <div class="table-wrap"><table id="compareTable" aria-describedby="compareCaption"></table></div>
 <p class="legend" id="compareCaption">各セルは「修正前 → 修正後」。扇形別の平均 (mm) と、帯の全頂点に対する埋まり・浮きの割合。<span class="bur">赤 = −4mm より内側</span> <span class="flo">青 = +12mm より外側</span>。読み方は 1 の (c) と同じ (浮きの % は毛の中に沈んだ頂点も数える)。</p>
+<p class="after-obs" id="buriedNote"></p>
 <h4>完了条件 (数値) との照合 — 修正後、4 姿勢</h4>
 <div class="table-wrap"><table id="criteriaTable" aria-describedby="criteriaCaption"></table></div>
-<p class="legend" id="criteriaCaption">条件は BUG-DOG-011 の完了条件 (1 の (e)): 上側の平均が毛の厚み相当以下 (短毛 +10mm・長毛 +25mm 程度、中毛は目安未定)、下側の平均が −5mm 以上、埋まり頂点 (&lt; −4mm) が 5% 以下。最も近い「頂点」までの距離なので、体の頂点が粗い所では大きめに出る。</p>
+<p class="legend" id="criteriaCaption">条件は BUG-DOG-011 の完了条件 (1 の (e)): 上側の平均が毛の厚み相当以下 (短毛 +10mm・長毛 +25mm 程度、中毛は目安未定)、下側の平均が −5mm 以上、埋まり頂点 (&lt; −4mm) が 5% 以下。最も近い「頂点」までの距離なので、体の頂点が粗い所では大きめに出る。数値の条件は短毛・中毛の 4 犬種にだけ当てる。毛に埋めるポメラニアン・サモエドは「帯が見えないこと・金具が毛の上に出ること」が条件で、写真と VR で確かめる。</p>
 
 <h3 id="afterDogs">(e) 犬ごとの前後比較</h3>
-<p class="sub">左が修正前、右が修正後 (R4) で、同じ姿勢・同じ視点です。姿勢のボタンで切り替わり、下の小さな写真 (修正後) を押すと比べる視点が変わります。静止は左側面・正面・真上・あご下を先に並べ、「ほかの視点も表示」で残り 4 視点を出します。犬ごとに「了承 / 修正したい / 保留」とメモを残してください。</p>
+<p class="sub">左が修正前、右が修正後 (最終、R9) で、同じ姿勢・同じ視点です。姿勢のボタンで切り替わり、下の小さな写真 (修正後) を押すと比べる視点が変わります。静止は左側面・正面・真上・あご下を先に並べ、「ほかの視点も表示」で残り 4 視点を出します。犬ごとに「了承 / 修正したい / 保留」とメモを残してください。</p>
 <div id="afterCards"></div>
 
-<h3>(f) 断面のドライラン値 (R4)</h3>
+<h3>(f) 断面のドライラン値 (R9)</h3>
 <div class="table-wrap"><table id="fitReportTable" aria-describedby="fitReportCaption"></table></div>
-<p class="legend" id="fitReportCaption">Walking/Production 8b Collar Fit Report の出力 (<code>after/tools/fit-report.txt</code>)。R4 を適用した後に取り直した値。「適用中との差」は計算し直した位置と、いまシーンに置かれている首輪の位置の差 (mm)。中心の移動は輪の座標で、負 = 下 (喉側) へ移した量。</p>
+<p class="legend" id="fitReportCaption">Walking/Production 8b Collar Fit Report の出力 (<code>after/tools/fit-report.txt</code>)。R9 を適用した後に取り直した値。毛に埋める犬種は、中心の移動 y に帯の上端を沈めた分が入る。「適用中との差」は計算し直した位置と、いまシーンに置かれている首輪の位置の差 (mm)。中心の移動は輪の座標で、負 = 下 (喉側) へ移した量。</p>
 
 <h3>(g) 残る課題</h3>
 <ul id="remainList">
-<li><b>長毛 2 犬種 (ポメラニアン・サモエド) で、毛が帯を少し突き抜ける。</b>ポメラニアンは上縁、サモエドは下前方。帯の位置と大きさだけでは消し切れず、毛を押し潰す表現が要る。毛の材質の <code>_FurTouchStrength</code> で押し潰せるかは未検証。</li>
+<li><b>(解消) 長毛 2 犬種 (ポメラニアン・サモエド) で毛が帯を突き抜ける。</b>案 1 で帯を体の中に隠したので、帯そのものが見えなくなった。</li>
+<li id="remainSamoyed"></li>
+<li><b>毛に埋める 2 犬種では、買った柄が首輪の帯では見えない。</b>ポメラニアン・サモエドでは、おそろいセット (IMP-DOG-048) の柄はリードと金具で見せる。</li>
 <li id="remainLab"></li>
 <li id="remainCriteria"></li>
-<li><b>左右・上下で別の倍率をかけているため、金具 (D リング・タブ・バックル) も縦に伸びる</b> (上下の倍率は最大 1.7)。配置が了承されたら、Fit が求めた半径で帯のメッシュを作り直して倍率を 1 に戻す (<code>scripts/art/leash-assets.cjs</code> の radii と金具の高さ RingY を更新)。</li>
+<li id="remainStretch"></li>
 <li><b>断面の大きさを外接矩形で取っているので、外れ値の頂点に弱い。</b>角度ごとに区切る・分位点を使うなどが候補。</li>
-<li><b>Verify に配置の不変条件を足す。</b>倍率の範囲、Fit を計算し直した結果との差 (1mm / 0.5° 以内)、Interact の当たりの半径、RingY = ry + 0.025。</li>
-<li><b>VR での確認は未実施 (ユーザー担当)。</b>連続した動き・リード接続中・撫でている最中・首元の飾りとの併用は、この撮影では見ていない。</li>
+<li><b>Verify に配置の不変条件を足す。</b>倍率の範囲 (毛に埋める犬種は一様で 1 以下)、Fit を計算し直した結果との差 (1mm / 0.5° 以内)、Interact の当たりの半径と中心、金具の高さ (RingY = ry + 0.025、毛に埋める犬種は + RingLift)。</li>
+<li><b>VR での確認は未実施 (ユーザー担当)。</b>連続した動き・リード接続中・撫でている最中・首元の飾りとの併用、ポメラニアン・サモエドの金具とリードの出方は、この撮影では見ていない。</li>
 </ul>
 
 <h3 id="vrcheck">(h) VR で見てほしい点</h3>
 <ol>
 <li><b>歩き</b>: 散歩で歩かせ続けたときに、首を振っても帯が首の付け根から外れず、浮き・埋まりがちらつかないか。</li>
-<li><b>座り</b>: 座らせたときに、帯の下側 (喉・胸側) が首や胸に沈み込まないか。特にラブラドールとサモエド。</li>
-<li><b>伏せ</b>: 伏せたときに、帯の下側が前脚・胸に埋まって見えないか。</li>
+<li><b>座り</b>: 座らせたときに、帯の下側 (喉・胸側) が首や胸に沈み込まないか。特にラブラドール。</li>
+<li><b>伏せ</b>: 伏せたときに、帯の下側が前脚・胸に埋まって見えないか。特にコーギー。</li>
 <li><b>リード接続中</b>: リードをつないだまま歩いたとき、縄が金具から自然に出ているか。首輪を外す操作 (Interact) と付け外しが修正前と同じようにできるか。</li>
-<li><b>撫で中</b>: 首まわりや頭を撫でたときに、首輪が手の動きや毛の反応に対して不自然に見えないか (毛の突き抜けが目立たないか)。</li>
+<li><b>撫で中</b>: 首まわりや頭を撫でたときに、首輪が手の動きや毛の反応に対して不自然に見えないか (ポメラニアン・サモエドでは、毛が動いたときに帯が覗かないか)。</li>
 <li><b>飾り併用</b>: バンダナ・蝶ネクタイ・首飾りなど首元の飾りを同時に付けたときに、首輪と食い込み合わないか。</li>
+<li><b>サモエド・ポメラニアンの金具とリード</b>: 帯が見えず、金具 (D リング) が毛の上に出ているか (サモエドはぎりぎり)。リードをつないだときに、縄が毛の中から自然に出てくるように見えるか。首輪を外す操作 (Interact) が持ち上げた金具の位置で押せるか。</li>
 </ol>
 </section>
 
@@ -342,7 +354,7 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--green);font-size:14px}
 <textarea id="overallNotes" maxlength="20000" placeholder="例: もみじは秋だけにしたい。おそろいセットは犬と飼い主で色違いにしたい。"></textarea>
 </section>
 </main>
-<footer>写真と数値: 2026-10-10、一時 Editor スクリプト KH_CollarSurveyTempEditor による撮影 (720×560)。数値の元データは tools/metrics.json と tools/report.txt。修正後 (R4、同日) は after/img/ と after/tools/ (metrics.json・report.txt・fit-report.txt)、調整テーブルは KH_LeashProductionEditor.cs から読む。再生成: node scripts/art/build-collar-review.cjs</footer>
+<footer>写真と数値: 2026-10-10、一時 Editor スクリプト KH_CollarSurveyTempEditor による撮影 (720×560)。数値の元データは tools/metrics.json と tools/report.txt。修正後 (最終 R9、同日) は after/img/ と after/tools/ (metrics.json・report.txt・fit-report.txt)、調整テーブルは KH_LeashProductionEditor.cs から読む。再生成: node scripts/art/build-collar-review.cjs</footer>
 <script>
 'use strict';
 const DATA=/*COLLAR_DATA*/;
@@ -436,18 +448,20 @@ function pairCell(b,a,unit){
 }
 function buildFitTable(){
  const t=$('fitTable');
- t.append(el('thead',{},el('tr',{},...['犬','帯の楕円半径 rx / ry (m)','毛の余白 (mm)','傾き','倍率の上限','断面位置のずらし (m)','最後の微調整 (m)','適用後の倍率 X / Y'].map((h,i)=>el('th',{class:[2,3,4,5,7].includes(i)?'num':'',text:h})))));
+ t.append(el('thead',{},el('tr',{},...['犬','帯の楕円半径 rx / ry (m)','毛の余白 (mm)','毛に埋める: 沈め / 内側寄せ / 金具の持ち上げ (mm)','傾き','倍率の上限','断面位置のずらし (m)','最後の微調整 (m)','適用後の倍率 X / Y'].map((h,i)=>el('th',{class:[2,3,4,5,6,8].includes(i)?'num':'',text:h})))));
  const tb=el('tbody');
- for(const d of DATA.after.dogs){const f=d.fit;tb.append(el('tr',{},el('td',{text:d.name}),el('td',{text:f.rx+' / '+f.ry}),el('td',{class:'num',text:String(f.furMarginMm)}),el('td',{class:'num',text:String(f.tilt)}),el('td',{class:'num',text:String(f.maxScale)}),el('td',{class:'num',text:String(f.along)}),el('td',{text:'('+f.extra.join(', ')+')'}),el('td',{class:'num',text:f.kX.toFixed(3)+' / '+f.kY.toFixed(3)})));}
+ for(const d of DATA.after.dogs){const f=d.fit;tb.append(el('tr',{},el('td',{text:d.name}),el('td',{text:f.rx+' / '+f.ry}),el('td',{class:'num',text:String(f.furMarginMm)}),el('td',{class:'num',text:f.buried?f.sinkMm+' / '+f.insetMm+' / '+f.ringLiftMm:'しない'}),el('td',{class:'num',text:String(f.tilt)}),el('td',{class:'num',text:String(f.maxScale)}),el('td',{class:'num',text:String(f.along)}),el('td',{text:'('+f.extra.join(', ')+')'}),el('td',{class:'num',text:f.kX.toFixed(3)+' / '+f.kY.toFixed(3)})));}
  t.append(tb);
  const c=DATA.after.consts;const zero=DATA.after.dogs.every(d=>d.fit.along===0&&d.fit.extra.every(v=>v===0));
- $('fitCaption').textContent=`列は Fit のテーブル BandRadii (帯の楕円半径。scripts/art/leash-assets.cjs と同じ値) / FurMargin (毛の余白) / TiltBlend (帯の面を首軸に直交する面から世界の鉛直面へ寄せる割合) / MaxScaleByBreed (X・Y 倍率の上限) / AlongOffset (断面の位置を首軸に沿ってずらす量) / ExtraOffset (最後の微調整)。${zero?'ずらし・微調整は全犬種 0。':''}共通の定数: 断面の厚み ±${Math.round(c.SliceHalfThickness*1000)}mm、探索半径は帯半径の ${c.SearchRadiusFactor} 倍、倍率は ${c.MinScale}〜${c.MaxScale}、断面の頂点が ${c.MinSamples} 未満なら修正前の置き方へ戻す。「適用後の倍率」は修正後の撮影で測った首輪の localScale の X・Y を Z で割った値 (計算値)。テーブルの出典は ${DATA.after.fitSource}。`;
+ $('fitCaption').textContent=`列は Fit のテーブル BandRadii (帯の楕円半径。scripts/art/leash-assets.cjs と同じ値) / FurMargin (毛の余白) / TiltBlend (帯の面を首軸に直交する面から世界の鉛直面へ寄せる割合) / BuriedInFur・SinkDepth・SideInset・RingLift (毛に埋める犬種と、帯の上端を皮膚の上面から沈める量・帯の横を皮膚の内側へ寄せる量・金具を持ち上げる量) / MaxScaleByBreed (X・Y 倍率の上限) / AlongOffset (断面の位置を首軸に沿ってずらす量) / ExtraOffset (最後の微調整)。${zero?'ずらし・微調整は全犬種 0。':''}共通の定数: 断面の厚み ±${Math.round(c.SliceHalfThickness*1000)}mm、探索半径は帯半径の ${c.SearchRadiusFactor} 倍、倍率は ${c.MinScale}〜${c.MaxScale}、断面の頂点が ${c.MinSamples} 未満なら修正前の置き方へ戻す。毛に埋める犬種は X・Y を同じ倍率 (${c.MinScale}〜1) にするので、毛の余白と倍率の上限は配置に使わない。「適用後の倍率」は修正後の撮影で測った首輪の localScale の X・Y を Z で割った値 (計算値)。テーブルの出典は ${DATA.after.fitSource}。`;
 }
 function buildCompare(){
+ const bd=DATA.after.dogs.filter(d=>d.buried);const restOf=d=>d.poses.find(x=>x.pose==='rest');
+ $('buriedNote').replaceChildren(el('b',{text:bd.map(d=>d.name).join('・')+'の埋まり (静止 '+bd.map(d=>restOf(d).a.buriedPct+'%').join('・')+') は意図どおり。'}),'案 1 で帯を体の中に隠したため。完了条件の数値 (上の目安・下 ≥ −5mm・埋まり ≤ 5%) は短毛・中毛の 4 犬種にだけ当て、'+bd.map(d=>d.name).join('・')+'は「帯が見えないこと・金具が毛の上に出ること」を写真と VR で確かめる。');
  const t=$('compareTable');
  t.append(el('thead',{},el('tr',{},...['犬','静止 上','静止 下','静止 埋まり','静止 浮き','座り 上','座り 下','座り 埋まり','座り 浮き'].map((h,i)=>el('th',{class:i?'num':'',text:h})))));
  const tb=el('tbody');
- for(const d of DATA.after.dogs){const tr=el('tr',{},el('td',{},el('a',{href:'#after-'+d.key,text:d.name})));for(const pose of ['rest','Sit']){const p=d.poses.find(x=>x.pose===pose);tr.append(pairCell(p.b.top,p.a.top,'mm'),pairCell(p.b.bottom,p.a.bottom,'mm'),pairCell(p.b.buriedPct,p.a.buriedPct,'%'),pairCell(p.b.floatingPct,p.a.floatingPct,'%'));}tb.append(tr);}
+ for(const d of DATA.after.dogs){const tr=el('tr',{},el('td',{},el('a',{href:'#after-'+d.key,text:d.name}),d.buried?el('span',{class:'sub',text:' (帯を体の中に隠す)'}):null));for(const pose of ['rest','Sit']){const p=d.poses.find(x=>x.pose===pose);tr.append(pairCell(p.b.top,p.a.top,'mm'),pairCell(p.b.bottom,p.a.bottom,'mm'),pairCell(p.b.buriedPct,p.a.buriedPct,'%'),pairCell(p.b.floatingPct,p.a.floatingPct,'%'));}tb.append(tr);}
  t.append(tb);
 }
 const pct1=r=>(r*100).toFixed(1)+'%';
@@ -456,6 +470,7 @@ function buildCriteria(){
  t.append(el('thead',{},el('tr',{},...['犬','毛 (上の目安)','上の平均 (4 姿勢)','下 ≥ −5mm','埋まり ≤ 5%'].map(h=>el('th',{text:h})))));
  const tb=el('tbody');
  for(const d of DATA.after.dogs){
+  if(d.buried){tb.append(el('tr',{},el('td',{text:d.name}),el('td',{text:d.coat+' (毛に埋める)'}),el('td',{colspan:'3',text:'対象外 (帯を体の中に隠す)。条件は「帯が見えないこと・金具が毛の上に出ること」で、写真と VR で確かめる。'})));continue;}
   const c=d.criteria;const tops=c.map(x=>x.top);const topNg=c.filter(x=>x.topOk===false);
   const botNg=c.filter(x=>!x.bottomOk);const burNg=c.filter(x=>!x.buriedOk);
   const topText=fmt(Math.min(...tops))+' 〜 '+fmt(Math.max(...tops))+(d.topTarget==null?' (目安未定)':topNg.length?` (目安を超える: ${topNg.length} / ${c.length} 姿勢)`:' (目安以内)');
@@ -470,17 +485,23 @@ function buildFitReport(){
  const t=$('fitReportTable');
  t.append(el('thead',{},el('tr',{},...['犬','断面の頂点数','中心の移動 x / y (mm)','断面の半幅 x / y (mm)','目標の半径 x / y (mm)','倍率 X / Y','適用中との差 (mm)','備考'].map((h,i)=>el('th',{class:i&&i<7?'num':'',text:h})))));
  const tb=el('tbody');const name=k=>DATA.after.dogs.find(d=>d.key===k).name;const two=a=>a[0]+' / '+a[1];
- for(const r of DATA.after.fitReport){const m=r.note.match(/scale clamped from \(([-\d.]+),([-\d.]+)\)/);
-  tb.append(el('tr',{},el('td',{text:name(r.key)}),el('td',{class:'num',text:String(r.samples)}),el('td',{class:'num',text:two(r.centerShift)}),el('td',{class:'num',text:two(r.halfExtents)}),el('td',{class:'num',text:two(r.targetRadii)}),el('td',{class:'num',text:two(r.kXY)}),el('td',{class:'num',text:r.delta.toFixed(1)}),el('td',{text:m?`上限で制限 (制限前 ${m[1]} / ${m[2]})`:r.note})));}
+ for(const r of DATA.after.fitReport){const m=r.note.match(/scale clamped from \(([-\d.]+),([-\d.]+)\)/);const bu=r.note.match(/buried-in-fur: scale ([\d.]+), band top (\d+)mm under skin top, ring lift (\d+)mm/);
+  tb.append(el('tr',{},el('td',{text:name(r.key)}),el('td',{class:'num',text:String(r.samples)}),el('td',{class:'num',text:two(r.centerShift)}),el('td',{class:'num',text:two(r.halfExtents)}),el('td',{class:'num',text:two(r.targetRadii)}),el('td',{class:'num',text:two(r.kXY)}),el('td',{class:'num',text:r.delta.toFixed(1)}),el('td',{text:bu?`毛に埋める: 一様な倍率 ${bu[1]}、帯の上端を皮膚の上面の ${bu[2]}mm 下、金具を ${bu[3]}mm 持ち上げ`:m?`上限で制限 (制限前 ${m[1]} / ${m[2]})`:r.note})));}
  t.append(tb);
 }
 function buildRemain(){
- const sit=d=>d.poses.find(x=>x.pose==='Sit');const lab=DATA.after.dogs.find(d=>d.key==='Lab');const others=DATA.after.dogs.filter(d=>d.key!=='Lab').map(d=>sit(d).a.buriedPct);
- $('remainLab').replaceChildren(el('b',{text:'ラブラドールの座りで下側が沈む。'}),`修正後の座りは下 ${fmt(sit(lab).a.bottom)}mm・埋まり ${sit(lab).a.buriedPct}% (修正前 ${fmt(sit(lab).b.bottom)}mm・${sit(lab).b.buriedPct}%)。他の 5 犬種の座りの埋まりは ${Math.min(...others)}〜${Math.max(...others)}%。`);
- const all=DATA.after.dogs.flatMap(d=>d.criteria.map(c=>({d,c})));const tops=all.map(x=>x.c.top);
- const beforeTops=DATA.after.dogs.flatMap(d=>d.poses.map(p=>p.b.top));
+ const sit=d=>d.poses.find(x=>x.pose==='Sit');const lab=DATA.after.dogs.find(d=>d.key==='Lab');const shown=DATA.after.dogs.filter(d=>!d.buried);const others=shown.filter(d=>d.key!=='Lab').map(d=>sit(d).a.buriedPct);
+ $('remainLab').replaceChildren(el('b',{text:'ラブラドールの座りで下側が沈む。'}),`修正後の座りは下 ${fmt(sit(lab).a.bottom)}mm・埋まり ${sit(lab).a.buriedPct}% (修正前 ${fmt(sit(lab).b.bottom)}mm・${sit(lab).b.buriedPct}%)。短毛・中毛の他の ${others.length} 犬種の座りの埋まりは ${Math.min(...others)}〜${Math.max(...others)}%。`);
+ const all=shown.flatMap(d=>d.criteria.map(c=>({d,c})));const tops=all.map(x=>x.c.top);
+ const beforeTops=shown.flatMap(d=>d.poses.map(p=>p.b.top));
+ const targeted=shown.filter(d=>d.topTarget!=null),untargeted=shown.filter(d=>d.topTarget==null);
+ const topNgText=targeted.map(d=>`${d.name} ${d.criteria.filter(c=>c.topOk===false).length} / ${d.criteria.length}`).join('、');
  const list=f=>all.filter(f).map(x=>x.d.name+'の'+poseShort(x.c)).join('、')||'なし';
- $('remainCriteria').replaceChildren(el('b',{text:'数値の完了条件はまだ満たしていない ((d) の照合表)。'}),`上側の平均は修正後も 4 姿勢で ${fmt(Math.min(...tops))}〜${fmt(Math.max(...tops))}mm (修正前 ${fmt(Math.min(...beforeTops))}〜${fmt(Math.max(...beforeTops))}mm) で、目安のある短毛・長毛の 4 犬種はすべての姿勢で目安を超える。下 −5mm 未満: ${list(x=>!x.c.bottomOk)}。埋まり 5% 超: ${list(x=>!x.c.buriedOk)}。写真の所見 (帯が首の付け根に収まる) と上側の値が食い違っているので、上の目安と測り方 (最も近い頂点までの距離) を見直すかの判断も要る。`);
+ $('remainCriteria').replaceChildren(el('b',{text:'短毛・中毛の 4 犬種で、数値の完了条件はまだ満たしていない ((d) の照合表)。'}),`上側の平均は修正後も 4 姿勢で ${fmt(Math.min(...tops))}〜${fmt(Math.max(...tops))}mm (修正前 ${fmt(Math.min(...beforeTops))}〜${fmt(Math.max(...beforeTops))}mm)。目安を超える姿勢: ${topNgText} (${untargeted.map(d=>d.name).join('・')}は目安未定)。下 −5mm 未満: ${list(x=>!x.c.bottomOk)}。埋まり 5% 超: ${list(x=>!x.c.buriedOk)}。写真の所見 (帯が首の付け根に収まる) と上側の値が食い違っているので、上の目安と測り方 (最も近い頂点までの距離) を見直すかの判断も要る。`);
+ const sam=DATA.after.dogs.find(d=>d.key==='Samoyed');
+ $('remainSamoyed').replaceChildren(el('b',{text:'サモエドの金具が毛からぎりぎりしか出ない。'}),`金具の持ち上げ ${sam.fit.ringLiftMm}mm で、背中側の上からは見えるが、左側面・正面ではほとんど見えない。リードをつないだときに縄が毛の中から出てくる見え方を VR で確かめる。`);
+ const st=shown.reduce((a,d)=>d.fit.kY>a.fit.kY?d:a);
+ $('remainStretch').replaceChildren(el('b',{text:'短毛・中毛の 4 犬種は左右・上下で別の倍率をかけているため、金具 (D リング・タブ・バックル) も縦に伸びる。'}),`上下の倍率は最大 ${st.fit.kY.toFixed(3)} (${st.name})。毛に埋める 2 犬種は倍率が一様なので伸びない。配置が了承されたら、Fit が求めた半径で帯のメッシュを作り直して倍率を 1 に戻す (scripts/art/leash-assets.cjs の radii と金具の高さ RingY を更新)。`);
 }
 
 /* ---- 3. after: dog cards ---- */
@@ -493,13 +514,13 @@ function renderAfterAnswer(box,d){
 function afterCard(d){
  const f=d.fit;const before=DATA.dogs.find(x=>x.key===d.key);
  const card=el('article',{class:'dog',id:'after-'+d.key});
- card.append(el('h4',{text:`${d.name} (${d.key})`}),el('p',{class:'placement',text:`修正後の置き方: 首の断面から決定。毛の余白 ${f.furMarginMm}mm、傾き ${f.tilt}、倍率の上限 ${f.maxScale}。適用後の倍率 X / Y = ${f.kX.toFixed(3)} / ${f.kY.toFixed(3)} (計算値)。`}));
+ card.append(el('h4',{text:`${d.name} (${d.key})`}),el('p',{class:'placement',text:f.buried?`修正後の置き方: 毛に埋める (案 1)。首の断面から中心を決め、帯の上端を皮膚の上面の ${f.sinkMm}mm 下、横を皮膚の ${f.insetMm}mm 内側に置いて体の中に隠す。金具は ${f.ringLiftMm}mm 持ち上げて毛の上に出す。傾き ${f.tilt}。適用後の倍率 X / Y = ${f.kX.toFixed(3)} / ${f.kY.toFixed(3)} (一様、計算値)。`:`修正後の置き方: 首の断面から決定。毛の余白 ${f.furMarginMm}mm、傾き ${f.tilt}、倍率の上限 ${f.maxScale}。適用後の倍率 X / Y = ${f.kX.toFixed(3)} / ${f.kY.toFixed(3)} (計算値)。`}));
  const poseBar=el('div',{class:'poses',role:'group','aria-label':d.name+'の姿勢 (前後比較)'});
  function side(tag,cls){const img=el('img',{class:'main-img',width:'720',height:'560',decoding:'async'});const missing=el('div',{class:'img-missing',hidden:''});
   img.addEventListener('error',()=>{img.hidden=true;missing.hidden=false;missing.textContent='画像を読み込めません: '+img.getAttribute('src');});
   img.addEventListener('load',()=>{img.hidden=false;missing.hidden=true;});
   return {img,missing,fig:el('figure',{},el('span',{class:cls,text:tag}),img,missing)};}
- const bSide=side('修正前','tag'),aSide=side('修正後 (R4)','tag after');
+ const bSide=side('修正前','tag'),aSide=side('修正後 (最終)','tag after');
  const cap=el('p',{class:'legend'});
  const thumbs=el('div',{class:'thumbs',role:'group','aria-label':d.name+'の視点 (前後比較)'});
  const moreBtn=el('button',{type:'button',class:'more'});
@@ -509,7 +530,7 @@ function afterCard(d){
   const v=visible.find(x=>x.view===view)||visible[0];view=v.view;
   const label=`${d.name}・${p.label}・${v.label}`;
   for(const[s,file,when]of[[bSide,v.before,'修正前'],[aSide,v.after,'修正後']]){s.img.hidden=false;s.missing.hidden=true;s.img.src=file;s.img.alt=`${label}の首輪の写真 (${when})`;}
-  cap.textContent=label+'。左が修正前、右が修正後 (R4)。クリップ '+p.clip+'。Editor のサンプル画像。';
+  cap.textContent=label+'。左が修正前、右が修正後 (最終、R9)。クリップ '+p.clip+'。Editor のサンプル画像。';
   for(const b of poseBar.children)b.setAttribute('aria-pressed',String(b.dataset.pose===pose));
   thumbs.replaceChildren(...visible.map(x=>{const b=el('button',{type:'button','aria-pressed':String(x.view===view),'aria-label':`${d.name}・${p.label}・${x.label}を前後で比べる`},el('img',{src:x.after,alt:`${d.name}・${p.label}・${x.label} (修正後)`,loading:'lazy',width:'720',height:'560'}),el('span',{text:x.label}));b.onclick=()=>{view=x.view;show();};return b;}));
   const extra=p.views.length-4;moreBtn.hidden=extra<=0;moreBtn.textContent=more?'4 視点に戻す':`ほかの視点も表示 (${extra})`;moreBtn.setAttribute('aria-expanded',String(more));
@@ -527,7 +548,7 @@ function afterCard(d){
  const a0=rest.a,b0=rest.b;
  const answer=el('div',{class:'review','data-after':d.key});renderAfterAnswer(answer,d);
  const left=el('div',{},el('div',{class:'table-wrap'},table),el('p',{class:'legend',text:`平均 (mm) と帯の全頂点に対する割合。修正後: 計測上の位置 ${a0.lerp}、localEuler ${a0.euler}、localScale ${a0.scale}。修正前: ${b0.lerp}、${b0.euler}、${b0.scale}。`}),details);
- const right=el('div',{},el('h4',{text:'修正後の見た目 (統括が写真で確認)'}),el('p',{class:'after-obs',text:d.afterObservation}),el('p',{class:'sub',text:'修正前の観察: '+before.observation}),answer);
+ const right=el('div',{},el('h4',{text:'修正後の見た目 (写真の所見)'}),el('p',{class:'after-obs',text:d.afterObservation}),el('p',{class:'sub',text:'修正前の観察: '+before.observation}),answer);
  card.append(poseBar,el('div',{class:'pair'},bSide.fig,aSide.fig),cap,thumbs,moreBtn,el('div',{class:'dog-grid'},left,right));
  show();
  return card;
@@ -557,7 +578,7 @@ function toMarkdown(){
  t+='## 項目への回答\n\n';for(const r of REVIEWS){const x=state.reviews[r.id];t+=`### ${r.title}\n\n回答: ${REVIEW_LABELS[x.decision]}\n\nメモ:\n${x.notes||'(未記入)'}\n\n`;}
  t+='## 要ユーザー判断\n\n';for(const q of QUESTIONS){const x=state.questions[q.id];t+=`### ${q.title}\n\n提案: ${q.proposal}\n\n回答: ${Q_LABELS[x.choice]}\n\nメモ:\n${x.notes||'(未記入)'}\n\n`;}
  t+='## 犬ごとのメモ\n\n';for(const d of DATA.dogs)t+=`- ${d.name} (${d.key}): ${state.dogs[d.key]||'(未記入)'}\n`;
- t+='\n## 3. 修正後 (R4) の前後比較 — 犬ごとの回答\n\n';for(const d of DATA.after.dogs){const x=state.after[d.key];t+=`### ${d.name} (${d.key})\n\n回答: ${REVIEW_LABELS[x.decision]}\n\nメモ:\n${x.notes||'(未記入)'}\n\n`;}
+ t+='\n## 3. 修正後 (最終、案 1) の前後比較 — 犬ごとの回答\n\n';for(const d of DATA.after.dogs){const x=state.after[d.key];t+=`### ${d.name} (${d.key})\n\n回答: ${REVIEW_LABELS[x.decision]}\n\nメモ:\n${x.notes||'(未記入)'}\n\n`;}
  t+='## 全体へのメモ\n\n'+(state.overall||'(未記入)')+'\n';return t;
 }
 $('markdown').onclick=()=>{download(toMarkdown(),'text/markdown;charset=utf-8','vanimal-collar-review.md');};

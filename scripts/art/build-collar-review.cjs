@@ -1,7 +1,7 @@
 // Rebuild the offline collar review sheet (artifacts/collar-review/2026-10-10/index.html).
 // Images are referenced relatively (before: img/, after: after/img/; not embedded).
-// Numbers come from tools/metrics.json (before) and after/tools/metrics.json (after, R4), the dry-run section values
-// from after/tools/fit-report.txt (R4), and the Fit tuning tables are read from KH_LeashProductionEditor.cs.
+// Numbers come from tools/metrics.json (before) and after/tools/metrics.json (after, final R9 = option 1), the dry-run
+// section values from after/tools/fit-report.txt (R9), and the Fit tuning tables are read from KH_LeashProductionEditor.cs.
 // Node standard modules only. Usage: node scripts/art/build-collar-review.cjs
 'use strict';
 const fs = require('node:fs');
@@ -54,10 +54,18 @@ function vecTable(name, type) {
     .map(x => x[1] === undefined ? (type === 'Vector2' ? [0, 0] : [0, 0, 0]) : x[1].split(',').map(num));
   if (v.length !== 6) fail(`${name} count`); return v;
 }
+function boolTable(name) {
+  const m = cs.match(new RegExp(`static readonly bool\\[\\] ${name}=\\{([^}]*)\\};`));
+  if (!m) fail(`${name} not found in ${csPath}`);
+  const v = m[1].split(',').map(x => { x = x.trim(); if (x !== 'true' && x !== 'false') fail(`not a bool in ${csPath}: ${x}`); return x === 'true'; });
+  if (v.length !== 6) fail(`${name} count`); return v;
+}
 function constant(name) { const m = cs.match(new RegExp(`\\b${name}=([-.\\d]+f?)`)); if (!m) fail(`${name} not found in ${csPath}`); return num(m[1]); }
 const tables = {
   BandRadii: vecTable('BandRadii', 'Vector2'), FurMargin: floatTable('FurMargin'), TiltBlend: floatTable('TiltBlend'),
   AlongOffset: floatTable('AlongOffset'), ExtraOffset: vecTable('ExtraOffset', 'Vector3'), MaxScaleByBreed: floatTable('MaxScaleByBreed'),
+  // 2026-10-10 user decision (option 1): long-coated dogs hide the band inside the body, only the lifted ring shows.
+  BuriedInFur: boolTable('BuriedInFur'), SinkDepth: floatTable('SinkDepth'), SideInset: floatTable('SideInset'), RingLift: floatTable('RingLift'),
 };
 const consts = {
   SliceHalfThickness: constant('SliceHalfThickness'), SearchRadiusFactor: constant('SearchRadiusFactor'),
@@ -65,7 +73,7 @@ const consts = {
 };
 tables.BandRadii.forEach((r, i) => { if (r[0] !== radii[i][0] || r[1] !== radii[i][1]) fail(`BandRadii[${breedOrder[i]}] ${r} differs from leash-assets.cjs radii ${radii[i]}`); });
 
-// ---- Dry-run section values (R4, re-run after the apply; delta = mm from the applied placement) ----
+// ---- Dry-run section values (R9, re-run after the apply; delta = mm from the applied placement) ----
 const fitReport = fs.readFileSync(path.join(out, 'after/tools/fit-report.txt'), 'utf8').split(/\r?\n/).filter(l => /^\w+ samples=/.test(l)).map(l => {
   const pair = k => { const m = l.match(new RegExp(`${k}=\\(([-\\d.]+),([-\\d.]+)\\)`)); if (!m) fail(`fit-report ${k} missing: ${l}`); return [Number(m[1]), Number(m[2])]; };
   return {
@@ -76,14 +84,15 @@ const fitReport = fs.readFileSync(path.join(out, 'after/tools/fit-report.txt'), 
 if (fitReport.map(r => r.key).join() !== breedOrder.join()) fail('fit-report.txt rows do not match the 6 breeds');
 
 // Observation text (before): the coordinator's analysis memo (2026-10-10) "犬ごとの見た目", corrected by the independent review.
-// afterObservation: the coordinator's image check of the R4 shots (2026-10-10).
+// afterObservation: image check of the final (R9) shots, 2026-10-10 (Pome / Samoyed: the coordinator's record; the
+// four other dogs: same as R4 plus the reduced margin, checked on after/img/).
 const dogs = [
   { key: 'Corgi', name: 'コーギー', placement: `Fit: 首骨→頭骨の 0.45、犬別補正なし。${radiiText('Corgi')}`,
     observation: '左側面では上面は毛に乗っているが、下前方が胸毛の中へ消える。正面では帯が頭に隠れ、金具 (D リング) だけが見える。真上では帯の後ろ半分が浮いて首との間に隙間 (影) がある。伏せでも同じ。',
-    afterObservation: '帯が首の付け根に収まり、正面・あご下からも帯が見える。' },
+    afterObservation: '帯が首の付け根に収まり、正面・あご下からも帯が見える。毛の余白を減らしたので、帯の縁が毛に少し沈む (毛に半分沈んだ首輪)。' },
   { key: 'Pome', name: 'ポメラニアン', placement: `Fit: 0.45、犬別補正なし。${radiiText('Pome')}`,
     observation: '真上では帯が首の毛の上に乗って見えるが、左側面では帯の下端から白い毛が束で突き抜ける。正面では帯が頭に隠れ、金具だけが見える。',
-    afterObservation: '「毛の上に乗った首輪」として読める。ただし上縁で毛が少し突き抜け、正面では輪の縁が毛の外周に沿って見える。' },
+    afterObservation: '帯は毛の中 (体の内側) に隠れて見えない。背中側で金具 (D リング) だけが毛の上に出る (左側面ではっきり見え、正面では頭の後ろに縁が少し見える)。' },
   { key: 'Lab', name: 'ラブラドール', placement: `計測上の位置 0.576 (Fit は 0.45 + 犬座標で前 40mm・下 8mm の補正)。localEuler (271.27, 180, 180) は (268.73, 0, 0) と同じ回転で、他犬種と同系統。${radiiText('Lab')}`,
     observation: '短毛なので最も素直。帯は顎下にきちんと回る。正面で帯が胸の前に見える (見た目の手本)。ただし数値では上 +15.8mm・埋まり 16% で、座りでは下側が −12.3mm と少し沈む。',
     afterObservation: '帯が首の付け根に収まり、正面・あご下からも帯が見える。座りでは下側が沈む (数値は右の表)。' },
@@ -92,10 +101,10 @@ const dogs = [
     afterObservation: '帯が首の付け根に収まり、正面・あご下からも帯が見える。' },
   { key: 'Shiba', name: '柴', placement: `計測上の位置 0.345 (Fit は 0.45 + 下 20mm の補正)。${radiiText('Shiba')} (ポメラニアンと同じ大きさ)`,
     observation: '帯が体格に対して小さく、左側面から見ると下半分が首の中へ沈んで半円に見える (左の近接で下端が皮膚に食い込む)。正面では帯が全く見えない。',
-    afterObservation: '帯が首の付け根に収まり、正面・あご下からも帯が見える。断面の探索半径を広げて胸側まで拾えるようにしたことで、静止の下側が大きく改善した (数値は右の表)。' },
+    afterObservation: '帯が首の付け根に収まり、正面・あご下からも帯が見える。断面の探索半径を広げて胸側まで拾えるようにしたことで、静止の下側が大きく改善した (数値は右の表)。毛の余白を減らしたので、帯の縁が毛に少し沈む。' },
   { key: 'Samoyed', name: 'サモエド', placement: `Fit: 0.45、犬別補正なし。${radiiText('Samoyed')}`,
     observation: '上は毛の表面に乗るが、下前方は毛に沈み、毛が帯を突き抜けて「帯が途中で切れた」ように読める。真上では帯が毛に埋もれて細く見える。',
-    afterObservation: '正面で首輪と分かる。ただし下前方で毛が帯を少し突き抜ける。' },
+    afterObservation: '帯は毛の中 (体の内側) に隠れて見えない。金具は背中側の上から見ると毛の上にわずかに出るが、毛が厚いので左側面・正面ではほとんど見えない (ぎりぎり)。' },
 ];
 
 const sectorMean = (entry, name) => {
@@ -149,6 +158,7 @@ const afterDogs = dogs.map((d, i) => {
   const rest = poses.find(p => p && p.pose === 'rest');
   const ls = rest ? vec(rest.a.scale) : [1, 1, 1];
   const [coatName, topTarget] = coat[d.key];
+  const buried = tables.BuriedInFur[i];
   return {
     key: d.key, name: d.name, afterObservation: d.afterObservation, poses,
     fit: {
@@ -157,11 +167,13 @@ const afterDogs = dogs.map((d, i) => {
       along: tables.AlongOffset[i], extra: tables.ExtraOffset[i],
       // X/Y band scale = localScale.xy / localScale.z (Fit writes scaleXY / neck.lossyScale and 1 / neck.lossyScale.z).
       kX: +(ls[0] / ls[2]).toFixed(3), kY: +(ls[1] / ls[2]).toFixed(3),
+      buried, sinkMm: Math.round(tables.SinkDepth[i] * 1000), insetMm: Math.round(tables.SideInset[i] * 1000), ringLiftMm: Math.round(tables.RingLift[i] * 1000),
     },
-    coat: coatName, topTarget,
+    coat: coatName, topTarget, buried,
     criteria: poses.filter(Boolean).map(p => ({
       pose: p.pose, label: p.label, top: p.a.top, bottom: p.a.bottom, buriedRatio: p.a.buriedRatio,
-      bottomOk: p.a.bottom >= -5, buriedOk: p.a.buriedRatio <= 0.05, topOk: topTarget == null ? null : p.a.top <= topTarget,
+      bottomOk: buried ? null : p.a.bottom >= -5, buriedOk: buried ? null : p.a.buriedRatio <= 0.05,
+      topOk: buried || topTarget == null ? null : p.a.top <= topTarget,
     })),
   };
 });
