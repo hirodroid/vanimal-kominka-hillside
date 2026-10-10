@@ -2,11 +2,11 @@
 id: BUG-DOG-010
 type: BUG
 system: DOG
-status: todo
+status: wip
 priority: Medium
 summary: 洗浄道具を持つ・装備すると形や持ち手が不自然に見える
-next: 泡銃の横向き・横倒れを再現し、噴出口が肘から手への方向に向くよう握り位置・向きを修正する
-updated: 2026-10-10
+next: 統括がコンパイル→WashPremium/47→44 Verifyで泡銃のGun保持を実測値で確認して保存。ユーザーがPCVR左右の手とDesktopで噴出口の向きを確認
+updated: 2026-10-11
 ---
 
 # BUG-DOG-010 洗浄道具を持ったときの見た目を修正
@@ -32,3 +32,31 @@ updated: 2026-10-10
 - PCVR、Desktop/Touch、他人からの見え方を確認し、対象アイテムと端末ごとの結果を記録する。
 
 関連：[種類別の道具選択 IMP-DOG-046](IMP-DOG-046-wash-tools-by-category.md)、[追加道具の先行導入 IMP-DOG-043](IMP-DOG-043-wash-premium-selection.md)。今回は起票のみ。
+
+## 2026-10-11 泡銃の原因と修正 (コードのみ、Unity 未実行)
+
+### 原因
+
+- 泡銃の持ち方は Pickup の `orientation=Grip`（[Build.cs:34](../../../Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.Build.cs)、7 枠すべて）で決まる。ExactGrip には FBX の `FoamCannon_GripAnchor` を**そのまま**入れている（Build.cs:35 `Anchor(go,"GripAnchor")` → [KH_WashSelection.cs:92](../../../Assets/KominkaHillside/Scripts/KH_WashSelection.cs) `ExactGrip=gripAnchors[...]`）。
+- この GripAnchor は Blender 側の作り方の約束で、向きは「ローカル +Z = 噴射方向」（asset-lab `scripts/build_premium.py:290` `common()` が方向 (0,-1,0) を +Z に向ける）。位置は既定値 (0,0,0) のままで、取っ手の中ではない（取っ手の前面より 1.2cm 前、`models_v02.py:36,45`）。引き渡し文書には「GripはUnity ExactGripではないため取り込み時に合わせる」とある（asset-lab `handoff.md:33`）が、この合わせ込みは行われていなかった。
+- 軸の実測：FBX を node で直接読むと、ルート `Lcl Rotation=(-90,0,0)`、GripAnchor・NozzleAnchor とも `(+90,0,0)`、移動は GripAnchor が 0。Unity では合成すると回転なしになるので、**ExactGrip の座標軸 = 銃モデルの座標軸（+Z = 噴射、+Y = 銃の上、+X = 右）**。2026-10-08 の Verify 出力でも `anchor FoamCannon ... forward=(0.000, 0.000, 1.000)`（artifacts/wash-listings/2026-10-08/evidence/selection-verify.txt:13）。
+- VRChat の規則（確かさ別）：
+  - **公式文書に記載**（[VRC Pickup](https://creators.vrchat.com/worlds/components/vrc_pickup/)、2026-10-11 取得）：Grip は VR では「Exact Grip の +X が前、+Z が上、そこから前へ 30° 倒す」、非 VR では「+Z が前、+X が下」。Gun は「Exact Gun の +X が狙う方向、+Z が上」。Gun には文書上 VR / 非VR の区別がない（同じ規則だと確認したわけではない）。Pickup の Version 1.0 / 1.1 の違いは Auto Hold だけで、向きの規則はバージョンに関係しない。原文：
+    > Gun: When picked up, the pickup rotates so the +X of Exact Gun faces forwards (in the direction the player is aiming), and its +Z faces up.
+    > Grip: Similar to Gun, except the orientation changes based on whether the grabbing player is in VR or not: In VR, the pickup rotates so the +X of Exact Grip faces forwards, and its +Z faces up. From there, it is then pitched forwards by 30 degrees. In non-VR, the pickup instead rotates so the +Z of Exact Grip faces forwards, and its +X faces down.
+  - 今の軸をこれに当てはめると、VR では噴射方向 (+Z) が上を向いて 30° 前へ倒れ、銃の右側面 (+X) が前を向く（= 横を向く）。Desktop では噴射は前を向くが、銃の右側面が下になる（= 横倒れ）。報告の症状と合う。
+  - **ソースで確認できたもの**：ClientSim（Desktop の近似）は Grip = 手の回転 × Euler(0,35,0)、Gun = × Euler(0,305,0) で、2 つのモードは 90° 違う（Packages/com.vrchat.worlds/Integrations/ClientSim/Runtime/Player/ClientSimPlayerHand.cs:36-37, 299-305）。VR 本体の挙動ではない。
+  - **未確認**：VR 本体での実際の向き、左右の手の違い（公式文書に記載なし）、Gun で手が来る点が手のどこか。
+- 結論：銃身が前を向く道具に Grip の規則を当てていた。Grip の規則は VR と Desktop で違うため、1 つの ExactGrip では両方を合わせられない。ユーザーが求める「肘→手の延長上に噴出口」は、VRChat では Gun の「狙う方向」がそれにあたる。
+
+### 変更
+
+- [KH_WashSelectionEditor.Refine.cs](../../../Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.Refine.cs) に `FoamCannonHold(sel)` を追加した。泡銃専用の枠 0（`Slots[0]`、他の道具は使わない）だけを `orientation=Gun` にし、`ExactGun` には新しく作る子 `KH_FoamCannonGunHold`（泡銃モデルの直下）を入れる。子の向きは `LookRotation(up, right)` で、+X = 噴射方向（モデルの +Z）、+Z = 銃の上（モデルの +Y）。位置は取っ手の中心 `(0,-0.012,-0.035)`（Blender の取っ手中心 (0,.035,-.012) をモデル座標に直した値）。値は定数 `FoamHoldLocalPosition` と `FoamHoldLocalRotation` で、正本はコード。枠 1〜6 は Grip のまま。U# の値・実行時コードは変えていない（`_Apply` は今まで通り ExactGrip だけを書く。Gun では使われない）。
+- 新しいメニュー `Tools/KominkaHillside/WashPremium/47 - Apply Foam Cannon Hold` を追加した。4 つの洗い場に冪等に書き込み、シーンを dirty にするが**保存はしない**。開始時に dirty なら止まる。結果は `Temp/WashSelection/foam-hold.txt` に書く。`42 - Build Selection` からも同じ関数を呼ぶ（Build.cs:37）。
+- [Verify.cs](../../../Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.Verify.cs) `44 - Verify Selection` に検査を追加した。各洗い場で `orientation==Gun`、`ExactGun` が `KH_FoamCannonGunHold`（モデル直下）、+X と噴射方向のずれ・+Z と銃の上のずれ（実測値を表示、各 0.5° 未満）、位置が定数どおり（誤差 0.5mm 未満）、噴出口が手より 0.15m 以上前、枠 1〜6 が Grip のまま、17 品の `_Apply` を一巡したあとも Gun の設定が残ること。ログに `hold FoamCannon <洗い場> sprayInHold=(1,0,0) modelUpInHold=(0,0,1) ...` が出る。NOT_TESTED 行も更新した。
+
+### 残り
+
+- 統括：`bash scripts/unity-compile.sh`（Editor の C# だけの変更で、Udon の変更はない）→ 47 を実行 → 44 を実行 → `Temp/WashSelection/verify.txt` の `hold FoamCannon` 4 行と PASS を確認 → シーンを保存。書き込み先は**シーンだけ**（4 洗い場の Slot0 の VRCPickup と、新しい子 4 個）。プレハブ資産は変わらない。シーンには別セッションの未コミット変更があるので、stage は分ける（vrc-scene-edit-safety）。
+- ユーザー：PCVR で右手と左手、それぞれ泡銃を持つ。噴出口が肘→手の延長上を向くか、横倒れがないか、取っ手が手に収まるかを見る。Desktop も確認する。向きがずれていたら `FoamHoldLocalRotation` を、手の位置がずれていたら `FoamHoldLocalPosition` を直し、47→44 をやり直す。
+- 対象外（同じ原因の可能性あり）：アヒル・魚・竹の水鉄砲とドライヤーも FBX の GripAnchor（+Z = 噴射）を Grip で使っている。水鉄砲の枠 2 はシャワー・じょうろと共用なので、道具ごとに orientation を切り替える必要がある。ユーザー確認のあとで別途扱う。

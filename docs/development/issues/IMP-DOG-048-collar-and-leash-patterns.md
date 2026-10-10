@@ -5,8 +5,8 @@ system: DOG
 status: todo
 priority: Medium
 summary: 首輪とリードの柄違いを Point 商品にし、おそろいセットを足す。2026-10-10 ユーザー決定: 首輪+リードのおそろいセットのみ 4 種 (しま / チェック / もみじ 各 30pt、革と真鍮 50pt)、単品なし、無料は現行の犬別色
-next: 実装 Issue を採番し、商品定義 (セット 4 行)・首輪の同期 (飾りと同じ台帳) とリードの同期 (本人選択 + PlayerData 保存)・干渉表の更新範囲を決める。古民家 business-strategy §5.2 / §14.1.1 と accessories §1 への反映も挙げる
-updated: 2026-10-10
+next: 実装は IMP-DOG-050 (2026-10-11 起票)。商品定義・首輪とリードの同期・干渉表の範囲・古民家の正本への反映箇所は 050 に書いた。050 で未決の点 (首輪を飾りの 6 つ目の枠にするか、商品の分類) を決めたら、この Issue の完了条件を見直す
+updated: 2026-10-11
 ---
 
 # IMP-DOG-048 首輪とリードの柄違いを Point 商品にし、おそろいセットを足す
@@ -96,3 +96,5 @@ updated: 2026-10-10
 関連: [購入導線 DES-UI-005](DES-UI-005-trainer-and-paid-items-purchase-flow.md)、[追加洗浄道具 IMP-DOG-043](IMP-DOG-043-wash-premium-selection.md)、[飾りと首輪の干渉 IMP-DOG-015](IMP-DOG-015-accessories-and-petfx-port.md)、[おもちゃの識別色 DES-DOG-002](DES-DOG-002-toy-behaviour.md)、[首輪の位置ずれ BUG-DOG-011](BUG-DOG-011-collar-fit.md)、古民家 `docs/business-strategy.md` §5.2・`docs/development/design/accessories.md` §1。
 
 2026-10-10: 企画案の起票と確認用HTMLの用意、ユーザー回答の記録まで。Unity・モデル・商品定義は未変更。
+
+2026-10-11: 実装 Issue を [IMP-DOG-050](IMP-DOG-050-collar-leash-set-products.md) として起票した。商品定義 (セット 4 行)、首輪の同期 (飾りと同じ台帳・同期)、リードの同期 (本人の選択 + PlayerData 保存)、干渉表の更新範囲、古民家の正本への反映箇所 (business-strategy §5.2・§14.1.1、accessories §1) を 050 に書いた。首輪を飾りの 6 つ目の枠にするか別の配列にするか、商品の分類は 050 で未決。

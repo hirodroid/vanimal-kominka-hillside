@@ -165,3 +165,5 @@ C#/Udonコンパイル、4か所×5姿勢の接点/bounds、保存再読込のba
 ホースと水鉄砲は、水にじゃれる・跳ねるなど、犬の大きく分かりやすい反応と組み合わせる。具体的な動き・発火条件・頻度・終了条件はこれから設計する。じょうろへ同じ反応を自動で広げるとは決めていない。
 
 担当Issue：[IMP-DOG-047](IMP-DOG-047-wash-item-review-changes.md)（構成・説明・画像・風）、[IMP-DOG-049](IMP-DOG-049-wash-water-tools-and-reactions.md)（水道具・注ぐ操作・犬の反応）、[IMP-DOG-046](IMP-DOG-046-wash-tools-by-category.md)（種類別選択）、[BUG-DOG-010](BUG-DOG-010-wash-tool-grip.md)（握り）、[IMP-DOG-044](IMP-DOG-044-wash-pool-platform.md)（プール）。価格・購入共有条件の変更は指定されていない。今回は方針・課題の更新まで。
+
+2026-10-11: 9品の設計案 (046・047・049・044、ユーザーが決めること Q1〜Q14) を [docs/plans/2026-10-11-wash-items-design.md](../../plans/2026-10-11-wash-items-design.md) に作成。

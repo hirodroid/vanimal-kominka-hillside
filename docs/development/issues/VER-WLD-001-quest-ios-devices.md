@@ -5,6 +5,8 @@ system: WLD
 status: todo
 priority: Medium
 summary: Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約
+next: "Quest 3 単体で play-checklist の D 節を D1 (入室直後と 6 匹リード散歩の fps) と D29 (フリスビーの 6 色と顔・首輪とリードが黒くないか。BUG-ENV-001 の 10-04 修正後) から始めて 1 周し、続けて iPhone 15 Pro で E 節を E1 (fps)・E27 (フリスビーの 6 色) から見る。Desktop の C 節はこの Issue の範囲外"
+updated: 2026-10-11
 ---
 
 # VER-WLD-001 Quest 単体・iOS の実機で全機能を確認する
@@ -18,6 +20,8 @@ summary: Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/�
 ## 確認に使える端末 (2026-09-27)
 
 ユーザー回答：**Quest 3（単体） / iPhone 15 Pro**。DES-ENV-002 の周回コース拡張では、この2台を実機確認の基準にする。16人参加・犬6匹の条件で、入口・上の広場・橋・川岸と区画の切り替わりを確認する。OS・VRChat版・解像度/リフレッシュレート・アバター表示設定・発熱状態は測定時に記録する。Androidスマホの機種は未提示であり、Quest 3 の結果をAndroidスマホ全般の合格にはしない。端末が決まっただけで、実機測定は未実施。
+
+2026-10-11 追記: 上の「実機測定は未実施」は Quest 3 については古い。ユーザーから Quest 3 の断片的な報告がある (09-30 入室直後 10〜20 fps と地形の光り、10-03「だいたい 40 fps、平常時 50」、10-04 景観の仕上げ後 20〜40 fps で不安定、10-04 フリスビーが真っ黒)。記録は [IMP-ENV-010](IMP-ENV-010-quest-performance.md) §4、[VER-ENV-002](VER-ENV-002-scenery-performance.md)、[BUG-ENV-001](BUG-ENV-001-mirror-default-materials.md) にある。どれも項目別・端末別の記録ではないので、下の表と完了条件は未のまま。iOS は体験会の所感と「色が全部同じ」の報告だけ。確認の手順は [play-checklist-2026-10-02](../../testing/play-checklist-2026-10-02.md) の D 節 (Quest 3)・E 節 (iOS)。
 
 ## 確認する内容 (括弧内が出どころの Issue)
 

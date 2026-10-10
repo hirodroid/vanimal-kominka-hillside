@@ -5,7 +5,8 @@ system: DOG
 status: review
 priority: Medium
 summary: 呼ぶ・ポーズを移植し、リード接続中の除外と斜面 (接地・法線) の判定を足す。2026-09-24 実装済み・Verify 全 PASS (c27a7e3)。法線 0.9 の判定は撤回 (10-03、IMP-DOG-032 が勝つ)。Play・T-010・斜面の PCVR 確認待ち
-next: "残り: 「呼ぶを全員に許可」OFF で権限者以外が呼べないこと・2 人の予約の取り合い (B27)、法線 0.9 の採用は撤回 (10-03 夜、IMP-DOG-032 が優先。変更 2・3 の該当部分は古民家どおりへ戻す)、Quest/iOS (VER-WLD-001)。PCVR 1 人 (A87〜A90) は 10-02 ユーザー総合判断で確認済み"
+next: "残り: 「呼ぶを全員に許可」OFF で権限者以外が呼べないこと・2 人の予約の取り合い (B27)、Quest/iOS (VER-WLD-001)。斜面の項目は IMP-DOG-032 の確認 (A0-26・C20) で見る。法線 0.9 の判定の撤回は 8faf572 で実装済み (2026-10-11 にコードで確認)。PCVR 1 人 (A87〜A90) は 10-02 ユーザー総合判断で確認済み"
+updated: 2026-10-11
 ---
 
 # IMP-DOG-016 呼ぶ・ポーズを移植し、リード除外と斜面判定を足す
@@ -88,3 +89,15 @@ next: "残り: 「呼ぶを全員に許可」OFF で権限者以外が呼べな�
 ## 2026-10-03 (`8faf572`) 撤回の実装
 
 撤回した変更 2 (法線 0.9 の判定・赤マーク・確定の抑止) と変更 3 のうち寝床へ収まる途中の接地は、[IMP-DOG-032](IMP-DOG-032-call-placement-free-height.md) として本番へ実装した (ValidPlacement は NaN / Inf だけ。シーンの赤マークは Menu/6i が削除。Menu/6b・6d を検証、Menu/6i ビルド済み)。変更 1 (リード接続中・集合中の拒否と Watch)・ポーズの移植・近づく足 (SleepStep) は維持した。チェックリストの A89 は「斜面・手の高さに置ける」へ読み替え済み (A0-26)。Play・PCVR での確認は 032 の項目で行う。
+
+## 2026-10-11 撤回の実装をコードで確認
+
+next に「変更 2・3 の該当部分は古民家どおりへ戻す」が残っていたが、戻す作業は 8faf572 (2026-10-03) で済んでいる。現在のコード (HEAD) で確かめた。
+
+- `KD_SleepSlot.cs:280-286`: `ValidPlacement` は NaN / Inf だけを見る (古民家どおり)。`HillsideMinGroundNormal` (0.9)・`HillsideGroundMask`・`_PlacementGroundOk` は 8faf572 で削除され、今は無い。
+- `KD_SleepPlacement.cs`: 赤い印 (`invalidMarks`)・地面へのレイ・確定の抑止 (`_groundOk`) は 8faf572 で削除。マーカーは手 / 頭の前にそのまま出る。HEAD のシーンにも `invalidMarks` は無い。
+- `KD_DogWanderController.Sleep.cs:206`: 置いた点へ収まる途中の `SnapToGround` (変更 3 の該当部分) は外した。近づく足 (`SleepStep` = `GatherStep`) は残す。
+- `KD_SleepSetupEditor.cs:461-462`: Menu/6b の Verify が、斜面判定が残っていないことを検査している。
+- 残っているのは文言キー `KD_TreatPouch.WordSleepNeedFlat` だけ (表に残るが使わない。`KD_SleepSetupEditor.cs:449` の注記)。
+
+Play・PCVR での確認は未実施のまま ([IMP-DOG-032](IMP-DOG-032-call-placement-free-height.md) の A0-26・C20)。
