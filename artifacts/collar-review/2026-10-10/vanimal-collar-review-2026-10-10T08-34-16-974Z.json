@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "sheet": "collar-review-2026-10-10",
+  "updatedAt": "2026-10-10T08:34:16.974Z",
+  "reviews": {
+    "current": {
+      "decision": "unreviewed",
+      "notes": ""
+    },
+    "fix": {
+      "decision": "unreviewed",
+      "notes": ""
+    },
+    "accept": {
+      "decision": "unreviewed",
+      "notes": ""
+    },
+    "collar": {
+      "decision": "ok",
+      "notes": ""
+    },
+    "leash": {
+      "decision": "ok",
+      "notes": ""
+    },
+    "set": {
+      "decision": "ok",
+      "notes": ""
+    },
+    "rules": {
+      "decision": "ok",
+      "notes": ""
+    },
+    "summary": {
+      "decision": "ok",
+      "notes": ""
+    }
+  },
+  "questions": {
+    "q1": {
+      "choice": "proposal",
+      "notes": ""
+    },
+    "q2": {
+      "choice": "proposal",
+      "notes": "保存する。"
+    },
+    "q3": {
+      "choice": "change",
+      "notes": "首輪とリードはセット売りのみ。"
+    },
+    "q4": {
+      "choice": "proposal",
+      "notes": ""
+    },
+    "q5": {
+      "choice": "proposal",
+      "notes": ""
+    },
+    "q6": {
+      "choice": "proposal",
+      "notes": ""
+    }
+  },
+  "dogs": {
+    "Corgi": "",
+    "Pome": "",
+    "Lab": "",
+    "Dachs": "",
+    "Shiba": "",
+    "Samoyed": ""
+  },
+  "overall": ""
+}

@@ -57,6 +57,13 @@ textarea{display:block;resize:vertical;min-height:80px;width:100%;border:1px sol
 .sources{font-size:13px;color:var(--muted)}
 footer{max-width:1180px;margin:auto;padding:0 4vw 28px;color:var(--muted);font-size:12px}
 code{font-size:.9em;background:#eef0e8;padding:0 4px;border-radius:4px}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:8px}
+.pair .tag{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:8px;margin-bottom:4px;background:#e9e9e2;color:#4e5548}.pair .tag.after{background:var(--precbg);color:var(--prec)}
+.more{font-size:13px;padding:4px 10px;margin-top:6px}
+.arrow{color:var(--muted);padding:0 2px}
+td.ok{color:var(--prec)}td.ng{color:var(--bur)}
+details{margin:8px 0}summary{cursor:pointer;color:var(--green);font-size:14px}
+.after-obs{padding:10px 14px;background:#edf1e6;border-radius:10px;margin:8px 0}
 [hidden]{display:none!important}
 @media(max-width:820px){.dog-grid{grid-template-columns:1fr}h1{font-size:22px}h2{font-size:20px}}
 @media(max-width:560px){header,nav.jump{padding-left:16px;padding-right:16px}main{padding:16px}section.part{padding:16px}.dog{padding:12px}.tools button,.file-button{font-size:13px;padding:8px 10px}table{font-size:13px}th,td{padding:5px 6px}}
@@ -64,18 +71,19 @@ code{font-size:.9em;background:#eef0e8;padding:0 4px;border-radius:4px}
 <header>
 <div class="brand">VAnimal / 古民家の裏山 / COLLAR REVIEW 2026-10-10</div>
 <h1>首輪の見直し — 現状と直し方、柄違いとおそろいセットの提案</h1>
-<p class="sub">散歩用首輪のずれ (BUG-DOG-011) と、首輪・リードの柄違いを Point 商品にする案 (IMP-DOG-048) の確認シート。各項目の末尾で「了承 / 修正したい / 保留」とメモを残してください。</p>
+<p class="sub">散歩用首輪のずれ (BUG-DOG-011) と、首輪・リードの柄違いを Point 商品にする案 (IMP-DOG-048) の確認シート。各項目の末尾で「了承 / 修正したい / 保留」とメモを残してください。<b>2026-10-10 に首輪の置き方を直したので、「3. 修正後 — 前後比較」で犬ごとの前後と、VR で見てほしい点を確認してください。</b></p>
 <div class="tools"><button class="primary" id="export" type="button">回答を保存 (JSON)</button><button id="markdown" type="button">読みやすい一覧を保存 (Markdown)</button><label class="file-button">回答を読み込む<input id="import" type="file" accept=".json,application/json"></label></div>
 <p class="save" id="saveStatus" role="status" aria-live="polite"></p>
 <p class="sub" id="progress"></p>
 <p class="sub">入力はこのブラウザーにも保存します (補助)。引き継ぎには「回答を保存」でダウンロードした JSON をチャットへ添付してください。ここでの回答は Unity や Issue へ自動では反映されません。</p>
 <noscript><p class="notice">JavaScript が無効なため、犬ごとの写真・数値と回答欄は表示されません。</p></noscript>
 </header>
-<nav class="jump" aria-label="ページ内の移動"><a href="#part1">1. いまの首輪</a><a href="#dogs">犬ごとの写真と数値</a><a href="#fixes">直し方</a><a href="#part2">2. 追加パッケージ案</a><a href="#decisions">要ユーザー判断</a><a href="#overall">全体メモ</a></nav>
+<nav class="jump" aria-label="ページ内の移動"><a href="#part1">1. いまの首輪</a><a href="#dogs">犬ごとの写真と数値</a><a href="#fixes">直し方</a><a href="#part2">2. 追加パッケージ案</a><a href="#decisions">要ユーザー判断</a><a href="#part3">3. 修正後の前後比較</a><a href="#vrcheck">VR で見てほしい点</a><a href="#overall">全体メモ</a></nav>
 <main>
 
 <section class="part" id="part1">
 <h2>1. いまの首輪 — 現状と直し方</h2>
+<p class="sub">この 1 は修正前 (2026-10-10 の調査時) の状態です。直した後の写真・数値は <a href="#part3">3. 修正後 — 前後比較</a> にあります。</p>
 <p class="notice">この写真と数値は Unity Editor でアニメーションの 1 コマを取り出した (サンプルした) もので、Play / VR / 実機の結果ではありません。連続した動き・PhysBone・距離による表示の切り替え・他の人からの見え方は含みません。</p>
 
 <h3 style="border-top:0;padding-top:0">(a) 結論</h3>
@@ -258,13 +266,83 @@ code{font-size:.9em;background:#eef0e8;padding:0 4px;border-radius:4px}
 </ul>
 </section>
 
+<section class="part" id="part3">
+<h2>3. 修正後 (2026-10-10 R4) — 前後比較</h2>
+<p class="notice">修正後の写真と数値も 1 と同じく、Editor でアニメーションの 1 コマを取り出したもので、VR での見え方の確認ではありません。VR で見てほしい点は (h) にまとめました。</p>
+
+<h3 style="border-top:0;padding-top:0">(a) 何を変えたか</h3>
+<ul>
+<li>首輪を置く処理 (<code>KH_LeashProductionEditor.Fit</code>。Walking/8 Refit Collars が呼ぶ) を、<b>首骨の軸ではなく、体 (<code>karada</code>) の首の断面から、輪の中心・向き・楕円の大きさを決める方式</b>に変えた (1 の直し方 A・B)。</li>
+<li>決め方: 首骨→頭骨の 0.45 の位置に、首の向きに直交する面と世界の鉛直面の間で帯の面を取る (鉛直面へ寄せる割合が「傾き」)。その面の前後の薄い範囲に入る体の頂点から断面の中心と左右・上下の半径を求め、輪の中心を断面の中心へ移す。帯の楕円は「断面の半径 + 毛の余白」に合わせて左右 (X) と上下 (Y) を別々に拡大する。帯の幅 (Z) は 1 のままで、帯は太らない。</li>
+<li>断面の頂点が少ないときは、修正前の置き方 (骨の軸 + ラブラドール・柴の手補正、倍率 1) に戻す。修正前の手補正はこの戻り先にだけ残し、通常の置き方からは削除した。</li>
+<li>首輪の「外す」Interact 用の当たり (SphereCollider) は首輪と一緒に拡大されるので、半径を倍率で割ってワールドでの半径 0.10 を保つようにした (独立レビューの指摘)。</li>
+<li>断面が取れず修正前の置き方へ戻したときは、Console に警告 (Debug.LogWarning) を出す (同上)。</li>
+<li>シーンを変えずに断面の値だけを書き出すドライランのメニュー (Walking/Production 8b Collar Fit Report) と、計算だけの関数 <code>Solve</code> を足した。</li>
+</ul>
+<h4>適用した調整テーブル</h4>
+<div class="table-wrap"><table id="fitTable" aria-describedby="fitCaption"></table></div>
+<p class="legend" id="fitCaption"></p>
+
+<h3>(b) 試したラウンド</h3>
+<ol>
+<li><b>R1</b> (傾き 0.5、縦横同じ倍率で上限 1.4): 縦長になり、帯が太って見えた。</li>
+<li><b>R2</b> (傾き 0.3、X/Y 別の倍率、断面の探索半径を帯半径の 1.8 倍 → 2.4 倍にして柴の胸側まで拾う、ポメラニアンは余白 0.004・上限 1.2): ポメラニアンが毛に沈んで見えなくなった。</li>
+<li><b>R3</b> (ポメラニアンを余白 0.010・上限 1.3・傾き 0.15): 上側で毛が突き抜けた。</li>
+<li><b>R4</b> (ポメラニアンを余白 0.014・上限 1.35): <b>採用</b>。このページの「修正後」はすべて R4。</li>
+</ol>
+
+<h3>(c) 適用・検証・保存</h3>
+<ul>
+<li>Walking/8 Refit Collars で 6 犬種へ適用し、シーン (<code>Assets/Scenes/VRCDefaultWorldScene.unity</code>) を保存した。</li>
+<li>検証: Walking/5 Verify は 491 PASS / 0 FAIL、Production 3 Verify は 66 PASS / failed=0。</li>
+<li>独立レビューの反映 (当たりの半径・警告) の後に Refit をやり直し、Walking/5 Verify (491 / 0)・Production 3 Verify (failed=0)・シーン保存を再度済ませた。首輪の配置と写真は変わっていない。</li>
+<li>修正後の撮影: 1 と同じ 4 姿勢・同じ視点で 102 枚 (<code>after/img/</code>、ファイル名も 1 と同じ)。数値は <code>after/tools/metrics.json</code>・<code>after/tools/report.txt</code>。撮影用の一時スクリプトは再利用後に削除した。</li>
+</ul>
+
+<h3 id="compare">(d) 前後の数値</h3>
+<div class="table-wrap"><table id="compareTable" aria-describedby="compareCaption"></table></div>
+<p class="legend" id="compareCaption">各セルは「修正前 → 修正後」。扇形別の平均 (mm) と、帯の全頂点に対する埋まり・浮きの割合。<span class="bur">赤 = −4mm より内側</span> <span class="flo">青 = +12mm より外側</span>。読み方は 1 の (c) と同じ (浮きの % は毛の中に沈んだ頂点も数える)。</p>
+<h4>完了条件 (数値) との照合 — 修正後、4 姿勢</h4>
+<div class="table-wrap"><table id="criteriaTable" aria-describedby="criteriaCaption"></table></div>
+<p class="legend" id="criteriaCaption">条件は BUG-DOG-011 の完了条件 (1 の (e)): 上側の平均が毛の厚み相当以下 (短毛 +10mm・長毛 +25mm 程度、中毛は目安未定)、下側の平均が −5mm 以上、埋まり頂点 (&lt; −4mm) が 5% 以下。最も近い「頂点」までの距離なので、体の頂点が粗い所では大きめに出る。</p>
+
+<h3 id="afterDogs">(e) 犬ごとの前後比較</h3>
+<p class="sub">左が修正前、右が修正後 (R4) で、同じ姿勢・同じ視点です。姿勢のボタンで切り替わり、下の小さな写真 (修正後) を押すと比べる視点が変わります。静止は左側面・正面・真上・あご下を先に並べ、「ほかの視点も表示」で残り 4 視点を出します。犬ごとに「了承 / 修正したい / 保留」とメモを残してください。</p>
+<div id="afterCards"></div>
+
+<h3>(f) 断面のドライラン値 (R4)</h3>
+<div class="table-wrap"><table id="fitReportTable" aria-describedby="fitReportCaption"></table></div>
+<p class="legend" id="fitReportCaption">Walking/Production 8b Collar Fit Report の出力 (<code>after/tools/fit-report.txt</code>)。R4 を適用した後に取り直した値。「適用中との差」は計算し直した位置と、いまシーンに置かれている首輪の位置の差 (mm)。中心の移動は輪の座標で、負 = 下 (喉側) へ移した量。</p>
+
+<h3>(g) 残る課題</h3>
+<ul id="remainList">
+<li><b>長毛 2 犬種 (ポメラニアン・サモエド) で、毛が帯を少し突き抜ける。</b>ポメラニアンは上縁、サモエドは下前方。帯の位置と大きさだけでは消し切れず、毛を押し潰す表現が要る。毛の材質の <code>_FurTouchStrength</code> で押し潰せるかは未検証。</li>
+<li id="remainLab"></li>
+<li id="remainCriteria"></li>
+<li><b>左右・上下で別の倍率をかけているため、金具 (D リング・タブ・バックル) も縦に伸びる</b> (上下の倍率は最大 1.7)。配置が了承されたら、Fit が求めた半径で帯のメッシュを作り直して倍率を 1 に戻す (<code>scripts/art/leash-assets.cjs</code> の radii と金具の高さ RingY を更新)。</li>
+<li><b>断面の大きさを外接矩形で取っているので、外れ値の頂点に弱い。</b>角度ごとに区切る・分位点を使うなどが候補。</li>
+<li><b>Verify に配置の不変条件を足す。</b>倍率の範囲、Fit を計算し直した結果との差 (1mm / 0.5° 以内)、Interact の当たりの半径、RingY = ry + 0.025。</li>
+<li><b>VR での確認は未実施 (ユーザー担当)。</b>連続した動き・リード接続中・撫でている最中・首元の飾りとの併用は、この撮影では見ていない。</li>
+</ul>
+
+<h3 id="vrcheck">(h) VR で見てほしい点</h3>
+<ol>
+<li><b>歩き</b>: 散歩で歩かせ続けたときに、首を振っても帯が首の付け根から外れず、浮き・埋まりがちらつかないか。</li>
+<li><b>座り</b>: 座らせたときに、帯の下側 (喉・胸側) が首や胸に沈み込まないか。特にラブラドールとサモエド。</li>
+<li><b>伏せ</b>: 伏せたときに、帯の下側が前脚・胸に埋まって見えないか。</li>
+<li><b>リード接続中</b>: リードをつないだまま歩いたとき、縄が金具から自然に出ているか。首輪を外す操作 (Interact) と付け外しが修正前と同じようにできるか。</li>
+<li><b>撫で中</b>: 首まわりや頭を撫でたときに、首輪が手の動きや毛の反応に対して不自然に見えないか (毛の突き抜けが目立たないか)。</li>
+<li><b>飾り併用</b>: バンダナ・蝶ネクタイ・首飾りなど首元の飾りを同時に付けたときに、首輪と食い込み合わないか。</li>
+</ol>
+</section>
+
 <section class="part" id="overall">
 <h2>全体へのメモ</h2>
 <label class="sub" for="overallNotes">首輪全体・このシートへの要望、ほかに作りたい柄やセットなど</label>
 <textarea id="overallNotes" maxlength="20000" placeholder="例: もみじは秋だけにしたい。おそろいセットは犬と飼い主で色違いにしたい。"></textarea>
 </section>
 </main>
-<footer>写真と数値: 2026-10-10、一時 Editor スクリプト KH_CollarSurveyTempEditor による撮影 (720×560)。数値の元データは tools/metrics.json と tools/report.txt。再生成: node scripts/art/build-collar-review.cjs</footer>
+<footer>写真と数値: 2026-10-10、一時 Editor スクリプト KH_CollarSurveyTempEditor による撮影 (720×560)。数値の元データは tools/metrics.json と tools/report.txt。修正後 (R4、同日) は after/img/ と after/tools/ (metrics.json・report.txt・fit-report.txt)、調整テーブルは KH_LeashProductionEditor.cs から読む。再生成: node scripts/art/build-collar-review.cjs</footer>
 <script>
 'use strict';
 const DATA=/*COLLAR_DATA*/;
@@ -279,7 +357,7 @@ const REVIEWS=reviewEls.map(e=>({id:e.dataset.review,title:e.dataset.title}));
 const QUESTIONS=questionEls.map(e=>({id:e.dataset.question,title:e.dataset.title,proposal:e.dataset.proposal}));
 const MAX_NOTE=12000,MAX_OVERALL=20000;
 function el(tag,attrs,...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs||{})){if(k==='class')e.className=v;else if(k==='text')e.textContent=v;else e.setAttribute(k,v);}for(const c of kids)if(c!=null)e.append(c);return e;}
-function blank(){const s={version:1,sheet:SHEET,updatedAt:null,reviews:{},questions:{},dogs:{},overall:''};for(const r of REVIEWS)s.reviews[r.id]={decision:'unreviewed',notes:''};for(const q of QUESTIONS)s.questions[q.id]={choice:'unanswered',notes:''};for(const d of DATA.dogs)s.dogs[d.key]='';return s;}
+function blank(){const s={version:1,sheet:SHEET,updatedAt:null,reviews:{},questions:{},dogs:{},overall:''};for(const r of REVIEWS)s.reviews[r.id]={decision:'unreviewed',notes:''};for(const q of QUESTIONS)s.questions[q.id]={choice:'unanswered',notes:''};for(const d of DATA.dogs)s.dogs[d.key]='';s.after={};for(const d of DATA.after.dogs)s.after[d.key]={decision:'unreviewed',notes:''};return s;}
 function isObj(v){return v&&typeof v==='object'&&!Array.isArray(v);}
 function validate(v){
  const bad=m=>{throw Error(m);};
@@ -292,13 +370,19 @@ function validate(v){
  for(const k of Object.keys(v.reviews))if(!Object.hasOwn(c.reviews,k))bad('知らない項目が含まれています: '+k);
  for(const k of Object.keys(v.questions))if(!Object.hasOwn(c.questions,k))bad('知らない判断が含まれています: '+k);
  for(const k of Object.keys(v.dogs))if(!Object.hasOwn(c.dogs,k))bad('知らない犬が含まれています: '+k);
+ // "after" (3. 修正後) was added on 2026-10-10 after the first answers; JSON saved before that has no "after" and stays valid.
+ if(v.after!==undefined){
+  if(!isObj(v.after))bad('修正後の回答の形式が正しくありません。現在の入力は変更していません。');
+  for(const d of DATA.after.dogs){const x=v.after[d.key];if(x===undefined)continue;if(!isObj(x)||!Object.hasOwn(REVIEW_LABELS,x.decision)||typeof x.notes!=='string'||x.notes.length>MAX_NOTE)bad('修正後の'+d.name+'の回答が正しくありません。現在の入力は変更していません。');c.after[d.key]={decision:x.decision,notes:x.notes};}
+  for(const k of Object.keys(v.after))if(!Object.hasOwn(c.after,k))bad('知らない犬が含まれています (修正後): '+k);
+ }
  c.overall=v.overall;c.updatedAt=typeof v.updatedAt==='string'?v.updatedAt:null;return c;
 }
 function message(t){$('saveStatus').textContent=t;}
 let state=blank();
 try{const stored=localStorage.getItem(KEY);if(stored){state=validate(JSON.parse(stored));message('前回の入力を復元しました。');}else message('まだ回答はありません。');}catch(e){message('ブラウザー保存を利用できないか、前回の回答を読み込めませんでした。回答は「回答を保存 (JSON)」で保存してください。');}
 function save(){state.updatedAt=new Date().toISOString();updateProgress();try{localStorage.setItem(KEY,JSON.stringify(state));message('ブラウザーに保存済み · '+new Date().toLocaleTimeString('ja-JP'));return true;}catch(e){message('ブラウザーへの保存に失敗しました。「回答を保存 (JSON)」でダウンロードしてください。');return false;}}
-function updateProgress(){const r=REVIEWS.filter(x=>state.reviews[x.id].decision!=='unreviewed').length;const q=QUESTIONS.filter(x=>state.questions[x.id].choice!=='unanswered').length;$('progress').textContent=`回答済み: 項目 ${r} / ${REVIEWS.length}、要ユーザー判断 ${q} / ${QUESTIONS.length}`;}
+function updateProgress(){const r=REVIEWS.filter(x=>state.reviews[x.id].decision!=='unreviewed').length;const q=QUESTIONS.filter(x=>state.questions[x.id].choice!=='unanswered').length;const a=DATA.after.dogs.filter(x=>state.after[x.key].decision!=='unreviewed').length;$('progress').textContent=`回答済み: 項目 ${r} / ${REVIEWS.length}、要ユーザー判断 ${q} / ${QUESTIONS.length}、修正後の犬 ${a} / ${DATA.after.dogs.length}`;}
 
 /* ---- numbers ---- */
 const fmt=n=>(n>0?'+':n<0?'−':'')+Math.abs(n).toFixed(1);
@@ -344,6 +428,112 @@ function dogCard(d){
  return card;
 }
 
+/* ---- 3. after: tables ---- */
+const poseShort=p=>p.label.replace(/ \(.*\)$/,'');
+function pairCell(b,a,unit){
+ const sp=n=>unit==='mm'?el('span',{class:n<-4?'bur':n>12?'flo':'',text:fmt(n)}):el('span',{text:n+'%'});
+ return el('td',{class:'num'},sp(b),el('span',{class:'arrow',text:' → '}),sp(a));
+}
+function buildFitTable(){
+ const t=$('fitTable');
+ t.append(el('thead',{},el('tr',{},...['犬','帯の楕円半径 rx / ry (m)','毛の余白 (mm)','傾き','倍率の上限','断面位置のずらし (m)','最後の微調整 (m)','適用後の倍率 X / Y'].map((h,i)=>el('th',{class:[2,3,4,5,7].includes(i)?'num':'',text:h})))));
+ const tb=el('tbody');
+ for(const d of DATA.after.dogs){const f=d.fit;tb.append(el('tr',{},el('td',{text:d.name}),el('td',{text:f.rx+' / '+f.ry}),el('td',{class:'num',text:String(f.furMarginMm)}),el('td',{class:'num',text:String(f.tilt)}),el('td',{class:'num',text:String(f.maxScale)}),el('td',{class:'num',text:String(f.along)}),el('td',{text:'('+f.extra.join(', ')+')'}),el('td',{class:'num',text:f.kX.toFixed(3)+' / '+f.kY.toFixed(3)})));}
+ t.append(tb);
+ const c=DATA.after.consts;const zero=DATA.after.dogs.every(d=>d.fit.along===0&&d.fit.extra.every(v=>v===0));
+ $('fitCaption').textContent=`列は Fit のテーブル BandRadii (帯の楕円半径。scripts/art/leash-assets.cjs と同じ値) / FurMargin (毛の余白) / TiltBlend (帯の面を首軸に直交する面から世界の鉛直面へ寄せる割合) / MaxScaleByBreed (X・Y 倍率の上限) / AlongOffset (断面の位置を首軸に沿ってずらす量) / ExtraOffset (最後の微調整)。${zero?'ずらし・微調整は全犬種 0。':''}共通の定数: 断面の厚み ±${Math.round(c.SliceHalfThickness*1000)}mm、探索半径は帯半径の ${c.SearchRadiusFactor} 倍、倍率は ${c.MinScale}〜${c.MaxScale}、断面の頂点が ${c.MinSamples} 未満なら修正前の置き方へ戻す。「適用後の倍率」は修正後の撮影で測った首輪の localScale の X・Y を Z で割った値 (計算値)。テーブルの出典は ${DATA.after.fitSource}。`;
+}
+function buildCompare(){
+ const t=$('compareTable');
+ t.append(el('thead',{},el('tr',{},...['犬','静止 上','静止 下','静止 埋まり','静止 浮き','座り 上','座り 下','座り 埋まり','座り 浮き'].map((h,i)=>el('th',{class:i?'num':'',text:h})))));
+ const tb=el('tbody');
+ for(const d of DATA.after.dogs){const tr=el('tr',{},el('td',{},el('a',{href:'#after-'+d.key,text:d.name})));for(const pose of ['rest','Sit']){const p=d.poses.find(x=>x.pose===pose);tr.append(pairCell(p.b.top,p.a.top,'mm'),pairCell(p.b.bottom,p.a.bottom,'mm'),pairCell(p.b.buriedPct,p.a.buriedPct,'%'),pairCell(p.b.floatingPct,p.a.floatingPct,'%'));}tb.append(tr);}
+ t.append(tb);
+}
+const pct1=r=>(r*100).toFixed(1)+'%';
+function buildCriteria(){
+ const t=$('criteriaTable');
+ t.append(el('thead',{},el('tr',{},...['犬','毛 (上の目安)','上の平均 (4 姿勢)','下 ≥ −5mm','埋まり ≤ 5%'].map(h=>el('th',{text:h})))));
+ const tb=el('tbody');
+ for(const d of DATA.after.dogs){
+  const c=d.criteria;const tops=c.map(x=>x.top);const topNg=c.filter(x=>x.topOk===false);
+  const botNg=c.filter(x=>!x.bottomOk);const burNg=c.filter(x=>!x.buriedOk);
+  const topText=fmt(Math.min(...tops))+' 〜 '+fmt(Math.max(...tops))+(d.topTarget==null?' (目安未定)':topNg.length?` (目安を超える: ${topNg.length} / ${c.length} 姿勢)`:' (目安以内)');
+  tb.append(el('tr',{},el('td',{text:d.name}),el('td',{text:d.coat+' ('+(d.topTarget==null?'目安未定':'+'+d.topTarget+'mm')+')'}),
+   el('td',{class:d.topTarget==null?'':topNg.length?'ng':'ok',text:topText}),
+   el('td',{class:botNg.length?'ng':'ok',text:botNg.length?'満たさない: '+botNg.map(x=>poseShort(x)+' '+fmt(x.bottom)).join('、'):'4 姿勢とも満たす'}),
+   el('td',{class:burNg.length?'ng':'ok',text:burNg.length?'満たさない: '+burNg.map(x=>poseShort(x)+' '+pct1(x.buriedRatio)).join('、'):'4 姿勢とも満たす'})));
+ }
+ t.append(tb);
+}
+function buildFitReport(){
+ const t=$('fitReportTable');
+ t.append(el('thead',{},el('tr',{},...['犬','断面の頂点数','中心の移動 x / y (mm)','断面の半幅 x / y (mm)','目標の半径 x / y (mm)','倍率 X / Y','適用中との差 (mm)','備考'].map((h,i)=>el('th',{class:i&&i<7?'num':'',text:h})))));
+ const tb=el('tbody');const name=k=>DATA.after.dogs.find(d=>d.key===k).name;const two=a=>a[0]+' / '+a[1];
+ for(const r of DATA.after.fitReport){const m=r.note.match(/scale clamped from \(([-\d.]+),([-\d.]+)\)/);
+  tb.append(el('tr',{},el('td',{text:name(r.key)}),el('td',{class:'num',text:String(r.samples)}),el('td',{class:'num',text:two(r.centerShift)}),el('td',{class:'num',text:two(r.halfExtents)}),el('td',{class:'num',text:two(r.targetRadii)}),el('td',{class:'num',text:two(r.kXY)}),el('td',{class:'num',text:r.delta.toFixed(1)}),el('td',{text:m?`上限で制限 (制限前 ${m[1]} / ${m[2]})`:r.note})));}
+ t.append(tb);
+}
+function buildRemain(){
+ const sit=d=>d.poses.find(x=>x.pose==='Sit');const lab=DATA.after.dogs.find(d=>d.key==='Lab');const others=DATA.after.dogs.filter(d=>d.key!=='Lab').map(d=>sit(d).a.buriedPct);
+ $('remainLab').replaceChildren(el('b',{text:'ラブラドールの座りで下側が沈む。'}),`修正後の座りは下 ${fmt(sit(lab).a.bottom)}mm・埋まり ${sit(lab).a.buriedPct}% (修正前 ${fmt(sit(lab).b.bottom)}mm・${sit(lab).b.buriedPct}%)。他の 5 犬種の座りの埋まりは ${Math.min(...others)}〜${Math.max(...others)}%。`);
+ const all=DATA.after.dogs.flatMap(d=>d.criteria.map(c=>({d,c})));const tops=all.map(x=>x.c.top);
+ const beforeTops=DATA.after.dogs.flatMap(d=>d.poses.map(p=>p.b.top));
+ const list=f=>all.filter(f).map(x=>x.d.name+'の'+poseShort(x.c)).join('、')||'なし';
+ $('remainCriteria').replaceChildren(el('b',{text:'数値の完了条件はまだ満たしていない ((d) の照合表)。'}),`上側の平均は修正後も 4 姿勢で ${fmt(Math.min(...tops))}〜${fmt(Math.max(...tops))}mm (修正前 ${fmt(Math.min(...beforeTops))}〜${fmt(Math.max(...beforeTops))}mm) で、目安のある短毛・長毛の 4 犬種はすべての姿勢で目安を超える。下 −5mm 未満: ${list(x=>!x.c.bottomOk)}。埋まり 5% 超: ${list(x=>!x.c.buriedOk)}。写真の所見 (帯が首の付け根に収まる) と上側の値が食い違っているので、上の目安と測り方 (最も近い頂点までの距離) を見直すかの判断も要る。`);
+}
+
+/* ---- 3. after: dog cards ---- */
+function renderAfterAnswer(box,d){
+ const r=state.after[d.key];
+ const ta=el('textarea',{maxlength:String(MAX_NOTE),id:'af-notes-'+d.key,placeholder:'直したいところ・理由 (任意)'});ta.value=r.notes;ta.oninput=()=>{state.after[d.key].notes=ta.value;save();};
+ const reset=el('button',{type:'button',text:'未回答に戻す'});reset.onclick=()=>{state.after[d.key].decision='unreviewed';save();renderAfterAnswer(box,d);};
+ box.replaceChildren(el('span',{class:'label',text:'修正後の'+d.name+'への回答'}),radios('af-'+d.key,REVIEW_LABELS,r.decision,v=>{state.after[d.key].decision=v;save();},'unreviewed'),el('label',{class:'sub',for:'af-notes-'+d.key,text:'メモ'}),ta,el('p',{},reset));
+}
+function afterCard(d){
+ const f=d.fit;const before=DATA.dogs.find(x=>x.key===d.key);
+ const card=el('article',{class:'dog',id:'after-'+d.key});
+ card.append(el('h4',{text:`${d.name} (${d.key})`}),el('p',{class:'placement',text:`修正後の置き方: 首の断面から決定。毛の余白 ${f.furMarginMm}mm、傾き ${f.tilt}、倍率の上限 ${f.maxScale}。適用後の倍率 X / Y = ${f.kX.toFixed(3)} / ${f.kY.toFixed(3)} (計算値)。`}));
+ const poseBar=el('div',{class:'poses',role:'group','aria-label':d.name+'の姿勢 (前後比較)'});
+ function side(tag,cls){const img=el('img',{class:'main-img',width:'720',height:'560',decoding:'async'});const missing=el('div',{class:'img-missing',hidden:''});
+  img.addEventListener('error',()=>{img.hidden=true;missing.hidden=false;missing.textContent='画像を読み込めません: '+img.getAttribute('src');});
+  img.addEventListener('load',()=>{img.hidden=false;missing.hidden=true;});
+  return {img,missing,fig:el('figure',{},el('span',{class:cls,text:tag}),img,missing)};}
+ const bSide=side('修正前','tag'),aSide=side('修正後 (R4)','tag after');
+ const cap=el('p',{class:'legend'});
+ const thumbs=el('div',{class:'thumbs',role:'group','aria-label':d.name+'の視点 (前後比較)'});
+ const moreBtn=el('button',{type:'button',class:'more'});
+ let pose='rest',view='left',more=false;
+ function show(){
+  const p=d.poses.find(x=>x.pose===pose);const visible=more?p.views:p.views.slice(0,4);
+  const v=visible.find(x=>x.view===view)||visible[0];view=v.view;
+  const label=`${d.name}・${p.label}・${v.label}`;
+  for(const[s,file,when]of[[bSide,v.before,'修正前'],[aSide,v.after,'修正後']]){s.img.hidden=false;s.missing.hidden=true;s.img.src=file;s.img.alt=`${label}の首輪の写真 (${when})`;}
+  cap.textContent=label+'。左が修正前、右が修正後 (R4)。クリップ '+p.clip+'。Editor のサンプル画像。';
+  for(const b of poseBar.children)b.setAttribute('aria-pressed',String(b.dataset.pose===pose));
+  thumbs.replaceChildren(...visible.map(x=>{const b=el('button',{type:'button','aria-pressed':String(x.view===view),'aria-label':`${d.name}・${p.label}・${x.label}を前後で比べる`},el('img',{src:x.after,alt:`${d.name}・${p.label}・${x.label} (修正後)`,loading:'lazy',width:'720',height:'560'}),el('span',{text:x.label}));b.onclick=()=>{view=x.view;show();};return b;}));
+  const extra=p.views.length-4;moreBtn.hidden=extra<=0;moreBtn.textContent=more?'4 視点に戻す':`ほかの視点も表示 (${extra})`;moreBtn.setAttribute('aria-expanded',String(more));
+ }
+ moreBtn.onclick=()=>{more=!more;show();};
+ for(const p of d.poses){const b=el('button',{type:'button','data-pose':p.pose,text:p.label});b.onclick=()=>{pose=p.pose;view='left';more=false;show();};poseBar.append(b);}
+ const table=el('table');
+ table.append(el('thead',{},el('tr',{},...['','静止 修正前','静止 修正後','座り 修正前','座り 修正後'].map((h,i)=>el('th',{class:i?'num':'',text:h})))));
+ const tb=el('tbody');const rest=d.poses.find(x=>x.pose==='rest'),sit=d.poses.find(x=>x.pose==='Sit');
+ for(const[label,k,unit]of[['上 (背中側)','top','mm'],['下 (喉・胸側)','bottom','mm'],['埋まり','buriedPct','%'],['浮き','floatingPct','%']]){const tr=el('tr',{'data-row':k},el('td',{text:label}));for(const p of[rest,sit])for(const m of[p.b,p.a])tr.append(unit==='mm'?numCell(m[k]):el('td',{class:'num',text:m[k]+'%'}));tb.append(tr);}
+ table.append(tb);
+ const full=el('table');full.append(el('thead',{},el('tr',{},...['姿勢','上','下','左','右','埋まり','浮き'].map((h,i)=>el('th',{class:i?'num':'',text:h})))));
+ const ftb=el('tbody');for(const p of d.poses)ftb.append(el('tr',{},el('td',{text:p.label}),pairCell(p.b.top,p.a.top,'mm'),pairCell(p.b.bottom,p.a.bottom,'mm'),pairCell(p.b.left,p.a.left,'mm'),pairCell(p.b.right,p.a.right,'mm'),pairCell(p.b.buriedPct,p.a.buriedPct,'%'),pairCell(p.b.floatingPct,p.a.floatingPct,'%')));full.append(ftb);
+ const details=el('details',{},el('summary',{text:'4 姿勢すべての数値 (修正前 → 修正後)'}),el('div',{class:'table-wrap'},full));
+ const a0=rest.a,b0=rest.b;
+ const answer=el('div',{class:'review','data-after':d.key});renderAfterAnswer(answer,d);
+ const left=el('div',{},el('div',{class:'table-wrap'},table),el('p',{class:'legend',text:`平均 (mm) と帯の全頂点に対する割合。修正後: 計測上の位置 ${a0.lerp}、localEuler ${a0.euler}、localScale ${a0.scale}。修正前: ${b0.lerp}、${b0.euler}、${b0.scale}。`}),details);
+ const right=el('div',{},el('h4',{text:'修正後の見た目 (統括が写真で確認)'}),el('p',{class:'after-obs',text:d.afterObservation}),el('p',{class:'sub',text:'修正前の観察: '+before.observation}),answer);
+ card.append(poseBar,el('div',{class:'pair'},bSide.fig,aSide.fig),cap,thumbs,moreBtn,el('div',{class:'dog-grid'},left,right));
+ show();
+ return card;
+}
+function renderAfter(){$('afterCards').replaceChildren(...DATA.after.dogs.map(afterCard));}
+
 /* ---- review / question controls ---- */
 function radios(name,labels,current,onPick,skip){const box=el('div',{class:'choices',role:'radiogroup'});for(const[val,label]of Object.entries(labels)){if(val===skip)continue;const input=el('input',{type:'radio',name,value:val});input.checked=val===current;input.onchange=()=>onPick(val);box.append(el('label',{class:'choice'},input,label));}return box;}
 function renderControls(){
@@ -367,11 +557,12 @@ function toMarkdown(){
  t+='## 項目への回答\n\n';for(const r of REVIEWS){const x=state.reviews[r.id];t+=`### ${r.title}\n\n回答: ${REVIEW_LABELS[x.decision]}\n\nメモ:\n${x.notes||'(未記入)'}\n\n`;}
  t+='## 要ユーザー判断\n\n';for(const q of QUESTIONS){const x=state.questions[q.id];t+=`### ${q.title}\n\n提案: ${q.proposal}\n\n回答: ${Q_LABELS[x.choice]}\n\nメモ:\n${x.notes||'(未記入)'}\n\n`;}
  t+='## 犬ごとのメモ\n\n';for(const d of DATA.dogs)t+=`- ${d.name} (${d.key}): ${state.dogs[d.key]||'(未記入)'}\n`;
- t+='\n## 全体へのメモ\n\n'+(state.overall||'(未記入)')+'\n';return t;
+ t+='\n## 3. 修正後 (R4) の前後比較 — 犬ごとの回答\n\n';for(const d of DATA.after.dogs){const x=state.after[d.key];t+=`### ${d.name} (${d.key})\n\n回答: ${REVIEW_LABELS[x.decision]}\n\nメモ:\n${x.notes||'(未記入)'}\n\n`;}
+ t+='## 全体へのメモ\n\n'+(state.overall||'(未記入)')+'\n';return t;
 }
 $('markdown').onclick=()=>{download(toMarkdown(),'text/markdown;charset=utf-8','vanimal-collar-review.md');};
-$('import').onchange=async ev=>{const file=ev.target.files[0];if(!file)return;try{if(file.size>1500000)throw Error('回答ファイルが大きすぎます。');const next=validate(JSON.parse(await file.text()));if(!confirm('現在の入力を、読み込む回答で置き換えます。よろしいですか？'))return;state=next;const saved=save();renderControls();renderDogs();if(saved)message('回答を読み込み、ブラウザーに保存しました。');}catch(e){alert('読み込めませんでした。'+e.message);}finally{ev.target.value='';}};
+$('import').onchange=async ev=>{const file=ev.target.files[0];if(!file)return;try{if(file.size>1500000)throw Error('回答ファイルが大きすぎます。');const next=validate(JSON.parse(await file.text()));if(!confirm('現在の入力を、読み込む回答で置き換えます。よろしいですか？'))return;state=next;const saved=save();renderControls();renderDogs();renderAfter();if(saved)message('回答を読み込み、ブラウザーに保存しました。');}catch(e){alert('読み込めませんでした。'+e.message);}finally{ev.target.value='';}};
 
-buildSummary();renderDogs();renderControls();
+buildSummary();renderDogs();renderControls();buildFitTable();buildCompare();buildCriteria();buildFitReport();buildRemain();renderAfter();
 </script>
 </html>

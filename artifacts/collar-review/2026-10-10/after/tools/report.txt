@@ -1,0 +1,217 @@
+Editor animation sampling on preview clones, not a Play/VR result.
+KD_Dog_Corgi rest clip=rest t=0.000 bandVerts=590 signedMm[min/mean/max]=4.0/26.3/85.3 buried(<-4mm)=0 (0%) floating(>12mm)=511 (87%)
+    top          n= 190 mm[min/mean/max]=4.0/40.8/85.3 buried=0 floating=172
+    upper-left   n=  36 mm[min/mean/max]=4.8/14.1/27.5 buried=0 floating=21
+    left         n=  28 mm[min/mean/max]=8.3/15.0/23.2 buried=0 floating=22
+    lower-left   n=  36 mm[min/mean/max]=7.2/16.1/28.8 buried=0 floating=26
+    bottom       n=  45 mm[min/mean/max]=7.3/19.2/29.6 buried=0 floating=41
+    lower-right  n=  36 mm[min/mean/max]=7.2/16.8/28.8 buried=0 floating=28
+    right        n= 183 mm[min/mean/max]=8.3/23.1/34.2 buried=0 floating=176
+    upper-right  n=  36 mm[min/mean/max]=4.8/15.8/27.5 buried=0 floating=25 skinSubMeshes=1 materials=ke_Uzumore<Hidden/Sigmal00/Uzumore/FurTwoPass> ke_Uzumore._OutlineWidth=0.0800 ke_Uzumore._OutlineFixWidth=0.5000 ke_Uzumore._OutlineVertexR2Width=0.0000 ke_Uzumore._FurVectorScale=1.0000 ke_Uzumore._FurVector=(0.0000, 0.0000, 1.0000, 0.0200) ke_Uzumore._VertexColor2FurVector=0.0000 ke_Uzumore._FurGravity=0.2500 ke_Uzumore._FurRandomize=0.0000 ke_Uzumore._FurAO=0.0000 ke_Uzumore._FurLayerNum=2.0000 ke_Uzumore._FurRootOffset=-0.1500 ke_Uzumore._FurCutoutLength=0.7000 ke_Uzumore._FurTouchStrength=1.0000 ke_Uzumore._FurRimFresnelPower=3.0000 ke_Uzumore._FurRimAntiLight=0.5000 ke_Uzumore._FurCull=0.0000 ke_Uzumore._FurSrcBlend=5.0000 ke_Uzumore._FurDstBlend=10.0000 ke_Uzumore._FurSrcBlendAlpha=1.0000 ke_Uzumore._FurDstBlendAlpha=10.0000 ke_Uzumore._FurBlendOp=0.0000 ke_Uzumore._FurBlendOpAlpha=0.0000 ke_Uzumore._FurSrcBlendFA=1.0000 ke_Uzumore._FurDstBlendFA=1.0000 ke_Uzumore._FurSrcBlendAlphaFA=0.0000 ke_Uzumore._FurDstBlendAlphaFA=1.0000 ke_Uzumore._FurBlendOpFA=4.0000 ke_Uzumore._FurBlendOpAlphaFA=4.0000 ke_Uzumore._FurZClip=1.0000 ke_Uzumore._FurZWrite=0.0000 ke_Uzumore._FurZTest=4.0000 ke_Uzumore._FurStencilRef=0.0000 ke_Uzumore._FurStencilReadMask=255.0000 ke_Uzumore._FurStencilWriteMask=255.0000 ke_Uzumore._FurStencilComp=8.0000 ke_Uzumore._FurStencilPass=0.0000 ke_Uzumore._FurStencilFail=0.0000 ke_Uzumore._FurStencilZFail=0.0000 ke_Uzumore._FurOffsetFactor=0.0000 ke_Uzumore._FurOffsetUnits=0.0000 ke_Uzumore._FurColorMask=15.0000 ke_Uzumore._FurAlphaToMask=0.0000 collarParent=Bone.003 collarChildren=ClipAnchor|Band|RingMount(off) neckLossyScale=(1.3099, 1.3099, 1.3099) dogLossyScale=(1.0000, 1.0000, 1.0000)
+KD_Dog_Corgi aruku clip=aruku t=1.750 bandVerts=590 signedMm[min/mean/max]=4.3/26.5/85.1 buried(<-4mm)=0 (0%) floating(>12mm)=508 (86%)
+    top          n= 190 mm[min/mean/max]=4.3/40.8/85.1 buried=0 floating=172
+    upper-left   n=  36 mm[min/mean/max]=5.2/14.2/27.8 buried=0 floating=21
+    left         n=  28 mm[min/mean/max]=8.3/15.0/23.0 buried=0 floating=22
+    lower-left   n=  36 mm[min/mean/max]=7.4/17.3/31.9 buried=0 floating=27
+    bottom       n=  45 mm[min/mean/max]=6.4/21.3/31.9 buried=0 floating=40
+    lower-right  n=  36 mm[min/mean/max]=4.6/16.8/31.1 buried=0 floating=27
+    right        n= 183 mm[min/mean/max]=8.3/23.0/34.2 buried=0 floating=174
+    upper-right  n=  36 mm[min/mean/max]=4.6/15.7/27.4 buried=0 floating=25
+KD_Dog_Corgi Sit clip=KD_Sit_Corgi t=4.750 bandVerts=590 signedMm[min/mean/max]=-21.8/24.9/85.1 buried(<-4mm)=16 (3%) floating(>12mm)=490 (83%)
+    top          n= 190 mm[min/mean/max]=-10.3/38.4/85.1 buried=10 floating=171
+    upper-left   n=  36 mm[min/mean/max]=3.8/13.7/26.2 buried=0 floating=20
+    left         n=  28 mm[min/mean/max]=4.7/13.1/22.4 buried=0 floating=14
+    lower-left   n=  36 mm[min/mean/max]=-10.7/15.0/25.1 buried=2 floating=26
+    bottom       n=  45 mm[min/mean/max]=-21.8/20.1/31.7 buried=2 floating=40
+    lower-right  n=  36 mm[min/mean/max]=-10.7/15.3/25.1 buried=2 floating=28
+    right        n= 183 mm[min/mean/max]=4.7/21.8/34.1 buried=0 floating=166
+    upper-right  n=  36 mm[min/mean/max]=3.8/15.3/26.2 buried=0 floating=25
+KD_Dog_Corgi huse clip=huse t=11.416 bandVerts=590 signedMm[min/mean/max]=-39.1/19.4/84.7 buried(<-4mm)=97 (16%) floating(>12mm)=413 (70%)
+    top          n= 190 mm[min/mean/max]=-7.4/39.0/84.7 buried=8 floating=172
+    upper-left   n=  36 mm[min/mean/max]=-5.9/13.1/25.5 buried=1 floating=19
+    left         n=  28 mm[min/mean/max]=-5.9/13.0/23.0 buried=1 floating=19
+    lower-left   n=  36 mm[min/mean/max]=-38.8/-17.8/13.2 buried=32 floating=2
+    bottom       n=  45 mm[min/mean/max]=-25.0/-4.9/19.8 buried=22 floating=3
+    lower-right  n=  36 mm[min/mean/max]=-39.1/-16.6/13.2 buried=31 floating=3
+    right        n= 183 mm[min/mean/max]=-5.8/22.5/34.4 buried=1 floating=172
+    upper-right  n=  36 mm[min/mean/max]=-6.9/14.5/25.6 buried=1 floating=23
+KD_Dog_Pome rest clip=rest t=0.000 bandVerts=590 signedMm[min/mean/max]=-14.2/20.2/62.7 buried(<-4mm)=43 (7%) floating(>12mm)=412 (70%)
+    top          n= 181 mm[min/mean/max]=-8.1/25.9/62.7 buried=24 floating=126
+    upper-left   n=  36 mm[min/mean/max]=-9.5/10.7/19.8 buried=1 floating=13
+    left         n=  36 mm[min/mean/max]=9.0/16.5/25.6 buried=0 floating=31
+    lower-left   n=  36 mm[min/mean/max]=-10.2/11.6/22.9 buried=3 floating=18
+    bottom       n=  36 mm[min/mean/max]=-14.2/1.9/12.8 buried=11 floating=3
+    lower-right  n=  36 mm[min/mean/max]=-10.2/11.7/22.9 buried=3 floating=18
+    right        n= 193 mm[min/mean/max]=9.0/25.7/35.5 buried=0 floating=187
+    upper-right  n=  36 mm[min/mean/max]=-9.5/11.3/19.8 buried=1 floating=16 skinSubMeshes=1 materials=ke_Uzumore<Hidden/Sigmal00/Uzumore/FurTwoPass> ke_Uzumore._OutlineWidth=0.0800 ke_Uzumore._OutlineFixWidth=0.5000 ke_Uzumore._OutlineVertexR2Width=0.0000 ke_Uzumore._FurVectorScale=1.0000 ke_Uzumore._FurVector=(0.0000, 0.0000, 1.0000, 0.0200) ke_Uzumore._VertexColor2FurVector=0.0000 ke_Uzumore._FurGravity=0.2500 ke_Uzumore._FurRandomize=0.0000 ke_Uzumore._FurAO=0.0000 ke_Uzumore._FurLayerNum=2.0000 ke_Uzumore._FurRootOffset=-0.5000 ke_Uzumore._FurCutoutLength=0.8000 ke_Uzumore._FurTouchStrength=1.0000 ke_Uzumore._FurRimFresnelPower=3.0000 ke_Uzumore._FurRimAntiLight=0.5000 ke_Uzumore._FurCull=0.0000 ke_Uzumore._FurSrcBlend=5.0000 ke_Uzumore._FurDstBlend=10.0000 ke_Uzumore._FurSrcBlendAlpha=1.0000 ke_Uzumore._FurDstBlendAlpha=10.0000 ke_Uzumore._FurBlendOp=0.0000 ke_Uzumore._FurBlendOpAlpha=0.0000 ke_Uzumore._FurSrcBlendFA=1.0000 ke_Uzumore._FurDstBlendFA=1.0000 ke_Uzumore._FurSrcBlendAlphaFA=0.0000 ke_Uzumore._FurDstBlendAlphaFA=1.0000 ke_Uzumore._FurBlendOpFA=4.0000 ke_Uzumore._FurBlendOpAlphaFA=4.0000 ke_Uzumore._FurZClip=1.0000 ke_Uzumore._FurZWrite=0.0000 ke_Uzumore._FurZTest=4.0000 ke_Uzumore._FurStencilRef=0.0000 ke_Uzumore._FurStencilReadMask=255.0000 ke_Uzumore._FurStencilWriteMask=255.0000 ke_Uzumore._FurStencilComp=8.0000 ke_Uzumore._FurStencilPass=0.0000 ke_Uzumore._FurStencilFail=0.0000 ke_Uzumore._FurStencilZFail=0.0000 ke_Uzumore._FurOffsetFactor=0.0000 ke_Uzumore._FurOffsetUnits=0.0000 ke_Uzumore._FurColorMask=15.0000 ke_Uzumore._FurAlphaToMask=0.0000 collarParent=Bone.003 collarChildren=ClipAnchor|Band|RingMount(off) neckLossyScale=(1.0000, 1.0000, 1.0000) dogLossyScale=(1.0000, 1.0000, 1.0000)
+KD_Dog_Pome aruku clip=aruku t=1.050 bandVerts=590 signedMm[min/mean/max]=-9.2/21.1/62.8 buried(<-4mm)=27 (5%) floating(>12mm)=446 (76%)
+    top          n= 181 mm[min/mean/max]=-9.2/26.3/62.8 buried=25 floating=124
+    upper-left   n=  36 mm[min/mean/max]=-8.1/10.8/19.6 buried=1 floating=15
+    left         n=  36 mm[min/mean/max]=9.2/16.3/23.4 buried=0 floating=30
+    lower-left   n=  36 mm[min/mean/max]=8.3/15.4/22.7 buried=0 floating=28
+    bottom       n=  36 mm[min/mean/max]=3.7/12.0/20.8 buried=0 floating=18
+    lower-right  n=  36 mm[min/mean/max]=4.4/14.8/22.3 buried=0 floating=26
+    right        n= 193 mm[min/mean/max]=9.0/24.8/35.2 buried=0 floating=187
+    upper-right  n=  36 mm[min/mean/max]=-8.5/11.4/19.6 buried=1 floating=18
+KD_Dog_Pome Sit clip=KD_Sit_Pome t=4.750 bandVerts=590 signedMm[min/mean/max]=-10.1/20.9/63.3 buried(<-4mm)=30 (5%) floating(>12mm)=444 (75%)
+    top          n= 177 mm[min/mean/max]=-10.1/26.9/63.3 buried=25 floating=127
+    upper-left   n=  36 mm[min/mean/max]=-7.4/10.7/19.5 buried=1 floating=14
+    left         n=  38 mm[min/mean/max]=8.9/16.1/24.8 buried=0 floating=32
+    lower-left   n=  39 mm[min/mean/max]=7.6/15.2/23.6 buried=0 floating=29
+    bottom       n=  31 mm[min/mean/max]=-8.5/10.1/18.7 buried=1 floating=13
+    lower-right  n=  36 mm[min/mean/max]=7.6/15.5/23.6 buried=0 floating=27
+    right        n= 195 mm[min/mean/max]=7.6/24.1/35.3 buried=0 floating=186
+    upper-right  n=  38 mm[min/mean/max]=-7.7/10.2/19.5 buried=3 floating=16
+KD_Dog_Pome huse clip=huse t=11.400 bandVerts=590 signedMm[min/mean/max]=-10.2/24.5/66.4 buried(<-4mm)=10 (2%) floating(>12mm)=498 (84%)
+    top          n= 172 mm[min/mean/max]=-9.9/31.3/66.4 buried=8 floating=148
+    upper-left   n=  41 mm[min/mean/max]=-10.2/11.0/20.1 buried=1 floating=17
+    left         n=  36 mm[min/mean/max]=8.4/18.0/30.2 buried=0 floating=29
+    lower-left   n=  41 mm[min/mean/max]=10.8/20.6/31.3 buried=0 floating=39
+    bottom       n=  27 mm[min/mean/max]=3.8/15.7/27.5 buried=0 floating=19
+    lower-right  n=  40 mm[min/mean/max]=10.4/21.0/30.9 buried=0 floating=34
+    right        n= 193 mm[min/mean/max]=10.3/28.0/39.1 buried=0 floating=190
+    upper-right  n=  40 mm[min/mean/max]=-9.6/12.5/20.2 buried=1 floating=22
+KD_Dog_Lab rest clip=rest t=0.000 bandVerts=590 signedMm[min/mean/max]=-17.1/21.4/66.3 buried(<-4mm)=28 (5%) floating(>12mm)=468 (79%)
+    top          n= 190 mm[min/mean/max]=0.2/33.1/66.3 buried=0 floating=164
+    upper-left   n=  36 mm[min/mean/max]=-12.1/10.9/21.1 buried=4 floating=19
+    left         n=  28 mm[min/mean/max]=-14.6/11.1/24.0 buried=2 floating=15
+    lower-left   n=  36 mm[min/mean/max]=5.7/19.3/30.1 buried=0 floating=32
+    bottom       n=  45 mm[min/mean/max]=-17.1/8.6/26.3 buried=15 floating=29
+    lower-right  n=  36 mm[min/mean/max]=5.7/18.3/30.1 buried=0 floating=32
+    right        n= 183 mm[min/mean/max]=-14.6/19.3/31.1 buried=3 floating=160
+    upper-right  n=  36 mm[min/mean/max]=-12.1/10.4/21.1 buried=4 floating=17 skinSubMeshes=1 materials=ke_Uzumore<Hidden/Sigmal00/Uzumore/FurTwoPass> ke_Uzumore._OutlineWidth=0.0800 ke_Uzumore._OutlineFixWidth=0.5000 ke_Uzumore._OutlineVertexR2Width=0.0000 ke_Uzumore._FurVectorScale=2.5000 ke_Uzumore._FurVector=(0.0000, 0.0000, 1.0000, 0.0100) ke_Uzumore._VertexColor2FurVector=0.0000 ke_Uzumore._FurGravity=0.0000 ke_Uzumore._FurRandomize=0.0000 ke_Uzumore._FurAO=0.0000 ke_Uzumore._FurLayerNum=2.0000 ke_Uzumore._FurRootOffset=0.0000 ke_Uzumore._FurCutoutLength=0.8000 ke_Uzumore._FurTouchStrength=1.0000 ke_Uzumore._FurRimFresnelPower=3.0000 ke_Uzumore._FurRimAntiLight=0.5000 ke_Uzumore._FurCull=0.0000 ke_Uzumore._FurSrcBlend=5.0000 ke_Uzumore._FurDstBlend=10.0000 ke_Uzumore._FurSrcBlendAlpha=1.0000 ke_Uzumore._FurDstBlendAlpha=10.0000 ke_Uzumore._FurBlendOp=0.0000 ke_Uzumore._FurBlendOpAlpha=0.0000 ke_Uzumore._FurSrcBlendFA=1.0000 ke_Uzumore._FurDstBlendFA=1.0000 ke_Uzumore._FurSrcBlendAlphaFA=0.0000 ke_Uzumore._FurDstBlendAlphaFA=1.0000 ke_Uzumore._FurBlendOpFA=4.0000 ke_Uzumore._FurBlendOpAlphaFA=4.0000 ke_Uzumore._FurZClip=1.0000 ke_Uzumore._FurZWrite=0.0000 ke_Uzumore._FurZTest=4.0000 ke_Uzumore._FurStencilRef=0.0000 ke_Uzumore._FurStencilReadMask=255.0000 ke_Uzumore._FurStencilWriteMask=255.0000 ke_Uzumore._FurStencilComp=8.0000 ke_Uzumore._FurStencilPass=0.0000 ke_Uzumore._FurStencilFail=0.0000 ke_Uzumore._FurStencilZFail=0.0000 ke_Uzumore._FurOffsetFactor=0.0000 ke_Uzumore._FurOffsetUnits=0.0000 ke_Uzumore._FurColorMask=15.0000 ke_Uzumore._FurAlphaToMask=0.0000 collarParent=Bone.003 collarChildren=ClipAnchor|Band|RingMount(off) neckLossyScale=(1.1518, 1.1518, 1.1518) dogLossyScale=(1.0000, 1.0000, 1.0000)
+KD_Dog_Lab aruku clip=aruku t=1.750 bandVerts=590 signedMm[min/mean/max]=-18.1/21.8/66.4 buried(<-4mm)=25 (4%) floating(>12mm)=464 (79%)
+    top          n= 190 mm[min/mean/max]=0.3/33.2/66.4 buried=0 floating=165
+    upper-left   n=  36 mm[min/mean/max]=-12.0/11.6/21.1 buried=3 floating=19
+    left         n=  28 mm[min/mean/max]=-16.3/11.2/22.2 buried=2 floating=16
+    lower-left   n=  36 mm[min/mean/max]=-11.7/17.0/30.5 buried=2 floating=28
+    bottom       n=  45 mm[min/mean/max]=-18.1/10.0/26.5 buried=13 floating=31
+    lower-right  n=  36 mm[min/mean/max]=7.7/19.6/30.6 buried=0 floating=32
+    right        n= 183 mm[min/mean/max]=-5.2/20.2/31.8 buried=1 floating=156
+    upper-right  n=  36 mm[min/mean/max]=-12.0/10.3/21.1 buried=4 floating=17
+KD_Dog_Lab Sit clip=KD_Sit_Lab t=4.750 bandVerts=590 signedMm[min/mean/max]=-29.2/14.6/66.3 buried(<-4mm)=128 (22%) floating(>12mm)=354 (60%)
+    top          n= 190 mm[min/mean/max]=-8.7/31.4/66.3 buried=5 floating=157
+    upper-left   n=  36 mm[min/mean/max]=-12.7/8.0/20.2 buried=7 floating=13
+    left         n=  28 mm[min/mean/max]=-11.7/6.5/17.9 buried=8 floating=10
+    lower-left   n=  36 mm[min/mean/max]=-25.0/-6.3/14.6 buried=23 floating=4
+    bottom       n=  45 mm[min/mean/max]=-29.2/-14.8/12.9 buried=41 floating=2
+    lower-right  n=  36 mm[min/mean/max]=-25.0/-8.2/14.6 buried=25 floating=4
+    right        n= 183 mm[min/mean/max]=-11.6/17.0/28.9 buried=10 floating=153
+    upper-right  n=  36 mm[min/mean/max]=-12.8/6.4/20.2 buried=9 floating=11
+KD_Dog_Lab huse clip=huse t=11.400 bandVerts=590 signedMm[min/mean/max]=-13.9/30.1/66.6 buried(<-4mm)=6 (1%) floating(>12mm)=530 (90%)
+    top          n= 190 mm[min/mean/max]=2.1/33.6/66.6 buried=0 floating=164
+    upper-left   n=  36 mm[min/mean/max]=-13.9/12.8/22.5 buried=3 floating=25
+    left         n=  28 mm[min/mean/max]=5.9/20.7/36.2 buried=0 floating=23
+    lower-left   n=  36 mm[min/mean/max]=23.2/38.9/53.8 buried=0 floating=36
+    bottom       n=  45 mm[min/mean/max]=26.7/41.6/54.7 buried=0 floating=45
+    lower-right  n=  36 mm[min/mean/max]=22.9/37.1/53.9 buried=0 floating=36
+    right        n= 183 mm[min/mean/max]=5.7/29.0/43.5 buried=0 floating=178
+    upper-right  n=  36 mm[min/mean/max]=-13.6/12.2/22.6 buried=3 floating=23
+KD_Dog_Dachs rest clip=rest t=0.000 bandVerts=590 signedMm[min/mean/max]=-9.9/20.9/69.1 buried(<-4mm)=15 (3%) floating(>12mm)=436 (74%)
+    top          n= 190 mm[min/mean/max]=-9.9/33.2/69.1 buried=13 floating=164
+    upper-left   n=  36 mm[min/mean/max]=-4.9/11.8/25.7 buried=1 floating=17
+    left         n=  28 mm[min/mean/max]=4.2/11.5/21.4 buried=0 floating=11
+    lower-left   n=  36 mm[min/mean/max]=7.1/17.9/29.4 buried=0 floating=29
+    bottom       n=  45 mm[min/mean/max]=-3.5/17.8/29.7 buried=0 floating=37
+    lower-right  n=  36 mm[min/mean/max]=7.1/18.7/29.4 buried=0 floating=29
+    right        n= 183 mm[min/mean/max]=4.2/14.7/24.1 buried=0 floating=128
+    upper-right  n=  36 mm[min/mean/max]=-4.9/13.3/25.7 buried=1 floating=21 skinSubMeshes=1 materials=ke_Uzumore<Hidden/Sigmal00/Uzumore/FurTwoPass> ke_Uzumore._OutlineWidth=0.0800 ke_Uzumore._OutlineFixWidth=0.5000 ke_Uzumore._OutlineVertexR2Width=0.0000 ke_Uzumore._FurVectorScale=1.3000 ke_Uzumore._FurVector=(0.0000, 0.0000, 1.0000, 0.0250) ke_Uzumore._VertexColor2FurVector=0.0000 ke_Uzumore._FurGravity=0.2500 ke_Uzumore._FurRandomize=0.0000 ke_Uzumore._FurAO=0.0000 ke_Uzumore._FurLayerNum=2.0000 ke_Uzumore._FurRootOffset=-0.5000 ke_Uzumore._FurCutoutLength=0.8000 ke_Uzumore._FurTouchStrength=1.0000 ke_Uzumore._FurRimFresnelPower=3.0000 ke_Uzumore._FurRimAntiLight=0.5000 ke_Uzumore._FurCull=0.0000 ke_Uzumore._FurSrcBlend=5.0000 ke_Uzumore._FurDstBlend=10.0000 ke_Uzumore._FurSrcBlendAlpha=1.0000 ke_Uzumore._FurDstBlendAlpha=10.0000 ke_Uzumore._FurBlendOp=0.0000 ke_Uzumore._FurBlendOpAlpha=0.0000 ke_Uzumore._FurSrcBlendFA=1.0000 ke_Uzumore._FurDstBlendFA=1.0000 ke_Uzumore._FurSrcBlendAlphaFA=0.0000 ke_Uzumore._FurDstBlendAlphaFA=1.0000 ke_Uzumore._FurBlendOpFA=4.0000 ke_Uzumore._FurBlendOpAlphaFA=4.0000 ke_Uzumore._FurZClip=1.0000 ke_Uzumore._FurZWrite=0.0000 ke_Uzumore._FurZTest=4.0000 ke_Uzumore._FurStencilRef=0.0000 ke_Uzumore._FurStencilReadMask=255.0000 ke_Uzumore._FurStencilWriteMask=255.0000 ke_Uzumore._FurStencilComp=8.0000 ke_Uzumore._FurStencilPass=0.0000 ke_Uzumore._FurStencilFail=0.0000 ke_Uzumore._FurStencilZFail=0.0000 ke_Uzumore._FurOffsetFactor=0.0000 ke_Uzumore._FurOffsetUnits=0.0000 ke_Uzumore._FurColorMask=15.0000 ke_Uzumore._FurAlphaToMask=0.0000 collarParent=Bone.003 collarChildren=ClipAnchor|Band|RingMount(off) neckLossyScale=(1.0000, 1.0000, 1.0000) dogLossyScale=(1.0000, 1.0000, 1.0000)
+KD_Dog_Dachs aruku clip=aruku 1 t=0.263 bandVerts=590 signedMm[min/mean/max]=-9.6/20.7/68.8 buried(<-4mm)=17 (3%) floating(>12mm)=437 (74%)
+    top          n= 190 mm[min/mean/max]=-9.6/33.2/68.8 buried=13 floating=164
+    upper-left   n=  36 mm[min/mean/max]=-4.9/11.9/25.7 buried=1 floating=18
+    left         n=  28 mm[min/mean/max]=3.4/11.1/20.8 buried=0 floating=10
+    lower-left   n=  36 mm[min/mean/max]=7.6/17.4/27.9 buried=0 floating=29
+    bottom       n=  45 mm[min/mean/max]=-8.9/15.2/27.2 buried=2 floating=29
+    lower-right  n=  36 mm[min/mean/max]=7.3/17.9/27.6 buried=0 floating=28
+    right        n= 183 mm[min/mean/max]=3.7/15.0/24.1 buried=0 floating=137
+    upper-right  n=  36 mm[min/mean/max]=-4.9/13.5/25.7 buried=1 floating=22
+KD_Dog_Dachs Sit clip=KD_Sit_Dachs t=4.750 bandVerts=590 signedMm[min/mean/max]=-14.6/19.6/67.8 buried(<-4mm)=39 (7%) floating(>12mm)=424 (72%)
+    top          n= 195 mm[min/mean/max]=-9.2/32.7/67.8 buried=8 floating=164
+    upper-left   n=  31 mm[min/mean/max]=2.9/13.3/26.2 buried=0 floating=18
+    left         n=  28 mm[min/mean/max]=4.1/10.7/17.6 buried=0 floating=10
+    lower-left   n=  36 mm[min/mean/max]=-12.4/9.2/22.3 buried=5 floating=18
+    bottom       n=  49 mm[min/mean/max]=-14.6/1.5/19.0 buried=22 floating=13
+    lower-right  n=  32 mm[min/mean/max]=-12.1/12.2/23.0 buried=4 floating=22
+    right        n= 183 mm[min/mean/max]=4.7/17.5/25.4 buried=0 floating=157
+    upper-right  n=  36 mm[min/mean/max]=2.9/14.1/26.2 buried=0 floating=22
+KD_Dog_Dachs huse clip=huse t=11.400 bandVerts=590 signedMm[min/mean/max]=-14.0/19.3/68.3 buried(<-4mm)=27 (5%) floating(>12mm)=391 (66%)
+    top          n= 190 mm[min/mean/max]=-8.6/33.1/68.3 buried=13 floating=164
+    upper-left   n=  36 mm[min/mean/max]=-5.0/11.4/25.8 buried=1 floating=16
+    left         n=  28 mm[min/mean/max]=4.7/10.9/20.3 buried=0 floating=9
+    lower-left   n=  36 mm[min/mean/max]=-14.0/12.8/26.4 buried=3 floating=22
+    bottom       n=  45 mm[min/mean/max]=-10.9/13.7/26.7 buried=1 floating=26
+    lower-right  n=  36 mm[min/mean/max]=-12.0/12.0/25.5 buried=7 floating=21
+    right        n= 183 mm[min/mean/max]=-7.9/13.2/22.5 buried=1 floating=112
+    upper-right  n=  36 mm[min/mean/max]=-5.4/13.1/25.9 buried=1 floating=21
+KD_Dog_Shiba rest clip=rest t=0.000 bandVerts=590 signedMm[min/mean/max]=-13.2/25.2/84.3 buried(<-4mm)=10 (2%) floating(>12mm)=494 (84%)
+    top          n= 190 mm[min/mean/max]=-6.9/38.3/84.3 buried=6 floating=164
+    upper-left   n=  32 mm[min/mean/max]=6.4/15.3/24.1 buried=0 floating=23
+    left         n=  36 mm[min/mean/max]=10.1/15.5/23.3 buried=0 floating=29
+    lower-left   n=  32 mm[min/mean/max]=-13.2/13.0/22.1 buried=2 floating=20
+    bottom       n=  45 mm[min/mean/max]=-2.1/14.6/24.3 buried=0 floating=31
+    lower-right  n=  31 mm[min/mean/max]=-13.2/12.8/22.1 buried=2 floating=19
+    right        n= 193 mm[min/mean/max]=10.1/23.7/32.7 buried=0 floating=184
+    upper-right  n=  31 mm[min/mean/max]=6.4/16.4/24.1 buried=0 floating=24 skinSubMeshes=1 materials=ke 1_Uzumore<Hidden/Sigmal00/Uzumore/FurTwoPass> ke 1_Uzumore._OutlineWidth=0.0800 ke 1_Uzumore._OutlineFixWidth=0.5000 ke 1_Uzumore._OutlineVertexR2Width=0.0000 ke 1_Uzumore._FurVectorScale=1.0000 ke 1_Uzumore._FurVector=(0.0000, 0.0000, 1.0000, 0.0100) ke 1_Uzumore._VertexColor2FurVector=0.0000 ke 1_Uzumore._FurGravity=0.1000 ke 1_Uzumore._FurRandomize=0.0000 ke 1_Uzumore._FurAO=0.0000 ke 1_Uzumore._FurLayerNum=2.0000 ke 1_Uzumore._FurRootOffset=0.0000 ke 1_Uzumore._FurCutoutLength=0.8000 ke 1_Uzumore._FurTouchStrength=1.0000 ke 1_Uzumore._FurRimFresnelPower=3.0000 ke 1_Uzumore._FurRimAntiLight=0.5000 ke 1_Uzumore._FurCull=0.0000 ke 1_Uzumore._FurSrcBlend=5.0000 ke 1_Uzumore._FurDstBlend=10.0000 ke 1_Uzumore._FurSrcBlendAlpha=1.0000 ke 1_Uzumore._FurDstBlendAlpha=10.0000 ke 1_Uzumore._FurBlendOp=0.0000 ke 1_Uzumore._FurBlendOpAlpha=0.0000 ke 1_Uzumore._FurSrcBlendFA=1.0000 ke 1_Uzumore._FurDstBlendFA=1.0000 ke 1_Uzumore._FurSrcBlendAlphaFA=0.0000 ke 1_Uzumore._FurDstBlendAlphaFA=1.0000 ke 1_Uzumore._FurBlendOpFA=4.0000 ke 1_Uzumore._FurBlendOpAlphaFA=4.0000 ke 1_Uzumore._FurZClip=1.0000 ke 1_Uzumore._FurZWrite=0.0000 ke 1_Uzumore._FurZTest=4.0000 ke 1_Uzumore._FurStencilRef=0.0000 ke 1_Uzumore._FurStencilReadMask=255.0000 ke 1_Uzumore._FurStencilWriteMask=255.0000 ke 1_Uzumore._FurStencilComp=8.0000 ke 1_Uzumore._FurStencilPass=0.0000 ke 1_Uzumore._FurStencilFail=0.0000 ke 1_Uzumore._FurStencilZFail=0.0000 ke 1_Uzumore._FurOffsetFactor=0.0000 ke 1_Uzumore._FurOffsetUnits=0.0000 ke 1_Uzumore._FurColorMask=15.0000 ke 1_Uzumore._FurAlphaToMask=0.0000 collarParent=Bone.003 collarChildren=ClipAnchor|Band|RingMount(off) neckLossyScale=(1.6152, 1.6152, 1.6152) dogLossyScale=(1.0000, 1.0000, 1.0000)
+KD_Dog_Shiba aruku clip=aruku t=1.750 bandVerts=590 signedMm[min/mean/max]=-14.7/25.6/84.3 buried(<-4mm)=10 (2%) floating(>12mm)=509 (86%)
+    top          n= 190 mm[min/mean/max]=-7.0/38.4/84.3 buried=6 floating=164
+    upper-left   n=  33 mm[min/mean/max]=6.5/15.8/24.3 buried=0 floating=25
+    left         n=  34 mm[min/mean/max]=9.6/15.5/22.2 buried=0 floating=30
+    lower-left   n=  33 mm[min/mean/max]=-12.4/13.8/23.8 buried=2 floating=25
+    bottom       n=  45 mm[min/mean/max]=7.3/18.4/26.2 buried=0 floating=39
+    lower-right  n=  32 mm[min/mean/max]=-14.7/13.3/23.6 buried=2 floating=20
+    right        n= 191 mm[min/mean/max]=9.9/23.5/32.7 buried=0 floating=182
+    upper-right  n=  32 mm[min/mean/max]=6.7/16.5/24.0 buried=0 floating=24
+KD_Dog_Shiba Sit clip=KD_Sit_Shiba t=4.750 bandVerts=590 signedMm[min/mean/max]=-15.3/22.4/84.3 buried(<-4mm)=41 (7%) floating(>12mm)=439 (74%)
+    top          n= 183 mm[min/mean/max]=-9.9/38.1/84.3 buried=8 floating=152
+    upper-left   n=  35 mm[min/mean/max]=5.8/14.5/22.3 buried=0 floating=24
+    left         n=  36 mm[min/mean/max]=-8.7/10.1/21.0 buried=4 floating=18
+    lower-left   n=  35 mm[min/mean/max]=-15.3/5.7/23.6 buried=13 floating=13
+    bottom       n=  38 mm[min/mean/max]=6.3/16.7/25.3 buried=0 floating=28
+    lower-right  n=  35 mm[min/mean/max]=-15.3/7.8/23.6 buried=10 floating=17
+    right        n= 193 mm[min/mean/max]=-8.7/19.3/32.4 buried=6 floating=161
+    upper-right  n=  35 mm[min/mean/max]=5.8/15.4/22.3 buried=0 floating=26
+KD_Dog_Shiba huse clip=KD_LieDown_Shiba t=11.416 bandVerts=590 signedMm[min/mean/max]=-14.0/25.5/84.0 buried(<-4mm)=20 (3%) floating(>12mm)=482 (82%)
+    top          n= 181 mm[min/mean/max]=-5.8/39.3/84.0 buried=5 floating=153
+    upper-left   n=  36 mm[min/mean/max]=5.2/14.1/23.9 buried=0 floating=21
+    left         n=  36 mm[min/mean/max]=-3.4/13.2/22.7 buried=0 floating=22
+    lower-left   n=  36 mm[min/mean/max]=-9.9/12.4/30.5 buried=4 floating=22
+    bottom       n=  36 mm[min/mean/max]=14.6/26.0/38.7 buried=0 floating=36
+    lower-right  n=  36 mm[min/mean/max]=-14.0/9.6/30.2 buried=11 floating=20
+    right        n= 193 mm[min/mean/max]=2.9/24.0/33.9 buried=0 floating=180
+    upper-right  n=  36 mm[min/mean/max]=6.5/16.3/24.5 buried=0 floating=28
+KD_Dog_Samoyed rest clip=rest t=0.000 bandVerts=594 signedMm[min/mean/max]=9.0/30.3/72.2 buried(<-4mm)=0 (0%) floating(>12mm)=587 (99%)
+    top          n= 190 mm[min/mean/max]=9.1/40.4/72.2 buried=0 floating=187
+    upper-left   n=  37 mm[min/mean/max]=14.6/23.6/34.5 buried=0 floating=37
+    left         n=  28 mm[min/mean/max]=15.7/22.2/29.0 buried=0 floating=28
+    lower-left   n=  37 mm[min/mean/max]=15.7/28.0/38.8 buried=0 floating=37
+    bottom       n=  45 mm[min/mean/max]=9.0/21.1/33.9 buried=0 floating=41
+    lower-right  n=  37 mm[min/mean/max]=15.7/27.7/38.8 buried=0 floating=37
+    right        n= 183 mm[min/mean/max]=15.7/27.0/35.8 buried=0 floating=183
+    upper-right  n=  37 mm[min/mean/max]=14.6/23.4/34.5 buried=0 floating=37 skinSubMeshes=1 materials=サモエド毛 2_Uzumore<Hidden/Sigmal00/Uzumore/FurTwoPass> サモエド毛 2_Uzumore._OutlineWidth=0.0800 サモエド毛 2_Uzumore._OutlineFixWidth=0.5000 サモエド毛 2_Uzumore._OutlineVertexR2Width=0.0000 サモエド毛 2_Uzumore._FurVectorScale=1.1000 サモエド毛 2_Uzumore._FurVector=(0.0000, 0.0000, 1.0000, 0.0300) サモエド毛 2_Uzumore._VertexColor2FurVector=0.0000 サモエド毛 2_Uzumore._FurGravity=0.2500 サモエド毛 2_Uzumore._FurRandomize=0.2000 サモエド毛 2_Uzumore._FurAO=0.0000 サモエド毛 2_Uzumore._FurLayerNum=2.0000 サモエド毛 2_Uzumore._FurRootOffset=-0.6500 サモエド毛 2_Uzumore._FurCutoutLength=0.8000 サモエド毛 2_Uzumore._FurTouchStrength=0.0000 サモエド毛 2_Uzumore._FurRimFresnelPower=3.0000 サモエド毛 2_Uzumore._FurRimAntiLight=0.5000 サモエド毛 2_Uzumore._FurCull=0.0000 サモエド毛 2_Uzumore._FurSrcBlend=5.0000 サモエド毛 2_Uzumore._FurDstBlend=10.0000 サモエド毛 2_Uzumore._FurSrcBlendAlpha=1.0000 サモエド毛 2_Uzumore._FurDstBlendAlpha=10.0000 サモエド毛 2_Uzumore._FurBlendOp=0.0000 サモエド毛 2_Uzumore._FurBlendOpAlpha=0.0000 サモエド毛 2_Uzumore._FurSrcBlendFA=1.0000 サモエド毛 2_Uzumore._FurDstBlendFA=1.0000 サモエド毛 2_Uzumore._FurSrcBlendAlphaFA=0.0000 サモエド毛 2_Uzumore._FurDstBlendAlphaFA=1.0000 サモエド毛 2_Uzumore._FurBlendOpFA=4.0000 サモエド毛 2_Uzumore._FurBlendOpAlphaFA=4.0000 サモエド毛 2_Uzumore._FurZClip=1.0000 サモエド毛 2_Uzumore._FurZWrite=0.0000 サモエド毛 2_Uzumore._FurZTest=4.0000 サモエド毛 2_Uzumore._FurStencilRef=0.0000 サモエド毛 2_Uzumore._FurStencilReadMask=255.0000 サモエド毛 2_Uzumore._FurStencilWriteMask=255.0000 サモエド毛 2_Uzumore._FurStencilComp=8.0000 サモエド毛 2_Uzumore._FurStencilPass=0.0000 サモエド毛 2_Uzumore._FurStencilFail=0.0000 サモエド毛 2_Uzumore._FurStencilZFail=0.0000 サモエド毛 2_Uzumore._FurOffsetFactor=0.0000 サモエド毛 2_Uzumore._FurOffsetUnits=0.0000 サモエド毛 2_Uzumore._FurColorMask=15.0000 サモエド毛 2_Uzumore._FurAlphaToMask=0.0000 collarParent=Bone.003 collarChildren=ClipAnchor|Band|RingMount(off) neckLossyScale=(1.3000, 1.3000, 1.3000) dogLossyScale=(1.0000, 1.0000, 1.0000)
+KD_Dog_Samoyed aruku clip=aruku t=0.875 bandVerts=594 signedMm[min/mean/max]=-13.7/27.9/69.5 buried(<-4mm)=8 (1%) floating(>12mm)=566 (95%)
+    top          n= 190 mm[min/mean/max]=5.3/38.3/69.5 buried=0 floating=184
+    upper-left   n=  37 mm[min/mean/max]=16.0/23.8/32.1 buried=0 floating=37
+    left         n=  28 mm[min/mean/max]=14.3/21.9/29.0 buried=0 floating=28
+    lower-left   n=  37 mm[min/mean/max]=15.7/26.3/37.6 buried=0 floating=37
+    bottom       n=  45 mm[min/mean/max]=-13.7/11.6/27.1 buried=8 floating=31
+    lower-right  n=  37 mm[min/mean/max]=9.3/21.0/33.1 buried=0 floating=33
+    right        n= 183 mm[min/mean/max]=7.5/25.2/35.8 buried=0 floating=179
+    upper-right  n=  37 mm[min/mean/max]=15.2/24.0/31.5 buried=0 floating=37
+KD_Dog_Samoyed Sit clip=KD_Sit_Samoyed t=4.750 bandVerts=594 signedMm[min/mean/max]=-29.7/22.9/65.6 buried(<-4mm)=53 (9%) floating(>12mm)=521 (88%)
+    top          n= 186 mm[min/mean/max]=-25.9/33.6/65.6 buried=6 floating=179
+    upper-left   n=  37 mm[min/mean/max]=13.5/22.2/32.7 buried=0 floating=37
+    left         n=  32 mm[min/mean/max]=10.7/19.3/27.1 buried=0 floating=31
+    lower-left   n=  38 mm[min/mean/max]=-22.8/11.6/32.7 buried=5 floating=23
+    bottom       n=  40 mm[min/mean/max]=-29.7/-13.4/14.2 buried=34 floating=5
+    lower-right  n=  37 mm[min/mean/max]=-22.4/11.2/32.1 buried=8 floating=23
+    right        n= 188 mm[min/mean/max]=11.4/25.3/34.2 buried=0 floating=187
+    upper-right  n=  36 mm[min/mean/max]=13.5/22.6/32.7 buried=0 floating=36
+KD_Dog_Samoyed huse clip=huse t=11.400 bandVerts=594 signedMm[min/mean/max]=-21.1/28.1/68.4 buried(<-4mm)=16 (3%) floating(>12mm)=554 (93%)
+    top          n= 187 mm[min/mean/max]=4.1/37.8/68.4 buried=0 floating=181
+    upper-left   n=  37 mm[min/mean/max]=14.7/24.3/34.4 buried=0 floating=37
+    left         n=  35 mm[min/mean/max]=7.2/19.5/38.1 buried=0 floating=29
+    lower-left   n=  33 mm[min/mean/max]=5.6/26.6/39.1 buried=0 floating=30
+    bottom       n=  43 mm[min/mean/max]=-21.1/5.0/26.1 buried=16 floating=26
+    lower-right  n=  35 mm[min/mean/max]=7.7/26.6/42.6 buried=0 floating=33
+    right        n= 192 mm[min/mean/max]=8.6/27.3/40.4 buried=0 floating=186
+    upper-right  n=  32 mm[min/mean/max]=15.7/24.5/33.6 buried=0 floating=32

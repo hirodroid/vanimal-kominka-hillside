@@ -93,17 +93,121 @@ namespace KominkaHillside.Editor
             var renderer=t.GetComponent<MeshRenderer>();if(renderer==null)renderer=t.gameObject.AddComponent<MeshRenderer>();renderer.sharedMaterial=material;
             return renderer;
         }
-        public static void Fit(Transform collar,Transform anchor,Transform dog,int breed)
+        // BUG-DOG-011: the ring is centred on the neck cross-section of the karada skin, not on the bone axis
+        // (the neck bone runs along the back of the neck, so the old Lerp(Bone.003, Bone.004, .45) floated on top
+        // and sank under the throat). Tuning points are the five tables BandRadii / FurMargin / TiltBlend /
+        // AlongOffset / ExtraOffset; their values are refined by the multi-view shots (artifacts/collar-review).
+        // Production 8b Collar Fit Report is the dry run (writes Temp/KH_CollarFit/report.txt, scene untouched).
+        public struct CollarFit
+        {
+            public Vector3 position;public Quaternion rotation;public Vector2 scaleXY;
+            public Vector3 centerShift;public Vector2 halfExtents;public Vector2 targetRadii;public int samples;public string note;
+        }
+        // Band ellipse radii (m; x = left/right, y = up/down). Same values as `radii` in scripts/art/leash-assets.cjs.
+        static readonly Vector2[] BandRadii={new Vector2(.090f,.075f),new Vector2(.09f,.08f),new Vector2(.100f,.125f),new Vector2(.07f,.065f),new Vector2(.09f,.080f),new Vector2(.16f,.16f)};
+        // Clearance added to the skin cross-section for fur (m). Provisional values to be tuned by shots: the material
+        // fur push-out (_FurVector.w x _FurVectorScale) is Corgi .02 / Pome .02 / Lab .025 / Dachs .0325 / Shiba .01 /
+        // Samoyed .033, and the visible fur is thinner than that.
+        static readonly float[] FurMargin={.010f,.014f,.006f,.008f,.010f,.012f};
+        // Per-breed cap on the ellipse scale. The fluffy small dogs (Pome, Samoyed) turn into a hoop around the whole
+        // fur silhouette when the band follows the skin section + margin, so they are capped to sit inside the fur.
+        static readonly float[] MaxScaleByBreed={1.7f,1.35f,1.7f,1.6f,1.7f,1.25f};
+        // 0 = ring plane perpendicular to the neck axis, 1 = vertical plane (axis flattened to horizontal). The blend
+        // tips the throat side forward/down onto the chest (BUG-DOG-011 fix B).
+        static readonly float[] TiltBlend={.3f,.15f,.3f,.3f,.3f,.3f};
+        // Slide of the section plane along the neck axis from the 45% point (m, + = toward the head).
+        static readonly float[] AlongOffset={0f,0f,0f,0f,0f,0f};
+        // Final nudge in collar local space (m; +X right, +Y dorsal (attachment-ring side), +Z head). The old hand corrections
+        // (Lab forward 40mm / down 8mm, Shiba down 20mm) are expected to be unnecessary with the section fit;
+        // confirm by shots before putting anything here.
+        static readonly Vector3[] ExtraOffset={Vector3.zero,Vector3.zero,Vector3.zero,Vector3.zero,Vector3.zero,Vector3.zero};
+        const float SliceHalfThickness=.020f,SearchRadiusFactor=2.4f,MinScale=.75f,MaxScale=1.7f;const int MinSamples=20;
+
+        // Pure: reads the current Edit-mode pose of the dog and changes nothing.
+        public static CollarFit Solve(Transform dog,int breed)
         {
             var bones=dog.GetComponentsInChildren<Transform>(true);
             var neck=bones.First(t=>t.name=="Bone.003");var head=bones.First(t=>t.name=="Bone.004");
+            var fit=new CollarFit{scaleXY=Vector2.one,note=""};
+            var a=(head.position-neck.position).normalized;
+            var p0=Vector3.Lerp(neck.position,head.position,.45f)+a*AlongOffset[breed];
+            var h=a-Vector3.up*Vector3.Dot(a,Vector3.up);
+            h=h.sqrMagnitude>1e-6f?h.normalized:a;
+            var n=Vector3.Slerp(a,h,TiltBlend[breed]).normalized;
+            var up=dog.up-n*Vector3.Dot(dog.up,n);
+            if(up.sqrMagnitude<1e-6f){fit.note="ring normal parallel to dog.up; ";up=Vector3.up-n*Vector3.Dot(Vector3.up,n);}
+            up=up.normalized;var right=Vector3.Cross(up,n);
+            var rotation=Quaternion.LookRotation(n,up);
+            if((rotation*Vector3.right-right).sqrMagnitude>1e-6f)fit.note+="WARN basis mismatch LookRotation.x vs Cross(up,n); ";
+            var skin=dog.GetComponentsInChildren<SkinnedMeshRenderer>(true).FirstOrDefault(s=>s.name=="karada");
+            float search=SearchRadiusFactor*Mathf.Max(BandRadii[breed].x,BandRadii[breed].y);
+            float minX=float.MaxValue,maxX=float.MinValue,minY=float.MaxValue,maxY=float.MinValue;int count=0;
+            if(skin!=null&&skin.sharedMesh!=null)
+                foreach(var v in KH_LeashFitInspector.SkinWorldVertices(skin))
+                {
+                    var d=v-p0;float along=Vector3.Dot(d,n);
+                    if(Mathf.Abs(along)>=SliceHalfThickness||(d-n*along).magnitude>=search)continue;
+                    float x=Vector3.Dot(d,right),y=Vector3.Dot(d,up);
+                    minX=Mathf.Min(minX,x);maxX=Mathf.Max(maxX,x);minY=Mathf.Min(minY,y);maxY=Mathf.Max(maxY,y);count++;
+                }
+            fit.samples=count;
+            if(count<MinSamples)
+            {
+                // Fallback: the pre-BUG-DOG-011 placement (bone axis + the old Lab / Shiba corrections), scale 1.
+                fit.note+="ERROR "+(skin==null?"karada skin not found":"only "+count+" section vertices (<"+MinSamples+")")+"; legacy placement";
+                fit.position=Vector3.Lerp(neck.position,head.position,.45f);
+                if(breed==2)fit.position+=dog.TransformDirection(new Vector3(0,-.008f,.040f));
+                if(breed==4)fit.position+=dog.TransformDirection(new Vector3(0,-.020f,0));
+                fit.rotation=Quaternion.LookRotation(head.position-neck.position,dog.up);
+                return fit;
+            }
+            float cx=(minX+maxX)*.5f,cy=(minY+maxY)*.5f,hx=(maxX-minX)*.5f,hy=(maxY-minY)*.5f;
+            var target=new Vector2(hx+FurMargin[breed],hy+FurMargin[breed]);
+            // X and Y scale separately so the ellipse follows the section; Z (band width) stays 1 so the belt does not fatten.
+            float rawX=target.x/BandRadii[breed].x,rawY=target.y/BandRadii[breed].y;
+            float maxScale=Mathf.Min(MaxScale,MaxScaleByBreed[breed]);
+            fit.scaleXY=new Vector2(Mathf.Clamp(rawX,MinScale,maxScale),Mathf.Clamp(rawY,MinScale,maxScale));
+            if(!Mathf.Approximately(rawX,fit.scaleXY.x)||!Mathf.Approximately(rawY,fit.scaleXY.y))fit.note+="scale clamped from ("+rawX.ToString("F3")+","+rawY.ToString("F3")+"); ";
+            fit.rotation=rotation;
+            fit.position=p0+right*cx+up*cy+rotation*ExtraOffset[breed];
+            fit.centerShift=new Vector3(cx,cy,0);fit.halfExtents=new Vector2(hx,hy);fit.targetRadii=target;
+            if(fit.note.Length==0)fit.note="ok";
+            return fit;
+        }
+        public static void Fit(Transform collar,Transform anchor,Transform dog,int breed)
+        {
+            var fit=Solve(dog,breed);
+            var neck=dog.GetComponentsInChildren<Transform>(true).First(t=>t.name=="Bone.003");
             collar.SetParent(neck,true);
-            collar.position=Vector3.Lerp(neck.position,head.position,.45f);
-            if(breed==2)collar.position+=dog.TransformDirection(new Vector3(0,-.008f,.040f));
-            if(breed==4)collar.position+=dog.TransformDirection(new Vector3(0,-.020f,0));
-            collar.rotation=Quaternion.LookRotation(head.position-neck.position,dog.up);
-            var s=neck.lossyScale;collar.localScale=new Vector3(1/s.x,1/s.y,1/s.z);
+            collar.SetPositionAndRotation(fit.position,fit.rotation);
+            var s=neck.lossyScale;collar.localScale=new Vector3(fit.scaleXY.x/s.x,fit.scaleXY.y/s.y,1f/s.z);
+            // The anchor is a child of the collar, so it scales with the band.
             anchor.localPosition=new Vector3(0,RingY[breed],0);anchor.localRotation=Quaternion.identity;
+            // The Interact trigger (KH_DogWalkingEditor adds it with radius .10) lives on the scaled collar: keep its
+            // world radius at .10 so the neck/head colliders and the ray priority stay as before (review 2026-10-10).
+            var hit=collar.GetComponent<SphereCollider>();
+            if(hit!=null){hit.radius=.10f/Mathf.Max(fit.scaleXY.x,fit.scaleXY.y,1f);hit.center=anchor.localPosition;}
+            if(fit.note.Contains("ERROR")||fit.note.Contains("WARN"))Debug.LogWarning("[KH Production] collar fit "+Keys[breed]+": "+fit.note);
+        }
+        // Dry run for BUG-DOG-011: solves all six collars and reports, without touching the scene.
+        [MenuItem("Tools/KominkaHillside/Walking/Production 8b Collar Fit Report")]
+        public static void CollarFitReport()
+        {
+            Guard();var m=UnityEngine.Object.FindObjectOfType<KH_LeashManager>();
+            if(m==null||m.dogRoots==null||m.dogRoots.Length!=6)throw new InvalidOperationException("Six dog manager required");
+            Func<float,string> mm=x=>(x*1000).ToString("F1");
+            var log=new StringBuilder("# per dog: key samples=<n> centerShift=(x,y mm) halfExtents=(x,y mm) targetRadii=(x,y mm) kXY=(x,y) delta=<mm from current> note=<text>\n");
+            for(int i=0;i<6;i++)
+            {
+                var fit=Solve(m.dogRoots[i],i);
+                var collar=m.collarAnchors!=null&&i<m.collarAnchors.Length&&m.collarAnchors[i]!=null?m.collarAnchors[i].GetComponentInParent<KH_LeashCollar>():null;
+                string delta=collar!=null?mm(Vector3.Distance(collar.transform.position,fit.position)):"n/a";
+                log.AppendLine(Keys[i]+" samples="+fit.samples+" centerShift=("+mm(fit.centerShift.x)+","+mm(fit.centerShift.y)+")"+
+                    " halfExtents=("+mm(fit.halfExtents.x)+","+mm(fit.halfExtents.y)+") targetRadii=("+mm(fit.targetRadii.x)+","+mm(fit.targetRadii.y)+")"+
+                    " kXY=("+fit.scaleXY.x.ToString("F3")+","+fit.scaleXY.y.ToString("F3")+") delta="+delta+" note="+fit.note);
+            }
+            Directory.CreateDirectory("Temp/KH_CollarFit");File.WriteAllText("Temp/KH_CollarFit/report.txt",log.ToString());
+            Debug.Log("[KH Production] collar fit report -> Temp/KH_CollarFit/report.txt");
         }
         [MenuItem("Tools/KominkaHillside/Walking/Production 2 Apply")]
         public static void Apply()
