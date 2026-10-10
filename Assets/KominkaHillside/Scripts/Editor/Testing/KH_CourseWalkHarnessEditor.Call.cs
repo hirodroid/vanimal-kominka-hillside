@@ -732,48 +732,42 @@ namespace KominkaHillside.Editor
         // ============================================================
         // C7-wet (設計書 §F.4「陸で接続した犬が、後で濡れた」・§F.6 の C7-wet)
         // ============================================================
-        // 到達手順 (コードの読みと、Edit モードの探索で確かめる):
-        // - 接続中の犬の足もとが水になる経路は NavMesh の移動 (LeashGo と GatherStep の角まで。_navStep の間は川の帯の判定を掛けない) だけ。
-        //   直進 (StepToward / Coast)・押し合い (_WaterPushBlocked) は帯の中へ入らない。Return の追従テレポートと切符の置き場所は NavMesh の点。
-        // - 泳ぎ (_waterSwimming / _swimYValid) を立てるのは水遊び・Fetch・ディスクの着水・Owner 交代の引き継ぎ (同期の waterPose 2) だけで、
-        //   どれも接続中には走らない (UpdateWaterPlay は接続中なら先に戻る。StartFetch は接続中を断る)。接続中の犬の水の状態は足が濡れる
-        //   (waterPose 1) までしか起こらない。
-        // - よって「陸で接続した犬が濡れる」は、**犬の濡れの規則 (WaterWetAt) で濡れる点に NavMesh がある**ときだけ起こる。CwSearch は
-        //   川の帯 (半幅 + 1 m) と水遊び場の多角形を 0.25 m の格子で走査し、濡れる点 (深さ > 0.04 m。規則は 0.02 m) のうち NavMesh の上
-        //   (水平 0.05 m 以内) にあり、最寄りの周回路ノードから完全な経路がある点と、その 0.5〜2.5 m にある乾いた NavMesh の立ち位置を探す。
-        // Play: 見つかれば T を立ち位置へ、人形 R を道の上 (その点から 40 m 以上・川から 12 m 以上・橋の外) へ置き、要求 → 測定がそろう →
-        // 犬 0 (接続中、陸で接続済み) をその点に置く → 濡れた (waterPose != 0) のを見て [行く] → C1 と同じ一式。合格は、C1 の条件に加えて
-        // 犬 0 が切符で動く直前まで濡れていた、水の拒否 (_waterLeashVeto) が立たなかった、着いた後に犬 0〜2 の waterPose 0・_waterSwimming と
-        // _swimYValid が false・waterState 0・接続が残る・地面に立つ (0.2 m 以内)。
-        // 探索は 2 つに分ける (Codex レビュー 2026-09-29):
-        // - 存在の走査 (exist*): 本体の規則そのまま (深さ > 0.02 m) で濡れる NavMesh 上の点が在るか。立ち位置・安定性・経路の条件は掛けない。
-        //   (a) 0.25 m 格子を NavMesh へ投影 (水平 0.05 m 以内)、(b) 水の近くの NavMesh の三角形を 0.1 m 以下の重心座標の格子で当てる
-        //   (頂点・辺を含む。格子で落ちる NavMesh の縁も見る)。
-        // - 試験に使う地点の選別 (pick*): 深さ > 0.04 m、0.25 m 格子、経路の確認は最大 400、乾いた立ち位置 (上の段落)。
-        // 選別で見つからなければケースは未実施 (状態 NOT_RUN。PASS に数えない)。notes と Console に「候補未発見・未実施」と両方の件数を書く。
-        // 存在の走査も 0 件のときだけ、走査の条件を書いたうえで「この走査では 0 件」と書く (到達不能とは言わない)。
-        // 探索自体が失敗したとき・ファイルが無いときは FAIL。
+        // 濡れの規則 (コードの読み):
+        // - 犬の濡れ (waterPose 1 / 2) は根の位置だけで決まる (WaterPoseRefresh → WaterWetAt: 水遊び場の多角形の中はその深さ、外は川の帯
+        //   (半幅 + BandMargin 1 m) の中で川全体の深さ > 0.02 m)。上がった後に残る濡れのフラグ・タイマーは無い (水遊びの WaterShake は
+        //   リードの無い犬だけ。KH_DogWash の _wet は洗いの毛の濡れで別のもの)。
+        // - 接続中の犬が動くのは NavMesh の上だけ (LeashGo / TeleportTo / 切符の置き場所)。泳ぎ (_waterSwimming) を立てる水遊び・Fetch・
+        //   ディスクは接続中には走らない。
+        // - 川の帯 = NavMesh の川床の除外 (KH_RiverData.BandMargin のコメント、RiverbedNotWalkable、Course/20 の「Riverbed walkable」検査)。
+        //   よって「濡れる点で NavMesh の上」は焼き方の決まりで空集合。2026-09-29 版 (19db81d の記録、a06178c) はこの点を探して 0 件
+        //   (格子 87,023 点 + 三角形 1,953 枚・約 1,611 万点) で未実施だった。地形を変えても見つからない。
+        // 2026-10-11 の通し方: 川の実際の出入り口 (川の Fetch が使う ok な岸のスライス KH_RiverData.sliceBank。Course/90 で焼き 91 で検査、
+        // NavMesh の上・帯の外・最寄りの周回路ノードから経路あり) を T の立ち位置にし、そこから川の中心へ 0.1 m ずつ進んで最初に濡れる
+        // (深さ > 0.08 m、規則は 0.02 m) 浅い点 (≤ 0.3 m、水遊び場の外) に犬 0 (陸で接続済み) を置く = 川から上がる手前の犬の足もと。
+        // 濡れ (waterPose != 0) は**本体の規則が書いたもの**を待って確かめる (ハーネスは waterPose を書かない)。そのあと _debugPoseHold
+        // (Course/78 W4-leash-stale・WashDirt と同じ作法) でその値を保つ: リードは帯の中の犬を 1 秒足らずで NavMesh へ歩かせて乾かすので、
+        // 保たないと [行く] の暗転の間に濡れが消える。保持は犬 0 が切符で動いたのを観測した時点で外し、その後の waterPose 0 は本体の
+        // 再計算が書く (外したことも合格条件)。模擬は 2 つ: 置き方 (接続中の犬はそこへ歩いて入れない) と保持。
+        // 合格は従来どおり: C1 の一式 + 犬 0 が切符で動く直前まで濡れていた、水の拒否 (_waterLeashVeto) が立たなかった、着いた後に
+        // 犬 0〜2 の waterPose 0・_waterSwimming / _swimYValid が false・waterState 0・接続が残る・地面に立つ (0.2 m 以内)。
+        // 地点が無ければ FAIL (ok な岸のスライスは川の Fetch の前提で、無ければデータの不具合)。探索自体の失敗・ファイルが無いときも FAIL。
         const string CwFile = "Temp/call-wet-site.json";
-        const float CwGrid = .25f, CwWetMin = .04f, CwRuntimeWet = .02f, CwOnNav = .05f, CwTriStep = .1f;
-        const int CwMaxPathChecks = 400, CwTriMaxDiv = 200;
+        // CwWetMin は規則 (0.02 m) の 4 倍: 置いた直後の最初の再計算の前にリードが岸へ数 cm 歩かせても濡れたままでいる余裕
+        const float CwWetMin = .08f, CwRuntimeWet = .02f, CwWadeMax = .3f, CwStep = .1f, CwStandMax = 3.5f, CwBankOnNav = .3f;
+        const int CwMaxPathChecks = 400;
         [Serializable] public class CwSite
         {
-            public string utc, why = "", error = "";
-            // 存在の走査 (本体の規則、条件なし)
-            public string existRule;
-            public int existGridScanned, existGridWet, existGridNavWet, existTriangles, existTriSamples, existTriWetSamples, existCount;
-            public Vector3 existExample;
-            public string existExampleFrom = "";
-            // 試験に使う地点の選別
-            public string pickRule;
-            public int pickWet, pickNavWet, pickPathChecked, pickReachable;
+            public string utc, why = "", error = "", rule;
+            public int slicesOk, slicesShallow, pathChecked, reachable;
             public bool found, spotUsed;
             public Vector3 wet, stand;
             public float depth;
-            public int node = -1, neighbours;
+            public int code = -1, node = -1;
         }
         static CwSite cwSite;
         static int cwLastPose = -1;
+        static Vector3 cwLastAt;
+        static bool cwPoseHeld, cwReleasedAtMove;
         static VRC.Udon.UdonBehaviour[] cwFetch;
 
         /// <summary>犬の WaterWetAt (KD_DogWanderController.HillsideWater.cs) の言い直し。min は濡れとみなす深さ (規則は 0.02 m)。</summary>
@@ -789,12 +783,12 @@ namespace KominkaHillside.Editor
             depth = river._DepthAt(p); return depth > min;
         }
 
-        static bool CwOnNavMesh(Vector3 q, float radius, out Vector3 at)
+        static bool CwOnNavMesh(Vector3 q, float radius, float maxOff, out Vector3 at)
         {
             at = q; NavMeshHit h;
             if (!NavMesh.SamplePosition(q, out h, radius, NavMesh.AllAreas)) return false;
             var off = h.position - q; off.y = 0f;
-            if (off.magnitude > CwOnNav) return false;
+            if (off.magnitude > maxOff) return false;
             at = h.position; return true;
         }
 
@@ -804,143 +798,77 @@ namespace KominkaHillside.Editor
             return NavMesh.CalculatePath(a, b, NavMesh.AllAreas, path) && path.status == NavMeshPathStatus.PathComplete;
         }
 
-        static long CwKey(int ix, int iz) { return ((long)ix << 32) | (uint)iz; }
+        /// <summary>岸の点 bank から川の中心へ (side は岸の側、中心は -side) CwStep ずつ進み、最初に濡れる (深さ > CwWetMin) 点。
+        /// その点が深い (> CwWadeMax)・川床が不明・水遊び場の中なら、そのスライスは使わない (浅い水際ではない)。y は川床 (地形) の高さ。</summary>
+        static bool CwShallow(KH_RiverData river, KH_WaterSpot spot, Vector3 bank, int side, out Vector3 wet, out float depth)
+        {
+            wet = bank; depth = 0f;
+            for (int k = 1; k * CwStep <= CwStandMax + 1e-4f; k++)
+            {
+                var p = new Vector3(bank.x - side * k * CwStep, 0f, bank.z);
+                if (spot != null && spot._Contains(p)) return false;
+                float bed = river._BedAt(p);
+                if (bed <= KH_RiverData.NoBed + 1f) continue;
+                p.y = bed;
+                float d;
+                if (!CwWetAt(river, spot, p, CwWetMin, out d)) continue;
+                if (d > CwWadeMax) return false;
+                wet = p; depth = d; return true;
+            }
+            return false;
+        }
 
-        /// <summary>Edit モード (Bind の後): 接続中の犬が歩いて入れる濡れた点と、T の乾いた立ち位置。</summary>
+        /// <summary>Edit モード (Bind の後): 川の ok な岸のスライスの岸 (T の立ち位置) と、その先の最初の浅い濡れた点 (犬 0 を置く)。
+        /// 浅い順 → 岸からの近さ → コード (決定的)。立ち位置は NavMesh の上 (0.3 m 以内) で、最寄りの周回路ノードから完全な経路がある。</summary>
         static CwSite CwSearch()
         {
-            string wetRule = "wet = the dogs' WaterWetAt restated (spot grid inside the spot polygon, unknown bed there = wet inside the band; else river band (half width + " + KH_RiverData.BandMargin + " m, not on a bridge deck) and river-wide depth)";
             var set = new CwSite
             {
                 utc = DateTime.UtcNow.ToString("o"),
-                existRule = wetRule + ", depth > " + CwRuntimeWet + " m (the runtime threshold); (a) " + CwGrid + " m grid over the band and the spot box projected on the NavMesh (within " + CwOnNav + " m horizontally); (b) every NavMesh triangle near the band or the spot box sampled on a barycentric lattice of <= " + CwTriStep + " m (vertices and edges included, at most " + CwTriMaxDiv + " divisions per edge); no stand, stability or path condition",
-                pickRule = wetRule + ", depth > " + CwWetMin + " m; " + CwGrid + " m grid on the NavMesh (within " + CwOnNav + " m); ranked by wet NavMesh neighbours within 0.5 m then depth; complete path from the nearest route node (at most " + CwMaxPathChecks + " checked); a dry NavMesh stand 0.5-2.5 m away"
+                rule = "stand = an ok river bank slice (KH_RiverData.sliceBank, Course/90-91: NavMesh, outside the band, out of the bridge zones) on the NavMesh within "
+                    + CwBankOnNav + " m, dry by the dogs' WaterWetAt, complete path from the nearest route node; dog 0 = the first point from the bank toward the centre (every "
+                    + CwStep + " m, at most " + CwStandMax + " m) that is wet by the dogs' WaterWetAt restated with depth > " + CwWetMin + " m (runtime " + CwRuntimeWet
+                    + " m), not deeper than " + CwWadeMax + " m, outside the water-play spot, at the riverbed height; ranked shallowest, nearest the bank, then by code (at most "
+                    + CwMaxPathChecks + " path checks)"
             };
             var rn = GameObject.Find("KH_Dogs/KH_RiverData"); var river = rn == null ? null : rn.GetComponent<KH_RiverData>();
-            if (river == null || !river._FetchReady()) { set.error = "KH_Dogs/KH_RiverData missing or its river-wide grid not built (Course/90)"; return set; }
+            if (river == null || !river._FetchReady()) { set.error = "KH_Dogs/KH_RiverData missing or its river-wide grid / bank slices not built (Course/90)"; return set; }
             var sn = GameObject.Find("KH_Dogs/KH_WaterSpot"); var spot = sn == null ? null : sn.GetComponent<KH_WaterSpot>();
             if (spot != null && !spot._Ready()) spot = null;
             set.spotUsed = spot != null;
-            var nav = new Dictionary<long, Vector3>(); var depthOf = new Dictionary<long, float>(); var seen = new HashSet<long>();
-            Action<int, int> probe = (ix, iz) =>
+            var cands = new List<KeyValuePair<int, Vector3>>(); var depthOf = new Dictionary<int, float>();
+            for (int code = 0; code < river.sliceOk.Length; code++)
             {
-                long key = CwKey(ix, iz);
-                if (!seen.Add(key)) return;
-                set.existGridScanned++;
-                float x = ix * CwGrid, z = iz * CwGrid, d;
-                var q = new Vector3(x, river._SurfaceY(z), z);
-                if (!CwWetAt(river, spot, q, CwRuntimeWet, out d)) return;
-                set.existGridWet++;
-                bool pickWet = CwWetAt(river, spot, q, CwWetMin, out d);
-                if (pickWet) set.pickWet++;
-                Vector3 at;
-                if (!CwOnNavMesh(q, 1.5f, out at)) return;
-                if (!CwWetAt(river, spot, at, CwRuntimeWet, out d)) return;   // y は橋の上だけに効く (橋の上は濡れない)
-                set.existGridNavWet++;
-                if (set.existCount++ == 0) { set.existExample = at; set.existExampleFrom = "grid"; }
-                if (!pickWet || !CwWetAt(river, spot, at, CwWetMin, out d)) return;
-                set.pickNavWet++; nav[key] = at; depthOf[key] = d;
-            };
-            float z0 = river.zStart, z1 = river.zStart + (river.centerX.Length - 1) * river.zStep;
-            for (int iz = Mathf.CeilToInt(z0 / CwGrid); iz * CwGrid <= z1; iz++)
-            {
-                float z = iz * CwGrid, cx = river._CenterX(z), hw = river._HalfWidth(z) + KH_RiverData.BandMargin;
-                for (int ix = Mathf.FloorToInt((cx - hw) / CwGrid); ix * CwGrid <= cx + hw; ix++) probe(ix, iz);
+                if (!river.sliceOk[code]) continue;
+                set.slicesOk++;
+                Vector3 bank = river.sliceBank[code], w; float d;
+                if (river._InBridgeZone(bank.z, 0f) || CwWetAt(river, spot, bank, CwRuntimeWet, out d)) continue;
+                if (!CwShallow(river, spot, bank, river._SliceSide(code), out w, out d)) continue;
+                set.slicesShallow++;
+                cands.Add(new KeyValuePair<int, Vector3>(code, w)); depthOf[code] = d;
             }
-            if (spot != null)
+            foreach (var cand in cands.OrderBy(a => depthOf[a.Key]).ThenBy(a => TvFlat(river.sliceBank[a.Key], a.Value)).ThenBy(a => a.Key))
             {
-                int xa = Mathf.FloorToInt(spot.polyX.Min() / CwGrid), xb = Mathf.CeilToInt(spot.polyX.Max() / CwGrid);
-                int za = Mathf.FloorToInt(spot.polyZ.Min() / CwGrid), zb = Mathf.CeilToInt(spot.polyZ.Max() / CwGrid);
-                for (int iz = za; iz <= zb; iz++) for (int ix = xa; ix <= xb; ix++) probe(ix, iz);
-            }
-            CwTriangleScan(river, spot, set);
-            // 犬が少し動いても濡れたままでいやすい点から: 2 格子以内の濡れた NavMesh の数 → 深さ → キー (決定的)
-            Func<long, int> neigh = k =>
-            {
-                int ix = (int)(k >> 32), iz = (int)(uint)(k & 0xffffffffL), n = 0;
-                for (int dz = -2; dz <= 2; dz++) for (int dx = -2; dx <= 2; dx++) if ((dx != 0 || dz != 0) && nav.ContainsKey(CwKey(ix + dx, iz + dz))) n++;
-                return n;
-            };
-            var ranked = nav.Keys.Select(k => new { k, n = neigh(k), d = depthOf[k] }).OrderByDescending(a => a.n).ThenByDescending(a => a.d).ThenBy(a => a.k).ToList();
-            foreach (var cand in ranked)
-            {
-                if (set.pickPathChecked >= CwMaxPathChecks) break;
-                set.pickPathChecked++;
-                var p = nav[cand.k]; int node = Closest(p); NavMeshHit nh;
-                if (!NavMesh.SamplePosition(nodes[node], out nh, 2f, NavMesh.AllAreas) || !CwPathComplete(nh.position, p)) continue;
-                set.pickReachable++;
-                Vector3 stand; if (!CwStand(river, spot, p, out stand)) continue;
-                set.found = true; set.wet = p; set.stand = stand; set.depth = cand.d; set.node = node; set.neighbours = cand.n;
-                set.why = "wet NavMesh point " + p.ToString("F2") + " depth " + cand.d.ToString("F3") + " m (" + cand.n + " wet NavMesh neighbours within 0.5 m), route node " + node + ", stand " + stand.ToString("F2");
+                if (set.pathChecked >= CwMaxPathChecks) break;
+                set.pathChecked++;
+                Vector3 stand; float d;
+                if (!CwOnNavMesh(river.sliceBank[cand.Key], 1f, CwBankOnNav, out stand) || CwWetAt(river, spot, stand, CwRuntimeWet, out d)) continue;
+                int node = Closest(stand); NavMeshHit nh;
+                if (!NavMesh.SamplePosition(nodes[node], out nh, 2f, NavMesh.AllAreas) || !CwPathComplete(nh.position, stand)) continue;
+                set.reachable++;
+                set.found = true; set.code = cand.Key; set.wet = cand.Value; set.stand = stand; set.depth = depthOf[cand.Key]; set.node = node;
+                set.why = "bank slice " + cand.Key + " (side " + river._SliceSide(cand.Key) + "): stand " + stand.ToString("F2") + " on the NavMesh, route node " + node
+                    + "; dog 0 at " + cand.Value.ToString("F2") + " depth " + set.depth.ToString("F3") + " m, " + TvFlat(stand, cand.Value).ToString("F2") + " m from the stand";
                 break;
             }
             if (!set.found)
-            {
-                string exist = "existence scan (runtime rule, no conditions): grid " + set.existGridScanned + " points / wet " + set.existGridWet + " / wet on the NavMesh " + set.existGridNavWet
-                    + "; NavMesh triangles near water " + set.existTriangles + " / samples " + set.existTriSamples + " / wet samples " + set.existTriWetSamples;
-                string pick = "selection: wet (> " + CwWetMin + " m) " + set.pickWet + " / on the NavMesh " + set.pickNavWet + " / path-checked " + set.pickPathChecked + " / reachable " + set.pickReachable
-                    + (set.pickReachable > 0 ? " (no dry NavMesh stand within 2.5 m)" : "");
-                set.why = set.existCount == 0
-                    ? "candidate not found, not run. This scan found 0 wet NavMesh points (" + set.existRule + "). " + exist + "; " + pick
-                    : "candidate not found by the selection, not run; the existence scan found " + set.existCount + " wet NavMesh point(s) (first " + set.existExample.ToString("F2") + " from the " + set.existExampleFrom + "). " + exist + "; " + pick;
-            }
+                set.why = "no site: ok bank slices " + set.slicesOk + " / with a shallow wet point " + set.slicesShallow + " / path-checked " + set.pathChecked + " / reachable " + set.reachable + " (" + set.rule + ")";
             return set;
-        }
-
-        /// <summary>存在の走査 (b): 水 (川の帯・水遊び場の箱) の近くの NavMesh の三角形を、辺 CwTriStep 以下の重心座標の格子で当てる。
-        /// 頂点・辺の上の点を含むので、0.25 m 格子の投影で落ちる NavMesh の縁も見る。点は三角形の上 = NavMesh の上。</summary>
-        static void CwTriangleScan(KH_RiverData river, KH_WaterSpot spot, CwSite set)
-        {
-            var tri = NavMesh.CalculateTriangulation();
-            var v = tri.vertices; var idx = tri.indices;
-            if (v == null || idx == null) return;
-            float sx0 = 0f, sx1 = 0f, sz0 = 0f, sz1 = 0f;
-            if (spot != null) { sx0 = spot.polyX.Min(); sx1 = spot.polyX.Max(); sz0 = spot.polyZ.Min(); sz1 = spot.polyZ.Max(); }
-            for (int t = 0; t + 2 < idx.Length; t += 3)
-            {
-                Vector3 a = v[idx[t]], b = v[idx[t + 1]], c = v[idx[t + 2]];
-                Vector3 ab = b - a, ac = c - a, bc = c - b; ab.y = 0f; ac.y = 0f; bc.y = 0f;
-                float edge = Mathf.Max(ab.magnitude, Mathf.Max(ac.magnitude, bc.magnitude));
-                // 近さ: 頂点の帯からの横距離の最小が 3 × 最長辺 + 1 m 未満 (川の曲がりと幅の変化の余裕)、または水遊び場の箱と重なる
-                float lat = Mathf.Min(river._Lateral(a, KH_RiverData.BandMargin), Mathf.Min(river._Lateral(b, KH_RiverData.BandMargin), river._Lateral(c, KH_RiverData.BandMargin)));
-                bool near = lat < 3f * edge + 1f;
-                if (!near && spot != null)
-                {
-                    float x0 = Mathf.Min(a.x, Mathf.Min(b.x, c.x)), x1 = Mathf.Max(a.x, Mathf.Max(b.x, c.x)), z0 = Mathf.Min(a.z, Mathf.Min(b.z, c.z)), z1 = Mathf.Max(a.z, Mathf.Max(b.z, c.z));
-                    near = x1 >= sx0 && x0 <= sx1 && z1 >= sz0 && z0 <= sz1;
-                }
-                if (!near) continue;
-                set.existTriangles++;
-                int n = Mathf.Clamp(Mathf.CeilToInt(edge / CwTriStep), 1, CwTriMaxDiv);
-                for (int i = 0; i <= n; i++)
-                    for (int j = 0; j <= n - i; j++)
-                    {
-                        var p = a + (b - a) * ((float)i / n) + (c - a) * ((float)j / n);
-                        set.existTriSamples++;
-                        float d;
-                        if (!CwWetAt(river, spot, p, CwRuntimeWet, out d)) continue;
-                        set.existTriWetSamples++;
-                        if (set.existCount++ == 0) { set.existExample = p; set.existExampleFrom = "triangles"; }
-                    }
-            }
-        }
-
-        static bool CwStand(KH_RiverData river, KH_WaterSpot spot, Vector3 wet, out Vector3 stand)
-        {
-            stand = wet;
-            for (float r = .5f; r <= 2.5f + 1e-4f; r += .25f)
-                for (int k = 0; k < 16; k++)
-                {
-                    float ang = k * Mathf.PI / 8f; Vector3 at, q = wet + new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang)) * r; float d;
-                    if (!CwOnNavMesh(q, 1f, out at) || CwWetAt(river, spot, at, CwRuntimeWet, out d) || !CwPathComplete(at, wet)) continue;
-                    stand = at; return true;
-                }
-            return false;
         }
 
         static string CwLine(CwSite s)
         {
-            return !string.IsNullOrEmpty(s.error) ? "ERROR (" + s.error + ")" : s.found ? "found: " + s.why : "NOT_RUN: " + s.why;
+            return !string.IsNullOrEmpty(s.error) ? "ERROR (" + s.error + ")" : s.found ? "found: " + s.why : "NOT FOUND: " + s.why;
         }
 
         /// <summary>82c のメニュー (Edit モード、Begin の前): 探して CwFile に書く。例外は error に入れて書く (82c の他のケースは止めない)。</summary>
@@ -985,10 +913,29 @@ namespace KominkaHillside.Editor
             return hits.Length == 0 ? -1f : Mathf.Abs(p.y - hits[0].point.y);
         }
 
+        /// <summary>犬 0 の _debugPoseHold を外す (保持中のときだけ。切符の移動の観測・流れの後・片付けから)。</summary>
+        static void CwReleasePose(bool atMove)
+        {
+            if (!cwPoseHeld) return;
+            CwFetch(0).SetProgramVariable("_debugPoseHold", false);
+            cwPoseHeld = false; cwReleasedAtMove = atMove;
+        }
+
+        /// <summary>Play 中: p が犬の濡れの規則 (深さ > 0.02 m) で濡れるか。notes 用 (合否には使わない)。</summary>
+        static string CwWetNow(Vector3 p)
+        {
+            var rn = GameObject.Find("KH_Dogs/KH_RiverData"); var river = rn == null ? null : rn.GetComponent<KH_RiverData>();
+            if (river == null || !river._FetchReady()) return "unknown";
+            var sn = GameObject.Find("KH_Dogs/KH_WaterSpot"); var spot = sn == null ? null : sn.GetComponent<KH_WaterSpot>();
+            if (spot != null && !spot._Ready()) spot = null;
+            float d;
+            return CwWetAt(river, spot, p, CwRuntimeWet, out d) ? "in the water (depth " + d.ToString("F3") + " m)" : "on dry ground";
+        }
+
         static void CallC7Wet()
         {
             var s = TvCase("C7-wet", true, 3); var c = new CallCtx();
-            cwSite = null; cwLastPose = -1;
+            cwSite = null; cwLastPose = -1; cwLastAt = Vector3.zero; cwPoseHeld = false; cwReleasedAtMove = false;
             string bad = null;
             try
             {
@@ -998,17 +945,9 @@ namespace KominkaHillside.Editor
             catch (Exception e) { bad = CwFile + " unreadable: " + e.Message; }
             if (bad == null && cwSite == null) bad = CwFile + " empty";
             if (bad == null && !string.IsNullOrEmpty(cwSite.error)) bad = "Edit-mode search: " + cwSite.error;
+            // 2026-10-11: 地点が無いのは未実施ではなく FAIL (ok な岸のスライスは川の Fetch の前提。このケースは NOT_RUN を使わない)
+            if (bad == null && !cwSite.found) bad = "Edit-mode search " + cwSite.utc + ": " + cwSite.why;
             if (bad != null) { string why = bad; s.Add(TvDo(() => { throw new InvalidOperationException(why); })); return; }
-            if (!cwSite.found)
-            {
-                s.Add(TvDo(() =>
-                {
-                    tvCaseNotRun = true;   // TravelTick: 状態 NOT_RUN (PASS に数えない)
-                    TvNote("NOT_RUN (Edit-mode search " + cwSite.utc + "): " + cwSite.why);
-                    Debug.Log("[KH Course Walk] C7-wet NOT_RUN: " + cwSite.why);
-                }));
-                return;
-            }
             int puppetNode = -1;
             s.Add(TvCooldown());
             s.Add(TvDo(() =>
@@ -1029,32 +968,48 @@ namespace KominkaHillside.Editor
                 TvNote("site (Edit-mode search " + cwSite.utc + "): " + cwSite.why + "; puppet on route node " + puppetNode);
             }));
             s.Add(TvWait(2));
-            s.Add(TvUntil(() => TvAllNear(7, TvNear), 30, "dogs did not catch up at the wet site"));
+            s.Add(TvUntil(() => TvAllNear(7, TvNear), 30, "dogs did not catch up at the bank"));
             s.Add(TvWait(1));
             s.Add(TvDo(() => TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), cwSite.stand) < .6f, "T stays on the stand point (" + TvFlat(Networking.LocalPlayer.GetPosition(), cwSite.stand).ToString("F2") + " m off)")));
-            // [行く] の直前: 犬 0 (陸で接続済み) を濡れた NavMesh の点へ置く = 接続中の NavMesh の歩きで足が濡れた状態 (模擬の置き方、場所は実際に歩ける点)
+            // [行く] の直前: 犬 0 (陸で接続済み) を岸の先の浅い水際へ置く (模擬の置き方: 接続中の犬はそこへ歩いて入れない)。
+            // 濡れは本体の規則が書くのを待つ (waterPose は書かない)。そのあと保持して、リードが岸へ歩かせても切符まで濡れを保つ (模擬)
             var wet = new List<Func<double, bool>>();
-            wet.Add(TvDo(() =>
+            // 犬の判断は間引かれ (IMP-DOG-034 / 036: 判断の間のフレームは脚だけが前の経路の角へ歩く)、waterPose の再計算は判断のときだけ。
+            // 最初の再計算の前に脚が岸へ歩かせないよう、本体が濡れを書くまでハーネスの各回で同じ点へ置き直す (CallMark より前なので
+            // 位置の不連続の数には入らない)。濡れは本体の規則が書いたものだけを見る
+            int places = 0;
+            Action place = () =>
             {
-                var face = cwSite.wet - cwSite.stand; face.y = 0f;
+                var face = cwSite.stand - cwSite.wet; face.y = 0f;   // 岸を向く (上がる手前の向き)
                 roots[0].SetPositionAndRotation(cwSite.wet, face.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(face) : roots[0].rotation);
                 var sync = roots[0].GetComponent<VRC.SDK3.Components.VRCObjectSync>(); if (sync != null) sync.FlagDiscontinuity();
-            }));
-            wet.Add(CallUntil(() => CwPose(0) != 0, 2, () => "dog 0 did not get wet at " + cwSite.wet.ToString("F2") + CwDogState(0)));
+                places++;
+            };
+            wet.Add(TvDo(() => { places = 0; place(); }));
+            wet.Add(CallUntil(() => { if (CwPose(0) != 0) return true; place(); return false; }, 2,
+                () => "dog 0 did not get wet at " + cwSite.wet.ToString("F2") + " (the runtime rule wrote no water pose; placed " + places + " times)" + CwDogState(0)));
             wet.Add(TvDo(() =>
             {
                 TvExpect(Get<int[]>(manager, "walkers")[0] == TvMe(), "dog 0 still leashed to me" + CwDogState(0));
                 TvExpect(!Get<bool>(wander[0], "_waterLeashVeto"), "no water veto: the leash was first seen on land" + CwDogState(0));
                 TvExpect(Get<int>(CwFetch(0), "dogState") == 0, "dog 0 idle (a chase would stop [行く] with TravelBall)");
-                cwLastPose = CwPose(0);
-                TvNote("dog 0 placed on the wet NavMesh point (simulated placement; the point is leash-walkable): pose " + cwLastPose + CwDogState(0));
+                cwLastPose = CwPose(0); cwLastAt = roots[0].position;
+                CwFetch(0).SetProgramVariable("_debugPoseHold", true); cwPoseHeld = true;
+                TvNote("dog 0 placed in the shallow water off the bank (simulated placement, " + places + " placement(s) until the runtime's first refresh): the runtime wrote pose " + cwLastPose + CwDogState(0)
+                    + "; the pose is then held (_debugPoseHold, simulated) until the ticket move is observed, because the leash walks the dog back onto the NavMesh");
             }));
-            CallGoFlow(s, c, "C7-wet", false, KH_LeashManager.JoinReasonNear, wet, () => { if (tvDisc[0] == 0) cwLastPose = CwPose(0); });
+            CallGoFlow(s, c, "C7-wet", false, KH_LeashManager.JoinReasonNear, wet, () =>
+            {
+                if (tvDisc[0] == 0) { cwLastPose = CwPose(0); cwLastAt = roots[0].position; }
+                else CwReleasePose(true);   // 切符で動いた: ここから waterPose は本体の再計算に戻す
+            });
+            s.Add(TvDo(() => CwReleasePose(false)));   // 観測より先に流れが終わったとき
             s.Add(CallUntil(() => CwPose(0) == 0, 2, () => "dog 0 still wet after the move" + CwDogState(0)));
             s.Add(TvWait(1));
             s.Add(TvDo(() =>
             {
                 TvExpect(cwLastPose == 1 || cwLastPose == 2, "dog 0 was still wet at the last observation before its ticket move (pose " + cwLastPose + ")");
+                TvExpect(!cwPoseHeld && !Get<bool>(CwFetch(0), "_debugPoseHold"), "the pose hold is released (pose 0 is the runtime's own)");
                 var walkers = Get<int[]>(manager, "walkers");
                 for (int i = 0; i < 3; i++)
                 {
@@ -1064,7 +1019,8 @@ namespace KominkaHillside.Editor
                     float gap = CwGroundGap(i);
                     TvExpect(gap >= 0f && gap < .2f, "dog" + i + " stands on the ground (root - ground " + gap.ToString("F3") + " m)");
                 }
-                TvNote("C7-wet: dog 0 wet (pose " + cwLastPose + ") until its ticket move; after the move dogs 0-2 pose 0, not swimming, no float height, no play, no veto, leashed, on the ground");
+                TvNote("C7-wet: dog 0 pose " + cwLastPose + " until its ticket move (last seen at " + cwLastAt.ToString("F2") + ", " + CwWetNow(cwLastAt) + "; hold released "
+                    + (cwReleasedAtMove ? "when the move was observed" : "after the flow") + "); after the move dogs 0-2 pose 0, not swimming, no float height, no play, no veto, leashed, on the ground");
             }));
         }
 
@@ -1076,10 +1032,12 @@ namespace KominkaHillside.Editor
                 var box = TvMyBox();
                 foreach (var hook in new[] { "debugJoinLoopback", "debugAnswerCode", "debugIncomingFrom", "debugIncomingKind", "debugIncomingSeq", "debugCrossInvert" }) box.SetProgramVariable(hook, 0);
                 TvSet("debugDropTravel", 0);
+                bool held = cwPoseHeld;
+                CwReleasePose(false);   // C7-wet が途中で止まったとき、犬 0 の waterPose の保持を残さない
                 tvPuppetWalk = false;
                 if (tvRemote != null) ClientSimMain.RemovePlayer(tvRemote);
                 tvRemote = null;
-                TvNote("debug hooks back to 0, puppet removed");
+                TvNote("debug hooks back to 0" + (held ? ", dog 0 pose hold released" : "") + ", puppet removed");
             }));
         }
 

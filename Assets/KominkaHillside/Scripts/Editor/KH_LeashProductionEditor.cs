@@ -117,7 +117,7 @@ namespace KominkaHillside.Editor
         // ends up inside the body), and the attachment ring is lifted by RingLift so it emerges from the fur.
         static readonly bool[] BuriedInFur={false,true,false,false,false,true};
         // Lift is measured by shots: Samoyed's shader fur reaches ~9cm above the karada skin at the nape, Pome's ~2cm.
-        static readonly float[] RingLift={0f,.036f,0f,0f,0f,.240f};
+        static readonly float[] RingLift={0f,.036f,0f,0f,0f,.065f};
         // The fur is alpha-cut shell layers, so anything between the skin and the outer shells shows through the gaps
         // (rounds 5-6: band on / just under the skin top still read as fur poking through a band). The buried band is
         // therefore placed fully INSIDE the opaque body: top edge SinkDepth under the skin top, sides SideInset inside the
