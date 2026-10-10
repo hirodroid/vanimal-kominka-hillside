@@ -59,6 +59,39 @@ namespace KominkaDogRun
         public const int WalkDestPlaza = 1;
 
         // 要求は照合先の共有状態 (接続 / 解除 / 行き先) で成立を確かめる
+        private int _introMenuRevision;
+        public int _IntroMenuRevision() { return _introMenuRevision; }
+
+        // Onboarding presents this board once; later input can move, close or switch it normally.
+        public bool _IntroShowDestination(Vector3 dogTop)
+        {
+            VRCPlayerApi local = Networking.LocalPlayer;
+            if (!Utilities.IsValid(local) || panelRoot == null || (sleepPlacement != null && sleepPlacement.Active)) return false;
+            SetTab(TabWalk);
+            if (!panelRoot.activeSelf) SetOpen(true);
+            _gardenPlaced = false;
+            Vector3 eye = local.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
+            PlaceWalkIntroBoard(dogTop, eye, local.GetRotation() * Vector3.forward);
+            Redraw();
+            return true;
+        }
+
+        private void PlaceWalkIntroBoard(Vector3 dogTop, Vector3 eye, Vector3 fallback)
+        {
+            Vector3 direction = dogTop - eye; direction.y = 0f;
+            float distance = direction.magnitude;
+            if (distance < .01f) { direction = fallback; direction.y = 0f; }
+            direction.Normalize();
+            RectTransform panel = (RectTransform)panelRoot.transform;
+            float halfHeight = panel.rect.height * Mathf.Abs(panel.lossyScale.y) * .5f;
+            Vector3 center = eye + direction * Mathf.Clamp(distance, 1.2f, 2.5f);
+            center.y = Mathf.Max(eye.y - .15f, dogTop.y + .2f + halfHeight);
+            transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+            transform.position += center - panel.TransformPoint(panel.rect.center);
+        }
+
+        public bool _IntroAttachPending() { return _walkPendingKind == 1; }
+
         private int _walkPendingKind;   // 0 none, 1 attach, 2 detach, 3 destination
         private int _walkPendingDog, _walkPendingHand, _walkPendingDest;
         private float _walkPendingAt;

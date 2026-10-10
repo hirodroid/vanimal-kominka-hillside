@@ -409,6 +409,8 @@ namespace KominkaDogRun
             if (_washActive || _leaveLowering) return true;
             // Candy performance / mount / exit hold, and a pending petting resume.
             if (candyPerformanceActive || _candyTicked || _candyPetResumePending) return true;
+            // Active invitation re-evaluates priority and gaze; do not replay old movement after an interaction starts.
+            if (_selectedBehavior == BehaviorInvitation) return true;
             // Branches that inject the one-frame gaze / tail into the pet controller, or bind the dog to others.
             if (_greetingActive || _nudging || _treatBusy || _activityBusy) return true;
             int b = _selectedBehavior;

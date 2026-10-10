@@ -1509,6 +1509,9 @@ namespace KominkaDogRun
             // (円の中で伏せない・人のそばで止まらない)。washCalls が無ければ何もせず false
             if (UpdateStationLeave()) { _selectedBehavior = BehaviorLeave; NotifyPlay(); return; }
 
+            // IMP-DOG-045: the leash rack invites only dogs free of every higher-priority errand.
+            if (UpdateInvitation()) { _selectedBehavior = BehaviorInvitation; NotifyPlay(); return; }
+
             // ---- 割り込み 1.8: 休憩 (IMP-DOG-014 Phase 1) ----
             // **人の用事 (Fetch / おやつ / 催促) には全部負ける** ので、ここに置く。
             // 接近 (_paused) に勝つか負けるかは `restWakesOnApproach` で切り替えられる —

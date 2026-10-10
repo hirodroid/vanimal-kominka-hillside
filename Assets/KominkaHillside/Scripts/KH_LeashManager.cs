@@ -231,6 +231,7 @@ namespace KominkaHillside
             if (count >= 3) return;
             walkers[dog] = caller.playerId;
             hands[dog] = hand;
+            IntroChanged(); // confirmed before the clip automatically drops
             destinations[dog] = route != null && route._DestinationNode(destination) >= 0 ? destination : defaultDestination;
             Debug.Log("[KH_Leash] ReqAttach dog" + dog + " by player " + caller.playerId + " hand=" + hand + " dest=" + destinations[dog]); // BUG-DOG-004 trail
             RequestSerialization();
@@ -266,6 +267,7 @@ namespace KominkaHillside
         private void Release(int dog)
         {
             walkers[dog] = -1;
+            IntroChanged();
             ClearTravel(dog); // IMP-WLD-001: a released dog carries no travel ticket (KH_LeashManager.Travel.cs)
             if (dogRoots[dog] != null) releasedHomes[dog] = dogRoots[dog].position;
             ApplyHomes();
@@ -317,7 +319,7 @@ namespace KominkaHillside
         }
 
         // IMP-DOG-036 S6: every non-Owner (and a late joiner's first state) starts the rope loops of the leashed dogs.
-        public override void OnDeserialization() { ApplyHomes(); WakeLeashedRopes(); ReleaseInteracts(); }
+        public override void OnDeserialization() { _introReceived = true; IntroChanged(); ApplyHomes(); WakeLeashedRopes(); ReleaseInteracts(); }
 
         // IMP-DOG-031: the collar's "Release leash" Interact is on only on the walker's own client (KH_LeashCollar._SetReleasable,
         // which writes only on a change). Called where walkers changes on this client: ReqAttach / Release (Owner), OnDeserialization
@@ -364,6 +366,7 @@ namespace KominkaHillside
         }
         public override void OnPlayerLeft(VRCPlayerApi player)
         {
+            ForgetInvitation(player.playerId);
             if (!Networking.IsOwner(gameObject)) return;
             bool changed = false;
             for (int i = 0; i < walkers.Length; i++) if (walkers[i] == player.playerId) { Release(i); changed = true; }
@@ -439,6 +442,7 @@ namespace KominkaHillside
             if (lrNow >= _lrNextAt) LightRopeTick(lrNow);
             if (Time.time < _nextMaintenance) return;
             _nextMaintenance = Time.time + 0.5f;
+            InvitationTick();
             // IMP-DOG-036 S6: safety net for the rope loops (state written without OnDeserialization, e.g. by the
             // harness; a holder that was not yet valid on this client; a lost event). Running loops ignore it.
             WakeLeashedRopes();

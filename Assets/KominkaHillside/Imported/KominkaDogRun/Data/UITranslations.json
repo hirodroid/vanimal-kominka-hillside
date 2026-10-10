@@ -3619,6 +3619,74 @@
         {
           "key": "film.none",
           "text": "撮影を許した人はいません"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "散歩の案内"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "リードを取ってみよう"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "リードを、光った首輪へ近づけよう"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "つながった！ 犬について歩こう"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "メニューで行き先を変えられるよ"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "つながるのを待ってね"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "近くに、いま散歩できる犬がいないよ"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "リードがないときは、さんぽメニューからつなげるよ"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "さんぽメニューをひらいてみよう"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "近くの犬の「左につなぐ」か「右につなぐ」を押そう"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "閉じる"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "もう一度見る"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "自動案内：ON"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "自動案内：OFF"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "設定へ戻る"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "リードをつなぐまでの短い案内です。表示は自分だけに見えます。"
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "散歩できる犬に近づいてみよう"
         }
       ]
     },
@@ -7238,6 +7306,74 @@
         {
           "key": "film.none",
           "text": "You have not allowed anyone to film you"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "Walk help"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "Pick up a leash tip"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "Bring the leash tip to a glowing collar"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "Connected! Follow your dog"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "Change your destination in the Walk menu"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "Waiting for the connection…"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "No dog nearby is ready for a walk right now"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "No leash tip here? Connect from the Walk menu"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "Open the Walk menu"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "Choose a nearby dog, then Attach left or Attach right"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "Close"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "Show again"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "Automatic help: ON"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "Automatic help: OFF"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "Back to settings"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "A short guide to connecting a leash. Only you see these hints."
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "Move closer to a dog that is ready to walk"
         }
       ]
     },
@@ -10857,6 +10993,74 @@
         {
           "key": "film.none",
           "text": "Вы никому не разрешили съёмку"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "Помощь с прогулкой"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "Возьми конец поводка"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "Поднеси конец поводка к светящемуся ошейнику"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "Готово! Следуй за собакой"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "Меняй цель прогулки в меню «Прогулка»"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "Подожди подключения…"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "Рядом пока нет собаки, готовой к прогулке"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "Нет поводка? Подключи его через меню прогулки"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "Открой меню прогулки"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "Выбери собаку рядом и подключи поводок к левой или правой руке"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "Закрыть"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "Показать снова"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "Автоподсказки: ВКЛ"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "Автоподсказки: ВЫКЛ"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "Назад к настройкам"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "Короткая подсказка о подключении поводка. Её видишь только ты."
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "Подойди к собаке, готовой к прогулке"
         }
       ]
     },
@@ -14476,6 +14680,74 @@
         {
           "key": "film.none",
           "text": "Ви нікому не дозволили зйомку"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "Допомога з прогулянкою"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "Візьми кінець повідця"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "Піднеси кінець повідця до нашийника, що світиться"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "Готово! Іди за собакою"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "Змінюй пункт призначення в меню «Прогулянка»"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "Зачекай на підключення…"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "Поруч поки немає собаки, готової до прогулянки"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "Немає повідця? Підключи його через меню прогулянки"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "Відкрий меню прогулянки"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "Вибери собаку поруч і підключи повідець до лівої або правої руки"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "Закрити"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "Показати знову"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "Автопідказки: УВІМК"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "Автопідказки: ВИМК"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "Назад до налаштувань"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "Коротка підказка про підключення повідця. Її бачиш лише ти."
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "Підійди до собаки, готової до прогулянки"
         }
       ]
     },
@@ -18095,6 +18367,74 @@
         {
           "key": "film.none",
           "text": "촬영을 허락한 사람이 없어요"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "산책 안내"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "리드줄 끝을 집어 보세요"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "리드줄 끝을 빛나는 목줄에 가까이 가져가세요"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "연결됐어요! 강아지를 따라 걸어 보세요"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "메뉴의 산책 탭에서 목적지를 바꿀 수 있어요"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "연결될 때까지 기다려 주세요"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "지금은 근처에 산책할 수 있는 강아지가 없어요"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "리드줄이 없으면 산책 메뉴에서 연결할 수 있어요"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "산책 메뉴를 열어 보세요"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "근처 강아지의 왼손 연결 또는 오른손 연결을 눌러 보세요"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "닫기"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "다시 보기"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "자동 안내: 켜짐"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "자동 안내: 꺼짐"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "설정으로 돌아가기"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "리드줄 연결까지의 짧은 안내예요. 나에게만 보여요."
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "산책할 수 있는 강아지에게 다가가 보세요"
         }
       ]
     },
@@ -21714,6 +22054,74 @@
         {
           "key": "film.none",
           "text": "Niemand darf dich filmen"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "Gassi-Hilfe"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "Nimm ein Leinenende"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "Halte das Leinenende an ein leuchtendes Halsband"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "Verbunden! Folge deinem Hund"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "Ändere dein Ziel im Spaziergang-Menü"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "Verbindung wird hergestellt…"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "Gerade ist kein Hund in der Nähe zum Gassigehen bereit"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "Keine Leine hier? Verbinde sie im Gassi-Menü"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "Öffne das Gassi-Menü"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "Wähle einen Hund in der Nähe und verbinde ihn links oder rechts"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "Schließen"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "Erneut zeigen"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "Automatische Hilfe: AN"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "Automatische Hilfe: AUS"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "Zurück zu Einstellungen"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "Eine kurze Anleitung zum Anleinen. Nur du siehst diese Hinweise."
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "Geh näher an einen Hund, der bereit ist"
         }
       ]
     },
@@ -25333,6 +25741,74 @@
         {
           "key": "film.none",
           "text": "没有允许拍摄的人"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "散步指引"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "拿起牵引绳的末端试试"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "把牵引绳末端靠近发光的项圈"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "连上了！跟着狗狗走吧"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "可以在菜单的「散步」中更改目的地"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "请稍等，正在连接…"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "附近暂时没有可以散步的狗狗"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "这里没有牵引绳？可以从散步菜单连接"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "打开散步菜单试试"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "选择附近的狗狗，点击连接左手或连接右手"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "关闭"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "再看一次"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "自动指引：开启"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "自动指引：关闭"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "返回设置"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "连接牵引绳的简短指引。只有你自己能看到。"
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "靠近可以散步的狗狗试试"
         }
       ]
     },
@@ -28952,6 +29428,74 @@
         {
           "key": "film.none",
           "text": "Nadie tiene permiso para grabarte"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "Ayuda para pasear"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "Coge un extremo de la correa"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "Acerca el extremo de la correa a un collar iluminado"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "¡Conectado! Sigue a tu perro"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "Cambia tu destino en el menú Paseo"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "Espera a que se conecte…"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "Ahora no hay ningún perro cerca listo para pasear"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "¿No hay correa aquí? Conéctala desde el menú de paseo"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "Abre el menú de paseo"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "Elige un perro cercano y conéctalo a la mano izquierda o derecha"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "Cerrar"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "Volver a mostrar"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "Ayuda automática: SÍ"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "Ayuda automática: NO"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "Volver a ajustes"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "Una breve guía para conectar la correa. Solo tú ves estas indicaciones."
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "Acércate a un perro que esté listo para pasear"
         }
       ]
     },
@@ -32571,6 +33115,74 @@
         {
           "key": "film.none",
           "text": "Personne n'est autorisé à te filmer"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "Aide à la promenade"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "Prends un bout de laisse"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "Approche le bout de la laisse d’un collier lumineux"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "C’est attaché ! Suis ton chien"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "Change de destination dans le menu Promenade"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "Patiente pendant la connexion…"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "Aucun chien à proximité n’est prêt à se promener"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "Pas de laisse ici ? Attache-la depuis le menu de promenade"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "Ouvre le menu de promenade"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "Choisis un chien proche, puis attache-le à la main gauche ou droite"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "Fermer"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "Revoir"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "Aide automatique : OUI"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "Aide automatique : NON"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "Retour aux réglages"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "Un petit guide pour attacher la laisse. Toi seul vois ces indications."
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "Approche-toi d’un chien prêt à se promener"
         }
       ]
     },
@@ -36190,6 +36802,74 @@
         {
           "key": "film.none",
           "text": "Ninguém tem permissão para gravar você"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "Ajuda no passeio"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "Pegue uma ponta da guia"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "Aproxime a ponta da guia de uma coleira iluminada"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "Conectou! Siga seu cachorro"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "Mude o destino no menu Passeio"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "Aguarde a conexão…"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "Nenhum cachorro por perto está pronto para passear agora"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "Sem guia aqui? Conecte pelo menu de passeio"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "Abra o menu de passeio"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "Escolha um cachorro próximo e conecte à mão esquerda ou direita"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "Fechar"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "Mostrar de novo"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "Ajuda automática: LIGADA"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "Ajuda automática: DESLIGADA"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "Voltar às configurações"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "Um guia rápido para conectar a guia. Só você vê estas dicas."
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "Chegue perto de um cachorro pronto para passear"
         }
       ]
     },
@@ -39809,6 +40489,74 @@
         {
           "key": "film.none",
           "text": "Nessuno ha il permesso di riprenderti"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "Aiuto passeggiata"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "Prendi un’estremità del guinzaglio"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "Avvicina l’estremità del guinzaglio a un collare luminoso"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "Collegato! Segui il tuo cane"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "Cambia destinazione nel menu Passeggiata"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "Attendi il collegamento…"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "Nessun cane vicino è pronto per una passeggiata ora"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "Nessun guinzaglio qui? Collegalo dal menu passeggiata"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "Apri il menu passeggiata"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "Scegli un cane vicino e collegalo alla mano sinistra o destra"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "Chiudi"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "Mostra di nuovo"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "Aiuto automatico: SÌ"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "Aiuto automatico: NO"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "Torna alle impostazioni"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "Una breve guida per collegare il guinzaglio. Solo tu vedi questi suggerimenti."
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "Avvicinati a un cane pronto a passeggiare"
         }
       ]
     },
@@ -43428,6 +44176,74 @@
         {
           "key": "film.none",
           "text": "Nikt nie ma zgody na nagrywanie"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "Pomoc w spacerze"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "Podnieś końcówkę smyczy"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "Zbliż końcówkę smyczy do świecącej obroży"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "Gotowe! Idź za psem"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "Zmień cel w menu Spacer"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "Poczekaj na połączenie…"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "W pobliżu nie ma teraz psa gotowego na spacer"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "Nie ma tu smyczy? Połącz ją przez menu spaceru"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "Otwórz menu spaceru"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "Wybierz psa w pobliżu i połącz smycz z lewą lub prawą ręką"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "Zamknij"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "Pokaż ponownie"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "Pomoc automatyczna: WŁ"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "Pomoc automatyczna: WYŁ"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "Wróć do ustawień"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "Krótka instrukcja łączenia smyczy. Tylko ty widzisz te wskazówki."
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "Podejdź do psa gotowego na spacer"
         }
       ]
     },
@@ -47051,6 +47867,74 @@
         {
           "key": "film.none",
           "text": "沒有允許拍攝的人"
+        },
+        {
+          "key": "walkIntro.title",
+          "text": "散步指引"
+        },
+        {
+          "key": "walkIntro.take",
+          "text": "拿起牽引繩的末端試試"
+        },
+        {
+          "key": "walkIntro.attach",
+          "text": "把牽引繩末端靠近發光的項圈"
+        },
+        {
+          "key": "walkIntro.success",
+          "text": "連上了！跟著狗狗走吧"
+        },
+        {
+          "key": "walkIntro.destination",
+          "text": "可以在選單的「散步」中更改目的地"
+        },
+        {
+          "key": "walkIntro.pending",
+          "text": "請稍等，正在連接…"
+        },
+        {
+          "key": "walkIntro.noDog",
+          "text": "附近暫時沒有可以散步的狗狗"
+        },
+        {
+          "key": "walkIntro.noTool",
+          "text": "這裡沒有牽引繩？可以從散步選單連接"
+        },
+        {
+          "key": "walkIntro.menu",
+          "text": "打開散步選單試試"
+        },
+        {
+          "key": "walkIntro.menuAttach",
+          "text": "選擇附近的狗狗，點選連接左手或連接右手"
+        },
+        {
+          "key": "walkIntro.close",
+          "text": "關閉"
+        },
+        {
+          "key": "walkIntro.replay",
+          "text": "再看一次"
+        },
+        {
+          "key": "walkIntro.autoOn",
+          "text": "自動指引：開啟"
+        },
+        {
+          "key": "walkIntro.autoOff",
+          "text": "自動指引：關閉"
+        },
+        {
+          "key": "walkIntro.back",
+          "text": "返回設定"
+        },
+        {
+          "key": "walkIntro.note",
+          "text": "連接牽引繩的簡短指引。只有你自己能看到。"
+        },
+        {
+          "key": "walkIntro.approach",
+          "text": "靠近可以散步的狗狗試試"
         }
       ]
     }

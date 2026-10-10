@@ -48,6 +48,8 @@ namespace KominkaDogRun
         {
             switch (_selectedBehavior)
             {
+                // Re-evaluate existing interactions before every invitation frame; never reserve a dog.
+                case BehaviorInvitation: return false;
                 case BehaviorSleep: return UpdateSleep();
                 case BehaviorLive: return UpdateLive();
                 case BehaviorActivity: return UpdateActivity();

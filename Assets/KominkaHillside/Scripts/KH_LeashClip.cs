@@ -25,9 +25,21 @@ namespace KominkaHillside
         private int _candidate = -1;
         private int _pending = -1;
         private int _hand;
+        private int _invitationStation = -1;
+        public int _InvitationStation() { return _invitationStation; }
         private float _since;
         private float _requestAt;
         private float _retryAfter;
+
+        // Read-only onboarding observations. Pending uses the request hand; a fresh pickup uses the SDK hand.
+        public bool _IntroPending() { return _pending >= 0; }
+        public int _IntroHand()
+        {
+            if (_pending >= 0) return _hand;
+            VRCPlayerApi local = Networking.LocalPlayer;
+            return Utilities.IsValid(local) && local.IsUserInVR() && pickup != null
+                ? (pickup.currentHand == VRC_Pickup.PickupHand.Left ? 0 : 1) : desktopHand;
+        }
 
         private void Start() { _home = transform.position; _rotation = transform.rotation; _started = true; }
 
@@ -40,7 +52,14 @@ namespace KominkaHillside
             if (!_started) return;
             if (pickup != null && (_pending >= 0 || pickup.IsHeld)) _Wake();
         }
-        public override void OnPickup() { _candidate = -1; _pending = -1; _Wake(); }
+        // A re-pick cannot cancel a request already sent to the Owner. ClipStep resolves it or times out.
+        public override void OnPickup()
+        {
+            _candidate = -1;
+            _invitationStation = manager != null ? manager._InviteStationAt(_started ? _home : transform.position) : -1;
+            if (manager != null) manager._InvitationChanged();
+            _Wake();
+        }
 
         // IMP-DOG-036 S5: the frame below used to be Update, which ran every frame for all six tips and returned at once for a tip
         // that is not held and has no attach request in flight. A tip is a local pickup (no sync), so it only becomes active
@@ -64,7 +83,12 @@ namespace KominkaHillside
             if (!ClipFrame()) { _looping = false; return; }
             SendCustomEventDelayedFrames(nameof(_ClipTick), 1, EventTiming.Update);
         }
-        public override void OnDrop() { _candidate = -1; if (_pending < 0) ReturnHome(); }
+        public override void OnDrop()
+        {
+            _candidate = -1; _invitationStation = -1;
+            if (manager != null) manager._InvitationChanged();
+            if (_pending < 0) ReturnHome();
+        }
         private void ReturnHome()
         {
             if (manager != null) _home = manager._ReturnSlot(transform.position, desktopHand, this);

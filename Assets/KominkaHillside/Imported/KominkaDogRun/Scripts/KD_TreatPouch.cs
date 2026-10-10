@@ -1018,6 +1018,7 @@ namespace KominkaDogRun
         /// > 当たりごと外してある (体に追従する当たりはプレイヤーを押しのける)。</summary>
         private void OpenOrRecall()
         {
+            _introMenuRevision++;
             if (sleepPlacement != null && sleepPlacement.Active) return;
             if (panelRoot == null) return;
             // 自分の操作で開けた = 呼び方を知っている。手元ヒントはここで消える (IMP-INF-020 案 4)
@@ -1064,6 +1065,7 @@ namespace KominkaDogRun
         /// <summary>ようこその [メニューを見る]。通常の面 (初回はかざり) へ。案内を離れた印を立てる。</summary>
         public void _WelcomeMenu()
         {
+            _introMenuRevision++;
             if (!_welcome) return;
             LeaveWelcome();
             ApplyTab();
@@ -1104,6 +1106,7 @@ namespace KominkaDogRun
         /// ローカル専用なので `_` 始まり。</summary>
         public void _Close()
         {
+            _introMenuRevision++;
             if (sleepPlacement != null && sleepPlacement.Active) sleepPlacement._CancelHidden();
             LeaveWelcome();
             SetOpen(false);
@@ -1269,6 +1272,7 @@ namespace KominkaDogRun
 
         public void _OpenSettings()
         {
+            _introMenuRevision++;
             LeaveWelcome();   // ヘッダの [設定] / ポイント ▶ も「案内を離れた」
             _extraSettingsPage = null;
             _settingsOpen = true;
@@ -1286,6 +1290,7 @@ namespace KominkaDogRun
 
         private void SetTab(int tab)
         {
+            _introMenuRevision++;
             if (tab < 0 || tab >= TabCount) return;
             if (_tab == tab && !_settingsOpen && !_welcome) return;
             LeaveWelcome();   // ようこそからタブを押した = 案内を離れた
