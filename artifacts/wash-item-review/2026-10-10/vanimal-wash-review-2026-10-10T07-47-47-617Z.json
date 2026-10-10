@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "collection": "wash-premium-0.3.0-review",
+  "updatedAt": "2026-10-10T07:47:47.617Z",
+  "overall": "",
+  "items": [
+    {
+      "id": "FoamCannon",
+      "name": "泡もこもこ銃",
+      "decision": "keep",
+      "notes": "",
+      "grip": "持った時になんか変に横に向いちゃうので、これ持った時に握った手に、要はこの泡が出る口が肘から手にかけた方向と同じ方向、リードが伸びるのと同じような方向に行ってくれないとおかしいので、それをちょっとちゃんと直したい。\n\n向きか、横になんか変に倒れちゃうっていうのもあるから、それをちゃんと手の向きと合わせて、それはやってほしいな。"
+    },
+    {
+      "id": "DuckWaterGun",
+      "name": "アヒルの水鉄砲",
+      "decision": "remove",
+      "notes": "なんかちゃちい。",
+      "grip": ""
+    },
+    {
+      "id": "FishWaterGun",
+      "name": "魚の水鉄砲",
+      "decision": "remove",
+      "notes": "ワールドに合わない",
+      "grip": ""
+    },
+    {
+      "id": "BambooWaterGun",
+      "name": "竹の水鉄砲",
+      "decision": "remove",
+      "notes": "なんかちがう",
+      "grip": ""
+    },
+    {
+      "id": "FlowerShower",
+      "name": "花のシャワー",
+      "decision": "remove",
+      "notes": "なんかちがう",
+      "grip": ""
+    },
+    {
+      "id": "RainShower",
+      "name": "角型シャワー",
+      "decision": "keep",
+      "notes": "",
+      "grip": ""
+    },
+    {
+      "id": "WateringCan",
+      "name": "じょうろ",
+      "decision": "keep",
+      "notes": "変わり種としてはおもしろいかも。",
+      "grip": ""
+    },
+    {
+      "id": "Dryer",
+      "name": "ドライヤー",
+      "decision": "keep",
+      "notes": "風邪の感じがちょっと違和感ある。パーティクル。",
+      "grip": ""
+    },
+    {
+      "id": "PatternTowel",
+      "name": "柄タオル",
+      "decision": "keep",
+      "notes": "タオルはいいね。",
+      "grip": ""
+    },
+    {
+      "id": "PawMitt",
+      "name": "肉球ミトン",
+      "decision": "keep",
+      "notes": "",
+      "grip": ""
+    },
+    {
+      "id": "LargeSponge",
+      "name": "大きなスポンジ",
+      "decision": "remove",
+      "notes": "スポンジは洗車感でるから、デスクトップ用のデフォルトのだけでOK",
+      "grip": ""
+    },
+    {
+      "id": "GroomingBrush",
+      "name": "ブラシ",
+      "decision": "remove",
+      "notes": "ブラッシングはエフェクトないし要らないかも。",
+      "grip": ""
+    },
+    {
+      "id": "Cologne",
+      "name": "コロン",
+      "decision": "remove",
+      "notes": "なにかわからない",
+      "grip": ""
+    },
+    {
+      "id": "HinokiBath",
+      "name": "檜の洗い台",
+      "decision": "keep",
+      "notes": "",
+      "grip": ""
+    },
+    {
+      "id": "StoneBath",
+      "name": "石の洗い台",
+      "decision": "keep",
+      "notes": "",
+      "grip": ""
+    },
+    {
+      "id": "TileBath",
+      "name": "タイルの洗い台",
+      "decision": "keep",
+      "notes": "病院感がすごいのでちょっと改善したい",
+      "grip": ""
+    },
+    {
+      "id": "FloatingDuck",
+      "name": "小さなアヒル",
+      "decision": "remove",
+      "notes": "謎すぎる",
+      "grip": ""
+    },
+    {
+      "id": "PoolCandidate",
+      "name": "プール（追加候補）",
+      "decision": "keep",
+      "notes": "",
+      "grip": ""
+    }
+  ]
+}

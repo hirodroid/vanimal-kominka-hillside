@@ -15,6 +15,10 @@
 
 関連：[種類別の選択 IMP-DOG-046](../../../docs/development/issues/IMP-DOG-046-wash-tools-by-category.md)、[持ち方 BUG-DOG-010](../../../docs/development/issues/BUG-DOG-010-wash-tool-grip.md)。
 
+## 回答受領（2026-10-10）
+
+[ユーザー回答JSON](vanimal-wash-review-2026-10-10T07-47-47-617Z.json)を原文のまま保存。18点すべて回答済み（keep 10点＝既存9品＋プール、remove 8点）。[採否と改善点の整理](../../../docs/development/issues/DES-DOG-008-wash-paid-tools-and-effects.md)へ反映した。実装は[IMP-DOG-047](../../../docs/development/issues/IMP-DOG-047-wash-item-review-changes.md)等で未着手。HTMLへは「回答を読み込む」でこのJSONを選べば再表示できる。
+
 ## 確認記録（2026-10-10）
 
 - JavaScript構文、18点・未確認の初期値、17写真と元画像のバイト一致を確認。

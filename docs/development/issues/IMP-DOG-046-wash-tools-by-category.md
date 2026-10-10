@@ -5,7 +5,7 @@ system: DOG
 status: todo
 priority: Medium
 summary: 追加洗浄道具を種類ごとに選択し、泡・水・タオルを同時に出せるようにする
-next: アイテム採否レビューの回答を受け、種類の分け方と置き場所を確定して選択状態を分離する
+next: 採否回答は受領済み。残す道具をもとに種類の分け方と置き場所を確定し、選択状態を分離する
 updated: 2026-10-10
 ---
 
@@ -29,6 +29,8 @@ updated: 2026-10-10
 [確認用HTML](../../../artifacts/wash-item-review/2026-10-10/index.html)で、既存17品と未制作のプール候補について「いる／いらない／保留」、改善点、持ったときの違和感を記録する。初期値は全品未確認。回答はブラウザー内保存とJSON書き出しに対応し、回答ファイルを受け取ってから企画・実装へ反映する。採否を先取りして既存モデルを削除しない。
 
 持ち方の不具合は [BUG-DOG-010](BUG-DOG-010-wash-tool-grip.md)、プール追加は [IMP-DOG-044](IMP-DOG-044-wash-pool-platform.md)。
+
+2026-10-10: [回答JSON](../../../artifacts/wash-item-review/2026-10-10/vanimal-wash-review-2026-10-10T07-47-47-617Z.json)を受領。残す追加道具は泡銃・角型シャワー・じょうろ・ドライヤー・柄タオル・肉球ミトン。台は檜・石・タイルと未制作のプール。採否の正本は[DES-DOG-008の10月10日記録](DES-DOG-008-wash-paid-tools-and-effects.md)。採否を反映する実装は[IMP-DOG-047](IMP-DOG-047-wash-item-review-changes.md)。種類別の同時利用方法は未実装で、採否の回答を分類の確定と読み替えない。
 
 ## 完了条件
 
