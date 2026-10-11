@@ -397,6 +397,7 @@ namespace KominkaHillside
 
         void DrawPerson()
         {
+            if (_monitorHidden) return;   // DES-WLD-004: the person row and list are on the monitor (PersonTick's 2 Hz redraw is skipped while hidden)
             bool pick = _open && _mode == ModeSelfFollow && !_patRun;   // §17: hidden while a pattern runs (its じぶん is always me)
             if (personButton != null && personButton.activeSelf != pick) personButton.SetActive(pick);
             KH_TravelMailbox box = PersonMyBox();

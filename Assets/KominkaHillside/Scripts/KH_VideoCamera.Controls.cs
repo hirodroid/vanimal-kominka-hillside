@@ -235,6 +235,7 @@ namespace KominkaHillside
 
         void DrawControls()
         {
+            if (_monitorHidden) return;   // DES-WLD-004: monitor-only drawing
             int kind = CtlKind(_mode);
             bool sides = kind == CtlKindAll || _mode == ModeOrbit;   // §16: [←][→] = around (CtlKindAll) or 一周's speed; dimmed in みち
             if (ctlImages != null)

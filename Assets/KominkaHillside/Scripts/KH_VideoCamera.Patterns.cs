@@ -592,6 +592,7 @@ namespace KominkaHillside
         /// when the pattern, the row, the shot or the scene changed.</summary>
         void DrawPattern()
         {
+            if (_monitorHidden) return;   // DES-WLD-004: monitor-only drawing (_patShownKey stays stale, so the show redraws the board)
             int key = _patRun ? ((((_patIdx * 64 + (_patRow + 1)) * 16 + _mode) * 8 + (_patScene + 1)) * 8 + (_mode == ModePath ? _pathMove : _mode == ModeOrbit ? _orbitKind : 0)) : -1;
             if (key == _patShownKey) return;
             _patShownKey = key;
