@@ -1,0 +1,144 @@
+﻿<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>フリスビーのモデル改善案 | 古民家の裏山</title>
+<style>
+:root{--paper:#faf8f2;--ink:#283c35;--muted:#64736a;--line:#d9dfd5;--green:#285b49;--sand:#eae3d2;--orange:#ad613a;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.8 system-ui,"Yu Gothic UI",Meiryo,sans-serif}button,input,select,textarea{font:inherit}button,select{cursor:pointer}button{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 15px;color:var(--ink)}button:hover{background:#edf1e9}button[aria-pressed=true],button.primary{background:var(--green);color:white;border-color:var(--green)}:focus-visible{outline:3px solid #b97035;outline-offset:4px}a{color:var(--green)}header,main,footer{max-width:1200px;margin:auto;padding:28px 36px}header{padding-top:42px;padding-bottom:20px}.eyebrow{font-size:12px;font-weight:750;letter-spacing:.16em;color:var(--green)}h1{font-size:clamp(30px,4vw,48px);line-height:1.3;letter-spacing:-.03em;margin:12px 0 18px}h2{font-size:25px;line-height:1.5;margin:0 0 16px}h3{font-size:19px;line-height:1.5;margin:0 0 10px}p{margin:8px 0 16px}.lead{max-width:790px;color:var(--muted);font-size:18px}.tag{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:650}.tag.recommend{background:#e1eddf;color:#224f3c;border-color:#cadbc6}.note{font-size:13px;color:var(--muted)}nav{display:flex;gap:20px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:16px;margin-top:24px}nav a{text-decoration:none;font-size:14px}.hero{display:grid;grid-template-columns:1fr 300px;gap:0;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}.viewer{position:relative;background:#eeeede;min-width:0}.viewer canvas{display:block;width:100%;height:410px;touch-action:none;cursor:grab}.viewer canvas:active{cursor:grabbing}.viewer-top{display:flex;justify-content:space-between;gap:12px;position:absolute;top:18px;left:22px;right:22px;pointer-events:none}.viewer-top span{font-size:12px;background:#fffc;padding:4px 9px;border-radius:5px}.view-tools{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:0 12px 18px}.view-tools button{font-size:13px;padding:5px 11px}.controls{padding:22px;border-left:1px solid var(--line)}label{display:block;font-size:13px;font-weight:650;margin-bottom:7px}select{width:100%;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:7px;padding:9px}input[type=range]{width:100%;accent-color:var(--green)}.control{margin-bottom:20px}.readout{display:flex;justify-content:space-between;gap:8px;font-size:13px}.swatch{display:inline-block;width:12px;height:12px;border-radius:50%;border:1px solid #0002;margin-right:6px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;min-width:0}.card.selected{border:2px solid var(--green);padding:19px}.card canvas{width:100%;height:155px;display:block;background:#f4f4e9;border-radius:8px;margin:12px 0}.card p{font-size:14px;min-height:76px}.card button{width:100%}.section{margin-top:52px;scroll-margin-top:20px}.two{display:grid;grid-template-columns:1fr 1fr;gap:24px}.panel{border:1px solid var(--line);border-radius:12px;padding:24px;background:#fff}.summary{border-left:4px solid var(--green);padding:18px 24px;background:#edf1e7;margin-top:22px}.summary p:last-child{margin-bottom:0}.spec{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}.spec div{padding:14px 18px;background:#f0eee4;border-radius:9px}.spec strong{font-size:25px;display:block;font-weight:650}.spec span{font-size:12px;color:var(--muted)}.section-canvas{width:100%;height:150px;display:block}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:13px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{background:#eeeee5;font-weight:650}td:first-child{min-width:100px;font-weight:650}ul,ol{padding-left:22px}li{margin-bottom:8px}.decision{display:grid;grid-template-columns:1fr 1fr;gap:24px}textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;background:#fcfcf8;color:var(--ink);resize:vertical;font-size:14px}.checks{display:flex;flex-wrap:wrap;gap:8px 20px}.checks label{font-weight:400}input[type=checkbox]{accent-color:var(--green)}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.status{font-size:13px;min-height:24px;color:var(--green)}details{margin:22px 0}summary{cursor:pointer;color:var(--green);font-weight:650}code{font-size:12px;background:#f0eee7;padding:2px 5px;border-radius:3px;overflow-wrap:anywhere}footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:36px;padding-top:20px;padding-bottom:40px}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-width:800px){header,main,footer{padding-left:20px;padding-right:20px}.hero{grid-template-columns:1fr}.controls{border-left:0;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:0 20px}.controls .note{grid-column:1/-1}.viewer canvas{height:350px}.two,.decision{grid-template-columns:1fr}.cards{gap:10px}.card{padding:12px}.card.selected{padding:11px}.card h3{font-size:16px}.card canvas{height:120px}.card p{min-height:125px}.card button{padding:8px 4px;font-size:13px}}
+@media(max-width:520px){.cards{grid-template-columns:1fr}.card canvas{height:155px}.card p{min-height:0}.controls{grid-template-columns:1fr}.viewer canvas{height:295px}.viewer-top{left:12px;right:12px;gap:5px}.viewer-top span{font-size:10px}.spec{gap:6px}.spec div{padding:10px}.spec strong{font-size:19px}h2{font-size:22px}.panel{padding:18px}}
+@media print{button,.view-tools,.controls,.actions,nav{display:none!important}.hero{grid-template-columns:1fr}.cards,.two{break-inside:avoid}body{font-size:12px}header,main{padding:12px}.section{margin-top:28px}.card p{min-height:0}}
+</style>
+</head>
+<body>
+<header>
+<div class="eyebrow">KOMINKA HILLSIDE / DESIGN NOTE 051</div>
+<h1>手に取ると、<br>ちゃんとフリスビー。</h1>
+<p class="lead">犬の顔と、それぞれの色はそのまま。丸みのある縁と浅い裏面のくぼみで、親しみのある遊び道具へ。</p>
+<span class="tag">2026.10.11 · 提案 v1 / 未採用</span>
+<nav aria-label="ページ内"><a href="#compare">3案を比べる</a><a href="#shape">形と断面</a><a href="#current">現行から変えること</a><a href="#build">制作と確認</a><a href="#decision">希望をまとめる</a></nav>
+</header>
+<main>
+<section id="compare" aria-labelledby="compare-title">
+<h2 id="compare-title">おすすめは A「まる縁スタンダード」</h2>
+<p>横から見た縁を丸め、中央を薄く、裏側を浅い皿状に。犬の顔を大きく残すので、誰のディスクかも分かります。</p>
+<div class="hero">
+<div class="viewer">
+<div class="viewer-top"><span id="view-title">A · まる縁スタンダード</span><span>形状イメージ / Unity実機画像ではありません</span></div>
+<canvas id="main-view" role="img" aria-label="フリスビー改善案の回転プレビュー。向きは下のボタンと角度スライダーでも変更できます。">3D形状のプレビュー。A案は丸い縁と浅いくぼみを持つ直径24cmのディスクです。</canvas>
+<div class="view-tools" aria-label="見る向き"><button data-view="top">表</button><button data-view="angle">斜め</button><button data-view="side">横</button><button data-view="bottom">裏</button><button id="reset">初期表示</button></div>
+</div>
+<div class="controls">
+<div class="control"><label for="dog">犬の識別色・顔</label><select id="dog"><option value="Corgi">コーギー / 赤</option><option value="Pome">ポメラニアン / ピンク</option><option value="Lab">ラブラドール / 黄</option><option value="Dachs">ダックスフンド / 青</option><option value="Shiba">柴犬 / 橙</option><option value="Samoyed">サモエド / 白</option></select></div>
+<div class="control"><label for="background">背景の比較</label><select id="background"><option value="neutral">ニュートラル</option><option value="grass">草地の色</option><option value="leaves">落ち葉の色</option><option value="shade">木陰の色</option></select></div>
+<div class="control"><div class="readout"><label for="tilt">見る角度</label><output id="tilt-value">35°</output></div><input id="tilt" type="range" min="-90" max="90" value="35" step="1"><div class="note">−90°：裏 / 0°：横 / 90°：表</div></div>
+<div class="control"><div class="readout"><label for="turn">面の回転</label><output id="turn-value">0°</output></div><input id="turn" type="range" min="-180" max="180" value="0" step="1"></div>
+<div class="control"><label><input id="show-face" type="checkbox" checked> 既存の顔を表示する</label><label><input id="held" type="checkbox"> 持ち主の表示を模擬</label></div>
+<p class="note">ドラッグでも回転できます。背景は比較用の色面です。照明・透明度・色の見え方は概念図で、端末での再現や合格を示しません。</p>
+</div>
+</div>
+<div class="cards">
+<article class="card selected" data-card="A"><span class="tag recommend">おすすめ</span><h3>A · まる縁スタンダード</h3><canvas data-preview="A" role="img" aria-label="A案。丸い縁、単色、中央に犬の顔。"></canvas><p>大きな色面と犬の顔。外周の角を丸め、裏にくぼみを作る。今の印象を自然に磨ける案。</p><button data-variant="A" aria-pressed="true">Aをプレビュー</button></article>
+<article class="card" data-card="B"><span class="tag">柔らかい印象</span><h3>B · ふっくらソフトリム</h3><canvas data-preview="B" role="img" aria-label="B案。幅広く膨らんだ縁。"></canvas><p>外周を幅広く膨らませ、柔らかい樹脂の玩具らしく。小型犬の口元では縁の存在感を要確認。</p><button data-variant="B" aria-pressed="false">Bをプレビュー</button></article>
+<article class="card" data-card="C"><span class="tag">柄の候補</span><h3>C · きなりリング</h3><canvas data-preview="C" role="img" aria-label="C案。Aの形にきなり色の輪を追加。"></canvas><p>Aの形に、顔の周囲を囲むきなり色の輪。落ち着いた印象。白いディスクと色面の小ささに注意。</p><button data-variant="C" aria-pressed="false">Cをプレビュー</button></article>
+</div>
+<div class="summary"><strong>まずは A を、6匹共通の新しい基本形に。</strong><p>犬別の色と両面の顔を残し、外径・外周の最大厚みも維持する提案です。Bは好みが柔らかい方向なら比較試作、Cは基本形を決めてからの柄候補にします。飛び方や新商品の追加は、この提案には含めていません。</p></div>
+</section>
+<section class="section" id="shape">
+<h2>01 / 縁は丸く、中央は薄く。</h2>
+<div class="spec"><div><span>外径 / 現行から維持する提案</span><strong>240 mm</strong></div><div><span>外周の最大厚み / 提案値</span><strong>24 mm</strong></div><div><span>顔の直径 / 現行から維持</span><strong>160 mm</strong></div></div>
+<div class="two">
+<div class="panel"><h3>断面の違い</h3><canvas id="section-view" class="section-canvas" role="img" aria-label="現行円柱と選択案の断面比較。改善案では丸い縁から薄い中央へつなぎ、裏面に浅いくぼみを設けます。"></canvas><p class="note">断面は厚み方向を3倍に強調。選択した案に連動します。中央厚は約4mmから、裏のくぼみは約13〜16mmから試作します。数値は最終寸法ではありません。</p></div>
+<div class="panel"><h3>近くで効く、3つの変更</h3><ol><li><strong>丸いリップ。</strong>天面から外周へなだらかにつなぎ、縁のハイライトが柔らかく回る形に。</li><li><strong>浅い裏面。</strong>平らな円柱の底をくぼませ、持ったときに薄い道具として読めるように。</li><li><strong>控えめな仕上げ。</strong>非金属・低光沢を維持。細かな傷や凹凸は初回には増やさず、輪郭と陰影を優先。</li></ol></div>
+</div>
+<p class="note">顔の画像は既存のものを使用しています。背景の色合わせや、首輪の金具の写り込みを整える場合は別途再キャプチャを検討します。このページでは画像を加工していません。</p>
+</section>
+<section class="section" id="current">
+<h2>02 / 現行から、何を変えるか。</h2>
+<div class="table-wrap"><table><thead><tr><th>要素</th><th>現行の設定・保存値</th><th>A案の提案</th></tr></thead><tbody>
+<tr><td>本体</td><td>Unityの円柱。生成コードの寸法は直径24cm × 厚さ2.4cm。</td><td>外径・外周厚を維持し、丸い縁・薄い中央・浅い裏面を持つ専用メッシュへ。</td></tr>
+<tr><td>識別</td><td>犬別の6色。表と裏に直径16cmの犬の顔。</td><td>色と顔を維持。両面から犬を見分ける役割を残す。</td></tr>
+<tr><td>材質</td><td>保存済み材質は Metallic 0 / Glossiness 0.3。</td><td>非金属を維持。光沢は現行値を起点に、昼と木陰で調整する。</td></tr>
+<tr><td>手に持つとき</td><td>持ち主だけ本体を透過表示、顔を非表示にする実装。</td><td>既存の切替を維持。丸い縁が照準を邪魔しないか、持ち主と他人の見え方を確認。</td></tr>
+<tr><td>当たり判定・挙動</td><td>BoxColliderと半径0.12mの飛行設定。表示とは別に挙動を制御。</td><td>最初は既存値を維持。メッシュの形を変えても飛行が自動改善されるものではない。</td></tr>
+</tbody></table></div>
+<p class="note">現行欄は2026-10-11の生成コードと保存済み材質を読み取ったものです。現在のUnity実行状態を計測した結果ではありません。</p>
+</section>
+<section class="section" id="build">
+<h2>03 / 形を決めたら、この順で確かめる。</h2>
+<div class="two"><div class="panel"><h3>制作の初期案</h3><ul><li>分類は手に持つ小物。6枚で同じ本体メッシュを共有する。</li><li>周方向48分割を起点に、顔を含め1枚1,500三角形程度、上限2,000を仮予算とする。負荷測定前の目標値。</li><li>本体1材質＋既存の両面の顔を基本とする。Cのリングも追加描画パスを増やさない方法を検討する。</li><li>最初は既存の顔表示の制御を残す。1枚のテクスチャへの統合は、採用後に必要性を判断する。</li><li>本体の原点・向きと既存の非均等スケールを確認。顔の位置を新しい面に合わせ、埋まり・浮き・ちらつきを防ぐ。</li></ul></div><div class="panel"><h3>見た目と操作の確認</h3><ul><li><strong>手元 0.3〜0.5m：</strong>表・裏・縁が滑らかで、顔が歪まず読める。</li><li><strong>犬の口元 1〜3m：</strong>6犬種で縁が口に自然に収まり、鼻・顎への埋まりが目立たない。</li><li><strong>飛行・落下 3m / 10m：</strong>草・落ち葉・川辺・木陰でディスクを見つけられる。遠距離は顔の細部より全体の色と輪郭を確認。</li><li><strong>操作と同期：</strong>持つ・投げる・取る・持ち帰る・手渡す。持ち主と他人の表示切替も確認する。</li><li><strong>PCVR / Quest / iOS：</strong>色、顔、暗部、透過、6枚同時の負荷を端末別に記録する。</li></ul></div></div>
+<p class="note">このページの確認範囲は提案の比較まで。ワールドへの適用・実機検証は未実施です。</p>
+</section>
+<section class="section" id="decision">
+<h2>04 / 希望をメモにまとめる。</h2>
+<p>案を選んで気になる点を書けば、相談用のメモを保存できます。選択はこのページ内だけのもので、Issueやモデルへ自動反映されません。</p>
+<div class="decision"><div class="panel"><div class="control"><label for="choice">進めたい方向</label><select id="choice"><option value="A">A · まる縁スタンダード（おすすめ）</option><option value="B">B · ふっくらソフトリム</option><option value="C">C · きなりリング</option><option value="undecided">まだ決めずに調整したい</option></select></div><label for="feedback">調整したいところ</label><textarea id="feedback" rows="5" placeholder="例：Aの形で、縁をもう少し柔らかく。顔はこのまま大きく残したい。"></textarea><p class="note">ページを閉じると入力は失われます。残したい内容はメモを保存してください。</p></div><div class="panel"><label for="decision-text">相談用メモ</label><textarea id="decision-text" rows="10" readonly></textarea><div class="actions"><button id="save-note" class="primary">メモを保存（.txt）</button><button id="select-note">全文を選択</button></div><div id="save-status" class="status" role="status"></div></div></div>
+</section>
+<details><summary>現行の根拠・関連資料</summary><ul><li><a href="../development/issues/IMP-DOG-051-frisbee-model-improvement.md">IMP-DOG-051 フリスビーのモデル改善</a></li><li><a href="../core-concept.md">コアコンセプト §3：識別色、非金属・低光沢、犬が主役</a></li><li><a href="../../Assets/KominkaHillside/Scripts/Editor/KH_FrisbeePrototypeEditor.cs">KH_FrisbeePrototypeEditor.cs：BuildDisc / BuildFaces / FaceDiameter</a></li><li><a href="../../Assets/KominkaHillside/Scripts/KH_Frisbee.cs">KH_Frisbee.cs：半径と保持時の表示切替</a></li><li><a href="../../Assets/KominkaHillside/Data/Frisbee/KH_FrisbeeDisc_Lab.mat">保存済み材質の例：Lab</a></li></ul></details>
+</main>
+<footer>古民家の裏山 · IMP-DOG-051 · 提案 v1 / 2026-10-11<br>図は比較用に作成した簡易形状です。既存の犬の顔画像を参照し、外部サービスへの送信は行いません。ページと画像はリポジトリ内で一緒に保管してください。</footer>
+<script>
+'use strict';
+(() => {
+const $=id=>document.getElementById(id);
+const names={A:'まる縁スタンダード',B:'ふっくらソフトリム',C:'きなりリング'};
+const dogs={Corgi:{name:'コーギー',rgb:[.9,.3,.25]},Pome:{name:'ポメラニアン',rgb:[.95,.6,.75]},Lab:{name:'ラブラドール',rgb:[.95,.8,.15]},Dachs:{name:'ダックスフンド',rgb:[.35,.55,.95]},Shiba:{name:'柴犬',rgb:[.85,.45,.2]},Samoyed:{name:'サモエド',rgb:[.9,.9,.95]}};
+// Dimensions are in mm. Each profile traces the solid cross-section from top centre to underside centre.
+const profiles={A:[[0,8],[80,8],[88,7],[100,7],[110,12],[116,12],[119,8],[120,2],[119,-6],[116,-11],[112,-12],[108,-10],[106,-5],[102,-1],[88,3],[80,4],[0,4]],B:[[0,5],[80,5],[87,5],[95,9],[104,12],[112,11],[118,7],[120,0],[118,-7],[112,-12],[105,-12],[99,-9],[96,-4],[87,0],[80,1],[0,1]]};
+profiles.C=profiles.A;
+const backgrounds={neutral:['#eeeedf','#d3d8c4'],grass:['#c6cd9a','#82916b'],leaves:['#dec69f','#b69064'],shade:['#818d82','#5b6b63']};
+const state={variant:'A',dog:'Corgi',tilt:35,turn:0,bg:'neutral',face:true,held:false};
+const images={};let imageFailures=0;
+Object.keys(dogs).forEach(key=>{const im=new Image();im.onload=drawAll;im.onerror=()=>{imageFailures++;$('save-status').textContent='顔画像を読み込めません。リポジトリ内の元の場所でページを開いてください。';};im.src='../../Assets/KominkaHillside/Textures/Frisbee/KH_DogFace_'+key+'.png';images[key]=im;});
+function setup(canvas){const box=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(box.width*dpr);canvas.height=Math.round(box.height*dpr);const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return{ctx,w:box.width,h:box.height};}
+function render(canvas,variant,tilt,turn,small=false){
+ const {ctx,w,h}=setup(canvas);if(!w||!h)return;
+ const bg=backgrounds[state.bg];const grad=ctx.createLinearGradient(0,0,w,h);grad.addColorStop(0,bg[0]);grad.addColorStop(1,bg[1]);ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+ const scale=Math.min(w/(small?310:350),h/(small?230:330));const cx=w/2,cy=h*.55;
+ ctx.save();ctx.translate(cx,cy+52*scale);ctx.scale(1,.21);const shadow=ctx.createRadialGradient(0,0,20*scale,0,0,134*scale);shadow.addColorStop(0,'#283c352c');shadow.addColorStop(1,'#283c3500');ctx.fillStyle=shadow;ctx.beginPath();ctx.arc(0,0,140*scale,0,Math.PI*2);ctx.fill();ctx.restore();
+ const a=tilt*Math.PI/180,b=turn*Math.PI/180,sa=Math.sin(a),ca=Math.cos(a),sb=Math.sin(b),cb=Math.cos(b);
+ function project(x,y,z){const X=x*cb-z*sb,Z=x*sb+z*cb;return[cx+X*scale,cy-(y*ca-Z*sa)*scale,y*sa+Z*ca];}
+ const profile=profiles[variant],n=64,polys=[],color=dogs[state.dog].rgb.map(v=>v*255);
+ for(let j=0;j<profile.length-1;j++){const [r0,y0]=profile[j],[r1,y1]=profile[j+1],dr=r1-r0,dy=y1-y0,len=Math.hypot(dr,dy)||1;
+  for(let i=0;i<n;i++){const p=i/n*Math.PI*2,q=(i+1)/n*Math.PI*2,m=(p+q)/2;const world=[[r0*Math.cos(p),y0,r0*Math.sin(p)],[r1*Math.cos(p),y1,r1*Math.sin(p)],[r1*Math.cos(q),y1,r1*Math.sin(q)],[r0*Math.cos(q),y0,r0*Math.sin(q)]];const pts=world.map(p=>project(...p));
+   // Outward surface normal, rotated with the disc; light is fixed in world space for an illustrative material.
+   const nx=-dy/len*Math.cos(m+b),ny=dr/len,nz=-dy/len*Math.sin(m+b);const shade=.68+.3*Math.max(0,-nx*.35+(ny*ca-nz*sa)*.6+(ny*sa+nz*ca)*.72);let rgb=color;
+   if(variant==='C'&&Math.min(r0,r1)>=80&&Math.max(r0,r1)<=110)rgb=[232,225,200];
+   polys.push({pts,world,depth:pts.reduce((s,p)=>s+p[2],0)/4,fill:'rgb('+rgb.map(v=>Math.round(v*shade)).join(',')+')'});
+  }
+ }
+ ctx.save();ctx.globalAlpha=state.held&&!small?.25:1;
+ polys.sort((a,b)=>a.depth-b.depth).forEach(poly=>{ctx.fillStyle=poly.fill;ctx.strokeStyle=poly.fill;ctx.lineWidth=.45;ctx.beginPath();poly.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();ctx.stroke();});ctx.restore();
+ if(state.face&&!(state.held&&!small)&&Math.abs(sa)>.025){
+  const im=images[state.dog];if(im&&im.complete&&im.naturalWidth){const top=sa>0,y=top?profile[0][1]+.1:profile[profile.length-1][1]-.1;const o=project(0,y,0),px=project(80,y,0),pz=project(0,y,top?80:-80);
+   ctx.save();ctx.transform((px[0]-o[0])/80,(px[1]-o[1])/80,(pz[0]-o[0])/80,(pz[1]-o[1])/80,o[0],o[1]);ctx.beginPath();ctx.arc(0,0,80,0,Math.PI*2);ctx.clip();ctx.drawImage(im,-80,-80,160,160);ctx.fillStyle='rgba(20,35,25,'+(top?.06:.19)+')';ctx.fillRect(-80,-80,160,160);ctx.restore();
+   // Clip body polygons to the camera side of the print plane, then redraw them in depth order.
+   // This hides the recessed print behind the nearer lip at grazing angles, on both faces.
+   polys.forEach(poly=>{const clipped=[],sign=top?1:-1;for(let k=0;k<poly.world.length;k++){const a=poly.world[k],b=poly.world[(k+1)%poly.world.length],da=sign*(a[1]-y),db=sign*(b[1]-y);if(da>=0)clipped.push(a);if((da>=0)!==(db>=0)){const t=da/(da-db);clipped.push(a.map((v,j)=>v+(b[j]-v)*t));}}if(clipped.length<3)return;ctx.fillStyle=poly.fill;ctx.strokeStyle=poly.fill;ctx.lineWidth=.45;ctx.beginPath();clipped.map(p=>project(...p)).forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();ctx.stroke();});
+  }
+ }
+ if(!small){ctx.fillStyle=state.bg==='shade'?'#fff':'#425c49';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText(state.held?'持ち主の表示を模擬：本体25%・顔なし':'直径240mm / 犬の顔160mm / '+(tilt<0?'裏面':'表面'),cx,h-20);}
+}
+function crossSection(){const canvas=$('section-view');canvas.style.height='320px';const {ctx,w,h}=setup(canvas);ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);const s=Math.min((w-36)/240,1.65),v=s*3,left=(w-240*s)/2;ctx.font='12px system-ui';ctx.fillStyle='#64736a';ctx.fillText('現行：平らな円柱',18,18);ctx.fillStyle='#b9c2b2';ctx.fillRect(left,33,240*s,24*v);const base=185;ctx.fillStyle='#285b49';ctx.fillText(state.variant+'案：'+names[state.variant],18,base-12);const profile=profiles[state.variant];ctx.beginPath();profile.forEach(([r,y],i)=>{const x=w/2+r*s,Y=base+(12-y)*v;i?ctx.lineTo(x,Y):ctx.moveTo(x,Y);});[...profile].reverse().forEach(([r,y])=>ctx.lineTo(w/2-r*s,base+(12-y)*v));ctx.closePath();ctx.fill();}
+function drawAll(){render($('main-view'),state.variant,state.tilt,state.turn);document.querySelectorAll('[data-preview]').forEach(c=>render(c,c.dataset.preview,32,0,true));crossSection();}
+function sync(){ $('view-title').textContent=state.variant+' · '+names[state.variant];$('tilt').value=state.tilt;$('turn').value=state.turn;$('tilt-value').textContent=state.tilt+'°';$('turn-value').textContent=state.turn+'°';document.querySelectorAll('[data-variant]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.variant===state.variant)));document.querySelectorAll('[data-card]').forEach(c=>c.classList.toggle('selected',c.dataset.card===state.variant));drawAll();}
+function note(){const choice=$('choice').value;$('decision-text').value='IMP-DOG-051 フリスビーのモデル改善 / 提案 v1\n\n希望：'+(choice==='undecided'?'まだ決めずに調整したい':choice+' · '+names[choice])+'\n\n共通の提案：\n・犬別の6色と両面の顔を維持\n・直径240mm、外周厚24mmを維持して試作\n・丸い縁、薄い中央、浅い裏面\n・飛び方や商品の追加は今回の提案外\n\n調整したい点：\n'+($('feedback').value.trim()||'（未記入）')+'\n\nこのメモは希望の記録です。採用・実装・検証の完了を示しません。';}
+document.querySelectorAll('[data-variant]').forEach(b=>b.addEventListener('click',()=>{state.variant=b.dataset.variant;sync();}));
+$('dog').addEventListener('change',e=>{state.dog=e.target.value;drawAll();});$('background').addEventListener('change',e=>{state.bg=e.target.value;drawAll();});
+['tilt','turn'].forEach(id=>$(id).addEventListener('input',e=>{state[id]=Number(e.target.value);sync();}));
+$('show-face').addEventListener('change',e=>{state.face=e.target.checked;drawAll();});$('held').addEventListener('change',e=>{state.held=e.target.checked;drawAll();});
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{state.tilt={top:90,angle:35,side:0,bottom:-65}[b.dataset.view];state.turn=0;sync();}));
+$('reset').addEventListener('click',()=>{Object.assign(state,{tilt:35,turn:0,face:true,held:false,bg:'neutral'});$('show-face').checked=true;$('held').checked=false;$('background').value='neutral';sync();});
+let drag=null;const cv=$('main-view');cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,tilt:state.tilt,turn:state.turn};cv.setPointerCapture(e.pointerId);});cv.addEventListener('pointermove',e=>{if(!drag)return;state.tilt=Math.round(Math.max(-90,Math.min(90,drag.tilt+(e.clientY-drag.y)*.5)));state.turn=Math.round(((drag.turn+(e.clientX-drag.x)*.6+540)%360)-180);sync();});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>cv.addEventListener(ev,()=>{drag=null;}));
+$('choice').addEventListener('change',()=>{if(names[$('choice').value]){state.variant=$('choice').value;sync();}note();});$('feedback').addEventListener('input',note);
+$('save-note').addEventListener('click',()=>{note();const blob=new Blob(['\uFEFF'+$('decision-text').value],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='IMP-DOG-051-frisbee-feedback.txt';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);$('save-status').textContent='メモのダウンロードを開始しました。';});
+$('select-note').addEventListener('click',()=>{$('decision-text').focus();$('decision-text').select();$('save-status').textContent='全文を選択しました。Ctrl+C / Cmd+C でコピーできます。';});
+new ResizeObserver(drawAll).observe(document.querySelector('.hero'));window.addEventListener('resize',drawAll);sync();note();
+})();
+</script>
+</body>
+</html>
+
+
