@@ -2,10 +2,10 @@
 id: BUG-DOG-011
 type: BUG
 system: DOG
-status: wip
+status: review
 priority: High
 summary: 散歩用首輪が首に対して上が浮き下が埋まって見える (6 犬種)。Fit を首の断面基準に改修し、2026-10-10 ユーザー決定 (案 1) でポメ・サモエドは帯を毛の中に隠して金具とリードで見せる。R12 を適用済み。2026-10-11 ユーザー指摘でサモエドの金具が首から上へ離れて見える (NG)
-next: R13 案 (サモエドの `RingLift` .240 → .065、コードのみ変更済み・未適用) を `Walking/8 Refit Collars` で適用し、Verify と多視点撮影 (サモエド backtop・側面・正面 × 4 姿勢、対照にポメ) で金具が毛の表面に乗るか確かめる。残りの VR 確認 (横から見て帯が首軸に直角か、歩き・座り・伏せ・リード接続中・撫で中・飾り併用、ポメの金具とリードの出方)
+next: ユーザーの VR 確認: サモエドの金具が毛の表面に乗っているか (浮いていない・沈んでいない)、歩き・座り・伏せ・撫で中、リード接続時の縄の出方、首輪を外す Interact が届くか。ほかの犬の確認項目は従来どおり (横から見て帯が首軸に直角か、飾り併用、ポメの金具)
 updated: 2026-10-11
 ---
 
@@ -205,6 +205,10 @@ R9 をユーザーが VR で確認した:「短毛・中毛の 4 犬種もだい
 連動するもの (コードの確認。追加の変更は不要): リードの接続点 `ClipAnchor` (= `KH_LeashCollar.anchor` = `KH_LeashManager.collarAnchors[5]`) の位置は `Fit` の `anchor.localPosition = (0, RingY + RingLift, 0)` だけで決まる。首輪を外す Interact の `SphereCollider` の中心は `Fit`・`Walking/8 Refit Collars`・`Production 2 Apply`・`Walking/3 Build` (周回版では実行しない) のどれも `anchor.localPosition` から取る。手で書いた値は無い。`Walking/5 Verify`・`Production 3 Verify` は金具の高さを検査しないので変更不要 (配置の不変条件を足す案は上の「残る課題」)。`Fit` の `RingLift` の上のコメント (「~9cm」) は R13 を採るときに直す。
 
 未完了 (統括が Unity で行う): `Walking/Production 8b Collar Fit Report` (ドライラン。サモエドの備考が「ring lift 65mm」になること) → `Walking/8 Refit Collars` → `Walking/5 Verify`・`Production 3 Verify` → 前回と同じ多視点撮影 (一時スクリプトは削除済みなので `artifacts/collar-review/2026-10-10/tools/KH_CollarSurveyTempEditor.cs.txt` から作り直す)。少なくともサモエドの backtop・側面・正面を 4 姿勢 (静止・歩き・座り・伏せ) で撮り、輪が首の面に立つので斜め後ろからの視点を足す。ポメも対照として撮る。金具が首・頭に約 13cm 近づくので、Interact の光線が首・頭の当たり判定に先に当たらないかも見る (`KH_DogWashSetupEditor` の注記)。採否はユーザーの VR 確認で決める。
+
+### R13 の適用 (2026-10-11、統括)
+
+コンパイル 0 → `Production 8b Collar Fit Report` の dry run で Samoyed "ring lift 65mm" → `Walking/8 Refit Collars` (自分で保存) → 差分は Samoyed の ClipAnchor と解除の SphereCollider 中心だけ (0.425 → 0.25) → `Production 3 Verify` 66 PASS、`Walking/5 Verify` 491 PASS (FAIL 0)。コミット `3e6129c`。前後の多視点撮影はしていない (撮影用の一時スクリプトの実行は今回見送り)。金具の見え方は VR で確かめる。
 
 ## 確認用HTML
 

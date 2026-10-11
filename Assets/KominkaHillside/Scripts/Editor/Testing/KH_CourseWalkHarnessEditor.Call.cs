@@ -27,7 +27,7 @@ namespace KominkaHillside.Editor
         public static void TravelCall()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Start Course/82c from Edit mode");
-            CwPrepare();   // C7-wet: the site is searched here, in Edit mode (Temp/call-wet-site.json). Never throws
+            CwPrepare();   // C7-wet-sim: the site is searched here, in Edit mode (Temp/call-wet-site.json). Never throws
             BeginTravel(false, false, true);
         }
 
@@ -54,7 +54,7 @@ namespace KominkaHillside.Editor
             CallC1(); CallC7Cooling(); CallC2(); CallC3(); CallC4Pending(); CallC4Measure(); CallC4Ticket(); CallC4Fade(); CallC4Late(); CallC4Double();
             CallC5(); CallC6(); CallC7Landing(); CallC8Replace(); CallC8Cross(); CallC8Confirmed();
             CallC9SelfStop(); CallC10ArriveTimeout();
-            CallC7Wet();   // 既存のケースの後 (順序・所要時間を変えない)。片付けの C11 は最後のまま
+            CallC7Wet();   // C7-wet-sim (模擬)。既存のケースの後 (順序・所要時間を変えない)。片付けの C11 は最後のまま
             CallCleanup();
         }
 
@@ -234,7 +234,7 @@ namespace KominkaHillside.Editor
         // ============================================================
 
         /// <summary>要求 → 通知 → 1.1 s → [行く] → 準備中 → 本人の移動 → 到着 の一式 (C1・C4-double・C7 で使う)。</summary>
-        /// beforePress: C7-wet の手順 (測定がそろった後、[行く] の直前に差し込む)。watch: 押した後の待ちの各回に呼ぶ (C7-wet の観測)。どちらも null なら従来どおり。
+        /// beforePress: C7-wet-sim の手順 (測定がそろった後、[行く] の直前に差し込む)。watch: 押した後の待ちの各回に呼ぶ (C7-wet-sim の観測)。どちらも null なら従来どおり。
         static void CallGoFlow(List<Func<double, bool>> s, CallCtx c, string name, bool doublePress, int expectReason, List<Func<double, bool>> beforePress = null, Action watch = null)
         {
             s.Add(TvDo(() => { CallGapReset(); c.seq = CallInject(KH_TravelMailbox.KindCall); }));
@@ -730,8 +730,12 @@ namespace KominkaHillside.Editor
         }
 
         // ============================================================
-        // C7-wet (設計書 §F.4「陸で接続した犬が、後で濡れた」・§F.6 の C7-wet)
+        // C7-wet-sim (設計書 §F.4「陸で接続した犬が、後で足を濡らした」・§F.6 の C7-wet-sim)
         // ============================================================
+        // 模擬 (配置と保持) による防御の試験。実際の同期の競合の経路は未検査 (2026-10-11 の独立レビュー、IMP-WLD-002)。
+        // PASS が示すのは「人工的に置いて保った waterPose が切符の同行を妨げず、保持を外すと本体の再計算で乾く」ことまで。
+        // 実際に起こり得る経路 (Manager が古い乾いた姿勢で接続を承認 → 犬の Owner が濡れを見て _waterLeashVeto を立て解除を要求 →
+        // その間に [行く]) は期待値が未決で、このケースは扱わない (拒否なしを要求している)。
         // 濡れの規則 (コードの読み):
         // - 犬の濡れ (waterPose 1 / 2) は根の位置だけで決まる (WaterPoseRefresh → WaterWetAt: 水遊び場の多角形の中はその深さ、外は川の帯
         //   (半幅 + BandMargin 1 m) の中で川全体の深さ > 0.02 m)。上がった後に残る濡れのフラグ・タイマーは無い (水遊びの WaterShake は
@@ -739,8 +743,9 @@ namespace KominkaHillside.Editor
         // - 接続中の犬が動くのは NavMesh の上だけ (LeashGo / TeleportTo / 切符の置き場所)。泳ぎ (_waterSwimming) を立てる水遊び・Fetch・
         //   ディスクは接続中には走らない。
         // - 川の帯 = NavMesh の川床の除外 (KH_RiverData.BandMargin のコメント、RiverbedNotWalkable、Course/20 の「Riverbed walkable」検査)。
-        //   よって「濡れる点で NavMesh の上」は焼き方の決まりで空集合。2026-09-29 版 (19db81d の記録、a06178c) はこの点を探して 0 件
-        //   (格子 87,023 点 + 三角形 1,953 枚・約 1,611 万点) で未実施だった。地形を変えても見つからない。
+        //   よって「濡れる点で NavMesh の上」はほぼ無い。2026-09-29 版 (19db81d の記録、a06178c) はこの点を探して 0 件
+        //   (格子 87,023 点 + 三角形 1,953 枚・約 1,611 万点) で未実施だった。ただし LeashGo は角の 0.35 m 手前で次の角へ切り替え、
+        //   移動中は _navStep で川の進入防止を迂回する (HillsideLeash.cs) ので、通常の経路で足が濡れないとは言えない (未確認)。
         // 2026-10-11 の通し方: 川の実際の出入り口 (川の Fetch が使う ok な岸のスライス KH_RiverData.sliceBank。Course/90 で焼き 91 で検査、
         // NavMesh の上・帯の外・最寄りの周回路ノードから経路あり) を T の立ち位置にし、そこから川の中心へ 0.1 m ずつ進んで最初に濡れる
         // (深さ > 0.08 m、規則は 0.02 m) 浅い点 (≤ 0.3 m、水遊び場の外) に犬 0 (陸で接続済み) を置く = 川から上がる手前の犬の足もと。
@@ -750,7 +755,9 @@ namespace KominkaHillside.Editor
         // 再計算が書く (外したことも合格条件)。模擬は 2 つ: 置き方 (接続中の犬はそこへ歩いて入れない) と保持。
         // 合格は従来どおり: C1 の一式 + 犬 0 が切符で動く直前まで濡れていた、水の拒否 (_waterLeashVeto) が立たなかった、着いた後に
         // 犬 0〜2 の waterPose 0・_waterSwimming / _swimYValid が false・waterState 0・接続が残る・地面に立つ (0.2 m 以内)。
-        // 地点が無ければ FAIL (ok な岸のスライスは川の Fetch の前提で、無ければデータの不具合)。探索自体の失敗・ファイルが無いときも FAIL。
+        // 地点が無ければ FAIL (SETUP_FAIL: 試験の入力を作れなかった)。川のデータの不具合とは限らない: 岸から 3.5 m 以内・深さ 0.08〜0.3 m・
+        // 水遊び場の外・乾いた立ち位置から経路あり は、このケースの追加条件で sliceOk には含まれない。探索自体の失敗・ファイルが無いときも
+        // SETUP_FAIL (FAIL)。
         const string CwFile = "Temp/call-wet-site.json";
         // CwWetMin は規則 (0.02 m) の 4 倍: 置いた直後の最初の再計算の前にリードが岸へ数 cm 歩かせても濡れたままでいる余裕
         const float CwWetMin = .08f, CwRuntimeWet = .02f, CwWadeMax = .3f, CwStep = .1f, CwStandMax = 3.5f, CwBankOnNav = .3f;
@@ -868,7 +875,7 @@ namespace KominkaHillside.Editor
 
         static string CwLine(CwSite s)
         {
-            return !string.IsNullOrEmpty(s.error) ? "ERROR (" + s.error + ")" : s.found ? "found: " + s.why : "NOT FOUND: " + s.why;
+            return !string.IsNullOrEmpty(s.error) ? "ERROR (" + s.error + ")" : s.found ? "found: " + s.why : "SETUP_FAIL: no shallow bank site (test input could not be built; not by itself a river data defect): " + s.why;
         }
 
         /// <summary>82c のメニュー (Edit モード、Begin の前): 探して CwFile に書く。例外は error に入れて書く (82c の他のケースは止めない)。</summary>
@@ -883,8 +890,8 @@ namespace KominkaHillside.Editor
                 Directory.CreateDirectory("Temp");
                 File.WriteAllText(CwFile, JsonUtility.ToJson(set, true));
             }
-            catch (Exception e) { Debug.LogWarning("[KH Course Walk] C7-wet site file not written: " + e.Message); }
-            Debug.Log("[KH Course Walk] C7-wet site: " + CwLine(set));
+            catch (Exception e) { Debug.LogWarning("[KH Course Walk] C7-wet-sim site file not written: " + e.Message); }
+            Debug.Log("[KH Course Walk] C7-wet-sim site: " + CwLine(set));
         }
 
         static VRC.Udon.UdonBehaviour CwFetch(int dog)
@@ -934,19 +941,21 @@ namespace KominkaHillside.Editor
 
         static void CallC7Wet()
         {
-            var s = TvCase("C7-wet", true, 3); var c = new CallCtx();
+            var s = TvCase("C7-wet-sim", true, 3); var c = new CallCtx();
             cwSite = null; cwLastPose = -1; cwLastAt = Vector3.zero; cwPoseHeld = false; cwReleasedAtMove = false;
             string bad = null;
             try
             {
-                if (!File.Exists(CwFile)) bad = CwFile + " missing: start 82c from its menu in Edit mode (the site is searched there)";
+                if (!File.Exists(CwFile)) bad = "SETUP_FAIL: " + CwFile + " missing: start 82c from its menu in Edit mode (the site is searched there)";
                 else cwSite = JsonUtility.FromJson<CwSite>(File.ReadAllText(CwFile));
             }
-            catch (Exception e) { bad = CwFile + " unreadable: " + e.Message; }
-            if (bad == null && cwSite == null) bad = CwFile + " empty";
-            if (bad == null && !string.IsNullOrEmpty(cwSite.error)) bad = "Edit-mode search: " + cwSite.error;
-            // 2026-10-11: 地点が無いのは未実施ではなく FAIL (ok な岸のスライスは川の Fetch の前提。このケースは NOT_RUN を使わない)
-            if (bad == null && !cwSite.found) bad = "Edit-mode search " + cwSite.utc + ": " + cwSite.why;
+            catch (Exception e) { bad = "SETUP_FAIL: " + CwFile + " unreadable: " + e.Message; }
+            if (bad == null && cwSite == null) bad = "SETUP_FAIL: " + CwFile + " empty";
+            if (bad == null && !string.IsNullOrEmpty(cwSite.error)) bad = "SETUP_FAIL: Edit-mode search: " + cwSite.error;
+            // 2026-10-11: 地点が無いのは未実施ではなく FAIL。ただし「試験の入力を作れなかった」(SETUP_FAIL) で、川のデータの不具合とは区別する
+            // (岸から 3.5 m・深さ 0.08〜0.3 m・水遊び場の外 はこのケースの追加条件で sliceOk に含まれない)。このケースは NOT_RUN を使わない
+            if (bad == null && !cwSite.found) bad = "SETUP_FAIL: no shallow bank site (test input could not be built; the extra conditions - within " + CwStandMax
+                + " m of the bank, depth " + CwWetMin + "-" + CwWadeMax + " m, outside the water-play spot, a dry stand with a path - are this case's, not sliceOk's, so this is not by itself a river data defect). Edit-mode search " + cwSite.utc + ": " + cwSite.why;
             if (bad != null) { string why = bad; s.Add(TvDo(() => { throw new InvalidOperationException(why); })); return; }
             int puppetNode = -1;
             s.Add(TvCooldown());
@@ -995,10 +1004,10 @@ namespace KominkaHillside.Editor
                 TvExpect(Get<int>(CwFetch(0), "dogState") == 0, "dog 0 idle (a chase would stop [行く] with TravelBall)");
                 cwLastPose = CwPose(0); cwLastAt = roots[0].position;
                 CwFetch(0).SetProgramVariable("_debugPoseHold", true); cwPoseHeld = true;
-                TvNote("dog 0 placed in the shallow water off the bank (simulated placement, " + places + " placement(s) until the runtime's first refresh): the runtime wrote pose " + cwLastPose + CwDogState(0)
+                TvNote("模擬 (配置と保持)。実際の同期の競合の経路は未検査. dog 0 placed in the shallow water off the bank (simulated placement, " + places + " placement(s) until the runtime's first refresh): the runtime wrote pose " + cwLastPose + CwDogState(0)
                     + "; the pose is then held (_debugPoseHold, simulated) until the ticket move is observed, because the leash walks the dog back onto the NavMesh");
             }));
-            CallGoFlow(s, c, "C7-wet", false, KH_LeashManager.JoinReasonNear, wet, () =>
+            CallGoFlow(s, c, "C7-wet-sim", false, KH_LeashManager.JoinReasonNear, wet, () =>
             {
                 if (tvDisc[0] == 0) { cwLastPose = CwPose(0); cwLastAt = roots[0].position; }
                 else CwReleasePose(true);   // 切符で動いた: ここから waterPose は本体の再計算に戻す
@@ -1019,7 +1028,7 @@ namespace KominkaHillside.Editor
                     float gap = CwGroundGap(i);
                     TvExpect(gap >= 0f && gap < .2f, "dog" + i + " stands on the ground (root - ground " + gap.ToString("F3") + " m)");
                 }
-                TvNote("C7-wet: dog 0 pose " + cwLastPose + " until its ticket move (last seen at " + cwLastAt.ToString("F2") + ", " + CwWetNow(cwLastAt) + "; hold released "
+                TvNote("C7-wet-sim: 模擬 (配置と保持)。実際の同期の競合の経路は未検査 (a sync-race leash with _waterLeashVeto is not covered). dog 0 pose " + cwLastPose + " until its ticket move (last seen at " + cwLastAt.ToString("F2") + ", " + CwWetNow(cwLastAt) + "; hold released "
                     + (cwReleasedAtMove ? "when the move was observed" : "after the flow") + "); after the move dogs 0-2 pose 0, not swimming, no float height, no play, no veto, leashed, on the ground");
             }));
         }
@@ -1033,7 +1042,7 @@ namespace KominkaHillside.Editor
                 foreach (var hook in new[] { "debugJoinLoopback", "debugAnswerCode", "debugIncomingFrom", "debugIncomingKind", "debugIncomingSeq", "debugCrossInvert" }) box.SetProgramVariable(hook, 0);
                 TvSet("debugDropTravel", 0);
                 bool held = cwPoseHeld;
-                CwReleasePose(false);   // C7-wet が途中で止まったとき、犬 0 の waterPose の保持を残さない
+                CwReleasePose(false);   // C7-wet-sim が途中で止まったとき、犬 0 の waterPose の保持を残さない
                 tvPuppetWalk = false;
                 if (tvRemote != null) ClientSimMain.RemovePlayer(tvRemote);
                 tvRemote = null;

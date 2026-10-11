@@ -5,7 +5,7 @@ system: DOG
 status: todo
 priority: Medium
 summary: 追加洗浄道具を種類ごとに選択し、泡・水・タオルを同時に出せるようにする
-next: 設計案 (docs/plans/2026-10-11-wash-items-design.md §1) のQ1〜Q3 (枠の数・基本に戻すの範囲・保持中の台切替) をユーザーが決めた後、IMP-DOG-047と1回で移行する
+next: 決定済み (2026-10-11、推奨どおり 3 枠)。IMP-DOG-047 と 1 回で KH_WashSelection を移行する。IMP-DOG-043 の作業中の区切りを確かめてから着手
 updated: 2026-10-11
 ---
 
@@ -43,3 +43,5 @@ updated: 2026-10-11
 今回は起票と確認用HTMLの用意まで。Unity・モデルの修正は未着手。
 
 2026-10-11: 設計案を [docs/plans/2026-10-11-wash-items-design.md](../../plans/2026-10-11-wash-items-design.md) §1 に作成 (推奨は泡・水・仕上げの3枠、各枠1品、枠ごとの置き場所)。ユーザーの判断待ち: Q1 枠の数、Q2「基本に戻す」の範囲、Q3 道具を持っている間の台の切替。
+
+決定: 2026-10-11 (ユーザー「推奨でOK」) [設計案](../../plans/2026-10-11-wash-items-design.md) の Q1〜Q3 を推奨どおり採用。
