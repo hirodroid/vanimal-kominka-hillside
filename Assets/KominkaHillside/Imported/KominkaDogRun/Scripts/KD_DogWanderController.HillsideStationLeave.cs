@@ -294,7 +294,9 @@ namespace KominkaDogRun
             // instead of StationTick's snap. With the stand still up and its station on: ride the stand; else ease itself.
             _leaveGroundY = GroundAfterPlacedSleep(dogRoot.position).y;   // a read (the debug writer tag only); nothing is written here
             if (dogRoot.position.y <= _leaveGroundY + 0.02f) { _leaveOwnEase = false; return false; }
-            _leaveOwnEase = !st.gameObject.activeInHierarchy || st._LiftNow() <= LeaveLowerDone;
+            // IMP-DOG-044 (2026-10-11): "down" = the stand's rest height (_LiftRest: > 0 while a platform that would sink into the slope is
+            // selected), not 0 - else the ride never ends there and the deadline snaps the dog to the ground
+            _leaveOwnEase = !st.gameObject.activeInHierarchy || st._LiftNow() <= st._LiftRest() + LeaveLowerDone;
             _leaveStation = k;   // round 6: the ride down needs it even when the walk's point failed (LeaveClear cleared it)
             _leaveLowering = true;
             float down = st.liftMax / Mathf.Max(0.05f, st.liftSpeed) + 1f;
@@ -481,7 +483,7 @@ namespace KominkaDogRun
             }
             // Round 3 (C-release 0.1 m): the stand's top at 0 is the duckboard (0.03 m over the HIGHEST ground under it), the ground
             // under the dog's centre can be lower still on a slope; that last step is eased at liftSpeed too instead of snapped
-            if (st != null && !_leaveOwnEase && st._LiftNow() <= LeaveLowerDone)
+            if (st != null && !_leaveOwnEase && st._LiftNow() <= st._LiftRest() + LeaveLowerDone)   // IMP-DOG-044: at its rest height (see StationLeaveEdge)
             {
                 _leaveOwnEase = true;
                 _leaveGroundY = GroundAfterPlacedSleep(dogRoot.position).y;

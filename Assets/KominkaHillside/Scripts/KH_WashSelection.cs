@@ -37,6 +37,11 @@ namespace KominkaHillside
         public ParticleSystem[] itemSprays;
         public AudioClip[] itemSounds;
         public float[] bathDepths;            // by item id: the support's mount depth under the platform collider
+        // IMP-DOG-044 (2026-10-11): by item id, the stand's lowest height (m) while that platform is selected here (0 = none needed: the
+        // ground under it is not higher than its bottom). Written by WashPremium/50 (measured per station), checked by 44. Declared null and
+        // optional (not in _Ready): a scene before 50 behaves as before. _Apply writes it to call.minLift on every client.
+        public float[] bathMinLifts;
+        public KH_WashStationCall call;       // this station's stand (WashPremium/50 wires it); null = no minimum height
         public Renderer[] freeTableRenderers;
         public KH_WashSupportVisual support;
         public float freeBaseY;
@@ -170,6 +175,7 @@ namespace KominkaHillside
             }
             for(int i=0;freeTableRenderers!=null&&i<freeTableRenderers.Length;i++)if(freeTableRenderers[i]!=null)freeTableRenderers[i].enabled=bath<0;
             if(support!=null){float depth=bath>=0?bathDepths[bath]:0f;support.mountBelowCollider=depth;support.baseLocalY=freeBaseY-depth;support._RefreshVisual();}
+            if(call!=null)call.minLift=bath>=0&&bathMinLifts!=null&&bath<bathMinLifts.Length?bathMinLifts[bath]:0f;   // IMP-DOG-044: derived here from the synced selectedBath (not synced itself)
             bool changed=_initialized&&(revision!=_seenRevision||appearAt>=0);
             if(animate&&changed)
             {

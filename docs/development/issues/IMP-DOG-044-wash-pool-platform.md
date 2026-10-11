@@ -5,7 +5,7 @@ system: DOG
 status: review
 priority: Medium
 summary: 洗浄台の種類にプールを追加し、洗い場ごとの写真選択から切り替えられるようにする
-next: 配置済み (2bf922e)。ユーザーの PCVR で水面の透け方・泡との描き順を確認。主洗い場で斜面に埋まる件の対処 (地形を平らにする推奨) を決める
+next: 配置済み。主洗い場の斜面は台の最低の高さ (0.22 m、プールと檜を選んだ時だけ) で解消。ユーザーの PCVR で水面の透け方・泡との描き順・主洗い場の高さと水の中の草を確認。地形を平らにする (a) などへ替えるかはユーザー
 updated: 2026-10-11
 ---
 
@@ -71,3 +71,51 @@ updated: 2026-10-11
 **見つけた問題 (ユーザーの判断待ち):** 主洗い場ではプールが地面に半分埋まり、縁だけが C の字に見える (`artifacts/wash-listings/2026-10-11-040/evidence/station.png`)。主洗い場の台の足元は斜面で、いちばん高い地面が台より 0.185 m 上にあり、台は Z ファイティングを避けてユーザーが置いた高さ (局所 y −0.028、IMP-ENV-007) のまま。高さ 0.22 m のプールは坂の上側が埋まる。候補: (a) 主洗い場の台の足元の地形を平らにする、(b) 主洗い場だけ台の基準を上げる (Z ファイティングを避けられる高さで)、(c) 主洗い場ではプールを選べなくする。推奨は (a)。道中の 3 か所は画像では確かめていない (Play で見る)。
 
 2026-10-11 (統括): 斜面に埋まるのは主洗い場だけ。Wash/12 (`293b7db` の時点) で道中の 3 か所は台が地面に乗っている: `PASS course: KH_WashStations/River (川辺): WashTable seated on the ground (local y -0.009, highest ground under it -0.009)`、`Upper (奥広場) ... (local y 0.000, highest ground under it 0.000)`、`Hillside (展望のベンチ) ... (local y 0.000, highest ground under it 0.000)`。主洗い場は `kept at the user's placement (local y -0.028; highest ground under it 0.185)`。犬ごとの大きさ (IMP-ENV-013) ではプールは拡縮しない (1.3 × 0.7 m のまま)。
+
+## 主洗い場の斜面: 台の最低の高さ (2026-10-11、未適用)
+
+**決定 (統括、元に戻せる):** 上の候補 (b) の形で、主洗い場の台の基準は動かさず、**地面に埋まる台 (プール等) を選んでいる間だけ、その洗い場の台を自動で最低の高さまで上げる**。(a) 台の足元の地形を平らにする、(c) 主洗い場ではプールを選べなくする、はユーザーの判断のために残す。選んだときの戻し方:
+
+- (a) 地形を平らにする: 台の品のいちばん低い点より地面が下がった分だけ効く。平らにした後で 50 を流し直すと、地面が台の品の底より 1 mm 以上高い所が残らなければ 0、残れば小さくなった値になる (50 は毎回測り直して書く)。
+- (c) 主洗い場でプールを選べなくする: 50 は洗い場ごとの無効化を知らず、どの洗い場でも全部の台の品を測って書く。値が残っていても選ばれなければ使われないが、選べなくするにはコードの変更が要る: 洗い場ごとの「出さない品」(例 `KH_WashSelection` の品ごとの可否の配列) を `_Valid` / `ReqSelect` と板 (`KH_WashSelectionBoard`) の表示で見て、50 はその品を 0 にする (44 も同じ規則で測る)。今は無い。
+- (b) (この節の実装) は今の方式そのもの。仕組みごと戻すなら `KH_WashSelection._Apply` の `call.minLift` を書く 1 行を外す (台は従来どおり犬がいなければ 0)。
+
+設計:
+
+- 洗い場ごと・台の品ごとの最低の高さ `KH_WashSelection.bathMinLifts[品番号]` (同期しない)。各クライアントが同期済みの `selectedBath` から `_Apply` で `KH_WashStationCall.minLift` (`[NonSerialized]`) へ書く。新しい同期変数・ネットワークイベントは無い。
+- 台の高さ = max(犬がいる間は同期した lift・いなければ 0, minLift) (`KH_WashStationCall._LiftTarget()`。`Update` は同じ式を呼び出し無しで毎フレーム計算するので、台を切り替えて minLift が変わると止まっていた台も動き出す)。**犬がいなくても台は minLift で止まる** (プールは犬の有無と関係なく表示されるため)。IMP-DOG-035 の「犬がいない時は 0」は同期した lift の規則として残り、台そのものは主洗い場でプールを選んでいる間だけ 0 に戻らない。
+- 台 ▲▼ は今まで通り同期した lift を 0.1 m 刻みで動かす。lift が minLift より低い間は台は minLift のまま (表示も今まで通り同期した lift)。0 で「台を下げる」は従来どおり何もしない。
+- 犬は `Lift/Anchor` (liftRoot の子) に乗るので台と一緒に動く。解放されて台から下りる処理 (`KD_DogWanderController.HillsideStationLeave.cs` の 2 か所) は「下り切った」を 0 ではなく `_LiftRest()` (= minLift) で判定する (0 のままだと下り切らず、期限で地面へ瞬間移動する)。そこから地面までは従来の自分で下りる処理 (liftSpeed)。支柱の見た目 (`KH_WashSupportVisual`) は台の Collider の下面を毎フレーム追う。自分の床 (`KH_WashPersonalFloor`) は変えない。
+- 値の決め方 (`WashPremium/50` と 44 が同じ関数 `FitMinLift` を使う): 台が lift 0 (Lift が洗い場の原点) のとき、台の品の模型のいちばん低い点 (メッシュの箱、洗い場の座標) と、その箱の広さ (楕円のプールは外接長方形 = 安全側) を 5 cm 格子で測った地面 (Wash/11・12 と同じ `StationGround`、地形だけ) のいちばん高い点の差が埋まり込み。1 mm 以下 (地面に乗っている。道中の洗い場) なら 0、それより深ければ 埋まり込み + 0.01 m を mm に切り上げ。0.1 m 刻みには丸めない (刻むのは同期した lift だけ)。liftMax を超えたら 50 は書かずに止まる。
+
+ファイル:
+
+- `Assets/KominkaHillside/Scripts/KH_WashStationCall.cs` (`minLift`、`_LiftRest`、`_LiftTarget`、`Update` の目標)
+- `Assets/KominkaHillside/Scripts/KH_WashSelection.cs` (`bathMinLifts`、`call`、`_Apply` で `call.minLift` を書く。`_Ready` には入れない: 50 の前のシーンは従来どおり)
+- `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogWanderController.HillsideStationLeave.cs` (下り切りの判定 2 か所)
+- `Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.MinLift.cs` (新規: メニュー `Tools/KominkaHillside/WashPremium/50 - Fit Bath Min Lift`、44 の検査 `VerifyMinLift` / `VerifyMinLiftLogic`)
+- `Assets/KominkaHillside/Scripts/Editor/KH_WashSelectionEditor.Verify.cs` (44 から上の検査を呼ぶ。45 の撮影で台を minLift へ上げる)
+- `Assets/KominkaHillside/Scripts/Editor/KH_DogWashSetupEditor.Station.cs` (`StationGround` を internal に。中身は同じ)
+- `Assets/KominkaHillside/Scripts/Editor/Testing/KH_CourseWalkHarnessEditor.WashHeight.cs` (`W-height-stand` の始めに主洗い場の台の品を無料の台へ戻す `WhFreePlatform`。期待値は変えない)
+
+50: 汚れたシーンは拒否、4 洗い場を全部測ってから書く、`call` の配線と `bathMinLifts` を書いて proxy → Udon、シーンを dirty にするだけで保存しない、2 回目は `changed=0`。記録は `Temp/WashSelection/fit-min-lift.txt`。
+44 に足した検査: 洗い場ごとに `bathMinLifts` を表示し、測り直した値と 1 mm 以内、台以外の品は 0、liftMax 以内、`call` がその洗い場の Call、backing にも同じ値。主洗い場 (stationIndex 0) で、台の品ごとと台なしについて `_Apply` → `call.minLift`、`_LiftTarget` (犬なし / lift 0 / 0.1 / liftMax) = max(lift, minLift) を Edit mode で確かめる。Wash/12 の検査は変えていない (Lift は原点、台はユーザーの置いた高さ、同期した lift の検査はそのまま)。 **44 の最低の高さの値の検査は 50 と同じ関数 `FitMinLift` で測り直すので、独立した検査ではない** (配線・backing・保存後も値が残ることと、規則の実行時の本体 `_Apply` / `_LiftTarget` を確かめる)。値が見た目に正しいことの独立の確認は、保存後に `WashPremium/45` で主洗い場をプールで撮った `artifacts/wash-listings/2026-10-11-040/evidence/station.png` (45 はプールを選んだ間だけ主洗い場の台を `_LiftRest()` = minLift まで上げて撮り、元に戻す。Edit mode では `Update` が動かないため。プールが斜面から出ているかを画で見る。犬の上り下り・遅れて入った人の高さは Play / 実機)。ハーネス `W-height-stand` (Course/100、主洗い場の台の実際の高さ 0.2 → 0.1 → 0 を見る) は始めに主洗い場の台の品を無料の台へ戻す (`KH_CourseWalkHarnessEditor.WashHeight.cs` の `WhFreePlatform`、Call.minLift が 0 であることも見る)。
+
+統括の実行順: `bash scripts/unity-compile.sh --udon` → `WashPremium/50` → `WashPremium/44` → 保存 → `Wash/12` → `WashPremium/44` (50 はシーンを dirty にし、Wash/12 は保存していないシーンを拒否する: `KH_CourseGroundEditor.Idle`)。期待: 主洗い場のプールだけ (檜も埋まるなら檜も) 0 より大きく、道中の 3 か所はおそらく 0。道中で小さな値 (例 0.012) が出たら、5 cm 格子が台の据え付け (Wash/11 の 5 点) より高い地面を見つけたということで不具合ではない (50 の記録で確かめる)。
+
+危険と残り:
+
+- 主洗い場でプールを選んでいる間、犬の立つ高さが minLift (およそ 0.2 m 程度の見込み) だけ上がる。洗う人の手の高さが合わないときは自分の床 (▲) を使う必要がある。台の表示は同期した lift (0.0 m) のままなので、表示と見た目の高さが食い違う。
+- lift が minLift より低い間の ▲ (0.1、0.2 m) は見た目が動かない。
+- 呼ばれた犬は minLift の台へ 1.5 m/s で上がる (0.2 m なら約 0.15 s)。解放後は台の最低の高さから地面まで自分で下りる (0.5 m/s。プールの床をすり抜けるように見える。縁 0.12〜0.15 m を歩いて抜けるのは道中の洗い場でも同じ)。
+- 入室直後・台を切り替えた直後は、台が 0.5 m/s で minLift まで上がる間 (0.4 s 程度) だけプールが埋まって見える。
+- 無料の台 (すのこ) の主洗い場での埋まり方は従来のまま (minLift は台の品を選んでいる時だけ)。
+- 2 人以上・遅れて入った人で同じ高さになること、犬の上り下り、主洗い場のプールの見た目は Play / 実機で確かめる。
+
+### 主洗い場の斜面: 適用 (2026-10-11、統括)
+
+適用の最初の回で、基準を「台の最低点」にしていたため、平らな道中の 3 か所まで檜・プールで 4.6〜4.8 cm 持ち上がる結果になった (有料の台の外装はもともと台の上面から 3.6〜3.8 cm 下へ沈む設計で、10-08 に了承済みの檜の見た目)。保存せずに破棄し、基準を **台の座 (`Lift/WashTable` の局所 y) より地面がどれだけ高いか** に直した (座が `Lift/WashTable` でなければ止める。Codex 短い再確認で「新基準の補正計算は問題なし」、低 2 件を反映)。
+
+結果 (`WashPremium/50`): **主洗い場 檜 0.222 m・プール 0.223 m**、道中 3 か所はすべて 0。→ 44 **1,011 PASS / FAIL 0** → 保存 → Wash/12 **FAIL 0 (5,387)** → 保存後の 44 も 1,011 PASS。撮影 45 (`artifacts/wash-listings/2026-10-11-040/evidence/station.png`) で、主洗い場のプールが地面から出て楕円の形がそのまま見えることを目視で確認。
+
+気づいた点 (Play で見る): 主洗い場ではプールの水の中に地面の草が少し突き出して見える (草の描画は地形のもの)。台を選んでいる間、主洗い場の犬は約 0.22 m 高く立つ (洗う人は自分の床の ▲ を使う)。

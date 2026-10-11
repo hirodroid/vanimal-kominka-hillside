@@ -15,6 +15,7 @@ namespace KominkaHillside.Editor
     /// W-height-floor: 自分の床。棚の東の床の上に立ち _Up ×3 → 0.3 m へ上がり、プレイヤーの足も床の上面へ (上げ終えた時の TeleportTo は 0 か 1 回)。
     ///   9 m 離れると 0 へ戻り、Collider が切れる。
     /// W-height-stand: 台。ボードの犬のボタン (柴) → 留まる、台 ▲ ×2 → liftRoot が 0.2 m 上がる、台 ▼ → 0.1 m、おわり → 解放して 0 へ。
+    ///   始めに主洗い場の台の品を無料の台へ戻す (IMP-DOG-044: プール等を選んでいると台は最低の高さ minLift より下がらない)。元には戻さない。
     ///   ボードのハンドラ (_Dog / _LiftUp / _LiftDown / _End) が Call の入口を呼ぶことも、これで見る。犬のルートの追従は別のケース (IMP-DOG-035)。
     /// W-height-board-me: ボードの 自分 ▲ ×2 → 床の目標 0.2 m、自分 ▼ ×2 → 0。
     ///
@@ -82,6 +83,7 @@ namespace KominkaHillside.Editor
                 var p = CmGround(whFloorRoot.TransformPoint(new Vector3(1.6f, 0f, 0f)), 1.5f);
                 CmTeleport(p, whStation.position - p);
                 whBoard.SendCustomEvent("_End");
+                WhFreePlatform();   // IMP-DOG-044: the stand's actual height below is the synced lift only with no premium platform's minLift
             }));
             s.Add(WsWait(0.5));
             // the dog must be free: an earlier case (call group C-fetch-busy) may leave it in a Fetch or held at a station.
@@ -180,6 +182,25 @@ namespace KominkaHillside.Editor
         {
             foreach (var u in WssPrograms("KD_DogWanderController")) if (Get<int>(u, "dogIndex") == dog) return u;
             return null;
+        }
+
+        /// <summary>IMP-DOG-044 (2026-10-11): the main station's premium platform back to the free table (selectedBath -1, applied
+        /// locally as WashPremium's PremiumClear does; the harness is the only player and the Owner), so KH_WashStationCall.minLift is 0
+        /// and liftRoot follows the synced lift alone. A scene without the premium selection: nothing to do.</summary>
+        static void WhFreePlatform()
+        {
+            var t = whStation.Find("PremiumTools");
+            var sel = t != null ? t.GetComponent<UdonBehaviour>() : null;
+            if (sel == null || sel.programSource == null || sel.programSource.name != "KH_WashSelection") { WsNote(WhStationName + ": no premium selection (minLift stays 0)"); return; }
+            int bath = Get<int>(sel, "selectedBath");
+            if (bath >= 0)
+            {
+                sel.SetProgramVariable("selectedBath", -1);
+                sel.SetProgramVariable("revision", Get<int>(sel, "revision") + 1);
+                HwInvoke(sel, "_Apply", "animate", false);
+                WsNote(WhStationName + ": premium platform " + bath + " -> the free table for this case");
+            }
+            WsExpect(Get<float>(whCall, "minLift") == 0f, WhStationName + ": Call.minLift 0 with the free table (" + Get<float>(whCall, "minLift").ToString("F3") + ")");
         }
 
         /// <summary>My floor back to 0 at once (Down x 12; the height eases down at 0.5 m/s by itself).</summary>

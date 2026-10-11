@@ -19,7 +19,8 @@ namespace KominkaHillside
     /// calls _ReleaseDog on its accept edge - 2026-10-07 audit RC-1: and every tick while the errand lasts - on every client; only
     /// the Owner's call acts), the caller leaving, the dog leashed by
     /// someone other than the caller, and idleReleaseSeconds since the last stroke (or the call) while the caller is farther than
-    /// callerFarMeters from the anchor. The stand goes back to 0 whenever no dog is held.
+    /// callerFarMeters from the anchor. The stand goes back to 0 whenever no dog is held (the synced lift; IMP-DOG-044 2026-10-11:
+    /// the stand itself rests at minLift, > 0 only while a platform that would sink into the ground is selected here).
     /// 2026-10-02: on that release edge the dog side (every client, from the synced heldDog) drops the wash hold and walks out past
     /// keepOutRadius at once, riding a raised stand down first; not when an errand or a leash took it, or another station holds it
     /// (KD_DogWanderController.HillsideStationLeave.cs). Nothing new is synced here.
@@ -105,6 +106,13 @@ namespace KominkaHillside
         // Every client: the arrival report sent for this generation (Codex 4: once, then at most once a second)
         private int _arrivedSentGen;
         private float _arrivedSentAt = -1000f;
+        // IMP-DOG-044 (2026-10-11, the main station's slope): the lowest height this stand may rest at, for the platform selected here.
+        // Not synced: every client derives it from the synced KH_WashSelection.selectedBath (KH_WashSelection._Apply writes
+        // bathMinLifts[selectedBath], or 0 with no platform / no table). The stand stands at max(synced lift with a dog / 0 without,
+        // minLift) - with a dog or without one: a premium platform whose bottom would be under the ground is raised clear of it
+        // (WashPremium/50 measures it per station and platform; 0 where the ground under it is not higher than its bottom). The synced
+        // lift and the lift buttons are unchanged (the stand simply stays at minLift while lift is below it).
+        [System.NonSerialized] public float minLift;
         // Every client
         private float _liftNow;
         private Vector3 _liftBase;
@@ -136,9 +144,15 @@ namespace KominkaHillside
         public float _StandYaw() { return standYaw; }
         public float _Lift01() { return liftMax > 0f ? Mathf.Clamp01(lift / liftMax) : 0f; }
         public float _LiftMeters() { return lift; }
-        /// <summary>This client's eased stand height (m above the base; 0 when down). The dog released from a raised stand rides it
-        /// down before it walks off (KD_DogWanderController.UpdateLeaveLowering).</summary>
+        /// <summary>This client's eased stand height (m above the base; _LiftRest() when down). The dog released from a raised stand
+        /// rides it down before it walks off (KD_DogWanderController.UpdateLeaveLowering).</summary>
         public float _LiftNow() { return _liftNow; }
+        /// <summary>IMP-DOG-044: the height the stand rests at with no dog / the lift at 0 (m): minLift of the selected platform, 0 at
+        /// most stations. The released dog's ride down ends here, not at 0.</summary>
+        public float _LiftRest() { return Mathf.Clamp(minLift, 0f, Mathf.Max(0f, liftMax)); }
+        /// <summary>IMP-DOG-044: the height every client eases the stand toward: the synced lift while a dog is held (0 without), never
+        /// below _LiftRest(). Pure (WashPremium/44 runs it in Edit mode).</summary>
+        public float _LiftTarget() { return Mathf.Max(heldDog >= 0 ? lift : 0f, _LiftRest()); }
         public int _CallerId() { return heldDog >= 0 ? callerId : -1; }
         public int _RefuseSerial() { return refuseSerial; }
         public int _RefusedDog() { return refusedDog; }
@@ -501,9 +515,12 @@ namespace KominkaHillside
             // IMP-DOG-036 S5: OwnerTick does nothing with no pending call and no held dog (its first two branches), so those own
             // fields are tested before IsOwner (which ran every frame on every client). Same result.
             if ((_pendingDog >= 0 || heldDog >= 0) && Networking.IsOwner(gameObject)) OwnerTick();
-            // Every client: ease the stand toward the synced height (0 with no dog)
+            // Every client: ease the stand toward the synced height (0 with no dog), never below the platform's minLift (IMP-DOG-044).
+            // Recomputed every frame, so a change of minLift (the platform switched) wakes the settled stand up as a lift change does.
             if (liftRoot == null || !_liftBaseOk) return;
+            // = _LiftTarget() with no call / extern on the usual frame (minLift 0); lift <= liftMax, so the clamp never goes below it
             float want = heldDog >= 0 ? lift : 0f;
+            if (minLift > want) want = _LiftRest();
             if (_liftNow == want) return;
             _liftNow = Mathf.MoveTowards(_liftNow, want, Mathf.Max(0.05f, liftSpeed) * Time.deltaTime);
             liftRoot.localPosition = _liftBase + Vector3.up * _liftNow;

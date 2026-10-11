@@ -1495,7 +1495,7 @@ namespace KominkaHillside.Editor
         /// a stand or a board is never taken for the ground (Codex 2026-09-30 7-1: the side-room check lifted its box onto
         /// whatever solid top it found). The TerrainCollider hit is used when there is one (what the players stand on),
         /// otherwise the covering Terrain's SampleHeight. No Terrain under the point: an exception (nothing is guessed).</summary>
-        static float StationGround(Transform station, Vector3 world)
+        internal static float StationGround(Transform station, Vector3 world)   // internal: WashPremium/50 / 44 (KH_WashSelectionEditor.MinLift.cs) read the same ground
         {
             Physics.SyncTransforms();
             var hits = Physics.RaycastAll(new Vector3(world.x, world.y + 3f, world.z), Vector3.down, 10f, ~0, QueryTriggerInteraction.Ignore);
