@@ -158,6 +158,22 @@ namespace KominkaHillside.Editor
                     RefCheck(v, cso, cb, "tabLabel", tabT != null ? Comp<TextMeshProUGUI>(tabT.Find("Label")) : null, c + " controls");
                 }
             }
+            // ---- 目から見た投影の非重複 (Codex M1.2 レビュー): 操作帯 / Tab / 手元メニュー と モニター、メニュー と 操作帯。保存された姿勢で計算 ----
+            var dmT = docks != null ? docks.Find(DockMonitorName) : null; var dnT = docks != null ? docks.Find(DockMenuName) : null;
+            if (dmT != null && dnT != null && ct != null)
+            {
+                Quaternion LocalRot(Transform x) { return Quaternion.Inverse(cart.transform.rotation) * x.rotation; }
+                Vector3 LocalPos(Transform x) { return cart.transform.InverseTransformPoint(x.position); }
+                var mon = Project(LocalPos(dmT), LocalRot(dmT), MonitorRect());
+                var men = Project(LocalPos(dnT), LocalRot(dnT), MenuRect());
+                var ctl = Project(LocalPos(ct), LocalRot(ct), ControlsRect());
+                var tab = Project(LocalPos(ct), LocalRot(ct), TabRect());
+                foreach (var (a, b, what) in new[] { (ctl, mon, "controls vs monitor"), (tab, mon, "tab vs monitor"), (men, mon, "menu vs monitor"), (men, ctl, "menu vs controls") })
+                {
+                    float g = AngularGap(a, b);
+                    v.Req(g >= AngularMarginDeg, c + " seen from the eye " + SeatedEyeLocal + ": " + what + " apart by " + g.ToString("F1") + " deg (>= " + AngularMarginDeg + "; " + a + " / " + b + ")");
+                }
+            }
             RefCheck(v, seatSo, seatBacking, "controls", controls, c);
             RefCheck(v, seatSo, seatBacking, "dock", dock, c);
         }

@@ -811,6 +811,7 @@ namespace KominkaHillside
 
         void DrawState()
         {
+            if (_monitorHidden) return;   // the state line is on the monitor; DrawPanel on show writes it
             _shownState = _state;
             if (stateLabel == null) return;
             string line;
@@ -857,6 +858,9 @@ namespace KominkaHillside
 
         void DrawPanel()
         {
+            // DES-WLD-004 (Codex M1.2 (2)): the monitor-only drawing is skipped while the board is hidden; _ShowMonitor (_Recall) redraws once.
+            // Filming, the permission checks, the pattern steps and TextsRefresh (the photo-page entries too) keep running
+            if (_monitorHidden) return;
             if (modeImages != null)
                 for (int m = 0; m < modeImages.Length; m++)
                     if (modeImages[m] != null) modeImages[m].color = m == _mode ? modeOnColor : modeOffColor;

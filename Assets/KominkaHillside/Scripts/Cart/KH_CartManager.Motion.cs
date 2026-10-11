@@ -52,7 +52,6 @@ namespace KominkaHillside
             if (carts == null || !EnsureRoute()) return;
             int now = Networking.GetServerTimeInMilliseconds();
             float dt = Time.deltaTime;
-            int frame = Time.frameCount;
             float t = Time.time;
             for (int c = 0; c < MaxCarts && c < carts.Length; c++)
             {
@@ -62,9 +61,8 @@ namespace KominkaHillside
                     continue;   // 駐車中・不可視のカートは何もしない
                 }
                 if (_cartT[c] == null) continue;
-                // 2026-10-12 (コスト削減): 自分のカートは毎フレーム、他人のカートは 2 フレームに 1 回 (補間なし。dt は前回からの経過)
-                bool mine = c == _myCart || c == _seatedCart;
-                if (!mine && !_snap[c] && ((frame + c) & 1) != 0) continue;
+                // 位置・回転 (距離の前進・横ずれ・yaw) は全カート毎フレーム (Codex M1.2 (1): 間引くと 30 fps で約 9 cm の段付きになる)。
+                // 間引くのは他人のカートの接地レイ (前回から 3 フレーム以上で 1 点、間は前回の高さ・ピッチの目標) だけ。区間は前回の区間から 1 歩たどるだけ
                 float step = _placedAt[c] > 0f ? t - _placedAt[c] : dt;
                 _placedAt[c] = t;
                 PlaceCart(c, now, step);
@@ -144,7 +142,7 @@ namespace KominkaHillside
             }
             else
             {
-                // 前回の当たりから 3 フレーム以上たっていれば 1 点 (2 フレームおきの更新と重なり、実際は 4 フレームに 1 回)
+                // 前回の当たりから 3 フレーム以上たっていれば 1 点 (3 フレームに 1 回。間のフレームは前回の高さの目標へ SmoothDamp)
                 if (snap || Time.frameCount - _groundFrame[c] >= 3)
                 {
                     _groundFrame[c] = Time.frameCount;
@@ -196,7 +194,8 @@ namespace KominkaHillside
                 float a = trackDistances[i];
                 float b = i + 1 < n ? trackDistances[i + 1] : trackLength;
                 if (x >= a && x < b) return i;
-                i = x >= b ? (i + 1) % n : (i + n - 1) % n;
+                // 向きは周回の符号付きの差で決める (0 跨ぎ: 末尾の区間から先頭へ、先頭から末尾へ 1 歩で行ける)
+                i = WrapSigned(x - a) > 0f ? (i + 1) % n : (i + n - 1) % n;
             }
             return TrackSegment(Wrap(x));
         }

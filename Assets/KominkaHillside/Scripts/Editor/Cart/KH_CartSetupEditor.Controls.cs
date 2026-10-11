@@ -38,15 +38,42 @@ namespace KominkaHillside.Editor
 
         /// <summary>座席の真下 (高さ 0) からの水平方向・距離と高さ。</summary>
         // Play 3 回目 (2026-10-12): 操作帯とモニターが座席から見て被らないよう、カートのローカル座標の固定値に置く (統括指示)。
-        // 目 (0, 1.25, -0.26) から: 操作帯 = 左前・低め・近め (俯角約 20°)、モニター = 左約 40°・仰角約 5°・遠め (操作帯と縦に約 25° 離れる)、メニュー = 真左
+        // Codex M1.2 レビュー (2026-10-12): 目 (0, 1.25, -0.26) から各板の外周 (モニター = 本体 840 + パターン板 500 px、手元メニュー 1140×700、操作帯 280×430 と Tab) を
+        // 方位角・仰角へ投影し、どの組も 5° 以上離れる配置を探索で決めた (操作帯の下端は肘掛け上面 0.75 m より上)。
+        // 余白: 操作帯-モニター 6.6° / Tab-モニター 6.8° / メニュー-モニター 7.2° / メニュー-操作帯 12.3°。座面の調整 (±30 cm・前後) で目が動くと余白は減る
         public static readonly Vector3 SeatedEyeLocal = new Vector3(0f, 1.25f, -0.26f);
         public const float PlacementTolerance = 0.02f;
         public static Vector3 DockMenuLocal(Vector3 seatBase) { return new Vector3(-1.15f, 1.0f, 0f); }
-        public static Vector3 DockMonitorLocal(Vector3 seatBase) { return new Vector3(-0.95f, 1.35f, 0.95f); }
+        public static Vector3 DockMonitorLocal(Vector3 seatBase) { return new Vector3(-0.70f, 1.80f, 1.15f); }
         public static Vector3 DockPhotoLocal(Vector3 seatBase) { return seatBase + new Vector3(-1f, 0f, -1f).normalized * 1.0f + Vector3.up * 1.0f; }
-        public static Vector3 ControlsLocal(Vector3 seatBase) { return new Vector3(-0.45f, 0.85f, 0.65f); }
+        public static Vector3 ControlsLocal(Vector3 seatBase) { return new Vector3(-0.40f, 1.00f, 0.50f); }
         /// <summary>面を目へ向ける姿勢: +Z = 目 → 板 (Canvas の表 -Z が目を向く。Runtime のドックと同じ約束)。上下の傾きも含む。</summary>
         public static Quaternion FaceEye(Vector3 local) { return Quaternion.LookRotation(local - SeatedEyeLocal, Vector3.up); }
+
+        // ---- 目から見た板の角度範囲 (Verify と配置探索が使う) ----
+        public const float AngularMarginDeg = 5f;
+        public struct AngleBox { public float az0, az1, el0, el1; public override string ToString() { return "az " + az0.ToString("F1") + ".." + az1.ToString("F1") + " el " + el0.ToString("F1") + ".." + el1.ToString("F1"); } }
+        /// <summary>板の局所矩形 (x0..x1, y0..y1 m、Canvas の中心が原点) を、FaceEye の姿勢で local に置いたときの目からの方位角 (右 +) と仰角 (上 +) の範囲。外周を 8 分割で標本化。</summary>
+        public static AngleBox Project(Vector3 local, Quaternion rot, Rect rect)
+        {
+            var b = new AngleBox { az0 = 1e9f, az1 = -1e9f, el0 = 1e9f, el1 = -1e9f };
+            for (int i = 0; i <= 8; i++) for (int j = 0; j <= 8; j++)
+            {
+                if (i % 8 != 0 && j % 8 != 0) continue;
+                var p = local + rot * new Vector3(Mathf.Lerp(rect.xMin, rect.xMax, i / 8f), Mathf.Lerp(rect.yMin, rect.yMax, j / 8f), 0f) - SeatedEyeLocal;
+                float az = Mathf.Atan2(p.x, p.z) * Mathf.Rad2Deg, el = Mathf.Atan2(p.y, new Vector2(p.x, p.z).magnitude) * Mathf.Rad2Deg;
+                b.az0 = Mathf.Min(b.az0, az); b.az1 = Mathf.Max(b.az1, az); b.el0 = Mathf.Min(b.el0, el); b.el1 = Mathf.Max(b.el1, el);
+            }
+            return b;
+        }
+        /// <summary>2 つの角度範囲の隔たり (度、正 = 離れている)。方位か仰角のどちらかで離れていればよい。</summary>
+        public static float AngularGap(AngleBox a, AngleBox b) { return Mathf.Max(Mathf.Max(b.az0 - a.az1, a.az0 - b.az1), Mathf.Max(b.el0 - a.el1, a.el0 - b.el1)); }
+        /// <summary>板の実寸 (m): モニター = 本体 + 右のパターン板 (KH_VideoCameraEditor)、手元メニュー = KD_TreatPouch の板 (中心がドック)、操作帯 = Body、Tab。</summary>
+        public static Rect MonitorRect() { float px = KH_VideoCameraEditor.Px; return Rect.MinMaxRect(-KH_VideoCameraEditor.CanvasPx.x * .5f * px, -KH_VideoCameraEditor.CanvasPx.y * .5f * px,
+            (KH_VideoCameraEditor.PatOffsetPxX + KH_VideoCameraEditor.PatCanvasPx.x * .5f) * px, Mathf.Max(KH_VideoCameraEditor.CanvasPx.y, KH_VideoCameraEditor.PatCanvasPx.y) * .5f * px); }
+        public static Rect MenuRect() { return Rect.MinMaxRect(-KD_TreatSetupEditor.PanelWidth * .5f * .001f, -KD_TreatSetupEditor.PanelHeight * .5f * .001f, KD_TreatSetupEditor.PanelWidth * .5f * .001f, KD_TreatSetupEditor.PanelHeight * .5f * .001f); }
+        public static Rect ControlsRect() { return Rect.MinMaxRect(-ControlsBoardSize.x * .5f * ControlsScale, -ControlsBoardSize.y * .5f * ControlsScale, ControlsBoardSize.x * .5f * ControlsScale, ControlsBoardSize.y * .5f * ControlsScale); }
+        public static Rect TabRect() { return Rect.MinMaxRect((TabPos.x - TabSize.x * .5f) * ControlsScale, (TabPos.y - TabSize.y * .5f) * ControlsScale, (TabPos.x + TabSize.x * .5f) * ControlsScale, (TabPos.y + TabSize.y * .5f) * ControlsScale); }
 
         static Quaternion FaceAway(Vector3 from, Vector3 pos)
         {
