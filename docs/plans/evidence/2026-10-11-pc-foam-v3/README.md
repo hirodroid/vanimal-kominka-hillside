@@ -1,5 +1,7 @@
 # PC連続泡 v3 — 実装候補の記録
 
+> 2026-10-11追記：ユーザー判断で立体泡を撤回し、元のシェーダー方式へ復元済み。このページは不採用となった候補の履歴。[復元の検査記録](rollback.txt)。
+
 2026-10-11。密集球を不採用としたユーザー画像を受けた再設計。仕様は [設計書 §17](../../2026-10-11-pc-shampoo-foam-design.md)、状態は [IMP-DOG-052](../../../development/issues/IMP-DOG-052-pc-volumetric-shampoo-foam.md)。外観方式v3、生成・Runtime互換Version2。実機採用の証拠ではない。
 
 ## 比較画像

@@ -1,0 +1,17 @@
+2026-10-11 PC foam rollback to 278fcb1
+Removed files: 87; original source files: 2
+Scene: 42 added documents removed, 18 original documents restored. Seven stale DynamicMaterials references removed separately.
+Unrelated scene changes preserved. Separate cart design commit retained.
+C# errors=0; Udon errors=0
+D independent review: removed 44 GUIDs have no remaining references in Assets/Packages/ProjectSettings.
+Working scene SHA256=e32f2b5f90fb32f0e902c747f60a8d159c06eea5957a830753d12f21391ca44a
+Commit scene SHA256=f1eb736d7c9e9161b953e21064ceabe3900cb8cf36cbd905a98ea3c465f8f334
+KH_Wash_Shiba originalShell=KH_WashShellMat_Shiba passes=5 backingClean=true
+KH_Wash_Corgi originalShell=KH_WashShellMat_Corgi passes=5 backingClean=true
+KH_Wash_Pome originalShell=KH_WashShellMat_Pome passes=5 backingClean=true
+KH_Wash_Lab originalShell=KH_WashShellMat_Lab passes=5 backingClean=true
+KH_Wash_Dachs originalShell=KH_WashShellMat_Dachs passes=5 backingClean=true
+KH_Wash_Samoyed originalShell=KH_WashShellMat_Samoyed passes=5 backingClean=true
+PASS six original shells; no PC foam roots/backing/compiled symbols; scene unchanged
+
+No Play/device benchmark/upload. User selected the original experience; no numeric performance claim.

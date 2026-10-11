@@ -825,7 +825,6 @@ namespace KominkaHillside.Editor
             if (WsGroup("hand") || WsGroup("hand-bottle")) MakeWashHandCases();    // IMP-DOG-039 (WashHand.cs): the bottle, the bare hands (simulated), the picture guide. Before "dogs" (it re-binds wsWash)
             if ((WsGroup("premium") || WsGroup("premium-input") || WsGroup("premium-other") || WsGroup("premium-free") || WsGroup("premium-water")) && UnityEngine.Object.FindObjectsOfType<KH_WashSelection>(true).Length>0) MakeWashPremiumCases();
             if (WsGroup("dogs")) MakeWashDogsCases();     // IMP-DOG-030 (WashDogs.cs): all six wired, Dachs foam, the others unchanged. Last: re-binds wsWash to the Dachs
-            if (WsGroup("pc-foam") && EditorUserBuildSettings.activeBuildTarget==BuildTarget.StandaloneWindows64) MakeWashPCFoamCases();
 
             WsWrite();
         }
