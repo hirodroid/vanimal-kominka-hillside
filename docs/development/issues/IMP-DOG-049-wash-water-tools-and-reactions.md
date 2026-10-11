@@ -406,3 +406,13 @@ PCVR・2 人・Quest / Android の確認は「未確認」として残す (こ�
 C# / U# コンパイル 0 → Codex 独立レビュー (90° を超える前傾での折り返し → `Atan2`、停止時の粒子量の戻し → `RestModel` で `FlowReset`、文言。統括が修正し 44 に 120° の確認を追加) → 21b → `WashPremium/49` (4 洗い場で `pulse WateringCan 0 -> -2`、作成 0) → 44 **969 PASS / FAIL 0** (傾きの測り方 24/30/45/60/120° → 24.00/30.00/45.00/60.00/120.00、横 45° → 0.00、Desktop の 60° の傾きで握りの移動 0.00 mm、押してもトグルしない) → 保存 → 21: 1 回目は「保全」で FAIL、差分 (`runtime-diff.txt`、21 に失敗時の差分の書き出しを追加) は展望のベンチの水の枠の `pulseSeconds 0 -> -2` の 1 行だけで、意図した変更と確認してから 21b で基準を取り直し **21 PASS** → Wash/12 **FAIL 0 (5,387)**: 6 犬種とも顎は +20° で下に開く (あご下の頂点が 4.6〜25.6 mm 下がり、鼻との間が 8.7→12.6 〜 49.1→74.5 mm に広がる) → 保存後の 44 も 969 PASS。シーンの差分は 4 洗い場の `pulseDurations[6]` と道具 1 つの `pulseSeconds` (と実行時用データ) だけ。
 
 これで段 A・段 B・じょうろの傾けて注ぐまで、この Issue の実装はすべて入った。残りはユーザーの確認 (上の「ユーザーの確認」、じょうろは VR の Grip で持った瞬間に注がないか) と、2 人・Quest / Android。
+
+### ClientSim ハーネス (2026-10-11、統括)
+
+回す前に Codex に相談 (vrc-review 相談モード): 「回す。ただし 100p1 の `P-selection-water-tilt` と 100p3 の `P-free-shower-regression` の 2 ケースだけ。100p2 は 44 で判断と適用を確認済みで初回の最小範囲から外す、100f の `W-height-stand` は無料台へ戻すので minLift > 0 は確かめられない」。
+
+- `Course/100p1` (premium-input): run `20261011-065712` **WASH_PASS** (1 ケース、sceneUnchanged true)。3 枠の UI → Owner の応答、じょうろの傾けて注ぐ (Desktop の傾け。VR の手の傾きは ClientSim では届かない)、泡の入れ替え、3 本同時。
+- `Course/100p3` (premium-free): run `20261011-065847` **WASH_PASS** (1 ケース、sceneUnchanged true)。無料シャワーのトグル・Drop で止まる・リセット。
+- 起動の 1 回目はどちらも `ExecuteMenuItem` の空応答で NOT_EXECUTED (vrc-synaptic-unity の既知の間欠)。Unity の状態を確かめて再試行した。
+
+ハーネスで未確認のまま残すもの: 水鉄砲・ホースの入力 (1 発の共有を含む)、犬の水の反応 (ケース未作成。実際のストロークの経路を通すケースが要る)、台の最低の高さへの移動と犬の降台、100p2 の残りのケース。2 人・VR の手の傾きは ClientSim では確かめられない。
