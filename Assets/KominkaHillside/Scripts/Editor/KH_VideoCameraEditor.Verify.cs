@@ -353,10 +353,9 @@ namespace KominkaHillside.Editor
             for (int r = 0; r < rows; r++) if (Mathf.RoundToInt(t[r * cols + KH_VideoCamera.ColMode]) == KH_VideoCamera.ModeConvoy) inTable++;
             Check(inTable == 0, "M2 隊列 is in no pattern (" + inTable + " rows of the cut table)");
             string src = string.Concat(Directory.GetFiles("Assets/KominkaHillside/Scripts", "KH_VideoCamera*.cs").Where(f => !f.EndsWith(".meta")).Select(File.ReadAllText));
-            Check(Regex.IsMatch(src, @"case ModeConvoy: return Convoy(dt);") && Regex.IsMatch(src, @"public void _Mode10() { SetMode(10); }"),
+            Check(src.Contains("case ModeConvoy: return Convoy(dt);") && src.Contains("public void _Mode10() { SetMode(10); }"),
                 "M2 隊列: the switch runs Convoy and the button event _Mode10 exists");
-            Check(Regex.IsMatch(src, @"if (!riding) {[^}
-]*return Tps(dt); }"), "M2 隊列: while I do not ride it is 背中ごし (Tps)");
+            Check(Regex.IsMatch(src, @"if \(!riding\) \{[^}\n]*return Tps\(dt\); \}"), "M2 隊列: while I do not ride it is 背中ごし (Tps)");
             // the pose math (the same static functions the runtime calls)
             Vector3 p = KH_VideoCamera.ConvoyPos(Vector3.zero, Vector3.forward, ConvoyBackDeg, ConvoyElevDeg, 10f);
             float elev = Mathf.Asin(Mathf.Clamp(p.y / 10f, -1f, 1f)) * Mathf.Rad2Deg, back = Mathf.Atan2(p.x, -p.z) * Mathf.Rad2Deg;
