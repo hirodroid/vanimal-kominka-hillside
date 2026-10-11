@@ -1,0 +1,12 @@
+{
+  "note": "DES-WLD-004 M2: KH_CartManager の調整値。Cart/1 Build と Cart/4 Apply Tuning が読んで Manager へ書く (SerializedObject -> CopyProxyToUdon)。単位: m, m/s, s, 度",
+  "speed": 1.3,
+  "gap": 3.0,
+  "lateral": 0.6,
+  "approach": 25.0,
+  "holdTimeoutSec": 60.0,
+  "seatStep": 0.05,
+  "yawStep": 15.0,
+  "laneOffset": 0.55,
+  "groundSmoothTime": 0.08
+}

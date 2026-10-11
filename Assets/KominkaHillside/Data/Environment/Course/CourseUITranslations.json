@@ -539,6 +539,30 @@
         {
           "key": "cart.seat.back",
           "text": "前後 ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "すれ違い待ち。自動で進みます"
+        },
+        {
+          "key": "cart.guide",
+          "text": "お手入れ道具の案内"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "受付停止"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "到着中"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "ばにまるのお手入れ道具"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "散歩のあとは、お手入れ道具で洗ってあげよう"
         }
       ]
     },
@@ -1078,6 +1102,30 @@
         {
           "key": "cart.seat.back",
           "text": "Fore/aft ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "Waiting to pass. It will move on its own"
+        },
+        {
+          "key": "cart.guide",
+          "text": "Grooming tools guide"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "Closed"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "Arriving"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "VAnimal grooming tools"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "After the walk, wash your dog with the grooming tools"
         }
       ]
     },
@@ -1617,6 +1665,30 @@
         {
           "key": "cart.seat.back",
           "text": "Вперёд/назад ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "Ждём встречных. Поедем сами"
+        },
+        {
+          "key": "cart.guide",
+          "text": "О средствах ухода"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "Приём закрыт"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "Прибывает"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "Средства ухода VAnimal"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "После прогулки помойте собаку средствами ухода"
         }
       ]
     },
@@ -2156,6 +2228,30 @@
         {
           "key": "cart.seat.back",
           "text": "Вперед/назад ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "Чекаємо зустрічних. Поїдемо самі"
+        },
+        {
+          "key": "cart.guide",
+          "text": "Про засоби догляду"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "Прийом закрито"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "Прибуває"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "Засоби догляду VAnimal"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "Після прогулянки помийте собаку засобами догляду"
         }
       ]
     },
@@ -2695,6 +2791,30 @@
         {
           "key": "cart.seat.back",
           "text": "앞뒤 ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "교행 대기 중. 자동으로 출발해요"
+        },
+        {
+          "key": "cart.guide",
+          "text": "손질 도구 안내"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "받지 않음"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "도착 중"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "VAnimal 손질 도구"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "산책 후에는 손질 도구로 씻겨 주세요"
         }
       ]
     },
@@ -3234,6 +3354,30 @@
         {
           "key": "cart.seat.back",
           "text": "Vor/zurück ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "Warten auf Gegenverkehr. Fährt von selbst weiter"
+        },
+        {
+          "key": "cart.guide",
+          "text": "Pflegewerkzeuge ansehen"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "Geschlossen"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "Kommt an"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "VAnimal Pflegewerkzeuge"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "Nach dem Spaziergang den Hund mit den Pflegewerkzeugen waschen"
         }
       ]
     },
@@ -3773,6 +3917,30 @@
         {
           "key": "cart.seat.back",
           "text": "前后 ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "等待会车，会自动前进"
+        },
+        {
+          "key": "cart.guide",
+          "text": "护理用品介绍"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "不接受"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "即将到达"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "VAnimal 护理用品"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "散步之后，用护理用品给狗狗洗澡吧"
         }
       ]
     },
@@ -4312,6 +4480,30 @@
         {
           "key": "cart.seat.back",
           "text": "Adelante/atrás ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "Esperando para cruzar. Seguirá solo"
+        },
+        {
+          "key": "cart.guide",
+          "text": "Guía de útiles de aseo"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "Cerrado"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "Llegando"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "Útiles de aseo VAnimal"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "Después del paseo, lava a tu perro con los útiles de aseo"
         }
       ]
     },
@@ -4851,6 +5043,30 @@
         {
           "key": "cart.seat.back",
           "text": "Avant/arrière ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "Attente de croisement. Repart tout seul"
+        },
+        {
+          "key": "cart.guide",
+          "text": "Guide des outils de toilettage"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "Fermé"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "Arrivée"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "Outils de toilettage VAnimal"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "Après la promenade, lave ton chien avec les outils de toilettage"
         }
       ]
     },
@@ -5390,6 +5606,30 @@
         {
           "key": "cart.seat.back",
           "text": "Frente/trás ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "Aguardando passagem. Segue sozinho"
+        },
+        {
+          "key": "cart.guide",
+          "text": "Guia de itens de cuidado"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "Fechado"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "Chegando"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "Itens de cuidado VAnimal"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "Depois do passeio, dê banho no seu cão com os itens de cuidado"
         }
       ]
     },
@@ -5929,6 +6169,30 @@
         {
           "key": "cart.seat.back",
           "text": "Avanti/indietro ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "In attesa di incrocio. Ripartirà da solo"
+        },
+        {
+          "key": "cart.guide",
+          "text": "Guida agli strumenti di cura"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "Chiuso"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "In arrivo"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "Strumenti di cura VAnimal"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "Dopo la passeggiata, lava il cane con gli strumenti di cura"
         }
       ]
     },
@@ -6468,6 +6732,30 @@
         {
           "key": "cart.seat.back",
           "text": "Przód/tył ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "Czekamy na mijankę. Ruszy sam"
+        },
+        {
+          "key": "cart.guide",
+          "text": "Przewodnik po akcesoriach"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "Zamknięte"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "Dojeżdża"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "Akcesoria pielęgnacyjne VAnimal"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "Po spacerze umyj psa akcesoriami pielęgnacyjnymi"
         }
       ]
     },
@@ -7011,6 +7299,30 @@
         {
           "key": "cart.seat.back",
           "text": "前後 ▼"
+        },
+        {
+          "key": "cart.result.waiting",
+          "text": "等待會車，會自動前進"
+        },
+        {
+          "key": "cart.guide",
+          "text": "護理用品介紹"
+        },
+        {
+          "key": "cart.row.closed",
+          "text": "不接受"
+        },
+        {
+          "key": "cart.row.ending",
+          "text": "即將到達"
+        },
+        {
+          "key": "cart.sign.caption",
+          "text": "VAnimal 護理用品"
+        },
+        {
+          "key": "cart.station.pr",
+          "text": "散步之後，用護理用品給狗狗洗澡吧"
         }
       ]
     }

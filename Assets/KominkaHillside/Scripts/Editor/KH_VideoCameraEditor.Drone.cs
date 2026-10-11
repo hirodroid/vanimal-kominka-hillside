@@ -135,8 +135,9 @@ namespace KominkaHillside.Editor
             Check(v != null, "KH_VideoCamera (Video/1)");
             if (v == null) return;
             var vb = UdonSharpEditorUtility.GetBackingUdonBehaviour(v);
-            // ---- 10 modes (§16: 手元 / 見下ろす out, 背中ごし / みち in; the list itself is checked by Video/2) ----
-            Check(KH_VideoCamera.ModeCount == 10 && KH_VideoCamera.ModeWord(KH_VideoCamera.ModeTps) == "背中ごし" && KH_VideoCamera.ModeWord(KH_VideoCamera.ModePath) == "みち", "10 modes with 背中ごし and みち");
+            // ---- 11 modes (§16: 手元 / 見下ろす out, 背中ごし / みち in; DES-WLD-004 M2: 隊列 at the end; the list itself is checked by Video/2) ----
+            Check(KH_VideoCamera.ModeCount == 11 && KH_VideoCamera.ModeWord(KH_VideoCamera.ModeTps) == "背中ごし" && KH_VideoCamera.ModeWord(KH_VideoCamera.ModePath) == "みち"
+                && KH_VideoCamera.ModeConvoy == KH_VideoCamera.ModeCount - 1 && KH_VideoCamera.ModeWord(KH_VideoCamera.ModeConvoy) == "隊列", "11 modes with 背中ごし, みち and 隊列 (the last button)");
             var words = Enumerable.Range(0, KH_VideoCamera.ModeCount).Select(KH_VideoCamera.ModeWord).ToArray();
             Check(!words.Contains("おかえり") && !words.Contains("ふれあい") && !words.Contains("手元") && !words.Contains("見下ろす") && words.Distinct().Count() == words.Length && !words.Contains("?"),
                 "おかえり / ふれあい / 手元 / 見下ろす are gone; every mode has its own label");

@@ -222,6 +222,7 @@ namespace KominkaHillside
             groupDir[g] = dir;
             groupAccepting[g] = true;
             groupCount[g] = 1;
+            groupLane[g] = 0; groupHoldDist[g] = -1f; groupHoldSinceMs[g] = 0;   // M2: 交通の状態は空から
             groupAnchorDist[g] = Wrap(start);
             groupAnchorMs[g] = Networking.GetServerTimeInMilliseconds() + departDelayMs;
             cartState[c] = CartRiding;

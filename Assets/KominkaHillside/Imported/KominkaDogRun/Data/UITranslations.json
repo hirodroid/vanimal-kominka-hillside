@@ -3257,6 +3257,10 @@
           "text": "みち"
         },
         {
+          "key": "video.mode.convoy",
+          "text": "隊列"
+        },
+        {
           "key": "video.mode.welcome",
           "text": "おかえり"
         },
@@ -6946,6 +6950,10 @@
         {
           "key": "video.mode.path",
           "text": "Trail"
+        },
+        {
+          "key": "video.mode.convoy",
+          "text": "Convoy"
         },
         {
           "key": "video.mode.welcome",
@@ -10639,6 +10647,10 @@
           "text": "Тропа"
         },
         {
+          "key": "video.mode.convoy",
+          "text": "Колонна"
+        },
+        {
           "key": "video.mode.welcome",
           "text": "С возвращением"
         },
@@ -14328,6 +14340,10 @@
         {
           "key": "video.mode.path",
           "text": "Стежка"
+        },
+        {
+          "key": "video.mode.convoy",
+          "text": "Колона"
         },
         {
           "key": "video.mode.welcome",
@@ -18021,6 +18037,10 @@
           "text": "길"
         },
         {
+          "key": "video.mode.convoy",
+          "text": "행렬"
+        },
+        {
           "key": "video.mode.welcome",
           "text": "어서 와"
         },
@@ -21710,6 +21730,10 @@
         {
           "key": "video.mode.path",
           "text": "Weg"
+        },
+        {
+          "key": "video.mode.convoy",
+          "text": "Kolonne"
         },
         {
           "key": "video.mode.welcome",
@@ -25403,6 +25427,10 @@
           "text": "沿路"
         },
         {
+          "key": "video.mode.convoy",
+          "text": "车队"
+        },
+        {
           "key": "video.mode.welcome",
           "text": "欢迎回来"
         },
@@ -29092,6 +29120,10 @@
         {
           "key": "video.mode.path",
           "text": "Camino"
+        },
+        {
+          "key": "video.mode.convoy",
+          "text": "Caravana"
         },
         {
           "key": "video.mode.welcome",
@@ -32785,6 +32817,10 @@
           "text": "Chemin"
         },
         {
+          "key": "video.mode.convoy",
+          "text": "Convoi"
+        },
+        {
           "key": "video.mode.welcome",
           "text": "Bon retour"
         },
@@ -36474,6 +36510,10 @@
         {
           "key": "video.mode.path",
           "text": "Caminho"
+        },
+        {
+          "key": "video.mode.convoy",
+          "text": "Comboio"
         },
         {
           "key": "video.mode.welcome",
@@ -40167,6 +40207,10 @@
           "text": "Sentiero"
         },
         {
+          "key": "video.mode.convoy",
+          "text": "Convoglio"
+        },
+        {
           "key": "video.mode.welcome",
           "text": "Bentornato"
         },
@@ -43856,6 +43900,10 @@
         {
           "key": "video.mode.path",
           "text": "Ścieżka"
+        },
+        {
+          "key": "video.mode.convoy",
+          "text": "Kolumna"
         },
         {
           "key": "video.mode.welcome",
@@ -47551,6 +47599,10 @@
         {
           "key": "video.mode.path",
           "text": "沿路"
+        },
+        {
+          "key": "video.mode.convoy",
+          "text": "車隊"
         },
         {
           "key": "video.mode.welcome",

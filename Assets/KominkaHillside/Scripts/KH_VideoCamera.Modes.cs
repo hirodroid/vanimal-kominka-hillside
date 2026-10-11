@@ -11,7 +11,7 @@ namespace KominkaHillside
     /// of this subject for lostHoldSeconds, then shows black).
     /// This file: the switch, the shared heading, 犬追従 / じぶん (W1) and every static pose formula (the runtime and the Edit-mode probe Video/2b
     /// call the same functions). The walk modes are in KH_VideoCamera.ModesWalk.cs, the play modes in KH_VideoCamera.ModesPlay.cs, 背中ごし / みち
-    /// (§16) in KH_VideoCamera.ModesPath.cs.
+    /// (§16) and 隊列 (DES-WLD-004 M2) in KH_VideoCamera.ModesPath.cs.
     /// </summary>
     public partial class KH_VideoCamera
     {
@@ -44,6 +44,7 @@ namespace KominkaHillside
                 case ModeOrbit: return Orbit(dt);
                 case ModePassBy: return PassBy(dt, now);
                 case ModePath: return PathMove(dt, now);   // §16: always me
+                case ModeConvoy: return Convoy(dt);   // DES-WLD-004 M2: my cart group (背中ごし while I do not ride), KH_VideoCamera.ModesPath.cs
                 case ModeWelcome: return Welcome(dt);   // §17: internal (patterns only), KH_VideoCamera.ModesPlay.cs
             }
             return false;
@@ -59,6 +60,7 @@ namespace KominkaHillside
             _orbitHave = false; _orbitEnded = false;   // §16: a new orbit starts its radius and angle again
             _tpsHave = false;
             _pathHave = false; _pathTrailAt = 0f;
+            _convoyHave = false; _convoyRiding = false;   // DES-WLD-004 M2 隊列
             _passIdx = -1; _passLast = -1;   // the pass history must not survive a reopen / mode re-entry
         }
 
@@ -234,6 +236,35 @@ namespace KominkaHillside
 
         /// <summary>§16 背中ごし look point: ahead metres in front of the head, drop up (negative = down): over the shoulder, where I look.</summary>
         public static Vector3 TpsLook(Vector3 head, Vector3 fwd, float ahead, float drop) { return head + fwd * ahead + Vector3.up * drop; }
+
+        /// <summary>DES-WLD-004 M2 隊列: the distance at which a convoy of this size (m) fills fill of the screen height at this vertical FOV,
+        /// clamped distMin..distMax. Not FrameDistanceFor: that one treats a size of 14 m or more as invalid (a long convoy is not).</summary>
+        public static float ConvoyDistance(float size, float fill, float fov, float distMin, float distMax)
+        {
+            if (!(size > 0f)) size = 0f;   // NaN-safe
+            fill = Mathf.Clamp(fill, 0.06f, 0.95f);
+            float half = Mathf.Clamp(fov, 10f, 120f) * 0.5f * Mathf.Deg2Rad;
+            return Mathf.Clamp((size / fill) * 0.5f / Mathf.Tan(half), distMin, distMax);
+        }
+
+        /// <summary>DES-WLD-004 M2 隊列 position: from the centre, dist metres toward the back of the travel direction fwd turned backDeg to its
+        /// right, elevDeg above the horizontal.</summary>
+        public static Vector3 ConvoyPos(Vector3 centre, Vector3 fwd, float backDeg, float elevDeg, float dist)
+        {
+            Vector3 f = new Vector3(fwd.x, 0f, fwd.z);
+            f = f.sqrMagnitude > 0.0001f ? f.normalized : Vector3.forward;
+            Vector3 right = new Vector3(f.z, 0f, -f.x);
+            float b = backDeg * Mathf.Deg2Rad, e = elevDeg * Mathf.Deg2Rad;
+            Vector3 h = -f * Mathf.Cos(b) + right * Mathf.Sin(b);
+            return centre + (h * Mathf.Cos(e) + Vector3.up * Mathf.Sin(e)) * dist;
+        }
+
+        /// <summary>DES-WLD-004 M2 隊列 framing size: the carts' radius around their centre (×2) plus the dogs' margin, or the radius with the dogs
+        /// (×2) when a dog is further out, plus one cart body.</summary>
+        public static float ConvoySize(float cartRadius, float allRadius, float dogMargin, float cartSize)
+        {
+            return Mathf.Max(2f * cartRadius + dogMargin, 2f * allRadius) + cartSize;
+        }
 
         /// <summary>§16 みち: the trail's direction turned to agree with my heading (the trail segment's sign is arbitrary).</summary>
         public static Vector3 PathTrailDir(Vector3 trail, Vector3 heading)

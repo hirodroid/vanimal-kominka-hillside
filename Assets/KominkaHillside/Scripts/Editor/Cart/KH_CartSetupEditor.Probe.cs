@@ -30,6 +30,7 @@ namespace KominkaHillside.Editor
             public List<string> arrivals = new List<string>();
             public float trackLength, closingSegment;   // M1.1
             public string noLateral;
+            public List<string> traffic = new List<string>();   // M2
             public string limitations = "Edit-mode math only: route proxy methods (if present) and the contract formulas evaluated in C#. Does not run KH_CartManager, server time, ground raycasts, SmoothDamp, stations or networking.";
         }
 
@@ -330,6 +331,7 @@ namespace KominkaHillside.Editor
             }
             catch (TargetInvocationException ex) { pr.Req(false, "track function threw in Edit mode: " + (ex.InnerException != null ? ex.InnerException.Message : ex.Message)); }
             ProbeTrackArrivals(pr, mgr, so, want, route);
+            ProbeTraffic(pr, mgr);
         }
 
         /// <summary>軌道の距離での開始・向き・残距離・到着 (Codex M1.1 レビュー 3)。期待値は保存済みの spotTrackDistance / destTrackDistance / trackLength から計算し、

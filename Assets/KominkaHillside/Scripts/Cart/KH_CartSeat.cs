@@ -25,6 +25,7 @@ namespace KominkaHillside
         public KH_CartStopButton stopButton, acceptButton;   // 子 GameObject (Interact を受ける。M1.1: 左右とも停止 (kind 0)。kind 1 ならマスターだけ)
         public KH_CartControls controls;   // M1.1: 左斜め前の操作帯 (null 可)
         public KH_CartDock dock;           // M1.1: 乗車中に板を寄せるドック (null 可)
+        public TMPro.TextMeshProUGUI signCaption;   // M2: 背面掲示の下の 1 行 (cart.sign.caption。言語の変化で書き直す。null 可)
 
         public const float SeatStep = 0.05f, YawStep = 15f;   // 座席の 1 段 (m / 度)
         private bool _seatReady;
@@ -58,8 +59,11 @@ namespace KominkaHillside
             EnsureSeatDefault();
             _seatH = steps; _seatY = yawSteps; _seatF = fwdSteps;
             // 前後は車体の前 (ローカル +z) へ 5 cm/段 (2026-10-12 追加要望)
-            seat.localPosition = new Vector3(_seatPos.x, _seatPos.y + steps * SeatStep, _seatPos.z + fwdSteps * SeatStep);
-            seat.localRotation = Quaternion.Euler(0f, yawSteps * YawStep, 0f) * _seatRot;
+            // M2: 1 段の量は manager の調整値 (seatStep / yawStep。tuning.json から Build が書く)。無ければ既定の定数
+            float step = manager != null && manager.seatStep > 0f ? manager.seatStep : SeatStep;
+            float yawStep = manager != null && manager.yawStep > 0f ? manager.yawStep : YawStep;
+            seat.localPosition = new Vector3(_seatPos.x, _seatPos.y + steps * step, _seatPos.z + fwdSteps * step);
+            seat.localRotation = Quaternion.Euler(0f, yawSteps * yawStep, 0f) * _seatRot;
         }
 
         // 既定の座席の姿勢は、最初に動かす前に 1 回だけ控える (Start の順は保証されないので _ApplySeat からも呼ぶ)
@@ -161,6 +165,8 @@ namespace KominkaHillside
             if (stopButton != null) stopButton._RefreshText();
             if (acceptButton != null) acceptButton._RefreshText();
             if (controls != null) controls._RefreshText();
+            // M2: 背面掲示の下の 1 行 (manager の最初の 1 秒の見回りで初回も書かれる)
+            if (signCaption != null && manager != null && manager.language != null) signCaption.text = manager.language._Text("cart.sign.caption");
         }
 
         public override void OnStationEntered(VRCPlayerApi player)

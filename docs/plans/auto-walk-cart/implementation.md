@@ -270,6 +270,12 @@ Motion: 横ずれは `groupLane` で決める (0 = 従来の千鳥、1 = 右へ 
 - 乗り場パネル: 受付 OFF / 終了中のグループも行に出し、`cart.result.closed` の短縮形 (`cart.row.closed`「受付停止」/ `cart.row.ending`「到着中」) を人数の後ろに付け、ボタンは無効表示 (押しても `CartClosed`)。
 - 調整値: `speed / gap / lateral / approach / holdTimeoutSec / seatStep / yawStep` を public のまま、Editor の `Data/Cart/tuning.json` から Build が書く (下記)。
 
+Runtime 実装で決めたこと (2026-10-12):
+- 判定は副作用なしの公開メソッド (Probe が Reflection で呼ぶ): `int TrafficDecide(float myLead, int myDir, int myCount, int myGroup, float otherLead, int otherDir, int otherCount, int otherGroup, float zoneFrom, float zoneTo)` (0 進む / 1 手前で待つ / 2 自分が区間内) と `float TrafficHoldDistance(float myLead, int myDir, int zone)` (待機距離。越えていれば先頭の距離、範囲外 −1)。最後尾は `lead − dir·(count−1)·gap`。
+- 待機中は先頭が待機点で止まり、後続は間隔を保って止まる (目的地の clamp と違い詰めない)。解除・タイムアウトで錨を今の先頭距離・今の時刻へ打ち直す。タイムアウト後 20 s は同じグループを待たせない。到着中 (Ending) のグループに待機は残さない。
+- 接地の高さの平滑化は新しい `groundSmoothTime = 0.08` (既存の `smoothTime` はシーンに 0.25 が保存されているのでピッチ用に残す)。
+- 追加の配線 (任意): `KH_CartControls.guideTab` (int、−1 = 開くだけ)、`KH_CartSeat.signCaption`、`KH_CartStationPanel.prLabel / photo`。
+
 ### Editor
 
 1. **道幅の分類** (Build、`.Track.cs`): 軌道の各区間の中点で、進行方向の左右へ 0.25 m 刻みに `NavMesh.SamplePosition` (半径 0.3) が通る幅を測り (最大 4 m)、左右合計の通行幅 W を得る。class 0: W ≥ 3.4、class 1: 2.2 ≤ W < 3.4、class 2: W < 2.2 または `linkAllowsDetour = false` (橋)。連続する class 2 を区間にまとめ、前後 1.5 m の余裕を足す。待機点は区間端から `3 m + gap×4` 手前で class ≤ 1 の最初の点。`trackClass / narrowFrom / narrowTo / waitBefore / waitAfter` を Manager へ書く。build.json に class ごとの延長と区間一覧を出す。

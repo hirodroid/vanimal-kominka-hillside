@@ -139,12 +139,12 @@ namespace KominkaHillside.Editor
                         if (b == null) { v.Req(false, c + " controls button " + ControlNames[k]); continue; }
                         EventCheck(v, b.gameObject, cb, ControlEvents[k], c + " controls");
                         var brt2 = (RectTransform)b; var lab = Comp<TextMeshProUGUI>(b.Find("Label"));
-                        v.Req(brt2.anchoredPosition == ControlPos(k) && brt2.sizeDelta == ControlsButtonSize && lab != null && lab.text == Ja(ControlKeys[k]),
+                        v.Req(brt2.anchoredPosition == ControlPos(k) && brt2.sizeDelta == ControlSize(k) && lab != null && lab.text == Ja(ControlKeys[k]),
                             c + " controls " + ControlNames[k] + " at " + ControlPos(k) + " (2 x 5 grid, pairs side by side), label '" + (lab != null ? lab.text : "") + "' = " + ControlKeys[k]);
                         buttons[k] = b.gameObject; labels[k] = Comp<TextMeshProUGUI>(b.Find("Label"));
                     }
                     var bodyT = board.Find(BodyName); var tabT = board.Find(TabName);
-                    v.Req(board.childCount == 2 && bodyT != null && tabT != null && bodyT.childCount == ControlEvents.Length, c + " controls board = Body (" + ControlEvents.Length + " buttons) + Tab outside Body (actual board " + board.childCount + ", body " + (bodyT != null ? bodyT.childCount : -1) + "; no leftover layout)");
+                    v.Req(board.childCount == 2 && bodyT != null && tabT != null && bodyT.childCount == ControlEvents.Length + 1 && bodyT.Find(NoteName) != null, c + " controls board = Body (" + ControlEvents.Length + " buttons + Note) + Tab outside Body (actual board " + board.childCount + ", body " + (bodyT != null ? bodyT.childCount : -1) + "; no leftover layout)");
                     if (tabT != null) EventCheck(v, tabT.gameObject, cb, TabEvent, c + " controls");
                     var cso = new SerializedObject(controls);
                     RefCheck(v, cso, cb, "manager", manager, c + " controls");
@@ -176,6 +176,18 @@ namespace KominkaHillside.Editor
             }
             RefCheck(v, seatSo, seatBacking, "controls", controls, c);
             RefCheck(v, seatSo, seatBacking, "dock", dock, c);
+            // M2: 操作帯の結果欄と背面の掲示の 1 行
+            if (controls != null)
+            {
+                var cso2 = new SerializedObject(controls); var cb2 = UdonSharpEditorUtility.GetBackingUdonBehaviour(controls);
+                var noteT = ct.Find(BoardName + "/" + BodyName + "/" + NoteName);
+                if (cso2.FindProperty("noteLabel") != null) RefCheck(v, cso2, cb2, "noteLabel", Comp<TextMeshProUGUI>(noteT), c + " controls"); else v.Pend(c + " KH_CartControls.noteLabel not found (Runtime M2)");
+            }
+            var model = cart.transform.Find(ModelName);
+            var signBack = model != null ? FindDeep(model, AnchorSignBack) : null;
+            var cap = signBack != null ? Comp<TextMeshProUGUI>(signBack.Find(SignCaptionName + "/Label")) : null;
+            v.Req(cap != null && cap.text == Ja("cart.sign.caption") && cap.gameObject.layer == 0 && cap.GetComponentInParent<GraphicRaycaster>() == null, c + " sign caption under Anchor_SignBack (cart.sign.caption, layer Default, no pointer)");
+            if (seatSo.FindProperty("signCaption") != null) RefCheck(v, seatSo, seatBacking, "signCaption", cap, c); else v.Pend(c + " KH_CartSeat.signCaption not found (Runtime M2)");
         }
 
         static void BackingFloats(V v, UdonBehaviour b, string name, float[] proxy)

@@ -203,6 +203,9 @@ namespace KominkaHillside
             groupDest[g] = 0;
             groupAnchorDist[g] = 0f;
             groupAnchorMs[g] = 0;
+            groupLane[g] = 0;            // M2: 交通の状態も解く
+            groupHoldDist[g] = -1f;
+            groupHoldSinceMs[g] = 0;
             Debug.Log("[KH_Cart] free group=" + g);
         }
 
@@ -232,7 +235,7 @@ namespace KominkaHillside
                 groupAnchorDist[g] = Wrap(groupAnchorDist[g] - dir * gap);
                 return;
             }
-            float s = speed * t - gap;   // 新しい先頭の、古い錨からの進み
+            float s = LeadTravel(g, now) - gap;   // 新しい先頭の、古い錨からの進み (M2: 交通の待機で止まっていればその分)
             if (IsDestRun(g)) { float r = Remaining(g); if (s > r) s = r; }
             groupAnchorDist[g] = Wrap(groupAnchorDist[g] + dir * s);
             groupAnchorMs[g] = now;
@@ -249,6 +252,7 @@ namespace KominkaHillside
             int now = Networking.GetServerTimeInMilliseconds();
             for (int g = 0; g < MaxGroups; g++)
                 if (SettleArrival(g, now)) changed = true;
+            if (TrafficTick(now)) changed = true;   // M2: すれ違い (一列化・狭い区間の先入優先・待機と解除。KH_CartManager.Traffic.cs)
             if (Time.time >= _nextMaintenance)
             {
                 _nextMaintenance = Time.time + 1f;
@@ -262,7 +266,7 @@ namespace KominkaHillside
         private bool SettleArrival(int g, int now)
         {
             if (!EnsureRoute() || groupState[g] != GroupRunning || !IsDestRun(g)) return false;
-            if (speed * Elapsed(g, now) < Remaining(g) - arriveSlack) return false;
+            if (LeadTravel(g, now) < Remaining(g) - arriveSlack) return false;
             groupState[g] = GroupEnding;   // 以後の合流は拒否
             for (int c = 0; c < MaxCarts; c++) if (cartState[c] == CartRiding && cartGroup[c] == g) cartState[c] = CartEnding;
             Debug.Log("[KH_Cart] arrive group=" + g + " dest=" + groupDest[g] + " count=" + groupCount[g]);
@@ -324,14 +328,40 @@ namespace KominkaHillside
             return raw > _L * .75f ? 0f : raw;
         }
 
-        /// <summary>カート c の、錨からの進み (進行方向の符号なし距離)。目的地走行は残りで止める (clamp)。</summary>
+        /// <summary>M2: 錨から交通の待機点 (groupHoldDist) までの、進行方向に測った距離。待機していなければ大きな値。行き過ぎは 0。</summary>
+        private float HoldRemaining(int g)
+        {
+            float h = groupHoldDist[g];
+            if (h < 0f) return 1e9f;
+            float raw = Wrap(groupDir[g] > 0 ? h - groupAnchorDist[g] : groupAnchorDist[g] - h);
+            return raw > _L * .75f ? 0f : raw;
+        }
+
+        /// <summary>先頭の、錨からの進み。待機点で止める (M2)。目的地の clamp は TravelOf / Remaining 側。</summary>
+        private float LeadTravel(int g, int now)
+        {
+            float s = speed * Elapsed(g, now);
+            float h = HoldRemaining(g);
+            return s > h ? h : s;
+        }
+
+        /// <summary>カート c の、錨からの進み (進行方向の符号なし距離)。先頭は待機点で止まり、後続は間隔を保って止まる (M2)。
+        /// 目的地走行は残りで止める (clamp。こちらは各車が目的地まで進む)。</summary>
         private float TravelOf(int c, int now)
         {
             int g = cartGroup[c];
             if (!ValidGroup(g)) return 0f;
-            float s = speed * Elapsed(g, now) - cartOrder[c] * gap;
+            float s = LeadTravel(g, now) - cartOrder[c] * gap;
             if (IsDestRun(g)) { float r = Remaining(g); if (s > r) s = r; }
             return s;
+        }
+
+        /// <summary>グループ g の先頭の今の経路距離。</summary>
+        private float LeadDistance(int g, int now)
+        {
+            float s = LeadTravel(g, now);
+            if (IsDestRun(g)) { float r = Remaining(g); if (s > r) s = r; }
+            return Wrap(groupAnchorDist[g] + groupDir[g] * s);
         }
 
         /// <summary>カート c の目標の経路距離 [0, L)。d = anchor + dir * (speed * t - order * gap)、目的地は越えない。</summary>

@@ -448,31 +448,37 @@ def build(lod):
             lathe(body, [(.024, -.002), (.020, .006)], foot, Y3, X3, Z3, 6, isl='dark', tag='dark_small', cap1='dark', uvs=.5)
         anchors['Anchor_SignBack'] = (bend_p((0, SIGNF['yc'], dpl)), bend_n((0, 0, 0), (0, 0, -1)), bend_n((0, 0, 0), (0, 1, 0)))
     # ---- axle: two wheels (16 segments, two-step shoulder, flat dark inner cap, small dark hub) + visible stubs
-    tp = [(.140, -.0425), (.140, .024), (.133, .036), (.118, .0425), (.076, .037), (.026, .044)]
+    #      LOD1: 8 segments, one chamfer instead of the two-step shoulder, flat outer face; same tire/hub islands
+    if hi:
+        tp, tsh = [(.140, -.0425), (.140, .024), (.133, .036), (.118, .0425), (.076, .037), (.026, .044)], [True, False, False, False, True, True]
+    else:
+        tp, tsh = [(.140, -.0425), (.140, .024), (.118, .0425), (.026, .0425)], [True, False, True, True]
     wmk = axle.mark()
-    Lt = lathe(axle, tp, (WHEEL_X, 0, 0), X3, Y3, Z3, 16, isl='tire', tag='tire', cap0='hidden', cap1='hub',
-               sharp_p=[True, False, False, False, True, True])
-    lathe(axle, [(.012, .27), (.012, WHEEL_X - .04)], (0, 0, 0), X3, Y3, Z3, 8, isl='dark', tag='dark_small', uvs=.5)
+    Lt = lathe(axle, tp, (WHEEL_X, 0, 0), X3, Y3, Z3, 16 if hi else 8, isl='tire', tag='tire', cap0='hidden', cap1='hub', sharp_p=tsh)
+    lathe(axle, [(.012, .27), (.012, WHEEL_X - .04)], (0, 0, 0), X3, Y3, Z3, 8 if hi else 6, isl='dark', tag='dark_small', uvs=.5)
     axle.mirror(wmk)
     meta('tire', t=Lt['t']); meta('hub', r=.026)
     return body, axle, anchors
 
 # ------------------------------------------------------------------ build + budget
 body0, axle0, ANCH = build(0)
-body1, _, _ = build(1)
+body1, axle1, _ = build(1)
 def tag_counts(mb):
     c = {}
     for t in mb.T: c[t[4]] = c.get(t[4], 0) + 1
     return dict(sorted(c.items(), key=lambda kv: -kv[1]))
-N_BODY, N_AXLE, N_LOD1 = len(body0.T), len(axle0.T), len(body1.T)
+N_BODY, N_AXLE, N_LOD1, N_AXLE1 = len(body0.T), len(axle0.T), len(body1.T), len(axle1.T)
+AXLE_LOD1_LIMIT = 180
+print('TRI LOD1 axle', N_AXLE1, 'LOD1 total', N_LOD1 + 2 * N_AXLE1)
 print('TRI body', N_BODY, 'axle', N_AXLE, 'x2 ->', N_BODY + 2 * N_AXLE, '| LOD1 body', N_LOD1)
 print('TAGS body', tag_counts(body0)); print('TAGS axle', tag_counts(axle0)); print('TAGS lod1', tag_counts(body1))
 assert N_BODY + 2 * N_AXLE <= BUDGET_LOD0, 'LOD0 over budget'
 assert N_LOD1 <= BUDGET_LOD1, 'LOD1 over budget'
+assert N_AXLE1 <= AXLE_LOD1_LIMIT and N_LOD1 + 2 * N_AXLE1 <= BUDGET_LOD1, ('LOD1 axle / total over budget', N_AXLE1, N_LOD1 + 2 * N_AXLE1)
 def geom_checks(mb, name):
     bad = sum(1 for t in mb.T if np.linalg.norm(np.cross(mb.V[t[0][1]] - mb.V[t[0][0]], mb.V[t[0][2]] - mb.V[t[0][0]])) < 1e-10)
     assert bad == 0, (name, 'zero-area 3D triangles', bad)
-for mb_, nm in ((body0, 'body'), (axle0, 'axle'), (body1, 'lod1')): geom_checks(mb_, nm)
+for mb_, nm in ((body0, 'body'), (axle0, 'axle'), (body1, 'lod1'), (axle1, 'axle_lod1')): geom_checks(mb_, nm)
 # island extents from LOD0; LOD1 must stay inside them
 for mb_ in (body0, axle0):
     for t in mb_.T:
@@ -480,7 +486,7 @@ for mb_ in (body0, axle0):
             if isl == 'SIGN': continue
             assert u >= -1e-9 and v >= -1e-9, (isl, u, v)
             ISL[isl]['w'] = max(ISL[isl]['w'], u); ISL[isl]['h'] = max(ISL[isl]['h'], v)
-for t in body1.T:
+for t in body1.T + axle1.T:
     for isl, u, v in t[1]:
         if isl != 'SIGN': assert u <= ISL[isl]['w'] + 1e-6 and v <= ISL[isl]['h'] + 1e-6, ('LOD1 outside island', isl, u, v)
 unused = [k for k, v in ISL.items() if v['w'] == 0]; assert not unused, unused
@@ -819,7 +825,7 @@ def measure(mb):
                       maxPxPerCm=round(float(d.max()), 2), triangles=len(lst))
     return out, minpx
 TEXEL, MINPX = {}, {}
-for nm, mb_ in (('Body', body0), ('Axle', axle0), ('Body_LOD1', body1)):
+for nm, mb_ in (('Body', body0), ('Axle', axle0), ('Body_LOD1', body1), ('Axle_LOD1', axle1)):
     TEXEL[nm], MINPX[nm] = measure(mb_)
 cover = np.zeros((ATLAS, ATLAS), bool)
 for mb_ in (body0, axle0):
@@ -878,6 +884,7 @@ OBJ = {}
 OBJ['Body'] = make_obj(NAME + '_Body', body0, (0, 0, 0), [MAT_BODY, MAT_SIGN])
 OBJ['Body_LOD1'] = make_obj(NAME + '_Body_LOD1', body1, (0, 0, 0), [MAT_BODY, MAT_SIGN])
 for k, z in AXLES.items(): OBJ['Axle' + k] = make_obj(NAME + '_Axle' + k, axle0, (0, WHEEL_R, z), [MAT_BODY], local=True)
+for k, z in AXLES.items(): OBJ['Axle' + k + '_LOD1'] = make_obj(NAME + '_Axle' + k + '_LOD1', axle1, (0, WHEEL_R, z), [MAT_BODY], local=True)
 def empty(name, pos, fwd, up=(0, 1, 0)):
     zb = nrm(B(up)); yb = -nrm(B(fwd)); xb = np.cross(yb, zb); zb = np.cross(xb, yb)
     e = bpy.data.objects.new(name, None); e.empty_display_type = 'ARROWS'; e.empty_display_size = .08
@@ -887,15 +894,38 @@ ANCHORS = {}
 for nm, (p, f) in ANCHORS_FIXED.items(): ANCHORS[nm] = dict(position=list(p), forward=list(f), up=[0, 1, 0])
 for nm, (p, f, u) in ANCH.items(): ANCHORS[nm] = dict(position=[float(x) for x in p], forward=[float(x) for x in nrm(f)], up=[float(x) for x in nrm(u)])
 for nm in sorted(ANCHORS): empty(nm, ANCHORS[nm]['position'], ANCHORS[nm]['forward'], ANCHORS[nm]['up'])
-EXPORT = [OBJ['Body'], OBJ['AxleFront'], OBJ['AxleRear'], OBJ['Body_LOD1']] + [bpy.data.objects[n] for n in sorted(ANCHORS)]
+EXPORT = [OBJ['Body'], OBJ['AxleFront'], OBJ['AxleRear'], OBJ['Body_LOD1'], OBJ['AxleFront_LOD1'], OBJ['AxleRear_LOD1']] + [bpy.data.objects[n] for n in sorted(ANCHORS)]
 bpy.ops.object.select_all(action='DESELECT')
 for o in EXPORT: o.select_set(True)
 bpy.context.view_layer.objects.active = OBJ['Body']
 FBX = OUT / (NAME + '.fbx')
+def raw_fbx(path):
+    from io_scene_fbx import parse_fbx
+    tr, _ = parse_fbx.parse(str(path)); ob = next(e for e in tr.elems if e.id == b'Objects'); out = {}
+    for e in ob.elems:
+        nm = e.props[1].split(b'\x00\x01')[0].decode()
+        if e.id == b'Geometry':
+            d = {c.id: c for c in e.elems}; uvl = d[b'LayerElementUV']; ud = {c.id: c for c in uvl.elems}
+            out['mesh:' + nm] = dict(v=np.array(d[b'Vertices'].props[0]), idx=np.array(d[b'PolygonVertexIndex'].props[0]),
+                                     uv=np.array(ud[b'UV'].props[0]), uvi=np.array(ud[b'UVIndex'].props[0]))
+        elif e.id == b'Model':
+            p = next((c for c in e.elems if c.id == b'Properties70'), None)
+            out['model:' + nm] = dict(p=np.array([x for c in (p.elems if p else []) if c.props[0] in (b'Lcl Translation', b'Lcl Rotation', b'Lcl Scaling') for x in c.props[4:]], float))
+    return out
+PREV_RAW = raw_fbx(FBX) if FBX.exists() else None
 bpy.ops.export_scene.fbx(filepath=str(FBX), use_selection=True, object_types={'MESH', 'EMPTY'}, bake_anim=False, add_leaf_bones=False,
                          axis_forward='-Z', axis_up='Y', apply_unit_scale=True, bake_space_transform=True, path_mode='AUTO',
                          mesh_smooth_type='OFF', use_mesh_modifiers=False)
 print('FBX written %.1fs' % (time.time() - T0))
+UNCHANGED = None
+if PREV_RAW:
+    NEW_RAW = raw_fbx(FBX); UNCHANGED = {}
+    for k, a in PREV_RAW.items():
+        b = NEW_RAW.get(k)
+        same = b is not None and all(a[f].shape == b[f].shape and np.allclose(a[f], b[f], atol=1e-7) for f in a)
+        UNCHANGED[k] = bool(same)
+    UNCHANGED['added'] = sorted(set(NEW_RAW) - set(PREV_RAW))
+    print('UNCHANGED vs previous FBX', UNCHANGED)
 
 # ------------------------------------------------------------------ independent read of the saved FBX (predicts the Unity pose)
 from io_scene_fbx import parse_fbx
@@ -1046,7 +1076,7 @@ for o in bpy.context.scene.objects:
     assert bad == 0 and zero == 0 and min(umin) >= 0 and max(umax) <= 1, (o.name, RT[o.name])
 empties = sorted(o.name for o in bpy.context.scene.objects if o.type == 'EMPTY')
 assert set(ANCHORS) <= set(empties), empties
-for nm in (NAME + '_Body', NAME + '_Body_LOD1', NAME + '_AxleFront', NAME + '_AxleRear'):
+for nm in (NAME + '_Body', NAME + '_Body_LOD1', NAME + '_AxleFront', NAME + '_AxleRear', NAME + '_AxleFront_LOD1', NAME + '_AxleRear_LOD1'):
     assert RT[nm]['triangles'] == PRE[nm]['triangles'], nm
 print('ROUNDTRIP ok', {k: (v['triangles'], v['minUVTriangleAreaPx2']) for k, v in RT.items()})
 
@@ -1060,8 +1090,9 @@ report = dict(
               fbx=dict(axis_forward='-Z', axis_up='Y', bake_space_transform=True, apply_unit_scale=True, object_types=['MESH', 'EMPTY']),
               leftRight='L = Unity -X (rider\'s left), R = Unity +X; brand mark on the +X lower corner of the backboard'),
     budget=dict(lod0Limit=BUDGET_LOD0, lod0Triangles=N_BODY + 2 * N_AXLE, body=N_BODY, axleEach=N_AXLE,
-                lod1Limit=BUDGET_LOD1, lod1Body=N_LOD1, lod1BodyPlusLod0Axles=N_LOD1 + 2 * N_AXLE,
-                materials=[NAME + '_Body', NAME + '_Sign'], trianglesByPart=dict(Body=tag_counts(body0), Axle=tag_counts(axle0), Body_LOD1=tag_counts(body1))),
+                lod1Limit=BUDGET_LOD1, lod1Body=N_LOD1, lod1BodyPlusLod0Axles=N_LOD1 + 2 * N_AXLE, axleLod1Each=N_AXLE1, axleLod1Limit=AXLE_LOD1_LIMIT, lod1Total=N_LOD1 + 2 * N_AXLE1,
+                previousFbxComparison=UNCHANGED,
+                materials=[NAME + '_Body', NAME + '_Sign'], trianglesByPart=dict(Body=tag_counts(body0), Axle=tag_counts(axle0), Body_LOD1=tag_counts(body1), Axle_LOD1=tag_counts(axle1))),
     meshesPreExport=PRE, fbxRoundTrip=RT, fbxRawCheck=FBX_CHECK,
     anchors=ANCHORS,
     uv=dict(atlasPx=ATLAS, gutterPx=2 * PAD, coverage=round(UV_COVERAGE, 4), rectFill=round(RECT_FILL, 4), fillTarget=list(FILL_TARGET),

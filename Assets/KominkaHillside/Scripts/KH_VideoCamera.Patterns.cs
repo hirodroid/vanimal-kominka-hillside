@@ -27,14 +27,16 @@ namespace KominkaHillside
     ///   never sends a request.
     /// - The dog: the board's dog when the pattern starts; the frisbee flows use the dog of the disc I hold / threw last (rechecked every tick);
     ///   おまかせ's wash flow uses the dog at the wash station.
-    /// - おかえり (ModeWelcome = 10, internal, no button): the dog bringing back the disc I threw, seen from my side (KH_VideoCamera.ModesPlay.cs).
+    /// - おかえり (ModeWelcome = 11 since DES-WLD-004 M2 added 隊列 = 10; internal, no button): the dog bringing back the disc I threw, seen from my side (KH_VideoCamera.ModesPlay.cs).
     /// The board's texts (W5): Tx(key, ja) in the player's language (UITranslations.json video.pattern.* / video.scene.*); the Word* constants and
     /// PatternName / PatternNote / SceneWord are the Japanese defaults. The names and notes are static labels rewritten by TextsRefresh.
     /// </summary>
     public partial class KH_VideoCamera
     {
         // ---- §17 the internal mode (no button: ModeCount stays the number of buttons; _SetShot and the switch take < ModeCountAll) ----
-        public const int ModeWelcome = 10, ModeCountAll = 11;
+        // DES-WLD-004 M2: 隊列 (ModeConvoy = 10) is a button, so おかえり moved 10 → 11 (the numbers live only in code; the table uses the names).
+        // 隊列 is not in any flow of the cut table (Video/2 checks)
+        public const int ModeWelcome = 11, ModeCountAll = 12;
         public const string WordModeWelcome = "おかえり";
         // ---- advance conditions of a cut (the table's ColAdv) ----
         public const int AdvTime = 0, AdvCatch = 1, AdvPassed = 2, AdvMoveDone = 3, AdvOrbitEnd = 4, AdvThrown = 5, AdvReturning = 6, AdvDelivered = 7, AdvHolding = 8, AdvCount = 9;

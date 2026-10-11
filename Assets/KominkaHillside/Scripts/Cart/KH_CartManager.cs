@@ -61,6 +61,19 @@ namespace KominkaHillside
         [UdonSynced] public int[] cartSeatSteps = new int[8];
         [UdonSynced] public int[] cartYawSteps  = new int[8];
         [UdonSynced] public int[] cartFwdSteps  = new int[8];   // 前後 (1 段 = 5 cm、+ が前、-6..+6。2026-10-12 追加要望)
+        // M2 交通 (KH_CartManager.Traffic.cs)。Owner が書く
+        [UdonSynced] public int[] groupLane = new int[8];                                         // 0 千鳥 / 1 一列・右寄せ / 2 一列・中央
+        [UdonSynced] public float[] groupHoldDist = new float[] {-1f,-1f,-1f,-1f,-1f,-1f,-1f,-1f}; // 先頭の距離の上限 (−1 = なし)
+        [UdonSynced] public int[] groupHoldSinceMs = new int[8];                                  // 待機を始めたサーバー時刻
+
+        // M2 交通の地形 (非同期。既定 null — Cart/1 Build が軌道から焼く。null なら交通なし)
+        public int[] trackClass;                     // 区間 i: 0 広い (千鳥可) / 1 一列なら双方通れる / 2 一列でも通れない
+        public float[] narrowFrom, narrowTo;         // class 2 の連続区間 (軌道距離)
+        public float[] waitBefore, waitAfter;        // 各区間の待機点 (順方向から入る側 / 逆方向から入る側)
+
+        [Header("M2 調整値 (Data/Cart/tuning.json から Build が書く)")]
+        public float approach = 25f, holdTimeoutSec = 60f, laneOffset = 0.55f, seatStep = 0.05f, yawStep = 15f;
+        public float groundSmoothTime = 0.08f;       // 接地の高さの平滑化 (M2 接地 v3。既存の smoothTime はピッチに使う)
 
         // M1.1: カート専用の軌道 (非同期。既定 null — Setup (Cart/1) が route の節 0 を除いた閉路から書く。null なら route を使う)
         public Vector3[] trackPositions;
@@ -165,6 +178,42 @@ namespace KominkaHillside
         public int _GroupState(int g) { return ValidGroup(g) ? groupState[g] : GroupFree; }
         public int _GroupCount(int g) { return ValidGroup(g) ? groupCount[g] : 0; }
         public int _GroupGen(int g) { return ValidGroup(g) ? groupGen[g] : -1; }
+        /// <summary>M2: 自分のグループが交通で待っているか (操作帯の「すれ違い待ち」)。</summary>
+        public bool _MyGroupWaiting() { int g = _MyGroup(); return ValidGroup(g) && groupHoldDist[g] >= 0f; }
+
+        // ============================================================
+        // 犬用 API (M2。KD_DogWanderController.HillsideLeash が呼ぶ。ローカルの計算だけで副作用なし)
+        // ============================================================
+
+        /// <summary>その人がカートに乗っているか (Riding / Ending)。</summary>
+        public bool _IsPlayerRiding(int playerId) { return RiderCart(playerId) >= 0; }
+
+        /// <summary>その人のカートの前方 0.9 m、横 slot 0: −0.45 / 1: +0.45 / 2: 0 (進行方向の右が +)。一列走行 (groupLane != 0) では横を半分に。
+        /// カートが無い・まだ表示していなければ Vector3.zero。slot は 0..2 に収める。</summary>
+        public Vector3 _DogAnchor(int playerId, int slot)
+        {
+            int c = RiderCart(playerId);
+            if (c < 0 || _cartT == null || _shown == null || _cartT[c] == null || !_shown[c]) return Vector3.zero;
+            Transform t = _cartT[c];
+            Vector3 f = t.forward; f.y = 0f;
+            f = f.sqrMagnitude < 0.0001f ? Vector3.forward : f.normalized;
+            Vector3 r = new Vector3(f.z, 0f, -f.x);
+            float side = slot <= 0 ? -DogSide : (slot == 1 ? DogSide : 0f);
+            int g = cartGroup[c];
+            if (ValidGroup(g) && groupLane[g] != LaneStagger) side *= 0.5f;
+            return t.position + f * DogAhead + r * side;
+        }
+
+        /// <summary>その人のカートの水平の前向き (単位)。カートが無ければ Vector3.zero。</summary>
+        public Vector3 _CartForward(int playerId)
+        {
+            int c = RiderCart(playerId);
+            if (c < 0 || _cartT == null || _shown == null || _cartT[c] == null || !_shown[c]) return Vector3.zero;
+            Vector3 f = _cartT[c].forward; f.y = 0f;
+            return f.sqrMagnitude < 0.0001f ? Vector3.zero : f.normalized;
+        }
+
+        const float DogAhead = 0.9f, DogSide = 0.45f;
         public int _GroupMasterPlayerId(int g)
         {
             if (!ValidGroup(g)) return 0;

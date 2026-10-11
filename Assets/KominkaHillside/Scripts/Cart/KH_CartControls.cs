@@ -8,7 +8,8 @@ namespace KominkaHillside
 {
     /// <summary>DES-WLD-004 M1.1: カート左斜め前の操作帯 (各カートに 1 つ。ローカル専用、同期しない)。
     /// Canvas (panel) は Setup が layer 17 (Walkthrough。撮影カメラに映らない) で作る。自分がこのカートに乗っている間だけ表示する。
-    /// ボタンの並び (buttons / labels、長さ 10): 0 メニュー / 1 撮影モニター / 2 高さ▲ / 3 高さ▼ / 4 前後▲ / 5 前後▼ / 6 向き◀ / 7 向き▶ / 8 停止 / 9 合流の受付。
+    /// ボタンの並び (buttons / labels、長さ 11): 0 メニュー / 1 撮影モニター / 2 高さ▲ / 3 高さ▼ / 4 前後▲ / 5 前後▼ / 6 向き◀ / 7 向き▶ / 8 停止 / 9 合流の受付 / 10 案内 (M2)。
+    /// noteLabel (M2) に「すれ違い待ち」を出す。
     /// 受付はマスターのときだけ押せる (Button.interactable)。撮影モニターは PC 専用 (Quest・スマホ・未配線では隠す)。
     /// manager.ApplyState → KH_CartSeat._SetRider から <see cref="_Refresh"/>、言語の変化で <see cref="_RefreshText"/>。</summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -28,13 +29,18 @@ namespace KominkaHillside
         public TextMeshProUGUI tabLabel;
         private bool _minimized;
 
-        // 2026-10-12: 前後を足して 10 個 (高さと前後の矢印は別の行・別のキー)
+        // 2026-10-12: 前後を足して 10 個 (高さと前後の矢印は別の行・別のキー)。M2: 11 個目「案内」
         public const int BtnMenu = 0, BtnMonitor = 1, BtnSeatUp = 2, BtnSeatDown = 3, BtnSeatForward = 4, BtnSeatBack = 5,
-            BtnTurnLeft = 6, BtnTurnRight = 7, BtnStop = 8, BtnAccepting = 9, ButtonCount = 10;
+            BtnTurnLeft = 6, BtnTurnRight = 7, BtnStop = 8, BtnAccepting = 9, BtnGuide = 10, ButtonCount = 11;
+        [Header("M2")]
+        public TextMeshProUGUI noteLabel;       // 操作帯の 1 行 (すれ違い待ちのとき cart.result.waiting。それ以外は空)
+        [Tooltip("「案内」で手元メニューを開いた後に送る KD_TreatPouch のタブ (_Tab<n>)。-1 = 開く (_Toggle) だけ")]
+        public int guideTab = -1;
 
         private int _visible = -1;    // -1 = まだ書いていない
         private int _master = -1;
         private int _accepting = -1;
+        private int _waiting = -1;
         private Button _acceptButton;
 
         void Start()
@@ -50,6 +56,12 @@ namespace KominkaHillside
             if (!mine) return;
             bool master = manager._IsMaster();
             bool accepting = manager._GroupAccepting(manager._MyGroup());
+            int w = manager._MyGroupWaiting() ? 1 : 0;
+            if (w != _waiting)
+            {
+                _waiting = w;
+                if (noteLabel != null) noteLabel.text = w == 1 ? T("cart.result.waiting") : "";
+            }
             int m = master ? 1 : 0, a = accepting ? 1 : 0;
             if (m == _master && a == _accepting) return;
             _master = m; _accepting = a;
@@ -64,7 +76,7 @@ namespace KominkaHillside
             int want = on ? 1 : 0;
             if (want == _visible) return;
             _visible = want;
-            _master = -1; _accepting = -1;   // 次に出すとき文言を書き直す
+            _master = -1; _accepting = -1; _waiting = -1;   // 次に出すとき文言を書き直す
             if (panel != null && panel.activeSelf != on) panel.SetActive(on);
             if (on) { _minimized = false; ApplyMinimized(); }   // 乗車開始は展開した状態から
             if (on && buttons != null && buttons.Length > BtnMonitor && buttons[BtnMonitor] != null)
@@ -90,6 +102,8 @@ namespace KominkaHillside
             SetLabel(BtnTurnRight, T("cart.turn.right"));
             SetLabel(BtnStop, T("cart.stop"));
             SetLabel(BtnAccepting, T("cart.accepting") + ": " + T(_accepting == 0 ? "cart.accepting.off" : "cart.accepting.on"));
+            SetLabel(BtnGuide, T("cart.guide"));
+            if (noteLabel != null) noteLabel.text = _waiting == 1 ? T("cart.result.waiting") : "";
         }
 
         // ---- Button.onClick → SendCustomEvent (引数なし。ローカル専用なので `_` 付き) ----
@@ -103,6 +117,14 @@ namespace KominkaHillside
         public void _PressTurnRight() { if (Riding()) manager._TurnRight(); }
         public void _PressStop() { if (Riding()) manager._Leave(); }
         public void _PressAccepting() { if (Riding()) manager._ToggleAccepting(); }
+
+        /// <summary>M2「お手入れ道具の案内」: 手元メニューを開き (開いていれば呼び戻し)、guideTab が 0 以上ならそのタブへ。ドックへ寄るのは従来どおり。</summary>
+        public void _PressGuide()
+        {
+            if (dock == null || !Riding()) return;
+            dock._PressMenu();
+            if (guideTab >= 0 && dock.menu != null) dock.menu.SendCustomEvent("_Tab" + guideTab.ToString());
+        }
 
         /// <summary>tab の onClick: 操作帯を最小化 / 展開する (ローカルの見た目だけ)。</summary>
         public void _PressToggle()

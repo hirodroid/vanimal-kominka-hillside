@@ -49,7 +49,9 @@ namespace KominkaHillside
         // button names / events (Mode0..ModeN-1 → _Mode0..), which Video/1 rewrites
         public const int ModeDogFollow = 0, ModeSelfFollow = 1, ModeTps = 2, ModeDogEye = 3, ModeSpot = 4, ModeDisc = 5,
             ModeCatchWait = 6, ModeOrbit = 7, ModePassBy = 8, ModePath = 9;
-        public const int ModeCount = 10;   // the panel's buttons. §17: + the internal おかえり (ModeWelcome = 10, ModeCountAll = 11, KH_VideoCamera.Patterns.cs)
+        // DES-WLD-004 M2 (2026-10-12): 隊列 (my cart group, KH_VideoCamera.ModesPath.cs) is the 11th button, at the end of the panel order
+        public const int ModeConvoy = 10;
+        public const int ModeCount = 11;   // the panel's buttons. §17: + the internal おかえり (ModeWelcome = 11, ModeCountAll = 12, KH_VideoCamera.Patterns.cs)
         // ---- the shot signal for a later sequencer (the user's "patterns", 2026-10-04): ShotSerial goes up on each event, ShotKind says which.
         // ShotReturned was raised by おかえり (removed in §15.5); kept as a value so a later sequencer's numbers do not move.
         // §16: ShotMoveDone = one みち move finished (back to its cut), ShotOrbitEnd = 一周 reached the end radius of 近づく / 離れる ----
@@ -77,6 +79,7 @@ namespace KominkaHillside
         public const string WordModeOrbit = "一周";
         public const string WordModePassBy = "通り過ぎ";
         public const string WordModePath = "みち";   // §16: moves along the walking direction (Vlog)
+        public const string WordModeConvoy = "隊列";   // DES-WLD-004 M2: every cart of my group and their dogs (背中ごし while I do not ride)
         public const string WordPathWaitApproach = "待って寄る", WordPathBackAway = "後ずさり", WordPathBeside = "横ならび", WordPathOvertake = "追いこし", WordPathPullAway = "寄って引く";
         public const string WordOrbitSteady = "一定", WordOrbitCloser = "近づく", WordOrbitFarther = "離れる";
         public const string WordSnap = "VRChatカメラに映す";
@@ -112,6 +115,7 @@ namespace KominkaHillside
                 case ModeOrbit: return WordModeOrbit;
                 case ModePassBy: return WordModePassBy;
                 case ModePath: return WordModePath;
+                case ModeConvoy: return WordModeConvoy;
                 case ModeWelcome: return WordModeWelcome;   // §17: internal, never a button
             }
             return "?";
@@ -158,6 +162,7 @@ namespace KominkaHillside
                 case ModeOrbit: return "video.mode.orbit";
                 case ModePassBy: return "video.mode.passby";
                 case ModePath: return "video.mode.path";
+                case ModeConvoy: return "video.mode.convoy";
                 case ModeWelcome: return "video.mode.welcome";
             }
             return "";
@@ -203,10 +208,11 @@ namespace KominkaHillside
         /// <summary>§15.5 / §16: which of [近く][遠く][↑][↓][←][→] a mode takes. CtlKindAll: the camera is "direction / distance / height from
         /// the subject" and ApplyControls moves that offset (犬追従・じぶん / 人・背中ごし・犬目線). CtlKindDistUp: the mode scales its own
         /// distances by [近く][遠く] and adds [↑][↓] to its own height (みち・一周; in 一周 [←][→] are the speed instead, CtlStep).
-        /// CtlKindNone: 定点・通り過ぎ (data positions), ディスク・キャッチ待ち (their own placement rules). 縦回転 and [戻す] work in every mode.</summary>
+        /// CtlKindNone: 定点・通り過ぎ (data positions), ディスク・キャッチ待ち (their own placement rules). 縦回転 and [戻す] work in every mode.
+        /// DES-WLD-004 M2: 隊列 is CtlKindAll (the offset from the convoy's centre; also from my head while it falls back to 背中ごし).</summary>
         public static int CtlKind(int m)
         {
-            if (m == ModeDogFollow || m == ModeSelfFollow || m == ModeTps || m == ModeDogEye) return CtlKindAll;
+            if (m == ModeDogFollow || m == ModeSelfFollow || m == ModeTps || m == ModeDogEye || m == ModeConvoy) return CtlKindAll;
             if (m == ModePath || m == ModeOrbit) return CtlKindDistUp;
             return CtlKindNone;
         }
@@ -256,6 +262,8 @@ namespace KominkaHillside
         public Vector3[] passPositions;
         [Tooltip("§16 みち: 散歩道 (KH_LeashManager.route と同じもの。Video/1 が書く)。null なら自分の進む向きだけを使う")]
         public KH_WalkRoute route;
+        [Tooltip("DES-WLD-004 M2 隊列: おさんぽカート (Cart/1 Build が配線し、Video/1 もシーンに 1 つだけあれば同じものを書く)。null なら隊列は背中ごしと同じ")]
+        public KH_CartManager cartManager;
 
         [Header("描画 (試作値。Video/1 が書き、Video/2 が照合する)")]
         public int renderWidth = 1280, renderHeight = 720, renderDepth = 24;
@@ -285,6 +293,12 @@ namespace KominkaHillside
         public float pathTrailMax = 4f;
         public float pathHeight = 1.3f, pathFov = 55f, pathAheadFar = 12f, pathApproachAt = 7f, pathAheadNear = 2.5f, pathGlideTau = 0.8f, pathHold = 4f;
         public float pathBeside = 2.8f, pathBehind = 3f, pathPassSide = 1.5f, pathPassSpeed = 1.5f, pathRecedeSpeed = 0.8f;
+        [Header("隊列 (DES-WLD-004 M2、自分が乗っているグループの全カートと乗員の犬。乗っていなければ背中ごし)")]
+        [Tooltip("中心 = グループのカートの重心 + convoyLift。広がり = max(2 × カートの半径 + convoyDogMargin, 2 × 犬も含めた半径) + convoyCartSize。" +
+            "距離 = 広がりが画面の高さの convoyFill に入る距離 (convoyFov、convoyDistMin〜convoyDistMax)。進行方向の後方 convoyBackDeg (右へ)・仰角 convoyElevDeg から。" +
+            "乗員の犬は飼い主のカートから convoyDogMax 以内だけ")]
+        public float convoyFov = 55f, convoyFill = 0.8f, convoyBackDeg = 35f, convoyElevDeg = 20f, convoyLift = 0.6f;
+        public float convoyDogMargin = 2f, convoyCartSize = 1.2f, convoyDistMin = 3f, convoyDistMax = 18f, convoyDogMax = 8f;
         [Header("定点 (§4.5)")]
         public float spotLookTau = 0.35f, spotDogPull = 0.3f;
         [Header("ディスク追従 (§4.6)")]
@@ -516,6 +530,7 @@ namespace KominkaHillside
         public void _Mode7() { SetMode(7); }
         public void _Mode8() { SetMode(8); }
         public void _Mode9() { SetMode(9); }
+        public void _Mode10() { SetMode(10); }   // DES-WLD-004 M2 隊列
         // W1 names (the harness V1-V3 uses them)
         public void _ModeDog() { SetMode(ModeDogFollow); }
         public void _ModeSelf() { SetMode(ModeSelfFollow); }

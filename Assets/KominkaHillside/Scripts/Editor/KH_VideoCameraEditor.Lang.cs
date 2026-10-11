@@ -35,7 +35,7 @@ namespace KominkaHillside.Editor
         /// <summary>The Japanese text of a key: what the builders write into the scene (the runtime rewrites it in the player's language).</summary>
         public static string Ja(string key) { return KD_LocalizationEditor.Text(Cat(), "ja", key); }
 
-        /// <summary>Every W5 key with its Japanese default in the code (105 keys).</summary>
+        /// <summary>Every W5 key with its Japanese default in the code (106 keys).</summary>
         public static List<KeyValuePair<string, string>> W5Keys()
         {
             var l = new List<KeyValuePair<string, string>>();
@@ -204,7 +204,7 @@ namespace KominkaHillside.Editor
             _w5Catalog = null;
             var cat = Cat();
             var pairs = W5Keys();
-            Check(pairs.Count == 105, "W5: " + pairs.Count + " video.* / film.* keys (105 expected: 104 + video.hide (DES-WLD-004 M1.1); change the number here when a text is added)");
+            Check(pairs.Count == 106, "W5: " + pairs.Count + " video.* / film.* keys (106 expected: 104 + video.hide (DES-WLD-004 M1.1) + video.mode.convoy (M2 隊列); change the number here when a text is added)");
             var bad = W5CatalogProblems();
             Check(bad.Count == 0, "W5: every key in all " + cat.languages.Length + " languages, the same {0} / {1} count as ja, ja = the code default, no stray key"
                 + (bad.Count > 0 ? " (" + bad.Count + " problems, first: " + string.Join(" | ", bad.Take(3)) + ")" : ""));

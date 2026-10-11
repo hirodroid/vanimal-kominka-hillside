@@ -242,6 +242,7 @@ namespace KominkaHillside.Editor
                 Check(ok, "pass point " + k + " at " + v.passPositions[k].ToString("F1") + " is free and above ground");
             }
             VerifyModes16(v, scene, Check, Warn);
+            VerifyConvoy(v, Check, Warn);   // DES-WLD-004 M2 隊列
             VerifyPatterns(v, Check, Warn);   // §17 (KH_VideoCameraEditor.Patterns.cs)
             VerifyLanguage(v, Check, Warn);   // W5 13 languages (KH_VideoCameraEditor.Lang.cs)
             float mib = RenderWidth * RenderHeight * (4f + 4f) / (1024f * 1024f);
@@ -288,9 +289,9 @@ namespace KominkaHillside.Editor
         /// mode takes, the route of みち, and nothing of the removed two left (constants, labels, tuning fields, pose functions, scene arrays).</summary>
         static void VerifyModes16(KH_VideoCamera v, UnityEngine.SceneManagement.Scene scene, Action<bool, string> Check, Action<string> Warn)
         {
-            string[] want = { "犬追従", "じぶん", "背中ごし", "犬目線", "定点", "ディスク", "キャッチ待ち", "一周", "通り過ぎ", "みち" };
+            string[] want = { "犬追従", "じぶん", "背中ごし", "犬目線", "定点", "ディスク", "キャッチ待ち", "一周", "通り過ぎ", "みち", "隊列" };   // DES-WLD-004 M2: + 隊列
             var words = Enumerable.Range(0, KH_VideoCamera.ModeCount).Select(KH_VideoCamera.ModeWord).ToArray();
-            Check(words.SequenceEqual(want), "§16 the 10 modes in panel order: " + string.Join(" / ", words));
+            Check(words.SequenceEqual(want), "§16 / M2 the " + want.Length + " modes in panel order: " + string.Join(" / ", words));
             Check(!words.Contains("手元") && !words.Contains("見下ろす"), "§16 手元 / 見下ろす are not modes any more");
             var moves = Enumerable.Range(0, KH_VideoCamera.PathMoveCount).Select(KH_VideoCamera.PathMoveWord).ToArray();
             Check(moves.SequenceEqual(new[] { "待って寄る", "後ずさり", "横ならび", "追いこし", "寄って引く" }), "§16 みち moves: " + string.Join(" / ", moves));
@@ -325,6 +326,51 @@ namespace KominkaHillside.Editor
             if (backing != null && backing.publicVariables.TryGetVariableValue("route", out object rv))
                 Check(expect != null && (rv as UnityEngine.Object) == UdonSharpEditorUtility.GetBackingUdonBehaviour(expect), "§16 backing route is the route's UdonBehaviour");
             else Warn("§16 'route' not in the backing heap yet (a saved / built scene carries it; rerun Video/2 after a reload)");
+        }
+
+        /// <summary>DES-WLD-004 M2 隊列: the wiring to the cart manager (Cart/1 / Video/1), its picker and controls, not in any pattern, the switch
+        /// and the fallback in the source, and the pose math on fixed numbers (no Play).</summary>
+        static void VerifyConvoy(KH_VideoCamera v, Action<bool, string> Check, Action<string> Warn)
+        {
+            var field = typeof(KH_VideoCamera).GetField("cartManager");
+            Check(field != null && field.FieldType == typeof(KH_CartManager), "M2 隊列: KH_VideoCamera.cartManager (KH_CartManager) exists");
+            var mgrs = UnityEngine.Object.FindObjectsOfType<KH_CartManager>(true);
+            if (mgrs.Length == 1)
+            {
+                if (v.cartManager == null) Warn("M2 隊列: cartManager not wired (run Cart/1 or Video/1); 隊列 films like 背中ごし until then");
+                else Check(v.cartManager == mgrs[0], "M2 隊列: cartManager = the scene's KH_CartManager (" + mgrs[0].name + ")");
+                var vb = UdonSharpEditorUtility.GetBackingUdonBehaviour(v);
+                if (v.cartManager != null && vb != null && vb.publicVariables.TryGetVariableValue("cartManager", out object cv))
+                    Check((cv as UnityEngine.Object) == UdonSharpEditorUtility.GetBackingUdonBehaviour(mgrs[0]), "M2 隊列: backing cartManager is the manager's UdonBehaviour");
+                else if (v.cartManager != null) Warn("M2 隊列: 'cartManager' not in the backing heap yet (a saved / built scene carries it; rerun Video/2 after a reload)");
+            }
+            else if (mgrs.Length == 0) Warn("M2 隊列: no KH_CartManager in the scene (隊列 films like 背中ごし)");
+            else Check(false, "M2 隊列: " + mgrs.Length + " KH_CartManager in the scene (exactly one expected)");
+            Check(KH_VideoCamera.PickerKind(KH_VideoCamera.ModeConvoy) == 0 && KH_VideoCamera.CtlKind(KH_VideoCamera.ModeConvoy) == KH_VideoCamera.CtlKindAll,
+                "M2 隊列: no picker, controls all (around the convoy's centre)");
+            float[] t = KH_VideoCamera.CutTable();
+            int cols = KH_VideoCamera.PatCols, rows = t != null ? t.Length / cols : 0, inTable = 0;
+            for (int r = 0; r < rows; r++) if (Mathf.RoundToInt(t[r * cols + KH_VideoCamera.ColMode]) == KH_VideoCamera.ModeConvoy) inTable++;
+            Check(inTable == 0, "M2 隊列 is in no pattern (" + inTable + " rows of the cut table)");
+            string src = string.Concat(Directory.GetFiles("Assets/KominkaHillside/Scripts", "KH_VideoCamera*.cs").Where(f => !f.EndsWith(".meta")).Select(File.ReadAllText));
+            Check(Regex.IsMatch(src, @"case ModeConvoy: return Convoy(dt);") && Regex.IsMatch(src, @"public void _Mode10() { SetMode(10); }"),
+                "M2 隊列: the switch runs Convoy and the button event _Mode10 exists");
+            Check(Regex.IsMatch(src, @"if (!riding) {[^}
+]*return Tps(dt); }"), "M2 隊列: while I do not ride it is 背中ごし (Tps)");
+            // the pose math (the same static functions the runtime calls)
+            Vector3 p = KH_VideoCamera.ConvoyPos(Vector3.zero, Vector3.forward, ConvoyBackDeg, ConvoyElevDeg, 10f);
+            float elev = Mathf.Asin(Mathf.Clamp(p.y / 10f, -1f, 1f)) * Mathf.Rad2Deg, back = Mathf.Atan2(p.x, -p.z) * Mathf.Rad2Deg;
+            Check(Mathf.Abs(p.magnitude - 10f) < 1e-3f && Mathf.Abs(elev - ConvoyElevDeg) < 0.01f && Mathf.Abs(back - ConvoyBackDeg) < 0.01f && p.z < 0f && p.x > 0f,
+                "M2 隊列 pose: 10 m out, behind (z " + p.z.ToString("F2") + "), to the right (x " + p.x.ToString("F2") + "), back " + back.ToString("F1") + "°, up " + elev.ToString("F1") + "°");
+            float s2 = KH_VideoCamera.ConvoySize(1.5f, 1.5f, ConvoyDogMargin, ConvoyCartSize), sDog = KH_VideoCamera.ConvoySize(1.5f, 4f, ConvoyDogMargin, ConvoyCartSize);
+            float dSolo = KH_VideoCamera.ConvoyDistance(KH_VideoCamera.ConvoySize(0f, 0f, ConvoyDogMargin, ConvoyCartSize), ConvoyFill, ConvoyFov, ConvoyDistMin, ConvoyDistMax);
+            float d2 = KH_VideoCamera.ConvoyDistance(s2, ConvoyFill, ConvoyFov, ConvoyDistMin, ConvoyDistMax);
+            float d8 = KH_VideoCamera.ConvoyDistance(KH_VideoCamera.ConvoySize(10.5f, 10.5f, ConvoyDogMargin, ConvoyCartSize), ConvoyFill, ConvoyFov, ConvoyDistMin, ConvoyDistMax);
+            float d0 = KH_VideoCamera.ConvoyDistance(0f, ConvoyFill, ConvoyFov, ConvoyDistMin, ConvoyDistMax), dNan = KH_VideoCamera.ConvoyDistance(float.NaN, ConvoyFill, ConvoyFov, ConvoyDistMin, ConvoyDistMax);
+            float want2 = (s2 / ConvoyFill) * 0.5f / Mathf.Tan(ConvoyFov * 0.5f * Mathf.Deg2Rad);
+            Check(Mathf.Abs(s2 - (3f + ConvoyDogMargin + ConvoyCartSize)) < 1e-4f && Mathf.Abs(sDog - (8f + ConvoyCartSize)) < 1e-4f && Mathf.Abs(d2 - want2) < 1e-3f
+                && d0 == ConvoyDistMin && dNan == ConvoyDistMin && d8 == ConvoyDistMax && dSolo >= ConvoyDistMin && dSolo < d2 && d2 < d8,
+                "M2 隊列 distance: 1 cart " + dSolo.ToString("F2") + " m, 2 carts 3 m apart " + d2.ToString("F2") + " m (size " + s2.ToString("F1") + "), 8 carts " + d8.ToString("F1") + " m (max), empty / NaN " + d0 + " m; a dog further out widens (" + sDog.ToString("F1") + ")");
         }
 
         /// <summary>Subjects.cs: a pose read on any player other than the local one (`lp.`) happens only inside TryPersonPose, after the mailbox's

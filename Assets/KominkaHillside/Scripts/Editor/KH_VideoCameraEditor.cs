@@ -74,6 +74,10 @@ namespace KominkaHillside.Editor
         public const float TpsFov = 60f, TpsBack = 2.2f, TpsShoulder = 0.35f, TpsLift = 0.3f, TpsLookAhead = 4f, TpsLookDrop = -0.2f, TpsYawTau = 0.8f;
         public const float PathTrailMax = 4f, PathHeight = 1.3f, PathFov = 55f, PathAheadFar = 12f, PathApproachAt = 7f, PathAheadNear = 2.5f, PathGlideTau = 0.8f, PathHold = 4f;
         public const float PathBeside = 2.8f, PathBehind = 3f, PathPassSide = 1.5f, PathPassSpeed = 1.5f, PathRecedeSpeed = 0.8f;
+        // DES-WLD-004 M2 隊列 (contract: back 35°, up 20°, 3..18 m, dogs' margin 2 m; the rest AI reading): convoyCartSize = the cart's length 1.2 m
+        // (production.md), so the first and last bodies are inside; convoyDogMax = selfDogMax
+        public const float ConvoyFov = 55f, ConvoyFill = 0.8f, ConvoyBackDeg = 35f, ConvoyElevDeg = 20f, ConvoyLift = 0.6f;
+        public const float ConvoyDogMargin = 2f, ConvoyCartSize = 1.2f, ConvoyDistMin = 3f, ConvoyDistMax = 18f, ConvoyDogMax = 8f;
         public const float SpotLookTau = 0.35f, SpotDogPull = 0.3f;
         public const float DiscFov = 60f, DiscSideK = 1f, DiscSideMin = 3f, DiscSideMax = 12f, DiscUp = 0.8f, DiscTau = 0.3f, DiscLookTau = 0.1f, DiscFlySpeed = 2f, DiscApartMax = 15f, DiscVelTau = 0.3f;
         // キャッチ待ち (2026-10-04 user: the catch point; the probe: disc + jumping dog + catch point inside the inner 80 %)
@@ -118,16 +122,17 @@ namespace KominkaHillside.Editor
         public const float Px = 0.001f;
         public static readonly Vector2 CanvasPx = new Vector2(840f, 880f);
         public static readonly Vector2 ScreenM = new Vector2(0.80f, 0.45f);
-        // §15.5: 10 mode buttons (2 rows × 5, 156 × 56 px), the picker row, the control row (9 × 84 px), the snap + drone row, note, state
+        // §15.5: the mode buttons (DES-WLD-004 M2: 11 with 隊列, 2 rows × 6, 130 × 56 px; was 2 × 5 of 156 px), the picker row, the control row (9 × 84 px), the snap + drone row, note, state
         public const float ScreenCenterPxY = 157f, ScreenFrontM = 0.003f;
         public static readonly Vector2 TitlePos = new Vector2(-180f, 412f), TitleSize = new Vector2(440f, 44f);
         public static readonly Vector2 ClosePos = new Vector2(380f, 412f), CloseSize = new Vector2(64f, 50f);
         // DES-WLD-004 M1.1 (2026-10-12): [モニターを隠す] は × の左隣 (140..340 px。題 -400..40 と × 348..412 に掛からない)。隠している間も撮影は続く (× は全停止)
         public const string HideMonitorName = "HideMonitor", KeyHideMonitor = "video.hide", WordHideMonitor = "モニターを隠す", HideMonitorEvent = "_HideMonitor";
         public static readonly Vector2 HideMonitorPos = new Vector2(240f, 412f), HideMonitorSize = new Vector2(200f, 50f);
-        public static readonly Vector2 ModeSize = new Vector2(156f, 56f);
-        public const float ModePitchX = 164f, ModeRow0Y = -100f, ModeRow1Y = -160f;
-        public const int ModeColumns = 5;
+        // DES-WLD-004 M2: 6 columns (x ±407.5 inside ±420; a third row would meet the picker at −222). Video/2 checks ≥ 120 × 50 and no overlap
+        public static readonly Vector2 ModeSize = new Vector2(130f, 56f);
+        public const float ModePitchX = 137f, ModeRow0Y = -100f, ModeRow1Y = -160f;
+        public const int ModeColumns = 6;
         public static Vector2 ModePos(int m) { int col = m % ModeColumns, row = m / ModeColumns; return new Vector2((col - (ModeColumns - 1) * 0.5f) * ModePitchX, row == 0 ? ModeRow0Y : ModeRow1Y); }
         public static readonly Vector2 PickerPos = new Vector2(0f, -222f), PickerSize = new Vector2(420f, 56f), PickerButtonSize = new Vector2(80f, 56f), PickerLabelSize = new Vector2(250f, 56f);
         public const float PickerButtonX = 170f;
@@ -302,6 +307,7 @@ namespace KominkaHillside.Editor
                 video.dogRoots = (Transform[])c.dogs.Clone(); video.dogHeads = (Transform[])c.heads.Clone(); video.dogNameKeys = (string[])c.nameKeys.Clone();
                 WirePlay(video, c, r.log);
                 video.route = RouteFor(c, r.log);   // §16 みち
+                video.cartManager = CartManagerFor(video.cartManager, r.log);   // DES-WLD-004 M2 隊列 (Cart/1 wires the same one)
                 var data = BuildData(c, r.log);
                 video.spotNames = data.spotNames; video.spotPositions = data.spotPositions; video.spotLooks = data.spotLooks; video.spotFovs = data.spotFovs; video.spotStations = data.spotStations;
                 video.passPositions = data.passPositions; video.spotKeys = data.spotKeys;   // W5: the spot names' keys
@@ -328,6 +334,17 @@ namespace KominkaHillside.Editor
             }
             WriteJson(OutDir + "/build.json", r);
             Debug.Log("[KH Video] VIDEO_BUILD_OK video camera built (" + r.log.Count + " log lines in " + OutDir + "/build.json). Next: Video/2, then Video/3 (harness, after the pre-run consult).");
+        }
+
+        /// <summary>DES-WLD-004 M2 隊列: the scene's only KH_CartManager (Cart/1 Build wires the same field). None: null (隊列 = 背中ごし).
+        /// More than one: the current value is kept and a WARN logged.</summary>
+        static KH_CartManager CartManagerFor(KH_CartManager current, List<string> log)
+        {
+            var all = UnityEngine.Object.FindObjectsOfType<KH_CartManager>(true);
+            if (all.Length == 1) { log.Add("隊列: cartManager = " + all[0].name); return all[0]; }
+            if (all.Length == 0) { log.Add("隊列: no KH_CartManager in the scene (隊列 films like 背中ごし)"); return null; }
+            log.Add("WARN 隊列: " + all.Length + " KH_CartManager in the scene; cartManager kept (" + (current != null ? current.name : "null") + ")");
+            return current;
         }
 
         static T EnsureUsc<T>(GameObject go, List<string> log) where T : UdonSharpBehaviour
@@ -364,6 +381,8 @@ namespace KominkaHillside.Editor
             A("tpsFov", TpsFov); A("tpsBack", TpsBack); A("tpsShoulder", TpsShoulder); A("tpsLift", TpsLift); A("tpsLookAhead", TpsLookAhead); A("tpsLookDrop", TpsLookDrop); A("tpsYawTau", TpsYawTau);
             A("pathTrailMax", PathTrailMax); A("pathHeight", PathHeight); A("pathFov", PathFov); A("pathAheadFar", PathAheadFar); A("pathApproachAt", PathApproachAt); A("pathAheadNear", PathAheadNear);
             A("pathGlideTau", PathGlideTau); A("pathHold", PathHold); A("pathBeside", PathBeside); A("pathBehind", PathBehind); A("pathPassSide", PathPassSide); A("pathPassSpeed", PathPassSpeed); A("pathRecedeSpeed", PathRecedeSpeed);
+            A("convoyFov", ConvoyFov); A("convoyFill", ConvoyFill); A("convoyBackDeg", ConvoyBackDeg); A("convoyElevDeg", ConvoyElevDeg); A("convoyLift", ConvoyLift);   // DES-WLD-004 M2 隊列
+            A("convoyDogMargin", ConvoyDogMargin); A("convoyCartSize", ConvoyCartSize); A("convoyDistMin", ConvoyDistMin); A("convoyDistMax", ConvoyDistMax); A("convoyDogMax", ConvoyDogMax);
             A("spotLookTau", SpotLookTau); A("spotDogPull", SpotDogPull);
             A("discFov", DiscFov); A("discSideK", DiscSideK); A("discSideMin", DiscSideMin); A("discSideMax", DiscSideMax); A("discUp", DiscUp); A("discTau", DiscTau); A("discLookTau", DiscLookTau); A("discFlySpeed", DiscFlySpeed); A("discApartMax", DiscApartMax); A("discVelTau", DiscVelTau);
             A("catchFov", CatchFov); A("catchSide", CatchSide); A("catchUp", CatchUp); A("catchLookBack", CatchLookBack); A("catchPlanWait", CatchPlanWait); A("catchReplanMove", CatchReplanMove);
@@ -554,7 +573,7 @@ namespace KominkaHillside.Editor
             var hideBtn = Btn(go.transform, HideMonitorName, HideMonitorPos, HideMonitorSize, Ja(KeyHideMonitor), c.font, target, HideMonitorEvent, log);   // Runtime: KH_VideoCamera._HideMonitor
             var hideLabel = LabelOf(hideBtn); if (hideLabel != null) { hideLabel.fontSize = 22f; hideLabel.fontSizeMax = 22f; hideLabel.fontSizeMin = 12f; hideLabel.enableAutoSizing = true; EditorUtility.SetDirty(hideLabel); }
             foreach (var old in new[] { "ModeDog", "ModeSelf" }) { var o = go.transform.Find(old); if (o != null) { UnityEngine.Object.DestroyImmediate(o.gameObject); log.Add("removed the W1 button " + old); } }
-            // §15.5: 12 → 10 modes; §16: still 10 (手元 / 見下ろす out, 背中ごし / みち in). The buttons past ModeCount are removed; the rest are
+            // §15.5: 12 → 10 modes; §16: still 10 (手元 / 見下ろす out, 背中ごし / みち in); DES-WLD-004 M2: 11 (隊列). The buttons past ModeCount are removed; the rest are
             // rewritten in place (label and event by number)
             for (int m = KH_VideoCamera.ModeCount; m < 16; m++) { var o = go.transform.Find(ModeButtonName(m)); if (o != null) { UnityEngine.Object.DestroyImmediate(o.gameObject); log.Add("removed the old button " + ModeButtonName(m)); } }
             u.modeImages = new Image[KH_VideoCamera.ModeCount];

@@ -277,7 +277,8 @@ namespace KominkaDogRun
             {
                 // Unleashing also gives the run clip back its normal playback speed: off the leash the dog
                 // never exceeds runSpeed, and Fetch may take over before the next wander frame (Codex D1).
-                if (_wasLeashed) { _wasLeashed = false; _speed = 0f; _nextLeashPath = 0f; _routeNext = -1;
+                if (_wasLeashed) { CartFollowEnd(); _cartRiding = false;   // DES-WLD-004 M2 (HillsideLeashCart.cs)
+                    _wasLeashed = false; _speed = 0f; _nextLeashPath = 0f; _routeNext = -1;
                     ResetPauseAndPoseState(); leashMode = LeashFree; ResetHolderSpeed(); ReleaseAnimatorSpeed();
                     KeepOutUnleashed();   // 2026-10-02 round 2: unleashed inside a wash station's circle -> a grace before it walks out (HillsideStationLeave.cs)
                     LeashTreatReset(); }  // IMP-DOG-006: a treat call's wait does not outlive the leash (HillsideTreatCall.cs)
@@ -331,7 +332,7 @@ namespace KominkaDogRun
             }
             // **手放した側も畳む** (Codex D)。ローカルの滞在状態が残ったままだと、この画面では
             // その犬がいつまでも「立ち寄り中」に見え、同じ人の他の犬が場所を取れなくなる
-            else if (_wasDogOwner) ResetPauseAndPoseState();
+            else if (_wasDogOwner) { ResetPauseAndPoseState(); _cartOrderLogged = -1; }   // DES-WLD-004 M2: the cart-follow log edge is the Owner's
             _wasDogOwner = _dogOwner;
             Vector3 toHand = handPos - dogRoot.position; toHand.y = 0f;
             float handDist = toHand.magnitude;
@@ -367,7 +368,10 @@ namespace KominkaDogRun
             SampleHolder(holderPos, loopWalk ? -1 : destNode, route);
             float stillFor = Time.time - _holderMovedAt;
             float restAfter = (_arrived ? 20f : _inviteAfterC + _inviteIntervalC * _inviteLimitC) + dogIndex * 2f;   // IMP-DOG-034 C1-1c
-            bool settling = stillFor > restAfter && handDist < 2.2f;
+            // DES-WLD-004 M2: the holder rides a cart (every client, synced facts). No rest, LieDown or sniff pose while riding:
+            // a traffic hold can park the cart longer than restAfter (HillsideLeashCart.cs). false when cartManager is null
+            _cartRiding = CartHolderRiding(walkerId);
+            bool settling = !_cartRiding && stillFor > restAfter && handDist < 2.2f;
             // IMP-DOG-027: the leashed wash stop (HillsideWash.cs) is decided here, on every client and before LeashPose and the
             // non-Owner return, so every screen picks the same pose (head to the washer, no LieDown / sniff). false whenever
             // wash is null or not held, and then LeashPose and everything below run exactly as before.
@@ -442,6 +446,12 @@ namespace KominkaDogRun
             // 1b. IMP-DOG-027: the holder washes the dog (their own stroke, standing, slack leash): stand still until they walk
             //     on. After the return (a stretched leash comes back first) and the travel ticket above, before rest and the rest.
             if (washStop) { WashLeashHold(); return true; }
+
+            // 1c. DES-WLD-004 M2: the holder rides a cart: walk at the cart's dog anchor. Before rest, the invitation, the detour,
+            //     the stopover and the lead, so none of them starts (a pause in progress ends in CartFollow). Getting off: the next
+            //     decision lands here with _cartRiding false and walks as usual (HillsideLeashCart.cs)
+            if (_cartRiding) { if (CartFollow(walkerId, leash)) return true; }
+            else if (_cartOrderLogged >= 0) CartFollowEnd();
 
             // 2. Holder has stood still for long (or all invitations are spent): settle down beside them until they move.
             if (stillFor > restAfter || (_inviteCount >= _inviteLimitC && stillFor > 1f))
@@ -699,7 +709,8 @@ namespace KominkaDogRun
             // 立ち寄り場所の上で止まっているなら、**その場所の種類がポーズを決める** (道からの距離より優先)。
             // モード (leashMode) は見ない — 見ると Owner だけが正しく、他の画面が立ち姿になる
             // IMP-DOG-034 C1-1c: the spots' positions / kinds cached on the attach edge (LeashStaticCache), same values as the calls
-            if (_spotsRef != null && settled && handDist >= (_poseSpotActive ? StopoverPoseHandHold : StopoverPoseHandMin))
+            // DES-WLD-004 M2: no spot / verge sniff pose while the holder rides a cart (_cartRiding is false without a cart manager)
+            if (!_cartRiding && _spotsRef != null && settled && handDist >= (_poseSpotActive ? StopoverPoseHandHold : StopoverPoseHandMin))
             {
                 // 一度その場所のポーズに入ったら、少し広い半径まではその場所で測り続ける
                 int found = -1;
@@ -724,7 +735,7 @@ namespace KominkaDogRun
             // **入るしきい値と保つしきい値を分ける** — 犬も人も少しずつ動くので、境目で姿勢が明滅する
             float trailNeed = _poseTrailActive ? PoseTrailHold : PoseTrailEnter;
             float handNeed = _poseTrailActive ? PoseHandHold : PoseHandMin;
-            _poseTrailActive = route != null && settled
+            _poseTrailActive = !_cartRiding && route != null && settled
                 && handDist >= handNeed
                 && PoseTrailDogAtLeast(route, dogRoot.position, trailNeed)       // IMP-DOG-034 A3: 結果は走査と同じ (下のキャッシュ)
                 && PoseTrailHandBelow(route, handPos, PoseTrailHalfWidth);

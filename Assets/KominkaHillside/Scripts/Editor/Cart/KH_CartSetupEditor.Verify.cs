@@ -216,10 +216,12 @@ namespace KominkaHillside.Editor
 
             // ---- M1.1: 軌道・座席の同期配列 ----
             TrackCheck(v, manager, mso, mb, route, leash);
+            M2ManagerCheck(v, manager, mso, mb, route, leash);
 
             // ---- 材質とテクスチャ ----
             MaterialCheck(v, bodyMat, BodyMaterialPath, BaseColorPath);
-            MaterialCheck(v, signMat, SignMaterialPath, SignTexturePath);
+            MaterialCheck(v, signMat, SignMaterialPath, SignOutPath);   // M2: 背面の掲示 = Data/Cart/KH_CartSign.png
+            SignImageCheck(v);
             foreach (var path in new[] { BaseColorPath, SignTexturePath })
             {
                 var ti = AssetImporter.GetAtPath(path) as TextureImporter;
@@ -275,6 +277,13 @@ namespace KominkaHillside.Editor
                 RefCheck(v, so, pb, "manager", manager, n);
                 RefCheck(v, so, pb, "language", language, n);
                 IntCheck(v, so, pb, "spot", s, n);
+                // M2: 注意書きの下に写真と 1 行 (注意書きが先 = 上)
+                var photoT = board != null ? board.Find(StationPhotoName) : null; var prT = board != null ? board.Find(StationPrName) : null; var noticeT = board != null ? board.Find("Notice") : null;
+                var photoImg = photoT != null ? photoT.GetComponent<RawImage>() : null;
+                v.Req(photoImg != null && photoImg.texture == AssetDatabase.LoadAssetAtPath<Texture2D>(SignOutPath), n + " photo = " + SignOutPath);
+                v.Req(prT != null && noticeT != null && photoT != null && ((RectTransform)noticeT).anchoredPosition.y > ((RectTransform)photoT).anchoredPosition.y && ((RectTransform)photoT).anchoredPosition.y > ((RectTransform)prT).anchoredPosition.y, n + " order: notice, photo, PR line");
+                if (so.FindProperty("prLabel") != null) RefCheck(v, so, pb, "prLabel", Comp<TextMeshProUGUI>(prT), n); else v.Pend(n + " KH_CartStationPanel.prLabel not found (Runtime M2)");
+                if (so.FindProperty("photo") != null) RefCheck(v, so, pb, "photo", photoImg, n);
                 Transform B(string path) { return board != null ? board.Find(path) : null; }
                 RefCheck(v, so, pb, "titleLabel", Comp<TextMeshProUGUI>(B("Title")), n);
                 RefCheck(v, so, pb, "noticeLabel", Comp<TextMeshProUGUI>(B("Notice")), n);
@@ -356,9 +365,10 @@ namespace KominkaHillside.Editor
             v.Req(lods.Length == 2, c + " LODGroup has 2 levels (actual " + lods.Length + ")");
             if (lods.Length != 2) return;
             Renderer R(string n) { var t = FindDeep(model, n); return t != null ? t.GetComponent<Renderer>() : null; }
-            var want0 = new[] { R(BodyMesh), R(AxleFrontMesh), R(AxleRearMesh) }; var want1 = new[] { R(BodyLodMesh) };
+            var want0 = new[] { R(BodyMesh), R(AxleFrontMesh), R(AxleRearMesh) };
+            var want1 = new[] { R(BodyLodMesh), R(AxleFrontLodMesh), R(AxleRearLodMesh) }.Where((x, k) => k == 0 || x != null).ToArray();   // M2: 車軸の LOD1 があれば含む
             v.Req(want0.All(r => r != null) && lods[0].renderers.Length == 3 && want0.All(r => lods[0].renderers.Contains(r)), c + " LOD0 = Body + AxleFront + AxleRear");
-            v.Req(want1[0] != null && lods[1].renderers.Length == 1 && lods[1].renderers[0] == want1[0], c + " LOD1 = Body_LOD1 only");
+            v.Req(want1[0] != null && lods[1].renderers.Length == want1.Length && want1.All(x => lods[1].renderers.Contains(x)), c + " LOD1 = Body_LOD1" + (want1.Length > 1 ? " + axle LOD1 x" + (want1.Length - 1) : " only (no axle LOD1 in the FBX yet)"));
             v.Req(Mathf.Abs(lods[0].screenRelativeTransitionHeight - Lod0Height) < 1e-4f && Mathf.Abs(lods[1].screenRelativeTransitionHeight - Lod1Height) < 1e-4f,
                 c + " LOD heights 0.12 / 0.03 (actual " + lods[0].screenRelativeTransitionHeight.ToString("F3") + " / " + lods[1].screenRelativeTransitionHeight.ToString("F3") + ")");
             int t0 = lods[0].renderers.Sum(r => Triangles(r)), t1 = lods[1].renderers.Sum(r => Triangles(r));

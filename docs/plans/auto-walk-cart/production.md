@@ -14,7 +14,8 @@ PC / Quest / Android / iOS 共通の BaseColor 1,024² を 1 枚、Normal と MS
 |---|---|---|
 | LOD0 三角形 (Body + 車軸 2) | 4,000 以内 | **3,872** (Body 3,056 + 車軸 408 × 2) |
 | LOD1 三角形 (`_Body_LOD1`) | 1,500 以内 | **1,136** |
-| LOD1 + LOD0 車軸 | (1 台 1,500 と読む場合) | 1,952。車軸の LOD1 は作っていない (下記) |
+| LOD1 車軸 (`_AxleFront_LOD1` / `_AxleRear_LOD1`) | 各 180 以内 | **144** (タイヤ 8 分割 × 2 + 軸 6 分割) |
+| LOD1 合計 (Body_LOD1 + 車軸 LOD1 × 2) | 1,500 以内 | **1,424** |
 | 材質 | Body 1 + Sign 1 | `KH_OsanpoCart_Body` (共有アトラス)、`KH_OsanpoCart_Sign` (案内面の板だけ) |
 | テクスチャ | 1,024² 1 枚 + 差替 1 枚 | BaseColor 1,024² sRGB、Sign 512×256 sRGB |
 
@@ -92,7 +93,7 @@ PC / Quest / Android / iOS 共通の BaseColor 1,024² を 1 枚、Normal と MS
   - `-- --out DIR --evidence DIR --report DIR --source DIR` で出力先を変えられる。`--no-render` で画像を省く。`--debug-shots` は確認用の追加画像。
   - 予算超過、UV 退化、FBX の軸や位置の食い違いがあれば assert で止まる。
 - 出力:
-  - [KH_OsanpoCart.fbx](../../../Assets/KominkaHillside/Models/Cart/KH_OsanpoCart.fbx): `_Body`、`_AxleFront`、`_AxleRear`、`_Body_LOD1` と Empty 8 個。
+  - [KH_OsanpoCart.fbx](../../../Assets/KominkaHillside/Models/Cart/KH_OsanpoCart.fbx): `_Body`、`_AxleFront`、`_AxleRear`、`_Body_LOD1`、`_AxleFront_LOD1`、`_AxleRear_LOD1` と Empty 8 個。
   - [KH_OsanpoCart_BaseColor.png](../../../Assets/KominkaHillside/Models/Cart/KH_OsanpoCart_BaseColor.png)
   - [KH_OsanpoCart_Sign.png](../../../Assets/KominkaHillside/Models/Cart/KH_OsanpoCart_Sign.png)
   - 書き出し元 `art-source/osanpo-cart/KH_OsanpoCart.generated.blend` と `layers/` (Unity の Assets 外)。
@@ -112,7 +113,7 @@ PC / Quest / Android / iOS 共通の BaseColor 1,024² を 1 枚、Normal と MS
   - Generate Lightmap UVs **Off** (移動物)、Generate Colliders Off、Read/Write **Off**、Import Cameras / Lights Off、Rig None、Animation の Import Off。
   - Materials は統括が `.mat` を作って割り当てる ([実装設計](implementation.md): Standard、Smoothness 0.25、GPU Instancing ON)。
   - Texture: BaseColor は sRGB、Max 1024、Android / iOS は ASTC 6x6、PC は BC7 か既定の DXT1、mip ON。Sign は sRGB、512、Wrap Clamp。
-  - 名前に `_LOD0` が無いので、**LODGroup は自動で作られない**。必要なら統括が `_Body` / `_Body_LOD1` と車軸で LODGroup を組む。
+  - 名前に `_LOD0` が無いので、**LODGroup は自動で作られない**。必要なら統括が `_Body` + `_AxleFront` / `_AxleRear` を LOD0、`_*_LOD1` 3 つを LOD1 として LODGroup を組む。
   - `.meta` はこの作業では作っていない。Unity が開いていればフォルダ `Models/Cart` と 3 ファイルの `.meta` は Unity が自動で作る。
 
 ## 参照元と権利
@@ -127,13 +128,13 @@ PC / Quest / Android / iOS 共通の BaseColor 1,024² を 1 枚、Normal と MS
   - 足置きを緑塗装の板にした (犬の高さの色制限)。
   - タイヤ内側は「省く」の代わりに、平らな暗い蓋 (隠れ面の島) で閉じた。開けたままだと内側から透けるため。
   - 銘の密度を 24 px/cm にした (50 mm で 7 文字の線を 3 px 以上にするため)。
-- 車軸の LOD1 は作っていない (依頼が `_Body_LOD1` だけのため)。LOD1 を 1 台 1,500 と読むなら車軸 2 本 816 が残るので、8 分割程度の車軸 LOD1 (1 本 100〜140 程度、推測) を足す必要がある。
+- 車軸の LOD1 (M2 で追加): タイヤ 8 分割、肩は 1 段の面取り、外側は平らな面に小さなハブ。原点は LOD0 と同じ車軸中心で、UV は LOD0 の tire / hub 島を共有する。島の中の位置は LOD1 の断面に合わせて少しずれるが、遠景用なので許容した。
 - 未検証: Unity での読み込み (寸法・軸・アンカーは FBX の生データから予測しただけ)、ワールド内の照明とライトプローブでの見え方、3〜5 px の線の ASTC 6x6 と mip での見え方、PCVR / Quest / Android / iOS 実機。0.3 m の単体レンダーを実機の近距離品質の合格としない。
 
 ## 確認結果
 
 2026-10-11。Blender 5.2.2 LTS を独立プロセス (`--background --factory-startup`) で実行した。
-- 予算: LOD0 3,872 / 4,000、LOD1 1,136 / 1,500、材質 2。
+- 予算: LOD0 3,872 / 4,000、LOD1 合計 1,424 / 1,500 (Body 1,136 + 車軸 144 × 2)、材質 2。
 - 保存 FBX の再読込: 面数一致。UV 退化 0、面積 0 は 0、範囲 [0,1]。材質名一致。Empty 8 個。
 - 3D の面積 0 の三角形 0 (作成時に assert)。
 - 画像は 2 周見て直した。
@@ -148,3 +149,4 @@ PC / Quest / Android / iOS 共通の BaseColor 1,024² を 1 枚、Normal と MS
 | 日付 | 内容 |
 |---|---|
 | 2026-10-11 | 初版。A案を Blender 生成スクリプトで本制作 (FBX・BaseColor・Sign・証拠画像・検査 JSON)。Unity 未取り込み |
+| 2026-10-12 | 車軸 LOD1 を追加 (各 144 三角形、LOD1 合計 1,424)。再書き出し前後の FBX を生データで比べ、既存メッシュ 4 つ (頂点・UV) とアンカー 8 つは不変。画像は不変 |

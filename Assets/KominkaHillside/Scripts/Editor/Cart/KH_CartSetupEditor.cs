@@ -72,8 +72,10 @@ namespace KominkaHillside.Editor
         public const int BodyLayer = 2, ButtonLayer = 0;
         public const VRCStation.Mobility StationMobility = VRCStation.Mobility.Immobilize;
         public const float PanelSide = 2.5f, PanelHeight = 1.2f, PanelScale = 0.001f;
-        public static readonly Vector2 BoardSize = new Vector2(760f, 800f);
-        const float RowPitch = 58f, FirstRowY = 90f;
+        public static readonly Vector2 BoardSize = new Vector2(760f, 1000f);   // M2: 注意書きの下に写真と 1 行を足して 800 → 1000
+        public const string StationPhotoName = "Photo", StationPrName = "PR";
+        public static readonly Vector2 StationPhotoPos = new Vector2(0f, 270f), StationPhotoSize = new Vector2(300f, 145f), StationPrPos = new Vector2(0f, 172f), StationPrSize = new Vector2(700f, 34f);
+        const float RowPitch = 58f, FirstRowY = -10f;
         // 合流行 700×52: 内側 -338..338 を 表示名 -338..-78 (幅 260) と 行き先・人数 -66..338 (幅 404) に分ける
         public const string JoinInfoName = "Info";
         public static readonly Vector2 JoinRowSize = new Vector2(700f, 52f);
@@ -84,7 +86,8 @@ namespace KominkaHillside.Editor
             "cart.title", "cart.start", "cart.join", "cart.notice", "cart.stop", "cart.accepting", "cart.accepting.on", "cart.accepting.off",
             "cart.result.full", "cart.result.closed", "cart.result.here", "cart.result.busy", "cart.result.started", "cart.result.joined", "cart.result.left",
             "cart.menu", "cart.monitor", "cart.seat.up", "cart.seat.down", "cart.turn.left", "cart.turn.right",   // M1.1
-            "cart.seat.forward", "cart.seat.back" };   // M1.1 追加 (座面の前後)
+            "cart.seat.forward", "cart.seat.back",   // M1.1 追加 (座面の前後)
+            "cart.result.waiting", "cart.guide", "cart.row.closed", "cart.row.ending", "cart.sign.caption", "cart.station.pr" };   // M2
 
         [Serializable] class BuildReport
         {
@@ -97,6 +100,9 @@ namespace KominkaHillside.Editor
             public float trackLength, loopLength, closingSegment;
             public float[] spotTrackDistance, destTrackDistance, noLateralFrom, noLateralTo;
             public List<string> sweepHits = new List<string>();
+            public float[] classLength = new float[3];   // M2: class 0/1/2 の延長 (m)
+            public List<string> narrowZones = new List<string>();
+            public string tuning;
             public List<string> log = new List<string>();
         }
 
@@ -164,6 +170,10 @@ namespace KominkaHillside.Editor
             report.trackNodes = track.positions.Length; report.trackLength = track.length; report.loopLength = route.loopLength; report.closingSegment = track.closing;
             report.spotTrackDistance = track.spot; report.destTrackDistance = track.dest; report.noLateralFrom = track.noFrom; report.noLateralTo = track.noTo;
             report.sweepHits = track.sweepHits; report.sweepCandidates = track.sweepCandidates; report.sweepSkippedLarge = track.sweepSkippedLarge;
+            // ---- M2: 調整 JSON と道幅の分類 (NavMesh を読むだけ) ----
+            var tuning = LoadTuning(); report.tuning = JsonUtility.ToJson(tuning);
+            var traffic = ClassifyTrack(track, tuning.gap);
+            report.classLength = traffic.lengthByClass; report.narrowZones = traffic.zones;
             var video = SingleOrNull<KH_VideoCamera>("KH_VideoCamera", report.log);
             var photo = SingleOrNull<KD_PhotoViewer>("KD_PhotoViewer", report.log);
             var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(FbxPath);
@@ -175,7 +185,8 @@ namespace KominkaHillside.Editor
             report.placeholderModel = fbx == null;
             report.model = fbx != null ? FbxPath : "PLACEHOLDER (Cube 0.82x0.6x1.2 + anchors)";
             var bodyMat = EnsureMaterial(BodyMaterialPath, BaseColorPath, report.log);
-            var signMat = EnsureMaterial(SignMaterialPath, SignTexturePath, report.log);
+            ComposeSign(report.log);   // M2: 背面の掲示 = Data/Cart/KH_CartSign.png (Set4 の文字の無い帯)
+            var signMat = EnsureMaterial(SignMaterialPath, SignOutPath, report.log);
             AssetDatabase.SaveAssets();
 
             File.Copy(KH_CourseGroundEditor.ScenePath, OutDir + "/before-cart.unity", true);
@@ -210,7 +221,10 @@ namespace KominkaHillside.Editor
                 SetRefs(so, "carts", seats); SetRefs(so, "panels", panels);
                 so.ApplyModifiedPropertiesWithoutUndo();
                 WriteTrack(manager, track);
+                WriteTraffic(manager, traffic);
+                WriteTuning(manager, tuning, report.log);
                 UdonSharpEditorUtility.CopyProxyToUdon(manager); EditorUtility.SetDirty(manager);
+                WireCartManagerRefs(manager, report.log);
 
                 // ---- KH_LeashManager.cartManager ----
                 var lso = new SerializedObject(leash);
@@ -242,6 +256,7 @@ namespace KominkaHillside.Editor
             File.WriteAllText(OutDir + "/build.json", JsonUtility.ToJson(report, true));
             Debug.Log("[KH Cart] TRACK nodes=" + report.trackNodes + " length=" + report.trackLength.ToString("F2") + " (loop " + report.loopLength.ToString("F2") + ", closing " + report.closingSegment.ToString("F2")
                 + ") noLateral=" + string.Join(",", report.noLateralFrom.Select((a, k) => a.ToString("F0") + "-" + report.noLateralTo[k].ToString("F0"))) + " hits=" + report.sweepHits.Count + ". " + RerunNote);
+            Debug.Log("[KH Cart] TRAFFIC class0=" + report.classLength[0].ToString("F0") + "m class1=" + report.classLength[1].ToString("F0") + "m class2=" + report.classLength[2].ToString("F0") + "m zones=" + report.narrowZones.Count + "\n" + string.Join("\n", report.narrowZones));
             Debug.Log("[KH Cart] BUILT carts=" + MaxCarts + " stations=" + StationCount + " model=" + (report.placeholderModel ? "PLACEHOLDER (仮形状: FBX not found, rerun Cart/1 after " + FbxPath + " arrives)" : "FBX")
                 + " droppedNetworkIds=" + report.droppedNetworkIds + ". Next: Cart/2 Verify, Cart/3 Probe, then run Course/27 (glyphs for cart.*) and save. Details: " + OutDir + "/build.json");
         }
@@ -284,7 +299,7 @@ namespace KominkaHillside.Editor
                 var lodGroup = model.GetComponent<LODGroup>(); if (lodGroup == null) lodGroup = model.AddComponent<LODGroup>();
                 lodGroup.SetLODs(new[] {
                     new LOD(Lod0Height, new[] { R(BodyMesh), R(AxleFrontMesh), R(AxleRearMesh) }),
-                    new LOD(Lod1Height, new[] { R(BodyLodMesh) }) });
+                    new LOD(Lod1Height, Lod1Renderers(model.transform, R(BodyLodMesh))) });
                 lodGroup.fadeMode = LODFadeMode.None;
                 lodGroup.RecalculateBounds();
                 EditorUtility.SetDirty(lodGroup);
@@ -333,9 +348,45 @@ namespace KominkaHillside.Editor
             if (so.FindProperty("acceptButton") != null) SetRef(so, "acceptButton", stops[1]);   // M1.1 で Runtime が外していれば書かない
             BuildCartUi(go, i, seatT, manager, language, menu, video, photo, font, ui, out KH_CartDock dock, out KH_CartControls controls);
             SetRef(so, "controls", controls); SetRef(so, "dock", dock);
+            // M2: 背面の掲示の下の 1 行 (cart.sign.caption)。Model の中なので Model と一緒に毎回作り直す
+            var caption = BuildSignCaption(go.transform, signBack, font);
+            SetRefIfPresent(so, "signCaption", caption, i == 0 ? log : new List<string>());
             so.ApplyModifiedPropertiesWithoutUndo();
             UdonSharpEditorUtility.CopyProxyToUdon(seat); EditorUtility.SetDirty(seat);
             return seat;
+        }
+
+        // ---- M2: LOD1 の車軸 (Model 担当が FBX に足す。あれば LOD1 に含める) ----
+        public const string AxleFrontLodMesh = "KH_OsanpoCart_AxleFront_LOD1", AxleRearLodMesh = "KH_OsanpoCart_AxleRear_LOD1";
+        static Renderer[] Lod1Renderers(Transform model, Renderer body)
+        {
+            var list = new List<Renderer> { body };
+            foreach (var n in new[] { AxleFrontLodMesh, AxleRearLodMesh }) { var t = FindDeep(model, n); var r = t != null ? t.GetComponent<Renderer>() : null; if (r != null) list.Add(r); }
+            return list.ToArray();
+        }
+
+        // ---- M2: 背面の掲示の下の 1 行 ----
+        public const string SignCaptionName = "SignCaption";
+        public static readonly Vector2 SignCaptionPx = new Vector2(420f, 56f);
+        public const float SignCaptionBelow = 0.14f, SignCaptionBehind = 0.006f;   // Anchor_SignBack から下へ / 車体の後ろへ (m)
+
+        /// <summary>WorldSpace Canvas (scale 0.001、操作なし: Raycaster / VRCUiShape / Collider を付けない、layer Default) の TMP 1 行。
+        /// 後ろから読む向き = Canvas の表 (-Z) がカートの後方 (-Z) を向く = カートと同じ回転。</summary>
+        static TextMeshProUGUI BuildSignCaption(Transform cart, Transform signBack, TMP_FontAsset font)
+        {
+            var old = signBack.Find(SignCaptionName); if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            var go = new GameObject(SignCaptionName, typeof(RectTransform)); go.layer = 0;
+            go.transform.SetParent(signBack, false);
+            go.transform.position = signBack.position - cart.up * SignCaptionBelow - cart.forward * SignCaptionBehind;
+            go.transform.rotation = cart.rotation;
+            var rt = (RectTransform)go.transform; rt.sizeDelta = SignCaptionPx;
+            var ls = signBack.lossyScale; rt.localScale = new Vector3(0.001f / ls.x, 0.001f / ls.y, 0.001f / ls.z);
+            var canvas = go.AddComponent<Canvas>(); canvas.renderMode = RenderMode.WorldSpace;
+            var plate = go.AddComponent<Image>(); plate.color = new Color(.20f, .15f, .11f, .88f); plate.raycastTarget = false; KD_UiSpriteEditor.ApplyRoundSkin(plate, KD_UiSpriteEditor.LoadRound());
+            var label = MakeText(go.transform, "Label", Vector2.zero, SignCaptionPx, 34f, font, Ja("cart.sign.caption"));
+            label.enableAutoSizing = true; label.fontSizeMin = 16f; label.fontSizeMax = 34f; label.color = new Color(.96f, .92f, .84f);
+            EditorUtility.SetDirty(label);
+            return label;
         }
 
         /// <summary>FBX が無いときの仮形状: Body = Cube (0.82×0.6×1.2、原点は地面中央)、車軸と 8 アンカーは空の Transform (契約と同じ名前)。</summary>
@@ -420,14 +471,14 @@ namespace KominkaHillside.Editor
             var bg = board.GetComponent<Image>(); if (bg == null) bg = board.AddComponent<Image>(); bg.color = new Color(.14f, .12f, .11f, .96f); bg.raycastTarget = true;
             KD_UiSpriteEditor.ApplyRoundSkin(bg, KD_UiSpriteEditor.LoadRound());
 
-            var title = MakeText(board.transform, "Title", new Vector2(0f, 355f), new Vector2(700f, 56f), 32f, font, Ja("cart.title"));
-            var notice = MakeText(board.transform, "Notice", new Vector2(0f, 290f), new Vector2(700f, 70f), 20f, font, Ja("cart.notice"));
+            var title = MakeText(board.transform, "Title", new Vector2(0f, 455f), new Vector2(700f, 56f), 32f, font, Ja("cart.title"));
+            var notice = MakeText(board.transform, "Notice", new Vector2(0f, 390f), new Vector2(700f, 70f), 20f, font, Ja("cart.notice"));
             notice.enableWordWrapping = true; notice.enableAutoSizing = true; notice.fontSizeMin = 14f; notice.fontSizeMax = 20f; notice.color = new Color(1f, .93f, .80f);
-            var start = KD_ShopSetupEditor.EnsureButton(board.transform, StartName, new Vector2(0f, 205f), new Vector2(520f, 80f), KD_UiSpriteEditor.ActionNeutral * 1.2f, font, Ja("cart.start"), backing, "_PressStart", log);
+            var start = KD_ShopSetupEditor.EnsureButton(board.transform, StartName, new Vector2(0f, 105f), new Vector2(520f, 80f), KD_UiSpriteEditor.ActionNeutral * 1.2f, font, Ja("cart.start"), backing, "_PressStart", log);
             var startLabel = start.transform.Find("Label").GetComponent<TextMeshProUGUI>();
             startLabel.fontSize = 26f; startLabel.enableAutoSizing = true; startLabel.fontSizeMin = 14f; startLabel.fontSizeMax = 26f;
             start.SetActive(true);
-            var result = MakeText(board.transform, "Result", new Vector2(0f, 143f), new Vector2(700f, 36f), 20f, font, "");
+            var result = MakeText(board.transform, "Result", new Vector2(0f, 43f), new Vector2(700f, 36f), 20f, font, "");
             result.enableAutoSizing = true; result.fontSizeMin = 12f; result.fontSizeMax = 20f; result.color = new Color(1f, .82f, .55f);
 
             var nameFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KH_CourseTravelNameFontEditor.FontPath);
@@ -463,6 +514,16 @@ namespace KominkaHillside.Editor
             var so = new SerializedObject(panel);
             SetRef(so, "manager", manager); SetRef(so, "language", language); SetInt(so, "spot", s);
             SetRef(so, "titleLabel", title); SetRef(so, "noticeLabel", notice); SetRef(so, "startLabel", startLabel); SetRef(so, "resultLabel", result);
+            // M2: 注意書きの下に写真 (背面の掲示と同じ画像) と 1 行 (cart.station.pr)。注意書きが先
+            var photoGo = KD_ShopSetupEditor.EnsureUiChild(board.transform, StationPhotoName, StationPhotoPos, StationPhotoSize);
+            foreach (var g in photoGo.GetComponents<Graphic>()) if (!(g is RawImage)) UnityEngine.Object.DestroyImmediate(g);
+            var photoImg = photoGo.GetComponent<RawImage>(); if (photoImg == null) photoImg = photoGo.AddComponent<RawImage>();
+            photoImg.texture = AssetDatabase.LoadAssetAtPath<Texture2D>(SignOutPath); photoImg.raycastTarget = false; photoImg.color = Color.white; EditorUtility.SetDirty(photoImg);
+            var pr = MakeText(board.transform, StationPrName, StationPrPos, StationPrSize, 20f, font, Ja("cart.station.pr"));
+            pr.enableAutoSizing = true; pr.fontSizeMin = 12f; pr.fontSizeMax = 20f; pr.color = new Color(1f, .93f, .80f); EditorUtility.SetDirty(pr);
+            var prLog = new List<string>();
+            SetRefIfPresent(so, "prLabel", pr, prLog); SetRefIfPresent(so, "photo", photoImg, prLog);
+            if (s == 0) foreach (var line in prLog) log.AppendLine(line);
             SetRef(so, "startButton", start); SetRefs(so, "joinButtons", rows); SetRefs(so, "joinLabels", rowLabels); SetRefs(so, "joinInfoLabels", rowInfos);
             so.ApplyModifiedPropertiesWithoutUndo();
             UdonSharpEditorUtility.CopyProxyToUdon(panel); EditorUtility.SetDirty(panel);

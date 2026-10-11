@@ -23,18 +23,22 @@ namespace KominkaHillside.Editor
         public const string DocksName = "Docks", DockMenuName = "Dock_Menu", DockMonitorName = "Dock_Monitor", DockPhotoName = "Dock_Photo", ControlsName = "Controls";
         public const int ControlsLayer = 17;   // Walkthrough: 既存の撮影モニター・手元メニューと同じ (撮影カメラに映らず、ポインタは届く)
         public const float ControlsScale = 0.001f, SeatedEyeAboveSeat = 0.7f;
-        public static readonly Vector2 ControlsBoardSize = new Vector2(280f, 430f), TabSize = new Vector2(50f, 50f), TabPos = new Vector2(111f, 186f), ControlsButtonSize = new Vector2(128f, 62f);
+        public static readonly Vector2 ControlsBoardSize = new Vector2(280f, 430f), TabSize = new Vector2(50f, 50f), TabPos = new Vector2(111f, 186f), ControlsButtonSize = new Vector2(128f, 54f), GuideButtonSize = new Vector2(262f, 54f);
+        // M2: 結果欄 (すれ違い待ち) は Body の左上 (Tab の左)。板の大きさは M1.2 の角度配置のまま (280×430)
+        public const string NoteName = "Note";
+        public static readonly Vector2 NotePos = new Vector2(-30f, 186f), NoteSize = new Vector2(205f, 50f);
         // 並びは KH_CartControls.buttons / labels と同じ (ユーザー要望 2026-10-12 で 10 個): 0 メニュー, 1 モニター, 2 高さ▲, 3 高さ▼, 4 前後▲, 5 前後▼, 6 向き◀, 7 向き▶, 8 停止, 9 受付。
         // 2 列 5 行で、行ごとに組 (高さ▲▼ / 前後▲▼ / 向き◀▶) が横に並ぶ = 矢印の組どうしが被らない
-        public static readonly string[] ControlEvents = { "_PressMenu", "_PressMonitor", "_PressSeatUp", "_PressSeatDown", "_PressSeatForward", "_PressSeatBack", "_PressTurnLeft", "_PressTurnRight", "_PressStop", "_PressAccepting" };
-        public static readonly string[] ControlKeys = { "cart.menu", "cart.monitor", "cart.seat.up", "cart.seat.down", "cart.seat.forward", "cart.seat.back", "cart.turn.left", "cart.turn.right", "cart.stop", "cart.accepting" };
-        public static readonly string[] ControlNames = { "Menu", "Monitor", "SeatUp", "SeatDown", "SeatForward", "SeatBack", "TurnLeft", "TurnRight", "Stop", "Accepting" };
-        public const int StopControl = 8;
+        public static readonly string[] ControlEvents = { "_PressMenu", "_PressMonitor", "_PressSeatUp", "_PressSeatDown", "_PressSeatForward", "_PressSeatBack", "_PressTurnLeft", "_PressTurnRight", "_PressStop", "_PressAccepting", "_PressGuide" };   // M2: 11 個目 = 案内
+        public static readonly string[] ControlKeys = { "cart.menu", "cart.monitor", "cart.seat.up", "cart.seat.down", "cart.seat.forward", "cart.seat.back", "cart.turn.left", "cart.turn.right", "cart.stop", "cart.accepting", "cart.guide" };
+        public static readonly string[] ControlNames = { "Menu", "Monitor", "SeatUp", "SeatDown", "SeatForward", "SeatBack", "TurnLeft", "TurnRight", "Stop", "Accepting", "Guide" };
+        public const int StopControl = 8, GuideControl = 10;
         // 最小化 (2026-10-12): Board の下に Body (10 ボタンと背景) と Tab (Body の外、右上隅 50×50、_PressToggle)。最小化しても Tab だけ残る。
         // Tab のラベルは Runtime が展開中「×」/ 最小化中「+」と書く (tabLabel)。Setup は初期表示として ≡ (フォントに無ければ -) を置く
         public const string BodyName = "Body", TabName = "Tab", TabEvent = "_PressToggle", TabSymbol = "+", TabFallback = "-";
         // 5 行 120..-160 (Tab の 161..211 と重ならない)
-        public static Vector2 ControlPos(int k) { return new Vector2(k % 2 == 0 ? -67f : 67f, 120f - (k / 2) * 70f); }
+        public static Vector2 ControlPos(int k) { return k == GuideControl ? new Vector2(0f, -170f) : new Vector2(k % 2 == 0 ? -67f : 67f, 130f - (k / 2) * 60f); }   // 6 行 130..-170 (Note/Tab の 161..211 と重ならない)
+        public static Vector2 ControlSize(int k) { return k == GuideControl ? GuideButtonSize : ControlsButtonSize; }
 
         /// <summary>座席の真下 (高さ 0) からの水平方向・距離と高さ。</summary>
         // Play 3 回目 (2026-10-12): 操作帯とモニターが座席から見て被らないよう、カートのローカル座標の固定値に置く (統括指示)。
@@ -131,12 +135,12 @@ namespace KominkaHillside.Editor
             var body = KD_ShopSetupEditor.EnsureUiChild(board.transform, BodyName, Vector2.zero, ControlsBoardSize); body.SetActive(true); body.layer = ControlsLayer;
             var bg = body.GetComponent<Image>(); if (bg == null) bg = body.AddComponent<Image>(); bg.color = new Color(.14f, .12f, .11f, .92f); bg.raycastTarget = true;
             KD_UiSpriteEditor.ApplyRoundSkin(bg, KD_UiSpriteEditor.LoadRound());
-            for (int c = body.transform.childCount - 1; c >= 0; c--) { var ch = body.transform.GetChild(c); if (Array.IndexOf(ControlNames, ch.name) < 0) UnityEngine.Object.DestroyImmediate(ch.gameObject); }
+            for (int c = body.transform.childCount - 1; c >= 0; c--) { var ch = body.transform.GetChild(c); if (Array.IndexOf(ControlNames, ch.name) < 0 && ch.name != NoteName) UnityEngine.Object.DestroyImmediate(ch.gameObject); }
             var buttons = new GameObject[ControlEvents.Length]; var labels = new TextMeshProUGUI[ControlEvents.Length];
             for (int k = 0; k < ControlEvents.Length; k++)
             {
                 var color = k == StopControl ? new Color(.55f, .25f, .20f) : KD_UiSpriteEditor.ActionNeutral;
-                var b = KD_ShopSetupEditor.EnsureButton(body.transform, ControlNames[k], ControlPos(k), ControlsButtonSize, color, font, Ja(ControlKeys[k]), backing, ControlEvents[k], log);
+                var b = KD_ShopSetupEditor.EnsureButton(body.transform, ControlNames[k], ControlPos(k), ControlSize(k), color, font, Ja(ControlKeys[k]), backing, ControlEvents[k], log);
                 var label = b.transform.Find("Label").GetComponent<TextMeshProUGUI>();
                 label.fontSize = 18f; label.enableWordWrapping = true; label.enableAutoSizing = true; label.fontSizeMin = 9f; label.fontSizeMax = 18f; label.overflowMode = TextOverflowModes.Overflow;
                 EditorUtility.SetDirty(label);
@@ -156,6 +160,12 @@ namespace KominkaHillside.Editor
             SetRef(cso, "manager", manager); SetInt(cso, "index", i); SetRef(cso, "dock", dock); SetRef(cso, "language", language);
             SetRef(cso, "panel", board); SetRefs(cso, "buttons", buttons); SetRefs(cso, "labels", labels);
             SetRef(cso, "body", body); SetRef(cso, "tab", tab); SetRef(cso, "tabLabel", tabLabel);
+            // M2: 結果欄 1 行 (cart.result.waiting 等。Runtime が書く。初期は空)
+            var note = MakeText(body.transform, NoteName, NotePos, NoteSize, 14f, font, "");
+            note.alignment = TextAlignmentOptions.Left; note.enableWordWrapping = true; note.enableAutoSizing = true; note.fontSizeMin = 9f; note.fontSizeMax = 14f; note.color = new Color(1f, .85f, .55f);
+            note.gameObject.layer = ControlsLayer; EditorUtility.SetDirty(note);
+            var noteLog = new List<string>(); SetRefIfPresent(cso, "noteLabel", note, noteLog);
+            if (i == 0) foreach (var line in noteLog) log.AppendLine(line);
             cso.ApplyModifiedPropertiesWithoutUndo();
             UdonSharpEditorUtility.CopyProxyToUdon(controls); EditorUtility.SetDirty(controls);
         }

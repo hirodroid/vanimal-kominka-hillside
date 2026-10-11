@@ -24,6 +24,9 @@ namespace KominkaHillside
         public GameObject[] joinButtons;           // MaxGroups 行
         public TextMeshProUGUI[] joinLabels;       // マスターの表示名だけ (表示名の補助フォント KH_DisplayName)
         public TextMeshProUGUI[] joinInfoLabels;   // 「· <行き先> · <人数>」(共通フォント。補助フォントにはハングル・キリルが無い。レビュー #7)
+        [Header("M2 掲示 (Build が配線。null 可)")]
+        public TextMeshProUGUI prLabel;            // cart.station.pr (注意書きの下)
+        public UnityEngine.UI.RawImage photo;      // 写真 (Runtime は触らない)
 
         const float ResultSeconds = 4f;
         const string Dot = " · ";
@@ -43,6 +46,7 @@ namespace KominkaHillside
             EnsureRows();
             if (titleLabel != null) titleLabel.text = T("cart.title");
             if (noticeLabel != null) noticeLabel.text = T("cart.notice");
+            if (prLabel != null) prLabel.text = T("cart.station.pr");   // M2: 注意書きの下の 1 行
             if (manager == null)
             {
                 if (startButton != null && startButton.activeSelf) startButton.SetActive(false);
@@ -59,7 +63,11 @@ namespace KominkaHillside
             int rows = joinButtons != null ? joinButtons.Length : 0;
             for (int g = 0; g < KH_CartManager.MaxGroups && row < rows; g++)
             {
-                if (manager._GroupState(g) != KH_CartManager.GroupRunning || !manager._GroupAccepting(g)) continue;
+                // M2: 受付 OFF・到着中のグループも行に出し、人数の後ろに短い理由を付けてボタンを無効にする (押しても CartClosed)
+                int state = manager._GroupState(g);
+                if (state == KH_CartManager.GroupFree) continue;
+                bool open = state == KH_CartManager.GroupRunning && manager._GroupAccepting(g);
+                string tail = open ? "" : Dot + T(state == KH_CartManager.GroupEnding ? "cart.row.ending" : "cart.row.closed");
                 _rowGroup[row] = g;
                 _rowGen[row] = manager._GroupGen(g);   // 押したときにこの世代を添える (レビュー #4)
                 if (joinLabels != null && row < joinLabels.Length && joinLabels[row] != null)
@@ -68,8 +76,13 @@ namespace KominkaHillside
                     joinLabels[row].text = Utilities.IsValid(p) ? p.displayName : "?";
                 }
                 if (joinInfoLabels != null && row < joinInfoLabels.Length && joinInfoLabels[row] != null)
-                    joinInfoLabels[row].text = "· " + DestName(manager._GroupDestination(g)) + Dot + manager._GroupCount(g).ToString();
-                if (joinButtons[row] != null && !joinButtons[row].activeSelf) joinButtons[row].SetActive(true);
+                    joinInfoLabels[row].text = "· " + DestName(manager._GroupDestination(g)) + Dot + manager._GroupCount(g).ToString() + tail;
+                if (joinButtons[row] != null)
+                {
+                    if (!joinButtons[row].activeSelf) joinButtons[row].SetActive(true);
+                    UnityEngine.UI.Button b = joinButtons[row].GetComponent<UnityEngine.UI.Button>();
+                    if (b != null && b.interactable != open) b.interactable = open;
+                }
                 row++;
             }
             for (int r = row; r < rows; r++)

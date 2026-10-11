@@ -27,9 +27,12 @@ namespace KominkaHillside
         const float CatchUpSpeed = 0.6f;    // m/s: 目標の跳びを追う速さ
         const float LateralSpeed = 0.4f;    // m/s: 横ずれの切り替え
         const float LateralLookAhead = 2.0f; // m: 寄せ切るまでに進む距離 (lateral / LateralSpeed × speed = 0.6 / 0.4 × 1.3 ≈ 1.95)
-        // M1.1 接地 (契約 Runtime 1)
-        const float GroundRayUp = 4f, GroundRayLength = 10f, GroundAccept = 0.35f, GroundBelow = 1.0f, GroundAbove = 1.5f;
-        const int GroundRetries = 3;
+        // M2 接地 v3 (契約 M2 Runtime 1)
+        const float GroundRayUp = 1.5f, GroundRayLength = 4f, GroundRecoverUp = 4f, GroundRecoverLength = 10f;
+        const float GroundObstacle = 0.45f, GroundRetryLength = 1.0f, GroundBelow = 1.0f, GroundAbove = 1.5f, GapLimit = 0.5f;
+        const int GroundRetries = 2;
+        private Collider _gCol;
+        private float[] _gapSince, _gapLogAt;
         const float PitchHalf = 0.42f;       // 前後の当たりの間隔の半分 (m)
 
         private void EnsureLocals()
@@ -42,6 +45,8 @@ namespace KominkaHillside
             _placedAt = new float[MaxCarts];
             _seg = new int[MaxCarts]; _groundFrame = new int[MaxCarts];
             for (int k = 0; k < MaxCarts; k++) { _seg[k] = -1; _groundFrame[k] = -1000; }
+            _gapSince = new float[MaxCarts]; _gapLogAt = new float[MaxCarts];
+            for (int k = 0; k < MaxCarts; k++) _gapSince[k] = -1f;
             _cartT = new Transform[MaxCarts];
             for (int c = 0; carts != null && c < carts.Length && c < MaxCarts; c++)
                 if (carts[c] != null) _cartT[c] = carts[c].transform;
@@ -120,20 +125,27 @@ namespace KominkaHillside
 
             float side = cartOrder[c] % 2 == 0 ? 1f : -1f;
             // レビュー #5: 橋の手前 LateralLookAhead から中央へ寄せ始める。M1.1: ベンチ・門枠などの追加範囲 (TrackNoLateral) も同じ扱い
-            float latTarget = detour ? side * lateral : 0f;
+            // M2: 横ずれは groupLane で決める (0 = 千鳥、1 = 右寄せ laneOffset (ベンチ等の追加範囲は 0)、2 = 中央)
+            int lane = groupLane[g];
+            float latTarget;
+            if (lane == LaneRight) latTarget = (_useTrack && (TrackNoLateral(d) || TrackNoLateral(d2))) ? 0f : laneOffset;
+            else if (lane == LaneCenter) latTarget = 0f;
+            else latTarget = detour ? side * lateral : 0f;
             float lat = snap ? latTarget : Mathf.MoveTowards(_lat[c], latTarget, LateralSpeed * dt);
             _lat[c] = lat;
             Vector3 pos = p + right * lat;
 
-            // 接地 (M1.1)。自分のカートは毎フレーム前後 2 点、他は 3 フレームに 1 回中央 1 点 (出現時は必ず)。ピッチは高さの差 (法線は使わない)
+            // 接地 (M2 v3)。自分のカートは毎フレーム前後 2 点、他は 3 フレームに 1 回中央 1 点 (出現時は必ず)。ピッチは高さの差 (法線は使わない)。
+            // レイの原点は前回の高さ + 1.5 m (snap は道の高さ + 1.5 m)
             float yTarget = _yT[c];
             float pitchTarget;
             bool mine = c == _myCart || c == _seatedCart;
+            float prevY = snap ? p.y : _y[c];
             if (mine)
             {
-                float yF = GroundAt(pos + fwd * PitchHalf, p.y + slope * PitchHalf);
+                float yF = GroundAt(pos + fwd * PitchHalf, p.y + slope * PitchHalf, prevY + slope * PitchHalf);
                 bool okF = _gHit;
-                float yR = GroundAt(pos - fwd * PitchHalf, p.y - slope * PitchHalf);
+                float yR = GroundAt(pos - fwd * PitchHalf, p.y - slope * PitchHalf, prevY - slope * PitchHalf);
                 bool okR = _gHit;
                 if (!okF) yF = okR ? yR + 2f * PitchHalf * slope : p.y + slope * PitchHalf;
                 if (!okR) yR = okF ? yF - 2f * PitchHalf * slope : p.y - slope * PitchHalf;
@@ -146,11 +158,13 @@ namespace KominkaHillside
                 if (snap || Time.frameCount - _groundFrame[c] >= 3)
                 {
                     _groundFrame[c] = Time.frameCount;
-                    float y = GroundAt(pos, p.y);
+                    float y = GroundAt(pos, p.y, prevY);
                     if (_gHit || snap) yTarget = y;
+                    GapWatch(c, y, p.y, d, pos);
                 }
                 pitchTarget = -Mathf.Atan(slope) * Mathf.Rad2Deg;
             }
+            if (mine) GapWatch(c, yTarget, p.y, d, pos);
             pitchTarget = Mathf.Clamp(pitchTarget, -pitchLimit, pitchLimit);
             _yT[c] = yTarget;
             if (snap)
@@ -162,7 +176,7 @@ namespace KominkaHillside
                 // vrc-udonsharp §1.4: 配列要素を ref に渡さない。ローカルで受けて書き戻す
                 float vy = _vy[c];
                 // 他人のカートは 2 フレームおきに来るので、経過 dt を明示して平滑化の速さを揃える
-                float y = Mathf.SmoothDamp(_y[c], yTarget, ref vy, smoothTime, Mathf.Infinity, dt);
+                float y = Mathf.SmoothDamp(_y[c], yTarget, ref vy, groundSmoothTime, Mathf.Infinity, dt);   // M2: 0.08 s (坂での遅れを 2 cm 程度に)
                 _y[c] = y; _vy[c] = vy;
                 float vp = _vp[c];
                 float pitch = Mathf.SmoothDamp(_pitch[c], pitchTarget, ref vp, smoothTime, Mathf.Infinity, dt);
@@ -212,29 +226,45 @@ namespace KominkaHillside
 
         private bool SegDetour(int i) { return trackDetour == null || i >= trackDetour.Length || trackDetour[i]; }
 
-        /// <summary>(xz, 道の高さ py) の地面の高さ。py + 4 から下へ 10 m。当たりが道の高さから 0.35 m より離れていれば、その 2 cm 下から撃ち直す
-        /// (最大 3 回。ベンチ・看板・犬・停止ボタンの上を抜ける)。採用は py に最も近い当たりで、[py - 1.0, py + 1.5] に収める。
-        /// _gHit = 何かに当たったか。契約の「TerrainCollider は撃ち直さない」は、Udon に TerrainCollider 型が公開されていない
-        /// (VRC.Udon.Wrapper.dll に無い。2026-10-12 確認) ので判定せず、距離の条件だけで撃ち直す (Terrain は下からは当たらないので結果は同じ)。</summary>
-        private float GroundAt(Vector3 at, float py)
+        /// <summary>M2 接地 v3 (犬の SnapToGround に寄せる): (xz, 前回の高さ prevY + 1.5) から下へ 4 m、最初の当たりを採る。
+        /// 当たりが prevY より 0.45 m 以上高い (ベンチ・犬・看板の上) ときは、その 2 cm 下から 1.0 m 撃ち直して当たれば低い方を採る (最大 2 回)。
+        /// 何も当たらなければ道の高さ py + 4 から 10 m で撃ち直す (復帰用)。安全のため [py − 1.0, py + 1.5] に収める。
+        /// _gHit = 何かに当たったか、_gCol = 採った当たりの Collider (診断ログ用)。Udon に TerrainCollider 型は無いので種類は見ない。</summary>
+        private float GroundAt(Vector3 at, float py, float prevY)
         {
-            _gHit = false;
-            Vector3 o = new Vector3(at.x, py + GroundRayUp, at.z);
-            float left = GroundRayLength;
-            float best = py, bestErr = 1e9f;
+            _gHit = false; _gCol = null;
             RaycastHit hit;
-            for (int k = 0; k <= GroundRetries; k++)
+            Vector3 o = new Vector3(at.x, prevY + GroundRayUp, at.z);
+            bool ok = Physics.Raycast(o, Vector3.down, out hit, GroundRayLength, KH_LeashManager.TravelGroundMask, QueryTriggerInteraction.Ignore);
+            if (!ok)
             {
-                if (left <= 0f || !Physics.Raycast(o, Vector3.down, out hit, left, KH_LeashManager.TravelGroundMask, QueryTriggerInteraction.Ignore)) break;
-                float hy = hit.point.y;
-                float e = Mathf.Abs(hy - py);
-                if (e < bestErr) { bestErr = e; best = hy; _gHit = true; }
-                if (e <= GroundAccept) break;
-                Vector3 next = hit.point + Vector3.down * 0.02f;
-                left -= o.y - next.y;
-                o = next;
+                o = new Vector3(at.x, py + GroundRecoverUp, at.z);
+                ok = Physics.Raycast(o, Vector3.down, out hit, GroundRecoverLength, KH_LeashManager.TravelGroundMask, QueryTriggerInteraction.Ignore);
+                if (!ok) return Mathf.Clamp(prevY, py - GroundBelow, py + GroundAbove);
             }
-            return Mathf.Clamp(best, py - GroundBelow, py + GroundAbove);
+            float y = hit.point.y;
+            Collider col = hit.collider;
+            for (int k = 0; k < GroundRetries && y > prevY + GroundObstacle; k++)
+            {
+                Vector3 below = hit.point + Vector3.down * 0.02f;
+                if (!Physics.Raycast(below, Vector3.down, out hit, GroundRetryLength, KH_LeashManager.TravelGroundMask, QueryTriggerInteraction.Ignore)) break;
+                if (hit.point.y < y) { y = hit.point.y; col = hit.collider; }
+            }
+            _gHit = true; _gCol = col;
+            return Mathf.Clamp(y, py - GroundBelow, py + GroundAbove);
+        }
+
+        /// <summary>診断: |カートの高さ − 道の高さ| > 0.5 m が 1 秒以上続いたら、5 秒に 1 回 `ground gap` を出す (埋まり・浮きの場所を Play ログから特定する)。</summary>
+        private void GapWatch(int c, float y, float py, float d, Vector3 at)
+        {
+            float gapM = y - py;
+            if (Mathf.Abs(gapM) <= GapLimit) { _gapSince[c] = -1f; return; }
+            float t = Time.time;
+            if (_gapSince[c] < 0f) { _gapSince[c] = t; return; }
+            if (t - _gapSince[c] < 1f || t < _gapLogAt[c]) return;
+            _gapLogAt[c] = t + 5f;
+            Debug.Log("[KH_Cart] ground gap=" + gapM.ToString("F2") + " d=" + d.ToString("F1") + " at=(" + at.x.ToString("F1") + "," + at.y.ToString("F1") + "," + at.z.ToString("F1") + ")"
+                + " hit=" + (_gCol != null ? _gCol.gameObject.name : "-") + " cart=" + c);
         }
 
         private void ParkCart(int c)
