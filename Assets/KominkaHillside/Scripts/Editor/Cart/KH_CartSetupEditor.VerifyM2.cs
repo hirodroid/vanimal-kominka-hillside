@@ -40,6 +40,8 @@ namespace KominkaHillside.Editor
                 v.Req(Enumerable.Range(0, m).Where(i => !track.detour[i]).All(i => c[i] == 2), "every no-detour (bridge) segment is class 2");
                 v.Req(bridgeZones >= 2, "narrow zones include the 2 bridges (zones with a bridge: " + bridgeZones + " of " + from.Length + ")");
                 float back = WaitExtra + tuning.gap * ConvoyCars;
+                // 併合後の区間どうしの間隔は待避に要る長さ以上
+                for (int z = 0; z < from.Length; z++) { int nx = (z + 1) % from.Length; if (from.Length > 1) v.Req(ZoneGap(track, to[z], from[nx]) >= back - .01f, "zones " + z + " and " + nx + " are " + ZoneGap(track, to[z], from[nx]).ToString("F1") + " m apart (>= " + back.ToString("F1") + "; closer ones are merged)"); }
                 for (int z = 0; z < from.Length; z++)
                 {
                     foreach (var (w, edge, sign, what) in new[] { (wb[z], from[z], -1, "waitBefore (+1)"), (wa[z], to[z], +1, "waitAfter (-1)") })
@@ -139,6 +141,22 @@ namespace KominkaHillside.Editor
                 int c5 = D(zf - 10f, +1, 1, 0, mid, +1, 1, 1); pr.Req(c5 == 0, "traffic 5: same direction -> go (got " + c5 + ")");
                 // 6 自分が区間内 → 2
                 int c6 = D(mid, +1, 1, 0, zt + 5f, -1, 1, 1); pr.Req(c6 == 2, "traffic 6: me inside -> go through (got " + c6 + ")");
+                // 7 0 を跨ぐ区間 [L-5, 5] の内外 (Codex M2 レビュー c)
+                {
+                    float wf = L - 5f, wt = 5f;
+                    int Dw(float myLead, int myDir, float oLead, int oDir) { return (int)decide.Invoke(mgr, new object[] { W(myLead), myDir, 1, 0, W(oLead), oDir, 1, 1, wf, wt }); }
+                    int inA = Dw(L - 1f, +1, 30f, -1), inB = Dw(2f, +1, 30f, -1), outFar = Dw(L - 20f, +1, 40f, -1), holdCase = Dw(L - 10f, +1, 1f, -1);
+                    pr.Req(inA == 2 && inB == 2, "traffic 7: zone across 0 [L-5, 5]: me at L-1 and at 2 count as inside (" + inA + ", " + inB + ")");
+                    pr.Req(outFar == 0 && holdCase == 1, "traffic 7: across 0: far outside -> go (" + outFar + "), other inside at d=1 -> wait (" + holdCase + ")");
+                }
+                // 8 併合区間 (保存値で最長の区間) の先入優先: 相手が区間の奥 (旧 2 つ目の側) に居れば手前で待つ、自分が入口側の中なら進む
+                {
+                    int longest = 0; for (int z = 1; z < from.Length; z++) if (ZoneLengthRaw(from[z], to[z], L) > ZoneLengthRaw(from[longest], to[longest], L)) longest = z;
+                    float lf = from[longest], lt = to[longest];
+                    int Dz(float myLead, int myDir, float oLead, int oDir) { return (int)decide.Invoke(mgr, new object[] { W(myLead), myDir, 1, 0, W(oLead), oDir, 1, 1, lf, lt }); }
+                    int a = Dz(lf - 10f, +1, lt - 1f, -1), b = Dz(lf + 1f, +1, lt + 10f, -1), c = Dz(lt + 10f, -1, lf + 1f, +1);
+                    pr.Req(a == 1 && b == 2 && c == 1, "traffic 8: longest zone " + lf.ToString("F1") + "-" + lt.ToString("F1") + " (" + ZoneLengthRaw(lf, lt, L).ToString("F1") + " m): other deep inside -> wait (" + a + "), me inside -> go (" + b + "), other's side waits (" + c + ")");
+                }
                 pr.r.traffic.Add("cases: " + c1 + " / " + c2far + "," + c2near + " / " + c3big + "," + c3small + " / " + c4 + " / " + c5 + " / " + c6);
                 if (hold != null)
                 {
@@ -151,6 +169,8 @@ namespace KominkaHillside.Editor
             }
             catch (TargetInvocationException ex) { pr.Req(false, "traffic function threw in Edit mode: " + (ex.InnerException != null ? ex.InnerException.Message : ex.Message)); }
         }
+
+        static float ZoneGap(Track t, float endOfA, float startOfB) { return TrackWrap(t, startOfB - endOfA); }
 
         static float ZoneLengthRaw(float from, float to, float L) { float l = to - from; return l < 0f ? l + L : l; }
     }

@@ -222,7 +222,7 @@ namespace KominkaHillside
             groupDir[g] = dir;
             groupAccepting[g] = true;
             groupCount[g] = 1;
-            groupLane[g] = 0; groupHoldDist[g] = -1f; groupHoldSinceMs[g] = 0;   // M2: 交通の状態は空から
+            groupLane[g] = 0; groupHoldDist[g] = -1f; groupHoldSinceMs[g] = 0; groupHoldBanMs[g] = 0;   // M2: 交通の状態は空から
             groupAnchorDist[g] = Wrap(start);
             groupAnchorMs[g] = Networking.GetServerTimeInMilliseconds() + departDelayMs;
             cartState[c] = CartRiding;
@@ -232,6 +232,7 @@ namespace KominkaHillside
             cartSpot[c] = spot;
             Debug.Log("[KH_Cart] start cart=" + c + " group=" + g + " gen=" + groupGen[g] + " player=" + pid + " spot=" + spot + " start=" + start + " basis=" + (_useTrack ? "track" : "route") + " dest=" + destination
                 + " dir=" + dir + " anchor=" + groupAnchorDist[g] + " remaining=" + (IsDestRun(g) ? Remaining(g) : -1f));
+            TrafficStartGate(g, start, dir, Networking.GetServerTimeInMilliseconds());   // Codex M2 (3): 狭い区間内の乗り場は対向が抜けるまで出発保留
             Commit();
         }
 

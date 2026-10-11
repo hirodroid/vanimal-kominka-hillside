@@ -94,7 +94,8 @@ namespace KominkaHillside
             _wantPos = ConvoyPos(centre, fs, convoyBackDeg, convoyElevDeg, _convoyDist) + LeadOffset(_hVel, posTau);
             _wantLook = centre + LeadOffset(_hVel, lookTau);
             _wantFov = convoyFov;
-            _subject = centre; _subjectSize = _convoySize;
+            // the occlusion ray starts ConvoySubjectSize × 0.6 out (one cart), not at the framing size: a long convoy (24 m) would skip 9 m of the ray
+            _subject = centre; _subjectSize = ConvoySubjectSize;
             return true;
         }
 
@@ -151,6 +152,9 @@ namespace KominkaHillside
         const float ConvoyApartMax = 40f;
         /// <summary>隊列: I count as riding only while my feet are within this of my cart (m).</summary>
         const float ConvoySeatMax = 3f;
+        /// <summary>隊列: the subject size handed to the shared occlusion (its ray skips size × 0.6 from the centre): one cart, separate from the
+        /// framing size _convoySize (Codex M2 review).</summary>
+        const float ConvoySubjectSize = 1.5f;
 
         static float FlatDist(Vector3 a, Vector3 b)
         {

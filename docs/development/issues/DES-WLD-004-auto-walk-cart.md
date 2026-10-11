@@ -5,7 +5,7 @@ system: WLD
 status: wip
 priority: Medium
 summary: 無料・全端末対応の自動散歩カート。既存ワープ5地点で開始し、犬の散歩設定を共用。グループ合流・引き継ぎに対応し、目的地到着で終了する
-next: M2 (すれ違い待機・犬の前方配置とくん活抑制・掲示・隊列カット・調整値・車軸 LOD1・接地 v3) を実装中。完了後に Play で確認し、最後に FPS の A/B
+next: M2 まで実装済み (交通・犬・掲示・隊列カット・調整値・接地 v3)。Play で M2 のチェック (実装設計 M2 節末尾) と FPS の A/B。結果に応じて調整
 updated: 2026-10-11
 ---
 
@@ -347,7 +347,8 @@ FPS の見立て (静的、未計測): 撮影モニターは 1280×720 の Rende
 | カメラ | 「隊列」カット (グループの重心と広がりから距離 3〜18 m、後方 35°・仰角 20°)。乗っていなければ背中ごし |
 | 調整 | `Data/Cart/tuning.json` (speed 1.3 / gap 3.0 / lateral 0.6 / approach 25 / holdTimeoutSec 60 / laneOffset 0.55 / seatStep 0.05 / yawStep 15) を Build が書く。`Cart/4 Apply Tuning` で JSON だけ再適用 |
 | モデル | 車軸 LOD1 各 144 三角形、LOD1 合計 1,424 / 1,500 |
-| 検査 | U# コンパイル 0 / Cart Verify `CART_OK` PASS 2,066 / Probe PASS 175 (交通 6 ケース) / Video Build OK、Video Verify は M2 の自己検査 2 件が FAIL (修正中) / Course/27 済み |
+| 検査 | U# コンパイル 0 / Cart Verify `CART_OK` PASS 2,068 / Probe PASS 178 (交通 8 ケース: 先入優先・待機点・解除・0 跨ぎ・併合区間) / Video Build OK・Video Verify PASS 584 / Course/27 済み |
+| 独立レビュー | Codex (M2) は高 3・中 4・低 1。全件反映: 待機設定時に錨を現在位置へ打ち直す (長く走った後に出発位置へ跳ぶ穴)、区間内に居る車は待たない + 相互待ちは出口に近い方を解く安全弁、門前の近接 2 区間を 1 区間に併合 (狭い区間は 5 → 4)、区間内の乗り場 (上流の橋) からは対向が抜けるまで出発を保留、0 を跨ぐ区間の長さの正規化、待機抑止を同期 (`groupHoldBanMs`)、Apply Tuning で待機点も再計算、隊列カットの遮蔽判定は被写体の大きさをカート 1 台分に分離、`ground gap` は平滑化後の高さで判定 |
 
 ## 受領要件 (2026-10-11)
 

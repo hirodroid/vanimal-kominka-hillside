@@ -56,6 +56,12 @@ namespace KominkaHillside.Editor
             if (managers.Length != 1) throw new InvalidOperationException("Exactly one KH_CartManager required (run Cart/1)");
             var t = LoadTuning(); var log = new List<string>();
             int n = WriteTuning(managers[0], t, log);
+            // gap が変わると待機点 (区間端から 3 m + gap×4) と区間の併合が変わる: Build と同じ関数で道幅の分類から書き直す (Codex M2 レビュー b)
+            var route = KH_CourseTravelEditor.FindPouch().manager.route;
+            var traffic = ClassifyTrack(BuildTrack(route), t.gap);
+            WriteTraffic(managers[0], traffic);
+            log.Add("traffic recomputed with gap " + t.gap + ": zones=" + traffic.from.Length + " class0=" + traffic.lengthByClass[0].ToString("F0") + "m class1=" + traffic.lengthByClass[1].ToString("F0") + "m class2=" + traffic.lengthByClass[2].ToString("F0") + "m");
+            log.AddRange(traffic.zones);
             UdonSharpEditorUtility.CopyProxyToUdon(managers[0]); EditorUtility.SetDirty(managers[0]);
             var scene = managers[0].gameObject.scene;
             EditorSceneManager.MarkSceneDirty(scene);
@@ -124,13 +130,13 @@ namespace KominkaHillside.Editor
                     k = kk;
                 }
             }
-            // 余裕を足して重なったものを併合
+            // 間が「3 m + gap×4」(待避に要る長さ) 未満の区間は 1 つに併合する (間で待避できないため。Codex M2 レビュー a)。待機点は併合後の両端から取る
+            float back = WaitExtra + gap * ConvoyCars;
             zones = zones.OrderBy(z => z.x).ToList();
             var merged = new List<Vector2>();
-            foreach (var z in zones) { if (merged.Count > 0 && z.x <= merged[merged.Count - 1].y) merged[merged.Count - 1] = new Vector2(merged[merged.Count - 1].x, Mathf.Max(merged[merged.Count - 1].y, z.y)); else merged.Add(z); }
-            // 継ぎ目の両側で重なる最後と最初をまとめる
-            if (merged.Count > 1 && merged[merged.Count - 1].y - t.length >= merged[0].x) { merged[0] = new Vector2(merged[merged.Count - 1].x, merged[0].y + t.length); merged.RemoveAt(merged.Count - 1); }
-            float back = WaitExtra + gap * ConvoyCars;
+            foreach (var z in zones) { if (merged.Count > 0 && z.x - merged[merged.Count - 1].y < back) merged[merged.Count - 1] = new Vector2(merged[merged.Count - 1].x, Mathf.Max(merged[merged.Count - 1].y, z.y)); else merged.Add(z); }
+            // 継ぎ目の両側 (最後と最初) も同じ基準でまとめる
+            if (merged.Count > 1 && merged[0].x + t.length - merged[merged.Count - 1].y < back) { merged[0] = new Vector2(merged[merged.Count - 1].x, merged[0].y + t.length); merged.RemoveAt(merged.Count - 1); }
             map.from = new float[merged.Count]; map.to = new float[merged.Count]; map.waitBefore = new float[merged.Count]; map.waitAfter = new float[merged.Count];
             for (int z = 0; z < merged.Count; z++) { map.from[z] = TrackWrap(t, merged[z].x); map.to[z] = TrackWrap(t, merged[z].y); }
             for (int z = 0; z < merged.Count; z++)

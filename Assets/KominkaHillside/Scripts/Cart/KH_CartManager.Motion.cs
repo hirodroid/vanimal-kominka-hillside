@@ -141,6 +141,7 @@ namespace KominkaHillside
             float pitchTarget;
             bool mine = c == _myCart || c == _seatedCart;
             float prevY = snap ? p.y : _y[c];
+            bool rayed = mine;
             if (mine)
             {
                 float yF = GroundAt(pos + fwd * PitchHalf, p.y + slope * PitchHalf, prevY + slope * PitchHalf);
@@ -160,11 +161,10 @@ namespace KominkaHillside
                     _groundFrame[c] = Time.frameCount;
                     float y = GroundAt(pos, p.y, prevY);
                     if (_gHit || snap) yTarget = y;
-                    GapWatch(c, y, p.y, d, pos);
+                    rayed = true;
                 }
                 pitchTarget = -Mathf.Atan(slope) * Mathf.Rad2Deg;
             }
-            if (mine) GapWatch(c, yTarget, p.y, d, pos);
             pitchTarget = Mathf.Clamp(pitchTarget, -pitchLimit, pitchLimit);
             _yT[c] = yTarget;
             if (snap)
@@ -182,6 +182,7 @@ namespace KominkaHillside
                 float pitch = Mathf.SmoothDamp(_pitch[c], pitchTarget, ref vp, smoothTime, Mathf.Infinity, dt);
                 _pitch[c] = pitch; _vp[c] = vp;
             }
+            if (rayed) GapWatch(c, _y[c], p.y, d, pos);   // Codex M2 (8): 平滑化した後の実際の高さで判定 (レイを撃ったフレームだけ)
             pos.y = _y[c];
             float yaw = Mathf.Atan2(fwd.x, fwd.z) * Mathf.Rad2Deg;
             _cartT[c].SetPositionAndRotation(pos, Quaternion.Euler(_pitch[c], yaw, 0f));

@@ -206,6 +206,7 @@ namespace KominkaHillside
             groupLane[g] = 0;            // M2: 交通の状態も解く
             groupHoldDist[g] = -1f;
             groupHoldSinceMs[g] = 0;
+            groupHoldBanMs[g] = 0;
             Debug.Log("[KH_Cart] free group=" + g);
         }
 

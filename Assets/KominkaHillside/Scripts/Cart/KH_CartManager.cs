@@ -65,6 +65,7 @@ namespace KominkaHillside
         [UdonSynced] public int[] groupLane = new int[8];                                         // 0 千鳥 / 1 一列・右寄せ / 2 一列・中央
         [UdonSynced] public float[] groupHoldDist = new float[] {-1f,-1f,-1f,-1f,-1f,-1f,-1f,-1f}; // 先頭の距離の上限 (−1 = なし)
         [UdonSynced] public int[] groupHoldSinceMs = new int[8];                                  // 待機を始めたサーバー時刻
+        [UdonSynced] public int[] groupHoldBanMs = new int[8];                                    // タイムアウト後この時刻まで待たせない (0 = なし。Codex M2 (5))
 
         // M2 交通の地形 (非同期。既定 null — Cart/1 Build が軌道から焼く。null なら交通なし)
         public int[] trackClass;                     // 区間 i: 0 広い (千鳥可) / 1 一列なら双方通れる / 2 一列でも通れない
