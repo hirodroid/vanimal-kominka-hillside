@@ -24,6 +24,8 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   if(hold==null){var g=new GameObject(FoamHoldName);Undo.RegisterCreatedObjectUndo(g,"Foam cannon hold");hold=g.transform;hold.SetParent(model,false);}
   Undo.RecordObject(hold,"Foam cannon hold");hold.localPosition=FoamHoldLocalPosition;hold.localRotation=FoamHoldLocalRotation;hold.localScale=Vector3.one;
   var pu=sel.pickups[Slots[0]];Undo.RecordObject(pu,"Foam cannon hold");pu.orientation=VRC_Pickup.PickupOrientation.Gun;pu.ExactGun=hold;
+  // IMP-DOG-046 (2026-10-11): the hold is per item at runtime (KH_WashSelection.gunHolds; _Apply sets Gun + Exact Gun for it, Grip otherwise).
+  if(sel.gunHolds!=null&&sel.gunHolds.Length>0){sel.gunHolds[0]=hold;EditorUtility.SetDirty(sel);}
   EditorUtility.SetDirty(hold);EditorUtility.SetDirty(pu);return hold;
  }
  [MenuItem(Menu+"47 - Apply Foam Cannon Hold")]
@@ -37,10 +39,10 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   {
    var pu=sel.pickups[Slots[0]];bool existed=sel.models[0].transform.Find(FoamHoldName)!=null;if(!existed)created++;
    string before="orientation="+pu.orientation+" exactGun="+(pu.ExactGun==null?"null":pu.ExactGun.name)+" exactGrip="+(pu.ExactGrip==null?"null":pu.ExactGrip.name);
-   var h=FoamCannonHold(sel);
+   var h=FoamCannonHold(sel);if(sel.gunHolds!=null)Copy(sel);
    log.AppendLine(sel.transform.parent.name+" "+pu.name+" before "+before+" after orientation="+pu.orientation+" exactGun="+h.name+" local="+h.localPosition.ToString("F3")+" rot="+h.localEulerAngles.ToString("F1")+(existed?" (updated)":" (created)"));
   }
   EditorSceneManager.MarkSceneDirty(scene);
-  Log("foam-hold","selectors="+sels.Length+" created="+created+" updated="+(sels.Length-created)+"\n"+log+"NOT saved: run 44 - Verify Selection, then save the scene");
+  Log("foam-hold","selectors="+sels.Length+" created="+created+" updated="+(sels.Length-created)+"\n"+log+"NOT saved: run 44 - Verify Selection, then save the scene (KH_WashSelection.gunHolds[0] copied to Udon when the category arrays exist)");
  }
 }}

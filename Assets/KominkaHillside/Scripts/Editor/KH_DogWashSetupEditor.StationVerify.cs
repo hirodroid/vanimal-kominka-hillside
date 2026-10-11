@@ -223,11 +223,18 @@ namespace KominkaHillside.Editor
             // ---- no tub (user's decision 2026-10-01), the sign; the players pass through the stand and the shelf ----
             req(st.Find(TubName) == null, label + ": no " + TubName + " (removed)");
             {
-                var solid = st.GetComponentsInChildren<Collider>(true).Where(x => !x.isTrigger && x.attachedRigidbody == null && x.transform.name != ResetName
+                // A pickup's collider (a Rigidbody on it or above it) is not part of the stand. attachedRigidbody alone misses a DISABLED one:
+                // a disabled collider is out of the physics scene and reports null, so the premium slots that are not selected
+                // (IMP-DOG-043/046: pickupColliders[s].enabled = false) counted as the shelf (2026-10-11, 7 per station). Their layer is Pickup 13.
+                var all = st.GetComponentsInChildren<Collider>(true).Where(x => !x.isTrigger && x.transform.name != ResetName
                     && !(st.Find(FloorName) != null && x.transform.IsChildOf(st.Find(FloorName)))).ToArray();
+                var solid = all.Where(x => x.attachedRigidbody == null && x.GetComponentInParent<Rigidbody>(true) == null).ToArray();
+                int pickupCols = all.Count(x => x.attachedRigidbody != null || x.GetComponentInParent<Rigidbody>(true) != null);
+                int disabledPickupCols = all.Count(x => x.attachedRigidbody == null && x.GetComponentInParent<Rigidbody>(true) != null);
                 var bump = solid.Where(x => x.gameObject.layer != StandLayer || HitsPlayers(x)).Select(x => KD_SceneObjects.PathOf(x.gameObject)).ToArray();
                 req(solid.Length >= 6 && bump.Length == 0 && Physics.GetIgnoreLayerCollision(StandLayer, 10) && Physics.GetIgnoreLayerCollision(StandLayer, 9),
-                    label + ": the shelf, its legs and the duckboard (" + solid.Length + " solid colliders) are on layer " + StandLayer + ", which does not collide with Player 9 / PlayerLocal 10 (" + string.Join(", ", bump) + ")");
+                    label + ": the shelf, its legs and the duckboard (" + solid.Length + " solid colliders) are on layer " + StandLayer + ", which does not collide with Player 9 / PlayerLocal 10 (" + string.Join(", ", bump) + ")"
+                    + " [left out: " + pickupCols + " pickup colliders under a Rigidbody, " + disabledPickupCols + " of them disabled (premium slots not selected)]");
                 var resetTf = st.Find(ResetName);
                 req(resetTf != null && resetTf.gameObject.layer == 0, label + ": " + ResetName + " stays on Default (Interact)");
             }
@@ -1067,8 +1074,14 @@ namespace KominkaHillside.Editor
                 }
             }
             req(count == 1 + CourseStations.Length, "bottle: " + (1 + CourseStations.Length) + " bottles, one per station (" + count + ")");
-            int sceneBottles = UnityEngine.Object.FindObjectsOfType<KH_WashTool>(true).Count(x => x.tool == KH_DogWash.ToolBottle);
-            req(sceneBottles == count, "bottle: every KH_WashTool with tool " + KH_DogWash.ToolBottle + " in the scene is a station's bottle (" + sceneBottles + " / " + count + ")");
+            // The premium FoamCannon (KH_WashSelection slot 0, IMP-DOG-043) deliberately uses the bottle's foam effect (tool 4 + sprayInput);
+            // it is a selector's pickup slot, not a station bottle, so it is counted apart (one per selector) (2026-10-11).
+            var bottleTools = UnityEngine.Object.FindObjectsOfType<KH_WashTool>(true).Where(x => x.tool == KH_DogWash.ToolBottle).ToArray();
+            int premiumFoam = bottleTools.Count(x => x.selection != null && x.sprayInput && x.selection.slots != null && x.selection.slots.Length > 0 && x.selection.slots[0] == x);
+            int selectors = UnityEngine.Object.FindObjectsOfType<KH_WashSelection>(true).Length;
+            int sceneBottles = bottleTools.Length - premiumFoam;
+            req(sceneBottles == count && premiumFoam == selectors, "bottle: every KH_WashTool with tool " + KH_DogWash.ToolBottle + " in the scene is a station's bottle (" + sceneBottles + " / " + count
+                + "), besides the premium FoamCannon slot 0 of each selector, which uses the bottle's foam effect (" + premiumFoam + " / " + selectors + ")");
             r.bottleCount = count;
         }
 

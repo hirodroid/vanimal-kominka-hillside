@@ -187,7 +187,8 @@ public static class KH_WashPremiumEditor
         if(count!=4)throw new Exception("Support count");
         if(File.Exists("Temp/WashPremium/runtime-before-stable.txt")){if(File.ReadAllText("Temp/WashPremium/runtime-before-stable.txt")!=Stable(RuntimeSnapshot()))throw new Exception("Stable runtime preservation failed");}
         else if(File.ReadAllText("Temp/WashPremium/runtime-before.txt")!=RuntimeSnapshot())throw new Exception("Runtime preservation failed");
-        var gallery=EditorSceneManager.GetActiveScene().GetRootGameObjects().Single(x=>x.name=="KH_WashPremiumPreview_Inactive");if(gallery.activeSelf||gallery.transform.childCount!=17)throw new Exception("Preview unexpectedly active");
+        var gallery=EditorSceneManager.GetActiveScene().GetRootGameObjects().Single(x=>x.name=="KH_WashPremiumPreview_Inactive");// IMP-DOG-047 (2026-10-11): WashPremium/48 keeps only the offered items in the gallery (the dropped ones ship otherwise).
+        if(gallery.activeSelf||gallery.transform.childCount!=KH_WashSelectionEditor.Order.Length)throw new Exception("Preview unexpectedly active or not the "+KH_WashSelectionEditor.Order.Length+" offered items ("+gallery.transform.childCount+")");
         log.AppendLine("PASS 18 models / 19604 tris / 2 materials / 6 texture imports / 4 support backing refs / 20 lift poses / center+size independence / existing runtime preservation; Edit-mode only");Receipt("verify",log.ToString());
     }
     [MenuItem(Menu+"22 - Refresh Support Bounds")]
