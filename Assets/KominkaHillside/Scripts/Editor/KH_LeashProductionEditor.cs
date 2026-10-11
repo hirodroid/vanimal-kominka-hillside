@@ -116,7 +116,9 @@ namespace KominkaHillside.Editor
         // (no stretched hardware), its top edge is placed on the top of the skin section (buried in the fur, the bottom
         // ends up inside the body), and the attachment ring is lifted by RingLift so it emerges from the fur.
         static readonly bool[] BuriedInFur={false,true,false,false,false,true};
-        // Lift is measured by shots: Samoyed's shader fur reaches ~9cm above the karada skin at the nape, Pome's ~2cm.
+        // Lift is set from shots. Clasp centre above the section's skin top = k*(RingY-ry+RingLift)-SinkDepth: Pome ~18mm,
+        // Samoyed ~42mm (R13, 2026-10-11; R12's .240 put it ~174mm up, floating). Samoyed's visible fur at the nape is ~30-40mm
+        // above the section top (BUG-DOG-011 R13).
         static readonly float[] RingLift={0f,.036f,0f,0f,0f,.065f};
         // The fur is alpha-cut shell layers, so anything between the skin and the outer shells shows through the gaps
         // (rounds 5-6: band on / just under the skin top still read as fur poking through a band). The buried band is
