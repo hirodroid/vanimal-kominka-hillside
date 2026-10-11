@@ -50458,10 +50458,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MomentumTransferMethod: 0
   DisallowTheft: 0
-  ExactGun: {fileID: 0}
+  ExactGun: {fileID: 202906247}
   ExactGrip: {fileID: 760147327}
   allowManipulationWhenEquipped: 0
-  orientation: 1
+  orientation: 2
   AutoHold: 3
   InteractionText: Care tool
   UseText: Use
@@ -64329,10 +64329,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MomentumTransferMethod: 0
   DisallowTheft: 0
-  ExactGun: {fileID: 0}
+  ExactGun: {fileID: 1222707880}
   ExactGrip: {fileID: 0}
   allowManipulationWhenEquipped: 0
-  orientation: 1
+  orientation: 2
   AutoHold: 3
   InteractionText: Care tool
   UseText: Use
@@ -76269,6 +76269,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 157653088}
   m_Mesh: {fileID: 4300000, guid: e850c0ccbcb29434294d95b837bdef8c, type: 2}
+--- !u!1 &157702322
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 157702323}
+  m_Layer: 0
+  m_Name: KH_FoamCannonGunHold
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &157702323
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 157702322}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.5, y: 0.5, z: 0.5, w: -0.5}
+  m_LocalPosition: {x: 0, y: -0.012, z: -0.035}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 716334918}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &158042192
 GameObject:
   m_ObjectHideFlags: 0
@@ -114979,6 +115010,37 @@ Transform:
   - {fileID: 79446217}
   - {fileID: 610520230}
   m_Father: {fileID: 1552360081}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &202906246
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 202906247}
+  m_Layer: 0
+  m_Name: KH_FoamCannonGunHold
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &202906247
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 202906246}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.5, y: 0.5, z: 0.5, w: -0.5}
+  m_LocalPosition: {x: 0, y: -0.012, z: -0.035}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 760147326}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &203389242
 GameObject:
@@ -196677,7 +196739,7 @@ Transform:
   m_GameObject: {fileID: 271027425}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.00000029802322, y: 0, z: -1.1999974}
+  m_LocalPosition: {x: 0.0000023841858, y: 0, z: -1.1999979}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -285393,10 +285455,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MomentumTransferMethod: 0
   DisallowTheft: 0
-  ExactGun: {fileID: 0}
+  ExactGun: {fileID: 1568229698}
   ExactGrip: {fileID: 1974272799}
   allowManipulationWhenEquipped: 0
-  orientation: 1
+  orientation: 2
   AutoHold: 3
   InteractionText: Care tool
   UseText: Use
@@ -459970,6 +460032,9 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 4360449158690093323, guid: aa022fc473a42c646bde6f4fde3cb92b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 157702323}
     - targetCorrespondingSourceObject: {fileID: 7419012971372222183, guid: aa022fc473a42c646bde6f4fde3cb92b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 959852492}
@@ -484284,6 +484349,9 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 4360449158690093323, guid: aa022fc473a42c646bde6f4fde3cb92b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 202906247}
     - targetCorrespondingSourceObject: {fileID: 7419012971372222183, guid: aa022fc473a42c646bde6f4fde3cb92b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1016527248}
@@ -541888,6 +541956,9 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 4360449158690093323, guid: aa022fc473a42c646bde6f4fde3cb92b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1222707880}
     - targetCorrespondingSourceObject: {fileID: 7419012971372222183, guid: aa022fc473a42c646bde6f4fde3cb92b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1646697184}
@@ -725288,6 +725359,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1578337589}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1222707879
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1222707880}
+  m_Layer: 0
+  m_Name: KH_FoamCannonGunHold
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1222707880
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1222707879}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.5, y: 0.5, z: 0.5, w: -0.5}
+  m_LocalPosition: {x: 0, y: -0.012, z: -0.035}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 899125006}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1223821031
 GameObject:
@@ -934289,6 +934391,37 @@ MonoBehaviour:
   m_Center: {x: 0, y: 0, z: 0}
   m_Area: 1
   m_AffectedAgents: ffffffff
+--- !u!1 &1568229697
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1568229698}
+  m_Layer: 0
+  m_Name: KH_FoamCannonGunHold
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1568229698
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1568229697}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.5, y: 0.5, z: 0.5, w: -0.5}
+  m_LocalPosition: {x: 0, y: -0.012, z: -0.035}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1974272800}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1568233063
 GameObject:
   m_ObjectHideFlags: 0
@@ -1133087,10 +1133220,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MomentumTransferMethod: 0
   DisallowTheft: 0
-  ExactGun: {fileID: 0}
+  ExactGun: {fileID: 157702323}
   ExactGrip: {fileID: 0}
   allowManipulationWhenEquipped: 0
-  orientation: 1
+  orientation: 2
   AutoHold: 3
   InteractionText: Care tool
   UseText: Use
@@ -1173157,6 +1173290,9 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 4360449158690093323, guid: aa022fc473a42c646bde6f4fde3cb92b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1568229698}
     - targetCorrespondingSourceObject: {fileID: 7419012971372222183, guid: aa022fc473a42c646bde6f4fde3cb92b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1540692776}

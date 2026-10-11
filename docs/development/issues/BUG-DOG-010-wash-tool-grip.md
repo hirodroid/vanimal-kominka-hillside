@@ -2,10 +2,10 @@
 id: BUG-DOG-010
 type: BUG
 system: DOG
-status: wip
+status: review
 priority: Medium
 summary: 洗浄道具を持つ・装備すると形や持ち手が不自然に見える
-next: 統括がコンパイル→WashPremium/47→44 Verifyで泡銃のGun保持を実測値で確認して保存。ユーザーがPCVR左右の手とDesktopで噴出口の向きを確認
+next: ユーザーの PCVR で泡銃を右手・左手で持ち、ノズルが肘→手の向きか・横倒れしないか・握りの位置を見る (Desktop も)。ずれたら FoamHoldLocalRotation / Position を直して 47 → 44。水鉄砲 3 種とドライヤーは同じ原因で未対応
 updated: 2026-10-11
 ---
 
@@ -60,3 +60,5 @@ updated: 2026-10-11
 - 統括：`bash scripts/unity-compile.sh`（Editor の C# だけの変更で、Udon の変更はない）→ 47 を実行 → 44 を実行 → `Temp/WashSelection/verify.txt` の `hold FoamCannon` 4 行と PASS を確認 → シーンを保存。書き込み先は**シーンだけ**（4 洗い場の Slot0 の VRCPickup と、新しい子 4 個）。プレハブ資産は変わらない。シーンには別セッションの未コミット変更があるので、stage は分ける（vrc-scene-edit-safety）。
 - ユーザー：PCVR で右手と左手、それぞれ泡銃を持つ。噴出口が肘→手の延長上を向くか、横倒れがないか、取っ手が手に収まるかを見る。Desktop も確認する。向きがずれていたら `FoamHoldLocalRotation` を、手の位置がずれていたら `FoamHoldLocalPosition` を直し、47→44 をやり直す。
 - 対象外（同じ原因の可能性あり）：アヒル・魚・竹の水鉄砲とドライヤーも FBX の GripAnchor（+Z = 噴射）を Grip で使っている。水鉄砲の枠 2 はシャワー・じょうろと共用なので、道具ごとに orientation を切り替える必要がある。ユーザー確認のあとで別途扱う。
+
+2026-10-11 (統括): シーンへ適用した。コンパイル 0 → `WashPremium/47` (4 洗い場で Slot0 を Gun、`KH_FoamCannonGunHold` を新規 4) → `44 - Verify Selection` 431 PASS / FAIL 0 (4 か所とも `aimErr=0.00deg upErr=0.00deg`、ノズルは手の 0.182 m 先) → 保存。保存後の差分は Slot0 の VRCPickup 4、持つ点 4、泡銃のプレハブインスタンス 4、中央支柱の位置の 2µm の再計算 1 だけ。Codex 独立レビュー (`c0ca3e5`) は軸の対応を問題なしとした。残り: ユーザーの PCVR (右手・左手でノズルが肘→手の向きか、握りの位置)、Desktop。水鉄砲 (アヒル・魚・竹) とドライヤーは同じ原因の見込みで未対応 (水の枠は道具ごとに持ち方を切り替える必要がある)。
