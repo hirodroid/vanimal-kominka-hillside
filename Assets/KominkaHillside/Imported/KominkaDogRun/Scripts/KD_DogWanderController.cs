@@ -1832,6 +1832,7 @@ namespace KominkaDogRun
             }
             FinishInterruptedGreeting();
             WaterHipsBobLate();   // IMP-DOG-020 step 7: the swim bob on a single-tier rig's hips, after the Animator (HillsideWater.cs)
+            if (_wpKind == 1 || _wpJawWrote) WaterPlayJawLate();   // IMP-DOG-049 段 B: the hose play's jaw snap, after the Animator (HillsideWash.cs)
             float dt = _dt;       // IMP-DOG-034: this frame's Update dt (+ the skipped frames' time)
             if (dt <= 0f) return;
 

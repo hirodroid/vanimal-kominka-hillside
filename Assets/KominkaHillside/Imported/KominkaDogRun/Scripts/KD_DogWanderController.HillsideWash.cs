@@ -118,6 +118,30 @@ namespace KominkaDogRun
         private float _washPawUntil = -1000f;
         private float _washPawNextAt;
         private int _washPawCount;
+        // ---- IMP-DOG-049 段 B: water play on a wash stand (design 2026-10-11 §3.3; the values: KH_DogWash.WaterPlay*) ----
+        // Every client: the synced edge (KH_DogWash.waterPlay) and the running reaction. Local, never synced.
+        private int _wpKind;                   // 0 none, 1 hose play (paw + snapping), 2 pistol hop (Jump clip + vertical hop)
+        private int _wpPart = -1;              // the hit part of the edge (the gaze when this client did not see the hit)
+        private float _wpStart = -1000f;
+        private float _wpUntil = -1000f;
+        private float _wpHopHeight;            // m, sampled at the start
+        private float _wpHopCrouch;            // the Jump clip's crouch (s): the hop starts here
+        private float _wpHopAir;               // the Jump clip's air time (2 x rise, s)
+        private bool _wpJumpWritten;           // we raised the Animator's Jump Bool (lowered by WaterPlayStop)
+        private int _wpSeen;                   // the last waterPlay value seen
+        private bool _wpSeenValid;             // _wpSeen is a baseline taken on the stand with a received state
+        private int _wpStandFrame = -10;       // last frame WaterPlayStand ran (on the stand)
+        // Owner: the decision's spacing
+        private float _wpHoseNextAt, _wpPistolNextAt;
+        private int _wpPistolSeen;
+        // Jaw snap (LateUpdate, every client): the head write bone's child Bone.006 (KD_DogRig: chin, parent Bone.004)
+        const string WaterJawBone = "Bone.006";
+        const float WaterJawSameDot = 0.999999f;   // the pet controller's PoseSameDot (the Animator did not write the bone)
+        private Transform _wpJaw;
+        private bool _wpJawLooked;
+        private bool _wpJawWrote;
+        private Quaternion _wpJawBase, _wpJawLast;   // written before read (guarded by _wpJawWrote)
+        private int _wpCount, _wpHoseCount, _wpHopCount, _wpRequestCount;   // harness read-outs
 
         /// <summary>IMP-DOG-028: this frame's paw-lift request (CallReady + CallPose 3 = CallPaw on the Hillside controllers).
         /// Frame-accurate for LateUpdate: _washActive is this frame's flag. Read by LateUpdate's ApplyCompanionAnimation call
@@ -313,7 +337,11 @@ namespace KominkaDogRun
             {
                 float dt = Dt();
                 Quaternion want = Quaternion.Euler(0f, st._StandYaw(), 0f);
-                dogRoot.SetPositionAndRotation(Vector3.MoveTowards(dogRoot.position, a, StationSettleSpeed * dt),
+                // IMP-DOG-049 段 B: the pistol hop moves the root straight up from the anchor only (never sideways; the stand may be
+                // raised to 0.9 m and the anchor rides it), faster than the settle so the arc keeps up with the Jump clip
+                bool hopping = _wpKind == 2;
+                Vector3 goal = hopping ? a + Vector3.up * WaterHopOffset(Time.time) : a;
+                dogRoot.SetPositionAndRotation(Vector3.MoveTowards(dogRoot.position, goal, (hopping ? WaterHopSettleSpeed : StationSettleSpeed) * dt),
                     Quaternion.RotateTowards(dogRoot.rotation, want, StationTurnRate * dt)); // net: owner-only: _dogOwner、洗い場の台の上に留める
                 if (!st._Arrived() && Horizontal(dogRoot.position, a) <= StationArrive) st._DogArrived(dogIndex);
             }
@@ -324,6 +352,8 @@ namespace KominkaDogRun
                 WashFrame();
                 WashLook(wash._WasherPosition());
             }
+            // IMP-DOG-049 段 B: after the wash frame (its satisfied / shake / paw are decided; our gaze overrides a glance this frame)
+            if (wash != null) WaterPlayStand(st);
             return true;
         }
 
@@ -385,6 +415,9 @@ namespace KominkaDogRun
             bool hasCalls = washCalls != null && washCalls.Length > 0;
             if (hasCalls) { StationTick(); LeaveGuardTick(); }
             if (wash == null && !hasCalls) return;
+            // IMP-DOG-049 段 B: a water play ends at once when the last frame did not run on the stand (released, leash, errand,
+            // water, Fetch / disc): the Jump Bool comes down and the hose paw ends (Q11). One compare while nothing runs.
+            if (_wpKind != 0 && _wpStandFrame < Time.frameCount - 1) WaterPlayStop();
             bool now = WashYieldsToErrand();
             if (now && !_washErrandPrev)
             {
@@ -490,6 +523,7 @@ namespace KominkaDogRun
                 _washSatisfySitAt = _washSatisfySits ? now + WashShakeSeconds : now;
                 _washSatisfyUntil = _washSatisfySits ? _washSatisfySitAt + WashSitSeconds : now + WashHappySeconds;
                 _washVoiceDone = false;
+                WaterPlayStop();          // IMP-DOG-049 段 B: the satisfied sign wins over a water play (before the paw reset below)
                 _washPawUntil = -1000f;   // the satisfied sign wins over a paw in progress (one pose Bool at a time)
                 _washSatisfiedCount++;
             }
@@ -501,7 +535,8 @@ namespace KominkaDogRun
             if (age < WashShakeDelay) _washShakeArmed = true;
             // A paw lift or a shake still running only postpones the chance (it stays armed until they end): a shower that ends on
             // a front leg starts a paw lift there, which used to swallow the shake (harness run 20260930-062530).
-            else if (_washShakeArmed && !shaking && now >= _washPawUntil)
+            // IMP-DOG-049 段 B: a water play postpones it the same way (a pistol shot ends a stroke mid-hop; the shake follows the hop)
+            else if (_washShakeArmed && !shaking && now >= _washPawUntil && now >= _wpUntil)
             {
                 _washShakeArmed = false;
                 if (_dogOwner && !satisfied && now >= _washShakeWetNextAt
@@ -525,7 +560,12 @@ namespace KominkaDogRun
             if (part != _washPawSeenPart)
             {
                 // Codex 4-4: only once the legs have stopped (_wasMoving = the Walk / Run written, incl. ApplyMoveAnim's stop hold)
-                if ((part == 3 || part == 4) && stroking && !satisfied && !shaking && !_wasMoving && now >= _washPawNextAt)
+                // IMP-DOG-049 段 B: not during a water play (the hose play holds the paw itself; a paw under the hop would raise
+                // CallReady together with Jump), and not for a hose / pistol hit on this part (Codex review 4): that hit is the water
+                // play's (KH_DogWash records it with the stroke, the same frame as _LastStrokePart), so the ordinary paw lift does not
+                // take it first and make the Owner's water decision see "busy". The free shower / can (mode 0) keep the paw lift.
+                bool waterHit = wash._WaterHitAge() < WashStrokeRecent && wash._WaterHitPart() == part;
+                if ((part == 3 || part == 4) && stroking && !satisfied && !shaking && !_wasMoving && now >= _washPawNextAt && now >= _wpUntil && !waterHit)
                 {
                     _washPawUntil = now + WashPawSeconds;
                     _washPawNextAt = now + (washPawSpacing > 0f ? washPawSpacing : DefaultWashPawSpacing);
@@ -553,6 +593,7 @@ namespace KominkaDogRun
         void StartWashShake(int kind)
         {
             float now = Time.time;
+            WaterPlayStop();   // IMP-DOG-049 段 B: a shake wins over a water play (one reaction at a time)
             if (petController != null) petController._StartShake(WashShakeSeconds);
             _washShakeUntil = now + WashShakeSeconds;
             _washSplashNextAt = now;
@@ -728,6 +769,211 @@ namespace KominkaDogRun
             // IMP-DOG-028: a stroke end from before this wash does not shake; the first stroke may start a paw lift
             _washShakeArmed = false;
             _washPawSeenPart = -1;
+        }
+
+        // ================= IMP-DOG-049 段 B: water play on a wash stand (design 2026-10-11 §3.3, Q10-Q12) =================
+        //
+        // Hose (hold-to-spray) -> the dog plays with the water: the head toward where the water hits (the stream), the jaw snapping
+        // (パクパク, LateUpdate) and a front paw raised (the existing paw-lift pose: _washPawUntil -> WashPawPose -> CallPaw).
+        // Pistol (one shot) -> a small hop in place and a turn of the head toward the hit side: the Jump clip (the frisbee's Animator
+        // Bool + state, already in every AC_KD_Dog_<breed>.controller; nothing in the controllers changes) and the Owner lifting the
+        // root straight up from the stand's anchor (WaterHopOffset; never sideways). The body yaw stays at standYaw (2026-09-30: no
+        // body turn while washed), so "振り向く" is the head only. Watering can / free shower: nothing (mode 0, KH_DogWash).
+        //
+        // Who reacts (Q11): only a dog held AND arrived on a wash stand - this runs from UpdateWashStation's on-the-stand block only,
+        // and WashErrandTick stops a running play on the first frame without it (leash, errand, water, Fetch / disc, release).
+        // Priority: below the satisfied sign / shake / paw lift (existing order). The Owner never requests while one of them runs,
+        // a client that still sees one running drops the edge, and a satisfied sign or a shake that starts stops a play.
+        //
+        // Sync (the shake pattern): the dog's Owner decides from the hits KH_DogWash recorded (ReceiveStroke: every accepted stroke,
+        // the own echo too) and calls wash._RequestWaterPlay(kind, part) -> the synced waterPlay serial; every client (the Owner the
+        // next frame) starts the reaction on the serial's edge. The first value seen on the stand with a received state is a baseline,
+        // never an edge (a joiner / a dog newly on the stand never replays an old play).
+        //
+        // Performance (IMP-DOG-034 / 036): nothing runs for a dog off the stands (one int compare in WashErrandTick, one bool guard in
+        // LateUpdate). On the stand: one getter per frame, and the Owner reads the hit ages only while water hits the dog.
+
+        const float WaterHopSettleSpeed = 4f;   // m/s, the root follows the hop arc (peak vertical speed ~4h / air <= 1.2 m/s)
+        const float WaterVoicePitch = 1.2f;
+
+        /// <summary>A water play is running (its own end time; hose: also ends 0.5 s after the water stops).</summary>
+        bool WaterPlayRunning() { return _wpKind != 0 && Time.time < _wpUntil; }
+
+        /// <summary>UpdateWashStation, on the stand, every client, every frame (after the wash frame).</summary>
+        void WaterPlayStand(KominkaHillside.KH_WashStationCall st)
+        {
+            float now = Time.time;
+            bool fresh = _wpStandFrame == Time.frameCount - 1;
+            _wpStandFrame = Time.frameCount;
+            bool satisfied = WashSatisfyRunning();
+            bool shaking = petController != null && petController.IsShaking;
+
+            // ---- the synced edge (every client). Baseline: the first frame of a stand run, or before the first receive ----
+            int plays = wash._WaterPlay();
+            bool has = wash._HasState();
+            if (!fresh || !has) _wpSeenValid = false;
+            if (!_wpSeenValid) { _wpSeen = plays; _wpSeenValid = has; }
+            else if (plays != _wpSeen)
+            {
+                // Codex review 2: the serial wraps at 24 bits on the sender, so "newer" is the modular difference in (0, 2^23)
+                int diff = ((plays >> 6) - (_wpSeen >> 6)) & 0xFFFFFF;
+                bool newer = diff > 0 && diff < 0x800000;
+                _wpSeen = plays;
+                int kind = plays & 3;
+                if (newer)
+                {
+                    // Codex review 1: every client keeps the decision's spacing from the received play, so a new Owner (after a hand-over)
+                    // does not request again at once. Max: the requesting Owner already set it a frame earlier.
+                    if (kind == 1) _wpHoseNextAt = Mathf.Max(_wpHoseNextAt, now + KominkaHillside.KH_DogWash.WaterPlayHoseSpacing);
+                    else if (kind == 2) _wpPistolNextAt = Mathf.Max(_wpPistolNextAt, now + KominkaHillside.KH_DogWash.WaterPlayPistolSpacing);
+                }
+                // Below the existing reactions: a satisfied sign, a shake or a paw lift (not our own hose paw) running here drops it
+                if (newer && !satisfied && !shaking && (now >= _washPawUntil || _wpKind == 1)) WaterPlayStart(kind, (plays >> 2) & 15, now);
+            }
+
+            // ---- the running play (every client) ----
+            if (_wpKind != 0)
+            {
+                // the hose play ends 0.5 s after the water stops (any shower-kind stroke on this dog seen here keeps it on)
+                if (now >= _wpUntil || (_wpKind == 1 && wash._WaterOnAge() > KominkaHillside.KH_DogWash.WaterPlayHoseEnd)) WaterPlayStop();
+                else
+                {
+                    // the Jump Bool is re-asserted every hop frame: KH_FrisbeeCatch writes Jump = false on its own state edges (idle)
+                    if (_wpKind == 2 && dogAnimator != null) { dogAnimator.SetBool("Jump", true); _wpJumpWritten = true; }
+                    if (petController != null) petController._SetGaze(WaterGazePoint(), 0f);   // one frame; after WashLook = wins a glance
+                }
+            }
+
+            // ---- the Owner's decision (only on the stand, arrived, below the existing reactions, stopped) ----
+            if (!_dogOwner || !_stationLocked || !st._Arrived()) return;
+            if (wash._WaterHitAge() > 1f) return;   // no hose / pistol hit on a reacting part lately: nothing to read
+            bool busy = satisfied || shaking || _washShakePending || now < _washPawUntil || WaterPlayRunning() || _wasMoving;
+            WaterPlayDecide(now, busy);
+        }
+
+        /// <summary>The dog's Owner (WaterPlayStand): the triggers (Q12, KH_DogWash.WaterPlay*). Hose: a run of hits on the reacting
+        /// parts at least WaterPlayHoseFirst long, then at most one play per WaterPlayHoseSpacing. Pistol: every hit is a candidate
+        /// (a new hit sequence number), at most one per WaterPlayPistolSpacing. A hit seen while busy is dropped, not queued.</summary>
+        void WaterPlayDecide(float now, bool busy)
+        {
+            int seq = wash._PistolHitSeq();
+            bool pistolHit = seq != _wpPistolSeen;
+            _wpPistolSeen = seq;
+            if (busy) return;
+            if (pistolHit && wash._PistolHitAge() < 0.5f && now >= _wpPistolNextAt)
+            {
+                _wpPistolNextAt = now + KominkaHillside.KH_DogWash.WaterPlayPistolSpacing;
+                _wpRequestCount++;
+                wash._RequestWaterPlay(2, wash._WaterHitPart());
+                return;
+            }
+            if (wash._HoseRunSeconds() >= KominkaHillside.KH_DogWash.WaterPlayHoseFirst && now >= _wpHoseNextAt)
+            {
+                _wpHoseNextAt = now + KominkaHillside.KH_DogWash.WaterPlayHoseSpacing;
+                _wpRequestCount++;
+                wash._RequestWaterPlay(1, wash._WaterHitPart());
+            }
+        }
+
+        /// <summary>Every client, on the synced edge: start a play (kind 1 hose, 2 pistol). A play still running is replaced.</summary>
+        void WaterPlayStart(int kind, int part, float now)
+        {
+            if (kind < 1 || kind > 2) return;
+            WaterPlayStop();
+            _wpKind = kind;
+            _wpPart = part;
+            _wpStart = now;
+            if (kind == 1)
+            {
+                _wpUntil = now + KominkaHillside.KH_DogWash.WaterPlaySeconds;
+                _washPawUntil = _wpUntil;   // the existing paw-lift pose (CallPaw, LateUpdate), held for the play; _washPawNextAt untouched
+                _wpHoseCount++;
+            }
+            else
+            {
+                // The Jump clip's own timing (KH_FrisbeeCatch is wired per breed by the six-dog build; the Lab values otherwise)
+                float crouch = 0.25f, rise = 0.35f, recover = 0.4f;
+                if (frisbeeCatch != null) { crouch = frisbeeCatch.clipCrouchDuration; rise = frisbeeCatch.clipRiseDuration; recover = frisbeeCatch.clipRecoverDuration; }
+                _wpHopCrouch = Mathf.Max(0f, crouch);
+                _wpHopAir = Mathf.Max(0.1f, 2f * rise);
+                _wpUntil = now + Mathf.Clamp(_wpHopCrouch + _wpHopAir + Mathf.Max(0f, recover),
+                    KominkaHillside.KH_DogWash.WaterPlayHopMinSeconds, KominkaHillside.KH_DogWash.WaterPlayHopMaxSeconds);
+                // Proportional to the dog: the standing head height (headAnchor above the root, sampled now; the stand's height cancels)
+                float head = petController != null && petController.headAnchor != null ? petController.headAnchor.position.y - dogRoot.position.y : 0.4f;
+                _wpHopHeight = Mathf.Clamp(head * KominkaHillside.KH_DogWash.WaterPlayHopRatio,
+                    KominkaHillside.KH_DogWash.WaterPlayHopMin, KominkaHillside.KH_DogWash.WaterPlayHopMax);
+                if (dogAnimator != null) { dogAnimator.SetBool("Jump", true); _wpJumpWritten = true; }
+                _wpHopCount++;
+            }
+            _wpCount++;
+            // One short voice through the dog's own voice source (the personal-volume ledger, like the shake); no new AudioSource
+            if (barkSource != null && barkClip != null) { barkSource.pitch = WaterVoicePitch; barkSource.PlayOneShot(barkClip, KominkaHillside.KH_DogWash.WaterPlayVoiceVolume); }
+        }
+
+        /// <summary>End a play now (every client): the Jump Bool down, the hose paw ended. The jaw flushes itself in LateUpdate.
+        /// Idempotent; the Owner's root eases back onto the anchor at the settle speed.</summary>
+        void WaterPlayStop()
+        {
+            float now = Time.time;
+            if (_wpKind == 1 && _washPawUntil > now) _washPawUntil = now;
+            _wpKind = 0;
+            _wpUntil = -1000f;
+            if (_wpJumpWritten && dogAnimator != null) dogAnimator.SetBool("Jump", false);
+            _wpJumpWritten = false;
+        }
+
+        /// <summary>The Owner's hop above the anchor (m): a parabola over the Jump clip's air time [crouch, crouch + 2 rise], 0
+        /// outside it (crouch / recover keep the paws on the stand, as the clip's ground keys expect).</summary>
+        float WaterHopOffset(float now)
+        {
+            if (_wpKind != 2 || now >= _wpUntil) return 0f;
+            float s = (now - _wpStart - _wpHopCrouch) / _wpHopAir;
+            if (s <= 0f || s >= 1f) return 0f;
+            return 4f * _wpHopHeight * s * (1f - s);
+        }
+
+        /// <summary>Where the head looks during a play: the last hit seen here (or the synced part's centre when this client saw
+        /// none lately), moved WaterPlayGazeOut toward the washer = the incoming stream / the side the shot came from.</summary>
+        Vector3 WaterGazePoint()
+        {
+            Vector3 hit = wash._WaterHitAge() < 1f ? wash._WaterHitWorld() : wash._PartWorld(_wpPart);
+            Vector3 toward = wash._WasherPosition() - hit;
+            return toward.sqrMagnitude > 0.01f ? hit + toward.normalized * KominkaHillside.KH_DogWash.WaterPlayGazeOut : hit;
+        }
+
+        /// <summary>LateUpdate (every client; called only while a hose play runs or a snap was written): the jaw snap, written after
+        /// the Animator and before the constraints (vrc-character-rig §6) on the pet controller's head write bone's child Bone.006
+        /// (the constraint source on a two-tier rig, the bone itself on a one-tier rig - the same rule as the head). An additive pitch
+        /// about the dog's right axis (+ = chin down, the frisbee clip's jaw sign), with the pet controller's accumulation guard: a
+        /// frame where the Animator did not write the bone starts from the last base, not from our own write. The last frame puts
+        /// the base back once.</summary>
+        void WaterPlayJawLate()
+        {
+            bool on = _wpKind == 1 && Time.time < _wpUntil;
+            if (!_wpJawLooked)
+            {
+                _wpJawLooked = true;
+                _wpJaw = petController != null && petController.sourceBone != null ? petController.sourceBone.Find(WaterJawBone) : null;
+            }
+            if (_wpJaw == null) { _wpJawWrote = false; return; }
+            Quaternion cur = _wpJaw.localRotation;
+            bool stale = _wpJawWrote && Mathf.Abs(Quaternion.Dot(cur, _wpJawLast)) > WaterJawSameDot;
+            Quaternion pose = stale ? _wpJawBase : cur;
+            if (!on)
+            {
+                if (stale) _wpJaw.localRotation = pose;
+                _wpJawWrote = false;
+                return;
+            }
+            float t = Time.time - _wpStart;
+            float open = KominkaHillside.KH_DogWash.WaterPlayJawDegrees * Mathf.Max(0f, Mathf.Sin(2f * Mathf.PI * KominkaHillside.KH_DogWash.WaterPlayJawHz * t));
+            Transform parent = _wpJaw.parent;
+            Vector3 axis = parent != null ? Quaternion.Inverse(parent.rotation) * dogRoot.right : dogRoot.right;
+            Quaternion written = Quaternion.AngleAxis(open, axis) * pose;
+            _wpJaw.localRotation = written;
+            _wpJawBase = pose;
+            _wpJawLast = written;
+            _wpJawWrote = true;
         }
     }
 }

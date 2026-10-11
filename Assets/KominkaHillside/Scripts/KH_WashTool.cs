@@ -370,6 +370,22 @@ namespace KominkaHillside
             ApplySpray(Want());
         }
 
+        // IMP-DOG-049 段 B (Codex review 3): is this tool spraying now, as far as this client can tell? KH_DogWash.WaterToolMode asks it
+        // only when one player holds two shower-kind tools, to tell which one a stroke came from. The holder: its own input (spray on,
+        // or a shot within pulseSeconds + StrokeSourceGrace: the stroke's echo comes a round trip later). Others: the synced spraying
+        // bit (toggle / hold), or a shot whose input time is within KH_WashToolState.ShotFreshMs. Read only; local, not a network event.
+        public const float StrokeSourceGrace = 1f;
+        public bool _SprayActive()
+        {
+            if (!selectionActive || !_IsSprayer()) return false;
+            if (_held) return _sprayOn || (pulseSeconds > 0f && Time.time < _pulseUntil + StrokeSourceGrace);
+            if (state == null) return false;
+            if (state.spraying) return true;
+            if (pulseSeconds <= 0f || state.shotSerial == 0) return false;
+            int age = Networking.GetServerTimeInMilliseconds() - state.shotServerMs;
+            return age > -KH_WashToolState.ShotFreshMs && age < KH_WashToolState.ShotFreshMs;
+        }
+
         // The item this premium slot shows (KH_WashSelection), -1 for a free tool or none.
         int _ShownItemHere()
         {

@@ -385,6 +385,11 @@ namespace KominkaHillside
         [UdonSynced] private int cleanMs;
         // The Owner's shake (IMP-DOG-028): _RequestShake bumps it and syncs; the others play the shake on the edge.
         [UdonSynced] private int shakeSerial;
+        // IMP-DOG-049 段 B: the Owner's water play (the hose / the water pistol, design 2026-10-11 §3.3). The shakeSerial pattern in
+        // one packed int: (serial << 6) | (part << 2) | kind - kind 1 = hose play, 2 = pistol hop, part = the hit part (0..8, the side
+        // and the gaze). _RequestWaterPlay bumps the serial and syncs; every client starts the reaction on the edge (the dog's
+        // WaterPlayStand); a joiner's first receive is only the baseline (never replayed). The wash-effect table is not touched (Q7).
+        [UdonSynced] private int waterPlay;
         // IMP-DOG-029 (Codex review 3, 1-1): the newest dirt event (NetStroke tool 3) whose change these cells hold. One
         // sequence for the object, continued by every Owner (the next event is dirtSeq + 1), so a receiver can tell which
         // dirt events a received / repainted state already contains.
@@ -483,6 +488,38 @@ namespace KominkaHillside
         private int _lastStrokePart = -1;
         private float _lastStrokeTime = -100f;
         private int _lastWasherId = -1;
+
+        // ---- IMP-DOG-049 段 B: water play (design 2026-10-11 §3.3, Q10-Q12). THE one table (trial values until Play, Q12);
+        // KD_DogWanderController.HillsideWash.cs reads it, Wash/12 prints it ("water play table"). ----
+        /// <summary>Parts whose hits start a reaction (bit = part id): 1 Chest, 2 Neck, 3 FrontL, 4 FrontR, 7 Head
+        /// ("頭・前足・胸のあたり"; the neck sits between head and chest).</summary>
+        public const int WaterPlayParts = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 7);
+        public const float WaterPlayHoseFirst = 0.5f;     // hose: continuous hits this long before the first play
+        public const float WaterPlayHoseSpacing = 5f;     // hose: then at most one play per this while the hits continue
+        public const float WaterPlayHoseEnd = 0.5f;       // hose: a gap this long breaks the run; the play ends this long after the water stops
+        public const float WaterPlayPistolSpacing = 3f;   // pistol: every hit is a candidate, the same dog at most once per this
+        public const float WaterPlaySeconds = 1.5f;       // one hose play (paw + snapping)
+        public const float WaterPlayHopMinSeconds = 1f;   // pistol hop = the dog's Jump clip length, clamped to 1..1.5 s
+        public const float WaterPlayHopMaxSeconds = 1.5f;
+        public const float WaterPlayHopRatio = 0.3f;      // hop height = this x the standing head height (headAnchor above the root)
+        public const float WaterPlayHopMin = 0.05f;       // m
+        public const float WaterPlayHopMax = 0.2f;        // m
+        public const float WaterPlayJawDegrees = 20f;     // hose: jaw snap (パクパク) peak, chin down
+        public const float WaterPlayJawHz = 3f;
+        public const float WaterPlayGazeOut = 0.4f;       // the head looks at the hit point moved this far toward the washer (the stream)
+        public const float WaterPlayVoiceVolume = 0.5f;   // one short bark (barkSource, pitch 1.2) at the start; no new AudioSource
+        // Every client, from the accepted strokes (ReceiveStroke; the own echo too). Hits of a hold-mode tool (the hose) or a shot
+        // tool (the pistol) on a WaterPlayParts part only; any shower-kind stroke keeps "water on" for the hose play's end.
+        private float _waterOnAt = -1000f;     // last accepted shower-kind stroke on this dog (any tool, any part)
+        private float _hoseHitAt = -1000f;     // last hose hit on a reacting part
+        private float _hoseRunStart = -1000f;  // first hit of the current hose run (gaps < WaterPlayHoseEnd)
+        private float _pistolHitAt = -1000f;
+        private int _pistolHitSeq;             // +1 per pistol hit (several per shot: one per received segment)
+        private float _waterHitAt = -1000f;    // last hose or pistol hit (either)
+        private int _waterHitPart = -1;
+        private Vector3 _waterHitWorld;
+        private float _ownWaterNoteAt = -1000f;   // the own strokes' water-hit record, at most 10 Hz per part (Stroke)
+        private int _ownWaterNotePart = -1;
 
         // Ownership follow (FollowDogOwner): consecutive checks the dog root was ours while this was not, and the
         // time of the last request.
@@ -1225,6 +1262,15 @@ namespace KominkaHillside
             {
                 VRCPlayerApi lp = Networking.LocalPlayer;
                 if (Utilities.IsValid(lp)) _lastWasherId = lp.playerId;
+                // IMP-DOG-049 段 B (Codex review 4): the own water hits are recorded with the own stroke, the same moment as
+                // _lastStrokePart below (the echo comes a round trip later, after the dog's paw lift would already have taken the part).
+                // At most 10 Hz per part (the source lookup loops the tools); the echo records again, which only refreshes the same values.
+                if (tool == ToolShower && Utilities.IsValid(lp) && (Time.time - _ownWaterNoteAt >= 0.1f || part != _ownWaterNotePart))
+                {
+                    _ownWaterNoteAt = Time.time;
+                    _ownWaterNotePart = part;   // a part change is recorded at once (the paw lift reads the part this frame)
+                    NoteWaterHit(lp.playerId, part, b);
+                }
                 _localStrokeAt = Time.time;
                 _lastStrokePart = part;
                 _lastStrokeTime = Time.time;
@@ -1331,6 +1377,7 @@ namespace KominkaHillside
                 if (!touched && slot >= 0) _sndLast[slot] = _acceptPrevLast;
             }
             if (touched) _lastWasherId = caller.playerId;
+            if (tool == ToolShower) NoteWaterHit(caller.playerId, part, b);   // IMP-DOG-049 段 B: every client, the own echo too
             if (touched || fx) _busyUntil = Time.time + BusyHold;   // IMP-DOG-034 B1e: an accepted stroke brings Update back to per-frame
             // Every client (the own echo too: the Owner's cells take the shower at the echo, so their runoff follows it)
             if (tool == ToolShower) MarkRunoff();
@@ -1788,6 +1835,111 @@ namespace KominkaHillside
         }
 
         public int _ShakeSerial() { return shakeSerial; }
+
+        // ================= IMP-DOG-049 段 B: water play (design 2026-10-11 §3.3) =================
+        // Which water tool hit: no tool ID is added (Q7: the wash effect stays the free shower's). The receiver looks at the tool
+        // the sender holds - the same KH_WashTool list and _IsHeldBy that HoldsTool already checks for every remote stroke - and
+        // reads its input mode (pulseSeconds, written per shown item by KH_WashSelection on every client): < 0 hold = the hose,
+        // > 0 one shot = the pistol, 0 = the free shower / the watering can (no reaction). Nothing new goes over the wire.
+
+        /// <summary>ReceiveStroke (every client, accepted shower-kind strokes, the own echo too): record a hit.</summary>
+        void NoteWaterHit(int playerId, int part, Vector3 meshPoint)
+        {
+            float now = Time.time;
+            _waterOnAt = now;
+            if (part < 0 || part >= PartCount || ((WaterPlayParts >> part) & 1) == 0) return;
+            int mode = WaterToolMode(playerId);
+            if (mode != 0) RecordWaterHit(mode, part, MeshToWorld(part, meshPoint));
+        }
+
+        void RecordWaterHit(int mode, int part, Vector3 world)
+        {
+            float now = Time.time;
+            if (mode == 1)
+            {
+                if (now - _hoseHitAt > WaterPlayHoseEnd) _hoseRunStart = now;   // a new run
+                _hoseHitAt = now;
+            }
+            else
+            {
+                _pistolHitAt = now;
+                _pistolHitSeq = (_pistolHitSeq + 1) & 0x3FFFFFFF;
+            }
+            _waterHitAt = now;
+            _waterHitPart = part;
+            _waterHitWorld = world;
+        }
+
+        /// <summary>The source of a shower-kind stroke from playerId: 1 = the hose (hold), 2 = the pistol (shot), 0 = anything else or
+        /// unknown. Candidates = every shower-kind tool the player holds (the free shower and the watering can included, pulseSeconds 0
+        /// = mode 0). One candidate: the stroke can only come from it (it passed HoldsTool / is the own input), its mode. Several (a
+        /// tool in each hand, or one just dropped within _IsHeldBy's grace): the one that is spraying now (KH_WashTool._SprayActive:
+        /// the hold / toggle spraying, or a shot within its freshness) decides; none or more than one active = ambiguous = 0 (no
+        /// reaction, Codex review 3: an unused hose in one hand must not turn the free shower's water into hose play).</summary>
+        int WaterToolMode(int playerId)
+        {
+            if (tools == null) return 0;
+            int held = 0, heldMode = 0, active = 0, activeMode = 0;
+            for (int i = 0; i < tools.Length; i++)
+            {
+                KH_WashTool t = tools[i];
+                if (t == null || t.tool != ToolShower || !t._IsHeldBy(playerId)) continue;
+                int m = t.pulseSeconds < 0f ? 1 : (t.pulseSeconds > 0f ? 2 : 0);
+                held++;
+                heldMode = m;
+                if (t._SprayActive()) { active++; activeMode = m; }
+            }
+            // 2026-10-11 Codex: with two water tools held, the synced spraying / shot state can lag the stroke and point at the wrong
+            // tool (a pistol shot elsewhere + the free shower on the dog). Holding two is rare, so no reaction at all in that case.
+            return held == 1 ? heldMode : 0;
+        }
+
+        /// <summary>Seconds since the last accepted shower-kind stroke on this dog (any tool, any part): "the water is on".</summary>
+        public float _WaterOnAge() { return Time.time - _waterOnAt; }
+        /// <summary>Seconds since the last hose or pistol hit on a reacting part (1e9-like when none).</summary>
+        public float _WaterHitAge() { return Time.time - _waterHitAt; }
+        /// <summary>The current hose run on the reacting parts: seconds from its first hit to its last, or -1 when the last hose hit
+        /// is older than WaterPlayHoseEnd (the run is broken).</summary>
+        public float _HoseRunSeconds() { return Time.time - _hoseHitAt <= WaterPlayHoseEnd ? _hoseHitAt - _hoseRunStart : -1f; }
+        public int _PistolHitSeq() { return _pistolHitSeq; }
+        public float _PistolHitAge() { return Time.time - _pistolHitAt; }
+        public int _WaterHitPart() { return _waterHitPart; }
+        public Vector3 _WaterHitWorld() { return _waterHitWorld; }
+
+        /// <summary>The world centre of a part (the cells' centre through the nearest collider of the part); the dog root when the
+        /// tables are missing. For the gaze of a reaction whose hit this client did not see.</summary>
+        public Vector3 _PartWorld(int part)
+        {
+            if (!_ready || _partCenter == null || part < 0 || part >= PartCount || part >= _partCenter.Length)
+                return dogRoot != null ? dogRoot.position : transform.position;
+            return MeshToWorld(part, _partCenter[part]);
+        }
+
+        /// <summary>The synced water play: (serial << 6) | (part << 2) | kind. Read by the dog every frame on a wash stand.</summary>
+        public int _WaterPlay() { return waterPlay; }
+
+        /// <summary>IMP-DOG-049 段 B: the Owner's water play (kind 1 hose play, 2 pistol hop; part = the hit part). Owner only (a
+        /// non-Owner call does nothing, like _RequestShake); synced at once. The dog's Owner decides (WaterPlayDecide); this object
+        /// follows the dog root's Owner, so during a hand-over window the request may be dropped (one reaction lost).</summary>
+        public void _RequestWaterPlay(int kind, int part)
+        {
+            if (!_ready || !Networking.IsOwner(gameObject) || kind < 1 || kind > 2) return;
+            if (part < 0 || part >= PartCount) part = 0;
+            int serial = ((waterPlay >> 6) + 1) & 0xFFFFFF;          // 24 bits: the packed value stays positive
+            waterPlay = (serial << 6) | (part << 2) | kind;          // net: owner-only
+            _syncDue = true;
+            _nextSync = Mathf.Min(_nextSync, Time.time);
+            Wake();   // IMP-DOG-034 B1e
+        }
+
+        /// <summary>Harness only: a water-tool hit as ReceiveStroke records it (mode 1 hose / 2 pistol) on a part, at the part's
+        /// centre, without a held tool (ClientSim cannot hold the premium slot). Local; nothing in the world calls it.</summary>
+        public void _DebugWaterHit(int mode, int part)
+        {
+            if (!_ready || mode < 1 || mode > 2 || part < 0 || part >= PartCount || _partCenter == null) return;
+            _waterOnAt = Time.time;
+            if (((WaterPlayParts >> part) & 1) != 0) RecordWaterHit(mode, part, MeshToWorld(part, _partCenter[part]));
+        }
 
         // Prototype / harness: Owner only. A whole-dog reset bumps the epoch, so everyone repaints once.
         public void _DebugSetDirt(float value)

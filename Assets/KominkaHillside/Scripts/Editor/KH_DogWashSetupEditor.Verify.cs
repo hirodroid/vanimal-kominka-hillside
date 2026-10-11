@@ -102,6 +102,7 @@ namespace KominkaHillside.Editor
             req(assets.Distinct().Count() == assets.Count, "masks / cell textures / mask materials / shells are per dog (" + assets.Count + " objects, " + assets.Distinct().Count() + " distinct)");
             req(washes.Select(w => w.dogIndex).Distinct().Count() == washes.Count, "KH_DogWash dogIndex distinct (" + string.Join(",", washes.Select(w => w.dogIndex)) + ")");
             CheckWanders(req, ctx, washes);
+            CheckWaterPlay(r, req, ctx);   // IMP-DOG-049 段 B (WaterPlay.cs): the table, Jump state, hop, jaw - read only
             CheckStation(r, req, dogsGo.scene, washes);
             CheckStationLayout(r, req, dogsGo.scene); // IMP-ENV-007 (StationVerify.cs): homes, return timing, spacing from the hand-placed spots
             CheckAudio(req, washes);

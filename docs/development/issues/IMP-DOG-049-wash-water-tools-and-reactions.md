@@ -2,10 +2,10 @@
 id: IMP-DOG-049
 type: IMP
 system: DOG
-status: wip
+status: review
 priority: Medium
 summary: ホースの連続放水・水鉄砲の単発射出・じょうろの傾け注ぎを整え、ホースと水鉄砲に犬の分かりやすい反応を組み合わせる
-next: 段 A (水鉄砲・ホース・プールの取り込みと道具の動き) のコードを書いた (2026-10-11、C# / U# コンパイル 0 (統括)、Codex 独立レビューの指摘 4 件を反映、未適用)。次は統括が「段 A 実装」の順で Unity へ適用 (コンパイル → 12 → 43 → 41 → 21b → 49 → 44 → 21 → Wash/12 → 保存 → 45)。じょうろの傾け注ぎは段 A から外した (下の記録)。段 B (犬の反応) は未着手
+next: 実装・適用済み (段 A 2bf922e、段 B)。ユーザーの PCVR で道具の持ち方・水鉄砲とホースの水・犬の反応 (ホースでパクパク、水鉄砲で跳ねる) を確認。じょうろの傾けて注ぐは延期中。2 人・Quest は未確認
 updated: 2026-10-11
 ---
 
@@ -185,3 +185,137 @@ PCVR・2 人・Quest / Android の確認は「未確認」として残す (こ�
    - 所有権が届く前の発射: 押した瞬間のサーバー時刻を記録し (`_Shot(item)` の中で `GetServerTimeInMilliseconds`)、発射の数を数える (最大 3)。所有権が届いたら `shotSerial += 数`、`shotServerMs` = 最後の発射の押した時刻、`shotItem` を書く。以前の「1 秒より古い発射は捨てる」はやめ、新しさは受け取る側が押した時刻で判断する (1.5 s、`ShotFreshMs`)。
 
 2026-10-11 (統括): Codex 最終確認の残り 1 点 (選択解除・品の切替の後も 1 発の表示タイマーが残り、別モードで噴射を再開し得る) を直した: `_SetSelected(false)` でタイマーを消し、`Want()` は `pulseSeconds > 0` の間だけタイマーを見る。C# / U# コンパイル 0。
+
+## 段 B 実装 (2026-10-11、未適用)
+
+犬の反応 (設計案 §3.3、Q10〜Q12 の推奨どおり)。**コードだけ。コンパイル・Codex 独立レビュー・Unity の操作は未実施** (統括が下の順で行う)。シーン・プレハブ・Animator Controller には書き込まない (値はコードの定数表、Jump の State は既存、顎は実行時に引く) ので、premium の後でも安全な設定メニューは要らない。
+
+### 何をするか
+
+| 道具 | 反応 | 作り |
+|---|---|---|
+| ホース (押している間、`pulseSeconds` = -1) | 水を追ってじゃれる 1.5 s | 顔を水の当たる方 (当たった点を洗う人の方へ 0.4 m 寄せた点 = 水の流れ) へ向ける (`_SetGaze`)、顎をパクパク (20°、3 Hz、LateUpdate で顎の骨へ加算)、前足を上げる (既存の足上げ = `_washPawUntil` → `WashPawPose` → CallPaw をそのまま使う) |
+| 水鉄砲 (1 発、`pulseSeconds` > 0) | その場でぴょんと跳ねて振り向く | フリスビーの Jump の Bool + State (6 犬種の `AC_KD_Dog_<犬種>.controller` に既にある。Controller は変えない) をクリップの長さだけ立てる。Owner が体の位置を台の立ち位置 (`anchor`) から**真上にだけ**放物線で上げ下げする (クリップの空中の区間 = crouch 後の 2 × rise)。高さ = 立っている頭の高さ (`headAnchor` − 犬の根元) × 0.3、0.05〜0.2 m。振り向きは顔だけ (体の向きは standYaw のまま。2026-09-30 の「洗われ中は体を回さない」に合わせた読み。体も少し回す案は PCVR で判断) |
+| じょうろ・無料シャワー | 付けない | `pulseSeconds` = 0 は印 0 |
+
+- 反応の始めに短い声を 1 回 (犬の `barkSource` で `barkClip` を pitch 1.2・音量 0.5。ブルブルと同じ声の音源で、AudioSource は増やさない)。
+- 跳ぶ動きはクリップの「着地」のキーで足が台に着く作りのまま。台を 0.9 m まで上げても立ち位置が台に乗って動くので、上下の動きだけが足される。
+
+### 値の置き場 (1 か所)
+
+`KH_DogWash.cs` の定数表 `WaterPlay*` (Q12 の仮値。Play で詰める)。Wash/12 が実際の値を 1 行に出す。
+
+| 値 | 仮値 |
+|---|---|
+| 反応する部位 `WaterPlayParts` | 胸 1・首 2・前足 3/4・頭 7 (「頭・前足・胸のあたり」。首は頭と胸の間なので入れた) |
+| ホース: 当たり続けてから 1 回目 `WaterPlayHoseFirst` | 0.5 s |
+| ホース: 以後の間隔 `WaterPlayHoseSpacing` | 5 s (当たり続けている間) |
+| ホース: 水が止まってから終わるまで / 当たりの切れ目 `WaterPlayHoseEnd` | 0.5 s |
+| 水鉄砲: 同じ犬の間隔 `WaterPlayPistolSpacing` | 3 s (当たるたびに候補) |
+| ホースの反応の長さ `WaterPlaySeconds` | 1.5 s |
+| 跳ぶ長さ | Jump クリップの長さ (crouch + 2 rise + recover) を 1〜1.5 s に収める |
+| 跳ぶ高さ `WaterPlayHopRatio` / `Min` / `Max` | 頭の高さ × 0.3、0.05〜0.2 m |
+| 顎 `WaterPlayJawDegrees` / `Hz` | 20°、3 Hz |
+| 顔を向ける点 `WaterPlayGazeOut` | 当たった点から洗う人の方へ 0.4 m |
+| 声 `WaterPlayVoiceVolume` | 0.5 |
+
+### 道具の区別 (洗いの効きの表は変えない、Q7)
+
+道具 ID は増やさない。ストロークを受け取った側 (`KH_DogWash.ReceiveStroke`、全端末・自分の返り (echo) も) が、送り主が持っている水の道具を既存の `tools` と `_IsHeldBy` (遠隔ストロークの `HoldsTool` と同じ確かめ方) で探し、その道具の `pulseSeconds` (`KH_WashSelection` が出している品ごとに全端末で書く) の符号で 1 = ホース / 2 = 水鉄砲 / 0 = それ以外 とする。**通信の中身は増えない** (NetStroke の形もそのまま)。
+- 候補 = 送り主が持っているシャワーの種類の道具すべて (無料シャワー・じょうろ = 印 0 も入れる。`WaterToolMode`)。**候補が 1 本**ならストロークはその道具からしか来ないので、その印。**2 本以上** (片手ずつ水の道具・持ち替えの直後で `_IsHeldBy` の猶予に前の道具が残る) なら**印 0 (反応しない)**。当初は「いま出ている道具 (`KH_WashTool._SprayActive`) がちょうど 1 本ならその印」としたが、Codex 再確認 (2026-10-11) で同期の遅れによる取り違え (別の場所へ撃った水鉄砲の直後に無料シャワーを当てると跳ねる) が残ると分かったので、2 本以上は一律に反応しないにした (`_SprayActive` は残すが判定には使わない)。使っていないホースを片手に持ったまま無料シャワーを当てても、ホースの反応にはならない。
+- 自分のストロークは描いた時点 (`Stroke`、`_LastStrokePart` と同じ瞬間、部位が変わったらすぐ・同じ部位は 10 Hz まで) でも記録する。返り (echo) は往復の後なので、それを待つと下の足上げが先に部位を取っていた (Codex レビュー 4)。返りでもう一度記録するが、同じ値を更新するだけ。
+- 記録 (`NoteWaterHit`): 全端末で「水が当たっている」(`_waterOnAt`、シャワーの種類のストロークなら道具・部位を問わない。ホースの終わりの判定) と、反応する部位へのホース・水鉄砲の当たり (ホースの連続の始まり・最後、水鉄砲の当たりの番号、部位、ワールド座標) を持つ。洗いの処理は一切変えない。
+
+### 同期 (ブルブルと同じ形)
+
+- `KH_DogWash` に同期変数 `waterPlay` (int 1 本) を足した: `(番号 << 6) | (部位 << 2) | 種類` (種類 1 = ホース、2 = 水鉄砲)。`_RequestWaterPlay(種類, 部位)` は `_RequestShake` と同じく **KH_DogWash の Owner (= 犬の Owner に追従)** だけが番号を 1 進めて送る。
+- 決めるのは**犬の Owner** (`WaterPlayDecide`、台の上の処理の中、`_dogOwner && 台に着いている && arrived`)。ホースは反応する部位への連続の当たりが 0.5 s 以上で、前回から 5 s 以上。水鉄砲は新しい当たりの番号があれば、前回から 3 s 以上。どちらも**今の優先順の下**: 満足の合図・ブルブル (保留中も)・足上げ・反応中・足が動いている間は要求しない (そのときの当たりは捨てる。貯めない)。
+- 間隔 (ホース 5 s・水鉄砲 3 s) は**受け取った反応からも全端末で数える** (Codex レビュー 1)。Owner が替わっても、新しい Owner がすぐに次を要求しない。
+- 番号は送る側で 24 bit で一周するので、受け取る側は差を 24 bit で取り、(0, 2^23) を「新しい」とする (Codex レビュー 2)。
+- 全端末 (Owner も次のフレーム) が番号の変化で反応を始める (`WaterPlayStand`)。**途中参加・台に新しく乗った犬は、台の上で最初に見た値 (状態を受け取った後) を基準にするだけで、再生しない**。台を離れて戻ったときも基準を取り直す。
+- Owner の交代の最中 (KH_DogWash の Owner がまだ犬の Owner に追いついていない数秒) の要求は届かない (反応が 1 回抜ける。受け入れる)。
+
+### 優先と止まる時 (Q11)
+
+- 台の上の処理 (`UpdateWashStation` の「台の上」の枝) からだけ動く = **洗い場の台に留めて着いた犬だけ**。最後のフレームが台の上でなかったら (放す・リード・用事・川・Fetch / ディスク) 次の `WashErrandTick` で止める (Jump を下ろし、ホースの足上げを終える)。
+- 満足の合図が始まると止める。ブルブルが始まると止める。反応中は足上げを始めない (Jump と CallReady が同時に立たない)。
+- **ホース・水鉄砲の当たり (印 1 / 2) で前足へ移ったときは、普通の足上げを出さない** (`WashReact` の足上げの条件に「この部位の直近 0.35 s の当たりが水の道具のものでない」を足した。Codex レビュー 4)。足上げが先に `_washPawUntil` を立てると、Owner の水の判断が「足上げ中」で当たりを捨て、水鉄砲の前足への 1 発が足上げに化けていた。無料シャワー・じょうろ (印 0) の足上げは今までどおり。満足の合図・ブルブルとの優先は変えていない。濡れのブルブルは反応の終わりまで待つ (足上げと同じ扱い。水鉄砲の 1 発でストロークが終わってもブルブルは跳び終わってから)。
+- 他の端末でまだ満足・ブルブル・足上げが見えていればその反応は捨てる (そのときだけ画面ごとに違いが出る)。
+
+### Animator の経路
+
+- 水鉄砲: `dogAnimator.SetBool("Jump", true)` (Any State → Jump、Bool が下りると Idle へ 0.2 s。フリスビー/2 が作ったもの)。跳んでいる間は毎フレーム立て直す (`KH_FrisbeeCatch` は待機中でも自分の状態の変わり目に Jump = false を書くため)。終わり・中断で false。フリスビーは `WashHeld` で台の上の犬には始まらないので、書き手が同時に 2 人になる場面は無い見込み。
+- ホース: 既存の足上げの経路 (LateUpdate の `ApplyCompanionAnimation` → CallReady + CallPose 3)。顎は `KD_DogPetController.sourceBone` (頭の書き先 = 2 段構えなら Constraint のソース側、1 段ならその骨) の子 `Bone.006` を `Find` で 1 回だけ引き、LateUpdate (Animator の後・Constraint の前、vrc-character-rig §6) で犬の右軸まわりに加算する (+ = 顎が下 = 口が開く。フリスビーのクリップの jaw と同じ向き)。Animator が書かなかったフレームは前の基準から書く (撫での頭と同じ蓄積防止)。終わった後の 1 フレームで基準へ戻す。
+- 体を動かすのは Owner だけ (`VRCObjectSync` が配る)。演出 (顔・顎・Jump の Bool・声) は全端末がローカルで出す。
+
+### 負荷 (IMP-DOG-034 / 036)
+
+- 台に乗っていない犬: `WashErrandTick` の int の比較 1 つと、LateUpdate の bool の確かめ 1 つだけ。
+- 台の上の犬 (最大 4): 毎フレーム `_WaterPlay()` を 1 回。Owner は直近 1 s に当たりがある間だけ当たりの値を読む。
+- `KH_DogWash`: シャワーの種類のストロークを受け取るたび (送り主ごとに最大 8 Hz) に float を 1 つ書く。反応する部位のときだけ道具を 1 周 (水の枠の道具だけ `_IsHeldBy` まで進む)。
+
+### 変更したファイル
+
+- U#: `Scripts/KH_DogWash.cs` (同期変数 `waterPlay`、定数表、当たりの記録 `NoteWaterHit` / `WaterToolMode`、読み出し、`_RequestWaterPlay`、ハーネス用 `_DebugWaterHit`)、`Imported/KominkaDogRun/Scripts/KD_DogWanderController.HillsideWash.cs` (反応の本体。既存の反応へは止める・待つの 4 行だけ)、`Imported/KominkaDogRun/Scripts/KD_DogWanderController.cs` (LateUpdate に顎の 1 行)、`Scripts/KH_WashTool.cs` (読むだけの `_SprayActive`、Codex レビュー 3。コンパイルで `KH_WashTool.asset` も作り直される)。新しい U# ファイル・Program Asset は無い。
+- Editor: **新規** `Scripts/Editor/KH_DogWashSetupEditor.WaterPlay.cs` (Wash/12 の行)、`KH_DogWashSetupEditor.Verify.cs` (呼び出し 1 行)。
+- Unity が作るもの: `Scripts/Editor/KH_DogWashSetupEditor.WaterPlay.cs.meta`。コンパイルで `KH_DogWash.asset` と `KD_DogWanderController.asset` が作り直される。**`KD_DogWanderController.asset` は別セッション (Treat 系) の未コミットの変更と同じ Program Asset** なので、stage は別セッションと分け方を決めてから (vrc-scene-edit-safety)。
+
+### Unity で行う手順 (統括、この順で)
+
+0. Codex 独立レビュー (段 B の同期の変更。完了の定義どおり)。
+1. `bash scripts/unity-compile.sh --udon` — C# / U# のエラー 0 (`KH_DogWash` の同期変数が 1 つ増えたので Udon も)。
+2. `Tools/KominkaHillside/Wash/12 - Verify Wash (All Dogs)` — FAIL 0 (段 A の基準 5361 行 → 5381 行の見込み: 表 1 + 同期変数 1 + 6 犬 × 3)。新しい行:
+   - `PASS water play table (KH_DogWash.WaterPlay*, Q12 trial values): parts Chest,Neck,FrontL,FrontR,Head / hose first 0.5 s, every 5 s, ends 0.5 s after the water / pistol every 3 s / play 1.5 s, hop 1..1.5 s / hop height 0.3 x head, 0.05..0.2 m / jaw 20 deg at 3 Hz / gaze out 0.4 m / voice 0.5`
+   - `PASS KH_DogWash.waterPlay is a synced int (serial << 6 | part << 2 | kind)`
+   - 6 犬それぞれ: `PASS water play <番号> (<名前>): Jump Bool + state (KH_Jump_<犬種>) + Any State in / Idle out in Assets/KominkaHillside/Imported/KominkaDogRun/Animations/AC_KD_Dog_<犬種>.controller`
+   - `PASS water play <番号> (<名前>): hop 0.0xx m (head 0.xxx m x 0.3) in the air 0.xx s after the crouch 0.xx s; play 1.xx s; Jump clip 1.xx s = crouch + 2 rise + recover 1.xx s (frisbeeCatch ...)` (Lab は crouch 0.25・air 0.70・play 1.35 s の見込み)
+   - `PASS water play <番号> (<名前>): jaw = .../Bone.004/Bone.006 (head write bone .../Bone.004 / child Bone.006), editor write bone .../Bone.006, PhysBone roots on it 0`
+   - **顎の行が FAIL のとき** (実行時の `sourceBone.Find("Bone.006")` が編集側の書き先と違う・見つからない): コードを緩めず、出た 2 つのパスを記録して戻す (犬ごとの顎の参照を Setup で配線する形へ変える)。Jump の行が FAIL なら Frisbee/2b で Controller を確かめる (この段では Controller を変えない)。
+   - hop の行の高さは**保存されたシーンの姿勢** (地面の上) の頭の高さから出した目安。実行時は反応の始めに台の上で立った姿勢から取り直すので、この数字で調整しない。
+3. シーンは変わらないので保存は不要 (Wash/12 は読むだけ)。44 / 21 は段 B で変わる所が無い (選択・道具・台を触っていない)。
+4. この Issue の frontmatter (`next`) を変えたので `node scripts/check-issues.js --write` (統括)。
+
+### ハーネス (回さない。回すかは相談で決める)
+
+- 当てはまる既存の群: Course/100 の洗い (`KH_CourseWalkHarnessEditor.WashReact.cs` の W-paw / W-shake の隣) と、台に呼ぶ手順 (`WashCall.cs`)。既存のケースの道具は `_LocalContact` を直接呼び、道具を持つ人がいない (`_IsHeldBy` は Pickup の持ち主を見る。`debugHeldOverride` は効かない) ので印 0 になり、この段の変更では反応も足上げの抑えも出ず、**既存のケースの期待値は変わらない見込み**。
+- **`_DebugWaterHit` で見られるのは反応の判断・同期・再生だけ。** 当たりの記録を直接書くので、`_LastStrokePart`・洗いの保持 (`_WashHold`)・`_washActive` (洗いのフレーム) を通らない。足上げとの取り合い (Codex レビュー 4) と、道具の区別 (`WaterToolMode` / `_SprayActive`) は試せない。それを見るケースは**本物のストロークの経路**が要る: 犬を台に呼んで着かせ (洗いのフレームが回る = `_washActive`)、水の枠に水鉄砲を出し、その `KH_WashTool` を実際に「持った」状態 (ClientSim の Pickup で持つ、またはハーネス用に `_IsHeldBy` が答える持ち主を作る口を足す) で、ノズルを前足へ向けて 1 発撃つ → `_wpHopCount` +1、`_washPawCount` は増えない。同じ形で無料シャワーを前足へ → 足上げ +1・反応 0。片手にホース (出さない) + 片手に無料シャワー (出す) → 反応 0。これらは道具を持たせる手順を作ってから足す。
+- 判断・再生のケース (`_DebugWaterHit` で足りる。ClientSim は 1 人 = Owner の経路だけ): 犬を台に呼んで着かせ、`KH_DogWash._DebugWaterHit(1, 7)` を 8 Hz で 0.6 s → `_wpHoseCount` +1・`WashPawPose`・`_wpJaw` の回転、止めて 0.5 s で `_wpKind` 0、当て続けて 5 s 以内に 2 回目が出ない / 5 s 後に出る。`_DebugWaterHit(2, 3)` を 3 回 / 1 s → `_wpHopCount` +1 だけ・Animator の Jump・根元の y が anchor より上がり横は動かない・3 s 後の次の当たりでもう 1 回。対照: お尻 (部位 0) だけ → 0、台に着いていない犬 → 0、満足の合図の最中 → 0。非 Owner・途中参加 (再生しない) は 1 人では見られない (W-react-remote と同じく SKIP、2 人の実機で見る)。
+
+### 残り・リスク
+
+- **顎の骨**: 2 段構えの犬でソース側の顎が頭の書き先の直下に `Bone.006` という名前であるかは未確認 (Wash/12 が確かめる)。顎が開く向き (+ = 下) は Unity の座標での判断で、Play で見る。Animator が顎を書かない State があっても蓄積しない作りにしたが、Play で「反応の後に口が開いたまま」でないかを見る。
+- **跳ぶ高さの見え方**: 他の人には `VRCObjectSync` の補間を通るので、跳びが小さく・遅れて見えるかもしれない (2 人で確かめる)。クリップの空中の脚の畳みと上下の量の組み合わせは Play で見る。
+- **声**: ホースを当て続けると 5 s ごとに短い声。うるさければ `WaterPlayVoiceVolume` を 0 にする。
+- **足上げ**: 既存の足上げは静止した姿勢 (掻く動きではない)。「前足で水を掻く」に足りなければ、足上げを短く出し入れする案を Play の後に検討。
+- **振り向き**: 体は回さず顔だけ。小さく分かりにくければ、跳んでいる間だけ体を少し (±15° 程度) 回して standYaw へ戻す案 (Owner の回転、同期は増えない)。
+- 当たりの判定は道具の Raycast (直線) で、水鉄砲の粒は弧を描く。遠くでは見た目の当たりとずれる (無料シャワーと同じ性質)。
+- 台の上の犬は毎フレーム判断する前提 (`WaterPlayStand` の基準取り直しと `WashErrandTick` の停止がフレームの連続を見る)。確かめた: リードなしは `TickBusy` が `_activityBusy` (台の枝が立てる) で、リード付きは `LeashLegsOk` が `_stationIdx >= 0` で、どちらも足だけのフレームにならない (IMP-DOG-036 の間引きを受けない)。
+- 区別の印は送り主が持っている道具から受け取った側が引く。水の道具 (無料シャワー・じょうろを含む) を 1 本だけ持っているときはその道具で決める。**2 本以上持っているとき (片手ずつ・持ち替えの直後の猶予 1.5 s を含む) は反応しない** (2026-10-11 Codex 再確認: 同期の遅れで、別の場所へ撃った水鉄砲の直後に無料シャワーを当てると水鉄砲と取り違え得るため。両手持ちはまれなので、取り違えより「反応しない」を選んだ)。この場合も、違う種類の反応は出ない。
+
+### ユーザーの確認 (PCVR、未確認)
+
+- [ ] ホース: 台に留めた犬の頭・胸・前足へ 0.5 s 以上当てると、前足を上げ、口をパクパクさせ、顔を水の方へ向ける。手を離すと 0.5 s ほどで終わる。当て続けると 5 s に 1 回まで。お尻・しっぽ・後ろ足だけでは出ない。
+- [ ] 水鉄砲: 頭・胸・前足に当てると、その場で小さく跳ねて当たった方へ顔を向ける。横へずれない・台からはみ出さない (台を一番高くしても)。3 s 以内の 2 発目では跳ばない。
+- [ ] じょうろ・無料シャワーでは出ない。台に留めていない犬 (歩いている・リードで台の外) では出ない。
+- [ ] 満足のお座り・ブルブル・足上げの最中には出ない。ホースを止めた後のブルブルは今までどおり出る。
+- [ ] 口が下へ開く (頭の中へ閉じない)。反応の後に口が開いたまま・前足が上がったままにならない。
+- [ ] 6 犬種で跳ぶ高さが体に合っている (ポメ・コーギーは小さく、ラブ・サモエドは大きめ)。
+- [ ] 声の大きさ・回数がうるさくない。
+- [ ] Desktop で同じ操作をしても同じ反応。
+- [ ] 2 人: もう 1 人にも同じ反応が同じ時に見える (跳ぶ高さが極端に小さくない)。後から入った人に過去の反応が再生されない。
+
+### 段 B の適用と、この作業のまとめ (2026-10-11、統括)
+
+段 B: C# / U# コンパイル 0 → Codex 独立レビュー 2 回 (受信側の待ち時間、serial の周回、道具の特定、前足の命中の調停、文言。最後の 1 点「同期の遅れで 2 本持ちのとき取り違え得る」は、2 本以上持っているときは反応しない、で統括が直した) → Wash/12 **FAIL 0 (5,381 項目、段 A の 5,361 から 20 行増)**: 6 犬種とも Jump の配線・跳ぶ高さ (頭の高さ × 0.3)・顎の骨を確認 → 44 は 962 PASS / FAIL 0 のまま。シーンの保存は不要 (書く値が無い)。`KD_DogWanderController.asset` などのプログラムアセットは、別セッションの未コミットのおやつの変更と同じファイルなので stage していない (Unity が開くときにソースから作り直す)。
+
+この作業の完了の定義 (上の「取り込みと実装の進め方」) は満たした: 3 品の取り込みと枠への追加 (`0677138`・`2bf922e`)、Codex の指摘の反映 (段 A 3 回・段 B 2 回)、44 / 21 / Wash/12 は基準より悪化なし、写真とリスティング画像の目視、コミット。**この Issue は done ではない**: じょうろの傾けて注ぐ (延期と記録済み)、下のユーザー確認、2 人・端末の確認が残る。
+
+#### ユーザーの確認 (段 A の道具の動き、PCVR、未確認)
+
+- [ ] 水鉄砲・ホースを右手・左手で持ち、ノズルが肘→手の向きか、握りの位置、ホースのたるみが腕や体に刺さって見えないか
+- [ ] 水鉄砲: 1 回押すごとに水の玉が弧を描いて 1 発、0.4 秒ごと。ホース: 押している間だけ太い水流、離すと止まる
+- [ ] 水の枠でじょうろ・水鉄砲・ホースを切り替え、持ったまま台 (檜・プール) を替えられる
+- [ ] プール: 水面が薄く透けて足先が見えるか、泡・しぶきとの前後 (描き順) が崩れないか。主洗い場ではプールが斜面に埋まる (IMP-DOG-044 の判断待ち)
+- [ ] 2 人: 相手の水鉄砲の 1 発が見える (連射はまとまって少なく見えることがある、許容)、同じ選択が見える。Quest / Android の負荷
+
+(犬の反応の確認項目は上の段 B の節)
