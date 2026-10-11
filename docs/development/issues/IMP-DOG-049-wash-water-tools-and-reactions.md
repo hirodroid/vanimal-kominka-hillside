@@ -5,7 +5,7 @@ system: DOG
 status: todo
 priority: Medium
 summary: ホースの連続放水・水鉄砲の単発射出・じょうろの傾け注ぎを整え、ホースと水鉄砲に犬の分かりやすい反応を組み合わせる
-next: 企画画像 (ホース・水鉄砲、各 A / B) を作成済み (2026-10-11)。ユーザーが確認用ページで案を選ぶ → Blender で制作
+next: 水鉄砲は案 A で決定。ホースはリールの形 (2 回目の企画画像 1 / 2) の回答待ち → 決まったら水鉄砲・ホースを Blender で制作
 updated: 2026-10-11
 ---
 
@@ -49,3 +49,6 @@ updated: 2026-10-11
 決定: 2026-10-11 (ユーザー「推奨でOK」) [設計案](../../plans/2026-10-11-wash-items-design.md) の Q7〜Q12 を推奨どおり採用。
 
 2026-10-11: 企画画像 (各 A / B の 2 案) を作った。画像はラボ `vrc-asset-lab/assets/wash-premium/design/2026-10-11/`、確認用ページは [artifacts/wash-concept-review/2026-10-11](../../../artifacts/wash-concept-review/2026-10-11/README.md)。ユーザーが案を選んでから Blender で制作する。
+
+2026-10-11 (ユーザー回答 [JSON](../../../artifacts/wash-concept-review/2026-10-11/vanimal-wash-concept-2026-10-11T01-43-01-752Z.json)): 水鉄砲は案 A。ホースは案 A を元に「色は B、持ち手と先端は A」→ リールの形を 2 通りにした 2 回目の企画画像で確認中 ([round2](../../../artifacts/wash-concept-review/2026-10-11/round2/index.html))。
+決定: 2026-10-11 (ユーザー) 水鉄砲の意匠は企画画像の案 A (横に水の窓、短い丸いノズル)。ホースのノズルは案 A の形。

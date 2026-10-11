@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "collection": "wash-concept-2026-10-11",
+  "updatedAt": "2026-10-11T01:43:01.752Z",
+  "overall": "",
+  "items": [
+    {
+      "id": "Hose",
+      "name": "ホース",
+      "decision": "A",
+      "shape": "色はBでホースの持ち手や先端はA",
+      "material": "",
+      "notes": ""
+    },
+    {
+      "id": "WaterPistol",
+      "name": "水鉄砲",
+      "decision": "A",
+      "shape": "",
+      "material": "",
+      "notes": ""
+    },
+    {
+      "id": "Pool",
+      "name": "プール",
+      "decision": "A",
+      "shape": "円形がいいかな",
+      "material": "",
+      "notes": ""
+    }
+  ]
+}

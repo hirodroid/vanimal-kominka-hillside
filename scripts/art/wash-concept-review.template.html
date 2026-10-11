@@ -8,14 +8,14 @@
 </style>
 <header>
 <div class="brand">VAnimal / CARE COLLECTION</div>
-<h1>新しいお手入れ道具の企画画像</h1>
-<p class="sub">ホース・水鉄砲・プールの 3 品。各品 A / B の 2 案から選ぶか、直したいところを書いてください。</p>
+<h1 id="pageTitle">新しいお手入れ道具の企画画像</h1>
+<p class="sub" id="pageSub"></p>
 <div class="tools"><button class="primary" id="export">回答を保存（JSON）</button><button id="markdown">読みやすい一覧を保存</button><label class="file-button">回答を読み込む<input id="import" type="file" accept=".json,application/json"></label></div>
 <p class="save" id="saveStatus" role="status" aria-live="polite"></p>
 <p class="sub">入力はこのブラウザーに保存します。共有・引き継ぎには「回答を保存」でダウンロードした JSON を使ってください。</p>
 </header>
 <main>
-<aside><div id="progress"></div><progress id="meter" max="3" value="0" aria-label="記入状況"></progress><nav id="list" aria-label="道具の一覧"></nav></aside>
+<aside><div id="progress"></div><progress id="meter" max="1" value="0" aria-label="記入状況"></progress><nav id="list" aria-label="道具の一覧"></nav></aside>
 <section class="panel"><div id="card">
 <div class="topline"><span class="tag" id="categoryLabel"></span><span class="tag" id="number"></span></div><h2 id="name"></h2>
 <p class="notice">生成 AI による企画画像です。ゲーム内の見た目・寸法・質感を約束するものではありません。採った案をもとに Blender で低ポリゴンのモデルを作ります。画像はクリックで拡大できます。</p>
@@ -24,7 +24,7 @@
 <h3>決まっていること (変えない)</h3><ul class="decided" id="decided"></ul>
 <h3>この画像で決めたいこと</h3><ul id="ask"></ul>
 </div><div>
-<fieldset><legend>どちらの案にしますか？</legend><div class="choices"><label class="choice"><input type="radio" name="decision" value="A">案 A</label><label class="choice"><input type="radio" name="decision" value="B">案 B</label><label class="choice"><input type="radio" name="decision" value="revise">直したい</label><label class="choice"><input type="radio" name="decision" value="hold">保留</label></div></fieldset>
+<fieldset><legend id="question">どちらの案にしますか？</legend><div class="choices"><label class="choice"><input type="radio" name="decision" value="A"><span id="labelA">案 A</span></label><label class="choice"><input type="radio" name="decision" value="B"><span id="labelB">案 B</span></label><label class="choice"><input type="radio" name="decision" value="revise">直したい</label><label class="choice"><input type="radio" name="decision" value="hold">保留</label></div></fieldset>
 <label class="label" for="shape">形・大きさ<span class="hint">　例：A の持ち手で B の先端</span><textarea id="shape" maxlength="12000"></textarea></label>
 <label class="label" for="material">素材・色<span class="hint">　例：木をもっと明るく</span><textarea id="material" maxlength="12000"></textarea></label>
 <label class="label" for="notes">そのほか<textarea id="notes" maxlength="12000"></textarea></label>
@@ -34,15 +34,19 @@
 <details><summary>全体への要望</summary><textarea id="allNotes" maxlength="20000" placeholder="例：3 品とも泡銃ともっと揃えたい。"></textarea></details>
 </section></main>
 <div id="zoom" hidden><img id="zoomImg" alt=""></div>
-<footer>企画画像：2026-10-11 生成 (Codex 内蔵の画像生成、既存の泡銃・じょうろ・檜の台の写真を参照)。ここでの回答は自動で Unity や Issue へ反映されません。</footer>
+<footer id="pageFooter">企画画像：2026-10-11 生成 (Codex 内蔵の画像生成、既存の泡銃・じょうろ・檜の台の写真を参照)。ここでの回答は自動で Unity や Issue へ反映されません。</footer>
 <script>
 'use strict';
 const items=/*ITEM_DATA*/;
-const KEY='vanimal-wash-concept-review-20261011-v1';
-const COLLECTION='wash-concept-2026-10-11';
+const page=/*PAGE_DATA*/;
+const KEY=page.key;
+const COLLECTION=page.collection;
 const labels={unreviewed:'未記入',A:'案 A',B:'案 B',revise:'直したい',hold:'保留'};
+const choiceLabel=(item,v)=>(item.choices&&item.choices[v])||labels[v];
+const rowLabel=r=>choiceLabel(items.find(i=>i.id===r.id),r.decision);
 const fields=['shape','material','notes'];
 const $=id=>document.getElementById(id);
+document.title=page.title;$('pageTitle').textContent=page.heading;$('pageSub').textContent=page.sub;$('pageFooter').textContent=page.footer;$('meter').max=items.length;
 const blank=()=>({version:1,collection:COLLECTION,updatedAt:null,overall:'',items:items.map(i=>({id:i.id,name:i.name,decision:'unreviewed',shape:'',material:'',notes:''}))});
 let state=blank(),current=items[0].id;
 function validate(value){
@@ -56,8 +60,8 @@ try{const stored=localStorage.getItem(KEY);if(stored){state=validate(JSON.parse(
 function save(){state.updatedAt=new Date().toISOString();try{localStorage.setItem(KEY,JSON.stringify(state));message('ブラウザーに保存済み · '+new Date().toLocaleTimeString('ja-JP'));return true;}catch(e){message('ブラウザーへの保存に失敗しました。「回答を保存」で JSON をダウンロードしてください。');return false;}}
 function row(){return state.items.find(i=>i.id===current);}
 function fill(id,list){$(id).replaceChildren(...list.map(t=>{const li=document.createElement('li');li.textContent=t;return li;}));}
-function updateList(){const done=state.items.filter(r=>r.decision!=='unreviewed').length;$('progress').textContent=`記入 ${done} / ${items.length} 品`;$('meter').value=done;$('list').replaceChildren();for(const item of items){const b=document.createElement('button');b.type='button';b.setAttribute('aria-current',String(item.id===current));b.append(document.createTextNode(item.name));const s=document.createElement('span');s.textContent=labels[state.items.find(r=>r.id===item.id).decision];b.append(s);b.onclick=()=>{current=item.id;render();};$('list').append(b);}}
-function render(){updateList();const item=items.find(i=>i.id===current),r=row(),index=items.indexOf(item);$('name').textContent=item.name;$('categoryLabel').textContent=item.category+' / '+item.issue;$('number').textContent=`${index+1} / ${items.length}`;$('photo').src=item.image;$('photo').alt=item.name+'の企画画像 (案 A・案 B)';$('caption').textContent=item.caption;fill('decided',item.decided);fill('ask',item.ask);document.querySelectorAll('[name=decision]').forEach(e=>e.checked=e.value===r.decision);for(const f of fields)$(f).value=r[f];$('allNotes').value=state.overall;$('prev').disabled=index<=0;$('next').disabled=index>=items.length-1;}
+function updateList(){const done=state.items.filter(r=>r.decision!=='unreviewed').length;$('progress').textContent=`記入 ${done} / ${items.length} 品`;$('meter').value=done;$('list').replaceChildren();for(const item of items){const b=document.createElement('button');b.type='button';b.setAttribute('aria-current',String(item.id===current));b.append(document.createTextNode(item.name));const s=document.createElement('span');s.textContent=rowLabel(state.items.find(r=>r.id===item.id));b.append(s);b.onclick=()=>{current=item.id;render();};$('list').append(b);}}
+function render(){updateList();const item=items.find(i=>i.id===current),r=row(),index=items.indexOf(item);$('name').textContent=item.name;$('categoryLabel').textContent=item.category+' / '+item.issue;$('number').textContent=`${index+1} / ${items.length}`;$('photo').src=item.image;$('photo').alt=item.name+'の企画画像 (案 A・案 B)';$('caption').textContent=item.caption;$('labelA').textContent=choiceLabel(item,'A');$('labelB').textContent=choiceLabel(item,'B');$('question').textContent=item.question||'どちらの案にしますか？';fill('decided',item.decided);fill('ask',item.ask);document.querySelectorAll('[name=decision]').forEach(e=>e.checked=e.value===r.decision);for(const f of fields)$(f).value=r[f];$('allNotes').value=state.overall;$('prev').disabled=index<=0;$('next').disabled=index>=items.length-1;}
 function move(d){const i=items.findIndex(x=>x.id===current)+d;if(items[i]){current=items[i].id;render();window.scrollTo({top:0,behavior:'smooth'});}}
 document.querySelectorAll('[name=decision]').forEach(e=>e.onchange=()=>{row().decision=e.value;save();updateList();});
 for(const f of fields)$(f).oninput=()=>{row()[f]=$(f).value;save();};
@@ -65,8 +69,8 @@ $('allNotes').oninput=()=>{state.overall=$('allNotes').value;save();};
 $('clearDecision').onclick=()=>{row().decision='unreviewed';save();render();};$('prev').onclick=()=>move(-1);$('next').onclick=()=>move(1);
 $('photo').onclick=()=>{$('zoomImg').src=$('photo').src;$('zoomImg').alt=$('photo').alt;$('zoom').hidden=false;};$('zoom').onclick=()=>{$('zoom').hidden=true;};document.addEventListener('keydown',e=>{if(e.key==='Escape')$('zoom').hidden=true;});
 function download(text,type,name){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
-$('export').onclick=()=>{save();download(JSON.stringify(state,null,2),'application/json','vanimal-wash-concept-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json');};
-$('markdown').onclick=()=>{let t='# VAnimal 新しいお手入れ道具の企画画像への回答\n\n';for(const r of state.items)t+=`## ${r.name} [${r.id}]\n\n選択：${labels[r.decision]}\n\n形・大きさ：\n${r.shape||'（未記入）'}\n\n素材・色：\n${r.material||'（未記入）'}\n\nそのほか：\n${r.notes||'（未記入）'}\n\n`;t+='## 全体への要望\n\n'+(state.overall||'（未記入）')+'\n';download(t,'text/markdown;charset=utf-8','vanimal-wash-concept.md');};
+$('export').onclick=()=>{save();download(JSON.stringify(state,null,2),'application/json',page.filePrefix+new Date().toISOString().replace(/[:.]/g,'-')+'.json');};
+$('markdown').onclick=()=>{let t='# VAnimal 新しいお手入れ道具の企画画像への回答\n\n';for(const r of state.items)t+=`## ${r.name} [${r.id}]\n\n選択：${rowLabel(r)}\n\n形・大きさ：\n${r.shape||'（未記入）'}\n\n素材・色：\n${r.material||'（未記入）'}\n\nそのほか：\n${r.notes||'（未記入）'}\n\n`;t+='## 全体への要望\n\n'+(state.overall||'（未記入）')+'\n';download(t,'text/markdown;charset=utf-8',page.filePrefix+'answers.md');};
 $('import').onchange=async ev=>{const file=ev.target.files[0];if(!file)return;try{if(file.size>1500000)throw Error('回答ファイルが大きすぎます。');const next=validate(JSON.parse(await file.text()));if(!confirm('現在の入力を、読み込む回答で置き換えます。よろしいですか？'))return;state=next;const saved=save();render();if(saved)message('回答を読み込み、ブラウザーに保存しました。');}catch(e){alert('読み込めませんでした。'+e.message);}finally{ev.target.value='';}};
 render();
 </script>

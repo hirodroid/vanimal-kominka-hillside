@@ -5,7 +5,7 @@ system: DOG
 status: todo
 priority: Medium
 summary: 洗浄台の種類にプールを追加し、洗い場ごとの写真選択から切り替えられるようにする
-next: 企画画像 (A / B) を作成済み (2026-10-11)。ユーザーが確認用ページで案を選ぶ → Blender で制作。犬ごとの大きさへの追従は IMP-ENV-013 の実装と合わせる
+next: 作りは案 A で決定。形 (円 直径 0.95 m まで / 楕円 1.3 × 0.7 m) を 2 回目の企画画像で回答待ち → Blender で制作
 updated: 2026-10-11
 ---
 
@@ -44,3 +44,6 @@ updated: 2026-10-11
 決定: 2026-10-11 (ユーザー「推奨でOK」) [設計案](../../plans/2026-10-11-wash-items-design.md) の Q13・Q14 (帆布 + 木枠の角丸長方形、薄く透ける水面) を推奨どおり採用。
 
 2026-10-11: 企画画像 (各 A / B の 2 案) を作った。画像はラボ `vrc-asset-lab/assets/wash-premium/design/2026-10-11/`、確認用ページは [artifacts/wash-concept-review/2026-10-11](../../../artifacts/wash-concept-review/2026-10-11/README.md)。ユーザーが案を選んでから Blender で制作する。
+
+2026-10-11 (ユーザー回答 [JSON](../../../artifacts/wash-concept-review/2026-10-11/vanimal-wash-concept-2026-10-11T01-43-01-752Z.json)): 案 A (木の板の外枠・丸い深緑の縁・帆布) で、形は「円形がいいかな」。Q13 の「1.3 × 0.7 m の角丸長方形」から変わるので、円 (直径 0.95 m まで。人が棚側に立つ空き 0.5 m のため) と楕円 (1.3 × 0.7 m) の 2 回目の企画画像で確認中 ([round2](../../../artifacts/wash-concept-review/2026-10-11/round2/index.html))。円なら犬ごとの大きさ (IMP-ENV-013) は縦横同じ倍率で拡縮する。
+決定: 2026-10-11 (ユーザー) プールの作りは企画画像の案 A。形 (円 / 楕円) は 2 回目の回答待ち。
