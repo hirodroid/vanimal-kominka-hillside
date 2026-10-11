@@ -117,21 +117,41 @@ namespace KominkaHillside
         /// <summary>車体基準の左右の降り口 (Start で控えたローカル位置) のうち NavMesh に立てる方 (L 優先) を選び、その側のアンカーを
         /// NavMesh 上の点 (+0.05 m) へ置いてから station の exit に入れる (レビュー #6: 以前は hit.position を捨てて元のアンカーへ降ろしていた)。
         /// 両側とも不可なら、控えた位置に戻した exitL。毎回書く (車体は動くので、前回と同じ側でも点は変わる)。</summary>
-        public void _PickExit()
+        public void _PickExit() { PickExitSide(false); }
+
+        /// <summary>M3 (Codex M3 (2)): 駐車枠に着いてから降ろすとき。外側 (右 = 道から離れる側) を優先し、立てなければ左。</summary>
+        public void _UnboardOuter()
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp) || station == null) return;
+            PickExitSide(true);
+            Debug.Log("[KH_Cart] unboard cart=" + index + " exit=" + (_exitSide == 1 ? "R" : "L") + " (parked, outer)");
+            station.ExitStation(lp);
+        }
+
+        private void PickExitSide(bool preferRight)
         {
             if (station == null) return;
             EnsureExitLocal();
             NavMeshHit hit;
-            int side = 0;
-            Transform t = exitL;
-            Vector3 put = exitL != null ? transform.TransformPoint(_exitLocalL) : Vector3.zero;
-            if (exitL != null && NavMesh.SamplePosition(transform.TransformPoint(_exitLocalL), out hit, ExitReach, NavMesh.AllAreas))
+            int side = preferRight ? 1 : 0;
+            Transform t = preferRight ? exitR : exitL;
+            Vector3 put = t != null ? transform.TransformPoint(preferRight ? _exitLocalR : _exitLocalL) : Vector3.zero;
+            Transform first = preferRight ? exitR : exitL, second = preferRight ? exitL : exitR;
+            Vector3 firstAt = transform.TransformPoint(preferRight ? _exitLocalR : _exitLocalL);
+            Vector3 secondAt = transform.TransformPoint(preferRight ? _exitLocalL : _exitLocalR);
+            if (first != null && NavMesh.SamplePosition(firstAt, out hit, ExitReach, NavMesh.AllAreas))
             {
-                put = hit.position + Vector3.up * ExitLift;
+                t = first; put = hit.position + Vector3.up * ExitLift;
             }
-            else if (exitR != null && NavMesh.SamplePosition(transform.TransformPoint(_exitLocalR), out hit, ExitReach, NavMesh.AllAreas))
+            else if (second != null && NavMesh.SamplePosition(secondAt, out hit, ExitReach, NavMesh.AllAreas))
             {
-                side = 1; t = exitR; put = hit.position + Vector3.up * ExitLift;
+                side = 1 - side; t = second; put = hit.position + Vector3.up * ExitLift;
+            }
+            else
+            {
+                // 両側とも立てない: 控えた位置に戻した exitL
+                side = 0; t = exitL; put = exitL != null ? transform.TransformPoint(_exitLocalL) : Vector3.zero;
             }
             _exitSide = side;
             if (t == null) return;

@@ -69,9 +69,10 @@ namespace KominkaHillside
         // M3: その場に残すカート (cartState == 3)。置いた軌道距離と時刻 (乗り場の回収は最古から)
         [UdonSynced] public float[] cartParkDist = new float[8];
         [UdonSynced] public int[] cartParkedMs = new int[8];
+        [UdonSynced] public int[] cartParkDir = new int[8];   // 駐車したときの進行方向 (+1 / −1。0 は +1 扱い)。向きと右側をこれで決める (Codex M3 (1))
 
-        [Header("M3 その場に残すカート")]
-        public float parkOffset = 0.9f, parkOffsetNarrow = 0.3f;   // 軌道点から右へ (class 2 の区間は狭い方)
+        [Header("M3 その場に残すカート (旧値。M3 レビュー後は ParkSlot の定数を使う)")]
+        public float parkOffset = 0.9f, parkOffsetNarrow = 0.3f;
 
         // M2 交通の地形 (非同期。既定 null — Cart/1 Build が軌道から焼く。null なら交通なし)
         public int[] trackClass;                     // 区間 i: 0 広い (千鳥可) / 1 一列なら双方通れる / 2 一列でも通れない
@@ -292,20 +293,39 @@ namespace KominkaHillside
                 bool parkedNow = cartState[c] == CartParked;
                 bool wasParked = _prevParked[c];
                 _prevParked[c] = parkedNow;
+                // Codex M3 (3): 駐車の時刻・距離が変わった = 中間 (走行) を受け取らずに別の場所へ置き直された
+                bool parkChanged = parkedNow && (cartParkedMs[c] != _seenParkMs[c] || cartParkDist[c] != _seenParkDist[c]);
+                if (parkedNow) { _seenParkMs[c] = cartParkedMs[c]; _seenParkDist[c] = cartParkDist[c]; }
                 if (active && !_shown[c])
                 {
-                    _shown[c] = true; _parked[c] = false; _snap[c] = true; _placedAt[c] = 0f; _seg[c] = -1; _parkDone[c] = false;
+                    _shown[c] = true; _parked[c] = false; _snap[c] = true; _placedAt[c] = 0f; _seg[c] = -1; _parkDone[c] = false; _parkLatReady[c] = false;
                     if (carts != null && c < carts.Length && carts[c] != null) carts[c]._SetVisible(true);
                 }
                 else if (active)
                 {
                     // 錨の打ち直し・隊列の詰め・その場に残す (M3) で目標が跳んだ分を、表示側でなめらかに追う (Motion の _err)
-                    if (parkedNow && wasParked) continue;   // 置かれたまま (動かない)
-                    if (parkedNow) _parkDone[c] = false;    // 走行 → Parked: その場で止まり、右へ寄せる
+                    if (parkedNow && wasParked)
+                    {
+                        if (parkChanged) { _snap[c] = true; _parkDone[c] = false; _parkLatReady[c] = false; }   // 新しい駐車枠へ即時
+                        continue;
+                    }
+                    if (parkedNow)
+                    {
+                        // 走行 → Parked: 駐車距離へ speed で進み (狭い区間は出口 + 3 m まで)、着いてから横へ寄せる (PlaceParked)
+                        _parkDone[c] = false; _parkLatReady[c] = false;
+                        if (!_snap[c] && Mathf.Abs(WrapSigned(cartParkDist[c] - _dLast[c])) > ParkDriveMax) _snap[c] = true;
+                        continue;
+                    }
+                    if (wasParked)
+                    {
+                        // Codex M3 (4): Parked → 走行。回収・合流で別の場所へ移るなら全員即時配置、その場からの再開は駐車姿勢から補間
+                        float jumpP = WrapSigned(TargetDistance(c, now) - _dLast[c]);
+                        if (Mathf.Abs(jumpP) > 1f) _snap[c] = true; else if (!_snap[c]) _err[c] = jumpP;
+                        continue;
+                    }
                     if (!_snap[c])
                     {
-                        float target = parkedNow ? cartParkDist[c] : TargetDistance(c, now);
-                        float jump = WrapSigned(target - _dLast[c]);
+                        float jump = WrapSigned(TargetDistance(c, now) - _dLast[c]);
                         if (Mathf.Abs(jump) > SnapJump) _snap[c] = true; else _err[c] = jump;
                     }
                 }
@@ -474,7 +494,9 @@ namespace KominkaHillside
 
             // 座っているカートが自分の乗車でなくなったのに座ったまま (取りこぼし・リスポーン後の居残り) なら、1.5 秒おきに降ろす
             // (降車を送ってから 1.5 秒は待つ: リスポーンが自分で station から外すのを先に受ける)
-            if (_seatedCart >= 0 && _seatedCart != _MyCart() && Time.time - _unboardAt > 1.5f && Time.time - _leaveSentAt > 1.5f)
+            // (M3: 駐車枠まで乗せたまま進んでいる間は待つ。期限 DeferExitMax を過ぎたら降ろす)
+            if (_deferExitCart >= 0 && (Time.time >= _deferExitUntil || _seatedCart != _deferExitCart)) _deferExitCart = -1;
+            if (_seatedCart >= 0 && _seatedCart != _MyCart() && _deferExitCart != _seatedCart && Time.time - _unboardAt > 1.5f && Time.time - _leaveSentAt > 1.5f)
                 UnboardCart(_seatedCart);
 
             if (Time.time < _nextLocalSlow) return;
@@ -500,7 +522,8 @@ namespace KominkaHillside
         private void BoardNow(int c, string how)
         {
             if (carts == null || c >= carts.Length || carts[c] == null) return;
-            PlaceCart(c, Networking.GetServerTimeInMilliseconds(), 0f);   // 割当の直後は駐車位置にいるので、先に姿勢を合わせる
+            // 地中のプールから・遠くの Parked の回収なら先に姿勢を合わせる (snap)。その場からの再開は駐車姿勢から補間するので触らない (Codex M3 (4))
+            if (_snap[c]) PlaceCart(c, Networking.GetServerTimeInMilliseconds(), 0f);
             carts[c]._Board();
             Debug.Log("[KH_Cart] board cart=" + c + " how=" + how + " order=" + cartOrder[c] + " group=" + cartGroup[c]);
         }
@@ -555,6 +578,8 @@ namespace KominkaHillside
 
         // ---- 調整値 (コードの定数。Play で決める) ----
         const float SnapJump = 15f;          // 目標がこれより跳んだら表示も跳ばす (それ以下はなめらかに追う)
+        const float DeferExitMax = 90f;      // 駐車枠まで乗せたまま進む上限 (長い狭い区間 + 横寄せ。過ぎたらその場で降ろす)
+        const float ParkDriveMax = 120f;     // 走行 → Parked で駐車距離がこれより遠ければ跳ばす (狭い区間の出口までは走って行く)
         const float ParkDelay = 1.0f;        // 空いたカートを駐車へ移すまでの間 (降りる人の ExitStation を先に済ませる)
         const float PendingTimeout = 2f;     // 出発・合流の返事待ち (契約: 2 秒で「空いているカートがありません」)
         const float BoardTimeout = 3f;       // 割当から着座までの見張り

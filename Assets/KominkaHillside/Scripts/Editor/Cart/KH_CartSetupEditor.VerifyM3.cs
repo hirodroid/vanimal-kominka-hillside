@@ -63,7 +63,7 @@ namespace KominkaHillside.Editor
                 else v.Pend("Cart_" + i + " KH_CartSeat.cartPanel not found (Runtime M3)");
             }
             // ---- 置き去りの同期配列 ----
-            foreach (var name in new[] { "cartParkDist", "cartParkedMs" })
+            foreach (var name in new[] { "cartParkDist", "cartParkedMs", "cartParkDir" })   // cartParkDir: M3 Codex 後 (駐車方向の同期)
             {
                 var p = mso.FindProperty(name);
                 v.Req(p != null && p.isArray && p.arraySize == MaxCarts, "manager." + name + " length " + MaxCarts + " (proxy " + (p != null && p.isArray ? p.arraySize : -1) + ")");
@@ -113,6 +113,86 @@ namespace KominkaHillside.Editor
             }
             catch (TargetInvocationException ex) { pr.Skip("parked probe threw in Edit mode (server time?): " + (ex.InnerException != null ? ex.InnerException.Message : ex.Message)); }
             finally { for (int k = 0; k < fields.Length; k++) fields[k].SetValue(mgr, saved[k]); }
+        }
+
+        /// <summary>駐車枠 (KH_CartManager.ParkSlotDistance / ParkSlotLateral、Reflection) の 3 ケース。プロキシの cartState / cartParkDir / cartParkDist を一時的に書き換え、必ず戻す。
+        /// ① 逆方向 (dir −1) は同じ距離でも道の反対側 (右 = 進行方向の右) に置かれ、同じ入力なら同じ結果 (同期値だけで決まる)
+        /// ② 同じ目的地へ同じ向きで 3 台が続けて駐車すると、駐車距離が互いに 1.6 m 以上離れる
+        /// ③ 狭い区間 (class 2) の中で止まると、進行方向側の出口 + 3 m に駐車する</summary>
+        static void ProbeParkSlots(P pr, KH_CartManager mgr)
+        {
+            var t = mgr.GetType(); const BindingFlags F = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            var mDist = t.GetMethod("ParkSlotDistance", F, null, new[] { typeof(float), typeof(int), typeof(int) }, null);
+            var mLat = t.GetMethod("ParkSlotLateral", F, null, new[] { typeof(float), typeof(int) }, null);
+            var mPoint = t.GetMethod("TrackPoint", F, null, new[] { typeof(float) }, null);
+            var mDir = t.GetMethod("TrackDirection", F, null, new[] { typeof(float) }, null);
+            if (mDist == null || mLat == null || mPoint == null || mDir == null) { pr.Skip("KH_CartManager.ParkSlotDistance / ParkSlotLateral / TrackPoint / TrackDirection not all found: park slot probe skipped"); return; }
+            var fState = t.GetField("cartState", F); var fDir = t.GetField("cartParkDir", F); var fDist = t.GetField("cartParkDist", F);
+            if (fState == null || fDir == null || fDist == null) { pr.Skip("cartState / cartParkDir / cartParkDist not all present: park slot probe skipped"); return; }
+            var so = new SerializedObject(mgr);
+            var lenP = so.FindProperty("trackLength"); float L = lenP != null ? lenP.floatValue : 0f;
+            var from = ReadFloats(so, "narrowFrom"); var to = ReadFloats(so, "narrowTo"); var dest = ReadFloats(so, "destTrackDistance");
+            if (L <= 0f || dest == null || dest.Length < 2) { pr.Skip("track not saved (run Cart/1): park slot probe skipped"); return; }
+            var cache = t.GetField("_routeCached", F); if (cache != null && cache.FieldType == typeof(bool)) cache.SetValue(mgr, false);
+            float W(float d) { d %= L; return d < 0f ? d + L : d; }
+            bool InAnyZone(float d) { if (from == null || to == null) return false; for (int k = 0; k < from.Length && k < to.Length; k++) if (W(d - from[k]) <= W(to[k] - from[k])) return true; return false; }
+            var savedState = (int[])((int[])fState.GetValue(mgr)).Clone(); var savedDir = (int[])((int[])fDir.GetValue(mgr)).Clone(); var savedDist = (float[])((float[])fDist.GetValue(mgr)).Clone();
+            try
+            {
+                var state = new int[MaxCarts]; var pdir = new int[MaxCarts]; var pdist = new float[MaxCarts];
+                for (int c = 0; c < MaxCarts; c++) { state[c] = 1; pdir[c] = 1; pdist[c] = 0f; }   // 全車走行中 (Parked なし)
+                fState.SetValue(mgr, state); fDir.SetValue(mgr, pdir); fDist.SetValue(mgr, pdist);
+                float Dist(float want, int dir, int self) { return (float)mDist.Invoke(mgr, new object[] { want, dir, self }); }
+                float Lat(float d, int dir) { return (float)mLat.Invoke(mgr, new object[] { d, dir }); }
+                Vector3 Pt(float d) { return (Vector3)mPoint.Invoke(mgr, new object[] { d }); }
+                Vector3 Fw(float d) { return (Vector3)mDir.Invoke(mgr, new object[] { d }); }
+
+                // 広い区間の点 (広場の行き先から、狭い区間の外を探す)
+                float wide = dest[1] >= 0f ? dest[1] : 0f;
+                for (int k = 0; k < 400 && (InAnyZone(wide) || InAnyZone(wide - 6f)); k++) wide = W(wide + 5f);
+
+                // ① 逆方向の横の符号
+                {
+                    float latP = Lat(wide, +1), latN = Lat(wide, -1), latP2 = Lat(wide, +1);
+                    var p = Pt(wide); var f = Fw(wide); var rightPlus = new Vector3(f.z, 0f, -f.x);
+                    var posP = p + rightPlus * latP; var posN = p - rightPlus * latN;   // dir −1 の右 = +1 の左
+                    float sideP = Vector3.Dot(posP - p, rightPlus), sideN = Vector3.Dot(posN - p, rightPlus);
+                    pr.Req(latP > 0f && latN > 0f && sideP > 0f && sideN < 0f && Mathf.Approximately(latP, latP2),
+                        "park 1: at d=" + wide.ToString("F1") + " dir +1 parks " + latP.ToString("F2") + " m right, dir -1 " + latN.ToString("F2") + " m on the other side (signed " + sideP.ToString("F2") + " / " + sideN.ToString("F2") + "), same input -> same result");
+                }
+                // ② 同じ目的地に 3 台が同じ向きで続けて駐車
+                {
+                    var got = new float[3];
+                    for (int c = 0; c < 3; c++)
+                    {
+                        got[c] = Dist(wide, +1, c);
+                        state[c] = 3; pdir[c] = 1; pdist[c] = got[c];   // Parked として登録してから次の車
+                        fState.SetValue(mgr, state); fDir.SetValue(mgr, pdir); fDist.SetValue(mgr, pdist);
+                    }
+                    float g01 = Mathf.Abs(W(got[0] - got[1] + L * .5f) - L * .5f), g12 = Mathf.Abs(W(got[1] - got[2] + L * .5f) - L * .5f), g02 = Mathf.Abs(W(got[0] - got[2] + L * .5f) - L * .5f);
+                    pr.Req(g01 >= 1.6f - 1e-3f && g12 >= 1.6f - 1e-3f && g02 >= 1.6f - 1e-3f, "park 2: three carts arriving at d=" + wide.ToString("F1") + " park at " + string.Join(", ", got.Select(x => x.ToString("F2"))) + " (gaps " + g01.ToString("F2") + ", " + g12.ToString("F2") + ", " + g02.ToString("F2") + " >= 1.6)");
+                    for (int c = 0; c < 3; c++) { state[c] = 1; pdist[c] = 0f; }
+                    fState.SetValue(mgr, state); fDist.SetValue(mgr, pdist);
+                }
+                // ③ 狭い区間の中で停止 → 出口 + 3 m (出口の先が別の区間なら SKIP)
+                if (from == null || to == null || from.Length == 0) pr.Skip("park 3: no narrow zone saved");
+                else
+                {
+                    int z = -1;
+                    for (int k = 0; k < from.Length && z < 0; k++) if (!InAnyZone(to[k] + 3f) && !InAnyZone(from[k] - 3f)) z = k;
+                    if (z < 0) pr.Skip("park 3: every zone exit + 3 m lies in another zone");
+                    else
+                    {
+                        float mid = W(from[z] + W(to[z] - from[z]) * .5f);
+                        float fwd = Dist(mid, +1, -1), back = Dist(mid, -1, -1);
+                        float expF = W(to[z] + 3f), expB = W(from[z] - 3f);
+                        pr.Req(Mathf.Abs(W(fwd - expF + L * .5f) - L * .5f) < 1e-3f && Mathf.Abs(W(back - expB + L * .5f) - L * .5f) < 1e-3f,
+                            "park 3: stop inside zone " + z + " (" + from[z].ToString("F1") + "-" + to[z].ToString("F1") + ") at " + mid.ToString("F1") + ": dir +1 parks at " + fwd.ToString("F2") + " (exit + 3 = " + expF.ToString("F2") + "), dir -1 at " + back.ToString("F2") + " (" + expB.ToString("F2") + ")");
+                    }
+                }
+            }
+            catch (TargetInvocationException ex) { pr.Req(false, "park slot function threw in Edit mode: " + (ex.InnerException != null ? ex.InnerException.Message : ex.Message)); }
+            finally { fState.SetValue(mgr, savedState); fDir.SetValue(mgr, savedDir); fDist.SetValue(mgr, savedDist); }
         }
     }
 }

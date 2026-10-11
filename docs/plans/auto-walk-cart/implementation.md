@@ -347,6 +347,12 @@ Runtime 実装で決めたこと (2026-10-12):
 - Probe 用 (副作用なし): `float ParkedStartDistance(int cart)`、`int ReclaimCandidate()`。
 - 配線: `KH_CartSeat.cartPanel` (KH_CartStationPanel)、`KH_CartStationPanel.cart` (int、乗り場 −1)、任意の `KH_CartStationPanel.content` (隠す中身の親。null なら直下の子すべて + パネルの Collider)。カート上メニューの結果表示は `carts[c].cartPanel` で引く。
 
+Codex M3 レビュー後 (2026-10-12):
+- 同期 `int[] cartParkDir` (駐車時の進行方向 ±1)。向きと右側はこれで決める (Late Joiner も同じ)。
+- 駐車枠 (`KH_CartManager.Park.cs`、副作用なし・Probe 用): `float ParkSlotDistance(float wantDist, int dir, int self)` (狭い区間の中なら進行方向側の端 + 3 m、同じ向きの Parked と 1.6 m 未満なら後ろへ 1.6 m ずつ最大 8 回) と `float ParkSlotLateral(float dist, int dir)` (class 0: 1.6 / class 1: 1.2、NavMesh 0.5 m 検査、外なら 0.3 m ずつ内側、下限 1.0)。旧 `parkOffset / parkOffsetNarrow` は使わない。
+- 停止・到着は、乗員を乗せたまま駐車距離へ speed で進み、横に寄せ切ってから外側 (右) へ降ろす。ワープ・合流の移動はすぐ降ろす。
+- 中間なしの再駐車は `cartParkedMs / cartParkDist` の変化で見分けて即時配置。Parked → 走行は、距離の差 1 m 超 (回収・合流) なら全員即時配置、その場からの再開は駐車姿勢から補間。
+
 ### Editor 2: カートステーション (impl-editor)
 
 - 乗り場 5 地点: 乗り場パネルの横に**静的なカート** (FBX のメッシュだけ: Body + 車軸、LODGroup 付き、Udon・Station・Collider なし、layer Default) を置く。向きは道の進行方向、位置は乗り場の着地点の右手 1.2 m。

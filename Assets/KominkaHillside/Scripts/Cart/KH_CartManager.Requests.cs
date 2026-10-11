@@ -158,7 +158,13 @@ namespace KominkaHillside
             _leaveCart = c; _leaveSentAt = Time.time; _leaveTries = 0;
             if (_fadeCart == c) { _fadeCart = -1; if (fade != null) fade._Release(); }
             Debug.Log("[KH_Cart] local-leave cart=" + c + " group=" + cartGroup[c] + " reason=" + reason + " seated=" + (_seatedCart == c));
-            if (exitStation && _seatedCart == c) UnboardCart(c);   // 降車の体感を Owner の往復で遅らせない
+            if (exitStation && _seatedCart == c)
+            {
+                // Codex M3 (2): 停止・到着は、カートが駐車枠 (狭い区間なら出口 + 3 m) へ着いて横に寄せ切ってから外側へ降ろす (PlaceParked)。
+                // ワープ・合流の移動 (travel) はすぐ降ろす (この後に暗転と TeleportTo が続く)
+                if (reason == "request" || reason == "arrive") { _deferExitCart = c; _deferExitUntil = Time.time + DeferExitMax; }
+                else UnboardCart(c);
+            }
             ApplyCore();   // 停止ボタンを先に消す
             SendLeave();
         }
@@ -303,6 +309,7 @@ namespace KominkaHillside
             cartSpot[c] = spot;
             cartParkDist[c] = 0f;
             cartParkedMs[c] = 0;
+            cartParkDir[c] = 0;
         }
 
         private void LogReclaim(int c)

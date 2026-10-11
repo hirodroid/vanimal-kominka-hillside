@@ -338,6 +338,7 @@ namespace KominkaHillside.Editor
             ProbeTrackArrivals(pr, mgr, so, want, route);
             ProbeTraffic(pr, mgr);
             ProbeParked(pr, mgr);   // M3
+            ProbeParkSlots(pr, mgr);   // M3 (Codex 後): 駐車枠
         }
 
         /// <summary>軌道の距離での開始・向き・残距離・到着 (Codex M1.1 レビュー 3)。期待値は保存済みの spotTrackDistance / destTrackDistance / trackLength から計算し、

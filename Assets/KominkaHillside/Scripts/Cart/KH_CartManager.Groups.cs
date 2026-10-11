@@ -158,8 +158,11 @@ namespace KominkaHillside
             if (ValidGroup(g)) SettleArrival(g, now);
             // M3: 降りた場所に残す (Parked)。置く距離は今の目標距離 (グループが無い不整合のときだけ Idle へ)
             bool canPark = ValidGroup(g) && groupState[g] != GroupFree && EnsureRoute();
-            float parkAt = canPark ? TargetDistance(c, now) : 0f;
+            int parkDir = canPark && groupDir[g] < 0 ? -1 : 1;
+            float stopAt = canPark ? TargetDistance(c, now) : 0f;
             ResetCart(c);
+            // Codex M3 (2): 駐車枠 (狭い区間は出口 + 3 m まで進む、他の Parked と 1.6 m 未満なら後ろへずらす)。ResetCart の後に決める (自分を数えない)
+            float parkAt = canPark ? ParkSlotDistance(stopAt, parkDir, c) : 0f;
             int freed = now == 0 ? 1 : now;   // 0 は「猶予なし」の印
             cartFreedMs[c] = freed;
             if (canPark)
@@ -167,7 +170,8 @@ namespace KominkaHillside
                 cartState[c] = CartParked;
                 cartParkDist[c] = parkAt;
                 cartParkedMs[c] = freed;
-                Debug.Log("[KH_Cart] park cart=" + c + " at=" + parkAt + " reason=" + reason);
+                cartParkDir[c] = parkDir;
+                Debug.Log("[KH_Cart] park cart=" + c + " at=" + parkAt + " stop=" + stopAt + " dir=" + parkDir + " reason=" + reason);
             }
             if (!ValidGroup(g) || groupState[g] == GroupFree)
             {
@@ -203,6 +207,7 @@ namespace KominkaHillside
             cartFwdSteps[c] = 0;
             cartParkDist[c] = 0f;   // M3 (Parked にするときは呼び元が書き直す)
             cartParkedMs[c] = 0;
+            cartParkDir[c] = 0;
         }
 
         private void FreeGroup(int g)

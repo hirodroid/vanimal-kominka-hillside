@@ -20,6 +20,13 @@ namespace KominkaHillside
     {
         private bool[] _shown, _parked, _snap;
         private bool[] _prevParked, _parkDone;   // M3: 前回の反映で Parked だったか / その場に寄せ終わったか
+        private float[] _parkLat;                // 駐車枠の横 (ParkSlotLateral の結果。駐車ごとに 1 回)
+        private bool[] _parkLatReady;
+        private int[] _seenParkMs;               // 最後に反映した cartParkedMs / cartParkDist (Codex M3 (3): 中間なしの再駐車を見分ける)
+        private float[] _seenParkDist;
+        private int _deferExitCart = -1;         // 乗員を乗せたまま駐車枠まで進み、着いたら降ろすカート
+        private float _deferExitUntil;
+        const float ParkLateralSpeed = 1.0f;     // m/s: 駐車枠への横寄せ (乗員を乗せていることがあるので走行の千鳥より速く・短く)
         private float[] _parkAt, _err, _dLast, _y, _vy, _pitch, _vp, _lat, _yT, _placedAt;
         private int[] _seg, _groundFrame;   // 前回の軌道の区間 (近傍からたどる) と、前回の接地のフレーム
         private Transform[] _cartT;
@@ -49,50 +56,51 @@ namespace KominkaHillside
             _gapSince = new float[MaxCarts]; _gapLogAt = new float[MaxCarts];
             for (int k = 0; k < MaxCarts; k++) _gapSince[k] = -1f;
             _prevParked = new bool[MaxCarts]; _parkDone = new bool[MaxCarts];
+            _parkLat = new float[MaxCarts]; _parkLatReady = new bool[MaxCarts];
+            _seenParkMs = new int[MaxCarts]; _seenParkDist = new float[MaxCarts];
             _cartT = new Transform[MaxCarts];
             for (int c = 0; carts != null && c < carts.Length && c < MaxCarts; c++)
                 if (carts[c] != null) _cartT[c] = carts[c].transform;
         }
 
-        /// <summary>M3: その場に残った (Parked) カートを、cartParkDist の軌道点から右へ parkOffset (class 2 の区間は parkOffsetNarrow) に置く。
-        /// 降りる人がまだ座っている間はその場に止め、離れてから右へ寄せる (LateralSpeed)。向きは止まったときの向きを保つ。寄せ終われば以後は書かない。</summary>
+        /// <summary>M3 (Codex M3 レビュー後): その場に残った (Parked) カートを駐車枠へ置く。距離は cartParkDist、向きと右側は cartParkDir (同期) で決め、
+        /// 横は ParkSlotLateral (class 0: 1.6 m / class 1: 1.2 m、NavMesh 外なら 0.3 m ずつ内側へ、下限 1.0 m。各クライアントが同じ式で計算)。
+        /// 表示距離 (_dLast) は駐車距離へ speed で進む (狭い区間の出口 + 3 m まで乗員を乗せたまま進む)。乗員が座っていれば横にも寄せ切ってから
+        /// 外側 (右) へ降ろす (_deferExitCart)。寄せ終われば以後は書かない。snap (初回・跳び) は即時配置。</summary>
         private void PlaceParked(int c, float dt)
         {
             if (_cartT == null || _cartT[c] == null || !EnsureRoute()) return;
             bool snap = _snap[c] || dt <= 0f;
-            if (!snap && (_parkDone[c] || _seatedCart == c)) return;
-            float err = snap ? 0f : Mathf.MoveTowards(_err[c], 0f, CatchUpSpeed * dt);
-            _err[c] = err;
-            float d = Wrap(cartParkDist[c] - err);
+            if (!snap && _parkDone[c]) return;
+            int dir = cartParkDir[c] < 0 ? -1 : 1;
+            float goal = cartParkDist[c];
+            if (!_parkLatReady[c]) { _parkLat[c] = ParkSlotLateral(goal, dir); _parkLatReady[c] = true; }
+            float d = snap ? goal : Wrap(_dLast[c] + Mathf.Clamp(WrapSigned(goal - _dLast[c]), -speed * dt, speed * dt));
+            bool reached = Mathf.Abs(WrapSigned(goal - d)) < 0.01f;
             Vector3 p, ahead;
-            bool narrow;
             if (_useTrack)
             {
                 int i = TrackSegNear(_seg[c], d);
                 _seg[c] = i;
                 p = SegPoint(i, d);
-                float xa = Wrap(d + lookAhead);
+                float xa = Wrap(d + dir * lookAhead);
                 ahead = SegPoint(TrackSegNear(i, xa), xa);
-                narrow = trackClass != null && i < trackClass.Length && trackClass[i] >= 2;
             }
             else
             {
                 p = route._PointAtDistance(d);
-                ahead = route._PointAtDistance(d + lookAhead);
-                narrow = !route._DetourAtDistance(d);
+                ahead = route._PointAtDistance(d + dir * lookAhead);
             }
             Vector3 fwd = ahead - p;
             float rise = fwd.y;
             fwd.y = 0f;
             float run = fwd.magnitude;
-            fwd = run > 0.01f ? fwd / run : Vector3.forward;
+            fwd = run > 0.01f ? fwd / run : (TrackDirection(d) * (float)dir);
             float slope = run > 0.01f ? rise / run : 0f;
-            // 止まったときの向き (今の車体の前) に合わせる。逆向きに走っていたなら前と右を反転
-            Vector3 cur = _cartT[c].forward; cur.y = 0f;
-            if (!snap && Vector3.Dot(cur, fwd) < 0f) { fwd = -fwd; slope = -slope; }
             Vector3 right = new Vector3(fwd.z, 0f, -fwd.x);
-            float latTarget = narrow ? parkOffsetNarrow : parkOffset;
-            float lat = snap ? latTarget : Mathf.MoveTowards(_lat[c], latTarget, LateralSpeed * dt);
+            // 横は駐車距離に着いてから寄せる (走っている間は今の横位置のまま)
+            float latTarget = reached ? _parkLat[c] : _lat[c];
+            float lat = snap ? _parkLat[c] : Mathf.MoveTowards(_lat[c], latTarget, ParkLateralSpeed * dt);
             _lat[c] = lat;
             Vector3 pos = p + right * lat;
             float prevY = snap ? p.y : _y[c];
@@ -113,7 +121,18 @@ namespace KominkaHillside
             _cartT[c].SetPositionAndRotation(pos, Quaternion.Euler(_pitch[c], Mathf.Atan2(fwd.x, fwd.z) * Mathf.Rad2Deg, 0f));
             _dLast[c] = d;
             _snap[c] = false;
-            _parkDone[c] = Mathf.Abs(lat - latTarget) < 0.001f && Mathf.Abs(err) < 0.001f && Mathf.Abs(_y[c] - y) < 0.005f && Mathf.Abs(_pitch[c] - pitch) < 0.05f;
+            bool settled = reached && Mathf.Abs(lat - _parkLat[c]) < 0.001f;
+            // 乗員を乗せたまま駐車枠へ着いた: 外側 (右) へ降ろす (Codex M3 (2)。降車位置は駐車枠の外側)
+            if (settled && _deferExitCart == c)
+            {
+                _deferExitCart = -1;
+                if (_seatedCart == c && carts != null && c < carts.Length && carts[c] != null)
+                {
+                    _unboardCart = c; _unboardAt = Time.time;
+                    carts[c]._UnboardOuter();
+                }
+            }
+            _parkDone[c] = settled && _deferExitCart != c && _seatedCart != c && Mathf.Abs(_y[c] - y) < 0.005f && Mathf.Abs(_pitch[c] - pitch) < 0.05f;
         }
 
         private void MotionTick()
