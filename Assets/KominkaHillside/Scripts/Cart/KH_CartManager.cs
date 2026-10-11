@@ -214,6 +214,22 @@ namespace KominkaHillside
             return f.sqrMagnitude < 0.0001f ? Vector3.zero : f.normalized;
         }
 
+        /// <summary>その人のカートの実効速度 (m/s)。同期値とサーバー時刻だけで決まる (全クライアントで同じ。表示の追いつき _err は含めない)。
+        /// 乗っていない・出発前の猶予・交通の待機点で止まっている・目的地に着いて止まっている → 0、それ以外 (合流直後も) → speed。</summary>
+        public float _CartSpeed(int playerId)
+        {
+            int c = RiderCart(playerId);
+            if (c < 0 || !EnsureRoute()) return 0f;
+            int g = cartGroup[c];
+            if (!ValidGroup(g) || groupState[g] == GroupFree) return 0f;
+            int now = Networking.GetServerTimeInMilliseconds();
+            float run = speed * Elapsed(g, now);
+            if (run <= 0f) return 0f;                       // 出発前の猶予
+            if (run >= HoldRemaining(g)) return 0f;         // 待機点で止まっている (後続も間隔を保って止まる)
+            if (IsDestRun(g) && run - cartOrder[c] * gap >= Remaining(g)) return 0f;   // 自分の車が目的地に着いた
+            return speed;
+        }
+
         const float DogAhead = 0.9f, DogSide = 0.45f;
         public int _GroupMasterPlayerId(int g)
         {
