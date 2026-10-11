@@ -1,0 +1,69 @@
+{
+  "checks": [
+    {
+      "design": "A / 里山の椅子",
+      "canvas": 517710,
+      "selected": true
+    },
+    {
+      "design": "B / こもれびポッド",
+      "canvas": 510238,
+      "selected": true
+    },
+    {
+      "design": "C / 山道のベンチ",
+      "canvas": 527286,
+      "selected": true
+    },
+    {
+      "color": "sand",
+      "selected": "true",
+      "note": true
+    },
+    {
+      "color": "clay",
+      "selected": "true",
+      "note": true
+    },
+    {
+      "color": "olive",
+      "selected": "true",
+      "note": true
+    },
+    {
+      "view": "front",
+      "pressed": "true"
+    },
+    {
+      "view": "side",
+      "pressed": "true"
+    },
+    {
+      "view": "back",
+      "pressed": "true"
+    },
+    {
+      "view": "top",
+      "pressed": "true"
+    },
+    {
+      "view": "angle",
+      "pressed": "true"
+    },
+    {
+      "feedback": true,
+      "overflow": false
+    },
+    {
+      "download": true
+    },
+    {
+      "formation": "すれ違い等で一時的に一列へ。短時間の会話・視認性の低下は許容する方針です。"
+    },
+    {
+      "mobileOverflow": false,
+      "width": 390
+    }
+  ],
+  "errors": []
+}

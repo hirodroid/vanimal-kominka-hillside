@@ -16,6 +16,11 @@
 /[Uu]ser[Ss]ettings/
 *.log
 
+# HTML レビューのブラウザ作業領域と動作確認用のダミー回答
+/artifacts/cart-design-review/chrome-profile/
+/artifacts/cart-design-review/osanpo-cart-design-v01-review.txt
+/artifacts/frisbee-model-review/2026-10-11/chrome-profile/
+
 # Blender の *.blend1 はバージョン管理に入れない
 *.blend1
 *.blend1.meta

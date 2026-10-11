@@ -1,0 +1,20 @@
+{
+  "initial": {
+    "title": "フリスビーのモデル改善案 | 古民家の裏山",
+    "canvases": 5,
+    "overflow": false,
+    "body": false
+  },
+  "interaction": {
+    "variant": "B · ふっくらソフトリム",
+    "tilt": "-65",
+    "dog": "Samoyed"
+  },
+  "note": true,
+  "mobile": {
+    "width": 390,
+    "scroll": 390,
+    "canvas": 348
+  },
+  "errors": []
+}
