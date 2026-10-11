@@ -22,7 +22,7 @@ public static partial class KH_WashSelectionEditor
     static readonly string[] Names={"FoamCannon","DuckWaterGun","FishWaterGun","BambooWaterGun","FlowerShower","RainShower","WateringCan","Dryer","PatternTowel","PawMitt","LargeSponge","GroomingBrush","Cologne","HinokiBath","StoneBath","TileBath","FloatingDuck","WaterPistol","Hose","PoolBath"};
     // Slots by item id for the tools (-1 = a platform; read only for tools)
     static readonly int[] Groups={0,1,1,1,1,1,1,2,2,0,0,2,2,3,3,3,3,1,1,3}, Slots={0,2,2,2,2,2,2,4,3,1,1,5,6,-1,-1,-1,-1,2,2};
-    public const int WaterPistolId=17, HoseId=18, PoolBathId=19;
+    public const int WateringCanId=6, WaterPistolId=17, HoseId=18, PoolBathId=19;
     static readonly Color Paper=new Color32(247,244,236,255), Forest=new Color32(54,78,60,255), Ink=new Color32(34,44,36,255), Gold=new Color32(184,137,69,255);
     [Serializable] public class WordsFile {public Lang[] languages;}
     [Serializable] public class Lang {public string code;public string[] words;}

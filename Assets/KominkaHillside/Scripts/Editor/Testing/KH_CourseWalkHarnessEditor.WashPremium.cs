@@ -7,7 +7,7 @@ namespace KominkaHillside.Editor {public static partial class KH_CourseWalkHarne
  // IMP-DOG-049 / 044 (2026-10-11): + 17 water pistol, 18 hose (water slot 2 with the can), 19 pool (platform). The cases below still use the
  // six ids; the hold-to-spray / one-shot inputs are not covered here yet (KH_WashSelectionEditor 44 checks the slot configuration).
  const int PFoamCannon=0,PPawMitt=9,PWateringCan=6,PDryer=7,PTowel=8,PHinoki=13,PWaterPistol=17,PHose=18,PPool=19;
- static UdonBehaviour premiumSelection,premiumWater;static Transform premiumBoard;static UdonBehaviour[] premiumTools;static int premiumSerial;static bool premiumReceived;
+ static UdonBehaviour premiumSelection,premiumWater;static Quaternion premiumCanRest;static Transform premiumBoard;static UdonBehaviour[] premiumTools;static int premiumSerial;static bool premiumReceived;
  static void PremiumBind(){var st=GameObject.Find("KH_WashStation").transform;premiumSelection=st.Find("PremiumTools").GetComponent<UdonBehaviour>();premiumBoard=st.Find("PremiumSelectionBoard");premiumTools=st.Find("PremiumTools").GetComponentsInChildren<UdonBehaviour>(true).Where(u=>u.programSource!=null&&u.programSource.name=="KH_WashTool").ToArray();hwSyms.Clear();hwParams.Clear();
   WsExpect(KH_WashSelectionEditor.Order.SequenceEqual(new[]{PFoamCannon,PPawMitt,PWateringCan,PWaterPistol,PHose,PDryer,PTowel,PHinoki,PPool}),"harness item ids = catalog Order ["+string.Join(",",KH_WashSelectionEditor.Order)+"]");
   var cats=Get<int[]>(premiumSelection,"itemCategories");WsExpect(cats.Length>PPool&&cats[PFoamCannon]==0&&cats[PPawMitt]==0&&cats[PWateringCan]==1&&cats[PDryer]==2&&cats[PTowel]==2&&cats[PHinoki]==KH_WashSelection.CategoryBath&&cats[PWaterPistol]==1&&cats[PHose]==1&&cats[PPool]==KH_WashSelection.CategoryBath,"scene itemCategories match the catalog (WashPremium/49 applied): ["+string.Join(",",cats)+"]");
@@ -39,17 +39,26 @@ namespace KominkaHillside.Editor {public static partial class KH_CourseWalkHarne
  static void MakeWashPremiumCases(){wsReport.notCovered.Add("Premium (IMP-DOG-046/047: foam / water / finish + platform): UI persistent listeners and local Owner request/ack exercised; holding is injected with debugHeldOverride, Pickup/Use events are injected. Physical grip, a tool held on another client (two-client network), late join with three tools out, sound quality and Quest rendering remain NOT_TESTED. The water pistol (one shot) and the hose (hold to spray) are offered since IMP-DOG-049 but their inputs are not exercised by these cases yet.");
  if(WsGroup("premium")||WsGroup("premium-input"))PremiumInputCases();if(WsGroup("premium")||WsGroup("premium-other"))PremiumOtherCases();if(WsGroup("premium")||WsGroup("premium-other")||WsGroup("premium-free"))PremiumFreeCases();}
  static void PremiumInputCases(){
-  // Was P-selection-pulse-toggle (water gun 0.22 s pulse, then the same slot as a shower). Since IMP-DOG-047 the water category offers only the
-  // watering can (a toggle): the pulse check returns with IMP-DOG-049's water gun (slot 2, same slot as the can). The same-slot reconfigure is
-  // replaced by the foam swap (cannon slot 0 -> mitt slot 1, the water slot untouched), then Q1 (one tool per category out at once).
-  var s=WsCase("P-selection-water-toggle",60);s.Add(WsDo(PremiumBind));s.Add(WsUntil(PremiumNear,3,()=>"tester within the selector's 6 m"));s.Add(WsDo(()=>PremiumTake(PWateringCan)));s.Add(PremiumAck("watering can"));
+  // Was P-selection-pulse-toggle (water gun 0.22 s pulse), then P-selection-water-toggle (the can as a toggle). IMP-DOG-049 (2026-10-11): the can
+  // tilts to pour (KH_WashTool.PulseTilt). ClientSim is Desktop: Use held leans the can's model (eased over DesktopTiltSeconds) and it pours
+  // from TiltStartDegrees; Use up eases it back and stops below TiltStopDegrees; drop stops at once and snaps the model upright. The VR hand
+  // tilt is not reachable here (WashPremium/44 runs MeasuredTilt on a turned pickup in Edit mode). The foam swap and Q1 follow as before.
+  var s=WsCase("P-selection-water-tilt",60);s.Add(WsDo(PremiumBind));s.Add(WsUntil(PremiumNear,3,()=>"tester within the selector's 6 m"));s.Add(WsDo(()=>PremiumTake(PWateringCan)));s.Add(PremiumAck("watering can"));
   s.Add(WsDo(()=>{WsExpect(PremiumCode()==KH_WashSelection.ResultApplied&&PremiumSel("selectedWater")==PWateringCan&&PremiumShown()[1]==PWateringCan&&PremiumPickupable(PWateringCan),"watering can via UI, local owner replied success ("+PremiumState()+")");
-   WsExpect(Get<float>(premiumWater,"pulseSeconds")==0f,"water slot is a toggle for the can (pulseSeconds "+Get<float>(premiumWater,"pulseSeconds")+")");WsExpect(WsRef(premiumWater,"nozzle") as Transform==(WsRef(premiumSelection,"nozzleAnchors") as Array).GetValue(PWateringCan) as Transform,"water slot configured with the can's nozzle");
-   premiumWater.SendCustomEvent("_onPickup");premiumWater.SendCustomEvent("_onPickupUseDown");premiumWater.SendCustomEvent("_onPickupUseUp");WsExpect(Get<bool>(premiumWater,"_sprayOn"),"first Use starts the can");}));
+   WsExpect(Get<float>(premiumWater,"pulseSeconds")==KH_WashTool.PulseTilt,"water slot tilts to pour for the can (pulseSeconds "+Get<float>(premiumWater,"pulseSeconds")+")");WsExpect(WsRef(premiumWater,"nozzle") as Transform==(WsRef(premiumSelection,"nozzleAnchors") as Array).GetValue(PWateringCan) as Transform,"water slot configured with the can's nozzle");
+   premiumCanRest=PremiumModel(PWateringCan).transform.localRotation;
+   premiumWater.SendCustomEvent("_onPickup");premiumWater.SendCustomEvent("_onPickupUseDown");WsExpect(!Get<bool>(premiumWater,"_sprayOn"),"Use down does not switch the can on by itself (no toggle)");}));
+  s.Add(WsWait(.5));   // past DesktopTiltSeconds (0.3 s)
+  s.Add(WsDo(()=>{float a=Get<float>(premiumWater,"_tiltAngle");float lean=Quaternion.Angle(PremiumModel(PWateringCan).transform.localRotation,premiumCanRest);
+   WsExpect(Get<bool>(premiumWater,"_sprayOn")&&Get<bool>(WsRef(premiumWater,"state") as UdonBehaviour,"spraying")&&a>=KH_WashTool.TiltStartDegrees&&lean>=KH_WashTool.TiltStartDegrees,"Use held: the can leans (tilt "+a.ToString("F1")+" deg, model "+lean.ToString("F1")+" deg) and pours");
+   premiumWater.SendCustomEvent("_onPickupUseUp");}));
   s.Add(WsWait(.5));
-  s.Add(WsDo(()=>{WsExpect(Get<bool>(premiumWater,"_sprayOn")&&Get<bool>(WsRef(premiumWater,"state") as UdonBehaviour,"spraying"),"can stays on after release and past the old 0.22 s pulse");premiumWater.SendCustomEvent("_onPickupUseDown");WsExpect(!Get<bool>(premiumWater,"_sprayOn")&&!Get<bool>(WsRef(premiumWater,"state") as UdonBehaviour,"spraying"),"second Use stops the can");}));
-  s.Add(WsWait(.3));   // past toggleGuardSeconds (0.15): a quicker third Use is ignored as a double tap
-  s.Add(WsDo(()=>{premiumWater.SendCustomEvent("_onPickupUseDown");WsExpect(Get<bool>(premiumWater,"_sprayOn"),"third Use starts it again");premiumWater.SendCustomEvent("_onDrop");WsExpect(!Get<bool>(premiumWater,"_sprayOn"),"drop stops the can");}));
+  s.Add(WsDo(()=>{float lean=Quaternion.Angle(PremiumModel(PWateringCan).transform.localRotation,premiumCanRest);
+   WsExpect(!Get<bool>(premiumWater,"_sprayOn")&&!Get<bool>(WsRef(premiumWater,"state") as UdonBehaviour,"spraying")&&lean<.01f,"Use up: the can eases back upright (model "+lean.ToString("F2")+" deg) and stops");
+   premiumWater.SendCustomEvent("_onPickupUseDown");}));
+  s.Add(WsWait(.5));
+  s.Add(WsDo(()=>{WsExpect(Get<bool>(premiumWater,"_sprayOn"),"Use held again pours again");premiumWater.SendCustomEvent("_onDrop");float lean=Quaternion.Angle(PremiumModel(PWateringCan).transform.localRotation,premiumCanRest);
+   WsExpect(!Get<bool>(premiumWater,"_sprayOn")&&!Get<bool>(WsRef(premiumWater,"state") as UdonBehaviour,"spraying")&&lean<.01f,"drop stops the can at once and snaps it upright (model "+lean.ToString("F2")+" deg)");}));
   s.Add(WsWait(PremiumGap));s.Add(WsDo(()=>PremiumTake(PFoamCannon)));s.Add(PremiumAck("foam cannon"));
   s.Add(WsDo(()=>{WsExpect(PremiumCode()==KH_WashSelection.ResultApplied&&PremiumSel("selectedFoam")==PFoamCannon&&PremiumShown()[0]==PFoamCannon&&PremiumPickupable(PFoamCannon)&&!PremiumPickupable(PPawMitt),"foam cannon out on its slot ("+PremiumState()+")");}));
   s.Add(WsWait(PremiumGap));s.Add(WsDo(()=>PremiumTake(PPawMitt)));s.Add(PremiumAck("paw mitt"));
@@ -58,7 +67,7 @@ namespace KominkaHillside.Editor {public static partial class KH_CourseWalkHarne
    WsExpect(PremiumSel("selectedWater")==PWateringCan&&PremiumShown()[1]==PWateringCan&&slotItem[slots[PWateringCan]]==PWateringCan&&PremiumPickupable(PWateringCan),"water stays out through the foam swap");}));
   s.Add(WsWait(PremiumGap));s.Add(WsDo(()=>PremiumTake(PDryer)));s.Add(PremiumAck("dryer"));
   s.Add(WsDo(()=>{var sh=PremiumShown();WsExpect(PremiumCode()==KH_WashSelection.ResultApplied&&sh[0]==PPawMitt&&sh[1]==PWateringCan&&sh[2]==PDryer&&PremiumPickupable(PPawMitt)&&PremiumPickupable(PWateringCan)&&PremiumPickupable(PDryer),"Q1 foam + water + finish out at once ("+PremiumState()+")");
-   WsNote("UI local owner request/ack per category; watering can toggle on the water slot (no pulse item until IMP-DOG-049); foam swap reconfigures slots 0/1 only; Q1 three out; simulated pickup/Use/drop events");}));
+   WsNote("UI local owner request/ack per category; watering can tilt-to-pour on the water slot (Desktop lean; the VR hand tilt is not reachable in ClientSim); foam swap reconfigures slots 0/1 only; Q1 three out; simulated pickup/Use/drop events");}));
  }
  static void PremiumOtherCases(){
   // Same intent as before (the held model waits during a later race, the first received state restores even when held), on foam: the water

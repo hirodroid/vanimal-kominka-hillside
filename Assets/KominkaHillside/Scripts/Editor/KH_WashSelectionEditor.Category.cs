@@ -33,6 +33,10 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
  // hose 2.5 m, water pistol 4 m (provisional, Play).
  public const float HoseRange=2.5f,WaterPistolRange=4f;
  static float SprayRange(int id){return id==7?.8f:id==HoseId?HoseRange:id==WaterPistolId?WaterPistolRange:1.5f;}
+ // the input per item (KH_WashTool.pulseSeconds): owned here and written by 48 / 49 on every run (before 2026-10-11 48 kept the scene value).
+ // The old water guns 1..3 (.22 s) and the cologne (.35 s) are not offered; the can tilts to pour (IMP-DOG-049, 2026-10-11: was the toggle 0),
+ // the pistol shoots one shot per WaterPistolShot, the hose sprays while held.
+ static float PulseSeconds(int id){return id==WateringCanId?KH_WashTool.PulseTilt:id==HoseId?KH_WashTool.PulseHold:id==WaterPistolId?WaterPistolShot:id>=1&&id<=3?.22f:id==12?.35f:0f;}
  static T At<T>(T[] a,int i){return a!=null&&i>=0&&i<a.Length?a[i]:default(T);}
  static string PathOf(Transform t){return t.parent==null?t.name:PathOf(t.parent)+"/"+t.name;}
  /// <summary>Index of the dropped item whose prefab this scene object instantiates (-1 = none).</summary>
@@ -86,7 +90,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
    cats[i]=CategoryOf(i);depths[i]=BathDepth(i);bool tool=cats[i]>=0&&cats[i]<KH_WashSelection.Categories;slotOf[i]=tool?Slots[i]:-1;
    if(cats[i]>=0&&models[i]==null)throw new Exception(label+": offered item "+Names[i]+" has no model");
    if(!tool)continue;
-   noz[i]=At(sel.nozzleAnchors,i);grip[i]=At(sel.gripAnchors,i);{var tb=TightBounds(models[i],sel.slots[Slots[i]].transform);var oc=At(sel.colliderCenters,i);var os=At(sel.colliderSizes,i);centers[i]=tb.center;sizes[i]=Vector3.Max(tb.size,new Vector3(.03f,.03f,.03f));if((os-sizes[i]).sqrMagnitude>1e-8f||(oc-centers[i]).sqrMagnitude>1e-8f)log.AppendLine("  collider "+label+" "+Names[i]+" size "+os.ToString("F3")+" -> "+sizes[i].ToString("F3")+" centre "+oc.ToString("F3")+" -> "+centers[i].ToString("F3"));}pulses[i]=At(sel.pulseDurations,i);ranges[i]=SprayRange(i);gun[i]=At(sel.gunHolds,i);sprays[i]=At(sel.itemSprays,i);sounds[i]=At(sel.itemSounds,i);
+   noz[i]=At(sel.nozzleAnchors,i);grip[i]=At(sel.gripAnchors,i);{var tb=TightBounds(models[i],sel.slots[Slots[i]].transform);var oc=At(sel.colliderCenters,i);var os=At(sel.colliderSizes,i);centers[i]=tb.center;sizes[i]=Vector3.Max(tb.size,new Vector3(.03f,.03f,.03f));if((os-sizes[i]).sqrMagnitude>1e-8f||(oc-centers[i]).sqrMagnitude>1e-8f)log.AppendLine("  collider "+label+" "+Names[i]+" size "+os.ToString("F3")+" -> "+sizes[i].ToString("F3")+" centre "+oc.ToString("F3")+" -> "+centers[i].ToString("F3"));}{float op=At(sel.pulseDurations,i);pulses[i]=PulseSeconds(i);if(op!=pulses[i])log.AppendLine("  pulse "+label+" "+Names[i]+" "+op+" -> "+pulses[i]);}ranges[i]=SprayRange(i);gun[i]=At(sel.gunHolds,i);sprays[i]=At(sel.itemSprays,i);sounds[i]=At(sel.itemSounds,i);
    if(noz[i]==null||grip[i]==null||!noz[i].IsChildOf(models[i].transform)||sizes[i].x<=.02f)throw new Exception(label+": "+Names[i]+" anchors / collider not built (run 42's data first)");
    // a Gun hold written for a kept item (GunHolds below: FoamCannon, WaterPistol, Hose) survives a re-run
    if(gun[i]!=null&&!gun[i].IsChildOf(models[i].transform)){log.AppendLine("  dropped gunHolds["+i+"] "+gun[i].name+" (not under "+Names[i]+")");gun[i]=null;}
@@ -212,7 +216,9 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   // IMP-DOG-049: non-null exactly for the Gun items (FoamCannon its own child, WaterPistol / Hose their FBX *_GunHold), the same as the proxy
   check(back.publicVariables.TryGetVariableValue("gunHolds",out v)&&v is Transform[] bg&&bg.Length==n&&Enumerable.Range(0,n).All(i=>GunItems.Contains(i)&&Offered(i)?bg[i]!=null&&bg[i]==sel.gunHolds[i]&&bg[i].name==GunHoldName(i):bg[i]==null),"saved backing gunHolds: "+string.Join(", ",GunItems.Select(i=>Names[i]+" "+GunHoldName(i)))+", others Grip "+st);
   check(back.publicVariables.TryGetVariableValue("sprayRanges",out v)&&v is float[] br&&sel.sprayRanges!=null&&br.SequenceEqual(sel.sprayRanges),"saved backing sprayRanges "+st);
-  check(back.publicVariables.TryGetVariableValue("pulseDurations",out v)&&v is float[] bp&&bp.SequenceEqual(sel.pulseDurations)&&Mathf.Abs(bp[WaterPistolId]-WaterPistolShot)<1e-6f&&bp[HoseId]==KH_WashTool.PulseHold&&bp[6]==0f,"saved backing pulseDurations: can toggle 0, pistol shot "+WaterPistolShot.ToString("F2")+" s, hose hold "+KH_WashTool.PulseHold+" "+st);
+  // IMP-DOG-049 (2026-10-11): the can was the toggle (0) until the tilt-to-pour input; it is KH_WashTool.PulseTilt now (the only change). Every
+  // offered tool must equal the code table (48 / 49 write it), so a scene that still carries the toggle fails here until 49 (or 48) runs.
+  check(back.publicVariables.TryGetVariableValue("pulseDurations",out v)&&v is float[] bp&&bp.SequenceEqual(sel.pulseDurations)&&Mathf.Abs(bp[WaterPistolId]-WaterPistolShot)<1e-6f&&bp[HoseId]==KH_WashTool.PulseHold&&bp[WateringCanId]==KH_WashTool.PulseTilt&&Order.All(i=>bp[i]==PulseSeconds(i)),"saved backing pulseDurations: can tilt "+KH_WashTool.PulseTilt+" (was toggle 0), pistol shot "+WaterPistolShot.ToString("F2")+" s, hose hold "+KH_WashTool.PulseHold+", every offered item = PulseSeconds "+st+" (actual can "+(sel.pulseDurations!=null&&sel.pulseDurations.Length>WateringCanId?sel.pulseDurations[WateringCanId].ToString():"-")+")");
   foreach(var f in new[]{"selectedFoam","selectedWater","selectedFinish","selectedBath"}){int pv=(int)typeof(KH_WashSelection).GetField(f).GetValue(sel);bool ok=back.publicVariables.TryGetVariableValue(f,out v)&&v is int bv&&bv==pv;log.AppendLine("value "+st+" "+f+"="+pv+" backing="+(v??"missing"));check(ok,"saved backing "+f+" == proxy "+st);}
   log.AppendLine("value "+st+" stale backing selectedTool (the removed 1-selection field; not in the program, unused): "+(back.publicVariables.TryGetVariableValue("selectedTool",out v)?"present":"absent"));
   // the free platform: slats stay hidden under the imported platform, never listed as the free table
@@ -243,6 +249,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
    foreach(int item in new[]{WaterPistolId,HoseId,6}){int code=sel._Decide(item,sel.revision);sel.revision++;sel._Apply(false);var pu=sel.pickups[Slots[item]];var t=sel.slots[Slots[item]];bool gun=sel.gunHolds[item]!=null;
     check(code==0&&sel.selectedWater==item&&sel.models[item].activeSelf&&pu.pickupable&&t.nozzle==sel.nozzleAnchors[item]&&t.spray==sel.itemSprays[item]&&t.pulseSeconds==sel.pulseDurations[item]&&Mathf.Abs(t.sprayRange-sel.sprayRanges[item])<1e-6f&&pu.orientation==(gun?VRC_Pickup.PickupOrientation.Gun:VRC_Pickup.PickupOrientation.Grip)&&(gun?pu.ExactGun==sel.gunHolds[item]:pu.ExactGrip==sel.gripAnchors[item])&&sel.selectedFoam==0&&sel.selectedFinish==7,
      "water swap -> "+Names[item]+": slot"+Slots[item]+" "+pu.orientation+", pulse "+t.pulseSeconds+", range "+t.sprayRange+" m, foam / finish stay ("+state()+")");}
+   VerifyCanTilt(sel,check,log);   // IMP-DOG-049: the can is out on the water slot now (the loop ends on it): its tilt-to-pour bodies (Water.cs)
    // swap inside one category leaves the others
    int c9=sel._Decide(9,sel.revision);sel.revision++;sel._Apply(false);check(c9==0&&sel.selectedFoam==9&&sel.selectedWater==6&&sel.selectedFinish==7&&sel.pickups[1].pickupable&&!sel.pickups[0].pickupable&&sel.pickups[2].pickupable,"foam swap to PawMitt leaves water / finish ("+state()+")");
    // Q3: the water slot held -> water requests refused, the platform and the other categories accepted

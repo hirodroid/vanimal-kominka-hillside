@@ -1,4 +1,4 @@
-using System;using System.IO;using System.Linq;using System.Text;using System.Collections.Generic;using UnityEngine;using UnityEditor;using UnityEditor.SceneManagement;using UdonSharpEditor;using VRC.SDKBase;
+using System;using System.IO;using System.Linq;using System.Text;using System.Reflection;using System.Collections.Generic;using UnityEngine;using UnityEditor;using UnityEditor.SceneManagement;using UdonSharpEditor;using VRC.SDKBase;
 namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEditor{
  // IMP-DOG-049 / IMP-DOG-044 stage A (2026-10-11): the three 0.4.0 items into the four existing stations. WashPremium/12 imports them,
  // 49 places them (the scene parts 48 does not make: IMP-DOG-047 step 3) and then runs the 48 body (ConfigureStation + ConfigureBoard),
@@ -78,7 +78,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
    else {go.transform.localPosition=Vector3.zero;var tb=TightBounds(go,parent);go.transform.localPosition=Vector3.up*Mathf.Max(0f,-tb.min.y);}   // stands on its lowest point (the grip), as 42 lifted the tools
    EditorUtility.SetDirty(go.transform);
    var noz=Anchor(go,"NozzleAnchor");var grip=Anchor(go,"GripAnchor");if(noz==null||grip==null||FbxGunHold(sel,id)==null)throw new Exception(label+": "+Names[id]+" anchors missing (NozzleAnchor / GripAnchor / GunHold)");
-   sel.nozzleAnchors[id]=noz;sel.gripAnchors[id]=grip;sel.pulseDurations[id]=id==HoseId?KH_WashTool.PulseHold:WaterPistolShot;sel.itemSounds[id]=Clip("WaterJet");
+   sel.nozzleAnchors[id]=noz;sel.gripAnchors[id]=grip;sel.pulseDurations[id]=PulseSeconds(id);sel.itemSounds[id]=Clip("WaterJet");
    if(sel.itemSounds[id]==null)throw new Exception("Missing "+Data+"Audio/WaterJet.wav");
    sel.itemSprays[id]=WaterSpray(noz,id==WaterPistolId,sel);
    log.AppendLine("  "+label+" "+Names[id]+" in "+PathOf(parent)+" at "+go.transform.localPosition.ToString("F3")+" pulse="+sel.pulseDurations[id]+" range="+SprayRange(id)+" spray="+PathOf(sel.itemSprays[id].transform)+" triggers="+sel.itemSprays[id].trigger.colliderCount);
@@ -187,5 +187,60 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   bool queues=window!=null&&water!=null&&window.sharedMaterial!=null&&water.sharedMaterial!=null&&window.sharedMaterial.name=="PremiumWash_Window"&&water.sharedMaterial.name=="PremiumWash_Water"&&mist!=null&&spray!=null
    &&window.sharedMaterial.renderQueue<mist.renderQueue&&water.sharedMaterial.renderQueue<mist.renderQueue&&water.sharedMaterial.renderQueue<spray.renderQueue&&water.sharedMaterial.renderQueue<3010;
   check(queues,"transparent queues "+st+": PremiumWash_Water "+(water==null||water.sharedMaterial==null?"-":water.sharedMaterial.renderQueue.ToString())+" / PremiumWash_Window "+(window==null||window.sharedMaterial==null?"-":window.sharedMaterial.renderQueue.ToString())+" < WashMist "+(mist==null?"-":mist.renderQueue.ToString())+" / KH_WashParticle_Spray "+(spray==null?"-":spray.renderQueue.ToString())+" < wet shell 3010 (the sort itself: Play)");
+ }
+ // ---- 44: the watering can's tilt-to-pour (IMP-DOG-049, 2026-10-11) ----
+ static bool SameExact(Vector3 a,Vector3 b){return a.x==b.x&&a.y==b.y&&a.z==b.z;}
+ static bool SameExact(Quaternion a,Quaternion b){return a.x==b.x&&a.y==b.y&&a.z==b.z&&a.w==b.w;}
+ /// <summary>Edit mode, on the proxy, while VerifyCategoryLogic has the can out on the water slot: runs the runtime's own bodies
+ /// (KH_WashTool MeasuredTilt / ShowModelTilt / RestModel / FlowFraction, by reflection) and prints the actual values: the thresholds,
+ /// the can's spout at rest (an upright can measures 0 although its rose points below the horizon), the VR measure of the pickup leaned
+ /// by known angles (the pickup root turned about the world axis and put back), the Desktop lean of the model about its grip (the spout
+ /// goes down, the grip stays) and its exact restore. Every transform it turns is put back in finally; nothing is marked dirty.</summary>
+ static void VerifyCanTilt(KH_WashSelection sel,Action<bool,string> check,StringBuilder log)
+ {
+  string st=sel.transform.parent.name;var t=sel.slots[Slots[WateringCanId]];var model=sel.models[WateringCanId].transform;var noz=sel.nozzleAnchors[WateringCanId];var grip=sel.gripAnchors[WateringCanId];
+  const BindingFlags bf=BindingFlags.Instance|BindingFlags.NonPublic;
+  Func<string,object[],object> call=(name,args)=>{var mi=typeof(KH_WashTool).GetMethod(name,bf);if(mi==null)throw new Exception("KH_WashTool."+name+" not found (the tilt bodies)");return mi.Invoke(t,args);};
+  float start=KH_WashTool.TiltStartDegrees,stop=KH_WashTool.TiltStopDegrees,max=KH_WashTool.TiltMaxDegrees,desk=KH_WashTool.DesktopTiltDegrees;
+  check(t.pulseSeconds==KH_WashTool.PulseTilt&&t.nozzle==noz&&sel.gunHolds[WateringCanId]==null&&sel.pickups[Slots[WateringCanId]].orientation==VRC_Pickup.PickupOrientation.Grip,
+   "WateringCan on slot"+Slots[WateringCanId]+" "+st+": tilt to pour (pulse "+t.pulseSeconds+" = KH_WashTool.PulseTilt), Grip, its own nozzle");
+  // a press never switches the can on by itself (no toggle): it only marks Use held (Desktop / Touch lean; ignored in VR), the frame pours
+  Func<string,bool> flag=name=>(bool)typeof(KH_WashTool).GetField(name,bf).GetValue(t);
+  bool lpOk;try{var lp0=Networking.LocalPlayer;lpOk=true;}catch(Exception){lpOk=false;}
+  if(!lpOk)log.AppendLine("NOT_TESTED WateringCan Use press in Edit mode "+st+": Networking.LocalPlayer throws outside Play (the harness P-selection-water-tilt covers the press)");
+  else try{t.OnPickupUseDown();bool downOn=flag("_sprayOn"),downHeld=flag("_useHeld");t.OnPickupUseUp();bool upHeld=flag("_useHeld");
+   check(!downOn&&downHeld&&!upHeld&&!flag("_sprayOn"),"WateringCan Use press does not toggle "+st+" (after Use down: spray "+downOn+", Use held "+downHeld+" (Edit mode = not VR: the Desktop lean); after Use up: held "+upHeld+")");}
+  catch(Exception e){check(false,"WateringCan Use press in Edit mode threw "+(e.InnerException??e).GetType().Name+": "+(e.InnerException??e).Message+" "+st);}
+  float flowStart=(float)call("FlowFraction",new object[]{start}),flowMid=(float)call("FlowFraction",new object[]{(start+max)*.5f}),flowMax=(float)call("FlowFraction",new object[]{max});
+  check(0f<stop&&stop<start&&start<max&&max<=desk&&KH_WashTool.DesktopTiltSeconds>0f&&Mathf.Abs(flowStart-KH_WashTool.TiltMinFlow)<1e-5f&&Mathf.Abs(flowMax-1f)<1e-5f&&flowStart<flowMid&&flowMid<flowMax,
+   "WateringCan tilt thresholds (KH_WashTool, plan 2026-10-11 §3.2, provisional): pours from "+start+" deg, stops below "+stop+" deg, full flow at "+max+" deg; flow "+flowStart.ToString("F2")+" / "+flowMid.ToString("F2")+" / "+flowMax.ToString("F2")+" x the item's rate at "+start+" / "+((start+max)*.5f)+" / "+max+" deg; Desktop / Touch leans the model to "+desk+" deg in "+KH_WashTool.DesktopTiltSeconds+" s while Use is held");
+  float restPitch=Mathf.Asin(Mathf.Clamp(noz.forward.y,-1f,1f))*Mathf.Rad2Deg;float rest=(float)call("MeasuredTilt",null);
+  check(Mathf.Abs(rest)<.5f,"WateringCan upright measures "+rest.ToString("F2")+" deg (its rose points "+restPitch.ToString("F1")+" deg from the horizon at rest, so the spout's own pitch is not the measure) "+st);
+  var root=t.transform;var rp=root.localPosition;var rr=root.localRotation;var mp=model.localPosition;var mr=model.localRotation;
+  var heading=Vector3.ProjectOnPlane(noz.forward,Vector3.up).normalized;var axis=Vector3.Cross(Vector3.up,heading);
+  try
+  {
+   // VR: the pickup leaned toward the spout (about the world axis across the spout) by known angles, and 45 deg sideways (about the heading)
+   var sb=new StringBuilder();bool ok=true;
+   foreach(float a in new[]{stop,start,45f,max,120f})/* 120: past 90 must not fold back (Codex 2026-10-11) */
+   {
+    root.localRotation=rr;root.rotation=Quaternion.AngleAxis(a,axis)*root.rotation;float m=(float)call("MeasuredTilt",null);ok&=Mathf.Abs(m-a)<.5f;sb.Append(" "+a.ToString("F0")+" -> "+m.ToString("F2")+";");
+   }
+   root.localRotation=rr;root.rotation=Quaternion.AngleAxis(45f,heading)*root.rotation;float side=(float)call("MeasuredTilt",null);
+   root.localRotation=rr;root.localPosition=rp;
+   check(ok&&Mathf.Abs(side)<.5f,"WateringCan VR measure = the pickup's lean toward the spout "+st+" (lean deg -> measured:"+sb+" 45 deg sideways -> "+side.ToString("F2")+")");
+   // Desktop / Touch: the model leans by the max about its grip
+   Vector3 g0=grip.position,n0=noz.position,f0=noz.forward;
+   call("ShowModelTilt",new object[]{max});
+   Vector3 g1=grip.position,n1=noz.position,f1=noz.forward;bool leaned=!SameExact(model.localRotation,mr);
+   float turned=Vector3.Angle(f0,f1),pitch1=Mathf.Asin(Mathf.Clamp(f1.y,-1f,1f))*Mathf.Rad2Deg,gripMoved=(g1-g0).magnitude;
+   call("RestModel",null);
+   bool back=SameExact(model.localPosition,mp)&&SameExact(model.localRotation,mr);float dq=Mathf.Max(Mathf.Abs(model.localRotation.x-mr.x),Mathf.Abs(model.localRotation.y-mr.y),Mathf.Abs(model.localRotation.z-mr.z),Mathf.Abs(model.localRotation.w-mr.w));
+   check(leaned&&Mathf.Abs(turned-max)<.5f&&f1.y<f0.y&&n1.y<n0.y&&gripMoved<.001f,
+    "WateringCan Desktop lean "+max+" deg about the grip "+st+": spout turned "+turned.ToString("F2")+" deg, pitch "+restPitch.ToString("F1")+" -> "+pitch1.ToString("F1")+" deg, rose "+((n0.y-n1.y)*100f).ToString("F1")+" cm lower, grip moved "+(gripMoved*1000f).ToString("F2")+" mm");
+   check(back,"WateringCan model upright again exactly after RestModel "+st+" (max |dq| "+dq.ToString("G3")+", position "+(SameExact(model.localPosition,mp)?"same":"moved")+")");
+   log.AppendLine("can tilt "+st+" spoutInSlot="+root.InverseTransformDirection(noz.forward).ToString("F3")+" gripInSlot="+root.InverseTransformPoint(grip.position).ToString("F3")+" modelLocal="+mp.ToString("F3")+" axisWorld="+axis.ToString("F3"));
+  }
+  finally{call("RestModel",null);root.localPosition=rp;root.localRotation=rr;if(!SameExact(model.localPosition,mp))model.localPosition=mp;if(!SameExact(model.localRotation,mr))model.localRotation=mr;}
  }
 }}

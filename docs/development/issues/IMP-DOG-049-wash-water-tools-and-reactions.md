@@ -5,7 +5,7 @@ system: DOG
 status: review
 priority: Medium
 summary: ホースの連続放水・水鉄砲の単発射出・じょうろの傾け注ぎを整え、ホースと水鉄砲に犬の分かりやすい反応を組み合わせる
-next: 実装・適用済み (段 A 2bf922e、段 B)。ユーザーの PCVR で道具の持ち方・水鉄砲とホースの水・犬の反応 (ホースでパクパク、水鉄砲で跳ねる) を確認。じょうろの傾けて注ぐは延期中。2 人・Quest は未確認
+next: 実装・適用済み (段 A・段 B・じょうろの傾けて注ぐ)。ユーザーの PCVR で道具の持ち方・水鉄砲とホースの水・じょうろの傾け (持った瞬間に注がないか)・犬の反応を確認。2 人・Quest は未確認
 updated: 2026-10-11
 ---
 
@@ -124,7 +124,7 @@ PCVR・2 人・Quest / Android の確認は「未確認」として残す (こ�
 
 ### じょうろの傾け注ぎ (段 A から外した)
 
-この Issue の完了条件「連続放水・単発射出・傾け注ぎが区別できる」に入っているが、段 A の完了の定義 (上の 5 項目) には無い。VR の手の傾きの判定、Desktop / スマホの自動の傾き、他の人への見せ方 (`KH_WashToolState` の配り方) と、ハーネスのじょうろのケース (`P-selection-water-toggle` はトグルを前提) の作り直しが要り、小さな変更ではない。**段 A では入れず、じょうろはトグルのまま。** 段 B の後に別の段で扱う (この Issue を done にする前に必要)。
+段 A ではじょうろをトグルのまま残した (VR の手の傾きの判定・Desktop / スマホの自動の傾き・他の人への見せ方・ハーネスのじょうろのケースの作り直しが要るため)。**2026-10-11 に下の「じょうろの傾けて注ぐ (2026-10-11、未適用)」で実装した** (延期は解消。適用は未実施)。
 
 ### 検査の追加 (緩めた所は無い。21 は基準ファイルが無いと失敗のまま、21b で取る)
 
@@ -283,7 +283,7 @@ PCVR・2 人・Quest / Android の確認は「未確認」として残す (こ�
 
 ### 残り・リスク
 
-- **顎の骨**: 2 段構えの犬でソース側の顎が頭の書き先の直下に `Bone.006` という名前であるかは未確認 (Wash/12 が確かめる)。顎が開く向き (+ = 下) は Unity の座標での判断で、Play で見る。Animator が顎を書かない State があっても蓄積しない作りにしたが、Play で「反応の後に口が開いたまま」でないかを見る。
+- **顎の骨**: 2 段構えの犬でソース側の顎が頭の書き先の直下に `Bone.006` という名前であるかは未確認 (Wash/12 が確かめる)。顎が開く向き (+ = 下) は **Wash/12 が犬ごとに静的に確かめる** (2026-10-11 追加、下の「じょうろの傾けて注ぐ」の「顎の向きの検査」。実行時の書き込み +20° を顎へ当て、顎の皮膚が下へ・鼻から離れる向きに動くかを測って元に戻す)。見た目 (口の開き方の自然さ) は Play で見る。Animator が顎を書かない State があっても蓄積しない作りにしたが、Play で「反応の後に口が開いたまま」でないかを見る。
 - **跳ぶ高さの見え方**: 他の人には `VRCObjectSync` の補間を通るので、跳びが小さく・遅れて見えるかもしれない (2 人で確かめる)。クリップの空中の脚の畳みと上下の量の組み合わせは Play で見る。
 - **声**: ホースを当て続けると 5 s ごとに短い声。うるさければ `WaterPlayVoiceVolume` を 0 にする。
 - **足上げ**: 既存の足上げは静止した姿勢 (掻く動きではない)。「前足で水を掻く」に足りなければ、足上げを短く出し入れする案を Play の後に検討。
@@ -317,5 +317,92 @@ PCVR・2 人・Quest / Android の確認は「未確認」として残す (こ�
 - [ ] 水の枠でじょうろ・水鉄砲・ホースを切り替え、持ったまま台 (檜・プール) を替えられる
 - [ ] プール: 水面が薄く透けて足先が見えるか、泡・しぶきとの前後 (描き順) が崩れないか。主洗い場ではプールが斜面に埋まる (IMP-DOG-044 の判断待ち)
 - [ ] 2 人: 相手の水鉄砲の 1 発が見える (連射はまとまって少なく見えることがある、許容)、同じ選択が見える。Quest / Android の負荷
+- [ ] じょうろ (VR): 持っただけ・トリガーを押しただけでは出ない。立てて持つと出ず、注ぎ口の側へ 30° ほど傾けると細く出始め、60° まで傾けるほど太くなる。戻すと 24° あたりで止まる。境目でちらつかない
+- [ ] じょうろ (VR): 持ったときの手の向きで、何もしなくても傾いて出てしまわないか (Grip の持ち方は BUG-DOG-010 の続きで未確認。出てしまうなら傾きの基準か持つ点を直す)。右手・左手
+- [ ] じょうろ (Desktop / スマホ): 押している間、じょうろが持ち手を軸に 0.3 秒ほどで傾いて注ぎ、離すと戻って止まる。持ち手が手から外れて見えない
+- [ ] じょうろ: 置く・リセットで戻すと注ぎが止まり、まっすぐに戻る。じょうろの水では犬がじゃれない・跳ねない (今までどおり)
+- [ ] 2 人: 相手のじょうろの水が見える。相手が VR なら傾きも見える。相手が Desktop なら、じょうろはまっすぐのまま水だけが出る (受け入れた制限)
 
 (犬の反応の確認項目は上の段 B の節)
+
+## じょうろの傾けて注ぐ (2026-10-11、未適用)
+
+設計案 §3.2 の「注ぎ口が下を向くほど注ぐ (傾けた角度で量が変わる)」「Desktop / スマホ = 押している間、じょうろが自動で傾いて注ぐ」「30° で出始め、60° で最大」を実装した。C# / U# コンパイル 0、Codex 独立レビュー済み (2026-10-11、統括: 90° を超える前傾で角度が折り返す件を `Atan2` に直し、落とす・戻す・持ち直し・角度での停止でも粒子量を戻すよう `RestModel` で `FlowReset` を呼ぶ)。シーンへの適用と検査の結果は下の「適用」。ハーネスは未実施。他の道具 (無料シャワー・ホース・水鉄砲・ボトル・スポンジ・タオル) の入力は変えていない。
+
+### 何をするか
+
+- 入力の種類を 1 つ足した: `KH_WashTool.PulseTilt` (= -2)。品ごとの `pulseDurations` で**じょうろ (品 6) だけ**がこれになる (0 = トグル、> 0 = 1 発、-1 = 押している間 (ホース) は変わらない)。
+- **傾き** = じょうろが立った姿勢から注ぎ口の側へ倒れた角度 (度)。じょうろの注ぎ口 (ハス口) は立てた状態で既に水平から 31.5° 下を向いている (44 の `anchor WateringCan ... forward=(0.000, -0.523, 0.853)`) ので、注ぎ口そのものの向きでは測らない (測ると持っただけで出る)。注ぎ口の水平の向きが道具の座標でどれだけ下がったかで測る (横に倒しても増えない)。
+- **VR (持っている本人)**: 手 (Pickup) の傾きから毎フレーム判定する。**押しても何も起きない** (トグルしない)。傾きは位置同期 (`VRCObjectSync`) でそのまま他の人にも見える。
+- **Desktop / スマホ (持っている本人)**: Use を押している間、じょうろの模型 (枠の子 = 品のモデル。注ぎ口の `NozzleAnchor` と粒子 `UseMist` も一緒に動く) だけを持ち手 (`GripAnchor`) を軸に 0.3 s で 60° まで傾け (なめらかに出入り)、離すと戻す。Pickup の根元は動かさない。**他の人には傾きは見えない** (水だけ見える。受け入れた制限。持つ人が VR か を見て他の人も傾ける案は、必要なら後で)。
+- **注ぐ / 止まる**: 30° 以上で注ぎ始め、24° 未満で止まる (ずれ幅 6° で、境目で手が揺れても同期の bit がちらつかない)。どちらの端末も同じ判定 (Desktop は表示中の角度)。
+- **量**: 水の粒子の出る数 (`emission.rateOverTimeMultiplier`) を 30° で品の値の 0.35 倍、60° で 1 倍 (間は直線)。持っている本人は自分の傾きから、他の人は見えている傾きから (まっすぐに見える = Desktop の人なので Desktop の 60° の量)。止めたり品を替えたりするときに元の値へ戻す。**洗いの効きは注いでいる間ずっと無料シャワーと同じ** (Q7。ストロークの秒数を傾きで減らすと細い注ぎが無料シャワーより弱くなるので、量は見た目だけ)。
+- **同期**: 注いでいる / いないだけを、今までの `KH_WashToolState._SetSpraying` (Owner が書く bool 1 本) で**変わった時だけ**送る。毎フレームの同期は増えない。新しい同期変数・ネットワークイベントは無い。
+- **止まる時**: 置く (`OnDrop`)・リセットで戻す (`ReturnHome`)・品の切替や選択の解除 (`_SetSelected`、`KH_WashSelection.ConfigureSlot` が品を替える前に呼ぶ)・持ち直し (`OnPickup`) で、注ぎを止め、模型をまっすぐに (ゆっくり戻さず即座に) 戻し、粒子の量を元に戻す。手を離さずに Use を離したときだけゆっくり戻す。
+- **犬の反応**: じょうろは今までどおり反応しない。`KH_DogWash.WaterToolMode` が `pulseSeconds < 0` をホースと見なしていたので (-2 もホースになる)、`== KH_WashTool.PulseHold` に直した。
+- 散水の当たり判定のマスクなど (`SprayMask`、粒子の衝突・Trigger) は変えていない。
+
+### 値 (仮。設計案の値 + こちらで決めた止まる角度。`KH_WashTool` の定数、44 が実際の値を出す)
+
+| 値 | 仮値 |
+|---|---|
+| 注ぎ始め `TiltStartDegrees` | 30° (設計案) |
+| 止まる `TiltStopDegrees` | 24° (ずれ幅。AI が決めた) |
+| 量が最大 `TiltMaxDegrees` | 60° (設計案) |
+| 30° での量 `TiltMinFlow` | 品の粒子の数の 0.35 倍 (AI が決めた) |
+| Desktop の傾き `DesktopTiltDegrees` / `DesktopTiltSeconds` | 60° / 0.3 s |
+
+### 変更したファイル
+
+- U#: `Scripts/KH_WashTool.cs` (入力 `PulseTilt`、`TiltFrame` / `RemoteFlow` / `MeasuredTilt` / `ShowModelTilt` / `RestModel` / `SetFlow` / `FlowReset`、止まる経路 4 か所)、`Scripts/KH_DogWash.cs` (`WaterToolMode` の 1 行と注釈)、`Scripts/KH_WashSelection.cs` (注釈だけ)。新しい U# ファイル・Program Asset・同期変数は無い。
+- Editor: `KH_WashSelectionEditor.cs` (`WateringCanId = 6`)、`.Category.cs` (品ごとの入力の表 `PulseSeconds(id)` を新設し、**48 / 49 (`ConfigureStation`) が毎回書く** (以前はシーンの値を残していた)。44 の `saved backing pulseDurations` をじょうろ = `PulseTilt` に変え (理由: トグルをやめたため。他の品の期待は変えず、全品 = 表 を足した)、論理の水の切替の後に `VerifyCanTilt` を呼ぶ)、`.Water.cs` (49 の水鉄砲・ホースも表から。44 の `VerifyCanTilt`)、`.Build.cs` (42 も表から)、`.Verify.cs` (NOT_TESTED の文言)、`KH_DogWashSetupEditor.WaterPlay.cs` (顎の向きの検査)。
+- ハーネス: `Testing/KH_CourseWalkHarnessEditor.WashPremium.cs` のケース `P-selection-water-toggle` を **`P-selection-water-tilt`** に作り直した (群 `premium-input`。トグルを前提にした期待を傾けて注ぐ期待へ: 押しただけでは出ない → 0.5 s 後に傾いて (30° 以上) 注ぎ `spraying` → 離して 0.5 s 後に止まってまっすぐ → もう一度押して注ぐ → 置くと即座に止まってまっすぐ)。ClientSim は Desktop なので VR の手の傾きは通らない (44 が Edit mode で確かめる)。**回していない** (回すかは相談)。
+
+### 44 の新しい行 (最初の洗い場、論理の水の切替がじょうろで終わった所)
+
+- `PASS WateringCan on slot2 <洗い場>: tilt to pour (pulse -2 = KH_WashTool.PulseTilt), Grip, its own nozzle`
+- `PASS WateringCan Use press does not toggle ... (after Use down: spray False, Use held True ...; after Use up: held False)` (Edit mode は VR でないので Desktop の経路。Edit mode で `Networking.LocalPlayer` が例外になる場合はこの行の代わりに log へ NOT_TESTED を 1 行出し、押す操作はハーネスの P-selection-water-tilt が見る)
+- `PASS WateringCan tilt thresholds (...): pours from 30 deg, stops below 24 deg, full flow at 60 deg; flow 0.35 / 0.6x / 1.00 x the item's rate at 30 / 45 / 60 deg; Desktop / Touch leans the model to 60 deg in 0.3 s while Use is held`
+- `PASS WateringCan upright measures 0.00 deg (its rose points -31.5 deg from the horizon at rest, ...)`
+- `PASS WateringCan VR measure = the pickup's lean toward the spout ... (lean deg -> measured: 24 -> 24.00; 30 -> 30.00; 45 -> 45.00; 60 -> 60.00; 45 deg sideways -> 0.00)` (Pickup の根元を世界の軸まわりに回して実行時の `MeasuredTilt` を呼び、戻す)
+- `PASS WateringCan Desktop lean 60 deg about the grip ...: spout turned 60.00 deg, pitch -31.5 -> -88.5 deg (前後), rose x.x cm lower, grip moved 0.00 mm` と `PASS WateringCan model upright again exactly after RestModel ...`
+- 各洗い場: `PASS saved backing pulseDurations: can tilt -2 (was toggle 0), pistol shot 0.40 s, hose hold -1, every offered item = PulseSeconds <洗い場> (actual can -2)`
+- 論理の `water swap -> WateringCan: slot2 Grip, pulse -2, range 1.5 m ...` (段 A の期待 `pulse 0` から変わる)。`can tilt <洗い場> spoutInSlot=... gripInSlot=...` を log に 1 行。
+- 実行時の本体 (`MeasuredTilt` / `ShowModelTilt` / `RestModel` / `FlowFraction` / `OnPickupUseDown` / `OnPickupUseUp`) をプロキシで呼ぶ。回した Transform は finally で戻す。
+
+### 顎の向きの検査 (Wash/12、段 B の残りの確認)
+
+- `KH_DogWashSetupEditor.WaterPlay.cs` の顎の行の後に、犬ごとに 1 行足した (Wash/12 は 6 行増えて **5,381 → 5,387 行**の見込み)。
+- 実行時 (`WaterPlayJawLate`) と同じ書き方で、実行時が書く顎の骨 (`petController.sourceBone.Find("Bone.006")`) を `+WaterPlayJawDegrees` (20°) 回す (`localRotation = AngleAxis(20, Inverse(parent.rotation) * dogRoot.right) * pose`)。2 段構えの犬では Constraint はこのメソッドの中では動かないので、皮膚側の顎 (`KD_DogRig.chin`) にも同じ世界の回転 `AngleAxis(20, dogRoot.right)` を当て、2 つの世界の差が 0.01° 未満で一致することを確かめる (同じ書き込みの再現の証拠)。
+- 測る物: 顎の骨に 0.5 以上の重みがある頂点の重心 (`BakeMesh(mesh, true)` × `localToWorldMatrix`)。**`-dogRoot.up` の向きに 1 mm より多く下がり、鼻 (`KD_DogRig.nose` = Bone.007 の頂点の重心。顎では動かない) から離れること**。頂点が無ければ顎の子孫のいちばん遠い点で測る (行にそう出る)。
+- 期待の行: `PASS water play <番号> (<名前>): jaw opens down at +20 deg (the runtime's write): <n> chin vertices move x.x mm down (-dogRoot.up), x.x mm forward; gap to the nose skin (<m> vertices) a -> b mm; written .../Bone.004/Bone.006 + skin .../Bone.006 (world deltas differ 0.0000 deg); restored exactly True, scene dirty False -> False`
+- 骨は finally で元に戻し、成分ごとに完全一致を確かめる。シーンの dirty が変わったら FAIL (記録も保存もしない)。
+- **FAIL のとき**: 「下がらない / 鼻へ寄る」なら顎の向きが逆。検査を緩めず、`WaterPlayJawLate` の符号 (または軸) を直す。測る物が無い・例外なら出た理由を記録して戻す。
+
+### Unity で行う手順 (統括、この順で)
+
+0. Codex 独立レビュー (この差分。入力の変更と、ハーネスの期待の作り直し)。
+1. `bash scripts/unity-compile.sh --udon` — C# / U# のエラー 0 (`KH_WashTool`・`KH_DogWash`・`KH_WashSelection` の U# が変わった。同期変数は増えていない)。
+2. (21 を回すなら先に `WashPremium/21b - Capture Integration Baseline`。シーンが保存済みの状態で)
+3. `WashPremium/49 - Place 0.4.0 Items` (または 48。どちらも `ConfigureStation` が品ごとの入力を表から書き直す。**シーンが dirty だと止まる**) — `Temp/WashSelection/place-040.txt` に 4 洗い場とも `  pulse <洗い場> WateringCan 0 -> -2`、`created models=0`。保存はしない。
+4. `WashPremium/44 - Verify Selection` — `PASS` (上の新しい行。行数は増える。FAIL 0)。
+5. `Tools/KominkaHillside/Wash/12 - Verify Wash (All Dogs)` — FAIL 0、顎の向き 6 行 (読むだけ。シーンを変えない)。
+6. シーンを保存 (stage は vrc-scene-edit-safety の手順で分ける)。保存後にもう一度 44 (保存された backing の `pulseDurations`)。差分の見込み: 4 洗い場の `KH_WashSelection.pulseDurations[6]` 0 → -2 (プロキシと backing)、水の枠の `KH_WashTool.pulseSeconds` は 44 が最後に設定した品の値。
+7. 21 を回すなら: 基準との違いは「水の枠の `KH_WashTool.pulseSeconds` が 0 → -2 (44 の論理がじょうろで終わる)」だけの見込み。それ以外が出たら止める (コードは緩めない)。
+8. この Issue の frontmatter (`next`) を変えたので `node scripts/check-issues.js --write` (統括)。
+9. ハーネス: 回すかは相談 (vrc-review 相談モード)。回すなら群 `premium-input` の `P-selection-water-tilt` だけ。
+
+### 残り・リスク
+
+- **VR の持ち方**: じょうろは Grip で持つ (FBX の `GripAnchor`)。公式の Grip は VR で前へ 30° 傾けて持たせる (BUG-DOG-010 の調べ) ので、持った手の向きしだいで、何もしなくても 30° 近く傾いて出てしまうかもしれない。PCVR で確かめる。出てしまうなら、持つ点 (`GripAnchor` の向き) を直すか、傾きの基準を変える (値は定数 1 か所)。
+- **Desktop の持ち方**: Desktop の Grip の向きで、じょうろが横向きに持たれていると、模型の傾き (じょうろ自身の注ぎ口の側へ) が画面では変な向きに見える。持ち方は今までと同じで、この変更では直していない。
+- 他の人には Desktop の傾きが見えない (水だけ。受け入れた制限)。VR の人の傾きは位置同期の補間ぶん遅れて見える。
+- 粒子の量は他の人の画面では見えている傾きから出すので、本人と少し違うことがある (見た目だけ)。
+- 洗いの当たりはノズルからの直線 (無料シャワーと同じ)。注ぐ水は弧を描いて落ちるので、遠くでは見た目の当たりとずれる (じょうろの届く距離は 1.5 m のまま)。
+- 2 人・Quest / Android は未確認。
+
+### じょうろの傾けて注ぐ・顎の検査の適用 (2026-10-11、統括)
+
+C# / U# コンパイル 0 → Codex 独立レビュー (90° を超える前傾での折り返し → `Atan2`、停止時の粒子量の戻し → `RestModel` で `FlowReset`、文言。統括が修正し 44 に 120° の確認を追加) → 21b → `WashPremium/49` (4 洗い場で `pulse WateringCan 0 -> -2`、作成 0) → 44 **969 PASS / FAIL 0** (傾きの測り方 24/30/45/60/120° → 24.00/30.00/45.00/60.00/120.00、横 45° → 0.00、Desktop の 60° の傾きで握りの移動 0.00 mm、押してもトグルしない) → 保存 → 21: 1 回目は「保全」で FAIL、差分 (`runtime-diff.txt`、21 に失敗時の差分の書き出しを追加) は展望のベンチの水の枠の `pulseSeconds 0 -> -2` の 1 行だけで、意図した変更と確認してから 21b で基準を取り直し **21 PASS** → Wash/12 **FAIL 0 (5,387)**: 6 犬種とも顎は +20° で下に開く (あご下の頂点が 4.6〜25.6 mm 下がり、鼻との間が 8.7→12.6 〜 49.1→74.5 mm に広がる) → 保存後の 44 も 969 PASS。シーンの差分は 4 洗い場の `pulseDurations[6]` と道具 1 つの `pulseSeconds` (と実行時用データ) だけ。
+
+これで段 A・段 B・じょうろの傾けて注ぐまで、この Issue の実装はすべて入った。残りはユーザーの確認 (上の「ユーザーの確認」、じょうろは VR の Grip で持った瞬間に注がないか) と、2 人・Quest / Android。

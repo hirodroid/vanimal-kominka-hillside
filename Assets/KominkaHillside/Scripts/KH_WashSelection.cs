@@ -30,7 +30,7 @@ namespace KominkaHillside
         public Transform[] gunHolds;
         public Vector3[] colliderCenters;
         public Vector3[] colliderSizes;
-        public float[] pulseDurations;        // by item id: KH_WashTool.pulseSeconds (0 toggle, > 0 one shot, KH_WashTool.PulseHold hold)
+        public float[] pulseDurations;        // by item id: KH_WashTool.pulseSeconds (0 toggle, > 0 one shot, KH_WashTool.PulseHold hold, KH_WashTool.PulseTilt tilt to pour)
         // By item id: KH_WashTool.sprayRange (the wash ray's reach, m). Per item because the water slot is shared by the watering can
         // (1.5), the hose (2.5) and the water pistol (4.0) (IMP-DOG-049). Declared null: WashPremium/48 / 49 write it (vrc-udonsharp §4).
         public float[] sprayRanges;

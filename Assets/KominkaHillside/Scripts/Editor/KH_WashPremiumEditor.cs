@@ -188,7 +188,19 @@ public static partial class KH_WashPremiumEditor
         if(count!=4)throw new Exception("Support count");
         // The baseline (Temp, per machine): menu 20 wrote it on 2026-10-08; 21b captures it again from the saved scene before a change
         // (IMP-DOG-049: before 49). No baseline = no PASS (Codex review 2026-10-11: a SKIP here must not end in an overall PASS).
-        if(File.Exists("Temp/WashPremium/runtime-before-stable.txt")){if(File.ReadAllText("Temp/WashPremium/runtime-before-stable.txt")!=Stable(RuntimeSnapshot()))throw new Exception("Stable runtime preservation failed");}
+        if(File.Exists("Temp/WashPremium/runtime-before-stable.txt"))
+        {
+            string before=File.ReadAllText("Temp/WashPremium/runtime-before-stable.txt"),after=Stable(RuntimeSnapshot());
+            if(before!=after)
+            {
+                // 2026-10-11: keep the evidence so a reviewer can judge the difference (no allow-list: any change still fails here).
+                File.WriteAllText("Temp/WashPremium/runtime-after-stable.txt",after);
+                string[] a=before.Split('\n'),b=after.Split('\n');var d=new StringBuilder("line count "+a.Length+" -> "+b.Length+"\n");
+                for(int i=0;i<Math.Max(a.Length,b.Length);i++){string x=i<a.Length?a[i]:"",y=i<b.Length?b[i]:"";if(x!=y)d.AppendLine("line "+i+"\n- "+x+"\n+ "+y);}
+                File.WriteAllText("Temp/WashPremium/runtime-diff.txt",d.ToString());
+                throw new Exception("Stable runtime preservation failed (Temp/WashPremium/runtime-diff.txt)");
+            }
+        }
         else if(File.Exists("Temp/WashPremium/runtime-before.txt")){if(File.ReadAllText("Temp/WashPremium/runtime-before.txt")!=RuntimeSnapshot())throw new Exception("Runtime preservation failed");}
         else throw new Exception("No runtime baseline in Temp/WashPremium: run 21b - Capture Integration Baseline on the saved scene BEFORE the change (49), then 21 after it");
         var gallery=EditorSceneManager.GetActiveScene().GetRootGameObjects().Single(x=>x.name=="KH_WashPremiumPreview_Inactive");// IMP-DOG-047 (2026-10-11): WashPremium/48 keeps only the offered items in the gallery (the dropped ones ship otherwise).

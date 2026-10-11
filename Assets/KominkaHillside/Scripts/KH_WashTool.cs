@@ -52,7 +52,7 @@ namespace KominkaHillside
         public KH_WashToolState state;
         // Optional premium input; effect kind remains tool. Existing free tools keep these defaults.
         public bool sprayInput;
-        public float pulseSeconds;     // 0 toggle / > 0 one shot / PulseHold hold-to-spray (OnPickupUseDown)
+        public float pulseSeconds;     // 0 toggle / > 0 one shot / PulseHold hold-to-spray / PulseTilt tilt-to-pour (OnPickupUseDown)
         public int finishKind;
         public KH_WashFinishFx[] finishTargets;
         public KH_WashSelection selection;
@@ -268,6 +268,7 @@ namespace KominkaHillside
             _held = true;
             _useHeld = false;
             _sprayOn = false;                     // picked up: always starts off
+            RestModel();                          // the can's Desktop tilt starts upright
             EndAllContacts();
             if (_IsSprayer() && state != null && state.spraying) state._SetSpraying(false);
             ApplySpray(Want());
@@ -279,6 +280,7 @@ namespace KominkaHillside
             _held = false;
             _useHeld = false;
             _sprayOn = false;
+            RestModel();                          // dropped: the frame loop stops, so no ease back (snap upright)
             EndAllContacts();
             if (_IsSprayer() && state != null) state._SetSpraying(false);
             ApplySpray(Want());
@@ -289,13 +291,18 @@ namespace KominkaHillside
         //   > 0        = one shot per press: on for pulseSeconds; a press while the shot runs is ignored, so the cadence is pulseSeconds
         //                (the water pistol)
         //   PulseHold  = hold to spray: on while Use is held, off on Use up (the hose; plan 2026-10-11 §3.2)
-        // Toggle and hold go through state._SetSpraying as before; a shot goes through state._Shot (a synced shot serial + its server time,
+        //   PulseTilt  = tilt to pour (the watering can; plan 2026-10-11 §3.2, TiltFrame below): VR pours by the can's tilt (Use does
+        //                nothing), Desktop / Touch holds Use to tilt the can's model locally and pour
+        // Toggle, hold and tilt go through state._SetSpraying as before; a shot goes through state._Shot (a synced shot serial + its server time,
         // so the others play one burst per shot and a late joiner replays none: Codex review 2026-10-11).
         public const float PulseHold = -1f;
+        public const float PulseTilt = -2f;
         public override void OnPickupUseDown()
         {
             if (_IsSprayer())
             {
+                // the can: VR never toggles on a press (the hand's tilt pours); Desktop / Touch: Use held = the auto-tilt (TiltFrame)
+                if (pulseSeconds == PulseTilt) { if (!IsLocalVR()) _useHeld = true; return; }
                 float now = Time.time;
                 if (pulseSeconds > 0f && _sprayOn) return;              // one shot at a time
                 if (pulseSeconds >= 0f && now - _lastToggleAt < toggleGuardSeconds) return;   // a double tap: ignore the second flip
@@ -321,6 +328,7 @@ namespace KominkaHillside
         {
             if (_IsSprayer())
             {
+                if (pulseSeconds == PulseTilt) { _useHeld = false; return; }   // the can: Desktop eases back and stops below the stop angle
                 // the toggle and the shot ignore the release; hold-to-spray (the hose) stops here
                 if (pulseSeconds < 0f && _sprayOn)
                 {
@@ -451,6 +459,7 @@ namespace KominkaHillside
             _awaySince = -1f;
             _useHeld = false;
             _sprayOn = false;
+            RestModel();
             EndAllContacts();
             if (_IsSprayer() && state != null) state._SetSpraying(false);
             ApplySpray(false);
@@ -576,6 +585,7 @@ namespace KominkaHillside
             {
                 _sprayOn = false; if (state != null) state._SetSpraying(false); EndAllContacts(); ApplySpray(false);
             }
+            if (pulseSeconds == PulseTilt) { if (_held) TiltFrame(); else if (_sprayShown) RemoteFlow(); }   // the can (below)
             TrackHolder();
             ReturnTick();
             if (_IsSprayer()) SprayChecks();
@@ -800,8 +810,157 @@ namespace KominkaHillside
             _lastHaptic = now;
             lp.PlayHapticEventInHand(hand, hapticDuration, hapticAmplitude, hapticFrequency);
         }
+        // ---- the watering can: tilt to pour (IMP-DOG-049, plan 2026-10-11 §3.2; pulseSeconds == PulseTilt, written per item by WashPremium/48 / 49) ----
+        // Tilt = how far the can leans toward its spout from standing upright (degrees, + = spout side down). The can's rose already points
+        // ~31.5 deg below the horizon when it stands (WashPremium/44 prints it), so the spout's own pitch is not the measure: the spout's
+        // horizontal heading in the tool's frame is, which dips by exactly the lean.
+        //  - VR holder: the tilt of the held pickup (the hand). Everyone sees that tilt through VRCObjectSync.
+        //  - Desktop / Touch holder: while Use is held, only the can's model (a child of the pickup, with its NozzleAnchor and UseMist) leans
+        //    about the grip, eased in / out over DesktopTiltSeconds to DesktopTiltDegrees. Local only: the others see the can upright (accepted;
+        //    the stream itself is shared).
+        // Pour = TiltStart and above, stops below TiltStop (hysteresis, so a hand near the edge does not flicker the synced bit). Only the
+        // edges go through state._SetSpraying (no per-frame sync). The flow (the stream's emission rate) grows from TiltMinFlow x the item's
+        // rate at TiltStart to 1 x at TiltMax: the holder from its own tilt, the others from the tilt they see (a can that looks upright =
+        // a Desktop holder = the Desktop tilt's flow). The wash is the shower's while pouring (Q7: the same effect as the free shower), so
+        // the stroke's dwell is not scaled. Values are the plan's provisional ones (30 deg on, 60 deg full); the stop angle is ours.
+        public const float TiltStartDegrees = 30f;
+        public const float TiltStopDegrees = 24f;
+        public const float TiltMaxDegrees = 60f;
+        public const float TiltMinFlow = 0.35f;
+        public const float DesktopTiltDegrees = 60f;
+        public const float DesktopTiltSeconds = 0.3f;
+        private float _tiltT;              // Desktop: 0 upright .. 1 leaning (linear clock; shown eased)
+        private float _tiltAngle;          // the tilt used on the holder's last frame (read-out for the harness)
+        private Transform _tiltModel;      // the model leaning now (Desktop), null = upright / nothing moved
+        private Vector3 _tiltRestPos, _tiltPivot, _tiltAxis;   // in the model's parent (the slot) frame, taken upright
+        private Quaternion _tiltRestRot;
+        private ParticleSystem _flowSpray; // the spray whose rateOverTimeMultiplier is scaled now, null = none
+        private float _flowBase;
+        private float _flowRate = -1f;
+
+        // The holder, every frame while held (BusyFrame).
+        void TiltFrame()
+        {
+            float angle;
+            if (IsLocalVR()) angle = MeasuredTilt();
+            else
+            {
+                _tiltT = Mathf.MoveTowards(_tiltT, _useHeld ? 1f : 0f, Time.deltaTime / DesktopTiltSeconds);
+                angle = DesktopTiltDegrees * Mathf.SmoothStep(0f, 1f, _tiltT);
+                ShowModelTilt(angle);
+            }
+            _tiltAngle = angle;
+            bool pour = selectionActive && angle >= (_sprayOn ? TiltStopDegrees : TiltStartDegrees);
+            if (pour != _sprayOn)
+            {
+                _sprayOn = pour;
+                if (state != null) state._SetSpraying(pour);
+                if (!pour) EndAllContacts();
+                ApplySpray(Want());
+            }
+            if (pour) SetFlow(FlowFraction(angle));
+        }
+
+        // Not the holder, while the stream shows: the flow from the tilt seen here.
+        void RemoteFlow()
+        {
+            float a = MeasuredTilt();
+            SetFlow(FlowFraction(a >= TiltStopDegrees ? a : DesktopTiltDegrees));
+        }
+
+        // The pickup's lean toward the spout (degrees). The model stands upright in its slot (localRotation identity), so the heading is
+        // taken from the nozzle in this tool's frame with its vertical part removed.
+        float MeasuredTilt()
+        {
+            if (nozzle == null) return 0f;
+            Vector3 h = transform.InverseTransformDirection(nozzle.forward);
+            h.y = 0f;
+            if (h.sqrMagnitude < 1e-6f) h = Vector3.forward;
+            float down = -transform.TransformDirection(h.normalized).y;
+            // atan2 with the tool's own up keeps past-90 deg leans past 90 (Asin folded 120 deg back to 60; Codex 2026-10-11).
+            return Mathf.Atan2(down, transform.up.y) * Mathf.Rad2Deg;
+        }
+
+        float FlowFraction(float angle)
+        {
+            return Mathf.Lerp(TiltMinFlow, 1f, Mathf.Clamp01((angle - TiltStartDegrees) / (TiltMaxDegrees - TiltStartDegrees)));
+        }
+
+        // k x the item's own rate (read once from the spray when it is first scaled; FlowReset puts it back).
+        void SetFlow(float k)
+        {
+            if (spray != _flowSpray)
+            {
+                FlowReset();
+                if (spray == null) return;
+                _flowSpray = spray;
+                var e0 = spray.emission;
+                _flowBase = e0.rateOverTimeMultiplier;
+            }
+            if (_flowSpray == null) return;
+            float rate = _flowBase * k;
+            if (Mathf.Abs(rate - _flowRate) < 0.01f) return;
+            _flowRate = rate;
+            var em = _flowSpray.emission;
+            em.rateOverTimeMultiplier = rate;
+        }
+
+        void FlowReset()
+        {
+            if (_flowSpray != null)
+            {
+                var em = _flowSpray.emission;
+                em.rateOverTimeMultiplier = _flowBase;
+            }
+            _flowSpray = null;
+            _flowRate = -1f;
+        }
+
+        // Desktop / Touch: lean the shown item's model by angle about its grip (the handle stays in the hand), toward its spout.
+        // The upright pose is taken on the first lean and put back exactly by RestModel.
+        void ShowModelTilt(float angle)
+        {
+            if (angle <= 0f) { RestModel(); return; }
+            if (_tiltModel == null)
+            {
+                int item = _ShownItemHere();
+                if (item < 0 || nozzle == null || selection.models == null || item >= selection.models.Length || selection.models[item] == null) return;
+                Transform m = selection.models[item].transform;
+                Transform p = m.parent;
+                if (p == null) return;
+                _tiltModel = m;
+                _tiltRestPos = m.localPosition;
+                _tiltRestRot = m.localRotation;
+                Transform grip = selection.gripAnchors != null && item < selection.gripAnchors.Length ? selection.gripAnchors[item] : null;
+                _tiltPivot = grip != null ? p.InverseTransformPoint(grip.position) : _tiltRestPos;
+                Vector3 h = p.InverseTransformDirection(nozzle.forward);
+                h.y = 0f;
+                if (h.sqrMagnitude < 1e-6f) h = Vector3.forward;
+                _tiltAxis = Vector3.Cross(Vector3.up, h.normalized);   // + about it turns the heading down (Unity: + about +X turns +Z to -Y)
+            }
+            Quaternion q = Quaternion.AngleAxis(angle, _tiltAxis);
+            _tiltModel.localRotation = q * _tiltRestRot;
+            _tiltModel.localPosition = _tiltPivot + q * (_tiltRestPos - _tiltPivot);
+        }
+
+        // Upright again, exactly as taken (pick up, drop, return, reconfigure, the end of the Desktop ease). No-op when nothing leans.
+        void RestModel()
+        {
+            FlowReset();                          // the flow rate goes back with the pose (drop / return / pick up / angle stop; Codex 2026-10-11)
+            _tiltT = 0f;
+            _tiltAngle = 0f;
+            if (_tiltModel == null) return;
+            _tiltModel.localPosition = _tiltRestPos;
+            _tiltModel.localRotation = _tiltRestRot;
+            _tiltModel = null;
+        }
+
         public void _SetSelected(bool value)
         {
+            // KH_WashSelection.ConfigureSlot calls this before it changes the item (nozzle / spray): the can's tilted model and its flow
+            // rate go back first, on the item they belong to. No-op when nothing was tilted / scaled (also in Edit mode, WashPremium/44).
+            RestModel();
+            FlowReset();
             selectionActive = value;
             if (value) return;
             _useHeld = false; _sprayOn = false; _shotShownUntil = -100f; EndAllContacts(); ApplySpray(false);

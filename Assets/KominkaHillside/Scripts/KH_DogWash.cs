@@ -1839,8 +1839,9 @@ namespace KominkaHillside
         // ================= IMP-DOG-049 段 B: water play (design 2026-10-11 §3.3) =================
         // Which water tool hit: no tool ID is added (Q7: the wash effect stays the free shower's). The receiver looks at the tool
         // the sender holds - the same KH_WashTool list and _IsHeldBy that HoldsTool already checks for every remote stroke - and
-        // reads its input mode (pulseSeconds, written per shown item by KH_WashSelection on every client): < 0 hold = the hose,
-        // > 0 one shot = the pistol, 0 = the free shower / the watering can (no reaction). Nothing new goes over the wire.
+        // reads its input mode (pulseSeconds, written per shown item by KH_WashSelection on every client): PulseHold (-1) = the hose,
+        // > 0 one shot = the pistol, 0 = the free shower, PulseTilt (-2) = the watering can (tilt to pour, 2026-10-11): those two no
+        // reaction. Nothing new goes over the wire.
 
         /// <summary>ReceiveStroke (every client, accepted shower-kind strokes, the own echo too): record a hit.</summary>
         void NoteWaterHit(int playerId, int part, Vector3 meshPoint)
@@ -1871,8 +1872,8 @@ namespace KominkaHillside
         }
 
         /// <summary>The source of a shower-kind stroke from playerId: 1 = the hose (hold), 2 = the pistol (shot), 0 = anything else or
-        /// unknown. Candidates = every shower-kind tool the player holds (the free shower and the watering can included, pulseSeconds 0
-        /// = mode 0). One candidate: the stroke can only come from it (it passed HoldsTool / is the own input), its mode. Several (a
+        /// unknown. Candidates = every shower-kind tool the player holds (the free shower (pulseSeconds 0) and the watering can
+        /// (KH_WashTool.PulseTilt) included = mode 0). One candidate: the stroke can only come from it (it passed HoldsTool / is the own input), its mode. Several (a
         /// tool in each hand, or one just dropped within _IsHeldBy's grace): the one that is spraying now (KH_WashTool._SprayActive:
         /// the hold / toggle spraying, or a shot within its freshness) decides; none or more than one active = ambiguous = 0 (no
         /// reaction, Codex review 3: an unused hose in one hand must not turn the free shower's water into hose play).</summary>
@@ -1884,7 +1885,8 @@ namespace KominkaHillside
             {
                 KH_WashTool t = tools[i];
                 if (t == null || t.tool != ToolShower || !t._IsHeldBy(playerId)) continue;
-                int m = t.pulseSeconds < 0f ? 1 : (t.pulseSeconds > 0f ? 2 : 0);
+                // only the hose's hold is mode 1: the can's tilt input (PulseTilt, also < 0) stays 0 = no reaction (2026-10-11)
+                int m = t.pulseSeconds == KH_WashTool.PulseHold ? 1 : (t.pulseSeconds > 0f ? 2 : 0);
                 held++;
                 heldMode = m;
                 if (t._SprayActive()) { active++; activeMode = m; }
