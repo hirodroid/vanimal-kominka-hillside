@@ -2,10 +2,10 @@
 id: IMP-DOG-046
 type: IMP
 system: DOG
-status: todo
+status: review
 priority: Medium
 summary: 追加洗浄道具を種類ごとに選択し、泡・水・タオルを同時に出せるようにする
-next: 決定済み (2026-10-11、推奨どおり 3 枠)。IMP-DOG-047 と 1 回で KH_WashSelection を移行する。IMP-DOG-043 の作業中の区切りを確かめてから着手
+next: シーンへ適用済み (2026-10-11、44 707 PASS、Wash/12 は範囲外の 1 件だけ)。ユーザーの PCVR で 3 枠同時・持ったまま台の切替・基本に戻す・ドライヤーの風を見る。2 人で同じ選択。リスティング画像 (41・45) とハーネス WashPremium.cs の旧名の修正は未着手
 updated: 2026-10-11
 ---
 
@@ -60,7 +60,7 @@ updated: 2026-10-11
   - 「基本に戻す」(item -1) は持たれていない種類をすべて -1 に、台も -1 にする。持たれている種類は残し、コード 3 を返す (Q2)。
 - 表示 (`_Apply`) は種類ごとに出ている品 (`_shownTools[3]`) と枠ごとの設定済み品 (`_slotItem[7]`) を持つ。決定の後に Pickup が届いた競合では、**持たれている種類だけ**旧モデルのまま待ち、他の種類と台は即座に切り替わる。枠の設定 (ノズル・粒子・音・当たり判定・持ち方) は品が変わった枠だけ書き直す (持っている枠を触らない)。使わない枠は `spray` を空にする。
 - 持ち方は品ごとのデータ `gunHolds[]` (null = Grip + `gripAnchors`、非 null = Gun + その Exact Gun)。泡銃は `KH_FoamCannonGunHold` (BUG-DOG-010)。`VRC_Pickup.orientation` / `ExactGun` の setter は Udon に公開済み (VRC.Udon.VRCWrapperModules.dll に `__set_orientation__VRCSDKBaseVRC_PickupPickupOrientation` と `__set_ExactGun__UnityEngineTransform`、2026-10-11 確認)。**IMP-DOG-049 の水鉄砲は、水の枠 (枠 2) のまま `gunHolds[水鉄砲]` を入れれば Gun になり、じょうろに戻すと Grip に戻る** (枠を増やすときは `slotCategories` に 1 行足す)。
-- 置き場所は種類ごとに 3 か所 (`PremiumTools/Home_Foam` / `Home_Water` / `Home_Finish`)。各枠の `KH_WashTool.home` をその種類の場所にした。トレーは棚の左で左から 泡 / 水 / 仕上げ (仮値: x = -1.23 / -1.055 / -0.785、トレー 0.70 × 0.40 m、中心 x -0.96)。間隔はラボの寸法 (`validation/build.json` の幅: ミトン 0.126・じょうろ 0.150・タオル 0.330 m) から決めた。**Unity では未計測**。44 が当たり判定の箱から足跡と間隔を出す。
+- 置き場所は種類ごとに 3 か所 (`PremiumTools/Home_Foam` / `Home_Water` / `Home_Finish`)。各枠の `KH_WashTool.home` をその種類の場所にした。トレーは棚の左で左から 泡 / 水 / 仕上げ (x = -1.25 / -1.07 / -0.785、z -0.04。トレー 0.73 × 0.42 m、中心 (-0.975, 0.03)。下の「配置の修正」で初回値から変更)。44 が当たり判定の箱から足跡と間隔を出す。
 - 出現の音・粒子は、変わった種類の置き場所で鳴らす (台だけの変更はトレー中央)。
 - 枠 5・6 (ブラシ・コロン) の Pickup ルートは残す (UdonBehaviour + VRCObjectSync を持つので、消すと型付きの NetworkIDs が宙に浮く。`reset.tools` / `KH_DogWash.tools` / `KH_WashFinishFx.tools` / Wash/12 の数も変えずに済む)。選べる品が無いので常に非表示・持てない。
 
@@ -93,7 +93,7 @@ updated: 2026-10-11
 | bottle: tool 4 の KH_WashTool が棚のボトルだけ (8 / 4) | **Wash/12 が追加品を知らない。** 泡銃 (枠 0) は意図してボトルの泡効果 (tool 4 + sprayInput) を使う。 | 各セレクターの枠 0 の泡銃を別に数える: `... a station's bottle (4 / 4), besides the premium FoamCannon slot 0 of each selector, which uses the bottle's foam effect (4 / 4)` |
 | layout: KH_WashStation の WashTable が地面に埋まる | 対象外 (別件) | なし |
 
-期待: Wash/12 の FAIL は 11 → 1 (WashTable の 1 件だけ)。増えた FAIL があれば基準 (`scratchpad/baseline/wash12-fails.txt`) と行ごとに比べる。トレーを左へ 7 cm 広げたので、コースの離隔検査 (手置きの物・歩く線) に新しい FAIL が出たら位置の定数 (`KH_WashSelectionEditor.Category.cs` の `HomeLocal` / `Tray*`) を見直す。
+期待: Wash/12 の FAIL は 11 → 1 (WashTable の 1 件だけ)。増えた FAIL があれば基準 (`scratchpad/baseline/wash12-fails.txt`) と行ごとに比べる。トレーを旧版 (x -1.17..-0.69、z -0.24..0.16) から x -1.34..-0.61、z -0.18..0.24 に広げたので、コースの離隔検査 (手置きの物・歩く線) に新しい FAIL が出たら位置の定数 (`KH_WashSelectionEditor.Category.cs` の `HomeLocal` / `Tray*`) を見直す。
 
 ### Unity で行う手順 (統括、この順で)
 
@@ -101,7 +101,7 @@ updated: 2026-10-11
 2. `Tools/KominkaHillside/WashPremium/43 - Prepare Care Font` — **48 より先、シーンが保存済みの状態で。** 43 はシーンを保存する (`SaveOpenScenes`) ため、48 の後に回すと検査前の移行まで保存してしまう。新しい字 58 字は IMP-DOG-047 に一覧。結果 `Temp/WashSelection/font.txt` の `missing=0`、YAML で `CareFont.asset` の `m_SourceFontFile: {fileID: 0}` を確かめる (vrc-world-ui §8)。
 3. `Tools/KominkaHillside/WashPremium/48 - Migrate To Category Slots` — 開始時に dirty なら止まる。dirty にするが**保存しない**。`Temp/WashSelection/migrate.txt` の期待値 (保存済みシーンを node で数えた値: 18 Prefab が各 5 個 = 4 洗い場 + 展示 1、展示の子は 17):
    - `selectors=4 removed station objects=44 gallery=11 offered=FoamCannon,PawMitt,WateringCan,Dryer,PatternTowel,HinokiBath`
-   - 洗い場ごとに `removed=11 slatsHidden=5 freeTableRenderers=1 (Mesh) homes=Home_Foam(-1.230, 0.820, -0.040) Home_Water(-1.055, 0.820, -0.040) Home_Finish(-0.785, 0.820, -0.040)` (freeTableRenderers の数は WashTable の下に他の Renderer が足されていれば増える。すのこと追加品のモデルが入っていないことが要点。初回は `created .../Home_*` が 3 行ずつ)
+   - 洗い場ごとに `removed=11 slatsHidden=5 freeTableRenderers=1 (Mesh) homes=Home_Foam(-1.250, 0.820, -0.040) Home_Water(-1.070, 0.820, -0.040) Home_Finish(-0.785, 0.820, -0.040)`、残す 5 品それぞれ `collider <洗い場> <品> size ... -> ... centre ... -> ...` (当たり判定の箱の作り直し。下の「配置の修正」) (freeTableRenderers の数は WashTable の下に他の Renderer が足されていれば増える。すのこと追加品のモデルが入っていないことが要点。初回は `created .../Home_*` が 3 行ずつ)
    - `NetworkIDs before: ... removedTypelessNull=… keptTypedNull=0` と `after:` の 2 行。`WARN NetworkID ... has types` が出たら止めて調べる (消さない)。
 4. `Tools/KominkaHillside/WashPremium/44 - Verify Selection` — `Temp/WashSelection/verify.txt` が PASS。期待する行 (抜粋):
    - `PASS four stations own distinct pickups (28) and visuals (24 / 24: FoamCannon, PawMitt, WateringCan, Dryer, PatternTowel, HinokiBath)`
@@ -125,3 +125,19 @@ updated: 2026-10-11
 - ユーザー: PCVR・Desktop で 3 品を同時に取り出して持つ・使う・置く。持ったまま台を替える (Q3)。1 品を持ったまま「基本に戻す」(Q2、持っている品が残り、案内が出る)。トレーの並びと間隔、棚・ボードとの干渉を見る。
 - 2 人: 片方が水を持ったまま、もう片方が泡・台を替える。途中参加で 3 品が出た状態が復元される。Owner 交代。
 - 端末: 3 品を同時に使ったときの負荷 (粒子は各 64、1 か所で最大 192) を Quest / Android で。
+
+### 配置の修正 (2026-10-11、コードのみ、未適用)
+
+統括の 1 回目 (48 → 44、保存せず破棄): 687 PASS / 20 FAIL、すべてトレーの配置 (じょうろが泡・ミトン・ドライヤー・タオルと 2〜26 cm 重なる、品が棚の左端 x -0.600 を 1〜9 cm 越える、4 洗い場とも)。足跡は洗い場ごとに違い、川辺が最小・展望のベンチが最大だった。
+
+- 原因: 当たり判定の箱 (`colliderCenters` / `colliderSizes`) が膨らんでいた。42 の `LocalBounds` は Renderer.bounds (世界座標の軸平行の箱) の 8 隅を枠の座標へ戻して囲むので、向きのある洗い場では「回した箱の箱の箱」になり、幅 w・奥行き d の品は x = w + d·sin(2·yaw)、z = d + w·sin(2·yaw) に広がる。1 回目の足跡から逆算すると、川辺 (yaw 81.8°) の値から解いた実寸で展望のベンチ (221.5°) の足跡を 3 mm 以内で再現でき、実寸はラボの寸法と一致した (泡銃 0.083 × 0.203、ミトン 0.125 × 0.194、じょうろ 0.150 × 0.360、ドライヤー 0.082 × 0.184、タオル 0.331 × 0.225 m)。Pickup の実際の当たり判定も同じだけ大きかった。
+- 修正: 48 が残す道具 5 品の箱を、各メッシュ自身の bounds の 8 隅から作り直す (`TightBounds`、洗い場の向きに依存しない)。旧→新を migrate.txt に 1 行ずつ出す。配置の定数 (`KH_WashSelectionEditor.Category.cs`): `HomeLocal` = (-1.25, 0.82, -0.04) / (-1.07, 0.82, -0.04) / (-0.785, 0.82, -0.04)、トレー `TrayLocal` (-0.975, 0.785, 0.03)・`TrayScale` (0.73, 0.03, 0.42)、支柱 `PostLocal` (-0.975, 0.38, 0.03)、`TrayCentre` (TakeoutHome) (-0.975, 0.82, -0.04)。
+- 予測 (箱が向きに依存しなくなるので 4 洗い場で同じ): ミトン / じょうろ 5.3 cm、泡銃 / じょうろ 6.3 cm、じょうろ / タオル 4.4 cm、じょうろ / ドライヤー 16.9 cm、タオル / 棚の左端 2.0 cm。品の範囲 x -1.324..-0.620・z -0.152..0.217 に対しトレー x -1.340..-0.610・z -0.18..0.24 (左 1.6 cm・右 1.0 cm 内側)。いちばん狭いのはタオルと棚の 2.0 cm。
+- 44 の許容範囲 (種類の違う品どうしが 1 cm 以上、棚の左端より左) は、このとおり一列で満たせるので緩めていない。棚の上の無料道具 (x -0.6..0.6)・ボード (x +0.95 側)・すのこ (z -1.55..-0.85)・脇の立ち位置 (z が同じ帯) とはトレーが重ならない。トレーと支柱には Collider が無い。
+- 未確認: Wash/12 のコース離隔検査 (トレーが広がった分)。モデルの高さ (y) は以前の値のまま (向きは y 軸まわりだけなので高さは膨らまない)。
+
+### シーンへの適用 (2026-10-11、統括)
+
+コンパイル 0 (C# / U#) → `WashPremium/43` (CareFont 585 文字・不足 0、`77f7c3e`) → `48` 1 回目は 44 で 20 FAIL (トレーの重なり。当たり判定の箱が洗い場の回転で膨らんでいた) → 保存せず開き直し、配置を直して → `48` (各洗い場で 11 品を削除、提供 6 品 = 泡銃・肉球ミトン・じょうろ・ドライヤー・柄タオル・檜、NetworkIDs 336 → 336、型なしの削除 0) → `44` **707 PASS / FAIL 0** → 保存 → `Wash/12` **1 FAIL** (作業前 11。残りは範囲外の主洗い場の台の接地) → 保存後の `.unity` に `gameObject: {fileID: 0}` 0 件。シーンの差分は有料道具まわりと、中央支柱の位置の誤差の再計算 1 件だけ。
+
+残り: ユーザーの PCVR (3 枠を同時に出す、道具を持ったまま台を替える、「基本に戻す」で持っている枠が残る、ドライヤーの風の筋)、Desktop、2 人で同じ選択が見えること。リスティング画像 (41・45) は未撮影。`Testing/KH_CourseWalkHarnessEditor.WashPremium.cs` は `selectedTool` などの旧名を読むので、実行すると失敗する (ハーネスは未修正・未実行)。訳は AI 作成・校正なし。

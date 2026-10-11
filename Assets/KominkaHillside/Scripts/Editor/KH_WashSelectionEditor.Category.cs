@@ -8,12 +8,15 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
  public static readonly int[] Order={0,9,6,7,8,13};                 // offered items in display order: foam, water, finish, station
  public static readonly int[] SlotCategories={0,0,1,2,2,-1,-1};      // slots 5 / 6 (brush / cologne) keep their pickup roots, never selectable
  public static readonly string[] CategoryHomeNames={"Home_Foam","Home_Water","Home_Finish"};
- // Provisional (not measured in Unity yet): the tray beside the shelf (shelf x -0.6..0.6, z -0.225..0.225, top 0.8) grows to the left
- // so foam / water / finish stand left to right as seen from the front (-Z). Spacing from the lab's model widths (asset-lab
- // validation/build.json, Unity X = Blender X): mitt 0.126 / can 0.150 / towel 0.330 m; towel right edge 2 cm off the shelf, 3 cm between
- // categories. 44 prints the measured collider footprints and gaps; adjust here, then 48.
- public static readonly Vector3[] HomeLocal={new Vector3(-1.23f,.82f,-.04f),new Vector3(-1.055f,.82f,-.04f),new Vector3(-.785f,.82f,-.04f)};
- public static readonly Vector3 TrayCentre=new Vector3(-.96f,.82f,-.04f),TrayLocal=new Vector3(-.96f,.785f,-.04f),TrayScale=new Vector3(.70f,.03f,.4f),PostLocal=new Vector3(-.96f,.38f,-.04f);
+ // Tray beside the shelf (shelf x -0.6..0.6, z -0.225..0.225, top 0.8): foam / water / finish left to right as seen from the front (-Z).
+ // Sized from the TIGHT collider boxes 48 now writes (TightBounds; = the lab's model sizes, asset-lab validation/build.json):
+ // relative to its home, x / z extents: FoamCannon -.042..+.042 / -.059..+.143, PawMitt -.074..+.052 / -.093..+.100, WateringCan
+ // -.075..+.075 / -.103..+.257, Dryer -.041..+.041 / -.065..+.120, PatternTowel -.165..+.165 / -.113..+.113 (2026-10-11, derived from the
+ // 44 footprints of the first 48 run: those boxes were world-AABB-of-AABB, inflated by w + d*sin(2*yaw), so River (yaw 81.8) was smallest
+ // and Hillside (221.5) largest). Predicted gaps, the same on every station: mitt / can 5.3 cm, can / towel 4.5 cm, towel / shelf edge
+ // 2.0 cm, inside the tray by 1.6 cm (left, mitt) and 1.0 cm (right, towel). 44 prints the measured footprints; adjust here, then 48.
+ public static readonly Vector3[] HomeLocal={new Vector3(-1.25f,.82f,-.04f),new Vector3(-1.07f,.82f,-.04f),new Vector3(-.785f,.82f,-.04f)};
+ public static readonly Vector3 TrayCentre=new Vector3(-.975f,.82f,-.04f),TrayLocal=new Vector3(-.975f,.785f,.03f),TrayScale=new Vector3(.73f,.03f,.42f),PostLocal=new Vector3(-.975f,.38f,.03f);
  public const int WordCount=43;                                      // 42 + word 42 "held tools stay out" (Q2)
  // By item id (same length as Names): the word holding its name. Explicit, not 20 + id: words 37.. are other texts, so a new item
  // (id 17+) appends its name to every language in words.json (index WordCount, then WordCount += 1) and that index here.
@@ -29,6 +32,20 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
  static int DroppedSource(GameObject go){if(go==null||!PrefabUtility.IsAnyPrefabInstanceRoot(go))return -1;string p=PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go);for(int d=0;d<Names.Length;d++)if(!Offered(d)&&p==Prefabs+Names[d]+".prefab")return d;return -1;}
  // Q6 (wind streaks): thin stretched particles that fly forward fast instead of a slow mist puff. Values are provisional (Play).
  public const float DryerSpeed=2.4f,DryerLifetime=.22f,DryerSizeMin=.004f,DryerSizeMax=.008f,DryerRate=16f,DryerAlpha=.16f,DryerLengthScale=2f,DryerVelocityScale=.035f;
+ /// <summary>The model's box in the slot's space from each mesh's own bounds (8 local corners), not from Renderer.bounds: the world AABB of a
+ /// model on a yawed station, turned back, grows by width + depth * sin(2 * yaw) (KH_WashSelectionEditor.Build LocalBounds).</summary>
+ static Bounds TightBounds(GameObject go,Transform space)
+ {
+  var b=new Bounds();bool first=true;
+  foreach(var r in go.GetComponentsInChildren<Renderer>(true))
+  {
+   if(r is ParticleSystemRenderer)continue;var mf=r.GetComponent<MeshFilter>();Bounds lb;
+   if(mf!=null&&mf.sharedMesh!=null)lb=mf.sharedMesh.bounds;else if(r is SkinnedMeshRenderer sk&&sk.sharedMesh!=null)lb=sk.localBounds;else continue;
+   for(int a=0;a<8;a++){var p=space.InverseTransformPoint(r.transform.TransformPoint(lb.center+Vector3.Scale(lb.extents,new Vector3((a&1)==0?-1:1,(a&2)==0?-1:1,(a&4)==0?-1:1))));if(first){b=new Bounds(p,Vector3.zero);first=false;}else b.Encapsulate(p);}
+  }
+  if(first)throw new Exception(go.name+" has no mesh to size its pickup collider");
+  return b;
+ }
  static void DryerStreaks(ParticleSystem ps)
  {
   var main=ps.main;main.startSpeed=DryerSpeed;main.startLifetime=DryerLifetime;main.startSize=new ParticleSystem.MinMaxCurve(DryerSizeMin,DryerSizeMax);main.startColor=new Color(.95f,.97f,1f,DryerAlpha);main.gravityModifier=0f;main.maxParticles=32;
@@ -62,7 +79,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
    cats[i]=CategoryOf(i);depths[i]=BathDepth(i);bool tool=cats[i]>=0&&cats[i]<KH_WashSelection.Categories;slotOf[i]=tool?Slots[i]:-1;
    if(cats[i]>=0&&models[i]==null)throw new Exception(label+": offered item "+Names[i]+" has no model");
    if(!tool)continue;
-   noz[i]=At(sel.nozzleAnchors,i);grip[i]=At(sel.gripAnchors,i);centers[i]=At(sel.colliderCenters,i);sizes[i]=At(sel.colliderSizes,i);pulses[i]=At(sel.pulseDurations,i);gun[i]=At(sel.gunHolds,i);sprays[i]=At(sel.itemSprays,i);sounds[i]=At(sel.itemSounds,i);
+   noz[i]=At(sel.nozzleAnchors,i);grip[i]=At(sel.gripAnchors,i);{var tb=TightBounds(models[i],sel.slots[Slots[i]].transform);var oc=At(sel.colliderCenters,i);var os=At(sel.colliderSizes,i);centers[i]=tb.center;sizes[i]=Vector3.Max(tb.size,new Vector3(.03f,.03f,.03f));if((os-sizes[i]).sqrMagnitude>1e-8f||(oc-centers[i]).sqrMagnitude>1e-8f)log.AppendLine("  collider "+label+" "+Names[i]+" size "+os.ToString("F3")+" -> "+sizes[i].ToString("F3")+" centre "+oc.ToString("F3")+" -> "+centers[i].ToString("F3"));}pulses[i]=At(sel.pulseDurations,i);gun[i]=At(sel.gunHolds,i);sprays[i]=At(sel.itemSprays,i);sounds[i]=At(sel.itemSounds,i);
    if(noz[i]==null||grip[i]==null||!noz[i].IsChildOf(models[i].transform)||sizes[i].x<=.02f)throw new Exception(label+": "+Names[i]+" anchors / collider not built (run 42's data first)");
    // a Gun hold written for a kept item (FoamCannon by FoamCannonHold below; IMP-DOG-049 water guns by their own setup) survives a re-run
    if(gun[i]!=null&&!gun[i].IsChildOf(models[i].transform)){log.AppendLine("  dropped gunHolds["+i+"] "+gun[i].name+" (not under "+Names[i]+")");gun[i]=null;}
