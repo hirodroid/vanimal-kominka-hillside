@@ -72,3 +72,5 @@ Wash/12 は 13 件 FAIL ([IMP-ENV-007](IMP-ENV-007-main-wash-station.md) の同�
 
 - `Hillside: Call.standYaw 314.2 = station yaw + 90` — 上の「向きが約 3° 変わった」件と同じ原因と推定。Wash/11 の再実行で直る見込み (シーンを保存するので、シーンの差分を片付けてから)。
 - River / Upper / Hillside とも、Layer 17 の固い Collider の数に有料道具の 7 枠が入る。`Premium_Hillside_Slot0/2/4/6 spray collision leaves out 22`。有料道具 (IMP-DOG-043) 側の未対応か検査の更新漏れかは未判定。
+
+2026-10-11 (統括): 展望のベンチの standYaw を `Wash/13` で 314.2 → 311.5 に直した (向きのずれは `5dfbff7` で 2.7° 回されたため)。Wash/12 の standYaw の FAIL は消えた。

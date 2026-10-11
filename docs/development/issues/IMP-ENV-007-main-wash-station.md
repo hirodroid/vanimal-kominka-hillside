@@ -89,3 +89,5 @@ Unity は触らず、git 履歴・docs・`Logs/kh-course-walk/` (Git 管理外�
 - 有料道具 (IMP-DOG-043、10-08 追加) に関係するもの: 固い Collider の Layer 17 の数に `PremiumTools/Premium_*_Slot0〜6` が入る (4 洗い場とも)、`Premium_KH_WashStation_Slot0 spray collision leaves out 22`、`KH_WashTool tool 4 = 8 / 4` (ボトル扱いの道具が洗い場あたり 2 つ)。検査が有料道具を知らないのか、配線の不足かは未判定。
 
 出力は `Temp/KH_DogWashSetupVerify.json` (git 管理外)。
+
+2026-10-11 (統括): standYaw を直した。原因は `5dfbff7` (有料道具の選択の追加、10-08) で主洗い場が約 183.5° (yaw 22.0° → 205.5°)・展望のベンチが約 2.7° 回され、Call.standYaw が古いままだったこと。Wash/11 は有料道具の選択が入ったシーンでは止まる作りなので、standYaw だけを書くメニュー `Wash/13 - Sync Stand Yaw (premium-safe)` を足して実行 (主 112.0 → 295.5、Hillside 314.2 → 311.5)。保存後の Wash/12 は **11 件 FAIL** (standYaw の 2 件が消えた)。残りは主洗い場の台の接地 1 件と、有料道具に関係する 10 件。犬の頭の向きは主洗い場で以前と逆になる (棚と平行は保つ)。PCVR で犬の向きと台の接地を見る。
