@@ -228,3 +228,76 @@ Runtime 実装で契約から変えた点 (2026-10-12):
 ### 検証と引き渡し (M1.1)
 
 統括: compile → Build (Program Asset 2 本の初回は 2 回) → Verify → Probe → Course/27 → Codex 独立レビュー → コミット。Play で見ること: 門に入らず広場へ向かう / ベンチ脇で一列になり浮かない / 坂で埋まらない (起きたら場所を報告) / 操作帯のメニューで手元メニューが左側に出て一緒に動く / 撮影モニター・写真ビューアが追従 / 座面の上下と向きが自分と他人の画面で一致 / ClientSim ではメニュー操作で降りるが TestBuild で座ったままか。
+
+## M2: すれ違い・犬の配置・掲示・カメラ・調整 (2026-10-12)
+
+ユーザー決定 (2026-10-12): 停止後は仕様どおり乗り場からの再出発のみ (その場に残さない)。グループ走行と移動中の合流は Play で OK。FPS は最後に確認。**M2 を全部実装する。** 契約は M1/M1.1 と同じ流儀 (Runtime は `Scripts/Cart/` と指定ファイル、Editor は `Scripts/Editor/Cart/` と翻訳表、Unity 操作は統括)。
+
+### 担当とファイルの所有
+
+| 担当 | 所有 | 内容 |
+|---|---|---|
+| Runtime (impl-runtime) | `Scripts/Cart/*`、`KH_LeashManager*.cs` | 接地 v3、交通 (すれ違い・待機)、犬用アンカー API、操作帯の「案内」、受付 OFF の表示、調整値 |
+| Editor (impl-editor) | `Scripts/Editor/Cart/*`、`CourseUITranslations.json`、`Data/Cart/` | 道幅の分類と待避点、掲示 (背面・乗り場)、調整 JSON、Verify/Probe |
+| Dog (impl-dog) | `Imported/KominkaDogRun/Scripts/KD_DogWanderController.HillsideLeash*.cs`、`KH_WalkStopovers.cs` (読むだけ可) | 乗車中の犬の前方配置とくん活抑制 |
+| Camera (impl-camera) | `Scripts/KH_VideoCamera*.cs`、`Scripts/Editor/KH_VideoCameraEditor*.cs`、`UITranslations.json` の video.* | 隊列カット |
+| Model (model-cart) | `scripts/art/osanpo-cart.py`、`Models/Cart/` | 車軸の LOD1 |
+
+### Runtime 1: 接地 v3 (犬と同じ方式に寄せる)
+
+犬は「自分の現在位置 + 1.5 m から下へ 4 m、Default + Environment、最初の当たりに y を合わせる (平滑化なし)」で埋まらない (`KD_DogWanderController.SnapToGround`)。カートは「道の高さ py + 4 から 10 m、py に最も近い当たりを採用、[py−1, py+1.5] に clamp、SmoothDamp」で、道の高さを基準にしている点が違う。v3:
+- 原点は **カートの前回の高さ** `_y[c] + 1.5` (初回・snap 時は py + 1.5)。長さ 4 m。最初の当たりを採用。当たらなければ py + 4 から 10 m で撃ち直し (復帰用)。
+- 障害物 (ベンチ・犬・看板) の上に乗らない: 当たりが前回の高さより 0.45 m 以上高く、かつその 2 cm 下から撃ち直して 1.0 m 以内に別の当たりがあれば、低い方を採る (最大 2 回)。
+- 高さの平滑化は残すが `smoothTime` を 0.08 s に下げる (坂での遅れを 2 cm 程度に)。ピッチは前後 2 点から。
+- **診断ログ**: |cart y − py| > 0.5 m が 1 秒以上続いたら 5 秒に 1 回 `[KH_Cart] ground gap=<m> d=<m> at=<pos> hit=<collider名>` を出す (埋まり・浮きの場所を Play ログから特定する)。
+
+### Runtime 2: 交通 (対向グループのすれ違いと待機)
+
+Editor が焼く配列 (null 既定): `int[] trackClass` (区間 i: 0 = 広い (千鳥可)、1 = 一列なら双方通れる、2 = 一列でも通れない)、`float[] narrowFrom, narrowTo` (class 2 の連続区間の距離範囲、軌道距離)、`float[] waitBefore, waitAfter` (各 narrow 区間の手前の待機点距離: 順方向から入る側 / 逆方向から入る側。待避できる class 0/1 の点で、区間の端から 3 m + 想定隊列長 (gap × 4) 手前)。
+同期 (追加): `int[] groupLane = new int[8]` (0 千鳥 / 1 一列・右寄せ / 2 一列・中央)、`float[] groupHoldDist = new float[8]` (−1 = なし。先頭の距離の上限。dir 方向でこれを越えない)、`int[] groupHoldSinceMs = new int[8]`。
+Owner の判定 (OwnerTick 4 Hz、`groupState == Running` の全組):
+1. **一列化**: 自分の先頭から `approach` (25 m) 先までに対向グループ (dir が逆) の車があれば、双方 `groupLane = 1` (右寄せ 0.55 m、横ずれ 0)。class 2 区間の中と手前 8 m は `groupLane = 2` (中央)。対向が居なくなり 10 m 離れたら 0 に戻す。同方向のグループは対象外。
+2. **狭い区間の先入優先**: 対向グループが class 2 区間の中に居る (先頭〜最後尾のどこかが区間内) か、区間の手前 `approach` 以内に居て自分より区間に近いなら、自分は区間手前の待機点で止まる: `groupHoldDist = waitBefore/After`。対向の最後尾が区間を出て 2 m 進んだら解除 (`groupHoldDist = −1` と錨の打ち直し: 現在の先頭距離・現在時刻)。
+3. 両方が手前なら、区間に近い方が先。同距離なら group 番号が小さい方。待機は最長 60 s で解除 (詰まり防止、ログ `traffic timeout`)。
+4. 待機は交通上の自動停止であり、所属・目的地・マスター・受付は変えない。待機中は操作帯の結果欄に `cart.result.waiting`「すれ違い待ち。自動で進みます」を出す (パネルの `resultLabel` ではなく操作帯に 1 行、`KH_CartControls` に `TextMeshProUGUI noteLabel` を追加)。
+Motion: 横ずれは `groupLane` で決める (0 = 従来の千鳥、1 = 右へ +0.55、2 = 0)。切り替えは LateralSpeed で滑らかに。距離は `groupHoldDist` で clamp (目的地 clamp と同じ扱い)。
+ログ: `traffic lane g=.. lane=..` / `traffic hold g=.. at=.. because=..` / `traffic release g=..`。
+
+### Runtime 3: 犬用 API と操作帯
+
+- `public bool _IsPlayerRiding(int playerId)`、`public Vector3 _DogAnchor(int playerId, int slot)` (slot 0..2: 乗っているカートの前方 0.9 m、横 (−0.45, +0.45, 0) の順。`groupLane != 0` のときは横を半分に。カートが無ければ `Vector3.zero`)、`public Vector3 _CartForward(int playerId)`。犬担当が呼ぶ。
+- 操作帯に「案内」ボタン (11 個目、文言 `cart.guide`「お手入れ道具の案内」): `KD_TreatPouch` を開き、課金道具の案内ページがあればそのページへ (無ければ `_Toggle()` だけ)。ドックへ寄せるのは従来どおり。
+- 乗り場パネル: 受付 OFF / 終了中のグループも行に出し、`cart.result.closed` の短縮形 (`cart.row.closed`「受付停止」/ `cart.row.ending`「到着中」) を人数の後ろに付け、ボタンは無効表示 (押しても `CartClosed`)。
+- 調整値: `speed / gap / lateral / approach / holdTimeoutSec / seatStep / yawStep` を public のまま、Editor の `Data/Cart/tuning.json` から Build が書く (下記)。
+
+### Editor
+
+1. **道幅の分類** (Build、`.Track.cs`): 軌道の各区間の中点で、進行方向の左右へ 0.25 m 刻みに `NavMesh.SamplePosition` (半径 0.3) が通る幅を測り (最大 4 m)、左右合計の通行幅 W を得る。class 0: W ≥ 3.4、class 1: 2.2 ≤ W < 3.4、class 2: W < 2.2 または `linkAllowsDetour = false` (橋)。連続する class 2 を区間にまとめ、前後 1.5 m の余裕を足す。待機点は区間端から `3 m + gap×4` 手前で class ≤ 1 の最初の点。`trackClass / narrowFrom / narrowTo / waitBefore / waitAfter` を Manager へ書く。build.json に class ごとの延長と区間一覧を出す。
+2. **掲示**: 背面の Sign に `Data/Cart/KH_CartSign.png` (512×256、`Data/WashPremium/Photos/Set*.png` の 1 枚を枠に収め、価格・文字なし) を Build が合成して `KH_OsanpoCart_Sign.mat` へ。Sign の板の下に小さな TMP (`cart.sign.caption`「ばにまるのお手入れ道具」、共通フォント、13 言語) を `Anchor_SignBack` の子に置く (操作なし、layer Default)。乗り場パネルに写真 1 枚 (同じ Set 画像) と 1 行 (`cart.station.pr`「散歩のあとは、お手入れ道具で洗ってあげよう」) を注意書きの下に追加。乗り場は注意書きが先。
+3. **調整 JSON**: `Data/Cart/tuning.json` (speed 1.3, gap 3.0, lateral 0.6, approach 25, holdTimeoutSec 60, seatStep 0.05, yawStep 15, laneOffset 0.55)。Build が読んで Manager へ書く。`Tools/KominkaHillside/Cart/4 Apply Tuning` は JSON だけ再適用 (シーンの他は触らない)。
+4. **Verify/Probe**: class 配列の長さ = 区間数、class 2 が橋 2 本を含む、待機点が class ≤ 1、待機点と区間の距離、`groupLane` 配列の長さ、操作帯 11 ボタン、Sign 材質の画像、caption の配線、tuning の値一致。Probe: 対向 2 グループの模擬 (Edit で Owner 判定の純関数 `TrafficDecide(...)` を Reflection で呼び、先入優先・待機点・解除の 6 ケース)。
+
+### Dog (impl-dog)
+
+- 持ち主が乗車中 (`cartManager._IsPlayerRiding(holderId)`) の犬は、リードの目標を手ではなく `cartManager._DogAnchor(holderId, slot)` にする (slot は持ち主の接続犬の中での順)。追従は既存の速度制御のまま (目標が 1.3 m/s で進むので歩き続ける)。
+- くん活 (`LeashStopover` / sniff / detour の開始) を持ち主が乗車中は始めない。進行中なら中断して追従へ戻す。
+- 持ち主が降りたら通常へ戻す (次の判定で自然に戻る形でよい)。
+- `KH_CartManager` への参照は `KD_DogWanderController` の非同期フィールド `public KH_CartManager cartManager;` (null なら従来どおり)。配線は Cart/1 Build が行う (Editor 担当: 6 匹の `cartManager` を SerializedObject で書く)。
+- 変更は乗車中だけに効くこと。通常の散歩の挙動 (目的地・寄り道・集合) を変えない。
+
+### Camera (impl-camera)
+
+- 新カット「隊列」(`video.mode.convoy`「隊列」): 自分が乗っているグループの全カートと犬を 1 画面に収める。被写体の中心 = グループのカートの重心、距離 = 隊列の広がり (先頭〜最後尾 + 犬の余裕 2 m) から画角で求め、後ろ斜め上 (進行方向の後方 35°、仰角 20°) から追う。乗っていなければ既存の「背中ごし」に戻る。既存の切替 UI (Modes の並び) に追加し、パターン再生の対象にはしない (任意)。
+- `KH_CartManager` への参照 `public KH_CartManager cartManager;` (Build で配線)。
+
+### Model (model-cart)
+
+- `_AxleFront_LOD1 / _AxleRear_LOD1` (各 ≤ 180 三角形、8 分割) を FBX に追加し、LOD1 合計 ≤ 1,500 (Body_LOD1 1,136 + 車軸 2 本)。production.md と report を更新。Editor の LODGroup は LOD1 に車軸 LOD1 を含める (Editor 担当)。
+
+### 乗車中の撫で・おやつ (決定)
+
+特別な処理は入れず **許可**する。撫では手の接触なのでそのまま、おやつ呼びは犬が持ち主のアンカーに居るので近い。Play で破綻があれば M3。
+
+### 検証と引き渡し (M2)
+
+compile → Cart/1 (Program Asset 無し) → Cart/2 → Cart/3 → Video/1 → Video/2 → Course/27 → 保存 → Codex → コミット。Play で見ること: ①逆方向 2 グループが広い道で一列・右寄せになってすれ違う ②橋の手前で後から来た側が待ち、相手が抜けたら進む ③犬が前方の定位置を歩き、くん活で止まらない ④背面の掲示と乗り場の写真 ⑤「隊列」カット ⑥埋まり・浮きの場所が `ground gap` ログに出るか ⑦FPS (最後)。
