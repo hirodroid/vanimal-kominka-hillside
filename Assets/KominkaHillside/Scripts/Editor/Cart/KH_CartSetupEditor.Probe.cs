@@ -28,6 +28,8 @@ namespace KominkaHillside.Editor
             public List<string> formation = new List<string>();
             public List<string> noDetourRanges = new List<string>();
             public List<string> arrivals = new List<string>();
+            public float trackLength, closingSegment;   // M1.1
+            public string noLateral;
             public string limitations = "Edit-mode math only: route proxy methods (if present) and the contract formulas evaluated in C#. Does not run KH_CartManager, server time, ground raycasts, SmoothDamp, stations or networking.";
         }
 
@@ -242,6 +244,87 @@ namespace KominkaHillside.Editor
                     r.arrivals.Add("spot " + s + " -> dest " + dest + " dir " + dir + " dist " + dist.ToString("F1") + " m, head " + tArrive.ToString("F0") + " s, order 3 " + ((dist + 3 * r.gap) / r.speed).ToString("F0") + " s");
                 }
             }
+
+            ProbeTrack(pr, route, leash);
+        }
+
+        /// <summary>M1.1: Manager の軌道関数 (TrackPoint / TrackDirection / TrackDetour / TrackNoLateral、Reflection) と保存済みの軌道配列を、
+        /// route と参照実装に照合する。乖離は節 0 の近傍 (直結区間) を除いて 0.01 m 未満、直結区間は約 1.45 m。</summary>
+        static void ProbeTrack(P pr, KH_WalkRoute route, KH_LeashManager leash)
+        {
+            var r = pr.r;
+            var mgr = UnityEngine.Object.FindObjectsOfType<KH_CartManager>(true).FirstOrDefault();
+            if (mgr == null) { pr.Skip("KH_CartManager not in scene: track probe skipped (run Cart/1)"); return; }
+            var want = BuildTrack(route);
+            ProjectStops(want, route, leash);
+            var so = new SerializedObject(mgr);
+            var pos = ReadVectors(so, "trackPositions");
+            if (pos == null || pos.Length != want.positions.Length) { pr.Req(false, "manager.trackPositions length " + want.positions.Length + " (actual " + (pos != null ? pos.Length : -1) + "; run Cart/1)"); return; }
+            var from = ReadFloats(so, "noLateralFrom"); var to = ReadFloats(so, "noLateralTo");
+            r.trackLength = want.length; r.closingSegment = want.closing;
+            r.noLateral = from != null && to != null ? string.Join(", ", from.Select((a, k) => a.ToString("F1") + "-" + to[k].ToString("F1"))) : "none";
+            pr.Req(want.closing > .5f && want.closing < 3f, "closing segment 435 -> 1 is short (" + want.closing.ToString("F2") + " m, expected about 1.45)");
+
+            var t = mgr.GetType();
+            MethodInfo M(string name) { return t.GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(float) }, null); }
+            var mPoint = M("TrackPoint"); var mDir = M("TrackDirection"); var mDetour = M("TrackDetour"); var mNo = M("TrackNoLateral");
+            if (mPoint == null) pr.Skip("KH_CartManager.TrackPoint(float) not found");
+            if (mDir == null) pr.Skip("KH_CartManager.TrackDirection(float) not found");
+            if (mDetour == null) pr.Skip("KH_CartManager.TrackDetour(float) not found");
+            if (mNo == null) pr.Skip("KH_CartManager.TrackNoLateral(float) not found");
+            float ld1 = route.loopDistances[1], lastNode = want.distances[want.distances.Length - 1];
+            try
+            {
+                if (mPoint != null)
+                {
+                    Func<float, Vector3> tp = d => (Vector3)mPoint.Invoke(mgr, new object[] { d });
+                    int nodeMiss = 0; for (int k = 0; k < want.positions.Length; k++) if ((tp(want.distances[k]) - want.positions[k]).magnitude > .01f) nodeMiss++;
+                    pr.Req(nodeMiss == 0, "TrackPoint(trackDistances[k]) == trackPositions[k] for all 435 nodes (miss " + nodeMiss + ")");
+                    // route との乖離: 節 1 から節 435 までの区間 (直結区間 = 節 0 の近傍を除く)
+                    float worst = 0f, worstAt = 0f;
+                    for (float d = 0f; d <= lastNode; d += .5f) { float e = (tp(d) - route._PointAtDistance(d + ld1)).magnitude; if (e > worst) { worst = e; worstAt = d; } }
+                    pr.Req(worst < .01f, "TrackPoint matches route._PointAtDistance away from node 0 (worst " + worst.ToString("F4") + " m at d=" + worstAt.ToString("F1") + ")");
+                    // 直結区間は節 435 → 節 1 の直線
+                    var mid = tp(lastNode + want.closing * .5f); var lin = Vector3.Lerp(want.positions[want.positions.Length - 1], want.positions[0], .5f);
+                    pr.Req((mid - lin).magnitude < .01f, "closing segment is the straight line node 435 -> node 1");
+                    pr.Req((tp(-.01f) - tp(want.length - .01f)).magnitude < 1e-3f && (tp(want.length + 3f) - tp(3f)).magnitude < 1e-3f, "TrackPoint wraps at trackLength");
+                    // 門枠: 乗り場の開始点と入口の到着点
+                    if (GateBounds(out Bounds gate, out string gatePath))
+                    {
+                        bool InGate(Vector3 q) { return q.x >= gate.min.x && q.x <= gate.max.x && q.z >= gate.min.z && q.z <= gate.max.z; }
+                        for (int s = 0; s < StationCount; s++) pr.Req(!InGate(tp(want.spot[s])), "spot " + s + " start outside the gate frame (TrackPoint)");
+                        var e0 = tp(want.dest[0]);
+                        pr.Req(!InGate(e0) && e0.z > gate.center.z, "entrance arrival in front of the gate (TrackPoint " + e0.ToString("F1") + ")");
+                    }
+                    else pr.Skip("gate frame not found");
+                }
+                if (mDir != null)
+                {
+                    float worstDot = 1f;
+                    for (float d = 0f; d < want.length; d += 1f) worstDot = Mathf.Min(worstDot, Vector3.Dot((Vector3)mDir.Invoke(mgr, new object[] { d }), TrackDirectionRef(want, d)));
+                    pr.Req(worstDot > .999f, "TrackDirection matches the track segments (min dot " + worstDot.ToString("F4") + ")");
+                }
+                if (mDetour != null)
+                {
+                    int miss = 0;
+                    for (float d = 0f; d < want.length; d += .5f) if ((bool)mDetour.Invoke(mgr, new object[] { d }) != want.detour[TrackSegment(want, d)]) miss++;
+                    pr.Req(miss == 0, "TrackDetour == trackDetour[segment] (mismatch " + miss + ")");
+                }
+                if (mNo != null)
+                {
+                    int miss = 0;
+                    for (float d = 0f; d < want.length; d += .5f) if ((bool)mNo.Invoke(mgr, new object[] { d }) != InNoLateral(from, to, d)) miss++;
+                    pr.Req(miss == 0, "TrackNoLateral == noLateralFrom/To ranges (mismatch " + miss + ")");
+                    var bench = GameObject.Find(BenchPath);
+                    if (bench != null)
+                    {
+                        float db = ProjectToTrack(want, bench.transform.position);
+                        pr.Req((bool)mNo.Invoke(mgr, new object[] { db }), "TrackNoLateral true at the viewpoint bench (d=" + db.ToString("F1") + ")");
+                    }
+                    else pr.Skip("bench " + BenchPath + " not found");
+                }
+            }
+            catch (TargetInvocationException ex) { pr.Req(false, "track function threw in Edit mode: " + (ex.InnerException != null ? ex.InnerException.Message : ex.Message)); }
         }
 
         static float Wrap(float d, float L) { d %= L; return d < 0f ? d + L : d; }

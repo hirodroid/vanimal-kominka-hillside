@@ -22,19 +22,124 @@ namespace KominkaHillside
         private float _L;
         private int _nodeCount, _loopFwd = 2, _loopRev = 3;
 
+        private bool _useTrack, _routeCached;
+
+        /// <summary>距離の基準を決める。M1.1: カート専用の軌道 (trackPositions / trackDistances / trackLength。Setup が書く) が揃っていれば
+        /// それを使い (_L = trackLength)、無ければ従来の route の周回 (_L = loopLength)。行き先の値 (周回 2/3) は route から読む。</summary>
         private bool EnsureRoute()
         {
-            if (route == null) return false;
-            if (_loopDist == null)
+            if (!_routeCached)
             {
-                _loopDist = route.loopDistances;
-                _L = route.loopLength;
-                _destNodes = route.destinationNodes;
-                _nodeCount = route.count;
-                _loopFwd = route.loopForwardDestination;
-                _loopRev = route.loopReverseDestination;
+                _routeCached = true;
+                _useTrack = trackPositions != null && trackDistances != null && trackPositions.Length > 1
+                    && trackDistances.Length == trackPositions.Length && trackLength > 0f;
+                if (route != null)
+                {
+                    _loopDist = route.loopDistances;
+                    _destNodes = route.destinationNodes;
+                    _nodeCount = route.count;
+                    _loopFwd = route.loopForwardDestination;
+                    _loopRev = route.loopReverseDestination;
+                }
+                _L = _useTrack ? trackLength : (route != null ? route.loopLength : 0f);
+                Debug.Log("[KH_Cart] distance basis=" + (_useTrack ? "track nodes=" + trackPositions.Length : "route") + " length=" + _L);
             }
-            return _loopDist != null && _nodeCount > 1 && _loopDist.Length >= _nodeCount && _L > 0f && route.closedLoop;
+            if (_useTrack) return true;
+            return route != null && _loopDist != null && _nodeCount > 1 && _loopDist.Length >= _nodeCount && _L > 0f && route.closedLoop;
+        }
+
+        /// <summary>乗り場 spot の開始距離。軌道なら spotTrackDistance[spot]、無ければ spotNodes のノードの loopDistances。無効なら -1。</summary>
+        private float SpotStartDistance(int spot)
+        {
+            if (spot < 0 || spot >= SpotCount || !EnsureRoute()) return -1f;
+            if (_useTrack)
+            {
+                if (spotTrackDistance == null || spot >= spotTrackDistance.Length) return -1f;
+                float s = spotTrackDistance[spot];
+                return s >= 0f ? s : -1f;
+            }
+            int node = SpotNode(spot);
+            return node >= 0 ? _loopDist[node] : -1f;
+        }
+
+        /// <summary>行き先の到着距離。周回 (2/3) と無効は -1。軌道なら destTrackDistance[dest]、無ければ destinationNodes のノードの loopDistances。</summary>
+        private float DestDistance(int destination)
+        {
+            if (destination == _loopFwd || destination == _loopRev || !EnsureRoute()) return -1f;
+            if (_useTrack)
+            {
+                if (destTrackDistance == null || destination < 0 || destination >= destTrackDistance.Length) return -1f;
+                float s = destTrackDistance[destination];
+                return s >= 0f ? s : -1f;
+            }
+            int node = DestNode(destination);
+            return node >= 0 ? _loopDist[node] : -1f;
+        }
+
+        // ============================================================
+        // 軌道 (M1.1)。Probe が Reflection で呼ぶので名前・引数 (float d 1 つ) を変えない。配列が無ければ route の同名機能へ
+        // ============================================================
+
+        /// <summary>距離 d の点 (軌道の区間 i = trackPositions[i] → [(i+1) % n] の直線補間)。</summary>
+        public Vector3 TrackPoint(float d)
+        {
+            if (!EnsureRoute()) return transform.position;
+            if (!_useTrack) return route._PointAtDistance(d);
+            int n = trackPositions.Length;
+            float x = Wrap(d);
+            int i = TrackSegment(x);
+            int j = (i + 1) % n;
+            float a = trackDistances[i];
+            float b = j == 0 ? trackLength : trackDistances[j];
+            float t = b - a > 0.0001f ? Mathf.Clamp01((x - a) / (b - a)) : 0f;
+            return Vector3.Lerp(trackPositions[i], trackPositions[j], t);
+        }
+
+        /// <summary>距離 d を含む区間の水平単位ベクトル (距離が増える向き)。</summary>
+        public Vector3 TrackDirection(float d)
+        {
+            if (!EnsureRoute()) return Vector3.forward;
+            if (!_useTrack) return route._DirectionAtDistance(d);
+            int n = trackPositions.Length;
+            int i = TrackSegment(Wrap(d));
+            Vector3 v = trackPositions[(i + 1) % n] - trackPositions[i]; v.y = 0f;
+            return v.sqrMagnitude < 0.0001f ? Vector3.forward : v.normalized;
+        }
+
+        /// <summary>距離 d を含む区間で横ずれしてよいか (trackDetour[i]。配列が無ければ true)。</summary>
+        public bool TrackDetour(float d)
+        {
+            if (!EnsureRoute()) return true;
+            if (!_useTrack) return route._DetourAtDistance(d);
+            if (trackDetour == null) return true;
+            int i = TrackSegment(Wrap(d));
+            return i >= trackDetour.Length || trackDetour[i];
+        }
+
+        /// <summary>距離 d が追加の横ずれ禁止範囲 [noLateralFrom[k], noLateralTo[k]] に入るか (周回をまたぐ範囲・負の始点も可)。</summary>
+        public bool TrackNoLateral(float d)
+        {
+            if (noLateralFrom == null || noLateralTo == null || !EnsureRoute()) return false;
+            float x = Wrap(d);
+            for (int k = 0; k < noLateralFrom.Length && k < noLateralTo.Length; k++)
+            {
+                float len = noLateralTo[k] - noLateralFrom[k];
+                if (len <= 0f) continue;
+                if (Wrap(x - noLateralFrom[k]) <= len) return true;
+            }
+            return false;
+        }
+
+        // trackDistances[i] <= x を満たす最大の i (二分探索。trackDistances[0] = 0、昇順)
+        private int TrackSegment(float x)
+        {
+            int lo = 0, hi = trackDistances.Length - 1;
+            while (lo < hi)
+            {
+                int mid = (lo + hi + 1) / 2;
+                if (trackDistances[mid] <= x) lo = mid; else hi = mid - 1;
+            }
+            return lo;
         }
 
         // ============================================================
@@ -82,6 +187,8 @@ namespace KominkaHillside
             cartGroup[c] = -1;
             cartOrder[c] = 0;
             cartSpot[c] = 0;
+            cartSeatSteps[c] = 0;   // M1.1: 降車で座席を既定へ戻す
+            cartYawSteps[c] = 0;
         }
 
         private void FreeGroup(int g)
@@ -168,7 +275,7 @@ namespace KominkaHillside
             {
                 if (cartState[c] == CartIdle)
                 {
-                    if (cartRider[c] != 0 || cartGroup[c] != -1) { ResetCart(c); changed = true; }
+                    if (cartRider[c] != 0 || cartGroup[c] != -1 || cartSeatSteps[c] != 0 || cartYawSteps[c] != 0) { ResetCart(c); changed = true; }
                     continue;
                 }
                 int g = cartGroup[c];
@@ -208,9 +315,9 @@ namespace KominkaHillside
         /// <summary>錨 (先頭の距離) から目的地距離まで、進行方向に測った残り。行き過ぎ (浮動小数で 1 周近くに化けた値) は 0。</summary>
         private float Remaining(int g)
         {
-            int node = DestNode(groupDest[g]);
-            if (node < 0) return 0f;
-            float a = groupAnchorDist[g], b = _loopDist[node];
+            float b = DestDistance(groupDest[g]);
+            if (b < 0f) return 0f;
+            float a = groupAnchorDist[g];
             float raw = Wrap(groupDir[g] > 0 ? b - a : a - b);
             return raw > _L * .75f ? 0f : raw;
         }

@@ -22,7 +22,15 @@ namespace KominkaHillside
         public VRC.SDK3.Components.VRCStation station;
         public Transform seat, exitL, exitR, stopL, stopR, signBack, axleFront, axleRear;
         public Renderer[] renderers;
-        public KH_CartStopButton stopButton, acceptButton;   // 子 GameObject (Interact を受ける。左 = 停止、右 = 受付切替)
+        public KH_CartStopButton stopButton, acceptButton;   // 子 GameObject (Interact を受ける。M1.1: 左右とも停止 (kind 0)。kind 1 ならマスターだけ)
+        public KH_CartControls controls;   // M1.1: 左斜め前の操作帯 (null 可)
+        public KH_CartDock dock;           // M1.1: 乗車中に板を寄せるドック (null 可)
+
+        public const float SeatStep = 0.05f, YawStep = 15f;   // 座席の 1 段 (m / 度)
+        private bool _seatReady;
+        private Vector3 _seatPos;
+        private Quaternion _seatRot;
+        private int _seatH = int.MinValue, _seatY = int.MinValue;   // 最後に置いた段数 (変わったときだけ書く)
 
         public const float WheelRadius = 0.14f;
         const float ExitReach = 1.0f;
@@ -37,6 +45,28 @@ namespace KominkaHillside
         {
             DisableInteractive = true;   // クリック着座の禁止 (着座はパネル経由だけ)
             EnsureExitLocal();
+            EnsureSeatDefault();
+        }
+
+        /// <summary>M1.1: 座席 (Anchor_Seat = station の入る位置) を既定 + 段数に置く。高さはローカル y に 5 cm/段、向きは親の Y 軸まわりに 15°/段。
+        /// 全クライアントが manager.ApplyState から同期値で呼ぶ (座っている人は station の入る位置に付いて動く)。</summary>
+        public void _ApplySeat(int steps, int yawSteps)
+        {
+            if (seat == null) return;
+            if (steps == _seatH && yawSteps == _seatY) return;
+            EnsureSeatDefault();
+            _seatH = steps; _seatY = yawSteps;
+            seat.localPosition = new Vector3(_seatPos.x, _seatPos.y + steps * SeatStep, _seatPos.z);
+            seat.localRotation = Quaternion.Euler(0f, yawSteps * YawStep, 0f) * _seatRot;
+        }
+
+        // 既定の座席の姿勢は、最初に動かす前に 1 回だけ控える (Start の順は保証されないので _ApplySeat からも呼ぶ)
+        private void EnsureSeatDefault()
+        {
+            if (_seatReady || seat == null) return;
+            _seatReady = true;
+            _seatPos = seat.localPosition;
+            _seatRot = seat.localRotation;
         }
 
         public void _SetVisible(bool on)
@@ -113,8 +143,14 @@ namespace KominkaHillside
         /// <summary>停止・受付ボタンを、このカートの乗員 (受付はマスター) にだけ出す。manager.ApplyState から。</summary>
         public void _SetRider(bool mine, bool master, bool accepting)
         {
-            if (stopButton != null) stopButton._SetOn(mine);
-            if (acceptButton != null) { acceptButton._SetAccepting(accepting); acceptButton._SetOn(mine && master); }
+            if (stopButton != null) stopButton._SetOn(mine && (stopButton.kind == 0 || master));
+            if (acceptButton != null)
+            {
+                acceptButton._SetAccepting(accepting);
+                acceptButton._SetOn(mine && (acceptButton.kind == 0 || master));   // M1.1: 右も停止 (kind 0) なら乗員全員に出す
+            }
+            if (dock != null) dock._SetRiding(mine);
+            if (controls != null) controls._Refresh();
         }
 
         /// <summary>言語が変わった (manager が 1 秒ごとに見て呼ぶ)。</summary>
@@ -122,6 +158,7 @@ namespace KominkaHillside
         {
             if (stopButton != null) stopButton._RefreshText();
             if (acceptButton != null) acceptButton._RefreshText();
+            if (controls != null) controls._RefreshText();
         }
 
         public override void OnStationEntered(VRCPlayerApi player)

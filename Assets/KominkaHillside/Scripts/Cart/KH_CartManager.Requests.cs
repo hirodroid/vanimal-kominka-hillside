@@ -97,6 +97,20 @@ namespace KominkaHillside
             else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqAccepting), on);
         }
 
+        // ---- 座席の調整 (M1.1。乗っている本人だけ。高さ 5 cm/段・向き 15°/段、どちらも -6..+6) ----
+        public void _SeatUp() { SendSeat(1, 0); }
+        public void _SeatDown() { SendSeat(-1, 0); }
+        public void _TurnLeft() { SendSeat(0, -1); }
+        public void _TurnRight() { SendSeat(0, 1); }
+
+        private void SendSeat(int dHeight, int dYaw)
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp) || !_IsRiding()) return;
+            if (Networking.IsOwner(gameObject)) ReceiveSeat(lp.playerId, dHeight, dYaw);
+            else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqSeat), dHeight, dYaw);
+        }
+
         /// <summary>降車の 1 本道。exitStation = false はすでに station の外 (ジャンプ) か、station に触れたくない (リスポーン) とき。</summary>
         private void LeaveCore(string reason, bool exitStation)
         {
@@ -158,9 +172,31 @@ namespace KominkaHillside
             ReceiveAccepting(caller.playerId, on);
         }
 
+        [NetworkCallable(maxEventsPerSecond: 6)]
+        public void ReqSeat(int dHeight, int dYaw) // net: callable-ok: CallingPlayer で照合 (自分が乗っているカートの座席だけ。1 回 ±1 段まで)
+        {
+            if (!Networking.IsOwner(gameObject)) return;
+            VRCPlayerApi caller = NetworkCalling.CallingPlayer;
+            if (!Utilities.IsValid(caller)) return;
+            ReceiveSeat(caller.playerId, dHeight, dYaw);
+        }
+
         // ============================================================
         // 裁定 (Owner)
         // ============================================================
+
+        private void ReceiveSeat(int pid, int dHeight, int dYaw)
+        {
+            int c = RiderCart(pid);
+            if (c < 0) return;
+            int h = Mathf.Clamp(cartSeatSteps[c] + Mathf.Clamp(dHeight, -1, 1), -SeatStepsMax, SeatStepsMax);
+            int y = Mathf.Clamp(cartYawSteps[c] + Mathf.Clamp(dYaw, -1, 1), -SeatStepsMax, SeatStepsMax);
+            if (h == cartSeatSteps[c] && y == cartYawSteps[c]) return;
+            cartSeatSteps[c] = h;
+            cartYawSteps[c] = y;
+            Debug.Log("[KH_Cart] seat cart=" + c + " player=" + pid + " height=" + h + " yaw=" + y);
+            Commit();
+        }
 
         private void ReceiveStart(int pid, int spot, int destination)
         {
@@ -173,8 +209,8 @@ namespace KominkaHillside
                 Debug.Log("[KH_Cart] reject start player=" + pid + " spot=" + spot + " dest=" + destination + " code=" + code);
                 return;
             }
-            int node = SpotNode(spot);
-            int dir = StartDirection(node, destination);
+            float start = SpotStartDistance(spot);
+            int dir = StartDirection(start, destination);
             groupGen[g] = (groupGen[g] % 1000000) + 1;   // 作成ごとに +1 (古い合流要求を見分ける)
             groupState[g] = GroupRunning;
             groupMaster[g] = c;
@@ -182,14 +218,14 @@ namespace KominkaHillside
             groupDir[g] = dir;
             groupAccepting[g] = true;
             groupCount[g] = 1;
-            groupAnchorDist[g] = Wrap(_loopDist[node]);
+            groupAnchorDist[g] = Wrap(start);
             groupAnchorMs[g] = Networking.GetServerTimeInMilliseconds() + departDelayMs;
             cartState[c] = CartRiding;
             cartRider[c] = pid;
             cartGroup[c] = g;
             cartOrder[c] = 0;
             cartSpot[c] = spot;
-            Debug.Log("[KH_Cart] start cart=" + c + " group=" + g + " gen=" + groupGen[g] + " player=" + pid + " spot=" + spot + " node=" + node + " dest=" + destination
+            Debug.Log("[KH_Cart] start cart=" + c + " group=" + g + " gen=" + groupGen[g] + " player=" + pid + " spot=" + spot + " start=" + start + " basis=" + (_useTrack ? "track" : "route") + " dest=" + destination
                 + " dir=" + dir + " anchor=" + groupAnchorDist[g] + " remaining=" + (IsDestRun(g) ? Remaining(g) : -1f));
             Commit();
         }
@@ -250,10 +286,11 @@ namespace KominkaHillside
         private int CanStart(int pid, int spot, int destination)
         {
             if (!EnsureRoute()) return CartUnavailable;
-            int node = SpotNode(spot);
-            if (node < 0 || DestNode(destination) < 0) return CartUnavailable;
+            float start = SpotStartDistance(spot);
+            bool loop = destination == _loopFwd || destination == _loopRev;
+            if (start < 0f || destination < 0 || destination >= _destKeys.Length || (!loop && DestDistance(destination) < 0f)) return CartUnavailable;
             if (RiderCart(pid) >= 0) return CartBusy;
-            if (IsHere(node, destination)) return CartHere;
+            if (IsHere(start, destination)) return CartHere;
             if (PickFreeCart() < 0 || PickFreeGroup() < 0) return CartFull;
             return CartOk;
         }
@@ -321,31 +358,28 @@ namespace KominkaHillside
             return node >= 0 && node < _nodeCount ? node : -1;
         }
 
-        /// <summary>周回 (順/逆) はその向き。それ以外は KH_WalkRoute._Next と同じ短い側 (forward <= 半周 なら +1)。</summary>
-        private int StartDirection(int node, int destination)
+        /// <summary>周回 (順/逆) はその向き。それ以外は KH_WalkRoute._Next と同じ短い側 (forward <= 半周 なら +1)。距離は軌道 (無ければ route)。</summary>
+        private int StartDirection(float start, int destination)
         {
             if (destination == _loopFwd) return 1;
             if (destination == _loopRev) return -1;
-            int to = DestNode(destination);
-            if (to < 0 || node < 0) return 1;
-            float forward = _loopDist[to] - _loopDist[node];
-            if (forward < 0f) forward += _L;
+            float to = DestDistance(destination);
+            if (to < 0f || start < 0f) return 1;
+            float forward = Wrap(to - start);
             return forward <= _L * .5f ? 1 : -1;
         }
 
-        /// <summary>現在地が目的地か。周回は常に false。乗り場のノード (Course/80 が基準から ±5 ノードまでずらして決める) と
-        /// 行き先のノードは一致しないことがあるので、経路距離 HereDistance 以内も「ここ」とみなす。</summary>
-        private bool IsHere(int node, int destination)
+        /// <summary>現在地が目的地か。周回は常に false。乗り場と行き先の点は一致しないことがあるので、経路距離 HereDistance 以内を「ここ」とみなす。</summary>
+        private bool IsHere(float start, int destination)
         {
             if (destination == _loopFwd || destination == _loopRev) return false;
-            int to = DestNode(destination);
-            if (to < 0 || node < 0) return false;
-            if (to == node) return true;
-            float diff = Mathf.Abs(_loopDist[to] - _loopDist[node]);
-            diff = Mathf.Min(diff, _L - diff);
+            float to = DestDistance(destination);
+            if (to < 0f || start < 0f) return false;
+            float diff = Mathf.Abs(WrapSigned(to - start));
             return diff < HereDistance;
         }
 
+        public const int SeatStepsMax = 6;   // 座席の段数の上限 (高さ ±30 cm、向き ±90°)
         const int ReuseDelayMs = 3000;   // 解放したカートを他の人へ回すまでの猶予 (サーバー時刻。cartFreedMs で同期)
     }
 }

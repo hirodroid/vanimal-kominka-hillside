@@ -183,3 +183,41 @@ Setup は `Assets/KominkaHillside/Models/Cart/` の中身を変更しない (FBX
 - 空車なしのときの結果通知は要求側のタイムアウト (2 秒) で代用する。
 - 合流時の着座は暗転で済ませ、走って追いつく演出はしない。
 - すれ違い・交通待機は無い。逆方向のグループは同じ道で重なり得る (M2)。
+
+## M1.1: Play 1 回目の指摘と追加要望 (2026-10-12)
+
+Issue の「Play 確認 1 回目と M1.1」の症状と原因候補に対応する。ユーザー要望 (2026-10-12): 座席の高さ・回転を変えたい / 乗車中はカート横のボタンで手元メニューを呼び、カートの左側で一緒に動いてほしい / 写真・撮影モニターも追従 / 調整 UI は左斜め前、カメラに映らないレイヤー。**乗車中に限り、2026-09-03 の「板は据えた後は追従しない」を上書きする** (降りれば従来どおり)。ClientSim は移動入力やジャンプで Station を抜ける (`ClientSimPlayerStationManager.CanPlayerMoveWhileSeated`) ため、ClientSim でメニューを開いて降りてしまう件は ClientSim の挙動として記録し、実機 (TestBuild) で確認する。
+
+### Runtime (impl-runtime)
+
+1. **接地の頑健化** (`KH_CartManager.Motion.cs`): レイは `p.y + 4` から下へ 10 m、マスクは従来 (Default + Environment)。当たった物が `TerrainCollider` でなく、かつ `|hit.y − p.y| > 0.35` なら、その当たり点の 2 cm 下から撃ち直す (最大 3 回)。採用は道の高さ `p.y` に最も近い当たり。最終の高さは `[p.y − 1.0, p.y + 1.5]` に clamp。ピッチは前後 ±0.42 m の 2 点の高さ差から取り (法線は使わない)、ロールは 0 のまま。レイの頻度: 自分が乗っているカートは毎フレーム 2 点 (前後)、他のカートは 3 フレームに 1 回 1 点、駐車中は 0。ベンチ・看板・犬 (Default のカプセル) の上に乗らないことが狙い。
+2. **カート専用の軌道** (`KH_CartManager.Motion.cs` / `.Groups.cs` / `.Requests.cs`): Setup が書く非同期配列 (既定 null) を優先し、null なら従来の route を使う。
+   ```
+   public Vector3[] trackPositions;  public float[] trackDistances;  public float trackLength;   // 節 0 (入口の枝) を除いた閉路
+   public bool[] trackDetour;        // 区間 i (trackPositions[i] → [i+1]) で横ずれ可か
+   public float[] noLateralFrom, noLateralTo;   // 追加で横ずれ 0 にする距離範囲 (ベンチ・門枠)
+   public float[] spotTrackDistance;            // 乗り場 0..4 の開始距離 (軌道上)
+   public float[] destTrackDistance;            // 行き先 0..5 の到着距離 (2/3 の周回は -1)
+   ```
+   `_PointAtDistance` 相当の補間・方向・detour 判定を軌道配列に対して行う関数を Manager 側に持つ (`TrackPoint / TrackDirection / TrackDetour / TrackNoLateral`)。開始・到着・向きの判定 (短い側) もこの距離で行う。Probe が照合するので、関数名はこの 4 つにする。
+3. **座席の調整** (同期、乗っている本人だけ変更可): `[UdonSynced] public int[] cartSeatSteps = new int[8]` (高さ、1 段 = 5 cm、−6..+6) と `[UdonSynced] public int[] cartYawSteps = new int[8]` (1 段 = 15°、−6..+6)。`[NetworkCallable(maxEventsPerSecond: 6)] public void ReqSeat(int dHeight, int dYaw)` を要求者 = そのカートの乗員のときだけ適用し Commit。全クライアントの ApplyState で `carts[c]._ApplySeat(steps, yawSteps)` を呼び、`KH_CartSeat` が `seat` (Anchor_Seat) のローカル位置 y と Y 回転を既定 + 段数で置く。降車 (RemoveCart) で 0 に戻す。ローカル API: `_SeatUp() / _SeatDown() / _TurnLeft() / _TurnRight()`。
+4. **ドック** (新規 `KH_CartDock.cs`、None、ローカル専用、各カートに 1 つ): 参照 `KominkaDogRun.KD_TreatPouch menu; KH_VideoCamera video; KominkaDogRun.KD_PhotoViewer photo; Transform dockMenu, dockMonitor, dockPhoto; KH_CartManager manager; int index;`。`LateUpdate` で「ローカルプレイヤーがこのカートに乗っている」間だけ、開いている板をドックの姿勢へ毎フレーム置く: 手元メニューは `menu.transform` を動かし `menu.panelRoot` の中心が `dockMenu` に来るよう補正 (PlaceInFront と同じ実測補正)、撮影モニターは `video.monitorRoot.transform`、写真ビューアは `photo.panelRoot` の親 (`photo.transform`) を同じ要領。板が閉じていれば触らない。降りたら以後触らない (置き去りのまま。据え直しは各板の既存操作)。ボタン: `_PressMenu()` → `menu._Toggle()`、`_PressMonitor()` → モニターが開いていれば `video._Recall()`、閉じていれば `video._Open()`。写真はボタン無し (開いている間だけ追従)。
+5. **操作帯** (新規 `KH_CartControls.cs`、None、ローカル専用): 左斜め前の小さな WorldSpace Canvas (Setup が作る、layer 17 Walkthrough = 撮影カメラに映らず操作できる、既存の撮影モニターと同じ)。ボタン 8 個: メニュー / モニター / 座面↑ / 座面↓ / 向き← / 向き→ / 停止 / 受付。表示は自分が乗っているときだけ (`_SetVisible`)。受付はマスターのときだけ有効表示。文言キー `cart.menu` メニュー / `cart.monitor` 撮影モニター / `cart.seat.up` 座面を上げる / `cart.seat.down` 座面を下げる / `cart.turn.left` 左を向く / `cart.turn.right` 右を向く (既存 `cart.stop` / `cart.accepting` を再利用)。
+6. 右肘掛けの `StopR` は停止 (kind 0) に変える (左右対称、X レビュー)。受付切替は操作帯だけ。
+
+Runtime 実装で契約から変えた点 (2026-10-12):
+- 1 の「TerrainCollider 以外」は判定しない。Udon に `TerrainCollider` 型が公開されていない (VRC.Udon.Wrapper.dll に無い) ので、距離の条件 (|hit.y − p.y| > 0.35) だけで撃ち直す。Terrain は下からは当たらないので、採用される高さは同じ。他人のカートのピッチは道の勾配 (`d` と `d + dir·lookAhead` の点の高さ差) から取る (レイを増やさない)。
+- 4 の写真ビューアはドックへ寄せない。`KD_PhotoViewer` は自分の `PostLateUpdate` で毎フレーム頭の前へ置き直すので、LateUpdate で動かしても上書きされる。頭に付いて動くので乗車中も一緒に動く。`photo` / `dockPhoto` は配線だけ受ける。
+- ドックの Transform は +Z = 座っている人から板へ向かう方向 (PlaceInFront・PlaceMonitor と同じ約束)。
+- 配線の追加: `KH_CartSeat.controls` (KH_CartControls)、`KH_CartSeat.dock` (KH_CartDock)。`KH_CartControls` は `manager, index, dock, language, panel (GameObject), buttons (GameObject[8]), labels (TextMeshProUGUI[8])`、並びは 0 メニュー / 1 モニター / 2 座面↑ / 3 座面↓ / 4 向き← / 5 向き→ / 6 停止 / 7 受付、onClick は `_PressMenu … _PressAccepting`。
+
+### Editor (impl-editor)
+
+1. **軌道の生成** (Build): `KH_WalkRoute` の `nodePositions` から節 0 を除いた閉路 (435 → 1 を直結) で `trackPositions / trackDistances / trackLength / trackDetour` を作る (`linkAllowsDetour` を区間へ写す。435→1 の区間は 435 の値)。乗り場 0..4 は `spotNodes` の位置を軌道へ投影した距離、行き先 0..5 は `destinationNodes` の位置を投影した距離 (入口 = 節 0 の位置を投影 → 門前の直結区間上)、周回 2/3 は −1。障害物の掃引 (トレイル沿い ±0.6 m、車高 0.3〜1.6 m、`Renderer.bounds`、Terrain / 草 / 木 / 石 / 犬 / カートを除く) で見つけた物の距離 ±4 m を `noLateralFrom/To` に書く (現状はベンチ d≈93 と門枠 d≈0 の 2 件が見込み)。配列は SerializedObject → `CopyProxyToUdon`。**Course/21 で経路を作り直したら Cart/1 を再実行する**旨をログと本書に残す。
+2. **ドック・操作帯の生成** (Build): 各カートに `Dock_Menu` (左側 1.1 m、高さ 1.0、面を座席へ)、`Dock_Monitor` (左前 1.2 m、高さ 1.1)、`Dock_Photo` (左後 1.0 m) の Transform。`Controls` Canvas (左斜め前 0.55 m、高さ 0.95、幅 0.28 m、layer 17、VRCUiShape、BoxCollider trigger、既存の共通フォント) にボタン 8 個を `EnsureButton` で配線。`KH_CartDock` と `KH_CartControls` を `AddUdonSharpComponent`、参照を配線 (`menu` = シーンの `KD_TreatPouch`、`video` = `KH_VideoCamera`、`photo` = `KD_PhotoViewer`。無ければ null のまま)。`StopR` の kind を 0 に。Program Asset は初回に作ってコンパイル待ちで止まる (従来どおり)。
+3. **文言**: 上記 6 キー × 13 言語を `CourseUITranslations.json` へ (統括が Course/27 を流す)。
+4. **Verify / Probe**: 軌道の節数 = 435、`trackLength` が route より約 11 m 短い、軌道と route の最大乖離 (節 0 近傍を除き 0)、乗り場の開始点が門枠の bounds に入らない、入口の到着点が門枠の手前 (z が門枠より大きい側)、`noLateral` がベンチの距離を覆う、ドック 3 点と操作帯の配線 (プロキシと backing)、layer 17、`StopR` kind 0、座席配列の長さ。
+
+### 検証と引き渡し (M1.1)
+
+統括: compile → Build (Program Asset 2 本の初回は 2 回) → Verify → Probe → Course/27 → Codex 独立レビュー → コミット。Play で見ること: 門に入らず広場へ向かう / ベンチ脇で一列になり浮かない / 坂で埋まらない (起きたら場所を報告) / 操作帯のメニューで手元メニューが左側に出て一緒に動く / 撮影モニター・写真ビューアが追従 / 座面の上下と向きが自分と他人の画面で一致 / ClientSim ではメニュー操作で降りるが TestBuild で座ったままか。

@@ -507,6 +507,30 @@
         {
           "key": "cart.result.left",
           "text": "降りました"
+        },
+        {
+          "key": "cart.menu",
+          "text": "メニュー"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "撮影モニター"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "座面を上げる"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "座面を下げる"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "左を向く"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "右を向く"
         }
       ]
     },
@@ -1014,6 +1038,30 @@
         {
           "key": "cart.result.left",
           "text": "Got off"
+        },
+        {
+          "key": "cart.menu",
+          "text": "Menu"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "Camera monitor"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "Raise seat"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "Lower seat"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "Turn left"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "Turn right"
         }
       ]
     },
@@ -1521,6 +1569,30 @@
         {
           "key": "cart.result.left",
           "text": "Вы сошли"
+        },
+        {
+          "key": "cart.menu",
+          "text": "Меню"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "Монитор камеры"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "Поднять сиденье"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "Опустить сиденье"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "Повернуть влево"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "Повернуть вправо"
         }
       ]
     },
@@ -2028,6 +2100,30 @@
         {
           "key": "cart.result.left",
           "text": "Ви зійшли"
+        },
+        {
+          "key": "cart.menu",
+          "text": "Меню"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "Монітор камери"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "Підняти сидіння"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "Опустити сидіння"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "Повернути ліворуч"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "Повернути праворуч"
         }
       ]
     },
@@ -2535,6 +2631,30 @@
         {
           "key": "cart.result.left",
           "text": "내렸어요"
+        },
+        {
+          "key": "cart.menu",
+          "text": "메뉴"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "촬영 모니터"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "좌석 올리기"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "좌석 내리기"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "왼쪽 보기"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "오른쪽 보기"
         }
       ]
     },
@@ -3042,6 +3162,30 @@
         {
           "key": "cart.result.left",
           "text": "Ausgestiegen"
+        },
+        {
+          "key": "cart.menu",
+          "text": "Menü"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "Kameramonitor"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "Sitz höher"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "Sitz tiefer"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "Nach links drehen"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "Nach rechts drehen"
         }
       ]
     },
@@ -3549,6 +3693,30 @@
         {
           "key": "cart.result.left",
           "text": "已下车"
+        },
+        {
+          "key": "cart.menu",
+          "text": "菜单"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "拍摄监视器"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "升高座位"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "降低座位"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "向左转"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "向右转"
         }
       ]
     },
@@ -4056,6 +4224,30 @@
         {
           "key": "cart.result.left",
           "text": "Te bajaste"
+        },
+        {
+          "key": "cart.menu",
+          "text": "Menú"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "Monitor de cámara"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "Subir asiento"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "Bajar asiento"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "Girar a la izquierda"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "Girar a la derecha"
         }
       ]
     },
@@ -4563,6 +4755,30 @@
         {
           "key": "cart.result.left",
           "text": "Descente effectuée"
+        },
+        {
+          "key": "cart.menu",
+          "text": "Menu"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "Moniteur caméra"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "Monter le siège"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "Baisser le siège"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "Tourner à gauche"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "Tourner à droite"
         }
       ]
     },
@@ -5070,6 +5286,30 @@
         {
           "key": "cart.result.left",
           "text": "Você desceu"
+        },
+        {
+          "key": "cart.menu",
+          "text": "Menu"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "Monitor da câmera"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "Subir assento"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "Baixar assento"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "Virar à esquerda"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "Virar à direita"
         }
       ]
     },
@@ -5577,6 +5817,30 @@
         {
           "key": "cart.result.left",
           "text": "Discesa effettuata"
+        },
+        {
+          "key": "cart.menu",
+          "text": "Menu"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "Monitor della telecamera"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "Alza il sedile"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "Abbassa il sedile"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "Gira a sinistra"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "Gira a destra"
         }
       ]
     },
@@ -6084,6 +6348,30 @@
         {
           "key": "cart.result.left",
           "text": "Wysiadanie zakończone"
+        },
+        {
+          "key": "cart.menu",
+          "text": "Menu"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "Monitor kamery"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "Podnieś siedzenie"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "Opuść siedzenie"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "Obróć w lewo"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "Obróć w prawo"
         }
       ]
     },
@@ -6595,6 +6883,30 @@
         {
           "key": "cart.result.left",
           "text": "已下車"
+        },
+        {
+          "key": "cart.menu",
+          "text": "選單"
+        },
+        {
+          "key": "cart.monitor",
+          "text": "拍攝監視器"
+        },
+        {
+          "key": "cart.seat.up",
+          "text": "升高座位"
+        },
+        {
+          "key": "cart.seat.down",
+          "text": "降低座位"
+        },
+        {
+          "key": "cart.turn.left",
+          "text": "向左轉"
+        },
+        {
+          "key": "cart.turn.right",
+          "text": "向右轉"
         }
       ]
     }

@@ -181,7 +181,7 @@ namespace KominkaHillside.Editor
                     var so2 = new SerializedObject(stopB[k]);
                     RefCheck(v, so2, bb, "manager", manager, sn);
                     RefCheck(v, so2, bb, "language", language, sn);
-                    IntCheck(v, so2, bb, "kind", k, sn);
+                    IntCheck(v, so2, bb, "kind", 0, sn);   // M1.1: 左右とも停止
                 }
 
                 // seat の配線
@@ -198,7 +198,8 @@ namespace KominkaHillside.Editor
                 RefCheck(v, so, sb, "axleFront", A(AxleFrontMesh), c);
                 RefCheck(v, so, sb, "axleRear", A(AxleRearMesh), c);
                 RefCheck(v, so, sb, "stopButton", stopB[0], c);
-                RefCheck(v, so, sb, "acceptButton", stopB[1], c);
+                if (so.FindProperty("acceptButton") != null) RefCheck(v, so, sb, "acceptButton", stopB[1], c);
+                CartUiCheck(v, go, i, so, sb, A(AnchorSeat), manager, language, p);
                 var rends = model.GetComponentsInChildren<Renderer>(true);
                 ArrayCheck(v, so, sb, "renderers", rends, c);
 
@@ -212,6 +213,9 @@ namespace KominkaHillside.Editor
             v.r.placeholderModel = anyPlaceholder;
             if (anyPlaceholder) v.Pend("仮形状: Model is the placeholder Cube (FBX " + FbxPath + " not built in). Rerun Cart/1 after the FBX arrives.");
             if (!anyPlaceholder && !anySignUsed) v.Pend("Sign material is not assigned to any renderer (FBX has no slot named Sign)");
+
+            // ---- M1.1: 軌道・座席の同期配列 ----
+            TrackCheck(v, manager, mso, mb, route, leash);
 
             // ---- 材質とテクスチャ ----
             MaterialCheck(v, bodyMat, BodyMaterialPath, BaseColorPath);

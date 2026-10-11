@@ -57,6 +57,18 @@ namespace KominkaHillside
         // Owner のローカルでなく同期に置くので、Owner 交代後も猶予と世代の照合が保たれる
         [UdonSynced] public int[] cartFreedMs = new int[8];
         [UdonSynced] public int[] groupGen    = new int[8];
+        // M1.1: 座席の調整 (乗っている本人だけが ReqSeat で変える。降車で 0)。高さ 1 段 = 5 cm、向き 1 段 = 15°、どちらも -6..+6
+        [UdonSynced] public int[] cartSeatSteps = new int[8];
+        [UdonSynced] public int[] cartYawSteps  = new int[8];
+
+        // M1.1: カート専用の軌道 (非同期。既定 null — Setup (Cart/1) が route の節 0 を除いた閉路から書く。null なら route を使う)
+        public Vector3[] trackPositions;
+        public float[] trackDistances;
+        public float trackLength;
+        public bool[] trackDetour;                   // 区間 i (trackPositions[i] → [i+1]) で横ずれ可か
+        public float[] noLateralFrom, noLateralTo;   // 追加で横ずれ 0 にする距離範囲 (ベンチ・門枠)
+        public float[] spotTrackDistance;            // 乗り場 0..4 の開始距離
+        public float[] destTrackDistance;            // 行き先 0..5 の到着距離 (周回 2/3 は -1)
 
         // ---- ローカル (同期しない) ----
         private int _myCart = -1;        // ApplyState が決める「自分が cartRider のカート」(-1 = なし)
@@ -264,7 +276,8 @@ namespace KominkaHillside
                 bool isMine = c == _myCart && _leaveCart != c;
                 int g = cartGroup[c];
                 bool master = isMine && ValidGroup(g) && groupMaster[g] == c && groupState[g] == GroupRunning;
-                carts[c]._SetRider(isMine, master, ValidGroup(g) && groupAccepting[g]);
+                carts[c]._SetRider(isMine, master, ValidGroup(g) && groupAccepting[g]);   // 操作帯の _Refresh とドックの開始/停止も中で
+                carts[c]._ApplySeat(cartSeatSteps[c], cartYawSteps[c]);
             }
         }
 

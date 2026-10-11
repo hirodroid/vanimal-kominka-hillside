@@ -34,7 +34,7 @@ namespace KominkaHillside.Editor
     {
         public const string OutDir = "Temp/cart-20261011";
         public const string ProgramDir = "Assets/KominkaHillside/Scripts/Cart";
-        public static readonly string[] ProgramNames = { "KH_CartManager", "KH_CartSeat", "KH_CartStopButton", "KH_CartStationPanel" };
+        public static readonly string[] ProgramNames = { "KH_CartManager", "KH_CartSeat", "KH_CartStopButton", "KH_CartStationPanel", "KH_CartDock", "KH_CartControls" };
         public const string ModelDir = "Assets/KominkaHillside/Models/Cart";
         public const string FbxPath = ModelDir + "/KH_OsanpoCart.fbx";
         public const string BaseColorPath = ModelDir + "/KH_OsanpoCart_BaseColor.png", SignTexturePath = ModelDir + "/KH_OsanpoCart_Sign.png";
@@ -82,7 +82,8 @@ namespace KominkaHillside.Editor
         public const float Smoothness = 0.25f, Metallic = 0f;
         public static readonly string[] CartKeys = {
             "cart.title", "cart.start", "cart.join", "cart.notice", "cart.stop", "cart.accepting", "cart.accepting.on", "cart.accepting.off",
-            "cart.result.full", "cart.result.closed", "cart.result.here", "cart.result.busy", "cart.result.started", "cart.result.joined", "cart.result.left" };
+            "cart.result.full", "cart.result.closed", "cart.result.here", "cart.result.busy", "cart.result.started", "cart.result.joined", "cart.result.left",
+            "cart.menu", "cart.monitor", "cart.seat.up", "cart.seat.down", "cart.turn.left", "cart.turn.right" };   // M1.1
 
         [Serializable] class BuildReport
         {
@@ -90,6 +91,11 @@ namespace KominkaHillside.Editor
             public bool programAssetsCreated, placeholderModel;
             public int droppedNetworkIds;
             public List<string> stations = new List<string>();
+            public string rerun = RerunNote;
+            public int trackNodes, sweepCandidates, sweepSkippedLarge;
+            public float trackLength, loopLength, closingSegment;
+            public float[] spotTrackDistance, destTrackDistance, noLateralFrom, noLateralTo;
+            public List<string> sweepHits = new List<string>();
             public List<string> log = new List<string>();
         }
 
@@ -150,6 +156,15 @@ namespace KominkaHillside.Editor
                 throw new InvalidOperationException("KH_LeashManager.spotPositions / spotYaws need " + StationCount + " entries (run Course/80)");
             // ---- 3. 資産側: import 設定 (再 import するので FBX はこの後に読む) と材質 (シーンより先) ----
             ConfigureImporters(report.log);
+            // ---- M1.1: カート専用の軌道 (シーンを変える前に計算。掃引はシーンの Renderer を読むだけ) ----
+            var track = BuildTrack(route);
+            ProjectStops(track, route, leash);
+            SweepObstacles(track);
+            report.trackNodes = track.positions.Length; report.trackLength = track.length; report.loopLength = route.loopLength; report.closingSegment = track.closing;
+            report.spotTrackDistance = track.spot; report.destTrackDistance = track.dest; report.noLateralFrom = track.noFrom; report.noLateralTo = track.noTo;
+            report.sweepHits = track.sweepHits; report.sweepCandidates = track.sweepCandidates; report.sweepSkippedLarge = track.sweepSkippedLarge;
+            var video = SingleOrNull<KH_VideoCamera>("KH_VideoCamera", report.log);
+            var photo = SingleOrNull<KD_PhotoViewer>("KD_PhotoViewer", report.log);
             var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(FbxPath);
             if (fbx != null)
             {
@@ -181,7 +196,7 @@ namespace KominkaHillside.Editor
 
                 // ---- カート 8 台 ----
                 var seats = new KH_CartSeat[MaxCarts];
-                for (int i = 0; i < MaxCarts; i++) seats[i] = BuildCart(scene, cartsRoot, i, manager, language, parking, fbx, bodyMat, signMat, report.log);
+                for (int i = 0; i < MaxCarts; i++) seats[i] = BuildCart(scene, cartsRoot, i, manager, language, parking, fbx, bodyMat, signMat, report.log, p, video, photo, font, ui);
 
                 // ---- 乗り場パネル 5 枚 ----
                 Physics.SyncTransforms();
@@ -193,6 +208,7 @@ namespace KominkaHillside.Editor
                 SetRef(so, "route", route); SetRef(so, "leash", leash); SetRef(so, "language", language); SetRef(so, "fade", fade); SetRef(so, "parking", parking);
                 SetRefs(so, "carts", seats); SetRefs(so, "panels", panels);
                 so.ApplyModifiedPropertiesWithoutUndo();
+                WriteTrack(manager, track);
                 UdonSharpEditorUtility.CopyProxyToUdon(manager); EditorUtility.SetDirty(manager);
 
                 // ---- KH_LeashManager.cartManager ----
@@ -223,6 +239,8 @@ namespace KominkaHillside.Editor
             if (ui.Length > 0) report.log.AddRange(ui.ToString().Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries));
             report.status = "BUILT";
             File.WriteAllText(OutDir + "/build.json", JsonUtility.ToJson(report, true));
+            Debug.Log("[KH Cart] TRACK nodes=" + report.trackNodes + " length=" + report.trackLength.ToString("F2") + " (loop " + report.loopLength.ToString("F2") + ", closing " + report.closingSegment.ToString("F2")
+                + ") noLateral=" + string.Join(",", report.noLateralFrom.Select((a, k) => a.ToString("F0") + "-" + report.noLateralTo[k].ToString("F0"))) + " hits=" + report.sweepHits.Count + ". " + RerunNote);
             Debug.Log("[KH Cart] BUILT carts=" + MaxCarts + " stations=" + StationCount + " model=" + (report.placeholderModel ? "PLACEHOLDER (仮形状: FBX not found, rerun Cart/1 after " + FbxPath + " arrives)" : "FBX")
                 + " droppedNetworkIds=" + report.droppedNetworkIds + ". Next: Cart/2 Verify, Cart/3 Probe, then run Course/27 (glyphs for cart.*) and save. Details: " + OutDir + "/build.json");
         }
@@ -232,7 +250,7 @@ namespace KominkaHillside.Editor
         // ============================================================
 
         static KH_CartSeat BuildCart(UnityEngine.SceneManagement.Scene scene, Transform cartsRoot, int i, KH_CartManager manager, KD_Language language, Transform parking,
-            GameObject fbx, Material bodyMat, Material signMat, List<string> log)
+            GameObject fbx, Material bodyMat, Material signMat, List<string> log, KD_TreatPouch menu, KH_VideoCamera video, KD_PhotoViewer photo, TMP_FontAsset font, StringBuilder ui)
         {
             var go = EnsureChild(cartsRoot, "Cart_" + i);
             go.layer = BodyLayer; go.SetActive(true);
@@ -298,7 +316,7 @@ namespace KominkaHillside.Editor
                 var stop = EnsureU<KH_CartStopButton>(sgo);
                 Backing(stop, Networking.SyncType.None);
                 var sso = new SerializedObject(stop);
-                SetRef(sso, "manager", manager); SetRef(sso, "language", language); SetInt(sso, "kind", k);
+                SetRef(sso, "manager", manager); SetRef(sso, "language", language); SetInt(sso, "kind", 0);   // M1.1: 左右とも停止 (受付切替は操作帯だけ)
                 sso.ApplyModifiedPropertiesWithoutUndo();
                 UdonSharpEditorUtility.CopyProxyToUdon(stop); EditorUtility.SetDirty(stop);
                 stops[k] = stop;
@@ -310,7 +328,10 @@ namespace KominkaHillside.Editor
             SetRef(so, "stopL", stops[0].transform); SetRef(so, "stopR", stops[1].transform);
             SetRef(so, "signBack", signBack); SetRef(so, "axleFront", axleFront); SetRef(so, "axleRear", axleRear);
             SetRefs(so, "renderers", renderers);
-            SetRef(so, "stopButton", stops[0]); SetRef(so, "acceptButton", stops[1]);
+            SetRef(so, "stopButton", stops[0]);
+            if (so.FindProperty("acceptButton") != null) SetRef(so, "acceptButton", stops[1]);   // M1.1 で Runtime が外していれば書かない
+            BuildCartUi(go, i, seatT, manager, language, menu, video, photo, font, ui, out KH_CartDock dock, out KH_CartControls controls);
+            SetRef(so, "controls", controls); SetRef(so, "dock", dock);
             so.ApplyModifiedPropertiesWithoutUndo();
             UdonSharpEditorUtility.CopyProxyToUdon(seat); EditorUtility.SetDirty(seat);
             return seat;
