@@ -31,8 +31,8 @@ namespace KominkaHillside.Editor
         public static readonly string[] ControlNames = { "Menu", "Monitor", "SeatUp", "SeatDown", "SeatForward", "SeatBack", "TurnLeft", "TurnRight", "Stop", "Accepting" };
         public const int StopControl = 8;
         // 最小化 (2026-10-12): Board の下に Body (10 ボタンと背景) と Tab (Body の外、右上隅 50×50、_PressToggle)。最小化しても Tab だけ残る。
-        // Tab のラベルは Runtime が展開中「×」/ 最小化中「≡」と書く (tabLabel)。Setup は初期表示として ≡ (フォントに無ければ -) を置く
-        public const string BodyName = "Body", TabName = "Tab", TabEvent = "_PressToggle", TabSymbol = "≡", TabFallback = "-";
+        // Tab のラベルは Runtime が展開中「×」/ 最小化中「+」と書く (tabLabel)。Setup は初期表示として ≡ (フォントに無ければ -) を置く
+        public const string BodyName = "Body", TabName = "Tab", TabEvent = "_PressToggle", TabSymbol = "+", TabFallback = "-";
         // 5 行 120..-160 (Tab の 161..211 と重ならない)
         public static Vector2 ControlPos(int k) { return new Vector2(k % 2 == 0 ? -67f : 67f, 120f - (k / 2) * 70f); }
 

@@ -22,7 +22,7 @@ namespace KominkaHillside
         public GameObject[] buttons;            // 長さ 10 (上の並び)
         public TextMeshProUGUI[] labels;        // 長さ 10
         // 2026-10-12 追加要望: 操作帯の最小化。body = 10 ボタンの親 (最小化中は非表示)、tab = 常に見える小さな切替ボタン (body の外。onClick → _PressToggle)。
-        // tabLabel は任意 (null 可): 展開中は「×」、最小化中は「≡」を書く (記号だけ。文言キーなし)
+        // tabLabel は任意 (null 可): 展開中は「×」、最小化中は「+」を書く (記号だけ。文言キーなし)
         public GameObject body;
         public GameObject tab;
         public TextMeshProUGUI tabLabel;
@@ -116,7 +116,7 @@ namespace KominkaHillside
             bool show = !_minimized;
             if (body != null && body.activeSelf != show) body.SetActive(show);
             if (tab != null && !tab.activeSelf) tab.SetActive(true);
-            if (tabLabel != null) tabLabel.text = _minimized ? "≡" : "×";   // ≡ / ×
+            if (tabLabel != null) tabLabel.text = _minimized ? "+" : "×";   // + / × (≡ U+2261 は共通フォントに無い。2026-10-12 実測)
         }
 
         private bool Riding() { return manager != null && manager._MyCart() == index; }
