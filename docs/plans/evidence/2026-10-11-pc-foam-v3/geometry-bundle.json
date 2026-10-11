@@ -1,0 +1,133 @@
+{
+    "version": "continuous-v3",
+    "result": "PASS",
+    "error": "",
+    "dogs": [
+        {
+            "name": "KH_Wash_Corgi",
+            "vertices": 3813,
+            "triangles": 3869,
+            "sourceTriangles": 6548,
+            "thinPasses": 2,
+            "skinError": 2.384185791015625e-7,
+            "rotatedSkinError": 2.384185791015625e-7,
+            "seamGap": 0.0,
+            "maximumOffset": 0.040274377912282947,
+            "coverage": [
+                0,
+                0,
+                0,
+                8422,
+                8578,
+                8694,
+                8694
+            ],
+            "bandCoverage": 4690
+        },
+        {
+            "name": "KH_Wash_Pome",
+            "vertices": 2012,
+            "triangles": 2138,
+            "sourceTriangles": 3764,
+            "thinPasses": 2,
+            "skinError": 0.0,
+            "rotatedSkinError": 0.0,
+            "seamGap": 0.0,
+            "maximumOffset": 0.035231709480285647,
+            "coverage": [
+                0,
+                0,
+                0,
+                13662,
+                14008,
+                14275,
+                14275
+            ],
+            "bandCoverage": 8270
+        },
+        {
+            "name": "KH_Wash_Lab",
+            "vertices": 3830,
+            "triangles": 4748,
+            "sourceTriangles": 6320,
+            "thinPasses": 2,
+            "skinError": 0.000003814697265625,
+            "rotatedSkinError": 0.000003814697265625,
+            "seamGap": 0.0,
+            "maximumOffset": 0.06050349026918411,
+            "coverage": [
+                0,
+                0,
+                0,
+                8647,
+                8766,
+                8853,
+                8853
+            ],
+            "bandCoverage": 3533
+        },
+        {
+            "name": "KH_Wash_Dachs",
+            "vertices": 2932,
+            "triangles": 3000,
+            "sourceTriangles": 5140,
+            "thinPasses": 2,
+            "skinError": 2.384185791015625e-7,
+            "rotatedSkinError": 2.384185791015625e-7,
+            "seamGap": 0.0,
+            "maximumOffset": 0.03641418367624283,
+            "coverage": [
+                0,
+                0,
+                0,
+                8153,
+                8355,
+                8505,
+                8505
+            ],
+            "bandCoverage": 5136
+        },
+        {
+            "name": "KH_Wash_Shiba",
+            "vertices": 3725,
+            "triangles": 3852,
+            "sourceTriangles": 6408,
+            "thinPasses": 2,
+            "skinError": 2.384185791015625e-7,
+            "rotatedSkinError": 2.384185791015625e-7,
+            "seamGap": 0.0,
+            "maximumOffset": 0.05703581124544144,
+            "coverage": [
+                0,
+                0,
+                0,
+                12357,
+                12527,
+                12643,
+                12643
+            ],
+            "bandCoverage": 10453
+        },
+        {
+            "name": "KH_Wash_Samoyed",
+            "vertices": 2534,
+            "triangles": 3030,
+            "sourceTriangles": 4596,
+            "thinPasses": 2,
+            "skinError": 0.000003814697265625,
+            "rotatedSkinError": 0.000003814697265625,
+            "seamGap": 0.0,
+            "maximumOffset": 0.07616251707077027,
+            "coverage": [
+                0,
+                0,
+                0,
+                15636,
+                15778,
+                15888,
+                15888
+            ],
+            "bandCoverage": 10582
+        }
+    ]
+}

@@ -1,0 +1,5 @@
+Non-Play wash station integration, authored dog pose, existing environment/light, temporary renderers. Not actual VRChat/PCVR.
+KH_Wash_Shiba version=2 generatorHash=3D4D55CD444FACD91A09C2E3D194AB810EA415783A4A51C5C77E37476AE9DE88
+station=Call anchor=(222.99, 40.03, 600.18) yaw=211.007
+KH_Wash_Shiba cameraOrtho=0.5546356 bodyBounds=Center: (223.00, 40.32, 600.18), Extents: (0.23, 0.29, 0.33) continuousVertices=3725 triangles=3852
+Production dirty unchanged=False

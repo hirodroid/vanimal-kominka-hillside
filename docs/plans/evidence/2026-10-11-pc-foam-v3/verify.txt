@@ -1,0 +1,8 @@
+checked=6
+KH_Wash_Corgi PASS mesh=3813 vertices runoff=16 originalShell=KH_WashShellMat_Corgi
+KH_Wash_Pome PASS mesh=2012 vertices runoff=16 originalShell=KH_WashShellMat_Pome
+KH_Wash_Lab PASS mesh=3830 vertices runoff=16 originalShell=KH_WashShellMat_Lab
+KH_Wash_Dachs PASS mesh=2932 vertices runoff=16 originalShell=KH_WashShellMat_Dachs
+KH_Wash_Shiba PASS mesh=3725 vertices runoff=16 originalShell=KH_WashShellMat_Shiba
+KH_Wash_Samoyed PASS mesh=2534 vertices runoff=16 originalShell=KH_WashShellMat_Samoyed
+PASS six dogs; no runtime/PCVR performance claim

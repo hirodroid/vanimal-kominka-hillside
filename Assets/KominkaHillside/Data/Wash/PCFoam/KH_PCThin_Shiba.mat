@@ -49,7 +49,7 @@ Material:
     m_Colors:
     - _DirtColor: {r: 0.15, g: 0.1, b: 0.065, a: 0.88}
     - _FoamColor: {r: 0.95, g: 0.96, b: 0.97999996, a: 1}
-    - _FoamShadow: {r: 0.8775, g: 0.9025, b: 0.95, a: 1}
+    - _FoamShadow: {r: 0.66, g: 0.73, b: 0.86, a: 1}
     - _FurFlowAxis: {r: 0, g: 0, b: 1, a: 0}
     - _WetTint: {r: 0.45, g: 0.6, b: 0.85, a: 1}
   m_BuildTextureStacks: []

@@ -38,7 +38,7 @@ namespace KominkaHillside.Editor
                 wash.shellRenderer=shell;foam.sharedMesh=AssetDatabase.LoadAssetAtPath<Mesh>(KH_PCFoamGenerateEditor.MeshPath(source));
                 foam.sharedMaterial=Own(new Material(AssetDatabase.LoadAssetAtPath<Material>(KH_PCFoamGenerateEditor.MaterialPath(source))));
                 var original=Own(new Material(source.shellRenderer.sharedMaterial));var thin=Own(new Material(AssetDatabase.LoadAssetAtPath<Material>(KH_PCFoamGenerateEditor.ThinPath(source))));
-                shell.sharedMaterial=original;Set(wash,"pcFoamRenderer",foam);Set(wash,"pcFoamRunoff",ps);Set(wash,"pcFoamThinMaterial",thin);Set(wash,"pcFoamFallbackShellMaterial",original);Set(wash,"pcFoamVersion",1);
+                shell.sharedMaterial=original;Set(wash,"pcFoamRenderer",foam);Set(wash,"pcFoamRunoff",ps);Set(wash,"pcFoamThinMaterial",thin);Set(wash,"pcFoamFallbackShellMaterial",original);Set(wash,"pcFoamVersion",KH_PCFoamGenerateEditor.Version);
                 var main=ps.main;main.playOnAwake=false;main.maxParticles=16;main.simulationSpace=ParticleSystemSimulationSpace.World;main.scalingMode=ParticleSystemScalingMode.Shape;
                 var emission=ps.emission;emission.enabled=false;ps.Stop(true,ParticleSystemStopBehavior.StopEmittingAndClear);
                 Call(wash,"PCFoamPrepare");var material=Own((Material)Get(wash,"_pcFoamMat"));

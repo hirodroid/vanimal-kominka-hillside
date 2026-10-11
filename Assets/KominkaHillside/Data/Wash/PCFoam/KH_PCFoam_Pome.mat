@@ -32,6 +32,7 @@ Material:
     - _Diagnostic: 0
     - _GrowthFull: 0.75
     - _GrowthStart: 0.18
+    - _HillScale: 1
     - _Inset: 0.03
     - _NormalScale: 0.85
     m_Colors:

@@ -38,7 +38,7 @@ namespace KominkaHillside.Editor
                 renderer.sharedMaterial=AssetDatabase.LoadAssetAtPath<Material>(KH_PCFoamGenerateEditor.MaterialPath(wash));
                 var manifest=ReadManifest(wash);var scale=(body.rootBone??body.transform).lossyScale;
                 float smallest=Mathf.Min(Mathf.Abs(scale.x),Mathf.Min(Mathf.Abs(scale.y),Mathf.Abs(scale.z)));
-                var bounds=body.localBounds;bounds.Expand(2f*(manifest.maxRadius+wash.shellRenderer.sharedMaterial.GetFloat("_BaseOffset"))/Mathf.Max(smallest,.00001f));
+                var bounds=body.localBounds;bounds.Expand(2f*manifest.maxOffset/Mathf.Max(smallest,.00001f));
                 renderer.localBounds=bounds;renderer.updateWhenOffscreen=false;renderer.skinnedMotionVectors=false;
                 renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;renderer.lightProbeUsage=body.lightProbeUsage;renderer.probeAnchor=body.probeAnchor;renderer.reflectionProbeUsage=ReflectionProbeUsage.Off;renderer.enabled=false;
                 var runoff=root.Find("Runoff");if(runoff==null){runoff=new GameObject("Runoff").transform;runoff.SetParent(root,false);}
@@ -59,7 +59,7 @@ namespace KominkaHillside.Editor
                 so.ApplyModifiedPropertiesWithoutUndo();UdonSharpEditorUtility.CopyProxyToUdon(wash);
                 EditorUtility.SetDirty(wash);EditorUtility.SetDirty(renderer);EditorUtility.SetDirty(ps);
             }
-            AssetDatabase.SaveAssets();EditorSceneManager.MarkSceneDirty(scene);
+            AssetDatabase.SaveAssetIfDirty(particleMesh);AssetDatabase.SaveAssetIfDirty(particleMaterial);EditorSceneManager.MarkSceneDirty(scene);
             Directory.CreateDirectory("Temp/PCFoamProof");File.WriteAllText("Temp/PCFoamProof/apply.txt","Applied six dogs. Authoring shells retain original material. Run Verify, then save.\n");
         }
 
@@ -67,7 +67,7 @@ namespace KominkaHillside.Editor
         internal static void ValidateAssets(KH_DogWash wash)
         {
             var body=KH_PCFoamAuditEditor.Body(wash);var manifest=ReadManifest(wash);
-            if(manifest.version!=KH_PCFoamGenerateEditor.Version||manifest.sourceHash!=AssetDatabase.GetAssetDependencyHash(AssetDatabase.GetAssetPath(body.sharedMesh)).ToString())throw new InvalidOperationException(wash.name+": regenerate stale mesh");
+            if(manifest.version!=KH_PCFoamGenerateEditor.Version||manifest.generatorHash!=KH_PCFoamGenerateEditor.Fingerprint()||manifest.sourceHash!=AssetDatabase.GetAssetDependencyHash(AssetDatabase.GetAssetPath(body.sharedMesh)).ToString())throw new InvalidOperationException(wash.name+": regenerate stale mesh");
             AssetDatabase.TryGetGUIDAndLocalFileIdentifier(body.sharedMesh,out string guid,out long fileId);
             var shell=wash.shellRenderer.sharedMaterial;string shellPath=AssetDatabase.GetAssetPath(shell);
             if(manifest.sourceGuid!=guid||manifest.sourceFileId!=fileId||manifest.shellGuid!=AssetDatabase.AssetPathToGUID(shellPath)
@@ -76,9 +76,10 @@ namespace KominkaHillside.Editor
                 throw new InvalidOperationException(wash.name+": generation input changed; regenerate PC foam");
             KH_PCFoamAuditEditor.Inspect(wash,out var excluded);
             if(manifest.anchors.Any(i=>i<0||i>=excluded.Length||excluded[i]))throw new InvalidOperationException(wash.name+": new dynamic morph affects foam anchors");
+            if(manifest.surfaceVertices==null||manifest.surfaceVertices.Any(i=>i<0||i>=excluded.Length||excluded[i]))throw new InvalidOperationException(wash.name+": invalid continuous surface");
             for(int i=0;i<manifest.staticWeights.Length;i++)if(Mathf.Abs(manifest.staticWeights[i]-body.GetBlendShapeWeight(i))>.001f)throw new InvalidOperationException(wash.name+": authored morph changed");
             var mesh=AssetDatabase.LoadAssetAtPath<Mesh>(KH_PCFoamGenerateEditor.MeshPath(wash));
-            if(mesh==null||mesh.vertexCount!=manifest.vertices||manifest.lobes>256||manifest.byPart.Where((n,i)=>i!=7).Any(n=>n==0))throw new InvalidOperationException(wash.name+": incomplete generated coverage");
+            if(mesh==null||mesh.vertexCount!=manifest.vertices||mesh.triangles.Length/3!=manifest.triangles||manifest.hillCount!=3||manifest.anchors.Length!=3||manifest.seamGap>.00001f||manifest.parentA.Length!=mesh.vertexCount||manifest.parentB.Length!=mesh.vertexCount||manifest.byPart.Where((n,i)=>i!=7).Any(n=>n==0))throw new InvalidOperationException(wash.name+": incomplete generated coverage");
             foreach(var path in new[]{KH_PCFoamGenerateEditor.MaterialPath(wash),KH_PCFoamGenerateEditor.ThinPath(wash)})
             {var mat=AssetDatabase.LoadAssetAtPath<Material>(path);if(mat==null||mat.shader==null||ShaderUtil.ShaderHasError(mat.shader))throw new InvalidOperationException("Missing/invalid "+path);}
             if(wash.shellRenderer.sharedMaterial==null||wash.shellRenderer.sharedMaterial.shader.name!="KominkaHillside/Wash Shell")throw new InvalidOperationException("Authoring shell must retain original material");
@@ -100,6 +101,7 @@ namespace KominkaHillside.Editor
                     if(ps==null||!ps.transform.IsChildOf(root)||ps.main.maxParticles!=16||ps.emission.enabled||ps.main.simulationSpace!=ParticleSystemSimulationSpace.World||ps.main.scalingMode!=ParticleSystemScalingMode.Shape)throw new InvalidOperationException(wash.name+": runoff configuration");
                     if(so.FindProperty(Fields[3]).objectReferenceValue!=wash.shellRenderer.sharedMaterial||so.FindProperty(Fields[4]).intValue!=KH_PCFoamGenerateEditor.Version)throw new InvalidOperationException(wash.name+": fallback/version");
                     var backing=UdonSharpEditorUtility.GetBackingUdonBehaviour(wash);
+                    if(!backing.publicVariables.TryGetVariableValue("pcFoamVersion",out int storedVersion)||storedVersion!=KH_PCFoamGenerateEditor.Version)throw new InvalidOperationException(wash.name+": backing version");
                     foreach(var field in Fields.Take(4))
                     {if(!backing.publicVariables.TryGetVariableValue(field,out object stored)||(UnityEngine.Object)stored!=so.FindProperty(field).objectReferenceValue)throw new InvalidOperationException(wash.name+": backing override "+field);}
                     passed++;log.AppendLine(wash.name+" PASS mesh="+renderer.sharedMesh.vertexCount+" vertices runoff=16 originalShell="+wash.shellRenderer.sharedMaterial.name);
@@ -122,7 +124,7 @@ namespace KominkaHillside.Editor
                 ||root.parent!=body.transform.parent||root.localPosition!=body.transform.localPosition||root.localRotation!=body.transform.localRotation||root.localScale!=body.transform.localScale)
                 throw new InvalidOperationException(wash.name+": invalid attached foam renderer");
             var scale=(body.rootBone??body.transform).lossyScale;float smallest=Mathf.Min(Mathf.Abs(scale.x),Mathf.Min(Mathf.Abs(scale.y),Mathf.Abs(scale.z)));
-            var required=body.localBounds;required.Expand(2f*(ReadManifest(wash).maxRadius+wash.shellRenderer.sharedMaterial.GetFloat("_BaseOffset"))/Mathf.Max(smallest,.00001f));
+            var required=body.localBounds;required.Expand(2f*ReadManifest(wash).maxOffset/Mathf.Max(smallest,.00001f));
             if(!renderer.localBounds.Contains(required.min)||!renderer.localBounds.Contains(required.max))throw new InvalidOperationException(wash.name+": foam bounds too small");
             if(pr==null||pr.mesh!=AssetDatabase.LoadAssetAtPath<Mesh>(KH_PCFoamGenerateEditor.Folder+"/KH_PCFoamRunoff.asset")
                 ||pr.sharedMaterial!=AssetDatabase.LoadAssetAtPath<Material>(KH_PCFoamGenerateEditor.Folder+"/KH_PCFoamRunoff.mat")||pr.renderMode!=ParticleSystemRenderMode.Mesh

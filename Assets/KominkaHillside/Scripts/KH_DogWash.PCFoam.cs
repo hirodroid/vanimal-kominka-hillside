@@ -23,7 +23,7 @@ namespace KominkaHillside
         // Must precede the existing shellRenderer.material getter: that getter fixes the runtime material cache.
         void PCFoamPrepare()
         {
-            _pcFoamReady = pcFoamVersion == 1 && shellRenderer != null && pcFoamRenderer != null
+            _pcFoamReady = pcFoamVersion == 2 && shellRenderer != null && pcFoamRenderer != null
                 && pcFoamRenderer.sharedMesh != null && pcFoamRenderer.sharedMaterial != null
                 && pcFoamRunoff != null && pcFoamThinMaterial != null && pcFoamFallbackShellMaterial != null;
             if (pcFoamRenderer != null) pcFoamRenderer.enabled = false;

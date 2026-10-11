@@ -24,9 +24,10 @@ namespace KominkaHillside.Editor
             public float skinErrorMetres, rotatedSkinErrorMetres, intermediateWidthRatio, boneMatrixErrorMetres;
             public List<Shot> shots = new List<Shot>();
         }
-        [MenuItem("Tools/KominkaHillside/PC Foam/10 - Prove Geometry")]
+        // v1 sphere proof is retained as source history only; its former menu is intentionally removed.
         public static void Prove()
         {
+            if (KH_PCFoamGenerateEditor.Version != 1) throw new InvalidOperationException("Legacy sphere proof cannot verify the continuous surface; use v3 checks.");
             if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Edit mode required");
             var active = SceneManager.GetActiveScene();
             if (active.path != "Assets/Scenes/VRCDefaultWorldScene.unity") throw new InvalidOperationException("Wrong scene");

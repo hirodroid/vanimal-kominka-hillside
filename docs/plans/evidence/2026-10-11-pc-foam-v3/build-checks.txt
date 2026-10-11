@@ -1,0 +1,203 @@
+Build processor on disposable scene copies; not an uploaded mobile bundle.
+PASS PC six copied washes
+PASS PC references stay in copy KH_Wash_Corgi
+PASS PC references stay in copy KH_Wash_Pome
+PASS PC references stay in copy KH_Wash_Lab
+PASS PC references stay in copy KH_Wash_Dachs
+PASS PC references stay in copy KH_Wash_Shiba
+PASS PC references stay in copy KH_Wash_Samoyed
+PASS PC processed six
+PASS PC shell KH_Wash_Corgi
+PASS PC shell KH_Wash_Pome
+PASS PC shell KH_Wash_Lab
+PASS PC shell KH_Wash_Dachs
+PASS PC shell KH_Wash_Shiba
+PASS PC shell KH_Wash_Samoyed
+PASS Android six copied washes
+PASS Android references stay in copy KH_Wash_Corgi
+PASS Android references stay in copy KH_Wash_Pome
+PASS Android references stay in copy KH_Wash_Lab
+PASS Android references stay in copy KH_Wash_Dachs
+PASS Android references stay in copy KH_Wash_Shiba
+PASS Android references stay in copy KH_Wash_Samoyed
+PASS Android processed six
+PASS Android shell KH_Wash_Corgi
+PASS Android root removed KH_Wash_Corgi
+PASS Android proxy cleared pcFoamRenderer
+PASS Android backing removed pcFoamRenderer
+PASS Android proxy cleared pcFoamRunoff
+PASS Android backing removed pcFoamRunoff
+PASS Android proxy cleared pcFoamThinMaterial
+PASS Android backing removed pcFoamThinMaterial
+PASS Android proxy cleared pcFoamFallbackShellMaterial
+PASS Android backing removed pcFoamFallbackShellMaterial
+PASS Android proxy cleared pcFoamVersion
+PASS Android backing removed pcFoamVersion
+PASS Android shell KH_Wash_Pome
+PASS Android root removed KH_Wash_Pome
+PASS Android proxy cleared pcFoamRenderer
+PASS Android backing removed pcFoamRenderer
+PASS Android proxy cleared pcFoamRunoff
+PASS Android backing removed pcFoamRunoff
+PASS Android proxy cleared pcFoamThinMaterial
+PASS Android backing removed pcFoamThinMaterial
+PASS Android proxy cleared pcFoamFallbackShellMaterial
+PASS Android backing removed pcFoamFallbackShellMaterial
+PASS Android proxy cleared pcFoamVersion
+PASS Android backing removed pcFoamVersion
+PASS Android shell KH_Wash_Lab
+PASS Android root removed KH_Wash_Lab
+PASS Android proxy cleared pcFoamRenderer
+PASS Android backing removed pcFoamRenderer
+PASS Android proxy cleared pcFoamRunoff
+PASS Android backing removed pcFoamRunoff
+PASS Android proxy cleared pcFoamThinMaterial
+PASS Android backing removed pcFoamThinMaterial
+PASS Android proxy cleared pcFoamFallbackShellMaterial
+PASS Android backing removed pcFoamFallbackShellMaterial
+PASS Android proxy cleared pcFoamVersion
+PASS Android backing removed pcFoamVersion
+PASS Android shell KH_Wash_Dachs
+PASS Android root removed KH_Wash_Dachs
+PASS Android proxy cleared pcFoamRenderer
+PASS Android backing removed pcFoamRenderer
+PASS Android proxy cleared pcFoamRunoff
+PASS Android backing removed pcFoamRunoff
+PASS Android proxy cleared pcFoamThinMaterial
+PASS Android backing removed pcFoamThinMaterial
+PASS Android proxy cleared pcFoamFallbackShellMaterial
+PASS Android backing removed pcFoamFallbackShellMaterial
+PASS Android proxy cleared pcFoamVersion
+PASS Android backing removed pcFoamVersion
+PASS Android shell KH_Wash_Shiba
+PASS Android root removed KH_Wash_Shiba
+PASS Android proxy cleared pcFoamRenderer
+PASS Android backing removed pcFoamRenderer
+PASS Android proxy cleared pcFoamRunoff
+PASS Android backing removed pcFoamRunoff
+PASS Android proxy cleared pcFoamThinMaterial
+PASS Android backing removed pcFoamThinMaterial
+PASS Android proxy cleared pcFoamFallbackShellMaterial
+PASS Android backing removed pcFoamFallbackShellMaterial
+PASS Android proxy cleared pcFoamVersion
+PASS Android backing removed pcFoamVersion
+PASS Android shell KH_Wash_Samoyed
+PASS Android root removed KH_Wash_Samoyed
+PASS Android proxy cleared pcFoamRenderer
+PASS Android backing removed pcFoamRenderer
+PASS Android proxy cleared pcFoamRunoff
+PASS Android backing removed pcFoamRunoff
+PASS Android proxy cleared pcFoamThinMaterial
+PASS Android backing removed pcFoamThinMaterial
+PASS Android proxy cleared pcFoamFallbackShellMaterial
+PASS Android backing removed pcFoamFallbackShellMaterial
+PASS Android proxy cleared pcFoamVersion
+PASS Android backing removed pcFoamVersion
+PASS iOS six copied washes
+PASS iOS references stay in copy KH_Wash_Corgi
+PASS iOS references stay in copy KH_Wash_Pome
+PASS iOS references stay in copy KH_Wash_Lab
+PASS iOS references stay in copy KH_Wash_Dachs
+PASS iOS references stay in copy KH_Wash_Shiba
+PASS iOS references stay in copy KH_Wash_Samoyed
+PASS iOS processed six
+PASS iOS shell KH_Wash_Corgi
+PASS iOS root removed KH_Wash_Corgi
+PASS iOS proxy cleared pcFoamRenderer
+PASS iOS backing removed pcFoamRenderer
+PASS iOS proxy cleared pcFoamRunoff
+PASS iOS backing removed pcFoamRunoff
+PASS iOS proxy cleared pcFoamThinMaterial
+PASS iOS backing removed pcFoamThinMaterial
+PASS iOS proxy cleared pcFoamFallbackShellMaterial
+PASS iOS backing removed pcFoamFallbackShellMaterial
+PASS iOS proxy cleared pcFoamVersion
+PASS iOS backing removed pcFoamVersion
+PASS iOS shell KH_Wash_Pome
+PASS iOS root removed KH_Wash_Pome
+PASS iOS proxy cleared pcFoamRenderer
+PASS iOS backing removed pcFoamRenderer
+PASS iOS proxy cleared pcFoamRunoff
+PASS iOS backing removed pcFoamRunoff
+PASS iOS proxy cleared pcFoamThinMaterial
+PASS iOS backing removed pcFoamThinMaterial
+PASS iOS proxy cleared pcFoamFallbackShellMaterial
+PASS iOS backing removed pcFoamFallbackShellMaterial
+PASS iOS proxy cleared pcFoamVersion
+PASS iOS backing removed pcFoamVersion
+PASS iOS shell KH_Wash_Lab
+PASS iOS root removed KH_Wash_Lab
+PASS iOS proxy cleared pcFoamRenderer
+PASS iOS backing removed pcFoamRenderer
+PASS iOS proxy cleared pcFoamRunoff
+PASS iOS backing removed pcFoamRunoff
+PASS iOS proxy cleared pcFoamThinMaterial
+PASS iOS backing removed pcFoamThinMaterial
+PASS iOS proxy cleared pcFoamFallbackShellMaterial
+PASS iOS backing removed pcFoamFallbackShellMaterial
+PASS iOS proxy cleared pcFoamVersion
+PASS iOS backing removed pcFoamVersion
+PASS iOS shell KH_Wash_Dachs
+PASS iOS root removed KH_Wash_Dachs
+PASS iOS proxy cleared pcFoamRenderer
+PASS iOS backing removed pcFoamRenderer
+PASS iOS proxy cleared pcFoamRunoff
+PASS iOS backing removed pcFoamRunoff
+PASS iOS proxy cleared pcFoamThinMaterial
+PASS iOS backing removed pcFoamThinMaterial
+PASS iOS proxy cleared pcFoamFallbackShellMaterial
+PASS iOS backing removed pcFoamFallbackShellMaterial
+PASS iOS proxy cleared pcFoamVersion
+PASS iOS backing removed pcFoamVersion
+PASS iOS shell KH_Wash_Shiba
+PASS iOS root removed KH_Wash_Shiba
+PASS iOS proxy cleared pcFoamRenderer
+PASS iOS backing removed pcFoamRenderer
+PASS iOS proxy cleared pcFoamRunoff
+PASS iOS backing removed pcFoamRunoff
+PASS iOS proxy cleared pcFoamThinMaterial
+PASS iOS backing removed pcFoamThinMaterial
+PASS iOS proxy cleared pcFoamFallbackShellMaterial
+PASS iOS backing removed pcFoamFallbackShellMaterial
+PASS iOS proxy cleared pcFoamVersion
+PASS iOS backing removed pcFoamVersion
+PASS iOS shell KH_Wash_Samoyed
+PASS iOS root removed KH_Wash_Samoyed
+PASS iOS proxy cleared pcFoamRenderer
+PASS iOS backing removed pcFoamRenderer
+PASS iOS proxy cleared pcFoamRunoff
+PASS iOS backing removed pcFoamRunoff
+PASS iOS proxy cleared pcFoamThinMaterial
+PASS iOS backing removed pcFoamThinMaterial
+PASS iOS proxy cleared pcFoamFallbackShellMaterial
+PASS iOS backing removed pcFoamFallbackShellMaterial
+PASS iOS proxy cleared pcFoamVersion
+PASS iOS backing removed pcFoamVersion
+PASS renamed six copied washes
+PASS renamed references stay in copy KH_Wash_Corgi
+PASS renamed references stay in copy KH_Wash_Pome
+PASS renamed references stay in copy KH_Wash_Lab
+PASS renamed references stay in copy KH_Wash_Dachs
+PASS renamed references stay in copy KH_Wash_Shiba
+PASS renamed references stay in copy KH_Wash_Samoyed
+Expected rejection: PC foam root moved or renamed: KH_Wash_Corgi
+PASS renamed rejected
+PASS wrong-mesh six copied washes
+PASS wrong-mesh references stay in copy KH_Wash_Corgi
+PASS wrong-mesh references stay in copy KH_Wash_Pome
+PASS wrong-mesh references stay in copy KH_Wash_Lab
+PASS wrong-mesh references stay in copy KH_Wash_Dachs
+PASS wrong-mesh references stay in copy KH_Wash_Shiba
+PASS wrong-mesh references stay in copy KH_Wash_Samoyed
+Expected rejection: KH_Wash_Corgi: invalid attached foam renderer
+PASS wrong-mesh rejected
+PASS stale-scale six copied washes
+PASS stale-scale references stay in copy KH_Wash_Corgi
+PASS stale-scale references stay in copy KH_Wash_Pome
+PASS stale-scale references stay in copy KH_Wash_Lab
+PASS stale-scale references stay in copy KH_Wash_Dachs
+PASS stale-scale references stay in copy KH_Wash_Shiba
+PASS stale-scale references stay in copy KH_Wash_Samoyed
+Expected rejection: KH_Wash_Corgi: generation input changed; regenerate PC foam
+PASS stale-scale rejected
+PASS all build copy checks

@@ -1,0 +1,14 @@
+Candidate preview only; authored pose, isolated scene, directional light 1, 640x512, not PCVR or production integration.
+KH_Wash_Corgi version=2 generatorHash=3D4D55CD444FACD91A09C2E3D194AB810EA415783A4A51C5C77E37476AE9DE88
+KH_Wash_Corgi cameraOrtho=0.5584 bodyBounds=Center: (44.00, 2.44, 45.95), Extents: (0.12, 0.20, 0.44) continuousVertices=3813 triangles=3869
+KH_Wash_Dachs version=2 generatorHash=3D4D55CD444FACD91A09C2E3D194AB810EA415783A4A51C5C77E37476AE9DE88
+KH_Wash_Dachs cameraOrtho=0.4547786 bodyBounds=Center: (44.00, 2.59, 48.02), Extents: (0.10, 0.18, 0.35) continuousVertices=2932 triangles=3000
+KH_Wash_Lab version=2 generatorHash=3D4D55CD444FACD91A09C2E3D194AB810EA415783A4A51C5C77E37476AE9DE88
+KH_Wash_Lab cameraOrtho=0.886786 bodyBounds=Center: (48.00, 2.36, 45.87), Extents: (0.17, 0.37, 0.68) continuousVertices=3830 triangles=4748
+KH_Wash_Pome version=2 generatorHash=3D4D55CD444FACD91A09C2E3D194AB810EA415783A4A51C5C77E37476AE9DE88
+KH_Wash_Pome cameraOrtho=0.2848284 bodyBounds=Center: (46.00, 2.24, 46.00), Extents: (0.10, 0.14, 0.19) continuousVertices=2012 triangles=2138
+KH_Wash_Shiba version=2 generatorHash=3D4D55CD444FACD91A09C2E3D194AB810EA415783A4A51C5C77E37476AE9DE88
+KH_Wash_Shiba cameraOrtho=0.5573187 bodyBounds=Center: (46.00, 2.58, 48.05), Extents: (0.13, 0.29, 0.38) continuousVertices=3725 triangles=3852
+KH_Wash_Samoyed version=2 generatorHash=3D4D55CD444FACD91A09C2E3D194AB810EA415783A4A51C5C77E37476AE9DE88
+KH_Wash_Samoyed cameraOrtho=0.6979311 bodyBounds=Center: (48.00, 2.61, 48.03), Extents: (0.16, 0.36, 0.48) continuousVertices=2534 triangles=3030
+Production dirty unchanged=False
