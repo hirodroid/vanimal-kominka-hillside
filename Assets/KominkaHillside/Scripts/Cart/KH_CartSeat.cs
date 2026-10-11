@@ -30,7 +30,7 @@ namespace KominkaHillside
         private bool _seatReady;
         private Vector3 _seatPos;
         private Quaternion _seatRot;
-        private int _seatH = int.MinValue, _seatY = int.MinValue;   // 最後に置いた段数 (変わったときだけ書く)
+        private int _seatH = int.MinValue, _seatY = int.MinValue, _seatF = int.MinValue;   // 最後に置いた段数 (変わったときだけ書く)
 
         public const float WheelRadius = 0.14f;
         const float ExitReach = 1.0f;
@@ -48,15 +48,17 @@ namespace KominkaHillside
             EnsureSeatDefault();
         }
 
-        /// <summary>M1.1: 座席 (Anchor_Seat = station の入る位置) を既定 + 段数に置く。高さはローカル y に 5 cm/段、向きは親の Y 軸まわりに 15°/段。
+        /// <summary>M1.1: 座席 (Anchor_Seat = station の入る位置) を既定 + 段数に置く。高さはローカル y、前後はローカル z (+ が前) にどちらも 5 cm/段、
+        /// 向きは親の Y 軸まわりに 15°/段。
         /// 全クライアントが manager.ApplyState から同期値で呼ぶ (座っている人は station の入る位置に付いて動く)。</summary>
-        public void _ApplySeat(int steps, int yawSteps)
+        public void _ApplySeat(int steps, int yawSteps, int fwdSteps)
         {
             if (seat == null) return;
-            if (steps == _seatH && yawSteps == _seatY) return;
+            if (steps == _seatH && yawSteps == _seatY && fwdSteps == _seatF) return;
             EnsureSeatDefault();
-            _seatH = steps; _seatY = yawSteps;
-            seat.localPosition = new Vector3(_seatPos.x, _seatPos.y + steps * SeatStep, _seatPos.z);
+            _seatH = steps; _seatY = yawSteps; _seatF = fwdSteps;
+            // 前後は車体の前 (ローカル +z) へ 5 cm/段 (2026-10-12 追加要望)
+            seat.localPosition = new Vector3(_seatPos.x, _seatPos.y + steps * SeatStep, _seatPos.z + fwdSteps * SeatStep);
             seat.localRotation = Quaternion.Euler(0f, yawSteps * YawStep, 0f) * _seatRot;
         }
 

@@ -51,8 +51,9 @@ namespace KominkaHillside
 
         void LateUpdate()
         {
-            if (!_riding) { enabled = false; return; }
-            if (manager != null && manager._MyCart() != index) { _SetRiding(false); return; }   // 取りこぼしの安全網
+            if (!_riding) { enabled = false; return; }   // 乗っていないカートのドックは無効 (LateUpdate も来ない)。ここは取りこぼしの保険
+            // 取りこぼしの安全網は 30 フレームに 1 回 (毎フレームの他 Behaviour 呼び出しを避ける。降車は _SetRiding(false) が先に来る)
+            if (manager != null && Time.frameCount % 30 == index % 30 && manager._MyCart() != index) { _SetRiding(false); return; }
             if (_menuPanel != null && dockMenu != null && _menuPanel.activeSelf)
             {
                 Vector3 want = dockMenu.position;
@@ -72,12 +73,14 @@ namespace KominkaHillside
             Cache();
         }
 
-        /// <summary>操作帯の [撮影モニター]。開いていれば呼び戻し、閉じていれば開く。PC 専用 (Quest・スマホでは KH_VideoCamera が何もしない)。</summary>
+        /// <summary>操作帯の [撮影モニター]。3 状態の循環: 閉 → 開く / 開 (表示中) → 板だけ隠す (撮影は続く) / 隠し中 → 再表示 (次のフレームからドックへ)。
+        /// PC 専用 (Quest・スマホでは KH_VideoCamera が何もしない)。</summary>
         public void _PressMonitor()
         {
             if (video == null) return;
             Cache();
-            if (_monitor != null && _monitor.activeSelf) video._Recall();
+            if (video._MonitorHidden()) video._ShowMonitor();
+            else if (_monitor != null && _monitor.activeSelf) video._HideMonitor();
             else video._Open();
         }
 

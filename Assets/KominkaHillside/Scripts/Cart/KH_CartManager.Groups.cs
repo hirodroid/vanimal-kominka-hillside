@@ -190,6 +190,7 @@ namespace KominkaHillside
             cartSpot[c] = 0;
             cartSeatSteps[c] = 0;   // M1.1: 降車で座席を既定へ戻す
             cartYawSteps[c] = 0;
+            cartFwdSteps[c] = 0;
         }
 
         private void FreeGroup(int g)
@@ -276,7 +277,7 @@ namespace KominkaHillside
             {
                 if (cartState[c] == CartIdle)
                 {
-                    if (cartRider[c] != 0 || cartGroup[c] != -1 || cartSeatSteps[c] != 0 || cartYawSteps[c] != 0) { ResetCart(c); changed = true; }
+                    if (cartRider[c] != 0 || cartGroup[c] != -1 || cartSeatSteps[c] != 0 || cartYawSteps[c] != 0 || cartFwdSteps[c] != 0) { ResetCart(c); changed = true; }
                     continue;
                 }
                 int g = cartGroup[c];

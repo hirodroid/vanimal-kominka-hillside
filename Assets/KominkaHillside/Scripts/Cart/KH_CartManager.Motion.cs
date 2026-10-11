@@ -19,7 +19,8 @@ namespace KominkaHillside
     public partial class KH_CartManager
     {
         private bool[] _shown, _parked, _snap;
-        private float[] _parkAt, _err, _dLast, _y, _vy, _pitch, _vp, _lat, _yT;
+        private float[] _parkAt, _err, _dLast, _y, _vy, _pitch, _vp, _lat, _yT, _placedAt;
+        private int[] _seg, _groundFrame;   // 前回の軌道の区間 (近傍からたどる) と、前回の接地のフレーム
         private Transform[] _cartT;
         private bool _gHit;   // GroundAt の結果 (当たりがあったか)
 
@@ -38,6 +39,9 @@ namespace KominkaHillside
             _parkAt = new float[MaxCarts]; _err = new float[MaxCarts]; _dLast = new float[MaxCarts];
             _y = new float[MaxCarts]; _vy = new float[MaxCarts]; _pitch = new float[MaxCarts]; _vp = new float[MaxCarts]; _lat = new float[MaxCarts];
             _yT = new float[MaxCarts];
+            _placedAt = new float[MaxCarts];
+            _seg = new int[MaxCarts]; _groundFrame = new int[MaxCarts];
+            for (int k = 0; k < MaxCarts; k++) { _seg[k] = -1; _groundFrame[k] = -1000; }
             _cartT = new Transform[MaxCarts];
             for (int c = 0; carts != null && c < carts.Length && c < MaxCarts; c++)
                 if (carts[c] != null) _cartT[c] = carts[c].transform;
@@ -48,11 +52,22 @@ namespace KominkaHillside
             if (carts == null || !EnsureRoute()) return;
             int now = Networking.GetServerTimeInMilliseconds();
             float dt = Time.deltaTime;
+            int frame = Time.frameCount;
+            float t = Time.time;
             for (int c = 0; c < MaxCarts && c < carts.Length; c++)
             {
+                if (!_shown[c])
+                {
+                    if (!_parked[c] && t >= _parkAt[c] && _seatedCart != c && _cartT[c] != null) ParkCart(c);
+                    continue;   // 駐車中・不可視のカートは何もしない
+                }
                 if (_cartT[c] == null) continue;
-                if (_shown[c]) PlaceCart(c, now, dt);
-                else if (!_parked[c] && Time.time >= _parkAt[c] && _seatedCart != c) ParkCart(c);
+                // 2026-10-12 (コスト削減): 自分のカートは毎フレーム、他人のカートは 2 フレームに 1 回 (補間なし。dt は前回からの経過)
+                bool mine = c == _myCart || c == _seatedCart;
+                if (!mine && !_snap[c] && ((frame + c) & 1) != 0) continue;
+                float step = _placedAt[c] > 0f ? t - _placedAt[c] : dt;
+                _placedAt[c] = t;
+                PlaceCart(c, now, step);
             }
         }
 
@@ -70,21 +85,43 @@ namespace KominkaHillside
             _err[c] = err;
             float d = Wrap(target - err);
 
-            Vector3 p = TrackPoint(d);
-            Vector3 ahead = TrackPoint(d + dir * lookAhead);
+            // 2026-10-12 (コスト削減): 軌道では区間の探索を 1 カート 1 回の二分探索 (前回の区間から近傍をたどる) にし、先読み点・横ずれの先読みは
+            // その区間から隣へたどるだけ。route へ戻っているときは従来どおり KH_WalkRoute の関数
+            Vector3 p, ahead, segDir;
+            bool detour;
+            float d2 = d + dir * LateralLookAhead;
+            if (_useTrack)
+            {
+                int i = TrackSegNear(_seg[c], d);
+                _seg[c] = i;
+                p = SegPoint(i, d);
+                float xa = Wrap(d + dir * lookAhead);
+                ahead = SegPoint(TrackSegNear(i, xa), xa);
+                float x2 = Wrap(d2);
+                int i2 = TrackSegNear(i, x2);
+                detour = SegDetour(i) && SegDetour(i2) && !TrackNoLateral(d) && !TrackNoLateral(x2);
+                segDir = trackPositions[(i + 1) % trackPositions.Length] - trackPositions[i];
+                segDir.y = 0f;
+                segDir = segDir.sqrMagnitude < 0.0001f ? Vector3.forward : segDir.normalized;
+            }
+            else
+            {
+                p = route._PointAtDistance(d);
+                ahead = route._PointAtDistance(d + dir * lookAhead);
+                detour = route._DetourAtDistance(d) && route._DetourAtDistance(d2);
+                segDir = Vector3.zero;
+            }
             Vector3 fwd = ahead - p;
             float rise = fwd.y;
             fwd.y = 0f;
             float run = fwd.magnitude;
-            if (run < 0.01f) { fwd = TrackDirection(d) * (float)dir; run = 0f; }
+            if (run < 0.01f) { fwd = (_useTrack ? segDir : route._DirectionAtDistance(d)) * (float)dir; run = 0f; }
             fwd = fwd.normalized;
             Vector3 right = new Vector3(fwd.z, 0f, -fwd.x);   // Cross(up, fwd)
             float slope = run > 0.01f ? rise / run : 0f;      // 道の勾配 (前後の当たりの基準と、他人のカートのピッチ)
 
             float side = cartOrder[c] % 2 == 0 ? 1f : -1f;
             // レビュー #5: 橋の手前 LateralLookAhead から中央へ寄せ始める。M1.1: ベンチ・門枠などの追加範囲 (TrackNoLateral) も同じ扱い
-            float d2 = d + dir * LateralLookAhead;
-            bool detour = TrackDetour(d) && TrackDetour(d2) && !TrackNoLateral(d) && !TrackNoLateral(d2);
             float latTarget = detour ? side * lateral : 0f;
             float lat = snap ? latTarget : Mathf.MoveTowards(_lat[c], latTarget, LateralSpeed * dt);
             _lat[c] = lat;
@@ -107,8 +144,10 @@ namespace KominkaHillside
             }
             else
             {
-                if (snap || (Time.frameCount + c) % 3 == 0)
+                // 前回の当たりから 3 フレーム以上たっていれば 1 点 (2 フレームおきの更新と重なり、実際は 4 フレームに 1 回)
+                if (snap || Time.frameCount - _groundFrame[c] >= 3)
                 {
+                    _groundFrame[c] = Time.frameCount;
                     float y = GroundAt(pos, p.y);
                     if (_gHit || snap) yTarget = y;
                 }
@@ -124,10 +163,11 @@ namespace KominkaHillside
             {
                 // vrc-udonsharp §1.4: 配列要素を ref に渡さない。ローカルで受けて書き戻す
                 float vy = _vy[c];
-                float y = Mathf.SmoothDamp(_y[c], yTarget, ref vy, smoothTime);
+                // 他人のカートは 2 フレームおきに来るので、経過 dt を明示して平滑化の速さを揃える
+                float y = Mathf.SmoothDamp(_y[c], yTarget, ref vy, smoothTime, Mathf.Infinity, dt);
                 _y[c] = y; _vy[c] = vy;
                 float vp = _vp[c];
-                float pitch = Mathf.SmoothDamp(_pitch[c], pitchTarget, ref vp, smoothTime);
+                float pitch = Mathf.SmoothDamp(_pitch[c], pitchTarget, ref vp, smoothTime, Mathf.Infinity, dt);
                 _pitch[c] = pitch; _vp[c] = vp;
             }
             pos.y = _y[c];
@@ -142,6 +182,36 @@ namespace KominkaHillside
             _dLast[c] = d;
             _snap[c] = false;
         }
+
+        // ---- 軌道の区間 (PlaceCart 専用。公開の TrackPoint などは Probe 用に毎回二分探索する) ----
+
+        /// <summary>x を含む区間を、start の区間から前後 4 区間までたどって探す。見つからなければ二分探索。</summary>
+        private int TrackSegNear(int start, float x)
+        {
+            int n = trackDistances.Length;
+            if (start < 0 || start >= n) return TrackSegment(Wrap(x));
+            int i = start;
+            for (int k = 0; k < 5; k++)
+            {
+                float a = trackDistances[i];
+                float b = i + 1 < n ? trackDistances[i + 1] : trackLength;
+                if (x >= a && x < b) return i;
+                i = x >= b ? (i + 1) % n : (i + n - 1) % n;
+            }
+            return TrackSegment(Wrap(x));
+        }
+
+        private Vector3 SegPoint(int i, float x)
+        {
+            int n = trackPositions.Length;
+            int j = (i + 1) % n;
+            float a = trackDistances[i];
+            float b = j == 0 ? trackLength : trackDistances[j];
+            float t = b - a > 0.0001f ? Mathf.Clamp01((x - a) / (b - a)) : 0f;
+            return Vector3.Lerp(trackPositions[i], trackPositions[j], t);
+        }
+
+        private bool SegDetour(int i) { return trackDetour == null || i >= trackDetour.Length || trackDetour[i]; }
 
         /// <summary>(xz, 道の高さ py) の地面の高さ。py + 4 から下へ 10 m。当たりが道の高さから 0.35 m より離れていれば、その 2 cm 下から撃ち直す
         /// (最大 3 回。ベンチ・看板・犬・停止ボタンの上を抜ける)。採用は py に最も近い当たりで、[py - 1.0, py + 1.5] に収める。

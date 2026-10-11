@@ -321,6 +321,7 @@ namespace KominkaHillside
         // Nothing is drawn and the picture stays detached until this is > 0, so a reopen never shows an earlier session's framing
         private int _subjectPoses;
         private bool _pictureShown;
+        private bool _monitorHidden;   // DES-WLD-004 M1.1: open, but the board is hidden (_HideMonitor)
         private int _state = StateNone;
         private int _shownState = -99;
         private float _lostSince = -1f;
@@ -443,6 +444,7 @@ namespace KominkaHillside
             OwnDogFirst();   // start on the player's own leashed dog; keeps the last chosen dog when the player has none
             AutoSubject();
             PlaceMonitor();
+            _monitorHidden = false;
             monitorRoot.SetActive(true);
             snapRenderer.gameObject.SetActive(_snapOn);
             _interval = renderFps > 1f ? 1f / renderFps : 1f / 30f;
@@ -455,17 +457,35 @@ namespace KominkaHillside
             DrawPanel();
         }
 
-        /// <summary>[モニターを呼ぶ]: the open monitor moves in front of the head (it never follows by itself).</summary>
+        /// <summary>[モニターを呼ぶ]: the open monitor moves in front of the head (it never follows by itself). A hidden monitor is shown again.</summary>
         public void _Recall()
         {
             if (!_open) return;
+            if (_monitorHidden) { _monitorHidden = false; monitorRoot.SetActive(true); }
             PlaceMonitor();
             TextsRefresh(); DrawPanel();   // W5: the panel in the player's language
         }
 
+        /// <summary>DES-WLD-004 M1.1 (2026-10-12): [モニターを隠す]. Only the monitor board goes away (monitorRoot inactive: the screen, the panels and
+        /// their buttons); filming keeps running. This behaviour lives on the system root and RecordSnap is a sibling of the monitor, so the
+        /// render tick (PostLateUpdate), RecordSnap, the drone sends and the pattern player are untouched. × (_Close) still stops everything.</summary>
+        public void _HideMonitor()
+        {
+            if (!_open || _monitorHidden) return;
+            _monitorHidden = true;
+            monitorRoot.SetActive(false);
+        }
+
+        /// <summary>Shows a hidden monitor again in front of the head (same as _Recall).</summary>
+        public void _ShowMonitor() { _Recall(); }
+
+        /// <summary>Open and hidden (filming continues without the board).</summary>
+        public bool _MonitorHidden() { return _open && _monitorHidden; }
+
         /// <summary>× on the monitor and [しまう] on the photo page. Stops the camera, hides everything and destroys the RT.</summary>
         public void _Close()
         {
+            _monitorHidden = false;
             if (!_open && _rt == null) return;
             PersonCloseAll();   // W4: × ends the film session (pending / in use) before anything else; a reopen needs a new request (§5.4)
             if (_patRun) PatternStop();   // §17: × stops the pattern (a reopen starts manual)

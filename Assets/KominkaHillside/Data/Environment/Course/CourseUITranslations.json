@@ -518,19 +518,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "座面を上げる"
+          "text": "高さ ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "座面を下げる"
+          "text": "高さ ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "左を向く"
+          "text": "向き ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "右を向く"
+          "text": "向き ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "前後 ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "前後 ▼"
         }
       ]
     },
@@ -1049,19 +1057,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "Raise seat"
+          "text": "Height ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "Lower seat"
+          "text": "Height ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "Turn left"
+          "text": "Turn ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "Turn right"
+          "text": "Turn ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "Fore/aft ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "Fore/aft ▼"
         }
       ]
     },
@@ -1580,19 +1596,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "Поднять сиденье"
+          "text": "Высота ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "Опустить сиденье"
+          "text": "Высота ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "Повернуть влево"
+          "text": "Поворот ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "Повернуть вправо"
+          "text": "Поворот ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "Вперёд/назад ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "Вперёд/назад ▼"
         }
       ]
     },
@@ -2111,19 +2135,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "Підняти сидіння"
+          "text": "Висота ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "Опустити сидіння"
+          "text": "Висота ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "Повернути ліворуч"
+          "text": "Поворот ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "Повернути праворуч"
+          "text": "Поворот ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "Вперед/назад ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "Вперед/назад ▼"
         }
       ]
     },
@@ -2642,19 +2674,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "좌석 올리기"
+          "text": "높이 ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "좌석 내리기"
+          "text": "높이 ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "왼쪽 보기"
+          "text": "방향 ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "오른쪽 보기"
+          "text": "방향 ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "앞뒤 ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "앞뒤 ▼"
         }
       ]
     },
@@ -3173,19 +3213,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "Sitz höher"
+          "text": "Höhe ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "Sitz tiefer"
+          "text": "Höhe ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "Nach links drehen"
+          "text": "Drehen ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "Nach rechts drehen"
+          "text": "Drehen ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "Vor/zurück ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "Vor/zurück ▼"
         }
       ]
     },
@@ -3704,19 +3752,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "升高座位"
+          "text": "高度 ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "降低座位"
+          "text": "高度 ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "向左转"
+          "text": "朝向 ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "向右转"
+          "text": "朝向 ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "前后 ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "前后 ▼"
         }
       ]
     },
@@ -4235,19 +4291,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "Subir asiento"
+          "text": "Altura ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "Bajar asiento"
+          "text": "Altura ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "Girar a la izquierda"
+          "text": "Girar ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "Girar a la derecha"
+          "text": "Girar ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "Adelante/atrás ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "Adelante/atrás ▼"
         }
       ]
     },
@@ -4766,19 +4830,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "Monter le siège"
+          "text": "Hauteur ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "Baisser le siège"
+          "text": "Hauteur ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "Tourner à gauche"
+          "text": "Tourner ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "Tourner à droite"
+          "text": "Tourner ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "Avant/arrière ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "Avant/arrière ▼"
         }
       ]
     },
@@ -5297,19 +5369,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "Subir assento"
+          "text": "Altura ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "Baixar assento"
+          "text": "Altura ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "Virar à esquerda"
+          "text": "Virar ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "Virar à direita"
+          "text": "Virar ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "Frente/trás ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "Frente/trás ▼"
         }
       ]
     },
@@ -5828,19 +5908,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "Alza il sedile"
+          "text": "Altezza ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "Abbassa il sedile"
+          "text": "Altezza ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "Gira a sinistra"
+          "text": "Ruota ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "Gira a destra"
+          "text": "Ruota ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "Avanti/indietro ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "Avanti/indietro ▼"
         }
       ]
     },
@@ -6359,19 +6447,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "Podnieś siedzenie"
+          "text": "Wysokość ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "Opuść siedzenie"
+          "text": "Wysokość ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "Obróć w lewo"
+          "text": "Obrót ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "Obróć w prawo"
+          "text": "Obrót ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "Przód/tył ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "Przód/tył ▼"
         }
       ]
     },
@@ -6894,19 +6990,27 @@
         },
         {
           "key": "cart.seat.up",
-          "text": "升高座位"
+          "text": "高度 ▲"
         },
         {
           "key": "cart.seat.down",
-          "text": "降低座位"
+          "text": "高度 ▼"
         },
         {
           "key": "cart.turn.left",
-          "text": "向左轉"
+          "text": "朝向 ◀"
         },
         {
           "key": "cart.turn.right",
-          "text": "向右轉"
+          "text": "朝向 ▶"
+        },
+        {
+          "key": "cart.seat.forward",
+          "text": "前後 ▲"
+        },
+        {
+          "key": "cart.seat.back",
+          "text": "前後 ▼"
         }
       ]
     }

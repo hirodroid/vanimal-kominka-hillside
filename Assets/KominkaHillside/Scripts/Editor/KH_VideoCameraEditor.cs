@@ -122,6 +122,9 @@ namespace KominkaHillside.Editor
         public const float ScreenCenterPxY = 157f, ScreenFrontM = 0.003f;
         public static readonly Vector2 TitlePos = new Vector2(-180f, 412f), TitleSize = new Vector2(440f, 44f);
         public static readonly Vector2 ClosePos = new Vector2(380f, 412f), CloseSize = new Vector2(64f, 50f);
+        // DES-WLD-004 M1.1 (2026-10-12): [モニターを隠す] は × の左隣 (140..340 px。題 -400..40 と × 348..412 に掛からない)。隠している間も撮影は続く (× は全停止)
+        public const string HideMonitorName = "HideMonitor", KeyHideMonitor = "video.hide", WordHideMonitor = "モニターを隠す", HideMonitorEvent = "_HideMonitor";
+        public static readonly Vector2 HideMonitorPos = new Vector2(240f, 412f), HideMonitorSize = new Vector2(200f, 50f);
         public static readonly Vector2 ModeSize = new Vector2(156f, 56f);
         public const float ModePitchX = 164f, ModeRow0Y = -100f, ModeRow1Y = -160f;
         public const int ModeColumns = 5;
@@ -548,6 +551,8 @@ namespace KominkaHillside.Editor
 
             Label(go.transform, "Title", TitlePos, TitleSize, Ja(KH_VideoCamera.KeyTitle), c.font, 28f, 18f, TextAlignmentOptions.MidlineLeft, false).color = KD_UiSpriteEditor.AccentGold;
             Btn(go.transform, "Close", ClosePos, CloseSize, "×", c.font, target, nameof(KH_VideoCamera._Close), log);
+            var hideBtn = Btn(go.transform, HideMonitorName, HideMonitorPos, HideMonitorSize, Ja(KeyHideMonitor), c.font, target, HideMonitorEvent, log);   // Runtime: KH_VideoCamera._HideMonitor
+            var hideLabel = LabelOf(hideBtn); if (hideLabel != null) { hideLabel.fontSize = 22f; hideLabel.fontSizeMax = 22f; hideLabel.fontSizeMin = 12f; hideLabel.enableAutoSizing = true; EditorUtility.SetDirty(hideLabel); }
             foreach (var old in new[] { "ModeDog", "ModeSelf" }) { var o = go.transform.Find(old); if (o != null) { UnityEngine.Object.DestroyImmediate(o.gameObject); log.Add("removed the W1 button " + old); } }
             // §15.5: 12 → 10 modes; §16: still 10 (手元 / 見下ろす out, 背中ごし / みち in). The buttons past ModeCount are removed; the rest are
             // rewritten in place (label and event by number)

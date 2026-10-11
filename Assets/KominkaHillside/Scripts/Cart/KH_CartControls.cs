@@ -8,7 +8,7 @@ namespace KominkaHillside
 {
     /// <summary>DES-WLD-004 M1.1: カート左斜め前の操作帯 (各カートに 1 つ。ローカル専用、同期しない)。
     /// Canvas (panel) は Setup が layer 17 (Walkthrough。撮影カメラに映らない) で作る。自分がこのカートに乗っている間だけ表示する。
-    /// ボタンの並び (buttons / labels、長さ 8): 0 メニュー / 1 撮影モニター / 2 座面↑ / 3 座面↓ / 4 向き← / 5 向き→ / 6 停止 / 7 合流の受付。
+    /// ボタンの並び (buttons / labels、長さ 10): 0 メニュー / 1 撮影モニター / 2 高さ▲ / 3 高さ▼ / 4 前後▲ / 5 前後▼ / 6 向き◀ / 7 向き▶ / 8 停止 / 9 合流の受付。
     /// 受付はマスターのときだけ押せる (Button.interactable)。撮影モニターは PC 専用 (Quest・スマホ・未配線では隠す)。
     /// manager.ApplyState → KH_CartSeat._SetRider から <see cref="_Refresh"/>、言語の変化で <see cref="_RefreshText"/>。</summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
@@ -19,10 +19,18 @@ namespace KominkaHillside
         public KH_CartDock dock;
         public KominkaDogRun.KD_Language language;
         public GameObject panel;                // Controls Canvas (_SetVisible で切り替え)
-        public GameObject[] buttons;            // 長さ 8 (上の並び)
-        public TextMeshProUGUI[] labels;        // 長さ 8
+        public GameObject[] buttons;            // 長さ 10 (上の並び)
+        public TextMeshProUGUI[] labels;        // 長さ 10
+        // 2026-10-12 追加要望: 操作帯の最小化。body = 10 ボタンの親 (最小化中は非表示)、tab = 常に見える小さな切替ボタン (body の外。onClick → _PressToggle)。
+        // tabLabel は任意 (null 可): 展開中は「×」、最小化中は「≡」を書く (記号だけ。文言キーなし)
+        public GameObject body;
+        public GameObject tab;
+        public TextMeshProUGUI tabLabel;
+        private bool _minimized;
 
-        public const int BtnMenu = 0, BtnMonitor = 1, BtnSeatUp = 2, BtnSeatDown = 3, BtnTurnLeft = 4, BtnTurnRight = 5, BtnStop = 6, BtnAccepting = 7;
+        // 2026-10-12: 前後を足して 10 個 (高さと前後の矢印は別の行・別のキー)
+        public const int BtnMenu = 0, BtnMonitor = 1, BtnSeatUp = 2, BtnSeatDown = 3, BtnSeatForward = 4, BtnSeatBack = 5,
+            BtnTurnLeft = 6, BtnTurnRight = 7, BtnStop = 8, BtnAccepting = 9, ButtonCount = 10;
 
         private int _visible = -1;    // -1 = まだ書いていない
         private int _master = -1;
@@ -58,6 +66,7 @@ namespace KominkaHillside
             _visible = want;
             _master = -1; _accepting = -1;   // 次に出すとき文言を書き直す
             if (panel != null && panel.activeSelf != on) panel.SetActive(on);
+            if (on) { _minimized = false; ApplyMinimized(); }   // 乗車開始は展開した状態から
             if (on && buttons != null && buttons.Length > BtnMonitor && buttons[BtnMonitor] != null)
             {
                 bool monitor = dock != null && dock.video != null;
@@ -75,6 +84,8 @@ namespace KominkaHillside
             SetLabel(BtnMonitor, T("cart.monitor"));
             SetLabel(BtnSeatUp, T("cart.seat.up"));
             SetLabel(BtnSeatDown, T("cart.seat.down"));
+            SetLabel(BtnSeatForward, T("cart.seat.forward"));
+            SetLabel(BtnSeatBack, T("cart.seat.back"));
             SetLabel(BtnTurnLeft, T("cart.turn.left"));
             SetLabel(BtnTurnRight, T("cart.turn.right"));
             SetLabel(BtnStop, T("cart.stop"));
@@ -86,10 +97,27 @@ namespace KominkaHillside
         public void _PressMonitor() { if (dock != null && Riding()) dock._PressMonitor(); }
         public void _PressSeatUp() { if (Riding()) manager._SeatUp(); }
         public void _PressSeatDown() { if (Riding()) manager._SeatDown(); }
+        public void _PressSeatForward() { if (Riding()) manager._SeatForward(); }
+        public void _PressSeatBack() { if (Riding()) manager._SeatBack(); }
         public void _PressTurnLeft() { if (Riding()) manager._TurnLeft(); }
         public void _PressTurnRight() { if (Riding()) manager._TurnRight(); }
         public void _PressStop() { if (Riding()) manager._Leave(); }
         public void _PressAccepting() { if (Riding()) manager._ToggleAccepting(); }
+
+        /// <summary>tab の onClick: 操作帯を最小化 / 展開する (ローカルの見た目だけ)。</summary>
+        public void _PressToggle()
+        {
+            _minimized = !_minimized;
+            ApplyMinimized();
+        }
+
+        private void ApplyMinimized()
+        {
+            bool show = !_minimized;
+            if (body != null && body.activeSelf != show) body.SetActive(show);
+            if (tab != null && !tab.activeSelf) tab.SetActive(true);
+            if (tabLabel != null) tabLabel.text = _minimized ? "≡" : "×";   // ≡ / ×
+        }
 
         private bool Riding() { return manager != null && manager._MyCart() == index; }
 

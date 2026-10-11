@@ -35,7 +35,7 @@ namespace KominkaHillside.Editor
         /// <summary>The Japanese text of a key: what the builders write into the scene (the runtime rewrites it in the player's language).</summary>
         public static string Ja(string key) { return KD_LocalizationEditor.Text(Cat(), "ja", key); }
 
-        /// <summary>Every W5 key with its Japanese default in the code (104 keys).</summary>
+        /// <summary>Every W5 key with its Japanese default in the code (105 keys).</summary>
         public static List<KeyValuePair<string, string>> W5Keys()
         {
             var l = new List<KeyValuePair<string, string>>();
@@ -51,6 +51,7 @@ namespace KominkaHillside.Editor
             A(KH_VideoCamera.KeySpotWash, SpotWordWash + "{0}"); A(KH_VideoCamera.KeySpotRiver, SpotWordRiver); A(KH_VideoCamera.KeySpotRiverLow, SpotWordRiverLow);
             string[] ck = KH_VideoCamera.CtlKeys(), cw = KH_VideoCamera.CtlWords();
             for (int i = 0; i < ck.Length && i < cw.Length; i++) if (ck[i].Length > 0) A(ck[i], cw[i]);
+            A(KeyHideMonitor, WordHideMonitor);   // DES-WLD-004 M1.1: [モニターを隠す]
             A(KH_VideoCamera.KeyDrone, KH_VideoCamera.WordDrone); A(KH_VideoCamera.KeyShow, KH_VideoCamera.WordShow); A(KH_VideoCamera.KeyHide, KH_VideoCamera.WordHide);
             // the person picker / list / confirmation (KH_VideoCamera.People.cs)
             A(KH_VideoCamera.KeyPerson, KH_VideoCamera.WordPerson); A(KH_VideoCamera.KeyPersonTitle, KH_VideoCamera.WordPersonTitle); A(KH_VideoCamera.KeyPersonClose, KH_VideoCamera.WordPersonClose);
@@ -155,6 +156,7 @@ namespace KominkaHillside.Editor
             string[] ck = KH_VideoCamera.CtlKeys();
             for (int i = 0; i < ck.Length; i++) if (ck[i].Length > 0) Add(mon, PanelName + "/" + CtlName(i) + "/Label", ck[i], true);
             Add(mon, PanelName + "/SnapNote", KH_VideoCamera.KeySnapNote, true);
+            Add(mon, PanelName + "/" + HideMonitorName + "/Label", KeyHideMonitor, false);   // Video/1 が作る (無ければ Video/2 の配線検査が NG)
             Add(mon, PanelName + "/" + PersonListName + "/Close/Label", KH_VideoCamera.KeyPersonClose, false);   // Video/4
             Add(mon, PanelName + "/" + PersonConfirmName + "/Yes/Label", KH_VideoCamera.KeyAskYes, false);
             Add(mon, PanelName + "/" + PersonConfirmName + "/No/Label", KH_VideoCamera.KeyAskNo, false);
@@ -202,7 +204,7 @@ namespace KominkaHillside.Editor
             _w5Catalog = null;
             var cat = Cat();
             var pairs = W5Keys();
-            Check(pairs.Count == 104, "W5: " + pairs.Count + " video.* / film.* keys (104 expected; change the number here when a text is added)");
+            Check(pairs.Count == 105, "W5: " + pairs.Count + " video.* / film.* keys (105 expected: 104 + video.hide (DES-WLD-004 M1.1); change the number here when a text is added)");
             var bad = W5CatalogProblems();
             Check(bad.Count == 0, "W5: every key in all " + cat.languages.Length + " languages, the same {0} / {1} count as ja, ja = the code default, no stray key"
                 + (bad.Count > 0 ? " (" + bad.Count + " problems, first: " + string.Join(" | ", bad.Take(3)) + ")" : ""));

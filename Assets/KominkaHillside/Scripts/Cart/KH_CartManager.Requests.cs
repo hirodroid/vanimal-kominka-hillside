@@ -98,17 +98,19 @@ namespace KominkaHillside
         }
 
         // ---- 座席の調整 (M1.1。乗っている本人だけ。高さ 5 cm/段・向き 15°/段、どちらも -6..+6) ----
-        public void _SeatUp() { SendSeat(1, 0); }
-        public void _SeatDown() { SendSeat(-1, 0); }
-        public void _TurnLeft() { SendSeat(0, -1); }
-        public void _TurnRight() { SendSeat(0, 1); }
+        public void _SeatUp() { SendSeat(1, 0, 0); }
+        public void _SeatDown() { SendSeat(-1, 0, 0); }
+        public void _TurnLeft() { SendSeat(0, -1, 0); }
+        public void _TurnRight() { SendSeat(0, 1, 0); }
+        public void _SeatForward() { SendSeat(0, 0, 1); }
+        public void _SeatBack() { SendSeat(0, 0, -1); }
 
-        private void SendSeat(int dHeight, int dYaw)
+        private void SendSeat(int dHeight, int dYaw, int dFwd)
         {
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp) || !_IsRiding()) return;
-            if (Networking.IsOwner(gameObject)) ReceiveSeat(lp.playerId, dHeight, dYaw);
-            else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqSeat), dHeight, dYaw);
+            if (Networking.IsOwner(gameObject)) ReceiveSeat(lp.playerId, dHeight, dYaw, dFwd);
+            else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqSeat), dHeight, dYaw, dFwd);
         }
 
         /// <summary>降車の 1 本道。exitStation = false はすでに station の外 (ジャンプ) か、station に触れたくない (リスポーン) とき。</summary>
@@ -173,28 +175,30 @@ namespace KominkaHillside
         }
 
         [NetworkCallable(maxEventsPerSecond: 6)]
-        public void ReqSeat(int dHeight, int dYaw) // net: callable-ok: CallingPlayer で照合 (自分が乗っているカートの座席だけ。1 回 ±1 段まで)
+        public void ReqSeat(int dHeight, int dYaw, int dFwd) // net: callable-ok: CallingPlayer で照合 (自分が乗っているカートの座席だけ。1 回 ±1 段まで)
         {
             if (!Networking.IsOwner(gameObject)) return;
             VRCPlayerApi caller = NetworkCalling.CallingPlayer;
             if (!Utilities.IsValid(caller)) return;
-            ReceiveSeat(caller.playerId, dHeight, dYaw);
+            ReceiveSeat(caller.playerId, dHeight, dYaw, dFwd);
         }
 
         // ============================================================
         // 裁定 (Owner)
         // ============================================================
 
-        private void ReceiveSeat(int pid, int dHeight, int dYaw)
+        private void ReceiveSeat(int pid, int dHeight, int dYaw, int dFwd)
         {
             int c = RiderCart(pid);
             if (c < 0) return;
             int h = Mathf.Clamp(cartSeatSteps[c] + Mathf.Clamp(dHeight, -1, 1), -SeatStepsMax, SeatStepsMax);
             int y = Mathf.Clamp(cartYawSteps[c] + Mathf.Clamp(dYaw, -1, 1), -SeatStepsMax, SeatStepsMax);
-            if (h == cartSeatSteps[c] && y == cartYawSteps[c]) return;
+            int f = Mathf.Clamp(cartFwdSteps[c] + Mathf.Clamp(dFwd, -1, 1), -SeatStepsMax, SeatStepsMax);
+            if (h == cartSeatSteps[c] && y == cartYawSteps[c] && f == cartFwdSteps[c]) return;
             cartSeatSteps[c] = h;
             cartYawSteps[c] = y;
-            Debug.Log("[KH_Cart] seat cart=" + c + " player=" + pid + " height=" + h + " yaw=" + y);
+            cartFwdSteps[c] = f;
+            Debug.Log("[KH_Cart] seat cart=" + c + " player=" + pid + " height=" + h + " yaw=" + y + " fwd=" + f);
             Commit();
         }
 

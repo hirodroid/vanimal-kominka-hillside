@@ -83,7 +83,8 @@ namespace KominkaHillside.Editor
         public static readonly string[] CartKeys = {
             "cart.title", "cart.start", "cart.join", "cart.notice", "cart.stop", "cart.accepting", "cart.accepting.on", "cart.accepting.off",
             "cart.result.full", "cart.result.closed", "cart.result.here", "cart.result.busy", "cart.result.started", "cart.result.joined", "cart.result.left",
-            "cart.menu", "cart.monitor", "cart.seat.up", "cart.seat.down", "cart.turn.left", "cart.turn.right" };   // M1.1
+            "cart.menu", "cart.monitor", "cart.seat.up", "cart.seat.down", "cart.turn.left", "cart.turn.right",   // M1.1
+            "cart.seat.forward", "cart.seat.back" };   // M1.1 追加 (座面の前後)
 
         [Serializable] class BuildReport
         {

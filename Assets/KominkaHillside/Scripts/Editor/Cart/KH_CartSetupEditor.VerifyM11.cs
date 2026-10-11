@@ -99,11 +99,13 @@ namespace KominkaHillside.Editor
                 for (int k = 0; k < 3; k++)
                 {
                     var t = docks.Find(names[k]);
-                    v.Req(t != null && (cart.transform.InverseTransformPoint(t.position) - want[k]).sqrMagnitude < 1e-4f, c + " " + names[k] + " at " + want[k].ToString("F2") + " (cart local)");
+                    v.Req(t != null && (cart.transform.InverseTransformPoint(t.position) - want[k]).magnitude < PlacementTolerance, c + " " + names[k] + " at " + want[k].ToString("F2") + " (cart local, ±" + PlacementTolerance + " m)");
                     if (t != null)
                     {
-                        var away = t.position - cart.transform.TransformPoint(seatBase); away.y = 0f;
-                        v.Req(Vector3.Dot(t.forward, away.normalized) > .999f, c + " " + names[k] + " +Z points away from the seat (front -Z faces the rider)");
+                        Vector3 away;
+                        if (k == 2) { away = t.position - cart.transform.TransformPoint(seatBase); away.y = 0f; }   // Dock_Photo は未使用で従来の水平向き
+                        else away = t.position - cart.transform.TransformPoint(SeatedEyeLocal);
+                        v.Req(Vector3.Dot(t.forward, away.normalized) > .999f, c + " " + names[k] + " +Z points from the eye to the board (front -Z faces the rider)");
                     }
                     RefCheck(v, dso, db, fields[k], t, c + " dock");
                 }
@@ -116,7 +118,8 @@ namespace KominkaHillside.Editor
             if (controls != null)
             {
                 var cb = SyncCheck(v, controls, Networking.SyncType.None, c + " controls");
-                v.Req((cart.transform.InverseTransformPoint(ct.position) - ControlsLocal(seatBase)).sqrMagnitude < 1e-4f, c + " controls at left-front 0.55 m, height 0.95");
+                v.Req((cart.transform.InverseTransformPoint(ct.position) - ControlsLocal(seatBase)).magnitude < PlacementTolerance, c + " controls at " + ControlsLocal(seatBase).ToString("F2") + " (cart local, ±" + PlacementTolerance + " m)");
+                v.Req(Vector3.Dot(ct.forward, (ct.position - cart.transform.TransformPoint(SeatedEyeLocal)).normalized) > .999f, c + " controls face the eye (tilted up toward it)");
                 var board = ct.Find(BoardName);
                 v.Req(board != null, c + " controls Board");
                 if (board != null)
@@ -132,11 +135,17 @@ namespace KominkaHillside.Editor
                     var buttons = new GameObject[ControlEvents.Length]; var labels = new TextMeshProUGUI[ControlEvents.Length];
                     for (int k = 0; k < ControlEvents.Length; k++)
                     {
-                        var b = board.Find(ControlNames[k]);
+                        var b = board.Find(BodyName + "/" + ControlNames[k]);
                         if (b == null) { v.Req(false, c + " controls button " + ControlNames[k]); continue; }
                         EventCheck(v, b.gameObject, cb, ControlEvents[k], c + " controls");
+                        var brt2 = (RectTransform)b; var lab = Comp<TextMeshProUGUI>(b.Find("Label"));
+                        v.Req(brt2.anchoredPosition == ControlPos(k) && brt2.sizeDelta == ControlsButtonSize && lab != null && lab.text == Ja(ControlKeys[k]),
+                            c + " controls " + ControlNames[k] + " at " + ControlPos(k) + " (2 x 5 grid, pairs side by side), label '" + (lab != null ? lab.text : "") + "' = " + ControlKeys[k]);
                         buttons[k] = b.gameObject; labels[k] = Comp<TextMeshProUGUI>(b.Find("Label"));
                     }
+                    var bodyT = board.Find(BodyName); var tabT = board.Find(TabName);
+                    v.Req(board.childCount == 2 && bodyT != null && tabT != null && bodyT.childCount == ControlEvents.Length, c + " controls board = Body (" + ControlEvents.Length + " buttons) + Tab outside Body (actual board " + board.childCount + ", body " + (bodyT != null ? bodyT.childCount : -1) + "; no leftover layout)");
+                    if (tabT != null) EventCheck(v, tabT.gameObject, cb, TabEvent, c + " controls");
                     var cso = new SerializedObject(controls);
                     RefCheck(v, cso, cb, "manager", manager, c + " controls");
                     IntCheck(v, cso, cb, "index", i, c + " controls");
@@ -145,6 +154,8 @@ namespace KominkaHillside.Editor
                     RefCheck(v, cso, cb, "panel", board.gameObject, c + " controls");
                     ArrayCheck(v, cso, cb, "buttons", buttons, c + " controls");
                     ArrayCheck(v, cso, cb, "labels", labels, c + " controls");
+                    RefCheck(v, cso, cb, "body", bodyT != null ? bodyT.gameObject : null, c + " controls"); RefCheck(v, cso, cb, "tab", tabT != null ? tabT.gameObject : null, c + " controls");
+                    RefCheck(v, cso, cb, "tabLabel", tabT != null ? Comp<TextMeshProUGUI>(tabT.Find("Label")) : null, c + " controls");
                 }
             }
             RefCheck(v, seatSo, seatBacking, "controls", controls, c);

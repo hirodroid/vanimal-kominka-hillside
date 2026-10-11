@@ -163,6 +163,7 @@ namespace KominkaHillside.Editor
             Transform P(string path) { return v.monitorRoot != null ? v.monitorRoot.transform.Find(PanelName + "/" + path) : null; }
             GameObject G(Transform t) { return t != null ? t.gameObject : null; }
             Wired(G(P("Close")), "_Close", "panel ×");
+            Wired(G(P(HideMonitorName)), HideMonitorEvent, "panel [モニターを隠す] (DES-WLD-004 M1.1; run Video/1)");
             // W2/W3: every mode button sends its own _ModeN, shows its label and is at least 120 × 50 px (a VR laser / a Desktop click)
             for (int m = 0; m < KH_VideoCamera.ModeCount; m++)
             {

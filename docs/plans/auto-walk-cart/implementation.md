@@ -205,6 +205,13 @@ Issue の「Play 確認 1 回目と M1.1」の症状と原因候補に対応す�
 5. **操作帯** (新規 `KH_CartControls.cs`、None、ローカル専用): 左斜め前の小さな WorldSpace Canvas (Setup が作る、layer 17 Walkthrough = 撮影カメラに映らず操作できる、既存の撮影モニターと同じ)。ボタン 8 個: メニュー / モニター / 座面↑ / 座面↓ / 向き← / 向き→ / 停止 / 受付。表示は自分が乗っているときだけ (`_SetVisible`)。受付はマスターのときだけ有効表示。文言キー `cart.menu` メニュー / `cart.monitor` 撮影モニター / `cart.seat.up` 座面を上げる / `cart.seat.down` 座面を下げる / `cart.turn.left` 左を向く / `cart.turn.right` 右を向く (既存 `cart.stop` / `cart.accepting` を再利用)。
 6. 右肘掛けの `StopR` は停止 (kind 0) に変える (左右対称、X レビュー)。受付切替は操作帯だけ。
 
+Play 2 回目の追加 (2026-10-12):
+- 座席の前後: `[UdonSynced] public int[] cartFwdSteps = new int[8]` (1 段 = 5 cm、+ が前、−6..+6)。`ReqSeat(int dHeight, int dYaw, int dFwd)`、`KH_CartSeat._ApplySeat(int steps, int yawSteps, int fwdSteps)` が Anchor_Seat のローカル z にも反映。ローカル API `_SeatForward() / _SeatBack()`。
+- 操作帯は 10 ボタン: 0 メニュー / 1 モニター / 2 高さ▲ / 3 高さ▼ / 4 前後▲ / 5 前後▼ / 6 向き◀ / 7 向き▶ / 8 停止 / 9 受付 (`_PressSeatForward` / `_PressSeatBack` を追加)。キー `cart.seat.forward` / `cart.seat.back`。
+- 操作帯の最小化: `KH_CartControls.body` (10 ボタンの親) / `tab` (body の外、常に見える切替) / 任意の `tabLabel` (展開中「×」・最小化中「≡」を書く)、tab の onClick → `_PressToggle()`。乗車開始 (`_SetVisible(true)`) で展開に戻す。
+- 撮影モニターを隠す: `KH_VideoCamera._HideMonitor()` (`_open` のまま `monitorRoot` だけ非表示。挙動は system root、RecordSnap は monitor の兄弟なので撮影・RecordSnap・ドローン送信・パターンは続く)、`_ShowMonitor()` (= `_Recall`。隠し中なら再表示)、`_MonitorHidden()`。× (`_Close`) は従来どおり全停止。操作帯のモニターは 閉 → `_Open` / 表示中 → `_HideMonitor` / 隠し中 → `_ShowMonitor` の循環。
+- コスト: 他人のカートは 2 フレームに 1 回 (補間なし、SmoothDamp は経過 dt を明示)、接地は前回から 3 フレーム以上 (実質 4 フレームに 1 回)。軌道の区間探索は前回の区間から近傍をたどる (二分探索は外れたときだけ)。パネルは version・言語・自分の行き先が変わったときだけ書き直す。
+
 Runtime 実装で契約から変えた点 (2026-10-12):
 - 1 の「TerrainCollider 以外」は判定しない。Udon に `TerrainCollider` 型が公開されていない (VRC.Udon.Wrapper.dll に無い) ので、距離の条件 (|hit.y − p.y| > 0.35) だけで撃ち直す。Terrain は下からは当たらないので、採用される高さは同じ。他人のカートのピッチは道の勾配 (`d` と `d + dir·lookAhead` の点の高さ差) から取る (レイを増やさない)。
 - 4 の写真ビューアはドックへ寄せない。`KD_PhotoViewer` は自分の `PostLateUpdate` で毎フレーム頭の前へ置き直すので、LateUpdate で動かしても上書きされる。頭に付いて動くので乗車中も一緒に動く。`photo` / `dockPhoto` は配線だけ受ける。

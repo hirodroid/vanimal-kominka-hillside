@@ -60,6 +60,7 @@ namespace KominkaHillside
         // M1.1: 座席の調整 (乗っている本人だけが ReqSeat で変える。降車で 0)。高さ 1 段 = 5 cm、向き 1 段 = 15°、どちらも -6..+6
         [UdonSynced] public int[] cartSeatSteps = new int[8];
         [UdonSynced] public int[] cartYawSteps  = new int[8];
+        [UdonSynced] public int[] cartFwdSteps  = new int[8];   // 前後 (1 段 = 5 cm、+ が前、-6..+6。2026-10-12 追加要望)
 
         // M1.1: カート専用の軌道 (非同期。既定 null — Setup (Cart/1) が route の節 0 を除いた閉路から書く。null なら route を使う)
         public Vector3[] trackPositions;
@@ -90,6 +91,7 @@ namespace KominkaHillside
         private int _reqSeq;             // 要求のローカル連番 (ログ用。割当は ID を運ばないので照合は乗り場・グループ・世代で行う)
         private float _nextOwnerTick, _nextMaintenance, _nextLocalSlow, _exitPickAt;
         private string _lang = "";
+        private int _panelVersion = -1, _panelDest = -2;   // パネルを最後に書いたときの version と自分の行き先
         private bool _started;
 
         public const string KeyStarted = "cart.result.started", KeyJoined = "cart.result.joined", KeyLeft = "cart.result.left",
@@ -215,7 +217,7 @@ namespace KominkaHillside
                 bool active = CartActive(c);
                 if (active && !_shown[c])
                 {
-                    _shown[c] = true; _parked[c] = false; _snap[c] = true;
+                    _shown[c] = true; _parked[c] = false; _snap[c] = true; _placedAt[c] = 0f; _seg[c] = -1;
                     if (carts != null && c < carts.Length && carts[c] != null) carts[c]._SetVisible(true);
                 }
                 else if (active)
@@ -277,7 +279,7 @@ namespace KominkaHillside
                 int g = cartGroup[c];
                 bool master = isMine && ValidGroup(g) && groupMaster[g] == c && groupState[g] == GroupRunning;
                 carts[c]._SetRider(isMine, master, ValidGroup(g) && groupAccepting[g]);   // 操作帯の _Refresh とドックの開始/停止も中で
-                carts[c]._ApplySeat(cartSeatSteps[c], cartYawSteps[c]);
+                carts[c]._ApplySeat(cartSeatSteps[c], cartYawSteps[c], cartFwdSteps[c]);
             }
         }
 
@@ -291,6 +293,8 @@ namespace KominkaHillside
         private void RefreshPanels(bool all)
         {
             if (panels == null) return;
+            _panelVersion = version;
+            _panelDest = _MyDestination();
             VRCPlayerApi lp = Networking.LocalPlayer;
             Vector3 me = Utilities.IsValid(lp) ? lp.GetPosition() : Vector3.zero;
             for (int i = 0; i < panels.Length; i++)
@@ -379,9 +383,11 @@ namespace KominkaHillside
             {
                 for (int c = 0; carts != null && c < carts.Length; c++) if (carts[c] != null) carts[c]._RefreshText();
             }
-            // 安全網: 取りこぼした反映を 1 秒ごとに突き合わせる (冪等)。近くのパネルは自分の行き先の表示も更新
+            // 安全網: 取りこぼした反映を 1 秒ごとに突き合わせる (冪等。他 Behaviour の呼び出しは変化した所だけ書く)
             ApplyCore();
-            RefreshPanels(langChanged);
+            // パネルは状態 (version)・言語・自分の行き先が変わったときだけ書き直す (2026-10-12 コスト削減。文字列連結・_Text・displayName を毎回しない)
+            int dest = _MyDestination();
+            if (langChanged || dest != _panelDest || version != _panelVersion) RefreshPanels(true);
         }
 
         // ============================================================

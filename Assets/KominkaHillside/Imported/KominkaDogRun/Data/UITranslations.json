@@ -3687,6 +3687,10 @@
         {
           "key": "walkIntro.approach",
           "text": "散歩できる犬に近づいてみよう"
+        },
+        {
+          "key": "video.hide",
+          "text": "モニターを隠す"
         }
       ]
     },
@@ -7374,6 +7378,10 @@
         {
           "key": "walkIntro.approach",
           "text": "Move closer to a dog that is ready to walk"
+        },
+        {
+          "key": "video.hide",
+          "text": "Hide monitor"
         }
       ]
     },
@@ -11061,6 +11069,10 @@
         {
           "key": "walkIntro.approach",
           "text": "Подойди к собаке, готовой к прогулке"
+        },
+        {
+          "key": "video.hide",
+          "text": "Скрыть экран"
         }
       ]
     },
@@ -14748,6 +14760,10 @@
         {
           "key": "walkIntro.approach",
           "text": "Підійди до собаки, готової до прогулянки"
+        },
+        {
+          "key": "video.hide",
+          "text": "Сховати екран"
         }
       ]
     },
@@ -18435,6 +18451,10 @@
         {
           "key": "walkIntro.approach",
           "text": "산책할 수 있는 강아지에게 다가가 보세요"
+        },
+        {
+          "key": "video.hide",
+          "text": "모니터 숨기기"
         }
       ]
     },
@@ -22122,6 +22142,10 @@
         {
           "key": "walkIntro.approach",
           "text": "Geh näher an einen Hund, der bereit ist"
+        },
+        {
+          "key": "video.hide",
+          "text": "Monitor ausblenden"
         }
       ]
     },
@@ -25809,6 +25833,10 @@
         {
           "key": "walkIntro.approach",
           "text": "靠近可以散步的狗狗试试"
+        },
+        {
+          "key": "video.hide",
+          "text": "隐藏屏幕"
         }
       ]
     },
@@ -29496,6 +29524,10 @@
         {
           "key": "walkIntro.approach",
           "text": "Acércate a un perro que esté listo para pasear"
+        },
+        {
+          "key": "video.hide",
+          "text": "Ocultar monitor"
         }
       ]
     },
@@ -33183,6 +33215,10 @@
         {
           "key": "walkIntro.approach",
           "text": "Approche-toi d’un chien prêt à se promener"
+        },
+        {
+          "key": "video.hide",
+          "text": "Masquer écran"
         }
       ]
     },
@@ -36870,6 +36906,10 @@
         {
           "key": "walkIntro.approach",
           "text": "Chegue perto de um cachorro pronto para passear"
+        },
+        {
+          "key": "video.hide",
+          "text": "Ocultar monitor"
         }
       ]
     },
@@ -40557,6 +40597,10 @@
         {
           "key": "walkIntro.approach",
           "text": "Avvicinati a un cane pronto a passeggiare"
+        },
+        {
+          "key": "video.hide",
+          "text": "Nascondi monitor"
         }
       ]
     },
@@ -44244,6 +44288,10 @@
         {
           "key": "walkIntro.approach",
           "text": "Podejdź do psa gotowego na spacer"
+        },
+        {
+          "key": "video.hide",
+          "text": "Ukryj ekran"
         }
       ]
     },
@@ -47935,6 +47983,10 @@
         {
           "key": "walkIntro.approach",
           "text": "靠近可以散步的狗狗試試"
+        },
+        {
+          "key": "video.hide",
+          "text": "隱藏螢幕"
         }
       ]
     }
