@@ -19,6 +19,7 @@ namespace KominkaHillside
     public partial class KH_CartManager
     {
         private bool[] _shown, _parked, _snap;
+        private bool[] _prevParked, _parkDone;   // M3: 前回の反映で Parked だったか / その場に寄せ終わったか
         private float[] _parkAt, _err, _dLast, _y, _vy, _pitch, _vp, _lat, _yT, _placedAt;
         private int[] _seg, _groundFrame;   // 前回の軌道の区間 (近傍からたどる) と、前回の接地のフレーム
         private Transform[] _cartT;
@@ -47,9 +48,72 @@ namespace KominkaHillside
             for (int k = 0; k < MaxCarts; k++) { _seg[k] = -1; _groundFrame[k] = -1000; }
             _gapSince = new float[MaxCarts]; _gapLogAt = new float[MaxCarts];
             for (int k = 0; k < MaxCarts; k++) _gapSince[k] = -1f;
+            _prevParked = new bool[MaxCarts]; _parkDone = new bool[MaxCarts];
             _cartT = new Transform[MaxCarts];
             for (int c = 0; carts != null && c < carts.Length && c < MaxCarts; c++)
                 if (carts[c] != null) _cartT[c] = carts[c].transform;
+        }
+
+        /// <summary>M3: その場に残った (Parked) カートを、cartParkDist の軌道点から右へ parkOffset (class 2 の区間は parkOffsetNarrow) に置く。
+        /// 降りる人がまだ座っている間はその場に止め、離れてから右へ寄せる (LateralSpeed)。向きは止まったときの向きを保つ。寄せ終われば以後は書かない。</summary>
+        private void PlaceParked(int c, float dt)
+        {
+            if (_cartT == null || _cartT[c] == null || !EnsureRoute()) return;
+            bool snap = _snap[c] || dt <= 0f;
+            if (!snap && (_parkDone[c] || _seatedCart == c)) return;
+            float err = snap ? 0f : Mathf.MoveTowards(_err[c], 0f, CatchUpSpeed * dt);
+            _err[c] = err;
+            float d = Wrap(cartParkDist[c] - err);
+            Vector3 p, ahead;
+            bool narrow;
+            if (_useTrack)
+            {
+                int i = TrackSegNear(_seg[c], d);
+                _seg[c] = i;
+                p = SegPoint(i, d);
+                float xa = Wrap(d + lookAhead);
+                ahead = SegPoint(TrackSegNear(i, xa), xa);
+                narrow = trackClass != null && i < trackClass.Length && trackClass[i] >= 2;
+            }
+            else
+            {
+                p = route._PointAtDistance(d);
+                ahead = route._PointAtDistance(d + lookAhead);
+                narrow = !route._DetourAtDistance(d);
+            }
+            Vector3 fwd = ahead - p;
+            float rise = fwd.y;
+            fwd.y = 0f;
+            float run = fwd.magnitude;
+            fwd = run > 0.01f ? fwd / run : Vector3.forward;
+            float slope = run > 0.01f ? rise / run : 0f;
+            // 止まったときの向き (今の車体の前) に合わせる。逆向きに走っていたなら前と右を反転
+            Vector3 cur = _cartT[c].forward; cur.y = 0f;
+            if (!snap && Vector3.Dot(cur, fwd) < 0f) { fwd = -fwd; slope = -slope; }
+            Vector3 right = new Vector3(fwd.z, 0f, -fwd.x);
+            float latTarget = narrow ? parkOffsetNarrow : parkOffset;
+            float lat = snap ? latTarget : Mathf.MoveTowards(_lat[c], latTarget, LateralSpeed * dt);
+            _lat[c] = lat;
+            Vector3 pos = p + right * lat;
+            float prevY = snap ? p.y : _y[c];
+            float y = GroundAt(pos, p.y, prevY);
+            if (!_gHit && !snap) y = _y[c];
+            float pitch = Mathf.Clamp(-Mathf.Atan(slope) * Mathf.Rad2Deg, -pitchLimit, pitchLimit);
+            if (snap) { _y[c] = y; _vy[c] = 0f; _pitch[c] = pitch; _vp[c] = 0f; }
+            else
+            {
+                float vy = _vy[c];
+                float yy = Mathf.SmoothDamp(_y[c], y, ref vy, groundSmoothTime, Mathf.Infinity, dt);
+                _y[c] = yy; _vy[c] = vy;
+                float vp = _vp[c];
+                float pp = Mathf.SmoothDamp(_pitch[c], pitch, ref vp, smoothTime, Mathf.Infinity, dt);
+                _pitch[c] = pp; _vp[c] = vp;
+            }
+            pos.y = _y[c];
+            _cartT[c].SetPositionAndRotation(pos, Quaternion.Euler(_pitch[c], Mathf.Atan2(fwd.x, fwd.z) * Mathf.Rad2Deg, 0f));
+            _dLast[c] = d;
+            _snap[c] = false;
+            _parkDone[c] = Mathf.Abs(lat - latTarget) < 0.001f && Mathf.Abs(err) < 0.001f && Mathf.Abs(_y[c] - y) < 0.005f && Mathf.Abs(_pitch[c] - pitch) < 0.05f;
         }
 
         private void MotionTick()
@@ -70,7 +134,8 @@ namespace KominkaHillside
                 // 間引くのは他人のカートの接地レイ (前回から 3 フレーム以上で 1 点、間は前回の高さ・ピッチの目標) だけ。区間は前回の区間から 1 歩たどるだけ
                 float step = _placedAt[c] > 0f ? t - _placedAt[c] : dt;
                 _placedAt[c] = t;
-                PlaceCart(c, now, step);
+                if (cartState[c] == CartParked) PlaceParked(c, step);   // M3: その場に残ったカート (寄せ終われば何もしない)
+                else PlaceCart(c, now, step);
             }
         }
 

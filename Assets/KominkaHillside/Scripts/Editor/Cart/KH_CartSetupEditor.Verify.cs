@@ -84,7 +84,7 @@ namespace KominkaHillside.Editor
             var stops = UnityEngine.Object.FindObjectsOfType<KH_CartStopButton>(true);
             v.Req(managers.Length == 1, "KH_CartManager count 1 (found " + managers.Length + ")");
             v.Req(seats.Length == MaxCarts, "KH_CartSeat count " + MaxCarts + " (found " + seats.Length + ")");
-            v.Req(panels.Length == StationCount, "KH_CartStationPanel count " + StationCount + " (found " + panels.Length + ")");
+            v.Req(panels.Length == StationCount + MaxCarts, "KH_CartStationPanel count " + (StationCount + MaxCarts) + " = stations 5 + cart panels 8 (found " + panels.Length + ")");
             v.Req(stops.Length == MaxCarts * 2, "KH_CartStopButton count " + (MaxCarts * 2) + " = 2 per cart (found " + stops.Length + ")");
             if (roots.Length != 1 || managers.Length != 1) return;
             var root = roots[0].transform; var manager = managers[0];
@@ -105,7 +105,9 @@ namespace KominkaHillside.Editor
             var expectedSeats = Enumerable.Range(0, MaxCarts).Select(i => cartsRoot != null && cartsRoot.Find("Cart_" + i) != null ? cartsRoot.Find("Cart_" + i).GetComponent<KH_CartSeat>() : null).ToArray();
             var expectedPanels = Enumerable.Range(0, StationCount).Select(s => stationsRoot != null && stationsRoot.Find("Station_" + s) != null ? stationsRoot.Find("Station_" + s).GetComponent<KH_CartStationPanel>() : null).ToArray();
             ArrayCheck(v, mso, mb, "carts", expectedSeats, "manager");
-            ArrayCheck(v, mso, mb, "panels", expectedPanels, "manager");
+            var expectedCartPanels = expectedSeats.Select(seat => seat != null && seat.transform.Find(CartPanelName) != null ? seat.transform.Find(CartPanelName).GetComponent<KH_CartStationPanel>() : null).ToArray();
+            ArrayCheck(v, mso, mb, "panels", expectedPanels.Concat(expectedCartPanels).ToArray(), "manager");   // M3: 乗り場 5 → カート上 8
+            M3Check(v, manager, mso, mb, leash, stationsRoot, expectedSeats, expectedCartPanels);
 
             // ---- KH_LeashManager.cartManager ----
             var lso = new SerializedObject(leash);
@@ -246,11 +248,13 @@ namespace KominkaHillside.Editor
                     Vector3 spot = leash.spotPositions[s];
                     float yaw = leash.spotYaws[s] * Mathf.Deg2Rad;
                     var right = new Vector3(Mathf.Cos(yaw), 0f, -Mathf.Sin(yaw));
-                    var d = panel.transform.position - spot; float height = d.y; d.y = 0f;
-                    v.Req(Mathf.Abs(d.magnitude - PanelSide) < 0.01f && Vector3.Dot(d.normalized, right) > 0.999f, n + " 2.5 m to the right of spot " + s + " (actual " + d.magnitude.ToString("F2") + " m)");
-                    var fwd = panel.transform.forward; fwd.y = 0f;
-                    v.Req(Vector3.Dot(fwd.normalized, right) > 0.999f, n + " front (-Z) faces the spot");
-                    v.r.passItems.Add(n + " info: height above spot = " + height.ToString("F2") + " m (ground + " + PanelHeight + ")");
+                    // M3: パネルは静的カートの右肘掛け (Anchor_StopR) の上 0.55 m、表 (-Z) が着地点を向く
+                    var sc = stationsRoot != null ? stationsRoot.Find(StationCartPrefix + s) : null;
+                    var armR = sc != null ? FindDeep(sc, AnchorStopR) : null;
+                    v.Req(armR != null && (panel.transform.position - (armR.position + sc.up * PanelAboveArmrest)).magnitude < 0.02f, n + " panel 0.55 m above " + StationCartPrefix + s + "/Anchor_StopR");
+                    var face = panel.transform.position - spot; face.y = 0f; var fwd = panel.transform.forward; fwd.y = 0f;
+                    v.Req(Vector3.Dot(fwd.normalized, face.normalized) > 0.999f, n + " front (-Z) faces the landing spot (aisle)");
+                    v.r.passItems.Add(n + " info: panel height above spot = " + (panel.transform.position.y - spot.y).ToString("F2") + " m");
                 }
                 var board = panel.transform.Find(BoardName);
                 v.Req(board != null, n + "/" + BoardName);

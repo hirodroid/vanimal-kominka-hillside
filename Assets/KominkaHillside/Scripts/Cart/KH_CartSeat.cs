@@ -26,6 +26,8 @@ namespace KominkaHillside
         public KH_CartControls controls;   // M1.1: 左斜め前の操作帯 (null 可)
         public KH_CartDock dock;           // M1.1: 乗車中に板を寄せるドック (null 可)
         public TMPro.TextMeshProUGUI signCaption;   // M2: 背面掲示の下の 1 行 (cart.sign.caption。言語の変化で書き直す。null 可)
+        public KH_CartStationPanel cartPanel;       // M3: カート上メニュー (spot = -1, cart = index)。Parked のときだけ出す (null 可)
+        private int _parkedShown = -1;              // -1 = まだ書いていない
 
         public const float SeatStep = 0.05f, YawStep = 15f;   // 座席の 1 段 (m / 度)
         private bool _seatReady;
@@ -157,6 +159,16 @@ namespace KominkaHillside
             }
             if (dock != null) dock._SetRiding(mine);
             if (controls != null) controls._Refresh();
+        }
+
+        /// <summary>M3: その場に残っている (Parked) ときだけカート上メニューを出す (manager.ApplyState から。変わったときだけ書く)。</summary>
+        public void _SetParked(bool on)
+        {
+            int want = on ? 1 : 0;
+            if (want == _parkedShown || cartPanel == null) return;
+            _parkedShown = want;
+            cartPanel._SetVisible(on);
+            if (on) cartPanel._Refresh();
         }
 
         /// <summary>言語が変わった (manager が 1 秒ごとに見て呼ぶ)。</summary>

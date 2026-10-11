@@ -563,6 +563,10 @@
         {
           "key": "cart.station.pr",
           "text": "散歩のあとは、お手入れ道具で洗ってあげよう"
+        },
+        {
+          "key": "cart.parked",
+          "text": "ここに停めてあります。乗って再開できます"
         }
       ]
     },
@@ -1126,6 +1130,10 @@
         {
           "key": "cart.station.pr",
           "text": "After the walk, wash your dog with the grooming tools"
+        },
+        {
+          "key": "cart.parked",
+          "text": "Parked here. Get on to continue"
         }
       ]
     },
@@ -1689,6 +1697,10 @@
         {
           "key": "cart.station.pr",
           "text": "После прогулки помойте собаку средствами ухода"
+        },
+        {
+          "key": "cart.parked",
+          "text": "Тележка стоит здесь. Садитесь, чтобы продолжить"
         }
       ]
     },
@@ -2252,6 +2264,10 @@
         {
           "key": "cart.station.pr",
           "text": "Після прогулянки помийте собаку засобами догляду"
+        },
+        {
+          "key": "cart.parked",
+          "text": "Візок стоїть тут. Сідайте, щоб продовжити"
         }
       ]
     },
@@ -2815,6 +2831,10 @@
         {
           "key": "cart.station.pr",
           "text": "산책 후에는 손질 도구로 씻겨 주세요"
+        },
+        {
+          "key": "cart.parked",
+          "text": "여기에 세워 두었어요. 타서 다시 출발할 수 있어요"
         }
       ]
     },
@@ -3378,6 +3398,10 @@
         {
           "key": "cart.station.pr",
           "text": "Nach dem Spaziergang den Hund mit den Pflegewerkzeugen waschen"
+        },
+        {
+          "key": "cart.parked",
+          "text": "Hier geparkt. Einsteigen und weiterfahren"
         }
       ]
     },
@@ -3941,6 +3965,10 @@
         {
           "key": "cart.station.pr",
           "text": "散步之后，用护理用品给狗狗洗澡吧"
+        },
+        {
+          "key": "cart.parked",
+          "text": "停在这里。上车即可继续"
         }
       ]
     },
@@ -4504,6 +4532,10 @@
         {
           "key": "cart.station.pr",
           "text": "Después del paseo, lava a tu perro con los útiles de aseo"
+        },
+        {
+          "key": "cart.parked",
+          "text": "Aparcado aquí. Súbete para continuar"
         }
       ]
     },
@@ -5067,6 +5099,10 @@
         {
           "key": "cart.station.pr",
           "text": "Après la promenade, lave ton chien avec les outils de toilettage"
+        },
+        {
+          "key": "cart.parked",
+          "text": "Garé ici. Monte pour repartir"
         }
       ]
     },
@@ -5630,6 +5666,10 @@
         {
           "key": "cart.station.pr",
           "text": "Depois do passeio, dê banho no seu cão com os itens de cuidado"
+        },
+        {
+          "key": "cart.parked",
+          "text": "Estacionado aqui. Suba para continuar"
         }
       ]
     },
@@ -6193,6 +6233,10 @@
         {
           "key": "cart.station.pr",
           "text": "Dopo la passeggiata, lava il cane con gli strumenti di cura"
+        },
+        {
+          "key": "cart.parked",
+          "text": "Parcheggiato qui. Sali per ripartire"
         }
       ]
     },
@@ -6756,6 +6800,10 @@
         {
           "key": "cart.station.pr",
           "text": "Po spacerze umyj psa akcesoriami pielęgnacyjnymi"
+        },
+        {
+          "key": "cart.parked",
+          "text": "Zaparkowany tutaj. Wsiądź, aby jechać dalej"
         }
       ]
     },
@@ -7323,6 +7371,10 @@
         {
           "key": "cart.station.pr",
           "text": "散步之後，用護理用品給狗狗洗澡吧"
+        },
+        {
+          "key": "cart.parked",
+          "text": "停在這裡。上車即可繼續"
         }
       ]
     }

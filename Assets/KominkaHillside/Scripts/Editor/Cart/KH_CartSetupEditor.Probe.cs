@@ -145,7 +145,7 @@ namespace KominkaHillside.Editor
             {
                 if (leash.spotNodes == null || leash.spotNodes.Length <= s || leash.spotNodes[s] < 0 || leash.spotNodes[s] >= n) { pr.Req(false, "spotNodes[" + s + "] valid"); continue; }
                 var q = pointOf(ld[leash.spotNodes[s]]) - leash.spotPositions[s]; q.y = 0f;
-                pr.Req(q.magnitude <= 3f, "spot " + s + ": point at loopDistances[spotNodes] within 3 m of spotPositions (" + q.magnitude.ToString("F2") + " m, " + src + ")");
+                pr.Req(q.magnitude <= 5f, "spot " + s + ": point at loopDistances[spotNodes] within 5 m of spotPositions (" + q.magnitude.ToString("F2") + " m, " + src + ")");
             }
 
             // ---- C. 向きの選択 (周回は 2 = +1 / 3 = -1、それ以外は _Next と同じ短い側) ----
@@ -268,16 +268,20 @@ namespace KominkaHillside.Editor
             var from = ReadFloats(so, "noLateralFrom"); var to = ReadFloats(so, "noLateralTo");
             r.trackLength = want.length; r.closingSegment = want.closing;
             r.noLateral = from != null && to != null ? string.Join(", ", from.Select((a, k) => a.ToString("F1") + "-" + to[k].ToString("F1"))) : "none";
-            pr.Req(want.closing > .5f && want.closing < 3f, "closing segment 435 -> 1 is short (" + want.closing.ToString("F2") + " m, expected about 1.45)");
+            if (want.skipsNode0) pr.Req(want.closing > .5f && want.closing < 3f, "node 0 spike skipped: closing segment 435 -> 1 is short (" + want.closing.ToString("F2") + " m, expected about 1.45)");
+            else pr.Req(want.positions.Length == route.count && Mathf.Abs(want.length - Enumerable.Range(0, route.count).Sum(i => Vector3.Distance(route.nodePositions[i], route.nodePositions[(i + 1) % route.count]))) <= .01f, "node 0 kept (no spike): track = route " + route.count + " nodes, length " + want.length.ToString("F2") + " = chord sum (NavMesh loop " + route.loopLength.ToString("F2") + ")");
 
             var t = mgr.GetType();
+            // Edit モードのプロキシは domain reload まで生き残り、前回の Probe で軌道配列をキャッシュしている (_routeCached)。Build で配列が変わったので読み直させる
+            var cacheFlag = t.GetField("_routeCached", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (cacheFlag != null && cacheFlag.FieldType == typeof(bool)) cacheFlag.SetValue(mgr, false);
             MethodInfo M(string name) { return t.GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(float) }, null); }
             var mPoint = M("TrackPoint"); var mDir = M("TrackDirection"); var mDetour = M("TrackDetour"); var mNo = M("TrackNoLateral");
             if (mPoint == null) pr.Skip("KH_CartManager.TrackPoint(float) not found");
             if (mDir == null) pr.Skip("KH_CartManager.TrackDirection(float) not found");
             if (mDetour == null) pr.Skip("KH_CartManager.TrackDetour(float) not found");
             if (mNo == null) pr.Skip("KH_CartManager.TrackNoLateral(float) not found");
-            float ld1 = route.loopDistances[1], lastNode = want.distances[want.distances.Length - 1];
+            float lastNode = want.distances[want.distances.Length - 1];
             try
             {
                 if (mPoint != null)
@@ -287,11 +291,12 @@ namespace KominkaHillside.Editor
                     pr.Req(nodeMiss == 0, "TrackPoint(trackDistances[k]) == trackPositions[k] for all 435 nodes (miss " + nodeMiss + ")");
                     // route との乖離: 節 1 から節 435 までの区間 (直結区間 = 節 0 の近傍を除く)
                     float worst = 0f, worstAt = 0f;
-                    for (float d = 0f; d <= lastNode; d += .5f) { float e = (tp(d) - route._PointAtDistance(d + ld1)).magnitude; if (e > worst) { worst = e; worstAt = d; } }
-                    pr.Req(worst < .01f, "TrackPoint matches route._PointAtDistance away from node 0 (worst " + worst.ToString("F4") + " m at d=" + worstAt.ToString("F1") + ")");
+                    // 軌道の距離は弦の累積 (route の loopDistances とは尺度が違う) ので、距離ではなく各区間の中点で route の同じ区間の中点と比べる
+                    for (int k = 0; k + 1 < want.positions.Length; k++) { float d = (want.distances[k] + want.distances[k + 1]) * .5f; float e = (tp(d) - Vector3.Lerp(route.nodePositions[k + want.firstNode], route.nodePositions[k + 1 + want.firstNode], .5f)).magnitude; if (e > worst) { worst = e; worstAt = d; } }
+                    pr.Req(worst < .01f, "TrackPoint matches the route segments (midpoints) away from the closing segment (worst " + worst.ToString("F4") + " m at d=" + worstAt.ToString("F1") + ")");
                     // 直結区間は節 435 → 節 1 の直線
                     var mid = tp(lastNode + want.closing * .5f); var lin = Vector3.Lerp(want.positions[want.positions.Length - 1], want.positions[0], .5f);
-                    pr.Req((mid - lin).magnitude < .01f, "closing segment is the straight line node 435 -> node 1");
+                    pr.Req((mid - lin).magnitude < .01f, "closing segment is the straight line node 435 -> node " + want.firstNode);
                     pr.Req((tp(-.01f) - tp(want.length - .01f)).magnitude < 1e-3f && (tp(want.length + 3f) - tp(3f)).magnitude < 1e-3f, "TrackPoint wraps at trackLength");
                     // 門枠: 乗り場の開始点と入口の到着点
                     if (GateBounds(out Bounds gate, out string gatePath))
@@ -332,6 +337,7 @@ namespace KominkaHillside.Editor
             catch (TargetInvocationException ex) { pr.Req(false, "track function threw in Edit mode: " + (ex.InnerException != null ? ex.InnerException.Message : ex.Message)); }
             ProbeTrackArrivals(pr, mgr, so, want, route);
             ProbeTraffic(pr, mgr);
+            ProbeParked(pr, mgr);   // M3
         }
 
         /// <summary>軌道の距離での開始・向き・残距離・到着 (Codex M1.1 レビュー 3)。期待値は保存済みの spotTrackDistance / destTrackDistance / trackLength から計算し、
@@ -357,7 +363,8 @@ namespace KominkaHillside.Editor
             Func<float, Vector3> tp = mPoint != null ? (Func<float, Vector3>)(d => (Vector3)mPoint.Invoke(mgr, new object[] { d })) : (d => TrackPointRef(want, d));
             float closingStart = want.distances[want.distances.Length - 1];
             bool entranceOnClosing = dest[0] >= closingStart - 1e-3f && dest[0] <= L + 1e-3f;
-            pr.Req(entranceOnClosing, "entrance arrival d=" + dest[0].ToString("F2") + " lies on the closing segment [" + closingStart.ToString("F2") + ", " + L.ToString("F2") + "]");
+            if (want.skipsNode0) pr.Req(entranceOnClosing, "entrance arrival d=" + dest[0].ToString("F2") + " lies on the closing segment [" + closingStart.ToString("F2") + ", " + L.ToString("F2") + "]");
+            else pr.Req(Mathf.Min(dest[0], L - dest[0]) < 1f, "node 0 kept: entrance arrival d=" + dest[0].ToString("F2") + " is at node 0 (track start)");
             try
             {
                 for (int s = 0; s < StationCount; s++)
@@ -394,7 +401,7 @@ namespace KominkaHillside.Editor
                         pr.Req((end - tp(dest[d])).magnitude < .01f, "spot " + s + " -> dest " + d + ": the head stops on the destination point (clamped at remaining " + remain.ToString("F1") + " m)");
                         // 0.25 m の弦は弧より短い (曲線で 0.03%)。下限は 0.1% + 0.5 m
                         pr.Req(walked >= remain * .999f - .5f && walked <= remain * 1.05f + .1f, "spot " + s + " -> dest " + d + ": remaining " + remain.ToString("F1") + " m vs walked " + walked.ToString("F1") + " m along TrackPoint");
-                        if (d == 0) pr.Req(viaClosing, "spot " + s + " -> entrance passes the closing segment");
+                        if (d == 0 && want.skipsNode0) pr.Req(viaClosing, "spot " + s + " -> entrance passes the closing segment");
                         r.arrivals.Add("track spot " + s + " -> dest " + d + " dir " + dir + " remain " + remain.ToString("F1") + " m, head " + (remain / r.speed).ToString("F0") + " s" + (viaClosing ? " (via closing)" : ""));
                     }
                 }

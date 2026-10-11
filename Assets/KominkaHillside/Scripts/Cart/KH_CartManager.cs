@@ -22,7 +22,7 @@ namespace KominkaHillside
         public const int MaxCarts = 8, MaxGroups = 8, SpotCount = 5;
         // 要求の結果 (ローカル API の戻り値。Owner からは返さない)
         public const int CartOk = 0, CartBusy = 1, CartFull = 2, CartClosed = 3, CartHere = 4, CartUnavailable = 5;
-        public const int CartIdle = 0, CartRiding = 1, CartEnding = 2;
+        public const int CartIdle = 0, CartRiding = 1, CartEnding = 2, CartParked = 3;   // M3: 3 = 降りた場所に残っている (乗員なし・グループなし・可視)
         public const int GroupFree = 0, GroupRunning = 1, GroupEnding = 2;
 
         // 参照 (非同期。既定は null — Setup が配線する。vrc-udonsharp §4: 参照配列に同じ長さの既定値を持たせない)
@@ -66,6 +66,12 @@ namespace KominkaHillside
         [UdonSynced] public float[] groupHoldDist = new float[] {-1f,-1f,-1f,-1f,-1f,-1f,-1f,-1f}; // 先頭の距離の上限 (−1 = なし)
         [UdonSynced] public int[] groupHoldSinceMs = new int[8];                                  // 待機を始めたサーバー時刻
         [UdonSynced] public int[] groupHoldBanMs = new int[8];                                    // タイムアウト後この時刻まで待たせない (0 = なし。Codex M2 (5))
+        // M3: その場に残すカート (cartState == 3)。置いた軌道距離と時刻 (乗り場の回収は最古から)
+        [UdonSynced] public float[] cartParkDist = new float[8];
+        [UdonSynced] public int[] cartParkedMs = new int[8];
+
+        [Header("M3 その場に残すカート")]
+        public float parkOffset = 0.9f, parkOffsetNarrow = 0.3f;   // 軌道点から右へ (class 2 の区間は狭い方)
 
         // M2 交通の地形 (非同期。既定 null — Cart/1 Build が軌道から焼く。null なら交通なし)
         public int[] trackClass;                     // 区間 i: 0 広い (千鳥可) / 1 一列なら双方通れる / 2 一列でも通れない
@@ -76,7 +82,8 @@ namespace KominkaHillside
         public float approach = 25f, holdTimeoutSec = 60f, laneOffset = 0.55f, seatStep = 0.05f, yawStep = 15f;
         public float groundSmoothTime = 0.08f;       // 接地の高さの平滑化 (M2 接地 v3。既存の smoothTime はピッチに使う)
 
-        // M1.1: カート専用の軌道 (非同期。既定 null — Setup (Cart/1) が route の節 0 を除いた閉路から書く。null なら route を使う)
+        // M1.1: カート専用の軌道 (非同期。既定 null — Setup (Cart/1) が route から書く閉路。節の数・閉じ区間の位置は前提にしない:
+        // 区間 i は trackPositions[i] → [(i+1) % n]、最後の区間の終端は trackLength。乗り場・行き先は spotTrackDistance / destTrackDistance。null なら route を使う)
         public Vector3[] trackPositions;
         public float[] trackDistances;
         public float trackLength;
@@ -99,9 +106,10 @@ namespace KominkaHillside
         private float _fadeAt;
         // 保留中の要求 (レビュー #1)。_pendingKind != 0 の間だけ有効。時間切れ・_LeaveForTravel・リスポーンで取り消す (_pendingKind = 0)。
         // 自分への新しい割当は、有効な保留要求と乗り場・グループ (合流は世代も) が合うときだけ着座し、それ以外は ReqLeave で返す
-        private int _pendingKind;        // 0 なし / 1 出発 / 2 合流 (2 秒の返事待ち)
+        private int _pendingKind;        // 0 なし / 1 出発 / 2 合流 / 3 カートから出発 / 4 カートから合流 (2 秒の返事待ち)
         private float _pendingAt;
         private int _pendingSpot = -1, _pendingGroup = -1, _pendingGen = -1;
+        private int _pendingCart = -1;   // M3: 3 = カートから出発 / 4 = カートから合流 の対象カート
         private int _reqSeq;             // 要求のローカル連番 (ログ用。割当は ID を運ばないので照合は乗り場・グループ・世代で行う)
         private float _nextOwnerTick, _nextMaintenance, _nextLocalSlow, _exitPickAt;
         private string _lang = "";
@@ -136,7 +144,7 @@ namespace KominkaHillside
             if (!Networking.IsOwner(gameObject) || !Utilities.IsValid(player)) return;
             bool changed = false;
             for (int c = 0; c < MaxCarts; c++)
-                if (cartState[c] != CartIdle && cartRider[c] == player.playerId) { RemoveCart(c, "left"); changed = true; }
+                if (IsRidingState(cartState[c]) && cartRider[c] == player.playerId) { RemoveCart(c, "left"); changed = true; }
             if (changed) Commit();
         }
 
@@ -274,24 +282,30 @@ namespace KominkaHillside
             int mine = -1;
             if (me > 0)
                 for (int c = 0; c < MaxCarts; c++)
-                    if (cartState[c] != CartIdle && cartRider[c] == me) { mine = c; break; }
+                    if (IsRidingState(cartState[c]) && cartRider[c] == me) { mine = c; break; }
 
             int now = Networking.GetServerTimeInMilliseconds();
             // 可視と駐車 (自分の着座より先に姿勢を合わせる)
             for (int c = 0; c < MaxCarts; c++)
             {
                 bool active = CartActive(c);
+                bool parkedNow = cartState[c] == CartParked;
+                bool wasParked = _prevParked[c];
+                _prevParked[c] = parkedNow;
                 if (active && !_shown[c])
                 {
-                    _shown[c] = true; _parked[c] = false; _snap[c] = true; _placedAt[c] = 0f; _seg[c] = -1;
+                    _shown[c] = true; _parked[c] = false; _snap[c] = true; _placedAt[c] = 0f; _seg[c] = -1; _parkDone[c] = false;
                     if (carts != null && c < carts.Length && carts[c] != null) carts[c]._SetVisible(true);
                 }
                 else if (active)
                 {
-                    // 錨の打ち直し・隊列の詰めで目標が跳んだ分を、表示側でなめらかに追う (Motion の _err)
+                    // 錨の打ち直し・隊列の詰め・その場に残す (M3) で目標が跳んだ分を、表示側でなめらかに追う (Motion の _err)
+                    if (parkedNow && wasParked) continue;   // 置かれたまま (動かない)
+                    if (parkedNow) _parkDone[c] = false;    // 走行 → Parked: その場で止まり、右へ寄せる
                     if (!_snap[c])
                     {
-                        float jump = WrapSigned(TargetDistance(c, now) - _dLast[c]);
+                        float target = parkedNow ? cartParkDist[c] : TargetDistance(c, now);
+                        float jump = WrapSigned(target - _dLast[c]);
                         if (Mathf.Abs(jump) > SnapJump) _snap[c] = true; else _err[c] = jump;
                     }
                 }
@@ -326,8 +340,8 @@ namespace KominkaHillside
                     }
                     else
                     {
-                        bool join = _pendingKind == 2;
-                        ShowResult(_pendingSpot, join ? KeyJoined : KeyStarted);
+                        bool join = _pendingKind == 2 || _pendingKind == 4;
+                        ShowPendingResult(join ? KeyJoined : KeyStarted);
                         _pendingKind = 0;
                         _boardAt = Time.time;
                         if (join) BeginJoinBoard(mine); else BoardNow(mine, "direct");
@@ -335,7 +349,7 @@ namespace KominkaHillside
                 }
             }
             // 自分の座っていたカートが他人に割り当て直された (解放直後の再利用) なら、運ばれる前に降りる
-            if (_seatedCart >= 0 && _seatedCart != _myCart && cartState[_seatedCart] != CartIdle) UnboardCart(_seatedCart);
+            if (_seatedCart >= 0 && _seatedCart != _myCart && IsRidingState(cartState[_seatedCart])) UnboardCart(_seatedCart);
 
             // 停止・受付ボタンは自分のカートの乗員にだけ出す
             for (int c = 0; carts != null && c < carts.Length && c < MaxCarts; c++)
@@ -346,14 +360,35 @@ namespace KominkaHillside
                 bool master = isMine && ValidGroup(g) && groupMaster[g] == c && groupState[g] == GroupRunning;
                 carts[c]._SetRider(isMine, master, ValidGroup(g) && groupAccepting[g]);   // 操作帯の _Refresh とドックの開始/停止も中で
                 carts[c]._ApplySeat(cartSeatSteps[c], cartYawSteps[c], cartFwdSteps[c]);
+                carts[c]._SetParked(cartState[c] == CartParked);   // M3: その場に残ったカートの上のメニュー
             }
         }
 
+        /// <summary>見せるカート: 走行中・到着中 (グループあり) と、その場に残った (Parked) カート。</summary>
         private bool CartActive(int c)
         {
-            if (cartState[c] == CartIdle) return false;
+            int s = cartState[c];
+            if (s == CartParked) return true;
+            if (!IsRidingState(s)) return false;
             int g = cartGroup[c];
             return ValidGroup(g) && groupState[g] != GroupFree;
+        }
+
+        private bool IsRidingState(int s) { return s == CartRiding || s == CartEnding; }
+
+        /// <summary>M3: そのカートがその場に残っているか (カート上メニューの表示)。</summary>
+        public bool _CartParked(int c) { return ValidCart(c) && cartState[c] == CartParked; }
+
+        /// <summary>保留中の要求の結果を、要求したパネル (乗り場か、カート上メニュー) に出す。</summary>
+        private void ShowPendingResult(string key)
+        {
+            if (_pendingKind == 3 || _pendingKind == 4)
+            {
+                if (carts != null && ValidCart(_pendingCart) && _pendingCart < carts.Length && carts[_pendingCart] != null && carts[_pendingCart].cartPanel != null)
+                    carts[_pendingCart].cartPanel._ShowResult(key);
+                return;
+            }
+            ShowResult(_pendingSpot, key);
         }
 
         private void RefreshPanels(bool all)
@@ -389,9 +424,11 @@ namespace KominkaHillside
             {
                 // 空車なし等で Owner が黙って断った (結果コードは返らない。契約の既知の制約)
                 string key = KeyFull;
-                if (_pendingKind == 2 && (!ValidGroup(_pendingGroup) || groupState[_pendingGroup] != GroupRunning || !groupAccepting[_pendingGroup])) key = KeyClosed;
-                Debug.Log("[KH_Cart] request timeout req=" + _reqSeq + " kind=" + _pendingKind + " spot=" + _pendingSpot + " group=" + _pendingGroup + " result=" + key);
-                ShowResult(_pendingSpot, key);
+                bool joinKind = _pendingKind == 2 || _pendingKind == 4;
+                if (joinKind && (!ValidGroup(_pendingGroup) || groupState[_pendingGroup] != GroupRunning || !groupAccepting[_pendingGroup])) key = KeyClosed;
+                if ((_pendingKind == 3 || _pendingKind == 4) && !_CartParked(_pendingCart)) key = KeyClosed;   // 置いてあったカートを先に使われた
+                Debug.Log("[KH_Cart] request timeout req=" + _reqSeq + " kind=" + _pendingKind + " spot=" + _pendingSpot + " cart=" + _pendingCart + " group=" + _pendingGroup + " result=" + key);
+                ShowPendingResult(key);
                 _pendingKind = 0;   // 取消。この後に届く割当は late-assign として返す
             }
 

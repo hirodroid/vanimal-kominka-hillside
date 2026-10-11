@@ -156,9 +156,19 @@ namespace KominkaHillside
             // レビュー #2: 先頭が到着距離に達していれば、外して錨を打ち直す前に Ending を確定する (Owner 自身が先頭のとき
             // LocalTick の到着降車が OwnerTick より先に走り、錨が 1 間隔後ろへ移って Ending が遅れていた)
             if (ValidGroup(g)) SettleArrival(g, now);
+            // M3: 降りた場所に残す (Parked)。置く距離は今の目標距離 (グループが無い不整合のときだけ Idle へ)
+            bool canPark = ValidGroup(g) && groupState[g] != GroupFree && EnsureRoute();
+            float parkAt = canPark ? TargetDistance(c, now) : 0f;
             ResetCart(c);
             int freed = now == 0 ? 1 : now;   // 0 は「猶予なし」の印
             cartFreedMs[c] = freed;
+            if (canPark)
+            {
+                cartState[c] = CartParked;
+                cartParkDist[c] = parkAt;
+                cartParkedMs[c] = freed;
+                Debug.Log("[KH_Cart] park cart=" + c + " at=" + parkAt + " reason=" + reason);
+            }
             if (!ValidGroup(g) || groupState[g] == GroupFree)
             {
                 Debug.Log("[KH_Cart] leave cart=" + c + " group=" + g + " player=" + pid + " reason=" + reason + " (no group)");
@@ -166,7 +176,7 @@ namespace KominkaHillside
             }
             // 残りの順を詰める (順序維持)
             for (int k = 0; k < MaxCarts; k++)
-                if (cartState[k] != CartIdle && cartGroup[k] == g && cartOrder[k] > order) cartOrder[k]--;
+                if (IsRidingState(cartState[k]) && cartGroup[k] == g && cartOrder[k] > order) cartOrder[k]--;
             int count = CountMembers(g);
             groupCount[g] = count;
             Debug.Log("[KH_Cart] leave cart=" + c + " group=" + g + " player=" + pid + " order=" + order + " count=" + count + " reason=" + reason);
@@ -191,6 +201,8 @@ namespace KominkaHillside
             cartSeatSteps[c] = 0;   // M1.1: 降車で座席を既定へ戻す
             cartYawSteps[c] = 0;
             cartFwdSteps[c] = 0;
+            cartParkDist[c] = 0f;   // M3 (Parked にするときは呼び元が書き直す)
+            cartParkedMs[c] = 0;
         }
 
         private void FreeGroup(int g)
@@ -213,13 +225,13 @@ namespace KominkaHillside
         private int CountMembers(int g)
         {
             int n = 0;
-            for (int c = 0; c < MaxCarts; c++) if (cartState[c] != CartIdle && cartGroup[c] == g) n++;
+            for (int c = 0; c < MaxCarts; c++) if (IsRidingState(cartState[c]) && cartGroup[c] == g) n++;
             return n;
         }
 
         private int MemberAt(int g, int order)
         {
-            for (int c = 0; c < MaxCarts; c++) if (cartState[c] != CartIdle && cartGroup[c] == g && cartOrder[c] == order) return c;
+            for (int c = 0; c < MaxCarts; c++) if (IsRidingState(cartState[c]) && cartGroup[c] == g && cartOrder[c] == order) return c;
             return -1;
         }
 
@@ -285,6 +297,13 @@ namespace KominkaHillside
                     if (cartRider[c] != 0 || cartGroup[c] != -1 || cartSeatSteps[c] != 0 || cartYawSteps[c] != 0 || cartFwdSteps[c] != 0) { ResetCart(c); changed = true; }
                     continue;
                 }
+                if (cartState[c] == CartParked)
+                {
+                    // M3: 置いてあるカートは乗員もグループも持たない (退出・不整合の判定の対象外)
+                    if (cartRider[c] != 0 || cartGroup[c] != -1 || cartOrder[c] != 0) { cartRider[c] = 0; cartGroup[c] = -1; cartOrder[c] = 0; changed = true; }
+                    continue;
+                }
+                if (!IsRidingState(cartState[c])) { ResetCart(c); changed = true; continue; }   // 未知の値
                 int g = cartGroup[c];
                 bool gone = !Utilities.IsValid(VRCPlayerApi.GetPlayerById(cartRider[c]));
                 bool orphan = !ValidGroup(g) || groupState[g] == GroupFree || (cartState[c] == CartEnding) != (groupState[g] == GroupEnding);
@@ -296,7 +315,7 @@ namespace KominkaHillside
                 int n = CountMembers(g);
                 if (n == 0) { FreeGroup(g); changed = true; continue; }
                 if (groupCount[g] != n) { groupCount[g] = n; changed = true; }
-                if (!ValidCart(groupMaster[g]) || cartGroup[groupMaster[g]] != g || cartState[groupMaster[g]] == CartIdle)
+                if (!ValidCart(groupMaster[g]) || cartGroup[groupMaster[g]] != g || !IsRidingState(cartState[groupMaster[g]]))
                 {
                     groupMaster[g] = MemberAt(g, 0);
                     Debug.Log("[KH_Cart] handover group=" + g + " master cart ->" + groupMaster[g] + " (repair)");

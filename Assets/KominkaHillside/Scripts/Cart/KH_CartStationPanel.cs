@@ -27,6 +27,12 @@ namespace KominkaHillside
         [Header("M2 掲示 (Build が配線。null 可)")]
         public TextMeshProUGUI prLabel;            // cart.station.pr (注意書きの下)
         public UnityEngine.UI.RawImage photo;      // 写真 (Runtime は触らない)
+        [Header("M3 カート上メニュー (spot = -1 のとき)")]
+        public int cart = -1;                      // 乗り場のパネルは -1。カート上メニューはそのカートの番号 (開始点はそのカートの置かれた位置)
+        [Tooltip("Parked でないときに隠す中身の親 (任意)。null なら直下の子をすべて切り替える")]
+        public GameObject content;
+        private int _visible = -1;
+        private Collider _hit;
 
         const float ResultSeconds = 4f;
         const string Dot = " · ";
@@ -44,8 +50,16 @@ namespace KominkaHillside
         public void _Refresh()
         {
             EnsureRows();
+            bool onCart = spot < 0;
+            if (onCart)
+            {
+                // M3: カート上メニューはそのカートがその場に残っている (Parked) ときだけ
+                bool show = manager != null && manager._CartParked(cart);
+                _SetVisible(show);
+                if (!show) return;
+            }
             if (titleLabel != null) titleLabel.text = T("cart.title");
-            if (noticeLabel != null) noticeLabel.text = T("cart.notice");
+            if (noticeLabel != null) noticeLabel.text = T(onCart ? "cart.parked" : "cart.notice");
             if (prLabel != null) prLabel.text = T("cart.station.pr");   // M2: 注意書きの下の 1 行
             if (manager == null)
             {
@@ -97,7 +111,7 @@ namespace KominkaHillside
         public void _PressStart()
         {
             if (manager == null) return;
-            int code = manager._Start(spot);
+            int code = spot < 0 ? manager._StartFrom(cart) : manager._Start(spot);   // M3: カート上メニューはそのカートから
             if (code != KH_CartManager.CartOk) _ShowResult(CodeKey(code));
         }
 
@@ -116,7 +130,7 @@ namespace KominkaHillside
             if (manager == null || row < 0 || row >= _rowGroup.Length) return;
             int g = _rowGroup[row];
             if (g < 0) return;
-            int code = manager._Join(spot, g, _rowGen[row]);
+            int code = spot < 0 ? manager._JoinFrom(cart, g, _rowGen[row]) : manager._Join(spot, g, _rowGen[row]);
             if (code != KH_CartManager.CartOk) _ShowResult(CodeKey(code));
         }
 
@@ -135,6 +149,27 @@ namespace KominkaHillside
             if (Time.time < _resultUntil - 0.05f) return;   // 後から出した結果の 4 秒を待つ
             _resultKey = "";
             if (resultLabel != null) resultLabel.text = "";
+        }
+
+        /// <summary>M3: カート上メニューの表示切替。content があればそれだけ、無ければ直下の子すべて。パネル自身の Collider (VRCUiShape の当たり) も切る。
+        /// Behaviour 自身は止めない (manager から呼ばれ続ける)。変わったときだけ書く。</summary>
+        public void _SetVisible(bool on)
+        {
+            int want = on ? 1 : 0;
+            if (want == _visible) return;
+            _visible = want;
+            if (content != null) { if (content.activeSelf != on) content.SetActive(on); }
+            else
+            {
+                Transform t = transform;
+                for (int i = 0; i < t.childCount; i++)
+                {
+                    GameObject child = t.GetChild(i).gameObject;
+                    if (child.activeSelf != on) child.SetActive(on);
+                }
+            }
+            if (_hit == null) _hit = GetComponent<Collider>();
+            if (_hit != null) _hit.enabled = on;
         }
 
         private string CodeKey(int code)

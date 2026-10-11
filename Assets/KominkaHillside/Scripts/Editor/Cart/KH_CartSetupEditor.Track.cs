@@ -22,6 +22,8 @@ namespace KominkaHillside.Editor
         public class Track
         {
             public Vector3[] positions; public float[] distances; public bool[] detour; public float length, closing;
+            public bool skipsNode0;   // M3: 節 0 が棘 (435→0→1 が 435→1 の 1.3 倍超) のときだけ除く。そうでなければ route と同じ 436 節
+            public int firstNode;     // positions[0] が route のどの節か (除くなら 1、含むなら 0)
             public float[] spot, dest, noFrom, noTo;
             public List<string> sweepHits = new List<string>();
             public int sweepCandidates, sweepSkippedLarge;
@@ -31,19 +33,28 @@ namespace KominkaHillside.Editor
         {
             int n = route.count; var np = route.nodePositions; var ld = route.loopDistances;
             if (!route.closedLoop || np == null || np.Length != n || ld == null || ld.Length != n || n < 4) throw new InvalidOperationException("Closed-loop route with nodePositions / loopDistances required");
-            int m = n - 1;
-            var t = new Track { positions = new Vector3[m], distances = new float[m], detour = new bool[m] };
             bool has = route.linkAllowsDetour != null && route.linkAllowsDetour.Length >= n;
+            // M3 (Course/21a の後): 節 0 が曲線上に乗れば棘ではないので除かない。棘 = 435→0→1 の長さが 435→1 の直線の SpikeRatio 倍を超える
+            float via0 = Vector3.Distance(np[n - 1], np[0]) + Vector3.Distance(np[0], np[1]), direct = Vector3.Distance(np[n - 1], np[1]);
+            bool skip = via0 > direct * SpikeRatio;
+            int first = skip ? 1 : 0, m = n - first;
+            var t = new Track { positions = new Vector3[m], distances = new float[m], detour = new bool[m], skipsNode0 = skip, firstNode = first };
+            // 距離は節間の弦 (3D の直線距離) の累積。TrackPoint が節間を直線補間するので、速度と残距離が弦に沿った実距離になる
+            // (route.loopDistances は NavMesh の経路長で弦より約 0.16% 長いのでコピーしない。2026-10-12 Probe の remaining/walked)
+            float sum = 0f;
             for (int k = 0; k < m; k++)
             {
-                t.positions[k] = np[k + 1];
-                t.distances[k] = ld[k + 1] - ld[1];
-                t.detour[k] = !has || route.linkAllowsDetour[k + 1];   // k = m-1 は節 435 の区間 (直結)
+                t.positions[k] = np[k + first];
+                if (k > 0) sum += Vector3.Distance(np[k - 1 + first], np[k + first]);
+                t.distances[k] = sum;
+                t.detour[k] = !has || route.linkAllowsDetour[k + first];   // 除くとき k = m-1 は節 435 の区間 (直結)
             }
-            t.closing = Vector3.Distance(np[n - 1], np[1]);
-            t.length = t.distances[m - 1] + t.closing;
+            t.closing = Vector3.Distance(np[n - 1], np[first]);   // 除くなら 435 → 1 の直結、含むなら 435 → 0 (通常の区間)
+            t.length = sum + t.closing;
             return t;
         }
+
+        public const float SpikeRatio = 1.3f;
 
         public static float TrackWrap(Track t, float d) { d %= t.length; return d < 0f ? d + t.length : d; }
 
@@ -98,7 +109,8 @@ namespace KominkaHillside.Editor
             for (int s = 0; s < StationCount; s++)
             {
                 if (leash.spotNodes == null || leash.spotNodes.Length <= s || leash.spotNodes[s] < 0 || leash.spotNodes[s] >= route.count) throw new InvalidOperationException("spotNodes[" + s + "] invalid (run Course/80)");
-                t.spot[s] = ProjectToTrack(t, route.nodePositions[leash.spotNodes[s]]);
+                // M3: 乗り場の着地点 (spotPositions) を軌道へ投影 (カートは着地点の真横から出発。節 435 が整形で動いても着地点は Course/80 のまま)
+                t.spot[s] = leash.spotPositions != null && leash.spotPositions.Length > s ? ProjectToTrack(t, leash.spotPositions[s]) : ProjectToTrack(t, route.nodePositions[leash.spotNodes[s]]);
             }
             t.dest = new float[6];
             for (int d = 0; d < 6; d++)

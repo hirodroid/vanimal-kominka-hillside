@@ -128,7 +128,7 @@ namespace KominkaHillside.Editor
             var b=JsonUtility.FromJson<Baseline>(File.ReadAllText(OriginalRecord));
             if(b.nodes==null||b.nodes.Length!=17)throw new InvalidOperationException("Invalid original route record");return b;
         }
-        static void Index(KH_WalkRoute route)
+        internal static void Index(KH_WalkRoute route)   // DES-WLD-004 M3: Course/22 (KH_CourseGateTurnEditor) が呼ぶ
         {
             route.cellOrigin=new Vector2(-32,-32);route.cellSize=32;route.cellColumns=21;route.cellRows=25;
             int cells=route.cellColumns*route.cellRows;var link=new List<int>();var entry=new List<int>();
@@ -155,7 +155,8 @@ namespace KominkaHillside.Editor
             if(r==null||!r.closedLoop||r.count<=17)throw new InvalidOperationException("Full course route required");
             var b=ReadBaseline();var errors=new List<string>();
             var report=new Report{utc=DateTime.UtcNow.ToString("o"),scene=EditorSceneManager.GetActiveScene().path,nodes=r.count,links=r.linkA.Length,length=r.loopLength};
-            for(int i=0;i<17;i++)if(r.nodes[i].position!=b.nodes[i]||r.arriveRadius[i]!=b.radii[i])errors.Add("Original node/radius changed "+i);
+            // DES-WLD-004 M3: 節 0・1 は Course/21a (門前の整形) の後の位置を正とする (original-route.json は旧 17 節の互換検査の正本なので書き換えない)
+            for(int i=0;i<17;i++)if((r.nodes[i].position!=b.nodes[i]||r.arriveRadius[i]!=b.radii[i])&&!KH_CourseGateTurnEditor.IsSmoothedGateNode(r,i))errors.Add("Original node/radius changed "+i);
             for(int i=0;i<r.count;i++)if(r.nodes[i].parent!=r.transform||r._Position(i)!=r.nodes[i].position||r.linkA[i]!=i||r.linkB[i]!=(i+1)%r.count)errors.Add("Node/link ownership or order "+i);
             foreach(int direction in new[]{2,3})
                 for(int start=0;start<r.count;start+=Mathf.Max(1,r.count/19))

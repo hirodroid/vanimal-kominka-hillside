@@ -35,7 +35,7 @@ namespace KominkaHillside
             int code = CanStart(lp.playerId, spot, destination);
             if (code != CartOk) return code;
             _reqSeq++;
-            _pendingKind = 1; _pendingAt = Time.time; _pendingSpot = spot; _pendingGroup = -1; _pendingGen = -1;
+            _pendingKind = 1; _pendingAt = Time.time; _pendingSpot = spot; _pendingGroup = -1; _pendingGen = -1; _pendingCart = -1;
             Debug.Log("[KH_Cart] request req=" + _reqSeq + " kind=start spot=" + spot + " dest=" + destination);
             if (Networking.IsOwner(gameObject)) ReceiveStart(lp.playerId, spot, destination);
             else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqStart), spot, destination);
@@ -51,10 +51,43 @@ namespace KominkaHillside
             int code = CanJoin(lp.playerId, spot, group, gen);
             if (code != CartOk) return code;
             _reqSeq++;
-            _pendingKind = 2; _pendingAt = Time.time; _pendingSpot = spot; _pendingGroup = group; _pendingGen = gen;
+            _pendingKind = 2; _pendingAt = Time.time; _pendingSpot = spot; _pendingGroup = group; _pendingGen = gen; _pendingCart = -1;
             Debug.Log("[KH_Cart] request req=" + _reqSeq + " kind=join spot=" + spot + " group=" + group + " gen=" + gen);
             if (Networking.IsOwner(gameObject)) ReceiveJoin(lp.playerId, spot, group, gen);
             else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqJoin), spot, group, gen);
+            return CartOk;
+        }
+
+        /// <summary>M3: その場に残ったカート cart から出発する (カート上メニュー)。行き先は犬の散歩設定。戻り値は結果コード。</summary>
+        public int _StartFrom(int cart)
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp) || leash == null) return CartUnavailable;
+            if (_IsRiding() || _leaveCart >= 0 || _pendingKind != 0) return CartBusy;
+            int destination = leash._MyChoice();
+            int code = CanStartFrom(lp.playerId, cart, destination);
+            if (code != CartOk) return code;
+            _reqSeq++;
+            _pendingKind = 3; _pendingAt = Time.time; _pendingSpot = -1; _pendingCart = cart; _pendingGroup = -1; _pendingGen = -1;
+            Debug.Log("[KH_Cart] request req=" + _reqSeq + " kind=start-from cart=" + cart + " dest=" + destination);
+            if (Networking.IsOwner(gameObject)) ReceiveStartFrom(lp.playerId, cart, destination);
+            else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqStartFrom), cart, destination);
+            return CartOk;
+        }
+
+        /// <summary>M3: その場に残ったカート cart に乗って、走行中のグループの末尾へ合流する (暗転で移動)。戻り値は結果コード。</summary>
+        public int _JoinFrom(int cart, int group, int gen)
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) return CartUnavailable;
+            if (_IsRiding() || _leaveCart >= 0 || _pendingKind != 0) return CartBusy;
+            int code = CanJoinFrom(lp.playerId, cart, group, gen);
+            if (code != CartOk) return code;
+            _reqSeq++;
+            _pendingKind = 4; _pendingAt = Time.time; _pendingSpot = -1; _pendingCart = cart; _pendingGroup = group; _pendingGen = gen;
+            Debug.Log("[KH_Cart] request req=" + _reqSeq + " kind=join-from cart=" + cart + " group=" + group + " gen=" + gen);
+            if (Networking.IsOwner(gameObject)) ReceiveJoinFrom(lp.playerId, cart, group, gen);
+            else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqJoinFrom), cart, group, gen);
             return CartOk;
         }
 
@@ -79,9 +112,13 @@ namespace KominkaHillside
         /// <summary>新しく自分に来た割当 c が、有効な保留要求の答えか (出発: 自分がマスターの 1 台目・同じ乗り場 / 合流: 同じ乗り場・グループ・世代)。</summary>
         private bool PendingMatches(int c)
         {
-            if (_pendingKind == 0 || cartSpot[c] != _pendingSpot) return false;
+            if (_pendingKind == 0) return false;
             int g = cartGroup[c];
             if (!ValidGroup(g)) return false;
+            // M3: カートからの出発・合流は「そのカート自体」が割り当てられたか
+            if (_pendingKind == 3) return c == _pendingCart && groupMaster[g] == c && cartOrder[c] == 0;
+            if (_pendingKind == 4) return c == _pendingCart && g == _pendingGroup && groupGen[g] == _pendingGen;
+            if (cartSpot[c] != _pendingSpot) return false;
             if (_pendingKind == 1) return groupMaster[g] == c && cartOrder[c] == 0;
             return g == _pendingGroup && groupGen[g] == _pendingGen;
         }
@@ -157,6 +194,24 @@ namespace KominkaHillside
         }
 
         [NetworkCallable(maxEventsPerSecond: 4)]
+        public void ReqStartFrom(int cart, int destination) // net: callable-ok: CallingPlayer で照合 (Parked のカートだけ。乗員は要求者)
+        {
+            if (!Networking.IsOwner(gameObject)) return;
+            VRCPlayerApi caller = NetworkCalling.CallingPlayer;
+            if (!Utilities.IsValid(caller)) return;
+            ReceiveStartFrom(caller.playerId, cart, destination);
+        }
+
+        [NetworkCallable(maxEventsPerSecond: 4)]
+        public void ReqJoinFrom(int cart, int group, int gen) // net: callable-ok: CallingPlayer で照合 (Parked のカートで、受付中・世代一致のグループの末尾へ)
+        {
+            if (!Networking.IsOwner(gameObject)) return;
+            VRCPlayerApi caller = NetworkCalling.CallingPlayer;
+            if (!Utilities.IsValid(caller)) return;
+            ReceiveJoinFrom(caller.playerId, cart, group, gen);
+        }
+
+        [NetworkCallable(maxEventsPerSecond: 4)]
         public void ReqLeave() // net: callable-ok: CallingPlayer で照合 (自分のカートだけを解放する)
         {
             if (!Networking.IsOwner(gameObject)) return;
@@ -205,7 +260,7 @@ namespace KominkaHillside
         private void ReceiveStart(int pid, int spot, int destination)
         {
             int code = CanStart(pid, spot, destination);
-            int c = code == CartOk ? PickFreeCart() : -1;
+            int c = code == CartOk ? ReclaimCandidate() : -1;
             int g = code == CartOk ? PickFreeGroup() : -1;
             if (code == CartOk && (c < 0 || g < 0)) code = CartFull;
             if (code != CartOk)
@@ -213,7 +268,14 @@ namespace KominkaHillside
                 Debug.Log("[KH_Cart] reject start player=" + pid + " spot=" + spot + " dest=" + destination + " code=" + code);
                 return;
             }
-            float start = SpotStartDistance(spot);
+            LogReclaim(c);
+            BeginGroup(pid, c, g, SpotStartDistance(spot), destination, spot, "start");
+            Commit();
+        }
+
+        /// <summary>1 人グループを作って走り出す (乗り場からとカートからの出発の共通部分)。Commit は呼び元。</summary>
+        private void BeginGroup(int pid, int c, int g, float start, int destination, int spot, string tag)
+        {
             int dir = StartDirection(start, destination);
             groupGen[g] = (groupGen[g] % 1000000) + 1;   // 作成ごとに +1 (古い合流要求を見分ける)
             groupState[g] = GroupRunning;
@@ -225,15 +287,29 @@ namespace KominkaHillside
             groupLane[g] = 0; groupHoldDist[g] = -1f; groupHoldSinceMs[g] = 0; groupHoldBanMs[g] = 0;   // M2: 交通の状態は空から
             groupAnchorDist[g] = Wrap(start);
             groupAnchorMs[g] = Networking.GetServerTimeInMilliseconds() + departDelayMs;
+            TakeCart(c, pid, g, 0, spot);
+            Debug.Log("[KH_Cart] " + tag + " cart=" + c + " group=" + g + " gen=" + groupGen[g] + " player=" + pid + " spot=" + spot + " start=" + start + " basis=" + (_useTrack ? "track" : "route") + " dest=" + destination
+                + " dir=" + dir + " anchor=" + groupAnchorDist[g] + " remaining=" + (IsDestRun(g) ? Remaining(g) : -1f));
+            TrafficStartGate(g, start, dir, Networking.GetServerTimeInMilliseconds());   // Codex M2 (3): 狭い区間内の乗り場は対向が抜けるまで出発保留
+        }
+
+        /// <summary>カート c を乗員 pid に割り当てる (Idle・Parked どちらからでも。置いてあった印は消す)。</summary>
+        private void TakeCart(int c, int pid, int g, int order, int spot)
+        {
             cartState[c] = CartRiding;
             cartRider[c] = pid;
             cartGroup[c] = g;
-            cartOrder[c] = 0;
+            cartOrder[c] = order;
             cartSpot[c] = spot;
-            Debug.Log("[KH_Cart] start cart=" + c + " group=" + g + " gen=" + groupGen[g] + " player=" + pid + " spot=" + spot + " start=" + start + " basis=" + (_useTrack ? "track" : "route") + " dest=" + destination
-                + " dir=" + dir + " anchor=" + groupAnchorDist[g] + " remaining=" + (IsDestRun(g) ? Remaining(g) : -1f));
-            TrafficStartGate(g, start, dir, Networking.GetServerTimeInMilliseconds());   // Codex M2 (3): 狭い区間内の乗り場は対向が抜けるまで出発保留
-            Commit();
+            cartParkDist[c] = 0f;
+            cartParkedMs[c] = 0;
+        }
+
+        private void LogReclaim(int c)
+        {
+            if (!ValidCart(c) || cartState[c] != CartParked) return;
+            int parkedFor = Networking.GetServerTimeInMilliseconds() - cartParkedMs[c];
+            Debug.Log("[KH_Cart] reclaim cart=" + c + " parkedFor=" + (parkedFor * 0.001f).ToString("F1") + "s at=" + cartParkDist[c]);
         }
 
         private void ReceiveJoin(int pid, int spot, int group, int gen)
@@ -247,7 +323,7 @@ namespace KominkaHillside
                 return;
             }
             int code = CanJoin(pid, spot, group, gen);
-            int c = code == CartOk ? PickFreeCart() : -1;
+            int c = code == CartOk ? ReclaimCandidate() : -1;
             if (code == CartOk && c < 0) code = CartFull;
             if (code != CartOk)
             {
@@ -255,14 +331,48 @@ namespace KominkaHillside
                 if (settled) Commit();
                 return;
             }
+            LogReclaim(c);
+            AddToGroup(pid, c, group, spot, "join");
+            Commit();
+        }
+
+        /// <summary>カート c をグループの末尾に加える (乗り場からとカートからの合流の共通部分)。Commit は呼び元。</summary>
+        private void AddToGroup(int pid, int c, int group, int spot, string tag)
+        {
             int order = CountMembers(group);   // 順は 0..count-1 に詰めてある (RemoveCart)。末尾は anchor - dir*order*gap に現れる
-            cartState[c] = CartRiding;
-            cartRider[c] = pid;
-            cartGroup[c] = group;
-            cartOrder[c] = order;
-            cartSpot[c] = spot;
+            TakeCart(c, pid, group, order, spot);
             groupCount[group] = order + 1;
-            Debug.Log("[KH_Cart] join cart=" + c + " group=" + group + " player=" + pid + " spot=" + spot + " order=" + order + " count=" + groupCount[group]);
+            Debug.Log("[KH_Cart] " + tag + " cart=" + c + " group=" + group + " player=" + pid + " spot=" + spot + " order=" + order + " count=" + groupCount[group]);
+        }
+
+        // ---- M3: その場に残ったカートからの出発・合流 (Owner) ----
+
+        private void ReceiveStartFrom(int pid, int cart, int destination)
+        {
+            int code = CanStartFrom(pid, cart, destination);
+            int g = code == CartOk ? PickFreeGroup() : -1;
+            if (code == CartOk && g < 0) code = CartFull;
+            if (code != CartOk)
+            {
+                Debug.Log("[KH_Cart] reject start-from player=" + pid + " cart=" + cart + " dest=" + destination + " code=" + code);
+                return;
+            }
+            BeginGroup(pid, cart, g, cartParkDist[cart], destination, -1, "start-from");
+            Commit();
+        }
+
+        private void ReceiveJoinFrom(int pid, int cart, int group, int gen)
+        {
+            bool settled = ValidGroup(group) && SettleArrival(group, Networking.GetServerTimeInMilliseconds());
+            int code = CanJoinFrom(pid, cart, group, gen);
+            if (code != CartOk)
+            {
+                Debug.Log("[KH_Cart] reject join-from player=" + pid + " cart=" + cart + " group=" + group + " gen=" + gen + " code=" + code
+                    + (ValidGroup(group) && groupGen[group] != gen ? " reason=gen" : ""));
+                if (settled) Commit();
+                return;
+            }
+            AddToGroup(pid, cart, group, -1, "join-from");   // カートは暗転で隊列の末尾へ移る (乗り場からの合流と同じ)
             Commit();
         }
 
@@ -297,7 +407,7 @@ namespace KominkaHillside
             if (start < 0f || destination < 0 || destination >= _destKeys.Length || (!loop && DestDistance(destination) < 0f)) return CartUnavailable;
             if (RiderCart(pid) >= 0) return CartBusy;
             if (IsHere(start, destination)) return CartHere;
-            if (PickFreeCart() < 0 || PickFreeGroup() < 0) return CartFull;
+            if (ReclaimCandidate() < 0 || PickFreeGroup() < 0) return CartFull;
             return CartOk;
         }
 
@@ -306,15 +416,61 @@ namespace KominkaHillside
             if (!EnsureRoute() || spot < 0 || spot >= SpotCount) return CartUnavailable;
             if (!ValidGroup(group) || groupState[group] != GroupRunning || !groupAccepting[group] || groupGen[group] != gen || CountMembers(group) <= 0) return CartClosed;
             if (RiderCart(pid) >= 0) return CartBusy;
-            if (PickFreeCart() < 0) return CartFull;
+            if (ReclaimCandidate() < 0) return CartFull;
             return CartOk;
+        }
+
+        private int CanStartFrom(int pid, int cart, int destination)
+        {
+            if (!EnsureRoute()) return CartUnavailable;
+            if (!ValidCart(cart) || cartState[cart] != CartParked) return CartClosed;   // 先に誰かが使った
+            bool loop = destination == _loopFwd || destination == _loopRev;
+            if (destination < 0 || destination >= _destKeys.Length || (!loop && DestDistance(destination) < 0f)) return CartUnavailable;
+            if (RiderCart(pid) >= 0) return CartBusy;
+            if (IsHere(cartParkDist[cart], destination)) return CartHere;
+            if (PickFreeGroup() < 0) return CartFull;
+            return CartOk;
+        }
+
+        private int CanJoinFrom(int pid, int cart, int group, int gen)
+        {
+            if (!EnsureRoute()) return CartUnavailable;
+            if (!ValidCart(cart) || cartState[cart] != CartParked) return CartClosed;
+            if (!ValidGroup(group) || groupState[group] != GroupRunning || !groupAccepting[group] || groupGen[group] != gen || CountMembers(group) <= 0) return CartClosed;
+            if (RiderCart(pid) >= 0) return CartBusy;
+            return CartOk;
+        }
+
+        /// <summary>M3 (Probe 用、副作用なし): Parked ならそのカートからの出発距離 (cartParkDist)、それ以外は −1。</summary>
+        public float ParkedStartDistance(int cart)
+        {
+            return ValidCart(cart) && cartState[cart] == CartParked ? cartParkDist[cart] : -1f;
+        }
+
+        /// <summary>M3 (Probe 用、副作用なし): 乗り場の出発・合流に使うカート。Idle の空車 (解放から ReuseDelayMs の猶予外) の番号の小さい方 → 無ければ
+        /// cartParkedMs が今より ReclaimGraceMs 以上前の Parked のうち最古 → 無ければ −1。</summary>
+        public int ReclaimCandidate()
+        {
+            int idle = PickFreeCart();
+            if (idle >= 0) return idle;
+            int now = Networking.GetServerTimeInMilliseconds();
+            int best = -1, bestAge = -1;
+            for (int c = 0; c < MaxCarts; c++)
+            {
+                if (cartState[c] != CartParked) continue;
+                if (carts != null && (c >= carts.Length || carts[c] == null)) continue;
+                int age = now - cartParkedMs[c];
+                if (age < ReclaimGraceMs) continue;   // 降りたばかり (まだ座っているかもしれない)
+                if (age > bestAge) { bestAge = age; best = c; }
+            }
+            return best;
         }
 
         /// <summary>その人が乗っているカート (Riding / Ending)。無ければ -1。</summary>
         private int RiderCart(int pid)
         {
             if (pid <= 0) return -1;
-            for (int c = 0; c < MaxCarts; c++) if (cartState[c] != CartIdle && cartRider[c] == pid) return c;
+            for (int c = 0; c < MaxCarts; c++) if (IsRidingState(cartState[c]) && cartRider[c] == pid) return c;
             return -1;
         }
 
@@ -386,6 +542,7 @@ namespace KominkaHillside
         }
 
         public const int SeatStepsMax = 6;   // 座席の段数の上限 (高さ ±30 cm、向き ±90°)
+        public const int ReclaimGraceMs = 3000;   // M3: 置いてから回収できるまでの猶予 (Probe が参照)
         const int ReuseDelayMs = 3000;   // 解放したカートを他の人へ回すまでの猶予 (サーバー時刻。cartFreedMs で同期)
     }
 }

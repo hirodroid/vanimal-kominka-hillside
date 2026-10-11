@@ -87,7 +87,8 @@ namespace KominkaHillside.Editor
             "cart.result.full", "cart.result.closed", "cart.result.here", "cart.result.busy", "cart.result.started", "cart.result.joined", "cart.result.left",
             "cart.menu", "cart.monitor", "cart.seat.up", "cart.seat.down", "cart.turn.left", "cart.turn.right",   // M1.1
             "cart.seat.forward", "cart.seat.back",   // M1.1 追加 (座面の前後)
-            "cart.result.waiting", "cart.guide", "cart.row.closed", "cart.row.ending", "cart.sign.caption", "cart.station.pr" };   // M2
+            "cart.result.waiting", "cart.guide", "cart.row.closed", "cart.row.ending", "cart.sign.caption", "cart.station.pr",   // M2
+            "cart.parked" };   // M3
 
         [Serializable] class BuildReport
         {
@@ -212,8 +213,10 @@ namespace KominkaHillside.Editor
 
                 // ---- 乗り場パネル 5 枚 ----
                 Physics.SyncTransforms();
-                var panels = new KH_CartStationPanel[StationCount];
-                for (int s = 0; s < StationCount; s++) panels[s] = BuildStation(stationsRoot, s, manager, language, leash, font, ui, report);
+                // M3: 乗り場 = 静的カート (メッシュだけ) + その右肘掛けの上のパネル。Manager.panels = 乗り場 5 + カート上 8 = 13
+                var panels = new KH_CartStationPanel[StationCount + MaxCarts];
+                for (int s = 0; s < StationCount; s++) panels[s] = BuildStation(scene, stationsRoot, s, manager, language, leash, font, fbx, bodyMat, signMat, ui, report);
+                for (int i = 0; i < MaxCarts; i++) panels[StationCount + i] = seats[i].GetComponentsInChildren<KH_CartStationPanel>(true).FirstOrDefault(x => x.name == CartPanelName);
 
                 // ---- Manager の配線 ----
                 var so = new SerializedObject(manager);
@@ -348,6 +351,12 @@ namespace KominkaHillside.Editor
             if (so.FindProperty("acceptButton") != null) SetRef(so, "acceptButton", stops[1]);   // M1.1 で Runtime が外していれば書かない
             BuildCartUi(go, i, seatT, manager, language, menu, video, photo, font, ui, out KH_CartDock dock, out KH_CartControls controls);
             SetRef(so, "controls", controls); SetRef(so, "dock", dock);
+            // M3: カート上メニュー (Parked のときだけ Runtime が出す)。右肘掛けの上 0.55 m、外側 (カートの右) を向く
+            var armR = A(AnchorStopR);
+            var cpPos = armR.position + go.transform.up * PanelAboveArmrest;
+            var cpRot = Quaternion.LookRotation(-go.transform.right, go.transform.up);   // 表 (-Z) = カートの右
+            var cartPanel = BuildPanel(go.transform, CartPanelName, cpPos, cpRot, -1, i, manager, language, font, ui, false);
+            SetRefIfPresent(so, "cartPanel", cartPanel, i == 0 ? log : new List<string>());
             // M2: 背面の掲示の下の 1 行 (cart.sign.caption)。Model の中なので Model と一緒に毎回作り直す
             var caption = BuildSignCaption(go.transform, signBack, font);
             SetRefIfPresent(so, "signCaption", caption, i == 0 ? log : new List<string>());
@@ -447,13 +456,68 @@ namespace KominkaHillside.Editor
         // 乗り場パネル
         // ============================================================
 
-        static KH_CartStationPanel BuildStation(Transform stationsRoot, int s, KH_CartManager manager, KD_Language language, KH_LeashManager leash, TMP_FontAsset font, StringBuilder log, BuildReport report)
+        // ---- M3: カートステーション ----
+        public const string StationCartPrefix = "StationCart_", CartPanelName = "Panel";
+        public const float StationCartSide = 1.2f, PanelAboveArmrest = 0.55f;
+
+        /// <summary>乗り場 s: 着地点の右手 1.2 m に静的カート (FBX のメッシュだけ。Udon / Station / Collider なし、layer Default、LODGroup 付き)、
+        /// その右肘掛け (Anchor_StopR) の上 0.55 m に乗り場パネル (通路 = 着地点側を向く)。</summary>
+        static KH_CartStationPanel BuildStation(UnityEngine.SceneManagement.Scene scene, Transform stationsRoot, int s, KH_CartManager manager, KD_Language language, KH_LeashManager leash, TMP_FontAsset font,
+            GameObject fbx, Material bodyMat, Material signMat, StringBuilder log, BuildReport report)
         {
             Vector3 spot = leash.spotPositions[s];
-            PanelPose(spot, leash.spotYaws[s], out Vector3 pos, out Quaternion rot, out float groundDelta, out bool hit);
-            report.stations.Add("Station_" + s + " spot=" + spot.ToString("F2") + " yaw=" + leash.spotYaws[s].ToString("F1") + " panel=" + pos.ToString("F2") + " ground=" + (hit ? "hit dy=" + groundDelta.ToString("F2") : "MISS (spot height used)"));
+            StationCartPose(spot, leash.spotYaws[s], out Vector3 cartPos, out Quaternion cartRot, out float groundDelta, out bool hit);
+            var sc = BuildStationCart(scene, stationsRoot, s, cartPos, cartRot, fbx, bodyMat, signMat);
+            var armR = FindDeep(sc.transform, AnchorStopR);
+            Vector3 pos = armR.position + sc.transform.up * PanelAboveArmrest;
+            var face = pos - spot; face.y = 0f;
+            Quaternion rot = Quaternion.LookRotation(face.sqrMagnitude > 1e-6f ? face.normalized : sc.transform.right, Vector3.up);   // 表 (-Z) が着地点を向く
+            report.stations.Add("Station_" + s + " spot=" + spot.ToString("F2") + " yaw=" + leash.spotYaws[s].ToString("F1") + " cart=" + cartPos.ToString("F2") + " panel=" + pos.ToString("F2") + " ground=" + (hit ? "hit dy=" + groundDelta.ToString("F2") : "MISS (spot height used)"));
+            return BuildPanel(stationsRoot, "Station_" + s, pos, rot, s, -1, manager, language, font, log, true);
+        }
 
-            var go = EnsureChild(stationsRoot, "Station_" + s);
+        /// <summary>静的カートの姿勢: 着地点から spotYaws の右手へ 1.2 m、その地点の地面 (TravelGroundMask)、向きは道の進行方向 (spotYaws)。</summary>
+        public static void StationCartPose(Vector3 spot, float yawDegrees, out Vector3 pos, out Quaternion rot, out float groundDelta, out bool hit)
+        {
+            float yaw = yawDegrees * Mathf.Deg2Rad;
+            var right = new Vector3(Mathf.Cos(yaw), 0f, -Mathf.Sin(yaw));
+            var flat = spot + right * StationCartSide;
+            float groundY = spot.y;
+            hit = Physics.Raycast(new Vector3(flat.x, spot.y + 5f, flat.z), Vector3.down, out RaycastHit h, 15f, KH_LeashManager.TravelGroundMask, QueryTriggerInteraction.Ignore);
+            if (hit) groundY = h.point.y;
+            groundDelta = groundY - spot.y;
+            pos = new Vector3(flat.x, groundY, flat.z);
+            rot = Quaternion.Euler(0f, yawDegrees, 0f);
+        }
+
+        /// <summary>静的カート (毎回作り直す)。FBX が無ければ仮形状。Collider と Udon は付けない。</summary>
+        static GameObject BuildStationCart(UnityEngine.SceneManagement.Scene scene, Transform parent, int s, Vector3 pos, Quaternion rot, GameObject fbx, Material bodyMat, Material signMat)
+        {
+            var old = parent.Find(StationCartPrefix + s); if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            GameObject model;
+            if (fbx != null) { model = (GameObject)PrefabUtility.InstantiatePrefab(fbx, scene); PrefabUtility.UnpackPrefabInstance(model, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction); }
+            else model = BuildPlaceholder();
+            model.name = StationCartPrefix + s;
+            model.transform.SetParent(parent, false);
+            model.transform.SetPositionAndRotation(pos, rot); model.transform.localScale = Vector3.one;
+            foreach (var t in model.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = 0;
+            foreach (var c in model.GetComponentsInChildren<Collider>(true)) UnityEngine.Object.DestroyImmediate(c);
+            var renderers = model.GetComponentsInChildren<Renderer>(true);
+            AssignMaterials(renderers, bodyMat, signMat, null);
+            if (fbx != null)
+            {
+                Renderer R(string n) { var t = FindDeep(model.transform, n); return t != null ? t.GetComponent<Renderer>() : null; }
+                var lodGroup = model.GetComponent<LODGroup>(); if (lodGroup == null) lodGroup = model.AddComponent<LODGroup>();
+                lodGroup.SetLODs(new[] { new LOD(Lod0Height, new[] { R(BodyMesh), R(AxleFrontMesh), R(AxleRearMesh) }), new LOD(Lod1Height, Lod1Renderers(model.transform, R(BodyLodMesh))) });
+                lodGroup.fadeMode = LODFadeMode.None; lodGroup.RecalculateBounds(); EditorUtility.SetDirty(lodGroup);
+            }
+            return model;
+        }
+
+        /// <summary>パネル 1 枚 (乗り場: spot = s, cart = -1 / カート上: spot = -1, cart = index)。中身は Board (= content)。カート上は最初は隠す (Parked のとき Runtime が出す)。</summary>
+        static KH_CartStationPanel BuildPanel(Transform parent, string name, Vector3 pos, Quaternion rot, int s, int cartIndex, KH_CartManager manager, KD_Language language, TMP_FontAsset font, StringBuilder log, bool visible)
+        {
+            var go = EnsureChild(parent, name);
             go.layer = 0; go.SetActive(true);
             go.transform.SetPositionAndRotation(pos, rot); go.transform.localScale = Vector3.one;
             var panel = EnsureU<KH_CartStationPanel>(go);
@@ -472,7 +536,7 @@ namespace KominkaHillside.Editor
             KD_UiSpriteEditor.ApplyRoundSkin(bg, KD_UiSpriteEditor.LoadRound());
 
             var title = MakeText(board.transform, "Title", new Vector2(0f, 455f), new Vector2(700f, 56f), 32f, font, Ja("cart.title"));
-            var notice = MakeText(board.transform, "Notice", new Vector2(0f, 390f), new Vector2(700f, 70f), 20f, font, Ja("cart.notice"));
+            var notice = MakeText(board.transform, "Notice", new Vector2(0f, 390f), new Vector2(700f, 70f), 20f, font, Ja(cartIndex >= 0 ? "cart.parked" : "cart.notice"));   // M3: カート上は cart.parked
             notice.enableWordWrapping = true; notice.enableAutoSizing = true; notice.fontSizeMin = 14f; notice.fontSizeMax = 20f; notice.color = new Color(1f, .93f, .80f);
             var start = KD_ShopSetupEditor.EnsureButton(board.transform, StartName, new Vector2(0f, 105f), new Vector2(520f, 80f), KD_UiSpriteEditor.ActionNeutral * 1.2f, font, Ja("cart.start"), backing, "_PressStart", log);
             var startLabel = start.transform.Find("Label").GetComponent<TextMeshProUGUI>();
@@ -508,11 +572,16 @@ namespace KominkaHillside.Editor
                 row.SetActive(false);
                 rows[i] = row; rowLabels[i] = label; rowInfos[i] = info;
             }
-            if (s == 0 && nameFont == null) log.AppendLine("WARN display-name font missing (" + KH_CourseTravelNameFontEditor.FontPath + "); join rows use the shared font");
+            if (s == 0 && cartIndex < 0 && nameFont == null) log.AppendLine("WARN display-name font missing (" + KH_CourseTravelNameFontEditor.FontPath + "); join rows use the shared font");
             foreach (var t in new TMP_Text[] { title, notice, startLabel, result }) EditorUtility.SetDirty(t);
 
             var so = new SerializedObject(panel);
             SetRef(so, "manager", manager); SetRef(so, "language", language); SetInt(so, "spot", s);
+            var m3Log = new List<string>();
+            var cartProp = so.FindProperty("cart");
+            if (cartProp != null && cartProp.propertyType == SerializedPropertyType.Integer) cartProp.intValue = cartIndex; else m3Log.Add("WARN KH_CartStationPanel.cart not found (Runtime M3)");
+            SetRefIfPresent(so, "content", board, m3Log);
+            if ((s == 0 || cartIndex == 0)) foreach (var line in m3Log) log.AppendLine(name + ": " + line);
             SetRef(so, "titleLabel", title); SetRef(so, "noticeLabel", notice); SetRef(so, "startLabel", startLabel); SetRef(so, "resultLabel", result);
             // M2: 注意書きの下に写真 (背面の掲示と同じ画像) と 1 行 (cart.station.pr)。注意書きが先
             var photoGo = KD_ShopSetupEditor.EnsureUiChild(board.transform, StationPhotoName, StationPhotoPos, StationPhotoSize);
@@ -523,10 +592,11 @@ namespace KominkaHillside.Editor
             pr.enableAutoSizing = true; pr.fontSizeMin = 12f; pr.fontSizeMax = 20f; pr.color = new Color(1f, .93f, .80f); EditorUtility.SetDirty(pr);
             var prLog = new List<string>();
             SetRefIfPresent(so, "prLabel", pr, prLog); SetRefIfPresent(so, "photo", photoImg, prLog);
-            if (s == 0) foreach (var line in prLog) log.AppendLine(line);
+            if (s == 0 || cartIndex == 0) foreach (var line in prLog) log.AppendLine(line);
             SetRef(so, "startButton", start); SetRefs(so, "joinButtons", rows); SetRefs(so, "joinLabels", rowLabels); SetRefs(so, "joinInfoLabels", rowInfos);
             so.ApplyModifiedPropertiesWithoutUndo();
             UdonSharpEditorUtility.CopyProxyToUdon(panel); EditorUtility.SetDirty(panel);
+            board.SetActive(visible);
             return panel;
         }
 

@@ -340,6 +340,13 @@ compile → Cart/1 (Program Asset 無し) → Cart/2 → Cart/3 → Video/1 → 
 - `KH_CartSeat`: Parked のとき `_SetVisible(true)`、カート上メニューの表示切替。
 - 受付 OFF / 到着中の行、世代照合、タイムアウトは乗り場と同じ関数を使う (パネルの `spot` が −1 なら `cart` の位置を開始点にする)。
 
+Runtime 実装で決めたこと (2026-10-12):
+- 状態: Idle 0 (プール・地中) / Riding 1 / Ending 2 / Parked 3 (乗員 0・グループ −1・可視)。乗員の判定・隊列の数え上げは Riding/Ending だけ (`IsRidingState`)。RemoveCart (停止・到着降車・ワープ・リスポーン・退出・見張りの gone) はグループがあれば今の目標距離で Parked、無い不整合だけ Idle。Maintain は Parked を退出・不整合の判定から外す。
+- 置き方: 降りる人が座っている間はその場、離れたら止まったときの向きのまま右へ寄せ (LateralSpeed)、寄せ終われば以後は書かない。走行 → Parked、Parked → 走行の距離の差は `_err` でなめらかに追う (合流は跳びが大きいので暗転のまま跳ぶ)。
+- 乗り場の出発・合流のカートは `ReclaimCandidate()` (Idle の空車 → 最古の Parked → −1。どちらも解放から 3 s の猶予外)。カートからの出発・合流 (`_StartFrom / _JoinFrom`) は猶予を見ない (使う人は外に立っている)。
+- Probe 用 (副作用なし): `float ParkedStartDistance(int cart)`、`int ReclaimCandidate()`。
+- 配線: `KH_CartSeat.cartPanel` (KH_CartStationPanel)、`KH_CartStationPanel.cart` (int、乗り場 −1)、任意の `KH_CartStationPanel.content` (隠す中身の親。null なら直下の子すべて + パネルの Collider)。カート上メニューの結果表示は `carts[c].cartPanel` で引く。
+
 ### Editor 2: カートステーション (impl-editor)
 
 - 乗り場 5 地点: 乗り場パネルの横に**静的なカート** (FBX のメッシュだけ: Body + 車軸、LODGroup 付き、Udon・Station・Collider なし、layer Default) を置く。向きは道の進行方向、位置は乗り場の着地点の右手 1.2 m。
