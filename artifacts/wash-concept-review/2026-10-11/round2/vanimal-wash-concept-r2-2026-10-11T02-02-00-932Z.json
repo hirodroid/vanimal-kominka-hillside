@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "collection": "wash-concept-2026-10-11-r2",
+  "updatedAt": "2026-10-11T02:02:00.932Z",
+  "overall": "",
+  "items": [
+    {
+      "id": "Hose",
+      "name": "ホース",
+      "decision": "revise",
+      "shape": "あーでもホースむずかしいな。他一件が。つながってる部分要らないか。ホースの途中と先端でいいな。リール不要。ちょっと頑張るところじゃないか。という感じ。\nホース感だけでていればいい。自由に持って動くからつながっているとちょっと大変すぎるかも。",
+      "material": "",
+      "notes": ""
+    },
+    {
+      "id": "Pool",
+      "name": "プール",
+      "decision": "B",
+      "shape": "",
+      "material": "",
+      "notes": ""
+    }
+  ]
+}
