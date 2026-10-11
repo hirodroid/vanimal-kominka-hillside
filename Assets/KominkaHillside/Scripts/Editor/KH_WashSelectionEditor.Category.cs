@@ -80,7 +80,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   for(int i=0;i<n;i++){var m=At(sel.models,i);if(m==null)continue;if(Offered(i)){models[i]=m;continue;}log.AppendLine("  removed "+PathOf(m.transform)+" ("+Names[i]+")");UnityEngine.Object.DestroyImmediate(m);removed++;}
   foreach(var t in root.GetComponentsInChildren<Transform>(true).Concat(table.GetComponentsInChildren<Transform>(true)).ToArray()){if(t==null)continue;int d=DroppedSource(t.gameObject);if(d<0)continue;log.AppendLine("  removed stray "+PathOf(t)+" ("+Names[d]+")");UnityEngine.Object.DestroyImmediate(t.gameObject);removed++;}
   // 2. per item
-  var noz=new Transform[n];var grip=new Transform[n];var gun=new Transform[n];var slotOf=new int[n];var cats=new int[n];var centers=new Vector3[n];var sizes=new Vector3[n];var pulses=new float[n];var ranges=new float[n];var sprays=new ParticleSystem[n];var sounds=new AudioClip[n];var depths=new float[n];
+  var noz=new Transform[n];var grip=new Transform[n];var gun=new Transform[n];var slotOf=new int[n];var cats=new int[n];var centers=new Vector3[n];var sizes=new Vector3[n];var pulses=new float[n];var ranges=new float[n];for(int ri=0;ri<n;ri++)ranges[ri]=SprayRange(ri);/* every item from the table (44 compares all n), only placed tools read it at runtime */var sprays=new ParticleSystem[n];var sounds=new AudioClip[n];var depths=new float[n];
   for(int i=0;i<n;i++)
   {
    cats[i]=CategoryOf(i);depths[i]=BathDepth(i);bool tool=cats[i]>=0&&cats[i]<KH_WashSelection.Categories;slotOf[i]=tool?Slots[i]:-1;
