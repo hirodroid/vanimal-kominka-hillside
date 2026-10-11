@@ -40,6 +40,8 @@ namespace KominkaHillside.Editor
         public static void WashHarnessBase() { WashHarnessGroups(new[] { "base" }); }
         [MenuItem("Tools/KominkaHillside/Course/100b - Harness Wash behavior + react")]
         public static void WashHarnessBehavior() { WashHarnessGroups(new[] { "behavior", "react" }); }
+        [MenuItem("Tools/KominkaHillside/Course/100b1 - Harness Wash water play (hose, pistol on the stand)")]
+        public static void WashHarnessWaterPlay() { WashHarnessGroups(new[] { "water-play" }); }   // IMP-DOG-049 段 B (WashWaterPlay.cs) alone (also in 100b)
         [MenuItem("Tools/KominkaHillside/Course/100c - Harness Wash sync")]
         public static void WashHarnessSync() { WashHarnessGroups(new[] { "sync" }); }
         [MenuItem("Tools/KominkaHillside/Course/100d - Harness Wash dirt + station")]
@@ -48,6 +50,8 @@ namespace KominkaHillside.Editor
         public static void WashHarnessDogs() { WashHarnessGroups(new[] { "stations", "dogs" }); }
         [MenuItem("Tools/KominkaHillside/Course/100f - Harness Wash call + height")]
         public static void WashHarnessCall() { WashHarnessGroups(new[] { "call", "height" }); }
+        [MenuItem("Tools/KominkaHillside/Course/100f2 - Harness Wash min lift")]
+        public static void WashHarnessMinLift() { WashHarnessGroups(new[] { "height-minlift" }); }   // IMP-DOG-044 W-height-minlift alone (also in 100f)
         [MenuItem("Tools/KominkaHillside/Course/100g - Harness Wash hand + bottle")]
         public static void WashHarnessHand() { WashHarnessGroups(new[] { "hand" }); }   // IMP-DOG-039 (WashHand.cs)
         [MenuItem("Tools/KominkaHillside/Course/100g1 - Harness Wash hand: bottle only")]
@@ -64,6 +68,8 @@ namespace KominkaHillside.Editor
         public static void WashHarnessPremiumRemaining(){WashHarnessGroups(new[]{"premium-other"});}
         [MenuItem("Tools/KominkaHillside/Course/100p3 - Harness Wash premium reset")]
         public static void WashHarnessPremiumReset(){WashHarnessGroups(new[]{"premium-free"});}
+        [MenuItem("Tools/KominkaHillside/Course/100p4 - Harness Wash premium water tools")]
+        public static void WashHarnessPremiumWater(){WashHarnessGroups(new[]{"premium-water"});}   // IMP-DOG-049 P-pistol-shot / P-hose-hold alone (also in 100p)
         static void WashHarnessGroups(string[] groups)
         {
             Begin(false);
@@ -807,6 +813,7 @@ namespace KominkaHillside.Editor
             } // base
             if (WsGroup("behavior")) MakeWashBehaviorCases(); // IMP-DOG-027 (WashBehavior.cs): leashed stop, the gates, gathering
             if (WsGroup("react")) MakeWashReactCases();    // IMP-DOG-028 (WashReact.cs): shake, satisfied, paw, no-repeat
+            if (WsGroup("react") || WsGroup("water-play")) MakeWashWaterPlayCases();   // IMP-DOG-049 段 B (WashWaterPlay.cs): hose / pistol play through the stroke entry with a ClientSim-held tool
             if (WsGroup("sync")) MakeWashSyncCases();     // IMP-DOG-026 (WashSync.cs): decay, local arm, late join / reset / handover (simulated), budget. Last: they reset the drying values
             if (WsGroup("station")) MakeWashStationCases();  // IMP-ENV-007 (WashStation.cs): tool return / held / spray off
             if (WsGroup("dirt")) MakeWashDirtCases();     // IMP-DOG-029 (WashDirt.cs): walk / zone / grace / station / river
@@ -814,8 +821,9 @@ namespace KominkaHillside.Editor
             if (WsGroup("call")) MakeWashCallCases();     // IMP-DOG-035 (WashCall.cs): call a dog to the station, stay, gates, release, swap
             if (WsGroup("call") || WsGroup("audit-a")) MakeWashAuditACases();   // audit 2026-10-07 Phase A (WashAuditA.cs): RC-1 travel ticket x station, RC-8 (a), RC-2 placed call timeout
             if (WsGroup("height")) MakeWashHeightCases(); // IMP-ENV-011 (WashHeight.cs): lift, personal floor, board handlers
+            if (WsGroup("height") || WsGroup("height-minlift")) MakeWashMinLiftCases();   // IMP-DOG-044 (WashHeight.cs): the pool raises the main stand to minLift, the dog stands / leaves there. After W-height-stand
             if (WsGroup("hand") || WsGroup("hand-bottle")) MakeWashHandCases();    // IMP-DOG-039 (WashHand.cs): the bottle, the bare hands (simulated), the picture guide. Before "dogs" (it re-binds wsWash)
-            if ((WsGroup("premium") || WsGroup("premium-input") || WsGroup("premium-other") || WsGroup("premium-free")) && UnityEngine.Object.FindObjectsOfType<KH_WashSelection>(true).Length>0) MakeWashPremiumCases();
+            if ((WsGroup("premium") || WsGroup("premium-input") || WsGroup("premium-other") || WsGroup("premium-free") || WsGroup("premium-water")) && UnityEngine.Object.FindObjectsOfType<KH_WashSelection>(true).Length>0) MakeWashPremiumCases();
             if (WsGroup("dogs")) MakeWashDogsCases();     // IMP-DOG-030 (WashDogs.cs): all six wired, Dachs foam, the others unchanged. Last: re-binds wsWash to the Dachs
 
             WsWrite();
@@ -897,6 +905,7 @@ namespace KominkaHillside.Editor
             // IMP-DOG-039: every held-tool kind (sponge, shower, towel, bottle = channels 0..3) and both bare hands (channels 4, 5)
             foreach (int t in new[] { KH_DogWash.ToolSponge, KH_DogWash.ToolShower, KH_DogWash.ToolTowel, KH_DogWash.ToolBottle }) { try { WsEnd(t); } catch (Exception) { } }
             for (int h = 0; h < 2; h++) { try { WsCall("_EndHand", "hand", h); } catch (Exception) { } }   // an older program has no _EndHand
+            try { WpRecover(); } catch (Exception) { }         // 100b1 / 100f2: the ClientSim-held tools let go, the shake hold-off put back (before PremiumRecover)
             try { PremiumRecover(); } catch (Exception) { }
             try { HwRecover(); } catch (Exception) { }         // 100g: the simulated hands off, its heap writes put back
             try { WsRunoffRestore(); } catch (Exception) { }   // W-shoulder turns the runoff off for itself

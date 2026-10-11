@@ -21,7 +21,9 @@ namespace KominkaHillside.Editor
         static bool wcGatherSet;
         static float wcLiftBaseY;
 
-        static void MakeWashCallCases()
+        /// <summary>Station 0 (the main station) and the Shiba's Fetch / disc / activities. WcSetup / WcCallAndArrive need these; the
+        /// water play (WashWaterPlay.cs) and min lift (WashHeight.cs) groups bind them too, so they run without the call group.</summary>
+        static void WcBind()
         {
             wcStation = null; wcAnchor = null; wcLiftRoot = null; wcGatherSet = false;
             foreach (var u in UnityEngine.Object.FindObjectsOfType<UdonBehaviour>())
@@ -35,6 +37,11 @@ namespace KominkaHillside.Editor
             wcFetch = WsRef(wsWander, "fetchController") as UdonBehaviour;
             wcCatcher = WsRef(wsWander, "frisbeeCatch") as UdonBehaviour;
             wcActivities = WsRef(wsWander, "activities") as UdonBehaviour;
+        }
+
+        static void MakeWashCallCases()
+        {
+            WcBind();
             int me = Networking.LocalPlayer.playerId;
             int other = (wsDog + 1) % wander.Length;
 

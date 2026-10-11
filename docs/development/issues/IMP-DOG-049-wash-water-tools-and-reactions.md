@@ -416,3 +416,31 @@ C# / U# コンパイル 0 → Codex 独立レビュー (90° を超える前傾�
 - 起動の 1 回目はどちらも `ExecuteMenuItem` の空応答で NOT_EXECUTED (vrc-synaptic-unity の既知の間欠)。Unity の状態を確かめて再試行した。
 
 ハーネスで未確認のまま残すもの: 水鉄砲・ホースの入力 (1 発の共有を含む)、犬の水の反応 (ケース未作成。実際のストロークの経路を通すケースが要る)、台の最低の高さへの移動と犬の降台、100p2 の残りのケース。2 人・VR の手の傾きは ClientSim では確かめられない。
+
+### ハーネスのケース追加 (2026-10-11、未実行)
+
+上の「未確認のまま残すもの」のうち、水鉄砲・ホースの入力と犬の水の反応のケースを足した (台の最低の高さは [IMP-DOG-044 の同名の節](IMP-DOG-044-wash-pool-platform.md#ハーネスのケース追加-2026-10-11未実行))。**コードだけ: コンパイル・実行は未実施** (統括)。U# は変えていない。
+
+**道具を持たせる方法:** `KH_WashTool._IsHeldBy` は `VRC_Pickup.currentPlayer` を読み、`debugHeldOverride` は見ない (段 B のハーネスの注記のとおり。override では `WaterToolMode` が持っている道具 0 本 = 印 0 になり、反応のケースが空振りする)。そこで ClientSim の Pickup の補助 (`ClientSimPickupHelper.Pickup`。ClientSim が `VRC_Pickup._GetCurrentPlayer` をこれへ向けている) で自分を持ち主にし、道具へ `_onPickup` を送る (`_held`)。放すときは `Drop` と `_onDrop`。2 本持ちは 2 つの Pickup の補助を別々に持たせる (ClientSim の手の仕組みは通さない)。補助が無い Pickup は SKIP。
+
+**ストロークの経路:** 道具が毎フレーム呼ぶ入口 `KH_DogWash._LocalContact` (tool = シャワーの種類) をハーネスが呼ぶ (既存の洗いのケースと同じ `WsDrive`)。道具の区別は呼び出しではなく送り主が「持っている」水の道具で決まるので、`Stroke` → `NoteWaterHit` → `WaterToolMode` → `_IsHeldBy`、`_LastStrokePart` と同じ瞬間の記録、洗いの保持、`_washActive`、足上げとの取り合い (Codex レビュー 4)、Owner の判断、`waterPlay` の番号と全端末側の開始は実行時のまま通る。通らないのはノズルからの Raycast (`SprayRays`) と、反応のケースの中での Use の押下 (入力は 100p4 が見る)。
+
+| 群 / メニュー | ケース | 期待 (実測を notes に出す) |
+|---|---|---|
+| `premium-water` / `Course/100p4 - Harness Wash premium water tools` (100p にも入る) | P-pistol-shot | 板の UI で水鉄砲 → `pulseSeconds` > 0、水鉄砲のノズル。押す → `_sprayOn`、`shotSerial` +1、`shotItem` 17、`spraying` は一度も true にならない、生きている粒子のピークが 1 以上かつ 1 バースト (10) 以下。0.2 s 後の押下は無視 (番号・`_pulseUntil` 不変)。`pulseSeconds` (0.4 s) で止まる (長さを出す)。止まった後の押下で +2。2 発目の途中で Drop → 即座に止まり、0.8 s 後に粒子 0・番号 +2 のまま。受け取り側の `_OnShot(17)` (持っていない水鉄砲の枠) → 1 回出て消える (対照)、`_OnShot(18)` → 何もしない。ホースへ替えてから古い `_OnShot(17)` → 何もしない (0.3 s 後も)。 |
+| 同上 | P-hose-hold | 板の UI でホース → `pulseSeconds` = `PulseHold` (-1)、ホースのノズル。押す → `_sprayOn`・`spraying`・粒子、0.6 s 押し続けて止まらない、`shotSerial` 不変。離す → 同じフレームで止まり、0.1 s 後も止まったまま。もう一度押して 0.3 s → 出ている、Drop → 即座に止まり 0.3 s 後も止まったまま。 |
+| `water-play` / `Course/100b1 - Harness Wash water play (hose, pistol on the stand)` (100b にも入る) | W-water-pistol | 水鉄砲を板で出して持ち、柴を主洗い場の台へ呼んで着かせ、腰 0.5 s → 前足 0.4 s。最後の部位と記録した当たりが前足、水鉄砲の当たり番号が進む、跳び +1・要求 +1・ホース 0、普通の足上げ 0 (`_washActive` が立っていた = 足上げは届く状態だった)、跳ぶ高さ 0.05〜0.2 m、根元が anchor から 0.5〜1 × 跳ぶ高さだけ上がって 1 cm 以内に戻る、x / z のずれ 1 cm 未満、Animator の Jump が立って下りる、長さ 1〜1.5 s。跳びが終わった直後 (要求から 1〜1.5 s) にもう一方の前足へ 0.3 s 当てる → 当たり番号は進むが、跳びも要求も足上げも増えない。2 発目は間隔 (3 s) が切れる 0.5 s 以上前に終わっていなければ「間隔は確認できていない」として FAIL (飛ばさない。返りの記録が遅れて届く分の余裕)。 |
+| 同上 | W-water-hose | ホースを出して持ち、胸 1.0 s。開始 0.45〜1.0 s (`WaterPlayHoseFirst`)、ホースの反応 +1・要求 +1・跳び 0、反応中に足上げの姿勢 (`_washActive` と `_washPawUntil`)、顎の書き込みが姿勢から 10° 以上、普通の足上げ 0、水を止めてから 0.4〜0.9 s で終わる、終わると足と顎が戻る。 |
+| 同上 | W-water-shower-control | 無料シャワー (`KH_WashShower_0`) だけを持って腰 → 前足: 足上げ +1 (足上げの経路が届く対照)、ホース・水鉄砲の当たりは記録されない、反応 0。 |
+| 同上 | W-water-two-tools-control | ホース (出さない、左手) と無料シャワー (右手) を同時に持って胸 1.0 s + 1 s 待つ: ストロークは届く (最後の部位 = 胸)、ホースの当たりは記録されず `_HoseRunSeconds` < 0、反応 0 (W-water-hose が同じ胸のストロークの陽性の対照)。 |
+
+- 反応のケースの始めは共通 (`WpStart`): 何も持っていない (放してから `HoldGrace` + 0.2 s 待つ = 持っている本数をケースが決める)、板で品を出す、柴を放して門の横へ置き、`ReqCall` で呼んで着かせ、2 s 待って足が止まり、前の反応・足上げの間隔が切れるまで待つ。ケースの間だけ濡れのブルブルを止める (`_washShakeWetNextAt` を 60 s 先へ。ブルブルが反応を止めるため。W-shake が別に見る)。終わり (`WpEnd`) と失敗 (`WsRecover` → `WpRecover`) で、道具を放し、ブルブルの値を戻し、選択を戻し、柴を台から放す。
+- 変更したファイル: 新規 `Scripts/Editor/Testing/KH_CourseWalkHarnessEditor.WashPremiumWater.cs`・`.WashWaterPlay.cs` (`.meta` は Unity が作る)、`.Wash.cs` (メニュー 100b1・100f2・100p4、群の振り分け、`WsRecover`)、`.WashPremium.cs` (振り分けと注記)、`.WashCall.cs` (束縛を `WcBind` へ切り出しただけ。中身は同じ)、`.WashHeight.cs` (IMP-DOG-044 のケース)。括弧の対応を Node で確認。C# のコンパイルは未確認。
+- ClientSim で確かめられないもの (2 人・PCVR へ): 他の人の 1 発の受け取り (`KH_WashToolState.OnDeserialization` の番号の辺と新しさ。ここでは `_OnShot` を直接呼ぶ)・途中参加の最初の状態・Manual 同期でまとまる連射、非 Owner の `waterPlay` の受け取り・途中参加の基準・Owner 交代、ノズルの Raycast と弧を描く粒子の当たりのずれ、VR の手の持ち方と Use、跳ぶ・顎の開きの見た目と声。
+- 回すかは相談 (vrc-review 相談モード)。回すなら群ごとに単独で: `100p4` (台に呼ばない、1 分前後) → `100b1` (4 ケースとも柴を台へ呼ぶ)。
+
+### 追加したハーネスの実行 (2026-10-11、統括)
+
+Codex 相談 (「100p4 → 100b1 → 100f2 を単独で順に。100f2 の降台の観測なしで PASS する穴と 100b1 の連射抑制を飛ばして PASS する穴を先に補強」) のとおり補強してから実行: `Course/100p4` (水鉄砲の 1 発・ホースの押している間) run `20261011-073459` **WASH_PASS 2 ケース**、`Course/100b1` (犬の水の反応: 水鉄砲で跳ねる・ホースでパクパク・無料シャワーは足上げだけ・2 本持ちは反応しない) run `20261011-073759` **WASH_PASS 4 ケース**、`Course/100f2` (主洗い場でプールを選ぶと台が 0.223 m へ上がり、犬が乗って下りる) run `20261011-073959` **WASH_PASS 1 ケース**。いずれも sceneUnchanged true。100b1 のメニュー名の「/」が Unity でサブメニューの区切りになり起動できなかったので「,」に直した。起動の 1 回目の空応答 (既知の間欠) は再試行。
+
+ClientSim で確かめられないもの (変わらず未確認): 他の端末での 1 発・反応の受信、途中参加、Manual 同期で連射がまとまる見え方、Owner 交代、ノズルの Raycast と弧を描く粒の差、VR の握りと Use、跳ぶ・顎・声の見た目、2 人で同じ台の高さに見えること。

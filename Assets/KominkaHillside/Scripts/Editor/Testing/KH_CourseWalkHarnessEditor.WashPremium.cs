@@ -5,7 +5,7 @@ namespace KominkaHillside.Editor {public static partial class KH_CourseWalkHarne
  // Item ids keep the 17-item numbering; the offered six are KH_WashSelectionEditor.Order (PremiumBind checks these names against it and
  // against the scene's itemCategories). Board tab = category (KH_WashSelection.CategoryBath = the station tab), row = place in Order.
  // IMP-DOG-049 / 044 (2026-10-11): + 17 water pistol, 18 hose (water slot 2 with the can), 19 pool (platform). The cases below still use the
- // six ids; the hold-to-spray / one-shot inputs are not covered here yet (KH_WashSelectionEditor 44 checks the slot configuration).
+ // six ids; the hold-to-spray / one-shot inputs are P-pistol-shot / P-hose-hold in WashPremiumWater.cs (group premium-water, 100p4).
  const int PFoamCannon=0,PPawMitt=9,PWateringCan=6,PDryer=7,PTowel=8,PHinoki=13,PWaterPistol=17,PHose=18,PPool=19;
  static UdonBehaviour premiumSelection,premiumWater;static Quaternion premiumCanRest;static Transform premiumBoard;static UdonBehaviour[] premiumTools;static int premiumSerial;static bool premiumReceived;
  static void PremiumBind(){var st=GameObject.Find("KH_WashStation").transform;premiumSelection=st.Find("PremiumTools").GetComponent<UdonBehaviour>();premiumBoard=st.Find("PremiumSelectionBoard");premiumTools=st.Find("PremiumTools").GetComponentsInChildren<UdonBehaviour>(true).Where(u=>u.programSource!=null&&u.programSource.name=="KH_WashTool").ToArray();hwSyms.Clear();hwParams.Clear();
@@ -36,8 +36,9 @@ namespace KominkaHillside.Editor {public static partial class KH_CourseWalkHarne
  const double PremiumGap=.45;
  static void PremiumHold(int item,int v){PremiumSlotTool(item).SetProgramVariable("debugHeldOverride",v);}
  static void PremiumRecover(){if(premiumTools==null)return;foreach(var u in premiumTools)if(u!=null){u.SendCustomEvent("_onDrop");u.SetProgramVariable("debugHeldOverride",0);}if(premiumSelection!=null)premiumSelection.SetProgramVariable("_receivedState",premiumReceived);premiumTools=null;premiumSelection=null;premiumWater=null;premiumBoard=null;}
- static void MakeWashPremiumCases(){wsReport.notCovered.Add("Premium (IMP-DOG-046/047: foam / water / finish + platform): UI persistent listeners and local Owner request/ack exercised; holding is injected with debugHeldOverride, Pickup/Use events are injected. Physical grip, a tool held on another client (two-client network), late join with three tools out, sound quality and Quest rendering remain NOT_TESTED. The water pistol (one shot) and the hose (hold to spray) are offered since IMP-DOG-049 but their inputs are not exercised by these cases yet.");
- if(WsGroup("premium")||WsGroup("premium-input"))PremiumInputCases();if(WsGroup("premium")||WsGroup("premium-other"))PremiumOtherCases();if(WsGroup("premium")||WsGroup("premium-other")||WsGroup("premium-free"))PremiumFreeCases();}
+ static void MakeWashPremiumCases(){wsReport.notCovered.Add("Premium (IMP-DOG-046/047: foam / water / finish + platform): UI persistent listeners and local Owner request/ack exercised; holding is injected with debugHeldOverride, Pickup/Use events are injected. Physical grip, a tool held on another client (two-client network), late join with three tools out, sound quality and Quest rendering remain NOT_TESTED. The water pistol (one shot) and the hose (hold to spray) inputs are P-pistol-shot / P-hose-hold (group premium-water); another player's burst is the direct _OnShot call, not a received state.");
+ if(WsGroup("premium")||WsGroup("premium-input"))PremiumInputCases();if(WsGroup("premium")||WsGroup("premium-other"))PremiumOtherCases();if(WsGroup("premium")||WsGroup("premium-other")||WsGroup("premium-free"))PremiumFreeCases();
+ if(WsGroup("premium")||WsGroup("premium-water"))PremiumWaterCases();}   // IMP-DOG-049 (WashPremiumWater.cs): the pistol's one shot, the hose's hold
  static void PremiumInputCases(){
   // Was P-selection-pulse-toggle (water gun 0.22 s pulse), then P-selection-water-toggle (the can as a toggle). IMP-DOG-049 (2026-10-11): the can
   // tilts to pour (KH_WashTool.PulseTilt). ClientSim is Desktop: Use held leans the can's model (eased over DesktopTiltSeconds) and it pours
