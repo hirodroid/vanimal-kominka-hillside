@@ -5,7 +5,7 @@ system: DOG
 status: todo
 priority: Medium
 summary: ホースの連続放水・水鉄砲の単発射出・じょうろの傾け注ぎを整え、ホースと水鉄砲に犬の分かりやすい反応を組み合わせる
-next: 決定済み (2026-10-11、推奨どおり)。ホース・水鉄砲のコンセプト画像を作り、ユーザーの承認を取ってから Blender へ
+next: 企画画像 (ホース・水鉄砲、各 A / B) を作成済み (2026-10-11)。ユーザーが確認用ページで案を選ぶ → Blender で制作
 updated: 2026-10-11
 ---
 
@@ -47,3 +47,5 @@ updated: 2026-10-11
 2026-10-11: 設計案を [docs/plans/2026-10-11-wash-items-design.md](../../plans/2026-10-11-wash-items-design.md) §3 に作成 (推奨はホース=連続でじゃれる、水鉄砲=単発でその場で跳ねる、台に留めた犬だけ、ブルブルと同じ同期の形)。ユーザーの判断待ち: Q7 洗う効きを無料シャワーと同じにするか、Q8 意匠の進め方、Q9 ホース本体の見せ方、Q10 反応の種類、Q11 反応する犬の範囲、Q12 頻度の仮値。
 
 決定: 2026-10-11 (ユーザー「推奨でOK」) [設計案](../../plans/2026-10-11-wash-items-design.md) の Q7〜Q12 を推奨どおり採用。
+
+2026-10-11: 企画画像 (各 A / B の 2 案) を作った。画像はラボ `vrc-asset-lab/assets/wash-premium/design/2026-10-11/`、確認用ページは [artifacts/wash-concept-review/2026-10-11](../../../artifacts/wash-concept-review/2026-10-11/README.md)。ユーザーが案を選んでから Blender で制作する。

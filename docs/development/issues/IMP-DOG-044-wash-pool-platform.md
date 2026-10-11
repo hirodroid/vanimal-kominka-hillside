@@ -5,7 +5,7 @@ system: DOG
 status: todo
 priority: Medium
 summary: 洗浄台の種類にプールを追加し、洗い場ごとの写真選択から切り替えられるようにする
-next: 決定済み (2026-10-11、帆布 + 木枠の角丸長方形・薄く透ける水面)。コンセプト画像を作りユーザーの承認を取る。犬ごとの台の大きさへの追従は IMP-ENV-013 の Q2 (有料の台も拡縮するか) の回答待ち
+next: 企画画像 (A / B) を作成済み (2026-10-11)。ユーザーが確認用ページで案を選ぶ → Blender で制作。犬ごとの大きさへの追従は IMP-ENV-013 の実装と合わせる
 updated: 2026-10-11
 ---
 
@@ -42,3 +42,5 @@ updated: 2026-10-11
 2026-10-11: 設計案を [docs/plans/2026-10-11-wash-items-design.md](../../plans/2026-10-11-wash-items-design.md) §4 に作成 (推奨は今の1.3 × 0.7 mに合わせた浅い角丸長方形、立つ面の高さは変えず縁だけ立ち上げる、水位は足首より下)。ユーザーの判断待ち: Q13 素材と形、Q14 水面の見せ方。犬ごとの台の大きさへの追従は [IMP-ENV-013](IMP-ENV-013-wash-platform-size-per-dog.md) (入江プロジェクトの場所の回答待ち) の決定まで寸法を決めない。
 
 決定: 2026-10-11 (ユーザー「推奨でOK」) [設計案](../../plans/2026-10-11-wash-items-design.md) の Q13・Q14 (帆布 + 木枠の角丸長方形、薄く透ける水面) を推奨どおり採用。
+
+2026-10-11: 企画画像 (各 A / B の 2 案) を作った。画像はラボ `vrc-asset-lab/assets/wash-premium/design/2026-10-11/`、確認用ページは [artifacts/wash-concept-review/2026-10-11](../../../artifacts/wash-concept-review/2026-10-11/README.md)。ユーザーが案を選んでから Blender で制作する。
