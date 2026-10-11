@@ -24,12 +24,16 @@ namespace KominkaHillside
         public int[] itemSlots;               // by item id: the pickup slot, -1 for platforms and items not offered
         public Transform[] nozzleAnchors;
         public Transform[] gripAnchors;
-        // By item id: non-null = orientation Gun with this Exact Gun (the foam cannon, BUG-DOG-010), null = Grip with gripAnchors.
+        // By item id: non-null = orientation Gun with this Exact Gun (the foam cannon, BUG-DOG-010; the water pistol and the hose,
+        // IMP-DOG-049: their FBX *_GunHold), null = Grip with gripAnchors.
         // Per item, not per slot, so one slot can hold a watering can (Grip) and a water gun (Gun) (IMP-DOG-049).
         public Transform[] gunHolds;
         public Vector3[] colliderCenters;
         public Vector3[] colliderSizes;
-        public float[] pulseDurations;
+        public float[] pulseDurations;        // by item id: KH_WashTool.pulseSeconds (0 toggle, > 0 one shot, KH_WashTool.PulseHold hold)
+        // By item id: KH_WashTool.sprayRange (the wash ray's reach, m). Per item because the water slot is shared by the watering can
+        // (1.5), the hose (2.5) and the water pistol (4.0) (IMP-DOG-049). Declared null: WashPremium/48 / 49 write it (vrc-udonsharp §4).
+        public float[] sprayRanges;
         public ParticleSystem[] itemSprays;
         public AudioClip[] itemSounds;
         public float[] bathDepths;            // by item id: the support's mount depth under the platform collider
@@ -126,6 +130,7 @@ namespace KominkaHillside
             int n=models.Length,k=slots.Length;
             if(n==0||k==0||pickups.Length!=k||pickupColliders.Length!=k||slotCategories.Length!=k||itemCategories.Length!=n||itemSlots.Length!=n||categoryHomes.Length!=Categories)return false;
             if(nozzleAnchors==null||nozzleAnchors.Length!=n||gripAnchors==null||gripAnchors.Length!=n||gunHolds==null||gunHolds.Length!=n||bathDepths==null||bathDepths.Length!=n)return false;
+            if(sprayRanges==null||sprayRanges.Length!=n)return false;
             return colliderCenters!=null&&colliderCenters.Length==n&&colliderSizes!=null&&colliderSizes.Length==n&&pulseDurations!=null&&pulseDurations.Length==n&&itemSprays!=null&&itemSprays.Length==n&&itemSounds!=null&&itemSounds.Length==n;
         }
         public void _Apply(bool animate)
@@ -181,7 +186,7 @@ namespace KominkaHillside
             bool active=item>=0;
             t._SetSelected(active);p.pickupable=active;col.enabled=active;
             if(!active){if(t.spray!=null)t.spray.Stop(true,ParticleSystemStopBehavior.StopEmittingAndClear);t.spray=null;return;}
-            t.nozzle=nozzleAnchors[item];t.spray=itemSprays[item];t.pulseSeconds=pulseDurations[item];
+            t.nozzle=nozzleAnchors[item];t.spray=itemSprays[item];t.pulseSeconds=pulseDurations[item];t.sprayRange=sprayRanges[item];
             if(t.sprayAudio!=null)t.sprayAudio.clip=itemSounds[item];
             Transform gun=gunHolds[item];
             if(gun!=null){p.orientation=VRC_Pickup.PickupOrientation.Gun;p.ExactGun=gun;}

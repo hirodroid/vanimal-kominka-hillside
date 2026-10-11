@@ -28,7 +28,28 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   if(sel.gunHolds!=null&&sel.gunHolds.Length>0){sel.gunHolds[0]=hold;EditorUtility.SetDirty(sel);}
   EditorUtility.SetDirty(hold);EditorUtility.SetDirty(pu);return hold;
  }
- [MenuItem(Menu+"47 - Apply Foam Cannon Hold")]
+ // IMP-DOG-049 (2026-10-11): every Gun item. FoamCannon keeps its own child (above, slot 0 only carries it, so the pickup is written here
+ // too); WaterPistol and Hose share the water slot with the watering can (Grip), so only gunHolds[item] is written and _Apply sets
+ // Gun + Exact Gun when it configures the slot for them. Their Exact Gun is the FBX child *_GunHold as it is (lab handoff 0.4.0: +X =
+ // spray, +Z = up, the same frame as KH_FoamCannonGunHold; WashPremium/12 measured it within 1 deg in the prefab, 44 per station).
+ // If a PCVR check asks for a different hand pose, add a child under the model as FoamCannonHold does and point gunHolds at it.
+ public static readonly int[] GunItems={0,WaterPistolId,HoseId};
+ static string GunHoldName(int id){return id==0?FoamHoldName:Names[id]+"_GunHold";}
+ static Transform FbxGunHold(KH_WashSelection sel,int id){var m=At(sel.models,id);return m==null?null:m.GetComponentsInChildren<Transform>(true).FirstOrDefault(t=>t.name==GunHoldName(id));}
+ static void GunHolds(KH_WashSelection sel,StringBuilder log)
+ {
+  FoamCannonHold(sel);
+  foreach(int id in GunItems)
+  {
+   if(id==0)continue;
+   if(At(sel.models,id)==null){if(log!=null)log.AppendLine("  gun hold "+Names[id]+" "+sel.transform.parent.name+": no model yet (run 49)");continue;}
+   var h=FbxGunHold(sel,id);if(h==null)throw new Exception(sel.transform.parent.name+": "+Names[id]+" has no "+GunHoldName(id)+" (re-import with 12)");
+   if(sel.gunHolds==null||sel.gunHolds.Length<=id)throw new Exception(sel.transform.parent.name+": gunHolds shorter than item "+id+" (run 49)");
+   sel.gunHolds[id]=h;
+  }
+  EditorUtility.SetDirty(sel);
+ }
+ [MenuItem(Menu+"47 - Apply Gun Holds")]
  public static void ApplyFoamCannonHold()
  {
   Guard();var scene=EditorSceneManager.GetActiveScene();if(scene.isDirty)throw new Exception("Save/reconcile unrelated scene edits first");
@@ -39,10 +60,11 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   {
    var pu=sel.pickups[Slots[0]];bool existed=sel.models[0].transform.Find(FoamHoldName)!=null;if(!existed)created++;
    string before="orientation="+pu.orientation+" exactGun="+(pu.ExactGun==null?"null":pu.ExactGun.name)+" exactGrip="+(pu.ExactGrip==null?"null":pu.ExactGrip.name);
-   var h=FoamCannonHold(sel);if(sel.gunHolds!=null)Copy(sel);
+   GunHolds(sel,log);var h=sel.models[0].transform.Find(FoamHoldName);if(sel.gunHolds!=null)Copy(sel);
    log.AppendLine(sel.transform.parent.name+" "+pu.name+" before "+before+" after orientation="+pu.orientation+" exactGun="+h.name+" local="+h.localPosition.ToString("F3")+" rot="+h.localEulerAngles.ToString("F1")+(existed?" (updated)":" (created)"));
+   foreach(int id in GunItems)if(id!=0)log.AppendLine("  gunHolds["+id+"] "+Names[id]+" = "+(sel.gunHolds==null||sel.gunHolds.Length<=id||sel.gunHolds[id]==null?"null":sel.gunHolds[id].name));
   }
   EditorSceneManager.MarkSceneDirty(scene);
-  Log("foam-hold","selectors="+sels.Length+" created="+created+" updated="+(sels.Length-created)+"\n"+log+"NOT saved: run 44 - Verify Selection, then save the scene (KH_WashSelection.gunHolds[0] copied to Udon when the category arrays exist)");
+  Log("foam-hold","selectors="+sels.Length+" created="+created+" updated="+(sels.Length-created)+"\n"+log+"NOT saved: run 44 - Verify Selection, then save the scene (KH_WashSelection.gunHolds copied to Udon when the category arrays exist). 48 / 49 run the same holds");
  }
 }}

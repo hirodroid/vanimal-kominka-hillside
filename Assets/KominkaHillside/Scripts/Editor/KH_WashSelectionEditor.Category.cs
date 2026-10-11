@@ -5,7 +5,9 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
  // added when built: Q4). Item ids keep the 17-item numbering of Names; a new item appends an id (17+), its name word (WordCount+) and
  // its photo. Owned by this code: 48 writes every value below on the four existing stations (scene values override code defaults),
  // 44 checks them with the measured values. The models' FBX / prefabs stay in Assets (only the scene instances of dropped items go).
- public static readonly int[] Order={0,9,6,7,8,13};                 // offered items in display order: foam, water, finish, station
+ // IMP-DOG-049 / 044 (2026-10-11): + 17 WaterPistol, 18 Hose (water), 19 PoolBath (platform) = the 9 items of DES-DOG-008. They need WashPremium/49
+ // (places their models) before 48 can run: 48 throws for an offered item without a model.
+ public static readonly int[] Order={0,9,6,17,18,7,8,13,19};          // offered items in display order: foam, water, finish, station
  public static readonly int[] SlotCategories={0,0,1,2,2,-1,-1};      // slots 5 / 6 (brush / cologne) keep their pickup roots, never selectable
  public static readonly string[] CategoryHomeNames={"Home_Foam","Home_Water","Home_Finish"};
  // Tray beside the shelf (shelf x -0.6..0.6, z -0.225..0.225, top 0.8): foam / water / finish left to right as seen from the front (-Z).
@@ -17,15 +19,20 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
  // 2.0 cm, inside the tray by 1.6 cm (left, mitt) and 1.0 cm (right, towel). 44 prints the measured footprints; adjust here, then 48.
  public static readonly Vector3[] HomeLocal={new Vector3(-1.25f,.82f,-.04f),new Vector3(-1.07f,.82f,-.04f),new Vector3(-.785f,.82f,-.04f)};
  public static readonly Vector3 TrayCentre=new Vector3(-.975f,.82f,-.04f),TrayLocal=new Vector3(-.975f,.785f,.03f),TrayScale=new Vector3(.73f,.03f,.42f),PostLocal=new Vector3(-.975f,.38f,.03f);
- public const int WordCount=43;                                      // 42 + word 42 "held tools stay out" (Q2)
+ public const int WordCount=46;                                      // 42 + word 42 "held tools stay out" (Q2) + 43..45 the names of items 17..19
  // By item id (same length as Names): the word holding its name. Explicit, not 20 + id: words 37.. are other texts, so a new item
  // (id 17+) appends its name to every language in words.json (index WordCount, then WordCount += 1) and that index here.
- public static readonly int[] ItemWords={20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36};
+ public static readonly int[] ItemWords={20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,43,44,45};   // 17 WaterPistol, 18 Hose, 19 PoolBath: AI-written names (13 languages)
  const int SprayMask=(1<<0)|(1<<11);                                 // as the free shower spray (KH_DogWashSetupEditor.Station.cs): Default + Environment, never floor 22
  static readonly Color OutColor=new Color(.93f,.87f,.70f);
  static bool Offered(int id){return Array.IndexOf(Order,id)>=0;}
  static int CategoryOf(int id){return Offered(id)?Groups[id]:-1;}
- static float BathDepth(int id){return id==13?.038f:id==14?.034f:id==15?.049f:0f;}
+ // the support's mount depth under the platform collider = the model's *_SupportMount below its origin (lab handoff; PoolBath 0.4.0: .036)
+ static float BathDepth(int id){return id==13?.038f:id==14?.034f:id==15?.049f:id==PoolBathId?.036f:0f;}
+ // the wash ray's reach per item (KH_WashTool.sprayRange; the build wrote 1.5 m per slot, the dryer's slot 0.8 m). IMP-DOG-049 plan §3.2:
+ // hose 2.5 m, water pistol 4 m (provisional, Play).
+ public const float HoseRange=2.5f,WaterPistolRange=4f;
+ static float SprayRange(int id){return id==7?.8f:id==HoseId?HoseRange:id==WaterPistolId?WaterPistolRange:1.5f;}
  static T At<T>(T[] a,int i){return a!=null&&i>=0&&i<a.Length?a[i]:default(T);}
  static string PathOf(Transform t){return t.parent==null?t.name:PathOf(t.parent)+"/"+t.name;}
  /// <summary>Index of the dropped item whose prefab this scene object instantiates (-1 = none).</summary>
@@ -73,15 +80,15 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   for(int i=0;i<n;i++){var m=At(sel.models,i);if(m==null)continue;if(Offered(i)){models[i]=m;continue;}log.AppendLine("  removed "+PathOf(m.transform)+" ("+Names[i]+")");UnityEngine.Object.DestroyImmediate(m);removed++;}
   foreach(var t in root.GetComponentsInChildren<Transform>(true).Concat(table.GetComponentsInChildren<Transform>(true)).ToArray()){if(t==null)continue;int d=DroppedSource(t.gameObject);if(d<0)continue;log.AppendLine("  removed stray "+PathOf(t)+" ("+Names[d]+")");UnityEngine.Object.DestroyImmediate(t.gameObject);removed++;}
   // 2. per item
-  var noz=new Transform[n];var grip=new Transform[n];var gun=new Transform[n];var slotOf=new int[n];var cats=new int[n];var centers=new Vector3[n];var sizes=new Vector3[n];var pulses=new float[n];var sprays=new ParticleSystem[n];var sounds=new AudioClip[n];var depths=new float[n];
+  var noz=new Transform[n];var grip=new Transform[n];var gun=new Transform[n];var slotOf=new int[n];var cats=new int[n];var centers=new Vector3[n];var sizes=new Vector3[n];var pulses=new float[n];var ranges=new float[n];var sprays=new ParticleSystem[n];var sounds=new AudioClip[n];var depths=new float[n];
   for(int i=0;i<n;i++)
   {
    cats[i]=CategoryOf(i);depths[i]=BathDepth(i);bool tool=cats[i]>=0&&cats[i]<KH_WashSelection.Categories;slotOf[i]=tool?Slots[i]:-1;
    if(cats[i]>=0&&models[i]==null)throw new Exception(label+": offered item "+Names[i]+" has no model");
    if(!tool)continue;
-   noz[i]=At(sel.nozzleAnchors,i);grip[i]=At(sel.gripAnchors,i);{var tb=TightBounds(models[i],sel.slots[Slots[i]].transform);var oc=At(sel.colliderCenters,i);var os=At(sel.colliderSizes,i);centers[i]=tb.center;sizes[i]=Vector3.Max(tb.size,new Vector3(.03f,.03f,.03f));if((os-sizes[i]).sqrMagnitude>1e-8f||(oc-centers[i]).sqrMagnitude>1e-8f)log.AppendLine("  collider "+label+" "+Names[i]+" size "+os.ToString("F3")+" -> "+sizes[i].ToString("F3")+" centre "+oc.ToString("F3")+" -> "+centers[i].ToString("F3"));}pulses[i]=At(sel.pulseDurations,i);gun[i]=At(sel.gunHolds,i);sprays[i]=At(sel.itemSprays,i);sounds[i]=At(sel.itemSounds,i);
+   noz[i]=At(sel.nozzleAnchors,i);grip[i]=At(sel.gripAnchors,i);{var tb=TightBounds(models[i],sel.slots[Slots[i]].transform);var oc=At(sel.colliderCenters,i);var os=At(sel.colliderSizes,i);centers[i]=tb.center;sizes[i]=Vector3.Max(tb.size,new Vector3(.03f,.03f,.03f));if((os-sizes[i]).sqrMagnitude>1e-8f||(oc-centers[i]).sqrMagnitude>1e-8f)log.AppendLine("  collider "+label+" "+Names[i]+" size "+os.ToString("F3")+" -> "+sizes[i].ToString("F3")+" centre "+oc.ToString("F3")+" -> "+centers[i].ToString("F3"));}pulses[i]=At(sel.pulseDurations,i);ranges[i]=SprayRange(i);gun[i]=At(sel.gunHolds,i);sprays[i]=At(sel.itemSprays,i);sounds[i]=At(sel.itemSounds,i);
    if(noz[i]==null||grip[i]==null||!noz[i].IsChildOf(models[i].transform)||sizes[i].x<=.02f)throw new Exception(label+": "+Names[i]+" anchors / collider not built (run 42's data first)");
-   // a Gun hold written for a kept item (FoamCannon by FoamCannonHold below; IMP-DOG-049 water guns by their own setup) survives a re-run
+   // a Gun hold written for a kept item (GunHolds below: FoamCannon, WaterPistol, Hose) survives a re-run
    if(gun[i]!=null&&!gun[i].IsChildOf(models[i].transform)){log.AppendLine("  dropped gunHolds["+i+"] "+gun[i].name+" (not under "+Names[i]+")");gun[i]=null;}
    if(sprays[i]!=null){var c=sprays[i].collision;c.collidesWith=SprayMask;EditorUtility.SetDirty(sprays[i]);}
   }
@@ -101,7 +108,8 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
    int first=Order.FirstOrDefault(i=>slotOf[i]==s&&cats[i]>=0&&cats[i]<KH_WashSelection.Categories);bool has=Order.Any(i=>slotOf[i]==s);
    t.nozzle=has?noz[first]:t.transform;t.spray=null;EditorUtility.SetDirty(t.transform);
    // no reference to a removed item's anchor stays on the pickup ("Missing"); the apply of an active slot writes its own hold again
-   var pu=sel.pickups[s];pu.ExactGrip=null;if(s!=Slots[0])pu.ExactGun=null;EditorUtility.SetDirty(pu);
+   // a shared slot (water: can Grip / pistol, hose Gun) rests as Grip; _Apply sets the hold of the item it configures (IMP-DOG-049)
+   var pu=sel.pickups[s];pu.ExactGrip=null;if(s!=Slots[0]){pu.ExactGun=null;pu.orientation=VRC_Pickup.PickupOrientation.Grip;}EditorUtility.SetDirty(pu);
   }
   // 5. the free platform: its renderers except the old slats (hidden by Wash/32 under the imported platform) and the premium models
   var platform=table.Find("ImportedPlatform");var premium=models.Where(m=>m!=null).Select(m=>m.transform).ToArray();int slatsHidden=0;
@@ -109,9 +117,9 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   var free=table.GetComponentsInChildren<Renderer>(true).Where(r=>!(r is ParticleSystemRenderer)&&!(platform!=null&&r.transform.parent==table&&r.name.StartsWith("Slat_"))&&!premium.Any(p=>r.transform.IsChildOf(p))).ToArray();
   // 6. write, hold, apply, copy
   sel.models=models;sel.itemCategories=cats;sel.itemSlots=slotOf;sel.slotCategories=(int[])SlotCategories.Clone();sel.categoryHomes=homes;
-  sel.nozzleAnchors=noz;sel.gripAnchors=grip;sel.gunHolds=gun;sel.colliderCenters=centers;sel.colliderSizes=sizes;sel.pulseDurations=pulses;sel.itemSprays=sprays;sel.itemSounds=sounds;sel.bathDepths=depths;sel.freeTableRenderers=free;
+  sel.nozzleAnchors=noz;sel.gripAnchors=grip;sel.gunHolds=gun;sel.colliderCenters=centers;sel.colliderSizes=sizes;sel.pulseDurations=pulses;sel.sprayRanges=ranges;sel.itemSprays=sprays;sel.itemSounds=sounds;sel.bathDepths=depths;sel.freeTableRenderers=free;
   sel.selectedFoam=-1;sel.selectedWater=-1;sel.selectedFinish=-1;sel.selectedBath=-1;
-  FoamCannonHold(sel);   // slot 0 Gun + Exact Gun, and gunHolds[0] (BUG-DOG-010)
+  GunHolds(sel,log);     // FoamCannon: slot 0 Gun + its Exact Gun (BUG-DOG-010); WaterPistol / Hose: gunHolds = the FBX *_GunHold (IMP-DOG-049)
   ResetApplyState(sel);sel._Apply(false);
   foreach(var p in sel.pickups)EditorUtility.SetDirty(p);foreach(var c in sel.pickupColliders)EditorUtility.SetDirty(c);
   foreach(var t in sel.slots)Copy(t);Copy(sel);
@@ -176,8 +184,9 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   check(sel.itemCategories.SequenceEqual(Enumerable.Range(0,n).Select(CategoryOf)),"itemCategories "+st+" = ["+string.Join(",",sel.itemCategories)+"]");
   check(sel.itemSlots!=null&&sel.itemSlots.SequenceEqual(Enumerable.Range(0,n).Select(i=>CategoryOf(i)>=0&&CategoryOf(i)<3?Slots[i]:-1)),"itemSlots "+st+" = ["+(sel.itemSlots==null?"null":string.Join(",",sel.itemSlots))+"]");
   check(sel.slotCategories!=null&&sel.slotCategories.SequenceEqual(SlotCategories),"slotCategories "+st+" = ["+(sel.slotCategories==null?"null":string.Join(",",sel.slotCategories))+"]");
-  check(sel.bathDepths!=null&&sel.bathDepths.Length==n&&Mathf.Abs(sel.bathDepths[13]-.038f)<1e-6f,"bathDepths "+st+" (hinoki "+(sel.bathDepths!=null&&sel.bathDepths.Length>13?sel.bathDepths[13].ToString("F3"):"-")+")");
-  foreach(var name in new[]{"nozzleAnchors","gripAnchors","gunHolds","colliderCenters","colliderSizes","pulseDurations","itemSprays","itemSounds"}){var a=typeof(KH_WashSelection).GetField(name).GetValue(sel) as Array;check(a!=null&&a.Length==n,name+".Length == "+n+" "+st+" (actual "+(a==null?"null":a.Length.ToString())+")");}
+  check(sel.bathDepths!=null&&sel.bathDepths.Length==n&&Mathf.Abs(sel.bathDepths[13]-.038f)<1e-6f&&Mathf.Abs(sel.bathDepths[PoolBathId]-.036f)<1e-6f,"bathDepths "+st+" (hinoki "+(sel.bathDepths!=null&&sel.bathDepths.Length>13?sel.bathDepths[13].ToString("F3"):"-")+", pool "+(sel.bathDepths!=null&&sel.bathDepths.Length>PoolBathId?sel.bathDepths[PoolBathId].ToString("F3"):"-")+")");
+  check(sel.sprayRanges!=null&&sel.sprayRanges.Length==n&&Enumerable.Range(0,n).All(i=>Mathf.Abs(sel.sprayRanges[i]-SprayRange(i))<1e-6f),"sprayRanges "+st+" (can "+(sel.sprayRanges!=null&&sel.sprayRanges.Length>6?sel.sprayRanges[6].ToString("F1"):"-")+" / pistol "+(sel.sprayRanges!=null&&sel.sprayRanges.Length>WaterPistolId?sel.sprayRanges[WaterPistolId].ToString("F1"):"-")+" / hose "+(sel.sprayRanges!=null&&sel.sprayRanges.Length>HoseId?sel.sprayRanges[HoseId].ToString("F1"):"-")+" m)");
+  foreach(var name in new[]{"nozzleAnchors","gripAnchors","gunHolds","colliderCenters","colliderSizes","pulseDurations","sprayRanges","itemSprays","itemSounds"}){var a=typeof(KH_WashSelection).GetField(name).GetValue(sel) as Array;check(a!=null&&a.Length==n,name+".Length == "+n+" "+st+" (actual "+(a==null?"null":a.Length.ToString())+")");}
   // the three homes, each slot's home, and the footprints on the tray
   check(sel.categoryHomes!=null&&sel.categoryHomes.Length==3&&Enumerable.Range(0,3).All(c=>sel.categoryHomes[c]!=null&&sel.categoryHomes[c].name==CategoryHomeNames[c]&&sel.categoryHomes[c].parent==sel.transform&&(sel.categoryHomes[c].localPosition-HomeLocal[c]).sqrMagnitude<1e-8f),
    "three category homes "+st+" ("+(sel.categoryHomes==null?"null":string.Join(" ",sel.categoryHomes.Select(h=>h==null?"null":h.name+h.localPosition.ToString("F3"))))+")");
@@ -190,6 +199,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   foreach(var a in boxes)foreach(var b in boxes){if(a.Key>=b.Key||CategoryOf(a.Key)==CategoryOf(b.Key))continue;float gx=Mathf.Max(a.Value.xMin-b.Value.xMax,b.Value.xMin-a.Value.xMax),gz=Mathf.Max(a.Value.yMin-b.Value.yMax,b.Value.yMin-a.Value.yMax);float gap=Mathf.Max(gx,gz);check(gap>=.01f,"tray gap "+Names[a.Key]+" / "+Names[b.Key]+" "+st+" "+(gap*100f).ToString("F1")+" cm (>= 1 cm; all three can be out at once)");}
   float shelfGap=boxes.Count==0?0:-.6f-boxes.Max(x=>x.Value.xMax);log.AppendLine("shelf "+st+": nearest tray item to the shelf's left edge (x -0.600) "+(shelfGap*100f).ToString("F1")+" cm; tray x "+(TrayLocal.x-TrayScale.x*.5f).ToString("F3")+".."+(TrayLocal.x+TrayScale.x*.5f).ToString("F3"));
   check(shelfGap>=0f,"tray items stay left of the shelf "+st+" ("+(shelfGap*100f).ToString("F1")+" cm)");
+  VerifyTray(sel,boxes,check,log);
   // the dropped items are gone; the kept ones remain
   for(int i=0;i<n;i++){bool offered=CategoryOf(i)>=0;check(offered==(sel.models[i]!=null),(offered?"model present ":"no model for dropped ")+Names[i]+" "+st);if(!offered)check(At(sel.itemSprays,i)==null&&At(sel.nozzleAnchors,i)==null,"no spray / anchor kept for dropped "+Names[i]+" "+st);}
   var strays=sel.transform.GetComponentsInChildren<Transform>(true).Concat(sel.transform.parent.Find("Lift/WashTable").GetComponentsInChildren<Transform>(true)).Where(t=>DroppedSource(t.gameObject)>=0).Select(t=>t.name).ToArray();
@@ -199,7 +209,10 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   check(back.publicVariables.TryGetVariableValue("itemCategories",out v)&&v is int[] bc&&bc.SequenceEqual(sel.itemCategories),"saved backing itemCategories "+st);
   check(back.publicVariables.TryGetVariableValue("slotCategories",out v)&&v is int[] bs&&bs.SequenceEqual(SlotCategories),"saved backing slotCategories "+st);
   check(back.publicVariables.TryGetVariableValue("categoryHomes",out v)&&v is Transform[] bh&&bh.SequenceEqual(sel.categoryHomes),"saved backing categoryHomes "+st);
-  check(back.publicVariables.TryGetVariableValue("gunHolds",out v)&&v is Transform[] bg&&bg.Length==n&&bg[0]!=null&&bg[0].name==FoamHoldName&&bg.Skip(1).All(x=>x==null),"saved backing gunHolds: FoamCannon "+FoamHoldName+", others Grip "+st);
+  // IMP-DOG-049: non-null exactly for the Gun items (FoamCannon its own child, WaterPistol / Hose their FBX *_GunHold), the same as the proxy
+  check(back.publicVariables.TryGetVariableValue("gunHolds",out v)&&v is Transform[] bg&&bg.Length==n&&Enumerable.Range(0,n).All(i=>GunItems.Contains(i)&&Offered(i)?bg[i]!=null&&bg[i]==sel.gunHolds[i]&&bg[i].name==GunHoldName(i):bg[i]==null),"saved backing gunHolds: "+string.Join(", ",GunItems.Select(i=>Names[i]+" "+GunHoldName(i)))+", others Grip "+st);
+  check(back.publicVariables.TryGetVariableValue("sprayRanges",out v)&&v is float[] br&&sel.sprayRanges!=null&&br.SequenceEqual(sel.sprayRanges),"saved backing sprayRanges "+st);
+  check(back.publicVariables.TryGetVariableValue("pulseDurations",out v)&&v is float[] bp&&bp.SequenceEqual(sel.pulseDurations)&&Mathf.Abs(bp[WaterPistolId]-WaterPistolShot)<1e-6f&&bp[HoseId]==KH_WashTool.PulseHold&&bp[6]==0f,"saved backing pulseDurations: can toggle 0, pistol shot "+WaterPistolShot.ToString("F2")+" s, hose hold "+KH_WashTool.PulseHold+" "+st);
   foreach(var f in new[]{"selectedFoam","selectedWater","selectedFinish","selectedBath"}){int pv=(int)typeof(KH_WashSelection).GetField(f).GetValue(sel);bool ok=back.publicVariables.TryGetVariableValue(f,out v)&&v is int bv&&bv==pv;log.AppendLine("value "+st+" "+f+"="+pv+" backing="+(v??"missing"));check(ok,"saved backing "+f+" == proxy "+st);}
   log.AppendLine("value "+st+" stale backing selectedTool (the removed 1-selection field; not in the program, unused): "+(back.publicVariables.TryGetVariableValue("selectedTool",out v)?"present":"absent"));
   // the free platform: slats stay hidden under the imported platform, never listed as the free table
@@ -226,12 +239,19 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
    check(on.SequenceEqual(new[]{0,2,4})&&sel.models[0].activeSelf&&sel.models[6].activeSelf&&sel.models[7].activeSelf,"Q1 foam + water + finish out at once: pickups ["+string.Join(",",on)+"] (want 0,2,4)");
    check(sel.slots[0].nozzle==sel.nozzleAnchors[0]&&sel.slots[2].nozzle==sel.nozzleAnchors[6]&&sel.slots[4].nozzle==sel.nozzleAnchors[7]&&sel.slots[4].spray==sel.itemSprays[7],"each out slot carries its item's nozzle / spray");
    check(sel.pickups[0].orientation==VRC_Pickup.PickupOrientation.Gun&&sel.pickups[0].ExactGun==sel.gunHolds[0]&&sel.pickups[2].orientation==VRC_Pickup.PickupOrientation.Grip&&sel.pickups[2].ExactGrip==sel.gripAnchors[6],"hold per item: FoamCannon Gun / WateringCan Grip (actual "+sel.pickups[0].orientation+" / "+sel.pickups[2].orientation+")");
+   // IMP-DOG-049: the water slot takes each water item's hold, nozzle, spray, input and reach (pistol / hose Gun, back to the can Grip)
+   foreach(int item in new[]{WaterPistolId,HoseId,6}){int code=sel._Decide(item,sel.revision);sel.revision++;sel._Apply(false);var pu=sel.pickups[Slots[item]];var t=sel.slots[Slots[item]];bool gun=sel.gunHolds[item]!=null;
+    check(code==0&&sel.selectedWater==item&&sel.models[item].activeSelf&&pu.pickupable&&t.nozzle==sel.nozzleAnchors[item]&&t.spray==sel.itemSprays[item]&&t.pulseSeconds==sel.pulseDurations[item]&&Mathf.Abs(t.sprayRange-sel.sprayRanges[item])<1e-6f&&pu.orientation==(gun?VRC_Pickup.PickupOrientation.Gun:VRC_Pickup.PickupOrientation.Grip)&&(gun?pu.ExactGun==sel.gunHolds[item]:pu.ExactGrip==sel.gripAnchors[item])&&sel.selectedFoam==0&&sel.selectedFinish==7,
+     "water swap -> "+Names[item]+": slot"+Slots[item]+" "+pu.orientation+", pulse "+t.pulseSeconds+", range "+t.sprayRange+" m, foam / finish stay ("+state()+")");}
    // swap inside one category leaves the others
    int c9=sel._Decide(9,sel.revision);sel.revision++;sel._Apply(false);check(c9==0&&sel.selectedFoam==9&&sel.selectedWater==6&&sel.selectedFinish==7&&sel.pickups[1].pickupable&&!sel.pickups[0].pickupable&&sel.pickups[2].pickupable,"foam swap to PawMitt leaves water / finish ("+state()+")");
    // Q3: the water slot held -> water requests refused, the platform and the other categories accepted
    sel.slots[2].debugHeldOverride=1;
    int cw=sel._Decide(6,sel.revision);check(cw==KH_WashSelection.ResultHeld&&sel.selectedWater==6,"held water: water request -> 1 (actual "+cw+")");
    int cb=sel._Decide(13,sel.revision);sel.revision++;sel._Apply(false);check(cb==0&&sel.selectedBath==13&&sel.models[13].activeSelf&&sel.freeTableRenderers.All(r=>!r.enabled),"Q3 held water: platform -> Hinoki accepted and shown, free table hidden (code "+cb+", "+state()+")");
+   // IMP-DOG-044: the pool as the platform (support mount depth .036), then back to the hinoki
+   int cp=sel._Decide(PoolBathId,sel.revision);sel.revision++;sel._Apply(false);check(cp==0&&sel.selectedBath==PoolBathId&&sel.models[PoolBathId].activeSelf&&!sel.models[13].activeSelf&&sel.freeTableRenderers.All(r=>!r.enabled)&&sel.support!=null&&Mathf.Abs(sel.support.mountBelowCollider-.036f)<1e-6f,"held water: platform -> PoolBath shown, hinoki hidden, support mount "+(sel.support==null?"-":sel.support.mountBelowCollider.ToString("F3"))+" ("+state()+")");
+   sel._Decide(13,sel.revision);sel.revision++;sel._Apply(false);
    int cf=sel._Decide(0,sel.revision);sel.revision++;sel._Apply(false);check(cf==0&&sel.selectedFoam==0&&sel.models[0].activeSelf,"held water: foam -> FoamCannon accepted ("+state()+")");
    int stale=sel._Decide(8,sel.revision-1);check(stale==KH_WashSelection.ResultStale,"stale revision -> 2 (actual "+stale+")");
    // Q2: reset keeps the held category, clears the rest and the platform
@@ -250,7 +270,7 @@ namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEdi
   finally
   {
    for(int s=0;s<held.Length;s++)sel.slots[s].debugHeldOverride=held[s];
-   sel.selectedFoam=f0;sel.selectedWater=w0;sel.selectedFinish=n0;sel.selectedBath=b0;sel.revision=r0;ResetApplyState(sel);sel._Apply(false);
+   sel.selectedFoam=f0;sel.selectedWater=w0;sel.selectedFinish=n0;sel.selectedBath=b0;sel.revision=r0;ResetApplyState(sel);sel._Apply(false);RestHolds(sel);
   }
  }
  /// <summary>Every dropped item's instance anywhere in the open scene (stations, the gallery, anything else).</summary>

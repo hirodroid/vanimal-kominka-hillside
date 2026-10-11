@@ -19,9 +19,9 @@
         "洗い場",
         "全部入り",
         "ふんわり泡の泡もこもこ銃と、肉球ミトンでやさしくお手入れ。",
-        "じょうろはひと押しで流し、もうひと押しで止まります。",
+        "じょうろはひと押しで流し、もうひと押しで止まります。ホースは押している間、水鉄砲はひと押しで一発。",
         "ドライヤーの風で乾かし、柄タオルで拭いて仕上げます。",
-        "洗い台を檜の台に着せ替えます。高さは今までどおり調整できます。",
+        "洗い台を檜の台かプールに着せ替えます。高さは今までどおり調整できます。",
         "泡・水・仕上げ・洗い場の全アイテム。種類ごとに1つずつ同時に出せます。",
         "泡もこもこ銃",
         "アヒル水鉄砲",
@@ -45,7 +45,10 @@
         "次の写真",
         "写真を選び、道具を取り出してください",
         "反映しました",
-        "持っている道具は、置いてから戻せます"
+        "持っている道具は、置いてから戻せます",
+        "水鉄砲",
+        "ホース",
+        "プール"
       ]
     },
     {
@@ -67,9 +70,9 @@
         "Station",
         "Complete set",
         "Foam cannon for soft foam, plus a paw mitt for gentle care.",
-        "Tap the watering can to pour; tap again to stop.",
+        "Tap the watering can to pour, tap again to stop. The hose sprays while you hold the trigger; the water pistol fires one shot per tap.",
         "Dry with the dryer's breeze, then wipe with a patterned towel.",
-        "Dress the wash platform in hinoki wood. Height works as before.",
+        "Dress the wash platform as a hinoki tub or a pool. Height works as before.",
         "Every foam, water, finishing and station item. One tool of each kind can be out at once.",
         "Foam cannon",
         "Duck water gun",
@@ -93,7 +96,10 @@
         "More photos",
         "Choose a photo, then take out a tool",
         "Applied",
-        "Tools in hand stay out; put them down to reset"
+        "Tools in hand stay out; put them down to reset",
+        "Water pistol",
+        "Hose",
+        "Pool"
       ]
     },
     {
@@ -115,9 +121,9 @@
         "세척대",
         "전체",
         "거품 분사기의 부드러운 거품과 발 모양 장갑으로 살살 씻겨요.",
-        "물뿌리개는 한 번 누르면 물이 나오고, 다시 누르면 멈춰요.",
+        "물뿌리개는 한 번 누르면 물이 나오고 다시 누르면 멈춰요. 호스는 누르는 동안, 물총은 한 번에 한 발.",
         "드라이어 바람으로 말리고 무늬 수건으로 닦아 마무리해요.",
-        "세척대를 편백 욕조로 바꿔요. 높이는 기존처럼 조절해요.",
+        "세척대를 편백 욕조나 물놀이 풀로 바꿔요. 높이는 기존처럼 조절해요.",
         "거품·물·마무리·세척대의 모든 아이템. 종류마다 하나씩 함께 꺼낼 수 있어요.",
         "거품 분사기",
         "오리 물총",
@@ -141,7 +147,10 @@
         "다음 사진",
         "사진을 고른 뒤 적용하세요",
         "적용 완료",
-        "들고 있는 도구는 내려놓은 뒤 되돌릴 수 있어요"
+        "들고 있는 도구는 내려놓은 뒤 되돌릴 수 있어요",
+        "물총",
+        "호스",
+        "물놀이 풀"
       ]
     },
     {
@@ -163,9 +172,9 @@
         "清洗台",
         "全部",
         "泡沫喷枪喷出绵密泡沫，配合爪形手套温柔清洗。",
-        "浇水壶按一下出水，再按一下停止。",
+        "浇水壶按一下出水，再按一下停止。水管按住时持续喷水，水枪每按一下射一发。",
         "用吹风机吹干，再用花纹毛巾擦拭收尾。",
-        "将清洗台换成桧木浴盆。高度仍可照常调节。",
+        "将清洗台换成桧木浴盆或水池。高度仍可照常调节。",
         "泡沫、水、收尾和清洗台的全部道具。每类可各取一件同时使用。",
         "泡沫喷枪",
         "小鸭水枪",
@@ -189,7 +198,10 @@
         "下一页照片",
         "选择照片后应用",
         "已应用",
-        "手中的工具放下后才能恢复"
+        "手中的工具放下后才能恢复",
+        "水枪",
+        "水管",
+        "水池"
       ]
     },
     {
@@ -211,9 +223,9 @@
         "清洗台",
         "全部",
         "泡沫噴槍噴出綿密泡沫，配合爪形手套溫柔清洗。",
-        "澆水壺按一下出水，再按一下停止。",
+        "澆水壺按一下出水，再按一下停止。水喉按住時持續噴水，水槍每按一下射一發。",
         "用風筒吹乾，再用花紋毛巾抹乾收尾。",
-        "將清洗台換成檜木浴盆。高度仍可照常調節。",
+        "將清洗台換成檜木浴盆或水池。高度仍可照常調節。",
         "泡沫、水、收尾和清洗台的全部道具。每類可各取一件同時使用。",
         "泡沫噴槍",
         "小鴨水槍",
@@ -237,7 +249,10 @@
         "下一頁照片",
         "選擇照片後套用",
         "已套用",
-        "手中的工具放下後才能恢復"
+        "手中的工具放下後才能恢復",
+        "水槍",
+        "水喉",
+        "水池"
       ]
     },
     {
@@ -259,9 +274,9 @@
         "Мойка",
         "Всё",
         "Пенная пушка для мягкой пены и варежка-лапка для бережного мытья.",
-        "Нажмите на лейку, чтобы полить; нажмите снова, чтобы остановить.",
+        "Лейка: нажмите, чтобы лить, и ещё раз, чтобы остановить. Шланг льёт, пока нажат курок; пистолет стреляет по нажатию.",
         "Высушите феном и вытрите узорным полотенцем.",
-        "Ванночка хиноки для мойки. Высота настраивается как раньше.",
+        "Ванночка хиноки или бассейн для мойки. Высота настраивается как раньше.",
         "Все предметы для пены, воды, ухода и мойки. Можно взять сразу по одному каждого вида.",
         "Пенная пушка",
         "Пистолет-утка",
@@ -285,7 +300,10 @@
         "Следующие фото",
         "Выберите фото и примените",
         "Готово",
-        "Инструменты в руках остаются; положите их, чтобы сбросить"
+        "Инструменты в руках остаются; положите их, чтобы сбросить",
+        "Водяной пистолет",
+        "Шланг",
+        "Бассейн"
       ]
     },
     {
@@ -307,9 +325,9 @@
         "Мийка",
         "Усе",
         "Пінна гармата для м'якої піни та рукавичка-лапка для ніжного миття.",
-        "Натисніть на лійку, щоб полити; натисніть знову, щоб зупинити.",
+        "Лійка: натисніть, щоб полити, і ще раз, щоб зупинити. Шланг ллє, доки натиснуто курок; пістолет стріляє за натиском.",
         "Висушіть феном і витріть візерунчастим рушником.",
-        "Ванночка хінокі для мийки. Висоту можна змінювати як раніше.",
+        "Ванночка хінокі або басейн для мийки. Висоту можна змінювати як раніше.",
         "Усі предмети для піни, води, догляду та мийки. Можна взяти одразу по одному кожного виду.",
         "Пінна гармата",
         "Пістолет-качка",
@@ -333,7 +351,10 @@
         "Наступні фото",
         "Оберіть фото та застосуйте",
         "Готово",
-        "Інструменти в руках залишаються; покладіть їх, щоб скинути"
+        "Інструменти в руках залишаються; покладіть їх, щоб скинути",
+        "Водяний пістолет",
+        "Шланг",
+        "Басейн"
       ]
     },
     {
@@ -355,9 +376,9 @@
         "Waschplatz",
         "Alles",
         "Schaumkanone für weichen Schaum und Pfotenhandschuh für sanftes Waschen.",
-        "Gießkanne antippen zum Gießen, erneut antippen zum Stoppen.",
+        "Gießkanne antippen zum Gießen, erneut zum Stoppen. Der Schlauch spritzt, solange der Abzug gedrückt ist; die Wasserpistole schießt pro Tipp.",
         "Mit dem Föhn trocknen, dann mit dem Mustertuch abtrocknen.",
-        "Der Waschplatz als Hinoki-Wanne. Die Höhe bleibt wie gewohnt einstellbar.",
+        "Der Waschplatz als Hinoki-Wanne oder Planschbecken. Die Höhe bleibt wie gewohnt einstellbar.",
         "Alle Schaum-, Wasser-, Pflege- und Waschplatz-Artikel. Je ein Werkzeug pro Art gleichzeitig nutzbar.",
         "Schaumkanone",
         "Enten-Wasserpistole",
@@ -381,7 +402,10 @@
         "Weitere Fotos",
         "Foto wählen und anwenden",
         "Angewendet",
-        "Gehaltene Werkzeuge bleiben; zum Zurücksetzen ablegen"
+        "Gehaltene Werkzeuge bleiben; zum Zurücksetzen ablegen",
+        "Wasserpistole",
+        "Schlauch",
+        "Planschbecken"
       ]
     },
     {
@@ -403,9 +427,9 @@
         "Lavadero",
         "Todo",
         "Cañón de espuma para una espuma suave y manopla de pata para lavar con cuidado.",
-        "Toca la regadera para verter; tócala otra vez para parar.",
+        "Toca la regadera para verter y otra vez para parar. La manguera moja mientras mantienes el gatillo; la pistola dispara un chorro por toque.",
         "Seca con el aire del secador y termina con la toalla estampada.",
-        "Viste el lavadero con la bañera de hinoki. La altura se ajusta como siempre.",
+        "Viste el lavadero con la bañera de hinoki o la piscina. La altura se ajusta como siempre.",
         "Todo lo de espuma, agua, acabado y lavadero. Puedes sacar una herramienta de cada tipo a la vez.",
         "Cañón de espuma",
         "Pistola de pato",
@@ -429,7 +453,10 @@
         "Más fotos",
         "Elige una foto y aplica",
         "Aplicado",
-        "Las herramientas en mano se quedan; suéltalas para restablecer"
+        "Las herramientas en mano se quedan; suéltalas para restablecer",
+        "Pistola de agua",
+        "Manguera",
+        "Piscina"
       ]
     },
     {
@@ -451,9 +478,9 @@
         "Lavage",
         "Tout",
         "Canon à mousse pour une mousse douce, et gant-patte pour un lavage tendre.",
-        "Touchez l'arrosoir pour verser, puis à nouveau pour arrêter.",
+        "Touchez l'arrosoir pour verser, à nouveau pour arrêter. Le tuyau arrose tant qu'on tient la détente ; le pistolet tire un jet par appui.",
         "Séchez au souffle du séchoir, puis essuyez avec la serviette à motifs.",
-        "Habillez le poste d'un bain en hinoki. La hauteur se règle comme avant.",
+        "Habillez le poste d'un bain en hinoki ou d'une piscine. La hauteur se règle comme avant.",
         "Tous les articles mousse, eau, finition et poste. Un outil de chaque type peut être sorti à la fois.",
         "Canon à mousse",
         "Pistolet canard",
@@ -477,7 +504,10 @@
         "Autres photos",
         "Choisissez une photo puis appliquez",
         "Appliqué",
-        "Les outils en main restent ; posez-les pour réinitialiser"
+        "Les outils en main restent ; posez-les pour réinitialiser",
+        "Pistolet à eau",
+        "Tuyau",
+        "Piscine"
       ]
     },
     {
@@ -499,9 +529,9 @@
         "Lavatório",
         "Tudo",
         "Canhão de espuma para espuma macia e luva de pata para uma lavagem suave.",
-        "Toque no regador para despejar; toque de novo para parar.",
+        "Toque no regador para despejar e de novo para parar. A mangueira jorra enquanto segura o gatilho; a pistola dispara um jato por toque.",
         "Seque com o vento do secador e finalize com a toalha estampada.",
-        "Vista o lavatório com a banheira de hinoki. A altura se ajusta como antes.",
+        "Vista o lavatório com a banheira de hinoki ou a piscina. A altura se ajusta como antes.",
         "Todos os itens de espuma, água, acabamento e lavatório. Uma ferramenta de cada tipo pode sair ao mesmo tempo.",
         "Canhão de espuma",
         "Pistola de pato",
@@ -525,7 +555,10 @@
         "Mais fotos",
         "Escolha uma foto e aplique",
         "Aplicado",
-        "Ferramentas na mão ficam; solte-as para redefinir"
+        "Ferramentas na mão ficam; solte-as para redefinir",
+        "Pistola d'água",
+        "Mangueira",
+        "Piscina"
       ]
     },
     {
@@ -547,9 +580,9 @@
         "Lavaggio",
         "Tutto",
         "Cannone di schiuma per una schiuma morbida e guanto a zampa per un lavaggio delicato.",
-        "Tocca l'annaffiatoio per versare, di nuovo per fermare.",
+        "Tocca l'annaffiatoio per versare, di nuovo per fermare. La canna spruzza finché tieni premuto il grilletto; la pistola spara un colpo a tocco.",
         "Asciuga con l'aria del phon e rifinisci con l'asciugamano decorato.",
-        "Veste la postazione con la vasca hinoki. L'altezza si regola come prima.",
+        "Veste la postazione con la vasca hinoki o la piscina. L'altezza si regola come prima.",
         "Tutti gli articoli per schiuma, acqua, rifinitura e postazione. Uno strumento per tipo alla volta.",
         "Cannone di schiuma",
         "Pistola papera",
@@ -573,7 +606,10 @@
         "Altre foto",
         "Scegli una foto e applica",
         "Applicato",
-        "Gli strumenti in mano restano; posali per ripristinare"
+        "Gli strumenti in mano restano; posali per ripristinare",
+        "Pistola ad acqua",
+        "Canna dell'acqua",
+        "Piscina"
       ]
     },
     {
@@ -595,9 +631,9 @@
         "Myjnia",
         "Wszystko",
         "Działko pianowe do miękkiej piany i rękawica-łapka do delikatnego mycia.",
-        "Dotknij konewki, by lać; dotknij ponownie, by przestać.",
+        "Dotknij konewki, by lać, i ponownie, by przestać. Wąż leje, dopóki trzymasz spust; pistolet strzela raz na dotknięcie.",
         "Wysusz suszarką, potem wytrzyj wzorzystym ręcznikiem.",
-        "Myjnia z wanienką hinoki. Wysokość ustawisz jak dotąd.",
+        "Myjnia z wanienką hinoki lub basenikiem. Wysokość ustawisz jak dotąd.",
         "Wszystko do piany, wody, wykończenia i myjni. Naraz po jednym narzędziu każdego rodzaju.",
         "Działko pianowe",
         "Pistolet-kaczka",
@@ -621,7 +657,10 @@
         "Więcej zdjęć",
         "Wybierz zdjęcie i zastosuj",
         "Zastosowano",
-        "Narzędzia w dłoni zostają; odłóż je, by przywrócić"
+        "Narzędzia w dłoni zostają; odłóż je, by przywrócić",
+        "Pistolet na wodę",
+        "Wąż",
+        "Basenik"
       ]
     }
   ]

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "source_repository": "vrc-asset-lab",
+  "source_git_commit": "04a798eebe7f41889e625f929dfe85e8304fd627",
+  "asset_id": "wash-premium",
+  "asset_revision": "0.4.0",
+  "config_sha256": "4bd3b379b2a15ec0cf037c25148bdec1241c0b5b064cb021b711a328841c8cac",
+  "source": "C:/work/unity/vrc-asset-lab/assets/wash-premium/exports/0.4.0",
+  "imported_on": "2026-10-11",
+  "destination_project": "VAnimal_KominkaHillside",
+  "destination_paths": [
+    "Assets/KominkaHillside/Models/WashPremium/WaterPistol.fbx",
+    "Assets/KominkaHillside/Models/WashPremium/Hose.fbx",
+    "Assets/KominkaHillside/Models/WashPremium/PoolBath.fbx",
+    "Assets/KominkaHillside/Models/WashPremium/PremiumAddons_BaseColor.png",
+    "Assets/KominkaHillside/Models/WashPremium/PremiumAddons_Normal.png",
+    "Assets/KominkaHillside/Models/WashPremium/PremiumAddons_MetallicSmoothness.png"
+  ],
+  "local_changes": [],
+  "files": [
+    {
+      "file": "WaterPistol.fbx",
+      "sha256": "4fee4101ce76889d3e798e93280fea0a945321dd0ad615c1382157a7ba6724db",
+      "source_sha256": "4fee4101ce76889d3e798e93280fea0a945321dd0ad615c1382157a7ba6724db"
+    },
+    {
+      "file": "Hose.fbx",
+      "sha256": "7fc280b372f8b00aed44a0d0fab132c4ba29569830905cc593a2e2d3b9368b64",
+      "source_sha256": "7fc280b372f8b00aed44a0d0fab132c4ba29569830905cc593a2e2d3b9368b64"
+    },
+    {
+      "file": "PoolBath.fbx",
+      "sha256": "80f19436be0d18729e5dbab8488297cbd6c4a37bc5ae8b2d6635c4a8a94fbcf3",
+      "source_sha256": "80f19436be0d18729e5dbab8488297cbd6c4a37bc5ae8b2d6635c4a8a94fbcf3"
+    },
+    {
+      "file": "PremiumAddons_BaseColor.png",
+      "sha256": "09a944badae07bf9c352412fa6c21dd39c9e0ce6130b2db4fb64145d285e158e",
+      "source_sha256": "09a944badae07bf9c352412fa6c21dd39c9e0ce6130b2db4fb64145d285e158e"
+    },
+    {
+      "file": "PremiumAddons_Normal.png",
+      "sha256": "b04b8d03d25ad394924bc45f23e4509a7c9e245fc6e8c2a21154f6adc91e11b0",
+      "source_sha256": "b04b8d03d25ad394924bc45f23e4509a7c9e245fc6e8c2a21154f6adc91e11b0"
+    },
+    {
+      "file": "PremiumAddons_MetallicSmoothness.png",
+      "sha256": "837446465eb8e5b9bbd0d5794b1f6aa2dc1a6b5f7b8c91ccccada8448978e94a",
+      "source_sha256": "837446465eb8e5b9bbd0d5794b1f6aa2dc1a6b5f7b8c91ccccada8448978e94a"
+    }
+  ],
+  "verification": {
+    "unity": "not_tested",
+    "vrchat": "not_tested"
+  },
+  "notes": "0.3.0 files in this folder are unchanged (origin.json). The lab exports folder is git-ignored; this copy is the versioned one. Visual approval of the 0.4.0 models by the user is pending (concepts approved 2026-10-11)."
+}

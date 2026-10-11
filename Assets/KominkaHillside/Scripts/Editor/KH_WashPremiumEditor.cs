@@ -10,7 +10,7 @@ using UdonSharpEditor;
 using VRC.Udon;
 namespace KominkaHillside.Editor
 {
-public static class KH_WashPremiumEditor
+public static partial class KH_WashPremiumEditor
 {
     const string Root = "Assets/KominkaHillside/Models/WashPremium/";
     const string Prefabs = "Assets/KominkaHillside/Prefabs/WashPremium/";
@@ -152,6 +152,7 @@ public static class KH_WashPremiumEditor
             log.AppendLine(n+" tris="+tri);
         }
         if(triangles!=19604)throw new Exception("Triangle drift "+triangles);
+        VerifyAddons(log);   // IMP-DOG-049 / 044: the 0.4.0 prefabs (two materials each: per-child map, KH_WashPremiumEditor.Addons.cs)
         foreach(var g in new[]{"Tools","Fixture"})foreach(var channel in new[]{"BaseColor","Normal","MetallicSmoothness"})
         {var ti=(TextureImporter)AssetImporter.GetAtPath(Root+"Premium"+g+"_"+channel+".png");var ps=ti.GetPlatformTextureSettings("Android");if(!ps.overridden||ps.maxTextureSize!=1024||ps.format!=TextureImporterFormat.ASTC_6x6||ti.isReadable||ti.sRGBTexture!=(channel=="BaseColor"))throw new Exception("Texture import "+g+channel);}
         int count=0;
@@ -185,11 +186,25 @@ public static class KH_WashPremiumEditor
             count++;
         }
         if(count!=4)throw new Exception("Support count");
+        // The baseline (Temp, per machine): menu 20 wrote it on 2026-10-08; 21b captures it again from the saved scene before a change
+        // (IMP-DOG-049: before 49). No baseline = no PASS (Codex review 2026-10-11: a SKIP here must not end in an overall PASS).
         if(File.Exists("Temp/WashPremium/runtime-before-stable.txt")){if(File.ReadAllText("Temp/WashPremium/runtime-before-stable.txt")!=Stable(RuntimeSnapshot()))throw new Exception("Stable runtime preservation failed");}
-        else if(File.ReadAllText("Temp/WashPremium/runtime-before.txt")!=RuntimeSnapshot())throw new Exception("Runtime preservation failed");
+        else if(File.Exists("Temp/WashPremium/runtime-before.txt")){if(File.ReadAllText("Temp/WashPremium/runtime-before.txt")!=RuntimeSnapshot())throw new Exception("Runtime preservation failed");}
+        else throw new Exception("No runtime baseline in Temp/WashPremium: run 21b - Capture Integration Baseline on the saved scene BEFORE the change (49), then 21 after it");
         var gallery=EditorSceneManager.GetActiveScene().GetRootGameObjects().Single(x=>x.name=="KH_WashPremiumPreview_Inactive");// IMP-DOG-047 (2026-10-11): WashPremium/48 keeps only the offered items in the gallery (the dropped ones ship otherwise).
         if(gallery.activeSelf||gallery.transform.childCount!=KH_WashSelectionEditor.Order.Length)throw new Exception("Preview unexpectedly active or not the "+KH_WashSelectionEditor.Order.Length+" offered items ("+gallery.transform.childCount+")");
-        log.AppendLine("PASS 18 models / 19604 tris / 2 materials / 6 texture imports / 4 support backing refs / 20 lift poses / center+size independence / existing runtime preservation; Edit-mode only");Receipt("verify",log.ToString());
+        log.AppendLine("PASS 18 models / 19604 tris / 2 materials / 6 texture imports / 4 support backing refs / 20 lift poses / center+size independence / existing runtime preservation (Temp/WashPremium/runtime-before*.txt) / gallery "+KH_WashSelectionEditor.Order.Length+" offered items; Edit-mode only");Receipt("verify",log.ToString());
+    }
+    /// <summary>IMP-DOG-049 (2026-10-11): the baseline 21 compares against (the stations' KH_WashStationCall, every KH_WashTool, the lift
+    /// colliders), from the SAVED scene, raw and in the stable form (globalIDs). Run it right before a change (49); 21 after the change
+    /// must find the same stable snapshot. Writes Temp only.</summary>
+    [MenuItem(Menu+"21b - Capture Integration Baseline")]
+    public static void CaptureBaseline()
+    {
+        Guard();if(EditorSceneManager.GetActiveScene().isDirty)throw new InvalidOperationException("Save first: the baseline is the saved scene");
+        if(Stations().Length!=4)throw new InvalidOperationException("Expected four stations");
+        var raw=RuntimeSnapshot();Directory.CreateDirectory("Temp/WashPremium");File.WriteAllText("Temp/WashPremium/runtime-before.txt",raw);File.WriteAllText("Temp/WashPremium/runtime-before-stable.txt",Stable(raw));
+        Receipt("baseline","stations=4 snapshot lines="+raw.Split(new[]{(char)10},StringSplitOptions.RemoveEmptyEntries).Length+" (KH_WashStationCall, KH_WashTool, lift colliders); 21 compares the stable form after the change");
     }
     [MenuItem(Menu+"22 - Refresh Support Bounds")]
     public static void RefreshBounds() { Guard(); foreach(var c in Stations())SetSupportBounds(c.liftRoot.parent.Find("SupportGroundRoot").GetComponentInChildren<SkinnedMeshRenderer>(true));Receipt("bounds","updated from recalculated baked mesh bounds"); }

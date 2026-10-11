@@ -15,7 +15,7 @@ namespace KominkaHillside
         public KominkaDogRun.KD_Language language;
         public string[] languageCodes;
         public string[] words;
-        public int wordCount=43;
+        public int wordCount=46;      // WashPremium/48 / 49 write the scene value (KH_WashSelectionEditor.WordCount)
         public int[] groups;          // by item id: the tab (0 foam / 1 water / 2 finish / 3 station), -1 = not offered
         public int[] order;           // the offered item ids in display order
         public int[] itemWords;       // by item id: the word holding its name (20 + id for the first 17; new items append words)

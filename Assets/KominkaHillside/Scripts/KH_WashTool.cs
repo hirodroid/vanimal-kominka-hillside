@@ -52,7 +52,7 @@ namespace KominkaHillside
         public KH_WashToolState state;
         // Optional premium input; effect kind remains tool. Existing free tools keep these defaults.
         public bool sprayInput;
-        public float pulseSeconds;
+        public float pulseSeconds;     // 0 toggle / > 0 one shot / PulseHold hold-to-spray (OnPickupUseDown)
         public int finishKind;
         public KH_WashFinishFx[] finishTargets;
         public KH_WashSelection selection;
@@ -284,16 +284,26 @@ namespace KominkaHillside
             ApplySpray(Want());
         }
 
+        // IMP-DOG-049 (2026-10-11): pulseSeconds picks the spray input of a sprayer (KH_WashSelection writes it per item):
+        //   0          = toggle (Use down flips on / off; the free shower, the watering can)
+        //   > 0        = one shot per press: on for pulseSeconds; a press while the shot runs is ignored, so the cadence is pulseSeconds
+        //                (the water pistol)
+        //   PulseHold  = hold to spray: on while Use is held, off on Use up (the hose; plan 2026-10-11 §3.2)
+        // Toggle and hold go through state._SetSpraying as before; a shot goes through state._Shot (a synced shot serial + its server time,
+        // so the others play one burst per shot and a late joiner replays none: Codex review 2026-10-11).
+        public const float PulseHold = -1f;
         public override void OnPickupUseDown()
         {
             if (_IsSprayer())
             {
                 float now = Time.time;
-                if (now - _lastToggleAt < toggleGuardSeconds) return;   // a double tap: ignore the second flip
+                if (pulseSeconds > 0f && _sprayOn) return;              // one shot at a time
+                if (pulseSeconds >= 0f && now - _lastToggleAt < toggleGuardSeconds) return;   // a double tap: ignore the second flip
                 _lastToggleAt = now;
-                _sprayOn = pulseSeconds > 0f || !_sprayOn;
-                if (pulseSeconds > 0f) _pulseUntil = now + pulseSeconds;
-                if (state != null) state._SetSpraying(_sprayOn);
+                _sprayOn = pulseSeconds != 0f || !_sprayOn;
+                // one shot: a serial on the state (KH_WashToolState._Shot), not the spraying bit; toggle / hold: the spraying bit as before
+                if (pulseSeconds > 0f) { _pulseUntil = now + pulseSeconds; if (state != null) state._Shot(_ShownItemHere()); }
+                else if (state != null) state._SetSpraying(_sprayOn);
                 if (!_sprayOn) EndAllContacts();
                 ApplySpray(Want());
                 return;
@@ -309,7 +319,18 @@ namespace KominkaHillside
 
         public override void OnPickupUseUp()
         {
-            if (_IsSprayer()) return;   // the toggle ignores the release
+            if (_IsSprayer())
+            {
+                // the toggle and the shot ignore the release; hold-to-spray (the hose) stops here
+                if (pulseSeconds < 0f && _sprayOn)
+                {
+                    _sprayOn = false;
+                    if (state != null) state._SetSpraying(false);
+                    EndAllContacts();
+                    ApplySpray(Want());
+                }
+                return;
+            }
             if (tool == KH_DogWash.ToolBottle)
             {
                 _useHeld = false;                         // stop repeating; every dose already closed its contact
@@ -332,7 +353,30 @@ namespace KominkaHillside
             if (!selectionActive) return false;
             if (!_IsSprayer()) return false;
             if (_held) return _sprayOn;               // the holder's own truth, no round trip
-            return state != null && state.spraying;
+            return (state != null && state.spraying) || (pulseSeconds > 0f && Time.time < _shotShownUntil);   // + a remote one-shot (_OnShot); only while this slot still shows a one-shot item (Codex 2026-10-11)
+        }
+
+        // IMP-DOG-049: another player's shot (the serial advanced on the state, KH_WashToolState.OnDeserialization). Local only, not a network
+        // event. Acts only when this slot still shows that one-shot item and is not spraying in another mode (a late notice after the slot
+        // switched to the hose / the can must not spray it). Shows one burst for pulseSeconds; the frame loop turns it off through Want().
+        private float _shotShownUntil = -100f;
+        public void _OnShot(int item)
+        {
+            if (!selectionActive || _held || pulseSeconds <= 0f) return;    // the holder shows its own shot from the input
+            if (state != null && state.spraying) return;                     // a toggle / hold spray is on: not a shot
+            if (item < 0 || item != _ShownItemHere()) return;                // the slot shows another item now
+            _shotShownUntil = Time.time + pulseSeconds;
+            if (_sprayShown && spray != null) { spray.Stop(); spray.Play(); }   // still showing the previous shot: restart the burst
+            ApplySpray(Want());
+        }
+
+        // The item this premium slot shows (KH_WashSelection), -1 for a free tool or none.
+        int _ShownItemHere()
+        {
+            if (selection == null || selection.slots == null || selection.slotCategories == null) return -1;
+            for (int s = 0; s < selection.slots.Length && s < selection.slotCategories.Length; s++)
+                if (selection.slots[s] == this) return selection._ShownItem(selection.slotCategories[s]);
+            return -1;
         }
 
         bool IsLocalVR()
@@ -744,7 +788,7 @@ namespace KominkaHillside
         {
             selectionActive = value;
             if (value) return;
-            _useHeld = false; _sprayOn = false; EndAllContacts(); ApplySpray(false);
+            _useHeld = false; _sprayOn = false; _shotShownUntil = -100f; EndAllContacts(); ApplySpray(false);
             if (state != null && Networking.IsOwner(state.gameObject)) state._SetSpraying(false);
         }
         [NetworkCallable(maxEventsPerSecond: 4)]
