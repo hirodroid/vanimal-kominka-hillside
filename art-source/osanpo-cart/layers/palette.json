@@ -1,0 +1,29 @@
+{
+  "hex": {
+    "moss": "53634e",
+    "cloth": "a89c78",
+    "wood": "92714b",
+    "dark": "343c35",
+    "brand": "364e3c",
+    "cream": "e6dcc3",
+    "stop": "b5735a",
+    "burn": "3b2a1d",
+    "rim": "46533f",
+    "hub": "262b27"
+  },
+  "idOrder": [
+    "moss",
+    "cloth",
+    "wood",
+    "dark",
+    "brand",
+    "cream",
+    "stop",
+    "burn",
+    "rim",
+    "hub"
+  ],
+  "idPixelValue": "id*20",
+  "valuePixel": "luminance*160",
+  "compose": "rgb = palette[id] * luminance (sRGB, clipped)"
+}
