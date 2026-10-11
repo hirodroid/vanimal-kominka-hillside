@@ -1,11 +1,11 @@
 # PC版シャンプー泡の立体化 — 詳細設計
 
 > 対象: DES-DOG-011
-> 2026-10-11 / 設計案 v1。ユーザー確認済みの範囲は **PCのみ改善、Quest・iOSは現行維持**。方式・調整値は比較試作前の提案であり、見た目と性能の採用判断は未了。
+> 2026-10-11 / 実装候補 v2。ユーザー確認済みの範囲は **PCのみ改善、Quest・iOSは現行維持**。ローカル実装・検査は§14、見た目と性能の採用判断は未了。
 
 ## 1. 結論と設計の境界
 
-第一候補は **既存の細い泡の膜＋体に付着する丸いメッシュ＋すすぎ時だけの短命Mesh粒子**。PCの現行「泥・濡れ1パス＋泡4層」を「泥・濡れ1パス＋薄い泡1層＋立体泡1パス」へ置き換える案を比較する。追加するだけの案も切り分け用に残すが、本採用では既存の上3層を削ることで増分を抑える。
+第一候補は **既存の細い泡の膜＋体に付着する丸いメッシュ＋すすぎ時だけの短命Mesh粒子**。PCの現行「泥・濡れ1パス＋泡4層」を「泥・濡れ1パス＋薄い泡2層＋立体泡1パス」へ置き換える候補を実装した。薄い泡1層の初案は全身比較で隙間が目立ち2層へ修正。追加するだけの案も切り分け用に残すが、第一候補は既存の上2層を置き換える。
 
 付着泡をParticleSystemで全面管理すると、各粒の骨追従・体表UV・局所すすぎ・復元を別途扱う必要がある。Udon APIが無いから却下するのではない（必要な粒子APIは今回公開を確認した）。**粒ごとの毎フレーム処理を避け、既存のスキニングとマスクを使えること**を第一候補の理由とする。
 
@@ -15,7 +15,7 @@
 
 ## 2. 今回確認した実物と、確認できていないこと
 
-### 2.1 調査条件と証拠
+### 2.1 設計前の読み取り調査条件と証拠（履歴）
 
 - Unity 2022.3.22f1 / Worlds SDK 3.10.5。開始時HEAD `647974c`。他セッションが同じ作業ツリーで追加道具等を変更中のため、関連の未コミット変更を含む作業ツリーを読み取り、実行コード・シーンは編集しない。
 - `scripts/unity-api.sh check` で本プロジェクトの `Assets` と接続先を照合。Editモードの `VRCDefaultWorldScene`、読み取り前後 `dirty=False`。Play・コンパイル・再構築・保存・描画試作は行っていない。
@@ -116,7 +116,7 @@ Boundsは元bodyの可動範囲に最大半径・毛面offsetを加え、実効�
 
 ## 5. 描画と材質
 
-新PC薄膜shader（仮称 `KH_WashShellPCThin.shader`）は、元 `KominkaHillside/Wash Shell` の `BASE` と `FOAM0` を `UsePass` で再利用する案。shader Propertiesは必要項目を明示し、元材質からEditorで値を複製・照合する。配列は現行同様Startで設定する。旧shaderのモバイルSubShaderは変更しない。UsePassの解決・variant stripping・D3D11での2パス化はG0で確認する。
+新PC薄膜shader `KH_WashShellPCThin.shader` は、元 `KominkaHillside/Wash Shell` の `BASE`・`FOAM0`・`FOAM1` を `UsePass` で再利用する。初案の2passでは根元のFOAM0が毛に隠れ、立体球の間に隙間が目立ったため、全身比較後に3passへ変更した。立体泡と合わせて4pass（流下は別）。元材質からEditorで値を複製・照合し、PC泡の下地だけは影色を淡くし、白毛用の強い平面コントラストを弱める。泥・濡れの設定は継承する。配列は現行同様Startで設定する。旧shaderのモバイルSubShaderは変更しない。UsePassの3pass解決・実描画・PC bundle後の再描画をG0で確認する。
 
 `Material.SetShaderPassEnabled("FOAM1", false)` で既存層を個別停止する案は採らない。APIは公開だが [Unity仕様](https://docs.unity3d.com/2022.3/Documentation/ScriptReference/Material.SetShaderPassEnabled.html) はLightMode tagを指定しており、現行BASE/FOAM0〜3は全てForwardBase。Nameが違うだけで個別に止まるとは言えない。[UsePass](https://docs.unity3d.com/2022.3/Documentation/Manual/SL-UsePass.html) は名前付きpass再利用の仕組みとして使い分ける。
 
@@ -144,7 +144,7 @@ Boundsは元bodyの可動範囲に最大半径・毛面offsetを加え、実効�
 
 ## 7. 実行コードへの接続
 
-実装予定は `KH_DogWash.PCFoam.cs` のpartialと、既存ファイルの少数の呼出点。新UdonBehaviourや新しいUpdate/LateUpdateを常設しない。追加フィールド・処理・呼出点を `#if !UNITY_ANDROID && !UNITY_IOS` でまとめて除外する。既存の同期変数・ネットワーク引数は増減しない。
+実装は `KH_DogWash.PCFoam.cs` のpartialと、既存ファイルの少数の呼出点。新UdonBehaviourや新しいUpdate/LateUpdateを常設しない。追加フィールド・処理・呼出点を `#if !UNITY_ANDROID && !UNITY_IOS` でまとめて除外する。既存の同期変数・ネットワーク引数は増減しない。
 
 | 既存の接続点 | PC側の責務 |
 |---|---|
@@ -156,9 +156,9 @@ Boundsは元bodyの可動範囲に最大半径・毛面offsetを加え、実効�
 | ContactEffects | §6の条件に限り流下粒子を出す。別端末への送信やclean判定を書き換えない |
 | リセット／epoch切替 | 粒子と発生accumulatorをClear。追加描画状態を再構成 |
 
-**泡RendererのOFF判定に注意:** 粗いセルが0でもローカルmaskに残り得るため、セル平均だけで即OFFにしない。初回は「泡を付ける操作・Restoreに泡を含む受信があればON」「泡セルが0かつ最後の泡関連活動から既存foamDrySeconds＋2秒を経過、または明示的なクリアを描画済みならOFF」とする保守的な猶予を使う。すすぎ直後の残留skin負荷は計測に含める。常時ONや早すぎるOFFを隠すために独自GPU readbackを導入しない。細い残留maskの扱いが不一致なら既存の復旧・乾燥経路と合わせて再設計する。
+**泡RendererのOFF判定:** 粗いセルが0でもローカルmaskに残り得るため、セル平均や経過時間だけでOFFにしない。泡付与・泡を含むRestore・泡セルの検出でON、泡なしRestoreまたは既存Decayの最終クリアBlit完了後にOFF。初案のfoamDrySeconds＋2秒は、別部位を洗い続けて乾燥が停止している場合と矛盾するため廃止した。すすぎ直後から既存クリアまでの残留skin負荷は計測に含める。追加GPU readbackは行わない。
 
-PC用薄膜材質へ変えるのはStartで `.material` を取得する前のSetup/ビルドコピーで行う。差替え前の元材質をPC専用の `pcFoamFallbackShellMaterial` 参照として必ず保持する。参照が無いbuildは検査で失敗させ、復帰を保証できないまま配布しない。Startの前置検査が失敗した場合は、その参照へ戻し、追加Rendererを無効化・粒子をClearしてから既存の材質キャッシュ取得とmask／配列の初期化へ進む。薄膜だけを残して成功扱いしない。
+PC用薄膜材質への変更はビルドコピーとStartの前置検査で行う。差替え前の元材質をPC専用の `pcFoamFallbackShellMaterial` 参照として必ず保持する。参照が無いbuildは検査で失敗させ、復帰を保証できないまま配布しない。Startの前置検査が失敗した場合は、その参照へ戻し、追加Rendererを無効化・粒子をClearしてから既存の材質キャッシュ取得とmask／配列の初期化へ進む。薄膜だけを残して成功扱いしない。
 
 実行中のA/B切替を追加する場合は、材質を入れ替えた後に `_shellMat` キャッシュとmask・配列を再bindする専用試験処理を使う。古いキャッシュを残した単純差替えでは比較しない。
 
@@ -186,7 +186,7 @@ PC用薄膜材質へ変えるのはStartで `.material` を取得する前のSet
 
 概算strideはPOSITION/NORMAL各12、UV群計72、weights＋indices32 bytes。実際のUnity stream・圧縮・CPU側コピー・GPU skin buffer・Read/Write・BlendShape等で変わる。256×6なら元データだけで約8.58 MiB。頂点属性を増やす方式なので、三角形だけで軽量と判断しない。初回の上限案は256 lobe/犬、6匹合計1,536 lobe、流下96粒。これで全身の見え方が満たせなければ、勝手に上限を上げず形状・方式と予算を再判断する。
 
-6匹の元meshは計32,776三角形。単純な「三角形×pass」では現行5pass=163,880、薄膜2pass＋192 lobe×6=157,712。**ほぼ同じだから同じ負荷、あるいは軽いとは言えない**。追加skinの8,064頂点/犬、5点×頂点のマスク読み、画素の覆う範囲、両眼描画が違う。一方で現行の上3層の画素ノイズを省けるため、測る価値がある。
+6匹の元meshは計32,776三角形。単純な「三角形×pass」では現行5pass=163,880、現在の薄膜3pass＋付着泡1,152 lobe=190,488（約16%増、流下別）。生成数はコーギー160・ポメ128・ラブ256・ダックス160・柴192・サモエド256で、追加skinは合計48,384頂点／92,160三角形。**pass削減を性能改善とは読まない**。5点×頂点のマスク読み、画素の覆う範囲、両眼描画も異なる。省くのは上2層の画素ノイズであり、採否にはCPU/GPUの比較が必要。
 
 負荷の暫定判定案は、同一PCVR条件で候補−現行のCPU/GPU各中央値が+0.3 ms以内、p95が+0.5 ms以内、90 Hzなら全体p95が11.1 ms以内（他refresh rateでは対応予算）。これは**測定前の提案**で、もともと予算を超える環境では「元が遅いから良い」にせず、候補の増分と既存の不足を分ける。測定揺れが閾値より大きければ判定不能とし、条件を固定して再測定する。ユーザーが負荷増を体感する場合は数値内でも見送る。
 
@@ -196,7 +196,7 @@ PC用薄膜材質へ変えるのはStartで `.material` を取得する前のSet
 |---|---|---|
 | A 現行4層 | 体感・速度・マスク・通信の基準 | 常に残す。現行確認も新しい版で行う |
 | D-add 現行＋立体泡 | 立体泡だけの増分を切り分ける | 完成案と取り違えない。GPU/CPU増分が大きければ早期終了 |
-| D-replace 薄膜2pass＋立体泡＋流下 | 第一候補 | 退化mesh保持NG、体表追従NG、帯へのはみ出し・大きな穴、必要密度が予算超過なら棄却 |
+| D-replace 薄膜3pass＋立体泡＋流下 | 第一候補（全身比較で2→3passへ修正） | 退化mesh保持NG、体表追従NG、帯へのはみ出し・大きな穴、必要密度が予算超過なら棄却 |
 | D-normal 通常の非退化skinned泡mesh | collapsed方式の保存／描画が通らない時の代替 | 局所的な成長・消失の質、同じ密度のskin負荷が許容外なら棄却。複雑な中心復元を無検証で足さない |
 | C 全面Mesh粒子 | ParticleSystem更新・描画の比較 | 固定粒数の元頂点anchorを追い、SetParticlesのCPUとmask対応を計測。独自readbackや大量骨GameObjectが必要なら今回の優先順位を下げる |
 
@@ -206,7 +206,7 @@ Cの初回対照は柴・同じ球mesh・同じ数・同じ不透明材質・同
 
 | ゲート | 成果物 / 合否 / 作業範囲 |
 |---|---|
-| G0 方式の成立 | 柴の元頂点1〜数個、Edit用の非保存コピーで生成。属性／index／Bounds／非ゼロの正しい描画、マスク0・中間・1、UsePass2pass、EmitParamsのUdonコンパイルを確認。保存再読込・PC bundle後にも保持。ここでfailedならD-normalへ |
+| G0 方式の成立 | 柴の元頂点1〜数個、Edit用の非保存コピーで生成。属性／index／Bounds／非ゼロの正しい描画、マスク0・中間・1、UsePass3pass実描画、EmitParamsのUdonコンパイルを確認。保存再読込・PC bundle後にも保持。ここでfailedならD-normalへ |
 | G1 面の範囲と追従 | 形状データ・動的BlendShape一覧・静的値・UV seam・5点supportを採取。背中・腹・脚・腰・尾根元の代表姿勢でanchorが浮かない。白毛・小型犬も少数表示し、顔を読めることを確認。必要部位を表現できなければ密度増量前に方式へ戻る |
 | G2 柴1匹の体験 | 薄泡→全身→片側すすぎ→止水→追加泡→全身すすぎ。上・横・斜め、近接VR・Desktop、昼／夜。1cm試験帯と通常7cm半径のシャワー、首脚seam、顔、泡なしすすぎ、ワープ中断を確認 |
 | G3 最小の性能A/B | 現行→D-add→現行→D-replace→現行。1匹／6匹、泡なし／全身／同時すすぎ、未使用、すすぎ直後のOFF猶予を測る。必要時だけCの最小対照へ。固定条件、ウォームアップ後30秒以上×3回を提案。CPU/GPU中央値・p95・drawcall・SetPass・vertices・粒数・メモリを同じ計測系で記録 |
@@ -215,9 +215,9 @@ Cの初回対照は柴・同じ球mesh・同じ数・同じ不透明材質・同
 
 Playが必要な工程では `vrc-review` の相談を経て `scripts/kh-harness-run.sh` から対象ケースだけ実行する。全体回帰は明示指示時のみ。PCVRの見た目・体感と通信／モバイル確認は `vrc-verification` に従って引き継ぎ、Editor画像を実機合格へ読み替えない。
 
-実装の作業単位は (1)生成・描画の小試作、(2)マスク／流下の接続、(3)PC build分岐・復旧、(4)比較と6匹。子IMPはG0着手時に発行し、方式不成立のまま全6匹の本制作Issueを完了扱いしない。G0〜G5は今回未実行。
+実装の作業単位は (1)生成・描画の小試作、(2)マスク／流下の接続、(3)PC build分岐・復旧、(4)比較と6匹。子IMPは [IMP-DOG-052](../development/issues/IMP-DOG-052-pc-volumetric-shampoo-foam.md)。2026-10-11の実装候補とゲートごとの確認範囲は§14。実機未確認のまま全6匹の採用完了扱いにしない。
 
-## 12. 制作票（生成アセット、未制作）
+## 12. 制作票（生成アセット）
 
 ### 目的・用途と見た目
 
@@ -241,21 +241,23 @@ UVは絵の展開ではなく体表マスク参照と球方向データ。縮退
 
 ### ファイルと引き渡し
 
-予定名: `Scripts/Editor/KH_PCFoamEditor*.cs`（生成・検査・ビルド分岐）、`Scripts/KH_DogWash.PCFoam.cs`、`Shaders/KH_WashShellPCThin.shader` / `KH_PCFoam.shader`、`Data/Wash/PCFoam/`（犬別mesh・材質・設定）。いずれも `Assets/KominkaHillside/` 内。既存GUIDを維持して再生成、.meta同梱。配置だけを正本にせずSetupとVerifyが設定版を照合する。
+実装名: `Scripts/Editor/KH_PCFoam*.cs`（生成・検査・ビルド分岐）、`Scripts/KH_DogWash.PCFoam.cs`、`Shaders/KH_WashShellPCThin.shader` / `KH_PCFoam.shader` / `KH_PCFoamRunoff.shader`、`Data/Wash/PCFoam/`（犬別mesh・材質・設定）。いずれも `Assets/KominkaHillside/` 内。既存GUIDを維持して再生成、.meta同梱。配置だけを正本にせずSetupとVerifyが設定版を照合する。
 
 ### 参照元と権利
 
-既存の購入犬のmesh/weights/UVを生成入力として扱い、元アセットは変更しない。今回新しい外部素材・画像・音源は取得していない。生成時に入力GUIDと由来・既存の利用条件記録を対応付け、派生アセットのワールド内利用範囲を確認する。外部へのmesh配布は今回の対象外。球primitiveとshaderコードは自作予定。
+既存の購入犬のmesh/weights/UVを生成入力として扱い、元アセットは変更しない。今回新しい外部素材・画像・音源は取得していない。生成時に入力GUIDと由来・既存の利用条件記録を対応付け、派生アセットのワールド内利用範囲を確認する。外部へのmesh配布は今回の対象外。球primitiveとshaderコードは自作。
 
 ### 仮決め・未確定
 
-collapsed meshの保存／ビルド保持、動的BlendShape一覧、全面を満たす密度、すすぎ境界、queueと透明な水の前後、性能予算の実機妥当性。いずれも上記ゲートで棄却できる設計とする。
+collapsed meshの保存／PC単体bundle保持と動的BlendShape一覧は§14で確認。全面を満たす密度、すすぎ境界、queueと透明な水の前後、性能予算の実機妥当性は未確定で、上記ゲートで棄却できる設計とする。
 
 ### 確認結果
 
-§2の読み取り・API公開・数式計算のみ完了。新mesh、材質、Udon、PC bundle、実機表現と性能は未検証。
+設計時の読み取り・API公開・数式計算に加え、§14の生成・描画・局所動作確認まで実施。PCVRの表現・性能と跨端末検収は未完了。
 
 ### 変更履歴
+
+2026-10-11 v2: 6匹の実装候補と局所検査を追加。薄膜を3passへ、形状を高さ0.85・埋込み0.03へ調整。
 
 2026-10-11 v1: 初回の調査案から、中心skin／固定UVの制約、静的tail2、部位と密度、UsePassによる上層置換、モバイルbuild除外、実装ゲートを具体化。
 
@@ -276,3 +278,75 @@ collapsed meshの保存／ビルド保持、動的BlendShape一覧、全面を�
 | Start時には薄膜へ差替え済みで、旧4層への復帰手段がない | 既存Startの材質キャッシュ取得を確認。§7・8で旧材質参照保持とキャッシュ取得前の復帰、G4で故障注入を明記 |
 
 同担当が上記2点と影響範囲を再確認し、両件解消・追加指摘なし。数式・数量、マスクと同期、未検証範囲の扱い、モバイル除外方針も問題なし。これは設計文書のレビュー結果であり、G0〜G5の合格ではない。数式再計算、`check-issues.js`、`check-doc-links.js` を実施済み（旧洗浄試作書のarchive候補WARNは既存）。
+
+## 14. 実装候補と確認記録（2026-10-11）
+
+実装担当Codex、開始HEAD `278fcb1`。証拠は [実装検証記録](evidence/2026-10-11-pc-foam-implementation/README.md)。調査・設計時点の未実装記述は履歴であり、現在の到達点は本節を使う。
+
+### 候補の形と保守
+
+6匹に合計1,152個の付着泡を生成。球の真珠状の境目を弱めるため、法線方向の高さを0.85倍、中心を半径の0.03倍だけ埋める。高さ0.55・埋込み0.1の候補は薄膜に埋まりすぎたため棄却。3passの薄膜で隙間を補い、PC側の泡下地だけ `_FurBrightness=0.5`、影色を元泡色へ75%寄せた。白毛の灰色の点を抑えるための候補調整であり、昼夜の採用値は未確定。
+
+生成入力は元body meshのGUID/local ID・依存hash、元shell材質のGUID/依存hash、静的形状値、meshToWorldScale、boneToPart。保存されていない元材質変更を拒否し、入力変化はSetup/Verify/build時に再生成要求として止める。`Data/Wash/PCFoam/` は生成物で、手修正は再生成により上書きされる。調整は元shellまたは生成コードのPC専用値を直して再生成する。購入アセット自体は変更しない。
+
+生成→適用の入口は `Tools/KominkaHillside/PC Foam/` の12 Generate、20 Apply、21 Verify。Applyは6匹に追加してdirtyにし、保存はVerify成功後に行う。元shellのauthoring材質はそのまま。PCビルドコピー／Startで薄膜へ切り替え、依存欠落時はStartの元材質キャッシュ取得前に旧材質へ復帰する。
+
+### 成功した範囲
+
+| 項目 | 証拠と実測範囲 |
+|---|---|
+| C#/Udon | C#成功。UdonはAndroid/iOS/PCのtarget指定で成功。PC泡の変数はAndroid/iOSで0、PCで12、最後にEditor用へ復元 |
+| 中心skin・展開 | 柴anchor13、42頂点80三角形。元姿勢誤差0、骨回転時5.4µm、独立骨行列計算との差3.8µm。保存再読込とPC単体bundle後も保持 |
+| マスクと薄膜 | mask0で0画素、1で192×192、0.5で115×116。周囲を含む5支点の各0で消失。薄膜3passの実描画・bundle後再描画成功 |
+| 形状監査 | 6犬種のAnimator/Udonの動的表情影響頂点を除外。ダックス・柴のtail、サモエドの静的形状を生成へ反映。全部位の実姿勢を検収した意味ではない |
+| 配線・鮮度 | 6匹の実mesh/material・bone/root/quality・TRS・Bounds・粒子設定・proxy/backingをVerify。誤mesh・改名root・変更scaleはコピー検査で拒否 |
+| ローカル動作 | run `20261011-082239`、38.3秒、PCF-restore-rinse-clear-reemit 1ケースPASS。泡なしで非発生、泡復元、すすぎ、自然消滅、リセット、再発生。初回最大1粒、再発生最大3粒、発生gate間隔も確認 |
+| 上限・復帰の単体確認 | 同じ時刻の40接触で1粒、上限16粒・拒否要求破棄・ワープclear・残maskの早期OFF防止・最終clearでOFF・欠落時fallback。C# Editプローブであり複数端末Udon試験ではない |
+| モバイル向けコピー | Android/iOS指定のProcessCopyを実行し6ルート・PC参照・DynamicMaterials・依存を除外。実際のモバイルビルドcallback到達性／実機の証拠ではない |
+| 保存への影響 | Apply前後のYAML要素比較で追加物と6匹の参照変更を特定、NetworkID一覧一致。Play前後のシーンSHA一致、dirty=false、設定とPlayerData復元 |
+| PCシーンbundle・容量 | Windowsの実callbackで6匹を処理、最終BuildReport Succeeded/errors0、収録sceneの読取り成功。追加資産群＋参照依存の単体bundleは圧縮1,243,358 B（1.19 MiB）、非圧縮10,088,176 B（9.62 MiB）。ワールド純増分・実行時RAM/VRAMではない |
+| Android/iOSシーンbundle | active targetはWindowsを維持し、Udon compileとBuildAssetBundlesに対象targetを明示。両方で実callbackが対象targetの6匹を処理、専用依存除外成功、最終BuildReport Succeeded/errors0、元シーンSHA一致。終了後Editor用へコンパイルを復元。SDK／実機検証とは別 |
+
+Editプレビューは柴・ポメ・サモエドの全身／帯／泡なしを固定照明で比較。主洗い場の照明・PCVR・水との順序・全姿勢の検収には使わない。
+
+PCシーンbundleは119,888,859 B（114.33 MiB）。これは共有作業ツリーの現行シーン全体の参考値で、泡導入前後の差ではない。初回はmanifest／ファイルの存在だけで成功とする検査が不十分だったため、固有run・出力先・最終BuildReport・対象platform・実callbackの処理target／件数・収録シーンを照合する方式へ変更した。nativeログには `Build Finished, Result: Failure.` が残るが、当該呼出しに対応する最終reportはSucceeded/errors0、生成物読取りも成功。内部ログがそう表示する原因は未特定。日時はUnity 2022.3.22f1がUnspecifiedを返すため、UTC変換による9時間ずれを判定に使わず、固有出力先とreportファイルの更新時刻で鮮度を確認する。
+
+### 独立レビューと未確認項目
+
+`foam_design_review` が実装差分を独立レビューし、(1)洗浄中のtimeout OFF、(2)改名rootのモバイル除外漏れ、(3)実Renderer設定の検査不足、(4)元shell変更の検知不足を指摘。全件修正し、同担当の限定再確認で解消。局所Playの事前相談を経て上記1ケースを実行した。レビュー対象は実装・検証手順であり実機外観ではない。
+
+追加したbundle検査の独立レビューで、reportがnullの時にactive targetのWindowsを誤採用しても件数だけでmobileをPASSにできる点を指摘された。callbackが実処理したtargetと依存除外完了をreceiptへ記録し、要求target一致を必須に修正。同担当の限定再確認で解消。修正後に上表の3targetを実行した。
+
+最終差分の確認で、cross-target後のEditor再コンパイルはメモリを復元するだけで、ディスクの生成ProgramAssetにmobile用fieldDefinitionsが残る点を修正した。開始前の既存dirtyを拒否し、終了時に対象のコンパイラ生成物だけをSaveAssetIfDirtyする。全体SaveAssetsは使わない。独立レビュー後、保存されたPC fieldDefinitionsとプログラム、シーン不変を確認。これは検査ツールの復元修正で、3targetの描画・除外検査とは別の記録を残す。
+
+G1の全姿勢・境界、G2の近接両眼／昼夜／水順序、G3のCPU/GPU・メモリ、G4のSDK経由・実端末・非Owner／Owner交代／途中参加・混在端末、G5のユーザー採否は未確認。6匹を置いたことをG5合格とはしない。現行と候補のA/Bは同じ姿勢・泡量・カメラ・解像度で行い、§9の予算を超えた場合は密度と方式を見直す。
+
+## 15. 実機への引き継ぎ
+
+### 0. Editorでは判定できない項目
+
+PCVRの両眼の位置・立体感、近接時の穴や輪郭、透明な水との描画順、実際の昼夜の白毛、VR解像度でのGPU負荷、別端末から受ける接触と途中参加。ここがNGならローカルの自動検査が成功していても採用しない。
+
+### 1. 準備と1人PCVR
+
+検証する版をメモし、コンソールの新規エラーなし・シーン保存・今回版のBuild & Testを確認する。既存の汚れ／泡／濡れの状態も記録する。ローカルbundle検査はBuild & Testの代わりではない。
+
+| 手順 | 期待する結果と記録 |
+|---|---|
+| 柴に少量→全身の泡、上・横・斜め・近接で見る | 丸い厚みが増える、穴や真珠の列が目立たない、顔が読める。昼／夜の同じ角度を残す |
+| 片側だけすすぐ→止水→追加泡→全身すすぎ | 消した帯の上に塊が残らない。接触近傍で泡が落ち、止水後0.6秒程度で流下が消える。泡なしでは流下しない |
+| 6犬種で歩行・座り・ブルブル、視界端から出し入れ | 関節や腹・脚・尾に浮きや欠け、突然の全消失がない。白毛も泥や灰色の点に見えない |
+| ワープ／リセット／再入場後に再び洗う | 過去の粒が残らず、新しい泡とすすぎが使える |
+| 同条件の現行と候補を比較 | §9・11 G3のCPU/GPU中央値・p95、描画数、メモリを記録。Desktop FPSだけでは採否を決めない |
+
+### 2. 2人・混在端末
+
+PC同士、およびPCとQuest/iOSで同じ犬を洗う。非Owner操作、2人同時すすぎ、Owner退出、泡を付けてから途中参加を確認する。洗浄状態の一致を見て、装飾粒子の個数一致は要求しない。Quest/iOSに新しい立体泡が出ず、従来の洗浄と表現が維持されることも各端末で記録する。
+
+| 症状 | 最初に見るところ |
+|---|---|
+| 古い平面表現のまま | 今回版をBuild & Testし直したか、PCか、Verifyの6匹配線、Startのfallback警告 |
+| 犬種1匹だけずれる／泡が出ない | 元body/材質/静的形状を変更後にGenerate→Verifyしたか、部位と視角 |
+| すすいだ帯に泡が残る | 同じ帯を旧版と比較し、細い帯／UV seam／近接角度を記録 |
+| Quest/iOSで新しい資産が混入する | 対象platformのcallback receiptと依存検査、ビルドし直した対象 |
+| 重い | 同じ解像度・頭数・泡量のCPU/GPU増分、粒数、すすぎ後の追加Renderer残留を分ける |

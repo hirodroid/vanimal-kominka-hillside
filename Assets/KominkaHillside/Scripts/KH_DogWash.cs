@@ -817,6 +817,9 @@ namespace KominkaHillside
 
             // Runtime copies only (vrc-udonsharp §1: Renderer.material is the one way to duplicate). The shell's
             // copy is taken once here and re-pointed at the newest mask after every Blit.
+#if !UNITY_ANDROID && !UNITY_IOS
+            PCFoamPrepare();
+#endif
             if (shellRenderer != null) _shellMat = shellRenderer.material;
             _maskMat = maskMaterialHolder != null ? maskMaterialHolder.material : maskMaterial;
 
@@ -845,6 +848,9 @@ namespace KominkaHillside
 
             _cur = maskA;
             _next = maskB;
+#if !UNITY_ANDROID && !UNITY_IOS
+            PCFoamInitialize(limit);
+#endif
 
             if (!_gotFirst)
             {
@@ -2020,6 +2026,9 @@ namespace KominkaHillside
         // contact history, so nothing from before is re-applied after the reset.
         void DropInFlight()
         {
+#if !UNITY_ANDROID && !UNITY_IOS
+            PCFoamReset();
+#endif
             _pdCount = 0;
             _qCount = 0;
             for (int t = 0; t < ChannelCount; t++) { _segOpen[t] = false; _segCarry[t] = false; _hValid[t] = false; }
@@ -2370,6 +2379,9 @@ namespace KominkaHillside
             SetLather(tool == ToolHand);
             VRCGraphics.Blit(_cur, _next, _maskMat, PassBrush);
             Swap();
+#if !UNITY_ANDROID && !UNITY_IOS
+            PCFoamTouch(tool);
+#endif
         }
 
         // IMP-DOG-039 §3.4: the Brush pass's lather gate - on for the bare hand only (x = handFoamMin, y = handSpreadStep texels,
@@ -2422,12 +2434,24 @@ namespace KominkaHillside
                 if (_dlEpoch[i] == epoch && SeqNewer(_dlSeq[i], dirtSeq)) QueueDirtFields(_dlFrom[i], _dlTo[i], _dlAmount[i] & 1023, (_dlAmount[i] >> 10) & 1023);
             _blitCount++;
             if (_maskMat == null || _cur == null || _next == null || cellTex == null) return false;
-            for (int c = 0; c < CellCount; c++) _cellColors[c] = new Color(_dirt[c], _foam[c], _wet[c], 1f);
+#if !UNITY_ANDROID && !UNITY_IOS
+            bool pcHasFoam = false;
+#endif
+            for (int c = 0; c < CellCount; c++)
+            {
+                _cellColors[c] = new Color(_dirt[c], _foam[c], _wet[c], 1f);
+#if !UNITY_ANDROID && !UNITY_IOS
+                if (_foam[c] > 0f) pcHasFoam = true;
+#endif
+            }
             cellTex.SetPixels(_cellColors);
             cellTex.Apply(false);
             _maskMat.SetTexture(_idCellTex, cellTex);
             VRCGraphics.Blit(_cur, _next, _maskMat, PassRestore);
             Swap();
+#if !UNITY_ANDROID && !UNITY_IOS
+            PCFoamRestored(pcHasFoam);
+#endif
             _restoreCount++;
             if (_replaying) { _rpIndex = 0; _rpLeft = -1f; }   // the partly replayed band was just wiped
             return true;
@@ -2544,6 +2568,9 @@ namespace KominkaHillside
                     _maskMat.SetVector(_idDecay, new Vector4(0f, 1f, 1f, 0f));
                     VRCGraphics.Blit(_cur, _next, _maskMat, PassDecay);
                     Swap();
+#if !UNITY_ANDROID && !UNITY_IOS
+                    PCFoamRestored(false);
+#endif
                 }
                 return;
             }
@@ -2737,6 +2764,9 @@ namespace KominkaHillside
             _cur = _next;
             _next = t;
             if (_shellMat != null) _shellMat.SetTexture(_idMask, _cur);
+#if !UNITY_ANDROID && !UNITY_IOS
+            PCFoamBind();
+#endif
         }
 
         bool EnsureCreated()
@@ -2964,6 +2994,9 @@ namespace KominkaHillside
             _avgWet = n > 0 ? sw / n : 0f;
             _anyFoamOrWet = foamWet;
             _cellsEmpty = !dirty && !foamWet;
+#if !UNITY_ANDROID && !UNITY_IOS
+            PCFoamEvaluate(sf);
+#endif
             EvaluateTime(now);
 
             // The clean edge (formulas in the header): arm on the average dirt or on enough foamed cells anywhere
@@ -3010,6 +3043,9 @@ namespace KominkaHillside
         // _lastActivity), every 0.5 s without the cell loop. Unchanged cells = unchanged _anyFoamOrWet / _cellsEmpty.
         void EvaluateTime(float now)
         {
+#if !UNITY_ANDROID && !UNITY_IOS
+            PCFoamTime(now);
+#endif
             if (_anyFoamOrWet) { _lastActivity = now; _lastWetActivity = now; }
             // The shell goes off only when the cells are all zero AND the mask has had a full drying time since the
             // last stroke / foam / wet (its band can outlast the coarse cells). The mask is then set to the cells
@@ -3761,6 +3797,9 @@ namespace KominkaHillside
             if (tool == ToolDryer) return; // air sound/particles live at the nozzle, not water/contact scrub
             float now = Time.time;
             float foamHere = FoamNear(FoamKeyEffects, part, meshPoint);
+#if !UNITY_ANDROID && !UNITY_IOS
+            PCFoamContact(tool, part, world, sec, foamHere);
+#endif
             if (tool == ToolBottle || tool == ToolHand)
             {
                 // IMP-DOG-039 §2.5: the foam loop alone (its own deadline, not the shower's fur / foam mix): the bottle for one

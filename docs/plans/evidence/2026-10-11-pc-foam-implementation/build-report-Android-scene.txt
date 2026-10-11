@@ -1,0 +1,1 @@
+result=Succeeded errors=0 startedRaw=2026-10-11T08:38:35.2872397 dateKind=Unspecified endedRaw=2026-10-11T08:39:46.1131208 platform=Android output=C:/work/unity/vcc/VAnimal_KominkaHillside/Temp/PCFoamProof/bundles/ccc10df3f0fb4b859b9cad366b23bf36/scene

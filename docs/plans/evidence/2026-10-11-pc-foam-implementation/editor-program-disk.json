@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "method": "Independent filesystem read without recompile",
+  "serializedFormat": 2,
+  "foamFields": [
+    "_pcFoamAcc",
+    "_pcFoamHasPosition",
+    "_pcFoamLastContact",
+    "_pcFoamLastPosition",
+    "_pcFoamMat",
+    "_pcFoamNextEmit",
+    "_pcFoamReady",
+    "pcFoamFallbackShellMaterial",
+    "pcFoamRenderer",
+    "pcFoamRunoff",
+    "pcFoamThinMaterial",
+    "pcFoamVersion"
+  ],
+  "sceneHash": "5afe76f7af72a1a7f1f0e5d77ce5265a79675a47830b377d878a335cc15f71ee",
+  "sceneHashUnchanged": true
+}

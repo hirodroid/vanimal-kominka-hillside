@@ -1,0 +1,125 @@
+{
+    "version": "IMP-DOG-052-G0-v1",
+    "result": "PASS",
+    "error": "",
+    "device": "Direct3D11",
+    "worldCentre": "(45.98711, 2.72134, 48.33979)",
+    "worldBounds": "Center: (46.00000, 2.67663, 47.81787), Extents: (1.72521, 1.78192, 1.78191)",
+    "sceneDirtyBefore": false,
+    "sceneDirtyAfter": false,
+    "anchor": 13,
+    "vertices": 42,
+    "triangles": 80,
+    "thinPasses": 3,
+    "skinErrorMetres": 0.0,
+    "rotatedSkinErrorMetres": 0.00000540006249138969,
+    "intermediateWidthRatio": 0.5989583134651184,
+    "boneMatrixErrorMetres": 0.00000384438408218557,
+    "shots": [
+        {
+            "name": "ordinary",
+            "pixels": 26951,
+            "width": 192,
+            "height": 192,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "static-expanded",
+            "pixels": 26951,
+            "width": 192,
+            "height": 192,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "full",
+            "pixels": 26952,
+            "width": 192,
+            "height": 192,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "zero",
+            "pixels": 0,
+            "width": 0,
+            "height": 0,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "half",
+            "pixels": 9647,
+            "width": 115,
+            "height": 116,
+            "centreErrorPixels": 0.5
+        },
+        {
+            "name": "support-1",
+            "pixels": 0,
+            "width": 0,
+            "height": 0,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "support-3",
+            "pixels": 0,
+            "width": 0,
+            "height": 0,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "support-5",
+            "pixels": 0,
+            "width": 0,
+            "height": 0,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "support-7",
+            "pixels": 0,
+            "width": 0,
+            "height": 0,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "support-9",
+            "pixels": 0,
+            "width": 0,
+            "height": 0,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "rotated",
+            "pixels": 26952,
+            "width": 192,
+            "height": 192,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "thin-full",
+            "pixels": 36864,
+            "width": 192,
+            "height": 192,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "thin-zero",
+            "pixels": 0,
+            "width": 0,
+            "height": 0,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "bundle",
+            "pixels": 26952,
+            "width": 192,
+            "height": 192,
+            "centreErrorPixels": 0.0
+        },
+        {
+            "name": "thin-bundle",
+            "pixels": 36864,
+            "width": 192,
+            "height": 192,
+            "centreErrorPixels": 0.0
+        }
+    ]
+}

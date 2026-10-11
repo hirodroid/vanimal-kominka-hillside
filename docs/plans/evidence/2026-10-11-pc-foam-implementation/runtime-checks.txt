@@ -1,0 +1,24 @@
+Real C# methods in Edit; not Udon runtime or network acceptance.
+PASS ready before shell material cache
+PASS initial existing mask
+PASS actual Swap binds both materials
+PASS replay/lather wakes without particles
+PASS zero coarse cells plus long washing cannot hide residual mask
+PASS clear restore hides
+PASS foam restore wakes
+PASS non-shower does not emit
+PASS no runoff below foam threshold
+direct Emit time=8.577303 next=0 contact=-1000 acc=0 count=0 fetched=0 playing=False stopped=True paused=False floatStep=True
+after explicit Edit simulate (no restart) time=8.577303 next=0 contact=-1000 acc=0 count=0 fetched=0 playing=False stopped=False paused=True floatStep=True
+direct Emit after simulate time=8.577303 next=0 contact=-1000 acc=0 count=1 fetched=1 playing=True stopped=False paused=False floatStep=True
+contact 0 time=8.577303 next=8.660636 contact=8.577303 acc=0 count=1 fetched=1 playing=True stopped=False paused=False floatStep=True
+contact 39 time=8.577303 next=8.660636 contact=8.577303 acc=0 count=1 fetched=1 playing=True stopped=False paused=False floatStep=True
+PASS same-time burst is throttled to one particle (actual=1)
+PASS world size and lifetime bounded
+PASS capacity 16 and denied requests discarded
+PASS epoch reset clears transient particles without premature mask hide
+PASS warp fixture contains a live particle
+PASS warp clears world-space runoff
+PASS actual final clearing Blit disables volume
+PASS missing dependency restores original before cache
+PASS all runtime method checks

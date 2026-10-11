@@ -1,0 +1,6 @@
+Compile target options only; no active-target switch or mobile scene build.
+Android foamSymbols=0 
+iOS foamSymbols=0 
+StandaloneWindows64 foamSymbols=12 pcFoamRenderer,pcFoamRunoff,pcFoamThinMaterial,pcFoamFallbackShellMaterial,pcFoamVersion,_pcFoamMat,_pcFoamReady,_pcFoamAcc,_pcFoamLastContact,_pcFoamNextEmit,_pcFoamLastPosition,_pcFoamHasPosition
+PASS platform conditional compilation
+PASS Editor compile restored

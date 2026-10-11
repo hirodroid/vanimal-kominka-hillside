@@ -1,0 +1,5 @@
+Candidate preview only; authored pose, isolated scene, directional light 1, 640x512, not PCVR or production integration.
+KH_Wash_Pome cameraOrtho=0.2848284 bodyBounds=Center: (46.00, 2.24, 46.00), Extents: (0.10, 0.14, 0.19) foam=128
+KH_Wash_Shiba cameraOrtho=0.5573187 bodyBounds=Center: (46.00, 2.58, 48.05), Extents: (0.13, 0.29, 0.38) foam=192
+KH_Wash_Samoyed cameraOrtho=0.6979311 bodyBounds=Center: (48.00, 2.61, 48.03), Extents: (0.16, 0.36, 0.48) foam=256
+Production dirty unchanged=True

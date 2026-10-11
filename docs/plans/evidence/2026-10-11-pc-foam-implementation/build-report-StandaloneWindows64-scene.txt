@@ -1,0 +1,1 @@
+result=Succeeded errors=0 startedRaw=2026-10-11T08:36:52.6515760 dateKind=Unspecified endedRaw=2026-10-11T08:37:47.4140298 platform=StandaloneWindows64 output=C:/work/unity/vcc/VAnimal_KominkaHillside/Temp/PCFoamProof/bundles/decd3ca7a5f34d48b8d95137b31ee453/scene

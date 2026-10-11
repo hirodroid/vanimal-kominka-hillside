@@ -1,0 +1,354 @@
+{
+  "createdUtc": "2026-10-11T08:46:51.195Z",
+  "note": "Working-tree inputs after checks, before staging. Scene contains one excluded unrelated TMP auto-size change; see scene-diff.json.",
+  "files": [
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoamRunoff.asset",
+      "sha256": "a2b7372933de125beb4b3a22582032cc0f34f8caad3d0013d8cb4553cbf6359e"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoamRunoff.asset.meta",
+      "sha256": "246043aaddbb5aa0dc93826e9586b206c5ba28bb6fcd8c1c5b96e1acc189c7f2"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoamRunoff.mat",
+      "sha256": "7d9b0da9cae10915f091c33042db19ab1de81275d731596970c8d9e88453f56a"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoamRunoff.mat.meta",
+      "sha256": "dbd3f519f98634a0a7d3a0c45184dc7853f75846490943956220793b9304f9de"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Corgi.asset",
+      "sha256": "be54bc966a18d8c695f068bb97808d1272d12e1264b57acb65bb41cca4a3003d"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Corgi.asset.meta",
+      "sha256": "5c173c17f411b27cb7c7740b49d51e75330e7495038eebf6f5af9269b1d056f8"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Corgi.json",
+      "sha256": "257718822be01d26e0f704b27f11b2a290c67b2b5983e74c5abb2fc85bef2430"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Corgi.json.meta",
+      "sha256": "79d7d877fed89539fab30c46371f1baf7e1d01aadc241fa48aa6b7f29ae95c20"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Corgi.mat",
+      "sha256": "c04fc934a216ce3766c9e890b324df63ca109b5dae77e83a25bc696dd2451cd3"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Corgi.mat.meta",
+      "sha256": "3b112a050492052cd530c9beee79af66acee91339d739a380b3fd5e120e23e7b"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Dachs.asset",
+      "sha256": "92ef0b3a02ef823e14313e004ab3d4a5abadc65a925dbe1c5533f8b0c1ca0662"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Dachs.asset.meta",
+      "sha256": "7a1f2c2ea32da0ed6dd5dc14726baba11a3d725da5cd84344cf4c46daa065d6a"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Dachs.json",
+      "sha256": "c7e793fadbab7d132a926b500e05c6ccdc0346eb46b380b40f441987b90b35c4"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Dachs.json.meta",
+      "sha256": "c67596d73990b8fc949f8a380b31c818ba98ea090e223f4d1cbc118e7536dac8"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Dachs.mat",
+      "sha256": "1ae205d7c4dfbff647c72ce084e16d2f307ef9c09ae18e1041833d8d1cd56c65"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Dachs.mat.meta",
+      "sha256": "e5e86fd73360823df93f82a309b83ab2ec71e768ede9ef7e47cba07b7efed037"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Lab.asset",
+      "sha256": "5672c936ccb92d3ed06ef4e2b06b82d270c6081da795cdfe1af7dfda1104bffc"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Lab.asset.meta",
+      "sha256": "bfaf767a436201b64f1b623db3631e02b5fbbca01d32380fcc8fb87245bc1cd2"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Lab.json",
+      "sha256": "c962cb84346c6b987466a9c6c82f296620be260f71a8e9d8bfe4d3f985c86352"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Lab.json.meta",
+      "sha256": "a4b8353caef3e11bf3fec89a769627dfded31b08de249f98e06aab57a647ce60"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Lab.mat",
+      "sha256": "a602eb01412b7a2d7f86251fa845677ac5a3cc5ff2e57ddae1706ae5dede8424"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Lab.mat.meta",
+      "sha256": "ec0fa28cefad6b550975714938301ff4835674b8587dc337d228d9dd7b4026c0"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Pome.asset",
+      "sha256": "63e82dc18cf58d9dbee9b620f0ff498e4c525dada1cfad70e1fb7a12c9f86358"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Pome.asset.meta",
+      "sha256": "4bb96aca90ea56dd1f84c642ee742347928f14a658c6e2745d5bc9599accd988"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Pome.json",
+      "sha256": "6778feeacd3e9550d166b795a32df8c0d61d2d87982030c05219adcb2e169c76"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Pome.json.meta",
+      "sha256": "a376b801e7006726f5480438c9582b1059fddbe02db6b53bb4ab4fcd7e69ca33"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Pome.mat",
+      "sha256": "c13b95037a3b43a7872a28ff4cbcbc32ce5b63a74611ae9281b7e0ecad49a6f5"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Pome.mat.meta",
+      "sha256": "0716abba986bc49489b3e62e5ef500a7844ea3e8482cc696fd8a36210aef5166"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Samoyed.asset",
+      "sha256": "cc635ce15575f7267edcac730ffabd6c627214cf238e58d48462171a560be613"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Samoyed.asset.meta",
+      "sha256": "04092856bb7af1ec3bf837dfc03309525693770db5d1488e8e7cbb25a6af8e69"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Samoyed.json",
+      "sha256": "676a25eb9cab7377dc198168e66e3666740a1fdc94b685bbc39e3e3fa37999f0"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Samoyed.json.meta",
+      "sha256": "b20d131d0b047601846c27c7906ccce6473f032f899944ccb6cd7a35ab0c609b"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Samoyed.mat",
+      "sha256": "6bc7373267275bbc0c6a26c54aa826974f73f2949974d0a68f5937916b6aa129"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Samoyed.mat.meta",
+      "sha256": "5ad4453aab9cce08e186806e9b6c1426cd3a3567129825c54975aca8a05c9494"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Shiba.asset",
+      "sha256": "dc1b9410bc5b0ec62ad31b0507bb1068e0e40d4b4f266d6e883014c7630349ad"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Shiba.asset.meta",
+      "sha256": "74605bedcc614d0efda74be916fab011d67322835532a75e93c17cdc7ab744b9"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Shiba.json",
+      "sha256": "f24513b364d638402539352d4d384d0dc365b7e366d6de2fd902170affddda4a"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Shiba.json.meta",
+      "sha256": "ba491960dfc64c00d507b5fe1c3b595a265d38e5f11152aa828d4efb351d31dd"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Shiba.mat",
+      "sha256": "314affe937d5d5fb3e56a76207040241d96550cc13ecef9f7ebead13ece3d42c"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCFoam_Shiba.mat.meta",
+      "sha256": "e3974caaf30da90e94f7f410d44e2337f32c58e64f585d97d4bf06d1aaab79d5"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCThin_Corgi.mat",
+      "sha256": "6ff4aaf08440778bc65d768d7f3272575ab1f1a56d31959e4e2496d81764d58e"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCThin_Corgi.mat.meta",
+      "sha256": "613d60767ecaaf50e671f99db26b5a7f220aab739016a4f2556e27d8e462ed64"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCThin_Dachs.mat",
+      "sha256": "09b7d8f5a9804f20de4e4b8cedf38041eb8eb79a5c5d0444befe82547e529c29"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCThin_Dachs.mat.meta",
+      "sha256": "b82bfbf28cd4f6bcb1db0cc8d0be43b4fabd2b20d945d1100153e65937008de6"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCThin_Lab.mat",
+      "sha256": "de9fd7af43ca438623983664a1ffc28f2450ec77eb8c0516961b7448ae204651"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCThin_Lab.mat.meta",
+      "sha256": "a61e9f41114bd27f43d640a77505c2f4f07a29802fce7fcb80e36e29ec6a6bbf"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCThin_Pome.mat",
+      "sha256": "24571777b102f6d5cf2afc95a11a4ba7ebf6df622340a2c7a6264ff2e0e8b3a7"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCThin_Pome.mat.meta",
+      "sha256": "dd85ae6b73191f70f89d76171198f3bf025516d907bf091e4e84ba5721c724b6"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCThin_Samoyed.mat",
+      "sha256": "c4fd5865f10a6963af9de9148ac5c75983190c7e72f7088b079a3396335869c5"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCThin_Samoyed.mat.meta",
+      "sha256": "bca9d40c8385b3b37946ffa3014bd349d06c97497fc0bbbb2b55c9ca3617abaa"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCThin_Shiba.mat",
+      "sha256": "5bdc1b0e28b82c24930e231ce8b71d7bd661df04965d39a308dc1751cc71b1cd"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam/KH_PCThin_Shiba.mat.meta",
+      "sha256": "ca39d51e093ce7ff4a1d678216b906bb89d22f6ec05338ada5d8a4c33ee4694a"
+    },
+    {
+      "path": "Assets/KominkaHillside/Data/Wash/PCFoam.meta",
+      "sha256": "07b99bae9bc633ce5c66e44ecd508605179949a981becd1bdca17a1a786dfdb6"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamAuditEditor.cs",
+      "sha256": "84a3b9d11b6f7e393ff083e5560ecbcbb4b99ad82bf905123c06c1706217651d"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamAuditEditor.cs.meta",
+      "sha256": "2e47ae7bccbee3e5a5597e422d9135ca7c72c4db7652ba88b61ba6e454cd036d"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamBuildEditor.cs",
+      "sha256": "25991ae9755761eff7d6bb73663e2f23a3549a1a2e7f51a8d57f2d52c67574ec"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamBuildEditor.cs.meta",
+      "sha256": "dea4395af067b8783e008eef1d619d09b7c3c20294c595c038e7fa359a84dd69"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamBundleProofEditor.cs",
+      "sha256": "d7c4c56f5051a16e938d4ccfb3f0231e130ac94d3661e0c5465606cd12c33eac"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamBundleProofEditor.cs.meta",
+      "sha256": "aad393c6698ed3db97699dfe88655bd8055665bd78613655c2d770d6aec37dca"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamChecksEditor.cs",
+      "sha256": "49bcaf845e11704b38ab6cee9f5240197926530f82d952f51512e0fb9be77d12"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamChecksEditor.cs.meta",
+      "sha256": "8e441ec4a2cbdb746f9d0599f8359b2a77a43b5e05b3928c9be27d2a471b2997"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamGenerateEditor.cs",
+      "sha256": "f0da5a406e083d45cdd1cd76e69c3fc19f93c6fadc6b2dc4c773a193bae9712f"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamGenerateEditor.cs.meta",
+      "sha256": "6180b828e240082af32cde9f5e7bdf0e964e2c042e4534547b5b4ad7d7f8512d"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamMesh.cs",
+      "sha256": "4d4ddfa2d2bcfc8f54c52cdd0de3587a1e2f575e46279ee0d20d10c70248591c"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamMesh.cs.meta",
+      "sha256": "d171daf4cc954981d6ef755e2639930ba7ae77a4a5f8f0b4eebde2a270247be5"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamPlatformCompileEditor.cs",
+      "sha256": "f6fedbe63583aee324ef75ed800b04c40757be9d9fb84ae88f24628dab9bb3fa"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamPlatformCompileEditor.cs.meta",
+      "sha256": "1ef257f6d3c3baa092b06aacd9d713ac12e036c880ef74b73c88881c66d97190"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamPreviewEditor.cs",
+      "sha256": "0de2983b8e20a7123cfe73cd550418579df634f6844031c0bbe58ce226047fd0"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamPreviewEditor.cs.meta",
+      "sha256": "8ea765a16a9e6d887104454fe60f35daa09ce714eac103456352cbe191c3bd7c"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamProofEditor.cs",
+      "sha256": "00c05a518cf76b2a59d36b876243740c2da7a40b55275d13af0cdcecefd08340"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamProofEditor.cs.meta",
+      "sha256": "4aad52bf9ac06180f8da188aac4d0415d986ef48abac5707225dd6d7148eb1bf"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamSetupEditor.cs",
+      "sha256": "6e1e8d74ab0530aab66b3b294d326d877ae8db2db7564c50c41c2e667a3de20d"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/KH_PCFoamSetupEditor.cs.meta",
+      "sha256": "e6febe0800cadb15acc4842ef6313bc36725248888223148ce9c626dc0c97f42"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/KH_DogWash.cs",
+      "sha256": "b0eb69fe46160db9c63b5e0d10babbfbbaa81605393d0b7ce65ede42286b6115"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/KH_DogWash.asset",
+      "sha256": "6a8d6016330ec0d9764d83f743bc7fd32ab9d58a4894727d55d78bf6915ff265"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/KH_DogWash.PCFoam.cs",
+      "sha256": "7facd6b0fe5e53624ea0ab02a52222e09d75ef7913e40a3a2e0c5222e3086236"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/KH_DogWash.PCFoam.cs.meta",
+      "sha256": "87f97a1de10aff0fa5842e1197bc734637633b2ac2080dedc0778f850d1e567b"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/Testing/KH_CourseWalkHarnessEditor.Wash.cs",
+      "sha256": "4232177a14bd3f51df8123c643736e9d7663394b47e7c5e53cd4b2fe8ebf1c07"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/Testing/KH_CourseWalkHarnessEditor.PCFoam.cs",
+      "sha256": "bf773b9e8e673818df841d2586e806ecdf81684563818b9d21dabe2496956522"
+    },
+    {
+      "path": "Assets/KominkaHillside/Scripts/Editor/Testing/KH_CourseWalkHarnessEditor.PCFoam.cs.meta",
+      "sha256": "177a5f502ac53e00cc883b4a826e069c60ae69af1677fbce8e55a7a11e948a32"
+    },
+    {
+      "path": "Assets/KominkaHillside/Shaders/KH_PCFoam.shader",
+      "sha256": "4c171274cb369ee22daaee15aed9e5465df78879af97e31caac6663b8b9ab568"
+    },
+    {
+      "path": "Assets/KominkaHillside/Shaders/KH_PCFoam.shader.meta",
+      "sha256": "09b3452dcea2355a593f10c1d2f63515e1c3debc96566d254cea65829ca1c7a4"
+    },
+    {
+      "path": "Assets/KominkaHillside/Shaders/KH_PCFoamRunoff.shader",
+      "sha256": "7b50e5498fb0cc16524c75041dcd2ebd5d08fc5619f046f43a6237491720ebe6"
+    },
+    {
+      "path": "Assets/KominkaHillside/Shaders/KH_PCFoamRunoff.shader.meta",
+      "sha256": "308d41d632388505b940524ef858a3cbe896db06a28016a78e92d455e4dfc074"
+    },
+    {
+      "path": "Assets/KominkaHillside/Shaders/KH_WashShellPCThin.shader",
+      "sha256": "97bc9378ccc0ce48c12b8bf51bfbfbf753ef1e352c1e966726a4b287b7615a41"
+    },
+    {
+      "path": "Assets/KominkaHillside/Shaders/KH_WashShellPCThin.shader.meta",
+      "sha256": "c26e5971a8a30de70e31310b0ebd279fb326cd9bdde84adb5b3c26e02830eedc"
+    },
+    {
+      "path": "Assets/Scenes/VRCDefaultWorldScene.unity",
+      "sha256": "5afe76f7af72a1a7f1f0e5d77ce5265a79675a47830b377d878a335cc15f71ee"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+result=Succeeded errors=0 startedRaw=2026-10-11T08:40:21.7826803 dateKind=Unspecified endedRaw=2026-10-11T08:41:22.8728637 platform=iOS output=C:/work/unity/vcc/VAnimal_KominkaHillside/Temp/PCFoamProof/bundles/3d5214ceb1a2486d807db1c1528689d4/scene

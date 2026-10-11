@@ -1,0 +1,1442 @@
+{
+    "result": "PASS",
+    "error": "",
+    "dogs": [
+        {
+            "name": "KH_Wash_Corgi",
+            "meshPath": "Assets/TORINOSUKE/犬ギミック/コーギー/コーギー.fbx",
+            "bodyPath": "KH_Dogs/KD_Dog_Corgi/hojo_born/Bone/Bone_end/PB3/inu/karada",
+            "vertices": 3672,
+            "animatorClips": 20,
+            "dynamicAffected": 275,
+            "eligible": 2057,
+            "legacyAnimations": 0,
+            "eligibleByPart": [
+                183,
+                66,
+                248,
+                290,
+                286,
+                395,
+                404,
+                0,
+                185
+            ],
+            "shapes": [
+                {
+                    "name": "me1",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 255,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me2",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 193,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me3",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 104,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me4",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 126,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me5",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 193,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me6",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 118,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "metozi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 181,
+                    "dynamic": true,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [8,8,8]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ko-gi-_anim/anim 1/taimen 2.anim / taimen 2 [0,0,89.2,81.8,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ookami/なで1.anim / なで1 [0,80,38.8,80,0,0,100,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ko-gi-_anim/anim 1/寝なで_ONOFF.anim / 寝なで_ONOFF [0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ko-gi-_anim/anim 1/寝なでなで.anim / 寝なでなで [0,21.6,0,81.9,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [75,75,75]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [40,40,40]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,1.11111116,3.88888931,7.5,11.1111116,13.8888884,15,15,24.4650249,52.5000076,80.53499,90,90,90,86.77735,59.4946442,26.71876,15,15,13.8888884,11.1111107,7.5,3.88888836,1.1111114,0]",
+                        "KD_DogPetController / KD_PetSystem_Corgi"
+                    ]
+                },
+                {
+                    "name": "mimi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 228,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "deka",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 1248,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "キー 11",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 94,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "osiri",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 313,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "tail_none",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 313,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "yase",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 2386,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "egao",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 94,
+                    "dynamic": true,
+                    "writers": [
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ko-gi-_anim/anim 1/taiki 6.anim / taiki 6 [0,48.1,0,62,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ookami/taiki 2.anim / taiki 2 [0,52.7,15.1,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/犬_テンプレ/〇〇_anim/anim 1/taiki 5.anim / taiki 5 [0,48.1,0,62,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Corgi.anim / KD_Sit_Corgi [0,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ko-gi-_anim/anim 1/huse.anim / huse [0,0,68.9,68.9,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PickupPose_Corgi.anim / KD_PickupPose_Corgi [0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ookami/なで1.anim / なで1 [0,100,88.9,0,58.7,49.5,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ko-gi-_anim/anim 1/寝なで_ONOFF.anim / 寝なで_ONOFF [0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ko-gi-_anim/anim 1/寝なでなで.anim / 寝なでなで [0,57,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PawHold_Corgi.anim / KD_PawHold_Corgi [80.1,80.1]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Corgi.anim / KD_Curl_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Corgi.anim / KD_BellyUp_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Corgi.anim / KD_ChinRest_Corgi [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Corgi.anim / KD_StretchYawn_Corgi [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+                        "KD_DogPetController / KD_PetSystem_Corgi"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "KH_Wash_Pome",
+            "meshPath": "Assets/TORINOSUKE/犬ギミック/もちぽめ/pome.fbx",
+            "bodyPath": "KH_Dogs/KD_Dog_Pome/hojo_born/Bone/Bone_end/PB3/inu/karada",
+            "vertices": 2011,
+            "animatorClips": 20,
+            "dynamicAffected": 284,
+            "eligible": 1174,
+            "legacyAnimations": 0,
+            "eligibleByPart": [
+                72,
+                59,
+                157,
+                201,
+                171,
+                213,
+                193,
+                0,
+                108
+            ],
+            "shapes": [
+                {
+                    "name": "me1",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 76,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me2",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 98,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me3",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 171,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me4",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 136,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me5",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 163,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me6",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 255,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "metozi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 163,
+                    "dynamic": true,
+                    "writers": [
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/taiki.anim / taiki [0,0,100,100,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/taiki 1.anim / taiki 1 [0,100,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/taiki 2.anim / taiki 2 [0,0,100,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [8,8,8]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/taimen.anim / taimen [0,100,0,93.9,85.8,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PickupPose_Pome.anim / KD_PickupPose_Pome [0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/なで1.anim / なで1 [0,80,38.8,80,0,0,100,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/寝なで_ONOFF.anim / 寝なで_ONOFF [0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/寝なでなで.anim / 寝なでなで [0,21.6,0,81.9,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [75,75,75]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [40,40,40]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,1.11111116,3.88888931,7.5,11.1111116,13.8888884,15,15,24.4650249,52.5000076,80.53499,90,90,90,86.77735,59.4946442,26.71876,15,15,13.8888884,11.1111107,7.5,3.88888836,1.1111114,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/PumpkinPreview/KD_Pumpkin_PomeHop.anim / KD_Pumpkin_PomeHop [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+                        "KD_DogPetController / KD_PetSystem_Pome"
+                    ]
+                },
+                {
+                    "name": "kubi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 818,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "maru",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 463,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "hara",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 459,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "sipo",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 59,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "osiri",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 475,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "mimi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 120,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "egao",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 132,
+                    "dynamic": true,
+                    "writers": [
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/taiki 2.anim / taiki 2 [0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Pome.anim / KD_Sit_Pome [0,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/huse.anim / huse [0,0,68.9,68.9,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/taimen.anim / taimen [0,100,100,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/なで1.anim / なで1 [0,100,88.9,0,58.7,49.5]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/寝なで_ONOFF.anim / 寝なで_ONOFF [0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/寝なでなで.anim / 寝なでなで [0,57,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PawHold_Pome.anim / KD_PawHold_Pome [80.1,80.1]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Pome.anim / KD_Curl_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Pome.anim / KD_BellyUp_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Pome.anim / KD_ChinRest_Pome [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Pome.anim / KD_StretchYawn_Pome [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+                        "KD_DogPetController / KD_PetSystem_Pome"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "KH_Wash_Lab",
+            "meshPath": "Assets/TORINOSUKE/犬ギミック/ラブラドール/ラブラドール.fbx",
+            "bodyPath": "KH_Dogs/KD_Dog_Lab/hojo_born/Bone/Bone_end/PB3/inu/karada",
+            "vertices": 3485,
+            "animatorClips": 20,
+            "dynamicAffected": 306,
+            "eligible": 2321,
+            "legacyAnimations": 0,
+            "eligibleByPart": [
+                132,
+                74,
+                234,
+                405,
+                395,
+                447,
+                443,
+                0,
+                191
+            ],
+            "shapes": [
+                {
+                    "name": "me1",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 96,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me2",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 170,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me3",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 248,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me4",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 122,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me5",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 86,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me6",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 160,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "metozi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 138,
+                    "dynamic": true,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [8,8,8]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ラブラドール_anim/anim 1/taimen 2.anim / taimen 2 [0,0,89.2,81.8,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ラブラドール_anim/anim 1/nade5.anim / nade5 [0,100,100,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ラブラドール_anim/anim 1/寝なで_ONOFF.anim / 寝なで_ONOFF [0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ラブラドール_anim/anim 1/寝なでなで.anim / 寝なでなで [0,21.6,0,81.9,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [75,75,75]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [40,40,40]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,1.11111116,3.88888931,7.5,11.1111116,13.8888884,15,15,24.4650249,52.5000076,80.53499,90,90,90,86.77735,59.4946442,26.71876,15,15,13.8888884,11.1111107,7.5,3.88888836,1.1111114,0]",
+                        "KD_DogPetController / KD_PetSystem_Lab"
+                    ]
+                },
+                {
+                    "name": "onaka",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 589,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "kubi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 559,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "mimi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 104,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "tail",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 106,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "onaka2",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 678,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "hana",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 85,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "egao",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 168,
+                    "dynamic": true,
+                    "writers": [
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ラブラドール_anim/anim 1/taiki 6.anim / taiki 6 [0,48.1,0,62,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ookami/taiki 2.anim / taiki 2 [0,52.7,15.1,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/犬_テンプレ/〇〇_anim/anim 1/taiki 5.anim / taiki 5 [0,48.1,0,62,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Lab.anim / KD_Sit_Lab [0,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ラブラドール_anim/anim 1/huse.anim / huse [0,0,68.9,68.9,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PickupPose_Lab.anim / KD_PickupPose_Lab [0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ラブラドール_anim/anim 1/寝なで_ONOFF.anim / 寝なで_ONOFF [0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/ラブラドール_anim/anim 1/寝なでなで.anim / 寝なでなで [0,57,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PawHold_Lab.anim / KD_PawHold_Lab [80.1,80.1]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Lab.anim / KD_Curl_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Lab.anim / KD_BellyUp_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Lab.anim / KD_ChinRest_Lab [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Lab.anim / KD_StretchYawn_Lab [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+                        "KD_DogPetController / KD_PetSystem_Lab"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "KH_Wash_Dachs",
+            "meshPath": "Assets/TORINOSUKE/犬ギミック/ダックスフンド/ダックスフンド.fbx",
+            "bodyPath": "KH_Dogs/KD_Dog_Dachs/hojo_born/Bone/Bone_end/PB3/inu/karada",
+            "vertices": 2746,
+            "animatorClips": 19,
+            "dynamicAffected": 488,
+            "eligible": 1432,
+            "legacyAnimations": 0,
+            "eligibleByPart": [
+                128,
+                25,
+                118,
+                236,
+                220,
+                294,
+                291,
+                0,
+                120
+            ],
+            "shapes": [
+                {
+                    "name": "me1",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 363,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me2",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 206,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me3",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 245,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me4",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 54,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me5",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 201,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me6",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 146,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "metozi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 264,
+                    "dynamic": true,
+                    "writers": [
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/dakkusu/anim 2/taiki.anim / taiki [0,0,100,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/dakkusu/anim 2/taiki 1.anim / taiki 1 [0,0,100,0,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/dakkusu/anim 2/taiki 2.anim / taiki 2 [0,100,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [8,8,8]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/taimen.anim / taimen [0,100,0,93.9,85.8,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PickupPose_Dachs.anim / KD_PickupPose_Dachs [0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/dakkusu/anim 2/nade4.anim / nade4 [0,100,100,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/dakkusu/anim 2/寝なで_ONOFF.anim / 寝なで_ONOFF [0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/dakkusu/anim 2/寝なでなで.anim / 寝なでなで [0,100,100,25.3,100,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [75,75,75]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [40,40,40]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,1.11111116,3.88888931,7.5,11.1111116,13.8888884,15,15,24.4650249,52.5000076,80.53499,90,90,90,86.77735,59.4946442,26.71876,15,15,13.8888884,11.1111107,7.5,3.88888836,1.1111114,0]",
+                        "KD_DogPetController / KD_PetSystem_Dachs"
+                    ]
+                },
+                {
+                    "name": "yase",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 176,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "huto",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 391,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "mimi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 137,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "atama",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 427,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "oshiri",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 173,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "tail",
+                    "authoredWeight": 100.0,
+                    "frames": 1,
+                    "affectedVertices": 85,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]"
+                    ]
+                },
+                {
+                    "name": "egao",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 246,
+                    "dynamic": true,
+                    "writers": [
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/dakkusu/anim 2/taiki 2.anim / taiki 2 [0,100,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Dachs.anim / KD_Sit_Dachs [0,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/dakkusu/anim 2/huse.anim / huse [0,0,68.9,68.9,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/pome/anim 1/taimen.anim / taimen [0,100,100,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/dakkusu/anim 2/nade4.anim / nade4 [0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/dakkusu/anim 2/寝なで_ONOFF.anim / 寝なで_ONOFF [0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/dakkusu/anim 2/寝なでなで.anim / 寝なでなで [0,100,81.1,100,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PawHold_Dachs.anim / KD_PawHold_Dachs [80.1,80.1]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Dachs.anim / KD_Curl_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Dachs.anim / KD_BellyUp_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Dachs.anim / KD_ChinRest_Dachs [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Dachs.anim / KD_StretchYawn_Dachs [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+                        "KD_DogPetController / KD_PetSystem_Dachs"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "KH_Wash_Shiba",
+            "meshPath": "Assets/TORINOSUKE/犬ギミック/柴犬_remake/柴犬２.fbx",
+            "bodyPath": "KH_Dogs/KD_Dog_Shiba/hojo_born/Bone/Bone_end/PB3/inu/karada",
+            "vertices": 3548,
+            "animatorClips": 20,
+            "dynamicAffected": 286,
+            "eligible": 2004,
+            "legacyAnimations": 0,
+            "eligibleByPart": [
+                101,
+                61,
+                210,
+                290,
+                289,
+                414,
+                420,
+                0,
+                219
+            ],
+            "shapes": [
+                {
+                    "name": "me1",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 148,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me2",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 122,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me3",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 134,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me4",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 181,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me5",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 152,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me6",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 158,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "metozi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 190,
+                    "dynamic": true,
+                    "writers": [
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/SHIBA/anim/taiki.anim / taiki [0,0,100,100,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/SHIBA/anim/taiki 1.anim / taiki 1 [0,100,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/SHIBA/anim/taiki 2.anim / taiki 2 [0,0,100,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [8,8,8]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/shiba_anim/anim 1/寝なで_ONOFF.anim / 寝なで_ONOFF [0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/shiba_anim/anim 1/寝なでなで.anim / 寝なでなで [0,21.6,0,81.9,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [75,75,75]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [40,40,40]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,1.11111116,3.88888931,7.5,11.1111116,13.8888884,15,15,24.4650249,52.5000076,80.53499,90,90,90,86.77735,59.4946442,26.71876,15,15,13.8888884,11.1111107,7.5,3.88888836,1.1111114,0]",
+                        "KD_DogPetController / KD_PetSystem_Shiba"
+                    ]
+                },
+                {
+                    "name": "koutoubu",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 379,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "onaka",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 264,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "tail1",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 240,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "tail2",
+                    "authoredWeight": 100.0,
+                    "frames": 1,
+                    "affectedVertices": 240,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]"
+                    ]
+                },
+                {
+                    "name": "maru",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 1052,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "mimi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 248,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "egao",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 96,
+                    "dynamic": true,
+                    "writers": [
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/shiba_anim/anim 1/taiki 6.anim / taiki 6 [0,48.1,0,62,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/SHIBA/anim/taiki 2.anim / taiki 2 [0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Shiba.anim / KD_Sit_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_LieDown_Shiba.anim / KD_LieDown_Shiba [0,0,68.9,68.9,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PickupPose_Shiba.anim / KD_PickupPose_Shiba [0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/shiba_anim/anim 1/なで4.anim / なで4 [0,61,79.5,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/shiba_anim/anim 1/寝なで_ONOFF.anim / 寝なで_ONOFF [0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/shiba_anim/anim 1/寝なでなで.anim / 寝なでなで [0,57,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PawHold_Shiba.anim / KD_PawHold_Shiba [80.1,80.1]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Shiba.anim / KD_Curl_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Shiba.anim / KD_BellyUp_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Shiba.anim / KD_ChinRest_Shiba [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Shiba.anim / KD_StretchYawn_Shiba [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+                        "KD_DogPetController / KD_PetSystem_Shiba"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "KH_Wash_Samoyed",
+            "meshPath": "Assets/TORINOSUKE/犬ギミック/サモエド/samoedo_v1.fbx",
+            "bodyPath": "KH_Dogs/KD_Dog_Samoyed/hojo_born/Bone/Bone_end/PB3/inu/karada",
+            "vertices": 2455,
+            "animatorClips": 19,
+            "dynamicAffected": 322,
+            "eligible": 1522,
+            "legacyAnimations": 0,
+            "eligibleByPart": [
+                95,
+                53,
+                136,
+                251,
+                261,
+                274,
+                260,
+                0,
+                192
+            ],
+            "shapes": [
+                {
+                    "name": "me1",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 72,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me2",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 176,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me3",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 54,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me4",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 102,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me5",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 109,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "me6",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 132,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "metozi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 91,
+                    "dynamic": true,
+                    "writers": [
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/samoedo/anim 2/taiki.anim / taiki [0,0,100,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/samoedo/anim 2/taiki 1.anim / taiki 1 [0,0,100,0,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/samoedo/anim 2/taiki 2.anim / taiki 2 [0,100,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [8,8,8]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PickupPose_Samoyed.anim / KD_PickupPose_Samoyed [0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/samoedo/anim 2/nade4.anim / nade4 [0,100,100,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/samoedo/anim 2/寝なで_ONOFF.anim / 寝なで_ONOFF [0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/samoedo/anim 2/寝なでなで.anim / 寝なでなで [0,100,100,25.3,100,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [75,75,75]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [40,40,40]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,1.11111116,3.88888931,7.5,11.1111116,13.8888884,15,15,24.4650249,52.5000076,80.53499,90,90,90,86.77735,59.4946442,26.71876,15,15,13.8888884,11.1111107,7.5,3.88888836,1.1111114,0]",
+                        "KD_DogPetController / KD_PetSystem_Samoyed"
+                    ]
+                },
+                {
+                    "name": "atama",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 51,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "atama2",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 152,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "karada1",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 94,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "karada2",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 400,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "sippo",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 131,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "asi",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 286,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+                    ]
+                },
+                {
+                    "name": "egao",
+                    "authoredWeight": 0.0,
+                    "frames": 1,
+                    "affectedVertices": 231,
+                    "dynamic": true,
+                    "writers": [
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/samoedo/anim 2/taiki 2.anim / taiki 2 [0,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [0,0,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/samoedo/anim 2/huse.anim / huse [0,0,68.9,68.9,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/samoedo/anim 2/taimen.anim / taimen [0,100,100,0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/samoedo/anim 2/寝なで_ONOFF.anim / 寝なで_ONOFF [0]",
+                        "Assets/TORINOSUKE/犬ギミック/gimmick/samoedo/anim 2/寝なでなで.anim / 寝なでなで [0,100,81.1,100,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/KD_PawHold_Samoyed.anim / KD_PawHold_Samoyed [80.1,80.1]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [0,0,0]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]",
+                        "KD_DogPetController / KD_PetSystem_Samoyed"
+                    ]
+                },
+                {
+                    "name": "キー 15",
+                    "authoredWeight": 50.0,
+                    "frames": 1,
+                    "affectedVertices": 271,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [50,50,50]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [50,50,50]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [50,50,50]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [50,50,50]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50]"
+                    ]
+                },
+                {
+                    "name": "キー 16",
+                    "authoredWeight": 100.0,
+                    "frames": 1,
+                    "affectedVertices": 251,
+                    "dynamic": false,
+                    "writers": [
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Sit_Samoyed.anim / KD_Sit_Samoyed [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_Curl_Samoyed.anim / KD_Curl_Samoyed [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_BellyUp_Samoyed.anim / KD_BellyUp_Samoyed [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_ChinRest_Samoyed.anim / KD_ChinRest_Samoyed [100,100,100]",
+                        "Assets/KominkaHillside/Imported/KominkaDogRun/Animations/Companion/KD_StretchYawn_Samoyed.anim / KD_StretchYawn_Samoyed [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]"
+                    ]
+                }
+            ]
+        }
+    ]
+}

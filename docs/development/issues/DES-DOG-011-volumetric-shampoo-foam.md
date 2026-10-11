@@ -5,7 +5,7 @@ system: DOG
 status: wip
 priority: Medium
 summary: PC限定の立体泡を詳細設計。薄膜＋付着メッシュ＋流下粒子を第一候補とし、Quest・iOSは現行維持（採否未了）
-next: 詳細設計G0として柴の中心skin・球展開・UsePass・Udon APIの最小成立試作を行う。見た目と性能の採否はG1〜G5で確認
+next: IMP-DOG-052の6匹実装候補をPCVRで比較し、見た目・CPU/GPU負荷・跨端末の結果から採否を判断する
 updated: 2026-10-11
 ---
 
@@ -81,7 +81,7 @@ Unityの [Renderer module](https://docs.unity3d.com/2022.3/Documentation/Manual/
 
 採用条件は「全身のもこもこ・流下が明確に改善」「洗った帯と泡が一致」「顔と犬らしさが読める」「PCで許容負荷内」「Quest・iOSの現行表現・処理を維持」。満たせなければPCも現行を維持する。G0着手時に実装Issueへ作業を分け、採否を本Issueへ戻す。
 
-Playは共通ルールに従い事前相談・専用ハーネス経由とし、全体回帰は明示指示時のみ。今回完了した範囲は詳細な調査・検討・設計であり、G0〜G5や全6匹への本実装は未着手。
+Playは共通ルールに従い事前相談・専用ハーネス経由とし、全体回帰は明示指示時のみ。設計後の実装依頼を [IMP-DOG-052](IMP-DOG-052-pc-volumetric-shampoo-foam.md) に分離し、6匹への候補適用と局所検査まで進めた。薄膜の初案2passは隙間対策で3passに修正。最新の数量・実装・検証範囲は詳細設計 §14。PCVRの見た目・負荷と端末境界の採否は未了。
 
 ## 5. 完了条件
 

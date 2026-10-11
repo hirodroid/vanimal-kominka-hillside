@@ -1,0 +1,15 @@
+{
+    "run": "ccc10df3f0fb4b859b9cad366b23bf36",
+    "status": "PASS",
+    "error": "",
+    "target": "Android",
+    "sceneHashBefore": "5AFE76F7AF72A1A7F1F0E5D77CE5265A79675A47830B377D878A335CC15F71EE",
+    "sceneHashAfter": "5AFE76F7AF72A1A7F1F0E5D77CE5265A79675A47830B377D878A335CC15F71EE",
+    "processed": 6,
+    "processedTarget": "Android",
+    "mobileDependenciesRemoved": true,
+    "sceneDownloadBytes": 77067961,
+    "addedGroupDownloadBytes": 0,
+    "addedGroupRawBytes": 0,
+    "limitations": "Local scene AssetBundle with explicit target, not SDK upload or device test. PC group bytes include referenced dependencies, not whole-world delta or resident memory. No CPU/GPU or PCVR acceptance."
+}
