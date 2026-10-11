@@ -15,6 +15,9 @@ namespace KominkaHillside
     ///   頭に付いて動くので乗車中も一緒に動く。ドックへは寄せない (dockPhoto / photo は将来用に配線だけ受ける)。
     /// - 板が閉じていれば触らない。既存スクリプトは変更しない (transform を外から動かすだけ)。
     /// - ドックの Transform の向き: +Z = 座っている人から板へ向かう方向 (PlaceInFront・PlaceMonitor と同じ約束)。</summary>
+    // KD_TreatPouch.LateUpdate (入力から PlaceInFront を呼ぶ) より後に置き場所を確定する (Codex M1.1 レビュー (5)。U# は DefaultExecutionOrder を
+    // UdonBehaviour の実行順へ写す — KD_SleepAudio の -100 と同じ仕組み)
+    [DefaultExecutionOrder(100)]
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_CartDock : UdonSharpBehaviour
     {

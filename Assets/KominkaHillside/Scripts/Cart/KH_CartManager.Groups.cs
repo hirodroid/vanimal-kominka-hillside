@@ -119,7 +119,8 @@ namespace KominkaHillside
         /// <summary>距離 d が追加の横ずれ禁止範囲 [noLateralFrom[k], noLateralTo[k]] に入るか (周回をまたぐ範囲・負の始点も可)。</summary>
         public bool TrackNoLateral(float d)
         {
-            if (noLateralFrom == null || noLateralTo == null || !EnsureRoute()) return false;
+            // 範囲は軌道の距離。route へ戻っているとき (軌道配列なし) は距離の基準が違うので適用しない (Codex M1.1 レビュー (2))
+            if (noLateralFrom == null || noLateralTo == null || !EnsureRoute() || !_useTrack) return false;
             float x = Wrap(d);
             for (int k = 0; k < noLateralFrom.Length && k < noLateralTo.Length; k++)
             {

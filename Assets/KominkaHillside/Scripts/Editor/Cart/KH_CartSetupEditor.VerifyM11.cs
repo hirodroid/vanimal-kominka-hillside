@@ -33,11 +33,11 @@ namespace KominkaHillside.Editor
             var spot = ReadFloats(mso, "spotTrackDistance"); var dest = ReadFloats(mso, "destTrackDistance");
             v.Req(spot != null && spot.Length == StationCount && spot.Select((d, s) => Mathf.Abs(d - want.spot[s])).All(x => x < 1e-3f), "spotTrackDistance[5] = spotNodes projected onto the track");
             v.Req(dest != null && dest.Length == 6 && dest.Select((d, k) => Mathf.Abs(d - want.dest[k])).All(x => x < 1e-3f) && dest[2] == -1f && dest[3] == -1f, "destTrackDistance[6] projected (loops 2/3 = -1)");
-            foreach (var name in new[] { "trackPositions", "trackDistances", "trackDetour", "spotTrackDistance", "destTrackDistance", "noLateralFrom", "noLateralTo" })
-            {
-                var p = mso.FindProperty(name); int proxyLen = p != null && p.isArray ? p.arraySize : -1;
-                v.Req(mb != null && mb.publicVariables.TryGetVariableValue(name, out object bv) && bv is Array a && a.Length == proxyLen && proxyLen > 0, "manager." + name + " present in backing with proxy length " + proxyLen);
-            }
+            // backing: 型付きで取り出し、全要素をプロキシと比べる (float / Vector3 は 1e-4。Codex M1.1 レビュー 4)
+            BackingVectors(v, mb, "trackPositions", pos);
+            BackingFloats(v, mb, "trackDistances", dist);
+            BackingBools(v, mb, "trackDetour", det);
+            foreach (var name in new[] { "spotTrackDistance", "destTrackDistance", "noLateralFrom", "noLateralTo" }) BackingFloats(v, mb, name, ReadFloats(mso, name));
             v.Req(mb != null && mb.publicVariables.TryGetVariableValue("trackLength", out object tl) && tl is float tf && Mathf.Abs(tf - len) < 1e-3f, "manager.trackLength (backing)");
 
             // 門枠: 乗り場の開始点が入らない / 入口の到着点は門枠の外 (z が門枠より大きい側)
@@ -150,6 +150,30 @@ namespace KominkaHillside.Editor
             RefCheck(v, seatSo, seatBacking, "controls", controls, c);
             RefCheck(v, seatSo, seatBacking, "dock", dock, c);
         }
+
+        static void BackingFloats(V v, UdonBehaviour b, string name, float[] proxy)
+        {
+            bool ok = proxy != null && proxy.Length > 0 && b != null && b.publicVariables.TryGetVariableValue(name, out object o) && o is float[] a && a.Length == proxy.Length;
+            int bad = -1;
+            if (ok) { var a2 = (float[])GetBacking(b, name); for (int i = 0; i < proxy.Length; i++) if (Mathf.Abs(a2[i] - proxy[i]) > 1e-4f) { bad = i; ok = false; break; } }
+            v.Req(ok, "manager." + name + " backing equals proxy element-wise (" + (proxy != null ? proxy.Length : -1) + (bad >= 0 ? ", first diff at " + bad : "") + ")");
+        }
+
+        static void BackingBools(V v, UdonBehaviour b, string name, bool[] proxy)
+        {
+            bool ok = proxy != null && proxy.Length > 0 && b != null && b.publicVariables.TryGetVariableValue(name, out object o) && o is bool[] a && a.SequenceEqual(proxy);
+            v.Req(ok, "manager." + name + " backing equals proxy element-wise (" + (proxy != null ? proxy.Length : -1) + ")");
+        }
+
+        static void BackingVectors(V v, UdonBehaviour b, string name, Vector3[] proxy)
+        {
+            bool ok = proxy != null && proxy.Length > 0 && b != null && b.publicVariables.TryGetVariableValue(name, out object o) && o is Vector3[] a && a.Length == proxy.Length;
+            int bad = -1;
+            if (ok) { var a2 = (Vector3[])GetBacking(b, name); for (int i = 0; i < proxy.Length; i++) if ((a2[i] - proxy[i]).sqrMagnitude > 1e-8f) { bad = i; ok = false; break; } }
+            v.Req(ok, "manager." + name + " backing equals proxy element-wise (" + (proxy != null ? proxy.Length : -1) + (bad >= 0 ? ", first diff at " + bad : "") + ")");
+        }
+
+        static object GetBacking(UdonBehaviour b, string name) { b.publicVariables.TryGetVariableValue(name, out object o); return o; }
 
         static float[] ReadFloats(SerializedObject so, string name)
         {

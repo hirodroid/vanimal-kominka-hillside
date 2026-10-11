@@ -222,8 +222,12 @@ namespace KominkaHillside.Editor
                 }
             }
 
-            // ---- F. 到着: 目的地の距離に clamp して止まり、先頭は arriveSlack 以内で判定される ----
-            for (int s = 0; s < StationCount && leash.spotNodes != null && s < leash.spotNodes.Length; s++)
+            // ---- F. 到着 (旧 route)。軌道を使うシーンでは ProbeTrackArrivals (軌道の距離と TrackPoint) が代わりに照合する ----
+            var mgrF = UnityEngine.Object.FindObjectsOfType<KH_CartManager>(true).FirstOrDefault();
+            var trackProp = mgrF != null ? new SerializedObject(mgrF).FindProperty("trackPositions") : null;
+            bool trackInUse = trackProp != null && trackProp.isArray && trackProp.arraySize > 1;
+            if (trackInUse) pr.Skip("route-based arrival (F) superseded: the manager uses the cart track; see track arrival checks");
+            for (int s = 0; !trackInUse && s < StationCount && leash.spotNodes != null && s < leash.spotNodes.Length; s++)
             {
                 int from = leash.spotNodes[s];
                 for (int dest = 0; dest <= 5; dest++)
@@ -325,6 +329,75 @@ namespace KominkaHillside.Editor
                 }
             }
             catch (TargetInvocationException ex) { pr.Req(false, "track function threw in Edit mode: " + (ex.InnerException != null ? ex.InnerException.Message : ex.Message)); }
+            ProbeTrackArrivals(pr, mgr, so, want, route);
+        }
+
+        /// <summary>軌道の距離での開始・向き・残距離・到着 (Codex M1.1 レビュー 3)。期待値は保存済みの spotTrackDistance / destTrackDistance / trackLength から計算し、
+        /// Manager の private 判定 (SpotStartDistance / DestDistance / StartDirection / IsHere、Reflection) があれば照合する。
+        /// 経路は TrackPoint を 0.25 m 刻みで辿った折れ線の長さで残距離を確かめ、入口 (直結区間上) へ向かう経路が直結区間を通ることも見る。</summary>
+        static void ProbeTrackArrivals(P pr, KH_CartManager mgr, SerializedObject so, Track want, KH_WalkRoute route)
+        {
+            var r = pr.r;
+            var spot = ReadFloats(so, "spotTrackDistance"); var dest = ReadFloats(so, "destTrackDistance");
+            var lenP = so.FindProperty("trackLength"); float L = lenP != null ? lenP.floatValue : -1f;
+            if (spot == null || spot.Length != StationCount || dest == null || dest.Length != 6 || L <= 0f) { pr.Req(false, "track arrival: spotTrackDistance[5] / destTrackDistance[6] / trackLength saved (run Cart/1)"); return; }
+            var t = mgr.GetType(); const BindingFlags F = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            var cache = t.GetField("_routeCached", F); if (cache != null && cache.FieldType == typeof(bool)) cache.SetValue(mgr, false);   // Build 前の値を掴んでいないように
+            var mPoint = t.GetMethod("TrackPoint", F, null, new[] { typeof(float) }, null);
+            var mSpot = t.GetMethod("SpotStartDistance", F, null, new[] { typeof(int) }, null);
+            var mDest = t.GetMethod("DestDistance", F, null, new[] { typeof(int) }, null);
+            var mDir = t.GetMethod("StartDirection", F, null, new[] { typeof(float), typeof(int) }, null);
+            var mHere = t.GetMethod("IsHere", F, null, new[] { typeof(float), typeof(int) }, null);
+            var hereField = t.GetField("HereDistance", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            float here = hereField != null && hereField.IsLiteral ? Convert.ToSingle(hereField.GetRawConstantValue()) : 15f;
+            foreach (var pair in new[] { ("SpotStartDistance(int)", mSpot), ("DestDistance(int)", mDest), ("StartDirection(float,int)", mDir), ("IsHere(float,int)", mHere) })
+                if (pair.Item2 == null) pr.Skip("KH_CartManager." + pair.Item1 + " not found: expected values only");
+            Func<float, Vector3> tp = mPoint != null ? (Func<float, Vector3>)(d => (Vector3)mPoint.Invoke(mgr, new object[] { d })) : (d => TrackPointRef(want, d));
+            float closingStart = want.distances[want.distances.Length - 1];
+            bool entranceOnClosing = dest[0] >= closingStart - 1e-3f && dest[0] <= L + 1e-3f;
+            pr.Req(entranceOnClosing, "entrance arrival d=" + dest[0].ToString("F2") + " lies on the closing segment [" + closingStart.ToString("F2") + ", " + L.ToString("F2") + "]");
+            try
+            {
+                for (int s = 0; s < StationCount; s++)
+                {
+                    float start = spot[s];
+                    if (mSpot != null) { float got = (float)mSpot.Invoke(mgr, new object[] { s }); pr.Req(Mathf.Abs(got - start) < 1e-3f, "SpotStartDistance(" + s + ") = spotTrackDistance (" + got.ToString("F2") + ")"); }
+                    for (int d = 0; d <= 5; d++)
+                    {
+                        int loop = route._LoopDirection(d);
+                        if (mDest != null) { float got = (float)mDest.Invoke(mgr, new object[] { d }); float exp = loop != 0 ? -1f : dest[d]; if (s == 0) pr.Req(Mathf.Abs(got - exp) < 1e-3f, "DestDistance(" + d + ") = " + exp.ToString("F2") + " (actual " + got.ToString("F2") + ")"); }
+                        if (loop != 0)
+                        {
+                            if (mDir != null) pr.Req((int)mDir.Invoke(mgr, new object[] { start, d }) == loop, "spot " + s + " -> loop " + d + ": StartDirection " + loop);
+                            if (mHere != null) pr.Req(!(bool)mHere.Invoke(mgr, new object[] { start, d }), "spot " + s + " -> loop " + d + ": never 'here'");
+                            continue;
+                        }
+                        float fwd = Wrap(dest[d] - start, L);
+                        int dir = fwd <= L * .5f ? 1 : -1;
+                        float remain = dir > 0 ? fwd : L - fwd;
+                        bool isHere = Mathf.Min(fwd, L - fwd) < here;
+                        if (mHere != null) pr.Req((bool)mHere.Invoke(mgr, new object[] { start, d }) == isHere, "spot " + s + " -> dest " + d + ": IsHere " + isHere + " (track distance " + Mathf.Min(fwd, L - fwd).ToString("F1") + " m, threshold " + here + ")");
+                        if (isHere) { r.arrivals.Add("track spot " + s + " -> dest " + d + ": HERE"); continue; }
+                        if (mDir != null) pr.Req((int)mDir.Invoke(mgr, new object[] { start, d }) == dir, "spot " + s + " -> dest " + d + ": StartDirection " + dir + " (shorter side on the track)");
+                        // 残距離 = TrackPoint を辿った折れ線の長さ。終点は行き先の点、入口なら直結区間を通る
+                        float walked = 0f; Vector3 prev = tp(start); bool viaClosing = false;
+                        const float step = .25f;
+                        for (float u = step; u < remain + step; u += step)
+                        {
+                            float k = Mathf.Min(u, remain); float dd = Wrap(start + dir * k, L);
+                            var q = tp(dd); walked += (q - prev).magnitude; prev = q;
+                            if (dd >= closingStart && dd <= L) viaClosing = true;
+                        }
+                        var end = tp(Wrap(start + dir * remain, L));
+                        pr.Req((end - tp(dest[d])).magnitude < .01f, "spot " + s + " -> dest " + d + ": the head stops on the destination point (clamped at remaining " + remain.ToString("F1") + " m)");
+                        // 0.25 m の弦は弧より短い (曲線で 0.03%)。下限は 0.1% + 0.5 m
+                        pr.Req(walked >= remain * .999f - .5f && walked <= remain * 1.05f + .1f, "spot " + s + " -> dest " + d + ": remaining " + remain.ToString("F1") + " m vs walked " + walked.ToString("F1") + " m along TrackPoint");
+                        if (d == 0) pr.Req(viaClosing, "spot " + s + " -> entrance passes the closing segment");
+                        r.arrivals.Add("track spot " + s + " -> dest " + d + " dir " + dir + " remain " + remain.ToString("F1") + " m, head " + (remain / r.speed).ToString("F0") + " s" + (viaClosing ? " (via closing)" : ""));
+                    }
+                }
+            }
+            catch (TargetInvocationException ex) { pr.Req(false, "track arrival function threw in Edit mode: " + (ex.InnerException != null ? ex.InnerException.Message : ex.Message)); }
         }
 
         static float Wrap(float d, float L) { d %= L; return d < 0f ? d + L : d; }

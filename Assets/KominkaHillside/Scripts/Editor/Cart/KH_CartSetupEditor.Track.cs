@@ -126,20 +126,19 @@ namespace KominkaHillside.Editor
             }
             t.sweepCandidates = cands.Count;
             var hitD = new List<float>(); var seen = new Dictionary<string, float>();
-            float[] lat = { -SweepHalfWidth, -SweepHalfWidth * .5f, 0f, SweepHalfWidth * .5f, SweepHalfWidth };
-            float[] hs = { SweepLow, (SweepLow + SweepHigh) * .5f, SweepHigh };
-            float[] fs = { -SweepStep * .5f, 0f, SweepStep * .5f };
+            // 掃引箱: 1 m の区間 (前後 ±0.5 m) × 中心 ±0.6 m × 車高 0.3〜1.6 m の向き付き箱を、ワールド座標の AABB で包む (斜めの区間では広めになる。保守的でよい)。
+            // Renderer.bounds との Bounds.Intersects で判定する (細い柱・看板の脚を標本点の間で取りこぼさない。Codex M1.1 レビュー 1)
             for (float d = 0f; d < t.length; d += SweepStep)
             {
                 var p = TrackPointRef(t, d); var f = TrackDirectionRef(t, d); var right = new Vector3(f.z, 0f, -f.x);
-                var mid = p + Vector3.up * ((SweepLow + SweepHigh) * .5f);
+                var box = new Bounds(p + Vector3.up * SweepLow, Vector3.zero);
+                foreach (float a in new[] { -SweepHalfWidth, SweepHalfWidth })
+                    foreach (float h in new[] { SweepLow, SweepHigh })
+                        foreach (float fo in new[] { -SweepStep * .5f, SweepStep * .5f })
+                            box.Encapsulate(p + right * a + Vector3.up * h + f * fo);
                 foreach (var c in cands)
                 {
-                    var b = c.Key.bounds;
-                    if (b.SqrDistance(mid) > 2.5f * 2.5f) continue;
-                    bool hit = false;
-                    foreach (var a in lat) { foreach (var h in hs) { foreach (var fo in fs) { if (b.Contains(p + right * a + Vector3.up * h + f * fo)) { hit = true; break; } } if (hit) break; } if (hit) break; }
-                    if (!hit) continue;
+                    if (!c.Key.bounds.Intersects(box)) continue;
                     hitD.Add(d);
                     if (!seen.ContainsKey(c.Value)) { seen[c.Value] = d; t.sweepHits.Add("d=" + d.ToString("F0") + " " + c.Value); }
                 }
