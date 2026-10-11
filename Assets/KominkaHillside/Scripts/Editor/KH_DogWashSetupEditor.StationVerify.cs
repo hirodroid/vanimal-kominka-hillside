@@ -105,6 +105,10 @@ namespace KominkaHillside.Editor
         /// <summary>What every wash station has (the main one and those along the course, IMP-ENV-008): yaw only, the stand, the
         /// tools' homes and return settings, the reset button wired to this station's tools, the duckboard, the side room, no tub
         /// and the sign. label prefixes every line.</summary>
+        // 2026-10-11 user (IMP-ENV-007): the main station's duckboard was moved off the ground by hand because it Z-fought with
+        // the terrain. Wash/12 checks that the placement is kept instead of re-seating it. Station name -> WashTable local y.
+        static readonly Dictionary<string, float> UserPlacedTableY = new Dictionary<string, float> { { "KH_WashStation", -0.028f } };
+
         static void CheckStationBody(VerifyReport r, Action<bool, string> req, Transform st, ToolSpec[] specs, string label)
         {
             var e = st.eulerAngles;
@@ -191,7 +195,11 @@ namespace KominkaHillside.Editor
                 float gap = (TableFront - TableSize.z * 0.5f) - ShelfDepth * 0.5f;
                 req(gap >= 0.5f - 1e-4f, label + ": " + gap.ToString("F3") + " m between the duckboard and the shelf (>= 0.5: people stand on the shelf side too)");
                 float want = MaxGround(st, new Vector3(0f, 0f, -TableFront), TableSize.x, TableSize.z);
-                req(Mathf.Abs(table.localPosition.y - want) < 0.005f, label + ": " + TableName + " seated on the ground (local y " + table.localPosition.y.ToString("F3") + ", highest ground under it " + want.ToString("F3") + "; top " + TableSize.y + " m above it)");
+                float placed;
+                if (UserPlacedTableY.TryGetValue(st.name, out placed))
+                    req(Mathf.Abs(table.localPosition.y - placed) < 0.005f, label + ": " + TableName + " kept at the user's placement (local y " + table.localPosition.y.ToString("F3") + " = " + placed.ToString("F3") + "; moved off the ground against Z-fighting, IMP-ENV-007 2026-10-11; highest ground under it " + want.ToString("F3") + ")");
+                else
+                    req(Mathf.Abs(table.localPosition.y - want) < 0.005f, label + ": " + TableName + " seated on the ground (local y " + table.localPosition.y.ToString("F3") + ", highest ground under it " + want.ToString("F3") + "; top " + TableSize.y + " m above it)");
                 var c = table.TransformPoint(box.center);
                 bool onTop = Physics.Raycast(c + Vector3.up * 1f, Vector3.down, out RaycastHit hit, 2f, 1 << StandLayer, QueryTriggerInteraction.Ignore) && hit.collider == box;
                 req(onTop, label + ": a downward ray (layer " + StandLayer + ") above the duckboard lands on it first (" + (hit.collider != null ? hit.collider.name : "nothing") + ")");
