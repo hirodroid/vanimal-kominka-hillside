@@ -193,6 +193,11 @@ namespace KominkaDogRun
         /// <summary>食べ始め (サーバー ms)。0 = まだ。**書くのはマスターだけ**
         /// (<see cref="_ReportArrived"/>)。食べ終わりは + eatDuration で全員が導出する。</summary>
         [UdonSynced] private int[] dogEatMs = new int[0];
+        // IMP-DOG-041: receipt kind and the bite point travel atomically with eat start.
+        // Held state cannot reconstruct these after the giver drops the consumed Pickup.
+        [UdonSynced] private bool[] dogHandFed = new bool[0];
+        [UdonSynced] private Vector3[] dogBitePos = new Vector3[0];
+        public const float HandFeedReach = 0.22f;
 
         private int _dogCount;
         private int _slotCount;
@@ -269,6 +274,8 @@ namespace KominkaDogRun
             dogSlot = NewFilled(_dogCount, -1);
             dogSlotOutMs = NewFilled(_dogCount, 0);
             dogEatMs = NewFilled(_dogCount, 0);
+            dogHandFed = new bool[_dogCount];
+            dogBitePos = new Vector3[_dogCount];
 
             _slotState = new int[_slotCount];
             _slotOutMs = new int[_slotCount];
@@ -359,6 +366,7 @@ namespace KominkaDogRun
             // IMP-DOG-006: 誰の枠へどの犬を出してよいか (他人の接続犬は外す / 出した人に接続犬が居ればその中から / 続けて同じ犬を呼ばない)
             BuildAllowWith(_walkerOf, _slotGiver, _slotState, _dogEligible, _lastCallGiver, _lastCallSeq,
                 _dogCount, _slotCount, _allow);
+            KeepHandReceipts(_slotState, _slotOutMs, _allow, _dogCount, _slotCount);
             ResolveClaimsAllowWith(dogSlot, dogSlotOutMs, _slotState, _slotOutMs,
                 _dogEligible, _distMm, _allow, _dogCount, _slotCount, _outSlot, _outOutMs);
 
@@ -379,6 +387,8 @@ namespace KominkaDogRun
                 // **掴む対象が変わったら食べ始めも捨てる。** 残すと、次に掴んだ
                 // 別のおやつが「もう食べ終わっている」ことになって出た瞬間に回収される
                 dogEatMs[d] = 0;
+                dogHandFed[d] = false;
+                dogBitePos[d] = Vector3.zero;
                 changed = true;
             }
             if (changed) RequestSerialization();
@@ -448,7 +458,13 @@ namespace KominkaDogRun
             if (root == null || !root.gameObject.activeInHierarchy) return false;
             KD_DogFetchController f = _packFetch[d];
             if (f == null || !f.IsIdle) return false;   // 仕事中
-            if (f.PetActive) return false;              // 撫でられている犬を引き剥がさない (不変条件 4)
+            // A hand approaching the mouth may also trigger petting. Keep an already accepted
+            // hand offer in that case; do not pull a different, already petted dog into a new claim.
+            if (f.PetActive)
+            {
+                KD_TreatSlot offer = LiveSlotOf(d);
+                if (offer == null || !offer.BodyHeld()) return false;
+            }
             KD_DogWanderController w = _packWander[d];
             if (w == null || w.IsNudging) return false; // 催促中 = 別のプレイヤーに関わっている
             // **そばで寝ている犬は最寄り候補から外す** (IMP-DOG-019 Phase 5 / §6 危険 5)。
@@ -560,15 +576,59 @@ namespace KominkaDogRun
 
             KD_TreatSlot s = LiveSlotOf(dogIndex);
             if (s == null) return;                            // 掴んでいない / 世代違い / Reserved
-            if (s.BodyHeld()) return;                         // 手の中のものは食べない
+            bool hand = s.BodyHeld();
+            if (hand)
+            {
+                KD_DogFetchController f = _packFetch[dogIndex];
+                if (f == null || f.mouthAnchor == null || !HandFeedReachWith(f.mouthAnchor.position, s.BodyPosition())) return;
+            }
             int i = ClaimedSlotOf(dogIndex);
-            if (_slotSettled != null && i >= 0 && i < _slotSettled.Length && !_slotSettled[i])
+            if (!hand && _slotSettled != null && i >= 0 && i < _slotSettled.Length && !_slotSettled[i])
                 return;                                       // まだ転がっている
 
             int ms = Networking.GetServerTimeInMilliseconds();
             // 0 は「まだ食べていない」の意味に使っているので避ける (枠の outMs と同じ処置)
             dogEatMs[dogIndex] = ms == 0 ? 1 : ms;
+            dogHandFed[dogIndex] = hand;
+            dogBitePos[dogIndex] = s.BodyPosition();
             RequestSerialization();
+        }
+
+        /// <summary>3D reach, not root-plane distance: no eating a high or distant hand.</summary>
+        // net: callable-ok: pure
+        public bool HandFeedReachWith(Vector3 mouth, Vector3 food)
+        {
+            return (mouth - food).sqrMagnitude <= HandFeedReach * HandFeedReach;
+        }
+
+        // net: callable-ok: read-only. Kept after the eating timer ends, until this claim ends.
+        public bool HandFedOf(int d)
+        {
+            return dogHandFed != null && d >= 0 && d < dogHandFed.Length && dogHandFed[d]
+                && dogEatMs != null && d < dogEatMs.Length && dogEatMs[d] != 0;
+        }
+
+        // net: callable-ok: read-only, generation checked by DogOfSlot.
+        public bool HandFedFor(int slotIdx, int gen) { return HandFedOf(DogOfSlot(slotIdx, gen)); }
+
+        // net: callable-ok: only writes the supplied scratch allow table, never synchronized state.
+        // Once bitten, attaching the dog to a different player cannot un-eat the same treat.
+        // The slot still ends normally by its existing completion/put-away/exit paths.
+        public void KeepHandReceipts(int[] states, int[] generations, int[] allow, int dogs, int count)
+        {
+            for (int d = 0; d < dogs; d++)
+            {
+                if (!HandFedOf(d)) continue;
+                int s = ClaimedSlotOf(d);
+                if (s < 0 || s >= count || states[s] != SlotOut || generations[s] != ClaimedGenOf(d)) continue;
+                allow[d * count + s] = AllowKeep;
+            }
+        }
+
+        // net: callable-ok: read-only
+        public Vector3 BitePositionOf(int d)
+        {
+            return dogBitePos != null && d >= 0 && d < dogBitePos.Length ? dogBitePos[d] : Vector3.zero;
         }
 
         /// <summary>犬 d の食べ始め (サーバー ms)。0 = まだ。</summary>

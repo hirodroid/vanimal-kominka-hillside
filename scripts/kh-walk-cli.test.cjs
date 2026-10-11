@@ -2,6 +2,16 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { request, result } = require('./kh-walk-cli.cjs');
 const name = 'bridge-190-choice-2-dogs-6';
+test('hand-feed receipt accepts only its completed scenario with restoration evidence', () => {
+  const args = ['Course/97e - Walk Harness Hand Feed (HF1 only, fresh profile)'];
+  const receipt = () => ({ ...make(), status: 'HAND_FEED_PASS', commerceSet: 5,
+    cases: [{ name: 'HF1-high-hand-to-mouth-and-recovery', status: 'PASS' }] });
+  assert.equal(result(receipt(), 'walk', args).ok, true);
+  for (const mutate of [j => j.commerceSet = 2, j => j.cases[0].name = 'TR6',
+    j => j.cases[0].status = 'FAIL', j => j.playerDataRestored = false, j => j.errors.push('runtime error')]) {
+    const j = receipt(); mutate(j); assert.equal(result(j, 'walk', args).ok, false);
+  }
+});
 const make = () => ({status:'SEGMENTS_OBSERVED', endedUtc:'2026-10-02T00:00:00Z', sceneFileUnchanged:true,
   settingsRestored:true, playerDataRestored:true, errors:[], selectedWalkCase:name, lapChoice:0,
   cases:[{name,status:'SEGMENT_OBSERVED'}]});

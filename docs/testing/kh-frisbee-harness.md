@@ -15,6 +15,8 @@
 
 ## 前提
 
+手渡しおやつの限定検査は `Course/97e - Walk Harness Hand Feed (HF1 only, fresh profile)`。高い手を拒否→同じ餌を口元で受領→非表示・回収・在庫1回を1シナリオで見る。`walk` と `--reason` / `--consult` を使う。入力は ClientSim の右手位置だけ模擬し、実 Pickup.Drop・左右のVR操作・実通信は対象外。Edit 検査は `Menu/6e Verify Hand Feeding`。版・結果は [IMP-DOG-041](../development/issues/IMP-DOG-041-hand-feed-treats.md) に記録する。
+
 - Unity 2022.3.22f1 / Worlds SDK 3.10.5 / Synaptic AI Pro 接続済み。
 - **Edit モードで、コンパイルエラー 0 件、開いているシーンが未変更**であること。
   どれか 1 つでも欠けると `BLOCKED` で何もしない (シーンの保存も破棄もしない)。

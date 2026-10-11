@@ -65,11 +65,14 @@ namespace KominkaDogRun
         private Rigidbody _rb;
         private VRC_Pickup _pickup;
         private VRCObjectSync _sync;
+        private Collider _collider;
 
         // 適用済みの枠の値 (変化したときだけ書く。Udon の extern を毎フレーム払わない)
         private int _appliedGiver = -2;
         private string _appliedProduct = "";
         private int _appliedState = -2;
+        private int _appliedGen;
+        private bool _appliedHandFed;
 
         // 手のひらへの吸着 (出した本人のローカルだけ)
         private bool _attaching;
@@ -127,6 +130,7 @@ namespace KominkaDogRun
             // **武装はここで落とす。** [出す] を押した押し下がりは吸着より前なので、
             // その離しで放してしまわないため (順序で塞ぐ — KD_TreatBox.GiveStepWith)
             _armed = false;
+            if (slot != null) slot._RefreshHandOffer();
         }
 
         private void Start()
@@ -134,6 +138,7 @@ namespace KominkaDogRun
             _rb = GetComponent<Rigidbody>();
             _pickup = (VRC_Pickup)GetComponent(typeof(VRC_Pickup));
             _sync = GetComponent<VRCObjectSync>();
+            _collider = GetComponent<Collider>();
 
             if (homeRadius <= 0.01f) homeRadius = DefaultHomeRadius;
 
@@ -166,12 +171,19 @@ namespace KominkaDogRun
             if (!force && state == _appliedState && state != KD_TreatBox.SlotReserved && state != KD_TreatBox.SlotOut) return;
             string prod = slot.Product();
             int giver = slot.GiverId();
-            if (!force && state == _appliedState && prod == _appliedProduct && giver == _appliedGiver) return;
+            int gen = slot.OutMs();
+            bool handFed = slot.box != null && slot.box.HandFedFor(slotIndex, gen);
+            if (!force && state == _appliedState && prod == _appliedProduct && giver == _appliedGiver
+                && gen == _appliedGen && handFed == _appliedHandFed) return;
             _appliedState = state;
             _appliedProduct = prod;
             _appliedGiver = giver;
+            _appliedGen = gen;
+            _appliedHandFed = handFed;
 
-            bool live = state == KD_TreatBox.SlotReserved || state == KD_TreatBox.SlotOut;
+            bool live = (state == KD_TreatBox.SlotReserved || state == KD_TreatBox.SlotOut) && !handFed;
+            // Keep the Udon/ObjectSync object alive. Only its mesh, collider and pickup disappear.
+            if (_collider != null) _collider.enabled = !handFed;
 
             // ---- メッシュ: 生きている枠だけ、その品を 1 個 ----
             int want = live ? IndexOfProduct(prod) : -1;
@@ -265,7 +277,7 @@ namespace KominkaDogRun
             _armed = false;
         }
 
-        /// <summary>**あげる = 手から離して落とす。**
+        /// <summary>落として与える場合の操作。口元への手渡しにはこの操作は不要 (IMP-DOG-041)。
         ///
         /// **初速は与えない。** 投げにすると狙いが要る遊びになり、「あげる」でなくなる —
         /// 手のひらの位置からそのまま落ちるので、犬の食べる点の導出は今までと同じ
@@ -273,8 +285,10 @@ namespace KominkaDogRun
         private void ReleaseFromHand()
         {
             if (!Networking.IsOwner(gameObject)) return;
+            if (slot != null && slot.box != null && slot.box.HandFedFor(slotIndex, slot.OutMs())) return;
             ClearAttach();
             if (_pickup != null && _pickup.IsHeld) _pickup.Drop();
+            if (slot != null) slot._RefreshHandOffer();
             // 吸着中は StepAttach が位置を書いていたので、落とすには物理へ返すだけでよい。
             // 枠が生きている間は ApplySlot が既に非 kinematic にしているが、
             // 取りこぼしていても落ちるように念のため戻す
@@ -303,11 +317,12 @@ namespace KominkaDogRun
 
         public override void OnPickupUseDown() { HandleGiveUse(true); }
         public override void OnPickupUseUp() { HandleGiveUse(false); }
-        public override void OnDrop() { ClearAttach(); }
+        public override void OnDrop() { ClearAttach(); if (slot != null) slot._RefreshHandOffer(); }
 
         private void HandleGiveUse(bool value)
         {
             if (slot == null || slot.box == null) return;
+            if (slot.box.HandFedFor(slotIndex, slot.OutMs())) return;
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp) || slot.GiverId() != lp.playerId || !Networking.IsOwner(gameObject)) return;
             bool panelOpen = slot.pouch != null && slot.pouch.TreatInputBlocked();
@@ -333,6 +348,7 @@ namespace KominkaDogRun
             // OnPickup は掴んだ本人のクライアントでだけ発火するローカルイベント。
             // **掴む導線は Phase 1 のまま残っている** — 掴んで手放しても「あげる」になる
             ClearAttach();
+            if (slot != null) slot._RefreshHandOffer();
         }
 
         /// <summary>**二重の保険。** 主たる横取り防止は `pickupable` (上の注記)。

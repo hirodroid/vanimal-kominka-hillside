@@ -9,7 +9,7 @@ namespace KominkaDogRun
     /// [IMP-TRT-001](../../../docs/development/issues/IMP-TRT-001-treat-system.md)
     /// の「Phase 4b の確定設計」。
     ///
-    /// 一文で: **誰が / 何を / いつ出したかを持つ。それだけ。**
+    /// 誰が / 何を / いつ出したかと、手に持って差し出しているかを持つ。
     ///
     /// ## 3 つとも導出しない
     ///
@@ -38,8 +38,8 @@ namespace KominkaDogRun
     ///
     /// ## `Returning` だけ同期しない — 理由を書いておく
     ///
-    /// 状態表の 5 つのうち `Free` / `Reserved` / `Out` は上の 3 int から一意に決まるが、
-    /// `Returning` (Respawn の再試行中) は決まらない。**同期変数を 4 本目に増やさなかった。**
+    /// 状態表の 5 つのうち `Free` / `Reserved` / `Out` は上の 3 値から一意に決まるが、
+    /// `Returning` (Respawn の再試行中) は決まらない。Returning 自体の同期値は持たない。
     ///
     /// 増やさなくてよいのは、**`Free` と `Returning` が他人から見て完全に同じ振る舞い**
     /// だから — どちらも Claim 対象外・掴めない・メッシュは全部 false。
@@ -48,7 +48,7 @@ namespace KominkaDogRun
     /// </summary>
     /// <remarks>
     /// SyncMode Manual・**専用 GameObject** (U# は同一 GameObject で同期方式を混在できない)。
-    /// 同期は 3 int × 3 枠 = 9 int。
+    /// 同期は各枠に giverId / product / outMs と handOffered (IMP-DOG-041)。
     /// </remarks>
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public class KD_TreatSlot : UdonSharpBehaviour
@@ -92,10 +92,13 @@ namespace KominkaDogRun
         /// <summary>突き合わせの間隔 (秒)。毎フレーム回さない (Udon VM)。</summary>
         const float TickInterval = 0.25f;
 
-        // ---- 同期 3 本。**これが枠の正本** ----
+        // ---- 枠の正本と手持ち状態の同期 ----
         [UdonSynced] private int giverId = -1;
         [UdonSynced] private string product = "";
         [UdonSynced] private int outMs;
+        // IMP-DOG-041: auto-attachment is NOT Pickup.IsHeld. Publish both as one offer state,
+        // together with the generation, so a remote dog never treats an attached treat as ground food.
+        [UdonSynced] private bool handOffered;
 
         /// <summary>Respawn が効くまでの再試行中か (**Owner のローカル状態**。上の注記を参照)。</summary>
         private bool _returning;
@@ -173,7 +176,17 @@ namespace KominkaDogRun
         // net: callable-ok: 読み取りのみ
         public bool BodyHeld()
         {
-            return body != null && body.IsHeldNow;
+            return Networking.IsOwner(gameObject) ? body != null && body.InHandNow() : handOffered;
+        }
+
+        /// <summary>Owner-only observation; also called at local pickup/attachment edges.</summary>
+        public void _RefreshHandOffer()
+        {
+            if (!Networking.IsOwner(gameObject)) return;
+            bool held = giverId >= 0 && body != null && body.InHandNow();
+            if (held == handOffered) return;
+            handOffered = held;
+            RequestSerialization();
         }
 
         /// <summary>予約が **ReserveSettle 待ちで一時的に**断られる状態か。
@@ -229,6 +242,7 @@ namespace KominkaDogRun
             giverId = lp.playerId;
             product = wantProduct;
             outMs = 0;
+            handOffered = false;
             _reservedSince = Time.time;
             RequestSerialization();
             return true;
@@ -246,6 +260,7 @@ namespace KominkaDogRun
             if (outMs != 0) return true;   // 冪等 — 2 度目は何もしない
 
             int ms = Networking.GetServerTimeInMilliseconds();
+            handOffered = body != null && body.InHandNow();
             outMs = ms == 0 ? 1 : ms;
             RequestSerialization();
             return true;
@@ -261,6 +276,7 @@ namespace KominkaDogRun
             giverId = -1;
             product = "";
             outMs = 0;
+            handOffered = false;
             _reservedSince = -1f;
             RequestSerialization();
 
@@ -307,6 +323,7 @@ namespace KominkaDogRun
 
             // ---- Out ----
             _reservedSince = -1f;
+            _RefreshHandOffer();
 
             // **giver が退室した** → 移譲でここ (マスター) が Owner になっている
             if (!GiverStillHere()) { _Release(); return; }

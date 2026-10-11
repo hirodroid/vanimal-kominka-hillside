@@ -16,8 +16,8 @@ namespace KominkaDogRun
     // Hook: UpdateHillsideLeashFull calls UpdateLeashTreat after the wash station branch (a held station wins) and before the wash
     // stop / LeashPose / travel / Return. The treat beats (show, walk to the treat, eat, thanks) are UpdateTreat itself, run with
     // _treatOnLeash raised: the steps go straight (StepToward) toward a point clamped to the leash reach, and a dog that is itself
-    // beyond the reach is left to the leash Return (review 2026-10-03), the stand-off in front
-    // of the holder is LeashTreatStandoff (hand reaches the head and the collar), and the gaze / tail are held until the next decision
+    // beyond the reach is left to the leash Return (review 2026-10-03). IMP-DOG-041 approaches the food using the mouth offset,
+    // and the gaze / tail are held until the next decision
     // (_SetGazeFor, as LeashPose does) so the leash's legs frames need nothing per frame.
     //
     // Sync: nothing new. The claim / eat start are KD_TreatBox's synced arrays (master), the giver is the slot's giverId, the leash is
@@ -36,7 +36,6 @@ namespace KominkaDogRun
         const int LeashTreatWait = 10;          // leashMode: waiting for the pat / the collar after eating (Owner)
         const float LeashTreatReach = 1.25f;    // decision 5: x leash length from the leash hand
         const float LeashTreatReachPad = 0.15f; // the clamp stops this far inside the reach (the Return threshold is the same 1.25x)
-        const float LeashTreatStandoff = 0.45f; // m in front of the holder (+ body radius) while the treat is in the hand. Provisional (PCVR)
         const float LeashTreatWaitBase = 8f;    // decision 4 (provisional)
         const float LeashTreatWaitCap = 20f;    // decision 4: the longest wait while being petted (provisional)
         const float LeashTreatPetGrace = 2f;    // a pat keeps at least this much of the wait left (within the cap)
@@ -254,7 +253,5 @@ namespace KominkaDogRun
             petController._SetUrge(urge);
         }
 
-        /// <summary>The stand-off in front of the giver while the treat is in their hand.</summary>
-        float TreatStandoff() { return _treatOnLeash ? LeashTreatStandoff : nudgeStandoff; }
     }
 }

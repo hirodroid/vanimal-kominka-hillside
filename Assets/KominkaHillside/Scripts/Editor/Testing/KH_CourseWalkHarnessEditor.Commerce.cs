@@ -30,6 +30,7 @@ namespace KominkaHillside.Editor
     {
         const int CmSetLedger = 0, CmSetLedgerReentry = 1, CmSetTreat = 2, CmSetTreatCall = 3;   // 3: IMP-DOG-006 Course/97c (TreatCall.cs)
         const int CmSetToyHover = 4;   // IMP-DOG-040 Course/97d (ToyHover.cs)
+        const int CmSetHandFeed = 5;   // IMP-DOG-041 Course/97e: one bounded hand-offer cycle
         const string CmLastLedgerPath = Dir + "/ledger-last.json";
         const string CmBiscuit = "treat.bone_biscuit", CmPawCookie = "treat.paw_cookie", CmJerky = "treat.jerky", CmFxPawCookie = "petfx.paw_cookie";
 
@@ -80,7 +81,7 @@ namespace KominkaHillside.Editor
             report.commerceOnly = true;
             report.commerceSet = set;
             report.commerceSource = source;
-            report.deadline = EditorApplication.timeSinceStartup + (set == CmSetLedger ? 1200 : set == CmSetLedgerReentry ? 600 : set == CmSetTreatCall ? 1500 : set == CmSetToyHover ? 1000 : 1800);
+            report.deadline = EditorApplication.timeSinceStartup + (set == CmSetHandFeed ? 120 : set == CmSetLedger ? 1200 : set == CmSetLedgerReentry ? 600 : set == CmSetTreatCall ? 1500 : set == CmSetToyHover ? 1000 : 1800);
             report.limitations = "Single local ClientSim; the local player is instance master and every Owner. Menu and NPC operations go through the real Udon events "
                 + "(no physical UI click, ray or proximity). PlayerData is ClientSim's local file: 'saved' = written to ClientSimStorage, 're-entry' (96b) = a new Play reading that file; "
                 + "not VRChat's server persistence or OnPlayerRestored timing. Heap writes (stay-accrual freeze, restore delay, slots held by puppets) are SIMULATED and listed in each case's notes. "
@@ -122,6 +123,7 @@ namespace KominkaHillside.Editor
             cmScripts = new List<List<Func<double, bool>>>(); cmLimits = new List<double>();
             cmStep = 0; cmCaseAt = -1; cmFailed = false; cmLoadedForced = false; cmPuppets.Clear();
             cmReport = new CmReport { runId = report.runId, harness = report.commerceSet == CmSetLedger ? "ledger (Course/96)" : report.commerceSet == CmSetLedgerReentry ? "ledger re-entry (Course/96b)" : report.commerceSet == CmSetTreatCall ? "treat call on the leash (Course/97c)" : report.commerceSet == CmSetToyHover ? "toy recall hover (Course/97d)" : "treats (Course/97)", source = report.commerceSource };
+            if (report.commerceSet == CmSetHandFeed) cmReport.harness = "hand feeding (Course/97e, HF1 only)";
             var all = UnityEngine.Object.FindObjectsOfType<UdonBehaviour>(true);
             cmLedger = CmOne(all, "KD_ProgressLedger");
             cmKeeper = CmOne(all, "KD_ShopKeeper");
@@ -137,6 +139,7 @@ namespace KominkaHillside.Editor
             else if (report.commerceSet == CmSetLedgerReentry) MakeLedgerReentryCases();
             else if (report.commerceSet == CmSetTreatCall) MakeTreatCallCases();
             else if (report.commerceSet == CmSetToyHover) MakeToyHoverCases();
+            else if (report.commerceSet == CmSetHandFeed) MakeHandFeedCases();
             else MakeTreatCases();
             CmWrite();
         }
@@ -182,12 +185,14 @@ namespace KominkaHillside.Editor
             CmWrite(); Save();
             if (caseIndex + 1 < report.cases.Count) { Next(); return; }
             string head = report.commerceSet == CmSetLedger ? "LEDGER" : report.commerceSet == CmSetLedgerReentry ? "LEDGER_REENTRY" : report.commerceSet == CmSetTreatCall ? "TREAT_CALL" : report.commerceSet == CmSetToyHover ? "TOY_HOVER" : "TREAT";
+            if (report.commerceSet == CmSetHandFeed) head = "HAND_FEED";
             End(head + (cmFailed ? "_FAIL" : "_PASS"), cmFailed ? "One or more cases failed; see commerce.json" : "Local ClientSim commerce cases passed. Not network, server persistence, device or PCVR acceptance.");
         }
 
         /// <summary>落ちたケースの後始末 (どれも失敗してよい。次のケースが前の状態を引きずらないため)。</summary>
         static void CmRecover()
         {
+            HfRestoreTracking();
             try { if (cmLoadedForced) { cmLedger.SetProgramVariable("_loaded", true); cmLoadedForced = false; } } catch (Exception) { }
             try { if (CmState() == KominkaDogRun.KD_TreatBox.DispOut) pouch.SendCustomEvent("_PutAway"); } catch (Exception) { }
             try { CmDetachAll(); } catch (Exception) { }

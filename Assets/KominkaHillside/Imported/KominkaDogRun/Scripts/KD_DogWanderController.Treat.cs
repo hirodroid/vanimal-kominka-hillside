@@ -13,8 +13,8 @@ namespace KominkaDogRun
         /// <summary>
         /// おやつへの反応 (設計書 §11 / Phase 4b)。演技したら true。
         ///
-        /// 2 拍: **見せる** (持たれている → 出した人へ寄っておやつを見つめる) →
-        /// **あげる** (着地 → そこへ歩いて食べる → 出した人を見る)。
+        /// 手に持ったおやつへ寄り、口元へ差し出されたら直接受け取る (IMP-DOG-041)。
+        /// 落とした場合は従来どおり地面で食べる。最後は出した人を見る。
         ///
         /// 入力は同期実体だけ — **どの枠へ向かうか** (`KD_TreatBox` の `dogSlot` /
         /// `dogSlotOutMs`)、**食べ始め** (`dogEatMs`)、おやつの位置 (VRCObjectSync)、
@@ -51,7 +51,8 @@ namespace KominkaDogRun
                 _treatEating = true;
                 KD_TreatSlot eating = treatBox.LiveSlotOf(dogIndex);
                 // 皿へ戻っても頭が追わないよう、食べ点は**食べ始めに 1 度だけ**固定する
-                _treatEatPos = eating != null ? eating.BodyPosition() : dogRoot.position;
+                _treatEatPos = treatBox.HandFedOf(dogIndex) ? treatBox.BitePositionOf(dogIndex)
+                    : eating != null ? eating.BodyPosition() : dogRoot.position;
                 // **返事の相手も食べ始めの瞬間に確定する** (Phase 1 と同じ作法)。
                 // 食べている途中で枠が回収されても、返事の相手はすり替わらない
                 _thanksPlayerId = eating != null ? eating.GiverId() : -1;
@@ -96,47 +97,21 @@ namespace KominkaDogRun
 
             Vector3 dogPos = dogRoot.position;
 
+            // The giver can move/drop their hand after the bite. Stay here, look at the synced
+            // bite point and wag; do not use the floor-only Pickup pose or chase the hidden body.
+            // Also hold this branch between the eating timer ending and the slot being returned.
+            if (treatBox.HandFedOf(dogIndex))
+            {
+                if (_speed <= stopSpeedThreshold) _look = true;
+                Coast();
+                TreatGaze(treatBox.BitePositionOf(dogIndex), 1f);
+                return true;
+            }
+
             // ---- 見せられている: 出した人へ寄って、おやつを見つめる (催促と同型) ----
             if (slot.BodyHeld())
             {
-                // **持ち主は giverId から引く。** 掴めるのは giver だけ
-                // (`pickupable` を giverId から導出してある) なので、持ち主 = 出した人
-                VRCPlayerApi holder = VRCPlayerApi.GetPlayerById(slot.GiverId());
-                if (!Utilities.IsValid(holder))
-                {
-                    Coast();
-                    return true; // 伝播の谷間。次フレームには確定する
-                }
-                Vector3 holderPos = holder.GetPosition();
-                Vector3 flat = holderPos - dogPos;
-                flat.y = 0f;
-                float hDist = flat.magnitude;
-                // 体格ぶん広く取る (0 フォールバックも UpdateNudge と同じ)
-                float radius = _selfRadius > 0.001f ? _selfRadius : 0.2f;
-                float standoff = TreatStandoff() + radius;   // IMP-DOG-006: closer on the leash (the hand reaches the head and the collar)
-
-                Vector3 dir = flat;
-                float advance = 0f;
-                if (hDist > 0.0001f)
-                {
-                    dir = flat / hDist;
-                    advance = hDist - standoff;
-                    float wallClear = WallClearance(dogPos, dir, hDist);
-                    if (advance > wallClear) advance = wallClear;
-                }
-                bool nearHolder = advance <= FaceSettleSlack;
-                if (nearHolder)
-                {
-                    if (_speed <= stopSpeedThreshold) _look = true;
-                    Coast();
-                    if (hDist > 0.0001f) FaceTowards(holderPos);
-                }
-                else
-                {
-                    TreatStep(dogPos + dir * advance, 0f, walkSpeed);   // IMP-DOG-006: on the leash, clamped to the leash reach (HillsideTreatCall.cs)
-                }
-                // 見つめるのは持ち主の顔ではなく**おやつそのもの** (食い意地が読める)
-                TreatGaze(slot.BodyPosition(), nearHolder ? 1f : 0.6f);
+                UpdateHandTreat(slot, dogPos);
                 return true;
             }
 
@@ -181,6 +156,37 @@ namespace KominkaDogRun
             TreatStep(dogPos + dirT * advanceT, 0f, dist > runDistance ? runSpeed : walkSpeed);
             TreatGaze(treatPos, 0.8f);
             return true;
+        }
+
+        // IMP-DOG-041: approach the offered food, not the giver's feet. The horizontal mouth
+        // offset sets only the stopping point; the actual 3D mouth position decides the bite.
+        void UpdateHandTreat(KD_TreatSlot slot, Vector3 dogPos)
+        {
+            Vector3 food = slot.BodyPosition();
+            Transform mouth = fetchController != null ? fetchController.mouthAnchor : null;
+            if (mouth == null) { Coast(); TreatGaze(food, 0.6f); return; }
+            if (treatBox.HandFeedReachWith(mouth.position, food))
+            {
+                Coast();
+                if (_speed <= stopSpeedThreshold) treatBox._ReportArrived(dogIndex);
+                TreatGaze(food, 1f);
+                return;
+            }
+            Vector3 flat = food - dogPos; flat.y = 0f;
+            float distance = flat.magnitude;
+            Vector3 mouthOffset = mouth.position - dogPos; mouthOffset.y = 0f;
+            float standOff = mouthOffset.magnitude + 0.08f;
+            float advance = distance - standOff;
+            Vector3 dir = distance > 0.0001f ? flat / distance : Vector3.zero;
+            if (distance > 0.0001f) advance = Mathf.Min(advance, WallClearance(dogPos, dir, distance));
+            if (advance <= FaceSettleSlack)
+            {
+                if (_speed <= stopSpeedThreshold) _look = true;
+                Coast();
+                if (distance > 0.0001f) FaceTowards(food);
+            }
+            else TreatStep(dogPos + dir * advance, 0f, walkSpeed);
+            TreatGaze(food, 0.8f);
         }
 
     }

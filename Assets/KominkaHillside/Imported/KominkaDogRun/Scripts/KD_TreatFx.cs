@@ -177,7 +177,7 @@ namespace KominkaDogRun
                 if (s != null)
                 {
                     _armedProduct[d] = s.Product();
-                    _armedPos[d] = s.BodyPosition();
+                    _armedPos[d] = box.HandFedOf(d) ? box.BitePositionOf(d) : s.BodyPosition();
                     // **入った時点で既に食べ終わっていたら撃たない** —
                     // Late Joiner や遅れて届いた同期値で、過去の食事の絵が突然出るのを防ぐ
                     if (now - eatMs < _eatMsDuration) _armedFired[d] = false;
@@ -198,7 +198,7 @@ namespace KominkaDogRun
 
             // 食べている間は場所を追いかける (枠が畳まれたら最後の位置がそのまま残る)
             KD_TreatSlot live = SlotOfDog(d);
-            if (live != null) _armedPos[d] = live.BodyPosition();
+            if (live != null) _armedPos[d] = box.HandFedOf(d) ? box.BitePositionOf(d) : live.BodyPosition();
 
             if (now - _armedEatMs[d] < _eatMsDuration) return;
 
