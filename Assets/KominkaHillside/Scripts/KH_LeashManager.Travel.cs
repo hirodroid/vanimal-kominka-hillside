@@ -60,6 +60,9 @@ namespace KominkaHillside
         [Header("Travel fade (IMP-WLD-001 段階 2。Course/84 が配線する。null なら暗転なしで移動)")]
         public KH_TravelFade travelFade;
 
+        [Header("おさんぽカート (DES-WLD-004 M1。Cart/1 が配線する。null ならカートなし)")]
+        public KH_CartManager cartManager;
+
         [Header("Travel tuning (設計書 §D.5。Play で決める)")]
         public float travelCooldownOk = 10f;
         public float travelCooldownFail = 3f;
@@ -131,6 +134,7 @@ namespace KominkaHillside
             if (TravelAnyChasing(mask)) return TravelBall;
             if (!TravelFindLanding(spot, lp.playerId)) { _tvCooldownUntil = Time.time + travelCooldownFail; return TravelCrowded; }
             float yaw = spotYaws[spot];
+            TravelLeaveCart();   // 門をすべて通った後 (暗転 / 切符へ進む経路) だけ。弾かれた要求では降ろさない
             if (mask == 0)
             {
                 // 犬がいなければ切符は出さない (§B.1 の 0 匹)。暗転だけして移動する
@@ -362,6 +366,13 @@ namespace KominkaHillside
             else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(CancelTravel), _tvReq);
         }
 
+        /// <summary>DES-WLD-004: ワープ・合流の移動の前に、おさんぽカートの保留中の出発・合流を取り消し、乗っていれば降ろす (降車優先)。
+        /// 乗っていなくても呼ぶ (保留中の要求への遅れた割当で、移動先から引き戻されないため。_LeaveForTravel は冪等)。暗転は呼び元。</summary>
+        private void TravelLeaveCart()
+        {
+            if (cartManager != null) cartManager._LeaveForTravel();
+        }
+
         private void TravelTeleport(VRCPlayerApi lp, Vector3 point, float yaw)
         {
             // 4 引数版で向きの扱いと lerpOnRemote を明示する (設計書 事実 3・§D.1)
@@ -493,6 +504,7 @@ namespace KominkaHillside
             if (Time.time < _tvCooldownUntil) return TravelCooling;
             int mask = _TravelMyMask();
             if (TravelAnyChasing(mask)) return TravelBall;
+            TravelLeaveCart();   // 門をすべて通った後だけ (_TravelBegin と同じ)
             _tvSpot = -1; _tvCenter = landing; _tvYaw = yaw;
             if (mask == 0) { _tvReq = 0; _tvMask = 0; TravelStartFade(); return TravelStarted; }
             _tvSeq = (_tvSeq % 65535) + 1;

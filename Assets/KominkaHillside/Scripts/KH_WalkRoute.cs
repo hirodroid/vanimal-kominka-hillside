@@ -204,5 +204,65 @@ namespace KominkaHillside
             float t = length < .0001f ? 0f : Mathf.Clamp01(Vector3.Dot(p - a, ab) / length);
             return (p - a - ab * t).sqrMagnitude;
         }
+
+        // ---- DES-WLD-004 おさんぽカート: 周回の距離 → 位置 (docs/plans/auto-walk-cart/implementation.md) ----
+        // loopDistances[i] はノード i までの累積距離 (NavMesh の経路長。[0] = 0、昇順)。区間 i はノード i → (i + 1) % count
+        // (KH_CourseRouteEditor が linkA[i] = i, linkB[i] = i + 1 で書く)。最後の区間の終端は loopLength。
+        // 距離は loopLength で正規化するので、負値や 1 周を超える値も受け付ける。周回データが無ければノード 0 を返す。
+
+        /// <summary>周回上の距離 d の点 (区間の直線補間。高さはノードの高さの補間)。</summary>
+        public Vector3 _PointAtDistance(float d)
+        {
+            if (!LoopReady()) return count > 0 ? _Position(0) : transform.position;
+            float x = LoopWrap(d);
+            int i = LoopSegment(x);
+            int j = (i + 1) % count;
+            float a = loopDistances[i];
+            float b = j == 0 ? loopLength : loopDistances[j];
+            float t = b - a > 0.0001f ? Mathf.Clamp01((x - a) / (b - a)) : 0f;
+            return Vector3.Lerp(_Position(i), _Position(j), t);
+        }
+
+        /// <summary>距離 d を含む区間の水平単位ベクトル (距離が増える向き)。呼び出し側が進行方向の符号を掛ける。</summary>
+        public Vector3 _DirectionAtDistance(float d)
+        {
+            if (!LoopReady()) return Vector3.forward;
+            int i = LoopSegment(LoopWrap(d));
+            Vector3 v = _Position((i + 1) % count) - _Position(i); v.y = 0f;
+            return v.sqrMagnitude < 0.0001f ? Vector3.forward : v.normalized;
+        }
+
+        /// <summary>距離 d を含む区間の linkAllowsDetour (橋などは false)。配列が無ければ true。</summary>
+        public bool _DetourAtDistance(float d)
+        {
+            if (linkAllowsDetour == null) return true;
+            if (!LoopReady()) return true;
+            int i = LoopSegment(LoopWrap(d));
+            return i >= linkAllowsDetour.Length || linkAllowsDetour[i];
+        }
+
+        private bool LoopReady()
+        {
+            return loopDistances != null && count > 1 && loopDistances.Length >= count && loopLength > 0f;
+        }
+
+        private float LoopWrap(float d)
+        {
+            float x = d - Mathf.Floor(d / loopLength) * loopLength;
+            if (x >= loopLength || x < 0f) x = 0f;   // 浮動小数の丸めで端に乗ったとき
+            return x;
+        }
+
+        // loopDistances[i] <= x を満たす最大の i (二分探索。loopDistances[0] = 0 なので必ず 0 以上)
+        private int LoopSegment(float x)
+        {
+            int lo = 0, hi = count - 1;
+            while (lo < hi)
+            {
+                int mid = (lo + hi + 1) / 2;
+                if (loopDistances[mid] <= x) lo = mid; else hi = mid - 1;
+            }
+            return lo;
+        }
     }
 }

@@ -447,6 +447,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "6 匹のボールを「{0}」にしました"
+        },
+        {
+          "key": "cart.title",
+          "text": "おさんぽカート"
+        },
+        {
+          "key": "cart.start",
+          "text": "ここから出発"
+        },
+        {
+          "key": "cart.join",
+          "text": "合流"
+        },
+        {
+          "key": "cart.notice",
+          "text": "自動で移動するカートです。VR酔いを感じたら、停止して降りてください。"
+        },
+        {
+          "key": "cart.stop",
+          "text": "停止して降りる"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "合流の受付"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "受付中"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "受付停止"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "いまは空いているカートがありません"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "このグループは合流を受け付けていません"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "ここが目的地です。さんぽの行き先を変えてください"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "すでに乗車中です"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "出発します"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "合流しました"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "降りました"
         }
       ]
     },
@@ -894,6 +954,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "All six balls are now: {0}"
+        },
+        {
+          "key": "cart.title",
+          "text": "Walk Cart"
+        },
+        {
+          "key": "cart.start",
+          "text": "Depart from here"
+        },
+        {
+          "key": "cart.join",
+          "text": "Join"
+        },
+        {
+          "key": "cart.notice",
+          "text": "This cart moves on its own. If you feel VR sickness, stop and get off."
+        },
+        {
+          "key": "cart.stop",
+          "text": "Stop and get off"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "Accept joiners"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "Accepting"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "Not accepting"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "No cart is free right now"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "This group is not accepting joiners"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "You are already here. Choose another walk destination"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "You are already riding"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "Departing"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "Joined the group"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "Got off"
         }
       ]
     },
@@ -1341,6 +1461,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "Теперь все шесть мячей: {0}"
+        },
+        {
+          "key": "cart.title",
+          "text": "Прогулочная тележка"
+        },
+        {
+          "key": "cart.start",
+          "text": "Отправиться отсюда"
+        },
+        {
+          "key": "cart.join",
+          "text": "Присоединиться"
+        },
+        {
+          "key": "cart.notice",
+          "text": "Эта тележка едет сама. Если в VR укачивает, остановитесь и сойдите."
+        },
+        {
+          "key": "cart.stop",
+          "text": "Остановиться и сойти"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "Приём попутчиков"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "Приём открыт"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "Приём закрыт"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "Сейчас нет свободных тележек"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "Эта группа не принимает попутчиков"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "Вы уже здесь. Выберите другую цель прогулки"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "Вы уже едете"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "Отправляемся"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "Вы присоединились"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "Вы сошли"
         }
       ]
     },
@@ -1788,6 +1968,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "Тепер усі шість м'ячів: {0}"
+        },
+        {
+          "key": "cart.title",
+          "text": "Прогулянковий візок"
+        },
+        {
+          "key": "cart.start",
+          "text": "Вирушити звідси"
+        },
+        {
+          "key": "cart.join",
+          "text": "Приєднатися"
+        },
+        {
+          "key": "cart.notice",
+          "text": "Цей візок їде сам. Якщо у VR заколисує, зупиніться й зійдіть."
+        },
+        {
+          "key": "cart.stop",
+          "text": "Зупинитися й зійти"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "Прийом попутників"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "Прийом відкрито"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "Прийом закрито"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "Зараз немає вільних візків"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "Ця група не приймає попутників"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "Ви вже тут. Оберіть іншу ціль прогулянки"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "Ви вже їдете"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "Вирушаємо"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "Ви приєдналися"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "Ви зійшли"
         }
       ]
     },
@@ -2235,6 +2475,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "여섯 마리의 공을 「{0}」(으)로 바꿨습니다"
+        },
+        {
+          "key": "cart.title",
+          "text": "산책 카트"
+        },
+        {
+          "key": "cart.start",
+          "text": "여기서 출발"
+        },
+        {
+          "key": "cart.join",
+          "text": "합류"
+        },
+        {
+          "key": "cart.notice",
+          "text": "자동으로 움직이는 카트예요. VR 멀미가 느껴지면 정지하고 내려 주세요."
+        },
+        {
+          "key": "cart.stop",
+          "text": "정지하고 내리기"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "합류 받기"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "받는 중"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "받지 않음"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "지금은 빈 카트가 없어요"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "이 그룹은 합류를 받지 않아요"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "여기가 목적지예요. 산책 목적지를 바꿔 주세요"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "이미 타고 있어요"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "출발할게요"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "합류했어요"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "내렸어요"
         }
       ]
     },
@@ -2682,6 +2982,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "Alle sechs Bälle sind jetzt: {0}"
+        },
+        {
+          "key": "cart.title",
+          "text": "Spazierwagen"
+        },
+        {
+          "key": "cart.start",
+          "text": "Hier losfahren"
+        },
+        {
+          "key": "cart.join",
+          "text": "Anschließen"
+        },
+        {
+          "key": "cart.notice",
+          "text": "Dieser Wagen fährt von selbst. Wenn dir in VR übel wird, halte an und steig aus."
+        },
+        {
+          "key": "cart.stop",
+          "text": "Anhalten und aussteigen"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "Mitfahrer annehmen"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "Nimmt an"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "Nimmt nicht an"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "Gerade ist kein Wagen frei"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "Diese Gruppe nimmt keine Mitfahrer an"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "Du bist schon hier. Wähle ein anderes Spaziergangsziel"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "Du fährst bereits"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "Abfahrt"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "Gruppe beigetreten"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "Ausgestiegen"
         }
       ]
     },
@@ -3129,6 +3489,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "6 只狗狗的球已换成「{0}」"
+        },
+        {
+          "key": "cart.title",
+          "text": "散步小车"
+        },
+        {
+          "key": "cart.start",
+          "text": "从这里出发"
+        },
+        {
+          "key": "cart.join",
+          "text": "会合"
+        },
+        {
+          "key": "cart.notice",
+          "text": "这是自动行驶的小车。如果感到VR晕动，请停车并下车。"
+        },
+        {
+          "key": "cart.stop",
+          "text": "停车并下车"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "接受会合"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "接受中"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "不接受"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "现在没有空闲的小车"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "这个小组不接受会合"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "这里就是目的地。请更改散步目的地"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "你已经在车上了"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "出发"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "已会合"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "已下车"
         }
       ]
     },
@@ -3576,6 +3996,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "Las seis pelotas ahora son: {0}"
+        },
+        {
+          "key": "cart.title",
+          "text": "Carrito de paseo"
+        },
+        {
+          "key": "cart.start",
+          "text": "Salir desde aquí"
+        },
+        {
+          "key": "cart.join",
+          "text": "Unirse"
+        },
+        {
+          "key": "cart.notice",
+          "text": "Este carrito se mueve solo. Si sientes mareo en VR, detente y bájate."
+        },
+        {
+          "key": "cart.stop",
+          "text": "Detener y bajar"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "Aceptar acompañantes"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "Aceptando"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "No acepta"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "Ahora no hay carritos libres"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "Este grupo no acepta acompañantes"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "Ya estás aquí. Elige otro destino de paseo"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "Ya estás en un carrito"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "Saliendo"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "Te uniste al grupo"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "Te bajaste"
         }
       ]
     },
@@ -4023,6 +4503,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "Les six balles sont maintenant : {0}"
+        },
+        {
+          "key": "cart.title",
+          "text": "Chariot de promenade"
+        },
+        {
+          "key": "cart.start",
+          "text": "Partir d’ici"
+        },
+        {
+          "key": "cart.join",
+          "text": "Rejoindre"
+        },
+        {
+          "key": "cart.notice",
+          "text": "Ce chariot avance tout seul. Si tu as le mal des transports en VR, arrête-toi et descends."
+        },
+        {
+          "key": "cart.stop",
+          "text": "Arrêter et descendre"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "Accepter les participants"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "Ouvert"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "Fermé"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "Aucun chariot libre pour le moment"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "Ce groupe n’accepte pas de participants"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "Tu es déjà ici. Choisis une autre destination de promenade"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "Tu es déjà à bord"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "Départ"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "Groupe rejoint"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "Descente effectuée"
         }
       ]
     },
@@ -4470,6 +5010,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "As seis bolas agora são: {0}"
+        },
+        {
+          "key": "cart.title",
+          "text": "Carrinho de passeio"
+        },
+        {
+          "key": "cart.start",
+          "text": "Partir daqui"
+        },
+        {
+          "key": "cart.join",
+          "text": "Juntar-se"
+        },
+        {
+          "key": "cart.notice",
+          "text": "Este carrinho anda sozinho. Se sentir enjoo em VR, pare e desça."
+        },
+        {
+          "key": "cart.stop",
+          "text": "Parar e descer"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "Aceitar participantes"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "Aceitando"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "Não aceitando"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "Nenhum carrinho livre agora"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "Este grupo não está aceitando participantes"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "Você já está aqui. Escolha outro destino de passeio"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "Você já está a bordo"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "Partindo"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "Você entrou no grupo"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "Você desceu"
         }
       ]
     },
@@ -4917,6 +5517,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "Ora tutte e sei le palle sono: {0}"
+        },
+        {
+          "key": "cart.title",
+          "text": "Carrello da passeggio"
+        },
+        {
+          "key": "cart.start",
+          "text": "Parti da qui"
+        },
+        {
+          "key": "cart.join",
+          "text": "Unisciti"
+        },
+        {
+          "key": "cart.notice",
+          "text": "Questo carrello si muove da solo. Se senti nausea in VR, fermati e scendi."
+        },
+        {
+          "key": "cart.stop",
+          "text": "Fermati e scendi"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "Accetta partecipanti"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "Aperto"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "Chiuso"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "Ora non ci sono carrelli liberi"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "Questo gruppo non accetta partecipanti"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "Sei già qui. Scegli un’altra meta della passeggiata"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "Sei già a bordo"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "Si parte"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "Ora sei nel gruppo"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "Discesa effettuata"
         }
       ]
     },
@@ -5364,6 +6024,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "Wszystkie sześć piłek to teraz: {0}"
+        },
+        {
+          "key": "cart.title",
+          "text": "Wózek spacerowy"
+        },
+        {
+          "key": "cart.start",
+          "text": "Ruszaj stąd"
+        },
+        {
+          "key": "cart.join",
+          "text": "Dołącz"
+        },
+        {
+          "key": "cart.notice",
+          "text": "Ten wózek jedzie sam. Jeśli w VR robi ci się niedobrze, zatrzymaj go i wysiądź."
+        },
+        {
+          "key": "cart.stop",
+          "text": "Zatrzymaj i wysiądź"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "Przyjmowanie chętnych"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "Otwarte"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "Zamknięte"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "Teraz nie ma wolnego wózka"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "Ta grupa nie przyjmuje chętnych"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "Już tu jesteś. Wybierz inny cel spaceru"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "Już jedziesz"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "Ruszamy"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "Dołączono do grupy"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "Wysiadanie zakończone"
         }
       ]
     },
@@ -5815,6 +6535,66 @@
         {
           "key": "course.toy.pattern.changed",
           "text": "6 隻狗狗的球已換成「{0}」"
+        },
+        {
+          "key": "cart.title",
+          "text": "散步小車"
+        },
+        {
+          "key": "cart.start",
+          "text": "從這裡出發"
+        },
+        {
+          "key": "cart.join",
+          "text": "會合"
+        },
+        {
+          "key": "cart.notice",
+          "text": "這是自動行駛的小車。如果感到VR暈動，請停車並下車。"
+        },
+        {
+          "key": "cart.stop",
+          "text": "停車並下車"
+        },
+        {
+          "key": "cart.accepting",
+          "text": "接受會合"
+        },
+        {
+          "key": "cart.accepting.on",
+          "text": "接受中"
+        },
+        {
+          "key": "cart.accepting.off",
+          "text": "不接受"
+        },
+        {
+          "key": "cart.result.full",
+          "text": "現在沒有空閒的小車"
+        },
+        {
+          "key": "cart.result.closed",
+          "text": "這個小組不接受會合"
+        },
+        {
+          "key": "cart.result.here",
+          "text": "這裡就是目的地。請更改散步目的地"
+        },
+        {
+          "key": "cart.result.busy",
+          "text": "你已經在車上了"
+        },
+        {
+          "key": "cart.result.started",
+          "text": "出發"
+        },
+        {
+          "key": "cart.result.joined",
+          "text": "已會合"
+        },
+        {
+          "key": "cart.result.left",
+          "text": "已下車"
         }
       ]
     }
