@@ -69,3 +69,5 @@ updated: 2026-10-11
 `2bf922e` で 4 洗い場の台の枠にプールを配置 (44 は 962 PASS / FAIL 0、21 PASS、Wash/12 FAIL 0)。台の枠の写真とリスティング画像は `artifacts/wash-listings/2026-10-11-040/` (04-station は檜とプール)。
 
 **見つけた問題 (ユーザーの判断待ち):** 主洗い場ではプールが地面に半分埋まり、縁だけが C の字に見える (`artifacts/wash-listings/2026-10-11-040/evidence/station.png`)。主洗い場の台の足元は斜面で、いちばん高い地面が台より 0.185 m 上にあり、台は Z ファイティングを避けてユーザーが置いた高さ (局所 y −0.028、IMP-ENV-007) のまま。高さ 0.22 m のプールは坂の上側が埋まる。候補: (a) 主洗い場の台の足元の地形を平らにする、(b) 主洗い場だけ台の基準を上げる (Z ファイティングを避けられる高さで)、(c) 主洗い場ではプールを選べなくする。推奨は (a)。道中の 3 か所は画像では確かめていない (Play で見る)。
+
+2026-10-11 (統括): 斜面に埋まるのは主洗い場だけ。Wash/12 (`293b7db` の時点) で道中の 3 か所は台が地面に乗っている: `PASS course: KH_WashStations/River (川辺): WashTable seated on the ground (local y -0.009, highest ground under it -0.009)`、`Upper (奥広場) ... (local y 0.000, highest ground under it 0.000)`、`Hillside (展望のベンチ) ... (local y 0.000, highest ground under it 0.000)`。主洗い場は `kept at the user's placement (local y -0.028; highest ground under it 0.185)`。犬ごとの大きさ (IMP-ENV-013) ではプールは拡縮しない (1.3 × 0.7 m のまま)。
