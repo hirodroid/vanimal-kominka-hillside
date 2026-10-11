@@ -1,0 +1,239 @@
+{
+  "date": "2026-10-11",
+  "purpose": "PC-only foam design; read-only queries, no Play or asset/scene mutation",
+  "unity": "2022.3.22f1",
+  "sdk": "3.10.5",
+  "before": {
+    "code": "return UnityEngine.Application.dataPath + \"|play=\" + UnityEditor.EditorApplication.isPlaying.ToString() + \"|scene=\" + UnityEngine.SceneManagement.SceneManager.GetActiveScene().path + \"|dirty=\" + UnityEngine.SceneManagement.SceneManager.GetActiveScene().isDirty.ToString();",
+    "success": true,
+    "value": "C:/work/unity/vcc/VAnimal_KominkaHillside/Assets|play=False|scene=Assets/Scenes/VRCDefaultWorldScene.unity|dirty=False",
+    "error": null
+  },
+  "registry": [
+    {
+      "id": "UnityEngineParticleSystem.__Emit__UnityEngineParticleSystemEmitParams_SystemInt32__SystemVoid",
+      "code": "return VRC.Udon.Editor.UdonEditorManager.Instance.GetNodeDefinition(\"UnityEngineParticleSystem.__Emit__UnityEngineParticleSystemEmitParams_SystemInt32__SystemVoid\").fullName;",
+      "success": true,
+      "value": "UnityEngineParticleSystem.__Emit__UnityEngineParticleSystemEmitParams_SystemInt32__SystemVoid",
+      "error": null
+    },
+    {
+      "id": "UnityEngineParticleSystem.__SetParticles__UnityEngineParticleSystemParticleArray_SystemInt32__SystemVoid",
+      "code": "return VRC.Udon.Editor.UdonEditorManager.Instance.GetNodeDefinition(\"UnityEngineParticleSystem.__SetParticles__UnityEngineParticleSystemParticleArray_SystemInt32__SystemVoid\").fullName;",
+      "success": true,
+      "value": "UnityEngineParticleSystem.__SetParticles__UnityEngineParticleSystemParticleArray_SystemInt32__SystemVoid",
+      "error": null
+    },
+    {
+      "id": "UnityEngineParticleSystem.__get_particleCount__SystemInt32",
+      "code": "return VRC.Udon.Editor.UdonEditorManager.Instance.GetNodeDefinition(\"UnityEngineParticleSystem.__get_particleCount__SystemInt32\").fullName;",
+      "success": true,
+      "value": "UnityEngineParticleSystem.__get_particleCount__SystemInt32",
+      "error": null
+    },
+    {
+      "id": "UnityEngineParticleSystemEmitParams.__set_position__UnityEngineVector3__SystemVoid",
+      "code": "return VRC.Udon.Editor.UdonEditorManager.Instance.GetNodeDefinition(\"UnityEngineParticleSystemEmitParams.__set_position__UnityEngineVector3__SystemVoid\").fullName;",
+      "success": true,
+      "value": "UnityEngineParticleSystemEmitParams.__set_position__UnityEngineVector3__SystemVoid",
+      "error": null
+    },
+    {
+      "id": "UnityEngineParticleSystemEmitParams.__set_velocity__UnityEngineVector3__SystemVoid",
+      "code": "return VRC.Udon.Editor.UdonEditorManager.Instance.GetNodeDefinition(\"UnityEngineParticleSystemEmitParams.__set_velocity__UnityEngineVector3__SystemVoid\").fullName;",
+      "success": true,
+      "value": "UnityEngineParticleSystemEmitParams.__set_velocity__UnityEngineVector3__SystemVoid",
+      "error": null
+    },
+    {
+      "id": "UnityEngineParticleSystemEmitParams.__set_startSize__SystemSingle__SystemVoid",
+      "code": "return VRC.Udon.Editor.UdonEditorManager.Instance.GetNodeDefinition(\"UnityEngineParticleSystemEmitParams.__set_startSize__SystemSingle__SystemVoid\").fullName;",
+      "success": true,
+      "value": "UnityEngineParticleSystemEmitParams.__set_startSize__SystemSingle__SystemVoid",
+      "error": null
+    },
+    {
+      "id": "UnityEngineParticleSystemEmitParams.__set_startLifetime__SystemSingle__SystemVoid",
+      "code": "return VRC.Udon.Editor.UdonEditorManager.Instance.GetNodeDefinition(\"UnityEngineParticleSystemEmitParams.__set_startLifetime__SystemSingle__SystemVoid\").fullName;",
+      "success": true,
+      "value": "UnityEngineParticleSystemEmitParams.__set_startLifetime__SystemSingle__SystemVoid",
+      "error": null
+    },
+    {
+      "id": "UnityEngineParticleSystemEmitParams.__set_applyShapeToPosition__SystemBoolean__SystemVoid",
+      "code": "return VRC.Udon.Editor.UdonEditorManager.Instance.GetNodeDefinition(\"UnityEngineParticleSystemEmitParams.__set_applyShapeToPosition__SystemBoolean__SystemVoid\").fullName;",
+      "success": true,
+      "value": "UnityEngineParticleSystemEmitParams.__set_applyShapeToPosition__SystemBoolean__SystemVoid",
+      "error": null
+    },
+    {
+      "id": "UnityEngineMaterial.__SetShaderPassEnabled__SystemString_SystemBoolean__SystemVoid",
+      "code": "return VRC.Udon.Editor.UdonEditorManager.Instance.GetNodeDefinition(\"UnityEngineMaterial.__SetShaderPassEnabled__SystemString_SystemBoolean__SystemVoid\").fullName;",
+      "success": true,
+      "value": "UnityEngineMaterial.__SetShaderPassEnabled__SystemString_SystemBoolean__SystemVoid",
+      "error": null
+    },
+    {
+      "id": "TMProTMP_Text.__set_font__TMProTMP_FontAsset__SystemVoid",
+      "code": "return VRC.Udon.Editor.UdonEditorManager.Instance.GetNodeDefinition(\"TMProTMP_Text.__set_font__TMProTMP_FontAsset__SystemVoid\").fullName;",
+      "success": false,
+      "value": null,
+      "error": "NodeDefinition referenced by 'TMProTMP_Text.__set_font__TMProTMP_FontAsset__SystemVoid' could not be found."
+    }
+  ],
+  "inventory": {
+    "code": "\nvar ws = UnityEngine.Object.FindObjectsOfType<KominkaHillside.KH_DogWash>();\nstring s = \"wash|mesh|vertices|triangles|submeshes|bones|blendshapes|quality|scale|offscreen|thickness|puffMax|puffMode|radius|rinseReach\\n\";\nfor(int i=0;i<ws.Length;i++) {\nvar w=ws[i]; var r=w.shellRenderer; var m=r.sharedMesh; int tri=0;\nfor(int j=0;j<m.subMeshCount;j++) tri+=(int)m.GetIndexCount(j)/3;\ns += w.name+\"|\"+m.name+\"|\"+m.vertexCount.ToString()+\"|\"+tri.ToString()+\"|\"+m.subMeshCount.ToString()+\"|\"+r.bones.Length.ToString()+\"|\"+m.blendShapeCount.ToString()+\"|\"+r.quality.ToString()+\"|\"+r.transform.lossyScale.ToString(\"F3\")+\"|\"+r.updateWhenOffscreen.ToString()+\"|\"+r.sharedMaterial.GetFloat(\"_FoamThickness\").ToString(\"F3\")+\"|\"+w.foamPuff.main.maxParticles.ToString()+\"|\"+w.foamPuff.GetComponent<UnityEngine.ParticleSystemRenderer>().renderMode.ToString()+\"|\"+w.showerRadius.ToString(\"F3\")+\"|\"+w.rinseReach.ToString(\"F3\")+\"\\n\";\n}\nreturn s;",
+    "success": false,
+    "value": null,
+    "error": null
+  },
+  "after": {
+    "code": "return UnityEngine.Application.dataPath + \"|play=\" + UnityEditor.EditorApplication.isPlaying.ToString() + \"|scene=\" + UnityEngine.SceneManagement.SceneManager.GetActiveScene().path + \"|dirty=\" + UnityEngine.SceneManagement.SceneManager.GetActiveScene().isDirty.ToString();",
+    "success": true,
+    "value": "C:/work/unity/vcc/VAnimal_KominkaHillside/Assets|play=False|scene=Assets/Scenes/VRCDefaultWorldScene.unity|dirty=False",
+    "error": null
+  },
+  "inventoryRows": {
+    "columns": "wash|mesh|vertices|triangles|submeshes|bones|blendshapes|quality|scale|offscreen|thickness|showerRadius|rinseReach",
+    "rows": [
+      {
+        "code": "var w = UnityEngine.Object.FindObjectsOfType<KominkaHillside.KH_DogWash>()[0]; var r = w.shellRenderer; var m = r.sharedMesh; return w.name + \"|\" + m.name + \"|\" + m.vertexCount.ToString() + \"|\" + (m.triangles.Length/3).ToString() + \"|\" + m.subMeshCount.ToString() + \"|\" + r.bones.Length.ToString() + \"|\" + m.blendShapeCount.ToString() + \"|\" + r.quality.ToString() + \"|\" + r.transform.lossyScale.ToString() + \"|\" + r.updateWhenOffscreen.ToString() + \"|\" + r.sharedMaterial.GetFloat(\"_FoamThickness\").ToString() + \"|\" + w.showerRadius.ToString() + \"|\" + w.rinseReach.ToString();",
+        "success": true,
+        "value": "KH_Wash_Corgi|１.001|3672|6548|1|33|14|Auto|(50.00, 50.00, 50.00)|False|0.032|0.07|1.7"
+      },
+      {
+        "code": "var w = UnityEngine.Object.FindObjectsOfType<KominkaHillside.KH_DogWash>()[1]; var r = w.shellRenderer; var m = r.sharedMesh; return w.name + \"|\" + m.name + \"|\" + m.vertexCount.ToString() + \"|\" + (m.triangles.Length/3).ToString() + \"|\" + m.subMeshCount.ToString() + \"|\" + r.bones.Length.ToString() + \"|\" + m.blendShapeCount.ToString() + \"|\" + r.quality.ToString() + \"|\" + r.transform.lossyScale.ToString() + \"|\" + r.updateWhenOffscreen.ToString() + \"|\" + r.sharedMaterial.GetFloat(\"_FoamThickness\").ToString() + \"|\" + w.showerRadius.ToString() + \"|\" + w.rinseReach.ToString();",
+        "success": true,
+        "value": "KH_Wash_Dachs|karada|2746|5140|1|33|14|Auto|(100.00, 100.00, 100.00)|False|0.029|0.07|1.7"
+      },
+      {
+        "code": "var w = UnityEngine.Object.FindObjectsOfType<KominkaHillside.KH_DogWash>()[2]; var r = w.shellRenderer; var m = r.sharedMesh; return w.name + \"|\" + m.name + \"|\" + m.vertexCount.ToString() + \"|\" + (m.triangles.Length/3).ToString() + \"|\" + m.subMeshCount.ToString() + \"|\" + r.bones.Length.ToString() + \"|\" + m.blendShapeCount.ToString() + \"|\" + r.quality.ToString() + \"|\" + r.transform.lossyScale.ToString() + \"|\" + r.updateWhenOffscreen.ToString() + \"|\" + r.sharedMaterial.GetFloat(\"_FoamThickness\").ToString() + \"|\" + w.showerRadius.ToString() + \"|\" + w.rinseReach.ToString();",
+        "success": true,
+        "value": "KH_Wash_Lab|karada|3485|6320|1|33|14|Auto|(100.00, 100.00, 100.00)|False|0.059|0.07|1.7"
+      },
+      {
+        "code": "var w = UnityEngine.Object.FindObjectsOfType<KominkaHillside.KH_DogWash>()[3]; var r = w.shellRenderer; var m = r.sharedMesh; return w.name + \"|\" + m.name + \"|\" + m.vertexCount.ToString() + \"|\" + (m.triangles.Length/3).ToString() + \"|\" + m.subMeshCount.ToString() + \"|\" + r.bones.Length.ToString() + \"|\" + m.blendShapeCount.ToString() + \"|\" + r.quality.ToString() + \"|\" + r.transform.lossyScale.ToString() + \"|\" + r.updateWhenOffscreen.ToString() + \"|\" + r.sharedMaterial.GetFloat(\"_FoamThickness\").ToString() + \"|\" + w.showerRadius.ToString() + \"|\" + w.rinseReach.ToString();",
+        "success": true,
+        "value": "KH_Wash_Pome|karada|2011|3764|1|31|14|Auto|(100.00, 100.00, 100.00)|False|0.022|0.07|1.7"
+      },
+      {
+        "code": "var w = UnityEngine.Object.FindObjectsOfType<KominkaHillside.KH_DogWash>()[4]; var r = w.shellRenderer; var m = r.sharedMesh; return w.name + \"|\" + m.name + \"|\" + m.vertexCount.ToString() + \"|\" + (m.triangles.Length/3).ToString() + \"|\" + m.subMeshCount.ToString() + \"|\" + r.bones.Length.ToString() + \"|\" + m.blendShapeCount.ToString() + \"|\" + r.quality.ToString() + \"|\" + r.transform.lossyScale.ToString() + \"|\" + r.updateWhenOffscreen.ToString() + \"|\" + r.sharedMaterial.GetFloat(\"_FoamThickness\").ToString() + \"|\" + w.showerRadius.ToString() + \"|\" + w.rinseReach.ToString();",
+        "success": true,
+        "value": "KH_Wash_Shiba|Cube.001|3548|6408|1|33|14|Auto|(50.00, 50.00, 50.00)|False|0.05|0.07|1.7"
+      },
+      {
+        "code": "var w = UnityEngine.Object.FindObjectsOfType<KominkaHillside.KH_DogWash>()[5]; var r = w.shellRenderer; var m = r.sharedMesh; return w.name + \"|\" + m.name + \"|\" + m.vertexCount.ToString() + \"|\" + (m.triangles.Length/3).ToString() + \"|\" + m.subMeshCount.ToString() + \"|\" + r.bones.Length.ToString() + \"|\" + m.blendShapeCount.ToString() + \"|\" + r.quality.ToString() + \"|\" + r.transform.lossyScale.ToString() + \"|\" + r.updateWhenOffscreen.ToString() + \"|\" + r.sharedMaterial.GetFloat(\"_FoamThickness\").ToString() + \"|\" + w.showerRadius.ToString() + \"|\" + w.rinseReach.ToString();",
+        "success": true,
+        "value": "KH_Wash_Samoyed|karada|2455|4596|1|33|16|Auto|(100.00, 100.00, 100.00)|False|0.057|0.07|1.7"
+      }
+    ]
+  },
+  "shibaBlendshapeProbe": {
+    "code": "var w=UnityEngine.GameObject.Find(\"KH_Wash_Shiba\").GetComponent<KominkaHillside.KH_DogWash>(); var m=w.shellRenderer.sharedMesh; var used=new bool[m.vertexCount]; var dp=new UnityEngine.Vector3[m.vertexCount]; var dn=new UnityEngine.Vector3[m.vertexCount]; var dt=new UnityEngine.Vector3[m.vertexCount]; string names=\"\"; for(int b=0;b<m.blendShapeCount;b++){ names+=m.GetBlendShapeName(b)+\",\"; for(int f=0;f<m.GetBlendShapeFrameCount(b);f++){m.GetBlendShapeFrameVertices(b,f,dp,dn,dt);for(int j=0;j<dp.Length;j++){if(dp[j].sqrMagnitude>1e-16f)used[j]=true;}}} int changed=0;for(int j=0;j<used.Length;j++){if(used[j])changed++;} return \"mesh=\"+m.name+\"; blendMoved=\"+changed.ToString()+\"; unchanged=\"+(m.vertexCount-changed).ToString()+\"; shapes=\"+names;",
+    "response": {
+      "success": true,
+      "output": "",
+      "result": "mesh=Cube.001; blendMoved=1967; unchanged=1581; shapes=me1,me2,me3,me4,me5,me6,metozi,koutoubu,onaka,tail1,tail2,maru,mimi,egao,",
+      "resultSet": true
+    }
+  },
+  "shibaCurrentMorphs": {
+    "code": "var w=UnityEngine.GameObject.Find(\"KH_Wash_Shiba\").GetComponent<KominkaHillside.KH_DogWash>(); var pet=w.dogRoot.GetComponentInChildren<KominkaDogRun.KD_DogPetController>(); var r=pet.faceRenderer; var m=r.sharedMesh; string s=\"\"; for(int i=0;i<m.blendShapeCount;i++){s+=m.GetBlendShapeName(i)+\"=\"+r.GetBlendShapeWeight(i).ToString()+\";\";} return s;",
+    "response": {
+      "success": false,
+      "error": "Object reference not set to an instance of an object",
+      "stackTrace": "  at <InteractiveExpressionClass>.Host (System.Object& $retval) [0x00028] in <4238edaaec304a1193bb16c0afc88248>:0 \r\n  at Mono.CSharp.Evaluator.Evaluate (System.String input, System.Object& result, System.Boolean& result_set) [0x00038] in <dc716ad31ee043669697df3b37cd5a18>:0 \r\n  at Mono.CSharp.Evaluator.Run (System.String statement) [0x00000] in <dc716ad31ee043669697df3b37cd5a18>:0 \r\n  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)\r\n  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <27124aa0e30a41659b903b822b959bc7>:0 "
+    }
+  },
+  "shibaCurrentMorphsCorrected": {
+    "code": "var w=UnityEngine.GameObject.Find(\"KH_Wash_Shiba\").GetComponent<KominkaHillside.KH_DogWash>(); var shell=w.shellRenderer; var rs=shell.transform.parent.GetComponentsInChildren<UnityEngine.SkinnedMeshRenderer>(); string s=\"\"; for(int a=0;a<rs.Length;a++){var r=rs[a];if(r!=shell && r.sharedMesh==shell.sharedMesh){s+=r.name+\":\";var m=r.sharedMesh;for(int i=0;i<m.blendShapeCount;i++){s+=m.GetBlendShapeName(i)+\"=\"+r.GetBlendShapeWeight(i).ToString()+\";\";}}} return s;",
+    "response": {
+      "success": true,
+      "output": "",
+      "result": "karada:me1=0;me2=0;me3=0;me4=0;me5=0;me6=0;metozi=0;koutoubu=0;onaka=0;tail1=0;tail2=100;maru=0;mimi=0;egao=0;",
+      "resultSet": true
+    }
+  },
+  "animatorMorphBindings": {
+    "code": "var ws=UnityEngine.Object.FindObjectsOfType<KominkaHillside.KH_DogWash>(); string s=\"\";for(int d=0;d<ws.Length;d++){var w=ws[d];var ans=w.shellRenderer.GetComponentsInParent<UnityEngine.Animator>(true);s+=w.name+\" animators=\"+ans.Length.ToString()+\":\";for(int a=0;a<ans.Length;a++){var ctrl=ans[a].runtimeAnimatorController;if(ctrl!=null){var clips=ctrl.animationClips;for(int c=0;c<clips.Length;c++){var bs=UnityEditor.AnimationUtility.GetCurveBindings(clips[c]);for(int b=0;b<bs.Length;b++){if(bs[b].propertyName.StartsWith(\"blendShape.\")){s+=clips[c].name+\"/\"+bs[b].path+\"/\"+bs[b].propertyName+\";\";}}}}}s+=\"\\n\";} return s;",
+    "response": {
+      "success": false,
+      "output": "",
+      "result": null,
+      "resultSet": false
+    }
+  },
+  "bindSurfaceArea": [
+    {
+      "name": "Shiba",
+      "code": "var w=UnityEngine.GameObject.Find(\"KH_Wash_Shiba\").GetComponent<KominkaHillside.KH_DogWash>();var m=w.shellRenderer.sharedMesh;var vs=m.vertices;var ts=m.triangles;float area=0f;for(int i=0;i<ts.Length;i+=3){area+=UnityEngine.Vector3.Cross(vs[ts[i+1]]-vs[ts[i]],vs[ts[i+2]]-vs[ts[i]]).magnitude*0.5f;}return area*w.meshToWorldScale*w.meshToWorldScale;",
+      "response": {
+        "success": true,
+        "output": "",
+        "result": 0.8182086,
+        "resultSet": true
+      }
+    },
+    {
+      "name": "Pome",
+      "code": "var w=UnityEngine.GameObject.Find(\"KH_Wash_Pome\").GetComponent<KominkaHillside.KH_DogWash>();var m=w.shellRenderer.sharedMesh;var vs=m.vertices;var ts=m.triangles;float area=0f;for(int i=0;i<ts.Length;i+=3){area+=UnityEngine.Vector3.Cross(vs[ts[i+1]]-vs[ts[i]],vs[ts[i+2]]-vs[ts[i]]).magnitude*0.5f;}return area*w.meshToWorldScale*w.meshToWorldScale;",
+      "response": {
+        "success": true,
+        "output": "",
+        "result": 0.262428969,
+        "resultSet": true
+      }
+    },
+    {
+      "name": "Samoyed",
+      "code": "var w=UnityEngine.GameObject.Find(\"KH_Wash_Samoyed\").GetComponent<KominkaHillside.KH_DogWash>();var m=w.shellRenderer.sharedMesh;var vs=m.vertices;var ts=m.triangles;float area=0f;for(int i=0;i<ts.Length;i+=3){area+=UnityEngine.Vector3.Cross(vs[ts[i+1]]-vs[ts[i]],vs[ts[i+2]]-vs[ts[i]]).magnitude*0.5f;}return area*w.meshToWorldScale*w.meshToWorldScale;",
+      "response": {
+        "success": true,
+        "output": "",
+        "result": 1.31205,
+        "resultSet": true
+      }
+    }
+  ],
+  "shibaMaterialQueues": {
+    "code": "var w=UnityEngine.GameObject.Find(\"KH_Wash_Shiba\").GetComponent<KominkaHillside.KH_DogWash>();var rs=w.shellRenderer.transform.parent.GetComponentsInChildren<UnityEngine.SkinnedMeshRenderer>();string s=\"\";for(int a=0;a<rs.Length;a++){var r=rs[a];if(r.sharedMesh==w.shellRenderer.sharedMesh){var ms=r.sharedMaterials;for(int i=0;i<ms.Length;i++){s+=r.name+\"|\"+ms[i].name+\"|\"+ms[i].shader.name+\"|\"+ms[i].renderQueue.ToString()+\";\";}}}return s;",
+    "response": {
+      "success": true,
+      "output": "",
+      "result": "karada|ke 1_Uzumore|Hidden/Sigmal00/Uzumore/FurTwoPass|3000;KH_WashShell|KH_WashShellMat_Shiba|KominkaHillside/Wash Shell|3010;",
+      "resultSet": true
+    }
+  },
+  "finalReadOnlyState": {
+    "code": "return UnityEngine.Application.dataPath + \"|play=\" + UnityEditor.EditorApplication.isPlaying.ToString() + \"|scene=\" + UnityEngine.SceneManagement.SceneManager.GetActiveScene().path + \"|dirty=\" + UnityEngine.SceneManagement.SceneManager.GetActiveScene().isDirty.ToString();",
+    "success": true,
+    "value": "C:/work/unity/vcc/VAnimal_KominkaHillside/Assets|play=False|scene=Assets/Scenes/VRCDefaultWorldScene.unity|dirty=False",
+    "error": null
+  },
+  "sourceSnapshot": {
+    "note": "SHA256 of on-disk files at research completion; other sessions share this working tree.",
+    "capturedUtc": "2026-10-11T04:52:05.247Z",
+    "files": [
+      {
+        "path": "Assets/KominkaHillside/Shaders/KH_WashShell.shader",
+        "sha256": "0986ef2098af82356c4fb4ed64fd07dba2bcaadba7b58ba9b3b3bfcdba080199"
+      },
+      {
+        "path": "Assets/KominkaHillside/Shaders/KH_WashMask.shader",
+        "sha256": "4d7a9070e676603213bc0b38de34a159d15ff76a66adedb1b6d1db2e359b1189"
+      },
+      {
+        "path": "Assets/KominkaHillside/Scripts/KH_DogWash.cs",
+        "sha256": "730963cef42540d3b28e1ad653fecaffa5ddd663a14802da96d53c395b766cad"
+      },
+      {
+        "path": "Assets/KominkaHillside/Scripts/Editor/KH_DogWashSetupEditor.Dog.cs",
+        "sha256": "0defb35fe95f347e88fb4a66ac4f01f3250166e108ea4a3bbd94852bde029ebc"
+      },
+      {
+        "path": "Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogPetController.cs",
+        "sha256": "b5eecb2b0182c7fb922aa449faa5f6b6b3e05ae2f863bea5bb916d7d1e5a2d59"
+      }
+    ]
+  }
+}

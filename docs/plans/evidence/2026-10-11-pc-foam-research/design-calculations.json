@@ -1,0 +1,57 @@
+{
+  "kind": "offline arithmetic, not measured GPU/CPU time or visual coverage",
+  "skinExamples": [
+    {
+      "boneAngleDegrees": 0,
+      "midpointSkinErrorMeters": 0,
+      "blendedNormalLength": 1
+    },
+    {
+      "boneAngleDegrees": 90,
+      "midpointSkinErrorMeters": 0.02,
+      "blendedNormalLength": 0.7071067811865476
+    },
+    {
+      "boneAngleDegrees": 180,
+      "midpointSkinErrorMeters": 0.028284271247461905,
+      "blendedNormalLength": 6.123233995736766e-17
+    }
+  ],
+  "capacity": [
+    {
+      "lobes": 64,
+      "triangles": 5120,
+      "vertices": 2688,
+      "footprintSumM2": 0.12566370614359174,
+      "footprintToShibaTotalArea": 0.15358394686097376,
+      "estimatedBytes": 374784
+    },
+    {
+      "lobes": 128,
+      "triangles": 10240,
+      "vertices": 5376,
+      "footprintSumM2": 0.25132741228718347,
+      "footprintToShibaTotalArea": 0.3071678937219475,
+      "estimatedBytes": 749568
+    },
+    {
+      "lobes": 192,
+      "triangles": 15360,
+      "vertices": 8064,
+      "footprintSumM2": 0.37699111843077526,
+      "footprintToShibaTotalArea": 0.4607518405829214,
+      "estimatedBytes": 1124352
+    },
+    {
+      "lobes": 256,
+      "triangles": 20480,
+      "vertices": 10752,
+      "footprintSumM2": 0.5026548245743669,
+      "footprintToShibaTotalArea": 0.614335787443895,
+      "estimatedBytes": 1499136
+    }
+  ],
+  "sixBodyTriangles": 32776,
+  "nominalSixDogsCurrentPassTriangles": 163880,
+  "nominalSixDogsCandidate192": 157712
+}
