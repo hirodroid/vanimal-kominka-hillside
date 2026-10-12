@@ -231,6 +231,7 @@ namespace KominkaHillside.Editor
             string all = string.Concat(Directory.GetFiles("Assets/KominkaHillside/Scripts", "KH_VideoCamera*.cs").Where(f => !f.EndsWith(".meta")).Select(File.ReadAllText));
             Check(Regex.IsMatch(all, @"shotListener\.SendCustomEvent\(""_OnVideoShot""\);\s*PatternOnShot\(kind\);"), "§17 RaiseShot still tells shotListener, then the pattern");
             Check(Regex.IsMatch(all, @"case ModeSelfFollow: return _person < 0 \|\| _patRun \? SelfFollow\(dt\) : PersonFollow\(dt\);"), "§17 a pattern's じぶん is always me");
+            Check(all.Contains("if (startWithPattern && defaultPattern >= 0 && defaultPattern < PatternCount) PatternStart(defaultPattern);"), "2026-10-12 _Open starts the default pattern (おまかせ) every time");
             Check(Regex.IsMatch(all, @"case ModeWelcome: return Welcome\(dt\);"), "§17 the switch runs おかえり");
             Check(Regex.IsMatch(all, @"void ShotApply\(int mode, int dog, int spot\)\s*\{\s*if \(!_open \|\| mode < 0 \|\| mode >= ModeCountAll\) return;"), "§17 the shot entry takes modes < ModeCountAll");
             Check(Regex.IsMatch(all, @"void SetMode\(int mode\)\s*\{\s*if \(_patRun\) PatternStop\(\);") && Regex.IsMatch(all, @"void StepPick\(int step\)\s*\{\s*if \(!_open\) return;\s*if \(_patRun\) PatternStop\(\);")
