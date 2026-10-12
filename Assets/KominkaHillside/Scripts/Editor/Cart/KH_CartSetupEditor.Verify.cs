@@ -108,6 +108,7 @@ namespace KominkaHillside.Editor
             var expectedCartPanels = expectedSeats.Select(seat => seat != null && seat.transform.Find(CartPanelName) != null ? seat.transform.Find(CartPanelName).GetComponent<KH_CartStationPanel>() : null).ToArray();
             ArrayCheck(v, mso, mb, "panels", expectedPanels.Concat(expectedCartPanels).ToArray(), "manager");   // M3: 乗り場 5 → カート上 8
             M3Check(v, manager, mso, mb, leash, route, stationsRoot, expectedSeats, expectedCartPanels);
+            VoiceCheck(v, manager, mso, mb);   // IMP-WLD-013 (KH_CartSetupEditor.VerifyVoice.cs)
 
             // ---- KH_LeashManager.cartManager ----
             var lso = new SerializedObject(leash);

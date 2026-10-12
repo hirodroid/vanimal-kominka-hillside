@@ -386,6 +386,7 @@ namespace KominkaHillside
                 carts[c]._ApplySeat(cartSeatSteps[c], cartYawSteps[c], cartFwdSteps[c]);
                 carts[c]._SetParked(cartState[c] == CartParked);   // M3: その場に残ったカートの上のメニュー
             }
+            VoiceSync();   // IMP-WLD-013: 同じグループの相手の声 (KH_CartManager.Voice.cs。差分だけ。ApplyCore を呼び返さない)
         }
 
         /// <summary>見せるカート: 走行中・到着中 (グループあり) と、その場に残った (Parked) カート。</summary>

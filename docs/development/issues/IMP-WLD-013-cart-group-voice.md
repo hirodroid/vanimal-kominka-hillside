@@ -2,10 +2,10 @@
 id: IMP-WLD-013
 type: IMP
 system: WLD
-status: wip
+status: review
 priority: Medium
-summary: 同じ自動散歩カートグループの参加者同士では、音声の距離減衰をほぼなくし、隊列の先頭と最後尾でも会話しやすくする
-next: カートの参加・離脱状態と既存のプレイヤー音声設定を調べ、グループ内への適用と離脱時の通常設定への復元を実装する。今回は起票のみ
+summary: 同じ自動散歩カートグループの相手の声だけ減衰をほぼなくす (near 25 m / far 40 m、離脱で VRChat 既定へ戻す) を KH_CartManager.Voice.cs で実装。Unity のコンパイル・Cart/2 と複数人の聴取は未実施
+next: 統括が Unity で compile (--udon) → Cart/2 Verify (voice の項目) → 保存。独立レビューの後、複数人の実機で下の B1〜B5 を聴取し、near / far / lowpass を決める
 updated: 2026-10-12
 decided: 2026-10-12
 ---
@@ -43,8 +43,33 @@ decided: 2026-10-12
 - [ ] ミュート・個別音量と声の方向感を実機で確認する。PCVR・Desktop・Quest 単体・Android/iOS の対応結果と未確認条件を分けて記録する。
 - [ ] 実装・独立レビューと、複数人の実クライアントでの聴取結果を記録する。設定値の検査だけを聞こえ方の合格にしない。
 
+## 実機チェックリスト
+
+設計と値は [実装設計 §2026-10-12 グループ内の音声](../../plans/auto-walk-cart/implementation.md#2026-10-12-グループ内の音声-imp-wld-013)。ClientSim では相手の端末の聞こえ方が出ないので、**ここは複数人の実クライアントでしか判定できない**。事前準備: Build & Test をし直した / コンソールにエラー無し / 全員のミュート・個別音量を既定に戻した。
+
+**A (1 人でできる)**
+- [ ] A1 乗車・降車・合流の取消でコンソールに例外が無く、`[KH_Cart] voice-*` のログが自分以外の相手にだけ出る (1 人なら 0 件)。
+
+**B (2 人以上。複数人の聴取)**
+- [ ] B1 先頭と最後尾: 同じグループで 3 台以上 (できれば 8 台) 並び、直線・カーブ・合流直後に、先頭と最後尾が普段の声量で相互に聞き取れ、近くの人との音量差をほぼ感じない。声の向き (左右) は残っている。
+- [ ] B2 別グループ・徒歩: 別グループのカートの人と、カートの横を歩く人の声が、普段どおり距離で小さくなる (隊列の後ろ 30 m で聞こえ過ぎない)。逆向きのすれ違いでも混線しない。
+- [ ] B3 離脱後の復元: 停止ボタン・ジャンプ・到着・ワープ・リスポーンで降りた人と、残った人が、降りた直後から普段の距離減衰に戻る (20 m 離れて聞き比べる)。残った人同士は続く。グループが解散した後も残らない。
+- [ ] B4 途中参加・再合流・別グループへの移動: 途中参加した人がカートに合流すると掛かり、別グループへ合流し直すと前のグループの人とは普段どおりに戻る。退室した人がいても他の人に影響しない。
+- [ ] B5 後方の声がこもる (ローパス) か、ミュート・個別音量が効くか。端末 (PCVR・Desktop・Quest 単体・Android/iOS) ごとに結果と未確認を分けて書く。
+
+| 症状 | 見るところ |
+|---|---|
+| 何も変わらない | アップロードし直したか → ログ `voice-apply` が出ているか (出ていなければ所属の判定、出ていれば値の不足) |
+| 後方が小さい | `voiceNear` が隊列より短い (カーブ・合流の追いつきで 21 m を超える) |
+| 後方がこもる | `voiceLowpass` を false にして比べる |
+| 降りても大きいまま | ログ `voice-restore` の有無 (無ければ解除の経路、あればアバター変更等で再適用されていないか) |
+
 ## 記録
 
 2026-10-12: 方針を採用し起票。コード・シーン・音声設定は変更していない。
 
 2026-10-12: このセッション (Fable 司令塔) で着手。別セッションの DES-WLD-004 M4 候補からは外す (二重実装を避ける)。新しい partial `KH_CartManager.Voice.cs` で実装し、カート本体の partial は触らない。
+
+2026-10-12: 実装 (コードと文書だけ。Unity・Play・コミットは統括)。`KH_CartManager.Voice.cs` (新): 自分と同じ cartGroup の Riding / Ending の cartRider に `voiceNear 25 / voiceFar 40 / voiceGain 15 / voiceLowpass on` (public 調整値) を掛け、外れた相手は VRChat 既定 (near 0 / far 25 / gain 15 / lowpass on) へ戻す。適用中の playerId の一覧との差分だけ API を呼び、無効なプレイヤーには呼ばない。掛けるのは本体 `ApplyCore()` の末尾に足した 1 行 `VoiceSync();` (Commit・OnDeserialization・Start・自分の降車・1 秒の安全網) と新設の `OnPlayerJoined`。同期変数は増やしていない。ワールドに他の音声制御は無い (`WorldAudioSettings` はシーン・プレハブの参照 0 件)。Udon の公開は `VRCWrapperModules.dll` の extern 名で確認。Editor: `KH_CartSetupEditor.VerifyVoice.cs` (新) の `VoiceCheck` を Cart/2 の `Validate` に 1 行で接続 (値の範囲・既定値・配線・WorldAudioSettings 不在・`VoiceTargets` の 10 ケース)。スクラッチの dotnet で実行側・Editor 側とも 0 エラー、`VoiceTargets` を 9 ケース呼んで期待どおり。**ClientSim では証明できない** (相手の聞こえ方が出ず、疑似 id は `GetPlayerById` が無効。カートのハーネスも無い) ので、聞こえ方は上の B1〜B5 で複数人の実機で聴取する。**設定値の検査 (Cart/2) だけを聞こえ方の合格にしない。** 未実施: Unity のコンパイルと Cart/2、独立レビュー、実機。
+
+2026-10-12: Codex 独立レビュー (高 0・中 2・低 1) を反映。(1) 中: 退室して無効になった相手が同期配列に ID が残る間 `_voiceOn` に保持され、ID の再利用時に再適用を飛ばす → `VoiceSync` で保持中の相手も毎回有効性を確かめて無効なら落とす (SetVoice なし)、`OnPlayerJoined` で入ってきた ID を一覧から捨ててから判定し直す (`VoiceForget`)。`OnPlayerLeft` は本体 `KH_CartManager.cs` に既にあり partial で二重に override できないので新設しない。(2) 中: Cart/2 の `voiceLowpass` が backing override の無い時に検査を省いていた → コード既定 (true) との一致を検査。(3) 低: Editor の far 上限の説明を「同じグループ内の可聴距離の上限」に訂正。Codex の注記: near 25 / far 40 は試作値で、25〜40 m は減衰し 40 m 以遠は同じグループでも聞こえない。経路上で離れた時まで「ほぼ減衰なし」を保証する値ではなく、実機で決める。スクラッチの dotnet で実行側 0 エラー、Editor 側は別セッションが編集中の歩行ハーネス系 (KH_CourseWalkHarnessEditor.* とそれを参照する 3 本) を除いて 0 エラー、`VoiceTargets` 9 ケースは期待どおり。
