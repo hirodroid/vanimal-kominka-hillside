@@ -15,7 +15,7 @@ namespace KominkaHillside.Editor
     /// Probe は ParkedStartDistance と ReclaimCandidate (Runtime の判定、Reflection)。</summary>
     public static partial class KH_CartSetupEditor
     {
-        static void M3Check(V v, KH_CartManager manager, SerializedObject mso, UdonBehaviour mb, KH_LeashManager leash, Transform stationsRoot, KH_CartSeat[] seats, KH_CartStationPanel[] cartPanels)
+        static void M3Check(V v, KH_CartManager manager, SerializedObject mso, UdonBehaviour mb, KH_LeashManager leash, KH_WalkRoute route, Transform stationsRoot, KH_CartSeat[] seats, KH_CartStationPanel[] cartPanels)
         {
             // ---- 静的カート (メッシュだけ) ----
             for (int s = 0; s < StationCount; s++)
@@ -33,8 +33,10 @@ namespace KominkaHillside.Editor
                 if (fbx) v.Req(sc.GetComponent<LODGroup>() != null && sc.GetComponent<LODGroup>().lodCount == 2, n + " LODGroup (2 levels)");
                 if (leash.spotPositions != null && leash.spotPositions.Length > s && leash.spotYaws != null && leash.spotYaws.Length > s)
                 {
-                    StationCartPose(leash.spotPositions[s], leash.spotYaws[s], out Vector3 pos, out Quaternion rot, out float _, out bool _);
-                    v.Req((sc.position - pos).magnitude < 0.02f && Quaternion.Angle(sc.rotation, rot) < 0.5f, n + " at the landing spot's right 1.2 m, facing the trail (" + (sc.position - pos).magnitude.ToString("F3") + " m off)");
+                    var tr = BuildTrack(route); ProjectStops(tr, route, leash);
+                    StationCartPoseFor(s, tr, leash, out Vector3 pos, out Quaternion rot, out Vector3 _, out float _, out bool _);
+                    v.Req((sc.position - pos).magnitude < 0.02f && Quaternion.Angle(sc.rotation, rot) < 0.5f, n + (s == 0 ? " beyond the map board (" + tr.spot0Basis + "), right 1.2 m of the track" : " at the landing spot's right 1.2 m, facing the trail") + " (" + (sc.position - pos).magnitude.ToString("F3") + " m off)");
+                    if (s == 0 && tr.spot0Basis.StartsWith("MAP BOARD NOT FOUND")) v.Pend("station 0: " + tr.spot0Basis);
                 }
             }
             // ---- カート上メニュー ----

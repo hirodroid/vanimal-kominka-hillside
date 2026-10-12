@@ -27,6 +27,9 @@ namespace KominkaHillside
         public GameObject body;
         public GameObject tab;
         public TextMeshProUGUI tabLabel;
+        // 2026-10-12 追加要望: タブ (TabCanvas のルート = tab) の置き場所。展開中は操作帯の角、最小化中は左の肘掛けの前上 (視界に入り続けない)。
+        // 切り替えのたびに tab.transform をアンカーの位置・向きへ置く (親は変えない。カートの子どうしなので以後は一緒に動く)。null なら動かさない
+        public Transform tabExpandedAnchor, tabMinimizedAnchor;
         private bool _minimized;
 
         // 2026-10-12: 前後を足して 10 個 (高さと前後の矢印は別の行・別のキー)。M2: 11 個目「案内」
@@ -138,6 +141,8 @@ namespace KominkaHillside
             bool show = !_minimized;
             if (body != null && body.activeSelf != show) body.SetActive(show);
             if (tab != null && !tab.activeSelf) tab.SetActive(true);
+            Transform anchor = _minimized ? tabMinimizedAnchor : tabExpandedAnchor;
+            if (tab != null && anchor != null) tab.transform.SetPositionAndRotation(anchor.position, anchor.rotation);
             if (tabLabel != null) tabLabel.text = _minimized ? "+" : "×";   // + / × (≡ U+2261 は共通フォントに無い。2026-10-12 実測)
         }
 

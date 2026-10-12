@@ -215,7 +215,8 @@ namespace KominkaHillside.Editor
                 Physics.SyncTransforms();
                 // M3: 乗り場 = 静的カート (メッシュだけ) + その右肘掛けの上のパネル。Manager.panels = 乗り場 5 + カート上 8 = 13
                 var panels = new KH_CartStationPanel[StationCount + MaxCarts];
-                for (int s = 0; s < StationCount; s++) panels[s] = BuildStation(scene, stationsRoot, s, manager, language, leash, font, fbx, bodyMat, signMat, ui, report);
+                for (int s = 0; s < StationCount; s++) panels[s] = BuildStation(scene, stationsRoot, s, manager, language, leash, track, font, fbx, bodyMat, signMat, ui, report);
+                report.log.Add("station 0 start: " + track.spot0Basis + " -> d=" + track.spot[0].ToString("F1"));
                 for (int i = 0; i < MaxCarts; i++) panels[StationCount + i] = seats[i].GetComponentsInChildren<KH_CartStationPanel>(true).FirstOrDefault(x => x.name == CartPanelName);
 
                 // ---- Manager の配線 ----
@@ -462,11 +463,10 @@ namespace KominkaHillside.Editor
 
         /// <summary>乗り場 s: 着地点の右手 1.2 m に静的カート (FBX のメッシュだけ。Udon / Station / Collider なし、layer Default、LODGroup 付き)、
         /// その右肘掛け (Anchor_StopR) の上 0.55 m に乗り場パネル (通路 = 着地点側を向く)。</summary>
-        static KH_CartStationPanel BuildStation(UnityEngine.SceneManagement.Scene scene, Transform stationsRoot, int s, KH_CartManager manager, KD_Language language, KH_LeashManager leash, TMP_FontAsset font,
+        static KH_CartStationPanel BuildStation(UnityEngine.SceneManagement.Scene scene, Transform stationsRoot, int s, KH_CartManager manager, KD_Language language, KH_LeashManager leash, Track track, TMP_FontAsset font,
             GameObject fbx, Material bodyMat, Material signMat, StringBuilder log, BuildReport report)
         {
-            Vector3 spot = leash.spotPositions[s];
-            StationCartPose(spot, leash.spotYaws[s], out Vector3 cartPos, out Quaternion cartRot, out float groundDelta, out bool hit);
+            StationCartPoseFor(s, track, leash, out Vector3 cartPos, out Quaternion cartRot, out Vector3 spot, out float groundDelta, out bool hit);
             var sc = BuildStationCart(scene, stationsRoot, s, cartPos, cartRot, fbx, bodyMat, signMat);
             var armR = FindDeep(sc.transform, AnchorStopR);
             Vector3 pos = armR.position + sc.transform.up * PanelAboveArmrest;
@@ -476,7 +476,18 @@ namespace KominkaHillside.Editor
             return BuildPanel(stationsRoot, "Station_" + s, pos, rot, s, -1, manager, language, font, log, true);
         }
 
-        /// <summary>静的カートの姿勢: 着地点から spotYaws の右手へ 1.2 m、その地点の地面 (TravelGroundMask)、向きは道の進行方向 (spotYaws)。</summary>
+        /// <summary>乗り場 s の静的カートの姿勢と、パネルが向く通路側の点 (aisle)。乗り場 0 は軌道上の開始点 (spotTrackDistance[0] = 地図ボードの少し奥) の右 1.2 m、
+        /// 向きは軌道の進行方向 (+1)。他の乗り場は着地点基準 (StationCartPose)。Build と Verify が同じ式を使う。</summary>
+        public static void StationCartPoseFor(int s, Track track, KH_LeashManager leash, out Vector3 pos, out Quaternion rot, out Vector3 aisle, out float groundDelta, out bool hit)
+        {
+            if (s != 0) { aisle = leash.spotPositions[s]; StationCartPose(aisle, leash.spotYaws[s], out pos, out rot, out groundDelta, out hit); return; }
+            aisle = TrackPointRef(track, track.spot[0]);
+            var f = TrackDirectionRef(track, track.spot[0]);
+            float yaw = Mathf.Atan2(f.x, f.z) * Mathf.Rad2Deg;
+            StationCartPose(aisle, yaw, out pos, out rot, out groundDelta, out hit);
+        }
+
+        /// <summary>静的カートの姿勢: 基準点から yaw の右手へ 1.2 m、その地点の地面 (TravelGroundMask)、向きは yaw (道の進行方向)。</summary>
         public static void StationCartPose(Vector3 spot, float yawDegrees, out Vector3 pos, out Quaternion rot, out float groundDelta, out bool hit)
         {
             float yaw = yawDegrees * Mathf.Deg2Rad;

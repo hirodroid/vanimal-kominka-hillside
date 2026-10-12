@@ -23,7 +23,8 @@ namespace KominkaHillside.Editor
         {
             public Vector3[] positions; public float[] distances; public bool[] detour; public float length, closing;
             public bool skipsNode0;   // M3: 節 0 が棘 (435→0→1 が 435→1 の 1.3 倍超) のときだけ除く。そうでなければ route と同じ 436 節
-            public int firstNode;     // positions[0] が route のどの節か (除くなら 1、含むなら 0)
+            public int firstNode;
+            public string spot0Basis;   // 2026-10-12: 乗り場 0 の開始点の決め方 (地図ボード基準 / 着地点基準の代替)     // positions[0] が route のどの節か (除くなら 1、含むなら 0)
             public float[] spot, dest, noFrom, noTo;
             public List<string> sweepHits = new List<string>();
             public int sweepCandidates, sweepSkippedLarge;
@@ -55,6 +56,8 @@ namespace KominkaHillside.Editor
         }
 
         public const float SpikeRatio = 1.3f;
+        public const string EntranceMapBoardPath = "KH_GuideBoards/Map";   // KH_GuideBoardsEditor の地図の板
+        public const float EntranceAfterMap = 6f, EntranceFallback = 8f;
 
         public static float TrackWrap(Track t, float d) { d %= t.length; return d < 0f ? d + t.length : d; }
 
@@ -112,6 +115,11 @@ namespace KominkaHillside.Editor
                 // M3: 乗り場の着地点 (spotPositions) を軌道へ投影 (カートは着地点の真横から出発。節 435 が整形で動いても着地点は Course/80 のまま)
                 t.spot[s] = leash.spotPositions != null && leash.spotPositions.Length > s ? ProjectToTrack(t, leash.spotPositions[s]) : ProjectToTrack(t, route.nodePositions[leash.spotNodes[s]]);
             }
+            // 2026-10-12 ユーザー要望: 入口 (乗り場 0) のカートステーションは地図ボードの少し奥 (広場へ向かって = 軌道距離が増える向き)。
+            // 地図ボード (KH_GuideBoards/Map) を軌道へ投影して +6 m。見つからなければ着地点の投影から +8 m
+            var map = GameObject.Find(EntranceMapBoardPath);
+            if (map != null) { t.spot[0] = TrackWrap(t, ProjectToTrack(t, map.transform.position) + EntranceAfterMap); t.spot0Basis = "map board " + EntranceMapBoardPath + " " + map.transform.position.ToString("F1") + " + " + EntranceAfterMap + " m"; }
+            else { t.spot[0] = TrackWrap(t, t.spot[0] + EntranceFallback); t.spot0Basis = "MAP BOARD NOT FOUND: landing + " + EntranceFallback + " m"; }
             t.dest = new float[6];
             for (int d = 0; d < 6; d++)
             {

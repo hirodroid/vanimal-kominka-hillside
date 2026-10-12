@@ -145,9 +145,23 @@ namespace KominkaHillside.Editor
                             c + " controls " + ControlNames[k] + " at " + ControlPos(k) + " (2 x 5 grid, pairs side by side), label '" + (lab != null ? lab.text : "") + "' = " + ControlKeys[k]);
                         buttons[k] = b.gameObject; labels[k] = Comp<TextMeshProUGUI>(b.Find("Label"));
                     }
-                    var bodyT = board.Find(BodyName); var tabT = board.Find(TabName);
-                    v.Req(board.childCount == 2 && bodyT != null && tabT != null && bodyT.childCount == ControlEvents.Length + 1 && bodyT.Find(NoteName) != null, c + " controls board = Body (" + ControlEvents.Length + " buttons + Note) + Tab outside Body (actual board " + board.childCount + ", body " + (bodyT != null ? bodyT.childCount : -1) + "; no leftover layout)");
-                    if (tabT != null) EventCheck(v, tabT.gameObject, cb, TabEvent, c + " controls");
+                    var bodyT = board.Find(BodyName); var tabT = cart.transform.Find(TabCanvasName);
+                    v.Req(board.childCount == 1 && bodyT != null && bodyT.childCount == ControlEvents.Length + 1 && bodyT.Find(NoteName) != null, c + " controls board = Body only (" + ControlEvents.Length + " buttons + Note; actual board " + board.childCount + ", body " + (bodyT != null ? bodyT.childCount : -1) + "; old Tab removed)");
+                    // タブの Canvas (カート直下) と 2 アンカー
+                    v.Req(tabT != null, c + " " + TabCanvasName + " under the cart");
+                    var tabBtn = tabT != null ? tabT.Find(TabButtonName) : null;
+                    if (tabT != null)
+                    {
+                        var tc = tabT.GetComponent<Canvas>(); var tcol = tabT.GetComponent<BoxCollider>(); var trt = tabT as RectTransform;
+                        v.Req(tc != null && tc.renderMode == RenderMode.WorldSpace && tabT.GetComponent<VRCUiShape>() != null && tabT.GetComponent<GraphicRaycaster>() != null && tcol != null && tcol.isTrigger
+                            && trt != null && trt.sizeDelta == TabSize && Mathf.Approximately(trt.localScale.x, ControlsScale) && tabT.GetComponentsInChildren<Transform>(true).All(x => x.gameObject.layer == ControlsLayer),
+                            c + " " + TabCanvasName + ": WorldSpace Canvas 50x50 @0.001 + VRCUiShape + Raycaster + trigger BoxCollider, layer 17");
+                        if (tabBtn != null) EventCheck(v, tabBtn.gameObject, cb, TabEvent, c + " tab"); else v.Req(false, c + " " + TabCanvasName + "/" + TabButtonName);
+                    }
+                    var tabExpT = ct.Find(TabExpandedName); var tabMinT = cart.transform.Find(TabMinimizedName);
+                    v.Req(tabExpT != null && (tabExpT.position - ct.TransformPoint(TabExpandedLocalOnControls())).magnitude < PlacementTolerance && Quaternion.Angle(tabExpT.rotation, ct.rotation) < 0.5f, c + " " + TabExpandedName + " at the controls' top-right corner (±0.02)");
+                    v.Req(tabMinT != null && (cart.transform.InverseTransformPoint(tabMinT.position) - TabMinimizedLocal).magnitude < PlacementTolerance && Vector3.Dot(tabMinT.forward, (tabMinT.position - cart.transform.TransformPoint(SeatedEyeLocal)).normalized) > .999f,
+                        c + " " + TabMinimizedName + " at " + TabMinimizedLocal.ToString("F2") + " (±0.02), facing the eye");
                     var cso = new SerializedObject(controls);
                     RefCheck(v, cso, cb, "manager", manager, c + " controls");
                     IntCheck(v, cso, cb, "index", i, c + " controls");
@@ -157,7 +171,9 @@ namespace KominkaHillside.Editor
                     ArrayCheck(v, cso, cb, "buttons", buttons, c + " controls");
                     ArrayCheck(v, cso, cb, "labels", labels, c + " controls");
                     RefCheck(v, cso, cb, "body", bodyT != null ? bodyT.gameObject : null, c + " controls"); RefCheck(v, cso, cb, "tab", tabT != null ? tabT.gameObject : null, c + " controls");
-                    RefCheck(v, cso, cb, "tabLabel", tabT != null ? Comp<TextMeshProUGUI>(tabT.Find("Label")) : null, c + " controls");
+                    RefCheck(v, cso, cb, "tabLabel", tabBtn != null ? Comp<TextMeshProUGUI>(tabBtn.Find("Label")) : null, c + " controls");
+                    if (cso.FindProperty("tabExpandedAnchor") != null) RefCheck(v, cso, cb, "tabExpandedAnchor", tabExpT, c + " controls"); else v.Pend(c + " KH_CartControls.tabExpandedAnchor not found (Runtime)");
+                    if (cso.FindProperty("tabMinimizedAnchor") != null) RefCheck(v, cso, cb, "tabMinimizedAnchor", tabMinT, c + " controls"); else v.Pend(c + " KH_CartControls.tabMinimizedAnchor not found (Runtime)");
                 }
             }
             // ---- 目から見た投影の非重複 (Codex M1.2 レビュー): 操作帯 / Tab / 手元メニュー と モニター、メニュー と 操作帯。保存された姿勢で計算 ----

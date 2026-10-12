@@ -36,6 +36,11 @@ namespace KominkaHillside.Editor
         // 最小化 (2026-10-12): Board の下に Body (10 ボタンと背景) と Tab (Body の外、右上隅 50×50、_PressToggle)。最小化しても Tab だけ残る。
         // Tab のラベルは Runtime が展開中「×」/ 最小化中「+」と書く (tabLabel)。Setup は初期表示として ≡ (フォントに無ければ -) を置く
         public const string BodyName = "Body", TabName = "Tab", TabEvent = "_PressToggle", TabSymbol = "+", TabFallback = "-";
+        // 2026-10-12: タブは独立した小さな Canvas (カート直下の TabCanvas)。Runtime が展開中は TabExpanded (操作帯の右上角)、最小化中は TabMinimized (左肘掛けの前上) の姿勢へ置く
+        public const string TabCanvasName = "TabCanvas", TabButtonName = "Button", TabExpandedName = "TabExpanded", TabMinimizedName = "TabMinimized";
+        public static readonly Vector3 TabMinimizedLocal = new Vector3(-0.30f, 0.86f, 0.10f);
+        public const float TabFrontOffset = 0.005f;   // 展開中は操作帯の面より目の側へ 5 mm (Body の背景と重ならない・ポインタが先に当たる)
+        public static Vector3 TabExpandedLocalOnControls() { return new Vector3(TabPos.x * ControlsScale, TabPos.y * ControlsScale, -TabFrontOffset); }
         // 5 行 120..-160 (Tab の 161..211 と重ならない)
         public static Vector2 ControlPos(int k) { return k == GuideControl ? new Vector2(0f, -170f) : new Vector2(k % 2 == 0 ? -67f : 67f, 130f - (k / 2) * 60f); }   // 6 行 130..-170 (Note/Tab の 161..211 と重ならない)
         public static Vector2 ControlSize(int k) { return k == GuideControl ? GuideButtonSize : ControlsButtonSize; }
@@ -130,8 +135,8 @@ namespace KominkaHillside.Editor
             var col = board.GetComponent<BoxCollider>(); if (col == null) col = board.AddComponent<BoxCollider>(); col.center = Vector3.zero; col.size = new Vector3(ControlsBoardSize.x, ControlsBoardSize.y, 2f); col.isTrigger = true;
             // 背景は Body が持つ (最小化で消える)。Board 自身の Image は外す
             var oldBg = board.GetComponent<Image>(); if (oldBg != null) UnityEngine.Object.DestroyImmediate(oldBg);
-            // 旧構成 (Board 直下の 8 / 10 ボタン) から作り直す: Body / Tab 以外の子を消す
-            for (int c = board.transform.childCount - 1; c >= 0; c--) { var ch = board.transform.GetChild(c); if (ch.name != BodyName && ch.name != TabName) UnityEngine.Object.DestroyImmediate(ch.gameObject); }
+            // 旧構成 (Board 直下の 8 / 10 ボタン、Board の子だった Tab) から作り直す: Body 以外の子を消す
+            for (int c = board.transform.childCount - 1; c >= 0; c--) { var ch = board.transform.GetChild(c); if (ch.name != BodyName) UnityEngine.Object.DestroyImmediate(ch.gameObject); }
             var body = KD_ShopSetupEditor.EnsureUiChild(board.transform, BodyName, Vector2.zero, ControlsBoardSize); body.SetActive(true); body.layer = ControlsLayer;
             var bg = body.GetComponent<Image>(); if (bg == null) bg = body.AddComponent<Image>(); bg.color = new Color(.14f, .12f, .11f, .92f); bg.raycastTarget = true;
             KD_UiSpriteEditor.ApplyRoundSkin(bg, KD_UiSpriteEditor.LoadRound());
@@ -149,10 +154,28 @@ namespace KominkaHillside.Editor
                 buttons[k] = b; labels[k] = label;
             }
             string symbol = KD_LocalizationEditor.HasGlyph(font, TabSymbol[0]) ? TabSymbol : TabFallback;
-            var tab = KD_ShopSetupEditor.EnsureButton(board.transform, TabName, TabPos, TabSize, KD_UiSpriteEditor.ActionNeutral, font, symbol, backing, TabEvent, log);
-            var tabLabel = tab.transform.Find("Label").GetComponent<TextMeshProUGUI>(); tabLabel.fontSize = 28f; tabLabel.enableAutoSizing = false; EditorUtility.SetDirty(tabLabel);
-            foreach (var t in tab.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = ControlsLayer;
-            tab.SetActive(true); tab.transform.SetAsLastSibling();
+            // アンカー 2 つ: 展開中 = 操作帯の右上角 (Controls の子)、最小化中 = 左肘掛けの前上 (カート直下、面は目へ)
+            var tabExpanded = EnsureChild(cgo.transform, TabExpandedName).transform;
+            tabExpanded.localPosition = TabExpandedLocalOnControls(); tabExpanded.localRotation = Quaternion.identity; tabExpanded.localScale = Vector3.one; tabExpanded.gameObject.layer = ControlsLayer;
+            var tabMinimized = EnsureChild(cart.transform, TabMinimizedName).transform;
+            tabMinimized.localPosition = TabMinimizedLocal; tabMinimized.localRotation = FaceEye(TabMinimizedLocal); tabMinimized.localScale = Vector3.one; tabMinimized.gameObject.layer = ControlsLayer;
+            // タブの Canvas (カート直下、50×50 px、scale 0.001、VRCUiShape、BoxCollider trigger、layer 17)。初期姿勢は展開中のアンカー
+            var tabGo = EnsureChild(cart.transform, TabCanvasName);
+            if (tabGo.GetComponent<RectTransform>() == null) { UnityEngine.Object.DestroyImmediate(tabGo); tabGo = new GameObject(TabCanvasName, typeof(RectTransform)); tabGo.transform.SetParent(cart.transform, false); }
+            tabGo.layer = ControlsLayer;
+            var trt = (RectTransform)tabGo.transform; trt.sizeDelta = TabSize; trt.localScale = Vector3.one * ControlsScale;
+            tabGo.transform.SetPositionAndRotation(tabExpanded.position, tabExpanded.rotation);
+            var tcanvas = tabGo.GetComponent<Canvas>(); if (tcanvas == null) tcanvas = tabGo.AddComponent<Canvas>(); tcanvas.renderMode = RenderMode.WorldSpace;
+            if (tabGo.GetComponent<GraphicRaycaster>() == null) tabGo.AddComponent<GraphicRaycaster>();
+            if (tabGo.GetComponent<VRCUiShape>() == null) tabGo.AddComponent<VRCUiShape>();
+            var tcol = tabGo.GetComponent<BoxCollider>(); if (tcol == null) tcol = tabGo.AddComponent<BoxCollider>(); tcol.center = Vector3.zero; tcol.size = new Vector3(TabSize.x, TabSize.y, 2f); tcol.isTrigger = true;
+            for (int c = tabGo.transform.childCount - 1; c >= 0; c--) { var ch = tabGo.transform.GetChild(c); if (ch.name != TabButtonName) UnityEngine.Object.DestroyImmediate(ch.gameObject); }
+            var tabButton = KD_ShopSetupEditor.EnsureButton(tabGo.transform, TabButtonName, Vector2.zero, TabSize, KD_UiSpriteEditor.ActionNeutral, font, symbol, backing, TabEvent, log);
+            var tabLabel = tabButton.transform.Find("Label").GetComponent<TextMeshProUGUI>(); tabLabel.fontSize = 28f; tabLabel.enableAutoSizing = false; EditorUtility.SetDirty(tabLabel);
+            foreach (var t in tabGo.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = ControlsLayer;
+            tabButton.SetActive(true);
+            tabGo.SetActive(false);   // 乗っている本人にだけ Runtime が出す
+            var tab = tabGo;
             if (i == 0) log.AppendLine("controls tab symbol " + symbol + (symbol == TabFallback ? " (font lacks " + TabSymbol + ")" : "") + (KD_LocalizationEditor.HasGlyph(font, '×') ? "" : "; WARN font lacks × (runtime label)"));
             board.SetActive(false);   // 乗っている本人にだけ KH_CartControls._SetVisible が出す
 
@@ -160,6 +183,8 @@ namespace KominkaHillside.Editor
             SetRef(cso, "manager", manager); SetInt(cso, "index", i); SetRef(cso, "dock", dock); SetRef(cso, "language", language);
             SetRef(cso, "panel", board); SetRefs(cso, "buttons", buttons); SetRefs(cso, "labels", labels);
             SetRef(cso, "body", body); SetRef(cso, "tab", tab); SetRef(cso, "tabLabel", tabLabel);
+            var tabLog = new List<string>(); SetRefIfPresent(cso, "tabExpandedAnchor", tabExpanded, tabLog); SetRefIfPresent(cso, "tabMinimizedAnchor", tabMinimized, tabLog);
+            if (i == 0) foreach (var line in tabLog) log.AppendLine(line);
             // M2: 結果欄 1 行 (cart.result.waiting 等。Runtime が書く。初期は空)
             var note = MakeText(body.transform, NoteName, NotePos, NoteSize, 14f, font, "");
             note.alignment = TextAlignmentOptions.Left; note.enableWordWrapping = true; note.enableAutoSizing = true; note.fontSizeMin = 9f; note.fontSizeMax = 14f; note.color = new Color(1f, .85f, .55f);
