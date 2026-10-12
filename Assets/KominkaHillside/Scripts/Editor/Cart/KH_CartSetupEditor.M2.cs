@@ -19,7 +19,9 @@ namespace KominkaHillside.Editor
         // ============================================================
 
         public const string TuningPath = "Assets/KominkaHillside/Data/Cart/tuning.json";
-        [Serializable] public class Tuning { public float speed = 1.3f, gap = 3f, lateral = .6f, approach = 25f, holdTimeoutSec = 60f, seatStep = .05f, yawStep = 15f, laneOffset = .55f, groundSmoothTime = .08f; }
+        [Serializable] public class Tuning { public float speed = 1.3f, gap = 3f, lateral = .6f, approach = 25f, holdTimeoutSec = 60f, seatStep = .05f, yawStep = 15f, laneOffset = .55f, groundSmoothTime = .08f;
+            public int defaultDestination = 2;   // KH_LeashManager.defaultDestination (2 = 山からの周回、2026-10-12 ユーザー決定)
+        }
         /// <summary>Runtime の KH_CartManager の public float と同じ名前 (impl-runtime と合意 2026-10-12)。</summary>
         public static readonly string[] TuningFields = { "speed", "gap", "lateral", "approach", "holdTimeoutSec", "seatStep", "yawStep", "laneOffset", "groundSmoothTime" };
 
@@ -29,12 +31,23 @@ namespace KominkaHillside.Editor
             var t = JsonUtility.FromJson<Tuning>(File.ReadAllText(TuningPath));
             if (t.speed <= 0f || t.gap <= 0f || t.lateral < 0f || t.approach <= 0f || t.holdTimeoutSec <= 0f || t.seatStep <= 0f || t.yawStep <= 0f || t.laneOffset < 0f || t.groundSmoothTime < 0f)
                 throw new InvalidOperationException(TuningPath + ": a value is out of range");
+            if (t.defaultDestination < 0 || t.defaultDestination > 5) throw new InvalidOperationException(TuningPath + ": defaultDestination must be 0..5");
             return t;
         }
 
         public static float TuningValue(Tuning t, string field) { return (float)typeof(Tuning).GetField(field).GetValue(t); }
 
         /// <summary>Manager の proxy へ書く (呼び元が CopyProxyToUdon)。無いフィールドは WARN に回し、書けた数を返す。</summary>
+        /// <summary>KH_LeashManager.defaultDestination (さんぽの目的地の既定) を tuning の値に (SerializedObject → CopyProxyToUdon)。</summary>
+        static void WriteDefaultDestination(KH_LeashManager leash, Tuning t, List<string> log)
+        {
+            var so = new SerializedObject(leash); var p = so.FindProperty("defaultDestination");
+            if (p == null || p.propertyType != SerializedPropertyType.Integer) { log.Add("WARN KH_LeashManager.defaultDestination not found"); return; }
+            if (p.intValue != t.defaultDestination) log.Add("leash defaultDestination " + p.intValue + " -> " + t.defaultDestination);
+            p.intValue = t.defaultDestination; so.ApplyModifiedPropertiesWithoutUndo();
+            UdonSharpEditorUtility.CopyProxyToUdon(leash); EditorUtility.SetDirty(leash);
+        }
+
         static int WriteTuning(KH_CartManager manager, Tuning t, List<string> log)
         {
             var so = new SerializedObject(manager); int n = 0;
@@ -63,6 +76,7 @@ namespace KominkaHillside.Editor
             log.Add("traffic recomputed with gap " + t.gap + ": zones=" + traffic.from.Length + " class0=" + traffic.lengthByClass[0].ToString("F0") + "m class1=" + traffic.lengthByClass[1].ToString("F0") + "m class2=" + traffic.lengthByClass[2].ToString("F0") + "m");
             log.AddRange(traffic.zones);
             UdonSharpEditorUtility.CopyProxyToUdon(managers[0]); EditorUtility.SetDirty(managers[0]);
+            WriteDefaultDestination(KH_CourseTravelEditor.FindPouch().manager, t, log);
             var scene = managers[0].gameObject.scene;
             EditorSceneManager.MarkSceneDirty(scene);
             if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Cart tuning save failed");

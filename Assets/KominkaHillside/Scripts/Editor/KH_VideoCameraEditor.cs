@@ -98,6 +98,9 @@ namespace KominkaHillside.Editor
         // §15.5 the camera drone (the marker): 5 Hz while filming another person, hidden near my head / near the subject's head
         public const float DroneSendHz = 5f, DroneHideNearMe = 0.3f;
         public const bool SnapOnOpen = true;
+        // user decision 2026-10-12: the monitor opens playing the おまかせ pattern (§17, PatternOmakase) every time
+        public const bool StartWithPattern = true;
+        public const int DefaultPattern = KH_VideoCamera.PatternOmakase;
 
         // ================================================================ layers and the RecordSnap (design §3.2-3.3, revised after the Codex review)
         /// <summary>**RecordSnap's layer: 4 Water.** It must be a layer VRChat's cameras draw and our own cameras (this video camera and the auto
@@ -367,6 +370,7 @@ namespace KominkaHillside.Editor
             v.dogFov = DogFov; v.dogSideDeg = DogSideDeg; v.dogFill = DogFill; v.dogDistMin = DogDistMin; v.dogDistMax = DogDistMax; v.dogLift = DogLift; v.dogLookAhead = DogLookAhead;
             v.selfFov = SelfFov; v.selfSideDeg = SelfSideDeg; v.selfDistance = SelfDistance; v.selfLift = SelfLift; v.selfLookToDogs = SelfLookToDogs; v.selfChestDrop = SelfChestDrop; v.selfDogMax = SelfDogMax;
             v.monitorDistance = MonitorDistance; v.monitorDrop = MonitorDrop; v.snapOnOpen = SnapOnOpen;
+            v.startWithPattern = StartWithPattern; v.defaultPattern = DefaultPattern;   // 2026-10-12: open = おまかせ
             foreach (var kv in ModeTuning()) typeof(KH_VideoCamera).GetField(kv.Key).SetValue(v, kv.Value);
         }
 
@@ -417,6 +421,10 @@ namespace KominkaHillside.Editor
             F("selfLookToDogs", SelfLookToDogs, v.selfLookToDogs); F("selfChestDrop", SelfChestDrop, v.selfChestDrop); F("selfDogMax", SelfDogMax, v.selfDogMax);
             F("monitorDistance", MonitorDistance, v.monitorDistance); F("monitorDrop", MonitorDrop, v.monitorDrop);
             l.Add(new KeyValuePair<string, bool>("snapOnOpen " + v.snapOnOpen, v.snapOnOpen == SnapOnOpen));
+            l.Add(new KeyValuePair<string, bool>("startWithPattern " + v.startWithPattern, v.startWithPattern == StartWithPattern));
+            I("defaultPattern", DefaultPattern, v.defaultPattern);
+            l.Add(new KeyValuePair<string, bool>("defaultPattern " + v.defaultPattern + " is a board pattern (0.." + (KH_VideoCamera.PatternCount - 1) + ") = おまかせ " + KH_VideoCamera.PatternOmakase,
+                v.defaultPattern >= 0 && v.defaultPattern < KH_VideoCamera.PatternCount && KH_VideoCamera.PatternName(v.defaultPattern) == "おまかせ"));
             foreach (var kv in ModeTuning()) F(kv.Key, kv.Value, (float)typeof(KH_VideoCamera).GetField(kv.Key).GetValue(v));
             return l;
         }

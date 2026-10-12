@@ -235,6 +235,7 @@ namespace KominkaHillside.Editor
                 SetRef(lso, "cartManager", manager);
                 lso.ApplyModifiedPropertiesWithoutUndo();
                 UdonSharpEditorUtility.CopyProxyToUdon(leash); EditorUtility.SetDirty(leash);
+                WriteDefaultDestination(leash, tuning, report.log);   // さんぽの目的地の既定 (tuning.json)
 
                 // ---- 文言 (Course/80・85 と同じ経路で extension を入れ直す) ----
                 KH_CourseTravelEditor.ApplyCatalog(p);

@@ -69,6 +69,13 @@ namespace KominkaHillside.Editor
                 v.Req(Mathf.Abs(p.floatValue - want) < 1e-4f, "manager." + f + " = tuning " + want + " (proxy " + p.floatValue + ")");
                 if (mb != null && mb.publicVariables.TryGetVariableValue(f, out object bv)) v.Req(bv is float bf && Mathf.Abs(bf - want) < 1e-4f, "manager." + f + " = tuning " + want + " (backing)");
             }
+            // ---- さんぽの目的地の既定 (KH_LeashManager.defaultDestination = tuning) ----
+            {
+                var lso = new SerializedObject(leash); var lp = lso.FindProperty("defaultDestination"); var lb = UdonSharpEditorUtility.GetBackingUdonBehaviour(leash);
+                bool proxyOk = lp != null && lp.intValue == tuning.defaultDestination;
+                bool backingOk = lb == null || !lb.publicVariables.TryGetVariableValue("defaultDestination", out object dv) || (dv is int di && di == tuning.defaultDestination);
+                v.Req(proxyOk && backingOk, "KH_LeashManager.defaultDestination = tuning " + tuning.defaultDestination + " (proxy " + (lp != null ? lp.intValue.ToString() : "missing") + ", backing " + (backingOk ? "ok" : "differs") + ")");
+            }
             // ---- 犬 6 匹と撮影カメラの cartManager ----
             int dogs = 0, dogOk = 0, dogNoField = 0;
             foreach (var d in UnityEngine.Object.FindObjectsOfType<KD_DogWanderController>(true))

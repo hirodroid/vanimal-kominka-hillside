@@ -62,7 +62,8 @@ namespace KominkaHillside
         public float dashSpeed = 4.5f;    // 走り: overtaking a walking holder, coming back inside 1.6x leash
         public float sprintSpeed = 7.2f;  // 全力: recovery from beyond 1.6x leash, keeping up with a running holder
         public float catchUpDistance = 10f;
-        public int defaultDestination = 1;
+        // 決定: 2026-10-12 (ユーザー) — 未選択時のさんぽの行き先は「山からの周回」(2 = 周回・順)。_MyChoice() 経由で犬の散歩とカートの両方に効く (旧値 1 = 広場)
+        public int defaultDestination = 2;
         [Header("Free walk (IMP-DOG-003, provisional)")]
         public float trailOffDistance = 6f;    // holder farther than this from the trail: dog keeps them company instead
         public float trailOnDistance = 4f;     // ... and rejoins the trail once the holder is closer than this

@@ -155,8 +155,12 @@ namespace KominkaHillside.Editor
                 Close();
                 Expect(!Get<bool>("_patRun"), "× stops it");
                 Open();
-                Expect(!Get<bool>("_patRun"), "a reopen starts manual");
-                V8Board(-1, "after × and a reopen: ");
+                // 2026-10-12 user decision: a reopen starts defaultPattern (おまかせ) from its start when startWithPattern, never the last pattern
+                bool v8Auto = Get<bool>("startWithPattern");
+                int v8Def = v8Auto ? Get<int>("defaultPattern") : -1;
+                Expect(v8Auto ? Get<bool>("_patRun") && Get<int>("_patIdx") == v8Def && v8Def == KH_VideoCamera.PatternOmakase : !Get<bool>("_patRun"),
+                    v8Auto ? "a reopen starts おまかせ (defaultPattern " + v8Def + "), not 散歩 Vlog 2" : "a reopen starts manual (startWithPattern off)");
+                V8Board(v8Def, "after × and a reopen: ");
                 uVideo.SetProgramVariable("pathHold", KH_VideoCameraEditor.PathHold);
                 timeMark = Time.realtimeSinceStartup;
             }));

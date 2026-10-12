@@ -214,6 +214,9 @@ namespace KominkaHillside
         public float patWashNear = 4f, patWashSpotMax = 6f, patDogNear = 15f;
         [Tooltip("おかえり (内部): 自分の足元から犬の方へ welcomeDist (犬までの半分より遠くへは出ない)・右へ welcomeSide・高さ welcomeHeight、見る先は犬の頭 (注視の時定数 welcomeLookTau)")]
         public float welcomeFov = 55f, welcomeDist = 1.6f, welcomeSide = 0.8f, welcomeHeight = 0.45f, welcomeLookTau = 0.1f;
+        [Tooltip("ユーザー決定 2026-10-12: モニターを開くたびに defaultPattern (おまかせ) の再生から始める。前回の状態は引き継がない。false なら手動 (従来)")]
+        public bool startWithPattern = true;
+        public int defaultPattern = PatternOmakase;
 
         // ---- runtime (local). The harness reads several of these by name ----
         private bool _patRun, _patStepNow, _patSawCarry;

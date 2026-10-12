@@ -468,7 +468,9 @@ namespace KominkaHillside
             enabled = true;
             TextsRefresh();   // W5: the panel in the player's language (it may have changed while closed)
             DrawEntry();
-            DrawPanel();
+            // user decision 2026-10-12: every open starts the default pattern (おまかせ) from its start; nothing of the last session is resumed
+            if (startWithPattern && defaultPattern >= 0 && defaultPattern < PatternCount) PatternStart(defaultPattern);   // it draws the panel
+            else DrawPanel();
         }
 
         /// <summary>[モニターを呼ぶ]: the open monitor moves in front of the head (it never follows by itself). A hidden monitor is shown again.</summary>
@@ -502,7 +504,7 @@ namespace KominkaHillside
             _monitorHidden = false;
             if (!_open && _rt == null) return;
             PersonCloseAll();   // W4: × ends the film session (pending / in use) before anything else; a reopen needs a new request (§5.4)
-            if (_patRun) PatternStop();   // §17: × stops the pattern (a reopen starts manual)
+            if (_patRun) PatternStop();   // §17: × stops the pattern (a reopen starts the default pattern again, startWithPattern)
             DroneOff();   // §15.5: the drone leaves my screen and nothing more is sent
             _open = false; _closes++;
             if (cam != null) cam.enabled = false;

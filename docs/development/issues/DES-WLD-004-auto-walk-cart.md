@@ -362,6 +362,10 @@ FPS の見立て (静的、未計測): 撮影モニターは 1280×720 の Rende
 | ⑥埋まり・浮き | OK (接地 v3 で解消) |
 | ⑦FPS | 実機確認はまだ |
 
+## 既定値の変更 (2026-10-12)
+
+ユーザー「かなりいい感じ。目的地のデフォルトを山からの周回に」「カメラはパターンのおすすめをデフォルトに」。さんぽの目的地の既定を 1 (広場) → 2 (山道から周回・順) に (`KH_LeashManager.defaultDestination`。コード既定値と tuning.json → シーン値の両方。犬の散歩とカートに共通)。撮影カメラは「おすすめ」という名前のパターンが無いため、場面で切り替える「おまかせ」(PatternOmakase=5) を開いたときの既定にした (`startWithPattern=true`、`defaultPattern=5`。解釈違いなら変更)。Cart Verify PASS 2,297 / Video Verify PASS 588。
+
 ## Play 6 回目後の追加要望 (2026-10-12)
 
 反映 (2026-10-12): `Course/16 - Remove Plaza Bench` でベンチを除去 (景観の生成と Course/56 の検査は ExcludePlazaBench で不在を正とする。NoWalk の範囲は残す)。到着で降りたカートはプールへ戻す (`arrive-release`)。犬の揺らぎは犬ごとの位相の正弦の和 (横 ±0.6 m、前後 −0.3〜+1.0 m、周期 5〜9 秒) と 15〜40 秒ごとの立ち止まりかけ (速度 0.6 倍、1.5〜2.5 秒)、隣の犬と 0.55 m 未満なら押し離す。Verify PASS 2,296 / Probe PASS 180。Play 未確認。
