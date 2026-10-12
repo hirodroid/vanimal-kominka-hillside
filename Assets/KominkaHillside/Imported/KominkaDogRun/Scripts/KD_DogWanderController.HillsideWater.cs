@@ -14,6 +14,9 @@ namespace KominkaDogRun
     // baked NavMesh already excludes the riverbed (bank ground above the exclusion's top can remain walkable inside the
     // band, and a leash walk must not freeze there). The gathering re-plans its NavMesh path every 0.5 s in GatherStep,
     // so a dog that walked straight to the bank waits there and takes the bridge as soon as a complete path appears.
+    // 2026-10-11 の決定 (DES-DOG-010) で上書き: the leash no longer stops at the bank. IMP-DOG-053 (HillsideLeashRiver.cs): a
+    // leashed dog whose holder takes it into the river leaves LeashGo there and moves under the river rules below (the frame
+    // mark _waterRiverFrame, the Fetch's legs); LeashGo itself still never enters the band (the NavMesh is unchanged).
     //
     // IMP-DOG-020 steps 2-3 (DES-DOG-004 B-1, B-2 "stage 0", C-6/6b/9/11): WaterPlay, the Owner's local state.
     //   start  : (decision 2026-09-27, 2nd) a free dog within 25 m of the spot's entry starts its first play of the stay within
@@ -28,8 +31,10 @@ namespace KominkaDogRun
     //            call to sleep beside someone, a treat, a live show or a gathering starts the exit first (turning to the
     //            asker) and is taken up by its own branch once the dog has landed (B-1 "受理は上陸後"; Codex 2026-09-27 D-高:
     //            a preempted play could leave the dog stuck at the band with no exit watch). A throw is held by the Fetch
-    //            (KD_DogFetchController.HillsideWater) and started after landing if it is at most 10 s old. A leash / toy
-    //            request is refused and asks the dog to come out. The first asker is kept until the exit starts.
+    //            (KD_DogFetchController.HillsideWater) and started after landing if it is at most 10 s old. A toy request
+    //            asks the dog to come out (the first asker is kept until the exit starts). A leash is no longer refused
+    //            (2026-10-11 の決定 DES-DOG-010 で上書き, IMP-DOG-053): the attach edge ends the play here (WaterLeashTick,
+    //            "leashed") with the swim height kept, and the leash's river follow takes the dog (HillsideLeashRiver.cs).
     //   strand : a dog that is wet with no play (Owner change C-11, a dropped play) starts the exit at once (6b: the nearest
     //            exit from the spot's static data, which every client holds).
     //   recover: exit not done in 10 s or stuck (< 0.1 m per 1 s for 2 s, C-9) -> 2nd: another exit -> 3rd: teleport to
@@ -272,10 +277,13 @@ namespace KominkaDogRun
             // Afloat: the height is kept by KD_DogPack; only a push out of the spot into the band is refused (W2-Pome, see above)
             // DES-DOG-005 D-4 (M3): the disc's water states (KH_FrisbeeCatch 11-13) always run under the river rules
             bool discWater = FrisbeeWaterBusy;
+            // IMP-DOG-053 #9: a leashed dog in the river (or walking out of it) is pushed under the river rules too, afloat and on its
+            // feet. Two dogs of the same holder never push each other (KD_DogPack), so this is another holder's or a free dog's push
+            bool leashRiver = LeashRiverRules();
             if (_WaterFloating())
             {
                 // IMP-DOG-021: a river swimmer is never pushed into the band where the river-wide water is not (a bridge zone)
-                if (((fetchController != null && fetchController.IsRiverWaterFetching) || discWater) && riverData != null
+                if (((fetchController != null && fetchController.IsRiverWaterFetching) || discWater || leashRiver) && riverData != null
                     && riverData._InBand(to, KominkaHillside.KH_RiverData.BandMargin) && !riverData._FetchWater(to)) return true;
             }
             if (_WaterFloating())
@@ -283,7 +291,7 @@ namespace KominkaDogRun
                     && riverData._InBand(to, KominkaHillside.KH_RiverData.BandMargin);
             int old = _waterFetchFrame, oldRiver = _waterRiverFrame;
             if ((fetchController != null && fetchController.IsWaterFetching) || discWater) _waterFetchFrame = Time.frameCount;   // the spot exception, as for its steps
-            if ((fetchController != null && fetchController.IsRiverWaterFetching) || discWater) _waterRiverFrame = Time.frameCount;   // IMP-DOG-021: river rules
+            if ((fetchController != null && fetchController.IsRiverWaterFetching) || discWater || leashRiver) _waterRiverFrame = Time.frameCount;   // IMP-DOG-021: river rules
             bool blocked = _BlockedByRiver(from, to);
             _waterFetchFrame = old; _waterRiverFrame = oldRiver;
             return blocked;
@@ -316,7 +324,8 @@ namespace KominkaDogRun
             return _wetMemoValue;
         }
 
-        /// <summary>From KD_DogFetchController (leash or toy asked while wading). Dog Owner only.</summary>
+        /// <summary>From KD_DogFetchController (a toy asked while wading; the disc's catcher). Dog Owner only. (The leash no longer
+        /// asks: 2026-10-11 の決定 DES-DOG-010 で上書き, IMP-DOG-053.)</summary>
         public void _WaterExitAsked(int playerId)
         {
             // First asker wins while the request is still unhandled (Codex 2026-09-27 U-中).
@@ -345,7 +354,9 @@ namespace KominkaDogRun
             int pose = fetchController.WaterPose;   // IMP-DOG-034 C1-5: one read for WaterFx / WaterBobTick (nothing writes it before them)
             WaterFx(pose);
             WaterBobTick(pose);
-            if (!_dogOwner) { waterState = WaterOff; _waterWasOwner = false; _waterLeashVeto = false; return; }   // the local play belongs to the Owner (C-11)
+            // the local play belongs to the Owner (C-11); so does the leash's river follow (IMP-DOG-053: a new Owner rebuilds it from the
+            // position and the pose)
+            if (!_dogOwner) { waterState = WaterOff; _waterWasOwner = false; _lrNear = false; if (_lrState != LrOff) LeashRiverReset("owner-lost"); return; }
             bool ownerEdge = !_waterWasOwner;
             if (!_waterWasOwner)
             {
@@ -366,11 +377,13 @@ namespace KominkaDogRun
             // WaterDryRefresh s (phased by dogIndex) or as soon as the root has moved WaterDryMove m from the last refresh - instead of
             // every frame. WaterWetAt is a pure function of the root position (baked data), so an unmoved dog gets the same answer;
             // the bounded difference is a leashed dog stepping onto wet ground inside WaterDryMove of the last refresh: its pose 1
-            // (splash, the arbiter's view) comes up to 0.25 s late. Leashed walks run on the NavMesh (the riverbed is excluded), so
-            // this is the bank's edge only. RC-14 is untouched: the attach edge (and a new holder) always refreshes on that frame,
-            // and anything wet / afloat / vetoed / in a water state / pose != 0 refreshes every frame as before.
+            // (splash) comes up to 0.25 s late. Leashed walks off the river run on the NavMesh (the riverbed is excluded), so this is
+            // the bank's edge only. 2026-10-11 の決定 (DES-DOG-010) で上書き: a leashed dog may now go into the river (IMP-DOG-053), so
+            // the leash's river follow (any state but Off: the way in, the water, the way out) refreshes every frame like a water
+            // state; the attach edge (and a new holder) always refreshes on that frame, and anything wet / afloat / in a water state /
+            // pose != 0 refreshes every frame as before.
             bool wet;
-            if (leashed && !edge && !ownerEdge && !_waterLeashVeto && waterState == WaterOff && !_waterSwimming && !_swimYValid
+            if (leashed && !edge && !ownerEdge && _lrState == LrOff && waterState == WaterOff && !_waterSwimming && !_swimYValid
                 && pose == 0 && !_waterLastWet && !WaterDryRefreshDue())
                 wet = false;   // = the last refresh's answer (_waterLastWet is false)
             else
@@ -400,9 +413,10 @@ namespace KominkaDogRun
         }
 
         /// <summary>Owner: the pose from where the dog stands now. Runs at the top of Update and again after every water move
-        /// (UpdateWaterPlay, _WaterFetchStep / Hold / WalkTo). RC-14 (破壊監査 2026-09-28, FUNC-04 BUG-02): with the top-of-Update
-        /// write only, the frame that stepped into the water still showed pose 0 until the next frame, and a leash request
-        /// arriving in between was accepted. Returns whether the root is wet.</summary>
+        /// (UpdateWaterPlay, _WaterFetchStep / Hold / WalkTo, the leash's river follow). RC-14 (破壊監査 2026-09-28, FUNC-04 BUG-02):
+        /// with the top-of-Update write only, the frame that stepped into the water still showed pose 0 until the next frame (then a
+        /// leash request arriving in between was accepted; IMP-DOG-053 accepts it anyway, but the splash, the pose and the readers of
+        /// the synced pose still want the pose of where the dog stands). Returns whether the root is wet.</summary>
         bool WaterPoseRefresh()
         {
             Vector3 p = dogRoot.position;
@@ -422,49 +436,27 @@ namespace KominkaDogRun
             return wetNow;
         }
 
-        // ---- RC-14: a leash that arrives while the dog is in the water (破壊監査 2026-09-28, FUNC-04 BUG-02) ----
-        // The arbiter refuses a wet dog (synced pose + the root's depth, KH_LeashManager.Water), but its view can be older than the
-        // dog: another client's pose and position arrive later, and a request can be judged in the frame before the pose update.
-        // So the dog Owner checks the connection itself when it first sees it: wet (or afloat) at that moment = the leash is not
-        // taken up (Update skips UpdateHillsideLeash, the water play keeps running and walks out, turning to the holder) and the
-        // arbiter is asked to release it (ReqWaterRelease with the vetoed holder, once a second, at most WaterLeashTries sends).
-        // Released -> back to normal; attaching again after landing is accepted as usual. The veto itself lasts until the
-        // connection is gone or the dog has landed (dry, out of the play or shaking on the bank): running out of sends never
-        // takes up the refused connection in the water (Codex review 2026-09-28 中). A connection first seen on land is
-        // untouched (a leashed walk may still get its feet wet on the bank). Owner-local; nothing synced.
-        const int WaterLeashTries = 10;
-        private bool _waterLeashVeto;
-        private int _waterLeashTries, _waterLeashHolder = -1;
-        private float _waterLeashSentAt = -1000f;
+        // ---- RC-14 (破壊監査 2026-09-28, FUNC-04 BUG-02) -> IMP-DOG-053: a leash that arrives while the dog is in the water ----
+        // Until 2026-10-11 a wet dog was not leashed: the arbiter refused it (KH_LeashManager._InWater) and a connection that got
+        // through anyway was vetoed here by the dog Owner (_waterLeashVeto: the leash not taken up, the play walking the dog out,
+        // ReqWaterRelease sent once a second). 2026-10-11 の決定 (DES-DOG-010) で上書き: the leash is accepted in the water (IMP-DOG-053),
+        // so the veto, its release request and the arbiter's refusal are retired. What stays is the edge itself: on the frame a leash
+        // (or a new holder) is first seen, a water play in progress ends here explicitly ("leashed"; it used to end as "preempted" one
+        // decision later), and the swim height is kept (_waterSwimming / _swimYValid / _waterSwimY are not touched, and the leash
+        // branch drops the float only for a dry dog that is not in its river follow: HillsideLeash.cs). The leash's river follow
+        // (HillsideLeashRiver.cs) takes the dog from the next lines of this decision, from where it is: afloat stays afloat, the
+        // walk out or the follow is chosen from the position and the holder. Owner-local; nothing synced.
+        private int _waterLeashHolder = -1;
 
         // IMP-DOG-034 C1-2: leashed / holder are read by WaterTick just before (the same two reads, same frame)
         void WaterLeashTick(bool wet, bool leashed, int holder)
         {
             bool edge = leashed && (!_waterWasLeashed || holder != _waterLeashHolder);
             _waterWasLeashed = leashed; _waterLeashHolder = holder;
-            if (!leashed)
-            {
-                if (_waterLeashVeto) { _waterLeashVeto = false; Debug.Log("[KD_DogWanderController] water leash released dog=" + dogIndex); }
-                return;
-            }
-            if (edge && (wet || _waterSwimming))
-            {
-                _waterLeashVeto = true; _waterLeashTries = 0;   // _waterLeashSentAt kept: once a second across vetoes
-                _WaterExitAsked(holder);
-                Debug.Log("[KD_DogWanderController] water leash veto dog=" + dogIndex + " holder=" + holder + " state=" + waterState);
-            }
-            if (!_waterLeashVeto) return;
-            if (!wet && !_waterSwimming && (waterState == WaterOff || waterState == WaterShake))
-            {
-                _waterLeashVeto = false;   // landed: a leash on the bank is a normal one
-                Debug.Log("[KD_DogWanderController] water leash veto ended dog=" + dogIndex + " (landed, leash taken up)");
-                return;
-            }
-            if (_waterLeashTries >= WaterLeashTries || Time.time - _waterLeashSentAt < 1f) return;
-            _waterLeashTries++; _waterLeashSentAt = Time.time;
-            if (_waterLeashTries == WaterLeashTries) Debug.Log("[KD_DogWanderController] water leash veto last request dog=" + dogIndex + " (kept until landing)");
-            hillsideLeashes._RequestWaterRelease(dogIndex, holder);
-            _travelMemoFrame = -1; _wlFrame = -1;   // IMP-DOG-034 C1-1d / C1-1e: the manager Owner may have released the leash just now
+            if (!edge) return;
+            if (waterState != WaterOff) WaterEnd("leashed");
+            if (wet || _waterSwimming)
+                Debug.Log("[KD_DogWanderController] water leash taken dog=" + dogIndex + " holder=" + holder + " swimming=" + _waterSwimming + " (IMP-DOG-053 river follow)");
         }
 
         /// <summary>The leash arbiter (KH_LeashManager._InWater, via KD_DogFetchController._WetAtRoot): wet in the spot at p.</summary>
@@ -479,11 +471,11 @@ namespace KominkaDogRun
                 if (fetchController.WaterPose == 0) return false;
                 Coast(); _waterPlayedNow = true; return true;   // IMP-DOG-036 S3
             }
-            // RC-14: a leash vetoed in the water (WaterLeashTick) is not taken up; the play keeps walking the dog out
-            // IMP-DOG-034 W-5: this frame's leash read from WaterTick when there is one (same value: nothing between writes walkers;
-            // _RequestWaterRelease clears _wlFrame), else the call as before
+            // IMP-DOG-053: a leashed dog belongs to the leash (in the water too: its river follow); the play ends on the attach edge
+            // (WaterLeashTick), this is the same rule for any later decision. IMP-DOG-034 W-5: this frame's leash read from WaterTick
+            // when there is one (same value: nothing between writes walkers), else the call as before
             bool leashedNow = _wlFrame == Time.frameCount ? _wlLeashed : (hillsideLeashes != null && hillsideLeashes._IsLeashed(dogIndex));
-            if (leashedNow && !_waterLeashVeto) { if (waterState != WaterOff) WaterEnd("leashed"); return false; }
+            if (leashedNow) { if (waterState != WaterOff) WaterEnd("leashed"); return false; }
             Vector3 p = dogRoot.position;
             bool wet = fetchController.WaterPose != 0 || WaterWetAtMemo(p);   // IMP-DOG-034 A5: 先頭の WaterPoseRefresh と同じ位置なら再計算しない
             // Cheap exit for the usual dry dog far from the spot (the errand lookups below are cross-behaviour calls).
@@ -999,10 +991,11 @@ namespace KominkaDogRun
         //   swim height: the decision records the water surface at its z and the slope along z (KH_RiverData._SurfaceY is linear in z
         //       between slices) and the per-dog offset; the legs follow it every frame (WaterSwimHeight(true)), the ease is MoveDt.
         //   bob / nose-up pitch (visual child in Update, hips in LateUpdate): from the decision's pose / bob / pitch target.
-        //   pose (_SetWaterPose), WaterFx, the swim start / end, the state machine, the errands, the leash veto (RC-14): decision only.
+        //   pose (_SetWaterPose), WaterFx, the swim start / end, the state machine, the errands, the leash's attach edge: decision only.
         // Stays per frame (TickBusy, as before): the Fetch's and the disc's water states (driven every frame by their own Update through
-        // _WaterFetchStep / _WaterRiverStep, handshakes _waterFetchFrame / _waterCarryFrame / _waterRiverFrame), a vetoed leash
-        // (_waterLeashVeto), the ease back to the ground / the pitch back to 0 after the play ended, a leashed dog in the water.
+        // _WaterFetchStep / _WaterRiverStep, handshakes _waterFetchFrame / _waterCarryFrame / _waterRiverFrame), the ease back to the
+        // ground / the pitch back to 0 after the play ended, a leashed dog in the water (IMP-DOG-053: its river follow, LeashLegsOk;
+        // the RC-14 veto that used to be listed here is retired, 2026-10-11 の決定 DES-DOG-010 で上書き).
         const float WaterLegLimitEps = 0.0001f;   // m below the real limits (the float rounding of "Ms - d < SinkGuard" / "d > limit")
         private bool _waterThin;          // the last decision ran the water play: the next frames may be water legs frames (Update)
         private bool _waterPlayedNow;     // this decision's UpdateWaterPlay returned true (lowered by Update before every decision)
@@ -1027,8 +1020,8 @@ namespace KominkaDogRun
             if (!_waterPlayedNow) return;
             int e = waterDecisionEvery <= 0 ? DefaultWaterDecisionEvery : waterDecisionEvery;
             if (e <= 1) return;
-            // RC-14's veto walks the dog out every frame; a leashed / washed / candy / companion-stretch dog is TickBusy's
-            if (_waterLeashVeto || _wasLeashed || _washActive || candyPerformanceActive || _candyPetResumePending || _writtenCallTime != 0f) return;
+            // a leashed (IMP-DOG-053: in the water too, its river follow) / washed / candy / companion-stretch dog is TickBusy's
+            if (_wasLeashed || _washActive || candyPerformanceActive || _candyPetResumePending || _writtenCallTime != 0f) return;
             if (AnimatorYielded()) return;   // Fetch / disc own the root and the Animator (their water states: every frame)
             if (_dogOwner)
             {
@@ -1130,7 +1123,8 @@ namespace KominkaDogRun
             if (_dogOwner != IsDogOwner()) return false;
             // Fetch / the disc took the root and the Animator
             if (AnimatorYielded()) return false;
-            // RC-14: a leash that appeared since the decision is checked (wet = vetoed) on this frame. KH_LeashManager._IsLeashed
+            // a leash that appeared since the decision is taken up on this frame (the play ends, the leash's river follow starts:
+            // IMP-DOG-053; RC-14's veto retired). KH_LeashManager._IsLeashed
             // reads walkers[dog] >= 0; read the synced array directly (one cross-behaviour read instead of a call)
             if (hillsideLeashes != null)
             {

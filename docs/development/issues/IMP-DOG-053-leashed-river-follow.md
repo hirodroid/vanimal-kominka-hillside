@@ -2,10 +2,10 @@
 id: IMP-DOG-053
 type: IMP
 system: DOG
-status: todo
+status: review
 priority: High
-summary: リードをつけたまま犬を川へ連れて入る (DES-DOG-010 方式 B の実装)。NavMesh は変えず、川の Fetch の脚 (川の規則・先読みの泳ぎ・泳ぎの高さ) でリードの追従を川の中へ延ばし、水中のリード接続の拒否 (RC-14) を退役する
-next: 入口は決定済み (§0、混在方式)。第 2 波で実装 (新しい partial HillsideLeashRiver + 退役の一覧 + ハーネスの期待の変更)。着手は DES-DOG-001 の停滞検知 (KH_LeashManager.cs) が入ってから
+summary: リードをつけたまま犬を川へ連れて入る (DES-DOG-010 方式 B の実装)。NavMesh は変えず、川の Fetch の脚 (川の規則・先読みの泳ぎ・泳ぎの高さ) でリードの追従を川の中へ延ばし、水中のリード接続の拒否 (RC-14) を退役する。2026-10-12 第 2 波で実装 (新しい partial HillsideLeashRiver・退役・プローブ Course/131・ハーネスの期待の変更と 78l)
+next: 独立レビュー (Codex 2026-10-12) の F1〜F7 を反映済み (入口は ok スライスだけ・入口への到着を追従の条件に・身震いを洗いのブルブルへ・ハーネスの判定)。統括がコンパイル (--udon) → Course/131 → 限定 9 ケース (Course/78m の 7 件 + Course/82l の 2 件)。その後 PCVR (A0-67〜72・B88〜B91)
 updated: 2026-10-12
 decided: 2026-10-11
 ---
@@ -32,6 +32,8 @@ decided: 2026-10-11
 要約の最後の行 `entry hint` は判断の材料 (直接入れる割合 ≥ 90 % なら直接を基本に例外区間だけスライス、50〜90 % なら混在、それ未満ならスライス経由)。**決めるのは実装の着手時で、ここに「決定: YYYY-MM-DD」を 1 行足す。**
 
 決定: 2026-10-12 (統括、Course/130 の結果 run DONE findings 0 から。AI の判断): **混在方式**。帯の縁から 1 m 以内で NavMesh が始まり、経路がつながり、水際までの傾斜 25° 以下で石が無いサンプル (686 中 465 = 67.8 %) は NavMesh の縁から帯へ直接入る。それ以外 (急傾斜 28・石 65・NavMesh が帯の手前で終わる 96 区間) は最も近い ok な岸のスライス (NavMesh の始点から中央値 0.82 m、p90 2.4 m、最大 11.5 m) を通る。橋の区域 (z 190・490) は入らず、上下の最寄りの ok スライスは 9.5〜12.5 m 離れている。深さは全犬種で届かないセルが 0 (泳がないラブ・サモエドも 0.85 M で川幅を横断できる)。調査の前に Course/90 を流して岸のスライスの保存値を作り直した (再計算との不一致 33 → 0、+x の ok が 390 → 357)。
+
+決定: 2026-10-12 (統括、Codex の独立レビュー F1 から。上の「混在方式」を上書き): **入口は検査済みの ok な岸のスライスだけ** (交差点から 2 m 以内のスライス → 30 m 以内のスライス → 入らない)。実行時の「直接」は近くの NavMesh の点だけで決まり、経路・傾斜・石を見られない。Course/131 で 39 標本 (未接続 16・石 12・急傾斜 11) が Course/130 の「直接は不可」に当たった。直接を戻すなら、接続・傾斜・石の 3 つを (スライスと同じく焼いて) 保証してから。
 
 統括の手順: `bash scripts/unity-compile.sh` → `Tools/KominkaHillside/Course/130 - Survey Leash River Entry` → `Temp/kh-leash-river/survey.json` の `summary` と `findings` を読む (findings が出たら先に Course/90・91 の再構築が要るか確かめる)。
 
@@ -113,3 +115,34 @@ Play の前に Edit で: 目標の縮め方と入口の選び方を、実装と�
 ## 記録
 
 - 2026-10-12: 起票 (DES-DOG-010 の第 1 波)。Edit 調査の道具 Course/130 を追加 (未実行。統括が流す)。ランタイムのコードは未変更。
+- 2026-10-12 (第 2 波、実装担当): §1 の 1〜11・§1.1・§1.2 を実装 (Unity のコンパイル・Play は未実施。一時 csproj で実行側・Editor 側とも 0 エラー)。設計の正本は [水遊びの設計書](../../plans/2026-09-27-river-play-and-floating-fetch.md) 末尾の節「2026-10-12 リード中の入水 (IMP-DOG-053)」。
+
+  | # | 実装 |
+  |---|---|
+  | 1 | `KD_DogWanderController.HillsideLeashRiver.cs` (新しい partial、`.meta` は Unity の refresh で作られる): 陸 → 入口へ → 川で追従 → 出水 → (泳いだ後の身震い) → 陸。`UpdateHillsideLeashFull` の切符の後・Return の前で呼ぶ。入る = 手が帯の中で目標が水の上 (水深 > 0.02 m) で手が 10 m 以内。濡れている犬は追従か出水へ直接 (Owner 交代も位置・`waterPose` から組み直す) |
+  | §0 | 入口 `_LeashRiverPlanEntry` (混在方式の軽い形): 交差点 C から 2 m 以内の ok スライス → 直接 (NavMesh が帯の縁から 1 m 以内、橋の区域の外) → 30 m 以内の ok スライス (自分 → 反対側) → 無し。実行時は傾斜・石を測れないので近い ok スライスを優先 (Course/131 がリスク数を数える) |
+  | 2 | 深さは `_waterRiverFrame` (川の Fetch の規則、泳がない犬 0.85 M)。印は Fetch と共用 (`RiverFetchNow` の読み手 `WaterSwimLookAhead`・`_WaterPushBlocked`・`WaterLegSafe` は、リードの川の状態でも同じ答えでよい) |
+  | 3 | `_LeashRiverClamp` (0.25 m ごと最大 8 m を同じ規則で進め、断られる一歩の手前)。待つ間は `_lrWaiting`、停滞の監視は出水だけ |
+  | 4 | 水中は `WaterStepSpeed`、入口へは走りまで。10 m 超は出水 (`far`)、水中から `TeleportTo` しない。出水の復旧は 3 段 (復帰点が NavMesh で取れなければ瞬間移動しない) |
+  | 5 | `WaterLeashTick` は接続の端で `WaterEnd("leashed")` と記録だけ (泳ぎの高さは触らない) |
+  | 6 | リードの `WaterClearFloat` は `!_waterLastWet && 川の状態が陸` のとき。切符 (`HillsideTravel`) は位置を変えたときだけ消して `WaterPoseRefresh`。`HillsideTreatCall.cs:98` (別担当のファイル) は `WaterPose != 0` で呼び出し自体が断られる (`HillsideLeashTreatBlocked`) ので水中では走らない。`HillsideWash.cs` の 2 か所は陸へ移した後か上陸後 |
+  | 7 | `LeashPose`: `waterPose` ≠ 0 で伏せ・嗅ぐ・座るを出さない (見るだけ) |
+  | 8 | `LeashLegsOk`: 川の状態が陸以外か手が帯の中なら毎フレーム判断。`WaterTick` の乾いた犬の間引きも川の状態が陸のときだけ |
+  | 9 | `_WaterPushBlocked`: 川の状態 (追従・出水) で、浮き側の橋の区域の拒否と歩き側の `_waterRiverFrame` の両方 |
+  | 10 | `KH_LeashManager.Release` → `_ReleaseHome` (帯の中か `_InWater` → 最寄りの ok スライスの復帰点、無ければ前の中心) |
+  | 11 | `WashYieldsToWater` に川の状態を足し、川の枝が洗い場に呼ばれた犬を出水させる。`StationWaterTimeout` の救済で川の状態も終える |
+  | §1.1 | 退役: `ReqAttach` の `_InWater`、`Intro` の `_InWater`、`WalkGateWater` と `course.water.busy` (翻訳表 13 言語・`KH_WalkTabLayoutEditor`)、`_waterLeashVeto` と拒否の半分 (`Tick.cs`・本体の `UpdateTick`)、`_RequestWaterRelease` / `ReqWaterRelease`。残す物は §1.1 のとおり |
+  | §1.2 | `HillsideWater.cs` の先頭・RC-14 の節・:366 付近、`KH_LeashManager.Water.cs` の先頭、`HillsideLeash.cs` の `WaterClearFloat` の前、IMP-DOG-034 W1、IMP-DOG-036 の RC-14 の行、IMP-DOG-020:20、水遊びの設計書 (B-1・C の 10・決めてもらうこと 3・:11・:118)、地図と移動の設計書 §F.4 に注記 |
+
+  検証の道具: Edit のプローブ `Tools/KominkaHillside/Course/131 - Probe Leash River` (`KH_CourseLeashRiverProbeEditor.cs`、`Temp/kh-leash-river/probe.json`)。ハーネス: 78 W4-leash / -stale / -late・88 S5b-sim の期待を「接続が成立し、リードの川の追従で出水」へ (水中の犬への接続は attachReach 4 m が効くので、プレイヤーが犬の 2 m まで寄ってから接続し、受理後に水遊び場の復帰点へ移る)、82c C7-wet-sim → C7-wet (T が川へ入り、犬がリードで入水 → [行く]。置き方・姿勢の保持の模擬は削除)、82b に T-swimkeep-ticket-sim (位置を変えない切符で水中の浮きを消さない、ヒープの切符)、最小の動的ケース 78l (LR-swim-Corgi / LR-wait-Lab / LR-attach-swim、`KH_CourseWalkHarnessEditor.LeashRiver.cs`)。どれも未実行 (回すかは統括が相談で決める)。
+  残り: 統括の Unity 確認、game-design §3・§4 の書き直しは DES-DOG-010「次の手順」4 (別セッションの区切り待ち。この Issue では書き直さない)。シーンの `KD_Language.extensionKeys` の `course.water.busy` は、翻訳表を入れ直すメニュー (Course/25・80・84 など) を次に流すまで残る (使われない。Course/26 の検査は翻訳表 → シーンの向きだけなので通る)。
+- 2026-10-12 (統括): Unity 検査 PASS (C#/U# 0、Course/131 DONE_WITH_FINDINGS 1 = 川の末端 z 720 は NavMesh が無く入れない、90・91 PASS、Walking/5 493/0、Course/26・121 OK、保存)。Codex の独立レビュー (レビュー + ハーネス相談) の結論「修正後に限定 9 ケース」。
+- 2026-10-12 (実装担当、レビューの反映。Unity 未確認):
+  - F1 高: 入口は ok スライスだけ (直接の分岐を削除。§0 に決定を追記)。Course/131 は直接の選択を findings に、NavMesh が 8 m 以内に無い標本 (z 720) は facts に分けた。
+  - F2 高: 乾いた入口へ向かう犬は、選んだスライスの岸の点に着いたときだけ追従へ (帯に入っただけでは移らない)。途中で濡れた犬は別の枝 (濡れている犬の引き継ぎ) で追従か出水へ。
+  - F3 中: 身震いを洗いのブルブルにつないだ。上陸で Owner が `KH_DogWash._RequestShake` (同期の shakeSerial) を上げ、全端末がリードの枝の `LeashRiverShakeEdge` でその番号の上がりから `StartWashShake` を始める (洗いの止まり中は洗いの枝が自分で受ける)。保持者が歩き去るときは出さない。
+  - F4 中: `WhLeashStage` の接続時刻を `lrAttachAt` に分け、S5b-sim の上陸後の再呼び寄せ (`c.done`) を到達可能にした。
+  - F5 中: LR-attach-swim は接続後、姿勢に依らず、水深が泳ぎ始め + 0.02 m 以上の所で根と河床の差 < 0.03 m か泳ぎの旗が落ちたら沈下として履歴に残す。
+  - F6 低: LR-swim は泳ぎ開始 25 s を合否に入れ、T-swimkeep-ticket-sim は切符の後 1.0 s まで観測。
+  - F7 低: 設計書の「入るときより 1 m 緩い」を訂正 (帯は同じ。違いは水深・橋の区域・河床の条件)、検証欄を統括の結果に更新。
+  - 限定実行の口: `Course/78m - Harness Leash River water (7 of 9 cases)` (W4-leash・-stale・-late・S5b-sim・LR-swim-Corgi・LR-wait-Lab・LR-attach-swim) と `Course/82l - Harness Leash River travel (C7-wet, T-swimkeep; 2 of 9 cases)` (82c の準備・人形・片付けを保つ)。1 回の Play で水と移動のモードを混ぜられないので 2 つ。

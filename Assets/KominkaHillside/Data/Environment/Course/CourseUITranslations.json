@@ -165,10 +165,6 @@
           "text": "ここで放すと水遊びします。上がったらまたつなげます"
         },
         {
-          "key": "course.water.busy",
-          "text": "水遊び中 — 上がったらつなげます"
-        },
-        {
           "key": "course.water.busyToy",
           "text": "水遊び中 — 上がったら呼べます"
         },
@@ -730,10 +726,6 @@
         {
           "key": "course.water.release",
           "text": "Let go here and the dog plays in the water. You can leash it again once it's out"
-        },
-        {
-          "key": "course.water.busy",
-          "text": "Playing in the water — leash it once it's out"
         },
         {
           "key": "course.water.busyToy",
@@ -1299,10 +1291,6 @@
           "text": "Отпустите здесь — собака поиграет в воде. Когда выйдет, можно снова взять на поводок"
         },
         {
-          "key": "course.water.busy",
-          "text": "Играет в воде — возьмите на поводок, когда выйдет"
-        },
-        {
           "key": "course.water.busyToy",
           "text": "Играет в воде — позовите, когда выйдет"
         },
@@ -1864,10 +1852,6 @@
         {
           "key": "course.water.release",
           "text": "Відпустіть тут — пес погратиметься у воді. Коли вийде, можна знову взяти на повідок"
-        },
-        {
-          "key": "course.water.busy",
-          "text": "Грається у воді — візьміть на повідок, коли вийде"
         },
         {
           "key": "course.water.busyToy",
@@ -2433,10 +2417,6 @@
           "text": "여기서 풀어 주면 물놀이를 해요. 나오면 다시 목줄을 맬 수 있어요"
         },
         {
-          "key": "course.water.busy",
-          "text": "물놀이 중 — 나오면 목줄을 맬 수 있어요"
-        },
-        {
           "key": "course.water.busyToy",
           "text": "물놀이 중 — 나오면 부를 수 있어요"
         },
@@ -2998,10 +2978,6 @@
         {
           "key": "course.water.release",
           "text": "Hier losgelassen, spielt der Hund im Wasser. Sobald er draußen ist, kannst du ihn wieder anleinen"
-        },
-        {
-          "key": "course.water.busy",
-          "text": "Spielt im Wasser – anleinen, sobald er draußen ist"
         },
         {
           "key": "course.water.busyToy",
@@ -3567,10 +3543,6 @@
           "text": "在这里放开，狗狗会去玩水。上岸后可以再牵上"
         },
         {
-          "key": "course.water.busy",
-          "text": "正在玩水 — 上岸后可以牵上"
-        },
-        {
           "key": "course.water.busyToy",
           "text": "正在玩水 — 上岸后可以呼唤"
         },
@@ -4132,10 +4104,6 @@
         {
           "key": "course.water.release",
           "text": "Si lo sueltas aquí, jugará en el agua. Cuando salga, podrás volver a atarlo"
-        },
-        {
-          "key": "course.water.busy",
-          "text": "Jugando en el agua — átalo cuando salga"
         },
         {
           "key": "course.water.busyToy",
@@ -4701,10 +4669,6 @@
           "text": "Lâché ici, le chien joue dans l'eau. Tu pourras le rattacher une fois sorti"
         },
         {
-          "key": "course.water.busy",
-          "text": "Joue dans l'eau — rattache-le une fois sorti"
-        },
-        {
           "key": "course.water.busyToy",
           "text": "Joue dans l'eau — appelle-le une fois sorti"
         },
@@ -5266,10 +5230,6 @@
         {
           "key": "course.water.release",
           "text": "Solte aqui e o cachorro brinca na água. Quando sair, dá para prender de novo"
-        },
-        {
-          "key": "course.water.busy",
-          "text": "Brincando na água — prenda quando sair"
         },
         {
           "key": "course.water.busyToy",
@@ -5835,10 +5795,6 @@
           "text": "Se lo lasci qui, gioca in acqua. Quando esce puoi rimettergli il guinzaglio"
         },
         {
-          "key": "course.water.busy",
-          "text": "Gioca in acqua — mettigli il guinzaglio quando esce"
-        },
-        {
           "key": "course.water.busyToy",
           "text": "Gioca in acqua — chiamalo quando esce"
         },
@@ -6400,10 +6356,6 @@
         {
           "key": "course.water.release",
           "text": "Puść tutaj, a pies pobawi się w wodzie. Gdy wyjdzie, możesz znów go przypiąć"
-        },
-        {
-          "key": "course.water.busy",
-          "text": "Bawi się w wodzie — przypnij, gdy wyjdzie"
         },
         {
           "key": "course.water.busyToy",
@@ -6971,10 +6923,6 @@
         {
           "key": "course.water.release",
           "text": "喺呢度放開，狗狗會去玩水。上岸之後可以再拖返"
-        },
-        {
-          "key": "course.water.busy",
-          "text": "玩緊水 — 上岸之後可以拖返"
         },
         {
           "key": "course.water.busyToy",

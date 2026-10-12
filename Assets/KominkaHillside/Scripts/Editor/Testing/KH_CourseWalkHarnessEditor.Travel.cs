@@ -140,6 +140,12 @@ namespace KominkaHillside.Editor
             {
                 TvRcCases();
                 TvSwimResidue();   // 82b だけの末尾 (82 の件数は変えない)
+                TvSwimKeep();      // IMP-DOG-053: 逆向き (水中の正当な浮きを、位置を変えない切符の適用で消さない。KH_CourseWalkHarnessEditor.LeashRiver.cs)
+                return;
+            }
+            if (report.travelCall && report.travelLeashRiver)
+            {
+                MakeLeashRiverTravelCases();   // IMP-DOG-053 Course/82l (KH_CourseWalkHarnessEditor.LeashRiver.cs)
                 return;
             }
             if (report.travelCall)

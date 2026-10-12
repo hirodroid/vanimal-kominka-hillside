@@ -134,7 +134,7 @@ namespace KominkaDogRun
             if (manager._IsGathering(dog)) return 3;
             if (sleepBoard != null && sleepBoard._IsCalled(dog)) return 7;   // 裏山改変 (IMP-DOG-016): 呼ばれて待機中は接続不可
             if (manager.fetchers == null || dog >= manager.fetchers.Length || manager.fetchers[dog] == null || !manager.fetchers[dog].IsIdle) return 4;
-            if (WaterBusy(dog)) return WalkGateWater;   // IMP-DOG-020 (KD_TreatPouch.Water.cs)
+            // (IMP-DOG-020's water gate 10 "水遊び中 — 上がったらつなげます" is retired: 2026-10-11 の決定 DES-DOG-010 で上書き, IMP-DOG-053)
             if (manager._MyCount(hand) >= 3) return 5;
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (manager.dogRoots == null || dog >= manager.dogRoots.Length || manager.dogRoots[dog] == null || !Utilities.IsValid(lp)) return 9;
@@ -147,7 +147,6 @@ namespace KominkaDogRun
             int gate = WalkAttachGate(dog, hand);
             if (gate != 0)
             {
-                if (gate == WalkGateWater) WaterAsk(dog);
                 string refusal = WalkGateKey(gate, hand);
                 HillsideNote(TabWalk, refusal, ""); WalkRowNote(dog, refusal, ""); Redraw(); return;
             }
@@ -199,7 +198,6 @@ namespace KominkaDogRun
 
         private string WalkGateKey(int gate, int hand)
         {
-            if (gate == WalkGateWater) return "course.water.busy";
             if (gate == 1) return "KD_TreatPouch.WordWalkGateAlready";
             if (gate == 2) return "KD_TreatPouch.WordWalkGateOther";
             if (gate == 3) return "KD_TreatPouch.WordWalkGateGathering";

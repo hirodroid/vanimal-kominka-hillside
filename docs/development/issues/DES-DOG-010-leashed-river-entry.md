@@ -5,7 +5,7 @@ system: DOG
 status: wip
 priority: High
 summary: リードをつけたまま犬を川へ連れて入れるようにする (水中のリード接続の拒否 RC-14 をやめる)。方式は NavMesh を変えずに、既存の川の Fetch の脚 (川の規則) をリードの追従に使う案を推奨
-next: 実装 Issue IMP-DOG-053 へ。調査は統括が Course/130 を流す (Temp/kh-leash-river/survey.json)。game-design §3・§4 の書き直しは別セッションの作業の区切りを待つ
+next: IMP-DOG-053 で実装済み (2026-10-12、Unity のコンパイル・Play 待ち)。統括の確認 (Course/131 のプローブ・相談で選んだハーネス・PCVR) を待つ。game-design §3・§4 の書き直しは別セッションの作業の区切りを待つ
 updated: 2026-10-12
 ---
 
@@ -129,3 +129,4 @@ updated: 2026-10-12
 
 関連: [DES-DOG-004](DES-DOG-004-river-play-and-floating-fetch.md) (水遊びの設計)、[IMP-DOG-020](IMP-DOG-020-river-wading-and-swim.md) (水遊び・泳ぎ・RC-14 の実装)、[IMP-DOG-021](IMP-DOG-021-river-wide-fetch-and-recall.md) (川全体の脚と岸)、[DES-DOG-001](DES-DOG-001-leash-walking.md) (リードの同期の契約)、[IMP-DOG-029](IMP-DOG-029-dirt-accumulation.md) (汚れ)、[IMP-WLD-002](IMP-WLD-002-call-player.md) (切符と濡れた犬)。
 2026-10-12 (統括): Course/130 を流した (findings 0)。入口は混在方式に決定 (IMP-DOG-053 §0)。調査の前に Course/90 + 91 でスライスの保存値を作り直した。
+2026-10-12 (第 2 波): [IMP-DOG-053](IMP-DOG-053-leashed-river-follow.md) で「B の形」を実装 (新しい partial `HillsideLeashRiver`・退役・プローブ Course/131・ハーネスの期待の変更と 78l)。Unity のコンパイル・Play は未実施。設計の正本は [水遊びの設計書](../../plans/2026-09-27-river-play-and-floating-fetch.md) 末尾の節。上の「背景」の表の前の決定 (B-1・C の 10・決めてもらうこと 3・IMP-DOG-020:20・地図と移動 §F.4) には「2026-10-12 に上書き (IMP-DOG-053)」の注記を足した。game-design §3・§4 は次の手順 4 のまま。

@@ -24,7 +24,8 @@ namespace KominkaHillside
         {
             if (dogRoots == null || dog < 0 || dog >= dogRoots.Length) return false;
             if (dogRoots[dog] == null || collarAnchors == null || dog >= collarAnchors.Length || collarAnchors[dog] == null || _IsLeashed(dog)) return false;
-            if (fetchers == null || dog >= fetchers.Length || fetchers[dog] == null || !fetchers[dog].IsIdle || _IsGathering(dog) || _InWater(dog)) return false;
+            // IMP-DOG-053: no water gate any more (ReqAttach takes a dog in the water: 2026-10-11 の決定 DES-DOG-010 で上書き)
+            if (fetchers == null || dog >= fetchers.Length || fetchers[dog] == null || !fetchers[dog].IsIdle || _IsGathering(dog)) return false;
             if (frisbeeCatchers != null && dog < frisbeeCatchers.Length && frisbeeCatchers[dog] != null && frisbeeCatchers[dog].IsEngaged) return false;
             if (sleepBoard != null && sleepBoard._IsCalled(dog)) return false;
             if (WashHeld(dog)) return false;

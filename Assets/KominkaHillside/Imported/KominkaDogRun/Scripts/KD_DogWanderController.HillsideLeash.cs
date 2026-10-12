@@ -271,7 +271,7 @@ namespace KominkaDogRun
         {
             if (hillsideLeashes == null || dogRoot == null) return false;
             // IMP-DOG-034 C1-1e: the Owner's WaterTick read _IsLeashed / walkers a moment ago in this tick (nothing in between writes
-            // them: its only writer, _RequestWaterRelease, invalidates _wlFrame and runs only with the water veto, which skips this)
+            // them; the old in-between writer, RC-14's _RequestWaterRelease, is retired with the veto: IMP-DOG-053)
             bool wlNow = _wlFrame == Time.frameCount;
             if (!(wlNow ? _wlLeashed : hillsideLeashes._IsLeashed(dogIndex)))
             {
@@ -281,6 +281,7 @@ namespace KominkaDogRun
                     _wasLeashed = false; _speed = 0f; _nextLeashPath = 0f; _routeNext = -1;
                     ResetPauseAndPoseState(); leashMode = LeashFree; ResetHolderSpeed(); ReleaseAnimatorSpeed();
                     KeepOutUnleashed();   // 2026-10-02 round 2: unleashed inside a wash station's circle -> a grace before it walks out (HillsideStationLeave.cs)
+                    LeashRiverReset("unleashed");   // IMP-DOG-053: a dog let go in the water walks out by the water play's strand rule (float kept)
                     LeashTreatReset(); }  // IMP-DOG-006: a treat call's wait does not outlive the leash (HillsideTreatCall.cs)
                 return false;
             }
@@ -300,7 +301,7 @@ namespace KominkaDogRun
             // Both own the Animator too, so the hand-over gets cleaned up once, on the edge (Codex D2).
             if (AnimatorYielded())
             {
-                if (!_leashYielded) { _leashYielded = true; YieldAnimator(); }
+                if (!_leashYielded) { _leashYielded = true; YieldAnimator(); LeashRiverReset("yielded"); }   // IMP-DOG-053: their own water legs
                 return true;
             }
             if (_leashYielded) { _leashYielded = false; ResetHolderSpeed(); } // came back: the pace estimate is stale
@@ -383,12 +384,19 @@ namespace KominkaDogRun
             // after the held station (it wins) and before the wash stop, LeashPose, travel and Return (HillsideTreatCall.cs)
             if (UpdateLeashTreat(holder, walkerId, handPos, handDist, leash)) return true;
             bool washStop = WashLeashStop(holder, handDist, leash);
+            LeashRiverShakeEdge(washStop);   // IMP-DOG-053 F3: the shake after the river, from KH_DogWash's synced edge (every client)
             LeashPose(holder, toHand, handDist, handPos, route, settling, washStop);
             if (!_dogOwner) { ApplyMoveAnim(); return true; }
-            // map-and-travel §F.4: the leash owns the root from here (leashed, no water veto - the caller checks it -, Fetch /
-            // disc not holding the dog, Owner), so an unfinished swim-height ease must not outlive it. Flags only, no height write.
-            WaterClearFloat();
+            // map-and-travel §F.4: the leash owns the root from here (leashed, Fetch / disc not holding the dog, Owner), so an
+            // unfinished swim-height ease must not outlive it on land. Flags only, no height write.
+            // 2026-10-11 の決定 (DES-DOG-010) で上書き (IMP-DOG-053 #6): the leash may now be in the water ("no water veto" no longer
+            // holds), so the float is dropped only for a dry dog (the last pose refresh) that is not in the leash's river follow; in the
+            // water the river legs below keep / ease the swim height (WaterApplySwimHeight), as the Fetch's legs do.
+            if (!_waterLastWet && _lrState == LrOff) WaterClearFloat();
             if (UpdateHillsideTravel(holderPos, handDist, leash)) return true; // IMP-WLD-001: travel ticket first, before Return (HillsideTravel.cs)
+            // IMP-DOG-053: the leash's river follow (HillsideLeashRiver.cs): after the ticket (a ticket that moves the dog takes it out
+            // of the water first), before the Return (whose dash / sprint and TeleportTo must never run from the water)
+            if (UpdateLeashRiver(holderPos, handPos, handDist, leash)) return true;
 
             // The stopover badge means "standing at that spot right now" and nothing else. Rest, the
             // return and the off-trail branches below all take the dog away without asking, so the badge
@@ -703,14 +711,18 @@ namespace KominkaDogRun
             // IMP-DOG-027: washed on the leash - stronger than settling (the holder standing to wash is not the holder resting).
             // The Owner's decision already includes "the holder is standing"; the others follow the observed stop.
             if (washStop && (_dogOwner || stopped)) { ClearPoseLatches(); WashLeashPose(); return; }
-            if (settling && stopped) { ClearPoseLatches(); _wantLieDown = true; return; }
+            // IMP-DOG-053 #7: in the water (the synced waterPose: every client the same) no lying down, sniffing or sitting; a dog that
+            // stops there (at the limit, or beside the hand) only stands and looks at the holder (the gaze below)
+            bool inWater = fetchController != null && fetchController.WaterPose != 0;
+            if (inWater) ClearPoseLatches();
+            if (settling && stopped && !inWater) { ClearPoseLatches(); _wantLieDown = true; return; }
             if (!stopped) { ClearPoseLatches(); return; }
             bool settled = _stoppedSince >= 0f && Time.time - _stoppedSince >= PoseStoppedFor;
             // 立ち寄り場所の上で止まっているなら、**その場所の種類がポーズを決める** (道からの距離より優先)。
             // モード (leashMode) は見ない — 見ると Owner だけが正しく、他の画面が立ち姿になる
             // IMP-DOG-034 C1-1c: the spots' positions / kinds cached on the attach edge (LeashStaticCache), same values as the calls
             // DES-WLD-004 M2: no spot / verge sniff pose while the holder rides a cart (_cartRiding is false without a cart manager)
-            if (!_cartRiding && _spotsRef != null && settled && handDist >= (_poseSpotActive ? StopoverPoseHandHold : StopoverPoseHandMin))
+            if (!inWater && !_cartRiding && _spotsRef != null && settled && handDist >= (_poseSpotActive ? StopoverPoseHandHold : StopoverPoseHandMin))
             {
                 // 一度その場所のポーズに入ったら、少し広い半径まではその場所で測り続ける
                 int found = -1;
@@ -735,7 +747,7 @@ namespace KominkaDogRun
             // **入るしきい値と保つしきい値を分ける** — 犬も人も少しずつ動くので、境目で姿勢が明滅する
             float trailNeed = _poseTrailActive ? PoseTrailHold : PoseTrailEnter;
             float handNeed = _poseTrailActive ? PoseHandHold : PoseHandMin;
-            _poseTrailActive = !_cartRiding && route != null && settled
+            _poseTrailActive = !inWater && !_cartRiding && route != null && settled
                 && handDist >= handNeed
                 && PoseTrailDogAtLeast(route, dogRoot.position, trailNeed)       // IMP-DOG-034 A3: 結果は走査と同じ (下のキャッシュ)
                 && PoseTrailHandBelow(route, handPos, PoseTrailHalfWidth);

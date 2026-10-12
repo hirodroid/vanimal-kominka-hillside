@@ -1331,9 +1331,10 @@ namespace KominkaDogRun
             if (_dogOwner != wasOwner) _behaviorSelectionValid = false;
             if (!_dogOwner) ObserveSpeed();
             WaterTick(); // IMP-DOG-020: 水遊びの姿勢・しぶき・リード解除の観測 (HillsideWater.cs)。早期 return より前
-            // RC-14: a leash first seen while the dog is in the water is not taken up (WaterLeashTick, HillsideWater.cs)
+            // IMP-DOG-053 (2026-10-11 の決定 DES-DOG-010 で上書き): a leash first seen while the dog is in the water is taken up (the
+            // RC-14 veto is retired); the leash branch follows the holder into / out of the river (HillsideLeashRiver.cs)
             _dbgTickExit = 0;   // 裏山改変 (2026-10-02 wash keep-out round 5): どこで return したか (ハーネスの読み出し。int の書き込みだけ)
-            if (!_waterLeashVeto && UpdateHillsideLeash()) { _dbgTickExit = 1; _behaviorSelectionValid = false; NotifyPlay(); return; }
+            if (UpdateHillsideLeash()) { _dbgTickExit = 1; _behaviorSelectionValid = false; NotifyPlay(); return; }
 
             _candyTicked = UpdateCandyPerformance();   // IMP-DOG-034: remembered for TickBusy (Tick.cs)
             if (_candyTicked) { _dbgTickExit = 2; _behaviorSelectionValid = false; NotifyPlay(); return; }

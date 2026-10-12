@@ -9,18 +9,13 @@ namespace KominkaDogRun
     //     entry, the walk tab's result line says "ここで放すと水遊びします。上がったらまたつなげます" (once per stay). Observed from
     //     the synced walkers, so a menu detach and a hand detach (taking the clip off) both count, and the flag is used only
     //     when the note is really shown (Codex 2026-09-27 U-中 x2). It runs after PollWalkPending, so it replaces "放しました".
-    //   - Leashing or calling a toy for a dog that is wading is refused on the menu ("水遊び中 — 上がったら…") and asks the
-    //     dog to come out (KD_DogFetchController._AskWaterExit). Acceptance is after landing (the arbiters refuse too).
+    //   - Calling a toy for a dog in the water whose ball is in its mouth is refused on the menu ("水遊び中 — 上がったら呼べます")
+    //     and asks the dog to come out (KD_DogFetchController._AskWaterExit, KD_TreatPouch.Toy). Leashing it is no longer refused:
+    //     the walk gate 10 (WalkGateWater, "course.water.busy") is retired - 2026-10-11 の決定 (DES-DOG-010) で上書き, IMP-DOG-053.
     public partial class KD_TreatPouch
     {
         public KominkaHillside.KH_WaterSpot waterSpot;
-        public const int WalkGateWater = 10;
         private bool _waterNoteShown;
-
-        private bool WaterBusy(int dog)
-        {
-            return manager != null && manager._InWater(dog);
-        }
 
         private void WaterAsk(int dog)
         {

@@ -27,7 +27,7 @@ namespace KominkaHillside.Editor
         public static void TravelCall()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Start Course/82c from Edit mode");
-            CwPrepare();   // C7-wet-sim: the site is searched here, in Edit mode (Temp/call-wet-site.json). Never throws
+            CwPrepare();   // C7-wet (IMP-DOG-053; was C7-wet-sim): the site is searched here, in Edit mode (Temp/call-wet-site.json). Never throws
             BeginTravel(false, false, true);
         }
 
@@ -54,7 +54,7 @@ namespace KominkaHillside.Editor
             CallC1(); CallC7Cooling(); CallC2(); CallC3(); CallC4Pending(); CallC4Measure(); CallC4Ticket(); CallC4Fade(); CallC4Late(); CallC4Double();
             CallC5(); CallC6(); CallC7Landing(); CallC8Replace(); CallC8Cross(); CallC8Confirmed();
             CallC9SelfStop(); CallC10ArriveTimeout();
-            CallC7Wet();   // C7-wet-sim (模擬)。既存のケースの後 (順序・所要時間を変えない)。片付けの C11 は最後のまま
+            CallC7Wet();   // C7-wet (IMP-DOG-053: リードで歩いて入水 → [行く] の実際の経路。旧 C7-wet-sim)。既存のケースの後。片付けの C11 は最後のまま
             CallCleanup();
         }
 
@@ -234,7 +234,7 @@ namespace KominkaHillside.Editor
         // ============================================================
 
         /// <summary>要求 → 通知 → 1.1 s → [行く] → 準備中 → 本人の移動 → 到着 の一式 (C1・C4-double・C7 で使う)。</summary>
-        /// beforePress: C7-wet-sim の手順 (測定がそろった後、[行く] の直前に差し込む)。watch: 押した後の待ちの各回に呼ぶ (C7-wet-sim の観測)。どちらも null なら従来どおり。
+        /// beforePress: C7-wet の手順 (測定がそろった後、[行く] の直前に差し込む)。watch: 押した後の待ちの各回に呼ぶ (C7-wet の観測)。どちらも null なら従来どおり。
         static void CallGoFlow(List<Func<double, bool>> s, CallCtx c, string name, bool doublePress, int expectReason, List<Func<double, bool>> beforePress = null, Action watch = null)
         {
             s.Add(TvDo(() => { CallGapReset(); c.seq = CallInject(KH_TravelMailbox.KindCall); }));
@@ -730,8 +730,16 @@ namespace KominkaHillside.Editor
         }
 
         // ============================================================
-        // C7-wet-sim (設計書 §F.4「陸で接続した犬が、後で足を濡らした」・§F.6 の C7-wet-sim)
+        // C7-wet (IMP-DOG-053, 2026-10-12: C7-wet-sim の置き換え。設計書 §F.4・§F.6)
         // ============================================================
+        // 2026-10-11 の決定 (DES-DOG-010) で上書き: リードの犬は川へ入れる。実際の経路をそのまま通す: T は岸 (下の地点探索の stand) で
+        // 犬 0〜2 を揃えたあと、川の中 (hold: 最初に濡れる浅い点から中心へ最大 1.5 m、深さ 0.12〜0.35 m、川全体の水の中、水遊び場の外) へ
+        // 入り、中心を向いて立つ。犬はリードの川の追従 (KD_DogWanderController.HillsideLeashRiver) で岸の入口から水へ入る。犬 0 が
+        // 本体の規則で濡れて (waterPose != 0) 追従の状態 2 になるのを待ってから [行く] を押す (置き方・waterPose の保持の模擬は無い)。
+        // 合格: C1 の一式 + 犬 0 が切符で動く直前まで濡れていた、着いた後に犬 0〜2 の waterPose 0・_waterSwimming / _swimYValid が false・
+        // waterState 0・リードの川の状態 0 (_lrState)・接続が残る・地面に立つ (0.2 m 以内)。切符は位置を変えた適用で浮きを消し姿勢を
+        // 更新する (HillsideTravel、IMP-DOG-053 #6)。
+        // 以下は C7-wet-sim (2026-10-11 版) の記録 (地点探索の規則はそのまま使う):
         // 模擬 (配置と保持) による防御の試験。実際の同期の競合の経路は未検査 (2026-10-11 の独立レビュー、IMP-WLD-002)。
         // PASS が示すのは「人工的に置いて保った waterPose が切符の同行を妨げず、保持を外すと本体の再計算で乾く」ことまで。
         // 実際に起こり得る経路 (Manager が古い乾いた姿勢で接続を承認 → 犬の Owner が濡れを見て _waterLeashVeto を立て解除を要求 →
@@ -769,6 +777,8 @@ namespace KominkaHillside.Editor
             public bool found, spotUsed;
             public Vector3 wet, stand;
             public float depth;
+            public Vector3 hold;      // IMP-DOG-053 C7-wet: where T stands in the river (from wet toward the centre, see CwHold)
+            public float holdDepth;
             public int code = -1, node = -1;
         }
         static CwSite cwSite;
@@ -825,6 +835,23 @@ namespace KominkaHillside.Editor
             return false;
         }
 
+        /// <summary>IMP-DOG-053 C7-wet: where T stands in the river. From the first wet point toward the centre (side = the bank's side), every
+        /// CwStep up to 1.5 m: the last point in the river-wide water (KH_RiverData._FetchWater, outside the spot) 0.12-0.35 m deep (T's hand
+        /// is then in the band and the dogs' targets in the water). None = the wet point itself. y = the riverbed.</summary>
+        static Vector3 CwHold(KH_RiverData river, KH_WaterSpot spot, Vector3 wet, int side, out float depth)
+        {
+            Vector3 best = wet; depth = river._DepthAt(wet);
+            for (int k = 1; k * CwStep <= 1.5f + 1e-4f; k++)
+            {
+                var p = new Vector3(wet.x - side * k * CwStep, 0f, wet.z);
+                if (!river._FetchWater(p) || (spot != null && spot._Contains(p))) continue;
+                float d = river._DepthAt(p);
+                if (d < .12f || d > .35f) continue;
+                p.y = river._BedAt(p); best = p; depth = d;
+            }
+            return best;
+        }
+
         /// <summary>Edit モード (Bind の後): 川の ok な岸のスライスの岸 (T の立ち位置) と、その先の最初の浅い濡れた点 (犬 0 を置く)。
         /// 浅い順 → 岸からの近さ → コード (決定的)。立ち位置は NavMesh の上 (0.3 m 以内) で、最寄りの周回路ノードから完全な経路がある。</summary>
         static CwSite CwSearch()
@@ -864,6 +891,7 @@ namespace KominkaHillside.Editor
                 if (!NavMesh.SamplePosition(nodes[node], out nh, 2f, NavMesh.AllAreas) || !CwPathComplete(nh.position, stand)) continue;
                 set.reachable++;
                 set.found = true; set.code = cand.Key; set.wet = cand.Value; set.stand = stand; set.depth = depthOf[cand.Key]; set.node = node;
+                set.hold = CwHold(river, spot, cand.Value, river._SliceSide(cand.Key), out set.holdDepth);   // IMP-DOG-053 C7-wet
                 set.why = "bank slice " + cand.Key + " (side " + river._SliceSide(cand.Key) + "): stand " + stand.ToString("F2") + " on the NavMesh, route node " + node
                     + "; dog 0 at " + cand.Value.ToString("F2") + " depth " + set.depth.ToString("F3") + " m, " + TvFlat(stand, cand.Value).ToString("F2") + " m from the stand";
                 break;
@@ -907,7 +935,7 @@ namespace KominkaHillside.Editor
         static string CwDogState(int dog)
         {
             return " [pose=" + CwPose(dog) + " swimming=" + Get<bool>(wander[dog], "_waterSwimming") + " swimYValid=" + Get<bool>(wander[dog], "_swimYValid")
-                + " waterState=" + Get<int>(wander[dog], "waterState") + " veto=" + Get<bool>(wander[dog], "_waterLeashVeto") + " walker=" + Get<int[]>(manager, "walkers")[dog]
+                + " waterState=" + Get<int>(wander[dog], "waterState") + " leashRiver=" + Get<int>(wander[dog], "_lrState") + " walker=" + Get<int[]>(manager, "walkers")[dog]   // IMP-DOG-053: the RC-14 veto field is retired
                 + " at=" + roots[dog].position.ToString("F2") + "]";
         }
 
@@ -941,7 +969,7 @@ namespace KominkaHillside.Editor
 
         static void CallC7Wet()
         {
-            var s = TvCase("C7-wet-sim", true, 3); var c = new CallCtx();
+            var s = TvCase("C7-wet", false, 3); var c = new CallCtx();   // IMP-DOG-053: the real path (was C7-wet-sim, simulated)
             cwSite = null; cwLastPose = -1; cwLastAt = Vector3.zero; cwPoseHeld = false; cwReleasedAtMove = false;
             string bad = null;
             try
@@ -980,56 +1008,47 @@ namespace KominkaHillside.Editor
             s.Add(TvUntil(() => TvAllNear(7, TvNear), 30, "dogs did not catch up at the bank"));
             s.Add(TvWait(1));
             s.Add(TvDo(() => TvExpect(TvFlat(Networking.LocalPlayer.GetPosition(), cwSite.stand) < .6f, "T stays on the stand point (" + TvFlat(Networking.LocalPlayer.GetPosition(), cwSite.stand).ToString("F2") + " m off)")));
-            // [行く] の直前: 犬 0 (陸で接続済み) を岸の先の浅い水際へ置く (模擬の置き方: 接続中の犬はそこへ歩いて入れない)。
-            // 濡れは本体の規則が書くのを待つ (waterPose は書かない)。そのあと保持して、リードが岸へ歩かせても切符まで濡れを保つ (模擬)
-            var wet = new List<Func<double, bool>>();
-            // 犬の判断は間引かれ (IMP-DOG-034 / 036: 判断の間のフレームは脚だけが前の経路の角へ歩く)、waterPose の再計算は判断のときだけ。
-            // 最初の再計算の前に脚が岸へ歩かせないよう、本体が濡れを書くまでハーネスの各回で同じ点へ置き直す (CallMark より前なので
-            // 位置の不連続の数には入らない)。濡れは本体の規則が書いたものだけを見る
-            int places = 0;
-            Action place = () =>
+            // IMP-DOG-053: T steps into the river (hold, facing the centre) and the leashed dogs follow by the leash's river follow. Nothing
+            // is placed or held: dog 0's wet pose is the runtime's own (the old simulated placement and _debugPoseHold are gone)
+            s.Add(TvDo(() =>
             {
-                var face = cwSite.stand - cwSite.wet; face.y = 0f;   // 岸を向く (上がる手前の向き)
-                roots[0].SetPositionAndRotation(cwSite.wet, face.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(face) : roots[0].rotation);
-                var sync = roots[0].GetComponent<VRC.SDK3.Components.VRCObjectSync>(); if (sync != null) sync.FlagDiscontinuity();
-                places++;
-            };
-            wet.Add(TvDo(() => { places = 0; place(); }));
-            wet.Add(CallUntil(() => { if (CwPose(0) != 0) return true; place(); return false; }, 2,
-                () => "dog 0 did not get wet at " + cwSite.wet.ToString("F2") + " (the runtime rule wrote no water pose; placed " + places + " times)" + CwDogState(0)));
+                var centre = KH_CourseGroundEditor.RiverAt(cwSite.hold.z);
+                var face = new Vector3(centre.x - cwSite.hold.x, 0f, 0f);
+                Networking.LocalPlayer.TeleportTo(cwSite.hold, face.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(face) : Networking.LocalPlayer.GetRotation());
+                TvNote("T in the river at " + cwSite.hold.ToString("F2") + " (depth " + cwSite.holdDepth.ToString("F3") + " m), facing the centre");
+            }));
+            s.Add(CallUntil(() => CwPose(0) != 0 && Get<int>(wander[0], "_lrState") == 2, 25,
+                () => "dog 0 did not follow into the water on the leash (river follow state 2 and a wet pose written by the runtime)" + CwDogState(0)));
+            s.Add(TvWait(1));
+            var wet = new List<Func<double, bool>>();
             wet.Add(TvDo(() =>
             {
                 TvExpect(Get<int[]>(manager, "walkers")[0] == TvMe(), "dog 0 still leashed to me" + CwDogState(0));
-                TvExpect(!Get<bool>(wander[0], "_waterLeashVeto"), "no water veto: the leash was first seen on land" + CwDogState(0));
+                TvExpect(CwPose(0) != 0 && Get<int>(wander[0], "_lrState") == 2, "dog 0 still in the water on the leash just before [行く]" + CwDogState(0));
                 TvExpect(Get<int>(CwFetch(0), "dogState") == 0, "dog 0 idle (a chase would stop [行く] with TravelBall)");
                 cwLastPose = CwPose(0); cwLastAt = roots[0].position;
-                CwFetch(0).SetProgramVariable("_debugPoseHold", true); cwPoseHeld = true;
-                TvNote("模擬 (配置と保持)。実際の同期の競合の経路は未検査. dog 0 placed in the shallow water off the bank (simulated placement, " + places + " placement(s) until the runtime's first refresh): the runtime wrote pose " + cwLastPose + CwDogState(0)
-                    + "; the pose is then held (_debugPoseHold, simulated) until the ticket move is observed, because the leash walks the dog back onto the NavMesh");
+                TvNote("dog 0 followed T into the river on the leash (real path, no placement / hold): pose " + cwLastPose + CwDogState(0));
             }));
-            CallGoFlow(s, c, "C7-wet-sim", false, KH_LeashManager.JoinReasonNear, wet, () =>
+            CallGoFlow(s, c, "C7-wet", false, KH_LeashManager.JoinReasonNear, wet, () =>
             {
                 if (tvDisc[0] == 0) { cwLastPose = CwPose(0); cwLastAt = roots[0].position; }
-                else CwReleasePose(true);   // 切符で動いた: ここから waterPose は本体の再計算に戻す
             });
-            s.Add(TvDo(() => CwReleasePose(false)));   // 観測より先に流れが終わったとき
             s.Add(CallUntil(() => CwPose(0) == 0, 2, () => "dog 0 still wet after the move" + CwDogState(0)));
             s.Add(TvWait(1));
             s.Add(TvDo(() =>
             {
                 TvExpect(cwLastPose == 1 || cwLastPose == 2, "dog 0 was still wet at the last observation before its ticket move (pose " + cwLastPose + ")");
-                TvExpect(!cwPoseHeld && !Get<bool>(CwFetch(0), "_debugPoseHold"), "the pose hold is released (pose 0 is the runtime's own)");
                 var walkers = Get<int[]>(manager, "walkers");
                 for (int i = 0; i < 3; i++)
                 {
-                    bool clean = CwPose(i) == 0 && !Get<bool>(wander[i], "_waterSwimming") && !Get<bool>(wander[i], "_swimYValid") && Get<int>(wander[i], "waterState") == 0 && !Get<bool>(wander[i], "_waterLeashVeto");
+                    bool clean = CwPose(i) == 0 && !Get<bool>(wander[i], "_waterSwimming") && !Get<bool>(wander[i], "_swimYValid") && Get<int>(wander[i], "waterState") == 0 && Get<int>(wander[i], "_lrState") == 0;
                     TvExpect(clean, "dog" + i + " left no water state after the move" + CwDogState(i));
                     TvExpect(walkers[i] == TvMe(), "dog" + i + " still leashed to me");
                     float gap = CwGroundGap(i);
                     TvExpect(gap >= 0f && gap < .2f, "dog" + i + " stands on the ground (root - ground " + gap.ToString("F3") + " m)");
                 }
-                TvNote("C7-wet-sim: 模擬 (配置と保持)。実際の同期の競合の経路は未検査 (a sync-race leash with _waterLeashVeto is not covered). dog 0 pose " + cwLastPose + " until its ticket move (last seen at " + cwLastAt.ToString("F2") + ", " + CwWetNow(cwLastAt) + "; hold released "
-                    + (cwReleasedAtMove ? "when the move was observed" : "after the flow") + "); after the move dogs 0-2 pose 0, not swimming, no float height, no play, no veto, leashed, on the ground");
+                TvNote("C7-wet: the real path (IMP-DOG-053). dog 0 pose " + cwLastPose + " until its ticket move (last seen at " + cwLastAt.ToString("F2") + ", " + CwWetNow(cwLastAt)
+                    + "); after the move dogs 0-2 pose 0, not swimming, no float height, no play, river follow 0, leashed, on the ground");
             }));
         }
 

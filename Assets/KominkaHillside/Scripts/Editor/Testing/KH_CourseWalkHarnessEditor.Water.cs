@@ -17,8 +17,10 @@ namespace KominkaHillside.Editor
     // its heap first (standing in for a new stay), so the same release starts the play again.
     //   W0              release -> WaterPlay started (waterState >= 1) within 5 s and the first wet step (waterPose 1) within 6 s
     //                   (decision 2026-09-27: B-1's 5 s runs to wet feet; 1 s margin for the measured spread). No debug entry.
-    //   W4-leash        wading, menu attach -> refused (walkers stays -1), exit starts <= 1.5 s, landed (waterPose 0) <= 10 s,
-    //                   then a menu attach is accepted.
+    //   W4-leash        (IMP-DOG-053, 2026-10-12: was "refused, exit <= 1.5 s, attach after landing") wading, menu attach -> accepted
+    //                   (walkers = me, kept to the end), the play ends "leashed" on the attach edge (log), the leash's river follow walks
+    //                   the dog out ("leash river exit" log: the holder stands on the bank, so the hand is not in the band) and it lands
+    //                   (waterPose 0, river state 0) <= 10 s; no "water leash veto" line. The 1.5 s exit start is not judged (no WaterExit).
     //   W4-gather       wading, a gathering starts (written into KD_GroupActivities' synced heap, roster empty as the arbiter
     //                   would freeze it) -> exit <= 1.5 s, landed <= 10 s, the dog never joins.
     //   W4-toy          (IMP-DOG-020, replaced by IMP-DOG-021 below) wading, menu "call the ball" -> refused, exit, landed.
@@ -72,8 +74,9 @@ namespace KominkaHillside.Editor
     //                       its wading limit, and the ball keeps floating.
     //   S4-sim              a floating ball's local float state is wiped (what a new ball Owner has): it keeps floating (does not
     //                       sink to the bed, is not sent to the bank) for 5 s.
-    //   S5b-sim             dog 2 wading: menu leash and "call the ball" in the same tick -> both refused, the dog comes out; after
-    //                       landing the ball call is accepted (ball within 3 m of the player).
+    //   S5b-sim             dog 2 wading: menu leash and "call the ball" in the same tick -> (IMP-DOG-053, 2026-10-12) both accepted: the
+    //                       leash is kept, the ball comes to the player, the dog walks out on the leash (river follow) and lands <= 10 s;
+    //                       after landing the ball call is pressed again (ball within 3 m of the player).
     //   Not simulable in one client: S1 (a non-Owner's throw) and two people asking at once (first asker) -> PCVR / 2 people.
     //   Destructive audit 2026-09-28 (docs/_sessions/destructive-audit-2026-09-28/triage.md), one-client stand-ins:
     //   every carried case  the first frame of the hold (4 or 7) has the ball frozen (RC-17) and the first frame after the Drop's
@@ -91,10 +94,11 @@ namespace KominkaHillside.Editor
     //                       release has gravity, the ball ends within 2.5 m of the player.
     // Water mode additions (78): W4-throw now runs on to the Drop's release (gravity on at once). W4-throw-regrab: Lab wading, its ball
     //   floating at 0.6 x its limit gets gravity on and is thrown at once -> gravity off again <= 0.6 s, direct water fetch 6 -> 7 -> ...
-    //   -> Drop with gravity at the release. W4-leash-stale: the synced pose held at 0 while the dog is wet, menu attach -> refused (the
-    //   depth under the root), exit <= 1.5 s, landed <= 10 s, attach after landing accepted. W4-leash-late: an accepted connection
-    //   written into the arbiter while the dog is wet -> the dog Owner vetoes it (log), released <= 2.5 s, exit <= 1.5 s, landed
-    //   <= 10 s, no leash move in the water (band / jump / depth rules), attach after landing accepted.
+    //   -> Drop with gravity at the release. W4-leash-stale: the synced pose held at 0 while the dog is wet, menu attach -> (IMP-DOG-053,
+    //   2026-10-12; was refused by the depth under the root) accepted: the stale pose is no reason to refuse; the dog walks out on the
+    //   leash (the Owner's own wet test, not the held pose), landed <= 10 s after the hold is released. W4-leash-late: an accepted
+    //   connection written into the arbiter while the dog is wet -> (was vetoed and released) kept: "water leash taken" logged, no veto,
+    //   the dog walks out on the leash, landed <= 10 s, the band / jump / depth rules (the Fetch limit 0.85 M while the river follow runs).
     // Water mode W0 (decision 2026-09-27, 2nd): no release step; a free dog placed within 25 m of the spot must start its play
     // within 5 s and be wet within 6 s. The other water-mode cases start the same way.
     // IMP-DOG-021 (DES-DOG-004 §E-4 / E-5, 2026-09-28):
@@ -102,7 +106,7 @@ namespace KominkaHillside.Editor
     //                       in no mouth): the ball within 3 m of the player, the dog stays wet and keeps playing for 4 s, no Fetch.
     //   W4-toy-chase (78)   the same ball thrown, then called as soon as the dog is after it (6): accepted, give-up reason=target-lost,
     //                       never 7, exit <= 1.5 s and landed <= 10 s after the call, the ball by the player.
-    //   S5b-sim (88, changed) the ball call in the water is accepted now (the leash is still refused and the dog comes out).
+    //   S5b-sim (88, changed) the ball call in the water is accepted now (the leash was still refused then; IMP-DOG-053 accepts it too).
     //   W3-*-deep (88)      fetchWadeRatio (KH_RiverData heap) set to the spot's 0.45 for the case: the "shallows only" switch of
     //                       §E-3, so the deep-ball path keeps its test; the criteria are unchanged.
     //   88b (river-wide), also at the end of 88:
@@ -180,6 +184,13 @@ namespace KominkaHillside.Editor
             public string rerollEndReason;
             public bool rerollRead, rerollFirstUsedAfter, rerollReentered;
             public List<WhDogStat> stats = new List<WhDogStat>();
+            // IMP-DOG-053 (2026-10-12): the leash taken up in the water (W4-leash / -stale / -late, S5b-sim) and the leashed river follow
+            // (78l LR-*): log lines of HillsideWater.WaterLeashTick / HillsideLeashRiver, and what the LR cases measured
+            public bool leashTakenLogged, leashedEndLogged, lrExitLogged, lrRecover3Logged, lostLeash, swam, floatStill, landedSameSide, waited, droppedToBed, walkOutDuringWait;
+            public int lrExitSpot = -9, lrMaxState, waterJumps, landTeleports;
+            public float minLift = 9f, stillSince = -1f, minMouthLR = 9f;
+            public string lrEntry, lrSite;
+            public double lrEnteredAt = -1, lrSwamAt = -1, lrLeftAt = -1, lrExitAt = -1, lrLandedAt = -1, lrCaughtUpAt = -1, lrWaitAt = -1, lrAttachAt = -1;
         }
         [Serializable] public class WhDogStat
         {
@@ -293,6 +304,15 @@ namespace KominkaHillside.Editor
             report.waterOnly = true; report.waterPlaySet = 1; report.deadline = EditorApplication.timeSinceStartup + 300; Save();
         }
 
+        // IMP-DOG-053 (2026-10-12): the leashed river follow's minimal dynamic cases alone (IMP-DOG-053 §3), the same run frame.
+        // Budget: Play entry + 3 cases (each: back on land <= 45 s, setup ~10 s, the case <= 90 s).
+        [MenuItem("Tools/KominkaHillside/Course/78l - Walk Harness Water Leash River (IMP-DOG-053)")]
+        public static void WaterLeashRiverHarness()
+        {
+            Begin(false);
+            report.waterOnly = true; report.waterPlaySet = 2; report.deadline = EditorApplication.timeSinceStartup + 600; Save();
+        }
+
         static void MakeWaterCases()
         {
             var all = UnityEngine.Object.FindObjectsOfType<UdonBehaviour>();
@@ -337,9 +357,11 @@ namespace KominkaHillside.Editor
             }
             else
                 foreach (var name in report.waterPlaySet == 1 ? new[] { "W-reroll-clock" }
+                    : report.waterPlaySet == 2 ? LrCaseNames   // IMP-DOG-053: 78l (KH_CourseWalkHarnessEditor.LeashRiver.cs)
+                    : report.waterPlaySet == 3 ? LrLimitedWaterNames   // IMP-DOG-053: 78m, the limited run's water half (same file)
                     : new[] { "W0", "W0-24m", "W-reroll-clock", "W4-leash", "W4-gather", "W4-toy", "W4-toy-chase", "W4-throw", "W4-throw-regrab", "W4-leash-stale", "W4-leash-late",
                     "W6-owner", "W6-exit-blocked", "W6-all-blocked", "W4-call" })
-                { report.cases.Add(new Case { name = name, count = 1 }); wh.cases.Add(new WhCase { name = name }); }
+                { report.cases.Add(new Case { name = name, count = 1 }); wh.cases.Add(new WhCase { name = name, dog = report.waterPlaySet >= 2 ? LrCaseDog(name) : 2 }); }
             whPhase = 0; whStep = 0; whNext = 0;
             if (!whLogHooked) { Application.logMessageReceived += WhLog; whLogHooked = true; }
         }
@@ -371,9 +393,24 @@ namespace KominkaHillside.Editor
                 if (condition.Contains("ball claim ok")) WC.claimOkLogged = true;
                 if (WC.log.Count < 40) WC.log.Add(condition); return;
             }
-            // RC-14: the dog Owner's leash veto (KD_DogWanderController.HillsideWater.cs WaterLeashTick)
+            // RC-14: the dog Owner's leash veto (retired by IMP-DOG-053: the line must not appear any more; kept as a negative check)
             if (condition.StartsWith("[KD_DogWanderController] water leash veto dog=" + WhDog + " ")) WC.vetoLogged = true;
             if (condition == "[KD_DogWanderController] water leash released dog=" + WhDog) WC.vetoReleasedLogged = true;
+            // IMP-DOG-053: the leash taken up in the water, the play ended by it, and the leash's river follow (HillsideLeashRiver.cs)
+            if (condition.StartsWith("[KD_DogWanderController] water leash taken dog=" + WhDog + " ")) WC.leashTakenLogged = true;
+            if (condition.StartsWith("[KD_DogWanderController] water end dog=" + WhDog + " reason=leashed")) WC.leashedEndLogged = true;
+            if (condition.StartsWith("[KD_DogWanderController] leash river ") && condition.Contains(" dog=" + WhDog + " "))
+            {
+                if (condition.StartsWith("[KD_DogWanderController] leash river exit "))
+                {
+                    WC.lrExitLogged = true; int sp = condition.IndexOf("spotExit=");
+                    int v; if (sp >= 0 && int.TryParse(condition.Substring(sp + 9).Trim(), out v)) WC.lrExitSpot = v;
+                }
+                if (condition.Contains(" stage=3 teleport")) WC.lrRecover3Logged = true;
+                if (condition.StartsWith("[KD_DogWanderController] leash river approach ") && WC.lrEntry == null) WC.lrEntry = condition.Substring(condition.IndexOf("why="));
+                if (WC.log.Count < 40) WC.log.Add(condition);
+                return;
+            }
             if (condition.StartsWith("[KD_DogWanderController] water step refused dog=" + WhDog + " ")) { if (WC.log.Count < 40) WC.log.Add(condition); return; }
             if (!condition.StartsWith("[KD_DogWanderController] water ")) return;
             if (WC.name != "W2" && !condition.Contains("dog=" + WhDog + " ") && !condition.EndsWith("dog=" + WhDog)) return;
@@ -403,6 +440,8 @@ namespace KominkaHillside.Editor
         }
 
         static int WhState() { return Get<int>(wander[WhDog], "waterState"); }
+        /// <summary>IMP-DOG-053: the leash's river follow state of the case's dog (0 Off, 1 Approach, 2 River, 3 Exit, 4 Shake; Owner local).</summary>
+        static int WhLr() { return Get<int>(wander[WhDog], "_lrState"); }
         static int WhPose() { return Get<int>(whFetch, "waterPose"); }
 
         static bool WhInSpot(Vector3 p)
@@ -438,7 +477,8 @@ namespace KominkaHillside.Editor
                     c.maxDepth = Mathf.Max(c.maxDepth, depth);
                     // IMP-DOG-021: while the Fetch is in the water (6 / 7 / 8) a non-swimmer may wade to fetchWadeRatio x M (0.85) while its Fetch is active (any state but Idle: chase, water 6-8, land Return/Drop right after landing); water play keeps 0.45
                     int fsNow = whFetch != null ? Get<int>(whFetch, "dogState") : 0;
-                    float wadeNow = fsNow != 0 ? WhFetchWadeRatio() : .45f;
+                    // IMP-DOG-053: the leash's river follow (2 River / 3 Exit) walks under the river rules too (the Fetch limit)
+                    float wadeNow = fsNow != 0 || WhLr() >= 2 ? WhFetchWadeRatio() : .45f;
                     if (!c.swimmer && depth > wadeNow * c.mouth + .02f) { c.tooDeepFrames++; if (c.log.Count < 40 && (c.tooDeepFrames == 1 || c.tooDeepFrames % 100 == 0)) c.log.Add("tooDeep #" + c.tooDeepFrames + " frame=" + c.frames + " fetch=" + fsNow + " pose=" + pose + " depth=" + depth.ToString("F3") + " limit=" + wadeNow.ToString("F2") + " river=" + (whRiver != null)); }
                 }
                 if (pose != 0)
@@ -455,6 +495,7 @@ namespace KominkaHillside.Editor
         {
             var c = WC; var cc = Current;
             if (report.waterFetch && !c.name.StartsWith("S5b")) { WhFetchTick(c, now); return; }
+            if (c.name.StartsWith("LR-")) { LrTick(c, now); return; }   // IMP-DOG-053 (78l, KH_CourseWalkHarnessEditor.LeashRiver.cs)
             if (c.name == "W2") { WhW2Tick(c, now); return; }
             if (whPhase == 0 && whStep == 0) { WhDog = c.dog; whFetch = whFetches[WhDog]; }
             if (whPhase >= 2) { if (report.waterSwim && c.stats.Count > 0) WhObserveDog(c.stats[0], Time.unscaledDeltaTime); else WhObserve(c); }
@@ -553,10 +594,14 @@ namespace KominkaHillside.Editor
             }
             switch (c.name)
             {
-                case "W4-leash": pouch.SendCustomEvent("_WalkLeft" + WhDog); break;
+                // IMP-DOG-053: the water gate (10) used to answer before the distance gate (6); now the attach must be within attachReach
+                // (4 m), so the player steps up to the wading dog first (WhStandNearDog), and once the leash is taken moves back onto the
+                // bank behind the spot (WhStandOnBank, WhEvaluate) so the river follow walks the dog out
+                case "W4-leash": WhStandNearDog(); pouch.SendCustomEvent("_WalkLeft" + WhDog); c.stage = 0; break;
                 case "S5b-sim":   // one person stands in for both: leash and "call the ball" in the same tick
+                    WhStandNearDog();
                     whBallAt = Get<Transform>(whFetch, "_ballT").position;
-                    pouch.SendCustomEvent("_WalkLeft" + WhDog); pouch.SendCustomEvent("_Toy" + WhDog); break;
+                    pouch.SendCustomEvent("_WalkLeft" + WhDog); pouch.SendCustomEvent("_Toy" + WhDog); c.stage = 0; break;
                 case "W4-gather":
                     whActivities.SetProgramVariable("participants", 0);
                     whActivities.SetProgramVariable("formation", 0);
@@ -606,14 +651,15 @@ namespace KominkaHillside.Editor
                     c.stage = 0; c.exitAt = 0; c.w1Leg = 0; break;
                 }
                 case "W4-leash-stale":
-                    // RC-14: the arbiter's view of the pose is older than the dog (pose held at 0 while the dog is wet); the menu attach
-                    // must still be refused (the depth under the root) and the dog must walk out
+                    // RC-14 -> IMP-DOG-053: the arbiter's view of the pose is older than the dog (pose held at 0 while the dog is wet); the
+                    // stale pose is no reason any more: the menu attach is accepted and the dog walks out on the leash (its Owner's own wet test)
                     whFetch.SetProgramVariable("waterPose", 0); whFetch.SetProgramVariable("_debugPoseHold", true);
+                    WhStandNearDog();
                     pouch.SendCustomEvent("_WalkLeft" + WhDog); c.stage = 0; break;
                 case "W4-leash-late":
                 {
-                    // RC-14: a connection that got through anyway (any entry, the hand clip included) reaches the wet dog: its Owner must
-                    // not take it up, must have it released and keep walking out
+                    // RC-14 -> IMP-DOG-053: a connection that reaches the wet dog through any entry (the hand clip included) is taken up
+                    // (no veto, no release): the dog walks out on the leash
                     var wk = (int[])Get<int[]>(manager, "walkers").Clone(); wk[WhDog] = Networking.LocalPlayer.playerId; manager.SetProgramVariable("walkers", wk);
                     var hs = (int[])Get<int[]>(manager, "hands").Clone(); hs[WhDog] = 0; manager.SetProgramVariable("hands", hs);
                     c.stage = 0; break;
@@ -667,41 +713,36 @@ namespace KominkaHillside.Editor
         {
             if (c.name.StartsWith("W1-")) { WhEvaluateW1(c, now, t); return; }
             int s = WhState(), pose = WhPose();
-            if (c.exitStarted < 0 && s == 3) c.exitStarted = t;
+            // IMP-DOG-053: a leashed dog walks out by the leash's river follow (state 3 = Exit), not by the play's WaterExit
+            if (c.exitStarted < 0 && (s == 3 || WhLr() == 3)) c.exitStarted = t;
             if (c.landed < 0 && pose == 0) c.landed = t;
             switch (c.name)
             {
                 case "W4-leash":
-                    if (t < 1) { if (Get<int[]>(manager, "walkers")[WhDog] >= 0) c.accepted = true; return; }
-                    c.refused = !c.accepted;
-                    if (c.landed >= 0 && !c.accepted && c.done < 0 && t - c.landed > 1.5)
+                    // IMP-DOG-053 (2026-10-12): accepted in the water; the player then stands on the bank and the leash walks the dog out
+                    if (WhLeashStage(c, now, t)) return;
+                    if (c.landed >= 0 && WhLr() == 0 && t - c.landed > 1.5)
                     {
-                        // Within attachReach (4 m): stand beside the landed dog, then attach the regular way.
-                        c.done = t; NavMeshHit near; var dp = roots[WhDog].position;
-                        if (NavMesh.SamplePosition(dp + new Vector3(1.2f, 0, 0), out near, 2, NavMesh.AllAreas)) Networking.LocalPlayer.TeleportTo(near.position, Networking.LocalPlayer.GetRotation());
-                        whNext = now + .5; return;
-                    }
-                    if (c.done >= 0 && c.actionAt >= 0 && !c.refusedLogged) { c.refusedLogged = true; pouch.SendCustomEvent("_WalkLeft" + WhDog); return; }
-                    if (c.done >= 0)
-                    {
-                        if (t - c.done < 1.5) return;
-                        bool accepted = Get<int[]>(manager, "walkers")[WhDog] == Networking.LocalPlayer.playerId;
-                        bool ok = c.refused && c.exitStarted >= 0 && c.exitStarted <= 1.5 && c.landed <= 10 && accepted && WhClean(c);
-                        WhFinish(c, now, ok, "refused=" + c.refused + " exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2") + " acceptedAfter=" + accepted + WhSummary(c)); return;
+                        bool ok = c.accepted && !c.lostLeash && c.leashTakenLogged && c.leashedEndLogged && c.lrExitLogged && !c.vetoLogged && !c.vetoReleasedLogged
+                            && c.landed <= 10 && WhClean(c);
+                        WhFinish(c, now, ok, WhLeashNote(c) + WhSummary(c)); return;
                     }
                     break;
                 case "S5b-sim":
                 {
                     var ballNow = Get<Transform>(whFetch, "_ballT").position;
-                    if (c.landed < 0) { if (Get<int[]>(manager, "walkers")[WhDog] >= 0) c.accepted = true; if (Vector3.Distance(ballNow, whBallAt) > .5f) c.ballMoved = true; return; }
+                    if (Vector3.Distance(ballNow, whBallAt) > .5f) c.ballMoved = true;
+                    if (WhLeashStage(c, now, t)) return;
+                    if (c.landed < 0 || WhLr() != 0) return;
                     if (c.done < 0 && t - c.landed > 1.5) { c.done = t; pouch.SendCustomEvent("_Toy" + WhDog); return; }
                     if (c.done >= 0 && t - c.done > 3)
                     {
-                        // IMP-DOG-021 (E-4, 2026-09-28): the ball is not in the dog's mouth, so calling it in the water is accepted now
-                        // (it comes to the player while the dog is still wading); the leash stays refused and the dog comes out for it
+                        // IMP-DOG-021 (E-4, 2026-09-28): the ball is not in the dog's mouth, so calling it in the water is accepted now (it comes
+                        // to the player while the dog is still wading). IMP-DOG-053 (2026-10-12): the leash is accepted too (it was refused) and
+                        // walks the dog out once the player stands on the bank
                         float toPlayer = Vector3.Distance(ballNow, Networking.LocalPlayer.GetPosition());
-                        bool ok = !c.accepted && c.ballMoved && c.exitStarted >= 0 && c.exitStarted <= 1.5 && c.landed <= 10 && toPlayer <= 3f && WhClean(c);
-                        WhFinish(c, now, ok, "leashRefused=" + !c.accepted + " toyAcceptedInWater=" + c.ballMoved + " exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2")
+                        bool ok = c.accepted && !c.lostLeash && c.ballMoved && c.lrExitLogged && !c.vetoLogged && c.landed <= 10 && toPlayer <= 3f && WhClean(c);
+                        WhFinish(c, now, ok, WhLeashNote(c) + " toyAcceptedInWater=" + c.ballMoved
                             + " ballToPlayerAfter=" + toPlayer.ToString("F2") + WhSummary(c)); return;
                     }
                     break;
@@ -825,46 +866,20 @@ namespace KominkaHillside.Editor
                 case "W4-leash-stale":
                 case "W4-leash-late":
                 {
+                    // IMP-DOG-053 (2026-10-12): stale = the menu attach is accepted although the synced pose reads 0 (held), late = the
+                    // connection written into the arbiter is kept (no veto, no release). Both: the dog walks out on the leash once the
+                    // player stands on the bank, landed <= 10 s. The held pose is released after 1 s (WhLeashStage waits that long here),
+                    // and landing counts only from the real pose after that (WhLeashStage clears it)
                     bool late = c.name == "W4-leash-late";
-                    int holder = Get<int[]>(manager, "walkers")[WhDog];
-                    if (c.stage == 0)
+                    if (c.stage == 0 && t < 1.0) { if (Get<int[]>(manager, "walkers")[WhDog] == Networking.LocalPlayer.playerId) c.accepted = true; return; }
+                    if (c.stage == 0 && !late) whFetch.SetProgramVariable("_debugPoseHold", false);   // the pose follows the dog again from here
+                    if (WhLeashStage(c, now, t)) return;
+                    if (c.landed >= 0 && WhLr() == 0 && t - c.landed > 1.5)
                     {
-                        if (!late)
-                        {
-                            if (holder >= 0) c.accepted = true;
-                            if (t < 1.0) return;
-                            whFetch.SetProgramVariable("_debugPoseHold", false);   // the pose follows the dog again from here
-                            c.refused = !c.accepted; c.stage = 1; return;
-                        }
-                        if (holder < 0) { c.releasedAt = t; c.stage = 1; return; }
-                        if (t > 3) { WhFinish(c, now, false, "the connection made in the water was not released within 3 s (veto logged " + c.vetoLogged + ")" + WhSummary(c)); return; }
-                        return;
+                        bool okL = c.accepted && !c.lostLeash && c.leashTakenLogged && c.lrExitLogged && !c.vetoLogged && !c.vetoReleasedLogged && c.landed <= 10 && WhClean(c);
+                        WhFinish(c, now, okL, (late ? "connectionKept" : "acceptedWithStalePose") + "=" + (c.accepted && !c.lostLeash) + " " + WhLeashNote(c) + WhSummary(c)); return;
                     }
-                    if (c.stage == 1)
-                    {
-                        if (!late && t < 1.5) return;
-                        if (!late) c.landed = -1;   // the held pose read 0 while wet: count landing only from the real pose
-                        c.stage = 2; return;
-                    }
-                    if (c.stage == 2)
-                    {
-                        if (c.landed >= 0 && t - c.landed > 1.5)
-                        {
-                            // Within attachReach (4 m): stand beside the landed dog, then attach the regular way
-                            NavMeshHit near; var dp = roots[WhDog].position;
-                            if (NavMesh.SamplePosition(dp + new Vector3(1.2f, 0, 0), out near, 2, NavMesh.AllAreas)) Networking.LocalPlayer.TeleportTo(near.position, Networking.LocalPlayer.GetRotation());
-                            c.stage = 3; whNext = now + .5; return;
-                        }
-                        break;
-                    }
-                    if (c.stage == 3) { pouch.SendCustomEvent("_WalkLeft" + WhDog); c.stage = 4; c.done = t; return; }
-                    if (t - c.done < 1.5) return;
-                    bool acceptedAfter = holder == Networking.LocalPlayer.playerId;
-                    bool okL = c.exitStarted >= 0 && c.exitStarted <= 1.5 && c.landed >= 0 && c.landed <= 10 && acceptedAfter && WhClean(c)
-                        // stale: refused by the arbiter itself, never connected-then-vetoed (Codex review 2026-09-28 中)
-                        && (late ? c.vetoLogged && c.releasedAt >= 0 && c.releasedAt <= 2.5 : c.refused && !c.vetoLogged);
-                    WhFinish(c, now, okL, (late ? "vetoLogged=" + c.vetoLogged + " released=" + c.releasedAt.ToString("F2") : "refusedWithStalePose=" + c.refused + " vetoLogged=" + c.vetoLogged)
-                        + " exit=" + c.exitStarted.ToString("F2") + " landed=" + c.landed.ToString("F2") + " acceptedAfter=" + acceptedAfter + WhSummary(c)); return;
+                    break;
                 }
                 case "W-reroll-clock":
                 {

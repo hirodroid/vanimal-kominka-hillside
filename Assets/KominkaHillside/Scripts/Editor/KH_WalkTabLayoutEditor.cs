@@ -403,7 +403,7 @@ namespace KominkaHillside.Editor
                 // 行に 4 秒出す結果・理由 (長いものは行では … で切れ、下端の 1 行に全文が出る。記録だけ)
                 string[] rowNotes = { "KD_TreatPouch.WordWalkAttachingLeft", "KD_TreatPouch.WordWalkAttachingRight", "KD_TreatPouch.WordWalkAttachedLeft", "KD_TreatPouch.WordWalkAttachedRight", "KD_TreatPouch.WordWalkDetaching", "KD_TreatPouch.WordWalkDetached",
                     "KD_TreatPouch.WordWalkDetachMineOnly", "KD_TreatPouch.WordWalkGateAlready", "KD_TreatPouch.WordWalkGateOther", "KD_TreatPouch.WordWalkGateGathering", "KD_TreatPouch.WordWalkGateBall", "KD_TreatPouch.WordWalkGateFullLeft", "KD_TreatPouch.WordWalkGateFullRight",
-                    "KD_TreatPouch.WordWalkGateFar", "KD_TreatPouch.WordWalkGateCalled", "KD_TreatPouch.WordWalkGateUnavailable", "course.water.busy", "KD_TreatPouch.WordWalkUnknown" };
+                    "KD_TreatPouch.WordWalkGateFar", "KD_TreatPouch.WordWalkGateCalled", "KD_TreatPouch.WordWalkGateUnavailable", "KD_TreatPouch.WordWalkUnknown" };   // IMP-DOG-053: "course.water.busy" retired with the walk gate 10
                 string[] summaryNotes = { "KD_TreatPouch.WordWalkDestRemembered", "KD_TreatPouch.WordWalkDestTelling", "KD_TreatPouch.WordWalkToPlaza", "KD_TreatPouch.WordWalkToGate", "course.walk.confirmed", "KD_TreatPouch.WordWalkUnknown" };
                 foreach (string code in lang.languageCodes)
                 {

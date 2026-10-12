@@ -6,15 +6,14 @@ using VRC.Udon.Common.Interfaces;
 
 namespace KominkaHillside
 {
-    // IMP-DOG-020 step 3 (DES-DOG-004 B-1): a wading dog is not leashed. The arbiter (this Owner) reads the synced
-    // waterPose, because WaterPlay itself is local to the dog's Owner. The menu shows "水遊び中 — 上がったらつなげます" and
-    // asks the dog to come out (KD_TreatPouch.Water). A clip attached by hand reaches ReqAttach only, so the refusal there
-    // also asks the dog to come out, turning to that player (_AskWaterExitFor). Attaching again after landing is accepted.
-    //
-    // RC-14 (破壊監査 2026-09-28, FUNC-04 BUG-02): the pose alone let an attach through in the frame the dog stepped in (the pose
-    // was written before the move) and on another client whose pose arrived late. The arbiter now also asks the depth under
-    // the dog's synced root (the spot's riverbed grid, KD_DogFetchController._WetAtRoot). An attach that still gets through
-    // is caught by the dog Owner, which asks for its release here (ReqWaterRelease) and walks out.
+    // IMP-DOG-020 step 3 (DES-DOG-004 B-1) and RC-14 (破壊監査 2026-09-28, FUNC-04 BUG-02) used to keep a wading dog off the leash:
+    // ReqAttach refused a dog _InWater (the synced waterPose or the depth under its synced root) and asked it out, the menu did the
+    // same (KD_TreatPouch WalkGateWater, "水遊び中 — 上がったらつなげます"), and a connection that got through anyway was vetoed by
+    // the dog Owner, which asked for its release here (ReqWaterRelease).
+    // 2026-10-11 の決定 (DES-DOG-010) で上書き (IMP-DOG-053): a dog in the water is leashed and follows its holder there
+    // (KD_DogWanderController.HillsideLeashRiver). The refusals and ReqWaterRelease (the sender and the receiver) are retired. What
+    // stays here: _InWater itself (KH_PhotoWalkWatcher's "no walk photo in the water"), and ReqWaterRelease's one lasting rule, the
+    // roaming home of a dog let go in the river, now applied by every release (Release -> _ReleaseHome; DES-DOG-010 decision 8).
     public partial class KH_LeashManager
     {
         public bool _InWater(int dog)
@@ -23,33 +22,22 @@ namespace KominkaHillside
             return fetchers[dog].WaterPose != 0 || fetchers[dog]._WetAtRoot();
         }
 
-        /// <summary>Dog Owner (KD_DogWanderController.WaterLeashTick): the connection it first saw while the dog was in the water.</summary>
-        public void _RequestWaterRelease(int dog, int holder)
+        /// <summary>IMP-DOG-053 #10 (DES-DOG-010 decision 8): where a dog let go at p roams from (Release, this Owner; also called by
+        /// Course/131 in Edit mode). In the river band or wet (_InWater: the synced pose / the depth under the synced root) = the return
+        /// point of the ok bank slice nearest p (own side first, within twice the bank reach: always on the land and on the NavMesh,
+        /// checked by Course/91; static data every client holds), else the home it had (ReqWaterRelease's old rule). Elsewhere p, as
+        /// before. The dog itself walks out by the water play's strand rule (the nearest usable bank).</summary>
+        public Vector3 _ReleaseHome(int dog, Vector3 p)
         {
-            if (!Utilities.IsValid(Networking.LocalPlayer)) return;
-            SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqWaterRelease), dog, holder);
-        }
-
-        // net: callable-ok: only the dog's own Owner is accepted (the one who moves it and saw it wet), and the only effect is
-        // releasing that one dog, which the water rule refuses anyway (a wading dog is not leashed, B-1).
-        // Codex review 2026-09-28 高: a request names the connection it vetoed (holder) and counts only while the dog is still in
-        // the water, so a late duplicate cannot release a new connection made after landing (even by the same player).
-        [NetworkCallable(maxEventsPerSecond: 6)]
-        public void ReqWaterRelease(int dog, int holder)
-        {
-            if (!Networking.IsOwner(gameObject) || dog < 0 || dog >= walkers.Length || dog >= dogRoots.Length || dogRoots[dog] == null) return;
-            if (walkers[dog] < 0 || walkers[dog] != holder || !_InWater(dog)) return;   // the dog retries once a second while it is wet
-            VRCPlayerApi caller = NetworkCalling.CallingPlayer;
-            VRCPlayerApi dogOwner = Networking.GetOwner(dogRoots[dog].gameObject);
-            if (!Utilities.IsValid(caller) || !Utilities.IsValid(dogOwner) || caller.playerId != dogOwner.playerId) return;
-            Debug.Log("[KH_Leash] ReqWaterRelease dog" + dog + " holder=" + walkers[dog] + " by dog owner " + caller.playerId);
-            // Release() makes the dog's current position its roaming home; here that is in the water, so keep the home it had
-            // (where it was last let go, beside the spot), and the dog roams from the bank once it has walked out
-            Vector3 home = releasedHomes[dog];
-            Release(dog);
-            releasedHomes[dog] = home;
-            ApplyHomes();
-            RequestSerialization();
+            if (fetchers == null || dog < 0 || dog >= fetchers.Length || fetchers[dog] == null) return p;
+            KH_RiverData rd = fetchers[dog].riverData;
+            if (rd == null || !rd._FetchReady()) return _InWater(dog) ? releasedHomes[dog] : p;
+            if (!rd._InBand(p, KH_RiverData.BandMargin) && !_InWater(dog)) return p;
+            int side = p.x >= rd._CenterX(p.z) ? 1 : -1;
+            float reach = 2f * rd._BankReach();
+            int code = rd._NearestSlice(p, side, reach, -1);
+            if (code < 0) code = rd._NearestSlice(p, -side, reach, -1);
+            return code >= 0 ? rd._SliceReturn(code) : releasedHomes[dog];
         }
     }
 }

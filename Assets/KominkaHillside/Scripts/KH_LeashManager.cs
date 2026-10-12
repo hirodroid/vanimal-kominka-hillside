@@ -240,7 +240,8 @@ namespace KominkaHillside
             if (Vector3.Distance(caller.GetPosition(), dogRoots[dog].position) > attachReach) return;
             // A carrying/chasing dog must finish its current Fetch before attachment; a gathering dog stays in formation.
             if (fetchers[dog] == null || !fetchers[dog].IsIdle || _IsGathering(dog)) return;
-            if (_InWater(dog)) { fetchers[dog]._AskWaterExitFor(caller.playerId); return; }   // IMP-DOG-020: after landing (KH_LeashManager.Water.cs)
+            // IMP-DOG-020's "a wading dog is not leashed" (_InWater: refuse and ask it out) is retired: 2026-10-11 の決定 (DES-DOG-010) で
+            // 上書き, IMP-DOG-053 - a dog in the water is leashed and follows its holder there (KD_DogWanderController.HillsideLeashRiver)
             if (frisbeeCatchers != null && dog < frisbeeCatchers.Length && frisbeeCatchers[dog] != null && frisbeeCatchers[dog].IsEngaged) return;
             // IMP-DOG-016: a dog waiting where it was called stays out of the walk until its caller (or the owner) lets it roam.
             if (sleepBoard != null && sleepBoard._IsCalled(dog)) return;
@@ -291,7 +292,8 @@ namespace KominkaHillside
             walkers[dog] = -1;
             IntroChanged();
             ClearTravel(dog); // IMP-WLD-001: a released dog carries no travel ticket (KH_LeashManager.Travel.cs)
-            if (dogRoots[dog] != null) releasedHomes[dog] = dogRoots[dog].position;
+            // IMP-DOG-053 #10: the roaming home is never in the river (KH_LeashManager.Water.cs _ReleaseHome; it was ReqWaterRelease's rule)
+            if (dogRoots[dog] != null) releasedHomes[dog] = _ReleaseHome(dog, dogRoots[dog].position);
             ApplyHomes();
             ReleaseInteract(dog);   // IMP-DOG-031: every Owner-side release (collar, menu, water, player left, maintenance)
         }

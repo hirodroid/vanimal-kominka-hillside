@@ -32,7 +32,7 @@ namespace KominkaDogRun
         // IMP-DOG-034 C1-1d: TravelPending は 1 tick に 2〜4 回呼ばれる (WashYieldsToErrand・UpdateHillsideTravel・Return の枝・
         // WashLeashStop)。中身は manager の同期配列と GetServerTimeInMilliseconds の読みだけの純関数なので、自分の tick の中では
         // 最初の答えを使い回す。無効化: UpdateTick の先頭、manager の切符・接続を書き換え得る呼び出しの直後 (_ReportTravelDone、
-        // _RequestWaterRelease)。差: 期限 15 s の境目が同じ tick の 2 回目の呼び出しの間 (同一フレーム内の ms) に来た場合だけ、
+        // 旧 RC-14 の _RequestWaterRelease。IMP-DOG-053 で退役)。差: 期限 15 s の境目が同じ tick の 2 回目の呼び出しの間 (同一フレーム内の ms) に来た場合だけ、
         // その tick は最初の答えで揃う (1 フレーム以内)。tick の外 (他 Behaviour からの呼び出し) では従来どおり毎回読む
         private int _travelMemoFrame = -1;
         private bool _travelMemo;
@@ -94,7 +94,16 @@ namespace KominkaDogRun
             ResetPauseAndPoseState();
             ResetHolderSpeed();
             _leashCorners = null; _nextLeashPath = 0f;
-            WaterClearFloat();   // §F.4: an unfinished swim-height ease left by a leash taken up on the bank (HillsideWater.cs)
+            // §F.4: an unfinished swim-height ease left by a leash taken up on the bank (HillsideWater.cs).
+            // 2026-10-11 の決定 (DES-DOG-010) で上書き (IMP-DOG-053 #6): only when the ticket moved the dog (to the land at travelPoint;
+            // the leash's river follow ends there and the pose is refreshed for the new place). A ticket that leaves a dog in the water
+            // where it is (near the hand) keeps its float: dropping it would sink a swimming dog to the riverbed
+            if (moved)
+            {
+                LeashRiverReset("ticket");
+                WaterClearFloat();
+                WaterPoseRefresh();
+            }
             _nextTeleportTry = Time.time + 1f;
             if (leashMode == LeashReturn) leashMode = LeashWalk;
             _travelDoneSentAt = Time.time;

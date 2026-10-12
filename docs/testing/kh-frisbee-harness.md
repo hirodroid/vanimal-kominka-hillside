@@ -906,3 +906,18 @@ Console エラー 0、`sceneFileUnchanged=true`、`overrideRestored` OK)。
 | `walk "Course/128 - Walk Harness Live Duration and liveId (audit RC-13)"` | `LV-end-zero` (t = 126.5 で再生中、127.1 で終了・残り約 60)、`LV-liveid-reset` (186 で残り約 1、187.1 で `liveId = -1`・`CanStart`)。開催は Owner としてヒープへ模擬、`startMs` を進める。`LIVE_PASS`。夜の一覧 `live` | `KH_CourseWalkHarnessEditor.Live.cs` |
 
 RC-7 (a)(b) (手渡し直後のストローク、Owner 交代の猶予中の汚れ) は ClientSim では配送順を作れないので、2 人の実通信 (チェックリスト B-9) で見る。
+
+## リードで川へ入る (IMP-DOG-053、2026-10-12)
+
+水中のリード接続の拒否 (RC-14) を退役し、リードの犬が川の Fetch の脚で川へ入る ([IMP-DOG-053](../development/issues/IMP-DOG-053-leashed-river-follow.md))。期待が変わったケースと、新しい入口。**どれも未実行。回すかは相談で決める** (群全体は回さない)。
+
+| 入口 | 中身 | 台本 |
+|---|---|---|
+| `menu "Course/131 - Probe Leash River"` (Edit) | 実装と同じメソッド (`_LeashRiverClamp` / `_LeashRiverPlanEntry` / `_LeashRiverPlanExit` / `KH_LeashManager._ReleaseHome`) を本シーンで呼ぶ。犬種ごとの縮めた目標 (対岸・最深・明示の上限 0.25 m・橋の区域)、Course/130 の 686 標本での入口の選び方 (直接と選んだが 130 は不可とした数 = リスク)、出口、外したときの中心。`Temp/kh-leash-river/probe.json`、Console `[KH Leash River Probe]`。前提: `Temp/kh-leash-river/survey.json` (Course/130) | `KH_CourseLeashRiverProbeEditor.cs` |
+| `walk "Course/78l - Walk Harness Water Leash River (IMP-DOG-053)"` | 最小の動的ケース 3 件: `LR-swim-Corgi` (岸 → 入水 → 浮いて止まる → 同じ岸へ上がる)、`LR-wait-Lab` (橋の区域の手前で待つ → 保持者が 14 m 離れる → 水中から瞬間移動せず上がって追う)、`LR-attach-swim` (水遊び場で泳いでいる犬へ接続 → 川底へ落ちない)。`WATER_PASS` / `water.json` | `KH_CourseWalkHarnessEditor.LeashRiver.cs` |
+| `walk "Course/78 - ..."` の `W4-leash` / `W4-leash-stale` / `W4-leash-late` | 旧: 拒否・解除・出水 1.5 s。新: 接続が成立し続け、接続の端で水遊びが `leashed` で終わり、保持者が岸に立つとリードの川の追従で出水 → 上陸 10 s 以内。拒否の記録 (`water leash veto`) は出ないこと。水中の犬への接続は attachReach 4 m が効くので、犬の 2 m まで寄ってから接続し、受理後に水遊び場の復帰点へ移る | `KH_CourseWalkHarnessEditor.Water.cs` |
+| `walk "Course/88 - ..."` の `S5b-sim` | 旧: リードは拒否・呼び寄せだけ受理。新: 両方受理 (リードは保たれ、ボールは手元へ、犬はリードで出水) | 同上 |
+| `walk "Course/82c - ..."` の `C7-wet` | 旧 `C7-wet-sim` (置き方と姿勢の保持の模擬)。新: T が岸から川の中へ入り、犬がリードで入水 (本体が濡れを書く) → [行く] → 着いた後に濡れ・浮き・川の状態が残らない | `KH_CourseWalkHarnessEditor.Call.cs` |
+| `walk "Course/78m - Harness Leash River water (7 of 9 cases)"` | **限定実行** (Codex の独立レビュー 2026-10-12 の結論「修正後に限定 9 ケース」の水の側): `W4-leash`・`W4-leash-stale`・`W4-leash-late`・`S5b-sim`・`LR-swim-Corgi`・`LR-wait-Lab`・`LR-attach-swim`。準備 (陸へ戻す・水遊びを始める・1.5 s 濡れる) と片付けは 78 / 88 / 78l と同じ。`WATER_PASS` / `water.json` | `KH_CourseWalkHarnessEditor.LeashRiver.cs` |
+| `walk "Course/82l - Harness Leash River travel (C7-wet, T-swimkeep; 2 of 9 cases)"` | **限定実行** の移動の側: 82c の準備 (犬 0〜2 を左手・1 回移動、地点探索は Edit で)・人形 (C0)・`C7-wet`・`T-swimkeep-ticket-sim`・片付け (C11)。1 回の Play で水と移動のモードを混ぜられないので 78m と 2 本に分けた | 同上 |
+| `walk "Course/82b - ..."` の `T-swimkeep-ticket-sim` | 新 (T-swimresidue-* の逆向き): 川で泳いでいるリードの犬に、位置を変えない切符 (ヒープに書いた模擬) を適用しても浮きが残る | `KH_CourseWalkHarnessEditor.LeashRiver.cs` |

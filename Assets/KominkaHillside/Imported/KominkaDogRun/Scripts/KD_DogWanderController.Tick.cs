@@ -29,7 +29,8 @@ namespace KominkaDogRun
     // and its legs frames are WaterRunLegs(): the same RunLegs replay, with the river / depth checks answered from the line the
     // decision validated (no spot query on a legs frame), the swim height from the recorded water surface, and the swim bob / pitch
     // on the visual child and the hips (LateUpdate) from the recorded pose. The gate is WaterLegsOk() instead of TickBusy().
-    // The Fetch's / disc's water states, the RC-14 veto and the ease back after the play keep deciding every frame (TickBusy).
+    // The Fetch's / disc's water states, the leash in the water (IMP-DOG-053's river follow; the RC-14 veto it replaced is retired) and
+    // the ease back after the play keep deciding every frame (TickBusy).
     //
     // IMP-DOG-036 S2b: a dog whose last decision found it resting (RestThinRecord: lying in the rest, or standing / lying in the
     // wander or the post-Fetch calm, still, no turn, nobody within pauseRadius, none of TickBusy's own-field states, the breath
@@ -161,7 +162,7 @@ namespace KominkaDogRun
             // still: a Coast at speed 0 (RunLegs skips it) and no turn recorded (the rest's turn before lying down is done)
             if (_speed != 0f || _legKind != LegCoast || _legFaceKind != LegNone) return;
             // nobody within pauseRadius (petting, the idle pant, the approach wake), and none of TickBusy's own-field states
-            if (_paused || _wasLeashed || _waterLeashVeto) return;
+            if (_paused || _wasLeashed || _lrState != LrOff) return;   // IMP-DOG-053: the RC-14 veto retired; the leash's river follow
             if (waterState != WaterOff || _waterSwimming || _swimYValid || _swimPitchNow != 0f || _hipsWrote) return;
             if (_washActive || _washLeashStop || _stationIdx >= 0 || _activityBusy) return;
             if (_leaveActive || _leaveLowering) return;   // 2026-10-02: walking out of a wash station (HillsideStationLeave.cs)
@@ -391,8 +392,8 @@ namespace KominkaDogRun
         {
             // IMP-DOG-036: an ownership change decides now (a legs frame must never move a root this client no longer owns)
             if (_dogOwner != IsDogOwner()) return true;
-            // A leash vetoed in the water: every frame (RC-14, the water play walks the dog out)
-            if (_waterLeashVeto) return true;
+            // (RC-14's "a leash vetoed in the water: every frame" is retired with the veto, IMP-DOG-053: a leash in the water is the
+            // leash's river follow, kept per frame by LeashLegsOk below)
             // IMP-DOG-036 S1: a leashed dog takes legs frames unless something in LeashLegsOk is live
             if (_wasLeashed) return !LeashLegsOk();
             // IMP-DOG-036 S2: a leash attached since the last decision decides now (the attach edge, RC-14's check, the walk).
@@ -458,8 +459,11 @@ namespace KominkaDogRun
             // a decision that switched mode and returned before any mover (a pause / stopover / invitation starting, a warp):
             // the new branch walks from the next decision, which is this frame
             if (_dogOwner && _legKind == LegNone) return false;
-            // water: any water state, the swim height or pitch still easing, the hips bob (RC-14 / _waterSeenFrame)
+            // water: any water state, the swim height or pitch still easing, the hips bob (_waterSeenFrame)
             if (waterState != WaterOff || _waterSwimming || _swimYValid || _swimPitchNow != 0f || _hipsWrote) return false;
+            // IMP-DOG-053 #8: the leash's river follow (the way in, the water, the way out) and a hand at the river (the way in may start):
+            // every frame. A legs frame would replay its StepToward without the river frame mark, and the plain band rule refuses it
+            if (_lrState != LrOff || _lrNear) return false;
             // wash: being washed / the leashed wash stop (_washLastFrame), held at a wash station
             if (_washActive || _washLeashStop || _stationIdx >= 0 || _activityBusy) return false;
             // leash detached or another holder since the decision. S2b: one direct read of walkers[dog]; _legHolderId is >= 0

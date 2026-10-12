@@ -271,6 +271,7 @@ namespace KominkaDogRun
                 Vector3 a0 = st._AnchorPosition();
                 Vector3 f0 = a0 - dogRoot.position; f0.y = 0f;
                 WaterEnd("station-timeout");
+                LeashRiverReset("station-timeout");   // IMP-DOG-053: a leashed dog's walk out that did not land in time
                 WaterClearFloat();
                 Vector3 goal = f0.sqrMagnitude > 0.01f ? a0 - f0.normalized * Mathf.Min(StationAppear, f0.magnitude) : a0;
                 // TeleportTo needs the NavMesh under the dog too, which a swimming dog may not have: then place it on the
@@ -398,7 +399,9 @@ namespace KominkaDogRun
 
         bool WashYieldsToWater()
         {
-            return fetchController.WaterPose != 0 || waterState != WaterOff;
+            // IMP-DOG-053 #11: the leash's river follow (Owner local, like waterState) walks a leashed dog out first ("先に上がる":
+            // HillsideLeashRiver.cs turns a held station into the walk out); the station takes it once that has landed
+            return fetchController.WaterPose != 0 || waterState != WaterOff || _lrState != LrOff;
         }
 
         private bool _washErrandPrev;   // last frame's WashYieldsToErrand (the accept edge)
