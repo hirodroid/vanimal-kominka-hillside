@@ -66,3 +66,4 @@ updated: 2026-10-12
 
 - [古民家の既存DES-DOG-011](C:/work/unity/vcc/KominkaDogRun/docs/development/issues/DES-DOG-011-called-dog-treat-response.md)
 - [入江IMP-DOG-012](C:/work/unity/vcc/A_Cove_to_Unwind/docs/development/issues/IMP-DOG-012-called-dog-stationary-treats.md)
+2026-10-12 (統括): 修正後の Unity 検査 C#/U# 0、Menu/6e 66/0。ClientSim Course/97f HF2-called-dog-stays-and-eats **PASS** (run 20261012-024727、sceneUnchanged)。コミット 06bb918。残りは実機 (A0-63〜65、B86〜87) とユーザーの決定 4 点。
