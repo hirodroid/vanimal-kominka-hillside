@@ -19,17 +19,22 @@ using VRCStation = VRC.SDK3.Components.VRCStation;
 
 namespace KominkaHillside.Editor
 {
-    /// <summary>DES-WLD-004 おさんぽカート M1 の Setup (契約: docs/plans/auto-walk-cart/implementation.md「Editor」節)。
+    /// <summary>DES-WLD-004 おさんぽカート (M1〜M3) の Setup (契約: docs/plans/auto-walk-cart/implementation.md の「Editor」「M1.1」「M2」「M3」節)。
     ///
     /// Cart/1 は Course/85 (KH_CourseTravelJoinEditor.Build) の流儀で次を行い、本番シーンを保存する:
-    /// 1. KH_CartManager / KH_CartSeat / KH_CartStopButton / KH_CartStationPanel の Program Asset が無ければ作ってコンパイルを始め、**シーンは変えずに止まる** (もう一度 Cart/1 を流す)。
-    /// 2. ルート KH_Cart (冪等。子は名前で探して無ければ作る): CartManager (Manual)、Parking (0, -50, 0)、Carts/Cart_0..7、Stations/Station_0..4。
-    /// 3. カート: 子 Model は毎回作り直す (FBX があれば InstantiatePrefab → Unpack、無ければ仮の Cube とアンカー)。本体に VRCStation + KH_CartSeat + BoxCollider (layer Ignore Raycast)、
-    ///    子 StopL / StopR に BoxCollider + KH_CartStopButton (kind 0 / 1)。材質は Materials/Cart に Standard で作る。
-    /// 4. 乗り場パネル: KH_LeashManager.spotPositions[N] から spotYaws[N] の右手へ 2.5 m、地面 + 1.2 m。Canvas は KH_TravelNotice の Board と同じ構成。
-    /// 5. 配線 (SerializedObject → CopyProxyToUdon)、KH_LeashManager.cartManager、翻訳表 (cart.*) を KH_CourseTravelEditor.ApplyCatalog で KD_Language へ。
-    /// 6. NetworkIDs の残骸除去 → 保存。グリフ焼き (Course/27) は統括が実行する。
-    /// 検査は Cart/2 (<see cref="Verify"/>)、純関数のプローブは Cart/3 (<see cref="Probe"/>)。</summary>
+    /// 1. Program Asset 6 本 (KH_CartManager / KH_CartSeat / KH_CartStopButton / KH_CartStationPanel / KH_CartDock / KH_CartControls) が無ければ作ってコンパイルを始め、
+    ///    **シーンは変えずに止まる** (もう一度 Cart/1 を流す)。
+    /// 2. 軌道 (.Track.cs): route の周回 436 節を写し、距離は節間の弦の累積 (節 0 が棘のときだけ除く。Course/21a の門前整形の後は除かない)。障害物の掃引で noLateral、
+    ///    道幅の分類で trackClass / narrow 区間 / 待機点 (.M2.cs)、乗り場の開始距離 (乗り場 0 = 地図ボードの奥 6 m、他 = 着地点の投影)。Course/21 / 21a の後は Cart/1 を再実行。
+    /// 3. ルート KH_Cart (冪等): CartManager (Manual)、Parking (0, -50, 0)、Carts/Cart_0..7、Stations (静的カート StationCart_0..4 + パネル Station_0..4)。
+    /// 4. 走行カート: 子 Model は毎回作り直す (FBX → Unpack + LODGroup、無ければ仮形状)。本体に VRCStation + KH_CartSeat + BoxCollider (layer Ignore Raycast)、
+    ///    StopL / StopR (どちらも停止)、Docks (KH_CartDock)、Controls (KH_CartControls、layer 17、11 ボタン + 結果欄)、TabCanvas と 2 アンカー、カート上メニュー Panel、背面の掲示の 1 行。
+    /// 5. 乗り場: 静的カート (メッシュだけ) を軌道の開始点から乗り場ごとの側へ「NavMesh 通行幅 + 0.8 m」外し、道側の肘掛けの上 0.55 m にパネル。Manager.panels = 乗り場 5 + カート上 8 = 13 枚。
+    /// 6. 調整値 (Data/Cart/tuning.json) を Manager と KH_LeashManager.defaultDestination へ、犬 6 匹・撮影カメラ・KH_LeashManager に cartManager、
+    ///    掲示画像 Data/Cart/KH_CartSign.png、翻訳表 (cart.*) を KH_CourseTravelEditor.ApplyCatalog で KD_Language へ。配線はすべて SerializedObject → CopyProxyToUdon。
+    /// 7. NetworkIDs の残骸除去 → 保存。グリフ焼き (Course/27) は統括が実行する。
+    /// 検査は Cart/2 (<see cref="Verify"/>)、純関数のプローブは Cart/3 (<see cref="Probe"/>)、調整値だけの再適用は Cart/4。
+    /// 関連: Course/21a・21b (門前の整形、KH_CourseGateTurnEditor)、Course/16 (広場入口のベンチ除去、KH_CoursePlazaBenchEditor)。</summary>
     public static partial class KH_CartSetupEditor
     {
         public const string OutDir = "Temp/cart-20261011";
@@ -71,7 +76,7 @@ namespace KominkaHillside.Editor
         /// また VRCStation のクリック着座を避ける (vrc-world-ui §2。DisableInteractive はシリアライズされないので Editor からは止められない)。</summary>
         public const int BodyLayer = 2, ButtonLayer = 0;
         public const VRCStation.Mobility StationMobility = VRCStation.Mobility.Immobilize;
-        public const float PanelSide = 2.5f, PanelHeight = 1.2f, PanelScale = 0.001f;
+        public const float PanelScale = 0.001f;
         public static readonly Vector2 BoardSize = new Vector2(760f, 1000f);   // M2: 注意書きの下に写真と 1 行を足して 800 → 1000
         public const string StationPhotoName = "Photo", StationPrName = "PR";
         public static readonly Vector2 StationPhotoPos = new Vector2(0f, 270f), StationPhotoSize = new Vector2(300f, 145f), StationPrPos = new Vector2(0f, 172f), StationPrSize = new Vector2(700f, 34f);
@@ -460,10 +465,10 @@ namespace KominkaHillside.Editor
 
         // ---- M3: カートステーション ----
         public const string StationCartPrefix = "StationCart_", CartPanelName = "Panel";
-        public const float StationCartSide = 1.2f, PanelAboveArmrest = 0.55f;
+        public const float PanelAboveArmrest = 0.55f;
 
-        /// <summary>乗り場 s: 着地点の右手 1.2 m に静的カート (FBX のメッシュだけ。Udon / Station / Collider なし、layer Default、LODGroup 付き)、
-        /// その右肘掛け (Anchor_StopR) の上 0.55 m に乗り場パネル (通路 = 着地点側を向く)。</summary>
+        /// <summary>乗り場 s: 静的カート (FBX のメッシュだけ。Udon / Station / Collider なし、layer Default、LODGroup 付き) を StationCartPoseFor の姿勢に置き、
+        /// 道側の肘掛け (StationArmrest) の上 0.55 m に乗り場パネル (表 = 道の点を向く)。</summary>
         static KH_CartStationPanel BuildStation(UnityEngine.SceneManagement.Scene scene, Transform stationsRoot, int s, KH_CartManager manager, KD_Language language, KH_LeashManager leash, Track track, TMP_FontAsset font,
             GameObject fbx, Material bodyMat, Material signMat, StringBuilder log, BuildReport report)
         {
@@ -472,13 +477,13 @@ namespace KominkaHillside.Editor
             var armR = FindDeep(sc.transform, StationArmrest(s));   // 道側の肘掛け (右に置いた乗り場は左肘掛け、左に置いた入口は右肘掛け)
             Vector3 pos = armR.position + sc.transform.up * PanelAboveArmrest;
             var face = pos - spot; face.y = 0f;
-            Quaternion rot = Quaternion.LookRotation(face.sqrMagnitude > 1e-6f ? face.normalized : sc.transform.right, Vector3.up);   // 表 (-Z) が着地点を向く
+            Quaternion rot = Quaternion.LookRotation(face.sqrMagnitude > 1e-6f ? face.normalized : sc.transform.right, Vector3.up);   // 表 (-Z) が道の点 (aisle) を向く
             report.stations.Add("Station_" + s + " aisle=" + spot.ToString("F2") + " side=" + (StationSide[s] < 0 ? "left" : "right") + " lateral=" + StationCartLateral(s, track).ToString("F2") + " m cart=" + cartPos.ToString("F2") + " panel=" + pos.ToString("F2") + " ground=" + (hit ? "hit dy=" + groundDelta.ToString("F2") : "MISS (spot height used)"));
             return BuildPanel(stationsRoot, "Station_" + s, pos, rot, s, -1, manager, language, font, log, true);
         }
 
-        /// <summary>乗り場 s の静的カートの姿勢と、パネルが向く通路側の点 (aisle)。乗り場 0 は軌道上の開始点 (spotTrackDistance[0] = 地図ボードの少し奥) の右 1.2 m、
-        /// 向きは軌道の進行方向 (+1)。他の乗り場は着地点基準 (StationCartPose)。Build と Verify が同じ式を使う。</summary>
+        /// <summary>乗り場 s の静的カートの姿勢と、パネルが向く通路側の点 (aisle = 軌道上の開始点 spotTrackDistance[s])。開始点から StationSide の側へ
+        /// StationCartLateral (NavMesh 通行幅 + 0.8 m、2.2〜3.5 m) 外し、地面に置き、向きは軌道の進行方向 (+1)。Build と Verify が同じ式を使う。</summary>
         public static void StationCartPoseFor(int s, Track track, KH_LeashManager leash, out Vector3 pos, out Quaternion rot, out Vector3 aisle, out float groundDelta, out bool hit)
         {
             // 2026-10-12 ユーザー要望 (見本カートが道に掛かって邪魔): 軌道上の開始点 (spotTrackDistance[s]) から、乗り場ごとの側 (StationSide) へ
@@ -508,20 +513,6 @@ namespace KominkaHillside.Editor
             var p = TrackPointRef(track, track.spot[s]); var f = TrackDirectionRef(track, track.spot[s]);
             var side = new Vector3(f.z, 0f, -f.x) * StationSide[s];
             return Mathf.Clamp(SideWidth(p, side) + StationCartClearance, StationCartLatMin, StationCartLatMax);
-        }
-
-        /// <summary>静的カートの姿勢: 基準点から yaw の右手へ 1.2 m、その地点の地面 (TravelGroundMask)、向きは yaw (道の進行方向)。</summary>
-        public static void StationCartPose(Vector3 spot, float yawDegrees, out Vector3 pos, out Quaternion rot, out float groundDelta, out bool hit)
-        {
-            float yaw = yawDegrees * Mathf.Deg2Rad;
-            var right = new Vector3(Mathf.Cos(yaw), 0f, -Mathf.Sin(yaw));
-            var flat = spot + right * StationCartSide;
-            float groundY = spot.y;
-            hit = Physics.Raycast(new Vector3(flat.x, spot.y + 5f, flat.z), Vector3.down, out RaycastHit h, 15f, KH_LeashManager.TravelGroundMask, QueryTriggerInteraction.Ignore);
-            if (hit) groundY = h.point.y;
-            groundDelta = groundY - spot.y;
-            pos = new Vector3(flat.x, groundY, flat.z);
-            rot = Quaternion.Euler(0f, yawDegrees, 0f);
         }
 
         /// <summary>静的カート (毎回作り直す)。FBX が無ければ仮形状。Collider と Udon は付けない。</summary>
@@ -632,21 +623,6 @@ namespace KominkaHillside.Editor
             UdonSharpEditorUtility.CopyProxyToUdon(panel); EditorUtility.SetDirty(panel);
             board.SetActive(visible);
             return panel;
-        }
-
-        /// <summary>パネルの姿勢: spot から spotYaws の右手 (cos yaw, 0, -sin yaw) へ 2.5 m、その地点の地面 (TravelGroundMask) + 1.2 m。
-        /// Canvas の表は -Z 側なので LookRotation(パネル - spot) で spot に表を向ける。</summary>
-        public static void PanelPose(Vector3 spot, float yawDegrees, out Vector3 pos, out Quaternion rot, out float groundDelta, out bool hit)
-        {
-            float yaw = yawDegrees * Mathf.Deg2Rad;
-            var right = new Vector3(Mathf.Cos(yaw), 0f, -Mathf.Sin(yaw));
-            var flat = spot + right * PanelSide;
-            float groundY = spot.y;
-            hit = Physics.Raycast(new Vector3(flat.x, spot.y + 5f, flat.z), Vector3.down, out RaycastHit h, 15f, KH_LeashManager.TravelGroundMask, QueryTriggerInteraction.Ignore);
-            if (hit) groundY = h.point.y;
-            groundDelta = groundY - spot.y;
-            pos = new Vector3(flat.x, groundY + PanelHeight, flat.z);
-            rot = Quaternion.LookRotation(right, Vector3.up);
         }
 
         // ============================================================

@@ -13,9 +13,13 @@ namespace KominkaHillside
     /// - 動きは決定論 (KH_CartManager.Motion.cs): 錨 (groupAnchorDist, groupAnchorMs, groupDir) と共通速度から各クライアントが
     ///   毎フレーム周回上の距離 → 姿勢を計算する。VRCObjectSync は使わない。
     /// - 降車の全経路 (停止ボタン・ジャンプ・ワープ/合流・リスポーン・到着・座れなかった) は LeaveCore 1 本を通る。
+    /// - partial: .Requests (要求と裁定・カートからの出発/合流) / .Groups (隊列・引き継ぎ・到着・距離・軌道) / .Motion (姿勢・接地) /
+    ///   .Traffic (M2 すれ違い・待機) / .Park (M3 駐車枠)。
+    /// - カートの状態: 0 Idle (プール・地中) / 1 Riding / 2 Ending / 3 Parked (途中で降りた場所に残り、カート上メニューから再開・合流できる)。
+    ///   目的地への到着で降りたカートは Idle (プールへ戻す)。乗り場は Idle → 最古の Parked の順に使う (回収)。
     ///
     /// ログは `[KH_Cart] <事象> key=value ...` の 1 行 (start / join / leave / arrive / handover / free / reject / accepting /
-    /// board / seated / unseated / unboard / local-leave / owner)。</summary>
+    /// board / seated / unseated / unboard / local-leave / owner / traffic * / park / arrive-release / reclaim / start-from / join-from / ground gap)。</summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.Manual)]
     public partial class KH_CartManager : UdonSharpBehaviour
     {
@@ -31,7 +35,7 @@ namespace KominkaHillside
         public KominkaDogRun.KD_Language language;
         public KH_TravelFade fade;
         public KH_CartSeat[] carts;            // MaxCarts 台
-        public KH_CartStationPanel[] panels;   // 5 枚 (spot 順)
+        public KH_CartStationPanel[] panels;   // 乗り場 5 (spot 順) + カート上 8 = 13 枚
         public Transform parking;              // 待機カートを置く場所 (地中 / 範囲外)
 
         [Header("設定 (M1 の既定。Setup は既定のまま)")]
@@ -39,7 +43,7 @@ namespace KominkaHillside
         public int departDelayMs = 3000;
 
         // 同期 (すべて宣言時に初期化、長さ固定。vrc-networking §5)。「なし」は cartRider = 0、cartGroup / groupMaster = -1
-        [UdonSynced] public int[] cartState   = new int[8];   // 0 Idle / 1 Riding / 2 Ending (到着停止へ向かう)
+        [UdonSynced] public int[] cartState   = new int[8];   // 0 Idle / 1 Riding / 2 Ending (到着停止へ向かう) / 3 Parked (途中で降りた場所に残る)
         [UdonSynced] public int[] cartRider   = new int[8];   // playerId、0 = 空
         [UdonSynced] public int[] cartGroup   = new int[] {-1,-1,-1,-1,-1,-1,-1,-1};
         [UdonSynced] public int[] cartOrder   = new int[8];   // グループ内の順 (0 = 先頭)

@@ -160,7 +160,7 @@ namespace KominkaHillside
             Debug.Log("[KH_Cart] local-leave cart=" + c + " group=" + cartGroup[c] + " reason=" + reason + " seated=" + (_seatedCart == c));
             if (exitStation && _seatedCart == c)
             {
-                // Codex M3 (2): 停止・到着は、カートが駐車枠 (狭い区間なら出口 + 3 m) へ着いて横に寄せ切ってから外側へ降ろす (PlaceParked)。
+                // Codex M3 (2): 途中の停止は、カートが駐車枠 (狭い区間なら出口 + 3 m) へ着いて横に寄せ切ってから外側へ降ろす (PlaceParked)。
                 // ワープ・合流の移動 (travel) はすぐ降ろす (この後に暗転と TeleportTo が続く)
                 // 到着 (arrive) はカートをプールへ戻すので、その場ですぐ降ろす (カートは降りたのを確かめてから地中へ: MotionTick の ParkCart)
                 if (reason == "request") { _deferExitCart = c; _deferExitUntil = Time.time + DeferExitMax; }

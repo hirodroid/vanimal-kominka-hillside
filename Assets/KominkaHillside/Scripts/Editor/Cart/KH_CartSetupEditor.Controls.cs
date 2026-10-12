@@ -22,7 +22,7 @@ namespace KominkaHillside.Editor
     {
         public const string DocksName = "Docks", DockMenuName = "Dock_Menu", DockMonitorName = "Dock_Monitor", DockPhotoName = "Dock_Photo", ControlsName = "Controls";
         public const int ControlsLayer = 17;   // Walkthrough: 既存の撮影モニター・手元メニューと同じ (撮影カメラに映らず、ポインタは届く)
-        public const float ControlsScale = 0.001f, SeatedEyeAboveSeat = 0.7f;
+        public const float ControlsScale = 0.001f;
         public static readonly Vector2 ControlsBoardSize = new Vector2(280f, 430f), TabSize = new Vector2(50f, 50f), TabPos = new Vector2(111f, 186f), ControlsButtonSize = new Vector2(128f, 54f), GuideButtonSize = new Vector2(262f, 54f);
         // M2: 結果欄 (すれ違い待ち) は Body の左上 (Tab の左)。板の大きさは M1.2 の角度配置のまま (280×430)
         public const string NoteName = "Note";

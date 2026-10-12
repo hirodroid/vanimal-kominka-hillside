@@ -156,7 +156,7 @@ namespace KominkaHillside
             // レビュー #2: 先頭が到着距離に達していれば、外して錨を打ち直す前に Ending を確定する (Owner 自身が先頭のとき
             // LocalTick の到着降車が OwnerTick より先に走り、錨が 1 間隔後ろへ移って Ending が遅れていた)
             if (ValidGroup(g)) SettleArrival(g, now);
-            // M3: 降りた場所に残す (Parked)。置く距離は今の目標距離 (グループが無い不整合のときだけ Idle へ)
+            // M3: 途中で降りたら降りた場所に残す (Parked)。目的地への到着とグループが無い不整合は Idle (プールへ戻す)
             bool canPark = ValidGroup(g) && groupState[g] != GroupFree && EnsureRoute();
             // 2026-10-12 追加要望: 目的地に着いて降りたカートは残さずプール (Idle) へ戻す (駐車枠も作らない)。途中の停止・ジャンプ・ワープ・リスポーン・退出は Parked
             bool arrived = canPark && IsDestRun(g) && TravelOf(c, now) >= Remaining(g) - arriveSlack;
