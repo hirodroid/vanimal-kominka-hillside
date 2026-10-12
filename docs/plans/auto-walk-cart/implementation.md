@@ -1,6 +1,6 @@
 # おさんぽカート 実装設計 M1 (2026-10-11)
 
-親 Issue: [DES-WLD-004](../../development/issues/DES-WLD-004-auto-walk-cart.md)。外観は [制作票](asset-brief.md) / [本制作](production.md)。本書は**実装の契約** (クラス・フィールド・メソッド・メニュー名) で、実装担当 2 名 (Runtime / Editor) が同じ名前で並行して書くための正本。ユーザー了承 (2026-10-11「そちらで改善し、Unityへ取り込んで機能も組み込み」) に基づき、M1 の範囲を先に決める。
+親 Issue: [DES-WLD-004](../../development/issues/DES-WLD-004-auto-walk-cart.md)。外観は [制作票](asset-brief.md) / [本制作](production.md)。利用者向けの流れは [利用の流れ (HTML)](usage-flow.html)。本書は**実装の契約** (クラス・フィールド・メソッド・メニュー名) で、実装担当 2 名 (Runtime / Editor) が同じ名前で並行して書くための正本。ユーザー了承 (2026-10-11「そちらで改善し、Unityへ取り込んで機能も組み込み」) に基づき、M1 の範囲を先に決める。
 
 ## 範囲
 

@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>おさんぽカート 利用の流れ</title>
+<style>
+:root{--paper:#f5f2e9;--ink:#263d35;--muted:#69776d;--line:#d8ddd1;--green:#355c48;--moss:#53634e;--accent:#b66d42;--white:#fffefa;--soft:#ebe4d3}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.8 system-ui,'Yu Gothic UI',Meiryo,sans-serif}
+.wrap{max-width:1100px;margin:auto;padding:0 20px 80px}
+header{padding:40px 0 10px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:11px;letter-spacing:.2em;color:var(--accent);font-weight:700}
+h1{font-size:clamp(26px,4vw,40px);line-height:1.3;margin:8px 0 6px;font-weight:600;letter-spacing:-.02em}
+header p{color:var(--muted);margin:0}
+nav{display:flex;flex-wrap:wrap;gap:8px 18px;padding:14px 0;border-bottom:1px solid var(--line);font-size:13px;position:sticky;top:0;background:var(--paper);z-index:2}
+nav a{color:var(--green);text-decoration:none;border-bottom:1px solid var(--line)}
+section{padding:34px 0 10px}
+h2{font-size:22px;margin:0 0 6px;font-weight:600}
+h3{font-size:16px;margin:22px 0 6px}
+.lead{color:var(--muted);margin:0 0 16px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+.chart{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:12px;margin:14px 0;overflow-x:auto}
+.chart .mermaid{min-width:320px}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--white)}
+th,td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}
+th{background:var(--soft);font-weight:600;white-space:nowrap}
+.tag{display:inline-block;background:var(--soft);border-radius:20px;padding:1px 10px;font-size:12px;margin-left:6px;color:var(--muted)}
+.note{font-size:13px;color:var(--muted)}
+ul{margin:6px 0 10px 1.2em;padding:0}
+li{margin:3px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+kbd{font:inherit;background:var(--soft);border-radius:6px;padding:0 6px}
+.fallback{display:none;white-space:pre-wrap;font:12px/1.5 ui-monospace,Consolas,monospace;color:var(--muted)}
+.nomermaid .fallback{display:block}
+.nomermaid .mermaid{display:none}
+footer{margin-top:40px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">VAnimal / 古民家の裏山 · DES-WLD-004</div>
+  <h1>おさんぽカート 利用の流れ</h1>
+  <p>一人乗りの自動散歩カート。乗り場で出発し、犬の散歩設定で道を進み、好きな所で降りられる。2026-10-12 時点 (M3 まで実装、Play 未確認の項目あり)。</p>
+</header>
+<nav>
+  <a href="#overview">全体像</a><a href="#start">出発</a><a href="#join">合流</a><a href="#ride">乗車中の操作</a><a href="#stop">停止と残るカート</a><a href="#arrive">到着</a><a href="#group">グループ</a><a href="#traffic">すれ違い</a><a href="#travel">ワープ等との関係</a><a href="#dog">犬</a><a href="#state">状態遷移</a><a href="#values">決めた値</a>
+</nav>
+
+<section id="overview">
+  <h2>全体像</h2>
+  <p class="lead">カートは 8 台。5 つの乗り場 (入口・広場・奥の広場・上流の橋・川辺) と、途中で降りて残ったカートが「乗り場」になる。</p>
+  <div class="chart"><pre class="mermaid">
+flowchart LR
+  S[乗り場のメニュー<br>5 地点] -->|出発| R[走行中]
+  S -->|合流| R
+  P[残ったカートのメニュー] -->|再開| R
+  P -->|合流| R
+  R -->|停止ボタン / ジャンプ| P
+  R -->|目的地に到着| P
+  R -->|ワープ・リスポーン・退出| P
+  P -.->|乗り場で空車が無いとき<br>最古のカートを回収| S
+  </pre><pre class="fallback">乗り場のメニュー →(出発/合流)→ 走行中 →(停止・到着・ワープ等)→ 残ったカート →(再開/合流)→ 走行中。乗り場で空車が無ければ最古の残ったカートを回収。</pre></div>
+  <div class="grid">
+    <div class="card"><h3 style="margin-top:0">行き先はさんぽの設定を共用</h3>さんぽで選んだ目的地 (入口 / 広場 / 奥の広場 / 川辺) か周回 (順 / 逆) のまま走る。カート専用の行き先設定は無い。グループに合流したら、そのグループのマスターの設定に従う。</div>
+    <div class="card"><h3 style="margin-top:0">無料・全端末</h3>犬がいなくても乗れる。PCVR・デスクトップ・Quest 単体・スマホを対象 (実機確認はこれから)。</div>
+    <div class="card"><h3 style="margin-top:0">降りるのは自由</h3>停止ボタンでもジャンプでも降りられる。VR 酔いを感じたらすぐ降りる、が前提。</div>
+  </div>
+</section>
+
+<section id="start">
+  <h2>乗り場から出発する</h2>
+  <p class="lead">乗り場には動かない見本のカートがあり、その肘掛けの上にメニューが出ている。</p>
+  <div class="chart"><pre class="mermaid">
+flowchart TD
+  A[乗り場のメニューで「ここから出発」] --> B{現在地が<br>さんぽの目的地と同じ?}
+  B -->|はい| B1[「ここが目的地です」<br>さんぽの行き先を変える]
+  B -->|いいえ| C{空いているカート<br>がある?}
+  C -->|Idle あり| D[そのカートを使う]
+  C -->|無いが 残ったカートあり| E[置かれて 3 秒以上の<br>最古のカートを回収して使う]
+  C -->|どちらも無い| F[「いまは空いているカートがありません」]
+  D --> G[着座 · 1 人グループができる<br>自分がマスター · 受付 ON]
+  E --> G
+  G --> H[3 秒後に出発]
+  H --> I{行き先}
+  I -->|周回 順/逆| J[止めるまで周回を続ける]
+  I -->|目的地| K[到着したら停車して降車]
+  </pre><pre class="fallback">出発 → 現在地が目的地なら案内 → 空車 (無ければ最古の残ったカートを回収) → 着座、1 人グループ、受付 ON → 3 秒後に出発 → 周回なら続ける / 目的地なら到着で停車・降車。</pre></div>
+  <p class="note">乗り場 0 (入口) からの出発点は、整形した門前の曲線上で着地点の真横。門の中へは入らない。</p>
+</section>
+
+<section id="join">
+  <h2>走っている友人に合流する</h2>
+  <p class="lead">乗り場のメニュー、または残ったカートのメニューから、受付中のグループを選ぶ。</p>
+  <div class="chart"><pre class="mermaid">
+flowchart TD
+  A[メニューの一覧<br>マスター名 · 行き先 · 人数] --> B{その行の状態}
+  B -->|受付中| C[押す]
+  B -->|受付停止 / 到着中| B1[押せない表示<br>別のグループか自分で出発]
+  C --> D{空車 or このカート<br>は使える?}
+  D -->|いいえ| D1[「いまは空いているカートがありません」]
+  D -->|はい| E[暗転して隊列の末尾へ<br>着座]
+  E --> F[マスターの行き先・方向で走る<br>自分の設定は保持]
+  F --> G[降りたら自分の設定に戻る]
+  </pre><pre class="fallback">一覧 → 受付中の行を押す → 空車があれば暗転して隊列の末尾へ → マスターの設定で走る → 降りたら自分の設定に戻る。</pre></div>
+  <ul>
+    <li>一覧は 1 グループ 1 行。マスターが交代しても同じグループは同じ行。</li>
+    <li>解散して同じ番号に別グループができた後の押下は、世代が違うので拒否される。</li>
+  </ul>
+</section>
+
+<section id="ride">
+  <h2>乗車中の操作</h2>
+  <p class="lead">座席の左斜め前に操作帯、左横に手元メニューのドック、左前上に撮影モニターのドックがある。</p>
+  <table>
+    <tr><th>場所</th><th>操作</th><th>内容</th></tr>
+    <tr><td rowspan="8">操作帯<span class="tag">左斜め前 · 自分だけに見える</span></td><td>メニュー</td><td>手元メニューを左横のドックに出す。以後カートと一緒に動く</td></tr>
+    <tr><td>撮影モニター <span class="tag">PC</span></td><td>閉 → 開く / 表示中 → 隠す (撮影は続く) / 隠し中 → 再表示</td></tr>
+    <tr><td>高さ ▲▼</td><td>座面の高さ ±30 cm (5 cm 刻み)。他の人の画面でも同じ</td></tr>
+    <tr><td>前後 ▲▼</td><td>座面の前後 ±30 cm</td></tr>
+    <tr><td>向き ◀▶</td><td>座面の向き ±90° (15° 刻み)</td></tr>
+    <tr><td>停止</td><td>停止して降りる (左右の肘掛けのボタンも同じ)</td></tr>
+    <tr><td>受付 <span class="tag">マスターだけ</span></td><td>合流の受付 ON / OFF。OFF にしても既に居る人は残る</td></tr>
+    <tr><td>案内</td><td>お手入れ道具の案内 (手元メニューを開く)</td></tr>
+    <tr><td>操作帯の右上</td><td>× / +</td><td>操作帯を最小化 / 展開</td></tr>
+    <tr><td>肘掛け前端</td><td>停止面 (左右)</td><td>停止して降りる</td></tr>
+    <tr><td>ジャンプ</td><td></td><td>降りる (VR 酔いの退路)</td></tr>
+  </table>
+  <p class="note">待機中 (すれ違い待ち) は操作帯に「すれ違い待ち。自動で進みます」が出る。ClientSim ではメニュー操作でも降りてしまうが、実機の挙動ではない。</p>
+</section>
+
+<section id="stop">
+  <h2>途中で止まる · 残ったカートが乗り場になる</h2>
+  <div class="chart"><pre class="mermaid">
+flowchart TD
+  A[停止ボタン / ジャンプ] --> B{今いる場所}
+  B -->|広い道| C[右へ 1.6 m 寄せて停車]
+  B -->|一列の道| D[右へ 1.2 m 寄せて停車]
+  B -->|橋 · 狭い区間| E[乗せたまま出口まで進み<br>出口の 3 m 先で停車]
+  C --> F[外側に降りる<br>犬は通常の散歩へ戻る]
+  D --> F
+  E --> F
+  F --> G[カートはその場に残り<br>上にメニューが出る]
+  G --> H{次にすること}
+  H -->|再開| I[ここを起点に 1 人で出発<br>自分の設定 · 新しいグループ]
+  H -->|合流| J[同じ / 別のグループへ]
+  H -->|歩いて行く| K[カートは残る · 誰でも使える<br>乗り場で空車が無ければ回収される]
+  </pre><pre class="fallback">停止 → 場所に応じて右へ寄せる (橋なら出口まで進む) → 降りる → カートが残りメニューが出る → 再開 / 合流 / そのまま。</pre></div>
+  <ul>
+    <li>本人と本人の犬だけが離脱し、同じグループの他の人は走り続ける。</li>
+    <li>自分がマスターなら、参加順が次の人にマスターが移る。行き先と受付状態はそのまま。</li>
+    <li>残ったカートは別の置き去りカートと 1.6 m 以上離して停める。</li>
+  </ul>
+</section>
+
+<section id="arrive">
+  <h2>目的地に着く</h2>
+  <div class="chart"><pre class="mermaid">
+flowchart LR
+  A[先頭が目的地の手前 0.5 m] --> B[グループは「到着中」<br>新しい合流は受け付けない]
+  B --> C[各車は自分が目的地に着いた所で停車]
+  C --> D[降車 · カートはその場に残る]
+  D --> E[次は乗り場か残ったカートから]
+  </pre><pre class="fallback">先頭が目的地手前 → 到着中 (合流不可) → 各車が着いた所で停車 → 降車、カートは残る。</pre></div>
+  <p class="note">周回 (順 / 逆) は到着が無く、止めるまで続く。入口 (目的地 0) の到着点は門の前の曲線上 (門から約 8 m)。</p>
+</section>
+
+<section id="group">
+  <h2>グループとマスター</h2>
+  <table>
+    <tr><th>場面</th><th>動き</th></tr>
+    <tr><td>出発</td><td>自分 1 人のグループができ、自分がマスター。受付は ON</td></tr>
+    <tr><td>合流</td><td>そのグループの末尾に入り、マスターの行き先・方向で走る。合流前の自分の設定は保持</td></tr>
+    <tr><td>受付 OFF</td><td>以後の合流を止める。既参加者は残る。マスターが交代しても受付状態は引き継ぐ</td></tr>
+    <tr><td>マスターが降りる / 退出</td><td>参加順が次の人へ。グループの行き先は維持し、新マスターの元の設定には切り替えない</td></tr>
+    <tr><td>最後の 1 人が降りる</td><td>グループは解散</td></tr>
+    <tr><td>隊列</td><td>通常は千鳥 (前後 3 m、左右 0.6 m 交互)。橋など一列の区間では一列</td></tr>
+  </table>
+</section>
+
+<section id="traffic">
+  <h2>逆方向のグループとすれ違う</h2>
+  <p class="lead">道は幅で 3 種類に分けてある。広い道 (千鳥可)、一列なら双方通れる道、一列でも通れない狭い区間 (橋 2 本・広場入口・門前)。</p>
+  <div class="chart"><pre class="mermaid">
+flowchart TD
+  A[前方 25 m 以内に<br>逆方向のグループ] --> B[双方とも一列 · 右寄せ 0.55 m]
+  B --> C{この先に狭い区間?}
+  C -->|いいえ| D[そのまますれ違う]
+  C -->|はい| E{相手が区間の中 or<br>自分より区間に近い?}
+  E -->|いいえ| F[自分が先に通る]
+  E -->|はい| G[区間手前の待機点で止まる<br>「すれ違い待ち」表示]
+  G --> H[相手の最後尾が区間を出て 2 m]
+  H --> I[自動で再開]
+  G -.->|60 秒たっても解除されない| I
+  D --> J[10 m 離れたら千鳥に戻る]
+  F --> J
+  I --> J
+  </pre><pre class="fallback">対向が 25 m 以内 → 双方一列・右寄せ → 狭い区間があれば先に入った側が優先、後の側は待機点で待つ → 相手が抜けたら再開 → 離れたら千鳥に戻る。</pre></div>
+  <ul>
+    <li>待機は交通上の自動停止で、所属・行き先・マスター・受付は変わらない。</li>
+    <li>狭い区間の中にある乗り場 (上流の橋) からは、対向が抜けるまで出発を保留する。</li>
+    <li>同じ方向のグループどうしは対象外 (追い越しは無い)。</li>
+  </ul>
+</section>
+
+<section id="travel">
+  <h2>ワープ · 通常の合流 · リスポーンとの関係</h2>
+  <div class="chart"><pre class="mermaid">
+flowchart LR
+  A[乗車中に地点ワープ / 友人の所へ合流 / リスポーン] --> B{実行された?}
+  B -->|取消 · 失敗| C[乗ったまま]
+  B -->|実行| D[先に降車 · カートはその場に残る]
+  D --> E[移動する · 犬の同行は既存どおり]
+  E --> F[残りのグループは継続<br>マスターなら引き継ぎ]
+  </pre><pre class="fallback">乗車中のワープ等 → 取消・失敗なら乗ったまま → 実行なら先に降車 (カートは残る) → 移動 → 残りのグループは継続。</pre></div>
+</section>
+
+<section id="dog">
+  <h2>犬</h2>
+  <table>
+    <tr><th>場面</th><th>犬の動き</th></tr>
+    <tr><td>乗車中</td><td>リードで繋いだ犬はカートの前 0.9 m・左右に並び、カートの速さに合わせて歩き続ける。一列の区間では左右を狭める。くん活・寄り道・休憩は始めない</td></tr>
+    <tr><td>待機 · 停車中</td><td>カートの前で待つ。嗅ぐ・伏せは出ない</td></tr>
+    <tr><td>降りた後</td><td>通常の散歩へ戻る</td></tr>
+    <tr><td>犬がいない</td><td>そのまま乗れる</td></tr>
+    <tr><td>撫でる · おやつ</td><td>乗車中も可 (特別な処理なし)</td></tr>
+  </table>
+</section>
+
+<section id="state">
+  <h2>状態遷移 (カート 1 台)</h2>
+  <div class="chart"><pre class="mermaid">
+stateDiagram-v2
+  [*] --> Idle: 起動時 (駐車場に隠す)
+  Idle --> Riding: 乗り場で出発 / 合流
+  Parked --> Riding: 残ったカートから再開 / 合流
+  Parked --> Riding: 乗り場で回収 (最古)
+  Riding --> Ending: グループの先頭が目的地に到着
+  Riding --> Parked: 停止 / ジャンプ / ワープ / リスポーン / 退出
+  Ending --> Parked: 自分の車が目的地に着いて降車
+  Parked --> Parked: 誰でも使える乗り場として残る
+  </pre><pre class="fallback">Idle →(出発/合流)→ Riding →(先頭が到着)→ Ending →(各車が着いて降車)→ Parked。Riding →(停止・ワープ等)→ Parked。Parked →(再開/合流/回収)→ Riding。</pre></div>
+  <p class="note">グループ側: Free → Running (出発) → Ending (先頭が到着) → Free (全員が降りる)。待機中 (hold) と車線 (千鳥 / 右寄せ / 中央) は Running の中の属性。</p>
+</section>
+
+<section id="values">
+  <h2>決めた値 (見直し可)</h2>
+  <table>
+    <tr><th>項目</th><th>値</th><th>変え方</th></tr>
+    <tr><td>巡航速度</td><td>1.3 m/s</td><td rowspan="5"><kbd>Data/Cart/tuning.json</kbd> を直して <kbd>Tools/KominkaHillside/Cart/4 Apply Tuning</kbd></td></tr>
+    <tr><td>車間 / 千鳥の横ずれ</td><td>3.0 m / 0.6 m</td></tr>
+    <tr><td>対向の検知距離 / 右寄せ</td><td>25 m / 0.55 m</td></tr>
+    <tr><td>待機の最長</td><td>60 秒</td></tr>
+    <tr><td>座面の 1 段</td><td>5 cm / 15°</td></tr>
+    <tr><td>出発までの猶予</td><td>3 秒</td><td>KH_CartManager の設定値</td></tr>
+    <tr><td>駐車の右寄せ</td><td>広い道 1.6 m / 一列の道 1.2 m / 狭い区間は出口 + 3 m</td><td>KH_CartManager.Park.cs</td></tr>
+    <tr><td>回収の猶予</td><td>置いてから 3 秒</td><td>ReclaimGraceMs</td></tr>
+    <tr><td>台数</td><td>8 台 (= 最大同時乗車)</td><td>MaxCarts (設計変更)</td></tr>
+  </table>
+</section>
+
+<footer>
+  正本: <a href="../../development/issues/DES-WLD-004-auto-walk-cart.md">DES-WLD-004</a> / <a href="implementation.md">実装設計 (M1〜M3)</a> / <a href="asset-brief.md">制作票</a>。図は Mermaid (CDN) で描画。オフラインでは各図の下に文章版が出る。Play・実機で未確認の項目は Issue の各回のチェックリストを参照。
+</footer>
+</div>
+<script type="module">
+  try {
+    const m = await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs');
+    m.default.initialize({ startOnLoad: false, theme: 'base', themeVariables: { primaryColor: '#ebe4d3', primaryTextColor: '#263d35', primaryBorderColor: '#53634e', lineColor: '#355c48', secondaryColor: '#fffefa', tertiaryColor: '#f5f2e9', fontFamily: 'system-ui, Yu Gothic UI, Meiryo, sans-serif', fontSize: '14px' } });
+    await m.default.run({ querySelector: '.mermaid' });
+  } catch (e) {
+    document.body.classList.add('nomermaid');
+  }
+</script>
+</body>
+</html>
