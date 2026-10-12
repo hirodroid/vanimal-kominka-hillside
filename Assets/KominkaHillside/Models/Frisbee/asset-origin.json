@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "source_repository": "vrc-asset-lab",
+  "source_git_commit": null,
+  "asset_id": "frisbee",
+  "asset_revision": "0.1.0",
+  "config_sha256": "f8138e8ffbaf17d8a92c232a7ec483ea4d39de2005123c8999553ccbe1241a88",
+  "imported_on": "2026-10-12",
+  "destination_project": "KominkaHillside",
+  "destination_paths": [
+    "Assets/KominkaHillside/Models/Frisbee/"
+  ],
+  "local_changes": [
+    "KH_Frisbee_A.fbx.meta written by hand from WashTools/Sponge.fbx.meta (new GUID): materialImportMode 0, importAnimation 0, cameras / lights off, Read/Write off, Convert Units on",
+    "Unity side: Tools/KominkaHillside/Frisbee/6 - Apply Rounded Disc Mesh swaps the six discs' MeshFilter to this mesh, keeps the BoxCollider world size (0.24 x 0.024 x 0.24 m) and the existing disc / face materials"
+  ],
+  "verification": {
+    "unity": "not_tested (import, Frisbee/6, Frisbee/6a, Frisbee/5, Course/93 are run by the coordinator)",
+    "vrchat": "not_tested"
+  },
+  "source_file_sha256": {
+    "KH_Frisbee_A.fbx": "b59e2dfbed930d3e3ff7c49353be3a98c56d3934d025bb9087ef4095dde73ad7"
+  }
+}

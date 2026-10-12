@@ -395,12 +395,18 @@ namespace KominkaHillside.Editor
         // caller whether to place it (placement is human-owned once it exists; review M4).
         public static KH_Frisbee BuildDisc(Transform parent, string name, string materialName, Color color, out bool created)
         {
+            // IMP-DOG-051: the body is the rounded plan-A mesh at scale 1 (no longer a Cylinder scaled 0.24 x 0.012 x 0.24). Checked
+            // before anything is created, so a missing import changes nothing.
+            string meshWhy; var rounded = RoundedDiscMesh(out meshWhy);
+            if (rounded == null) throw new InvalidOperationException("[KH Frisbee] " + meshWhy + " (nothing built)");
             var existing = parent.Find(name);
             created = existing == null;
-            var discGo = Prim(name, PrimitiveType.Cylinder, parent);
-            discGo.layer = PickupLayer; discGo.transform.localScale = new Vector3(.24f, .012f, .24f);
+            var discGo = Prim(name, PrimitiveType.Cylinder, parent);   // a new disc starts as the primitive for its components; the mesh is swapped below
+            discGo.layer = PickupLayer; discGo.transform.localScale = Vector3.one;
+            discGo.GetComponent<MeshFilter>().sharedMesh = rounded;
             var cap = discGo.GetComponent<CapsuleCollider>(); if (cap != null) UnityEngine.Object.DestroyImmediate(cap);
-            var box = discGo.GetComponent<BoxCollider>(); if (box == null) box = discGo.AddComponent<BoxCollider>(); box.size = new Vector3(1f, 2f, 1f);
+            // Same world box as before (0.24 x 0.024 x 0.24 m, centred): the collider, mass and flight model do not change with the look.
+            var box = discGo.GetComponent<BoxCollider>(); if (box == null) box = discGo.AddComponent<BoxCollider>(); box.size = DiscSize; box.center = Vector3.zero;
             var discMat = Mat(materialName, color);
             discGo.GetComponent<Renderer>().sharedMaterial = discMat;
             var rb = discGo.GetComponent<Rigidbody>(); if (rb == null) rb = discGo.AddComponent<Rigidbody>();
@@ -451,8 +457,213 @@ namespace KominkaHillside.Editor
             disc.desktopMinThrowSpeed = 6f; disc.desktopMaxThrowSpeed = 11f; disc.desktopThrowRise = 0.25f; // a short press must still fly ~2 s
             var descriptor = UnityEngine.Object.FindObjectOfType<VRCSceneDescriptor>();
             if (descriptor != null) disc.respawnBelowY = descriptor.RespawnHeightY;
-            BuildFaces(discGo, FaceKeyFor(materialName), disc);
+            BuildFaces(discGo, FaceKeyFor(materialName), disc, rounded);
             return disc;
+        }
+
+        // ---------------------------------------------------------------- IMP-DOG-051 rounded disc (plan A)
+        // vrc-asset-lab assets/frisbee 0.1.0 (generator assets/frisbee/scripts/build_frisbee.py, numbers in its validation/build.json):
+        // outer 240 mm, rim 24 mm thick (round lip, section radius 12 mm), 4 mm centre, 16 mm deep dish underneath, 1,728 triangles.
+        // Mesh in metres, origin on the rim's mid-plane, +Y up, so the disc's BoxCollider keeps its old world size centred on the origin.
+        public const string RoundedDiscFbxPath = "Assets/KominkaHillside/Models/Frisbee/KH_Frisbee_A.fbx";
+        public static readonly Vector3 DiscSize = new Vector3(.24f, .024f, .24f);           // world size of the disc's BoxCollider, both shapes
+        static readonly Vector3 LegacyCylinderScale = new Vector3(.24f, .012f, .24f);      // the Cylinder primitive (2 high, 1 across) before 051
+        // The two flat face plateaus (r <= 80 mm) of the lab config 0.1.0. Used only when the mesh cannot be read; Frisbee/6 measures them.
+        public const float RoundedPlateTopY = .008f, RoundedPlateBottomY = .004f;
+        public enum DiscShape { Unknown, Cylinder, Rounded }
+
+        // The single Mesh inside the FBX, refused unless its bounds are the 0.24 x 0.024 x 0.24 m disc centred on the origin
+        // (catches an axis / unit mistake in the export or the importer before any scene object is touched).
+        public static Mesh RoundedDiscMesh(out string why)
+        {
+            var meshes = AssetDatabase.LoadAllAssetsAtPath(RoundedDiscFbxPath).OfType<Mesh>().ToArray();
+            if (meshes.Length != 1) { why = RoundedDiscFbxPath + " holds " + meshes.Length + " meshes, expected 1 (import it: refresh, then check the Console)"; return null; }
+            var b = meshes[0].bounds;
+            if ((b.size - DiscSize).magnitude > .001f || b.center.magnitude > .001f)
+            { why = RoundedDiscFbxPath + " bounds " + b.size.ToString("F4") + " at " + b.center.ToString("F4") + ", expected " + DiscSize.ToString("F3") + " at the origin (Convert Units on, Scale Factor 1)"; return null; }
+            why = ""; return meshes[0];
+        }
+
+        // Face plateau heights (disc space, metres) measured from the vertices inside the face circle; the constants when the
+        // vertices cannot be read (how says which).
+        public static void MeasureFacePlates(Mesh mesh, out float top, out float bottom, out string how)
+        {
+            top = RoundedPlateTopY; bottom = RoundedPlateBottomY; how = "lab config constants";
+            Vector3[] v = null;
+            try { v = mesh.vertices; } catch (Exception e) { how += " (vertices not readable: " + e.GetType().Name + ")"; }
+            if (v == null || v.Length == 0) return;
+            float r2 = (FaceDiameter * .5f + 1e-4f) * (FaceDiameter * .5f + 1e-4f), hi = float.MinValue, lo = float.MaxValue; int n = 0;
+            foreach (var p in v) if (p.x * p.x + p.z * p.z <= r2) { n++; if (p.y > hi) hi = p.y; if (p.y < lo) lo = p.y; }
+            if (n == 0) { how += " (no vertex inside the face circle)"; return; }
+            top = hi; bottom = lo;
+            how = "measured from " + n + " vertices inside r " + (FaceDiameter * 500f).ToString("F0") + " mm (config " + (RoundedPlateTopY * 1000f).ToString("F1") + " / " + (RoundedPlateBottomY * 1000f).ToString("F1") + " mm)";
+        }
+
+        public static DiscShape ShapeOf(GameObject discGo, Mesh rounded)
+        {
+            var mf = discGo.GetComponent<MeshFilter>(); var m = mf == null ? null : mf.sharedMesh;
+            if (m == null) return DiscShape.Unknown;
+            if (rounded != null && m == rounded) return DiscShape.Rounded;
+            if (m.name == "Cylinder" && AssetDatabase.GetAssetPath(m) == "Library/unity default resources") return DiscShape.Cylinder;
+            return DiscShape.Unknown;
+        }
+
+        // Where a face print sits, disc space in metres (FaceLift off the surface it covers).
+        static float FaceY(DiscShape shape, bool top, float plateTop, float plateBottom)
+        {
+            if (shape == DiscShape.Rounded) return top ? plateTop + FaceLift : plateBottom - FaceLift;
+            return (top ? 1f : -1f) * (DiscSize.y * .5f + FaceLift);   // Cylinder caps at +-12 mm
+        }
+
+        // FaceTop / FaceBottom pose under a disc of any scale: FaceDiameter across, FaceY off the disc's origin.
+        static void PlaceFace(Transform face, Transform disc, bool top, float y)
+        {
+            Vector3 ps = disc.localScale;
+            face.localPosition = new Vector3(0f, y / ps.y, 0f);
+            // Bottom: turned over about z, so it faces down and still reads unmirrored from below.
+            face.localRotation = top ? Quaternion.identity : Quaternion.Euler(0f, 0f, 180f);
+            face.localScale = new Vector3(FaceDiameter / ps.x, 1f, FaceDiameter / ps.z);
+        }
+
+        // IMP-DOG-051: what Frisbee/6 promises about one disc; empty when all is well. requireRounded false also accepts a
+        // consistent pre-051 Cylinder disc (the prototype scene until Frisbee/6 or 4 runs there). The physics half is the same for
+        // both shapes: one enabled solid BoxCollider of DiscSize in world, centred, and BuildDisc's Rigidbody values.
+        public static string DiscMeshProblems(KH_Frisbee disc, bool requireRounded, out DiscShape shape)
+        {
+            var bad = new List<string>();
+            string why; var rounded = RoundedDiscMesh(out why);
+            if (rounded == null && requireRounded) bad.Add(why);
+            var go = disc.gameObject; var t = disc.transform;
+            shape = ShapeOf(go, rounded);
+            var mr = go.GetComponent<MeshRenderer>();
+            if (mr == null || !mr.enabled || mr.sharedMaterial == null) bad.Add("no enabled MeshRenderer with a material");
+            else if (disc.discRenderer != mr) bad.Add("KH_Frisbee.discRenderer is not the disc's own renderer");
+            if (shape == DiscShape.Unknown) bad.Add("mesh is " + (go.GetComponent<MeshFilter>() == null || go.GetComponent<MeshFilter>().sharedMesh == null ? "missing" : go.GetComponent<MeshFilter>().sharedMesh.name) + ", neither " + RoundedDiscFbxPath + " nor the Cylinder");
+            else if (requireRounded && shape != DiscShape.Rounded) bad.Add("still the Cylinder (run Frisbee/6 - Apply Rounded Disc Mesh)");
+            Vector3 want = shape == DiscShape.Rounded ? Vector3.one : LegacyCylinderScale;
+            if (shape != DiscShape.Unknown && (t.localScale - want).magnitude > 1e-4f) bad.Add("localScale " + t.localScale.ToString("F4") + ", expected " + want.ToString("F3") + " for the " + shape + " mesh");
+            var cols = go.GetComponents<Collider>(); var box = go.GetComponent<BoxCollider>();
+            if (cols.Length != 1 || box == null) bad.Add(cols.Length + " colliders, expected the one BoxCollider");
+            if (box != null)
+            {
+                Vector3 world = Vector3.Scale(box.size, t.lossyScale), centre = Vector3.Scale(box.center, t.lossyScale);
+                if (!box.enabled || box.isTrigger) bad.Add("BoxCollider disabled or a trigger");
+                if ((world - DiscSize).magnitude > 1e-4f) bad.Add("BoxCollider world size " + world.ToString("F4") + ", expected " + DiscSize.ToString("F3"));
+                if (centre.magnitude > 1e-4f) bad.Add("BoxCollider centre " + centre.ToString("F4") + " is off the origin");
+            }
+            var rb = go.GetComponent<Rigidbody>();
+            if (rb == null || Mathf.Abs(rb.mass - .15f) > 1e-4f || Mathf.Abs(rb.drag - .4f) > 1e-4f || Mathf.Abs(rb.angularDrag - 1f) > 1e-4f || rb.collisionDetectionMode != CollisionDetectionMode.Continuous)
+                bad.Add("Rigidbody is not BuildDisc's (mass 0.15, drag 0.4, angular drag 1, Continuous)");
+            if (go.GetComponent<VRCPickup>() == null || go.GetComponent<VRCObjectSync>() == null) bad.Add("VRCPickup / VRCObjectSync missing");
+            if (Mathf.Abs(disc.radius - DiscSize.x * .5f) > 1e-4f) bad.Add("KH_Frisbee.radius " + disc.radius.ToString("F3") + " != " + (DiscSize.x * .5f).ToString("F3"));
+            if (shape != DiscShape.Unknown)
+            {
+                float pt = RoundedPlateTopY, pb = RoundedPlateBottomY; string how;
+                if (shape == DiscShape.Rounded) MeasureFacePlates(rounded, out pt, out pb, out how);
+                for (int k = 0; k < FaceChildren.Length; k++)
+                {
+                    var f = t.Find(FaceChildren[k]); if (f == null) { bad.Add(FaceChildren[k] + " missing"); continue; }
+                    float y = f.localPosition.y * t.localScale.y, wantY = FaceY(shape, k == 0, pt, pb);
+                    if (Mathf.Abs(y - wantY) > 2e-4f || new Vector2(f.localPosition.x, f.localPosition.z).magnitude > 1e-4f)
+                        bad.Add(FaceChildren[k] + " at y " + (y * 1000f).ToString("F2") + " mm, expected " + (wantY * 1000f).ToString("F2") + " mm on the axis (" + shape + ")");
+                }
+            }
+            return string.Join("; ", bad);
+        }
+
+        // IMP-DOG-051: swaps the active scene's discs to the rounded mesh. World scene (6 discs) or the prototype (one per lane +
+        // Terrain). Only the look changes: MeshFilter, localScale 1, the BoxCollider re-expressed so its world size and centre stay,
+        // FaceTop / FaceBottom moved onto the new face plateaus. Materials, Rigidbody, Pickup, ObjectSync, KH_Frisbee: untouched.
+        // Everything that can refuse is checked first. Marks the scene dirty and does NOT save (check with Frisbee/6a, then save).
+        [MenuItem("Tools/KominkaHillside/Frisbee/6 - Apply Rounded Disc Mesh")]
+        public static void ApplyRoundedDiscMesh()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) throw new InvalidOperationException("Edit mode only (nothing changed)");
+            var scene = SceneManager.GetActiveScene();
+            bool world = scene.path == KH_CourseGroundEditor.ScenePath, proto = scene.path == ScenePath;
+            if (!world && !proto) throw new InvalidOperationException("Open " + KH_CourseGroundEditor.ScenePath + " (or " + ScenePath + ") as the active scene (nothing changed)");
+            string why; var mesh = RoundedDiscMesh(out why);
+            if (mesh == null) throw new InvalidOperationException("[KH Frisbee] " + why + " (nothing changed)");
+            float plateTop, plateBottom; string how; MeasureFacePlates(mesh, out plateTop, out plateBottom, out how);
+            if (Mathf.Abs(plateTop - RoundedPlateTopY) > 5e-4f || Mathf.Abs(plateBottom - RoundedPlateBottomY) > 5e-4f || plateTop - plateBottom < .002f)
+                throw new InvalidOperationException("[KH Frisbee] face plateaus " + (plateTop * 1000f).ToString("F2") + " / " + (plateBottom * 1000f).ToString("F2") + " mm are not the lab's " + (RoundedPlateTopY * 1000f) + " / " + (RoundedPlateBottomY * 1000f) + " mm (" + how + "; nothing changed)");
+            var discs = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<KH_Frisbee>(true)).ToArray();
+            int expect = world ? 6 : LaneBreeds.Length + 1;
+            if (discs.Length != expect) throw new InvalidOperationException("expected " + expect + " discs in " + scene.path + ", found " + discs.Length + " (nothing changed)");
+            var refuse = new List<string>();
+            foreach (var d in discs)
+            {
+                var go = d.gameObject; var shape = ShapeOf(go, mesh);
+                if (go.GetComponent<MeshFilter>() == null || go.GetComponent<MeshRenderer>() == null) refuse.Add(d.name + ": no MeshFilter / MeshRenderer");
+                if (shape == DiscShape.Unknown) refuse.Add(d.name + ": unknown mesh " + (go.GetComponent<MeshFilter>() == null || go.GetComponent<MeshFilter>().sharedMesh == null ? "(none)" : go.GetComponent<MeshFilter>().sharedMesh.name));
+                var cols = go.GetComponents<Collider>(); var box = go.GetComponent<BoxCollider>();
+                if (cols.Length != 1 || box == null) refuse.Add(d.name + ": " + cols.Length + " colliders, expected the one BoxCollider");
+                else if ((Vector3.Scale(box.size, d.transform.lossyScale) - DiscSize).magnitude > 1e-3f) refuse.Add(d.name + ": BoxCollider world size " + Vector3.Scale(box.size, d.transform.lossyScale).ToString("F4") + " is not " + DiscSize.ToString("F3") + " (not BuildDisc's; left for a person to look at)");
+                foreach (string fc in FaceChildren) if (d.transform.Find(fc) == null) refuse.Add(d.name + ": " + fc + " missing");
+                var others = d.transform.Cast<Transform>().Where(c => !FaceChildren.Contains(c.name)).Select(c => c.name).ToArray();
+                if (others.Length > 0) refuse.Add(d.name + ": unexpected children " + string.Join(", ", others) + " (their world pose would change with the scale)");
+                if (PrefabUtility.IsPartOfPrefabInstance(go)) refuse.Add(d.name + ": part of a prefab instance");
+            }
+            if (refuse.Count > 0) throw new InvalidOperationException("[KH Frisbee] FRISBEE_ROUNDED_APPLY_REFUSED " + string.Join(" | ", refuse) + " (nothing changed)");
+            var log = new StringBuilder(); int converted = 0, already = 0;
+            foreach (var d in discs)
+            {
+                var t = d.transform; var mf = d.GetComponent<MeshFilter>(); var box = d.GetComponent<BoxCollider>();
+                var faces = FaceChildren.Select(fc => t.Find(fc)).ToArray();
+                Undo.RecordObjects(new UnityEngine.Object[] { t, mf, box, faces[0], faces[1] }, "Apply Rounded Disc Mesh");
+                bool was = ShapeOf(d.gameObject, mesh) == DiscShape.Rounded; if (was) already++; else converted++;
+                Vector3 worldSize = Vector3.Scale(box.size, t.lossyScale), worldCentre = Vector3.Scale(box.center, t.lossyScale), scaleBefore = t.localScale;
+                Vector3 parentScale = t.parent == null ? Vector3.one : t.parent.lossyScale;
+                t.localScale = Vector3.one; mf.sharedMesh = mesh;
+                Vector3 ls = Vector3.Scale(parentScale, t.localScale);
+                box.size = new Vector3(worldSize.x / ls.x, worldSize.y / ls.y, worldSize.z / ls.z);
+                box.center = new Vector3(worldCentre.x / ls.x, worldCentre.y / ls.y, worldCentre.z / ls.z);
+                for (int k = 0; k < faces.Length; k++) PlaceFace(faces[k], t, k == 0, FaceY(DiscShape.Rounded, k == 0, plateTop, plateBottom));
+                foreach (var o in new UnityEngine.Object[] { t, mf, box, faces[0], faces[1] }) EditorUtility.SetDirty(o);
+                log.Append(" | ").Append(d.name).Append(was ? " (already rounded)" : " (was Cylinder)")
+                   .Append(" scale ").Append(scaleBefore.ToString("F3")).Append(" -> 1, box world ").Append(Vector3.Scale(box.size, t.lossyScale).ToString("F4"))
+                   .Append(", FaceTop y ").Append((faces[0].localPosition.y * 1000f).ToString("F2")).Append(" mm, FaceBottom y ").Append((faces[1].localPosition.y * 1000f).ToString("F2")).Append(" mm");
+            }
+            EditorSceneManager.MarkSceneDirty(scene);
+            Debug.Log("[KH Frisbee] FRISBEE_ROUNDED_APPLY_OK scene=" + scene.path + " discs=" + discs.Length + " converted=" + converted + " already=" + already
+                + " plates top " + (plateTop * 1000f).ToString("F2") + " / bottom " + (plateBottom * 1000f).ToString("F2") + " mm (" + how + ")" + log
+                + " -- NOT saved: run Frisbee/6a - Verify Rounded Disc Mesh, then save the scene");
+        }
+
+        // IMP-DOG-051: the strict check after Frisbee/6 on the active scene (every disc rounded, physics as before, faces placed, prints wired).
+        [MenuItem("Tools/KominkaHillside/Frisbee/6a - Verify Rounded Disc Mesh")]
+        public static void VerifyRoundedDiscMesh()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) throw new InvalidOperationException("Edit mode only");
+            var scene = SceneManager.GetActiveScene();
+            var discs = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<KH_Frisbee>(true)).ToArray();
+            var lines = new List<string>(); int fail = 0;
+            string why; var mesh = RoundedDiscMesh(out why);
+            if (mesh == null) { lines.Add("FAIL " + why); fail++; }
+            else
+            {
+                float pt, pb; string how; MeasureFacePlates(mesh, out pt, out pb, out how);
+                lines.Add("INFO mesh " + mesh.name + ": " + mesh.vertexCount + " vertices, " + (mesh.GetIndexCount(0) / 3) + " triangles, bounds " + mesh.bounds.size.ToString("F4")
+                    + ", face plateaus " + (pt * 1000f).ToString("F2") + " / " + (pb * 1000f).ToString("F2") + " mm (" + how + ")");
+            }
+            if (scene.path == KH_CourseGroundEditor.ScenePath && discs.Length != 6) { lines.Add("FAIL expected 6 discs, found " + discs.Length); fail++; }
+            if (discs.Length == 0) { lines.Add("FAIL no KH_Frisbee in " + scene.path); fail++; }
+            foreach (var d in discs)
+            {
+                DiscShape shape; string p = DiscMeshProblems(d, true, out shape);
+                string key = null; var mr = d.GetComponent<MeshRenderer>();
+                var dm = d.discMaterial != null ? d.discMaterial : (mr == null ? null : mr.sharedMaterial);
+                try { key = dm == null ? null : FaceKeyFor(dm.name); } catch (InvalidOperationException) { }
+                string fp = key == null ? "no dog key in the disc material name" : FaceProblems(d, key);
+                var ft = d.transform.Find(FaceChildren[0]); var fb = d.transform.Find(FaceChildren[1]);
+                string pose = ft == null || fb == null ? "" : " FaceTop y " + (ft.localPosition.y * d.transform.localScale.y * 1000f).ToString("F2") + " mm / FaceBottom y " + (fb.localPosition.y * d.transform.localScale.y * 1000f).ToString("F2")
+                    + " mm, across " + ft.lossyScale.x.ToString("F3") + " m";
+                bool ok = p.Length == 0 && fp.Length == 0; if (!ok) fail++;
+                lines.Add((ok ? "PASS " : "FAIL ") + d.name + " (" + shape + ")" + pose + (p.Length == 0 ? "" : " -- " + p) + (fp.Length == 0 ? "" : " -- faces: " + fp));
+            }
+            string line = "[KH Frisbee] " + (fail == 0 ? "FRISBEE_ROUNDED_OK" : "FRISBEE_ROUNDED_FAIL") + " scene=" + scene.path + " discs=" + discs.Length + " failures=" + fail + "\n" + string.Join("\n", lines);
+            Directory.CreateDirectory("Temp/imp-dog-051"); File.WriteAllText("Temp/imp-dog-051/verify.txt", line);
+            if (fail > 0) Debug.LogError(line); else Debug.Log(line);
         }
 
         // ---------------------------------------------------------------- IMP-DOG-018 dog face prints
@@ -513,21 +724,18 @@ namespace KominkaHillside.Editor
             return m;
         }
 
-        static void BuildFaces(GameObject discGo, string key, KH_Frisbee disc)
+        static void BuildFaces(GameObject discGo, string key, KH_Frisbee disc, Mesh rounded)
         {
             var mesh = FaceMesh(); var mat = FaceMaterial(key);
-            Vector3 ps = discGo.transform.localScale;   // (0.24, 0.012, 0.24): undo it so the print is FaceDiameter across
+            // IMP-DOG-051: on the rounded disc's flat face plateaus (measured from its mesh), FaceLift off each.
+            float plateTop, plateBottom; string how; MeasureFacePlates(rounded, out plateTop, out plateBottom, out how);
             var renderers = new Renderer[FaceChildren.Length];
             for (int k = 0; k < FaceChildren.Length; k++)
             {
                 bool top = k == 0;
                 var go = Obj(FaceChildren[k], discGo.transform);
                 go.layer = discGo.layer;
-                // The Cylinder primitive's caps are at local y = +-1; lift the print FaceLift (world) off each cap.
-                go.transform.localPosition = new Vector3(0f, (top ? 1f : -1f) * (1f + FaceLift / ps.y), 0f);
-                // Bottom: turned over about z, so it faces down and still reads unmirrored from below.
-                go.transform.localRotation = top ? Quaternion.identity : Quaternion.Euler(0f, 0f, 180f);
-                go.transform.localScale = new Vector3(FaceDiameter / ps.x, 1f, FaceDiameter / ps.z);
+                PlaceFace(go.transform, discGo.transform, top, FaceY(ShapeOf(discGo, rounded), top, plateTop, plateBottom));
                 foreach (var col in go.GetComponents<Collider>()) UnityEngine.Object.DestroyImmediate(col);
                 var mf = go.GetComponent<MeshFilter>(); if (mf == null) mf = go.AddComponent<MeshFilter>(); mf.sharedMesh = mesh;
                 var mr = go.GetComponent<MeshRenderer>(); if (mr == null) mr = go.AddComponent<MeshRenderer>();
@@ -1067,6 +1275,11 @@ namespace KominkaHillside.Editor
                         "lane " + breed + ": variant Normal, nothing queued, held override 0, no play area (same as the Lab lane)");
                     string faceProblem = FaceProblems(ld, breed);
                     Check(faceProblem.Length == 0, "lane " + breed + ": FaceTop / FaceBottom prints of " + breed + " on " + ld.name + (faceProblem.Length == 0 ? "" : " -- " + faceProblem));
+                    // IMP-DOG-051: the body is the rounded mesh or (until Frisbee/6 / 4 runs here) the old Cylinder, either way with the
+                    // same collider / Rigidbody and the prints on its own surfaces. The strict "rounded only" check is Frisbee/6a.
+                    DiscShape lshape; string shapeProblem = DiscMeshProblems(ld, false, out lshape);
+                    Check(shapeProblem.Length == 0, "lane " + breed + ": " + ld.name + " is a consistent " + lshape + " disc (box " + DiscSize.ToString("F3") + " m centred, BuildDisc's Rigidbody, prints on its surfaces)" + (shapeProblem.Length == 0 ? "" : " -- " + shapeProblem));
+                    if (lshape == DiscShape.Cylinder) log.AppendLine("INFO lane " + breed + ": " + ld.name + " still has the pre-051 Cylinder (Frisbee/6 with this scene active, or Frisbee/4, gives it the rounded mesh)");
                 }
                 if (catcher != null && disc != null)
                 {

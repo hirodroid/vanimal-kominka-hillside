@@ -34,7 +34,7 @@ namespace KominkaHillside.Editor
         [Serializable] class Report
         {
             public string utc, scene, status;
-            public int catchers, discs, errors;
+            public int catchers, discs, errors, roundedDiscs;
             public List<string> findings = new List<string>();
             public int routeSamples, points, noGround, playable, reachable, jumpable;
             public float reachableRatio, jumpableRatio;
@@ -122,6 +122,15 @@ namespace KominkaHillside.Editor
             var discs = UnityEngine.Object.FindObjectsOfType<KH_Frisbee>(true);
             r.catchers = catchers.Length; r.discs = discs.Length;
             CheckConfig(catchers, discs, r.findings);
+            // IMP-DOG-051: the six discs carry the rounded mesh (Frisbee/6) with the old collider / Rigidbody. Here and not in CheckConfig,
+            // so Course/92 (which re-checks CheckConfig after saving) does not depend on it.
+            foreach (var d in discs)
+            {
+                KH_FrisbeePrototypeEditor.DiscShape shape;
+                string sp = KH_FrisbeePrototypeEditor.DiscMeshProblems(d, true, out shape);
+                if (sp.Length > 0) r.findings.Add(d.name + ": " + sp);
+                else r.roundedDiscs++;
+            }
             var river = UnityEngine.Object.FindObjectsOfType<KH_RiverData>(true).FirstOrDefault();
             var spot = UnityEngine.Object.FindObjectsOfType<KH_WaterSpot>(true).FirstOrDefault();
             if (river == null || !river._Ready()) r.findings.Add("KH_RiverData missing or empty (Course/73)");
@@ -139,7 +148,7 @@ namespace KominkaHillside.Editor
                 + " pathRefusedSegments=" + r.pathRefusedSegments + "/" + Mathf.Max(0, r.routeSamples - 1)
                 + " band=" + r.bandPoints + " floats=" + r.bandFloats + " bank=" + r.bandBankReturn
                 + " treesNoCollider=" + r.treeInstancesNoCollider + "+" + r.treeObjectsNoCollider
-                + " errors=" + r.errors + " -> " + OutDir + "/anywhere.json";
+                + " roundedDiscs=" + r.roundedDiscs + "/" + r.discs + " errors=" + r.errors + " -> " + OutDir + "/anywhere.json";
             if (r.errors > 0) Debug.LogError(line + " | " + string.Join(" | ", r.findings));
             else Debug.Log(line);
         }
