@@ -5,7 +5,7 @@ system: DOG
 status: wip
 priority: High
 summary: リードをつけたまま犬を川へ連れて入れるようにする (水中のリード接続の拒否 RC-14 をやめる)。方式は NavMesh を変えずに、既存の川の Fetch の脚 (川の規則) をリードの追従に使う案を推奨
-next: IMP-DOG-053 で実装済み (2026-10-12、Unity のコンパイル・Play 待ち)。統括の確認 (Course/131 のプローブ・相談で選んだハーネス・PCVR) を待つ。game-design §3・§4 の書き直しは別セッションの作業の区切りを待つ
+next: 実装は IMP-DOG-053 (review、限定 9 ケース PASS)。この Issue に残るのは game-design §3・§4 と前の決定の各所の書き直し (別セッションの作業の区切りを待って行う)。終わったら done
 updated: 2026-10-12
 ---
 

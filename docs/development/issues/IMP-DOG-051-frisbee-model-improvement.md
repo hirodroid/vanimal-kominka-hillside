@@ -2,10 +2,10 @@
 id: IMP-DOG-051
 type: IMP
 system: DOG
-status: wip
+status: review
 priority: Medium
 summary: フリスビーのモデル改善。2026-10-11にA「まる縁スタンダード」をユーザー採用。2026-10-12にメッシュ (1,728三角形) と差し替えメニュー Frisbee/6 を制作。Unityへの取り込み・適用は統括、見た目の確認は未実施
-next: 統括がUnityでFBXを取り込み、本シーンで Frisbee/6 → 6a → 保存 → Frisbee/5 → Course/93。そのあとPCVRで手元・飛行・6犬種の口元・顔の見え方 (チェックリスト A0-66)
+next: ユーザーの Play (A0-66: 持つ・飛ぶ・くわえる・両面の顔・持ち主の半透明表示で皿の内側がどう透けるか)、Quest/iOS の色 (VER-WLD-001)。Frisbee/5 (試作シーンを追加で開く) は未実行
 updated: 2026-10-12
 decided: 2026-10-11
 ---
@@ -60,3 +60,4 @@ decided: 2026-10-11
 2026-10-12: メッシュ制作済み・Unity 差し替えは統括。A案を vrc-asset-lab の `assets/frisbee/` (0.1.0、[IMP-AST-004](../../../../../vrc-asset-lab/docs/development/issues/review/IMP-AST-004-frisbee.md)) でヘッドレスの Blender 5.2.2 により生成し、[KH_Frisbee_A.fbx](../../../Assets/KominkaHillside/Models/Frisbee/KH_Frisbee_A.fbx) へコピーした。断面はHTMLの `profiles.A` を円弧で滑らかにした回転体 (周方向48)。外径240.0 mm・外周最大厚24.0 mm (断面半径12 mmの丸い縁)・中央厚4.0 mm・裏のくぼみ16.0 mm・顔の面は直径160 mmの平面 (表 y=+8 mm、裏 y=+4 mm、外周の上端より4 mm低い)。1,728三角形・866頂点、1材質、テクスチャなし。UVは表裏の平面投影2島で、顔の円は歪みなし (面積比1.000)。退化・非多様体・自己交差0、FBXを読み戻して三角形・寸法・UV・法線が一致。Unityでの範囲は x・z ±0.120 m、y ±0.012 m の予測 (原点は外周の厚みの中央 = 既存のBoxColliderの中心)。`.meta` は `Models/WashTools/Sponge.fbx.meta` を写して GUID だけ新規 (Materials None・Animation なし・Read/Write オフ)。
 
 同日、Editor 側 ([KH_FrisbeePrototypeEditor.cs](../../../Assets/KominkaHillside/Scripts/Editor/KH_FrisbeePrototypeEditor.cs)): `Tools/KominkaHillside/Frisbee/6 - Apply Rounded Disc Mesh` が作業中のシーン (本シーンは6枚、試作シーンは7枚) の KH_Frisbee の MeshFilter をFBXのメッシュへ替え、localScale を (0.24, 0.012, 0.24) から 1 へ、BoxCollider の size をワールド寸法 0.24 × 0.024 × 0.24 m のまま換算し、FaceTop / FaceBottom をメッシュから測った面の 1 mm 外 (y=+9 mm / +3 mm) へ置き直す。材質・Rigidbody・Pickup・ObjectSync・KH_Frisbee は触らない。拒否条件 (メッシュの bounds、ディスク数、Collider、未知の子、プレハブ) は変更前にすべて検査し、保存はしない。`Frisbee/6a - Verify Rounded Disc Mesh` が厳密に検査し (全枚が新メッシュ・Collider と Rigidbody は BuildDisc の値・顔の位置・顔の画像)、`Course/93` も6枚が新メッシュかを見る (`roundedDiscs=6/6`)。`Frisbee/5` は試作シーンの円柱 (Frisbee/4 を回さない限り残る) も「整合した円柱」として通し、INFO で知らせる。BuildDisc も新メッシュで作る形に直した (Frisbee/4・Course/92 は回さない前提)。実行時のコードは変えていない (KH_Frisbee・KH_ToyRecall のディスクの大きさは `radius` 0.12 を使い、localScale を見るのはボールだけ)。scratchpad の一時 csproj で実行側・Editor 側とも0エラー。Unity での取り込み・メニュー実行・Play は未実施。
+2026-10-12 (統括): Unity に取り込み、Frisbee/6 Apply Rounded Disc Mesh converted=6、Frisbee/6a PASS、Course/93 FRISBEE_ANYWHERE_OK roundedDiscs=6/6、シーン保存 (本シーンの 6 枚が新メッシュ・scale 1)。コミット ec4dcf6 (コード・FBX)・d86a3a5 (シーン)。ラボ 106471a / 57fb06f (adopted_by)。Frisbee/5 は試作シーンを追加で開くため省略。
