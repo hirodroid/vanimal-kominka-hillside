@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 600" role="img" aria-labelledby="title desc">
+<title id="title">広場フィナーレの配置案・上から見た模式図</title><desc id="desc">入口から順に奥の枠へ入る6匹。観客は犬の前方5〜8mを初期候補とし、右側の通行帯と到着導線を空ける。寸法と向きは未測量。</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0 0L8 3L0 6" fill="#cd8843"/></marker></defs>
+<rect width="820" height="600" rx="20" fill="#eeeadf"/>
+<g font-family="Meiryo,sans-serif" fill="#294638"><text x="32" y="40" font-size="15" font-weight="bold">広場の配置案 / 縮尺・方位は模式</text><text x="32" y="64" font-size="12" fill="#647568">既存の道・リード拠点・おもちゃ・古民家への眺めを現地で確認して回転・移動する</text>
+<rect x="662" y="90" width="126" height="454" rx="18" fill="#d9ded3"/><path d="M725 525V115" stroke="#829681" stroke-width="3" stroke-dasharray="8 8"/>
+<text x="725" y="145" text-anchor="middle" font-size="15">既存の通行帯</text><text x="725" y="171" text-anchor="middle" font-size="12">道幅を要確認</text><text x="725" y="500" text-anchor="middle" font-size="12">ここに観客を</text><text x="725" y="522" text-anchor="middle" font-size="12">集めない</text>
+<ellipse cx="350" cy="158" rx="239" ry="51" fill="none" stroke="#dcab65" stroke-width="3" stroke-dasharray="6 6"/><text x="350" y="130" text-anchor="middle" font-size="13">灯りは犬より少し後ろ・高さ2.5〜3.5m</text>
+<path d="M32 365Q72 305 106 269Q335 141 594 269" fill="none" stroke="#cd8843" stroke-width="4" marker-end="url(#arrow)"/>
+<text x="25" y="400" font-size="13">坂道から入場</text><text x="25" y="423" font-size="12">奥の枠から埋める</text>
+<g fill="#385b45" stroke="#eeeadf" stroke-width="3"><circle cx="124" cy="273" r="23"/><circle cx="214" cy="231" r="23"/><circle cx="304" cy="214" r="23"/><circle cx="394" cy="214" r="23"/><circle cx="484" cy="231" r="23"/><circle cx="574" cy="273" r="23"/></g>
+<g fill="white" text-anchor="middle" font-size="18"><text x="124" y="279">6</text><text x="214" y="237">5</text><text x="304" y="220">4</text><text x="394" y="220">3</text><text x="484" y="237">2</text><text x="574" y="279">1</text></g>
+<g text-anchor="middle" font-size="12"><text x="124" y="314">サモエド</text><text x="214" y="272">ラブラドール</text><text x="304" y="255">柴犬</text><text x="394" y="255">ダックス</text><text x="484" y="272">ポメラニアン</text><text x="574" y="314">コーギー</text></g>
+<path d="M126 338H574M126 331V345M574 331V345" fill="none" stroke="#7c8d7b"/><text x="350" y="361" font-size="12" text-anchor="middle">犬の並ぶ幅：約7m / 奥行：約2m（提案）</text>
+<rect x="188" y="411" width="410" height="124" rx="22" fill="#dbe3cf" stroke="#9dae93" stroke-dasharray="5 5"/><text x="393" y="445" text-anchor="middle" font-size="17" font-weight="bold">観覧・撮影の候補エリア</text><text x="393" y="474" text-anchor="middle" font-size="13">犬まで5〜8mを初期位置に比較</text><text x="393" y="499" text-anchor="middle" font-size="12">着座・小さいアバターは前方 / 立位はその後ろへ</text><text x="393" y="521" text-anchor="middle" font-size="12">席や人数を固定する指定ではありません</text>
+<text x="32" y="573" font-size="12" fill="#647568">1〜6は行進順。欠員枠は空ける。犬の顔を前後に重ねず、通常の通行と設備の利用を残す。</text></g></svg>
