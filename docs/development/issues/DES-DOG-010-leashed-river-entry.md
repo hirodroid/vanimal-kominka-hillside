@@ -5,8 +5,8 @@ system: DOG
 status: wip
 priority: High
 summary: リードをつけたまま犬を川へ連れて入れるようにする (水中のリード接続の拒否 RC-14 をやめる)。方式は NavMesh を変えずに、既存の川の Fetch の脚 (川の規則) をリードの追従に使う案を推奨
-next: 決定済み (2026-10-11、8 件とも推奨、方式 B)。Edit の調査 (NavMesh の縁と川の帯の縁の距離、岸のスライスの間隔) → 実装 Issue を起こす → 独立レビュー。game-design §3・§4 の書き直しは別セッションの作業の区切りを待つ
-updated: 2026-10-11
+next: 実装 Issue IMP-DOG-053 へ。調査は統括が Course/130 を流す (Temp/kh-leash-river/survey.json)。game-design §3・§4 の書き直しは別セッションの作業の区切りを待つ
+updated: 2026-10-12
 ---
 
 # DES-DOG-010 リードをつけたまま川へ入る
@@ -15,7 +15,7 @@ updated: 2026-10-11
 
 決定: 2026-10-11 (ユーザー「リードの拒否をやめたい。かわにつれていきたい。」)
 
-この Issue は設計だけ。コード・シーン・ハーネスは変えていない。方式の採否と下の 8 件はユーザーの回答待ち。
+この Issue は設計だけ。コード・シーン・ハーネスは変えていない。方式 B と下の 8 件は 2026-10-11 に決定済み (実装は IMP-DOG-053)。
 
 ## 背景: 今は「リード中は川へ入らない」
 
@@ -99,8 +99,8 @@ updated: 2026-10-11
 ## 次の手順
 
 1. ~~上の 8 件と方式 B をユーザーが決める。~~ 2026-10-11 に決定済み。
-2. Edit の調査 (Play 不要): NavMesh の縁と川の帯の縁の距離、ok な岸のスライスの間隔。入口の作り方を決める。
-3. 実装 Issue を起こす (IMP-DOG)。完了前に独立レビュー、ハーネスは相談で決めた群だけ。
+2. Edit の調査 (Play 不要): NavMesh の縁と川の帯の縁の距離、ok な岸のスライスの間隔。入口の作り方を決める。→ 道具は `Tools/KominkaHillside/Course/130 - Survey Leash River Entry` (2026-10-12 追加、統括が流す)。入口の決定は [IMP-DOG-053](IMP-DOG-053-leashed-river-follow.md) §0 に記録する。
+3. ~~実装 Issue を起こす (IMP-DOG)。~~ [IMP-DOG-053](IMP-DOG-053-leashed-river-follow.md) (2026-10-12)。完了前に独立レビュー、ハーネスは相談で決めた群だけ。
 4. game-design §3・§4 と、上の表の前の決定の各所を新しい規則で書き直す。
 
 ## 相談の記録 (Codex、2026-10-11、HEAD `4db477b`)
@@ -125,4 +125,7 @@ updated: 2026-10-11
 | 新しい同期変数は要らない | 採用 |
 | 浅瀬だけの段階を先に公開するのは推奨しない | 質問 1 の推奨に反映 |
 
+- 2026-10-12: 第 1 波。Edit 調査の道具 Course/130 (`KH_CourseLeashRiverSurveyEditor.cs`、読むだけ) を足し、実装 Issue [IMP-DOG-053](IMP-DOG-053-leashed-river-follow.md) を起票 (「B の形」を 11 の単位と退役の一覧に分けた。退役の一覧に `KH_LeashManager.Intro.cs:27` の `_InWater` を追加、`_InWater` そのものは写真の判定が使うので残す)。ランタイムのコードは未変更。
+
 関連: [DES-DOG-004](DES-DOG-004-river-play-and-floating-fetch.md) (水遊びの設計)、[IMP-DOG-020](IMP-DOG-020-river-wading-and-swim.md) (水遊び・泳ぎ・RC-14 の実装)、[IMP-DOG-021](IMP-DOG-021-river-wide-fetch-and-recall.md) (川全体の脚と岸)、[DES-DOG-001](DES-DOG-001-leash-walking.md) (リードの同期の契約)、[IMP-DOG-029](IMP-DOG-029-dirt-accumulation.md) (汚れ)、[IMP-WLD-002](IMP-WLD-002-call-player.md) (切符と濡れた犬)。
+2026-10-12 (統括): Course/130 を流した (findings 0)。入口は混在方式に決定 (IMP-DOG-053 §0)。調査の前に Course/90 + 91 でスライスの保存値を作り直した。
