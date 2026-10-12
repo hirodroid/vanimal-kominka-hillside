@@ -4,9 +4,9 @@ type: VER
 system: ENV
 status: wip
 priority: High
-summary: 景観・小物の仕上げ後、Quest 3 が 20〜40 fps で安定しない (10-04 ユーザー報告。変更前は通常 40〜50)。毎フレーム処理の増加と描画を切り分けて原因を特定し、眺めを保ちながら調整する
-next: 計測用のボタンと KH_PerfProbe は 2026-10-06 に撤去した (ユーザー指示。メディアフィックス版の準備)。このボタンでの計測は行っていない。Quest で読む必要が出たら Mobile/20 で置き直し、川沿いほかで NewGrass / NewBoards / NewOther / Props / DogUdon を 1 つずつ OFF にして fps を読み (本文の表)、終わったら Mobile/22 で外す。写真 OFF では変わらなかった (10-04 ユーザー)。結果が出たら効いている群から調整する
-updated: 2026-10-06
+summary: 景観・小物の仕上げ後に Quest 3 が 20〜40 (10-04)、カート・洗い道具・招待の追加後は常時 20 (10-12 ユーザー報告)。毎フレーム処理の増加と描画を切り分けて原因を特定し、眺めを保ちながら調整する
+next: "2026-10-12 の静的監査で、10-06 以降に待機中の Udon が約 2 倍 (+900〜1,200 extern/フレーム、0.5 s ごとの 4,000 の塊) と判明 (本文の表 1〜9、直し方付き)。描画側の増分はスポーン付近では小さい。次: (1) ユーザーが空を見上げて CPU/GPU を切り分け、(2) 表 1〜9 の無駄を挙動を変えずに直す、(3) Mobile/20 の群を更新して Quest で群別に読む (シーン保存は別セッションと調整)。10-04 の景観の切り分けは未実施のまま"
+updated: 2026-10-12
 ---
 
 # VER-ENV-002 景観改善後の性能調査と調整
@@ -118,7 +118,58 @@ DogUdon を OFF にすると犬の状態がずれることがある。計測の�
 | 川沿い・川上 | | | | | | | |
 | 門 | | | | | | | |
 
+## 2026-10-12 ユーザー報告 (第 2 回) と静的監査
+
+ユーザー報告 (Quest 3 単体、カート版): 「入った瞬間から常時 20 fps、30 に一度も届かない、ひどい時は 10 代後半。2 匹連れてカートで 10 分散歩して 20 代前半。前回のチューニング以降 (カート等) の毎フレーム Udon が怪しい」。10-04 の「20〜40 で安定しない」から、**視点に依らない定常コストが積み増しされた**読み。10-04 の描画側の切り分けは未実施のままなので、今回の低下は「10-04 の未計測の描画 + 10-06 以降の増分」の重なりとして扱う (Udon だけで説明しない)。
+
+### やったこと (Fable 司令塔、Opus 監査 2 本、コード・シーン・Unity の設定は未変更)
+
+- Edit モードで実体数を取った (シーンファイルの集計はプレハブの中身が見えない)。有効 UdonBehaviour **364** (10-06 のシーン保存では 234)、Canvas 35 枚有効 (TMP 447 個)、AudioSource 118 (待機中に鳴る新規は 0)、VRCObjectSync + Pickup **68** (洗い道具 47、犬 21)、Unity Standard の Renderer 170 (カート 78 = 乗用 8 + 乗り場の見本 5、洗い道具・小物。Android のビルドフックは地形しか差し替えない)。KH_WashTool は 19 → **47** 個。
+- Udon の毎フレーム経路 (91b3fe3 以降の差分 72 ファイル): [記録](../../plans/2026-10-12-performance-inventory-udon.md)。描画・UI・音・物理・同期: [記録](../../plans/2026-10-12-performance-inventory-scene.md)。
+- 統括が現物で検証した上位 5 件 (下の表の 1〜5) と、シーンの同期方式 (KH_WashTool 47 個のうち 28 個が `_syncMethod: 2` = Continuous、19 個が None。スクリプトは `NoVariableSync` 宣言)。
+
+### 結果 (計測ではない。extern 数は ±50% の概算、20 fps 換算)
+
+10-06 以降に**待機中の Udon が約 +900〜1,200 extern/フレーム増えた** (10-04 の固定費 約 500〜800 のほぼ 2 倍)。加えて 0.5 秒ごとに約 4,000 extern の塊が 1 フレームに乗る。周期型 (0.15〜1 秒) は fps が下がるほど 1 フレームあたりが増える (悪循環)。Quest の extern 単価は未計測。09-30 の実測 (犬配下 158 個 OFF で PC −4.0 ms、Quest 10〜20 → 30〜40 fps) から、PC の数 ms は Quest で 5〜8 倍になる。
+
+| 順 | 何 (個数) | 待機中 /フレーム | 10-04 比 | 直し方 (挙動を変えない) |
+|---|---|---|---|---|
+| 1 | 犬の誘い `KD_DogWanderController.HillsideInvitation.cs:32-35` (6) | 約 150〜250 | GREW | `inviteDogStation[dogIndex]` (同期配列 1 回) を `_InvitationAvailable()` / `_IntroDogAvailable()` (他 Behaviour 約 30 回) より先に見る。結果は同じ |
+| 2 | 誘いの保守 `KH_LeashManager.Invitation.cs:132-172` (Owner、0.5 s) | 1 回 約 4,000 (平均 約 200) | GREW (新規の塊) | 報告の表が空・`inviteHeldMask == 0`・全犬 `inviteDogStation == 0` なら 80 要素のループ 3 本と 6 匹の判定を飛ばす。何も書かない結果は同じ |
+| 3 | `KH_WashTool` (47) 0.5 s 巡回 | 約 120〜190 | GREW (19 → 47) | 選ばれていないスロット (`!selectionActive && returnSeconds <= 0`) は idle ループを止め `_SetSelected(true)` で再開。28 個の Continuous は別件 (`NoVariableSync` は Continuous と共存できる宣言で None の指定ではない。同居の VRCObjectSync とネットワークイベントを確かめてから) |
+| 4 | `KH_WashSupportVisual.cs:15` (4) LateUpdate 毎フレーム | 約 140 (fps によらない) | NEW | 台が動いた時だけ (`KH_WashStationCall.cs:562` と `_StandPose` の後に `_RefreshVisual()`、`KH_WashSelection.cs:186` は既にそうしている)。LateUpdate を外す |
+| 5 | `KH_CartManager.cs:164` (1) | 約 130 + 1 s ごと約 700 (ApplyCore) | NEW | 時刻比較を `IsOwner` より先に。表示中・駐車待ちの台が 0 なら MotionTick のループを飛ばす。ApplyCore の毎秒全呼び出しは安全網なので据え置きでよい |
+| 6 | `KH_WashSelection.cs:72-73` (4) 0.25 s 自己再送 | 約 80 | NEW | 待つカテゴリが無ければ再予約しない (受信・要求・道具の OnDrop で再開。「持っている間の切替を Drop 後に反映する」役割があるので単純削除は不可) |
+| 7 | `KH_WashSelectionBoard.cs:74` (4) 0.25 s、距離なし | 約 80 | NEW | `KH_WashStationBoard` と同じく近い時だけ 0.25 s、遠ければ 1〜2 s |
+| 8 | `KH_WalkIntro.cs:116-121` (1) 0.15 s、終わっても止まらない | 約 75 (導入中は約 700) | NEW | 完了・非表示・却下かつ Quiet なら Tick を飛ばす (`_Replay` / `_OnLeashChanged` / 設定で戻す) |
+| 9 | `KD_DogBook.cs:164-165` (1) 0.5 s、距離なし | 約 65 | GREW 少し | 開いている・近い時だけ 0.5 s |
+| — | 犬の Update / LateUpdate 本体、Fetch・フリスビー・撫で・おやつ・寝床・ライブ、カートの Dock / Seat / Controls / StopButton / StationPanel、WashToolState、FurColor、ShopItem (51)、KH_VideoCamera (Android で Start が止める) | 不変 / 0 | — | — |
+
+描画・UI・音・同期側 (スポーン 30 m 以内で 10-06 以降に増えたもの): 見本カート 1 台 + 掲示 (17 m)、洗い場の有料ボードと器具 (8 m)、犬紹介の Canvas 3 枚 (8 m)。概算 +15〜40 draw call で、**これだけで 40 → 20 (+25 ms) は説明できない**。新規の AudioSource 48・ParticleSystem 36 は待機中に鳴らない・出ない。洗い道具の Rigidbody 47 は全部 kinematic。非 Udon で数に比例して増えたのは VRCObjectSync + Pickup (40 → 68) だけ (推定 1 ms 以下)。10-04 の景観 429 Renderer は static でなく、オクルージョンのベイクは 09-27 (景観・カート・洗い場より前)。Quest の lodBias は 2 の可能性が高く、10-04 棚卸しの「約 200 m まで消えない」は倍の距離になりうる。
+
+未コミットの別セッションの変更について: `ProjectSettings/AudioManager.asset` の voice 64/32 → 32/24 は、ワールドの AssetBundle に ProjectSettings は乗らないので Quest には効かない見込み (確度 約 90%)。シーンの `m_IndirectSpecularColor` が黒になったのは再保存の副産物で性能には無関係。どちらも触っていない。
+
+### 次の一手 (提案。ユーザー判断待ち)
+
+1. **Play 無しの確認 (ユーザー、今の版で)**: スポーンで真上の空を見る。20 のままなら CPU (Udon・同期) 側、上がれば描画側。OVR Metrics の GPU % / CPU % が読めればなお良い。
+2. **明らかな無駄 (上の表 1〜9) を先に直す** (挙動を変えない順序の入れ替えと、動いていない時に止めるだけ)。実装は Opus、Codex の独立レビュー後に ClientSim で Cart / Wash / Invitation の既存ケースを絞って回す。
+3. **計測ボタンを置き直して Quest で群別に読む** (Mobile/20 の群を更新: 10-04 景観 (草 / 板の木 / 他) / カート一式 / 洗い道具 47 / Canvas 全部 / 新規 Udon (招待・案内・洗い選択・支柱) / 犬 Udon / 川音 20)。シーン保存が要るので、別セッションの未コミット差分と調整してから。
+4. 描画側の候補 (測ってから): カート・洗い道具・小物の材質を Android/iOS ビルドだけ `VRChat/Mobile/Standard Lite` へ差し替えるフック (地形と同じ型)、Quest の小草の消える距離を先に縮める (樹木の輪郭は残す)、遠い掲示の Canvas + Raycaster を 40 m 超で切る、川音を近い 3〜4 本だけ鳴らす。static 化 + オクルージョン再ベイクは遮蔽物 (建物・岩) を選んでから。
+
+
+### Codex 相談 (2026-10-12、vrc-review 相談モード、gpt-6-astra。採否は統括が現物で判断)
+
+| 問い | Codex の結論 | 採否 |
+|---|---|---|
+| 常時 20 は「10-04 の描画 + 10-06 以降の Udon 増分」の重なりか | 第一仮説にしてよい。ただし extern 数は処理時間ではなく、寄与率は未確定。0.5 s の山は引っ掛かりの説明にはなるが常時 20 の単独原因とは断定できない。追加候補の順は ① 近景の Standard・Canvas/TMP の描画、② 洗い道具の Rigidbody・Collider・ObjectSync の実稼働、③ 犬の Animator・スキニングの既存固定費。Pickup / Station / Canvas / Continuous 28 個は個数だけでは評価できない | 採用。本票の読みと同じ |
+| 次の一手 (A: ClientSim の群別 ms / B: Quest の計測ボタン / C: 無駄を先に直す) | **B → C → B の再計測**。最初の B は同じ位置・向き・犬の状態で「基準 → 新規 Udon 停止 → 復帰 → 10-04 景観の Renderer 停止 → 復帰」、片方ずつで差が小さい時だけ両方停止。その後に必要な側だけカート・洗い道具・Canvas・犬へ分解。A は Quest が当面測れない時の CPU 候補の順位づけには使えるが、主因・改善量は決まらないので必須にしない。`enabled=false` では遅延イベント (WashSelection の `_Poll` 等) が止まらないので、停止が成立したかの確認を群に入れる。計測 UI は Canvas 群から除外し、ビルド内容 (未コミット差分を含む) を固定して記録する | 採用。Play (ClientSim) は今回は回さない。計測ボタンの群は「新規 Udon」(招待・案内・洗い選択・支柱・カート管理) を 1 群にまとめ、遅延イベントが止まったかを Verify に入れる |
+| C を先に直す順と禁止事項 | 招待の判定順序 → 支柱の変更時更新 → 案内の休止 → 洗い選択の必要時巡回。Continuous → None は別件 (`NoVariableSync` は Continuous と共存できる宣言)。招待の Owner 側は「自分が持っていない」で止めず、他人の報告・期限切れ・解除の同期・Owner 交代時の復元を残す。握手フレームと Update / LateUpdate の順序は維持。Late Joiner 用の同期状態をイベントへ置き換えない。案内は完了直後の成功表示を終えてから休止 | 採用。表の 1〜9 の順序と注記を揃えた |
+| 10-04 の景観を測る前に静的に決められる調整 | 方針までは選べる (Quest の小草を先に近距離化、樹木の輪郭は残す)。LOD は画面占有率なので Bounds と lodBias を確かめて対象別に。static 化は用途別フラグで、抜きの葉・板の木を遮蔽物にしない。再ベイクを最初の切り分けにしない | 採用。描画側の候補 4 の「static 化 + 再ベイク」は「測った後、遮蔽物を選んでから」に格下げ |
+
+
 ## 記録
+
+2026-10-12: ユーザー報告 (常時 20 fps) を受け、Edit モードの実体数 + Udon / 描画側の静的監査 (上の節と 2 本の記録)。Unity の設定・コード・シーンは未変更。Codex 相談 (B → C → B) を節末に記録。Play は回していない。
 
 2026-10-06 (撤去): ユーザー指示 (配信者・宣伝動画の制作者へ渡すメディアフィックス版の準備。他のデバッグ用の物も消す) で `Mobile/22 - Remove Perf Probe` を実行し、`KH_PerfProbe` とボタン 11 個を外して保存した。読み直し: 根 0・Udon 0・NetworkIDs 258 (死んだ項目 0)・Console エラー 0。このボタンでの Quest 計測は行っていない (10-04 の 20〜40 fps 報告の切り分けは未実施のまま)。他にデバッグ用の物は見当たらない (`KH_World/KH_Dummies` の仮の犬 6 体は Terrain 試作の名残で非表示のまま。Walking の Verify が「非表示」を前提にしているので残した)。
 
