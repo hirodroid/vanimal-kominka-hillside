@@ -10,6 +10,9 @@ namespace KominkaHillside.Editor
 {
     public static partial class KH_RoadsideSceneryEditor
     {
+        /// <summary>2026-10-12 ユーザー要望: 広場入口のベンチ (通路上、旧 KH_Bench と見た目の ViewpointBench) は Course/16 で除去済み。再実行しても作り直さない。</summary>
+        public const bool ExcludePlazaBench = true;
+
         [MenuItem("Tools/KominkaHillside/Course/145 - Finish Rest Benches")]
         public static void Benches()
         {
@@ -25,18 +28,21 @@ namespace KominkaHillside.Editor
             var size=mesh.bounds.size;if(Vector3.Distance(size,new Vector3(1.6f,.45f,.5f))>.01f)throw new InvalidOperationException("Bench dimensions "+size);
             string path=Dir+"/KH_RoadsideBench.asset";if(File.Exists(path))throw new InvalidOperationException("Preserve existing bench mesh");AssetDatabase.CreateAsset(mesh,path);
             var material=AssetDatabase.LoadAssetAtPath<Material>(KH_CourseAutumnEditor.MaterialPath);if(material==null)throw new InvalidOperationException("Bridge wood required");
-            var old=GameObject.Find("KH_World/KH_Places/KH_Viewpoint/KH_Bench");var oldRenderer=old.GetComponent<MeshRenderer>();var oldCollider=old.GetComponent<BoxCollider>();
+            var old=ExcludePlazaBench?null:GameObject.Find("KH_World/KH_Places/KH_Viewpoint/KH_Bench");var oldRenderer=old!=null?old.GetComponent<MeshRenderer>():null;var oldCollider=old!=null?old.GetComponent<BoxCollider>():null;
             var parent=Child(root.transform,"RestBenches");
             try
             {
-                var view=MakeBench(parent.transform,"ViewpointBench",new Vector3(old.transform.position.x,oldCollider.bounds.min.y,old.transform.position.z),old.transform.eulerAngles.y,mesh,material,false);
-                oldRenderer.enabled=false;EditorUtility.SetDirty(oldRenderer);
+                if(!ExcludePlazaBench&&old!=null)
+                {
+                    MakeBench(parent.transform,"ViewpointBench",new Vector3(old.transform.position.x,oldCollider.bounds.min.y,old.transform.position.z),old.transform.eulerAngles.y,mesh,material,false);
+                    oldRenderer.enabled=false;EditorUtility.SetDirty(oldRenderer);
+                }
                 MakeBench(parent.transform,"UpperPlazaBench",upperSeat,210,mesh,material,true);
                 MakeBench(parent.transform,"RiverBench",riverSeat,245,mesh,material,true);
                 AssetDatabase.SaveAssets();EditorSceneManager.MarkSceneDirty(root.scene);if(!EditorSceneManager.SaveScene(root.scene))throw new IOException("Bench save failed");
                 Debug.Log("[Roadside] Three timber benches, original viewpoint collider preserved; new benches require Nav refresh");
             }
-            catch{oldRenderer.enabled=true;UnityEngine.Object.DestroyImmediate(parent);EditorSceneManager.MarkSceneDirty(root.scene);if(EditorSceneManager.SaveScene(root.scene))AssetDatabase.DeleteAsset(path);throw;}
+            catch{if(oldRenderer!=null)oldRenderer.enabled=true;UnityEngine.Object.DestroyImmediate(parent);EditorSceneManager.MarkSceneDirty(root.scene);if(EditorSceneManager.SaveScene(root.scene))AssetDatabase.DeleteAsset(path);throw;}
         }
         static Vector3 SeatGround(Vector3 preferred,float yaw)
         {

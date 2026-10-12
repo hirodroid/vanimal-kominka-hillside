@@ -27,6 +27,33 @@ namespace KominkaDogRun
         const float CartArrive = 0.2f;         // m: stand-by distance at a waiting cart
         const float CartPathFar = 2f;          // m: farther than this behind the spot, walk the NavMesh path
         const float CartStillSpeed = 0.05f;    // m/s: _CartSpeed at or below this = the cart is waiting
+        // ---- 2026-10-12 Play fix 2 ("a fixed spot has no walk feel"): the target wanders around the anchor (Owner, local time) ----
+        // offset in the cart frame: lateral = amp * (0.6 sin(2pi t/7.3 + 0.6k) + 0.4 sin(2pi t/5.3 + 1.02k + 1.3)), amp 0.6 (0.25 single file)
+        //                           forward = 0.35 + 0.65 * (0.6 sin(2pi t/8.6 + 2.1k) + 0.4 sin(2pi t/6.1 + 2.1k + 2.2))  in [-0.3, +1.0]
+        // k = the dog's order on the holder (slot): neighbours sway sideways nearly together (0.6 rad apart) and take turns ahead
+        // (2.1 rad = a third of a turn apart), which is what keeps them from closing in on each other
+        const float CartSwayLat = 0.6f, CartSwayLatNarrow = 0.25f;
+        const float CartSwayT1 = 7.3f, CartSwayT2 = 5.3f, CartSwayT3 = 8.6f, CartSwayT4 = 6.1f;   // s, all within 5-9
+        const float CartSwayLatPhase = 0.6f, CartSwayFwdPhase = 2.1f;   // rad per slot
+        const float CartFwdMid = 0.35f, CartFwdAmp = 0.65f;
+        const float Tau = 6.2831853f;
+        const float CartSpacing = 0.55f;       // m: goals of the holder's dogs are kept at least about this far apart
+        const float CartFwdMin = -0.3f;        // m: the goal never falls further behind the anchor than this
+        const int CartRelax = 4;               // relaxation rounds of the spacing (desk check: 2 left pairs at 0.3-0.4 m, 4 none under 0.5)
+        private Vector3[] _cartGoals, _cartGoalsNext, _cartBases;   // scratch for the spacing (holder's dogs in order), reused
+        const float CartNarrowWidth = 0.7f;    // m: slot 0-1 anchors closer than this = the runtime halved them (single file)
+        const float CartBlendTime = 2f;        // s: the wander fades in after the cart starts (no jump from the stand-by spot)
+        // "almost stopping": every 15-40 s, for 1.5-2.5 s, speed x0.6 and sway x1.5 at the peak (a sine bump, so no jerk). Never a stop,
+        // never a sniff pose (LeashPose reads _cartRiding)
+        const float CartHesGapMin = 15f, CartHesGapMax = 40f, CartHesMin = 1.5f, CartHesMax = 2.5f;
+        const float CartHesSpeed = 0.6f, CartHesSway = 0.5f;
+        private float _cartBlend;              // 0..1 wander fade-in, from _cartMoveSince (CartWander)
+        private float _cartMoveSince;          // when the cart was last seen starting to move (or the follow began moving)
+        const float CartWanderEvery = 0.25f;   // s: the wander (and its spacing) is recomputed at 4 Hz, the decisions reuse it
+        private float _cartWanderNext;         // 0 = recompute now
+        private Vector3 _cartWanderOff;
+        private float _cartHesNext, _cartHesStart, _cartHesUntil;   // 0 = not scheduled / not in one
+        private float _cartHesFactor = 1f;     // speed factor of this decision
 
         /// <summary>Every client, once per leash decision. Synced facts only (the cart manager's rider table), so every screen agrees
         /// up to sync latency.</summary>
@@ -66,6 +93,7 @@ namespace KominkaDogRun
             {
                 Debug.Log("[KD_Leash] cart-follow dog=" + dogIndex + " slot=" + order + " holder=" + holderId
                     + (moving ? " state=move" : " state=wait"));
+                if (moving && _cartStateLogged != 1) { _cartMoveSince = Time.time; _cartWanderNext = 0f; }   // starts: fade the wander in
                 _cartOrderLogged = order; _cartStateLogged = state;
             }
             // A sniff in progress ends here, through the single exit (Return's precedent: logged as its own reason)
@@ -85,6 +113,7 @@ namespace KominkaDogRun
             {
                 // The cart is waiting (start grace, traffic hold, arrived): the old stand-by - walk onto the anchor and stand there.
                 // StepToward coasts to a stop inside CartArrive. No sniff / LieDown (LeashPose and settling read _cartRiding)
+                _cartBlend = 0f; _cartHesUntil = 0f; _cartHesFactor = 1f; _cartWanderNext = 0f;   // the wander stops; it fades in again on the next start
                 if (d > CartPathFar) LeashGo(anchor, walkSpeed, CartArrive);
                 else CartStep(anchor, CartArrive, walkSpeed);
                 return true;
@@ -95,14 +124,20 @@ namespace KominkaDogRun
             //   dAlong = (anchor - dog) . fwd   (> 0: the dog is behind its spot)
             //   v = cartSpeed + CartGain * dAlong, clamped to [CartMinRatio * cartSpeed, dashSpeed]
             // At the spot v = cartSpeed; ahead of it the dog slows but keeps walking and lets the cart catch up.
+            // The goal is the anchor plus the slow wander (fix 2); everything below converges on the goal, as before on the anchor
+            if (Time.time >= _cartWanderNext) { _cartWanderOff = CartWander(holderId, order, fwd); _cartWanderNext = Time.time + CartWanderEvery; }
+            Vector3 goal = anchor + _cartWanderOff;
+            goal.y = pos.y;
+            toAnchor = goal - pos;
+            d = toAnchor.magnitude;
             float dAlong = Vector3.Dot(toAnchor, fwd);
             Vector3 lateral = toAnchor - fwd * dAlong;
-            float v = Mathf.Clamp(cartSpeed + CartGain * dAlong, CartMinRatio * cartSpeed, hillsideLeashes.dashSpeed);
+            float v = Mathf.Clamp(cartSpeed + CartGain * dAlong, CartMinRatio * cartSpeed, hillsideLeashes.dashSpeed) * _cartHesFactor;
             if (d > CartPathFar && dAlong > 0f)
             {
                 // Far behind or off to the side: the NavMesh path to the spot (around obstacles). Return / the teleport above
                 // still take over past 1.25x leash from the hand
-                LeashGo(anchor + fwd * CartLead, v, 0.05f);
+                LeashGo(goal + fwd * CartLead, v, 0.05f);
                 return true;
             }
             // Near the spot (or ahead of it): steer straight. Behind: toward anchor + fwd * CartLead (pure pursuit, the lateral
@@ -111,6 +146,117 @@ namespace KominkaDogRun
             float along = (d <= CartAlign || dAlong < 0f) ? 0f : dAlong;
             CartStep(pos + fwd * (along + CartLead) + lateral, 0.05f, v);
             return true;
+        }
+
+        /// <summary>Owner, moving cart: the wander offset (cart frame, world vector) for this decision, and the "almost stopping"
+        /// speed factor (_cartHesFactor). Constants and formulas above.</summary>
+        private Vector3 CartWander(int holderId, int order, Vector3 fwd)
+        {
+            float now = Time.time;
+            if (_cartHesNext <= 0f) _cartHesNext = now + CartHesGapMin + Rand01((int)(now * 10f), 4301) * (CartHesGapMax - CartHesGapMin);
+            if (_cartHesUntil <= 0f && now >= _cartHesNext)
+            {
+                _cartHesStart = now;
+                _cartHesUntil = now + CartHesMin + Rand01((int)(now * 10f), 4311) * (CartHesMax - CartHesMin);
+                Debug.Log("[KD_Leash] cart-follow dog=" + dogIndex + " dawdle " + (_cartHesUntil - now).ToString("F1") + "s");
+            }
+            float h = 0f;
+            if (_cartHesUntil > 0f)
+            {
+                if (now >= _cartHesUntil)
+                {
+                    _cartHesUntil = 0f;
+                    _cartHesNext = now + CartHesGapMin + Rand01((int)(now * 10f), 4321) * (CartHesGapMax - CartHesGapMin);
+                }
+                else h = Mathf.Sin(Mathf.PI * (now - _cartHesStart) / (_cartHesUntil - _cartHesStart));
+            }
+            _cartHesFactor = 1f - (1f - CartHesSpeed) * h;
+            // single file: the runtime halves the slot spacing then, so the sway narrows too
+            Vector3 a0 = cartManager._DogAnchor(holderId, 0), a1 = cartManager._DogAnchor(holderId, 1), a2 = cartManager._DogAnchor(holderId, 2);
+            bool narrow = Horizontal(a0, a1) < CartNarrowWidth;
+            float amp = narrow ? CartSwayLatNarrow : CartSwayLat;
+            Vector3 right = new Vector3(fwd.z, 0f, -fwd.x);   // the runtime's right (+ = right of travel)
+            _cartBlend = Mathf.Clamp01((now - _cartMoveSince) / CartBlendTime);
+            // Keep clear of the holder's other dogs. Not their positions (targets never mix in other dogs' local positions,
+            // DES-NET-001): their goals, from the same formula, the same anchors and this clock (their dawdle is theirs, so it is
+            // left out for them). The slot phases alone could not do it - the middle slot is only 0.45 m from each side, and with
+            // independent sway a pair was under 0.5 m about a quarter of the time (desk check). So every dog relaxes the whole set
+            // the same way (CartRelax rounds): a pair closer than CartSpacing moves apart by half the shortfall each, along a fixed
+            // axis - sideways by slot (0 left, 2 middle, 1 right) for different slots, forward by row for the same slot - so two
+            // dogs never swap sides and the goals move continuously. Desk check (3 and 6 dogs, 15 min): every pair >= 0.50 m.
+            int[] w = hillsideLeashes.walkers;
+            int n = w == null ? 0 : w.Length;
+            if (_cartGoals == null || _cartGoals.Length < n)
+            { _cartGoals = new Vector3[n]; _cartGoalsNext = new Vector3[n]; _cartBases = new Vector3[n]; }
+            int count = 0;
+            for (int i = 0; i < n; i++)
+            {
+                if (w[i] != holderId) continue;
+                Vector3 bk = CartSlotBase(count, a0, a1, a2, fwd); bk.y = 0f;
+                Vector3 sk = CartSway(count, now, amp, i == dogIndex ? 1f + CartHesSway * h : 1f, right, fwd) * _cartBlend;
+                _cartBases[count] = bk;
+                _cartGoals[count] = bk + sk;
+                count++;
+            }
+            if (order >= count) return Vector3.zero;   // walkers changed under us (cannot happen within one decision): no wander
+            for (int r = 0; count > 1 && r < CartRelax; r++)
+            {
+                for (int k = 0; k < count; k++)
+                {
+                    Vector3 m = _cartGoals[k];
+                    float px = 0f, pf = 0f;
+                    for (int q = 0; q < count; q++)
+                    {
+                        if (q == k) continue;
+                        Vector3 dv = m - _cartGoals[q];
+                        float dx = Vector3.Dot(dv, right), df = Vector3.Dot(dv, fwd);
+                        if (k % 3 != q % 3)
+                        {
+                            float sg = CartLatRank(k % 3) > CartLatRank(q % 3) ? 1f : -1f;
+                            float need = Mathf.Sqrt(Mathf.Max(0f, CartSpacing * CartSpacing - df * df));
+                            float have = dx * sg;
+                            if (have < need) px += sg * (need - have) * 0.5f;
+                        }
+                        else
+                        {
+                            float sg = k / 3 > q / 3 ? 1f : -1f;
+                            float need = Mathf.Sqrt(Mathf.Max(0f, CartSpacing * CartSpacing - dx * dx));
+                            float have = df * sg;
+                            if (have < need) pf += sg * (need - have) * 0.5f;
+                        }
+                    }
+                    Vector3 g = m + right * px + fwd * pf;
+                    // never more than CartFwdMin behind its own anchor, whatever the push did
+                    float fo = Vector3.Dot(g - _cartBases[k], fwd);
+                    if (fo < CartFwdMin) g += fwd * (CartFwdMin - fo);
+                    _cartGoalsNext[k] = g;
+                }
+                Vector3[] tmp = _cartGoals; _cartGoals = _cartGoalsNext; _cartGoalsNext = tmp;
+            }
+            Vector3 off = _cartGoals[order] - _cartBases[order];
+            off.y = 0f;
+            return off;
+        }
+
+        /// <summary>Sideways rank of a slot as the runtime places it: 0 left (-), 2 middle, 1 right (+).</summary>
+        private float CartLatRank(int slot) { return slot == 0 ? -1f : (slot == 1 ? 1f : 0f); }
+
+        /// <summary>The anchor of the holder's dog number `k` (0-based order): slot k % 3, one row of CartRowStep further ahead per 3.</summary>
+        private Vector3 CartSlotBase(int k, Vector3 a0, Vector3 a1, Vector3 a2, Vector3 fwd)
+        {
+            int slot = k % 3;
+            Vector3 a = slot == 0 ? a0 : (slot == 1 ? a1 : a2);
+            return a + fwd * (CartRowStep * (k / 3));
+        }
+
+        /// <summary>The slow wander of dog number `k` (world vector, cart frame). latScale: the dawdle widens the sway.</summary>
+        private Vector3 CartSway(int k, float now, float amp, float latScale, Vector3 right, Vector3 fwd)
+        {
+            float sL = 0.6f * Mathf.Sin(Tau * now / CartSwayT1 + k * CartSwayLatPhase)
+                + 0.4f * Mathf.Sin(Tau * now / CartSwayT2 + k * CartSwayLatPhase * 1.7f + 1.3f);
+            float sF = 0.6f * Mathf.Sin(Tau * now / CartSwayT3 + k * CartSwayFwdPhase)
+                + 0.4f * Mathf.Sin(Tau * now / CartSwayT4 + k * CartSwayFwdPhase + 2.2f);
+            return right * (amp * sL * latScale) + fwd * (CartFwdMid + CartFwdAmp * sF);
         }
 
         /// <summary>A straight step along the cart track. The track is the walk trail (bridges included), which the river band rule
@@ -129,6 +275,7 @@ namespace KominkaDogRun
             if (_cartOrderLogged < 0) return;
             Debug.Log("[KD_Leash] cart-follow dog=" + dogIndex + " slot=-1 (off)");
             _cartOrderLogged = -1; _cartStateLogged = -1;
+            _cartBlend = 0f; _cartHesNext = 0f; _cartHesUntil = 0f; _cartHesFactor = 1f; _cartWanderNext = 0f; _cartWanderOff = Vector3.zero;
             if (leashMode == LeashCart) leashMode = LeashWalk;
         }
     }

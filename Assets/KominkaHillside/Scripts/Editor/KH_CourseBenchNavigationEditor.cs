@@ -58,7 +58,21 @@ namespace KominkaHillside.Editor
         [MenuItem("Tools/KominkaHillside/Course/56 - Verify Viewpoint Bench Navigation")]
         public static void Verify()
         {
-            KH_CourseGroundEditor.Idle(KH_CourseGroundEditor.ScenePath);var root=GameObject.Find("KH_CourseNavigation");VerifyConfiguration(root.transform);
+            KH_CourseGroundEditor.Idle(KH_CourseGroundEditor.ScenePath);var root=GameObject.Find("KH_CourseNavigation");
+            // 2026-10-12: 広場入口のベンチは Course/16 で除去 (KH_RoadsideSceneryEditor.ExcludePlazaBench)。そのときはベンチが無いことを正とし、
+            // 除外の範囲 (NoWalk、焼き直したときだけ効く) が残っていることと、旧ベンチ位置を通る経路が繋がることだけを見る
+            if(KH_RoadsideSceneryEditor.ExcludePlazaBench&&GameObject.Find(Bench)==null)
+            {
+                var left=KH_CoursePlazaBenchEditor.Targets();
+                if(left.Count>0)throw new InvalidOperationException("Plaza bench should be removed (Course/16) but remains: "+left[0].name);
+                if(root==null||root.transform.Find(Name)==null)throw new InvalidOperationException("Bench exclusion volume missing (kept on purpose after the bench removal)");
+                var rp=new NavMeshPath();NavMeshHit ra,rc;
+                if(!NavMesh.SamplePosition(new Vector3(80.34f,19.1f,108.78f),out ra,.5f,NavMesh.AllAreas)||!NavMesh.SamplePosition(new Vector3(80.69f,19.03f,115.67f),out rc,.5f,NavMesh.AllAreas)||
+                    !NavMesh.CalculatePath(ra.position,rc.position,NavMesh.AllAreas,rp)||rp.status!=NavMeshPathStatus.PathComplete)throw new InvalidOperationException("Route past the former bench incomplete");
+                Debug.Log("[KH Course Bench] BENCH_REMOVED (ExcludePlazaBench): no plaza bench, exclusion volume kept, path past the former bench complete corners="+rp.corners.Length);
+                return;
+            }
+            VerifyConfiguration(root.transform);
             var b=BenchBounds();int samples=0;
             for(int x=0;x<5;x++)for(int z=0;z<3;z++)for(int y=0;y<2;y++)
             {

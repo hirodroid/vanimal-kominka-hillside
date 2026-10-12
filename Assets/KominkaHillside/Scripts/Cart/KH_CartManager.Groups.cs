@@ -158,6 +158,9 @@ namespace KominkaHillside
             if (ValidGroup(g)) SettleArrival(g, now);
             // M3: 降りた場所に残す (Parked)。置く距離は今の目標距離 (グループが無い不整合のときだけ Idle へ)
             bool canPark = ValidGroup(g) && groupState[g] != GroupFree && EnsureRoute();
+            // 2026-10-12 追加要望: 目的地に着いて降りたカートは残さずプール (Idle) へ戻す (駐車枠も作らない)。途中の停止・ジャンプ・ワープ・リスポーン・退出は Parked
+            bool arrived = canPark && IsDestRun(g) && TravelOf(c, now) >= Remaining(g) - arriveSlack;
+            if (arrived) { canPark = false; Debug.Log("[KH_Cart] arrive-release cart=" + c + " group=" + g + " player=" + pid); }
             int parkDir = canPark && groupDir[g] < 0 ? -1 : 1;
             float stopAt = canPark ? TargetDistance(c, now) : 0f;
             ResetCart(c);

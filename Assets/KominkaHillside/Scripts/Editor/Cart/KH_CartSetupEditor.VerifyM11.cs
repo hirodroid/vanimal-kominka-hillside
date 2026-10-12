@@ -60,7 +60,8 @@ namespace KominkaHillside.Editor
             var from = ReadFloats(mso, "noLateralFrom"); var to = ReadFloats(mso, "noLateralTo");
             v.Req(from != null && to != null && from.Length == to.Length && from.Zip(to, (a, b) => a <= b && a >= 0f && b <= len + 1e-3f).All(x => x), "noLateralFrom/To paired ranges within [0, trackLength]");
             var bench = GameObject.Find(BenchPath);
-            if (bench == null) v.Pend("bench " + BenchPath + " not found; noLateral bench check skipped");
+            if (bench == null && KH_RoadsideSceneryEditor.ExcludePlazaBench) v.Req(KH_CoursePlazaBenchEditor.Targets().Count == 0, "plaza bench removed (ExcludePlazaBench, Course/16): no bench to cover with noLateral");
+            else if (bench == null) v.Pend("bench " + BenchPath + " not found; noLateral bench check skipped");
             else
             {
                 float db = ProjectToTrack(want, bench.transform.position);
@@ -208,8 +209,17 @@ namespace KominkaHillside.Editor
             if (seatSo.FindProperty("signCaption") != null) RefCheck(v, seatSo, seatBacking, "signCaption", cap, c); else v.Pend(c + " KH_CartSeat.signCaption not found (Runtime M2)");
         }
 
+        /// <summary>長さ 0 (または null) のプロキシ配列は backing に override が無い (null) ことがある。どちらも空なら一致とする (2026-10-12 ベンチ除去で noLateral が 0 本)。</summary>
+        static bool BothEmpty(UdonBehaviour b, string name, Array proxy)
+        {
+            if (proxy != null && proxy.Length > 0) return false;
+            object o = b != null ? GetBacking(b, name) : null;
+            return o == null || (o is Array a && a.Length == 0);
+        }
+
         static void BackingFloats(V v, UdonBehaviour b, string name, float[] proxy)
         {
+            if (BothEmpty(b, name, proxy)) { v.Req(true, "manager." + name + " empty in proxy and backing"); return; }
             bool ok = proxy != null && proxy.Length > 0 && b != null && b.publicVariables.TryGetVariableValue(name, out object o) && o is float[] a && a.Length == proxy.Length;
             int bad = -1;
             if (ok) { var a2 = (float[])GetBacking(b, name); for (int i = 0; i < proxy.Length; i++) if (Mathf.Abs(a2[i] - proxy[i]) > 1e-4f) { bad = i; ok = false; break; } }
@@ -218,12 +228,14 @@ namespace KominkaHillside.Editor
 
         static void BackingBools(V v, UdonBehaviour b, string name, bool[] proxy)
         {
+            if (BothEmpty(b, name, proxy)) { v.Req(true, "manager." + name + " empty in proxy and backing"); return; }
             bool ok = proxy != null && proxy.Length > 0 && b != null && b.publicVariables.TryGetVariableValue(name, out object o) && o is bool[] a && a.SequenceEqual(proxy);
             v.Req(ok, "manager." + name + " backing equals proxy element-wise (" + (proxy != null ? proxy.Length : -1) + ")");
         }
 
         static void BackingVectors(V v, UdonBehaviour b, string name, Vector3[] proxy)
         {
+            if (BothEmpty(b, name, proxy)) { v.Req(true, "manager." + name + " empty in proxy and backing"); return; }
             bool ok = proxy != null && proxy.Length > 0 && b != null && b.publicVariables.TryGetVariableValue(name, out object o) && o is Vector3[] a && a.Length == proxy.Length;
             int bad = -1;
             if (ok) { var a2 = (Vector3[])GetBacking(b, name); for (int i = 0; i < proxy.Length; i++) if ((a2[i] - proxy[i]).sqrMagnitude > 1e-8f) { bad = i; ok = false; break; } }

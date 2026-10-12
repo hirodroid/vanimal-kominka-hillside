@@ -331,6 +331,7 @@ namespace KominkaHillside.Editor
                         float db = ProjectToTrack(want, bench.transform.position);
                         pr.Req((bool)mNo.Invoke(mgr, new object[] { db }), "TrackNoLateral true at the viewpoint bench (d=" + db.ToString("F1") + ")");
                     }
+                    else if (KH_RoadsideSceneryEditor.ExcludePlazaBench) pr.Req(true, "plaza bench removed (ExcludePlazaBench): no bench to check with TrackNoLateral");
                     else pr.Skip("bench " + BenchPath + " not found");
                 }
             }
