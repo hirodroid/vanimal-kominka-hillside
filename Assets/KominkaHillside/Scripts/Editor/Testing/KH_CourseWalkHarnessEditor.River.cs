@@ -34,7 +34,8 @@ namespace KominkaHillside.Editor
     //                          one gather-stall log, then straight to the slot (<= 0.6 m off the line) and ready there within
     //                          the 60 s of the gathering; the gathering ended by the authority (startedMs moved back 61 s)
     //                          puts the roaming home within 1 m of the reached spot (KH_LeashManager.GatherHome).
-    //                          Course/75g runs this case alone.
+    //                          Course/75g runs this case alone; Course/75h (Edit mode, no Play) finds the spot with the same
+    //                          search (FindStallSpot) first and writes Temp/kh-gather-stall/spot.json.
     // Band = the generating formula (KH_CourseGroundEditor.RiverAt / HalfWidth, centre ± (half width + 1 m)), not the baked
     // KH_RiverData, so the check is independent of the runtime data. A frame counts as a violation only when the dog root
     // is more than 5 cm inside the band (the runtime interpolation differs from the formula by < 0.05 m, Course/74).
@@ -355,6 +356,12 @@ namespace KominkaHillside.Editor
         {
             float wr = Get<float>(riverActivities, "widthRatio"), gap = Get<float>(riverActivities, "gapRatio");
             float[] radii = riverPack != null ? Get<float[]>(riverPack, "dogRadius") : null;
+            return StallSlotLead(wr, gap, radii);
+        }
+
+        // Pure: the same formula from the given ratios / radii (Play reads them from the heap, the Edit probe from the proxies).
+        static float StallSlotLead(float wr, float gap, float[] radii)
+        {
             Func<int, float> width = k => (radii != null && k < radii.Length && radii[k] > .001f ? radii[k] : .25f) * wr;
             float total = 0f;
             for (int k = 0; k < 5; k++) total += (width(k) + width(k + 1)) * gap;
@@ -370,14 +377,32 @@ namespace KominkaHillside.Editor
         // A start S and a slot E beside the route: both on the NavMesh, the straight line S->E leaves the NavMesh (an obstacle),
         // the complete NavMesh path is >= 4 m longer (so a NavMesh walk is far off the line), no river band on the line or at
         // the anchor. Pass 0 also keeps the ground under the line within 2 m of it (a low obstacle: rock, fence, rail).
-        static void StallPlace(RiverCase c)
+        // The stall spot and why the other candidates failed. Written by the Edit probe (Course/75h) to Temp/kh-gather-stall/spot.json.
+        // Each candidate counts once, under the first condition it failed (in the order of the fields below).
+        [Serializable] public class StallSpot
         {
-            if (riverRoute == null) throw new InvalidOperationException("KH_WalkRoute missing (its nodes seed the stall site search)");
-            // Read like Walking/5 Verify reads the route's backing nodes (an Array of Transforms), not as an exact Transform[].
-            var nodeArray = Get<Array>(riverRoute, "nodes");
-            var nodes = new Transform[nodeArray.Length];
-            for (int i = 0; i < nodes.Length; i++) nodes[i] = nodeArray.GetValue(i) as Transform;
-            float lead = StallSlotLead();
+            public string status = "NONE", scene, utc, node, why;
+            public bool found;
+            public int pass = -1, nodes, candidates;
+            public float len, dirDeg, straight, pathLength, lead;
+            public Vector3 start, slot, anchor, site, edge;
+            public int noNavMesh, tooShort, lineOpen, noCompletePath, detourUnder4m, riverOnLine, groundOff2m, anchorNoGround, noPlayerSpot;
+            public string Rejections()
+            {
+                return "candidates=" + candidates + " noNavMesh=" + noNavMesh + " tooShort(<6m)=" + tooShort + " lineOpen(no obstacle)=" + lineOpen + " noCompletePath=" + noCompletePath
+                    + " detour<4m=" + detourUnder4m + " riverOnLine=" + riverOnLine + " groundOff>2m(pass0)=" + groundOff2m + " anchorNoGround=" + anchorNoGround + " noPlayerSpot=" + noPlayerSpot;
+            }
+        }
+
+        // Play-independent search (NavMesh, the river band formula and the ground ray only; no Udon heap, no player): used by the
+        // Play case (StallPlace) and the Edit probe (Course/75h) alike. A start S and a slot E beside the route: both on the
+        // NavMesh, the straight line S->E leaves the NavMesh (an obstacle), the complete NavMesh path is >= 4 m longer (so a NavMesh
+        // walk is far off the line), no river band on the line or at the anchor, and a NavMesh spot 1.5 m behind S for the player.
+        // Pass 0 also keeps the ground under the line within 2 m of it (a low obstacle: rock, fence, rail); pass 1 drops that.
+        static StallSpot FindStallSpot(Transform[] nodes, float lead)
+        {
+            var r = new StallSpot { lead = lead, nodes = nodes == null ? 0 : nodes.Count(n => n != null) };
+            if (nodes == null) { r.why = "no route nodes"; return r; }
             var path = new NavMeshPath();
             for (int pass = 0; pass < 2; pass++)
                 foreach (var n in nodes)
@@ -386,44 +411,97 @@ namespace KominkaHillside.Editor
                     foreach (float len in new[] { 8f, 10f, 12f })
                         for (int a = 0; a < 16; a++)
                         {
+                            r.candidates++;
                             var dir = Quaternion.Euler(0f, a * 22.5f, 0f) * Vector3.forward;
                             NavMeshHit hs, he, edge, hp;
                             if (!NavMesh.SamplePosition(n.position - dir * len * .5f, out hs, 1f, NavMesh.AllAreas)
-                                || !NavMesh.SamplePosition(n.position + dir * len * .5f, out he, 1f, NavMesh.AllAreas)) continue;
+                                || !NavMesh.SamplePosition(n.position + dir * len * .5f, out he, 1f, NavMesh.AllAreas)) { r.noNavMesh++; continue; }
                             Vector3 s = hs.position, e = he.position, flat = e - s; flat.y = 0f;
                             float straight = flat.magnitude;
-                            if (straight < 6f) continue;
+                            if (straight < 6f) { r.tooShort++; continue; }
                             Vector3 d = flat / straight;
-                            if (!NavMesh.Raycast(s, e, out edge, NavMesh.AllAreas)) continue;   // nothing between them
-                            if (!NavMesh.CalculatePath(s, e, NavMesh.AllAreas, path) || path.status != NavMeshPathStatus.PathComplete) continue;
+                            if (!NavMesh.Raycast(s, e, out edge, NavMesh.AllAreas)) { r.lineOpen++; continue; }   // nothing between them
+                            if (!NavMesh.CalculatePath(s, e, NavMesh.AllAreas, path) || path.status != NavMeshPathStatus.PathComplete) { r.noCompletePath++; continue; }
                             float pathLength = StallPathLength(path);
-                            if (pathLength < straight + 4f) continue;
-                            bool ok = StallDry(s) && StallDry(e);
-                            for (float t = 0f; t <= 1f && ok; t += .5f / straight)
+                            if (pathLength < straight + 4f) { r.detourUnder4m++; continue; }
+                            bool wet = !StallDry(s) || !StallDry(e), high = false;
+                            for (float t = 0f; t <= 1f && !wet && !high; t += .5f / straight)
                             {
                                 var p = Vector3.Lerp(s, e, t);
-                                if (!StallDry(p)) ok = false;
+                                if (!StallDry(p)) { wet = true; break; }
                                 RaycastHit g;
-                                if (ok && pass == 0 && Physics.Raycast(new Vector3(p.x, Mathf.Max(s.y, e.y) + 6f, p.z), Vector3.down, out g, 30f, StallGroundMask, QueryTriggerInteraction.Ignore)
-                                    && Mathf.Abs(g.point.y - p.y) > 2f) ok = false;
+                                if (pass == 0 && Physics.Raycast(new Vector3(p.x, Mathf.Max(s.y, e.y) + 6f, p.z), Vector3.down, out g, 30f, StallGroundMask, QueryTriggerInteraction.Ignore)
+                                    && Mathf.Abs(g.point.y - p.y) > 2f) high = true;
                             }
-                            if (!ok) continue;
+                            if (wet) { r.riverOnLine++; continue; }
+                            if (high) { r.groundOff2m++; continue; }
                             RaycastHit ag;
                             Vector3 anchor = e + d * lead;   // slot 0 = anchor - d * lead = e (StallStart turns the formation's right to d)
-                            if (!Physics.Raycast(anchor + Vector3.up * 3f, Vector3.down, out ag, 8f, StallGroundMask, QueryTriggerInteraction.Ignore) || !StallDry(ag.point)) continue;
-                            if (!NavMesh.SamplePosition(s - d * 1.5f, out hp, 1f, NavMesh.AllAreas)) continue;   // the player stands behind the dog to attach
-                            c.anchor = ag.point; c.slot = new Vector3(e.x, e.y, e.z); c.dogStart = s; c.site = hp.position;
-                            c.straightLength = straight; c.pathLength = pathLength; c.z = s.z; c.side = RiverSideOf(s);
-                            c.log.Add("site pass=" + pass + " node=" + n.name + " len=" + len + " dir=" + (a * 22.5f) + " straight=" + straight.ToString("F1") + " path=" + pathLength.ToString("F1")
-                                + " edge=" + edge.position.ToString("F1") + " lead=" + lead.ToString("F2"));
-                            var facing = Quaternion.LookRotation(d);
-                            Networking.LocalPlayer.TeleportTo(c.site, facing);
-                            roots[RiverDog].SetPositionAndRotation(s, facing);
-                            var sync = roots[RiverDog].GetComponent<VRC.SDK3.Components.VRCObjectSync>(); if (sync != null) sync.FlagDiscontinuity();
-                            return;
+                            if (!Physics.Raycast(anchor + Vector3.up * 3f, Vector3.down, out ag, 8f, StallGroundMask, QueryTriggerInteraction.Ignore) || !StallDry(ag.point)) { r.anchorNoGround++; continue; }
+                            if (!NavMesh.SamplePosition(s - d * 1.5f, out hp, 1f, NavMesh.AllAreas)) { r.noPlayerSpot++; continue; }   // the player stands behind the dog to attach
+                            r.found = true; r.status = "FOUND"; r.pass = pass; r.node = n.name; r.len = len; r.dirDeg = a * 22.5f;
+                            r.start = s; r.slot = e; r.anchor = ag.point; r.site = hp.position; r.edge = edge.position;
+                            r.straight = straight; r.pathLength = pathLength;
+                            return r;
                         }
                 }
-            throw new InvalidOperationException("No stall site: no route-side pair with an obstacle on the straight line, a complete path >= 4 m longer and no river band");
+            r.why = "no candidate passed every condition";
+            return r;
+        }
+
+        static void StallPlace(RiverCase c)
+        {
+            if (riverRoute == null) throw new InvalidOperationException("KH_WalkRoute missing (its nodes seed the stall site search)");
+            // Read like Walking/5 Verify reads the route's backing nodes (an Array of Transforms), not as an exact Transform[].
+            var nodeArray = Get<Array>(riverRoute, "nodes");
+            var nodes = new Transform[nodeArray.Length];
+            for (int i = 0; i < nodes.Length; i++) nodes[i] = nodeArray.GetValue(i) as Transform;
+            var spot = FindStallSpot(nodes, StallSlotLead());
+            if (!spot.found) throw new InvalidOperationException("No stall site (" + spot.why + "): " + spot.Rejections() + ". Run Course/75h in Edit mode first");
+            Vector3 s = spot.start, d = spot.slot - spot.start; d.y = 0f; d.Normalize();
+            c.anchor = spot.anchor; c.slot = spot.slot; c.dogStart = s; c.site = spot.site;
+            c.straightLength = spot.straight; c.pathLength = spot.pathLength; c.z = s.z; c.side = RiverSideOf(s);
+            c.log.Add("site pass=" + spot.pass + " node=" + spot.node + " len=" + spot.len + " dir=" + spot.dirDeg + " straight=" + spot.straight.ToString("F1") + " path=" + spot.pathLength.ToString("F1")
+                + " edge=" + spot.edge.ToString("F1") + " lead=" + spot.lead.ToString("F2") + " start=" + s.ToString("F2"));
+            var facing = Quaternion.LookRotation(d);
+            Networking.LocalPlayer.TeleportTo(c.site, facing);
+            roots[RiverDog].SetPositionAndRotation(s, facing);
+            var sync = roots[RiverDog].GetComponent<VRC.SDK3.Components.VRCObjectSync>(); if (sync != null) sync.FlagDiscontinuity();
+        }
+
+        // DES-DOG-001 (2026-10-12): Edit-mode probe of the w5-gather-stall spot on the saved scene's NavMesh and colliders, so the
+        // Play case (Course/75g, and Course/75 in the night run) is not started when no spot exists. Reads the U# proxies (route
+        // nodes, formation ratios, pack radii), changes nothing, writes Temp/kh-gather-stall/spot.json and one summary line:
+        //   GATHER_STALL_SPOT_OK pass=<0|1> node=<name> straight=<m> path=<m> start=<xyz> slot=<xyz> anchor=<xyz> -> <json>
+        //   GATHER_STALL_SPOT_FAIL <why>: candidates=.. noNavMesh=.. ... -> <json>
+        [MenuItem("Tools/KominkaHillside/Course/75h - Probe Gather Stall Spot")]
+        public static void ProbeGatherStallSpot()
+        {
+            const string ProbeDir = "Temp/kh-gather-stall", Json = ProbeDir + "/spot.json";
+            StallSpot spot;
+            string scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path;
+            if (EditorApplication.isPlayingOrWillChangePlaymode) spot = new StallSpot { why = "Play mode (run in Edit mode)" };
+            else if (scene != KH_CourseGroundEditor.ScenePath) spot = new StallSpot { why = "active scene is " + scene + ", expected " + KH_CourseGroundEditor.ScenePath };
+            else
+            {
+                Physics.SyncTransforms();
+                var walkRoute = UnityEngine.Object.FindObjectOfType<KH_WalkRoute>();
+                var act = UnityEngine.Object.FindObjectOfType<KominkaDogRun.KD_GroupActivities>();
+                var pack = UnityEngine.Object.FindObjectOfType<KominkaDogRun.KD_DogPack>();
+                if (walkRoute == null || walkRoute.nodes == null) spot = new StallSpot { why = "KH_WalkRoute (nodes) missing" };
+                else if (act == null) spot = new StallSpot { why = "KD_GroupActivities missing" };
+                else spot = FindStallSpot(walkRoute.nodes, StallSlotLead(act.widthRatio, act.gapRatio, pack != null ? pack.dogRadius : null));
+            }
+            spot.scene = scene; spot.utc = DateTime.UtcNow.ToString("o");
+            if (!spot.found) spot.status = "NONE";
+            Directory.CreateDirectory(ProbeDir);
+            File.WriteAllText(Json, JsonUtility.ToJson(spot, true));
+            if (spot.found)
+                Debug.Log("[KH Gather Stall Probe] GATHER_STALL_SPOT_OK pass=" + spot.pass + " node=" + spot.node + " len=" + spot.len + " dir=" + spot.dirDeg + " straight=" + spot.straight.ToString("F1")
+                    + " path=" + spot.pathLength.ToString("F1") + " start=" + spot.start.ToString("F2") + " slot=" + spot.slot.ToString("F2") + " anchor=" + spot.anchor.ToString("F2")
+                    + " edge=" + spot.edge.ToString("F2") + " lead=" + spot.lead.ToString("F2") + " (" + spot.Rejections() + ") -> " + Json);
+            else
+                Debug.LogWarning("[KH Gather Stall Probe] GATHER_STALL_SPOT_FAIL " + spot.why + ": " + spot.Rejections() + " -> " + Json);
         }
 
         static void StallStart(RiverCase c, double now)
