@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using KominkaDogRun;
@@ -24,7 +25,7 @@ namespace KominkaHillside.Editor
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Edit mode required");
             Scene production = SceneManager.GetActiveScene();
             bool wasDirty = production.isDirty;
-            var log = new StringBuilder("IMP-DOG-041 hand feeding Edit checks\n");
+            var log = new StringBuilder("IMP-DOG-041 hand feeding + IMP-DOG-042 called dog Edit checks\n");
             int passed = 0, failed = 0;
             Action<bool, string> check = (ok, name) => { if (ok) passed++; else failed++; log.AppendLine((ok ? "PASS " : "FAIL ") + name); };
             Scene preview = EditorSceneManager.NewPreviewScene();
@@ -90,6 +91,8 @@ namespace KominkaHillside.Editor
                 Apply(body);
                 check(!mesh.activeSelf, "put away hides treat");
                 check(!box.HandFedOf(-1) && !box.HandFedOf(6), "missing dog rejected");
+
+                CalledDogChecks(box, slot, preview, check, log);
             }
             finally { EditorSceneManager.ClosePreviewScene(preview); }
 
@@ -102,7 +105,14 @@ namespace KominkaHillside.Editor
                 check(w.treatBox != null && mouth != null, w.name + " treatBox and mouth wired");
                 if (mouth != null && w.dogRoot != null)
                     log.AppendLine("  mouth offset world m: " + (mouth.position - w.dogRoot.position).ToString("F3"));
+                // IMP-DOG-042: the called-dog beat reads the call (sleepBoard slot), the gaze writer and the treat box
+                check(w.sleepBoard != null && w.sleepBoard.SlotOf(w.dogIndex) != null && w.petController != null,
+                    w.name + " called-dog treat wiring (sleepBoard slot, petController)");
             }
+            // IMP-DOG-042: the pose panel drops the chin rest / paw while CalledTreatActive; it reads its own dogs[] by index
+            var poses = UnityEngine.Object.FindObjectsOfType<KD_CallPose>(true).Where(p => p.gameObject.scene == production).ToArray();
+            check(poses.Length == 1 && poses[0].dogs != null && poses[0].dogs.Length == 6 && poses[0].dogs.All(x => x != null),
+                "KD_CallPose wired to six dogs (chin rest / paw yield to the called-dog treat)");
             check(dogs == 6, "six production dogs");
             check(production.isDirty == wasDirty, "production dirty unchanged");
             log.AppendLine("RESULT " + passed + " passed / " + failed + " failed");
@@ -110,6 +120,133 @@ namespace KominkaHillside.Editor
             File.WriteAllText("Logs/KominkaHillside/verify-hand-feeding.txt", log.ToString());
             if (failed > 0) throw new InvalidOperationException(log.ToString());
             Debug.Log(log.ToString());
+        }
+
+        static T Field<T>(object o, string name) { return (T)o.GetType().GetField(name, Private).GetValue(o); }
+
+        // IMP-DOG-042: the called dog's acceptance rule (KD_TreatBox.CalledFeedAllowWith, the real method) and the dog-side gates,
+        // on the same disposable preview scene. Inputs are the table the master builds in Reconcile; nothing is mocked inside the rule.
+        static void CalledDogChecks(KD_TreatBox box, KD_TreatSlot slot, Scene preview, Action<bool, string> check, StringBuilder log)
+        {
+            const int Out = KD_TreatBox.SlotOut, None = KD_TreatBox.AllowNone, Keep = KD_TreatBox.AllowKeep, New = KD_TreatBox.AllowNew;
+            // dogs: 0 = called by 7 and waiting (ふせ / おすわり), 1 = free dog that claimed slot 0 first, 2 = called by 7 but not waiting
+            // (walking there / lying pose / stretching), 3 = called by 8 and waiting. slots: 0 = 7's treat held at dog 0's mouth,
+            // 1 = 8's treat held at dog 0's and dog 3's mouth, 2 = 7's treat on the ground at dog 0's mouth
+            const int D = 4, S = 3;
+            int[] caller = { 7, -1, 7, 8 }, ready = { 1, 0, 0, 1 }, giver = { 7, 8, 7 }, state = { Out, Out, Out }, held = { 1, 1, 0 };
+            int[] gens = { 100, 200, 300 }, prev = { -1, 0, -1, -1 }, prevGen = { 0, 100, 0, 0 };
+            var reach = new int[D * S];
+            reach[0 * S + 0] = 2; reach[0 * S + 1] = 2; reach[0 * S + 2] = 2; reach[2 * S + 0] = 2; reach[3 * S + 1] = 2;
+            Func<int[]> fresh = () => Enumerable.Repeat(New, D * S).ToArray();   // unleashed dogs, as BuildAllowWith leaves them
+            var allow = fresh();
+            box.CalledFeedAllowWith(caller, ready, new int[D], giver, state, held, reach, prev, prevGen, gens, D, S, allow);
+            check(allow[0 * S + 0] == New, "042 caller's held treat at the called dog's mouth is accepted");
+            check(allow[0 * S + 1] == None, "042 another player's hand at the called dog's mouth is ignored");
+            check(allow[0 * S + 2] == None, "042 ground treat at the called dog's mouth is ignored (no walking to food)");
+            check(allow[2 * S + 0] == None && allow[2 * S + 1] == None && allow[2 * S + 2] == None,
+                "042 a called dog not waiting in an awake pose takes nothing (walking there / lying / stretching)");
+            check(allow[1 * S + 0] == None && allow[1 * S + 2] == New, "042 offered slot taken from the free dog that had not started eating; its other slots stay");
+            check(allow[3 * S + 1] == New && allow[1 * S + 1] == None, "042 each caller's offer goes to that caller's dog only");
+            var outSlot = new int[D]; var outGen = new int[D];
+            box.ResolveClaimsAllowWith(prev, prevGen, state, gens, new[] { 1, 1, 0, 1 }, Enumerable.Repeat(500, D * S).ToArray(), allow, D, S, outSlot, outGen);
+            check(outSlot[0] == 0 && outGen[0] == 100 && outSlot[3] == 1 && outSlot[1] == 2 && outSlot[2] == -1,
+                "042 resolve: called dogs get the offers at their mouths, the free dog moves to the remaining slot (" + string.Join(",", outSlot) + ")");
+
+            // keep band (hand wobbling between HandFeedReach and CalledFeedKeep) and release beyond it
+            reach = new int[D * S]; reach[0 * S + 0] = 1;
+            allow = fresh();
+            box.CalledFeedAllowWith(caller, ready, new int[D], giver, state, held, reach, new[] { 0, -1, -1, -1 }, new[] { 100, 0, 0, 0 }, gens, D, S, allow);
+            check(allow[0 * S + 0] == Keep && allow[1 * S + 0] == None, "042 own claim kept inside the keep band, still not given to others");
+            allow = fresh();
+            box.CalledFeedAllowWith(caller, ready, new int[D], giver, state, held, reach, new[] { -1, -1, -1, -1 }, new int[D], gens, D, S, allow);
+            check(allow[0 * S + 0] == None && allow[1 * S + 0] == New, "042 keep band never starts a claim; the slot stays open to free dogs");
+            reach = new int[D * S];
+            allow = fresh();
+            box.CalledFeedAllowWith(caller, ready, new int[D], giver, state, held, reach, new[] { 0, -1, -1, -1 }, new[] { 100, 0, 0, 0 }, gens, D, S, allow);
+            check(allow[0 * S + 0] == None, "042 hand pulled beyond the keep band releases the claim (far / high treat)");
+            check(KD_TreatBox.CalledFeedKeep > KD_TreatBox.HandFeedReach, "042 keep band is wider than the bite reach");
+
+            // a dog that has started eating keeps its row (RC-6: no un-eating), even when its slot is now offered to a called dog
+            reach = new int[D * S]; reach[0 * S + 0] = 2;
+            allow = fresh();
+            box.CalledFeedAllowWith(caller, ready, new[] { 0, 1, 0, 0 }, giver, state, held, reach, prev, prevGen, gens, D, S, allow);
+            check(allow[1 * S + 0] == New, "042 a free dog already eating keeps its row");
+            allow = fresh();
+            box.CalledFeedAllowWith(caller, ready, new[] { 1, 0, 0, 0 }, giver, state, new[] { 0, 0, 0 }, new int[D * S], prev, prevGen, gens, D, S, allow);
+            check(allow[0 * S + 0] == New && allow[0 * S + 2] == New, "042 a called dog already eating keeps its row (receipt kept by KeepHandReceipts)");
+            allow = fresh();
+            box.CalledFeedAllowWith(new[] { -1, -1, -1, -1 }, new int[D], new int[D], giver, state, held, reach, prev, prevGen, gens, D, S, allow);
+            check(allow.All(a => a == New), "042 nobody called: the table is untouched (same answer as before 042)");
+
+            // ---- dog side: which poses wait for a treat, and the beat never moves the dog ----
+            var dogGo = new GameObject("CalledDogProbe");
+            SceneManager.MoveGameObjectToScene(dogGo, preview);
+            var dog = dogGo.AddComponent<KD_DogWanderController>();
+            var board = dogGo.AddComponent<KD_SleepBoard>();
+            var seat = dogGo.AddComponent<KD_SleepSlot>();
+            board.slots = new[] { seat };
+            seat.dogIndex = 0;
+            dog.dogIndex = 0; dog.sleepBoard = board; dog.treatBox = box; dog.dogRoot = dogGo.transform;
+            Set(dog, "_sleepCalled", true); Set(dog, "_wantSleep", false);
+            Set(seat, "poseId", 2);
+            check(!dog.CalledFeedReady, "042 called but not arrived (still walking) does not wait for a treat");
+            Set(dog, "_wantSleep", true);
+            foreach (int pose in new[] { 0, 3, 4 })
+            {
+                Set(seat, "poseId", pose);
+                check(!dog.CalledFeedReady, "042 lying pose " + pose + " (IsAsleep: ごろん / うずくまる / へそ天) takes no treat");
+            }
+            foreach (int pose in new[] { 1, 2 })
+            {
+                Set(seat, "poseId", pose);
+                // IsStretching reads the server clock; in Edit it may be unavailable. Then the awake case is left to the harness (97f)
+                try { check(dog.CalledFeedReady, "042 awake pose " + pose + " (ふせ / おすわり) waits for a treat at the mouth"); }
+                catch (Exception e) { log.AppendLine("NOTE 042 awake pose " + pose + " not evaluable in Edit (" + e.GetType().Name + "); Course/97f covers it"); }
+            }
+            // placed spot (場所を決めて呼ぶ): IsCompanionReady is raised before the lift, so a dog rising / turning onto the spot takes nothing
+            // (review 2026-10-12). Every refusal below returns before the stretch check (no server clock needed)
+            var spot = new Vector3(3f, 1.5f, 4f);
+            Set(seat, "poseId", 2); Set(seat, "hasSpot", true); Set(seat, "spot", spot); Set(seat, "spotYaw", 37f);
+            Set(dog, "_placedSleepActive", true);
+            dogGo.transform.SetPositionAndRotation(spot - Vector3.up * .5f, Quaternion.Euler(0, 37, 0));
+            check(!dog.CalledFeedReady, "042 placed spot: still lifting (0.5 m below the spot) takes no treat");
+            dogGo.transform.SetPositionAndRotation(spot - Vector3.up * .09f, Quaternion.Euler(0, 37, 0));
+            check(!dog.CalledFeedReady, "042 placed spot: just outside the 3D arrival tolerance (0.09 m) takes no treat");
+            dogGo.transform.SetPositionAndRotation(spot, Quaternion.Euler(0, 37 + 30, 0));
+            check(!dog.CalledFeedReady, "042 placed spot: still turning (30 deg off the spot yaw) takes no treat");
+            Set(dog, "_dogOwner", true); Set(dog, "_placedSettling", true);
+            dogGo.transform.SetPositionAndRotation(spot - Vector3.up * .02f, Quaternion.Euler(0, 37, 0));
+            check(!dog.CalledFeedReady, "042 placed spot: the Owner's lift not finished (_placedSettling) takes no treat");
+            Set(dog, "_placedSettling", false);
+            Set(seat, "hasSpot", false);
+            check(!dog.CalledFeedReady, "042 placed flag without a synced spot (release in flight) takes no treat");
+            Set(seat, "hasSpot", true);
+            dogGo.transform.SetPositionAndRotation(spot, Quaternion.Euler(0, 37, 0));
+            try { check(dog.CalledFeedReady, "042 placed spot: settled on the spot and yaw waits for a treat"); }
+            catch (Exception e) { log.AppendLine("NOTE 042 settled placed spot not evaluable in Edit (" + e.GetType().Name + "); Course/97f covers the fan spot only"); }
+            Set(dog, "_placedSleepActive", false); Set(dog, "_dogOwner", false); Set(seat, "hasSpot", false);
+
+            Set(dog, "_ctActive", true); Set(dog, "_sleepCalled", false);
+            check(!dog.CalledTreatActive, "042 CalledTreatActive drops with the call (KD_CallPose resumes chin rest / paw)");
+            Set(dog, "_sleepCalled", true);
+            check(dog.CalledTreatActive, "042 CalledTreatActive while called and in the beat");
+
+            // the beat itself on a lying pose (no server clock): the caller's receipt holds the dog busy, another giver's does not;
+            // neither moves nor turns the root (no Coast-turn / FaceTowards / StepToward / _look / _eatPose)
+            Set(seat, "poseId", 0);
+            box.slots = new[] { slot };   // LiveSlotOf reads the box's slot table (the 041 rows above did not need it)
+            Set(slot, "giverId", 7); Set(slot, "product", "20"); Set(slot, "outMs", 100);
+            Set(box, "dogSlot", new[] { 0 }); Set(box, "dogSlotOutMs", new[] { 100 });
+            Set(box, "dogEatMs", new[] { 1 }); Set(box, "dogHandFed", new[] { true });
+            dogGo.transform.SetPositionAndRotation(new Vector3(3, 1, 4), Quaternion.Euler(0, 37, 0));
+            MethodInfo beat = typeof(KD_DogWanderController).GetMethod("UpdateCalledTreat", Private);
+            Set(dog, "_treatBusy", false); Set(dog, "_ctActive", false);
+            beat.Invoke(dog, new object[] { 8 });
+            check(!Field<bool>(dog, "_treatBusy") && !Field<bool>(dog, "_ctActive"), "042 another player's treat claim is not this called dog's beat");
+            beat.Invoke(dog, new object[] { 7 });
+            check(Field<bool>(dog, "_treatBusy") && Field<bool>(dog, "_ctActive"), "042 the caller's received treat holds the called dog in the beat");
+            check(dogGo.transform.position == new Vector3(3, 1, 4) && Quaternion.Angle(dogGo.transform.rotation, Quaternion.Euler(0, 37, 0)) < .001f
+                && !Field<bool>(dog, "_eatPose") && !Field<bool>(dog, "_look"), "042 the beat never moves / turns the dog or raises the floor / LookAt pose");
         }
     }
 }

@@ -198,6 +198,9 @@ namespace KominkaDogRun
         [UdonSynced] private bool[] dogHandFed = new bool[0];
         [UdonSynced] private Vector3[] dogBitePos = new Vector3[0];
         public const float HandFeedReach = 0.22f;
+        /// <summary>IMP-DOG-042: 呼ばれて待機中の犬が、口元で受けた (まだ食べ始めていない) Claim を保つ口からの距離 (m)。
+        /// 受け始めは <see cref="HandFeedReach"/>。手が境目で揺れても 0.25 秒ごとに Claim が犬と犬の間を行き来しない帯。</summary>
+        public const float CalledFeedKeep = 0.45f;
 
         private int _dogCount;
         private int _slotCount;
@@ -239,6 +242,14 @@ namespace KominkaDogRun
         private int[] _lastCallSeq;    // その呼び出しの通し番号 (大きいほど新しい)
         private int _callSeq;
         private KominkaHillside.KH_LeashManager _leashes;
+
+        // ---- IMP-DOG-042 (2026-10-12): 呼ばれて待機中の犬への手渡し。マスターのローカル (同期しない) の作業配列 ----
+        // 規則は純関数 CalledFeedAllowWith。入力は呼んだ人 (KD_SleepBoard の同期値)・待機の姿勢・枠の手持ち・口と餌の距離
+        private int[] _calledBy;       // 犬 d を呼んでいる playerId (-1 = 呼ばれていない)
+        private int[] _calledReady;    // 犬 d が呼ばれて着き、起きている姿勢で待っている (1)
+        private int[] _eatStarted;     // 犬 d の食べ始めが立っている (1)。その犬の行は触らない
+        private int[] _slotHeld;       // 枠 i が Out で手に持たれている (1)
+        private int[] _reachCode;      // 犬 d の口 × 枠 i の餌: 2 = 手渡しの届く範囲 / 1 = 保つ帯 / 0 = 外。添字 d * slotCount + i
 
         private void Start()
         {
@@ -294,6 +305,11 @@ namespace KominkaDogRun
             _allow = new int[_dogCount * _slotCount];
             _lastCallGiver = NewFilled(_dogCount, -1);
             _lastCallSeq = NewFilled(_dogCount, 0);
+            _calledBy = NewFilled(_dogCount, -1);
+            _calledReady = new int[_dogCount];
+            _eatStarted = new int[_dogCount];
+            _slotHeld = new int[_slotCount];
+            _reachCode = new int[_dogCount * _slotCount];
             _leashes = null;
             for (int d = 0; d < _dogCount && _leashes == null; d++)
                 if (_packWander[d] != null) _leashes = _packWander[d].hillsideLeashes;
@@ -366,6 +382,11 @@ namespace KominkaDogRun
             // IMP-DOG-006: 誰の枠へどの犬を出してよいか (他人の接続犬は外す / 出した人に接続犬が居ればその中から / 続けて同じ犬を呼ばない)
             BuildAllowWith(_walkerOf, _slotGiver, _slotState, _dogEligible, _lastCallGiver, _lastCallSeq,
                 _dogCount, _slotCount, _allow);
+            // IMP-DOG-042: 呼ばれて待機中の犬は、呼んだ本人が口元へ差し出した枠だけを受ける (そこへは歩かない)。
+            // その枠はほかの犬 (まだ食べ始めていない) から外す。食べ始めた犬の行と手渡しの受取 (下の KeepHandReceipts) が勝つ
+            if (CollectCalledFeed())
+                CalledFeedAllowWith(_calledBy, _calledReady, _eatStarted, _slotGiver, _slotState, _slotHeld, _reachCode,
+                    dogSlot, dogSlotOutMs, _slotOutMs, _dogCount, _slotCount, _allow);
             KeepHandReceipts(_slotState, _slotOutMs, _allow, _dogCount, _slotCount);
             ResolveClaimsAllowWith(dogSlot, dogSlotOutMs, _slotState, _slotOutMs,
                 _dogEligible, _distMm, _allow, _dogCount, _slotCount, _outSlot, _outOutMs);
@@ -458,6 +479,11 @@ namespace KominkaDogRun
             if (root == null || !root.gameObject.activeInHierarchy) return false;
             KD_DogFetchController f = _packFetch[d];
             if (f == null || !f.IsIdle) return false;   // 仕事中
+            // IMP-DOG-042: 呼ばれている犬は、着いて起きている姿勢 (ふせ / おすわり) で待っている間だけ受けられる。どの枠を受けるかは
+            // 許可の表 (CalledFeedAllowWith = 呼んだ本人が口元へ差し出した枠だけ) が決める。撫でより前に見る — 口元の手は撫でにもなり、
+            // この犬の Claim は手が口元に来てからしか立たない (041 のように Claim が先に立っていない) ので、下の撫での除外に掛けると永久に配られない
+            KD_DogWanderController called = _packWander[d];
+            if (called != null && called.IsSleepCalled) return called.CalledFeedReady;
             // A hand approaching the mouth may also trigger petting. Keep an already accepted
             // hand offer in that case; do not pull a different, already petted dog into a new claim.
             if (f.PetActive)
@@ -472,6 +498,7 @@ namespace KominkaDogRun
             // 別の人が出したおやつへ歩いて行ってしまう。
             // **`f.IsIdle` では弾けない**: 寝ている犬の `dogState` は Idle のまま
             // (犬の状態機械は徘徊層が持ち、Fetch は関与しない)
+            // IMP-DOG-042: 呼ばれている犬は上で答えを返している (ここへは来ない)。他人のおやつで占有が破れないのは許可の表が守る
             if (w.IsSleepCalled) return false;
             return true;
         }
@@ -622,6 +649,105 @@ namespace KominkaDogRun
                 int s = ClaimedSlotOf(d);
                 if (s < 0 || s >= count || states[s] != SlotOut || generations[s] != ClaimedGenOf(d)) continue;
                 allow[d * count + s] = AllowKeep;
+            }
+        }
+
+        // ============================================================
+        // IMP-DOG-042 (2026-10-12): 呼んだ犬が、その場に留まったまま、呼んだ本人が口元へ差し出したおやつを食べる
+        // 設計: docs/plans/2026-10-03-treat-call.md「2026-10-12 IMP-DOG-042」
+        // ============================================================
+
+        /// <summary>呼ばれている犬の入力を作業配列へ集める (マスターのローカル。結果は dogSlot として配る)。呼ばれている犬が
+        /// 1 匹も居なければ false (表に触らない = IMP-DOG-042 より前と同じ答え)。呼んだ人は KD_SleepBoard の同期値、待機の姿勢は
+        /// 犬の CalledFeedReady (同期値と犬の Owner = マスターの観測から全員が導く)、口と餌の距離は _ReportArrived と同じ 3D。</summary>
+        private bool CollectCalledFeed()
+        {
+            bool any = false;
+            for (int d = 0; d < _dogCount; d++)
+            {
+                KD_DogWanderController w = _packWander[d];
+                int caller = w != null && w.sleepBoard != null ? w.sleepBoard.LiveSleeperOf(w.dogIndex) : -1;
+                _calledBy[d] = caller;
+                _calledReady[d] = caller >= 0 && w.CalledFeedReady ? 1 : 0;
+                _eatStarted[d] = dogEatMs[d] != 0 ? 1 : 0;
+                if (caller >= 0) any = true;
+            }
+            if (!any) return false;
+            for (int i = 0; i < _slotCount; i++)
+                _slotHeld[i] = _slotState[i] == SlotOut && slots[i] != null && slots[i].BodyHeld() ? 1 : 0;
+            for (int d = 0; d < _dogCount; d++)
+            {
+                KD_DogFetchController f = _packFetch[d];
+                Transform mouth = _calledReady[d] != 0 && f != null ? f.mouthAnchor : null;
+                for (int i = 0; i < _slotCount; i++)
+                {
+                    int code = 0;
+                    if (mouth != null && _slotHeld[i] != 0 && _slotGiver[i] == _calledBy[d])
+                    {
+                        Vector3 food = slots[i].BodyPosition();
+                        if (HandFeedReachWith(mouth.position, food)) code = 2;
+                        else if ((mouth.position - food).sqrMagnitude <= CalledFeedKeep * CalledFeedKeep) code = 1;
+                    }
+                    _reachCode[d * _slotCount + i] = code;
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// **呼ばれて待機中の犬は、呼んだ本人が口元へ差し出した枠だけを受ける** — 許可の表 <paramref name="allow"/>
+        /// (<see cref="BuildAllowWith"/> の後、<see cref="KeepHandReceipts"/> の前) を書き換える。純関数。
+        /// <code>
+        /// 呼ばれている犬 c (caller[c] &gt;= 0、食べ始めていない) の行:
+        ///   枠 i が Out・手に持たれている・出した人 == caller[c]・c が待機の姿勢 (calledReady) で
+        ///     口から HandFeedReach 以内 (reach 2)                          → AllowNew
+        ///     c が今その枠 (同じ世代) を掴んでいて CalledFeedKeep 以内 (1)  → AllowKeep (境目で行き来しない)
+        ///   それ以外 (遠い・高い・地面・他人の手・向かう途中・寝る姿勢・伸び)  → AllowNone (掴んでいても外す)
+        /// 上で AllowKeep 以上になった枠は、その犬のもの: ほかの犬 (食べ始めていない・その枠で同じく許された呼ばれている犬を除く) は AllowNone。
+        /// </code>
+        /// **食べ始めた犬の行は触らない** (破壊的監査 v2 RC-6: 食べている途中に Claim を剥がすと同じおやつが復活する)。
+        /// 呼ばれていない犬の行は、枠を口元へ差し出された犬に譲るときだけ変わる。
+        /// </summary>
+        // net: callable-ok: 純関数 — 引数だけを見て書き換えるのは渡された許可の表だけ
+        public void CalledFeedAllowWith(int[] caller, int[] calledReady, int[] eatStarted,
+            int[] slotGiver, int[] slotState, int[] slotHeld, int[] reach,
+            int[] prevSlot, int[] prevOutMs, int[] slotOutMs, int dogs, int count, int[] allow)
+        {
+            if (allow == null || caller == null || calledReady == null || eatStarted == null || slotGiver == null || slotState == null
+                || slotHeld == null || reach == null || slotOutMs == null) return;
+            if (dogs > caller.Length || dogs > calledReady.Length || dogs > eatStarted.Length) return;
+            if (count > slotGiver.Length || count > slotState.Length || count > slotHeld.Length || count > slotOutMs.Length) return;
+            if (dogs * count > allow.Length || dogs * count > reach.Length) return;
+            for (int d = 0; d < dogs; d++)
+            {
+                int g = caller[d];
+                if (g < 0 || eatStarted[d] != 0) continue;
+                int ps = prevSlot == null || d >= prevSlot.Length ? -1 : prevSlot[d];
+                int pg = prevOutMs == null || d >= prevOutMs.Length ? 0 : prevOutMs[d];
+                for (int i = 0; i < count; i++)
+                {
+                    int a = AllowNone;
+                    if (calledReady[d] != 0 && slotState[i] == SlotOut && slotHeld[i] != 0 && slotGiver[i] == g)
+                    {
+                        int r = reach[d * count + i];
+                        if (r >= 2) a = AllowNew;
+                        else if (r >= 1 && ps == i && pg == slotOutMs[i]) a = AllowKeep;
+                    }
+                    allow[d * count + i] = a;
+                }
+            }
+            for (int i = 0; i < count; i++)
+            {
+                bool offered = false;
+                for (int d = 0; d < dogs && !offered; d++)
+                    if (caller[d] >= 0 && eatStarted[d] == 0 && allow[d * count + i] >= AllowKeep) offered = true;
+                if (!offered) continue;
+                for (int d = 0; d < dogs; d++)
+                {
+                    if (eatStarted[d] != 0) continue;
+                    if (caller[d] >= 0 && allow[d * count + i] >= AllowKeep) continue;
+                    allow[d * count + i] = AllowNone;
+                }
             }
         }
 

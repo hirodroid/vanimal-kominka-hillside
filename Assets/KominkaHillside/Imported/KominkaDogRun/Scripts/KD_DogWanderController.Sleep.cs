@@ -97,6 +97,9 @@ namespace KominkaDogRun
             // EndRest 経由なのでクールダウンと借金の清算はどの出口とも同じ
             if (_restPhase != RestPhaseNone) EndRest();
 
+            // IMP-DOG-042: 食べのエッジは呼ばれている間も毎回追う (HillsideCalledTreat.cs)。見せるのは凍結後だけ (下の 2 か所)
+            CalledTreatEdges(sleeper);
+
             Vector3 playerPos = p.GetPosition();
 
             // ---- 凍結前: 扇のスロットへ歩く ----
@@ -175,6 +178,8 @@ namespace KominkaDogRun
             // **到着していないうちは Sleep を立てない** (Phase 1 の申し送り) —
             // 移動中に立てると「歩いたまま寝る」絵になる。Animator へ書くのは LateUpdate の 1 箇所
             if (_speed <= stopSpeedThreshold && facing) _wantSleep = true;
+            // IMP-DOG-042: 着いてポーズを取っている間だけ、呼んだ本人が口元へ差し出したおやつをその場で食べる (足も向きも動かさない)
+            if (_wantSleep) UpdateCalledTreat(sleeper);
             return true;
         }
 
@@ -212,6 +217,7 @@ namespace KominkaDogRun
                 // under / over the spot), which a horizontal check would call arrived. Busy until then (TickBusy)
                 _placedSettling = (target - lifted).sqrMagnitude > 0.000001f;
             }
+            UpdateCalledTreat(_sleeperId);   // IMP-DOG-042: 置いた点でも同じ (_sleeperId は同じ判断で UpdateSleep が引き直した占有者)
             return true;
         }
 

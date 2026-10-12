@@ -12,6 +12,18 @@ test('hand-feed receipt accepts only its completed scenario with restoration evi
     const j = receipt(); mutate(j); assert.equal(result(j, 'walk', args).ok, false);
   }
 });
+test('called-dog hand-feed receipt (Course/97f, IMP-DOG-042) accepts only its own scenario', () => {
+  const args = ['Course/97f - Walk Harness Called Hand Feed (HF2 only, fresh profile)'];
+  const receipt = () => ({ ...make(), status: 'HAND_FEED_PASS', commerceSet: 6,
+    cases: [{ name: 'HF2-called-dog-stays-and-eats', status: 'PASS' }] });
+  assert.equal(result(receipt(), 'walk', args).ok, true);
+  for (const mutate of [j => j.commerceSet = 5, j => j.cases[0].name = 'HF1-high-hand-to-mouth-and-recovery',
+    j => j.cases[0].status = 'FAIL', j => j.cases.push({ name: 'extra', status: 'PASS' }), j => j.sceneFileUnchanged = false]) {
+    const j = receipt(); mutate(j); assert.equal(result(j, 'walk', args).ok, false);
+  }
+  // a 97f receipt is not a 97e pass
+  assert.equal(result(receipt(), 'walk', ['Course/97e - Walk Harness Hand Feed (HF1 only, fresh profile)']).ok, false);
+});
 const make = () => ({status:'SEGMENTS_OBSERVED', endedUtc:'2026-10-02T00:00:00Z', sceneFileUnchanged:true,
   settingsRestored:true, playerDataRestored:true, errors:[], selectedWalkCase:name, lapChoice:0,
   cases:[{name,status:'SEGMENT_OBSERVED'}]});

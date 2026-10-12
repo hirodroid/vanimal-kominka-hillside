@@ -45,24 +45,7 @@ namespace KominkaDogRun
             // 掴んでいるかの判定より先に見る — 食べ終わると枠が回収されて Claim ごと
             // 畳まれるので、Claim で先に return すると終わりのエッジを永久に拾えず、
             // 返事 (完了条件 3) が出ない
-            bool eatingMine = treatBox.EatingNowOf(dogIndex);
-            if (eatingMine && !_treatEating)
-            {
-                _treatEating = true;
-                KD_TreatSlot eating = treatBox.LiveSlotOf(dogIndex);
-                // 皿へ戻っても頭が追わないよう、食べ点は**食べ始めに 1 度だけ**固定する
-                _treatEatPos = treatBox.HandFedOf(dogIndex) ? treatBox.BitePositionOf(dogIndex)
-                    : eating != null ? eating.BodyPosition() : dogRoot.position;
-                // **返事の相手も食べ始めの瞬間に確定する** (Phase 1 と同じ作法)。
-                // 食べている途中で枠が回収されても、返事の相手はすり替わらない
-                _thanksPlayerId = eating != null ? eating.GiverId() : -1;
-            }
-            else if (!eatingMine && _treatEating)
-            {
-                // 食べ終わった (または途中で畳まれた) → 出した人を見る (返事 — 完了条件 3)
-                _treatEating = false;
-                _thanksUntil = Time.time + treatThanksDuration;
-            }
+            TreatEatEdge();
 
             // ---- 返事: 出した人の方を向いて見る (ローカル演出。開始時刻は同期値由来なので
             // クライアント間のずれは食べ終わりの伝播ぶんだけ) ----
@@ -187,6 +170,32 @@ namespace KominkaDogRun
             }
             else TreatStep(dogPos + dir * advance, 0f, walkSpeed);
             TreatGaze(food, 0.8f);
+        }
+
+        /// <summary>食べの立ち上がり / 終わりのエッジ (同期値から導出)。IMP-DOG-042 で UpdateTreat から切り出した (中身は同じ)。
+        /// 呼ばれて待機中の犬は UpdateTreat まで来ない (寝る枝 1.1 が先に返す) ので、UpdateCalledTreat
+        /// (HillsideCalledTreat.cs) もこの 1 本を通る — 片方だけが拾うと、呼ぶの解除で通常の層へ戻ったときに
+        /// エッジが二重になる / 欠ける。</summary>
+        void TreatEatEdge()
+        {
+            bool eatingMine = treatBox.EatingNowOf(dogIndex);
+            if (eatingMine && !_treatEating)
+            {
+                _treatEating = true;
+                KD_TreatSlot eating = treatBox.LiveSlotOf(dogIndex);
+                // 皿へ戻っても頭が追わないよう、食べ点は**食べ始めに 1 度だけ**固定する
+                _treatEatPos = treatBox.HandFedOf(dogIndex) ? treatBox.BitePositionOf(dogIndex)
+                    : eating != null ? eating.BodyPosition() : dogRoot.position;
+                // **返事の相手も食べ始めの瞬間に確定する** (Phase 1 と同じ作法)。
+                // 食べている途中で枠が回収されても、返事の相手はすり替わらない
+                _thanksPlayerId = eating != null ? eating.GiverId() : -1;
+            }
+            else if (!eatingMine && _treatEating)
+            {
+                // 食べ終わった (または途中で畳まれた) → 出した人を見る (返事 — 完了条件 3)
+                _treatEating = false;
+                _thanksUntil = Time.time + treatThanksDuration;
+            }
         }
 
     }

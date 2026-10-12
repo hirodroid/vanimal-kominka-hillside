@@ -218,8 +218,10 @@ namespace KominkaDogRun
             }
             bool chin = slot.PoseId == 1;
             bool held = chin ? slot.ChinHand != 0 : slot.PawHeld;
+            // IMP-DOG-042: おやつを口元で受けて食べ・返事をしている間 (CalledTreatActive) は、あご乗せ・お手を下ろす
+            // (口元の手をあご乗せと読まない。頭は餌の注視が持つ)。終われば手を置き直して再開できる
             bool ready = slot.IsSleeperLocal && (slot.PoseId == 2 || chin) && !slot.StretchActive && dogs[i] != null
-                && dogs[i].IsCompanionReady && root != null && (placement == null || !placement.Active);
+                && dogs[i].IsCompanionReady && !dogs[i].CalledTreatActive && root != null && (placement == null || !placement.Active);
             if (!ready)
             {
                 _dwell[i] = 0; _outside[i] = 0; _desktopUntil[i] = 0; _sampled[i] = false;

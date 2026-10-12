@@ -38,6 +38,8 @@ function result(j, kind, args) {
   const pass = /^(?:PASS|(?:WASH|WATER|SWIM|FETCH|W5|FRISBEE_M2|FRISBEE_M3|TRAVEL_CALL|TREAT|HAND_FEED|LEDGER|LEDGER_REENTRY|LIVE)_PASS|WATER_PASS_PARTIAL)$/.test(j.status);
   if (kind === 'walk' && /^Course\/97e\s*-/.test(args[0]) && (j.commerceSet !== 5 || cases.length !== 1 || cases[0].name !== 'HF1-high-hand-to-mouth-and-recovery'))
     issues.push('hand-feed scenario mismatch');
+  if (kind === 'walk' && /^Course\/97f\s*-/.test(args[0]) && (j.commerceSet !== 6 || cases.length !== 1 || cases[0].name !== 'HF2-called-dog-stays-and-eats'))
+    issues.push('called hand-feed scenario mismatch');
   if (kind === 'segment' && j.status !== 'SEGMENTS_OBSERVED') issues.push('segment did not complete');
   if (kind === 'lap' && j.status !== 'LAP_OBSERVED') issues.push('lap did not complete');
   const failures = cases.filter(c => c.status !== (observed || 'PASS') && !(pass && c.status === 'SKIP') && !(j.status === 'WATER_PASS_PARTIAL' && c.status === 'NOT_EXERCISED'));
