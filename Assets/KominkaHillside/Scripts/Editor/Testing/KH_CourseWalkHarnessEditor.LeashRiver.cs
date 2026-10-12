@@ -26,7 +26,8 @@ namespace KominkaHillside.Editor
     //                   the dog swims (pose 2) <= 25 s, floats still (pose 2, speed < 0.05) for 1 s, then the player steps back onto the
     //                   bank: walked out and landed (pose 0, state 0) <= 25 s on the same bank, no stage-3 recovery, no water jump, the
     //                   mouth >= MouthLowLimit above the water, the root never sunk into the riverbed while swimming (root - bed >= -0.04 m:
-    //                   the designed float hangs the feet up to the draft below the water, and the leash river legs floor it at bed - 0.03 m;
+    //                   the designed float hangs the feet up to the draft below the water, and the swim floor holds it at bed - 0.03 m
+    //                   (the leash river legs since IMP-DOG-053; every leg in WaterSwimHeight since BUG-DOG-012, the bed of _WaterBedAt);
     //                   was ">= 0.03 m" until run 20261012-030041, which found -0.155 m in the shallow tail of a swim).
     //   LR-wait-Lab     dog 2 (a non-swimmer) leashed on an ok slice 12-20 m below a bridge; the player steps into the river there, the
     //                   dog follows (state 2) <= 25 s; the player walks on to 4 m from the bridge (inside its no-entry zone, outside the
@@ -255,9 +256,12 @@ namespace KominkaHillside.Editor
             if (st > c.lrMaxState) c.lrMaxState = st;
             float surface = KH_CourseGroundEditor.RiverAt(p.z).y;
             if (pose != 0 && lrMouth != null) c.minMouthLR = Mathf.Min(c.minMouthLR, lrMouth.position.y - surface);
-            float bed = LrRiverData()._BedAt(p);
+            // BUG-DOG-012 (2026-10-12): the riverbed and the depth the runtime's swim rules and floor use (the spot's grid in the spot, else
+            // the river-wide grid: KD_DogWanderController._WaterBedAt / _WaterDepthAt), not KH_RiverData alone (LR-attach-swim is in the spot)
+            var wp = WhWanderProxy(WhDog);
+            float bed = wp._WaterBedAt(p);
             if (bed <= KH_RiverData.NoBed + 1f) return;
-            float lift = p.y - bed, depth = LrRiverData()._DepthAt(p);
+            float lift = p.y - bed, depth = wp._WaterDepthAt(p);
             if (c.name == "LR-attach-swim")
             {
                 // F5 (Codex review 2026-10-12): after the attach, independent of the pose (a sink writes pose 1 and _waterSwimming false
@@ -288,20 +292,33 @@ namespace KominkaHillside.Editor
         }
 
         /// <summary>The root height the runtime holds an afloat dog at (WaterSwimHeight: water + swimClear - Ms - the dog's swimSink, settled),
-        /// with the leash river's floor (KD_DogWanderController.LeashRiverSwimFloor: never below the riverbed - 0.03 m). From the scene
-        /// proxies (static tuning), so it works in the travel mode too (whSpot is bound by the water mode only).</summary>
+        /// with the swim floor (never below the riverbed - 0.03 m). BUG-DOG-012 (2026-10-12): the runtime's own functions on the dog's
+        /// proxy (KD_DogWanderController._WaterSwimRootY / _WaterSwimFloorY: static tuning and baked data), so the formula and the floor
+        /// have one copy; it works in the travel mode too (whSpot is bound by the water mode only). Not carrying.</summary>
         static float LrFloatY(int dog, Vector3 p)
         {
-            var sn = GameObject.Find("KH_Dogs/KH_WaterSpot"); var spot = sn == null ? null : sn.GetComponent<KH_WaterSpot>();
-            if (spot == null) throw new InvalidOperationException("KH_Dogs/KH_WaterSpot missing");
-            var river = LrRiverData();
-            float sink = spot.swimSink != null && dog < spot.swimSink.Length ? spot.swimSink[dog] : 0f;
-            float y = river._SurfaceY(p.z) + spot.swimClear - Get<float>(wander[dog], "waterSwimMouth") - sink;
-            float bed = river._BedAt(p);
-            return bed > KH_RiverData.NoBed + 1f ? Mathf.Max(y, bed - LrSwimFloorM) : y;
+            var wp = WhWanderProxy(dog);
+            return Mathf.Max(wp._WaterSwimRootY(p, false), wp._WaterSwimFloorY(p));   // the floor is NoBed (-1000) where there is no riverbed
         }
 
-        const float LrSwimFloorM = .03f;   // = KD_DogWanderController.LrSwimFloor
+        const float LrSwimFloorM = KominkaDogRun.KD_DogWanderController.WaterSwimFloorDepth;   // BUG-DOG-012: the runtime's constant (was a copy)
+
+        static readonly KominkaDogRun.KD_DogWanderController[] whWanderProxies = new KominkaDogRun.KD_DogWanderController[6];
+
+        /// <summary>BUG-DOG-012: the U# proxy of dog's KD_DogWanderController (its pure, baked-data functions are called on it, as
+        /// LrRiverData's KH_RiverData proxy is). Cached; a destroyed proxy (a new Play) is looked up again.</summary>
+        static KominkaDogRun.KD_DogWanderController WhWanderProxy(int dog)
+        {
+            var w = whWanderProxies[dog];
+            if (w != null) return w;
+            // the proxy component on the same GameObject (the path LrRiverData's GetComponent<KH_RiverData> used in the PASS runs); the
+            // UdonSharp lookup only as a fallback
+            w = wander[dog] != null ? wander[dog].GetComponent<KominkaDogRun.KD_DogWanderController>() : null;
+            if (w == null) w = UdonSharpEditor.UdonSharpEditorUtility.GetProxyBehaviour(wander[dog]) as KominkaDogRun.KD_DogWanderController;
+            if (w == null || w.waterSpot == null || w.riverData == null) throw new InvalidOperationException("KD_DogWanderController proxy of dog " + dog + " (waterSpot / riverData) missing");
+            whWanderProxies[dog] = w;
+            return w;
+        }
 
         static float lrSwimEnter;
 

@@ -76,6 +76,9 @@ namespace KominkaDogRun
         const float WaterApproachTimeout = 20f, WaterExitTimeout = 10f, WaterShakeSeconds = 1.2f, WaterLookSeconds = 1f;
         const float WaterStuckStep = 0.1f, WaterFxRange = 20f, WaterSplashInterval = 0.25f;
         const float SwimEaseRate = 1.2f, SinkGuard = 0.03f, SwimLookAhead = 0.3f;
+        // BUG-DOG-012 (2026-10-12): an afloat root is never lower than the riverbed - this (WaterSwimHeight; was IMP-DOG-053's
+        // LrSwimFloor on the leash's river legs only). Public: the harness and Course/132 read the same value
+        public const float WaterSwimFloorDepth = 0.03f;
         private bool _waterSwimming, _swimYValid, _waterWasOwner, _bobBaseValid, _swimSettled;
         private int _waterFetchFrame = -1, _waterCarryFrame = -1;
         // Last refusal of _BlockedByRiver (1 sink-guard / 2 wade-limit / 3 band outside the spot / 4 leaving the spot into the band /
@@ -675,7 +678,10 @@ namespace KominkaDogRun
         // ---- DES-DOG-005 D-3 (M3): a disc catch that lands in the water (ドボン, KH_FrisbeeCatch) ----
 
         /// <summary>The afloat root height at p (the formula of WaterApplySwimHeight, no max with the riverbed): water + swimClear
-        /// (+ carryExtra while carrying) - Ms - the dog's swimSink. Local, read by the disc planner.</summary>
+        /// (+ carryExtra while carrying) - Ms - the dog's swimSink. Local, read by the disc planner. BUG-DOG-012: WaterSwimHeight
+        /// calls this, then raises the result to _WaterSwimFloorY (the floor is not applied here: the planner's landY is unchanged;
+        /// at the swim start depth no breed's float is below the floor except the Shiba by 0.007 m, from the scene's values; Course/132
+        /// checks it).</summary>
         public float _WaterSwimRootY(Vector3 p, bool carrying)
         {
             if (waterSpot == null || riverData == null) return p.y;
@@ -694,6 +700,27 @@ namespace KominkaDogRun
 
         /// <summary>The walk-clip mouth height Ms (the sink guard of a wading dog: never where Ms - depth < 0.03 m).</summary>
         public float _WaterWalkMouth() { return waterSwimMouth; }
+
+        /// <summary>BUG-DOG-012: the riverbed under p as the swim rules see it (the same source as WDepth: the spot's grid wherever it
+        /// has a riverbed, else the river-wide grid); NoBed (-1000) where neither has one. Pure (baked data). Read by the swim floor,
+        /// the harness and Course/132.</summary>
+        public float _WaterBedAt(Vector3 p)
+        {
+            if (waterSpot != null) { float b = waterSpot._Bed(p); if (b > KominkaHillside.KH_WaterSpot.NoBed + 1f) return b; }
+            return riverData != null ? riverData._BedAt(p) : KominkaHillside.KH_RiverData.NoBed;
+        }
+
+        /// <summary>BUG-DOG-012: the lowest root height an afloat dog may have at p (riverbed - WaterSwimFloorDepth); NoBed (-1000) where
+        /// there is no riverbed data (no floor).</summary>
+        public float _WaterSwimFloorY(Vector3 p)
+        {
+            float b = _WaterBedAt(p);
+            return b > KominkaHillside.KH_RiverData.NoBed + 1f ? b - WaterSwimFloorDepth : KominkaHillside.KH_RiverData.NoBed;
+        }
+
+        /// <summary>The swim start / end depths of this dog (WaterSwimEnterDepth / WaterSwimLeaveDepth). Read by Course/132.</summary>
+        public float _WaterSwimEnterDepth() { return waterSpot == null ? 0f : WaterSwimEnterDepth(); }
+        public float _WaterSwimLeaveDepth() { return waterSpot == null ? 0f : WaterSwimLeaveDepth(); }
 
         /// <summary>Dog Owner, the frame a jump lands in the water at p (the root is already there): afloat from here when p is at least
         /// the swim entry depth for a swimmer (the height then eases onto the water line, as a swim start does), and the pose now.</summary>
@@ -752,14 +779,25 @@ namespace KominkaDogRun
             if (_waterSwimming)
             {
                 // the bob is on the visual child; carrying a ball (Fetch state 7/8) lifts the mouth by the ball's radius (B-1)
+                // BUG-DOG-012: the formula is _WaterSwimRootY (one copy: Course/132 evaluates the same function). PCVR 2026-09-28: per-dog sink
                 float want = legs ? _wrecSurfY + _wrecSurfSlope * (q.z - _wrecSurfZ) + _wrecSwimOff
-                    : riverData._SurfaceY(q.z) + waterSpot.swimClear + (_waterCarryFrame == Time.frameCount ? waterSpot.carryExtra : 0f) - waterSwimMouth - waterSpot._SwimSink(dogIndex);   // PCVR 2026-09-28: per-dog sink
+                    : _WaterSwimRootY(q, _waterCarryFrame == Time.frameCount);
                 if (!_swimYValid) { _waterSwimY = q.y; _swimYValid = true; _swimSettled = false; }
                 // Rising only at the start; once afloat the height follows the water surface exactly every frame, so a slope
                 // or a push cannot leave the mouth low for a few frames (W2-Pome run 20260927-073904).
                 // IMP-DOG-036 S3: the ease is one frame (MoveDt): the water legs frames ease too (outside the tick it was deltaTime already)
                 if (_swimSettled) _waterSwimY = want;
                 else { _waterSwimY = Mathf.MoveTowards(_waterSwimY, want, SwimEaseRate * MoveDt()); _swimSettled = Mathf.Abs(_waterSwimY - want) < 0.002f; }
+                // BUG-DOG-012 (2026-10-12; IMP-DOG-053's LeashRiverSwimFloor, now for every leg): the float hangs the feet the draft
+                // (Ms + sink - swimClear: Corgi 0.175 m) below the water, and the swim ends only after 0.5 s below the leave depth or at
+                // the dry edge, so a swimmer walking out reached water 0.02 m deep still afloat with its root up to the draft under the
+                // riverbed (78m run 20261012-030041: -0.155 m). The root is never put lower than the riverbed - WaterSwimFloorDepth
+                // (_WaterSwimFloorY: the riverbed of the swim rules, WDepth's grid). Only the height: the swim flag, the pose and
+                // _swimSettled are not touched. A legs frame never needs it: WaterLegsSwimOk lets an afloat legs frame run only where
+                // every cell it can touch is at least _wrecFloatLow deep (the floor cannot act there). The ease back to the ground
+                // below is not floored: it starts from a floored height and only rises toward the ground (a floor there could hold
+                // _swimYValid forever where the physics ground lies more than 0.03 m under the grid's riverbed)
+                if (!legs) { float floorY = _WaterSwimFloorY(q); if (_waterSwimY < floorY) _waterSwimY = floorY; }
             }
             else if (_swimYValid)
             {
@@ -1007,6 +1045,7 @@ namespace KominkaDogRun
         private bool _wrecSwim;
         private float[] _wrecLow;                    // swimming breeds: KH_WaterSpot._DepthLowTable
         private float _wrecEnter, _wrecLeave;        // WaterSwimEnterDepth / WaterSwimLeaveDepth at the decision
+        private float _wrecFloatLow;                 // BUG-DOG-012: an afloat legs frame needs every touched cell at least this deep
         private float _wrecZLo, _wrecZHi;            // the surface piece of the swim-height record
         private float _wrecSurfY, _wrecSurfZ, _wrecSurfSlope, _wrecSwimOff;   // swim height record (Owner, swimming)
         private int _wrecPose;              // the visual record (every client): the pose after the decision,
@@ -1032,6 +1071,9 @@ namespace KominkaDogRun
                 {
                     WaterRecordSurface(dogRoot.position.z);
                     _wrecSwimOff = waterSpot.swimClear + (_waterCarryFrame == Time.frameCount ? waterSpot.carryExtra : 0f) - waterSwimMouth - waterSpot._SwimSink(dogIndex);
+                    // BUG-DOG-012: afloat legs frames only where the swim floor cannot act (depth >= -offset - floor) nor the swim end
+                    // timer start (>= the leave depth): WaterLegsSwimOk. _wrecLeave was set by WaterLegsRecordCells just above
+                    _wrecFloatLow = Mathf.Max(_wrecLeave, -_wrecSwimOff - WaterSwimFloorDepth);
                 }
             }
             _wrecPose = fetchController.WaterPose;   // after this decision's WaterPoseRefresh (non-Owner: the synced pose)
@@ -1148,7 +1190,8 @@ namespace KominkaDogRun
         ///     swimLeaveHold timer, anything deeper resets it (_swimShallowSince = -1).
         /// True only when every grid cell the frame can touch - the root, the step's end (toward the target, and a coast along
         /// _moveDir) and, wading, the look-ahead point - is proven by the KH_WaterSpot tables to be shallower than the enter depth
-        /// (wading) / at least the leave depth (afloat). Then the per-frame decision would not have started the swim and would have
+        /// (wading) / at least the leave depth and deep enough for the swim floor not to act (afloat: _wrecFloatLow, BUG-DOG-012).
+        /// Then the per-frame decision would not have started the swim and would have
         /// reset the timer (done here). Anything else decides on this frame, so the look-ahead and the pose refresh run before the
         /// step exactly as they did. Afloat, it also decides before z leaves the recorded surface piece (WaterRecordSurface).</summary>
         bool WaterLegsSwimOk()
@@ -1196,7 +1239,9 @@ namespace KominkaDogRun
                 for (int ix = ix0; ix <= ix1; ix++)
                 {
                     int ci = iz * cx + ix;
-                    if (afloat) { if (!(low[ci] >= _wrecLeave)) return false; }
+                    // BUG-DOG-012: afloat, also deep enough that the swim floor cannot act (_wrecFloatLow >= _wrecLeave): the legs
+                    // frame's height (no riverbed query) is then what the decision's floored height would be
+                    if (afloat) { if (!(low[ci] >= _wrecFloatLow)) return false; }
                     else if (!(up[ci] < _wrecEnter)) return false;
                 }
             if (afloat) _swimShallowSince = -1f;   // what the per-frame WaterPoseRefresh did at this depth (before and after the step)

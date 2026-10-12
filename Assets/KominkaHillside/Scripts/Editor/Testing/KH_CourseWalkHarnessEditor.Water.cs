@@ -48,6 +48,18 @@ namespace KominkaHillside.Editor
     //                   _waterFirstUsed still true, no new play (waterState 0) for
     //                   3 s of game time after the end, exit <= 1.5 s, landed <= 10 s, the per-frame rules. The 45 s are not waited.
     //                   After the case the clock is held at +600 s again (the other cases' precondition).
+    //   W-swim-exit     (BUG-DOG-012, 2026-10-12; in 78 before W4-call and alone in 78s) dog 0 (Corgi, a swimmer: draft 0.175 m), the
+    //                   other dogs quieted (WhQuietOthers). Wading -> sent to the spot's deepest cell (the W1 debug entry) until it swims
+    //                   and gets there (<= 20 s) -> the stay ended (_waterUntil = 0): the play's own exit swims it out through the
+    //                   shallows to its exit (thinned decisions and water legs frames, as in real play). Every frame while the swim
+    //                   flag is up: root - riverbed (the runtime's own _WaterBedAt, the bed of the swim floor) and the unfloored float
+    //                   (_WaterSwimRootY - bed: what the code before BUG-DOG-012 would have held). Pass: swam, reached the deep cell,
+    //                   landed <= 25 s after the stay ended through the play's own exit (no stage-3 recovery, came within 1 m of the
+    //                   exit point it was heading for), the per-frame rules (WhClean), root - bed >= -(0.03 + 0.01) on every afloat
+    //                   frame. NOT_EXERCISED (Codex review 2026-10-12) when no afloat frame on the way out (after the stay ended) had
+    //                   the unfloored float <= -0.06 (clearly under the -0.04 pass line: the code before the fix would have passed too).
+    //                   Recorded on the way out: frames where the floor was needed / applied (root held at bed - 0.03). The ease
+    //                   back to the ground is recorded, not judged.
     // Actions start only once the dog is really in the water: waterPose 1 held for 1.5 s (run 20260927-053222 acted 2 s after
     // waterState 2, while the dog was still crossing the dry 2.4 m between the entry and the band, so every case saw a dry dog).
     // Every frame, for every case: the dog root inside the river band but outside the spot (formula band), feet deeper than
@@ -191,6 +203,13 @@ namespace KominkaHillside.Editor
             public float minLift = 9f, stillSince = -1f, minMouthLR = 9f;
             public string lrEntry, lrSite;
             public double lrEnteredAt = -1, lrSwamAt = -1, lrLeftAt = -1, lrExitAt = -1, lrLandedAt = -1, lrCaughtUpAt = -1, lrWaitAt = -1, lrAttachAt = -1;
+            // BUG-DOG-012 (W-swim-exit): afloat frames where the unfloored float was below the floor (the floor acted), the lowest
+            // unfloored float - riverbed (the old code's root), and the lowest root - riverbed while easing back to the ground (info)
+            // Codex review 2026-10-12: counted only after the stay ended (the way out), split into "the floor was needed" (unfloored
+            // float < bed - 0.03) and "the floor was applied" (needed and the root held at bed - 0.03), and the frames where the unfloored
+            // float was clearly below the pass line (<= SwimExitSinkLine: the code before the fix would have failed there) = exercised
+            public int floorFrames, floorAppliedFrames, exitSinkFrames;
+            public float minRawLift = 9f, minEaseLift = 9f, exitNearest = 99f;
         }
         [Serializable] public class WhDogStat
         {
@@ -292,7 +311,7 @@ namespace KominkaHillside.Editor
         {
             Begin(false);
             // EnterPlaymode takes effect after this frame, so the mode flag reaches the journal before the domain reload.
-            report.waterOnly = true; report.deadline = EditorApplication.timeSinceStartup + 1060; Save();   // 15 cases (IMP-DOG-021: W4-toy-chase; audit 2026-10-07: W-reroll-clock, about 30 s)
+            report.waterOnly = true; report.deadline = EditorApplication.timeSinceStartup + 1160; Save();   // 16 cases (IMP-DOG-021: W4-toy-chase; audit 2026-10-07: W-reroll-clock, about 30 s; BUG-DOG-012: W-swim-exit, about 100 s)
         }
 
         // 破壊監査 2026-10-07 RC-15: the new case alone, in the same run frame (the 78 setup and judgement, nothing else).
@@ -312,6 +331,17 @@ namespace KominkaHillside.Editor
             Begin(false);
             report.waterOnly = true; report.waterPlaySet = 2; report.deadline = EditorApplication.timeSinceStartup + 600; Save();
         }
+
+        // BUG-DOG-012 (2026-10-12): the swim floor's case alone, in the same run frame (78's setup and judgement, nothing else).
+        // Budget: Play entry + phase 0 (<= 45 s back on land) + wet (<= 30 s) + the case (deep <= 20 s, out <= 25 s, + 1 s).
+        [MenuItem("Tools/KominkaHillside/Course/78s - Walk Harness Water W-swim-exit (BUG-DOG-012)")]
+        public static void WaterSwimExitHarness()
+        {
+            Begin(false);
+            report.waterOnly = true; report.waterPlaySet = 4; report.deadline = EditorApplication.timeSinceStartup + 300; Save();
+        }
+
+        const string SwimExitCase = "W-swim-exit";
 
         static void MakeWaterCases()
         {
@@ -359,9 +389,10 @@ namespace KominkaHillside.Editor
                 foreach (var name in report.waterPlaySet == 1 ? new[] { "W-reroll-clock" }
                     : report.waterPlaySet == 2 ? LrCaseNames   // IMP-DOG-053: 78l (KH_CourseWalkHarnessEditor.LeashRiver.cs)
                     : report.waterPlaySet == 3 ? LrLimitedWaterNames   // IMP-DOG-053: 78m, the limited run's water half (same file)
+                    : report.waterPlaySet == 4 ? new[] { SwimExitCase }   // BUG-DOG-012: 78s
                     : new[] { "W0", "W0-24m", "W-reroll-clock", "W4-leash", "W4-gather", "W4-toy", "W4-toy-chase", "W4-throw", "W4-throw-regrab", "W4-leash-stale", "W4-leash-late",
-                    "W6-owner", "W6-exit-blocked", "W6-all-blocked", "W4-call" })
-                { report.cases.Add(new Case { name = name, count = 1 }); wh.cases.Add(new WhCase { name = name, dog = report.waterPlaySet >= 2 ? LrCaseDog(name) : 2 }); }
+                    "W6-owner", "W6-exit-blocked", "W6-all-blocked", SwimExitCase, "W4-call" })
+                { report.cases.Add(new Case { name = name, count = 1 }); wh.cases.Add(new WhCase { name = name, dog = name == SwimExitCase ? 0 : report.waterPlaySet >= 2 ? LrCaseDog(name) : 2 }); }
             whPhase = 0; whStep = 0; whNext = 0;
             if (!whLogHooked) { Application.logMessageReceived += WhLog; whLogHooked = true; }
         }
@@ -489,6 +520,88 @@ namespace KominkaHillside.Editor
                 }
             }
             int s = WhState(); if (s != whLastState) { c.stateChanges++; whLastState = s; }
+            if (c.name == SwimExitCase) WhSwimExitObserve(c, p, pose);   // BUG-DOG-012
+        }
+
+        /// <summary>BUG-DOG-012 (W-swim-exit), every observed frame: root - riverbed with the runtime's own riverbed (_WaterBedAt, the swim
+        /// floor's) while the swim flag is up, and the unfloored float there (_WaterSwimRootY: what the code before the fix held).</summary>
+        static void WhSwimExitObserve(WhCase c, Vector3 p, int pose)
+        {
+            var wp = WhWanderProxy(WhDog);
+            float bed = wp._WaterBedAt(p);
+            if (bed <= KH_RiverData.NoBed + 1f) return;
+            bool swimming = Get<bool>(wander[WhDog], "_waterSwimming"), held = Get<bool>(wander[WhDog], "_swimYValid");
+            float lift = p.y - bed;
+            if (!swimming) { if (held && lift < c.minEaseLift) c.minEaseLift = lift; return; }
+            c.swam = true;
+            float raw = wp._WaterSwimRootY(p, false) - bed, floor = KominkaDogRun.KD_DogWanderController.WaterSwimFloorDepth;
+            if (c.w1Leg >= 1)   // the way out only (after the stay ended): the frames on the way in prove nothing about the exit
+            {
+                if (raw < -floor)
+                {
+                    c.floorFrames++;
+                    if (Mathf.Abs(lift + floor) <= .002f) c.floorAppliedFrames++;   // the root held at bed - 0.03 (the floor applied)
+                }
+                if (raw <= SwimExitSinkLine) c.exitSinkFrames++;
+                if (raw < c.minRawLift) c.minRawLift = raw;
+            }
+            if (lift < c.minLift)
+            {
+                c.minLift = lift;
+                if (lift < -(floor + .01f) && !c.droppedToBed)
+                {
+                    c.droppedToBed = true;
+                    if (c.log.Count < 40) c.log.Add("SUNK root - bed " + lift.ToString("F3") + " (unfloored " + raw.ToString("F3") + ") at " + p.ToString("F2") + " depth " + wp._WaterDepthAt(p).ToString("F3")
+                        + " pose " + pose + " state " + WhState() + " settled " + Get<bool>(wander[WhDog], "_swimSettled") + " legs " + Get<int>(wander[WhDog], "_dbgWaterLegs") + " frame " + Time.frameCount);
+                }
+            }
+        }
+
+        /// <summary>BUG-DOG-012 (W-swim-exit): leg 0 to the deepest cell until the dog swims there (<= 20 s), then the stay ends and the
+        /// play swims it out; judged 1 s after it lands (pose 0).</summary>
+        static void WhEvaluateSwimExit(WhCase c, double now, double t)
+        {
+            var p = roots[WhDog].position; int pose = WhPose();
+            if (c.w1Leg == 0)
+            {
+                if (Flat(p - c.deepTarget) < .7f && pose == 2) c.reachedDeep = true;
+                if (c.reachedDeep) { wander[WhDog].SetProgramVariable("_waterUntil", 0f); c.w1Leg = 1; c.exitAt = t; return; }
+                if (t > 20) { WhFinish(c, now, false, "did not swim at the deepest cell within 20 s (pose " + pose + ", " + Flat(p - c.deepTarget).ToString("F2") + " m from it)" + WhSummary(c)); return; }
+                return;
+            }
+            // Codex review 2026-10-12: the landing must be the play's own exit (not a stage-3 recovery teleport, which WhJump exempts):
+            // the nearest approach to the exit the play is heading for now (_waterExit: a stage-2 recovery may have changed it)
+            if (WhState() != 0)
+            {
+                var exits = Get<Vector3[]>(whSpot, "exits"); int k = Get<int>(wander[WhDog], "_waterExit");
+                if (exits != null && k >= 0 && k < exits.Length) c.exitNearest = Mathf.Min(c.exitNearest, Flat(p - exits[k]));
+            }
+            if (c.landed < 0 && pose == 0) c.landed = t;
+            if (c.landed < 0)
+            {
+                if (t - c.exitAt > 25) WhFinish(c, now, false, "not landed within 25 s after the stay ended" + WhSwimExitNote(c) + WhSummary(c));
+                return;
+            }
+            if (t - c.landed < 1) return;
+            float floor = KominkaDogRun.KD_DogWanderController.WaterSwimFloorDepth;
+            bool ok = c.swam && c.reachedDeep && c.landed - c.exitAt <= 25 && WhClean(c) && !c.droppedToBed && c.minLift >= -(floor + .01f)
+                && c.recoverStage < 3 && c.exitNearest <= 1f;
+            // exercised: on the way out, afloat frames whose unfloored float was clearly below the pass line (the old code fails there)
+            bool exercised = c.exitSinkFrames > 0;
+            WhFinish(c, now, ok, (exercised || !ok ? "" : "no afloat frame on the way out had the unfloored float <= " + SwimExitSinkLine.ToString("F2") + " (the old code would also pass): ")
+                + "landed " + (c.landed - c.exitAt).ToString("F2") + " s after the stay ended, recover stage " + c.recoverStage + ", nearest to the exit " + c.exitNearest.ToString("F2") + " m (limit 1)"
+                + WhSwimExitNote(c) + WhSummary(c), ok && !exercised);
+        }
+
+        // Codex review 2026-10-12: an exit frame counts as "exercised" only when the unfloored float is clearly under the pass line
+        // -(floor + 0.01) = -0.04 (by 0.02 m), so a case the code before the fix would also pass is NOT_EXERCISED, not PASS
+        const float SwimExitSinkLine = -.06f;
+
+        static string WhSwimExitNote(WhCase c)
+        {
+            return " | afloat: min root - bed " + c.minLift.ToString("F3") + " (limit " + (-(KominkaDogRun.KD_DogWanderController.WaterSwimFloorDepth + .01f)).ToString("F3") + "), unfloored min "
+                + c.minRawLift.ToString("F3") + " on the way out; frames there: floor needed " + c.floorFrames + ", floor applied " + c.floorAppliedFrames + ", unfloored <= " + SwimExitSinkLine.ToString("F2") + " " + c.exitSinkFrames
+                + ", sunk " + c.droppedToBed + "; easing min " + c.minEaseLift.ToString("F3") + " (recorded, not judged)";
         }
 
         static void WhStepTick(double now)
@@ -508,7 +621,7 @@ namespace KominkaHillside.Editor
                     if (whStep < 6) { pouch.SendCustomEvent("_WalkOff" + whStep++); whNext = now + .3; return; }
                     if (!report.waterSwim) { wander[WhDog].SetProgramVariable("_waterNextRoll", Time.time + 600f); if (WhState() != 0) wander[WhDog].SetProgramVariable("_waterUntil", 0f); }
                     if (WhPose() != 0 || (!report.waterSwim && WhState() != 0) || Get<int>(whFetch, "dogState") != 0) { if (now - cc.startedAt > 45) throw new TimeoutException("Dog " + WhDog + " not back on land / idle"); whNext = now + .5; return; }
-                    if (report.waterSwim) WhQuietOthers(WhDog);
+                    if (report.waterSwim || c.name == SwimExitCase) WhQuietOthers(WhDog);   // BUG-DOG-012: one swimmer alone (no push-apart)
                     c.mouth = Get<float>(wander[WhDog], "waterMouthHeight");
                     c.swimmer = Get<bool>(wander[WhDog], "waterSwimAllowed");
                     if (report.waterSwim && c.stats.Count == 0) c.stats.Add(WhNewStat(WhDog));
@@ -590,6 +703,15 @@ namespace KominkaHillside.Editor
                 c.deepTarget = WhCellBy(true); c.shallowTarget = WhCellBy(false);
                 WhSetTarget(c.deepTarget); c.w1Leg = 0; c.done = 0;
                 WhThinReset(WhDog);   // IMP-DOG-036 S3: counted from here to the landing (WhEvaluateW1)
+                return;
+            }
+            if (c.name == SwimExitCase)
+            {
+                // BUG-DOG-012: the W1 debug entry to the deepest cell; WhEvaluateSwimExit ends the stay once the dog swims there
+                c.deepTarget = WhCellBy(true); WhSetTarget(c.deepTarget); c.w1Leg = 0; c.exitAt = -1;
+                WhThinReset(WhDog);
+                if (c.log.Count < 40) c.log.Add("deep target " + c.deepTarget.ToString("F2") + " depth " + (KH_CourseGroundEditor.RiverAt(c.deepTarget.z).y - c.deepTarget.y).ToString("F3")
+                    + " swim enter " + WhWanderProxy(WhDog)._WaterSwimEnterDepth().ToString("F3") + " leave " + WhWanderProxy(WhDog)._WaterSwimLeaveDepth().ToString("F3"));
                 return;
             }
             switch (c.name)
@@ -712,6 +834,7 @@ namespace KominkaHillside.Editor
         static void WhEvaluate(WhCase c, double now, double t)
         {
             if (c.name.StartsWith("W1-")) { WhEvaluateW1(c, now, t); return; }
+            if (c.name == SwimExitCase) { WhEvaluateSwimExit(c, now, t); return; }   // BUG-DOG-012
             int s = WhState(), pose = WhPose();
             // IMP-DOG-053: a leashed dog walks out by the leash's river follow (state 3 = Exit), not by the play's WaterExit
             if (c.exitStarted < 0 && (s == 3 || WhLr() == 3)) c.exitStarted = t;
@@ -1010,7 +1133,7 @@ namespace KominkaHillside.Editor
             Current.status = c.status; Current.reason = reason; Current.endedAt = now;
             WhSave(null); Save();
             if (caseIndex + 1 < report.cases.Count) { Next(); whPhase = 0; whStep = 0; whNext = 0; return; }
-            bool all = wh.cases.All(x => x.status == "PASS" || (x.status == "NOT_EXERCISED" && x.name == "W4-call"));
+            bool all = wh.cases.All(x => x.status == "PASS" || (x.status == "NOT_EXERCISED" && (x.name == "W4-call" || x.name == SwimExitCase)));
             string status = report.waterFetch ? (all ? "FETCH_PASS" : "FETCH_FAIL") : report.waterSwim ? (all ? "SWIM_PASS" : "SWIM_FAIL")
                 : all ? (wh.cases.Any(x => x.status == "NOT_EXERCISED") ? "WATER_PASS_PARTIAL" : "WATER_PASS") : "WATER_FAIL";
             WhSave(status);

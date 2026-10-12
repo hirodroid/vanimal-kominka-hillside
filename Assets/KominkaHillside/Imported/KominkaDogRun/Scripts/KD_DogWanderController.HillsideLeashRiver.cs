@@ -54,7 +54,6 @@ namespace KominkaDogRun
         const float LrClampStep = 0.25f, LrClampMax = 8f, LrClampEvery = 0.25f;
         const float LrStop = 0.25f;             // m: at the (shortened) goal
         const float LrInward = 0.5f;            // m inside the band edge: the first goal of a dog still on the bank
-        const float LrSwimFloor = 0.03f;        // m: an afloat root never lower than the riverbed - this (LeashRiverSwimFloor)
         private int _lrState;                   // Owner local (harness: GetProgramVariable)
         private float _lrStageAt, _lrRetryAt;
         private Vector3 _lrEntryPt, _lrPlanPt;
@@ -224,29 +223,8 @@ namespace KominkaDogRun
             _lrWaiting = inBand && (at || refused) && shortened;
             if (_lrWaiting) _lrWaitDecisions++;
             if ((at || refused) && _speed <= stopSpeedThreshold) FaceTowards(holderPos);   // waiting at the limit faces the holder
-            LeashRiverSwimHeight();
+            WaterApplySwimHeight();   // BUG-DOG-012: the swim floor is inside (was LeashRiverSwimHeight)
             WaterPoseRefresh();
-        }
-
-        /// <summary>WaterApplySwimHeight, then the swim floor (LeashRiverSwimFloor). Every leash river step that may be afloat.</summary>
-        void LeashRiverSwimHeight() { WaterApplySwimHeight(); LeashRiverSwimFloor(); }
-
-        /// <summary>78m run 20261012-030041 (LR-swim-Corgi, root 0.155 m under the riverbed, mouth still 0.042 m above the water): the
-        /// afloat root is water + swimClear - Ms - sink with no floor (the Fetch's WaterSwimHeight), and the swim ends only after 0.5 s
-        /// below the leave depth (0.6 M) or at the dry edge. A swimmer walking out at swim speed reaches 0.02 m of water still afloat,
-        /// so its root (the feet) sank up to its draft (Corgi 0.175 m) into the bank. The leash's river legs keep the root no lower
-        /// than the riverbed - LrSwimFloor: a designed float never goes that low where it can start (at the swim start depth the
-        /// draft is at most 0.015 m deeper: Pome), so only the shallow tail of a swim is lifted. The flags (_waterSwimming, the pose)
-        /// are not touched: no swim / wade flicker at the start. Owner only (the river steps run on the Owner).</summary>
-        void LeashRiverSwimFloor()
-        {
-            if (!_waterSwimming && !_swimYValid) return;
-            Vector3 q = dogRoot.position;
-            float bed = riverData._BedAt(q);
-            if (bed <= KominkaHillside.KH_RiverData.NoBed + 1f || q.y >= bed - LrSwimFloor) return;
-            q.y = bed - LrSwimFloor;
-            _waterSwimY = q.y;
-            dogRoot.position = q; // net: owner-only: the leash branch returns before the river steps for non-Owners
         }
 
         void LeashRiverExitStep(Vector3 p, Vector3 holderPos)
@@ -258,7 +236,7 @@ namespace KominkaDogRun
             if (landed)
             {
                 Coast();
-                LeashRiverSwimHeight();
+                WaterApplySwimHeight();   // BUG-DOG-012: the swim floor is inside (was LeashRiverSwimHeight)
                 WaterPoseRefresh();
                 _lrLandings++;
                 if (_lrSwam && !HolderMoving())
@@ -301,7 +279,7 @@ namespace KominkaDogRun
                             Debug.Log("[KD_DogWanderController] leash river recover dog=" + dogIndex + " stage=3 no-bank (no NavMesh near " + _lrReturnPt.ToString("F2") + ")");
                             WaterSwimLookAhead(p, _lrExitPt);
                             StepToward(_lrExitPt, 0f, _waterSwimming ? WaterSwimSpeed() : walkSpeed);
-                            LeashRiverSwimHeight();
+                            WaterApplySwimHeight();   // BUG-DOG-012: the swim floor is inside (was LeashRiverSwimHeight)
                             WaterPoseRefresh();
                             return;
                         }
@@ -322,7 +300,7 @@ namespace KominkaDogRun
             }
             WaterSwimLookAhead(p, _lrExitPt);
             StepToward(_lrExitPt, 0f, _waterSwimming ? WaterSwimSpeed() : wetHere ? walkSpeed : runSpeed);
-            LeashRiverSwimHeight();
+            WaterApplySwimHeight();   // BUG-DOG-012: the swim floor is inside (was LeashRiverSwimHeight)
             WaterPoseRefresh();
         }
 

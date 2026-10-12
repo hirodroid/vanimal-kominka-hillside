@@ -70,7 +70,7 @@ namespace KominkaHillside.Editor
             public bool waterSwim; // IMP-DOG-020 step 4 W1 x6 / W2 (same file, Course/79)
             public bool waterFetch; // IMP-DOG-020 step 6 W3 / S4 / S5b (same file, Course/88)
             public int waterFetchSet; // IMP-DOG-021: 0 = every Course/88 case, 1 = the IMP-DOG-020 cases only (88a), 2 = the IMP-DOG-021 cases only (88b)
-            public int waterPlaySet;  // 破壊監査 2026-10-07 RC-15: 0 = every Course/78 case, 1 = W-reroll-clock only (78r); IMP-DOG-053: 2 = the leash river cases LR-* (78l), 3 = 78m (W4-leash x3, S5b-sim, LR-* x3)
+            public int waterPlaySet;  // 破壊監査 2026-10-07 RC-15: 0 = every Course/78 case, 1 = W-reroll-clock only (78r); IMP-DOG-053: 2 = the leash river cases LR-* (78l), 3 = 78m (W4-leash x3, S5b-sim, LR-* x3); BUG-DOG-012: 4 = W-swim-exit alone (78s)
             public bool travelLeashRiver;   // IMP-DOG-053 Course/82l: with travelCall, only C7-wet and T-swimkeep-ticket-sim (KH_CourseWalkHarnessEditor.LeashRiver.cs)
             public bool commerceOnly;     // IMP-PRG-001 / IMP-DOG-014 Course/96・96b・97 (KH_CourseWalkHarnessEditor.Commerce.cs)
             public int commerceSet;       // 0 = ledger (96), 1 = ledger re-entry (96b), 2 = treats (97)
