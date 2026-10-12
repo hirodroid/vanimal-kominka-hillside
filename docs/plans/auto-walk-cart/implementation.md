@@ -1,13 +1,103 @@
-# おさんぽカート 実装設計 M1 (2026-10-11)
+# おさんぽカート 実装設計 M1〜M3 (2026-10-11〜12)
 
 親 Issue: [DES-WLD-004](../../development/issues/DES-WLD-004-auto-walk-cart.md)。外観は [制作票](asset-brief.md) / [本制作](production.md)。利用者向けの流れは [利用の流れ (HTML)](usage-flow.html)。本書は**実装の契約** (クラス・フィールド・メソッド・メニュー名) で、実装担当 2 名 (Runtime / Editor) が同じ名前で並行して書くための正本。ユーザー了承 (2026-10-11「そちらで改善し、Unityへ取り込んで機能も組み込み」) に基づき、M1 の範囲を先に決める。
+
+**読み方 (2026-10-12)**: 今の作りは次の「現在の構成」を正本とする。M1 以降の各節は「契約 (当時)」として残し、後で変わった箇所には「→ 現在は…」を添えた。文書と現物が食い違えば現物 (コード・メニュー) を正とし、この節を直す。
+
+## 現在の構成 (2026-10-12)
+
+M1〜M3、同日の既定値の変更 (`c482b96`・`01ea848`) と追加要望の反映 (`b25b2d5`・`bbdb33a`・`e9eb02e`) の後の構成。**Play で確かめた範囲は Issue 冒頭のまとめを参照し、ここに書いた動作を合格とは読まない。**
+
+### Runtime のクラス
+
+| ファイル (`Assets/KominkaHillside/Scripts/` から) | 役割 |
+|---|---|
+| `Cart/KH_CartManager.cs` (Manual) | 唯一の権威。参照・設定・同期配列・`ApplyState`。犬とカメラ向けの読み取り API `_IsPlayerRiding / _DogAnchor / _CartForward / _CartSpeed` |
+| `Cart/KH_CartManager.Requests.cs` | ローカル API (`_Start / _Join / _StartFrom / _JoinFrom / _Leave / _LeaveForTravel / _ToggleAccepting / _SeatUp…_SeatBack`) と Owner の裁定 `ReqStart / ReqJoin / ReqStartFrom / ReqJoinFrom / ReqLeave / ReqAccepting` (4 回/秒)・`ReqSeat` (6 回/秒)。乗り場の空車選び `ReclaimCandidate` (Idle → 最古の Parked) |
+| `Cart/KH_CartManager.Groups.cs` | 隊列の順・マスターの引き継ぎ・到着 (`SettleArrival`)・降車の後始末 `RemoveCart` (途中は Parked、到着は `arrive-release` で Idle)。軌道の距離関数 `TrackPoint / TrackDirection / TrackDetour / TrackNoLateral` |
+| `Cart/KH_CartManager.Motion.cs` | 距離 → 姿勢 (全員、毎フレーム)。接地 v3、横ずれ (千鳥・右寄せ・中央)、車輪、駐車の寄せ、Idle の地中への退避 |
+| `Cart/KH_CartManager.Traffic.cs` | 対向グループの一列化と狭い区間の待機 (Owner、4 Hz)。純関数 `TrafficDecide / TrafficHoldDistance` |
+| `Cart/KH_CartManager.Park.cs` | 駐車枠の純関数 `ParkSlotDistance / ParkSlotLateral` |
+| `Cart/KH_CartSeat.cs` | カート本体 (VRCStation と同居、layer 2)。`_Board / _Unboard / _ApplySeat / _SetVisible / _Spin`、降り口の NavMesh 選択 |
+| `Cart/KH_CartStopButton.cs` | 肘掛け前端の停止面 `StopL / StopR` (どちらも kind 0 = 停止)。kind 1 (受付) はコードに残るが配置していない |
+| `Cart/KH_CartStationPanel.cs` | メニュー板。乗り場 5 枚 (`spot` 0〜4) + カート上 8 枚 (`spot = -1`, `cart = index`、Parked のときだけ表示) の計 13 枚 |
+| `Cart/KH_CartDock.cs` | 乗車中だけ、開いている手元メニューと撮影モニターをカート左のドックへ毎フレーム運ぶ (写真ビューアは頭に追従するので対象外) |
+| `Cart/KH_CartControls.cs` | 左斜め前の操作帯 (layer 17)。11 ボタン、最小化タブ (`TabCanvas`)、`noteLabel` (すれ違い待ち) |
+| `KH_WalkRoute.cs` | `_PointAtDistance / _DirectionAtDistance / _DetourAtDistance` (軌道が無いときの予備) |
+| `KH_LeashManager.Travel.cs` | `cartManager` と、ワープ・合流の暗転直前の門 `TravelLeaveCart()` → `_LeaveForTravel()` (取消・失敗では呼ばない)。既定の行き先は `KH_LeashManager.defaultDestination = 2` (山道から周回・順) |
+| `Imported/KominkaDogRun/Scripts/KD_DogWanderController.HillsideLeashCart.cs` | 持ち主が乗車中の犬: `_DogAnchor` を中心に揺らぐ目標へ連続追従、立ち止まりかけ、隣の犬と 0.55 m 未満なら押し離す、くん活を始めない。`cartManager` が null なら従来どおり |
+| `KH_VideoCamera.Modes.cs` / `.ModesPath.cs` / `.Patterns.cs` | 撮り方「隊列」(`ModeConvoy`。乗っていなければ背中ごし)。モニターを開くと `startWithPattern = true`・`defaultPattern = PatternOmakase` (5、おまかせ) から始まる |
+
+### 同期配列 (`KH_CartManager.cs`、すべて長さ 8・宣言時に初期化)
+
+| 名前 | 意味 | 「なし」 |
+|---|---|---|
+| `cartState` | 0 Idle / 1 Riding / 2 Ending / 3 Parked | — |
+| `cartRider` | 乗員の playerId | 0 |
+| `cartGroup` / `cartOrder` / `cartSpot` | 所属グループ / グループ内の順 (0 = 先頭) / 出発した乗り場 | −1 / — / — |
+| `cartFreedMs` | 解放したサーバー時刻 (3 秒の再利用猶予) | 0 |
+| `cartSeatSteps` / `cartFwdSteps` / `cartYawSteps` | 座席の高さ・前後 (5 cm) / 向き (15°)。各 −6〜+6、降車で 0 | — |
+| `cartParkDist` / `cartParkedMs` / `cartParkDir` | Parked の軌道距離 / 置いた時刻 (回収は最古から) / 置いたときの進行方向 ±1 | — |
+| `groupState` | 0 Free / 1 Running / 2 Ending | — |
+| `groupMaster` | マスターのカート番号 | −1 |
+| `groupDest` / `groupDir` | 行き先 0〜5 / 向き ±1 | — |
+| `groupAccepting` / `groupGen` / `groupCount` | 受付 / 作成ごとの世代 (合流の照合) / 人数 | — |
+| `groupAnchorDist` / `groupAnchorMs` | 錨 (先頭の軌道距離とサーバー時刻) | — |
+| `groupLane` | 0 千鳥 / 1 一列・右寄せ / 2 一列・中央 | — |
+| `groupHoldDist` / `groupHoldSinceMs` / `groupHoldBanMs` | 待機中の先頭距離の上限 / 待機開始時刻 / タイムアウト後に待たせない期限 | −1 / — / 0 |
+| `version` (int 1 個) | 変更ごとに +1 (パネルの再描画) | — |
+
+非同期で Cart/1 が焼く配列: `trackPositions / trackDistances / trackLength / trackDetour`、`spotTrackDistance` (乗り場 0 は地図ボードの投影 + 6 m)、`destTrackDistance` (周回は −1)、`noLateralFrom / noLateralTo` (2026-10-12 のベンチ除去後は 0 本)、`trackClass` (0 広い / 1 一列なら双方 / 2 一列でも不可)、`narrowFrom / narrowTo / waitBefore / waitAfter` (狭い区間 4 か所と各前後の待機点)。
+
+### 状態
+
+| 状態 | 中身 |
+|---|---|
+| カート | Idle (プール・地中・不可視) →出発/合流→ Riding →先頭が到着→ Ending →各自が着いて降車→ **Idle** (`arrive-release`)。Riding・Ending →停止/ジャンプ/ワープ/合流/リスポーン/退出→ Parked (乗員 0・グループ −1・可視・カート上メニュー)。Parked →そのカートから再開/合流、または乗り場で回収→ Riding |
+| グループ | Free →出発→ Running →先頭が目的地の手前 `arriveSlack` 0.5 m→ Ending (新規合流は拒否) →全員が降りる→ Free。周回は Ending にならない |
+| 車線 `groupLane` | 対向が `approach` 25 m 以内で 1 (右寄せ `laneOffset`)、狭い区間の中と手前 8 m は 2、対向が最後尾から 10 m 離れたら 0 |
+| 待機 (hold) | `groupHoldDist ≥ 0` の間、先頭がその距離で止まり後続は間隔を保つ。相手が抜けて 2 m・接近をやめる・`holdTimeoutSec` 60 秒で解除し錨を打ち直す。タイムアウト後は `groupHoldBanMs` まで待たせない。所属・行き先・マスター・受付は変えない |
+| 結果コード | `CartOk 0 / CartBusy 1 / CartFull 2 / CartClosed 3 / CartHere 4 / CartUnavailable 5` (ローカルで先に判定。Owner からは返さない) |
+
+### Editor メニュー
+
+| メニュー (`Tools/KominkaHillside/`) | 内容 |
+|---|---|
+| `Cart/1 Build Carts And Stations` | カート 8 台・乗り場 5 地点 (道の外の見本カート + 道側の肘掛けの上のパネル)・カート上パネル 8 枚・ドック・操作帯・最小化タブを冪等に作り配線。軌道・道幅の分類・待機点を焼き、tuning.json を適用、犬 6 匹とカメラの `cartManager` を配線、文言を `KD_Language` へ。Program Asset が無い初回は作って止まるので 2 回 |
+| `Cart/2 Verify Carts` / `Cart/3 Probe Cart Motion` | Edit の検査 / 純関数の照合 (下の「検査」) |
+| `Cart/4 Apply Tuning` | `Data/Cart/tuning.json` だけを再適用 (待機点も再計算)。シーンの他は触らない |
+| `Course/21a - Smooth Gate Turn` / `Course/21b - Verify Gate Turn` | 門前の折返しを 2 次ベジエで整形 (節 433・434・435・0・1、節数・番号は維持) / その検査。経路 (Course/21・21a) を作り直したら Cart/1 を再実行する |
+| `Course/16 - Remove Plaza Bench` | 広場入口のベンチ (`KH_Bench` と見た目の `ViewpointBench`) を除去 (冪等。NavMesh は焼き直さない)。`KH_CoursePlazaBenchEditor.cs` (2026-10-12 時点で未コミット) |
+| `Video/1 - Build Video Camera` / `Video/2 - Verify` | 撮影カメラ (隊列カット・既定パターンを含む) の構築と検査 |
+| `Course/27 - Add Course UI Glyphs` | `cart.*` を含む文言のグリフ焼き (文言を足したら実行) |
+
+### データと調整値
+
+| ファイル | 中身 |
+|---|---|
+| `Assets/KominkaHillside/Data/Cart/tuning.json` | `speed` 1.3 / `gap` 3 / `lateral` 0.6 / `approach` 25 / `holdTimeoutSec` 60 / `seatStep` 0.05 / `yawStep` 15 / `laneOffset` 0.55 / `groundSmoothTime` 0.08 / `defaultDestination` 2 (`KH_LeashManager` へ) |
+| `Assets/KominkaHillside/Data/Cart/KH_CartSign.png` | 背面と乗り場の掲示の写真 (512×256、文字・価格なし) |
+| `Assets/KominkaHillside/Data/Environment/Course/CourseUITranslations.json` | `cart.*` 30 キー × 13 言語 (`cart.start.here` は作らず `cart.start` を再利用、`cart.parked` はある) |
+
+調整値の変え方: tuning.json の値 → `Cart/4 Apply Tuning`。駐車枠 (右 1.6 / 1.2 m、下限 1.0 m、間隔 1.6 m、狭い区間は出口 + 3 m) は `KH_CartManager.Park.cs` の定数、回収の猶予は `ReclaimGraceMs` 3000、出発の猶予は `departDelayMs` 3000、台数は `MaxCarts` 8 (設計変更)。見本カートの寄せ幅 (NavMesh 幅 + 0.8 m、2.2〜3.5 m) と側 (`StationSide`: 入口だけ左) と最小化タブの位置 (`TabMinimizedLocal` (−0.30, 0.86, 0.10)) は Editor の定数で、変えたら Cart/1。
+
+### 検査
+
+- `Cart/2` は `Temp/cart-20261011/verify.json` に `CART_OK` / NG 件数を書く (件数・SyncMethod Manual・配線の backing 実物・Station 設定・材質・LOD・文言・軌道と交通の配列・見本カート・パネルの位置・板の非重複・tuning の一致)。最新 PASS 2,296〜2,297。
+- `Cart/3` は `Temp/cart-20261011/probe.json` (軌道の補間・乗り場と行き先の距離・向き・隊列・交通 8 ケース・Parked からの開始・回収の順・駐車枠)。最新 PASS 180。`OK_WITH_SKIP` は旧 route の到着検証の SKIP で問題ではない。
+- 走行中のログは `[KH_Cart] <事象> key=value` (start / join / leave / arrive / arrive-release / park / reclaim / handover / traffic lane・hold・release・timeout / ground gap ほか)。Play の不具合はこのログで場所と事象を特定する。
+- ClientSim では VRCStation の着座・移動は参考値 (メニュー操作で降りるのは ClientSim の挙動)。ハーネスの群は作っていない。
+
+### Play で未確認の項目 (2026-10-12)
+
+橋手前の待機、隊列カット、FPS (乗車中のモニター開閉の A/B)、門前を滑らかに曲がる (犬も)、乗り場の見本カートとメニュー、停止で残るカートとそこからの再開・合流、最古の回収、入口行きの到着位置、ベンチ除去後の広場入口の通行、到着でプールへ戻る、犬の揺らぎと立ち止まりかけ、最小化タブの位置、入口の見本カートの位置、2 人以上の受付 OFF と引き継ぎ、Quest・スマホ・デスクトップの操作、13 言語の枠。
 
 ## 範囲
 
 | 段階 | 入れるもの |
 |---|---|
 | **M1 (今回)** | 乗り場 5 地点 (既存ワープ先 0〜4) で開始・合流、犬の散歩設定 (`KH_LeashManager._MyChoice()`) を共用、周回 (順/逆) と目的地到着での終了、千鳥走行 (橋など `linkAllowsDetour=false` の区間は一列)、個人の停止・降車、マスターの参加順引き継ぎ、受付 ON/OFF (初期 ON・マスターだけ)、乗車中のワープ・合流・リスポーン・退出での降車優先、Late Joiner への整合、13 言語の固定文言、乗り場の注意書き、Editor の Build/Verify/Probe |
-| **M2 (記録のみ、今回作らない)** | 対向グループの待機・先入優先・待避場所、くん活の抑制と犬の前方配置、掲示 (背面 Sign) の内容と手元パネル、速度・車間・横ずれ量の実機調整、現在地が目的地のときの案内の磨き込み、乗車中の撫で・おやつ、動画カメラとの併用確認 |
+| **M2 (記録のみ、今回作らない)** | 対向グループの待機・先入優先・待避場所、くん活の抑制と犬の前方配置、掲示 (背面 Sign) の内容と手元パネル、速度・車間・横ずれ量の実機調整、現在地が目的地のときの案内の磨き込み、乗車中の撫で・おやつ、動画カメラとの併用確認。→ 現在は: 2026-10-12 に §M2 で実装 (速度等の実機調整は Play 待ち) |
 
 M1 でも「犬が同行する」のは既存のリード追従 (持ち主へ 7.2 m/s で追い、10 m 離れると瞬間移動) に任せる。カートの速度はこれより十分遅い (1.3 m/s)。カートから犬を動かすコードは書かない。
 
@@ -53,6 +143,7 @@ public KH_CartSeat[] carts;            // MaxCarts 台
 public KH_CartStationPanel[] panels;   // 5 枚 (spot 順)
 public Transform parking;              // 待機カートを置く場所 (Setup が作る。地中/範囲外)
 ```
+→ 現在は: `panels` は乗り場 5 + カート上 8 の 13 枚 (§M3。コードのコメントは「5 枚」のまま)。
 設定: `public float speed = 1.3f, gap = 3f, lateral = .6f, arriveSlack = .5f, smoothTime = .25f, pitchLimit = 8f, lookAhead = 1.5f; public int departDelayMs = 3000;`
 
 同期 (すべて宣言時に初期化、長さ固定):
@@ -75,6 +166,7 @@ public Transform parking;              // 待機カートを置く場所 (Setup 
 [UdonSynced] public int[] groupGen    = new int[8];           // グループ作成ごとに +1。ReqJoin の世代照合に使う
 ```
 「なし」を表す値は `cartRider` が 0、`cartGroup` / `groupMaster` が -1。0 を「なし」として読む配列と -1 を読む配列を混ぜない。
+→ 現在は: `cartState` に 3 = Parked (§M3)。座席・交通・駐車の配列も増えた。全体は §現在の構成の同期配列 (コードの `cartState` の行末コメントは 0〜2 のまま古い)。
 `cartFreedMs` / `groupGen` は Owner 交代後も猶予と世代を保つため同期に置く (Codex 独立レビュー 2026-10-11 #3・#4)。
 
 要求 (ローカル API → Owner へのネットワークイベント)。戻り値は結果コード `const int`: `CartOk=0, CartBusy=1 (自分が乗車中), CartFull=2 (空車なし), CartClosed=3 (受付 OFF/終了中/存在しない), CartHere=4 (現在地が目的地), CartUnavailable=5`:
@@ -130,7 +222,7 @@ Station の設定 (Setup): `PlayerMobility = Immobilize`、`disableStationExit =
 
 ### `KH_CartStopButton` — None
 
-肘掛け前端の子 GameObject (BoxCollider、Interact)。`public KH_CartManager manager; public KominkaDogRun.KD_Language language; public int kind;` (0 = 停止 → `manager._Leave()`、1 = 受付切替 → `manager._ToggleAccepting()`)。`InteractionText` は `Start()` で `language._Text("cart.stop")` / `("cart.accepting")` を入れる (非 ASCII は実行時なら可)。左 = 停止、右 = 受付切替 (M1 の暫定。X レビューの左右対称は M2 で見直す)。
+肘掛け前端の子 GameObject (BoxCollider、Interact)。`public KH_CartManager manager; public KominkaDogRun.KD_Language language; public int kind;` (0 = 停止 → `manager._Leave()`、1 = 受付切替 → `manager._ToggleAccepting()`)。`InteractionText` は `Start()` で `language._Text("cart.stop")` / `("cart.accepting")` を入れる (非 ASCII は実行時なら可)。左 = 停止、右 = 受付切替 (M1 の暫定。X レビューの左右対称は M2 で見直す)。→ 現在は: M1.1 で左右とも停止 (kind 0)。受付切替は操作帯だけ。
 
 ### `KH_CartStationPanel` — None
 
@@ -158,7 +250,7 @@ public void _PressJoin0() … _PressJoin7(); // 行ごと (U# は引数付き on
 
 ### 文言キー (`Assets/KominkaHillside/Data/Environment/Course/CourseUITranslations.json`、ja 必須、他 12 言語は既存の流儀で)
 
-`cart.title` おさんぽカート / `cart.start` ここから出発 / `cart.join` 合流 / `cart.notice` 自動で移動するカートです。VR酔いを感じたら、停止して降りてください。 / `cart.stop` 停止して降りる / `cart.accepting` 合流の受付 / `cart.accepting.on` 受付中 / `cart.accepting.off` 受付停止 / `cart.result.full` いまは空いているカートがありません / `cart.result.closed` このグループは合流を受け付けていません / `cart.result.here` ここが目的地です。さんぽの行き先を変えてください / `cart.result.busy` すでに乗車中です / `cart.result.started` 出発します / `cart.result.joined` 合流しました / `cart.result.left` 降りました / 行き先名は既存のさんぽの行き先キー (`KH_CourseMenuEditor.cs` の並び) を参照し、新規に作らない。
+`cart.title` おさんぽカート / `cart.start` ここから出発 / `cart.join` 合流 / `cart.notice` 自動で移動するカートです。VR酔いを感じたら、停止して降りてください。 / `cart.stop` 停止して降りる / `cart.accepting` 合流の受付 / `cart.accepting.on` 受付中 / `cart.accepting.off` 受付停止 / `cart.result.full` いまは空いているカートがありません / `cart.result.closed` このグループは合流を受け付けていません / `cart.result.here` ここが目的地です。さんぽの行き先を変えてください / `cart.result.busy` すでに乗車中です / `cart.result.started` 出発します / `cart.result.joined` 合流しました / `cart.result.left` 降りました / 行き先名は既存のさんぽの行き先キー (`KH_CourseMenuEditor.cs` の並び) を参照し、新規に作らない。→ 現在は: M1.1〜M3 の追加で `cart.*` は 30 キー (§現在の構成のデータ)。
 
 ## Editor (Assets/KominkaHillside/Scripts/Editor/Cart/)
 
@@ -182,7 +274,7 @@ Setup は `Assets/KominkaHillside/Models/Cart/` の中身を変更しない (FBX
 
 - 空車なしのときの結果通知は要求側のタイムアウト (2 秒) で代用する。
 - 合流時の着座は暗転で済ませ、走って追いつく演出はしない。
-- すれ違い・交通待機は無い。逆方向のグループは同じ道で重なり得る (M2)。
+- すれ違い・交通待機は無い。逆方向のグループは同じ道で重なり得る (M2)。→ 現在は: M2 で一列化と狭い区間の待機を実装。
 
 ## M1.1: Play 1 回目の指摘と追加要望 (2026-10-12)
 
@@ -195,14 +287,14 @@ Issue の「Play 確認 1 回目と M1.1」の症状と原因候補に対応す�
    ```
    public Vector3[] trackPositions;  public float[] trackDistances;  public float trackLength;   // 節 0 (入口の枝) を除いた閉路
    public bool[] trackDetour;        // 区間 i (trackPositions[i] → [i+1]) で横ずれ可か
-   public float[] noLateralFrom, noLateralTo;   // 追加で横ずれ 0 にする距離範囲 (ベンチ・門枠)
+   public float[] noLateralFrom, noLateralTo;   // 追加で横ずれ 0 にする距離範囲 (ベンチ・門枠。→ 現在は 0 本: 門枠は軌道の変更で外れ、ベンチは 2026-10-12 に除去)
    public float[] spotTrackDistance;            // 乗り場 0..4 の開始距離 (軌道上)
    public float[] destTrackDistance;            // 行き先 0..5 の到着距離 (2/3 の周回は -1)
    ```
    `_PointAtDistance` 相当の補間・方向・detour 判定を軌道配列に対して行う関数を Manager 側に持つ (`TrackPoint / TrackDirection / TrackDetour / TrackNoLateral`)。開始・到着・向きの判定 (短い側) もこの距離で行う。Probe が照合するので、関数名はこの 4 つにする。
 3. **座席の調整** (同期、乗っている本人だけ変更可): `[UdonSynced] public int[] cartSeatSteps = new int[8]` (高さ、1 段 = 5 cm、−6..+6) と `[UdonSynced] public int[] cartYawSteps = new int[8]` (1 段 = 15°、−6..+6)。`[NetworkCallable(maxEventsPerSecond: 6)] public void ReqSeat(int dHeight, int dYaw)` を要求者 = そのカートの乗員のときだけ適用し Commit。全クライアントの ApplyState で `carts[c]._ApplySeat(steps, yawSteps)` を呼び、`KH_CartSeat` が `seat` (Anchor_Seat) のローカル位置 y と Y 回転を既定 + 段数で置く。降車 (RemoveCart) で 0 に戻す。ローカル API: `_SeatUp() / _SeatDown() / _TurnLeft() / _TurnRight()`。
 4. **ドック** (新規 `KH_CartDock.cs`、None、ローカル専用、各カートに 1 つ): 参照 `KominkaDogRun.KD_TreatPouch menu; KH_VideoCamera video; KominkaDogRun.KD_PhotoViewer photo; Transform dockMenu, dockMonitor, dockPhoto; KH_CartManager manager; int index;`。`LateUpdate` で「ローカルプレイヤーがこのカートに乗っている」間だけ、開いている板をドックの姿勢へ毎フレーム置く: 手元メニューは `menu.transform` を動かし `menu.panelRoot` の中心が `dockMenu` に来るよう補正 (PlaceInFront と同じ実測補正)、撮影モニターは `video.monitorRoot.transform`、写真ビューアは `photo.panelRoot` の親 (`photo.transform`) を同じ要領。板が閉じていれば触らない。降りたら以後触らない (置き去りのまま。据え直しは各板の既存操作)。ボタン: `_PressMenu()` → `menu._Toggle()`、`_PressMonitor()` → モニターが開いていれば `video._Recall()`、閉じていれば `video._Open()`。写真はボタン無し (開いている間だけ追従)。
-5. **操作帯** (新規 `KH_CartControls.cs`、None、ローカル専用): 左斜め前の小さな WorldSpace Canvas (Setup が作る、layer 17 Walkthrough = 撮影カメラに映らず操作できる、既存の撮影モニターと同じ)。ボタン 8 個: メニュー / モニター / 座面↑ / 座面↓ / 向き← / 向き→ / 停止 / 受付。表示は自分が乗っているときだけ (`_SetVisible`)。受付はマスターのときだけ有効表示。文言キー `cart.menu` メニュー / `cart.monitor` 撮影モニター / `cart.seat.up` 座面を上げる / `cart.seat.down` 座面を下げる / `cart.turn.left` 左を向く / `cart.turn.right` 右を向く (既存 `cart.stop` / `cart.accepting` を再利用)。
+5. **操作帯** (新規 `KH_CartControls.cs`、None、ローカル専用。→ 現在は 11 ボタンと最小化タブ: 下の Play 2 回目の追加と §M2 の「案内」): 左斜め前の小さな WorldSpace Canvas (Setup が作る、layer 17 Walkthrough = 撮影カメラに映らず操作できる、既存の撮影モニターと同じ)。ボタン 8 個: メニュー / モニター / 座面↑ / 座面↓ / 向き← / 向き→ / 停止 / 受付。表示は自分が乗っているときだけ (`_SetVisible`)。受付はマスターのときだけ有効表示。文言キー `cart.menu` メニュー / `cart.monitor` 撮影モニター / `cart.seat.up` 座面を上げる / `cart.seat.down` 座面を下げる / `cart.turn.left` 左を向く / `cart.turn.right` 右を向く (既存 `cart.stop` / `cart.accepting` を再利用)。
 6. 右肘掛けの `StopR` は停止 (kind 0) に変える (左右対称、X レビュー)。受付切替は操作帯だけ。
 
 Play 2 回目の追加 (2026-10-12):
@@ -220,8 +312,8 @@ Runtime 実装で契約から変えた点 (2026-10-12):
 
 ### Editor (impl-editor)
 
-1. **軌道の生成** (Build): `KH_WalkRoute` の `nodePositions` から節 0 を除いた閉路 (435 → 1 を直結) で `trackPositions / trackDistances / trackLength / trackDetour` を作る (`linkAllowsDetour` を区間へ写す。435→1 の区間は 435 の値)。乗り場 0..4 は `spotNodes` の位置を軌道へ投影した距離、行き先 0..5 は `destinationNodes` の位置を投影した距離 (入口 = 節 0 の位置を投影 → 門前の直結区間上)、周回 2/3 は −1。障害物の掃引 (トレイル沿い ±0.6 m、車高 0.3〜1.6 m、`Renderer.bounds`、Terrain / 草 / 木 / 石 / 犬 / カートを除く) で見つけた物の距離 ±4 m を `noLateralFrom/To` に書く (現状はベンチ d≈93 と門枠 d≈0 の 2 件が見込み)。配列は SerializedObject → `CopyProxyToUdon`。**Course/21 で経路を作り直したら Cart/1 を再実行する**旨をログと本書に残す。
-2. **ドック・操作帯の生成** (Build): 各カートに `Dock_Menu` (左側 1.1 m、高さ 1.0、面を座席へ)、`Dock_Monitor` (左前 1.2 m、高さ 1.1)、`Dock_Photo` (左後 1.0 m) の Transform。`Controls` Canvas (左斜め前 0.55 m、高さ 0.95、幅 0.28 m、layer 17、VRCUiShape、BoxCollider trigger、既存の共通フォント) にボタン 8 個を `EnsureButton` で配線。`KH_CartDock` と `KH_CartControls` を `AddUdonSharpComponent`、参照を配線 (`menu` = シーンの `KD_TreatPouch`、`video` = `KH_VideoCamera`、`photo` = `KD_PhotoViewer`。無ければ null のまま)。`StopR` の kind を 0 に。Program Asset は初回に作ってコンパイル待ちで止まる (従来どおり)。
+1. **軌道の生成** (Build): `KH_WalkRoute` の `nodePositions` から節 0 を除いた閉路 (435 → 1 を直結) で `trackPositions / trackDistances / trackLength / trackDetour` を作る (`linkAllowsDetour` を区間へ写す。435→1 の区間は 435 の値)。乗り場 0..4 は `spotNodes` の位置を軌道へ投影した距離、行き先 0..5 は `destinationNodes` の位置を投影した距離 (入口 = 節 0 の位置を投影 → 門前の直結区間上)、周回 2/3 は −1。障害物の掃引 (トレイル沿い ±0.6 m、車高 0.3〜1.6 m、`Renderer.bounds`、Terrain / 草 / 木 / 石 / 犬 / カートを除く) で見つけた物の距離 ±4 m を `noLateralFrom/To` に書く (現状はベンチ d≈93 と門枠 d≈0 の 2 件が見込み。→ 現在は 0 件: 門枠は M1.1 の軌道で外れ、ベンチは 2026-10-12 に `Course/16` で除去)。配列は SerializedObject → `CopyProxyToUdon`。**Course/21 で経路を作り直したら Cart/1 を再実行する**旨をログと本書に残す。
+2. **ドック・操作帯の生成** (Build): 各カートに `Dock_Menu` (左側 1.1 m、高さ 1.0、面を座席へ)、`Dock_Monitor` (左前 1.2 m、高さ 1.1)、`Dock_Photo` (左後 1.0 m) の Transform。→ 現在は: Play 3 回目と Codex M1.2 の後、操作帯 (−0.40, 1.00, 0.50)・モニター (−0.70, 1.80, 1.15)・メニュー (−1.15, 1.0, 0) の固定値 (Issue §Play 確認 3 回目)。最小化中のタブは左肘掛けの前上 (−0.30, 0.86, 0.10)。`Controls` Canvas (左斜め前 0.55 m、高さ 0.95、幅 0.28 m、layer 17、VRCUiShape、BoxCollider trigger、既存の共通フォント) にボタン 8 個を `EnsureButton` で配線。`KH_CartDock` と `KH_CartControls` を `AddUdonSharpComponent`、参照を配線 (`menu` = シーンの `KD_TreatPouch`、`video` = `KH_VideoCamera`、`photo` = `KD_PhotoViewer`。無ければ null のまま)。`StopR` の kind を 0 に。Program Asset は初回に作ってコンパイル待ちで止まる (従来どおり)。
 3. **文言**: 上記 6 キー × 13 言語を `CourseUITranslations.json` へ (統括が Course/27 を流す)。
 4. **Verify / Probe**: 軌道の節数 = 435、`trackLength` が route より約 11 m 短い、軌道と route の最大乖離 (節 0 近傍を除き 0)、乗り場の開始点が門枠の bounds に入らない、入口の到着点が門枠の手前 (z が門枠より大きい側)、`noLateral` がベンチの距離を覆う、ドック 3 点と操作帯の配線 (プロキシと backing)、layer 17、`StopR` kind 0、座席配列の長さ。
 
@@ -231,7 +323,7 @@ Runtime 実装で契約から変えた点 (2026-10-12):
 
 ## M2: すれ違い・犬の配置・掲示・カメラ・調整 (2026-10-12)
 
-ユーザー決定 (2026-10-12): 停止後は仕様どおり乗り場からの再出発のみ (その場に残さない)。グループ走行と移動中の合流は Play で OK。FPS は最後に確認。**M2 を全部実装する。** 契約は M1/M1.1 と同じ流儀 (Runtime は `Scripts/Cart/` と指定ファイル、Editor は `Scripts/Editor/Cart/` と翻訳表、Unity 操作は統括)。
+ユーザー決定 (2026-10-12): 停止後は仕様どおり乗り場からの再出発のみ (その場に残さない)。(→ 同日 M3 で「その場に残し、そこから再開・合流」に上書き)グループ走行と移動中の合流は Play で OK。FPS は最後に確認。**M2 を全部実装する。** 契約は M1/M1.1 と同じ流儀 (Runtime は `Scripts/Cart/` と指定ファイル、Editor は `Scripts/Editor/Cart/` と翻訳表、Unity 操作は統括)。
 
 ### 担当とファイルの所有
 
@@ -265,7 +357,7 @@ Motion: 横ずれは `groupLane` で決める (0 = 従来の千鳥、1 = 右へ 
 
 ### Runtime 3: 犬用 API と操作帯
 
-- `public bool _IsPlayerRiding(int playerId)`、`public Vector3 _DogAnchor(int playerId, int slot)` (slot 0..2: 乗っているカートの前方 0.9 m、横 (−0.45, +0.45, 0) の順。`groupLane != 0` のときは横を半分に。カートが無ければ `Vector3.zero`)、`public Vector3 _CartForward(int playerId)`。犬担当が呼ぶ。
+- `public bool _IsPlayerRiding(int playerId)`、`public Vector3 _DogAnchor(int playerId, int slot)` (slot 0..2: 乗っているカートの前方 0.9 m、横 (−0.45, +0.45, 0) の順。`groupLane != 0` のときは横を半分に。カートが無ければ `Vector3.zero`)、`public Vector3 _CartForward(int playerId)`。犬担当が呼ぶ。→ 現在は: `_CartSpeed` も追加 (待機中は 0)。犬側はアンカーを中心に揺らぐ目標へ連続追従する (§Dog の末尾)。
 - 操作帯に「案内」ボタン (11 個目、文言 `cart.guide`「お手入れ道具の案内」): `KD_TreatPouch` を開き、課金道具の案内ページがあればそのページへ (無ければ `_Toggle()` だけ)。ドックへ寄せるのは従来どおり。
 - 乗り場パネル: 受付 OFF / 終了中のグループも行に出し、`cart.result.closed` の短縮形 (`cart.row.closed`「受付停止」/ `cart.row.ending`「到着中」) を人数の後ろに付け、ボタンは無効表示 (押しても `CartClosed`)。
 - 調整値: `speed / gap / lateral / approach / holdTimeoutSec / seatStep / yawStep` を public のまま、Editor の `Data/Cart/tuning.json` から Build が書く (下記)。
@@ -290,6 +382,7 @@ Runtime 実装で決めたこと (2026-10-12):
 - 持ち主が降りたら通常へ戻す (次の判定で自然に戻る形でよい)。
 - `KH_CartManager` への参照は `KD_DogWanderController` の非同期フィールド `public KH_CartManager cartManager;` (null なら従来どおり)。配線は Cart/1 Build が行う (Editor 担当: 6 匹の `cartManager` を SerializedObject で書く)。
 - 変更は乗車中だけに効くこと。通常の散歩の挙動 (目的地・寄り道・集合) を変えない。
+- → 現在は (Play 4・6 回目の指摘で変更、2026-10-12): 到着で止まる追従をやめ、カート速度 + 距離比例の連続制御 (下限 0.35 倍、待機中は 0)。目標は犬ごとの位相の正弦の和で揺らす (横 ±0.6 m・一列時 0.25 m、前後 −0.3〜+1.0 m、周期 5〜9 秒)。15〜40 秒ごとに立ち止まりかけ (速度 0.6 倍、1.5〜2.5 秒、止まらない)。隣の犬と 0.55 m 未満なら押し離す。実装は `KD_DogWanderController.HillsideLeashCart.cs`。
 
 ### Camera (impl-camera)
 
@@ -321,6 +414,8 @@ compile → Cart/1 (Program Asset 無し) → Cart/2 → Cart/3 → Video/1 → 
 
 ### Editor 1: 門前の折返しを滑らかに (`Tools/KominkaHillside/Course/22 - Smooth Gate Turn`、impl-editor)
 
+→ 現在は: メニューは `Course/21a - Smooth Gate Turn` / `Course/21b - Verify Gate Turn` (`KH_CourseGateTurnEditor.cs`)。以下の 22 / 22b は 21a / 21b と読み替える。節 0 は門から約 8 m (門枠から 8.35 m 以上)。
+
 既存の route を**その場で**整形する (節の数と番号は変えない。Course/21 の再実行は不要):
 - 節 432 と節 2 の間の節 433・434・435・0・1 を、432 → 2 を結ぶ 2 次ベジエ (制御点は門側へ膨らむ (44.5, 45.0) 付近) 上に等間隔で置き直す。各点は Raycast (Default + Environment) で y を取り、`NavMesh.SamplePosition` (0.5 m) で通行面へ寄せる。
 - 節 0 (入口の目的地) は曲線上で門に最も近い点にする (入口到着 = 門前の曲線上。門から約 5〜7 m)。
@@ -331,7 +426,7 @@ compile → Cart/1 (Program Asset 無し) → Cart/2 → Cart/3 → Video/1 → 
 
 ### 設計 (その場に残すカート)
 
-- `cartState` に **3 = Parked** を追加。個人の停止・降車と到着終了で、カートは Idle (プール) ではなく Parked になり、その場に残る。同期: `float[] cartParkDist` (軌道距離)、`int[] cartParkedMs` (サーバー時刻)。Motion は Parked のカートを `cartParkDist` の軌道点から右へ `parkOffset` (0.9 m、class 2 の区間では 0.3 m) に置く (他の車の通行を妨げない)。
+- `cartState` に **3 = Parked** を追加。個人の停止・降車と到着終了で、カートは Idle (プール) ではなく Parked になり、その場に残る。→ 現在は: 到着で降りたカートは Idle (プール) へ戻す (2026-10-12 ユーザー要望、`arrive-release`)。Parked は途中の停止・ジャンプ・ワープ・合流・リスポーン・退出だけ。寄せ幅は下の Codex 反映の駐車枠 (`parkOffset` は使わない)。同期: `float[] cartParkDist` (軌道距離)、`int[] cartParkedMs` (サーバー時刻)。Motion は Parked のカートを `cartParkDist` の軌道点から右へ `parkOffset` (0.9 m、class 2 の区間では 0.3 m) に置く (他の車の通行を妨げない)。
 - Parked のカートには **カート上のメニュー** (`KH_CartStationPanel` を `spot = -1`、`cart = index` で各カートに 1 枚、右肘掛けの上 0.55 m、外側を向く) が出る。内容は乗り場のパネルと同じ (出発 / 合流の行 / 注意書き / PR)。Parked でないときは非表示。
 - **カートからの出発** (`ReqStartFrom(int cart, int destination)`): そのカートが Parked なら、要求者を乗員にし、`groupAnchorDist = cartParkDist` で 1 人グループを作る (カートはその場から動き出す)。現在地が目的地なら `CartHere`。
 - **カートからの合流** (`ReqJoinFrom(int cart, int group, int gen)`): そのカートが Parked なら、要求者を乗員にして末尾に加える (カートは暗転で隊列へ移動。乗り場からの合流と同じ)。
@@ -356,15 +451,15 @@ Codex M3 レビュー後 (2026-10-12):
 
 ### Editor 2: カートステーション (impl-editor)
 
-- 乗り場 5 地点: 乗り場パネルの横に**静的なカート** (FBX のメッシュだけ: Body + 車軸、LODGroup 付き、Udon・Station・Collider なし、layer Default) を置く。向きは道の進行方向、位置は乗り場の着地点の右手 1.2 m。
-- 乗り場パネルはその静的カートの右肘掛けの上 0.55 m に移し、通路側 (着地点側) を向ける。大きさは現状のまま (幅 760 → 肘掛け幅より大きいので、肘掛けの真上から少し外へ出してよい)。
+- 乗り場 5 地点: 乗り場パネルの横に**静的なカート** (FBX のメッシュだけ: Body + 車軸、LODGroup 付き、Udon・Station・Collider なし、layer Default) を置く。向きは道の進行方向、位置は乗り場の着地点の右手 1.2 m。→ 現在は: 軌道上の開始点から道の外へ NavMesh 幅 + 0.8 m (2.2〜3.5 m)。側は `StationSide` で入口 (乗り場 0) だけ左 = 地図ボード側、他は右。入口の開始点は地図ボードを軌道へ投影して広場側へ 6 m (`b25b2d5`・`bbdb33a`。Editor の `StationCartSide = 1.2f` は旧値)。
+- 乗り場パネルはその静的カートの右肘掛けの上 0.55 m に移し、通路側 (着地点側) を向ける。→ 現在は: 道側の肘掛け (右に置いた乗り場は左肘掛け、入口は右肘掛け) の上 0.55 m。大きさは現状のまま (幅 760 → 肘掛け幅より大きいので、肘掛けの真上から少し外へ出してよい)。
 - 8 台の走行カートにカート上メニュー (`Panel` 子オブジェクト、`KH_CartStationPanel` 1 枚ずつ、`spot=-1`, `cart=index`) を作り配線。Manager の `panels` は乗り場 5 + カート 8 = 13 枚 (`ApplyState` の `_Refresh` 対象)。
 - Verify: 静的カート 5 台 (Udon なし)、パネルの位置、カート上メニューの配線、`cartParkDist / cartParkedMs` の長さ。Probe: `ReqStartFrom` の開始距離 = `cartParkDist`、回収の順序 (最古)。
 
 ### 文言
 
-`cart.start.here`「ここから出発」(乗り場と同じ文言でよければ `cart.start` を再利用)、`cart.parked`「ここに停めてあります。乗って再開できます」(カート上メニューの注意書きの代わり)。
+`cart.start.here`「ここから出発」(乗り場と同じ文言でよければ `cart.start` を再利用。→ 現在は `cart.start` を再利用し `cart.start.here` は無い)、`cart.parked`「ここに停めてあります。乗って再開できます」(カート上メニューの注意書きの代わり)。
 
 ### 検証と引き渡し (M3)
 
-compile → Course/22 → Course/22b → Cart/1 (Program Asset 無し) → Cart/2 → Cart/3 → 保存 → Codex → コミット。Play: ①広場→川辺で門前を滑らかに曲がる (犬も) ②乗り場に静的カートとその上のメニュー ③途中で停止するとカートが残り、上にメニューが出る ④そこから一人で再開 / 同じ・別のグループへ合流 ⑤乗り場で空車が無いとき最古の置き去りカートが回収される。
+compile → Course/22 → Course/22b → Cart/1 (Program Asset 無し) → Cart/2 → Cart/3 → 保存 → Codex → コミット (→ 現在のメニューは Course/21a → 21b)。Play: ①広場→川辺で門前を滑らかに曲がる (犬も) ②乗り場に静的カートとその上のメニュー ③途中で停止するとカートが残り、上にメニューが出る ④そこから一人で再開 / 同じ・別のグループへ合流 ⑤乗り場で空車が無いとき最古の置き去りカートが回収される。

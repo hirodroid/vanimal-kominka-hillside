@@ -86,6 +86,7 @@ UI制作・改修・レビューは `vrc-world-ui` と `.claude/skills/vrc-world
 | 地形・境界・負荷 | [IMP-ENV-001](development/issues/IMP-ENV-001-hillside-polish.md)、[完了した地形判断](development/issues/issue_summary.md) |
 | 犬ギミックの出所 | [移植記録](development/imports/kominka-dog-system.md) |
 | 川のせせらぎ音 (環境音) | [制作票・素材記録](plans/2026-10-02-river-ambience-production.md) (Firefly 生成。利用条件は未確認)。Issue は [IMP-ENV-006](development/issues/IMP-ENV-006-river-ambience.md)。メニューは `Course/110` / `111` |
+| おさんぽカート (自動散歩カート) | [DES-WLD-004](development/issues/DES-WLD-004-auto-walk-cart.md) (冒頭のまとめが現在地の入口)、[実装設計 §現在の構成](plans/auto-walk-cart/implementation.md)、[利用の流れ (HTML)](plans/auto-walk-cart/usage-flow.html)、外観は [制作票](plans/auto-walk-cart/asset-brief.md) / [本制作](plans/auto-walk-cart/production.md)。メニューは `Cart/1`〜`4`、仕様は game-design §4 |
 | 散歩帰りのお手入れ・洗い場 | [IMP-DOG-024](development/issues/IMP-DOG-024-walk-and-wash-experience.md)。主洗い場は門外の犬の集合場所・リード設備付近。仕様はgame-design §4、体験の意図と最優先品質はcore-concept §1・2 |
 
 本番は周回版を採用した `VRCDefaultWorldScene`。旧Terrain PrototypeのBuildはKH_Worldを破棄するため本番で使わない。周回の更新・検査はCourseメニューと[切替記録](plans/des-env-002/production.md)を参照。元の道の比較用設定はKH_TerrainPrototypeConfig、全周地形はKH_CourseGroundEditorを使う。

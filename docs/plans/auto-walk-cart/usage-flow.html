@@ -42,7 +42,7 @@ footer{margin-top:40px;font-size:12px;color:var(--muted);border-top:1px solid va
 <header>
   <div class="eyebrow">VAnimal / 古民家の裏山 · DES-WLD-004</div>
   <h1>おさんぽカート 利用の流れ</h1>
-  <p>一人乗りの自動散歩カート。乗り場で出発し、犬の散歩設定で道を進み、好きな所で降りられる。2026-10-12 時点 (M3 まで実装、Play 未確認の項目あり)。</p>
+  <p>一人乗りの自動散歩カート。乗り場で出発し、犬の散歩設定で道を進み、好きな所で降りられる。2026-10-12 時点 (M3 と同日の既定値の変更・追加要望の反映まで実装。Play 未確認の項目あり)。</p>
 </header>
 <nav>
   <a href="#overview">全体像</a><a href="#start">出発</a><a href="#join">合流</a><a href="#ride">乗車中の操作</a><a href="#stop">停止と残るカート</a><a href="#arrive">到着</a><a href="#group">グループ</a><a href="#traffic">すれ違い</a><a href="#travel">ワープ等との関係</a><a href="#dog">犬</a><a href="#state">状態遷移</a><a href="#values">決めた値</a>
@@ -50,7 +50,7 @@ footer{margin-top:40px;font-size:12px;color:var(--muted);border-top:1px solid va
 
 <section id="overview">
   <h2>全体像</h2>
-  <p class="lead">カートは 8 台。5 つの乗り場 (入口・広場・奥の広場・上流の橋・川辺) と、途中で降りて残ったカートが「乗り場」になる。</p>
+  <p class="lead">カートは 8 台。5 つの乗り場 (入口・広場・奥の広場・上流の橋・川辺) と、途中で降りて残ったカートが「乗り場」になる。目的地に着いて降りたカートは残らず、プールへ戻る。</p>
   <div class="chart"><pre class="mermaid">
 flowchart LR
   S[乗り場のメニュー<br>5 地点] -->|出発| R[走行中]
@@ -58,12 +58,13 @@ flowchart LR
   P[残ったカートのメニュー] -->|再開| R
   P -->|合流| R
   R -->|停止ボタン / ジャンプ| P
-  R -->|目的地に到着| P
   R -->|ワープ・リスポーン・退出| P
+  R -->|目的地に到着| I[プールへ戻る<br>カートは残らない]
+  I -.->|次の出発で使われる| S
   P -.->|乗り場で空車が無いとき<br>最古のカートを回収| S
-  </pre><pre class="fallback">乗り場のメニュー →(出発/合流)→ 走行中 →(停止・到着・ワープ等)→ 残ったカート →(再開/合流)→ 走行中。乗り場で空車が無ければ最古の残ったカートを回収。</pre></div>
+  </pre><pre class="fallback">乗り場のメニュー →(出発/合流)→ 走行中 →(停止・ワープ等)→ 残ったカート →(再開/合流)→ 走行中。目的地に到着したカートはプールへ戻る (残らない)。乗り場で空車が無ければ最古の残ったカートを回収。</pre></div>
   <div class="grid">
-    <div class="card"><h3 style="margin-top:0">行き先はさんぽの設定を共用</h3>さんぽで選んだ目的地 (入口 / 広場 / 奥の広場 / 川辺) か周回 (順 / 逆) のまま走る。カート専用の行き先設定は無い。グループに合流したら、そのグループのマスターの設定に従う。</div>
+    <div class="card"><h3 style="margin-top:0">行き先はさんぽの設定を共用</h3>さんぽで選んだ目的地 (入口 / 広場 / 奥の広場 / 川辺) か周回 (順 / 逆) のまま走る。選んでいなければ「山道から周回 (順)」(犬の散歩と共通の既定)。カート専用の行き先設定は無い。グループに合流したら、そのグループのマスターの設定に従う。</div>
     <div class="card"><h3 style="margin-top:0">無料・全端末</h3>犬がいなくても乗れる。PCVR・デスクトップ・Quest 単体・スマホを対象 (実機確認はこれから)。</div>
     <div class="card"><h3 style="margin-top:0">降りるのは自由</h3>停止ボタンでもジャンプでも降りられる。VR 酔いを感じたらすぐ降りる、が前提。</div>
   </div>
@@ -71,7 +72,7 @@ flowchart LR
 
 <section id="start">
   <h2>乗り場から出発する</h2>
-  <p class="lead">乗り場には動かない見本のカートがあり、その肘掛けの上にメニューが出ている。</p>
+  <p class="lead">乗り場には動かない見本のカートが道の外 (道幅 + 0.8 m、2.2〜3.5 m 離れた所) にあり、道側の肘掛けの上にメニューが出ている。</p>
   <div class="chart"><pre class="mermaid">
 flowchart TD
   A[乗り場のメニューで「ここから出発」] --> B{現在地が<br>さんぽの目的地と同じ?}
@@ -84,10 +85,10 @@ flowchart TD
   E --> G
   G --> H[3 秒後に出発]
   H --> I{行き先}
-  I -->|周回 順/逆| J[止めるまで周回を続ける]
-  I -->|目的地| K[到着したら停車して降車]
-  </pre><pre class="fallback">出発 → 現在地が目的地なら案内 → 空車 (無ければ最古の残ったカートを回収) → 着座、1 人グループ、受付 ON → 3 秒後に出発 → 周回なら続ける / 目的地なら到着で停車・降車。</pre></div>
-  <p class="note">乗り場 0 (入口) の見本カートとメニューは地図ボードの奥 (広場側) にあり、出発点もその横。門の中へは入らない。</p>
+  I -->|周回 順/逆<br>既定は山道から周回 順| J[止めるまで周回を続ける]
+  I -->|目的地| K[到着したら停車して降車<br>カートはプールへ戻る]
+  </pre><pre class="fallback">出発 → 現在地が目的地なら案内 → 空車 (無ければ最古の残ったカートを回収) → 着座、1 人グループ、受付 ON → 3 秒後に出発 → 周回 (既定は山道から周回・順) なら続ける / 目的地なら到着で停車・降車し、カートはプールへ戻る。</pre></div>
+  <p class="note">乗り場 0 (入口) だけ見本カートとメニューは道の左 = 地図ボード側にあり、出発点は地図ボードから広場側へ 6 m 進んだ所。門の中へは入らない。他の 4 地点の見本カートは道の右。</p>
 </section>
 
 <section id="join">
@@ -116,7 +117,7 @@ flowchart TD
   <table>
     <tr><th>場所</th><th>操作</th><th>内容</th></tr>
     <tr><td rowspan="8">操作帯<span class="tag">左斜め前 · 自分だけに見える</span></td><td>メニュー</td><td>手元メニューを左横のドックに出す。以後カートと一緒に動く</td></tr>
-    <tr><td>撮影モニター <span class="tag">PC</span></td><td>閉 → 開く / 表示中 → 隠す (撮影は続く) / 隠し中 → 再表示</td></tr>
+    <tr><td>撮影モニター <span class="tag">PC</span></td><td>閉 → 開く / 表示中 → 隠す (撮影は続く) / 隠し中 → 再表示。開くと撮影パターン「おまかせ」から始まる</td></tr>
     <tr><td>高さ ▲▼</td><td>座面の高さ ±30 cm (5 cm 刻み)。他の人の画面でも同じ</td></tr>
     <tr><td>前後 ▲▼</td><td>座面の前後 ±30 cm</td></tr>
     <tr><td>向き ◀▶</td><td>座面の向き ±90° (15° 刻み)</td></tr>
@@ -160,10 +161,10 @@ flowchart TD
 flowchart LR
   A[先頭が目的地の手前 0.5 m] --> B[グループは「到着中」<br>新しい合流は受け付けない]
   B --> C[各車は自分が目的地に着いた所で停車]
-  C --> D[降車 · カートはその場に残る]
+  C --> D[降車 · カートは残らずプールへ戻る]
   D --> E[次は乗り場か残ったカートから]
-  </pre><pre class="fallback">先頭が目的地手前 → 到着中 (合流不可) → 各車が着いた所で停車 → 降車、カートは残る。</pre></div>
-  <p class="note">周回 (順 / 逆) は到着が無く、止めるまで続く。入口 (目的地 0) の到着点は門の前の曲線上 (門から約 8 m)。</p>
+  </pre><pre class="fallback">先頭が目的地手前 → 到着中 (合流不可) → 各車が着いた所で停車 → 降車、カートはプールへ戻る (残らない)。</pre></div>
+  <p class="note">周回 (順 / 逆) は到着が無く、止めるまで続く。入口 (目的地 0) の到着点は門の前の曲線上 (門から約 8 m)。その場に残るのは途中で止めたカートだけ (到着ではない)。</p>
 </section>
 
 <section id="group">
@@ -181,7 +182,7 @@ flowchart LR
 
 <section id="traffic">
   <h2>逆方向のグループとすれ違う</h2>
-  <p class="lead">道は幅で 3 種類に分けてある。広い道 (千鳥可)、一列なら双方通れる道、一列でも通れない狭い区間 (橋 2 本・広場入口・門前)。</p>
+  <p class="lead">道は幅で 3 種類に分けてある。広い道 (千鳥可)、一列なら双方通れる道、一列でも通れない狭い区間 4 か所 (広場入口の狭い所・上流の橋・下流の橋・門前)。広場入口のベンチは除去したが、道幅の狭い所として残る。</p>
   <div class="chart"><pre class="mermaid">
 flowchart TD
   A[前方 25 m 以内に<br>逆方向のグループ] --> B[双方とも一列 · 右寄せ 0.55 m]
@@ -220,7 +221,7 @@ flowchart LR
   <h2>犬</h2>
   <table>
     <tr><th>場面</th><th>犬の動き</th></tr>
-    <tr><td>乗車中</td><td>リードで繋いだ犬はカートの前 0.9 m・左右に並び、カートの速さに合わせて歩き続ける。一列の区間では左右を狭める。くん活・寄り道・休憩は始めない</td></tr>
+    <tr><td>乗車中</td><td>リードで繋いだ犬はカートの前 0.9 m・左右 ±0.45 m を中心に、犬ごとにずらしてゆっくり揺れながら歩く (横 ±0.6 m、前後 −0.3〜+1.0 m、周期 5〜9 秒)。15〜40 秒ごとに少しの間ゆっくりになる「立ち止まりかけ」(速さ 0.6 倍、止まらない)。隣の犬と近づきすぎたら離れる。一列の区間では揺れを狭める。くん活・寄り道・休憩は始めない</td></tr>
     <tr><td>待機 · 停車中</td><td>カートの前で待つ。嗅ぐ・伏せは出ない</td></tr>
     <tr><td>降りた後</td><td>通常の散歩へ戻る</td></tr>
     <tr><td>犬がいない</td><td>そのまま乗れる</td></tr>
@@ -238,9 +239,9 @@ stateDiagram-v2
   Parked --> Riding: 乗り場で回収 (最古)
   Riding --> Ending: グループの先頭が目的地に到着
   Riding --> Parked: 停止 / ジャンプ / ワープ / リスポーン / 退出
-  Ending --> Parked: 自分の車が目的地に着いて降車
+  Ending --> Idle: 自分の車が目的地に着いて降車 (プールへ戻る)
   Parked --> Parked: 誰でも使える乗り場として残る
-  </pre><pre class="fallback">Idle →(出発/合流)→ Riding →(先頭が到着)→ Ending →(各車が着いて降車)→ Parked。Riding →(停止・ワープ等)→ Parked。Parked →(再開/合流/回収)→ Riding。</pre></div>
+  </pre><pre class="fallback">Idle →(出発/合流)→ Riding →(先頭が到着)→ Ending →(各車が着いて降車)→ Idle (プールへ戻る)。Riding →(停止・ワープ等)→ Parked。Parked →(再開/合流/回収)→ Riding。</pre></div>
   <p class="note">グループ側: Free → Running (出発) → Ending (先頭が到着) → Free (全員が降りる)。待機中 (hold) と車線 (千鳥 / 右寄せ / 中央) は Running の中の属性。</p>
 </section>
 
@@ -254,14 +255,18 @@ stateDiagram-v2
     <tr><td>待機の最長</td><td>60 秒</td></tr>
     <tr><td>座面の 1 段</td><td>5 cm / 15°</td></tr>
     <tr><td>出発までの猶予</td><td>3 秒</td><td>KH_CartManager の設定値</td></tr>
-    <tr><td>駐車の右寄せ</td><td>広い道 1.6 m / 一列の道 1.2 m / 狭い区間は出口 + 3 m</td><td>KH_CartManager.Park.cs</td></tr>
+    <tr><td>さんぽの既定の行き先</td><td>山道から周回 (順) (犬の散歩と共通)</td><td><kbd>tuning.json</kbd> の <kbd>defaultDestination</kbd> (2) → Cart/4 (KH_LeashManager に書く)</td></tr>
+    <tr><td>駐車の寄せ幅 (右)</td><td>広い道 1.6 m / 一列の道 1.2 m / 狭い区間は出口 + 3 m</td><td>KH_CartManager.Park.cs</td></tr>
+    <tr><td>見本カートの位置</td><td>道の外へ道幅 + 0.8 m (2.2〜3.5 m)。入口だけ左 (地図ボード側、地図ボードから広場側へ 6 m)</td><td>Editor の定数を変えて Cart/1</td></tr>
+    <tr><td>最小化タブの位置</td><td>左の肘掛けの前上 (カート基準 −0.30, 0.86, 0.10)</td><td>Editor の定数を変えて Cart/1</td></tr>
+    <tr><td>撮影モニターの始まり</td><td>「おまかせ」パターン</td><td>KH_VideoCamera の startWithPattern / defaultPattern</td></tr>
     <tr><td>回収の猶予</td><td>置いてから 3 秒</td><td>ReclaimGraceMs</td></tr>
     <tr><td>台数</td><td>8 台 (= 最大同時乗車)</td><td>MaxCarts (設計変更)</td></tr>
   </table>
 </section>
 
 <footer>
-  正本: <a href="../../development/issues/DES-WLD-004-auto-walk-cart.md">DES-WLD-004</a> / <a href="implementation.md">実装設計 (M1〜M3)</a> / <a href="asset-brief.md">制作票</a>。図は Mermaid (CDN) で描画。オフラインでは各図の下に文章版が出る。Play・実機で未確認の項目は Issue の各回のチェックリストを参照。
+  正本: <a href="../../development/issues/DES-WLD-004-auto-walk-cart.md">DES-WLD-004</a> / <a href="implementation.md">実装設計 (§現在の構成)</a> / <a href="asset-brief.md">制作票</a>。図は Mermaid (CDN) で描画。オフラインでは各図の下に文章版が出る。Play・実機で未確認の項目は Issue の各回のチェックリストを参照。
 </footer>
 </div>
 <script type="module">
