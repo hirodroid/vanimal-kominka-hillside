@@ -20,9 +20,9 @@ namespace KominkaHillside
         public KH_CartManager manager;
         public int index;
         public VRC.SDK3.Components.VRCStation station;
-        public Transform seat, exitL, exitR, stopL, stopR, signBack, axleFront, axleRear;
+        public Transform seat, exitL, exitR, signBack, axleFront, axleRear;
         public Renderer[] renderers;
-        public KH_CartStopButton stopButton, acceptButton;   // 子 GameObject (Interact を受ける。M1.1: 左右とも停止 (kind 0)。kind 1 ならマスターだけ)
+        // IMP-WLD-015 (2026-10-13): 肘掛け前端の停止ボタン (KH_CartStopButton / stopL / stopR) は撤去。停止は操作帯の「停止」(KH_CartControls._PressStop) だけ
         public KH_CartControls controls;   // M1.1: 左斜め前の操作帯 (null 可)
         public KH_CartDock dock;           // M1.1: 乗車中に板を寄せるドック (null 可)
         public TMPro.TextMeshProUGUI signCaption;   // M2: 背面掲示の下の 1 行 (cart.sign.caption。言語の変化で書き直す。null 可)
@@ -177,15 +177,10 @@ namespace KominkaHillside
             if (exitR != null) _exitLocalR = transform.InverseTransformPoint(exitR.position);
         }
 
-        /// <summary>停止・受付ボタンを、このカートの乗員 (受付はマスター) にだけ出す。manager.ApplyState から。</summary>
+        /// <summary>このカートの乗員かどうかをドックと操作帯へ伝える。manager.ApplyState から。
+        /// master / accepting は今は使わない (IMP-WLD-015 で肘掛けの停止・受付ボタンを撤去。操作帯は _Refresh で manager から読む)。呼び出し側に合わせて引数は残す。</summary>
         public void _SetRider(bool mine, bool master, bool accepting)
         {
-            if (stopButton != null) stopButton._SetOn(mine && (stopButton.kind == 0 || master));
-            if (acceptButton != null)
-            {
-                acceptButton._SetAccepting(accepting);
-                acceptButton._SetOn(mine && (acceptButton.kind == 0 || master));   // M1.1: 右も停止 (kind 0) なら乗員全員に出す
-            }
             if (dock != null) dock._SetRiding(mine);
             if (controls != null) controls._Refresh();
         }
@@ -203,8 +198,6 @@ namespace KominkaHillside
         /// <summary>言語が変わった (manager が 1 秒ごとに見て呼ぶ)。</summary>
         public void _RefreshText()
         {
-            if (stopButton != null) stopButton._RefreshText();
-            if (acceptButton != null) acceptButton._RefreshText();
             if (controls != null) controls._RefreshText();
             // M2: 背面掲示の下の 1 行 (manager の最初の 1 秒の見回りで初回も書かれる)
             if (signCaption != null && manager != null && manager.language != null) signCaption.text = manager.language._Text("cart.sign.caption");

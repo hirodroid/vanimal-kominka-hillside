@@ -22,13 +22,13 @@ namespace KominkaHillside.Editor
     /// <summary>DES-WLD-004 おさんぽカート (M1〜M3) の Setup (契約: docs/plans/auto-walk-cart/implementation.md の「Editor」「M1.1」「M2」「M3」節)。
     ///
     /// Cart/1 は Course/85 (KH_CourseTravelJoinEditor.Build) の流儀で次を行い、本番シーンを保存する:
-    /// 1. Program Asset 6 本 (KH_CartManager / KH_CartSeat / KH_CartStopButton / KH_CartStationPanel / KH_CartDock / KH_CartControls) が無ければ作ってコンパイルを始め、
+    /// 1. Program Asset 5 本 (KH_CartManager / KH_CartSeat / KH_CartStationPanel / KH_CartDock / KH_CartControls) が無ければ作ってコンパイルを始め、
     ///    **シーンは変えずに止まる** (もう一度 Cart/1 を流す)。
     /// 2. 軌道 (.Track.cs): route の周回 436 節を写し、距離は節間の弦の累積 (節 0 が棘のときだけ除く。Course/21a の門前整形の後は除かない)。障害物の掃引で noLateral、
     ///    道幅の分類で trackClass / narrow 区間 / 待機点 (.M2.cs)、乗り場の開始距離 (乗り場 0 = 地図ボードの奥 6 m、他 = 着地点の投影)。Course/21 / 21a の後は Cart/1 を再実行。
     /// 3. ルート KH_Cart (冪等): CartManager (Manual)、Parking (0, -50, 0)、Carts/Cart_0..7、Stations (静的カート StationCart_0..4 + パネル Station_0..4)。
     /// 4. 走行カート: 子 Model は毎回作り直す (FBX → Unpack + LODGroup、無ければ仮形状)。本体に VRCStation + KH_CartSeat + BoxCollider (layer Ignore Raycast)、
-    ///    StopL / StopR (どちらも停止)、Docks (KH_CartDock)、Controls (KH_CartControls、layer 17、11 ボタン + 結果欄)、TabCanvas と 2 アンカー、カート上メニュー Panel、背面の掲示の 1 行。
+    ///    残っている StopL / StopR の除去 (IMP-WLD-015: 肘掛け前端の停止ボタンは撤去。停止は操作帯だけ)、Docks (KH_CartDock)、Controls (KH_CartControls、layer 17、11 ボタン + 結果欄)、TabCanvas と 2 アンカー、カート上メニュー Panel、背面の掲示の 1 行。
     /// 5. 乗り場: 静的カート (メッシュだけ) を軌道の開始点から乗り場ごとの側へ「NavMesh 通行幅 + 0.8 m」外し、道側の肘掛けの上 0.55 m にパネル。Manager.panels = 乗り場 5 + カート上 8 = 13 枚。
     /// 6. 調整値 (Data/Cart/tuning.json) を Manager と KH_LeashManager.defaultDestination へ、犬 6 匹・撮影カメラ・KH_LeashManager に cartManager、
     ///    掲示画像 Data/Cart/KH_CartSign.png、翻訳表 (cart.*) を KH_CourseTravelEditor.ApplyCatalog で KD_Language へ。配線はすべて SerializedObject → CopyProxyToUdon。
@@ -39,13 +39,14 @@ namespace KominkaHillside.Editor
     {
         public const string OutDir = "Temp/cart-20261011";
         public const string ProgramDir = "Assets/KominkaHillside/Scripts/Cart";
-        public static readonly string[] ProgramNames = { "KH_CartManager", "KH_CartSeat", "KH_CartStopButton", "KH_CartStationPanel", "KH_CartDock", "KH_CartControls" };
+        public static readonly string[] ProgramNames = { "KH_CartManager", "KH_CartSeat", "KH_CartStationPanel", "KH_CartDock", "KH_CartControls" };
         public const string ModelDir = "Assets/KominkaHillside/Models/Cart";
         public const string FbxPath = ModelDir + "/KH_OsanpoCart.fbx";
         public const string BaseColorPath = ModelDir + "/KH_OsanpoCart_BaseColor.png", SignTexturePath = ModelDir + "/KH_OsanpoCart_Sign.png";
         public const string MaterialDir = "Assets/KominkaHillside/Materials/Cart";
         public const string BodyMaterialPath = MaterialDir + "/KH_OsanpoCart_Body.mat", SignMaterialPath = MaterialDir + "/KH_OsanpoCart_Sign.mat";
         public const string RootName = "KH_Cart", ManagerName = "CartManager", CartsName = "Carts", StationsName = "Stations", ParkingName = "Parking", ModelName = "Model", BoardName = "Board";
+        // StopL / StopR: IMP-WLD-015 で撤去した肘掛け前端の停止ボタンの子の名前。Build の片付けと Verify の「無い」検査にだけ使う
         public const string StopLName = "StopL", StopRName = "StopR", StartName = "StartButton", JoinPrefix = "Join";
         public const int MaxCarts = 8, MaxGroups = 8, StationCount = 5;
         public static readonly Vector3 ParkingPosition = new Vector3(0f, -50f, 0f);
@@ -65,13 +66,12 @@ namespace KominkaHillside.Editor
             new Vector3(0.80f, 0f, 0.15f),    // ExitR
             new Vector3(-0.30f, 0f, 1.30f),   // DogL
             new Vector3(0.30f, 0f, 1.30f),    // DogR
-            new Vector3(-0.36f, 0.76f, 0.30f),// StopL (肘掛け前端)
+            new Vector3(-0.36f, 0.76f, 0.30f),// StopL (肘掛け前端。アンカーは M3 のパネル位置などに使う。停止ボタンは IMP-WLD-015 で撤去)
             new Vector3(0.36f, 0.76f, 0.30f), // StopR
             new Vector3(0f, 0.75f, -0.62f) }; // SignBack
         public static readonly Vector3 PlaceholderBodySize = new Vector3(0.82f, 0.6f, 1.2f);
         static readonly Vector3 PlaceholderAxleFront = new Vector3(0f, 0.14f, 0.42f), PlaceholderAxleRear = new Vector3(0f, 0.14f, -0.42f);
         public static readonly Vector3 BodyColliderCenter = new Vector3(0f, 0.3f, 0f), BodyColliderSize = new Vector3(0.82f, 0.6f, 1.2f);
-        public static readonly Vector3 StopColliderSize = new Vector3(0.09f, 0.03f, 0.09f);
         /// <summary>本体の層 = Ignore Raycast。接地 Raycast (KH_LeashManager.TravelGroundMask = 0|11) が自分の車体に当たらないように、
         /// また VRCStation のクリック着座を避ける (vrc-world-ui §2。DisableInteractive はシリアライズされないので Editor からは止められない)。</summary>
         public const int BodyLayer = 2, ButtonLayer = 0;
@@ -328,34 +328,24 @@ namespace KominkaHillside.Editor
             var seat = EnsureU<KH_CartSeat>(go);
             Backing(seat, Networking.SyncType.None);
 
-            // 停止 / 受付切替 (肘掛け前端)
-            var stops = new KH_CartStopButton[2];
+            // IMP-WLD-015 (2026-10-13): 肘掛け前端の停止ボタン (StopL / StopR、KH_CartStopButton) は撤去。停止は操作帯の「停止」だけ。
+            // StopL / StopR は Model の外 (カート直下) にあるので Model の作り直しでは消えない。前の Build の残りをここで消す
+            // (Program Asset と .cs を消した後でも GameObject ごと消せる)
             for (int k = 0; k < 2; k++)
             {
-                var anchor = A(k == 0 ? AnchorStopL : AnchorStopR);
-                var sgo = EnsureChild(go.transform, k == 0 ? StopLName : StopRName);
-                sgo.layer = ButtonLayer; sgo.SetActive(true);
-                sgo.transform.localPosition = go.transform.InverseTransformPoint(anchor.position);
-                sgo.transform.localRotation = Quaternion.Inverse(go.transform.rotation) * anchor.rotation; sgo.transform.localScale = Vector3.one;
-                var bc = sgo.GetComponent<BoxCollider>(); if (bc == null) bc = sgo.AddComponent<BoxCollider>();
-                bc.center = Vector3.zero; bc.size = StopColliderSize; bc.isTrigger = false; EditorUtility.SetDirty(bc);
-                var stop = EnsureU<KH_CartStopButton>(sgo);
-                Backing(stop, Networking.SyncType.None);
-                var sso = new SerializedObject(stop);
-                SetRef(sso, "manager", manager); SetRef(sso, "language", language); SetInt(sso, "kind", 0);   // M1.1: 左右とも停止 (受付切替は操作帯だけ)
-                sso.ApplyModifiedPropertiesWithoutUndo();
-                UdonSharpEditorUtility.CopyProxyToUdon(stop); EditorUtility.SetDirty(stop);
-                stops[k] = stop;
+                string sn = k == 0 ? StopLName : StopRName;
+                for (var t = go.transform.Find(sn); t != null; t = go.transform.Find(sn))
+                {
+                    if (i == 0) log.Add("removed " + go.name + "/" + sn + " (IMP-WLD-015 armrest stop switch)");
+                    UnityEngine.Object.DestroyImmediate(t.gameObject);
+                }
             }
 
             var so = new SerializedObject(seat);
             SetRef(so, "manager", manager); SetInt(so, "index", i); SetRef(so, "station", station);
             SetRef(so, "seat", seatT); SetRef(so, "exitL", exitL); SetRef(so, "exitR", exitR);
-            SetRef(so, "stopL", stops[0].transform); SetRef(so, "stopR", stops[1].transform);
             SetRef(so, "signBack", signBack); SetRef(so, "axleFront", axleFront); SetRef(so, "axleRear", axleRear);
             SetRefs(so, "renderers", renderers);
-            SetRef(so, "stopButton", stops[0]);
-            if (so.FindProperty("acceptButton") != null) SetRef(so, "acceptButton", stops[1]);   // M1.1 で Runtime が外していれば書かない
             BuildCartUi(go, i, seatT, manager, language, menu, video, photo, font, ui, out KH_CartDock dock, out KH_CartControls controls);
             SetRef(so, "controls", controls); SetRef(so, "dock", dock);
             // M3: カート上メニュー (Parked のときだけ Runtime が出す)。右肘掛けの上 0.55 m、外側 (カートの右) を向く

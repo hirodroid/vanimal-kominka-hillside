@@ -13,8 +13,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 ARGV = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 def opt(name, default): return (pathlib.Path(ARGV[ARGV.index(name) + 1]) if name in ARGV else default).resolve()
 OUT = opt('--out', ROOT / 'Assets/KominkaHillside/Models/Cart')
-EVID = opt('--evidence', ROOT / 'docs/plans/evidence/2026-10-12-osanpo-cart')
-REP = opt('--report', ROOT / 'Temp/osanpo-cart-20261012')
+EVID = opt('--evidence', ROOT / 'docs/plans/evidence/2026-10-13-osanpo-cart')
+REP = opt('--report', ROOT / 'Temp/osanpo-cart-20261013')
 SRC = opt('--source', ROOT / 'art-source/osanpo-cart')
 RENDER = '--no-render' not in ARGV
 for d in (OUT, EVID, REP, SRC): d.mkdir(parents=True, exist_ok=True)
@@ -28,13 +28,12 @@ BUDGET_LOD0, BUDGET_LOD1 = 4000, 1500
 FILL_TARGET = (0.75, 0.85)
 # sRGB palette. cloth = #bd9a69 desaturated, slightly darker and nudged to grey-green (kept apart from tan fur).
 HEX = dict(moss='53634e', cloth='a89c78', wood='92714b', dark='343c35', brand='364e3c', cream='e6dcc3',
-           stop='b5735a', burn='3b2a1d', rim='46533f', hub='262b27')
+           burn='3b2a1d', rim='46533f', hub='262b27')
 IDS = list(HEX); ID = {k: i for i, k in enumerate(IDS)}
 PAL = np.array([[int(HEX[k][i:i + 2], 16) for i in (0, 2, 4)] for k in IDS], np.float32)
 # Island texel density in px/cm. fixed=True keeps the near-view value; the rest are scaled together to fill the atlas.
 ISLANDS = {
-    'armrest': (14, True), 'armrest_cap': (14, True), 'stop_base': (14, True), 'stop_cap': (10, True),
-    'button_side': (10, True), 'button_top': (14, True), 'cushion_band': (12, True), 'footrest_band': (10, True),
+    'armrest': (14, True), 'armrest_cap': (14, True), 'cushion_band': (12, True), 'footrest_band': (10, True),
     'brand': (24, True),
     'chassis_band': (3, False), 'chassis_top': (1.5, False), 'seat_band': (3.5, False), 'cushion_top': (2.5, False),
     'footrest_top': (4, False), 'backboard': (3, False), 'backboard_cap': (3, False), 'backpost': (3, False),
@@ -52,7 +51,7 @@ CU = dict(w=.52, d=.46, zc=-.24, r=.045)                              # seat cus
 FR = dict(w=.54, d=.50, zc=.31, r=.03, y0=.198, y1=.222)              # footrest, floor ~.22
 ARM = dict(x=.29, w=.08, t=.045, yc=.7275, z0=-.42, z1=.03)           # armrest top .75
 ARMPOST = dict(x=.285, z=(-.38, -.06), r=.014)
-STOP = dict(depth=.095, w=.07, zc=-.0225, y=.743, tilt=18., roll=8.)   # wedge on the armrest front, faces the eye
+STOP = dict(depth=.095, zc=-.0225, y=.743, tilt=18., roll=8.)   # positions Anchor_StopL/R only (former stop-panel wedge, removed by IMP-WLD-015)
 BACK = dict(lean=5., y=.53, z=-.50, w=.55, h=.52, t=.028, sag=.02, post_x=.255, post_r=.016)
 BRAND = dict(x0=.17, x1=.22, y0=.042, y1=.056)                        # VAnimal burn mark, lower right seen from behind
 SIGNF = dict(w=.32, h=.18, yc=.30, border=.02)                        # embedded frame; plate .28 x .14 (2:1)
@@ -328,7 +327,7 @@ def build(lod):
              cap0='hidden', cap1='footrest_top', cap_tag='footrest_top')
     fe = [L['s'][j] for j in range(L['n'] // 2 + 1) if L['P'][j, 1] > lim2]
     meta('footrest_band', t=L['t'], front_end=max(fe)); meta('footrest_top', w=FR['w'] / 2, d=FR['d'])
-    # ---- right-side set (armrest, stop panel, posts), mirrored to the left
+    # ---- right-side set (armrest, posts), mirrored to the left
     mk = body.mark()
     hw2, ht = ARM['w'] / 2, ARM['t'] / 2
     o = fillet([(0, -ht), (hw2, -ht), (hw2, ht), (-hw2, ht), (-hw2, -ht)], [0, .010, .013, .013, .010], [0, cs, cs, cs, cs])
@@ -340,21 +339,12 @@ def build(lod):
     meta('armrest', top=(min(top), max(top)), bottom=(L['s'][1], L['s'][L['n'] - 1]), vtot=L['s'][L['n']], length=L['t'][-1],
          posts=[z - ARM['z0'] for z in ARMPOST['z']])
     meta('armrest_cap', w=ARM['w'], h=ARM['t'])
-    # stop panel wedge, tilted toward the seated eye (normal up-back) and rolled inward; convex mesh button
-    dz = STOP['depth'] / 2; tr = .010; tf = tr + STOP['depth'] * math.tan(math.radians(STOP['tilt']))
-    o = fillet([(-dz, 0), (dz, 0), (dz, tf), (-dz, tr)], [.002, .002, .005, .005], [1, 1, cs, cs])
-    smk = body.mark()
-    Ls = loft(body, o, roll(-STOP['w'] / 2, STOP['w'] / 2, .003, .003, 1, 1), (0, 0, 0), Z3, Y3, X3, isl='stop_base', tag='stop_panel',
-              cap0='stop_cap', cap1='stop_cap')
+    # Anchor_StopL/R: the stop panel (wedge + convex button) was removed by IMP-WLD-015 (2026-10-13). The anchors stay at the
+    # former button-top centre (Unity: M3 cart menu, station panel, Verify), so the wedge frame math below is kept unchanged.
+    tr = .010; tf = tr + STOP['depth'] * math.tan(math.radians(STOP['tilt']))
     a = math.radians(STOP['tilt']); ntop = np.array([0, math.cos(a), -math.sin(a)]); ftop = np.array([0, math.sin(a), math.cos(a)])
     ctop = np.array([0, (tr + tf) / 2, 0])
-    lathe(body, [(.019, -.002), (.019, .004), (.015, .0075)] if hi else [(.019, -.002), (.015, .0075)], ctop, ntop, X3, ftop, 12 if hi else 6, isl='button_side', tag='stop_button',
-          cap1='button_top')
     R = rot_axis(Z3, STOP['roll']); Tst = np.array([ARM['x'], STOP['y'], STOP['zc']])
-    body.rigid(smk, R, Tst)
-    ttop = [Ls['s'][k] for k in range(len(o)) if abs(o[k][1] - (tr + (tf - tr) * (o[k][0] + dz) / (2 * dz))) < 1e-6]
-    meta('stop_base', top=(min(ttop), max(ttop)), t=Ls['t'])
-    meta('button_top', r=.015)
     if hi:
         p = R @ (ctop + ntop * .0075) + Tst; M = np.array([-1, 1, 1])
         anchors['Anchor_StopR'] = (p, R @ ntop, R @ ftop)
@@ -677,22 +667,6 @@ def P_armrest(m, u, v):
 def P_armrest_cap(m, u, v):
     f = (np.hypot(u - m['w'] / 2, v + .03) / .010) % 1
     return full(u, 'wood'), .86 * (1 - .18 * ss(.60, .68, f) * ss(.98, .92, f)) * tone(u, v, 15, .02)
-def P_stop_base(m, u, v):
-    u0, u1 = m['top']; t = m['t']; vlo, vhi = t[1], t[-2]
-    ids = full(u, 'dark'); lum = tone(u, v, 16, .02)
-    ontop = (u > u0 - .001) & (u < u1 + .001)
-    border = ontop & (((u - u0) < .006) | ((u1 - u) < .006) | (v < vlo + .004) | (v > vhi - .004))
-    ids = np.where(border, ID['brand'], ids)
-    lum = np.where(border, lum * 1.25, np.where(ontop, lum * 1.10, lum))
-    return ids, lum
-def P_stop_cap(m, u, v): return full(u, 'dark'), tone(u, v, 26, .02)
-def P_button_side(m, u, v): return full(u, 'stop'), tone(u, v, 27, .02) * (1 - .25 * ss(.003, 0, v))
-def P_button_top(m, u, v):
-    R = m['r']; x, y = u - R, v - R
-    ids = full(u, 'stop'); lum = tone(u, v, 17, .02) * (1 + .06 * ss(R, 0, np.hypot(x, y)))
-    k, rr = .0065, .0015
-    sq = np.hypot(np.maximum(np.abs(x) - k + rr, 0), np.maximum(np.abs(y) - k + rr, 0)) < rr
-    return np.where(sq, ID['cream'], ids), lum
 def P_fender(m, u, v):
     s = m['s']; L = m['length']; lum = tone(u, v, 18)
     under = v < s[1]; rimin = (v >= s[1]) & (v < s[3])

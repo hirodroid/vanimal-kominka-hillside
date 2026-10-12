@@ -71,6 +71,8 @@ namespace KominkaHillside.Editor
                     v.Req(asset.behaviourSyncMode == want, "program asset " + ProgramNames[i] + " behaviourSyncMode=" + want + " (actual " + asset.behaviourSyncMode + ")");
                 }
             }
+            // IMP-WLD-015: 肘掛け前端の停止ボタンは撤去。Program Asset も残っていないこと
+            v.Req(AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(ProgramDir + "/KH_CartStopButton.asset") == null, "no program asset KH_CartStopButton (IMP-WLD-015 removed)");
 
             // ---- 件数 ----
             var p = KH_CourseTravelEditor.FindPouch();
@@ -81,13 +83,14 @@ namespace KominkaHillside.Editor
             var managers = UnityEngine.Object.FindObjectsOfType<KH_CartManager>(true);
             var seats = UnityEngine.Object.FindObjectsOfType<KH_CartSeat>(true);
             var panels = UnityEngine.Object.FindObjectsOfType<KH_CartStationPanel>(true);
-            var stops = UnityEngine.Object.FindObjectsOfType<KH_CartStopButton>(true);
             v.Req(managers.Length == 1, "KH_CartManager count 1 (found " + managers.Length + ")");
             v.Req(seats.Length == MaxCarts, "KH_CartSeat count " + MaxCarts + " (found " + seats.Length + ")");
             v.Req(panels.Length == StationCount + MaxCarts, "KH_CartStationPanel count " + (StationCount + MaxCarts) + " = stations 5 + cart panels 8 (found " + panels.Length + ")");
-            v.Req(stops.Length == MaxCarts * 2, "KH_CartStopButton count " + (MaxCarts * 2) + " = 2 per cart (found " + stops.Length + ")");
             if (roots.Length != 1 || managers.Length != 1) return;
             var root = roots[0].transform; var manager = managers[0];
+            // IMP-WLD-015: Program Asset を消した後に残った UdonBehaviour (programSource が null) が KH_Cart の下に無いこと
+            var orphanUdon = root.GetComponentsInChildren<UdonBehaviour>(true).Where(u => u.programSource == null).Select(u => u.gameObject.name).ToArray();
+            v.Req(orphanUdon.Length == 0, "no UdonBehaviour with null programSource under " + RootName + " (found " + orphanUdon.Length + (orphanUdon.Length > 0 ? ": " + string.Join(", ", orphanUdon.Take(20)) : "") + ")");
             var mb = SyncCheck(v, manager, Networking.SyncType.Manual, "manager");
             var parking = root.Find(ParkingName);
             v.Req(parking != null && (parking.position - ParkingPosition).sqrMagnitude < 1e-4f, "Parking at " + ParkingPosition);
@@ -165,27 +168,8 @@ namespace KominkaHillside.Editor
                     v.Req(st.stationExitPlayerLocation != null && (st.stationExitPlayerLocation == A(AnchorExitL) || st.stationExitPlayerLocation == A(AnchorExitR)), c + " station exit = Anchor_ExitL/R");
                 }
 
-                // 停止 / 受付切替
-                var stopGo = new Transform[] { go.transform.Find(StopLName), go.transform.Find(StopRName) };
-                var stopB = new KH_CartStopButton[2];
-                for (int k = 0; k < 2; k++)
-                {
-                    string sn = c + "/" + (k == 0 ? StopLName : StopRName);
-                    var t = stopGo[k];
-                    stopB[k] = t != null ? t.GetComponent<KH_CartStopButton>() : null;
-                    v.Req(stopB[k] != null, sn + " KH_CartStopButton");
-                    if (stopB[k] == null) continue;
-                    var anchor = A(k == 0 ? AnchorStopL : AnchorStopR);
-                    v.Req(t.gameObject.layer == ButtonLayer, sn + " layer Default");
-                    v.Req(anchor != null && (t.position - anchor.position).sqrMagnitude < 1e-6f && Quaternion.Angle(t.rotation, anchor.rotation) < 0.1f, sn + " at " + (k == 0 ? AnchorStopL : AnchorStopR) + " (position and rotation)");
-                    var bc = t.GetComponent<BoxCollider>();
-                    v.Req(bc != null && (bc.size - StopColliderSize).sqrMagnitude < 1e-8f, sn + " BoxCollider " + StopColliderSize);
-                    var bb = SyncCheck(v, stopB[k], Networking.SyncType.None, sn);
-                    var so2 = new SerializedObject(stopB[k]);
-                    RefCheck(v, so2, bb, "manager", manager, sn);
-                    RefCheck(v, so2, bb, "language", language, sn);
-                    IntCheck(v, so2, bb, "kind", 0, sn);   // M1.1: 左右とも停止
-                }
+                // IMP-WLD-015: 肘掛け前端の停止ボタン (StopL / StopR) は撤去。カート直下に残っていないこと (Cart/1 が消す)
+                v.Req(go.transform.Find(StopLName) == null && go.transform.Find(StopRName) == null, c + " has no " + StopLName + " / " + StopRName + " (IMP-WLD-015 removed)");
 
                 // seat の配線
                 var so = new SerializedObject(seat);
@@ -195,13 +179,9 @@ namespace KominkaHillside.Editor
                 RefCheck(v, so, sb, "seat", A(AnchorSeat), c);
                 RefCheck(v, so, sb, "exitL", A(AnchorExitL), c);
                 RefCheck(v, so, sb, "exitR", A(AnchorExitR), c);
-                RefCheck(v, so, sb, "stopL", stopGo[0], c);
-                RefCheck(v, so, sb, "stopR", stopGo[1], c);
                 RefCheck(v, so, sb, "signBack", A(AnchorSignBack), c);
                 RefCheck(v, so, sb, "axleFront", A(AxleFrontMesh), c);
                 RefCheck(v, so, sb, "axleRear", A(AxleRearMesh), c);
-                RefCheck(v, so, sb, "stopButton", stopB[0], c);
-                if (so.FindProperty("acceptButton") != null) RefCheck(v, so, sb, "acceptButton", stopB[1], c);
                 CartUiCheck(v, go, i, so, sb, A(AnchorSeat), manager, language, p);
                 var rends = model.GetComponentsInChildren<Renderer>(true);
                 ArrayCheck(v, so, sb, "renderers", rends, c);

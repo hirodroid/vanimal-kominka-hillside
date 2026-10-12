@@ -5,8 +5,8 @@ system: DOG
 status: todo
 priority: Medium
 summary: 首輪とリードのおそろいセット 4 種 (しま / チェック / もみじ 各 30pt、革と真鍮 50pt) を Point 商品として実装する。商品定義、首輪の同期 (飾りと同じ)、リードの同期 (本人の選択 + PlayerData 保存)、干渉表、古民家の正本への反映
-next: 首輪の装着状態を飾りの 6 つ目の枠にするか別の配列にするか、商品の分類 (accessory か新しい分類か) を決める。テクスチャ制作は BUG-DOG-011 で埋もれ 2 犬種の金具の位置が決まってから
-updated: 2026-10-11
+next: 首輪の枠 (6 つ目 or 別配列) と分類 (accessory or 新分類) の推奨を §推奨 に記録 (2026-10-13)。ユーザーの決定待ち。テクスチャ制作は BUG-DOG-011 の金具の位置が決まってから
+updated: 2026-10-13
 ---
 
 # IMP-DOG-050 首輪とリードのおそろいセットを Point 商品として実装する
@@ -75,6 +75,34 @@ updated: 2026-10-11
 
 単品販売、5 種目以上の柄、形の違う首輪・リード (鈴付き・布テープ・竹の持ち手)、CE 化、毛色との連動 ([DES-DOG-009](DES-DOG-009-instance-owner-fur-color.md))。
 
+## 推奨 (2026-10-13、統括 Fable + Opus の静的確認)
+
+HEAD `3b40285` のソースを読んだだけの推奨。Unity・Play・ハーネスは使っていない。どちらも採否はユーザーが決める。
+
+### Q1. 首輪の装着状態: 推奨 = 別の挙動 (新しい KH_ スクリプト、Manual、犬 6 匹の int 配列)
+
+- 理由 1: `KD_AccessoryBox` は「枠の数は仕様なので 5 のまま持つ」と書いている (`KD_AccessoryBox.cs:62-65`)。見た目は兄弟ノードの `SetActive` だけで作り、材質に触らない作り (同 12-13・27-28、`Apply` 407-435)。テクスチャを替える首輪の柄はこの形に乗らない。
+- 理由 2: 6 つ目の枠にすると守りが要る所が多い。(a) `Apply` は `nodes.Length < productIds.Length * dogCount` のとき全部を描かずに戻る (同 412) ので、首輪の品目にも空の器が要る。(b) 通常の Setup ごとに呼ばれる `BindCandyNodes` が品目を 18 + キャンディ 6 = 24 件に切り詰める (`KD_AccessorySetsEditor.cs:54-57`)。(c) 裏山の Setup は品目ごとに部位の錨へ器を作る (`KD_AccessorySetupEditor.Hillside.cs:513-530` 付近。部位は `Slot { Head, Face, Chest, Body, Tail }`、`KD_AccessorySetupEditor.cs:49`)。(d) 検査が 30 = 6 匹 × 5 枠を直書きしている (`KD_AccessorySetChecksEditor.cs:149, 174`)。(e) キャンディの演出中は普通の飾りを全部消す (`KD_AccessoryBox.cs:426`) ので、首輪を例外にする必要がある。
+- 理由 3: 見た目の側は `KH_FurColor` がほぼそのまま前例になる (犬 6 匹の `[UdonSynced] int[]`、Manual、0 = 犬ごとの既定、`MaterialPropertyBlock` で `_MainTex` だけ差し替え、材質の複製なし。`KH_FurColor.cs:18-23, 48, 156-159`)。
+- 差し込み口: 帯・縄・スナップ・持ち手はすべて共有材質 `KH_Leash_WovenMetal` (BaseColor 1024² が 1 枚) を使う (`KH_LeashProductionEditor.cs:35, 76-80, 260, 275-278`)。テクスチャは下の 768px が犬ごとに 128px の帯 6 本、その上が金具・持ち手・縄 (`scripts/art/leash-assets.cjs:14-15, 30`)。柄ごとに同じ並びの BaseColor を 1 枚作り、犬の `Band` の Renderer に PropertyBlock で当てれば、識別色の帯と金具の色を 1 回で替えられる見込み (推定。Blender 版の帯メッシュの UV は未確認)。埋もれ 2 犬種の `AttachmentRing` は別材質 `KH_ClipNeutral` (BUG-DOG-011) なので、革と真鍮では別に当てる。リードの側 (`KH_LeashCollar.ropeMesh / snapVisual / handleVisual`) は、歩かせている人の選択で同じ差し替えをする。
+- 費用: 要求 → Owner の検証 → 応答・時間切れ・所持の再試行・退室時の解放 (`KD_AccessoryBox.cs:192-325, 372-404`) と 60 秒の計算 (同 455-479) を写す。新しい同期物なので Menu/19b Assign Network IDs が要る (前例 `KH_ToyTopRowEditor.Patterns.cs:27`)。手元メニューも、首輪の行は飾りの台帳でなくこの挙動を読む分岐が要る (`KD_TreatPouch.Acc.cs:155-218, 428-490` に当たる処理)。
+- 要ユーザー判断: 60 秒の待ちを飾りと共有するか。飾りの待ちは犬ごとに 1 つ (`_changerId` / `_changedMs`、同 102-107)。6 つ目の枠なら共有になる (首輪を替えると、他人はその犬の飾りも 60 秒替えられない)。別の挙動なら独立になる。推奨は独立 (どちらでも「最後に替えた人以外は 60 秒待つ」は守られる)。
+- 代案 A: 6 つ目の枠。上の (a)〜(e) を全部守り、`Unset` を「既定の色」と読み、`_Clear(dog, 5)` で既定へ戻す。要求・60 秒・途中参加は追加のコードなしで使える。代案 B: `KD_AccessoryBox` に犬 6 匹の配列をもう 1 本足す。同期物は増えず要求経路と 60 秒を共有できるが、`Apply` の分岐と、古民家から移植した KD_ ファイルの改変が増える。
+- 触るファイル (推奨): 新規の挙動 (例 `Assets/KominkaHillside/Scripts/KH_CollarPattern.cs`) とその Setup / Verify、`KD_TreatPouch.Acc.cs` (首輪の行)、`KH_LeashCollar.cs` か `KH_LeashManager.cs` (リードの差し替え)、`scripts/art/leash-assets.cjs` (柄の BaseColor)。`KD_AccessoryBox.cs` は触らない。
+
+### Q2. 商品の分類: 推奨 = 新しい分類 (例 `collar`)
+
+- 理由 1 (決め手): カタログは分類ごとに 1 つの選択を PlayerData (`Sel.{分類}`) に保存する。復元は台帳の読み込みを待ち、持っていない保存値は既定へ戻し、購入するとそのまま選ぶ (`KD_ShopCatalog.cs:43, 54-75, 82-99, 125-126`)。§3 のリードの要件 (1 人 1 つ・PlayerData・未所持は既定へ・台帳の復元を待つ) を追加の保存処理なしで満たせる。撫でFX も同じ形 (`KD_PetFxBox.cs:103-112`、分類 `petfx` を見る消費者)。`accessory` に入れると `Sel.accessory` を飾りと共有し、既定がバンダナになる (`KD_ProductDefinitions.cs:29`)。
+- 理由 2: 飾りの台帳と一覧は分類で拾わず、明示の表で配線している (`KD_AccessorySetsEditor.cs:27-31`、`KD_AccessorySetsEditor.Hillside.cs:79-94`)。どちらの分類でも、首輪のセットが体の部位の飾りとして勝手に出ることはない。
+- 新しい分類で要る手当: `Categories` と `Defaults` は添字で対応する (`KD_ProductDefinitions.cs:28-29`)。既定を "" にするなら、裏山の Verify の「初期品がちょうど 1 つ」(`KD_ShopSetupEditor.Hillside.cs:416-421`) の除外 (live / experience / action) に足す。代わりに無料の行 (例 `collar.basic` 0pt、`petfx.heart` と同じ形) を既定に置けば検査はそのままで、手元メニューで「基本に戻す」を選ぶ口にもなる (カタログに選択を消す口は無い。`KD_ShopCatalog.cs:82-91`)。無料の行を足すかは要ユーザー判断 (売る商品は 4 種のまま、台帳の行が 1 つ増える)。
+- 代案: `accessory` に入れる (分類は変えない。前例 `accessory.floral_set`)。この場合リードの選択は、別の PlayerData キーと復元の順序を自前で持つ。
+- 触るファイル (推奨): `KD_ProductDefinitions.cs` (分類・既定・セット 4 行、無料の行を足すなら 1 行)、`KD_ShopSetupEditor.Hillside.cs` (`HillsideNameKeys` と初期品の検査)、文言 (UITranslations.json)、リードの消費者 (新規、`KD_PetFxBox` の形) とカタログの `consumers` の配線。`KD_ProductsEditor.HasMenuEntry` (50-57) は未知の分類で false を返すが、使うのは Imported-Unused の検査だけ (裏山の Verify は SKIP、`KD_ShopSetupEditor.Hillside.cs:449`)。
+
+### 小さな未決定 2 点
+
+- 売り場の位置: かざりタブ 1 ページ目の見えている行は 14、行のイベントは `_Acc0`〜`_Acc15` の 16 本 (`KD_TreatPouch.Acc.cs:40-55`、`KD_AccessorySetsEditor.cs:19`)。4 セットを同じ一覧に足すと 18 行になり入らない。推奨は撫でFX と同じく、かざりタブの中に「首輪とリード」の小見出しを別に作る (撫でFX の行の前例 `KD_TreatPouch.Acc.cs:399-403`)。
+- ミニチュア: 焼くときに元の材質の `_MainTex` を写した材質を作る (`KD_DogPreviewEditor.cs:378-389`)。推奨は初回は基本色のまま (焼き直し不要)。試着で柄を見せるなら、焼いた首輪の Renderer に同じ PropertyBlock を当てる方法がある見込み (推定、未確認)。
+
 ## 完了条件
 
 - [ ] 4 セットの商品行と所持キーを足し、購入で首輪とリードの両方が解放される。所持していない柄は選べない
@@ -95,3 +123,5 @@ updated: 2026-10-11
 ## 記録
 
 2026-10-11: 起票 (IMP-DOG-048 の決定から)。Unity・モデル・商品定義は未変更。
+
+2026-10-13: 2 つの未決定 (枠・分類) の推奨を記録 (Opus の静的確認、統括 Fable)。コード・シーンは変更していない。

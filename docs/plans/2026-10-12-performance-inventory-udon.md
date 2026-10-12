@@ -35,7 +35,7 @@
 | `KH_CartDock` (8) | LateUpdate (`KH_CartDock.cs:52`) | Start で `enabled = false` (乗っていない間) (`:36-40`) | 0 |
 | `KH_CartSeat` (8) | なし | ApplyCore (1 秒ごと) から `_SetRider` / `_ApplySeat` / `_SetParked` が呼ばれる。どれも変化時だけ書く | 0 (呼ばれる分はマネージャー側に計上) |
 | `KH_CartControls` (8) | なし | `_Refresh` は `_SetRider` から。`manager._MyCart()` を呼び返して `_SetVisible(false)` が即 return | 0 |
-| `KH_CartStopButton` (16) | なし | `_SetOn` / `_SetAccepting` は変化時だけ | 0 |
+| `KH_CartStopButton` (16) | なし | `_SetOn` / `_SetAccepting` は変化時だけ (→ 2026-10-13 IMP-WLD-015 で 16 個とも撤去) | 0 |
 | `KH_CartStationPanel` (13) | なし | `_Refresh` は `RefreshPanels` (版・言語・行き先が変わった時) だけ。遅延は結果表示の消去 1 回だけ (`:144`) | 0 |
 
 **KH_CartManager の中身 (全車プール時、確認済み)**

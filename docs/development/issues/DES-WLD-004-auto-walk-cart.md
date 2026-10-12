@@ -29,7 +29,7 @@ updated: 2026-10-12
 | 体験と利用条件 | 無料の一人乗り自動散歩カート (8 台 = 最大同時乗車 8 人)。犬なしでも利用でき、PCVR・デスクトップ・Quest 単体・Android/iOS を対象にする (端末別の確認はこれから)。犬は既存 6 匹の接続ルールを維持し、犬が引く乗り物にはしない |
 | 行き先 | 自分のさんぽの設定 (目的地 4 か所 / 周回 順・逆) を共用。**未選択時の既定は「山道から周回 (順)」** (2026-10-12 ユーザー決定、`KH_LeashManager.defaultDestination = 2`、犬の散歩と共通)。目的地は到着で終了、周回は止めるまで続く。合流中はグループのマスターの設定に従い、降りたら自分の設定に戻る |
 | 出発・合流の場所 | 乗り場 5 地点 (既存ワープ先 0〜4) と、**途中で降りてその場に残ったカート** のメニュー (2026-10-12 M3 で「乗り場からのみ」を変更)。乗り場には動かない見本カートを道の外 (軌道中心から配置側の通行端までの幅 + 0.8 m、2.2〜3.5 m) に置き、道側の肘掛けの上にメニュー。入口 (乗り場 0) だけ道の左 = 地図ボード側で、出発点は地図ボードから広場側へ 6 m。現在地が目的地なら出発しない |
-| 停止と残るカート | 停止ボタン (左右の肘掛け・操作帯)・ジャンプ・乗車中のワープ/合流/リスポーン・退出で降りると、カートはその場に残る (Parked)。停止ボタンでは乗せたまま駐車枠 (右へ 1.6 m、一列の道 1.2 m、狭い区間は出口 + 3 m) まで進んで寄せてから降ろす。ジャンプ・ワープ・リスポーン・退出はその場ですぐ降り、カートだけが駐車枠へ進む。残ったカートは誰でも使え、乗り場で空車が無いときは置いて 3 秒以上の最古のカートを回収する |
+| 停止と残るカート | 停止ボタン (操作帯の「停止」。左右の肘掛けの停止面は 2026-10-13 IMP-WLD-015 で撤去)・ジャンプ・乗車中のワープ/合流/リスポーン・退出で降りると、カートはその場に残る (Parked)。停止ボタンでは乗せたまま駐車枠 (右へ 1.6 m、一列の道 1.2 m、狭い区間は出口 + 3 m) まで進んで寄せてから降ろす。ジャンプ・ワープ・リスポーン・退出はその場ですぐ降り、カートだけが駐車枠へ進む。残ったカートは誰でも使え、乗り場で空車が無いときは置いて 3 秒以上の最古のカートを回収する |
 | 到着 | 先頭が目的地の手前 0.5 m でグループは「到着中」(新規合流は拒否)。各車は自分が着いた所で停車・降車し、**カートは残さずプールへ戻る** (2026-10-12 ユーザー要望、ログ `arrive-release`)。入口行きの到着点は門前の曲線上 (門から約 8 m) |
 | グループ | 出発で 1 人グループ (自分がマスター・受付 ON)。合流は隊列の末尾へ暗転して着座。受付の切替はマスターだけ (操作帯)、OFF でも既参加者は残る。マスターが降りたら参加順で引き継ぎ、行き先・受付は維持。一覧は 1 グループ 1 行で、受付停止・到着中の行は押せない表示。グループ内の音声は [IMP-WLD-013](IMP-WLD-013-cart-group-voice.md) (2026-10-12 に別セッションが着手、wip。`KH_CartManager.Voice.cs` を足す予定) |
 | 隊列と通行 | 通常は千鳥 (前後 3 m・左右 0.6 m)。対向グループが 25 m 以内なら双方一列・右寄せ 0.55 m。一列でも通れない狭い区間は 4 か所 (広場入口の狭い所・上流の橋・下流の橋・門前) で、先に入った側が優先、自分の先頭から入口まで 25 m 以内で相手が区間内 (または自分より入口に近い) なら手前の待機点で待つ (60 秒で解除。一列化の判定とは別)。待機は所属・行き先を変えない |
@@ -301,7 +301,7 @@ HTMLと制作票の作成は `2dab08d` でコミット済み。このまとめ�
 | 項目 | 結果 |
 |---|---|
 | モデル | `scripts/art/osanpo-cart.py` → `Assets/KominkaHillside/Models/Cart/KH_OsanpoCart.fbx` + BaseColor 1,024 + Sign 512×256。LOD0 3,872 三角形 (予算 4,000)、LOD1 Body 1,136 (予算 1,500)、UV 充填 77%、近距離面 12〜16 px/cm。Unity で読み戻した寸法・アンカー・三角形数は制作側の値と一致 ([本制作](../../plans/auto-walk-cart/production.md)、証拠画像 `docs/plans/evidence/2026-10-11-osanpo-cart/`) |
-| 実装 | [実装設計 M1](../../plans/auto-walk-cart/implementation.md) の契約どおり。`Assets/KominkaHillside/Scripts/Cart/` (KH_CartManager 4 本 / KH_CartSeat / KH_CartStopButton / KH_CartStationPanel、Program Asset 付き)、`KH_WalkRoute` に距離→位置の 3 メソッド、`KH_LeashManager.Travel.cs` にワープ・合流時の降車優先。Editor は `Tools/KominkaHillside/Cart/1 Build Carts And Stations` / `2 Verify Carts` / `3 Probe Cart Motion` |
+| 実装 | [実装設計 M1](../../plans/auto-walk-cart/implementation.md) の契約どおり。`Assets/KominkaHillside/Scripts/Cart/` (KH_CartManager 4 本 / KH_CartSeat / KH_CartStopButton / KH_CartStationPanel、Program Asset 付き。KH_CartStopButton は 2026-10-13 IMP-WLD-015 で撤去)、`KH_WalkRoute` に距離→位置の 3 メソッド、`KH_LeashManager.Travel.cs` にワープ・合流時の降車優先。Editor は `Tools/KominkaHillside/Cart/1 Build Carts And Stations` / `2 Verify Carts` / `3 Probe Cart Motion` |
 | シーン | `KH_Cart` ルートにカート 8 台 (LODGroup 2 段、材質 Body + Sign、GPU Instancing)、乗り場パネル 5 枚 (既存ワープ先 0〜4 の右手 2.5 m)、Parking。Build が保存し、NetworkID の残骸 0 |
 | 文言 | `CourseUITranslations.json` に `cart.*` 15 キー × 13 言語。Course/27 でグリフを焼き、同梱言語の検証 (Course/26) は PASS。非同梱言語 (ru/uk/ko/zh/pl 等) は既存キーと同じくクライアント内蔵フォントに依存し、実機確認の対象 |
 | 検査 | U# コンパイル エラー 0 / Verify `CART_OK` (NG 0、PASS 1,195: 件数・SyncMethod Manual・配線の backing 実物・Station 設定・材質・import 設定・LOD・文言) / Probe `PROBE_OK` (67 PASS: 距離→位置の連続性と wrap、乗り場ノードの位置、目的地ごとの向き、隊列オフセット、橋の横ずれ 0、到着判定) |
@@ -339,7 +339,7 @@ Edit モードで調べた原因の候補 (2026-10-12、統括):
 | 座席 | 高さ ±30 cm (5 cm 段)・向き ±90° (15° 段) を同期し、乗員だけ変更可。降車で初期値 |
 | 追従 | `KH_CartDock`: 乗車中だけ手元メニュー (KD_TreatPouch) と撮影モニター (KH_VideoCamera) をカート左のドックへ毎フレーム。写真ビューアは元々頭に追従するので対象外。`[DefaultExecutionOrder(100)]` で既存メニューの後に確定 |
 | 操作帯 | `KH_CartControls`: 左斜め前の帯 (layer 17、撮影カメラに映らない)、メニュー / モニター / 座面↑↓ / 向き←→ / 停止 / 受付。右肘掛けも停止に |
-| 検査 | U# コンパイル 0 / Verify `CART_OK` PASS 1,699 (軌道配列の backing 全要素一致、ドック・操作帯の配線、layer 17、StopR kind 0 を含む) / Probe `OK_WITH_SKIP` PASS 167 (軌道の補間・直結区間・乗り場と行き先の軌道距離・向き・残距離・到着点。旧 route の到着検証 1 件は軌道に置き換え済みで SKIP) / Course/27 グリフ焼き済み |
+| 検査 | U# コンパイル 0 / Verify `CART_OK` PASS 1,699 (軌道配列の backing 全要素一致、ドック・操作帯の配線、layer 17、StopR kind 0 を含む。KH_CartStopButton は 2026-10-13 IMP-WLD-015 で撤去) / Probe `OK_WITH_SKIP` PASS 167 (軌道の補間・直結区間・乗り場と行き先の軌道距離・向き・残距離・到着点。旧 route の到着検証 1 件は軌道に置き換え済みで SKIP) / Course/27 グリフ焼き済み |
 | 独立レビュー | Codex 5 件 (中 3・低 2) を全件反映: 掃引を Bounds.Intersects へ、route フォールバック時に軌道の禁止範囲を使わない、Probe の到着検証を軌道距離へ、backing 配列の全要素比較、Dock の実行順 |
 | ClientSim | メニュー操作で Station を抜けるのは ClientSim の挙動 (移動入力・ジャンプで降車)。実機では座ったままのはずで、TestBuild で確認 |
 
