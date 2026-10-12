@@ -2,11 +2,11 @@
 id: IMP-ENV-013
 type: IMP
 system: ENV
-status: todo
+status: review
 priority: Medium
-summary: 洗い場の台の大きさが犬によって変わらない (6 犬種とも 1.3 × 0.7 m 固定)。犬の大きさに合わせて台の平面サイズを切り替える
-next: 決定済み (2026-10-11、Q1〜Q4 推奨どおり)。IMP-DOG-046 / 047 の作り替えの後に、KH_WashStationCall へ犬別の大きさと Apply / Verify メニューを足す
-updated: 2026-10-11
+summary: 洗い場の台を、呼んだ犬の足の大きさに合わせて縮める (足 × 1.5・余白 5 cm・最小 0.30 × 0.22 m、犬がいない時はラブの大きさ、プールを選んでいる間は 1.3 × 0.7 のまま)
+next: Wash/22・23・12・WashPremium/21 は PASS・保存済み (10-12)。Codex レビューの反映分を統括が再コンパイル → Wash/23 → W-stand-size (Course/100f3)。その後ユーザーの PCVR (ポメ + 檜、A0-63〜65・B86)
+updated: 2026-10-12
 ---
 
 # IMP-ENV-013 洗い場の台を犬の大きさに合わせる
@@ -157,3 +157,19 @@ updated: 2026-10-11
 決定: 2026-10-11 (ユーザー「推奨」) 上の Q1〜Q4 を推奨どおり: Q1 入江と同じ決め方 (足の矩形 × 1.5、各辺 5 cm 以上、最小 0.30 × 0.22 m)、Q2 有料の台 (檜・プール) も一緒に拡縮し、ポメ + 檜を Play で見る (崩れて見えたら有料の台を選んでいる間は 1.3 × 0.7 m のまま)、Q3 呼び出しを受けた時に切り替える、Q4 犬がいないときは最大の犬の大きさ。実装は IMP-DOG-046 / 047 (有料の台を作り替える) の後に着手する。
 
 2026-10-11 (統括、IMP-DOG-044 の制作から): プールは犬ごとの大きさに拡縮しない。ラボ 0.4.0 の計算では、ポメの倍率 (X 0.23 / Z 0.31) で丸い縁が幅 1.0〜1.4 cm の板につぶれ、縦板も 1.5 cm 幅になる。Q2 の決定の予備 (「崩れて見えたら有料の台を選んでいる間は 1.3 × 0.7 m のまま」) に従い、**プールを選んでいる間は 1.3 × 0.7 m のまま**にする (ラボ `handoff.md` 0.4.0 節)。小さい犬用が要るなら拡縮ではなく、別の大きさのプールを生成する (`config.json` の `addons_v04.pool`)。実装時は拡縮の対象からプールを外すこと。
+
+## 記録
+
+2026-10-12 (実装担当、コードと文書のみ。Unity の起動・メニュー・Play・保存はしていない): 設計は [設計書 §8](../../plans/2026-10-01-wash-call-and-height.md#8-2026-10-12-犬別の台の大きさ-imp-env-013)。
+
+- `KH_WashStationCall.cs`: 同期しないフィールド `standTable` / `standSize` (Vector3[6]、null 宣言) / `standIdle` / `standBaseSize` / `standBasePos` / `standBaseScale` / `standSpeed` (1.5) と `[NonSerialized] standKeep`、`_StandSize()` (純粋)・`_StandPose(s)`・`StandStep()`。`StandStep` は `Update` の高さの早期 return より前。Start と最初の OnDeserialization で即座に合わせ、プールを選んだ瞬間も即座に元の大きさへ。同期変数は増やしていない
+- `KH_WashSelection.cs`: `bathKeepsSize` (bool[]、プールだけ true、`_Ready` に入れない) と `_KeepsSize(bath)`。`_Apply` が `minLift` と同じ所で `call.standKeep` を書く
+- 新しいメニュー `Wash/22 - Apply Stand Sizes` / `Wash/23 - Verify Stand Sizes` (`KH_DogWashSetupEditor.StandSize.cs`)。Wash/11 は変えていない
+- `KH_WashPremiumEditor.cs`: WashPremium/21 の保全検査で、`KH_WashStationCall` の新しい 7 フィールドを比べる前に両側から外す (`StripStand`。基準の取り直しは不要)
+- ClientSim: `W-stand-size` (群 `stand-size`、`Course/100f3`、群 `height` にも入る。`KH_CourseWalkHarnessEditor.WashStandSize.cs`)。回していない
+- 規則で入江から変えた点: 幅に「足の中心の左右のずれ × 2」を足す (台は左右へ動かないので、両側の 5 cm を保つため)。idle は 6 匹の台をすべて含む長方形 (最大の犬 + ずれぶん。広がる向きしか無いことを保証)
+- 検証: scratchpad の一時 csproj (Assembly-CSharp / -Editor の全ソース + ディスク上の新しいファイル、Unity が作った DLL を参照) で実行側・Editor 側ともエラー 0。U# のコンパイル、Wash/22・23、既存の Wash/12・32・WashPremium/21、Play は未実施
+- 未確認: 裏山の足の実測値 (Wash/22 の報告から設計書 §8.2 へ写す)、Play の見た目 (檜 + ポメ、ラブ・サモエドの幅、縮む動き)、洗い中の姿勢、台に置いた道具、別の犬へ替えた時に前の犬が去る間の大きさ、2 人・途中参加、Quest
+- 実機の確認: [Play チェックリスト](../../testing/play-checklist-2026-10-02.md) A0-63〜A0-65、B86
+
+2026-10-12 (統括の Unity 検査): C# / U# コンパイル 0、Wash/22 4 stations、Wash/23 VERIFY_OK 265、Wash/12 PASS、WashPremium/21 PASS、保存済み。Wash/32 の FAIL 32 件は全部が有料の道具の見た目 (別セッションの領域) で無関係。実測値 (4 か所同じ、犬の前 = Lift +X): コーギー 0.4630 × 0.3243 (+0.0341)、ポメ 0.3002 × 0.2216 (−0.0253)、ラブ 0.7745 × 0.3822 (+0.0153)、ダックス 0.4435 × 0.2345 (+0.0087)、柴 0.5433 × 0.3266 (+0.0308)、サモエド 0.7612 × 0.3195 (+0.0158)、idle = ラブと同じ。表は設計書 §8.2。Codex 独立レビュー (高なし) の中 2・低 1 を反映 (実装担当、コードと文書のみ): プールへ切り替えた時はモデルを表示する前に台を即時に元の大きさへ (`KH_WashStationCall._StandSnapNow`、`KH_WashSelection._Apply` から)、`W-stand-size` の判定を同期の切り替わりの時刻から (開始 1 フレーム以内・着く前に途中の大きさ・着く前に寄せ終わる)、値の表と「寄せている途中の大きさは端末ごとに同時とは限らない」を設計書へ。再コンパイル → Wash/23 → 100f3 は統括

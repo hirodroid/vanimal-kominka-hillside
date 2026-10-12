@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "source_repository": "vrc-asset-lab",
-  "source_git_commit": null,
+  "source_git_commit": "106471a",
   "asset_id": "frisbee",
   "asset_revision": "0.1.0",
   "config_sha256": "f8138e8ffbaf17d8a92c232a7ec483ea4d39de2005123c8999553ccbe1241a88",

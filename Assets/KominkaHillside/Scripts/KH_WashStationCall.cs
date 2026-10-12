@@ -118,9 +118,43 @@ namespace KominkaHillside
         private Vector3 _liftBase;
         private bool _liftBaseOk;
 
+        // ---- IMP-ENV-013 (2026-10-12): the stand's size per dog (docs/plans/2026-10-01-wash-call-and-height.md §8) ----
+        // Not synced: every client derives the size from the synced heldDog (nothing new on the wire). Written by Wash/22 (measured from
+        // the six dogs' paw colliders, per station), checked by Wash/23. A size is (length along Lift X, width along Lift Z, the centre's
+        // offset along Lift X), m. Only standTable's localScale x / z and localPosition x change: never its y, the anchor or the lift.
+        [Header("台の大きさ (IMP-ENV-013、Wash/22)")]
+        public Transform standTable;         // Lift/WashTable (its BoxCollider and every child scale with it)
+        public Vector3[] standSize;          // by dog index; declared null, Wash/22 allocates and wires it (vrc-udonsharp §4)
+        public Vector3 standIdle;            // no dog: the smallest rectangle holding all six dogs' stands (Q4: the largest dog's size)
+        public Vector3 standBaseSize;        // the table's own collider size at scale 1 (1.3 x 0.03 x 0.7)
+        public Vector3 standBasePos;         // standTable's localPosition / localScale in the scene (Edit mode keeps them)
+        public Vector3 standBaseScale;
+        public float standSpeed = 1.5f;      // m/s, every client eases the (length, width, offset) toward the target
+        // The selected platform keeps the table at its own size (IMP-DOG-044 pool: 1.3 x 0.7, never scaled). Not synced: every client
+        // takes it from the synced KH_WashSelection.selectedBath (KH_WashSelection._Apply writes _KeepsSize(selectedBath) here).
+        [System.NonSerialized] public bool standKeep;
+        private bool _standOk, _standMoving, _standSynced, _standSnapNext;
+        private int _standKey = -3;          // -2 the platform keeps the size, -1 no dog, 0.. the held dog
+        private Vector3 _standNow, _standWant;
+
         void Start()
         {
             if (liftRoot != null) { _liftBase = liftRoot.localPosition; _liftBaseOk = true; }
+            // IMP-ENV-013: at once to the current target (whoever joins sees no shrinking stand); unwired / zero sizes = left as it is
+            _standOk = standTable != null && standBaseSize.x > 0f && standBaseSize.z > 0f;
+            if (_standOk)
+            {
+                _standKey = StandKey();
+                _standWant = _StandSize(); _standNow = _standWant; _standMoving = false;
+                _StandPose(_standNow);
+            }
+        }
+
+        // IMP-ENV-013: the first state received (a late joiner, after Start) snaps the stand to the held dog's size instead of easing
+        public override void OnDeserialization()
+        {
+            if (_standSynced) return;
+            _standSynced = true; _standSnapNext = true;
         }
 
         // Codex 3: a station switched off lets its dog go (the dog side also ignores inactive stations, so it is free at once even
@@ -515,6 +549,8 @@ namespace KominkaHillside
             // IMP-DOG-036 S5: OwnerTick does nothing with no pending call and no held dog (its first two branches), so those own
             // fields are tested before IsOwner (which ran every frame on every client). Same result.
             if ((_pendingDog >= 0 || heldDog >= 0) && Networking.IsOwner(gameObject)) OwnerTick();
+            // IMP-ENV-013: the size before the height's early returns below (a settled height must not freeze the size)
+            if (_standOk) StandStep();
             // Every client: ease the stand toward the synced height (0 with no dog), never below the platform's minLift (IMP-DOG-044).
             // Recomputed every frame, so a change of minLift (the platform switched) wakes the settled stand up as a lift change does.
             if (liftRoot == null || !_liftBaseOk) return;
@@ -524,6 +560,69 @@ namespace KominkaHillside
             if (_liftNow == want) return;
             _liftNow = Mathf.MoveTowards(_liftNow, want, Mathf.Max(0.05f, liftSpeed) * Time.deltaTime);
             liftRoot.localPosition = _liftBase + Vector3.up * _liftNow;
+        }
+
+        // ================= IMP-ENV-013: the stand's size =================
+
+        int StandKey() { return standKeep ? -2 : heldDog; }
+
+        /// <summary>IMP-ENV-013: the stand's target (length along Lift X, width along Lift Z, centre offset along Lift X; m) on this
+        /// client: the base size while the selected platform keeps it (the pool) or nothing is wired, the held dog's size (Q3: from the
+        /// accepted call, not the arrival), standIdle with no dog. Pure (Wash/23 runs it in Edit mode).</summary>
+        public Vector3 _StandSize()
+        {
+            Vector3 b = new Vector3(standBaseSize.x, standBaseSize.z, 0f);
+            if (standKeep || standTable == null) return b;
+            Vector3 s = standIdle;
+            int d = heldDog;
+            if (standSize != null && d >= 0 && d < standSize.Length) s = standSize[d];
+            if (s.x <= 0f || s.y <= 0f) return b;
+            return s;
+        }
+
+        /// <summary>IMP-ENV-013: puts standTable at size s (see _StandSize): x / z scale by the ratio to standBaseSize, x position by the
+        /// offset. y (height, thickness) is never touched. Wash/23 runs it in Edit mode and puts the table back.</summary>
+        public void _StandPose(Vector3 s)
+        {
+            if (standTable == null || standBaseSize.x <= 0f || standBaseSize.z <= 0f) return;
+            standTable.localScale = new Vector3(standBaseScale.x * s.x / standBaseSize.x, standBaseScale.y, standBaseScale.z * s.y / standBaseSize.z);
+            standTable.localPosition = new Vector3(standBasePos.x + s.z, standBasePos.y, standBasePos.z);
+        }
+
+        /// <summary>IMP-ENV-013 (Codex review): the target, the current size and the transform at once, now. KH_WashSelection._Apply calls
+        /// it when a platform that keeps the size (the pool) is selected, before that platform's model is shown, so a squeezed pool is
+        /// never drawn (whatever the order of the two Updates). Before this Start nothing happens (Start snaps to the same target).</summary>
+        public void _StandSnapNow()
+        {
+            if (!_standOk) return;
+            _standKey = StandKey();
+            _standWant = _StandSize(); _standNow = _standWant; _standMoving = false;
+            _StandPose(_standNow);
+        }
+
+        /// <summary>Every client, every frame (Update): a new key (the held dog / no dog / the platform keeping the size) takes a new
+        /// target, eased at standSpeed; the first received state and a platform that keeps the size snap at once (no squeezed pool, no
+        /// shrinking stand for a late joiner). Idle frames cost the key compare only.</summary>
+        void StandStep()
+        {
+            int key = StandKey();
+            if (key != _standKey)
+            {
+                _standKey = key;
+                _standWant = _StandSize();
+                if (_standSnapNext || key == -2)
+                {
+                    _standSnapNext = false; _standMoving = false; _standNow = _standWant;
+                    _StandPose(_standNow);
+                    return;
+                }
+                _standMoving = true;
+            }
+            _standSnapNext = false;
+            if (!_standMoving) return;
+            _standNow = Vector3.MoveTowards(_standNow, _standWant, Mathf.Max(0.05f, standSpeed) * Time.deltaTime);
+            _StandPose(_standNow);
+            if ((_standNow - _standWant).sqrMagnitude < 1e-12f) _standMoving = false;   // MoveTowards lands on the target exactly
         }
     }
 }

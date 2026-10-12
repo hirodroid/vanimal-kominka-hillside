@@ -94,7 +94,7 @@ public static partial class KH_WashPremiumEditor
         var b=new StringBuilder();
         foreach(var c in Stations())
         {
-            b.AppendLine(PathOf(c.transform)+EditorJsonUtility.ToJson(c));
+            b.AppendLine(PathOf(c.transform)+StripStand(EditorJsonUtility.ToJson(c)));
             foreach(var t in c.transform.parent.GetComponentsInChildren<KH_WashTool>(true).OrderBy(x=>PathOf(x.transform)))b.AppendLine(PathOf(t.transform)+EditorJsonUtility.ToJson(t));
             foreach(var col in c.liftRoot.GetComponentsInChildren<Collider>(true)) b.AppendLine(PathOf(col.transform)+EditorJsonUtility.ToJson(col));
         }
@@ -190,7 +190,7 @@ public static partial class KH_WashPremiumEditor
         // (IMP-DOG-049: before 49). No baseline = no PASS (Codex review 2026-10-11: a SKIP here must not end in an overall PASS).
         if(File.Exists("Temp/WashPremium/runtime-before-stable.txt"))
         {
-            string before=File.ReadAllText("Temp/WashPremium/runtime-before-stable.txt"),after=Stable(RuntimeSnapshot());
+            string before=StripStand(File.ReadAllText("Temp/WashPremium/runtime-before-stable.txt")),after=Stable(RuntimeSnapshot());   // IMP-ENV-013: StripStand on both sides
             if(before!=after)
             {
                 // 2026-10-11: keep the evidence so a reviewer can judge the difference (no allow-list: any change still fails here).
@@ -201,7 +201,7 @@ public static partial class KH_WashPremiumEditor
                 throw new Exception("Stable runtime preservation failed (Temp/WashPremium/runtime-diff.txt)");
             }
         }
-        else if(File.Exists("Temp/WashPremium/runtime-before.txt")){if(File.ReadAllText("Temp/WashPremium/runtime-before.txt")!=RuntimeSnapshot())throw new Exception("Runtime preservation failed");}
+        else if(File.Exists("Temp/WashPremium/runtime-before.txt")){if(StripStand(File.ReadAllText("Temp/WashPremium/runtime-before.txt"))!=RuntimeSnapshot())throw new Exception("Runtime preservation failed");}
         else throw new Exception("No runtime baseline in Temp/WashPremium: run 21b - Capture Integration Baseline on the saved scene BEFORE the change (49), then 21 after it");
         var gallery=EditorSceneManager.GetActiveScene().GetRootGameObjects().Single(x=>x.name=="KH_WashPremiumPreview_Inactive");// IMP-DOG-047 (2026-10-11): WashPremium/48 keeps only the offered items in the gallery (the dropped ones ship otherwise).
         if(gallery.activeSelf||gallery.transform.childCount!=KH_WashSelectionEditor.Order.Length)throw new Exception("Preview unexpectedly active or not the "+KH_WashSelectionEditor.Order.Length+" offered items ("+gallery.transform.childCount+")");
@@ -248,9 +248,16 @@ public static partial class KH_WashPremiumEditor
         RenderTexture.active=rt;var tex=new Texture2D(rt.width,rt.height,TextureFormat.RGB24,false);try{tex.ReadPixels(new Rect(0,0,rt.width,rt.height),0,0);tex.Apply();File.WriteAllBytes("Temp/WashPremium/images/"+name+".png",tex.EncodeToPNG());}finally{UnityEngine.Object.DestroyImmediate(tex);}}
     public static void FacePreview()
     {Guard();var gallery=EditorSceneManager.GetActiveScene().GetRootGameObjects().Single(x=>x.name=="KH_WashPremiumPreview_Inactive");foreach(Transform t in gallery.transform)if(!t.name.EndsWith("Bath"))t.localRotation=Quaternion.Euler(0,180,0);PrefabUtility.SaveAsPrefabAsset(gallery,Prefabs+"PremiumWashPreview.prefab");}
+    /// <summary>IMP-ENV-013 (2026-10-12): the stand-size fields Wash/22 adds to KH_WashStationCall (standTable / standSize / standIdle /
+    /// standBase* / standSpeed) are left out of this preservation check, the same limited strip on both sides (the snapshot here, the
+    /// baseline file when read): a baseline taken before the fields existed and one taken after both compare without them. Wash/23
+    /// checks those fields (proxy, backing, the measured values). Each is preceded by a comma (stationIndex is the first field) and its
+    /// value is flat: a number, {"x":..}/{"instanceID":..}/{"globalID":".."} or an array of such objects.</summary>
+    static readonly string[] StandFields={"standTable","standSize","standIdle","standBaseSize","standBasePos","standBaseScale","standSpeed"};
+    static string StripStand(string s){return System.Text.RegularExpressions.Regex.Replace(s,",\"(?:"+string.Join("|",StandFields)+")\":(?:\\{[^{}]*\\}|\\[(?:\\{[^{}]*\\},?)*\\]|[^,{}\\[\\]]+)","");}
     static string Stable(string raw)
     {return System.Text.RegularExpressions.Regex.Replace(raw,"\"instanceID\":(-?[0-9]+)",m=>{var obj=EditorUtility.InstanceIDToObject(int.Parse(m.Groups[1].Value));return "\"globalID\":\""+(obj==null?"null":GlobalObjectId.GetGlobalObjectIdSlow(obj).ToString())+"\"";});}
     public static void PreserveStableBaseline()
-    {Guard();if(File.ReadAllText("Temp/WashPremium/runtime-before.txt")!=RuntimeSnapshot())throw new Exception("Cannot normalize a drifted baseline");File.WriteAllText("Temp/WashPremium/runtime-before-stable.txt",Stable(File.ReadAllText("Temp/WashPremium/runtime-before.txt")));}
+    {Guard();var raw=StripStand(File.ReadAllText("Temp/WashPremium/runtime-before.txt"));if(raw!=RuntimeSnapshot())throw new Exception("Cannot normalize a drifted baseline");File.WriteAllText("Temp/WashPremium/runtime-before-stable.txt",Stable(raw));}
 }
 }

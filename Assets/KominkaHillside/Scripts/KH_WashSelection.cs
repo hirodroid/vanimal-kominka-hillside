@@ -42,6 +42,10 @@ namespace KominkaHillside
         // optional (not in _Ready): a scene before 50 behaves as before. _Apply writes it to call.minLift on every client.
         public float[] bathMinLifts;
         public KH_WashStationCall call;       // this station's stand (WashPremium/50 wires it); null = no minimum height
+        // IMP-ENV-013 (2026-10-12): by item id, true = while this platform is selected the stand keeps its own 1.3 x 0.7 size (the pool,
+        // IMP-DOG-044: its rim would flatten if scaled per dog). Written by Wash/22, checked by Wash/23. Declared null and optional (not in
+        // _Ready): no array = every platform scales with the dog. _Apply writes _KeepsSize(selectedBath) to call.standKeep on every client.
+        public bool[] bathKeepsSize;
         public Renderer[] freeTableRenderers;
         public KH_WashSupportVisual support;
         public float freeBaseY;
@@ -69,6 +73,8 @@ namespace KominkaHillside
         public void _Poll(){_Apply(_initialized);SendCustomEventDelayedSeconds(nameof(_Poll),.25f);}
         public override void OnDeserialization(){bool animate=_receivedState;_Apply(animate);_receivedState=true;}
         public override void OnOwnershipTransferred(VRCPlayerApi player){_Apply(false);if(Networking.IsOwner(gameObject))RequestSerialization();}
+        /// <summary>IMP-ENV-013: does platform `bath` keep the stand at its own size (-1 / out of range / no array: no). Pure (Wash/23).</summary>
+        public bool _KeepsSize(int bath){return bath>=0&&bathKeepsSize!=null&&bath<bathKeepsSize.Length&&bathKeepsSize[bath];}
         public int _Category(int item){return itemCategories!=null&&item>=0&&item<itemCategories.Length?itemCategories[item]:-1;}
         /// <summary>The synced selection of a category (3 = platform), -1 when none or not a valid offered item of that category.</summary>
         public int _Selected(int category){return _Valid(category==0?selectedFoam:category==1?selectedWater:category==2?selectedFinish:category==CategoryBath?selectedBath:-1,category);}
@@ -159,6 +165,9 @@ namespace KominkaHillside
                 if(want>=0)appearAt=c;
                 _shownTools[c]=want;
             }
+            // IMP-ENV-013: before any model is shown, so a platform that keeps the stand's size (the pool) is never drawn squeezed: the stand
+            // is put at its own size now (Codex review 2026-10-12). Leaving it (keep -> false) eases in KH_WashStationCall.StandStep as usual.
+            if(call!=null){bool keep=_KeepsSize(bath);if(call.standKeep!=keep){call.standKeep=keep;if(keep)call._StandSnapNow();}}
             for(int i=0;i<n;i++)
             {
                 if(models[i]==null)continue;

@@ -52,6 +52,8 @@ namespace KominkaHillside.Editor
         public static void WashHarnessCall() { WashHarnessGroups(new[] { "call", "height" }); }
         [MenuItem("Tools/KominkaHillside/Course/100f2 - Harness Wash min lift")]
         public static void WashHarnessMinLift() { WashHarnessGroups(new[] { "height-minlift" }); }   // IMP-DOG-044 W-height-minlift alone (also in 100f)
+        [MenuItem("Tools/KominkaHillside/Course/100f3 - Harness Wash stand size")]
+        public static void WashHarnessStandSize() { WashHarnessGroups(new[] { "stand-size" }); }   // IMP-ENV-013 W-stand-size alone (also in 100f)
         [MenuItem("Tools/KominkaHillside/Course/100g - Harness Wash hand + bottle")]
         public static void WashHarnessHand() { WashHarnessGroups(new[] { "hand" }); }   // IMP-DOG-039 (WashHand.cs)
         [MenuItem("Tools/KominkaHillside/Course/100g1 - Harness Wash hand: bottle only")]
@@ -822,6 +824,7 @@ namespace KominkaHillside.Editor
             if (WsGroup("call") || WsGroup("audit-a")) MakeWashAuditACases();   // audit 2026-10-07 Phase A (WashAuditA.cs): RC-1 travel ticket x station, RC-8 (a), RC-2 placed call timeout
             if (WsGroup("height")) MakeWashHeightCases(); // IMP-ENV-011 (WashHeight.cs): lift, personal floor, board handlers
             if (WsGroup("height") || WsGroup("height-minlift")) MakeWashMinLiftCases();   // IMP-DOG-044 (WashHeight.cs): the pool raises the main stand to minLift, the dog stands / leaves there. After W-height-stand
+            if (WsGroup("height") || WsGroup("stand-size")) MakeWashStandSizeCases();   // IMP-ENV-013 (WashStandSize.cs): the stand eases to the Pome's size on the call, back to idle on the release
             if (WsGroup("hand") || WsGroup("hand-bottle")) MakeWashHandCases();    // IMP-DOG-039 (WashHand.cs): the bottle, the bare hands (simulated), the picture guide. Before "dogs" (it re-binds wsWash)
             if ((WsGroup("premium") || WsGroup("premium-input") || WsGroup("premium-other") || WsGroup("premium-free") || WsGroup("premium-water")) && UnityEngine.Object.FindObjectsOfType<KH_WashSelection>(true).Length>0) MakeWashPremiumCases();
             if (WsGroup("dogs")) MakeWashDogsCases();     // IMP-DOG-030 (WashDogs.cs): all six wired, Dachs foam, the others unchanged. Last: re-binds wsWash to the Dachs
