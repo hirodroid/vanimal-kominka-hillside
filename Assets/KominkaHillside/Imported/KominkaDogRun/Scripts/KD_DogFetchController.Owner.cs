@@ -22,7 +22,23 @@ namespace KominkaDogRun
         /// それによって dogRoot も兄弟もインスタンスマスターに揃ったまま一緒に移る。</summary>
         bool IsDogOwner()
         {
-            return dogRoot != null && Networking.IsOwner(dogRoot.gameObject);
+            // VER-ENV-002 C wave 2: the two GameObjects are read once (Component.gameObject and the Unity null test are externs, and
+            // this runs every frame and from every request). dogRoot is wired in the Editor and never reassigned at runtime, so the
+            // cached answer is the one the old expression gave. Lazy (not Start) because a request can arrive before Start.
+            if (_ownerGoCached) return _dogRootOk && Networking.IsOwner(_dogRootGo);
+            CacheOwnerObjects();
+            return _dogRootOk && Networking.IsOwner(_dogRootGo);
+        }
+
+        bool _ownerGoCached, _dogRootOk;
+        GameObject _dogRootGo, _selfGo;
+
+        void CacheOwnerObjects()
+        {
+            _ownerGoCached = true;
+            _dogRootOk = dogRoot != null;
+            _dogRootGo = _dogRootOk ? dogRoot.gameObject : null;
+            _selfGo = gameObject;
         }
 
         /// <summary>Ownership の軸が割れていたら**一度だけ**警告する。
@@ -33,7 +49,9 @@ namespace KominkaDogRun
         void WarnIfOwnerSplit()
         {
             if (_ownerSplitWarned) return;
-            if (_dogOwner == Networking.IsOwner(gameObject)) return;
+            // VER-ENV-002 C wave 2: the cached own GameObject (Update calls IsDogOwner just before, which fills it)
+            if (_ownerGoCached) { if (_dogOwner == Networking.IsOwner(_selfGo)) return; }
+            else if (_dogOwner == Networking.IsOwner(gameObject)) return;
             _ownerSplitWarned = true;
             Debug.LogError("[KD_DogFetchController] Ownership の軸が割れている (IMP-NET-005 不変条件 8): "
                 + "dogRoot=" + OwnerName(dogRoot.gameObject)

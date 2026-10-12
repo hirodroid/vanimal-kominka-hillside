@@ -120,6 +120,12 @@ namespace KominkaHillside
         private VRCObjectSync[] _ballSync;
         private float[] _riverLastReturn;
         private int[] _riverRepeat;
+        // VER-ENV-002 C wave 2: the last look of ball i (as its Owner, not held / carried / hovering) ended "on land": not in the spot,
+        // not floating along the river, outside the band, with no float to stop. While it lies exactly there (all three floats ==)
+        // and its float / gravity still say so, the next look reaches the same "on land" exit; only the three position tests
+        // (KH_WaterSpot._FloatsAt, KH_RiverData._FloatsAt / _InBand - pure functions of the baked river data) are skipped.
+        private bool[] _landQuiet;
+        private Vector3[] _landQuietAt;
         private float[] _riverSettleUntil;      // after a bank return: keep the ball asleep until this time
         const float RiverSettleSeconds = 1.25f; // 5 looks: the teleport and the first ground contact can wake it
         const int RiverBankTries = 6;           // bank candidates at +2, +3.5 ... +9.5 m beyond the band edge
@@ -420,6 +426,8 @@ namespace KominkaHillside
                 _riverSettleUntil = new float[balls.Length];
                 _floating = new bool[balls.Length];
                 _riverRepeat = new int[balls.Length];
+                _landQuiet = new bool[balls.Length];        // VER-ENV-002 C wave 2 (all false: the first look of each ball is full)
+                _landQuietAt = new Vector3[balls.Length];
                 for (int k = 0; k < _riverSince.Length; k++) { _riverSince[k] = -1f; _riverLastReturn[k] = -1000f; }
                 EnsureToyCache();   // IMP-DOG-040: the ball Rigidbody / VRCObjectSync cache is shared with the hover
             }
@@ -430,24 +438,36 @@ namespace KominkaHillside
                 GameObject go = b.gameObject;
                 // In the mouth now (RC-09, 破壊監査 2026-09-28 FUNC-05 BUG-04): Drop after the release is not a hold, so the
                 // physics below applies from the release on instead of waiting for Idle (IsCarrying covers the whole Drop)
-                bool carried = fetchers != null && i < fetchers.Length && fetchers[i] != null && fetchers[i]._BallInMouth();
+                // VER-ENV-002 C wave 2: the held flag, the dog's controller and the ownership are read once per ball (they were read
+                // up to 4 / 2 / 2 times; nothing between the reads changes them - StopFloat only writes the gravity)
+                bool held = b.IsHeldNow;
+                KominkaDogRun.KD_DogFetchController fc = fetchers != null && i < fetchers.Length ? fetchers[i] : null;
+                bool carried = fc != null && fc._BallInMouth();
                 // Held or carried = a new play: forget earlier returns, so only a ball that rolls back by itself counts
                 // toward the park (Codex 2026-09-27 U-中: three quick throws into the river must not park the third)
                 // (a throw starts that dog's Fetch, which also catches a grab-and-throw shorter than one 0.25 s look)
-                bool fetching = fetchers != null && i < fetchers.Length && fetchers[i] != null && !fetchers[i].IsIdle;
-                if (b.IsHeldNow || fetching) { _riverRepeat[i] = 0; _riverLastReturn[i] = -1000f; }
-                if (b.IsHeldNow || carried) _riverSettleUntil[i] = 0f;   // a dog merely chasing does not touch it
-                if (b.IsHeldNow && _floating[i] && Networking.IsOwner(go)) StopFloat(i, go);   // picked up: normal physics
-                if (!Networking.IsOwner(go) || b.IsHeldNow || carried) { _riverSince[i] = -1f; continue; }
+                bool fetching = fc != null && !fc.IsIdle;
+                if (held || fetching) { _riverRepeat[i] = 0; _riverLastReturn[i] = -1000f; }
+                if (held || carried) _riverSettleUntil[i] = 0f;   // a dog merely chasing does not touch it
+                bool owner = Networking.IsOwner(go);
+                if (held && _floating[i] && owner) StopFloat(i, go);   // picked up: normal physics
+                if (!owner || held || carried) { _riverSince[i] = -1f; _landQuiet[i] = false; continue; }
                 // IMP-DOG-040: a ball the menu holds in front of the player is not floated, given its gravity back or sent to the bank
                 // (it may hang over the band or the water-play spot). CheckHover owns it until it is taken or lands.
-                if (BallHovering(i)) { _riverSince[i] = -1f; continue; }
+                if (BallHovering(i)) { _riverSince[i] = -1f; _landQuiet[i] = false; continue; }
                 // Codex review 2026-09-28 高 (RC-17 / RC-09): a dog that lost the ball while carrying gives up without touching its
                 // physics (only the Owner may write them), so the ball's Owner - this client - unfreezes a kinematic ball that no
                 // dog has in its mouth (a race ball is its winner's). Then the rules below float it or give its gravity back.
-                if (UnfreezeIfFree(i, go)) continue;
+                if (UnfreezeIfFree(i, go)) { _landQuiet[i] = false; continue; }
                 if (Time.time < _riverSettleUntil[i]) SettleBall(i);
                 Vector3 p = go.transform.position;
+                // VER-ENV-002 C wave 2: still lying where the last look found it on land (see _landQuiet). With _floating false and
+                // the gravity on, the tests below would give inSpot false, _FloatsAt false, no StopFloat, not in the band -> this exit
+                // Exact per-component compare, not Vector3 == (1e-5 m tolerance): a ball creeping a few um at a time across the band edge
+                // must reach _InBand again (ObserveBall may use == because its speed threshold makes such moves irrelevant; here none does)
+                Vector3 q = _landQuietAt[i];
+                if (_landQuiet[i] && p.x == q.x && p.y == q.y && p.z == q.z && !_floating[i] && !GravityOff(i)) { _riverSince[i] = -1f; continue; }
+                _landQuiet[i] = false;
                 // In the spot: float (every new Owner does the same from the position, so an Owner change keeps it afloat, S4).
                 // IMP-DOG-021 (E-2): anywhere along the river as well (KH_RiverData._FloatsAt: in the water, outside the bridge
                 // zones, a usable bank within reach). The bridge zones and the stretches without a bank keep the bank return below.
@@ -456,7 +476,7 @@ namespace KominkaHillside
                 // Left the spot water (or released on land): gravity back. Judged from the physical state too, not only the local
                 // history: a ball another Owner floated and a dog then carried out has _floating false here (Codex 2026-09-27 D-高)
                 if (_floating[i] || GravityOff(i)) StopFloat(i, go);
-                if (!riverData._InBand(p, KH_RiverData.BandMargin)) { _riverSince[i] = -1f; continue; }
+                if (!riverData._InBand(p, KH_RiverData.BandMargin)) { _riverSince[i] = -1f; _landQuiet[i] = true; _landQuietAt[i] = p; continue; }
                 if (_riverSince[i] < 0f) _riverSince[i] = Time.time;
                 bool sunk = p.y < riverData._SurfaceY(p.z);
                 if (!sunk && Time.time - _riverSince[i] < RiverStrandSeconds) continue;

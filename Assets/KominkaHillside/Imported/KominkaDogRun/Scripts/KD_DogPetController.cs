@@ -337,6 +337,9 @@ namespace KominkaDogRun
         const float ContactSampleInterval = 0.1f;
         const float FarContactSampleInterval = 0.25f;
         const float FarContactDistance = 4f;
+        // VER-ENV-002 C wave 2: IsFarFromContact's one-read short cut. Real anchors are cm apart; 3 m (not 2) also keeps the
+        // synthetic anchor 6 m away in KD_PetSamplingVerifyEditor ("every contact anchor protects") clear of the boundary
+        const float FarSkipMargin = 3f;
         float _nextContactSampleTime;
         float _previousContactSampleTime;
         bool _petting;
@@ -1116,7 +1119,15 @@ namespace KominkaDogRun
             if (headPos.sqrMagnitude <= 0.0001f) return false;
             float distance = Mathf.Max(FarContactDistance, handValidMaxDistance + releaseRadius);
             float sq = distance * distance;
-            if ((headPos - HeadZonePos()).sqrMagnitude <= sq) return false;
+            float zoneSq = (headPos - HeadZonePos()).sqrMagnitude;
+            if (zoneSq <= sq) return false;
+            // VER-ENV-002 C wave 2: farther than distance + FarSkipMargin from the head zone = farther than distance from every
+            // anchor, since the cheek / chin anchors sit on the same head a few cm from it (KD_PetSetupEditor / KD_DogRig: offsets
+            // of 2-8 cm in dog-local metres on the head bones), far inside the 3 m margin (|head - anchor| >= |head - zone| -
+            // |anchor - zone|). The three anchor tests below would all say "far"; only their reads are skipped. Nearer than that,
+            // the full test runs as before. Petting / a held hand never come here (the caller's !_handHeld && !_petting).
+            float skip = distance + FarSkipMargin;
+            if (zoneSq > skip * skip) return true;
             if (cheekAnchorL != null && (headPos - cheekAnchorL.position).sqrMagnitude <= sq) return false;
             if (cheekAnchorR != null && (headPos - cheekAnchorR.position).sqrMagnitude <= sq) return false;
             if (chinAnchor != null && (headPos - chinAnchor.position).sqrMagnitude <= sq) return false;

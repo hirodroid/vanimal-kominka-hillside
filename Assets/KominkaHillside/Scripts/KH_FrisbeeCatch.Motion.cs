@@ -845,6 +845,7 @@ namespace KominkaHillside
         // constraints that place the mesh-side mouth bone, so the disc follows the drawn mouth (review D6).
         public override void PostLateUpdate()
         {
+            if (state == StateIdle) return;   // VER-ENV-002 C wave 2: Idle carries nothing; one compare before IsCarrying's six
             if (!IsCarrying) return;
             if (HeldNow()) return;
             Vector3 fwd = dogRoot.forward, up = dogRoot.up;

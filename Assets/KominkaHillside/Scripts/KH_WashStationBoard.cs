@@ -106,6 +106,18 @@ namespace KominkaHillside
         private int[] _dogWord;      // W* shown on the second line per dog
         private string _shownRule = "", _shownHeights = "";
         private float _shownRange = -1f;
+        // VER-ENV-002 C wave 2: the inputs of the last built height line / status line. The same inputs and the same words (LoadWords
+        // clears both keys) give the same string, so the ToString / Replace work is skipped; the label writes were already change-only.
+        private bool _heightsKeyValid;
+        private float _heightsStand, _heightsMe;
+        private int _stWord = -1, _stDog = -1;
+        private string _stText = "";
+        // VER-ENV-002 C wave 2 (exception, display only): within showMeters the refresh waits QuietRefreshSeconds instead of
+        // refreshSeconds while the last refresh found nothing in progress here (no held dog, no pending call, no press of mine, no
+        // refusal on show). Every press still sets _nextAt = 0 (the next frame refreshes), and a busy board keeps refreshSeconds.
+        // Only a passive change (another player leashes / throws for / gathers a dog, a remote lift) can show up to 0.25 s later.
+        const float QuietRefreshSeconds = 0.5f;
+        private bool _quiet;
 
         public void _Dog0() { DoCall(0); }
         public void _Dog1() { DoCall(1); }
@@ -168,6 +180,7 @@ namespace KominkaHillside
                 if (dogNameLabels[i] != null) dogNameLabels[i].text = DogName(i);
             for (int i = 0; _dogWord != null && i < _dogWord.Length; i++) { _dogWord[i] = -1; _dogLook[i] = -1; }
             _shownRange = -1f; _shownHeights = ""; _shown = "";
+            _heightsKeyValid = false; _stWord = -1; _stDog = -1;   // VER-ENV-002 C wave 2: the words changed, rebuild both lines
             _wordsDirty = false;
             _ApplyGuide();
         }
@@ -271,6 +284,7 @@ namespace KominkaHillside
             if (s != _shown) { _shown = s; statusText.text = s; }
             RefreshRule();
             RefreshHeights();
+            if (_quiet && QuietRefreshSeconds > refreshSeconds) _nextAt = Time.time + QuietRefreshSeconds;
         }
 
         void RefreshDogs(int pid)
@@ -325,11 +339,23 @@ namespace KominkaHillside
             int dog = call._HeldDog();
             int pending = call._PendingDog();
             if (_myPick >= 0 && (dog == _myPick || serial != _myPickSerial || Time.time > _myPickUntil)) _myPick = -1;   // accepted / refused / timed out
-            if (Time.time < _refuseUntil) head = _refuseText;
-            else if (dog >= 0 && dog != _myPick) head = (call._Arrived() ? W(WHere) : W(WCalling)).Replace("{0}", DogName(dog));
-            else if (_myPick >= 0) head = W(WCalling).Replace("{0}", DogName(_myPick));
-            else if (pending >= 0) head = W(WCalling).Replace("{0}", DogName(pending));
+            bool refusing = Time.time < _refuseUntil;
+            _quiet = !refusing && dog < 0 && pending < 0 && _myPick < 0;   // VER-ENV-002 C wave 2: see QuietRefreshSeconds
+            if (refusing) head = _refuseText;
+            else if (dog >= 0 && dog != _myPick) head = StatusName(call._Arrived() ? WHere : WCalling, dog);
+            else if (_myPick >= 0) head = StatusName(WCalling, _myPick);
+            else if (pending >= 0) head = StatusName(WCalling, pending);
             return head;
+        }
+
+        /// <summary>VER-ENV-002 C wave 2: W(word) with {0} = the dog's name, rebuilt only when the word or the dog changed
+        /// (LoadWords clears the key, so a language switch rebuilds it).</summary>
+        string StatusName(int word, int dog)
+        {
+            if (word == _stWord && dog == _stDog) return _stText;
+            _stWord = word; _stDog = dog;
+            _stText = W(word).Replace("{0}", DogName(dog));
+            return _stText;
         }
 
         void RefreshRule()
@@ -347,6 +373,8 @@ namespace KominkaHillside
             if (heightText == null) return;
             float stand = call._LiftMeters();
             float me = personalFloor != null ? personalFloor._TargetHeight() : 0f;
+            if (_heightsKeyValid && stand == _heightsStand && me == _heightsMe) return;   // VER-ENV-002 C wave 2: same numbers, same words
+            _heightsKeyValid = true; _heightsStand = stand; _heightsMe = me;
             string t = W(WHeights).Replace("{0}", stand.ToString("F1")).Replace("{1}", me.ToString("F1"));
             if (t != _shownHeights) { _shownHeights = t; heightText.text = t; }
         }

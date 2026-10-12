@@ -1130,9 +1130,16 @@ namespace KominkaHillside
             if (state == StateIdle)
             {
                 // Idle: Wander owns the Animator and the root; we only watch for a held disc.
-                VRCPlayerApi holder = HolderNow();
-                // DES-DOG-005 C-3: a Ready that found no playable stand-off spot waits _readyRetryAt out (no per-frame flip).
-                if (_dogOwner && standoffWhenHeld && holder != null && Time.time >= _readyRetryAt && CanPlay(holder.GetPosition(), holder.playerId)) { _standoffValid = false; _nextStandoff = 0f; TransitionTo(StateReady); }
+                // VER-ENV-002 C wave 2: the holder is only used by the Owner with standoffWhenHeld, and HolderNow is null unless the
+                // disc is held (KH_Frisbee.HolderPlayer is null when its pickup - the same VRC_Pickup as _discPickup - is not held;
+                // the debug override gives a holder only when > 0). So the cached pickup (one extern) answers "not held" before the
+                // cross-behaviour read, and non-Owners skip it. The same transition under the same conditions as before.
+                if (_dogOwner && standoffWhenHeld && (debugHeldOverride != 0 || (_discPickup != null && _discPickup.IsHeld)))
+                {
+                    VRCPlayerApi holder = HolderNow();
+                    // DES-DOG-005 C-3: a Ready that found no playable stand-off spot waits _readyRetryAt out (no per-frame flip).
+                    if (holder != null && Time.time >= _readyRetryAt && CanPlay(holder.GetPosition(), holder.playerId)) { _standoffValid = false; _nextStandoff = 0f; TransitionTo(StateReady); }
+                }
                 return;
             }
             if (state == StateReady)
@@ -1372,9 +1379,14 @@ namespace KominkaHillside
         }
 
         // Same contract as KD_DogFetchController (IMP-NET-005 invariant 8): dogRoot and this object share an Owner.
+        // VER-ENV-002 C wave 2: the own GameObject is read once (Component.gameObject is an extern; this runs every frame)
+        private bool _selfGoSet;
+        private GameObject _selfGo;
         void WarnIfOwnerSplit()
         {
-            if (_ownerSplitWarned || _dogOwner == Networking.IsOwner(gameObject)) return;
+            if (_ownerSplitWarned) return;
+            if (_selfGoSet) { if (_dogOwner == Networking.IsOwner(_selfGo)) return; }
+            else { _selfGo = gameObject; _selfGoSet = true; if (_dogOwner == Networking.IsOwner(_selfGo)) return; }
             _ownerSplitWarned = true;
             Debug.LogError("[KH_FrisbeeCatch] Ownership split: dogRoot and " + gameObject.name + " have different Owners - throws are dropped until they converge.");
         }

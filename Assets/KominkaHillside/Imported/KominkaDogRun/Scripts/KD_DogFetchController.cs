@@ -716,6 +716,11 @@ namespace KominkaDogRun
         {
             if (_ballT == null) { _ballObsValid = false; return; }
             Vector3 p = _ballT.position;
+            // VER-ENV-002 C wave 2: a ball that has not moved since the last sample (a resting ball: asleep for its Owner, no
+            // VRCObjectSync update for the others) cannot be evidence - Unity's == means a move under 1e-5 m, and m / dt > MinThrowSpeed
+            // would need dt < 1e-5 s while the test below requires dt > 1e-4 s. Same state as the full path (prev = p, valid stays true);
+            // only deltaTime, the subtraction, magnitude and division are skipped. Every sample is still taken every frame.
+            if (_ballObsValid && p == _ballObsPrevPos) { _ballObsPrevPos = p; return; }
             float dt = Time.deltaTime;
             if (_ballObsValid && dt > 0.0001f)
             {
@@ -1317,6 +1322,8 @@ namespace KominkaDogRun
             // (表示ローカル、状態は同期変数から導出)。
             // VRCObjectSync の書き込みより後に走るため、このフレームの描画はこちらが勝つ。
             // 非 Owner の起点は自分の OnDeserialization 時刻 — 数フレームのずれは許容
+            // VER-ENV-002 C wave 2: Idle carries nothing (every term below is false for state 0); one compare instead of four
+            if (dogState == StateIdle) return;
             bool carrying = dogState == StateReturn || dogState == StateWaterReturn || dogState == StateWaterExit   // IMP-DOG-020
                 || (dogState == StateDrop && (Time.time - _stateEnteredTime) < dropWaitDuration + dropDelay);
             // IMP-FET-014: 口から掴まれたら**手が勝つ**。Owner の Idle が届くまでの数フレーム、
