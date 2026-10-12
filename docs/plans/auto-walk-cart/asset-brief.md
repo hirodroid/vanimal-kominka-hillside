@@ -2,7 +2,7 @@
 
 ## 目的・用途と見た目
 
-対象は古民家の裏山、[DES-WLD-004](../../development/issues/DES-WLD-004-auto-walk-cart.md)。2026-10-11依頼により、Unityを操作せず外観のデザインと[HTMLレビュー](design-v1.html)を作成。主分類 FIXTURE、追加タグ near_view / repeated / networked。**提案、ユーザー採用前**。ブラウザ内の簡易形状であり、製品モデルではない。
+対象は古民家の裏山、[DES-WLD-004](../../development/issues/DES-WLD-004-auto-walk-cart.md)。2026-10-11依頼により、Unityを操作せず外観のデザインと[HTMLレビュー](design-v1.html)を作成。主分類 FIXTURE、追加タグ near_view / repeated / networked。**提案、ユーザー採用前** (当時の記述。現在は A 案を採用済み、変更履歴参照)。ブラウザ内の簡易形状であり、製品モデルではない。
 
 方針の正本は[core-concept §3](../../core-concept.md)。落ち着いた秋の里山、犬が主役、低光沢、密度を上げず輪郭を整える。今回の役割は座れる道具と操作の伝達。近距離の肘掛け・座面、前方の犬、後続から見る背面を比較する。既存ワールドでの確認は未実施。
 

@@ -10,7 +10,7 @@ M1〜M3、同日の既定値の変更 (`c482b96`・`01ea848`) と追加要望の
 
 ### Runtime のクラス
 
-| ファイル (`Assets/KominkaHillside/Scripts/` から) | 役割 |
+| ファイル (`Assets/KominkaHillside/Scripts/` から。犬の行だけ `Assets/` からの完全パス) | 役割 |
 |---|---|
 | `Cart/KH_CartManager.cs` (Manual) | 唯一の権威。参照・設定・同期配列・`ApplyState`。犬とカメラ向けの読み取り API `_IsPlayerRiding / _DogAnchor / _CartForward / _CartSpeed` |
 | `Cart/KH_CartManager.Requests.cs` | ローカル API (`_Start / _Join / _StartFrom / _JoinFrom / _Leave / _LeaveForTravel / _ToggleAccepting / _SeatUp…_SeatBack`) と Owner の裁定 `ReqStart / ReqJoin / ReqStartFrom / ReqJoinFrom / ReqLeave / ReqAccepting` (4 回/秒)・`ReqSeat` (6 回/秒)。乗り場の空車選び `ReclaimCandidate` (Idle → 最古の Parked) |
@@ -25,7 +25,7 @@ M1〜M3、同日の既定値の変更 (`c482b96`・`01ea848`) と追加要望の
 | `Cart/KH_CartControls.cs` | 左斜め前の操作帯 (layer 17)。11 ボタン、最小化タブ (`TabCanvas`)、`noteLabel` (すれ違い待ち) |
 | `KH_WalkRoute.cs` | `_PointAtDistance / _DirectionAtDistance / _DetourAtDistance` (軌道が無いときの予備) |
 | `KH_LeashManager.Travel.cs` | `cartManager` と、ワープ・合流の暗転直前の門 `TravelLeaveCart()` → `_LeaveForTravel()` (取消・失敗では呼ばない)。既定の行き先は `KH_LeashManager.defaultDestination = 2` (山道から周回・順) |
-| `Imported/KominkaDogRun/Scripts/KD_DogWanderController.HillsideLeashCart.cs` | 持ち主が乗車中の犬: `_DogAnchor` を中心に揺らぐ目標へ連続追従、立ち止まりかけ、隣の犬と 0.55 m 未満なら押し離す、くん活を始めない。`cartManager` が null なら従来どおり |
+| `Assets/KominkaHillside/Imported/KominkaDogRun/Scripts/KD_DogWanderController.HillsideLeashCart.cs` | 持ち主が乗車中の犬: `_DogAnchor` を中心に揺らぐ目標へ連続追従、立ち止まりかけ、同じ持ち主の犬の目標点どうしを 0.55 m 基準で離す補正、くん活を始めない。`cartManager` が null なら従来どおり |
 | `KH_VideoCamera.Modes.cs` / `.ModesPath.cs` / `.Patterns.cs` | 撮り方「隊列」(`ModeConvoy`。乗っていなければ背中ごし)。モニターを開くと `startWithPattern = true`・`defaultPattern = PatternOmakase` (5、おまかせ) から始まる |
 
 ### 同期配列 (`KH_CartManager.cs`、すべて長さ 8・宣言時に初期化)
@@ -79,7 +79,7 @@ M1〜M3、同日の既定値の変更 (`c482b96`・`01ea848`) と追加要望の
 | `Assets/KominkaHillside/Data/Cart/KH_CartSign.png` | 背面と乗り場の掲示の写真 (512×256、文字・価格なし) |
 | `Assets/KominkaHillside/Data/Environment/Course/CourseUITranslations.json` | `cart.*` 30 キー × 13 言語 (`cart.start.here` は作らず `cart.start` を再利用、`cart.parked` はある) |
 
-調整値の変え方: tuning.json の値 → `Cart/4 Apply Tuning`。駐車枠 (右 1.6 / 1.2 m、下限 1.0 m、間隔 1.6 m、狭い区間は出口 + 3 m) は `KH_CartManager.Park.cs` の定数、回収の猶予は `ReclaimGraceMs` 3000、出発の猶予は `departDelayMs` 3000、台数は `MaxCarts` 8 (設計変更)。見本カートの寄せ幅 (NavMesh 幅 + 0.8 m、2.2〜3.5 m) と側 (`StationSide`: 入口だけ左) と最小化タブの位置 (`TabMinimizedLocal` (−0.30, 0.86, 0.10)) は Editor の定数で、変えたら Cart/1。
+調整値の変え方: tuning.json の値 → `Cart/4 Apply Tuning`。駐車枠 (右 1.6 / 1.2 m、下限 1.0 m、間隔 1.6 m、狭い区間は出口 + 3 m) は `KH_CartManager.Park.cs` の定数、回収の猶予は `ReclaimGraceMs` 3000、出発の猶予は `departDelayMs` 3000、台数は `MaxCarts` 8 (設計変更)。見本カートの寄せ幅 (軌道中心から配置側の通行端までの NavMesh 幅 + 0.8 m、2.2〜3.5 m) と側 (`StationSide`: 入口だけ左) と最小化タブの位置 (`TabMinimizedLocal` (−0.30, 0.86, 0.10)) は Editor の定数で、変えたら Cart/1。
 
 ### 検査
 
@@ -189,6 +189,7 @@ public int  _GroupDestination(int g); public bool _GroupAccepting(int g); public
 - 空車 (レビュー #3): `cartFreedMs` から 3000 ms 以内のカートは候補から外す (代わりに使うこともしない)。
 - `ReqJoin`: (先に到着判定を現在時刻で確定) group が Running かつ accepting、`groupGen[group] == gen`、空車あり、要求者未乗車 → `cartOrder = groupCount` で末尾に加え `groupCount++`。世代違いは拒否 (ログ `reject ... reason=gen`)。出発ごとに `groupGen[g]++`。錨は打ち直さない (末尾は距離 `anchor - dir*order*gap` に現れる)。ローカル側: 自分のカートが来たら `fade` で短く暗転して着座 (暗転は `KH_TravelFade` の既存 API を使う。無ければ暗転なし)。
 - `ReqLeave`: 要求者のカートを `Idle` に戻し、グループから外す。残りの `cartOrder` を詰める (順序維持)。先頭が抜けた場合は錨を**新しい先頭の現在距離**に打ち直す (他の車が前へ詰めない)。マスターなら `cartOrder` 最小の車の乗員へ引き継ぎ、`groupDest/groupDir/groupAccepting` は維持。`groupCount == 0` → `groupState = 0` に解放。
+  → 2026-10-12 変更: 途中の降車ではカートは Idle ではなく Parked (その場に残る)、到着での降車だけ Idle (§M3、`RemoveCart`)。
 - 到着 (Owner の Update・`ReqLeave` の解放前・`ReqJoin` の裁定前に同じ関数 `SettleArrival` で判定): `groupDest` が周回 (2/3) でなければ、先頭の距離が目的地ノードの距離に `arriveSlack` 以内 → `groupState = 2`、以後の `ReqJoin` は拒否。解放 (錨の打ち直し) より先に確定するので、Owner 自身が先頭で到着降車しても Ending が遅れない (レビュー #2)。各車は自分の距離が目的地距離に達した時点で止まる (Motion 側で clamp)。各クライアントは**自分の**カートが止まった (= 到着距離に達した) 時点で自分で降車処理 (`_Leave` と同じローカル処理 + `ReqLeave`)。Owner は `groupCount == 0` で解放。
 - `OnPlayerLeft(player)` (Owner): その playerId のカートを `ReqLeave` と同じ処理で解放。`OnPlayerRespawn(player)`: ローカルなら保留中の要求を取り消し、乗車中なら降車処理 (station には触れない)。
 - `OnDeserialization` と Owner のローカル反映は同じ `ApplyState()` を通す: 自分のカートが新しく割り当てられたら着座、自分のカートが消えていたら降車、全パネル `_Refresh()`、全カートの可視と駐車の更新。
@@ -382,7 +383,7 @@ Runtime 実装で決めたこと (2026-10-12):
 - 持ち主が降りたら通常へ戻す (次の判定で自然に戻る形でよい)。
 - `KH_CartManager` への参照は `KD_DogWanderController` の非同期フィールド `public KH_CartManager cartManager;` (null なら従来どおり)。配線は Cart/1 Build が行う (Editor 担当: 6 匹の `cartManager` を SerializedObject で書く)。
 - 変更は乗車中だけに効くこと。通常の散歩の挙動 (目的地・寄り道・集合) を変えない。
-- → 現在は (Play 4・6 回目の指摘で変更、2026-10-12): 到着で止まる追従をやめ、カート速度 + 距離比例の連続制御 (下限 0.35 倍、待機中は 0)。目標は犬ごとの位相の正弦の和で揺らす (横 ±0.6 m・一列時 0.25 m、前後 −0.3〜+1.0 m、周期 5〜9 秒)。15〜40 秒ごとに立ち止まりかけ (速度 0.6 倍、1.5〜2.5 秒、止まらない)。隣の犬と 0.55 m 未満なら押し離す。実装は `KD_DogWanderController.HillsideLeashCart.cs`。
+- → 現在は (Play 4・6 回目の指摘で変更、2026-10-12): 到着で止まる追従をやめ、カート速度 + 距離比例の連続制御 (下限 0.35 倍、待機中は 0)。目標は犬ごとの位相の正弦の和で揺らす (横の基本振幅 ±0.6 m・一列時 0.25 m、前後 −0.3〜+1.0 m、周期 5〜9 秒)。15〜40 秒ごとに 1.5〜2.5 秒の立ち止まりかけ (正弦の山で速度は最小 0.6 倍、揺れは最大 1.5 倍、止まらない)。0.55 m は同じ持ち主の犬の目標点どうしの間隔の補正基準 (`CartSpacing`)。実装は `KD_DogWanderController.HillsideLeashCart.cs`。
 
 ### Camera (impl-camera)
 
@@ -437,7 +438,8 @@ compile → Cart/1 (Program Asset 無し) → Cart/2 → Cart/3 → Video/1 → 
 
 Runtime 実装で決めたこと (2026-10-12):
 - 状態: Idle 0 (プール・地中) / Riding 1 / Ending 2 / Parked 3 (乗員 0・グループ −1・可視)。乗員の判定・隊列の数え上げは Riding/Ending だけ (`IsRidingState`)。RemoveCart (停止・到着降車・ワープ・リスポーン・退出・見張りの gone) はグループがあれば今の目標距離で Parked、無い不整合だけ Idle。Maintain は Parked を退出・不整合の判定から外す。
-- 置き方: 降りる人が座っている間はその場、離れたら止まったときの向きのまま右へ寄せ (LateralSpeed)、寄せ終われば以後は書かない。走行 → Parked、Parked → 走行の距離の差は `_err` でなめらかに追う (合流は跳びが大きいので暗転のまま跳ぶ)。
+  → 2026-10-12 変更: 到着での降車は Idle (`arrive-release`)。Parked になるのは途中の降車だけ。
+- 置き方: 降りる人が座っている間はその場、離れたら止まったときの向きのまま右へ寄せ (LateralSpeed)、寄せ終われば以後は書かない。→ 2026-10-12 変更 (Codex M3 後): 停止ボタンのときだけ乗せたまま駐車枠へ進んで寄せてから降ろす。ジャンプ・ワープ等はすぐ降り、カートだけが駐車枠へ寄る。走行 → Parked、Parked → 走行の距離の差は `_err` でなめらかに追う (合流は跳びが大きいので暗転のまま跳ぶ)。
 - 乗り場の出発・合流のカートは `ReclaimCandidate()` (Idle の空車 → 最古の Parked → −1。どちらも解放から 3 s の猶予外)。カートからの出発・合流 (`_StartFrom / _JoinFrom`) は猶予を見ない (使う人は外に立っている)。
 - Probe 用 (副作用なし): `float ParkedStartDistance(int cart)`、`int ReclaimCandidate()`。
 - 配線: `KH_CartSeat.cartPanel` (KH_CartStationPanel)、`KH_CartStationPanel.cart` (int、乗り場 −1)、任意の `KH_CartStationPanel.content` (隠す中身の親。null なら直下の子すべて + パネルの Collider)。カート上メニューの結果表示は `carts[c].cartPanel` で引く。
@@ -451,7 +453,7 @@ Codex M3 レビュー後 (2026-10-12):
 
 ### Editor 2: カートステーション (impl-editor)
 
-- 乗り場 5 地点: 乗り場パネルの横に**静的なカート** (FBX のメッシュだけ: Body + 車軸、LODGroup 付き、Udon・Station・Collider なし、layer Default) を置く。向きは道の進行方向、位置は乗り場の着地点の右手 1.2 m。→ 現在は: 軌道上の開始点から道の外へ NavMesh 幅 + 0.8 m (2.2〜3.5 m)。側は `StationSide` で入口 (乗り場 0) だけ左 = 地図ボード側、他は右。入口の開始点は地図ボードを軌道へ投影して広場側へ 6 m (`b25b2d5`・`bbdb33a`。Editor の `StationCartSide = 1.2f` は旧値)。
+- 乗り場 5 地点: 乗り場パネルの横に**静的なカート** (FBX のメッシュだけ: Body + 車軸、LODGroup 付き、Udon・Station・Collider なし、layer Default) を置く。向きは道の進行方向、位置は乗り場の着地点の右手 1.2 m。→ 現在は: 軌道上の開始点から道の外へ、軌道中心から配置側の通行端までの NavMesh 幅 + 0.8 m (2.2〜3.5 m)。側は `StationSide` で入口 (乗り場 0) だけ左 = 地図ボード側、他は右。入口の開始点は地図ボードを軌道へ投影して広場側へ 6 m (`b25b2d5`・`bbdb33a`。Editor の `StationCartSide = 1.2f` は旧値)。
 - 乗り場パネルはその静的カートの右肘掛けの上 0.55 m に移し、通路側 (着地点側) を向ける。→ 現在は: 道側の肘掛け (右に置いた乗り場は左肘掛け、入口は右肘掛け) の上 0.55 m。大きさは現状のまま (幅 760 → 肘掛け幅より大きいので、肘掛けの真上から少し外へ出してよい)。
 - 8 台の走行カートにカート上メニュー (`Panel` 子オブジェクト、`KH_CartStationPanel` 1 枚ずつ、`spot=-1`, `cart=index`) を作り配線。Manager の `panels` は乗り場 5 + カート 8 = 13 枚 (`ApplyState` の `_Refresh` 対象)。
 - Verify: 静的カート 5 台 (Udon なし)、パネルの位置、カート上メニューの配線、`cartParkDist / cartParkedMs` の長さ。Probe: `ReqStartFrom` の開始距離 = `cartParkDist`、回収の順序 (最古)。
@@ -463,3 +465,32 @@ Codex M3 レビュー後 (2026-10-12):
 ### 検証と引き渡し (M3)
 
 compile → Course/22 → Course/22b → Cart/1 (Program Asset 無し) → Cart/2 → Cart/3 → 保存 → Codex → コミット (→ 現在のメニューは Course/21a → 21b)。Play: ①広場→川辺で門前を滑らかに曲がる (犬も) ②乗り場に静的カートとその上のメニュー ③途中で停止するとカートが残り、上にメニューが出る ④そこから一人で再開 / 同じ・別のグループへ合流 ⑤乗り場で空車が無いとき最古の置き去りカートが回収される。
+
+## 2026-10-12 グループ内の音声 (IMP-WLD-013)
+
+Issue: [IMP-WLD-013](../../development/issues/IMP-WLD-013-cart-group-voice.md)。同じカートグループの相手の声だけ、距離減衰をほぼなくす。実装は新しい partial `KH_CartManager.Voice.cs` と、本体 `ApplyCore()` の末尾の 1 行 `VoiceSync();` だけ。同期変数は増やさない。他人の位置は読まない (playerId だけ)。
+
+**値** (`KH_CartManager` の public 調整値。試作値で、聞こえ方は未確認)
+
+| 項目 | 同じグループの相手 | VRChat 既定 (戻す値。定数 `VoiceDefault*`) |
+|---|---|---|
+| `voiceNear` (ここまで減衰なし) | 25 m | 0 m |
+| `voiceFar` (ここで 0) | 40 m | 25 m |
+| `voiceGain` | 15 dB (既定のまま) | 15 dB |
+| `voiceLowpass` | on (既定のまま) | on |
+
+- near は隊列の最大長 (8 台 − 1) × 車間 3 m = 21 m より大きくする (far だけ伸ばすと後方の声は小さいまま)。VolumetricRadius・ミュート・個別音量 (利用者側の設定) には触れない。
+- 既定値は [VRChat Player Audio](https://creators.vrchat.com/worlds/udon/players/player-audio/) (2026-10-12 確認: gain 0〜24 dB 既定 15、near 既定 0 (公式は 0 のままを推奨)、far 既定 25、lowpass 既定 on)。`SetVoiceDistanceNear / Far / Gain / Lowpass` が Udon に公開されていることは `VRC.Udon.VRCWrapperModules.dll` の extern 名で確認 (チャネル B。Unity でのレジストリ照会 (チャネル A) は未実施で、コンパイルで確かめる)。
+- ワールドに他の音声制御は無い (2026-10-12 grep: `SetVoice*` は UdonSharp 付属の `WorldAudioSettings` だけで、シーン・プレハブからの参照 0 件。Cart/2 が「シーンに WorldAudioSettings が無い」を検査)。他の制御を足すときは、戻す値を VRChat 既定でなくその制御の値にする設計が要る。
+
+**誰に掛けるか**: 各端末がローカルで、自分 (`_MyGroup()`。降車を送った後は −1) と同じ `cartGroup` を持つ Riding / Ending のカートの `cartRider` (0 と自分を除く、重複は 1 回)。グループが Free なら誰もいない。Parked・Idle のカートは乗員 0 なので対象外。合流要求中・拒否・取消は同期に現れないので掛からない。すれ違い待機 (所属のまま) と到着中 (Ending) は掛かったまま。判定は副作用なしの `VoiceTargets(me, myGroup, rider, state, group, gState, outIds)`。
+
+**いつ**: `ApplyCore()` の末尾 (`VoiceSync`) と `OnPlayerJoined` (Voice partial に新設)。ApplyCore は Owner の Commit・OnDeserialization・Start・自分の降車 (LeaveCore)・1 秒の安全網から呼ばれる。毎フレームは見ない。`VoiceSync` は ApplyCore / Commit / 着座・降車を呼び返さない (本体の入れ子の禁止)。
+
+**差分と解除**: 適用中の playerId の一覧 (`_voiceOn`、最大 8) と、今あるべき相手 (`_voiceWant`) を毎回突き合わせ、外れた相手だけを VRChat 既定へ戻し、新しい相手にだけ掛ける (降車・到着・停止・ワープ・リスポーン・退室・別グループへの移動・グループ解散・自分の降車のどれでも同じ経路)。空いた枠に別の人が入っても前の相手は残らない。プレイヤーが無効なら `SetVoice*` を呼ばない (例外で KH_CartManager が halted になるとカート全体が止まるため): 退室した相手は一覧から外すだけ、まだ読み込まれていない相手は一覧に入れず `OnPlayerJoined` か次の ApplyCore で掛け直す。本体の `OnPlayerLeft` は触らない (退室者は Owner の RemoveCart → Commit か 1 秒の安全網で一覧から外れる)。ログは `[KH_Cart] voice-apply player=.. group=.. near=.. far=.. count=..` / `voice-restore player=..` / `voice-drop player=.. (gone)`。
+
+**検査**: Cart/2 Verify に `VoiceCheck` (新しい `KH_CartSetupEditor.VerifyVoice.cs`、`Validate` に 1 行): 戻す値が VRChat 既定、`voiceNear ≥ (8 − 1) × gap + 2`、`near < far ≤ 100`、gain 0〜24、backing は override があれば proxy と一致 (Setup は書かないので無いのが通常)、`VoiceSync / VoiceRestore / OnPlayerJoined` の存在と ApplyCore の `VoiceSync();`、シーンに WorldAudioSettings が無いこと、`VoiceTargets` の 10 ケース (同じグループだけ・1 人・自分が乗っていない・ローカル無効・解散・到着中・別グループへ移動・降車・枠の再利用・重複)。2026-10-12 にスクラッチの dotnet で同じ判定を 9 ケース呼び、期待どおり (Unity での Cart/2 は未実施)。
+
+**ClientSim では証明できない**: 相手の端末での聞こえ方は出ず、疑似プレイヤー id は `GetPlayerById` が無効なので掛ける呼び出しも走らない。カートの ClientSim ハーネスも無い (ハーネスはフリスビー・動画用)。**複数人の実機で聴取する。設定値の検査だけを聞こえ方の合格にしない。**
+
+**未確認** (実機で決める): 先頭↔最後尾 (最大 8 台・カーブ・合流直後の追いつき) で音量差を感じないか / lowpass が距離で掛かり後方がこもらないか (こもるなら `voiceLowpass = false` を試す) / 別グループ・徒歩の人が既定のまま混線しないか / 離脱・解散後に既定へ戻るか / アバター変更・リスポーンで VRChat が相手の設定を戻すか (公式に記載なし。戻るなら一覧の再適用が要る) / 声の方向感・ミュート・個別音量 / PCVR・Desktop・Quest 単体・Android/iOS。合流を取り消した後に遅れて届いた割当 (late-assign) は、本人が返すまでの 1 往復だけ相手側で掛かることがある (本人側は `_MyGroup()` が −1 なので掛けない)。
