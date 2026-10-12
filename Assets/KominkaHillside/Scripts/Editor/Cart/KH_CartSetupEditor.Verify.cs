@@ -250,12 +250,12 @@ namespace KominkaHillside.Editor
                     var right = new Vector3(Mathf.Cos(yaw), 0f, -Mathf.Sin(yaw));
                     // M3: パネルは静的カートの右肘掛け (Anchor_StopR) の上 0.55 m、表 (-Z) が着地点を向く
                     var sc = stationsRoot != null ? stationsRoot.Find(StationCartPrefix + s) : null;
-                    var armR = sc != null ? FindDeep(sc, AnchorStopR) : null;
-                    v.Req(armR != null && (panel.transform.position - (armR.position + sc.up * PanelAboveArmrest)).magnitude < 0.02f, n + " panel 0.55 m above " + StationCartPrefix + s + "/Anchor_StopR");
+                    var armR = sc != null ? FindDeep(sc, StationArmrest(s)) : null;
+                    v.Req(armR != null && (panel.transform.position - (armR.position + sc.up * PanelAboveArmrest)).magnitude < 0.02f, n + " panel 0.55 m above " + StationCartPrefix + s + "/" + StationArmrest(s) + " (the trail-side armrest)");
                     var trackForPanel = BuildTrack(route); ProjectStops(trackForPanel, route, leash);
                     StationCartPoseFor(s, trackForPanel, leash, out Vector3 _, out Quaternion _, out Vector3 aisle, out float _, out bool _);
                     var face = panel.transform.position - aisle; face.y = 0f; var fwd = panel.transform.forward; fwd.y = 0f;
-                    v.Req(Vector3.Dot(fwd.normalized, face.normalized) > 0.999f, n + " front (-Z) faces the landing spot (aisle)");
+                    v.Req(Vector3.Dot(fwd.normalized, face.normalized) > 0.999f, n + " front (-Z) faces the trail point beside the station cart (aisle)");
                     v.r.passItems.Add(n + " info: panel height above spot = " + (panel.transform.position.y - spot.y).ToString("F2") + " m");
                 }
                 var board = panel.transform.Find(BoardName);

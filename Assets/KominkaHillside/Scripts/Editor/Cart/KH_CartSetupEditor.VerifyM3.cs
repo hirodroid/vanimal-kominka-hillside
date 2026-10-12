@@ -35,7 +35,7 @@ namespace KominkaHillside.Editor
                 {
                     var tr = BuildTrack(route); ProjectStops(tr, route, leash);
                     StationCartPoseFor(s, tr, leash, out Vector3 pos, out Quaternion rot, out Vector3 _, out float _, out bool _);
-                    v.Req((sc.position - pos).magnitude < 0.02f && Quaternion.Angle(sc.rotation, rot) < 0.5f, n + (s == 0 ? " beyond the map board (" + tr.spot0Basis + "), right 1.2 m of the track" : " at the landing spot's right 1.2 m, facing the trail") + " (" + (sc.position - pos).magnitude.ToString("F3") + " m off)");
+                    v.Req((sc.position - pos).magnitude < 0.02f && Quaternion.Angle(sc.rotation, rot) < 0.5f, n + " at track d=" + tr.spot[s].ToString("F1") + (s == 0 ? " (" + tr.spot0Basis + ")" : "") + ", " + (StationSide[s] < 0 ? "left" : "right") + " " + StationCartLateral(s, tr).ToString("F2") + " m (NavMesh width + 0.8, 2.2-3.5), facing the track direction" + " (" + (sc.position - pos).magnitude.ToString("F3") + " m off)");
                     if (s == 0 && tr.spot0Basis.StartsWith("MAP BOARD NOT FOUND")) v.Pend("station 0: " + tr.spot0Basis);
                 }
             }

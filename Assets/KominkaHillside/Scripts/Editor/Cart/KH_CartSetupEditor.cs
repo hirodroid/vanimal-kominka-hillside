@@ -468,11 +468,11 @@ namespace KominkaHillside.Editor
         {
             StationCartPoseFor(s, track, leash, out Vector3 cartPos, out Quaternion cartRot, out Vector3 spot, out float groundDelta, out bool hit);
             var sc = BuildStationCart(scene, stationsRoot, s, cartPos, cartRot, fbx, bodyMat, signMat);
-            var armR = FindDeep(sc.transform, AnchorStopR);
+            var armR = FindDeep(sc.transform, StationArmrest(s));   // 道側の肘掛け (右に置いた乗り場は左肘掛け、左に置いた入口は右肘掛け)
             Vector3 pos = armR.position + sc.transform.up * PanelAboveArmrest;
             var face = pos - spot; face.y = 0f;
             Quaternion rot = Quaternion.LookRotation(face.sqrMagnitude > 1e-6f ? face.normalized : sc.transform.right, Vector3.up);   // 表 (-Z) が着地点を向く
-            report.stations.Add("Station_" + s + " spot=" + spot.ToString("F2") + " yaw=" + leash.spotYaws[s].ToString("F1") + " cart=" + cartPos.ToString("F2") + " panel=" + pos.ToString("F2") + " ground=" + (hit ? "hit dy=" + groundDelta.ToString("F2") : "MISS (spot height used)"));
+            report.stations.Add("Station_" + s + " aisle=" + spot.ToString("F2") + " side=" + (StationSide[s] < 0 ? "left" : "right") + " lateral=" + StationCartLateral(s, track).ToString("F2") + " m cart=" + cartPos.ToString("F2") + " panel=" + pos.ToString("F2") + " ground=" + (hit ? "hit dy=" + groundDelta.ToString("F2") : "MISS (spot height used)"));
             return BuildPanel(stationsRoot, "Station_" + s, pos, rot, s, -1, manager, language, font, log, true);
         }
 
@@ -480,11 +480,33 @@ namespace KominkaHillside.Editor
         /// 向きは軌道の進行方向 (+1)。他の乗り場は着地点基準 (StationCartPose)。Build と Verify が同じ式を使う。</summary>
         public static void StationCartPoseFor(int s, Track track, KH_LeashManager leash, out Vector3 pos, out Quaternion rot, out Vector3 aisle, out float groundDelta, out bool hit)
         {
-            if (s != 0) { aisle = leash.spotPositions[s]; StationCartPose(aisle, leash.spotYaws[s], out pos, out rot, out groundDelta, out hit); return; }
-            aisle = TrackPointRef(track, track.spot[0]);
-            var f = TrackDirectionRef(track, track.spot[0]);
-            float yaw = Mathf.Atan2(f.x, f.z) * Mathf.Rad2Deg;
-            StationCartPose(aisle, yaw, out pos, out rot, out groundDelta, out hit);
+            // 2026-10-12 ユーザー要望 (見本カートが道に掛かって邪魔): 軌道上の開始点 (spotTrackDistance[s]) から、乗り場ごとの側 (StationSide) へ
+            // 「その側の NavMesh 通行幅 + 0.8 m」(2.2〜3.5 m) 外す。向きは軌道の進行方向 (+1)。パネルが向く通路側 = その軌道点
+            aisle = TrackPointRef(track, track.spot[s]);
+            var f = TrackDirectionRef(track, track.spot[s]);
+            var right = new Vector3(f.z, 0f, -f.x);
+            float lat = StationCartLateral(s, track);
+            var flat = aisle + right * (StationSide[s] * lat);
+            float groundY = aisle.y;
+            hit = Physics.Raycast(new Vector3(flat.x, aisle.y + 5f, flat.z), Vector3.down, out RaycastHit h, 15f, KH_LeashManager.TravelGroundMask, QueryTriggerInteraction.Ignore);
+            if (hit) groundY = h.point.y;
+            groundDelta = groundY - aisle.y;
+            pos = new Vector3(flat.x, groundY, flat.z);
+            rot = Quaternion.LookRotation(f, Vector3.up);
+        }
+
+        /// <summary>乗り場ごとの側: -1 = 進行方向 (+1) の左、+1 = 右。乗り場 0 (入口) は地図ボード側 = 広場へ向かって左。</summary>
+        public static readonly int[] StationSide = { -1, +1, +1, +1, +1 };
+        public const float StationCartClearance = 0.8f, StationCartLatMin = 2.2f, StationCartLatMax = 3.5f;
+        /// <summary>パネルを載せる肘掛け = 道の側 (カートが道の右なら左肘掛け、左なら右肘掛け)。</summary>
+        public static string StationArmrest(int s) { return StationSide[s] > 0 ? AnchorStopL : AnchorStopR; }
+
+        /// <summary>静的カートの横ずれ (m): 軌道中心から StationSide の側の NavMesh 通行幅 (SideWidth、0.25 m 刻み・最大 4 m) + 0.8 m、[2.2, 3.5] に収める。</summary>
+        public static float StationCartLateral(int s, Track track)
+        {
+            var p = TrackPointRef(track, track.spot[s]); var f = TrackDirectionRef(track, track.spot[s]);
+            var side = new Vector3(f.z, 0f, -f.x) * StationSide[s];
+            return Mathf.Clamp(SideWidth(p, side) + StationCartClearance, StationCartLatMin, StationCartLatMax);
         }
 
         /// <summary>静的カートの姿勢: 基準点から yaw の右手へ 1.2 m、その地点の地面 (TravelGroundMask)、向きは yaw (道の進行方向)。</summary>
