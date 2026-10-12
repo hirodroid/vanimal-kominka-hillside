@@ -73,7 +73,7 @@ DES-DOG-010「B の形」の項目ごと。場所は主なもの。新しい同�
 
 `HillsideWater.cs` の先頭 (:13-16「NavMesh moves (LeashGo / GatherStep) are left as they were」・:31「A leash / toy request is refused」) と RC-14 の節 (:427-435)、`HillsideWater.cs:366-372` (「Leashed walks run on the NavMesh … RC-14 is untouched」)、`KH_LeashManager.Water.cs` の先頭、`HillsideLeash.cs:387-389` (`WaterClearFloat` の前の「no water veto」)、[IMP-DOG-034](IMP-DOG-034-dog-udon-tick-thinning.md) W1 (:198)、[IMP-DOG-036](IMP-DOG-036-leash-decision-thinning.md) の RC-14 の行 (:82・:133)、[IMP-DOG-020](IMP-DOG-020-river-wading-and-swim.md):20、水遊びの設計書の B-1 (:170・:173)・C の 10 (:316)・決めてもらうこと 3 (:448)、[地図と移動の設計書](../../plans/2026-09-27-map-and-travel.md) §F.4 (:613)。それぞれ「2026-10-11 の決定 (DES-DOG-010) で上書き」の注記を残して直す。
 
-**game-design §3・§4 はこの Issue では書き直さない** (別セッションの作業の区切りを待つ。DES-DOG-010「次の手順」4)。完了の前に、書き直しが済んだか、別の Issue に残っているかを確かめる。
+**game-design §3・§4 はこの Issue では書き直さない** (DES-DOG-010「次の手順」4)。→ 2026-10-12 に game-design §3・§4 へ反映済み (DES-DOG-010 done)。
 
 ## 2. ハーネスの期待の変更
 
@@ -110,7 +110,7 @@ Play の前に Edit で: 目標の縮め方と入口の選び方を、実装と�
 - §2 の期待が直り、相談で選んだ群が通る
 - 独立レビュー (`vrc-review`) の指摘を反映
 - PCVR の確認項目が実機チェックリストにある (見え方・2 人以上)
-- game-design §3・§4 の書き直しの行き先が決まっている (済み、または別の Issue)
+- [x] game-design §3・§4 の書き直しの行き先が決まっている (2026-10-12 に game-design へ反映済み、DES-DOG-010 は done)
 
 ## 記録
 

@@ -2,11 +2,12 @@
 id: DES-DOG-010
 type: DES
 system: DOG
-status: wip
+status: done
 priority: High
 summary: リードをつけたまま犬を川へ連れて入れるようにする (水中のリード接続の拒否 RC-14 をやめる)。方式は NavMesh を変えずに、既存の川の Fetch の脚 (川の規則) をリードの追従に使う案を推奨
-next: 実装は IMP-DOG-053 (review、限定 9 ケース PASS)。この Issue に残るのは game-design §3・§4 と前の決定の各所の書き直し (別セッションの作業の区切りを待って行う)。終わったら done
+next: game-design §3・§4 と前の決定の各所へ反映済み (2026-10-12) → done。実装・実機の確認は IMP-DOG-053 (限定 9 ケース PASS、実機 A0-67〜72・B88〜91 は未確認)
 updated: 2026-10-12
+decided: 2026-10-11
 ---
 
 # DES-DOG-010 リードをつけたまま川へ入る
@@ -31,7 +32,7 @@ updated: 2026-10-12
 | 同 :448 (決めてもらうこと 3) | 「決定: 2026-09-27 (推奨どおり無し。外して遊ぶ)」 (同 :11・:118 も同じ) |
 | [IMP-DOG-020](IMP-DOG-020-river-wading-and-swim.md):20 | 「リード中は入水しない。」 |
 | [地図と移動の設計書](../../plans/2026-09-27-map-and-travel.md):613 (§F.4) | 「水の中で新しく接続する \| Manager が拒む既存の方針のまま … 水中接続を新たに許す変更は混ぜない」 (2026-09-29 Codex 相談) |
-| [game-design](../../game-design.md):35・:52 | 「既存の入水禁止をそのまま解除しない」「リードの付いていない犬が浅瀬へ入り … 水遊び場の外では犬もボールも川へ入れない」 — **この Issue では変えていない**。方式が決まったら §3・§4 を直す |
+| [game-design](../../game-design.md):35・:52 | 「既存の入水禁止をそのまま解除しない」「リードの付いていない犬が浅瀬へ入り … 水遊び場の外では犬もボールも川へ入れない」 — **この Issue では変えていない**。方式が決まったら §3・§4 を直す。 — **2026-10-12 反映済み**: §3 の段落末と §4「川の水遊び」の行に「2026-10-12 に上書き (IMP-DOG-053)」を足した (元の文は残し、自由行動の水遊びに限る形)。§8 にも 1 行 |
 
 ## 拒否 (RC-14) が今守っているもの
 
@@ -101,7 +102,7 @@ updated: 2026-10-12
 1. ~~上の 8 件と方式 B をユーザーが決める。~~ 2026-10-11 に決定済み。
 2. Edit の調査 (Play 不要): NavMesh の縁と川の帯の縁の距離、ok な岸のスライスの間隔。入口の作り方を決める。→ 道具は `Tools/KominkaHillside/Course/130 - Survey Leash River Entry` (2026-10-12 追加、統括が流す)。入口の決定は [IMP-DOG-053](IMP-DOG-053-leashed-river-follow.md) §0 に記録する。
 3. ~~実装 Issue を起こす (IMP-DOG)。~~ [IMP-DOG-053](IMP-DOG-053-leashed-river-follow.md) (2026-10-12)。完了前に独立レビュー、ハーネスは相談で決めた群だけ。
-4. game-design §3・§4 と、上の表の前の決定の各所を新しい規則で書き直す。
+4. ~~game-design §3・§4 と、上の表の前の決定の各所を新しい規則で書き直す。~~ 2026-10-12 に済み (下の記録)。
 
 ## 相談の記録 (Codex、2026-10-11、HEAD `4db477b`)
 
@@ -130,3 +131,6 @@ updated: 2026-10-12
 関連: [DES-DOG-004](DES-DOG-004-river-play-and-floating-fetch.md) (水遊びの設計)、[IMP-DOG-020](IMP-DOG-020-river-wading-and-swim.md) (水遊び・泳ぎ・RC-14 の実装)、[IMP-DOG-021](IMP-DOG-021-river-wide-fetch-and-recall.md) (川全体の脚と岸)、[DES-DOG-001](DES-DOG-001-leash-walking.md) (リードの同期の契約)、[IMP-DOG-029](IMP-DOG-029-dirt-accumulation.md) (汚れ)、[IMP-WLD-002](IMP-WLD-002-call-player.md) (切符と濡れた犬)。
 2026-10-12 (統括): Course/130 を流した (findings 0)。入口は混在方式に決定 (IMP-DOG-053 §0)。調査の前に Course/90 + 91 でスライスの保存値を作り直した。
 2026-10-12 (第 2 波): [IMP-DOG-053](IMP-DOG-053-leashed-river-follow.md) で「B の形」を実装 (新しい partial `HillsideLeashRiver`・退役・プローブ Course/131・ハーネスの期待の変更と 78l)。Unity のコンパイル・Play は未実施。設計の正本は [水遊びの設計書](../../plans/2026-09-27-river-play-and-floating-fetch.md) 末尾の節。上の「背景」の表の前の決定 (B-1・C の 10・決めてもらうこと 3・IMP-DOG-020:20・地図と移動 §F.4) には「2026-10-12 に上書き (IMP-DOG-053)」の注記を足した。game-design §3・§4 は次の手順 4 のまま。
+2026-10-12 (文書担当): 次の手順 4。[game-design](../../game-design.md) §3 (水遊びの決定の段落末) と §4「川の水遊び」の行に、リード中の入水の規則 (ok な岸から入る・川の Fetch と同じ深さ・届かない所の手前で待つ・10 m 超は自分で上がる・水中は伏せ・嗅ぐ・座らない・泳いでいる犬にも接続可・外した犬の中心は陸・切符で運ぶ・身震い・6 匹・汚れと写真は今のまま・自由行動の 0.45 倍は不変・実機未確認) を「2026-10-12 に上書き (IMP-DOG-053)」として足し、§8 に 1 行。上の表の [DES-DOG-004](DES-DOG-004-river-play-and-floating-fetch.md) の決定 3 (:44、決定 1 の「リードを外した犬だけ」を含む) に 2026-10-12 の注記を足した。ほかの行 (水遊びの設計書・IMP-DOG-020・地図と移動 §F.4) は IMP-DOG-053 の担当が注記済み。これで done。
+
+決定: 2026-10-12 (ffaf1d6 / 4e5fafe)
