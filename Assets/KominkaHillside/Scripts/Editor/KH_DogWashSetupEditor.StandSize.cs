@@ -18,8 +18,8 @@ namespace KominkaHillside.Editor
     /// update (Wash/11 refuses once the premium selection is installed): Wash/22 measures the six dogs' paws and writes the sizes to
     /// each station's KH_WashStationCall (and the pool's "keep the size" flag to KH_WashSelection), Wash/23 checks them. Neither saves.
     ///
-    /// Rule (Q1, the Cove's): the rectangle of the four paw capsules (the lowest KH_WashPart_{FrontL,FrontR,HindL,HindR}_N of each leg,
-    /// radius included, in the dog's frame) -> length / width = max(paws x 1.5, paws + 2 x 0.05, minimum 0.30 / 0.22), never more than
+    /// Rule (Q1, the Cove's x 1.5 raised to x 2.0 on 2026-10-13, the user: the Shiba's stand looked too small): the rectangle of the four paw capsules (the lowest KH_WashPart_{FrontL,FrontR,HindL,HindR}_N of each leg,
+    /// radius included, in the dog's frame) -> length / width = max(paws x 2.0, paws + 2 x 0.05, minimum 0.30 / 0.22), never more than
     /// the table's own 1.3 x 0.7. The table moves along the dog's length (Lift X) so the paws' centre is its centre; it does not move
     /// sideways, so the width also gets 2 x |the paws' sideways centre| (both sides keep the 5 cm; the Cove took that centre as 0).
     /// No dog (Q4): the smallest rectangle holding all six dogs' stands (= the largest dog, the Lab, plus their offsets), so a stand
@@ -27,7 +27,7 @@ namespace KominkaHillside.Editor
     /// The pool (IMP-DOG-044, 2026-10-11 decision): never scaled, the stand keeps 1.3 x 0.7 while it is selected.</summary>
     public static partial class KH_DogWashSetupEditor
     {
-        const float StandFactor = 1.5f, StandMargin = 0.05f, StandMinLength = 0.30f, StandMinWidth = 0.22f, StandEaseSpeed = 1.5f;
+        const float StandFactor = 2.0f, StandMargin = 0.05f, StandMinLength = 0.30f, StandMinWidth = 0.22f, StandEaseSpeed = 1.5f;
         const float StandCentreTol = 0.005f, StandValueTol = 0.001f;
         static readonly string[] StandLegs = { "FrontL", "FrontR", "HindL", "HindR" };
         const string StandApplyReport = "Temp/KH_WashStandSize.txt", StandVerifyReport = "Temp/KH_WashStandSizeVerify.txt";
@@ -150,7 +150,7 @@ namespace KominkaHillside.Editor
             Directory.CreateDirectory("Temp");
             File.WriteAllText(StandVerifyReport, DateTime.UtcNow.ToString("o") + "\nIMP-ENV-013 Wash/23 Verify Stand Sizes: " + (failed == 0 ? "PASS" : "FAIL " + failed) + " (" + lines.Count + " checks; Edit mode, the runtime _StandSize / _StandPose on the proxy, every pose put back)\n"
                 + StandRuleText() + "\n" + StandDogsText(dogs) + string.Join("\n", lines)
-                + "\nNot covered (Play / PCVR): the easing on screen, a dog's washing pose against the Edit-mode paws (the 5 cm margin absorbs it), the hinoki grain and edges at a small size (Pome X 0.23), tools put on a small stand, two players seeing the same size, Quest.\n");
+                + "\nNot covered (Play / PCVR): the easing on screen, a dog's washing pose against the Edit-mode paws (the 5 cm margin absorbs it), the hinoki grain and edges at a small size (Pome X 0.31), tools put on a small stand, two players seeing the same size, Quest.\n");
             if (failed > 0) throw new InvalidOperationException("[KH Wash StandSize] Verify failed (" + failed + "), see " + StandVerifyReport + ":\n" + string.Join("\n", lines.Where(l => l.StartsWith("FAIL")).Take(30)));
             Debug.Log("[KH Wash StandSize] VERIFY_OK (" + lines.Count + " checks) -> " + StandVerifyReport);
         }
