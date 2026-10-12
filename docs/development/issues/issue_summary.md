@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-134 件 — 対応中 15 / 確認待ち 78 / 未着手 8 / 保留 3 / 完了 30
+135 件 — 対応中 15 / 確認待ち 78 / 未着手 9 / 保留 3 / 完了 30
 
 ## 実行キュー
 
@@ -108,6 +108,7 @@
 | [BUG-DOG-012](BUG-DOG-012-swim-shallow-exit-sink.md) | Medium | 水遊び・Fetch の脚で、泳いだまま浅瀬へ上がる途中に足が河床へ沈み得る (IMP-DOG-053 のリードの川の脚で見つかり、そちらは床を入れて修正済み。自由行動の脚は未修正) | todo | 自由行動の水遊び・川の Fetch の脚 (HillsideWater.cs の WaterApplySwimHeight の呼び元) に、053 と同じ「浮いている根を河床 − 0.03 m より下へ置かない」床を入れるか、泳ぎ終わりの判定 (0.6 M を 0.5 s 下回るか乾くまで) を浅瀬で早める。Edit プローブで再現してから最小修正。回すのは相談で決めた群だけ |
 | [IMP-DOG-048](IMP-DOG-048-collar-and-leash-patterns.md) | Medium | 首輪とリードの柄違いを Point 商品にし、おそろいセットを足す。2026-10-10 ユーザー決定: 首輪+リードのおそろいセットのみ 4 種 (しま / チェック / もみじ 各 30pt、革と真鍮 50pt)、単品なし、無料は現行の犬別色 | todo | 実装は IMP-DOG-050 (2026-10-11 起票)。商品定義・首輪とリードの同期・干渉表の範囲・古民家の正本への反映箇所は 050 に書いた。050 で未決の点 (首輪を飾りの 6 つ目の枠にするか、商品の分類) を決めたら、この Issue の完了条件を見直す |
 | [IMP-DOG-050](IMP-DOG-050-collar-leash-set-products.md) | Medium | 首輪とリードのおそろいセット 4 種 (しま / チェック / もみじ 各 30pt、革と真鍮 50pt) を Point 商品として実装する。商品定義、首輪の同期 (飾りと同じ)、リードの同期 (本人の選択 + PlayerData 保存)、干渉表、古民家の正本への反映 | todo | 首輪の装着状態を飾りの 6 つ目の枠にするか別の配列にするか、商品の分類 (accessory か新しい分類か) を決める。テクスチャ制作は BUG-DOG-011 で埋もれ 2 犬種の金具の位置が決まってから |
+| [IMP-WLD-015](IMP-WLD-015-cart-remove-armrest-stop-switch.md) | Medium | カートの肘掛け (とって) の先にある停止スイッチ (StopL / StopR の操作面) がもう機能しておらず見た目も変。撤去する (停止は操作帯の「停止」だけに) | todo | 起票のみ。実装担当は未定。Blender 原本 scripts/art/osanpo-cart.py から操作面を外して再生成 → Setup / Verify / Runtime / 文書から StopL / StopR を外す |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo | Quest 3 単体で play-checklist の D 節を D1 (入室直後と 6 匹リード散歩の fps) と D29 (フリスビーの 6 色と顔・首輪とリードが黒くないか。BUG-ENV-001 の 10-04 修正後) から始めて 1 周し、続けて iPhone 15 Pro で E 節を E1 (fps)・E27 (フリスビーの 6 色) から見る。Desktop の C 節はこの Issue の範囲外 |
 | [IMP-DOG-033](IMP-DOG-033-call-placement-tilt.md) | Low | 場所を決めて呼ぶで、手の傾きに合わせて犬を傾けて置けるようにする (斜面で抱っこしている感じに置く) | todo | IMP-DOG-032 の Play (A0-26・B66・C20) が 10-06 までに済んだら着手。同期・犬の姿勢・Desktop/Touch の扱いは [設計案](../../plans/2026-10-03-call-placement-tilt.md) (傾き上限 30°・8° 未満は水平、Desktop/Touch は地面に自動で合わせる) を実装する |
 | [IMP-DOG-011](IMP-DOG-011-muchio-greeting.md) | Medium | 裏山で空いている犬が、自由行動の一つとしてたまにムチォの匂いを嗅ぎに行く。2026-09-22 保留 (他者のアバターギミック依存・集客寄りの動機)。理由と再検討条件は本文末尾の保留の記録 | hold | 再検討: 「これがあると散歩・犬との体験そのものが良くなる」と Play で感じたとき。集客目的だけでは解除しない |
