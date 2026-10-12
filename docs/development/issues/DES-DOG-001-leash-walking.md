@@ -5,7 +5,7 @@ system: DOG
 status: wip
 priority: High
 summary: 集合・目的地継承・拠点回収の契約と集合の停滞検知を実装済み (Editor)。残りは 2 人確認・端末別入力・購入権の双方向
-next: "集合の 2 人確認 (開催者退出・途中参加・道具の取り合い、B15)、購入権の双方向 (B16。実課金はユーザー判断)、端末別入力 (Desktop/Touch/Quest/iOS)。停滞検知は 10-12 実装 (8 s / 0.5 m の試作値、Editor 検査のみ。Course/75g は未実行、見え方は PCVR で確認)。PCVR 1 人の集合・拠点 (A55・A56) は 10-02 ユーザー総合判断で確認済み"
+next: "集合の 2 人確認 (開催者退出・途中参加・道具の取り合い、B15)、購入権の双方向 (B16。実課金はユーザー判断)、端末別入力 (Desktop/Touch/Quest/iOS)。停滞検知は 10-12 実装 (8 s / 0.5 m の試作値。Walking/5 PASS、Course/75g w5-gather-stall PASS run 20261012-024904。見え方は PCVR で確認)。PCVR 1 人の集合・拠点 (A55・A56) は 10-02 ユーザー総合判断で確認済み"
 ---
 
 # DES-DOG-001 リード散歩の操作・行動・同期を設計する
