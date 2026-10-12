@@ -1,0 +1,21 @@
+// Read-only scene snapshot for the proposal. No Unity mutation.
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const root = path.resolve(__dirname, '../../..');
+const scenePath = 'Assets/Scenes/VRCDefaultWorldScene.unity';
+const bytes = fs.readFileSync(path.join(root, scenePath));
+const s = bytes.toString('utf8');
+const marker = s.indexOf('  destinationNodes:');
+const block = s.slice(marker).match(/  nodePositions:\r?\n((?:  - \{x:.*\r?\n)+)/)[1];
+const nodes = [...block.matchAll(/x: ([^,]+), y: ([^,]+), z: ([^}]+)/g)].map(m => m.slice(1).map(Number));
+const dist = (a,b) => Math.hypot(...a.map((x,i)=>x-b[i]));
+const cumulative = [0];
+for(let i=1;i<nodes.length;i++) cumulative.push(cumulative[i-1]+dist(nodes[i],nodes[i-1]));
+const hex = s.slice(marker).match(/destinationNodes: ([0-9a-f]+)/)[1];
+const buf = Buffer.from(hex,'hex');
+const destinations = Array.from({length:buf.length/4},(_,i)=>buf.readInt32LE(i*4));
+const data = {date:'2026-10-12', source:scenePath, sha256:crypto.createHash('sha256').update(bytes).digest('hex'), count:nodes.length, loopLength:cumulative.at(-1)+dist(nodes.at(-1),nodes[0]), nodes, cumulative, destinations};
+fs.writeFileSync(path.join(__dirname,'route-snapshot.json'),JSON.stringify(data,null,2)+'\n');
+for(const [a,b] of [[5,16],[10,16],[13,16],[143,163],[270,294],[276,294],[284,302],[230,250]]) console.log(JSON.stringify({a,b,length:cumulative[b]-cumulative[a],start:nodes[a],end:nodes[b],height:nodes[b][1]-nodes[a][1]}));
+console.log(JSON.stringify({destinations,loopLength:data.loopLength,count:nodes.length}));
