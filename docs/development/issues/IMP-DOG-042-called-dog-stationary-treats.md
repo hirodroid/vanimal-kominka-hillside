@@ -5,7 +5,7 @@ system: DOG
 status: review
 priority: High
 summary: 呼ばれて待機中の犬 (ふせ・おすわり) が、呼んだ本人が口元へ差し出したおやつだけをその場で食べ、同じ待機とポーズへ戻る。2026-10-12 実装 (同期の追加なし)。C# / U# 0・Menu/6e 60/0・6d PASS (指定寝床の修正前)。Codex レビュー中 1 件を修正済み。ClientSim / 実機は未実施
-next: 統括が再コンパイル → Menu/6e (指定寝床の 6 件を追加) → Course/97f (相談の結論: 指定寝床の修正後に回す)。その後 PCVR (A0-63〜65) と 2 人 (B86〜87)。AI の読み 4 点 (寝る 3 姿勢を受けない・AllDogsEngaged を変えない・保つ帯 0.45 m・運ぶ途中は見ない) はユーザーの決定待ち
+next: 実機 (A0-63〜65、B86〜87)。AI の読み 4 点は 2026-10-12 ユーザー採用
 updated: 2026-10-12
 ---
 
@@ -67,3 +67,4 @@ updated: 2026-10-12
 - [古民家の既存DES-DOG-011](C:/work/unity/vcc/KominkaDogRun/docs/development/issues/DES-DOG-011-called-dog-treat-response.md)
 - [入江IMP-DOG-012](C:/work/unity/vcc/A_Cove_to_Unwind/docs/development/issues/IMP-DOG-012-called-dog-stationary-treats.md)
 2026-10-12 (統括): 修正後の Unity 検査 C#/U# 0、Menu/6e 66/0。ClientSim Course/97f HF2-called-dog-stays-and-eats **PASS** (run 20261012-024727、sceneUnchanged)。コミット 06bb918。残りは実機 (A0-63〜65、B86〜87) とユーザーの決定 4 点。
+決定: 2026-10-12 ユーザー「OKで」— AI の読み 4 点 (寝る 3 姿勢と伸びの最中は受けない / AllDogsEngaged は変えない / 保つ帯 0.45 m / 運ぶ途中は餌を見ない) をそのまま採用。残りは実機 (A0-63〜65、B86〜87)。
