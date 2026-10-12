@@ -734,7 +734,10 @@ namespace KominkaHillside.Editor
                     if (Vector3.Distance(ballNow, whBallAt) > .5f) c.ballMoved = true;
                     if (WhLeashStage(c, now, t)) return;
                     if (c.landed < 0 || WhLr() != 0) return;
-                    if (c.done < 0 && t - c.landed > 1.5) { c.done = t; pouch.SendCustomEvent("_Toy" + WhDog); return; }
+                    // 78m run 20261012-030041: on the leash the dog lands 0.3 s after the action, so landing + 1.5 s fell inside the toy recall's
+                    // 2 s cooldown (KH_ToyRecall.recallCooldown) from the first call: the second call was refused and the ball stayed by the
+                    // player's place in the water (3.09 m from the bank). The second call waits for the cooldown too (2 s + 0.5 s margin)
+                    if (c.done < 0 && t - c.landed > 1.5 && t > 2.5) { c.done = t; pouch.SendCustomEvent("_Toy" + WhDog); return; }
                     if (c.done >= 0 && t - c.done > 3)
                     {
                         // IMP-DOG-021 (E-4, 2026-09-28): the ball is not in the dog's mouth, so calling it in the water is accepted now (it comes

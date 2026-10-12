@@ -25,7 +25,9 @@ namespace KominkaHillside.Editor
     //                   band edge, outside the spot and the bridge zones, facing the centre). Pass: the river follow starts (state >= 2),
     //                   the dog swims (pose 2) <= 25 s, floats still (pose 2, speed < 0.05) for 1 s, then the player steps back onto the
     //                   bank: walked out and landed (pose 0, state 0) <= 25 s on the same bank, no stage-3 recovery, no water jump, the
-    //                   mouth >= MouthLowLimit above the water, the root never on the riverbed while swimming (root - bed >= 0.03 m).
+    //                   mouth >= MouthLowLimit above the water, the root never sunk into the riverbed while swimming (root - bed >= -0.04 m:
+    //                   the designed float hangs the feet up to the draft below the water, and the leash river legs floor it at bed - 0.03 m;
+    //                   was ">= 0.03 m" until run 20261012-030041, which found -0.155 m in the shallow tail of a swim).
     //   LR-wait-Lab     dog 2 (a non-swimmer) leashed on an ok slice 12-20 m below a bridge; the player steps into the river there, the
     //                   dog follows (state 2) <= 25 s; the player walks on to 4 m from the bridge (inside its no-entry zone, outside the
     //                   deck). Pass: the dog stops at the zone's edge (_lrWaiting, its z <= bridge - 8 + 0.3) <= 10 s and stays in the
@@ -261,20 +263,45 @@ namespace KominkaHillside.Editor
                 // F5 (Codex review 2026-10-12): after the attach, independent of the pose (a sink writes pose 1 and _waterSwimming false
                 // together): wherever the water is deeper than this dog's swim start (+ 0.02 m) the root must float above the riverbed
                 // and the swim flag must hold. The first such frame is kept (droppedToBed is a history, never cleared)
+                // 2026-10-12 (78m run 20261012-030041): "afloat" = the root at the designed float height (LrFloatY: water + swimClear - Ms -
+                // sink, never below riverbed - 0.03 m), not "0.03 m above the riverbed" - the designed float hangs the feet up to the
+                // draft (Corgi 0.175 m) below the water, i.e. below the riverbed wherever the water is shallower than the draft
                 if (c.lrAttachAt >= 0 && c.lrLandedAt < 0 && depth >= lrSwimEnter + .02f)
                 {
                     c.minLift = Mathf.Min(c.minLift, lift);
                     bool swimming = Get<bool>(wander[WhDog], "_waterSwimming");
-                    if ((lift < .03f || !swimming) && !c.droppedToBed)
+                    float want = LrFloatY(WhDog, p);
+                    if ((p.y < want - .03f || !swimming) && !c.droppedToBed)
                     {
                         c.droppedToBed = true;
-                        if (c.log.Count < 40) c.log.Add("DROPPED at " + p.ToString("F2") + " depth " + depth.ToString("F3") + " lift " + lift.ToString("F3") + " swimming " + swimming + " pose " + pose);
+                        if (c.log.Count < 40) c.log.Add("DROPPED at " + p.ToString("F2") + " depth " + depth.ToString("F3") + " lift " + lift.ToString("F3") + " float " + (p.y - want).ToString("F3") + " swimming " + swimming + " pose " + pose);
                     }
                 }
                 return;
             }
-            if (pose == 2) c.minLift = Mathf.Min(c.minLift, lift);
+            if (pose == 2 && lift < c.minLift)
+            {
+                // where the lowest root was seen (the leash river state: 1 approach / 2 follow / 3 exit; the depth there)
+                c.minLift = lift;
+                if (lift < -.02f && c.log.Count < 40) c.log.Add("low root " + lift.ToString("F3") + " m under the riverbed at " + p.ToString("F2") + " depth " + depth.ToString("F3") + " river state " + st + " float error " + (p.y - LrFloatY(WhDog, p)).ToString("F3"));
+            }
         }
+
+        /// <summary>The root height the runtime holds an afloat dog at (WaterSwimHeight: water + swimClear - Ms - the dog's swimSink, settled),
+        /// with the leash river's floor (KD_DogWanderController.LeashRiverSwimFloor: never below the riverbed - 0.03 m). From the scene
+        /// proxies (static tuning), so it works in the travel mode too (whSpot is bound by the water mode only).</summary>
+        static float LrFloatY(int dog, Vector3 p)
+        {
+            var sn = GameObject.Find("KH_Dogs/KH_WaterSpot"); var spot = sn == null ? null : sn.GetComponent<KH_WaterSpot>();
+            if (spot == null) throw new InvalidOperationException("KH_Dogs/KH_WaterSpot missing");
+            var river = LrRiverData();
+            float sink = spot.swimSink != null && dog < spot.swimSink.Length ? spot.swimSink[dog] : 0f;
+            float y = river._SurfaceY(p.z) + spot.swimClear - Get<float>(wander[dog], "waterSwimMouth") - sink;
+            float bed = river._BedAt(p);
+            return bed > KH_RiverData.NoBed + 1f ? Mathf.Max(y, bed - LrSwimFloorM) : y;
+        }
+
+        const float LrSwimFloorM = .03f;   // = KD_DogWanderController.LrSwimFloor
 
         static float lrSwimEnter;
 
@@ -392,7 +419,7 @@ namespace KominkaHillside.Editor
                 c.landedSameSide = RiverSideOf(p) == lrSide && RiverLateral(p) >= 0f;
                 if (t - c.lrLandedAt < 1) return;
                 bool ok = c.lrMaxState >= 2 && c.swam && c.lrSwamAt >= 0 && c.lrSwamAt <= 25 && c.floatStill && c.landedSameSide && c.lrLandedAt - c.lrLeftAt <= 25 && !c.lrRecover3Logged && c.waterJumps == 0
-                    && (lrMouth == null || c.minMouthLR >= MouthLowLimit) && c.minLift >= .03f && Get<int[]>(manager, "walkers")[WhDog] == Networking.LocalPlayer.playerId;
+                    && (lrMouth == null || c.minMouthLR >= MouthLowLimit) && c.minLift >= -(LrSwimFloorM + .01f) && Get<int[]>(manager, "walkers")[WhDog] == Networking.LocalPlayer.playerId;
                 WhFinish(c, now, ok, "entered=" + c.lrEnteredAt.ToString("F2") + " swam=" + c.lrSwamAt.ToString("F2") + " floatStill=" + c.floatStill + " left=" + c.lrLeftAt.ToString("F2")
                     + " exit=" + c.lrExitAt.ToString("F2") + " landed=" + c.lrLandedAt.ToString("F2") + " sameBank=" + c.landedSameSide + LrNote(c)); return;
             }
@@ -464,7 +491,7 @@ namespace KominkaHillside.Editor
             {
                 if (c.lrLandedAt < 0) c.lrLandedAt = t;
                 if (t - c.lrLandedAt < 1) return;
-                bool ok = c.accepted && !c.lostLeash && c.leashTakenLogged && c.leashedEndLogged && !c.droppedToBed && c.minLift >= .03f && c.lrLandedAt - c.lrLeftAt <= 20
+                bool ok = c.accepted && !c.lostLeash && c.leashTakenLogged && c.leashedEndLogged && !c.droppedToBed && c.minLift >= -(LrSwimFloorM + .01f) && c.lrLandedAt - c.lrLeftAt <= 20
                     && c.waterJumps == 0 && !c.lrRecover3Logged && !c.vetoLogged;
                 WhFinish(c, now, ok, "attached=" + c.lrAttachAt.ToString("F2") + " leashTaken=" + c.leashTakenLogged + " playEndedLeashed=" + c.leashedEndLogged + " droppedToBed=" + c.droppedToBed
                     + " left=" + c.lrLeftAt.ToString("F2") + " landed=" + c.lrLandedAt.ToString("F2") + LrNote(c)); return;
@@ -528,7 +555,12 @@ namespace KominkaHillside.Editor
                     var p = roots[0].position; float bed = LrRiverData()._BedAt(p);
                     TvExpect(Get<int>(wander[0], "_travelApplies") - applies0 == 1 && Get<int>(wander[0], "_travelMoves") == moves0, tag + ": applied once without a move (applies +" + (Get<int>(wander[0], "_travelApplies") - applies0) + ", moves +" + (Get<int>(wander[0], "_travelMoves") - moves0) + ")");
                     TvExpect(Get<bool>(wander[0], "_waterSwimming") && CwPose(0) == 2 && Get<int>(wander[0], "_lrState") == 2, tag + ": still afloat in the river follow " + (.25 * k).ToString("F2") + " s after the apply" + CwDogState(0));
-                    TvExpect(bed > KH_RiverData.NoBed + 1f && p.y - bed >= .03f, tag + ": the root above the riverbed (" + (p.y - bed).ToString("F3") + " m)");
+                    // 82l run 20261012-030307: "root >= riverbed + 0.03" was the wrong invariant (the dog floated where the water is 0.137 m, shallower
+                    // than its 0.175 m draft: root - riverbed -0.038 by design). What a dropped float would change is the height: the root at the
+                    // designed float height (LrFloatY, with the river legs' floor) and the hold flag still set (WaterClearFloat lowers it)
+                    float want = LrFloatY(0, p);
+                    TvExpect(bed > KH_RiverData.NoBed + 1f && Mathf.Abs(p.y - want) <= .03f && Get<bool>(wander[0], "_swimYValid"),
+                        tag + ": the root at the float height (root - float " + (p.y - want).ToString("F3") + " m, root - riverbed " + (p.y - bed).ToString("F3") + " m, swimYValid " + Get<bool>(wander[0], "_swimYValid") + ")");
                     return true;
                 });
             }
