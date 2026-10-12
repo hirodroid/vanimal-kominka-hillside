@@ -24,6 +24,10 @@ namespace KominkaHillside
         private int _inviteLocalMask;
         private float _inviteNextSend, _inviteSendZerosUntil;
         private double _inviteRebuildUntil;
+        // VER-ENV-002 (2026-10-12): false only when every _inviteMasks entry is 0. Set by the only writer of non-zero
+        // masks (RememberInvitation; the tick's refresh loop only removes bits) and cleared by the tick after it has
+        // seen all 80 entries at 0, so the zeroing writers (ForgetInvitation, TTL, ownership) never need to touch it.
+        private bool _inviteAnyReport;
         private NavMeshPath _invitePath;
 
         public int _InviteStationAt(Vector3 point)
@@ -76,6 +80,7 @@ namespace KominkaHillside
             }
             if (slot < 0) return;
             _inviteIds[slot] = id; _inviteMasks[slot] = mask; _inviteSeen[slot] = now;
+            if (mask != 0) _inviteAnyReport = true;
         }
 
         private void ForgetInvitation(int id)
@@ -130,12 +135,18 @@ namespace KominkaHillside
                 else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReportInvitation), localMask);
             }
             if (!Networking.IsOwner(gameObject)) return;
+            // VER-ENV-002 (2026-10-12): nothing reported, nothing held, no dog invited, look ids already cleared and no
+            // handover window: every pass below then writes nothing and `changed` stays false (refresh skips zero masks;
+            // held = confirmed = 0, so ReduceInvitation(0, 0) neither touches inviteUntil nor inviteHeldMask; every look
+            // stays -1; every dog keeps previous = chosen = -1 because no station bit is held). Skip them.
+            if (!_inviteAnyReport && inviteHeldMask == 0 && now >= _inviteRebuildUntil && InvitationIdle()) return;
             for (int i = 0; i < _inviteMasks.Length; i++)
             {
                 if (_inviteMasks[i] == 0) continue;
                 _inviteMasks[i] = InvitationMask(VRCPlayerApi.GetPlayerById(_inviteIds[i]), _inviteMasks[i]);
             }
             int held = InvitationReportedMask(now);
+            _inviteAnyReport = held != 0;   // held is the OR of every mask after the TTL pass: 0 means all 80 are 0
             // During handover retain only the inherited state; it still expires even if reports never arrive.
             int confirmed = held;
             if (now < _inviteRebuildUntil) held |= inviteHeldMask;
@@ -171,6 +182,14 @@ namespace KominkaHillside
                 changed = true;
             }
             if (changed) RequestSerialization();
+        }
+
+        // VER-ENV-002: no dog assigned to a station and every look id cleared (the synced state the tick would write).
+        private bool InvitationIdle()
+        {
+            for (int s = 0; s < inviteLookIds.Length; s++) if (inviteLookIds[s] != -1) return false;
+            for (int dog = 0; dog < inviteDogStation.Length; dog++) if (inviteDogStation[dog] != 0) return false;
+            return true;
         }
 
         // No SDK access: this transition is also exercised by Edit-mode probes.

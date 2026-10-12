@@ -236,6 +236,7 @@ namespace KominkaHillside
                 _prevHolderUntil = Time.time + HoldGrace;
             }
             _holderId = id;
+            if (id >= 0) WakeIdle();   // 2026-10-12: a resting slot seen held (on demand: _IsHeldBy / _HeldNow) watches for the drop again
         }
 
         public override void OnOwnershipTransferred(VRCPlayerApi player)
@@ -243,6 +244,7 @@ namespace KominkaHillside
             if (!Utilities.IsValid(player)) return;
             _ownerSinceId = player.playerId;
             _ownerSinceAt = Time.time;
+            WakeIdle();   // 2026-10-12: a resting slot picked up elsewhere (the Pickup hands the ownership over) tracks the holder again
             // A new Owner (a pickup hand-over, or the old Owner left) counts the return from now: its own clock may have missed
             // the last hold (seen late / joined late), so it waits the full returnSeconds instead of snapping the tool away at once.
             if (_awaySince >= 0f) _awaySince = Time.time;
@@ -354,6 +356,7 @@ namespace KominkaHillside
         public void _OnStateChanged()
         {
             ApplySpray(Want());
+            WakeIdle();   // 2026-10-12: a resting slot whose state turned spraying watches it again (SprayChecks clears an orphaned spray)
         }
 
         bool Want()
@@ -361,7 +364,13 @@ namespace KominkaHillside
             if (!selectionActive) return false;
             if (!_IsSprayer()) return false;
             if (_held) return _sprayOn;               // the holder's own truth, no round trip
-            return (state != null && state.spraying) || (pulseSeconds > 0f && Time.time < _shotShownUntil);   // + a remote one-shot (_OnShot); only while this slot still shows a one-shot item (Codex 2026-10-11)
+            return WantRemote(state != null && state.spraying);
+        }
+
+        // Want() for a tool not held here, given state.spraying (SprayChecks reads it once for both of its lines)
+        bool WantRemote(bool stateSpraying)
+        {
+            return stateSpraying || (pulseSeconds > 0f && Time.time < _shotShownUntil);   // + a remote one-shot (_OnShot); only while this slot still shows a one-shot item (Codex 2026-10-11)
         }
 
         // IMP-DOG-049: another player's shot (the serial advanced on the state, KH_WashToolState.OnDeserialization). Local only, not a network
@@ -443,7 +452,7 @@ namespace KominkaHillside
         void ReturnTick()
         {
             if (_returnPending && Time.time - _returnAskedAt >= ReturnAskTimeout) _returnPending = false;
-            if (home == null || returnSeconds <= 0f) return;   // 0 or less: never returns by itself (the production value)
+            if (returnSeconds <= 0f || home == null) return;   // 0 or less: never returns by itself (the production value; tested first: no extern)
             float now = Time.time;
             if (HeldForReturn()) { _awaySince = now; return; }
             Vector3 d = transform.position - home.position;
@@ -548,6 +557,32 @@ namespace KominkaHillside
             if (Busy()) { WakeFrames(); return; }
             IdleStep();
             if (_frameLoop) return;                    // the checks woke it (a missed spray state)
+            if (CanRest()) return;                     // 2026-10-12: an unselected slot with nothing to watch (WakeIdle restarts)
+            StartIdleLoop();
+        }
+
+        // 2026-10-12 (VER-ENV-002 perf): the idle checks of a premium slot that is not selected here do nothing while
+        //  - its pickup cannot be taken (KH_WashSelection.ConfigureSlot: pickupable false, collider off) and nobody is seen holding it,
+        //    so TrackHolder has no change to see (it also runs on demand in _IsHeldBy / _HeldNow / _RequestReturn),
+        //  - ReturnTick has only the reset request's timeout (returnSeconds <= 0, no request in flight),
+        //  - SprayChecks: Want() is false (unselected) and _sprayShown is already false (_SetSelected(false)); the orphan clean-up needs
+        //    state.spraying, which keeps the loop running while true.
+        // Then the loop stops. WakeIdle restarts it: _SetSelected(true), _OnStateChanged (the state deserialized / written),
+        // OnOwnershipTransferred, a holder seen by TrackHolder; OnPickup / _RequestReturn / OnEnable start it as before (through
+        // WakeFrames' hand-off or StartIdleLoop). The harness override (debugHeldOverride) never rests.
+        bool CanRest()
+        {
+            if (selectionActive || returnSeconds > 0f || _returnPending || _held || debugHeldOverride != 0) return false;
+            TrackHolder();                             // fresh: the idle step may not have been due on this call
+            if (_holderId >= 0 || (_pickup != null && _pickup.IsHeld)) return false;
+            return state == null || !state.spraying;
+        }
+
+        void WakeIdle()
+        {
+            if (!_started || _frameLoop || _idleLoop) return;   // before Start / Edit mode: Start starts it; a loop already runs
+            float now = Time.time;
+            if (_idleNext < now) _idleNext = now + UnityEngine.Random.Range(0f, IdleInterval);   // a phase per tool again (IMP-DOG-034 B2)
             StartIdleLoop();
         }
 
@@ -560,7 +595,7 @@ namespace KominkaHillside
             {
                 _frameLoop = false;
                 IdleStep();
-                if (!_frameLoop) StartIdleLoop();
+                if (!_frameLoop && !CanRest()) StartIdleLoop();
                 return;
             }
             BusyFrame();
@@ -622,11 +657,16 @@ namespace KominkaHillside
         // Shower only (IMP-DOG-034 B2: the sponge / towel state never sprays, so these were no-ops for them).
         void SprayChecks()
         {
-            ApplySpray(Want());   // catches a missed deserialization; no-op when unchanged
+            if (_held) { ApplySpray(Want()); return; }   // held here: Want() reads no state, and the clean-up below needs !_held
+
+            // = ApplySpray(Want()) for a tool not held here, with state.spraying read once (2026-10-12 perf; ApplySpray does not
+            // change it). Catches a missed deserialization; no-op when unchanged.
+            bool stateSpraying = state != null && state.spraying;
+            ApplySpray(selectionActive && _IsSprayer() && WantRemote(stateSpraying));
 
             // A spray left on by a holder who is gone: the state's new Owner clears it (vrc-networking §6).
             // (debugHeldOverride > 0: the harness plays a holder, so the spray it switched on stays on.)
-            if (!_held && state != null && state.spraying && Networking.IsOwner(state.gameObject)
+            if (stateSpraying && Networking.IsOwner(state.gameObject)
                 && (_pickup == null || !_pickup.IsHeld) && debugHeldOverride <= 0)
                 state._SetSpraying(false);
         }
@@ -962,7 +1002,7 @@ namespace KominkaHillside
             RestModel();
             FlowReset();
             selectionActive = value;
-            if (value) return;
+            if (value) { WakeIdle(); return; }   // 2026-10-12: a resting slot's idle checks resume (no-op in Edit mode / before Start)
             _useHeld = false; _sprayOn = false; _shotShownUntil = -100f; EndAllContacts(); ApplySpray(false);
             if (state != null && Networking.IsOwner(state.gameObject)) state._SetSpraying(false);
         }

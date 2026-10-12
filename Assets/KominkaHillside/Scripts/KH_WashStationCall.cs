@@ -136,10 +136,20 @@ namespace KominkaHillside
         private bool _standOk, _standMoving, _standSynced, _standSnapNext;
         private int _standKey = -3;          // -2 the platform keeps the size, -1 no dog, 0.. the held dog
         private Vector3 _standNow, _standWant;
+        // 2026-10-12 (VER-ENV-002 perf): the telescopic support (KH_WashSupportVisual, no LateUpdate) is refreshed on a frame the stand
+        // moved (the lift or _StandPose), once at the end of Update. Found in Start where WashPremium/20 puts it (beside liftRoot,
+        // "SupportGroundRoot"; WashPremium/21 checks that parent). None = nothing to refresh. Edit mode: null (no Start).
+        private KH_WashSupportVisual _support;
+        private bool _supportDirty;
 
         void Start()
         {
             if (liftRoot != null) { _liftBase = liftRoot.localPosition; _liftBaseOk = true; }
+            if (liftRoot != null && liftRoot.parent != null)
+            {
+                Transform s = liftRoot.parent.Find("SupportGroundRoot");
+                if (s != null) _support = s.GetComponent<KH_WashSupportVisual>();
+            }
             // IMP-ENV-013: at once to the current target (whoever joins sees no shrinking stand); unwired / zero sizes = left as it is
             _standOk = standTable != null && standBaseSize.x > 0f && standBaseSize.z > 0f;
             if (_standOk)
@@ -553,13 +563,22 @@ namespace KominkaHillside
             if (_standOk) StandStep();
             // Every client: ease the stand toward the synced height (0 with no dog), never below the platform's minLift (IMP-DOG-044).
             // Recomputed every frame, so a change of minLift (the platform switched) wakes the settled stand up as a lift change does.
-            if (liftRoot == null || !_liftBaseOk) return;
-            // = _LiftTarget() with no call / extern on the usual frame (minLift 0); lift <= liftMax, so the clamp never goes below it
-            float want = heldDog >= 0 ? lift : 0f;
-            if (minLift > want) want = _LiftRest();
-            if (_liftNow == want) return;
-            _liftNow = Mathf.MoveTowards(_liftNow, want, Mathf.Max(0.05f, liftSpeed) * Time.deltaTime);
-            liftRoot.localPosition = _liftBase + Vector3.up * _liftNow;
+            if (liftRoot != null && _liftBaseOk)
+            {
+                // = _LiftTarget() with no call / extern on the usual frame (minLift 0); lift <= liftMax, so the clamp never goes below it
+                float want = heldDog >= 0 ? lift : 0f;
+                if (minLift > want) want = _LiftRest();
+                if (_liftNow != want)
+                {
+                    _liftNow = Mathf.MoveTowards(_liftNow, want, Mathf.Max(0.05f, liftSpeed) * Time.deltaTime);
+                    liftRoot.localPosition = _liftBase + Vector3.up * _liftNow;
+                    _supportDirty = true;
+                }
+            }
+            // 2026-10-12 perf: the support is refreshed here, at the end of this Update, on a frame the stand moved (the lift above or
+            // _StandPose); its old LateUpdate ran later in the same frame, and nothing reads the support in between
+            // (KH_WashSelection._Apply refreshes it at once itself)
+            if (_supportDirty) { _supportDirty = false; if (_support != null) _support._RefreshVisual(); }
         }
 
         // ================= IMP-ENV-013: the stand's size =================
@@ -587,6 +606,7 @@ namespace KominkaHillside
             if (standTable == null || standBaseSize.x <= 0f || standBaseSize.z <= 0f) return;
             standTable.localScale = new Vector3(standBaseScale.x * s.x / standBaseSize.x, standBaseScale.y, standBaseScale.z * s.y / standBaseSize.z);
             standTable.localPosition = new Vector3(standBasePos.x + s.z, standBasePos.y, standBasePos.z);
+            _supportDirty = true;   // only marked here: refreshed at the end of this client's Update (Edit mode: never; KH_WashSelection._Apply refreshes at once)
         }
 
         /// <summary>IMP-ENV-013 (Codex review): the target, the current size and the transform at once, now. KH_WashSelection._Apply calls

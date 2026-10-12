@@ -38,6 +38,10 @@ namespace KominkaDogRun
         private int _favorite = -1, _selected;
         private bool _restored;
         private float _nextRefresh, _nextRoster, _messageUntil;
+        // 裏山改変 (VER-ENV-002 2026-10-12): 板から離れている間 (ページを開いていない・12 m より遠い) は Refresh を 2 s ごとに間引く。
+        // 近づいたかは 0.5 s ごとに見るので、近くでは今まで通り 0.5 s。ボタン類は従来どおりその場で Refresh を呼ぶ
+        private const float RefreshNearDistance = 12f, RefreshFarSeconds = 2f;
+        private float _nextFarRefresh;
         private string _messageKey = "";
         private VRCPlayerApi[] _players = new VRCPlayerApi[100];
         private KD_PlayerDogTag[] _tags = new KD_PlayerDogTag[100];
@@ -162,7 +166,14 @@ namespace KominkaDogRun
             if (open && Utilities.IsValid(Networking.LocalPlayer)
                 && Vector3.Distance(Networking.LocalPlayer.GetPosition(), transform.position) > hideDistance) _Close();
             if (Time.time < _nextRefresh) return;
-            _nextRefresh = Time.time + .5f; Refresh();
+            _nextRefresh = Time.time + .5f;
+            if (!open && Time.time < _nextFarRefresh)
+            {
+                VRCPlayerApi local = Networking.LocalPlayer;
+                if (Utilities.IsValid(local)
+                    && (local.GetPosition() - transform.position).sqrMagnitude > RefreshNearDistance * RefreshNearDistance) return;
+            }
+            _nextFarRefresh = Time.time + RefreshFarSeconds; Refresh();
         }
         void CacheRoster()
         {

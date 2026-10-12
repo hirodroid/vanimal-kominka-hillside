@@ -29,12 +29,19 @@ namespace KominkaDogRun
 
         bool UpdateInvitation()
         {
-            if (hillsideLeashes == null || dogIndex < 0 || hillsideLeashes.inviteSpots == null
-                || !_InvitationAvailable() || !hillsideLeashes._IntroDogAvailable(dogIndex))
+            // VER-ENV-002 (2026-10-12): the cheap "is this dog invited at all" test runs before the two availability
+            // checks (about 30 cross-behaviour reads). Every exit below is the same `_invitationStation = -1; return false`,
+            // and both availability checks are pure reads (the WashHeld memo is a frame cache), so the result is unchanged.
+            if (hillsideLeashes == null || dogIndex < 0 || hillsideLeashes.inviteSpots == null)
             { _invitationStation = -1; return false; }
-            int station = hillsideLeashes.inviteDogStation[dogIndex] - 1;
+            int[] dogStations = hillsideLeashes.inviteDogStation;
+            if (dogStations == null || dogIndex >= dogStations.Length)
+            { _invitationStation = -1; return false; }
+            int station = dogStations[dogIndex] - 1;
+            if (station < 0) { _invitationStation = -1; return false; }
             double now = Networking.GetServerTimeInSeconds();
-            if (station < 0 || now >= hillsideLeashes.inviteUntil[station])
+            if (now >= hillsideLeashes.inviteUntil[station]
+                || !_InvitationAvailable() || !hillsideLeashes._IntroDogAvailable(dogIndex))
             { _invitationStation = -1; return false; }
             Vector3 target = hillsideLeashes.inviteSpots[station * hillsideLeashes.inviteDogs.Length + dogIndex].position;
             if (!KeepOutClear(target, .3f)) { _invitationStation = -1; return false; }

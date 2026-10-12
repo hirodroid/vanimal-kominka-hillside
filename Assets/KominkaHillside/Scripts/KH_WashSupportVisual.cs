@@ -2,7 +2,11 @@ using UdonSharp;
 using UnityEngine;
 namespace KominkaHillside
 {
-    /// <summary>Local visual only: rigid telescopic sleeves follow the displayed table, outside its lift and scale.</summary>
+    /// <summary>Local visual only: rigid telescopic sleeves follow the displayed table, outside its lift and scale.
+    /// 2026-10-12 (VER-ENV-002 perf): no LateUpdate. The table moves only through KH_WashStationCall (the lift, _StandPose: it marks
+    /// the support dirty and refreshes it at the end of its own Update on the frame the stand moved) and KH_WashSelection._Apply (the
+    /// platform's mount depth: refreshes at once). Nothing reads the support between that Update and LateUpdate. Start covers the
+    /// first frame.</summary>
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
     public class KH_WashSupportVisual : UdonSharpBehaviour
     {
@@ -12,7 +16,10 @@ namespace KominkaHillside
         public float strokeMeters = .9f;
         public float baseLocalY;
         public float mountBelowCollider;
-        private void LateUpdate() { _RefreshVisual(); }
+        // The last written position and weight: an unchanged result writes nothing (exact compares).
+        private bool _written;
+        private float _lastX, _lastY, _lastZ, _lastWeight;
+        void Start() { _RefreshVisual(); }
 
         public void _RefreshVisual()
         {
@@ -22,8 +29,12 @@ namespace KominkaHillside
             Vector3 mount = tableCollider.transform.TransformPoint(bottom);
             mount.y -= mountBelowCollider;
             Vector3 target = transform.parent.InverseTransformPoint(mount);
-            transform.localPosition = new Vector3(target.x, baseLocalY, target.z);
-            sleeves.SetBlendShapeWeight(extendIndex, Mathf.Clamp01((target.y - baseLocalY) / strokeMeters) * 100f);
+            float x = target.x, z = target.z;
+            float weight = Mathf.Clamp01((target.y - baseLocalY) / strokeMeters) * 100f;
+            if (_written && x == _lastX && baseLocalY == _lastY && z == _lastZ && weight == _lastWeight) return;
+            _written = true; _lastX = x; _lastY = baseLocalY; _lastZ = z; _lastWeight = weight;
+            transform.localPosition = new Vector3(x, baseLocalY, z);
+            sleeves.SetBlendShapeWeight(extendIndex, weight);
         }
     }
 }

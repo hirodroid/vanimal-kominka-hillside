@@ -42,9 +42,18 @@ namespace KominkaHillside
         // as KH_WashStationBoard keeps its refusal (_refuseUntil). Reset while holding a tool answers code 3 AND is held at once.
         const float ResultSeconds=4f;
         private float _resultUntil=-100f;
-        void Start(){_Refresh();SendCustomEventDelayedSeconds(nameof(_Tick),.25f);}
+        // 2026-10-12 (VER-ENV-002 perf): one _Tick chain, always re-armed at 0.25 s (Start arms it once, every _Tick path re-arms it
+        // exactly once: never two outstanding, never none). Only the body is gated: while the local player is farther than NearMeters
+        // (horizontal, as KH_WashStationBoard showMeters 12 m) and nothing waits (no request pending, no result on show), the body runs
+        // about once a second (_farUntil). Every action handler calls Poke(), so a press is answered within 0.25 s from any distance.
+        // Content unchanged; action response <= 0.25 s (Poke / pending), passive updates (language, pickup labels, held hint) <= ~1 s when far.
+        const float NearMeters=12f, NearTickSeconds=.25f, FarBodySeconds=1f;
+        private float _farUntil;   // far: the body waits until this time (0 = run it on the next tick)
+        void Start(){_Refresh();SendCustomEventDelayedSeconds(nameof(_Tick),NearTickSeconds);}
+        void Poke(){_farUntil=0f;}
         public void _Tick()
         {
+            if(!_pending&&Time.time<_farUntil&&Time.time>=_resultUntil){SendCustomEventDelayedSeconds(nameof(_Tick),NearTickSeconds);return;}
             string code=language!=null?language.CurrentLanguage:"ja";
             if(code!=_language){_language=code;_lang=0;for(int i=0;languageCodes!=null&&i<languageCodes.Length;i++)if(languageCodes[i]==code)_lang=i;_Refresh();}
             if(_pending&&selection!=null)
@@ -71,7 +80,15 @@ namespace KominkaHillside
                     }
                 }
             }
-            SendCustomEventDelayedSeconds(nameof(_Tick),.25f);
+            _farUntil=IsFar()?Time.time+FarBodySeconds-.05f:0f;   // -.05: the 4th 0.25 s tick lands on it, not the 5th
+            SendCustomEventDelayedSeconds(nameof(_Tick),NearTickSeconds);
+        }
+        bool IsFar()
+        {
+            var lp=Networking.LocalPlayer;
+            if(!Utilities.IsValid(lp))return true;
+            Vector3 d=lp.GetPosition()-transform.position;d.y=0f;
+            return d.sqrMagnitude>NearMeters*NearMeters;
         }
         public string _Word(int index){return W(index);}
         string W(int i){int k=_lang*wordCount+i;return words!=null&&k>=0&&k<words.Length?words[k]:"";}
@@ -81,12 +98,12 @@ namespace KominkaHillside
         bool IsOut(int id){int c=Category(id);return selection!=null&&c>=0&&selection._Selected(c)==id;}
         bool Listed(int id){int g=Category(id);return g>=0&&(_tab==4||g==_tab);}
         public void _Tab0(){Tab(0);}public void _Tab1(){Tab(1);}public void _Tab2(){Tab(2);}public void _Tab3(){Tab(3);}public void _Tab4(){Tab(4);}
-        void Tab(int i){_tab=i;_page=0;_chosen=-1;Click();_Refresh();}
+        void Tab(int i){_tab=i;_page=0;_chosen=-1;Click();_Refresh();Poke();}
         public void _Item0(){Pick(0);}public void _Item1(){Pick(1);}public void _Item2(){Pick(2);}public void _Item3(){Pick(3);}public void _Item4(){Pick(4);}public void _Item5(){Pick(5);}
-        void Pick(int slot){if(_visible[slot]<0)return;_chosen=_visible[slot];Click();RefreshItems();}
-        public void _Next(){_page++;_chosen=-1;Click();_Refresh();}
-        public void _Take(){if(selection==null||_pending||_chosen<0)return;_beforeResult=selection.localResultSerial;_pending=true;_until=Time.time+5f;status.text=W(4);selection._Request(_chosen);}
-        public void _Reset(){if(selection==null||_pending)return;_beforeResult=selection.localResultSerial;_pending=true;_until=Time.time+5f;status.text=W(4);selection._Request(-1);}
+        void Pick(int slot){if(_visible[slot]<0)return;_chosen=_visible[slot];Click();RefreshItems();Poke();}
+        public void _Next(){_page++;_chosen=-1;Click();_Refresh();Poke();}
+        public void _Take(){if(selection==null||_pending||_chosen<0)return;_beforeResult=selection.localResultSerial;_pending=true;_until=Time.time+5f;status.text=W(4);selection._Request(_chosen);Poke();}
+        public void _Reset(){if(selection==null||_pending)return;_beforeResult=selection.localResultSerial;_pending=true;_until=Time.time+5f;status.text=W(4);selection._Request(-1);Poke();}
         void Click(){if(uiSound!=null)uiSound.Play();}
         public void _Refresh()
         {

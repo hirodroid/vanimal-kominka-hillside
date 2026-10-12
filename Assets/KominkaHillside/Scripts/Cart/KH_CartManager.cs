@@ -141,6 +141,7 @@ namespace KominkaHillside
         public override void OnOwnershipTransferred(VRCPlayerApi player)
         {
             Debug.Log("[KH_Cart] owner player=" + (Utilities.IsValid(player) ? player.playerId : -1) + " version=" + version);
+            _nextOwnerTick = 0f;   // 新しい Owner は次のフレームで OwnerTick (Update が IsOwner を 0.25 秒ごとにしか見ないため)
         }
 
         // Owner だけ: 退出した人のカートを解放する (Owner 交代と重なった取りこぼしは OwnerTick の見張りが拾う)
@@ -166,10 +167,13 @@ namespace KominkaHillside
             if (!_started) return;
             MotionTick();
             LocalTick();
-            if (Networking.IsOwner(gameObject) && Time.time >= _nextOwnerTick)
+            // 2026-10-12 (コスト削減): 時刻を先に見て、IsOwner (extern) は 0.25 秒に 1 回だけ。非 Owner も時刻を進める
+            // (Owner 交代は OnOwnershipTransferred が _nextOwnerTick を 0 に戻すので、新しい Owner は次のフレームで回る)
+            float t = Time.time;
+            if (t >= _nextOwnerTick)
             {
-                _nextOwnerTick = Time.time + 0.25f;
-                OwnerTick();
+                _nextOwnerTick = t + 0.25f;
+                if (Networking.IsOwner(gameObject)) OwnerTick();
             }
         }
 
@@ -339,6 +343,7 @@ namespace KominkaHillside
                     _parkAt[c] = Time.time + ParkDelay;   // 降りる人の ExitStation が先に済むよう、少しその場に止めてから駐車
                 }
             }
+            RecountMotion();   // _shown / _parked を書いた後 (MotionTick の早期 return 用)
 
             if (mine != _myCart)
             {
@@ -463,7 +468,7 @@ namespace KominkaHillside
                 if (_leaveCart >= 0 && _leaveCart == _myCart) SendLeave();
             }
 
-            if (_IsRiding())
+            if (_myCart >= 0 && _IsRiding())   // 先にフィールドだけ見る (乗っていない間はメソッド呼び出しをしない)
             {
                 int c = _myCart;
                 // 到着: 自分のカートが目的地距離に達したら、自分で降りる (1 回だけ。LeaveCore が _leaveCart で止める)

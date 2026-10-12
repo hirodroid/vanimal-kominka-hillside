@@ -19,6 +19,9 @@ namespace KominkaHillside
     public partial class KH_CartManager
     {
         private bool[] _shown, _parked, _snap;
+        // 2026-10-12 (コスト削減): 毎フレーム見る必要があるカートの数 = _shown[c] || !_parked[c] (表示中か、ParkDelay 後の ParkCart 待ち)。
+        // _shown / _parked を書く所 (EnsureLocals・ApplyCore・ParkCart) で RecountMotion が数え直す。0 なら MotionTick は何もしない
+        private int _motionCount = -1;   // -1 = 未確保 (EnsureLocals 前。MotionTick は従来の経路)
         private bool[] _prevParked, _parkDone;   // M3: 前回の反映で Parked だったか / その場に寄せ終わったか
         private float[] _parkLat;                // 駐車枠の横 (ParkSlotLateral の結果。駐車ごとに 1 回)
         private bool[] _parkLatReady;
@@ -61,6 +64,15 @@ namespace KominkaHillside
             _cartT = new Transform[MaxCarts];
             for (int c = 0; carts != null && c < carts.Length && c < MaxCarts; c++)
                 if (carts[c] != null) _cartT[c] = carts[c].transform;
+            RecountMotion();   // 確保直後は全車 _parked = false なので 8 (Start の ParkCart で減る)
+        }
+
+        /// <summary>_motionCount を数え直す (8 要素。_shown / _parked を書いた直後だけ呼ぶ。毎フレームは呼ばない)。</summary>
+        private void RecountMotion()
+        {
+            int n = 0;
+            for (int c = 0; c < MaxCarts; c++) if (_shown[c] || !_parked[c]) n++;
+            _motionCount = n;
         }
 
         /// <summary>M3 (Codex M3 レビュー後): その場に残った (Parked) カートを駐車枠へ置く。距離は cartParkDist、向きと右側は cartParkDir (同期) で決め、
@@ -137,6 +149,8 @@ namespace KominkaHillside
 
         private void MotionTick()
         {
+            // 表示中も駐車待ちも無い (全車プール) なら、経路・サーバー時刻・ループを省く。未確保 (-1) は従来の経路
+            if (_motionCount == 0) return;
             if (carts == null || !EnsureRoute()) return;
             int now = Networking.GetServerTimeInMilliseconds();
             float dt = Time.deltaTime;
@@ -357,6 +371,7 @@ namespace KominkaHillside
             if (carts == null || c >= carts.Length || carts[c] == null) return;
             EnsureLocals();
             _parked[c] = true;
+            RecountMotion();
             carts[c]._SetVisible(false);
             if (parking != null && _cartT[c] != null)
                 _cartT[c].SetPositionAndRotation(parking.position + parking.right * (c * 3f), parking.rotation);

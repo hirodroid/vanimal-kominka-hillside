@@ -31,6 +31,9 @@ namespace KominkaHillside
         private bool _destinationShown, _destinationPresented;
         private int _successMenuRevision;
         private bool _dismissed, _replay, _inside, _engaged;
+        // VER-ENV-002 (2026-10-12): set only where Tick has just hidden everything because the intro is over for this
+        // player; cleared by every entry that can bring it back. While set, Tick keeps only the language and inside reads.
+        private bool _resting;
         private int _state, _successDog = -1, _seenMask, _hintDog = -1;
         private float _readyAt = -1f, _successUntil, _nextTick;
         private Transform _arrowTarget;
@@ -51,6 +54,7 @@ namespace KominkaHillside
             bool saved = false;
             PlayerData.TryGetBool(player, ConnectedKey, out saved);
             _completed = _completed || saved || _sessionSuccess;
+            _resting = false;
             if (!_choseHidden) { bool off = false; PlayerData.TryGetBool(player, HiddenKey, out off); _hidden = off; }
             _restored = true;
             if (_sessionSuccess && !saved) PlayerData.SetBool(ConnectedKey, true);
@@ -60,6 +64,7 @@ namespace KominkaHillside
 
         public void _OnLeashChanged()
         {
+            _resting = false; // also reached from Tick; a resting Tick does not call this
             VRCPlayerApi local = Networking.LocalPlayer;
             if (!Utilities.IsValid(local) || manager == null || manager.walkers == null) return;
             int mask = 0;
@@ -98,14 +103,14 @@ namespace KominkaHillside
         public void _BackSettings() { pouch._OpenSettings(); }
         public void _ToggleAuto()
         {
-            _hidden = !_hidden; _choseHidden = true;
+            _hidden = !_hidden; _choseHidden = true; _resting = false;
             if (_restored) PlayerData.SetBool(HiddenKey, _hidden);
             if (_hidden && !_replay) Finish();
             RefreshLabels();
         }
         public void _Replay()
         {
-            _dismissed = false; _replay = true; _engaged = false; _state = Quiet;
+            _dismissed = false; _replay = true; _engaged = false; _state = Quiet; _resting = false;
             _readyAt = Time.time;
             // An already connected walker has nothing to reconnect. Replay shows the closing hint only.
             for (int i = 0; i < manager.walkers.Length; i++) if (manager._IsMine(i))
@@ -160,11 +165,15 @@ namespace KominkaHillside
 
         private void Tick(VRCPlayerApi local)
         {
-            _OnLeashChanged();
+            // Resting: the rest of this Tick would end in Pause() on already hidden visuals (Quiet, not engaged). Leash
+            // changes still arrive through the manager's _OnLeashChanged event (attach, release and OnDeserialization).
+            bool resting = _resting && _state == Quiet && !_engaged && !_replay && (_completed || _hidden || _dismissed);
+            if (!resting) _OnLeashChanged();
             string lang = language != null ? language.CurrentLanguage : "ja";
             if (lang != _shownLanguage) { _shownLanguage = lang; _shownKey = null; RefreshLabels(); }
             Vector3 offset = local.GetPosition() - entrance.position; offset.y = 0;
             _inside = offset.sqrMagnitude <= (_inside ? leaveRadius * leaveRadius : enterRadius * enterRadius);
+            if (resting) return;
             if (!_restored || !manager._IntroStateReady()) { Pause(); return; }
             if (_readyAt < 0f) _readyAt = Time.time + readyDelay;
             if (_state == Success)
@@ -182,7 +191,7 @@ namespace KominkaHillside
                 return;
             }
             if (Time.time < _readyAt || (!_replay && (_completed || _hidden || _dismissed)) || !_inside)
-            { Pause(); return; }
+            { Pause(); _resting = !_replay && (_completed || _hidden || _dismissed); return; }
             _engaged = true;
             messageRoot.position = _messageHome;
             bool pending = pouch != null && pouch._IntroAttachPending();

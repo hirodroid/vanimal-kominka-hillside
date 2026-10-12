@@ -5,7 +5,7 @@ system: ENV
 status: wip
 priority: High
 summary: 景観・小物の仕上げ後に Quest 3 が 20〜40 (10-04)、カート・洗い道具・招待の追加後は常時 20 (10-12 ユーザー報告)。毎フレーム処理の増加と描画を切り分けて原因を特定し、眺めを保ちながら調整する
-next: "2026-10-12 の静的監査で、10-06 以降に待機中の Udon が約 2 倍 (+900〜1,200 extern/フレーム、0.5 s ごとの 4,000 の塊) と判明 (本文の表 1〜9、直し方付き)。描画側の増分はスポーン付近では小さい。次: (1) ユーザーが空を見上げて CPU/GPU を切り分け、(2) 表 1〜9 の無駄を挙動を変えずに直す、(3) Mobile/20 の群を更新して Quest で群別に読む (シーン保存は別セッションと調整)。10-04 の景観の切り分けは未実施のまま"
+next: "2026-10-12 に C (無駄の修正) を実装・コミット。次はユーザーの Quest 実機で fps を読む (本文「ユーザーの Play / Quest で見てほしいこと」6 項目)。戻り切らなければ 10-04 の景観 (抜きの草・板の木、Quest の小草の近距離化) と材質の Mobile 差し替えを候補に"
 updated: 2026-10-12
 ---
 
@@ -157,6 +157,10 @@ DogUdon を OFF にすると犬の状態がずれることがある。計測の�
 4. 描画側の候補 (測ってから): カート・洗い道具・小物の材質を Android/iOS ビルドだけ `VRChat/Mobile/Standard Lite` へ差し替えるフック (地形と同じ型)、Quest の小草の消える距離を先に縮める (樹木の輪郭は残す)、遠い掲示の Canvas + Raycaster を 40 m 超で切る、川音を近い 3〜4 本だけ鳴らす。static 化 + オクルージョン再ベイクは遮蔽物 (建物・岩) を選んでから。
 
 
+### 決定: 2026-10-12 ユーザー「景観のレンダー停止はとくに変わらなかった。C かな。計測不要かも。原因はほぼ確定している」
+
+C (無駄の修正、表 1〜9) を先行し、Quest の群別計測 (B) は行わない。10-04 の景観の切り分けは、ユーザーの観察 (Renderer を止めても変わらない) を記録として残す。修正後の確認は Quest 実機でユーザーが fps を読む。
+
 ### Codex 相談 (2026-10-12、vrc-review 相談モード、gpt-6-astra。採否は統括が現物で判断)
 
 | 問い | Codex の結論 | 採否 |
@@ -167,7 +171,53 @@ DogUdon を OFF にすると犬の状態がずれることがある。計測の�
 | 10-04 の景観を測る前に静的に決められる調整 | 方針までは選べる (Quest の小草を先に近距離化、樹木の輪郭は残す)。LOD は画面占有率なので Bounds と lodBias を確かめて対象別に。static 化は用途別フラグで、抜きの葉・板の木を遮蔽物にしない。再ベイクを最初の切り分けにしない | 採用。描画側の候補 4 の「static 化 + 再ベイク」は「測った後、遮蔽物を選んでから」に格下げ |
 
 
+### 実装 (2026-10-12、C: 無駄の修正。Opus 3 本 + 統括の検証 + Codex 独立レビュー)
+
+コード 10 ファイル (下)。シーン・プレハブ・`.asset`・Unity の設定は未変更 (配線の追加なし。支柱は `liftRoot.parent.Find("SupportGroundRoot")` で Start に取得)。C# 0 / U# 0。Edit モードの検査: Leash Invitation/2 Verify 49/49・3 Probe Transitions 11/11、Walk Intro/3 Verify 81/81、Cart/2 Verify `CART_OK` 2,320、WashPremium/44 Verify Selection 1,011 PASS / 0 FAIL、Wash/23 Verify Stand Sizes 0 FAIL。**これらは既存の回帰の確認で、新しい早期 return・休止・再開の経路は通らない** (Codex 指摘)。新しい経路の確認は Play (ユーザー) に残る。
+
+| 表の # | 変更 | 不変条件 |
+|---|---|---|
+| 1 | `KD_DogWanderController.HillsideInvitation.cs` `UpdateInvitation`: `inviteDogStation[dogIndex]` → `inviteUntil` → 可否判定 2 つ、の順 | 全 exit が同じ `_invitationStation = -1; return false`。可否判定は純粋な読み取り (WashHeld のメモはフレーム内キャッシュ) |
+| 2 | `KH_LeashManager.Invitation.cs` `InvitationTick`: Owner 側の早期 return (`!_inviteAnyReport && inviteHeldMask == 0 && now >= _inviteRebuildUntil && 全 inviteLookIds == -1 && 全 inviteDogStation == 0`)。`_inviteAnyReport` は `RememberInvitation` (mask != 0) で立ち、tick が `held != 0` で再計算 | その条件下では 5 本のループが何も書かず `changed` は false (`ReduceInvitation(0,0)` は `inviteHeldMask == 0` なら無書き込み)。ローカルの報告・他人の報告・Owner 交代の 3 秒・期限切れは従来どおり。反射で呼ばれる 4 メソッドの署名は不変 |
+| 3 | `KH_WashTool.cs`: 未選択スロットの idle ループを `CanRest` で停止 (selectionActive false・returnSeconds <= 0・返却要求なし・非保持・保持者なし・debugHeldOverride 0・state.spraying false)。再開 `WakeIdle`: `_SetSelected(true)`・`_OnStateChanged`・`OnOwnershipTransferred`・TrackHolder が保持者を見た時。`SprayChecks` は `state.spraying` を 1 回だけ読む | 未選択スロットは `ConfigureSlot` で pickupable false + Collider off なので掴めない。止まるのは有料 28 スロットのうち未選択のもの (4 洗い場で 3 カテゴリ選択なら 16 個。無料 19 個は従来どおり) |
+| 4 | `KH_WashSupportVisual.cs` LateUpdate 削除、Start で 1 回、同じ値なら書かない。`KH_WashStationCall.cs` lift の書き込みと `_StandPose` で dirty、Update 末尾で 1 回 `_RefreshVisual` | 台を動かすのは StationCall (lift・_StandPose) と `KH_WashSelection._Apply` (直接呼ぶ) だけ。更新が LateUpdate から Update 末尾へ移るが、その間に支柱を読む物は無い |
+| 5 | `KH_CartManager.cs` 時刻比較を `IsOwner` より先 (非 Owner も時刻を進め、`OnOwnershipTransferred` で 0 に)。`Motion.cs` `_motionCount` (= `_shown || !_parked` の台数、EnsureLocals / ApplyCore 末尾 / ParkCart で数え直し) が 0 なら MotionTick を即 return | count 0 = 全車 `!_shown && _parked` = 旧ループが全部 continue していた状態。書き込み箇所は 3 か所で全部カバー、漏れても 1 秒の ApplyCore で自己修正 |
+| 6 | `KH_WashSelection.cs` `_Poll` は `_PollPending()` (未適用、または保持待ちカテゴリ `_shownTools[c] != _Selected(c)`) の間だけ再予約。Start / OnDeserialization / OnOwnershipTransferred / ReqSelect から `PollIfPending`、`_polling` で一重化 | 待ちが無い tick は `_Apply` が `same` で戻っていた。Drop は遠隔では poll だけが検知するので、待ちの間は 0.25 s を維持 |
+| 7 | `KH_WashSelectionBoard.cs` タイマーは常に 0.25 s の 1 本。12 m より遠く、要求待ちでも結果表示中でもない時だけ本体を飛ばして約 1 s に 1 回。操作 (`_Take` / `_Reset` / Tab / Pick / `_Next`) で `Poke` → 次の tick で本体 | 本体は不変。予約は常に 1 本 (二重・消失なし)。操作への応答 ≤ 0.25 s、遠くでの受動的な文言更新 ≤ 1 s (例外として記録) |
+| 8 | `KH_WalkIntro.cs` `_resting`: Pause 経路 (完了 / 非表示 / 却下 かつ !_replay) で立ち、resting の Tick は言語と `_inside` だけ。`_OnLeashChanged` / `_Replay` / `_ToggleAuto` / `OnPlayerRestored` で解除 | 本番の `walkers` の書き込み (接続・解除・受信) は全部 `IntroChanged()` → `_OnLeashChanged` を通る。PostLateUpdate 不変 |
+| 9 | `KD_DogBook.cs` ページを開いていない・12 m より遠い時は Refresh を 2 s (距離は 0.5 s ごとに見る) | 近くでは従来どおり。遠くでの一覧の言語・毛色更新 ≤ 2 s (例外として記録) |
+
+#### Codex 独立レビュー (2026-10-12、gpt-6-astra) の採否
+
+| 重要度 | 指摘 | 対応 |
+|---|---|---|
+| 中 | 掲示板の遠距離 1 s 予約が操作直後の応答まで遅らせる。ハーネス `WashPremium.cs:35` (返信後 0.45 s で次の `_Take`) が偽 FAIL になりうる | **反映**: 予約は 0.25 s の 1 本のまま、遠い時は本体だけ間引き、操作で Poke (表の 7) |
+| 中 | 掲示板 (遠距離 1 s) と犬紹介 (遠距離 2 s) は厳密には挙動不変でない (文言更新の遅れ) | **例外として採用** (IMP-DOG-034 の方針「リアルタイム性より軽さ」。12 m より遠い板の文字は読めない)。記録に残す |
+| 中 | `KH_WashSelection` の巡回を再開する位相が変わり、Drop の反映時刻が最大 0.25 s ずれる | **据え置き**: 旧版も Drop と tick の位相は無関係 (任意) で、どちらも Drop 後 0.25 s 以内に反映する。分布は同じ |
+| 中 (推測) | 未選択スロットの休止中に、遠隔の保持 (選択変更を受ける直前の掴み直し) の履歴を失い、Drop 後に届いた洗浄通知を `_IsHeldBy` が拒否しうる | **据え置き (既知の残リスク)**: 相手の端末が選択変更を受けると `pickupable = false` で手放されるので、保持は通信のずれの間 (< 0.5 s) だけ。旧版の 0.5 s 巡回でもその長さの保持は取りこぼす。実通信で問題が出たら、休止中も TrackHolder だけ 0.5 s で回す案へ |
+| 低 | カート Owner の A→B→A で保守が最大 0.25 s 早まる | **据え置き**: OwnerTick は冪等で、早まる方向だけ |
+| 中 | 既存の Edit 検査・プローブは新しい早期 return・休止・再開を通らない (偽 PASS に読まない) | **記録**: 上の検査結果は回帰の確認。新しい経路は Play (ユーザー) で |
+| 中 | 削減は全 47 個ではない (無料 19 個は継続、有料は未選択分だけ) | **記録** (表の 3) |
+| 低 | コメントの過大表現 3 か所 (支柱の「直後」「旧 LateUpdate と同じ」、掲示板の「何も変わらない」) | **反映** |
+| — | 招待 (a)・WashSelection の起床漏れ (c)・WalkIntro (d)・`_motionCount` (e)・Udon VM の成立・二重予約: 問題なし | — |
+
+#### ハーネスの要否 (Codex 相談 2026-10-12、短い型)
+
+結論「今は WashPremium 群を回さず、ユーザーの Play で変更経路を確認」を採用 (`P-held-category-refused` / `P-held-change-and-first-restore` は保留 → Drop → 自動反映の検証にならない)。ClientSim の Play は回していない。
+
+#### ユーザーの Play / Quest で見てほしいこと (新しい経路。Edit 検査では通らない)
+
+1. **Quest 3 の fps**: スポーンで何もしない時 (前回 常時 20)。期待は 10-03 の水準 (40 前後) へ戻る方向。戻り切らなければ 10-04 の景観が残りの候補
+2. **洗い場**: 未選択のまま放置 → ボードで選ぶ → 道具を取って使う (休止したスロットが起きる)。道具を持ったまま別の道具へ切り替え → 置いた後に切り替わる (0.25 s 以内)。12 m より離れた所から戻ってボードを押す → 待ち表示がすぐ解け、続けて押せる。台の高さ・大きさが変わる時に支柱が付いてくる
+3. **招待**: 誰も台を持たない状態からリードの先端を台のそばで持つ → 犬が寄る (早期 return からの再開)
+4. **初回案内**: 完了後に設定から再表示、リードの接続・解除で案内が戻る
+5. **カート**: 全車プールの状態から乗る → 動く。降りて駐車 → 再び乗る。Owner 交代 (2 人)
+6. **犬紹介**: 遠くから近づいた時に一覧の表示が 2 s 以内に追いつく
+
+
 ## 記録
+
+2026-10-12 (実装): C の無駄の修正 10 ファイルを実装 (上の実装の節)。C# 0 / U# 0、Edit 検査 6 本 PASS、Codex 独立レビュー反映、ハーネスは相談の結果回さず。シーン・`.asset` は未変更。Quest の fps と新しい経路の Play はユーザー待ち。
 
 2026-10-12: ユーザー報告 (常時 20 fps) を受け、Edit モードの実体数 + Udon / 描画側の静的監査 (上の節と 2 本の記録)。Unity の設定・コード・シーンは未変更。Codex 相談 (B → C → B) を節末に記録。Play は回していない。
 

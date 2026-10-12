@@ -69,10 +69,24 @@ namespace KominkaHillside
         private bool _initialized;
         private bool _receivedState;
         public int localResultSerial, localResultCode;
-        void Start(){_Apply(false);SendCustomEventDelayedSeconds(nameof(_Poll),.25f);}
-        public void _Poll(){_Apply(_initialized);SendCustomEventDelayedSeconds(nameof(_Poll),.25f);}
-        public override void OnDeserialization(){bool animate=_receivedState;_Apply(animate);_receivedState=true;}
-        public override void OnOwnershipTransferred(VRCPlayerApi player){_Apply(false);if(Networking.IsOwner(gameObject))RequestSerialization();}
+        // 2026-10-12 (VER-ENV-002 perf): _Poll runs only while it has work: a category whose new tool waits for the held one to be put
+        // down (_shownTools[c] != _Selected(c), left so only by the held-wait `continue` in _Apply), or before the first apply. Otherwise
+        // _Apply returns at `same` and the tick did nothing. Every runtime _Apply caller (Start, _Poll, OnDeserialization,
+        // OnOwnershipTransferred, ReqSelect) re-arms it through PollIfPending; the drop on a remote client is seen only by this poll
+        // (no OnDrop there), so it keeps the 0.25 s cadence while a wait exists. Never scheduled from _Apply itself (Edit mode calls it).
+        private bool _polling;   // a _Poll is scheduled (one at a time)
+        void Start(){_Apply(false);PollIfPending();}
+        public void _Poll(){_polling=false;_Apply(_initialized);PollIfPending();}
+        void PollIfPending(){if(_polling||!_PollPending())return;_polling=true;SendCustomEventDelayedSeconds(nameof(_Poll),.25f);}
+        /// <summary>Would the next _Poll tick do anything: not applied yet, or a held-wait category (see _Apply).</summary>
+        bool _PollPending()
+        {
+            if(!_initialized||_shownTools==null)return true;
+            for(int c=0;c<Categories;c++)if(_shownTools[c]!=_Selected(c))return true;
+            return false;
+        }
+        public override void OnDeserialization(){bool animate=_receivedState;_Apply(animate);_receivedState=true;PollIfPending();}
+        public override void OnOwnershipTransferred(VRCPlayerApi player){_Apply(false);if(Networking.IsOwner(gameObject))RequestSerialization();PollIfPending();}
         /// <summary>IMP-ENV-013: does platform `bath` keep the stand at its own size (-1 / out of range / no array: no). Pure (Wash/23).</summary>
         public bool _KeepsSize(int bath){return bath>=0&&bathKeepsSize!=null&&bath<bathKeepsSize.Length&&bathKeepsSize[bath];}
         public int _Category(int item){return itemCategories!=null&&item>=0&&item<itemCategories.Length?itemCategories[item]:-1;}
@@ -110,7 +124,7 @@ namespace KominkaHillside
             if(Time.time-_lastRequest<.3f)return;
             _lastRequest=Time.time;resultPlayer=p.playerId;resultSerial++;
             resultCode=_Decide(item,expectedRevision);
-            if(resultCode==ResultApplied||resultCode==ResultKeptHeld){revision++;_Apply(true);}
+            if(resultCode==ResultApplied||resultCode==ResultKeptHeld){revision++;_Apply(true);PollIfPending();}
             RequestSerialization();Reply(p.playerId);
             // Only the pickup's current owner writes its position. No ownership stealing, no all-client teleport.
             if(resultCode==ResultApplied&&category>=0&&category<Categories)slots[itemSlots[item]].SendCustomNetworkEvent(NetworkEventTarget.Owner,"ReqPremiumReturn");
