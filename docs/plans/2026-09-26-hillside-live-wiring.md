@@ -1,5 +1,7 @@
 # 裏山ライブ「紅葉が星になる」をシーンで再生する配線計画 (調査・順序・Play チェックリスト)
 
+**購入権の方針を訂正 (2026-10-12)**: ワールド共通の課金商品はトレーナーだけ。Candy / Pumpkin / Pack を含む他の課金商品はワールド別購入で、古民家で購入済みでも裏山では別途購入する。以下の 09-26 のコード・シーン調査は当時の記録であり、古民家の商品 ID の流用を今後の実装方針にしない。現行の設計は [DES-LIV-001](../development/issues/DES-LIV-001-hillside-live.md)。商品・販売設定は今回未変更。
+
 状態: **調査と計画だけ (2026-09-26)。C#・シーン・データは未変更。** 次の波で実装する。演目の中身は Live Generator の [hillside-dusk 企画001](../../../../vrc-live-generator/docs/v2/kominka-hillside/concepts/hillside-dusk/001/README.md) ([Q&A](../../../../vrc-live-generator/docs/v2/kominka-hillside/concepts/hillside-dusk/001/qa.md))、開催・再生の設計は [DES-LIV-001](../development/issues/DES-LIV-001-hillside-live.md)、演目の企画は [DES-LIV-002](../development/issues/DES-LIV-002-live-lineup-and-parade.md)。移植の出所は [犬ギミック移植記録](../development/imports/kominka-dog-system.md)。
 
 根拠は `ファイル:行` で書く。パスは特記なければ `Assets/KominkaHillside/Imported/KominkaDogRun/` からの相対 (`Scripts/…` / `Editor/…`)。行番号は 2026-09-26 の作業ツリー。シーンは別セッションの未コミット変更を含む作業ツリーの版をテキストで読んだ (Unity は操作していない)。**推測は「未確認」と書く。**
@@ -75,7 +77,7 @@
 - 追加する行 (案): `new Row("live.hillside_dusk", "live", "KD_ShopItem_Live_HillsideDusk", 30, 0, 0, 0, "")`。Point の買い切り (CE の Listing なし)。キー名は曲 ID が決まったら確定 (§3 D1)。
 - 所有判定: 板は `KD_ShopItem.Owned()` (`Scripts/Progress/KD_ShopItem.cs:269-275`)、開催の受理は Owner 側で `hostingItems[id].OwnedBy(caller)` (`Scripts/KD_LiveSystem.cs:299-303`) → `ledger.IsUnlockedFor` が相手の PlayerData を読む (`KD_ProgressLedger.cs:289-295`)。**開催者本人の所有で開く。鑑賞は全員**。
 - 購入: ライブタブの行 → 詳細 → [買う] → 確認カード → `catalog._RequestBuy` → `ledger._TryBuyUnlock` (`Scripts/KD_TreatPouch.Live.cs` の `_LiveDetailAction` / `_LiveBuy`)。既存の経路のまま。
-- 古民家のライブ 7 商品の行はカタログに残す (台帳の行。画面には `LiveProducts` に載せたものだけ出る)。CE (Candy / Pumpkin / Pack) の購入者利用は DES-LIV-001 の別論点で、今回は触らない。
+- 09-26 時点では古民家のライブ 7 商品の行をカタログに残す案だった (台帳の行。画面には `LiveProducts` に載せたものだけ出る)。**2026-10-12 訂正**: 課金ライブは裏山用の購入権へ分離する。残っている古民家用の行・商品参照を実装時に棚卸しし、裏山の購入入口と所有判定へ流用しない。商品構成は DES-LIV-001 で具体化する。
 
 ### 2.6 手元メニューのライブタブ (Live4)
 
@@ -248,6 +250,6 @@ AI が ClientSim で見られるのは「開始要求 → 台帳の liveId / sta
 - 生成器のステージに付く AudioSource の 3D 設定と、取り込み時に作られる材質数・粒数。曲がまだ無いので未計測。
 - `KD_LiveSystem` を `KH_Dogs/KH_Live` に置いたとき、古民家の Verify (Imported-Unused/Live System/3) が名前で探す前提 (`KD_DogDefs.SystemsPath`) とずれる。古民家版は使わない前提で、裏山版 26b だけを正にする。
 - `KD_TreatPouch.hillsideStage` の段階表 (`KD_Hillside.Stage = 2`) にライブを足すか (段階 3 にするか、live は段階と独立に「あれば検査」にするか)。後者を推奨。
-- 古民家のライブ商品 7 行を裏山のカタログに残すこと (購入入口は出ないが台帳上は買える形)。CE 購入者の利用 (DES-LIV-001) の結論が出るまで残す。
+- 古民家のライブ商品 7 行をカタログに残す案は上の §2.5 の訂正を適用する。課金ライブのワールド別購入は 2026-10-12 に決定済みで、裏山用の商品構成・ID・購入入口・所有判定の整理が残る (DES-LIV-001)。
 - 別件候補: `Editor/KD_LiveThumbnailEditor.cs:55` の旧 Capture は `KD_LiveNight` と `====KominkaDogRun====` を必須とし、裏山では例外になる。参考画像 (サムネイル) を作るときに対応する。
 - 観客の犬の Ownership は動かさない (古民家の器どおり)。犬の位置更新は各犬の Owner だけで、同期変数は増えない。これは古民家の実装を読んだ結論で、裏山の 2 人検証は未実施。
