@@ -566,6 +566,13 @@ namespace KominkaHillside.Editor
                 Check(passB!=null&&act.hillsidePass==passB&&passB.product!=null&&passB.product.ID==TrainerProductId&&passB.listingId==TrainerListingId,"trainer pass: shared Product/Listing IDs");
                 bool actRefs=true;for(int i=0;i<6;i++){var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+Keys[i]);var f=Find<KD_DogFetchController>(root,"KD_FetchSystem_"+Keys[i]);if(w.activities!=act||f.activities!=act)actRefs=false;}
                 Check(actRefs,"all six Wander/Fetch reference the gather authority");
+                // DES-DOG-001 (2026-10-12): stall rescue of the gathering walk. The dogs read the window from the manager
+                // (w.hillsideLeashes == m is "leash wiring" above). Prototype values pinned; the window must fit in the 60 s
+                // gathering, and a dog walking at its slowest tier must cover far more than the stall distance in one window.
+                Check(m.gatherStallSeconds==8f&&m.gatherStallDistance==.5f,"gather stall rescue at the prototype values: "+m.gatherStallSeconds.ToString("F1")+" s / "+m.gatherStallDistance.ToString("F2")+" m (8 s / 0.5 m)");
+                bool stallSane=m.gatherStallSeconds>0f&&m.gatherStallSeconds<60f&&m.gatherStallDistance>0f;
+                for(int i=0;i<6;i++){var w=Find<KD_DogWanderController>(root,"KD_WanderSystem_"+Keys[i]);if(w.walkSpeed*m.gatherStallSeconds<4f*m.gatherStallDistance)stallSane=false;}
+                Check(stallSane,"gather stall window inside the 60 s gathering, and walkSpeed x window >= 4 x stall distance on all six dogs");
             }
             // IMP-DOG-005: disc + catcher on the walking dog (FrisbeeKeys; IMP-DOG-012: all six), others deliberately unwired.
             var descV=desc0();

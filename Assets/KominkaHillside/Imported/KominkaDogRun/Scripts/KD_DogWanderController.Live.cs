@@ -95,6 +95,53 @@ namespace KominkaDogRun
             return liveSpot.position + right * offset;
         }
 
+        // ---- DES-DOG-001 (2026-10-12): stall rescue of the gathering walk (hillside, Owner only, no synced state) ----
+        // A dog on its way to its slot that moves less than hillsideLeashes.gatherStallDistance (horizontal) within
+        // gatherStallSeconds is stalled (caught on something the NavMesh path does not see, a corner it never reaches, a
+        // path that flips back and forth) and goes straight to the slot, through obstacles, for the rest of this gathering:
+        // the agreed fallback that so far only a missing complete path triggered. The window is measured by Time.time on
+        // decision frames (IMP-DOG-036: at most 0.2 s apart while walking), from the dog's own root only.
+        // The 60 s limit, the early end and the host leaving need nothing here: Mode turns 0, this branch is not taken and
+        // the manager places the roaming home on the safe ground at the reached spot (KH_LeashManager._OnGatherEnded).
+        // A new walk is a mode-1 walking decision more than GatherWalkGap after the last one, or a gathering whose Elapsed
+        // went back (started again): the window restarts and the straight latch is cleared.
+        const float GatherWalkGap = 1f;
+        private bool _gatherStraight;          // latched: straight for the rest of this walk (harness read-out)
+        private float _gatherWindowAt;         // Time.time the current window started
+        private Vector3 _gatherWindowFrom;     // root position then
+        private float _gatherWalkSince = -1f;  // Time.time this walk started (harness read-out)
+        private float _gatherStraightAt = -1f; // Time.time the latch was set, -1 = not this walk (harness read-out)
+        private float _gatherSeenAt = -100f;   // last walking decision of a gathering
+        private float _gatherSeenElapsed;      // activities.Elapsed then
+        private float _gatherStallSeconds = 8f, _gatherStallDistance = .5f;   // the manager's values, read when a walk starts
+        private int _dbgGatherStalls;          // latches since load (harness read-out)
+
+        private bool GatherStalled()
+        {
+            if (!_dogOwner) return false;   // net: owner-only: only the Owner moves the root; the others keep GatherStep's ApplyMoveAnim
+            float now = Time.time;
+            float elapsed = activities.Elapsed;
+            if (now - _gatherSeenAt > GatherWalkGap || elapsed + GatherWalkGap < _gatherSeenElapsed)
+            {
+                _gatherStraight = false; _gatherStraightAt = -1f;
+                _gatherWalkSince = now; _gatherWindowAt = now; _gatherWindowFrom = dogRoot.position;
+                _gatherStallSeconds = hillsideLeashes.gatherStallSeconds;
+                _gatherStallDistance = hillsideLeashes.gatherStallDistance;
+            }
+            _gatherSeenAt = now; _gatherSeenElapsed = elapsed;
+            if (_gatherStraight) return true;
+            if (_gatherStallSeconds <= 0f || now - _gatherWindowAt < _gatherStallSeconds) return false;
+            Vector3 moved = dogRoot.position - _gatherWindowFrom;
+            moved.y = 0f;
+            float distance = moved.magnitude;
+            _gatherWindowAt = now; _gatherWindowFrom = dogRoot.position;
+            if (distance >= _gatherStallDistance) return false;
+            _gatherStraight = true; _gatherStraightAt = now; _dbgGatherStalls++;
+            Debug.Log("[KD_DogWanderController] gather-stall dog=" + dogIndex + " moved=" + distance.ToString("F2")
+                + " in " + (now - _gatherWalkSince).ToString("F1") + "s -> straight");
+            return true;
+        }
+
         bool UpdateActivity()
         {
             if (activities == null || !SelfAvailable()) return false;   // IMP-DOG-034 A5: tick 内で 1 回 (Performance.cs)
@@ -108,7 +155,8 @@ namespace KominkaDogRun
                 {
                     float speed = flat.magnitude > runDistance ? runSpeed : walkSpeed;
                     // Hillside: walk the baked NavMesh when a complete path exists; otherwise go straight (through obstacles).
-                    if (hillsideLeashes == null || !GatherStep(goal, speed)) StepToward(goal, 0f, speed);
+                    // DES-DOG-001: a stalled dog also goes straight for the rest of this gathering (GatherStalled).
+                    if (hillsideLeashes == null || GatherStalled() || !GatherStep(goal, speed)) StepToward(goal, 0f, speed);
                     return true;
                 }
                 Coast();

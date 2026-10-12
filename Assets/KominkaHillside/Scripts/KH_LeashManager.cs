@@ -73,6 +73,14 @@ namespace KominkaHillside
         public int inviteLimit = 3;            // after this many, the dog settles down until the holder moves
         public float detourChance = 0.25f;     // per 4 s roll while walking with slack
         public float stopoverChance = 0.5f;    // chance the dog takes a stopover spot it passes (provisional)
+        // DES-DOG-001 (2026-10-12): a dog walking to its gathering slot that moves less than gatherStallDistance (m) in
+        // gatherStallSeconds (s) is stalled and goes straight (through obstacles) for the rest of that gathering. Read by
+        // each dog's Owner (KD_DogWanderController.Live.cs, GatherStalled). Prototype values until Play; Verify pins them.
+        [Header("Gathering stall rescue (DES-DOG-001, provisional)")]
+        [Tooltip("集合へ向かう犬を何秒ごとに見て、進んだ距離が gatherStallDistance 未満なら停滞とみなすか (試作値 8)")]
+        public float gatherStallSeconds = 8f;
+        [Tooltip("停滞とみなす移動距離 (m、水平)。gatherStallSeconds の間にこれ未満しか動かなければ、その集合の残りは直進 (すり抜け) (試作値 0.5)")]
+        public float gatherStallDistance = 0.5f;
         private float _nextMaintenance;
         private int _myChoice = -1;            // this player's destination choice for the stay; -1 = not chosen yet
         private NavMeshPath _stationPath;
@@ -115,11 +123,24 @@ namespace KominkaHillside
             for (int i = 0; i < walkers.Length; i++)
             {
                 if (walkers[i] >= 0 || (participantMask & (1 << i)) == 0 || dogRoots[i] == null) continue;
-                NavMeshHit hit;
-                releasedHomes[i] = NavMesh.SamplePosition(dogRoots[i].position, out hit, 2f, NavMesh.AllAreas) ? hit.position : dogRoots[i].position;
+                releasedHomes[i] = GatherHome(dogRoots[i].position);
                 changed = true;
             }
             if (changed) { ApplyHomes(); RequestSerialization(); }
+        }
+
+        // DES-DOG-001 (2026-10-12): the roaming home of a gathering participant is the safe ground at the spot it reached.
+        // The NavMesh within 2 m as before; a dog that went straight through an obstacle (stall rescue) or ran out of the
+        // 60 s on the way can be off the walkable mesh, so then the ground under it (the travel ray: 2 m up, 6 m down, the
+        // footing layers), else the position itself.
+        private Vector3 GatherHome(Vector3 p)
+        {
+            NavMeshHit nav;
+            if (NavMesh.SamplePosition(p, out nav, 2f, NavMesh.AllAreas)) return nav.position;
+            RaycastHit ground;
+            if (Physics.Raycast(p + Vector3.up * TravelRayUp, Vector3.down, out ground, TravelRayLength, TravelGroundMask, QueryTriggerInteraction.Ignore))
+                return ground.point;
+            return p;
         }
 
         public Vector3 _HandPosition(VRCPlayerApi player, int hand)
