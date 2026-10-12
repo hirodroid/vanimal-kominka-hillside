@@ -69,7 +69,7 @@ namespace KominkaHillside.Editor
             }
 
             // 座席の同期配列 (宣言時に長さ 8)
-            foreach (var name in new[] { "cartSeatSteps", "cartYawSteps" })
+            foreach (var name in new[] { "cartSeatSteps", "cartYawSteps", "cartSeatAuto" })   // cartSeatAuto: BUG-WLD-001 (着座の高さの自動補正)
             {
                 var p = mso.FindProperty(name);
                 v.Req(p != null && p.isArray && p.arraySize == MaxCarts, "manager." + name + " length " + MaxCarts + " (proxy " + (p != null && p.isArray ? p.arraySize : -1) + ")");

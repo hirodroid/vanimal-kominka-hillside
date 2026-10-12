@@ -65,6 +65,8 @@ namespace KominkaHillside
         [UdonSynced] public int[] cartSeatSteps = new int[8];
         [UdonSynced] public int[] cartYawSteps  = new int[8];
         [UdonSynced] public int[] cartFwdSteps  = new int[8];   // 前後 (1 段 = 5 cm、+ が前、-6..+6。2026-10-12 追加要望)
+        // BUG-WLD-001: 着座の高さの自動補正 (1 段 = 5 cm、-20..+20)。乗員が着座 0.5 s 後に腰の骨を測って ReqSeatAuto で入れる。高さは手動 + これ。降車で 0
+        [UdonSynced] public int[] cartSeatAuto  = new int[8];
         // M2 交通 (KH_CartManager.Traffic.cs)。Owner が書く
         [UdonSynced] public int[] groupLane = new int[8];                                         // 0 千鳥 / 1 一列・右寄せ / 2 一列・中央
         [UdonSynced] public float[] groupHoldDist = new float[] {-1f,-1f,-1f,-1f,-1f,-1f,-1f,-1f}; // 先頭の距離の上限 (−1 = なし)
@@ -388,7 +390,7 @@ namespace KominkaHillside
                 int g = cartGroup[c];
                 bool master = isMine && ValidGroup(g) && groupMaster[g] == c && groupState[g] == GroupRunning;
                 carts[c]._SetRider(isMine, master, ValidGroup(g) && groupAccepting[g]);   // 操作帯の _Refresh とドックの開始/停止も中で
-                carts[c]._ApplySeat(cartSeatSteps[c], cartYawSteps[c], cartFwdSteps[c]);
+                carts[c]._ApplySeat(cartSeatSteps[c], cartYawSteps[c], cartFwdSteps[c], cartSeatAuto[c]);
                 carts[c]._SetParked(cartState[c] == CartParked);   // M3: その場に残ったカートの上のメニュー
             }
             VoiceSync();   // IMP-WLD-013: 同じグループの相手の声 (KH_CartManager.Voice.cs。差分だけ。ApplyCore を呼び返さない)
@@ -576,6 +578,9 @@ namespace KominkaHillside
             _exitPickAt = 0f;
             Debug.Log("[KH_Cart] seated cart=" + c);
         }
+
+        /// <summary>BUG-WLD-001: ローカルプレイヤーがこのカートに実際に座っているか (KH_CartSeat の腰の測定から)。</summary>
+        public bool _IsSeatedHere(int c) { return c >= 0 && _seatedCart == c; }
 
         public void _OnUnseated(int c)
         {

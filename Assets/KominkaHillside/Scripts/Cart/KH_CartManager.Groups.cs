@@ -208,6 +208,7 @@ namespace KominkaHillside
             cartSeatSteps[c] = 0;   // M1.1: 降車で座席を既定へ戻す
             cartYawSteps[c] = 0;
             cartFwdSteps[c] = 0;
+            cartSeatAuto[c] = 0;    // BUG-WLD-001: 着座の自動補正も降車で 0
             cartParkDist[c] = 0f;   // M3 (Parked にするときは呼び元が書き直す)
             cartParkedMs[c] = 0;
             cartParkDir[c] = 0;
@@ -302,7 +303,7 @@ namespace KominkaHillside
             {
                 if (cartState[c] == CartIdle)
                 {
-                    if (cartRider[c] != 0 || cartGroup[c] != -1 || cartSeatSteps[c] != 0 || cartYawSteps[c] != 0 || cartFwdSteps[c] != 0) { ResetCart(c); changed = true; }
+                    if (cartRider[c] != 0 || cartGroup[c] != -1 || cartSeatSteps[c] != 0 || cartYawSteps[c] != 0 || cartFwdSteps[c] != 0 || cartSeatAuto[c] != 0) { ResetCart(c); changed = true; }
                     continue;
                 }
                 if (cartState[c] == CartParked)

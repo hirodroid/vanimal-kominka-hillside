@@ -37,6 +37,7 @@ M1〜M3、同日の既定値の変更 (`c482b96`・`01ea848`) と追加要望の
 | `cartGroup` / `cartOrder` / `cartSpot` | 所属グループ / グループ内の順 (0 = 先頭) / 出発した乗り場 | −1 / — / — |
 | `cartFreedMs` | 解放したサーバー時刻 (3 秒の再利用猶予) | 0 |
 | `cartSeatSteps` / `cartFwdSteps` / `cartYawSteps` | 座席の高さ・前後 (5 cm) / 向き (15°)。各 −6〜+6、降車で 0 | — |
+| `cartSeatAuto` | 着座の高さの自動補正 (5 cm、−20〜+20)。乗員が着座 0.5 s 後に腰の骨を測って `ReqSeatAuto` で入れる。高さ = 手動 + 自動、降車で 0 (BUG-WLD-001) | 0 |
 | `cartParkDist` / `cartParkedMs` / `cartParkDir` | Parked の軌道距離 / 置いた時刻 (回収は最古から) / 置いたときの進行方向 ±1 | — |
 | `groupState` | 0 Free / 1 Running / 2 Ending | — |
 | `groupMaster` | マスターのカート番号 | −1 |
@@ -300,6 +301,7 @@ Issue の「Play 確認 1 回目と M1.1」の症状と原因候補に対応す�
 
 Play 2 回目の追加 (2026-10-12):
 - 座席の前後: `[UdonSynced] public int[] cartFwdSteps = new int[8]` (1 段 = 5 cm、+ が前、−6..+6)。`ReqSeat(int dHeight, int dYaw, int dFwd)`、`KH_CartSeat._ApplySeat(int steps, int yawSteps, int fwdSteps)` が Anchor_Seat のローカル z にも反映。ローカル API `_SeatForward() / _SeatBack()`。
+- 着座の高さの自動補正 (2026-10-12、[BUG-WLD-001](../../development/issues/BUG-WLD-001-cart-seat-hip-height.md)): ローカルの乗員の `OnStationEntered` から 0.5 s 後に `KH_CartSeat._MeasureHip` が 1 回だけ `GetBonePosition(Hips)` を測り、段数 = round((座面 (Anchor_Seat の既定位置の world y) + 0.10 − 腰 y) / 5 cm) を `_SendSeatAuto` → `[NetworkCallable(6)] ReqSeatAuto(int steps)` (乗員の照合は `ReqSeat` と同じ、−20..+20) で `cartSeatAuto` へ。`_ApplySeat(steps, yawSteps, fwdSteps, autoSteps)` は高さを手動 + 自動で置く。腰の骨が無い (ゼロ) なら補正なし。降車 (ResetCart) で 0。
 - 操作帯は 10 ボタン: 0 メニュー / 1 モニター / 2 高さ▲ / 3 高さ▼ / 4 前後▲ / 5 前後▼ / 6 向き◀ / 7 向き▶ / 8 停止 / 9 受付 (`_PressSeatForward` / `_PressSeatBack` を追加)。キー `cart.seat.forward` / `cart.seat.back`。
 - 操作帯の最小化: `KH_CartControls.body` (10 ボタンの親) / `tab` (body の外、常に見える切替) / 任意の `tabLabel` (展開中「×」・最小化中「≡」を書く)、tab の onClick → `_PressToggle()`。乗車開始 (`_SetVisible(true)`) で展開に戻す。
 - 撮影モニターを隠す: `KH_VideoCamera._HideMonitor()` (`_open` のまま `monitorRoot` だけ非表示。挙動は system root、RecordSnap は monitor の兄弟なので撮影・RecordSnap・ドローン送信・パターンは続く)、`_ShowMonitor()` (= `_Recall`。隠し中なら再表示)、`_MonitorHidden()`。× (`_Close`) は従来どおり全停止。操作帯のモニターは 閉 → `_Open` / 表示中 → `_HideMonitor` / 隠し中 → `_ShowMonitor` の循環。

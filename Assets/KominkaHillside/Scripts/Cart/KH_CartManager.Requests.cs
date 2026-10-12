@@ -150,6 +150,15 @@ namespace KominkaHillside
             else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqSeat), dHeight, dYaw, dFwd);
         }
 
+        /// <summary>BUG-WLD-001: 着座の高さの自動補正 (段数の絶対値) を送る。KH_CartSeat._MeasureHip から (ローカルの乗員だけ、着座ごとに 1 回)。</summary>
+        public void _SendSeatAuto(int steps)
+        {
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp) || !_IsRiding()) return;
+            if (Networking.IsOwner(gameObject)) ReceiveSeatAuto(lp.playerId, steps);
+            else SendCustomNetworkEvent(NetworkEventTarget.Owner, nameof(ReqSeatAuto), steps);
+        }
+
         /// <summary>降車の 1 本道。exitStation = false はすでに station の外 (ジャンプ) か、station に触れたくない (リスポーン) とき。</summary>
         private void LeaveCore(string reason, bool exitStation)
         {
@@ -245,6 +254,15 @@ namespace KominkaHillside
             ReceiveSeat(caller.playerId, dHeight, dYaw, dFwd);
         }
 
+        [NetworkCallable(maxEventsPerSecond: 6)]
+        public void ReqSeatAuto(int steps) // net: callable-ok: CallingPlayer で照合 (自分が乗っているカートの座席だけ。-SeatAutoMax..+SeatAutoMax に丸める)
+        {
+            if (!Networking.IsOwner(gameObject)) return;
+            VRCPlayerApi caller = NetworkCalling.CallingPlayer;
+            if (!Utilities.IsValid(caller)) return;
+            ReceiveSeatAuto(caller.playerId, steps);
+        }
+
         // ============================================================
         // 裁定 (Owner)
         // ============================================================
@@ -261,6 +279,18 @@ namespace KominkaHillside
             cartYawSteps[c] = y;
             cartFwdSteps[c] = f;
             Debug.Log("[KH_Cart] seat cart=" + c + " player=" + pid + " height=" + h + " yaw=" + y + " fwd=" + f);
+            Commit();
+        }
+
+        // BUG-WLD-001: 着座の高さの自動補正 (乗員だけ。絶対値で上書き)
+        private void ReceiveSeatAuto(int pid, int steps)
+        {
+            int c = RiderCart(pid);
+            if (c < 0) return;
+            int a = Mathf.Clamp(steps, -SeatAutoMax, SeatAutoMax);
+            if (a == cartSeatAuto[c]) return;
+            cartSeatAuto[c] = a;
+            Debug.Log("[KH_Cart] seat-auto apply cart=" + c + " player=" + pid + " steps=" + a);
             Commit();
         }
 
@@ -550,6 +580,7 @@ namespace KominkaHillside
         }
 
         public const int SeatStepsMax = 6;   // 座席の段数の上限 (高さ ±30 cm、向き ±90°)
+        public const int SeatAutoMax = 20;   // BUG-WLD-001: 着座の高さの自動補正の上限 (±1 m。KH_CartSeat.SeatAutoMax と同じ)
         public const int ReclaimGraceMs = 3000;   // M3: 置いてから回収できるまでの猶予 (Probe が参照)
         const int ReuseDelayMs = 3000;   // 解放したカートを他の人へ回すまでの猶予 (サーバー時刻。cartFreedMs で同期)
     }

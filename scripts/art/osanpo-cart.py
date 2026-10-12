@@ -13,8 +13,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 ARGV = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 def opt(name, default): return (pathlib.Path(ARGV[ARGV.index(name) + 1]) if name in ARGV else default).resolve()
 OUT = opt('--out', ROOT / 'Assets/KominkaHillside/Models/Cart')
-EVID = opt('--evidence', ROOT / 'docs/plans/evidence/2026-10-11-osanpo-cart')
-REP = opt('--report', ROOT / 'Temp/osanpo-cart-20261011')
+EVID = opt('--evidence', ROOT / 'docs/plans/evidence/2026-10-12-osanpo-cart')
+REP = opt('--report', ROOT / 'Temp/osanpo-cart-20261012')
 SRC = opt('--source', ROOT / 'art-source/osanpo-cart')
 RENDER = '--no-render' not in ARGV
 for d in (OUT, EVID, REP, SRC): d.mkdir(parents=True, exist_ok=True)
@@ -417,14 +417,16 @@ def build(lod):
         ids = [grid[0][c], grid[0][c + 1], grid[1][c + 1], grid[1][c]]
         uv = [('SIGN', c / cols, 0), ('SIGN', (c + 1) / cols, 0), ('SIGN', (c + 1) / cols, 1), ('SIGN', c / cols, 1)]
         body.quad(ids, uv, [(0, 0, -1)] * 4, 1, 'sign')
-    # back cushion (right) and post, mirrored
-    bmk = body.mark()
+    # back cushion: one centred piece for the single seat (IMP-WLD-014; was two .24 halves at x +-.13, outer edges +-.25 kept).
+    # loft mirror=True only mirrors the UVs about x=0 (one island for both halves); the geometry is not duplicated.
     bprof = ([(.006, .014), (0, .020), (0, .058), (-.003, .0635), (0, .069), (.014, .079), (.034, .084)] if hi
              else [(.006, .014), (0, .066), (.034, .084)])
-    L = loft(body, rrect(.24, .47, .045, 2 if hi else 1), bprof, (.13, .25, 0), X3, Y3, Z3, isl='backcush_band', tag='back_cushion', mirror=True,
+    L = loft(body, rrect(.50, .47, .045, 2 if hi else 1), bprof, (0, .25, 0), X3, Y3, Z3, isl='backcush_band', tag='back_cushion', mirror=True,
              cap1='backcush_front')
     meta('backcush_band', t=L['t'], pip=(L['t'][2], L['t'][4]) if hi else None)
-    meta('backcush_front', w=.12, h=.47)
+    meta('backcush_front', w=.25, h=.47)
+    # back post (right), mirrored
+    bmk = body.mark()
     lean = math.radians(BACK['lean'])
     Yl = np.array([0, math.cos(lean), -math.sin(lean)]); Dl = np.array([0, math.sin(lean), math.cos(lean)])
     Ob = np.array([0, BACK['y'], BACK['z']]); Rb = hb ** 2 / (2 * BACK['sag'])
@@ -1082,7 +1084,7 @@ print('ROUNDTRIP ok', {k: (v['triangles'], v['minUVTriangleAreaPx2']) for k, v i
 
 # ------------------------------------------------------------------ report
 report = dict(
-    asset=NAME, sourceRecipe='scripts/art/osanpo-cart.py', blenderVersion=bpy.app.version_string, executionDate='2026-10-11',
+    asset=NAME, sourceRecipe='scripts/art/osanpo-cart.py', blenderVersion=bpy.app.version_string, executionDate=time.strftime('%Y-%m-%d'),
     command='blender --background --factory-startup --python-exit-code 1 --python scripts/art/osanpo-cart.py',
     outputs=dict(fbx=str(FBX.relative_to(ROOT)) if FBX.is_relative_to(ROOT) else str(FBX), baseColor=BASE_PNG.name, sign=SIGN_PNG.name,
                  blend=str(BLEND), evidence=sorted(p.name for p in EVID.glob('*.png'))),

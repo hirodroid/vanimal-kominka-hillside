@@ -33,7 +33,15 @@ namespace KominkaHillside
         private bool _seatReady;
         private Vector3 _seatPos;
         private Quaternion _seatRot;
-        private int _seatH = int.MinValue, _seatY = int.MinValue, _seatF = int.MinValue;   // 最後に置いた段数 (変わったときだけ書く)
+        private int _seatH = int.MinValue, _seatY = int.MinValue, _seatF = int.MinValue, _seatA = int.MinValue;   // 最後に置いた段数 (変わったときだけ書く。_seatA = 自動補正)
+
+        // BUG-WLD-001: 着座の高さの自動補正 (ローカルの乗員だけが測る。着座ごとに 1 回)
+        // 腰の骨 (Hips) の中心は尻の接地面より少し上にあるので、目標は「座面 + これ」。Play で調整する
+        const float HipAboveSeat = 0.10f;
+        const float HipMeasureDelay = 0.5f;   // 着座から測るまで (座りのアニメーションが落ち着くのを待つ)
+        const int SeatAutoMax = 20;           // 自動補正の段数の上限 (±1 m。manager.SeatAutoMax と同じ)
+        private bool _hipMeasured;            // この着座で測り終えた (補正後に測り直さない = ループ防止)
+        private float _enteredAt = -1000f;    // 最後の着座の時刻 (出入りを繰り返したとき、古い予約を捨てる)
 
         public const float WheelRadius = 0.14f;
         const float ExitReach = 1.0f;
@@ -53,18 +61,19 @@ namespace KominkaHillside
 
         /// <summary>M1.1: 座席 (Anchor_Seat = station の入る位置) を既定 + 段数に置く。高さはローカル y、前後はローカル z (+ が前) にどちらも 5 cm/段、
         /// 向きは親の Y 軸まわりに 15°/段。
-        /// 全クライアントが manager.ApplyState から同期値で呼ぶ (座っている人は station の入る位置に付いて動く)。</summary>
-        public void _ApplySeat(int steps, int yawSteps, int fwdSteps)
+        /// 全クライアントが manager.ApplyState から同期値で呼ぶ (座っている人は station の入る位置に付いて動く)。
+        /// BUG-WLD-001: autoSteps = 着座時の自動補正 (cartSeatAuto)。高さは手動 + 自動の段数。</summary>
+        public void _ApplySeat(int steps, int yawSteps, int fwdSteps, int autoSteps)
         {
             if (seat == null) return;
-            if (steps == _seatH && yawSteps == _seatY && fwdSteps == _seatF) return;
+            if (steps == _seatH && yawSteps == _seatY && fwdSteps == _seatF && autoSteps == _seatA) return;
             EnsureSeatDefault();
-            _seatH = steps; _seatY = yawSteps; _seatF = fwdSteps;
+            _seatH = steps; _seatY = yawSteps; _seatF = fwdSteps; _seatA = autoSteps;
             // 前後は車体の前 (ローカル +z) へ 5 cm/段 (2026-10-12 追加要望)
             // M2: 1 段の量は manager の調整値 (seatStep / yawStep。tuning.json から Build が書く)。無ければ既定の定数
             float step = manager != null && manager.seatStep > 0f ? manager.seatStep : SeatStep;
             float yawStep = manager != null && manager.yawStep > 0f ? manager.yawStep : YawStep;
-            seat.localPosition = new Vector3(_seatPos.x, _seatPos.y + steps * step, _seatPos.z + fwdSteps * step);
+            seat.localPosition = new Vector3(_seatPos.x, _seatPos.y + (steps + autoSteps) * step, _seatPos.z + fwdSteps * step);
             seat.localRotation = Quaternion.Euler(0f, yawSteps * yawStep, 0f) * _seatRot;
         }
 
@@ -205,14 +214,53 @@ namespace KominkaHillside
         {
             if (!Utilities.IsValid(player)) return;
             Debug.Log("[KH_Cart] station-entered cart=" + index + " player=" + player.playerId);
-            if (player.isLocal && manager != null) manager._OnSeated(index);
+            if (player.isLocal && manager != null)
+            {
+                manager._OnSeated(index);
+                // BUG-WLD-001: 0.5 s 後に腰の高さを 1 回測る
+                _hipMeasured = false;
+                _enteredAt = Time.time;
+                SendCustomEventDelayedSeconds(nameof(_MeasureHip), HipMeasureDelay);
+            }
         }
 
         public override void OnStationExited(VRCPlayerApi player)
         {
             if (!Utilities.IsValid(player)) return;
             Debug.Log("[KH_Cart] station-exited cart=" + index + " player=" + player.playerId);
+            if (player.isLocal) _hipMeasured = false;   // BUG-WLD-001: 次の着座でまた測る
             if (player.isLocal && manager != null) manager._OnUnseated(index);   // 乗車中なら降車処理 (冪等)
+        }
+
+        /// <summary>BUG-WLD-001: ローカルの乗員の腰の骨 (Hips) の高さを、座面 (Anchor_Seat の既定位置 = 手動・自動の段数を除く) + HipAboveSeat に
+        /// 合わせる段数を求めて manager へ送る (cartSeatAuto)。着座ごとに 1 回だけ (補正を掛けた後は測り直さない)。
+        /// 測った腰の高さからの差なので、測る時点の段数 (手動・自動) に関係なく、補正後の腰は目標に来る。
+        /// `_` 始まり = ネットワークからは呼べない (OnStationEntered の遅延イベントからだけ)。</summary>
+        public void _MeasureHip()
+        {
+            if (_hipMeasured || manager == null || seat == null) return;
+            if (Time.time - _enteredAt < HipMeasureDelay - 0.05f) return;   // 出入りを繰り返した: 古い予約は捨て、最後の着座の予約で測る
+            if (!manager._IsSeatedHere(index) || manager._MyCart() != index) return;   // もう降りた・自分のカートでない
+            VRCPlayerApi lp = Networking.LocalPlayer;
+            if (!Utilities.IsValid(lp)) return;
+            _hipMeasured = true;
+            EnsureSeatDefault();
+            Vector3 hips = lp.GetBonePosition(HumanBodyBones.Hips);
+            float feetY = lp.GetPosition().y;
+            if (!(hips != Vector3.zero))   // op_Inequality が公開されている方 (KH_LeashCollar と同じ)
+            {
+                Debug.Log("[KH_Cart] seat-auto cart=" + index + " skipped (no hips bone) feet=" + feetY.ToString("F3"));
+                return;
+            }
+            float step = manager.seatStep > 0f ? manager.seatStep : SeatStep;
+            float seatY = seat.parent != null ? seat.parent.TransformPoint(_seatPos).y : _seatPos.y;
+            float delta = seatY + HipAboveSeat - hips.y;
+            int steps = Mathf.Clamp(Mathf.RoundToInt(delta / step), -SeatAutoMax, SeatAutoMax);
+            Debug.Log("[KH_Cart] seat-auto cart=" + index + " hips=" + hips.y.ToString("F3") + " feet=" + feetY.ToString("F3")
+                + " seat=" + seatY.ToString("F3") + " delta=" + delta.ToString("F3") + " steps=" + steps);
+            if (steps == 0) return;
+            // 最後の文にする: Owner 自身だと Commit → ApplyCore → この Behaviour の _ApplySeat へ入れ子で戻るので、送った後は何も読まない
+            manager._SendSeatAuto(steps);
         }
     }
 }
