@@ -101,6 +101,8 @@ namespace KominkaDogRun
             if (kind == ConfirmTreat) { _TreatConfirmBuy(); return; }
             // 裏山改変 (DES-DOG-002): ボールの柄の [購入] (KD_TreatPouch.ToyTop.cs)
             if (kind == ConfirmToyPattern) { _PatternConfirmBuy(); return; }
+            // 裏山改変 (IMP-DOG-050): 首輪とリードのセットの [購入] (KD_TreatPouch.Collar.cs)
+            if (kind == ConfirmCollar) { _CollarConfirmBuy(); return; }
             HideConfirmAll();
         }
 
@@ -117,6 +119,8 @@ namespace KominkaDogRun
             if (kind == ConfirmTreat) { _TreatConfirmNo(); return; }
             // 裏山改変 (DES-DOG-002): ボールの柄の [やめる] / 暗幕 (KD_TreatPouch.ToyTop.cs)
             if (kind == ConfirmToyPattern) { _PatternConfirmNo(); return; }
+            // 裏山改変 (IMP-DOG-050): 首輪とリードのセットの [やめる] / 暗幕 (KD_TreatPouch.Collar.cs)
+            if (kind == ConfirmCollar) { _CollarConfirmNo(); return; }
             HideConfirmAll();
         }
 

@@ -1494,7 +1494,7 @@ namespace KominkaDogRun.Editor
                 foreach (var (prefix, rowCount) in KD_HandMenuScrollEditor.RowsFor(KD_TreatPouch.TabAcc)) for (int i = 0; i < rowCount; i++) want.Add(prefix + i);
                 var got = new System.Collections.Generic.List<string>();
                 foreach (Transform row in accScroll.content) got.Add(row.name);
-                v.Check(System.Linq.Enumerable.SequenceEqual(want, got), "かざりの Content の子順が AccRow0..15, FxHead0..1, FxRow0..10 (actual " + got.Count + " 行)");
+                v.Check(System.Linq.Enumerable.SequenceEqual(want, got), "かざりの Content の子順が AccRow0..15, FxHead0..1, FxRow0..10, CollarHead0..2, CollarRow0..4 (IMP-DOG-050。actual " + got.Count + " 行)");
             }
             else v.Check(false, "かざりの Scroll がある");
             v.Check(AllSet(pouch.fxButtons, HillsideFxRowCount) && AllSet(pouch.fxLabels, HillsideFxRowCount), "fxButtons / fxLabels が 11 本 (かざりの Content の FxRow)");

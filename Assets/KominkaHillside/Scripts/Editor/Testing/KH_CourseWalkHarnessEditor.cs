@@ -77,6 +77,7 @@ namespace KominkaHillside.Editor
             public string commerceSource; // 96b: the PlayerData snapshot of the 96 run that was installed before Play
             public bool washOnly;         // IMP-DOG-025 Course/100 (KH_CourseWalkHarnessEditor.Wash.cs)
             public bool toyRowOnly;       // DES-UI-002 / DES-DOG-002 Course/126 おもちゃタブの上段 (KH_CourseWalkHarnessEditor.ToyRow.cs)
+            public bool collarPatternOnly; // IMP-DOG-050 Course/129 首輪とリードのおそろいセット (KH_CourseWalkHarnessEditor.CollarPattern.cs)
             public string toyRowGroups;   // Course/126a = "throw" / 126b = "pattern" / 126 = both (Play で静的変数が消えるのでここに持つ)
             public string washGroups;     // Course/100a-e: comma-separated groups to run (empty = all). Persisted here because Play mode reloads the domain and clears statics
             public int lapChoice;
@@ -201,6 +202,7 @@ namespace KominkaHillside.Editor
                 }
                 if(report.errors.Count>0)throw new InvalidOperationException("Runtime error: "+report.errors[0]);
                 if(report.toyRowOnly){ToyRowTick(now);return;}
+                if(report.collarPatternOnly){CollarPatternTick(now);return;}
                 if(report.commerceOnly){CommerceTick(now);return;}
                 if(report.washOnly){WashTick(now);return;}
                 if(report.riverOnly){RiverTick(now);return;}
@@ -279,6 +281,7 @@ namespace KominkaHillside.Editor
         static void MakeCases()
         {
             if(report.toyRowOnly){MakeToyRowCases();return;}
+            if(report.collarPatternOnly){MakeCollarPatternCases();return;}
             if(report.commerceOnly){MakeCommerceCases();return;}
             if(report.washOnly){MakeWashCases();return;}
             if(report.riverOnly){MakeRiverCases();return;}

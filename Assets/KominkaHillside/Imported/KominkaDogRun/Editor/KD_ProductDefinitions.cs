@@ -25,8 +25,9 @@ namespace KominkaDogRun.Editor
             { this.key=key; categoryKey=category; this.sceneName=sceneName; this.price=price; packCount=pack; initialStock=initial; stockCap=cap; ceListingId=listing; ceProductId=productId; ceCredits=credits; ceAsset=asset; }
             public bool IsCE { get { return !string.IsNullOrEmpty(ceListingId); } }
         }
-        public static readonly string[] Categories = { "toy", "petfx", "treat", "live", "accessory", "experience", "action" };
-        public static readonly string[] Defaults = { "toy.basic_ball", "petfx.heart", "treat.bone_biscuit", "", "accessory.bandana", "", "" };
+        // 裏山改変 (IMP-DOG-050): 末尾に collar (首輪とリードのおそろいセット)。Categories と Defaults は添字で対応する
+        public static readonly string[] Categories = { "toy", "petfx", "treat", "live", "accessory", "experience", "action", "collar" };
+        public static readonly string[] Defaults = { "toy.basic_ball", "petfx.heart", "treat.bone_biscuit", "", "accessory.bandana", "", "", "collar.basic" };
 
         // ---- CE の ID (ce-listings.md §2 と同じ値。2026-09-15 ユーザーが Storefront で作成。1〜6 の Listing は 09-16 に Permanent で作り直し) ----
         const string PlushProduct = "prod_de49c223-4170-4518-b0f3-4c69d6528339", PlushListing = "prod_bbd71ab8-65e9-42ab-9dec-7e566d43d007";
@@ -99,6 +100,14 @@ namespace KominkaDogRun.Editor
             // 裏山改変 (DES-LIV-001 / 002): 裏山専用ライブ「紅葉が星になる」(Point 30pt の買い切り)。末尾に足す (既存行の並びを動かさない)。
             // 古民家のライブ 7 行は台帳の行として残す (画面に出るのは KD_DogDefs.LiveProducts に載せたものだけ)
             new Row("live.hillside_dusk", "live", "KD_ShopItem_Live_HillsideDusk", 30, 0, 0, 0, ""),
+            // 裏山改変 (IMP-DOG-050、IMP-DOG-048 の 2026-10-10 ユーザー決定): 首輪とリードのおそろいセット。セットだけを売る (単品なし)。
+            // 所持キー own.{key} 1 つで首輪 (KH_CollarPattern) とリード (KH_CollarLeash) の両方を解放する。
+            // collar.basic は無料の既定 (今の犬別の色)。分類 collar の倒れ先 (AI の仮決定 2026-10-13、ユーザー確認待ち)
+            new Row("collar.basic", "collar", "KD_ShopItem_Collar_Basic", 0, 0, 0, 0, ""),
+            new Row("collar.stripe", "collar", "KD_ShopItem_Collar_Stripe", 30, 0, 0, 0, ""),
+            new Row("collar.check", "collar", "KD_ShopItem_Collar_Check", 30, 0, 0, 0, ""),
+            new Row("collar.momiji", "collar", "KD_ShopItem_Collar_Momiji", 30, 0, 0, 0, ""),
+            new Row("collar.leather_brass", "collar", "KD_ShopItem_Collar_LeatherBrass", 50, 0, 0, 0, ""),
         };
         public static Row Get(string key)
         { var row=Array.Find(All,x=>x.key==key); if(row==null) throw new InvalidOperationException("Unknown product: "+key); return row; }

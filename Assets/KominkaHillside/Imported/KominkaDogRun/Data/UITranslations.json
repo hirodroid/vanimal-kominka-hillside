@@ -2837,6 +2837,42 @@
           "text": "撫でエフェクト"
         },
         {
+          "key": "collar.group",
+          "text": "首輪とリード"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "基本 (犬ごとの色)"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "しま"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "チェック"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "もみじ"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "革と真鍮"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "首輪とリードのおそろいセット。6 匹の首輪と自分のリードに使えます"
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "自分のリード"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "リードに使用中"
+        },
+        {
           "key": "KD_TreatPouch.WordSleepLeashed",
           "text": "リード中。さんぽで外してから"
         },
@@ -6566,6 +6602,42 @@
         {
           "key": "KD_TreatPouch.WordFxGroup",
           "text": "Petting effects"
+        },
+        {
+          "key": "collar.group",
+          "text": "Collars & leashes"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "Basic (each dog's colour)"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "Stripes"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "Check"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "Maple leaves"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "Leather & brass"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "Matching collar and leash set. Use it on all six dogs' collars and on your own leash."
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "My leash"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "On my leash"
         },
         {
           "key": "KD_TreatPouch.WordSleepLeashed",
@@ -10299,6 +10371,42 @@
           "text": "Petting effects"
         },
         {
+          "key": "collar.group",
+          "text": "Ошейники и поводки"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "Обычный (цвет каждой собаки)"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "Полоски"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "Клетка"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "Кленовые листья"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "Кожа и латунь"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "Комплект: ошейник и поводок. Для ошейников всех шести собак и вашего поводка."
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "Мой поводок"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "На моём поводке"
+        },
+        {
           "key": "KD_TreatPouch.WordSleepLeashed",
           "text": "On a leash. Unclip it in Walk first"
         },
@@ -14028,6 +14136,42 @@
         {
           "key": "KD_TreatPouch.WordFxGroup",
           "text": "Petting effects"
+        },
+        {
+          "key": "collar.group",
+          "text": "Нашийники й повідці"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "Звичайний (колір кожного собаки)"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "Смужки"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "Клітинка"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "Кленове листя"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "Шкіра й латунь"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "Комплект: нашийник і повідець. Для нашийників усіх шести собак і вашого повідця."
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "Мій повідець"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "На моєму повідці"
         },
         {
           "key": "KD_TreatPouch.WordSleepLeashed",
@@ -17761,6 +17905,42 @@
           "text": "Petting effects"
         },
         {
+          "key": "collar.group",
+          "text": "목줄과 리드줄"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "기본 (강아지별 색)"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "줄무늬"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "체크"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "단풍"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "가죽과 황동"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "목줄과 리드줄 세트. 여섯 마리의 목줄과 내 리드줄에 쓸 수 있어요."
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "내 리드줄"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "리드줄에 사용 중"
+        },
+        {
           "key": "KD_TreatPouch.WordSleepLeashed",
           "text": "On a leash. Unclip it in Walk first"
         },
@@ -21490,6 +21670,42 @@
         {
           "key": "KD_TreatPouch.WordFxGroup",
           "text": "Petting effects"
+        },
+        {
+          "key": "collar.group",
+          "text": "Halsbänder & Leinen"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "Standard (Farbe je Hund)"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "Streifen"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "Karo"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "Ahornblätter"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "Leder & Messing"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "Passendes Set aus Halsband und Leine. Für die Halsbänder aller sechs Hunde und deine eigene Leine."
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "Meine Leine"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "An meiner Leine"
         },
         {
           "key": "KD_TreatPouch.WordSleepLeashed",
@@ -25223,6 +25439,42 @@
           "text": "Petting effects"
         },
         {
+          "key": "collar.group",
+          "text": "项圈和牵引绳"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "基本（每只狗的颜色）"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "条纹"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "格纹"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "枫叶"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "皮革与黄铜"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "项圈与牵引绳的同款套装。可用于六只狗的项圈和你自己的牵引绳。"
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "我的牵引绳"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "牵引绳使用中"
+        },
+        {
           "key": "KD_TreatPouch.WordSleepLeashed",
           "text": "On a leash. Unclip it in Walk first"
         },
@@ -28952,6 +29204,42 @@
         {
           "key": "KD_TreatPouch.WordFxGroup",
           "text": "Petting effects"
+        },
+        {
+          "key": "collar.group",
+          "text": "Collares y correas"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "Básico (color de cada perro)"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "Rayas"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "Cuadros"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "Hojas de arce"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "Cuero y latón"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "Set a juego de collar y correa. Sirve para los collares de los seis perros y para tu propia correa."
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "Mi correa"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "En mi correa"
         },
         {
           "key": "KD_TreatPouch.WordSleepLeashed",
@@ -32685,6 +32973,42 @@
           "text": "Petting effects"
         },
         {
+          "key": "collar.group",
+          "text": "Colliers et laisses"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "Base (couleur de chaque chien)"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "Rayures"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "Carreaux"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "Feuilles d'érable"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "Cuir et laiton"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "Ensemble assorti collier et laisse. Pour les colliers des six chiens et ta propre laisse."
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "Ma laisse"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "Sur ma laisse"
+        },
+        {
           "key": "KD_TreatPouch.WordSleepLeashed",
           "text": "On a leash. Unclip it in Walk first"
         },
@@ -36414,6 +36738,42 @@
         {
           "key": "KD_TreatPouch.WordFxGroup",
           "text": "Petting effects"
+        },
+        {
+          "key": "collar.group",
+          "text": "Coleiras e guias"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "Básico (cor de cada cão)"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "Listras"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "Xadrez"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "Folhas de bordo"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "Couro e latão"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "Conjunto combinando de coleira e guia. Vale para as coleiras dos seis cães e para a sua guia."
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "Minha guia"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "Na minha guia"
         },
         {
           "key": "KD_TreatPouch.WordSleepLeashed",
@@ -40147,6 +40507,42 @@
           "text": "Petting effects"
         },
         {
+          "key": "collar.group",
+          "text": "Collari e guinzagli"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "Base (colore di ogni cane)"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "Righe"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "Quadretti"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "Foglie d'acero"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "Cuoio e ottone"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "Set coordinato di collare e guinzaglio. Per i collari dei sei cani e per il tuo guinzaglio."
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "Il mio guinzaglio"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "Sul mio guinzaglio"
+        },
+        {
           "key": "KD_TreatPouch.WordSleepLeashed",
           "text": "On a leash. Unclip it in Walk first"
         },
@@ -43876,6 +44272,42 @@
         {
           "key": "KD_TreatPouch.WordFxGroup",
           "text": "Petting effects"
+        },
+        {
+          "key": "collar.group",
+          "text": "Obroże i smycze"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "Podstawowy (kolor każdego psa)"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "Paski"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "Kratka"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "Liście klonu"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "Skóra i mosiądz"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "Pasujący zestaw obroży i smyczy. Do obroży wszystkich sześciu psów i twojej smyczy."
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "Moja smycz"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "Na mojej smyczy"
         },
         {
           "key": "KD_TreatPouch.WordSleepLeashed",
@@ -47611,6 +48043,42 @@
         {
           "key": "KD_TreatPouch.WordFxGroup",
           "text": "Petting effects"
+        },
+        {
+          "key": "collar.group",
+          "text": "頸圈和牽繩"
+        },
+        {
+          "key": "collar.name.basic",
+          "text": "基本（每隻狗的顏色）"
+        },
+        {
+          "key": "collar.name.stripe",
+          "text": "條紋"
+        },
+        {
+          "key": "collar.name.check",
+          "text": "格仔"
+        },
+        {
+          "key": "collar.name.momiji",
+          "text": "楓葉"
+        },
+        {
+          "key": "collar.name.leatherBrass",
+          "text": "皮革與黃銅"
+        },
+        {
+          "key": "collar.setBody",
+          "text": "頸圈與牽繩的同款套裝。可用於六隻狗的頸圈和你自己的牽繩。"
+        },
+        {
+          "key": "collar.myLeash",
+          "text": "我的牽繩"
+        },
+        {
+          "key": "collar.onLeash",
+          "text": "牽繩使用中"
         },
         {
           "key": "KD_TreatPouch.WordSleepLeashed",

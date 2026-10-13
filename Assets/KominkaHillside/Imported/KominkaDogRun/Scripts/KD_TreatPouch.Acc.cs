@@ -106,6 +106,7 @@ namespace KominkaDogRun
         public void _AccBack()
         {
             _accConfirm = false; _accGiftRow = -1;
+            if (CollarBack()) return;   // 裏山改変 (IMP-DOG-050): 首輪とリードのセットの面 → 一覧 (KD_TreatPouch.Collar.cs)
             if (_accSet >= 0)
             {
                 if (_accProduct >= 0) _accSetMenu = _accProduct == _accSet ? 1 : 2;
@@ -154,6 +155,7 @@ namespace KominkaDogRun
 
         private void AccRow(int row)
         {
+            if (CollarPageRow(row)) return;   // 裏山改変 (IMP-DOG-050): セットの面の行 (自分のリード / 犬 6 匹)
             if (accessories == null) return;
 
             if (_accSetMenu > 0)
@@ -304,6 +306,7 @@ namespace KominkaDogRun
         {
             if (accRows == null) return;
             EnsureAccessoryCatalog();
+            if (RedrawCollarPage()) return;   // 裏山改変 (IMP-DOG-050): 首輪とリードのセットの面は AccRow を使い回して描く
 
             // Ownership may arrive after purchase or restoration while the preview is open.
             if (_accSet < 0 && _accProduct >= 0 && accProductIds != null && _accProduct < accProductIds.Length
@@ -401,6 +404,7 @@ namespace KominkaDogRun
             // 下端の 1 行は 撫でFX の結果 → 無ければ支度ポイントの未受取の案内 (KD_TreatPouch.PetFx.cs)
             bool fxLevel = !page2 && _accSetMenu == 0;
             RedrawFxRows(fxLevel);
+            RedrawCollarRows(fxLevel);   // 裏山改変 (IMP-DOG-050): 撫でFX の後ろに「首輪とリード」の小見出しと 5 行
             HillsideAccFooter(fxLevel);
         }
 

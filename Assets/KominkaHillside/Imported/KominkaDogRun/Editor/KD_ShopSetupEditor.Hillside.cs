@@ -90,6 +90,12 @@ namespace KominkaDogRun.Editor
             { "petfx.lantern", "fx.lantern" },
             { "petfx.meteor", "fx.meteor" },
             { "petfx.confetti", "fx.confetti" },
+            // 裏山改変 (IMP-DOG-050): 首輪とリードのおそろいセット (文言は UITranslations.json の collar.name.*)
+            { "collar.basic", "collar.name.basic" },
+            { "collar.stripe", "collar.name.stripe" },
+            { "collar.check", "collar.name.check" },
+            { "collar.momiji", "collar.name.momiji" },
+            { "collar.leather_brass", "collar.name.leatherBrass" },
         };
 
         /// <summary>表に無い行 (後から商品を足したとき) の文言キー。ライブの行と同じ `<シーン名>.displayNameKey.0` 型。</summary>
@@ -218,6 +224,10 @@ namespace KominkaDogRun.Editor
             var keep = new System.Collections.Generic.List<UdonSharpBehaviour>();
             if (petFx != null) keep.Add(petFx);
             if (toyBox != null) keep.Add(toyBox);
+            // 裏山改変 (IMP-DOG-050): リードの柄の消費側 (KH_Dogs/KH_CollarLeash、Collar/1 が足す) があれば通知先に残す (流し直しで消さない)
+            var collarLeashT = dogs.Find(KominkaHillside.KH_CollarLeash.ObjectName);
+            var collarLeash = collarLeashT == null ? null : collarLeashT.GetComponent<KominkaHillside.KH_CollarLeash>();
+            if (collarLeash != null) keep.Add(collarLeash);
             catalog.consumers = keep.ToArray();
             catalog.consumerEvents = keep.Select(x => "_OnShopSelectionChanged").ToArray();
             ok &= TryCopy(catalog, log);

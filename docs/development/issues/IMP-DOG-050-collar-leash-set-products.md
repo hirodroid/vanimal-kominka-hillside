@@ -2,10 +2,10 @@
 id: IMP-DOG-050
 type: IMP
 system: DOG
-status: todo
+status: review
 priority: Medium
 summary: 首輪とリードのおそろいセット 4 種 (しま / チェック / もみじ 各 30pt、革と真鍮 50pt) を Point 商品として実装する。商品定義、首輪の同期 (飾りと同じ)、リードの同期 (本人の選択 + PlayerData 保存)、干渉表、古民家の正本への反映
-next: "2026-10-13 ユーザー決定「推奨でお願いします」: 首輪は別の挙動 (新しい KH_ スクリプト、Manual、犬 6 匹の int 配列、60 秒は独立)、分類は新しい collar、売り場は「首輪とリード」の小見出し、ミニチュアは基本色のまま。残る選択 1 つ: 既定を空にして Verify の除外に足すか、無料の collar.basic を置くか (推奨なし)。実装は未着手。テクスチャ制作は BUG-DOG-011 の金具の位置が決まってから"
+next: "実装・静的検証・Codex レビュー反映まで完了 (2026-10-13)。残り: ClientSim の最小群 Course/129 (collar-pattern 2 ケース)、ユーザーの Play (購入 → 首輪とリードの柄、2 人で同期・60 秒・途中参加、近 → 遠 → 近の往復)、テクスチャ本制作 (BUG-DOG-011 の VR 確認後)、仮決定 collar.basic の確認"
 updated: 2026-10-13
 ---
 
@@ -122,6 +122,58 @@ HEAD `3b40285` のソースを読んだだけの推奨。Unity・Play・ハー�
 - 購入導線: [DES-UI-005](DES-UI-005-trainer-and-paid-items-purchase-flow.md)
 - 識別色: [DES-DOG-002](DES-DOG-002-toy-behaviour.md)
 
+## 実装 (2026-10-13、Opus サブエージェント。コードと仮テクスチャだけ。Unity・Play・ハーネスは使っていない)
+
+**決定 (AI の仮決定、ユーザー確認待ち): 分類 collar の既定は無料の行 `collar.basic` (0pt、`petfx.heart` と同じ形)。** 裏山の Menu/4a「初期品がちょうど 1 つ」の検査はそのまま通り、手元メニューに「基本」の行ができて、犬の首輪と自分のリードを今の犬別の色へ戻す口になる。売る商品は 4 セットのまま (台帳の行が 1 つ増える)。代案 (既定を空 + Verify の除外) に替えるなら `KD_ProductDefinitions` の 1 行と `Defaults`、Collar/1・2 の表 [0] を直す。
+
+### 作ったもの
+
+- 商品: `KD_ProductDefinitions` に分類 `collar` (`Categories` の末尾、`Defaults` は `collar.basic`) と 5 行 `collar.basic` 0 / `collar.stripe` 30 / `collar.check` 30 / `collar.momiji` 30 / `collar.leather_brass` 50 (シーン名 `KD_ShopItem_Collar_Basic|Stripe|Check|Momiji|LeatherBrass`、作るのは Menu/4 Setup Shop)。文言キーは `HillsideNameKeys` に `collar.name.*`。所持キーは台帳の `own.{productKey}` 1 つで首輪とリードの両方。
+- 文言: `UITranslations.json` の 13 言語に 9 キー (`collar.group` / `collar.name.basic|stripe|check|momiji|leatherBrass` / `collar.setBody` / `collar.myLeash` / `collar.onLeash`)。**AI の下書きで校正していない** (「鍮」など新しい字形は Collar/1 が共通フォントへ足す)。
+- 首輪 (犬 6 匹、共有): 新規 `KH_CollarPattern` (Manual、`KH_Dogs/KH_CollarPattern`)。同期は `int[6] _pattern` (0 = 基本) / `_changerId` / `_changedMs` の 3 本。見た目は首輪の `Band` の `_MainTex` を MaterialPropertyBlock で差し替え、埋もれ 2 犬種 (ポメ・サモエド) は `ClipAnchor/AttachmentRing` の `_Color` を革と真鍮のときだけ真鍮色にする (ほかの柄は `KH_ClipNeutral` の色のまま)。材質の複製なし。`KD_AccessoryBox` は触っていない。
+- リード (1 人 1 つ): 新規 `KH_CollarLeash` (None、カタログの consumer。`KD_PetFxBox` の形) と `KH_CollarTag` (Manual + VRCPlayerObject。`KD_PlayerFxTag` の形。同期は string 1 本)。選択の正本はカタログの `Sel.collar` (PlayerData)。各犬の縄・スナップ・持ち手 (`KH_LeashCollar.ropeMesh / snapVisual / handleVisual`) を、その犬をつないでいる人 (`KH_LeashManager.walkers`) の選択で描く。他人の選択は札から読み、所持 (`KD_ShopItem.OwnedBy`) を確かめてから描く。持っていなければ基本。
+- 手元メニュー: `KD_TreatPouch.Collar.cs` (新規 partial)。かざりタブの一覧の面で、撫でFX の行の後ろに「首輪とリード」の小見出しと 5 行。所持 → [えらぶ] でセットの面 (1 行目 自分のリード、2〜7 行目 犬 6 匹、かざりの AccRow を使い回す)、未所持 → [買う] で共通の確認カード (kind `ConfirmCollar` = 18、DES-UI-005)。購入はカタログの `_RequestBuy` (払う → 解放 → リードの柄として選ぶ。犬の首輪は次の明示の操作)。既存ファイルへの差し込みは `KD_TreatPouch.Acc.cs` 4 か所、`.PetFx.cs` 1 行 (`HillsideAccCatalogLevel`)、`.Confirm.cs` 2 行。2 列の格子なので、前に並ぶセルが奇数なら小見出しの前に空きセル (`CollarHead0`) を出す (今は 14 + 2 + 11 = 27 で奇数)。
+- 行の器: `Menu/7` は周回版で実行禁止なので、`Collar/1` が かざりの Content に `FxHead0..1` / `FxRow0` の複製で `CollarHead0..2` と `CollarRow0..4` を足す (撫でFX の同梱の拡張 `KD_BundledPetFxEditor` と同じ局所の足し方)。行の表 `KD_HandMenuScrollEditor.RowsFor(TabAcc)` と押し先 `ExpectedRowEvent` (`_Collar{i}`) に足したので、Menu/20・21 の並びの検査はこの行込みで見る。`Menu/4 Setup Shop` がカタログの通知先を作り直しても `KH_CollarLeash` を残す。
+- テクスチャ (仮): `scripts/art/leash-assets.cjs --patterns` が `Textures/Walking/KH_Leash_Pattern_{Stripe,Check,Momiji,LeatherBrass}_provisional.png` (1024²、基本の BaseColor と同じ並び: 下 768px が犬ごとの 128px の帯で地は識別色、その上が金具・持ち手・縄) だけを書く (基本の 3 枚とメッシュは書かない)。取り込み設定は Collar/1 が基本の BaseColor と同じにする。**本番の絵は BUG-DOG-011 (金具の位置) の VR 確認の後。**
+- メニュー `Tools/KominkaHillside/Collar/` (`KH_CollarPatternEditor`): `0 - Create Collar Programs` / `1 - Setup Collar Pattern` (冪等、保存しない) / `2 - Verify Collar Pattern` (`COLLAR_OK n` / `COLLAR_FAIL`、ログ `Temp/KH_Collar/verify.txt`)。
+
+### 統括が回す順 (Unity)
+
+1. C# コンパイル (`bash scripts/unity-compile.sh`)。`KD_TreatPouch` が `KH_CollarPattern` を参照するので、U# はまだ通らない。
+2. `Collar/0 - Create Collar Programs` (Program Asset 3 つ) → `bash scripts/unity-compile.sh --udon`。
+3. `Menu/4 Setup Shop` (collar の 5 行) → `Menu/4a Verify Shop`。
+4. `Collar/1 - Setup Collar Pattern` (器 3 つ・配線・行・字形・言語表)。
+5. `Menu/19b Assign Network IDs` (新しい同期物 `KH_CollarPattern` と PlayerObject の `KH_CollarTag`) → 保存。
+6. 検査: `Collar/2 - Verify Collar Pattern`、`Menu/4a`、`Menu/20 Verify Pouch`、`Menu/21 Verify Scroll Layout`、`Menu/6h Verify Pet Fx` (カタログの通知先)、`Walking/5 Verify` (NetworkID)。
+
+### 同期の設計 (要点)
+
+- 首輪: 書くのは `KH_CollarPattern` の Owner だけ (既定 = マスター。`OnOwnershipRequest` は false、`SetOwner` なし)。Owner は呼んだ人 (`NetworkCalling.CallingPlayer`) について、犬と柄の範囲・60 秒 (最後に替えた人以外。飾りとは独立)・セットの所持 (その人の台帳の `own.{key}`) を確かめてから書く。購入直後で所持が届いていなければ「保留」を返し、要求側が 5 秒以内に再送する (飾りと同じ手順)。
+- 途中参加: 3 本の同期配列を最初の `OnDeserialization` で受けて描く。新しいインスタンスは 0 (基本) から。
+- 退室: 首輪の柄は残る。替えた人の退室は 60 秒の待ちだけを外す (Owner の `OnPlayerLeft` / 移譲後の見直し)。
+- リード: 本人の選択は PlayerData (`Sel.collar`) とカタログが持ち、`KH_CollarTag` (PlayerObject) で配る。読む側が所持を確かめる。退室すると札は消え、その人の犬の縄も外れて隠れる。
+
+### 残り
+
+- 本番のテクスチャ 4 枚 (BUG-DOG-011 の VR 確認の後)。今の 4 枚は仮で、ファイル名に `provisional` を付けた。差し替えは同じパスへ上書きすれば配線は変わらない (名前を変えるなら Collar/1 の表も)。
+- Play: 首輪とリードの見え方 (6 犬種 × 4 柄。帯が見える 4 犬種、埋もれ 2 犬種は金具とリード)、購入 → リードに反映、セットの面の 60 秒表示、再入室でリードが戻る。
+- 2 人: 首輪の柄が両方に同じに見える・途中参加・60 秒・他人のリードの柄 (近い → 遠い (LineRenderer、柄なし) → 近いの往復で戻る)・未所持の柄を名乗っても基本に見える。
+- ClientSim の 2 ケース (Course/129、群 `collar-pattern`。Codex 相談の結論、2026-10-13): `collar-restore-delayed-35s` (遅い復元を台帳のヒープで模擬) と `collar-select-basic-roundtrip`。**作っただけで未実行。** 回すのは統括の判断。
+- Quest / iOS ([VER-WLD-001](VER-WLD-001-quest-ios-devices.md))。テクスチャ 4 枚 (1024²) ぶん容量が増える (Build Size で測る)。
+- 首元の飾りとの干渉表 (§4) の見直しは未着手 (形は変えていないので新しい組は増えない見込み、推定)。
+
+### 開いている問い (ユーザー確認待ち)
+
+- 既定を無料の `collar.basic` にした仮決定でよいか。
+- しま・チェック・もみじのとき、ポメ・サモエドの金具 (`AttachmentRing`) は `KH_ClipNeutral` の金色のまま。帯の金具 (灰色) とそろえるかは BUG-DOG-011 の「要判断」と同じ論点。
+- リード台の留め具 (`KH_LeashClip`) と LineRenderer の縄は柄を付けていない (共有材質のまま)。付けるかは未決定。**既存の `KH_LeashCollar` は `lightRope` が false でも、他人の縄が自分から `ropeStraightDistance` (15 m) より遠いと LineRenderer で描く** (IMP-DOG-036 S6) ので、他人の選んだ柄は離れると消え、`ropeFullDistance` (13 m) より近づくと戻る。2 人の確認条件に「近い → 遠い → 近いの往復で柄が戻る」を入れる (Codex 独立レビュー 2026-10-13 低)。
+- 購入するとリードの柄はすぐその柄になる (カタログの `_RequestBuy` が選ぶ) が、犬の首輪は替わらない (飾りと同じく「買う」と「つける」を分ける)。この分け方でよいか。
+- 13 言語の文言 (AI の下書き、校正なし)。
+
+### 古民家の正本への反映 (§6 に足すこと。ここでは編集しない)
+
+- §6 の 3 か所に加えて: 裏山の実装では分類 `collar` を新設し、無料の既定 `collar.basic` を置いた (仮)。商品キーは `collar.stripe` / `collar.check` / `collar.momiji` / `collar.leather_brass`。古民家に同じ商品を入れるときは同じキーにそろえる。
+
 ## 記録
 
 2026-10-11: 起票 (IMP-DOG-048 の決定から)。Unity・モデル・商品定義は未変更。
@@ -129,3 +181,7 @@ HEAD `3b40285` のソースを読んだだけの推奨。Unity・Play・ハー�
 2026-10-13: 2 つの未決定 (枠・分類) の推奨を記録 (Opus の静的確認、統括 Fable)。コード・シーンは変更していない。
 
 2026-10-13: ユーザー決定「推奨でお願いします」(別の挙動・新分類 collar・小見出し・ミニチュア基本色)。§推奨 の冒頭に決定行。実装は BUG-DOG-011 の金具の位置の後。
+
+2026-10-13: 実装 (Opus サブエージェント、統括 Fable)。商品 5 行・文言 13 言語・`KH_CollarPattern` / `KH_CollarLeash` / `KH_CollarTag`・手元メニューの行・Collar/0〜2・仮テクスチャ 4 枚。既定は無料の `collar.basic` (AI の仮決定、ユーザー確認待ち)。Unity は未実行 (コンパイル・Setup・Verify は統括)。
+
+2026-10-13: 統括の検証 (C# 0 / U# 0、Collar/2 COLLAR_OK 85、Menu/4a・20・21・6h・Walking/5 PASS、保存)。Codex 独立レビュー: 10 点のうち 8 点は問題なし、2 点を反映 (中: `KH_CollarLeash` の復元待ちの 30 s 打ち切りをやめ、`_Tick` が `catalog.Resolved()` を見るまで確かめ続ける / 低: 遠い他人の縄は LineRenderer で柄が消える旨の注記と、開いている問い・2 人の確認条件への追記)。ClientSim の 2 ケース (Course/129) を追加 (未実行)。

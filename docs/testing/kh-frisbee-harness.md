@@ -730,6 +730,22 @@ bash scripts/kh-harness-run.sh walk "Course/83b - Walk Harness Collar Interact (
 - 結果: `Logs/kh-course-walk/<run>/travel.json` (ケースごとの notes。首輪の状態を `0:Ic 1:D- ...` の形で残す。`D` = DisableInteractive、`I` = 有効、`c` = Collider 有効、`-` = 無効) と `report.json`。全体の状態は **`COLLAR_INTERACT_OBSERVED`**
 - **見ていないもの**: 他の人が散歩中の犬 (2 人が要る)、Manager の Owner の交代・退室・遅れて入った人 (実通信)。Interact の光線・枠の表示、撫で・洗う道具・つかむ操作が首輪に取られないこと (`Interact()` は直接呼ぶので光線を通らない)。これらは Play と PCVR (2 人) で見る
 
+## 本シーンの首輪とリードのおそろいセット (Course/129, IMP-DOG-050)
+
+`Tools/KominkaHillside/Course/129 - Walk Harness Collar Pattern (IMP-DOG-050)`。2026-10-13 の Codex 相談の結論で 2 ケースだけ (夜の群 `collar-pattern`。`--only collar` は 83b とこの群の両方を選ぶ)。枠は歩行ハーネスと同じ (journal・締切 360 s・PlayerData の退避と復元・シーンを保存しない・Stop は Course/41)。PlayerData は空から (Course/126 と同じ準備)。台本は `KH_CourseWalkHarnessEditor.CollarPattern.cs`、ケースの記録は `collar-pattern.json`。前提は Collar/1 (`KH_CollarPattern` / `KH_CollarLeash` / `KH_CollarTag` と手元メニューの行)。
+
+```bash
+bash scripts/kh-harness-run.sh walk "Course/129 - Walk Harness Collar Pattern (IMP-DOG-050)" --reason ".." --consult ".."
+```
+
+| ケース | 操作 | 合格 |
+|---|---|---|
+| collar-restore-delayed-35s | 前提: おじいさんの 200 pt (本物の Interact) → かざりの しま を買う (`_Collar1` → `_ConfirmYes`)。**模擬**: 台帳のヒープ `_loaded=false`、カタログの `_resolved` / `_loaded` / collar の `_selected` / `_userChose`、`KH_CollarLeash` の `_restoreSeen` / `_local` / `_published`、自分の `KH_CollarTag._selected` を入室直後へ戻し、35 s 待ってから `_loaded=true` | 35 s の間は何も採らない。解決から 3 s 以内にカタログ・`KH_CollarLeash._local`・札がそろって しま、手元メニューの しま の行が「リードに使用中」。犬 0 を繋ぐと縄・スナップ・持ち手の `_MainTex` が しま |
+| collar-select-basic-roundtrip | 犬 0 を繋ぐ → しま の面の「自分のリード」(`_Acc0`) → 戻る → 基本の面の `_Acc0` | しま: カタログ・`_local`・札・`Sel.collar`・3 つの描画先がしま。基本: すべて `collar.basic`、描画先の `_MainTex` は基本の BaseColor (明示の書き戻し)、`_applied[0]=0` |
+
+- 遅い復元は ClientSim では作れないので、Course/96 の L2 と同じく台帳のヒープで遅らせる (模擬)。本物の再入室とサーバー保存は PCVR。
+- 見ないもの: 他人のリードの柄 (札と OwnedBy)、遠い他人の縄が LineRenderer になって柄が消える往復、犬の首輪の 60 秒と Owner の検証、途中参加 (2 人)、見た目 (PCVR)。
+
 ## 本シーンのオート／マニュアルのナイトモード (Course/83c, IMP-ENV-005)
 
 `Tools/KominkaHillside/Course/83c - Walk Harness Night Mode Auto Manual (IMP-ENV-005)`。83b と同じ枠 (travel の `TravelTick` を借りる。ワープ・地点・暗転・犬は使わない)。全体の締切 400 s、1 分ほどで終わる。PlayerData は 96・97 と同じく退避してから消し、「初めて来た人」で Play に入る (Finish が戻す)。

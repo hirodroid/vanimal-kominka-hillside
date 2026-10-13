@@ -1,5 +1,6 @@
 // Project-specific mesh design; Synaptic constructs, unwraps, validates and exports it in Blender.
 // Run node scripts/art/leash-assets.cjs. Requests go to Temp; source parameters remain reviewable here.
+// node scripts/art/leash-assets.cjs --patterns writes only the four provisional collar & leash set BaseColors (IMP-DOG-050).
 // --replace-owned regenerates these nine KH_* meshes only; first confirm they belong to KH_Leash_Production.
 // Default mode requires those names to be absent. Original scene objects are never deleted.
 const fs=require('fs'),path=require('path'),zlib=require('zlib');
@@ -10,6 +11,40 @@ const model=root+'/Assets/KominkaHillside/Models/Walking';
 const colors=[[38,118,129],[195,114,65],[82,114,173],[161,74,87],[124,100,157],[111,139,93]];
 const crcTable=Array.from({length:256},(_,n)=>{for(let k=0;k<8;k++)n=n&1?0xedb88320^(n>>>1):n>>>1;return n>>>0;});
 function png(file,pixel){const w=1024,h=1024,raw=Buffer.alloc(h*(1+w*4));for(let y=0;y<h;y++)for(let x=0;x<w;x++){let p=pixel(x,h-1-y),o=y*(w*4+1)+1+x*4;for(let c=0;c<4;c++)raw[o+c]=p[c];}function chunk(t,b){let tb=Buffer.from(t),n=Buffer.alloc(4);n.writeUInt32BE(b.length);let crc=0xffffffff;for(let v of Buffer.concat([tb,b]))crc=crcTable[(crc^v)&255]^(crc>>>8);let cb=Buffer.alloc(4);cb.writeUInt32BE((crc^0xffffffff)>>>0);return Buffer.concat([n,tb,b,cb]);}let hdr=Buffer.alloc(13);hdr.writeUInt32BE(w);hdr.writeUInt32BE(h,4);hdr[8]=8;hdr[9]=6;fs.writeFileSync(file,Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',hdr),chunk('IDAT',zlib.deflateSync(raw)),chunk('IEND',Buffer.alloc(0))]));}
+// IMP-DOG-050: `--patterns` writes ONLY the four provisional BaseColors of the collar & leash sets and exits (the base
+// KH_Leash_BaseColor / Normal / Metallic, the meshes and Temp/KH_LeashRelease are not touched). Same layout as the base
+// BaseColor: six 128 px dog lanes in the lower 768 px (identity colour kept as the ground), 768-864 metal fittings,
+// 864-944 dark grip, 944+ rope. Provisional art: the final textures wait for BUG-DOG-011 (hardware position, VR check).
+if(process.argv.includes('--patterns')){
+ const fract=v=>v-Math.floor(v),hash=(x,y)=>fract(Math.sin(x*12.9898+y*78.233)*43758.5453);
+ const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t),cream=[236,226,200];
+ const weave=(x,y)=>1+.055*Math.sin(x*Math.PI/3)*Math.cos(y*Math.PI/3);
+ const stitchAt=(x,v)=>(v>=22&&v<=25||v>=102&&v<=105)&&x%16<10;
+ // lane(row,x,v) -> ground colour; stitch(row) -> thread colour; metal / grip / rope (x,y) -> colour
+ function pattern(name,o){png(tex+'/KH_Leash_Pattern_'+name+'_provisional.png',(x,y)=>{let c;
+  if(y<768){let row=Math.floor(y/128),v=y%128;c=o.lane(row,x,v).map(n=>n*weave(x,y));if(v<16||v>111)c=c.map(n=>n*.54);if(stitchAt(x,v))c=o.stitch(row);}
+  else if(y<864)c=o.metal(x,y);else if(y<944)c=o.grip(x,y);else c=o.rope(x,y);
+  return [...c.map(n=>Math.max(0,Math.min(255,Math.round(n)))),255];});}
+ const metal=()=>[181,187,177],grip=()=>[43,48,46];
+ // しま: 32 px cross stripes of the dog colour and a cream tint; rope = teal with a cream spiral
+ pattern('Stripe',{lane:(r,x,v)=>((x>>5)&1)?mix(colors[r],cream,.55):colors[r],stitch:()=>cream,metal,grip,
+  rope:(x,y)=>(((x+2*y)>>4)&1)?[226,214,186]:[76,125,125]});
+ // チェック: gingham (both bands = darker dog colour, one = light tint, none = lighter tint); rope = teal / cream blocks
+ pattern('Check',{lane:(r,x,v)=>{let a=(x>>4)&1,b=((v-16)>>4)&1,c=colors[r];return a&&b?c.map(n=>n*.78):a||b?mix(c,cream,.38):mix(c,cream,.72);},
+  stitch:r=>colors[r].map(n=>n*.6),metal,grip,rope:(x,y)=>((((x>>4)+(y>>3))&1)?[218,206,178]:[76,125,125])});
+ // もみじ: maple leaves (5 lobes, red / orange / yellow) every 48 px on the dog colour; rope = autumn red with flecks
+ const leafCols=[[196,58,36],[226,128,40],[214,170,52]];
+ function leaf(x,v){let cell=Math.floor(x/48),cx=cell*48+24,cy=64+((cell&1)?14:-14),dx=x-cx,dy=v-cy,r=Math.hypot(dx,dy),a=Math.atan2(dy,dx)+cell*.9;
+  let R=17*(.52+.48*Math.abs(Math.cos(2.5*a)));if(Math.abs(dx)<1.2&&dy<0&&dy>-22)return leafCols[cell%3].map(n=>n*.7);return r<R?leafCols[cell%3]:null;}
+ pattern('Momiji',{lane:(r,x,v)=>{let l=(v>=16&&v<=111)?leaf(x,v):null;return l?l:colors[r].map(n=>n*.92);},stitch:()=>[230,196,120],metal,grip,
+  rope:(x,y)=>{let h=hash(x>>2,y>>2);return h>.86?[232,176,64]:h>.72?[214,110,46]:[150,62,40];}});
+ // 革と真鍮: leather tinted 28 % toward the dog colour with grain, thread in the dog colour, brass fittings, dark leather grip, braided leather rope
+ const leather=[112,72,44];
+ pattern('LeatherBrass',{lane:(r,x,v)=>mix(leather,colors[r],.28).map(n=>n*(.9+.16*hash(x>>1,v>>1))),stitch:r=>mix(colors[r],[255,255,255],.25),
+  metal:(x,y)=>[176,133,61].map(n=>n*(1+.06*Math.sin(x*.9+y*.2))),grip:(x,y)=>[58,38,26].map(n=>n*(.9+.15*hash(x>>1,y>>1))),
+  rope:(x,y)=>[120,78,46].map(n=>n*(1+.18*Math.sin((x+3*y)*Math.PI/6)))});
+ console.log('wrote 4 provisional pattern BaseColors to '+tex);process.exit(0);
+}
 // Six padded webbing lanes, with edge stitching. Upper lanes are brushed metal, dark grip and rope.
 function heightAt(x,y){if(y<768){let v=y%128;return .30*Math.sin(x*Math.PI/3)*Math.cos(y*Math.PI/3)+((v<19||v>109)?-.5:0);}if(y>=944)return .4*Math.sin((x+y*3)*Math.PI/8);return .04*Math.sin(x);}
 png(tex+'/KH_Leash_BaseColor.png',(x,y)=>{let c;if(y<768){let row=Math.floor(y/128),v=y%128;c=colors[row];let weave=1+.055*Math.sin(x*Math.PI/3)*Math.cos(y*Math.PI/3);c=c.map(n=>n*weave);if(v<16||v>111)c=c.map(n=>n*.54);if((v>=22&&v<=25||v>=102&&v<=105)&&x%16<10)c=[224,211,181];}else if(y<864)c=[181,187,177];else if(y<944)c=[43,48,46];else {let a=1+.08*Math.sin((x+3*y)*Math.PI/8);c=[76*a,125*a,125*a];}return [...c.map(n=>Math.round(n)),255];});

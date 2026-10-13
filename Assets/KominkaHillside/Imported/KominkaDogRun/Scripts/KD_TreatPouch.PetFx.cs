@@ -108,7 +108,7 @@ namespace KominkaDogRun
         /// <summary>かざりのカタログ階層 (商品一覧の面) か。セットの面 (_accSetMenu 1 / 2) と犬選択の面 (_accProduct 選択中) は false。</summary>
         private bool HillsideAccCatalogLevel()
         {
-            return _accSetMenu == 0 && _accProduct < 0;
+            return _accSetMenu == 0 && _accProduct < 0 && _collarPage < 0;   // 裏山改変 (IMP-DOG-050): 首輪とリードのセットの面もカタログ階層ではない
         }
 
         /// <summary>板の下端 (feedbackLabel) に撫でFX の結果 (つけた / 買えない 等) を出すか。

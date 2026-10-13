@@ -37,7 +37,9 @@ namespace KominkaDogRun.Editor
             if (id == KD_TreatPouch.TabLive) return new[] { (Prefixes[id], KD_DogDefs.LiveShows.Length) };
             if (id == KD_TreatPouch.TabWalk) return new[] { (Prefixes[id], KD_TreatSetupEditor.WalkRowCount) };
             // 裏山改変 (IMP-DOG-015): AccRow16 → 撫でFX の群見出し 2 セル (FxHead0 見出し / FxHead1 空き) → FxRow11
-            if (id == KD_TreatPouch.TabAcc) return new[] { (Prefixes[id], KD_AccessorySetsEditor.MenuCount), (KD_TreatSetupEditor.FxHeadPrefix, 2), (AccFxPrefix, KD_TreatSetupEditor.HillsideFxRowCount) };
+            // 裏山改変 (IMP-DOG-050): その後ろに「首輪とリード」の小見出し 3 セル (CollarHead0 段そろえの空き / 1 見出し / 2 空き) → CollarRow5 (Collar/1 が足す。無い行は Build が飛ばす)
+            if (id == KD_TreatPouch.TabAcc) return new[] { (Prefixes[id], KD_AccessorySetsEditor.MenuCount), (KD_TreatSetupEditor.FxHeadPrefix, 2), (AccFxPrefix, KD_TreatSetupEditor.HillsideFxRowCount),
+                (KominkaHillside.Editor.KH_CollarPatternEditor.HeadPrefix, KominkaHillside.Editor.KH_CollarPatternEditor.HeadCount), (KominkaHillside.Editor.KH_CollarPatternEditor.RowPrefix, KominkaHillside.Editor.KH_CollarPatternEditor.RowCount) };
             // 裏山改変 (司令塔 2026-09-23): おやつは Row 4 (KD_ShopSetupEditor.TreatProductCount。Pouch ビルダーが作る数と同じ。古民家の行プールも 4)
             if (id == KD_TreatPouch.TabTreat) return new[] { (Prefixes[id], KD_ShopSetupEditor.TreatProductCount) };
             return new[] { (Prefixes[id], 6) };
@@ -414,6 +416,7 @@ namespace KominkaDogRun.Editor
                     if (button == "Here") return index == KD_TreatSetupEditor.WalkDogRows ? "_WalkPlaza" : "_WalkGate";
                     return "_Walk" + button + index;   // Left / Right / Off
                 case "FxRow": return "_Fx" + index;
+                case "CollarRow": return "_Collar" + index;   // 裏山改変 (IMP-DOG-050)
                 case "SleepRow": return "_Sleep" + index;
                 case "LiveRow": return (button == "Gift" ? "_LiveGift" : "_Live") + index;
                 case "AccRow": return (button == "Gift" ? "_AccGift" : "_Acc") + index;
@@ -490,7 +493,8 @@ namespace KominkaDogRun.Editor
                 foreach(Transform row in s.content)
                 {
                     Check(row.GetComponent<LayoutElement>()!=null,"layout element "+row.name);
-                    string rowPrefix=id==KD_TreatPouch.TabAcc && row.name.StartsWith(AccFxPrefix)?AccFxPrefix:Prefixes[id];
+                    string rowPrefix=id==KD_TreatPouch.TabAcc && row.name.StartsWith(AccFxPrefix)?AccFxPrefix
+                        :id==KD_TreatPouch.TabAcc && row.name.StartsWith(KominkaHillside.Editor.KH_CollarPatternEditor.RowPrefix)?KominkaHillside.Editor.KH_CollarPatternEditor.RowPrefix:Prefixes[id];   // 裏山改変 (IMP-DOG-050)
                     foreach(var b in row.GetComponentsInChildren<Button>(true))
                     {
                         Check(b.onClick.GetPersistentEventCount()==1 && b.onClick.GetPersistentTarget(0)==UdonSharpEditorUtility.GetBackingUdonBehaviour(p),"preserved action "+row.name+"/"+b.name);

@@ -35,7 +35,7 @@ function result(j, kind, args) {
   if (kind === 'walk' && j.lapChoice !== 0) issues.push('unexpected continuous lap');
   // OBSERVED is successful execution of its stated local checks, never full feature/device acceptance.
   const observed = j.status === 'SEGMENTS_OBSERVED' ? 'SEGMENT_OBSERVED' : j.status === 'LAP_OBSERVED' ? 'LAP_OBSERVED' : null;
-  const pass = /^(?:PASS|(?:WASH|WATER|SWIM|FETCH|W5|FRISBEE_M2|FRISBEE_M3|TRAVEL_CALL|TREAT|HAND_FEED|LEDGER|LEDGER_REENTRY|LIVE)_PASS|WATER_PASS_PARTIAL)$/.test(j.status);
+  const pass = /^(?:PASS|(?:WASH|WATER|SWIM|FETCH|W5|FRISBEE_M2|FRISBEE_M3|TRAVEL_CALL|TREAT|HAND_FEED|LEDGER|LEDGER_REENTRY|LIVE|COLLAR_PATTERN)_PASS|WATER_PASS_PARTIAL)$/.test(j.status);
   if (kind === 'walk' && /^Course\/97e\s*-/.test(args[0]) && (j.commerceSet !== 5 || cases.length !== 1 || cases[0].name !== 'HF1-high-hand-to-mouth-and-recovery'))
     issues.push('hand-feed scenario mismatch');
   if (kind === 'walk' && /^Course\/97f\s*-/.test(args[0]) && (j.commerceSet !== 6 || cases.length !== 1 || cases[0].name !== 'HF2-called-dog-stays-and-eats'))
