@@ -1,0 +1,17 @@
+{
+    "version": "kh-zfix-1",
+    "renderer": "KH_FarKominka/KH_KominkaBuilding/床/石畳み/床.001 (8)",
+    "sourceName": "床.001",
+    "sourcePath": "Assets/モサンゴ屋/Kominka/FBX/建物.fbx",
+    "sourceGuid": "8add0740f715ece43805c8303608e17b",
+    "planHash": "52427678a6dea3f3fad64de08459de5b",
+    "utc": "2026-10-13T05:21:30.6069107Z",
+    "sourceLocalId": -580869657298854085,
+    "sourceVertices": 24,
+    "sourceTriangles": 12,
+    "derivedVertices": 24,
+    "derivedTriangles": 12,
+    "components": [
+        "c0: 12 tris, submeshes 0, inflated 4.21 mm"
+    ]
+}

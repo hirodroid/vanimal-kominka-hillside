@@ -1,0 +1,23 @@
+{
+    "version": "kh-zfix-1",
+    "renderer": "KH_FarKominka/KH_KominkaBuilding/障子/書斎障子/障子.012",
+    "sourceName": "障子.012",
+    "sourcePath": "Assets/モサンゴ屋/Kominka/FBX/建物.fbx",
+    "sourceGuid": "8add0740f715ece43805c8303608e17b",
+    "planHash": "cffec7ed1c5cea9c150a47959a0341ec",
+    "utc": "2026-10-13T05:21:30.7487313Z",
+    "sourceLocalId": 8589659588945231283,
+    "sourceVertices": 272,
+    "sourceTriangles": 136,
+    "derivedVertices": 272,
+    "derivedTriangles": 136,
+    "components": [
+        "c3: 8 tris, submeshes 1, inflated 2.10 mm",
+        "c9: 8 tris, submeshes 1, inflated 2.10 mm",
+        "c10: 8 tris, submeshes 1, inflated 2.10 mm",
+        "c11: 8 tris, submeshes 1, inflated 2.10 mm",
+        "c12: 8 tris, submeshes 1, inflated 2.10 mm",
+        "c13: 12 tris, submeshes 1, inflated 4.21 mm",
+        "c15: 10 tris, submeshes 2, inflated 1.54 mm"
+    ]
+}

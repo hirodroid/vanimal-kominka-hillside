@@ -1,0 +1,26 @@
+{
+    "version": "kh-zfix-1",
+    "renderer": "KH_FarKominka/KH_KominkaWall/門枠",
+    "sourceName": "門枠",
+    "sourcePath": "Assets/モサンゴ屋/Kominka/FBX/外壁.fbx",
+    "sourceGuid": "4a8c07bd12b764243b6298805e843b42",
+    "planHash": "3c30841bf71169dc0f1ecba12f3fcc6a",
+    "utc": "2026-10-13T05:21:31.0284764Z",
+    "sourceLocalId": -2831110272481550506,
+    "sourceVertices": 416,
+    "sourceTriangles": 220,
+    "derivedVertices": 416,
+    "derivedTriangles": 220,
+    "components": [
+        "c1: 10 tris, submeshes 0, inflated 4.10 mm",
+        "c11: 8 tris, submeshes 1, inflated 1.60 mm",
+        "c12: 8 tris, submeshes 1, inflated 1.61 mm",
+        "c13: 8 tris, submeshes 1, inflated 1.60 mm",
+        "c14: 8 tris, submeshes 1, inflated 1.60 mm",
+        "c15: 8 tris, submeshes 1, inflated 1.60 mm",
+        "c16: 8 tris, submeshes 1, inflated 1.60 mm",
+        "c17: 8 tris, submeshes 1, inflated 1.60 mm",
+        "c18: 8 tris, submeshes 1, inflated 1.60 mm",
+        "c19: 8 tris, submeshes 1, inflated 1.60 mm"
+    ]
+}

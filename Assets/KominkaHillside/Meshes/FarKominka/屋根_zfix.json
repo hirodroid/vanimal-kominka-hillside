@@ -1,0 +1,19 @@
+{
+    "version": "kh-zfix-1",
+    "renderer": "KH_FarKominka/KH_KominkaBuilding/屋根",
+    "sourceName": "屋根",
+    "sourcePath": "Assets/モサンゴ屋/Kominka/FBX/建物.fbx",
+    "sourceGuid": "8add0740f715ece43805c8303608e17b",
+    "planHash": "ad83398651493097d34dd9d6839f3129",
+    "utc": "2026-10-13T05:21:30.5567952Z",
+    "sourceLocalId": 4306888753047193765,
+    "sourceVertices": 3110,
+    "sourceTriangles": 1652,
+    "derivedVertices": 3110,
+    "derivedTriangles": 1652,
+    "components": [
+        "c104: 4 tris, submeshes 1, inflated 4.44 mm",
+        "c105: 4 tris, submeshes 1, inflated 0.20 mm",
+        "c106: 6 tris, submeshes 1, inflated 0.20 mm"
+    ]
+}
