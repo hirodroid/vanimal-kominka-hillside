@@ -1229,6 +1229,42 @@
           "text": "伸び・あくび"
         },
         {
+          "key": "call.trick.bang",
+          "text": "バーン"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "ジャンプ"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "頭に向けて手をサッと出す"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "頭の上へ手をサッと上げる"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "再生中"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "あと {0} 秒"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "バーン・ジャンプはトレーナー特典です。購入画面からどうぞ"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "トレーナー"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "手元メニュー「呼ぶ」の [バーン] [ジャンプ] でもできます"
+        },
+        {
           "key": "activities.title",
           "text": "あそぶ・みる"
         },
@@ -4922,6 +4958,42 @@
         {
           "key": "call.stretch",
           "text": "Stretch & yawn"
+        },
+        {
+          "key": "call.trick.bang",
+          "text": "Bang"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "Jump"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "Quickly move a hand toward the head"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "Quickly raise a hand above the head"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "Performing"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "Ready in {0}s"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "Bang and Jump are Trainer perks. Open the store to get them"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "Trainer"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "You can also use [Bang] [Jump] in the Call tab of the menu"
         },
         {
           "key": "activities.title",
@@ -8619,6 +8691,42 @@
           "text": "Потягушки и зевок"
         },
         {
+          "key": "call.trick.bang",
+          "text": "Бах"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "Прыжок"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "Быстро протяни руку к голове"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "Быстро подними руку над головой"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "Выполняет"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "Ещё {0} с"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "«Бах» и «Прыжок» — бонус Тренера. Купить можно в магазине"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "Тренер"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "Также можно кнопками [Бах] [Прыжок] во вкладке «Позвать»"
+        },
+        {
           "key": "activities.title",
           "text": "Игры и просмотр"
         },
@@ -12312,6 +12420,42 @@
         {
           "key": "call.stretch",
           "text": "Потягування й позіхання"
+        },
+        {
+          "key": "call.trick.bang",
+          "text": "Бах"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "Стрибок"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "Швидко простягни руку до голови"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "Швидко підніми руку над головою"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "Виконує"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "Ще {0} с"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "«Бах» і «Стрибок» — бонус Тренера. Придбати можна в магазині"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "Тренер"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "Також можна кнопками [Бах] [Стрибок] у вкладці «Покликати»"
         },
         {
           "key": "activities.title",
@@ -16009,6 +16153,42 @@
           "text": "기지개·하품"
         },
         {
+          "key": "call.trick.bang",
+          "text": "빵"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "점프"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "머리 쪽으로 손을 휙 내밀기"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "머리 위로 손을 휙 올리기"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "하는 중"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "{0}초 후"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "빵·점프는 트레이너 특전입니다. 구매 화면에서 이용하세요"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "트레이너"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "메뉴 [부르기] 탭의 [빵] [점프] 버튼으로도 할 수 있습니다"
+        },
+        {
           "key": "activities.title",
           "text": "놀기·보기"
         },
@@ -19702,6 +19882,42 @@
         {
           "key": "call.stretch",
           "text": "Strecken & Gähnen"
+        },
+        {
+          "key": "call.trick.bang",
+          "text": "Peng"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "Hopp"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "Hand schnell zum Kopf strecken"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "Hand schnell über den Kopf heben"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "Läuft"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "Noch {0} s"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "Peng und Hopp sind Trainer-Vorteile. Öffne den Shop"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "Trainer"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "Geht auch mit [Peng] [Hopp] im Menü-Tab „Rufen“"
         },
         {
           "key": "activities.title",
@@ -23399,6 +23615,42 @@
           "text": "伸懒腰、打哈欠"
         },
         {
+          "key": "call.trick.bang",
+          "text": "砰"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "跳"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "把手快速伸向头部"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "把手快速举到头顶上方"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "表演中"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "还有 {0} 秒"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "砰和跳是训练员特典。请从购买画面购买"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "训练员"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "也可以用菜单“呼唤”中的 [砰] [跳]"
+        },
+        {
           "key": "activities.title",
           "text": "玩耍与观看"
         },
@@ -27092,6 +27344,42 @@
         {
           "key": "call.stretch",
           "text": "Estirarse y bostezar"
+        },
+        {
+          "key": "call.trick.bang",
+          "text": "Bang"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "Salta"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "Mueve la mano rápido hacia la cabeza"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "Sube la mano rápido sobre la cabeza"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "En curso"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "Faltan {0} s"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "Bang y Salta son ventajas de Trainer. Abre la tienda"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "Trainer"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "También con [Bang] [Salta] en la pestaña «Llamar» del menú"
         },
         {
           "key": "activities.title",
@@ -30789,6 +31077,42 @@
           "text": "S'étirer et bâiller"
         },
         {
+          "key": "call.trick.bang",
+          "text": "Pan"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "Saute"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "Avance vite la main vers la tête"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "Lève vite la main au-dessus de la tête"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "En cours"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "Encore {0} s"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "Pan et Saute sont des avantages Trainer. Ouvre la boutique"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "Trainer"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "Aussi avec [Pan] [Saute] dans l'onglet « Appeler » du menu"
+        },
+        {
           "key": "activities.title",
           "text": "Activités"
         },
@@ -34482,6 +34806,42 @@
         {
           "key": "call.stretch",
           "text": "Espreguiçar e bocejar"
+        },
+        {
+          "key": "call.trick.bang",
+          "text": "Bang"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "Pula"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "Leve a mão rápido em direção à cabeça"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "Erga a mão rápido acima da cabeça"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "Em andamento"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "Faltam {0} s"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "Bang e Pula são vantagens de Trainer. Abra a loja"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "Trainer"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "Também dá com [Bang] [Pula] na aba \"Chamar\" do menu"
         },
         {
           "key": "activities.title",
@@ -38179,6 +38539,42 @@
           "text": "Stiracchiata e sbadiglio"
         },
         {
+          "key": "call.trick.bang",
+          "text": "Bang"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "Salta"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "Porta in fretta la mano verso la testa"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "Alza in fretta la mano sopra la testa"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "In corso"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "Ancora {0} s"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "Bang e Salta sono vantaggi Trainer. Apri il negozio"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "Trainer"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "Anche con [Bang] [Salta] nella scheda \"Chiama\" del menu"
+        },
+        {
           "key": "activities.title",
           "text": "Attività"
         },
@@ -41872,6 +42268,42 @@
         {
           "key": "call.stretch",
           "text": "Przeciąganie i ziewanie"
+        },
+        {
+          "key": "call.trick.bang",
+          "text": "Pif-paf"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "Hop"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "Szybko wyciągnij rękę w stronę głowy"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "Szybko unieś rękę nad głowę"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "W trakcie"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "Jeszcze {0} s"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "Pif-paf i Hop to bonus trenera. Otwórz sklep"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "Trener"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "Można też przyciskami [Pif-paf] [Hop] w zakładce „Zawołaj”"
         },
         {
           "key": "activities.title",
@@ -45571,6 +46003,42 @@
         {
           "key": "call.stretch",
           "text": "伸懶腰、打哈欠"
+        },
+        {
+          "key": "call.trick.bang",
+          "text": "砰"
+        },
+        {
+          "key": "call.trick.jump",
+          "text": "跳"
+        },
+        {
+          "key": "call.trick.hint.bang",
+          "text": "把手快速伸向頭部"
+        },
+        {
+          "key": "call.trick.hint.jump",
+          "text": "把手快速舉到頭頂上方"
+        },
+        {
+          "key": "call.trick.playing",
+          "text": "表演中"
+        },
+        {
+          "key": "call.trick.wait",
+          "text": "還有 {0} 秒"
+        },
+        {
+          "key": "call.trick.trainer",
+          "text": "砰和跳是訓練員特典。請從購買畫面購買"
+        },
+        {
+          "key": "call.trick.trainerTag",
+          "text": "訓練員"
+        },
+        {
+          "key": "call.trick.hint.menu",
+          "text": "也可以用選單「呼喚」中的 [砰] [跳]"
         },
         {
           "key": "activities.title",

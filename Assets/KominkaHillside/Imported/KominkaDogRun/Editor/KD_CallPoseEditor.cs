@@ -389,7 +389,8 @@ namespace KominkaDogRun.Editor
                 Vector3 target;
                 Check(petUdon.publicVariables.TryGetVariableValue("chinRestTarget", out target) && target == c.chinTargets[d], def.key + " chin backing target");
                 var slotProgram = UdonSharpEditorUtility.GetBackingUdonBehaviour(c.board.SlotOf(d)).programSource.SerializedProgramAsset.RetrieveProgram();
-                foreach (var field in new[] { "chinHand", "stretchMs", "hasStretch" })
+                // 裏山改変: IMP-DOG-054 同期の hasStretch (bool) は trickKind (int) に置き換えた (同期変数の数は同じ)
+                foreach (var field in new[] { "chinHand", "stretchMs", "trickKind" })
                     Check(slotProgram.SymbolTable.GetSymbols().Contains(field), def.key + " compiled slot field " + field);
                 Check(ctrl.parameters.Any(p => p.name == "CallReady") && ctrl.parameters.Any(p => p.name == "CallPose"), def.key + " parameters");
                 foreach (var name in States) Check(sm.states.Count(s => s.state.name == name && s.state.motion != null) == 1, def.key + " " + name);

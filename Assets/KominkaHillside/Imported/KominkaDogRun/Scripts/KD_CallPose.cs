@@ -7,7 +7,7 @@ using VRC.SDKBase;
 namespace KominkaDogRun
 {
     [UdonBehaviourSyncMode(BehaviourSyncMode.None)]
-    public class KD_CallPose : UdonSharpBehaviour
+    public partial class KD_CallPose : UdonSharpBehaviour   // 裏山改変: IMP-DOG-054 partial (芸の入口・合図・ボタンは KD_CallPose.Tricks.cs)
     {
         public const string SelectionWaiting = "犬を確認中";
         public const string SelectionBusy = "ほかの人が選択中";
@@ -186,7 +186,11 @@ namespace KominkaDogRun
             VRCPlayerApi lp = Networking.LocalPlayer;
             if (!Utilities.IsValid(lp) || board == null || dogs == null) return;
             _anyLocalCall = false;
-            for (int i = 0; i < dogs.Length && i < _dwell.Length; i++) UpdatePaw(i, lp, dt);
+            for (int i = 0; i < dogs.Length && i < _dwell.Length; i++)
+            {
+                UpdatePaw(i, lp, dt);
+                UpdateTrick(i, lp);   // 裏山改変: IMP-DOG-054 VR の芸の合図 (面を開いていなくても判定する)
+            }
             if (!_anyLocalCall && _dog < 0) _nextTick = Time.time + .25f;
             if (_dog >= 0 && panel != null && panel.activeInHierarchy)
             {
@@ -321,6 +325,7 @@ namespace KominkaDogRun
                 pawButton.interactable = locked || (mine && desktop && !slot.StretchActive && dogs[_dog] != null && dogs[_dog].IsCompanionReady
                     && slot.DogRoot() != null && Vector3.Distance(lp.GetPosition(), slot.DogRoot().position) <= 2f);
             }
+            DrawTricks();   // 裏山改変: IMP-DOG-054 [バーン] [ジャンプ] の状態表と未所持の案内 (状態行)
             KD_ShopItem purchase = Product(_purchase);
             if (purchase != null && purchase.Owned()) { _purchase = -1; purchase = null; }
             // P13: 板の手前のカード 1 枚。中身の行に「一度の購入で 6 犬種共通」

@@ -21,6 +21,14 @@ namespace KominkaDogRun
         // One permanent entitlement per action, shared by every dog breed.
         public KD_ShopItem[] actionProducts;
         public const int BellyUp = 0, ChinRest = 1, GivePaw = 2, StretchYawn = 3;
+        // 裏山改変: IMP-DOG-054 一発の芸の種類 (同期の trickKind の値。KD_CallPose のゾーン・ガイドの kind も同じ番号)
+        public const int TrickNone = 0, TrickStretch = 1, TrickBang = 2, TrickJump = 3;
+        // 裏山改変: IMP-DOG-054 伸び・バーン・ジャンプ共通の間隔 (stretchMs からの経過)
+        public const int TrickIntervalMs = 8000;
+        // 裏山改変: IMP-DOG-054 バーン・ジャンプはトレーナー特典 (受信側は送り手の _OwnedBy で判定。未配線は拒否)。
+        // tricksEnabled = 提供前のスイッチ (§2.10。OFF なら Bang / Jump を受けない。伸びは影響なし)。6 枠とも同じ値を Tricks/3 が書く
+        public KominkaHillside.KH_TrainerPass trainerPass;
+        public bool tricksEnabled;
         [SerializeField] private float releaseDistance = 8f;
         [SerializeField] private float arriveTimeout = 30f;
         [SerializeField] private float arriveRadius = 1.5f;
@@ -33,7 +41,7 @@ namespace KominkaDogRun
         [UdonSynced] private bool pawHeld;
         [UdonSynced] private int chinHand; // 0: none, 1: left, 2: right, 3: Desktop/Touch
         [UdonSynced] private int stretchMs;
-        [UdonSynced] private bool hasStretch;
+        [UdonSynced] private int trickKind; // 裏山改変: IMP-DOG-054 旧 hasStretch (bool)。0 無し / 1 伸び / 2 バーン / 3 ジャンプ。開始時刻は stretchMs を共用
         [UdonSynced] private int callToken;
         [UdonSynced] private bool arrived;
         [UdonSynced] private int reservedId = -1;
@@ -42,6 +50,7 @@ namespace KominkaDogRun
         // A single event queue preserves each sender's reserve -> commit/cancel ordering.
         public const int MaxPoseId = 4;
         private const int Reserve = 1, Renew = 2, Cancel = 3, Commit = 4, Release = 5, Pose = 6, Paw = 7, Chin = 8, Stretch = 9;
+        private const int Bang = 10, Jump = 11; // 裏山改変: IMP-DOG-054 芸の要求 (op の番号。Animator の CallPose 8 / 9 とは別の表)
         private const int LeaseMs = 15000, RequestMaxAgeMs = 8000;
         [System.NonSerialized] public int requestedPose;
         [System.NonSerialized] public Vector3 requestedSpot;
@@ -62,6 +71,9 @@ namespace KominkaDogRun
         private int _chinRequested, _chinGeneration;
         private float _nextChinRetry;
         private float _nextWatch;
+        // 裏山改変: IMP-DOG-054 送り手の「要求中」: 送る前の stretchMs と世代 (calledMs) を控え、どちらかが変わるか 2 s で解く
+        private float _trickRequestUntil;
+        private int _trickRequestBase, _trickRequestCall;
         // Owner-local tombstones: canceled/repeated requests cannot recreate reservations.
         private int[] _requestPlayers = new int[90];
         private int[] _requestTokens = new int[90];
@@ -73,9 +85,38 @@ namespace KominkaDogRun
         public int PoseId { get { return Mathf.Clamp(poseId, 0, MaxPoseId); } }
         public bool PawHeld { get { return LiveSleeperId >= 0 && PoseId == 2 && !StretchActive && pawHeld; } }
         public int ChinHand { get { return LiveSleeperId >= 0 && PoseId == 1 && !StretchActive ? chinHand : 0; } }
-        public bool StretchActive { get { int age = Networking.GetServerTimeInMilliseconds() - stretchMs; return LiveSleeperId >= 0 && hasStretch && age >= 0 && age < 6000; } }
-        public float StretchTime { get { return Mathf.Clamp01((Networking.GetServerTimeInMilliseconds() - stretchMs) / 6000f); } }
-        public bool CanStretch { get { return LiveSleeperId >= 0 && arrived && !StretchActive && (!hasStretch || Networking.GetServerTimeInMilliseconds() - stretchMs >= 8000); } }
+        // 裏山改変: IMP-DOG-054 一発の芸 (伸び / バーン / ジャンプ)。長さは種類ごとで、窓 (TrickActive) と正規化 (TrickTime) の両方に使う。
+        // 「再生が終わる」(窓を過ぎる・Pose で trickKind = 0) と「開始の履歴」(stretchMs。0 = 履歴なし) を分け、間隔は stretchMs だけで判定する。
+        // StretchActive / StretchTime は互換のため残す (種類を問わない。お手・あご乗せ・おやつ・撫での頭の追従を止める既存の読み手が芸全体に効く)
+        public int TrickKind { get { return LiveSleeperId >= 0 ? trickKind : TrickNone; } }
+        // net: callable-ok: read-only constant lookup
+        public int TrickLengthMs(int kind) { return kind == TrickStretch || kind == TrickBang ? 6000 : kind == TrickJump ? 2000 : 0; }
+        public bool TrickActive { get { int age = Networking.GetServerTimeInMilliseconds() - stretchMs; return LiveSleeperId >= 0 && trickKind != TrickNone && stretchMs != 0 && age >= 0 && age < TrickLengthMs(trickKind); } }
+        public float TrickTime
+        {
+            get
+            {
+                int length = TrickLengthMs(trickKind);
+                if (trickKind == TrickNone || length <= 0 || stretchMs == 0) return 0f;
+                return Mathf.Clamp01((Networking.GetServerTimeInMilliseconds() - stretchMs) / (float)length);
+            }
+        }
+        public bool StretchActive { get { return TrickActive; } }
+        public float StretchTime { get { return TrickTime; } }
+        public bool CanStretch { get { return LiveSleeperId >= 0 && arrived && !TrickActive && (stretchMs == 0 || Networking.GetServerTimeInMilliseconds() - stretchMs >= TrickIntervalMs); } }
+        /// <summary>裏山改変: IMP-DOG-054 共通の間隔の残り (ms)。履歴なし・間隔を過ぎていれば 0。</summary>
+        public int TrickWaitMs
+        {
+            get
+            {
+                if (stretchMs == 0) return 0;
+                int age = Networking.GetServerTimeInMilliseconds() - stretchMs;
+                return age >= TrickIntervalMs ? 0 : Mathf.Clamp(TrickIntervalMs - age, 0, TrickIntervalMs);
+            }
+        }
+        /// <summary>裏山改変: IMP-DOG-054 芸の要求を送ってから 2 s、または結果 (stretchMs の変化)・世代の変化 (calledMs) が来るまで true。
+        /// Owner 自身の送信は HandleRequest が同期的に受理して stretchMs が変わるので、送った直後から false になる (状態 4 を隠さない)。</summary>
+        public bool TrickRequestPending { get { return Time.time < _trickRequestUntil && stretchMs == _trickRequestBase && calledMs == _trickRequestCall; } }
         public bool HasSpot { get { return hasSpot; } }
         public Vector3 Spot { get { return spot; } }
         public float SpotYaw { get { return spotYaw; } }
@@ -198,6 +239,23 @@ namespace KominkaDogRun
             if (!IsSleeperLocal || CallPending || !CanStretch || !ActionOwnedBy(StretchYawn, Networking.LocalPlayer)) return;
             SendRequest(Stretch, calledMs, Vector3.zero, 0f, 0, false, OwnerId());
         }
+        // 裏山改変: IMP-DOG-054 芸の送り手。受信側 (HandleRequest) と同じ条件をここでも見て早期に落とす (BUG-DOG-009 の型)。
+        // CalledTreatActive・配置中・IsCompanionReady は犬側・面のローカル状態なので KD_CallPose が見てから呼ぶ
+        public void _Bang() { SendTrick(Bang); }
+        public void _Jump() { SendTrick(Jump); }
+        private void SendTrick(int op)
+        {
+            var lp = Networking.LocalPlayer;
+            if (!IsSleeperLocal || CallPending || TrickRequestPending || PoseId != 2 || !CanStretch || !tricksEnabled
+                || trainerPass == null || !trainerPass._Loaded() || !trainerPass._OwnedBy(lp)) return;
+            _trickRequestBase = stretchMs; _trickRequestCall = calledMs; _trickRequestUntil = Time.time + 2f;
+            SendRequest(op, calledMs, Vector3.zero, 0f, 0, false, OwnerId());
+        }
+        // 裏山改変: IMP-DOG-054 受理の書き込み (伸び・バーン・ジャンプ共通)。stretchMs == 0 は「履歴なし」なので 0 を避ける
+        private void StartTrick(int now, int kind)
+        {
+            stretchMs = now == 0 ? 1 : now; trickKind = kind; pawHeld = false; chinHand = 0; RequestSerialization();
+        }
         private void SendRequest(int op, int token, Vector3 position, float yaw, int pose, bool flag, int owner)
         {
             if (owner < 0) return;
@@ -251,7 +309,7 @@ namespace KominkaDogRun
                 if (!PoseOwnedBy(pose, player) || !ValidPlacement(position, yaw)) return;
                 sleeperId = id; hasSpot = flag; spot = flag ? position : Vector3.zero;
                 spotYaw = flag ? Mathf.Repeat(yaw, 360f) : 0f; poseId = pose; pawHeld = false; arrived = false;
-                chinHand = 0; hasStretch = false;
+                chinHand = 0; trickKind = TrickNone; stretchMs = 0;   // 裏山改変: IMP-DOG-054 呼び直し・再配置は新しい世代 (芸と間隔の履歴を両方消す)
                 if (now == calledMs) now++;
                 calledMs = now == 0 ? 1 : now; callToken = token;
                 ClearReservation();
@@ -260,13 +318,17 @@ namespace KominkaDogRun
             {
                 if (op == Release && (sleeperId == id || (board != null && board.CanControlNow(player)))) PublishRelease();   // 管理者の取り上げは受理直前に在席を測り直す (IMP-NET-007)
                 else if (sleeperId == id && op == Pose && PoseOwnedBy(pose, player))
-                { poseId = pose; pawHeld = false; chinHand = 0; hasStretch = false; RequestSerialization(); }
+                { poseId = pose; pawHeld = false; chinHand = 0; trickKind = TrickNone; RequestSerialization(); }   // 裏山改変: IMP-DOG-054 再生は止めるが stretchMs は残す (姿勢変更で間隔を回避させない)
                 else if (sleeperId == id && op == Paw && poseId == 2 && pose == poseId && !StretchActive && pawHeld != flag && (!flag || ActionOwnedBy(GivePaw, player)))
                 { pawHeld = flag; RequestSerialization(); }
                 else if (sleeperId == id && op == Chin && poseId == 1 && pose >= 0 && pose <= 3 && !StretchActive && chinHand != pose && (pose == 0 || ActionOwnedBy(ChinRest, player)))
                 { chinHand = pose; RequestSerialization(); }
                 else if (sleeperId == id && op == Stretch && CanStretch && ActionOwnedBy(StretchYawn, player))
-                { stretchMs = now; hasStretch = true; pawHeld = false; chinHand = 0; RequestSerialization(); }
+                { StartTrick(now, TrickStretch); }   // 裏山改変: IMP-DOG-054 旧 hasStretch = true。権利・姿勢条件は従来どおり
+                // 裏山改変: IMP-DOG-054 バーン / ジャンプ: おすわり・到着済み・共通の間隔・提供中・送り手がトレーナー (未配線・未ロードは拒否)
+                else if (sleeperId == id && (op == Bang || op == Jump) && tricksEnabled && poseId == 2 && arrived && CanStretch
+                    && trainerPass != null && trainerPass._OwnedBy(player))
+                { StartTrick(now, op == Bang ? TrickBang : TrickJump); }
             }
         }
         private int RequestIndex(int player)
@@ -374,7 +436,7 @@ namespace KominkaDogRun
         private void PublishRelease()
         {
             sleeperId = -1; calledMs = 0; hasSpot = false; spot = Vector3.zero; spotYaw = 0f;
-            poseId = 0; pawHeld = false; chinHand = 0; hasStretch = false; callToken = 0; arrived = false;
+            poseId = 0; pawHeld = false; chinHand = 0; trickKind = TrickNone; stretchMs = 0; callToken = 0; arrived = false;   // 裏山改変: IMP-DOG-054 解除で芸と間隔の履歴を両方消す
             ClearReservation();
         }
 

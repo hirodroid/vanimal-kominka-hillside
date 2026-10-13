@@ -1869,18 +1869,19 @@ namespace KominkaDogRun
                 // frame (it can be non-zero with no live caller, so "nobody called" cannot skip it). Same values as before.
                 KD_SleepSlot slot = LateSleepSlot();
                 int pose = slot == null ? 0 : slot.PoseId;
-                bool stretch = IsCompanionReady && slot != null && slot.StretchActive;
+                // 裏山改変: IMP-DOG-054 一発の芸 (伸び 1 / バーン 2 / ジャンプ 3) を CallPose 7 / 8 / 9 へ。時刻は種類ごとの長さで正規化した TrickTime
+                bool stretch = IsCompanionReady && slot != null && slot.TrickActive;
                 int animation = pose == 3 ? 4 : pose == 4 ? 5 : pose;
                 if (pose == 2 && slot != null && slot.PawHeld) animation = 3;
                 if (pose == 1 && slot != null && slot.ChinHand != 0) animation = 6;
-                if (stretch) animation = 7;
+                if (stretch) animation = slot.TrickKind == KD_SleepSlot.TrickJump ? 9 : slot.TrickKind == KD_SleepSlot.TrickBang ? 8 : 7;   // 裏山改変: IMP-DOG-054
                 // IMP-DOG-028: 洗われ中の足上げ (CallPaw = 3)。優先は最後 (Sit / LieDown / 集合 / 寝床の呼び出しが立っていれば出さない)。
                 // 洗われていない犬は WashPawPose が false (_washActive が立たない) なので、下の 2 式は従来と同じ値になる
                 // _wasMoving: the Walk / Run this frame's ApplyMoveAnim wrote (incl. its stop hold) - no static pose while the legs move
                 bool washPaw = WashPawPose && !_wasMoving && !_wantSit && !_wantLieDown && !_groupSit && !IsCompanionReady;
                 ApplyCompanionAnimation(_wantSleep && pose == 0 && !stretch,
                     washPaw || _groupSit || (IsCompanionReady && (pose != 0 || stretch)),
-                    washPaw ? 3 : (_groupSit ? 2 : animation), stretch ? slot.StretchTime : 0f);
+                    washPaw ? 3 : (_groupSit ? 2 : animation), stretch ? slot.TrickTime : 0f);   // 裏山改変: IMP-DOG-054 TrickTime
             }
 
             if (breathSource == null) return;
