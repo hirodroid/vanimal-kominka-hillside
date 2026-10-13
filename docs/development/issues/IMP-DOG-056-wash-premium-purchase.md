@@ -5,7 +5,7 @@ system: DOG
 status: todo
 priority: Medium
 summary: 洗い場の追加道具 5 セット (泡 / 水 / 仕上げ / 洗い場 各 500C、全部入り 1500C) を Credits 商品として接続する。Storefront の ID は ce-listings.md、所有判定は「インスタンスに 1 人でも所有者がいれば全員が選べる、洗い終わりまで継続」
-next: "ユーザー: 全部入りの作り方 (ce-listings §4-2 案 1 / 案 2) を決め、Storefront で Udon Product 4 または 5 と Listing 5 を作り ce-listings.md §2 C に貼る、Listing 文面の起草。AI: 貼られたら商品定義の行追加・所有判定の設計 (§2) → Codex 相談 → 実装"
+next: "案 1 で決定 (2026-10-14)。ユーザー: Storefront の Udon Product 4 と Listing 5 の ID を ce-listings.md §2 C に貼る (全部入りは Listing ID だけ)、Listing 文面の起草。AI: 貼られたら商品定義の行追加・所有判定の設計 (§2) → Codex 相談 → 実装"
 updated: 2026-10-14
 ---
 
@@ -25,7 +25,7 @@ updated: 2026-10-14
 
 ### 1. 商品定義と Storefront の ID
 
-- ユーザーが Storefront で作り、[ce-listings.md §2 C](../design/ce-listings.md) に貼る (手順は同 §1)。全部入りの作り方 (案 1 = 4 Product を含める Listing、案 2 = 5 つ目の Product) は同 §4-2。どちらもコードの変更が要るので、費用を見てユーザーが決める。
+- ユーザーが Storefront で作り、[ce-listings.md §2 C](../design/ce-listings.md) に貼る (手順は同 §1)。全部入りの作り方は **案 1 で決定 (2026-10-14 ユーザー。Storefront で 1 Listing に 4 Product を追加できた)**: 全部入りは C-1〜C-4 の Product を含める Listing で、5 つ目の Product は作らない。所有判定はセットごとの Product だけを見る。`Row` は 1 行 1 `ceListingId` で、同じ `ceAsset` を別 Listing と共有する行を `Validate` が拒むので、全部入りの購入画面 (`Store.OpenListing`) を開く入口は **Listing だけの項目** (Product を持たない定義、または `KD_ShopItem` とは別の参照) として足す。設計は Codex 相談で確認する。
 - 貼られたら `KD_ProductDefinitions.All` の末尾に CE 行を足す (分類は新規 `wash` か。既存 `Categories` を確認して決める)。`IsCE` 行は `price=0`・`ceCredits>0`、同じアセットを共有する行は Product / Listing / Credits が一致 (`Validate` の契約)。UdonProduct アセットは `Products/1 - Apply Metadata`、配線は `Menu/4 Setup Shop` → `4a Verify Shop` (ユーザー実行)。
 - 手元メニューに売り場の行を置くか、洗い場の写真選択パネルから `Store.OpenListing` を開くかは [DES-UI-005](DES-UI-005-trainer-and-paid-items-purchase-flow.md) の導線設計と合わせる。
 
@@ -58,3 +58,5 @@ updated: 2026-10-14
 ## 記録
 
 2026-10-14: 起票。IMP-DOG-043 の「次工程」を引き継ぐ。ce-listings.md を同日に作成 (ID は空欄)。コード・シーン・Storefront は未変更。
+
+決定: 2026-10-14 (ユーザー) 全部入りは案 1 (4 Product を含める Listing)。Storefront で 1 Listing に 4 Product を追加できたと報告。ID は未貼付。

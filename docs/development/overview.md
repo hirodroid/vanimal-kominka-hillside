@@ -47,7 +47,7 @@
 
 Issue単位の状態と次の作業は [Issueサマリ](issues/issue_summary.md) を参照する。この文書は一覧を複製せず、全体の到達点と優先順を示す。進行中の未コミット実装は検証済みに数えない。
 
-**2026-10-14 CE 商品台帳の作成と洗い場の購入接続の起票 (ユーザー依頼「古民家ドッグランを参考に ListingId / ProductId を置く場所を」、統括 Fable、文書のみ)。** [CE 商品台帳](design/ce-listings.md) を古民家と同じパスに作成 (移植コードが参照していた切れたパス)。§2 は A トレーナー (共通、既存 ID)、B 古民家から移植した 6 商品 (裏山用の別 ID が要る。空欄)、C 洗い場 5 Listing (各 500C / 全部入り 1500C。空欄)。購入画面・所有判定 (誰か 1 人の所有で全員、洗い終わりまで継続) は [IMP-DOG-056](issues/IMP-DOG-056-wash-premium-purchase.md) (todo) に起票し、IMP-DOG-043 の「次工程」を付け替えた。**見つけた食い違い (台帳 §4-1)**: `KD_ProductDefinitions.cs` 33〜38 行の 6 商品の定数は古民家の ID のままで、2026-10-12 の「共通はトレーナーだけ」と合わない (コード未変更。飾り 2 件は DES-UI-005、ライブ 3 件は DES-LIV-001 で扱う)。**次はユーザー**: 全部入りの作り方 (台帳 §4-2 案 1 / 案 2) を決め、Storefront で Udon Product と Listing を作って §2 C に貼る、Listing 文面の起草。
+**2026-10-14 CE 商品台帳の作成と洗い場の購入接続の起票 (ユーザー依頼「古民家ドッグランを参考に ListingId / ProductId を置く場所を」、統括 Fable、文書のみ)。** [CE 商品台帳](design/ce-listings.md) を古民家と同じパスに作成 (移植コードが参照していた切れたパス)。§2 は A トレーナー (共通、既存 ID)、B 古民家から移植した 6 商品 (裏山用の別 ID が要る。空欄)、C 洗い場 5 Listing (各 500C / 全部入り 1500C。空欄)。購入画面・所有判定 (誰か 1 人の所有で全員、洗い終わりまで継続) は [IMP-DOG-056](issues/IMP-DOG-056-wash-premium-purchase.md) (todo) に起票し、IMP-DOG-043 の「次工程」を付け替えた。**見つけた食い違い (台帳 §4-1)**: `KD_ProductDefinitions.cs` 33〜38 行の 6 商品の定数は古民家の ID のままで、2026-10-12 の「共通はトレーナーだけ」と合わない (コード未変更。飾り 2 件は DES-UI-005、ライブ 3 件は DES-LIV-001 で扱う)。同日ユーザーが全部入りを**案 1** (4 Product を含める Listing、5 つ目の Product なし) と決定し、Storefront で 1 Listing に 4 Product を追加できたと報告。**次はユーザー**: Product 4 と Listing 5 の ID を台帳 §2 C に貼る、Listing 文面の起草。
 
 ### 10-03 の 11 件の本番実装 (`8faf572`) と検証の範囲
 

@@ -67,7 +67,7 @@ game-design §5 (2026-10-12 ユーザー訂正) により、トレーナー以�
 | C-2 | VAnimal｜あらいばセット 水 | Permanent / 500C |  |  | `KD_Product_WashWater.asset` | `wash.water_set` | じょうろ、ホース、水鉄砲 |
 | C-3 | VAnimal｜あらいばセット 仕上げ | Permanent / 500C |  |  | `KD_Product_WashFinish.asset` | `wash.finish_set` | ドライヤー、柄タオル |
 | C-4 | VAnimal｜あらいばセット 洗い場 | Permanent / 500C |  |  | `KD_Product_WashStation.asset` | `wash.station_set` | 檜の洗い台、プール |
-| C-5 | VAnimal｜あらいばセット 全部入り | Permanent / 1500C |  |  | (§4-2 で決める: 4 Product を含める Listing か、5 つ目の Product か) | `wash.all_set` (5 つ目の Product を作る場合だけ) | 上の 4 セット |
+| C-5 | VAnimal｜あらいばセット 全部入り | Permanent / 1500C | (無し。C-1〜C-4 の 4 Product を含める Listing) |  | (無し) | (無し。所有は C-1〜C-4 の Product で判定し、この Listing は購入画面を開くだけ) | 上の 4 セット (案 1、2026-10-14 決定) |
 
 リスティング画像 (1024×1024、価格なし、犬なし) は [artifacts/wash-listings/2026-10-13-v05/](../../../artifacts/wash-listings/2026-10-13-v05/README.md) の 5 枚 (9 品の再設計版)。それ以前の撮影分 ([2026-10-13](../../../artifacts/wash-listings/2026-10-13/README.md)、[2026-10-08](../../../artifacts/wash-listings/2026-10-08/README.md)) は保全で、Storefront には使わない。
 
@@ -114,7 +114,7 @@ game-design §5 (2026-10-12 ユーザー訂正) により、トレーナー以�
 | # | 論点 | 現状 | 担当 |
 |---|---|---|---|
 | 4-1 | **移植コードが古民家の 6 商品 (B-1〜B-6) の Product / Listing ID を持ったまま** | `KD_ProductDefinitions.cs` 33〜38 行。2026-10-12 の「共通はトレーナーだけ」と食い違う。裏山でこれらを画面に出す前に、裏山用 ID へ差し替えるか、行を売り場から外す。コード・シーンは 2026-10-14 時点で未変更 (`Validate` が形式を見るだけで、古民家の ID かどうかは判別しない) | 飾り 2 件は DES-UI-005 の棚卸し、ライブ 3 件は DES-LIV-001、ぬいぐるみは初期公開外 |
-| 4-2 | **全部入り (C-5) の作り方** | 公式で 1 Listing に複数 Product を入れられることは確認済み (§1-2)。**案 1**: Listing C-5 に C-1〜C-4 の 4 Product を含める (5 つ目の Product は無し)。所有判定はセットごとの Product を見るだけで済むが、`Row` は 1 行 1 `ceListingId` で、同じ `ceAsset` を別の Listing と共有する行を `Validate` が拒むので、`Store.OpenListing(C-5)` を開く入口を置くには Row の拡張か Listing だけの項目が要る。**未確認: 同じ Udon Product を 2 つの Listing (C-1 と C-5) に入れられるか** (Storefront で確かめる)。**案 2**: 5 つ目の Udon Product `wash.all_set` を作る。Row はそのまま使えるが、所有判定側で「全部入り OR 各セット」を書き、二重の判定を持つ。どちらもコードの変更が要る。費用を見て IMP-DOG-056 で決める | IMP-DOG-056 (ユーザー決定) |
+| 4-2 | **全部入り (C-5) の作り方** | 公式で 1 Listing に複数 Product を入れられることは確認済み (§1-2)。**案 1**: Listing C-5 に C-1〜C-4 の 4 Product を含める (5 つ目の Product は無し)。所有判定はセットごとの Product を見るだけで済むが、`Row` は 1 行 1 `ceListingId` で、同じ `ceAsset` を別の Listing と共有する行を `Validate` が拒むので、`Store.OpenListing(C-5)` を開く入口を置くには Row の拡張か Listing だけの項目が要る。**未確認: 同じ Udon Product を 2 つの Listing (C-1 と C-5) に入れられるか** (Storefront で確かめる)。**案 2**: 5 つ目の Udon Product `wash.all_set` を作る。Row はそのまま使えるが、所有判定側で「全部入り OR 各セット」を書き、二重の判定を持つ。どちらもコードの変更が要る。費用を見て IMP-DOG-056 で決める。**決定: 2026-10-14 ユーザー「案 1」。Storefront で 1 つの Listing に 4 Product を追加できたことを実測** (同じ Product を C-1〜C-4 の各 Listing にも入れた状態で成立するかは、4 つの Listing を作った時点で確かめる) | IMP-DOG-056 (決定済み。Row の拡張 = Listing だけの項目は 056 §1) |
 | 4-3 | **インスタンス共有の所有判定** | 既存 CE は購入者本人の `Store` 判定だけ。洗い場は「誰か 1 人が所有」+「洗い終わりまで継続」+「所有者 0 で無料に戻る」。所有者の退室・途中参加・洗いの終わりの判定が要る。`KH_WashSelection` には購入判定が無い (IMP-DOG-043 は購入なしで先行導入) | IMP-DOG-056 |
 | 4-4 | 裏山の Listing 名の接尾 | 古民家と同名の Listing を 2 つ作ると Storefront で見分けにくい。「｜裏山」などを付けるかはユーザー | DES-UI-005 |
 | 4-5 | 画像の価格表記・犬なしの既定 | 古民家の既定 (1024×1024、価格なし) を踏襲。C の 5 枚は撮影済み | — |
@@ -122,3 +122,4 @@ game-design §5 (2026-10-12 ユーザー訂正) により、トレーナー以�
 ## 記録
 
 - 2026-10-14: 起票 (ユーザー依頼)。ID はすべて空欄、コード・シーン・Storefront は未変更。公式 Listings の「複数 Product」を確認して §4-2 に記載。同日、Codex 相当の確認で §1-5 (メニューは統括が実行) と §4-2 (案 1 も Row の拡張が要る、未確認は Product の 2 Listing 共有) を訂正。
+- 2026-10-14: ユーザー決定「案 1」(全部入りは 4 Product を含める Listing、5 つ目の Product は作らない)。Storefront で 1 Listing に 4 Product を追加できたと報告。C-5 の行を Listing だけに直した。ID はまだ空欄。
