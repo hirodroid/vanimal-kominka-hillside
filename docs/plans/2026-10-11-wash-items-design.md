@@ -101,7 +101,7 @@
 - 選択の一覧は 17 品の固定配列 (`Editor/KH_WashSelectionEditor.cs:20-21` の `Names` / `Groups`)。ランタイムも 17 品前提で、番号で種類を判定している (`KH_WashSelection.cs:58` `item>16`、`:64-67` `item<13` / `<16`、`:77` `models.Length!=17`、`:95-96` 台とアヒル)。
 - 選択 UI は 5 タブ (泡・水・仕上げ・洗い場・全部入り)、1 ページ 6 品 (`KH_WashSelectionBoard.cs:58`、`:73-84`)。
 - 文言は 13 言語 × 42 語 (`Assets/KominkaHillside/Data/WashPremium/words.json`、`KH_WashSelectionBoard.cs:15`)。**セット説明 5 語 (15〜19 番) はすべて外す品の名前を含む** (「スポンジ」「水鉄砲は短くシュッと。シャワーと…」「ブラシ…コロン」「檜・石・タイル…アヒル」「全アイテム」)。
-- 文字のフォント `CareFont` は Static で保存している (`Editor/KH_WashSelectionEditor.Font.cs:6`)。新しい字は 43 番のメニューで焼き直す必要がある。
+- 2026-10-13更新: 専用 `CareFont` を撤回し、既存 `KD_NotoSerif SDF` とVRChatフォールバックを使う。43は既存フォント適用（自動保存なし）、保存後の51で参照を確認。商品画像だけは既存TTFから必要文字の一時Staticを作り、撮影後に破棄する。[IMP-UI-007](../development/issues/IMP-UI-007-wash-font-fallback.md)。
 - リスティング画像 5 枚と実行用の写真は 17 品の構成で撮影済み ([画像の記録](../../artifacts/wash-listings/2026-10-08/README.md))。撮影メニューの説明文に「6つの水の道具」などが直書きされている (`Editor/KH_WashSelectionEditor.cs:44`)。
 - 外す 11 品のモデルは 4 か所 × 各品で、シーンに置かれている (IMP-DOG-043「68モデル」)。
 - ドライヤーの風は通常の霧の粒子 (色 (0.9, 0.94, 0.92, 0.1)、毎秒 9、速さ 0.6、大きさ 0.02。`Build.cs:35`)。
@@ -145,7 +145,7 @@
 
 ### 2.6 実装で触る所
 
-- `KH_WashSelection.cs` / `KH_WashSelectionBoard.cs` (番号の判定をカタログへ)、`Editor/KH_WashSelectionEditor*.cs` (Names / Groups / Slots、写真、撮影の説明文、検査)、`Data/WashPremium/words.json` (13 言語)、`CareFont` の焼き直し、リスティング画像 5 枚、ドライヤーの粒子 (`Build.cs:35` の生成部)。
+- `KH_WashSelection.cs` / `KH_WashSelectionBoard.cs` (番号の判定をカタログへ)、`Editor/KH_WashSelectionEditor*.cs` (Names / Groups / Slots、写真、撮影の説明文、検査)、`Data/WashPremium/words.json` (13 言語)、既存共通フォント/fallbackの確認（上記10-13改訂）、リスティング画像 5 枚、ドライヤーの粒子 (`Build.cs:35` の生成部)。
 - シーンの 4 か所の `PremiumTools` (外す品の置物の除去)。モデル原本と DES-DOG-008 の記録は消さない。
 
 ---

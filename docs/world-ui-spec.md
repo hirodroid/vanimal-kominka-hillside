@@ -295,7 +295,7 @@ Network IDの保全：unknown
 
 - 閲覧タブ・選択中の写真・言語は個人状態。確定した道具・台・アヒルは**その洗い場だけ**の共有状態。他の3洗い場は変えない。
 - 現在はすべて購入なしで利用可能。購入ボタン・価格・商品ID・所有判定は後工程。使用中の追加道具を置くまでは切替を止め、理由を状態欄に表示。
-- 13言語（ja/en/ru/uk/ko/de/zh-cn/es/fr/pt-br/it/pl/zh-hk）。正本は Data/WashPremium/words.json、既存KD_Languageへ追従。元フォントはEditor用、ランタイムは必要字形のみStatic SDF。字形欠け・枠はみ出しを全言語・5タブで確認。
+- 13言語（ja/en/ru/uk/ko/de/zh-cn/es/fr/pt-br/it/pl/zh-hk）。正本は Data/WashPremium/words.json、既存KD_Languageへ追従。2026-10-13 [IMP-UI-007](development/issues/IMP-UI-007-wash-font-fallback.md)で専用CareFontを撤回し、既存KD_NotoSerif SDFとVRChatクライアントのフォールバックへ統一。字形を自動追加しない。字形・枠内収まりは全言語・5タブ・状態文言を実機で確認する。商品画像の撮影だけは既存TTFからキャプションの必要文字を一時Static化し、撮影後に破棄する（新規の配布フォントなし）。
 - 状態表示：選択案内／反映中／保持中／適用完了／再試行。Ownerの応答は要求者IDを確認するローカル結果通知。アヒルは明示ON/OFF。途中参加の初期復元では出現演出を鳴らさない。
 - [実装・局所テスト・実機確認待ち](development/issues/IMP-DOG-043-wash-premium-selection.md)、[写真・画像仕様](../artifacts/wash-listings/2026-10-08/README.md)。
 

@@ -98,7 +98,7 @@ updated: 2026-10-11
 ### Unity で行う手順 (統括、この順で)
 
 1. `bash scripts/unity-compile.sh --udon` — C# と Udon のエラー 0。新しい Program Asset は無い。 新しい Editor ファイル `KH_WashSelectionEditor.Category.cs` の `.meta` はここで Unity が作るので、コミット時に `.cs` と一緒に stage する (同じフォルダの `KH_HandFeed*` と `Testing/` の未追跡ファイルは別セッションのもの)。
-2. `Tools/KominkaHillside/WashPremium/43 - Prepare Care Font` — **48 より先、シーンが保存済みの状態で。** 43 はシーンを保存する (`SaveOpenScenes`) ため、48 の後に回すと検査前の移行まで保存してしまう。新しい字 58 字は IMP-DOG-047 に一覧。結果 `Temp/WashSelection/font.txt` の `missing=0`、YAML で `CareFont.asset` の `m_SourceFontFile: {fileID: 0}` を確かめる (vrc-world-ui §8)。
+2. 2026-10-13更新: `Tools/KominkaHillside/WashPremium/43 - Apply Shared Font` は保存済みシーンのボードへ既存共通フォントを適用する。字形の焼込み・自動保存はしない。対象シーンを保存した後、`51 - Verify Font Policy` で参照を確認する。未収録字はクライアントfallbackの実機確認へ渡す。[IMP-UI-007](IMP-UI-007-wash-font-fallback.md)。
 3. `Tools/KominkaHillside/WashPremium/48 - Migrate To Category Slots` — 開始時に dirty なら止まる。dirty にするが**保存しない**。`Temp/WashSelection/migrate.txt` の期待値 (保存済みシーンを node で数えた値: 18 Prefab が各 5 個 = 4 洗い場 + 展示 1、展示の子は 17):
    - `selectors=4 removed station objects=44 gallery=11 offered=FoamCannon,PawMitt,WateringCan,Dryer,PatternTowel,HinokiBath`
    - 洗い場ごとに `removed=11 slatsHidden=5 freeTableRenderers=1 (Mesh) homes=Home_Foam(-1.250, 0.820, -0.040) Home_Water(-1.070, 0.820, -0.040) Home_Finish(-0.785, 0.820, -0.040)`、残す 5 品それぞれ `collider <洗い場> <品> size ... -> ... centre ... -> ...` (当たり判定の箱の作り直し。下の「配置の修正」) (freeTableRenderers の数は WashTable の下に他の Renderer が足されていれば増える。すのこと追加品のモデルが入っていないことが要点。初回は `created .../Home_*` が 3 行ずつ)
