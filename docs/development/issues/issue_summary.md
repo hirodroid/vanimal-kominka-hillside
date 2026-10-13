@@ -3,7 +3,7 @@
 > 生成ファイル。手で編集しない。運用は [README.md](README.md)。
 > 更新は `node scripts/check-issues.js --write` (状態・概要・次は各 Issue の frontmatter が正本)。
 
-144 件 — 対応中 14 / 確認待ち 87 / 未着手 9 / 保留 3 / 完了 31
+145 件 — 対応中 14 / 確認待ち 87 / 未着手 10 / 保留 3 / 完了 31
 
 ## 実行キュー
 
@@ -115,6 +115,7 @@
 | [BUG-DOG-005](BUG-DOG-005-ios-disc-colors.md) | Medium | 体験会 (2026-09-26) で iOS 参加者から「フリスビーの色が全部同じ」。10-04 に Quest で真っ黒とユーザーが確認 (iOS も同じらしい)。原因の見立ては材質の金属 1 で、修正は BUG-ENV-001 で行う | todo | BUG-ENV-001 でディスクと顔の材質を金属 0 へ直した後、Quest と iOS で 6 色と顔が見分けられるかを確認する |
 | [IMP-DOG-048](IMP-DOG-048-collar-and-leash-patterns.md) | Medium | 首輪とリードの柄違いを Point 商品にし、おそろいセットを足す。2026-10-10 ユーザー決定: 首輪+リードのおそろいセットのみ 4 種 (しま / チェック / もみじ 各 30pt、革と真鍮 50pt)、単品なし、無料は現行の犬別色 | todo | 実装は IMP-DOG-050 (2026-10-11 起票)。商品定義・首輪とリードの同期・干渉表の範囲・古民家の正本への反映箇所は 050 に書いた。050 で未決の点 (首輪を飾りの 6 つ目の枠にするか、商品の分類) を決めたら、この Issue の完了条件を見直す |
 | [IMP-DOG-056](IMP-DOG-056-wash-premium-purchase.md) | Medium | 洗い場の追加道具 5 セット (泡 / 水 / 仕上げ / 洗い場 各 500C、全部入り 1500C) を Credits 商品として接続する。Storefront の ID は ce-listings.md、所有判定は「インスタンスに 1 人でも所有者がいれば全員が選べる、洗い終わりまで継続」 | todo | 案 1 で決定 (2026-10-14)。ユーザー: Storefront の Udon Product 4 と Listing 5 の ID を ce-listings.md §2 C に貼る (全部入りは Listing ID だけ)、Listing 文面の起草。AI: 貼られたら商品定義の行追加・所有判定の設計 (§2) → Codex 相談 → 実装 |
+| [IMP-UI-008](IMP-UI-008-credits-shop-and-item-boards.md) | Medium | クレジットを古民家ドッグランに揃え、torinosukeShop 紹介・バニマルのグループポスター・裏山版のアイテム案内とメニューを開くボードを整備する | todo | 古民家ドッグランのクレジット・紹介とポスター・犬たちのお気に入り隣のボードを確認し、裏山への移植内容と配置案を整理する |
 | [VER-WLD-001](VER-WLD-001-quest-ios-devices.md) | Medium | Quest 単体・iOS の実機で全機能 (散歩・メニュー・空/夜・フリスビー・首輪/リード・負荷・境界) を確認する。各 Issue の Quest/iOS 未確認をここに集約 | todo | Quest 3 単体で play-checklist の D 節を D1 (入室直後と 6 匹リード散歩の fps) と D29 (フリスビーの 6 色と顔・首輪とリードが黒くないか。BUG-ENV-001 の 10-04 修正後) から始めて 1 周し、続けて iPhone 15 Pro で E 節を E1 (fps)・E27 (フリスビーの 6 色) から見る。Desktop の C 節はこの Issue の範囲外 |
 | [BUG-ENV-004](BUG-ENV-004-prop-zfight-photoboard-guideroof.md) | Low | 自作の小物 2 件に同一平面の重なり (写真ボードの仕上げ板 KH_PhotoBoard/Structure/FinishedVisual 219 cm² gap 2 mm、門前の案内板の屋根の棟 Ridge と RoofFront / RoofBack 7 cm² gap 0)。BUG-ENV-003 の走査で見つかった古民家以外の残り | todo | ユーザーが Play でちらつきを見た時に着手。直すなら生成側 (KH_PropFinishEditor の仕上げ板の押し出し、KH_GuideBoardsEditor の屋根の棟の高さ) を 4 mm 離す。ZFight/1 で再確認 |
 | [IMP-DOG-033](IMP-DOG-033-call-placement-tilt.md) | Low | 場所を決めて呼ぶで、手の傾きに合わせて犬を傾けて置けるようにする (斜面で抱っこしている感じに置く) | todo | IMP-DOG-032 の Play (A0-26・B66・C20) が 10-06 までに済んだら着手。同期・犬の姿勢・Desktop/Touch の扱いは [設計案](../../plans/2026-10-03-call-placement-tilt.md) (傾き上限 30°・8° 未満は水平、Desktop/Touch は地面に自動で合わせる) を実装する |
