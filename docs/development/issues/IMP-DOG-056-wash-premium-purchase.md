@@ -85,9 +85,9 @@ updated: 2026-10-14
 
 ## 完了条件
 
-- [ ] ce-listings.md §2 C の 9 ID (Product 4、Listing 5) が `KD_ProductDefinitions` の定数と一致し、`Menu/4a Verify Shop` PASS (wash は初期品 0 の分類として検査)
+- [x] ce-listings.md §2 C の 9 ID (Product 4、Listing 5) が `KD_ProductDefinitions` の定数と一致し、`Menu/4a Verify Shop` PASS (wash は初期品 0 の分類として検査) (2026-10-14)
 - [x] 所有判定の設計 (§2) を Codex 相談で確認し、契約を本票に記録 (2026-10-14)。「洗いの終わり」の推奨 (§2.3) はユーザー確認待ち
-- [ ] Edit (44): _Decide の 3 状態 × 4 経路、_StationIdle の両枝、配線と ID。ClientSim (premium-store、相談で回すと決めたら): 未所有 → Locked、Purchased → 反映、Play 中の購入通知
+- [x] Edit (44): _Decide の 3 状態 × 4 経路、_StationIdle の両枝、配線と ID (PASS 1095)。ClientSim (premium-store): 未所有 → Locked、Purchased → 反映、Play 中の購入通知 (Course/100p5 3 / 3 PASS、run 20261013-233842) (2026-10-14)
 - [ ] 実機 2 人 (ユーザー): §2.4 の 5 項目 (他人の所有で選べる・途中参加・Owner 兼所有者の退室と 60 s 後の戻り・実課金 1 件・全部入りなら 4 Product)。読込中の表示
 - [ ] Listing の有効化は実課金の検査の直前に (ユーザー)。一般向けの導線 (看板・文面) の公開は実課金の確認後 (ce-listings §1-6)
 
@@ -110,6 +110,6 @@ updated: 2026-10-14
 
 **検証 (統括)**: C# 0 / U# 0 → Products/1 (UdonProduct 4 件、ID 一致) → Menu/4 PASS (60 件、WARN 4 = 文言キー未登録は想定内) → 4a PASS → 54 WIRE_STORE_OK (4 洗い場) → 44 PASS 1095 / FAIL 0 → 51 PASS (共有フォント Static、新しい字は端末の代替) → 19b (NetworkIDs 383 → 387) → 保存 → Course/100p5 WASH_PASS 3 / 3 (run 20261013-233842、sceneUnchanged: 未所有 → Locked、Play 前 Purchased で泡 Applied・水 Locked、Play 中の購入通知で解放)。
 
-**Codex 独立レビュー (gpt-6-astra)**: 中 3 (60 s が poll の隙間で保証されない / 44 が reset.tools の欠けを見逃す / 購入ボタンの listener 状態を見ない)・低 1 (Unknown の走査負荷) → 全部反映。同期・権限・回帰・U# 制約・ハーネス・語・文書は問題なし。ハーネスは「修正後に 100p5 を単独で 3 ケース」の結論で回した。
+**Codex 独立レビュー (gpt-6-astra)**: 中 3 (60 s が poll の隙間で保証されない / 44 が reset.tools の欠けを見逃す / 購入ボタンの listener 状態を見ない)・低 1 (Unknown の走査負荷) → 全部反映。同期・権限・回帰・U# 制約・ハーネス・語・文書は問題なし。ハーネスは「修正後に 100p5 を単独で 3 ケース」の結論で回した。修正後の再確認は Codex ではなく 44 (指摘のケースそのものを実時計の検査に入れた) と 100p5 で行った。
 
 **未確認 (実機 2 人でしか決まらない)**: 購入 0 件の在室者にも `OnPurchasesLoaded` が届くか (届かないと None に到達せず「確認しています…」が続く。契約の前提)、他人の所有で選べる、途中参加、Owner 兼最後の所有者の退室 → 60 s 後の戻り、実課金 1 件、同じ Product を 2 Listing に入れた状態の成立 (ce-listings §4-2)。
