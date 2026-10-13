@@ -19,7 +19,13 @@ namespace KominkaHillside.Editor
     //   ZFight/5  - Apply Farmhouse Fix           writes derived mesh assets + JSON sidecars, overrides MeshFilter.sharedMesh on the
     //                                             prefab-instance children, marks the scene dirty (never saves); Temp/KH_ZFightScan/fix.md
     //   ZFight/6  - Verify Farmhouse Fix          plan == assigned meshes, colliders untouched, detector (menu 1 settings) clean within 9 m
-    // Order for a fresh check: 5 -> 6 -> 1 (re-scan) -> 2 (captures).
+    // Order for a fresh check: 5a -> 5 -> 6 -> 1 (re-scan) -> 2 (captures).
+    // Safety (2026-10-13 review): the planner has a 120 s / 20M-candidate budget and Cancel (interrupted = FAIL, nothing applied);
+    // the planned inflation is measured on the actual displaced vertices before anything is written (every active pair >= 4 mm,
+    // no flipped / collapsed triangle); 5 builds all derived meshes in temporaries first and commits all or nothing (rollback of
+    // assets, sidecars and MeshFilters on any exception); sidecars record the source asset's dependency hash and a hash of the
+    // source positions / indices, so a changed FBX is rebuilt and 6 reports it as pending; 6 measures the assigned meshes and
+    // FAILs when the detector result is incomplete (time budget or a candidate / accepted cap).
     //
     // Method (one mechanism for every pair, decided from the mesh data at run time):
     //   component = connected piece of one renderer's SOURCE mesh (vertices welded at 0.01 mm, across all submeshes).
@@ -62,13 +68,15 @@ namespace KominkaHillside.Editor
         const float FixSeedMinAreaM2 = 5e-4f /* 5 cm2 */, FixPairMinAreaM2 = 1e-4f /* 1 cm2, as menu 1 */, FixVerifyMinAreaCm2 = 20f;
         const float FixMaxOffset = 0.015f, FixLambda = 1e-4f, FixSpike = 3f, FixDownNormalY = -0.7f, FixSheetMerge = 0.0005f, FixEps = 1e-6f;
         const int FixMaxMoved = 80, FixMaxPasses = 5000;
+        const double FixPlanBudgetSeconds = 120; const long FixMaxCandidates = 20000000;   // planner limits; an interrupted plan is never applied
+        const float FixMeasureTol = 0.00005f, FixTiltDot = 0.98f, FixMinAreaRatio = 0.5f;   // post-inflation checks on the actual vertices
 
         // ================================================================ planner types
 
         class FxRend
         {
             public int index; public Renderer r; public MeshFilter mf; public Mesh source;
-            public string path, rel, sourceHow, sourcePath, sourceGuid; public long sourceLocalId;
+            public string path, rel, sourceHow, sourcePath, sourceGuid, sourceDepHash; public long sourceLocalId;
             public Matrix4x4 l2w; public bool movable = true;
             public Vector3[] v; public List<int[]> subs; public int[] weld, compOfWeld; public string[] mats;
         }
@@ -83,9 +91,10 @@ namespace KominkaHillside.Editor
         {
             public int a, b, front = -1; public float area, seedArea, minDist = float.MaxValue;
             public Vector3 wc, nsum, bmin = Vector3.one * float.MaxValue, bmax = Vector3.one * float.MinValue;
-            public bool fight, seed; public string why = "", dropped;
+            public bool fight, seed; public string why = "", dropped; public float measuredMm = -1f;
             public List<FxSheet> raw = new List<FxSheet>(), sheets = new List<FxSheet>();
             public HashSet<int> trisA = new HashSet<int>(), trisB = new HashSet<int>(), subsA = new HashSet<int>(), subsB = new HashSet<int>();
+            public List<long> triPairs = new List<long>();   // (index of A tri << 32) | index of B tri, for the post-inflation measurement
             public Vector3 Centre { get { return area > 0 ? wc / area : Vector3.zero; } }
         }
 
@@ -93,7 +102,8 @@ namespace KominkaHillside.Editor
 
         class FxPlan
         {
-            public GameObject root; public Vector3 eye; public bool ok = true; public int passes, oversize; public long candidates;
+            public GameObject root; public Vector3 eye; public bool ok = true, interrupted; public int passes, oversize; public long candidates;
+            public System.Diagnostics.Stopwatch watch = System.Diagnostics.Stopwatch.StartNew();
             public List<FxRend> rends = new List<FxRend>(); public List<FxComp> comps = new List<FxComp>(); public List<FxTri> tris = new List<FxTri>();
             public List<FxPair> pairs = new List<FxPair>(); public Dictionary<int, FxIntra> intra = new Dictionary<int, FxIntra>();
             public List<string> errors = new List<string>(), notes = new List<string>();
@@ -107,6 +117,7 @@ namespace KominkaHillside.Editor
             public string scanRanks, rendererA, rendererB, materialsA, materialsB, relation, moved, why, sheetsBeforeMm;
             public int componentA, componentB; public bool seed, fight, separated;
             public float areaCm2, seedAreaCm2, distance, closestBeforeMm, closestAfterMm, coverAByBPct, coverBByAPct, offsetAMm, offsetBMm;
+            public float measuredAfterMm = -1f;   // smallest |separation| measured on the inflated vertices (-1 = not measured)
             public Vector3 centre, normal;
         }
 
@@ -125,6 +136,7 @@ namespace KominkaHillside.Editor
         [Serializable] public class FixSidecar
         {
             public string version, renderer, sourceName, sourcePath, sourceGuid, planHash, utc; public long sourceLocalId;
+            public string sourceDependencyHash, sourceGeometryHash;   // source FBX + import settings, and the source positions / indices: a changed source is rebuilt
             public int sourceVertices, sourceTriangles, derivedVertices, derivedTriangles; public List<string> components = new List<string>();
         }
 
@@ -160,6 +172,7 @@ namespace KominkaHillside.Editor
                 else
                 {
                     plan = FxBuildPlan(root);
+                    if (plan.ok) FxMeasurePlanned(plan);   // actual inflated vertices: every active pair >= 4 mm, no flipped / collapsed face
                     FxFillReport(plan, rep);
                     if (!plan.ok) rep.errors.Add("plan failed; nothing applied");
                     else if (apply) sceneChanged = FxApply(plan, rep);
@@ -193,7 +206,7 @@ namespace KominkaHillside.Editor
                     if (fr.source == null) { plan.ok = false; plan.errors.Add("source mesh not found for " + fr.path + " (" + how + ")"); continue; }
                     fr.sourcePath = AssetDatabase.GetAssetPath(fr.source); string g; long id;
                     if (string.IsNullOrEmpty(fr.sourcePath) || !AssetDatabase.TryGetGUIDAndLocalFileIdentifier(fr.source, out g, out id)) { fr.movable = false; plan.notes.Add("mesh is not an asset; kept as is: " + fr.path); }
-                    else { fr.sourceGuid = g; fr.sourceLocalId = id; }
+                    else { fr.sourceGuid = g; fr.sourceLocalId = id; fr.sourceDepHash = AssetDatabase.GetAssetDependencyHash(fr.sourcePath).ToString(); }
                     if (fr.source.bindposes.Length > 0 || fr.source.blendShapeCount > 0) { fr.movable = false; plan.notes.Add("skinned / blend-shape mesh; kept as is: " + fr.path); }
                     if (TextUi(r)) fr.movable = false;
                     string note;
@@ -210,6 +223,7 @@ namespace KominkaHillside.Editor
                 plan.notes.Add(doubleSided ? "a farmhouse material is Cull Off: opposite-facing pairs are NOT handled by this fix (check menu 1's back-to-back list)"
                                            : "opposite-facing pairs ignored: every farmhouse material is culled (back-to-back faces do not fight)");
                 FxFindPairs(plan);
+                if (plan.interrupted) return plan;
                 FxDecide(plan);
                 FxSolve(plan);
                 FxNames(plan);
@@ -326,18 +340,39 @@ namespace KominkaHillside.Editor
             int done = 0, total = Math.Max(grid.Count, 1);
             foreach (var kv in grid)
             {
-                if ((++done & 255) == 0) EditorUtility.DisplayProgressBar("KH ZFight: farmhouse fix plan", "cells " + done + "/" + total, (float)done / total);
+                if (FxInterrupted(plan, "pair search, cell " + (done + 1) + "/" + total, (++done & 63) == 0 ? (float)done / total : -1f)) break;
                 var list = kv.Value;
-                for (int x = 0; x < list.Count; x++) for (int y = x + 1; y < list.Count; y++) FxTest(plan, list[x], list[y], kv.Key, inv, acc, clip);
+                for (int x = 0; x < list.Count && !plan.interrupted; x++)
+                {
+                    if ((x & 15) == 15 && FxInterrupted(plan, "pair search, dense cell (" + list.Count + " triangles)", -1f)) break;
+                    for (int y = x + 1; y < list.Count; y++) FxTest(plan, list[x], list[y], kv.Key, inv, acc, clip);
+                }
+                if (plan.interrupted) break;
             }
-            for (int o = 0; o < oversize.Count; o++)
+            for (int o = 0; o < oversize.Count && !plan.interrupted; o++)
+            {
+                if (FxInterrupted(plan, "large triangles " + o + "/" + oversize.Count, (float)o / oversize.Count)) break;
                 for (int j = 0; j < tris.Count; j++)
                 {
                     if (j == oversize[o] || (isOver[j] && j < oversize[o])) continue;
                     FxTest(plan, oversize[o], j, long.MinValue, inv, acc, clip);
                 }
+            }
             plan.pairs = acc.Values.ToList();
             if (oversize.Count > 0) plan.notes.Add(oversize.Count + " large triangles tested by brute force");
+        }
+
+        /// <summary>Time budget, candidate cap and Cancel (progress >= 0 shows the cancelable bar). Sets plan.ok = false; never applied.</summary>
+        static bool FxInterrupted(FxPlan plan, string where, float progress)
+        {
+            if (plan.interrupted) return true;
+            string why = null;
+            if (plan.watch.Elapsed.TotalSeconds > FixPlanBudgetSeconds) why = "time budget " + FixPlanBudgetSeconds + " s reached";
+            else if (plan.candidates > FixMaxCandidates) why = "candidate cap " + FixMaxCandidates + " reached";
+            else if (progress >= 0f && EditorUtility.DisplayCancelableProgressBar("KH ZFight: farmhouse fix plan", where, progress)) why = "cancelled";
+            if (why == null) return false;
+            plan.interrupted = true; plan.ok = false; plan.errors.Add("planner interrupted (" + why + ") in " + where + "; incomplete plan, nothing applied");
+            return true;
         }
 
         static void FxTest(FxPlan plan, int i, int j, long cellKey, float inv, Dictionary<long, FxPair> acc, FxClip clip)
@@ -384,7 +419,7 @@ namespace KominkaHillside.Editor
             pr.area += area; pr.wc += centre * area; pr.nsum += P.n * area;
             pr.bmin = Vector3.Min(pr.bmin, Vector3.Min(P.min, Q.min)); pr.bmax = Vector3.Max(pr.bmax, Vector3.Max(P.max, Q.max));
             pr.raw.Add(new FxSheet { lo = sMin, hi = sMax, area = area });
-            pr.trisA.Add(ip); pr.trisB.Add(iq); pr.subsA.Add(P.sub); pr.subsB.Add(Q.sub);
+            pr.trisA.Add(ip); pr.trisB.Add(iq); pr.subsA.Add(P.sub); pr.subsB.Add(Q.sub); pr.triPairs.Add(((long)ip << 32) | (uint)iq);
             if (coplanar)
             {
                 float dist = Vector3.Distance(plan.eye, centre); pr.minDist = Mathf.Min(pr.minDist, dist);
@@ -477,6 +512,7 @@ namespace KominkaHillside.Editor
             float[] o; string err; int passes;
             foreach (var s in seeds)
             {
+                if (FxInterrupted(plan, "solver, seed " + (seeds.IndexOf(s) + 1) + "/" + seeds.Count, (float)seeds.IndexOf(s) / Math.Max(seeds.Count, 1))) break;
                 s.seed = true;
                 bool ok = FxTrySolve(plan, out o, out err, out passes); plan.passes += passes;
                 if (ok) continue;
@@ -561,6 +597,102 @@ namespace KominkaHillside.Editor
             foreach (var c in FxMoved(plan, fr)) sb.Append('|').Append(c.local).Append(':').Append((c.offset * 1000f).ToString("F2", ci));
             for (int i = 0; i < 12; i++) sb.Append('|').Append(fr.l2w[i].ToString("F4", ci));   // world-mm -> local conversion depends on the transform
             return Hash128.Compute(sb.ToString()).ToString();
+        }
+
+        /// <summary>FNV-1a over the source positions and indices that the derived mesh is built from.</summary>
+        static string FxGeomHash(FxRend fr)
+        {
+            unchecked
+            {
+                ulong h = 1469598103934665603UL; const ulong prime = 1099511628211UL;
+                Action<int> mix = x => { for (int k = 0; k < 4; k++) { h ^= (byte)(x >> (8 * k)); h *= prime; } };
+                foreach (var p in fr.v) { mix(BitConverter.ToInt32(BitConverter.GetBytes(p.x), 0)); mix(BitConverter.ToInt32(BitConverter.GetBytes(p.y), 0)); mix(BitConverter.ToInt32(BitConverter.GetBytes(p.z), 0)); }
+                foreach (var s in fr.subs) { mix(-1); foreach (int i in s) mix(i); }
+                return h.ToString("x16");
+            }
+        }
+
+        /// <summary>Why the sidecar does not describe a mesh built from this renderer's current source (null = it does).</summary>
+        static string FxSidecarStale(FixSidecar sc, FxRend fr, string planHash)
+        {
+            if (sc == null) return "no sidecar";
+            if (sc.sourceGuid != fr.sourceGuid || sc.sourceLocalId != fr.sourceLocalId) return "sidecar source is another mesh";
+            if (sc.planHash != planHash) return "plan changed";
+            if (string.IsNullOrEmpty(sc.sourceDependencyHash) || sc.sourceDependencyHash != fr.sourceDepHash) return "source asset (FBX / import settings) changed or not recorded";
+            if (string.IsNullOrEmpty(sc.sourceGeometryHash) || sc.sourceGeometryHash != FxGeomHash(fr)) return "source geometry changed or not recorded";
+            return null;
+        }
+
+        // ================================================================ post-inflation measurement
+
+        /// <summary>Measures the planned inflation on the actual displaced vertices; any failure fails the plan (nothing is applied).</summary>
+        static void FxMeasurePlanned(FxPlan plan)
+        {
+            var local = new Dictionary<int, Vector3[]>();
+            foreach (var fr in plan.rends) { if (!FxMoved(plan, fr).Any()) continue; int mv; float mx; local[fr.index] = FxDisplaced(plan, fr, out mv, out mx); }
+            var fails = FxMeasure(plan, local, plan.notes);
+            if (fails.Count == 0) return;
+            plan.ok = false;
+            foreach (var f in fails) plan.errors.Add("post-inflation check: " + f);
+        }
+
+        /// <summary>local[rend] = vertex positions (renderer space) after the fix; renderers not in it keep their source positions.
+        /// Checks every triangle of a moved component (not flipped, not collapsed below half its area; tilt > ~11 deg is a note) and
+        /// every active pair (seed, or a component moved): the smallest |separation| over its overlapping triangle pairs, measured on
+        /// the new vertices, must be >= 4 mm. Sets FxPair.measuredMm. Returns the failures.</summary>
+        static List<string> FxMeasure(FxPlan plan, Dictionary<int, Vector3[]> local, List<string> notes)
+        {
+            var fails = new List<string>(); var world = new Dictionary<int, Vector3[]>();
+            foreach (var kv in local)
+            {
+                var fr = plan.rends[kv.Key]; var w = new Vector3[kv.Value.Length];
+                for (int i = 0; i < w.Length; i++) w[i] = fr.l2w.MultiplyPoint3x4(kv.Value[i]);
+                world[kv.Key] = w;
+            }
+            var badComp = new Dictionary<int, string>(); var tilted = new Dictionary<int, int>();
+            foreach (var t in plan.tris)
+            {
+                if (plan.comps[t.comp].offset <= 0f || !world.ContainsKey(t.rend)) continue;
+                Vector3 a, b, c, n; float area; FxTriNow(plan, world, t, out a, out b, out c, out n, out area);
+                string bad = area < FixMinAreaRatio * t.area ? "collapsed (area " + (area / t.area).ToString("F2") + "x)" : Vector3.Dot(n, t.n) <= 0f ? "flipped" : null;
+                if (bad != null) { if (!badComp.ContainsKey(t.comp)) badComp[t.comp] = bad; continue; }
+                if (Vector3.Dot(n, t.n) < FixTiltDot) { int k; tilted.TryGetValue(t.comp, out k); tilted[t.comp] = k + 1; }
+            }
+            foreach (var kv in badComp) fails.Add(FxCompName(plan, kv.Key) + ": a triangle " + kv.Value + " after inflation by " + (plan.comps[kv.Key].offset * 1000f).ToString("F1") + " mm");
+            foreach (var kv in tilted) notes.Add("post-inflation: " + kv.Value + " triangles of " + FxCompName(plan, kv.Key) + " tilt by more than " + (Mathf.Acos(FixTiltDot) * Mathf.Rad2Deg).ToString("F0") + " deg (vertex move capped at " + FixSpike + "x the offset)");
+            var clip = new FxClip();
+            foreach (var p in plan.pairs)
+            {
+                if (!p.seed && plan.comps[p.a].offset <= 0f && plan.comps[p.b].offset <= 0f) continue;
+                float closest = float.MaxValue;
+                foreach (long tp in p.triPairs)
+                {
+                    FxTri P = plan.tris[(int)(tp >> 32)], Q = plan.tris[(int)(tp & 0xffffffffL)];
+                    Vector3 a, b, c, n, qa, qb, qc, qn; float ar, qar;
+                    FxTriNow(plan, world, P, out a, out b, out c, out n, out ar); FxTriNow(plan, world, Q, out qa, out qb, out qc, out qn, out qar);
+                    if (ar < 1e-10f || qar < 1e-10f) continue;
+                    Vector3 u = (b - a).normalized, vv = Vector3.Cross(n, u);
+                    clip.Set(a, u, vv);
+                    if (clip.Overlap(a, b, c, qa, qb, qc) < FixPairMinAreaM2) continue;
+                    float nn = Vector3.Dot(qn, n); if (nn < 1e-4f) continue;
+                    float sMin = float.MaxValue, sMax = float.MinValue;
+                    for (int k = 0; k < clip.count; k++) { Vector3 pt = a + u * clip.poly[k].x + vv * clip.poly[k].y; float s = Vector3.Dot(qn, qa - pt) / nn; sMin = Mathf.Min(sMin, s); sMax = Mathf.Max(sMax, s); }
+                    closest = Mathf.Min(closest, sMin <= 0f && sMax >= 0f ? 0f : Mathf.Min(Mathf.Abs(sMin), Mathf.Abs(sMax)));
+                }
+                if (closest == float.MaxValue) { p.measuredMm = -1f; continue; }   // the faces no longer overlap
+                p.measuredMm = closest * 1000f;
+                if (closest < FixTarget - FixMeasureTol)
+                    fails.Add((p.seed ? "seed " : "pair ") + FxCompName(plan, p.a) + " x " + FxCompName(plan, p.b) + " measured " + p.measuredMm.ToString("F2") + " mm (< " + FixTarget * 1000f + " mm) at " + Vector3.Distance(plan.eye, p.Centre).ToString("F1") + " m");
+            }
+            return fails;
+        }
+
+        static void FxTriNow(FxPlan plan, Dictionary<int, Vector3[]> world, FxTri t, out Vector3 a, out Vector3 b, out Vector3 c, out Vector3 n, out float area)
+        {
+            Vector3[] w;
+            if (world.TryGetValue(t.rend, out w)) { a = w[t.i0]; b = w[t.i1]; c = w[t.i2]; } else { a = t.a; b = t.b; c = t.c; }
+            var cr = Vector3.Cross(b - a, c - a); float len = cr.magnitude; area = len * .5f;
+            n = len < 1e-10f ? Vector3.zero : (plan.rends[t.rend].l2w.determinant < 0f ? -cr : cr) / len;
         }
 
         // ================================================================ derived mesh
@@ -680,66 +812,138 @@ namespace KominkaHillside.Editor
             if (!AssetDatabase.IsValidFolder(FixMeshesParent)) AssetDatabase.CreateFolder("Assets/KominkaHillside", "Meshes");
             if (!AssetDatabase.IsValidFolder(FixDir)) AssetDatabase.CreateFolder(FixMeshesParent, "FarKominka");
         }
+        static List<KeyValuePair<MeshFilter, Mesh>> sFxJournal;   // set during FxApply: every MeshFilter change with its previous mesh
 
         static void FxAssign(MeshFilter mf, Mesh mesh)
         {
+            if (sFxJournal != null) sFxJournal.Add(new KeyValuePair<MeshFilter, Mesh>(mf, mf.sharedMesh));
             Undo.RecordObject(mf, "KH ZFight farmhouse fix");
             mf.sharedMesh = mesh;
             PrefabUtility.RecordPrefabInstancePropertyModifications(mf);
         }
 
-        // ================================================================ apply
+        class FxJob
+        {
+            public FxRend fr; public FixRendRow row; public string name, path, side, hash, oldSide; public bool current, created;
+            public Mesh existing, temp, backup, mesh; public FixSidecar sidecar;
+        }
 
+        // ================================================================ apply (all or nothing)
+
+        /// <summary>1) builds and validates every derived mesh in temporary meshes; any failure: nothing is written.
+        /// 2) commits asset contents, sidecars and MeshFilter swaps (journal + Undo group); any exception: assets, sidecars and
+        /// MeshFilters are restored to what they were and the error is reported. The geometry itself was checked by FxMeasurePlanned.</summary>
         static bool FxApply(FxPlan plan, FixReport rep)
         {
-            bool changed = false; FxEnsureFolder();
-            var planned = new HashSet<MeshFilter>(); var sidecarsToImport = new List<string>();
+            var jobs = new List<FxJob>(); var planned = new HashSet<MeshFilter>(); string buildError = null;
+            // ---- phase 1: build into temporaries
             foreach (var fr in plan.rends)
             {
                 var moved = FxMoved(plan, fr).ToList(); if (moved.Count == 0) continue;
                 planned.Add(fr.mf);
-                var row = rep.renderersChanged.FirstOrDefault(x => x.renderer == fr.path && x.action == "planned"); if (row == null) { row = new FixRendRow { renderer = fr.path }; rep.renderersChanged.Add(row); }
-                string name = plan.assetName[fr.index], path = FixDir + "/" + name + ".asset", side = FxSidecarPath(path), hash = FxPlanHash(plan, fr);
-                var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path); var sc = FxReadSidecar(path);
-                bool current = mesh != null && sc != null && sc.planHash == hash && sc.sourceGuid == fr.sourceGuid && sc.sourceLocalId == fr.sourceLocalId && mesh.vertexCount == fr.source.vertexCount;
-                string action;
-                if (current) action = "asset unchanged (sidecar matches)";
-                else
+                var job = new FxJob { fr = fr, name = plan.assetName[fr.index], hash = FxPlanHash(plan, fr) };
+                job.row = rep.renderersChanged.FirstOrDefault(x => x.renderer == fr.path && x.action == "planned");
+                if (job.row == null) { job.row = new FixRendRow { renderer = fr.path }; rep.renderersChanged.Add(job.row); }
+                job.path = FixDir + "/" + job.name + ".asset"; job.side = FxSidecarPath(job.path);
+                job.existing = AssetDatabase.LoadAssetAtPath<Mesh>(job.path);
+                job.current = job.existing != null && job.existing.vertexCount == fr.source.vertexCount && FxSidecarStale(FxReadSidecar(job.path), fr, job.hash) == null;
+                jobs.Add(job);
+                if (job.current) continue;
+                int mv; float mx; var pos = FxDisplaced(plan, fr, out mv, out mx); string err;
+                job.temp = new Mesh { hideFlags = HideFlags.HideAndDontSave };
+                if (!FxFill(job.temp, fr.source, pos, job.name, out err)) { buildError = fr.path + ": " + err; job.row.action = "FAILED: " + err; break; }
+                job.sidecar = new FixSidecar { version = FixVersion, renderer = fr.path, sourceName = fr.source.name, sourcePath = fr.sourcePath, sourceGuid = fr.sourceGuid, sourceLocalId = fr.sourceLocalId,
+                    sourceDependencyHash = fr.sourceDepHash, sourceGeometryHash = FxGeomHash(fr), sourceVertices = fr.source.vertexCount, sourceTriangles = FxTriCount(fr.subs),
+                    derivedVertices = job.temp.vertexCount, derivedTriangles = FxTriCountMesh(job.temp), planHash = job.hash, utc = DateTime.UtcNow.ToString("o") };
+                foreach (var c in moved) job.sidecar.components.Add("c" + c.local + ": " + c.tris + " tris, submeshes " + string.Join("/", c.subs.OrderBy(x => x)) + ", inflated " + (c.offset * 1000f).ToString("F2", CultureInfo.InvariantCulture) + " mm");
+            }
+            if (buildError != null)
+            {
+                foreach (var j in jobs) if (j.temp != null) UnityEngine.Object.DestroyImmediate(j.temp);
+                rep.errors.Add("derived mesh build failed (" + buildError + "); nothing written, nothing assigned");
+                return false;
+            }
+
+            // ---- phase 2: commit
+            FxEnsureFolder();
+            Undo.IncrementCurrentGroup(); int group = Undo.GetCurrentGroup(); Undo.SetCurrentGroupName("KH ZFight farmhouse fix");
+            var journal = new List<KeyValuePair<MeshFilter, Mesh>>(); sFxJournal = journal; bool changed = false;
+            var sidecarsToImport = new List<string>();
+            try
+            {
+                foreach (var j in jobs)
                 {
-                    int mv; float mx; var pos = FxDisplaced(plan, fr, out mv, out mx); string err;
-                    bool isNew = mesh == null; if (isNew) mesh = new Mesh();
-                    if (!FxFill(mesh, fr.source, pos, name, out err))
+                    string action;
+                    if (j.current) { j.mesh = j.existing; action = "asset unchanged (sidecar matches)"; }
+                    else
                     {
-                        rep.errors.Add("mesh build failed for " + fr.path + ": " + err); row.action = "FAILED: " + err;
-                        if (isNew) UnityEngine.Object.DestroyImmediate(mesh);
-                        continue;
+                        j.oldSide = File.Exists(j.side) ? File.ReadAllText(j.side) : null;
+                        if (j.existing != null)
+                        {
+                            j.backup = UnityEngine.Object.Instantiate(j.existing); j.backup.hideFlags = HideFlags.HideAndDontSave;
+                            string err; if (!FxFill(j.existing, j.temp, j.temp.vertices, j.name, out err)) throw new InvalidOperationException("writing " + j.path + ": " + err);
+                            EditorUtility.SetDirty(j.existing); j.mesh = j.existing; action = "asset rebuilt";
+                        }
+                        else
+                        {
+                            j.temp.hideFlags = HideFlags.None; AssetDatabase.CreateAsset(j.temp, j.path); j.created = true; j.mesh = j.temp; j.temp = null; action = "asset created";
+                        }
+                        File.WriteAllText(j.side, JsonUtility.ToJson(j.sidecar, true)); sidecarsToImport.Add(j.side);
                     }
-                    if (isNew) AssetDatabase.CreateAsset(mesh, path); else EditorUtility.SetDirty(mesh);
-                    var scNew = new FixSidecar { version = FixVersion, renderer = fr.path, sourceName = fr.source.name, sourcePath = fr.sourcePath, sourceGuid = fr.sourceGuid, sourceLocalId = fr.sourceLocalId,
-                        sourceVertices = fr.source.vertexCount, sourceTriangles = FxTriCount(fr.subs), derivedVertices = mesh.vertexCount, derivedTriangles = FxTriCountMesh(mesh), planHash = hash, utc = DateTime.UtcNow.ToString("o") };
-                    foreach (var c in moved) scNew.components.Add("c" + c.local + ": " + c.tris + " tris, submeshes " + string.Join("/", c.subs.OrderBy(x => x)) + ", inflated " + (c.offset * 1000f).ToString("F2", CultureInfo.InvariantCulture) + " mm");
-                    File.WriteAllText(side, JsonUtility.ToJson(scNew, true)); sidecarsToImport.Add(side);
-                    action = isNew ? "asset created" : "asset rebuilt";
+                    if (j.fr.mf.sharedMesh != j.mesh) { FxAssign(j.fr.mf, j.mesh); changed = true; action += ", MeshFilter assigned"; }
+                    else action += ", MeshFilter already assigned";
+                    j.row.action = action; j.row.derived = j.path;
                 }
-                if (fr.mf.sharedMesh != mesh) { FxAssign(fr.mf, mesh); changed = true; action += ", MeshFilter assigned"; }
-                else action += ", MeshFilter already assigned";
-                row.action = action; row.derived = path;
+                foreach (var mf in plan.root.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    if (planned.Contains(mf) || !FxIsDerived(mf.sharedMesh)) continue;
+                    string how; var src = FxSourceMesh(mf, out how); string where = KH_ZFightDetector.LeafPath(mf.transform, plan.root.transform);
+                    if (src == null) throw new InvalidOperationException("cannot revert " + where + ": " + how);
+                    FxAssign(mf, src); changed = true; rep.notes.Add("reverted to the source mesh (no longer in the plan): " + where);
+                }
+                changed |= FxCopies(plan, rep, true);
+                AssetDatabase.SaveAssets();
+                foreach (var s in sidecarsToImport) AssetDatabase.ImportAsset(s, ImportAssetOptions.ForceUpdate);
             }
-            AssetDatabase.SaveAssets();
-            foreach (var s in sidecarsToImport) AssetDatabase.ImportAsset(s, ImportAssetOptions.ForceUpdate);
-            foreach (var mf in plan.root.GetComponentsInChildren<MeshFilter>(true))
+            catch (Exception e)
             {
-                if (planned.Contains(mf) || !FxIsDerived(mf.sharedMesh)) continue;
-                string how; var src = FxSourceMesh(mf, out how); string where = KH_ZFightDetector.LeafPath(mf.transform, plan.root.transform);
-                if (src == null) { rep.errors.Add("cannot revert " + where + ": " + how); continue; }
-                FxAssign(mf, src); changed = true; rep.notes.Add("reverted to the source mesh (no longer in the plan): " + where);
+                Debug.LogException(e);
+                var restoreErrors = new List<string>();
+                try { Undo.RevertAllDownToGroup(group); } catch (Exception u) { restoreErrors.Add("undo: " + u.Message); }
+                for (int i = journal.Count - 1; i >= 0; i--)
+                {
+                    var mf = journal[i].Key; if (mf == null || mf.sharedMesh == journal[i].Value) continue;
+                    mf.sharedMesh = journal[i].Value; PrefabUtility.RecordPrefabInstancePropertyModifications(mf);
+                }
+                foreach (var j in jobs)
+                {
+                    if (j.current) continue;
+                    try
+                    {
+                        if (j.created) { AssetDatabase.DeleteAsset(j.path); j.mesh = null; }
+                        else if (j.backup != null) { string err; if (!FxFill(j.existing, j.backup, j.backup.vertices, j.name, out err)) restoreErrors.Add(j.path + ": " + err); EditorUtility.SetDirty(j.existing); }
+                        if (j.oldSide != null) File.WriteAllText(j.side, j.oldSide);
+                        else if (File.Exists(j.side)) AssetDatabase.DeleteAsset(j.side);
+                    }
+                    catch (Exception r) { restoreErrors.Add(j.path + ": " + r.Message); }
+                }
+                try { AssetDatabase.SaveAssets(); } catch (Exception s) { restoreErrors.Add("save: " + s.Message); }
+                rep.errors.Add("apply failed (" + e.GetType().Name + " " + e.Message + "); rolled back assets, sidecars and MeshFilters" + (restoreErrors.Count > 0 ? "; RESTORE ERRORS: " + string.Join(" / ", restoreErrors) : ""));
+                foreach (var j in jobs) j.row.action = "rolled back";
+                changed = false;
             }
-            changed |= FxCopies(plan, rep, true);
-            foreach (var guid in AssetDatabase.FindAssets("t:Mesh", new[] { FixDir }))
+            finally
             {
-                var p = AssetDatabase.GUIDToAssetPath(guid);
-                if (!plan.assetName.Values.Any(n => FixDir + "/" + n + ".asset" == p)) rep.notes.Add("stale derived asset, not referenced by the plan (left on disk): " + p);
+                sFxJournal = null;
+                foreach (var j in jobs) { if (j.temp != null) UnityEngine.Object.DestroyImmediate(j.temp); if (j.backup != null) UnityEngine.Object.DestroyImmediate(j.backup); }
+                Undo.CollapseUndoOperations(group);
             }
+            if (rep.errors.Count == 0)
+                foreach (var guid in AssetDatabase.FindAssets("t:Mesh", new[] { FixDir }))
+                {
+                    var p = AssetDatabase.GUIDToAssetPath(guid);
+                    if (!plan.assetName.Values.Any(n => FixDir + "/" + n + ".asset" == p)) rep.notes.Add("stale derived asset, not referenced by the plan (left on disk): " + p);
+                }
             return changed;
         }
 
@@ -832,7 +1036,7 @@ namespace KominkaHillside.Editor
                 relation = ca.rend != cb.rend ? "renderers" : p.subsA.Overlaps(p.subsB) ? "components" : "submeshes",
                 seed = p.seed, fight = p.fight, why = p.dropped != null ? "DROPPED: " + p.dropped : p.why, areaCm2 = p.area * 1e4f, seedAreaCm2 = p.seedArea * 1e4f, distance = Vector3.Distance(plan.eye, p.Centre),
                 sheetsBeforeMm = string.Join(" ; ", p.sheets.Select(s => (s.lo * 1000f).ToString("F1") + ".." + (s.hi * 1000f).ToString("F1"))),
-                closestBeforeMm = FxClosest(p, 0f) * 1000f, closestAfterMm = FxClosest(p, delta) * 1000f,
+                closestBeforeMm = FxClosest(p, 0f) * 1000f, closestAfterMm = FxClosest(p, delta) * 1000f, measuredAfterMm = p.measuredMm,
                 coverAByBPct = areaA > 0 ? Mathf.Min(100f, p.area / areaA * 100f) : 0f, coverBByAPct = areaB > 0 ? Mathf.Min(100f, p.area / areaB * 100f) : 0f,
                 offsetAMm = ca.offset * 1000f, offsetBMm = cb.offset * 1000f, centre = p.Centre, normal = p.nsum.normalized,
                 separated = FxAllowed(p, delta) || FxClosest(p, delta) >= FixTarget - 5e-5f
@@ -904,13 +1108,13 @@ namespace KominkaHillside.Editor
 
         static void FxPairTable(StringBuilder sb, IEnumerable<FixPairRow> rows)
         {
-            sb.AppendLine("| scan rank | A (component; submesh:material) | B (component; submesh:material) | relation | area cm2 (seed) | centre | dist m | sheets before mm | cover A by B / B by A % | moved | why | offset A / B mm | closest before -> after mm | ok |");
-            sb.AppendLine("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
+            sb.AppendLine("| scan rank | A (component; submesh:material) | B (component; submesh:material) | relation | area cm2 (seed) | centre | dist m | sheets before mm | cover A by B / B by A % | moved | why | offset A / B mm | closest before -> after mm (planned) | measured after mm | ok |");
+            sb.AppendLine("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|");
             foreach (var r in rows)
                 sb.AppendLine("| " + r.scanRanks + " | " + KH_ZFightDetector.Md(r.rendererA) + " #c" + r.componentA + "; " + KH_ZFightDetector.Md(r.materialsA) + " | " + KH_ZFightDetector.Md(r.rendererB) + " #c" + r.componentB + "; " + KH_ZFightDetector.Md(r.materialsB)
                     + " | " + r.relation + " | " + r.areaCm2.ToString("F0") + " (" + r.seedAreaCm2.ToString("F0") + ") | " + KH_ZFightDetector.V(r.centre) + " | " + r.distance.ToString("F1") + " | " + r.sheetsBeforeMm + " | "
                     + r.coverAByBPct.ToString("F0") + " / " + r.coverBByAPct.ToString("F0") + " | " + r.moved + " | " + KH_ZFightDetector.Md(r.why) + " | " + r.offsetAMm.ToString("F1") + " / " + r.offsetBMm.ToString("F1") + " | "
-                    + r.closestBeforeMm.ToString("F1") + " -> " + r.closestAfterMm.ToString("F1") + " | " + (r.separated ? "yes" : "NO") + " |");
+                    + r.closestBeforeMm.ToString("F1") + " -> " + r.closestAfterMm.ToString("F1") + " | " + (r.measuredAfterMm >= 0f ? r.measuredAfterMm.ToString("F2") : "-") + " | " + (r.separated && (r.measuredAfterMm < 0f || r.measuredAfterMm >= FixTarget * 1000f - 0.05f) ? "yes" : "NO") + " |");
         }
 
         // ================================================================ 6 - Verify
@@ -931,7 +1135,7 @@ namespace KominkaHillside.Editor
                     var plan = FxBuildPlan(root); rep.eye = plan.eye;
                     if (!plan.ok) foreach (var e in plan.errors) rep.failures.Add("planner: " + e);
                     // 1. every planned renderer points at an up-to-date derived mesh; nothing else points at one
-                    var planned = new HashSet<MeshFilter>();
+                    var planned = new HashSet<MeshFilter>(); var assigned = new Dictionary<int, Vector3[]>();
                     foreach (var fr in plan.rends)
                     {
                         if (!FxMoved(plan, fr).Any()) continue;
@@ -940,12 +1144,28 @@ namespace KominkaHillside.Editor
                         var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path); var sc = FxReadSidecar(path);
                         if (mesh == null) { rep.failures.Add("missing derived mesh " + path + " for " + fr.path + " (run 5)"); continue; }
                         if (sc == null) { rep.failures.Add("missing sidecar " + FxSidecarPath(path)); continue; }
-                        if (sc.planHash != FxPlanHash(plan, fr)) rep.failures.Add("pending: the plan for " + fr.path + " changed since " + path + " was built (run 5)");
-                        if (sc.sourceGuid != fr.sourceGuid || sc.sourceLocalId != fr.sourceLocalId) rep.failures.Add("sidecar source of " + path + " is not the source mesh of " + fr.path);
+                        string stale = FxSidecarStale(sc, fr, FxPlanHash(plan, fr));
+                        if (stale != null) rep.failures.Add("pending: " + path + " is stale for " + fr.path + " (" + stale + "; run 5)");
                         if (fr.mf.sharedMesh != mesh) rep.failures.Add(fr.path + " MeshFilter does not point at " + path);
                         if (mesh.vertexCount != fr.source.vertexCount || mesh.subMeshCount != fr.source.subMeshCount || FxTriCountMesh(mesh) != FxTriCount(fr.subs))
                             rep.failures.Add(path + ": vertex / submesh / triangle count differs from the source");
+                        else if (fr.mf.sharedMesh == mesh)
+                        {   // measure what is actually assigned, not the planned arithmetic
+                            Vector3[] dv; List<int[]> ds; string note;
+                            if (KH_ZFightDetector.ReadMesh(mesh, out dv, out ds, out note) && dv.Length == fr.v.Length) assigned[fr.index] = dv;
+                            else rep.failures.Add(path + ": unreadable for the separation check " + note);
+                        }
                         rep.derivedChecked++;
+                    }
+                    // 1b. separations measured on the assigned meshes: every seed / pair touching a moved component >= 4 mm
+                    if (plan.ok)
+                    {
+                        var mnotes = new List<string>();
+                        foreach (var f in FxMeasure(plan, assigned, mnotes)) rep.failures.Add("measured on the assigned meshes: " + f);
+                        rep.notes.AddRange(mnotes);
+                        int measured = plan.pairs.Count(q => q.measuredMm >= 0f);
+                        float worst = plan.pairs.Where(q => q.measuredMm >= 0f).Select(q => q.measuredMm).DefaultIfEmpty(-1f).Min();
+                        rep.notes.Add("separation measured on " + measured + " active pairs (assigned derived meshes: " + assigned.Count + "); smallest " + worst.ToString("F2") + " mm");
                     }
                     foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
                         if (!planned.Contains(mf) && FxIsDerived(mf.sharedMesh))
@@ -963,7 +1183,7 @@ namespace KominkaHillside.Editor
                     var res = KH_ZFightDetector.Run(inputs, FarmCell, FarmMinAreaM2, FarmClusterLink, FarmBudgetSeconds, "KH ZFight: verify farmhouse fix");
                     rep.truncated = res.truncated; rep.detectorGroups = res.groups.Count;
                     rep.notes.Add("detector: renderers main " + main + ", extra " + extra + ", triangles " + res.triangles + ", groups " + res.groups.Count + ", back-to-back " + res.backToBack.Count + ", " + res.seconds.ToString("F1") + " s");
-                    if (res.truncated) rep.failures.Add("detector truncated: " + string.Join("; ", res.notes));
+                    if (res.incomplete) rep.failures.Add("detector incomplete (" + (res.truncated ? "truncated" : "a candidate / accepted cap was hit") + "): " + string.Join("; ", res.notes));
                     foreach (var p in res.parts) if (!p.readable) rep.failures.Add("detector could not read " + p.path + ": " + p.note);
                     string prefix = root.name + "/";
                     foreach (var g in res.groups.OrderBy(x => Vector3.Distance(plan.eye, x.centre)))

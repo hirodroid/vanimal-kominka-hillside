@@ -146,7 +146,7 @@ namespace KominkaHillside.Editor
             var kt = c.root.Find(Kominka.name);
             if (kt != null)
             {
-                var broken = KominkaRules(c, kt.position, kt.rotation);
+                var broken = KominkaRules(c, kt.position, kt.eulerAngles.y);
                 req(broken.Count == 0, "Kominka placement rules (in front of the gate, wash working area, boards A / B, spawn, portal view, loop, fixtures)" + (broken.Count > 0 ? ": " + string.Join("; ", broken) : ""));
             }
             CheckCuts(c, req, warn, v);
@@ -240,29 +240,37 @@ namespace KominkaHillside.Editor
             var read = Samples(t, ReaderArea(b), 0.2f);
             string tag = b.name + " placement: ";
             Func<List<Vector3>, Vector3, float> minTo = (list, p) => list.Min(q => Flat(q - p));
+            // IMP-WLD-016 review (2026-10-13): for the Kominka board every distance that KominkaRules (Guide/1, which also decides "kept at")
+            // judges too comes from the same exact measurement with the same inputs (x / z, the yaw as a float), so Guide/1 and Guide/2 can
+            // never disagree. Boards A / B keep the 0.1 m sampling (no Guide/1 rule shares it). The rule values are unchanged.
+            bool kom = b == Kominka;
+            var g = kom ? MeasureKominka(c, a, t.position, t.eulerAngles.y) : null;
+            var komFoot = kom ? RectPoly(t.position, Quaternion.Euler(0f, t.eulerAngles.y, 0f), Footprint(b)) : null;
+            Func<Vector3, float> footTo = p => kom ? PolyDist(new[] { XZ(p) }, komFoot) : minTo(foot, p);
 
             if (a.route != null && a.route.Length > 1)
             {
                 int n = a.route.Length, segs = a.closed ? n : n - 1;
                 float best = float.PositiveInfinity;
-                foreach (var p in foot)
-                    for (int i = 0; i < segs; i++) best = Mathf.Min(best, SegDist(p, a.route[i], a.route[(i + 1) % n]));
+                if (kom) best = g.routeFoot;
+                else
+                    foreach (var p in foot)
+                        for (int i = 0; i < segs; i++) best = Mathf.Min(best, SegDist(p, a.route[i], a.route[(i + 1) % n]));
                 req(best >= RouteClear, tag + "the loop's centre line " + best.ToString("F2") + " m (>= " + RouteClear + ")");
             }
             else req(false, tag + "KH_WalkRoute.nodePositions missing");
             if (a.roams.Count > 0)
             {
-                float best = a.roams.Min(r => minTo(foot, r.position));
+                float best = a.roams.Min(r => footTo(r.position));
                 req(best >= RoamClear, tag + "dog roam centres " + best.ToString("F2") + " m (>= " + RoamClear + ", roam radius 3)");
             }
             else warn(false, tag + "no KH_Dogs/KH_Roam_* found");
             if (a.spawn != null)
             {
-                float f = minTo(foot, a.spawn.position), r = minTo(read, a.spawn.position);
+                float f = footTo(a.spawn.position), r = minTo(read, a.spawn.position);
                 // 2026-10-13 ユーザー決定 IMP-WLD-016: the Kominka board stands in front of the gate, right behind the spawn (2.50 m out on the
                 // gate's centre line): its footprint only stays KominkaSpawnClear off the spawn point, and the spawn may be in its readers'
                 // area (reported as a note, not a check)
-                bool kom = b == Kominka;
                 float spawnMin = kom ? KominkaSpawnClear : SpawnClear;
                 req(f >= spawnMin, tag + "spawn " + f.ToString("F2") + " m (>= " + spawnMin + (kom ? ", relaxed by IMP-WLD-016" : "") + ")");
                 if (kom) v.notes.Add(b.name + ": readers' area " + r.ToString("F2") + " m from the spawn (the >= " + ReaderSpawnClear + " rule is not applied to this board, IMP-WLD-016)");
@@ -275,7 +283,7 @@ namespace KominkaHillside.Editor
                 {
                     // the gate line follows the gate itself (KH_GateBlock faces out along the wall's normal); the spawn may look elsewhere
                     Vector3 fwd = a.gate.forward; fwd.y = 0f; fwd.Normalize();
-                    float side = foot.Min(p => Vector3.Dot(Flat3(p - a.gate.position), fwd));
+                    float side = kom ? g.gateSide : foot.Min(p => Vector3.Dot(Flat3(p - a.gate.position), fwd));
                     float min = b == Kominka ? GateSideMinKominka : GateSideMin;
                     req(side >= min, tag + "outside the gate, " + side.ToString("F2") + " m in front of the gate line (>= " + min + ")");
                     float d = Mathf.Abs(Mathf.DeltaAngle(bearingBoard, Bearing(a.spawn.position, a.gate.position)));
@@ -285,9 +293,7 @@ namespace KominkaHillside.Editor
                     if (kom)
                     {
                         // IMP-WLD-016: the in-front-of-the-gate rule (also inside KominkaRules) as its own line, with the distances
-                        Vector3 gr = a.gate.right; gr.y = 0f; gr.Normalize();
-                        float reach = foot.Max(p => Mathf.Abs(Vector3.Dot(Flat3(p - a.gate.position), gr)));
-                        float along, outward; GateFrame(c, t.position, out along, out outward);
+                        float reach = g.reach, along = g.along, outward = g.outward;
                         req(reach <= GateOpeningHalf + 0.01f && outward <= GateFrontOutMax + 0.01f, tag + "in front of the gate: centre " + along.ToString("+0.00;-0.00") + " m from the gate's centre line, "
                             + outward.ToString("F2") + " m out from the gate (<= " + GateFrontOutMax + "), footprint within " + reach.ToString("F2") + " m of the centre line (<= " + GateOpeningHalf + ", the opening's half width)");
                         v.notes.Add(b.name + ": " + Mathf.Abs(along).ToString("F2") + " m from the gate's centre line (" + (along < 0f ? "west" : "east") + "), " + outward.ToString("F2") + " m out from the gate, centre "
@@ -310,13 +316,13 @@ namespace KominkaHillside.Editor
             foreach (var kv in new[] { new KeyValuePair<string, Transform>("shopkeeper", a.keeper), new KeyValuePair<string, Transform>("leash rack", a.rack), new KeyValuePair<string, Transform>("welcome spot", a.welcome) })
             {
                 if (kv.Value == null) { warn(false, tag + kv.Key + " not found"); continue; }
-                float d = minTo(foot, kv.Value.position);
+                float d = footTo(kv.Value.position);
                 req(d >= FixtureClear, tag + kv.Key + " " + d.ToString("F2") + " m (>= " + FixtureClear + ")");
             }
-            if (a.treats.Count > 0) { float d = a.treats.Min(x => minTo(foot, x.position)); req(d >= FixtureClear, tag + "treats " + d.ToString("F2") + " m (>= " + FixtureClear + ")"); }
+            if (a.treats.Count > 0) { float d = a.treats.Min(x => footTo(x.position)); req(d >= FixtureClear, tag + "treats " + d.ToString("F2") + " m (>= " + FixtureClear + ")"); }
             if (a.washFloor != null && a.washMain != null)
             {
-                float out1 = foot.Min(p => OutsideSquare(p, a.washFloor.position, a.washMain.rotation, WashFloorHalf));
+                float out1 = kom ? g.washFloorFoot : foot.Min(p => OutsideSquare(p, a.washFloor.position, a.washMain.rotation, WashFloorHalf));
                 bool readOverlap = read.Any(p => OutsideSquare(p, a.washFloor.position, a.washMain.rotation, WashFloorHalf) <= 0f);
                 req(out1 >= WashFloorClear, tag + "outside the main wash station's floor by " + out1.ToString("F2") + " m (>= " + WashFloorClear + ")");
                 if (b != Kominka) req(!readOverlap, tag + "the readers' area is not on the main wash station's floor");
@@ -440,23 +446,27 @@ namespace KominkaHillside.Editor
             var p = anchor.position;
             float g = Ground(p);
             req(Mathf.Abs(p.y - g) <= 0.05f, "the portal stands on the terrain (" + (p.y - g).ToString("+0.00;-0.00") + " m)");
+            // IMP-WLD-016 review (2026-10-13): the distance rules below are judged at the point KominkaRules (Guide/1) judges, from the same
+            // measurement (MeasureKominka: the board's x / z and yaw as a float), so the two cannot disagree; the anchor must stand there.
+            var pk = MeasureKominka(c, a, board.position, board.eulerAngles.y).portal;
+            req(Flat(p - pk) <= 0.01f, "the portal anchor stands where PortalSide puts it (" + Flat(p - pk).ToString("F3") + " m off; Guide/1 rebuilds it)");
             if (a.spawn != null)
             {
-                float d = Flat(p - a.spawn.position);
+                float d = Flat(pk - a.spawn.position);
                 req(d >= PortalSpawnClear, "the portal " + d.ToString("F2") + " m from the spawn (>= " + PortalSpawnClear + "; IMP-ENV-003, relaxed from 4.0 by IMP-WLD-016)");
                 float side = anchor.localPosition.x >= 0f ? 1f : -1f;
-                v.notes.Add("portal on the board's " + (side > 0f ? "+X (readers' right)" : "-X (readers' left)") + " side; PortalSide now says " + (PortalSide(c, board.position, board.rotation) > 0f ? "+X" : "-X"));
-                float bp = Bearing(a.spawn.position, p);
+                v.notes.Add("portal on the board's " + (side > 0f ? "+X (readers' right)" : "-X (readers' left)") + " side; PortalSide now says " + (PortalSide(c, board.position, Quaternion.Euler(0f, board.eulerAngles.y, 0f)) > 0f ? "+X" : "-X"));
+                float bp = Bearing(a.spawn.position, pk);
                 if (a.kominka != null) req(Mathf.Abs(Mathf.DeltaAngle(bp, Bearing(a.spawn.position, a.kominka.position))) >= FarmhouseSectorMin, "the portal is not in the turn-around view to the farmhouse");
                 if (a.gate != null) req(Mathf.Abs(Mathf.DeltaAngle(bp, Bearing(a.spawn.position, a.gate.position))) >= FarmhouseSectorMin, "the portal is not in front of the gate from the spawn");
                 v.notes.Add("portal at " + V(p) + ", " + d.ToString("F1") + " m from the spawn at bearing " + bp.ToString("F0") + " deg, facing yaw " + anchor.eulerAngles.y.ToString("F0"));
             }
             if (a.washFloor != null && a.washMain != null)
-                req(OutsideSquare(p, a.washFloor.position, a.washMain.rotation, WashFloorHalf) >= 1.0f, "the portal is >= 1 m outside the main wash station's floor");
+                req(OutsideSquare(pk, a.washFloor.position, a.washMain.rotation, WashFloorHalf) >= 1.0f, "the portal is >= 1 m outside the main wash station's floor");
             if (a.route != null && a.route.Length > 1)
             {
                 int n = a.route.Length, segs = a.closed ? n : n - 1; float best = float.PositiveInfinity;
-                for (int i = 0; i < segs; i++) best = Mathf.Min(best, SegDist(p, a.route[i], a.route[(i + 1) % n]));
+                for (int i = 0; i < segs; i++) best = Mathf.Min(best, SegDist(pk, a.route[i], a.route[(i + 1) % n]));
                 req(best >= 2.5f, "the portal " + best.ToString("F2") + " m from the loop's centre line (>= 2.5)");
             }
             Physics.SyncTransforms();

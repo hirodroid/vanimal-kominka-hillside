@@ -55,6 +55,7 @@ namespace KominkaHillside.Editor
             public List<Group> backToBack = new List<Group>();    // opposite-facing, both single-sided
             public List<string> notes = new List<string>();
             public int triangles, oversize; public long candidates, accepted; public double seconds; public bool truncated;
+            public bool incomplete;   // truncated, or a candidate / accepted cap was hit (some overlaps were not examined)
         }
 
         struct Tri
@@ -208,21 +209,26 @@ namespace KominkaHillside.Editor
                 int done = 0, total = grid.Count;
                 foreach (var kv in grid)
                 {
-                    if ((++done & 255) == 0)
-                    {
-                        if (watch.Elapsed.TotalSeconds > budgetSeconds) { r.truncated = true; r.notes.Add("time budget " + budgetSeconds + " s reached at cell " + done + "/" + total + "; partial result"); break; }
-                        if (EditorUtility.DisplayCancelableProgressBar(progressTitle, "cells " + done + "/" + total + ", accepted " + r.accepted, (float)done / total))
-                        { r.truncated = true; r.notes.Add("cancelled at cell " + done + "/" + total + "; partial result"); break; }
-                    }
+                    // time is checked on every cell (and every 16 rows inside a dense cell); the cancelable bar every 256 cells
+                    if (watch.Elapsed.TotalSeconds > budgetSeconds) { r.truncated = true; r.notes.Add("time budget " + budgetSeconds + " s reached at cell " + (done + 1) + "/" + total + "; partial result"); break; }
+                    if ((++done & 255) == 0 && EditorUtility.DisplayCancelableProgressBar(progressTitle, "cells " + done + "/" + total + ", accepted " + r.accepted, (float)done / total))
+                    { r.truncated = true; r.notes.Add("cancelled at cell " + done + "/" + total + "; partial result"); break; }
                     var list = kv.Value; long cellKey = kv.Key;
-                    for (int x = 0; x < list.Count; x++)
+                    for (int x = 0; x < list.Count && !r.truncated; x++)
+                    {
+                        if ((x & 15) == 15 && watch.Elapsed.TotalSeconds > budgetSeconds)
+                        { r.truncated = true; r.notes.Add("time budget " + budgetSeconds + " s reached inside cell " + done + "/" + total + " (" + list.Count + " triangles); partial result"); break; }
                         for (int y = x + 1; y < list.Count; y++)
                             TestPair(tris, list[x], list[y], cellKey, inv, partMeet, minAreaM2, acc, pairCounts, cappedPairs, ctx, r);
+                    }
+                    if (r.truncated) break;
                 }
                 if (!r.truncated)
                     for (int o = 0; o < oversize.Count; o++)
                     {
                         if (watch.Elapsed.TotalSeconds > budgetSeconds) { r.truncated = true; r.notes.Add("time budget reached in oversize pass"); break; }
+                        if (EditorUtility.DisplayCancelableProgressBar(progressTitle, "large triangles " + o + "/" + oversize.Count, (float)o / Math.Max(oversize.Count, 1)))
+                        { r.truncated = true; r.notes.Add("cancelled in oversize pass; partial result"); break; }
                         for (int j = 0; j < tris.Count; j++)
                         {
                             if (j == oversize[o]) continue;
@@ -234,11 +240,16 @@ namespace KominkaHillside.Editor
                 // 3. cluster each renderer/submesh pair into spatial groups
                 foreach (var pa in acc.Values) if (cappedPairs.Contains(PairKey(pa.partA, pa.partB))) pa.capped = true;
                 if (cappedPairs.Count > 0) r.notes.Add(cappedPairs.Count + " renderer pairs hit the candidate cap (" + CandidateCapPerPair + "); their groups are marked capped");
+                int acceptCapped = 0; bool anyCapped = false;
+                foreach (var pa in acc.Values) { if (pa.items.Count >= AcceptCapPerPair) acceptCapped++; if (pa.capped) anyCapped = true; }
+                if (acceptCapped > 0) r.notes.Add(acceptCapped + " submesh pairs hit the accepted-overlap cap (" + AcceptCapPerPair + "); their groups are marked capped");
+                // capped = some overlaps were not examined: the result is incomplete even though it was not truncated by time
+                r.incomplete = cappedPairs.Count > 0 || anyCapped;
                 foreach (var pa in acc.Values) foreach (var g in ClusterGroups(pa, clusterLink, r.parts, partMats)) (g.facing == "opposite" && !DoubleSided(partMats, g) ? r.backToBack : r.groups).Add(g);
             }
             catch (Exception e) { r.truncated = true; r.notes.Add("detector exception: " + e.GetType().Name + " " + e.Message); Debug.LogException(e); }
             finally { EditorUtility.ClearProgressBar(); }
-            r.seconds = watch.Elapsed.TotalSeconds;
+            r.seconds = watch.Elapsed.TotalSeconds; r.incomplete |= r.truncated;
             return r;
         }
 

@@ -54,14 +54,18 @@ namespace KominkaHillside.Editor
             var st = roots[0].transform;
             Physics.SyncTransforms();
 
-            // ---- where the last Build left it (human-owned; Build never moves it) ----
-            BuildReport built = null;
-            try { if (File.Exists(BuildReportPath)) built = JsonUtility.FromJson<BuildReport>(File.ReadAllText(BuildReportPath)); } catch (Exception) { built = null; }
-            // x / z only: y is the footprint rule (BUG-ENV-002), which Wash/25 may rewrite after a Build; CheckDuckboardGround checks it
-            if (built != null && built.status == "BUILT")
-                req(FlatDist(built.stationPosition, st.position) < 1e-3f, "layout: " + StationName + " at the x / z the last Build kept/created " + built.stationPosition.ToString("F3")
-                    + " (now " + st.position.ToString("F3") + "; moved by hand after the Build? run Wash/11 (or Wash/25 with premium) again to seat it on the new ground)");
-            else r.notes.Add("layout: no BUILT report in " + BuildReportPath + " (Temp is cleared when Unity closes): the station position was not compared with the last Build");
+            // ---- where the last placement operation left it (x / z human-owned; neither Wash/11 nor Wash/25 moves them) ----
+            // x / z only: y is the footprint rule (BUG-ENV-002), checked by CheckDuckboardGround. The record is the newer of Wash/11's
+            // BUILT report and Wash/25's reseat record (both write the station's position after seating it: LastPlacement, Ground.cs).
+            Vector3 placed; string placedBy, placedAt;
+            if (LastPlacement(out placed, out placedBy, out placedAt))
+            {
+                bool premium = UnityEngine.Object.FindObjectsOfType<KH_WashSelection>(true).Length > 0;
+                req(FlatDist(placed, st.position) < 1e-3f, "layout: " + StationName + " at the x / z the last placement (" + placedBy + ", " + placedAt + ") left " + placed.ToString("F3")
+                    + " (now " + st.position.ToString("F3") + "; moved by hand after it? save, then run " + (premium ? "Wash/25 Reseat Station Roots (Wash/11 refuses with the premium selection)" : "Wash/11 Build Wash")
+                    + ": it seats the station on the new ground and rewrites this record)");
+            }
+            else r.notes.Add("layout: no placement record (" + BuildReportPath + " BUILT or " + ReseatRecordPath + "; Temp is cleared when Unity closes): the station position was not compared with the last Wash/11 / Wash/25");
 
             CheckStationBody(r, req, st, ToolSpecs, "layout: " + StationName);
             var table = FindTable(st);

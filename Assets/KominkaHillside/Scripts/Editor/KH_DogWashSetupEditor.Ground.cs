@@ -17,9 +17,13 @@ namespace KominkaHillside.Editor
     //                 the highest ground under the duckboard footprint - the duckboard's local y at lift 0 ) + StationClearance
     // sampled with StationGround (the terrain only) at RectSamples (centre + 4 corners) of the shelf top (1.2 x 0.45 at z 0) and of
     // the duckboard (1.3 x 0.7 at z -TableFront), so neither the shelf's legs nor the duckboard's bottom is under the terrain.
-    // Only y changes: x, z and yaw are kept exactly (棚と洗い場の位置は保つ). Everything else hangs off the root (Homes, tools, Lift
-    // with the duckboard / Anchor, PersonalFloor, Board, Guide, the premium parts and SupportGroundRoot), all in station-local
-    // numbers, so they move with it and none of their local values goes stale.
+    // Only y changes: x, z and yaw are kept exactly (棚と洗い場の位置は保つ). What a re-seat (Wash/25) does to the values hanging off it:
+    //   - transform-local values, preserved (they move with the root, nothing to re-run): Homes and the tools, Lift with the
+    //     duckboard (WashTable local y) / Anchor, PersonalFloor (pf.baseY, Floor), Board, Guide, the premium parts (PremiumTools,
+    //     PremiumSelectionBoard, SelectionPosts), SupportGroundRoot / KH_WashSupportVisual.baseLocalY, KH_WashSelection.freeBaseY,
+    //     KH_WashStationCall.standBasePos (Wash/22). Wash/23 and WashPremium/21 stay as they were.
+    //   - ground-dependent values, must be recomputed: KH_WashSelection.bathMinLifts (the terrain above the seat, measured in station
+    //     space, changes when the root moves) -> WashPremium/50, then WashPremium/44. Wash/12's ground checks re-measure by themselves.
     // The builder seats the duckboard at (highest ground under it) + StationClearance, station-local (BuildStand); with the root at
     // max(shelf, duckboard) + StationClearance that is a fixed point of the rule above, so 11 twice and 25 after 11 give the same y.
     // On a slope the rule lifts the whole station: the shelf's legs stand above the lower ground by up to the footprint's range
@@ -28,8 +32,16 @@ namespace KominkaHillside.Editor
     {
         const float StationClearance = 0.01f;               // m above the highest ground sample (also against Z-fighting, IMP-ENV-007 2026-10-11)
         const float DuckboardBuriedTol = 0.005f;            // Wash/12: duckboard bottom - ground >= -this at every corner (lift 0)
-        const float DuckboardFloatMax = 0.35f;              // Wash/12: ... and <= this (not floating)
-        const float FootprintRangeRelocate = 0.25f;         // Wash/24: ground max - min over the shelf + duckboard samples above this -> relocate candidate
+        // Wash/12: ... and <= this (not floating). A sanity bound, not a visual pass: by the rule the highest corner sits StationClearance
+        // above its ground, so the largest corner gap is the ground's fall across the duckboard (+ 0.01, + the shelf's excess when the shelf
+        // ground sets the root). 0.35 m over the duckboard's 1.39 m diagonal is ~14 deg, nearly 3x the course placement limit
+        // (CourseSlopeMax 5 deg = 0.12 m over it) and above the 0.25 m relocate trigger below; past it the root is not where the rule puts
+        // it (raised by hand, wrong terrain) rather than merely on a slope. Measured 2026-10-13 after Wash/25: every station within it.
+        // Whether a gap looks acceptable is the user's call (Play), helped by Wash/24's numbers.
+        const float DuckboardFloatMax = 0.35f;
+        // Wash/24 only (report, never a failure): a station is a relocate candidate when the footprint range (ground max - min over the
+        // shelf + duckboard samples) or the shelf legs' lift after Wash/25 (rule root y - the lowest footprint ground) exceeds this.
+        const float FootprintRangeRelocate = 0.25f;
         const float RelocateRadius = 3f, RelocateStep = 0.25f, RelocateSeparation = 0.75f;
         const int RelocateCount = 3;
         const string GroundJsonPath = "Temp/KH_WashStationGround.json", GroundMdPath = "Temp/KH_WashStationGround.md", ReseatReportPath = "Temp/KH_WashStationReseat.txt";
@@ -334,6 +346,28 @@ namespace KominkaHillside.Editor
 
         // ================================================================ 25 (premium-safe; writes only the roots' y)
 
+        /// <summary>Wash/25's placement record (Temp, like Wash/11's BuildReport): where it left the main station. Wash/12 compares the
+        /// station's x / z with the newer of this and the last BUILT report (LastPlacement).</summary>
+        [Serializable] class ReseatRecord { public string utc, status; public Vector3 stationPosition; public int changed; }
+        const string ReseatRecordPath = "Temp/KH_WashStationReseat.json";
+
+        /// <summary>The main station's last recorded placement: Wash/11's BUILT report or Wash/25's record, whichever ran last (by utc).
+        /// false when neither exists (Temp is cleared when Unity closes). op names the menu that wrote it.</summary>
+        static bool LastPlacement(out Vector3 position, out string op, out string utc)
+        {
+            position = Vector3.zero; op = ""; utc = "";
+            BuildReport built = null; ReseatRecord reseat = null;
+            try { if (File.Exists(BuildReportPath)) built = JsonUtility.FromJson<BuildReport>(File.ReadAllText(BuildReportPath)); } catch (Exception) { built = null; }
+            try { if (File.Exists(ReseatRecordPath)) reseat = JsonUtility.FromJson<ReseatRecord>(File.ReadAllText(ReseatRecordPath)); } catch (Exception) { reseat = null; }
+            if (built != null && built.status != "BUILT") built = null;
+            if (reseat != null && reseat.status != "RESEATED") reseat = null;
+            Func<string, DateTime> at = s => { DateTime d; return DateTime.TryParse(s, null, System.Globalization.DateTimeStyles.RoundtripKind, out d) ? d.ToUniversalTime() : DateTime.MinValue; };
+            bool useReseat = reseat != null && (built == null || at(reseat.utc) >= at(built.utc));
+            if (useReseat) { position = reseat.stationPosition; op = "Wash/25 Reseat Station Roots"; utc = reseat.utc; return true; }
+            if (built != null) { position = built.stationPosition; op = "Wash/11 Build Wash"; utc = built.utc; return true; }
+            return false;
+        }
+
         /// <summary>Wash/11 refuses once the premium selection is installed, so this is the targeted fix: every station root's y by
         /// KeptRootY (the duckboard keeps its local y, so Lift / Anchor / PersonalFloor / standBasePos / SupportGroundRoot / freeBaseY stay
         /// valid). x, z and yaw are not touched. Marks the scene dirty, does not save. Next: Wash/24 (measure), save, Wash/12,
@@ -375,6 +409,9 @@ namespace KominkaHillside.Editor
                 changed++;
             }
             if (changed > 0) EditorSceneManager.MarkSceneDirty(scene);
+            // the placement record Wash/12 compares the main station's x / z with (the newer of this and Wash/11's BUILT report)
+            var main = plan.Select(kv => kv.Key).FirstOrDefault(t => t.name == StationName && t.parent == null);
+            if (main != null) WriteJson(ReseatRecordPath, new ReseatRecord { utc = DateTime.UtcNow.ToString("o"), status = "RESEATED", stationPosition = main.position, changed = changed });
             Directory.CreateDirectory("Temp");
             File.WriteAllText(ReseatReportPath, DateTime.UtcNow.ToString("o") + "\nBUG-ENV-002 Wash/25 Reseat Station Roots: stations=" + plan.Count + " changed=" + changed + " (0 on a re-run). NOT saved.\n"
                 + "Next: Wash/24 (measure), save, Wash/12, WashPremium/50 then WashPremium/44, save.\n" + log);

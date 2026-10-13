@@ -1533,11 +1533,15 @@ namespace KominkaHillside.Editor
                 if (h.distance < bestDist) { bestDist = h.distance; y = h.point.y; }
             }
             if (bestDist < float.PositiveInfinity) return y;
+            // fallback (no TerrainCollider hit): the highest of the Terrains covering the point (on a shared tile edge the first one
+            // found was taken before; the highest is the safe side for "not buried", BUG-ENV-002 review)
+            float top = float.NegativeInfinity;
             foreach (var t in UnityEngine.Object.FindObjectsOfType<Terrain>())
             {
                 var p = t.transform.position; var s = t.terrainData.size;
-                if (world.x >= p.x && world.x <= p.x + s.x && world.z >= p.z && world.z <= p.z + s.z) return t.SampleHeight(world) + p.y;
+                if (world.x >= p.x && world.x <= p.x + s.x && world.z >= p.z && world.z <= p.z + s.z) top = Mathf.Max(top, t.SampleHeight(world) + p.y);
             }
+            if (top > float.NegativeInfinity) return top;
             throw new InvalidOperationException("No Terrain under " + world.ToString("F2") + " (the wash station is seated on the terrain only)");
         }
 

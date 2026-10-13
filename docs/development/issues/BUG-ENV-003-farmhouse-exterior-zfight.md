@@ -47,6 +47,8 @@ AI 側で確かめる。
 
 ## 記録
 
+2026-10-13 (Codex 独立レビュー、コミット後): 高 1 (ZFight/5 が既存の派生メッシュを Clear() で直接組み立て、失敗しても次へ進み部分適用が戻らない) → 全部を一時メッシュで組んで検査してから一括適用、失敗は Undo + 元メッシュ・sidecar の復旧。中 4: sidecar に元メッシュの依存ハッシュと形状ハッシュを入れて古い元データを検出 (6 は pending で FAIL)、膨らませた後の実頂点で離隔 ≥ 4 mm・面積比・向きを検査 (5 / 5a は不合格なら適用しない、6 も同じ)、Detector の上限到達を incomplete として 6 で FAIL、計画に 120 s・2,000 万候補・Cancel の打ち切り (中断した計画は適用しない)。再実行: C# 0、5a OK → 5 (sidecar 13 件を書き直し、メッシュとオフセットは不変、sceneChanged=False) → 6 ZFIGHT_FIX_OK 13 (262 組の実測の最小離隔 4.10 mm) → 1 変化なし → 保存。
+
 2026-10-13 (統括 Fable、実装 Opus 2 名): 走査 ZFight/1 (同一平面・同じ向きの三角形の重なり。閾値 3 mm、近接 20 mm) で 251 群。ユーザー報告の 2 か所に当たるのは、(a) 外壁の 瓦 サブメッシュと 外壁 サブメッシュの笠の重なり (スポーンに一番近い角 (41.7, 3.5, 35.2) で 517 cm²、門の両脇で 258 cm² × 2、gap 0.0)、(b) 門の敷石 (床/石畳み/床.001) と門枠の重なり (0.1 mm、762 + 755 cm²)、門枠の部品同士 (2.5 mm、1,477 cm²)、扉 門.001 / 門.002 の重なり (0.0、120 cm²)。直し方 (ZFight/5): 購入 FBX は触らず、派生メッシュ Assets/KominkaHillside/Meshes/FarKominka/*_zfix.asset (13 個、頂点・三角形・UV2・サブメッシュ不変) を作り、重なる連結成分を法線方向へ膨らませて 4 mm 以上離す (瓦の笠 4.1 / 8.2 mm、敷石 4.2 mm、門枠 1.6〜4.1 mm、扉 2.7〜4.1 mm、内側の障子 2.1〜7.6 mm。全 61 成分 / 13 Renderer)。MeshCollider は元メッシュのまま。5a (計画) → 5 → 6 ZFIGHT_FIX_OK 13 → 5 (2 回目 sceneChanged=False) → 1 (coplanar 93 → 66、古民家の 9 m 以内の同じ向きの重なりは 0。残るのは下向きの壁の底面 (除外) と、古民家以外の 2 件 → BUG-ENV-004) → 2 (撮り直し) → Guide/2 GUIDE_BOARDS_OK 651 → 保存。Editor の静止画では Z ファイトの有無が判別できない (24-bit 深度・reversed-Z) ので、合否は走査と実機。証拠: docs/plans/evidence/2026-10-13-zfight/ (scan-farmhouse.md 前、scan-farmhouse-after.md 後、fix-farmhouse.md、画像)。ベイク照明は未確認 (UV2 と Renderer の設定は不変)。
 
 2026-10-13: 起票 (ユーザー依頼「Issue に登録しておいてほしい」)。優先度 Medium は AI の仮置き。実装は未着手。

@@ -549,7 +549,7 @@ namespace KominkaHillside.Editor
                     if (tried.Count < 3) tried.Add(d.ToString("F1") + " m blocked by " + string.Join(", ", hb.Concat(hp).Distinct().Take(2)));
                     continue;
                 }
-                var broken = KominkaRules(c, pos, rot);
+                var broken = KominkaRules(c, pos, yaw);
                 // IMP-WLD-016 (2026-10-13): the readers now stand between the gate and the spawn, so Guide/2's "no solid collider where the
                 // readers stand" is checked here too (same box and heights as Verify's Placement), before anything is saved
                 var rr = ReaderArea(Kominka);
@@ -574,22 +574,129 @@ namespace KominkaHillside.Editor
                 .Select(x => KD_SceneObjects.PathOf(x.gameObject)).Distinct().ToList();
         }
 
+        // ---------------------------------------------------------------- one geometry for Guide/1 and Guide/2 (IMP-WLD-016 review, 2026-10-13)
+
+        /// <summary>The Kominka board's distances that both Guide/1 (KominkaRules, which also decides "kept at") and Guide/2 (Verify's
+        /// Placement / CheckPortal) judge. Measured once here, exactly (the footprint is the Footprint rect as a polygon, not sampled) and
+        /// from the same inputs (x / z and the yaw as a float), so the two can never disagree. Before, Guide/1 sampled an 8 x 2 grid and
+        /// Guide/2 a 0.1 m grid: a footprint edge 0.49 m from the spawn measured ~0.507 in Guide/1 (pass, kept forever) and ~0.490 in
+        /// Guide/2 (fail). The rule values themselves are unchanged.</summary>
+        class KomGeo
+        {
+            public float spawnFoot = float.PositiveInfinity, roamFoot = float.PositiveInfinity, routeFoot = float.PositiveInfinity, washFloorFoot = float.PositiveInfinity;
+            public bool hasGate; public float gateSide = float.PositiveInfinity, reach, along, outward;
+            public Vector3 portal;   // where PortalSide puts the portal (y = the board's)
+            public List<KeyValuePair<Transform, float>> fixtures = new List<KeyValuePair<Transform, float>>();   // leash rack, shopkeeper, welcome spot, treats: footprint distance
+        }
+
+        static KomGeo MeasureKominka(Ctx c, Anch a, Vector3 pos, float yaw)
+        {
+            var rot = Quaternion.Euler(0f, yaw, 0f);
+            var g = new KomGeo();
+            var foot = RectPoly(pos, rot, Footprint(Kominka));
+            g.portal = pos + rot * new Vector3(PortalSide(c, pos, rot) * PortalSideX, 0f, BackZ);
+            if (a.spawn != null) g.spawnFoot = PolyDist(new[] { XZ(a.spawn.position) }, foot);
+            foreach (var r in a.roams) if (r != null) g.roamFoot = Mathf.Min(g.roamFoot, PolyDist(new[] { XZ(r.position) }, foot));
+            if (a.gate != null)
+            {
+                // a linear function over a rectangle is extreme at its corners: the corners give the exact min / max
+                g.hasGate = true;
+                Vector3 gf3 = a.gate.forward; gf3.y = 0f; gf3.Normalize();
+                Vector3 gr3 = a.gate.right; gr3.y = 0f; gr3.Normalize();
+                Vector2 o = XZ(a.gate.position), gf = XZ(gf3), gr = XZ(gr3), p = XZ(pos);
+                g.gateSide = foot.Min(q => Vector2.Dot(q - o, gf));
+                g.reach = foot.Max(q => Mathf.Abs(Vector2.Dot(q - o, gr)));
+                g.along = Vector2.Dot(p - o, gr); g.outward = Vector2.Dot(p - o, gf);
+            }
+            if (a.route != null && a.route.Length > 1)
+            {
+                int n = a.route.Length, segs = a.closed ? n : n - 1;
+                for (int i = 0; i < segs; i++) g.routeFoot = Mathf.Min(g.routeFoot, PolyDist(new[] { XZ(a.route[i]), XZ(a.route[(i + 1) % n]) }, foot));
+            }
+            if (a.washFloor != null && a.washMain != null)
+            {
+                // the square OutsideSquare uses (centre = the floor, yaw = the station's, half WashFloorHalf); 0 = touching or overlapping
+                var sq = RectPoly(a.washFloor.position, Quaternion.Euler(0f, a.washMain.rotation.eulerAngles.y, 0f), Rect.MinMaxRect(-WashFloorHalf, -WashFloorHalf, WashFloorHalf, WashFloorHalf));
+                g.washFloorFoot = PolyDist(foot, sq);
+            }
+            foreach (var t in new[] { a.rack, a.keeper, a.welcome }.Concat(a.treats))
+                if (t != null) g.fixtures.Add(new KeyValuePair<Transform, float>(t, PolyDist(new[] { XZ(t.position) }, foot)));
+            return g;
+        }
+
+        static Vector2 XZ(Vector3 v) { return new Vector2(v.x, v.z); }
+
+        /// <summary>A board-local x / z rect as a world x / z polygon (4 corners in order).</summary>
+        static Vector2[] RectPoly(Vector3 pos, Quaternion rot, Rect r)
+        {
+            return new[] { new Vector2(r.xMin, r.yMin), new Vector2(r.xMax, r.yMin), new Vector2(r.xMax, r.yMax), new Vector2(r.xMin, r.yMax) }
+                .Select(l => XZ(pos + rot * new Vector3(l.x, 0f, l.y))).ToArray();
+        }
+
+        /// <summary>Exact distance between two convex x / z shapes (1 vertex = a point, 2 = a segment, 4 = a rect); 0 when they touch or overlap.</summary>
+        static float PolyDist(Vector2[] A, Vector2[] B)
+        {
+            if (InConvex(A[0], B) || InConvex(B[0], A)) return 0f;
+            float d = float.PositiveInfinity;
+            for (int i = 0; i < A.Length; i++)
+                for (int j = 0; j < B.Length; j++)
+                    d = Mathf.Min(d, SegSegDist(A[i], A[(i + 1) % A.Length], B[j], B[(j + 1) % B.Length]));
+            return d;
+        }
+
+        /// <summary>Inside or on the edge of a convex polygon of 3+ vertices (either winding); false for a point or a segment.</summary>
+        static bool InConvex(Vector2 p, Vector2[] poly)
+        {
+            if (poly.Length < 3) return false;
+            bool pos = false, neg = false;
+            for (int i = 0; i < poly.Length; i++)
+            {
+                float cr = Cross2(poly[(i + 1) % poly.Length] - poly[i], p - poly[i]);
+                if (cr > 0f) pos = true; else if (cr < 0f) neg = true;
+            }
+            return !(pos && neg);
+        }
+
+        static float SegSegDist(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4)
+        {
+            float d1 = Cross2(p4 - p3, p1 - p3), d2 = Cross2(p4 - p3, p2 - p3), d3 = Cross2(p2 - p1, p3 - p1), d4 = Cross2(p2 - p1, p4 - p1);
+            if (((d1 > 0f && d2 < 0f) || (d1 < 0f && d2 > 0f)) && ((d3 > 0f && d4 < 0f) || (d3 < 0f && d4 > 0f))) return 0f;   // proper crossing
+            return Mathf.Min(Mathf.Min(PtSeg(p1, p3, p4), PtSeg(p2, p3, p4)), Mathf.Min(PtSeg(p3, p1, p2), PtSeg(p4, p1, p2)));
+        }
+
+        static float PtSeg(Vector2 p, Vector2 a, Vector2 b)
+        {
+            Vector2 ab = b - a; float l2 = ab.sqrMagnitude;
+            float u = l2 > 1e-12f ? Mathf.Clamp01(Vector2.Dot(p - a, ab) / l2) : 0f;
+            return Vector2.Distance(p, a + ab * u);
+        }
+
+        static float Cross2(Vector2 a, Vector2 b) { return a.x * b.y - a.y * b.x; }
+
         /// <summary>The Guide/2 rules that a step toward the spawn could break (Guide/2 checks all of them again after the build).
         /// IMP-WLD-016 (2026-10-13): includes the in-front-of-the-gate rule, so a board left beside the gate fails here and is re-placed.</summary>
-        static List<string> KominkaRules(Ctx c, Vector3 pos, Quaternion rot)
+        /// <param name="yaw">The board's yaw as a float (Guide/1: the searched yaw or the existing board's eulerAngles.y; Guide/2: the board's
+        /// eulerAngles.y), so both build the same rotation from the same number (IMP-WLD-016 review).</param>
+        static List<string> KominkaRules(Ctx c, Vector3 pos, float yaw)
         {
             var bad = new List<string>();
+            var rot = Quaternion.Euler(0f, yaw, 0f);
             var a = FindAnchors(c);
+            // the distances Guide/2 also judges come from MeasureKominka (exact, shared with Verify's Placement / CheckPortal); this grid
+            // only serves the rules that Guide/2 checks nowhere else (boards A / B)
+            var g = MeasureKominka(c, a, pos, yaw);
             var foot = new List<Vector3>();
             var fr = Footprint(Kominka);
             for (int i = 0; i <= 8; i++) for (int j = 0; j <= 2; j++) foot.Add(pos + rot * new Vector3(fr.xMin + fr.width * i / 8f, 0f, fr.yMin + fr.height * j / 2f));
-            var portal = pos + rot * new Vector3(PortalSide(c, pos, rot) * PortalSideX, 0f, BackZ);
+            var portal = g.portal;
             var readers = new List<Vector3>();
             var rr = ReaderArea(Kominka);
             for (int i = 0; i <= 6; i++) for (int j = 0; j <= 4; j++) readers.Add(pos + rot * new Vector3(rr.xMin + rr.width * i / 6f, 0f, rr.yMin + rr.height * j / 4f));
+            // Guide/2 checks the dog roam centres for every board; checked here too so Guide/1 never keeps a pose Guide/2 fails
+            if (g.roamFoot < RoamClear) bad.Add("board " + g.roamFoot.ToString("F2") + " m from a dog roam centre (< " + RoamClear + ")");
             if (a.spawn != null)
             {
-                float ds = foot.Min(q => Flat(q - a.spawn.position)), dp = Flat(portal - a.spawn.position);
+                float ds = g.spawnFoot, dp = Flat(portal - a.spawn.position);
                 // 2026-10-13 ユーザー決定 IMP-WLD-016: relaxed for this board. The spawn is 2.50 m out on the gate's centre line, so a board in
                 // front of the gate stands right behind it: SpawnClear 3.0 -> KominkaSpawnClear (the frame only stays off the arrival point).
                 if (ds < KominkaSpawnClear) bad.Add("board " + ds.ToString("F2") + " m from the spawn (< " + KominkaSpawnClear + ")");
@@ -599,35 +706,26 @@ namespace KominkaHillside.Editor
                 // so that Guide/1 never saves a pose Guide/2 would fail.
                 var pv = PortalInTurnAround(a, portal);
                 if (pv != null) bad.Add("portal in the turn-around view to " + pv);
-                if (a.gate != null)
+                if (g.hasGate)
                 {
                     // the gate line follows the gate itself (KH_GateBlock faces out along the wall's normal), not the spawn's look direction (352 deg since 2026-10-06)
-                    Vector3 fwd = a.gate.forward; fwd.y = 0f; fwd.Normalize();
-                    float side = foot.Min(q => Vector3.Dot(Flat3(q - a.gate.position), fwd));
-                    if (side < GateSideMinKominka) bad.Add("only " + side.ToString("F2") + " m in front of the gate line");
+                    if (g.gateSide < GateSideMinKominka) bad.Add("only " + g.gateSide.ToString("F2") + " m in front of the gate line");
                     // 2026-10-13 ユーザー決定 IMP-WLD-016: in front of the gate. Replaces the 2026-10-03 rule "keep the footprint 0.5 m clear of the
                     // gate opening's ends" (the gate is sealed for players by KH_GateBlock, so there is no passage to keep open).
-                    var gr = a.gate.right; gr.y = 0f; gr.Normalize();
-                    float reach = foot.Max(q => Mathf.Abs(Vector3.Dot(Flat3(q - a.gate.position), gr)));
-                    float along, outward; GateFrame(c, pos, out along, out outward);
-                    if (reach > GateOpeningHalf + 0.01f) bad.Add("not in front of the gate: the footprint reaches " + reach.ToString("F2") + " m from the gate's centre line (> " + GateOpeningHalf + ", the opening's half width; centre " + along.ToString("+0.00;-0.00") + " m)");
-                    if (outward > GateFrontOutMax + 0.01f) bad.Add("not at the gate: the centre is " + outward.ToString("F2") + " m out from the gate (> " + GateFrontOutMax + ")");
+                    if (g.reach > GateOpeningHalf + 0.01f) bad.Add("not in front of the gate: the footprint reaches " + g.reach.ToString("F2") + " m from the gate's centre line (> " + GateOpeningHalf + ", the opening's half width; centre " + g.along.ToString("+0.00;-0.00") + " m)");
+                    if (g.outward > GateFrontOutMax + 0.01f) bad.Add("not at the gate: the centre is " + g.outward.ToString("F2") + " m out from the gate (> " + GateFrontOutMax + ")");
                 }
             }
             if (a.route != null && a.route.Length > 1)
             {
-                int n = a.route.Length, segs = a.closed ? n : n - 1; float rb = float.PositiveInfinity, rp = float.PositiveInfinity;
-                for (int i = 0; i < segs; i++)
-                {
-                    foreach (var q in foot) rb = Mathf.Min(rb, SegDist(q, a.route[i], a.route[(i + 1) % n]));
-                    rp = Mathf.Min(rp, SegDist(portal, a.route[i], a.route[(i + 1) % n]));
-                }
-                if (rb < RouteClear) bad.Add("board " + rb.ToString("F2") + " m from the loop line");
+                int n = a.route.Length, segs = a.closed ? n : n - 1; float rp = float.PositiveInfinity;
+                for (int i = 0; i < segs; i++) rp = Mathf.Min(rp, SegDist(portal, a.route[i], a.route[(i + 1) % n]));
+                if (g.routeFoot < RouteClear) bad.Add("board " + g.routeFoot.ToString("F2") + " m from the loop line");
                 if (rp < 2.5f) bad.Add("portal " + rp.ToString("F2") + " m from the loop line");
             }
             if (a.washFloor != null && a.washMain != null)
             {
-                if (foot.Min(q => OutsideSquare(q, a.washFloor.position, a.washMain.rotation, WashFloorHalf)) < WashFloorClear) bad.Add("board on / near the wash floor");
+                if (g.washFloorFoot < WashFloorClear) bad.Add("board on / near the wash floor");
                 if (OutsideSquare(portal, a.washFloor.position, a.washMain.rotation, WashFloorHalf) < 1.0f) bad.Add("portal on / near the wash floor");
                 // Relaxed for this board (2026-10-03): its readers may stand on the edge of the 5 x 5 m personal floor (an invisible floor that
                 // only rises for the washer who raises it), but not within 1 m of the working area (shelf + duckboard + 1 m each side) and not
@@ -653,8 +751,8 @@ namespace KominkaHillside.Editor
                 }
                 if (best < 1.5f) bad.Add("board / portal / readers " + best.ToString("F2") + " m from board " + other.name + " (< 1.5)");
             }
-            foreach (var t in new[] { a.rack, a.keeper, a.welcome }.Concat(a.treats))
-                if (t != null && foot.Concat(new[] { portal }).Min(q => Flat(q - t.position)) < FixtureClear) bad.Add("within " + FixtureClear + " m of " + t.name);
+            foreach (var kv in g.fixtures)
+                if (Mathf.Min(kv.Value, Flat(portal - kv.Key.position)) < FixtureClear) bad.Add("within " + FixtureClear + " m of " + kv.Key.name);
             // IMP-WLD-016 (2026-10-13): in front of the gate the photo board (right of the gate) is near; Photo/2 wants portals 2.5 m from its
             // footprint and readers (KH_PhotoGalleryEditor.Place PortalClear). Approximated from its root here so Guide/1 does not pick a
             // pose Photo/2 fails outright; Photo/2 stays the authority.
@@ -860,7 +958,7 @@ namespace KominkaHillside.Editor
             EditorUtility.SetDirty(box);
 
             var anchor = Child(board, PortalAnchorName, keep);
-            float side = PortalSide(c, board.position, board.rotation);
+            float side = PortalSide(c, board.position, Quaternion.Euler(0f, board.eulerAngles.y, 0f));   // the same yaw float KominkaRules / Guide/2 use (IMP-WLD-016 review)
             var spot = board.TransformPoint(new Vector3(side * PortalSideX, 0f, BackZ));
             anchor.localPosition = new Vector3(side * PortalSideX, Ground(spot) - board.position.y, BackZ);
             anchor.localRotation = Quaternion.Euler(0f, PortalYaw, 0f); anchor.localScale = Vector3.one;
