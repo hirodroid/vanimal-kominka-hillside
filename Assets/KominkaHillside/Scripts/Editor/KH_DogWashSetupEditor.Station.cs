@@ -21,8 +21,9 @@ namespace KominkaHillside.Editor
     // sign, and a home Transform per tool under "Homes" (KH_WashTool.home), and the reset button "ResetButton" (KH_WashStationReset: sends every tool nobody holds
     // home; the automatic return is off by the user's decision 2026-09-30, returnSeconds 0).
     // Everything is a child of KH_WashStation with code-owned local transforms, so it moves with the station. The
-    // station's own position and rotation are human-owned once it exists (never written here after creation); the
-    // duckboard and the tub are seated on the ground under them on every Build (run 11 again after moving the station).
+    // station's x, z and yaw are human-owned once it exists (never written here after creation); its y is the footprint
+    // rule (BUG-ENV-002, Ground.cs: the highest ground under the shelf / duckboard + 1 cm, written on every Build), and the
+    // duckboard is seated on the ground under it + 1 cm on every Build (run 11, or 25 with premium, after moving the station).
     //
     // IMP-ENV-008 (stations along the course, docs/plans/2026-09-30-wash-station-layout.md §6): the table CourseStations
     // (River / Upper / Hillside) builds the same parts (BuildStationParts: stand, duckboard, tub, sign, homes, tools, reset)
@@ -136,11 +137,12 @@ namespace KominkaHillside.Editor
             {
                 station = new GameObject(StationName);
                 var p = c.rack.position + new Vector3(StationOffsetX, 0f, 0f);
-                p.y = Ground(p.x, p.z, c.rack.position.y);
+                p.y = Ground(p.x, p.z, c.rack.position.y);   // the ray's start only: SeatStationRoot below sets the y
                 station.transform.SetPositionAndRotation(p, Quaternion.Euler(0f, c.rack.eulerAngles.y, 0f));
-                r.log.Add("created " + StationName + " at " + p.ToString("F2") + " (" + RackName + " x " + StationOffsetX + " m, ground)");
+                r.log.Add("created " + StationName + " at " + p.ToString("F2") + " (" + RackName + " x " + StationOffsetX + " m)");
             }
             station.transform.localScale = Vector3.one;
+            SeatStationRoot(station.transform, r);   // BUG-ENV-002: y from the shelf + duckboard footprint (Ground.cs); x, z, yaw kept
             r.stationPosition = station.transform.position;
 
             var wood = AssetDatabase.LoadAssetAtPath<Material>(WoodMatPath);
@@ -305,7 +307,11 @@ namespace KominkaHillside.Editor
             foreach (var spec in CourseStations)
             {
                 var st = root.Find(spec.key);
-                if (st != null) r.log.Add("kept " + CourseRootName + "/" + spec.key + " at " + st.position.ToString("F2") + " yaw " + st.eulerAngles.y.ToString("F1") + " (human-owned)");
+                if (st != null)
+                {
+                    r.log.Add("kept " + CourseRootName + "/" + spec.key + " at " + st.position.ToString("F2") + " yaw " + st.eulerAngles.y.ToString("F1") + " (x, z, yaw human-owned)");
+                    SeatStationRoot(st, r);   // BUG-ENV-002: only y, by the footprint rule (Ground.cs)
+                }
                 else
                 {
                     if (cc == null) { r.log.Add("WARN " + spec.key + " (" + spec.label + ") not placed: " + missing); continue; }
@@ -477,15 +483,17 @@ namespace KominkaHillside.Editor
             return list;
         }
 
-        /// <summary>The station pose at a world XZ: y = the terrain there, yaw so that the front (-Z, the duckboard) faces the nearest
-        /// point of the path (people come from the path). Throws when there is no terrain.</summary>
+        /// <summary>The station pose at a world XZ: yaw so that the front (-Z, the duckboard) faces the nearest point of the path (people
+        /// come from the path), then y by the footprint rule (BuilderRootY, BUG-ENV-002; was the terrain at the origin). Throws when
+        /// there is no terrain.</summary>
         static void CoursePose(CourseCtx c, Vector3 xz, out Vector3 pos, out Quaternion rot)
         {
-            pos = new Vector3(xz.x, Ground(xz.x, xz.z, xz.y), xz.z);
+            pos = new Vector3(xz.x, Ground(xz.x, xz.z, xz.y), xz.z);   // the rays' start; the yaw uses x / z only
             Vector3 t; float d;
             var q = NearestOnPath(c, pos, out t, out d);
             var back = Flat3(pos - q);
             rot = back.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(back.normalized, Vector3.up) : Quaternion.identity;
+            pos.y = BuilderRootY(pos, rot);
         }
 
         static Vector3 Flat3(Vector3 v) { v.y = 0f; return v; }
@@ -581,20 +589,38 @@ namespace KominkaHillside.Editor
             // obstacles over the working area (shelf, duckboard, tub and 1 m each side of the duckboard), terrain + 0.02 .. + 1.8 m
             {
                 float halfX = TableSize.x * 0.5f + SideMargin, z0 = -TableFront - TableSize.z * 0.5f, z1 = ShelfDepth * 0.5f;
-                float bottom = hmin + 0.02f, top = hmax + 1.8f;
-                var centre = pos + rot * new Vector3(0f, 0f, (z0 + z1) * 0.5f); centre.y = (bottom + top) * 0.5f;
-                var hits = Physics.OverlapBox(centre, new Vector3(halfX, (top - bottom) * 0.5f, (z1 - z0) * 0.5f), rot, ~0, QueryTriggerInteraction.Ignore)
-                    .Where(x => !(x is TerrainCollider) && x.attachedRigidbody == null && HitsPlayers(x) && (self == null || !x.transform.IsChildOf(self)))
-                    .Select(x => KominkaDogRun.Editor.KD_SceneObjects.PathOf(x.gameObject)).ToArray();
+                var hits = WorkAreaObstacles(pos, rot, hmin, hmax, self);
                 add(hits.Length == 0, "no solid collider over the working area " + (2f * halfX).ToString("F1") + " x " + (z1 - z0).ToString("F2") + " m (the station's own parts aside: " + string.Join(", ", hits) + ")");
             }
             {
-                var board = pos + rot * new Vector3(0f, 0f, -TableFront);
-                UnityEngine.AI.NavMeshHit hit;
-                bool nav = UnityEngine.AI.NavMesh.SamplePosition(board, out hit, CourseNavReach + 2f, UnityEngine.AI.NavMesh.AllAreas) && FlatDist(hit.position, board) <= CourseNavReach;
-                add(nav, "the duckboard centre within " + CourseNavReach + " m of the NavMesh (the dogs can reach it" + (nav ? ", " + FlatDist(hit.position, board).ToString("F2") + " m" : "") + ")");
+                float d;
+                bool nav = DuckboardOnNavMesh(pos, rot, out d);
+                add(nav, "the duckboard centre within " + CourseNavReach + " m of the NavMesh (the dogs can reach it" + (nav ? ", " + d.ToString("F2") + " m" : "") + ")");
             }
             return o;
+        }
+
+        /// <summary>Solid colliders the players bump over the working area (shelf, duckboard and 1 m each side of it) of a pose, from the
+        /// lowest terrain + 0.02 to the highest + 1.8 m; the terrain and self's own parts left out (PlacementChecks, Wash/24).</summary>
+        static string[] WorkAreaObstacles(Vector3 pos, Quaternion rot, float hmin, float hmax, Transform self)
+        {
+            float halfX = TableSize.x * 0.5f + SideMargin, z0 = -TableFront - TableSize.z * 0.5f, z1 = ShelfDepth * 0.5f;
+            float bottom = hmin + 0.02f, top = hmax + 1.8f;
+            var centre = pos + rot * new Vector3(0f, 0f, (z0 + z1) * 0.5f); centre.y = (bottom + top) * 0.5f;
+            return Physics.OverlapBox(centre, new Vector3(halfX, (top - bottom) * 0.5f, (z1 - z0) * 0.5f), rot, ~0, QueryTriggerInteraction.Ignore)
+                .Where(x => !(x is TerrainCollider) && x.attachedRigidbody == null && HitsPlayers(x) && (self == null || !x.transform.IsChildOf(self)))
+                .Select(x => KominkaDogRun.Editor.KD_SceneObjects.PathOf(x.gameObject)).ToArray();
+        }
+
+        /// <summary>The duckboard centre of a pose within CourseNavReach (horizontal) of the NavMesh; dist = that distance.</summary>
+        static bool DuckboardOnNavMesh(Vector3 pos, Quaternion rot, out float dist)
+        {
+            var board = pos + rot * new Vector3(0f, 0f, -TableFront);
+            UnityEngine.AI.NavMeshHit hit;
+            dist = float.PositiveInfinity;
+            if (!UnityEngine.AI.NavMesh.SamplePosition(board, out hit, CourseNavReach + 2f, UnityEngine.AI.NavMesh.AllAreas)) return false;
+            dist = FlatDist(hit.position, board);
+            return dist <= CourseNavReach;
         }
 
         /// <summary>Footprint (station local rectangles) distance to a world point, for a pose (no Transform needed).</summary>
@@ -1408,7 +1434,8 @@ namespace KominkaHillside.Editor
             if (oldTable != null) { oldTable.SetParent(lift, false); r.log.Add(station.name + "/" + TableName + " moved under " + LiftName); }
             var table = Child(lift, TableName);
             table.gameObject.layer = 0;
-            float tableY = MaxGround(station, new Vector3(0f, 0f, -TableFront), TableSize.x, TableSize.z);
+            // BUG-ENV-002: + StationClearance (the root is at the footprint's highest ground + the same, so this is <= 0 and Wash/25 keeps it)
+            float tableY = MaxGround(station, new Vector3(0f, 0f, -TableFront), TableSize.x, TableSize.z) + StationClearance;
             table.localPosition = new Vector3(0f, tableY, -TableFront);
             table.localRotation = Quaternion.identity; table.localScale = Vector3.one;
             foreach (var c in table.GetComponents<Collider>()) if (!(c is BoxCollider)) UnityEngine.Object.DestroyImmediate(c);
@@ -1426,7 +1453,7 @@ namespace KominkaHillside.Editor
             }
             foreach (Transform t in table.Cast<Transform>().ToArray())
                 if (t.name.StartsWith("Slat_") && (!int.TryParse(t.name.Substring(5), out int k) || k >= TableSlats)) UnityEngine.Object.DestroyImmediate(t.gameObject);
-            r.log.Add(station.name + "/" + TableName + " local y " + tableY.ToString("F3") + " (highest ground under the board)");
+            r.log.Add(station.name + "/" + TableName + " local y " + tableY.ToString("F3") + " (highest ground under the board + " + StationClearance + ")");
             // the point the called dog stands on: the duckboard's top centre, under Lift (moves with the stand)
             var anchor = Child(lift, AnchorName);
             anchor.gameObject.layer = 0;

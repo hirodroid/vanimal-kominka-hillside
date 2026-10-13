@@ -57,9 +57,10 @@ namespace KominkaHillside.Editor
             // ---- where the last Build left it (human-owned; Build never moves it) ----
             BuildReport built = null;
             try { if (File.Exists(BuildReportPath)) built = JsonUtility.FromJson<BuildReport>(File.ReadAllText(BuildReportPath)); } catch (Exception) { built = null; }
+            // x / z only: y is the footprint rule (BUG-ENV-002), which Wash/25 may rewrite after a Build; CheckDuckboardGround checks it
             if (built != null && built.status == "BUILT")
-                req((built.stationPosition - st.position).magnitude < 1e-3f, "layout: " + StationName + " at the position the last Build kept/created " + built.stationPosition.ToString("F3")
-                    + " (now " + st.position.ToString("F3") + "; moved by hand after the Build? run Wash/11 again to seat the duckboard on the new ground)");
+                req(FlatDist(built.stationPosition, st.position) < 1e-3f, "layout: " + StationName + " at the x / z the last Build kept/created " + built.stationPosition.ToString("F3")
+                    + " (now " + st.position.ToString("F3") + "; moved by hand after the Build? run Wash/11 (or Wash/25 with premium) again to seat it on the new ground)");
             else r.notes.Add("layout: no BUILT report in " + BuildReportPath + " (Temp is cleared when Unity closes): the station position was not compared with the last Build");
 
             CheckStationBody(r, req, st, ToolSpecs, "layout: " + StationName);
@@ -105,10 +106,6 @@ namespace KominkaHillside.Editor
         /// <summary>What every wash station has (the main one and those along the course, IMP-ENV-008): yaw only, the stand, the
         /// tools' homes and return settings, the reset button wired to this station's tools, the duckboard, the side room, no tub
         /// and the sign. label prefixes every line.</summary>
-        // 2026-10-11 user (IMP-ENV-007): the main station's duckboard was moved off the ground by hand because it Z-fought with
-        // the terrain. Wash/12 checks that the placement is kept instead of re-seating it. Station name -> WashTable local y.
-        static readonly Dictionary<string, float> UserPlacedTableY = new Dictionary<string, float> { { "KH_WashStation", -0.028f } };
-
         static void CheckStationBody(VerifyReport r, Action<bool, string> req, Transform st, ToolSpec[] specs, string label)
         {
             var e = st.eulerAngles;
@@ -194,12 +191,12 @@ namespace KominkaHillside.Editor
                     label + ": " + TableName + " " + TableFront + " m in front of the shelf (local " + table.localPosition.ToString("F3") + ")");
                 float gap = (TableFront - TableSize.z * 0.5f) - ShelfDepth * 0.5f;
                 req(gap >= 0.5f - 1e-4f, label + ": " + gap.ToString("F3") + " m between the duckboard and the shelf (>= 0.5: people stand on the shelf side too)");
+                // BUG-ENV-002 (2026-10-13): the duckboard's 4 corners against the terrain and the root's height rule (Ground.cs). Replaces
+                // "seated on the ground (local y = highest ground under it)" and the main station's kept user placement (local y -0.028,
+                // IMP-ENV-007 2026-10-11), which left it up to 0.2 m under the slope. Wash/25 lifts the root instead of the duckboard.
                 float want = MaxGround(st, new Vector3(0f, 0f, -TableFront), TableSize.x, TableSize.z);
-                float placed;
-                if (UserPlacedTableY.TryGetValue(st.name, out placed))
-                    req(Mathf.Abs(table.localPosition.y - placed) < 0.005f, label + ": " + TableName + " kept at the user's placement (local y " + table.localPosition.y.ToString("F3") + " = " + placed.ToString("F3") + "; moved off the ground against Z-fighting, IMP-ENV-007 2026-10-11; highest ground under it " + want.ToString("F3") + ")");
-                else
-                    req(Mathf.Abs(table.localPosition.y - want) < 0.005f, label + ": " + TableName + " seated on the ground (local y " + table.localPosition.y.ToString("F3") + ", highest ground under it " + want.ToString("F3") + "; top " + TableSize.y + " m above it)");
+                r.notes.Add(label + ": " + TableName + " local y " + table.localPosition.y.ToString("F3") + ", highest ground under it (5 samples, station local) " + want.ToString("F3"));
+                CheckDuckboardGround(r, req, st, table, label);
                 var c = table.TransformPoint(box.center);
                 bool onTop = Physics.Raycast(c + Vector3.up * 1f, Vector3.down, out RaycastHit hit, 2f, 1 << StandLayer, QueryTriggerInteraction.Ignore) && hit.collider == box;
                 req(onTop, label + ": a downward ray (layer " + StandLayer + ") above the duckboard lands on it first (" + (hit.collider != null ? hit.collider.name : "nothing") + ")");

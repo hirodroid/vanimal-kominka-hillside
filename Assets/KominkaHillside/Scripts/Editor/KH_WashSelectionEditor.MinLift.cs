@@ -1,7 +1,7 @@
 using System;using System.Linq;using System.Text;using System.Reflection;using UnityEngine;using UnityEditor;using UnityEditor.SceneManagement;using UdonSharpEditor;
 namespace KominkaHillside.Editor{public static partial class KH_WashSelectionEditor{
  // IMP-DOG-044 (2026-10-11, orchestrator's decision, reversible): the main station's stand sits on a slope (the highest ground under it is
- // 0.185 m above the station origin, the stand at the user's y -0.028: IMP-ENV-007), so the 0.22 m pool was half buried at lift 0. While a
+ // 0.185 m above the station origin, the stand at the user's y -0.028 until 2026-10-13; BUG-ENV-002 now seats the root so the duckboard is 0.01 m above the highest ground: IMP-ENV-007), so the 0.22 m pool was half buried at lift 0. While a
  // platform that would sink into the ground is selected at a station, its stand rests at a minimum height instead (KH_WashStationCall.
  // minLift, not synced: every client takes it from the synced selectedBath through KH_WashSelection.bathMinLifts). 50 measures it per station
  // and platform, 44 measures again and compares (one rule: FitMinLift).
