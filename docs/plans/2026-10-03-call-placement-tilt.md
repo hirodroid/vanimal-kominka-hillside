@@ -1,5 +1,7 @@
 # 場所を決めて呼ぶ: 手の傾きで犬を置く (IMP-DOG-033) — 設計
 
+> **2026-10-14 不採用・取り下げ (ユーザー決定)。** 本書は検討時の履歴。実装予定・回答待ちには含めない。現在の範囲は [game-design §7](../game-design.md#7-初期範囲の境界) を参照する。
+
 2026-10-03 作成 (AI 設計案、ユーザー未確認)。Issue: [IMP-DOG-033](../development/issues/IMP-DOG-033-call-placement-tilt.md)。前提: [IMP-DOG-032](../development/issues/IMP-DOG-032-call-placement-free-height.md) (高さを古民家どおり自由にする)、[IMP-DOG-016](../development/issues/IMP-DOG-016-call-pose-port-and-slope.md) (法線 0.9 の斜面判定)。
 
 **この設計は「IMP-DOG-032 が勝つ」(法線 0.9 の判定と接地を外す) を前提にしている。** 016 が勝つ場合の違いは §6 に書いた。
