@@ -5,7 +5,7 @@ system: DOG
 status: review
 priority: Medium
 summary: 首輪とリードのおそろいセット 4 種 (しま / チェック / もみじ 各 30pt、革と真鍮 50pt) を Point 商品として実装する。商品定義、首輪の同期 (飾りと同じ)、リードの同期 (本人の選択 + PlayerData 保存)、干渉表、古民家の正本への反映
-next: "実装・静的検証・Codex レビュー反映まで完了 (2026-10-13)。残り: ClientSim の最小群 Course/129 (collar-pattern 2 ケース)、ユーザーの Play (購入 → 首輪とリードの柄、2 人で同期・60 秒・途中参加、近 → 遠 → 近の往復)、テクスチャ本制作 (BUG-DOG-011 の VR 確認後)、仮決定 collar.basic の確認"
+next: "実装・静的検証・Codex レビュー反映・Course/129 (collar-pattern 2 ケース PASS、run 20261013-052444) まで完了 (2026-10-13)。残り: ユーザーの Play (購入 → 首輪とリードの柄、2 人で同期・60 秒・途中参加、近 → 遠 → 近の往復)、テクスチャ本制作 (BUG-DOG-011 の VR 確認後)、仮決定 collar.basic の確認、古民家側文書への反映 §6"
 updated: 2026-10-13
 ---
 
@@ -175,6 +175,8 @@ HEAD `3b40285` のソースを読んだだけの推奨。Unity・Play・ハー�
 - §6 の 3 か所に加えて: 裏山の実装では分類 `collar` を新設し、無料の既定 `collar.basic` を置いた (仮)。商品キーは `collar.stripe` / `collar.check` / `collar.momiji` / `collar.leather_brass`。古民家に同じ商品を入れるときは同じキーにそろえる。
 
 ## 記録
+
+2026-10-13 (統括 Fable): Course/129 Walk Harness Collar Pattern を Codex 相談の結論どおり最小群だけ実行 (1 回目は起動の空応答で NOT_EXECUTED、25 s 置いて再試行)。run 20261013-052444 COLLAR_PATTERN_PASS cases 2 sceneUnchanged true (collar-restore-delayed-35s / collar-select-basic-roundtrip)。実通信・2 人・途中参加・Owner 退室・端末はユーザーの Play。
 
 2026-10-11: 起票 (IMP-DOG-048 の決定から)。Unity・モデル・商品定義は未変更。
 
