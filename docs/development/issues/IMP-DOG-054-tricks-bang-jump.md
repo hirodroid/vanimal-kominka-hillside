@@ -2,7 +2,7 @@
 id: IMP-DOG-054
 type: IMP
 system: DOG
-status: wip
+status: review
 priority: Medium
 summary: 呼んで座らせた犬に芸「バーン」「ジャンプ」を指示する (DES-DOG-012 第 2 版の実装)。VR は手をゾーンへ速く入れる合図、全端末で呼ぶタブのボタン。トレーナー特典 (裏山だけ)、伸び/あくびと同じ一発再生 (trickKind + stretchMs)、使える状態になったらアクションアシスタント的なガイドを出す
 next: "2026-10-13 実装・検査・Codex レビュー反映まで完了 (status review)。残りはユーザー: PCVR で合図 (バーン = 頭へ手をサッと、ジャンプ = 頭の上へサッと) の受理・不受理ケース・小型犬への到達性、ガイドの見え方、Desktop のボタン、2 人で同じ時刻に同じ芸が見えること。tricksEnabled は今 ON (確認用)。初期公開のビルドの前に OFF にするか (§2.10) と「モード」の読み (§1 決定 7) の確認"
